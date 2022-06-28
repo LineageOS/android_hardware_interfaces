@@ -34,6 +34,9 @@ namespace hardware {
 namespace gnss {
 namespace common {
 
+using aidl::android::hardware::gnss::ElapsedRealtime;
+using aidl::android::hardware::gnss::GnssLocation;
+
 NmeaFixInfo::NmeaFixInfo() : hasGMCRecord(false), hasGGARecord(false) {}
 
 float NmeaFixInfo::getAltitudeMeters() const {
@@ -234,6 +237,40 @@ std::unique_ptr<V2_0::GnssLocation> NmeaFixInfo::getLocationFromInputStr(
         return nullptr;
     }
     return nmeaFixInfo.toGnssLocation();
+}
+
+/**
+ * Convert V2_0::GnssLocation to aidl::GnssLocation.
+ */
+std::unique_ptr<GnssLocation> NmeaFixInfo::getAidlLocationFromInputStr(
+        const std::string& inputStr) {
+    std::unique_ptr<V2_0::GnssLocation> locationV2 = getLocationFromInputStr(inputStr);
+    if (locationV2 == nullptr) {
+        return nullptr;
+    }
+
+    ElapsedRealtime elapsedRealtime = {
+            .flags = ElapsedRealtime::HAS_TIMESTAMP_NS | ElapsedRealtime::HAS_TIME_UNCERTAINTY_NS,
+            .timestampNs = ::android::elapsedRealtimeNano(),
+            // This is an hardcoded value indicating a 1ms of uncertainty between the two clocks.
+            // In an actual implementation provide an estimate of the synchronization uncertainty
+            // or don't set the field.
+            .timeUncertaintyNs = 1020400};
+
+    GnssLocation location = {
+            .gnssLocationFlags = locationV2->v1_0.gnssLocationFlags,
+            .latitudeDegrees = locationV2->v1_0.latitudeDegrees,
+            .longitudeDegrees = locationV2->v1_0.longitudeDegrees,
+            .altitudeMeters = locationV2->v1_0.altitudeMeters,
+            .speedMetersPerSec = locationV2->v1_0.speedMetersPerSec,
+            .bearingDegrees = locationV2->v1_0.bearingDegrees,
+            .horizontalAccuracyMeters = locationV2->v1_0.horizontalAccuracyMeters,
+            .verticalAccuracyMeters = locationV2->v1_0.verticalAccuracyMeters,
+            .speedAccuracyMetersPerSecond = locationV2->v1_0.speedAccuracyMetersPerSecond,
+            .bearingAccuracyDegrees = locationV2->v1_0.bearingAccuracyDegrees,
+            .timestampMillis = locationV2->v1_0.timestamp,
+            .elapsedRealtime = elapsedRealtime};
+    return std::make_unique<GnssLocation>(location);
 }
 
 /**

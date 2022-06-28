@@ -45,6 +45,7 @@ class RadioNetworkResponse : public BnRadioNetworkResponse {
     CellIdentity barringCellIdentity;
     std::vector<BarringInfo> barringInfoList;
     UsageSetting usageSetting;
+    std::vector<RadioAccessSpecifier> specifiers;
 
     virtual ndk::ScopedAStatus acknowledgeRequest(int32_t serial) override;
 

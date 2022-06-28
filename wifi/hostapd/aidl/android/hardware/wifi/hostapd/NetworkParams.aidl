@@ -44,4 +44,12 @@ parcelable NetworkParams {
      * CHARGEABLE_PUBLIC_NETWORK when set to true.
      */
     boolean isMetered;
+    /**
+     * Additional vendor specific elements for Beacon and Probe Response frames
+     * This parameter can be used to add additional vendor specific element(s) into
+     * the end of the Beacon and Probe Response frames. The format for these
+     * element(s) is a binary dump of the raw information elements (id+len+payload for
+     * one or more elements). Example: byte[]{ 221, 4, 17, 34, 51, 1 }
+     */
+    byte[] vendorElements;
 }

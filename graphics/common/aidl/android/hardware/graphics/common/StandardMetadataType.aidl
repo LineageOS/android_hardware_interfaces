@@ -22,8 +22,9 @@ package android.hardware.graphics.common;
  * This is an enum that defines the common types of gralloc 4 buffer metadata. The comments for
  * each enum include a description of the metadata that is associated with the type.
  *
- * IMapper@4.x must support getting the following standard buffer metadata types. IMapper@4.x may
- * support setting these standard buffer metadata types as well.
+ * IMapper@4.x must support getting the following standard buffer metadata types, with the exception
+ * of SMPTE 2094-10 metadata. IMapper@4.x may support setting these standard buffer metadata types
+ * as well.
  *
  * When encoding these StandardMetadataTypes into a byte stream, the associated MetadataType is
  * is first encoded followed by the StandardMetadataType value. The MetadataType is encoded by
@@ -33,6 +34,7 @@ package android.hardware.graphics.common;
  *
  * The StandardMetadataType encode/decode support library can be found in:
  * frameworks/native/libs/gralloc/types/include/gralloctypes/Gralloc4.h.
+ * @hide
  */
 @VintfStability
 @Backing(type="long")
@@ -344,7 +346,7 @@ enum StandardMetadataType {
     /**
      * Can be used to get or set dynamic HDR metadata specified by SMPTE ST 2094-40:2016.
      *
-     * This metadata is uint8_t byte array.
+     * This metadata is a uint8_t byte array.
      *
      * This is not used in tone mapping until it has been set for the first time.
      *
@@ -353,4 +355,17 @@ enum StandardMetadataType {
      * If this is unset when encoded into a byte stream, the byte stream is empty.
      */
     SMPTE2094_40 = 21,
+
+    /**
+     * Can be used to get or set dynamic HDR metadata specified by SMPTE ST 2094-10:2016.
+     *
+     * This metadata is a uint8_t byte array.
+     *
+     * This is not used in tone mapping until it has been set for the first time.
+     *
+     * When it is encoded into a byte stream, the length of the HDR metadata byte array is written
+     * using 8 bytes in little endian. It is followed by the uint8_t byte array.
+     * If this is unset when encoded into a byte stream, the byte stream is empty.
+     */
+    SMPTE2094_10 = 22,
 }

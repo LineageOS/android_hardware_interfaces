@@ -113,10 +113,9 @@ bool fillMockDataFrame(UltrasonicsDataFrameDesc& dataFrameDesc, sp<IMemory> pIMe
     dataFrameDesc.receiversReadingsCountList = receiversReadingsCountList;
 
     const std::vector<WaveformData> waveformDataList = {
-            {recvIdList[0], { {1000, 0.1f}, {2000, 0.8f} }},
-            {recvIdList[1], { {1000, 0.1f}, {2000, 1.0f} }},
-            {recvIdList[2], { {1000, 0.1f}, {2000, 0.2f}, {4000, 0.2f}, {5000, 0.1f} }}
-    };
+            {recvIdList[0], {{1000, 0.1f}, {2000, 0.8f}}},
+            {recvIdList[1], {{1000, 0.1f}, {2000, 1.0f}}},
+            {recvIdList[2], {{1000, 0.1f}, {2000, 0.2f}, {4000, 0.2f}, {5000, 0.1f}}}};
 
     if (pIMemory.get() == nullptr) {
         return false;

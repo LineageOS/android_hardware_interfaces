@@ -15,6 +15,7 @@
  */
 
 #include <composer-vts/2.2/RenderEngineVts.h>
+#include "renderengine/impl/ExternalTexture.h"
 
 namespace android {
 namespace hardware {
@@ -60,19 +61,20 @@ void TestRenderEngine::initGraphicBuffer(uint32_t width, uint32_t height, uint32
 
 void TestRenderEngine::drawLayers() {
     base::unique_fd bufferFence;
-    base::unique_fd readyFence;
 
-    std::vector<const renderengine::LayerSettings*> compositionLayerPointers;
-    compositionLayerPointers.reserve(mCompositionLayers.size());
+    std::vector<renderengine::LayerSettings> compositionLayers;
+    compositionLayers.reserve(mCompositionLayers.size());
     std::transform(mCompositionLayers.begin(), mCompositionLayers.end(),
-                   std::back_insert_iterator(compositionLayerPointers),
-                   [](renderengine::LayerSettings& settings) -> renderengine::LayerSettings* {
-                       return &settings;
+                   std::back_insert_iterator(compositionLayers),
+                   [](renderengine::LayerSettings& settings) -> renderengine::LayerSettings {
+                       return settings;
                    });
-    auto texture = std::make_shared<renderengine::ExternalTexture>(
-            mGraphicBuffer, *mRenderEngine, renderengine::ExternalTexture::Usage::WRITEABLE);
-    mRenderEngine->drawLayers(mDisplaySettings, compositionLayerPointers, texture, true,
-                              std::move(bufferFence), &readyFence);
+    auto texture = std::make_shared<renderengine::impl::ExternalTexture>(
+            mGraphicBuffer, *mRenderEngine, renderengine::impl::ExternalTexture::Usage::WRITEABLE);
+    auto [status, readyFence] = mRenderEngine
+                                        ->drawLayers(mDisplaySettings, compositionLayers, texture,
+                                                     true, std::move(bufferFence))
+                                        .get();
     int fd = readyFence.release();
     if (fd != -1) {
         ASSERT_EQ(0, sync_wait(fd, -1));

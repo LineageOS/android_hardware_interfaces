@@ -32,6 +32,7 @@ cc_library_static {
         "TestCommandReader.cpp",
     ],
     static_libs: [
+        "android.hardware.graphics.allocator-V1-ndk",
         "android.hardware.graphics.composer@2.1",
         "android.hardware.graphics.mapper@2.0-vts",
         "android.hardware.graphics.mapper@3.0-vts",
@@ -39,6 +40,7 @@ cc_library_static {
         "libgtest",
     ],
     export_static_lib_headers: [
+        "android.hardware.graphics.allocator-V1-ndk",
         "android.hardware.graphics.composer@2.1",
         "android.hardware.graphics.mapper@2.0-vts",
         "android.hardware.graphics.mapper@3.0-vts",

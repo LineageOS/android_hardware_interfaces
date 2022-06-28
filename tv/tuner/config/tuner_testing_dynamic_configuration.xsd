@@ -94,6 +94,8 @@
                     "connectToCicamId": if the device supports frontend connecting to cicam, the
                         target cicam id needs to be configured here. Supported in Tuner 1.1 or
                         higher.
+                    "removeOutputPid": the unnecessary PID will be filtered out from frontend
+                        output. Supported in Tuner 2.0 or higher.
                     "frequency": the frequency used to configure tune and scan.
                     "endFrequency": the end frequency of scan. Supported in Tuner 1.1 or higher.
 
@@ -125,6 +127,7 @@
         <xs:attribute name="isSoftwareFrontend" type="xs:boolean" use="required"/>
         <xs:attribute name="frequency" type="xs:nonNegativeInteger" use="required"/>
         <xs:attribute name="connectToCicamId" type="xs:nonNegativeInteger" use="optional"/>
+        <xs:attribute name="removeOutputPid" type="xs:nonNegativeInteger" use="optional"/>
         <xs:attribute name="endFrequency" type="xs:nonNegativeInteger" use="optional"/>
     </xs:complexType>
 
@@ -191,7 +194,7 @@
             <xs:enumeration value="IP"/>
             <xs:enumeration value="NTP"/>
             <xs:enumeration value="IP_PAYLOAD"/>
-            <xs:enumeration value="PAYLOAD_THROUGH"/>            
+            <xs:enumeration value="PAYLOAD_THROUGH"/>
         </xs:restriction>
     </xs:simpleType>
 
@@ -220,11 +223,13 @@
             <xs:element name="videoStreamType" type="xs:unsignedByte"/>
         </xs:choice>
         <xs:attribute name="isPassthrough" type="xs:boolean" use="required"/>
+        <xs:attribute name="isSecureMemory" type="xs:boolean" use="required"/>
     </xs:complexType>
     <xs:complexType name="sectionFilterSettings">
         <xs:attribute name="isCheckCrc" type="xs:boolean" use="required"/>
         <xs:attribute name="isRepeat" type="xs:boolean" use="required"/>
         <xs:attribute name="isRaw" type="xs:boolean" use="required"/>
+        <xs:attribute name="bitWidthOfLengthField" type="xs:nonNegativeInteger" use="required"/>
     </xs:complexType>
     <xs:complexType name="recordFilterSettings">
         <xs:attribute name="tsIndexMask" type="tsIndexMask" use="required"/>
@@ -242,6 +247,10 @@
                     "bufferSize": the buffer size of the filter in hex.
                     "pid": the pid that would be used to configure the filter.
                     "useFMQ": if the filter uses FMQ.
+                    "timeDelayInMs": the filter's time delay hint. 0 by default.  Must not be
+                        longer than 30 seconds.
+                    "dataDelayInBytes": the filter's data delay hint. 0 by default. Configured data
+                        size must be received within 30 seconds.
 
                 Each filter element also contains at most one type-related "filterSettings".
                     - The settings type should match the filter "subType" attribute.
@@ -273,6 +282,8 @@
         <xs:attribute name="pid" type="xs:nonNegativeInteger" use="optional"/>
         <xs:attribute name="useFMQ" type="xs:boolean" use="required"/>
         <xs:attribute name="monitorEventTypes" type="monitoEvents" use="optional"/>
+        <xs:attribute name="timeDelayInMs" type="xs:nonNegativeInteger" use="optional"/>
+        <xs:attribute name="dataDelayInBytes" type="xs:nonNegativeInteger" use="optional"/>
     </xs:complexType>
 
     <!-- DVR SESSION -->

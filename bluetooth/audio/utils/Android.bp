@@ -51,7 +51,7 @@ cc_library_shared {
         "libbinder_ndk",
         "libfmq",
         "liblog",
-        "android.hardware.bluetooth.audio-V1-ndk",
+        "android.hardware.bluetooth.audio-V2-ndk",
         "libhidlbase",
     ],
 }

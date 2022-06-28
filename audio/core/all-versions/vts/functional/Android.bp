@@ -30,6 +30,7 @@ cc_defaults {
         "android.hardware.audio.common.test.utility",
         "audioclient-types-aidl-cpp",
         "libaudioclient_aidl_conversion",
+        "libstagefright_foundation",
     ],
     shared_libs: [
         "libbinder",
@@ -60,6 +61,7 @@ cc_test {
         "libmedia_helper",
         "android.hardware.audio@2.0",
         "android.hardware.audio.common@2.0",
+        "android.media.audio.common.types-V1-cpp",
     ],
     cflags: [
         "-DMAJOR_VERSION=2",
@@ -89,6 +91,7 @@ cc_test {
         "libmedia_helper",
         "android.hardware.audio@4.0",
         "android.hardware.audio.common@4.0",
+        "android.media.audio.common.types-V1-cpp",
     ],
     cflags: [
         "-DMAJOR_VERSION=4",
@@ -115,6 +118,7 @@ cc_test {
         "libmedia_helper",
         "android.hardware.audio@5.0",
         "android.hardware.audio.common@5.0",
+        "android.media.audio.common.types-V1-cpp",
     ],
     cflags: [
         "-DMAJOR_VERSION=5",
@@ -145,6 +149,7 @@ cc_test {
         "libmedia_helper",
         "android.hardware.audio@6.0",
         "android.hardware.audio.common@6.0",
+        "android.media.audio.common.types-V1-cpp",
     ],
     cflags: [
         "-DMAJOR_VERSION=6",
@@ -244,6 +249,7 @@ cc_test {
     static_libs: [
         "android.hardware.audio@6.0",
         "android.hardware.audio.common@6.0",
+        "android.media.audio.common.types-V1-cpp",
         "libaudiofoundation",
         "libaudiopolicycomponents",
         "libmedia_helper",

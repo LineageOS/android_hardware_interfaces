@@ -1,0 +1,1340 @@
+/*
+ * Copyright 2022 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.wifi@1.6;
+
+import @1.0::MacAddress;
+import @1.0::NanCipherSuiteType;
+import @1.0::NanDataPathChannelCfg;
+import @1.0::NanDataPathConfirmInd;
+import @1.0::NanDataPathSecurityConfig;
+import @1.0::NanDataPathSecurityType;
+import @1.0::NanDiscoveryCommonConfig;
+import @1.0::NanInitiateDataPathRequest;
+import @1.0::NanMatchAlg;
+import @1.0::NanRangingIndication;
+import @1.0::NanRespondToDataPathIndicationRequest;
+import @1.0::NanPublishType;
+import @1.0::NanTxType;
+import @1.0::Rssi;
+import @1.0::RttBw;
+import @1.0::RttPeerType;
+import @1.0::RttStatus;
+import @1.0::RttType;
+import @1.0::StaLinkLayerIfaceStats;
+import @1.0::StaLinkLayerRadioStats;
+import @1.0::TimeSpanInPs;
+import @1.0::TimeStampInUs;
+import @1.0::TimeStampInMs;
+import @1.0::WifiChannelInMhz;
+import @1.0::WifiChannelWidthInMhz;
+import @1.0::WifiInformationElement;
+import @1.0::WifiRateNss;
+import @1.4::RttPreamble;
+import @1.4::WifiRatePreamble;
+import @1.5::NanConfigRequestSupplemental;
+import @1.5::WifiBand;
+import @1.5::StaLinkLayerIfaceContentionTimeStats;
+import @1.5::WifiIfaceMode;
+
+/**
+ * Channel operating width in Mhz.
+ */
+enum WifiChannelWidthInMhz : @1.0::WifiChannelWidthInMhz {
+    /**
+     * 320 MHz
+     */
+    WIDTH_320 = 7,
+};
+
+/**
+ * RTT Measurement Bandwidth.
+ */
+enum RttBw : @1.0::RttBw {
+    BW_320MHZ = 0x40,
+};
+
+/**
+ * RTT Measurement Preamble.
+ */
+enum RttPreamble : @1.4::RttPreamble {
+    /**
+     * Preamble type for 11be
+     */
+    EHT = 0x10,
+};
+
+/**
+ * Wifi Rate Preamble
+ */
+enum WifiRatePreamble : @1.4::WifiRatePreamble {
+    /**
+     * Preamble type for 11be
+     */
+    EHT = 6,
+};
+
+/**
+ * Antenna configuration
+ */
+enum WifiAntennaMode : uint32_t {
+  WIFI_ANTENNA_MODE_UNSPECIFIED    = 0,
+  WIFI_ANTENNA_MODE_1X1        = 1,
+  WIFI_ANTENNA_MODE_2X2        = 2,
+  WIFI_ANTENNA_MODE_3X3        = 3,
+  WIFI_ANTENNA_MODE_4X4        = 4,
+};
+
+/**
+ * Channel information.
+ */
+struct WifiChannelInfo {
+    /**
+     * Channel width (20, 40, 80, 80+80, 160, 320).
+     */
+    WifiChannelWidthInMhz width;
+
+    /**
+     * Primary 20 MHz channel.
+     */
+    WifiChannelInMhz centerFreq;
+
+    /**
+     * Center frequency (MHz) first segment.
+     */
+    WifiChannelInMhz centerFreq0;
+
+    /**
+     * Center frequency (MHz) second segment.
+     */
+    WifiChannelInMhz centerFreq1;
+};
+
+/**
+ * RTT configuration.
+ */
+struct RttConfig {
+    /**
+     * Peer device mac address.
+     */
+    MacAddress addr;
+
+    /**
+     * 1-sided or 2-sided RTT.
+     */
+    RttType type;
+
+    /**
+     * Optional - peer device hint (STA, P2P, AP).
+     */
+    RttPeerType peer;
+
+    /**
+     * Required for STA-AP mode, optional for P2P, NBD etc.
+     */
+    WifiChannelInfo channel;
+
+    /**
+     * Time interval between bursts (units: 100 ms).
+     * Applies to 1-sided and 2-sided RTT multi-burst requests.
+     * Range: 0-31, 0: no preference by initiator (2-sided RTT).
+     */
+    uint32_t burstPeriod;
+
+    /**
+     * Total number of RTT bursts to be executed. It will be
+     * specified in the same way as the parameter "Number of
+     * Burst Exponent" found in the FTM frame format. It
+     * applies to both: 1-sided RTT and 2-sided RTT. Valid
+     * values are 0 to 15 as defined in 802.11mc std.
+     * 0 means single shot
+     * The implication of this parameter on the maximum
+     * number of RTT results is the following:
+     * for 1-sided RTT: max num of RTT results = (2^num_burst)*(num_frames_per_burst)
+     * for 2-sided RTT: max num of RTT results = (2^num_burst)*(num_frames_per_burst - 1)
+     */
+    uint32_t numBurst;
+
+    /**
+     * Num of frames per burst.
+     * Minimum value = 1, Maximum value = 31
+     * For 2-sided this equals the number of FTM frames
+     * to be attempted in a single burst. This also
+     * equals the number of FTM frames that the
+     * initiator will request that the responder send
+     * in a single frame.
+     */
+    uint32_t numFramesPerBurst;
+
+    /**
+     * Number of retries for a failed RTT frame.
+     * Applies to 1-sided RTT only. Minimum value = 0, Maximum value = 3
+     */
+    uint32_t numRetriesPerRttFrame;
+
+    /**
+     * Following fields are only valid for 2-side RTT.
+     *
+     *
+     * Maximum number of retries that the initiator can
+     * retry an FTMR frame.
+     * Minimum value = 0, Maximum value = 3
+     */
+    uint32_t numRetriesPerFtmr;
+
+    /**
+     * Whether to request location civic info or not.
+     */
+    bool mustRequestLci;
+
+    /**
+     * Whether to request location civic records or not.
+     */
+    bool mustRequestLcr;
+
+    /**
+     * Applies to 1-sided and 2-sided RTT. Valid values will
+     * be 2-11 and 15 as specified by the 802.11mc std for
+     * the FTM parameter burst duration. In a multi-burst
+     * request, if responder overrides with larger value,
+     * the initiator will return failure. In a single-burst
+     * request if responder overrides with larger value,
+     * the initiator will sent TMR_STOP to terminate RTT
+     * at the end of the burst_duration it requested.
+     */
+    uint32_t burstDuration;
+
+    /**
+     * RTT preamble to be used in the RTT frames.
+     */
+    RttPreamble preamble;
+
+    /**
+     * RTT BW to be used in the RTT frames.
+     */
+    RttBw bw;
+};
+
+/**
+ * RTT Responder information
+ */
+struct RttResponder {
+    WifiChannelInfo channel;
+
+    RttPreamble preamble;
+};
+
+struct WifiChannelStats {
+    /**
+     * Channel information.
+     */
+    WifiChannelInfo channel;
+
+    /**
+     * Total time for which the radio is awake on this channel.
+     */
+    uint32_t onTimeInMs;
+
+    /**
+     * Total time for which CCA is held busy on this channel.
+     */
+    uint32_t ccaBusyTimeInMs;
+};
+
+struct StaLinkLayerRadioStats {
+    /**
+     * Baseline information as defined in HAL 1.0.
+     */
+    @1.0::StaLinkLayerRadioStats V1_0;
+
+    /**
+     * Total time for which the radio is awake due to NAN scan since boot or crash.
+     */
+    uint32_t onTimeInMsForNanScan;
+
+    /**
+     * Total time for which the radio is awake due to background scan since boot or crash.
+     */
+    uint32_t onTimeInMsForBgScan;
+
+    /**
+     * Total time for which the radio is awake due to roam scan since boot or crash.
+     */
+    uint32_t onTimeInMsForRoamScan;
+
+    /**
+     * Total time for which the radio is awake due to PNO scan since boot or crash.
+     */
+    uint32_t onTimeInMsForPnoScan;
+
+    /**
+     * Total time for which the radio is awake due to Hotspot 2.0 scans and GAS exchange since boot
+     * or crash.
+     */
+    uint32_t onTimeInMsForHs20Scan;
+
+    /**
+     * List of channel stats associated with this radio
+     */
+    vec<WifiChannelStats> channelStats;
+
+    /**
+     * Radio ID: An implementation specific value identifying the radio interface for which the
+     * stats are produced. Framework must not interpret this value. It must use this value for
+     * persistently identifying the statistics between calls,
+     * e.g. if the HAL provides them in different order.
+     */
+    int32_t radioId;
+};
+
+/**
+ * Per peer statistics.  The types of peer include the Access Point (AP), the Tunneled Direct Link
+ * Setup (TDLS), the Group Owner (GO), the Neighbor Awareness Networking (NAN), etc.
+ */
+struct StaPeerInfo {
+    /**
+     * Station count: The total number of stations currently associated with the peer.
+     */
+    uint16_t staCount;
+
+    /**
+     * Channel utilization: The percentage of time (normalized to 255, i.e., x% corresponds to
+     * (int) x * 255 / 100) that the medium is sensed as busy measured by either physical or
+     * virtual carrier sense (CS) mechanism.
+     */
+    uint16_t chanUtil;
+
+    /**
+     * Per rate statistics
+     */
+    vec<StaRateStat> rateStats;
+};
+
+/**
+ * Iface statistics for the current connection.
+ */
+struct StaLinkLayerIfaceStats {
+    /**
+     * Baseline information as defined in HAL 1.0.
+     */
+    @1.0::StaLinkLayerIfaceStats V1_0;
+
+    /**
+     * Duty cycle for the iface.
+     * if this iface is being served using time slicing on a radio with one or more ifaces
+     * (i.e MCC), then the duty cycle assigned to this iface in %.
+     * If not using time slicing (i.e SCC or DBS), set to 100.
+     */
+    uint8_t timeSliceDutyCycleInPercent;
+
+    /**
+     * WME Best Effort (BE) Access Category (AC) contention time statistics.
+     */
+    StaLinkLayerIfaceContentionTimeStats wmeBeContentionTimeStats;
+
+    /**
+     * WME Background (BK) Access Category (AC) contention time statistics.
+     */
+    StaLinkLayerIfaceContentionTimeStats wmeBkContentionTimeStats;
+
+    /**
+     * WME Video (VI) Access Category (AC) contention time statistics.
+     */
+    StaLinkLayerIfaceContentionTimeStats wmeViContentionTimeStats;
+
+    /**
+     * WME Voice (VO) Access Category (AC) contention time statistics.
+     */
+    StaLinkLayerIfaceContentionTimeStats wmeVoContentionTimeStats;
+
+    /**
+     * Per peer statistics.
+     */
+    vec<StaPeerInfo> peers;
+};
+
+/**
+ * Link layer stats retrieved via |getLinkLayerStats|.
+ */
+struct StaLinkLayerStats {
+    StaLinkLayerIfaceStats iface;
+
+    vec<StaLinkLayerRadioStats> radios;
+
+    /**
+     * TimeStamp for each stats sample.
+     * This is the absolute milliseconds from boot when these stats were
+     * sampled.
+     */
+    TimeStampInMs timeStampInMs;
+};
+
+/**
+ * Wifi rate info.
+ */
+struct WifiRateInfo {
+    /**
+     * Preamble used for RTT measurements.
+     */
+    WifiRatePreamble preamble;
+
+    /**
+     * Number of spatial streams.
+     */
+    WifiRateNss nss;
+
+    /**
+     * Bandwidth of channel.
+     */
+    WifiChannelWidthInMhz bw;
+
+    /**
+     * OFDM/CCK rate code would be as per ieee std in the units of 0.5mbps.
+     * HT/VHT/HE/EHT it would be mcs index.
+     */
+    uint8_t rateMcsIdx;
+
+    /**
+     * Bitrate in units of 100 Kbps.
+     */
+    uint32_t bitRateInKbps;
+};
+
+/**
+ * Per rate statistics.  The rate is characterized by the combination of preamble, number of spatial
+ * streams, transmission bandwidth, and modulation and coding scheme (MCS).
+ */
+struct StaRateStat {
+    /**
+     * Wifi rate information: preamble, number of spatial streams, bandwidth, MCS, etc.
+     */
+    WifiRateInfo rateInfo;
+
+    /**
+     * Number of successfully transmitted data packets (ACK received)
+     */
+    uint32_t txMpdu;
+
+    /**
+     * Number of received data packets
+     */
+    uint32_t rxMpdu;
+
+    /**
+     * Number of data packet losses (no ACK)
+     */
+    uint32_t mpduLost;
+
+    /**
+     * Number of data packet retries
+     */
+    uint32_t retries;
+};
+
+/**
+ * RTT results.
+ */
+struct RttResult {
+    /**
+     * Peer device mac address.
+     */
+    MacAddress addr;
+
+    /**
+     * Burst number in a multi-burst request.
+     */
+    uint32_t burstNum;
+
+    /**
+     * Total RTT measurement frames attempted.
+     */
+    uint32_t measurementNumber;
+
+    /**
+     * Total successful RTT measurement frames.
+     */
+    uint32_t successNumber;
+
+    /**
+     * Maximum number of "FTM frames per burst" supported by
+     * the responder STA. Applies to 2-sided RTT only.
+     * If reponder overrides with larger value:
+     * - for single-burst request initiator will truncate the
+     * larger value and send a TMR_STOP after receiving as
+     * many frames as originally requested.
+     * - for multi-burst request, initiator will return
+     * failure right away.
+     */
+    uint8_t numberPerBurstPeer;
+
+    /**
+     * Ranging status.
+     */
+    RttStatus status;
+
+    /**
+     * When status == RTT_STATUS_FAIL_BUSY_TRY_LATER,
+     * this will be the time provided by the responder as to
+     * when the request can be tried again. Applies to 2-sided
+     * RTT only. In sec, 1-31sec.
+     */
+    uint8_t retryAfterDuration;
+
+    /**
+     * RTT type.
+     */
+    RttType type;
+
+    /**
+     * Average rssi in 0.5 dB steps e.g. 143 implies -71.5 dB.
+     */
+    Rssi rssi;
+
+    /**
+     * Rssi spread in 0.5 dB steps e.g. 5 implies 2.5 dB spread (optional).
+     */
+    Rssi rssiSpread;
+
+    /**
+     * 1-sided RTT: TX rate of RTT frame.
+     * 2-sided RTT: TX rate of initiator's Ack in response to FTM frame.
+     */
+    WifiRateInfo txRate;
+
+    /**
+     * 1-sided RTT: TX rate of Ack from other side.
+     * 2-sided RTT: TX rate of FTM frame coming from responder.
+     */
+    WifiRateInfo rxRate;
+
+    /**
+     * Round trip time in picoseconds
+     */
+    TimeSpanInPs rtt;
+
+    /**
+     * Rtt standard deviation in picoseconds.
+     */
+    TimeSpanInPs rttSd;
+
+    /**
+     * Difference between max and min rtt times recorded in picoseconds.
+     */
+    TimeSpanInPs rttSpread;
+
+    /**
+     * Distance in mm (optional).
+     */
+    int32_t distanceInMm;
+
+    /**
+     * Standard deviation in mm (optional).
+     */
+    int32_t distanceSdInMm;
+
+    /**
+     * Difference between max and min distance recorded in mm (optional).
+     */
+    int32_t distanceSpreadInMm;
+
+    /**
+     * Time of the measurement (in microseconds since boot).
+     */
+    TimeStampInUs timeStampInUs;
+
+    /**
+     * in ms, actual time taken by the FW to finish one burst
+     * measurement. Applies to 1-sided and 2-sided RTT.
+     */
+    uint32_t burstDurationInMs;
+
+    /**
+     * Number of bursts allowed by the responder. Applies
+     * to 2-sided RTT only.
+     */
+    uint32_t negotiatedBurstNum;
+
+    /**
+     * for 11mc only.
+     */
+    WifiInformationElement lci;
+
+    /**
+     * for 11mc only.
+     */
+    WifiInformationElement lcr;
+};
+
+/**
+ * NAN data path channel information provided to the framework.
+ */
+struct NanDataPathChannelInfo {
+    /**
+     * Channel frequency in MHz.
+     */
+    WifiChannelInMhz channelFreq;
+
+    /**
+     * Channel bandwidth in MHz.
+     */
+    WifiChannelWidthInMhz channelBandwidth;
+
+    /**
+     * Number of spatial streams used in the channel.
+     */
+    uint32_t numSpatialStreams;
+};
+
+/**
+ * NAN Data path confirmation Indication structure.
+ * Event indication is received on both initiator and responder side when negotiation for a
+ * data-path finish: on success or failure.
+ */
+struct NanDataPathConfirmInd {
+    /**
+     * Baseline information as defined in HAL 1.0.
+     */
+    @1.0::NanDataPathConfirmInd V1_0;
+
+    /**
+     * The channel(s) on which the NDP is scheduled to operate.
+     * Updates to the operational channels are provided using the |eventDataPathScheduleUpdate|
+     * event.
+     */
+    vec<NanDataPathChannelInfo> channelInfo;
+};
+
+/**
+ * NAN data path channel information update indication structure.
+ * Event indication is received by all NDP owners whenever the channels on which the NDP operates
+ * are updated.
+ * Note: multiple NDPs may share the same schedule, the indication specifies all NDPs to which it
+ * applies.
+ */
+struct NanDataPathScheduleUpdateInd {
+    /**
+     * The discovery address (NMI) of the peer to which the NDP is connected.
+     */
+    MacAddress peerDiscoveryAddress;
+
+    /**
+     * The updated channel(s) information.
+     */
+    vec<NanDataPathChannelInfo> channelInfo;
+
+    /**
+     * The list of NDPs to which this update applies.
+     */
+    vec<uint32_t> ndpInstanceIds;
+};
+
+/**
+ * Wifi usable channel information.
+ */
+struct WifiUsableChannel {
+    /**
+     * Wifi channel freqeuncy in MHz.
+     */
+    WifiChannelInMhz channel;
+
+    /**
+     * Wifi channel bandwidth in MHz.
+     */
+    WifiChannelWidthInMhz channelBandwidth;
+
+    /**
+     * Iface modes feasible on this channel.
+     */
+    bitfield<WifiIfaceMode> ifaceModeMask;
+};
+
+/**
+ * RTT Capabilities.
+ */
+struct RttCapabilities {
+    /**
+     * if 1-sided rtt data collection is supported.
+     */
+    bool rttOneSidedSupported;
+
+    /**
+     * if ftm rtt data collection is supported.
+     */
+    bool rttFtmSupported;
+
+    /**
+     * if initiator supports LCI request. Applies to 2-sided RTT.
+     */
+    bool lciSupported;
+
+    /**
+     * if initiator supports LCR request. Applies to 2-sided RTT.
+     */
+    bool lcrSupported;
+
+    /**
+     * if 11mc responder mode is supported.
+     */
+    bool responderSupported;
+
+    /**
+     * Bit mask indicates what preamble is supported by initiator.
+     * Combination of |RttPreamble| values.
+     */
+    bitfield<RttPreamble> preambleSupport;
+
+    /**
+     * Bit mask indicates what BW is supported by initiator.
+     * Combination of |RttBw| values.
+     */
+    bitfield<RttBw> bwSupport;
+
+    /**
+     * Draft 11mc spec version supported by chip.
+     * For instance, version 4.0 must be 40 and version 4.3 must be 43 etc.
+     */
+    uint8_t mcVersion;
+};
+
+/**
+ * Cipher suite flags.
+ */
+enum NanCipherSuiteType : @1.0::NanCipherSuiteType {
+    /**
+     *  NCS-PK-128
+     */
+    PUBLIC_KEY_128_MASK = 1 << 2,
+    /**
+     *  NCS-PK-256
+     */
+    PUBLIC_KEY_256_MASK = 1 << 3,
+};
+
+/**
+ * NAN configuration request parameters added in the 1.2 HAL. These are supplemental to previous
+ * versions.
+ */
+struct NanConfigRequestSupplemental {
+    /**
+     * Baseline information as defined in HAL 1.5.
+     */
+    @1.5::NanConfigRequestSupplemental V1_5;
+
+    /**
+     * Controls NAN instant communication mode operate on which channel
+     */
+    uint32_t instantModeChannel;
+};
+
+/**
+ * Configuration of NAN data-path security.
+ */
+struct NanDataPathSecurityConfig {
+    /**
+     * Security configuration of the data-path (NDP). Security is enabled if not equal to
+     * |NanDataPathSecurityType.OPEN|.
+     * NAN Spec: Service Discovery Extension Attribute (SDEA) / Control / Security Required
+     */
+    NanDataPathSecurityType securityType;
+
+    /**
+     * Cipher type for data-paths. If |securityType| is |NanDataPathSecurityType.OPEN| then must
+     * be set to |NanCipherSuiteType.NONE|, otherwise a non-|NanCipherSuiteType.NONE| cipher suite
+     * must be specified.
+     */
+    NanCipherSuiteType cipherType;
+
+    /**
+     * Optional Pairwise Master Key (PMK). Must be specified (and is only used) if |securityType| is
+     * set to |NanDataPathSecurityType.PMK|.
+     * Ref: IEEE 802.11i
+     */
+    uint8_t[32] pmk;
+
+    /**
+     * Optional Passphrase. Must be specified (and is only used) if |securityType| is set to
+     * |NanDataPathSecurityType.PASSPHRASE|.
+     * Min length: |MIN_PASSPHRASE_LENGTH|
+     * Max length: |MAX_PASSPHRASE_LENGTH|
+     * NAN Spec: Appendix: Mapping passphrase to PMK for NCS-SK Cipher Suites
+     */
+    vec<uint8_t> passphrase;
+
+    /**
+     * Security Context Identifier attribute contains PMKID shall be included in NDP setup and
+     * response messages. Security Context Identifier, Identifies the Security Context. When
+     * security is enabled this field contains the 16 octet PMKID identifying the PMK used for
+     * setting up the Secure Data Path.
+     */
+    uint8_t[16] scid;
+};
+
+/**
+ * Response to a data-path request from a peer.
+ */
+struct NanRespondToDataPathIndicationRequest {
+    /**
+     * Accept (true) or reject (false) the request.
+     * NAN Spec: Data Path Attributes / NDP Attribute / Type and Status
+     */
+    bool acceptRequest;
+
+    /**
+     * ID of the data-path (NDP) for which we're responding - obtained as part of the request in
+     * |IWifiNanIfaceEventCallback.eventDataPathRequest|.
+     */
+    uint32_t ndpInstanceId;
+
+    /**
+     * NAN data interface name on which this data-path session is to be started.
+     * This must be an interface created using |IWifiNanIface.createDataInterfaceRequest|.
+     */
+    string ifaceName;
+
+    /**
+     * Security configuration of the requested data-path.
+     */
+    NanDataPathSecurityConfig securityConfig;
+
+    /**
+     * Arbitrary information communicated to the peer as part of the data-path setup process - there
+     * is no semantic meaning to these bytes. They are passed-through from sender to receiver as-is
+     * with no parsing.
+     * Max length: |NanCapabilities.maxAppInfoLen|.
+     * NAN Spec: Data Path Attributes / NDP Attribute / NDP Specific Info
+     */
+    vec<uint8_t> appInfo;
+
+    /**
+     * A service name to be used with |passphrase| to construct a Pairwise Master Key (PMK) for the
+     * data-path. Only relevant when a data-path is requested which is not associated with a NAN
+     * discovery session - e.g. using out-of-band discovery.
+     * Constraints: same as |NanDiscoveryCommonConfig.serviceName|
+     * NAN Spec: Appendix: Mapping pass-phrase to PMK for NCS-SK Cipher Suites
+     */
+    vec<uint8_t> serviceNameOutOfBand;
+};
+
+/**
+ *  Data Path Initiator requesting a data-path.
+ */
+struct NanInitiateDataPathRequest {
+    /**
+     * ID of the peer. Obtained as part of an earlier |IWifiNanIfaceEventCallback.eventMatch| or
+     * |IWifiNanIfaceEventCallback.eventFollowupReceived|.
+     */
+    uint32_t peerId;
+
+    /**
+     * NAN management interface MAC address of the peer. Obtained as part of an earlier
+     * |IWifiNanIfaceEventCallback.eventMatch| or |IWifiNanIfaceEventCallback.eventFollowupReceived|.
+     */
+    MacAddress peerDiscMacAddr;
+
+    /**
+     * Config flag for channel request.
+     */
+    NanDataPathChannelCfg channelRequestType;
+
+    /**
+     * Channel frequency in MHz to start data-path. Not relevant if |channelRequestType| is
+     * |NanDataPathChannelCfg.CHANNEL_NOT_REQUESTED|.
+     */
+    WifiChannelInMhz channel;
+
+    /**
+     * NAN data interface name on which this data-path session is to be initiated.
+     * This must be an interface created using |IWifiNanIface.createDataInterfaceRequest|.
+     */
+    string ifaceName;
+
+    /**
+     * Security configuration of the requested data-path.
+     */
+    NanDataPathSecurityConfig securityConfig;
+
+    /**
+     * Arbitrary information communicated to the peer as part of the data-path setup process - there
+     * is no semantic meaning to these bytes. They are passed-through from sender to receiver as-is
+     * with no parsing.
+     * Max length: |NanCapabilities.maxAppInfoLen|.
+     * NAN Spec: Data Path Attributes / NDP Attribute / NDP Specific Info
+     */
+    vec<uint8_t> appInfo;
+
+    /**
+     * A service name to be used with |passphrase| to construct a Pairwise Master Key (PMK) for the
+     * data-path. Only relevant when a data-path is requested which is not associated with a NAN
+     * discovery session - e.g. using out-of-band discovery.
+     * Constraints: same as |NanDiscoveryCommonConfig.serviceName|
+     * NAN Spec: Appendix: Mapping pass-phrase to PMK for NCS-SK Cipher Suites
+     */
+    vec<uint8_t> serviceNameOutOfBand;
+};
+
+/**
+ * Configurations of NAN discovery sessions: common to publish and subscribe discovery.
+ */
+struct NanDiscoveryCommonConfig {
+    /**
+     * The ID of the discovery session being configured. A value of 0 specifies a request to create
+     * a new discovery session. The new discovery session ID is returned with
+     * |IWifiNanIfaceEventCallback.notifyStartPublishResponse| or
+     * |IWifiNanIfaceEventCallback.notifyStartSubscribeResponse|.
+     * NAN Spec: Service Descriptor Attribute (SDA) / Instance ID
+     */
+    uint8_t sessionId;
+
+    /**
+     * The lifetime of the discovery session in seconds. A value of 0 means run forever or until
+     * canceled using |IWifiIface.stopPublishRequest| or |IWifiIface.stopSubscribeRequest|.
+     */
+    uint16_t ttlSec;
+
+    /**
+     * Indicates the interval between two Discovery Windows in which the device supporting the
+     * service is awake to transmit or receive the Service Discovery frames. Valid values of Awake
+     * DW Interval are: 1, 2, 4, 8 and 16. A value of 0 will default to 1. Does not override
+     * |NanBandSpecificConfig.discoveryWindowIntervalVal| configurations if those are specified.
+     */
+    uint16_t discoveryWindowPeriod;
+
+    /**
+     * The lifetime of the discovery session in number of transmitted SDF discovery packets. A value
+     * of 0 means forever or until canceled using |IWifiIface.stopPublishRequest| or
+     * |IWifiIface.stopSubscribeRequest|.
+     */
+    uint8_t discoveryCount;
+
+    /**
+     * UTF-8 encoded string identifying the service.
+     * Max length: |NanCapabilities.maxServiceNameLen|.
+     * NAN Spec: The only acceptable single-byte UTF-8 symbols for a Service Name are alphanumeric
+     * values (A-Z, a-z, 0-9), the hyphen ('-'), and the period ('.'). All valid multi-byte UTF-8
+     * characters are acceptable in a Service Name.
+     */
+    vec<uint8_t> serviceName;
+
+    /**
+     * Specifies how often to trigger |IWifiNanIfaceEventCallback.eventMatch| when continuously
+     * discovering the same discovery session (with no changes).
+     */
+    NanMatchAlg discoveryMatchIndicator;
+
+    /**
+     * Arbitrary information communicated in discovery packets - there is no semantic meaning to these
+     * bytes. They are passed-through from publisher to subscriber as-is with no parsing.
+     * Max length: |NanCapabilities.maxServiceSpecificInfoLen|.
+     * NAN Spec: Service Descriptor Attribute (SDA) / Service Info
+     */
+    vec<uint8_t> serviceSpecificInfo;
+
+    /**
+     * Arbitrary information communicated in discovery packets - there is no semantic meaning to these
+     * bytes. They are passed-through from publisher to subscriber as-is with no parsing.
+     * Max length: |NanCapabilities.maxExtendedServiceSpecificInfoLen|.
+     * Spec: Service Descriptor Extension Attribute (SDEA) / Service Info
+     */
+    vec<uint8_t> extendedServiceSpecificInfo;
+
+    /**
+     * Ordered sequence of <length, value> pairs (|length| uses 1 byte and contains the number of
+     * bytes in the |value| field) which specify further match criteria (beyond the service name).
+     * The match behavior is specified in details in the NAN spec.
+     * Publisher: used in SOLICITED or SOLICITED_UNSOLICITED sessions.
+     * Subscriber: used in ACTIVE or PASSIVE sessions.
+     * Max length: |NanCapabilities.maxMatchFilterLen|.
+     * NAN Spec: matching_filter_rx
+     */
+    vec<uint8_t> rxMatchFilter;
+
+    /**
+     * Ordered sequence of <length, value> pairs (|length| uses 1 byte and contains the number of
+     * bytes in the |value| field) which specify further match criteria (beyond the service name).
+     * The match behavior is specified in details in the NAN spec.
+     * Publisher: used if provided.
+     * Subscriber: used (if provided) only in ACTIVE sessions.
+     * Max length: |NanCapabilities.maxMatchFilterLen|.
+     * NAN Spec: matching_filter_tx and Service Descriptor Attribute (SDA) / Matching Filter
+     */
+    vec<uint8_t> txMatchFilter;
+
+    /**
+     * Specifies whether or not the discovery session uses the
+     * |NanBandSpecificConfig.rssiCloseProximity| value (configured in enable/configure requests) to
+     * filter out matched discovered peers.
+     * NAN Spec: Service Descriptor Attribute / Service Control / Discovery Range Limited.
+     */
+    bool useRssiThreshold;
+
+    /**
+     * Controls whether or not the |IWifiNanIfaceEventCallback.eventPublishTerminated| (for publish
+     * discovery sessions) or |IWifiNanIfaceEventCallback.eventSubscribeTerminated| (for subscribe
+     * discovery sessions) will be delivered.
+     */
+    bool disableDiscoveryTerminationIndication;
+
+    /**
+     * Controls whether or not the |IWifiNanIfaceEventCallback.eventMatchExpired| will be delivered.
+     */
+    bool disableMatchExpirationIndication;
+
+    /**
+     * Controls whether or not the |IWifiNanIfaceEventCallback.eventFollowupReceived| will be
+     * delivered.
+     */
+    bool disableFollowupReceivedIndication;
+
+    /**
+     * Security configuration of data-paths created in the context of this discovery session. Security
+     * parameters can be overridden during the actual construction of the data-path - allowing
+     * individual data-paths to have unique PMKs or Passphrases.
+     */
+    NanDataPathSecurityConfig securityConfig;
+
+    /**
+     * Specifies whether or not there is a ranging requirement in this discovery session.
+     * Ranging is only performed if all other match criteria with the peer are met. Ranging must
+     * be performed if both peers in the discovery session (publisher and subscriber) set this
+     * flag to true. Otherwise, if either peer sets this flag to false, ranging must not be performed
+     * and must not impact discovery decisions.
+     * Note: specifying that ranging is required also implies that this device must automatically
+     * accept ranging requests from peers.
+     * NAN Spec: Service Discovery Extension Attribute (SDEA) / Control / Ranging Require.
+     */
+    bool rangingRequired;
+
+    /**
+     * Interval in msec between two ranging measurements. Only relevant if |rangingRequired| is true.
+     * If the Awake DW interval specified either in |discoveryWindowPeriod| or in
+     * |NanBandSpecificConfig.discoveryWindowIntervalVal| is larger than the ranging interval then
+     * priority is given to Awake DW interval.
+     */
+    uint32_t rangingIntervalMsec;
+
+    /**
+     * The type of ranging feedback to be provided by discovery session matches
+     * |IWifiNanIfaceEventCallback.eventMatch|. Only relevant if |rangingRequired| is true.
+     */
+    bitfield<NanRangingIndication> configRangingIndications;
+
+    /**
+     * The ingress and egress distance in cm. If ranging is enabled (|rangingEnabled| is true) then
+     * |configRangingIndications| is used to determine whether ingress and/or egress (or neither)
+     * are used to determine whether a match has occurred.
+     * NAN Spec: Service Discovery Extension Attribute (SDEA) / Ingress & Egress Range Limit
+     */
+    uint16_t distanceIngressCm;
+
+    uint16_t distanceEgressCm;
+};
+
+/**
+ * Publish request: specifies a publish discovery operation.
+ */
+struct NanPublishRequest {
+    /**
+     * Common configuration of discovery sessions.
+     */
+    NanDiscoveryCommonConfig baseConfigs;
+
+    /**
+     * The type of the publish discovery session.
+     */
+    NanPublishType publishType;
+
+    /**
+     * For publishType of |NanPublishType.SOLICITED| or |NanPublishType.UNSOLICITED_SOLICITED|
+     * specifies the type of transmission used for responding to the probing subscribe discovery
+     * peer.
+     */
+    NanTxType txType;
+
+    /**
+     * Specifies whether data-path requests |IWifiNanIfaceEventCallback.eventDataPathRequest| (in
+     * the context of this discovery session) are automatically accepted (if true) - in which case
+     * the Responder must not call the |IWifiNanIface.respondToDataPathIndicationRequest| method and
+     * the device must automatically accept the data-path request and complete the negotiation.
+     */
+    bool autoAcceptDataPathRequests;
+};
+
+/**
+ * Match indication structure
+ */
+struct NanMatchInd {
+    /**
+     * Publish or subscribe discovery session ID of an existing discovery session.
+     * NAN Spec: Service Descriptor Attribute (SDA) / Instance ID
+     */
+    uint8_t discoverySessionId;
+
+    /**
+     * A unique ID of the peer. Can be subsequently used in |IWifiNanIface.transmitFollowupRequest| or
+     * to set up a data-path.
+     */
+    uint32_t peerId;
+
+    /**
+     * The NAN Discovery (management) MAC address of the peer.
+     */
+    MacAddress addr;
+
+    /**
+     * The arbitrary information contained in the |NanDiscoveryCommonConfig.serviceSpecificInfo| of
+     * the peer's discovery session configuration.
+     * Max length: |NanCapabilities.maxServiceSpecificInfoLen|.
+     * NAN Spec: Service Descriptor Attribute (SDA) / Service Info
+     */
+    vec<uint8_t> serviceSpecificInfo;
+
+    /**
+     * Arbitrary information communicated in discovery packets - there is no semantic meaning to these
+     * bytes. They are passed-through from publisher to subscriber as-is with no parsing.
+     * Max length: |NanCapabilities.maxExtendedServiceSpecificInfoLen|.
+     * Spec: Service Descriptor Extension Attribute (SDEA) / Service Info
+     */
+    vec<uint8_t> extendedServiceSpecificInfo;
+
+    /**
+     * The match filter from the discovery packet (publish or subscribe) which caused service
+     * discovery. Matches the |NanDiscoveryCommonConfig.txMatchFilter| of the peer's Unsolicited
+     * publish message or of the local device's Active subscribe message.
+     * Max length: |NanCapabilities.maxMatchFilterLen|.
+     * NAN Spec: Service Descriptor Attribute (SDA) / Matching Filter
+     */
+    vec<uint8_t> matchFilter;
+
+    /**
+     * Indicates the type of discovery: true if match occurred on a Beacon frame, false if the match
+     * occurred on a Service Discovery Frames (SDF).
+     */
+    bool matchOccuredInBeaconFlag;
+
+    /**
+     * Flag to indicate firmware is out of resource and that it can no longer track this Service Name.
+     * Indicates that while |IWifiNanIfaceEventCallback.eventMatch| will be received, the
+     * |NanDiscoveryCommonConfig.discoveryMatchIndicator| configuration will not be honored.
+     */
+    bool outOfResourceFlag;
+
+    /**
+     * If RSSI filtering was enabled using |NanDiscoveryCommonConfig.useRssiThreshold| in discovery
+     * session setup then this field contains the received RSSI value. It will contain 0 if RSSI
+     * filtering was not enabled.
+     * RSSI values are returned without sign, e.g. -70dBm will be returned as 70.
+     */
+    uint8_t rssiValue;
+
+    /**
+     * Cipher type for data-paths constructed in the context of this discovery session. Valid if
+     * |peerRequiresSecurityEnabledInNdp| is true.
+     */
+    NanCipherSuiteType peerCipherType;
+
+    /**
+     * Indicates whether or not the peer requires security enabled in any data-path (NDP) constructed
+     * in the context of this discovery session. The |cipherType| specifies the cipher type for such
+     * data-paths.
+     * NAN Spec: Service Discovery Extension Attribute (SDEA) / Control / Security Required
+     */
+    bool peerRequiresSecurityEnabledInNdp;
+
+    /**
+     * Indicates whether or not the peer requires (and hence allows) ranging in the context of this
+     * discovery session.
+     * Note that ranging is only performed if all other match criteria with the peer are met.
+     * NAN Spec: Service Discovery Extension Attribute (SDEA) / Control / Ranging Require.
+     */
+    bool peerRequiresRanging;
+
+    /**
+     * Ranging indication supersedes the NanMatchAlg specification.
+     * Ex: If NanMatchAlg is MATCH_ONCE, but ranging indications is continuous then continuous
+     * match notifications will be received (with ranging information).
+     * Ranging indication data is provided if Ranging required is enabled in the discovery
+     * specification and:
+     *   1) continuous ranging specified.
+     *   2) ingress/egress specified and:
+     *       - notify once for ingress >= ingress_distance and egress <= egress_distance,
+     *       - same for ingress_egress_both
+     * If the Awake DW intervals are larger than the ranging intervals then priority is given to the
+     * device DW intervals.
+     *
+     * If ranging was required and executed contains the distance to the peer in MM. The
+     * |rangingIndicationType| field specifies the event which triggered ranging.
+     */
+    uint32_t rangingMeasurementInMm;
+
+    /**
+     * The ranging event(s) which triggered the ranging. E.g. can indicate that continuous ranging was
+     * requested, or else that an ingress event occurred.
+     */
+    bitfield<NanRangingIndication> rangingIndicationType;
+
+    /**
+     * Security Context Identifier attribute contains PMKID shall be included in NDP setup and
+     * response messages. Security Context Identifier, Identifies the Security Context. For NAN
+     * Shared Key Cipher Suite, this field contains the 16 octet PMKID identifying the PMK used for
+     * setting up the Secure Data Path.
+     */
+    vec<uint8_t> scid;
+};
+
+/**
+ * NDP Capabilities response.
+ */
+struct NanCapabilities {
+    /**
+     * Maximum number of clusters which the device can join concurrently.
+     */
+    uint32_t maxConcurrentClusters;
+
+    /**
+     * Maximum number of concurrent publish discovery sessions.
+     */
+    uint32_t maxPublishes;
+
+    /**
+     * Maximum number of concurrent subscribe discovery sessions.
+     */
+    uint32_t maxSubscribes;
+
+    /**
+     * Maximum length (in bytes) of service name.
+     */
+    uint32_t maxServiceNameLen;
+
+    /**
+     * Maximum length (in bytes) of individual match filters.
+     */
+    uint32_t maxMatchFilterLen;
+
+    /**
+     * Maximum length (in bytes) of aggregate match filters across all active sessions.
+     */
+    uint32_t maxTotalMatchFilterLen;
+
+    /**
+     * Maximum length (in bytes) of the service specific info field.
+     */
+    uint32_t maxServiceSpecificInfoLen;
+
+    /**
+     * Maximum length (in bytes) of the extended service specific info field.
+     */
+    uint32_t maxExtendedServiceSpecificInfoLen;
+
+    /**
+     * Maximum number of data interfaces (NDI) which can be created concurrently on the device.
+     */
+    uint32_t maxNdiInterfaces;
+
+    /**
+     * Maximum number of data paths (NDP) which can be created concurrently on the device, across all
+     * data interfaces (NDI).
+     */
+    uint32_t maxNdpSessions;
+
+    /**
+     * Maximum length (in bytes) of application info field (used in data-path negotiations).
+     */
+    uint32_t maxAppInfoLen;
+
+    /**
+     * Maximum number of transmitted followup messages which can be queued by the firmware.
+     */
+    uint32_t maxQueuedTransmitFollowupMsgs;
+
+    /**
+     * Maximum number MAC interface addresses which can be specified to a subscribe discovery session.
+     */
+    uint32_t maxSubscribeInterfaceAddresses;
+
+    /**
+     * The set of supported Cipher suites. The |NanCipherSuiteType| bit fields are used.
+     */
+    bitfield<NanCipherSuiteType> supportedCipherSuites;
+
+    /**
+     * Flag to indicate id instant communication mode is supported.
+     */
+    bool instantCommunicationModeSupportFlag;
+};
+
+/**
+ * Wifi radio configuration
+ */
+struct WifiRadioConfiguration {
+    /**
+     * Band on which this radio chain is operating.
+     * Valid values of bandInfo are: BAND_24GHZ, BAND_5GHZ, BAND_6GHZ and
+     * BAND_60GHZ.
+     *
+     */
+    WifiBand bandInfo;
+
+    /**
+     * Wifi Antenna configuration.
+     */
+    WifiAntennaMode antennaMode;
+};
+
+/**
+ * Wifi radio combination
+ */
+struct WifiRadioCombination {
+    /**
+     * A list of radio configurations in this combination.
+     */
+    vec<WifiRadioConfiguration> radioConfigurations;
+};
+
+/**
+ * Wifi radio combinations matrix retrieved via |getSupportedRadioCombinationsMatrix|.
+ */
+struct WifiRadioCombinationMatrix {
+    /**
+     * A list of all the possible radio combinations that the chip can operate.
+     */
+    vec<WifiRadioCombination> radioCombinations;
+};
+
+/**
+ * List of interface concurrency types, used in reporting device concurrency capabilities.
+ */
+enum IfaceConcurrencyType : uint32_t {
+    /**
+     * Concurrency type for station mode.
+     */
+    STA,
+    /**
+     * Concurrency type of single-port AP mode.
+     */
+    AP,
+    /**
+     * Concurrency type of two-port bridged AP mode.
+     */
+    AP_BRIDGED,
+    /**
+     * Concurrency type of peer-to-peer mode.
+     */
+    P2P,
+    /**
+     * Concurrency type of neighborhood area network mode.
+     */
+    NAN,
+};

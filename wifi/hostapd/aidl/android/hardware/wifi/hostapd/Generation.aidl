@@ -25,8 +25,9 @@ package android.hardware.wifi.hostapd;
  * WIFI_STANDARD_11N = [hw_mode is HOSTAPD_MODE_IEEE80211G and (HT is 1 or HT40 is 1)] or
  *                     [hw_mode is HOSTAPD_MODE_IEEE80211A and VHT is 0].
  * WIFI_STANDARD_11AC = hw_mode is HOSTAPD_MODE_IEEE80211A and VHT is 1.
- * WIFI_STANDARD_11AX = hw_mode is HOSTAPD_MODE_IEEE80211A and High Efficiency supported.
  * WIFI_STANDARD_11AD = hw_mode is HOSTAPD_MODE_IEEE80211AD.
+ * WIFI_STANDARD_11AX = hw_mode is HOSTAPD_MODE_IEEE80211A and High Efficiency supported.
+ * WIFI_STANDARD_11BE = hw_mode is HOSTAPD_MODE_IEEE80211A and Extreme High Throughput supported.
  */
 @VintfStability
 @Backing(type="int")
@@ -35,6 +36,7 @@ enum Generation {
     WIFI_STANDARD_LEGACY = 0,
     WIFI_STANDARD_11N = 1,
     WIFI_STANDARD_11AC = 2,
-    WIFI_STANDARD_11AX = 3,
-    WIFI_STANDARD_11AD = 4,
+    WIFI_STANDARD_11AD = 3,
+    WIFI_STANDARD_11AX = 4,
+    WIFI_STANDARD_11BE = 5,
 }

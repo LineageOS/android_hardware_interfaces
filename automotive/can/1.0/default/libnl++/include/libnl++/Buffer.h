@@ -138,7 +138,7 @@ class Buffer {
     class raw_iterator : public iterator {
       public:
         iterator operator++() {
-            this->mCurrent.mData++;  // ignore alignment
+            ++this->mCurrent.mData;  // ignore alignment
             return *this;
         }
         const T& operator*() const { return *this->mCurrent.mData; }

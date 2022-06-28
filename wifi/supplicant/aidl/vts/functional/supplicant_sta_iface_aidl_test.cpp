@@ -33,6 +33,7 @@ using aidl::android::hardware::wifi::supplicant::BtCoexistenceMode;
 using aidl::android::hardware::wifi::supplicant::ConnectionCapabilities;
 using aidl::android::hardware::wifi::supplicant::DebugLevel;
 using aidl::android::hardware::wifi::supplicant::DppAkm;
+using aidl::android::hardware::wifi::supplicant::DppConnectionKeys;
 using aidl::android::hardware::wifi::supplicant::DppCurve;
 using aidl::android::hardware::wifi::supplicant::DppNetRole;
 using aidl::android::hardware::wifi::supplicant::DppResponderBootstrapInfo;
@@ -42,7 +43,6 @@ using aidl::android::hardware::wifi::supplicant::ISupplicant;
 using aidl::android::hardware::wifi::supplicant::ISupplicantStaIface;
 using aidl::android::hardware::wifi::supplicant::ISupplicantStaNetwork;
 using aidl::android::hardware::wifi::supplicant::KeyMgmtMask;
-using aidl::android::hardware::wifi::supplicant::RxFilterType;
 using aidl::android::hardware::wifi::supplicant::WpaDriverCapabilitiesMask;
 using aidl::android::hardware::wifi::supplicant::WpsConfigMethods;
 using android::ProcessState;
@@ -76,6 +76,13 @@ class SupplicantStaIfaceCallback : public BnSupplicantStaIfaceCallback {
     }
     ::ndk::ScopedAStatus onAuthenticationTimeout(
         const std::vector<uint8_t>& /* bssid */) override {
+        return ndk::ScopedAStatus::ok();
+    }
+    ::ndk::ScopedAStatus onAuxiliarySupplicantEvent(
+            ::aidl::android::hardware::wifi::supplicant ::
+                    AuxiliarySupplicantEventCode /* eventCode */,
+            const std::vector<uint8_t>& /* bssid */,
+            const std::string& /* reasonString */) override {
         return ndk::ScopedAStatus::ok();
     }
     ::ndk::ScopedAStatus onBssTmHandlingDone(
@@ -112,17 +119,18 @@ class SupplicantStaIfaceCallback : public BnSupplicantStaIfaceCallback {
         return ndk::ScopedAStatus::ok();
     }
     ::ndk::ScopedAStatus onDppSuccessConfigReceived(
-        const std::vector<uint8_t>& /* ssid */,
-        const std::string& /* password */,
-        const std::vector<uint8_t>& /* psk */,
-        ::aidl::android::hardware::wifi::supplicant::DppAkm /* securityAkm */)
-        override {
+            const std::vector<uint8_t>& /* ssid */, const std::string& /* password */,
+            const std::vector<uint8_t>& /* psk */,
+            ::aidl::android::hardware::wifi::supplicant::DppAkm /* securityAkm */,
+            const ::aidl::android::hardware::wifi::supplicant::
+                    DppConnectionKeys& /* DppConnectionKeys */) override {
         return ndk::ScopedAStatus::ok();
     }
     ::ndk::ScopedAStatus onDppSuccessConfigSent() override {
         return ndk::ScopedAStatus::ok();
     }
-    ::ndk::ScopedAStatus onEapFailure(int32_t /* errorCode */) override {
+    ::ndk::ScopedAStatus onEapFailure(const std::vector<uint8_t>& /* bssid */,
+                                      int32_t /* errorCode */) override {
         return ndk::ScopedAStatus::ok();
     }
     ::ndk::ScopedAStatus onExtRadioWorkStart(int32_t /* id */) override {
@@ -189,6 +197,13 @@ class SupplicantStaIfaceCallback : public BnSupplicantStaIfaceCallback {
         return ndk::ScopedAStatus::ok();
     }
     ::ndk::ScopedAStatus onWpsEventSuccess() override {
+        return ndk::ScopedAStatus::ok();
+    }
+    ::ndk::ScopedAStatus onQosPolicyReset() override { return ndk::ScopedAStatus::ok(); }
+    ::ndk::ScopedAStatus onQosPolicyRequest(
+            int32_t /* qosPolicyRequestId */,
+            const std::vector<::aidl::android::hardware::wifi::supplicant ::
+                                      QosPolicyData /* qosPolicyData */>&) override {
         return ndk::ScopedAStatus::ok();
     }
 };
@@ -528,36 +543,6 @@ TEST_P(SupplicantStaIfaceAidlTest, SetPowerSave) {
 }
 
 /*
- * StartRxFilter
- */
-TEST_P(SupplicantStaIfaceAidlTest, StartRxFilter) {
-    EXPECT_TRUE(sta_iface_->startRxFilter().isOk());
-}
-
-/*
- * StopRxFilter
- */
-TEST_P(SupplicantStaIfaceAidlTest, StopRxFilter) {
-    EXPECT_TRUE(sta_iface_->stopRxFilter().isOk());
-}
-
-/*
- * AddRxFilter
- */
-TEST_P(SupplicantStaIfaceAidlTest, AddRxFilter) {
-    EXPECT_TRUE(sta_iface_->addRxFilter(RxFilterType::V4_MULTICAST).isOk());
-    EXPECT_TRUE(sta_iface_->addRxFilter(RxFilterType::V6_MULTICAST).isOk());
-}
-
-/*
- * RemoveRxFilter
- */
-TEST_P(SupplicantStaIfaceAidlTest, RemoveRxFilter) {
-    EXPECT_TRUE(sta_iface_->removeRxFilter(RxFilterType::V4_MULTICAST).isOk());
-    EXPECT_TRUE(sta_iface_->removeRxFilter(RxFilterType::V6_MULTICAST).isOk());
-}
-
-/*
  * AddExtRadioWork
  */
 TEST_P(SupplicantStaIfaceAidlTest, AddExtRadioWork) {
@@ -749,14 +734,16 @@ TEST_P(SupplicantStaIfaceAidlTest, StartDppConfiguratorInitiator) {
         "6D795F746573745F73736964";  // 'my_test_ssid' encoded in hex
     const std::string password =
         "746F70736563726574";  // 'topsecret' encoded in hex
+    const std::vector<uint8_t> eckey_in = {0x2, 0x3, 0x4};
+    std::vector<uint8_t> eckey_out = {};
 
     // Start DPP as Configurator-Initiator. Since this operation requires two
     // devices, we start the operation and expect a timeout.
     EXPECT_TRUE(sta_iface_
-                    ->startDppConfiguratorInitiator(peer_id, 0, ssid, password,
-                                                    "", DppNetRole::STA,
-                                                    DppAkm::PSK)
-                    .isOk());
+                        ->startDppConfiguratorInitiator(peer_id, 0, ssid, password, "",
+                                                        DppNetRole::STA, DppAkm::PSK, eckey_in,
+                                                        &eckey_out)
+                        .isOk());
 
     // Wait for the timeout callback
     ASSERT_EQ(std::cv_status::no_timeout,

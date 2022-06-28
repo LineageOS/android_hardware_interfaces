@@ -38,4 +38,8 @@ enum WpaDriverCapabilitiesMask {
      * Wi-Fi Display R2
      */
     WFD_R2 = 1 << 3,
+    /**
+     * Trust On First Use
+     */
+    TRUST_ON_FIRST_USE = 1 << 4,
 }

@@ -24,6 +24,19 @@ package {
 }
 
 cc_library_static {
+    name: "libvtsclearkey",
+    srcs: [
+        "drm_hal_clearkey_module.cpp",
+    ],
+    static_libs: [
+        "libgtest",
+    ],
+    header_libs: ["drm_hal_vendor_module_headers"],
+    export_header_lib_headers: ["drm_hal_vendor_module_headers"],
+    export_include_dirs: ["."],
+}
+
+cc_library_static {
     name: "android.hardware.drm@1.2-vts",
     defaults: ["VtsHalTargetTestDefaults"],
     local_include_dirs: [

@@ -26,7 +26,10 @@ package {
 cc_test {
     name: "VtsHalSensorsV1_0TargetTest",
     cflags: ["-DLOG_TAG=\"sensors_hidl_hal_test\""],
-    defaults: ["VtsHalTargetTestDefaults"],
+    defaults: [
+        "VtsHalSensorsDefaults",
+        "VtsHalTargetTestDefaults",
+    ],
     tidy_timeout_srcs: [
         "VtsHalSensorsV1_0TargetTest.cpp",
     ],
@@ -34,9 +37,12 @@ cc_test {
         "SensorsHidlEnvironmentV1_0.cpp",
         "VtsHalSensorsV1_0TargetTest.cpp",
     ],
+    shared_libs: [
+        "libbinder_ndk",
+        "libvndksupport",
+    ],
     static_libs: [
         "android.hardware.sensors@1.0",
-        "VtsHalSensorsTargetTestUtils",
     ],
     test_suites: [
         "general-tests",

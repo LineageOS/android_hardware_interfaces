@@ -48,6 +48,7 @@ using Gralloc2 = android::hardware::graphics::mapper::V2_0::vts::Gralloc;
 using Gralloc2_1 = android::hardware::graphics::mapper::V2_1::vts::Gralloc;
 using Gralloc3 = android::hardware::graphics::mapper::V3_0::vts::Gralloc;
 using Gralloc4 = android::hardware::graphics::mapper::V4_0::vts::Gralloc;
+using IAllocator = aidl::android::hardware::graphics::allocator::IAllocator;
 
 class ComposerClient;
 

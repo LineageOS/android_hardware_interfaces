@@ -20,6 +20,7 @@
 #include <android/hardware/wifi/1.5/IWifi.h>
 #include <android/hardware/wifi/1.5/IWifiNanIface.h>
 #include <android/hardware/wifi/1.5/IWifiNanIfaceEventCallback.h>
+#include <android/hardware/wifi/1.6/IWifiNanIface.h>
 #include <gtest/gtest.h>
 #include <hidl/GtestPrinter.h>
 #include <hidl/ServiceManagement.h>
@@ -34,7 +35,6 @@ using namespace ::android::hardware::wifi::V1_0;
 using namespace ::android::hardware::wifi::V1_2;
 using namespace ::android::hardware::wifi::V1_4;
 using namespace ::android::hardware::wifi::V1_5;
-
 using ::android::sp;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
@@ -586,6 +586,11 @@ TEST_P(WifiNanIfaceHidlTest, configRequest_1_5ShimInvalidArgs) {
  * getCapabilitiesRequest: validate that returns capabilities.
  */
 TEST_P(WifiNanIfaceHidlTest, getCapabilitiesRequest_1_5) {
+    sp<::android::hardware::wifi::V1_6::IWifiNanIface> iface_converted =
+            ::android::hardware::wifi::V1_6::IWifiNanIface::castFrom(iwifiNanIface);
+    if (iface_converted != nullptr) {
+        return;
+    }
     uint16_t inputCmdId = 10;
     callbackType = INVALID;
     const auto& halStatus =

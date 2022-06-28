@@ -124,11 +124,9 @@ void DvrCallback::testRecordOutput() {
     while (mDataOutputBuffer.empty()) {
         if (-ETIMEDOUT == mMsgCondition.waitRelative(mMsgLock, WAIT_TIMEOUT)) {
             EXPECT_TRUE(false) << "record output matching pid does not output within timeout";
-            stopRecordThread();
             return;
         }
     }
-    stopRecordThread();
     ALOGW("[vts] record pass and stop");
 }
 
@@ -193,9 +191,10 @@ void DvrCallback::recordThreadLoop(RecordSettings* /*recordSettings*/, bool* kee
 bool DvrCallback::readRecordFMQ() {
     android::Mutex::Autolock autoLock(mMsgLock);
     bool result = false;
+    int readSize = mRecordMQ->availableToRead();
     mDataOutputBuffer.clear();
-    mDataOutputBuffer.resize(mRecordMQ->availableToRead());
-    result = mRecordMQ->read(mDataOutputBuffer.data(), mRecordMQ->availableToRead());
+    mDataOutputBuffer.resize(readSize);
+    result = mRecordMQ->read(mDataOutputBuffer.data(), readSize);
     EXPECT_TRUE(result) << "can't read from Record MQ";
     mMsgCondition.signal();
     return result;

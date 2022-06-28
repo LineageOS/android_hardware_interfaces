@@ -19,6 +19,8 @@ package android.hardware.gnss;
 /**
  * Enumeration of available values for the GNSS Measurement's multipath
  * indicator.
+ *
+ * @hide
  */
 @VintfStability
 @Backing(type="int")

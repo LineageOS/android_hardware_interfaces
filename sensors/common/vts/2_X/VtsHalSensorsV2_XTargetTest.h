@@ -170,12 +170,12 @@ class SensorsHidlTest : public SensorsHidlTestBaseV2_X {
   public:
     virtual void SetUp() override {
         mEnvironment = new SensorsHidlEnvironmentV2_X(GetParam());
-        mEnvironment->HidlSetUp();
+        mEnvironment->SetUp();
         // Ensure that we have a valid environment before performing tests
         ASSERT_NE(getSensors(), nullptr);
     }
 
-    virtual void TearDown() override { mEnvironment->HidlTearDown(); }
+    virtual void TearDown() override { mEnvironment->TearDown(); }
 
   protected:
     SensorInfoType defaultSensorByType(SensorTypeVersion type) override;
@@ -216,7 +216,7 @@ class SensorsHidlTest : public SensorsHidlTestBaseV2_X {
 
     inline sp<ISensorsWrapperBase>& getSensors() { return mEnvironment->mSensors; }
 
-    SensorsHidlEnvironmentBase<EventType>* getEnvironment() override { return mEnvironment; }
+    SensorsVtsEnvironmentBase<EventType>* getEnvironment() override { return mEnvironment; }
 
     // Test helpers
     void runSingleFlushTest(const std::vector<SensorInfoType>& sensors, bool activateSensor,
@@ -530,32 +530,31 @@ TEST_P(SensorsHidlTest, CallInitializeTwice) {
     // Create a new environment that calls initialize()
     std::unique_ptr<SensorsHidlEnvironmentTest> newEnv =
             std::make_unique<SensorsHidlEnvironmentTest>(GetParam());
-    newEnv->HidlSetUp();
+    newEnv->SetUp();
     if (HasFatalFailure()) {
         return;  // Exit early if setting up the new environment failed
     }
 
     activateAllSensors(true);
     // Verify that the old environment does not receive any events
-    EXPECT_EQ(collectEvents(kCollectionTimeoutUs, kNumEvents, getEnvironment()).size(), 0);
+    EXPECT_EQ(getEnvironment()->collectEvents(kCollectionTimeoutUs, kNumEvents).size(), 0);
     // Verify that the new event queue receives sensor events
-    EXPECT_GE(collectEvents(kCollectionTimeoutUs, kNumEvents, newEnv.get(), newEnv.get()).size(),
-              kNumEvents);
+    EXPECT_GE(newEnv.get()->collectEvents(kCollectionTimeoutUs, kNumEvents).size(), kNumEvents);
     activateAllSensors(false);
 
     // Cleanup the test environment
-    newEnv->HidlTearDown();
+    newEnv->TearDown();
 
     // Restore the test environment for future tests
-    getEnvironment()->HidlTearDown();
-    getEnvironment()->HidlSetUp();
+    getEnvironment()->TearDown();
+    getEnvironment()->SetUp();
     if (HasFatalFailure()) {
         return;  // Exit early if resetting the environment failed
     }
 
     // Ensure that the original environment is receiving events
     activateAllSensors(true);
-    EXPECT_GE(collectEvents(kCollectionTimeoutUs, kNumEvents).size(), kNumEvents);
+    EXPECT_GE(getEnvironment()->collectEvents(kCollectionTimeoutUs, kNumEvents).size(), kNumEvents);
     activateAllSensors(false);
 }
 
@@ -565,21 +564,21 @@ TEST_P(SensorsHidlTest, CleanupConnectionsOnInitialize) {
     // Verify that events are received
     constexpr useconds_t kCollectionTimeoutUs = 1000 * 1000;  // 1s
     constexpr int32_t kNumEvents = 1;
-    ASSERT_GE(collectEvents(kCollectionTimeoutUs, kNumEvents, getEnvironment()).size(), kNumEvents);
+    ASSERT_GE(getEnvironment()->collectEvents(kCollectionTimeoutUs, kNumEvents).size(), kNumEvents);
 
     // Clear the active sensor handles so they are not disabled during TearDown
     auto handles = mSensorHandles;
     mSensorHandles.clear();
-    getEnvironment()->HidlTearDown();
-    getEnvironment()->HidlSetUp();
+    getEnvironment()->TearDown();
+    getEnvironment()->SetUp();
     if (HasFatalFailure()) {
         return;  // Exit early if resetting the environment failed
     }
 
     // Verify no events are received until sensors are re-activated
-    ASSERT_EQ(collectEvents(kCollectionTimeoutUs, kNumEvents, getEnvironment()).size(), 0);
+    ASSERT_EQ(getEnvironment()->collectEvents(kCollectionTimeoutUs, kNumEvents).size(), 0);
     activateAllSensors(true);
-    ASSERT_GE(collectEvents(kCollectionTimeoutUs, kNumEvents, getEnvironment()).size(), kNumEvents);
+    ASSERT_GE(getEnvironment()->collectEvents(kCollectionTimeoutUs, kNumEvents).size(), kNumEvents);
 
     // Disable sensors
     activateAllSensors(false);

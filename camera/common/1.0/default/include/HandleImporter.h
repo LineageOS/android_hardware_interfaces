@@ -61,6 +61,11 @@ public:
 
     int unlock(buffer_handle_t& buf); // returns release fence
 
+    // Query Gralloc4 metadata
+    bool isSmpte2086Present(const buffer_handle_t& buf);
+    bool isSmpte2094_10Present(const buffer_handle_t& buf);
+    bool isSmpte2094_40Present(const buffer_handle_t& buf);
+
 private:
     void initializeLocked();
     void cleanup();
