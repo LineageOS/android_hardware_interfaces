@@ -286,6 +286,9 @@ struct TunerTestingConfigAidlReader1_0 {
                     }
                     case FrontendTypeEnum::ISDBS:
                         type = FrontendType::ISDBS;
+                        frontendMap[id].settings.set<
+                            FrontendSettings::Tag::isdbs>(
+                                readIsdbsFrontendSettings(feConfig));
                         break;
                     case FrontendTypeEnum::ISDBS3:
                         type = FrontendType::ISDBS3;
@@ -695,23 +698,49 @@ struct TunerTestingConfigAidlReader1_0 {
     }
 
     static FrontendAtscSettings readAtscFrontendSettings(Frontend& feConfig) {
-        ALOGW("[ConfigReader] fe type is atsc");
-        FrontendAtscSettings atscSettings{
-                .frequency = (int64_t)feConfig.getFrequency(),
-        };
-        if (feConfig.hasEndFrequency()) {
-            atscSettings.endFrequency = (int64_t)feConfig.getEndFrequency();
-        }
-        if (!feConfig.hasAtscFrontendSettings_optional()) {
-            ALOGW("[ConfigReader] no more atsc settings");
-            return atscSettings;
-        }
-        auto atsc = feConfig.getFirstAtscFrontendSettings_optional();
-        atscSettings.inversion = static_cast<FrontendSpectralInversion>(
-            atsc->getInversion());
-        atscSettings.modulation = static_cast<FrontendAtscModulation>(
-            atsc->getModulation());
+      ALOGW("[ConfigReader] fe type is atsc");
+      FrontendAtscSettings atscSettings{
+          .frequency = (int64_t) feConfig.getFrequency(),
+      };
+      if (feConfig.hasEndFrequency()) {
+        atscSettings.endFrequency = (int64_t) feConfig.getEndFrequency();
+      }
+      if (!feConfig.hasAtscFrontendSettings_optional()) {
+        ALOGW("[ConfigReader] no more atsc settings");
         return atscSettings;
+      }
+      auto atsc = feConfig.getFirstAtscFrontendSettings_optional();
+      atscSettings.inversion = static_cast<FrontendSpectralInversion>(
+          atsc->getInversion());
+      atscSettings.modulation = static_cast<FrontendAtscModulation>(
+          atsc->getModulation());
+      return atscSettings;
+    }
+
+    static FrontendIsdbsSettings readIsdbsFrontendSettings(Frontend &feConfig) {
+      ALOGW("[ConfigReader] fe type is isdbs");
+      FrontendIsdbsSettings isdbsSettings{
+              .frequency = (int64_t)feConfig.getFrequency()
+      };
+      if (feConfig.hasEndFrequency()) {
+            isdbsSettings.endFrequency = (int64_t)feConfig.getEndFrequency();
+      }
+      if (!feConfig.hasIsdbsFrontendSettings_optional()) {
+            ALOGW("[ConfigReader] no more isdbs settings");
+            return isdbsSettings;
+      }
+      auto isdbs = feConfig.getFirstIsdbsFrontendSettings_optional();
+      isdbsSettings.streamId = (int32_t)isdbs->getStreamId();
+      isdbsSettings.symbolRate = (int32_t)isdbs->getSymbolRate();
+      isdbsSettings.modulation = static_cast<FrontendIsdbsModulation>(
+          isdbs->getModulation());
+      isdbsSettings.coderate = static_cast<FrontendIsdbsCoderate>(
+          isdbs->getCoderate());
+      isdbsSettings.rolloff = static_cast<FrontendIsdbsRolloff>(
+          isdbs->getRolloff());
+      isdbsSettings.streamIdType = static_cast<FrontendIsdbsStreamIdType>(
+          isdbs->getStreamIdType());
+      return isdbsSettings;
     }
 
     static bool readFilterTypeAndSettings(Filter filterConfig, DemuxFilterType& type,
