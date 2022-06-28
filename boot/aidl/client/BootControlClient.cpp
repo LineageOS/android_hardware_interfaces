@@ -327,9 +327,14 @@ std::unique_ptr<BootControlClient> BootControlClient::WaitForService() {
     const auto instance_name =
             std::string(::aidl::android::hardware::boot::IBootControl::descriptor) + "/default";
 
-    if (auto module = ::aidl::android::hardware::boot::IBootControl::fromBinder(
+    if (AServiceManager_isDeclared(instance_name.c_str())) {
+        auto module = ::aidl::android::hardware::boot::IBootControl::fromBinder(
                 ndk::SpAIBinder(AServiceManager_waitForService(instance_name.c_str())));
-        module != nullptr) {
+        if (module == nullptr) {
+            LOG(ERROR) << "AIDL " << instance_name
+                       << " is declared but waitForService returned nullptr.";
+            return nullptr;
+        }
         LOG(INFO) << "Using AIDL version of IBootControl";
         return std::make_unique<BootControlClientAidl>(module);
     }
