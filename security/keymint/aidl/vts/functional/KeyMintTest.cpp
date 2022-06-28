@@ -613,7 +613,7 @@ bool matching_rp_instance(const string& km_name,
 class NewKeyGenerationTest : public KeyMintAidlTestBase {
   protected:
     void CheckBaseParams(const vector<KeyCharacteristics>& keyCharacteristics) {
-        AuthorizationSet auths = CheckCommonParams(keyCharacteristics);
+        AuthorizationSet auths = CheckCommonParams(keyCharacteristics, KeyOrigin::GENERATED);
         EXPECT_TRUE(auths.Contains(TAG_PURPOSE, KeyPurpose::SIGN));
 
         // Check that some unexpected tags/values are NOT present.
@@ -622,20 +622,21 @@ class NewKeyGenerationTest : public KeyMintAidlTestBase {
     }
 
     void CheckSymmetricParams(const vector<KeyCharacteristics>& keyCharacteristics) {
-        AuthorizationSet auths = CheckCommonParams(keyCharacteristics);
+        AuthorizationSet auths = CheckCommonParams(keyCharacteristics, KeyOrigin::GENERATED);
         EXPECT_TRUE(auths.Contains(TAG_PURPOSE, KeyPurpose::ENCRYPT));
         EXPECT_TRUE(auths.Contains(TAG_PURPOSE, KeyPurpose::DECRYPT));
 
         EXPECT_FALSE(auths.Contains(TAG_PURPOSE, KeyPurpose::SIGN));
     }
 
-    AuthorizationSet CheckCommonParams(const vector<KeyCharacteristics>& keyCharacteristics) {
+    AuthorizationSet CheckCommonParams(const vector<KeyCharacteristics>& keyCharacteristics,
+                                       const KeyOrigin expectedKeyOrigin) {
         // TODO(swillden): Distinguish which params should be in which auth list.
         AuthorizationSet auths;
         for (auto& entry : keyCharacteristics) {
             auths.push_back(AuthorizationSet(entry.authorizations));
         }
-        EXPECT_TRUE(auths.Contains(TAG_ORIGIN, KeyOrigin::GENERATED));
+        EXPECT_TRUE(auths.Contains(TAG_ORIGIN, expectedKeyOrigin));
 
         // Verify that App data, ROT and auth timeout are NOT included.
         EXPECT_FALSE(auths.Contains(TAG_ROOT_OF_TRUST));
@@ -3801,7 +3802,7 @@ typedef KeyMintAidlTestBase ExportKeyTest;
 // TODO(seleneh) add ExportKey to GenerateKey
 // check result
 
-class ImportKeyTest : public KeyMintAidlTestBase {
+class ImportKeyTest : public NewKeyGenerationTest {
   public:
     template <TagType tag_type, Tag tag, typename ValueT>
     void CheckCryptoParam(TypedTag<tag_type, tag> ttag, ValueT expected) {
@@ -4509,6 +4510,65 @@ TEST_P(ImportKeyTest, HmacKeySuccess) {
     string message = "Hello World!";
     string signature = MacMessage(message, Digest::SHA_2_256, 256);
     VerifyMessage(message, signature, AuthorizationSetBuilder().Digest(Digest::SHA_2_256));
+}
+
+/*
+ * ImportKeyTest.GetKeyCharacteristics
+ *
+ * Verifies that imported keys have the correct characteristics.
+ */
+TEST_P(ImportKeyTest, GetKeyCharacteristics) {
+    vector<uint8_t> key_blob;
+    vector<KeyCharacteristics> key_characteristics;
+    auto base_builder = AuthorizationSetBuilder()
+                                .Padding(PaddingMode::NONE)
+                                .Authorization(TAG_NO_AUTH_REQUIRED)
+                                .SetDefaultValidity();
+    vector<Algorithm> algorithms = {Algorithm::RSA, Algorithm::EC, Algorithm::HMAC, Algorithm::AES,
+                                    Algorithm::TRIPLE_DES};
+    ErrorCode result;
+    string symKey = hex2str("a49d7564199e97cb529d2c9d97bf2f98");                   // 128 bits
+    string tdesKey = hex2str("a49d7564199e97cb529d2c9d97bf2f98d35edf57ba1f7358");  // 192 bits
+    for (auto alg : algorithms) {
+        SCOPED_TRACE(testing::Message() << "Algorithm-" << alg);
+        AuthorizationSetBuilder builder(base_builder);
+        switch (alg) {
+            case Algorithm::RSA:
+                builder.RsaSigningKey(2048, 65537).Digest(Digest::NONE);
+
+                result = ImportKey(builder, KeyFormat::PKCS8, rsa_2048_key, &key_blob,
+                                   &key_characteristics);
+                break;
+            case Algorithm::EC:
+                builder.EcdsaSigningKey(EcCurve::P_256).Digest(Digest::NONE);
+                result = ImportKey(builder, KeyFormat::PKCS8, ec_256_key, &key_blob,
+                                   &key_characteristics);
+                break;
+            case Algorithm::HMAC:
+                builder.HmacKey(128)
+                        .Digest(Digest::SHA_2_256)
+                        .Authorization(TAG_MIN_MAC_LENGTH, 128);
+                result =
+                        ImportKey(builder, KeyFormat::RAW, symKey, &key_blob, &key_characteristics);
+                break;
+            case Algorithm::AES:
+                builder.AesEncryptionKey(128).BlockMode(BlockMode::ECB);
+                result =
+                        ImportKey(builder, KeyFormat::RAW, symKey, &key_blob, &key_characteristics);
+                break;
+            case Algorithm::TRIPLE_DES:
+                builder.TripleDesEncryptionKey(168).BlockMode(BlockMode::ECB);
+                result = ImportKey(builder, KeyFormat::RAW, tdesKey, &key_blob,
+                                   &key_characteristics);
+                break;
+            default:
+                ADD_FAILURE() << "Invalid Algorithm " << uint32_t(alg);
+                continue;
+        }
+        ASSERT_EQ(ErrorCode::OK, result);
+        CheckCharacteristics(key_blob, key_characteristics);
+        CheckCommonParams(key_characteristics, KeyOrigin::IMPORTED);
+    }
 }
 
 INSTANTIATE_KEYMINT_AIDL_TEST(ImportKeyTest);
