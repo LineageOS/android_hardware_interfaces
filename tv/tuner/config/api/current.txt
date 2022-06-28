@@ -1,6 +1,14 @@
 // Signature format: 2.0
 package android.media.tuner.testing.configuration.V1_0 {
 
+  public class AtscFrontendSettings {
+    ctor public AtscFrontendSettings();
+    method @Nullable public java.math.BigInteger getInversion();
+    method @Nullable public java.math.BigInteger getModulation();
+    method public void setInversion(@Nullable java.math.BigInteger);
+    method public void setModulation(@Nullable java.math.BigInteger);
+  }
+
   public class AvFilterSettings {
     ctor public AvFilterSettings();
     method @Nullable public short getAudioStreamType_optional();
@@ -310,6 +318,7 @@ package android.media.tuner.testing.configuration.V1_0 {
 
   public class Frontend {
     ctor public Frontend();
+    method @Nullable public android.media.tuner.testing.configuration.V1_0.AtscFrontendSettings getAtscFrontendSettings_optional();
     method @Nullable public java.math.BigInteger getConnectToCicamId();
     method @Nullable public android.media.tuner.testing.configuration.V1_0.DvbsFrontendSettings getDvbsFrontendSettings_optional();
     method @Nullable public android.media.tuner.testing.configuration.V1_0.DvbtFrontendSettings getDvbtFrontendSettings_optional();
@@ -319,6 +328,7 @@ package android.media.tuner.testing.configuration.V1_0 {
     method @Nullable public boolean getIsSoftwareFrontend();
     method @Nullable public java.math.BigInteger getRemoveOutputPid();
     method @Nullable public android.media.tuner.testing.configuration.V1_0.FrontendTypeEnum getType();
+    method public void setAtscFrontendSettings_optional(@Nullable android.media.tuner.testing.configuration.V1_0.AtscFrontendSettings);
     method public void setConnectToCicamId(@Nullable java.math.BigInteger);
     method public void setDvbsFrontendSettings_optional(@Nullable android.media.tuner.testing.configuration.V1_0.DvbsFrontendSettings);
     method public void setDvbtFrontendSettings_optional(@Nullable android.media.tuner.testing.configuration.V1_0.DvbtFrontendSettings);

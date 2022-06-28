@@ -263,6 +263,9 @@ struct TunerTestingConfigAidlReader1_0 {
                         break;
                     case FrontendTypeEnum::ATSC:
                         type = FrontendType::ATSC;
+                        frontendMap[id].settings.set<
+                            FrontendSettings::Tag::atsc>(
+                                readAtscFrontendSettings(feConfig));
                         break;
                     case FrontendTypeEnum::ATSC3:
                         type = FrontendType::ATSC3;
@@ -689,6 +692,26 @@ struct TunerTestingConfigAidlReader1_0 {
             dvbsSettings.isDiseqcRxMessage = dvbs->getIsDiseqcRxMessage();
         }
         return dvbsSettings;
+    }
+
+    static FrontendAtscSettings readAtscFrontendSettings(Frontend& feConfig) {
+        ALOGW("[ConfigReader] fe type is atsc");
+        FrontendAtscSettings atscSettings{
+                .frequency = (int64_t)feConfig.getFrequency(),
+        };
+        if (feConfig.hasEndFrequency()) {
+            atscSettings.endFrequency = (int64_t)feConfig.getEndFrequency();
+        }
+        if (!feConfig.hasAtscFrontendSettings_optional()) {
+            ALOGW("[ConfigReader] no more atsc settings");
+            return atscSettings;
+        }
+        auto atsc = feConfig.getFirstAtscFrontendSettings_optional();
+        atscSettings.inversion = static_cast<FrontendSpectralInversion>(
+            atsc->getInversion());
+        atscSettings.modulation = static_cast<FrontendAtscModulation>(
+            atsc->getModulation());
+        return atscSettings;
     }
 
     static bool readFilterTypeAndSettings(Filter filterConfig, DemuxFilterType& type,
