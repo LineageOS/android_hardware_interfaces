@@ -326,6 +326,7 @@ package android.media.tuner.testing.configuration.V1_0 {
     method @Nullable public java.math.BigInteger getFrequency();
     method @Nullable public String getId();
     method @Nullable public boolean getIsSoftwareFrontend();
+    method @Nullable public android.media.tuner.testing.configuration.V1_0.IsdbsFrontendSettings getIsdbsFrontendSettings_optional();
     method @Nullable public java.math.BigInteger getRemoveOutputPid();
     method @Nullable public android.media.tuner.testing.configuration.V1_0.FrontendTypeEnum getType();
     method public void setAtscFrontendSettings_optional(@Nullable android.media.tuner.testing.configuration.V1_0.AtscFrontendSettings);
@@ -336,6 +337,7 @@ package android.media.tuner.testing.configuration.V1_0 {
     method public void setFrequency(@Nullable java.math.BigInteger);
     method public void setId(@Nullable String);
     method public void setIsSoftwareFrontend(@Nullable boolean);
+    method public void setIsdbsFrontendSettings_optional(@Nullable android.media.tuner.testing.configuration.V1_0.IsdbsFrontendSettings);
     method public void setRemoveOutputPid(@Nullable java.math.BigInteger);
     method public void setType(@Nullable android.media.tuner.testing.configuration.V1_0.FrontendTypeEnum);
   }
@@ -430,6 +432,22 @@ package android.media.tuner.testing.configuration.V1_0 {
     method public void setIpCid(@Nullable java.math.BigInteger);
     method public void setSrcIpAddress(@Nullable android.media.tuner.testing.configuration.V1_0.IpAddress);
     method public void setSrcPort(@Nullable long);
+  }
+
+  public class IsdbsFrontendSettings {
+    ctor public IsdbsFrontendSettings();
+    method @Nullable public java.math.BigInteger getCoderate();
+    method @Nullable public java.math.BigInteger getModulation();
+    method @Nullable public java.math.BigInteger getRolloff();
+    method @Nullable public java.math.BigInteger getStreamId();
+    method @Nullable public java.math.BigInteger getStreamIdType();
+    method @Nullable public java.math.BigInteger getSymbolRate();
+    method public void setCoderate(@Nullable java.math.BigInteger);
+    method public void setModulation(@Nullable java.math.BigInteger);
+    method public void setRolloff(@Nullable java.math.BigInteger);
+    method public void setStreamId(@Nullable java.math.BigInteger);
+    method public void setStreamIdType(@Nullable java.math.BigInteger);
+    method public void setSymbolRate(@Nullable java.math.BigInteger);
   }
 
   public class Lnb {
