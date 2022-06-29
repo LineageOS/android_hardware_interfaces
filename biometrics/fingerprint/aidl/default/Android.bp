@@ -28,7 +28,7 @@ cc_binary {
         "android.hardware.biometrics.common.thread",
         "android.hardware.biometrics.common.util",
     ],
-    static_libs: ["android.hardware.biometrics.fingerprint.VirtualProps"],
+    static_libs: ["libandroid.hardware.biometrics.fingerprint.VirtualProps"],
 }
 
 cc_test {
@@ -43,7 +43,7 @@ cc_test {
         "libbinder_ndk",
     ],
     static_libs: [
-        "android.hardware.biometrics.fingerprint.VirtualProps",
+        "libandroid.hardware.biometrics.fingerprint.VirtualProps",
         "android.hardware.biometrics.fingerprint-V2-ndk",
         "android.hardware.biometrics.common-V2-ndk",
         "android.hardware.keymaster-V3-ndk",
