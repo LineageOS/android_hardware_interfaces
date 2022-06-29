@@ -29,6 +29,7 @@
         <option name="cleanup" value="true" />
         <option name="push" value="VtsHalAudioV7_0TargetTest->/data/local/tmp/VtsHalAudioV7_0TargetTest" />
         <option name="push" value="audio_policy_configuration_V7_0.xsd->/data/local/tmp/audio_policy_configuration_V7_0.xsd" />
+        <option name="push" value="sine882hz3s.mp3->/data/local/tmp/sine882hz3s.mp3" />
     </target_preparer>
 
     <test class="com.android.tradefed.testtype.GTest" >
