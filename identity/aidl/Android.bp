@@ -26,9 +26,36 @@ aidl_interface {
             apps_enabled: false,
         },
     },
-    versions: [
-        "1",
-        "2",
-        "3",
+    versions_with_info: [
+        {
+            version: "1",
+            imports: [
+                "android.hardware.keymaster-V3",
+                "android.hardware.security.keymint-V1",
+            ],
+        },
+        {
+            version: "2",
+            imports: [
+                "android.hardware.keymaster-V3",
+                "android.hardware.security.keymint-V1",
+            ],
+        },
+        {
+            version: "3",
+            imports: [
+                "android.hardware.keymaster-V3",
+                "android.hardware.security.keymint-V1",
+            ],
+        },
+        {
+            version: "4",
+            imports: [
+                "android.hardware.keymaster-V3",
+                "android.hardware.security.keymint-V2",
+            ],
+        },
+
     ],
+
 }

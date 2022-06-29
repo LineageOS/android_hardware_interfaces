@@ -264,8 +264,8 @@ Return<void> Tuner::getFrontendInfo(FrontendId frontendId, getFrontendInfo_cb _h
     // assign randomly selected values for testing.
     info = {
             .type = mFrontends[frontendId]->getFrontendType(),
-            .minFrequency = 139,
-            .maxFrequency = 1139,
+            .minFrequency = 139000000,
+            .maxFrequency = 1139000000,
             .minSymbolRate = 45,
             .maxSymbolRate = 1145,
             .acquireRange = 30,

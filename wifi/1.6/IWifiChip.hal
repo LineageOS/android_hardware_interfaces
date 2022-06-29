@@ -1,0 +1,235 @@
+/*
+ * Copyright 2022 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.wifi@1.6;
+
+import @1.0::ChipModeId;
+import @1.0::IWifiIface;
+import @1.0::WifiStatus;
+import @1.5::WifiBand;
+import @1.5::IWifiChip;
+import @1.5::WifiIfaceMode;
+import IWifiRttController;
+
+/**
+ * Interface that represents a chip that must be configured as a single unit.
+ */
+interface IWifiChip extends @1.5::IWifiChip {
+    /**
+     * Usable Wifi channels filter masks.
+     */
+    enum UsableChannelFilter : @1.5::IWifiChip.UsableChannelFilter {
+        /**
+         * Filter Wifi channels that are supported for NAN3.1 Instant communication mode. This
+         * filter should only be applied to NAN interface.
+         * - If 5G is supported default discovery channel 149/44 is considered,
+         * - If 5G is not supported then channel 6 has to be considered.
+         */
+        NAN_INSTANT_MODE = 1 << 2,
+    };
+
+    /**
+     * Create a RTTController instance.
+     *
+     * RTT controller can be either:
+     * a) Bound to a specific iface by passing in the corresponding |IWifiIface|
+     * object in |iface| param, OR
+     * b) Let the implementation decide the iface to use for RTT operations by
+     * passing null in |iface| param.
+     *
+     * @param boundIface HIDL interface object representing the iface if
+     *        the responder must be bound to a specific iface, null otherwise.
+     * @return status WifiStatus of the operation.
+     *         Possible status codes:
+     *         |WifiStatusCode.SUCCESS|,
+     *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|
+     */
+    createRttController_1_6(IWifiIface boundIface)
+        generates (WifiStatus status, IWifiRttController rtt);
+
+    /**
+     * Retrieve list of usable Wifi channels for the specified band &
+     * operational modes.
+     *
+     * The list of usable Wifi channels in a given band depends on factors
+     * like current country code, operational mode (e.g. STA, SAP, WFD-CLI,
+     * WFD-GO, TDLS, NAN) and other restrictons due to DFS, cellular coexistence
+     * and conncurency state of the device.
+     *
+     * @param band |WifiBand| for which list of usable channels is requested.
+     * @param ifaceModeMask Bitmask of the modes represented by |WifiIfaceMode|
+     *        Bitmask respresents all the modes that the caller is interested
+     *        in (e.g. STA, SAP, CLI, GO, TDLS, NAN). E.g. If the caller is
+     *        interested in knowing usable channels for P2P CLI, P2P GO & NAN,
+     *        ifaceModeMask would be set to
+     *        IFACE_MODE_P2P_CLIENT|IFACE_MODE_P2P_GO|IFACE_MODE_NAN.
+     * @param filterMask Bitmask of filters represented by
+     *        |UsableChannelFilter|. Specifies whether driver should filter
+     *        channels based on additional criteria. If no filter is specified
+     *        driver should return usable channels purely based on regulatory
+     *        constraints.
+     * @return status WifiStatus of the operation.
+     *         Possible status codes:
+     *         |WifiStatusCode.SUCCESS|,
+     *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+     *         |WifiStatusCode.ERROR_INVALID_ARGS|,
+     *         |WifiStatusCode.FAILURE_UNKNOWN|
+     * @return channels List of channels represented by |WifiUsableChannel|
+     *         Each entry represents a channel frequency, bandwidth and
+     *         bitmask of modes (e.g. STA, SAP, CLI, GO, TDLS, NAN) that are
+     *         allowed on that channel. E.g. If only STA mode can be supported
+     *         on an indoor channel, only the IFACE_MODE_STA bit would be set
+     *         for that channel. If 5GHz SAP cannot be supported, then none of
+     *         the 5GHz channels will have IFACE_MODE_SOFTAP bit set.
+     *         Note: Bits do not represent concurrency state. Each bit only
+     *         represents whether particular mode is allowed on that channel.
+     */
+    getUsableChannels_1_6(WifiBand band, bitfield<WifiIfaceMode> ifaceModeMask,
+        bitfield<UsableChannelFilter> filterMask)
+        generates (WifiStatus status, vec<WifiUsableChannel> channels);
+
+    /**
+     * Set of interface concurrency types with the maximum number of interfaces that can have
+     * one of the specified concurrency types for a given ChipConcurrencyCombination. See
+     * ChipConcurrencyCombination for examples.
+     */
+    struct ChipConcurrencyCombinationLimit {
+        // Each IfaceConcurrencyType must occur at most once.
+        vec<IfaceConcurrencyType> types;
+        uint32_t maxIfaces;
+    };
+
+    /**
+     * Set of interfaces that can operate concurrently when in a given mode. See
+     * ChipMode below.
+     *
+     * For example:
+     *   [{STA} <= 2]
+     *       At most two STA interfaces are supported
+     *       [], [STA], [STA+STA]
+     *
+     *   [{STA} <= 1, {NAN} <= 1, {AP_BRIDGED} <= 1]
+     *       Any combination of STA, NAN, AP_BRIDGED
+     *       [], [STA], [NAN], [AP_BRIDGED], [STA+NAN], [STA+AP_BRIDGED], [NAN+AP_BRIDGED],
+     *       [STA+NAN+AP_BRIDGED]
+     *
+     *   [{STA} <= 1, {NAN,P2P} <= 1]
+     *       Optionally a STA and either NAN or P2P
+     *       [], [STA], [STA+NAN], [STA+P2P], [NAN], [P2P]
+     *       Not included [NAN+P2P], [STA+NAN+P2P]
+     *
+     *   [{STA} <= 1, {STA,NAN} <= 1]
+     *       Optionally a STA and either a second STA or a NAN
+     *       [], [STA], [STA+NAN], [STA+STA], [NAN]
+     *       Not included [STA+STA+NAN]
+     */
+    struct ChipConcurrencyCombination {
+        vec<ChipConcurrencyCombinationLimit> limits;
+    };
+
+    /**
+     * A mode that the chip can be put in. A mode defines a set of constraints on
+     * the interfaces that can exist while in that mode. Modes define a unit of
+     * configuration where all interfaces must be torn down to switch to a
+     * different mode. Some HALs may only have a single mode, but an example where
+     * multiple modes would be required is if a chip has different firmwares with
+     * different capabilities.
+     *
+     * When in a mode, it must be possible to perform any combination of creating
+     * and removing interfaces as long as at least one of the
+     * ChipConcurrencyCombinations is satisfied. This means that if a chip has two
+     * available combinations, [{STA} <= 1] and [{AP_BRIDGED} <= 1] then it is expected
+     * that exactly one STA type or one AP_BRIDGED type can be created, but it
+     * is not expected that both a STA and AP_BRIDGED type  could be created. If it
+     * was then there would be a single available combination
+     * [{STA} <=1, {AP_BRIDGED} <= 1].
+     *
+     * When switching between two available combinations it is expected that
+     * interfaces only supported by the initial combination must be removed until
+     * the target combination is also satisfied. At that point new interfaces
+     * satisfying only the target combination can be added (meaning the initial
+     * combination limits will no longer satisfied). The addition of these new
+     * interfaces must not impact the existence of interfaces that satisfy both
+     * combinations.
+     *
+     * For example, a chip with available combinations:
+     *     [{STA} <= 2, {NAN} <=1] and [{STA} <=1, {NAN} <= 1, {AP_BRIDGED} <= 1}]
+     * If the chip currently has 3 interfaces STA, STA and NAN and wants to add an
+     * AP_BRIDGED interface in place of one of the STAs then first one of the STA
+     * interfaces must be removed and then the AP interface can be created after
+     * the STA had been torn down. During this process the remaining STA and NAN
+     * interfaces must not be removed/recreated.
+     *
+     * If a chip does not support this kind of reconfiguration in this mode then
+     * the combinations must be separated into two separate modes. Before
+     * switching modes all interfaces must be torn down, the mode switch must be
+     * enacted and when it completes the new interfaces must be brought up.
+     */
+    struct ChipMode {
+        /**
+         * Id that can be used to put the chip in this mode.
+         */
+        ChipModeId id;
+
+        /**
+         * A list of the possible interface concurrency type combinations that the chip can have
+         * while in this mode.
+         */
+        vec<ChipConcurrencyCombination> availableCombinations;
+    };
+
+    /**
+     * Get the set of operation modes that the chip supports.
+     *
+     * @return status WifiStatus of the operation.
+     *         Possible status codes:
+     *         |WifiStatusCode.SUCCESS|,
+     *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|
+     * @return modes List of modes supported by the device.
+     */
+    getAvailableModes_1_6() generates (WifiStatus status, vec<ChipMode> modes);
+
+    /**
+     * Retrieve the list of all the possible radio combinations supported by this
+     * chip.
+     *
+     * @return status WifiStatus of the operation.
+     *         Possible status codes:
+     *         |WifiStatusCode.SUCCESS|,
+     *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|,
+     *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+     *         |WifiStatusCode.FAILURE_UNKNOWN|
+     * @return radioCombinationMatrix
+     *         A list of all the possible radio combinations represented by
+     *         |WifiRadioCombinationMatrix|.
+     *         For Example in case of a chip which has two radios, where one radio is
+     *         capable of 2.4GHz 2X2 only and another radio which is capable of either
+     *         5GHz or 6GHz 2X2, number of possible radio combinations in this case
+     *         are 5 and possible combinations are
+     *         {{{2G 2X2}}, //Standalone 2G
+     *         {{5G 2X2}}, //Standalone 5G
+     *         {{6G 2X2}}, //Standalone 6G
+     *         {{2G 2X2}, {5G 2X2}}, //2G+5G DBS
+     *         {{2G 2X2}, {6G 2X2}}} //2G+6G DBS
+     *         Note: Since this chip doesn’t support 5G+6G simultaneous operation
+     *         as there is only one radio which can support both bands, So it can only
+     *         do MCC 5G+6G. This table should not get populated with possible MCC
+     *         configurations. This is only for simultaneous radio configurations
+     *         (such as standalone, multi band simultaneous or single band simultaneous).
+     */
+    getSupportedRadioCombinationsMatrix()
+        generates (WifiStatus status, WifiRadioCombinationMatrix radioCombinationMatrix);
+};

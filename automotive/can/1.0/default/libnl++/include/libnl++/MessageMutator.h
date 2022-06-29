@@ -53,9 +53,27 @@ class MessageMutator {
      */
     void write(Buffer<nlattr> attr, uint64_t val) const;
 
+    class iterator {
+      public:
+        iterator(const MessageMutator& container, Buffer<nlmsghdr>::iterator current);
+
+        iterator operator++();
+        bool operator==(const iterator& other) const;
+        const MessageMutator operator*() const;
+
+      protected:
+        const MessageMutator& mContainer;
+        Buffer<nlmsghdr>::iterator mCurrent;
+    };
+    iterator begin() const;
+    iterator end() const;
+
   private:
-    const Buffer<nlmsghdr> mConstBuffer;
     nlmsghdr* mMutableBuffer;
+    size_t mTotalLen;
+
+    Buffer<nlmsghdr> constBuffer() const;
+    MessageMutator fragment(Buffer<nlmsghdr> buf) const;
 };
 
 }  // namespace android::nl

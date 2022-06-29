@@ -95,6 +95,15 @@ class Socket {
     bool send(const Buffer<nlmsghdr>& msg, const sockaddr_nl& sa);
 
     /**
+     * Send Netlink message.
+     *
+     * \param msg Message to send.
+     * \param destination Destination PID.
+     * \return true, if succeeded.
+     */
+    bool send(const Buffer<nlmsghdr>& msg, uint32_t destination);
+
+    /**
      * Receive one or multiple Netlink messages.
      *
      * WARNING: the underlying buffer is owned by Socket class and the data is valid until the next
@@ -181,6 +190,22 @@ class Socket {
      * \return A populated pollfd object.
      */
     pollfd preparePoll(short events = 0);
+
+    /**
+     * Join a multicast group.
+     *
+     * \param group Group ID (*not* a bitfield)
+     * \return whether the operation succeeded
+     */
+    bool addMembership(unsigned group);
+
+    /**
+     * Leave a multicast group.
+     *
+     * \param group Group ID (*not* a bitfield)
+     * \return whether the operation succeeded
+     */
+    bool dropMembership(unsigned group);
 
     /**
      * Live iterator continuously receiving messages from Netlink socket.

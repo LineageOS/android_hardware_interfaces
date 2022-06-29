@@ -65,6 +65,11 @@ class PowerStatsAidl : public testing::TestWithParam<std::string> {
     template <typename T, typename S, typename R>
     void testMatching(std::vector<T> const& c1, R T::*f1, std::vector<S> const& c2, R S::*f2);
 
+    bool containsTimedEntity(const std::string& str);
+
+    void excludeTimedEntities(std::vector<PowerEntity>* entities,
+                              std::vector<StateResidencyResult>* results);
+
     std::shared_ptr<IPowerStats> powerstats;
 };
 
@@ -109,6 +114,29 @@ void PowerStatsAidl::testMatching(std::vector<T> const& c1, R T::*f1, std::vecto
     }
 
     EXPECT_EQ(c1fields, c2fields);
+}
+
+bool PowerStatsAidl::containsTimedEntity(const std::string& str) {
+    // TODO(b/229698505): Extend PowerEntityInfo to identify timed power entity
+    return str.find("AoC") != std::string::npos;
+}
+
+void PowerStatsAidl::excludeTimedEntities(std::vector<PowerEntity>* entities,
+                                          std::vector<StateResidencyResult>* results) {
+    for (auto it = entities->begin(); it != entities->end(); it++) {
+        if (containsTimedEntity((*it).name)) {
+            auto entityId = (*it).id;
+            entities->erase(it--);
+
+            // Erase result element matching the entity ID
+            for (auto resultsIt = results->begin(); resultsIt != results->end(); resultsIt++) {
+                if ((*resultsIt).id == entityId) {
+                    results->erase(resultsIt--);
+                    break;
+                }
+            }
+        }
+    }
 }
 
 // Each PowerEntity must have a valid name
@@ -185,19 +213,20 @@ TEST_P(PowerStatsAidl, TestGetStateResidency) {
     ASSERT_OK(powerstats->getStateResidency({}, &results));
 }
 
-// State residency must return all results
-TEST_P(PowerStatsAidl, TestGetStateResidencyAllResults) {
+// State residency must return all results except timed power entities
+TEST_P(PowerStatsAidl, TestGetStateResidencyAllResultsExceptTimedEntities) {
     std::vector<PowerEntity> entities;
     ASSERT_OK(powerstats->getPowerEntityInfo(&entities));
 
     std::vector<StateResidencyResult> results;
     ASSERT_OK(powerstats->getStateResidency({}, &results));
+    excludeTimedEntities(&entities, &results);
 
     testMatching(entities, &PowerEntity::id, results, &StateResidencyResult::id);
 }
 
-// Each result must contain all state residencies
-TEST_P(PowerStatsAidl, TestGetStateResidencyAllStateResidencies) {
+// Each result must contain all state residencies except timed power entities
+TEST_P(PowerStatsAidl, TestGetStateResidencyAllStateResidenciesExceptTimedEntities) {
     std::vector<PowerEntity> entities;
     ASSERT_OK(powerstats->getPowerEntityInfo(&entities));
 
@@ -205,16 +234,18 @@ TEST_P(PowerStatsAidl, TestGetStateResidencyAllStateResidencies) {
     ASSERT_OK(powerstats->getStateResidency({}, &results));
 
     for (auto entity : entities) {
-        auto it = std::find_if(results.begin(), results.end(),
-                               [&entity](const auto& x) { return x.id == entity.id; });
-        ASSERT_NE(it, results.end());
+        if (!containsTimedEntity(entity.name)) {
+            auto it = std::find_if(results.begin(), results.end(),
+                                   [&entity](const auto& x) { return x.id == entity.id; });
+            ASSERT_NE(it, results.end());
 
-        testMatching(entity.states, &State::id, it->stateResidencyData, &StateResidency::id);
+            testMatching(entity.states, &State::id, it->stateResidencyData, &StateResidency::id);
+        }
     }
 }
 
-// State residency must return results for each requested power entity
-TEST_P(PowerStatsAidl, TestGetStateResidencySelectedResults) {
+// State residency must return results for each requested power entity except timed power entities
+TEST_P(PowerStatsAidl, TestGetStateResidencySelectedResultsExceptTimedEntities) {
     std::vector<PowerEntity> entities;
     ASSERT_OK(powerstats->getPowerEntityInfo(&entities));
     if (entities.empty()) {
@@ -223,8 +254,12 @@ TEST_P(PowerStatsAidl, TestGetStateResidencySelectedResults) {
 
     std::vector<PowerEntity> selectedEntities = getRandomSubset(entities);
     std::vector<int32_t> selectedIds;
-    for (auto const& entity : selectedEntities) {
-        selectedIds.push_back(entity.id);
+    for (auto it = selectedEntities.begin(); it != selectedEntities.end(); it++) {
+        if (!containsTimedEntity((*it).name)) {
+            selectedIds.push_back((*it).id);
+        } else {
+            selectedEntities.erase(it--);
+        }
     }
 
     std::vector<StateResidencyResult> selectedResults;

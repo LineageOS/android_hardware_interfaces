@@ -1,0 +1,74 @@
+/*
+ * Copyright 2022 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.wifi@1.6;
+
+import @1.0::CommandIdShort;
+import @1.0::WifiNanStatus;
+import @1.5::IWifiNanIfaceEventCallback;
+
+/**
+ * NAN Response and Asynchronous Event Callbacks.
+ *
+ * References to "NAN Spec" are to the Wi-Fi Alliance "Wi-Fi Neighbor Awareness
+ * Networking (NAN) Technical Specification".
+ */
+interface IWifiNanIfaceEventCallback extends @1.5::IWifiNanIfaceEventCallback {
+    /**
+     * Asynchronous callback indicating a data-path (NDP) setup has been completed: received by
+     * both Initiator and Responder.
+     *
+     * Note: supersedes the @1.0::IWifiNanIfaceEventCallback.eventDataPathConfirm() method which is
+     * deprecated as of HAL version 1.2.
+     *
+     * @param event: NanDataPathConfirmInd containing event details.
+     */
+    oneway eventDataPathConfirm_1_6(NanDataPathConfirmInd event);
+
+    /**
+     * Asynchronous callback indicating a data-path (NDP) schedule has been updated (e.g. channels
+     * have been changed).
+     *
+     * @param event: NanDataPathScheduleUpdateInd containing event details.
+     */
+    oneway eventDataPathScheduleUpdate_1_6(NanDataPathScheduleUpdateInd event);
+
+    /**
+     * Asynchronous callback indicating that a match has occurred: i.e. a service has been
+     * discovered.
+     *
+     * Note: supersedes the @1.0::IWifiNanIfaceEventCallback.eventMatch(NanMatchInd event) method
+     * which is deprecated as of HAL version 1.6.
+     *
+     * @param event: NanMatchInd containing event details.
+     */
+    oneway eventMatch_1_6(NanMatchInd event);
+
+    /**
+     * Asynchronous callback invoked in response to a capability request
+     * |IWifiNanIface.getCapabilitiesRequest|.
+     *
+     * Note: supersedes the @1.5::IWifiNanIfaceEventCallback.notifyCapabilitiesResponse() method
+     * which is deprecated as of HAL version 1.6.
+     *
+     * @param cmdId command Id corresponding to the original request.
+     * @param status WifiNanStatus of the operation. Possible status codes are:
+     *        |NanStatusType.SUCCESS|
+     * @param capabilities Capability data.
+     */
+    oneway notifyCapabilitiesResponse_1_6(CommandIdShort id, WifiNanStatus status,
+        NanCapabilities capabilities);
+};

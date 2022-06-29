@@ -25,6 +25,7 @@ cc_binary {
         "libhidlbase",
         "libhardware",
         "libutils",
+        "android.hardware.biometrics.fingerprint@2.1",
         "android.hardware.biometrics.fingerprint@2.2",
     ],
 

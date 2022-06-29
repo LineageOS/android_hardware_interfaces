@@ -25,7 +25,7 @@ using ::android::hardware::sensors::V1_0::ISensors;
 using ::android::hardware::sensors::V1_0::Result;
 using ::android::hardware::sensors::V1_0::SensorInfo;
 
-void SensorsHidlEnvironmentV1_0::HidlTearDown() {
+void SensorsHidlEnvironmentV1_0::TearDown() {
     mStopThread = true;
     if (mPollThread.joinable()) {
         mPollThread.detach();

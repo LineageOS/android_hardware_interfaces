@@ -34,7 +34,7 @@ namespace android::nl {
  * a single instance can only be used by a single thread - the one owning the underlying buffer).
  */
 template <typename T>
-class Message {
+class Message : public Buffer<nlmsghdr> {
   public:
     /**
      * Validate buffer contents as a message carrying T data and create instance of parsed message.
@@ -51,7 +51,7 @@ class Message {
 
         const auto attributes = buf.data<nlattr>(sizeof(T));
 
-        return Message<T>(nlHeader, dataHeader, attributes);
+        return Message<T>(buf, nlHeader, dataHeader, attributes);
     }
 
     /**
@@ -94,8 +94,9 @@ class Message {
     const T* operator->() const { return &data; }
 
   private:
-    Message(const nlmsghdr& nlHeader, const T& dataHeader, Attributes attributes)
-        : header(nlHeader), data(dataHeader), attributes(attributes) {}
+    Message(Buffer<nlmsghdr> buffer, const nlmsghdr& nlHeader, const T& dataHeader,
+            Attributes attributes)
+        : Buffer<nlmsghdr>(buffer), header(nlHeader), data(dataHeader), attributes(attributes) {}
 };
 
 }  // namespace android::nl

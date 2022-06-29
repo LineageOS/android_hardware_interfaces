@@ -1,0 +1,44 @@
+package {
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "hardware_interfaces_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-Apache-2.0
+    default_applicable_licenses: ["hardware_interfaces_license"],
+}
+
+aidl_interface {
+    name: "android.hardware.soundtrigger3",
+    vendor_available: true,
+    host_supported: true,
+    flags: [
+        "-Werror",
+        "-Weverything",
+        "-Wno-missing-permission-annotation",
+    ],
+    srcs: [
+        "android/hardware/soundtrigger3/ISoundTriggerHw.aidl",
+        "android/hardware/soundtrigger3/ISoundTriggerHwCallback.aidl",
+        "android/hardware/soundtrigger3/ISoundTriggerHwGlobalCallback.aidl",
+    ],
+    stability: "vintf",
+    imports: [
+        "android.media.soundtrigger.types-V1",
+    ],
+    backend: {
+        cpp: {
+            // prefer NDK backend which can be used anywhere
+            enabled: false,
+        },
+        java: {
+            sdk_version: "module_current",
+        },
+    },
+    versions_with_info: [
+        {
+            version: "1",
+            imports: ["android.media.soundtrigger.types-V1"],
+        },
+    ],
+
+}

@@ -4,3 +4,4 @@ service vendor.tuner-hal-1-0 /vendor/bin/hw/android.hardware.tv.tuner@1.0-servic
     group mediadrm drmrpc
     ioprio rt 4
     task_profiles ProcessCapacityHigh
+    onrestart restart media.tuner

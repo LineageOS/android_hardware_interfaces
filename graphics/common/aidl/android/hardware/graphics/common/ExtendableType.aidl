@@ -22,6 +22,7 @@ package android.hardware.graphics.common;
  * proprietary vendor compression strategy. Instead, compression is represented using this
  * ExtendableType that can support standard compression strategies while still allowing
  * every vendor to easily add their own non-standard definitions.
+ * @hide
  */
 @VintfStability
 parcelable ExtendableType {

@@ -375,6 +375,11 @@ TEST_P(StoreHidlTest, ListRoles) {
 }
 
 static int getFirstApiLevel() {
+    int boardApiLevel = android::base::GetIntProperty("ro.board.first_api_level", 0);
+    if (boardApiLevel != 0) {
+        return boardApiLevel;
+    }
+
     return android::base::GetIntProperty("ro.product.first_api_level", __ANDROID_API_T__);
 }
 

@@ -23,6 +23,7 @@ package android.hardware.graphics.common;
  * reasons. However, unlike gralloc1's android_flex_component, this field is NOT a bit field.
  * A plane's components should NOT be expressed by bitwise OR-ing different
  * PlaneLayoutComponentTypes together.
+ * @hide
  */
 @VintfStability
 @Backing(type="long")

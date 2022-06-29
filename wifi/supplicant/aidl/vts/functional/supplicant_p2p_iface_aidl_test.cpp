@@ -34,6 +34,7 @@ using aidl::android::hardware::wifi::supplicant::IfaceType;
 using aidl::android::hardware::wifi::supplicant::ISupplicant;
 using aidl::android::hardware::wifi::supplicant::ISupplicantP2pIface;
 using aidl::android::hardware::wifi::supplicant::MiracastMode;
+using aidl::android::hardware::wifi::supplicant::P2pFrameTypeMask;
 using aidl::android::hardware::wifi::supplicant::P2pGroupCapabilityMask;
 using aidl::android::hardware::wifi::supplicant::P2pProvDiscStatusCode;
 using aidl::android::hardware::wifi::supplicant::P2pStatusCode;
@@ -157,6 +158,21 @@ class SupplicantP2pIfaceCallback : public BnSupplicantP2pIfaceCallback {
     ::ndk::ScopedAStatus onStaDeauthorized(
         const std::vector<uint8_t>& /* srcAddress */,
         const std::vector<uint8_t>& /* p2pDeviceAddress */) override {
+        return ndk::ScopedAStatus::ok();
+    }
+    ::ndk::ScopedAStatus onGroupFrequencyChanged(const std::string& /* groupIfname */,
+                                                 int32_t /* frequency */) override {
+        return ndk::ScopedAStatus::ok();
+    }
+    ::ndk::ScopedAStatus onDeviceFoundWithVendorElements(
+            const std::vector<uint8_t>& /* srcAddress */,
+            const std::vector<uint8_t>& /* p2pDeviceAddress */,
+            const std::vector<uint8_t>& /* primaryDeviceType */,
+            const std::string& /* deviceName */, WpsConfigMethods /* configMethods */,
+            int8_t /* deviceCapabilities */, P2pGroupCapabilityMask /* groupCapabilities */,
+            const std::vector<uint8_t>& /* wfdDeviceInfo */,
+            const std::vector<uint8_t>& /* wfdR2DeviceInfo */,
+            const std::vector<uint8_t>& /* vendorElemBytes */) override {
         return ndk::ScopedAStatus::ok();
     }
 };
@@ -476,6 +492,20 @@ TEST_P(SupplicantP2pIfaceAidlTest, Find) {
 }
 
 /*
+ * FindSocialChannelsOnly
+ */
+TEST_P(SupplicantP2pIfaceAidlTest, FindSocialChannelsOnly) {
+    EXPECT_TRUE(p2p_iface_->findOnSocialChannels(kTestFindTimeout).isOk());
+}
+
+/*
+ * FindSpecificFrequency
+ */
+TEST_P(SupplicantP2pIfaceAidlTest, FindSpecificFrequency) {
+    EXPECT_TRUE(p2p_iface_->findOnSpecificFrequency(2412, kTestFindTimeout).isOk());
+}
+
+/*
  * StopFind
  */
 TEST_P(SupplicantP2pIfaceAidlTest, StopFind) {
@@ -617,6 +647,21 @@ TEST_P(SupplicantP2pIfaceAidlTest, AddAndRemoveUpnpService) {
     // upnpServiceName was already removed.
     EXPECT_FALSE(
         p2p_iface_->removeUpnpService(0 /* version */, upnpServiceName).isOk());
+}
+
+/*
+ * SetVendorElements
+ */
+TEST_P(SupplicantP2pIfaceAidlTest, SetVendorElements) {
+    LOG(INFO) << "SupplicantP2pIfaceAidlTest::SetVendorElements start";
+
+    std::vector<uint8_t> vendorElemBytes;
+    EXPECT_TRUE(
+            p2p_iface_
+                    ->setVendorElements(P2pFrameTypeMask::P2P_FRAME_PROBE_RESP_P2P, vendorElemBytes)
+                    .isOk());
+
+    LOG(INFO) << "SupplicantP2pIfaceAidlTest::SetVendorElements end";
 }
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(SupplicantP2pIfaceAidlTest);

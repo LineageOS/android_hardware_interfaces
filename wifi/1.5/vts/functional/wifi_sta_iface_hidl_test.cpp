@@ -94,6 +94,11 @@ TEST_P(WifiStaIfaceHidlTest, GetLinkLayerStats_1_5) {
     // Retrieve link layer stats.
     const auto& status_and_stats =
         HIDL_INVOKE(wifi_sta_iface_, getLinkLayerStats_1_5);
+
+    if (status_and_stats.first.code == WifiStatusCode::ERROR_NOT_SUPPORTED) {
+        GTEST_SKIP() << "Skipping this test since API is deprecated.";
+    }
+
     EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_stats.first.code);
     EXPECT_GT(status_and_stats.second.timeStampInMs, 0u);
     // Try to create 2nd iface. If yes, it should fill in the duty cycle field.

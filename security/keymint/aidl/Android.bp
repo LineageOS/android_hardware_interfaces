@@ -32,7 +32,18 @@ aidl_interface {
             ],
         },
     },
-    versions: ["1"],
+    versions_with_info: [
+        {
+            version: "1",
+            imports: ["android.hardware.security.secureclock-V1"],
+        },
+        {
+            version: "2",
+            imports: ["android.hardware.security.secureclock-V1"],
+        },
+
+    ],
+
 }
 
 // cc_defaults that includes the latest KeyMint AIDL library.

@@ -23,6 +23,14 @@ package {
     default_applicable_licenses: ["hardware_interfaces_license"],
 }
 
+cc_library_headers {
+    name: "drm_hal_vendor_module_headers",
+    vendor_available: true,
+    export_include_dirs: [
+        "include",
+    ],
+}
+
 cc_library_static {
     name: "libdrmvtshelper",
     defaults: ["VtsHalTargetTestDefaults"],
@@ -36,6 +44,7 @@ cc_library_static {
         "android.hardware.drm@1.0-helper",
     ],
     export_include_dirs: ["include"],
+    export_static_lib_headers: ["android.hardware.drm@1.0-helper"],
 }
 
 cc_library_static {

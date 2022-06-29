@@ -16,14 +16,6 @@
 
 package android.hardware.automotive.audiocontrol;
 
-import android.hardware.automotive.audiocontrol.AudioFocusChange;
-import android.hardware.automotive.audiocontrol.DuckingInfo;
-import android.hardware.automotive.audiocontrol.MutingInfo;
-import android.hardware.automotive.audiocontrol.IFocusListener;
-import android.hardware.automotive.audiocontrol.IAudioGainCallback;
-import android.hardware.automotive.audiocontrol.AudioGainConfigInfo;
-import android.hardware.automotive.audiocontrol.Reasons;
-
 /**
  * Important note on Metadata:
  * Metadata qualifies a playback track for an output stream.
@@ -54,6 +46,13 @@ import android.hardware.automotive.audiocontrol.Reasons;
  * audio_policy_engine_configuration.xml file.
  */
 import android.hardware.audio.common.PlaybackTrackMetadata;
+import android.hardware.automotive.audiocontrol.AudioFocusChange;
+import android.hardware.automotive.audiocontrol.AudioGainConfigInfo;
+import android.hardware.automotive.audiocontrol.DuckingInfo;
+import android.hardware.automotive.audiocontrol.IAudioGainCallback;
+import android.hardware.automotive.audiocontrol.IFocusListener;
+import android.hardware.automotive.audiocontrol.MutingInfo;
+import android.hardware.automotive.audiocontrol.Reasons;
 
 /**
  * Interacts with the car's audio subsystem to manage audio sources and volumes
@@ -90,19 +89,19 @@ interface IAudioControl {
      * @param duckingInfos an array of {@link DuckingInfo} objects for the audio zones where audio
      * focus has changed.
      */
-     oneway void onDevicesToDuckChange(in DuckingInfo[] duckingInfos);
+    oneway void onDevicesToDuckChange(in DuckingInfo[] duckingInfos);
 
-     /**
-      * Notifies HAL of changes in output devices that the HAL should apply muting to.
-      *
-      * This will be called in response to changes in audio mute state for each volume group
-      * and will include a {@link MutingInfo} object per audio zone that experienced a mute state
-      * event.
-      *
-      * @param mutingInfos an array of {@link MutingInfo} objects for the audio zones where audio
-      * mute state has changed.
-      */
-     oneway void onDevicesToMuteChange(in MutingInfo[] mutingInfos);
+    /**
+     * Notifies HAL of changes in output devices that the HAL should apply muting to.
+     *
+     * This will be called in response to changes in audio mute state for each volume group
+     * and will include a {@link MutingInfo} object per audio zone that experienced a mute state
+     * event.
+     *
+     * @param mutingInfos an array of {@link MutingInfo} objects for the audio zones where audio
+     * mute state has changed.
+     */
+    oneway void onDevicesToMuteChange(in MutingInfo[] mutingInfos);
 
     /**
      * Registers focus listener to be used by HAL for requesting and abandoning audio focus.
@@ -153,9 +152,9 @@ interface IAudioControl {
      * @param focusChange the AudioFocusChange that has occurred.
      */
     oneway void onAudioFocusChangeWithMetaData(in PlaybackTrackMetadata playbackMetaData,
-        in int zoneId, in AudioFocusChange focusChange);
+            in int zoneId, in AudioFocusChange focusChange);
 
-     /**
+    /**
      * Notifies HAL of changes in output devices that the HAL should apply gain change to
      * and the reason(s) why
      *
@@ -168,8 +167,8 @@ interface IAudioControl {
      *                {@link android.hardware.automotive.audiocontrol.Reasons} constants.
      *
      * @param gains List of gains the change is intended to.
-      */
-     oneway void setAudioDeviceGainsChanged(in Reasons[] reasons, in AudioGainConfigInfo[] gains);
+     */
+    oneway void setAudioDeviceGainsChanged(in Reasons[] reasons, in AudioGainConfigInfo[] gains);
 
     /**
      * Registers callback to be used by HAL for reporting unexpected gain(s) changed and the

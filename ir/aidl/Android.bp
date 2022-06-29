@@ -33,11 +33,12 @@ aidl_interface {
         java: {
             sdk_version: "module_current",
         },
-        ndk: {
-            vndk: {
-                // TODO(b/206116595) enable this
-                enabled: false,
-            },
-        },
     },
+    versions_with_info: [
+        {
+            version: "1",
+            imports: [],
+        },
+    ],
+
 }
