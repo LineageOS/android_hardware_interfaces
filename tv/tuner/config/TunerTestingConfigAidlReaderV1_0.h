@@ -173,7 +173,7 @@ struct DescramblingHardwareConnections {
     string videoFilterId;
     string descramblerId;
     string dvrSourceId;
-    /* list string of extra filters; */
+    vector<string> extraFilters;
 };
 
 struct LnbLiveHardwareConnections {
@@ -581,6 +581,10 @@ struct TunerTestingConfigAidlReader1_0 {
         } else {
             descrambling.hasFrontendConnection = false;
             descrambling.dvrSourceId = descConfig.getDvrSourceConnection();
+        }
+        if (descConfig.hasOptionalFilters()) {
+            auto optionalFilters = descConfig.getOptionalFilters();
+            descrambling.extraFilters = optionalFilters;
         }
     }
 

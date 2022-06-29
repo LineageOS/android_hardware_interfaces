@@ -167,12 +167,18 @@ inline void initTimeFilterConfig() {
     TunerTestingConfigAidlReader1_0::readTimeFilterConfig1_0(timeFilterMap);
 };
 
+inline void initDescramblerConfig() {
+    // Read customized config
+    TunerTestingConfigAidlReader1_0::readDescramblerConfig1_0(descramblerMap);
+}
+
 /** Read the vendor configurations of which hardware to use for each test cases/data flows */
 inline void connectHardwaresToTestCases() {
     TunerTestingConfigAidlReader1_0::connectLiveBroadcast(live);
     TunerTestingConfigAidlReader1_0::connectScan(scan);
     TunerTestingConfigAidlReader1_0::connectDvrRecord(record);
     TunerTestingConfigAidlReader1_0::connectTimeFilter(timeFilter);
+    TunerTestingConfigAidlReader1_0::connectDescrambling(descrambling);
 };
 
 inline bool validateConnections() {
@@ -188,6 +194,9 @@ inline bool validateConnections() {
                                             : true;
     feIsValid &= record.support && record.hasFrontendConnection
                          ? frontendMap.find(record.frontendId) != frontendMap.end()
+                         : true;
+    feIsValid &= descrambling.support && descrambling.hasFrontendConnection
+                         ? frontendMap.find(descrambling.frontendId) != frontendMap.end()
                          : true;
 
     if (!feIsValid) {
@@ -210,6 +219,16 @@ inline bool validateConnections() {
         dvrIsValid &= dvrMap.find(record.dvrRecordId) != dvrMap.end();
     }
 
+    if (descrambling.support) {
+        if (descrambling.hasFrontendConnection) {
+            if (frontendMap[descrambling.frontendId].isSoftwareFe) {
+                dvrIsValid &= dvrMap.find(descrambling.dvrSoftwareFeId) != dvrMap.end();
+            }
+        } else {
+            dvrIsValid &= dvrMap.find(descrambling.dvrSourceId) != dvrMap.end();
+        }
+    }
+
     if (!dvrIsValid) {
         ALOGW("[vts config] dynamic config dvr connection is invalid.");
         return false;
@@ -222,6 +241,15 @@ inline bool validateConnections() {
     filterIsValid &=
             record.support ? filterMap.find(record.recordFilterId) != filterMap.end() : true;
 
+    filterIsValid &= descrambling.support
+                             ? filterMap.find(descrambling.videoFilterId) != filterMap.end() &&
+                                       filterMap.find(descrambling.audioFilterId) != filterMap.end()
+                             : true;
+
+    for (auto& filterId : descrambling.extraFilters) {
+        filterIsValid &= filterMap.find(filterId) != filterMap.end();
+    }
+
     if (!filterIsValid) {
         ALOGW("[vts config] dynamic config filter connection is invalid.");
         return false;
@@ -233,6 +261,15 @@ inline bool validateConnections() {
 
     if (!timeFilterIsValid) {
         ALOGW("[vts config] dynamic config time filter connection is invalid.");
+    }
+
+    bool descramblerIsValid =
+            descrambling.support
+                    ? descramblerMap.find(descrambling.descramblerId) != descramblerMap.end()
+                    : true;
+
+    if (!descramblerIsValid) {
+        ALOGW("[vts config] dynamic config descrambler connection is invalid.");
         return false;
     }
 

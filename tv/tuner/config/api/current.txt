@@ -67,6 +67,7 @@ package android.media.tuner.testing.configuration.V1_0 {
     method @Nullable public String getDvrSourceConnection();
     method @Nullable public String getFrontendConnection();
     method @Nullable public boolean getHasFrontendConnection();
+    method @Nullable public java.util.List<java.lang.String> getOptionalFilters();
     method @Nullable public String getVideoFilterConnection();
     method public void setAudioFilterConnection(@Nullable String);
     method public void setDescramblerConnection(@Nullable String);
@@ -74,6 +75,7 @@ package android.media.tuner.testing.configuration.V1_0 {
     method public void setDvrSourceConnection(@Nullable String);
     method public void setFrontendConnection(@Nullable String);
     method public void setHasFrontendConnection(@Nullable boolean);
+    method public void setOptionalFilters(@Nullable java.util.List<java.lang.String>);
     method public void setVideoFilterConnection(@Nullable String);
   }
 

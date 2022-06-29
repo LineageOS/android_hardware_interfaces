@@ -651,6 +651,7 @@
                     <xs:attribute name="audioFilterConnection" type="filterId" use="required"/>
                     <xs:attribute name="videoFilterConnection" type="filterId" use="required"/>
                     <!-- TODO: b/182519645 allow the users to insert extra filters -->
+                    <xs:element name="optionalFilters" type="filterConnections" minOccurs="0" maxOccurs="1"/>
                     <!-- This DVR is only required when the frontend is using the software input -->
                     <xs:attribute name="dvrSoftwareFeConnection" type="dvrId" use="optional"/>
                     <!-- This Dvr is only required when there's no frontend(sw or hw) connection -->
