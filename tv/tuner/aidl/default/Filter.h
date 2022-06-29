@@ -258,6 +258,10 @@ class Filter : public BnFilter {
     std::mutex mFilterOutputLock;
     std::mutex mRecordFilterOutputLock;
 
+    // handle single Section filter
+    uint32_t mSectionSizeLeft = 0;
+    vector<int8_t> mSectionOutput;
+
     // temp handle single PES filter
     // TODO handle mulptiple Pes filters
     int mPesSizeLeft = 0;
