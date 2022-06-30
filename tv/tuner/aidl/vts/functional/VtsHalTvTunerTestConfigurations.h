@@ -162,11 +162,17 @@ inline void initDvrConfig() {
     TunerTestingConfigAidlReader1_0::readDvrConfig1_0(dvrMap);
 };
 
+inline void initTimeFilterConfig() {
+    // Read customized config
+    TunerTestingConfigAidlReader1_0::readTimeFilterConfig1_0(timeFilterMap);
+};
+
 /** Read the vendor configurations of which hardware to use for each test cases/data flows */
 inline void connectHardwaresToTestCases() {
     TunerTestingConfigAidlReader1_0::connectLiveBroadcast(live);
     TunerTestingConfigAidlReader1_0::connectScan(scan);
     TunerTestingConfigAidlReader1_0::connectDvrRecord(record);
+    TunerTestingConfigAidlReader1_0::connectTimeFilter(timeFilter);
 };
 
 inline bool validateConnections() {
@@ -218,6 +224,15 @@ inline bool validateConnections() {
 
     if (!filterIsValid) {
         ALOGW("[vts config] dynamic config filter connection is invalid.");
+        return false;
+    }
+
+    bool timeFilterIsValid =
+            timeFilter.support ? timeFilterMap.find(timeFilter.timeFilterId) != timeFilterMap.end()
+                               : true;
+
+    if (!timeFilterIsValid) {
+        ALOGW("[vts config] dynamic config time filter connection is invalid.");
         return false;
     }
 

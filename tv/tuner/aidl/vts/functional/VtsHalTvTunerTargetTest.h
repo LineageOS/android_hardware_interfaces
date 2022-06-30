@@ -36,6 +36,7 @@ bool initConfiguration() {
     initFrontendConfig();
     initFilterConfig();
     initDvrConfig();
+    initTimeFilterConfig();
     connectHardwaresToTestCases();
     if (!validateConnections()) {
         ALOGW("[vts] failed to validate connections.");
