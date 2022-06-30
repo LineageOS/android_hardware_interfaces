@@ -894,14 +894,6 @@ const std::vector<ConfigDeclaration> kVehicleProperties = {
 
         {.config =
                  {
-                         .prop = toInt(VehicleProperty::FOG_LIGHTS_STATE),
-                         .access = VehiclePropertyAccess::READ,
-                         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-                 },
-         .initialValue = {.int32Values = {LIGHT_STATE_ON}}},
-
-        {.config =
-                 {
                          .prop = toInt(VehicleProperty::FRONT_FOG_LIGHTS_STATE),
                          .access = VehiclePropertyAccess::READ,
                          .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
