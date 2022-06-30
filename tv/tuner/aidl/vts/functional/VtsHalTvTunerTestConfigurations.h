@@ -172,6 +172,16 @@ inline void initDescramblerConfig() {
     TunerTestingConfigAidlReader1_0::readDescramblerConfig1_0(descramblerMap);
 }
 
+inline void initLnbConfig() {
+    // Read customized config
+    TunerTestingConfigAidlReader1_0::readLnbConfig1_0(lnbMap);
+};
+
+inline void initDiseqcMsgsConfig() {
+    // Read customized config
+    TunerTestingConfigAidlReader1_0::readDiseqcMessages(diseqcMsgMap);
+};
+
 /** Read the vendor configurations of which hardware to use for each test cases/data flows */
 inline void connectHardwaresToTestCases() {
     TunerTestingConfigAidlReader1_0::connectLiveBroadcast(live);
@@ -179,6 +189,8 @@ inline void connectHardwaresToTestCases() {
     TunerTestingConfigAidlReader1_0::connectDvrRecord(record);
     TunerTestingConfigAidlReader1_0::connectTimeFilter(timeFilter);
     TunerTestingConfigAidlReader1_0::connectDescrambling(descrambling);
+    TunerTestingConfigAidlReader1_0::connectLnbLive(lnbLive);
+    TunerTestingConfigAidlReader1_0::connectLnbRecord(lnbRecord);
 };
 
 inline bool validateConnections() {
@@ -198,6 +210,11 @@ inline bool validateConnections() {
     feIsValid &= descrambling.support && descrambling.hasFrontendConnection
                          ? frontendMap.find(descrambling.frontendId) != frontendMap.end()
                          : true;
+
+    feIsValid &= lnbLive.support ? frontendMap.find(lnbLive.frontendId) != frontendMap.end() : true;
+
+    feIsValid &=
+            lnbRecord.support ? frontendMap.find(lnbRecord.frontendId) != frontendMap.end() : true;
 
     if (!feIsValid) {
         ALOGW("[vts config] dynamic config fe connection is invalid.");
@@ -229,6 +246,8 @@ inline bool validateConnections() {
         }
     }
 
+    dvrIsValid &= lnbRecord.support ? dvrMap.find(lnbRecord.dvrRecordId) != dvrMap.end() : true;
+
     if (!dvrIsValid) {
         ALOGW("[vts config] dynamic config dvr connection is invalid.");
         return false;
@@ -247,6 +266,22 @@ inline bool validateConnections() {
                              : true;
 
     for (auto& filterId : descrambling.extraFilters) {
+        filterIsValid &= filterMap.find(filterId) != filterMap.end();
+    }
+
+    filterIsValid &= lnbLive.support
+                             ? filterMap.find(lnbLive.audioFilterId) != filterMap.end() &&
+                                       filterMap.find(lnbLive.videoFilterId) != filterMap.end()
+                             : true;
+
+    filterIsValid &=
+            lnbRecord.support ? filterMap.find(lnbRecord.recordFilterId) != filterMap.end() : true;
+
+    for (auto& filterId : lnbRecord.extraFilters) {
+        filterIsValid &= filterMap.find(filterId) != filterMap.end();
+    }
+
+    for (auto& filterId : lnbLive.extraFilters) {
         filterIsValid &= filterMap.find(filterId) != filterMap.end();
     }
 
@@ -270,6 +305,30 @@ inline bool validateConnections() {
 
     if (!descramblerIsValid) {
         ALOGW("[vts config] dynamic config descrambler connection is invalid.");
+        return false;
+    }
+
+    bool lnbIsValid = lnbLive.support ? lnbMap.find(lnbLive.lnbId) != lnbMap.end() : true;
+
+    lnbIsValid &= lnbRecord.support ? lnbMap.find(lnbRecord.lnbId) != lnbMap.end() : true;
+
+    if (!lnbIsValid) {
+        ALOGW("[vts config] dynamic config lnb connection is invalid.");
+        return false;
+    }
+
+    bool diseqcMsgsIsValid = true;
+
+    for (auto& msg : lnbRecord.diseqcMsgs) {
+        diseqcMsgsIsValid &= diseqcMsgMap.find(msg) != diseqcMsgMap.end();
+    }
+
+    for (auto& msg : lnbLive.diseqcMsgs) {
+        diseqcMsgsIsValid &= diseqcMsgMap.find(msg) != diseqcMsgMap.end();
+    }
+
+    if (!diseqcMsgsIsValid) {
+        ALOGW("[vts config] dynamic config diseqcMsg is invalid.");
         return false;
     }
 

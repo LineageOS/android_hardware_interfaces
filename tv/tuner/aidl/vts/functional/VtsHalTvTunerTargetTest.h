@@ -38,6 +38,8 @@ bool initConfiguration() {
     initDvrConfig();
     initTimeFilterConfig();
     initDescramblerConfig();
+    initLnbConfig();
+    initDiseqcMsgsConfig();
     connectHardwaresToTestCases();
     if (!validateConnections()) {
         ALOGW("[vts] failed to validate connections.");

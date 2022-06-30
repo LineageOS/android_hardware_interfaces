@@ -183,7 +183,7 @@ struct LnbLiveHardwareConnections {
     string videoFilterId;
     string lnbId;
     vector<string> diseqcMsgs;
-    /* list string of extra filters; */
+    vector<string> extraFilters;
 };
 
 struct LnbRecordHardwareConnections {
@@ -193,7 +193,7 @@ struct LnbRecordHardwareConnections {
     string recordFilterId;
     string lnbId;
     vector<string> diseqcMsgs;
-    /* list string of extra filters; */
+    vector<string> extraFilters;
 };
 
 struct TimeFilterHardwareConnections {
@@ -606,6 +606,10 @@ struct TunerTestingConfigAidlReader1_0 {
                 lnbLive.diseqcMsgs.push_back(msgName);
             }
         }
+        if (lnbLiveConfig.hasOptionalFilters()) {
+            auto optionalFilters = lnbLiveConfig.getOptionalFilters();
+            lnbLive.extraFilters = optionalFilters;
+        }
     }
 
     static void connectLnbRecord(LnbRecordHardwareConnections& lnbRecord) {
@@ -625,6 +629,10 @@ struct TunerTestingConfigAidlReader1_0 {
             for (auto msgName : lnbRecordConfig.getDiseqcMsgSender()) {
                 lnbRecord.diseqcMsgs.push_back(msgName);
             }
+        }
+        if (lnbRecordConfig.hasOptionalFilters()) {
+            auto optionalFilters = lnbRecordConfig.getOptionalFilters();
+            lnbRecord.extraFilters = optionalFilters;
         }
     }
 

@@ -688,7 +688,7 @@
                     <xs:attribute name="videoFilterConnection" type="filterId" use="required"/>
                     <xs:attribute name="lnbConnection" type="lnbId" use="required"/>
                     <xs:attribute name="diseqcMsgSender" type="diseqcMsgSender" use="optional"/>
-                    <!-- TODO: b/182519645 allow the users to insert extra filters -->
+                    <xs:element name="optionalFilters" type="filterConnections" minOccurs="0" maxOccurs="1"/>
                 </xs:complexType>
             </xs:element>
             <xs:element name="lnbRecord" minOccurs="0" maxOccurs="1">
@@ -698,6 +698,7 @@
                     <xs:attribute name="dvrRecordConnection" type="dvrId" use="required"/>
                     <xs:attribute name="lnbConnection" type="lnbId" use="required"/>
                     <xs:attribute name="diseqcMsgSender" type="diseqcMsgSender" use="optional"/>
+                    <xs:element name="optionalFilters" type="filterConnections" minOccurs="0" maxOccurs="1"/>
                 </xs:complexType>
             </xs:element>
             <xs:element name="timeFilter" minOccurs="0" maxOccurs="1">
