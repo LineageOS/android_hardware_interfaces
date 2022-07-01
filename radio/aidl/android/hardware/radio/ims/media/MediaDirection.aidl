@@ -19,12 +19,17 @@ package android.hardware.radio.ims.media;
 @VintfStability
 @Backing(type="int")
 enum MediaDirection {
-    /** No media flow in either direction */
+    /**
+     * No RTP/RTCP flow in either direction. The implementation
+     * may release the audio resource. Eg. SRVCC.
+     */
     NO_FLOW = 0,
-    /** Device sends outgoing media and drops incoming media */
-    TRANSMIT_ONLY = 1,
-    /** Device receives the downlink media and does not transmit any uplink media */
+    /** Device sends outgoing RTP and drops incoming RTP */
+    SEND_ONLY = 1,
+    /** Device receives the downlink RTP and does not transmit any uplink RTP */
     RECEIVE_ONLY = 2,
-    /** Device sends and receive media in both directions */
-    TRANSMIT_RECEIVE = 3,
+    /** Device sends and receive RTP in both directions */
+    SEND_RECEIVE = 3,
+    /** No RTP flow however RTCP continues to flow. Eg. HOLD */
+    INACTIVE = 4,
 }
