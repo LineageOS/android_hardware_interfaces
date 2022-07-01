@@ -92,6 +92,21 @@
         <xs:attribute name="coderate" type="xs:nonNegativeInteger" use="required"/>
         <xs:attribute name="rolloff" type="xs:nonNegativeInteger" use="required"/>
     </xs:complexType>
+    <xs:complexType name="isdbtFrontendSettings">
+        <xs:attribute name="serviceAreaId" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="inversion" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="bandwidth" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="mode" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="guardInterval" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="partialReceptionFlag" type="xs:nonNegativeInteger" use="required"/>
+        <xs:element name="FrontendIsdbtLayerSettings" type="FrontendIsdbtLayerSettings"/>
+    </xs:complexType>
+    <xs:complexType name="FrontendIsdbtLayerSettings">
+        <xs:attribute name="modulation" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="coderate" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="timeInterleave" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="numOfSegment" type="xs:nonNegativeInteger" use="required"/>
+    </xs:complexType>
 
     <xs:complexType name="frontend">
         <xs:annotation>
@@ -128,9 +143,9 @@
             <xs:element name="dvbsFrontendSettings" type="dvbsFrontendSettings"/>
             <xs:element name="dvbtFrontendSettings" type="dvbtFrontendSettings"/>
             <xs:element name="isdbsFrontendSettings" type="isdbsFrontendSettings"/>
-            <!--xs:element name="isdbs3" type="isdbs3Settings"/>
-            <xs:element name="isdbt" type="isdbtSettings"/>
-            <xs:element name="dtmb" type="dtmbSettings"/-->
+            <!--xs:element name="isdbs3" type="isdbs3Settings"/-->
+            <xs:element name="isdbtFrontendSettings" type="isdbtFrontendSettings"/>
+            <!--xs:element name="dtmb" type="dtmbSettings"/-->
         </xs:choice>
         <xs:attribute name="id" type="frontendId" use="required"/>
         <xs:attribute name="type" type="frontendTypeEnum" use="required"/>
