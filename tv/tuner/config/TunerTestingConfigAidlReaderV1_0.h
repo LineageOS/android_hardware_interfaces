@@ -146,12 +146,13 @@ struct ScanHardwareConnections {
 
 struct DvrPlaybackHardwareConnections {
     bool support;
+    bool hasExtraFilters = false;
     string frontendId;
     string dvrId;
     string audioFilterId;
     string videoFilterId;
     string sectionFilterId;
-    /* list string of extra filters; */
+    vector<string> extraFilters;
 };
 
 struct DvrRecordHardwareConnections {
@@ -173,7 +174,7 @@ struct DescramblingHardwareConnections {
     string videoFilterId;
     string descramblerId;
     string dvrSourceId;
-    /* list string of extra filters; */
+    vector<string> extraFilters;
 };
 
 struct LnbLiveHardwareConnections {
@@ -183,7 +184,7 @@ struct LnbLiveHardwareConnections {
     string videoFilterId;
     string lnbId;
     vector<string> diseqcMsgs;
-    /* list string of extra filters; */
+    vector<string> extraFilters;
 };
 
 struct LnbRecordHardwareConnections {
@@ -193,7 +194,7 @@ struct LnbRecordHardwareConnections {
     string recordFilterId;
     string lnbId;
     vector<string> diseqcMsgs;
-    /* list string of extra filters; */
+    vector<string> extraFilters;
 };
 
 struct TimeFilterHardwareConnections {
@@ -534,6 +535,13 @@ struct TunerTestingConfigAidlReader1_0 {
         } else {
             playback.sectionFilterId = emptyHardwareId;
         }
+        if (playbackConfig.hasOptionalFilters() && !playback.hasExtraFilters) {
+            auto optionalFilters = playbackConfig.getFirstOptionalFilters()->getOptionalFilter();
+            for (size_t i = 0; i < optionalFilters.size(); ++i) {
+                playback.extraFilters.push_back(optionalFilters[i].getFilterId());
+            }
+            playback.hasExtraFilters = true;
+        }
     }
 
     static void connectDvrRecord(DvrRecordHardwareConnections& record) {
@@ -583,6 +591,10 @@ struct TunerTestingConfigAidlReader1_0 {
             descrambling.hasFrontendConnection = false;
             descrambling.dvrSourceId = descConfig.getDvrSourceConnection();
         }
+        if (descConfig.hasOptionalFilters()) {
+            auto optionalFilters = descConfig.getOptionalFilters();
+            descrambling.extraFilters = optionalFilters;
+        }
     }
 
     static void connectLnbLive(LnbLiveHardwareConnections& lnbLive) {
@@ -603,6 +615,10 @@ struct TunerTestingConfigAidlReader1_0 {
                 lnbLive.diseqcMsgs.push_back(msgName);
             }
         }
+        if (lnbLiveConfig.hasOptionalFilters()) {
+            auto optionalFilters = lnbLiveConfig.getOptionalFilters();
+            lnbLive.extraFilters = optionalFilters;
+        }
     }
 
     static void connectLnbRecord(LnbRecordHardwareConnections& lnbRecord) {
@@ -622,6 +638,10 @@ struct TunerTestingConfigAidlReader1_0 {
             for (auto msgName : lnbRecordConfig.getDiseqcMsgSender()) {
                 lnbRecord.diseqcMsgs.push_back(msgName);
             }
+        }
+        if (lnbRecordConfig.hasOptionalFilters()) {
+            auto optionalFilters = lnbRecordConfig.getOptionalFilters();
+            lnbRecord.extraFilters = optionalFilters;
         }
     }
 
