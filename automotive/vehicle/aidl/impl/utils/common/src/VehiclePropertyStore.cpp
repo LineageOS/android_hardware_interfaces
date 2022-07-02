@@ -106,7 +106,8 @@ void VehiclePropertyStore::registerProperty(const VehiclePropConfig& config,
 }
 
 VhalResult<void> VehiclePropertyStore::writeValue(VehiclePropValuePool::RecyclableType propValue,
-                                                  bool updateStatus) {
+                                                  bool updateStatus,
+                                                  VehiclePropertyStore::EventMode eventMode) {
     std::scoped_lock<std::mutex> g(mLock);
 
     int32_t propId = propValue->prop;
@@ -145,7 +146,12 @@ VhalResult<void> VehiclePropertyStore::writeValue(VehiclePropValuePool::Recyclab
     }
 
     record->values[recId] = std::move(propValue);
-    if (valueUpdated && mOnValueChangeCallback != nullptr) {
+
+    if (eventMode == EventMode::NEVER) {
+        return {};
+    }
+
+    if ((eventMode == EventMode::ALWAYS || valueUpdated) && mOnValueChangeCallback != nullptr) {
         mOnValueChangeCallback(*(record->values[recId]));
     }
     return {};
