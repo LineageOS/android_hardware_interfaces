@@ -448,6 +448,67 @@ TEST_F(VehiclePropertyStoreTest, testPropertyChangeCallbackNoUpdate) {
     ASSERT_EQ(updatedValue.prop, INVALID_PROP_ID);
 }
 
+TEST_F(VehiclePropertyStoreTest, testPropertyChangeCallbackNoUpdateForTimestampChange) {
+    VehiclePropValue updatedValue{
+            .prop = INVALID_PROP_ID,
+    };
+    VehiclePropValue fuelCapacity = {
+            .prop = toInt(VehicleProperty::INFO_FUEL_CAPACITY),
+            .value = {.floatValues = {1.0}},
+    };
+    ASSERT_RESULT_OK(mStore->writeValue(mValuePool->obtain(fuelCapacity)));
+
+    mStore->setOnValueChangeCallback(
+            [&updatedValue](const VehiclePropValue& value) { updatedValue = value; });
+
+    // Write the same value with different timestamp should succeed but should not trigger callback.
+    fuelCapacity.timestamp = 1;
+    ASSERT_RESULT_OK(mStore->writeValue(mValuePool->obtain(fuelCapacity)));
+
+    ASSERT_EQ(updatedValue.prop, INVALID_PROP_ID);
+}
+
+TEST_F(VehiclePropertyStoreTest, testPropertyChangeCallbackForceUpdate) {
+    VehiclePropValue updatedValue{
+            .prop = INVALID_PROP_ID,
+    };
+    VehiclePropValue fuelCapacity = {
+            .prop = toInt(VehicleProperty::INFO_FUEL_CAPACITY),
+            .value = {.floatValues = {1.0}},
+    };
+    ASSERT_RESULT_OK(mStore->writeValue(mValuePool->obtain(fuelCapacity)));
+
+    mStore->setOnValueChangeCallback(
+            [&updatedValue](const VehiclePropValue& value) { updatedValue = value; });
+
+    fuelCapacity.timestamp = 1;
+    ASSERT_RESULT_OK(mStore->writeValue(mValuePool->obtain(fuelCapacity), /*updateStatus=*/false,
+                                        VehiclePropertyStore::EventMode::ALWAYS));
+
+    ASSERT_EQ(updatedValue, fuelCapacity);
+}
+
+TEST_F(VehiclePropertyStoreTest, testPropertyChangeCallbackForceNoUpdate) {
+    VehiclePropValue updatedValue{
+            .prop = INVALID_PROP_ID,
+    };
+    VehiclePropValue fuelCapacity = {
+            .prop = toInt(VehicleProperty::INFO_FUEL_CAPACITY),
+            .value = {.floatValues = {1.0}},
+    };
+    ASSERT_RESULT_OK(mStore->writeValue(mValuePool->obtain(fuelCapacity)));
+
+    mStore->setOnValueChangeCallback(
+            [&updatedValue](const VehiclePropValue& value) { updatedValue = value; });
+    fuelCapacity.value.floatValues[0] = 2.0;
+    fuelCapacity.timestamp = 1;
+
+    ASSERT_RESULT_OK(mStore->writeValue(mValuePool->obtain(fuelCapacity), /*updateStatus=*/false,
+                                        VehiclePropertyStore::EventMode::NEVER));
+
+    ASSERT_EQ(updatedValue.prop, INVALID_PROP_ID);
+}
+
 }  // namespace vehicle
 }  // namespace automotive
 }  // namespace hardware
