@@ -123,10 +123,10 @@ class DefaultVehicleHal final : public aidl::android::hardware::automotive::vehi
         std::shared_ptr<PendingRequestPool> mPendingRequestPool;
     };
 
-    // A wrapper for binder operations to enable stubbing for test.
-    class IBinder {
+    // A wrapper for binder lifecycle operations to enable stubbing for test.
+    class BinderLifecycleInterface {
       public:
-        virtual ~IBinder() = default;
+        virtual ~BinderLifecycleInterface() = default;
 
         virtual binder_status_t linkToDeath(AIBinder* binder, AIBinder_DeathRecipient* recipient,
                                             void* cookie) = 0;
@@ -134,8 +134,8 @@ class DefaultVehicleHal final : public aidl::android::hardware::automotive::vehi
         virtual bool isAlive(const AIBinder* binder) = 0;
     };
 
-    // A real implementation for IBinder.
-    class AIBinderImpl final : public IBinder {
+    // A real implementation for BinderLifecycleInterface.
+    class BinderLifecycleHandler final : public BinderLifecycleInterface {
       public:
         binder_status_t linkToDeath(AIBinder* binder, AIBinder_DeathRecipient* recipient,
                                     void* cookie) override;
@@ -154,7 +154,7 @@ class DefaultVehicleHal final : public aidl::android::hardware::automotive::vehi
     // BinderDiedUnlinkedEvent represents either an onBinderDied or an onBinderUnlinked event.
     struct BinderDiedUnlinkedEvent {
         // true for onBinderDied, false for onBinderUnlinked.
-        bool onBinderDied;
+        bool forOnBinderDied;
         const AIBinder* clientId;
     };
 
@@ -186,8 +186,8 @@ class DefaultVehicleHal final : public aidl::android::hardware::automotive::vehi
             GUARDED_BY(mLock);
     // SubscriptionClients is thread-safe.
     std::shared_ptr<SubscriptionClients> mSubscriptionClients;
-    // mBinderImpl is only going to be changed in test.
-    std::unique_ptr<IBinder> mBinderImpl;
+    // mBinderLifecycleHandler is only going to be changed in test.
+    std::unique_ptr<BinderLifecycleInterface> mBinderLifecycleHandler;
 
     // Only initialized once.
     std::shared_ptr<std::function<void()>> mRecurrentAction;
@@ -263,7 +263,7 @@ class DefaultVehicleHal final : public aidl::android::hardware::automotive::vehi
     void setTimeout(int64_t timeoutInNano);
 
     // Test-only
-    void setBinderImpl(std::unique_ptr<IBinder> impl);
+    void setBinderLifecycleHandler(std::unique_ptr<BinderLifecycleInterface> impl);
 };
 
 }  // namespace vehicle
