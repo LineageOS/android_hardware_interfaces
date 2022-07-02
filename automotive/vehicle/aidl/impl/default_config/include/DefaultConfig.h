@@ -173,6 +173,17 @@ const std::vector<ConfigDeclaration> kVehicleProperties = {
 
         {.config =
                  {
+                         .prop = toInt(VehicleProperty::EV_BATTERY_DISPLAY_UNITS),
+                         .access = VehiclePropertyAccess::READ_WRITE,
+                         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                         .configArray = {toInt(VehicleUnit::WATT_HOUR),
+                                         toInt(VehicleUnit::AMPERE_HOURS),
+                                         toInt(VehicleUnit::KILOWATT_HOUR)},
+                 },
+         .initialValue = {.int32Values = {toInt(VehicleUnit::KILOWATT_HOUR)}}},
+
+        {.config =
+                 {
                          .prop = toInt(VehicleProperty::SEAT_OCCUPANCY),
                          .access = VehiclePropertyAccess::READ,
                          .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
@@ -457,6 +468,15 @@ const std::vector<ConfigDeclaration> kVehicleProperties = {
                          .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
                  },
          .initialValue = {.int32Values = {0}}},
+
+        {.config =
+                 {
+                         .prop = toInt(VehicleProperty::FUEL_VOLUME_DISPLAY_UNITS),
+                         .access = VehiclePropertyAccess::READ_WRITE,
+                         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                         .configArray = {(int)VehicleUnit::LITER, (int)VehicleUnit::US_GALLON},
+                 },
+         .initialValue = {.int32Values = {(int)VehicleUnit::LITER}}},
 
         {.config =
                  {
