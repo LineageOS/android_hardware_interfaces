@@ -260,7 +260,7 @@ class Filter : public BnFilter {
 
     // temp handle single PES filter
     // TODO handle mulptiple Pes filters
-    int mPesSizeLeft = 0;
+    uint32_t mPesSizeLeft = 0;
     vector<int8_t> mPesOutput;
 
     // A map from data id to ion handle

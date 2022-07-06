@@ -803,7 +803,7 @@ void Filter::updateRecordOutput(vector<int8_t>& data) {
             }
         }
 
-        int endPoint = min(184, mPesSizeLeft);
+        uint32_t endPoint = min(184u, mPesSizeLeft);
         // append data and check size
         vector<int8_t>::const_iterator first = mFilterOutput.begin() + i + 4;
         vector<int8_t>::const_iterator last = mFilterOutput.begin() + i + 4 + endPoint;
@@ -885,7 +885,7 @@ void Filter::updateRecordOutput(vector<int8_t>& data) {
             }
         }
 
-        int endPoint = min(184, mPesSizeLeft);
+        uint32_t endPoint = min(184u, mPesSizeLeft);
         // append data and check size
         vector<int8_t>::const_iterator first = mFilterOutput.begin() + i + 4;
         vector<int8_t>::const_iterator last = mFilterOutput.begin() + i + 4 + endPoint;
