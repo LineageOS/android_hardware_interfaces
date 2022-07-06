@@ -29,6 +29,12 @@ class CustomVibrator : public BnCustomVibrator {
     ndk::ScopedAStatus perform(VendorEffect effect,
                                const std::shared_ptr<IVibratorCallback>& callback,
                                int32_t* _aidl_return) override;
+
+  private:
+    // override for AIBinder_setInheritRt, AIBinder_setMinSchedulerPolicy, or
+    // AIBinder_setRequestingSid calling this in the constructor or elsewhere, the binder would
+    // immediately be destroyed.
+    ndk::SpAIBinder createBinder() override;
 };
 
 }  // namespace aidl::android::hardware::tests::extension::vibrator
