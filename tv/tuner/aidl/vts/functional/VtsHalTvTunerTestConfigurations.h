@@ -182,6 +182,87 @@ inline void initDiseqcMsgsConfig() {
     TunerTestingConfigAidlReader1_0::readDiseqcMessages(diseqcMsgMap);
 };
 
+inline void determineScan() {
+    if (!frontendMap.empty()) {
+        scan.hasFrontendConnection = true;
+        ALOGD("Can support scan");
+    }
+}
+
+inline void determineTimeFilter() {
+    if (!timeFilterMap.empty()) {
+        timeFilter.support = true;
+        ALOGD("Can support time filter");
+    }
+}
+
+inline void determineDvrPlayback() {
+    if (!playbackDvrIds.empty() && !audioFilterIds.empty() && !videoFilterIds.empty()) {
+        playback.support = true;
+        ALOGD("Can support dvr playback");
+    }
+}
+
+inline void determineLnbLive() {
+    if (!audioFilterIds.empty() && !videoFilterIds.empty() && !frontendMap.empty() &&
+        !lnbMap.empty()) {
+        lnbLive.support = true;
+        ALOGD("Can support lnb live");
+    }
+}
+
+inline void determineLnbRecord() {
+    if (!frontendMap.empty() && !recordFilterIds.empty() && !recordDvrIds.empty() &&
+        !lnbMap.empty()) {
+        lnbRecord.support = true;
+        ALOGD("Can support lnb record");
+    }
+}
+
+inline void determineLive() {
+    if (videoFilterIds.empty() || audioFilterIds.empty() || frontendMap.empty()) {
+        return;
+    }
+    if (hasSwFe && !hasHwFe && dvrMap.empty()) {
+        ALOGD("Cannot configure Live. Only software frontends and no dvr connections");
+        return;
+    }
+    ALOGD("Can support live");
+    live.hasFrontendConnection = true;
+}
+
+inline void determineDescrambling() {
+    if (descramblerMap.empty() || audioFilterIds.empty() || videoFilterIds.empty()) {
+        return;
+    }
+    if (frontendMap.empty() && playbackDvrIds.empty()) {
+        ALOGD("Cannot configure descrambling. No frontends or playback dvr's");
+        return;
+    }
+    if (hasSwFe && !hasHwFe && playbackDvrIds.empty()) {
+        ALOGD("cannot configure descrambling. Only SW frontends and no playback dvr's");
+        return;
+    }
+    ALOGD("Can support descrambling");
+    descrambling.support = true;
+}
+
+inline void determineDvrRecord() {
+    if (recordDvrIds.empty() || recordFilterIds.empty()) {
+        return;
+    }
+    if (frontendMap.empty() && playbackDvrIds.empty()) {
+        ALOGD("Cannot support dvr record. No frontends and  no playback dvr's");
+        return;
+    }
+    if (hasSwFe && !hasHwFe && playbackDvrIds.empty()) {
+        ALOGD("Cannot support dvr record. Only SW frontends and no playback dvr's");
+        return;
+    }
+    ALOGD("Can support dvr record.");
+    record.support = true;
+}
+
 /** Read the vendor configurations of which hardware to use for each test cases/data flows */
 inline void connectHardwaresToTestCases() {
     TunerTestingConfigAidlReader1_0::connectLiveBroadcast(live);
@@ -193,6 +274,17 @@ inline void connectHardwaresToTestCases() {
     TunerTestingConfigAidlReader1_0::connectLnbRecord(lnbRecord);
     TunerTestingConfigAidlReader1_0::connectDvrPlayback(playback);
 };
+
+inline void determineDataFlows() {
+    determineScan();
+    determineTimeFilter();
+    determineDvrPlayback();
+    determineLnbLive();
+    determineLnbRecord();
+    determineLive();
+    determineDescrambling();
+    determineDvrRecord();
+}
 
 inline bool validateConnections() {
     if (record.support && !record.hasFrontendConnection &&
