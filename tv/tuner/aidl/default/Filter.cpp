@@ -961,64 +961,24 @@ void Filter::updateRecordOutput(vector<int8_t>& data) {
     return ::ndk::ScopedAStatus::ok();
 }
 
-// Read PSI (Program Specific Information) Sections from TransportStreams
-// as defined in ISO/IEC 13818-1 Section 2.4.4
 bool Filter::writeSectionsAndCreateEvent(vector<int8_t>& data) {
     // TODO check how many sections has been read
     ALOGD("[Filter] section handler");
+    if (!writeDataToFilterMQ(data)) {
+        return false;
+    }
+    DemuxFilterSectionEvent secEvent;
+    secEvent = {
+            // temp dump meta data
+            .tableId = 0,
+            .version = 1,
+            .sectionNum = 1,
+            .dataLength = static_cast<int32_t>(data.size()),
+    };
 
-    // Transport Stream Packets are 188 bytes long, as defined in the
-    // Introduction of ISO/IEC 13818-1
-    for (int i = 0; i < data.size(); i += 188) {
-        if (mSectionSizeLeft == 0) {
-            // Location for sectionSize as defined by Section 2.4.4
-            // Note that the first 4 bytes skipped are the TsHeader
-            mSectionSizeLeft = ((data[i + 5] & 0x0f) << 8) | (data[i + 6] & 0xff);
-            mSectionSizeLeft += 3;
-            if (DEBUG_FILTER) {
-                ALOGD("[Filter] section data length %d", mSectionSizeLeft);
-            }
-        }
-
-        // 184 bytes per packet is derived by subtracting the 4 byte length of
-        // the TsHeader from its 188 byte packet size
-        uint32_t endPoint = min(184u, mSectionSizeLeft);
-        // append data and check size
-        vector<int8_t>::const_iterator first = data.begin() + i + 4;
-        vector<int8_t>::const_iterator last = data.begin() + i + 4 + endPoint;
-        mSectionOutput.insert(mSectionOutput.end(), first, last);
-        // size does not match then continue
-        mSectionSizeLeft -= endPoint;
-        if (DEBUG_FILTER) {
-            ALOGD("[Filter] section data left %d", mSectionSizeLeft);
-        }
-        if (mSectionSizeLeft > 0) {
-            continue;
-        }
-
-        if (!writeDataToFilterMQ(mSectionOutput)) {
-            mSectionOutput.clear();
-            return false;
-        }
-
-        DemuxFilterSectionEvent secEvent;
-        secEvent = {
-                // temp dump meta data
-                .tableId = 0,
-                .version = 1,
-                .sectionNum = 1,
-                .dataLength = static_cast<int32_t>(mSectionOutput.size()),
-        };
-        if (DEBUG_FILTER) {
-            ALOGD("[Filter] assembled section data length %lld", secEvent.dataLength);
-        }
-
-        {
-            std::lock_guard<std::mutex> lock(mFilterEventsLock);
-            mFilterEvents.push_back(
-                    DemuxFilterEvent::make<DemuxFilterEvent::Tag::section>(secEvent));
-        }
-        mSectionOutput.clear();
+    {
+        std::lock_guard<std::mutex> lock(mFilterEventsLock);
+        mFilterEvents.push_back(DemuxFilterEvent::make<DemuxFilterEvent::Tag::section>(secEvent));
     }
 
     return true;
