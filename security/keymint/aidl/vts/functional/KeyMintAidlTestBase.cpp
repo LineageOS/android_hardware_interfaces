@@ -772,6 +772,100 @@ void KeyMintAidlTestBase::CheckAesIncrementalEncryptOperation(BlockMode block_mo
     }
 }
 
+void KeyMintAidlTestBase::AesCheckEncryptOneByteAtATime(const string& key, BlockMode block_mode,
+                                                        PaddingMode padding_mode, const string& iv,
+                                                        const string& plaintext,
+                                                        const string& exp_cipher_text) {
+    bool is_authenticated_cipher = (block_mode == BlockMode::GCM);
+    auto auth_set = AuthorizationSetBuilder()
+                            .Authorization(TAG_NO_AUTH_REQUIRED)
+                            .AesEncryptionKey(key.size() * 8)
+                            .BlockMode(block_mode)
+                            .Padding(padding_mode);
+    if (iv.size() > 0) auth_set.Authorization(TAG_CALLER_NONCE);
+    if (is_authenticated_cipher) auth_set.Authorization(TAG_MIN_MAC_LENGTH, 128);
+    ASSERT_EQ(ErrorCode::OK, ImportKey(auth_set, KeyFormat::RAW, key));
+
+    CheckEncryptOneByteAtATime(block_mode, 16 /*block_size*/, padding_mode, iv, plaintext,
+                               exp_cipher_text);
+}
+
+void KeyMintAidlTestBase::CheckEncryptOneByteAtATime(BlockMode block_mode, const int block_size,
+                                                     PaddingMode padding_mode, const string& iv,
+                                                     const string& plaintext,
+                                                     const string& exp_cipher_text) {
+    bool is_stream_cipher = (block_mode == BlockMode::CTR || block_mode == BlockMode::GCM);
+    bool is_authenticated_cipher = (block_mode == BlockMode::GCM);
+    auto params = AuthorizationSetBuilder().BlockMode(block_mode).Padding(padding_mode);
+    if (iv.size() > 0) params.Authorization(TAG_NONCE, iv.data(), iv.size());
+    if (is_authenticated_cipher) params.Authorization(TAG_MAC_LENGTH, 128);
+
+    AuthorizationSet output_params;
+    EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, params, &output_params));
+
+    string actual_ciphertext;
+    if (is_stream_cipher) {
+        // Assert that a 1 byte of output is produced for 1 byte of input.
+        // Every input byte produces an output byte.
+        for (int plaintext_index = 0; plaintext_index < plaintext.size(); plaintext_index++) {
+            string ciphertext;
+            EXPECT_EQ(ErrorCode::OK, Update(plaintext.substr(plaintext_index, 1), &ciphertext));
+            // Some StrongBox implementations cannot support 1:1 input:output lengths, so
+            // we relax this API restriction for them.
+            if (SecLevel() != SecurityLevel::STRONGBOX) {
+                EXPECT_EQ(1, ciphertext.size()) << "plaintext index: " << plaintext_index;
+            }
+            actual_ciphertext.append(ciphertext);
+        }
+        string ciphertext;
+        EXPECT_EQ(ErrorCode::OK, Finish(&ciphertext));
+        if (SecLevel() != SecurityLevel::STRONGBOX) {
+            string expected_final_output;
+            if (is_authenticated_cipher) {
+                expected_final_output = exp_cipher_text.substr(plaintext.size());
+            }
+            EXPECT_EQ(expected_final_output, ciphertext);
+        }
+        actual_ciphertext.append(ciphertext);
+    } else {
+        // Assert that a block of output is produced once a full block of input is provided.
+        // Every input block produces an output block.
+        bool compare_output = true;
+        string additional_information;
+        int vendor_api_level = property_get_int32("ro.vendor.api_level", 0);
+        if (SecLevel() == SecurityLevel::STRONGBOX) {
+            // This is known to be broken on older vendor implementations.
+            if (vendor_api_level < 33) {
+                compare_output = false;
+            } else {
+                additional_information = " (b/194134359) ";
+            }
+        }
+        for (int plaintext_index = 0; plaintext_index < plaintext.size(); plaintext_index++) {
+            string ciphertext;
+            EXPECT_EQ(ErrorCode::OK, Update(plaintext.substr(plaintext_index, 1), &ciphertext));
+            if (compare_output) {
+                if ((plaintext_index % block_size) == block_size - 1) {
+                    // Update is expected to have output a new block
+                    EXPECT_EQ(block_size, ciphertext.size())
+                            << "plaintext index: " << plaintext_index << additional_information;
+                } else {
+                    // Update is expected to have produced no output
+                    EXPECT_EQ(0, ciphertext.size())
+                            << "plaintext index: " << plaintext_index << additional_information;
+                }
+            }
+            actual_ciphertext.append(ciphertext);
+        }
+        string ciphertext;
+        EXPECT_EQ(ErrorCode::OK, Finish(&ciphertext));
+        actual_ciphertext.append(ciphertext);
+    }
+    // Regardless of how the completed ciphertext got accumulated, it should match the expected
+    // ciphertext.
+    EXPECT_EQ(exp_cipher_text, actual_ciphertext);
+}
+
 void KeyMintAidlTestBase::CheckHmacTestVector(const string& key, const string& message,
                                               Digest digest, const string& expected_mac) {
     SCOPED_TRACE("CheckHmacTestVector");
