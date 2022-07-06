@@ -107,10 +107,9 @@ ScopedAStatus ContextHub::onHostEndpointConnected(const HostEndpointInfo& in_inf
 ScopedAStatus ContextHub::onHostEndpointDisconnected(char16_t in_hostEndpointId) {
     if (mConnectedHostEndpoints.count(in_hostEndpointId) > 0) {
         mConnectedHostEndpoints.erase(in_hostEndpointId);
-        return ndk::ScopedAStatus::ok();
-    } else {
-        return ndk::ScopedAStatus(AStatus_fromExceptionCode(EX_ILLEGAL_ARGUMENT));
     }
+
+    return ndk::ScopedAStatus::ok();
 }
 
 }  // namespace contexthub
