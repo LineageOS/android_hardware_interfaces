@@ -954,6 +954,18 @@ TEST(HidlUtils, ConvertAudioPortConfig) {
     EXPECT_TRUE(audio_port_configs_are_equal(&halConfig, &halConfigBack));
 }
 
+static AudioProfile generateValidAudioProfile() {
+    AudioProfile profile;
+    profile.format = toString(xsd::AudioFormat::AUDIO_FORMAT_PCM_16_BIT);
+    profile.sampleRates.resize(2);
+    profile.sampleRates[0] = 44100;
+    profile.sampleRates[1] = 48000;
+    profile.channelMasks.resize(2);
+    profile.channelMasks[0] = toString(xsd::AudioChannelMask::AUDIO_CHANNEL_OUT_MONO);
+    profile.channelMasks[1] = toString(xsd::AudioChannelMask::AUDIO_CHANNEL_OUT_STEREO);
+    return profile;
+}
+
 TEST(HidlUtils, ConvertInvalidAudioTransports) {
     hidl_vec<AudioTransport> invalid;
     struct audio_port_v7 halInvalid = {};
@@ -973,20 +985,32 @@ TEST(HidlUtils, ConvertInvalidAudioTransports) {
     invalid[0].audioCapability.edid(hidl_vec<uint8_t>(EXTRA_AUDIO_DESCRIPTOR_SIZE + 1));
     invalid[1].encapsulationType = "random string";
     EXPECT_EQ(BAD_VALUE, HidlUtils::audioTransportsToHal(invalid, &halInvalid));
+
+    // The size of audio profile must not be greater than the maximum value.
+    invalid.resize(0);
+    invalid.resize(AUDIO_PORT_MAX_AUDIO_PROFILES + 1);
+    for (size_t i = 0; i < invalid.size(); ++i) {
+        invalid[i].audioCapability.profile(generateValidAudioProfile());
+        invalid[i].encapsulationType =
+                toString(xsd::AudioEncapsulationType::AUDIO_ENCAPSULATION_TYPE_NONE);
+    }
+    EXPECT_EQ(BAD_VALUE, HidlUtils::audioTransportsToHal(invalid, &halInvalid));
+
+    // The size of extra audio descriptors must not be greater than the maximum value.
+    invalid.resize(0);
+    invalid.resize(AUDIO_PORT_MAX_EXTRA_AUDIO_DESCRIPTORS + 1);
+    for (size_t i = 0; i < invalid.size(); ++i) {
+        invalid[i].audioCapability.edid({0x11, 0x06, 0x01});
+        invalid[i].encapsulationType =
+                toString(xsd::AudioEncapsulationType::AUDIO_ENCAPSULATION_TYPE_IEC61937);
+    }
+    EXPECT_EQ(BAD_VALUE, HidlUtils::audioTransportsToHal(invalid, &halInvalid));
 }
 
 TEST(HidlUtils, ConvertAudioTransports) {
     hidl_vec<AudioTransport> transports;
     transports.resize(2);
-    AudioProfile profile;
-    profile.format = toString(xsd::AudioFormat::AUDIO_FORMAT_PCM_16_BIT);
-    profile.sampleRates.resize(2);
-    profile.sampleRates[0] = 44100;
-    profile.sampleRates[1] = 48000;
-    profile.channelMasks.resize(2);
-    profile.channelMasks[0] = toString(xsd::AudioChannelMask::AUDIO_CHANNEL_OUT_MONO);
-    profile.channelMasks[1] = toString(xsd::AudioChannelMask::AUDIO_CHANNEL_OUT_STEREO);
-    transports[0].audioCapability.profile(profile);
+    transports[0].audioCapability.profile(generateValidAudioProfile());
     hidl_vec<uint8_t> shortAudioDescriptor({0x11, 0x06, 0x01});
     transports[0].encapsulationType =
             toString(xsd::AudioEncapsulationType::AUDIO_ENCAPSULATION_TYPE_NONE);
