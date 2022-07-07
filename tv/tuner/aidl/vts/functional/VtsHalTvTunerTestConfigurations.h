@@ -75,6 +75,104 @@ static LnbLiveHardwareConnections lnbLive;
 static LnbRecordHardwareConnections lnbRecord;
 static TimeFilterHardwareConnections timeFilter;
 
+/*
+ * This function takes in a 2d vector of device Id's
+ * The n vectors correlate to the ids for n different devices (eg frontends, filters)
+ * The resultant 2d vector is every combination of id's with 1 id from each vector
+ */
+inline vector<vector<string>> generateIdCombinations(vector<vector<string>>& ids) {
+    vector<vector<string>> combinations;
+
+    // The index of each vector in ids that will be used in the next combination
+    // EG {0, 2} means combo {ids[0][0] ids[1][2]} will be next
+    const int size = static_cast<int>(ids.size());
+    vector<int> indexes_used_in_combination(size, 0);
+
+    // The vector number from ids whose elements we will cycle through to make combinations.
+    // First, start at the right most vector
+    int cycled_vector = size - 1;
+
+    while (cycled_vector >= 0) {
+        // Make a combination (one at a time)
+        vector<string> combo;
+        for (size_t i = 0; i < indexes_used_in_combination.size(); ++i) {
+            const int combo_index = indexes_used_in_combination[i];
+            combo.push_back(ids[i][combo_index]);
+        }
+        combinations.push_back(combo);
+
+        // Find the right most vector that still has space [elements left] to cycle through and
+        // create a combination
+        while (cycled_vector >= 0 &&
+               indexes_used_in_combination[cycled_vector] == ids[cycled_vector].size() - 1) {
+            cycled_vector--;
+        }
+
+        // Use this check to avoid segmentation faults
+        if (cycled_vector >= 0) {
+            // Once found, we have a vector we can cycle through, so increase to its next element
+            indexes_used_in_combination[cycled_vector]++;
+
+            // Reset the other vectors to the right to their first element so we can cycle through
+            // them again with the new element from cycled vector
+            for (size_t i = cycled_vector + 1; i < indexes_used_in_combination.size(); ++i) {
+                indexes_used_in_combination[i] = 0;
+            }
+
+            // all the vectors to the right were reset, so we can cycle through them again
+            // Start at the furthest right vector
+            cycled_vector = size - 1;
+        }
+    }
+
+    return combinations;
+}
+
+/*
+ * index 0 - playback dvr
+ * index 1 - audio filters
+ * index 2 - video filters
+ * index 3 - optional section filters
+ */
+static inline vector<DvrPlaybackHardwareConnections> generatePlaybackCombinations() {
+    vector<DvrPlaybackHardwareConnections> combinations;
+    vector<string> sectionFilterIds_optional = sectionFilterIds;
+    sectionFilterIds_optional.push_back(emptyHardwareId);
+    vector<vector<string>> deviceIds{playbackDvrIds, audioFilterIds, videoFilterIds,
+                                     sectionFilterIds_optional};
+
+    const int dvrIndex = 0;
+    const int audioFilterIndex = 1;
+    const int videoFilterIndex = 2;
+    const int sectionFilterIndex = 3;
+
+    auto idCombinations = generateIdCombinations(deviceIds);
+    for (auto& combo : idCombinations) {
+        DvrPlaybackHardwareConnections mPlayback;
+        mPlayback.dvrId = combo[dvrIndex];
+        mPlayback.audioFilterId = combo[audioFilterIndex];
+        mPlayback.videoFilterId = combo[videoFilterIndex];
+        mPlayback.sectionFilterId = combo[sectionFilterIndex];
+        combinations.push_back(mPlayback);
+    }
+
+    return combinations;
+}
+
+static inline vector<DvrPlaybackHardwareConnections> generatePlaybackConfigs() {
+    vector<DvrPlaybackHardwareConnections> playback_configs;
+    if (configuredPlayback) {
+        ALOGD("Using DVR playback configuration provided.");
+        playback_configs = {playback};
+    } else {
+        ALOGD("Dvr playback not provided. Generating possible combinations. Consider adding it to "
+              "the configuration file.");
+        playback_configs = generatePlaybackCombinations();
+    }
+
+    return playback_configs;
+}
+
 /** Config all the frontends that would be used in the tests */
 inline void initFrontendConfig() {
     // The test will use the internal default fe when default fe is connected to any data flow

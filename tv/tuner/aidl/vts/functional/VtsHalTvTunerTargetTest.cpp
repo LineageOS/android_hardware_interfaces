@@ -839,10 +839,16 @@ TEST_P(TunerFilterAidlTest, FilterDelayHintTest) {
 
 TEST_P(TunerPlaybackAidlTest, PlaybackDataFlowWithTsSectionFilterTest) {
     description("Feed ts data from playback and configure Ts section filter to get output");
-    if (!playback.support || playback.sectionFilterId.compare(emptyHardwareId) == 0) {
+    if (!playback.support) {
         return;
     }
-    playbackSingleFilterTest(filterMap[playback.sectionFilterId], dvrMap[playback.dvrId]);
+    vector<DvrPlaybackHardwareConnections> playback_configs = generatePlaybackConfigs();
+    for (auto& configuration : playback_configs) {
+        if (configuration.sectionFilterId.compare(emptyHardwareId) != 0) {
+            playback = configuration;
+            playbackSingleFilterTest(filterMap[playback.sectionFilterId], dvrMap[playback.dvrId]);
+        }
+    }
 }
 
 TEST_P(TunerPlaybackAidlTest, PlaybackDataFlowWithTsAudioFilterTest) {
@@ -850,7 +856,11 @@ TEST_P(TunerPlaybackAidlTest, PlaybackDataFlowWithTsAudioFilterTest) {
     if (!playback.support) {
         return;
     }
-    playbackSingleFilterTest(filterMap[playback.audioFilterId], dvrMap[playback.dvrId]);
+    vector<DvrPlaybackHardwareConnections> playback_configs = generatePlaybackConfigs();
+    for (auto& configuration : playback_configs) {
+        playback = configuration;
+        playbackSingleFilterTest(filterMap[playback.audioFilterId], dvrMap[playback.dvrId]);
+    }
 }
 
 TEST_P(TunerPlaybackAidlTest, PlaybackDataFlowWithTsVideoFilterTest) {
@@ -858,7 +868,11 @@ TEST_P(TunerPlaybackAidlTest, PlaybackDataFlowWithTsVideoFilterTest) {
     if (!playback.support) {
         return;
     }
-    playbackSingleFilterTest(filterMap[playback.videoFilterId], dvrMap[playback.dvrId]);
+    vector<DvrPlaybackHardwareConnections> playback_configs = generatePlaybackConfigs();
+    for (auto& configuration : playback_configs) {
+        playback = configuration;
+        playbackSingleFilterTest(filterMap[playback.videoFilterId], dvrMap[playback.dvrId]);
+    }
 }
 
 TEST_P(TunerRecordAidlTest, RecordDataFlowWithTsRecordFilterTest) {

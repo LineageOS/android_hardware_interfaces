@@ -83,6 +83,7 @@ static vector<string> recordDvrIds;
 static vector<string> audioFilterIds;
 static vector<string> videoFilterIds;
 static vector<string> recordFilterIds;
+static vector<string> sectionFilterIds;
 
 #define PROVISION_STR                                      \
     "{                                                   " \
@@ -838,6 +839,8 @@ struct TunerTestingConfigAidlReader1_0 {
             videoFilterIds.push_back(filterConfig.getId());
         } else if (subType == FilterSubTypeEnum::RECORD) {
             recordFilterIds.push_back(filterConfig.getId());
+        } else if (subType == FilterSubTypeEnum::SECTION) {
+            sectionFilterIds.push_back(filterConfig.getId());
         }
 
         switch (mainType) {

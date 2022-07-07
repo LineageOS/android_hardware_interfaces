@@ -70,6 +70,7 @@ void clearIds() {
     videoFilterIds.clear();
     playbackDvrIds.clear();
     recordFilterIds.clear();
+    sectionFilterIds.clear();
 }
 
 class TunerLnbAidlTest : public testing::TestWithParam<std::string> {
