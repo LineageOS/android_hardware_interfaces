@@ -623,6 +623,23 @@ TEST_P(AudioEffectHidlTest, GetParameter) {
     EXPECT_TRUE(ret.isOk());
 }
 
+TEST_P(AudioEffectHidlTest, GetParameterInvalidMaxReplySize) {
+    description("Verify that GetParameter caps the maximum reply size");
+    // Use a non-empty parameter to avoid being rejected by any earlier checks.
+    hidl_vec<uint8_t> parameter;
+    parameter.resize(16);
+    // Use very large size to ensure that the service does not crash. Since parameters
+    // are specific to each effect, and some effects may not have parameters at all,
+    // simply checking the return value would not reveal an issue of using an uncapped value.
+    const uint32_t veryLargeReplySize = std::numeric_limits<uint32_t>::max() - 100;
+    Result retval = Result::OK;
+    Return<void> ret =
+            effect->getParameter(parameter, veryLargeReplySize,
+                                 [&](Result r, const hidl_vec<uint8_t>&) { retval = r; });
+    EXPECT_TRUE(ret.isOk());
+    EXPECT_EQ(Result::INVALID_ARGUMENTS, retval);
+}
+
 TEST_P(AudioEffectHidlTest, GetSupportedConfigsForFeature) {
     description("Verify that GetSupportedConfigsForFeature does not crash");
     Return<void> ret = effect->getSupportedConfigsForFeature(
