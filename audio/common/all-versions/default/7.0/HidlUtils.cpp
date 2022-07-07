@@ -894,7 +894,7 @@ status_t HidlUtils::audioTransportsToHal(const hidl_vec<AudioTransport>& transpo
     for (const auto& transport : transports) {
         switch (transport.audioCapability.getDiscriminator()) {
             case AudioTransport::AudioCapability::hidl_discriminator::profile:
-                if (halPort->num_audio_profiles > AUDIO_PORT_MAX_AUDIO_PROFILES) {
+                if (halPort->num_audio_profiles >= AUDIO_PORT_MAX_AUDIO_PROFILES) {
                     ALOGE("%s, too many audio profiles", __func__);
                     result = BAD_VALUE;
                     break;
@@ -910,7 +910,8 @@ status_t HidlUtils::audioTransportsToHal(const hidl_vec<AudioTransport>& transpo
                                 result);
                 break;
             case AudioTransport::AudioCapability::hidl_discriminator::edid:
-                if (halPort->num_extra_audio_descriptors > AUDIO_PORT_MAX_EXTRA_AUDIO_DESCRIPTORS) {
+                if (halPort->num_extra_audio_descriptors >=
+                    AUDIO_PORT_MAX_EXTRA_AUDIO_DESCRIPTORS) {
                     ALOGE("%s, too many extra audio descriptors", __func__);
                     result = BAD_VALUE;
                     break;
