@@ -981,7 +981,7 @@ string KeyMintAidlTestBase::LocalRsaEncryptMessage(const string& message,
 
     // Retrieve relevant tags.
     Digest digest = Digest::NONE;
-    Digest mgf_digest = Digest::NONE;
+    Digest mgf_digest = Digest::SHA1;
     PaddingMode padding = PaddingMode::NONE;
 
     auto digest_tag = params.GetTagValue(TAG_DIGEST);
