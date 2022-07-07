@@ -5169,6 +5169,79 @@ TEST_P(EncryptionOperationsTest, RsaOaepWithMGFDigestSuccess) {
 }
 
 /*
+ * EncryptionOperationsTest.RsaOaepMGFDigestDefaultSuccess
+ *
+ * Verifies that RSA-OAEP decryption operations work when no MGF digest is
+ * specified, defaulting to SHA-1.
+ */
+TEST_P(EncryptionOperationsTest, RsaOaepMGFDigestDefaultSuccess) {
+    size_t key_size = 2048;
+    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                                 .Authorization(TAG_NO_AUTH_REQUIRED)
+                                                 .RsaEncryptionKey(key_size, 65537)
+                                                 .Padding(PaddingMode::RSA_OAEP)
+                                                 .Digest(Digest::SHA_2_256)
+                                                 .SetDefaultValidity()));
+
+    // Do local RSA encryption using the default MGF digest of SHA-1.
+    string message = "Hello";
+    auto params =
+            AuthorizationSetBuilder().Digest(Digest::SHA_2_256).Padding(PaddingMode::RSA_OAEP);
+    string ciphertext = LocalRsaEncryptMessage(message, params);
+    EXPECT_EQ(key_size / 8, ciphertext.size());
+
+    // Do KeyMint RSA decryption also using the default MGF digest of SHA-1.
+    string plaintext = DecryptMessage(ciphertext, params);
+    EXPECT_EQ(message, plaintext) << "RSA-OAEP failed with default digest";
+
+    // Decrypting corrupted ciphertext should fail.
+    size_t offset_to_corrupt = random() % ciphertext.size();
+    char corrupt_byte;
+    do {
+        corrupt_byte = static_cast<char>(random() % 256);
+    } while (corrupt_byte == ciphertext[offset_to_corrupt]);
+    ciphertext[offset_to_corrupt] = corrupt_byte;
+
+    EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, params));
+    string result;
+    EXPECT_EQ(ErrorCode::UNKNOWN_ERROR, Finish(ciphertext, &result));
+    EXPECT_EQ(0U, result.size());
+}
+
+/*
+ * EncryptionOperationsTest.RsaOaepMGFDigestDefaultFail
+ *
+ * Verifies that RSA-OAEP decryption operations fail when no MGF digest is
+ * specified on begin (thus defaulting to SHA-1), but the key characteristics
+ * has an explicit set of values for MGF_DIGEST that do not contain SHA-1.
+ */
+TEST_P(EncryptionOperationsTest, RsaOaepMGFDigestDefaultFail) {
+    size_t key_size = 2048;
+    ASSERT_EQ(ErrorCode::OK,
+              GenerateKey(AuthorizationSetBuilder()
+                                  .Authorization(TAG_NO_AUTH_REQUIRED)
+                                  .Authorization(TAG_RSA_OAEP_MGF_DIGEST, Digest::SHA_2_256)
+                                  .RsaEncryptionKey(key_size, 65537)
+                                  .Padding(PaddingMode::RSA_OAEP)
+                                  .Digest(Digest::SHA_2_256)
+                                  .SetDefaultValidity()));
+
+    // Do local RSA encryption using the default MGF digest of SHA-1.
+    string message = "Hello";
+    auto params =
+            AuthorizationSetBuilder().Digest(Digest::SHA_2_256).Padding(PaddingMode::RSA_OAEP);
+    string ciphertext = LocalRsaEncryptMessage(message, params);
+    EXPECT_EQ(key_size / 8, ciphertext.size());
+
+    // begin() params do not include MGF_DIGEST, so a default of SHA1 is assumed.
+    // Key characteristics *do* include values for MGF_DIGEST, so the SHA1 value
+    // is checked against those values, and found absent.
+    auto result = Begin(KeyPurpose::DECRYPT, params);
+    EXPECT_TRUE(result == ErrorCode::UNSUPPORTED_MGF_DIGEST ||
+                result == ErrorCode::INCOMPATIBLE_MGF_DIGEST);
+}
+
+/*
  * EncryptionOperationsTest.RsaOaepWithMGFIncompatibleDigest
  *
  * Verifies that RSA-OAEP decryption operations fail in the correct way when asked to operate
