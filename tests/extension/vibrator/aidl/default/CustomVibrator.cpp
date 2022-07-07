@@ -57,4 +57,12 @@ ndk::ScopedAStatus CustomVibrator::perform(VendorEffect effect,
     return ndk::ScopedAStatus::ok();
 }
 
+ndk::SpAIBinder CustomVibrator::createBinder() {
+    auto binder = BnCustomVibrator::createBinder();
+    // e.g. AIBinder_setInheritRt(binder.get(), true);
+    // e.g. AIBinder_setMinSchedulerPolicy(binder.get(), SCHED_NORMAL, 20);
+    // e.g. AIBinder_setRequestingSid(binder.get(), true);
+    return binder;
+}
+
 }  // namespace aidl::android::hardware::tests::extension::vibrator
