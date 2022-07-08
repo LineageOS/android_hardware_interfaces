@@ -494,23 +494,32 @@ TEST_P(TunerLnbAidlTest, SendDiseqcMessageToLnb) {
     if (!lnbLive.support) {
         return;
     }
-    if (lnbMap[lnbLive.lnbId].name.compare(emptyHardwareId) == 0) {
-        vector<int32_t> ids;
-        ASSERT_TRUE(mLnbTests.getLnbIds(ids));
-        ASSERT_TRUE(ids.size() > 0);
-        ASSERT_TRUE(mLnbTests.openLnbById(ids[0]));
-    } else {
-        int32_t id;
-        ASSERT_TRUE(mLnbTests.openLnbByName(lnbMap[lnbLive.lnbId].name, id));
+    vector<LnbLiveHardwareConnections> lnbLive_configs = generateLnbLiveConfigurations();
+    if (lnbLive_configs.empty()) {
+        ALOGD("No frontends that support satellites.");
+        return;
     }
-    ASSERT_TRUE(mLnbTests.setLnbCallback());
-    ASSERT_TRUE(mLnbTests.setVoltage(lnbMap[lnbLive.lnbId].voltage));
-    ASSERT_TRUE(mLnbTests.setTone(lnbMap[lnbLive.lnbId].tone));
-    ASSERT_TRUE(mLnbTests.setSatellitePosition(lnbMap[lnbLive.lnbId].position));
-    for (auto msgName : lnbLive.diseqcMsgs) {
-        ASSERT_TRUE(mLnbTests.sendDiseqcMessage(diseqcMsgMap[msgName]));
+    for (auto& combination : lnbLive_configs) {
+        lnbLive = combination;
+
+        if (lnbMap[lnbLive.lnbId].name.compare(emptyHardwareId) == 0) {
+            vector<int32_t> ids;
+            ASSERT_TRUE(mLnbTests.getLnbIds(ids));
+            ASSERT_TRUE(ids.size() > 0);
+            ASSERT_TRUE(mLnbTests.openLnbById(ids[0]));
+        } else {
+            int32_t id;
+            ASSERT_TRUE(mLnbTests.openLnbByName(lnbMap[lnbLive.lnbId].name, id));
+        }
+        ASSERT_TRUE(mLnbTests.setLnbCallback());
+        ASSERT_TRUE(mLnbTests.setVoltage(lnbMap[lnbLive.lnbId].voltage));
+        ASSERT_TRUE(mLnbTests.setTone(lnbMap[lnbLive.lnbId].tone));
+        ASSERT_TRUE(mLnbTests.setSatellitePosition(lnbMap[lnbLive.lnbId].position));
+        for (auto msgName : lnbLive.diseqcMsgs) {
+            ASSERT_TRUE(mLnbTests.sendDiseqcMessage(diseqcMsgMap[msgName]));
+        }
+        ASSERT_TRUE(mLnbTests.closeLnb());
     }
-    ASSERT_TRUE(mLnbTests.closeLnb());
 }
 
 TEST_P(TunerDemuxAidlTest, openDemux) {
@@ -1019,8 +1028,16 @@ TEST_P(TunerBroadcastAidlTest, LnbBroadcastDataFlowVideoFilterTest) {
     if (!lnbLive.support) {
         return;
     }
-    broadcastSingleFilterTestWithLnb(filterMap[lnbLive.videoFilterId],
-                                     frontendMap[lnbLive.frontendId], lnbMap[lnbLive.lnbId]);
+    vector<LnbLiveHardwareConnections> lnbLive_configs = generateLnbLiveConfigurations();
+    if (lnbLive_configs.empty()) {
+        ALOGD("No frontends that support satellites.");
+        return;
+    }
+    for (auto& combination : lnbLive_configs) {
+        lnbLive = combination;
+        broadcastSingleFilterTestWithLnb(filterMap[lnbLive.videoFilterId],
+                                         frontendMap[lnbLive.frontendId], lnbMap[lnbLive.lnbId]);
+    }
 }
 
 TEST_P(TunerBroadcastAidlTest, MediaFilterWithSharedMemoryHandle) {

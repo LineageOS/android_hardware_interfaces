@@ -65,6 +65,9 @@ AssertionResult filterDataOutputTestBase(FilterTests& tests) {
 }
 
 void clearIds() {
+    lnbIds.clear();
+    diseqcMsgs.clear();
+    frontendIds.clear();
     recordDvrIds.clear();
     audioFilterIds.clear();
     videoFilterIds.clear();

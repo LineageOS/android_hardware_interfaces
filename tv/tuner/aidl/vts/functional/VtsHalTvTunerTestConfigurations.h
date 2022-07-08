@@ -173,6 +173,55 @@ static inline vector<DvrPlaybackHardwareConnections> generatePlaybackConfigs() {
     return playback_configs;
 }
 
+/*
+ * index 0 - frontends
+ * index 1 - audio filters
+ * index 2 - video filters
+ * index 3 - lnbs
+ */
+static inline vector<LnbLiveHardwareConnections> generateLnbLiveCombinations() {
+    vector<LnbLiveHardwareConnections> combinations;
+    vector<vector<string>> deviceIds{frontendIds, audioFilterIds, videoFilterIds, lnbIds};
+
+    const int frontendIndex = 0;
+    const int audioFilterIndex = 1;
+    const int videoFilterIndex = 2;
+    const int lnbIndex = 3;
+
+    // TODO: Find a better way to vary diseqcMsgs, if at all
+    auto idCombinations = generateIdCombinations(deviceIds);
+    for (auto& combo : idCombinations) {
+        const string feId = combo[frontendIndex];
+        auto type = frontendMap[feId].type;
+        if (type == FrontendType::DVBS || type == FrontendType::ISDBS ||
+            type == FrontendType::ISDBS3) {
+            LnbLiveHardwareConnections mLnbLive;
+            mLnbLive.frontendId = feId;
+            mLnbLive.audioFilterId = combo[audioFilterIndex];
+            mLnbLive.videoFilterId = combo[videoFilterIndex];
+            mLnbLive.lnbId = combo[lnbIndex];
+            mLnbLive.diseqcMsgs = diseqcMsgs;
+            combinations.push_back(mLnbLive);
+        }
+    }
+
+    return combinations;
+}
+
+static inline vector<LnbLiveHardwareConnections> generateLnbLiveConfigurations() {
+    vector<LnbLiveHardwareConnections> lnbLive_configs;
+    if (configuredLnbLive) {
+        ALOGD("Using LnbLive configuration provided.");
+        lnbLive_configs = {lnbLive};
+    } else {
+        ALOGD("LnbLive not provided. Generating possible combinations. Consider adding it to the "
+              "configuration file.");
+        lnbLive_configs = generateLnbLiveCombinations();
+    }
+
+    return lnbLive_configs;
+}
+
 /** Config all the frontends that would be used in the tests */
 inline void initFrontendConfig() {
     // The test will use the internal default fe when default fe is connected to any data flow
@@ -368,8 +417,8 @@ inline void connectHardwaresToTestCases() {
     TunerTestingConfigAidlReader1_0::connectDvrRecord(record);
     TunerTestingConfigAidlReader1_0::connectTimeFilter(timeFilter);
     TunerTestingConfigAidlReader1_0::connectDescrambling(descrambling);
-    TunerTestingConfigAidlReader1_0::connectLnbLive(lnbLive);
     TunerTestingConfigAidlReader1_0::connectLnbRecord(lnbRecord);
+    TunerTestingConfigAidlReader1_0::connectLnbLive(lnbLive);
     TunerTestingConfigAidlReader1_0::connectDvrPlayback(playback);
 };
 
