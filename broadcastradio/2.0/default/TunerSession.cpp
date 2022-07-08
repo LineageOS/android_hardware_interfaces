@@ -241,13 +241,13 @@ Return<Result> TunerSession::startProgramListUpdates(const ProgramFilter& filter
     };
     std::copy_if(list.begin(), list.end(), std::back_inserter(filteredList), filterCb);
 
-    auto task = [this, list]() {
+    auto task = [this, filteredList]() {
         lock_guard<mutex> lk(mMut);
 
         ProgramListChunk chunk = {};
         chunk.purge = true;
         chunk.complete = true;
-        chunk.modified = hidl_vec<ProgramInfo>(list.begin(), list.end());
+        chunk.modified = hidl_vec<ProgramInfo>(filteredList.begin(), filteredList.end());
 
         mCallback->onProgramListUpdated(chunk);
     };
