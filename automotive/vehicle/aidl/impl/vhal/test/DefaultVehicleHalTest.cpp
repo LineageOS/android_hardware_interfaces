@@ -324,9 +324,9 @@ class DefaultVehicleHalTest : public testing::Test {
         mCallbackClient = IVehicleCallback::fromBinder(mBinder);
 
         // Set the linkToDeath to a fake implementation that always returns OK.
-        auto binderImpl = std::make_unique<TestBinderImpl>();
-        mBinderImpl = binderImpl.get();
-        mVhal->setBinderImpl(std::move(binderImpl));
+        auto handler = std::make_unique<TestBinderLifecycleHandler>();
+        mBinderLifecycleHandler = handler.get();
+        mVhal->setBinderLifecycleHandler(std::move(handler));
     }
 
     void TearDown() override {
@@ -370,7 +370,7 @@ class DefaultVehicleHalTest : public testing::Test {
 
     bool hasNoSubscriptions() { return mVhal->mSubscriptionManager->isEmpty(); }
 
-    void setBinderAlive(bool isAlive) { mBinderImpl->setAlive(isAlive); };
+    void setBinderAlive(bool isAlive) { mBinderLifecycleHandler->setAlive(isAlive); };
 
     static Result<void> getValuesTestCases(size_t size, GetValueRequests& requests,
                                            std::vector<GetValueResult>& expectedResults,
@@ -444,7 +444,7 @@ class DefaultVehicleHalTest : public testing::Test {
     }
 
   private:
-    class TestBinderImpl final : public DefaultVehicleHal::IBinder {
+    class TestBinderLifecycleHandler final : public DefaultVehicleHal::BinderLifecycleInterface {
       public:
         binder_status_t linkToDeath(AIBinder*, AIBinder_DeathRecipient*, void*) override {
             if (mIsAlive) {
@@ -468,7 +468,7 @@ class DefaultVehicleHalTest : public testing::Test {
     std::shared_ptr<MockVehicleCallback> mCallback;
     std::shared_ptr<IVehicleCallback> mCallbackClient;
     SpAIBinder mBinder;
-    TestBinderImpl* mBinderImpl;
+    TestBinderLifecycleHandler* mBinderLifecycleHandler;
 };
 
 TEST_F(DefaultVehicleHalTest, testGetAllPropConfigsSmall) {
