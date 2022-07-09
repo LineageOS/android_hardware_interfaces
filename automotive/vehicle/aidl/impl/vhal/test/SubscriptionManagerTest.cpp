@@ -477,16 +477,16 @@ TEST_F(SubscriptionManagerTest, testUnsubscribeOnchange) {
     ASSERT_THAT(clients[getCallbackClient()], ElementsAre(&updatedValues[1]));
 }
 
-TEST_F(SubscriptionManagerTest, testCheckSampleRateValid) {
-    ASSERT_TRUE(SubscriptionManager::checkSampleRate(1.0));
+TEST_F(SubscriptionManagerTest, testCheckSampleRateHzValid) {
+    ASSERT_TRUE(SubscriptionManager::checkSampleRateHz(1.0));
 }
 
-TEST_F(SubscriptionManagerTest, testCheckSampleRateInvalidTooSmall) {
-    ASSERT_FALSE(SubscriptionManager::checkSampleRate(FLT_MIN));
+TEST_F(SubscriptionManagerTest, testCheckSampleRateHzInvalidTooSmall) {
+    ASSERT_FALSE(SubscriptionManager::checkSampleRateHz(FLT_MIN));
 }
 
-TEST_F(SubscriptionManagerTest, testCheckSampleRateInvalidZero) {
-    ASSERT_FALSE(SubscriptionManager::checkSampleRate(0));
+TEST_F(SubscriptionManagerTest, testCheckSampleRateHzInvalidZero) {
+    ASSERT_FALSE(SubscriptionManager::checkSampleRateHz(0));
 }
 
 }  // namespace vehicle
