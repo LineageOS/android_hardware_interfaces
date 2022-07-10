@@ -55,18 +55,17 @@ ndk::ScopedAStatus LeAudioOffloadAudioProvider::startSession(
     const std::shared_ptr<IBluetoothAudioPort>& host_if,
     const AudioConfiguration& audio_config,
     const std::vector<LatencyMode>& latency_modes, DataMQDesc* _aidl_return) {
-  if (audio_config.getTag() != AudioConfiguration::leAudioConfig) {
+  if (session_type_ ==
+      SessionType::LE_AUDIO_BROADCAST_HARDWARE_OFFLOAD_ENCODING_DATAPATH) {
+    if (audio_config.getTag() != AudioConfiguration::leAudioBroadcastConfig) {
+      LOG(WARNING) << __func__ << " - Invalid Audio Configuration="
+                   << audio_config.toString();
+      *_aidl_return = DataMQDesc();
+      return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+    }
+  } else if (audio_config.getTag() != AudioConfiguration::leAudioConfig) {
     LOG(WARNING) << __func__ << " - Invalid Audio Configuration="
                  << audio_config.toString();
-    *_aidl_return = DataMQDesc();
-    return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
-  }
-  const auto& le_audio_config =
-      audio_config.get<AudioConfiguration::leAudioConfig>();
-  if (!BluetoothAudioCodecs::IsOffloadLeAudioConfigurationValid(
-          session_type_, le_audio_config)) {
-    LOG(WARNING) << __func__ << " - Unsupported LC3 Offloaded Configuration="
-                 << le_audio_config.toString();
     *_aidl_return = DataMQDesc();
     return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
   }
