@@ -317,19 +317,6 @@ bool BluetoothAudioCodecs::IsOffloadLc3ConfigurationValid(
   return false;
 }
 
-bool BluetoothAudioCodecs::IsOffloadLeAudioConfigurationValid(
-    const SessionType& session_type, const LeAudioConfiguration&) {
-  if (session_type !=
-          SessionType::LE_AUDIO_HARDWARE_OFFLOAD_ENCODING_DATAPATH &&
-      session_type !=
-          SessionType::LE_AUDIO_HARDWARE_OFFLOAD_DECODING_DATAPATH &&
-      session_type !=
-          SessionType::LE_AUDIO_BROADCAST_HARDWARE_OFFLOAD_ENCODING_DATAPATH) {
-    return false;
-  }
-  return true;
-}
-
 std::vector<PcmCapabilities>
 BluetoothAudioCodecs::GetSoftwarePcmCapabilities() {
   return {kDefaultSoftwarePcmCapabilities};
