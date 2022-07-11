@@ -17,6 +17,7 @@
 #ifndef android_hardware_automotive_vehicle_aidl_impl_default_config_include_DefaultConfig_H_
 #define android_hardware_automotive_vehicle_aidl_impl_default_config_include_DefaultConfig_H_
 
+#include <ConfigDeclaration.h>
 #include <PropertyUtils.h>
 #include <TestPropertyUtils.h>
 #include <VehicleHalTypes.h>
@@ -55,17 +56,6 @@ using ::aidl::android::hardware::automotive::vehicle::VehicleSeatOccupancyState;
 using ::aidl::android::hardware::automotive::vehicle::VehicleTurnSignal;
 using ::aidl::android::hardware::automotive::vehicle::VehicleUnit;
 using ::aidl::android::hardware::automotive::vehicle::VehicleVendorPermission;
-
-struct ConfigDeclaration {
-    VehiclePropConfig config;
-
-    // This value will be used as an initial value for the property. If this field is specified for
-    // property that supports multiple areas then it will be used for all areas unless particular
-    // area is overridden in initialAreaValue field.
-    RawPropValues initialValue;
-    // Use initialAreaValues if it is necessary to specify different values per each area.
-    std::map<int32_t, RawPropValues> initialAreaValues;
-};
 
 const std::vector<ConfigDeclaration> kVehicleProperties = {
         {.config =
@@ -1548,8 +1538,6 @@ const std::vector<ConfigDeclaration> kVehicleProperties = {
 
 // public namespace
 namespace defaultconfig {
-
-typedef defaultconfig_impl::ConfigDeclaration ConfigDeclaration;
 
 inline constexpr const std::vector<ConfigDeclaration>& getDefaultConfigs() {
     return defaultconfig_impl::kVehicleProperties;

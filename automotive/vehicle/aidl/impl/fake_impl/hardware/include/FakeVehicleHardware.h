@@ -153,7 +153,7 @@ class FakeVehicleHardware : public IVehicleHardware {
 
     void init();
     // Stores the initial value to property store.
-    void storePropInitialValue(const defaultconfig::ConfigDeclaration& config);
+    void storePropInitialValue(const ConfigDeclaration& config);
     // The callback that would be called when a vehicle property value change happens.
     void onValueChangeCallback(
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value);
