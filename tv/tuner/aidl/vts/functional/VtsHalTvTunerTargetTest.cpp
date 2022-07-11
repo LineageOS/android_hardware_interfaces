@@ -926,7 +926,11 @@ TEST_P(TunerFrontendAidlTest, AutoScanFrontend) {
     if (!scan.hasFrontendConnection) {
         return;
     }
-    mFrontendTests.scanTest(frontendMap[scan.frontendId], FrontendScanType::SCAN_AUTO);
+    vector<ScanHardwareConnections> scan_configs = generateScanConfigurations();
+    for (auto& configuration : scan_configs) {
+        scan = configuration;
+        mFrontendTests.scanTest(frontendMap[scan.frontendId], FrontendScanType::SCAN_AUTO);
+    }
 }
 
 TEST_P(TunerFrontendAidlTest, BlindScanFrontend) {
@@ -934,7 +938,11 @@ TEST_P(TunerFrontendAidlTest, BlindScanFrontend) {
     if (!scan.hasFrontendConnection) {
         return;
     }
-    mFrontendTests.scanTest(frontendMap[scan.frontendId], FrontendScanType::SCAN_BLIND);
+    vector<ScanHardwareConnections> scan_configs = generateScanConfigurations();
+    for (auto& configuration : scan_configs) {
+        scan = configuration;
+        mFrontendTests.scanTest(frontendMap[scan.frontendId], FrontendScanType::SCAN_BLIND);
+    }
 }
 
 TEST_P(TunerFrontendAidlTest, TuneFrontendWithFrontendSettings) {
@@ -950,7 +958,11 @@ TEST_P(TunerFrontendAidlTest, BlindScanFrontendWithEndFrequency) {
     if (!scan.hasFrontendConnection) {
         return;
     }
-    mFrontendTests.scanTest(frontendMap[scan.frontendId], FrontendScanType::SCAN_BLIND);
+    vector<ScanHardwareConnections> scan_configs = generateScanConfigurations();
+    for (auto& configuration : scan_configs) {
+        scan = configuration;
+        mFrontendTests.scanTest(frontendMap[scan.frontendId], FrontendScanType::SCAN_BLIND);
+    }
 }
 
 TEST_P(TunerFrontendAidlTest, LinkToCiCam) {

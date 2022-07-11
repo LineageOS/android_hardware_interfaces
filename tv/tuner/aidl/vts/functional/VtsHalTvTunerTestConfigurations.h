@@ -222,6 +222,32 @@ static inline vector<LnbLiveHardwareConnections> generateLnbLiveConfigurations()
     return lnbLive_configs;
 }
 
+static inline vector<ScanHardwareConnections> generateScanCombinations() {
+    vector<ScanHardwareConnections> combinations;
+
+    for (auto& id : frontendIds) {
+        ScanHardwareConnections mScan;
+        mScan.frontendId = id;
+        combinations.push_back(mScan);
+    }
+
+    return combinations;
+}
+
+static inline vector<ScanHardwareConnections> generateScanConfigurations() {
+    vector<ScanHardwareConnections> scan_configs;
+    if (configuredScan) {
+        ALOGD("Using scan configuration provided.");
+        scan_configs = {scan};
+    } else {
+        ALOGD("Scan not provided. Generating possible combinations. Consider adding it to "
+              "the configuration file.");
+        scan_configs = generateScanCombinations();
+    }
+
+    return scan_configs;
+}
+
 /** Config all the frontends that would be used in the tests */
 inline void initFrontendConfig() {
     // The test will use the internal default fe when default fe is connected to any data flow
@@ -417,8 +443,8 @@ inline void connectHardwaresToTestCases() {
     TunerTestingConfigAidlReader1_0::connectDvrRecord(record);
     TunerTestingConfigAidlReader1_0::connectTimeFilter(timeFilter);
     TunerTestingConfigAidlReader1_0::connectDescrambling(descrambling);
-    TunerTestingConfigAidlReader1_0::connectLnbRecord(lnbRecord);
     TunerTestingConfigAidlReader1_0::connectLnbLive(lnbLive);
+    TunerTestingConfigAidlReader1_0::connectLnbRecord(lnbRecord);
     TunerTestingConfigAidlReader1_0::connectDvrPlayback(playback);
 };
 
