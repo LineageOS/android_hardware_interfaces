@@ -238,12 +238,27 @@ void Effect::effectOffloadParamToHal(const EffectOffloadParameter& offload,
 }
 
 // static
-std::vector<uint8_t> Effect::parameterToHal(uint32_t paramSize, const void* paramData,
-                                            uint32_t valueSize, const void** valueData) {
+bool Effect::parameterToHal(uint32_t paramSize, const void* paramData, uint32_t valueSize,
+                            const void** valueData, std::vector<uint8_t>* halParamBuffer) {
+    constexpr size_t kMaxSize = EFFECT_PARAM_SIZE_MAX - sizeof(effect_param_t);
+    if (paramSize > kMaxSize) {
+        ALOGE("%s: Parameter size is too big: %" PRIu32, __func__, paramSize);
+        return false;
+    }
     size_t valueOffsetFromData = alignedSizeIn<uint32_t>(paramSize) * sizeof(uint32_t);
+    if (valueOffsetFromData > kMaxSize) {
+        ALOGE("%s: Aligned parameter size is too big: %zu", __func__, valueOffsetFromData);
+        return false;
+    }
+    if (valueSize > kMaxSize - valueOffsetFromData) {
+        ALOGE("%s: Value size is too big: %" PRIu32 ", max size is %zu", __func__, valueSize,
+              kMaxSize - valueOffsetFromData);
+        android_errorWriteLog(0x534e4554, "237291425");
+        return false;
+    }
     size_t halParamBufferSize = sizeof(effect_param_t) + valueOffsetFromData + valueSize;
-    std::vector<uint8_t> halParamBuffer(halParamBufferSize, 0);
-    effect_param_t* halParam = reinterpret_cast<effect_param_t*>(&halParamBuffer[0]);
+    halParamBuffer->resize(halParamBufferSize, 0);
+    effect_param_t* halParam = reinterpret_cast<effect_param_t*>(halParamBuffer->data());
     halParam->psize = paramSize;
     halParam->vsize = valueSize;
     memcpy(halParam->data, paramData, paramSize);
@@ -256,7 +271,7 @@ std::vector<uint8_t> Effect::parameterToHal(uint32_t paramSize, const void* para
             *valueData = halParam->data + valueOffsetFromData;
         }
     }
-    return halParamBuffer;
+    return true;
 }
 
 Result Effect::analyzeCommandStatus(const char* commandName, const char* context, status_t status) {
@@ -314,11 +329,15 @@ Result Effect::getParameterImpl(uint32_t paramSize, const void* paramData,
                                 GetParameterSuccessCallback onSuccess) {
     // As it is unknown what method HAL uses for copying the provided parameter data,
     // it is safer to make sure that input and output buffers do not overlap.
-    std::vector<uint8_t> halCmdBuffer =
-        parameterToHal(paramSize, paramData, requestValueSize, nullptr);
+    std::vector<uint8_t> halCmdBuffer;
+    if (!parameterToHal(paramSize, paramData, requestValueSize, nullptr, &halCmdBuffer)) {
+        return Result::INVALID_ARGUMENTS;
+    }
     const void* valueData = nullptr;
-    std::vector<uint8_t> halParamBuffer =
-        parameterToHal(paramSize, paramData, replyValueSize, &valueData);
+    std::vector<uint8_t> halParamBuffer;
+    if (!parameterToHal(paramSize, paramData, replyValueSize, &valueData, &halParamBuffer)) {
+        return Result::INVALID_ARGUMENTS;
+    }
     uint32_t halParamBufferSize = halParamBuffer.size();
 
     return sendCommandReturningStatusAndData(
@@ -472,8 +491,10 @@ Result Effect::setConfigImpl(int commandCode, const char* commandName, const Eff
 
 Result Effect::setParameterImpl(uint32_t paramSize, const void* paramData, uint32_t valueSize,
                                 const void* valueData) {
-    std::vector<uint8_t> halParamBuffer =
-        parameterToHal(paramSize, paramData, valueSize, &valueData);
+    std::vector<uint8_t> halParamBuffer;
+    if (!parameterToHal(paramSize, paramData, valueSize, &valueData, &halParamBuffer)) {
+        return Result::INVALID_ARGUMENTS;
+    }
     return sendCommandReturningStatus(EFFECT_CMD_SET_PARAM, "SET_PARAM", halParamBuffer.size(),
                                       &halParamBuffer[0]);
 }
