@@ -900,7 +900,8 @@ void Filter::updateRecordOutput(vector<int8_t>& data) {
         }
 
         result = createMediaFilterEventWithIon(mPesOutput);
-        if (result.isOk()) {
+        if (!result.isOk()) {
+            mFilterOutput.clear();
             return result;
         }
     }
