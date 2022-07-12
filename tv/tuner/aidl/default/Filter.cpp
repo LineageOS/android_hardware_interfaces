@@ -793,7 +793,8 @@ void Filter::updateRecordOutput(vector<int8_t>& data) {
             }
             if (prefix == 0x000001) {
                 // TODO handle mulptiple Pes filters
-                mPesSizeLeft = (mFilterOutput[i + 8] << 8) | mFilterOutput[i + 9];
+                mPesSizeLeft = (static_cast<uint8_t>(mFilterOutput[i + 8]) << 8) |
+                               static_cast<uint8_t>(mFilterOutput[i + 9]);
                 mPesSizeLeft += 6;
                 if (DEBUG_FILTER) {
                     ALOGD("[Filter] pes data length %d", mPesSizeLeft);
@@ -875,7 +876,8 @@ void Filter::updateRecordOutput(vector<int8_t>& data) {
             }
             if (prefix == 0x000001) {
                 // TODO handle mulptiple Pes filters
-                mPesSizeLeft = (mFilterOutput[i + 8] << 8) | mFilterOutput[i + 9];
+                mPesSizeLeft = (static_cast<uint8_t>(mFilterOutput[i + 8]) << 8) |
+                               static_cast<uint8_t>(mFilterOutput[i + 9]);
                 mPesSizeLeft += 6;
                 if (DEBUG_FILTER) {
                     ALOGD("[Filter] pes data length %d", mPesSizeLeft);
@@ -973,7 +975,8 @@ bool Filter::writeSectionsAndCreateEvent(vector<int8_t>& data) {
         if (mSectionSizeLeft == 0) {
             // Location for sectionSize as defined by Section 2.4.4
             // Note that the first 4 bytes skipped are the TsHeader
-            mSectionSizeLeft = ((data[i + 5] & 0x0f) << 8) | (data[i + 6] & 0xff);
+            mSectionSizeLeft = ((static_cast<uint8_t>(data[i + 5]) & 0x0f) << 8) |
+                               static_cast<uint8_t>(data[i + 6]);
             mSectionSizeLeft += 3;
             if (DEBUG_FILTER) {
                 ALOGD("[Filter] section data length %d", mSectionSizeLeft);
