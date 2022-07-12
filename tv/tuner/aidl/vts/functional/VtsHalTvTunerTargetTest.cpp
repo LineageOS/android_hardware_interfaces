@@ -908,9 +908,17 @@ TEST_P(TunerRecordAidlTest, LnbRecordDataFlowWithTsRecordFilterTest) {
     if (!lnbRecord.support) {
         return;
     }
-    recordSingleFilterTestWithLnb(filterMap[lnbRecord.recordFilterId],
-                                  frontendMap[lnbRecord.frontendId], dvrMap[lnbRecord.dvrRecordId],
-                                  lnbMap[lnbRecord.lnbId]);
+    vector<LnbRecordHardwareConnections> lnbRecord_configs = generateLnbRecordConfigurations();
+    if (lnbRecord_configs.empty()) {
+        ALOGD("No frontends that support satellites.");
+        return;
+    }
+    for (auto& configuration : lnbRecord_configs) {
+        lnbRecord = configuration;
+        recordSingleFilterTestWithLnb(filterMap[lnbRecord.recordFilterId],
+                                      frontendMap[lnbRecord.frontendId],
+                                      dvrMap[lnbRecord.dvrRecordId], lnbMap[lnbRecord.lnbId]);
+    }
 }
 
 TEST_P(TunerFrontendAidlTest, TuneFrontend) {

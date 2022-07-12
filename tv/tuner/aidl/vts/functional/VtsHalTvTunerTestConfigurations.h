@@ -248,6 +248,55 @@ static inline vector<ScanHardwareConnections> generateScanConfigurations() {
     return scan_configs;
 }
 
+/*
+ * index 0 - frontends
+ * index 1 - record filter
+ * index 2 - Record Dvr
+ * index 3 - Lnb
+ */
+static inline vector<LnbRecordHardwareConnections> generateLnbRecordCombinations() {
+    vector<LnbRecordHardwareConnections> combinations;
+    vector<vector<string>> deviceIds{frontendIds, recordFilterIds, recordDvrIds, lnbIds};
+
+    const int frontendIndex = 0;
+    const int recordFilterIndex = 1;
+    const int dvrIndex = 2;
+    const int lnbIndex = 3;
+
+    auto idCombinations = generateIdCombinations(deviceIds);
+    // TODO : Find a better way to vary diseqcMsgs, if at all
+    for (auto& combo : idCombinations) {
+        const string feId = combo[frontendIndex];
+        auto type = frontendMap[feId].type;
+        if (type == FrontendType::DVBS || type == FrontendType::ISDBS ||
+            type == FrontendType::ISDBS3) {
+            LnbRecordHardwareConnections mLnbRecord;
+            mLnbRecord.frontendId = feId;
+            mLnbRecord.recordFilterId = combo[recordFilterIndex];
+            mLnbRecord.dvrRecordId = combo[dvrIndex];
+            mLnbRecord.lnbId = combo[lnbIndex];
+            mLnbRecord.diseqcMsgs = diseqcMsgs;
+            combinations.push_back(mLnbRecord);
+        }
+    }
+
+    return combinations;
+}
+
+static inline vector<LnbRecordHardwareConnections> generateLnbRecordConfigurations() {
+    vector<LnbRecordHardwareConnections> lnbRecord_configs;
+    if (configuredLnbRecord) {
+        ALOGD("Using LnbRecord configuration provided.");
+        lnbRecord_configs = {lnbRecord};
+    } else {
+        ALOGD("LnbRecord not provided. Generating possible combinations. Consider adding it to "
+              "the configuration file.");
+        lnbRecord_configs = generateLnbRecordCombinations();
+    }
+
+    return lnbRecord_configs;
+}
+
 /** Config all the frontends that would be used in the tests */
 inline void initFrontendConfig() {
     // The test will use the internal default fe when default fe is connected to any data flow
@@ -425,7 +474,7 @@ inline void determineDvrRecord() {
         return;
     }
     if (frontendMap.empty() && playbackDvrIds.empty()) {
-        ALOGD("Cannot support dvr record. No frontends and  no playback dvr's");
+        ALOGD("Cannot support dvr record. No frontends and no playback dvr's");
         return;
     }
     if (hasSwFe && !hasHwFe && playbackDvrIds.empty()) {
