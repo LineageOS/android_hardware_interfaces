@@ -171,4 +171,12 @@ enum UwbVendorCapabilityTlvTypes {
      * 0 - Feature not supported.
      */
     SUPPORTED_RSSI_REPORTING = 0xE6,
+
+    /**
+     * 1 byte value to indicate support for diagnostics feature.
+     * Values:
+     *  1 - Feature supported.
+     *  0 - Feature not supported.
+     */
+    SUPPORTED_DIAGNOSTICS = 0xE7,
 }

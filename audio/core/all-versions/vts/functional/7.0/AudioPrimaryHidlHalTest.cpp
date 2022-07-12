@@ -18,6 +18,7 @@
 #include <numeric>
 
 #include <android-base/chrono_utils.h>
+#include <cutils/properties.h>
 
 #include "Generators.h"
 
@@ -898,10 +899,16 @@ class CompressedOffloadOutputStreamTest : public PcmOnlyConfigOutputStreamTest {
 TEST_P(CompressedOffloadOutputStreamTest, Mp3FormatGaplessOffload) {
     doc::test("Check that compressed offload mix ports for MP3 implement gapless offload");
     const auto& flags = getOutputFlags();
+    const bool isNewDeviceLaunchingOnTPlus = property_get_int32("ro.vendor.api_level", 0) >= 33;
     if (std::find_if(flags.begin(), flags.end(), [](const auto& flag) {
             return flag == toString(xsd::AudioInOutFlag::AUDIO_OUTPUT_FLAG_GAPLESS_OFFLOAD);
         }) == flags.end()) {
-        GTEST_SKIP() << "Compressed offload mix port does not support gapless offload";
+        if (isNewDeviceLaunchingOnTPlus) {
+            FAIL() << "New devices launching on Android T+ must support gapless offload, "
+                   << "see VSR-4.3-001";
+        } else {
+            GTEST_SKIP() << "Compressed offload mix port does not support gapless offload";
+        }
     }
     // FIXME: The presentation position is not updated if there is no zero padding in data.
     std::vector<uint8_t> offloadData(stream->getBufferSize());
