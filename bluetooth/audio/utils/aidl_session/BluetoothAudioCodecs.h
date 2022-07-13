@@ -44,9 +44,6 @@ class BluetoothAudioCodecs {
   static bool IsOffloadCodecConfigurationValid(
       const SessionType& session_type, const CodecConfiguration& codec_config);
 
-  static bool IsOffloadLeAudioConfigurationValid(
-      const SessionType& session_type, const LeAudioConfiguration&);
-
   static std::vector<LeAudioCodecCapabilitiesSetting>
   GetLeAudioOffloadCodecCapabilities(const SessionType& session_type);
 
