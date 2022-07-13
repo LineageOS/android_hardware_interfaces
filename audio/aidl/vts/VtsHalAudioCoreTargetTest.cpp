@@ -15,10 +15,8 @@
  */
 
 #include <algorithm>
-#include <condition_variable>
 #include <limits>
 #include <memory>
-#include <mutex>
 #include <optional>
 #include <set>
 #include <string>
@@ -35,11 +33,9 @@
 #include <aidl/android/media/audio/common/AudioIoFlags.h>
 #include <aidl/android/media/audio/common/AudioOutputFlags.h>
 #include <android-base/chrono_utils.h>
-#include <android-base/properties.h>
-#include <android/binder_manager.h>
-#include <android/binder_process.h>
 #include <fmq/AidlMessageQueue.h>
 
+#include "AudioHalBinderServiceUtil.h"
 #include "ModuleConfig.h"
 
 using namespace android;
@@ -101,37 +97,19 @@ AudioDeviceAddress GenerateUniqueDeviceAddress() {
     return AudioDeviceAddress::make<AudioDeviceAddress::Tag::id>(std::to_string(++nextId));
 }
 
-struct AidlDeathRecipient {
-    const ndk::SpAIBinder binder;
-    const ndk::ScopedAIBinder_DeathRecipient recipient;
-    std::mutex mutex;
-    std::condition_variable condition;
-    bool fired = false;
-
-    explicit AidlDeathRecipient(const ndk::SpAIBinder& binder)
-        : binder(binder), recipient(AIBinder_DeathRecipient_new(&binderDiedCallbackAidl)) {}
-
-    binder_status_t linkToDeath() {
-        return AIBinder_linkToDeath(binder.get(), recipient.get(), this);
-    }
-
-    void binderDied() {
-        std::unique_lock<std::mutex> lock(mutex);
-        fired = true;
-        condition.notify_one();
-    };
-
-    bool waitForFired(int timeoutMs) {
-        std::unique_lock<std::mutex> lock(mutex);
-        condition.wait_for(lock, std::chrono::milliseconds(timeoutMs), [this]() { return fired; });
-        return fired;
-    }
-
-    static void binderDiedCallbackAidl(void* cookie) {
-        AidlDeathRecipient* self = static_cast<AidlDeathRecipient*>(cookie);
-        self->binderDied();
-    }
+template <typename T>
+struct IsInput {
+    constexpr operator bool() const;
 };
+
+template <>
+constexpr IsInput<IStreamIn>::operator bool() const {
+    return true;
+}
+template <>
+constexpr IsInput<IStreamOut>::operator bool() const {
+    return false;
+}
 
 // All 'With*' classes are move-only because they are associated with some
 // resource or state of a HAL module.
@@ -238,20 +216,15 @@ class AudioCoreModule : public testing::TestWithParam<std::string> {
     }
 
     void ConnectToService() {
-        module = IModule::fromBinder(
-                ndk::SpAIBinder(AServiceManager_getService(GetParam().c_str())));
+        module = IModule::fromBinder(binderUtil.connectToService(GetParam()));
         ASSERT_NE(module, nullptr);
     }
 
     void RestartService() {
         ASSERT_NE(module, nullptr);
         moduleConfig.reset();
-        deathHandler.reset(new AidlDeathRecipient(module->asBinder()));
-        ASSERT_EQ(STATUS_OK, deathHandler->linkToDeath());
-        ASSERT_TRUE(base::SetProperty("sys.audio.restart.hal", "1"));
-        EXPECT_TRUE(deathHandler->waitForFired(3000));
-        deathHandler.reset();
-        ASSERT_NO_FATAL_FAILURE(ConnectToService());
+        module = IModule::fromBinder(binderUtil.restartService());
+        ASSERT_NE(module, nullptr);
     }
 
     void ApplyEveryConfig(const std::vector<AudioPortConfig>& configs) {
@@ -322,8 +295,8 @@ class AudioCoreModule : public testing::TestWithParam<std::string> {
     }
 
     std::shared_ptr<IModule> module;
-    std::unique_ptr<AidlDeathRecipient> deathHandler;
     std::unique_ptr<ModuleConfig> moduleConfig;
+    AudioHalBinderServiceUtil binderUtil;
     WithDebugFlags debug;
 };
 
