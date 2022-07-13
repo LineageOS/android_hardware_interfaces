@@ -87,6 +87,7 @@ static vector<string> sectionFilterIds;
 static vector<string> frontendIds;
 static vector<string> lnbIds;
 static vector<string> diseqcMsgs;
+static vector<string> descramblerIds;
 
 #define PROVISION_STR                                      \
     "{                                                   " \
@@ -461,6 +462,7 @@ struct TunerTestingConfigAidlReader1_0 {
             auto descramblers = *hardwareConfig.getFirstDescramblers();
             for (auto descramblerConfig : descramblers.getDescrambler()) {
                 string id = descramblerConfig.getId();
+                descramblerIds.push_back(id);
                 descramblerMap[id].casSystemId =
                         static_cast<int32_t>(descramblerConfig.getCasSystemId());
                 if (descramblerConfig.hasProvisionStr()) {

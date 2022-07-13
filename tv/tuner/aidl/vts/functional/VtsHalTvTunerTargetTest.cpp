@@ -1073,25 +1073,34 @@ TEST_P(TunerDescramblerAidlTest, CreateDescrambler) {
     if (!descrambling.support) {
         return;
     }
-    int32_t demuxId;
-    std::shared_ptr<IDemux> demux;
-    ASSERT_TRUE(mDemuxTests.openDemux(demux, demuxId));
-
-    if (descrambling.hasFrontendConnection) {
-        int32_t feId;
-        mFrontendTests.getFrontendIdByType(frontendMap[descrambling.frontendId].type, feId);
-        ASSERT_TRUE(feId != INVALID_ID);
-        ASSERT_TRUE(mFrontendTests.openFrontendById(feId));
-        ASSERT_TRUE(mFrontendTests.setFrontendCallback());
-        ASSERT_TRUE(mDemuxTests.setDemuxFrontendDataSource(feId));
+    vector<DescramblingHardwareConnections> descrambling_configs =
+            generateDescramblingConfigurations();
+    if (descrambling_configs.empty()) {
+        ALOGD("No valid descrambling combinations in the configuration file.");
+        return;
     }
+    for (auto& combination : descrambling_configs) {
+        descrambling = combination;
+        int32_t demuxId;
+        std::shared_ptr<IDemux> demux;
+        ASSERT_TRUE(mDemuxTests.openDemux(demux, demuxId));
 
-    ASSERT_TRUE(mDescramblerTests.openDescrambler(demuxId));
-    ASSERT_TRUE(mDescramblerTests.closeDescrambler());
-    ASSERT_TRUE(mDemuxTests.closeDemux());
+        if (descrambling.hasFrontendConnection) {
+            int32_t feId;
+            mFrontendTests.getFrontendIdByType(frontendMap[descrambling.frontendId].type, feId);
+            ASSERT_TRUE(feId != INVALID_ID);
+            ASSERT_TRUE(mFrontendTests.openFrontendById(feId));
+            ASSERT_TRUE(mFrontendTests.setFrontendCallback());
+            ASSERT_TRUE(mDemuxTests.setDemuxFrontendDataSource(feId));
+        }
 
-    if (descrambling.hasFrontendConnection) {
-        ASSERT_TRUE(mFrontendTests.closeFrontend());
+        ASSERT_TRUE(mDescramblerTests.openDescrambler(demuxId));
+        ASSERT_TRUE(mDescramblerTests.closeDescrambler());
+        ASSERT_TRUE(mDemuxTests.closeDemux());
+
+        if (descrambling.hasFrontendConnection) {
+            ASSERT_TRUE(mFrontendTests.closeFrontend());
+        }
     }
 }
 
@@ -1100,11 +1109,20 @@ TEST_P(TunerDescramblerAidlTest, ScrambledBroadcastDataFlowMediaFiltersTest) {
     if (!descrambling.support) {
         return;
     }
-    set<FilterConfig> filterConfs;
-    filterConfs.insert(static_cast<FilterConfig>(filterMap[descrambling.audioFilterId]));
-    filterConfs.insert(static_cast<FilterConfig>(filterMap[descrambling.videoFilterId]));
-    scrambledBroadcastTest(filterConfs, frontendMap[descrambling.frontendId],
-                           descramblerMap[descrambling.descramblerId]);
+    vector<DescramblingHardwareConnections> descrambling_configs =
+            generateDescramblingConfigurations();
+    if (descrambling_configs.empty()) {
+        ALOGD("No valid descrambling combinations in the configuration file.");
+        return;
+    }
+    for (auto& combination : descrambling_configs) {
+        descrambling = combination;
+        set<FilterConfig> filterConfs;
+        filterConfs.insert(static_cast<FilterConfig>(filterMap[descrambling.audioFilterId]));
+        filterConfs.insert(static_cast<FilterConfig>(filterMap[descrambling.videoFilterId]));
+        scrambledBroadcastTest(filterConfs, frontendMap[descrambling.frontendId],
+                               descramblerMap[descrambling.descramblerId]);
+    }
 }
 
 INSTANTIATE_TEST_SUITE_P(PerInstance, TunerBroadcastAidlTest,

@@ -297,6 +297,87 @@ static inline vector<LnbRecordHardwareConnections> generateLnbRecordConfiguratio
     return lnbRecord_configs;
 }
 
+/*
+ * index 0 - decramblers
+ * index 1 - frontends
+ * index 2 - audio filters
+ * index 3 - video filters
+ * index 4 - Dvr SW Fe Connections
+ * index 5 - DVR Source Connections
+ */
+static inline vector<DescramblingHardwareConnections> generateDescramblingCombinations() {
+    vector<DescramblingHardwareConnections> combinations;
+    vector<string> mfrontendIds = frontendIds;
+    vector<string> mDvrFeConnectionIds = playbackDvrIds;
+    vector<string> mDvrSourceConnectionIds = playbackDvrIds;
+
+    // Add the empty hardware id to each vector to include combinations where these 3 fields might
+    // be optional
+    mfrontendIds.push_back(emptyHardwareId);
+    mDvrFeConnectionIds.push_back(emptyHardwareId);
+    mDvrSourceConnectionIds.push_back(emptyHardwareId);
+
+    const int descramblerIndex = 0;
+    const int frontendIndex = 1;
+    const int audioFilterIndex = 2;
+    const int videoFilterIndex = 3;
+    const int dvrFeIdIndex = 4;
+    const int dvrSourceIdIndex = 5;
+
+    vector<vector<string>> deviceIds{descramblerIds, mfrontendIds,        audioFilterIds,
+                                     videoFilterIds, mDvrFeConnectionIds, mDvrSourceConnectionIds};
+    auto idCombinations = generateIdCombinations(deviceIds);
+    for (auto& combo : idCombinations) {
+        DescramblingHardwareConnections mDescrambling;
+        const string feId = combo[frontendIndex];
+        const string dvrSwFeId = combo[dvrFeIdIndex];
+        const string dvrSourceId = combo[dvrSourceIdIndex];
+        mDescrambling.hasFrontendConnection = feId.compare(emptyHardwareId) == 0 ? false : true;
+        if (!mDescrambling.hasFrontendConnection) {
+            if (dvrSourceId.compare(emptyHardwareId) == 0) {
+                // If combination does not have a frontend or dvr source connection, do not include
+                // it
+                continue;
+            }
+        } else {
+            if (frontendMap[feId].isSoftwareFe && dvrSwFeId.compare(emptyHardwareId) == 0) {
+                // If combination has a software frontend and no dvr->software frontend connection,
+                // do not include it
+                continue;
+            }
+        }
+        if (dvrSwFeId.compare(dvrSourceId) == 0) {
+            // If dvr->software frontend connection is the same as dvr source input to tuner, do not
+            // include it.
+            continue;
+        }
+        mDescrambling.frontendId = feId;
+        mDescrambling.audioFilterId = combo[audioFilterIndex];
+        mDescrambling.videoFilterId = combo[videoFilterIndex];
+        mDescrambling.dvrSoftwareFeId = dvrSwFeId;
+        mDescrambling.dvrSourceId = dvrSourceId;
+        mDescrambling.descramblerId = combo[descramblerIndex];
+        combinations.push_back(mDescrambling);
+    }
+
+    return combinations;
+}
+
+static inline vector<DescramblingHardwareConnections> generateDescramblingConfigurations() {
+    vector<DescramblingHardwareConnections> descrambling_configs;
+    if (configuredDescrambling) {
+        ALOGD("Using Descrambling configuration provided.");
+        descrambling_configs = {descrambling};
+    } else {
+        ALOGD("Descrambling not provided. Generating possible combinations. Consider adding it to "
+              "the "
+              "configuration file.");
+        descrambling_configs = generateDescramblingCombinations();
+    }
+
+    return descrambling_configs;
+}
+
 /** Config all the frontends that would be used in the tests */
 inline void initFrontendConfig() {
     // The test will use the internal default fe when default fe is connected to any data flow
