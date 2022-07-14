@@ -77,7 +77,7 @@ std::unordered_map<VehicleProperty, VehiclePropertyAccess> AccessForVehiclePrope
         {VehicleProperty::IGNITION_STATE, VehiclePropertyAccess::READ},
         {VehicleProperty::ABS_ACTIVE, VehiclePropertyAccess::READ},
         {VehicleProperty::TRACTION_CONTROL_ACTIVE, VehiclePropertyAccess::READ},
-        {VehicleProperty::HVAC_FAN_SPEED, VehiclePropertyAccess::READ},
+        {VehicleProperty::HVAC_FAN_SPEED, VehiclePropertyAccess::READ_WRITE},
         {VehicleProperty::HVAC_FAN_DIRECTION, VehiclePropertyAccess::READ_WRITE},
         {VehicleProperty::HVAC_TEMPERATURE_CURRENT, VehiclePropertyAccess::READ},
         {VehicleProperty::HVAC_TEMPERATURE_SET, VehiclePropertyAccess::READ_WRITE},
