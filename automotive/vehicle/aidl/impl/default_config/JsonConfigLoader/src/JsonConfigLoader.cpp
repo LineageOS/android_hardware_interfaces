@@ -398,9 +398,32 @@ void JsonConfigParser::parseAccessChangeMode(
     return;
 }
 
-void JsonConfigParser::parsePropValues(const Json::Value& parentJsonNode,
+bool JsonConfigParser::parsePropValues(const Json::Value& parentJsonNode,
                                        const std::string& fieldName, RawPropValues* outPtr,
                                        std::vector<std::string>* errors) {
+    if (!parentJsonNode.isObject()) {
+        errors->push_back("Node: " + parentJsonNode.toStyledString() + " is not an object");
+        return false;
+    }
+    if (!parentJsonNode.isMember(fieldName)) {
+        return false;
+    }
+    const Json::Value& jsonValue = parentJsonNode[fieldName];
+    bool success = true;
+    success &= tryParseJsonArrayToVariable(jsonValue, "int32Values",
+                                           /*optional=*/true, &(outPtr->int32Values), errors);
+    success &= tryParseJsonArrayToVariable(jsonValue, "floatValues",
+                                           /*optional=*/true, &(outPtr->floatValues), errors);
+    success &= tryParseJsonArrayToVariable(jsonValue, "int64Values",
+                                           /*optional=*/true, &(outPtr->int64Values), errors);
+    // We don't support "byteValues" yet.
+    success &= tryParseJsonValueToVariable(jsonValue, "stringValue",
+                                           /*optional=*/true, &(outPtr->stringValue), errors);
+    return success;
+}
+
+void JsonConfigParser::parseAreas(const Json::Value& parentJsonNode, const std::string& fieldName,
+                                  ConfigDeclaration* config, std::vector<std::string>* errors) {
     if (!parentJsonNode.isObject()) {
         errors->push_back("Node: " + parentJsonNode.toStyledString() + " is not an object");
         return;
@@ -409,15 +432,39 @@ void JsonConfigParser::parsePropValues(const Json::Value& parentJsonNode,
         return;
     }
     const Json::Value& jsonValue = parentJsonNode[fieldName];
-    tryParseJsonArrayToVariable(jsonValue, "int32Values", /*optional=*/true, &(outPtr->int32Values),
-                                errors);
-    tryParseJsonArrayToVariable(jsonValue, "floatValues", /*optional=*/true, &(outPtr->floatValues),
-                                errors);
-    tryParseJsonArrayToVariable(jsonValue, "int64Values", /*optional=*/true, &(outPtr->int64Values),
-                                errors);
-    // We don't support "byteValues" yet.
-    tryParseJsonValueToVariable(jsonValue, "stringValue", /*optional=*/true, &(outPtr->stringValue),
-                                errors);
+
+    if (!jsonValue.isArray()) {
+        errors->push_back("Field: " + fieldName + " is not an array");
+        return;
+    }
+    for (unsigned int i = 0; i < jsonValue.size(); i++) {
+        int32_t areaId;
+        const Json::Value& jsonAreaConfig = jsonValue[i];
+        if (!tryParseJsonValueToVariable(jsonAreaConfig, "areaId",
+                                         /*optional=*/false, &areaId, errors)) {
+            continue;
+        }
+        VehicleAreaConfig areaConfig = {};
+        areaConfig.areaId = areaId;
+        tryParseJsonValueToVariable(jsonAreaConfig, "minInt32Value", /*optional=*/true,
+                                    &areaConfig.minInt32Value, errors);
+        tryParseJsonValueToVariable(jsonAreaConfig, "maxInt32Value", /*optional=*/true,
+                                    &areaConfig.maxInt32Value, errors);
+        tryParseJsonValueToVariable(jsonAreaConfig, "minInt64Value", /*optional=*/true,
+                                    &areaConfig.minInt64Value, errors);
+        tryParseJsonValueToVariable(jsonAreaConfig, "maxInt64Value", /*optional=*/true,
+                                    &areaConfig.maxInt64Value, errors);
+        tryParseJsonValueToVariable(jsonAreaConfig, "minFloatValue", /*optional=*/true,
+                                    &areaConfig.minFloatValue, errors);
+        tryParseJsonValueToVariable(jsonAreaConfig, "maxFloatValue", /*optional=*/true,
+                                    &areaConfig.maxFloatValue, errors);
+        config->config.areaConfigs.push_back(std::move(areaConfig));
+
+        RawPropValues areaValue = {};
+        if (parsePropValues(jsonAreaConfig, "defaultValue", &areaValue, errors)) {
+            config->initialAreaValues[areaId] = std::move(areaValue);
+        }
+    }
 }
 
 std::optional<ConfigDeclaration> JsonConfigParser::parseEachProperty(
@@ -446,8 +493,7 @@ std::optional<ConfigDeclaration> JsonConfigParser::parseEachProperty(
     tryParseJsonArrayToVariable(propJsonValue, "configArray", /*optional=*/true,
                                 &configDecl.config.configArray, errors);
 
-    parsePropValues(propJsonValue, "defaultValue", /*optional=*/true, &configDecl.initialValue,
-                    errors);
+    parsePropValues(propJsonValue, "defaultValue", &configDecl.initialValue, errors);
 
     tryParseJsonValueToVariable(propJsonValue, "minSampleRate", /*optional=*/true,
                                 &configDecl.config.minSampleRate, errors);
@@ -455,7 +501,7 @@ std::optional<ConfigDeclaration> JsonConfigParser::parseEachProperty(
     tryParseJsonValueToVariable(propJsonValue, "maxSampleRate", /*optional=*/true,
                                 &configDecl.config.maxSampleRate, errors);
 
-    // TODO(b/238685398): AreaConfigs
+    parseAreas(propJsonValue, "areas", &configDecl, errors);
 
     if (errors->size() != initialErrorCount) {
         return std::nullopt;

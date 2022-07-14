@@ -27,6 +27,7 @@ namespace automotive {
 namespace vehicle {
 
 using ::aidl::android::hardware::automotive::vehicle::RawPropValues;
+using ::aidl::android::hardware::automotive::vehicle::VehicleAreaConfig;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropConfig;
 using ::aidl::android::hardware::automotive::vehicle::VehicleProperty;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyAccess;
@@ -108,7 +109,7 @@ TEST_F(JsonConfigLoaderUnitTest, TestProperty_FailInvalidJson) {
     }
     )");
 
-    ASSERT_FALSE(mLoader.loadPropConfig(iss);.ok()) << "Invalid JSON format must cause error";
+    ASSERT_FALSE(mLoader.loadPropConfig(iss).ok()) << "Invalid JSON format must cause error";
 }
 
 TEST_F(JsonConfigLoaderUnitTest, TestConfigArray) {
@@ -490,15 +491,99 @@ TEST_F(JsonConfigLoaderUnitTest, TestDefaultValue_FailInvalidType) {
     {
         "properties": [{
             "property": "VehicleProperty::INFO_FUEL_CAPACITY",
-            "defaultValue": [{
+            "defaultValue": {
                 "int32Values": [1.1]
-            }]
+            }
         }]
     }
     )");
 
     ASSERT_FALSE(mLoader.loadPropConfig(iss).ok())
             << "Wrong type for DefaultValue must cause error";
+}
+
+TEST_F(JsonConfigLoaderUnitTest, testAreas_Simple) {
+    std::istringstream iss(R"(
+    {
+        "properties": [{
+            "property": "VehicleProperty::INFO_FUEL_CAPACITY",
+            "areas": [{
+                "areaId": "Constants::HVAC_ALL",
+                "minInt32Value": 1,
+                "maxInt32Value": 7
+            }]
+        }]
+    }
+    )");
+
+    auto result = mLoader.loadPropConfig(iss);
+
+    auto configs = result.value();
+    ASSERT_EQ(configs.size(), 1u);
+
+    const VehiclePropConfig& config = configs[0].config;
+    ASSERT_EQ(config.areaConfigs.size(), 1u);
+    const VehicleAreaConfig& areaConfig = config.areaConfigs[0];
+    ASSERT_EQ(areaConfig.minInt32Value, 1);
+    ASSERT_EQ(areaConfig.maxInt32Value, 7);
+    ASSERT_EQ(areaConfig.areaId, HVAC_ALL);
+}
+
+TEST_F(JsonConfigLoaderUnitTest, testAreas_DefaultValueForEachArea) {
+    std::istringstream iss(R"(
+    {
+        "properties": [{
+            "property": "VehicleProperty::INFO_FUEL_CAPACITY",
+            "areas": [{
+                "areaId": "Constants::HVAC_LEFT",
+                "defaultValue": {
+                    "int32Values": [1]
+                }
+            }, {
+                "areaId": "Constants::HVAC_RIGHT",
+                "defaultValue": {
+                    "int32Values": [2]
+                }
+            }]
+        }]
+    }
+    )");
+
+    auto result = mLoader.loadPropConfig(iss);
+
+    auto configs = result.value();
+    ASSERT_EQ(configs.size(), 1u);
+
+    const VehiclePropConfig& config = configs[0].config;
+    ASSERT_EQ(config.areaConfigs.size(), 2u);
+    ASSERT_EQ(config.areaConfigs[0].areaId, HVAC_LEFT);
+    ASSERT_EQ(config.areaConfigs[1].areaId, HVAC_RIGHT);
+    ASSERT_EQ(configs[0].initialAreaValues[HVAC_LEFT], RawPropValues{.int32Values = {1}});
+    ASSERT_EQ(configs[0].initialAreaValues[HVAC_RIGHT], RawPropValues{.int32Values = {2}});
+}
+
+TEST_F(JsonConfigLoaderUnitTest, testAreas_FailInvalidTypeForOneAreaValue) {
+    std::istringstream iss(R"(
+    {
+        "properties": [{
+            "property": "VehicleProperty::INFO_FUEL_CAPACITY",
+            "areas": [{
+                "areaId": "Constants::HVAC_LEFT",
+                "defaultValue": {
+                    "int32Values": [1]
+                }
+            }, {
+                "areaId": "Constants::HVAC_RIGHT",
+                "defaultValue": {
+                    "int32Values": [2.1]
+                }
+            }]
+        }]
+    }
+    )");
+
+    ASSERT_FALSE(mLoader.loadPropConfig(iss).ok())
+            << "Wrong type for DefaultValue for one area must cause error";
 }
 
 }  // namespace vehicle

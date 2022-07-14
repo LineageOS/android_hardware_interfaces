@@ -93,8 +93,7 @@ TEST(DefaultConfigTest, TestCompatibleWithDefaultConfigHeader) {
     }
 
     ASSERT_EQ(configsFromHeaderFile.size(), configsFromJson.size());
-    // TODO(b/238685398): Uncomment this once we finish the parser.
-    // ASSERT_THAT(configsFromHeaderFile, UnorderedElementsAreArray(configsFromJson));
+    ASSERT_THAT(configsFromHeaderFile, UnorderedElementsAreArray(configsFromJson));
 }
 
 #endif  // ENABLE_VEHICLE_HAL_TEST_PROPERTIES

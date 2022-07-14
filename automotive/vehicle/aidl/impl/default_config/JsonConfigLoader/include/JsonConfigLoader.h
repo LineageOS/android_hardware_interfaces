@@ -137,9 +137,15 @@ class JsonConfigParser {
             T* outPtr, std::vector<std::string>* errors);
 
     // Parses a JSON field to RawPropValues.
-    void parsePropValues(const Json::Value& parentJsonNode, const std::string& fieldName,
+    //
+    // @return True if the field exist and can be parsed to a RawPropValues.
+    bool parsePropValues(const Json::Value& parentJsonNode, const std::string& fieldName,
                          aidl::android::hardware::automotive::vehicle::RawPropValues* outPtr,
                          std::vector<std::string>* errors);
+
+    // Prase a JSON field as an array of area configs.
+    void parseAreas(const Json::Value& parentJsonNode, const std::string& fieldName,
+                    ConfigDeclaration* outPtr, std::vector<std::string>* errors);
 };
 
 }  // namespace jsonconfigloader_impl
