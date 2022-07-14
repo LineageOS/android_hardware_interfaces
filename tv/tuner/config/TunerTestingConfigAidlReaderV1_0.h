@@ -80,6 +80,7 @@ static string mConfigFilePath;
 
 static vector<string> playbackDvrIds;
 static vector<string> recordDvrIds;
+static vector<string> timeFilterIds;
 static vector<string> audioFilterIds;
 static vector<string> videoFilterIds;
 static vector<string> recordFilterIds;
@@ -503,6 +504,7 @@ struct TunerTestingConfigAidlReader1_0 {
             auto timeFilters = *hardwareConfig.getFirstTimeFilters();
             for (auto timeFilterConfig : timeFilters.getTimeFilter()) {
                 string id = timeFilterConfig.getId();
+                timeFilterIds.push_back(id);
                 timeFilterMap[id].timeStamp = static_cast<int64_t>(timeFilterConfig.getTimeStamp());
             }
         }

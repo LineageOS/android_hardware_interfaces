@@ -645,7 +645,11 @@ TEST_P(TunerFilterAidlTest, testTimeFilter) {
         return;
     }
     // TODO use parameterized tests
-    testTimeFilter(timeFilterMap[timeFilter.timeFilterId]);
+    auto timeFilter_configs = generateTimeFilterConfigurations();
+    for (auto& configuration : timeFilter_configs) {
+        timeFilter = configuration;
+        testTimeFilter(timeFilterMap[timeFilter.timeFilterId]);
+    }
 }
 
 static bool isEventProducingFilter(const FilterConfig& filterConfig) {

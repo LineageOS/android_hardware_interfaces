@@ -380,6 +380,33 @@ static inline vector<DescramblingHardwareConnections> generateDescramblingConfig
     return descrambling_configs;
 }
 
+static inline vector<TimeFilterHardwareConnections> generateTimeFilterCombinations() {
+    vector<TimeFilterHardwareConnections> combinations;
+
+    for (auto& id : timeFilterIds) {
+        TimeFilterHardwareConnections mTimeFilter;
+        mTimeFilter.timeFilterId = id;
+        combinations.push_back(mTimeFilter);
+    }
+
+    return combinations;
+}
+
+static inline vector<TimeFilterHardwareConnections> generateTimeFilterConfigurations() {
+    vector<TimeFilterHardwareConnections> timeFilter_configs;
+    if (configuredTimeFilter) {
+        ALOGD("Using TimeFilter configuration provided.");
+        timeFilter_configs = {timeFilter};
+    } else {
+        ALOGD("TimeFilter not provided. Generating possible combinations. Consider adding it to "
+              "the "
+              "configuration file.");
+        timeFilter_configs = generateTimeFilterCombinations();
+    }
+
+    return timeFilter_configs;
+}
+
 /** Config all the frontends that would be used in the tests */
 inline void initFrontendConfig() {
     // The test will use the internal default fe when default fe is connected to any data flow
