@@ -1,0 +1,1345 @@
+{
+    "apiVersion": 1,
+    "properties": [
+        {
+            "property": "VehicleProperty::INFO_FUEL_CAPACITY",
+            "defaultValue": {
+                "floatValues": [
+                    15000.0
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::INFO_FUEL_TYPE",
+            "defaultValue": {
+                "int32Values": [
+                    "FuelType::FUEL_TYPE_UNLEADED"
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::INFO_EV_BATTERY_CAPACITY",
+            "defaultValue": {
+                "floatValues": [
+                    150000.0
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::INFO_EV_CONNECTOR_TYPE",
+            "defaultValue": {
+                "int32Values": [
+                    "EvConnectorType::IEC_TYPE_1_AC"
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::INFO_FUEL_DOOR_LOCATION",
+            "defaultValue": {
+                "int32Values": [
+                    "Constants::FUEL_DOOR_REAR_LEFT"
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::INFO_EV_PORT_LOCATION",
+            "defaultValue": {
+                "int32Values": [
+                    "Constants::CHARGE_PORT_FRONT_LEFT"
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::INFO_MULTI_EV_PORT_LOCATIONS",
+            "defaultValue": {
+                "int32Values": [
+                    "Constants::CHARGE_PORT_FRONT_LEFT",
+                    "Constants::CHARGE_PORT_REAR_LEFT"
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::INFO_MAKE",
+            "defaultValue": {
+                "stringValue": "Toy Vehicle"
+            }
+        },
+        {
+            "property": "VehicleProperty::INFO_MODEL",
+            "defaultValue": {
+                "stringValue": "Speedy Model"
+            }
+        },
+        {
+            "property": "VehicleProperty::INFO_MODEL_YEAR",
+            "defaultValue": {
+                "int32Values": [
+                    2020
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::INFO_EXTERIOR_DIMENSIONS",
+            "defaultValue": {
+                "int32Values": [
+                    1776,
+                    4950,
+                    2008,
+                    2140,
+                    2984,
+                    1665,
+                    1667,
+                    11800
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::PERF_VEHICLE_SPEED",
+            "defaultValue": {
+                "floatValues": [
+                    0.0
+                ]
+            },
+            "maxSampleRate": 10.0,
+            "minSampleRate": 1.0
+        },
+        {
+            "property": "VehicleProperty::VEHICLE_SPEED_DISPLAY_UNITS",
+            "defaultValue": {
+                "int32Values": [
+                    "VehicleUnit::KILOMETERS_PER_HOUR"
+                ]
+            },
+            "configArray": [
+                "VehicleUnit::METER_PER_SEC",
+                "VehicleUnit::MILES_PER_HOUR",
+                "VehicleUnit::KILOMETERS_PER_HOUR"
+            ]
+        },
+        {
+            "property": "VehicleProperty::EV_BATTERY_DISPLAY_UNITS",
+            "defaultValue": {
+                "int32Values": [
+                    "VehicleUnit::KILOWATT_HOUR"
+                ]
+            },
+            "configArray": [
+                "VehicleUnit::WATT_HOUR",
+                "VehicleUnit::AMPERE_HOURS",
+                "VehicleUnit::KILOWATT_HOUR"
+            ]
+        },
+        {
+            "property": "VehicleProperty::SEAT_OCCUPANCY",
+            "areas": [
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            "VehicleSeatOccupancyState::VACANT"
+                        ]
+                    },
+                    "areaId": "Constants::SEAT_1_LEFT"
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            "VehicleSeatOccupancyState::VACANT"
+                        ]
+                    },
+                    "areaId": "Constants::SEAT_1_RIGHT"
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::INFO_DRIVER_SEAT",
+            "defaultValue": {
+                "int32Values": [
+                    "Constants::SEAT_1_LEFT"
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": 0
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::PERF_ODOMETER",
+            "defaultValue": {
+                "floatValues": [
+                    0.0
+                ]
+            },
+            "maxSampleRate": 10.0,
+            "minSampleRate": 1.0
+        },
+        {
+            "property": "VehicleProperty::PERF_STEERING_ANGLE",
+            "defaultValue": {
+                "floatValues": [
+                    0.0
+                ]
+            },
+            "maxSampleRate": 10.0,
+            "minSampleRate": 1.0
+        },
+        {
+            "property": "VehicleProperty::PERF_REAR_STEERING_ANGLE",
+            "defaultValue": {
+                "floatValues": [
+                    0.0
+                ]
+            },
+            "maxSampleRate": 10.0,
+            "minSampleRate": 1.0
+        },
+        {
+            "property": "VehicleProperty::ENGINE_RPM",
+            "defaultValue": {
+                "floatValues": [
+                    0.0
+                ]
+            },
+            "maxSampleRate": 10.0,
+            "minSampleRate": 1.0
+        },
+        {
+            "property": "VehicleProperty::FUEL_LEVEL",
+            "defaultValue": {
+                "floatValues": [
+                    15000.0
+                ]
+            },
+            "maxSampleRate": 100.0,
+            "minSampleRate": 1.0
+        },
+        {
+            "property": "VehicleProperty::FUEL_DOOR_OPEN",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::EV_BATTERY_LEVEL",
+            "defaultValue": {
+                "floatValues": [
+                    150000.0
+                ]
+            },
+            "maxSampleRate": 100.0,
+            "minSampleRate": 1.0
+        },
+        {
+            "property": "VehicleProperty::EV_CHARGE_PORT_OPEN",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::EV_CHARGE_PORT_CONNECTED",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::EV_BATTERY_INSTANTANEOUS_CHARGE_RATE",
+            "defaultValue": {
+                "floatValues": [
+                    0.0
+                ]
+            },
+            "maxSampleRate": 10.0,
+            "minSampleRate": 1.0
+        },
+        {
+            "property": "VehicleProperty::EV_CHARGE_CURRENT_DRAW_LIMIT",
+            "defaultValue": {
+                "floatValues": [
+                    12.5
+                ]
+            },
+            "comment": "ConfigArray specifies Max current draw allowed by vehicle in amperes",
+            "configArray": [
+                20
+            ]
+        },
+        {
+            "property": "VehicleProperty::EV_CHARGE_PERCENT_LIMIT",
+            "defaultValue": {
+                "floatValues": [
+                    40.0
+                ]
+            },
+            "configArray": [
+                20,
+                40,
+                60,
+                80,
+                100
+            ]
+        },
+        {
+            "property": "VehicleProperty::EV_CHARGE_STATE",
+            "defaultValue": {
+                "int32Values": [
+                    2
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::EV_CHARGE_SWITCH",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::EV_CHARGE_TIME_REMAINING",
+            "defaultValue": {
+                "int32Values": [
+                    20
+                ]
+            },
+            "maxSampleRate": 10.0,
+            "minSampleRate": 1.0
+        },
+        {
+            "property": "VehicleProperty::EV_REGENERATIVE_BRAKING_STATE",
+            "defaultValue": {
+                "int32Values": [
+                    2
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::TRAILER_PRESENT",
+            "defaultValue": {
+                "int32Values": [
+                    2
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::VEHICLE_CURB_WEIGHT",
+            "defaultValue": {
+                "int32Values": [
+                    30
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::RANGE_REMAINING",
+            "defaultValue": {
+                "floatValues": [
+                    50000.0
+                ]
+            },
+            "comment": "units in meter",
+            "maxSampleRate": 2.0,
+            "minSampleRate": 1.0
+        },
+        {
+            "property": "VehicleProperty::TIRE_PRESSURE",
+            "defaultValue": {
+                "floatValues": [
+                    200.0
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "Constants::WHEEL_FRONT_LEFT",
+                    "minFloatValue": 193.0,
+                    "maxFloatValue": 300.0
+                },
+                {
+                    "areaId": "Constants::WHEEL_FRONT_RIGHT",
+                    "minFloatValue": 193.0,
+                    "maxFloatValue": 300.0
+                },
+                {
+                    "areaId": "Constants::WHEEL_REAR_LEFT",
+                    "minFloatValue": 193.0,
+                    "maxFloatValue": 300.0
+                },
+                {
+                    "areaId": "Constants::WHEEL_REAR_RIGHT",
+                    "minFloatValue": 193.0,
+                    "maxFloatValue": 300.0
+                }
+            ],
+            "comment": "Units in kpa",
+            "maxSampleRate": 2.0,
+            "minSampleRate": 1.0
+        },
+        {
+            "property": "VehicleProperty::CRITICALLY_LOW_TIRE_PRESSURE",
+            "areas": [
+                {
+                    "defaultValue": {
+                        "floatValues": [
+                            137.0
+                        ]
+                    },
+                    "areaId": "Constants::WHEEL_FRONT_LEFT"
+                },
+                {
+                    "defaultValue": {
+                        "floatValues": [
+                            137.0
+                        ]
+                    },
+                    "areaId": "Constants::WHEEL_FRONT_RIGHT"
+                },
+                {
+                    "defaultValue": {
+                        "floatValues": [
+                            137.0
+                        ]
+                    },
+                    "areaId": "Constants::WHEEL_REAR_RIGHT"
+                },
+                {
+                    "defaultValue": {
+                        "floatValues": [
+                            137.0
+                        ]
+                    },
+                    "areaId": "Constants::WHEEL_REAR_LEFT"
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::TIRE_PRESSURE_DISPLAY_UNITS",
+            "defaultValue": {
+                "int32Values": [
+                    "VehicleUnit::PSI"
+                ]
+            },
+            "configArray": [
+                "VehicleUnit::KILOPASCAL",
+                "VehicleUnit::PSI",
+                "VehicleUnit::BAR"
+            ]
+        },
+        {
+            "property": "VehicleProperty::CURRENT_GEAR",
+            "defaultValue": {
+                "int32Values": [
+                    "VehicleGear::GEAR_PARK"
+                ]
+            },
+            "configArray": [
+                "VehicleGear::GEAR_PARK",
+                "VehicleGear::GEAR_NEUTRAL",
+                "VehicleGear::GEAR_REVERSE",
+                "VehicleGear::GEAR_1",
+                "VehicleGear::GEAR_2",
+                "VehicleGear::GEAR_3",
+                "VehicleGear::GEAR_4",
+                "VehicleGear::GEAR_5"
+            ]
+        },
+        {
+            "property": "VehicleProperty::PARKING_BRAKE_ON",
+            "defaultValue": {
+                "int32Values": [
+                    1
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::PARKING_BRAKE_AUTO_APPLY",
+            "defaultValue": {
+                "int32Values": [
+                    1
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::FUEL_LEVEL_LOW",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::FUEL_VOLUME_DISPLAY_UNITS",
+            "defaultValue": {
+                "int32Values": [
+                    "VehicleUnit::LITER"
+                ]
+            },
+            "configArray": [
+                "VehicleUnit::LITER",
+                "VehicleUnit::US_GALLON"
+            ]
+        },
+        {
+            "property": "VehicleProperty::HW_KEY_INPUT",
+            "defaultValue": {
+                "int32Values": [
+                    0,
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::HW_ROTARY_INPUT",
+            "defaultValue": {
+                "int32Values": [
+                    0,
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::HW_CUSTOM_INPUT",
+            "defaultValue": {
+                "int32Values": [
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "configArray": [
+                0,
+                0,
+                0,
+                3,
+                0,
+                0,
+                0,
+                0,
+                0
+            ]
+        },
+        {
+            "property": "VehicleProperty::HVAC_POWER_ON",
+            "defaultValue": {
+                "int32Values": [
+                    1
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "Constants::HVAC_ALL"
+                }
+            ],
+            "configArray": [
+                "VehicleProperty::HVAC_FAN_SPEED",
+                "VehicleProperty::HVAC_FAN_DIRECTION"
+            ]
+        },
+        {
+            "property": "VehicleProperty::HVAC_DEFROSTER",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "VehicleAreaWindow::FRONT_WINDSHIELD"
+                },
+                {
+                    "areaId": "VehicleAreaWindow::REAR_WINDSHIELD"
+                }
+            ],
+            "comment": "0 means using for all areas"
+        },
+        {
+            "property": "VehicleProperty::HVAC_ELECTRIC_DEFROSTER_ON",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "VehicleAreaWindow::FRONT_WINDSHIELD"
+                },
+                {
+                    "areaId": "VehicleAreaWindow::REAR_WINDSHIELD"
+                }
+            ],
+            "comment": "0 means using for all areas"
+        },
+        {
+            "property": "VehicleProperty::HVAC_MAX_DEFROST_ON",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "Constants::HVAC_ALL"
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::HVAC_RECIRC_ON",
+            "defaultValue": {
+                "int32Values": [
+                    1
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "Constants::HVAC_ALL"
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::HVAC_AUTO_RECIRC_ON",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "Constants::HVAC_ALL"
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::HVAC_AC_ON",
+            "defaultValue": {
+                "int32Values": [
+                    1
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "Constants::HVAC_ALL"
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::HVAC_MAX_AC_ON",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "Constants::HVAC_ALL"
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::HVAC_AUTO_ON",
+            "defaultValue": {
+                "int32Values": [
+                    1
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "Constants::HVAC_ALL"
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::HVAC_DUAL_ON",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "Constants::HVAC_ALL"
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::HVAC_FAN_SPEED",
+            "defaultValue": {
+                "int32Values": [
+                    3
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "Constants::HVAC_ALL",
+                    "minInt32Value": 1,
+                    "maxInt32Value": 7
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::HVAC_FAN_DIRECTION",
+            "defaultValue": {
+                "int32Values": [
+                    "VehicleHvacFanDirection::FACE"
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "Constants::HVAC_ALL"
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::HVAC_FAN_DIRECTION_AVAILABLE",
+            "defaultValue": {
+                "int32Values": [
+                    "Constants::FAN_DIRECTION_FACE",
+                    "Constants::FAN_DIRECTION_FLOOR",
+                    "Constants::FAN_DIRECTION_FACE_FLOOR",
+                    "Constants::FAN_DIRECTION_DEFROST",
+                    "Constants::FAN_DIRECTION_FACE_DEFROST",
+                    "Constants::FAN_DIRECTION_FLOOR_DEFROST",
+                    "Constants::FAN_DIRECTION_FLOOR_DEFROST_FACE"
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "Constants::HVAC_ALL"
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::HVAC_SEAT_VENTILATION",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "Constants::SEAT_1_LEFT",
+                    "minInt32Value": 0,
+                    "maxInt32Value": 3
+                },
+                {
+                    "areaId": "Constants::SEAT_1_RIGHT",
+                    "minInt32Value": 0,
+                    "maxInt32Value": 3
+                }
+            ],
+            "comment": "0 is off and +ve values indicate ventilation level."
+        },
+        {
+            "property": "VehicleProperty::HVAC_STEERING_WHEEL_HEAT",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": 0,
+                    "minInt32Value": -2,
+                    "maxInt32Value": 2
+                }
+            ],
+            "comment": "+ve values for heating and -ve for cooling"
+        },
+        {
+            "property": "VehicleProperty::HVAC_SEAT_TEMPERATURE",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "Constants::SEAT_1_LEFT",
+                    "minInt32Value": -2,
+                    "maxInt32Value": 2
+                },
+                {
+                    "areaId": "Constants::SEAT_1_RIGHT",
+                    "minInt32Value": -2,
+                    "maxInt32Value": 2
+                }
+            ],
+            "comment": "+ve values for heating and -ve for cooling"
+        },
+        {
+            "property": "VehicleProperty::HVAC_TEMPERATURE_SET",
+            "areas": [
+                {
+                    "defaultValue": {
+                        "floatValues": [
+                            16.0
+                        ]
+                    },
+                    "areaId": 49,
+                    "minFloatValue": 16.0,
+                    "maxFloatValue": 32.0
+                },
+                {
+                    "defaultValue": {
+                        "floatValues": [
+                            20.0
+                        ]
+                    },
+                    "areaId": 68,
+                    "minFloatValue": 16.0,
+                    "maxFloatValue": 32.0
+                }
+            ],
+            "configArray": [
+                160,
+                280,
+                5,
+                605,
+                825,
+                10
+            ]
+        },
+        {
+            "property": "VehicleProperty::HVAC_TEMPERATURE_VALUE_SUGGESTION",
+            "defaultValue": {
+                "floatValues": [
+                    66.19999694824219,
+                    49.0,
+                    19.0,
+                    66.5
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::ENV_OUTSIDE_TEMPERATURE",
+            "defaultValue": {
+                "floatValues": [
+                    25.0
+                ]
+            },
+            "maxSampleRate": 2.0,
+            "minSampleRate": 1.0
+        },
+        {
+            "property": "VehicleProperty::HVAC_TEMPERATURE_DISPLAY_UNITS",
+            "defaultValue": {
+                "int32Values": [
+                    49
+                ]
+            },
+            "configArray": [
+                49,
+                48
+            ]
+        },
+        {
+            "property": "VehicleProperty::DISTANCE_DISPLAY_UNITS",
+            "defaultValue": {
+                "int32Values": [
+                    "VehicleUnit::MILE"
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": 0
+                }
+            ],
+            "configArray": [
+                "VehicleUnit::KILOMETER",
+                "VehicleUnit::MILE"
+            ]
+        },
+        {
+            "property": "VehicleProperty::NIGHT_MODE",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::GEAR_SELECTION",
+            "defaultValue": {
+                "int32Values": [
+                    "VehicleGear::GEAR_PARK"
+                ]
+            },
+            "configArray": [
+                "VehicleGear::GEAR_PARK",
+                "VehicleGear::GEAR_NEUTRAL",
+                "VehicleGear::GEAR_REVERSE",
+                "VehicleGear::GEAR_DRIVE",
+                "VehicleGear::GEAR_1",
+                "VehicleGear::GEAR_2",
+                "VehicleGear::GEAR_3",
+                "VehicleGear::GEAR_4",
+                "VehicleGear::GEAR_5"
+            ]
+        },
+        {
+            "property": "VehicleProperty::TURN_SIGNAL_STATE",
+            "defaultValue": {
+                "int32Values": [
+                    "VehicleTurnSignal::NONE"
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::IGNITION_STATE",
+            "defaultValue": {
+                "int32Values": [
+                    "VehicleIgnitionState::ON"
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::ENGINE_COOLANT_TEMP",
+            "defaultValue": {
+                "floatValues": [
+                    75.0
+                ]
+            },
+            "maxSampleRate": 10.0,
+            "minSampleRate": 1.0
+        },
+        {
+            "property": "VehicleProperty::ENGINE_OIL_LEVEL",
+            "defaultValue": {
+                "int32Values": [
+                    "VehicleOilLevel::NORMAL"
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::ENGINE_OIL_TEMP",
+            "defaultValue": {
+                "floatValues": [
+                    101.0
+                ]
+            },
+            "maxSampleRate": 10.0,
+            "minSampleRate": 0.10000000149011612
+        },
+        {
+            "property": "VehicleProperty::DOOR_LOCK",
+            "areas": [
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            1
+                        ]
+                    },
+                    "areaId": "Constants::DOOR_1_LEFT"
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            1
+                        ]
+                    },
+                    "areaId": "Constants::DOOR_1_RIGHT"
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            1
+                        ]
+                    },
+                    "areaId": "Constants::DOOR_2_LEFT"
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            1
+                        ]
+                    },
+                    "areaId": "Constants::DOOR_2_RIGHT"
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::DOOR_POS",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "Constants::DOOR_1_LEFT",
+                    "minInt32Value": 0,
+                    "maxInt32Value": 1
+                },
+                {
+                    "areaId": "Constants::DOOR_1_RIGHT",
+                    "minInt32Value": 0,
+                    "maxInt32Value": 1
+                },
+                {
+                    "areaId": "Constants::DOOR_2_LEFT",
+                    "minInt32Value": 0,
+                    "maxInt32Value": 1
+                },
+                {
+                    "areaId": "Constants::DOOR_2_RIGHT",
+                    "minInt32Value": 0,
+                    "maxInt32Value": 1
+                },
+                {
+                    "areaId": "Constants::DOOR_REAR",
+                    "minInt32Value": 0,
+                    "maxInt32Value": 1
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::WINDOW_LOCK",
+            "areas": [
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            0
+                        ]
+                    },
+                    "areaId": "Constants::WINDOW_1_RIGHT_2_LEFT_2_RIGHT"
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::WINDOW_POS",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "Constants::WINDOW_1_LEFT",
+                    "minInt32Value": 0,
+                    "maxInt32Value": 10,
+                },
+                {
+                    "areaId": "Constants::WINDOW_1_RIGHT",
+                    "minInt32Value": 0,
+                    "maxInt32Value": 10,
+                },
+                {
+                    "areaId": "Constants::WINDOW_2_LEFT",
+                    "minInt32Value": 0,
+                    "maxInt32Value": 10,
+                },
+                {
+                    "areaId": "Constants::WINDOW_2_RIGHT",
+                    "minInt32Value": 0,
+                    "maxInt32Value": 10,
+                },
+                {
+                    "areaId": "Constants::WINDOW_ROOF_TOP_1",
+                    "minInt32Value": -10,
+                    "maxInt32Value": 10
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::WHEEL_TICK",
+            "defaultValue": {
+                "int64Values": [
+                    0,
+                    100000,
+                    200000,
+                    300000,
+                    400000
+                ]
+            },
+            "configArray": [
+                15,
+                50000,
+                50000,
+                50000,
+                50000
+            ],
+            "maxSampleRate": 10.0,
+            "minSampleRate": 1.0
+        },
+        {
+            "property": "VehicleProperty::ABS_ACTIVE",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::TRACTION_CONTROL_ACTIVE",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::AP_POWER_STATE_REQ",
+            "configArray": [
+                0
+            ]
+        },
+        {
+            "property": "VehicleProperty::AP_POWER_STATE_REPORT",
+            "defaultValue": {
+                "int32Values": [
+                    "VehicleApPowerStateReport::WAIT_FOR_VHAL",
+                    0
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::DISPLAY_BRIGHTNESS",
+            "defaultValue": {
+                "int32Values": [
+                    100
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": 0,
+                    "minInt32Value": 0,
+                    "maxInt32Value": 100
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::OBD2_LIVE_FRAME",
+            "configArray": [
+                0,
+                0
+            ]
+        },
+        {
+            "property": "VehicleProperty::OBD2_FREEZE_FRAME",
+            "configArray": [
+                0,
+                0
+            ]
+        },
+        {
+            "property": "VehicleProperty::OBD2_FREEZE_FRAME_INFO"
+        },
+        {
+            "property": "VehicleProperty::OBD2_FREEZE_FRAME_CLEAR",
+            "configArray": [
+                1
+            ]
+        },
+        {
+            "property": "VehicleProperty::HEADLIGHTS_STATE",
+            "defaultValue": {
+                "int32Values": [
+                    "Constants::LIGHT_STATE_ON"
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::HIGH_BEAM_LIGHTS_STATE",
+            "defaultValue": {
+                "int32Values": [
+                    "Constants::LIGHT_STATE_ON"
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::FRONT_FOG_LIGHTS_STATE",
+            "defaultValue": {
+                "int32Values": [
+                    "Constants::LIGHT_STATE_ON"
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::REAR_FOG_LIGHTS_STATE",
+            "defaultValue": {
+                "int32Values": [
+                    "Constants::LIGHT_STATE_ON"
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::HAZARD_LIGHTS_STATE",
+            "defaultValue": {
+                "int32Values": [
+                    "Constants::LIGHT_STATE_ON"
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::HEADLIGHTS_SWITCH",
+            "defaultValue": {
+                "int32Values": [
+                    "Constants::LIGHT_SWITCH_AUTO"
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::HIGH_BEAM_LIGHTS_SWITCH",
+            "defaultValue": {
+                "int32Values": [
+                    "Constants::LIGHT_SWITCH_AUTO"
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::FOG_LIGHTS_SWITCH",
+            "defaultValue": {
+                "int32Values": [
+                    "Constants::LIGHT_SWITCH_AUTO"
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::FRONT_FOG_LIGHTS_SWITCH",
+            "defaultValue": {
+                "int32Values": [
+                    "Constants::LIGHT_SWITCH_AUTO"
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::REAR_FOG_LIGHTS_SWITCH",
+            "defaultValue": {
+                "int32Values": [
+                    "Constants::LIGHT_SWITCH_AUTO"
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::HAZARD_LIGHTS_SWITCH",
+            "defaultValue": {
+                "int32Values": [
+                    "Constants::LIGHT_SWITCH_AUTO"
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::EVS_SERVICE_REQUEST",
+            "defaultValue": {
+                "int32Values": [
+                    "EvsServiceType::REARVIEW",
+                    "EvsServiceState::OFF"
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::VEHICLE_MAP_SERVICE"
+        },
+        {
+            "property": "VehicleProperty::ELECTRONIC_TOLL_COLLECTION_CARD_TYPE",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::ELECTRONIC_TOLL_COLLECTION_CARD_STATUS",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::INITIAL_USER_INFO"
+        },
+        {
+            "property": "VehicleProperty::SWITCH_USER"
+        },
+        {
+            "property": "VehicleProperty::CREATE_USER"
+        },
+        {
+            "property": "VehicleProperty::REMOVE_USER"
+        },
+        {
+            "property": "VehicleProperty::USER_IDENTIFICATION_ASSOCIATION"
+        },
+        {
+            "property": "VehicleProperty::POWER_POLICY_REQ"
+        },
+        {
+            "property": "VehicleProperty::POWER_POLICY_GROUP_REQ"
+        },
+        {
+            "property": "VehicleProperty::CURRENT_POWER_POLICY"
+        },
+        {
+            "property": "VehicleProperty::ANDROID_EPOCH_TIME",
+        },
+        {
+            "property": "VehicleProperty::WATCHDOG_ALIVE",
+        },
+        {
+            "property": "VehicleProperty::WATCHDOG_TERMINATED_PROCESS",
+        },
+        {
+            "property": "VehicleProperty::VHAL_HEARTBEAT"
+        },
+        {
+            "property": "VehicleProperty::CLUSTER_SWITCH_UI",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            },
+            "comment": "0 means ClusterHome"
+        },
+        {
+            "property": "VehicleProperty::CLUSTER_DISPLAY_STATE",
+            "defaultValue": {
+                "int32Values": [
+                    0,
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1
+                ]
+            },
+            "comment":
+                    "Value means: 0 /* Off */, -1, -1, -1, -1 /* Bounds */, -1, -1, -1, -1 /* Insets */",
+        },
+        {
+            "property": "VehicleProperty::CLUSTER_REPORT_STATE",
+            "configArray": [
+                0,
+                0,
+                0,
+                11,
+                0,
+                0,
+                0,
+                0,
+                16
+            ]
+        },
+        {
+            "property": "VehicleProperty::CLUSTER_REQUEST_DISPLAY",
+        },
+        {
+            "property": "VehicleProperty::CLUSTER_NAVIGATION_STATE",
+        },
+        {
+            "property": "VehicleProperty::GENERAL_SAFETY_REGULATION_COMPLIANCE_REQUIREMENT",
+            "defaultValue": {
+                "int32Values": [
+                    "GsrComplianceRequirementType::GSR_COMPLIANCE_REQUIRED_THROUGH_SYSTEM_IMAGE"
+                ]
+            }
+        }
+    ]
+}
