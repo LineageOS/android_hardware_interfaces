@@ -19,6 +19,7 @@
 #include <aidl/Vintf.h>
 #include <aidl/android/hardware/wifi/supplicant/BnSupplicant.h>
 #include <aidl/android/hardware/wifi/supplicant/BnSupplicantP2pIfaceCallback.h>
+#include <aidl/android/hardware/wifi/supplicant/SupplicantStatusCode.h>
 #include <android/binder_manager.h>
 #include <android/binder_status.h>
 #include <binder/IServiceManager.h>
@@ -38,6 +39,7 @@ using aidl::android::hardware::wifi::supplicant::P2pFrameTypeMask;
 using aidl::android::hardware::wifi::supplicant::P2pGroupCapabilityMask;
 using aidl::android::hardware::wifi::supplicant::P2pProvDiscStatusCode;
 using aidl::android::hardware::wifi::supplicant::P2pStatusCode;
+using aidl::android::hardware::wifi::supplicant::SupplicantStatusCode;
 using aidl::android::hardware::wifi::supplicant::WpsConfigMethods;
 using aidl::android::hardware::wifi::supplicant::WpsDevPasswordId;
 using aidl::android::hardware::wifi::supplicant::WpsProvisionMethod;
@@ -413,7 +415,12 @@ TEST_P(SupplicantP2pIfaceAidlTest, SetListenChannel) {
  */
 TEST_P(SupplicantP2pIfaceAidlTest, EnableMacRandomization) {
     // Enable twice
-    EXPECT_TRUE(p2p_iface_->setMacRandomization(true).isOk());
+    auto status = p2p_iface_->setMacRandomization(true);
+    if (!status.isOk() && status.getServiceSpecificError() ==
+                                  static_cast<int32_t>(SupplicantStatusCode::FAILURE_UNSUPPORTED)) {
+        GTEST_SKIP() << "Mac randomization is not supported.";
+    }
+    EXPECT_TRUE(status.isOk());
     EXPECT_TRUE(p2p_iface_->setMacRandomization(true).isOk());
 
     // Disable twice
