@@ -896,10 +896,49 @@ class CompressedOffloadOutputStreamTest : public PcmOnlyConfigOutputStreamTest {
     }
 };
 
+class OffloadCallbacks : public IStreamOutCallback {
+  public:
+    Return<void> onDrainReady() override {
+        ALOGI("onDrainReady");
+        {
+            std::lock_guard lg(mLock);
+            mOnDrainReady = true;
+        }
+        mCondVar.notify_one();
+        return {};
+    }
+    Return<void> onWriteReady() override { return {}; }
+    Return<void> onError() override {
+        ALOGW("onError");
+        {
+            std::lock_guard lg(mLock);
+            mOnError = true;
+        }
+        mCondVar.notify_one();
+        return {};
+    }
+    bool waitForDrainReadyOrError() {
+        std::unique_lock l(mLock);
+        if (!mOnDrainReady && !mOnError) {
+            mCondVar.wait(l, [&]() { return mOnDrainReady || mOnError; });
+        }
+        const bool success = !mOnError;
+        mOnDrainReady = mOnError = false;
+        return success;
+    }
+
+  private:
+    std::mutex mLock;
+    bool mOnDrainReady = false;
+    bool mOnError = false;
+    std::condition_variable mCondVar;
+};
+
 TEST_P(CompressedOffloadOutputStreamTest, Mp3FormatGaplessOffload) {
     doc::test("Check that compressed offload mix ports for MP3 implement gapless offload");
     const auto& flags = getOutputFlags();
     const bool isNewDeviceLaunchingOnTPlus = property_get_int32("ro.vendor.api_level", 0) >= 33;
+    // See test instantiation, only offload MP3 mix ports are used.
     if (std::find_if(flags.begin(), flags.end(), [](const auto& flag) {
             return flag == toString(xsd::AudioInOutFlag::AUDIO_OUTPUT_FLAG_GAPLESS_OFFLOAD);
         }) == flags.end()) {
@@ -910,8 +949,7 @@ TEST_P(CompressedOffloadOutputStreamTest, Mp3FormatGaplessOffload) {
             GTEST_SKIP() << "Compressed offload mix port does not support gapless offload";
         }
     }
-    // FIXME: The presentation position is not updated if there is no zero padding in data.
-    std::vector<uint8_t> offloadData(stream->getBufferSize());
+    std::vector<uint8_t> offloadData;
     ASSERT_NO_FATAL_FAILURE(loadData("/data/local/tmp/sine882hz3s.mp3", &offloadData));
     ASSERT_FALSE(offloadData.empty());
     ASSERT_NO_FATAL_FAILURE(createPatchIfNeeded());
@@ -921,38 +959,70 @@ TEST_P(CompressedOffloadOutputStreamTest, Mp3FormatGaplessOffload) {
     const int delay = 576 + 1000;
     const int padding = 756 + 1000;
     const int durationMs = 3000 - 44;
-    // StreamWriter plays 'offloadData' in a loop, possibly using multiple calls to 'write',
-    // this depends on the relative sizes of 'offloadData' and the HAL buffer. Writer calls
-    // 'onDataWrap' callback each time it wraps around the buffer.
+    auto start = std::chrono::steady_clock::now();
+    auto callbacks = sp<OffloadCallbacks>::make();
+    std::mutex presentationEndLock;
+    std::vector<float> presentationEndTimes;
+    // StreamWriter plays 'offloadData' in a loop, possibly using multiple calls to 'write', this
+    // depends on the relative sizes of 'offloadData' and the HAL buffer. Writer calls 'onDataStart'
+    // each time it starts writing the buffer from the beginning, and 'onDataWrap' callback each
+    // time it wraps around the buffer.
     StreamWriter writer(
-            stream.get(), stream->getBufferSize(), std::move(offloadData), [&]() /* onDataWrap */ {
-                Parameters::set(stream,
-                                {{AUDIO_OFFLOAD_CODEC_DELAY_SAMPLES, std::to_string(delay)},
+            stream.get(), stream->getBufferSize(), std::move(offloadData),
+            [&]() /* onDataStart */ { start = std::chrono::steady_clock::now(); },
+            [&]() /* onDataWrap */ {
+                Return<Result> ret(Result::OK);
+                // Decrease the volume since the test plays a loud sine wave.
+                ret = stream->setVolume(0.1, 0.1);
+                if (!ret.isOk() || ret != Result::OK) {
+                    ALOGE("%s: setVolume failed: %s", __func__, toString(ret).c_str());
+                    return false;
+                }
+                ret = Parameters::set(
+                        stream, {{AUDIO_OFFLOAD_CODEC_DELAY_SAMPLES, std::to_string(delay)},
                                  {AUDIO_OFFLOAD_CODEC_PADDING_SAMPLES, std::to_string(padding)}});
-                stream->drain(AudioDrain::EARLY_NOTIFY);
+                if (!ret.isOk() || ret != Result::OK) {
+                    ALOGE("%s: setParameters failed: %s", __func__, toString(ret).c_str());
+                    return false;
+                }
+                ret = stream->drain(AudioDrain::EARLY_NOTIFY);
+                if (!ret.isOk() || ret != Result::OK) {
+                    ALOGE("%s: drain failed: %s", __func__, toString(ret).c_str());
+                    return false;
+                }
+                // FIXME: On some SoCs intermittent errors are possible, ignore them.
+                if (callbacks->waitForDrainReadyOrError()) {
+                    const float duration = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                                   std::chrono::steady_clock::now() - start)
+                                                   .count();
+                    std::lock_guard lg(presentationEndLock);
+                    presentationEndTimes.push_back(duration);
+                }
+                return true;
             });
+    ASSERT_OK(stream->setCallback(callbacks));
     ASSERT_TRUE(writer.start());
-    ASSERT_TRUE(writer.waitForAtLeastOneCycle());
-    // Decrease the volume since the test plays a loud sine wave.
-    ASSERT_OK(stream->setVolume(0.1, 0.1));
     // How many times to loop the track so that the sum of gapless delay and padding from
     // the first presentation end to the last is at least 'presentationeEndPrecisionMs'.
     const int playbackNumber = (int)(significantSampleNumber / ((float)delay + padding) + 1);
-    std::vector<float> presentationEndTimes;
-    uint64_t previousPosition = std::numeric_limits<uint64_t>::max();
-    for (int i = 0; i < playbackNumber; ++i) {
-        const auto start = std::chrono::steady_clock::now();
-        ASSERT_NO_FATAL_FAILURE(
-                waitForPresentationPositionAdvance(writer, &previousPosition, &previousPosition));
-        presentationEndTimes.push_back(std::chrono::duration_cast<std::chrono::milliseconds>(
-                                               std::chrono::steady_clock::now() - start)
-                                               .count());
+    for (bool done = false; !done;) {
+        usleep(presentationeEndPrecisionMs * 1000);
+        {
+            std::lock_guard lg(presentationEndLock);
+            done = presentationEndTimes.size() >= playbackNumber;
+        }
+        ASSERT_FALSE(writer.hasError()) << "Recent write or drain operation has failed";
     }
     const float avgDuration =
             std::accumulate(presentationEndTimes.begin(), presentationEndTimes.end(), 0.0) /
             presentationEndTimes.size();
-    EXPECT_NEAR(durationMs, avgDuration, presentationeEndPrecisionMs * 0.1);
+    std::stringstream observedEndTimes;
+    std::copy(presentationEndTimes.begin(), presentationEndTimes.end(),
+              std::ostream_iterator<float>(observedEndTimes, ", "));
+    EXPECT_NEAR(durationMs, avgDuration, presentationeEndPrecisionMs * 0.1)
+            << "Observed durations: " << observedEndTimes.str();
     writer.stop();
+    EXPECT_OK(stream->clearCallback());
     releasePatchIfNeeded();
 }
 
