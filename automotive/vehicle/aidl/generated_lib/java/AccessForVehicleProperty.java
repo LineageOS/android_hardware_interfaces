@@ -69,7 +69,7 @@ public final class AccessForVehicleProperty {
         Map.entry(VehicleProperty.IGNITION_STATE, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.ABS_ACTIVE, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.TRACTION_CONTROL_ACTIVE, VehiclePropertyAccess.READ),
-        Map.entry(VehicleProperty.HVAC_FAN_SPEED, VehiclePropertyAccess.READ),
+        Map.entry(VehicleProperty.HVAC_FAN_SPEED, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.HVAC_FAN_DIRECTION, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.HVAC_TEMPERATURE_CURRENT, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.HVAC_TEMPERATURE_SET, VehiclePropertyAccess.READ_WRITE),
