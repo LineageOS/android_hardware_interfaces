@@ -188,6 +188,10 @@ class KeyMintAidlTestBase : public ::testing::TestWithParam<string> {
 
     void CheckAesIncrementalEncryptOperation(BlockMode block_mode, int message_size);
 
+    void AesCheckEncryptOneByteAtATime(const string& key, BlockMode block_mode,
+                                       PaddingMode padding_mode, const string& iv,
+                                       const string& plaintext, const string& exp_cipher_text);
+
     void CheckHmacTestVector(const string& key, const string& message, Digest digest,
                              const string& expected_mac);
 
@@ -343,6 +347,11 @@ class KeyMintAidlTestBase : public ::testing::TestWithParam<string> {
     string name_;
     string author_;
     long challenge_;
+
+  private:
+    void CheckEncryptOneByteAtATime(BlockMode block_mode, const int block_size,
+                                    PaddingMode padding_mode, const string& iv,
+                                    const string& plaintext, const string& exp_cipher_text);
 };
 
 // If the given property is available, add it to the tag set under the given tag ID.
