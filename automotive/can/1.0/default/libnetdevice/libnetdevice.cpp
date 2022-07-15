@@ -60,7 +60,7 @@ bool add(std::string dev, std::string type) {
 
     {
         auto linkinfo = req.addNested(IFLA_LINKINFO);
-        req.add(IFLA_INFO_KIND, type);
+        req.addBuffer(IFLA_INFO_KIND, type);
     }
 
     nl::Socket sock(NETLINK_ROUTE);
