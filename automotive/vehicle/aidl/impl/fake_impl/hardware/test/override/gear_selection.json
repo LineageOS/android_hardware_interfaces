@@ -1,9 +1,13 @@
-[
-  {
-    "timestamp": 1000000,
-    "areaId": 0,
-    "value": 8,
-    // GEAR_SELECTION
-    "prop": 289408000
-  }
-]
+{
+    "apiVersion": 1,
+    "properties": [
+        {
+            "property": "VehicleProperty::GEAR_SELECTION",
+            "defaultValue": {
+                "int32Values": [
+                    8
+                ]
+            }
+        }
+    ]
+}
