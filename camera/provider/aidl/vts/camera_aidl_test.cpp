@@ -22,6 +22,7 @@
 #include <HandleImporter.h>
 #include <aidl/android/hardware/camera/device/ICameraDevice.h>
 #include <aidl/android/hardware/camera/metadata/CameraMetadataTag.h>
+#include <aidl/android/hardware/camera/metadata/RequestAvailableColorSpaceProfilesMap.h>
 #include <aidl/android/hardware/camera/metadata/RequestAvailableDynamicRangeProfilesMap.h>
 #include <aidl/android/hardware/camera/metadata/SensorInfoColorFilterArrangement.h>
 #include <aidl/android/hardware/camera/metadata/SensorPixelMode.h>
@@ -43,6 +44,7 @@ using ::aidl::android::hardware::camera::common::TorchModeStatus;
 using ::aidl::android::hardware::camera::device::CameraMetadata;
 using ::aidl::android::hardware::camera::device::ICameraDevice;
 using ::aidl::android::hardware::camera::metadata::CameraMetadataTag;
+using ::aidl::android::hardware::camera::metadata::RequestAvailableColorSpaceProfilesMap;
 using ::aidl::android::hardware::camera::metadata::RequestAvailableDynamicRangeProfilesMap;
 using ::aidl::android::hardware::camera::metadata::SensorInfoColorFilterArrangement;
 using ::aidl::android::hardware::camera::metadata::SensorPixelMode;
@@ -2789,6 +2791,168 @@ void CameraAidlTest::verify10BitMetadata(
     }
 }
 
+bool CameraAidlTest::reportsColorSpaces(const camera_metadata_t* staticMeta) {
+    camera_metadata_ro_entry capabilityEntry;
+    int rc = find_camera_metadata_ro_entry(staticMeta, ANDROID_REQUEST_AVAILABLE_CAPABILITIES,
+                                           &capabilityEntry);
+    if (rc == 0) {
+        for (uint32_t i = 0; i < capabilityEntry.count; i++) {
+            if (capabilityEntry.data.u8[i] ==
+                ANDROID_REQUEST_AVAILABLE_CAPABILITIES_COLOR_SPACE_PROFILES) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+void CameraAidlTest::getColorSpaceProfiles(
+        const camera_metadata_t* staticMeta,
+        std::vector<RequestAvailableColorSpaceProfilesMap>* profiles) {
+    ASSERT_NE(nullptr, staticMeta);
+    ASSERT_NE(nullptr, profiles);
+    camera_metadata_ro_entry entry;
+    int rc = find_camera_metadata_ro_entry(
+            staticMeta, ANDROID_REQUEST_AVAILABLE_COLOR_SPACE_PROFILES_MAP, &entry);
+    ASSERT_EQ(rc, 0);
+    ASSERT_TRUE(entry.count > 0);
+    ASSERT_EQ(entry.count % 3, 0);
+
+    for (uint32_t i = 0; i < entry.count; i += 3) {
+        ASSERT_NE(entry.data.i64[i],
+                ANDROID_REQUEST_AVAILABLE_COLOR_SPACE_PROFILES_MAP_UNSPECIFIED);
+        if (std::find(profiles->begin(), profiles->end(),
+                static_cast<RequestAvailableColorSpaceProfilesMap>(entry.data.i64[i]))
+                == profiles->end()) {
+            profiles->emplace_back(
+                    static_cast<RequestAvailableColorSpaceProfilesMap>(entry.data.i64[i]));
+        }
+    }
+}
+
+bool CameraAidlTest::isColorSpaceCompatibleWithDynamicRangeAndPixelFormat(
+        const camera_metadata_t* staticMeta,
+        RequestAvailableColorSpaceProfilesMap colorSpace,
+        RequestAvailableDynamicRangeProfilesMap dynamicRangeProfile,
+        aidl::android::hardware::graphics::common::PixelFormat pixelFormat) {
+    camera_metadata_ro_entry entry;
+    int rc = find_camera_metadata_ro_entry(
+            staticMeta, ANDROID_REQUEST_AVAILABLE_COLOR_SPACE_PROFILES_MAP, &entry);
+
+    if (rc == 0) {
+        for (uint32_t i = 0; i < entry.count; i += 3) {
+            RequestAvailableColorSpaceProfilesMap entryColorSpace =
+                    static_cast<RequestAvailableColorSpaceProfilesMap>(entry.data.i64[i]);
+            int64_t dynamicRangeProfileI64 = static_cast<int64_t>(dynamicRangeProfile);
+            int32_t entryImageFormat = static_cast<int32_t>(entry.data.i64[i + 1]);
+            int32_t expectedImageFormat = halFormatToPublicFormat(pixelFormat);
+            if (entryColorSpace == colorSpace
+                    && (entry.data.i64[i + 2] & dynamicRangeProfileI64) != 0
+                    && entryImageFormat == expectedImageFormat) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+const char* CameraAidlTest::getColorSpaceProfileString(
+        RequestAvailableColorSpaceProfilesMap colorSpace) {
+    auto colorSpaceCast = static_cast<int>(colorSpace);
+    switch (colorSpaceCast) {
+        case ANDROID_REQUEST_AVAILABLE_COLOR_SPACE_PROFILES_MAP_UNSPECIFIED:
+            return "UNSPECIFIED";
+        case ColorSpaceNamed::SRGB:
+            return "SRGB";
+        case ColorSpaceNamed::LINEAR_SRGB:
+            return "LINEAR_SRGB";
+        case ColorSpaceNamed::EXTENDED_SRGB:
+            return "EXTENDED_SRGB";
+        case ColorSpaceNamed::LINEAR_EXTENDED_SRGB:
+            return "LINEAR_EXTENDED_SRGB";
+        case ColorSpaceNamed::BT709:
+            return "BT709";
+        case ColorSpaceNamed::BT2020:
+            return "BT2020";
+        case ColorSpaceNamed::DCI_P3:
+            return "DCI_P3";
+        case ColorSpaceNamed::DISPLAY_P3:
+            return "DISPLAY_P3";
+        case ColorSpaceNamed::NTSC_1953:
+            return "NTSC_1953";
+        case ColorSpaceNamed::SMPTE_C:
+            return "SMPTE_C";
+        case ColorSpaceNamed::ADOBE_RGB:
+            return "ADOBE_RGB";
+        case ColorSpaceNamed::PRO_PHOTO_RGB:
+            return "PRO_PHOTO_RGB";
+        case ColorSpaceNamed::ACES:
+            return "ACES";
+        case ColorSpaceNamed::ACESCG:
+            return "ACESCG";
+        case ColorSpaceNamed::CIE_XYZ:
+            return "CIE_XYZ";
+        case ColorSpaceNamed::CIE_LAB:
+            return "CIE_LAB";
+        default:
+            return "INVALID";
+    }
+
+    return "INVALID";
+}
+
+const char* CameraAidlTest::getDynamicRangeProfileString(
+        RequestAvailableDynamicRangeProfilesMap dynamicRangeProfile) {
+    auto dynamicRangeProfileCast =
+            static_cast<camera_metadata_enum_android_request_available_dynamic_range_profiles_map>
+            (dynamicRangeProfile);
+    switch (dynamicRangeProfileCast) {
+        case ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_STANDARD:
+            return "STANDARD";
+        case ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_HLG10:
+            return "HLG10";
+        case ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_HDR10:
+            return "HDR10";
+        case ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_HDR10_PLUS:
+            return "HDR10_PLUS";
+        case ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_DOLBY_VISION_10B_HDR_REF:
+            return "DOLBY_VISION_10B_HDR_REF";
+        case ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_DOLBY_VISION_10B_HDR_REF_PO:
+            return "DOLBY_VISION_10B_HDR_REF_P0";
+        case ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_DOLBY_VISION_10B_HDR_OEM:
+            return "DOLBY_VISION_10B_HDR_OEM";
+        case ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_DOLBY_VISION_10B_HDR_OEM_PO:
+            return "DOLBY_VISION_10B_HDR_OEM_P0";
+        case ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_DOLBY_VISION_8B_HDR_REF:
+            return "DOLBY_VISION_8B_HDR_REF";
+        case ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_DOLBY_VISION_8B_HDR_REF_PO:
+            return "DOLBY_VISION_8B_HDR_REF_P0";
+        case ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_DOLBY_VISION_8B_HDR_OEM:
+            return "DOLBY_VISION_8B_HDR_OEM";
+        case ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_DOLBY_VISION_8B_HDR_OEM_PO:
+            return "DOLBY_VISION_8B_HDR_OEM_P0";
+        default:
+            return "INVALID";
+    }
+
+    return "INVALID";
+}
+
+int32_t CameraAidlTest::halFormatToPublicFormat(
+        aidl::android::hardware::graphics::common::PixelFormat pixelFormat) {
+    // This is an incomplete mapping of pixel format to image format and assumes dataspaces
+    // (see getDataspace)
+    switch (pixelFormat) {
+    case PixelFormat::BLOB:
+        return 0x100; // ImageFormat.JPEG
+    case PixelFormat::Y16:
+        return 0x44363159; // ImageFormat.DEPTH16
+    default:
+        return static_cast<int32_t>(pixelFormat);
+    }
+}
+
 void CameraAidlTest::configurePreviewStream(
         const std::string& name, const std::shared_ptr<ICameraProvider>& provider,
         const AvailableStream* previewThreshold, std::shared_ptr<ICameraDeviceSession>* session,
@@ -2933,5 +3097,225 @@ void CameraAidlTest::updateInflightResultQueue(
     std::unique_lock<std::mutex> l(mLock);
     for (auto& it : mInflightMap) {
         it.second->resultQueue = resultQueue;
+    }
+}
+
+void CameraAidlTest::processColorSpaceRequest(
+        RequestAvailableColorSpaceProfilesMap colorSpace,
+        RequestAvailableDynamicRangeProfilesMap dynamicRangeProfile) {
+    std::vector<std::string> cameraDeviceNames = getCameraDeviceNames(mProvider);
+    int64_t bufferId = 1;
+    CameraMetadata settings;
+
+    for (const auto& name : cameraDeviceNames) {
+        std::string version, deviceId;
+        ASSERT_TRUE(matchDeviceName(name, mProviderType, &version, &deviceId));
+        CameraMetadata meta;
+        std::shared_ptr<ICameraDevice> device;
+        openEmptyDeviceSession(name, mProvider, &mSession, &meta, &device);
+        camera_metadata_t* staticMeta = reinterpret_cast<camera_metadata_t*>(meta.metadata.data());
+
+        // Device does not report color spaces, skip.
+        if (!reportsColorSpaces(staticMeta)) {
+            ndk::ScopedAStatus ret = mSession->close();
+            mSession = nullptr;
+            ASSERT_TRUE(ret.isOk());
+            ALOGV("Camera %s does not report color spaces", name.c_str());
+            continue;
+        }
+        std::vector<RequestAvailableColorSpaceProfilesMap> profileList;
+        getColorSpaceProfiles(staticMeta, &profileList);
+        ASSERT_FALSE(profileList.empty());
+
+        // Device does not support color space / dynamic range profile, skip
+        if (std::find(profileList.begin(), profileList.end(), colorSpace)
+                == profileList.end() || !isColorSpaceCompatibleWithDynamicRangeAndPixelFormat(
+                        staticMeta, colorSpace, dynamicRangeProfile,
+                        PixelFormat::IMPLEMENTATION_DEFINED)) {
+            ndk::ScopedAStatus ret = mSession->close();
+            mSession = nullptr;
+            ASSERT_TRUE(ret.isOk());
+            ALOGV("Camera %s does not support color space %s with dynamic range profile %s and "
+                  "pixel format %d", name.c_str(), getColorSpaceProfileString(colorSpace),
+                  getDynamicRangeProfileString(dynamicRangeProfile),
+                  PixelFormat::IMPLEMENTATION_DEFINED);
+            continue;
+        }
+
+        ALOGV("Camera %s supports color space %s with dynamic range profile %s and pixel format %d",
+                name.c_str(), getColorSpaceProfileString(colorSpace),
+                getDynamicRangeProfileString(dynamicRangeProfile),
+                PixelFormat::IMPLEMENTATION_DEFINED);
+
+        // If an HDR dynamic range profile is reported in the color space profile list,
+        // the device must also have the dynamic range profiles map capability and contain
+        // the dynamic range profile in the map.
+        if (dynamicRangeProfile != static_cast<RequestAvailableDynamicRangeProfilesMap>(
+                ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_STANDARD)) {
+            ASSERT_TRUE(is10BitDynamicRangeCapable(staticMeta));
+
+            std::vector<RequestAvailableDynamicRangeProfilesMap> dynamicRangeProfiles;
+            get10BitDynamicRangeProfiles(staticMeta, &dynamicRangeProfiles);
+            ASSERT_FALSE(dynamicRangeProfiles.empty());
+            ASSERT_FALSE(std::find(dynamicRangeProfiles.begin(), dynamicRangeProfiles.end(),
+                    dynamicRangeProfile) == dynamicRangeProfiles.end());
+        }
+
+        CameraMetadata req;
+        android::hardware::camera::common::V1_0::helper::CameraMetadata defaultSettings;
+        ndk::ScopedAStatus ret =
+                mSession->constructDefaultRequestSettings(RequestTemplate::PREVIEW, &req);
+        ASSERT_TRUE(ret.isOk());
+
+        const camera_metadata_t* metadata =
+                reinterpret_cast<const camera_metadata_t*>(req.metadata.data());
+        size_t expectedSize = req.metadata.size();
+        int result = validate_camera_metadata_structure(metadata, &expectedSize);
+        ASSERT_TRUE((result == 0) || (result == CAMERA_METADATA_VALIDATION_SHIFTED));
+
+        size_t entryCount = get_camera_metadata_entry_count(metadata);
+        ASSERT_GT(entryCount, 0u);
+        defaultSettings = metadata;
+
+        const camera_metadata_t* settingsBuffer = defaultSettings.getAndLock();
+        uint8_t* rawSettingsBuffer = (uint8_t*)settingsBuffer;
+        settings.metadata = std::vector(
+                rawSettingsBuffer, rawSettingsBuffer + get_camera_metadata_size(settingsBuffer));
+        overrideRotateAndCrop(&settings);
+
+        ret = mSession->close();
+        mSession = nullptr;
+        ASSERT_TRUE(ret.isOk());
+
+        std::vector<HalStream> halStreams;
+        bool supportsPartialResults = false;
+        bool useHalBufManager = false;
+        int32_t partialResultCount = 0;
+        Stream previewStream;
+        std::shared_ptr<DeviceCb> cb;
+
+        previewStream.usage =
+            static_cast<aidl::android::hardware::graphics::common::BufferUsage>(
+                    GRALLOC1_CONSUMER_USAGE_HWCOMPOSER);
+        previewStream.dataSpace = getDataspace(PixelFormat::IMPLEMENTATION_DEFINED);
+        previewStream.colorSpace = static_cast<int32_t>(colorSpace);
+        configureStreams(name, mProvider, PixelFormat::IMPLEMENTATION_DEFINED, &mSession,
+                            &previewStream, &halStreams, &supportsPartialResults,
+                            &partialResultCount, &useHalBufManager, &cb, 0,
+                            /*maxResolution*/ false, dynamicRangeProfile);
+        ASSERT_NE(mSession, nullptr);
+
+        ::aidl::android::hardware::common::fmq::MQDescriptor<
+                int8_t, aidl::android::hardware::common::fmq::SynchronizedReadWrite>
+                descriptor;
+        auto resultQueueRet = mSession->getCaptureResultMetadataQueue(&descriptor);
+        ASSERT_TRUE(resultQueueRet.isOk());
+
+        std::shared_ptr<ResultMetadataQueue> resultQueue =
+                std::make_shared<ResultMetadataQueue>(descriptor);
+        if (!resultQueue->isValid() || resultQueue->availableToWrite() <= 0) {
+            ALOGE("%s: HAL returns empty result metadata fmq, not use it", __func__);
+            resultQueue = nullptr;
+            // Don't use the queue onwards.
+        }
+
+        mInflightMap.clear();
+        // Stream as long as needed to fill the Hal inflight queue
+        std::vector<CaptureRequest> requests(halStreams[0].maxBuffers);
+
+        for (int32_t frameNumber = 0; frameNumber < requests.size(); frameNumber++) {
+            std::shared_ptr<InFlightRequest> inflightReq = std::make_shared<InFlightRequest>(
+                    static_cast<ssize_t>(halStreams.size()), false, supportsPartialResults,
+                    partialResultCount, std::unordered_set<std::string>(), resultQueue);
+
+            CaptureRequest& request = requests[frameNumber];
+            std::vector<StreamBuffer>& outputBuffers = request.outputBuffers;
+            outputBuffers.resize(halStreams.size());
+
+            size_t k = 0;
+            inflightReq->mOutstandingBufferIds.resize(halStreams.size());
+            std::vector<buffer_handle_t> graphicBuffers;
+            graphicBuffers.reserve(halStreams.size());
+
+            for (const auto& halStream : halStreams) {
+                buffer_handle_t buffer_handle;
+                if (useHalBufManager) {
+                    outputBuffers[k] = {halStream.id,   0,
+                                        NativeHandle(), BufferStatus::OK,
+                                        NativeHandle(), NativeHandle()};
+                } else {
+                    auto usage = android_convertGralloc1To0Usage(
+                            static_cast<uint64_t>(halStream.producerUsage),
+                            static_cast<uint64_t>(halStream.consumerUsage));
+                    allocateGraphicBuffer(previewStream.width, previewStream.height, usage,
+                                            halStream.overrideFormat, &buffer_handle);
+
+                    inflightReq->mOutstandingBufferIds[halStream.id][bufferId] = buffer_handle;
+                    graphicBuffers.push_back(buffer_handle);
+                    outputBuffers[k] = {halStream.id, bufferId,
+                        android::makeToAidl(buffer_handle), BufferStatus::OK, NativeHandle(),
+                        NativeHandle()};
+                    bufferId++;
+                }
+                k++;
+            }
+
+            request.inputBuffer = {
+                    -1, 0, NativeHandle(), BufferStatus::ERROR, NativeHandle(), NativeHandle()};
+            request.frameNumber = frameNumber;
+            request.fmqSettingsSize = 0;
+            request.settings = settings;
+            request.inputWidth = 0;
+            request.inputHeight = 0;
+
+            {
+                std::unique_lock<std::mutex> l(mLock);
+                mInflightMap[frameNumber] = inflightReq;
+            }
+
+        }
+
+        int32_t numRequestProcessed = 0;
+        std::vector<BufferCache> cachesToRemove;
+        ndk::ScopedAStatus returnStatus =
+            mSession->processCaptureRequest(requests, cachesToRemove, &numRequestProcessed);
+        ASSERT_TRUE(returnStatus.isOk());
+        ASSERT_EQ(numRequestProcessed, requests.size());
+
+        returnStatus = mSession->repeatingRequestEnd(requests.size() - 1,
+                std::vector<int32_t> {halStreams[0].id});
+        ASSERT_TRUE(returnStatus.isOk());
+
+        for (int32_t frameNumber = 0; frameNumber < requests.size(); frameNumber++) {
+            const auto& inflightReq = mInflightMap[frameNumber];
+            std::unique_lock<std::mutex> l(mLock);
+            while (!inflightReq->errorCodeValid &&
+                    ((0 < inflightReq->numBuffersLeft) || (!inflightReq->haveResultMetadata))) {
+                auto timeout = std::chrono::system_clock::now() +
+                                std::chrono::seconds(kStreamBufferTimeoutSec);
+                ASSERT_NE(std::cv_status::timeout, mResultCondition.wait_until(l, timeout));
+            }
+
+            ASSERT_FALSE(inflightReq->errorCodeValid);
+            ASSERT_NE(inflightReq->resultOutputBuffers.size(), 0u);
+
+            if (dynamicRangeProfile != static_cast<RequestAvailableDynamicRangeProfilesMap>(
+                    ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_STANDARD)) {
+                verify10BitMetadata(mHandleImporter, *inflightReq, dynamicRangeProfile);
+            }
+        }
+
+        if (useHalBufManager) {
+            std::vector<int32_t> streamIds(halStreams.size());
+            for (size_t i = 0; i < streamIds.size(); i++) {
+                streamIds[i] = halStreams[i].id;
+            }
+            mSession->signalStreamFlush(streamIds, /*streamConfigCounter*/ 0);
+            cb->waitForBuffersReturned();
+        }
+
+        ret = mSession->close();
+        mSession = nullptr;
+        ASSERT_TRUE(ret.isOk());
     }
 }
