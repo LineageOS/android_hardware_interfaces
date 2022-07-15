@@ -35,7 +35,7 @@ int main(int /* argc */, char* /* argv */ []) {
     auto userHal = connector->getEmulatedUserHal();
     auto hal = std::make_unique<impl::EmulatedVehicleHal>(store.get(), connector.get(), userHal);
     auto emulator = std::make_unique<impl::VehicleEmulator>(hal.get());
-    auto service = std::make_unique<VehicleHalManager>(hal.get());
+    auto service = android::sp<VehicleHalManager>::make(hal.get());
     connector->setValuePool(hal->getValuePool());
 
     configureRpcThreadpool(4, true /* callerWillJoin */);
