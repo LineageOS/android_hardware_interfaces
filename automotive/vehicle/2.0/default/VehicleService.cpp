@@ -33,7 +33,7 @@ int main(int /* argc */, char* /* argv */ []) {
     auto store = std::make_unique<VehiclePropertyStore>();
     auto connector = std::make_unique<DefaultVehicleConnector>();
     auto hal = std::make_unique<DefaultVehicleHal>(store.get(), connector.get());
-    auto service = std::make_unique<VehicleHalManager>(hal.get());
+    auto service = android::sp<VehicleHalManager>::make(hal.get());
     connector->setValuePool(hal->getValuePool());
 
     android::hardware::configureRpcThreadpool(4, true /* callerWillJoin */);
