@@ -1,0 +1,14 @@
+filegroup {
+    name: "VehicleHalDefaultProperties_JSON",
+    srcs: ["DefaultProperties.json"],
+}
+
+filegroup {
+    name: "VehicleHalTestProperties_JSON",
+    srcs: ["TestProperties.json"],
+}
+
+filegroup {
+    name: "VehicleHalVendorClusterTestProperties_JSON",
+    srcs: ["VendorClusterTestProperties.json"],
+}
