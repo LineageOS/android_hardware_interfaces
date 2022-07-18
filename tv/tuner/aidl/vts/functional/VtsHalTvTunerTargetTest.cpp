@@ -260,7 +260,9 @@ void TunerRecordAidlTest::recordSingleFilterTestWithLnb(FilterConfig filterConf,
     for (auto msgName : lnbRecord.diseqcMsgs) {
         ASSERT_TRUE(mLnbTests.sendDiseqcMessage(diseqcMsgMap[msgName]));
     }
-    recordSingleFilterTest(filterConf, frontendConf, dvrConf);
+    if (!frontendConf.isSoftwareFe) {
+        recordSingleFilterTest(filterConf, frontendConf, dvrConf, Dataflow_Context::LNBRECORD);
+    }
     ASSERT_TRUE(mLnbTests.closeLnb());
     mLnbId = INVALID_LNB_ID;
 }
@@ -318,29 +320,47 @@ void TunerRecordAidlTest::attachSingleFilterToRecordDvrTest(FilterConfig filterC
 }
 
 void TunerRecordAidlTest::recordSingleFilterTest(FilterConfig filterConf,
-                                                 FrontendConfig frontendConf, DvrConfig dvrConf) {
+                                                 FrontendConfig frontendConf, DvrConfig dvrConf,
+                                                 Dataflow_Context context) {
     int32_t demuxId;
     std::shared_ptr<IDemux> demux;
     ASSERT_TRUE(mDemuxTests.openDemux(demux, demuxId));
     mDvrTests.setDemux(demux);
 
     DvrConfig dvrSourceConfig;
-    if (record.hasFrontendConnection) {
+    if (context == Dataflow_Context::RECORD) {
+        if (record.hasFrontendConnection) {
+            int32_t feId;
+            mFrontendTests.getFrontendIdByType(frontendConf.type, feId);
+            ASSERT_TRUE(feId != INVALID_ID);
+            ASSERT_TRUE(mFrontendTests.openFrontendById(feId));
+            ASSERT_TRUE(mFrontendTests.setFrontendCallback());
+            if (frontendConf.isSoftwareFe) {
+                mFrontendTests.setSoftwareFrontendDvrConfig(dvrMap[record.dvrSoftwareFeId]);
+            }
+            ASSERT_TRUE(mDemuxTests.setDemuxFrontendDataSource(feId));
+            mFrontendTests.setDvrTests(&mDvrTests);
+        } else {
+            dvrSourceConfig = dvrMap[record.dvrSourceId];
+            ASSERT_TRUE(mDvrTests.openDvrInDemux(dvrSourceConfig.type, dvrSourceConfig.bufferSize));
+            ASSERT_TRUE(mDvrTests.configDvrPlayback(dvrSourceConfig.settings));
+            ASSERT_TRUE(mDvrTests.getDvrPlaybackMQDescriptor());
+        }
+    } else if (context == Dataflow_Context::LNBRECORD) {
+        // If function arrives here, frontend should not be software, so no need to configure a dvr
+        // source or dvr fe connection that might be used for recording without an Lnb
         int32_t feId;
         mFrontendTests.getFrontendIdByType(frontendConf.type, feId);
         ASSERT_TRUE(feId != INVALID_ID);
         ASSERT_TRUE(mFrontendTests.openFrontendById(feId));
         ASSERT_TRUE(mFrontendTests.setFrontendCallback());
-        if (frontendConf.isSoftwareFe) {
-            mFrontendTests.setSoftwareFrontendDvrConfig(dvrMap[record.dvrSoftwareFeId]);
+        if (mLnbId != INVALID_LNB_ID) {
+            ASSERT_TRUE(mFrontendTests.setLnb(mLnbId));
+        } else {
+            FAIL();
         }
         ASSERT_TRUE(mDemuxTests.setDemuxFrontendDataSource(feId));
         mFrontendTests.setDvrTests(&mDvrTests);
-    } else {
-        dvrSourceConfig = dvrMap[record.dvrSourceId];
-        ASSERT_TRUE(mDvrTests.openDvrInDemux(dvrSourceConfig.type, dvrSourceConfig.bufferSize));
-        ASSERT_TRUE(mDvrTests.configDvrPlayback(dvrSourceConfig.settings));
-        ASSERT_TRUE(mDvrTests.getDvrPlaybackMQDescriptor());
     }
 
     int64_t filterId;
@@ -360,24 +380,31 @@ void TunerRecordAidlTest::recordSingleFilterTest(FilterConfig filterConf,
     ASSERT_TRUE(mDvrTests.startDvrRecord());
     ASSERT_TRUE(mFilterTests.startFilter(filterId));
 
-    if (record.hasFrontendConnection) {
+    if (context == Dataflow_Context::RECORD) {
+        if (record.hasFrontendConnection) {
+            ASSERT_TRUE(mFrontendTests.tuneFrontend(frontendConf, true /*testWithDemux*/));
+        } else {
+            // Start DVR Source
+            mDvrTests.startPlaybackInputThread(
+                    dvrSourceConfig.playbackInputFile,
+                    dvrSourceConfig.settings.get<DvrSettings::Tag::playback>());
+            ASSERT_TRUE(mDvrTests.startDvrPlayback());
+        }
+    } else if (context == Dataflow_Context::LNBRECORD) {
         ASSERT_TRUE(mFrontendTests.tuneFrontend(frontendConf, true /*testWithDemux*/));
-    } else {
-        // Start DVR Source
-        mDvrTests.startPlaybackInputThread(
-                dvrSourceConfig.playbackInputFile,
-                dvrSourceConfig.settings.get<DvrSettings::Tag::playback>());
-        ASSERT_TRUE(mDvrTests.startDvrPlayback());
     }
-
     mDvrTests.testRecordOutput();
     mDvrTests.stopRecordThread();
 
-    if (record.hasFrontendConnection) {
+    if (context == Dataflow_Context::RECORD) {
+        if (record.hasFrontendConnection) {
+            ASSERT_TRUE(mFrontendTests.stopTuneFrontend(true /*testWithDemux*/));
+        } else {
+            mDvrTests.stopPlaybackThread();
+            ASSERT_TRUE(mDvrTests.stopDvrPlayback());
+        }
+    } else if (context == Dataflow_Context::LNBRECORD) {
         ASSERT_TRUE(mFrontendTests.stopTuneFrontend(true /*testWithDemux*/));
-    } else {
-        mDvrTests.stopPlaybackThread();
-        ASSERT_TRUE(mDvrTests.stopDvrPlayback());
     }
 
     ASSERT_TRUE(mFilterTests.stopFilter(filterId));
@@ -386,10 +413,14 @@ void TunerRecordAidlTest::recordSingleFilterTest(FilterConfig filterConf,
     ASSERT_TRUE(mFilterTests.closeFilter(filterId));
     mDvrTests.closeDvrRecord();
 
-    if (record.hasFrontendConnection) {
+    if (context == Dataflow_Context::RECORD) {
+        if (record.hasFrontendConnection) {
+            ASSERT_TRUE(mFrontendTests.closeFrontend());
+        } else {
+            mDvrTests.closeDvrPlayback();
+        }
+    } else if (context == Dataflow_Context::LNBRECORD) {
         ASSERT_TRUE(mFrontendTests.closeFrontend());
-    } else {
-        mDvrTests.closeDvrPlayback();
     }
 
     ASSERT_TRUE(mDemuxTests.closeDemux());
@@ -892,8 +923,12 @@ TEST_P(TunerRecordAidlTest, RecordDataFlowWithTsRecordFilterTest) {
     if (!record.support) {
         return;
     }
-    recordSingleFilterTest(filterMap[record.recordFilterId], frontendMap[record.frontendId],
-                           dvrMap[record.dvrRecordId]);
+    auto record_configs = generateRecordConfigurations();
+    for (auto& configuration : record_configs) {
+        record = configuration;
+        recordSingleFilterTest(filterMap[record.recordFilterId], frontendMap[record.frontendId],
+                               dvrMap[record.dvrRecordId], Dataflow_Context::RECORD);
+    }
 }
 
 TEST_P(TunerRecordAidlTest, AttachFiltersToRecordTest) {
@@ -902,8 +937,13 @@ TEST_P(TunerRecordAidlTest, AttachFiltersToRecordTest) {
     if (!record.support) {
         return;
     }
-    attachSingleFilterToRecordDvrTest(filterMap[record.recordFilterId],
-                                      frontendMap[record.frontendId], dvrMap[record.dvrRecordId]);
+    auto record_configs = generateRecordConfigurations();
+    for (auto& configuration : record_configs) {
+        record = configuration;
+        attachSingleFilterToRecordDvrTest(filterMap[record.recordFilterId],
+                                          frontendMap[record.frontendId],
+                                          dvrMap[record.dvrRecordId]);
+    }
 }
 
 TEST_P(TunerRecordAidlTest, LnbRecordDataFlowWithTsRecordFilterTest) {

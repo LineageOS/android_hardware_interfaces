@@ -78,6 +78,8 @@ void clearIds() {
     sectionFilterIds.clear();
 }
 
+enum class Dataflow_Context { LNBRECORD, RECORD };
+
 class TunerLnbAidlTest : public testing::TestWithParam<std::string> {
   public:
     virtual void SetUp() override {
@@ -289,7 +291,7 @@ class TunerRecordAidlTest : public testing::TestWithParam<std::string> {
     void recordSingleFilterTestWithLnb(FilterConfig filterConf, FrontendConfig frontendConf,
                                        DvrConfig dvrConf, LnbConfig lnbConf);
     void recordSingleFilterTest(FilterConfig filterConf, FrontendConfig frontendConf,
-                                DvrConfig dvrConf);
+                                DvrConfig dvrConf, Dataflow_Context context);
 
     std::shared_ptr<ITuner> mService;
     FrontendTests mFrontendTests;

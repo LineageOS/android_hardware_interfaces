@@ -407,6 +407,56 @@ static inline vector<TimeFilterHardwareConnections> generateTimeFilterConfigurat
     return timeFilter_configs;
 }
 
+/*
+ * index 0 - frontends
+ * index 1 - record dvrs
+ * index 2 - record filters
+ */
+static inline vector<DvrRecordHardwareConnections> generateRecordCombinations() {
+    vector<DvrRecordHardwareConnections> combinations;
+
+    const int frontendIdIndex = 0;
+    const int recordDvrIndex = 1;
+    const int recordFilterIndex = 2;
+
+    vector<vector<string>> deviceIds{frontendIds, recordDvrIds, recordFilterIds};
+
+    auto idCombinations = generateIdCombinations(deviceIds);
+    for (auto& combo : idCombinations) {
+        DvrRecordHardwareConnections mRecord;
+        const string feId = combo[frontendIdIndex];
+        mRecord.hasFrontendConnection = true;
+        if (frontendMap[feId].isSoftwareFe) {
+            // If we have a software frontend, do not include configuration for testing.
+            continue;
+        }
+        mRecord.frontendId = feId;
+        mRecord.support = true;
+        mRecord.dvrSourceId = emptyHardwareId;
+        mRecord.dvrSoftwareFeId = emptyHardwareId;
+        mRecord.recordFilterId = combo[recordFilterIndex];
+        mRecord.dvrRecordId = combo[recordDvrIndex];
+        combinations.push_back(mRecord);
+    }
+
+    return combinations;
+}
+
+static inline vector<DvrRecordHardwareConnections> generateRecordConfigurations() {
+    vector<DvrRecordHardwareConnections> record_configs;
+    if (configuredRecord) {
+        ALOGD("Using Record configuration provided.");
+        record_configs = {record};
+    } else {
+        ALOGD("Record not provided. Generating possible combinations. Consider adding it to "
+              "the "
+              "configuration file.");
+        record_configs = generateRecordCombinations();
+    }
+
+    return record_configs;
+}
+
 /** Config all the frontends that would be used in the tests */
 inline void initFrontendConfig() {
     // The test will use the internal default fe when default fe is connected to any data flow
