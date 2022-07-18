@@ -481,6 +481,15 @@ const std::vector<ConfigDeclaration> kVehicleProperties = {
 
         {.config =
                  {
+                         .prop = toInt(
+                                 VehicleProperty::FUEL_CONSUMPTION_UNITS_DISTANCE_OVER_VOLUME),
+                         .access = VehiclePropertyAccess::READ_WRITE,
+                         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                 },
+         .initialValue = {.int32Values = {1}}},
+
+        {.config =
+                 {
                          .prop = toInt(VehicleProperty::HW_KEY_INPUT),
                          .access = VehiclePropertyAccess::READ,
                          .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
