@@ -234,7 +234,7 @@ Status getPortModeHelper(const std::string portName, PortMode& portMode)  {
     else
         return Status::UNRECOGNIZED_ROLE;
 
-        return Status::SUCCESS;
+    return Status::SUCCESS;
 }
 
 Status getPortStatusHelper (hidl_vec<PortStatus>& currentPortStatus) {
