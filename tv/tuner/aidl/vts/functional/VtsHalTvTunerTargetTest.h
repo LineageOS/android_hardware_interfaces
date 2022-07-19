@@ -45,6 +45,8 @@ bool initConfiguration() {
         ALOGW("[vts] failed to validate connections.");
         return false;
     }
+    determineDataFlows();
+
     return true;
 }
 
@@ -62,6 +64,14 @@ AssertionResult filterDataOutputTestBase(FilterTests& tests) {
     return success();
 }
 
+void clearIds() {
+    recordDvrIds.clear();
+    audioFilterIds.clear();
+    videoFilterIds.clear();
+    playbackDvrIds.clear();
+    recordFilterIds.clear();
+}
+
 class TunerLnbAidlTest : public testing::TestWithParam<std::string> {
   public:
     virtual void SetUp() override {
@@ -75,6 +85,11 @@ class TunerLnbAidlTest : public testing::TestWithParam<std::string> {
         ASSERT_TRUE(initConfiguration());
 
         mLnbTests.setService(mService);
+    }
+
+    virtual void TearDown() override {
+        clearIds();
+        mService = nullptr;
     }
 
   protected:
@@ -105,6 +120,11 @@ class TunerDemuxAidlTest : public testing::TestWithParam<std::string> {
         mFilterTests.setService(mService);
     }
 
+    virtual void TearDown() override {
+        clearIds();
+        mService = nullptr;
+    }
+
   protected:
     static void description(const std::string& description) {
         RecordProperty("description", description);
@@ -133,6 +153,11 @@ class TunerFilterAidlTest : public testing::TestWithParam<std::string> {
         mFrontendTests.setService(mService);
         mDemuxTests.setService(mService);
         mFilterTests.setService(mService);
+    }
+
+    virtual void TearDown() override {
+        clearIds();
+        mService = nullptr;
     }
 
   protected:
@@ -201,6 +226,11 @@ class TunerPlaybackAidlTest : public testing::TestWithParam<std::string> {
         mDvrTests.setService(mService);
     }
 
+    virtual void TearDown() override {
+        clearIds();
+        mService = nullptr;
+    }
+
   protected:
     static void description(const std::string& description) {
         RecordProperty("description", description);
@@ -236,6 +266,12 @@ class TunerRecordAidlTest : public testing::TestWithParam<std::string> {
         mFilterTests.setService(mService);
         mDvrTests.setService(mService);
         mLnbTests.setService(mService);
+    }
+
+    virtual void TearDown() override {
+        clearIds();
+        mService = nullptr;
+        mLnbId = nullptr;
     }
 
   protected:
@@ -278,6 +314,11 @@ class TunerFrontendAidlTest : public testing::TestWithParam<std::string> {
         mFrontendTests.setService(mService);
     }
 
+    virtual void TearDown() override {
+        clearIds();
+        mService = nullptr;
+    }
+
   protected:
     static void description(const std::string& description) {
         RecordProperty("description", description);
@@ -306,6 +347,12 @@ class TunerBroadcastAidlTest : public testing::TestWithParam<std::string> {
         mFilterTests.setService(mService);
         mLnbTests.setService(mService);
         mDvrTests.setService(mService);
+    }
+
+    virtual void TearDown() override {
+        clearIds();
+        mService = nullptr;
+        mLnbId = nullptr;
     }
 
   protected:
@@ -352,6 +399,11 @@ class TunerDescramblerAidlTest : public testing::TestWithParam<std::string> {
         mDvrTests.setService(mService);
         mDescramblerTests.setService(mService);
         mDescramblerTests.setCasService(mCasService);
+    }
+
+    virtual void TearDown() override {
+        clearIds();
+        mService = nullptr;
     }
 
   protected:

@@ -62,9 +62,27 @@ using namespace std;
 using namespace aidl::android::hardware::tv::tuner;
 using namespace android::media::tuner::testing::configuration::V1_0;
 
+static bool hasHwFe = false;
+static bool hasSwFe = false;
+static bool configFileRead = false;
+static bool configuredLive = false;
+static bool configuredScan = false;
+static bool configuredRecord = false;
+static bool configuredLnbLive = false;
+static bool configuredPlayback = false;
+static bool configuredLnbRecord = false;
+static bool configuredTimeFilter = false;
+static bool configuredDescrambling = false;
+
 const string emptyHardwareId = "";
 
 static string mConfigFilePath;
+
+static vector<string> playbackDvrIds;
+static vector<string> recordDvrIds;
+static vector<string> audioFilterIds;
+static vector<string> videoFilterIds;
+static vector<string> recordFilterIds;
 
 #define PROVISION_STR                                      \
     "{                                                   " \
@@ -310,6 +328,11 @@ struct TunerTestingConfigAidlReader1_0 {
                 }
                 frontendMap[id].type = type;
                 frontendMap[id].isSoftwareFe = feConfig.getIsSoftwareFrontend();
+                if (frontendMap[id].isSoftwareFe) {
+                    hasSwFe = true;
+                } else {
+                    hasHwFe = true;
+                }
                 // TODO: b/182519645 complete the tune status config
                 frontendMap[id].tuneStatusTypes = types;
                 frontendMap[id].expectTuneStatuses = statuses;
@@ -384,11 +407,13 @@ struct TunerTestingConfigAidlReader1_0 {
                 DvrType type;
                 switch (dvrConfig.getType()) {
                     case DvrTypeEnum::PLAYBACK:
+                        playbackDvrIds.push_back(id);
                         type = DvrType::PLAYBACK;
                         dvrMap[id].settings.set<DvrSettings::Tag::playback>(
                                 readPlaybackSettings(dvrConfig));
                         break;
                     case DvrTypeEnum::RECORD:
+                        recordDvrIds.push_back(id);
                         type = DvrType::RECORD;
                         dvrMap[id].settings.set<DvrSettings::Tag::record>(
                                 readRecordSettings(dvrConfig));
@@ -477,6 +502,7 @@ struct TunerTestingConfigAidlReader1_0 {
         auto dataFlow = getDataFlowConfiguration();
         if (dataFlow.hasClearLiveBroadcast()) {
             live.hasFrontendConnection = true;
+            configuredLive = true;
         } else {
             live.hasFrontendConnection = false;
             return;
@@ -510,6 +536,7 @@ struct TunerTestingConfigAidlReader1_0 {
         auto dataFlow = getDataFlowConfiguration();
         if (dataFlow.hasScan()) {
             scan.hasFrontendConnection = true;
+            configuredScan = true;
         } else {
             scan.hasFrontendConnection = false;
             return;
@@ -522,6 +549,7 @@ struct TunerTestingConfigAidlReader1_0 {
         auto dataFlow = getDataFlowConfiguration();
         if (dataFlow.hasDvrPlayback()) {
             playback.support = true;
+            configuredPlayback = true;
         } else {
             playback.support = false;
             return;
@@ -548,6 +576,7 @@ struct TunerTestingConfigAidlReader1_0 {
         auto dataFlow = getDataFlowConfiguration();
         if (dataFlow.hasDvrRecord()) {
             record.support = true;
+            configuredRecord = true;
         } else {
             record.support = false;
             return;
@@ -572,6 +601,7 @@ struct TunerTestingConfigAidlReader1_0 {
         auto dataFlow = getDataFlowConfiguration();
         if (dataFlow.hasDescrambling()) {
             descrambling.support = true;
+            configuredDescrambling = true;
         } else {
             descrambling.support = false;
             return;
@@ -601,6 +631,7 @@ struct TunerTestingConfigAidlReader1_0 {
         auto dataFlow = getDataFlowConfiguration();
         if (dataFlow.hasLnbLive()) {
             lnbLive.support = true;
+            configuredLnbLive = true;
         } else {
             lnbLive.support = false;
             return;
@@ -625,6 +656,7 @@ struct TunerTestingConfigAidlReader1_0 {
         auto dataFlow = getDataFlowConfiguration();
         if (dataFlow.hasLnbRecord()) {
             lnbRecord.support = true;
+            configuredLnbRecord = true;
         } else {
             lnbRecord.support = false;
             return;
@@ -649,6 +681,7 @@ struct TunerTestingConfigAidlReader1_0 {
         auto dataFlow = getDataFlowConfiguration();
         if (dataFlow.hasTimeFilter()) {
             timeFilter.support = true;
+            configuredTimeFilter = true;
         } else {
             timeFilter.support = false;
             return;
@@ -798,6 +831,14 @@ struct TunerTestingConfigAidlReader1_0 {
                                           DemuxFilterSettings& settings) {
         auto mainType = filterConfig.getMainType();
         auto subType = filterConfig.getSubType();
+
+        if (subType == FilterSubTypeEnum::AUDIO) {
+            audioFilterIds.push_back(filterConfig.getId());
+        } else if (subType == FilterSubTypeEnum::VIDEO) {
+            videoFilterIds.push_back(filterConfig.getId());
+        } else if (subType == FilterSubTypeEnum::RECORD) {
+            recordFilterIds.push_back(filterConfig.getId());
+        }
 
         switch (mainType) {
             case FilterMainTypeEnum::TS: {
