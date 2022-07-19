@@ -363,8 +363,9 @@ const std::vector<ConfigDeclaration> kVehicleProperties = {
                          .prop = toInt(VehicleProperty::VEHICLE_CURB_WEIGHT),
                          .access = VehiclePropertyAccess::READ,
                          .changeMode = VehiclePropertyChangeMode::STATIC,
+                         .configArray = {/*gross weight kg=*/2948},
                  },
-         .initialValue = {.int32Values = {30}}},
+         .initialValue = {.int32Values = {2211 /*kg*/}}},
 
         {.config =
                  {
@@ -477,6 +478,15 @@ const std::vector<ConfigDeclaration> kVehicleProperties = {
                          .configArray = {(int)VehicleUnit::LITER, (int)VehicleUnit::US_GALLON},
                  },
          .initialValue = {.int32Values = {(int)VehicleUnit::LITER}}},
+
+        {.config =
+                 {
+                         .prop = toInt(
+                                 VehicleProperty::FUEL_CONSUMPTION_UNITS_DISTANCE_OVER_VOLUME),
+                         .access = VehiclePropertyAccess::READ_WRITE,
+                         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                 },
+         .initialValue = {.int32Values = {1}}},
 
         {.config =
                  {

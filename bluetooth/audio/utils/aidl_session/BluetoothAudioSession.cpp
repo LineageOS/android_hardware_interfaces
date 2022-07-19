@@ -111,7 +111,9 @@ void BluetoothAudioSession::ReportAudioConfigChanged(
   if (session_type_ !=
           SessionType::LE_AUDIO_HARDWARE_OFFLOAD_ENCODING_DATAPATH &&
       session_type_ !=
-          SessionType::LE_AUDIO_HARDWARE_OFFLOAD_DECODING_DATAPATH) {
+          SessionType::LE_AUDIO_HARDWARE_OFFLOAD_DECODING_DATAPATH &&
+      session_type_ !=
+          SessionType::LE_AUDIO_BROADCAST_HARDWARE_OFFLOAD_ENCODING_DATAPATH) {
     return;
   }
   std::lock_guard<std::recursive_mutex> guard(mutex_);
