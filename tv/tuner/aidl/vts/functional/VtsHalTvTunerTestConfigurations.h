@@ -457,6 +457,81 @@ static inline vector<DvrRecordHardwareConnections> generateRecordConfigurations(
     return record_configs;
 }
 
+/*
+ * index 0 - frontends
+ * index 1 - audio filters
+ * index 2 - playback dvrs
+ * index 3 - section Filters
+ */
+static inline vector<LiveBroadcastHardwareConnections> generateLiveCombinations() {
+    vector<LiveBroadcastHardwareConnections> combinations;
+    vector<string> mSectionFilterIds = sectionFilterIds;
+    vector<string> mDvrSwConnectionIds = playbackDvrIds;
+
+    // Adding the empty hardware id to cover cases where fields are optional
+    mSectionFilterIds.push_back(emptyHardwareId);
+    mDvrSwConnectionIds.push_back(emptyHardwareId);
+
+    const int frontendIdIndex = 0;
+    const int audioFilterIdIndex = 1;
+    const int dvrSwConnectionIdIndex = 2;
+    const int sectionFilterIdIndex = 3;
+
+    vector<vector<string>> deviceIds{frontendIds, audioFilterIds, mDvrSwConnectionIds,
+                                     mSectionFilterIds};
+
+    auto idCombinations = generateIdCombinations(deviceIds);
+    for (auto& combo : idCombinations) {
+        LiveBroadcastHardwareConnections mLive;
+        const string feId = combo[frontendIdIndex];
+        const string dvrSwConnectionId = combo[dvrSwConnectionIdIndex];
+        mLive.hasFrontendConnection = true;
+
+        if (frontendMap[feId].isSoftwareFe && dvrSwConnectionId.compare(emptyHardwareId) == 0) {
+            // If the frontend is a software frontend and there is no dvr playback connected, do not
+            // include configuration
+            continue;
+        }
+        mLive.frontendId = feId;
+        mLive.dvrSoftwareFeId = dvrSwConnectionId;
+        mLive.audioFilterId = combo[audioFilterIdIndex];
+        const int videoFilterIdIndex =
+                find(audioFilterIds.begin(), audioFilterIds.end(), mLive.audioFilterId) -
+                audioFilterIds.begin();
+        mLive.videoFilterId = videoFilterIds[videoFilterIdIndex];
+        mLive.sectionFilterId = combo[sectionFilterIdIndex];
+
+        if (pcrFilterIds.empty()) {
+            // If pcr Filters have not been provided, set it to empty hardware id
+            mLive.pcrFilterId = emptyHardwareId;
+        } else {
+            // If pcr Filters have been provided, use the first index if there is only 1, or choose
+            // the filter that corresponds to the correct audio and video filter pair
+            const int pcrFilterIdIndex = pcrFilterIds.size() == 1 ? 0 : videoFilterIdIndex;
+            mLive.pcrFilterId = pcrFilterIds[pcrFilterIdIndex];
+        }
+
+        combinations.push_back(mLive);
+    }
+
+    return combinations;
+}
+
+static inline vector<LiveBroadcastHardwareConnections> generateLiveConfigurations() {
+    vector<LiveBroadcastHardwareConnections> live_configs;
+    if (configuredLive) {
+        ALOGD("Using Live configuration provided.");
+        live_configs = {live};
+    } else {
+        ALOGD("Live not provided. Generating possible combinations. Consider adding it to "
+              "the "
+              "configuration file.");
+        live_configs = generateLiveCombinations();
+    }
+
+    return live_configs;
+}
+
 /** Config all the frontends that would be used in the tests */
 inline void initFrontendConfig() {
     // The test will use the internal default fe when default fe is connected to any data flow
@@ -782,6 +857,13 @@ inline bool validateConnections() {
 
     if (audioFilterIds.size() != videoFilterIds.size()) {
         ALOGW("[vts config] the number of audio and video filters should be equal");
+        return false;
+    }
+
+    if (!pcrFilterIds.empty() && pcrFilterIds.size() != 1 &&
+        pcrFilterIds.size() != audioFilterIds.size()) {
+        ALOGW("[vts config] When more than 1 pcr filter is configured, the number of pcr filters "
+              "must equal the number of audio and video filters.");
         return false;
     }
 

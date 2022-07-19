@@ -557,17 +557,21 @@ TEST_P(TunerDemuxAidlTest, openDemux) {
     if (!live.hasFrontendConnection) {
         return;
     }
-    int32_t feId;
-    int32_t demuxId;
-    std::shared_ptr<IDemux> demux;
-    mFrontendTests.getFrontendIdByType(frontendMap[live.frontendId].type, feId);
-    ASSERT_TRUE(feId != INVALID_ID);
-    ASSERT_TRUE(mFrontendTests.openFrontendById(feId));
-    ASSERT_TRUE(mFrontendTests.setFrontendCallback());
-    ASSERT_TRUE(mDemuxTests.openDemux(demux, demuxId));
-    ASSERT_TRUE(mDemuxTests.setDemuxFrontendDataSource(feId));
-    ASSERT_TRUE(mDemuxTests.closeDemux());
-    ASSERT_TRUE(mFrontendTests.closeFrontend());
+    auto live_configs = generateLiveConfigurations();
+    for (auto& configuration : live_configs) {
+        live = configuration;
+        int32_t feId;
+        int32_t demuxId;
+        std::shared_ptr<IDemux> demux;
+        mFrontendTests.getFrontendIdByType(frontendMap[live.frontendId].type, feId);
+        ASSERT_TRUE(feId != INVALID_ID);
+        ASSERT_TRUE(mFrontendTests.openFrontendById(feId));
+        ASSERT_TRUE(mFrontendTests.setFrontendCallback());
+        ASSERT_TRUE(mDemuxTests.openDemux(demux, demuxId));
+        ASSERT_TRUE(mDemuxTests.setDemuxFrontendDataSource(feId));
+        ASSERT_TRUE(mDemuxTests.closeDemux());
+        ASSERT_TRUE(mFrontendTests.closeFrontend());
+    }
 }
 
 TEST_P(TunerDemuxAidlTest, getAvSyncTime) {
@@ -575,40 +579,45 @@ TEST_P(TunerDemuxAidlTest, getAvSyncTime) {
     if (!live.hasFrontendConnection) {
         return;
     }
-    if (live.pcrFilterId.compare(emptyHardwareId) == 0) {
-        return;
-    }
-    int32_t feId;
-    int32_t demuxId;
-    std::shared_ptr<IDemux> demux;
-    int64_t mediaFilterId;
-    int64_t pcrFilterId;
-    int32_t avSyncHwId;
-    std::shared_ptr<IFilter> mediaFilter;
+    auto live_configs = generateLiveConfigurations();
+    for (auto& configuration : live_configs) {
+        live = configuration;
+        if (live.pcrFilterId.compare(emptyHardwareId) == 0) {
+            continue;
+        }
+        int32_t feId;
+        int32_t demuxId;
+        std::shared_ptr<IDemux> demux;
+        int64_t mediaFilterId;
+        int64_t pcrFilterId;
+        int32_t avSyncHwId;
+        std::shared_ptr<IFilter> mediaFilter;
 
-    mFrontendTests.getFrontendIdByType(frontendMap[live.frontendId].type, feId);
-    ASSERT_TRUE(feId != INVALID_ID);
-    ASSERT_TRUE(mFrontendTests.openFrontendById(feId));
-    ASSERT_TRUE(mFrontendTests.setFrontendCallback());
-    ASSERT_TRUE(mDemuxTests.openDemux(demux, demuxId));
-    ASSERT_TRUE(mDemuxTests.setDemuxFrontendDataSource(feId));
-    mFilterTests.setDemux(demux);
-    ASSERT_TRUE(mFilterTests.openFilterInDemux(filterMap[live.videoFilterId].type,
-                                               filterMap[live.videoFilterId].bufferSize));
-    ASSERT_TRUE(mFilterTests.getNewlyOpenedFilterId_64bit(mediaFilterId));
-    ASSERT_TRUE(mFilterTests.configFilter(filterMap[live.videoFilterId].settings, mediaFilterId));
-    mediaFilter = mFilterTests.getFilterById(mediaFilterId);
-    ASSERT_TRUE(mFilterTests.openFilterInDemux(filterMap[live.pcrFilterId].type,
-                                               filterMap[live.pcrFilterId].bufferSize));
-    ASSERT_TRUE(mFilterTests.getNewlyOpenedFilterId_64bit(pcrFilterId));
-    ASSERT_TRUE(mFilterTests.configFilter(filterMap[live.pcrFilterId].settings, pcrFilterId));
-    ASSERT_TRUE(mDemuxTests.getAvSyncId(mediaFilter, avSyncHwId));
-    ASSERT_TRUE(pcrFilterId == avSyncHwId);
-    ASSERT_TRUE(mDemuxTests.getAvSyncTime(pcrFilterId));
-    ASSERT_TRUE(mFilterTests.closeFilter(pcrFilterId));
-    ASSERT_TRUE(mFilterTests.closeFilter(mediaFilterId));
-    ASSERT_TRUE(mDemuxTests.closeDemux());
-    ASSERT_TRUE(mFrontendTests.closeFrontend());
+        mFrontendTests.getFrontendIdByType(frontendMap[live.frontendId].type, feId);
+        ASSERT_TRUE(feId != INVALID_ID);
+        ASSERT_TRUE(mFrontendTests.openFrontendById(feId));
+        ASSERT_TRUE(mFrontendTests.setFrontendCallback());
+        ASSERT_TRUE(mDemuxTests.openDemux(demux, demuxId));
+        ASSERT_TRUE(mDemuxTests.setDemuxFrontendDataSource(feId));
+        mFilterTests.setDemux(demux);
+        ASSERT_TRUE(mFilterTests.openFilterInDemux(filterMap[live.videoFilterId].type,
+                                                   filterMap[live.videoFilterId].bufferSize));
+        ASSERT_TRUE(mFilterTests.getNewlyOpenedFilterId_64bit(mediaFilterId));
+        ASSERT_TRUE(
+                mFilterTests.configFilter(filterMap[live.videoFilterId].settings, mediaFilterId));
+        mediaFilter = mFilterTests.getFilterById(mediaFilterId);
+        ASSERT_TRUE(mFilterTests.openFilterInDemux(filterMap[live.pcrFilterId].type,
+                                                   filterMap[live.pcrFilterId].bufferSize));
+        ASSERT_TRUE(mFilterTests.getNewlyOpenedFilterId_64bit(pcrFilterId));
+        ASSERT_TRUE(mFilterTests.configFilter(filterMap[live.pcrFilterId].settings, pcrFilterId));
+        ASSERT_TRUE(mDemuxTests.getAvSyncId(mediaFilter, avSyncHwId));
+        ASSERT_TRUE(pcrFilterId == avSyncHwId);
+        ASSERT_TRUE(mDemuxTests.getAvSyncTime(pcrFilterId));
+        ASSERT_TRUE(mFilterTests.closeFilter(pcrFilterId));
+        ASSERT_TRUE(mFilterTests.closeFilter(mediaFilterId));
+        ASSERT_TRUE(mDemuxTests.closeDemux());
+        ASSERT_TRUE(mFrontendTests.closeFrontend());
+    }
 }
 
 TEST_P(TunerFilterAidlTest, StartFilterInDemux) {
@@ -617,7 +626,11 @@ TEST_P(TunerFilterAidlTest, StartFilterInDemux) {
         return;
     }
     // TODO use parameterized tests
-    configSingleFilterInDemuxTest(filterMap[live.videoFilterId], frontendMap[live.frontendId]);
+    auto live_configs = generateLiveConfigurations();
+    for (auto& configuration : live_configs) {
+        live = configuration;
+        configSingleFilterInDemuxTest(filterMap[live.videoFilterId], frontendMap[live.frontendId]);
+    }
 }
 
 TEST_P(TunerFilterAidlTest, ConfigIpFilterInDemuxWithCid) {
@@ -626,10 +639,14 @@ TEST_P(TunerFilterAidlTest, ConfigIpFilterInDemuxWithCid) {
     if (!live.hasFrontendConnection) {
         return;
     }
-    if (live.ipFilterId.compare(emptyHardwareId) == 0) {
-        return;
+    auto live_configs = generateLiveConfigurations();
+    for (auto& configuration : live_configs) {
+        live = configuration;
+        if (live.ipFilterId.compare(emptyHardwareId) == 0) {
+            continue;
+        }
+        configSingleFilterInDemuxTest(filterMap[live.ipFilterId], frontendMap[live.frontendId]);
     }
-    configSingleFilterInDemuxTest(filterMap[live.ipFilterId], frontendMap[live.frontendId]);
 }
 
 TEST_P(TunerFilterAidlTest, ReconfigFilterToReceiveStartId) {
@@ -638,8 +655,13 @@ TEST_P(TunerFilterAidlTest, ReconfigFilterToReceiveStartId) {
         return;
     }
     // TODO use parameterized tests
-    reconfigSingleFilterInDemuxTest(filterMap[live.videoFilterId], filterMap[live.videoFilterId],
-                                    frontendMap[live.frontendId]);
+    auto live_configs = generateLiveConfigurations();
+    for (auto& configuration : live_configs) {
+        live = configuration;
+        reconfigSingleFilterInDemuxTest(filterMap[live.videoFilterId],
+                                        filterMap[live.videoFilterId],
+                                        frontendMap[live.frontendId]);
+    }
 }
 
 TEST_P(TunerFilterAidlTest, SetFilterLinkage) {
@@ -969,7 +991,11 @@ TEST_P(TunerFrontendAidlTest, TuneFrontend) {
     if (!live.hasFrontendConnection) {
         return;
     }
-    mFrontendTests.tuneTest(frontendMap[live.frontendId]);
+    auto live_configs = generateLiveConfigurations();
+    for (auto& configuration : live_configs) {
+        live = configuration;
+        mFrontendTests.tuneTest(frontendMap[live.frontendId]);
+    }
 }
 
 TEST_P(TunerFrontendAidlTest, AutoScanFrontend) {
@@ -1001,7 +1027,11 @@ TEST_P(TunerFrontendAidlTest, TuneFrontendWithFrontendSettings) {
     if (!live.hasFrontendConnection) {
         return;
     }
-    mFrontendTests.tuneTest(frontendMap[live.frontendId]);
+    auto live_configs = generateLiveConfigurations();
+    for (auto& configuration : live_configs) {
+        live = configuration;
+        mFrontendTests.tuneTest(frontendMap[live.frontendId]);
+    }
 }
 
 TEST_P(TunerFrontendAidlTest, BlindScanFrontendWithEndFrequency) {
@@ -1021,10 +1051,14 @@ TEST_P(TunerFrontendAidlTest, LinkToCiCam) {
     if (!live.hasFrontendConnection) {
         return;
     }
-    if (!frontendMap[live.frontendId].canConnectToCiCam) {
-        return;
+    auto live_configs = generateLiveConfigurations();
+    for (auto& configuration : live_configs) {
+        live = configuration;
+        if (!frontendMap[live.frontendId].canConnectToCiCam) {
+            continue;
+        }
+        mFrontendTests.tuneTest(frontendMap[live.frontendId]);
     }
-    mFrontendTests.tuneTest(frontendMap[live.frontendId]);
 }
 
 TEST_P(TunerFrontendAidlTest, getHardwareInfo) {
@@ -1032,7 +1066,11 @@ TEST_P(TunerFrontendAidlTest, getHardwareInfo) {
     if (!live.hasFrontendConnection) {
         return;
     }
-    mFrontendTests.debugInfoTest(frontendMap[live.frontendId]);
+    auto live_configs = generateLiveConfigurations();
+    for (auto& configuration : live_configs) {
+        live = configuration;
+        mFrontendTests.debugInfoTest(frontendMap[live.frontendId]);
+    }
 }
 
 TEST_P(TunerFrontendAidlTest, maxNumberOfFrontends) {
@@ -1048,7 +1086,11 @@ TEST_P(TunerFrontendAidlTest, statusReadinessTest) {
     if (!live.hasFrontendConnection) {
         return;
     }
-    mFrontendTests.statusReadinessTest(frontendMap[live.frontendId]);
+    auto live_configs = generateLiveConfigurations();
+    for (auto& configuration : live_configs) {
+        live = configuration;
+        mFrontendTests.statusReadinessTest(frontendMap[live.frontendId]);
+    }
 }
 
 TEST_P(TunerBroadcastAidlTest, BroadcastDataFlowVideoFilterTest) {
@@ -1056,7 +1098,11 @@ TEST_P(TunerBroadcastAidlTest, BroadcastDataFlowVideoFilterTest) {
     if (!live.hasFrontendConnection) {
         return;
     }
-    broadcastSingleFilterTest(filterMap[live.videoFilterId], frontendMap[live.frontendId]);
+    auto live_configs = generateLiveConfigurations();
+    for (auto& configuration : live_configs) {
+        live = configuration;
+        broadcastSingleFilterTest(filterMap[live.videoFilterId], frontendMap[live.frontendId]);
+    }
 }
 
 TEST_P(TunerBroadcastAidlTest, BroadcastDataFlowAudioFilterTest) {
@@ -1064,7 +1110,11 @@ TEST_P(TunerBroadcastAidlTest, BroadcastDataFlowAudioFilterTest) {
     if (!live.hasFrontendConnection) {
         return;
     }
-    broadcastSingleFilterTest(filterMap[live.audioFilterId], frontendMap[live.frontendId]);
+    auto live_configs = generateLiveConfigurations();
+    for (auto& configuration : live_configs) {
+        live = configuration;
+        broadcastSingleFilterTest(filterMap[live.audioFilterId], frontendMap[live.frontendId]);
+    }
 }
 
 TEST_P(TunerBroadcastAidlTest, BroadcastDataFlowSectionFilterTest) {
@@ -1072,10 +1122,14 @@ TEST_P(TunerBroadcastAidlTest, BroadcastDataFlowSectionFilterTest) {
     if (!live.hasFrontendConnection) {
         return;
     }
-    if (live.sectionFilterId.compare(emptyHardwareId) == 0) {
-        return;
+    auto live_configs = generateLiveConfigurations();
+    for (auto& configuration : live_configs) {
+        live = configuration;
+        if (live.sectionFilterId.compare(emptyHardwareId) == 0) {
+            continue;
+        }
+        broadcastSingleFilterTest(filterMap[live.sectionFilterId], frontendMap[live.frontendId]);
     }
-    broadcastSingleFilterTest(filterMap[live.sectionFilterId], frontendMap[live.frontendId]);
 }
 
 TEST_P(TunerBroadcastAidlTest, IonBufferTest) {
@@ -1083,7 +1137,11 @@ TEST_P(TunerBroadcastAidlTest, IonBufferTest) {
     if (!live.hasFrontendConnection) {
         return;
     }
-    broadcastSingleFilterTest(filterMap[live.videoFilterId], frontendMap[live.frontendId]);
+    auto live_configs = generateLiveConfigurations();
+    for (auto& configuration : live_configs) {
+        live = configuration;
+        broadcastSingleFilterTest(filterMap[live.videoFilterId], frontendMap[live.frontendId]);
+    }
 }
 
 TEST_P(TunerBroadcastAidlTest, LnbBroadcastDataFlowVideoFilterTest) {
@@ -1108,7 +1166,12 @@ TEST_P(TunerBroadcastAidlTest, MediaFilterWithSharedMemoryHandle) {
     if (!live.hasFrontendConnection) {
         return;
     }
-    mediaFilterUsingSharedMemoryTest(filterMap[live.videoFilterId], frontendMap[live.frontendId]);
+    auto live_configs = generateLiveConfigurations();
+    for (auto& configuration : live_configs) {
+        live = configuration;
+        mediaFilterUsingSharedMemoryTest(filterMap[live.videoFilterId],
+                                         frontendMap[live.frontendId]);
+    }
 }
 
 TEST_P(TunerDescramblerAidlTest, CreateDescrambler) {

@@ -79,7 +79,9 @@ const string emptyHardwareId = "";
 static string mConfigFilePath;
 
 static vector<string> playbackDvrIds;
+static vector<string> ipFilterIds;
 static vector<string> recordDvrIds;
+static vector<string> pcrFilterIds;
 static vector<string> timeFilterIds;
 static vector<string> audioFilterIds;
 static vector<string> videoFilterIds;
@@ -853,6 +855,10 @@ struct TunerTestingConfigAidlReader1_0 {
             recordFilterIds.push_back(filterConfig.getId());
         } else if (subType == FilterSubTypeEnum::SECTION) {
             sectionFilterIds.push_back(filterConfig.getId());
+        } else if (subType == FilterSubTypeEnum::PCR) {
+            pcrFilterIds.push_back(filterConfig.getId());
+        } else if (subType == FilterSubTypeEnum::IP) {
+            ipFilterIds.push_back(filterConfig.getId());
         }
 
         switch (mainType) {

@@ -68,6 +68,8 @@ void clearIds() {
     lnbIds.clear();
     diseqcMsgs.clear();
     frontendIds.clear();
+    ipFilterIds.clear();
+    pcrFilterIds.clear();
     recordDvrIds.clear();
     timeFilterIds.clear();
     descramblerIds.clear();
