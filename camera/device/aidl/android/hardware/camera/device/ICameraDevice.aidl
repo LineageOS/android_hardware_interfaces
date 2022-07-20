@@ -279,8 +279,10 @@ interface ICameraDevice {
      * with specified torchStrength if the torch is OFF.
      *
      * The torchStrength value must be within the valid range i.e. >=1 and
-     * <= FLASH_INFO_STRENGTH_MAXIMUM_LEVEL. Whenever the torch is turned OFF,
-     * the brightness level will reset to FLASH_INFO_STRENGTH_DEFAULT_LEVEL.
+     * <= FLASH_INFO_STRENGTH_MAXIMUM_LEVEL. The FLASH_INFO_STRENGTH_MAXIMUM_LEVEL must
+     * be set to a level which will not cause any burn out issues. Whenever
+     * the torch is turned OFF, the brightness level will reset to
+     * FLASH_INFO_STRENGTH_DEFAULT_LEVEL.
      * When the client calls setTorchMode(ON) after turnOnTorchWithStrengthLevel(N),
      * the flash unit will have brightness level equal to N. This level does not
      * represent the real brightness units. It is linear in nature i.e. flashlight
