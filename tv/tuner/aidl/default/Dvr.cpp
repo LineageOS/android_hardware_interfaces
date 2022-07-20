@@ -427,7 +427,7 @@ bool Dvr::startFilterDispatcher(bool isVirtualFrontend, bool isRecording) {
     map<int64_t, std::shared_ptr<IFilter>>::iterator it;
     // Handle the output data per filter type
     for (it = mFilters.begin(); it != mFilters.end(); it++) {
-        if (mDemux->startFilterHandler(it->first).isOk()) {
+        if (!mDemux->startFilterHandler(it->first).isOk()) {
             return false;
         }
     }
