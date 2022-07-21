@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-#include "Route.h"
+#pragma once
 
-#include "Addr.h"
-#include "Link.h"
+#include "../MessageDefinition.h"
+
+#include <linux/rtnetlink.h>
 
 namespace android::nl::protocols::route {
 
-// clang-format off
-Route::Route() : NetlinkProtocol(NETLINK_ROUTE, "ROUTE", {
-    std::make_shared<Addr>(),
-    std::make_shared<Link>(),
-}) {}
-// clang-format on
+class Addr : public MessageDefinition<ifaddrmsg> {
+  public:
+    Addr();
+    void toStream(std::stringstream& ss, const ifaddrmsg& data) const override;
+};
 
 }  // namespace android::nl::protocols::route
