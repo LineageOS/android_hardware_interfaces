@@ -34,6 +34,14 @@ namespace vehicle {
 // private namespace
 namespace jsonconfigloader_impl {
 
+// An abstract interface that represents a ValueParser for any constant value types.
+class ConstantParserInterface {
+  public:
+    // Parses a constant variable name to its actual value.
+    virtual android::base::Result<int> parseValue(const std::string& name) const = 0;
+    virtual ~ConstantParserInterface() = default;
+};
+
 // A class to parse a value field in JSON config file.
 // If the field is a string and the field is in the format of "XX::XX", the value will be parsed
 // as a constant value in the format of "TYPE::NAME". Otherwise, the field will be return as is
@@ -60,6 +68,22 @@ class JsonValueParser final {
 
     std::optional<std::pair<std::string, std::string>> maybeGetTypeAndValueName(
             const std::string& jsonFieldValue) const;
+
+    android::base::Result<int> parseConstantValue(
+            const std::pair<std::string, std::string>& typeValueName) const;
+
+    const ConstantParserInterface* getParser(const std::string& type) const {
+        auto it = mConstantParsersByType.find(type);
+        if (it == mConstantParsersByType.end()) {
+            return nullptr;
+        }
+        return it->second.get();
+    }
+
+  private:
+    inline static const std::string DELIMITER = "::";
+    std::unordered_map<std::string, std::unique_ptr<ConstantParserInterface>>
+            mConstantParsersByType;
 };
 
 // The main class to parse a VHAL config file in JSON format.
@@ -103,6 +127,14 @@ class JsonConfigParser {
     bool tryParseJsonArrayToVariable(const Json::Value& parentJsonNode,
                                      const std::string& fieldName, bool fieldIsOptional,
                                      std::vector<T>* outPtr, std::vector<std::string>* errors);
+    // Parses a JSON field to VehiclePropertyAccess or VehiclePropertyChangeMode.
+    template <class T>
+    void parseAccessChangeMode(
+            const Json::Value& parentJsonNode, const std::string& fieldName, int propId,
+            const std::string& propStr,
+            const std::unordered_map<aidl::android::hardware::automotive::vehicle::VehicleProperty,
+                                     T>& defaultMap,
+            T* outPtr, std::vector<std::string>* errors);
 
     // Parses a JSON field to RawPropValues.
     void parsePropValues(const Json::Value& parentJsonNode, const std::string& fieldName,

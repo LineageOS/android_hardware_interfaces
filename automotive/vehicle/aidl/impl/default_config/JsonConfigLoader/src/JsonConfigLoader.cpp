@@ -61,6 +61,139 @@ using ::aidl::android::hardware::automotive::vehicle::VehicleVendorPermission;
 using ::android::base::Error;
 using ::android::base::Result;
 
+// Defines a map from constant names to constant values, the values defined here corresponds to
+// the "Constants::XXXX" used in JSON config file.
+const std::unordered_map<std::string, int> CONSTANTS_BY_NAME = {
+        {"DOOR_1_RIGHT", DOOR_1_RIGHT},
+        {"DOOR_1_LEFT", DOOR_1_LEFT},
+        {"DOOR_2_RIGHT", DOOR_2_RIGHT},
+        {"DOOR_2_LEFT", DOOR_2_LEFT},
+        {"DOOR_REAR", DOOR_REAR},
+        {"HVAC_ALL", HVAC_ALL},
+        {"HVAC_LEFT", HVAC_LEFT},
+        {"HVAC_RIGHT", HVAC_RIGHT},
+        {"VENDOR_EXTENSION_INT_PROPERTY", VENDOR_EXTENSION_INT_PROPERTY},
+        {"VENDOR_EXTENSION_BOOLEAN_PROPERTY", VENDOR_EXTENSION_BOOLEAN_PROPERTY},
+        {"VENDOR_EXTENSION_STRING_PROPERTY", VENDOR_EXTENSION_STRING_PROPERTY},
+        {"VENDOR_EXTENSION_FLOAT_PROPERTY", VENDOR_EXTENSION_FLOAT_PROPERTY},
+        {"WINDOW_1_LEFT", WINDOW_1_LEFT},
+        {"WINDOW_1_RIGHT", WINDOW_1_RIGHT},
+        {"WINDOW_2_LEFT", WINDOW_2_LEFT},
+        {"WINDOW_2_RIGHT", WINDOW_2_RIGHT},
+        {"WINDOW_ROOF_TOP_1", WINDOW_ROOF_TOP_1},
+        {"WINDOW_1_RIGHT_2_LEFT_2_RIGHT", WINDOW_1_RIGHT | WINDOW_2_LEFT | WINDOW_2_RIGHT},
+        {"SEAT_1_RIGHT", SEAT_1_RIGHT},
+        {"SEAT_1_LEFT", SEAT_1_LEFT},
+        {"WHEEL_REAR_RIGHT", WHEEL_REAR_RIGHT},
+        {"WHEEL_REAR_LEFT", WHEEL_REAR_LEFT},
+        {"WHEEL_FRONT_RIGHT", WHEEL_FRONT_RIGHT},
+        {"WHEEL_FRONT_LEFT", WHEEL_FRONT_LEFT},
+        {"CHARGE_PORT_FRONT_LEFT", CHARGE_PORT_FRONT_LEFT},
+        {"CHARGE_PORT_REAR_LEFT", CHARGE_PORT_REAR_LEFT},
+        {"FAN_DIRECTION_FLOOR", FAN_DIRECTION_FLOOR},
+        {"FAN_DIRECTION_FACE", FAN_DIRECTION_FACE},
+        {"FAN_DIRECTION_DEFROST", FAN_DIRECTION_DEFROST},
+        {"FAN_DIRECTION_FACE_FLOOR", FAN_DIRECTION_FACE | FAN_DIRECTION_FLOOR},
+        {"FAN_DIRECTION_FACE_DEFROST", FAN_DIRECTION_FACE | FAN_DIRECTION_DEFROST},
+        {"FAN_DIRECTION_FLOOR_DEFROST", FAN_DIRECTION_FLOOR | FAN_DIRECTION_DEFROST},
+        {"FAN_DIRECTION_FLOOR_DEFROST_FACE",
+         FAN_DIRECTION_FLOOR | FAN_DIRECTION_DEFROST | FAN_DIRECTION_FACE},
+        {"FUEL_DOOR_REAR_LEFT", FUEL_DOOR_REAR_LEFT},
+        {"LIGHT_STATE_ON", LIGHT_STATE_ON},
+        {"LIGHT_SWITCH_AUTO", LIGHT_SWITCH_AUTO},
+#ifdef ENABLE_VEHICLE_HAL_TEST_PROPERTIES
+        // Following are test properties:
+        {"ECHO_REVERSE_BYTES", ECHO_REVERSE_BYTES},
+        {"kMixedTypePropertyForTest", kMixedTypePropertyForTest},
+        {"VENDOR_CLUSTER_NAVIGATION_STATE", VENDOR_CLUSTER_NAVIGATION_STATE},
+        {"VENDOR_CLUSTER_REQUEST_DISPLAY", VENDOR_CLUSTER_REQUEST_DISPLAY},
+        {"VENDOR_CLUSTER_SWITCH_UI", VENDOR_CLUSTER_SWITCH_UI},
+        {"VENDOR_CLUSTER_DISPLAY_STATE", VENDOR_CLUSTER_DISPLAY_STATE},
+        {"VENDOR_CLUSTER_REPORT_STATE", VENDOR_CLUSTER_REPORT_STATE},
+        {"PLACEHOLDER_PROPERTY_INT", PLACEHOLDER_PROPERTY_INT},
+        {"PLACEHOLDER_PROPERTY_FLOAT", PLACEHOLDER_PROPERTY_FLOAT},
+        {"PLACEHOLDER_PROPERTY_BOOLEAN", PLACEHOLDER_PROPERTY_BOOLEAN},
+        {"PLACEHOLDER_PROPERTY_STRING", PLACEHOLDER_PROPERTY_STRING}
+#endif  // ENABLE_VEHICLE_HAL_TEST_PROPERTIES
+};
+
+// A class to parse constant values for type T.
+template <class T>
+class ConstantParser final : public ConstantParserInterface {
+  public:
+    ConstantParser() {
+        for (const T& v : ndk::enum_range<T>()) {
+            std::string name = aidl::android::hardware::automotive::vehicle::toString(v);
+            // We use the same constant for both VehicleUnit::GALLON and VehicleUnit::US_GALLON,
+            // which caused toString() not work properly for US_GALLON. So we explicitly add the
+            // map here.
+            if (name == "GALLON") {
+                mValueByName["US_GALLON"] = toInt(v);
+            }
+            mValueByName[name] = toInt(v);
+        }
+    }
+
+    ~ConstantParser() = default;
+
+    Result<int> parseValue(const std::string& name) const override {
+        auto it = mValueByName.find(name);
+        if (it == mValueByName.end()) {
+            return Error() << "Constant name: " << name << " is not defined";
+        }
+        return it->second;
+    }
+
+  private:
+    std::unordered_map<std::string, int> mValueByName;
+};
+
+// A class to parse constant values defined in CONSTANTS_BY_NAME map.
+class LocalVariableParser final : public ConstantParserInterface {
+  public:
+    ~LocalVariableParser() = default;
+
+    Result<int> parseValue(const std::string& name) const override {
+        auto constantsIt = CONSTANTS_BY_NAME.find(name);
+        if (constantsIt == CONSTANTS_BY_NAME.end()) {
+            return Error() << "Constant variable name: " << name << " is not defined";
+        }
+        return constantsIt->second;
+    }
+};
+
+JsonValueParser::JsonValueParser() {
+    mConstantParsersByType["VehiclePropertyAccess"] =
+            std::make_unique<ConstantParser<VehiclePropertyAccess>>();
+    mConstantParsersByType["VehiclePropertyChangeMode"] =
+            std::make_unique<ConstantParser<VehiclePropertyChangeMode>>();
+    mConstantParsersByType["VehicleGear"] = std::make_unique<ConstantParser<VehicleGear>>();
+    mConstantParsersByType["VehicleAreaWindow"] =
+            std::make_unique<ConstantParser<VehicleAreaWindow>>();
+    mConstantParsersByType["VehicleOilLevel"] = std::make_unique<ConstantParser<VehicleOilLevel>>();
+    mConstantParsersByType["VehicleUnit"] = std::make_unique<ConstantParser<VehicleUnit>>();
+    mConstantParsersByType["VehicleSeatOccupancyState"] =
+            std::make_unique<ConstantParser<VehicleSeatOccupancyState>>();
+    mConstantParsersByType["VehicleHvacFanDirection"] =
+            std::make_unique<ConstantParser<VehicleHvacFanDirection>>();
+    mConstantParsersByType["VehicleApPowerStateReport"] =
+            std::make_unique<ConstantParser<VehicleApPowerStateReport>>();
+    mConstantParsersByType["VehicleTurnSignal"] =
+            std::make_unique<ConstantParser<VehicleTurnSignal>>();
+    mConstantParsersByType["VehicleVendorPermission"] =
+            std::make_unique<ConstantParser<VehicleVendorPermission>>();
+    mConstantParsersByType["EvsServiceType"] = std::make_unique<ConstantParser<EvsServiceType>>();
+    mConstantParsersByType["EvsServiceState"] = std::make_unique<ConstantParser<EvsServiceState>>();
+    mConstantParsersByType["EvConnectorType"] = std::make_unique<ConstantParser<EvConnectorType>>();
+    mConstantParsersByType["VehicleProperty"] = std::make_unique<ConstantParser<VehicleProperty>>();
+    mConstantParsersByType["GsrComplianceRequirementType"] =
+            std::make_unique<ConstantParser<GsrComplianceRequirementType>>();
+    mConstantParsersByType["VehicleIgnitionState"] =
+            std::make_unique<ConstantParser<VehicleIgnitionState>>();
+    mConstantParsersByType["FuelType"] = std::make_unique<ConstantParser<FuelType>>();
+    mConstantParsersByType["Constants"] = std::make_unique<LocalVariableParser>();
+}
+
 template <>
 Result<int32_t> JsonValueParser::convertValueToType<int32_t>(const std::string& fieldName,
                                                              const Json::Value& value) {
@@ -157,11 +290,25 @@ std::optional<std::pair<std::string, std::string>> JsonValueParser::maybeGetType
     }
     std::string type = jsonFieldValue.substr(0, pos);
     std::string valueName = jsonFieldValue.substr(pos + DELIMITER.length(), std::string::npos);
+    if (type != "Constants" && mConstantParsersByType.find(type) == mConstantParsersByType.end()) {
+        return {};
+    }
     return std::make_pair(type, valueName);
 }
 
-Result<int> JsonValueParser::parseConstantValue(const std::pair<std::string, std::string>&) const {
-    // TODO(b/238685398): Implement this.
+Result<int> JsonValueParser::parseConstantValue(
+        const std::pair<std::string, std::string>& typeValueName) const {
+    const std::string& type = typeValueName.first;
+    const std::string& valueName = typeValueName.second;
+    auto it = mConstantParsersByType.find(type);
+    if (it == mConstantParsersByType.end()) {
+        return Error() << "Unrecognized type: " << type;
+    }
+    auto result = it->second->parseValue(valueName);
+    if (!result.ok()) {
+        return Error() << type << "::" << valueName << " undefined";
+    }
+    return result;
 }
 
 template <class T>
@@ -216,6 +363,33 @@ bool JsonConfigParser::tryParseJsonArrayToVariable(const Json::Value& parentJson
     return true;
 }
 
+template <class T>
+void JsonConfigParser::parseAccessChangeMode(
+        const Json::Value& parentJsonNode, const std::string& fieldName, int propId,
+        const std::string& propStr, const std::unordered_map<VehicleProperty, T>& defaultMap,
+        T* outPtr, std::vector<std::string>* errors) {
+    if (!parentJsonNode.isObject()) {
+        errors->push_back("Node: " + parentJsonNode.toStyledString() + " is not an object");
+        return;
+    }
+    if (parentJsonNode.isMember(fieldName)) {
+        auto result = mValueParser.parseValue<int32_t>(fieldName, parentJsonNode[fieldName]);
+        if (!result.ok()) {
+            errors->push_back(result.error().message());
+            return;
+        }
+        *outPtr = static_cast<T>(result.value());
+        return;
+    }
+    auto it = defaultMap.find(static_cast<VehicleProperty>(propId));
+    if (it == defaultMap.end()) {
+        errors->push_back("No " + fieldName + " specified for property: " + propStr);
+        return;
+    }
+    *outPtr = it->second;
+    return;
+}
+
 void JsonConfigParser::parsePropValues(const Json::Value& parentJsonNode,
                                        const std::string& fieldName, RawPropValues* outPtr,
                                        std::vector<std::string>* errors) {
@@ -252,7 +426,11 @@ std::optional<ConfigDeclaration> JsonConfigParser::parseEachProperty(
     configDecl.config.prop = propId;
     std::string propStr = propJsonValue["property"].toStyledString();
 
-    // TODO(b/238685398): Parse access and changeMode.
+    parseAccessChangeMode(propJsonValue, "access", propId, propStr, AccessForVehicleProperty,
+                          &configDecl.config.access, errors);
+
+    parseAccessChangeMode(propJsonValue, "changeMode", propId, propStr,
+                          ChangeModeForVehicleProperty, &configDecl.config.changeMode, errors);
 
     tryParseJsonValueToVariable(propJsonValue, "configString", /*optional=*/true,
                                 &configDecl.config.configString, errors);
