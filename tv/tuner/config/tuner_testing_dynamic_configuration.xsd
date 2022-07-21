@@ -644,7 +644,7 @@
                     <xs:attribute name="pcrFilterConnection" type="filterId" use="optional"/>
                     <xs:attribute name="sectionFilterConnection" type="filterId" use="optional"/>
                     <xs:attribute name="ipFilterConnection" type="filterId" use="optional"/>
-                    <!-- TODO: b/182519645 allow the users to insert extra filters -->
+                    <xs:element name="optionalFilters" type="filterConnections" minOccurs="0" maxOccurs="1"/>
                     <!-- DVR is only required when the frontend is using the software input -->
                     <xs:attribute name="dvrSoftwareFeConnection" type="dvrId" use="optional"/>
                 </xs:complexType>
@@ -665,7 +665,6 @@
                     <xs:attribute name="descramblerConnection" type="descramblerId" use="required"/>
                     <xs:attribute name="audioFilterConnection" type="filterId" use="required"/>
                     <xs:attribute name="videoFilterConnection" type="filterId" use="required"/>
-                    <!-- TODO: b/182519645 allow the users to insert extra filters -->
                     <xs:element name="optionalFilters" type="filterConnections" minOccurs="0" maxOccurs="1"/>
                     <!-- This DVR is only required when the frontend is using the software input -->
                     <xs:attribute name="dvrSoftwareFeConnection" type="dvrId" use="optional"/>
@@ -679,14 +678,7 @@
                     <xs:attribute name="audioFilterConnection" type="filterId" use="required"/>
                     <xs:attribute name="videoFilterConnection" type="filterId" use="required"/>
                     <xs:attribute name="sectionFilterConnection" type="filterId" use="optional"/>
-                    <xs:element name="optionalFilters" minOccurs="0" maxOccurs="1">
-                      <xs:complexType>
-                          <xs:sequence>
-                            <xs:element name="optionalFilter" type="optionalFilter" minOccurs="1" maxOccurs="unbounded"/>
-                          </xs:sequence>
-                      </xs:complexType>
-                    </xs:element>
-                    <!--TODO: b/182519645 allow the users to insert extra filters/-->
+                    <xs:element name="optionalFilters" type="filterConnections" minOccurs="0" maxOccurs="1"/>
                 </xs:complexType>
             </xs:element>
             <xs:element name="dvrRecord" minOccurs="0" maxOccurs="1">
