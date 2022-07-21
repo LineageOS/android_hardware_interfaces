@@ -815,7 +815,7 @@ interface IKeyMintDevice {
     /**
      * Called by client to notify the IKeyMintDevice that the device has left the early boot
      * state, and that keys with the EARLY_BOOT_ONLY tag may no longer be used.  All attempts to use
-     * an EARLY_BOOT_ONLY key after this method is called must fail with Error::INVALID_KEY_BLOB.
+     * an EARLY_BOOT_ONLY key after this method is called must fail with Error::EARLY_BOOT_ENDED.
      */
     void earlyBootEnded();
 
