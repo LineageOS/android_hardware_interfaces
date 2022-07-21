@@ -155,6 +155,7 @@ struct LiveBroadcastHardwareConnections {
     string ipFilterId;
     string pcrFilterId;
     /* list string of extra filters; */
+    vector<string> extraFilters;
 };
 
 struct ScanHardwareConnections {
@@ -530,6 +531,10 @@ struct TunerTestingConfigAidlReader1_0 {
         } else {
             live.ipFilterId = emptyHardwareId;
         }
+        if (liveConfig.hasOptionalFilters()) {
+            auto optionalFilters = liveConfig.getOptionalFilters();
+            live.extraFilters = optionalFilters;
+        }
     }
 
     static void connectScan(ScanHardwareConnections& scan) {
@@ -563,12 +568,9 @@ struct TunerTestingConfigAidlReader1_0 {
         } else {
             playback.sectionFilterId = emptyHardwareId;
         }
-        if (playbackConfig.hasOptionalFilters() && !playback.hasExtraFilters) {
-            auto optionalFilters = playbackConfig.getFirstOptionalFilters()->getOptionalFilter();
-            for (size_t i = 0; i < optionalFilters.size(); ++i) {
-                playback.extraFilters.push_back(optionalFilters[i].getFilterId());
-            }
-            playback.hasExtraFilters = true;
+        if (playbackConfig.hasOptionalFilters()) {
+            auto optionalFilters = playbackConfig.getOptionalFilters();
+            playback.extraFilters = optionalFilters;
         }
     }
 
