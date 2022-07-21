@@ -330,9 +330,13 @@
             "property": "VehicleProperty::VEHICLE_CURB_WEIGHT",
             "defaultValue": {
                 "int32Values": [
-                    30
+                    2211
                 ]
-            }
+            },
+            "configArray": [
+                2948
+            ],
+            "comment": "unit is kg"
         },
         {
             "property": "VehicleProperty::RANGE_REMAINING",
@@ -481,6 +485,14 @@
                 "VehicleUnit::LITER",
                 "VehicleUnit::US_GALLON"
             ]
+        },
+        {
+            "property": "VehicleProperty::FUEL_CONSUMPTION_UNITS_DISTANCE_OVER_VOLUME",
+            "defaultValue": {
+                "int32Values": [
+                    1
+                ]
+            }
         },
         {
             "property": "VehicleProperty::HW_KEY_INPUT",
@@ -1184,14 +1196,6 @@
         },
         {
             "property": "VehicleProperty::HIGH_BEAM_LIGHTS_SWITCH",
-            "defaultValue": {
-                "int32Values": [
-                    "Constants::LIGHT_SWITCH_AUTO"
-                ]
-            }
-        },
-        {
-            "property": "VehicleProperty::FOG_LIGHTS_SWITCH",
             "defaultValue": {
                 "int32Values": [
                     "Constants::LIGHT_SWITCH_AUTO"
