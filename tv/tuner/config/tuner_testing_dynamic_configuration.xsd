@@ -77,8 +77,14 @@
     <xs:complexType name="dvbsFrontendSettings">
         <xs:attribute name="inputStreamId" type="xs:nonNegativeInteger" use="required"/>
         <xs:attribute name="symbolRate" type="xs:nonNegativeInteger" use="required"/>
-        <xs:attribute name="scanType" type="dvbsScanType" use="optional"/>
-        <xs:attribute name="isDiseqcRxMessage" type="xs:boolean" use="optional"/>
+        <xs:attribute name="scanType" type="dvbsScanType" use="required"/>
+        <xs:attribute name="isDiseqcRxMessage" type="xs:boolean" use="required"/>
+        <xs:attribute name="inversion" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="modulation" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="pilot" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="standard" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="vcmMode" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="rolloff" type="xs:nonNegativeInteger" use="required"/>
     </xs:complexType>
     <xs:complexType name="atscFrontendSettings">
         <xs:attribute name="inversion" type="xs:nonNegativeInteger" use="required"/>

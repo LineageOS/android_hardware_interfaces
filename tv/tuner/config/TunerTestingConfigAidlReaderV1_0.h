@@ -737,17 +737,17 @@ struct TunerTestingConfigAidlReader1_0 {
             ALOGW("[ConfigReader] no more dvbs settings");
             return dvbsSettings;
         }
-        dvbsSettings.symbolRate = static_cast<int32_t>(
-                feConfig.getFirstDvbsFrontendSettings_optional()->getSymbolRate());
-        dvbsSettings.inputStreamId = static_cast<int32_t>(
-                feConfig.getFirstDvbsFrontendSettings_optional()->getInputStreamId());
         auto dvbs = feConfig.getFirstDvbsFrontendSettings_optional();
-        if (dvbs->hasScanType()) {
-            dvbsSettings.scanType = static_cast<FrontendDvbsScanType>(dvbs->getScanType());
-        }
-        if (dvbs->hasIsDiseqcRxMessage()) {
-            dvbsSettings.isDiseqcRxMessage = dvbs->getIsDiseqcRxMessage();
-        }
+        dvbsSettings.symbolRate = static_cast<int32_t>(dvbs->getSymbolRate());
+        dvbsSettings.inputStreamId = static_cast<int32_t>(dvbs->getInputStreamId());
+        dvbsSettings.scanType = static_cast<FrontendDvbsScanType>(dvbs->getScanType());
+        dvbsSettings.isDiseqcRxMessage = dvbs->getIsDiseqcRxMessage();
+        dvbsSettings.inversion = static_cast<FrontendSpectralInversion>(dvbs->getInversion());
+        dvbsSettings.modulation = static_cast<FrontendDvbsModulation>(dvbs->getModulation());
+        dvbsSettings.rolloff = static_cast<FrontendDvbsRolloff>(dvbs->getRolloff());
+        dvbsSettings.pilot = static_cast<FrontendDvbsPilot>(dvbs->getPilot());
+        dvbsSettings.standard = static_cast<FrontendDvbsStandard>(dvbs->getStandard());
+        dvbsSettings.vcmMode = static_cast<FrontendDvbsVcmMode>(dvbs->getVcmMode());
         return dvbsSettings;
     }
 
