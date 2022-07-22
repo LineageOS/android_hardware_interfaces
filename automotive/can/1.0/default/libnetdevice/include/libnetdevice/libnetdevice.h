@@ -68,9 +68,19 @@ enum class WaitCondition {
     PRESENT_AND_UP,
 
     /**
+     * Interface is up and with IPv4 address configured.
+     */
+    PRESENT_AND_IPV4,
+
+    /**
      * Interface is down or not present (disconnected) at all.
      */
     DOWN_OR_GONE,
+};
+
+enum class Quantifier {
+    ALL_OF,
+    ANY_OF,
 };
 
 /**
@@ -78,10 +88,12 @@ enum class WaitCondition {
  *
  * \param ifnames List of interfaces to watch for.
  * \param cnd Awaited condition.
- * \param allOf true if all interfaces need to satisfy the condition, false if only one satistying
+ * \param quant Whether all interfaces need to satisfy the condition or just one satistying
  *        interface should stop the wait.
+ * \return name of one interface that satisfied the condition
  */
-void waitFor(std::set<std::string> ifnames, WaitCondition cnd, bool allOf = true);
+std::optional<std::string> waitFor(std::set<std::string> ifnames, WaitCondition cnd,
+                                   Quantifier quant = Quantifier::ALL_OF);
 
 /**
  * Brings network interface up.

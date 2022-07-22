@@ -47,7 +47,7 @@ static SocketParams getSocketParams(int domain) {
     return params;
 }
 
-bool send(unsigned long request, struct ifreq& ifr) {
+int trySend(unsigned long request, struct ifreq& ifr) {
     const auto sp = getSocketParams(socketDomain);
     base::unique_fd sock(socket(sp.domain, sp.type, sp.protocol));
     if (!sock.ok()) {
@@ -55,7 +55,12 @@ bool send(unsigned long request, struct ifreq& ifr) {
         return false;
     }
 
-    if (ioctl(sock.get(), request, &ifr) < 0) {
+    if (ioctl(sock.get(), request, &ifr) < 0) return errno;
+    return 0;
+}
+
+bool send(unsigned long request, struct ifreq& ifr) {
+    if (trySend(request, ifr) != 0) {
         PLOG(ERROR) << "ioctl(" << std::hex << request << std::dec << ") failed";
         return false;
     }
