@@ -19,7 +19,6 @@ package android.hardware.audio.core;
 import android.hardware.audio.core.MmapBufferDescriptor;
 import android.hardware.common.fmq.MQDescriptor;
 import android.hardware.common.fmq.SynchronizedReadWrite;
-import android.hardware.common.fmq.UnsynchronizedWrite;
 
 /**
  * Stream descriptor contains fast message queues and buffers used for sending
@@ -57,13 +56,6 @@ parcelable StreamDescriptor {
     }
 
     /**
-     * The exit command is used to unblock the HAL thread and ask it to exit.
-     * This is the last command that the client sends via the StreamDescriptor.
-     * The HAL module must reply to this command in order to unblock the client,
-     * and cease waiting on the command queue.
-     */
-    const int COMMAND_EXIT = 0;
-    /**
      * The command used for audio I/O, see 'AudioBuffer'. For MMap No IRQ mode
      * this command only provides updated positions and latency because actual
      * audio I/O is done via the 'AudioBuffer.mmap' shared buffer.
@@ -83,28 +75,25 @@ parcelable StreamDescriptor {
          */
         int code;
         /**
-         * For output streams: the amount of bytes provided by the client in the
-         *   'audio.fmq' queue.
-         * For input streams: the amount of bytes requested by the client to read
-         *   from the hardware into the 'audio.fmq' queue.
+         * For output streams: the amount of bytes that the client requests the
+         *   HAL module to read from the 'audio.fmq' queue.
+         * For input streams: the amount of bytes requested by the client to
+         *   read from the hardware into the 'audio.fmq' queue.
+         *
+         * In both cases it is allowed for this field to contain any
+         * non-negative number. The value 0 can be used if the client only needs
+         * to retrieve current positions and latency. Any sufficiently big value
+         * which exceeds the size of the queue's area which is currently
+         * available for reading or writing by the HAL module must be trimmed by
+         * the HAL module to the available size. Note that the HAL module is
+         * allowed to consume or provide less data than requested, and it must
+         * return the amount of actually read or written data via the
+         * 'Reply.fmqByteCount' field. Thus, only attempts to pass a negative
+         * number must be constituted as a client's error.
          */
         int fmqByteCount;
     }
     MQDescriptor<Command, SynchronizedReadWrite> command;
-
-    /**
-     * No error, the command completed successfully.
-     */
-    const int STATUS_OK = 0;
-    /**
-     * Invalid data provided in the command, e.g. unknown command code or
-     * negative 'fmqByteCount' value.
-     */
-    const int STATUS_ILLEGAL_ARGUMENT = 1;
-    /**
-     * The HAL module is not in the state when it can complete the command.
-     */
-    const int STATUS_ILLEGAL_STATE = 2;
 
     /**
      * Used for providing replies to commands. The HAL module writes into
@@ -115,7 +104,15 @@ parcelable StreamDescriptor {
     @FixedSize
     parcelable Reply {
         /**
-         * One of STATUS_* statuses.
+         * One of Binder STATUS_* statuses:
+         *  - STATUS_OK: the command has completed successfully;
+         *  - STATUS_BAD_VALUE: invalid value in the 'Command' structure;
+         *  - STATUS_INVALID_OPERATION: the mix port is not connected
+         *                              to any producer or consumer, thus
+         *                              positions can not be reported;
+         *  - STATUS_NOT_ENOUGH_DATA: a read or write error has
+         *                            occurred for the 'audio.fmq' queue;
+         *
          */
         int status;
         /**
@@ -123,6 +120,9 @@ parcelable StreamDescriptor {
          *   module from the 'audio.fmq' queue.
          * For input streams: the amount of bytes actually provided by the HAL
          *   in the 'audio.fmq' queue.
+         *
+         * The returned value must not exceed the value passed in the
+         * 'fmqByteCount' field of the corresponding command or be negative.
          */
         int fmqByteCount;
         /**
@@ -162,12 +162,15 @@ parcelable StreamDescriptor {
     @VintfStability
     union AudioBuffer {
         /**
-         * The fast message queue used for all modes except MMap No IRQ. Access
-         * to this queue is synchronized via the 'command' and 'reply' queues
-         * as described below.
+         * The fast message queue used for all modes except MMap No IRQ.  Both
+         * reads and writes into this queue are non-blocking because access to
+         * this queue is synchronized via the 'command' and 'reply' queues as
+         * described below. The queue nevertheless uses 'SynchronizedReadWrite'
+         * because there is only one reader, and the reading position must be
+         * shared.
          *
          * For output streams the following sequence of operations is used:
-         *  1. The client puts audio data into the 'audio.fmq' queue.
+         *  1. The client writes audio data into the 'audio.fmq' queue.
          *  2. The client writes the 'BURST' command into the 'command' queue,
          *     and hangs on waiting on a read from the 'reply' queue.
          *  3. The high priority thread in the HAL module wakes up due to 2.
@@ -175,19 +178,20 @@ parcelable StreamDescriptor {
          *  5. The HAL module writes the command status and current positions
          *     into 'reply' queue, and hangs on waiting on a read from
          *     the 'command' queue.
+         *  6. The client wakes up due to 5. and reads the reply.
          *
          * For input streams the following sequence of operations is used:
          *  1. The client writes the 'BURST' command into the 'command' queue,
          *     and hangs on waiting on a read from the 'reply' queue.
          *  2. The high priority thread in the HAL module wakes up due to 1.
-         *  3. The HAL module puts audio data into the 'audio.fmq' queue.
+         *  3. The HAL module writes audio data into the 'audio.fmq' queue.
          *  4. The HAL module writes the command status and current positions
          *     into 'reply' queue, and hangs on waiting on a read from
          *     the 'command' queue.
          *  5. The client wakes up due to 4.
          *  6. The client reads the reply and audio data.
          */
-        MQDescriptor<byte, UnsynchronizedWrite> fmq;
+        MQDescriptor<byte, SynchronizedReadWrite> fmq;
         /**
          * MMap buffers are shared directly with the DSP, which operates
          * independently from the CPU. Writes and reads into these buffers
