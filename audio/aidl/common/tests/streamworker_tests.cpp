@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
+#include <pthread.h>
 #include <sched.h>
 #include <unistd.h>
+
 #include <atomic>
 
 #include <StreamWorker.h>
@@ -34,6 +36,7 @@ class TestWorker : public StreamWorker<TestWorker> {
     explicit TestWorker(TestStream* stream) : mStream(stream) {}
 
     size_t getWorkerCycles() const { return mWorkerCycles; }
+    int getPriority() const { return mPriority; }
     bool hasWorkerCycleCalled() const { return mWorkerCycles != 0; }
     bool hasNoWorkerCycleCalled(useconds_t usec) {
         const size_t cyclesBefore = mWorkerCycles;
@@ -41,8 +44,9 @@ class TestWorker : public StreamWorker<TestWorker> {
         return mWorkerCycles == cyclesBefore;
     }
 
-    bool workerInit() { return mStream; }
+    std::string workerInit() { return mStream != nullptr ? "" : "Expected error"; }
     bool workerCycle() {
+        mPriority = getpriority(PRIO_PROCESS, 0);
         do {
             mWorkerCycles++;
         } while (mWorkerCycles == 0);
@@ -52,6 +56,7 @@ class TestWorker : public StreamWorker<TestWorker> {
   private:
     TestStream* const mStream;
     std::atomic<size_t> mWorkerCycles = 0;
+    std::atomic<int> mPriority = ANDROID_PRIORITY_DEFAULT;
 };
 
 // The parameter specifies whether an extra call to 'stop' is made at the end.
@@ -217,6 +222,21 @@ TEST_P(StreamWorkerTest, MutexDoesNotBlockWorker) {
     worker.testLockUnlockMutex(false);
     worker.waitForAtLeastOneCycle();
     EXPECT_FALSE(worker.hasError());
+}
+
+TEST_P(StreamWorkerTest, ThreadName) {
+    const std::string workerName = "TestWorker";
+    ASSERT_TRUE(worker.start(workerName)) << worker.getError();
+    char nameBuf[128];
+    ASSERT_EQ(0, pthread_getname_np(worker.testGetThreadNativeHandle(), nameBuf, sizeof(nameBuf)));
+    EXPECT_EQ(workerName, nameBuf);
+}
+
+TEST_P(StreamWorkerTest, ThreadPriority) {
+    const int priority = ANDROID_PRIORITY_LOWEST;
+    ASSERT_TRUE(worker.start("", priority)) << worker.getError();
+    worker.waitForAtLeastOneCycle();
+    EXPECT_EQ(priority, worker.getPriority());
 }
 
 INSTANTIATE_TEST_SUITE_P(StreamWorker, StreamWorkerTest, testing::Bool());
