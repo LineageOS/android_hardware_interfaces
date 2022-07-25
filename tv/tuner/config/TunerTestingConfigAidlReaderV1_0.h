@@ -83,6 +83,11 @@ static vector<string> recordDvrIds;
 static vector<string> audioFilterIds;
 static vector<string> videoFilterIds;
 static vector<string> recordFilterIds;
+static vector<string> sectionFilterIds;
+static vector<string> frontendIds;
+static vector<string> lnbIds;
+static vector<string> diseqcMsgs;
+static vector<string> descramblerIds;
 
 #define PROVISION_STR                                      \
     "{                                                   " \
@@ -268,6 +273,7 @@ struct TunerTestingConfigAidlReader1_0 {
             auto frontends = *hardwareConfig.getFirstFrontends();
             for (auto feConfig : frontends.getFrontend()) {
                 string id = feConfig.getId();
+                frontendIds.push_back(id);
                 if (id.compare(string("FE_DEFAULT")) == 0) {
                     // overrid default
                     frontendMap.erase(string("FE_DEFAULT"));
@@ -438,6 +444,7 @@ struct TunerTestingConfigAidlReader1_0 {
             auto lnbs = *hardwareConfig.getFirstLnbs();
             for (auto lnbConfig : lnbs.getLnb()) {
                 string id = lnbConfig.getId();
+                lnbIds.push_back(id);
                 if (lnbConfig.hasName()) {
                     lnbMap[id].name = lnbConfig.getName();
                 } else {
@@ -456,6 +463,7 @@ struct TunerTestingConfigAidlReader1_0 {
             auto descramblers = *hardwareConfig.getFirstDescramblers();
             for (auto descramblerConfig : descramblers.getDescrambler()) {
                 string id = descramblerConfig.getId();
+                descramblerIds.push_back(id);
                 descramblerMap[id].casSystemId =
                         static_cast<int32_t>(descramblerConfig.getCasSystemId());
                 if (descramblerConfig.hasProvisionStr()) {
@@ -481,6 +489,7 @@ struct TunerTestingConfigAidlReader1_0 {
             auto msgs = *hardwareConfig.getFirstDiseqcMessages();
             for (auto msgConfig : msgs.getDiseqcMessage()) {
                 string name = msgConfig.getMsgName();
+                diseqcMsgs.push_back(name);
                 for (uint8_t atom : msgConfig.getMsgBody()) {
                     diseqcMsgMap[name].push_back(atom);
                 }
@@ -840,6 +849,8 @@ struct TunerTestingConfigAidlReader1_0 {
             videoFilterIds.push_back(filterConfig.getId());
         } else if (subType == FilterSubTypeEnum::RECORD) {
             recordFilterIds.push_back(filterConfig.getId());
+        } else if (subType == FilterSubTypeEnum::SECTION) {
+            sectionFilterIds.push_back(filterConfig.getId());
         }
 
         switch (mainType) {
