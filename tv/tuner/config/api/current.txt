@@ -178,13 +178,25 @@ package android.media.tuner.testing.configuration.V1_0 {
   public class DvbsFrontendSettings {
     ctor public DvbsFrontendSettings();
     method @Nullable public java.math.BigInteger getInputStreamId();
+    method @Nullable public java.math.BigInteger getInversion();
     method @Nullable public boolean getIsDiseqcRxMessage();
+    method @Nullable public java.math.BigInteger getModulation();
+    method @Nullable public java.math.BigInteger getPilot();
+    method @Nullable public java.math.BigInteger getRolloff();
     method @Nullable public android.media.tuner.testing.configuration.V1_0.DvbsScanType getScanType();
+    method @Nullable public java.math.BigInteger getStandard();
     method @Nullable public java.math.BigInteger getSymbolRate();
+    method @Nullable public java.math.BigInteger getVcmMode();
     method public void setInputStreamId(@Nullable java.math.BigInteger);
+    method public void setInversion(@Nullable java.math.BigInteger);
     method public void setIsDiseqcRxMessage(@Nullable boolean);
+    method public void setModulation(@Nullable java.math.BigInteger);
+    method public void setPilot(@Nullable java.math.BigInteger);
+    method public void setRolloff(@Nullable java.math.BigInteger);
     method public void setScanType(@Nullable android.media.tuner.testing.configuration.V1_0.DvbsScanType);
+    method public void setStandard(@Nullable java.math.BigInteger);
     method public void setSymbolRate(@Nullable java.math.BigInteger);
+    method public void setVcmMode(@Nullable java.math.BigInteger);
   }
 
   public enum DvbsScanType {
