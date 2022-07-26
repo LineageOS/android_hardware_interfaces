@@ -153,7 +153,7 @@ class TunerFilterAidlTest : public testing::TestWithParam<std::string> {
             mService = nullptr;
         }
         ASSERT_NE(mService, nullptr);
-        initConfiguration();
+        ASSERT_TRUE(initConfiguration());
 
         mFrontendTests.setService(mService);
         mDemuxTests.setService(mService);
@@ -264,7 +264,7 @@ class TunerRecordAidlTest : public testing::TestWithParam<std::string> {
             mService = nullptr;
         }
         ASSERT_NE(mService, nullptr);
-        initConfiguration();
+        ASSERT_TRUE(initConfiguration());
 
         mFrontendTests.setService(mService);
         mDemuxTests.setService(mService);
@@ -313,7 +313,7 @@ class TunerFrontendAidlTest : public testing::TestWithParam<std::string> {
             mService = nullptr;
         }
         ASSERT_NE(mService, nullptr);
-        initConfiguration();
+        ASSERT_TRUE(initConfiguration());
 
         mFrontendTests.setService(mService);
     }
@@ -344,7 +344,7 @@ class TunerBroadcastAidlTest : public testing::TestWithParam<std::string> {
             mService = nullptr;
         }
         ASSERT_NE(mService, nullptr);
-        initConfiguration();
+        ASSERT_TRUE(initConfiguration());
 
         mFrontendTests.setService(mService);
         mDemuxTests.setService(mService);

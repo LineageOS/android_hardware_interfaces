@@ -131,28 +131,28 @@ inline vector<vector<string>> generateIdCombinations(vector<vector<string>>& ids
 /*
  * index 0 - playback dvr
  * index 1 - audio filters
- * index 2 - video filters
- * index 3 - optional section filters
+ * index 2 - optional section filters
  */
 static inline vector<DvrPlaybackHardwareConnections> generatePlaybackCombinations() {
     vector<DvrPlaybackHardwareConnections> combinations;
     vector<string> sectionFilterIds_optional = sectionFilterIds;
     sectionFilterIds_optional.push_back(emptyHardwareId);
-    vector<vector<string>> deviceIds{playbackDvrIds, audioFilterIds, videoFilterIds,
-                                     sectionFilterIds_optional};
+    vector<vector<string>> deviceIds{playbackDvrIds, audioFilterIds, sectionFilterIds_optional};
 
     const int dvrIndex = 0;
     const int audioFilterIndex = 1;
-    const int videoFilterIndex = 2;
-    const int sectionFilterIndex = 3;
+    const int sectionFilterIndex = 2;
 
     auto idCombinations = generateIdCombinations(deviceIds);
     for (auto& combo : idCombinations) {
         DvrPlaybackHardwareConnections mPlayback;
         mPlayback.dvrId = combo[dvrIndex];
         mPlayback.audioFilterId = combo[audioFilterIndex];
-        mPlayback.videoFilterId = combo[videoFilterIndex];
         mPlayback.sectionFilterId = combo[sectionFilterIndex];
+        const int videoFilterIndex =
+                find(audioFilterIds.begin(), audioFilterIds.end(), mPlayback.audioFilterId) -
+                audioFilterIds.begin();
+        mPlayback.videoFilterId = videoFilterIds[videoFilterIndex];
         combinations.push_back(mPlayback);
     }
 
@@ -176,17 +176,15 @@ static inline vector<DvrPlaybackHardwareConnections> generatePlaybackConfigs() {
 /*
  * index 0 - frontends
  * index 1 - audio filters
- * index 2 - video filters
- * index 3 - lnbs
+ * index 2 - lnbs
  */
 static inline vector<LnbLiveHardwareConnections> generateLnbLiveCombinations() {
     vector<LnbLiveHardwareConnections> combinations;
-    vector<vector<string>> deviceIds{frontendIds, audioFilterIds, videoFilterIds, lnbIds};
+    vector<vector<string>> deviceIds{frontendIds, audioFilterIds, lnbIds};
 
     const int frontendIndex = 0;
     const int audioFilterIndex = 1;
-    const int videoFilterIndex = 2;
-    const int lnbIndex = 3;
+    const int lnbIndex = 2;
 
     // TODO: Find a better way to vary diseqcMsgs, if at all
     auto idCombinations = generateIdCombinations(deviceIds);
@@ -198,7 +196,10 @@ static inline vector<LnbLiveHardwareConnections> generateLnbLiveCombinations() {
             LnbLiveHardwareConnections mLnbLive;
             mLnbLive.frontendId = feId;
             mLnbLive.audioFilterId = combo[audioFilterIndex];
-            mLnbLive.videoFilterId = combo[videoFilterIndex];
+            const int videoFilterIndex =
+                    find(audioFilterIds.begin(), audioFilterIds.end(), mLnbLive.audioFilterId) -
+                    audioFilterIds.begin();
+            mLnbLive.videoFilterId = videoFilterIds[videoFilterIndex];
             mLnbLive.lnbId = combo[lnbIndex];
             mLnbLive.diseqcMsgs = diseqcMsgs;
             combinations.push_back(mLnbLive);
@@ -301,9 +302,8 @@ static inline vector<LnbRecordHardwareConnections> generateLnbRecordConfiguratio
  * index 0 - decramblers
  * index 1 - frontends
  * index 2 - audio filters
- * index 3 - video filters
- * index 4 - Dvr SW Fe Connections
- * index 5 - DVR Source Connections
+ * index 3 - Dvr SW Fe Connections
+ * index 4 - DVR Source Connections
  */
 static inline vector<DescramblingHardwareConnections> generateDescramblingCombinations() {
     vector<DescramblingHardwareConnections> combinations;
@@ -320,12 +320,11 @@ static inline vector<DescramblingHardwareConnections> generateDescramblingCombin
     const int descramblerIndex = 0;
     const int frontendIndex = 1;
     const int audioFilterIndex = 2;
-    const int videoFilterIndex = 3;
-    const int dvrFeIdIndex = 4;
-    const int dvrSourceIdIndex = 5;
+    const int dvrFeIdIndex = 3;
+    const int dvrSourceIdIndex = 4;
 
-    vector<vector<string>> deviceIds{descramblerIds, mfrontendIds,        audioFilterIds,
-                                     videoFilterIds, mDvrFeConnectionIds, mDvrSourceConnectionIds};
+    vector<vector<string>> deviceIds{descramblerIds, mfrontendIds, audioFilterIds,
+                                     mDvrFeConnectionIds, mDvrSourceConnectionIds};
     auto idCombinations = generateIdCombinations(deviceIds);
     for (auto& combo : idCombinations) {
         DescramblingHardwareConnections mDescrambling;
@@ -353,7 +352,10 @@ static inline vector<DescramblingHardwareConnections> generateDescramblingCombin
         }
         mDescrambling.frontendId = feId;
         mDescrambling.audioFilterId = combo[audioFilterIndex];
-        mDescrambling.videoFilterId = combo[videoFilterIndex];
+        const int videoFilterIndex =
+                find(audioFilterIds.begin(), audioFilterIds.end(), mDescrambling.audioFilterId) -
+                audioFilterIds.begin();
+        mDescrambling.videoFilterId = videoFilterIds[videoFilterIndex];
         mDescrambling.dvrSoftwareFeId = dvrSwFeId;
         mDescrambling.dvrSourceId = dvrSourceId;
         mDescrambling.descramblerId = combo[descramblerIndex];
@@ -698,6 +700,11 @@ inline bool validateConnections() {
 
     if (!filterIsValid) {
         ALOGW("[vts config] dynamic config filter connection is invalid.");
+        return false;
+    }
+
+    if (audioFilterIds.size() != videoFilterIds.size()) {
+        ALOGW("[vts config] the number of audio and video filters should be equal");
         return false;
     }
 
