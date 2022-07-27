@@ -40,6 +40,7 @@ using ::aidl::android::hardware::automotive::vehicle::RawPropValues;
 using ::aidl::android::hardware::automotive::vehicle::VehicleApPowerStateReport;
 using ::aidl::android::hardware::automotive::vehicle::VehicleApPowerStateReq;
 using ::aidl::android::hardware::automotive::vehicle::VehicleAreaConfig;
+using ::aidl::android::hardware::automotive::vehicle::VehicleAreaMirror;
 using ::aidl::android::hardware::automotive::vehicle::VehicleAreaWindow;
 using ::aidl::android::hardware::automotive::vehicle::VehicleGear;
 using ::aidl::android::hardware::automotive::vehicle::VehicleHvacFanDirection;
@@ -714,6 +715,22 @@ const std::vector<ConfigDeclaration> kVehicleProperties = {
                                             .maxInt32Value = 2,
                                     }}},
          .initialValue = {.int32Values = {0}}},  // +ve values for heating and -ve for cooling
+
+        {.config = {.prop = toInt(VehicleProperty::HVAC_SIDE_MIRROR_HEAT),
+                    .access = VehiclePropertyAccess::READ_WRITE,
+                    .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                    .areaConfigs = {VehicleAreaConfig{
+                                            .areaId = toInt(VehicleAreaMirror::DRIVER_LEFT),
+                                            .minInt32Value = 0,
+                                            .maxInt32Value = 2,
+                                    },
+                                    VehicleAreaConfig{
+                                            .areaId = toInt(VehicleAreaMirror::DRIVER_RIGHT),
+                                            .minInt32Value = 0,
+                                            .maxInt32Value = 2,
+                                    }}},
+         .initialAreaValues = {{toInt(VehicleAreaMirror::DRIVER_LEFT), {.int32Values = {2}}},
+                               {toInt(VehicleAreaMirror::DRIVER_RIGHT), {.int32Values = {1}}}}},
 
         {.config = {.prop = toInt(VehicleProperty::HVAC_TEMPERATURE_SET),
                     .access = VehiclePropertyAccess::READ_WRITE,
