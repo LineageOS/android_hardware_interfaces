@@ -37,28 +37,23 @@ constexpr float kDefaultColorInRgba[] = {0.1f, 0.5f, 0.1f, 1.0f};
 constexpr float kDisplayAreaRatio = 0.8f;
 
 constexpr const char vertexShaderSource[] =
-        ""
-        "#version 300 es                    \n"
-        "layout(location = 0) in vec4 pos;  \n"
-        "layout(location = 1) in vec2 tex;  \n"
-        "out vec2 uv;                       \n"
-        "void main()                        \n"
-        "{                                  \n"
-        "   gl_Position = pos;              \n"
-        "   uv = tex;                       \n"
-        "}                                  \n";
+        "attribute vec4 pos;                    \n"
+        "attribute vec2 tex;                    \n"
+        "varying vec2 uv;                       \n"
+        "void main()                            \n"
+        "{                                      \n"
+        "   gl_Position = pos;                  \n"
+        "   uv = tex;                           \n"
+        "}                                      \n";
 
 constexpr const char pixelShaderSource[] =
-        "#version 300 es                    \n"
-        "precision mediump float;           \n"
-        "uniform sampler2D tex;             \n"
-        "in vec2 uv;                        \n"
-        "out vec4 color;                    \n"
-        "void main()                        \n"
-        "{                                  \n"
-        "    vec4 texel = texture(tex, uv); \n"
-        "    color = texel;                 \n"
-        "}                                  \n";
+        "precision mediump float;               \n"
+        "uniform sampler2D tex;                 \n"
+        "varying vec2 uv;                       \n"
+        "void main()                            \n"
+        "{                                      \n"
+        "    gl_FragColor = texture2D(tex, uv); \n"
+        "}                                      \n";
 
 const char* getEGLError(void) {
     switch (eglGetError()) {
@@ -157,6 +152,9 @@ GLuint buildShaderProgram(const char* vtxSrc, const char* pxlSrc) {
     glAttachShader(program, vertexShader);
     glAttachShader(program, pixelShader);
 
+    glBindAttribLocation(program, 0, "pos");
+    glBindAttribLocation(program, 1, "tex");
+
     // Link the program
     glLinkProgram(program);
     GLint linked = 0;
@@ -235,7 +233,7 @@ bool GlWrapper::initialize(const sp<IAutomotiveDisplayProxyService>& service, ui
         return false;
     }
 
-    EGLint major = 3;
+    EGLint major = 2;
     EGLint minor = 0;
     if (!eglInitialize(mDisplay, &major, &minor)) {
         LOG(ERROR) << "Failed to initialize EGL: " << getEGLError();
