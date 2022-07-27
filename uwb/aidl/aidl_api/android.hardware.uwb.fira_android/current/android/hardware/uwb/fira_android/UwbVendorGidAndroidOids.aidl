@@ -36,4 +36,5 @@ package android.hardware.uwb.fira_android;
 enum UwbVendorGidAndroidOids {
   ANDROID_GET_POWER_STATS = 0,
   ANDROID_SET_COUNTRY_CODE = 1,
+  ANDROID_RANGE_DIAGNOSTICS = 2,
 }
