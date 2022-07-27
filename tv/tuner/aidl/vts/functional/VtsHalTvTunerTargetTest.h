@@ -65,11 +65,16 @@ AssertionResult filterDataOutputTestBase(FilterTests& tests) {
 }
 
 void clearIds() {
+    lnbIds.clear();
+    diseqcMsgs.clear();
+    frontendIds.clear();
     recordDvrIds.clear();
+    descramblerIds.clear();
     audioFilterIds.clear();
     videoFilterIds.clear();
     playbackDvrIds.clear();
     recordFilterIds.clear();
+    sectionFilterIds.clear();
 }
 
 class TunerLnbAidlTest : public testing::TestWithParam<std::string> {

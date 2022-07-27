@@ -494,23 +494,32 @@ TEST_P(TunerLnbAidlTest, SendDiseqcMessageToLnb) {
     if (!lnbLive.support) {
         return;
     }
-    if (lnbMap[lnbLive.lnbId].name.compare(emptyHardwareId) == 0) {
-        vector<int32_t> ids;
-        ASSERT_TRUE(mLnbTests.getLnbIds(ids));
-        ASSERT_TRUE(ids.size() > 0);
-        ASSERT_TRUE(mLnbTests.openLnbById(ids[0]));
-    } else {
-        int32_t id;
-        ASSERT_TRUE(mLnbTests.openLnbByName(lnbMap[lnbLive.lnbId].name, id));
+    vector<LnbLiveHardwareConnections> lnbLive_configs = generateLnbLiveConfigurations();
+    if (lnbLive_configs.empty()) {
+        ALOGD("No frontends that support satellites.");
+        return;
     }
-    ASSERT_TRUE(mLnbTests.setLnbCallback());
-    ASSERT_TRUE(mLnbTests.setVoltage(lnbMap[lnbLive.lnbId].voltage));
-    ASSERT_TRUE(mLnbTests.setTone(lnbMap[lnbLive.lnbId].tone));
-    ASSERT_TRUE(mLnbTests.setSatellitePosition(lnbMap[lnbLive.lnbId].position));
-    for (auto msgName : lnbLive.diseqcMsgs) {
-        ASSERT_TRUE(mLnbTests.sendDiseqcMessage(diseqcMsgMap[msgName]));
+    for (auto& combination : lnbLive_configs) {
+        lnbLive = combination;
+
+        if (lnbMap[lnbLive.lnbId].name.compare(emptyHardwareId) == 0) {
+            vector<int32_t> ids;
+            ASSERT_TRUE(mLnbTests.getLnbIds(ids));
+            ASSERT_TRUE(ids.size() > 0);
+            ASSERT_TRUE(mLnbTests.openLnbById(ids[0]));
+        } else {
+            int32_t id;
+            ASSERT_TRUE(mLnbTests.openLnbByName(lnbMap[lnbLive.lnbId].name, id));
+        }
+        ASSERT_TRUE(mLnbTests.setLnbCallback());
+        ASSERT_TRUE(mLnbTests.setVoltage(lnbMap[lnbLive.lnbId].voltage));
+        ASSERT_TRUE(mLnbTests.setTone(lnbMap[lnbLive.lnbId].tone));
+        ASSERT_TRUE(mLnbTests.setSatellitePosition(lnbMap[lnbLive.lnbId].position));
+        for (auto msgName : lnbLive.diseqcMsgs) {
+            ASSERT_TRUE(mLnbTests.sendDiseqcMessage(diseqcMsgMap[msgName]));
+        }
+        ASSERT_TRUE(mLnbTests.closeLnb());
     }
-    ASSERT_TRUE(mLnbTests.closeLnb());
 }
 
 TEST_P(TunerDemuxAidlTest, openDemux) {
@@ -839,10 +848,16 @@ TEST_P(TunerFilterAidlTest, FilterDelayHintTest) {
 
 TEST_P(TunerPlaybackAidlTest, PlaybackDataFlowWithTsSectionFilterTest) {
     description("Feed ts data from playback and configure Ts section filter to get output");
-    if (!playback.support || playback.sectionFilterId.compare(emptyHardwareId) == 0) {
+    if (!playback.support) {
         return;
     }
-    playbackSingleFilterTest(filterMap[playback.sectionFilterId], dvrMap[playback.dvrId]);
+    vector<DvrPlaybackHardwareConnections> playback_configs = generatePlaybackConfigs();
+    for (auto& configuration : playback_configs) {
+        if (configuration.sectionFilterId.compare(emptyHardwareId) != 0) {
+            playback = configuration;
+            playbackSingleFilterTest(filterMap[playback.sectionFilterId], dvrMap[playback.dvrId]);
+        }
+    }
 }
 
 TEST_P(TunerPlaybackAidlTest, PlaybackDataFlowWithTsAudioFilterTest) {
@@ -850,7 +865,11 @@ TEST_P(TunerPlaybackAidlTest, PlaybackDataFlowWithTsAudioFilterTest) {
     if (!playback.support) {
         return;
     }
-    playbackSingleFilterTest(filterMap[playback.audioFilterId], dvrMap[playback.dvrId]);
+    vector<DvrPlaybackHardwareConnections> playback_configs = generatePlaybackConfigs();
+    for (auto& configuration : playback_configs) {
+        playback = configuration;
+        playbackSingleFilterTest(filterMap[playback.audioFilterId], dvrMap[playback.dvrId]);
+    }
 }
 
 TEST_P(TunerPlaybackAidlTest, PlaybackDataFlowWithTsVideoFilterTest) {
@@ -858,7 +877,11 @@ TEST_P(TunerPlaybackAidlTest, PlaybackDataFlowWithTsVideoFilterTest) {
     if (!playback.support) {
         return;
     }
-    playbackSingleFilterTest(filterMap[playback.videoFilterId], dvrMap[playback.dvrId]);
+    vector<DvrPlaybackHardwareConnections> playback_configs = generatePlaybackConfigs();
+    for (auto& configuration : playback_configs) {
+        playback = configuration;
+        playbackSingleFilterTest(filterMap[playback.videoFilterId], dvrMap[playback.dvrId]);
+    }
 }
 
 TEST_P(TunerRecordAidlTest, RecordDataFlowWithTsRecordFilterTest) {
@@ -885,9 +908,17 @@ TEST_P(TunerRecordAidlTest, LnbRecordDataFlowWithTsRecordFilterTest) {
     if (!lnbRecord.support) {
         return;
     }
-    recordSingleFilterTestWithLnb(filterMap[lnbRecord.recordFilterId],
-                                  frontendMap[lnbRecord.frontendId], dvrMap[lnbRecord.dvrRecordId],
-                                  lnbMap[lnbRecord.lnbId]);
+    vector<LnbRecordHardwareConnections> lnbRecord_configs = generateLnbRecordConfigurations();
+    if (lnbRecord_configs.empty()) {
+        ALOGD("No frontends that support satellites.");
+        return;
+    }
+    for (auto& configuration : lnbRecord_configs) {
+        lnbRecord = configuration;
+        recordSingleFilterTestWithLnb(filterMap[lnbRecord.recordFilterId],
+                                      frontendMap[lnbRecord.frontendId],
+                                      dvrMap[lnbRecord.dvrRecordId], lnbMap[lnbRecord.lnbId]);
+    }
 }
 
 TEST_P(TunerFrontendAidlTest, TuneFrontend) {
@@ -903,7 +934,11 @@ TEST_P(TunerFrontendAidlTest, AutoScanFrontend) {
     if (!scan.hasFrontendConnection) {
         return;
     }
-    mFrontendTests.scanTest(frontendMap[scan.frontendId], FrontendScanType::SCAN_AUTO);
+    vector<ScanHardwareConnections> scan_configs = generateScanConfigurations();
+    for (auto& configuration : scan_configs) {
+        scan = configuration;
+        mFrontendTests.scanTest(frontendMap[scan.frontendId], FrontendScanType::SCAN_AUTO);
+    }
 }
 
 TEST_P(TunerFrontendAidlTest, BlindScanFrontend) {
@@ -911,7 +946,11 @@ TEST_P(TunerFrontendAidlTest, BlindScanFrontend) {
     if (!scan.hasFrontendConnection) {
         return;
     }
-    mFrontendTests.scanTest(frontendMap[scan.frontendId], FrontendScanType::SCAN_BLIND);
+    vector<ScanHardwareConnections> scan_configs = generateScanConfigurations();
+    for (auto& configuration : scan_configs) {
+        scan = configuration;
+        mFrontendTests.scanTest(frontendMap[scan.frontendId], FrontendScanType::SCAN_BLIND);
+    }
 }
 
 TEST_P(TunerFrontendAidlTest, TuneFrontendWithFrontendSettings) {
@@ -927,7 +966,11 @@ TEST_P(TunerFrontendAidlTest, BlindScanFrontendWithEndFrequency) {
     if (!scan.hasFrontendConnection) {
         return;
     }
-    mFrontendTests.scanTest(frontendMap[scan.frontendId], FrontendScanType::SCAN_BLIND);
+    vector<ScanHardwareConnections> scan_configs = generateScanConfigurations();
+    for (auto& configuration : scan_configs) {
+        scan = configuration;
+        mFrontendTests.scanTest(frontendMap[scan.frontendId], FrontendScanType::SCAN_BLIND);
+    }
 }
 
 TEST_P(TunerFrontendAidlTest, LinkToCiCam) {
@@ -1005,8 +1048,16 @@ TEST_P(TunerBroadcastAidlTest, LnbBroadcastDataFlowVideoFilterTest) {
     if (!lnbLive.support) {
         return;
     }
-    broadcastSingleFilterTestWithLnb(filterMap[lnbLive.videoFilterId],
-                                     frontendMap[lnbLive.frontendId], lnbMap[lnbLive.lnbId]);
+    vector<LnbLiveHardwareConnections> lnbLive_configs = generateLnbLiveConfigurations();
+    if (lnbLive_configs.empty()) {
+        ALOGD("No frontends that support satellites.");
+        return;
+    }
+    for (auto& combination : lnbLive_configs) {
+        lnbLive = combination;
+        broadcastSingleFilterTestWithLnb(filterMap[lnbLive.videoFilterId],
+                                         frontendMap[lnbLive.frontendId], lnbMap[lnbLive.lnbId]);
+    }
 }
 
 TEST_P(TunerBroadcastAidlTest, MediaFilterWithSharedMemoryHandle) {
@@ -1022,25 +1073,34 @@ TEST_P(TunerDescramblerAidlTest, CreateDescrambler) {
     if (!descrambling.support) {
         return;
     }
-    int32_t demuxId;
-    std::shared_ptr<IDemux> demux;
-    ASSERT_TRUE(mDemuxTests.openDemux(demux, demuxId));
-
-    if (descrambling.hasFrontendConnection) {
-        int32_t feId;
-        mFrontendTests.getFrontendIdByType(frontendMap[descrambling.frontendId].type, feId);
-        ASSERT_TRUE(feId != INVALID_ID);
-        ASSERT_TRUE(mFrontendTests.openFrontendById(feId));
-        ASSERT_TRUE(mFrontendTests.setFrontendCallback());
-        ASSERT_TRUE(mDemuxTests.setDemuxFrontendDataSource(feId));
+    vector<DescramblingHardwareConnections> descrambling_configs =
+            generateDescramblingConfigurations();
+    if (descrambling_configs.empty()) {
+        ALOGD("No valid descrambling combinations in the configuration file.");
+        return;
     }
+    for (auto& combination : descrambling_configs) {
+        descrambling = combination;
+        int32_t demuxId;
+        std::shared_ptr<IDemux> demux;
+        ASSERT_TRUE(mDemuxTests.openDemux(demux, demuxId));
 
-    ASSERT_TRUE(mDescramblerTests.openDescrambler(demuxId));
-    ASSERT_TRUE(mDescramblerTests.closeDescrambler());
-    ASSERT_TRUE(mDemuxTests.closeDemux());
+        if (descrambling.hasFrontendConnection) {
+            int32_t feId;
+            mFrontendTests.getFrontendIdByType(frontendMap[descrambling.frontendId].type, feId);
+            ASSERT_TRUE(feId != INVALID_ID);
+            ASSERT_TRUE(mFrontendTests.openFrontendById(feId));
+            ASSERT_TRUE(mFrontendTests.setFrontendCallback());
+            ASSERT_TRUE(mDemuxTests.setDemuxFrontendDataSource(feId));
+        }
 
-    if (descrambling.hasFrontendConnection) {
-        ASSERT_TRUE(mFrontendTests.closeFrontend());
+        ASSERT_TRUE(mDescramblerTests.openDescrambler(demuxId));
+        ASSERT_TRUE(mDescramblerTests.closeDescrambler());
+        ASSERT_TRUE(mDemuxTests.closeDemux());
+
+        if (descrambling.hasFrontendConnection) {
+            ASSERT_TRUE(mFrontendTests.closeFrontend());
+        }
     }
 }
 
@@ -1049,11 +1109,20 @@ TEST_P(TunerDescramblerAidlTest, ScrambledBroadcastDataFlowMediaFiltersTest) {
     if (!descrambling.support) {
         return;
     }
-    set<FilterConfig> filterConfs;
-    filterConfs.insert(static_cast<FilterConfig>(filterMap[descrambling.audioFilterId]));
-    filterConfs.insert(static_cast<FilterConfig>(filterMap[descrambling.videoFilterId]));
-    scrambledBroadcastTest(filterConfs, frontendMap[descrambling.frontendId],
-                           descramblerMap[descrambling.descramblerId]);
+    vector<DescramblingHardwareConnections> descrambling_configs =
+            generateDescramblingConfigurations();
+    if (descrambling_configs.empty()) {
+        ALOGD("No valid descrambling combinations in the configuration file.");
+        return;
+    }
+    for (auto& combination : descrambling_configs) {
+        descrambling = combination;
+        set<FilterConfig> filterConfs;
+        filterConfs.insert(static_cast<FilterConfig>(filterMap[descrambling.audioFilterId]));
+        filterConfs.insert(static_cast<FilterConfig>(filterMap[descrambling.videoFilterId]));
+        scrambledBroadcastTest(filterConfs, frontendMap[descrambling.frontendId],
+                               descramblerMap[descrambling.descramblerId]);
+    }
 }
 
 INSTANTIATE_TEST_SUITE_P(PerInstance, TunerBroadcastAidlTest,
