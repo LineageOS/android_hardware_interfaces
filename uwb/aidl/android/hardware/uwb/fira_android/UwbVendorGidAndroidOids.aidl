@@ -31,4 +31,8 @@ enum UwbVendorGidAndroidOids {
     // Used to set the current regulatory country code (determined usinag
     // SIM or hardcoded by OEM).
     ANDROID_SET_COUNTRY_CODE = 0x1,
+    // Used by the notification to get UWB ranging diagnostics stats.
+    // Supported only if the UwbVendorCapabilityTlvTypes.SUPPORTED_DIAGNOSTICS set
+    // to 1.
+    ANDROID_RANGE_DIAGNOSTICS = 0x2,
 }
