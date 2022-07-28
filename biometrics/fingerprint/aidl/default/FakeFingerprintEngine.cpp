@@ -15,8 +15,10 @@
  */
 
 #include "FakeFingerprintEngine.h"
+#include "Fingerprint.h"
 
 #include <android-base/logging.h>
+#include <android-base/parseint.h>
 
 #include <fingerprint.sysprop.h>
 
@@ -24,6 +26,7 @@
 #include "util/Util.h"
 
 using namespace ::android::fingerprint::virt;
+using ::android::base::ParseInt;
 
 namespace aidl::android::hardware::biometrics::fingerprint {
 
@@ -172,6 +175,11 @@ void FakeFingerprintEngine::enumerateEnrollmentsImpl(ISessionCallback* cb) {
     BEGIN_OP(0);
 
     std::vector<int32_t> ids;
+    // There are some enrollment sync issue with framework, which results in
+    //  a single template removal during the very firt sync command after reboot.
+    //  This is a workaround for now. TODO(b/243129174)
+    ids.push_back(-1);
+
     for (auto& enrollment : FingerprintHalProperties::enrollments()) {
         auto id = enrollment.value_or(0);
         if (id > 0) {
@@ -203,7 +211,11 @@ void FakeFingerprintEngine::removeEnrollmentsImpl(ISessionCallback* cb,
 
 void FakeFingerprintEngine::getAuthenticatorIdImpl(ISessionCallback* cb) {
     BEGIN_OP(0);
-    cb->onAuthenticatorIdRetrieved(FingerprintHalProperties::authenticator_id().value_or(0));
+    int64_t authenticatorId = FingerprintHalProperties::authenticator_id().value_or(0);
+    if (FingerprintHalProperties::enrollments().size() > 0 && authenticatorId == 0) {
+        authenticatorId = 99999999;  // default authenticatorId, TODO(b/230515082)
+    }
+    cb->onAuthenticatorIdRetrieved(authenticatorId);
 }
 
 void FakeFingerprintEngine::invalidateAuthenticatorIdImpl(ISessionCallback* cb) {
@@ -221,4 +233,57 @@ void FakeFingerprintEngine::resetLockoutImpl(ISessionCallback* cb,
     cb->onLockoutCleared();
 }
 
+ndk::ScopedAStatus FakeFingerprintEngine::onPointerDownImpl(int32_t /*pointerId*/, int32_t /*x*/,
+                                                            int32_t /*y*/, float /*minor*/,
+                                                            float /*major*/) {
+    BEGIN_OP(0);
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus FakeFingerprintEngine::onPointerUpImpl(int32_t /*pointerId*/) {
+    BEGIN_OP(0);
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus FakeFingerprintEngine::onUiReadyImpl() {
+    BEGIN_OP(0);
+    return ndk::ScopedAStatus::ok();
+}
+
+bool FakeFingerprintEngine::getSensorLocationConfig(SensorLocation& out) {
+    auto loc = FingerprintHalProperties::sensor_location().value_or("");
+    auto isValidStr = false;
+    auto dim = Util::split(loc, ":");
+
+    if (dim.size() < 3 or dim.size() > 4) {
+        if (!loc.empty()) LOG(WARNING) << "Invalid sensor location input (x:y:radius):" + loc;
+        return false;
+    } else {
+        int32_t x, y, r;
+        std::string d = "";
+        if (dim.size() >= 3) {
+            isValidStr = ParseInt(dim[0], &x) && ParseInt(dim[1], &y) && ParseInt(dim[2], &r);
+        }
+        if (dim.size() >= 4) {
+            d = dim[3];
+        }
+        if (isValidStr) out = {0, x, y, r, d};
+
+        return isValidStr;
+    }
+}
+SensorLocation FakeFingerprintEngine::getSensorLocation() {
+    SensorLocation location;
+
+    if (getSensorLocationConfig(location)) {
+        return location;
+    } else {
+        return defaultSensorLocation();
+    }
+}
+
+SensorLocation FakeFingerprintEngine::defaultSensorLocation() {
+    return {0 /* displayId (not used) */, 0 /* sensorLocationX */, 0 /* sensorLocationY */,
+            0 /* sensorRadius */, "" /* display */};
+}
 }  // namespace aidl::android::hardware::biometrics::fingerprint

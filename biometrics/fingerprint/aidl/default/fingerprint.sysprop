@@ -133,3 +133,13 @@ prop {
     access: ReadWrite
     api_name: "operation_authenticate_duration"
 }
+
+# sensor location
+#    <x>:<y>:<radius> in pixel
+prop {
+    prop_name: "persist.vendor.fingerprint.virtual.sensor_location"
+    type: String
+    scope: Public
+    access: ReadWrite
+    api_name: "sensor_location"
+}

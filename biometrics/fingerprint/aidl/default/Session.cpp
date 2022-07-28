@@ -167,7 +167,7 @@ ndk::ScopedAStatus Session::enumerateEnrollments() {
 }
 
 ndk::ScopedAStatus Session::removeEnrollments(const std::vector<int32_t>& enrollmentIds) {
-    LOG(INFO) << "removeEnrollments";
+    LOG(INFO) << "removeEnrollments, size:" << enrollmentIds.size();
     scheduleStateOrCrash(SessionState::REMOVING_ENROLLMENTS);
 
     mWorker->schedule(Callable::from([this, enrollmentIds] {
@@ -228,19 +228,31 @@ ndk::ScopedAStatus Session::close() {
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus Session::onPointerDown(int32_t /*pointerId*/, int32_t /*x*/, int32_t /*y*/,
-                                          float /*minor*/, float /*major*/) {
+ndk::ScopedAStatus Session::onPointerDown(int32_t pointerId, int32_t x, int32_t y, float minor,
+                                          float major) {
     LOG(INFO) << "onPointerDown";
+    mWorker->schedule(Callable::from([this, pointerId, x, y, minor, major] {
+        mEngine->onPointerDownImpl(pointerId, x, y, minor, major);
+        enterIdling();
+    }));
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus Session::onPointerUp(int32_t /*pointerId*/) {
+ndk::ScopedAStatus Session::onPointerUp(int32_t pointerId) {
     LOG(INFO) << "onPointerUp";
+    mWorker->schedule(Callable::from([this, pointerId] {
+        mEngine->onPointerUpImpl(pointerId);
+        enterIdling();
+    }));
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus Session::onUiReady() {
     LOG(INFO) << "onUiReady";
+    mWorker->schedule(Callable::from([this] {
+        mEngine->onUiReadyImpl();
+        enterIdling();
+    }));
     return ndk::ScopedAStatus::ok();
 }
 
