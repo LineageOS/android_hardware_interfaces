@@ -276,7 +276,6 @@ class TunerRecordAidlTest : public testing::TestWithParam<std::string> {
     virtual void TearDown() override {
         clearIds();
         mService = nullptr;
-        mLnbId = nullptr;
     }
 
   protected:
@@ -299,7 +298,7 @@ class TunerRecordAidlTest : public testing::TestWithParam<std::string> {
     LnbTests mLnbTests;
 
   private:
-    int32_t* mLnbId = nullptr;
+    int32_t mLnbId = INVALID_LNB_ID;
 };
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(TunerRecordAidlTest);
@@ -357,7 +356,6 @@ class TunerBroadcastAidlTest : public testing::TestWithParam<std::string> {
     virtual void TearDown() override {
         clearIds();
         mService = nullptr;
-        mLnbId = nullptr;
     }
 
   protected:
@@ -380,7 +378,7 @@ class TunerBroadcastAidlTest : public testing::TestWithParam<std::string> {
     void mediaFilterUsingSharedMemoryTest(FilterConfig filterConf, FrontendConfig frontendConf);
 
   private:
-    int32_t* mLnbId = nullptr;
+    int32_t mLnbId = INVALID_LNB_ID;
 };
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(TunerBroadcastAidlTest);
