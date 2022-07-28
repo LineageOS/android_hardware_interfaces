@@ -23,12 +23,21 @@ namespace android {
 namespace hardware {
 namespace light {
 
+static constexpr int kNumDefaultLights = 3;
+
 ndk::ScopedAStatus Lights::setLightState(int id, const HwLightState& state) {
     LOG(INFO) << "Lights setting state for id=" << id << " to color " << std::hex << state.color;
-    return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+    if (id <= 0 || id > kNumDefaultLights) {
+        return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+    } else {
+        return ndk::ScopedAStatus::ok();
+    }
 }
 
-ndk::ScopedAStatus Lights::getLights(std::vector<HwLight>* /*lights*/) {
+ndk::ScopedAStatus Lights::getLights(std::vector<HwLight>* lights) {
+    for (int i = 1; i <= kNumDefaultLights; i++) {
+        lights->push_back({i, i});
+    }
     LOG(INFO) << "Lights reporting supported lights";
     return ndk::ScopedAStatus::ok();
 }
