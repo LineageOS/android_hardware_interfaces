@@ -93,26 +93,10 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
-        <name>android.hardware.biometrics.face</name>
-        <version>1.0</version>
-        <interface>
-            <name>IBiometricsFace</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.biometrics.face</name>
         <interface>
             <name>IFace</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
-    <hal format="hidl" optional="true">
-        <name>android.hardware.biometrics.fingerprint</name>
-        <version>2.1-3</version>
-        <interface>
-            <name>IBiometricsFingerprint</name>
             <instance>default</instance>
         </interface>
     </hal>
