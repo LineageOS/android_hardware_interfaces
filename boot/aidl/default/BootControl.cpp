@@ -84,10 +84,12 @@ ScopedAStatus BootControl::getSnapshotMergeStatus(MergeStatus* _aidl_return) {
 
 ScopedAStatus BootControl::getSuffix(int32_t in_slot, std::string* _aidl_return) {
     if (!impl_.IsValidSlot(in_slot)) {
-        return ScopedAStatus::fromServiceSpecificErrorWithMessage(
-                INVALID_SLOT, (std::string("Invalid slot ") + std::to_string(in_slot)).c_str());
+        // Old HIDL hal returns empty string for invalid slots. We should maintain this behavior in
+        // AIDL for compatibility.
+        _aidl_return->clear();
+    } else {
+        *_aidl_return = impl_.GetSuffix(in_slot);
     }
-    *_aidl_return = impl_.GetSuffix(in_slot);
     return ScopedAStatus::ok();
 }
 
