@@ -409,14 +409,6 @@
             <regex-instance>.*</regex-instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
-        <name>android.hardware.nfc</name>
-        <version>1.2</version>
-        <interface>
-            <name>INfc</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.nfc</name>
         <interface>
