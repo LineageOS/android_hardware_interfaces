@@ -129,8 +129,8 @@ void TunerBroadcastAidlTest::broadcastSingleFilterTest(FilterConfig filterConf,
     mFrontendTests.getFrontendIdByType(frontendConf.type, feId);
     ASSERT_TRUE(mFrontendTests.openFrontendById(feId));
     ASSERT_TRUE(mFrontendTests.setFrontendCallback());
-    if (mLnbId) {
-        ASSERT_TRUE(mFrontendTests.setLnb(*mLnbId));
+    if (mLnbId != INVALID_LNB_ID) {
+        ASSERT_TRUE(mFrontendTests.setLnb(mLnbId));
     }
     if (frontendConf.isSoftwareFe) {
         mFrontendTests.setSoftwareFrontendDvrConfig(dvrMap[live.dvrSoftwareFeId]);
@@ -162,10 +162,9 @@ void TunerBroadcastAidlTest::broadcastSingleFilterTestWithLnb(FilterConfig filte
         ASSERT_TRUE(mLnbTests.getLnbIds(ids));
         ASSERT_TRUE(ids.size() > 0);
         ASSERT_TRUE(mLnbTests.openLnbById(ids[0]));
-        mLnbId = &ids[0];
+        mLnbId = ids[0];
     } else {
-        mLnbId = (int32_t*)malloc(sizeof(int32_t));
-        ASSERT_TRUE(mLnbTests.openLnbByName(lnbConf.name, *mLnbId));
+        ASSERT_TRUE(mLnbTests.openLnbByName(lnbConf.name, mLnbId));
     }
     ASSERT_TRUE(mLnbTests.setLnbCallback());
     ASSERT_TRUE(mLnbTests.setVoltage(lnbConf.voltage));
@@ -173,7 +172,7 @@ void TunerBroadcastAidlTest::broadcastSingleFilterTestWithLnb(FilterConfig filte
     ASSERT_TRUE(mLnbTests.setSatellitePosition(lnbConf.position));
     broadcastSingleFilterTest(filterConf, frontendConf);
     ASSERT_TRUE(mLnbTests.closeLnb());
-    mLnbId = nullptr;
+    mLnbId = INVALID_LNB_ID;
 }
 
 void TunerBroadcastAidlTest::mediaFilterUsingSharedMemoryTest(FilterConfig filterConf,
@@ -248,10 +247,9 @@ void TunerRecordAidlTest::recordSingleFilterTestWithLnb(FilterConfig filterConf,
         ASSERT_TRUE(mLnbTests.getLnbIds(ids));
         ASSERT_TRUE(ids.size() > 0);
         ASSERT_TRUE(mLnbTests.openLnbById(ids[0]));
-        mLnbId = &ids[0];
+        mLnbId = ids[0];
     } else {
-        mLnbId = (int32_t*)malloc(sizeof(int32_t));
-        ASSERT_TRUE(mLnbTests.openLnbByName(lnbConf.name, *mLnbId));
+        ASSERT_TRUE(mLnbTests.openLnbByName(lnbConf.name, mLnbId));
     }
     ASSERT_TRUE(mLnbTests.setLnbCallback());
     ASSERT_TRUE(mLnbTests.setVoltage(lnbConf.voltage));
@@ -262,7 +260,7 @@ void TunerRecordAidlTest::recordSingleFilterTestWithLnb(FilterConfig filterConf,
     }
     recordSingleFilterTest(filterConf, frontendConf, dvrConf);
     ASSERT_TRUE(mLnbTests.closeLnb());
-    mLnbId = nullptr;
+    mLnbId = INVALID_LNB_ID;
 }
 
 void TunerRecordAidlTest::attachSingleFilterToRecordDvrTest(FilterConfig filterConf,
