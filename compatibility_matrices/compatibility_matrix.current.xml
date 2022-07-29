@@ -406,23 +406,6 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
-        <name>android.hardware.keymaster</name>
-        <version>3.0</version>
-        <version>4.0-1</version>
-        <interface>
-            <name>IKeymasterDevice</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
-    <hal format="hidl" optional="true">
-        <name>android.hardware.keymaster</name>
-        <version>4.0-1</version>
-        <interface>
-            <name>IKeymasterDevice</name>
-            <instance>strongbox</instance>
-        </interface>
-    </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.security.dice</name>
         <version>1</version>
