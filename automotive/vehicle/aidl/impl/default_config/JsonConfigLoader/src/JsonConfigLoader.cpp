@@ -44,6 +44,7 @@ using ::aidl::android::hardware::automotive::vehicle::RawPropValues;
 using ::aidl::android::hardware::automotive::vehicle::VehicleApPowerStateReport;
 using ::aidl::android::hardware::automotive::vehicle::VehicleApPowerStateReq;
 using ::aidl::android::hardware::automotive::vehicle::VehicleAreaConfig;
+using ::aidl::android::hardware::automotive::vehicle::VehicleAreaMirror;
 using ::aidl::android::hardware::automotive::vehicle::VehicleAreaWindow;
 using ::aidl::android::hardware::automotive::vehicle::VehicleGear;
 using ::aidl::android::hardware::automotive::vehicle::VehicleHvacFanDirection;
@@ -82,8 +83,11 @@ const std::unordered_map<std::string, int> CONSTANTS_BY_NAME = {
         {"WINDOW_2_RIGHT", WINDOW_2_RIGHT},
         {"WINDOW_ROOF_TOP_1", WINDOW_ROOF_TOP_1},
         {"WINDOW_1_RIGHT_2_LEFT_2_RIGHT", WINDOW_1_RIGHT | WINDOW_2_LEFT | WINDOW_2_RIGHT},
-        {"SEAT_1_RIGHT", SEAT_1_RIGHT},
         {"SEAT_1_LEFT", SEAT_1_LEFT},
+        {"SEAT_1_RIGHT", SEAT_1_RIGHT},
+        {"SEAT_2_LEFT", SEAT_2_LEFT},
+        {"SEAT_2_RIGHT", SEAT_2_RIGHT},
+        {"SEAT_2_CENTER", SEAT_2_CENTER},
         {"WHEEL_REAR_RIGHT", WHEEL_REAR_RIGHT},
         {"WHEEL_REAR_LEFT", WHEEL_REAR_LEFT},
         {"WHEEL_FRONT_RIGHT", WHEEL_FRONT_RIGHT},
@@ -101,6 +105,8 @@ const std::unordered_map<std::string, int> CONSTANTS_BY_NAME = {
         {"FUEL_DOOR_REAR_LEFT", FUEL_DOOR_REAR_LEFT},
         {"LIGHT_STATE_ON", LIGHT_STATE_ON},
         {"LIGHT_SWITCH_AUTO", LIGHT_SWITCH_AUTO},
+        {"MIRROR_DRIVER_LEFT_RIGHT",
+         toInt(VehicleAreaMirror::DRIVER_LEFT) | toInt(VehicleAreaMirror::DRIVER_RIGHT)},
 #ifdef ENABLE_VEHICLE_HAL_TEST_PROPERTIES
         // Following are test properties:
         {"ECHO_REVERSE_BYTES", ECHO_REVERSE_BYTES},
@@ -170,6 +176,8 @@ JsonValueParser::JsonValueParser() {
     mConstantParsersByType["VehicleGear"] = std::make_unique<ConstantParser<VehicleGear>>();
     mConstantParsersByType["VehicleAreaWindow"] =
             std::make_unique<ConstantParser<VehicleAreaWindow>>();
+    mConstantParsersByType["VehicleAreaMirror"] =
+            std::make_unique<ConstantParser<VehicleAreaMirror>>();
     mConstantParsersByType["VehicleOilLevel"] = std::make_unique<ConstantParser<VehicleOilLevel>>();
     mConstantParsersByType["VehicleUnit"] = std::make_unique<ConstantParser<VehicleUnit>>();
     mConstantParsersByType["VehicleSeatOccupancyState"] =

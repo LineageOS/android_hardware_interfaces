@@ -182,11 +182,7 @@ const std::vector<ConfigDeclaration> kVehicleProperties = {
                                     VehicleAreaConfig{.areaId = SEAT_2_LEFT},
                                     VehicleAreaConfig{.areaId = SEAT_2_RIGHT},
                                     VehicleAreaConfig{.areaId = SEAT_2_CENTER}}},
-         .initialAreaValues = {{SEAT_1_LEFT, {.int32Values = {0}}},
-                               {SEAT_1_RIGHT, {.int32Values = {0}}},
-                               {SEAT_2_LEFT, {.int32Values = {0}}},
-                               {SEAT_2_RIGHT, {.int32Values = {0}}},
-                               {SEAT_2_CENTER, {.int32Values = {0}}}}},
+         .initialValue = {.int32Values = {0}}},
 
         {.config = {.prop = toInt(VehicleProperty::SEAT_BELT_HEIGHT_POS),
                     .access = VehiclePropertyAccess::READ_WRITE,
@@ -206,11 +202,7 @@ const std::vector<ConfigDeclaration> kVehicleProperties = {
                                     VehicleAreaConfig{.areaId = SEAT_2_CENTER,
                                                       .minInt32Value = 0,
                                                       .maxInt32Value = 10}}},
-         .initialAreaValues = {{SEAT_1_LEFT, {.int32Values = {10}}},
-                               {SEAT_1_RIGHT, {.int32Values = {10}}},
-                               {SEAT_2_LEFT, {.int32Values = {10}}},
-                               {SEAT_2_RIGHT, {.int32Values = {10}}},
-                               {SEAT_2_CENTER, {.int32Values = {10}}}}},
+         .initialValue = {.int32Values = {10}}},
 
         {.config = {.prop = toInt(VehicleProperty::SEAT_BELT_HEIGHT_MOVE),
                     .access = VehiclePropertyAccess::READ_WRITE,
@@ -230,11 +222,7 @@ const std::vector<ConfigDeclaration> kVehicleProperties = {
                                     VehicleAreaConfig{.areaId = SEAT_2_CENTER,
                                                       .minInt32Value = -1,
                                                       .maxInt32Value = 1}}},
-         .initialAreaValues = {{SEAT_1_LEFT, {.int32Values = {0}}},
-                               {SEAT_1_RIGHT, {.int32Values = {0}}},
-                               {SEAT_2_LEFT, {.int32Values = {0}}},
-                               {SEAT_2_RIGHT, {.int32Values = {0}}},
-                               {SEAT_2_CENTER, {.int32Values = {0}}}}},
+         .initialValue = {.int32Values = {0}}},
 
         {.config = {.prop = toInt(VehicleProperty::SEAT_FORE_AFT_POS),
                     .access = VehiclePropertyAccess::READ_WRITE,
@@ -254,11 +242,7 @@ const std::vector<ConfigDeclaration> kVehicleProperties = {
                                     VehicleAreaConfig{.areaId = SEAT_2_CENTER,
                                                       .minInt32Value = -10,
                                                       .maxInt32Value = 10}}},
-         .initialAreaValues = {{SEAT_1_LEFT, {.int32Values = {0}}},
-                               {SEAT_1_RIGHT, {.int32Values = {0}}},
-                               {SEAT_2_LEFT, {.int32Values = {0}}},
-                               {SEAT_2_RIGHT, {.int32Values = {0}}},
-                               {SEAT_2_CENTER, {.int32Values = {0}}}}},
+         .initialValue = {.int32Values = {0}}},
 
         {.config = {.prop = toInt(VehicleProperty::SEAT_FORE_AFT_MOVE),
                     .access = VehiclePropertyAccess::READ_WRITE,
@@ -278,11 +262,7 @@ const std::vector<ConfigDeclaration> kVehicleProperties = {
                                     VehicleAreaConfig{.areaId = SEAT_2_CENTER,
                                                       .minInt32Value = -1,
                                                       .maxInt32Value = 1}}},
-         .initialAreaValues = {{SEAT_1_LEFT, {.int32Values = {0}}},
-                               {SEAT_1_RIGHT, {.int32Values = {0}}},
-                               {SEAT_2_LEFT, {.int32Values = {0}}},
-                               {SEAT_2_RIGHT, {.int32Values = {0}}},
-                               {SEAT_2_CENTER, {.int32Values = {0}}}}},
+         .initialValue = {.int32Values = {0}}},
 
         {.config = {.prop = toInt(VehicleProperty::SEAT_BACKREST_ANGLE_1_POS),
                     .access = VehiclePropertyAccess::READ_WRITE,
@@ -302,11 +282,7 @@ const std::vector<ConfigDeclaration> kVehicleProperties = {
                                     VehicleAreaConfig{.areaId = SEAT_2_CENTER,
                                                       .minInt32Value = -10,
                                                       .maxInt32Value = 10}}},
-         .initialAreaValues = {{SEAT_1_LEFT, {.int32Values = {0}}},
-                               {SEAT_1_RIGHT, {.int32Values = {0}}},
-                               {SEAT_2_LEFT, {.int32Values = {0}}},
-                               {SEAT_2_RIGHT, {.int32Values = {0}}},
-                               {SEAT_2_CENTER, {.int32Values = {0}}}}},
+         .initialValue = {.int32Values = {0}}},
 
         {.config = {.prop = toInt(VehicleProperty::SEAT_BACKREST_ANGLE_1_MOVE),
                     .access = VehiclePropertyAccess::READ_WRITE,
@@ -326,11 +302,7 @@ const std::vector<ConfigDeclaration> kVehicleProperties = {
                                     VehicleAreaConfig{.areaId = SEAT_2_CENTER,
                                                       .minInt32Value = -1,
                                                       .maxInt32Value = 1}}},
-         .initialAreaValues = {{SEAT_1_LEFT, {.int32Values = {0}}},
-                               {SEAT_1_RIGHT, {.int32Values = {0}}},
-                               {SEAT_2_LEFT, {.int32Values = {0}}},
-                               {SEAT_2_RIGHT, {.int32Values = {0}}},
-                               {SEAT_2_CENTER, {.int32Values = {0}}}}},
+         .initialValue = {.int32Values = {0}}},
 
         {.config = {.prop = toInt(VehicleProperty::SEAT_BACKREST_ANGLE_2_POS),
                     .access = VehiclePropertyAccess::READ_WRITE,
@@ -350,11 +322,7 @@ const std::vector<ConfigDeclaration> kVehicleProperties = {
                                     VehicleAreaConfig{.areaId = SEAT_2_CENTER,
                                                       .minInt32Value = -10,
                                                       .maxInt32Value = 10}}},
-         .initialAreaValues = {{SEAT_1_LEFT, {.int32Values = {0}}},
-                               {SEAT_1_RIGHT, {.int32Values = {0}}},
-                               {SEAT_2_LEFT, {.int32Values = {0}}},
-                               {SEAT_2_RIGHT, {.int32Values = {0}}},
-                               {SEAT_2_CENTER, {.int32Values = {0}}}}},
+         .initialValue = {.int32Values = {0}}},
 
         {.config = {.prop = toInt(VehicleProperty::SEAT_BACKREST_ANGLE_2_MOVE),
                     .access = VehiclePropertyAccess::READ_WRITE,
@@ -374,11 +342,7 @@ const std::vector<ConfigDeclaration> kVehicleProperties = {
                                     VehicleAreaConfig{.areaId = SEAT_2_CENTER,
                                                       .minInt32Value = -1,
                                                       .maxInt32Value = 1}}},
-         .initialAreaValues = {{SEAT_1_LEFT, {.int32Values = {0}}},
-                               {SEAT_1_RIGHT, {.int32Values = {0}}},
-                               {SEAT_2_LEFT, {.int32Values = {0}}},
-                               {SEAT_2_RIGHT, {.int32Values = {0}}},
-                               {SEAT_2_CENTER, {.int32Values = {0}}}}},
+         .initialValue = {.int32Values = {0}}},
 
         {.config =
                  {
@@ -1271,7 +1235,7 @@ const std::vector<ConfigDeclaration> kVehicleProperties = {
                  {
                          .prop = toInt(VehicleProperty::SUPPORT_CUSTOMIZE_VENDOR_PERMISSION),
                          .access = VehiclePropertyAccess::READ,
-                         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                         .changeMode = VehiclePropertyChangeMode::STATIC,
                          .configArray = {kMixedTypePropertyForTest,
                                          toInt(VehicleVendorPermission::
                                                        PERMISSION_GET_VENDOR_CATEGORY_INFO),
@@ -1315,8 +1279,8 @@ const std::vector<ConfigDeclaration> kVehicleProperties = {
                 .config =
                         {
                                 .prop = toInt(VehicleProperty::REMOVE_USER),
-                                .access = VehiclePropertyAccess::READ_WRITE,
-                                .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                                .access = VehiclePropertyAccess::WRITE,
+                                .changeMode = VehiclePropertyChangeMode::STATIC,
                         },
         },
         {
