@@ -1297,12 +1297,20 @@ TEST_P(TunerDescramblerAidlTest, ScrambledBroadcastDataFlowMediaFiltersTestWithL
     if (!lnbDescrambling.support) {
         return;
     }
-    set<FilterConfig> filterConfs;
-    filterConfs.insert(static_cast<FilterConfig>(filterMap[lnbDescrambling.audioFilterId]));
-    filterConfs.insert(static_cast<FilterConfig>(filterMap[lnbDescrambling.videoFilterId]));
-    scrambledBroadcastTestWithLnb(filterConfs, frontendMap[lnbDescrambling.frontendId],
-                                  descramblerMap[lnbDescrambling.descramblerId],
-                                  lnbMap[lnbDescrambling.lnbId]);
+    auto lnbDescrambling_configs = generateLnbDescramblingConfigurations();
+    if (lnbDescrambling_configs.empty()) {
+        ALOGD("No frontends that support satellites.");
+        return;
+    }
+    for (auto& configuration : lnbDescrambling_configs) {
+        lnbDescrambling = configuration;
+        set<FilterConfig> filterConfs;
+        filterConfs.insert(static_cast<FilterConfig>(filterMap[lnbDescrambling.audioFilterId]));
+        filterConfs.insert(static_cast<FilterConfig>(filterMap[lnbDescrambling.videoFilterId]));
+        scrambledBroadcastTestWithLnb(filterConfs, frontendMap[lnbDescrambling.frontendId],
+                                      descramblerMap[lnbDescrambling.descramblerId],
+                                      lnbMap[lnbDescrambling.lnbId]);
+    }
 }
 
 INSTANTIATE_TEST_SUITE_P(PerInstance, TunerBroadcastAidlTest,

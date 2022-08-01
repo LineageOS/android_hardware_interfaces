@@ -533,6 +533,54 @@ static inline vector<LiveBroadcastHardwareConnections> generateLiveConfiguration
     return live_configs;
 }
 
+static inline vector<LnbDescramblingHardwareConnections> generateLnbDescramblingCombinations() {
+    vector<LnbDescramblingHardwareConnections> combinations;
+    vector<vector<string>> deviceIds{frontendIds, audioFilterIds, lnbIds, descramblerIds};
+
+    const int frontendIdIndex = 0;
+    const int audioFilterIdIndex = 1;
+    const int lnbIdIndex = 2;
+    const int descramblerIdIndex = 3;
+
+    auto idCombinations = generateIdCombinations(deviceIds);
+    // TODO : Find a better way to vary diseqcMsgs, if at all
+    for (auto& combo : idCombinations) {
+        const string feId = combo[frontendIdIndex];
+        auto type = frontendMap[feId].type;
+        if (type == FrontendType::DVBS || type == FrontendType::ISDBS ||
+            type == FrontendType::ISDBS3) {
+            LnbDescramblingHardwareConnections mLnbDescrambling;
+            mLnbDescrambling.support = true;
+            mLnbDescrambling.frontendId = feId;
+            mLnbDescrambling.audioFilterId = combo[audioFilterIdIndex];
+            const int videoFilterIdIndex = find(audioFilterIds.begin(), audioFilterIds.end(),
+                                                mLnbDescrambling.audioFilterId) -
+                                           audioFilterIds.begin();
+            mLnbDescrambling.videoFilterId = videoFilterIds[videoFilterIdIndex];
+            mLnbDescrambling.lnbId = combo[lnbIdIndex];
+            mLnbDescrambling.descramblerId = combo[descramblerIdIndex];
+            mLnbDescrambling.diseqcMsgs = diseqcMsgs;
+            combinations.push_back(mLnbDescrambling);
+        }
+    }
+
+    return combinations;
+}
+
+static inline vector<LnbDescramblingHardwareConnections> generateLnbDescramblingConfigurations() {
+    vector<LnbDescramblingHardwareConnections> lnbDescrambling_configs;
+    if (configuredLnbDescrambling) {
+        ALOGD("Using LnbDescrambling configuration provided");
+        lnbDescrambling_configs = {lnbDescrambling};
+    } else {
+        ALOGD("LnbDescrambling not provided. Generating possible combinations. Consider adding it "
+              "to the configuration file.");
+        lnbDescrambling_configs = generateLnbDescramblingCombinations();
+    }
+
+    return lnbDescrambling_configs;
+}
+
 /** Config all the frontends that would be used in the tests */
 inline void initFrontendConfig() {
     // The test will use the internal default fe when default fe is connected to any data flow
@@ -721,6 +769,15 @@ inline void determineDvrRecord() {
     record.support = true;
 }
 
+inline void determineLnbDescrambling() {
+    if (frontendIds.empty() || audioFilterIds.empty() || videoFilterIds.empty() || lnbIds.empty() ||
+        descramblerIds.empty()) {
+        return;
+    }
+    ALOGD("Can support LnbDescrambling.");
+    lnbDescrambling.support = true;
+}
+
 /** Read the vendor configurations of which hardware to use for each test cases/data flows */
 inline void connectHardwaresToTestCases() {
     TunerTestingConfigAidlReader1_0::connectLiveBroadcast(live);
@@ -743,6 +800,7 @@ inline void determineDataFlows() {
     determineLive();
     determineDescrambling();
     determineDvrRecord();
+    determineLnbDescrambling();
 }
 
 inline bool validateConnections() {
