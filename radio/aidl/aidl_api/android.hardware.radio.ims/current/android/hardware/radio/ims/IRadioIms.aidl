@@ -38,6 +38,7 @@ interface IRadioIms {
   oneway void updateImsRegistrationInfo(int serial, in android.hardware.radio.ims.ImsRegistration imsRegistration);
   oneway void startImsTraffic(int serial, in String token, android.hardware.radio.ims.ImsTrafficType imsTrafficType, android.hardware.radio.AccessNetwork accessNetworkType);
   oneway void stopImsTraffic(int serial, in String token);
+  oneway void triggerEpsFallback(int serial, in android.hardware.radio.ims.EpsFallbackReason reason);
   oneway void setResponseFunctions(in android.hardware.radio.ims.IRadioImsResponse radioImsResponse, in android.hardware.radio.ims.IRadioImsIndication radioImsIndication);
   oneway void sendAnbrQuery(int serial, android.hardware.radio.ims.ImsStreamType mediaType, android.hardware.radio.ims.ImsStreamDirection direction, int bitsPerSecond);
 }

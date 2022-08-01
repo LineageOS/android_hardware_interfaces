@@ -164,6 +164,32 @@ TEST_P(RadioImsTest, stopImsTraffic) {
 }
 
 /*
+ * Test IRadioIms.triggerEpsFallback() for the response returned.
+ */
+TEST_P(RadioImsTest, triggerEpsFallback) {
+    if (!deviceSupportsFeature(FEATURE_TELEPHONY_IMS)) {
+        ALOGI("Skipping triggerEpsFallback because ims is not supported in device");
+        return;
+    } else {
+        ALOGI("Running triggerEpsFallback because ims is supported in device");
+    }
+
+    serial = GetRandomSerialNumber();
+
+    ndk::ScopedAStatus res =
+            radio_ims->triggerEpsFallback(serial, EpsFallbackReason::NO_NETWORK_TRIGGER);
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_ims->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_ims->rspInfo.serial);
+
+    ALOGI("triggerEpsFallback, rspInfo.error = %s\n",
+              toString(radioRsp_ims->rspInfo.error).c_str());
+
+    verifyError(radioRsp_ims->rspInfo.error);
+}
+
+/*
  * Test IRadioIms.sendAnbrQuery() for the response returned.
  */
 TEST_P(RadioImsTest, sendAnbrQuery) {

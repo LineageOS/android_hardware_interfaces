@@ -17,6 +17,7 @@
 package android.hardware.radio.ims;
 
 import android.hardware.radio.AccessNetwork;
+import android.hardware.radio.ims.EpsFallbackReason;
 import android.hardware.radio.ims.ImsRegistration;
 import android.hardware.radio.ims.ImsStreamDirection;
 import android.hardware.radio.ims.ImsTrafficType;
@@ -101,6 +102,17 @@ oneway interface IRadioIms {
      * Response function is IRadioImsResponse.stopImsTrafficResponse()
      */
     void stopImsTraffic(int serial, in String token);
+
+    /**
+     * Triggers the UE initiated EPS fallback when a MO voice call failed to establish on 5G NR
+     * network and network didn't initiate a fallback.
+     *
+     * @param serial Serial number of request
+     * @param reason Specifies the reason that causes EPS fallback
+     *
+     * Response function is IRadioImsResponse.triggerEpsFallbackResponse()
+     */
+    void triggerEpsFallback(int serial, in EpsFallbackReason reason);
 
     /**
      * Set response functions for IMS radio requests and indications.

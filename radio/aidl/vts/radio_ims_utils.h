@@ -48,6 +48,8 @@ class RadioImsResponse : public BnRadioImsResponse {
 
     virtual ndk::ScopedAStatus stopImsTrafficResponse(const RadioResponseInfo& info) override;
 
+    virtual ndk::ScopedAStatus triggerEpsFallbackResponse(const RadioResponseInfo& info) override;
+
     virtual ndk::ScopedAStatus sendAnbrQueryResponse(const RadioResponseInfo& info) override;
 };
 
