@@ -542,7 +542,7 @@ enum VehicleProperty {
      */
     TRACTION_CONTROL_ACTIVE = 0x040B + 0x10000000 + 0x01000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:BOOLEAN
-    /*
+    /**
      * HVAC Properties
      *
      * Additional rules for mapping a zoned HVAC property (except

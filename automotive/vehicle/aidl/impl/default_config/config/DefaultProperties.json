@@ -130,6 +130,311 @@
             ]
         },
         {
+            "property": "VehicleProperty::SEAT_BELT_BUCKLED",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "Constants::SEAT_1_LEFT"
+                },
+                {
+                    "areaId": "Constants::SEAT_1_RIGHT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_LEFT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_RIGHT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_CENTER"
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::SEAT_BELT_HEIGHT_POS",
+            "defaultValue": {
+                "int32Values": [
+                    10
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "Constants::SEAT_1_LEFT",
+                    "minInt32Value": 0,
+                    "maxInt32Value": 10
+                },
+                {
+                    "areaId": "Constants::SEAT_1_RIGHT",
+                    "minInt32Value": 0,
+                    "maxInt32Value": 10
+                },
+                {
+                    "areaId": "Constants::SEAT_2_LEFT",
+                    "minInt32Value": 0,
+                    "maxInt32Value": 10
+                },
+                {
+                    "areaId": "Constants::SEAT_2_RIGHT",
+                    "minInt32Value": 0,
+                    "maxInt32Value": 10
+                },
+                {
+                    "areaId": "Constants::SEAT_2_CENTER",
+                    "minInt32Value": 0,
+                    "maxInt32Value": 10
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::SEAT_BELT_HEIGHT_MOVE",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "Constants::SEAT_1_LEFT",
+                    "minInt32Value": -1,
+                    "maxInt32Value": 1
+                },
+                {
+                    "areaId": "Constants::SEAT_1_RIGHT",
+                    "minInt32Value": -1,
+                    "maxInt32Value": 1
+                },
+                {
+                    "areaId": "Constants::SEAT_2_LEFT",
+                    "minInt32Value": -1,
+                    "maxInt32Value": 1
+                },
+                {
+                    "areaId": "Constants::SEAT_2_RIGHT",
+                    "minInt32Value": -1,
+                    "maxInt32Value": 1
+                },
+                {
+                    "areaId": "Constants::SEAT_2_CENTER",
+                    "minInt32Value": -1,
+                    "maxInt32Value": 1
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::SEAT_FORE_AFT_POS",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "Constants::SEAT_1_LEFT",
+                    "minInt32Value": -10,
+                    "maxInt32Value": 10
+                },
+                {
+                    "areaId": "Constants::SEAT_1_RIGHT",
+                    "minInt32Value": -10,
+                    "maxInt32Value": 10
+                },
+                {
+                    "areaId": "Constants::SEAT_2_LEFT",
+                    "minInt32Value": -10,
+                    "maxInt32Value": 10
+                },
+                {
+                    "areaId": "Constants::SEAT_2_RIGHT",
+                    "minInt32Value": -10,
+                    "maxInt32Value": 10
+                },
+                {
+                    "areaId": "Constants::SEAT_2_CENTER",
+                    "minInt32Value": -10,
+                    "maxInt32Value": 10
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::SEAT_FORE_AFT_MOVE",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "Constants::SEAT_1_LEFT",
+                    "minInt32Value": -1,
+                    "maxInt32Value": 1
+                },
+                {
+                    "areaId": "Constants::SEAT_1_RIGHT",
+                    "minInt32Value": -1,
+                    "maxInt32Value": 1
+                },
+                {
+                    "areaId": "Constants::SEAT_2_LEFT",
+                    "minInt32Value": -1,
+                    "maxInt32Value": 1
+                },
+                {
+                    "areaId": "Constants::SEAT_2_RIGHT",
+                    "minInt32Value": -1,
+                    "maxInt32Value": 1
+                },
+                {
+                    "areaId": "Constants::SEAT_2_CENTER",
+                    "minInt32Value": -1,
+                    "maxInt32Value": 1
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::SEAT_BACKREST_ANGLE_1_POS",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "Constants::SEAT_1_LEFT",
+                    "minInt32Value": -10,
+                    "maxInt32Value": 10
+                },
+                {
+                    "areaId": "Constants::SEAT_1_RIGHT",
+                    "minInt32Value": -10,
+                    "maxInt32Value": 10
+                },
+                {
+                    "areaId": "Constants::SEAT_2_LEFT",
+                    "minInt32Value": -10,
+                    "maxInt32Value": 10
+                },
+                {
+                    "areaId": "Constants::SEAT_2_RIGHT",
+                    "minInt32Value": -10,
+                    "maxInt32Value": 10
+                },
+                {
+                    "areaId": "Constants::SEAT_2_CENTER",
+                    "minInt32Value": -10,
+                    "maxInt32Value": 10
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::SEAT_BACKREST_ANGLE_1_MOVE",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "Constants::SEAT_1_LEFT",
+                    "minInt32Value": -1,
+                    "maxInt32Value": 1
+                },
+                {
+                    "areaId": "Constants::SEAT_1_RIGHT",
+                    "minInt32Value": -1,
+                    "maxInt32Value": 1
+                },
+                {
+                    "areaId": "Constants::SEAT_2_LEFT",
+                    "minInt32Value": -1,
+                    "maxInt32Value": 1
+                },
+                {
+                    "areaId": "Constants::SEAT_2_RIGHT",
+                    "minInt32Value": -1,
+                    "maxInt32Value": 1
+                },
+                {
+                    "areaId": "Constants::SEAT_2_CENTER",
+                    "minInt32Value": -1,
+                    "maxInt32Value": 1
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::SEAT_BACKREST_ANGLE_2_POS",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "Constants::SEAT_1_LEFT",
+                    "minInt32Value": -10,
+                    "maxInt32Value": 10
+                },
+                {
+                    "areaId": "Constants::SEAT_1_RIGHT",
+                    "minInt32Value": -10,
+                    "maxInt32Value": 10
+                },
+                {
+                    "areaId": "Constants::SEAT_2_LEFT",
+                    "minInt32Value": -10,
+                    "maxInt32Value": 10
+                },
+                {
+                    "areaId": "Constants::SEAT_2_RIGHT",
+                    "minInt32Value": -10,
+                    "maxInt32Value": 10
+                },
+                {
+                    "areaId": "Constants::SEAT_2_CENTER",
+                    "minInt32Value": -10,
+                    "maxInt32Value": 10
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::SEAT_BACKREST_ANGLE_2_MOVE",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "Constants::SEAT_1_LEFT",
+                    "minInt32Value": -1,
+                    "maxInt32Value": 1
+                },
+                {
+                    "areaId": "Constants::SEAT_1_RIGHT",
+                    "minInt32Value": -1,
+                    "maxInt32Value": 1
+                },
+                {
+                    "areaId": "Constants::SEAT_2_LEFT",
+                    "minInt32Value": -1,
+                    "maxInt32Value": 1
+                },
+                {
+                    "areaId": "Constants::SEAT_2_RIGHT",
+                    "minInt32Value": -1,
+                    "maxInt32Value": 1
+                },
+                {
+                    "areaId": "Constants::SEAT_2_CENTER",
+                    "minInt32Value": -1,
+                    "maxInt32Value": 1
+                }
+            ]
+        },
+        {
             "property": "VehicleProperty::SEAT_OCCUPANCY",
             "areas": [
                 {
@@ -781,6 +1086,21 @@
                 }
             ],
             "comment": "+ve values for heating and -ve for cooling"
+        },
+        {
+            "property": "VehicleProperty::HVAC_SIDE_MIRROR_HEAT",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "Constants::MIRROR_DRIVER_LEFT_RIGHT",
+                    "minInt32Value": 0,
+                    "maxInt32Value": 2
+                }
+            ]
         },
         {
             "property": "VehicleProperty::HVAC_TEMPERATURE_SET",
