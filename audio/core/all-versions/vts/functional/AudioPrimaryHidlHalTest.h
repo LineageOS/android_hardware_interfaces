@@ -938,12 +938,13 @@ class StreamWriter : public StreamWorker<StreamWriter> {
     StreamWriter(IStreamOut* stream, size_t bufferSize)
         : mStream(stream), mBufferSize(bufferSize), mData(mBufferSize) {}
     StreamWriter(IStreamOut* stream, size_t bufferSize, std::vector<uint8_t>&& data,
-                 std::function<void()> onDataWrap)
+                 std::function<void()> onDataStart, std::function<bool()> onDataWrap)
         : mStream(stream),
           mBufferSize(bufferSize),
           mData(std::move(data)),
+          mOnDataStart(onDataStart),
           mOnDataWrap(onDataWrap) {
-        ALOGW("StreamWriter data size: %d", (int)mData.size());
+        ALOGI("StreamWriter data size: %d", (int)mData.size());
     }
     ~StreamWriter() {
         stop();
@@ -1010,6 +1011,7 @@ class StreamWriter : public StreamWorker<StreamWriter> {
             ALOGE("command message queue write failed");
             return false;
         }
+        if (mDataPosition == 0) mOnDataStart();
         const size_t dataSize = std::min(mData.size() - mDataPosition, mDataMQ->availableToWrite());
         bool success = mDataMQ->write(mData.data() + mDataPosition, dataSize);
         ALOGE_IF(!success, "data message queue write failed");
@@ -1040,7 +1042,9 @@ class StreamWriter : public StreamWorker<StreamWriter> {
             ALOGE("bad wait status: %d", ret);
             success = false;
         }
-        if (success && mDataPosition == 0) mOnDataWrap();
+        if (success && mDataPosition == 0) {
+            success = mOnDataWrap();
+        }
         return success;
     }
 
@@ -1048,7 +1052,8 @@ class StreamWriter : public StreamWorker<StreamWriter> {
     IStreamOut* const mStream;
     const size_t mBufferSize;
     std::vector<uint8_t> mData;
-    std::function<void()> mOnDataWrap = []() {};
+    std::function<void()> mOnDataStart = []() {};
+    std::function<bool()> mOnDataWrap = []() { return true; };
     size_t mDataPosition = 0;
     std::unique_ptr<CommandMQ> mCommandMQ;
     std::unique_ptr<DataMQ> mDataMQ;
