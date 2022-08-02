@@ -517,20 +517,10 @@ class PcmOnlyConfigOutputStreamTest : public OutputStreamTest {
     }
 
     bool canQueryPresentationPosition() const {
-        auto maybeSinkAddress =
-                getCachedPolicyConfig().getSinkDeviceForMixPort(getDeviceName(), getMixPortName());
-        // Returning 'true' when no sink is found so the test can fail later with a more clear
-        // problem description.
-        return !maybeSinkAddress.has_value() ||
-               !xsd::isTelephonyDevice(maybeSinkAddress.value().deviceType);
+        return !xsd::isTelephonyDevice(address.deviceType);
     }
 
     void createPatchIfNeeded() {
-        auto maybeSinkAddress =
-                getCachedPolicyConfig().getSinkDeviceForMixPort(getDeviceName(), getMixPortName());
-        ASSERT_TRUE(maybeSinkAddress.has_value())
-                << "No sink device found for mix port " << getMixPortName() << " (module "
-                << getDeviceName() << ")";
         if (areAudioPatchesSupported()) {
             AudioPortConfig source;
             source.base.format.value(getConfig().base.format);
@@ -540,13 +530,13 @@ class PcmOnlyConfigOutputStreamTest : public OutputStreamTest {
             source.ext.mix().ioHandle = helper.getIoHandle();
             source.ext.mix().useCase.stream({});
             AudioPortConfig sink;
-            sink.ext.device(maybeSinkAddress.value());
+            sink.ext.device(address);
             EXPECT_OK(getDevice()->createAudioPatch(hidl_vec<AudioPortConfig>{source},
                                                     hidl_vec<AudioPortConfig>{sink},
                                                     returnIn(res, mPatchHandle)));
             mHasPatch = res == Result::OK;
         } else {
-            EXPECT_OK(stream->setDevices({maybeSinkAddress.value()}));
+            EXPECT_OK(stream->setDevices({address}));
         }
     }
 
@@ -555,10 +545,6 @@ class PcmOnlyConfigOutputStreamTest : public OutputStreamTest {
             if (areAudioPatchesSupported() && mHasPatch) {
                 EXPECT_OK(getDevice()->releaseAudioPatch(mPatchHandle));
                 mHasPatch = false;
-            }
-        } else {
-            if (stream) {
-                EXPECT_OK(stream->setDevices({address}));
             }
         }
     }
@@ -691,24 +677,12 @@ class PcmOnlyConfigInputStreamTest : public InputStreamTest {
         InputStreamTest::TearDown();
     }
 
-    bool canQueryCapturePosition() const {
-        auto maybeSourceAddress = getCachedPolicyConfig().getSourceDeviceForMixPort(
-                getDeviceName(), getMixPortName());
-        // Returning 'true' when no source is found so the test can fail later with a more clear
-        // problem description.
-        return !maybeSourceAddress.has_value() ||
-               !xsd::isTelephonyDevice(maybeSourceAddress.value().deviceType);
-    }
+    bool canQueryCapturePosition() const { return !xsd::isTelephonyDevice(address.deviceType); }
 
     void createPatchIfNeeded() {
-        auto maybeSourceAddress = getCachedPolicyConfig().getSourceDeviceForMixPort(
-                getDeviceName(), getMixPortName());
-        ASSERT_TRUE(maybeSourceAddress.has_value())
-                << "No source device found for mix port " << getMixPortName() << " (module "
-                << getDeviceName() << ")";
         if (areAudioPatchesSupported()) {
             AudioPortConfig source;
-            source.ext.device(maybeSourceAddress.value());
+            source.ext.device(address);
             AudioPortConfig sink;
             sink.base.format.value(getConfig().base.format);
             sink.base.sampleRateHz.value(getConfig().base.sampleRateHz);
@@ -721,7 +695,7 @@ class PcmOnlyConfigInputStreamTest : public InputStreamTest {
                                                     returnIn(res, mPatchHandle)));
             mHasPatch = res == Result::OK;
         } else {
-            EXPECT_OK(stream->setDevices({maybeSourceAddress.value()}));
+            EXPECT_OK(stream->setDevices({address}));
         }
     }
 
@@ -730,10 +704,6 @@ class PcmOnlyConfigInputStreamTest : public InputStreamTest {
             if (areAudioPatchesSupported() && mHasPatch) {
                 EXPECT_OK(getDevice()->releaseAudioPatch(mPatchHandle));
                 mHasPatch = false;
-            }
-        } else {
-            if (stream) {
-                EXPECT_OK(stream->setDevices({address}));
             }
         }
     }
@@ -864,14 +834,8 @@ TEST_P(MicrophoneInfoInputStreamTest, GetActiveMicrophones) {
     }
     ASSERT_OK(res);
 
-    auto maybeSourceAddress =
-            getCachedPolicyConfig().getSourceDeviceForMixPort(getDeviceName(), getMixPortName());
-    ASSERT_TRUE(maybeSourceAddress.has_value())
-            << "No source device found for mix port " << getMixPortName() << " (module "
-            << getDeviceName() << ")";
-
     for (auto microphone : microphones) {
-        if (microphone.deviceAddress == maybeSourceAddress.value()) {
+        if (microphone.deviceAddress == address) {
             StreamReader reader(stream.get(), stream->getBufferSize());
             ASSERT_TRUE(reader.start());
             reader.pause();  // This ensures that at least one read has happened.
