@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,20 +18,34 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-cc_library_headers {
-    name: "VehicleHalDefaultConfig",
+cc_test {
+    name: "JsonConfigLoaderUnitTest",
     vendor: true,
-    local_include_dirs: ["include"],
-    export_include_dirs: ["include"],
+    srcs: ["*.cpp"],
+    static_libs: [
+        "VehicleHalJsonConfigLoader",
+        "VehicleHalUtils",
+        "libgtest",
+    ],
+    shared_libs: [
+        "libjsoncpp",
+    ],
     defaults: ["VehicleHalDefaults"],
-    static_libs: ["VehicleHalUtils"],
-    header_libs: [
-        "VehicleHalJsonConfigLoaderHeaders",
-        "VehicleHalTestUtilHeaders",
+    test_suites: ["device-tests"],
+}
+
+cc_test {
+    name: "JsonConfigLoaderUnitTestEnableTestProperties",
+    vendor: true,
+    srcs: ["*.cpp"],
+    static_libs: [
+        "VehicleHalJsonConfigLoaderEnableTestProperties",
+        "VehicleHalUtils",
+        "libgtest",
     ],
-    export_static_lib_headers: ["VehicleHalUtils"],
-    export_header_lib_headers: [
-        "VehicleHalTestUtilHeaders",
-        "VehicleHalJsonConfigLoaderHeaders",
+    shared_libs: [
+        "libjsoncpp",
     ],
+    defaults: ["VehicleHalDefaults"],
+    test_suites: ["device-tests"],
 }

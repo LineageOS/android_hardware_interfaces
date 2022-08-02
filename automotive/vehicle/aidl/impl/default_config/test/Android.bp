@@ -24,11 +24,53 @@ cc_test {
     defaults: ["VehicleHalDefaults"],
     srcs: ["*.cpp"],
     static_libs: [
+        "VehicleHalJsonConfigLoader",
         "VehicleHalUtils",
+        "libgmock",
         "libgtest",
     ],
     header_libs: [
+        // TODO(b/238685398): Remove this once we deprecate DefaultConfig.h
         "VehicleHalDefaultConfig",
+        "IVehicleGeneratedHeaders",
+    ],
+    shared_libs: [
+        "libjsoncpp",
+    ],
+    data: [
+        ":VehicleHalDefaultProperties_JSON",
+    ],
+    test_suites: ["device-tests"],
+}
+
+cc_test {
+    name: "VehicleHalDefaultConfigTestEnableTestProperties",
+    vendor: true,
+    defaults: ["VehicleHalDefaults"],
+    srcs: ["*.cpp"],
+    static_libs: [
+        "VehicleHalJsonConfigLoaderEnableTestProperties",
+        "VehicleHalUtils",
+        "libgmock",
+        "libgtest",
+    ],
+    cflags: [
+        // TODO(b/238685398): Remove this once we deprecate DefaultConfig.h
+        "-DENABLE_VENDOR_CLUSTER_PROPERTY_FOR_TESTING",
+        "-DENABLE_VEHICLE_HAL_TEST_PROPERTIES",
+    ],
+    header_libs: [
+        // TODO(b/238685398): Remove this once we deprecate DefaultConfig.h
+        "VehicleHalDefaultConfig",
+        "IVehicleGeneratedHeaders",
+    ],
+    shared_libs: [
+        "libjsoncpp",
+    ],
+    data: [
+        ":VehicleHalDefaultProperties_JSON",
+        ":VehicleHalTestProperties_JSON",
+        ":VehicleHalVendorClusterTestProperties_JSON",
     ],
     test_suites: ["device-tests"],
 }

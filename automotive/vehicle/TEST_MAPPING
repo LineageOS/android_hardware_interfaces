@@ -7,6 +7,15 @@
       "name": "VehicleHalDefaultConfigTest"
     },
     {
+      "name": "VehicleHalDefaultConfigTestEnableTestProperties"
+    },
+    {
+      "name": "JsonConfigLoaderUnitTest"
+    },
+    {
+      "name": "JsonConfigLoaderUnitTestEnableTestProperties"
+    },
+    {
       "name": "VehicleHalVehicleUtilsTest"
     },
     {
