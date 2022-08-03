@@ -937,6 +937,14 @@ class StreamWriter : public StreamWorker<StreamWriter> {
 
     StreamWriter(IStreamOut* stream, size_t bufferSize)
         : mStream(stream), mBufferSize(bufferSize), mData(mBufferSize) {}
+    StreamWriter(IStreamOut* stream, size_t bufferSize, std::vector<uint8_t>&& data,
+                 std::function<void()> onDataWrap)
+        : mStream(stream),
+          mBufferSize(bufferSize),
+          mData(std::move(data)),
+          mOnDataWrap(onDataWrap) {
+        ALOGW("StreamWriter data size: %d", (int)mData.size());
+    }
     ~StreamWriter() {
         stop();
         if (mEfGroup) {
@@ -1002,9 +1010,11 @@ class StreamWriter : public StreamWorker<StreamWriter> {
             ALOGE("command message queue write failed");
             return false;
         }
-        const size_t dataSize = std::min(mData.size(), mDataMQ->availableToWrite());
-        bool success = mDataMQ->write(mData.data(), dataSize);
+        const size_t dataSize = std::min(mData.size() - mDataPosition, mDataMQ->availableToWrite());
+        bool success = mDataMQ->write(mData.data() + mDataPosition, dataSize);
         ALOGE_IF(!success, "data message queue write failed");
+        mDataPosition += dataSize;
+        if (mDataPosition >= mData.size()) mDataPosition = 0;
         mEfGroup->wake(static_cast<uint32_t>(MessageQueueFlagBits::NOT_EMPTY));
 
         uint32_t efState = 0;
@@ -1030,6 +1040,7 @@ class StreamWriter : public StreamWorker<StreamWriter> {
             ALOGE("bad wait status: %d", ret);
             success = false;
         }
+        if (success && mDataPosition == 0) mOnDataWrap();
         return success;
     }
 
@@ -1037,6 +1048,8 @@ class StreamWriter : public StreamWorker<StreamWriter> {
     IStreamOut* const mStream;
     const size_t mBufferSize;
     std::vector<uint8_t> mData;
+    std::function<void()> mOnDataWrap = []() {};
+    size_t mDataPosition = 0;
     std::unique_ptr<CommandMQ> mCommandMQ;
     std::unique_ptr<DataMQ> mDataMQ;
     std::unique_ptr<StatusMQ> mStatusMQ;
