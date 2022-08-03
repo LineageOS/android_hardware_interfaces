@@ -43,10 +43,33 @@ interface IModule {
   android.media.audio.common.AudioPort[] getAudioPorts();
   android.hardware.audio.core.AudioRoute[] getAudioRoutes();
   android.hardware.audio.core.AudioRoute[] getAudioRoutesForAudioPort(int portId);
-  android.hardware.audio.core.IStreamIn openInputStream(int portConfigId, in android.hardware.audio.common.SinkMetadata sinkMetadata);
-  android.hardware.audio.core.IStreamOut openOutputStream(int portConfigId, in android.hardware.audio.common.SourceMetadata sourceMetadata, in @nullable android.media.audio.common.AudioOffloadInfo offloadInfo);
+  android.hardware.audio.core.IModule.OpenInputStreamReturn openInputStream(in android.hardware.audio.core.IModule.OpenInputStreamArguments args);
+  android.hardware.audio.core.IModule.OpenOutputStreamReturn openOutputStream(in android.hardware.audio.core.IModule.OpenOutputStreamArguments args);
   android.hardware.audio.core.AudioPatch setAudioPatch(in android.hardware.audio.core.AudioPatch requested);
   boolean setAudioPortConfig(in android.media.audio.common.AudioPortConfig requested, out android.media.audio.common.AudioPortConfig suggested);
   void resetAudioPatch(int patchId);
   void resetAudioPortConfig(int portConfigId);
+  @VintfStability
+  parcelable OpenInputStreamArguments {
+    int portConfigId;
+    android.hardware.audio.common.SinkMetadata sinkMetadata;
+    long bufferSizeFrames;
+  }
+  @VintfStability
+  parcelable OpenInputStreamReturn {
+    android.hardware.audio.core.IStreamIn stream;
+    android.hardware.audio.core.StreamDescriptor desc;
+  }
+  @VintfStability
+  parcelable OpenOutputStreamArguments {
+    int portConfigId;
+    android.hardware.audio.common.SourceMetadata sourceMetadata;
+    @nullable android.media.audio.common.AudioOffloadInfo offloadInfo;
+    long bufferSizeFrames;
+  }
+  @VintfStability
+  parcelable OpenOutputStreamReturn {
+    android.hardware.audio.core.IStreamOut stream;
+    android.hardware.audio.core.StreamDescriptor desc;
+  }
 }

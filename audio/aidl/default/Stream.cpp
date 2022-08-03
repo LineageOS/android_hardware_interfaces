@@ -15,7 +15,6 @@
  */
 
 #define LOG_TAG "AHAL_Stream"
-#define LOG_NDEBUG 0
 #include <android-base/logging.h>
 
 #include "core-impl/Stream.h"
@@ -26,7 +25,9 @@ using aidl::android::media::audio::common::AudioOffloadInfo;
 
 namespace aidl::android::hardware::audio::core {
 
-StreamIn::StreamIn(const SinkMetadata& sinkMetadata) : mMetadata(sinkMetadata) {}
+StreamIn::StreamIn(const SinkMetadata& sinkMetadata) : mMetadata(sinkMetadata) {
+    LOG(DEBUG) << __func__;
+}
 
 ndk::ScopedAStatus StreamIn::close() {
     LOG(DEBUG) << __func__;
@@ -51,7 +52,9 @@ ndk::ScopedAStatus StreamIn::updateMetadata(const SinkMetadata& in_sinkMetadata)
 
 StreamOut::StreamOut(const SourceMetadata& sourceMetadata,
                      const std::optional<AudioOffloadInfo>& offloadInfo)
-    : mMetadata(sourceMetadata), mOffloadInfo(offloadInfo) {}
+    : mMetadata(sourceMetadata), mOffloadInfo(offloadInfo) {
+    LOG(DEBUG) << __func__;
+}
 
 ndk::ScopedAStatus StreamOut::close() {
     LOG(DEBUG) << __func__;
