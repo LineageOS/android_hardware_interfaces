@@ -21,3 +21,27 @@ filegroup {
     name: "VehicleHalVendorClusterTestProperties_JSON",
     srcs: ["VendorClusterTestProperties.json"],
 }
+
+prebuilt_etc {
+    name: "Prebuilt_VehicleHalDefaultProperties_JSON",
+    filename_from_src: true,
+    src: "DefaultProperties.json",
+    sub_dir: "automotive/vhalconfig/",
+    vendor: true,
+}
+
+prebuilt_etc {
+    name: "Prebuilt_VehicleHalTestProperties_JSON",
+    filename_from_src: true,
+    src: "TestProperties.json",
+    sub_dir: "automotive/vhalconfig/",
+    vendor: true,
+}
+
+prebuilt_etc {
+    name: "Prebuilt_VehicleHalVendorClusterTestProperties_JSON",
+    filename_from_src: true,
+    src: "VendorClusterTestProperties.json",
+    sub_dir: "automotive/vhalconfig/",
+    vendor: true,
+}

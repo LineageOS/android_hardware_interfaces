@@ -19,7 +19,6 @@
 
 #include "FakeVehicleHardware.h"
 
-#include <DefaultConfig.h>
 #include <FakeObd2Frame.h>
 #include <JsonFakeValueGenerator.h>
 #include <LinearFakeValueGenerator.h>
@@ -27,6 +26,8 @@
 #include <TestPropertyUtils.h>
 #include <VehicleHalTypes.h>
 #include <VehicleUtils.h>
+
+#include <android-base/file.h>
 #include <android-base/parsedouble.h>
 #include <android-base/properties.h>
 #include <android-base/strings.h>
@@ -74,9 +75,16 @@ using ::android::base::ScopedLockAssertion;
 using ::android::base::StartsWith;
 using ::android::base::StringPrintf;
 
-const char* VENDOR_OVERRIDE_DIR = "/vendor/etc/automotive/vhaloverride/";
-const char* OVERRIDE_PROPERTY = "persist.vendor.vhal_init_value_override";
-const char* POWER_STATE_REQ_CONFIG_PROPERTY = "ro.vendor.fake_vhal.ap_power_state_req.config";
+// The directory for default property configuration file.
+// For config file format, see impl/default_config/config/README.md.
+constexpr char DEFAULT_CONFIG_DIR[] = "/vendor/etc/automotive/vhalconfig/";
+// The directory for property configuration file that overrides the default configuration file.
+// For config file format, see impl/default_config/config/README.md.
+constexpr char OVERRIDE_CONFIG_DIR[] = "/vendor/etc/automotive/vhaloverride/";
+// If OVERRIDE_PROPERTY is set, we will use the configuration files from OVERRIDE_CONFIG_DIR to
+// overwrite the default configs.
+constexpr char OVERRIDE_PROPERTY[] = "persist.vendor.vhal_init_value_override";
+constexpr char POWER_STATE_REQ_CONFIG_PROPERTY[] = "ro.vendor.fake_vhal.ap_power_state_req.config";
 
 // A list of supported options for "--set" command.
 const std::unordered_set<std::string> SET_PROP_OPTIONS = {
@@ -139,10 +147,11 @@ void FakeVehicleHardware::storePropInitialValue(const ConfigDeclaration& config)
 }
 
 FakeVehicleHardware::FakeVehicleHardware()
-    : FakeVehicleHardware(std::make_unique<VehiclePropValuePool>()) {}
+    : FakeVehicleHardware(DEFAULT_CONFIG_DIR, OVERRIDE_CONFIG_DIR, false) {}
 
-FakeVehicleHardware::FakeVehicleHardware(std::unique_ptr<VehiclePropValuePool> valuePool)
-    : mValuePool(std::move(valuePool)),
+FakeVehicleHardware::FakeVehicleHardware(std::string defaultConfigDir,
+                                         std::string overrideConfigDir, bool forceOverride)
+    : mValuePool(std::make_unique<VehiclePropValuePool>()),
       mServerSidePropStore(new VehiclePropertyStore(mValuePool)),
       mFakeObd2Frame(new obd2frame::FakeObd2Frame(mServerSidePropStore)),
       mFakeUserHal(new FakeUserHal(mValuePool)),
@@ -150,7 +159,10 @@ FakeVehicleHardware::FakeVehicleHardware(std::unique_ptr<VehiclePropValuePool> v
       mGeneratorHub(new GeneratorHub(
               [this](const VehiclePropValue& value) { eventFromVehicleBus(value); })),
       mPendingGetValueRequests(this),
-      mPendingSetValueRequests(this) {
+      mPendingSetValueRequests(this),
+      mDefaultConfigDir(defaultConfigDir),
+      mOverrideConfigDir(overrideConfigDir),
+      mForceOverride(forceOverride) {
     init();
 }
 
@@ -160,9 +172,19 @@ FakeVehicleHardware::~FakeVehicleHardware() {
     mGeneratorHub.reset();
 }
 
+std::unordered_map<int32_t, ConfigDeclaration> FakeVehicleHardware::loadConfigDeclarations() {
+    std::unordered_map<int32_t, ConfigDeclaration> configsByPropId;
+    loadPropConfigsFromDir(mDefaultConfigDir, &configsByPropId);
+    if (mForceOverride ||
+        android::base::GetBoolProperty(OVERRIDE_PROPERTY, /*default_value=*/false)) {
+        loadPropConfigsFromDir(mOverrideConfigDir, &configsByPropId);
+    }
+    return configsByPropId;
+}
+
 void FakeVehicleHardware::init() {
-    for (auto& it : defaultconfig::getDefaultConfigs()) {
-        VehiclePropConfig cfg = it.config;
+    for (auto& [_, configDeclaration] : loadConfigDeclarations()) {
+        VehiclePropConfig cfg = configDeclaration.config;
         VehiclePropertyStore::TokenFunction tokenFunction = nullptr;
 
         if (cfg.prop == toInt(VehicleProperty::AP_POWER_STATE_REQ)) {
@@ -178,15 +200,18 @@ void FakeVehicleHardware::init() {
             // logic.
             continue;
         }
-        storePropInitialValue(it);
+        storePropInitialValue(configDeclaration);
     }
 
-    maybeOverrideProperties(VENDOR_OVERRIDE_DIR);
-
     // OBD2_LIVE_FRAME and OBD2_FREEZE_FRAME must be configured in default configs.
-    mFakeObd2Frame->initObd2LiveFrame(*mServerSidePropStore->getConfig(OBD2_LIVE_FRAME).value());
-    mFakeObd2Frame->initObd2FreezeFrame(
-            *mServerSidePropStore->getConfig(OBD2_FREEZE_FRAME).value());
+    auto maybeObd2LiveFrame = mServerSidePropStore->getConfig(OBD2_LIVE_FRAME);
+    if (maybeObd2LiveFrame.has_value()) {
+        mFakeObd2Frame->initObd2LiveFrame(*maybeObd2LiveFrame.value());
+    }
+    auto maybeObd2FreezeFrame = mServerSidePropStore->getConfig(OBD2_FREEZE_FRAME);
+    if (maybeObd2FreezeFrame.has_value()) {
+        mFakeObd2Frame->initObd2FreezeFrame(*maybeObd2FreezeFrame.value());
+    }
 
     mServerSidePropStore->setOnValueChangeCallback(
             [this](const VehiclePropValue& value) { return onValueChangeCallback(value); });
@@ -408,7 +433,7 @@ VhalResult<void> FakeVehicleHardware::maybeSetSpecialValue(const VehiclePropValu
             *isSpecialValue = true;
             return mFakeObd2Frame->clearObd2FreezeFrames(value);
 
-#ifdef ENABLE_VENDOR_CLUSTER_PROPERTY_FOR_TESTING
+#ifdef ENABLE_VEHICLE_HAL_TEST_PROPERTIES
         case toInt(VehicleProperty::CLUSTER_REPORT_STATE):
             [[fallthrough]];
         case toInt(VehicleProperty::CLUSTER_REQUEST_DISPLAY):
@@ -436,7 +461,7 @@ VhalResult<void> FakeVehicleHardware::maybeSetSpecialValue(const VehiclePropValu
                        << getErrorMsg(writeResult);
             }
             return {};
-#endif  // ENABLE_VENDOR_CLUSTER_PROPERTY_FOR_TESTING
+#endif  // ENABLE_VEHICLE_HAL_TEST_PROPERTIES
 
         default:
             break;
@@ -1264,33 +1289,26 @@ void FakeVehicleHardware::onValueChangeCallback(const VehiclePropValue& value) {
     (*mOnPropertyChangeCallback)(std::move(updatedValues));
 }
 
-void FakeVehicleHardware::maybeOverrideProperties(const char* overrideDir) {
-    if (android::base::GetBoolProperty(OVERRIDE_PROPERTY, false)) {
-        overrideProperties(overrideDir);
-    }
-}
-
-void FakeVehicleHardware::overrideProperties(const char* overrideDir) {
-    ALOGI("loading vendor override properties from %s", overrideDir);
-    if (auto dir = opendir(overrideDir); dir != NULL) {
+void FakeVehicleHardware::loadPropConfigsFromDir(
+        const std::string& dirPath,
+        std::unordered_map<int32_t, ConfigDeclaration>* configsByPropId) {
+    ALOGI("loading properties from %s", dirPath.c_str());
+    if (auto dir = opendir(dirPath.c_str()); dir != NULL) {
         std::regex regJson(".*[.]json", std::regex::icase);
         while (auto f = readdir(dir)) {
             if (!std::regex_match(f->d_name, regJson)) {
                 continue;
             }
-            std::string file = overrideDir + std::string(f->d_name);
-            JsonFakeValueGenerator tmpGenerator(file);
-
-            std::vector<VehiclePropValue> propValues = tmpGenerator.getAllEvents();
-            for (const VehiclePropValue& prop : propValues) {
-                auto propToStore = mValuePool->obtain(prop);
-                propToStore->timestamp = elapsedRealtimeNano();
-                if (auto result = mServerSidePropStore->writeValue(std::move(propToStore),
-                                                                   /*updateStatus=*/true);
-                    !result.ok()) {
-                    ALOGW("failed to write vendor override properties: %d, error: %s, code: %d",
-                          prop.prop, getErrorMsg(result).c_str(), getIntErrorCode(result));
-                }
+            std::string filePath = dirPath + "/" + std::string(f->d_name);
+            ALOGI("loading properties from %s", filePath.c_str());
+            auto result = mLoader.loadPropConfig(filePath);
+            if (!result.ok()) {
+                ALOGE("failed to load config file: %s, error: %s", filePath.c_str(),
+                      result.error().message().c_str());
+                continue;
+            }
+            for (auto& [propId, configDeclaration] : result.value()) {
+                (*configsByPropId)[propId] = std::move(configDeclaration);
             }
         }
         closedir(dir);

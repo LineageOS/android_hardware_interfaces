@@ -21,6 +21,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <fstream>
+#include <unordered_map>
 
 namespace android {
 namespace hardware {
@@ -45,7 +46,8 @@ std::string getTestFilePath(const char* filename) {
     return baseDir + "/" + filename;
 }
 
-Result<std::vector<ConfigDeclaration>> loadConfig(JsonConfigLoader& loader, const char* path) {
+Result<std::unordered_map<int32_t, ConfigDeclaration>> loadConfig(JsonConfigLoader& loader,
+                                                                  const char* path) {
     std::string configPath = getTestFilePath(path);
     std::ifstream ifs(configPath.c_str());
     if (!ifs) {
@@ -89,7 +91,9 @@ TEST(DefaultConfigTest, TestCompatibleWithDefaultConfigHeader) {
                                    kVendorClusterTestPropertiesConfigFile})) {
         auto result = loadConfig(loader, file);
         ASSERT_TRUE(result.ok()) << result.error().message();
-        configsFromJson.insert(configsFromJson.end(), result.value().begin(), result.value().end());
+        for (auto& [propId, configDeclaration] : result.value()) {
+            configsFromJson.push_back(configDeclaration);
+        }
     }
 
     ASSERT_EQ(configsFromHeaderFile.size(), configsFromJson.size());
