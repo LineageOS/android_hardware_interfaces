@@ -78,10 +78,10 @@ static AudioOffloadInfo generateOffloadInfo(const AudioConfigBase& base) {
             .base = base,
             .streamType = toString(xsd::AudioStreamType::AUDIO_STREAM_MUSIC),
             .usage = toString(xsd::AudioUsage::AUDIO_USAGE_MEDIA),
-            .bitRatePerSecond = 320,
+            .bitRatePerSecond = 192,  // as in sine882hz3s.mp3
             .durationMicroseconds = -1,
             .bitWidth = 16,
-            .bufferSize = 256  // arbitrary value
+            .bufferSize = 72000  // 3 seconds at 192 kbps, as in sine882hz3s.mp3
     };
 }
 
