@@ -617,7 +617,8 @@ static std::string DeviceConfigParameterToString(
                     std::get<PARAM_FLAGS>(info.param)));
 #elif MAJOR_VERSION >= 7
     const auto configPart =
-            std::to_string(config.base.sampleRateHz) + "_" +
+            ::testing::PrintToString(std::get<PARAM_ATTACHED_DEV_ADDR>(info.param).deviceType) +
+            "_" + std::to_string(config.base.sampleRateHz) + "_" +
             // The channel masks and flags are vectors of strings, just need to sanitize them.
             SanitizeStringForGTestName(::testing::PrintToString(config.base.channelMask)) + "_" +
             SanitizeStringForGTestName(::testing::PrintToString(std::get<PARAM_FLAGS>(info.param)));
@@ -658,6 +659,9 @@ class AudioHidlTestWithDeviceConfigParameter
                 std::get<INDEX_OUTPUT>(std::get<PARAM_FLAGS>(GetParam())));
     }
 #elif MAJOR_VERSION >= 7
+    DeviceAddress getAttachedDeviceAddress() const {
+        return std::get<PARAM_ATTACHED_DEV_ADDR>(GetParam());
+    }
     hidl_vec<AudioInOutFlag> getInputFlags() const { return std::get<PARAM_FLAGS>(GetParam()); }
     hidl_vec<AudioInOutFlag> getOutputFlags() const { return std::get<PARAM_FLAGS>(GetParam()); }
 #endif
@@ -1047,7 +1051,7 @@ class OutputStreamTest
 #if MAJOR_VERSION <= 6
         address.device = AudioDevice::OUT_DEFAULT;
 #elif MAJOR_VERSION >= 7
-        address.deviceType = toString(xsd::AudioDevice::AUDIO_DEVICE_OUT_DEFAULT);
+        address = getAttachedDeviceAddress();
 #endif
         const AudioConfig& config = getConfig();
         auto flags = getOutputFlags();
@@ -1243,16 +1247,11 @@ class InputStreamTest
 #if MAJOR_VERSION <= 6
         address.device = AudioDevice::IN_DEFAULT;
 #elif MAJOR_VERSION >= 7
-        auto maybeSourceAddress = getCachedPolicyConfig().getSourceDeviceForMixPort(
-                getDeviceName(), getMixPortName());
+        address = getAttachedDeviceAddress();
         auto& metadata = initMetadata.tracks[0];
-        if (maybeSourceAddress.has_value() &&
-            !xsd::isTelephonyDevice(maybeSourceAddress.value().deviceType)) {
-            address = maybeSourceAddress.value();
+        if (!xsd::isTelephonyDevice(address.deviceType)) {
             metadata.source = toString(xsd::AudioSource::AUDIO_SOURCE_UNPROCESSED);
             metadata.channelMask = getConfig().base.channelMask;
-        } else {
-            address.deviceType = toString(xsd::AudioDevice::AUDIO_DEVICE_IN_DEFAULT);
         }
 #if MAJOR_VERSION == 7 && MINOR_VERSION >= 1
         auto flagsIt = std::find(flags.begin(), flags.end(),
