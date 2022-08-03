@@ -274,37 +274,11 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <!-- Either the AIDL or the HIDL allocator HAL must exist on the device.
-         If the HIDL composer HAL exists, it must be at least version 2.0.
-         See DeviceManifestTest.GrallocHal -->
-    <hal format="hidl" optional="true">
-        <name>android.hardware.graphics.allocator</name>
-        <!-- New, non-Go devices should use 4.0 or the AIDL hal.
-             See DeviceManifestTest.GrallocVersionCompatibility. -->
-        <version>2.0</version>
-        <version>3.0</version>
-        <version>4.0</version>
-        <interface>
-            <name>IAllocator</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.graphics.allocator</name>
         <version>1</version>
         <interface>
             <name>IAllocator</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
-    <!-- Either the AIDL or the HIDL composer HAL must exist on the device.
-         If the HIDL composer HAL exists, it must be at least version 2.1.
-         See DeviceManifestTest.ComposerHal -->
-    <hal format="hidl" optional="true">
-        <name>android.hardware.graphics.composer</name>
-        <version>2.1-4</version>
-        <interface>
-            <name>IComposer</name>
             <instance>default</instance>
         </interface>
     </hal>
