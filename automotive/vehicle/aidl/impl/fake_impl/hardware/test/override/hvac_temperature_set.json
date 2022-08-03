@@ -1,10 +1,20 @@
-[
-  {
-    "timestamp": 1000000,
-    // HVAC_LEFT
-    "areaId": 49,
-    "value": 30,
-    // HVAC_TEMPERATURE_SET
-    "prop": 358614275
-  }
-]
+{
+    "apiVersion": 1,
+    "properties": [
+        {
+            "property": "VehicleProperty::HVAC_TEMPERATURE_SET",
+            "areas": [
+                {
+                    "defaultValue": {
+                        "floatValues": [
+                            30.0
+                        ]
+                    },
+                    "areaId": 49,
+                    "minFloatValue": 16.0,
+                    "maxFloatValue": 32.0
+                }
+            ]
+        }
+    ]
+}

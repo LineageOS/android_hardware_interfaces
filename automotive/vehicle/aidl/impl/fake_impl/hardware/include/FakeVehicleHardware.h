@@ -18,11 +18,12 @@
 #define android_hardware_automotive_vehicle_aidl_impl_fake_impl_hardware_include_FakeVehicleHardware_H_
 
 #include <ConcurrentQueue.h>
-#include <DefaultConfig.h>
+#include <ConfigDeclaration.h>
 #include <FakeObd2Frame.h>
 #include <FakeUserHal.h>
 #include <GeneratorHub.h>
 #include <IVehicleHardware.h>
+#include <JsonConfigLoader.h>
 #include <RecurrentTimer.h>
 #include <VehicleHalTypes.h>
 #include <VehiclePropertyStore.h>
@@ -32,9 +33,9 @@
 #include <android-base/stringprintf.h>
 #include <android-base/thread_annotations.h>
 
-#include <map>
 #include <memory>
 #include <mutex>
+#include <unordered_map>
 #include <vector>
 
 namespace android {
@@ -49,7 +50,8 @@ class FakeVehicleHardware : public IVehicleHardware {
 
     FakeVehicleHardware();
 
-    explicit FakeVehicleHardware(std::unique_ptr<VehiclePropValuePool> valuePool);
+    FakeVehicleHardware(std::string defaultConfigDir, std::string overrideConfigDir,
+                        bool forceOverride);
 
     ~FakeVehicleHardware();
 
@@ -151,17 +153,23 @@ class FakeVehicleHardware : public IVehicleHardware {
                                   aidl::android::hardware::automotive::vehicle::SetValueRequest>
             mPendingSetValueRequests;
 
+    const std::string mDefaultConfigDir;
+    const std::string mOverrideConfigDir;
+    const bool mForceOverride;
+
+    // Only used during initialization.
+    JsonConfigLoader mLoader;
+
     void init();
     // Stores the initial value to property store.
     void storePropInitialValue(const ConfigDeclaration& config);
     // The callback that would be called when a vehicle property value change happens.
     void onValueChangeCallback(
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value);
-    // If property "persist.vendor.vhal_init_value_override" is set to true, override the properties
-    // using config files in 'overrideDir'.
-    void maybeOverrideProperties(const char* overrideDir);
-    // Override the properties using config files in 'overrideDir'.
-    void overrideProperties(const char* overrideDir);
+    // Load the config files in format '*.json' from the directory and parse the config files
+    // into a map from property ID to ConfigDeclarations.
+    void loadPropConfigsFromDir(const std::string& dirPath,
+                                std::unordered_map<int32_t, ConfigDeclaration>* configs);
     // Function to be called when a value change event comes from vehicle bus. In our fake
     // implementation, this function is only called during "--inject-event" dump command.
     void eventFromVehicleBus(
@@ -184,6 +192,8 @@ class FakeVehicleHardware : public IVehicleHardware {
     ValueResultType getEchoReverseBytes(
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value) const;
     bool isHvacPropAndHvacNotAvailable(int32_t propId);
+
+    std::unordered_map<int32_t, ConfigDeclaration> loadConfigDeclarations();
 
     std::string dumpAllProperties();
     std::string dumpOnePropertyByConfig(
