@@ -27,7 +27,9 @@
 
 using aidl::android::hardware::audio::common::SinkMetadata;
 using aidl::android::hardware::audio::common::SourceMetadata;
+using aidl::android::media::audio::common::AudioChannelLayout;
 using aidl::android::media::audio::common::AudioFormatDescription;
+using aidl::android::media::audio::common::AudioFormatType;
 using aidl::android::media::audio::common::AudioIoFlags;
 using aidl::android::media::audio::common::AudioOffloadInfo;
 using aidl::android::media::audio::common::AudioOutputFlags;
@@ -36,6 +38,7 @@ using aidl::android::media::audio::common::AudioPortConfig;
 using aidl::android::media::audio::common::AudioPortExt;
 using aidl::android::media::audio::common::AudioProfile;
 using aidl::android::media::audio::common::Int;
+using aidl::android::media::audio::common::PcmType;
 
 namespace aidl::android::hardware::audio::core {
 
@@ -67,6 +70,49 @@ bool generateDefaultPortConfig(const AudioPort& port, AudioPortConfig* config) {
     config->flags = port.flags;
     config->ext = port.ext;
     return true;
+}
+
+constexpr size_t getPcmSampleSizeInBytes(PcmType pcm) {
+    switch (pcm) {
+        case PcmType::UINT_8_BIT:
+            return 1;
+        case PcmType::INT_16_BIT:
+            return 2;
+        case PcmType::INT_32_BIT:
+            return 4;
+        case PcmType::FIXED_Q_8_24:
+            return 4;
+        case PcmType::FLOAT_32_BIT:
+            return 4;
+        case PcmType::INT_24_BIT:
+            return 3;
+    }
+    return 0;
+}
+
+constexpr size_t getChannelCount(const AudioChannelLayout& layout) {
+    using Tag = AudioChannelLayout::Tag;
+    switch (layout.getTag()) {
+        case Tag::none:
+            return 0;
+        case Tag::invalid:
+            return 0;
+        case Tag::indexMask:
+            return __builtin_popcount(layout.get<Tag::indexMask>());
+        case Tag::layoutMask:
+            return __builtin_popcount(layout.get<Tag::layoutMask>());
+        case Tag::voiceMask:
+            return __builtin_popcount(layout.get<Tag::voiceMask>());
+    }
+    return 0;
+}
+
+size_t getFrameSizeInBytes(const AudioFormatDescription& format, const AudioChannelLayout& layout) {
+    if (format.type == AudioFormatType::PCM) {
+        return getPcmSampleSizeInBytes(format.pcm) * getChannelCount(layout);
+    }
+    // For non-PCM formats always use frame size of 1.
+    return 1;
 }
 
 bool findAudioProfile(const AudioPort& port, const AudioFormatDescription& format,
@@ -109,6 +155,78 @@ void Module::cleanUpPatches(int32_t portConfigId) {
         }
     }
     erase_all_values(mPatches, erasedPatches);
+}
+
+ndk::ScopedAStatus Module::createStreamDescriptor(int32_t in_portConfigId,
+                                                  int64_t in_bufferSizeFrames,
+                                                  StreamDescriptor* out_descriptor) {
+    if (in_bufferSizeFrames <= 0) {
+        LOG(ERROR) << __func__ << ": non-positive buffer size " << in_bufferSizeFrames;
+        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+    }
+    if (in_bufferSizeFrames < kMinimumStreamBufferSizeFrames) {
+        LOG(ERROR) << __func__ << ": insufficient buffer size " << in_bufferSizeFrames
+                   << ", must be at least " << kMinimumStreamBufferSizeFrames;
+        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+    }
+    auto& configs = getConfig().portConfigs;
+    auto portConfigIt = findById<AudioPortConfig>(configs, in_portConfigId);
+    // Since 'createStreamDescriptor' is an internal method, it is assumed that
+    // validity of the portConfigId has already been checked.
+    const size_t frameSize =
+            getFrameSizeInBytes(portConfigIt->format.value(), portConfigIt->channelMask.value());
+    if (frameSize == 0) {
+        LOG(ERROR) << __func__ << ": could not calculate frame size for port config "
+                   << portConfigIt->toString();
+        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+    }
+    LOG(DEBUG) << __func__ << ": frame size " << frameSize << " bytes";
+    if (frameSize > kMaximumStreamBufferSizeBytes / in_bufferSizeFrames) {
+        LOG(ERROR) << __func__ << ": buffer size " << in_bufferSizeFrames
+                   << " frames is too large, maximum size is "
+                   << kMaximumStreamBufferSizeBytes / frameSize;
+        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+    }
+    (void)out_descriptor;
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus Module::findPortIdForNewStream(int32_t in_portConfigId, AudioPort** port) {
+    auto& configs = getConfig().portConfigs;
+    auto portConfigIt = findById<AudioPortConfig>(configs, in_portConfigId);
+    if (portConfigIt == configs.end()) {
+        LOG(ERROR) << __func__ << ": existing port config id " << in_portConfigId << " not found";
+        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+    }
+    const int32_t portId = portConfigIt->portId;
+    // In our implementation, configs of mix ports always have unique IDs.
+    CHECK(portId != in_portConfigId);
+    auto& ports = getConfig().ports;
+    auto portIt = findById<AudioPort>(ports, portId);
+    if (portIt == ports.end()) {
+        LOG(ERROR) << __func__ << ": port id " << portId << " used by port config id "
+                   << in_portConfigId << " not found";
+        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+    }
+    if (mStreams.count(in_portConfigId) != 0) {
+        LOG(ERROR) << __func__ << ": port config id " << in_portConfigId
+                   << " already has a stream opened on it";
+        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
+    }
+    if (portIt->ext.getTag() != AudioPortExt::Tag::mix) {
+        LOG(ERROR) << __func__ << ": port config id " << in_portConfigId
+                   << " does not correspond to a mix port";
+        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+    }
+    const int32_t maxOpenStreamCount = portIt->ext.get<AudioPortExt::Tag::mix>().maxOpenStreamCount;
+    if (maxOpenStreamCount != 0 && mStreams.count(portId) >= maxOpenStreamCount) {
+        LOG(ERROR) << __func__ << ": port id " << portId
+                   << " has already reached maximum allowed opened stream count: "
+                   << maxOpenStreamCount;
+        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
+    }
+    *port = &(*portIt);
+    return ndk::ScopedAStatus::ok();
 }
 
 internal::Configuration& Module::getConfig() {
@@ -336,98 +454,59 @@ ndk::ScopedAStatus Module::getAudioRoutesForAudioPort(int32_t in_portId,
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus Module::openInputStream(int32_t in_portConfigId,
-                                           const SinkMetadata& in_sinkMetadata,
-                                           std::shared_ptr<IStreamIn>* _aidl_return) {
-    auto& configs = getConfig().portConfigs;
-    auto portConfigIt = findById<AudioPortConfig>(configs, in_portConfigId);
-    if (portConfigIt == configs.end()) {
-        LOG(ERROR) << __func__ << ": existing port config id " << in_portConfigId << " not found";
-        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+ndk::ScopedAStatus Module::openInputStream(const OpenInputStreamArguments& in_args,
+                                           OpenInputStreamReturn* _aidl_return) {
+    LOG(DEBUG) << __func__ << ": port config id " << in_args.portConfigId << ", buffer size "
+               << in_args.bufferSizeFrames << " frames";
+    AudioPort* port = nullptr;
+    if (auto status = findPortIdForNewStream(in_args.portConfigId, &port); !status.isOk()) {
+        return status;
     }
-    const int32_t portId = portConfigIt->portId;
-    // In our implementation, configs of mix ports always have unique IDs.
-    CHECK(portId != in_portConfigId);
-    auto& ports = getConfig().ports;
-    auto portIt = findById<AudioPort>(ports, portId);
-    if (portIt == ports.end()) {
-        LOG(ERROR) << __func__ << ": port id " << portId << " used by port config id "
-                   << in_portConfigId << " not found";
-        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
-    }
-    if (portIt->flags.getTag() != AudioIoFlags::Tag::input ||
-        portIt->ext.getTag() != AudioPortExt::Tag::mix) {
-        LOG(ERROR) << __func__ << ": port config id " << in_portConfigId
+    if (port->flags.getTag() != AudioIoFlags::Tag::input) {
+        LOG(ERROR) << __func__ << ": port config id " << in_args.portConfigId
                    << " does not correspond to an input mix port";
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
     }
-    if (mStreams.count(in_portConfigId) != 0) {
-        LOG(ERROR) << __func__ << ": port config id " << in_portConfigId
-                   << " already has a stream opened on it";
-        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
+    if (auto status = createStreamDescriptor(in_args.portConfigId, in_args.bufferSizeFrames,
+                                             &_aidl_return->desc);
+        !status.isOk()) {
+        return status;
     }
-    const int32_t maxOpenStreamCount = portIt->ext.get<AudioPortExt::Tag::mix>().maxOpenStreamCount;
-    if (maxOpenStreamCount != 0 && mStreams.count(portId) >= maxOpenStreamCount) {
-        LOG(ERROR) << __func__ << ": port id " << portId
-                   << " has already reached maximum allowed opened stream count: "
-                   << maxOpenStreamCount;
-        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
-    }
-    auto stream = ndk::SharedRefBase::make<StreamIn>(in_sinkMetadata);
-    mStreams.insert(portId, in_portConfigId, StreamWrapper(stream));
-    *_aidl_return = std::move(stream);
+    auto stream = ndk::SharedRefBase::make<StreamIn>(in_args.sinkMetadata);
+    mStreams.insert(port->id, in_args.portConfigId, StreamWrapper(stream));
+    _aidl_return->stream = std::move(stream);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus Module::openOutputStream(int32_t in_portConfigId,
-                                            const SourceMetadata& in_sourceMetadata,
-                                            const std::optional<AudioOffloadInfo>& in_offloadInfo,
-                                            std::shared_ptr<IStreamOut>* _aidl_return) {
-    auto& configs = getConfig().portConfigs;
-    auto portConfigIt = findById<AudioPortConfig>(configs, in_portConfigId);
-    if (portConfigIt == configs.end()) {
-        LOG(ERROR) << __func__ << ": existing port config id " << in_portConfigId << " not found";
-        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+ndk::ScopedAStatus Module::openOutputStream(const OpenOutputStreamArguments& in_args,
+                                            OpenOutputStreamReturn* _aidl_return) {
+    LOG(DEBUG) << __func__ << ": port config id " << in_args.portConfigId << ", has offload info? "
+               << (in_args.offloadInfo.has_value()) << ", buffer size " << in_args.bufferSizeFrames
+               << " frames";
+    AudioPort* port = nullptr;
+    if (auto status = findPortIdForNewStream(in_args.portConfigId, &port); !status.isOk()) {
+        return status;
     }
-    const int32_t portId = portConfigIt->portId;
-    // In our implementation, configs of mix ports always have unique IDs.
-    CHECK(portId != in_portConfigId);
-    auto& ports = getConfig().ports;
-    auto portIt = findById<AudioPort>(ports, portId);
-    if (portIt == ports.end()) {
-        LOG(ERROR) << __func__ << ": port id " << portId << " used by port config id "
-                   << in_portConfigId << " not found";
-        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
-    }
-    if (portIt->flags.getTag() != AudioIoFlags::Tag::output ||
-        portIt->ext.getTag() != AudioPortExt::Tag::mix) {
-        LOG(ERROR) << __func__ << ": port config id " << in_portConfigId
+    if (port->flags.getTag() != AudioIoFlags::Tag::output) {
+        LOG(ERROR) << __func__ << ": port config id " << in_args.portConfigId
                    << " does not correspond to an output mix port";
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
     }
-    if (portConfigIt->flags.has_value() &&
-        ((portConfigIt->flags.value().get<AudioIoFlags::Tag::output>() &
-          1 << static_cast<int32_t>(AudioOutputFlags::COMPRESS_OFFLOAD)) != 0) &&
-        !in_offloadInfo.has_value()) {
-        LOG(ERROR) << __func__ << ": port config id " << in_portConfigId
+    if ((port->flags.get<AudioIoFlags::Tag::output>() &
+         1 << static_cast<int32_t>(AudioOutputFlags::COMPRESS_OFFLOAD)) != 0 &&
+        !in_args.offloadInfo.has_value()) {
+        LOG(ERROR) << __func__ << ": port id " << port->id
                    << " has COMPRESS_OFFLOAD flag set, requires offload info";
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
     }
-    if (mStreams.count(in_portConfigId) != 0) {
-        LOG(ERROR) << __func__ << ": port config id " << in_portConfigId
-                   << " already has a stream opened on it";
-        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
+    if (auto status = createStreamDescriptor(in_args.portConfigId, in_args.bufferSizeFrames,
+                                             &_aidl_return->desc);
+        !status.isOk()) {
+        return status;
     }
-    const int32_t maxOpenStreamCount = portIt->ext.get<AudioPortExt::Tag::mix>().maxOpenStreamCount;
-    if (maxOpenStreamCount != 0 && mStreams.count(portId) >= maxOpenStreamCount) {
-        LOG(ERROR) << __func__ << ": port id " << portId
-                   << " has already reached maximum allowed opened stream count: "
-                   << maxOpenStreamCount;
-        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
-    }
-    auto stream = ndk::SharedRefBase::make<StreamOut>(in_sourceMetadata, in_offloadInfo);
-    mStreams.insert(portId, in_portConfigId, StreamWrapper(stream));
-    *_aidl_return = std::move(stream);
+    auto stream = ndk::SharedRefBase::make<StreamOut>(in_args.sourceMetadata, in_args.offloadInfo);
+    mStreams.insert(port->id, in_args.portConfigId, StreamWrapper(stream));
+    _aidl_return->stream = std::move(stream);
     return ndk::ScopedAStatus::ok();
 }
 
@@ -512,6 +591,10 @@ ndk::ScopedAStatus Module::setAudioPatch(const AudioPatch& in_requested, AudioPa
         }
     }
     *_aidl_return = in_requested;
+    _aidl_return->minimumStreamBufferSizeFrames = kMinimumStreamBufferSizeFrames;
+    _aidl_return->latenciesMs.clear();
+    _aidl_return->latenciesMs.insert(_aidl_return->latenciesMs.end(),
+                                     _aidl_return->sinkPortConfigIds.size(), kLatencyMs);
     if (existing == patches.end()) {
         _aidl_return->id = getConfig().nextPatchId++;
         patches.push_back(*_aidl_return);

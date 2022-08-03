@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <condition_variable>
+#include <limits>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -48,6 +49,7 @@ using aidl::android::hardware::audio::core::IModule;
 using aidl::android::hardware::audio::core::IStreamIn;
 using aidl::android::hardware::audio::core::IStreamOut;
 using aidl::android::hardware::audio::core::ModuleDebug;
+using aidl::android::hardware::audio::core::StreamDescriptor;
 using aidl::android::media::audio::common::AudioContentType;
 using aidl::android::media::audio::common::AudioDevice;
 using aidl::android::media::audio::common::AudioDeviceAddress;
@@ -225,6 +227,9 @@ class WithAudioPortConfig {
 
 class AudioCoreModule : public testing::TestWithParam<std::string> {
   public:
+    // The default buffer size is used mostly for negative tests.
+    static constexpr int kDefaultBufferSize = 256;
+
     void SetUp() override {
         ASSERT_NO_FATAL_FAILURE(ConnectToService());
         debug.flags().simulateDeviceConnections = true;
@@ -382,13 +387,14 @@ class WithStream {
         }
     }
     void SetUpPortConfig(IModule* module) { ASSERT_NO_FATAL_FAILURE(mPortConfig.SetUp(module)); }
-    ScopedAStatus SetUpNoChecks(IModule* module) {
-        return SetUpNoChecks(module, mPortConfig.get());
+    ScopedAStatus SetUpNoChecks(IModule* module, long bufferSize) {
+        return SetUpNoChecks(module, mPortConfig.get(), bufferSize);
     }
-    ScopedAStatus SetUpNoChecks(IModule* module, const AudioPortConfig& portConfig);
-    void SetUp(IModule* module) {
+    ScopedAStatus SetUpNoChecks(IModule* module, const AudioPortConfig& portConfig,
+                                long bufferSize);
+    void SetUp(IModule* module, long bufferSize) {
         ASSERT_NO_FATAL_FAILURE(SetUpPortConfig(module));
-        ScopedAStatus status = SetUpNoChecks(module);
+        ScopedAStatus status = SetUpNoChecks(module, bufferSize);
         ASSERT_EQ(EX_NONE, status.getExceptionCode())
                 << status << "; port config id " << getPortId();
         ASSERT_NE(nullptr, mStream) << "; port config id " << getPortId();
@@ -401,6 +407,7 @@ class WithStream {
   private:
     WithAudioPortConfig mPortConfig;
     std::shared_ptr<Stream> mStream;
+    StreamDescriptor mDescriptor;
 };
 
 SinkMetadata GenerateSinkMetadata(const AudioPortConfig& portConfig) {
@@ -415,8 +422,19 @@ SinkMetadata GenerateSinkMetadata(const AudioPortConfig& portConfig) {
 
 template <>
 ScopedAStatus WithStream<IStreamIn>::SetUpNoChecks(IModule* module,
-                                                   const AudioPortConfig& portConfig) {
-    return module->openInputStream(portConfig.id, GenerateSinkMetadata(portConfig), &mStream);
+                                                   const AudioPortConfig& portConfig,
+                                                   long bufferSize) {
+    aidl::android::hardware::audio::core::IModule::OpenInputStreamArguments args;
+    args.portConfigId = portConfig.id;
+    args.sinkMetadata = GenerateSinkMetadata(portConfig);
+    args.bufferSizeFrames = bufferSize;
+    aidl::android::hardware::audio::core::IModule::OpenInputStreamReturn ret;
+    ScopedAStatus status = module->openInputStream(args, &ret);
+    if (status.isOk()) {
+        mStream = std::move(ret.stream);
+        mDescriptor = std::move(ret.desc);
+    }
+    return status;
 }
 
 SourceMetadata GenerateSourceMetadata(const AudioPortConfig& portConfig) {
@@ -432,10 +450,20 @@ SourceMetadata GenerateSourceMetadata(const AudioPortConfig& portConfig) {
 
 template <>
 ScopedAStatus WithStream<IStreamOut>::SetUpNoChecks(IModule* module,
-                                                    const AudioPortConfig& portConfig) {
-    return module->openOutputStream(portConfig.id, GenerateSourceMetadata(portConfig),
-                                    ModuleConfig::generateOffloadInfoIfNeeded(portConfig),
-                                    &mStream);
+                                                    const AudioPortConfig& portConfig,
+                                                    long bufferSize) {
+    aidl::android::hardware::audio::core::IModule::OpenOutputStreamArguments args;
+    args.portConfigId = portConfig.id;
+    args.sourceMetadata = GenerateSourceMetadata(portConfig);
+    args.offloadInfo = ModuleConfig::generateOffloadInfoIfNeeded(portConfig);
+    args.bufferSizeFrames = bufferSize;
+    aidl::android::hardware::audio::core::IModule::OpenOutputStreamReturn ret;
+    ScopedAStatus status = module->openOutputStream(args, &ret);
+    if (status.isOk()) {
+        mStream = std::move(ret.stream);
+        mDescriptor = std::move(ret.desc);
+    }
+    return status;
 }
 
 class WithAudioPatch {
@@ -467,6 +495,10 @@ class WithAudioPatch {
         ASSERT_EQ(EX_NONE, status.getExceptionCode())
                 << status << "; source port config id " << mSrcPortConfig.getId()
                 << "; sink port config id " << mSinkPortConfig.getId();
+        EXPECT_GT(mPatch.minimumStreamBufferSizeFrames, 0) << "patch id " << getId();
+        for (auto latencyMs : mPatch.latenciesMs) {
+            EXPECT_GT(latencyMs, 0) << "patch id " << getId();
+        }
     }
     int32_t getId() const { return mPatch.id; }
     const AudioPatch& get() const { return mPatch; }
@@ -739,18 +771,24 @@ TEST_P(AudioCoreModule, OpenStreamInvalidPortConfigId) {
     ASSERT_NO_FATAL_FAILURE(GetAllPortConfigIds(&portConfigIds));
     for (const auto portConfigId : GetNonExistentIds(portConfigIds)) {
         {
-            std::shared_ptr<IStreamIn> stream;
-            ScopedAStatus status = module->openInputStream(portConfigId, {}, &stream);
+            aidl::android::hardware::audio::core::IModule::OpenInputStreamArguments args;
+            args.portConfigId = portConfigId;
+            args.bufferSizeFrames = kDefaultBufferSize;
+            aidl::android::hardware::audio::core::IModule::OpenInputStreamReturn ret;
+            ScopedAStatus status = module->openInputStream(args, &ret);
             EXPECT_EQ(EX_ILLEGAL_ARGUMENT, status.getExceptionCode())
                     << status << " openInputStream returned for port config ID " << portConfigId;
-            EXPECT_EQ(nullptr, stream);
+            EXPECT_EQ(nullptr, ret.stream);
         }
         {
-            std::shared_ptr<IStreamOut> stream;
-            ScopedAStatus status = module->openOutputStream(portConfigId, {}, {}, &stream);
+            aidl::android::hardware::audio::core::IModule::OpenOutputStreamArguments args;
+            args.portConfigId = portConfigId;
+            args.bufferSizeFrames = kDefaultBufferSize;
+            aidl::android::hardware::audio::core::IModule::OpenOutputStreamReturn ret;
+            ScopedAStatus status = module->openOutputStream(args, &ret);
             EXPECT_EQ(EX_ILLEGAL_ARGUMENT, status.getExceptionCode())
                     << status << " openOutputStream returned for port config ID " << portConfigId;
-            EXPECT_EQ(nullptr, stream);
+            EXPECT_EQ(nullptr, ret.stream);
         }
     }
 }
@@ -1120,7 +1158,7 @@ class AudioStream : public AudioCoreModule {
         std::shared_ptr<Stream> heldStream;
         {
             WithStream<Stream> stream(portConfig.value());
-            ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get()));
+            ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultBufferSize));
             heldStream = stream.getSharedPointer();
         }
         ScopedAStatus status = heldStream->close();
@@ -1132,8 +1170,41 @@ class AudioStream : public AudioCoreModule {
         const auto allPortConfigs = moduleConfig->getPortConfigsForMixPorts(IsInput<Stream>());
         for (const auto& portConfig : allPortConfigs) {
             WithStream<Stream> stream(portConfig);
-            ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get()));
+            ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultBufferSize));
         }
+    }
+
+    void OpenInvalidBufferSize() {
+        const auto portConfig = moduleConfig->getSingleConfigForMixPort(IsInput<Stream>());
+        if (!portConfig.has_value()) {
+            GTEST_SKIP() << "No mix port for attached devices";
+        }
+        WithStream<Stream> stream(portConfig.value());
+        ASSERT_NO_FATAL_FAILURE(stream.SetUpPortConfig(module.get()));
+        // The buffer size of 1 frame should be impractically small, and thus
+        // less than any minimum buffer size suggested by any HAL.
+        for (long bufferSize : std::array<long, 4>{-1, 0, 1, std::numeric_limits<long>::max()}) {
+            ScopedAStatus status = stream.SetUpNoChecks(module.get(), bufferSize);
+            EXPECT_EQ(EX_ILLEGAL_ARGUMENT, status.getExceptionCode())
+                    << status << " open" << direction(true) << "Stream returned for " << bufferSize
+                    << " buffer size";
+            EXPECT_EQ(nullptr, stream.get());
+        }
+    }
+
+    void OpenInvalidDirection() {
+        // Important! The direction of the port config must be reversed.
+        const auto portConfig = moduleConfig->getSingleConfigForMixPort(!IsInput<Stream>());
+        if (!portConfig.has_value()) {
+            GTEST_SKIP() << "No mix port for attached devices";
+        }
+        WithStream<Stream> stream(portConfig.value());
+        ASSERT_NO_FATAL_FAILURE(stream.SetUpPortConfig(module.get()));
+        ScopedAStatus status = stream.SetUpNoChecks(module.get(), kDefaultBufferSize);
+        EXPECT_EQ(EX_ILLEGAL_ARGUMENT, status.getExceptionCode())
+                << status << " open" << direction(true) << "Stream returned for port config ID "
+                << stream.getPortId();
+        EXPECT_EQ(nullptr, stream.get());
     }
 
     void OpenOverMaxCount() {
@@ -1158,10 +1229,10 @@ class AudioStream : public AudioCoreModule {
                 streamWraps[i].emplace(portConfigs[i]);
                 WithStream<Stream>& stream = streamWraps[i].value();
                 if (i < maxStreamCount) {
-                    ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get()));
+                    ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultBufferSize));
                 } else {
                     ASSERT_NO_FATAL_FAILURE(stream.SetUpPortConfig(module.get()));
-                    ScopedAStatus status = stream.SetUpNoChecks(module.get());
+                    ScopedAStatus status = stream.SetUpNoChecks(module.get(), kDefaultBufferSize);
                     EXPECT_EQ(EX_ILLEGAL_STATE, status.getExceptionCode())
                             << status << " open" << direction(true)
                             << "Stream returned for port config ID " << stream.getPortId()
@@ -1173,21 +1244,6 @@ class AudioStream : public AudioCoreModule {
             GTEST_SKIP() << "Not enough " << direction(false)
                          << " ports to test max open stream count";
         }
-    }
-
-    void OpenInvalidDirection() {
-        // Important! The direction of the port config must be reversed.
-        const auto portConfig = moduleConfig->getSingleConfigForMixPort(!IsInput<Stream>());
-        if (!portConfig.has_value()) {
-            GTEST_SKIP() << "No mix port for attached devices";
-        }
-        WithStream<Stream> stream(portConfig.value());
-        ASSERT_NO_FATAL_FAILURE(stream.SetUpPortConfig(module.get()));
-        ScopedAStatus status = stream.SetUpNoChecks(module.get());
-        EXPECT_EQ(EX_ILLEGAL_ARGUMENT, status.getExceptionCode())
-                << status << " open" << direction(true) << "Stream returned for port config ID "
-                << stream.getPortId();
-        EXPECT_EQ(nullptr, stream.get());
     }
 
     void OpenTwiceSamePortConfig() {
@@ -1204,7 +1260,7 @@ class AudioStream : public AudioCoreModule {
             GTEST_SKIP() << "No mix port for attached devices";
         }
         WithStream<Stream> stream(portConfig.value());
-        ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get()));
+        ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultBufferSize));
         ScopedAStatus status = module->resetAudioPortConfig(stream.getPortId());
         EXPECT_EQ(EX_ILLEGAL_STATE, status.getExceptionCode())
                 << status << " returned for port config ID " << stream.getPortId();
@@ -1212,9 +1268,10 @@ class AudioStream : public AudioCoreModule {
 
     void OpenTwiceSamePortConfigImpl(const AudioPortConfig& portConfig) {
         WithStream<Stream> stream1(portConfig);
-        ASSERT_NO_FATAL_FAILURE(stream1.SetUp(module.get()));
+        ASSERT_NO_FATAL_FAILURE(stream1.SetUp(module.get(), kDefaultBufferSize));
         WithStream<Stream> stream2;
-        ScopedAStatus status = stream2.SetUpNoChecks(module.get(), stream1.getPortConfig());
+        ScopedAStatus status =
+                stream2.SetUpNoChecks(module.get(), stream1.getPortConfig(), kDefaultBufferSize);
         EXPECT_EQ(EX_ILLEGAL_STATE, status.getExceptionCode())
                 << status << " when opening " << direction(false)
                 << " stream twice for the same port config ID " << stream1.getPortId();
@@ -1238,6 +1295,7 @@ std::string AudioStreamOut::direction(bool capitalize) {
 
 TEST_IO_STREAM(CloseTwice);
 TEST_IO_STREAM(OpenAllConfigs);
+TEST_IO_STREAM(OpenInvalidBufferSize);
 TEST_IO_STREAM(OpenInvalidDirection);
 TEST_IO_STREAM(OpenOverMaxCount);
 TEST_IO_STREAM(OpenTwiceSamePortConfig);
@@ -1277,10 +1335,14 @@ TEST_P(AudioStreamOut, RequireOffloadInfo) {
     const auto portConfig = moduleConfig->getSingleConfigForMixPort(false, *offloadPortIt);
     ASSERT_TRUE(portConfig.has_value())
             << "No profiles specified for the compressed offload mix port";
+    StreamDescriptor descriptor;
     std::shared_ptr<IStreamOut> ignored;
-    ScopedAStatus status = module->openOutputStream(portConfig.value().id,
-                                                    GenerateSourceMetadata(portConfig.value()),
-                                                    {} /* offloadInfo */, &ignored);
+    aidl::android::hardware::audio::core::IModule::OpenOutputStreamArguments args;
+    args.portConfigId = portConfig.value().id;
+    args.sourceMetadata = GenerateSourceMetadata(portConfig.value());
+    args.bufferSizeFrames = kDefaultBufferSize;
+    aidl::android::hardware::audio::core::IModule::OpenOutputStreamReturn ret;
+    ScopedAStatus status = module->openOutputStream(args, &ret);
     EXPECT_EQ(EX_ILLEGAL_ARGUMENT, status.getExceptionCode())
             << status
             << " returned when no offload info is provided for a compressed offload mix port";
