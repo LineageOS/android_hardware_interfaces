@@ -97,7 +97,7 @@ const std::unordered_set<std::string> SET_PROP_OPTIONS = {
 
 }  // namespace
 
-void FakeVehicleHardware::storePropInitialValue(const defaultconfig::ConfigDeclaration& config) {
+void FakeVehicleHardware::storePropInitialValue(const ConfigDeclaration& config) {
     const VehiclePropConfig& vehiclePropConfig = config.config;
     int propId = vehiclePropConfig.prop;
 

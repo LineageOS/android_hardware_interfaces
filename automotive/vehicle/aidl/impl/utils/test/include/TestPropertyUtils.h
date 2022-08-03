@@ -35,7 +35,6 @@ using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType;
 
 }  // namespace testpropertyutils_impl
 
-#ifdef ENABLE_VENDOR_CLUSTER_PROPERTY_FOR_TESTING
 // Converts the system property to the vendor property.
 // WARNING: This is only for the end-to-end testing, Should NOT include in the user build.
 inline constexpr int32_t toVendor(
@@ -55,7 +54,6 @@ constexpr int32_t VENDOR_CLUSTER_REQUEST_DISPLAY =
         toVendor(testpropertyutils_impl::VehicleProperty::CLUSTER_REQUEST_DISPLAY);
 constexpr int32_t VENDOR_CLUSTER_NAVIGATION_STATE =
         toVendor(testpropertyutils_impl::VehicleProperty::CLUSTER_NAVIGATION_STATE);
-#endif  // ENABLE_VENDOR_CLUSTER_PROPERTY_FOR_TESTING
 
 // These properties are placeholder properties for developers to test new features without
 // implementing a real property.
