@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f82ddb5b_f8ff33f7",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 21290
+      },
+      "writtenOn": "2022-08-04T19:00:51Z",
+      "side": 1,
+      "message": "alternative from aosp master: https://android.googlesource.com/platform/hardware/interfaces/+/150dded787009b6e84e02dca11a593c5deba0e01%5E%21/#F0",
+      "revId": "738119dc86a7da075085eea8484c9535c2adbab0",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
