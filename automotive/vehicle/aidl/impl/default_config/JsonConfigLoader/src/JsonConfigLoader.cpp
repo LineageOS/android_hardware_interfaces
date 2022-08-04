@@ -25,6 +25,7 @@
 #endif  // ENABLE_VEHICLE_HAL_TEST_PROPERTIES
 
 #include <android-base/strings.h>
+#include <fstream>
 
 namespace android {
 namespace hardware {
@@ -509,25 +510,32 @@ std::optional<ConfigDeclaration> JsonConfigParser::parseEachProperty(
     return configDecl;
 }
 
-Result<std::vector<ConfigDeclaration>> JsonConfigParser::parseJsonConfig(std::istream& is) {
+Result<std::unordered_map<int32_t, ConfigDeclaration>> JsonConfigParser::parseJsonConfig(
+        std::istream& is) {
     Json::CharReaderBuilder builder;
     Json::Value root;
-    std::vector<ConfigDeclaration> configs;
+    std::unordered_map<int32_t, ConfigDeclaration> configsByPropId;
     std::string errs;
     if (!Json::parseFromStream(builder, is, &root, &errs)) {
         return Error() << "Failed to parse property config file as JSON, error: " << errs;
+    }
+    if (!root.isObject()) {
+        return Error() << "root element must be an object";
+    }
+    if (!root.isMember("properties") || !root["properties"].isArray()) {
+        return Error() << "Missing 'properties' field in root or the field is not an array";
     }
     Json::Value properties = root["properties"];
     std::vector<std::string> errors;
     for (unsigned int i = 0; i < properties.size(); i++) {
         if (auto maybeConfig = parseEachProperty(properties[i], &errors); maybeConfig.has_value()) {
-            configs.push_back(std::move(maybeConfig.value()));
+            configsByPropId[maybeConfig.value().config.prop] = std::move(maybeConfig.value());
         }
     }
     if (!errors.empty()) {
         return Error() << android::base::Join(errors, '\n');
     }
-    return configs;
+    return configsByPropId;
 }
 
 }  // namespace jsonconfigloader_impl
@@ -536,9 +544,19 @@ JsonConfigLoader::JsonConfigLoader() {
     mParser = std::make_unique<jsonconfigloader_impl::JsonConfigParser>();
 }
 
-android::base::Result<std::vector<ConfigDeclaration>> JsonConfigLoader::loadPropConfig(
-        std::istream& is) {
+android::base::Result<std::unordered_map<int32_t, ConfigDeclaration>>
+JsonConfigLoader::loadPropConfig(std::istream& is) {
     return mParser->parseJsonConfig(is);
+}
+
+android::base::Result<std::unordered_map<int32_t, ConfigDeclaration>>
+JsonConfigLoader::loadPropConfig(const std::string& configPath) {
+    std::ifstream ifs(configPath.c_str());
+    if (!ifs) {
+        return android::base::Error() << "couldn't open " << configPath << " for parsing.";
+    }
+
+    return loadPropConfig(ifs);
 }
 
 }  // namespace vehicle

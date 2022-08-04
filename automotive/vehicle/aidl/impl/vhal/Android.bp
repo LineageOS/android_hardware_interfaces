@@ -75,10 +75,6 @@ cc_fuzz {
         "VehicleHalDefaults",
         "android-automotive-large-parcelable-defaults",
     ],
-    header_libs: [
-        "IVehicleHardware",
-        "VehicleHalDefaultConfig",
-    ],
     static_libs: [
         "DefaultVehicleHal",
         "FakeVehicleHardware",

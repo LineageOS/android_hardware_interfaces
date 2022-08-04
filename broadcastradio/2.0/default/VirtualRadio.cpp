@@ -46,9 +46,9 @@ VirtualRadio gAmFmRadio(
 VirtualRadio gDabRadio(
     "DAB radio mock",
     {
-        {make_selector_dab(12345, 225648), "BBC Radio 1", "Khalid", "Talk"},  // 12B
-        {make_selector_dab(22345, 222064), "Classic FM", "Jean Sibelius", "Andante Festivo"},  // 11D
-        {make_selector_dab(32345, 222064), "Absolute Radio", "Coldplay", "Clocks"},  // 11D
+        {make_selector_dab(0xA00001u, 0x0001u), "BBC Radio 1", "Khalid", "Talk"},
+        {make_selector_dab(0xB00001u, 0x1001u), "Classic FM", "Jean Sibelius", "Andante Festivo"},
+        {make_selector_dab(0xB00002u, 0x1001u), "Absolute Radio", "Coldplay", "Clocks"},
     });
 // clang-format on
 
