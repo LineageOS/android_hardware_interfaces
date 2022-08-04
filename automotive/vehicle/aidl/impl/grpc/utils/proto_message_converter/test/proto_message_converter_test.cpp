@@ -16,9 +16,11 @@
 
 #include <vector>
 
-#include <DefaultConfig.h>
+#include <JsonConfigLoader.h>
 #include <ProtoMessageConverter.h>
 #include <VehicleHalTypes.h>
+
+#include <android-base/file.h>
 #include <android-base/format.h>
 #include <android/hardware/automotive/vehicle/VehiclePropConfig.pb.h>
 #include <android/hardware/automotive/vehicle/VehiclePropValue.pb.h>
@@ -35,23 +37,39 @@ namespace {
 namespace proto = ::android::hardware::automotive::vehicle::proto;
 namespace aidl_vehicle = ::aidl::android::hardware::automotive::vehicle;
 
+constexpr char DEFAULT_PROPERTIES_CONFIG[] = "DefaultProperties.json";
+
+inline std::string getConfigPath(const std::string& name) {
+    return android::base::GetExecutableDirectory() + "/" + name;
+}
+
 std::vector<aidl_vehicle::VehiclePropConfig> prepareTestConfigs() {
+    JsonConfigLoader loader;
+    auto result = loader.loadPropConfig(getConfigPath(DEFAULT_PROPERTIES_CONFIG));
+    if (!result.ok()) {
+        return {};
+    }
     std::vector<aidl_vehicle::VehiclePropConfig> configs;
-    for (auto& property : defaultconfig::getDefaultConfigs()) {
-        configs.push_back(property.config);
+    for (auto& [_, configDeclaration] : result.value()) {
+        configs.push_back(configDeclaration.config);
     }
     return configs;
 }
 
 std::vector<aidl_vehicle::VehiclePropValue> prepareTestValues() {
+    JsonConfigLoader loader;
+    auto result = loader.loadPropConfig(getConfigPath(DEFAULT_PROPERTIES_CONFIG));
+    if (!result.ok()) {
+        return {};
+    }
     std::vector<aidl_vehicle::VehiclePropValue> values;
     int64_t timestamp = 1;
-    for (auto& property : defaultconfig::getDefaultConfigs()) {
+    for (auto& [_, configDeclaration] : result.value()) {
         values.push_back({
                 .timestamp = timestamp,
                 .areaId = 123,
-                .prop = property.config.prop,
-                .value = property.initialValue,
+                .prop = configDeclaration.config.prop,
+                .value = configDeclaration.initialValue,
                 .status = aidl_vehicle::VehiclePropertyStatus::ERROR,
         });
     }

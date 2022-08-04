@@ -89,7 +89,8 @@ class JsonValueParser final {
 // The main class to parse a VHAL config file in JSON format.
 class JsonConfigParser {
   public:
-    android::base::Result<std::vector<ConfigDeclaration>> parseJsonConfig(std::istream& is);
+    android::base::Result<std::unordered_map<int32_t, ConfigDeclaration>> parseJsonConfig(
+            std::istream& is);
 
   private:
     JsonValueParser mValueParser;
@@ -155,8 +156,13 @@ class JsonConfigLoader final {
   public:
     JsonConfigLoader();
 
-    // Loads a JSON file stream and parses it to a list of ConfigDeclarations.
-    android::base::Result<std::vector<ConfigDeclaration>> loadPropConfig(std::istream& is);
+    // Loads a JSON file stream and parses it to a map from propId to ConfigDeclarations.
+    android::base::Result<std::unordered_map<int32_t, ConfigDeclaration>> loadPropConfig(
+            std::istream& is);
+
+    // Loads a JSON config file and parses it to a map from propId to ConfigDeclarations.
+    android::base::Result<std::unordered_map<int32_t, ConfigDeclaration>> loadPropConfig(
+            const std::string& configPath);
 
   private:
     std::unique_ptr<jsonconfigloader_impl::JsonConfigParser> mParser;

@@ -16,7 +16,6 @@
 
 #include <FakeVehicleHardware.h>
 
-#include <DefaultConfig.h>
 #include <FakeObd2Frame.h>
 #include <FakeUserHal.h>
 #include <PropertyUtils.h>
@@ -80,7 +79,9 @@ class FakeVehicleHardwareTestHelper {
   public:
     FakeVehicleHardwareTestHelper(FakeVehicleHardware* hardware) { mHardware = hardware; }
 
-    void overrideProperties(const char* overrideDir) { mHardware->overrideProperties(overrideDir); }
+    std::unordered_map<int32_t, ConfigDeclaration> loadConfigDeclarations() {
+        return mHardware->loadConfigDeclarations();
+    }
 
   private:
     FakeVehicleHardware* mHardware;
@@ -89,7 +90,9 @@ class FakeVehicleHardwareTestHelper {
 class FakeVehicleHardwareTest : public ::testing::Test {
   protected:
     void SetUp() override {
-        mHardware = std::make_unique<FakeVehicleHardware>();
+        mHardware = std::make_unique<FakeVehicleHardware>(android::base::GetExecutableDirectory(),
+                                                          /*overrideConfigDir=*/"",
+                                                          /*forceOverride=*/false);
         auto callback = std::make_unique<IVehicleHardware::PropertyChangeCallback>(
                 [this](const std::vector<VehiclePropValue>& values) {
                     onPropertyChangeEvent(values);
@@ -108,6 +111,10 @@ class FakeVehicleHardwareTest : public ::testing::Test {
     }
 
     FakeVehicleHardware* getHardware() { return mHardware.get(); }
+
+    void setHardware(std::unique_ptr<FakeVehicleHardware> hardware) {
+        mHardware = std::move(hardware);
+    }
 
     StatusCode setValues(const std::vector<SetValueRequest>& requests) {
         {
@@ -374,7 +381,8 @@ class FakeVehicleHardwareTest : public ::testing::Test {
 TEST_F(FakeVehicleHardwareTest, testGetAllPropertyConfigs) {
     std::vector<VehiclePropConfig> configs = getHardware()->getAllPropertyConfigs();
 
-    ASSERT_EQ(configs.size(), defaultconfig::getDefaultConfigs().size());
+    FakeVehicleHardwareTestHelper helper(getHardware());
+    ASSERT_EQ(configs.size(), helper.loadConfigDeclarations().size());
 }
 
 TEST_F(FakeVehicleHardwareTest, testGetDefaultValues) {
@@ -382,7 +390,8 @@ TEST_F(FakeVehicleHardwareTest, testGetDefaultValues) {
     std::vector<GetValueResult> expectedGetValueResults;
     int64_t requestId = 1;
 
-    for (auto& config : defaultconfig::getDefaultConfigs()) {
+    FakeVehicleHardwareTestHelper helper(getHardware());
+    for (auto& [propId, config] : helper.loadConfigDeclarations()) {
         if (obd2frame::FakeObd2Frame::isDiagnosticProperty(config.config)) {
             // Ignore storing default value for diagnostic property. They have special get/set
             // logic.
@@ -394,12 +403,11 @@ TEST_F(FakeVehicleHardwareTest, testGetDefaultValues) {
             continue;
         }
 
-        if (config.config.prop == ECHO_REVERSE_BYTES) {
+        if (propId == ECHO_REVERSE_BYTES) {
             // Ignore ECHO_REVERSE_BYTES, it has special logic.
             continue;
         }
 
-        int propId = config.config.prop;
         if (isGlobalProp(propId)) {
             if (config.initialValue == RawPropValues{}) {
                 addGetValueRequest(getValueRequests, expectedGetValueResults, requestId++,
@@ -657,10 +665,12 @@ TEST_F(FakeVehicleHardwareTest, testSetStatusMustIgnore) {
 }
 
 TEST_F(FakeVehicleHardwareTest, testVendorOverrideProperties) {
-    std::string overrideDir = android::base::GetExecutableDirectory() + "/override/";
+    std::string currentDir = android::base::GetExecutableDirectory();
+    std::string overrideDir = currentDir + "/override/";
     // Set vendor override directory.
-    FakeVehicleHardwareTestHelper helper(getHardware());
-    helper.overrideProperties(overrideDir.c_str());
+    std::unique_ptr<FakeVehicleHardware> hardware =
+            std::make_unique<FakeVehicleHardware>(currentDir, overrideDir, /*forceOverride=*/true);
+    setHardware(std::move(hardware));
 
     // This is the same as the prop in 'gear_selection.json'.
     int gearProp = toInt(VehicleProperty::GEAR_SELECTION);
@@ -695,10 +705,12 @@ TEST_F(FakeVehicleHardwareTest, testVendorOverrideProperties) {
 }
 
 TEST_F(FakeVehicleHardwareTest, testVendorOverridePropertiesMultipleAreas) {
-    std::string overrideDir = android::base::GetExecutableDirectory() + "/override/";
+    std::string currentDir = android::base::GetExecutableDirectory();
+    std::string overrideDir = currentDir + "/override/";
     // Set vendor override directory.
-    FakeVehicleHardwareTestHelper helper(getHardware());
-    helper.overrideProperties(overrideDir.c_str());
+    std::unique_ptr<FakeVehicleHardware> hardware =
+            std::make_unique<FakeVehicleHardware>(currentDir, overrideDir, /*forceOverride=*/true);
+    setHardware(std::move(hardware));
 
     // This is the same as the prop in 'hvac_temperature_set.json'.
     int hvacProp = toInt(VehicleProperty::HVAC_TEMPERATURE_SET);
@@ -711,22 +723,16 @@ TEST_F(FakeVehicleHardwareTest, testVendorOverridePropertiesMultipleAreas) {
     ASSERT_TRUE(result.ok()) << "expect to get the overridden property ok: " << getStatus(result);
     ASSERT_EQ(static_cast<size_t>(1), result.value().value.floatValues.size());
     ASSERT_EQ(30.0f, result.value().value.floatValues[0]);
-
-    // HVAC_RIGHT should not be affected and return the default value.
-    result = getValue(VehiclePropValue{
-            .prop = hvacProp,
-            .areaId = HVAC_RIGHT,
-    });
-
-    ASSERT_TRUE(result.ok()) << "expect to get the default property ok: " << getStatus(result);
-    ASSERT_EQ(static_cast<size_t>(1), result.value().value.floatValues.size());
-    ASSERT_EQ(20.0f, result.value().value.floatValues[0]);
 }
 
 TEST_F(FakeVehicleHardwareTest, testVendorOverridePropertiesDirDoesNotExist) {
-    // Set vendor override directory to a non-existing dir
-    FakeVehicleHardwareTestHelper helper(getHardware());
-    helper.overrideProperties("123");
+    std::string currentDir = android::base::GetExecutableDirectory();
+    std::string overrideDir = currentDir + "/override/";
+    // Set vendor override directory to a non-existing dir.
+    std::unique_ptr<FakeVehicleHardware> hardware =
+            std::make_unique<FakeVehicleHardware>(currentDir, "1234", /*forceOverride=*/true);
+    setHardware(std::move(hardware));
+
     auto result = getValue(VehiclePropValue{
             .prop = toInt(VehicleProperty::GEAR_SELECTION),
     });
@@ -1840,7 +1846,7 @@ TEST_F(FakeVehicleHardwareTest, testDebugGenFakeDataLinear) {
 
 std::string getTestFilePath(const char* filename) {
     static std::string baseDir = android::base::GetExecutableDirectory();
-    return baseDir + "/" + filename;
+    return baseDir + "/fakedata/" + filename;
 }
 
 TEST_F(FakeVehicleHardwareTest, testDebugGenFakeDataJson) {

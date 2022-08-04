@@ -38,7 +38,7 @@ class JsonConfigLoaderUnitTest : public ::testing::Test {
     JsonConfigLoader mLoader;
 };
 
-TEST_F(JsonConfigLoaderUnitTest, TestBasic) {
+TEST_F(JsonConfigLoaderUnitTest, testBasic) {
     std::istringstream iss(R"(
     {
         "properties": [{
@@ -53,11 +53,39 @@ TEST_F(JsonConfigLoaderUnitTest, TestBasic) {
 
     auto configs = result.value();
     ASSERT_EQ(configs.size(), 1u);
-
-    ASSERT_EQ(configs[0].config.prop, 291504388);
+    ASSERT_EQ(configs.begin()->second.config.prop, 291504388);
 }
 
-TEST_F(JsonConfigLoaderUnitTest, TestPropertyIsEnum) {
+TEST_F(JsonConfigLoaderUnitTest, testRootNotObject) {
+    std::istringstream iss(R"(
+    []
+    )");
+
+    ASSERT_FALSE(mLoader.loadPropConfig(iss).ok()) << "root is not an object must cause error";
+}
+
+TEST_F(JsonConfigLoaderUnitTest, testMissingPropertiesField) {
+    std::istringstream iss(R"(
+    {
+        "abcd": 1234
+    }
+    )");
+
+    ASSERT_FALSE(mLoader.loadPropConfig(iss).ok()) << "Missing 'properties' field must cause error";
+}
+
+TEST_F(JsonConfigLoaderUnitTest, testPropertiesFieldNotArray) {
+    std::istringstream iss(R"(
+    {
+        "properties': {'a': 'b'}
+    }
+    )");
+
+    ASSERT_FALSE(mLoader.loadPropConfig(iss).ok())
+            << "'properties' field is not an array must cause error";
+}
+
+TEST_F(JsonConfigLoaderUnitTest, testPropertyIsEnum) {
     std::istringstream iss(R"(
     {
         "properties": [{
@@ -72,11 +100,10 @@ TEST_F(JsonConfigLoaderUnitTest, TestPropertyIsEnum) {
 
     auto configs = result.value();
     ASSERT_EQ(configs.size(), 1u);
-
-    ASSERT_EQ(configs[0].config.prop, toInt(VehicleProperty::INFO_FUEL_CAPACITY));
+    ASSERT_EQ(configs.begin()->second.config.prop, toInt(VehicleProperty::INFO_FUEL_CAPACITY));
 }
 
-TEST_F(JsonConfigLoaderUnitTest, TestPropertyEnum_FailInvalidEnum) {
+TEST_F(JsonConfigLoaderUnitTest, testPropertyEnum_FailInvalidEnum) {
     std::istringstream iss(R"(
     {
         "properties": [{
@@ -89,7 +116,7 @@ TEST_F(JsonConfigLoaderUnitTest, TestPropertyEnum_FailInvalidEnum) {
             << "Invalid VehicleProperty enum must cause error";
 }
 
-TEST_F(JsonConfigLoaderUnitTest, TestPropertyEnum_FailInvalidType) {
+TEST_F(JsonConfigLoaderUnitTest, testPropertyEnum_FailInvalidType) {
     std::istringstream iss(R"(
     {
         "properties": [{
@@ -102,7 +129,7 @@ TEST_F(JsonConfigLoaderUnitTest, TestPropertyEnum_FailInvalidType) {
             << "Invalid VehicleProperty type must cause error";
 }
 
-TEST_F(JsonConfigLoaderUnitTest, TestProperty_FailInvalidJson) {
+TEST_F(JsonConfigLoaderUnitTest, testProperty_FailInvalidJson) {
     std::istringstream iss(R"(
     {
         "properties": [{
@@ -112,7 +139,7 @@ TEST_F(JsonConfigLoaderUnitTest, TestProperty_FailInvalidJson) {
     ASSERT_FALSE(mLoader.loadPropConfig(iss).ok()) << "Invalid JSON format must cause error";
 }
 
-TEST_F(JsonConfigLoaderUnitTest, TestConfigArray) {
+TEST_F(JsonConfigLoaderUnitTest, testConfigArray) {
     std::istringstream iss(R"(
     {
         "properties": [{
@@ -128,10 +155,10 @@ TEST_F(JsonConfigLoaderUnitTest, TestConfigArray) {
 
     auto configs = result.value();
     ASSERT_EQ(configs.size(), 1u);
-    ASSERT_EQ(configs[0].config.configArray, std::vector<int>({1, 2, 3}));
+    ASSERT_EQ(configs.begin()->second.config.configArray, std::vector<int>({1, 2, 3}));
 }
 
-TEST_F(JsonConfigLoaderUnitTest, TestConfigArrayConstants) {
+TEST_F(JsonConfigLoaderUnitTest, testConfigArrayConstants) {
     std::istringstream iss(R"(
     {
         "properties": [{
@@ -147,11 +174,12 @@ TEST_F(JsonConfigLoaderUnitTest, TestConfigArrayConstants) {
 
     auto configs = result.value();
     ASSERT_EQ(configs.size(), 1u);
-    ASSERT_EQ(configs[0].config.configArray, std::vector<int>({1, 2, FUEL_DOOR_REAR_LEFT}));
+    ASSERT_EQ(configs.begin()->second.config.configArray,
+              std::vector<int>({1, 2, FUEL_DOOR_REAR_LEFT}));
 }
 
 // We have special logic to deal with GALLON and US_GALLON since they share the same value.
-TEST_F(JsonConfigLoaderUnitTest, TestConfigArrayUnitGallon) {
+TEST_F(JsonConfigLoaderUnitTest, testConfigArrayUnitGallon) {
     std::istringstream iss(R"(
     {
         "properties": [{
@@ -166,7 +194,7 @@ TEST_F(JsonConfigLoaderUnitTest, TestConfigArrayUnitGallon) {
     ASSERT_TRUE(result.ok()) << result.error().message();
 }
 
-TEST_F(JsonConfigLoaderUnitTest, TestConfigArrayUnitUsGallon) {
+TEST_F(JsonConfigLoaderUnitTest, testConfigArrayUnitUsGallon) {
     std::istringstream iss(R"(
     {
         "properties": [{
@@ -181,7 +209,7 @@ TEST_F(JsonConfigLoaderUnitTest, TestConfigArrayUnitUsGallon) {
     ASSERT_TRUE(result.ok()) << result.error().message();
 }
 
-TEST_F(JsonConfigLoaderUnitTest, TestConfigArray_FailInvalidEnum) {
+TEST_F(JsonConfigLoaderUnitTest, testConfigArray_FailInvalidEnum) {
     std::istringstream iss(R"(
     {
         "properties": [{
@@ -195,7 +223,7 @@ TEST_F(JsonConfigLoaderUnitTest, TestConfigArray_FailInvalidEnum) {
             << "Invalid enum in ConfigArray must cause error";
 }
 
-TEST_F(JsonConfigLoaderUnitTest, TestConfigArray_FailNotArray) {
+TEST_F(JsonConfigLoaderUnitTest, testConfigArray_FailNotArray) {
     std::istringstream iss(R"(
     {
         "properties": [{
@@ -209,7 +237,7 @@ TEST_F(JsonConfigLoaderUnitTest, TestConfigArray_FailNotArray) {
             << "ConfigArray is not an array must cause error";
 }
 
-TEST_F(JsonConfigLoaderUnitTest, TestConfigString) {
+TEST_F(JsonConfigLoaderUnitTest, testConfigString) {
     std::istringstream iss(R"(
     {
         "properties": [{
@@ -225,10 +253,10 @@ TEST_F(JsonConfigLoaderUnitTest, TestConfigString) {
 
     auto configs = result.value();
     ASSERT_EQ(configs.size(), 1u);
-    ASSERT_EQ(configs[0].config.configString, "test");
+    ASSERT_EQ(configs.begin()->second.config.configString, "test");
 }
 
-TEST_F(JsonConfigLoaderUnitTest, TestConfigString_FailNotString) {
+TEST_F(JsonConfigLoaderUnitTest, testConfigString_FailNotString) {
     std::istringstream iss(R"(
     {
         "properties": [{
@@ -242,7 +270,7 @@ TEST_F(JsonConfigLoaderUnitTest, TestConfigString_FailNotString) {
             << "ConfigString is not a String must cause error";
 }
 
-TEST_F(JsonConfigLoaderUnitTest, TestCheckDefaultAccessChangeMode) {
+TEST_F(JsonConfigLoaderUnitTest, testCheckDefaultAccessChangeMode) {
     std::istringstream iss(R"(
     {
         "properties": [{
@@ -257,12 +285,12 @@ TEST_F(JsonConfigLoaderUnitTest, TestCheckDefaultAccessChangeMode) {
     auto configs = result.value();
     ASSERT_EQ(configs.size(), 1u);
 
-    const VehiclePropConfig& propConfig = configs[0].config;
+    const VehiclePropConfig& propConfig = configs.begin()->second.config;
     ASSERT_EQ(propConfig.access, VehiclePropertyAccess::READ);
     ASSERT_EQ(propConfig.changeMode, VehiclePropertyChangeMode::STATIC);
 }
 
-TEST_F(JsonConfigLoaderUnitTest, TestAccessOverride) {
+TEST_F(JsonConfigLoaderUnitTest, testAccessOverride) {
     std::istringstream iss(R"(
     {
         "properties": [{
@@ -278,12 +306,12 @@ TEST_F(JsonConfigLoaderUnitTest, TestAccessOverride) {
     auto configs = result.value();
     ASSERT_EQ(configs.size(), 1u);
 
-    const VehiclePropConfig& propConfig = configs[0].config;
+    const VehiclePropConfig& propConfig = configs.begin()->second.config;
     ASSERT_EQ(propConfig.access, VehiclePropertyAccess::WRITE);
     ASSERT_EQ(propConfig.changeMode, VehiclePropertyChangeMode::STATIC);
 }
 
-TEST_F(JsonConfigLoaderUnitTest, TestChangeModeOverride) {
+TEST_F(JsonConfigLoaderUnitTest, testChangeModeOverride) {
     std::istringstream iss(R"(
     {
         "properties": [{
@@ -299,12 +327,12 @@ TEST_F(JsonConfigLoaderUnitTest, TestChangeModeOverride) {
     auto configs = result.value();
     ASSERT_EQ(configs.size(), 1u);
 
-    const VehiclePropConfig& propConfig = configs[0].config;
+    const VehiclePropConfig& propConfig = configs.begin()->second.config;
     ASSERT_EQ(propConfig.access, VehiclePropertyAccess::READ);
     ASSERT_EQ(propConfig.changeMode, VehiclePropertyChangeMode::ON_CHANGE);
 }
 
-TEST_F(JsonConfigLoaderUnitTest, TestCustomProp) {
+TEST_F(JsonConfigLoaderUnitTest, testCustomProp) {
     std::istringstream iss(R"(
     {
         "properties": [{
@@ -321,12 +349,12 @@ TEST_F(JsonConfigLoaderUnitTest, TestCustomProp) {
     auto configs = result.value();
     ASSERT_EQ(configs.size(), 1u);
 
-    const VehiclePropConfig& propConfig = configs[0].config;
+    const VehiclePropConfig& propConfig = configs.begin()->second.config;
     ASSERT_EQ(propConfig.access, VehiclePropertyAccess::WRITE);
     ASSERT_EQ(propConfig.changeMode, VehiclePropertyChangeMode::ON_CHANGE);
 }
 
-TEST_F(JsonConfigLoaderUnitTest, TestCustomProp_FailMissingAccess) {
+TEST_F(JsonConfigLoaderUnitTest, testCustomProp_FailMissingAccess) {
     std::istringstream iss(R"(
     {
         "properties": [{
@@ -340,7 +368,7 @@ TEST_F(JsonConfigLoaderUnitTest, TestCustomProp_FailMissingAccess) {
             << "Missing access for custom property must cause error";
 }
 
-TEST_F(JsonConfigLoaderUnitTest, TestCustomProp_FailMissingChangeMode) {
+TEST_F(JsonConfigLoaderUnitTest, testCustomProp_FailMissingChangeMode) {
     std::istringstream iss(R"(
     {
         "properties": [{
@@ -354,7 +382,7 @@ TEST_F(JsonConfigLoaderUnitTest, TestCustomProp_FailMissingChangeMode) {
             << "Missing change mode for custom property must cause error";
 }
 
-TEST_F(JsonConfigLoaderUnitTest, TestMinSampleRate) {
+TEST_F(JsonConfigLoaderUnitTest, testMinSampleRate) {
     std::istringstream iss(R"(
     {
         "properties": [{
@@ -370,10 +398,10 @@ TEST_F(JsonConfigLoaderUnitTest, TestMinSampleRate) {
 
     auto configs = result.value();
     ASSERT_EQ(configs.size(), 1u);
-    ASSERT_EQ(configs[0].config.minSampleRate, 1);
+    ASSERT_EQ(configs.begin()->second.config.minSampleRate, 1);
 }
 
-TEST_F(JsonConfigLoaderUnitTest, TestMinSampleRate_FailInvalidType) {
+TEST_F(JsonConfigLoaderUnitTest, testMinSampleRate_FailInvalidType) {
     std::istringstream iss(R"(
     {
         "properties": [{
@@ -387,7 +415,7 @@ TEST_F(JsonConfigLoaderUnitTest, TestMinSampleRate_FailInvalidType) {
             << "Wrong type for MinSampleRate must cause error";
 }
 
-TEST_F(JsonConfigLoaderUnitTest, TestMaxSampleRate) {
+TEST_F(JsonConfigLoaderUnitTest, testMaxSampleRate) {
     std::istringstream iss(R"(
     {
         "properties": [{
@@ -403,10 +431,10 @@ TEST_F(JsonConfigLoaderUnitTest, TestMaxSampleRate) {
 
     auto configs = result.value();
     ASSERT_EQ(configs.size(), 1u);
-    ASSERT_EQ(configs[0].config.maxSampleRate, 1);
+    ASSERT_EQ(configs.begin()->second.config.maxSampleRate, 1);
 }
 
-TEST_F(JsonConfigLoaderUnitTest, TestMaxSampleRate_FailInvalidType) {
+TEST_F(JsonConfigLoaderUnitTest, testMaxSampleRate_FailInvalidType) {
     std::istringstream iss(R"(
     {
         "properties": [{
@@ -420,7 +448,7 @@ TEST_F(JsonConfigLoaderUnitTest, TestMaxSampleRate_FailInvalidType) {
             << "Wrong type for MaxSampleRate must cause error";
 }
 
-TEST_F(JsonConfigLoaderUnitTest, TestDefaultValue_Simple) {
+TEST_F(JsonConfigLoaderUnitTest, testDefaultValue_Simple) {
     std::istringstream iss(R"(
     {
         "properties": [{
@@ -438,10 +466,10 @@ TEST_F(JsonConfigLoaderUnitTest, TestDefaultValue_Simple) {
 
     auto configs = result.value();
     ASSERT_EQ(configs.size(), 1u);
-    ASSERT_EQ(configs[0].initialValue.int32Values, std::vector<int32_t>({1, 2}));
+    ASSERT_EQ(configs.begin()->second.initialValue.int32Values, std::vector<int32_t>({1, 2}));
 }
 
-TEST_F(JsonConfigLoaderUnitTest, TestDefaultValue_Mixed) {
+TEST_F(JsonConfigLoaderUnitTest, testDefaultValue_Mixed) {
     std::istringstream iss(R"(
     {
         "properties": [{
@@ -463,7 +491,7 @@ TEST_F(JsonConfigLoaderUnitTest, TestDefaultValue_Mixed) {
     auto configs = result.value();
     ASSERT_EQ(configs.size(), 1u);
 
-    const RawPropValues& initialValue = configs[0].initialValue;
+    const RawPropValues& initialValue = configs.begin()->second.initialValue;
     ASSERT_EQ(initialValue.int32Values, std::vector<int32_t>({1, FUEL_DOOR_REAR_LEFT}));
     ASSERT_EQ(initialValue.int64Values,
               std::vector<int64_t>({2, static_cast<int64_t>(FUEL_DOOR_REAR_LEFT)}));
@@ -472,7 +500,7 @@ TEST_F(JsonConfigLoaderUnitTest, TestDefaultValue_Mixed) {
     ASSERT_EQ(initialValue.stringValue, "abcd");
 }
 
-TEST_F(JsonConfigLoaderUnitTest, TestDefaultValue_FailNotObject) {
+TEST_F(JsonConfigLoaderUnitTest, testDefaultValue_FailNotObject) {
     std::istringstream iss(R"(
     {
         "properties": [{
@@ -486,7 +514,7 @@ TEST_F(JsonConfigLoaderUnitTest, TestDefaultValue_FailNotObject) {
             << "DefaultValue is not an object must cause error";
 }
 
-TEST_F(JsonConfigLoaderUnitTest, TestDefaultValue_FailInvalidType) {
+TEST_F(JsonConfigLoaderUnitTest, testDefaultValue_FailInvalidType) {
     std::istringstream iss(R"(
     {
         "properties": [{
@@ -521,7 +549,7 @@ TEST_F(JsonConfigLoaderUnitTest, testAreas_Simple) {
     auto configs = result.value();
     ASSERT_EQ(configs.size(), 1u);
 
-    const VehiclePropConfig& config = configs[0].config;
+    const VehiclePropConfig& config = configs.begin()->second.config;
     ASSERT_EQ(config.areaConfigs.size(), 1u);
     const VehicleAreaConfig& areaConfig = config.areaConfigs[0];
     ASSERT_EQ(areaConfig.minInt32Value, 1);
@@ -554,12 +582,14 @@ TEST_F(JsonConfigLoaderUnitTest, testAreas_DefaultValueForEachArea) {
     auto configs = result.value();
     ASSERT_EQ(configs.size(), 1u);
 
-    const VehiclePropConfig& config = configs[0].config;
+    const VehiclePropConfig& config = configs.begin()->second.config;
     ASSERT_EQ(config.areaConfigs.size(), 2u);
     ASSERT_EQ(config.areaConfigs[0].areaId, HVAC_LEFT);
     ASSERT_EQ(config.areaConfigs[1].areaId, HVAC_RIGHT);
-    ASSERT_EQ(configs[0].initialAreaValues[HVAC_LEFT], RawPropValues{.int32Values = {1}});
-    ASSERT_EQ(configs[0].initialAreaValues[HVAC_RIGHT], RawPropValues{.int32Values = {2}});
+    ASSERT_EQ(configs.begin()->second.initialAreaValues[HVAC_LEFT],
+              RawPropValues{.int32Values = {1}});
+    ASSERT_EQ(configs.begin()->second.initialAreaValues[HVAC_RIGHT],
+              RawPropValues{.int32Values = {2}});
 }
 
 TEST_F(JsonConfigLoaderUnitTest, testAreas_FailInvalidTypeForOneAreaValue) {

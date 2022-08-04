@@ -28,7 +28,9 @@ interface IStreamIn {
      *
      * Releases any resources allocated for this stream on the HAL module side.
      * The stream can not be operated after it has been closed. Methods of this
-     * interface throw EX_ILLEGAL_STATE in for a closed stream.
+     * interface throw EX_ILLEGAL_STATE for a closed stream.
+     *
+     * The associated stream descriptor can be released once this method returns.
      *
      * @throws EX_ILLEGAL_STATE If the stream has already been closed.
      */

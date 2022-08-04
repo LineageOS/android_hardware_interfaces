@@ -16,6 +16,8 @@ cc_library_static {
         "libstagefright_foundation",
         "android.media.audio.common.types-V1-ndk",
         "android.hardware.audio.core-V1-ndk",
+        "android.hardware.common-V2-ndk",
+        "android.hardware.common.fmq-V1-ndk",
     ],
     export_include_dirs: ["include"],
     srcs: [
@@ -41,6 +43,8 @@ cc_binary {
         "libstagefright_foundation",
         "android.media.audio.common.types-V1-ndk",
         "android.hardware.audio.core-V1-ndk",
+        "android.hardware.common-V2-ndk",
+        "android.hardware.common.fmq-V1-ndk",
     ],
     static_libs: [
         "libaudioserviceexampleimpl",
