@@ -35,6 +35,7 @@
 
 #include <common/all-versions/VersionUtils.h>
 
+#include <cutils/properties.h>
 #include <gtest/gtest.h>
 #include <hidl/GtestPrinter.h>
 #include <hidl/ServiceManagement.h>
@@ -625,6 +626,10 @@ TEST_P(AudioEffectHidlTest, GetParameter) {
 
 TEST_P(AudioEffectHidlTest, GetParameterInvalidMaxReplySize) {
     description("Verify that GetParameter caps the maximum reply size");
+    const bool isNewDeviceLaunchingOnTPlus = property_get_int32("ro.vendor.api_level", 0) >= 33;
+    if (!isNewDeviceLaunchingOnTPlus) {
+        GTEST_SKIP() << "The test only applies to devices launching on T or later";
+    }
     // Use a non-empty parameter to avoid being rejected by any earlier checks.
     hidl_vec<uint8_t> parameter;
     parameter.resize(16);
