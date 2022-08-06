@@ -170,7 +170,9 @@ void TunerBroadcastAidlTest::broadcastSingleFilterTestWithLnb(FilterConfig filte
     ASSERT_TRUE(mLnbTests.setVoltage(lnbConf.voltage));
     ASSERT_TRUE(mLnbTests.setTone(lnbConf.tone));
     ASSERT_TRUE(mLnbTests.setSatellitePosition(lnbConf.position));
-    broadcastSingleFilterTest(filterConf, frontendConf);
+    if (!frontendConf.isSoftwareFe) {
+        broadcastSingleFilterTest(filterConf, frontendConf);
+    }
     ASSERT_TRUE(mLnbTests.closeLnb());
     mLnbId = INVALID_LNB_ID;
 }
@@ -499,7 +501,6 @@ TEST_P(TunerLnbAidlTest, SendDiseqcMessageToLnb) {
     }
     for (auto& combination : lnbLive_configs) {
         lnbLive = combination;
-
         if (lnbMap[lnbLive.lnbId].name.compare(emptyHardwareId) == 0) {
             vector<int32_t> ids;
             ASSERT_TRUE(mLnbTests.getLnbIds(ids));
