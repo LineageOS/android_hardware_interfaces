@@ -83,6 +83,21 @@ oneway interface IImsMediaSession {
     void sendDtmf(char dtmfDigit, int duration);
 
     /**
+     * Start sending DTMF digit until the stopDtmf() API is received.
+     * If the implementation is currently sending a DTMF tone for which
+     * stopDtmf() is not received yet, then that digit must be stopped first
+     *
+     * @param dtmfDigit single char having one of 12 values: 0-9, *, #
+     */
+    void startDtmf(char dtmfDigit);
+
+    /**
+     * Stop sending the last DTMF digit started by startDtmf().
+     * stopDtmf() without preceding startDtmf() must be ignored.
+     */
+    void stopDtmf();
+
+    /**
      * Send RTP header extension to the other party in the next RTP packet.
      *
      * @param extensions data to be transmitted via RTP header extension
