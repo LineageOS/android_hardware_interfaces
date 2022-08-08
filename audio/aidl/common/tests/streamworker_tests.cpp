@@ -16,6 +16,7 @@
 
 #include <pthread.h>
 #include <sched.h>
+#include <sys/resource.h>
 #include <unistd.h>
 
 #include <atomic>
@@ -26,18 +27,19 @@
 #define LOG_TAG "StreamWorker_Test"
 #include <log/log.h>
 
+using android::hardware::audio::common::StreamLogic;
 using android::hardware::audio::common::StreamWorker;
 
-class TestWorker : public StreamWorker<TestWorker> {
+class TestWorkerLogic : public StreamLogic {
   public:
     struct Stream {
-        void setErrorStatus() { status = WorkerStatus::ABORT; }
-        void setStopStatus() { status = WorkerStatus::EXIT; }
-        std::atomic<WorkerStatus> status = WorkerStatus::CONTINUE;
+        void setErrorStatus() { status = Status::ABORT; }
+        void setStopStatus() { status = Status::EXIT; }
+        std::atomic<Status> status = Status::CONTINUE;
     };
 
     // Use nullptr to test error reporting from the worker thread.
-    explicit TestWorker(Stream* stream) : mStream(stream) {}
+    explicit TestWorkerLogic(Stream* stream) : mStream(stream) {}
 
     size_t getWorkerCycles() const { return mWorkerCycles; }
     int getPriority() const { return mPriority; }
@@ -48,8 +50,10 @@ class TestWorker : public StreamWorker<TestWorker> {
         return mWorkerCycles == cyclesBefore;
     }
 
-    std::string workerInit() { return mStream != nullptr ? "" : "Expected error"; }
-    WorkerStatus workerCycle() {
+  protected:
+    // StreamLogic implementation
+    std::string init() override { return mStream != nullptr ? "" : "Expected error"; }
+    Status cycle() override {
         mPriority = getpriority(PRIO_PROCESS, 0);
         do {
             mWorkerCycles++;
@@ -62,6 +66,7 @@ class TestWorker : public StreamWorker<TestWorker> {
     std::atomic<size_t> mWorkerCycles = 0;
     std::atomic<int> mPriority = ANDROID_PRIORITY_DEFAULT;
 };
+using TestWorker = StreamWorker<TestWorkerLogic>;
 
 // The parameter specifies whether an extra call to 'stop' is made at the end.
 class StreamWorkerInvalidTest : public testing::TestWithParam<bool> {
