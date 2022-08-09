@@ -45,11 +45,11 @@ static aidl::CdmaSmsAddress toAidl(const V1_0::CdmaSmsAddress& addr) {
 
 static V1_0::CdmaSmsAddress toHidl(const aidl::CdmaSmsAddress& addr) {
     return {
-            .digitMode = V1_0::CdmaSmsDigitMode{addr.digitMode},
+            .digitMode = static_cast<V1_0::CdmaSmsDigitMode>(addr.digitMode),
             .numberMode = addr.isNumberModeDataNetwork ? V1_0::CdmaSmsNumberMode::DATA_NETWORK
                                                        : V1_0::CdmaSmsNumberMode::NOT_DATA_NETWORK,
-            .numberType = V1_0::CdmaSmsNumberType{addr.numberType},
-            .numberPlan = V1_0::CdmaSmsNumberPlan{addr.numberPlan},
+            .numberType = static_cast<V1_0::CdmaSmsNumberType>(addr.numberType),
+            .numberPlan = static_cast<V1_0::CdmaSmsNumberPlan>(addr.numberPlan),
             .digits = addr.digits,
     };
 }
@@ -64,7 +64,7 @@ static aidl::CdmaSmsSubaddress toAidl(const V1_0::CdmaSmsSubaddress& addr) {
 
 static V1_0::CdmaSmsSubaddress toHidl(const aidl::CdmaSmsSubaddress& addr) {
     return {
-            .subaddressType = V1_0::CdmaSmsSubaddressType{addr.subaddressType},
+            .subaddressType = static_cast<V1_0::CdmaSmsSubaddressType>(addr.subaddressType),
             .odd = addr.odd,
             .digits = addr.digits,
     };
@@ -94,7 +94,7 @@ V1_0::CdmaSmsMessage toHidl(const aidl::CdmaSmsMessage& msg) {
 
 V1_0::ImsSmsMessage toHidl(const aidl::ImsSmsMessage& msg) {
     return {
-            .tech = V1_0::RadioTechnologyFamily{msg.tech},
+            .tech = static_cast<V1_0::RadioTechnologyFamily>(msg.tech),
             .retry = msg.retry,
             .messageRef = msg.messageRef,
             .cdmaMessage = toHidl(msg.cdmaMessage),
@@ -147,14 +147,14 @@ V1_0::GsmBroadcastSmsConfigInfo toHidl(const aidl::GsmBroadcastSmsConfigInfo& in
 
 V1_0::CdmaSmsWriteArgs toHidl(const aidl::CdmaSmsWriteArgs& args) {
     return {
-            .status = V1_0::CdmaSmsWriteArgsStatus{args.status},
+            .status = static_cast<V1_0::CdmaSmsWriteArgsStatus>(args.status),
             .message = toHidl(args.message),
     };
 }
 
 V1_0::SmsWriteArgs toHidl(const aidl::SmsWriteArgs& args) {
     return {
-            .status = V1_0::SmsWriteArgsStatus{args.status},
+            .status = static_cast<V1_0::SmsWriteArgsStatus>(args.status),
             .pdu = args.pdu,
             .smsc = args.smsc,
     };
