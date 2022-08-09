@@ -30,7 +30,7 @@ namespace aidl = ::aidl::android::hardware::radio::modem;
 
 V1_0::NvWriteItem toHidl(const aidl::NvWriteItem& item) {
     return {
-            .itemId = V1_0::NvItem{item.itemId},
+            .itemId = static_cast<V1_0::NvItem>(item.itemId),
             .value = item.value,
     };
 }
@@ -48,10 +48,10 @@ aidl::RadioCapability toAidl(const V1_0::RadioCapability& capa) {
 V1_0::RadioCapability toHidl(const aidl::RadioCapability& capa) {
     return {
             .session = capa.session,
-            .phase = V1_0::RadioCapabilityPhase{capa.phase},
+            .phase = static_cast<V1_0::RadioCapabilityPhase>(capa.phase),
             .raf = toHidlBitfield<V1_0::RadioAccessFamily>(capa.raf),
             .logicalModemUuid = capa.logicalModemUuid,
-            .status = V1_0::RadioCapabilityStatus{capa.status},
+            .status = static_cast<V1_0::RadioCapabilityStatus>(capa.status),
     };
 }
 
