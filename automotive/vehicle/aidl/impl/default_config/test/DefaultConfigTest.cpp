@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include <DefaultConfig.h>
 #include <JsonConfigLoader.h>
 #include <VehicleUtils.h>
 #include <android-base/file.h>
@@ -78,26 +77,6 @@ TEST(DefaultConfigTest, TestloadVendorClusterTestProperties) {
     auto result = loadConfig(loader, kVendorClusterTestPropertiesConfigFile);
 
     ASSERT_TRUE(result.ok()) << result.error().message();
-}
-
-// TODO(b/238685398): Remove this test after we deprecate DefaultConfig.h
-TEST(DefaultConfigTest, TestCompatibleWithDefaultConfigHeader) {
-    auto configsFromHeaderFile = defaultconfig::getDefaultConfigs();
-
-    std::vector<ConfigDeclaration> configsFromJson;
-    JsonConfigLoader loader;
-    for (const char* file :
-         std::vector<const char*>({kDefaultPropertiesConfigFile, kTestPropertiesConfigFile,
-                                   kVendorClusterTestPropertiesConfigFile})) {
-        auto result = loadConfig(loader, file);
-        ASSERT_TRUE(result.ok()) << result.error().message();
-        for (auto& [propId, configDeclaration] : result.value()) {
-            configsFromJson.push_back(configDeclaration);
-        }
-    }
-
-    ASSERT_EQ(configsFromHeaderFile.size(), configsFromJson.size());
-    ASSERT_THAT(configsFromHeaderFile, UnorderedElementsAreArray(configsFromJson));
 }
 
 #endif  // ENABLE_VEHICLE_HAL_TEST_PROPERTIES
