@@ -65,7 +65,7 @@ V1_0::Carrier toHidl(const aidl::Carrier& carrier) {
     return {
             .mcc = carrier.mcc,
             .mnc = carrier.mnc,
-            .matchType = V1_0::CarrierMatchType{carrier.matchType},
+            .matchType = static_cast<V1_0::CarrierMatchType>(carrier.matchType),
             .matchData = carrier.matchData,
     };
 }
@@ -107,7 +107,7 @@ V1_1::ImsiEncryptionInfo toHidl(const aidl::ImsiEncryptionInfo& info) {
 V1_6::ImsiEncryptionInfo toHidl_1_6(const aidl::ImsiEncryptionInfo& info) {
     return {
             .base = toHidl(info),
-            .keyType = V1_6::PublicKeyType{info.keyType},
+            .keyType = static_cast<V1_6::PublicKeyType>(info.keyType),
     };
 }
 

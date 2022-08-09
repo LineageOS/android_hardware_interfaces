@@ -29,15 +29,15 @@ namespace aidl = ::aidl::android::hardware::radio::voice;
 V1_0::Dial toHidl(const aidl::Dial& info) {
     return {
             .address = info.address,
-            .clir = V1_0::Clir{info.clir},
+            .clir = static_cast<V1_0::Clir>(info.clir),
             .uusInfo = toHidl(info.uusInfo),
     };
 }
 
 V1_0::UusInfo toHidl(const aidl::UusInfo& info) {
     return {
-            .uusType = V1_0::UusType{info.uusType},
-            .uusDcs = V1_0::UusDcs{info.uusDcs},
+            .uusType = static_cast<V1_0::UusType>(info.uusType),
+            .uusDcs = static_cast<V1_0::UusDcs>(info.uusDcs),
             .uusData = info.uusData,
     };
 }
@@ -55,7 +55,7 @@ aidl::CallForwardInfo toAidl(const V1_0::CallForwardInfo& info) {
 
 V1_0::CallForwardInfo toHidl(const aidl::CallForwardInfo& info) {
     return {
-            .status = V1_0::CallForwardInfoStatus{info.status},
+            .status = static_cast<V1_0::CallForwardInfoStatus>(info.status),
             .reason = info.reason,
             .serviceClass = info.serviceClass,
             .toa = info.toa,
