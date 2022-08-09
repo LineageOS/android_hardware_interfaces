@@ -28,14 +28,14 @@ namespace aidl = ::aidl::android::hardware::radio::data;
 
 V1_5::DataProfileInfo toHidl(const aidl::DataProfileInfo& info) {
     return {
-            .profileId = V1_0::DataProfileId{info.profileId},
+            .profileId = static_cast<V1_0::DataProfileId>(info.profileId),
             .apn = info.apn,
-            .protocol = V1_4::PdpProtocolType{info.protocol},
-            .roamingProtocol = V1_4::PdpProtocolType{info.roamingProtocol},
-            .authType = V1_0::ApnAuthType{info.authType},
+            .protocol = static_cast<V1_4::PdpProtocolType>(info.protocol),
+            .roamingProtocol = static_cast<V1_4::PdpProtocolType>(info.roamingProtocol),
+            .authType = static_cast<V1_0::ApnAuthType>(info.authType),
             .user = info.user,
             .password = info.password,
-            .type = V1_0::DataProfileInfoType{info.type},
+            .type = static_cast<V1_0::DataProfileInfoType>(info.type),
             .maxConnsTime = info.maxConnsTime,
             .maxConns = info.maxConns,
             .waitTime = info.waitTime,
@@ -74,7 +74,7 @@ V1_6::SliceInfo toHidl(const aidl::SliceInfo& info) {
             .sliceDifferentiator = info.sliceDifferentiator,
             .mappedHplmnSst = static_cast<V1_6::SliceServiceType>(info.mappedHplmnSst),
             .mappedHplmnSD = info.mappedHplmnSd,
-            .status = V1_6::SliceStatus{info.status},
+            .status = static_cast<V1_6::SliceStatus>(info.status),
     };
 }
 
@@ -106,7 +106,7 @@ V1_6::OsAppId toHidl(const aidl::OsAppId& appId) {
 
 V1_1::KeepaliveRequest toHidl(const aidl::KeepaliveRequest& keep) {
     return {
-            .type = V1_1::KeepaliveType{keep.type},
+            .type = static_cast<V1_1::KeepaliveType>(keep.type),
             .sourceAddress = keep.sourceAddress,
             .sourcePort = keep.sourcePort,
             .destinationAddress = keep.destinationAddress,
