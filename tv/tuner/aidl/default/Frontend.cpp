@@ -28,10 +28,10 @@ namespace hardware {
 namespace tv {
 namespace tuner {
 
-Frontend::Frontend(FrontendType type, int32_t id, std::shared_ptr<Tuner> tuner) {
+Frontend::Frontend(FrontendType type, int32_t id) {
     mType = type;
     mId = id;
-    mTuner = tuner;
+    mTuner = nullptr;
     // Init callback to nullptr
     mCallback = nullptr;
 
@@ -170,7 +170,12 @@ Frontend::Frontend(FrontendType type, int32_t id, std::shared_ptr<Tuner> tuner) 
     }
 }
 
-Frontend::~Frontend() {}
+Frontend::~Frontend() {
+    ALOGV("%s", __FUNCTION__);
+    mCallback = nullptr;
+    mIsLocked = false;
+    mTuner = nullptr;
+}
 
 ::ndk::ScopedAStatus Frontend::close() {
     ALOGV("%s", __FUNCTION__);
@@ -178,6 +183,7 @@ Frontend::~Frontend() {}
     mCallback = nullptr;
     mIsLocked = false;
     mTuner->removeFrontend(mId);
+    mTuner = nullptr;
 
     return ::ndk::ScopedAStatus::ok();
 }
@@ -231,6 +237,10 @@ Frontend::~Frontend() {}
     mScanThread = std::thread(&Frontend::scanThreadLoop, this);
 
     return ::ndk::ScopedAStatus::ok();
+}
+
+void Frontend::setTunerService(std::shared_ptr<Tuner> tuner) {
+    mTuner = tuner;
 }
 
 void Frontend::scanThreadLoop() {

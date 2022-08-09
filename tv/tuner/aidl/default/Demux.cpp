@@ -37,6 +37,7 @@ Demux::Demux(int32_t demuxId, std::shared_ptr<Tuner> tuner) {
 }
 
 Demux::~Demux() {
+    ALOGV("%s", __FUNCTION__);
     close();
 }
 
@@ -180,7 +181,10 @@ Demux::~Demux() {
     mRecordFilterIds.clear();
     mFilters.clear();
     mLastUsedFilterId = -1;
-    mTuner->removeDemux(mDemuxId);
+    if (mTuner != nullptr) {
+        mTuner->removeDemux(mDemuxId);
+        mTuner = nullptr;
+    }
 
     return ::ndk::ScopedAStatus::ok();
 }
