@@ -37,17 +37,11 @@ parcelable EvsParams {
      */
     byte channelAwareMode;
     /**
-     * hf-only: Header full only is used for the outgoing packets. If it's true then
-     * the session shall support header full format only else the session could
-     * support both header full format and compact format.
+     * hf-only: Header full only is used for the outgoing and incoming packets.
+     * If it's true then the session shall support header full format only else the
+     * session could support both header full format and compact format.
      */
-    boolean useHeaderFullOnlyOnTx;
-    /**
-     * hf-only: Header full only used on the incoming packets. If it's true then the
-     * session shall support header full format only else the session could support
-     * both header full format and compact format.
-     */
-    boolean useHeaderFullOnlyOnRx;
+    boolean useHeaderFullOnly;
     /**
      * evs-mode-switch: Used for switching between EVS Primary mode and EVS AMR-WB IO mode,
      * If this value is true, the codec operates in AMR-WB IO mode
