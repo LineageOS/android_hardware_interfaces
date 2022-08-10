@@ -911,6 +911,19 @@
             ]
         },
         {
+            "property": "VehicleProperty::HVAC_ACTUAL_FAN_SPEED_RPM",
+            "defaultValue": {
+                "int32Values": [
+                    50
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "Constants::HVAC_ALL"
+                }
+            ]
+        },
+        {
             "property": "VehicleProperty::HVAC_POWER_ON",
             "defaultValue": {
                 "int32Values": [
@@ -1169,6 +1182,27 @@
                     "areaId": "Constants::MIRROR_DRIVER_LEFT_RIGHT",
                     "minInt32Value": 0,
                     "maxInt32Value": 2
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::HVAC_TEMPERATURE_CURRENT",
+            "areas": [
+                {
+                    "defaultValue": {
+                        "floatValues": [
+                            17.3
+                        ]
+                    },
+                    "areaId": 49
+                },
+                {
+                    "defaultValue": {
+                        "floatValues": [
+                            19.1
+                        ]
+                    },
+                    "areaId": 68
                 }
             ]
         },
