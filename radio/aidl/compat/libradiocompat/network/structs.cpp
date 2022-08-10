@@ -66,7 +66,7 @@ V1_5::NgranBands toHidl(aidl::NgranBands band) {
 
 V1_5::SignalThresholdInfo toHidl(const aidl::SignalThresholdInfo& info) {
     return {
-            .signalMeasurement = V1_5::SignalMeasurementType{info.signalMeasurement},
+            .signalMeasurement = static_cast<V1_5::SignalMeasurementType>(info.signalMeasurement),
             .hysteresisMs = info.hysteresisMs,
             .hysteresisDb = info.hysteresisDb,
             .thresholds = info.thresholds,
@@ -155,7 +155,7 @@ V1_5::RadioAccessSpecifier toHidl(const aidl::RadioAccessSpecifier& spec) {
 
 V1_5::NetworkScanRequest toHidl(const aidl::NetworkScanRequest& req) {
     return {
-            .type = V1_1::ScanType{req.type},
+            .type = static_cast<V1_1::ScanType>(req.type),
             .interval = req.interval,
             .specifiers = toHidl(req.specifiers),
             .maxSearchTime = req.maxSearchTime,
