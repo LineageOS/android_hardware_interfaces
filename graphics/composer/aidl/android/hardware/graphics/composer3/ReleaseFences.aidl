@@ -20,7 +20,6 @@ package android.hardware.graphics.composer3;
 parcelable ReleaseFences {
     /**
      * The display which this commands refers to.
-     * @see IComposer.createDisplay
      */
     long display;
     @VintfStability
