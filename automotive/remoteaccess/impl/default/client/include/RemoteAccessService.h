@@ -19,8 +19,10 @@
 #include <aidl/android/hardware/automotive/remoteaccess/ApState.h>
 #include <aidl/android/hardware/automotive/remoteaccess/BnRemoteAccess.h>
 #include <aidl/android/hardware/automotive/remoteaccess/IRemoteTaskCallback.h>
+#include <wakeup_client.grpc.pb.h>
 
 #include <string>
+#include <thread>
 
 namespace android {
 namespace hardware {
@@ -30,9 +32,11 @@ namespace remoteaccess {
 class RemoteAccessService
     : public aidl::android::hardware::automotive::remoteaccess::BnRemoteAccess {
   public:
+    RemoteAccessService(WakeupClient::StubInterface* grpcStub);
+
     ndk::ScopedAStatus getDeviceId(std::string* deviceId) override;
 
-    ndk::ScopedAStatus getWakeupServiceName(std::string* wakeupServerName) override;
+    ndk::ScopedAStatus getWakeupServiceName(std::string* wakeupServiceName) override;
 
     ndk::ScopedAStatus setRemoteTaskCallback(
             const std::shared_ptr<
@@ -43,6 +47,14 @@ class RemoteAccessService
 
     ndk::ScopedAStatus notifyApStateChange(
             const aidl::android::hardware::automotive::remoteaccess::ApState& newState) override;
+
+  private:
+    WakeupClient::StubInterface* mGrpcStub;
+    std::shared_ptr<aidl::android::hardware::automotive::remoteaccess::IRemoteTaskCallback>
+            mRemoteTaskCallback;
+    std::thread mThread;
+
+    void taskLoop();
 };
 
 }  // namespace remoteaccess

@@ -25,8 +25,9 @@
 int main(int /* argc */, char* /* argv */[]) {
     ALOGI("Registering RemoteAccessService as service...");
 
+    // TODO(b/241483300): Create GrpcClientStub here.
     auto service = ndk::SharedRefBase::make<
-            android::hardware::automotive::remoteaccess::RemoteAccessService>();
+            android::hardware::automotive::remoteaccess::RemoteAccessService>(nullptr);
 
     binder_exception_t err = AServiceManager_addService(
             service->asBinder().get(), "android.hardware.automotive.remote.IRemoteAccess/default");

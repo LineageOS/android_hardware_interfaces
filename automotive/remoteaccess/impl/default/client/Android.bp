@@ -32,6 +32,11 @@ cc_binary {
         "libbinder_ndk",
         "liblog",
         "libutils",
+        "libgrpc++",
+        "libprotobuf-cpp-full",
+    ],
+    cflags: [
+        "-Wno-unused-parameter",
     ],
 }
 
@@ -45,10 +50,17 @@ cc_library {
     ],
     whole_static_libs: [
         "android.hardware.automotive.remoteaccess-V1-ndk",
+        "wakeup_client_protos",
     ],
     shared_libs: [
+        "libbase",
         "libbinder_ndk",
         "liblog",
         "libutils",
+        "libgrpc++",
+        "libprotobuf-cpp-full",
+    ],
+    cflags: [
+        "-Wno-unused-parameter",
     ],
 }
