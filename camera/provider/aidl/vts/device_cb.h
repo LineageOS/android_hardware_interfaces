@@ -73,7 +73,7 @@ class DeviceCb : public BnCameraDeviceCallback {
     std::vector<Stream> mStreams;
     std::vector<HalStream> mHalStreams;
     int64_t mNextBufferId = 1;
-    using OutstandingBuffers = std::unordered_map<uint64_t, NativeHandle>;
+    using OutstandingBuffers = std::unordered_map<uint64_t, buffer_handle_t>;
     // size == mStreams.size(). Tracking each streams outstanding buffers
     std::vector<OutstandingBuffers> mOutstandingBufferIds;
     std::condition_variable mFlushedCondition;
