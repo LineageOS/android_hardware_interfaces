@@ -399,6 +399,10 @@ class CameraAidlTest : public ::testing::TestWithParam<std::string> {
         // Result metadata
         ::android::hardware::camera::common::V1_0::helper::CameraMetadata collectedResult;
 
+        // Inflight buffers
+        using OutstandingBuffers = std::unordered_map<uint64_t, buffer_handle_t>;
+        std::vector<OutstandingBuffers> mOutstandingBufferIds;
+
         // A copy-able StreamBuffer using buffer_handle_t instead of AIDLs NativeHandle
         struct NativeStreamBuffer {
             int32_t streamId;
