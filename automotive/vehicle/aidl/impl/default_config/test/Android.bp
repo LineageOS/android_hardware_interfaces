@@ -30,8 +30,6 @@ cc_test {
         "libgtest",
     ],
     header_libs: [
-        // TODO(b/238685398): Remove this once we deprecate DefaultConfig.h
-        "VehicleHalDefaultConfig",
         "IVehicleGeneratedHeaders",
     ],
     shared_libs: [
@@ -55,13 +53,9 @@ cc_test {
         "libgtest",
     ],
     cflags: [
-        // TODO(b/238685398): Remove this once we deprecate DefaultConfig.h
-        "-DENABLE_VENDOR_CLUSTER_PROPERTY_FOR_TESTING",
         "-DENABLE_VEHICLE_HAL_TEST_PROPERTIES",
     ],
     header_libs: [
-        // TODO(b/238685398): Remove this once we deprecate DefaultConfig.h
-        "VehicleHalDefaultConfig",
         "IVehicleGeneratedHeaders",
     ],
     shared_libs: [
