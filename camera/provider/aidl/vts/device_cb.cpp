@@ -155,7 +155,7 @@ ScopedAStatus DeviceCb::requestStreamBuffers(const std::vector<BufferRequest>& b
                     BufferStatus::OK, NativeHandle(), NativeHandle(),
             };
 
-            mOutstandingBufferIds[idx][mNextBufferId++] = ::android::dupToAidl(handle);
+            mOutstandingBufferIds[idx][mNextBufferId++] = handle;
         }
         atLeastOneStreamOk = true;
         bufRets[i].streamId = stream.id;
@@ -427,9 +427,13 @@ bool DeviceCb::processCaptureResultLocked(
         }
 
         CameraAidlTest::InFlightRequest::StreamBufferAndTimestamp streamBufferAndTimestamp;
+        auto outstandingBuffers = mUseHalBufManager ? mOutstandingBufferIds :
+            request->mOutstandingBufferIds;
+        auto outputBuffer = outstandingBuffers.empty() ? ::android::makeFromAidl(buffer.buffer) :
+            outstandingBuffers[buffer.streamId][buffer.bufferId];
         streamBufferAndTimestamp.buffer = {buffer.streamId,
                                            buffer.bufferId,
-                                           ::android::makeFromAidl(buffer.buffer),
+                                           outputBuffer,
                                            buffer.status,
                                            ::android::makeFromAidl(buffer.acquireFence),
                                            ::android::makeFromAidl(buffer.releaseFence)};
