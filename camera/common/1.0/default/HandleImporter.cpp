@@ -18,6 +18,7 @@
 #include "HandleImporter.h"
 
 #include <gralloctypes/Gralloc4.h>
+#include "aidl/android/hardware/graphics/common/Smpte2086.h"
 #include <log/log.h>
 
 namespace android {
@@ -30,6 +31,7 @@ namespace helper {
 using aidl::android::hardware::graphics::common::PlaneLayout;
 using aidl::android::hardware::graphics::common::PlaneLayoutComponent;
 using aidl::android::hardware::graphics::common::PlaneLayoutComponentType;
+using aidl::android::hardware::graphics::common::Smpte2086;
 using MetadataType = android::hardware::graphics::mapper::V4_0::IMapper::MetadataType;
 using MapperErrorV2 = android::hardware::graphics::mapper::V2_0::Error;
 using MapperErrorV3 = android::hardware::graphics::mapper::V3_0::Error;
@@ -127,16 +129,35 @@ YCbCrLayout HandleImporter::lockYCbCrInternal(const sp<M> mapper, buffer_handle_
 bool isMetadataPesent(const sp<IMapperV4> mapper, const buffer_handle_t& buf,
         MetadataType metadataType) {
     auto buffer = const_cast<native_handle_t*>(buf);
-    mapper->get(buffer, metadataType, [] (const auto& tmpError,
+    bool ret = false;
+    hidl_vec<uint8_t> vec;
+    mapper->get(buffer, metadataType, [&] (const auto& tmpError,
                 const auto& tmpMetadata) {
                     if (tmpError == MapperErrorV4::NONE) {
-                        return tmpMetadata.size() > 0;
+                        vec = tmpMetadata;
                     } else {
                         ALOGE("%s: failed to get metadata %d!", __FUNCTION__, tmpError);
-                        return false;
                     }});
 
-    return false;
+    if (vec.size() > 0) {
+            if (metadataType == gralloc4::MetadataType_Smpte2086){
+                std::optional<Smpte2086> realSmpte2086;
+                gralloc4::decodeSmpte2086(vec, &realSmpte2086);
+                ret = realSmpte2086.has_value();
+            } else if (metadataType == gralloc4::MetadataType_Smpte2094_10) {
+                std::optional<std::vector<uint8_t>> realSmpte2094_10;
+                gralloc4::decodeSmpte2094_10(vec, &realSmpte2094_10);
+                ret = realSmpte2094_10.has_value();
+            } else if (metadataType == gralloc4::MetadataType_Smpte2094_40) {
+                std::optional<std::vector<uint8_t>> realSmpte2094_40;
+                gralloc4::decodeSmpte2094_40(vec, &realSmpte2094_40);
+                ret = realSmpte2094_40.has_value();
+            } else {
+                ALOGE("%s: Unknown metadata type!", __FUNCTION__);
+            }
+    }
+
+    return ret;
 }
 
 std::vector<PlaneLayout> getPlaneLayouts(const sp<IMapperV4> mapper, buffer_handle_t& buf) {
