@@ -68,7 +68,10 @@ void clearIds() {
     lnbIds.clear();
     diseqcMsgs.clear();
     frontendIds.clear();
+    ipFilterIds.clear();
+    pcrFilterIds.clear();
     recordDvrIds.clear();
+    timeFilterIds.clear();
     descramblerIds.clear();
     audioFilterIds.clear();
     videoFilterIds.clear();
@@ -76,6 +79,8 @@ void clearIds() {
     recordFilterIds.clear();
     sectionFilterIds.clear();
 }
+
+enum class Dataflow_Context { LNBRECORD, RECORD };
 
 class TunerLnbAidlTest : public testing::TestWithParam<std::string> {
   public:
@@ -153,7 +158,7 @@ class TunerFilterAidlTest : public testing::TestWithParam<std::string> {
             mService = nullptr;
         }
         ASSERT_NE(mService, nullptr);
-        initConfiguration();
+        ASSERT_TRUE(initConfiguration());
 
         mFrontendTests.setService(mService);
         mDemuxTests.setService(mService);
@@ -264,7 +269,7 @@ class TunerRecordAidlTest : public testing::TestWithParam<std::string> {
             mService = nullptr;
         }
         ASSERT_NE(mService, nullptr);
-        initConfiguration();
+        ASSERT_TRUE(initConfiguration());
 
         mFrontendTests.setService(mService);
         mDemuxTests.setService(mService);
@@ -288,7 +293,7 @@ class TunerRecordAidlTest : public testing::TestWithParam<std::string> {
     void recordSingleFilterTestWithLnb(FilterConfig filterConf, FrontendConfig frontendConf,
                                        DvrConfig dvrConf, LnbConfig lnbConf);
     void recordSingleFilterTest(FilterConfig filterConf, FrontendConfig frontendConf,
-                                DvrConfig dvrConf);
+                                DvrConfig dvrConf, Dataflow_Context context);
 
     std::shared_ptr<ITuner> mService;
     FrontendTests mFrontendTests;
@@ -313,7 +318,7 @@ class TunerFrontendAidlTest : public testing::TestWithParam<std::string> {
             mService = nullptr;
         }
         ASSERT_NE(mService, nullptr);
-        initConfiguration();
+        ASSERT_TRUE(initConfiguration());
 
         mFrontendTests.setService(mService);
     }
@@ -344,7 +349,7 @@ class TunerBroadcastAidlTest : public testing::TestWithParam<std::string> {
             mService = nullptr;
         }
         ASSERT_NE(mService, nullptr);
-        initConfiguration();
+        ASSERT_TRUE(initConfiguration());
 
         mFrontendTests.setService(mService);
         mDemuxTests.setService(mService);
