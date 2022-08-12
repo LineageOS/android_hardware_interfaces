@@ -428,28 +428,45 @@ void TunerRecordAidlTest::recordSingleFilterTest(FilterConfig filterConf,
 
 void TunerDescramblerAidlTest::scrambledBroadcastTest(set<struct FilterConfig> mediaFilterConfs,
                                                       FrontendConfig frontendConf,
-                                                      DescramblerConfig descConfig) {
+                                                      DescramblerConfig descConfig,
+                                                      Dataflow_Context context) {
     int32_t demuxId;
     std::shared_ptr<IDemux> demux;
     ASSERT_TRUE(mDemuxTests.openDemux(demux, demuxId));
 
     DvrConfig dvrSourceConfig;
-    if (descrambling.hasFrontendConnection) {
+    if (context == Dataflow_Context::DESCRAMBLING) {
+        if (descrambling.hasFrontendConnection) {
+            int32_t feId;
+            mFrontendTests.getFrontendIdByType(frontendConf.type, feId);
+            ASSERT_TRUE(mFrontendTests.openFrontendById(feId));
+            ASSERT_TRUE(mFrontendTests.setFrontendCallback());
+            if (frontendConf.isSoftwareFe) {
+                mFrontendTests.setSoftwareFrontendDvrConfig(dvrMap[descrambling.dvrSoftwareFeId]);
+            }
+            ASSERT_TRUE(mDemuxTests.setDemuxFrontendDataSource(feId));
+            mFrontendTests.setDemux(demux);
+        } else {
+            dvrSourceConfig = dvrMap[descrambling.dvrSourceId];
+            mDvrTests.setDemux(demux);
+            ASSERT_TRUE(mDvrTests.openDvrInDemux(dvrSourceConfig.type, dvrSourceConfig.bufferSize));
+            ASSERT_TRUE(mDvrTests.configDvrPlayback(dvrSourceConfig.settings));
+            ASSERT_TRUE(mDvrTests.getDvrPlaybackMQDescriptor());
+        }
+    } else if (context == Dataflow_Context::LNBDESCRAMBLING) {
         int32_t feId;
         mFrontendTests.getFrontendIdByType(frontendConf.type, feId);
         ASSERT_TRUE(mFrontendTests.openFrontendById(feId));
         ASSERT_TRUE(mFrontendTests.setFrontendCallback());
-        if (frontendConf.isSoftwareFe) {
-            mFrontendTests.setSoftwareFrontendDvrConfig(dvrMap[descrambling.dvrSoftwareFeId]);
+        if (mLnbId != INVALID_LNB_ID) {
+            ASSERT_TRUE(mFrontendTests.setLnb(mLnbId));
+        } else {
+            // If, for some reason, the test got here without failing. We fail it here.
+            ALOGD("mLnbId is null. Something went wrong. Exiting ScrambledBroadcastWithLnbId.");
+            FAIL();
         }
         ASSERT_TRUE(mDemuxTests.setDemuxFrontendDataSource(feId));
         mFrontendTests.setDemux(demux);
-    } else {
-        dvrSourceConfig = dvrMap[descrambling.dvrSourceId];
-        mDvrTests.setDemux(demux);
-        ASSERT_TRUE(mDvrTests.openDvrInDemux(dvrSourceConfig.type, dvrSourceConfig.bufferSize));
-        ASSERT_TRUE(mDvrTests.configDvrPlayback(dvrSourceConfig.settings));
-        ASSERT_TRUE(mDvrTests.getDvrPlaybackMQDescriptor());
     }
 
     set<int64_t> filterIds;
@@ -480,24 +497,32 @@ void TunerDescramblerAidlTest::scrambledBroadcastTest(set<struct FilterConfig> m
         ASSERT_TRUE(mFilterTests.startFilter(*id));
     }
 
-    if (descrambling.hasFrontendConnection) {
-        // tune test
+    if (context == Dataflow_Context::DESCRAMBLING) {
+        if (descrambling.hasFrontendConnection) {
+            // tune test
+            ASSERT_TRUE(mFrontendTests.tuneFrontend(frontendConf, true /*testWithDemux*/));
+        } else {
+            // Start DVR Source
+            mDvrTests.startPlaybackInputThread(
+                    dvrSourceConfig.playbackInputFile,
+                    dvrSourceConfig.settings.get<DvrSettings::Tag::playback>());
+            ASSERT_TRUE(mDvrTests.startDvrPlayback());
+        }
+    } else if (context == Dataflow_Context::LNBDESCRAMBLING) {
         ASSERT_TRUE(mFrontendTests.tuneFrontend(frontendConf, true /*testWithDemux*/));
-    } else {
-        // Start DVR Source
-        mDvrTests.startPlaybackInputThread(
-                dvrSourceConfig.playbackInputFile,
-                dvrSourceConfig.settings.get<DvrSettings::Tag::playback>());
-        ASSERT_TRUE(mDvrTests.startDvrPlayback());
     }
 
     ASSERT_TRUE(filterDataOutputTest());
 
-    if (descrambling.hasFrontendConnection) {
+    if (context == Dataflow_Context::DESCRAMBLING) {
+        if (descrambling.hasFrontendConnection) {
+            ASSERT_TRUE(mFrontendTests.stopTuneFrontend(true /*testWithDemux*/));
+        } else {
+            mDvrTests.stopPlaybackThread();
+            ASSERT_TRUE(mDvrTests.stopDvrPlayback());
+        }
+    } else if (context == Dataflow_Context::LNBDESCRAMBLING) {
         ASSERT_TRUE(mFrontendTests.stopTuneFrontend(true /*testWithDemux*/));
-    } else {
-        mDvrTests.stopPlaybackThread();
-        ASSERT_TRUE(mDvrTests.stopDvrPlayback());
     }
 
     for (id = filterIds.begin(); id != filterIds.end(); id++) {
@@ -511,13 +536,48 @@ void TunerDescramblerAidlTest::scrambledBroadcastTest(set<struct FilterConfig> m
         ASSERT_TRUE(mFilterTests.closeFilter(*id));
     }
 
-    if (descrambling.hasFrontendConnection) {
+    if (context == Dataflow_Context::DESCRAMBLING) {
+        if (descrambling.hasFrontendConnection) {
+            ASSERT_TRUE(mFrontendTests.closeFrontend());
+        } else {
+            mDvrTests.closeDvrPlayback();
+        }
+    } else if (context == Dataflow_Context::LNBDESCRAMBLING) {
         ASSERT_TRUE(mFrontendTests.closeFrontend());
-    } else {
-        mDvrTests.closeDvrPlayback();
     }
 
     ASSERT_TRUE(mDemuxTests.closeDemux());
+}
+
+void TunerDescramblerAidlTest::scrambledBroadcastTestWithLnb(
+        set<struct FilterConfig>& mediaFilterConfs, FrontendConfig& frontendConf,
+        DescramblerConfig& descConfig, LnbConfig& lnbConfig) {
+    // We can test the Lnb individually and make sure it functions properly. If the frontend is
+    // software, we cannot test the whole dataflow. If the frontend is hardware, we can
+    if (lnbConfig.name.compare(emptyHardwareId) == 0) {
+        vector<int32_t> ids;
+        ASSERT_TRUE(mLnbTests.getLnbIds(ids));
+        ASSERT_TRUE(ids.size() > 0);
+        ASSERT_TRUE(mLnbTests.openLnbById(ids[0]));
+        mLnbId = ids[0];
+    } else {
+        ASSERT_TRUE(mLnbTests.openLnbByName(lnbConfig.name, mLnbId));
+    }
+    // Once Lnb is opened, test some of its basic functionality
+    ASSERT_TRUE(mLnbTests.setLnbCallback());
+    ASSERT_TRUE(mLnbTests.setVoltage(lnbConfig.voltage));
+    ASSERT_TRUE(mLnbTests.setTone(lnbConfig.tone));
+    ASSERT_TRUE(mLnbTests.setSatellitePosition(lnbConfig.position));
+    if (!frontendConf.isSoftwareFe) {
+        ALOGD("Frontend is not software, testing entire dataflow.");
+        scrambledBroadcastTest(mediaFilterConfs, frontendConf, descConfig,
+                               Dataflow_Context::LNBDESCRAMBLING);
+    } else {
+        ALOGD("Frontend is software, did not test the entire dataflow, but tested the Lnb "
+              "individually.");
+    }
+    ASSERT_TRUE(mLnbTests.closeLnb());
+    mLnbId = INVALID_LNB_ID;
 }
 
 TEST_P(TunerLnbAidlTest, SendDiseqcMessageToLnb) {
@@ -1227,7 +1287,29 @@ TEST_P(TunerDescramblerAidlTest, ScrambledBroadcastDataFlowMediaFiltersTest) {
         filterConfs.insert(static_cast<FilterConfig>(filterMap[descrambling.audioFilterId]));
         filterConfs.insert(static_cast<FilterConfig>(filterMap[descrambling.videoFilterId]));
         scrambledBroadcastTest(filterConfs, frontendMap[descrambling.frontendId],
-                               descramblerMap[descrambling.descramblerId]);
+                               descramblerMap[descrambling.descramblerId],
+                               Dataflow_Context::DESCRAMBLING);
+    }
+}
+
+TEST_P(TunerDescramblerAidlTest, ScrambledBroadcastDataFlowMediaFiltersTestWithLnb) {
+    description("Test media filters in scrambled broadcast use case with Lnb");
+    if (!lnbDescrambling.support) {
+        return;
+    }
+    auto lnbDescrambling_configs = generateLnbDescramblingConfigurations();
+    if (lnbDescrambling_configs.empty()) {
+        ALOGD("No frontends that support satellites.");
+        return;
+    }
+    for (auto& configuration : lnbDescrambling_configs) {
+        lnbDescrambling = configuration;
+        set<FilterConfig> filterConfs;
+        filterConfs.insert(static_cast<FilterConfig>(filterMap[lnbDescrambling.audioFilterId]));
+        filterConfs.insert(static_cast<FilterConfig>(filterMap[lnbDescrambling.videoFilterId]));
+        scrambledBroadcastTestWithLnb(filterConfs, frontendMap[lnbDescrambling.frontendId],
+                                      descramblerMap[lnbDescrambling.descramblerId],
+                                      lnbMap[lnbDescrambling.lnbId]);
     }
 }
 

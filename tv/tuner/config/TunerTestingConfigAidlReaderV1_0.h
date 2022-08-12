@@ -73,6 +73,7 @@ static bool configuredPlayback = false;
 static bool configuredLnbRecord = false;
 static bool configuredTimeFilter = false;
 static bool configuredDescrambling = false;
+static bool configuredLnbDescrambling = false;
 
 const string emptyHardwareId = "";
 
@@ -227,6 +228,16 @@ struct LnbRecordHardwareConnections {
 struct TimeFilterHardwareConnections {
     bool support;
     string timeFilterId;
+};
+
+struct LnbDescramblingHardwareConnections {
+    bool support;
+    string frontendId;
+    string audioFilterId;
+    string videoFilterId;
+    string lnbId;
+    string descramblerId;
+    vector<string> diseqcMsgs;
 };
 
 struct TunerTestingConfigAidlReader1_0 {
@@ -703,6 +714,28 @@ struct TunerTestingConfigAidlReader1_0 {
         }
         auto timeFilterConfig = *dataFlow.getFirstTimeFilter();
         timeFilter.timeFilterId = timeFilterConfig.getTimeFilterConnection();
+    }
+
+    static void connectLnbDescrambling(LnbDescramblingHardwareConnections& lnbDescrambling) {
+        auto dataFlow = getDataFlowConfiguration();
+        if (dataFlow.hasLnbDescrambling()) {
+            lnbDescrambling.support = true;
+            configuredLnbDescrambling = true;
+        } else {
+            lnbDescrambling.support = false;
+            return;
+        }
+        auto lnbDescramblingConfig = *dataFlow.getFirstLnbDescrambling();
+        lnbDescrambling.frontendId = lnbDescramblingConfig.getFrontendConnection();
+        lnbDescrambling.audioFilterId = lnbDescramblingConfig.getAudioFilterConnection();
+        lnbDescrambling.videoFilterId = lnbDescramblingConfig.getVideoFilterConnection();
+        lnbDescrambling.lnbId = lnbDescramblingConfig.getLnbConnection();
+        lnbDescrambling.descramblerId = lnbDescramblingConfig.getDescramblerConnection();
+        if (lnbDescramblingConfig.hasDiseqcMsgSender()) {
+            for (auto& msgName : lnbDescramblingConfig.getDiseqcMsgSender()) {
+                lnbDescrambling.diseqcMsgs.push_back(msgName);
+            }
+        }
     }
 
   private:
