@@ -26,7 +26,6 @@ import android.hardware.graphics.composer3.LayerCommand;
 parcelable DisplayCommand {
     /**
      * The display which this commands refers to.
-     * @see IComposer.createDisplay
      */
     long display;
 
