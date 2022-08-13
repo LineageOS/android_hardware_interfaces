@@ -1244,7 +1244,7 @@
             "defaultValue": {
                 "floatValues": [
                     66.19999694824219,
-                    49.0,
+                    "VehicleUnit::FAHRENHEIT",
                     19.0,
                     66.5
                 ]
@@ -1264,12 +1264,12 @@
             "property": "VehicleProperty::HVAC_TEMPERATURE_DISPLAY_UNITS",
             "defaultValue": {
                 "int32Values": [
-                    49
+                    "VehicleUnit::FAHRENHEIT"
                 ]
             },
             "configArray": [
-                49,
-                48
+                "VehicleUnit::FAHRENHEIT",
+                "VehicleUnit::CELSIUS"
             ]
         },
         {
@@ -1456,22 +1456,22 @@
                 {
                     "areaId": "Constants::WINDOW_1_LEFT",
                     "minInt32Value": 0,
-                    "maxInt32Value": 10,
+                    "maxInt32Value": 10
                 },
                 {
                     "areaId": "Constants::WINDOW_1_RIGHT",
                     "minInt32Value": 0,
-                    "maxInt32Value": 10,
+                    "maxInt32Value": 10
                 },
                 {
                     "areaId": "Constants::WINDOW_2_LEFT",
                     "minInt32Value": 0,
-                    "maxInt32Value": 10,
+                    "maxInt32Value": 10
                 },
                 {
                     "areaId": "Constants::WINDOW_2_RIGHT",
                     "minInt32Value": 0,
-                    "maxInt32Value": 10,
+                    "maxInt32Value": 10
                 },
                 {
                     "areaId": "Constants::WINDOW_ROOF_TOP_1",
@@ -1703,13 +1703,13 @@
             "property": "VehicleProperty::CURRENT_POWER_POLICY"
         },
         {
-            "property": "VehicleProperty::ANDROID_EPOCH_TIME",
+            "property": "VehicleProperty::ANDROID_EPOCH_TIME"
         },
         {
-            "property": "VehicleProperty::WATCHDOG_ALIVE",
+            "property": "VehicleProperty::WATCHDOG_ALIVE"
         },
         {
-            "property": "VehicleProperty::WATCHDOG_TERMINATED_PROCESS",
+            "property": "VehicleProperty::WATCHDOG_TERMINATED_PROCESS"
         },
         {
             "property": "VehicleProperty::VHAL_HEARTBEAT"
@@ -1739,7 +1739,7 @@
                 ]
             },
             "comment":
-                    "Value means: 0 /* Off */, -1, -1, -1, -1 /* Bounds */, -1, -1, -1, -1 /* Insets */",
+                    "Value means: 0 /* Off */, -1, -1, -1, -1 /* Bounds */, -1, -1, -1, -1 /* Insets */"
         },
         {
             "property": "VehicleProperty::CLUSTER_REPORT_STATE",
@@ -1756,10 +1756,10 @@
             ]
         },
         {
-            "property": "VehicleProperty::CLUSTER_REQUEST_DISPLAY",
+            "property": "VehicleProperty::CLUSTER_REQUEST_DISPLAY"
         },
         {
-            "property": "VehicleProperty::CLUSTER_NAVIGATION_STATE",
+            "property": "VehicleProperty::CLUSTER_NAVIGATION_STATE"
         },
         {
             "property": "VehicleProperty::GENERAL_SAFETY_REGULATION_COMPLIANCE_REQUIREMENT",
