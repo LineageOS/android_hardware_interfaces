@@ -27,6 +27,7 @@ package android.media.tuner.testing.configuration.V1_0 {
     method @Nullable public android.media.tuner.testing.configuration.V1_0.DataFlowConfiguration.Descrambling getDescrambling();
     method @Nullable public android.media.tuner.testing.configuration.V1_0.DataFlowConfiguration.DvrPlayback getDvrPlayback();
     method @Nullable public android.media.tuner.testing.configuration.V1_0.DataFlowConfiguration.DvrRecord getDvrRecord();
+    method @Nullable public android.media.tuner.testing.configuration.V1_0.DataFlowConfiguration.LnbDescrambling getLnbDescrambling();
     method @Nullable public android.media.tuner.testing.configuration.V1_0.DataFlowConfiguration.LnbLive getLnbLive();
     method @Nullable public android.media.tuner.testing.configuration.V1_0.DataFlowConfiguration.LnbRecord getLnbRecord();
     method @Nullable public android.media.tuner.testing.configuration.V1_0.DataFlowConfiguration.Scan getScan();
@@ -35,6 +36,7 @@ package android.media.tuner.testing.configuration.V1_0 {
     method public void setDescrambling(@Nullable android.media.tuner.testing.configuration.V1_0.DataFlowConfiguration.Descrambling);
     method public void setDvrPlayback(@Nullable android.media.tuner.testing.configuration.V1_0.DataFlowConfiguration.DvrPlayback);
     method public void setDvrRecord(@Nullable android.media.tuner.testing.configuration.V1_0.DataFlowConfiguration.DvrRecord);
+    method public void setLnbDescrambling(@Nullable android.media.tuner.testing.configuration.V1_0.DataFlowConfiguration.LnbDescrambling);
     method public void setLnbLive(@Nullable android.media.tuner.testing.configuration.V1_0.DataFlowConfiguration.LnbLive);
     method public void setLnbRecord(@Nullable android.media.tuner.testing.configuration.V1_0.DataFlowConfiguration.LnbRecord);
     method public void setScan(@Nullable android.media.tuner.testing.configuration.V1_0.DataFlowConfiguration.Scan);
@@ -109,6 +111,22 @@ package android.media.tuner.testing.configuration.V1_0 {
     method public void setFrontendConnection(@Nullable String);
     method public void setHasFrontendConnection(@Nullable boolean);
     method public void setRecordFilterConnection(@Nullable String);
+  }
+
+  public static class DataFlowConfiguration.LnbDescrambling {
+    ctor public DataFlowConfiguration.LnbDescrambling();
+    method @Nullable public String getAudioFilterConnection();
+    method @Nullable public String getDescramblerConnection();
+    method @Nullable public java.util.List<java.lang.String> getDiseqcMsgSender();
+    method @Nullable public String getFrontendConnection();
+    method @Nullable public String getLnbConnection();
+    method @Nullable public String getVideoFilterConnection();
+    method public void setAudioFilterConnection(@Nullable String);
+    method public void setDescramblerConnection(@Nullable String);
+    method public void setDiseqcMsgSender(@Nullable java.util.List<java.lang.String>);
+    method public void setFrontendConnection(@Nullable String);
+    method public void setLnbConnection(@Nullable String);
+    method public void setVideoFilterConnection(@Nullable String);
   }
 
   public static class DataFlowConfiguration.LnbLive {
