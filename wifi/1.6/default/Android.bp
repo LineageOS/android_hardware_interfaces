@@ -63,6 +63,7 @@ cc_library_static {
     name: "android.hardware.wifi@1.0-service-lib",
     defaults: ["android.hardware.wifi@1.0-service-cppflags-defaults"],
     proprietary: true,
+    compile_multilib: "first",
     cppflags: [
         "-Wall",
         "-Werror",
@@ -183,6 +184,7 @@ cc_binary {
 cc_test {
     name: "android.hardware.wifi@1.0-service-tests",
     proprietary: true,
+    compile_multilib: "first",
     cppflags: [
         "-Wall",
         "-Werror",
