@@ -32,6 +32,7 @@ import android.hardware.graphics.composer3.DisplayIdentification;
 import android.hardware.graphics.composer3.FormatColorComponent;
 import android.hardware.graphics.composer3.HdrCapabilities;
 import android.hardware.graphics.composer3.IComposerCallback;
+import android.hardware.graphics.composer3.OverlayProperties;
 import android.hardware.graphics.composer3.PerFrameMetadataKey;
 import android.hardware.graphics.composer3.PowerMode;
 import android.hardware.graphics.composer3.ReadbackBufferAttributes;
@@ -814,4 +815,14 @@ interface IComposerClient {
      *
      */
     void setIdleTimerEnabled(long display, int timeoutMs);
+
+    /**
+     * Hardware overlays is a technique to composite different buffers directly to the screen
+     * while bypassing GPU composition.
+     *
+     * This function returns what the device's overlays support.
+     *
+     * @return the overlay properties of the device.
+     */
+    OverlayProperties getOverlaySupport();
 }
