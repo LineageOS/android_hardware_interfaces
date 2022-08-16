@@ -96,6 +96,14 @@ typedef struct {
 } RawStreamConfig;
 constexpr const size_t kStreamCfgSz = sizeof(RawStreamConfig) / sizeof(int32_t);
 
+const std::unordered_set<int32_t> gSupportedColorFormats ({
+    HAL_PIXEL_FORMAT_RGBA_8888,
+    HAL_PIXEL_FORMAT_BGRA_8888,
+    HAL_PIXEL_FORMAT_YCRCB_420_SP,  // NV21
+    HAL_PIXEL_FORMAT_YV12,          // YV12
+    HAL_PIXEL_FORMAT_YCBCR_422_I    // YUY2
+});
+
 } // anonymous namespace
 
 
@@ -251,7 +259,7 @@ protected:
             RawStreamConfig *ptr = reinterpret_cast<RawStreamConfig *>(streamCfgs.data.i32);
             for (unsigned offset = 0; offset < streamCfgs.count; offset += kStreamCfgSz) {
                 if (ptr->direction == ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT &&
-                    ptr->format == HAL_PIXEL_FORMAT_RGBA_8888) {
+                    isSupportedColorFormat(ptr->format)) {
                     targetCfg.width = ptr->width;
                     targetCfg.height = ptr->height;
                     targetCfg.format = static_cast<PixelFormat>(ptr->format);
@@ -262,6 +270,10 @@ protected:
         }
 
         return targetCfg;
+    }
+
+    bool isSupportedColorFormat(int32_t format) {
+        return gSupportedColorFormats.find(format) != gSupportedColorFormats.end();
     }
 
     sp<IEvsEnumerator>              pEnumerator;   // Every test needs access to the service
@@ -2022,12 +2034,13 @@ TEST_P(EvsHidlTest, CameraUseStreamConfigToDisplay) {
             RawStreamConfig *ptr = reinterpret_cast<RawStreamConfig *>(streamCfgs.data.i32);
             for (unsigned offset = 0; offset < streamCfgs.count; offset += kStreamCfgSz) {
                 if (ptr->direction == ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT &&
-                    ptr->format == HAL_PIXEL_FORMAT_RGBA_8888) {
+                    isSupportedColorFormat(ptr->format)) {
 
                     if (ptr->width * ptr->height > maxArea &&
                         ptr->framerate >= minReqFps) {
                         targetCfg.width = ptr->width;
                         targetCfg.height = ptr->height;
+                        targetCfg.format = static_cast<PixelFormat>(ptr->format);
 
                         maxArea = ptr->width * ptr->height;
                         foundCfg = true;
@@ -2036,8 +2049,6 @@ TEST_P(EvsHidlTest, CameraUseStreamConfigToDisplay) {
                 ++ptr;
             }
         }
-        targetCfg.format =
-            static_cast<PixelFormat>(HAL_PIXEL_FORMAT_RGBA_8888);
 
         if (!foundCfg) {
             // Current EVS camera does not provide stream configurations in the
@@ -2125,12 +2136,13 @@ TEST_P(EvsHidlTest, MultiCameraStreamUseConfig) {
             RawStreamConfig *ptr = reinterpret_cast<RawStreamConfig *>(streamCfgs.data.i32);
             for (unsigned offset = 0; offset < streamCfgs.count; offset += kStreamCfgSz) {
                 if (ptr->direction == ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT &&
-                    ptr->format == HAL_PIXEL_FORMAT_RGBA_8888) {
+                    isSupportedColorFormat(ptr->format)) {
 
                     if (ptr->width * ptr->height > maxArea &&
                         ptr->framerate >= minReqFps) {
                         targetCfg.width = ptr->width;
                         targetCfg.height = ptr->height;
+                        targetCfg.format = static_cast<PixelFormat>(ptr->format);
 
                         maxArea = ptr->width * ptr->height;
                         foundCfg = true;
@@ -2139,8 +2151,6 @@ TEST_P(EvsHidlTest, MultiCameraStreamUseConfig) {
                 ++ptr;
             }
         }
-        targetCfg.format =
-            static_cast<PixelFormat>(HAL_PIXEL_FORMAT_RGBA_8888);
 
         if (!foundCfg) {
             LOG(INFO) << "Device " << cam.v1.cameraId
