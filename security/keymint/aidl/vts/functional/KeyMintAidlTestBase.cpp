@@ -1070,8 +1070,20 @@ string KeyMintAidlTestBase::LocalRsaEncryptMessage(const string& message,
         return "Failure";
     }
     X509_Ptr key_cert(parse_cert_blob(cert_chain_[0].encodedCertificate));
+    if (key_cert.get() == nullptr) {
+        ADD_FAILURE() << "Failed to parse cert";
+        return "Failure";
+    }
     EVP_PKEY_Ptr pub_key(X509_get_pubkey(key_cert.get()));
+    if (pub_key.get() == nullptr) {
+        ADD_FAILURE() << "Failed to retrieve public key";
+        return "Failure";
+    }
     RSA_Ptr rsa(EVP_PKEY_get1_RSA(const_cast<EVP_PKEY*>(pub_key.get())));
+    if (rsa.get() == nullptr) {
+        ADD_FAILURE() << "Failed to retrieve RSA public key";
+        return "Failure";
+    }
 
     // Retrieve relevant tags.
     Digest digest = Digest::NONE;

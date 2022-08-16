@@ -741,6 +741,7 @@ TEST_P(NewKeyGenerationTest, AesInvalidSize) {
 
     for (auto block_mode : ValidBlockModes(Algorithm::AES)) {
         for (auto padding_mode : ValidPaddingModes(Algorithm::AES, block_mode)) {
+            SCOPED_TRACE(testing::Message() << "AES-unknown-" << block_mode << "-" << padding_mode);
             vector<uint8_t> key_blob;
             vector<KeyCharacteristics> key_characteristics;
             // No key size specified
@@ -994,6 +995,7 @@ TEST_P(NewKeyGenerationTest, TripleDesInvalidSize) {
  */
 TEST_P(NewKeyGenerationTest, Rsa) {
     for (auto key_size : ValidKeySizes(Algorithm::RSA)) {
+        SCOPED_TRACE(testing::Message() << "RSA-" << key_size);
         vector<uint8_t> key_blob;
         vector<KeyCharacteristics> key_characteristics;
         ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
@@ -1066,6 +1068,7 @@ TEST_P(NewKeyGenerationTest, RsaWithAttestation) {
     vector<uint8_t> serial_blob(build_serial_blob(serial_int));
 
     for (auto key_size : ValidKeySizes(Algorithm::RSA)) {
+        SCOPED_TRACE(testing::Message() << "RSA-" << key_size);
         vector<uint8_t> key_blob;
         vector<KeyCharacteristics> key_characteristics;
         auto builder = AuthorizationSetBuilder()
@@ -1148,6 +1151,7 @@ TEST_P(NewKeyGenerationTest, DISABLED_RsaWithRpkAttestation) {
     attestation_key.issuerSubjectName = make_name_from_str("Android Keystore Key");
 
     for (auto key_size : ValidKeySizes(Algorithm::RSA)) {
+        SCOPED_TRACE(testing::Message() << "RSA-" << key_size);
         auto challenge = "hello";
         auto app_id = "foo";
 
@@ -1295,6 +1299,7 @@ TEST_P(NewKeyGenerationTest, RsaWithSelfSign) {
     vector<uint8_t> serial_blob(build_serial_blob(serial_int));
 
     for (auto key_size : ValidKeySizes(Algorithm::RSA)) {
+        SCOPED_TRACE(testing::Message() << "RSA-" << key_size);
         vector<uint8_t> key_blob;
         vector<KeyCharacteristics> key_characteristics;
         ASSERT_EQ(ErrorCode::OK,
@@ -1416,6 +1421,7 @@ TEST_P(NewKeyGenerationTest, RsaWithAttestationAppIdIgnored) {
  */
 TEST_P(NewKeyGenerationTest, LimitedUsageRsa) {
     for (auto key_size : ValidKeySizes(Algorithm::RSA)) {
+        SCOPED_TRACE(testing::Message() << "RSA-" << key_size);
         vector<uint8_t> key_blob;
         vector<KeyCharacteristics> key_characteristics;
         ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
@@ -1466,6 +1472,7 @@ TEST_P(NewKeyGenerationTest, LimitedUsageRsaWithAttestation) {
     vector<uint8_t> serial_blob(build_serial_blob(serial_int));
 
     for (auto key_size : ValidKeySizes(Algorithm::RSA)) {
+        SCOPED_TRACE(testing::Message() << "RSA-" << key_size);
         vector<uint8_t> key_blob;
         vector<KeyCharacteristics> key_characteristics;
         auto builder = AuthorizationSetBuilder()
@@ -1535,6 +1542,7 @@ TEST_P(NewKeyGenerationTest, LimitedUsageRsaWithAttestation) {
  */
 TEST_P(NewKeyGenerationTest, NoInvalidRsaSizes) {
     for (auto key_size : InvalidKeySizes(Algorithm::RSA)) {
+        SCOPED_TRACE(testing::Message() << "RSA-" << key_size);
         vector<uint8_t> key_blob;
         vector<KeyCharacteristics> key_characteristics;
         ASSERT_EQ(ErrorCode::UNSUPPORTED_KEY_SIZE,
@@ -1569,6 +1577,7 @@ TEST_P(NewKeyGenerationTest, RsaNoDefaultSize) {
  */
 TEST_P(NewKeyGenerationTest, RsaMissingParams) {
     for (auto key_size : ValidKeySizes(Algorithm::RSA)) {
+        SCOPED_TRACE(testing::Message() << "RSA-" << key_size);
         ASSERT_EQ(ErrorCode::OK,
                   GenerateKey(
                           AuthorizationSetBuilder().RsaKey(key_size, 65537).SetDefaultValidity()));
@@ -1584,6 +1593,7 @@ TEST_P(NewKeyGenerationTest, RsaMissingParams) {
  */
 TEST_P(NewKeyGenerationTest, Ecdsa) {
     for (auto curve : ValidCurves()) {
+        SCOPED_TRACE(testing::Message() << "Curve::" << curve);
         vector<uint8_t> key_blob;
         vector<KeyCharacteristics> key_characteristics;
         ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
@@ -1709,6 +1719,7 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestation) {
     vector<uint8_t> serial_blob(build_serial_blob(serial_int));
 
     for (auto curve : ValidCurves()) {
+        SCOPED_TRACE(testing::Message() << "Curve::" << curve);
         vector<uint8_t> key_blob;
         vector<KeyCharacteristics> key_characteristics;
         auto builder = AuthorizationSetBuilder()
@@ -2211,6 +2222,7 @@ TEST_P(NewKeyGenerationTest, EcdsaSelfSignAttestation) {
     vector<uint8_t> serial_blob(build_serial_blob(serial_int));
 
     for (auto curve : ValidCurves()) {
+        SCOPED_TRACE(testing::Message() << "Curve::" << curve);
         vector<uint8_t> key_blob;
         vector<KeyCharacteristics> key_characteristics;
         ASSERT_EQ(ErrorCode::OK,
@@ -2282,6 +2294,7 @@ TEST_P(NewKeyGenerationTest, EcdsaIgnoreAppId) {
     auto app_id = "foo";
 
     for (auto curve : ValidCurves()) {
+        SCOPED_TRACE(testing::Message() << "Curve::" << curve);
         vector<uint8_t> key_blob;
         vector<KeyCharacteristics> key_characteristics;
         ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
@@ -2323,6 +2336,7 @@ TEST_P(NewKeyGenerationTest, AttestationApplicationIDLengthProperlyEncoded) {
     std::vector<uint32_t> app_id_lengths{143, 258};
 
     for (uint32_t length : app_id_lengths) {
+        SCOPED_TRACE(testing::Message() << "app_id_len=" << length);
         const string app_id(length, 'a');
         vector<uint8_t> key_blob;
         vector<KeyCharacteristics> key_characteristics;
@@ -2377,6 +2391,7 @@ TEST_P(NewKeyGenerationTest, AttestationApplicationIDLengthProperlyEncoded) {
  */
 TEST_P(NewKeyGenerationTest, LimitedUsageEcdsa) {
     for (auto curve : ValidCurves()) {
+        SCOPED_TRACE(testing::Message() << "Curve::" << curve);
         vector<uint8_t> key_blob;
         vector<KeyCharacteristics> key_characteristics;
         ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
@@ -2430,6 +2445,7 @@ TEST_P(NewKeyGenerationTest, EcdsaDefaultSize) {
  */
 TEST_P(NewKeyGenerationTest, EcdsaInvalidCurve) {
     for (auto curve : InvalidCurves()) {
+        SCOPED_TRACE(testing::Message() << "Curve::" << curve);
         vector<uint8_t> key_blob;
         vector<KeyCharacteristics> key_characteristics;
         auto result = GenerateKey(AuthorizationSetBuilder()
@@ -2507,6 +2523,7 @@ TEST_P(NewKeyGenerationTest, EcdsaAllValidCurves) {
         digest = Digest::SHA_2_512;
     }
     for (auto curve : ValidCurves()) {
+        SCOPED_TRACE(testing::Message() << "Curve::" << curve);
         EXPECT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
                                                      .EcdsaSigningKey(curve)
                                                      .Digest(digest)
@@ -2524,6 +2541,7 @@ TEST_P(NewKeyGenerationTest, EcdsaAllValidCurves) {
  */
 TEST_P(NewKeyGenerationTest, Hmac) {
     for (auto digest : ValidDigests(false /* withNone */, true /* withMD5 */)) {
+        SCOPED_TRACE(testing::Message() << "Digest::" << digest);
         vector<uint8_t> key_blob;
         vector<KeyCharacteristics> key_characteristics;
         constexpr size_t key_size = 128;
@@ -2557,6 +2575,7 @@ TEST_P(NewKeyGenerationTest, HmacNoAttestation) {
     auto app_id = "foo";
 
     for (auto digest : ValidDigests(false /* withNone */, true /* withMD5 */)) {
+        SCOPED_TRACE(testing::Message() << "Digest::" << digest);
         vector<uint8_t> key_blob;
         vector<KeyCharacteristics> key_characteristics;
         constexpr size_t key_size = 128;
@@ -2590,6 +2609,7 @@ TEST_P(NewKeyGenerationTest, HmacNoAttestation) {
  */
 TEST_P(NewKeyGenerationTest, LimitedUsageHmac) {
     for (auto digest : ValidDigests(false /* withNone */, true /* withMD5 */)) {
+        SCOPED_TRACE(testing::Message() << "Digest::" << digest);
         vector<uint8_t> key_blob;
         vector<KeyCharacteristics> key_characteristics;
         constexpr size_t key_size = 128;
@@ -2628,6 +2648,7 @@ TEST_P(NewKeyGenerationTest, LimitedUsageHmac) {
  */
 TEST_P(NewKeyGenerationTest, HmacCheckKeySizes) {
     for (size_t key_size = 0; key_size <= 512; ++key_size) {
+        SCOPED_TRACE(testing::Message() << "HMAC-" << key_size);
         if (key_size < 64 || key_size % 8 != 0) {
             // To keep this test from being very slow, we only test a random fraction of
             // non-byte key sizes.  We test only ~10% of such cases. Since there are 392 of
@@ -2670,6 +2691,7 @@ TEST_P(NewKeyGenerationTest, HmacCheckKeySizes) {
  */
 TEST_P(NewKeyGenerationTest, HmacCheckMinMacLengths) {
     for (size_t min_mac_length = 0; min_mac_length <= 256; ++min_mac_length) {
+        SCOPED_TRACE(testing::Message() << "MIN_MAC_LENGTH=" << min_mac_length);
         if (min_mac_length < 64 || min_mac_length % 8 != 0) {
             // To keep this test from being very long, we only test a random fraction of
             // non-byte lengths.  We test only ~10% of such cases. Since there are 172 of them,
@@ -2826,6 +2848,7 @@ TEST_P(SigningOperationsTest, RsaAllPaddingsAndDigests) {
     for (auto padding :
          {PaddingMode::NONE, PaddingMode::RSA_PSS, PaddingMode::RSA_PKCS1_1_5_SIGN}) {
         for (auto digest : ValidDigests(true /* withNone */, true /* withMD5 */)) {
+            SCOPED_TRACE(testing::Message() << "RSA padding=" << padding << " digest=" << digest);
             if (padding == PaddingMode::NONE && digest != Digest::NONE) {
                 // Digesting only makes sense with padding.
                 continue;
@@ -3541,6 +3564,7 @@ TEST_P(SigningOperationsTest, AesEcbSign) {
  */
 TEST_P(SigningOperationsTest, HmacAllDigests) {
     for (auto digest : ValidDigests(false /* withNone */, false /* withMD5 */)) {
+        SCOPED_TRACE(testing::Message() << "Digest::" << digest);
         ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
                                                      .Authorization(TAG_NO_AUTH_REQUIRED)
                                                      .HmacKey(128)
@@ -4391,6 +4415,7 @@ TEST_P(ImportKeyTest, AesFailure) {
     string key = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     uint32_t bitlen = key.size() * 8;
     for (uint32_t key_size : {bitlen - 1, bitlen + 1, bitlen - 8, bitlen + 8}) {
+        SCOPED_TRACE(testing::Message() << "import-key-size=" << key_size);
         // Explicit key size doesn't match that of the provided key.
         auto result = ImportKey(AuthorizationSetBuilder()
                                         .Authorization(TAG_NO_AUTH_REQUIRED)
@@ -4458,6 +4483,7 @@ TEST_P(ImportKeyTest, TripleDesFailure) {
     string key = hex2str("a49d7564199e97cb529d2c9d97bf2f98d35edf57ba1f7358");
     uint32_t bitlen = key.size() * 7;
     for (uint32_t key_size : {bitlen - 1, bitlen + 1, bitlen - 8, bitlen + 8}) {
+        SCOPED_TRACE(testing::Message() << "import-key-size=" << key_size);
         // Explicit key size doesn't match that of the provided key.
         auto result = ImportKey(AuthorizationSetBuilder()
                                         .Authorization(TAG_NO_AUTH_REQUIRED)
@@ -4943,6 +4969,7 @@ typedef KeyMintAidlTestBase EncryptionOperationsTest;
  */
 TEST_P(EncryptionOperationsTest, RsaNoPaddingSuccess) {
     for (uint64_t exponent : ValidExponents()) {
+        SCOPED_TRACE(testing::Message() << "RSA exponent=" << exponent);
         ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
                                                      .Authorization(TAG_NO_AUTH_REQUIRED)
                                                      .RsaEncryptionKey(2048, exponent)
@@ -5133,6 +5160,7 @@ TEST_P(EncryptionOperationsTest, RsaOaepWithMGFDigestSuccess) {
     string message = "Hello";
 
     for (auto digest : digests) {
+        SCOPED_TRACE(testing::Message() << "digest-" << digest);
         auto params = AuthorizationSetBuilder()
                               .Authorization(TAG_RSA_OAEP_MGF_DIGEST, digest)
                               .Digest(Digest::SHA_2_256)
@@ -5553,6 +5581,7 @@ TEST_P(EncryptionOperationsTest, AesWrongPurpose) {
  */
 TEST_P(EncryptionOperationsTest, AesEcbCbcNoPaddingWrongInputSize) {
     for (BlockMode blockMode : {BlockMode::ECB, BlockMode::CBC}) {
+        SCOPED_TRACE(testing::Message() << "AES-" << blockMode);
         ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
                                                      .Authorization(TAG_NO_AUTH_REQUIRED)
                                                      .AesEncryptionKey(128)
@@ -6249,6 +6278,7 @@ TEST_P(EncryptionOperationsTest, AesCbcZeroInputSuccess) {
     // Zero input message
     string message = "";
     for (auto padding : {PaddingMode::NONE, PaddingMode::PKCS7}) {
+        SCOPED_TRACE(testing::Message() << "AES padding=" << padding);
         auto params = AuthorizationSetBuilder().BlockMode(BlockMode::CBC).Padding(padding);
         AuthorizationSet out_params;
         string ciphertext1 = EncryptMessage(message, params, &out_params);
@@ -6917,6 +6947,7 @@ TEST_P(EncryptionOperationsTest, TripleDesEcbPkcs7Padding) {
                                                  .Padding(PaddingMode::PKCS7)));
 
     for (size_t i = 0; i < 32; ++i) {
+        SCOPED_TRACE(testing::Message() << "msg size=" << i);
         string message(i, 'a');
         auto inParams =
                 AuthorizationSetBuilder().BlockMode(BlockMode::ECB).Padding(PaddingMode::PKCS7);
@@ -7227,6 +7258,7 @@ TEST_P(EncryptionOperationsTest, TripleDesCbcNotAuthorized) {
  */
 TEST_P(EncryptionOperationsTest, TripleDesEcbCbcNoPaddingWrongInputSize) {
     for (BlockMode blockMode : {BlockMode::ECB, BlockMode::CBC}) {
+        SCOPED_TRACE(testing::Message() << "BlockMode::" << blockMode);
         ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
                                                      .TripleDesEncryptionKey(168)
                                                      .BlockMode(blockMode)
@@ -7285,6 +7317,7 @@ TEST_P(EncryptionOperationsTest, TripleDesCbcNoPaddingKeyWithPkcs7Padding) {
 
     // Try various message lengths; all should fail.
     for (size_t i = 0; i <= 32; i++) {
+        SCOPED_TRACE(testing::Message() << "i = " << i);
         auto begin_params =
                 AuthorizationSetBuilder().BlockMode(BlockMode::CBC).Padding(PaddingMode::PKCS7);
         EXPECT_EQ(ErrorCode::INCOMPATIBLE_PADDING_MODE, Begin(KeyPurpose::ENCRYPT, begin_params));
@@ -7954,6 +7987,7 @@ TEST_P(TransportLimitTest, LargeFinishInput) {
                                                  .Padding(PaddingMode::NONE)));
 
     for (int msg_size = 8 /* 256 bytes */; msg_size <= 11 /* 2 KiB */; msg_size++) {
+        SCOPED_TRACE(testing::Message() << "msg_size = " << msg_size);
         auto cipher_params =
                 AuthorizationSetBuilder().BlockMode(BlockMode::ECB).Padding(PaddingMode::NONE);
 
@@ -8267,6 +8301,7 @@ TEST_P(KeyAgreementTest, EcdhCurve25519Mismatch) {
     GenerateKeyMintEcKey(curve, &kmPubKey);
 
     for (auto localCurve : ValidCurves()) {
+        SCOPED_TRACE(testing::Message() << "local-curve-" << localCurve);
         if (localCurve == curve) {
             continue;
         }
