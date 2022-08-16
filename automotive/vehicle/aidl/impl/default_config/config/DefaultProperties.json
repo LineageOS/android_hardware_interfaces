@@ -1611,6 +1611,39 @@
             }
         },
         {
+            "property": "VehicleProperty::CABIN_LIGHTS_STATE",
+            "defaultValue": {
+                "int32Values": [
+                    "Constants::LIGHT_STATE_ON"
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::READING_LIGHTS_STATE",
+            "defaultValue": {
+                "int32Values": [
+                    "Constants::LIGHT_STATE_ON"
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "Constants::SEAT_1_LEFT"
+                },
+                {
+                    "areaId": "Constants::SEAT_1_RIGHT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_LEFT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_RIGHT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_CENTER"
+                }
+            ]
+        },
+        {
             "property": "VehicleProperty::HEADLIGHTS_SWITCH",
             "defaultValue": {
                 "int32Values": [
