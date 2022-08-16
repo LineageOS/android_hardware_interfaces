@@ -1276,6 +1276,24 @@ const std::vector<ConfigDeclaration> kVehicleProperties = {
 
         {.config =
                  {
+                         .prop = toInt(VehicleProperty::CABIN_LIGHTS_STATE),
+                         .access = VehiclePropertyAccess::READ,
+                         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                 },
+         .initialValue = {.int32Values = {LIGHT_STATE_ON}}},
+
+        {.config = {.prop = toInt(VehicleProperty::READING_LIGHTS_STATE),
+                    .access = VehiclePropertyAccess::READ,
+                    .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                    .areaConfigs = {VehicleAreaConfig{.areaId = SEAT_1_LEFT},
+                                    VehicleAreaConfig{.areaId = SEAT_1_RIGHT},
+                                    VehicleAreaConfig{.areaId = SEAT_2_LEFT},
+                                    VehicleAreaConfig{.areaId = SEAT_2_RIGHT},
+                                    VehicleAreaConfig{.areaId = SEAT_2_CENTER}}},
+         .initialValue = {.int32Values = {LIGHT_STATE_ON}}},
+
+        {.config =
+                 {
                          .prop = toInt(VehicleProperty::HEADLIGHTS_SWITCH),
                          .access = VehiclePropertyAccess::READ_WRITE,
                          .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
