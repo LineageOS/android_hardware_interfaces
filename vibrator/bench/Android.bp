@@ -29,7 +29,7 @@ cc_benchmark {
         "benchmark.cpp",
     ],
     shared_libs: [
-        "android.hardware.vibrator-V1-cpp",
+        "android.hardware.vibrator-V2-cpp",
         "android.hardware.vibrator@1.0",
         "android.hardware.vibrator@1.1",
         "android.hardware.vibrator@1.2",

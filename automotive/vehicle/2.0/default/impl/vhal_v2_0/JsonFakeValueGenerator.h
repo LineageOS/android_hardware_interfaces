@@ -41,7 +41,8 @@ private:
 
 public:
     JsonFakeValueGenerator(const VehiclePropValue& request);
-    JsonFakeValueGenerator(std::string path);
+    JsonFakeValueGenerator(const std::string& path, int32_t repetition);
+    JsonFakeValueGenerator(const std::string& path);
 
     ~JsonFakeValueGenerator() = default;
 

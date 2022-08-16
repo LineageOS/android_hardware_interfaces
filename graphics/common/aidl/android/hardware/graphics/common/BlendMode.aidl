@@ -18,6 +18,7 @@ package android.hardware.graphics.common;
 
 /**
  * Blend modes, settable per layer.
+ * @hide
  */
 @VintfStability
 @Backing(type="int")

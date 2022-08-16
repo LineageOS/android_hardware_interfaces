@@ -18,6 +18,8 @@ package android.hardware.gnss;
 
 /**
  * Cumulative GNSS power statistics since boot.
+ *
+ * @hide
  */
 @VintfStability
 parcelable ElapsedRealtime {

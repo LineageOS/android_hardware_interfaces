@@ -17,7 +17,7 @@
 #ifndef android_hardware_gnss_common_default_FixLocationParser_H_
 #define android_hardware_gnss_common_default_FixLocationParser_H_
 
-#include <android/hardware/gnss/2.0/IGnss.h>
+#include <aidl/android/hardware/gnss/BnGnss.h>
 
 #include <utils/SystemClock.h>
 #include <string>
@@ -36,7 +36,8 @@ namespace common {
 
 struct FixLocationParser {
   public:
-    static std::unique_ptr<V2_0::GnssLocation> getLocationFromInputStr(const std::string& inputStr);
+    static std::unique_ptr<aidl::android::hardware::gnss::GnssLocation> getLocationFromInputStr(
+            const std::string& inputStr);
 };
 
 }  // namespace common

@@ -20,6 +20,8 @@
 #include <unordered_set>
 #include <vector>
 
+#include <aidl/android/hardware/graphics/allocator/AllocationError.h>
+#include <aidl/android/hardware/graphics/allocator/IAllocator.h>
 #include <android/hardware/graphics/allocator/4.0/IAllocator.h>
 #include <android/hardware/graphics/mapper/4.0/IMapper.h>
 #include <gtest/gtest.h>
@@ -47,13 +49,39 @@ class Gralloc {
         kToleranceAllErrors = ~0x0U,
     };
 
-    Gralloc(const std::string& allocatorServiceName = "default",
+    Gralloc(const std::string& aidlAllocatorServiceName =
+                    "android.hardware.graphics.allocator.IAllocator/default",
+            const std::string& hidlAllocatorServiceName = "default",
             const std::string& mapperServiceName = "default", bool errOnFailure = true);
     ~Gralloc();
 
+    static Error toHidlError(aidl::android::hardware::graphics::allocator::AllocationError error) {
+        switch (error) {
+            case aidl::android::hardware::graphics::allocator::AllocationError::BAD_DESCRIPTOR:
+                return Error::BAD_DESCRIPTOR;
+            case aidl::android::hardware::graphics::allocator::AllocationError::NO_RESOURCES:
+                return Error::NO_RESOURCES;
+            case aidl::android::hardware::graphics::allocator::AllocationError::UNSUPPORTED:
+                return Error::UNSUPPORTED;
+        }
+    }
+    static Error toHidlError(const ndk::ScopedAStatus& status) {
+        if (status.isOk()) {
+            return Error::NONE;
+        }
+
+        if (status.getExceptionCode() != EX_SERVICE_SPECIFIC) {
+            return Error::NO_RESOURCES;
+        }
+
+        return toHidlError(
+                static_cast<aidl::android::hardware::graphics::allocator::AllocationError>(
+                        status.getServiceSpecificError()));
+    }
+
     // IAllocator methods
 
-    sp<IAllocator> getAllocator() const;
+    bool hasAllocator() { return mHidlAllocator != nullptr || mAidlAllocator != nullptr; }
 
     // When import is false, this simply calls IAllocator::allocate. When import
     // is true, the returned buffers are also imported into the mapper.
@@ -80,6 +108,10 @@ class Gralloc {
                                     bool import, uint32_t* outStride) {
         return allocate(descriptorInfo, import, Tolerance::kToleranceStrict, outStride);
     }
+
+    // Dispatches directly to the allocator
+    void rawAllocate(const BufferDescriptor& descriptor, uint32_t count,
+                     std::function<void(Error, uint32_t, const hidl_vec<hidl_handle>&)> callback);
 
     // IMapper methods
 
@@ -111,6 +143,10 @@ class Gralloc {
 
     bool isSupported(const IMapper::BufferDescriptorInfo& descriptorInfo);
 
+    // A version of isSupported that simply treats failure as no support, so it
+    // does not fail the test.
+    bool isSupportedNoFailure(const IMapper::BufferDescriptorInfo& descriptorInfo);
+
     Error get(const native_handle_t* bufferHandle, const IMapper::MetadataType& metadataType,
               hidl_vec<uint8_t>* outVec);
 
@@ -130,16 +166,20 @@ class Gralloc {
                 0x1U << std::underlying_type_t<Error>(error)) != 0;
     }
 
-    void init(const std::string& allocatorServiceName, const std::string& mapperServiceName);
+    void init(const std::string& aidlAllocatorServiceName,
+              const std::string& hidlAllocatorServiceName, const std::string& mapperServiceName);
 
     // initialize without checking for failure to get service
-    void initNoErr(const std::string& allocatorServiceName, const std::string& mapperServiceName);
+    void initNoErr(const std::string& aidlAllocatorServiceName,
+                   const std::string& hidlAllocatorServiceName,
+                   const std::string& mapperServiceName);
     const native_handle_t* cloneBuffer(const hidl_handle& rawHandle, enum Tolerance tolerance);
     const native_handle_t* cloneBuffer(const hidl_handle& rawHandle) {
         return cloneBuffer(rawHandle, Tolerance::kToleranceStrict);
     }
 
-    sp<IAllocator> mAllocator;
+    sp<IAllocator> mHidlAllocator;
+    std::shared_ptr<aidl::android::hardware::graphics::allocator::IAllocator> mAidlAllocator;
     sp<IMapper> mMapper;
 
     // Keep track of all cloned and imported handles.  When a test fails with

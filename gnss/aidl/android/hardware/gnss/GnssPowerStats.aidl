@@ -20,6 +20,8 @@ import android.hardware.gnss.ElapsedRealtime;
 
 /**
  * Cumulative GNSS power statistics since boot.
+ *
+ * @hide
  */
 @VintfStability
 parcelable GnssPowerStats {

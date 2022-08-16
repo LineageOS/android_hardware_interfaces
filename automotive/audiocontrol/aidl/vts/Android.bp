@@ -37,11 +37,16 @@ cc_test {
         "libxml2",
     ],
     static_libs: [
-        "android.hardware.automotive.audiocontrol-V1-cpp",
+        "android.hardware.automotive.audiocontrol-V2-cpp",
+        "android.hardware.audio.common-V1-cpp",
+        "android.media.audio.common.types-V1-cpp",
         "libgmock",
     ],
     test_suites: [
         "general-tests",
         "vts",
+    ],
+    cflags: [
+        "-Wno-deprecated-declarations",
     ],
 }

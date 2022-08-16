@@ -1,0 +1,99 @@
+/**
+ * Copyright (c) 2021, The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package {
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "hardware_interfaces_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-Apache-2.0
+    default_applicable_licenses: ["hardware_interfaces_license"],
+}
+
+aidl_interface {
+    name: "android.hardware.graphics.composer3",
+    host_supported: true,
+    vendor_available: true,
+    vndk: {
+        enabled: true,
+        support_system_process: true,
+    },
+    srcs: [
+        "android/hardware/graphics/composer3/*.aidl",
+    ],
+    stability: "vintf",
+    imports: [
+        "android.hardware.graphics.common-V3",
+        "android.hardware.common-V2",
+    ],
+    backend: {
+        cpp: {
+            enabled: false,
+        },
+        java: {
+            sdk_version: "module_current",
+            enabled: false,
+        },
+        ndk: {
+            vndk: {
+                enabled: true,
+            },
+        },
+    },
+    versions_with_info: [
+        {
+            version: "1",
+            imports: [
+                "android.hardware.graphics.common-V3",
+                "android.hardware.common-V2",
+            ],
+        },
+    ],
+
+}
+
+cc_library_headers {
+    name: "android.hardware.graphics.composer3-command-buffer",
+    vendor_available: true,
+    shared_libs: [
+        "android.hardware.graphics.composer3-V1-ndk",
+        "android.hardware.common-V2-ndk",
+        "libbase",
+        "libfmq",
+        "libsync",
+    ],
+    static_libs: [
+        "libaidlcommonsupport",
+    ],
+    export_shared_lib_headers: [
+        "libfmq",
+        "libsync",
+    ],
+    export_include_dirs: ["include"],
+}
+
+cc_test {
+    name: "android.hardware.graphics.composer3-hidl2aidl-asserts",
+    vendor_available: true,
+    srcs: ["android/hardware/graphics/composer3/Hidl2AidlAsserts.cpp"],
+    shared_libs: [
+        "libbinder_ndk",
+        "libhidlbase",
+        "android.hardware.graphics.composer3-V1-ndk",
+        "android.hardware.graphics.composer@2.1",
+        "android.hardware.graphics.composer@2.4",
+    ],
+}

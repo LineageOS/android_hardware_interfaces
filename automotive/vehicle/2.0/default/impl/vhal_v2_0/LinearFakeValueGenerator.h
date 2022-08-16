@@ -35,8 +35,8 @@ private:
 
     struct GeneratorCfg {
         int32_t propId;
-        float initialValue;
-        float currentValue;  //  Should be in range (initialValue +/- dispersion).
+        float middleValue;
+        float currentValue;  //  Should be in range (middleValue +/- dispersion).
         float dispersion;    //  Defines minimum and maximum value based on initial value.
         float increment;     //  Value that we will be added to currentValue with each timer tick.
         Nanos interval;
@@ -44,6 +44,11 @@ private:
 
 public:
     LinearFakeValueGenerator(const VehiclePropValue& request);
+    // A linear value generator in range [middleValue - dispersion, middleValue + dispersion),
+    // starts at 'currentValue' and at each 'interval', increase by 'increment' and loop back if
+    // exceeds middleValue + dispersion.
+    LinearFakeValueGenerator(int32_t propId, float middleValue, float currentValue,
+                             float dispersion, float increment, int64_t interval);
     ~LinearFakeValueGenerator() = default;
 
     VehiclePropValue nextEvent();
@@ -52,6 +57,9 @@ public:
 
 private:
     GeneratorCfg mGenCfg;
+
+    void initGenCfg(int32_t propId, float middleValue, float currentValue, float dispersion,
+                    float increment, int64_t interval);
 };
 
 }  // namespace impl

@@ -16,6 +16,8 @@
 
 package android.hardware.wifi.hostapd;
 
+import android.hardware.wifi.hostapd.ChannelBandwidth;
+
 /**
  * Parameters to control the HW mode for the interface.
  */
@@ -68,4 +70,15 @@ parcelable HwModeParams {
      * Enable EDMG (802.11ay), this option is only allowed for the 60GHz band.
      */
     boolean enableEdmg;
+    /**
+     * Whether IEEE 802.11be (Extreme High Throughput) is enabled or not.
+     * Note: hw_mode=a is used to specify that 5 GHz band or 6 GHz band is
+     * used with Extreme High Throughput.
+     */
+    boolean enable80211BE;
+    /**
+     * Limit on maximum channel bandwidth for the softAp.
+     * For automatic selection with no limit use BANDWIDTH_AUTO
+     */
+    ChannelBandwidth maximumChannelBandwidth;
 }

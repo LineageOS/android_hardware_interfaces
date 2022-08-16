@@ -18,6 +18,7 @@ package android.hardware.gnss;
 
 import android.hardware.gnss.ElapsedRealtime;
 import android.hardware.gnss.GnssClock;
+import android.hardware.gnss.GnssConstellationType;
 import android.hardware.gnss.GnssMeasurement;
 
 /**
@@ -27,6 +28,8 @@ import android.hardware.gnss.GnssMeasurement;
  *
  * - Reporting of GNSS constellation measurements is mandatory.
  * - Reporting of all tracked constellations are encouraged.
+ *
+ * @hide
  */
 @VintfStability
 parcelable GnssData {
@@ -41,4 +44,59 @@ parcelable GnssData {
      * clock.
      */
     ElapsedRealtime elapsedRealtime;
+
+    /**
+     * Represents a reading of GNSS AGC value of a constellation type and a frequency band.
+     */
+    @VintfStability
+    parcelable GnssAgc {
+        /**
+         * Automatic gain control (AGC) level. AGC acts as a variable gain amplifier adjusting the
+         * power of the incoming signal. The AGC level may be used to indicate potential
+         * interference. Higher gain (and/or lower input power) must be output as a positive number.
+         * Hence in cases of strong jamming, in the band of this signal, this value must go more
+         * negative. This value must be consistent given the same level of the incoming signal
+         * power.
+         *
+         * Note: Different hardware designs (e.g. antenna, pre-amplification, or other RF HW
+         * components) may also affect the typical output of this value on any given hardware design
+         * in an open sky test - the important aspect of this output is that changes in this value
+         * are indicative of changes on input signal power in the frequency band for this
+         * measurement.
+         */
+        double agcLevelDb;
+
+        /**
+         * Constellation type of the SV that transmits the signal.
+         */
+        GnssConstellationType constellation = GnssConstellationType.UNKNOWN;
+
+        /**
+         * Carrier frequency of the signal tracked, for example it can be the
+         * GPS central frequency for L1 = 1575.45 MHz, or L2 = 1227.60 MHz, L5 =
+         * 1176.45 MHz, varying GLO channels, etc. If the field is not set, it
+         * is the primary common use central frequency, e.g. L1 = 1575.45 MHz
+         * for GPS.
+         *
+         * If all the GLO frequencies have a common AGC, the FC0 (frequency
+         * channel number 0) of the individual GLO bands is used to represent
+         * all the GLO frequencies.
+         *
+         * For an L1, L5 receiver tracking a satellite on L1 and L5 at the same
+         * time, two raw measurement structs must be reported for this same
+         * satellite, in one of the measurement structs, all the values related
+         * to L1 must be filled, and in the other all of the values related to
+         * L5 must be filled.
+         */
+        long carrierFrequencyHz;
+    }
+
+    /**
+     * The array of GNSS AGC values.
+     *
+     * This field must be reported when the GNSS measurement engine is running, even when the
+     * GnssMeasurement or GnssClock fields are not reported yet. E.g., when a GNSS signal is too
+     * weak to be acquired, the AGC value must still be reported.
+     */
+    GnssAgc[] gnssAgcs = {};
 }

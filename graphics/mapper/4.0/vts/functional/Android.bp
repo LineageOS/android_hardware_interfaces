@@ -25,20 +25,27 @@ package {
 
 cc_test {
     name: "VtsHalGraphicsMapperV4_0TargetTest",
-    defaults: ["VtsHalTargetTestDefaults"],
+    defaults: [
+        "VtsHalTargetTestDefaults",
+        "use_libaidlvintf_gtest_helper_static",
+    ],
     srcs: ["VtsHalGraphicsMapperV4_0TargetTest.cpp"],
     static_libs: [
-        "android.hardware.graphics.common-V2-ndk",
+        "android.hardware.graphics.common-V3-ndk",
         "android.hardware.graphics.mapper@4.0-vts",
+        "libaidlcommonsupport",
         "libgralloctypes",
         "libsync",
     ],
     shared_libs: [
+        "android.hardware.graphics.allocator-V1-ndk",
         "android.hardware.graphics.allocator@4.0",
         "android.hardware.graphics.common@1.0",
         "android.hardware.graphics.common@1.1",
         "android.hardware.graphics.common@1.2",
         "android.hardware.graphics.mapper@4.0",
+        "libbinder_ndk",
+        "libvndksupport",
     ],
     header_libs: [
         "libsystem_headers",

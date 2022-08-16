@@ -30,9 +30,17 @@ cc_test {
     srcs: [
         "gnss_hal_test.cpp",
         "gnss_hal_test_cases.cpp",
+        "AGnssCallbackAidl.cpp",
+        "AGnssRilCallbackAidl.cpp",
+        "GnssAntennaInfoCallbackAidl.cpp",
+        "GnssBatchingCallback.cpp",
         "GnssCallbackAidl.cpp",
+        "GnssGeofenceCallback.cpp",
         "GnssMeasurementCallbackAidl.cpp",
+        "GnssNavigationMessageCallback.cpp",
         "GnssPowerIndicationCallback.cpp",
+        "GnssVisibilityControlCallback.cpp",
+        "MeasurementCorrectionsCallback.cpp",
         "VtsHalGnssTargetTest.cpp",
     ],
     shared_libs: [
@@ -43,7 +51,7 @@ cc_test {
         "libbinder",
     ],
     static_libs: [
-        "android.hardware.gnss-V1-cpp",
+        "android.hardware.gnss-V2-cpp",
         "android.hardware.gnss@common-vts-lib",
     ],
     test_suites: [

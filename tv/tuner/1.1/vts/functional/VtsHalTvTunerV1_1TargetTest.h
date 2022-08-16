@@ -39,7 +39,7 @@ static AssertionResult success() {
     return ::testing::AssertionSuccess();
 }
 
-AssertionResult filterDataOutputTestBase(FilterTests tests) {
+AssertionResult filterDataOutputTestBase(FilterTests& tests) {
     // Data Verify Module
     std::map<uint64_t, sp<FilterCallback>>::iterator it;
     std::map<uint64_t, sp<FilterCallback>> filterCallbacks = tests.getFilterCallbacks();

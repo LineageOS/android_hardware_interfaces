@@ -21,7 +21,6 @@ package android.hardware.automotive.audiocontrol;
  * Was expecting to reuse android.media.audio types... Limit info to minimum to prevent
  * duplicating aidl_api. Will follow up if AudioGainConfig is exposed by android.media AIDL API.
  */
-@JavaDerive(equals=true, toString=true)
 @VintfStability
 parcelable AudioGainConfigInfo {
     /**

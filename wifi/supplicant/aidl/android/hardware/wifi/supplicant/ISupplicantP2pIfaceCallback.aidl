@@ -31,7 +31,7 @@ import android.hardware.wifi.supplicant.WpsDevPasswordId;
  * corresponding |ISupplicantP2pIface.registerCallback| method.
  */
 @VintfStability
-interface ISupplicantP2pIfaceCallback {
+oneway interface ISupplicantP2pIfaceCallback {
     /**
      * Used to indicate that a P2P device has been found.
      *
@@ -50,7 +50,7 @@ interface ISupplicantP2pIfaceCallback {
      * @param wfdDeviceInfo WFD device info as described in section 5.1.2 of WFD
      *        technical specification v1.0.0.
      */
-    oneway void onDeviceFound(in byte[] srcAddress, in byte[] p2pDeviceAddress,
+    void onDeviceFound(in byte[] srcAddress, in byte[] p2pDeviceAddress,
             in byte[] primaryDeviceType, in String deviceName, in WpsConfigMethods configMethods,
             in byte deviceCapabilities, in P2pGroupCapabilityMask groupCapabilities,
             in byte[] wfdDeviceInfo);
@@ -60,19 +60,19 @@ interface ISupplicantP2pIfaceCallback {
      *
      * @param p2pDeviceAddress P2P device address.
      */
-    oneway void onDeviceLost(in byte[] p2pDeviceAddress);
+    void onDeviceLost(in byte[] p2pDeviceAddress);
 
     /**
      * Used to indicate the termination of P2P find operation.
      */
-    oneway void onFindStopped();
+    void onFindStopped();
 
     /**
      * Used to indicate the completion of a P2P Group Owner negotiation request.
      *
      * @param status Status of the GO negotiation.
      */
-    oneway void onGoNegotiationCompleted(in P2pStatusCode status);
+    void onGoNegotiationCompleted(in P2pStatusCode status);
 
     /**
      * Used to indicate the reception of a P2P Group Owner negotiation request.
@@ -81,19 +81,19 @@ interface ISupplicantP2pIfaceCallback {
      *        negotiation request.
      * @param passwordId Type of password.
      */
-    oneway void onGoNegotiationRequest(in byte[] srcAddress, in WpsDevPasswordId passwordId);
+    void onGoNegotiationRequest(in byte[] srcAddress, in WpsDevPasswordId passwordId);
 
     /**
      * Used to indicate a failure to form a P2P group.
      *
      * @param failureReason Failure reason string for debug purposes.
      */
-    oneway void onGroupFormationFailure(in String failureReason);
+    void onGroupFormationFailure(in String failureReason);
 
     /**
      * Used to indicate a successful formation of a P2P group.
      */
-    oneway void onGroupFormationSuccess();
+    void onGroupFormationSuccess();
 
     /**
      * Used to indicate the removal of a P2P group.
@@ -101,7 +101,7 @@ interface ISupplicantP2pIfaceCallback {
      * @param groupIfName Interface name of the group. (For ex: p2p-p2p0-1)
      * @param isGroupOwner Whether this device is owner of the group.
      */
-    oneway void onGroupRemoved(in String groupIfname, in boolean isGroupOwner);
+    void onGroupRemoved(in String groupIfname, in boolean isGroupOwner);
 
     /**
      * Used to indicate the start of a P2P group.
@@ -115,7 +115,7 @@ interface ISupplicantP2pIfaceCallback {
      * @param goDeviceAddress MAC Address of the owner of this group.
      * @param isPersistent Whether this group is persisted or not.
      */
-    oneway void onGroupStarted(in String groupIfname, in boolean isGroupOwner, in byte[] ssid,
+    void onGroupStarted(in String groupIfname, in boolean isGroupOwner, in byte[] ssid,
             in int frequency, in byte[] psk, in String passphrase, in byte[] goDeviceAddress,
             in boolean isPersistent);
 
@@ -128,8 +128,8 @@ interface ISupplicantP2pIfaceCallback {
      * @param persistentNetworkId Persistent network Id of the group.
      * @param operatingFrequency Frequency on which the invitation was received.
      */
-    oneway void onInvitationReceived(in byte[] srcAddress, in byte[] goDeviceAddress,
-            in byte[] bssid, in int persistentNetworkId, in int operatingFrequency);
+    void onInvitationReceived(in byte[] srcAddress, in byte[] goDeviceAddress, in byte[] bssid,
+            in int persistentNetworkId, in int operatingFrequency);
 
     /**
      * Used to indicate the result of the P2P invitation request.
@@ -137,7 +137,7 @@ interface ISupplicantP2pIfaceCallback {
      * @param bssid Bssid of the group.
      * @param status Status of the invitation.
      */
-    oneway void onInvitationResult(in byte[] bssid, in P2pStatusCode status);
+    void onInvitationResult(in byte[] bssid, in P2pStatusCode status);
 
     /**
      * Used to indicate the completion of a P2P provision discovery request.
@@ -148,7 +148,7 @@ interface ISupplicantP2pIfaceCallback {
      * @param configMethods Mask of WPS configuration methods supported.
      * @param generatedPin 8 digit pin generated.
      */
-    oneway void onProvisionDiscoveryCompleted(in byte[] p2pDeviceAddress, in boolean isRequest,
+    void onProvisionDiscoveryCompleted(in byte[] p2pDeviceAddress, in boolean isRequest,
             in P2pProvDiscStatusCode status, in WpsConfigMethods configMethods,
             in String generatedPin);
 
@@ -174,7 +174,7 @@ interface ISupplicantP2pIfaceCallback {
      * @param wfdR2DeviceInfo WFD R2 device info as described in section 5.1.12 of WFD
      *        technical specification v2.1.
      */
-    oneway void onR2DeviceFound(in byte[] srcAddress, in byte[] p2pDeviceAddress,
+    void onR2DeviceFound(in byte[] srcAddress, in byte[] p2pDeviceAddress,
             in byte[] primaryDeviceType, in String deviceName, in WpsConfigMethods configMethods,
             in byte deviceCapabilities, in P2pGroupCapabilityMask groupCapabilities,
             in byte[] wfdDeviceInfo, in byte[] wfdR2DeviceInfo);
@@ -187,8 +187,7 @@ interface ISupplicantP2pIfaceCallback {
      *        Wifi P2P Technical specification v1.2.
      * @parm tlvs Refer to section 3.1.3.1 of Wifi P2P Technical specification v1.2.
      */
-    oneway void onServiceDiscoveryResponse(
-            in byte[] srcAddress, in char updateIndicator, in byte[] tlvs);
+    void onServiceDiscoveryResponse(in byte[] srcAddress, in char updateIndicator, in byte[] tlvs);
 
     /**
      * Used to indicate when a STA device is connected to this device.
@@ -196,7 +195,7 @@ interface ISupplicantP2pIfaceCallback {
      * @param srcAddress MAC address of the device that was authorized.
      * @param p2pDeviceAddress P2P device address.
      */
-    oneway void onStaAuthorized(in byte[] srcAddress, in byte[] p2pDeviceAddress);
+    void onStaAuthorized(in byte[] srcAddress, in byte[] p2pDeviceAddress);
 
     /**
      * Used to indicate when a STA device is disconnected from this device.
@@ -204,5 +203,44 @@ interface ISupplicantP2pIfaceCallback {
      * @param srcAddress MAC address of the device that was deauthorized.
      * @param p2pDeviceAddress P2P device address.
      */
-    oneway void onStaDeauthorized(in byte[] srcAddress, in byte[] p2pDeviceAddress);
+    void onStaDeauthorized(in byte[] srcAddress, in byte[] p2pDeviceAddress);
+
+    /**
+     * Used to indicate that operating frequency has changed for this P2P group interface.
+     *
+     * @param groupIfName Interface name of the group. (For ex: p2p-p2p0-1)
+     * @param frequency New operating frequency in MHz.
+     */
+    void onGroupFrequencyChanged(in String groupIfname, in int frequency);
+
+    /**
+     * Used to indicate that a P2P device has been found.
+     *
+     * @param srcAddress MAC address of the device found. This must either
+     *        be the P2P device address for a peer which is not in a group,
+     *        or the P2P interface address for a peer which is a Group Owner.
+     * @param p2pDeviceAddress P2P device address.
+     * @param primaryDeviceType Type of device. Refer to section B.1 of Wifi P2P
+     *        Technical specification v1.2.
+     * @param deviceName Name of the device.
+     * @param configMethods Mask of WPS configuration methods supported by the
+     *        device.
+     * @param deviceCapabilities Refer to section 4.1.4 of Wifi P2P Technical
+     *        specification v1.2.
+     * @param groupCapabilites Refer to section 4.1.4 of Wifi P2P Technical
+     *        specification v1.2.
+     * @param wfdDeviceInfo WFD device info as described in section 5.1.2 of WFD
+     *        technical specification v1.0.0.
+     * @param wfdR2DeviceInfo WFD R2 device info as described in section 5.1.12 of WFD
+     *        technical specification v2.1.
+     * @param vendorElemBytes Vendor-specific information element bytes. The format of an
+     *         information element is EID (1 byte) + Length (1 Byte) + Payload which is
+     *         defined in Section 9.4.4 TLV encodings of 802.11-2016 IEEE Standard for
+     *         Information technology. The length indicates the size of the payload.
+     *         Multiple information elements may be appended within the byte array.
+     */
+    void onDeviceFoundWithVendorElements(in byte[] srcAddress, in byte[] p2pDeviceAddress,
+            in byte[] primaryDeviceType, in String deviceName, in WpsConfigMethods configMethods,
+            in byte deviceCapabilities, in P2pGroupCapabilityMask groupCapabilities,
+            in byte[] wfdDeviceInfo, in byte[] wfdR2DeviceInfo, in byte[] vendorElemBytes);
 }

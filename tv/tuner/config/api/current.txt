@@ -5,9 +5,11 @@ package android.media.tuner.testing.configuration.V1_0 {
     ctor public AvFilterSettings();
     method @Nullable public short getAudioStreamType_optional();
     method @Nullable public boolean getIsPassthrough();
+    method @Nullable public boolean getIsSecureMemory();
     method @Nullable public short getVideoStreamType_optional();
     method public void setAudioStreamType_optional(@Nullable short);
     method public void setIsPassthrough(@Nullable boolean);
+    method public void setIsSecureMemory(@Nullable boolean);
     method public void setVideoStreamType_optional(@Nullable short);
   }
 
@@ -254,6 +256,7 @@ package android.media.tuner.testing.configuration.V1_0 {
     ctor public Filter();
     method @Nullable public android.media.tuner.testing.configuration.V1_0.AvFilterSettings getAvFilterSettings_optional();
     method @Nullable public java.math.BigInteger getBufferSize();
+    method @Nullable public java.math.BigInteger getDataDelayInBytes();
     method @Nullable public String getId();
     method @Nullable public android.media.tuner.testing.configuration.V1_0.IpFilterConfig getIpFilterConfig_optional();
     method @Nullable public android.media.tuner.testing.configuration.V1_0.FilterMainTypeEnum getMainType();
@@ -262,9 +265,11 @@ package android.media.tuner.testing.configuration.V1_0 {
     method @Nullable public android.media.tuner.testing.configuration.V1_0.RecordFilterSettings getRecordFilterSettings_optional();
     method @Nullable public android.media.tuner.testing.configuration.V1_0.SectionFilterSettings getSectionFilterSettings_optional();
     method @Nullable public android.media.tuner.testing.configuration.V1_0.FilterSubTypeEnum getSubType();
+    method @Nullable public java.math.BigInteger getTimeDelayInMs();
     method @Nullable public boolean getUseFMQ();
     method public void setAvFilterSettings_optional(@Nullable android.media.tuner.testing.configuration.V1_0.AvFilterSettings);
     method public void setBufferSize(@Nullable java.math.BigInteger);
+    method public void setDataDelayInBytes(@Nullable java.math.BigInteger);
     method public void setId(@Nullable String);
     method public void setIpFilterConfig_optional(@Nullable android.media.tuner.testing.configuration.V1_0.IpFilterConfig);
     method public void setMainType(@Nullable android.media.tuner.testing.configuration.V1_0.FilterMainTypeEnum);
@@ -273,6 +278,7 @@ package android.media.tuner.testing.configuration.V1_0 {
     method public void setRecordFilterSettings_optional(@Nullable android.media.tuner.testing.configuration.V1_0.RecordFilterSettings);
     method public void setSectionFilterSettings_optional(@Nullable android.media.tuner.testing.configuration.V1_0.SectionFilterSettings);
     method public void setSubType(@Nullable android.media.tuner.testing.configuration.V1_0.FilterSubTypeEnum);
+    method public void setTimeDelayInMs(@Nullable java.math.BigInteger);
     method public void setUseFMQ(@Nullable boolean);
   }
 
@@ -311,6 +317,7 @@ package android.media.tuner.testing.configuration.V1_0 {
     method @Nullable public java.math.BigInteger getFrequency();
     method @Nullable public String getId();
     method @Nullable public boolean getIsSoftwareFrontend();
+    method @Nullable public java.math.BigInteger getRemoveOutputPid();
     method @Nullable public android.media.tuner.testing.configuration.V1_0.FrontendTypeEnum getType();
     method public void setConnectToCicamId(@Nullable java.math.BigInteger);
     method public void setDvbsFrontendSettings_optional(@Nullable android.media.tuner.testing.configuration.V1_0.DvbsFrontendSettings);
@@ -319,6 +326,7 @@ package android.media.tuner.testing.configuration.V1_0 {
     method public void setFrequency(@Nullable java.math.BigInteger);
     method public void setId(@Nullable String);
     method public void setIsSoftwareFrontend(@Nullable boolean);
+    method public void setRemoveOutputPid(@Nullable java.math.BigInteger);
     method public void setType(@Nullable android.media.tuner.testing.configuration.V1_0.FrontendTypeEnum);
   }
 
@@ -471,9 +479,11 @@ package android.media.tuner.testing.configuration.V1_0 {
 
   public class SectionFilterSettings {
     ctor public SectionFilterSettings();
+    method @Nullable public java.math.BigInteger getBitWidthOfLengthField();
     method @Nullable public boolean getIsCheckCrc();
     method @Nullable public boolean getIsRaw();
     method @Nullable public boolean getIsRepeat();
+    method public void setBitWidthOfLengthField(@Nullable java.math.BigInteger);
     method public void setIsCheckCrc(@Nullable boolean);
     method public void setIsRaw(@Nullable boolean);
     method public void setIsRepeat(@Nullable boolean);

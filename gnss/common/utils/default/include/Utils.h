@@ -17,6 +17,7 @@
 #ifndef android_hardware_gnss_common_default_Utils_H_
 #define android_hardware_gnss_common_default_Utils_H_
 
+#include <aidl/android/hardware/gnss/BnGnss.h>
 #include <aidl/android/hardware/gnss/BnGnssMeasurementInterface.h>
 #include <android/hardware/gnss/1.0/IGnss.h>
 #include <android/hardware/gnss/2.0/IGnss.h>
@@ -34,8 +35,13 @@ struct Utils {
             const bool enableCorrVecOutputs);
     static V2_0::IGnssMeasurementCallback::GnssData getMockMeasurementV2_0();
     static V2_1::IGnssMeasurementCallback::GnssData getMockMeasurementV2_1();
+
+    static aidl::android::hardware::gnss::GnssLocation getMockLocation();
     static V2_0::GnssLocation getMockLocationV2_0();
     static V1_0::GnssLocation getMockLocationV1_0();
+
+    static std::vector<aidl::android::hardware::gnss::IGnssCallback::GnssSvInfo>
+    getMockSvInfoList();
     static hidl_vec<V2_1::IGnssCallback::GnssSvInfo> getMockSvInfoListV2_1();
     static V2_1::IGnssCallback::GnssSvInfo getMockSvInfoV2_1(
             V2_0::IGnssCallback::GnssSvInfo gnssSvInfoV2_0, float basebandCN0DbHz);
@@ -46,7 +52,33 @@ struct Utils {
                                                              float cN0DbHz, float elevationDegrees,
                                                              float azimuthDegrees,
                                                              float carrierFrequencyHz);
+
     static hidl_vec<V2_1::IGnssAntennaInfoCallback::GnssAntennaInfo> getMockAntennaInfos();
+};
+
+struct ThreadBlocker {
+    // returns false if unblocked:
+    template <class R, class P>
+    bool wait_for(std::chrono::duration<R, P> const& time) {
+        std::unique_lock<std::mutex> lock(m);
+        return !cv.wait_for(lock, time, [&] { return terminate; });
+    }
+
+    void notify() {
+        std::unique_lock<std::mutex> lock(m);
+        terminate = true;
+        cv.notify_all();
+    }
+
+    void reset() {
+        std::unique_lock<std::mutex> lock(m);
+        terminate = false;
+    }
+
+  private:
+    std::condition_variable cv;
+    std::mutex m;
+    bool terminate = false;
 };
 
 }  // namespace common

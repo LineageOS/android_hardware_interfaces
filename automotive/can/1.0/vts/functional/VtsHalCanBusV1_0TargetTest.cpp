@@ -18,6 +18,7 @@
 #include <android-base/strings.h>
 #include <android/hardware/automotive/can/1.0/ICanBus.h>
 #include <android/hardware/automotive/can/1.0/types.h>
+#include <can-vts-utils/bus-enumerator.h>
 #include <can-vts-utils/can-hal-printers.h>
 #include <gmock/gmock.h>
 #include <hidl-utils/hidl-utils.h>
@@ -27,6 +28,8 @@
 namespace android::hardware::automotive::can::V1_0::vts {
 
 using hardware::hidl_vec;
+using InterfaceType = ICanController::InterfaceType;
+using IfId = ICanController::BusConfig::InterfaceId;
 
 struct CanMessageListener : public can::V1_0::ICanMessageListener {
     virtual Return<void> onReceive(const can::V1_0::CanMessage&) override { return {}; }
@@ -41,20 +44,60 @@ class CanBusHalTest : public ::testing::TestWithParam<std::string> {
     virtual void SetUp() override;
     virtual void TearDown() override;
 
+    bool up(InterfaceType iftype, const std::string& srvname, const std::string& ifname);
+
     std::tuple<Result, sp<ICloseHandle>> listen(const hidl_vec<CanMessageFilter>& filter,
                                                 const sp<ICanMessageListener>& listener);
     sp<ICloseHandle> listenForErrors(const sp<ICanErrorListener>& listener);
 
     sp<ICanBus> mCanBus;
+    sp<ICanController> mCanController;
 };
 
 void CanBusHalTest::SetUp() {
     mCanBus = ICanBus::getService(GetParam());
     ASSERT_TRUE(mCanBus) << "Couldn't open CAN Bus: " << GetParam();
+    const auto controllers = getAllHalInstanceNames(ICanController::descriptor);
+    ASSERT_GT(controllers.size(), 0u);
+    // just grab the first one
+    mCanController = ICanController::getService(controllers[0]);
+    ASSERT_TRUE(mCanController) << "Couldn't open CAN Controller: " << controllers[0];
+
+    // this will throw an error if the bus is already up, but we have to try.
+    up(InterfaceType::VIRTUAL, GetParam(), "vcan0");
 }
 
 void CanBusHalTest::TearDown() {
     mCanBus.clear();
+}
+
+bool CanBusHalTest::up(InterfaceType iftype, const std::string& srvname,
+                       const std::string& ifname) {
+    ICanController::BusConfig config = {};
+    config.name = srvname;
+
+    // TODO(b/146214370): move interfaceId constructors to a library
+    if (iftype == InterfaceType::SOCKETCAN) {
+        IfId::Socketcan socketcan = {};
+        socketcan.ifname(ifname);
+        config.interfaceId.socketcan(socketcan);
+    } else if (iftype == InterfaceType::SLCAN) {
+        IfId::Slcan slcan = {};
+        slcan.ttyname(ifname);
+        config.interfaceId.slcan(slcan);
+    } else if (iftype == InterfaceType::VIRTUAL) {
+        config.interfaceId.virtualif({ifname});
+    } else {
+        ADD_FAILURE() << "Unexpected iftype: " << toString(iftype);
+    }
+
+    const auto upresult = mCanController->upInterface(config);
+    if (upresult != ICanController::Result::OK) {
+        // upInterface returns INVALID_STATE if the interface is already up (which is fine).
+        EXPECT_EQ(ICanController::Result::INVALID_STATE, upresult)
+                << ifname << " can't be brought up!";
+    }
+    return true;
 }
 
 std::tuple<Result, sp<ICloseHandle>> CanBusHalTest::listen(

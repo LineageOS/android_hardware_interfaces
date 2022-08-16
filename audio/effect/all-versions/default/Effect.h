@@ -29,6 +29,7 @@
 #include <fmq/MessageQueue.h>
 #include <hidl/MQDescriptor.h>
 #include <hidl/Status.h>
+#include <mediautils/MethodStatistics.h>
 #include <utils/Thread.h>
 
 #include <hardware/audio_effect.h>
@@ -169,7 +170,11 @@ struct Effect : public IEffect {
     Result setParameterImpl(uint32_t paramSize, const void* paramData, uint32_t valueSize,
                             const void* valueData);
 
-   private:
+    // process execution statistics
+    const std::shared_ptr<mediautils::MethodStatistics<std::string>> mStatistics =
+            std::make_shared<mediautils::MethodStatistics<std::string>>();
+
+  private:
     friend struct VirtualizerEffect;  // for getParameterImpl
     friend struct VisualizerEffect;   // to allow executing commands
 

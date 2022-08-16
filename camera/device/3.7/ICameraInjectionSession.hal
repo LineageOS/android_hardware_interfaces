@@ -24,7 +24,10 @@ import @3.6::HalStreamConfiguration;
 import @3.7::ICameraDeviceSession;
 
 /**
- * Injection Camera device active session interface.
+ * Injection camera device active session interface.
+ *
+ * Note that this is implemented on a special camera injection hal, if it is a
+ * general camera hal, it is not necessary to implement this interface.
  *
  * When an external camera is injected to replace the internal camera session, the
  * injection session will be established in camera framework, and then
