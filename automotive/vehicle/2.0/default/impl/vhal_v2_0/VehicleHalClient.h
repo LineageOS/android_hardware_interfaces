@@ -18,7 +18,13 @@
 
 #include <vhal_v2_0/VehicleClient.h>
 
-namespace android::hardware::automotive::vehicle::V2_0::impl {
+namespace android {
+namespace hardware {
+namespace automotive {
+namespace vehicle {
+namespace V2_0 {
+
+namespace impl {
 
 // The common client operations that may be used by both native and
 // virtualized VHAL clients.
@@ -40,4 +46,10 @@ class VehicleHalClient : public IVehicleClient {
     PropertyCallBackType mPropCallback;
 };
 
-}  // namespace android::hardware::automotive::vehicle::V2_0::impl
+}  // namespace impl
+
+}  // namespace V2_0
+}  // namespace vehicle
+}  // namespace automotive
+}  // namespace hardware
+}  // namespace android

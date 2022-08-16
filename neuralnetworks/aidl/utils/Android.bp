@@ -38,7 +38,7 @@ cc_defaults {
     export_include_dirs: ["include"],
     cflags: ["-Wthread-safety"],
     static_libs: [
-        "android.hardware.graphics.common-V2-ndk",
+        "android.hardware.graphics.common-V3-ndk",
         "libaidlcommonsupport",
         "libarect",
         "neuralnetworks_types",
@@ -92,7 +92,7 @@ cc_defaults {
     name: "neuralnetworks_use_latest_utils_hal_aidl",
     static_libs: [
         "android.hardware.common-V2-ndk",
-        "android.hardware.graphics.common-V2-ndk",
+        "android.hardware.graphics.common-V3-ndk",
         "android.hardware.neuralnetworks-V4-ndk",
         "neuralnetworks_utils_hal_aidl",
     ],

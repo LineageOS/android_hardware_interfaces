@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,56 +14,32 @@
  * limitations under the License.
  */
 
+// This file is just used for soft migration from VehicleHalServer to DefaultVehicleHalServer.
+// The virtualized VHAL that uses VehichleHalServer is at a different repo and cannot be updated
+// together with this repo, so we need a soft migration. Once the rename is finished at the
+// virtualized VHAL side, this file would be removed.
+
 #pragma once
 
-#include <vhal_v2_0/VehicleObjectPool.h>
-#include <vhal_v2_0/VehiclePropertyStore.h>
-#include <vhal_v2_0/VehicleServer.h>
+#include "DefaultVehicleHalServer.h"
 
-#include "GeneratorHub.h"
+namespace android {
+namespace hardware {
+namespace automotive {
+namespace vehicle {
+namespace V2_0 {
 
-namespace android::hardware::automotive::vehicle::V2_0::impl {
+namespace impl {
 
-// This contains the common server operations that will be used by
-// both native and virtualized VHAL server. Notice that in the virtualized
-// scenario, the server may be run on a different OS than Android.
-class VehicleHalServer : public IVehicleServer {
+class VehicleHalServer : public DefaultVehicleHalServer {
   public:
-    VehicleHalServer();
-
-    void sendAllValuesToClient();
-
-    // Methods from IVehicleServer
-
-    std::vector<VehiclePropConfig> onGetAllPropertyConfig() const override;
-
-    StatusCode onSetProperty(const VehiclePropValue& value, bool updateStatus) override;
-
-    // Set the Property Value Pool used in this server
-    void setValuePool(VehiclePropValuePool* valuePool);
-
-  private:
-    using VehiclePropValuePtr = recyclable_ptr<VehiclePropValue>;
-
-    GeneratorHub* getGenerator();
-
-    VehiclePropValuePool* getValuePool() const;
-
-    void onFakeValueGenerated(const VehiclePropValue& value);
-
-    StatusCode handleGenerateFakeDataRequest(const VehiclePropValue& request);
-
-    VehiclePropValuePtr createApPowerStateReq(VehicleApPowerStateReq req, int32_t param);
-
-    VehiclePropValuePtr createHwInputKeyProp(VehicleHwKeyInputAction action, int32_t keyCode,
-                                             int32_t targetDisplay);
-
-  private:
-    GeneratorHub mGeneratorHub{
-            std::bind(&VehicleHalServer::onFakeValueGenerated, this, std::placeholders::_1)};
-
-    VehiclePropValuePool* mValuePool{nullptr};
-    VehiclePropertyStore mServerSidePropStore;
+    VehicleHalServer() : DefaultVehicleHalServer(){};
 };
 
-}  // namespace android::hardware::automotive::vehicle::V2_0::impl
+}  // namespace impl
+
+}  // namespace V2_0
+}  // namespace vehicle
+}  // namespace automotive
+}  // namespace hardware
+}  // namespace android

@@ -41,4 +41,11 @@ aidl_interface {
             gen_trace: true,
         },
     },
+    versions_with_info: [
+        {
+            version: "1",
+            imports: [],
+        },
+    ],
+
 }

@@ -33,9 +33,10 @@ Lnb::Lnb(int id) {
 
 Lnb::~Lnb() {}
 
-Return<Result> Lnb::setCallback(const sp<ILnbCallback>& /* callback */) {
+Return<Result> Lnb::setCallback(const sp<ILnbCallback>& callback) {
     ALOGV("%s", __FUNCTION__);
 
+    mCallback = callback;
     return Result::SUCCESS;
 }
 
@@ -57,9 +58,16 @@ Return<Result> Lnb::setSatellitePosition(LnbPosition /* position */) {
     return Result::SUCCESS;
 }
 
-Return<Result> Lnb::sendDiseqcMessage(const hidl_vec<uint8_t>& /* diseqcMessage */) {
+Return<Result> Lnb::sendDiseqcMessage(const hidl_vec<uint8_t>& diseqcMessage) {
     ALOGV("%s", __FUNCTION__);
 
+    if (mCallback != nullptr) {
+        // The correct implementation should be to return the response from the
+        // device via onDiseqcMessage(). The below implementation is only to enable
+        // testing for LnbCallbacks.
+        ALOGV("[hidl] %s - this is for test purpose only, and must be replaced!", __FUNCTION__);
+        mCallback->onDiseqcMessage(diseqcMessage);
+    }
     return Result::SUCCESS;
 }
 

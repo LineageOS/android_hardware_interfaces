@@ -30,6 +30,7 @@
 
 #include <CameraMetadata.h>
 #include <CameraParameters.h>
+#include <HandleImporter.h>
 #include <android/hardware/camera/device/1.0/ICameraDevice.h>
 #include <android/hardware/camera/device/3.2/ICameraDevice.h>
 #include <android/hardware/camera/device/3.3/ICameraDeviceSession.h>
@@ -95,6 +96,7 @@ using ::android::hardware::camera::common::V1_0::Status;
 using ::android::hardware::camera::common::V1_0::TorchMode;
 using ::android::hardware::camera::common::V1_0::TorchModeStatus;
 using ::android::hardware::camera::common::V1_0::helper::CameraParameters;
+using ::android::hardware::camera::common::V1_0::helper::HandleImporter;
 using ::android::hardware::camera::common::V1_0::helper::Size;
 using ::android::hardware::camera::device::V1_0::CameraFacing;
 using ::android::hardware::camera::device::V1_0::CameraFrameMetadata;
@@ -134,7 +136,6 @@ using ::android::hardware::graphics::common::V1_0::BufferUsage;
 using ::android::hardware::graphics::common::V1_0::Dataspace;
 using ::android::hardware::graphics::common::V1_0::PixelFormat;
 using ::android::hidl::allocator::V1_0::IAllocator;
-using ::android::hidl::memory::V1_0::IMapper;
 using ::android::hidl::memory::V1_0::IMemory;
 using ResultMetadataQueue = MessageQueue<uint8_t, kSynchronizedReadWrite>;
 using ::android::hidl::manager::V1_0::IServiceManager;
@@ -159,6 +160,27 @@ struct AvailableStream {
     int32_t width;
     int32_t height;
     int32_t format;
+};
+
+struct RecordingRateSizePair {
+    int32_t recordingRate;
+    int32_t width;
+    int32_t height;
+
+    bool operator==(const RecordingRateSizePair &p) const{
+        return p.recordingRate == recordingRate &&
+                p.width == width &&
+                p.height == height;
+    }
+};
+
+struct RecordingRateSizePairHasher {
+    size_t operator()(const RecordingRateSizePair& p) const {
+        std::size_t p1 = std::hash<int32_t>()(p.recordingRate);
+        std::size_t p2 = std::hash<int32_t>()(p.width);
+        std::size_t p3 = std::hash<int32_t>()(p.height);
+        return p1 ^ p2 ^ p3;
+    }
 };
 
 struct AvailableZSLInputOutput {
@@ -191,9 +213,18 @@ enum SystemCameraKind {
     HIDDEN_SECURE_CAMERA
 };
 
+const static std::vector<int64_t> kMandatoryUseCases = {
+        ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_DEFAULT,
+        ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_PREVIEW,
+        ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_STILL_CAPTURE,
+        ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_VIDEO_RECORD,
+        ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_PREVIEW_VIDEO_STILL,
+        ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_VIDEO_CALL
+};
+
 namespace {
     // "device@<version>/legacy/<id>"
-    const char *kDeviceNameRE = "device@([0-9]+\\.[0-9]+)/%s/(.+)";
+    const char* kDeviceNameRE = "device@([0-9]+\\.[0-9]+)/%s/(.+)";
     const int CAMERA_DEVICE_API_VERSION_3_7 = 0x307;
     const int CAMERA_DEVICE_API_VERSION_3_6 = 0x306;
     const int CAMERA_DEVICE_API_VERSION_3_5 = 0x305;
@@ -201,18 +232,16 @@ namespace {
     const int CAMERA_DEVICE_API_VERSION_3_3 = 0x303;
     const int CAMERA_DEVICE_API_VERSION_3_2 = 0x302;
     const int CAMERA_DEVICE_API_VERSION_1_0 = 0x100;
-    const char *kHAL3_7 = "3.7";
-    const char *kHAL3_6 = "3.6";
-    const char *kHAL3_5 = "3.5";
-    const char *kHAL3_4 = "3.4";
-    const char *kHAL3_3 = "3.3";
-    const char *kHAL3_2 = "3.2";
-    const char *kHAL1_0 = "1.0";
+    const char* kHAL3_7 = "3.7";
+    const char* kHAL3_6 = "3.6";
+    const char* kHAL3_5 = "3.5";
+    const char* kHAL3_4 = "3.4";
+    const char* kHAL3_3 = "3.3";
+    const char* kHAL3_2 = "3.2";
+    const char* kHAL1_0 = "1.0";
 
-    bool matchDeviceName(const hidl_string& deviceName,
-            const hidl_string &providerType,
-            std::string* deviceVersion,
-            std::string* cameraId) {
+    bool matchDeviceName(const hidl_string& deviceName, const hidl_string& providerType,
+                         std::string* deviceVersion, std::string* cameraId) {
         ::android::String8 pattern;
         pattern.appendFormat(kDeviceNameRE, providerType.c_str());
         std::regex e(pattern.string());
@@ -608,7 +637,8 @@ public:
      }
 
      virtual Return<void> processCaptureResult_3_4(
-         const hidl_vec<V3_4::CaptureResult>& /*results*/) override {
+
+             const hidl_vec<V3_4::CaptureResult>& /*results*/) override {
          ALOGI("processCaptureResult_3_4 callback");
          ADD_FAILURE();  // Empty callback should not reach here
          return Void();
@@ -639,40 +669,40 @@ public:
  };
 
     struct DeviceCb : public V3_5::ICameraDeviceCallback {
-        DeviceCb(CameraHidlTest *parent, int deviceVersion, const camera_metadata_t *staticMeta) :
-                mParent(parent), mDeviceVersion(deviceVersion) {
+        DeviceCb(CameraHidlTest* parent, int deviceVersion, const camera_metadata_t* staticMeta)
+            : mParent(parent), mDeviceVersion(deviceVersion) {
             mStaticMetadata = staticMeta;
         }
 
-        Return<void> processCaptureResult_3_4(
-                const hidl_vec<V3_4::CaptureResult>& results) override;
+        Return<void> processCaptureResult_3_4(const hidl_vec<V3_4::CaptureResult>& results) override;
         Return<void> processCaptureResult(const hidl_vec<CaptureResult>& results) override;
         Return<void> notify(const hidl_vec<NotifyMsg>& msgs) override;
 
-        Return<void> requestStreamBuffers(
-                const hidl_vec<V3_5::BufferRequest>& bufReqs,
-                requestStreamBuffers_cb _hidl_cb) override;
+        Return<void> requestStreamBuffers(const hidl_vec<V3_5::BufferRequest>& bufReqs,
+                                          requestStreamBuffers_cb _hidl_cb) override;
 
         Return<void> returnStreamBuffers(const hidl_vec<StreamBuffer>& buffers) override;
 
         void setCurrentStreamConfig(const hidl_vec<V3_4::Stream>& streams,
-                const hidl_vec<V3_2::HalStream>& halStreams);
+                                     const hidl_vec<V3_2::HalStream>& halStreams);
 
         void waitForBuffersReturned();
 
-     private:
+      private:
         bool processCaptureResultLocked(const CaptureResult& results,
-                hidl_vec<PhysicalCameraMetadata> physicalCameraMetadata);
+                                        hidl_vec<PhysicalCameraMetadata> physicalCameraMetadata);
+        Return<void> notifyHelper(const hidl_vec<NotifyMsg>& msgs,
+                                  const std::vector<std::pair<bool, nsecs_t>>& readoutTimestamps);
 
-        CameraHidlTest *mParent; // Parent object
+        CameraHidlTest* mParent;  // Parent object
         int mDeviceVersion;
         android::hardware::camera::common::V1_0::helper::CameraMetadata mStaticMetadata;
         bool hasOutstandingBuffersLocked();
 
         /* members for requestStreamBuffers() and returnStreamBuffers()*/
-        std::mutex mLock; // protecting members below
-        bool                      mUseHalBufManager = false;
-        hidl_vec<V3_4::Stream>    mStreams;
+        std::mutex mLock;  // protecting members below
+        bool mUseHalBufManager = false;
+        hidl_vec<V3_4::Stream> mStreams;
         hidl_vec<V3_2::HalStream> mHalStreams;
         uint64_t mNextBufferId = 1;
         using OutstandingBuffers = std::unordered_map<uint64_t, hidl_handle>;
@@ -767,12 +797,12 @@ public:
                       sp<provider::V2_5::ICameraProvider>* provider2_5 /*out*/,
                       sp<provider::V2_6::ICameraProvider>* provider2_6 /*out*/,
                       sp<provider::V2_7::ICameraProvider>* provider2_7 /*out*/);
-    void castSession(const sp<ICameraDeviceSession> &session, int32_t deviceVersion,
-            sp<device::V3_3::ICameraDeviceSession> *session3_3 /*out*/,
-            sp<device::V3_4::ICameraDeviceSession> *session3_4 /*out*/,
-            sp<device::V3_5::ICameraDeviceSession> *session3_5 /*out*/,
-            sp<device::V3_6::ICameraDeviceSession> *session3_6 /*out*/,
-            sp<device::V3_7::ICameraDeviceSession> *session3_7 /*out*/);
+    void castSession(const sp<ICameraDeviceSession>& session, int32_t deviceVersion,
+                     sp<device::V3_3::ICameraDeviceSession>* session3_3 /*out*/,
+                     sp<device::V3_4::ICameraDeviceSession>* session3_4 /*out*/,
+                     sp<device::V3_5::ICameraDeviceSession>* session3_5 /*out*/,
+                     sp<device::V3_6::ICameraDeviceSession>* session3_6 /*out*/,
+                     sp<device::V3_7::ICameraDeviceSession>* session3_7 /*out*/);
     void castInjectionSession(
             const sp<ICameraDeviceSession>& session,
             sp<device::V3_7::ICameraInjectionSession>* injectionSession3_7 /*out*/);
@@ -853,6 +883,7 @@ public:
     void verifyCameraCharacteristics(Status status, const CameraMetadata& chars);
     void verifyExtendedSceneModeCharacteristics(const camera_metadata_t* metadata);
     void verifyZoomCharacteristics(const camera_metadata_t* metadata);
+    void verifyStreamUseCaseCharacteristics(const camera_metadata_t* metadata);
     void verifyRecommendedConfigs(const CameraMetadata& metadata);
     void verifyMonochromeCharacteristics(const CameraMetadata& chars, int deviceVersion);
     void verifyMonochromeCameraResult(
@@ -898,11 +929,12 @@ public:
 
     static Status getMandatoryConcurrentStreams(const camera_metadata_t* staticMeta,
                                                 std::vector<AvailableStream>* outputStreams);
-
+    static bool supportsPreviewStabilization(const std::string& name, sp<ICameraProvider> provider);
     static Status getJpegBufferSize(camera_metadata_t *staticMeta,
             uint32_t* outBufSize);
     static Status isConstrainedModeAvailable(camera_metadata_t *staticMeta);
     static Status isLogicalMultiCamera(const camera_metadata_t *staticMeta);
+    static bool isTorchStrengthControlSupported(const camera_metadata_t *staticMeta);
     static Status isOfflineSessionSupported(const camera_metadata_t *staticMeta);
     static Status getPhysicalCameraIds(const camera_metadata_t *staticMeta,
             std::unordered_set<std::string> *physicalIds/*out*/);
@@ -944,6 +976,9 @@ public:
 
     void processCaptureRequestInternal(uint64_t bufferusage, RequestTemplate reqTemplate,
                                        bool useSecureOnlyCameras);
+    void processPreviewStabilizationCaptureRequestInternal(
+            bool previewStabilizationOn,
+            /*inout*/ std::unordered_map<std::string, nsecs_t>& cameraDeviceToTimeLag);
 
     // Used by switchToOffline where a new result queue is created for offline reqs
     void updateInflightResultQueue(std::shared_ptr<ResultMetadataQueue> resultQueue);
@@ -954,6 +989,9 @@ protected:
     struct InFlightRequest {
         // Set by notify() SHUTTER call.
         nsecs_t shutterTimestamp;
+
+        bool shutterReadoutTimestampValid;
+        nsecs_t shutterReadoutTimestamp;
 
         bool errorCodeValid;
         ErrorCode errorCode;
@@ -994,12 +1032,18 @@ protected:
 
         // Buffers are added by process_capture_result when output buffers
         // return from HAL but framework.
-        ::android::Vector<StreamBuffer> resultOutputBuffers;
+        struct StreamBufferAndTimestamp {
+            StreamBuffer buffer;
+            nsecs_t timeStamp;
+        };
+        ::android::Vector<StreamBufferAndTimestamp> resultOutputBuffers;
 
         std::unordered_set<std::string> expectedPhysicalResults;
 
         InFlightRequest() :
                 shutterTimestamp(0),
+                shutterReadoutTimestampValid(false),
+                shutterReadoutTimestamp(0),
                 errorCodeValid(false),
                 errorCode(ErrorCode::ERROR_BUFFER),
                 usePartialResult(false),
@@ -1017,6 +1061,8 @@ protected:
                 bool partialResults, uint32_t partialCount,
                 std::shared_ptr<ResultMetadataQueue> queue = nullptr) :
                 shutterTimestamp(0),
+                shutterReadoutTimestampValid(false),
+                shutterReadoutTimestamp(0),
                 errorCodeValid(false),
                 errorCode(ErrorCode::ERROR_BUFFER),
                 usePartialResult(partialResults),
@@ -1035,6 +1081,8 @@ protected:
                 const std::unordered_set<std::string>& extraPhysicalResult,
                 std::shared_ptr<ResultMetadataQueue> queue = nullptr) :
                 shutterTimestamp(0),
+                shutterReadoutTimestampValid(false),
+                shutterReadoutTimestamp(0),
                 errorCodeValid(false),
                 errorCode(ErrorCode::ERROR_BUFFER),
                 usePartialResult(partialResults),
@@ -1078,6 +1126,8 @@ protected:
 
     // Camera provider type.
     std::string mProviderType;
+
+    HandleImporter mHandleImporter;
 };
 
 Return<void> CameraHidlTest::Camera1DeviceCb::notifyCallback(
@@ -1403,8 +1453,25 @@ bool CameraHidlTest::DeviceCb::processCaptureResultLocked(const CaptureResult& r
         return notify;
     }
 
-    request->resultOutputBuffers.appendArray(results.outputBuffers.data(),
-            results.outputBuffers.size());
+    for (const auto& buffer : results.outputBuffers) {
+        // wait for the fence timestamp and store it along with the buffer
+        // TODO: Check if we really need the dup here
+        sp<android::Fence> releaseFence = nullptr;
+        if (buffer.releaseFence && (buffer.releaseFence->numFds == 1) &&
+            buffer.releaseFence->data[0] >= 0) {
+            releaseFence = new android::Fence(dup(buffer.releaseFence->data[0]));
+        }
+        InFlightRequest::StreamBufferAndTimestamp streamBufferAndTimestamp;
+        streamBufferAndTimestamp.buffer = buffer;
+        streamBufferAndTimestamp.timeStamp = systemTime();
+        if (releaseFence && releaseFence->isValid()) {
+            releaseFence->wait(/*ms*/ 300);
+            nsecs_t releaseTime = releaseFence->getSignalTime();
+            if (streamBufferAndTimestamp.timeStamp < releaseTime)
+                streamBufferAndTimestamp.timeStamp = releaseTime;
+        }
+        request->resultOutputBuffers.push_back(streamBufferAndTimestamp);
+    }
     // If shutter event is received notify the pending threads.
     if (request->shutterTimestamp != 0) {
         notify = true;
@@ -1463,6 +1530,18 @@ void CameraHidlTest::DeviceCb::waitForBuffersReturned() {
 
 Return<void> CameraHidlTest::DeviceCb::notify(
         const hidl_vec<NotifyMsg>& messages) {
+    std::vector<std::pair<bool, nsecs_t>> readoutTimestamps;
+    readoutTimestamps.resize(messages.size());
+    for (size_t i = 0; i < messages.size(); i++) {
+        readoutTimestamps[i] = {false, 0};
+    }
+
+    return notifyHelper(messages, readoutTimestamps);
+}
+
+Return<void> CameraHidlTest::DeviceCb::notifyHelper(
+        const hidl_vec<NotifyMsg>& messages,
+        const std::vector<std::pair<bool, nsecs_t>>& readoutTimestamps) {
     std::lock_guard<std::mutex> l(mParent->mLock);
 
     for (size_t i = 0; i < messages.size(); i++) {
@@ -1525,6 +1604,8 @@ Return<void> CameraHidlTest::DeviceCb::notify(
                 }
                 InFlightRequest *r = mParent->mInflightMap.editValueAt(idx);
                 r->shutterTimestamp = messages[i].msg.shutter.timestamp;
+                r->shutterReadoutTimestampValid = readoutTimestamps[i].first;
+                r->shutterReadoutTimestamp = readoutTimestamps[i].second;
             }
                 break;
             default:
@@ -3120,9 +3201,9 @@ TEST_P(CameraHidlTest, openClose) {
                 sp<device::V3_5::ICameraDeviceSession> sessionV3_5;
                 sp<device::V3_6::ICameraDeviceSession> sessionV3_6;
                 sp<device::V3_7::ICameraDeviceSession> sessionV3_7;
-                castSession(session, deviceVersion, &sessionV3_3,
-                        &sessionV3_4, &sessionV3_5, &sessionV3_6,
-                        &sessionV3_7);
+                castSession(session, deviceVersion, &sessionV3_3, &sessionV3_4, &sessionV3_5,
+                            &sessionV3_6, &sessionV3_7);
+
                 if (deviceVersion == CAMERA_DEVICE_API_VERSION_3_7) {
                     ASSERT_TRUE(sessionV3_7.get() != nullptr);
                 } else if (deviceVersion == CAMERA_DEVICE_API_VERSION_3_6) {
@@ -3133,7 +3214,7 @@ TEST_P(CameraHidlTest, openClose) {
                     ASSERT_TRUE(sessionV3_4.get() != nullptr);
                 } else if (deviceVersion == CAMERA_DEVICE_API_VERSION_3_3) {
                     ASSERT_TRUE(sessionV3_3.get() != nullptr);
-                } else { //V3_2
+                } else {  // V3_2
                     ASSERT_TRUE(sessionV3_3.get() == nullptr);
                     ASSERT_TRUE(sessionV3_4.get() == nullptr);
                     ASSERT_TRUE(sessionV3_5.get() == nullptr);
@@ -3295,8 +3376,8 @@ TEST_P(CameraHidlTest, configureStreamsAvailableOutputs) {
         sp<device::V3_7::ICameraDevice> cameraDevice3_7;
         openEmptyDeviceSession(name, mProvider,
                 &session /*out*/, &staticMeta /*out*/, &cameraDevice /*out*/);
-        castSession(session, deviceVersion, &session3_3, &session3_4, &session3_5,
-                &session3_6, &session3_7);
+        castSession(session, deviceVersion, &session3_3, &session3_4, &session3_5, &session3_6,
+                    &session3_7);
         castDevice(cameraDevice, deviceVersion, &cameraDevice3_5, &cameraDevice3_7);
 
         outputStreams.clear();
@@ -3567,8 +3648,8 @@ TEST_P(CameraHidlTest, configureStreamsInvalidOutputs) {
         sp<device::V3_7::ICameraDevice> cameraDevice3_7;
         openEmptyDeviceSession(name, mProvider, &session /*out*/, &staticMeta /*out*/,
                 &cameraDevice /*out*/);
-        castSession(session, deviceVersion, &session3_3, &session3_4, &session3_5,
-                &session3_6, &session3_7);
+        castSession(session, deviceVersion, &session3_3, &session3_4, &session3_5, &session3_6,
+                    &session3_7);
         castDevice(cameraDevice, deviceVersion, &cameraDevice3_5, &cameraDevice3_7);
 
         outputStreams.clear();
@@ -3780,8 +3861,8 @@ TEST_P(CameraHidlTest, configureStreamsZSLInputOutputs) {
         sp<device::V3_7::ICameraDevice> cameraDevice3_7;
         openEmptyDeviceSession(name, mProvider, &session /*out*/, &staticMeta /*out*/,
                 &cameraDevice /*out*/);
-        castSession(session, deviceVersion, &session3_3, &session3_4, &session3_5,
-                &session3_6, &session3_7);
+        castSession(session, deviceVersion, &session3_3, &session3_4, &session3_5, &session3_6,
+                    &session3_7);
         castDevice(cameraDevice, deviceVersion, &cameraDevice3_5, &cameraDevice3_7);
 
         Status rc = isZSLModeAvailable(staticMeta);
@@ -3962,8 +4043,8 @@ TEST_P(CameraHidlTest, configureStreamsWithSessionParameters) {
         sp<device::V3_6::ICameraDeviceSession> session3_6;
         sp<device::V3_7::ICameraDeviceSession> session3_7;
         openEmptyDeviceSession(name, mProvider, &session /*out*/, &staticMetaBuffer /*out*/);
-        castSession(session, deviceVersion, &session3_3, &session3_4, &session3_5,
-                &session3_6, &session3_7);
+        castSession(session, deviceVersion, &session3_3, &session3_4, &session3_5, &session3_6,
+                    &session3_7);
         if (deviceVersion == CAMERA_DEVICE_API_VERSION_3_4) {
             ASSERT_NE(session3_4, nullptr);
         } else {
@@ -4107,8 +4188,8 @@ TEST_P(CameraHidlTest, configureStreamsPreviewStillOutputs) {
         sp<device::V3_7::ICameraDevice> cameraDevice3_7;
         openEmptyDeviceSession(name, mProvider, &session /*out*/, &staticMeta /*out*/,
                 &cameraDevice /*out*/);
-        castSession(session, deviceVersion, &session3_3, &session3_4, &session3_5,
-                &session3_6, &session3_7);
+        castSession(session, deviceVersion, &session3_3, &session3_4, &session3_5, &session3_6,
+                    &session3_7);
         castDevice(cameraDevice, deviceVersion, &cameraDevice3_5, &cameraDevice3_7);
 
         // Check if camera support depth only
@@ -4241,8 +4322,8 @@ TEST_P(CameraHidlTest, configureStreamsConstrainedOutputs) {
         sp<device::V3_7::ICameraDevice> cameraDevice3_7;
         openEmptyDeviceSession(name, mProvider, &session /*out*/, &staticMeta /*out*/,
                 &cameraDevice /*out*/);
-        castSession(session, deviceVersion, &session3_3, &session3_4, &session3_5,
-                &session3_6, &session3_7);
+        castSession(session, deviceVersion, &session3_3, &session3_4, &session3_5, &session3_6,
+                    &session3_7);
         castDevice(cameraDevice, deviceVersion, &cameraDevice3_5, &cameraDevice3_7);
 
         Status rc = isConstrainedModeAvailable(staticMeta);
@@ -4256,6 +4337,39 @@ TEST_P(CameraHidlTest, configureStreamsConstrainedOutputs) {
         AvailableStream hfrStream;
         rc = pickConstrainedModeSize(staticMeta, hfrStream);
         ASSERT_EQ(Status::OK, rc);
+
+        // Check that HAL does not advertise multiple preview rates
+        // for the same recording rate and size.
+        camera_metadata_ro_entry entry;
+
+        std::unordered_map<RecordingRateSizePair, int32_t, RecordingRateSizePairHasher> fpsRangeMap;
+
+        auto retCode = find_camera_metadata_ro_entry(staticMeta,
+                ANDROID_CONTROL_AVAILABLE_HIGH_SPEED_VIDEO_CONFIGURATIONS, &entry);
+        ASSERT_EQ(retCode, 0);
+        ASSERT_GT(entry.count, 0);
+
+        for (size_t i = 0; i < entry.count; i+=5) {
+            RecordingRateSizePair recordingRateSizePair;
+            recordingRateSizePair.width = entry.data.i32[i];
+            recordingRateSizePair.height = entry.data.i32[i+1];
+
+            int32_t previewFps = entry.data.i32[i+2];
+            int32_t recordingFps = entry.data.i32[i+3];
+            recordingRateSizePair.recordingRate = recordingFps;
+
+            if (recordingFps != previewFps) {
+                auto it = fpsRangeMap.find(recordingRateSizePair);
+                if (it == fpsRangeMap.end()) {
+                    fpsRangeMap.insert(std::make_pair(recordingRateSizePair,previewFps));
+                    ALOGV("Added RecordingRateSizePair:%d , %d, %d PreviewRate: %d",
+                            recordingFps, recordingRateSizePair.width, recordingRateSizePair.height,
+                            previewFps);
+                } else {
+                    ASSERT_EQ(previewFps, it->second);
+                }
+            }
+        }
 
         int32_t streamId = 0;
         uint32_t streamConfigCounter = 0;
@@ -4488,8 +4602,8 @@ TEST_P(CameraHidlTest, configureStreamsVideoStillOutputs) {
         sp<device::V3_7::ICameraDevice> cameraDevice3_7;
         openEmptyDeviceSession(name, mProvider, &session /*out*/, &staticMeta /*out*/,
                 &cameraDevice /*out*/);
-        castSession(session, deviceVersion, &session3_3, &session3_4, &session3_5,
-                &session3_6, &session3_7);
+        castSession(session, deviceVersion, &session3_3, &session3_4, &session3_5, &session3_6,
+                    &session3_7);
         castDevice(cameraDevice, deviceVersion, &cameraDevice3_5, &cameraDevice3_7);
 
         // Check if camera support depth only
@@ -4727,7 +4841,7 @@ void CameraHidlTest::processCaptureRequestInternal(uint64_t bufferUsage,
 
             ASSERT_FALSE(inflightReq.errorCodeValid);
             ASSERT_NE(inflightReq.resultOutputBuffers.size(), 0u);
-            ASSERT_EQ(testStream.id, inflightReq.resultOutputBuffers[0].streamId);
+            ASSERT_EQ(testStream.id, inflightReq.resultOutputBuffers[0].buffer.streamId);
 
             request.frameNumber++;
             // Empty settings should be supported after the first call
@@ -4765,7 +4879,7 @@ void CameraHidlTest::processCaptureRequestInternal(uint64_t bufferUsage,
 
             ASSERT_FALSE(inflightReq.errorCodeValid);
             ASSERT_NE(inflightReq.resultOutputBuffers.size(), 0u);
-            ASSERT_EQ(testStream.id, inflightReq.resultOutputBuffers[0].streamId);
+            ASSERT_EQ(testStream.id, inflightReq.resultOutputBuffers[0].buffer.streamId);
         }
 
         if (useHalBufManager) {
@@ -5234,8 +5348,8 @@ TEST_P(CameraHidlTest, processCaptureRequestBurstISO) {
         camera_metadata_entry_t hwLevel = staticMeta.find(ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL);
         ASSERT_TRUE(0 < hwLevel.count);
         if (ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL_LIMITED == hwLevel.data.u8[0] ||
-                ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL_EXTERNAL == hwLevel.data.u8[0]) {
-            //Limited/External devices can skip this test
+            ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL_EXTERNAL == hwLevel.data.u8[0]) {
+            // Limited/External devices can skip this test
             ret = session->close();
             ASSERT_TRUE(ret.isOk());
             continue;
@@ -5346,7 +5460,7 @@ TEST_P(CameraHidlTest, processCaptureRequestBurstISO) {
 
             ASSERT_FALSE(inflightReqs[i].errorCodeValid);
             ASSERT_NE(inflightReqs[i].resultOutputBuffers.size(), 0u);
-            ASSERT_EQ(previewStream.id, inflightReqs[i].resultOutputBuffers[0].streamId);
+            ASSERT_EQ(previewStream.id, inflightReqs[i].resultOutputBuffers[0].buffer.streamId);
             ASSERT_FALSE(inflightReqs[i].collectedResult.isEmpty());
             ASSERT_TRUE(inflightReqs[i].collectedResult.exists(ANDROID_SENSOR_SENSITIVITY));
             camera_metadata_entry_t isoResult = inflightReqs[i].collectedResult.find(
@@ -5630,7 +5744,7 @@ TEST_P(CameraHidlTest, switchToOffline) {
 
             ASSERT_FALSE(inflightReqs[i].errorCodeValid);
             ASSERT_NE(inflightReqs[i].resultOutputBuffers.size(), 0u);
-            ASSERT_EQ(stream.id, inflightReqs[i].resultOutputBuffers[0].streamId);
+            ASSERT_EQ(stream.id, inflightReqs[i].resultOutputBuffers[0].buffer.streamId);
             ASSERT_FALSE(inflightReqs[i].collectedResult.isEmpty());
         }
 
@@ -5826,7 +5940,7 @@ TEST_P(CameraHidlTest, flushPreviewRequest) {
 
             if (!inflightReq.errorCodeValid) {
                 ASSERT_NE(inflightReq.resultOutputBuffers.size(), 0u);
-                ASSERT_EQ(previewStream.id, inflightReq.resultOutputBuffers[0].streamId);
+                ASSERT_EQ(previewStream.id, inflightReq.resultOutputBuffers[0].buffer.streamId);
             } else {
                 switch (inflightReq.errorCode) {
                     case ErrorCode::ERROR_REQUEST:
@@ -6374,6 +6488,22 @@ Status CameraHidlTest::isLogicalMultiCamera(const camera_metadata_t *staticMeta)
     }
 
     return ret;
+}
+
+bool CameraHidlTest::isTorchStrengthControlSupported(const camera_metadata_t *staticMetadata) {
+    int32_t maxLevel = 0;
+    camera_metadata_ro_entry maxEntry;
+    int rc = find_camera_metadata_ro_entry(staticMetadata,
+            ANDROID_FLASH_INFO_STRENGTH_MAXIMUM_LEVEL, &maxEntry);
+    if (rc != 0) {
+        return false;
+    }
+    maxLevel = *maxEntry.data.i32;
+    if (maxLevel > 1) {
+        ALOGI("Torch strength control supported.");
+        return true;
+    }
+    return false;
 }
 
 // Check if the camera device has logical multi-camera capability.
@@ -7000,8 +7130,8 @@ void CameraHidlTest::configurePreviewStreams3_4(const std::string &name, int32_t
     sp<device::V3_3::ICameraDeviceSession> session3_3;
     sp<device::V3_6::ICameraDeviceSession> session3_6;
     sp<device::V3_7::ICameraDeviceSession> session3_7;
-    castSession(session, deviceVersion, &session3_3, session3_4, session3_5,
-            &session3_6, &session3_7);
+    castSession(session, deviceVersion, &session3_3, session3_4, session3_5, &session3_6,
+                &session3_7);
     ASSERT_NE(nullptr, (*session3_4).get());
 
     *useHalBufManager = false;
@@ -7295,6 +7425,47 @@ void CameraHidlTest::configurePreviewStream(const std::string &name, int32_t dev
                           previewStream, halStreamConfig, supportsPartialResults,
                           partialResultCount, useHalBufManager, outCb, streamConfigCounter);
 }
+
+bool CameraHidlTest::supportsPreviewStabilization(const std::string& name,
+                                                  sp<ICameraProvider> provider) {
+    Return<void> ret;
+    sp<ICameraDevice> device3_x = nullptr;
+    ret = provider->getCameraDeviceInterface_V3_x(name, [&](auto status, const auto& device) {
+        ALOGI("getCameraDeviceInterface_V3_x returns status:%d", (int)status);
+        ASSERT_EQ(Status::OK, status);
+        ASSERT_NE(device, nullptr);
+        device3_x = device;
+    });
+    if (!(ret.isOk())) {
+        ADD_FAILURE() << "Failed to get camera device interface for " << name;
+    }
+
+    camera_metadata_t* staticMeta = nullptr;
+    ret = device3_x->getCameraCharacteristics([&](Status s, CameraMetadata metadata) {
+        ASSERT_EQ(Status::OK, s);
+        staticMeta =
+                clone_camera_metadata(reinterpret_cast<const camera_metadata_t*>(metadata.data()));
+    });
+    if (!(ret.isOk())) {
+        ADD_FAILURE() << "Failed to get camera characteristics for " << name;
+    }
+    // Go through the characteristics and see if video stabilization modes have
+    // preview stabilization
+    camera_metadata_ro_entry entry;
+
+    int retcode = find_camera_metadata_ro_entry(
+            staticMeta, ANDROID_CONTROL_AVAILABLE_VIDEO_STABILIZATION_MODES, &entry);
+    if ((0 == retcode) && (entry.count > 0)) {
+        for (auto i = 0; i < entry.count; i++) {
+            if (entry.data.u8[i] ==
+                ANDROID_CONTROL_VIDEO_STABILIZATION_MODE_PREVIEW_STABILIZATION) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 // Open a device session and configure a preview stream.
 void CameraHidlTest::configureSingleStream(
         const std::string& name, int32_t deviceVersion, sp<ICameraProvider> provider,
@@ -7361,8 +7532,8 @@ void CameraHidlTest::configureSingleStream(
     sp<device::V3_5::ICameraDeviceSession> session3_5;
     sp<device::V3_6::ICameraDeviceSession> session3_6;
     sp<device::V3_7::ICameraDeviceSession> session3_7;
-    castSession(*session, deviceVersion, &session3_3, &session3_4, &session3_5,
-            &session3_6, &session3_7);
+    castSession(*session, deviceVersion, &session3_3, &session3_4, &session3_5, &session3_6,
+                &session3_7);
 
     *useHalBufManager = false;
     status = find_camera_metadata_ro_entry(staticMeta,
@@ -7541,12 +7712,12 @@ void CameraHidlTest::castProvider(const sp<ICameraProvider>& provider,
 }
 
 //Cast camera device session to corresponding version
-void CameraHidlTest::castSession(const sp<ICameraDeviceSession> &session, int32_t deviceVersion,
-        sp<device::V3_3::ICameraDeviceSession> *session3_3 /*out*/,
-        sp<device::V3_4::ICameraDeviceSession> *session3_4 /*out*/,
-        sp<device::V3_5::ICameraDeviceSession> *session3_5 /*out*/,
-        sp<device::V3_6::ICameraDeviceSession> *session3_6 /*out*/,
-        sp<device::V3_7::ICameraDeviceSession> *session3_7 /*out*/) {
+void CameraHidlTest::castSession(const sp<ICameraDeviceSession>& session, int32_t deviceVersion,
+                                 sp<device::V3_3::ICameraDeviceSession>* session3_3 /*out*/,
+                                 sp<device::V3_4::ICameraDeviceSession>* session3_4 /*out*/,
+                                 sp<device::V3_5::ICameraDeviceSession>* session3_5 /*out*/,
+                                 sp<device::V3_6::ICameraDeviceSession>* session3_6 /*out*/,
+                                 sp<device::V3_7::ICameraDeviceSession>* session3_7 /*out*/) {
     ASSERT_NE(nullptr, session3_3);
     ASSERT_NE(nullptr, session3_4);
     ASSERT_NE(nullptr, session3_5);
@@ -8047,6 +8218,7 @@ void CameraHidlTest::verifyCameraCharacteristics(Status status, const CameraMeta
 
     verifyExtendedSceneModeCharacteristics(metadata);
     verifyZoomCharacteristics(metadata);
+    verifyStreamUseCaseCharacteristics(metadata);
 }
 
 void CameraHidlTest::verifyExtendedSceneModeCharacteristics(const camera_metadata_t* metadata) {
@@ -8277,6 +8449,46 @@ void CameraHidlTest::verifyZoomCharacteristics(const camera_metadata_t* metadata
     }
 }
 
+void CameraHidlTest::verifyStreamUseCaseCharacteristics(const camera_metadata_t* metadata) {
+    camera_metadata_ro_entry entry;
+    // Check capabilities
+    int retcode = find_camera_metadata_ro_entry(metadata,
+                ANDROID_REQUEST_AVAILABLE_CAPABILITIES, &entry);
+    bool hasStreamUseCaseCap = false;
+    if ((0 == retcode) && (entry.count > 0)) {
+        if (std::find(entry.data.u8, entry.data.u8 + entry.count,
+                ANDROID_REQUEST_AVAILABLE_CAPABILITIES_STREAM_USE_CASE) !=
+                entry.data.u8 + entry.count) {
+            hasStreamUseCaseCap = true;
+        }
+    }
+
+    bool supportMandatoryUseCases = false;
+    retcode = find_camera_metadata_ro_entry(metadata,
+        ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES, &entry);
+    if ((0 == retcode) && (entry.count > 0)) {
+        supportMandatoryUseCases = true;
+        for (size_t i = 0; i < kMandatoryUseCases.size(); i++) {
+            if (std::find(entry.data.i64, entry.data.i64 + entry.count, kMandatoryUseCases[i])
+                    == entry.data.i64 + entry.count) {
+                supportMandatoryUseCases = false;
+                break;
+            }
+        }
+        bool supportDefaultUseCase = false;
+        for (size_t i = 0; i < entry.count; i++) {
+            if (entry.data.i64[i] == ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_DEFAULT) {
+                supportDefaultUseCase = true;
+            }
+            ASSERT_TRUE(entry.data.i64[i] <= ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_VIDEO_CALL ||
+                    entry.data.i64[i] >= ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_VENDOR_START);
+        }
+        ASSERT_TRUE(supportDefaultUseCase);
+    }
+
+    ASSERT_EQ(hasStreamUseCaseCap, supportMandatoryUseCases);
+}
+
 void CameraHidlTest::verifyMonochromeCharacteristics(const CameraMetadata& chars,
         int deviceVersion) {
     const camera_metadata_t* metadata = (camera_metadata_t*)chars.data();
@@ -8430,8 +8642,8 @@ void CameraHidlTest::verifyBuffersReturned(
     sp<device::V3_5::ICameraDeviceSession> session3_5;
     sp<device::V3_6::ICameraDeviceSession> session3_6;
     sp<device::V3_7::ICameraDeviceSession> session3_7;
-    castSession(session, deviceVersion, &session3_3, &session3_4, &session3_5,
-            &session3_6, &session3_7);
+    castSession(session, deviceVersion, &session3_3, &session3_4, &session3_5, &session3_6,
+                &session3_7);
     ASSERT_NE(nullptr, session3_5.get());
 
     hidl_vec<int32_t> streamIds(1);

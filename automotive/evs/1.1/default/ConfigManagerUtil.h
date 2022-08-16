@@ -13,57 +13,48 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef CONFIG_MANAGER_UTIL_H
-#define CONFIG_MANAGER_UTIL_H
+#ifndef ANDROID_HARDWARE_AUTOMOTIVE_EVS_V1_1_CONFIGMANAGERUTIL_H
+#define ANDROID_HARDWARE_AUTOMOTIVE_EVS_V1_1_CONFIGMANAGERUTIL_H
 
-#include <utility>
-#include <string>
-#include <system/camera_metadata.h>
 #include <android/hardware/automotive/evs/1.1/types.h>
+#include <system/camera_metadata.h>
+#include <string>
+#include <utility>
 
-using namespace std;
-using ::android::hardware::automotive::evs::V1_1::CameraParam;
-
+namespace android::hardware::automotive::evs::V1_1::implementation {
 
 class ConfigManagerUtil {
-public:
+  public:
     /**
      * Convert a given string into V4L2_CID_*
      */
-    static bool convertToEvsCameraParam(const string &id,
-                                        CameraParam &camParam);
+    static bool convertToEvsCameraParam(const std::string& id, CameraParam& camParam);
     /**
      * Convert a given string into android.hardware.graphics.common.PixelFormat
      */
-    static bool convertToPixelFormat(const string &format,
-                                     int32_t &pixelFormat);
+    static bool convertToPixelFormat(const std::string& format, int32_t& pixelFormat);
     /**
      * Convert a given string into corresponding camera metadata data tag defined in
      * system/media/camera/include/system/camera_metadta_tags.h
      */
-    static bool convertToMetadataTag(const char *name,
-                                     camera_metadata_tag &aTag);
+    static bool convertToMetadataTag(const char* name, camera_metadata_tag& aTag);
     /**
      * Convert a given string into a floating value array
      */
-    static float *convertFloatArray(const char *sz,
-                                    const char *vals,
-                                    size_t &count,
+    static float* convertFloatArray(const char* sz, const char* vals, size_t& count,
                                     const char delimiter = ',');
     /**
      * Trim a string
      */
-    static string trimString(const string &src,
-                             const string &ws = " \n\r\t\f\v");
+    static std::string trimString(const std::string& src, const std::string& ws = " \n\r\t\f\v");
 
     /**
      * Convert a given string to corresponding camera capabilities
      */
     static bool convertToCameraCapability(
-        const char *name,
-        camera_metadata_enum_android_request_available_capabilities_t &cap);
-
+            const char* name, camera_metadata_enum_android_request_available_capabilities_t& cap);
 };
 
-#endif // CONFIG_MANAGER_UTIL_H
+}  // namespace android::hardware::automotive::evs::V1_1::implementation
 
+#endif  // ANDROID_HARDWARE_AUTOMOTIVE_EVS_V1_1_CONFIGMANAGERUTIL_H

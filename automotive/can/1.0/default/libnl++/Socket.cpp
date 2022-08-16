@@ -68,6 +68,11 @@ bool Socket::send(const Buffer<nlmsghdr>& msg, const sockaddr_nl& sa) {
     return true;
 }
 
+bool Socket::send(const Buffer<nlmsghdr>& msg, uint32_t destination) {
+    sockaddr_nl sa = {.nl_family = AF_NETLINK, .nl_pad = 0, .nl_pid = destination, .nl_groups = 0};
+    return send(msg, sa);
+}
+
 bool Socket::increaseReceiveBuffer(size_t maxSize) {
     if (maxSize == 0) {
         LOG(ERROR) << "Maximum receive size should not be zero";
@@ -155,6 +160,26 @@ std::optional<unsigned> Socket::getPid() {
 
 pollfd Socket::preparePoll(short events) {
     return {mFd.get(), events, 0};
+}
+
+bool Socket::addMembership(unsigned group) {
+    const auto res =
+            setsockopt(mFd.get(), SOL_NETLINK, NETLINK_ADD_MEMBERSHIP, &group, sizeof(group));
+    if (res < 0) {
+        PLOG(ERROR) << "Failed joining multicast group " << group;
+        return false;
+    }
+    return true;
+}
+
+bool Socket::dropMembership(unsigned group) {
+    const auto res =
+            setsockopt(mFd.get(), SOL_NETLINK, NETLINK_DROP_MEMBERSHIP, &group, sizeof(group));
+    if (res < 0) {
+        PLOG(ERROR) << "Failed leaving multicast group " << group;
+        return false;
+    }
+    return true;
 }
 
 Socket::receive_iterator::receive_iterator(Socket& socket, bool end)

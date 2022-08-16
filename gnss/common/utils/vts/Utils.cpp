@@ -15,88 +15,86 @@
  */
 
 #include <Utils.h>
+#include <android/hardware/gnss/BnGnss.h>
+#include <android/hardware/gnss/IGnss.h>
 #include "gtest/gtest.h"
 
 #include <cutils/properties.h>
+#include <utils/SystemClock.h>
 
 namespace android {
 namespace hardware {
 namespace gnss {
 namespace common {
 
-using GnssConstellationType_V1_0 = V1_0::GnssConstellationType;
-using GnssConstellationType_V2_0 = V2_0::GnssConstellationType;
+using android::hardware::gnss::ElapsedRealtime;
+using android::hardware::gnss::GnssLocation;
 
+using namespace measurement_corrections::V1_0;
 using V1_0::GnssLocationFlags;
 
-void Utils::checkLocation(const GnssLocation& location, bool check_speed,
-                          bool check_more_accuracies) {
-    EXPECT_TRUE(location.gnssLocationFlags & GnssLocationFlags::HAS_LAT_LONG);
-    EXPECT_TRUE(location.gnssLocationFlags & GnssLocationFlags::HAS_ALTITUDE);
-    if (check_speed) {
-        EXPECT_TRUE(location.gnssLocationFlags & GnssLocationFlags::HAS_SPEED);
-    }
-    EXPECT_TRUE(location.gnssLocationFlags & GnssLocationFlags::HAS_HORIZONTAL_ACCURACY);
-    // New uncertainties available in O must be provided,
-    // at least when paired with modern hardware (2017+)
-    if (check_more_accuracies) {
-        EXPECT_TRUE(location.gnssLocationFlags & GnssLocationFlags::HAS_VERTICAL_ACCURACY);
-        if (check_speed) {
-            EXPECT_TRUE(location.gnssLocationFlags & GnssLocationFlags::HAS_SPEED_ACCURACY);
-            if (location.gnssLocationFlags & GnssLocationFlags::HAS_BEARING) {
-                EXPECT_TRUE(location.gnssLocationFlags & GnssLocationFlags::HAS_BEARING_ACCURACY);
-            }
-        }
-    }
-    EXPECT_GE(location.latitudeDegrees, -90.0);
-    EXPECT_LE(location.latitudeDegrees, 90.0);
-    EXPECT_GE(location.longitudeDegrees, -180.0);
-    EXPECT_LE(location.longitudeDegrees, 180.0);
-    EXPECT_GE(location.altitudeMeters, -1000.0);
-    EXPECT_LE(location.altitudeMeters, 30000.0);
-    if (check_speed) {
-        EXPECT_GE(location.speedMetersPerSec, 0.0);
-        EXPECT_LE(location.speedMetersPerSec, 5.0);  // VTS tests are stationary.
+using MeasurementCorrectionsAidl =
+        android::hardware::gnss::measurement_corrections::MeasurementCorrections;
+using ReflectingPlaneAidl = android::hardware::gnss::measurement_corrections::ReflectingPlane;
+using SingleSatCorrectionAidl =
+        android::hardware::gnss::measurement_corrections::SingleSatCorrection;
+using ExcessPathInfo = SingleSatCorrectionAidl::ExcessPathInfo;
 
-        // Non-zero speeds must be reported with an associated bearing
-        if (location.speedMetersPerSec > 0.0) {
-            EXPECT_TRUE(location.gnssLocationFlags & GnssLocationFlags::HAS_BEARING);
-        }
-    }
-
-    /*
-     * Tolerating some especially high values for accuracy estimate, in case of
-     * first fix with especially poor geometry (happens occasionally)
-     */
-    EXPECT_GT(location.horizontalAccuracyMeters, 0.0);
-    EXPECT_LE(location.horizontalAccuracyMeters, 250.0);
-
-    /*
-     * Some devices may define bearing as -180 to +180, others as 0 to 360.
-     * Both are okay & understandable.
-     */
-    if (location.gnssLocationFlags & GnssLocationFlags::HAS_BEARING) {
-        EXPECT_GE(location.bearingDegrees, -180.0);
-        EXPECT_LE(location.bearingDegrees, 360.0);
-    }
-    if (location.gnssLocationFlags & GnssLocationFlags::HAS_VERTICAL_ACCURACY) {
-        EXPECT_GT(location.verticalAccuracyMeters, 0.0);
-        EXPECT_LE(location.verticalAccuracyMeters, 500.0);
-    }
-    if (location.gnssLocationFlags & GnssLocationFlags::HAS_SPEED_ACCURACY) {
-        EXPECT_GT(location.speedAccuracyMetersPerSecond, 0.0);
-        EXPECT_LE(location.speedAccuracyMetersPerSecond, 50.0);
-    }
-    if (location.gnssLocationFlags & GnssLocationFlags::HAS_BEARING_ACCURACY) {
-        EXPECT_GT(location.bearingAccuracyDegrees, 0.0);
-        EXPECT_LE(location.bearingAccuracyDegrees, 360.0);
-    }
-
-    // Check timestamp > 1.48e12 (47 years in msec - 1970->2017+)
-    EXPECT_GT(location.timestamp, 1.48e12);
+template <>
+int64_t Utils::getLocationTimestampMillis(const android::hardware::gnss::GnssLocation& location) {
+    return location.timestampMillis;
 }
 
-const MeasurementCorrections_1_0 Utils::getMockMeasurementCorrections() {
+template <>
+int64_t Utils::getLocationTimestampMillis(const V1_0::GnssLocation& location) {
+    return location.timestamp;
+}
+
+template <>
+void Utils::checkLocationElapsedRealtime(const V1_0::GnssLocation&) {}
+
+template <>
+void Utils::checkLocationElapsedRealtime(const android::hardware::gnss::GnssLocation& location) {
+    checkElapsedRealtime(location.elapsedRealtime);
+}
+
+void Utils::checkElapsedRealtime(const ElapsedRealtime& elapsedRealtime) {
+    ASSERT_TRUE(elapsedRealtime.flags >= 0 &&
+                elapsedRealtime.flags <= (ElapsedRealtime::HAS_TIMESTAMP_NS |
+                                          ElapsedRealtime::HAS_TIME_UNCERTAINTY_NS));
+    if (elapsedRealtime.flags & ElapsedRealtime::HAS_TIMESTAMP_NS) {
+        ASSERT_TRUE(elapsedRealtime.timestampNs > 0);
+    }
+    if (elapsedRealtime.flags & ElapsedRealtime::HAS_TIME_UNCERTAINTY_NS) {
+        ASSERT_TRUE(elapsedRealtime.timeUncertaintyNs > 0);
+    }
+}
+
+const GnssLocation Utils::getMockLocation(double latitudeDegrees, double longitudeDegrees,
+                                          double horizontalAccuracyMeters) {
+    ElapsedRealtime elapsedRealtime;
+    elapsedRealtime.flags =
+            ElapsedRealtime::HAS_TIMESTAMP_NS | ElapsedRealtime::HAS_TIME_UNCERTAINTY_NS;
+    elapsedRealtime.timestampNs = ::android::elapsedRealtimeNano();
+    elapsedRealtime.timeUncertaintyNs = 1000;
+    GnssLocation location;
+    location.gnssLocationFlags = 0xFF;
+    location.latitudeDegrees = latitudeDegrees;
+    location.longitudeDegrees = longitudeDegrees;
+    location.altitudeMeters = 500.0;
+    location.speedMetersPerSec = 0.0;
+    location.bearingDegrees = 0.0;
+    location.horizontalAccuracyMeters = horizontalAccuracyMeters;
+    location.verticalAccuracyMeters = 1000.0;
+    location.speedAccuracyMetersPerSecond = 1000.0;
+    location.bearingAccuracyDegrees = 90.0;
+    location.timestampMillis =
+            static_cast<int64_t>(kMockTimestamp + ::android::elapsedRealtimeNano() * 1e-6);
+    location.elapsedRealtime = elapsedRealtime;
+    return location;
+}
+
+const MeasurementCorrections Utils::getMockMeasurementCorrections() {
     ReflectingPlane reflectingPlane = {
             .latitudeDegrees = 37.4220039,
             .longitudeDegrees = -122.0840991,
@@ -104,12 +102,12 @@ const MeasurementCorrections_1_0 Utils::getMockMeasurementCorrections() {
             .azimuthDegrees = 203.0,
     };
 
-    SingleSatCorrection_V1_0 singleSatCorrection1 = {
+    SingleSatCorrection singleSatCorrection1 = {
             .singleSatCorrectionFlags = GnssSingleSatCorrectionFlags::HAS_SAT_IS_LOS_PROBABILITY |
                                         GnssSingleSatCorrectionFlags::HAS_EXCESS_PATH_LENGTH |
                                         GnssSingleSatCorrectionFlags::HAS_EXCESS_PATH_LENGTH_UNC |
                                         GnssSingleSatCorrectionFlags::HAS_REFLECTING_PLANE,
-            .constellation = GnssConstellationType_V1_0::GPS,
+            .constellation = V1_0::GnssConstellationType::GPS,
             .svid = 12,
             .carrierFrequencyHz = 1.59975e+09,
             .probSatIsLos = 0.50001,
@@ -117,11 +115,12 @@ const MeasurementCorrections_1_0 Utils::getMockMeasurementCorrections() {
             .excessPathLengthUncertaintyMeters = 25.5,
             .reflectingPlane = reflectingPlane,
     };
-    SingleSatCorrection_V1_0 singleSatCorrection2 = {
+    SingleSatCorrection singleSatCorrection2 = {
             .singleSatCorrectionFlags = GnssSingleSatCorrectionFlags::HAS_SAT_IS_LOS_PROBABILITY |
                                         GnssSingleSatCorrectionFlags::HAS_EXCESS_PATH_LENGTH |
                                         GnssSingleSatCorrectionFlags::HAS_EXCESS_PATH_LENGTH_UNC,
-            .constellation = GnssConstellationType_V1_0::GPS,
+
+            .constellation = V1_0::GnssConstellationType::GPS,
             .svid = 9,
             .carrierFrequencyHz = 1.59975e+09,
             .probSatIsLos = 0.873,
@@ -129,9 +128,9 @@ const MeasurementCorrections_1_0 Utils::getMockMeasurementCorrections() {
             .excessPathLengthUncertaintyMeters = 10.0,
     };
 
-    hidl_vec<SingleSatCorrection_V1_0> singleSatCorrections = {singleSatCorrection1,
-                                                               singleSatCorrection2};
-    MeasurementCorrections_1_0 mockCorrections = {
+    hidl_vec<SingleSatCorrection> singleSatCorrections = {singleSatCorrection1,
+                                                          singleSatCorrection2};
+    MeasurementCorrections mockCorrections = {
             .latitudeDegrees = 37.4219999,
             .longitudeDegrees = -122.0840575,
             .altitudeMeters = 30.60062531,
@@ -143,25 +142,26 @@ const MeasurementCorrections_1_0 Utils::getMockMeasurementCorrections() {
     return mockCorrections;
 }
 
-const MeasurementCorrections_1_1 Utils::getMockMeasurementCorrections_1_1() {
-    MeasurementCorrections_1_0 mockCorrections_1_0 = getMockMeasurementCorrections();
+const measurement_corrections::V1_1::MeasurementCorrections
+Utils::getMockMeasurementCorrections_1_1() {
+    MeasurementCorrections mockCorrections_1_0 = getMockMeasurementCorrections();
 
-    SingleSatCorrection_V1_1 singleSatCorrection1 = {
+    measurement_corrections::V1_1::SingleSatCorrection singleSatCorrection1 = {
             .v1_0 = mockCorrections_1_0.satCorrections[0],
-            .constellation = GnssConstellationType_V2_0::IRNSS,
+            .constellation = V2_0::GnssConstellationType::IRNSS,
     };
-    SingleSatCorrection_V1_1 singleSatCorrection2 = {
+    measurement_corrections::V1_1::SingleSatCorrection singleSatCorrection2 = {
             .v1_0 = mockCorrections_1_0.satCorrections[1],
-            .constellation = GnssConstellationType_V2_0::IRNSS,
+            .constellation = V2_0::GnssConstellationType::IRNSS,
     };
 
-    mockCorrections_1_0.satCorrections[0].constellation = GnssConstellationType_V1_0::UNKNOWN;
-    mockCorrections_1_0.satCorrections[1].constellation = GnssConstellationType_V1_0::UNKNOWN;
+    mockCorrections_1_0.satCorrections[0].constellation = V1_0::GnssConstellationType::UNKNOWN;
+    mockCorrections_1_0.satCorrections[1].constellation = V1_0::GnssConstellationType::UNKNOWN;
 
-    hidl_vec<SingleSatCorrection_V1_1> singleSatCorrections = {singleSatCorrection1,
-                                                               singleSatCorrection2};
+    hidl_vec<measurement_corrections::V1_1::SingleSatCorrection> singleSatCorrections = {
+            singleSatCorrection1, singleSatCorrection2};
 
-    MeasurementCorrections_1_1 mockCorrections_1_1 = {
+    measurement_corrections::V1_1::MeasurementCorrections mockCorrections_1_1 = {
             .v1_0 = mockCorrections_1_0,
             .hasEnvironmentBearing = true,
             .environmentBearingDegrees = 45.0,
@@ -171,28 +171,108 @@ const MeasurementCorrections_1_1 Utils::getMockMeasurementCorrections_1_1() {
     return mockCorrections_1_1;
 }
 
+namespace {
+const ExcessPathInfo createExcessPathInfo(float excessPathLengthMeters,
+                                          float excessPathLengthUncertaintyMeters,
+                                          const ReflectingPlaneAidl* reflectingPlane,
+                                          float attenuationDb) {
+    ExcessPathInfo excessPathInfo;
+    excessPathInfo.excessPathInfoFlags =
+            ExcessPathInfo::EXCESS_PATH_INFO_HAS_EXCESS_PATH_LENGTH |
+            ExcessPathInfo::EXCESS_PATH_INFO_HAS_EXCESS_PATH_LENGTH_UNC |
+            ExcessPathInfo::EXCESS_PATH_INFO_HAS_ATTENUATION |
+            (reflectingPlane == nullptr ? 0
+                                        : ExcessPathInfo::EXCESS_PATH_INFO_HAS_REFLECTING_PLANE);
+    excessPathInfo.excessPathLengthMeters = excessPathLengthMeters;
+    excessPathInfo.excessPathLengthUncertaintyMeters = excessPathLengthUncertaintyMeters;
+    if (reflectingPlane != nullptr) {
+        excessPathInfo.reflectingPlane = *reflectingPlane;
+    }
+    excessPathInfo.attenuationDb = attenuationDb;
+    return excessPathInfo;
+}
+}  // anonymous namespace
+
+const MeasurementCorrectionsAidl Utils::getMockMeasurementCorrections_aidl() {
+    ReflectingPlaneAidl reflectingPlane;
+    reflectingPlane.latitudeDegrees = 37.4220039;
+    reflectingPlane.longitudeDegrees = -122.0840991;
+    reflectingPlane.altitudeMeters = 250.35;
+    reflectingPlane.reflectingPlaneAzimuthDegrees = 203.0;
+
+    SingleSatCorrectionAidl singleSatCorrection1;
+    singleSatCorrection1.singleSatCorrectionFlags =
+            SingleSatCorrectionAidl::SINGLE_SAT_CORRECTION_HAS_SAT_IS_LOS_PROBABILITY |
+            SingleSatCorrectionAidl::SINGLE_SAT_CORRECTION_HAS_COMBINED_EXCESS_PATH_LENGTH |
+            SingleSatCorrectionAidl::SINGLE_SAT_CORRECTION_HAS_COMBINED_EXCESS_PATH_LENGTH_UNC |
+            SingleSatCorrectionAidl::SINGLE_SAT_CORRECTION_HAS_COMBINED_ATTENUATION;
+    singleSatCorrection1.constellation = android::hardware::gnss::GnssConstellationType::GPS;
+    singleSatCorrection1.svid = 12;
+    singleSatCorrection1.carrierFrequencyHz = 1.59975e+09;
+    singleSatCorrection1.probSatIsLos = 0.50001;
+    singleSatCorrection1.combinedExcessPathLengthMeters = 203.5;
+    singleSatCorrection1.combinedExcessPathLengthUncertaintyMeters = 59.1;
+    singleSatCorrection1.combinedAttenuationDb = -4.3;
+    singleSatCorrection1.excessPathInfos.push_back(
+            createExcessPathInfo(137.4, 25.5, &reflectingPlane, -3.5));
+    singleSatCorrection1.excessPathInfos.push_back(
+            createExcessPathInfo(296.3, 87.2, &reflectingPlane, -5.1));
+
+    SingleSatCorrectionAidl singleSatCorrection2;
+    singleSatCorrection2.singleSatCorrectionFlags =
+            SingleSatCorrectionAidl::SINGLE_SAT_CORRECTION_HAS_SAT_IS_LOS_PROBABILITY |
+            SingleSatCorrectionAidl::SINGLE_SAT_CORRECTION_HAS_COMBINED_EXCESS_PATH_LENGTH |
+            SingleSatCorrectionAidl::SINGLE_SAT_CORRECTION_HAS_COMBINED_EXCESS_PATH_LENGTH_UNC |
+            SingleSatCorrectionAidl::SINGLE_SAT_CORRECTION_HAS_COMBINED_ATTENUATION;
+    singleSatCorrection2.constellation = GnssConstellationType::GPS;
+    singleSatCorrection2.svid = 9;
+    singleSatCorrection2.carrierFrequencyHz = 1.59975e+09;
+    singleSatCorrection2.probSatIsLos = 0.873;
+    singleSatCorrection2.combinedExcessPathLengthMeters = 26.294;
+    singleSatCorrection2.combinedExcessPathLengthUncertaintyMeters = 10.0;
+    singleSatCorrection2.combinedAttenuationDb = -0.5;
+    singleSatCorrection2.excessPathInfos.push_back(
+            createExcessPathInfo(26.294, 10.0, nullptr, -0.5));
+
+    std::vector<SingleSatCorrectionAidl> singleSatCorrections = {singleSatCorrection1,
+                                                                 singleSatCorrection2};
+    MeasurementCorrectionsAidl mockCorrections;
+    mockCorrections.latitudeDegrees = 37.4219999;
+    mockCorrections.longitudeDegrees = -122.0840575;
+    mockCorrections.altitudeMeters = 30.60062531;
+    mockCorrections.horizontalPositionUncertaintyMeters = 9.23542;
+    mockCorrections.verticalPositionUncertaintyMeters = 15.02341;
+    mockCorrections.toaGpsNanosecondsOfWeek = 2935633453L;
+    mockCorrections.hasEnvironmentBearing = true;
+    mockCorrections.environmentBearingDegrees = 45.0;
+    mockCorrections.environmentBearingUncertaintyDegrees = 4.0;
+    mockCorrections.satCorrections = singleSatCorrections;
+
+    return mockCorrections;
+}
+
 /*
  * MapConstellationType:
  * Given a GnssConstellationType_2_0 type constellation, maps to its equivalent
  * GnssConstellationType_1_0 type constellation. For constellations that do not have
  * an equivalent value, maps to GnssConstellationType_1_0::UNKNOWN
  */
-GnssConstellationType_1_0 Utils::mapConstellationType(GnssConstellationType_2_0 constellation) {
+V1_0::GnssConstellationType Utils::mapConstellationType(V2_0::GnssConstellationType constellation) {
     switch (constellation) {
-        case GnssConstellationType_2_0::GPS:
-            return GnssConstellationType_1_0::GPS;
-        case GnssConstellationType_2_0::SBAS:
-            return GnssConstellationType_1_0::SBAS;
-        case GnssConstellationType_2_0::GLONASS:
-            return GnssConstellationType_1_0::GLONASS;
-        case GnssConstellationType_2_0::QZSS:
-            return GnssConstellationType_1_0::QZSS;
-        case GnssConstellationType_2_0::BEIDOU:
-            return GnssConstellationType_1_0::BEIDOU;
-        case GnssConstellationType_2_0::GALILEO:
-            return GnssConstellationType_1_0::GALILEO;
+        case V2_0::GnssConstellationType::GPS:
+            return V1_0::GnssConstellationType::GPS;
+        case V2_0::GnssConstellationType::SBAS:
+            return V1_0::GnssConstellationType::SBAS;
+        case V2_0::GnssConstellationType::GLONASS:
+            return V1_0::GnssConstellationType::GLONASS;
+        case V2_0::GnssConstellationType::QZSS:
+            return V1_0::GnssConstellationType::QZSS;
+        case V2_0::GnssConstellationType::BEIDOU:
+            return V1_0::GnssConstellationType::BEIDOU;
+        case V2_0::GnssConstellationType::GALILEO:
+            return V1_0::GnssConstellationType::GALILEO;
         default:
-            return GnssConstellationType_1_0::UNKNOWN;
+            return V1_0::GnssConstellationType::UNKNOWN;
     }
 }
 

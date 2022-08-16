@@ -21,6 +21,7 @@ import android.hardware.wifi.supplicant.ISupplicantP2pIfaceCallback;
 import android.hardware.wifi.supplicant.ISupplicantP2pNetwork;
 import android.hardware.wifi.supplicant.IfaceType;
 import android.hardware.wifi.supplicant.MiracastMode;
+import android.hardware.wifi.supplicant.P2pFrameTypeMask;
 import android.hardware.wifi.supplicant.P2pGroupCapabilityMask;
 import android.hardware.wifi.supplicant.WpsConfigMethods;
 import android.hardware.wifi.supplicant.WpsProvisionMethod;
@@ -237,7 +238,7 @@ interface ISupplicantP2pIface {
      * Initiate a P2P service discovery with an optional timeout.
      *
      * @param timeoutInSec Max time to be spent is performing discovery.
-     *        Set to 0 to indefinely continue discovery until an explicit
+     *        Set to 0 to indefinitely continue discovery until an explicit
      *        |stopFind| is sent.
      * @throws ServiceSpecificException with one of the following values:
      *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
@@ -643,6 +644,17 @@ interface ISupplicantP2pIface {
     void setWfdR2DeviceInfo(in byte[] info);
 
     /**
+     * Remove the client with the MAC address from the group.
+     *
+     * @param peerAddress Mac address of the client.
+     * @param isLegacyClient Indicate if client is a legacy client or not.
+     * @throws ServiceSpecificException with one of the following values:
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+     */
+    void removeClient(in byte[/*6*/] peerAddress, in boolean isLegacyClient);
+
+    /**
      * Set the list of supported config methods for WPS operations.
      *
      * @param configMethods Mask of WPS configuration methods supported by the
@@ -767,4 +779,52 @@ interface ISupplicantP2pIface {
      *         |SupplicantStatusCode.FAILURE_IFACE_DISABLED|
      */
     void stopFind();
+
+    /**
+     * Initiate a P2P device discovery only on social channels.
+     *
+     * Full P2P discovery is performed through |ISupplicantP2pIface.find| method.
+     *
+     * @param timeoutInSec The maximum amount of time that should be spent in performing device
+     *         discovery.
+     *        Set to 0 to indefinitely continue discovery until an explicit
+     *        |stopFind| is sent.
+     * @throws ServiceSpecificException with one of the following values:
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+     *         |SupplicantStatusCode.FAILURE_IFACE_DISABLED|
+     */
+    void findOnSocialChannels(in int timeoutInSec);
+
+    /**
+     * Initiate a P2P device discovery on a specific frequency.
+     *
+     * Full P2P discovery is performed through |ISupplicantP2pIface.find| method.
+     *
+     * @param freqInHz the frequency to be scanned.
+     * @param timeoutInSec Max time to be spent is performing discovery.
+     *        Set to 0 to indefinitely continue discovery until an explicit
+     *        |stopFind| is sent.
+     * @throws ServiceSpecificException with one of the following values:
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+     *         |SupplicantStatusCode.FAILURE_IFACE_DISABLED|
+     */
+    void findOnSpecificFrequency(in int freqInHz, in int timeoutInSec);
+
+    /**
+     * Set vendor-specific information elements to P2P frames.
+     *
+     * @param frameTypeMask The bit mask of P2P frame type represented by
+     *         P2pFrameTypeMask.
+     * @param vendorElemBytes Vendor-specific information element bytes. The format of an
+     *         information element is EID (1 byte) + Length (1 Byte) + Payload which is
+     *         defined in Section 9.4.4 TLV encodings of 802.11-2016 IEEE Standard for
+     *         Information technology. The length indicates the size of the payload.
+     *         Multiple information elements may be appended within the byte array.
+     * @throws ServiceSpecificException with one of the following values:
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+     */
+    void setVendorElements(in P2pFrameTypeMask frameTypeMask, in byte[] vendorElemBytes);
 }

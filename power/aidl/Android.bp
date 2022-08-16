@@ -36,8 +36,20 @@ aidl_interface {
             platform_apis: true,
         },
     },
-    versions: [
-        "1",
-        "2",
+    versions_with_info: [
+        {
+            version: "1",
+            imports: [],
+        },
+        {
+            version: "2",
+            imports: [],
+        },
+        {
+            version: "3",
+            imports: [],
+        },
+
     ],
+
 }

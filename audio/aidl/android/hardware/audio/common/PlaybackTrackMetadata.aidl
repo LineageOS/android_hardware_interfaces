@@ -16,7 +16,9 @@
 
 package android.hardware.audio.common;
 
+import android.media.audio.common.AudioChannelLayout;
 import android.media.audio.common.AudioContentType;
+import android.media.audio.common.AudioDevice;
 import android.media.audio.common.AudioUsage;
 
 /**
@@ -32,6 +34,11 @@ parcelable PlaybackTrackMetadata {
      * 0 means muted, 1 is unity gain, 2 means double amplitude, etc.
      */
     float gain;
+    AudioChannelLayout channelMask;
+    /**
+     * Indicates the source of an output stream, can be left unspecified.
+     */
+    @nullable AudioDevice sourceDevice;
     /**
      * Tags from AudioTrack audio attributes. Tag is an additional use case
      * qualifier complementing AudioUsage and AudioContentType. Tags are set by

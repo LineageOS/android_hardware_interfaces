@@ -77,6 +77,25 @@ inline const hidl_vec<V1_0::SensorInfo>& convertToOldSensorInfos(
     return reinterpret_cast<const hidl_vec<V1_0::SensorInfo>&>(infos);
 }
 
+inline void convertToSensor(const V2_1::SensorInfo& src, sensor_t* dst) {
+    dst->name = strdup(src.name.c_str());
+    dst->vendor = strdup(src.vendor.c_str());
+    dst->version = src.version;
+    dst->handle = src.sensorHandle;
+    dst->type = (int)src.type;
+    dst->maxRange = src.maxRange;
+    dst->resolution = src.resolution;
+    dst->power = src.power;
+    dst->minDelay = src.minDelay;
+    dst->fifoReservedEventCount = src.fifoReservedEventCount;
+    dst->fifoMaxEventCount = src.fifoMaxEventCount;
+    dst->stringType = strdup(src.typeAsString.c_str());
+    dst->requiredPermission = strdup(src.requiredPermission.c_str());
+    dst->maxDelay = src.maxDelay;
+    dst->flags = src.flags;
+    dst->reserved[0] = dst->reserved[1] = 0;
+}
+
 inline void convertFromSensorEvent(const sensors_event_t& src, V2_1::Event* dst) {
     switch ((SensorType)src.type) {
         case SensorType::HINGE_ANGLE:

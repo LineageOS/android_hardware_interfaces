@@ -201,10 +201,7 @@ TEST_P(PowerAidl, updateAndReportDurations) {
 // FIXED_PERFORMANCE mode is required for all devices which ship on Android 11
 // or later
 TEST_P(PowerAidl, hasFixedPerformance) {
-    auto apiLevel = GetUintProperty<uint64_t>("ro.product.first_api_level", 0);
-    if (apiLevel == 0) {
-        apiLevel = GetUintProperty<uint64_t>("ro.build.version.sdk", 0);
-    }
+    auto apiLevel = GetUintProperty<uint64_t>("ro.vendor.api_level", 0);
     ASSERT_NE(apiLevel, 0);
 
     if (apiLevel >= 30) {

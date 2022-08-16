@@ -1,0 +1,33 @@
+{
+  "presubmit": [
+    {
+      "name": "VehicleHalAidlHidlCompatibilityTest"
+    },
+    {
+      "name": "VehicleHalDefaultConfigTest"
+    },
+    {
+      "name": "VehicleHalVehicleUtilsTest"
+    },
+    {
+      "name": "FakeVehicleHardwareTest"
+    },
+    {
+      "name": "FakeVehicleHalValueGeneratorsTest"
+    },
+    {
+      "name": "FakeObd2FrameTest"
+    },
+    {
+      "name": "FakeUserHalTest"
+    },
+    {
+      "name": "DefaultVehicleHalTest"
+    }
+  ],
+  "auto-presubmit": [
+    {
+      "name": "VtsHalAutomotiveVehicle_TargetTest"
+    }
+  ]
+}

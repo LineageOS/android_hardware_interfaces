@@ -181,6 +181,9 @@ struct ExternalCameraDeviceSession : public virtual RefBase,
         std::unordered_map<Size, sp<AllocatedFrame>, SizeHasher> mScaledYu12Frames;
         YCbCrLayout mYu12FrameLayout;
         YCbCrLayout mYu12ThumbFrameLayout;
+        std::vector<uint8_t> mMuteTestPatternFrame;
+        uint32_t mTestPatternData[4] = {0, 0, 0, 0};
+        bool mCameraMuted = false;
         uint32_t mBlobBufferSize = 0; // 0 -> HAL derive buffer size, else: use given size
 
         std::string mExifMake;

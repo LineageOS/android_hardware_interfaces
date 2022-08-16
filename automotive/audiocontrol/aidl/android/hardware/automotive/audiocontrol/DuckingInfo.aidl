@@ -18,47 +18,47 @@ package android.hardware.automotive.audiocontrol;
 
 import android.hardware.audio.common.PlaybackTrackMetadata;
 
- /**
-  * The current ducking information for a single audio zone.
-  *
-  * <p>This includes devices to duck, as well as unduck based on the contents of a previous
-  * {@link DuckingInfo}. Additionally, the current usages holding focus in the specified zone are
-  * included, which were used to determine which addresses to duck.
-  */
- @VintfStability
- parcelable DuckingInfo {
-     /**
-      * ID of the associated audio zone
-      */
-     int zoneId;
+/**
+ * The current ducking information for a single audio zone.
+ *
+ * <p>This includes devices to duck, as well as unduck based on the contents of a previous
+ * {@link DuckingInfo}. Additionally, the current usages holding focus in the specified zone are
+ * included, which were used to determine which addresses to duck.
+ */
+@VintfStability
+parcelable DuckingInfo {
+    /**
+     * ID of the associated audio zone
+     */
+    int zoneId;
 
-     /**
-      * List of addresses for audio output devices that should be ducked.
-      *
-      * <p>The provided address strings are defined in audio_policy_configuration.xml.
-      */
-     String[] deviceAddressesToDuck;
+    /**
+     * List of addresses for audio output devices that should be ducked.
+     *
+     * <p>The provided address strings are defined in audio_policy_configuration.xml.
+     */
+    String[] deviceAddressesToDuck;
 
-     /**
-      * List of addresses for audio output devices that were previously be ducked and should now be
-      * unducked.
-      *
-      * <p>The provided address strings are defined in audio_policy_configuration.xml.
-      */
-     String[] deviceAddressesToUnduck;
+    /**
+     * List of addresses for audio output devices that were previously be ducked and should now be
+     * unducked.
+     *
+     * <p>The provided address strings are defined in audio_policy_configuration.xml.
+     */
+    String[] deviceAddressesToUnduck;
 
-     /**
-      * List of usages currently holding focus for this audio zone.
-      *
-      * This field was deprecated in version 2.
-      * Use playbackMetaDataHoldingFocus instead.
-      *
-      * <p> See {@code audioUsage} in audio_policy_configuration.xsd for the list of allowed values.
-      */
-     String[] usagesHoldingFocus;
+    /**
+     * List of usages currently holding focus for this audio zone.
+     *
+     * This field was deprecated in version 2.
+     * Use playbackMetaDataHoldingFocus instead.
+     *
+     * <p> See {@code audioUsage} in audio_policy_configuration.xsd for the list of allowed values.
+     */
+    String[] usagesHoldingFocus;
 
-     /**
-      *  List of output stream metadata associated with the current focus holder for this audio zone
-      */
-     @nullable PlaybackTrackMetadata[] playbackMetaDataHoldingFocus;
+    /**
+     *  List of output stream metadata associated with the current focus holder for this audio zone
+     */
+    @nullable PlaybackTrackMetadata[] playbackMetaDataHoldingFocus;
 }

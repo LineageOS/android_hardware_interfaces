@@ -375,6 +375,11 @@ TEST_P(StoreHidlTest, ListRoles) {
 }
 
 static int getFirstApiLevel() {
+    int boardApiLevel = android::base::GetIntProperty("ro.board.first_api_level", 0);
+    if (boardApiLevel != 0) {
+        return boardApiLevel;
+    }
+
     return android::base::GetIntProperty("ro.product.first_api_level", __ANDROID_API_T__);
 }
 
@@ -395,9 +400,18 @@ TEST_P(StoreHidlTest, OmxCodecAllowedTest) {
                             << " Component: " << info.mName.c_str() << " Role: " << role.c_str()
                             << " not allowed for devices launching with Android T and above";
                 } else {
-                    ASSERT_LT(getFirstApiLevel(), __ANDROID_API_S__)
+                    std::string codecName = info.mName;
+                    bool isAndroidCodec = (codecName.rfind("OMX.google", 0) != std::string::npos);
+                    if (isAndroidCodec && (getFirstApiLevel() <= __ANDROID_API_S__)) {
+                        // refer b/230582620
+                        // S AOSP build did not remove the OMX.google video codecs
+                        // so it is infeasible to require no OMX.google.* video codecs
+                        // on S launching devices
+                    } else {
+                        ASSERT_LT(getFirstApiLevel(), __ANDROID_API_S__)
                             << " Component: " << info.mName.c_str() << " Role: " << role.c_str()
                             << " not allowed for devices launching with Android S and above";
+                    }
                 }
             }
             if (role.find("audio_decoder") != std::string::npos ||
