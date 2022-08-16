@@ -1433,6 +1433,122 @@
             ]
         },
         {
+            "property": "VehicleProperty::MIRROR_Z_POS",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "VehicleAreaMirror::DRIVER_LEFT",
+                    "minInt32Value": -3,
+                    "maxInt32Value": 3
+                },
+                {
+                    "areaId": "VehicleAreaMirror::DRIVER_RIGHT",
+                    "minInt32Value": -3,
+                    "maxInt32Value": 3
+                },
+                {
+                    "areaId": "VehicleAreaMirror::DRIVER_CENTER",
+                    "minInt32Value": -3,
+                    "maxInt32Value": 3
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::MIRROR_Z_MOVE",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "VehicleAreaMirror::DRIVER_LEFT",
+                    "minInt32Value": -1,
+                    "maxInt32Value": 1
+                },
+                {
+                    "areaId": "VehicleAreaMirror::DRIVER_RIGHT",
+                    "minInt32Value": -1,
+                    "maxInt32Value": 1
+                },
+                {
+                    "areaId": "VehicleAreaMirror::DRIVER_CENTER",
+                    "minInt32Value": -1,
+                    "maxInt32Value": 1
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::MIRROR_Y_POS",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "VehicleAreaMirror::DRIVER_LEFT",
+                    "minInt32Value": -3,
+                    "maxInt32Value": 3
+                },
+                {
+                    "areaId": "VehicleAreaMirror::DRIVER_RIGHT",
+                    "minInt32Value": -3,
+                    "maxInt32Value": 3
+                },
+                {
+                    "areaId": "VehicleAreaMirror::DRIVER_CENTER",
+                    "minInt32Value": -3,
+                    "maxInt32Value": 3
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::MIRROR_Y_MOVE",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "VehicleAreaMirror::DRIVER_LEFT",
+                    "minInt32Value": -1,
+                    "maxInt32Value": 1
+                },
+                {
+                    "areaId": "VehicleAreaMirror::DRIVER_RIGHT",
+                    "minInt32Value": -1,
+                    "maxInt32Value": 1
+                },
+                {
+                    "areaId": "VehicleAreaMirror::DRIVER_CENTER",
+                    "minInt32Value": -1,
+                    "maxInt32Value": 1
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::MIRROR_LOCK",
+            "defaultValue": {
+                "int32Values": [
+                    1
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::MIRROR_FOLD",
+            "defaultValue": {
+                "int32Values": [
+                    1
+                ]
+            }
+        },
+        {
             "property": "VehicleProperty::WINDOW_LOCK",
             "areas": [
                 {
