@@ -33,7 +33,9 @@ parcelable EvsEventDesc {
     @utf8InCpp
     String deviceId;
     /**
-     * Possible additional vendor information that is opaque to the EvsManager
+     * Possible additional vendor information that is opaque to the EvsManager.
+     * The size of the payload must not exceed 16-byte if the HIDL recipients are
+     * expected to exist.
      */
     int[] payload;
 }
