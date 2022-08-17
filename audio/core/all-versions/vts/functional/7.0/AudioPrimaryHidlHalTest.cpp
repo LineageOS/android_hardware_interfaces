@@ -14,7 +14,11 @@
  * limitations under the License.
  */
 
+#include <fstream>
+#include <numeric>
+
 #include <android-base/chrono_utils.h>
+#include <cutils/properties.h>
 
 #include "Generators.h"
 
@@ -517,20 +521,10 @@ class PcmOnlyConfigOutputStreamTest : public OutputStreamTest {
     }
 
     bool canQueryPresentationPosition() const {
-        auto maybeSinkAddress =
-                getCachedPolicyConfig().getSinkDeviceForMixPort(getDeviceName(), getMixPortName());
-        // Returning 'true' when no sink is found so the test can fail later with a more clear
-        // problem description.
-        return !maybeSinkAddress.has_value() ||
-               !xsd::isTelephonyDevice(maybeSinkAddress.value().deviceType);
+        return !xsd::isTelephonyDevice(address.deviceType);
     }
 
     void createPatchIfNeeded() {
-        auto maybeSinkAddress =
-                getCachedPolicyConfig().getSinkDeviceForMixPort(getDeviceName(), getMixPortName());
-        ASSERT_TRUE(maybeSinkAddress.has_value())
-                << "No sink device found for mix port " << getMixPortName() << " (module "
-                << getDeviceName() << ")";
         if (areAudioPatchesSupported()) {
             AudioPortConfig source;
             source.base.format.value(getConfig().base.format);
@@ -540,13 +534,13 @@ class PcmOnlyConfigOutputStreamTest : public OutputStreamTest {
             source.ext.mix().ioHandle = helper.getIoHandle();
             source.ext.mix().useCase.stream({});
             AudioPortConfig sink;
-            sink.ext.device(maybeSinkAddress.value());
+            sink.ext.device(address);
             EXPECT_OK(getDevice()->createAudioPatch(hidl_vec<AudioPortConfig>{source},
                                                     hidl_vec<AudioPortConfig>{sink},
                                                     returnIn(res, mPatchHandle)));
             mHasPatch = res == Result::OK;
         } else {
-            EXPECT_OK(stream->setDevices({maybeSinkAddress.value()}));
+            EXPECT_OK(stream->setDevices({address}));
         }
     }
 
@@ -555,10 +549,6 @@ class PcmOnlyConfigOutputStreamTest : public OutputStreamTest {
             if (areAudioPatchesSupported() && mHasPatch) {
                 EXPECT_OK(getDevice()->releaseAudioPatch(mPatchHandle));
                 mHasPatch = false;
-            }
-        } else {
-            if (stream) {
-                EXPECT_OK(stream->setDevices({address}));
             }
         }
     }
@@ -575,16 +565,22 @@ class PcmOnlyConfigOutputStreamTest : public OutputStreamTest {
         // Sometimes HAL doesn't have enough information until the audio data actually gets
         // consumed by the hardware.
         bool timedOut = false;
-        res = Result::INVALID_STATE;
-        for (android::base::Timer elapsed;
-             res != Result::OK && !writer.hasError() &&
-             !(timedOut = (elapsed.duration() >= kPositionChangeTimeout));) {
-            usleep(kWriteDurationUs);
-            ASSERT_OK(stream->getPresentationPosition(returnIn(res, framesInitial, ts)));
-            ASSERT_RESULT(okOrInvalidState, res);
+        if (!firstPosition || *firstPosition == std::numeric_limits<uint64_t>::max()) {
+            res = Result::INVALID_STATE;
+            for (android::base::Timer elapsed;
+                 res != Result::OK && !writer.hasError() &&
+                 !(timedOut = (elapsed.duration() >= kPositionChangeTimeout));) {
+                usleep(kWriteDurationUs);
+                ASSERT_OK(stream->getPresentationPosition(returnIn(res, framesInitial, ts)));
+                ASSERT_RESULT(okOrInvalidState, res);
+            }
+            ASSERT_FALSE(writer.hasError());
+            ASSERT_FALSE(timedOut);
+        } else {
+            // Use `firstPosition` instead of querying it from the HAL. This is used when
+            // `waitForPresentationPositionAdvance` is called in a loop.
+            framesInitial = *firstPosition;
         }
-        ASSERT_FALSE(writer.hasError());
-        ASSERT_FALSE(timedOut);
 
         uint64_t frames = framesInitial;
         for (android::base::Timer elapsed;
@@ -646,7 +642,7 @@ TEST_P(PcmOnlyConfigOutputStreamTest, PresentationPositionPreservedOnStandby) {
     ASSERT_OK(stream->standby());
     writer.resume();
 
-    uint64_t frames;
+    uint64_t frames = std::numeric_limits<uint64_t>::max();
     ASSERT_NO_FATAL_FAILURE(waitForPresentationPositionAdvance(writer, &frames));
     EXPECT_GT(frames, framesInitial);
 
@@ -691,24 +687,12 @@ class PcmOnlyConfigInputStreamTest : public InputStreamTest {
         InputStreamTest::TearDown();
     }
 
-    bool canQueryCapturePosition() const {
-        auto maybeSourceAddress = getCachedPolicyConfig().getSourceDeviceForMixPort(
-                getDeviceName(), getMixPortName());
-        // Returning 'true' when no source is found so the test can fail later with a more clear
-        // problem description.
-        return !maybeSourceAddress.has_value() ||
-               !xsd::isTelephonyDevice(maybeSourceAddress.value().deviceType);
-    }
+    bool canQueryCapturePosition() const { return !xsd::isTelephonyDevice(address.deviceType); }
 
     void createPatchIfNeeded() {
-        auto maybeSourceAddress = getCachedPolicyConfig().getSourceDeviceForMixPort(
-                getDeviceName(), getMixPortName());
-        ASSERT_TRUE(maybeSourceAddress.has_value())
-                << "No source device found for mix port " << getMixPortName() << " (module "
-                << getDeviceName() << ")";
         if (areAudioPatchesSupported()) {
             AudioPortConfig source;
-            source.ext.device(maybeSourceAddress.value());
+            source.ext.device(address);
             AudioPortConfig sink;
             sink.base.format.value(getConfig().base.format);
             sink.base.sampleRateHz.value(getConfig().base.sampleRateHz);
@@ -721,7 +705,7 @@ class PcmOnlyConfigInputStreamTest : public InputStreamTest {
                                                     returnIn(res, mPatchHandle)));
             mHasPatch = res == Result::OK;
         } else {
-            EXPECT_OK(stream->setDevices({maybeSourceAddress.value()}));
+            EXPECT_OK(stream->setDevices({address}));
         }
     }
 
@@ -730,10 +714,6 @@ class PcmOnlyConfigInputStreamTest : public InputStreamTest {
             if (areAudioPatchesSupported() && mHasPatch) {
                 EXPECT_OK(getDevice()->releaseAudioPatch(mPatchHandle));
                 mHasPatch = false;
-            }
-        } else {
-            if (stream) {
-                EXPECT_OK(stream->setDevices({address}));
             }
         }
     }
@@ -864,14 +844,8 @@ TEST_P(MicrophoneInfoInputStreamTest, GetActiveMicrophones) {
     }
     ASSERT_OK(res);
 
-    auto maybeSourceAddress =
-            getCachedPolicyConfig().getSourceDeviceForMixPort(getDeviceName(), getMixPortName());
-    ASSERT_TRUE(maybeSourceAddress.has_value())
-            << "No source device found for mix port " << getMixPortName() << " (module "
-            << getDeviceName() << ")";
-
     for (auto microphone : microphones) {
-        if (microphone.deviceAddress == maybeSourceAddress.value()) {
+        if (microphone.deviceAddress == address) {
             StreamReader reader(stream.get(), stream->getBufferSize());
             ASSERT_TRUE(reader.start());
             reader.pause();  // This ensures that at least one read has happened.
@@ -889,3 +863,176 @@ INSTANTIATE_TEST_CASE_P(MicrophoneInfoInputStream, MicrophoneInfoInputStreamTest
                         ::testing::ValuesIn(getBuiltinMicConfigParameters()),
                         &DeviceConfigParameterToString);
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(MicrophoneInfoInputStreamTest);
+
+static const std::vector<DeviceConfigParameter>& getOutputDeviceCompressedConfigParameters(
+        const AudioConfigBase& configToMatch) {
+    static const std::vector<DeviceConfigParameter> parameters = [&] {
+        auto allParams = getOutputDeviceConfigParameters();
+        std::vector<DeviceConfigParameter> compressedParams;
+        std::copy_if(allParams.begin(), allParams.end(), std::back_inserter(compressedParams),
+                     [&](auto cfg) {
+                         if (std::get<PARAM_CONFIG>(cfg).base != configToMatch) return false;
+                         const auto& flags = std::get<PARAM_FLAGS>(cfg);
+                         return std::find_if(flags.begin(), flags.end(), [](const auto& flag) {
+                                    return flag ==
+                                           toString(xsd::AudioInOutFlag::
+                                                            AUDIO_OUTPUT_FLAG_COMPRESS_OFFLOAD);
+                                }) != flags.end();
+                     });
+        return compressedParams;
+    }();
+    return parameters;
+}
+
+class CompressedOffloadOutputStreamTest : public PcmOnlyConfigOutputStreamTest {
+  public:
+    void loadData(const std::string& fileName, std::vector<uint8_t>* data) {
+        std::ifstream is(fileName, std::ios::in | std::ios::binary);
+        ASSERT_TRUE(is.good()) << "Failed to open file " << fileName;
+        is.seekg(0, is.end);
+        data->reserve(data->size() + is.tellg());
+        is.seekg(0, is.beg);
+        data->insert(data->end(), std::istreambuf_iterator<char>(is),
+                     std::istreambuf_iterator<char>());
+        ASSERT_TRUE(!is.fail()) << "Failed to read from file " << fileName;
+    }
+};
+
+class OffloadCallbacks : public IStreamOutCallback {
+  public:
+    Return<void> onDrainReady() override {
+        ALOGI("onDrainReady");
+        {
+            std::lock_guard lg(mLock);
+            mOnDrainReady = true;
+        }
+        mCondVar.notify_one();
+        return {};
+    }
+    Return<void> onWriteReady() override { return {}; }
+    Return<void> onError() override {
+        ALOGW("onError");
+        {
+            std::lock_guard lg(mLock);
+            mOnError = true;
+        }
+        mCondVar.notify_one();
+        return {};
+    }
+    bool waitForDrainReadyOrError() {
+        std::unique_lock l(mLock);
+        if (!mOnDrainReady && !mOnError) {
+            mCondVar.wait(l, [&]() { return mOnDrainReady || mOnError; });
+        }
+        const bool success = !mOnError;
+        mOnDrainReady = mOnError = false;
+        return success;
+    }
+
+  private:
+    std::mutex mLock;
+    bool mOnDrainReady = false;
+    bool mOnError = false;
+    std::condition_variable mCondVar;
+};
+
+TEST_P(CompressedOffloadOutputStreamTest, Mp3FormatGaplessOffload) {
+    doc::test("Check that compressed offload mix ports for MP3 implement gapless offload");
+    const auto& flags = getOutputFlags();
+    const bool isNewDeviceLaunchingOnTPlus = property_get_int32("ro.vendor.api_level", 0) >= 33;
+    // See test instantiation, only offload MP3 mix ports are used.
+    if (std::find_if(flags.begin(), flags.end(), [](const auto& flag) {
+            return flag == toString(xsd::AudioInOutFlag::AUDIO_OUTPUT_FLAG_GAPLESS_OFFLOAD);
+        }) == flags.end()) {
+        if (isNewDeviceLaunchingOnTPlus) {
+            FAIL() << "New devices launching on Android T+ must support gapless offload, "
+                   << "see VSR-4.3-001";
+        } else {
+            GTEST_SKIP() << "Compressed offload mix port does not support gapless offload";
+        }
+    }
+    std::vector<uint8_t> offloadData;
+    ASSERT_NO_FATAL_FAILURE(loadData("/data/local/tmp/sine882hz3s.mp3", &offloadData));
+    ASSERT_FALSE(offloadData.empty());
+    ASSERT_NO_FATAL_FAILURE(createPatchIfNeeded());
+    const int presentationeEndPrecisionMs = 1000;
+    const int sampleRate = 44100;
+    const int significantSampleNumber = (presentationeEndPrecisionMs * sampleRate) / 1000;
+    const int delay = 576 + 1000;
+    const int padding = 756 + 1000;
+    const int durationMs = 3000 - 44;
+    auto start = std::chrono::steady_clock::now();
+    auto callbacks = sp<OffloadCallbacks>::make();
+    std::mutex presentationEndLock;
+    std::vector<float> presentationEndTimes;
+    // StreamWriter plays 'offloadData' in a loop, possibly using multiple calls to 'write', this
+    // depends on the relative sizes of 'offloadData' and the HAL buffer. Writer calls 'onDataStart'
+    // each time it starts writing the buffer from the beginning, and 'onDataWrap' callback each
+    // time it wraps around the buffer.
+    StreamWriter writer(
+            stream.get(), stream->getBufferSize(), std::move(offloadData),
+            [&]() /* onDataStart */ { start = std::chrono::steady_clock::now(); },
+            [&]() /* onDataWrap */ {
+                Return<Result> ret(Result::OK);
+                // Decrease the volume since the test plays a loud sine wave.
+                ret = stream->setVolume(0.1, 0.1);
+                if (!ret.isOk() || ret != Result::OK) {
+                    ALOGE("%s: setVolume failed: %s", __func__, toString(ret).c_str());
+                    return false;
+                }
+                ret = Parameters::set(
+                        stream, {{AUDIO_OFFLOAD_CODEC_DELAY_SAMPLES, std::to_string(delay)},
+                                 {AUDIO_OFFLOAD_CODEC_PADDING_SAMPLES, std::to_string(padding)}});
+                if (!ret.isOk() || ret != Result::OK) {
+                    ALOGE("%s: setParameters failed: %s", __func__, toString(ret).c_str());
+                    return false;
+                }
+                ret = stream->drain(AudioDrain::EARLY_NOTIFY);
+                if (!ret.isOk() || ret != Result::OK) {
+                    ALOGE("%s: drain failed: %s", __func__, toString(ret).c_str());
+                    return false;
+                }
+                // FIXME: On some SoCs intermittent errors are possible, ignore them.
+                if (callbacks->waitForDrainReadyOrError()) {
+                    const float duration = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                                   std::chrono::steady_clock::now() - start)
+                                                   .count();
+                    std::lock_guard lg(presentationEndLock);
+                    presentationEndTimes.push_back(duration);
+                }
+                return true;
+            });
+    ASSERT_OK(stream->setCallback(callbacks));
+    ASSERT_TRUE(writer.start());
+    // How many times to loop the track so that the sum of gapless delay and padding from
+    // the first presentation end to the last is at least 'presentationeEndPrecisionMs'.
+    const int playbackNumber = (int)(significantSampleNumber / ((float)delay + padding) + 1);
+    for (bool done = false; !done;) {
+        usleep(presentationeEndPrecisionMs * 1000);
+        {
+            std::lock_guard lg(presentationEndLock);
+            done = presentationEndTimes.size() >= playbackNumber;
+        }
+        ASSERT_FALSE(writer.hasError()) << "Recent write or drain operation has failed";
+    }
+    const float avgDuration =
+            std::accumulate(presentationEndTimes.begin(), presentationEndTimes.end(), 0.0) /
+            presentationEndTimes.size();
+    std::stringstream observedEndTimes;
+    std::copy(presentationEndTimes.begin(), presentationEndTimes.end(),
+              std::ostream_iterator<float>(observedEndTimes, ", "));
+    EXPECT_NEAR(durationMs, avgDuration, presentationeEndPrecisionMs * 0.1)
+            << "Observed durations: " << observedEndTimes.str();
+    writer.stop();
+    EXPECT_OK(stream->clearCallback());
+    releasePatchIfNeeded();
+}
+
+INSTANTIATE_TEST_CASE_P(
+        CompressedOffloadOutputStream, CompressedOffloadOutputStreamTest,
+        ::testing::ValuesIn(getOutputDeviceCompressedConfigParameters(AudioConfigBase{
+                .format = xsd::toString(xsd::AudioFormat::AUDIO_FORMAT_MP3),
+                .sampleRateHz = 44100,
+                .channelMask = xsd::toString(xsd::AudioChannelMask::AUDIO_CHANNEL_OUT_STEREO)})),
+        &DeviceConfigParameterToString);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(CompressedOffloadOutputStreamTest);
