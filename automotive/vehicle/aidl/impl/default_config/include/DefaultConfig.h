@@ -763,6 +763,12 @@ const std::vector<ConfigDeclaration> kVehicleProperties = {
                          .int32Values = {0, 0, 0},
                  }},
 
+        {.config = {.prop = toInt(VehicleProperty::HVAC_ACTUAL_FAN_SPEED_RPM),
+                    .access = VehiclePropertyAccess::READ,
+                    .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                    .areaConfigs = {VehicleAreaConfig{.areaId = HVAC_ALL}}},
+         .initialValue = {.int32Values = {50}}},
+
         {.config = {.prop = toInt(VehicleProperty::HVAC_POWER_ON),
                     .access = VehiclePropertyAccess::READ_WRITE,
                     .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
@@ -910,6 +916,14 @@ const std::vector<ConfigDeclaration> kVehicleProperties = {
                             .maxInt32Value = 2,
                     }}},
          .initialValue = {.int32Values = {0}}},
+
+        {.config = {.prop = toInt(VehicleProperty::HVAC_TEMPERATURE_CURRENT),
+                    .access = VehiclePropertyAccess::READ,
+                    .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                    .areaConfigs = {VehicleAreaConfig{.areaId = HVAC_LEFT},
+                                    VehicleAreaConfig{.areaId = HVAC_RIGHT}}},
+         .initialAreaValues = {{HVAC_LEFT, {.floatValues = {17.3f}}},
+                               {HVAC_RIGHT, {.floatValues = {19.1f}}}}},
 
         {.config = {.prop = toInt(VehicleProperty::HVAC_TEMPERATURE_SET),
                     .access = VehiclePropertyAccess::READ_WRITE,
