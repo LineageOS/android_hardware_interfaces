@@ -207,18 +207,6 @@
             <regex-instance>.*</regex-instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
-        <name>android.hardware.drm</name>
-        <version>1.3-4</version>
-        <interface>
-            <name>ICryptoFactory</name>
-            <regex-instance>.*</regex-instance>
-        </interface>
-        <interface>
-            <name>IDrmFactory</name>
-            <regex-instance>.*</regex-instance>
-        </interface>
-    </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.dumpstate</name>
         <interface>
@@ -231,14 +219,6 @@
         <version>1.0</version>
         <interface>
             <name>IGatekeeper</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
-    <hal format="hidl" optional="true">
-        <name>android.hardware.gnss</name>
-        <version>2.0-1</version>
-        <interface>
-            <name>IGnss</name>
             <instance>default</instance>
         </interface>
     </hal>
@@ -630,27 +610,11 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
-        <name>android.hardware.tv.tuner</name>
-        <version>1.0-1</version>
-        <interface>
-            <name>ITuner</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.tv.tuner</name>
         <version>1</version>
         <interface>
             <name>ITuner</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
-    <hal format="hidl" optional="true">
-        <name>android.hardware.usb</name>
-        <version>1.0-3</version>
-        <interface>
-            <name>IUsb</name>
             <instance>default</instance>
         </interface>
     </hal>
