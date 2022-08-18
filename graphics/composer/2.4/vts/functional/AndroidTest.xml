@@ -31,6 +31,6 @@
     <test class="com.android.tradefed.testtype.GTest" >
         <option name="native-test-device-path" value="/data/local/tmp" />
         <option name="module-name" value="VtsHalGraphicsComposerV2_4TargetTest" />
-        <option name="native-test-timeout" value="900000"/>
+        <option name="native-test-timeout" value="1800000"/>
     </test>
 </configuration>
