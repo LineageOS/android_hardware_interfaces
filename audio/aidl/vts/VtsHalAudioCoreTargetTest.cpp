@@ -28,7 +28,6 @@
 #include <android-base/logging.h>
 
 #include <StreamWorker.h>
-#include <Utils.h>
 #include <aidl/Gtest.h>
 #include <aidl/Vintf.h>
 #include <aidl/android/hardware/audio/core/IConfig.h>
@@ -55,6 +54,7 @@ using aidl::android::hardware::audio::core::IStreamIn;
 using aidl::android::hardware::audio::core::IStreamOut;
 using aidl::android::hardware::audio::core::ModuleDebug;
 using aidl::android::hardware::audio::core::StreamDescriptor;
+using aidl::android::hardware::common::fmq::SynchronizedReadWrite;
 using aidl::android::media::audio::common::AudioContentType;
 using aidl::android::media::audio::common::AudioDevice;
 using aidl::android::media::audio::common::AudioDeviceAddress;
@@ -68,7 +68,6 @@ using aidl::android::media::audio::common::AudioPortDeviceExt;
 using aidl::android::media::audio::common::AudioPortExt;
 using aidl::android::media::audio::common::AudioSource;
 using aidl::android::media::audio::common::AudioUsage;
-using android::hardware::audio::common::getFrameSizeInBytes;
 using android::hardware::audio::common::StreamLogic;
 using android::hardware::audio::common::StreamWorker;
 using ndk::ScopedAStatus;
@@ -368,18 +367,12 @@ class WithDevicePortConnectedState {
 
 class StreamContext {
   public:
-    typedef AidlMessageQueue<StreamDescriptor::Command,
-                             ::aidl::android::hardware::common::fmq::SynchronizedReadWrite>
-            CommandMQ;
-    typedef AidlMessageQueue<StreamDescriptor::Reply,
-                             ::aidl::android::hardware::common::fmq::SynchronizedReadWrite>
-            ReplyMQ;
-    typedef AidlMessageQueue<int8_t, ::aidl::android::hardware::common::fmq::SynchronizedReadWrite>
-            DataMQ;
+    typedef AidlMessageQueue<StreamDescriptor::Command, SynchronizedReadWrite> CommandMQ;
+    typedef AidlMessageQueue<StreamDescriptor::Reply, SynchronizedReadWrite> ReplyMQ;
+    typedef AidlMessageQueue<int8_t, SynchronizedReadWrite> DataMQ;
 
-    StreamContext(const AudioPortConfig& portConfig, const StreamDescriptor& descriptor)
-        : mFrameSizeBytes(
-                  getFrameSizeInBytes(portConfig.format.value(), portConfig.channelMask.value())),
+    explicit StreamContext(const StreamDescriptor& descriptor)
+        : mFrameSizeBytes(descriptor.frameSizeBytes),
           mCommandMQ(new CommandMQ(descriptor.command)),
           mReplyMQ(new ReplyMQ(descriptor.reply)),
           mBufferSizeFrames(descriptor.bufferSizeFrames),
@@ -392,6 +385,10 @@ class StreamContext {
         EXPECT_TRUE(mReplyMQ->isValid());
         if (mDataMQ != nullptr) {
             EXPECT_TRUE(mDataMQ->isValid());
+            EXPECT_GE(mDataMQ->getQuantumCount() * mDataMQ->getQuantumSize(),
+                      mFrameSizeBytes * mBufferSizeFrames)
+                    << "Data MQ actual buffer size is "
+                       "less than the buffer size as specified by the descriptor";
         }
     }
     size_t getBufferSizeBytes() const { return mFrameSizeBytes * mBufferSizeFrames; }
@@ -605,7 +602,7 @@ class WithStream {
         ASSERT_NE(nullptr, mStream) << "; port config id " << getPortId();
         EXPECT_GE(mDescriptor.bufferSizeFrames, bufferSizeFrames)
                 << "actual buffer size must be no less than requested";
-        mContext.emplace(mPortConfig.get(), mDescriptor);
+        mContext.emplace(mDescriptor);
         ASSERT_NO_FATAL_FAILURE(mContext.value().checkIsValid());
     }
     Stream* get() const { return mStream.get(); }
