@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+#include <cstdlib>
+#include <ctime>
+
 #include "core-impl/Config.h"
 #include "core-impl/Module.h"
 
@@ -25,6 +28,9 @@ using aidl::android::hardware::audio::core::Config;
 using aidl::android::hardware::audio::core::Module;
 
 int main() {
+    // Random values are used in the implementation.
+    std::srand(std::time(nullptr));
+
     // This is a debug implementation, always enable debug logging.
     android::base::SetMinimumLogSeverity(::android::base::DEBUG);
     ABinderProcess_setThreadPoolMaxThreadCount(16);
