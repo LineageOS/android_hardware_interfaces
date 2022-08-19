@@ -23,7 +23,7 @@ package {
     default_applicable_licenses: ["hardware_interfaces_license"],
 }
 
-cc_library_headers {
+cc_library {
     name: "libaudioaidlcommon",
     host_supported: true,
     vendor_available: true,
@@ -36,13 +36,16 @@ cc_library_headers {
         "libbase_headers",
         "libsystem_headers",
     ],
+    srcs: [
+        "StreamWorker.cpp",
+    ],
 }
 
 cc_test {
     name: "libaudioaidlcommon_test",
     host_supported: true,
     vendor_available: true,
-    header_libs: [
+    static_libs: [
         "libaudioaidlcommon",
     ],
     shared_libs: [

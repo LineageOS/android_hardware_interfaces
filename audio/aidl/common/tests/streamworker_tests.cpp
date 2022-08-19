@@ -16,6 +16,7 @@
 
 #include <pthread.h>
 #include <sched.h>
+#include <sys/resource.h>
 #include <unistd.h>
 
 #include <atomic>
@@ -26,14 +27,19 @@
 #define LOG_TAG "StreamWorker_Test"
 #include <log/log.h>
 
-struct TestStream {
-    std::atomic<bool> error = false;
-};
+using android::hardware::audio::common::StreamLogic;
+using android::hardware::audio::common::StreamWorker;
 
-class TestWorker : public StreamWorker<TestWorker> {
+class TestWorkerLogic : public StreamLogic {
   public:
+    struct Stream {
+        void setErrorStatus() { status = Status::ABORT; }
+        void setStopStatus() { status = Status::EXIT; }
+        std::atomic<Status> status = Status::CONTINUE;
+    };
+
     // Use nullptr to test error reporting from the worker thread.
-    explicit TestWorker(TestStream* stream) : mStream(stream) {}
+    explicit TestWorkerLogic(Stream* stream) : mStream(stream) {}
 
     size_t getWorkerCycles() const { return mWorkerCycles; }
     int getPriority() const { return mPriority; }
@@ -44,20 +50,23 @@ class TestWorker : public StreamWorker<TestWorker> {
         return mWorkerCycles == cyclesBefore;
     }
 
-    std::string workerInit() { return mStream != nullptr ? "" : "Expected error"; }
-    bool workerCycle() {
+  protected:
+    // StreamLogic implementation
+    std::string init() override { return mStream != nullptr ? "" : "Expected error"; }
+    Status cycle() override {
         mPriority = getpriority(PRIO_PROCESS, 0);
         do {
             mWorkerCycles++;
         } while (mWorkerCycles == 0);
-        return !mStream->error;
+        return mStream->status;
     }
 
   private:
-    TestStream* const mStream;
+    Stream* const mStream;
     std::atomic<size_t> mWorkerCycles = 0;
     std::atomic<int> mPriority = ANDROID_PRIORITY_DEFAULT;
 };
+using TestWorker = StreamWorker<TestWorkerLogic>;
 
 // The parameter specifies whether an extra call to 'stop' is made at the end.
 class StreamWorkerInvalidTest : public testing::TestWithParam<bool> {
@@ -70,7 +79,8 @@ class StreamWorkerInvalidTest : public testing::TestWithParam<bool> {
     }
 
   protected:
-    StreamWorkerInvalidTest(TestStream* stream) : testing::TestWithParam<bool>(), worker(stream) {}
+    StreamWorkerInvalidTest(TestWorker::Stream* stream)
+        : testing::TestWithParam<bool>(), worker(stream) {}
     TestWorker worker;
 };
 
@@ -118,7 +128,7 @@ class StreamWorkerTest : public StreamWorkerInvalidTest {
     StreamWorkerTest() : StreamWorkerInvalidTest(&stream) {}
 
   protected:
-    TestStream stream;
+    TestWorker::Stream stream;
 };
 
 static constexpr unsigned kWorkerIdleCheckTime = 50 * 1000;
@@ -130,21 +140,47 @@ TEST_P(StreamWorkerTest, Uninitialized) {
 
 TEST_P(StreamWorkerTest, Start) {
     ASSERT_TRUE(worker.start());
+    EXPECT_TRUE(worker.waitForAtLeastOneCycle());
+    EXPECT_FALSE(worker.hasError());
+}
+
+TEST_P(StreamWorkerTest, StartStop) {
+    ASSERT_TRUE(worker.start());
+    EXPECT_TRUE(worker.waitForAtLeastOneCycle());
+    EXPECT_FALSE(worker.hasError());
+    worker.stop();
+    EXPECT_FALSE(worker.hasError());
+}
+
+TEST_P(StreamWorkerTest, WorkerExit) {
+    ASSERT_TRUE(worker.start());
+    stream.setStopStatus();
     worker.waitForAtLeastOneCycle();
     EXPECT_FALSE(worker.hasError());
+    EXPECT_TRUE(worker.hasNoWorkerCycleCalled(kWorkerIdleCheckTime));
 }
 
 TEST_P(StreamWorkerTest, WorkerError) {
     ASSERT_TRUE(worker.start());
-    stream.error = true;
+    stream.setErrorStatus();
     worker.waitForAtLeastOneCycle();
     EXPECT_TRUE(worker.hasError());
     EXPECT_TRUE(worker.hasNoWorkerCycleCalled(kWorkerIdleCheckTime));
 }
 
+TEST_P(StreamWorkerTest, StopAfterError) {
+    ASSERT_TRUE(worker.start());
+    stream.setErrorStatus();
+    worker.waitForAtLeastOneCycle();
+    EXPECT_TRUE(worker.hasError());
+    EXPECT_TRUE(worker.hasNoWorkerCycleCalled(kWorkerIdleCheckTime));
+    worker.stop();
+    EXPECT_TRUE(worker.hasError());
+}
+
 TEST_P(StreamWorkerTest, PauseResume) {
     ASSERT_TRUE(worker.start());
-    worker.waitForAtLeastOneCycle();
+    EXPECT_TRUE(worker.waitForAtLeastOneCycle());
     EXPECT_FALSE(worker.hasError());
     worker.pause();
     EXPECT_TRUE(worker.hasNoWorkerCycleCalled(kWorkerIdleCheckTime));
@@ -158,7 +194,7 @@ TEST_P(StreamWorkerTest, PauseResume) {
 
 TEST_P(StreamWorkerTest, StopPaused) {
     ASSERT_TRUE(worker.start());
-    worker.waitForAtLeastOneCycle();
+    EXPECT_TRUE(worker.waitForAtLeastOneCycle());
     EXPECT_FALSE(worker.hasError());
     worker.pause();
     worker.stop();
@@ -167,7 +203,7 @@ TEST_P(StreamWorkerTest, StopPaused) {
 
 TEST_P(StreamWorkerTest, PauseAfterErrorIgnored) {
     ASSERT_TRUE(worker.start());
-    stream.error = true;
+    stream.setErrorStatus();
     worker.waitForAtLeastOneCycle();
     EXPECT_TRUE(worker.hasError());
     worker.pause();
@@ -177,7 +213,7 @@ TEST_P(StreamWorkerTest, PauseAfterErrorIgnored) {
 
 TEST_P(StreamWorkerTest, ResumeAfterErrorIgnored) {
     ASSERT_TRUE(worker.start());
-    stream.error = true;
+    stream.setErrorStatus();
     worker.waitForAtLeastOneCycle();
     EXPECT_TRUE(worker.hasError());
     worker.resume();
@@ -187,11 +223,11 @@ TEST_P(StreamWorkerTest, ResumeAfterErrorIgnored) {
 
 TEST_P(StreamWorkerTest, WorkerErrorOnResume) {
     ASSERT_TRUE(worker.start());
-    worker.waitForAtLeastOneCycle();
+    EXPECT_TRUE(worker.waitForAtLeastOneCycle());
     EXPECT_FALSE(worker.hasError());
     worker.pause();
     EXPECT_FALSE(worker.hasError());
-    stream.error = true;
+    stream.setErrorStatus();
     EXPECT_FALSE(worker.hasError());
     worker.resume();
     worker.waitForAtLeastOneCycle();
@@ -208,7 +244,7 @@ TEST_P(StreamWorkerTest, WaitForAtLeastOneCycle) {
 
 TEST_P(StreamWorkerTest, WaitForAtLeastOneCycleError) {
     ASSERT_TRUE(worker.start());
-    stream.error = true;
+    stream.setErrorStatus();
     EXPECT_FALSE(worker.waitForAtLeastOneCycle());
 }
 
@@ -220,7 +256,7 @@ TEST_P(StreamWorkerTest, MutexDoesNotBlockWorker) {
         usleep(kWorkerIdleCheckTime);
     }
     worker.testLockUnlockMutex(false);
-    worker.waitForAtLeastOneCycle();
+    EXPECT_TRUE(worker.waitForAtLeastOneCycle());
     EXPECT_FALSE(worker.hasError());
 }
 
@@ -235,7 +271,7 @@ TEST_P(StreamWorkerTest, ThreadName) {
 TEST_P(StreamWorkerTest, ThreadPriority) {
     const int priority = ANDROID_PRIORITY_LOWEST;
     ASSERT_TRUE(worker.start("", priority)) << worker.getError();
-    worker.waitForAtLeastOneCycle();
+    EXPECT_TRUE(worker.waitForAtLeastOneCycle());
     EXPECT_EQ(priority, worker.getPriority());
 }
 
