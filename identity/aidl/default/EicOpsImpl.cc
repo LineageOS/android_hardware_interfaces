@@ -100,6 +100,7 @@ void eicOpsHmacSha256Final(EicHmacSha256Ctx* ctx, uint8_t digest[EIC_SHA256_DIGE
     if (size != EIC_SHA256_DIGEST_SIZE) {
         LOG(ERROR) << "Expected 32 bytes from HMAC_Final, got " << size;
     }
+    HMAC_CTX_cleanup(realCtx);
 }
 
 void eicOpsSha256Init(EicSha256Ctx* ctx) {
@@ -394,14 +395,17 @@ bool eicOpsEcDsa(const uint8_t privateKey[EIC_P256_PRIV_KEY_SIZE],
     }
 
     if (BN_bn2binpad(sig->r, signature, 32) != 32) {
+        ECDSA_SIG_free(sig);
         eicDebug("Error encoding r");
         return false;
     }
     if (BN_bn2binpad(sig->s, signature + 32, 32) != 32) {
+        ECDSA_SIG_free(sig);
         eicDebug("Error encoding s");
         return false;
     }
 
+    ECDSA_SIG_free(sig);
     return true;
 }
 
