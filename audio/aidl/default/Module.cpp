@@ -20,6 +20,8 @@
 #define LOG_TAG "AHAL_Module"
 #include <android-base/logging.h>
 
+#include <Utils.h>
+#include <aidl/android/media/audio/common/AudioInputFlags.h>
 #include <aidl/android/media/audio/common/AudioOutputFlags.h>
 
 #include "core-impl/Module.h"
@@ -30,6 +32,7 @@ using aidl::android::hardware::audio::common::SourceMetadata;
 using aidl::android::media::audio::common::AudioChannelLayout;
 using aidl::android::media::audio::common::AudioFormatDescription;
 using aidl::android::media::audio::common::AudioFormatType;
+using aidl::android::media::audio::common::AudioInputFlags;
 using aidl::android::media::audio::common::AudioIoFlags;
 using aidl::android::media::audio::common::AudioOffloadInfo;
 using aidl::android::media::audio::common::AudioOutputFlags;
@@ -39,6 +42,7 @@ using aidl::android::media::audio::common::AudioPortExt;
 using aidl::android::media::audio::common::AudioProfile;
 using aidl::android::media::audio::common::Int;
 using aidl::android::media::audio::common::PcmType;
+using android::hardware::audio::common::getFrameSizeInBytes;
 
 namespace aidl::android::hardware::audio::core {
 
@@ -72,49 +76,6 @@ bool generateDefaultPortConfig(const AudioPort& port, AudioPortConfig* config) {
     return true;
 }
 
-constexpr size_t getPcmSampleSizeInBytes(PcmType pcm) {
-    switch (pcm) {
-        case PcmType::UINT_8_BIT:
-            return 1;
-        case PcmType::INT_16_BIT:
-            return 2;
-        case PcmType::INT_32_BIT:
-            return 4;
-        case PcmType::FIXED_Q_8_24:
-            return 4;
-        case PcmType::FLOAT_32_BIT:
-            return 4;
-        case PcmType::INT_24_BIT:
-            return 3;
-    }
-    return 0;
-}
-
-constexpr size_t getChannelCount(const AudioChannelLayout& layout) {
-    using Tag = AudioChannelLayout::Tag;
-    switch (layout.getTag()) {
-        case Tag::none:
-            return 0;
-        case Tag::invalid:
-            return 0;
-        case Tag::indexMask:
-            return __builtin_popcount(layout.get<Tag::indexMask>());
-        case Tag::layoutMask:
-            return __builtin_popcount(layout.get<Tag::layoutMask>());
-        case Tag::voiceMask:
-            return __builtin_popcount(layout.get<Tag::voiceMask>());
-    }
-    return 0;
-}
-
-size_t getFrameSizeInBytes(const AudioFormatDescription& format, const AudioChannelLayout& layout) {
-    if (format.type == AudioFormatType::PCM) {
-        return getPcmSampleSizeInBytes(format.pcm) * getChannelCount(layout);
-    }
-    // For non-PCM formats always use frame size of 1.
-    return 1;
-}
-
 bool findAudioProfile(const AudioPort& port, const AudioFormatDescription& format,
                       AudioProfile* profile) {
     if (auto profilesIt =
@@ -133,33 +94,8 @@ void Module::cleanUpPatch(int32_t patchId) {
     erase_all_values(mPatches, std::set<int32_t>{patchId});
 }
 
-void Module::cleanUpPatches(int32_t portConfigId) {
-    auto& patches = getConfig().patches;
-    if (patches.size() == 0) return;
-    auto range = mPatches.equal_range(portConfigId);
-    for (auto it = range.first; it != range.second; ++it) {
-        auto patchIt = findById<AudioPatch>(patches, it->second);
-        if (patchIt != patches.end()) {
-            erase_if(patchIt->sourcePortConfigIds,
-                     [portConfigId](auto e) { return e == portConfigId; });
-            erase_if(patchIt->sinkPortConfigIds,
-                     [portConfigId](auto e) { return e == portConfigId; });
-        }
-    }
-    std::set<int32_t> erasedPatches;
-    for (size_t i = patches.size() - 1; i != 0; --i) {
-        const auto& patch = patches[i];
-        if (patch.sourcePortConfigIds.empty() || patch.sinkPortConfigIds.empty()) {
-            erasedPatches.insert(patch.id);
-            patches.erase(patches.begin() + i);
-        }
-    }
-    erase_all_values(mPatches, erasedPatches);
-}
-
-ndk::ScopedAStatus Module::createStreamDescriptor(int32_t in_portConfigId,
-                                                  int64_t in_bufferSizeFrames,
-                                                  StreamDescriptor* out_descriptor) {
+ndk::ScopedAStatus Module::createStreamContext(int32_t in_portConfigId, int64_t in_bufferSizeFrames,
+                                               StreamContext* out_context) {
     if (in_bufferSizeFrames <= 0) {
         LOG(ERROR) << __func__ << ": non-positive buffer size " << in_bufferSizeFrames;
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
@@ -171,7 +107,7 @@ ndk::ScopedAStatus Module::createStreamDescriptor(int32_t in_portConfigId,
     }
     auto& configs = getConfig().portConfigs;
     auto portConfigIt = findById<AudioPortConfig>(configs, in_portConfigId);
-    // Since 'createStreamDescriptor' is an internal method, it is assumed that
+    // Since this is a private method, it is assumed that
     // validity of the portConfigId has already been checked.
     const size_t frameSize =
             getFrameSizeInBytes(portConfigIt->format.value(), portConfigIt->channelMask.value());
@@ -187,7 +123,26 @@ ndk::ScopedAStatus Module::createStreamDescriptor(int32_t in_portConfigId,
                    << kMaximumStreamBufferSizeBytes / frameSize;
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
     }
-    (void)out_descriptor;
+    const auto& flags = portConfigIt->flags.value();
+    if ((flags.getTag() == AudioIoFlags::Tag::input &&
+         (flags.get<AudioIoFlags::Tag::input>() &
+          1 << static_cast<int32_t>(AudioInputFlags::MMAP_NOIRQ)) == 0) ||
+        (flags.getTag() == AudioIoFlags::Tag::output &&
+         (flags.get<AudioIoFlags::Tag::output>() &
+          1 << static_cast<int32_t>(AudioOutputFlags::MMAP_NOIRQ)) == 0)) {
+        StreamContext temp(
+                std::make_unique<StreamContext::CommandMQ>(1, true /*configureEventFlagWord*/),
+                std::make_unique<StreamContext::ReplyMQ>(1, true /*configureEventFlagWord*/),
+                frameSize,
+                std::make_unique<StreamContext::DataMQ>(frameSize * in_bufferSizeFrames));
+        if (temp.isValid()) {
+            *out_context = std::move(temp);
+        } else {
+            return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
+        }
+    } else {
+        // TODO: Implement simulation of MMAP buffer allocation
+    }
     return ndk::ScopedAStatus::ok();
 }
 
@@ -251,6 +206,28 @@ void Module::registerPatch(const AudioPatch& patch) {
     };
     do_insert(patch.sourcePortConfigIds);
     do_insert(patch.sinkPortConfigIds);
+}
+
+void Module::updateStreamsConnectedState(const AudioPatch& oldPatch, const AudioPatch& newPatch) {
+    // Streams from the old patch need to be disconnected, streams from the new
+    // patch need to be connected. If the stream belongs to both patches, no need
+    // to update it.
+    std::set<int32_t> idsToDisconnect, idsToConnect;
+    idsToDisconnect.insert(oldPatch.sourcePortConfigIds.begin(),
+                           oldPatch.sourcePortConfigIds.end());
+    idsToDisconnect.insert(oldPatch.sinkPortConfigIds.begin(), oldPatch.sinkPortConfigIds.end());
+    idsToConnect.insert(newPatch.sourcePortConfigIds.begin(), newPatch.sourcePortConfigIds.end());
+    idsToConnect.insert(newPatch.sinkPortConfigIds.begin(), newPatch.sinkPortConfigIds.end());
+    std::for_each(idsToDisconnect.begin(), idsToDisconnect.end(), [&](const auto& portConfigId) {
+        if (idsToConnect.count(portConfigId) == 0) {
+            mStreams.setStreamIsConnected(portConfigId, false);
+        }
+    });
+    std::for_each(idsToConnect.begin(), idsToConnect.end(), [&](const auto& portConfigId) {
+        if (idsToDisconnect.count(portConfigId) == 0) {
+            mStreams.setStreamIsConnected(portConfigId, true);
+        }
+    });
 }
 
 ndk::ScopedAStatus Module::setModuleDebug(
@@ -467,13 +444,22 @@ ndk::ScopedAStatus Module::openInputStream(const OpenInputStreamArguments& in_ar
                    << " does not correspond to an input mix port";
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
     }
-    if (auto status = createStreamDescriptor(in_args.portConfigId, in_args.bufferSizeFrames,
-                                             &_aidl_return->desc);
+    StreamContext context;
+    if (auto status = createStreamContext(in_args.portConfigId, in_args.bufferSizeFrames, &context);
         !status.isOk()) {
         return status;
     }
-    auto stream = ndk::SharedRefBase::make<StreamIn>(in_args.sinkMetadata);
-    mStreams.insert(port->id, in_args.portConfigId, StreamWrapper(stream));
+    context.fillDescriptor(&_aidl_return->desc);
+    auto stream = ndk::SharedRefBase::make<StreamIn>(in_args.sinkMetadata, std::move(context));
+    if (auto status = stream->init(); !status.isOk()) {
+        return status;
+    }
+    StreamWrapper streamWrapper(stream);
+    auto patchIt = mPatches.find(in_args.portConfigId);
+    if (patchIt != mPatches.end()) {
+        streamWrapper.setStreamIsConnected(true);
+    }
+    mStreams.insert(port->id, in_args.portConfigId, std::move(streamWrapper));
     _aidl_return->stream = std::move(stream);
     return ndk::ScopedAStatus::ok();
 }
@@ -499,13 +485,23 @@ ndk::ScopedAStatus Module::openOutputStream(const OpenOutputStreamArguments& in_
                    << " has COMPRESS_OFFLOAD flag set, requires offload info";
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
     }
-    if (auto status = createStreamDescriptor(in_args.portConfigId, in_args.bufferSizeFrames,
-                                             &_aidl_return->desc);
+    StreamContext context;
+    if (auto status = createStreamContext(in_args.portConfigId, in_args.bufferSizeFrames, &context);
         !status.isOk()) {
         return status;
     }
-    auto stream = ndk::SharedRefBase::make<StreamOut>(in_args.sourceMetadata, in_args.offloadInfo);
-    mStreams.insert(port->id, in_args.portConfigId, StreamWrapper(stream));
+    context.fillDescriptor(&_aidl_return->desc);
+    auto stream = ndk::SharedRefBase::make<StreamOut>(in_args.sourceMetadata, std::move(context),
+                                                      in_args.offloadInfo);
+    if (auto status = stream->init(); !status.isOk()) {
+        return status;
+    }
+    StreamWrapper streamWrapper(stream);
+    auto patchIt = mPatches.find(in_args.portConfigId);
+    if (patchIt != mPatches.end()) {
+        streamWrapper.setStreamIsConnected(true);
+    }
+    mStreams.insert(port->id, in_args.portConfigId, std::move(streamWrapper));
     _aidl_return->stream = std::move(stream);
     return ndk::ScopedAStatus::ok();
 }
@@ -595,15 +591,20 @@ ndk::ScopedAStatus Module::setAudioPatch(const AudioPatch& in_requested, AudioPa
     _aidl_return->latenciesMs.clear();
     _aidl_return->latenciesMs.insert(_aidl_return->latenciesMs.end(),
                                      _aidl_return->sinkPortConfigIds.size(), kLatencyMs);
+    AudioPatch oldPatch{};
     if (existing == patches.end()) {
         _aidl_return->id = getConfig().nextPatchId++;
         patches.push_back(*_aidl_return);
         existing = patches.begin() + (patches.size() - 1);
     } else {
+        oldPatch = *existing;
         *existing = *_aidl_return;
     }
     registerPatch(*existing);
-    LOG(DEBUG) << __func__ << ": created or updated patch id " << _aidl_return->id;
+    updateStreamsConnectedState(oldPatch, *_aidl_return);
+
+    LOG(DEBUG) << __func__ << ": " << (oldPatch.id == 0 ? "created" : "updated") << " patch "
+               << _aidl_return->toString();
     return ndk::ScopedAStatus::ok();
 }
 
@@ -738,6 +739,7 @@ ndk::ScopedAStatus Module::resetAudioPatch(int32_t in_patchId) {
     auto patchIt = findById<AudioPatch>(patches, in_patchId);
     if (patchIt != patches.end()) {
         cleanUpPatch(patchIt->id);
+        updateStreamsConnectedState(*patchIt, AudioPatch{});
         patches.erase(patchIt);
         LOG(DEBUG) << __func__ << ": erased patch " << in_patchId;
         return ndk::ScopedAStatus::ok();

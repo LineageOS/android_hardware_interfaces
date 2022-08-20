@@ -123,6 +123,15 @@ std::vector<AudioPort> ModuleConfig::getOutputMixPorts() const {
     return result;
 }
 
+std::vector<AudioPort> ModuleConfig::getAttachedDevicesPortsForMixPort(
+        bool isInput, const AudioPortConfig& mixPortConfig) const {
+    const auto mixPortIt = findById<AudioPort>(mPorts, mixPortConfig.portId);
+    if (mixPortIt != mPorts.end()) {
+        return getAttachedDevicesPortsForMixPort(isInput, *mixPortIt);
+    }
+    return {};
+}
+
 std::vector<AudioPort> ModuleConfig::getAttachedSinkDevicesPortsForMixPort(
         const AudioPort& mixPort) const {
     std::vector<AudioPort> result;

@@ -13,12 +13,10 @@ cc_test {
         "VtsHalTargetTestDefaults",
         "use_libaidlvintf_gtest_helper_static",
     ],
-    srcs: [
-        "ModuleConfig.cpp",
-        "VtsHalAudioCoreTargetTest.cpp",
-    ],
     shared_libs: [
         "libbinder_ndk",
+        "libcutils",
+        "libfmq",
     ],
     static_libs: [
         "android.hardware.audio.common-V1-ndk",
@@ -26,6 +24,17 @@ cc_test {
         "android.hardware.common-V2-ndk",
         "android.hardware.common.fmq-V1-ndk",
         "android.media.audio.common.types-V1-ndk",
+        "libaudioaidlcommon",
+    ],
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-Wthread-safety",
+    ],
+    srcs: [
+        "ModuleConfig.cpp",
+        "VtsHalAudioCoreTargetTest.cpp",
     ],
     test_suites: [
         "general-tests",
