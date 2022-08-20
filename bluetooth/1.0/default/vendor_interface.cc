@@ -277,6 +277,18 @@ bool VendorInterface::Open(InitializeCompleteCallback initialize_complete_cb,
   return true;
 }
 
+#include <fcntl.h>
+#include <sys/ioctl.h>
+static void hw_reset(bool reset) {
+  unsigned buf[8] = { 8 * 4, 0, 0x38041, 8, 8, 128, 0, 0};
+  buf[6] = reset ? 0 : 1;
+  int fd = open("/dev/vcio", 0);
+  if (fd >= 0) {
+    ioctl(fd, _IOWR(100, 0, char *), buf);
+    close(fd);
+  }
+}
+
 void VendorInterface::Close() {
   // These callbacks may send HCI events (vendor-dependent), so make sure to
   // StopWatching the file descriptor after this.
@@ -311,6 +323,10 @@ void VendorInterface::Close() {
     delete firmware_startup_timer_;
     firmware_startup_timer_ = nullptr;
   }
+
+  hw_reset(true);
+  sleep(2);
+  hw_reset(false);
 }
 
 size_t VendorInterface::Send(uint8_t type, const uint8_t* data, size_t length) {
