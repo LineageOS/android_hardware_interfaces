@@ -54,6 +54,9 @@ class ModuleConfig {
         return isInput ? getAttachedSourceDevicesPortsForMixPort(mixPort)
                        : getAttachedSinkDevicesPortsForMixPort(mixPort);
     }
+    std::vector<aidl::android::media::audio::common::AudioPort> getAttachedDevicesPortsForMixPort(
+            bool isInput,
+            const aidl::android::media::audio::common::AudioPortConfig& mixPortConfig) const;
     std::vector<aidl::android::media::audio::common::AudioPort>
     getAttachedSinkDevicesPortsForMixPort(
             const aidl::android::media::audio::common::AudioPort& mixPort) const;

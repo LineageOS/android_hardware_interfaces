@@ -555,7 +555,7 @@ std::pair<wifi_error, std::vector<uint8_t>> WifiLegacyHal::readApfPacketFilterDa
 
     status = global_func_table_.wifi_read_packet_filter(
             getIfaceHandle(iface_name), /*src_offset=*/0, buffer.data(), buffer.size());
-    return {status, move(buffer)};
+    return {status, std::move(buffer)};
 }
 
 std::pair<wifi_error, wifi_gscan_capabilities> WifiLegacyHal::getGscanCapabilities(

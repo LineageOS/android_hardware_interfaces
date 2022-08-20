@@ -27,10 +27,12 @@ interface IStreamOut {
      * Close the stream.
      *
      * Releases any resources allocated for this stream on the HAL module side.
-     * The stream can not be operated after it has been closed. Methods of this
-     * interface throw EX_ILLEGAL_STATE for a closed stream.
+     * This includes the fast message queues and shared memories returned via
+     * the StreamDescriptor. Thus, the stream can not be operated anymore after
+     * it has been closed. The client needs to release the audio data I/O
+     * objects after the call to this method returns.
      *
-     * The associated stream descriptor can be released once this method returns.
+     * Methods of this interface throw EX_ILLEGAL_STATE for a closed stream.
      *
      * @throws EX_ILLEGAL_STATE If the stream has already been closed.
      */
