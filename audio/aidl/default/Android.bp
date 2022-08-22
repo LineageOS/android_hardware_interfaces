@@ -1,0 +1,45 @@
+package {
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "hardware_interfaces_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-Apache-2.0
+    default_applicable_licenses: ["hardware_interfaces_license"],
+}
+
+cc_library_static {
+    name: "libaudioserviceexampleimpl",
+    vendor: true,
+    shared_libs: [
+        "libbase",
+        "libbinder_ndk",
+        "android.hardware.audio.core-V1-ndk",
+    ],
+    export_include_dirs: ["include"],
+    srcs: [
+        "Config.cpp",
+        "Configuration.cpp",
+        "Module.cpp",
+        "Stream.cpp",
+    ],
+    visibility: [
+        ":__subpackages__",
+    ],
+}
+
+cc_binary {
+    name: "android.hardware.audio.service-aidl.example",
+    relative_install_path: "hw",
+    init_rc: ["android.hardware.audio.service-aidl.example.rc"],
+    vintf_fragments: ["android.hardware.audio.service-aidl.xml"],
+    vendor: true,
+    shared_libs: [
+        "libbase",
+        "libbinder_ndk",
+        "android.hardware.audio.core-V1-ndk",
+    ],
+    static_libs: [
+        "libaudioserviceexampleimpl",
+    ],
+    srcs: ["main.cpp"],
+}
