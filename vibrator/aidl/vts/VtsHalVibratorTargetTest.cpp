@@ -444,7 +444,7 @@ TEST_P(VibratorAidl, ComposeValidPrimitives) {
 
             effect.delayMs = std::rand() % (maxDelay + 1);
             effect.primitive = primitive;
-            effect.scale = static_cast<float>(std::rand()) / RAND_MAX;
+            effect.scale = static_cast<float>(std::rand()) / static_cast<float>(RAND_MAX);
             composite.emplace_back(effect);
 
             if (composite.size() == maxSize) {
