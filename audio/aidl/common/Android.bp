@@ -46,6 +46,7 @@ cc_test {
     host_supported: true,
     vendor_available: true,
     static_libs: [
+        "android.media.audio.common.types-V1-ndk",
         "libaudioaidlcommon",
     ],
     shared_libs: [
@@ -59,6 +60,7 @@ cc_test {
     ],
     srcs: [
         "tests/streamworker_tests.cpp",
+        "tests/utils_tests.cpp",
     ],
     test_suites: [
         "general-tests",

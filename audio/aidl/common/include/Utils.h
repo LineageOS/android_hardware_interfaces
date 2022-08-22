@@ -62,12 +62,20 @@ constexpr size_t getChannelCount(
 constexpr size_t getFrameSizeInBytes(
         const ::aidl::android::media::audio::common::AudioFormatDescription& format,
         const ::aidl::android::media::audio::common::AudioChannelLayout& layout) {
+    if (format == ::aidl::android::media::audio::common::AudioFormatDescription{}) {
+        // Unspecified format.
+        return 0;
+    }
     using ::aidl::android::media::audio::common::AudioFormatType;
     if (format.type == AudioFormatType::PCM) {
         return getPcmSampleSizeInBytes(format.pcm) * getChannelCount(layout);
+    } else if (format.type == AudioFormatType::NON_PCM) {
+        // For non-PCM formats always use the underlying PCM size. The default value for
+        // PCM is "UINT_8_BIT", thus non-encapsulated streams have the frame size of 1.
+        return getPcmSampleSizeInBytes(format.pcm);
     }
-    // For non-PCM formats always use frame size of 1.
-    return 1;
+    // Something unexpected.
+    return 0;
 }
 
 }  // namespace android::hardware::audio::common
