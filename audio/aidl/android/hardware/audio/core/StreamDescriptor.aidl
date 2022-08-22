@@ -145,6 +145,14 @@ parcelable StreamDescriptor {
     MQDescriptor<Reply, SynchronizedReadWrite> reply;
 
     /**
+     * The size of one frame of audio data in bytes. For PCM formats this is
+     * usually equal to the size of a sample multiplied by the number of
+     * channels used. For encoded bitstreams encapsulated into PCM the sample
+     * size of the underlying PCM stream is used. For encoded bitstreams that
+     * are passed without encapsulation, the frame size is usually 1 byte.
+     */
+    int frameSizeBytes;
+    /**
      * Total buffer size in frames. This applies both to the size of the 'audio.fmq'
      * queue and to the size of the shared memory buffer for MMap No IRQ streams.
      * Note that this size may end up being slightly larger than the size requested

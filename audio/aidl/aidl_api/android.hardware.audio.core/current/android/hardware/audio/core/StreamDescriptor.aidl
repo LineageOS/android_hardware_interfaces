@@ -36,6 +36,7 @@ package android.hardware.audio.core;
 parcelable StreamDescriptor {
   android.hardware.common.fmq.MQDescriptor<android.hardware.audio.core.StreamDescriptor.Command,android.hardware.common.fmq.SynchronizedReadWrite> command;
   android.hardware.common.fmq.MQDescriptor<android.hardware.audio.core.StreamDescriptor.Reply,android.hardware.common.fmq.SynchronizedReadWrite> reply;
+  int frameSizeBytes;
   long bufferSizeFrames;
   android.hardware.audio.core.StreamDescriptor.AudioBuffer audio;
   const int COMMAND_BURST = 1;
