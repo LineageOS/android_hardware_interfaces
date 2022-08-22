@@ -78,7 +78,7 @@ aidl_interface {
     ],
     imports: [
         "android.hardware.audio.common-V1",
-        "android.media.audio.common.types",
+        "android.media.audio.common.types-V1",
     ],
     stability: "vintf",
     backend: {
