@@ -77,7 +77,7 @@ aidl_interface {
         "android/hardware/audio/core/IStreamOut.aidl",
     ],
     imports: [
-        "android.hardware.audio.common",
+        "android.hardware.audio.common-V1",
         "android.media.audio.common.types",
     ],
     stability: "vintf",
