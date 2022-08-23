@@ -13,29 +13,22 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<configuration description="Runs VtsHalAudioV7_1TargetTest.">
+<configuration description="Runs VtsAidlHalSensorsTargetTest.">
     <option name="test-suite-tag" value="apct" />
     <option name="test-suite-tag" value="apct-native" />
 
     <target_preparer class="com.android.tradefed.targetprep.RootTargetPreparer"/>
     <target_preparer class="com.android.tradefed.targetprep.StopServicesSetup"/>
 
-    <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
-        <option name="run-command" value="setprop vts.native_server.on 1"/>
-        <option name="teardown-command" value="setprop vts.native_server.on 0"/>
-    </target_preparer>
-
     <target_preparer class="com.android.tradefed.targetprep.PushFilePreparer">
         <option name="cleanup" value="true" />
-        <option name="push" value="VtsHalAudioV7_1TargetTest->/data/local/tmp/VtsHalAudioV7_1TargetTest" />
-        <option name="push" value="audio_policy_configuration_V7_1.xsd->/data/local/tmp/audio_policy_configuration_V7_1.xsd" />
-        <option name="push" value="sine882hz3s.mp3->/data/local/tmp/sine882hz3s.mp3" />
-
+        <option name="push" value="VtsAidlHalSensorsTargetTest->/data/local/tmp/VtsAidlHalSensorsTargetTest" />
     </target_preparer>
 
     <test class="com.android.tradefed.testtype.GTest" >
+        <option name="native-test-timeout" value="900000" />
+        <option name="runtime-hint" value="300000"/>
         <option name="native-test-device-path" value="/data/local/tmp" />
-        <option name="module-name" value="VtsHalAudioV7_1TargetTest" />
-        <option name="native-test-timeout" value="10m" />
+        <option name="module-name" value="VtsAidlHalSensorsTargetTest" />
     </test>
 </configuration>
