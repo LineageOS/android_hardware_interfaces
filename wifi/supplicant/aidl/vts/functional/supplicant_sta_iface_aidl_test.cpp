@@ -218,6 +218,15 @@ class SupplicantStaIfaceCallback : public BnSupplicantStaIfaceCallback {
                     MloLinkInfoChangeReason /* reason */) override {
         return ndk::ScopedAStatus::ok();
     }
+    ::ndk::ScopedAStatus onDppConfigReceived(
+            const ::aidl::android::hardware::wifi::supplicant::
+                    DppConfigurationData& /* configData */) override {
+        return ndk::ScopedAStatus::ok();
+    }
+    ::ndk::ScopedAStatus onDppConnectionStatusResultSent(
+            ::aidl::android::hardware::wifi::supplicant::DppStatusErrorCode /* code */) override {
+        return ndk::ScopedAStatus::ok();
+    }
 };
 
 class SupplicantStaIfaceAidlTest : public testing::TestWithParam<std::string> {
