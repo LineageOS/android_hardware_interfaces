@@ -57,33 +57,12 @@ cc_binary {
 cc_fuzz {
     name: "android.hardware.vibrator-service.example_fuzzer",
     host_supported: true,
+    defaults: ["service_fuzzer_defaults"],
     static_libs: [
         "android.hardware.vibrator-V2-ndk",
-        "libbase",
-        "libbinder_random_parcel",
-        "libcutils",
         "liblog",
         "libvibratorexampleimpl",
     ],
-    target: {
-        android: {
-            shared_libs: [
-                "libbinder_ndk",
-                "libbinder",
-                "libutils",
-            ],
-        },
-        host: {
-            static_libs: [
-                "libbinder_ndk",
-                "libbinder",
-                "libutils",
-            ],
-        },
-        darwin: {
-            enabled: false,
-        },
-    },
     srcs: ["fuzzer.cpp"],
     fuzz_config: {
         cc: [
