@@ -105,6 +105,7 @@ const std::unordered_map<std::string, int> CONSTANTS_BY_NAME = {
          FAN_DIRECTION_FLOOR | FAN_DIRECTION_DEFROST | FAN_DIRECTION_FACE},
         {"FUEL_DOOR_REAR_LEFT", FUEL_DOOR_REAR_LEFT},
         {"LIGHT_STATE_ON", LIGHT_STATE_ON},
+        {"LIGHT_SWITCH_OFF", LIGHT_SWITCH_OFF},
         {"LIGHT_SWITCH_AUTO", LIGHT_SWITCH_AUTO},
         {"MIRROR_DRIVER_LEFT_RIGHT",
          toInt(VehicleAreaMirror::DRIVER_LEFT) | toInt(VehicleAreaMirror::DRIVER_RIGHT)},

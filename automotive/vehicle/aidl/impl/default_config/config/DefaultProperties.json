@@ -2255,6 +2255,39 @@
             }
         },
         {
+            "property": "VehicleProperty::CABIN_LIGHTS_SWITCH",
+            "defaultValue": {
+                "int32Values": [
+                    "Constants::LIGHT_SWITCH_OFF"
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::READING_LIGHTS_SWITCH",
+            "defaultValue": {
+                "int32Values": [
+                    "Constants::LIGHT_SWITCH_OFF"
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "Constants::SEAT_1_LEFT"
+                },
+                {
+                    "areaId": "Constants::SEAT_1_RIGHT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_LEFT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_RIGHT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_CENTER"
+                }
+            ]
+        },
+        {
             "property": "VehicleProperty::EVS_SERVICE_REQUEST",
             "defaultValue": {
                 "int32Values": [
