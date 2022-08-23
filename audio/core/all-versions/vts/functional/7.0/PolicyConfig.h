@@ -61,6 +61,18 @@ class PolicyConfig {
     const std::set<std::string>& getModulesWithDevicesNames() const {
         return mModulesWithDevicesNames;
     }
+    std::optional<DeviceAddress> getDeviceAddressOfSinkDeviceAttachedToMixPort(
+            const std::string& moduleName, const std::string& mixPortName) const {
+        const auto attachedDevicePort = getAttachedSinkDeviceForMixPort(moduleName, mixPortName);
+        if (attachedDevicePort.empty()) return {};
+        return getDeviceAddressOfDevicePort(moduleName, attachedDevicePort);
+    }
+    std::optional<DeviceAddress> getDeviceAddressOfSourceDeviceAttachedToMixPort(
+            const std::string& moduleName, const std::string& mixPortName) const {
+        const auto attachedDevicePort = getAttachedSourceDeviceForMixPort(moduleName, mixPortName);
+        if (attachedDevicePort.empty()) return {};
+        return getDeviceAddressOfDevicePort(moduleName, attachedDevicePort);
+    }
     std::string getAttachedSinkDeviceForMixPort(const std::string& moduleName,
                                                 const std::string& mixPortName) const {
         return findAttachedDevice(getAttachedDevices(moduleName),
@@ -84,8 +96,6 @@ class PolicyConfig {
     const std::vector<std::string>& getAttachedDevices(const std::string& moduleName) const;
     std::optional<DeviceAddress> getDeviceAddressOfDevicePort(
             const std::string& moduleName, const std::string& devicePortName) const;
-    std::string getDevicePortTagNameFromType(const std::string& moduleName,
-                                             const AudioDevice& deviceType) const;
     std::set<std::string> getSinkDevicesForMixPort(const std::string& moduleName,
                                                    const std::string& mixPortName) const;
     std::set<std::string> getSourceDevicesForMixPort(const std::string& moduleName,
