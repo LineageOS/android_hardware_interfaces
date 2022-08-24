@@ -41,3 +41,31 @@ cc_test {
         "vts",
     ],
 }
+
+cc_test {
+    name: "VtsHalAudioEffectTargetTest",
+    defaults: [
+        "VtsHalTargetTestDefaults",
+        "use_libaidlvintf_gtest_helper_static",
+    ],
+    srcs: [
+        "VtsHalAudioEffectTargetTest.cpp",
+    ],
+    shared_libs: [
+        "libbinder_ndk",
+    ],
+    static_libs: [
+        "android.media.audio.common.types-V1-ndk",
+        "android.hardware.audio.effect-V1-ndk",
+    ],
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-Wthread-safety",
+    ],
+    test_suites: [
+        "general-tests",
+        "vts",
+    ],
+}

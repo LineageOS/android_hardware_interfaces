@@ -51,3 +51,44 @@ cc_binary {
     ],
     srcs: ["main.cpp"],
 }
+
+cc_defaults {
+    name: "aidlaudioeffectservice_defaults",
+    vendor: true,
+    shared_libs: [
+        "libbase",
+        "libbinder_ndk",
+        "android.media.audio.common.types-V1-ndk",
+        "android.hardware.audio.effect-V1-ndk",
+    ],
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-Wthread-safety",
+    ],
+}
+
+cc_library_static {
+    name: "libaudioeffectserviceexampleimpl",
+    defaults: ["aidlaudioeffectservice_defaults"],
+    export_include_dirs: ["include"],
+    srcs: [
+        "EffectFactory.cpp",
+    ],
+    visibility: [
+        ":__subpackages__",
+    ],
+}
+
+cc_binary {
+    name: "android.hardware.audio.effect.service-aidl.example",
+    relative_install_path: "hw",
+    init_rc: ["android.hardware.audio.effect.service-aidl.example.rc"],
+    vintf_fragments: ["android.hardware.audio.effect.service-aidl.xml"],
+    defaults: ["aidlaudioeffectservice_defaults"],
+    static_libs: [
+        "libaudioeffectserviceexampleimpl",
+    ],
+    srcs: ["EffectMain.cpp"],
+}
