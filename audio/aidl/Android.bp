@@ -75,6 +75,7 @@ aidl_interface {
         "android/hardware/audio/core/IModule.aidl",
         "android/hardware/audio/core/IStreamIn.aidl",
         "android/hardware/audio/core/IStreamOut.aidl",
+        "android/hardware/audio/core/ModuleDebug.aidl",
     ],
     imports: [
         "android.hardware.audio.common-V1",
@@ -86,6 +87,4 @@ aidl_interface {
             platform_apis: true,
         },
     },
-    versions: [
-    ],
 }

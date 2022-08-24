@@ -38,11 +38,11 @@ auto erase_all(C& c, const V& keys) {
     return oldSize - c.size();
 }
 
-// Erase all the elements in the map that satisfy the provided predicate.
+// Erase all the elements in the container that satisfy the provided predicate.
 template <typename C, typename P>
 auto erase_if(C& c, P pred) {
     auto oldSize = c.size();
-    for (auto it = c.begin(), last = c.end(); it != last;) {
+    for (auto it = c.begin(); it != c.end();) {
         if (pred(*it)) {
             it = c.erase(it);
         } else {

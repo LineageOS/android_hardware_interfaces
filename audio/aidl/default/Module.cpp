@@ -18,7 +18,6 @@
 #include <set>
 
 #define LOG_TAG "AHAL_Module"
-#define LOG_NDEBUG 0
 #include <android-base/logging.h>
 
 #include <aidl/android/media/audio/common/AudioOutputFlags.h>
@@ -81,6 +80,7 @@ bool findAudioProfile(const AudioPort& port, const AudioFormatDescription& forma
     }
     return false;
 }
+
 }  // namespace
 
 void Module::cleanUpPatch(int32_t patchId) {
@@ -135,6 +135,154 @@ void Module::registerPatch(const AudioPatch& patch) {
     do_insert(patch.sinkPortConfigIds);
 }
 
+ndk::ScopedAStatus Module::setModuleDebug(
+        const ::aidl::android::hardware::audio::core::ModuleDebug& in_debug) {
+    LOG(DEBUG) << __func__ << ": old flags:" << mDebug.toString()
+               << ", new flags: " << in_debug.toString();
+    if (mDebug.simulateDeviceConnections != in_debug.simulateDeviceConnections &&
+        !mConnectedDevicePorts.empty()) {
+        LOG(ERROR) << __func__ << ": attempting to change device connections simulation "
+                   << "while having external devices connected";
+        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
+    }
+    mDebug = in_debug;
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus Module::connectExternalDevice(const AudioPort& in_templateIdAndAdditionalData,
+                                                 AudioPort* _aidl_return) {
+    const int32_t templateId = in_templateIdAndAdditionalData.id;
+    auto& ports = getConfig().ports;
+    AudioPort connectedPort;
+    {  // Scope the template port so that we don't accidentally modify it.
+        auto templateIt = findById<AudioPort>(ports, templateId);
+        if (templateIt == ports.end()) {
+            LOG(ERROR) << __func__ << ": port id " << templateId << " not found";
+            return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+        }
+        if (templateIt->ext.getTag() != AudioPortExt::Tag::device) {
+            LOG(ERROR) << __func__ << ": port id " << templateId << " is not a device port";
+            return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+        }
+        if (!templateIt->profiles.empty()) {
+            LOG(ERROR) << __func__ << ": port id " << templateId
+                       << " does not have dynamic profiles";
+            return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+        }
+        auto& templateDevicePort = templateIt->ext.get<AudioPortExt::Tag::device>();
+        if (templateDevicePort.device.type.connection.empty()) {
+            LOG(ERROR) << __func__ << ": port id " << templateId << " is permanently attached";
+            return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+        }
+        // Postpone id allocation until we ensure that there are no client errors.
+        connectedPort = *templateIt;
+        connectedPort.extraAudioDescriptors = in_templateIdAndAdditionalData.extraAudioDescriptors;
+        const auto& inputDevicePort =
+                in_templateIdAndAdditionalData.ext.get<AudioPortExt::Tag::device>();
+        auto& connectedDevicePort = connectedPort.ext.get<AudioPortExt::Tag::device>();
+        connectedDevicePort.device.address = inputDevicePort.device.address;
+        LOG(DEBUG) << __func__ << ": device port " << connectedPort.id << " device set to "
+                   << connectedDevicePort.device.toString();
+        // Check if there is already a connected port with for the same external device.
+        for (auto connectedPortId : mConnectedDevicePorts) {
+            auto connectedPortIt = findById<AudioPort>(ports, connectedPortId);
+            if (connectedPortIt->ext.get<AudioPortExt::Tag::device>().device ==
+                connectedDevicePort.device) {
+                LOG(ERROR) << __func__ << ": device " << connectedDevicePort.device.toString()
+                           << " is already connected at the device port id " << connectedPortId;
+                return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
+            }
+        }
+    }
+
+    if (!mDebug.simulateDeviceConnections) {
+        // In a real HAL here we would attempt querying the profiles from the device.
+        LOG(ERROR) << __func__ << ": failed to query supported device profiles";
+        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
+    }
+
+    connectedPort.id = ++getConfig().nextPortId;
+    mConnectedDevicePorts.insert(connectedPort.id);
+    LOG(DEBUG) << __func__ << ": template port " << templateId << " external device connected, "
+               << "connected port ID " << connectedPort.id;
+    auto& connectedProfiles = getConfig().connectedProfiles;
+    if (auto connectedProfilesIt = connectedProfiles.find(templateId);
+        connectedProfilesIt != connectedProfiles.end()) {
+        connectedPort.profiles = connectedProfilesIt->second;
+    }
+    ports.push_back(connectedPort);
+    *_aidl_return = std::move(connectedPort);
+
+    std::vector<AudioRoute> newRoutes;
+    auto& routes = getConfig().routes;
+    for (auto& r : routes) {
+        if (r.sinkPortId == templateId) {
+            AudioRoute newRoute;
+            newRoute.sourcePortIds = r.sourcePortIds;
+            newRoute.sinkPortId = connectedPort.id;
+            newRoute.isExclusive = r.isExclusive;
+            newRoutes.push_back(std::move(newRoute));
+        } else {
+            auto& srcs = r.sourcePortIds;
+            if (std::find(srcs.begin(), srcs.end(), templateId) != srcs.end()) {
+                srcs.push_back(connectedPort.id);
+            }
+        }
+    }
+    routes.insert(routes.end(), newRoutes.begin(), newRoutes.end());
+
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus Module::disconnectExternalDevice(int32_t in_portId) {
+    auto& ports = getConfig().ports;
+    auto portIt = findById<AudioPort>(ports, in_portId);
+    if (portIt == ports.end()) {
+        LOG(ERROR) << __func__ << ": port id " << in_portId << " not found";
+        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+    }
+    if (portIt->ext.getTag() != AudioPortExt::Tag::device) {
+        LOG(ERROR) << __func__ << ": port id " << in_portId << " is not a device port";
+        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+    }
+    if (mConnectedDevicePorts.count(in_portId) == 0) {
+        LOG(ERROR) << __func__ << ": port id " << in_portId << " is not a connected device port";
+        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+    }
+    auto& configs = getConfig().portConfigs;
+    auto& initials = getConfig().initialConfigs;
+    auto configIt = std::find_if(configs.begin(), configs.end(), [&](const auto& config) {
+        if (config.portId == in_portId) {
+            // Check if the configuration was provided by the client.
+            const auto& initialIt = findById<AudioPortConfig>(initials, config.id);
+            return initialIt == initials.end() || config != *initialIt;
+        }
+        return false;
+    });
+    if (configIt != configs.end()) {
+        LOG(ERROR) << __func__ << ": port id " << in_portId << " has a non-default config with id "
+                   << configIt->id;
+        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
+    }
+    ports.erase(portIt);
+    mConnectedDevicePorts.erase(in_portId);
+    LOG(DEBUG) << __func__ << ": connected device port " << in_portId << " released";
+
+    auto& routes = getConfig().routes;
+    for (auto routesIt = routes.begin(); routesIt != routes.end();) {
+        if (routesIt->sinkPortId == in_portId) {
+            routesIt = routes.erase(routesIt);
+        } else {
+            // Note: the list of sourcePortIds can't become empty because there must
+            // be the id of the template port in the route.
+            erase_if(routesIt->sourcePortIds, [in_portId](auto src) { return src == in_portId; });
+            ++routesIt;
+        }
+    }
+
+    return ndk::ScopedAStatus::ok();
+}
+
 ndk::ScopedAStatus Module::getAudioPatches(std::vector<AudioPatch>* _aidl_return) {
     *_aidl_return = getConfig().patches;
     LOG(DEBUG) << __func__ << ": returning " << _aidl_return->size() << " patches";
@@ -168,6 +316,23 @@ ndk::ScopedAStatus Module::getAudioPorts(std::vector<AudioPort>* _aidl_return) {
 ndk::ScopedAStatus Module::getAudioRoutes(std::vector<AudioRoute>* _aidl_return) {
     *_aidl_return = getConfig().routes;
     LOG(DEBUG) << __func__ << ": returning " << _aidl_return->size() << " routes";
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus Module::getAudioRoutesForAudioPort(int32_t in_portId,
+                                                      std::vector<AudioRoute>* _aidl_return) {
+    auto& ports = getConfig().ports;
+    if (auto portIt = findById<AudioPort>(ports, in_portId); portIt == ports.end()) {
+        LOG(ERROR) << __func__ << ": port id " << in_portId << " not found";
+        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+    }
+    auto& routes = getConfig().routes;
+    std::copy_if(routes.begin(), routes.end(), std::back_inserter(*_aidl_return),
+                 [&](const auto& r) {
+                     const auto& srcs = r.sourcePortIds;
+                     return r.sinkPortId == in_portId ||
+                            std::find(srcs.begin(), srcs.end(), in_portId) != srcs.end();
+                 });
     return ndk::ScopedAStatus::ok();
 }
 
