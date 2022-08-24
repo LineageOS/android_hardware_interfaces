@@ -96,3 +96,26 @@ aidl_interface {
         },
     },
 }
+
+aidl_interface {
+    name: "android.hardware.audio.effect",
+    vendor_available: true,
+    srcs: [
+        "android/hardware/audio/effect/Descriptor.aidl",
+        "android/hardware/audio/effect/IFactory.aidl",
+    ],
+    imports: [
+        "android.hardware.audio.common-V1",
+        "android.media.audio.common.types-V1",
+    ],
+    stability: "vintf",
+    backend: {
+        // The C++ backend is disabled transitively due to use of FMQ.
+        cpp: {
+            enabled: false,
+        },
+        java: {
+            sdk_version: "module_current",
+        },
+    },
+}
