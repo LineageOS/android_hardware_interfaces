@@ -18,6 +18,7 @@
 
 #include <map>
 #include <memory>
+#include <set>
 
 #include <aidl/android/hardware/audio/core/BnModule.h>
 
@@ -27,6 +28,12 @@
 namespace aidl::android::hardware::audio::core {
 
 class Module : public BnModule {
+    ndk::ScopedAStatus setModuleDebug(
+            const ::aidl::android::hardware::audio::core::ModuleDebug& in_debug) override;
+    ndk::ScopedAStatus connectExternalDevice(
+            const ::aidl::android::media::audio::common::AudioPort& in_templateIdAndAdditionalData,
+            ::aidl::android::media::audio::common::AudioPort* _aidl_return) override;
+    ndk::ScopedAStatus disconnectExternalDevice(int32_t in_portId) override;
     ndk::ScopedAStatus getAudioPatches(std::vector<AudioPatch>* _aidl_return) override;
     ndk::ScopedAStatus getAudioPort(
             int32_t in_portId,
@@ -37,6 +44,9 @@ class Module : public BnModule {
     ndk::ScopedAStatus getAudioPorts(
             std::vector<::aidl::android::media::audio::common::AudioPort>* _aidl_return) override;
     ndk::ScopedAStatus getAudioRoutes(std::vector<AudioRoute>* _aidl_return) override;
+    ndk::ScopedAStatus getAudioRoutesForAudioPort(
+            int32_t in_portId,
+            std::vector<::aidl::android::hardware::audio::core::AudioRoute>* _aidl_return) override;
     ndk::ScopedAStatus openInputStream(
             int32_t in_portConfigId,
             const ::aidl::android::hardware::audio::common::SinkMetadata& in_sinkMetadata,
@@ -63,6 +73,9 @@ class Module : public BnModule {
     void registerPatch(const AudioPatch& patch);
 
     std::unique_ptr<internal::Configuration> mConfig;
+    ModuleDebug mDebug;
+    // ids of ports created at runtime via 'connectExternalDevice'.
+    std::set<int32_t> mConnectedDevicePorts;
     Streams mStreams;
     // Maps port ids and port config ids to patch ids.
     // Multimap because both ports and configs can be used by multiple patches.
