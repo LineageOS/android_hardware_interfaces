@@ -22,6 +22,9 @@
 #include <set>
 #include <string>
 
+#define LOG_TAG "VtsHalAudioCore"
+#include <android-base/logging.h>
+
 #include <aidl/Gtest.h>
 #include <aidl/Vintf.h>
 #include <android-base/properties.h>
@@ -45,9 +48,12 @@ using android::hardware::audio::core::AudioRoute;
 using android::hardware::audio::core::IModule;
 using android::hardware::audio::core::IStreamIn;
 using android::hardware::audio::core::IStreamOut;
+using android::hardware::audio::core::ModuleDebug;
 using android::media::audio::common::AudioContentType;
 using android::media::audio::common::AudioDevice;
+using android::media::audio::common::AudioDeviceAddress;
 using android::media::audio::common::AudioDeviceType;
+using android::media::audio::common::AudioFormatType;
 using android::media::audio::common::AudioIoFlags;
 using android::media::audio::common::AudioOutputFlags;
 using android::media::audio::common::AudioPort;
@@ -63,7 +69,7 @@ auto findById(std::vector<T>& v, int32_t id) {
 }
 
 template <typename C>
-std::vector<int32_t> getNonExistentIds(const C& allIds) {
+std::vector<int32_t> GetNonExistentIds(const C& allIds) {
     if (allIds.empty()) {
         return std::vector<int32_t>{-1, 0, 1};
     }
@@ -71,6 +77,12 @@ std::vector<int32_t> getNonExistentIds(const C& allIds) {
     nonExistentIds.push_back(*std::min_element(allIds.begin(), allIds.end()) - 1);
     nonExistentIds.push_back(*std::max_element(allIds.begin(), allIds.end()) + 1);
     return nonExistentIds;
+}
+
+AudioDeviceAddress GenerateUniqueDeviceAddress() {
+    static int nextId = 1;
+    // TODO: Use connection-specific ID.
+    return AudioDeviceAddress::make<AudioDeviceAddress::Tag::id>(std::to_string(++nextId));
 }
 
 struct AidlDeathRecipient : IBinder::DeathRecipient {
@@ -107,70 +119,28 @@ constexpr IsInput<IStreamOut>::operator bool() const {
     return false;
 }
 
-class AudioCoreModule : public testing::TestWithParam<std::string> {
+class WithDebugFlags {
   public:
-    void SetUp() override { ASSERT_NO_FATAL_FAILURE(ConnectToService()); }
-
-    void ConnectToService() {
-        module = android::waitForDeclaredService<IModule>(String16(GetParam().c_str()));
-        ASSERT_NE(module, nullptr);
-    }
-
-    void RestartService() {
-        ASSERT_NE(module, nullptr);
-        moduleConfig.reset();
-        deathHandler = sp<AidlDeathRecipient>::make();
-        ASSERT_EQ(NO_ERROR, IModule::asBinder(module)->linkToDeath(deathHandler));
-        ASSERT_TRUE(base::SetProperty("sys.audio.restart.hal", "1"));
-        EXPECT_TRUE(deathHandler->waitForFired(3000));
-        deathHandler = nullptr;
-        ASSERT_NO_FATAL_FAILURE(ConnectToService());
-    }
-
-    template <typename Entity>
-    void GetAllEntityIds(std::set<int32_t>* entityIds,
-                         Status (IModule::*getter)(std::vector<Entity>*),
-                         const std::string& errorMessage) {
-        std::vector<Entity> entities;
-        {
-            Status status = (module.get()->*getter)(&entities);
-            ASSERT_EQ(Status::EX_NONE, status.exceptionCode()) << status;
-        }
-        std::transform(entities.begin(), entities.end(),
-                       std::inserter(*entityIds, entityIds->begin()),
-                       [](const auto& entity) { return entity.id; });
-        EXPECT_EQ(entities.size(), entityIds->size()) << errorMessage;
-    }
-
-    void GetAllPatchIds(std::set<int32_t>* patchIds) {
-        return GetAllEntityIds<AudioPatch>(
-                patchIds, &IModule::getAudioPatches,
-                "IDs of audio patches returned by IModule.getAudioPatches are not unique");
-    }
-
-    void GetAllPortIds(std::set<int32_t>* portIds) {
-        return GetAllEntityIds<AudioPort>(
-                portIds, &IModule::getAudioPorts,
-                "IDs of audio ports returned by IModule.getAudioPorts are not unique");
-    }
-
-    void GetAllPortConfigIds(std::set<int32_t>* portConfigIds) {
-        return GetAllEntityIds<AudioPortConfig>(
-                portConfigIds, &IModule::getAudioPortConfigs,
-                "IDs of audio port configs returned by IModule.getAudioPortConfigs are not unique");
-    }
-
-    void SetUpModuleConfig() {
-        if (moduleConfig == nullptr) {
-            moduleConfig = std::make_unique<ModuleConfig>(module.get());
-            ASSERT_EQ(Status::EX_NONE, moduleConfig->getStatus().exceptionCode())
-                    << "ModuleConfig init error: " << moduleConfig->getError();
+    WithDebugFlags() {}
+    explicit WithDebugFlags(const ModuleDebug& initial) : mInitial(initial), mFlags(initial) {}
+    explicit WithDebugFlags(const WithDebugFlags& initial)
+        : mInitial(initial.mFlags), mFlags(initial.mFlags) {}
+    ~WithDebugFlags() {
+        if (mModule != nullptr) {
+            Status status = mModule->setModuleDebug(mInitial);
+            EXPECT_EQ(Status::EX_NONE, status.exceptionCode()) << status;
         }
     }
+    void SetUp(IModule* module) {
+        Status status = module->setModuleDebug(mFlags);
+        ASSERT_EQ(Status::EX_NONE, status.exceptionCode()) << status;
+    }
+    ModuleDebug& flags() { return mFlags; }
 
-    sp<IModule> module;
-    sp<AidlDeathRecipient> deathHandler;
-    std::unique_ptr<ModuleConfig> moduleConfig;
+  private:
+    ModuleDebug mInitial;
+    ModuleDebug mFlags;
+    IModule* mModule = nullptr;
 };
 
 // For consistency, WithAudioPortConfig can start both with a non-existent
@@ -224,6 +194,147 @@ class WithAudioPortConfig {
     AudioPortConfig mInitialConfig;
     IModule* mModule = nullptr;
     AudioPortConfig mConfig;
+};
+
+class AudioCoreModule : public testing::TestWithParam<std::string> {
+  public:
+    void SetUp() override {
+        ASSERT_NO_FATAL_FAILURE(ConnectToService());
+        debug.flags().simulateDeviceConnections = true;
+        ASSERT_NO_FATAL_FAILURE(debug.SetUp(module.get()));
+    }
+
+    void TearDown() override {
+        if (module != nullptr) {
+            Status status = module->setModuleDebug(ModuleDebug{});
+            EXPECT_EQ(Status::EX_NONE, status.exceptionCode())
+                    << status << " returned when resetting debug flags";
+        }
+    }
+
+    void ConnectToService() {
+        module = android::waitForDeclaredService<IModule>(String16(GetParam().c_str()));
+        ASSERT_NE(module, nullptr);
+    }
+
+    void RestartService() {
+        ASSERT_NE(module, nullptr);
+        moduleConfig.reset();
+        deathHandler = sp<AidlDeathRecipient>::make();
+        ASSERT_EQ(NO_ERROR, IModule::asBinder(module)->linkToDeath(deathHandler));
+        ASSERT_TRUE(base::SetProperty("sys.audio.restart.hal", "1"));
+        EXPECT_TRUE(deathHandler->waitForFired(3000));
+        deathHandler = nullptr;
+        ASSERT_NO_FATAL_FAILURE(ConnectToService());
+    }
+
+    void ApplyEveryConfig(const std::vector<AudioPortConfig>& configs) {
+        for (const auto& config : configs) {
+            ASSERT_NE(0, config.portId);
+            WithAudioPortConfig portConfig(config);
+            ASSERT_NO_FATAL_FAILURE(portConfig.SetUp(module.get()));  // calls setAudioPortConfig
+            EXPECT_EQ(config.portId, portConfig.get().portId);
+            std::vector<AudioPortConfig> retrievedPortConfigs;
+            Status status = module->getAudioPortConfigs(&retrievedPortConfigs);
+            ASSERT_EQ(Status::EX_NONE, status.exceptionCode()) << status;
+            const int32_t portConfigId = portConfig.getId();
+            auto configIt = std::find_if(
+                    retrievedPortConfigs.begin(), retrievedPortConfigs.end(),
+                    [&portConfigId](const auto& retrConf) { return retrConf.id == portConfigId; });
+            EXPECT_NE(configIt, retrievedPortConfigs.end())
+                    << "Port config id returned by setAudioPortConfig: " << portConfigId
+                    << " is not found in the list returned by getAudioPortConfigs";
+            if (configIt != retrievedPortConfigs.end()) {
+                EXPECT_EQ(portConfig.get(), *configIt)
+                        << "Applied port config returned by setAudioPortConfig: "
+                        << portConfig.get().toString()
+                        << " is not the same as retrieved via getAudioPortConfigs: "
+                        << configIt->toString();
+            }
+        }
+    }
+
+    template <typename Entity>
+    void GetAllEntityIds(std::set<int32_t>* entityIds,
+                         Status (IModule::*getter)(std::vector<Entity>*),
+                         const std::string& errorMessage) {
+        std::vector<Entity> entities;
+        {
+            Status status = (module.get()->*getter)(&entities);
+            ASSERT_EQ(Status::EX_NONE, status.exceptionCode()) << status;
+        }
+        std::transform(entities.begin(), entities.end(),
+                       std::inserter(*entityIds, entityIds->begin()),
+                       [](const auto& entity) { return entity.id; });
+        EXPECT_EQ(entities.size(), entityIds->size()) << errorMessage;
+    }
+
+    void GetAllPatchIds(std::set<int32_t>* patchIds) {
+        return GetAllEntityIds<AudioPatch>(
+                patchIds, &IModule::getAudioPatches,
+                "IDs of audio patches returned by IModule.getAudioPatches are not unique");
+    }
+
+    void GetAllPortIds(std::set<int32_t>* portIds) {
+        return GetAllEntityIds<AudioPort>(
+                portIds, &IModule::getAudioPorts,
+                "IDs of audio ports returned by IModule.getAudioPorts are not unique");
+    }
+
+    void GetAllPortConfigIds(std::set<int32_t>* portConfigIds) {
+        return GetAllEntityIds<AudioPortConfig>(
+                portConfigIds, &IModule::getAudioPortConfigs,
+                "IDs of audio port configs returned by IModule.getAudioPortConfigs are not unique");
+    }
+
+    void SetUpModuleConfig() {
+        if (moduleConfig == nullptr) {
+            moduleConfig = std::make_unique<ModuleConfig>(module.get());
+            ASSERT_EQ(Status::EX_NONE, moduleConfig->getStatus().exceptionCode())
+                    << "ModuleConfig init error: " << moduleConfig->getError();
+        }
+    }
+
+    sp<IModule> module;
+    sp<AidlDeathRecipient> deathHandler;
+    std::unique_ptr<ModuleConfig> moduleConfig;
+    WithDebugFlags debug;
+};
+
+class WithDevicePortConnectedState {
+  public:
+    explicit WithDevicePortConnectedState(const AudioPort& idAndData) : mIdAndData(idAndData) {}
+    WithDevicePortConnectedState(const AudioPort& id, const AudioDeviceAddress& address)
+        : mIdAndData(setAudioPortAddress(id, address)) {}
+    ~WithDevicePortConnectedState() {
+        if (mModule != nullptr) {
+            Status status = mModule->disconnectExternalDevice(getId());
+            EXPECT_EQ(Status::EX_NONE, status.exceptionCode())
+                    << status << " returned when disconnecting device port ID " << getId();
+        }
+    }
+    void SetUp(IModule* module) {
+        Status status = module->connectExternalDevice(mIdAndData, &mConnectedPort);
+        ASSERT_EQ(Status::EX_NONE, status.exceptionCode())
+                << status << " returned when connecting device port ID & data "
+                << mIdAndData.toString();
+        ASSERT_NE(mIdAndData.id, getId())
+                << "ID of the connected port must not be the same as the ID of the template port";
+        mModule = module;
+    }
+    int32_t getId() const { return mConnectedPort.id; }
+    const AudioPort& get() { return mConnectedPort; }
+
+  private:
+    static AudioPort setAudioPortAddress(const AudioPort& id, const AudioDeviceAddress& address) {
+        AudioPort result = id;
+        result.ext.get<AudioPortExt::Tag::device>().device.address = address;
+        return result;
+    }
+
+    const AudioPort mIdAndData;
+    IModule* mModule = nullptr;
+    AudioPort mConnectedPort;
 };
 
 template <typename Stream>
@@ -332,7 +443,7 @@ TEST_P(AudioCoreModule, PortIdsAreUnique) {
     ASSERT_NO_FATAL_FAILURE(GetAllPortIds(&portIds));
 }
 
-TEST_P(AudioCoreModule, GetAudioPortsIsStatic) {
+TEST_P(AudioCoreModule, GetAudioPortsIsStable) {
     std::vector<AudioPort> ports1;
     {
         Status status = module->getAudioPorts(&ports1);
@@ -344,13 +455,13 @@ TEST_P(AudioCoreModule, GetAudioPortsIsStatic) {
         ASSERT_EQ(Status::EX_NONE, status.exceptionCode()) << status;
     }
     ASSERT_EQ(ports1.size(), ports2.size())
-            << "Sizes of audio port arrays do not match across calls to getAudioPorts";
+            << "Sizes of audio port arrays do not match across consequent calls to getAudioPorts";
     std::sort(ports1.begin(), ports1.end());
     std::sort(ports2.begin(), ports2.end());
     EXPECT_EQ(ports1, ports2);
 }
 
-TEST_P(AudioCoreModule, GetAudioRoutesIsStatic) {
+TEST_P(AudioCoreModule, GetAudioRoutesIsStable) {
     std::vector<AudioRoute> routes1;
     {
         Status status = module->getAudioRoutes(&routes1);
@@ -362,7 +473,7 @@ TEST_P(AudioCoreModule, GetAudioRoutesIsStatic) {
         ASSERT_EQ(Status::EX_NONE, status.exceptionCode()) << status;
     }
     ASSERT_EQ(routes1.size(), routes2.size())
-            << "Sizes of audio route arrays do not match across calls to getAudioRoutes";
+            << "Sizes of audio route arrays do not match across consequent calls to getAudioRoutes";
     std::sort(routes1.begin(), routes1.end());
     std::sort(routes2.begin(), routes2.end());
     EXPECT_EQ(routes1, routes2);
@@ -398,6 +509,32 @@ TEST_P(AudioCoreModule, GetAudioRoutesPortIdsAreValid) {
         for (const auto& source : route.sourcePortIds) {
             EXPECT_EQ(1, portIds.count(source)) << source << " source port id is unknown";
         }
+    }
+}
+
+TEST_P(AudioCoreModule, GetAudioRoutesForAudioPort) {
+    std::set<int32_t> portIds;
+    ASSERT_NO_FATAL_FAILURE(GetAllPortIds(&portIds));
+    if (portIds.empty()) {
+        GTEST_SKIP() << "No ports in the module.";
+    }
+    for (const auto portId : portIds) {
+        std::vector<AudioRoute> routes;
+        Status status = module->getAudioRoutesForAudioPort(portId, &routes);
+        EXPECT_EQ(Status::EX_NONE, status.exceptionCode()) << status;
+        for (const auto& r : routes) {
+            if (r.sinkPortId != portId) {
+                const auto& srcs = r.sourcePortIds;
+                EXPECT_TRUE(std::find(srcs.begin(), srcs.end(), portId) != srcs.end())
+                        << " port ID " << portId << " does not used by the route " << r.toString();
+            }
+        }
+    }
+    for (const auto portId : GetNonExistentIds(portIds)) {
+        std::vector<AudioRoute> routes;
+        Status status = module->getAudioRoutesForAudioPort(portId, &routes);
+        EXPECT_EQ(Status::EX_ILLEGAL_ARGUMENT, status.exceptionCode())
+                << status << " returned for port ID " << portId;
     }
 }
 
@@ -486,7 +623,7 @@ TEST_P(AudioCoreModule, GetAudioPort) {
         EXPECT_EQ(Status::EX_NONE, status.exceptionCode()) << status;
         EXPECT_EQ(portId, port.id);
     }
-    for (const auto portId : getNonExistentIds(portIds)) {
+    for (const auto portId : GetNonExistentIds(portIds)) {
         AudioPort port;
         Status status = module->getAudioPort(portId, &port);
         EXPECT_EQ(Status::EX_ILLEGAL_ARGUMENT, status.exceptionCode())
@@ -494,10 +631,59 @@ TEST_P(AudioCoreModule, GetAudioPort) {
     }
 }
 
+// Verify that HAL module reports for a connected device port at least one non-dynamic profile,
+// that is, a profile with actual supported configuration.
+// Note: This test relies on simulation of external device connections by the HAL module.
+TEST_P(AudioCoreModule, GetAudioPortWithExternalDevices) {
+    ASSERT_NO_FATAL_FAILURE(SetUpModuleConfig());
+    std::vector<AudioPort> ports = moduleConfig->getExternalDevicePorts();
+    if (ports.empty()) {
+        GTEST_SKIP() << "No external devices in the module.";
+    }
+    for (const auto& port : ports) {
+        AudioPort portWithData = port;
+        portWithData.ext.get<AudioPortExt::Tag::device>().device.address =
+                GenerateUniqueDeviceAddress();
+        WithDevicePortConnectedState portConnected(portWithData);
+        ASSERT_NO_FATAL_FAILURE(portConnected.SetUp(module.get()));
+        const int32_t connectedPortId = portConnected.getId();
+        ASSERT_NE(portWithData.id, connectedPortId);
+        ASSERT_EQ(portWithData.ext.getTag(), portConnected.get().ext.getTag());
+        EXPECT_EQ(portWithData.ext.get<AudioPortExt::Tag::device>().device,
+                  portConnected.get().ext.get<AudioPortExt::Tag::device>().device);
+        // Verify that 'getAudioPort' and 'getAudioPorts' return the same connected port.
+        AudioPort connectedPort;
+        Status status = module->getAudioPort(connectedPortId, &connectedPort);
+        EXPECT_EQ(Status::EX_NONE, status.exceptionCode())
+                << status << " returned for getAudioPort port ID " << connectedPortId;
+        EXPECT_EQ(portConnected.get(), connectedPort);
+        const auto& portProfiles = connectedPort.profiles;
+        EXPECT_NE(0, portProfiles.size())
+                << "Connected port has no profiles: " << connectedPort.toString();
+        const auto dynamicProfileIt =
+                std::find_if(portProfiles.begin(), portProfiles.end(), [](const auto& profile) {
+                    return profile.format.type == AudioFormatType::DEFAULT;
+                });
+        EXPECT_EQ(portProfiles.end(), dynamicProfileIt) << "Connected port contains dynamic "
+                                                        << "profiles: " << connectedPort.toString();
+
+        std::vector<AudioPort> allPorts;
+        {
+            Status status = module->getAudioPorts(&allPorts);
+            ASSERT_EQ(Status::EX_NONE, status.exceptionCode()) << status;
+        }
+        const auto allPortsIt = findById(allPorts, connectedPortId);
+        EXPECT_NE(allPorts.end(), allPortsIt);
+        if (allPortsIt != allPorts.end()) {
+            EXPECT_EQ(portConnected.get(), *allPortsIt);
+        }
+    }
+}
+
 TEST_P(AudioCoreModule, OpenStreamInvalidPortConfigId) {
     std::set<int32_t> portConfigIds;
     ASSERT_NO_FATAL_FAILURE(GetAllPortConfigIds(&portConfigIds));
-    for (const auto portConfigId : getNonExistentIds(portConfigIds)) {
+    for (const auto portConfigId : GetNonExistentIds(portConfigIds)) {
         {
             sp<IStreamIn> stream;
             Status status = module->openInputStream(portConfigId, {}, &stream);
@@ -537,7 +723,7 @@ TEST_P(AudioCoreModule, PortConfigPortIdsAreValid) {
 TEST_P(AudioCoreModule, ResetAudioPortConfigInvalidId) {
     std::set<int32_t> portConfigIds;
     ASSERT_NO_FATAL_FAILURE(GetAllPortConfigIds(&portConfigIds));
-    for (const auto portConfigId : getNonExistentIds(portConfigIds)) {
+    for (const auto portConfigId : GetNonExistentIds(portConfigIds)) {
         Status status = module->resetAudioPortConfig(portConfigId);
         EXPECT_EQ(Status::EX_ILLEGAL_ARGUMENT, status.exceptionCode())
                 << status << " returned for port config ID " << portConfigId;
@@ -608,39 +794,35 @@ TEST_P(AudioCoreModule, SetAudioPortConfigSuggestedConfig) {
     EXPECT_EQ(suggestedConfig.flags.value(), appliedConfig.flags.value());
 }
 
+TEST_P(AudioCoreModule, SetAllAttachedDevicePortConfigs) {
+    ASSERT_NO_FATAL_FAILURE(SetUpModuleConfig());
+    ASSERT_NO_FATAL_FAILURE(ApplyEveryConfig(moduleConfig->getPortConfigsForAttachedDevicePorts()));
+}
+
+// Note: This test relies on simulation of external device connections by the HAL module.
+TEST_P(AudioCoreModule, SetAllExternalDevicePortConfigs) {
+    ASSERT_NO_FATAL_FAILURE(SetUpModuleConfig());
+    std::vector<AudioPort> ports = moduleConfig->getExternalDevicePorts();
+    if (ports.empty()) {
+        GTEST_SKIP() << "No external devices in the module.";
+    }
+    for (const auto& port : ports) {
+        WithDevicePortConnectedState portConnected(port, GenerateUniqueDeviceAddress());
+        ASSERT_NO_FATAL_FAILURE(portConnected.SetUp(module.get()));
+        ASSERT_NO_FATAL_FAILURE(
+                ApplyEveryConfig(moduleConfig->getPortConfigsForDevicePort(portConnected.get())));
+    }
+}
+
 TEST_P(AudioCoreModule, SetAllStaticAudioPortConfigs) {
     ASSERT_NO_FATAL_FAILURE(SetUpModuleConfig());
-    const auto allPortConfigs = moduleConfig->getPortConfigsForMixPorts();
-    for (const auto& config : allPortConfigs) {
-        ASSERT_NE(0, config.portId);
-        WithAudioPortConfig portConfig(config);
-        ASSERT_NO_FATAL_FAILURE(portConfig.SetUp(module.get()));
-        EXPECT_EQ(config.portId, portConfig.get().portId);
-        std::vector<AudioPortConfig> retrievedPortConfigs;
-        {
-            Status status = module->getAudioPortConfigs(&retrievedPortConfigs);
-            ASSERT_EQ(Status::EX_NONE, status.exceptionCode()) << status;
-        }
-        const int32_t portConfigId = portConfig.getId();
-        auto configIt = std::find_if(
-                retrievedPortConfigs.begin(), retrievedPortConfigs.end(),
-                [&portConfigId](const auto& retrConf) { return retrConf.id == portConfigId; });
-        EXPECT_NE(configIt, retrievedPortConfigs.end())
-                << "Port config id returned by setAudioPortConfig: " << portConfigId
-                << " is not found in the list returned by getPortConfigsForMixPorts";
-        if (configIt != retrievedPortConfigs.end()) {
-            EXPECT_EQ(portConfig.get(), *configIt)
-                    << "Port config returned by getPortConfigsForMixPorts: " << configIt->toString()
-                    << " is not the same as returned by setAudioPortConfig: "
-                    << portConfig.get().toString();
-        }
-    }
+    ASSERT_NO_FATAL_FAILURE(ApplyEveryConfig(moduleConfig->getPortConfigsForMixPorts()));
 }
 
 TEST_P(AudioCoreModule, SetAudioPortConfigInvalidPortId) {
     std::set<int32_t> portIds;
     ASSERT_NO_FATAL_FAILURE(GetAllPortIds(&portIds));
-    for (const auto portId : getNonExistentIds(portIds)) {
+    for (const auto portId : GetNonExistentIds(portIds)) {
         AudioPortConfig portConfig, suggestedConfig;
         bool applied;
         portConfig.portId = portId;
@@ -656,7 +838,7 @@ TEST_P(AudioCoreModule, SetAudioPortConfigInvalidPortId) {
 TEST_P(AudioCoreModule, SetAudioPortConfigInvalidPortConfigId) {
     std::set<int32_t> portConfigIds;
     ASSERT_NO_FATAL_FAILURE(GetAllPortConfigIds(&portConfigIds));
-    for (const auto portConfigId : getNonExistentIds(portConfigIds)) {
+    for (const auto portConfigId : GetNonExistentIds(portConfigIds)) {
         AudioPortConfig portConfig, suggestedConfig;
         bool applied;
         portConfig.id = portConfigId;
@@ -666,6 +848,203 @@ TEST_P(AudioCoreModule, SetAudioPortConfigInvalidPortConfigId) {
         EXPECT_FALSE(suggestedConfig.format.has_value());
         EXPECT_FALSE(suggestedConfig.channelMask.has_value());
         EXPECT_FALSE(suggestedConfig.sampleRate.has_value());
+    }
+}
+
+TEST_P(AudioCoreModule, TryConnectMissingDevice) {
+    ASSERT_NO_FATAL_FAILURE(SetUpModuleConfig());
+    std::vector<AudioPort> ports = moduleConfig->getExternalDevicePorts();
+    if (ports.empty()) {
+        GTEST_SKIP() << "No external devices in the module.";
+    }
+    AudioPort ignored;
+    WithDebugFlags doNotSimulateConnections(debug);
+    doNotSimulateConnections.flags().simulateDeviceConnections = false;
+    ASSERT_NO_FATAL_FAILURE(doNotSimulateConnections.SetUp(module.get()));
+    for (const auto& port : ports) {
+        AudioPort portWithData = port;
+        portWithData.ext.get<AudioPortExt::Tag::device>().device.address =
+                GenerateUniqueDeviceAddress();
+        Status status = module->connectExternalDevice(portWithData, &ignored);
+        EXPECT_EQ(Status::EX_ILLEGAL_STATE, status.exceptionCode())
+                << status << " returned for static port " << portWithData.toString();
+    }
+}
+
+TEST_P(AudioCoreModule, TryChangingConnectionSimulationMidway) {
+    ASSERT_NO_FATAL_FAILURE(SetUpModuleConfig());
+    std::vector<AudioPort> ports = moduleConfig->getExternalDevicePorts();
+    if (ports.empty()) {
+        GTEST_SKIP() << "No external devices in the module.";
+    }
+    WithDevicePortConnectedState portConnected(*ports.begin(), GenerateUniqueDeviceAddress());
+    ASSERT_NO_FATAL_FAILURE(portConnected.SetUp(module.get()));
+    ModuleDebug midwayDebugChange = debug.flags();
+    midwayDebugChange.simulateDeviceConnections = false;
+    Status status = module->setModuleDebug(midwayDebugChange);
+    EXPECT_EQ(Status::EX_ILLEGAL_STATE, status.exceptionCode())
+            << status << " returned when trying to disable connections simulation "
+            << "while having a connected device";
+}
+
+TEST_P(AudioCoreModule, ConnectDisconnectExternalDeviceInvalidPorts) {
+    AudioPort ignored;
+    std::set<int32_t> portIds;
+    ASSERT_NO_FATAL_FAILURE(GetAllPortIds(&portIds));
+    for (const auto portId : GetNonExistentIds(portIds)) {
+        AudioPort invalidPort;
+        invalidPort.id = portId;
+        Status status = module->connectExternalDevice(invalidPort, &ignored);
+        EXPECT_EQ(Status::EX_ILLEGAL_ARGUMENT, status.exceptionCode())
+                << status << " returned for port ID " << portId << " when setting CONNECTED state";
+        status = module->disconnectExternalDevice(portId);
+        EXPECT_EQ(Status::EX_ILLEGAL_ARGUMENT, status.exceptionCode())
+                << status << " returned for port ID " << portId
+                << " when setting DISCONNECTED state";
+    }
+
+    std::vector<AudioPort> ports;
+    {
+        Status status = module->getAudioPorts(&ports);
+        ASSERT_EQ(Status::EX_NONE, status.exceptionCode()) << status;
+    }
+    for (const auto& port : ports) {
+        if (port.ext.getTag() != AudioPortExt::Tag::device) {
+            Status status = module->connectExternalDevice(port, &ignored);
+            EXPECT_EQ(Status::EX_ILLEGAL_ARGUMENT, status.exceptionCode())
+                    << status << " returned for non-device port ID " << port.id
+                    << " when setting CONNECTED state";
+            status = module->disconnectExternalDevice(port.id);
+            EXPECT_EQ(Status::EX_ILLEGAL_ARGUMENT, status.exceptionCode())
+                    << status << " returned for non-device port ID " << port.id
+                    << " when setting DISCONNECTED state";
+        } else {
+            const auto& devicePort = port.ext.get<AudioPortExt::Tag::device>();
+            if (devicePort.device.type.connection.empty()) {
+                Status status = module->connectExternalDevice(port, &ignored);
+                EXPECT_EQ(Status::EX_ILLEGAL_ARGUMENT, status.exceptionCode())
+                        << status << " returned for permanently attached device port ID " << port.id
+                        << " when setting CONNECTED state";
+                status = module->disconnectExternalDevice(port.id);
+                EXPECT_EQ(Status::EX_ILLEGAL_ARGUMENT, status.exceptionCode())
+                        << status << " returned for permanently attached device port ID " << port.id
+                        << " when setting DISCONNECTED state";
+            }
+        }
+    }
+}
+
+// Note: This test relies on simulation of external device connections by the HAL module.
+TEST_P(AudioCoreModule, ConnectDisconnectExternalDeviceTwice) {
+    ASSERT_NO_FATAL_FAILURE(SetUpModuleConfig());
+    AudioPort ignored;
+    std::vector<AudioPort> ports = moduleConfig->getExternalDevicePorts();
+    if (ports.empty()) {
+        GTEST_SKIP() << "No external devices in the module.";
+    }
+    for (const auto& port : ports) {
+        Status status = module->disconnectExternalDevice(port.id);
+        EXPECT_EQ(Status::EX_ILLEGAL_ARGUMENT, status.exceptionCode())
+                << status << " returned when disconnecting already disconnected device port ID "
+                << port.id;
+        AudioPort portWithData = port;
+        portWithData.ext.get<AudioPortExt::Tag::device>().device.address =
+                GenerateUniqueDeviceAddress();
+        WithDevicePortConnectedState portConnected(portWithData);
+        ASSERT_NO_FATAL_FAILURE(portConnected.SetUp(module.get()));
+        status = module->connectExternalDevice(portConnected.get(), &ignored);
+        EXPECT_EQ(Status::EX_ILLEGAL_ARGUMENT, status.exceptionCode())
+                << status << " returned when trying to connect a connected device port "
+                << portConnected.get().toString();
+        status = module->connectExternalDevice(portWithData, &ignored);
+        EXPECT_EQ(Status::EX_ILLEGAL_STATE, status.exceptionCode())
+                << status << " returned when connecting again the external device "
+                << portWithData.ext.get<AudioPortExt::Tag::device>().device.toString();
+        if (status.exceptionCode() == Status::EX_NONE) {
+            ADD_FAILURE() << "Returned connected port " << ignored.toString() << " for template "
+                          << portWithData.toString();
+        }
+    }
+}
+
+// Note: This test relies on simulation of external device connections by the HAL module.
+TEST_P(AudioCoreModule, DisconnectExternalDeviceNonResetPortConfig) {
+    ASSERT_NO_FATAL_FAILURE(SetUpModuleConfig());
+    std::vector<AudioPort> ports = moduleConfig->getExternalDevicePorts();
+    if (ports.empty()) {
+        GTEST_SKIP() << "No external devices in the module.";
+    }
+    for (const auto& port : ports) {
+        WithDevicePortConnectedState portConnected(port, GenerateUniqueDeviceAddress());
+        ASSERT_NO_FATAL_FAILURE(portConnected.SetUp(module.get()));
+        const auto portConfig = moduleConfig->getSingleConfigForDevicePort(portConnected.get());
+        {
+            WithAudioPortConfig config(portConfig);
+            // Note: if SetUp fails, check the status of 'GetAudioPortWithExternalDevices' test.
+            // Our test assumes that 'getAudioPort' returns at least one profile, and it
+            // is not a dynamic profile.
+            ASSERT_NO_FATAL_FAILURE(config.SetUp(module.get()));
+            Status status = module->disconnectExternalDevice(portConnected.getId());
+            EXPECT_EQ(Status::EX_ILLEGAL_STATE, status.exceptionCode())
+                    << status << " returned when trying to disconnect device port ID " << port.id
+                    << " with active configuration " << config.getId();
+        }
+    }
+}
+
+TEST_P(AudioCoreModule, ExternalDevicePortRoutes) {
+    ASSERT_NO_FATAL_FAILURE(SetUpModuleConfig());
+    std::vector<AudioPort> ports = moduleConfig->getExternalDevicePorts();
+    if (ports.empty()) {
+        GTEST_SKIP() << "No external devices in the module.";
+    }
+    for (const auto& port : ports) {
+        std::vector<AudioRoute> routesBefore;
+        {
+            Status status = module->getAudioRoutes(&routesBefore);
+            ASSERT_EQ(Status::EX_NONE, status.exceptionCode()) << status;
+        }
+
+        int32_t connectedPortId;
+        {
+            WithDevicePortConnectedState portConnected(port, GenerateUniqueDeviceAddress());
+            ASSERT_NO_FATAL_FAILURE(portConnected.SetUp(module.get()));
+            connectedPortId = portConnected.getId();
+            std::vector<AudioRoute> connectedPortRoutes;
+            {
+                Status status =
+                        module->getAudioRoutesForAudioPort(connectedPortId, &connectedPortRoutes);
+                ASSERT_EQ(Status::EX_NONE, status.exceptionCode())
+                        << status << " returned when retrieving routes for connected port id "
+                        << connectedPortId;
+            }
+            // There must be routes for the port to be useful.
+            if (connectedPortRoutes.empty()) {
+                std::vector<AudioRoute> allRoutes;
+                Status status = module->getAudioRoutes(&allRoutes);
+                ASSERT_EQ(Status::EX_NONE, status.exceptionCode()) << status;
+                ADD_FAILURE() << " no routes returned for the connected port "
+                              << portConnected.get().toString()
+                              << "; all routes: " << android::internal::ToString(allRoutes);
+            }
+        }
+        std::vector<AudioRoute> ignored;
+        Status status = module->getAudioRoutesForAudioPort(connectedPortId, &ignored);
+        ASSERT_EQ(Status::EX_ILLEGAL_ARGUMENT, status.exceptionCode())
+                << status << " returned when retrieving routes for released connected port id "
+                << connectedPortId;
+
+        std::vector<AudioRoute> routesAfter;
+        {
+            Status status = module->getAudioRoutes(&routesAfter);
+            ASSERT_EQ(Status::EX_NONE, status.exceptionCode()) << status;
+        }
+        ASSERT_EQ(routesBefore.size(), routesAfter.size())
+                << "Sizes of audio route arrays do not match after creating and "
+                << "releasing a connected port";
+        std::sort(routesBefore.begin(), routesBefore.end());
+        std::sort(routesAfter.begin(), routesAfter.end());
+        EXPECT_EQ(routesBefore, routesAfter);
     }
 }
 
@@ -899,7 +1278,7 @@ class AudioModulePatch : public AudioCoreModule {
 
         std::set<int32_t> portConfigIds;
         ASSERT_NO_FATAL_FAILURE(GetAllPortConfigIds(&portConfigIds));
-        for (const auto portConfigId : getNonExistentIds(portConfigIds)) {
+        for (const auto portConfigId : GetNonExistentIds(portConfigIds)) {
             EXPECT_NO_FATAL_FAILURE(SetInvalidPatchHelper(
                     Status::EX_ILLEGAL_ARGUMENT, {portConfigId}, {sinkPortConfig.getId()}));
             EXPECT_NO_FATAL_FAILURE(SetInvalidPatchHelper(Status::EX_ILLEGAL_ARGUMENT,
@@ -969,7 +1348,7 @@ class AudioModulePatch : public AudioCoreModule {
         // Then use the same patch setting, except for having an invalid ID.
         std::set<int32_t> patchIds;
         ASSERT_NO_FATAL_FAILURE(GetAllPatchIds(&patchIds));
-        for (const auto patchId : getNonExistentIds(patchIds)) {
+        for (const auto patchId : GetNonExistentIds(patchIds)) {
             AudioPatch patchWithNonExistendId = patch.get();
             patchWithNonExistendId.id = patchId;
             Status status = module->setAudioPatch(patchWithNonExistendId, &patchWithNonExistendId);
@@ -995,7 +1374,7 @@ TEST_PATCH_BOTH_DIRECTIONS(UpdatePatch);
 TEST_P(AudioModulePatch, ResetInvalidPatchId) {
     std::set<int32_t> patchIds;
     ASSERT_NO_FATAL_FAILURE(GetAllPatchIds(&patchIds));
-    for (const auto patchId : getNonExistentIds(patchIds)) {
+    for (const auto patchId : GetNonExistentIds(patchIds)) {
         Status status = module->resetAudioPatch(patchId);
         EXPECT_EQ(Status::EX_ILLEGAL_ARGUMENT, status.exceptionCode())
                 << status << " returned for patch ID " << patchId;
