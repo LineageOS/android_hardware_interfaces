@@ -198,7 +198,8 @@ public final class AccessForVehicleProperty {
         Map.entry(VehicleProperty.EV_REGENERATIVE_BRAKING_STATE, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.TRAILER_PRESENT, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.VEHICLE_CURB_WEIGHT, VehiclePropertyAccess.READ),
-        Map.entry(VehicleProperty.GENERAL_SAFETY_REGULATION_COMPLIANCE_REQUIREMENT, VehiclePropertyAccess.READ)
+        Map.entry(VehicleProperty.GENERAL_SAFETY_REGULATION_COMPLIANCE_REQUIREMENT, VehiclePropertyAccess.READ),
+        Map.entry(VehicleProperty.SUPPORTED_PROPERTY_IDS, VehiclePropertyAccess.READ)
     );
 
 }
