@@ -40,6 +40,28 @@ class Factory : public BnFactory {
             const std::optional<::aidl::android::media::audio::common::AudioUuid>& in_instance,
             std::vector<Descriptor::Identity>* out_descriptor) override;
 
+    /**
+     * @brief Create an effect instance for a certain implementation (identified by UUID).
+     *
+     * @param in_impl_uuid Effect implementation UUID.
+     * @param _aidl_return A pointer to created effect instance.
+     * @return ndk::ScopedAStatus
+     */
+    ndk::ScopedAStatus createEffect(
+            const ::aidl::android::media::audio::common::AudioUuid& in_impl_uuid,
+            std::shared_ptr<::aidl::android::hardware::audio::effect::IEffect>* _aidl_return)
+            override;
+
+    /**
+     * @brief Destroy an effect instance.
+     *
+     * @param in_handle Effect instance handle.
+     * @return ndk::ScopedAStatus
+     */
+    ndk::ScopedAStatus destroyEffect(
+            const std::shared_ptr<::aidl::android::hardware::audio::effect::IEffect>& in_handle)
+            override;
+
   private:
     // List of effect descriptors supported by the devices.
     std::vector<Descriptor::Identity> mIdentityList;
