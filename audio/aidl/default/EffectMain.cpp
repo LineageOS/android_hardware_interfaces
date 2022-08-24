@@ -23,10 +23,11 @@
 int main() {
     // This is a debug implementation, always enable debug logging.
     android::base::SetMinimumLogSeverity(::android::base::DEBUG);
-    ABinderProcess_setThreadPoolMaxThreadCount(16);
+    ABinderProcess_setThreadPoolMaxThreadCount(1);
 
     auto effectFactory =
             ndk::SharedRefBase::make<aidl::android::hardware::audio::effect::Factory>();
+
     std::string serviceName = std::string() + effectFactory->descriptor + "/default";
     binder_status_t status =
             AServiceManager_addService(effectFactory->asBinder().get(), serviceName.c_str());

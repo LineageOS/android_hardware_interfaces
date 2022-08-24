@@ -166,3 +166,19 @@ aidl_interface {
         },
     },
 }
+
+latest_android_hardware_audio_effect = "android.hardware.audio.effect-V1"
+
+cc_defaults {
+    name: "latest_android_hardware_audio_effect_ndk_shared",
+    shared_libs: [
+        latest_android_hardware_audio_effect + "-ndk",
+    ],
+}
+
+cc_defaults {
+    name: "latest_android_hardware_audio_effect_ndk_static",
+    static_libs: [
+        latest_android_hardware_audio_effect + "-ndk",
+    ],
+}
