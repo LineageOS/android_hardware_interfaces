@@ -46,20 +46,38 @@ ModuleConfig::ModuleConfig(IModule* module) {
     for (const auto& port : mPorts) {
         if (port.ext.getTag() != AudioPortExt::Tag::device) continue;
         const auto& devicePort = port.ext.get<AudioPortExt::Tag::device>();
-        const bool isInput = port.flags.getTag() == AudioIoFlags::Tag::input;
         if (devicePort.device.type.connection.empty()) {
+            const bool isInput = port.flags.getTag() == AudioIoFlags::Tag::input;
             // Permanently attached device.
             if (isInput) {
                 mAttachedSourceDevicePorts.insert(port.id);
             } else {
                 mAttachedSinkDevicePorts.insert(port.id);
             }
+        } else if (port.profiles.empty()) {
+            mExternalDevicePorts.insert(port.id);
         }
     }
     if (!mStatus.isOk()) return;
     mStatus = module->getAudioRoutes(&mRoutes);
     if (!mStatus.isOk()) return;
     mStatus = module->getAudioPortConfigs(&mInitialConfigs);
+}
+
+std::vector<AudioPort> ModuleConfig::getAttachedDevicePorts() const {
+    std::vector<AudioPort> result;
+    std::copy_if(mPorts.begin(), mPorts.end(), std::back_inserter(result), [&](const auto& port) {
+        return mAttachedSinkDevicePorts.count(port.id) != 0 ||
+               mAttachedSourceDevicePorts.count(port.id) != 0;
+    });
+    return result;
+}
+
+std::vector<AudioPort> ModuleConfig::getExternalDevicePorts() const {
+    std::vector<AudioPort> result;
+    std::copy_if(mPorts.begin(), mPorts.end(), std::back_inserter(result),
+                 [&](const auto& port) { return mExternalDevicePorts.count(port.id) != 0; });
+    return result;
 }
 
 std::vector<AudioPort> ModuleConfig::getInputMixPorts() const {
@@ -229,6 +247,23 @@ std::vector<ModuleConfig::SrcSinkGroup> ModuleConfig::getRoutableSrcSinkGroups(b
     return result;
 }
 
+std::string ModuleConfig::toString() const {
+    std::string result;
+    result.append("Ports: ");
+    result.append(android::internal::ToString(mPorts));
+    result.append("Initial configs: ");
+    result.append(android::internal::ToString(mInitialConfigs));
+    result.append("Attached sink device ports: ");
+    result.append(android::internal::ToString(mAttachedSinkDevicePorts));
+    result.append("Attached source device ports: ");
+    result.append(android::internal::ToString(mAttachedSourceDevicePorts));
+    result.append("External device ports: ");
+    result.append(android::internal::ToString(mExternalDevicePorts));
+    result.append("Routes: ");
+    result.append(android::internal::ToString(mRoutes));
+    return result;
+}
+
 static std::vector<AudioPortConfig> combineAudioConfigs(const AudioPort& port,
                                                         const AudioProfile& profile) {
     std::vector<AudioPortConfig> configs;
@@ -319,10 +354,14 @@ std::vector<AudioPortConfig> ModuleConfig::generateAudioDevicePortConfigs(
             if (singleProfile && !result.empty()) return result;
         }
         if (resultSizeBefore == result.size()) {
-            AudioPortConfig empty;
-            empty.portId = devicePort.id;
-            empty.ext = devicePort.ext;
-            result.push_back(empty);
+            std::copy_if(mInitialConfigs.begin(), mInitialConfigs.end(), std::back_inserter(result),
+                         [&](const auto& config) { return config.portId == devicePort.id; });
+            if (resultSizeBefore == result.size()) {
+                AudioPortConfig empty;
+                empty.portId = devicePort.id;
+                empty.ext = devicePort.ext;
+                result.push_back(empty);
+            }
         }
         if (singleProfile) return result;
     }

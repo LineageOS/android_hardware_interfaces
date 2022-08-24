@@ -32,21 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.audio.core;
-@VintfStability
-interface IModule {
-  void setModuleDebug(in android.hardware.audio.core.ModuleDebug debug);
-  android.media.audio.common.AudioPort connectExternalDevice(in android.media.audio.common.AudioPort templateIdAndAdditionalData);
-  void disconnectExternalDevice(int portId);
-  android.hardware.audio.core.AudioPatch[] getAudioPatches();
-  android.media.audio.common.AudioPort getAudioPort(int portId);
-  android.media.audio.common.AudioPortConfig[] getAudioPortConfigs();
-  android.media.audio.common.AudioPort[] getAudioPorts();
-  android.hardware.audio.core.AudioRoute[] getAudioRoutes();
-  android.hardware.audio.core.AudioRoute[] getAudioRoutesForAudioPort(int portId);
-  android.hardware.audio.core.IStreamIn openInputStream(int portConfigId, in android.hardware.audio.common.SinkMetadata sinkMetadata);
-  android.hardware.audio.core.IStreamOut openOutputStream(int portConfigId, in android.hardware.audio.common.SourceMetadata sourceMetadata, in @nullable android.media.audio.common.AudioOffloadInfo offloadInfo);
-  android.hardware.audio.core.AudioPatch setAudioPatch(in android.hardware.audio.core.AudioPatch requested);
-  boolean setAudioPortConfig(in android.media.audio.common.AudioPortConfig requested, out android.media.audio.common.AudioPortConfig suggested);
-  void resetAudioPatch(int patchId);
-  void resetAudioPortConfig(int portConfigId);
+@JavaDerive(equals=true, toString=true) @VintfStability
+parcelable ModuleDebug {
+  boolean simulateDeviceConnections;
 }
