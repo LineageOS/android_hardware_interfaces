@@ -2253,7 +2253,7 @@
             "property": "VehicleProperty::GENERAL_SAFETY_REGULATION_COMPLIANCE_REQUIREMENT",
             "defaultValue": {
                 "int32Values": [
-                    "GsrComplianceRequirementType::GSR_COMPLIANCE_REQUIRED_THROUGH_SYSTEM_IMAGE"
+                    "GsrComplianceRequirementType::GSR_COMPLIANCE_REQUIRED_V1"
                 ]
             }
         }
