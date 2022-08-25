@@ -26,6 +26,6 @@ hidl_interface {
     gen_java: false,
     apex_available: [
         "//apex_available:platform",
-        "com.android.bluetooth",
+        "com.android.btservices",
     ],
 }
