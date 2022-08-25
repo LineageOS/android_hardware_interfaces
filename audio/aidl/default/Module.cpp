@@ -424,6 +424,7 @@ ndk::ScopedAStatus Module::openOutputStream(int32_t in_portConfigId,
 }
 
 ndk::ScopedAStatus Module::setAudioPatch(const AudioPatch& in_requested, AudioPatch* _aidl_return) {
+    LOG(DEBUG) << __func__ << ": requested patch " << in_requested.toString();
     if (in_requested.sourcePortConfigIds.empty()) {
         LOG(ERROR) << __func__ << ": requested patch has empty sources list";
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
