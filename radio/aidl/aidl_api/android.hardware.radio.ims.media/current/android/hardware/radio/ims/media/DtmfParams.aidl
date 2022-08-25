@@ -34,6 +34,7 @@
 package android.hardware.radio.ims.media;
 @VintfStability
 parcelable DtmfParams {
-  byte payloadTypeNumber;
+  byte rxPayloadTypeNumber;
+  byte txPayloadTypeNumber;
   byte samplingRateKHz;
 }

@@ -19,11 +19,21 @@ package android.hardware.radio.ims.media;
 @VintfStability
 parcelable DtmfParams {
     /**
-     * Dynamic payload type number to be used for DTMF RTP packets. The values is
-     * in the range from 96 to 127 chosen during the session establishment. The PT
-     * value of the RTP header of all DTMF packets shall be set with this value.
+     * Dynamic payload type number to be used for DTMF RTP packets received.
+     * The values is in the range from 96 to 127 chosen during the session
+     * establishment. The PT  value of the RTP header of all DTMF packets shall be
+     * set with this value.
      */
-    byte payloadTypeNumber;
+    byte rxPayloadTypeNumber;
+
+    /**
+     * Dynamic payload type number to be used for DTMF RTP packets sent.
+     * The values is in the range from 96 to 127 chosen during the session
+     * establishment. The PT value of the RTP header of all DTMF packets shall be set
+     * with this value.
+     */
+    byte txPayloadTypeNumber;
+
     /** Sampling rate in kHz */
     byte samplingRateKHz;
 }
