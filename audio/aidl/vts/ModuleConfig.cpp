@@ -16,24 +16,24 @@
 
 #include <algorithm>
 
-#include <android/media/audio/common/AudioIoFlags.h>
-#include <android/media/audio/common/AudioOutputFlags.h>
+#include <aidl/android/media/audio/common/AudioIoFlags.h>
+#include <aidl/android/media/audio/common/AudioOutputFlags.h>
 
 #include "ModuleConfig.h"
 
 using namespace android;
 
-using android::hardware::audio::core::IModule;
-using android::media::audio::common::AudioChannelLayout;
-using android::media::audio::common::AudioFormatDescription;
-using android::media::audio::common::AudioFormatType;
-using android::media::audio::common::AudioIoFlags;
-using android::media::audio::common::AudioOutputFlags;
-using android::media::audio::common::AudioPort;
-using android::media::audio::common::AudioPortConfig;
-using android::media::audio::common::AudioPortExt;
-using android::media::audio::common::AudioProfile;
-using android::media::audio::common::Int;
+using aidl::android::hardware::audio::core::IModule;
+using aidl::android::media::audio::common::AudioChannelLayout;
+using aidl::android::media::audio::common::AudioFormatDescription;
+using aidl::android::media::audio::common::AudioFormatType;
+using aidl::android::media::audio::common::AudioIoFlags;
+using aidl::android::media::audio::common::AudioOutputFlags;
+using aidl::android::media::audio::common::AudioPort;
+using aidl::android::media::audio::common::AudioPortConfig;
+using aidl::android::media::audio::common::AudioPortExt;
+using aidl::android::media::audio::common::AudioProfile;
+using aidl::android::media::audio::common::Int;
 
 template <typename T>
 auto findById(const std::vector<T>& v, int32_t id) {
