@@ -27,8 +27,9 @@ enum GsrComplianceRequirementType {
      * GSR compliance is not required.
      */
     GSR_COMPLIANCE_NOT_REQUIRED = 0,
+
     /**
-     * GSR compliance is required through system image.
+     * GSR compliance is required and the requirement solution version is 1.
      */
-    GSR_COMPLIANCE_REQUIRED_THROUGH_SYSTEM_IMAGE = 1,
+    GSR_COMPLIANCE_REQUIRED_V1 = 1,
 }
