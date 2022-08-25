@@ -29,7 +29,7 @@ hidl_interface {
     gen_java: true,
     apex_available: [
         "//apex_available:platform",
-        "com.android.bluetooth",
+        "com.android.btservices",
         "com.android.media",
         "com.android.media.swcodec",
     ],
