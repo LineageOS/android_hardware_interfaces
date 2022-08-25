@@ -38,16 +38,16 @@ void Tuner::init() {
     // Static Frontends array to maintain local frontends information
     // Array index matches their FrontendId in the default impl
     mFrontendSize = 10;
-    mFrontends[0] = ndk::SharedRefBase::make<Frontend>(FrontendType::ISDBS, 0, this->ref<Tuner>());
-    mFrontends[1] = ndk::SharedRefBase::make<Frontend>(FrontendType::ATSC3, 1, this->ref<Tuner>());
-    mFrontends[2] = ndk::SharedRefBase::make<Frontend>(FrontendType::DVBC, 2, this->ref<Tuner>());
-    mFrontends[3] = ndk::SharedRefBase::make<Frontend>(FrontendType::DVBS, 3, this->ref<Tuner>());
-    mFrontends[4] = ndk::SharedRefBase::make<Frontend>(FrontendType::DVBT, 4, this->ref<Tuner>());
-    mFrontends[5] = ndk::SharedRefBase::make<Frontend>(FrontendType::ISDBT, 5, this->ref<Tuner>());
-    mFrontends[6] = ndk::SharedRefBase::make<Frontend>(FrontendType::ANALOG, 6, this->ref<Tuner>());
-    mFrontends[7] = ndk::SharedRefBase::make<Frontend>(FrontendType::ATSC, 7, this->ref<Tuner>());
-    mFrontends[8] = ndk::SharedRefBase::make<Frontend>(FrontendType::ISDBS3, 8, this->ref<Tuner>());
-    mFrontends[9] = ndk::SharedRefBase::make<Frontend>(FrontendType::DTMB, 9, this->ref<Tuner>());
+    mFrontends[0] = ndk::SharedRefBase::make<Frontend>(FrontendType::ISDBS, 0);
+    mFrontends[1] = ndk::SharedRefBase::make<Frontend>(FrontendType::ATSC3, 1);
+    mFrontends[2] = ndk::SharedRefBase::make<Frontend>(FrontendType::DVBC, 2);
+    mFrontends[3] = ndk::SharedRefBase::make<Frontend>(FrontendType::DVBS, 3);
+    mFrontends[4] = ndk::SharedRefBase::make<Frontend>(FrontendType::DVBT, 4);
+    mFrontends[5] = ndk::SharedRefBase::make<Frontend>(FrontendType::ISDBT, 5);
+    mFrontends[6] = ndk::SharedRefBase::make<Frontend>(FrontendType::ANALOG, 6);
+    mFrontends[7] = ndk::SharedRefBase::make<Frontend>(FrontendType::ATSC, 7);
+    mFrontends[8] = ndk::SharedRefBase::make<Frontend>(FrontendType::ISDBS3, 8);
+    mFrontends[9] = ndk::SharedRefBase::make<Frontend>(FrontendType::DTMB, 9);
 
     mMaxUsableFrontends[FrontendType::ISDBS] = 1;
     mMaxUsableFrontends[FrontendType::ATSC3] = 1;
@@ -89,6 +89,7 @@ Tuner::~Tuner() {}
                 static_cast<int32_t>(Result::INVALID_ARGUMENT));
     }
 
+    mFrontends[in_frontendId]->setTunerService(this->ref<Tuner>());
     *_aidl_return = mFrontends[in_frontendId];
     return ::ndk::ScopedAStatus::ok();
 }
