@@ -48,15 +48,15 @@ class Module : public BnModule {
             int32_t in_portId,
             std::vector<::aidl::android::hardware::audio::core::AudioRoute>* _aidl_return) override;
     ndk::ScopedAStatus openInputStream(
-            int32_t in_portConfigId,
-            const ::aidl::android::hardware::audio::common::SinkMetadata& in_sinkMetadata,
-            std::shared_ptr<IStreamIn>* _aidl_return) override;
+            const ::aidl::android::hardware::audio::core::IModule::OpenInputStreamArguments&
+                    in_args,
+            ::aidl::android::hardware::audio::core::IModule::OpenInputStreamReturn* _aidl_return)
+            override;
     ndk::ScopedAStatus openOutputStream(
-            int32_t in_portConfigId,
-            const ::aidl::android::hardware::audio::common::SourceMetadata& in_sourceMetadata,
-            const std::optional<::aidl::android::media::audio::common::AudioOffloadInfo>&
-                    in_offloadInfo,
-            std::shared_ptr<IStreamOut>* _aidl_return) override;
+            const ::aidl::android::hardware::audio::core::IModule::OpenOutputStreamArguments&
+                    in_args,
+            ::aidl::android::hardware::audio::core::IModule::OpenOutputStreamReturn* _aidl_return)
+            override;
     ndk::ScopedAStatus setAudioPatch(const AudioPatch& in_requested,
                                      AudioPatch* _aidl_return) override;
     ndk::ScopedAStatus setAudioPortConfig(
@@ -69,8 +69,20 @@ class Module : public BnModule {
   private:
     void cleanUpPatch(int32_t patchId);
     void cleanUpPatches(int32_t portConfigId);
+    ndk::ScopedAStatus createStreamDescriptor(
+            int32_t in_portConfigId, int64_t in_bufferSizeFrames,
+            ::aidl::android::hardware::audio::core::StreamDescriptor* out_descriptor);
+    ndk::ScopedAStatus findPortIdForNewStream(
+            int32_t in_portConfigId, ::aidl::android::media::audio::common::AudioPort** port);
     internal::Configuration& getConfig();
     void registerPatch(const AudioPatch& patch);
+
+    // This value is used for all AudioPatches.
+    static constexpr int32_t kMinimumStreamBufferSizeFrames = 16;
+    // This value is used for all AudioPatches.
+    static constexpr int32_t kLatencyMs = 10;
+    // The maximum stream buffer size is 1 GiB = 2 ** 30 bytes;
+    static constexpr int32_t kMaximumStreamBufferSizeBytes = 1 << 30;
 
     std::unique_ptr<internal::Configuration> mConfig;
     ModuleDebug mDebug;
