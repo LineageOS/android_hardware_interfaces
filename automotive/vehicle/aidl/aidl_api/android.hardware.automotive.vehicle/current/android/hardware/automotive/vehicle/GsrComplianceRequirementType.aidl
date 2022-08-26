@@ -35,5 +35,5 @@ package android.hardware.automotive.vehicle;
 @Backing(type="int") @VintfStability
 enum GsrComplianceRequirementType {
   GSR_COMPLIANCE_NOT_REQUIRED = 0,
-  GSR_COMPLIANCE_REQUIRED_THROUGH_SYSTEM_IMAGE = 1,
+  GSR_COMPLIANCE_REQUIRED_V1 = 1,
 }
