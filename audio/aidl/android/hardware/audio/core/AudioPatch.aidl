@@ -37,4 +37,18 @@ parcelable AudioPatch {
      * unique.
      */
     int[] sinkPortConfigIds;
+    /**
+     * The minimum buffer size, in frames, which streams must use for
+     * this connection configuration. This field is filled out by the
+     * HAL module on creation of the patch and must be a positive number.
+     */
+    int minimumStreamBufferSizeFrames;
+    /**
+     * Latencies, in milliseconds, associated with each sink port config from
+     * the 'sinkPortConfigIds' field. This field is filled out by the HAL module
+     * on creation or updating of the patch and must be a positive number. This
+     * is a nominal value. The current value of latency is provided via
+     * 'StreamDescriptor' command exchange on each audio I/O operation.
+     */
+    int[] latenciesMs;
 }
