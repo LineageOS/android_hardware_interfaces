@@ -66,14 +66,12 @@ void TestRenderEngine::drawLayers() {
     auto texture = std::make_shared<::android::renderengine::impl::ExternalTexture>(
             mGraphicBuffer, *mRenderEngine,
             ::android::renderengine::impl::ExternalTexture::Usage::WRITEABLE);
-    auto [status, readyFence] = mRenderEngine
-                                        ->drawLayers(mDisplaySettings, compositionLayers, texture,
-                                                     true, std::move(bufferFence))
-                                        .get();
-    int fd = readyFence.release();
-    if (fd != -1) {
-        ASSERT_EQ(0, sync_wait(fd, -1));
-        ASSERT_EQ(0, close(fd));
+    auto result = mRenderEngine
+                          ->drawLayers(mDisplaySettings, compositionLayers, texture, true,
+                                       std::move(bufferFence))
+                          .get();
+    if (result.ok()) {
+        result.value()->waitForever(LOG_TAG);
     }
 }
 
