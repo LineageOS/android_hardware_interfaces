@@ -74,19 +74,12 @@ cc_fuzz {
         "FakeVehicleHardwareDefaults",
         "VehicleHalDefaults",
         "android-automotive-large-parcelable-defaults",
+        "service_fuzzer_defaults",
     ],
     static_libs: [
         "DefaultVehicleHal",
         "FakeVehicleHardware",
         "VehicleHalUtils",
-        "libbase",
-        "libbinder_random_parcel",
-        "libcutils",
-    ],
-    shared_libs: [
-        "libbinder_ndk",
-        "libbinder",
-        "libutils",
     ],
     srcs: ["src/fuzzer.cpp"],
     fuzz_config: {
