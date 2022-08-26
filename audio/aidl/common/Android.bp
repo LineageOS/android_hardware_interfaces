@@ -30,9 +30,11 @@ cc_library_headers {
     export_include_dirs: ["include"],
     header_libs: [
         "libbase_headers",
+        "libsystem_headers",
     ],
     export_header_lib_headers: [
         "libbase_headers",
+        "libsystem_headers",
     ],
 }
 
