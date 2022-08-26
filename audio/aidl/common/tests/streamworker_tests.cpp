@@ -207,4 +207,16 @@ TEST_P(StreamWorkerTest, WaitForAtLeastOneCycleError) {
     EXPECT_FALSE(worker.waitForAtLeastOneCycle());
 }
 
+TEST_P(StreamWorkerTest, MutexDoesNotBlockWorker) {
+    ASSERT_TRUE(worker.start());
+    const size_t workerCyclesBefore = worker.getWorkerCycles();
+    worker.testLockUnlockMutex(true);
+    while (worker.getWorkerCycles() == workerCyclesBefore) {
+        usleep(kWorkerIdleCheckTime);
+    }
+    worker.testLockUnlockMutex(false);
+    worker.waitForAtLeastOneCycle();
+    EXPECT_FALSE(worker.hasError());
+}
+
 INSTANTIATE_TEST_SUITE_P(StreamWorker, StreamWorkerTest, testing::Bool());
