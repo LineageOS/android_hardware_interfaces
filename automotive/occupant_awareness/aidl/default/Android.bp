@@ -42,17 +42,10 @@ cc_binary {
 
 cc_fuzz {
     name: "android.hardware.automotive.occupant_awareness-service.fuzzer",
+    defaults: ["service_fuzzer_defaults"],
     static_libs: [
         "android.hardware.automotive.occupant_awareness-V1-ndk",
-        "libbase",
-        "libbinder_random_parcel",
-        "libcutils",
         "liblog",
-    ],
-    shared_libs: [
-        "libbinder_ndk",
-        "libbinder",
-        "libutils",
     ],
     srcs: [
         "fuzzer.cpp",
