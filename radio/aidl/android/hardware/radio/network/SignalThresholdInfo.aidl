@@ -82,7 +82,13 @@ parcelable SignalThresholdInfo {
      * Reference: 3GPP TS 38.215 section 5.1.*, 3GPP TS 38.133 section 10.1.16.1.
      */
     const int SIGNAL_MEASUREMENT_TYPE_SSSINR = 8;
-
+    /**
+     * EcNo value
+     * Range: -24 dBm to 1 dBm.
+     * Used RAN: UTRAN
+     * Reference: 3GPP TS 25.215 5.1.5
+     */
+    const int SIGNAL_MEASUREMENT_TYPE_ECNO = 9;
     /**
      * Signal Measurement Type
      * Values are SIGNAL_MEASUREMENT_TYPE_
