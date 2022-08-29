@@ -60,11 +60,13 @@ cc_binary {
 
 cc_defaults {
     name: "aidlaudioeffectservice_defaults",
+    defaults: [
+        "latest_android_media_audio_common_types_ndk_shared",
+    ],
     vendor: true,
     shared_libs: [
         "libbase",
         "libbinder_ndk",
-        "android.media.audio.common.types-V1-ndk",
         "android.hardware.audio.effect-V1-ndk",
     ],
     cflags: [
