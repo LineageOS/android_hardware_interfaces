@@ -76,6 +76,12 @@ props {
     prop_name: "vendor.fingerprint.virtual.operation_enroll_latency"
   }
   prop {
+    api_name: "sensor_location"
+    type: String
+    access: ReadWrite
+    prop_name: "persist.vendor.fingerprint.virtual.sensor_location"
+  }
+  prop {
     api_name: "type"
     type: String
     access: ReadWrite

@@ -20,6 +20,7 @@
 
 #include <random>
 
+#include <aidl/android/hardware/biometrics/fingerprint/SensorLocation.h>
 #include <future>
 #include <vector>
 
@@ -31,6 +32,7 @@ namespace aidl::android::hardware::biometrics::fingerprint {
 class FakeFingerprintEngine {
   public:
     FakeFingerprintEngine() : mRandom(std::mt19937::default_seed) {}
+    virtual ~FakeFingerprintEngine() {}
 
     void generateChallengeImpl(ISessionCallback* cb);
     void revokeChallengeImpl(ISessionCallback* cb, int64_t challenge);
@@ -44,6 +46,18 @@ class FakeFingerprintEngine {
     void getAuthenticatorIdImpl(ISessionCallback* cb);
     void invalidateAuthenticatorIdImpl(ISessionCallback* cb);
     void resetLockoutImpl(ISessionCallback* cb, const keymaster::HardwareAuthToken& /*hat*/);
+    bool getSensorLocationConfig(SensorLocation& out);
+
+    virtual ndk::ScopedAStatus onPointerDownImpl(int32_t pointerId, int32_t x, int32_t y,
+                                                 float minor, float major);
+
+    virtual ndk::ScopedAStatus onPointerUpImpl(int32_t pointerId);
+
+    virtual ndk::ScopedAStatus onUiReadyImpl();
+
+    virtual SensorLocation getSensorLocation();
+
+    virtual SensorLocation defaultSensorLocation();
 
     std::mt19937 mRandom;
 };

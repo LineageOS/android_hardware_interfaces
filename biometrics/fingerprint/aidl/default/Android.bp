@@ -16,6 +16,9 @@ cc_binary {
     local_include_dirs: ["include"],
     srcs: [
         "FakeFingerprintEngine.cpp",
+        "FakeFingerprintEngineRear.cpp",
+        "FakeFingerprintEngineUdfps.cpp",
+        "FakeFingerprintEngineSide.cpp",
         "Fingerprint.cpp",
         "Session.cpp",
         "main.cpp",
@@ -41,6 +44,32 @@ cc_test {
     shared_libs: [
         "libbase",
         "libbinder_ndk",
+        "android.hardware.biometrics.common.thread",
+    ],
+    static_libs: [
+        "libandroid.hardware.biometrics.fingerprint.VirtualProps",
+        "android.hardware.biometrics.fingerprint-V2-ndk",
+        "android.hardware.biometrics.common-V2-ndk",
+        "android.hardware.keymaster-V3-ndk",
+        "android.hardware.biometrics.common.util",
+    ],
+    vendor: true,
+    test_suites: ["general-tests"],
+    require_root: true,
+}
+
+cc_test {
+    name: "android.hardware.biometrics.fingerprint.FakeFingerprintEngineUdfpsTest",
+    local_include_dirs: ["include"],
+    srcs: [
+        "tests/FakeFingerprintEngineUdfpsTest.cpp",
+        "FakeFingerprintEngineUdfps.cpp",
+        "FakeFingerprintEngine.cpp",
+    ],
+    shared_libs: [
+        "libbase",
+        "libbinder_ndk",
+        "android.hardware.biometrics.common.thread",
     ],
     static_libs: [
         "libandroid.hardware.biometrics.fingerprint.VirtualProps",
