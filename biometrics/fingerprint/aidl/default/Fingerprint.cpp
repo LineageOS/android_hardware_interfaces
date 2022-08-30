@@ -26,7 +26,7 @@ using namespace ::android::fingerprint::virt;
 namespace aidl::android::hardware::biometrics::fingerprint {
 namespace {
 constexpr size_t MAX_WORKER_QUEUE_SIZE = 5;
-constexpr int SENSOR_ID = 1;
+constexpr int SENSOR_ID = 5;
 constexpr common::SensorStrength SENSOR_STRENGTH = common::SensorStrength::STRONG;
 constexpr int MAX_ENROLLMENTS_PER_USER = 5;
 constexpr bool SUPPORTS_NAVIGATION_GESTURES = true;
@@ -39,8 +39,25 @@ constexpr char SW_VERSION[] = "vendor/version/revision";
 
 }  // namespace
 
-Fingerprint::Fingerprint()
-    : mEngine(std::make_unique<FakeFingerprintEngine>()), mWorker(MAX_WORKER_QUEUE_SIZE) {}
+Fingerprint::Fingerprint() : mWorker(MAX_WORKER_QUEUE_SIZE) {
+    std::string sensorTypeProp = FingerprintHalProperties::type().value_or("");
+    if (sensorTypeProp == "" || sensorTypeProp == "default" || sensorTypeProp == "rear") {
+        mSensorType = FingerprintSensorType::REAR;
+        mEngine = std::make_unique<FakeFingerprintEngineRear>();
+    } else if (sensorTypeProp == "udfps") {
+        mSensorType = FingerprintSensorType::UNDER_DISPLAY_OPTICAL;
+        mEngine = std::make_unique<FakeFingerprintEngineUdfps>();
+    } else if (sensorTypeProp == "side") {
+        mSensorType = FingerprintSensorType::POWER_BUTTON;
+        mEngine = std::make_unique<FakeFingerprintEngineSide>();
+    } else {
+        mSensorType = FingerprintSensorType::UNKNOWN;
+        mEngine = std::make_unique<FakeFingerprintEngineRear>();
+        UNIMPLEMENTED(FATAL) << "unrecognized or unimplemented fingerprint behavior: "
+                             << sensorTypeProp;
+    }
+    LOG(INFO) << "sensorTypeProp:" << sensorTypeProp;
+}
 
 ndk::ScopedAStatus Fingerprint::getSensorProps(std::vector<SensorProps>* out) {
     std::vector<common::ComponentInfo> componentInfo = {
@@ -51,22 +68,12 @@ ndk::ScopedAStatus Fingerprint::getSensorProps(std::vector<SensorProps>* out) {
     common::CommonProps commonProps = {SENSOR_ID, SENSOR_STRENGTH, MAX_ENROLLMENTS_PER_USER,
                                        componentInfo};
 
-    SensorLocation sensorLocation = {0 /* displayId (not used) */, 0 /* sensorLocationX */,
-                                     0 /* sensorLocationY */, 0 /* sensorRadius */,
-                                     "" /* display */};
+    SensorLocation sensorLocation = mEngine->getSensorLocation();
 
-    FingerprintSensorType sensorType = FingerprintSensorType::UNKNOWN;
-    std::string sensorTypeProp = FingerprintHalProperties::type().value_or("");
-    if (sensorTypeProp == "" || sensorTypeProp == "default" || sensorTypeProp == "rear") {
-        sensorType = FingerprintSensorType::REAR;
-    }
-    if (sensorType == FingerprintSensorType::UNKNOWN) {
-        UNIMPLEMENTED(FATAL) << "unrecognized or unimplemented fingerprint behavior: "
-                             << sensorTypeProp;
-    }
+    LOG(INFO) << "sensor type:" << (int)mSensorType << " location:" << sensorLocation.toString();
 
     *out = {{commonProps,
-             sensorType,
+             mSensorType,
              {sensorLocation},
              SUPPORTS_NAVIGATION_GESTURES,
              false /* supportsDetectInteraction */}};
@@ -80,6 +87,8 @@ ndk::ScopedAStatus Fingerprint::createSession(int32_t sensorId, int32_t userId,
 
     mSession = SharedRefBase::make<Session>(sensorId, userId, cb, mEngine.get(), &mWorker);
     *out = mSession;
+
+    LOG(INFO) << "createSession: sensorId:" << sensorId << " userId:" << userId;
     return ndk::ScopedAStatus::ok();
 }
 

@@ -16,9 +16,15 @@
 
 #pragma once
 
+#define LOG_TAG "FingerprintVirtualHal"
+
 #include <aidl/android/hardware/biometrics/fingerprint/BnFingerprint.h>
 
 #include "FakeFingerprintEngine.h"
+#include "FakeFingerprintEngineRear.h"
+#include "FakeFingerprintEngineSide.h"
+#include "FakeFingerprintEngineUdfps.h"
+
 #include "Session.h"
 #include "thread/WorkerThread.h"
 
@@ -38,6 +44,7 @@ class Fingerprint : public BnFingerprint {
     std::unique_ptr<FakeFingerprintEngine> mEngine;
     WorkerThread mWorker;
     std::shared_ptr<Session> mSession;
+    FingerprintSensorType mSensorType;
 };
 
 }  // namespace aidl::android::hardware::biometrics::fingerprint
