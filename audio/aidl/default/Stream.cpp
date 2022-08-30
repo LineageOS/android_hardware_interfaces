@@ -35,6 +35,7 @@ void StreamContext::fillDescriptor(StreamDescriptor* desc) {
         desc->reply = mReplyMQ->dupeDesc();
     }
     if (mDataMQ) {
+        desc->frameSizeBytes = mFrameSize;
         desc->bufferSizeFrames =
                 mDataMQ->getQuantumCount() * mDataMQ->getQuantumSize() / mFrameSize;
         desc->audio.set<StreamDescriptor::AudioBuffer::Tag::fmq>(mDataMQ->dupeDesc());
