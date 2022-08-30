@@ -29,11 +29,15 @@
 #include <android-base/thread_annotations.h>
 #include <system/thread_defs.h>
 
+namespace android::hardware::audio::common {
+
 template <typename Impl>
 class StreamWorker {
     enum class WorkerState { STOPPED, RUNNING, PAUSE_REQUESTED, PAUSED, RESUME_REQUESTED };
 
   public:
+    enum class WorkerStatus { ABORT, CONTINUE, EXIT };
+
     StreamWorker() = default;
     ~StreamWorker() { stop(); }
     // Note that 'priority' here is what is known as the 'nice number' in *nix systems.
@@ -66,8 +70,7 @@ class StreamWorker {
     void stop() {
         {
             std::lock_guard<std::mutex> lock(mWorkerLock);
-            if (mError.empty()) {
-                if (mWorkerState == WorkerState::STOPPED) return;
+            if (mWorkerState != WorkerState::STOPPED) {
                 mWorkerState = WorkerState::STOPPED;
                 mWorkerStateChangeRequest = true;
             }
@@ -91,18 +94,22 @@ class StreamWorker {
 
     // Methods that need to be provided by subclasses:
     //
-    // Called once at the beginning of the thread loop. Must return
-    // an empty string to enter the thread loop, otherwise the thread loop
-    // exits and the worker switches into the 'error' state, setting
-    // the error to the returned value.
+    // /* Called once at the beginning of the thread loop. Must return
+    //  * an empty string to enter the thread loop, otherwise the thread loop
+    //  * exits and the worker switches into the 'error' state, setting
+    //  * the error to the returned value.
+    //  */
     // std::string workerInit();
     //
-    // Called for each thread loop unless the thread is in 'paused' state.
-    // Must return 'true' to continue running, otherwise the thread loop
-    // exits and the worker switches into the 'error' state with a generic
-    // error message. It is recommended that the subclass reports any
-    // problems via logging facilities.
-    // bool workerCycle();
+    // /* Called for each thread loop unless the thread is in 'paused' state.
+    //  * Must return 'CONTINUE' to continue running, otherwise the thread loop
+    //  * exits. If the result from worker cycle is 'ABORT' then the worker switches
+    //  * into the 'error' state with a generic error message. It is recommended that
+    //  * the subclass reports any problems via logging facilities. Returning the 'EXIT'
+    //  * status is equivalent to calling 'stop()' method. This is just a way of
+    //  * of stopping the worker by its own initiative.
+    //  */
+    // WorkerStatus workerCycle();
 
   private:
     void switchWorkerStateSync(WorkerState oldState, WorkerState newState,
@@ -146,8 +153,10 @@ class StreamWorker {
 
         for (WorkerState state = WorkerState::RUNNING; state != WorkerState::STOPPED;) {
             bool needToNotify = false;
-            if (state != WorkerState::PAUSED ? static_cast<Impl*>(this)->workerCycle()
-                                             : (sched_yield(), true)) {
+            if (WorkerStatus status = state != WorkerState::PAUSED
+                                              ? static_cast<Impl*>(this)->workerCycle()
+                                              : (sched_yield(), WorkerStatus::CONTINUE);
+                status == WorkerStatus::CONTINUE) {
                 {
                     // See https://developer.android.com/training/articles/smp#nonracing
                     android::base::ScopedLockAssertion lock_assertion(mWorkerLock);
@@ -188,7 +197,9 @@ class StreamWorker {
                     needToNotify = true;
                 }
                 state = mWorkerState = WorkerState::STOPPED;
-                mError = "workerCycle failed";
+                if (status == WorkerStatus::ABORT) {
+                    mError = "workerCycle aborted";
+                }
             }
             if (needToNotify) {
                 {
@@ -218,3 +229,5 @@ class StreamWorker {
     static_assert(std::atomic<bool>::is_always_lock_free);
     std::atomic<bool> mWorkerStateChangeRequest GUARDED_BY(mWorkerLock) = false;
 };
+
+}  // namespace android::hardware::audio::common
