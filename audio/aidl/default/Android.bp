@@ -11,6 +11,7 @@ cc_library_static {
     name: "libaudioserviceexampleimpl",
     vendor: true,
     shared_libs: [
+        "libaudioaidlcommon",
         "libbase",
         "libbinder_ndk",
         "libstagefright_foundation",
