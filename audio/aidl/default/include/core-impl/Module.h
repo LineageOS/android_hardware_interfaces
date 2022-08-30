@@ -28,6 +28,11 @@
 namespace aidl::android::hardware::audio::core {
 
 class Module : public BnModule {
+  public:
+    // This value is used for all AudioPatches and reported by all streams.
+    static constexpr int32_t kLatencyMs = 10;
+
+  private:
     ndk::ScopedAStatus setModuleDebug(
             const ::aidl::android::hardware::audio::core::ModuleDebug& in_debug) override;
     ndk::ScopedAStatus connectExternalDevice(
@@ -66,21 +71,18 @@ class Module : public BnModule {
     ndk::ScopedAStatus resetAudioPatch(int32_t in_patchId) override;
     ndk::ScopedAStatus resetAudioPortConfig(int32_t in_portConfigId) override;
 
-  private:
     void cleanUpPatch(int32_t patchId);
-    void cleanUpPatches(int32_t portConfigId);
-    ndk::ScopedAStatus createStreamDescriptor(
+    ndk::ScopedAStatus createStreamContext(
             int32_t in_portConfigId, int64_t in_bufferSizeFrames,
-            ::aidl::android::hardware::audio::core::StreamDescriptor* out_descriptor);
+            ::aidl::android::hardware::audio::core::StreamContext* out_context);
     ndk::ScopedAStatus findPortIdForNewStream(
             int32_t in_portConfigId, ::aidl::android::media::audio::common::AudioPort** port);
     internal::Configuration& getConfig();
     void registerPatch(const AudioPatch& patch);
+    void updateStreamsConnectedState(const AudioPatch& oldPatch, const AudioPatch& newPatch);
 
     // This value is used for all AudioPatches.
     static constexpr int32_t kMinimumStreamBufferSizeFrames = 16;
-    // This value is used for all AudioPatches.
-    static constexpr int32_t kLatencyMs = 10;
     // The maximum stream buffer size is 1 GiB = 2 ** 30 bytes;
     static constexpr int32_t kMaximumStreamBufferSizeBytes = 1 << 30;
 
