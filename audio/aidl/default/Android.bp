@@ -7,19 +7,27 @@ package {
     default_applicable_licenses: ["hardware_interfaces_license"],
 }
 
-cc_library_static {
-    name: "libaudioserviceexampleimpl",
+cc_defaults {
+    name: "aidlaudioservice_defaults",
     vendor: true,
     shared_libs: [
         "libaudioaidlcommon",
         "libbase",
         "libbinder_ndk",
+        "libcutils",
+        "libfmq",
         "libstagefright_foundation",
+        "libutils",
         "android.media.audio.common.types-V1-ndk",
         "android.hardware.audio.core-V1-ndk",
         "android.hardware.common-V2-ndk",
         "android.hardware.common.fmq-V1-ndk",
     ],
+}
+
+cc_library_static {
+    name: "libaudioserviceexampleimpl",
+    defaults: ["aidlaudioservice_defaults"],
     export_include_dirs: ["include"],
     srcs: [
         "Config.cpp",
@@ -37,16 +45,7 @@ cc_binary {
     relative_install_path: "hw",
     init_rc: ["android.hardware.audio.service-aidl.example.rc"],
     vintf_fragments: ["android.hardware.audio.service-aidl.xml"],
-    vendor: true,
-    shared_libs: [
-        "libbase",
-        "libbinder_ndk",
-        "libstagefright_foundation",
-        "android.media.audio.common.types-V1-ndk",
-        "android.hardware.audio.core-V1-ndk",
-        "android.hardware.common-V2-ndk",
-        "android.hardware.common.fmq-V1-ndk",
-    ],
+    defaults: ["aidlaudioservice_defaults"],
     static_libs: [
         "libaudioserviceexampleimpl",
     ],

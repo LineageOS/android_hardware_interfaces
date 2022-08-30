@@ -255,12 +255,16 @@ interface IModule {
      *
      * Note that although it's not prohibited to open a stream on a mix port
      * configuration which is not connected (using a patch) to any device port,
-     * and set up a patch afterwards, this is not the recommended sequence of
-     * calls, because setting up of a patch might fail due to an insufficient
-     * stream buffer size.
+     * and set up a patch afterwards, this sequence of calls is not recommended,
+     * because setting up of a patch might fail due to an insufficient stream
+     * buffer size. Another consequence of having a stream on an unconnected mix
+     * port is that capture positions can not be determined because there is no
+     * "external observer," thus read operations done via StreamDescriptor will
+     * be completing with an error, although data (zero filled) will still be
+     * provided.
      *
      * @return An opened input stream and the associated descriptor.
-     * @param args Input arguments, see 'OpenInputStreamArguments' parcelable.
+     * @param args The pack of arguments, see 'OpenInputStreamArguments' parcelable.
      * @throws EX_ILLEGAL_ARGUMENT In the following cases:
      *                             - If the port config can not be found by the ID.
      *                             - If the port config is not of an input mix port.
@@ -269,6 +273,7 @@ interface IModule {
      *                          - If the port config already has a stream opened on it.
      *                          - If the limit on the open stream count for the port has
      *                            been reached.
+     *                          - If the HAL module failed to initialize the stream.
      */
     @VintfStability
     parcelable OpenInputStreamArguments {
@@ -312,12 +317,16 @@ interface IModule {
      *
      * Note that although it's not prohibited to open a stream on a mix port
      * configuration which is not connected (using a patch) to any device port,
-     * and set up a patch afterwards, this is not the recommended sequence of
-     * calls, because setting up of a patch might fail due to an insufficient
-     * stream buffer size.
+     * and set up a patch afterwards, this sequence of calls is not recommended,
+     * because setting up of a patch might fail due to an insufficient stream
+     * buffer size. Another consequence of having a stream on an unconnected mix
+     * port is that presentation positions can not be determined because there
+     * is no "external observer," thus write operations done via
+     * StreamDescriptor will be completing with an error, although the data
+     * will still be accepted and immediately discarded.
      *
      * @return An opened output stream and the associated descriptor.
-     * @param args Input arguments, see 'OpenOutputStreamArguments' parcelable.
+     * @param args The pack of arguments, see 'OpenOutputStreamArguments' parcelable.
      * @throws EX_ILLEGAL_ARGUMENT In the following cases:
      *                             - If the port config can not be found by the ID.
      *                             - If the port config is not of an output mix port.
@@ -330,6 +339,7 @@ interface IModule {
      *                            been reached.
      *                          - If another opened stream already exists for the 'PRIMARY'
      *                            output port.
+     *                          - If the HAL module failed to initialize the stream.
      */
     @VintfStability
     parcelable OpenOutputStreamArguments {

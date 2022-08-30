@@ -38,11 +38,7 @@ parcelable StreamDescriptor {
   android.hardware.common.fmq.MQDescriptor<android.hardware.audio.core.StreamDescriptor.Reply,android.hardware.common.fmq.SynchronizedReadWrite> reply;
   long bufferSizeFrames;
   android.hardware.audio.core.StreamDescriptor.AudioBuffer audio;
-  const int COMMAND_EXIT = 0;
   const int COMMAND_BURST = 1;
-  const int STATUS_OK = 0;
-  const int STATUS_ILLEGAL_ARGUMENT = 1;
-  const int STATUS_ILLEGAL_STATE = 2;
   @FixedSize @VintfStability
   parcelable Position {
     long frames;
@@ -63,7 +59,7 @@ parcelable StreamDescriptor {
   }
   @VintfStability
   union AudioBuffer {
-    android.hardware.common.fmq.MQDescriptor<byte,android.hardware.common.fmq.UnsynchronizedWrite> fmq;
+    android.hardware.common.fmq.MQDescriptor<byte,android.hardware.common.fmq.SynchronizedReadWrite> fmq;
     android.hardware.audio.core.MmapBufferDescriptor mmap;
   }
 }
