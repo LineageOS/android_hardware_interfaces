@@ -2853,4 +2853,28 @@ enum VehicleProperty {
     GENERAL_SAFETY_REGULATION_COMPLIANCE_REQUIREMENT = 0x0F47 + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
 
+    /**
+     * (Deprecated) List of all supported property IDs.
+     *
+     * A list of all supported property IDs (including this property). This property is required for
+     * HIDL VHAL to work with large amount of vehicle prop configs where the getAllPropConfigs
+     * payload exceeds the binder limitation. This issue is fixed in AIDL version using
+     * LargeParcelable in getAllPropConfigs, so this property is deprecated.
+     *
+     * In HIDL VHAL implementation, if the amount of data returned in getAllPropConfigs exceeds the
+     * binder limitation, vendor must support this property and return all the supported property
+     * IDs. Car service will divide this list into smaller sub lists and use getPropConfigs([ids])
+     * to query the sub lists. The results will be merged together in Car Service.
+     *
+     * The config array for this property must contain one int element which is the number of
+     * configs per getPropConfigs request by Car Service. This number must be small enough so that
+     * each getPropConfigs payload will not exceed binder limitation, however, a smaller number will
+     * cause more requests, which increase overhead to fetch all the configs.
+     *
+     * @change_mode VehiclePropertyChangeMode.STATIC
+     * @access VehiclePropertyAccess.READ
+     */
+    SUPPORTED_PROPERTY_IDS = 0x0F48 + 0x10000000 + 0x01000000
+            + 0x00410000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32_VEC
+
 }
