@@ -31,6 +31,7 @@ name:
     ],
     defaults: [
         "VtsHalTargetTestDefaults",
+        "android.hardware.graphics.common-ndk_static",
         "use_libaidlvintf_gtest_helper_static",
     ],
     shared_libs: [
@@ -43,7 +44,6 @@ name:
         "android.hardware.automotive.evs@common-default-lib",
         "android.hardware.automotive.evs-V1-ndk",
         "android.hardware.common-V2-ndk",
-        "android.hardware.graphics.common-V3-ndk",
         "libaidlcommonsupport",
     ],
     test_suites: [
