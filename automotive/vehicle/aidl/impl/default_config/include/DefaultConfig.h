@@ -1444,6 +1444,26 @@ const std::vector<ConfigDeclaration> kVehicleProperties = {
                                                       .maxInt32Value = 10}}},
          .initialValue = {.int32Values = {0}}},
 
+        {.config = {.prop = toInt(VehicleProperty::WINDOW_MOVE),
+                    .access = VehiclePropertyAccess::READ_WRITE,
+                    .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                    .areaConfigs = {VehicleAreaConfig{.areaId = WINDOW_1_LEFT,
+                                                      .minInt32Value = -1,
+                                                      .maxInt32Value = 1},
+                                    VehicleAreaConfig{.areaId = WINDOW_1_RIGHT,
+                                                      .minInt32Value = -1,
+                                                      .maxInt32Value = 1},
+                                    VehicleAreaConfig{.areaId = WINDOW_2_LEFT,
+                                                      .minInt32Value = -1,
+                                                      .maxInt32Value = 1},
+                                    VehicleAreaConfig{.areaId = WINDOW_2_RIGHT,
+                                                      .minInt32Value = -1,
+                                                      .maxInt32Value = 1},
+                                    VehicleAreaConfig{.areaId = WINDOW_ROOF_TOP_1,
+                                                      .minInt32Value = -1,
+                                                      .maxInt32Value = 1}}},
+         .initialValue = {.int32Values = {0}}},
+
         {.config =
                  {
                          .prop = WHEEL_TICK,
