@@ -65,10 +65,44 @@ inline constexpr std::chrono::seconds kTuneTimeoutSec =
 inline constexpr std::chrono::seconds kProgramListScanTimeoutSec =
         std::chrono::seconds(IBroadcastRadio::LIST_COMPLETE_TIMEOUT_MS * 1000);
 
+const ConfigFlag kConfigFlagValues[] = {
+        ConfigFlag::FORCE_MONO,
+        ConfigFlag::FORCE_ANALOG,
+        ConfigFlag::FORCE_DIGITAL,
+        ConfigFlag::RDS_AF,
+        ConfigFlag::RDS_REG,
+        ConfigFlag::DAB_DAB_LINKING,
+        ConfigFlag::DAB_FM_LINKING,
+        ConfigFlag::DAB_DAB_SOFT_LINKING,
+        ConfigFlag::DAB_FM_SOFT_LINKING,
+};
+
 void printSkipped(const string& msg) {
     const auto testInfo = testing::UnitTest::GetInstance()->current_test_info();
     LOG(INFO) << "[  SKIPPED ] " << testInfo->test_case_name() << "." << testInfo->name()
               << " with message: " << msg;
+}
+
+bool isValidAmFmFreq(int64_t freq) {
+    ProgramIdentifier id = bcutils::makeIdentifier(IdentifierType::AMFM_FREQUENCY_KHZ, freq);
+    return bcutils::isValid(id);
+}
+
+void validateRange(const AmFmBandRange& range) {
+    EXPECT_TRUE(isValidAmFmFreq(range.lowerBound));
+    EXPECT_TRUE(isValidAmFmFreq(range.upperBound));
+    EXPECT_LT(range.lowerBound, range.upperBound);
+    EXPECT_GT(range.spacing, 0u);
+    EXPECT_EQ((range.upperBound - range.lowerBound) % range.spacing, 0u);
+}
+
+bool supportsFM(const AmFmRegionConfig& config) {
+    for (const auto& range : config.ranges) {
+        if (bcutils::getBand(range.lowerBound) == bcutils::FrequencyBand::FM) {
+            return true;
+        }
+    }
+    return false;
 }
 
 }  // namespace
@@ -249,6 +283,143 @@ TEST_P(BroadcastRadioHalTest, TunerCallbackFailsWithNull) {
     auto halResult = mModule->setTunerCallback(nullptr);
 
     EXPECT_EQ(halResult.getServiceSpecificError(), resultToInt(Result::INVALID_ARGUMENTS));
+}
+
+/**
+ * Test fetching AM/FM regional configuration.
+ *
+ * Verifies that:
+ *  - AM/FM regional configuration is either set at startup or not supported at all by the hardware;
+ *  - FM Deemphasis and RDS are correctly configured for FM-capable radio;
+ */
+TEST_P(BroadcastRadioHalTest, GetAmFmRegionConfig) {
+    LOG(DEBUG) << "GetAmFmRegionConfig Test";
+
+    AmFmRegionConfig config;
+
+    bool supported = getAmFmRegionConfig(/* full= */ false, &config);
+
+    if (!supported) {
+        printSkipped("AM/FM not supported");
+        return;
+    }
+
+    EXPECT_LE(popcountll(static_cast<unsigned long long>(config.fmDeemphasis)), 1);
+    EXPECT_LE(popcountll(static_cast<unsigned long long>(config.fmRds)), 1);
+
+    if (supportsFM(config)) {
+        EXPECT_EQ(popcountll(static_cast<unsigned long long>(config.fmDeemphasis)), 1);
+    }
+}
+
+/**
+ * Test fetching ranges of AM/FM regional configuration.
+ *
+ * Verifies that:
+ *  - AM/FM regional configuration is either set at startup or not supported at all by the hardware;
+ *  - there is at least one AM/FM band configured;
+ *  - all channel grids (frequency ranges and spacings) are valid;
+ *  - seek spacing is a multiple of the manual spacing value.
+ */
+TEST_P(BroadcastRadioHalTest, GetAmFmRegionConfigRanges) {
+    LOG(DEBUG) << "GetAmFmRegionConfigRanges Test";
+
+    AmFmRegionConfig config;
+
+    bool supported = getAmFmRegionConfig(/* full= */ false, &config);
+
+    if (!supported) {
+        printSkipped("AM/FM not supported");
+        return;
+    }
+
+    EXPECT_GT(config.ranges.size(), 0u);
+    for (const auto& range : config.ranges) {
+        validateRange(range);
+        EXPECT_EQ(range.seekSpacing % range.spacing, 0u);
+        EXPECT_GE(range.seekSpacing, range.spacing);
+    }
+}
+
+/**
+ * Test fetching FM regional capabilities.
+ *
+ * Verifies that:
+ *  - AM/FM regional capabilities are either available or not supported at all by the hardware;
+ *  - there is at least one de-emphasis filter mode supported for FM-capable radio;
+ */
+TEST_P(BroadcastRadioHalTest, GetAmFmRegionConfigCapabilitiesForFM) {
+    LOG(DEBUG) << "GetAmFmRegionConfigCapabilitiesForFM Test";
+
+    AmFmRegionConfig config;
+
+    bool supported = getAmFmRegionConfig(/* full= */ true, &config);
+
+    if (supported && supportsFM(config)) {
+        EXPECT_GE(popcountll(static_cast<unsigned long long>(config.fmDeemphasis)), 1);
+    } else {
+        printSkipped("FM not supported");
+    }
+}
+
+/**
+ * Test fetching the ranges of AM/FM regional capabilities.
+ *
+ * Verifies that:
+ *  - AM/FM regional capabilities are either available or not supported at all by the hardware;
+ *  - there is at least one AM/FM range supported;
+ *  - all channel grids (frequency ranges and spacings) are valid;
+ *  - seek spacing is not set.
+ */
+TEST_P(BroadcastRadioHalTest, GetAmFmRegionConfigCapabilitiesRanges) {
+    LOG(DEBUG) << "GetAmFmRegionConfigCapabilitiesRanges Test";
+
+    AmFmRegionConfig config;
+
+    bool supported = getAmFmRegionConfig(/* full= */ true, &config);
+
+    if (!supported) {
+        printSkipped("AM/FM not supported");
+        return;
+    }
+
+    EXPECT_GT(config.ranges.size(), 0u);
+
+    for (const auto& range : config.ranges) {
+        validateRange(range);
+        EXPECT_EQ(range.seekSpacing, 0u);
+    }
+}
+
+/**
+ * Test fetching DAB regional configuration.
+ *
+ * Verifies that:
+ *  - DAB regional configuration is either set at startup or not supported at all by the hardware;
+ *  - all channel labels match correct format;
+ *  - all channel frequencies are in correct range.
+ */
+TEST_P(BroadcastRadioHalTest, GetDabRegionConfig) {
+    LOG(DEBUG) << "GetDabRegionConfig Test";
+    vector<DabTableEntry> config;
+
+    auto halResult = mModule->getDabRegionConfig(&config);
+
+    if (halResult.getServiceSpecificError() == resultToInt(Result::NOT_SUPPORTED)) {
+        printSkipped("DAB not supported");
+        return;
+    }
+    ASSERT_TRUE(halResult.isOk());
+
+    std::regex re("^[A-Z0-9][A-Z0-9 ]{0,5}[A-Z0-9]$");
+
+    for (const auto& entry : config) {
+        EXPECT_TRUE(std::regex_match(string(entry.label), re));
+
+        ProgramIdentifier id =
+                bcutils::makeIdentifier(IdentifierType::DAB_FREQUENCY_KHZ, entry.frequencyKhz);
+        EXPECT_TRUE(bcutils::isValid(id));
+    }
 }
 
 /**
@@ -586,6 +757,162 @@ TEST_P(BroadcastRadioHalTest, Cancel) {
 }
 
 /**
+ * Test IBroadcastRadio::get|setParameters() methods called with no parameters.
+ *
+ * Verifies that:
+ *  - callback is called for empty parameters set.
+ */
+TEST_P(BroadcastRadioHalTest, NoParameters) {
+    LOG(DEBUG) << "NoParameters Test";
+
+    vector<VendorKeyValue> parametersResults = {};
+
+    auto halResult = mModule->setParameters({}, &parametersResults);
+
+    ASSERT_TRUE(halResult.isOk());
+    ASSERT_EQ(parametersResults.size(), 0u);
+
+    parametersResults.clear();
+
+    halResult = mModule->getParameters({}, &parametersResults);
+
+    ASSERT_TRUE(halResult.isOk());
+    ASSERT_EQ(parametersResults.size(), 0u);
+}
+
+/**
+ * Test IBroadcastRadio::get|setParameters() methods called with unknown parameters.
+ *
+ * Verifies that:
+ *  - unknown parameters are ignored;
+ *  - callback is called also for empty results set.
+ */
+TEST_P(BroadcastRadioHalTest, UnknownParameters) {
+    LOG(DEBUG) << "UnknownParameters Test";
+
+    vector<VendorKeyValue> parametersResults = {};
+
+    auto halResult =
+            mModule->setParameters({{"com.android.unknown", "sample"}}, &parametersResults);
+
+    ASSERT_TRUE(halResult.isOk());
+    ASSERT_EQ(parametersResults.size(), 0u);
+
+    parametersResults.clear();
+
+    halResult = mModule->getParameters({"com.android.unknown*", "sample"}, &parametersResults);
+
+    ASSERT_TRUE(halResult.isOk());
+    ASSERT_EQ(parametersResults.size(), 0u);
+}
+
+/**
+ * Test geting image of invalid ID.
+ *
+ * Verifies that:
+ * - getImage call handles argument 0 gracefully.
+ */
+TEST_P(BroadcastRadioHalTest, GetNoImage) {
+    LOG(DEBUG) << "GetNoImage Test";
+    vector<uint8_t> rawImage;
+
+    auto result = mModule->getImage(IBroadcastRadio::INVALID_IMAGE, &rawImage);
+
+    ASSERT_TRUE(result.isOk());
+    ASSERT_EQ(rawImage.size(), 0u);
+}
+
+/**
+ * Test getting config flags.
+ *
+ * Verifies that:
+ * - isConfigFlagSet either succeeds or ends with NOT_SUPPORTED or INVALID_STATE;
+ * - call success or failure is consistent with setConfigFlag.
+ */
+TEST_P(BroadcastRadioHalTest, FetchConfigFlags) {
+    LOG(DEBUG) << "FetchConfigFlags Test";
+
+    for (const auto& flag : kConfigFlagValues) {
+        bool gotValue = false;
+
+        auto halResult = mModule->isConfigFlagSet(flag, &gotValue);
+
+        if (halResult.getServiceSpecificError() != resultToInt(Result::NOT_SUPPORTED) &&
+            halResult.getServiceSpecificError() != resultToInt(Result::INVALID_STATE)) {
+            ASSERT_TRUE(halResult.isOk());
+        }
+
+        // set must fail or succeed the same way as get
+        auto setResult = mModule->setConfigFlag(flag, /* value= */ false);
+
+        EXPECT_TRUE((halResult.isOk() && setResult.isOk()) ||
+                    (halResult.getServiceSpecificError()) == setResult.getServiceSpecificError());
+
+        setResult = mModule->setConfigFlag(flag, /* value= */ true);
+
+        EXPECT_TRUE((halResult.isOk() && setResult.isOk()) ||
+                    (halResult.getServiceSpecificError()) == setResult.getServiceSpecificError());
+    }
+}
+
+/**
+ * Test setting config flags.
+ *
+ * Verifies that:
+ * - setConfigFlag either succeeds or ends with NOT_SUPPORTED or INVALID_STATE;
+ * - isConfigFlagSet reflects the state requested immediately after the set call.
+ */
+TEST_P(BroadcastRadioHalTest, SetConfigFlags) {
+    LOG(DEBUG) << "SetConfigFlags Test";
+
+    auto get = [&](ConfigFlag flag) -> bool {
+        bool* gotValue = nullptr;
+
+        auto halResult = mModule->isConfigFlagSet(flag, gotValue);
+
+        EXPECT_FALSE(gotValue == nullptr);
+        EXPECT_TRUE(halResult.isOk());
+        return *gotValue;
+    };
+
+    auto notSupportedError = resultToInt(Result::NOT_SUPPORTED);
+    auto invalidStateError = resultToInt(Result::INVALID_STATE);
+    for (const auto& flag : kConfigFlagValues) {
+        auto result = mModule->setConfigFlag(flag, /* value= */ false);
+
+        if (result.getServiceSpecificError() == notSupportedError ||
+            result.getServiceSpecificError() == invalidStateError) {
+            // setting to true must result in the same error as false
+            auto secondResult = mModule->setConfigFlag(flag, /* value= */ true);
+
+            EXPECT_TRUE((result.isOk() && secondResult.isOk()) ||
+                        result.getServiceSpecificError() == secondResult.getServiceSpecificError());
+            continue;
+        } else {
+            ASSERT_TRUE(result.isOk());
+        }
+
+        // verify false is set
+        bool value = get(flag);
+        EXPECT_FALSE(value);
+
+        // try setting true this time
+        result = mModule->setConfigFlag(flag, /* value= */ true);
+
+        ASSERT_TRUE(result.isOk());
+        value = get(flag);
+        EXPECT_TRUE(value);
+
+        // false again
+        result = mModule->setConfigFlag(flag, /* value= */ false);
+
+        ASSERT_TRUE(result.isOk());
+        value = get(flag);
+        EXPECT_FALSE(value);
+    }
+}
+
+/**
  * Test getting program list using empty program filter.
  *
  * Verifies that:
@@ -692,6 +1019,70 @@ TEST_P(BroadcastRadioHalTest, GetProgramListFromDabFilter) {
     }
     std::optional<bcutils::ProgramInfoSet> dabList = getProgramList(dabFilter);
     ASSERT_EQ(dabList->size(), expectedResultSize) << "dab filter result size is wrong";
+}
+
+/**
+ * Test HD_STATION_NAME correctness.
+ *
+ * Verifies that if a program on the list contains HD_STATION_NAME identifier:
+ *  - the program provides station name in its metadata;
+ *  - the identifier matches the name;
+ *  - there is only one identifier of that type.
+ */
+TEST_P(BroadcastRadioHalTest, HdRadioStationNameId) {
+    LOG(DEBUG) << "HdRadioStationNameId Test";
+
+    std::optional<bcutils::ProgramInfoSet> list = getProgramList();
+    if (!list) {
+        printSkipped("No program list");
+        return;
+    }
+
+    for (const auto& program : *list) {
+        vector<int> nameIds = bcutils::getAllIds(program.selector, IdentifierType::HD_STATION_NAME);
+        EXPECT_LE(nameIds.size(), 1u);
+        if (nameIds.size() == 0) {
+            continue;
+        }
+
+        std::optional<string> name = bcutils::getMetadataString(program, Metadata::programName);
+        if (!name) {
+            name = bcutils::getMetadataString(program, Metadata::rdsPs);
+        }
+        ASSERT_TRUE(name.has_value());
+
+        ProgramIdentifier expectedId = bcutils::makeHdRadioStationName(*name);
+        EXPECT_EQ(nameIds[0], expectedId.value);
+    }
+}
+
+/**
+ * Test announcement listener registration.
+ *
+ * Verifies that:
+ *  - registerAnnouncementListener either succeeds or returns NOT_SUPPORTED;
+ *  - if it succeeds, it returns a valid close handle (which is a nullptr otherwise);
+ *  - closing handle does not crash.
+ */
+TEST_P(BroadcastRadioHalTest, AnnouncementListenerRegistration) {
+    LOG(DEBUG) << "AnnouncementListenerRegistration Test";
+    std::shared_ptr<AnnouncementListenerMock> listener =
+            SharedRefBase::make<AnnouncementListenerMock>();
+    std::shared_ptr<ICloseHandle> closeHandle = nullptr;
+
+    auto halResult = mModule->registerAnnouncementListener(listener, {AnnouncementType::EMERGENCY},
+                                                           &closeHandle);
+
+    if (halResult.getServiceSpecificError() == resultToInt(Result::NOT_SUPPORTED)) {
+        ASSERT_EQ(closeHandle.get(), nullptr);
+        printSkipped("Announcements not supported");
+        return;
+    }
+
+    ASSERT_TRUE(halResult.isOk());
+    ASSERT_NE(closeHandle.get(), nullptr);
+
+    closeHandle->close();
 }
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(BroadcastRadioHalTest);
