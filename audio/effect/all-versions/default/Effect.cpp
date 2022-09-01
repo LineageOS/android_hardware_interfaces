@@ -316,6 +316,11 @@ void Effect::getConfigImpl(int commandCode, const char* commandName, GetConfigCa
 
 Result Effect::getCurrentConfigImpl(uint32_t featureId, uint32_t configSize,
                                     GetCurrentConfigSuccessCallback onSuccess) {
+    if (configSize > kMaxDataSize - sizeof(uint32_t)) {
+        ALOGE("%s: Config size is too big: %" PRIu32, __func__, configSize);
+        android_errorWriteLog(0x534e4554, "240266798");
+        return Result::INVALID_ARGUMENTS;
+    }
     uint32_t halCmd = featureId;
     std::vector<uint32_t> halResult(alignedSizeIn<uint32_t>(sizeof(uint32_t) + configSize), 0);
     uint32_t halResultSize = 0;
@@ -350,8 +355,12 @@ Result Effect::getParameterImpl(uint32_t paramSize, const void* paramData,
 
 Result Effect::getSupportedConfigsImpl(uint32_t featureId, uint32_t maxConfigs, uint32_t configSize,
                                        GetSupportedConfigsSuccessCallback onSuccess) {
+    if (maxConfigs != 0 && configSize > (kMaxDataSize - 2 * sizeof(uint32_t)) / maxConfigs) {
+        ALOGE("%s: Config size is too big: %" PRIu32, __func__, configSize);
+        return Result::INVALID_ARGUMENTS;
+    }
     uint32_t halCmd[2] = {featureId, maxConfigs};
-    uint32_t halResultSize = 2 * sizeof(uint32_t) + maxConfigs * sizeof(configSize);
+    uint32_t halResultSize = 2 * sizeof(uint32_t) + maxConfigs * configSize;
     std::vector<uint8_t> halResult(static_cast<size_t>(halResultSize), 0);
     return sendCommandReturningStatusAndData(
         EFFECT_CMD_GET_FEATURE_SUPPORTED_CONFIGS, "GET_FEATURE_SUPPORTED_CONFIGS", sizeof(halCmd),
