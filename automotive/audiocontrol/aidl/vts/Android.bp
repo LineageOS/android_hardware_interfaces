@@ -24,6 +24,8 @@ package {
 cc_test {
     name: "VtsAidlHalAudioControlTest",
     defaults: [
+        "latest_android_media_audio_common_types_cpp_static",
+        "latest_android_hardware_audio_common_cpp_static",
         "VtsHalTargetTestDefaults",
         "use_libaidlvintf_gtest_helper_static",
     ],
@@ -38,8 +40,6 @@ cc_test {
     ],
     static_libs: [
         "android.hardware.automotive.audiocontrol-V2-cpp",
-        "android.hardware.audio.common-V1-cpp",
-        "android.media.audio.common.types-V1-cpp",
         "libgmock",
     ],
     test_suites: [

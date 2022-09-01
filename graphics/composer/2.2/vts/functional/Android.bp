@@ -27,6 +27,7 @@ cc_test {
     name: "VtsHalGraphicsComposerV2_2TargetTest",
     defaults: [
         "VtsHalTargetTestDefaults",
+        "android.hardware.graphics.composer3-ndk_static",
         // Needed for librenderengine
         "skia_deps",
     ],
@@ -68,7 +69,6 @@ cc_test {
         "android.hardware.graphics.composer@2.1-vts",
         "android.hardware.graphics.composer@2.2",
         "android.hardware.graphics.composer@2.2-vts",
-        "android.hardware.graphics.composer3-V1-ndk",
         "android.hardware.graphics.mapper@2.0-vts",
         "android.hardware.graphics.mapper@2.1-vts",
         "android.hardware.graphics.mapper@3.0-vts",
