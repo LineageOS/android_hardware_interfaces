@@ -37,6 +37,14 @@
             <instance>default</instance>
         </interface>
     </hal>
+    <hal format="aidl" optional="false">
+        <name>android.hardware.audio.effect</name>
+        <version>1</version>
+        <interface>
+            <name>IFactory</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
     <hal format="aidl" optional="true">
          <name>android.hardware.authsecret</name>
          <version>1</version>
