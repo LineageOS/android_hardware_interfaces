@@ -184,6 +184,9 @@ struct Effect : public IEffect {
     using GetSupportedConfigsSuccessCallback =
         std::function<void(uint32_t supportedConfigs, void* configsData)>;
 
+    // Sets the limit on the maximum size of vendor-provided data structures.
+    static constexpr size_t kMaxDataSize = 1 << 20;
+
     static const char* sContextResultOfCommand;
     static const char* sContextCallToCommand;
     static const char* sContextCallFunction;
