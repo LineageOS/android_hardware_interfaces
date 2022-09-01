@@ -665,6 +665,37 @@ TEST_P(AudioEffectHidlTest, SetCurrentConfigForFeature) {
     EXPECT_TRUE(ret.isOk());
 }
 
+TEST_P(AudioEffectHidlTest, GetSupportedConfigsForFeatureInvalidConfigSize) {
+    description("Verify that GetSupportedConfigsForFeature caps the maximum config size");
+    const bool isNewDeviceLaunchingOnTPlus = property_get_int32("ro.vendor.api_level", 0) >= 33;
+    if (!isNewDeviceLaunchingOnTPlus) {
+        GTEST_SKIP() << "The test only applies to devices launching on T or later";
+    }
+    // Use very large size to ensure that the service does not crash.
+    const uint32_t veryLargeConfigSize = std::numeric_limits<uint32_t>::max() - 100;
+    Result retval = Result::OK;
+    Return<void> ret = effect->getSupportedConfigsForFeature(
+            0, 1, veryLargeConfigSize,
+            [&](Result r, uint32_t, const hidl_vec<uint8_t>&) { retval = r; });
+    EXPECT_TRUE(ret.isOk());
+    EXPECT_EQ(Result::INVALID_ARGUMENTS, retval);
+}
+
+TEST_P(AudioEffectHidlTest, GetCurrentConfigForFeatureInvalidConfigSize) {
+    description("Verify that GetCurrentConfigForFeature caps the maximum config size");
+    const bool isNewDeviceLaunchingOnTPlus = property_get_int32("ro.vendor.api_level", 0) >= 33;
+    if (!isNewDeviceLaunchingOnTPlus) {
+        GTEST_SKIP() << "The test only applies to devices launching on T or later";
+    }
+    // Use very large size to ensure that the service does not crash.
+    const uint32_t veryLargeConfigSize = std::numeric_limits<uint32_t>::max() - 100;
+    Result retval = Result::OK;
+    Return<void> ret = effect->getCurrentConfigForFeature(
+            0, veryLargeConfigSize, [&](Result r, const hidl_vec<uint8_t>&) { retval = r; });
+    EXPECT_TRUE(ret.isOk());
+    EXPECT_EQ(Result::INVALID_ARGUMENTS, retval);
+}
+
 // The main test class for Equalizer Audio Effect HIDL HAL.
 class EqualizerAudioEffectHidlTest : public AudioEffectHidlTest {
   public:
