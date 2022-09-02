@@ -1,0 +1,7 @@
+service vendor.boot-default /system/bin/hw/android.hardware.boot-service.default_recovery
+    class early_hal
+    user root
+    group root
+    seclabel u:r:hal_bootctl_default:s0
+    interface aidl android.hardware.boot.IBootControl/default
+
