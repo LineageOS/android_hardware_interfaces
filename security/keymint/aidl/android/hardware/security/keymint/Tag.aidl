@@ -274,25 +274,10 @@ enum Tag {
     USAGE_EXPIRE_DATETIME = TagType.DATE | 402,
 
     /**
-     * Tag::MIN_SECONDS_BETWEEN_OPS specifies the minimum amount of time that elapses between
-     * allowed operations using a key.  This can be used to rate-limit uses of keys in contexts
-     * where unlimited use may enable brute force attacks.
+     * OBSOLETE: Do not use.
      *
-     * The value is a 32-bit integer representing seconds between allowed operations.
-     *
-     * When a key with this tag is used in an operation, the IKeyMintDevice must start a timer
-     * during the finish() or abort() call.  Any call to begin() that is received before the timer
-     * indicates that the interval specified by Tag::MIN_SECONDS_BETWEEN_OPS has elapsed must fail
-     * with ErrorCode::KEY_RATE_LIMIT_EXCEEDED.  This implies that the IKeyMintDevice must keep a
-     * table of use counters for keys with this tag.  Because memory is often limited, this table
-     * may have a fixed maximum size and KeyMint may fail operations that attempt to use keys with
-     * this tag when the table is full.  The table must accommodate at least 8 in-use keys and
-     * aggressively reuse table slots when key minimum-usage intervals expire.  If an operation
-     * fails because the table is full, KeyMint returns ErrorCode::TOO_MANY_OPERATIONS.
-     *
-     * Must be hardware-enforced.
-     *
-     * TODO(b/191738660): Remove in KeyMint V2. Currently only used for FDE.
+     * This tag value is included for historical reason, as it was present in Keymaster.
+     * KeyMint implementations do not need to support this tag.
      */
     MIN_SECONDS_BETWEEN_OPS = TagType.UINT | 403,
 
@@ -898,8 +883,12 @@ enum Tag {
     STORAGE_KEY = TagType.BOOL | 722,
 
     /**
-     * OBSOLETE: Do not use. See IKeyMintOperation.updateAad instead.
-     * TODO(b/191738660): Remove in KeyMint v2.
+     * OBSOLETE: Do not use.
+     *
+     * This tag value is included for historical reasons -- in Keymaster it was used to hold
+     * associated data for AEAD encryption, as an additional parameter to
+     * IKeymasterDevice::finish().  In KeyMint the IKeyMintOperation::updateAad() method is used for
+     * this.
      */
     ASSOCIATED_DATA = TagType.BYTES | 1000,
 
@@ -938,10 +927,12 @@ enum Tag {
     RESET_SINCE_ID_ROTATION = TagType.BOOL | 1004,
 
     /**
-     * OBSOLETE: Do not use. See the authToken parameter for IKeyMintDevice::begin and for
-     * IKeyMintOperation methods instead.
+     * OBSOLETE: Do not use.
      *
-     * TODO(b/191738660): Delete when keystore1 is deleted.
+     * This tag value is included for historical reasons -- in Keymaster it was used to hold
+     * a confirmation token as an additional parameter to
+     * IKeymasterDevice::finish().  In KeyMint the IKeyMintOperation::finish() method includes
+     * a confirmationToken argument for this.
      */
     CONFIRMATION_TOKEN = TagType.BYTES | 1005,
 
