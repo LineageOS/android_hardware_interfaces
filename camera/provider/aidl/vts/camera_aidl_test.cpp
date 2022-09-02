@@ -331,6 +331,63 @@ void CameraAidlTest::verifyStreamUseCaseCharacteristics(const camera_metadata_t*
     ASSERT_EQ(hasStreamUseCaseCap, supportMandatoryUseCases);
 }
 
+void CameraAidlTest::verifySettingsOverrideCharacteristics(const camera_metadata_t* metadata) {
+    camera_metadata_ro_entry entry;
+    int retcode = find_camera_metadata_ro_entry(metadata,
+            ANDROID_CONTROL_AVAILABLE_SETTINGS_OVERRIDES, &entry);
+    bool supportSettingsOverride = false;
+    if ((0 == retcode) && (entry.count > 0)) {
+        supportSettingsOverride = true;
+        bool hasOff = false;
+        for (size_t i = 0; i < entry.count; i++) {
+            if (entry.data.u8[i] == ANDROID_CONTROL_SETTINGS_OVERRIDE_OFF) {
+                hasOff = true;
+            }
+        }
+        ASSERT_TRUE(hasOff);
+    }
+
+    // Check availableRequestKeys
+    retcode = find_camera_metadata_ro_entry(metadata,
+            ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS, &entry);
+    bool hasSettingsOverrideRequestKey = false;
+    if ((0 == retcode) && (entry.count > 0)) {
+        hasSettingsOverrideRequestKey =
+                std::find(entry.data.i32, entry.data.i32 + entry.count,
+                        ANDROID_CONTROL_SETTINGS_OVERRIDE) != entry.data.i32 + entry.count;
+    } else {
+        ADD_FAILURE() << "Get camera availableRequestKeys failed!";
+    }
+
+    // Check availableResultKeys
+    retcode = find_camera_metadata_ro_entry(metadata,
+            ANDROID_REQUEST_AVAILABLE_RESULT_KEYS, &entry);
+    bool hasSettingsOverrideResultKey = false;
+    if ((0 == retcode) && (entry.count > 0)) {
+        hasSettingsOverrideResultKey =
+                std::find(entry.data.i32, entry.data.i32 + entry.count,
+                        ANDROID_CONTROL_SETTINGS_OVERRIDE) != entry.data.i32 + entry.count;
+    } else {
+        ADD_FAILURE() << "Get camera availableResultKeys failed!";
+    }
+
+    // Check availableCharacteristicKeys
+    retcode = find_camera_metadata_ro_entry(metadata,
+            ANDROID_REQUEST_AVAILABLE_CHARACTERISTICS_KEYS, &entry);
+    bool hasSettingsOverrideCharacteristicsKey= false;
+    if ((0 == retcode) && (entry.count > 0)) {
+        hasSettingsOverrideCharacteristicsKey = std::find(entry.data.i32,
+                entry.data.i32 + entry.count, ANDROID_CONTROL_AVAILABLE_SETTINGS_OVERRIDES)
+                        != entry.data.i32 + entry.count;
+    } else {
+        ADD_FAILURE() << "Get camera availableCharacteristicsKeys failed!";
+    }
+
+    ASSERT_EQ(supportSettingsOverride, hasSettingsOverrideRequestKey);
+    ASSERT_EQ(supportSettingsOverride, hasSettingsOverrideResultKey);
+    ASSERT_EQ(supportSettingsOverride, hasSettingsOverrideCharacteristicsKey);
+}
+
 Status CameraAidlTest::isMonochromeCamera(const camera_metadata_t* staticMeta) {
     Status ret = Status::OPERATION_NOT_SUPPORTED;
     if (nullptr == staticMeta) {
@@ -606,6 +663,7 @@ void CameraAidlTest::verifyCameraCharacteristics(const CameraMetadata& chars) {
     verifyExtendedSceneModeCharacteristics(metadata);
     verifyZoomCharacteristics(metadata);
     verifyStreamUseCaseCharacteristics(metadata);
+    verifySettingsOverrideCharacteristics(metadata);
 }
 
 void CameraAidlTest::verifyExtendedSceneModeCharacteristics(const camera_metadata_t* metadata) {
@@ -1516,6 +1574,15 @@ void CameraAidlTest::verifyRequestTemplate(const camera_metadata_t* metadata,
     if (foundZoomRatio == 0) {
         ASSERT_EQ(zoomRatioEntry.count, 1);
         ASSERT_EQ(zoomRatioEntry.data.f[0], 1.0f);
+    }
+
+    // Check settings override
+    camera_metadata_ro_entry settingsOverrideEntry;
+    int foundSettingsOverride = find_camera_metadata_ro_entry(metadata,
+           ANDROID_CONTROL_SETTINGS_OVERRIDE,&settingsOverrideEntry);
+    if (foundSettingsOverride == 0) {
+        ASSERT_EQ(settingsOverrideEntry.count, 1);
+        ASSERT_EQ(settingsOverrideEntry.data.u8[0], ANDROID_CONTROL_SETTINGS_OVERRIDE_OFF);
     }
 }
 
