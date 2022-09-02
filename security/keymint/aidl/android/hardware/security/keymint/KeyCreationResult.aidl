@@ -158,12 +158,23 @@ parcelable KeyCreationResult {
      *     Failed                     (3),
      * }
      *
+     * -- Note that the AuthorizationList SEQUENCE is also used in IKeyMintDevice::importWrappedKey
+     * -- as a way of describing the authorizations associated with a key that is being securely
+     * -- imported.  As such, it includes the ability to describe tags that are only relevant for
+     * -- symmetric keys, and which will never appear in the attestation extension of an X.509
+     * -- certificate that holds the public key part of an asymmetric keypair. Importing a wrapped
+     * -- key also allows the use of Tag::USER_SECURE_ID, which is never included in an attestation
+     * -- extension because it has no meaning off-device.
+     *
      * AuthorizationList ::= SEQUENCE {
      *     purpose                    [1] EXPLICIT SET OF INTEGER OPTIONAL,
      *     algorithm                  [2] EXPLICIT INTEGER OPTIONAL,
      *     keySize                    [3] EXPLICIT INTEGER OPTIONAL,
+     *     blockMode                  [4] EXPLICIT SET OF INTEGER OPTIONAL, -- symmetric only
      *     digest                     [5] EXPLICIT SET OF INTEGER OPTIONAL,
      *     padding                    [6] EXPLICIT SET OF INTEGER OPTIONAL,
+     *     callerNonce                [7] EXPLICIT NULL OPTIONAL, -- symmetric only
+     *     minMacLength               [8] EXPLICIT INTEGER OPTIONAL, -- symmetric only
      *     ecCurve                    [10] EXPLICIT INTEGER OPTIONAL,
      *     rsaPublicExponent          [200] EXPLICIT INTEGER OPTIONAL,
      *     mgfDigest                  [203] EXPLICIT SET OF INTEGER OPTIONAL,
@@ -173,6 +184,7 @@ parcelable KeyCreationResult {
      *     originationExpireDateTime  [401] EXPLICIT INTEGER OPTIONAL,
      *     usageExpireDateTime        [402] EXPLICIT INTEGER OPTIONAL,
      *     usageCountLimit            [405] EXPLICIT INTEGER OPTIONAL,
+     *     userSecureId               [502] EXPLICIT INTEGER OPTIONAL, -- only used on import
      *     noAuthRequired             [503] EXPLICIT NULL OPTIONAL,
      *     userAuthType               [504] EXPLICIT INTEGER OPTIONAL,
      *     authTimeout                [505] EXPLICIT INTEGER OPTIONAL,
