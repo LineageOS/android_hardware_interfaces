@@ -2468,8 +2468,9 @@ enum VehicleProperty {
      * VHAL sets this property to change car power policy. Car power policy service subscribes to
      * this property and actually changes the power policy.
      * The request is made by setting the VehiclePropValue with the ID of a power policy which is
-     * defined at /vendor/etc/power_policy.xml. If the given ID is not defined, car power policy
-     * service ignores the request and the current power policy is maintained.
+     * defined at /vendor/etc/automotive/power_policy.xml.
+     * If the given ID is not defined, car power policy service ignores the request
+     * and the current power policy is maintained.
      *
      *   string: "sample_policy_id" // power policy ID
      *
