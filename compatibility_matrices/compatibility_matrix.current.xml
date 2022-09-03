@@ -731,6 +731,7 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.wifi.supplicant</name>
+        <version>2</version>
         <interface>
             <name>ISupplicant</name>
             <instance>default</instance>
