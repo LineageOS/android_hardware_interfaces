@@ -27,6 +27,7 @@ cc_library_static {
     name: "android.hardware.graphics.mapper@4.0-vts",
     defaults: [
         "VtsHalTargetTestDefaults",
+        "android.hardware.graphics.allocator-ndk_static",
         "android.hardware.graphics.common-ndk_static",
     ],
     srcs: ["MapperVts.cpp"],
@@ -35,7 +36,6 @@ cc_library_static {
         "-g",
     ],
     static_libs: [
-        "android.hardware.graphics.allocator-V1-ndk",
         "android.hardware.graphics.allocator@4.0",
         "android.hardware.graphics.mapper@4.0",
         "libaidlcommonsupport",
@@ -46,7 +46,6 @@ cc_library_static {
         "libvndksupport",
     ],
     export_static_lib_headers: [
-        "android.hardware.graphics.allocator-V1-ndk",
         "android.hardware.graphics.allocator@4.0",
         "android.hardware.graphics.common-V3-ndk",
         "android.hardware.graphics.mapper@4.0",
