@@ -48,4 +48,5 @@ parcelable SignalThresholdInfo {
   const int SIGNAL_MEASUREMENT_TYPE_SSRSRP = 6;
   const int SIGNAL_MEASUREMENT_TYPE_SSRSRQ = 7;
   const int SIGNAL_MEASUREMENT_TYPE_SSSINR = 8;
+  const int SIGNAL_MEASUREMENT_TYPE_ECNO = 9;
 }
