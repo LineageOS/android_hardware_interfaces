@@ -147,6 +147,17 @@ class RadioNetworkResponse : public BnRadioNetworkResponse {
 
     virtual ndk::ScopedAStatus supplyNetworkDepersonalizationResponse(
             const RadioResponseInfo& info, int32_t remainingRetries) override;
+
+    virtual ndk::ScopedAStatus setEmergencyModeResponse(
+            const RadioResponseInfo& info, const EmergencyRegResult& regState) override;
+
+    virtual ndk::ScopedAStatus triggerEmergencyNetworkScanResponse(
+            const RadioResponseInfo& info) override;
+
+    virtual ndk::ScopedAStatus exitEmergencyModeResponse(const RadioResponseInfo& info) override;
+
+    virtual ndk::ScopedAStatus cancelEmergencyNetworkScanResponse(
+            const RadioResponseInfo& info) override;
 };
 
 /* Callback class for radio network indication */
@@ -201,6 +212,9 @@ class RadioNetworkIndication : public BnRadioNetworkIndication {
 
     virtual ndk::ScopedAStatus voiceRadioTechChanged(RadioIndicationType type,
                                                      RadioTechnology rat) override;
+
+    virtual ndk::ScopedAStatus emergencyNetworkScanResult(
+            RadioIndicationType type, const EmergencyRegResult& result) override;
 };
 
 // The main test class for Radio AIDL Network.
