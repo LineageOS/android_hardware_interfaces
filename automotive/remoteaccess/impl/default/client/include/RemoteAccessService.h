@@ -19,6 +19,7 @@
 #include <aidl/android/hardware/automotive/remoteaccess/ApState.h>
 #include <aidl/android/hardware/automotive/remoteaccess/BnRemoteAccess.h>
 #include <aidl/android/hardware/automotive/remoteaccess/IRemoteTaskCallback.h>
+#include <android-base/thread_annotations.h>
 #include <wakeup_client.grpc.pb.h>
 
 #include <string>
@@ -32,7 +33,9 @@ namespace remoteaccess {
 class RemoteAccessService
     : public aidl::android::hardware::automotive::remoteaccess::BnRemoteAccess {
   public:
-    RemoteAccessService(WakeupClient::StubInterface* grpcStub);
+    explicit RemoteAccessService(WakeupClient::StubInterface* grpcStub);
+
+    ~RemoteAccessService();
 
     ndk::ScopedAStatus getDeviceId(std::string* deviceId) override;
 
@@ -49,12 +52,29 @@ class RemoteAccessService
             const aidl::android::hardware::automotive::remoteaccess::ApState& newState) override;
 
   private:
-    WakeupClient::StubInterface* mGrpcStub;
-    std::shared_ptr<aidl::android::hardware::automotive::remoteaccess::IRemoteTaskCallback>
-            mRemoteTaskCallback;
-    std::thread mThread;
+    // For testing.
+    friend class RemoteAccessServiceUnitTest;
 
-    void taskLoop();
+    WakeupClient::StubInterface* mGrpcStub;
+    std::thread mThread;
+    std::mutex mLock;
+    std::condition_variable mCv;
+    std::shared_ptr<aidl::android::hardware::automotive::remoteaccess::IRemoteTaskCallback>
+            mRemoteTaskCallback GUARDED_BY(mLock);
+    std::unique_ptr<grpc::ClientContext> mGetRemoteTasksContext GUARDED_BY(mLock);
+    // Associated with mCv to notify the task loop to stop waiting and exit.
+    bool mTaskWaitStopped GUARDED_BY(mLock);
+    // A mutex to make sure startTaskLoop does not overlap with stopTaskLoop.
+    std::mutex mStartStopTaskLoopLock;
+    bool mTaskLoopRunning GUARDED_BY(mStartStopTaskLoopLock);
+    // Default wait time before retry connecting to remote access client is 10s.
+    size_t mRetryWaitInMs = 10'000;
+
+    void runTaskLoop();
+    void maybeStartTaskLoop();
+    void maybeStopTaskLoop();
+
+    void setRetryWaitInMs(size_t retryWaitInMs) { mRetryWaitInMs = retryWaitInMs; }
 };
 
 }  // namespace remoteaccess
