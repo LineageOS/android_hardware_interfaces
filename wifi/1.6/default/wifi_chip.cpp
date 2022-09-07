@@ -1926,9 +1926,10 @@ uint32_t WifiChip::startIdxOfApIface() {
 // concurrent STA and not dual AP, else start with idx 0.
 std::string WifiChip::allocateApIfaceName() {
     // Check if we have a dedicated iface for AP.
-    std::vector<std::string> ifnames = getPredefinedApIfaceNames(false);
-    if (!ifnames.empty()) {
-        return ifnames[0];
+    std::vector<std::string> ifnames = getPredefinedApIfaceNames(true);
+    for (auto const& ifname : ifnames) {
+        if (findUsingName(ap_ifaces_, ifname)) continue;
+        return ifname;
     }
     return allocateApOrStaIfaceName(IfaceType::AP, startIdxOfApIface());
 }
