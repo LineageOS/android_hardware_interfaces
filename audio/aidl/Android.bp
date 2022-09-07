@@ -33,7 +33,7 @@ aidl_interface {
         "android/hardware/audio/common/SourceMetadata.aidl",
     ],
     imports: [
-        "android.media.audio.common.types-V1",
+        "android.media.audio.common.types-V2",
     ],
     stability: "vintf",
     backend: {
@@ -59,10 +59,32 @@ aidl_interface {
     versions_with_info: [
         {
             version: "1",
-            imports: ["android.media.audio.common.types-V1"],
+            imports: ["android.media.audio.common.types-V2"],
         },
+        // IMPORTANT: Update latest_android_hardware_audio_common every time you
+        // add the latest frozen version to versions_with_info
     ],
 
+}
+
+// Note: This should always be one version ahead of the last frozen version
+latest_android_hardware_audio_common = "android.hardware.audio.common-V1"
+
+// Modules that depend on android.hardware.audio.common directly can include
+// the following cc_defaults to avoid explicitly managing dependency versions
+// across many scattered files.
+cc_defaults {
+    name: "latest_android_hardware_audio_common_cpp_static",
+    static_libs: [
+        latest_android_hardware_audio_common + "-cpp",
+    ],
+}
+
+cc_defaults {
+    name: "latest_android_hardware_audio_common_ndk_static",
+    static_libs: [
+        latest_android_hardware_audio_common + "-ndk",
+    ],
 }
 
 aidl_interface {
@@ -80,10 +102,10 @@ aidl_interface {
         "android/hardware/audio/core/StreamDescriptor.aidl",
     ],
     imports: [
-        "android.hardware.audio.common-V1",
         "android.hardware.common-V2",
         "android.hardware.common.fmq-V1",
-        "android.media.audio.common.types-V1",
+        "android.hardware.audio.common-V1",
+        "android.media.audio.common.types-V2",
     ],
     stability: "vintf",
     backend: {
@@ -95,6 +117,30 @@ aidl_interface {
             sdk_version: "module_current",
         },
     },
+    versions_with_info: [
+        // IMPORTANT: Update latest_android_hardware_audio_core every time you
+        // add the latest frozen version to versions_with_info
+    ],
+}
+
+// Note: This should always be one version ahead of the last frozen version
+latest_android_hardware_audio_core = "android.hardware.audio.core-V1"
+
+// Modules that depend on android.hardware.audio.core directly can include
+// the following cc_defaults to avoid explicitly managing dependency versions
+// across many scattered files.
+cc_defaults {
+    name: "latest_android_hardware_audio_core_ndk_shared",
+    shared_libs: [
+        latest_android_hardware_audio_core + "-ndk",
+    ],
+}
+
+cc_defaults {
+    name: "latest_android_hardware_audio_core_ndk_static",
+    static_libs: [
+        latest_android_hardware_audio_core + "-ndk",
+    ],
 }
 
 aidl_interface {
@@ -106,7 +152,7 @@ aidl_interface {
     ],
     imports: [
         "android.hardware.audio.common-V1",
-        "android.media.audio.common.types-V1",
+        "android.media.audio.common.types-V2",
     ],
     stability: "vintf",
     backend: {

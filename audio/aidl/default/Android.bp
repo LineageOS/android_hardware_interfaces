@@ -18,8 +18,6 @@ cc_defaults {
         "libfmq",
         "libstagefright_foundation",
         "libutils",
-        "android.media.audio.common.types-V1-ndk",
-        "android.hardware.audio.core-V1-ndk",
         "android.hardware.common-V2-ndk",
         "android.hardware.common.fmq-V1-ndk",
     ],
@@ -27,7 +25,11 @@ cc_defaults {
 
 cc_library_static {
     name: "libaudioserviceexampleimpl",
-    defaults: ["aidlaudioservice_defaults"],
+    defaults: [
+        "aidlaudioservice_defaults",
+        "latest_android_media_audio_common_types_ndk_shared",
+        "latest_android_hardware_audio_core_ndk_shared",
+    ],
     export_include_dirs: ["include"],
     srcs: [
         "Config.cpp",
@@ -45,7 +47,11 @@ cc_binary {
     relative_install_path: "hw",
     init_rc: ["android.hardware.audio.service-aidl.example.rc"],
     vintf_fragments: ["android.hardware.audio.service-aidl.xml"],
-    defaults: ["aidlaudioservice_defaults"],
+    defaults: [
+        "aidlaudioservice_defaults",
+        "latest_android_media_audio_common_types_ndk_shared",
+        "latest_android_hardware_audio_core_ndk_shared",
+    ],
     static_libs: [
         "libaudioserviceexampleimpl",
     ],
@@ -54,11 +60,13 @@ cc_binary {
 
 cc_defaults {
     name: "aidlaudioeffectservice_defaults",
+    defaults: [
+        "latest_android_media_audio_common_types_ndk_shared",
+    ],
     vendor: true,
     shared_libs: [
         "libbase",
         "libbinder_ndk",
-        "android.media.audio.common.types-V1-ndk",
         "android.hardware.audio.effect-V1-ndk",
     ],
     cflags: [
