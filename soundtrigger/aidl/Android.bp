@@ -23,7 +23,7 @@ aidl_interface {
     ],
     stability: "vintf",
     imports: [
-        "android.media.soundtrigger.types",
+        "android.media.soundtrigger.types-V1",
     ],
     backend: {
         cpp: {
@@ -45,7 +45,7 @@ aidl_interface {
 }
 
 // Note: This should always be one version ahead of the last frozen version
-latest_android_hardware_soundtrigger3 = "android.hardware.soundtrigger3-V2"
+latest_android_hardware_soundtrigger3 = "android.hardware.soundtrigger3-V1"
 
 // Modules that depend on android.hardware.soundtrigger3 directly can include
 // the following java_defaults to avoid explicitly managing dependency versions
