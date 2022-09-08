@@ -125,6 +125,13 @@ const std::vector<ConfigDeclaration> kVehicleProperties = {
 
         {.config =
                  {
+                         .prop = toInt(VehicleProperty::INFO_VIN),
+                         .access = VehiclePropertyAccess::READ,
+                         .changeMode = VehiclePropertyChangeMode::STATIC,
+                 },
+         .initialValue = {.stringValue = "1GCARVIN123456789"}},
+        {.config =
+                 {
                          .prop = toInt(VehicleProperty::INFO_MAKE),
                          .access = VehiclePropertyAccess::READ,
                          .changeMode = VehiclePropertyChangeMode::STATIC,
