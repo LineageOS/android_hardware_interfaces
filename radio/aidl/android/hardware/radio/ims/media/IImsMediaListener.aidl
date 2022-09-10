@@ -24,7 +24,6 @@ import android.hardware.radio.ims.media.RtpError;
  */
 @VintfStability
 oneway interface IImsMediaListener {
-
     /**
      * Fired when a IImsMedia#openSession() API is successful.
      *
@@ -45,5 +44,12 @@ oneway interface IImsMediaListener {
      *   RtpError :NO_RESOURCES
      *   RtpError :PORT_UNAVAILABLE
      */
-     void onOpenSessionFailure(int sessionId, RtpError error);
+    void onOpenSessionFailure(int sessionId, RtpError error);
+
+    /**
+     * Fired when IImsMedia#closeSession() API handled.
+     *
+     * @param sessionId identifier of the session
+     */
+    void onSessionClosed(int sessionId);
 }

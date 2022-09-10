@@ -36,4 +36,5 @@ package android.hardware.radio.ims.media;
 interface IImsMediaListener {
   oneway void onOpenSessionSuccess(int sessionId, android.hardware.radio.ims.media.IImsMediaSession session);
   oneway void onOpenSessionFailure(int sessionId, android.hardware.radio.ims.media.RtpError error);
+  oneway void onSessionClosed(int sessionId);
 }
