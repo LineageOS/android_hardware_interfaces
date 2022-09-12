@@ -104,14 +104,19 @@ void RemoteAccessService::runTaskLoop() {
         }
         GetRemoteTasksResponse response;
         while (reader->Read(&response)) {
+            ALOGI("Receiving one task from remote task client");
+
             std::shared_ptr<IRemoteTaskCallback> callback;
             {
                 std::lock_guard<std::mutex> lockGuard(mLock);
                 callback = mRemoteTaskCallback;
             }
             if (callback == nullptr) {
+                ALOGD("No callback registered, task ignored");
                 continue;
             }
+            ALOGD("Calling onRemoteTaskRequested callback for client ID: %s",
+                  response.clientid().c_str());
             ScopedAStatus callbackStatus = callback->onRemoteTaskRequested(
                     response.clientid(), stringToBytes(response.data()));
             if (!callbackStatus.isOk()) {
