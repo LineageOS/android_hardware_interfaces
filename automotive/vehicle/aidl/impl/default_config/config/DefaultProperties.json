@@ -59,6 +59,12 @@
             }
         },
         {
+            "property": "VehicleProperty::INFO_VIN",
+            "defaultValue": {
+                "stringValue": "1GCARVIN123456789"
+            }
+        },
+        {
             "property": "VehicleProperty::INFO_MAKE",
             "defaultValue": {
                 "stringValue": "Toy Vehicle"
