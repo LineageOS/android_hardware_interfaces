@@ -48,6 +48,8 @@ class ModuleConfig {
     std::vector<aidl::android::media::audio::common::AudioPort> getMixPorts(bool isInput) const {
         return isInput ? getInputMixPorts() : getOutputMixPorts();
     }
+    std::vector<aidl::android::media::audio::common::AudioPort> getOffloadMixPorts(
+            bool attachedOnly, bool singlePort) const;
 
     std::vector<aidl::android::media::audio::common::AudioPort> getAttachedDevicesPortsForMixPort(
             bool isInput, const aidl::android::media::audio::common::AudioPort& mixPort) const {
