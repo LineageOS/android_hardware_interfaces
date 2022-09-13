@@ -143,10 +143,38 @@ JsonOutput jsonEncodeCsrWithBuild(const std::string instance_name,
 
 /**
  * Parses a DeviceInfo structure from the given CBOR data. The parsed data is then validated to
- * ensure it is formatted correctly and that it contains the required values for Remote Key
- * Provisioning.
+ * ensure it contains the minimum required data at the time of manufacturing. This is only a
+ * partial validation, as some fields may not be provisioned yet at the time this information
+ * is parsed in the manufacturing process.
  */
-ErrMsgOr<std::unique_ptr<cppbor::Map>> parseAndValidateDeviceInfo(
+ErrMsgOr<std::unique_ptr<cppbor::Map>> parseAndValidateFactoryDeviceInfo(
         const std::vector<uint8_t>& deviceInfoBytes, IRemotelyProvisionedComponent* provisionable);
+
+/**
+ * Parses a DeviceInfo structure from the given CBOR data. The parsed data is then validated to
+ * ensure it is formatted correctly and that it contains the required values for Remote Key
+ * Provisioning. This is a full validation, and assumes the device is provisioned as if it is
+ * suitable for the end user.
+ */
+ErrMsgOr<std::unique_ptr<cppbor::Map>> parseAndValidateProductionDeviceInfo(
+        const std::vector<uint8_t>& deviceInfoBytes, IRemotelyProvisionedComponent* provisionable);
+
+/**
+ * Verify the protected data as if the device is still early in the factory process and may not
+ * have all device identifiers provisioned yet.
+ */
+ErrMsgOr<std::vector<BccEntryData>> verifyFactoryProtectedData(
+        const DeviceInfo& deviceInfo, const cppbor::Array& keysToSign,
+        const std::vector<uint8_t>& keysToSignMac, const ProtectedData& protectedData,
+        const EekChain& eekChain, const std::vector<uint8_t>& eekId, int32_t supportedEekCurve,
+        IRemotelyProvisionedComponent* provisionable, const std::vector<uint8_t>& challenge);
+/**
+ * Verify the protected data as if the device is a final production sample.
+ */
+ErrMsgOr<std::vector<BccEntryData>> verifyProductionProtectedData(
+        const DeviceInfo& deviceInfo, const cppbor::Array& keysToSign,
+        const std::vector<uint8_t>& keysToSignMac, const ProtectedData& protectedData,
+        const EekChain& eekChain, const std::vector<uint8_t>& eekId, int32_t supportedEekCurve,
+        IRemotelyProvisionedComponent* provisionable, const std::vector<uint8_t>& challenge);
 
 }  // namespace aidl::android::hardware::security::keymint::remote_prov
