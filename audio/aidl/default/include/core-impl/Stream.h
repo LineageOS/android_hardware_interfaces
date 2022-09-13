@@ -229,10 +229,9 @@ class StreamWrapper {
     }
     void setStreamIsConnected(bool connected) {
         std::visit(
-                [&](auto&& ws) -> bool {
+                [&](auto&& ws) {
                     auto s = ws.lock();
                     if (s) s->setIsConnected(connected);
-                    return !!s;
                 },
                 mStream);
     }
@@ -253,7 +252,7 @@ class Streams {
     }
     void insert(int32_t portId, int32_t portConfigId, StreamWrapper sw) {
         mStreams.insert(std::pair{portConfigId, sw});
-        mStreams.insert(std::pair{portId, sw});
+        mStreams.insert(std::pair{portId, std::move(sw)});
     }
     void setStreamIsConnected(int32_t portConfigId, bool connected) {
         if (auto it = mStreams.find(portConfigId); it != mStreams.end()) {
