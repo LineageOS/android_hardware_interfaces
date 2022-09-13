@@ -178,13 +178,18 @@ StreamInWorkerLogic::Status StreamInWorkerLogic::cycle() {
             }
             break;
         case Tag::drain:
-            if (mState == StreamDescriptor::State::ACTIVE) {
-                usleep(1000);  // Simulate a blocking call into the driver.
-                populateReply(&reply, mIsConnected);
-                // Can switch the state to ERROR if a driver error occurs.
-                mState = StreamDescriptor::State::DRAINING;
+            if (command.get<Tag::drain>() == StreamDescriptor::DrainMode::DRAIN_UNSPECIFIED) {
+                if (mState == StreamDescriptor::State::ACTIVE) {
+                    usleep(1000);  // Simulate a blocking call into the driver.
+                    populateReply(&reply, mIsConnected);
+                    // Can switch the state to ERROR if a driver error occurs.
+                    mState = StreamDescriptor::State::DRAINING;
+                } else {
+                    populateReplyWrongState(&reply, command);
+                }
             } else {
-                populateReplyWrongState(&reply, command);
+                LOG(WARNING) << __func__
+                             << ": invalid drain mode: " << toString(command.get<Tag::drain>());
             }
             break;
         case Tag::standby:
@@ -262,11 +267,31 @@ bool StreamInWorkerLogic::read(size_t clientSize, StreamDescriptor::Reply* reply
 const std::string StreamOutWorkerLogic::kThreadName = "writer";
 
 StreamOutWorkerLogic::Status StreamOutWorkerLogic::cycle() {
-    if (mState == StreamDescriptor::State::DRAINING) {
+    if (mState == StreamDescriptor::State::DRAINING ||
+        mState == StreamDescriptor::State::TRANSFERRING) {
         if (auto stateDurationMs = std::chrono::duration_cast<std::chrono::milliseconds>(
                     std::chrono::steady_clock::now() - mTransientStateStart);
             stateDurationMs >= mTransientStateDelayMs) {
-            mState = StreamDescriptor::State::IDLE;
+            if (mAsyncCallback == nullptr) {
+                // In blocking mode, mState can only be DRAINING.
+                mState = StreamDescriptor::State::IDLE;
+            } else {
+                // In a real implementation, the driver should notify the HAL about
+                // drain or transfer completion. In the stub, we switch unconditionally.
+                if (mState == StreamDescriptor::State::DRAINING) {
+                    mState = StreamDescriptor::State::IDLE;
+                    ndk::ScopedAStatus status = mAsyncCallback->onDrainReady();
+                    if (!status.isOk()) {
+                        LOG(ERROR) << __func__ << ": error from onDrainReady: " << status;
+                    }
+                } else {
+                    mState = StreamDescriptor::State::ACTIVE;
+                    ndk::ScopedAStatus status = mAsyncCallback->onTransferReady();
+                    if (!status.isOk()) {
+                        LOG(ERROR) << __func__ << ": error from onTransferReady: " << status;
+                    }
+                }
+            }
             if (mTransientStateDelayMs.count() != 0) {
                 LOG(DEBUG) << __func__ << ": switched to state " << toString(mState)
                            << " after a timeout";
@@ -298,40 +323,57 @@ StreamOutWorkerLogic::Status StreamOutWorkerLogic::cycle() {
         case Tag::getStatus:
             populateReply(&reply, mIsConnected);
             break;
-        case Tag::start:
+        case Tag::start: {
+            bool commandAccepted = true;
             switch (mState) {
                 case StreamDescriptor::State::STANDBY:
                     mState = StreamDescriptor::State::IDLE;
-                    populateReply(&reply, mIsConnected);
                     break;
                 case StreamDescriptor::State::PAUSED:
                     mState = StreamDescriptor::State::ACTIVE;
-                    populateReply(&reply, mIsConnected);
                     break;
                 case StreamDescriptor::State::DRAIN_PAUSED:
                     switchToTransientState(StreamDescriptor::State::DRAINING);
-                    populateReply(&reply, mIsConnected);
+                    break;
+                case StreamDescriptor::State::TRANSFER_PAUSED:
+                    switchToTransientState(StreamDescriptor::State::TRANSFERRING);
                     break;
                 default:
                     populateReplyWrongState(&reply, command);
+                    commandAccepted = false;
             }
-            break;
+            if (commandAccepted) {
+                populateReply(&reply, mIsConnected);
+            }
+        } break;
         case Tag::burst:
             if (const int32_t fmqByteCount = command.get<Tag::burst>(); fmqByteCount >= 0) {
                 LOG(DEBUG) << __func__ << ": '" << toString(command.getTag()) << "' command for "
                            << fmqByteCount << " bytes";
-                if (mState !=
-                    StreamDescriptor::State::ERROR) {  // BURST can be handled in all valid states
+                if (mState != StreamDescriptor::State::ERROR &&
+                    mState != StreamDescriptor::State::TRANSFERRING &&
+                    mState != StreamDescriptor::State::TRANSFER_PAUSED) {
                     if (!write(fmqByteCount, &reply)) {
                         mState = StreamDescriptor::State::ERROR;
                     }
                     if (mState == StreamDescriptor::State::STANDBY ||
-                        mState == StreamDescriptor::State::DRAIN_PAUSED) {
-                        mState = StreamDescriptor::State::PAUSED;
+                        mState == StreamDescriptor::State::DRAIN_PAUSED ||
+                        mState == StreamDescriptor::State::PAUSED) {
+                        if (mAsyncCallback == nullptr ||
+                            mState != StreamDescriptor::State::DRAIN_PAUSED) {
+                            mState = StreamDescriptor::State::PAUSED;
+                        } else {
+                            mState = StreamDescriptor::State::TRANSFER_PAUSED;
+                        }
                     } else if (mState == StreamDescriptor::State::IDLE ||
-                               mState == StreamDescriptor::State::DRAINING) {
-                        mState = StreamDescriptor::State::ACTIVE;
-                    }  // When in 'ACTIVE' and 'PAUSED' do not need to change the state.
+                               mState == StreamDescriptor::State::DRAINING ||
+                               mState == StreamDescriptor::State::ACTIVE) {
+                        if (mAsyncCallback == nullptr || reply.fmqByteCount == fmqByteCount) {
+                            mState = StreamDescriptor::State::ACTIVE;
+                        } else {
+                            switchToTransientState(StreamDescriptor::State::TRANSFERRING);
+                        }
+                    }
                 } else {
                     populateReplyWrongState(&reply, command);
                 }
@@ -340,13 +382,23 @@ StreamOutWorkerLogic::Status StreamOutWorkerLogic::cycle() {
             }
             break;
         case Tag::drain:
-            if (mState == StreamDescriptor::State::ACTIVE) {
-                usleep(1000);  // Simulate a blocking call into the driver.
-                populateReply(&reply, mIsConnected);
-                // Can switch the state to ERROR if a driver error occurs.
-                switchToTransientState(StreamDescriptor::State::DRAINING);
+            if (command.get<Tag::drain>() == StreamDescriptor::DrainMode::DRAIN_ALL ||
+                command.get<Tag::drain>() == StreamDescriptor::DrainMode::DRAIN_EARLY_NOTIFY) {
+                if (mState == StreamDescriptor::State::ACTIVE ||
+                    mState == StreamDescriptor::State::TRANSFERRING) {
+                    usleep(1000);  // Simulate a blocking call into the driver.
+                    populateReply(&reply, mIsConnected);
+                    // Can switch the state to ERROR if a driver error occurs.
+                    switchToTransientState(StreamDescriptor::State::DRAINING);
+                } else if (mState == StreamDescriptor::State::TRANSFER_PAUSED) {
+                    mState = StreamDescriptor::State::DRAIN_PAUSED;
+                    populateReply(&reply, mIsConnected);
+                } else {
+                    populateReplyWrongState(&reply, command);
+                }
             } else {
-                populateReplyWrongState(&reply, command);
+                LOG(WARNING) << __func__
+                             << ": invalid drain mode: " << toString(command.get<Tag::drain>());
             }
             break;
         case Tag::standby:
@@ -359,20 +411,30 @@ StreamOutWorkerLogic::Status StreamOutWorkerLogic::cycle() {
                 populateReplyWrongState(&reply, command);
             }
             break;
-        case Tag::pause:
-            if (mState == StreamDescriptor::State::ACTIVE ||
-                mState == StreamDescriptor::State::DRAINING) {
-                populateReply(&reply, mIsConnected);
-                mState = mState == StreamDescriptor::State::ACTIVE
-                                 ? StreamDescriptor::State::PAUSED
-                                 : StreamDescriptor::State::DRAIN_PAUSED;
-            } else {
-                populateReplyWrongState(&reply, command);
+        case Tag::pause: {
+            bool commandAccepted = true;
+            switch (mState) {
+                case StreamDescriptor::State::ACTIVE:
+                    mState = StreamDescriptor::State::PAUSED;
+                    break;
+                case StreamDescriptor::State::DRAINING:
+                    mState = StreamDescriptor::State::DRAIN_PAUSED;
+                    break;
+                case StreamDescriptor::State::TRANSFERRING:
+                    mState = StreamDescriptor::State::TRANSFER_PAUSED;
+                    break;
+                default:
+                    populateReplyWrongState(&reply, command);
+                    commandAccepted = false;
             }
-            break;
+            if (commandAccepted) {
+                populateReply(&reply, mIsConnected);
+            }
+        } break;
         case Tag::flush:
             if (mState == StreamDescriptor::State::PAUSED ||
-                mState == StreamDescriptor::State::DRAIN_PAUSED) {
+                mState == StreamDescriptor::State::DRAIN_PAUSED ||
+                mState == StreamDescriptor::State::TRANSFER_PAUSED) {
                 populateReply(&reply, mIsConnected);
                 mState = StreamDescriptor::State::IDLE;
             } else {

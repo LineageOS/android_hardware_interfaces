@@ -86,6 +86,7 @@ class Module : public BnModule {
     void cleanUpPatch(int32_t patchId);
     ndk::ScopedAStatus createStreamContext(
             int32_t in_portConfigId, int64_t in_bufferSizeFrames,
+            std::shared_ptr<IStreamCallback> asyncCallback,
             ::aidl::android::hardware::audio::core::StreamContext* out_context);
     ndk::ScopedAStatus findPortIdForNewStream(
             int32_t in_portConfigId, ::aidl::android::media::audio::common::AudioPort** port);

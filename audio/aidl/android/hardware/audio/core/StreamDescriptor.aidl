@@ -100,6 +100,28 @@ import android.media.audio.common.Void;
  * client can never observe a stream with a functioning command queue in this
  * state. The 'ERROR' state is a special state which the state machine enters
  * when an unrecoverable hardware error is detected by the HAL module.
+ *
+ * Non-blocking (asynchronous) modes introduce a new 'TRANSFERRING' state, which
+ * the state machine can enter after replying to the 'burst' command, instead of
+ * staying in the 'ACTIVE' state. In this case the client gets unblocked
+ * earlier, while the actual audio delivery to / from the observer is not
+ * complete yet. Once the HAL module is ready for the next transfer, it notifies
+ * the client via a oneway callback, and the machine switches to 'ACTIVE'
+ * state. The 'TRANSFERRING' state is thus "transient", similar to the
+ * 'DRAINING' state. For output streams, asynchronous transfer can be paused,
+ * and it's another new state: 'TRANSFER_PAUSED'. It differs from 'PAUSED' by
+ * the fact that no new writes are allowed. Please see 'stream-in-async-sm.gv'
+ * and 'stream-out-async-sm.gv' files for details. Below is the table summary
+ * for asynchronous only-states:
+ *
+ *  Producer | Buffer state | Consumer | Applies | State
+ *  active?  |              | active?  | to      |
+ * ==========|==============|==========|=========|==============================
+ *  Yes      | Not empty    | Yes      | Both    | TRANSFERRING, s/w x-runs counted
+ * ----------|--------------|----------|---------|-----------------------------
+ *  Yes      | Not empty    | No       | Output  | TRANSFER_PAUSED,
+ *           |              |          |         | h/w emits silence.
+ *
  */
 @JavaDerive(equals=true, toString=true)
 @VintfStability
@@ -171,16 +193,52 @@ parcelable StreamDescriptor {
         /**
          * Used for output streams only, pauses draining. This state is similar
          * to the 'PAUSED' state, except that the client is not adding any
-         * new data. If it emits a 'BURST' command, this brings the stream
+         * new data. If it emits a 'burst' command, this brings the stream
          * into the regular 'PAUSED' state.
          */
         DRAIN_PAUSED = 6,
+        /**
+         * Used only for streams in asynchronous mode. The stream enters this
+         * state after receiving a 'burst' command and returning control back
+         * to the client, thus unblocking it.
+         */
+        TRANSFERRING = 7,
+        /**
+         * Used only for output streams in asynchronous mode only. The stream
+         * enters this state after receiving a 'pause' command while being in
+         * the 'TRANSFERRING' state. Unlike 'PAUSED' state, this state does not
+         * accept new writes.
+         */
+        TRANSFER_PAUSED = 8,
         /**
          * The ERROR state is entered when the stream has encountered an
          * irrecoverable error from the lower layer. After entering it, the
          * stream can only be closed.
          */
         ERROR = 100,
+    }
+
+    @VintfStability
+    @Backing(type="byte")
+    enum DrainMode {
+        /**
+         * Unspecified—used with input streams only, because the client controls
+         * draining.
+         */
+        DRAIN_UNSPECIFIED = 0,
+        /**
+         * Used with output streams only, the HAL module indicates drain
+         * completion when all remaining audio data has been consumed.
+         */
+        DRAIN_ALL = 1,
+        /**
+         * Used with output streams only, the HAL module indicates drain
+         * completion shortly before all audio data has been consumed in order
+         * to give the client an opportunity to provide data for the next track
+         * for gapless playback. The exact amount of provided time is specific
+         * to the HAL implementation.
+         */
+        DRAIN_EARLY_NOTIFY = 2,
     }
 
     /**
@@ -253,7 +311,7 @@ parcelable StreamDescriptor {
          * See the state machines on the applicability of this command to
          * different states.
          */
-        Void drain;
+        DrainMode drain;
         /**
          * See the state machines on the applicability of this command to
          * different states.
@@ -413,6 +471,10 @@ parcelable StreamDescriptor {
          *     into 'reply' queue, and hangs on waiting on a read from
          *     the 'command' queue.
          *  6. The client wakes up due to 5. and reads the reply.
+         *     Note: in non-blocking mode, when the HAL module goes to
+         *           the 'TRANSFERRING' state (as indicated by the 'reply.state'
+         *           field), the client must wait for the 'IStreamCallback.onTransferReady'
+         *           notification to arrive before starting the next burst.
          *
          * For input streams the following sequence of operations is used:
          *  1. The client writes the BURST command into the 'command' queue,
@@ -427,6 +489,10 @@ parcelable StreamDescriptor {
          *  5. The client wakes up due to 4.
          *  6. The client reads the reply and audio data. The client must
          *     always read from the FMQ all the data it contains.
+         *     Note: in non-blocking mode, when the HAL module goes to
+         *           the 'TRANSFERRING' state (as indicated by the 'reply.state'
+         *           field) the client must wait for the 'IStreamCallback.onTransferReady'
+         *           notification to arrive before starting the next burst.
          *
          */
         MQDescriptor<byte, SynchronizedReadWrite> fmq;

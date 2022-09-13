@@ -15,12 +15,16 @@
  */
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
+#include <condition_variable>
 #include <limits>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <set>
 #include <string>
+#include <variant>
 #include <vector>
 
 #define LOG_TAG "VtsHalAudioCore"
@@ -30,6 +34,7 @@
 #include <Utils.h>
 #include <aidl/Gtest.h>
 #include <aidl/Vintf.h>
+#include <aidl/android/hardware/audio/core/BnStreamCallback.h>
 #include <aidl/android/hardware/audio/core/IModule.h>
 #include <aidl/android/hardware/audio/core/ITelephony.h>
 #include <aidl/android/media/audio/common/AudioIoFlags.h>
@@ -389,15 +394,132 @@ class StreamContext {
     std::unique_ptr<DataMQ> mDataMQ;
 };
 
-class StreamLogicDriver {
+struct StreamEventReceiver {
+    virtual ~StreamEventReceiver() = default;
+    enum class Event { None, DrainReady, Error, TransferReady };
+    virtual std::tuple<int, Event> getLastEvent() const = 0;
+    virtual std::tuple<int, Event> waitForEvent(int clientEventSeq) = 0;
+    static constexpr int kEventSeqInit = -1;
+};
+std::string toString(StreamEventReceiver::Event event) {
+    switch (event) {
+        case StreamEventReceiver::Event::None:
+            return "None";
+        case StreamEventReceiver::Event::DrainReady:
+            return "DrainReady";
+        case StreamEventReceiver::Event::Error:
+            return "Error";
+        case StreamEventReceiver::Event::TransferReady:
+            return "TransferReady";
+    }
+    return std::to_string(static_cast<int32_t>(event));
+}
+
+// Transition to the next state happens either due to a command from the client,
+// or after an event received from the server.
+using TransitionTrigger = std::variant<StreamDescriptor::Command, StreamEventReceiver::Event>;
+using StateTransition = std::pair<TransitionTrigger, StreamDescriptor::State>;
+struct StateSequence {
+    virtual ~StateSequence() = default;
+    virtual void rewind() = 0;
+    virtual bool done() const = 0;
+    virtual TransitionTrigger getTrigger() = 0;
+    virtual std::set<StreamDescriptor::State> getExpectedStates() = 0;
+    virtual void advance(StreamDescriptor::State state) = 0;
+};
+
+static const StreamDescriptor::Command kGetStatusCommand =
+        StreamDescriptor::Command::make<StreamDescriptor::Command::Tag::getStatus>(Void{});
+static const StreamDescriptor::Command kStartCommand =
+        StreamDescriptor::Command::make<StreamDescriptor::Command::Tag::start>(Void{});
+static const StreamDescriptor::Command kBurstCommand =
+        StreamDescriptor::Command::make<StreamDescriptor::Command::Tag::burst>(0);
+static const StreamDescriptor::Command kDrainInCommand =
+        StreamDescriptor::Command::make<StreamDescriptor::Command::Tag::drain>(
+                StreamDescriptor::DrainMode::DRAIN_UNSPECIFIED);
+static const StreamDescriptor::Command kDrainOutAllCommand =
+        StreamDescriptor::Command::make<StreamDescriptor::Command::Tag::drain>(
+                StreamDescriptor::DrainMode::DRAIN_ALL);
+static const StreamDescriptor::Command kDrainOutEarlyCommand =
+        StreamDescriptor::Command::make<StreamDescriptor::Command::Tag::drain>(
+                StreamDescriptor::DrainMode::DRAIN_EARLY_NOTIFY);
+static const StreamDescriptor::Command kStandbyCommand =
+        StreamDescriptor::Command::make<StreamDescriptor::Command::Tag::standby>(Void{});
+static const StreamDescriptor::Command kPauseCommand =
+        StreamDescriptor::Command::make<StreamDescriptor::Command::Tag::pause>(Void{});
+static const StreamDescriptor::Command kFlushCommand =
+        StreamDescriptor::Command::make<StreamDescriptor::Command::Tag::flush>(Void{});
+static const StreamEventReceiver::Event kTransferReadyEvent =
+        StreamEventReceiver::Event::TransferReady;
+static const StreamEventReceiver::Event kDrainReadyEvent = StreamEventReceiver::Event::DrainReady;
+
+// Handle possible bifurcations:
+//   - on burst and on start: 'TRANSFERRING' -> {'ACTIVE', 'TRANSFERRING'}
+//   - on pause: 'TRANSFER_PAUSED' -> {'PAUSED', 'TRANSFER_PAUSED'}
+// It is assumed that the 'steps' provided on the construction contain the sequence
+// for the async case, which gets corrected in the case when the HAL decided to do
+// a synchronous transfer.
+class SmartStateSequence : public StateSequence {
   public:
+    explicit SmartStateSequence(const std::vector<StateTransition>& steps) : mSteps(steps) {}
+    explicit SmartStateSequence(std::vector<StateTransition>&& steps) : mSteps(std::move(steps)) {}
+    void rewind() override { mCurrentStep = 0; }
+    bool done() const override { return mCurrentStep >= mSteps.size(); }
+    TransitionTrigger getTrigger() override { return mSteps[mCurrentStep].first; }
+    std::set<StreamDescriptor::State> getExpectedStates() override {
+        std::set<StreamDescriptor::State> result = {getState()};
+        if (isBurstBifurcation() || isStartBifurcation()) {
+            result.insert(StreamDescriptor::State::ACTIVE);
+        } else if (isPauseBifurcation()) {
+            result.insert(StreamDescriptor::State::PAUSED);
+        }
+        return result;
+    }
+    void advance(StreamDescriptor::State state) override {
+        if (isBurstBifurcation() && state == StreamDescriptor::State::ACTIVE &&
+            mCurrentStep + 1 < mSteps.size() &&
+            mSteps[mCurrentStep + 1].first == TransitionTrigger{kTransferReadyEvent}) {
+            mCurrentStep++;
+        }
+        mCurrentStep++;
+    }
+
+  private:
+    StreamDescriptor::State getState() const { return mSteps[mCurrentStep].second; }
+    bool isBurstBifurcation() {
+        return getTrigger() == TransitionTrigger{kBurstCommand}&& getState() ==
+               StreamDescriptor::State::TRANSFERRING;
+    }
+    bool isPauseBifurcation() {
+        return getTrigger() == TransitionTrigger{kPauseCommand}&& getState() ==
+               StreamDescriptor::State::TRANSFER_PAUSED;
+    }
+    bool isStartBifurcation() {
+        return getTrigger() == TransitionTrigger{kStartCommand}&& getState() ==
+               StreamDescriptor::State::TRANSFERRING;
+    }
+    const std::vector<StateTransition> mSteps;
+    size_t mCurrentStep = 0;
+};
+
+std::string toString(const TransitionTrigger& trigger) {
+    if (std::holds_alternative<StreamDescriptor::Command>(trigger)) {
+        return std::string("'")
+                .append(toString(std::get<StreamDescriptor::Command>(trigger).getTag()))
+                .append("' command");
+    }
+    return std::string("'")
+            .append(toString(std::get<StreamEventReceiver::Event>(trigger)))
+            .append("' event");
+}
+
+struct StreamLogicDriver {
     virtual ~StreamLogicDriver() = default;
     // Return 'true' to stop the worker.
     virtual bool done() = 0;
     // For 'Writer' logic, if the 'actualSize' is 0, write is skipped.
     // The 'fmqByteCount' from the returned command is passed as is to the HAL.
-    virtual StreamDescriptor::Command getNextCommand(int maxDataSize,
-                                                     int* actualSize = nullptr) = 0;
+    virtual TransitionTrigger getNextTrigger(int maxDataSize, int* actualSize = nullptr) = 0;
     // Return 'true' to indicate that no further processing is needed,
     // for example, the driver is expecting a bad status to be returned.
     // The logic cycle will return with 'CONTINUE' status. Otherwise,
@@ -410,46 +532,102 @@ class StreamLogicDriver {
 
 class StreamCommonLogic : public StreamLogic {
   protected:
-    StreamCommonLogic(const StreamContext& context, StreamLogicDriver* driver)
+    StreamCommonLogic(const StreamContext& context, StreamLogicDriver* driver,
+                      StreamEventReceiver* eventReceiver)
         : mCommandMQ(context.getCommandMQ()),
           mReplyMQ(context.getReplyMQ()),
           mDataMQ(context.getDataMQ()),
           mData(context.getBufferSizeBytes()),
-          mDriver(driver) {}
+          mDriver(driver),
+          mEventReceiver(eventReceiver) {}
     StreamContext::CommandMQ* getCommandMQ() const { return mCommandMQ; }
     StreamContext::ReplyMQ* getReplyMQ() const { return mReplyMQ; }
+    StreamContext::DataMQ* getDataMQ() const { return mDataMQ; }
     StreamLogicDriver* getDriver() const { return mDriver; }
+    StreamEventReceiver* getEventReceiver() const { return mEventReceiver; }
 
-    std::string init() override { return ""; }
+    std::string init() override {
+        LOG(DEBUG) << __func__;
+        return "";
+    }
+    std::optional<StreamDescriptor::Command> maybeGetNextCommand(int* actualSize = nullptr) {
+        TransitionTrigger trigger = mDriver->getNextTrigger(mData.size(), actualSize);
+        if (StreamEventReceiver::Event* expEvent =
+                    std::get_if<StreamEventReceiver::Event>(&trigger);
+            expEvent != nullptr) {
+            auto [eventSeq, event] = mEventReceiver->waitForEvent(mLastEventSeq);
+            mLastEventSeq = eventSeq;
+            if (event != *expEvent) {
+                LOG(ERROR) << __func__ << ": expected event " << toString(*expEvent) << ", got "
+                           << toString(event);
+                return {};
+            }
+            // If we were waiting for an event, the new stream state must be retrieved
+            // via 'getStatus'.
+            return StreamDescriptor::Command::make<StreamDescriptor::Command::Tag::getStatus>(
+                    Void{});
+        }
+        return std::get<StreamDescriptor::Command>(trigger);
+    }
+    bool readDataFromMQ(size_t readCount) {
+        std::vector<int8_t> data(readCount);
+        if (mDataMQ->read(data.data(), readCount)) {
+            memcpy(mData.data(), data.data(), std::min(mData.size(), data.size()));
+            return true;
+        }
+        LOG(ERROR) << __func__ << ": reading of " << readCount << " bytes from MQ failed";
+        return false;
+    }
+    bool writeDataToMQ() {
+        if (mDataMQ->write(mData.data(), mData.size())) {
+            return true;
+        }
+        LOG(ERROR) << __func__ << ": writing of " << mData.size() << " bytes to MQ failed";
+        return false;
+    }
 
+  private:
     StreamContext::CommandMQ* mCommandMQ;
     StreamContext::ReplyMQ* mReplyMQ;
     StreamContext::DataMQ* mDataMQ;
     std::vector<int8_t> mData;
     StreamLogicDriver* const mDriver;
+    StreamEventReceiver* const mEventReceiver;
+    int mLastEventSeq = StreamEventReceiver::kEventSeqInit;
 };
 
 class StreamReaderLogic : public StreamCommonLogic {
   public:
-    StreamReaderLogic(const StreamContext& context, StreamLogicDriver* driver)
-        : StreamCommonLogic(context, driver) {}
+    StreamReaderLogic(const StreamContext& context, StreamLogicDriver* driver,
+                      StreamEventReceiver* eventReceiver)
+        : StreamCommonLogic(context, driver, eventReceiver) {}
 
   protected:
     Status cycle() override {
         if (getDriver()->done()) {
+            LOG(DEBUG) << __func__ << ": clean exit";
             return Status::EXIT;
         }
-        StreamDescriptor::Command command = getDriver()->getNextCommand(mData.size());
-        if (!mCommandMQ->writeBlocking(&command, 1)) {
+        StreamDescriptor::Command command;
+        if (auto maybeCommand = maybeGetNextCommand(); maybeCommand.has_value()) {
+            command = std::move(maybeCommand.value());
+        } else {
+            LOG(ERROR) << __func__ << ": no next command";
+            return Status::ABORT;
+        }
+        LOG(DEBUG) << "Writing command: " << command.toString();
+        if (!getCommandMQ()->writeBlocking(&command, 1)) {
             LOG(ERROR) << __func__ << ": writing of command into MQ failed";
             return Status::ABORT;
         }
         StreamDescriptor::Reply reply{};
-        if (!mReplyMQ->readBlocking(&reply, 1)) {
-            LOG(ERROR) << __func__ << ": reading of reply from MQ failed";
+        LOG(DEBUG) << "Reading reply...";
+        if (!getReplyMQ()->readBlocking(&reply, 1)) {
             return Status::ABORT;
         }
+        LOG(DEBUG) << "Reply received: " << reply.toString();
         if (getDriver()->interceptRawReply(reply)) {
+            LOG(DEBUG) << __func__ << ": reply has been intercepted by the driver";
             return Status::CONTINUE;
         }
         if (reply.status != STATUS_OK) {
@@ -463,11 +641,11 @@ class StreamReaderLogic : public StreamCommonLogic {
                        << ": received invalid byte count in the reply: " << reply.fmqByteCount;
             return Status::ABORT;
         }
-        if (static_cast<size_t>(reply.fmqByteCount) != mDataMQ->availableToRead()) {
+        if (static_cast<size_t>(reply.fmqByteCount) != getDataMQ()->availableToRead()) {
             LOG(ERROR) << __func__
                        << ": the byte count in the reply is not the same as the amount of "
                        << "data available in the MQ: " << reply.fmqByteCount
-                       << " != " << mDataMQ->availableToRead();
+                       << " != " << getDataMQ()->availableToRead();
         }
         if (reply.latencyMs < 0 && reply.latencyMs != StreamDescriptor::LATENCY_UNKNOWN) {
             LOG(ERROR) << __func__ << ": received invalid latency value: " << reply.latencyMs;
@@ -484,10 +662,8 @@ class StreamReaderLogic : public StreamCommonLogic {
             return Status::ABORT;
         }
         const bool acceptedReply = getDriver()->processValidReply(reply);
-        if (const size_t readCount = mDataMQ->availableToRead(); readCount > 0) {
-            std::vector<int8_t> data(readCount);
-            if (mDataMQ->read(data.data(), readCount)) {
-                memcpy(mData.data(), data.data(), std::min(mData.size(), data.size()));
+        if (const size_t readCount = getDataMQ()->availableToRead(); readCount > 0) {
+            if (readDataFromMQ(readCount)) {
                 goto checkAcceptedReply;
             }
             LOG(ERROR) << __func__ << ": reading of " << readCount << " data bytes from MQ failed";
@@ -505,29 +681,39 @@ using StreamReader = StreamWorker<StreamReaderLogic>;
 
 class StreamWriterLogic : public StreamCommonLogic {
   public:
-    StreamWriterLogic(const StreamContext& context, StreamLogicDriver* driver)
-        : StreamCommonLogic(context, driver) {}
+    StreamWriterLogic(const StreamContext& context, StreamLogicDriver* driver,
+                      StreamEventReceiver* eventReceiver)
+        : StreamCommonLogic(context, driver, eventReceiver) {}
 
   protected:
     Status cycle() override {
         if (getDriver()->done()) {
+            LOG(DEBUG) << __func__ << ": clean exit";
             return Status::EXIT;
         }
         int actualSize = 0;
-        StreamDescriptor::Command command = getDriver()->getNextCommand(mData.size(), &actualSize);
-        if (actualSize != 0 && !mDataMQ->write(mData.data(), mData.size())) {
-            LOG(ERROR) << __func__ << ": writing of " << mData.size() << " bytes to MQ failed";
+        StreamDescriptor::Command command;
+        if (auto maybeCommand = maybeGetNextCommand(&actualSize); maybeCommand.has_value()) {
+            command = std::move(maybeCommand.value());
+        } else {
+            LOG(ERROR) << __func__ << ": no next command";
             return Status::ABORT;
         }
-        if (!mCommandMQ->writeBlocking(&command, 1)) {
+        if (actualSize != 0 && !writeDataToMQ()) {
+            return Status::ABORT;
+        }
+        LOG(DEBUG) << "Writing command: " << command.toString();
+        if (!getCommandMQ()->writeBlocking(&command, 1)) {
             LOG(ERROR) << __func__ << ": writing of command into MQ failed";
             return Status::ABORT;
         }
         StreamDescriptor::Reply reply{};
-        if (!mReplyMQ->readBlocking(&reply, 1)) {
+        LOG(DEBUG) << "Reading reply...";
+        if (!getReplyMQ()->readBlocking(&reply, 1)) {
             LOG(ERROR) << __func__ << ": reading of reply from MQ failed";
             return Status::ABORT;
         }
+        LOG(DEBUG) << "Reply received: " << reply.toString();
         if (getDriver()->interceptRawReply(reply)) {
             return Status::CONTINUE;
         }
@@ -542,10 +728,10 @@ class StreamWriterLogic : public StreamCommonLogic {
                        << ": received invalid byte count in the reply: " << reply.fmqByteCount;
             return Status::ABORT;
         }
-        if (mDataMQ->availableToWrite() != mDataMQ->getQuantumCount()) {
+        if (getDataMQ()->availableToWrite() != getDataMQ()->getQuantumCount()) {
             LOG(ERROR) << __func__ << ": the HAL module did not consume all data from the data MQ: "
-                       << "available to write " << mDataMQ->availableToWrite()
-                       << ", total size: " << mDataMQ->getQuantumCount();
+                       << "available to write " << getDataMQ()->availableToWrite()
+                       << ", total size: " << getDataMQ()->getQuantumCount();
             return Status::ABORT;
         }
         if (reply.latencyMs < 0 && reply.latencyMs != StreamDescriptor::LATENCY_UNKNOWN) {
@@ -570,6 +756,71 @@ class StreamWriterLogic : public StreamCommonLogic {
     }
 };
 using StreamWriter = StreamWorker<StreamWriterLogic>;
+
+class DefaultStreamCallback : public ::aidl::android::hardware::audio::core::BnStreamCallback,
+                              public StreamEventReceiver {
+    ndk::ScopedAStatus onTransferReady() override {
+        LOG(DEBUG) << __func__;
+        putLastEvent(Event::TransferReady);
+        return ndk::ScopedAStatus::ok();
+    }
+    ndk::ScopedAStatus onError() override {
+        LOG(DEBUG) << __func__;
+        putLastEvent(Event::Error);
+        return ndk::ScopedAStatus::ok();
+    }
+    ndk::ScopedAStatus onDrainReady() override {
+        LOG(DEBUG) << __func__;
+        putLastEvent(Event::DrainReady);
+        return ndk::ScopedAStatus::ok();
+    }
+
+  public:
+    // To avoid timing out the whole test suite in case no event is received
+    // from the HAL, use a local timeout for event waiting.
+    static constexpr auto kEventTimeoutMs = std::chrono::milliseconds(1000);
+
+    StreamEventReceiver* getEventReceiver() { return this; }
+    std::tuple<int, Event> getLastEvent() const override {
+        std::lock_guard l(mLock);
+        return getLastEvent_l();
+    }
+    std::tuple<int, Event> waitForEvent(int clientEventSeq) override {
+        std::unique_lock l(mLock);
+        android::base::ScopedLockAssertion lock_assertion(mLock);
+        LOG(DEBUG) << __func__ << ": client " << clientEventSeq << ", last " << mLastEventSeq;
+        if (mCv.wait_for(l, kEventTimeoutMs, [&]() {
+                android::base::ScopedLockAssertion lock_assertion(mLock);
+                return clientEventSeq < mLastEventSeq;
+            })) {
+        } else {
+            LOG(WARNING) << __func__ << ": timed out waiting for an event";
+            putLastEvent_l(Event::None);
+        }
+        return getLastEvent_l();
+    }
+
+  private:
+    std::tuple<int, Event> getLastEvent_l() const REQUIRES(mLock) {
+        return std::make_tuple(mLastEventSeq, mLastEvent);
+    }
+    void putLastEvent(Event event) {
+        {
+            std::lock_guard l(mLock);
+            putLastEvent_l(event);
+        }
+        mCv.notify_one();
+    }
+    void putLastEvent_l(Event event) REQUIRES(mLock) {
+        mLastEventSeq++;
+        mLastEvent = event;
+    }
+
+    mutable std::mutex mLock;
+    std::condition_variable mCv;
+    int mLastEventSeq GUARDED_BY(mLock) = kEventSeqInit;
+    Event mLastEvent GUARDED_BY(mLock) = Event::None;
+};
 
 template <typename T>
 struct IOTraits {
@@ -607,6 +858,7 @@ class WithStream {
     }
     Stream* get() const { return mStream.get(); }
     const StreamContext* getContext() const { return mContext ? &(mContext.value()) : nullptr; }
+    StreamEventReceiver* getEventReceiver() { return mStreamCallback->getEventReceiver(); }
     std::shared_ptr<Stream> getSharedPointer() const { return mStream; }
     const AudioPortConfig& getPortConfig() const { return mPortConfig.get(); }
     int32_t getPortId() const { return mPortConfig.getId(); }
@@ -616,6 +868,7 @@ class WithStream {
     std::shared_ptr<Stream> mStream;
     StreamDescriptor mDescriptor;
     std::optional<StreamContext> mContext;
+    std::shared_ptr<DefaultStreamCallback> mStreamCallback;
 };
 
 SinkMetadata GenerateSinkMetadata(const AudioPortConfig& portConfig) {
@@ -636,11 +889,15 @@ ScopedAStatus WithStream<IStreamIn>::SetUpNoChecks(IModule* module,
     args.portConfigId = portConfig.id;
     args.sinkMetadata = GenerateSinkMetadata(portConfig);
     args.bufferSizeFrames = bufferSizeFrames;
+    auto callback = ndk::SharedRefBase::make<DefaultStreamCallback>();
+    // TODO: Uncomment when support for asynchronous input is implemented.
+    // args.callback = callback;
     aidl::android::hardware::audio::core::IModule::OpenInputStreamReturn ret;
     ScopedAStatus status = module->openInputStream(args, &ret);
     if (status.isOk()) {
         mStream = std::move(ret.stream);
         mDescriptor = std::move(ret.desc);
+        mStreamCallback = std::move(callback);
     }
     return status;
 }
@@ -665,11 +922,14 @@ ScopedAStatus WithStream<IStreamOut>::SetUpNoChecks(IModule* module,
     args.sourceMetadata = GenerateSourceMetadata(portConfig);
     args.offloadInfo = ModuleConfig::generateOffloadInfoIfNeeded(portConfig);
     args.bufferSizeFrames = bufferSizeFrames;
+    auto callback = ndk::SharedRefBase::make<DefaultStreamCallback>();
+    args.callback = callback;
     aidl::android::hardware::audio::core::IModule::OpenOutputStreamReturn ret;
     ScopedAStatus status = module->openOutputStream(args, &ret);
     if (status.isOk()) {
         mStream = std::move(ret.stream);
         mDescriptor = std::move(ret.desc);
+        mStreamCallback = std::move(callback);
     }
     return status;
 }
@@ -1379,10 +1639,10 @@ TEST_P(AudioCoreTelephony, SwitchAudioMode) {
     }
 }
 
+using CommandSequence = std::vector<StreamDescriptor::Command>;
 class StreamLogicDriverInvalidCommand : public StreamLogicDriver {
   public:
-    StreamLogicDriverInvalidCommand(const std::vector<StreamDescriptor::Command>& commands)
-        : mCommands(commands) {}
+    StreamLogicDriverInvalidCommand(const CommandSequence& commands) : mCommands(commands) {}
 
     std::string getUnexpectedStatuses() {
         // This method is intended to be called after the worker thread has joined,
@@ -1396,25 +1656,29 @@ class StreamLogicDriverInvalidCommand : public StreamLogicDriver {
     }
 
     bool done() override { return mNextCommand >= mCommands.size(); }
-    StreamDescriptor::Command getNextCommand(int, int* actualSize) override {
+    TransitionTrigger getNextTrigger(int, int* actualSize) override {
         if (actualSize != nullptr) *actualSize = 0;
         return mCommands[mNextCommand++];
     }
     bool interceptRawReply(const StreamDescriptor::Reply& reply) override {
-        if (reply.status != STATUS_BAD_VALUE) {
-            std::string s = mCommands[mNextCommand - 1].toString();
+        const size_t currentCommand = mNextCommand - 1;  // increased by getNextTrigger
+        const bool isLastCommand = currentCommand == mCommands.size() - 1;
+        // All but the last command should run correctly. The last command must return 'BAD_VALUE'
+        // status.
+        if ((!isLastCommand && reply.status != STATUS_OK) ||
+            (isLastCommand && reply.status != STATUS_BAD_VALUE)) {
+            std::string s = mCommands[currentCommand].toString();
             s.append(", ").append(statusToString(reply.status));
             mStatuses.push_back(std::move(s));
-            // If the HAL does not recognize the command as invalid,
-            // retrieve the data etc.
-            return reply.status != STATUS_OK;
+            // Process the reply, since the worker exits in case of an error.
+            return false;
         }
-        return true;
+        return isLastCommand;
     }
     bool processValidReply(const StreamDescriptor::Reply&) override { return true; }
 
   private:
-    const std::vector<StreamDescriptor::Command> mCommands;
+    const CommandSequence mCommands;
     size_t mNextCommand = 0;
     std::vector<std::string> mStatuses;
 };
@@ -1556,21 +1820,46 @@ class AudioStream : public AudioCoreModule {
     }
 
     void SendInvalidCommandImpl(const AudioPortConfig& portConfig) {
-        std::vector<StreamDescriptor::Command> commands = {
-                StreamDescriptor::Command::make<StreamDescriptor::Command::Tag::halReservedExit>(0),
-                // TODO: For proper testing of input streams, need to put the stream into
-                // a state which accepts BURST commands.
-                StreamDescriptor::Command::make<StreamDescriptor::Command::Tag::burst>(-1),
-                StreamDescriptor::Command::make<StreamDescriptor::Command::Tag::burst>(
-                        std::numeric_limits<int32_t>::min()),
-        };
-        WithStream<Stream> stream(portConfig);
-        ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultBufferSizeFrames));
-        StreamLogicDriverInvalidCommand driver(commands);
-        typename IOTraits<Stream>::Worker worker(*stream.getContext(), &driver);
-        ASSERT_TRUE(worker.start());
-        worker.join();
-        EXPECT_EQ("", driver.getUnexpectedStatuses());
+        using TestSequence = std::pair<std::string, CommandSequence>;
+        // The last command in 'CommandSequence' is the one that must trigger
+        // an error status. All preceding commands are to put the state machine
+        // into a state which accepts the last command.
+        std::vector<TestSequence> sequences{
+                std::make_pair(std::string("HalReservedExit"),
+                               std::vector{StreamDescriptor::Command::make<
+                                       StreamDescriptor::Command::Tag::halReservedExit>(0)}),
+                std::make_pair(std::string("BurstNeg"),
+                               std::vector{kStartCommand,
+                                           StreamDescriptor::Command::make<
+                                                   StreamDescriptor::Command::Tag::burst>(-1)}),
+                std::make_pair(
+                        std::string("BurstMinInt"),
+                        std::vector{kStartCommand, StreamDescriptor::Command::make<
+                                                           StreamDescriptor::Command::Tag::burst>(
+                                                           std::numeric_limits<int32_t>::min())})};
+        if (IOTraits<Stream>::is_input) {
+            sequences.emplace_back("DrainAll",
+                                   std::vector{kStartCommand, kBurstCommand, kDrainOutAllCommand});
+            sequences.emplace_back(
+                    "DrainEarly", std::vector{kStartCommand, kBurstCommand, kDrainOutEarlyCommand});
+        } else {
+            sequences.emplace_back("DrainUnspecified",
+                                   std::vector{kStartCommand, kBurstCommand, kDrainInCommand});
+        }
+        for (const auto& seq : sequences) {
+            SCOPED_TRACE(std::string("Sequence ").append(seq.first));
+            LOG(DEBUG) << __func__ << ": Sequence " << seq.first;
+            WithStream<Stream> stream(portConfig);
+            ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultBufferSizeFrames));
+            StreamLogicDriverInvalidCommand driver(seq.second);
+            typename IOTraits<Stream>::Worker worker(*stream.getContext(), &driver,
+                                                     stream.getEventReceiver());
+            LOG(DEBUG) << __func__ << ": starting worker...";
+            ASSERT_TRUE(worker.start());
+            LOG(DEBUG) << __func__ << ": joining worker...";
+            worker.join();
+            EXPECT_EQ("", driver.getUnexpectedStatuses());
+        }
     }
 };
 using AudioStreamIn = AudioStream<IStreamIn>;
@@ -1614,27 +1903,51 @@ TEST_P(AudioStreamOut, RequireOffloadInfo) {
         GTEST_SKIP()
                 << "No mix port for compressed offload that could be routed to attached devices";
     }
-    const auto portConfig =
-            moduleConfig->getSingleConfigForMixPort(false, *offloadMixPorts.begin());
-    ASSERT_TRUE(portConfig.has_value())
-            << "No profiles specified for the compressed offload mix port";
+    const auto config = moduleConfig->getSingleConfigForMixPort(false, *offloadMixPorts.begin());
+    ASSERT_TRUE(config.has_value()) << "No profiles specified for the compressed offload mix port";
+    WithAudioPortConfig portConfig(config.value());
+    ASSERT_NO_FATAL_FAILURE(portConfig.SetUp(module.get()));
     StreamDescriptor descriptor;
     std::shared_ptr<IStreamOut> ignored;
     aidl::android::hardware::audio::core::IModule::OpenOutputStreamArguments args;
-    args.portConfigId = portConfig.value().id;
-    args.sourceMetadata = GenerateSourceMetadata(portConfig.value());
+    args.portConfigId = portConfig.getId();
+    args.sourceMetadata = GenerateSourceMetadata(portConfig.get());
     args.bufferSizeFrames = kDefaultBufferSizeFrames;
     aidl::android::hardware::audio::core::IModule::OpenOutputStreamReturn ret;
     EXPECT_STATUS(EX_ILLEGAL_ARGUMENT, module->openOutputStream(args, &ret))
             << "when no offload info is provided for a compressed offload mix port";
 }
 
-using CommandAndState = std::pair<StreamDescriptor::Command, StreamDescriptor::State>;
+TEST_P(AudioStreamOut, RequireAsyncCallback) {
+    const auto nonBlockingMixPorts =
+            moduleConfig->getNonBlockingMixPorts(true /*attachedOnly*/, true /*singlePort*/);
+    if (nonBlockingMixPorts.empty()) {
+        GTEST_SKIP()
+                << "No mix port for non-blocking output that could be routed to attached devices";
+    }
+    const auto config =
+            moduleConfig->getSingleConfigForMixPort(false, *nonBlockingMixPorts.begin());
+    ASSERT_TRUE(config.has_value()) << "No profiles specified for the non-blocking mix port";
+    WithAudioPortConfig portConfig(config.value());
+    ASSERT_NO_FATAL_FAILURE(portConfig.SetUp(module.get()));
+    StreamDescriptor descriptor;
+    std::shared_ptr<IStreamOut> ignored;
+    aidl::android::hardware::audio::core::IModule::OpenOutputStreamArguments args;
+    args.portConfigId = portConfig.getId();
+    args.sourceMetadata = GenerateSourceMetadata(portConfig.get());
+    args.offloadInfo = ModuleConfig::generateOffloadInfoIfNeeded(portConfig.get());
+    args.bufferSizeFrames = kDefaultBufferSizeFrames;
+    aidl::android::hardware::audio::core::IModule::OpenOutputStreamReturn ret;
+    EXPECT_STATUS(EX_ILLEGAL_ARGUMENT, module->openOutputStream(args, &ret))
+            << "when no async callback is provided for a non-blocking mix port";
+}
 
 class StreamLogicDefaultDriver : public StreamLogicDriver {
   public:
-    explicit StreamLogicDefaultDriver(const std::vector<CommandAndState>& commands)
-        : mCommands(commands) {}
+    explicit StreamLogicDefaultDriver(std::shared_ptr<StateSequence> commands)
+        : mCommands(commands) {
+        mCommands->rewind();
+    }
 
     // The three methods below is intended to be called after the worker
     // thread has joined, thus no extra synchronization is needed.
@@ -1642,21 +1955,24 @@ class StreamLogicDefaultDriver : public StreamLogicDriver {
     bool hasRetrogradeObservablePosition() const { return mRetrogradeObservablePosition; }
     std::string getUnexpectedStateTransition() const { return mUnexpectedTransition; }
 
-    bool done() override { return mNextCommand >= mCommands.size(); }
-    StreamDescriptor::Command getNextCommand(int maxDataSize, int* actualSize) override {
-        auto command = mCommands[mNextCommand++].first;
-        if (command.getTag() == StreamDescriptor::Command::Tag::burst) {
-            if (actualSize != nullptr) {
-                // In the output scenario, reduce slightly the fmqByteCount to verify
-                // that the HAL module always consumes all data from the MQ.
-                if (maxDataSize > 1) maxDataSize--;
-                *actualSize = maxDataSize;
+    bool done() override { return mCommands->done(); }
+    TransitionTrigger getNextTrigger(int maxDataSize, int* actualSize) override {
+        auto trigger = mCommands->getTrigger();
+        if (StreamDescriptor::Command* command = std::get_if<StreamDescriptor::Command>(&trigger);
+            command != nullptr) {
+            if (command->getTag() == StreamDescriptor::Command::Tag::burst) {
+                if (actualSize != nullptr) {
+                    // In the output scenario, reduce slightly the fmqByteCount to verify
+                    // that the HAL module always consumes all data from the MQ.
+                    if (maxDataSize > 1) maxDataSize--;
+                    *actualSize = maxDataSize;
+                }
+                command->set<StreamDescriptor::Command::Tag::burst>(maxDataSize);
+            } else {
+                if (actualSize != nullptr) *actualSize = 0;
             }
-            command.set<StreamDescriptor::Command::Tag::burst>(maxDataSize);
-        } else {
-            if (actualSize != nullptr) *actualSize = 0;
         }
-        return command;
+        return trigger;
     }
     bool interceptRawReply(const StreamDescriptor::Reply&) override { return false; }
     bool processValidReply(const StreamDescriptor::Reply& reply) override {
@@ -1671,33 +1987,40 @@ class StreamLogicDefaultDriver : public StreamLogicDriver {
             mPreviousFrames = reply.observable.frames;
         }
 
-        const auto& lastCommandState = mCommands[mNextCommand - 1];
-        if (lastCommandState.second != reply.state) {
-            std::string s = std::string("Unexpected transition from the state ")
-                                    .append(mPreviousState)
-                                    .append(" to ")
-                                    .append(toString(reply.state))
-                                    .append(" caused by the command ")
-                                    .append(lastCommandState.first.toString());
+        auto expected = mCommands->getExpectedStates();
+        if (expected.count(reply.state) == 0) {
+            std::string s =
+                    std::string("Unexpected transition from the state ")
+                            .append(mPreviousState.has_value() ? toString(mPreviousState.value())
+                                                               : "<initial state>")
+                            .append(" to ")
+                            .append(toString(reply.state))
+                            .append(" (expected one of ")
+                            .append(::android::internal::ToString(expected))
+                            .append(") caused by the ")
+                            .append(toString(mCommands->getTrigger()));
             LOG(ERROR) << __func__ << ": " << s;
             mUnexpectedTransition = std::move(s);
             return false;
         }
+        mCommands->advance(reply.state);
+        mPreviousState = reply.state;
         return true;
     }
 
   protected:
-    const std::vector<CommandAndState>& mCommands;
-    size_t mNextCommand = 0;
+    std::shared_ptr<StateSequence> mCommands;
+    std::optional<StreamDescriptor::State> mPreviousState;
     std::optional<int64_t> mPreviousFrames;
-    std::string mPreviousState = "<initial state>";
     bool mObservablePositionIncrease = false;
     bool mRetrogradeObservablePosition = false;
     std::string mUnexpectedTransition;
 };
 
-enum { NAMED_CMD_NAME, NAMED_CMD_DELAY_MS, NAMED_CMD_CMDS };
-using NamedCommandSequence = std::tuple<std::string, int, std::vector<CommandAndState>>;
+enum { NAMED_CMD_NAME, NAMED_CMD_DELAY_MS, NAMED_CMD_STREAM_TYPE, NAMED_CMD_CMDS };
+enum class StreamTypeFilter { ANY, SYNC, ASYNC };
+using NamedCommandSequence =
+        std::tuple<std::string, int, StreamTypeFilter, std::shared_ptr<StateSequence>>;
 enum { PARAM_MODULE_NAME, PARAM_CMD_SEQ, PARAM_SETUP_SEQ };
 using StreamIoTestParameters =
         std::tuple<std::string /*moduleName*/, NamedCommandSequence, bool /*useSetupSequence2*/>;
@@ -1718,6 +2041,23 @@ class AudioStreamIo : public AudioCoreModuleBase,
         }
         for (const auto& portConfig : allPortConfigs) {
             SCOPED_TRACE(portConfig.toString());
+            const bool isNonBlocking =
+                    IOTraits<Stream>::is_input
+                            ? false
+                            :
+                            // TODO: Uncomment when support for asynchronous input is implemented.
+                            /*isBitPositionFlagSet(
+                              portConfig.flags.value().template get<AudioIoFlags::Tag::input>(),
+                              AudioInputFlags::NON_BLOCKING) :*/
+                            isBitPositionFlagSet(portConfig.flags.value()
+                                                         .template get<AudioIoFlags::Tag::output>(),
+                                                 AudioOutputFlags::NON_BLOCKING);
+            if (auto streamType =
+                        std::get<NAMED_CMD_STREAM_TYPE>(std::get<PARAM_CMD_SEQ>(GetParam()));
+                (isNonBlocking && streamType == StreamTypeFilter::SYNC) ||
+                (!isNonBlocking && streamType == StreamTypeFilter::ASYNC)) {
+                continue;
+            }
             WithDebugFlags delayTransientStates = WithDebugFlags::createNested(debug);
             delayTransientStates.flags().streamTransientStateDelayMs =
                     std::get<NAMED_CMD_DELAY_MS>(std::get<PARAM_CMD_SEQ>(GetParam()));
@@ -1739,7 +2079,7 @@ class AudioStreamIo : public AudioCoreModuleBase,
 
     // Set up a patch first, then open a stream.
     void RunStreamIoCommandsImplSeq1(const AudioPortConfig& portConfig,
-                                     const std::vector<CommandAndState>& commandsAndStates) {
+                                     std::shared_ptr<StateSequence> commandsAndStates) {
         auto devicePorts = moduleConfig->getAttachedDevicesPortsForMixPort(
                 IOTraits<Stream>::is_input, portConfig);
         ASSERT_FALSE(devicePorts.empty());
@@ -1750,9 +2090,12 @@ class AudioStreamIo : public AudioCoreModuleBase,
         WithStream<Stream> stream(patch.getPortConfig(IOTraits<Stream>::is_input));
         ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultBufferSizeFrames));
         StreamLogicDefaultDriver driver(commandsAndStates);
-        typename IOTraits<Stream>::Worker worker(*stream.getContext(), &driver);
+        typename IOTraits<Stream>::Worker worker(*stream.getContext(), &driver,
+                                                 stream.getEventReceiver());
 
+        LOG(DEBUG) << __func__ << ": starting worker...";
         ASSERT_TRUE(worker.start());
+        LOG(DEBUG) << __func__ << ": joining worker...";
         worker.join();
         EXPECT_FALSE(worker.hasError()) << worker.getError();
         EXPECT_EQ("", driver.getUnexpectedStateTransition());
@@ -1764,11 +2107,12 @@ class AudioStreamIo : public AudioCoreModuleBase,
 
     // Open a stream, then set up a patch for it.
     void RunStreamIoCommandsImplSeq2(const AudioPortConfig& portConfig,
-                                     const std::vector<CommandAndState>& commandsAndStates) {
+                                     std::shared_ptr<StateSequence> commandsAndStates) {
         WithStream<Stream> stream(portConfig);
         ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultBufferSizeFrames));
         StreamLogicDefaultDriver driver(commandsAndStates);
-        typename IOTraits<Stream>::Worker worker(*stream.getContext(), &driver);
+        typename IOTraits<Stream>::Worker worker(*stream.getContext(), &driver,
+                                                 stream.getEventReceiver());
 
         auto devicePorts = moduleConfig->getAttachedDevicesPortsForMixPort(
                 IOTraits<Stream>::is_input, portConfig);
@@ -1777,7 +2121,9 @@ class AudioStreamIo : public AudioCoreModuleBase,
         WithAudioPatch patch(IOTraits<Stream>::is_input, stream.getPortConfig(), devicePortConfig);
         ASSERT_NO_FATAL_FAILURE(patch.SetUp(module.get()));
 
+        LOG(DEBUG) << __func__ << ": starting worker...";
         ASSERT_TRUE(worker.start());
+        LOG(DEBUG) << __func__ << ": joining worker...";
         worker.join();
         EXPECT_FALSE(worker.hasError()) << worker.getError();
         EXPECT_EQ("", driver.getUnexpectedStateTransition());
@@ -1984,80 +2330,122 @@ GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(AudioStreamOut);
 // This is the value used in test sequences for which the test needs to ensure
 // that the HAL stays in a transient state long enough to receive the next command.
 static const int kStreamTransientStateTransitionDelayMs = 3000;
-static const StreamDescriptor::Command kGetStatusCommand =
-        StreamDescriptor::Command::make<StreamDescriptor::Command::Tag::getStatus>(Void{});
-static const StreamDescriptor::Command kStartCommand =
-        StreamDescriptor::Command::make<StreamDescriptor::Command::Tag::start>(Void{});
-static const StreamDescriptor::Command kBurstCommand =
-        StreamDescriptor::Command::make<StreamDescriptor::Command::Tag::burst>(0);
-static const StreamDescriptor::Command kDrainCommand =
-        StreamDescriptor::Command::make<StreamDescriptor::Command::Tag::drain>(Void{});
-static const StreamDescriptor::Command kStandbyCommand =
-        StreamDescriptor::Command::make<StreamDescriptor::Command::Tag::standby>(Void{});
-static const StreamDescriptor::Command kPauseCommand =
-        StreamDescriptor::Command::make<StreamDescriptor::Command::Tag::pause>(Void{});
-static const StreamDescriptor::Command kFlushCommand =
-        StreamDescriptor::Command::make<StreamDescriptor::Command::Tag::flush>(Void{});
-static const NamedCommandSequence kReadOrWriteSeq =
-        std::make_tuple(std::string("ReadOrWrite"), 0,
-                        std::vector<CommandAndState>{
-                                std::make_pair(kStartCommand, StreamDescriptor::State::IDLE),
-                                std::make_pair(kBurstCommand, StreamDescriptor::State::ACTIVE),
-                                std::make_pair(kBurstCommand, StreamDescriptor::State::ACTIVE),
-                                std::make_pair(kBurstCommand, StreamDescriptor::State::ACTIVE)});
-static const NamedCommandSequence kDrainInSeq =
-        std::make_tuple(std::string("Drain"), 0,
-                        std::vector<CommandAndState>{
-                                std::make_pair(kStartCommand, StreamDescriptor::State::IDLE),
-                                std::make_pair(kBurstCommand, StreamDescriptor::State::ACTIVE),
-                                std::make_pair(kDrainCommand, StreamDescriptor::State::DRAINING),
-                                std::make_pair(kStartCommand, StreamDescriptor::State::ACTIVE),
-                                std::make_pair(kDrainCommand, StreamDescriptor::State::DRAINING)
-                                // TODO: Test that from DRAINING the stream goes either to DRAINING
-                                // or to STANDBY. Supporting this in a generic would complicate the
-                                // test code because after state bifurcation we probably need to use
-                                // different commands for each state, this way a sequence of
-                                // commands and states becomes a tree.
-                        });
-static const NamedCommandSequence kDrainOutSeq =
-        std::make_tuple(std::string("Drain"), 0,
-                        std::vector<CommandAndState>{
-                                std::make_pair(kStartCommand, StreamDescriptor::State::IDLE),
-                                std::make_pair(kBurstCommand, StreamDescriptor::State::ACTIVE),
-                                std::make_pair(kDrainCommand, StreamDescriptor::State::DRAINING),
-                                // Draining is synchronous, the stream switches to IDLE afterwards.
-                                std::make_pair(kGetStatusCommand, StreamDescriptor::State::IDLE)});
-static const NamedCommandSequence kDrainPauseOutSeq = std::make_tuple(
-        std::string("DrainPause"), kStreamTransientStateTransitionDelayMs,
-        std::vector<CommandAndState>{
-                std::make_pair(kStartCommand, StreamDescriptor::State::IDLE),
-                std::make_pair(kBurstCommand, StreamDescriptor::State::ACTIVE),
-                std::make_pair(kDrainCommand, StreamDescriptor::State::DRAINING),
-                std::make_pair(kPauseCommand, StreamDescriptor::State::DRAIN_PAUSED),
-                std::make_pair(kStartCommand, StreamDescriptor::State::DRAINING),
-                std::make_pair(kPauseCommand, StreamDescriptor::State::DRAIN_PAUSED),
-                std::make_pair(kBurstCommand, StreamDescriptor::State::PAUSED)});
-static const NamedCommandSequence kStandbySeq =
-        std::make_tuple(std::string("Standby"), 0,
-                        std::vector<CommandAndState>{
-                                std::make_pair(kStartCommand, StreamDescriptor::State::IDLE),
-                                std::make_pair(kStandbyCommand, StreamDescriptor::State::STANDBY),
-                                // Perform a read or write in order to advance observable position
-                                // (this is verified by tests).
-                                std::make_pair(kStartCommand, StreamDescriptor::State::IDLE),
-                                std::make_pair(kBurstCommand, StreamDescriptor::State::ACTIVE)});
+
+// TODO: Add async test cases for input once it is implemented.
+
+std::shared_ptr<StateSequence> makeBurstCommands(bool isSync, size_t burstCount) {
+    const auto burst =
+            isSync ? std::vector<StateTransition>{std::make_pair(kBurstCommand,
+                                                                 StreamDescriptor::State::ACTIVE)}
+                   : std::vector<StateTransition>{
+                             std::make_pair(kBurstCommand, StreamDescriptor::State::TRANSFERRING),
+                             std::make_pair(kTransferReadyEvent, StreamDescriptor::State::ACTIVE)};
+    std::vector<StateTransition> result{
+            std::make_pair(kStartCommand, StreamDescriptor::State::IDLE)};
+    for (size_t i = 0; i < burstCount; ++i) {
+        result.insert(result.end(), burst.begin(), burst.end());
+    }
+    return std::make_shared<SmartStateSequence>(result);
+}
+static const NamedCommandSequence kReadSeq =
+        std::make_tuple(std::string("Read"), 0, StreamTypeFilter::ANY, makeBurstCommands(true, 3));
+static const NamedCommandSequence kWriteSyncSeq = std::make_tuple(
+        std::string("Write"), 0, StreamTypeFilter::SYNC, makeBurstCommands(true, 3));
+static const NamedCommandSequence kWriteAsyncSeq = std::make_tuple(
+        std::string("Write"), 0, StreamTypeFilter::ASYNC, makeBurstCommands(false, 3));
+
+std::shared_ptr<StateSequence> makeAsyncDrainCommands(bool isInput) {
+    return std::make_shared<SmartStateSequence>(std::vector<StateTransition>{
+            std::make_pair(kStartCommand, StreamDescriptor::State::IDLE),
+            std::make_pair(kBurstCommand, isInput ? StreamDescriptor::State::ACTIVE
+                                                  : StreamDescriptor::State::TRANSFERRING),
+            std::make_pair(isInput ? kDrainInCommand : kDrainOutAllCommand,
+                           StreamDescriptor::State::DRAINING),
+            isInput ? std::make_pair(kStartCommand, StreamDescriptor::State::ACTIVE)
+                    : std::make_pair(kBurstCommand, StreamDescriptor::State::TRANSFERRING),
+            std::make_pair(isInput ? kDrainInCommand : kDrainOutAllCommand,
+                           StreamDescriptor::State::DRAINING)});
+}
+static const NamedCommandSequence kWriteDrainAsyncSeq =
+        std::make_tuple(std::string("WriteDrain"), kStreamTransientStateTransitionDelayMs,
+                        StreamTypeFilter::ASYNC, makeAsyncDrainCommands(false));
+static const NamedCommandSequence kDrainInSeq = std::make_tuple(
+        std::string("Drain"), 0, StreamTypeFilter::ANY, makeAsyncDrainCommands(true));
+
+std::shared_ptr<StateSequence> makeDrainOutCommands(bool isSync) {
+    return std::make_shared<SmartStateSequence>(std::vector<StateTransition>{
+            std::make_pair(kStartCommand, StreamDescriptor::State::IDLE),
+            std::make_pair(kBurstCommand, StreamDescriptor::State::ACTIVE),
+            std::make_pair(kDrainOutAllCommand, StreamDescriptor::State::DRAINING),
+            std::make_pair(isSync ? TransitionTrigger(kGetStatusCommand)
+                                  : TransitionTrigger(kDrainReadyEvent),
+                           StreamDescriptor::State::IDLE)});
+}
+static const NamedCommandSequence kDrainOutSyncSeq = std::make_tuple(
+        std::string("Drain"), 0, StreamTypeFilter::SYNC, makeDrainOutCommands(true));
+static const NamedCommandSequence kDrainOutAsyncSeq = std::make_tuple(
+        std::string("Drain"), 0, StreamTypeFilter::ASYNC, makeDrainOutCommands(false));
+
+std::shared_ptr<StateSequence> makeDrainOutPauseCommands(bool isSync) {
+    return std::make_shared<SmartStateSequence>(std::vector<StateTransition>{
+            std::make_pair(kStartCommand, StreamDescriptor::State::IDLE),
+            std::make_pair(kBurstCommand, isSync ? StreamDescriptor::State::ACTIVE
+                                                 : StreamDescriptor::State::TRANSFERRING),
+            std::make_pair(kDrainOutAllCommand, StreamDescriptor::State::DRAINING),
+            std::make_pair(kPauseCommand, StreamDescriptor::State::DRAIN_PAUSED),
+            std::make_pair(kStartCommand, StreamDescriptor::State::DRAINING),
+            std::make_pair(kPauseCommand, StreamDescriptor::State::DRAIN_PAUSED),
+            std::make_pair(kBurstCommand, isSync ? StreamDescriptor::State::PAUSED
+                                                 : StreamDescriptor::State::TRANSFER_PAUSED)});
+}
+static const NamedCommandSequence kDrainPauseOutSyncSeq =
+        std::make_tuple(std::string("DrainPause"), kStreamTransientStateTransitionDelayMs,
+                        StreamTypeFilter::SYNC, makeDrainOutPauseCommands(true));
+static const NamedCommandSequence kDrainPauseOutAsyncSeq =
+        std::make_tuple(std::string("DrainPause"), kStreamTransientStateTransitionDelayMs,
+                        StreamTypeFilter::ASYNC, makeDrainOutPauseCommands(false));
+
+// This sequence also verifies that the capture / presentation position is not reset on standby.
+std::shared_ptr<StateSequence> makeStandbyCommands(bool isInput, bool isSync) {
+    return std::make_shared<SmartStateSequence>(std::vector<StateTransition>{
+            std::make_pair(kStartCommand, StreamDescriptor::State::IDLE),
+            std::make_pair(kStandbyCommand, StreamDescriptor::State::STANDBY),
+            std::make_pair(kStartCommand, StreamDescriptor::State::IDLE),
+            std::make_pair(kBurstCommand, isInput || isSync
+                                                  ? StreamDescriptor::State::ACTIVE
+                                                  : StreamDescriptor::State::TRANSFERRING),
+            std::make_pair(kPauseCommand, isInput || isSync
+                                                  ? StreamDescriptor::State::PAUSED
+                                                  : StreamDescriptor::State::TRANSFER_PAUSED),
+            std::make_pair(kFlushCommand, isInput ? StreamDescriptor::State::STANDBY
+                                                  : StreamDescriptor::State::IDLE),
+            std::make_pair(isInput ? kGetStatusCommand : kStandbyCommand,  // no-op for input
+                           StreamDescriptor::State::STANDBY),
+            std::make_pair(kStartCommand, StreamDescriptor::State::IDLE),
+            std::make_pair(kBurstCommand, isInput || isSync
+                                                  ? StreamDescriptor::State::ACTIVE
+                                                  : StreamDescriptor::State::TRANSFERRING)});
+}
+static const NamedCommandSequence kStandbyInSeq = std::make_tuple(
+        std::string("Standby"), 0, StreamTypeFilter::ANY, makeStandbyCommands(true, false));
+static const NamedCommandSequence kStandbyOutSyncSeq = std::make_tuple(
+        std::string("Standby"), 0, StreamTypeFilter::SYNC, makeStandbyCommands(false, true));
+static const NamedCommandSequence kStandbyOutAsyncSeq =
+        std::make_tuple(std::string("Standby"), kStreamTransientStateTransitionDelayMs,
+                        StreamTypeFilter::ASYNC, makeStandbyCommands(false, false));
+
 static const NamedCommandSequence kPauseInSeq =
-        std::make_tuple(std::string("Pause"), 0,
-                        std::vector<CommandAndState>{
+        std::make_tuple(std::string("Pause"), 0, StreamTypeFilter::ANY,
+                        std::make_shared<SmartStateSequence>(std::vector<StateTransition>{
                                 std::make_pair(kStartCommand, StreamDescriptor::State::IDLE),
                                 std::make_pair(kBurstCommand, StreamDescriptor::State::ACTIVE),
                                 std::make_pair(kPauseCommand, StreamDescriptor::State::PAUSED),
                                 std::make_pair(kBurstCommand, StreamDescriptor::State::ACTIVE),
                                 std::make_pair(kPauseCommand, StreamDescriptor::State::PAUSED),
-                                std::make_pair(kFlushCommand, StreamDescriptor::State::STANDBY)});
-static const NamedCommandSequence kPauseOutSeq =
-        std::make_tuple(std::string("Pause"), 0,
-                        std::vector<CommandAndState>{
+                                std::make_pair(kFlushCommand, StreamDescriptor::State::STANDBY)}));
+static const NamedCommandSequence kPauseOutSyncSeq =
+        std::make_tuple(std::string("Pause"), 0, StreamTypeFilter::SYNC,
+                        std::make_shared<SmartStateSequence>(std::vector<StateTransition>{
                                 std::make_pair(kStartCommand, StreamDescriptor::State::IDLE),
                                 std::make_pair(kBurstCommand, StreamDescriptor::State::ACTIVE),
                                 std::make_pair(kPauseCommand, StreamDescriptor::State::PAUSED),
@@ -2065,41 +2453,84 @@ static const NamedCommandSequence kPauseOutSeq =
                                 std::make_pair(kPauseCommand, StreamDescriptor::State::PAUSED),
                                 std::make_pair(kBurstCommand, StreamDescriptor::State::PAUSED),
                                 std::make_pair(kStartCommand, StreamDescriptor::State::ACTIVE),
-                                std::make_pair(kPauseCommand, StreamDescriptor::State::PAUSED)});
-static const NamedCommandSequence kFlushInSeq =
-        std::make_tuple(std::string("Flush"), 0,
-                        std::vector<CommandAndState>{
-                                std::make_pair(kStartCommand, StreamDescriptor::State::IDLE),
-                                std::make_pair(kBurstCommand, StreamDescriptor::State::ACTIVE),
-                                std::make_pair(kPauseCommand, StreamDescriptor::State::PAUSED),
-                                std::make_pair(kFlushCommand, StreamDescriptor::State::STANDBY)});
-static const NamedCommandSequence kFlushOutSeq = std::make_tuple(
-        std::string("Flush"), 0,
-        std::vector<CommandAndState>{std::make_pair(kStartCommand, StreamDescriptor::State::IDLE),
-                                     std::make_pair(kBurstCommand, StreamDescriptor::State::ACTIVE),
-                                     std::make_pair(kPauseCommand, StreamDescriptor::State::PAUSED),
-                                     std::make_pair(kFlushCommand, StreamDescriptor::State::IDLE)});
-static const NamedCommandSequence kDrainPauseFlushOutSeq = std::make_tuple(
-        std::string("DrainPauseFlush"), kStreamTransientStateTransitionDelayMs,
-        std::vector<CommandAndState>{
+                                std::make_pair(kPauseCommand, StreamDescriptor::State::PAUSED)}));
+/* TODO: Figure out a better way for testing sync/async bursts
+static const NamedCommandSequence kPauseOutAsyncSeq = std::make_tuple(
+        std::string("Pause"), kStreamTransientStateTransitionDelayMs, StreamTypeFilter::ASYNC,
+        std::make_shared<StaticStateSequence>(std::vector<StateTransition>{
                 std::make_pair(kStartCommand, StreamDescriptor::State::IDLE),
-                std::make_pair(kBurstCommand, StreamDescriptor::State::ACTIVE),
-                std::make_pair(kDrainCommand, StreamDescriptor::State::DRAINING),
-                std::make_pair(kPauseCommand, StreamDescriptor::State::DRAIN_PAUSED),
-                std::make_pair(kFlushCommand, StreamDescriptor::State::IDLE)});
+                std::make_pair(kBurstCommand, StreamDescriptor::State::TRANSFERRING),
+                std::make_pair(kPauseCommand, StreamDescriptor::State::TRANSFER_PAUSED),
+                std::make_pair(kStartCommand, StreamDescriptor::State::TRANSFERRING),
+                std::make_pair(kPauseCommand, StreamDescriptor::State::TRANSFER_PAUSED),
+                std::make_pair(kDrainOutAllCommand, StreamDescriptor::State::DRAIN_PAUSED),
+                std::make_pair(kBurstCommand, StreamDescriptor::State::TRANSFER_PAUSED)}));
+*/
+
+std::shared_ptr<StateSequence> makeFlushCommands(bool isInput, bool isSync) {
+    return std::make_shared<SmartStateSequence>(std::vector<StateTransition>{
+            std::make_pair(kStartCommand, StreamDescriptor::State::IDLE),
+            std::make_pair(kBurstCommand, isInput || isSync
+                                                  ? StreamDescriptor::State::ACTIVE
+                                                  : StreamDescriptor::State::TRANSFERRING),
+            std::make_pair(kPauseCommand, isInput || isSync
+                                                  ? StreamDescriptor::State::PAUSED
+                                                  : StreamDescriptor::State::TRANSFER_PAUSED),
+            std::make_pair(kFlushCommand, isInput ? StreamDescriptor::State::STANDBY
+                                                  : StreamDescriptor::State::IDLE)});
+}
+static const NamedCommandSequence kFlushInSeq = std::make_tuple(
+        std::string("Flush"), 0, StreamTypeFilter::ANY, makeFlushCommands(true, false));
+static const NamedCommandSequence kFlushOutSyncSeq = std::make_tuple(
+        std::string("Flush"), 0, StreamTypeFilter::SYNC, makeFlushCommands(false, true));
+static const NamedCommandSequence kFlushOutAsyncSeq =
+        std::make_tuple(std::string("Flush"), kStreamTransientStateTransitionDelayMs,
+                        StreamTypeFilter::ASYNC, makeFlushCommands(false, false));
+
+std::shared_ptr<StateSequence> makeDrainPauseFlushOutCommands(bool isSync) {
+    return std::make_shared<SmartStateSequence>(std::vector<StateTransition>{
+            std::make_pair(kStartCommand, StreamDescriptor::State::IDLE),
+            std::make_pair(kBurstCommand, isSync ? StreamDescriptor::State::ACTIVE
+                                                 : StreamDescriptor::State::TRANSFERRING),
+            std::make_pair(kDrainOutAllCommand, StreamDescriptor::State::DRAINING),
+            std::make_pair(kPauseCommand, StreamDescriptor::State::DRAIN_PAUSED),
+            std::make_pair(kFlushCommand, StreamDescriptor::State::IDLE)});
+}
+static const NamedCommandSequence kDrainPauseFlushOutSyncSeq =
+        std::make_tuple(std::string("DrainPauseFlush"), kStreamTransientStateTransitionDelayMs,
+                        StreamTypeFilter::SYNC, makeDrainPauseFlushOutCommands(true));
+static const NamedCommandSequence kDrainPauseFlushOutAsyncSeq =
+        std::make_tuple(std::string("DrainPauseFlush"), kStreamTransientStateTransitionDelayMs,
+                        StreamTypeFilter::ASYNC, makeDrainPauseFlushOutCommands(false));
+
+// Note, this isn't the "official" enum printer, it is only used to make the test name suffix.
+std::string PrintStreamFilterToString(StreamTypeFilter filter) {
+    switch (filter) {
+        case StreamTypeFilter::ANY:
+            return "";
+        case StreamTypeFilter::SYNC:
+            return "Sync";
+        case StreamTypeFilter::ASYNC:
+            return "Async";
+    }
+    return std::string("Unknown").append(std::to_string(static_cast<int32_t>(filter)));
+}
 std::string GetStreamIoTestName(const testing::TestParamInfo<StreamIoTestParameters>& info) {
     return android::PrintInstanceNameToString(
                    testing::TestParamInfo<std::string>{std::get<PARAM_MODULE_NAME>(info.param),
                                                        info.index})
             .append("_")
             .append(std::get<NAMED_CMD_NAME>(std::get<PARAM_CMD_SEQ>(info.param)))
+            .append(PrintStreamFilterToString(
+                    std::get<NAMED_CMD_STREAM_TYPE>(std::get<PARAM_CMD_SEQ>(info.param))))
             .append("_SetupSeq")
             .append(std::get<PARAM_SETUP_SEQ>(info.param) ? "2" : "1");
 }
+
 INSTANTIATE_TEST_SUITE_P(
         AudioStreamIoInTest, AudioStreamIoIn,
         testing::Combine(testing::ValuesIn(android::getAidlHalInstanceNames(IModule::descriptor)),
-                         testing::Values(kReadOrWriteSeq, kDrainInSeq, kStandbySeq, kPauseInSeq,
+                         testing::Values(kReadSeq, kDrainInSeq, kStandbyInSeq, kPauseInSeq,
                                          kFlushInSeq),
                          testing::Values(false, true)),
         GetStreamIoTestName);
@@ -2107,9 +2538,13 @@ GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(AudioStreamIoIn);
 INSTANTIATE_TEST_SUITE_P(
         AudioStreamIoOutTest, AudioStreamIoOut,
         testing::Combine(testing::ValuesIn(android::getAidlHalInstanceNames(IModule::descriptor)),
-                         testing::Values(kReadOrWriteSeq, kDrainOutSeq, kDrainPauseOutSeq,
-                                         kStandbySeq, kPauseOutSeq, kFlushOutSeq,
-                                         kDrainPauseFlushOutSeq),
+                         testing::Values(kWriteSyncSeq, kWriteAsyncSeq, kWriteDrainAsyncSeq,
+                                         kDrainOutSyncSeq, kDrainPauseOutSyncSeq,
+                                         kDrainPauseOutAsyncSeq, kStandbyOutSyncSeq,
+                                         kStandbyOutAsyncSeq,
+                                         kPauseOutSyncSeq,  // kPauseOutAsyncSeq,
+                                         kFlushOutSyncSeq, kFlushOutAsyncSeq,
+                                         kDrainPauseFlushOutSyncSeq, kDrainPauseFlushOutAsyncSeq),
                          testing::Values(false, true)),
         GetStreamIoTestName);
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(AudioStreamIoOut);
@@ -2124,7 +2559,6 @@ class TestExecutionTracer : public ::testing::EmptyTestEventListener {
     void OnTestStart(const ::testing::TestInfo& test_info) override {
         TraceTestState("Started", test_info);
     }
-
     void OnTestEnd(const ::testing::TestInfo& test_info) override {
         TraceTestState("Completed", test_info);
     }
@@ -2138,6 +2572,7 @@ class TestExecutionTracer : public ::testing::EmptyTestEventListener {
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
     ::testing::UnitTest::GetInstance()->listeners().Append(new TestExecutionTracer());
+    android::base::SetMinimumLogSeverity(::android::base::DEBUG);
     ABinderProcess_setThreadPoolMaxThreadCount(1);
     ABinderProcess_startThreadPool();
     return RUN_ALL_TESTS();

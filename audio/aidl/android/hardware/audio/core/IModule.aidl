@@ -21,6 +21,7 @@ import android.hardware.audio.common.SourceMetadata;
 import android.hardware.audio.core.AudioMode;
 import android.hardware.audio.core.AudioPatch;
 import android.hardware.audio.core.AudioRoute;
+import android.hardware.audio.core.IStreamCallback;
 import android.hardware.audio.core.IStreamIn;
 import android.hardware.audio.core.IStreamOut;
 import android.hardware.audio.core.ITelephony;
@@ -320,9 +321,13 @@ interface IModule {
      * 'setAudioPortConfig' method. Existence of an audio patch involving this
      * port configuration is not required for successful opening of a stream.
      *
-     * If the port configuration has 'COMPRESS_OFFLOAD' output flag set,
-     * the framework must provide additional information about the encoded
-     * audio stream in 'offloadInfo' argument.
+     * If the port configuration has the 'COMPRESS_OFFLOAD' output flag set,
+     * the client must provide additional information about the encoded
+     * audio stream in the 'offloadInfo' argument.
+     *
+     * If the port configuration has the 'NON_BLOCKING' output flag set,
+     * the client must provide a callback for asynchronous notifications
+     * in the 'callback' argument.
      *
      * The requested buffer size is expressed in frames, thus the actual size
      * in bytes depends on the audio port configuration. Also, the HAL module
@@ -358,6 +363,8 @@ interface IModule {
      *                             - If the offload info is not provided for an offload
      *                               port configuration.
      *                             - If a buffer of the requested size can not be provided.
+     *                             - If the callback is not provided for a non-blocking
+     *                               port configuration.
      * @throws EX_ILLEGAL_STATE In the following cases:
      *                          - If the port config already has a stream opened on it.
      *                          - If the limit on the open stream count for the port has
@@ -376,6 +383,8 @@ interface IModule {
         @nullable AudioOffloadInfo offloadInfo;
         /** Requested audio I/O buffer minimum size, in frames. */
         long bufferSizeFrames;
+        /** Client callback interface for the non-blocking output mode. */
+        @nullable IStreamCallback callback;
     }
     @VintfStability
     parcelable OpenOutputStreamReturn {
