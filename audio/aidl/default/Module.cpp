@@ -43,6 +43,7 @@ using aidl::android::media::audio::common::AudioProfile;
 using aidl::android::media::audio::common::Int;
 using aidl::android::media::audio::common::PcmType;
 using android::hardware::audio::common::getFrameSizeInBytes;
+using android::hardware::audio::common::isBitPositionFlagSet;
 
 namespace aidl::android::hardware::audio::core {
 
@@ -125,11 +126,11 @@ ndk::ScopedAStatus Module::createStreamContext(int32_t in_portConfigId, int64_t 
     }
     const auto& flags = portConfigIt->flags.value();
     if ((flags.getTag() == AudioIoFlags::Tag::input &&
-         (flags.get<AudioIoFlags::Tag::input>() &
-          1 << static_cast<int32_t>(AudioInputFlags::MMAP_NOIRQ)) == 0) ||
+         !isBitPositionFlagSet(flags.get<AudioIoFlags::Tag::input>(),
+                               AudioInputFlags::MMAP_NOIRQ)) ||
         (flags.getTag() == AudioIoFlags::Tag::output &&
-         (flags.get<AudioIoFlags::Tag::output>() &
-          1 << static_cast<int32_t>(AudioOutputFlags::MMAP_NOIRQ)) == 0)) {
+         !isBitPositionFlagSet(flags.get<AudioIoFlags::Tag::output>(),
+                               AudioOutputFlags::MMAP_NOIRQ))) {
         StreamContext temp(
                 std::make_unique<StreamContext::CommandMQ>(1, true /*configureEventFlagWord*/),
                 std::make_unique<StreamContext::ReplyMQ>(1, true /*configureEventFlagWord*/),
@@ -478,9 +479,9 @@ ndk::ScopedAStatus Module::openOutputStream(const OpenOutputStreamArguments& in_
                    << " does not correspond to an output mix port";
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
     }
-    if ((port->flags.get<AudioIoFlags::Tag::output>() &
-         1 << static_cast<int32_t>(AudioOutputFlags::COMPRESS_OFFLOAD)) != 0 &&
-        !in_args.offloadInfo.has_value()) {
+    const bool isOffload = isBitPositionFlagSet(port->flags.get<AudioIoFlags::Tag::output>(),
+                                                AudioOutputFlags::COMPRESS_OFFLOAD);
+    if (isOffload && !in_args.offloadInfo.has_value()) {
         LOG(ERROR) << __func__ << ": port id " << port->id
                    << " has COMPRESS_OFFLOAD flag set, requires offload info";
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);

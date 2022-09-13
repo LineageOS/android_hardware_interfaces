@@ -16,8 +16,13 @@
 
 #pragma once
 
+#include <initializer_list>
+#include <type_traits>
+
 #include <aidl/android/media/audio/common/AudioChannelLayout.h>
 #include <aidl/android/media/audio/common/AudioFormatDescription.h>
+#include <aidl/android/media/audio/common/AudioInputFlags.h>
+#include <aidl/android/media/audio/common/AudioOutputFlags.h>
 #include <aidl/android/media/audio/common/PcmType.h>
 
 namespace android::hardware::audio::common {
@@ -76,6 +81,36 @@ constexpr size_t getFrameSizeInBytes(
     }
     // Something unexpected.
     return 0;
+}
+
+// The helper functions defined below are only applicable to the case when an enum type
+// specifies zero-based bit positions, not bit masks themselves. This is why instantiation
+// is restricted to certain enum types.
+template <typename E>
+using is_bit_position_enum = std::integral_constant<
+        bool, std::is_same_v<E, ::aidl::android::media::audio::common::AudioInputFlags> ||
+                      std::is_same_v<E, ::aidl::android::media::audio::common::AudioOutputFlags>>;
+
+template <typename E, typename U = std::underlying_type_t<E>,
+          typename = std::enable_if_t<is_bit_position_enum<E>::value>>
+constexpr U makeBitPositionFlagMask(E flag) {
+    return 1 << static_cast<U>(flag);
+}
+
+template <typename E, typename U = std::underlying_type_t<E>,
+          typename = std::enable_if_t<is_bit_position_enum<E>::value>>
+constexpr bool isBitPositionFlagSet(U mask, E flag) {
+    return (mask & makeBitPositionFlagMask(flag)) != 0;
+}
+
+template <typename E, typename U = std::underlying_type_t<E>,
+          typename = std::enable_if_t<is_bit_position_enum<E>::value>>
+constexpr U makeBitPositionFlagMask(std::initializer_list<E> flags) {
+    U result = 0;
+    for (const auto flag : flags) {
+        result |= makeBitPositionFlagMask(flag);
+    }
+    return result;
 }
 
 }  // namespace android::hardware::audio::common
