@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <Utils.h>
 #include <aidl/android/media/audio/common/AudioChannelLayout.h>
 #include <aidl/android/media/audio/common/AudioDeviceType.h>
 #include <aidl/android/media/audio/common/AudioFormatDescription.h>
@@ -40,6 +41,7 @@ using aidl::android::media::audio::common::AudioPortMixExt;
 using aidl::android::media::audio::common::AudioProfile;
 using aidl::android::media::audio::common::Int;
 using aidl::android::media::audio::common::PcmType;
+using android::hardware::audio::common::makeBitPositionFlagMask;
 
 namespace aidl::android::hardware::audio::core::internal {
 
@@ -193,7 +195,7 @@ Configuration& getNullPrimaryConfiguration() {
                                  createDeviceExt(AudioDeviceType::OUT_SPEAKER, 0)));
 
         AudioPort primaryOutMix = createPort(c.nextPortId++, "primary output",
-                                             1 << static_cast<int32_t>(AudioOutputFlags::PRIMARY),
+                                             makeBitPositionFlagMask(AudioOutputFlags::PRIMARY),
                                              false, createPortMixExt(1, 1));
         primaryOutMix.profiles.insert(primaryOutMix.profiles.begin(),
                                       standardPcmAudioProfiles.begin(),
@@ -202,9 +204,9 @@ Configuration& getNullPrimaryConfiguration() {
 
         AudioPort compressedOffloadOutMix =
                 createPort(c.nextPortId++, "compressed offload",
-                           1 << static_cast<int32_t>(AudioOutputFlags::DIRECT) |
-                                   1 << static_cast<int32_t>(AudioOutputFlags::COMPRESS_OFFLOAD) |
-                                   1 << static_cast<int32_t>(AudioOutputFlags::NON_BLOCKING),
+                           makeBitPositionFlagMask({AudioOutputFlags::DIRECT,
+                                                    AudioOutputFlags::COMPRESS_OFFLOAD,
+                                                    AudioOutputFlags::NON_BLOCKING}),
                            false, createPortMixExt(1, 1));
         compressedOffloadOutMix.profiles.push_back(
                 createProfile(::android::MEDIA_MIMETYPE_AUDIO_MPEG,
