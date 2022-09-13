@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <chrono>
 
+#include <Utils.h>
 #include <aidl/android/media/audio/common/AudioIoFlags.h>
 #include <aidl/android/media/audio/common/AudioOutputFlags.h>
 
@@ -39,14 +40,15 @@ using aidl::android::media::audio::common::AudioPortExt;
 using aidl::android::media::audio::common::AudioProfile;
 using aidl::android::media::audio::common::AudioUsage;
 using aidl::android::media::audio::common::Int;
+using android::hardware::audio::common::isBitPositionFlagSet;
 
 // static
 std::optional<AudioOffloadInfo> ModuleConfig::generateOffloadInfoIfNeeded(
         const AudioPortConfig& portConfig) {
     if (portConfig.flags.has_value() &&
         portConfig.flags.value().getTag() == AudioIoFlags::Tag::output &&
-        (portConfig.flags.value().get<AudioIoFlags::Tag::output>() &
-         1 << static_cast<int>(AudioOutputFlags::COMPRESS_OFFLOAD)) != 0) {
+        isBitPositionFlagSet(portConfig.flags.value().get<AudioIoFlags::Tag::output>(),
+                             AudioOutputFlags::COMPRESS_OFFLOAD)) {
         AudioOffloadInfo offloadInfo;
         offloadInfo.base.sampleRate = portConfig.sampleRate.value().value;
         offloadInfo.base.channelMask = portConfig.channelMask.value();
@@ -120,6 +122,23 @@ std::vector<AudioPort> ModuleConfig::getOutputMixPorts() const {
         return port.ext.getTag() == AudioPortExt::Tag::mix &&
                port.flags.getTag() == AudioIoFlags::Tag::output;
     });
+    return result;
+}
+
+std::vector<AudioPort> ModuleConfig::getOffloadMixPorts(bool attachedOnly, bool singlePort) const {
+    std::vector<AudioPort> result;
+    const auto mixPorts = getMixPorts(false /*isInput*/);
+    auto offloadPortIt = mixPorts.begin();
+    while (offloadPortIt != mixPorts.end()) {
+        offloadPortIt = std::find_if(offloadPortIt, mixPorts.end(), [&](const AudioPort& port) {
+            return isBitPositionFlagSet(port.flags.get<AudioIoFlags::Tag::output>(),
+                                        AudioOutputFlags::COMPRESS_OFFLOAD) &&
+                   (!attachedOnly || !getAttachedSinkDevicesPortsForMixPort(port).empty());
+        });
+        if (offloadPortIt == mixPorts.end()) break;
+        result.push_back(*offloadPortIt++);
+        if (singlePort) break;
+    }
     return result;
 }
 
