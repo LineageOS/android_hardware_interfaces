@@ -39,6 +39,9 @@ class ThreadController {
     ~ThreadController() { stop(); }
 
     bool start(const std::string& name, int priority);
+    // Note: 'pause' and 'resume' methods should only be used on the "driving" side.
+    // In the case of audio HAL I/O, the driving side is the client, because the HAL
+    // implementation always blocks on getting a command.
     void pause() { switchWorkerStateSync(WorkerState::RUNNING, WorkerState::PAUSE_REQUESTED); }
     void resume() { switchWorkerStateSync(WorkerState::PAUSED, WorkerState::RESUME_REQUESTED); }
     bool hasError() {

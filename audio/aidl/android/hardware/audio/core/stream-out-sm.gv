@@ -1,0 +1,48 @@
+// Copyright (C) 2022 The Android Open Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// To render: dot -Tpng stream-out-sm.gv -o stream-out-sm.png
+digraph stream_out_state_machine {
+    node [shape=doublecircle style=filled fillcolor=black width=0.5] I;
+    node [shape=point width=0.5] F;
+    node [shape=oval width=1];
+    node [fillcolor=lightgreen] STANDBY;  // buffer is empty
+    node [fillcolor=lightgreen] IDLE;     // buffer is empty
+    node [fillcolor=tomato] CLOSED;
+    node [fillcolor=tomato] ERROR;
+    node [style=dashed] ANY_STATE;
+    node [fillcolor=lightblue style=filled];
+    I -> STANDBY;
+    STANDBY -> IDLE [label="START"];           // consumer -> active
+    STANDBY -> PAUSED [label="BURST"];         // producer -> active
+    IDLE -> STANDBY [label="STANDBY"];         // consumer -> passive
+    IDLE -> ACTIVE [label="BURST"];            // producer -> active
+    ACTIVE -> ACTIVE [label="BURST"];
+    ACTIVE -> PAUSED [label="PAUSE"];          // consumer -> passive (not consuming)
+    ACTIVE -> DRAINING [label="DRAIN"];        // producer -> passive
+    PAUSED -> PAUSED [label="BURST"];
+    PAUSED -> ACTIVE [label="START"];          // consumer -> active
+    PAUSED -> IDLE [label="FLUSH"];            // producer -> passive, buffer is cleared
+    DRAINING -> IDLE [label="<empty buffer>"];
+    DRAINING -> ACTIVE [label="BURST"];        // producer -> active
+    DRAINING -> DRAIN_PAUSED [label="PAUSE"];  // consumer -> passive (not consuming)
+    DRAIN_PAUSED -> DRAINING [label="START"];  // consumer -> active
+    DRAIN_PAUSED -> PAUSED [label="BURST"];    // producer -> active
+    DRAIN_PAUSED -> IDLE [label="FLUSH"];      // buffer is cleared
+    IDLE -> ERROR [label="<hardware failure>"];
+    ACTIVE -> ERROR [label="<hardware failure>"];
+    DRAINING -> ERROR [label="<hardware failure>"];
+    ANY_STATE -> CLOSED [label="→IStream*.close"];
+    CLOSED -> F;
+}

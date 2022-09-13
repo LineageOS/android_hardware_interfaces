@@ -39,15 +39,34 @@ parcelable StreamDescriptor {
   int frameSizeBytes;
   long bufferSizeFrames;
   android.hardware.audio.core.StreamDescriptor.AudioBuffer audio;
-  const int COMMAND_BURST = 1;
+  const int LATENCY_UNKNOWN = -1;
   @FixedSize @VintfStability
   parcelable Position {
     long frames;
     long timeNs;
   }
+  @Backing(type="int") @VintfStability
+  enum State {
+    STANDBY = 1,
+    IDLE = 2,
+    ACTIVE = 3,
+    PAUSED = 4,
+    DRAINING = 5,
+    DRAIN_PAUSED = 6,
+    ERROR = 100,
+  }
+  @Backing(type="int") @VintfStability
+  enum CommandCode {
+    START = 1,
+    BURST = 2,
+    DRAIN = 3,
+    STANDBY = 4,
+    PAUSE = 5,
+    FLUSH = 6,
+  }
   @FixedSize @VintfStability
   parcelable Command {
-    int code;
+    android.hardware.audio.core.StreamDescriptor.CommandCode code = android.hardware.audio.core.StreamDescriptor.CommandCode.START;
     int fmqByteCount;
   }
   @FixedSize @VintfStability
@@ -57,6 +76,8 @@ parcelable StreamDescriptor {
     android.hardware.audio.core.StreamDescriptor.Position observable;
     android.hardware.audio.core.StreamDescriptor.Position hardware;
     int latencyMs;
+    int xrunFrames;
+    android.hardware.audio.core.StreamDescriptor.State state = android.hardware.audio.core.StreamDescriptor.State.STANDBY;
   }
   @VintfStability
   union AudioBuffer {
