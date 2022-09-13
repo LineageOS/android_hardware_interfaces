@@ -351,11 +351,11 @@ class SensorsHidlTestBase : public testing::TestWithParam<std::string> {
                   minDelayAverageInterval / 10);
 
         // fastest rate sampling time is close to spec
-        EXPECT_LT(std::abs(minDelayAverageInterval - minSamplingPeriodInNs),
+        EXPECT_LE(std::abs(minDelayAverageInterval - minSamplingPeriodInNs),
                   minSamplingPeriodInNs / 10);
 
         // slowest rate sampling time is close to spec
-        EXPECT_LT(std::abs(maxDelayAverageInterval - maxSamplingPeriodInNs),
+        EXPECT_LE(std::abs(maxDelayAverageInterval - maxSamplingPeriodInNs),
                   maxSamplingPeriodInNs / 10);
     }
 
