@@ -26,6 +26,7 @@
 #include <android-base/logging.h>
 
 #include <StreamWorker.h>
+#include <Utils.h>
 #include <aidl/Gtest.h>
 #include <aidl/Vintf.h>
 #include <aidl/android/hardware/audio/core/IConfig.h>
@@ -64,6 +65,7 @@ using aidl::android::media::audio::common::AudioPortDeviceExt;
 using aidl::android::media::audio::common::AudioPortExt;
 using aidl::android::media::audio::common::AudioSource;
 using aidl::android::media::audio::common::AudioUsage;
+using android::hardware::audio::common::isBitPositionFlagSet;
 using android::hardware::audio::common::StreamLogic;
 using android::hardware::audio::common::StreamWorker;
 using ndk::ScopedAStatus;
@@ -95,20 +97,6 @@ AudioDeviceAddress GenerateUniqueDeviceAddress() {
     static int nextId = 1;
     // TODO: Use connection-specific ID.
     return AudioDeviceAddress::make<AudioDeviceAddress::Tag::id>(std::to_string(++nextId));
-}
-
-template <typename T>
-struct IsInput {
-    constexpr operator bool() const;
-};
-
-template <>
-constexpr IsInput<IStreamIn>::operator bool() const {
-    return true;
-}
-template <>
-constexpr IsInput<IStreamOut>::operator bool() const {
-    return false;
 }
 
 // All 'With*' classes are move-only because they are associated with some
@@ -864,12 +852,12 @@ TEST_P(AudioCoreModule, CheckMixPorts) {
         ASSERT_EQ(EX_NONE, status.getExceptionCode()) << status;
     }
     std::optional<int32_t> primaryMixPort;
-    constexpr int primaryOutputFlag = 1 << static_cast<int>(AudioOutputFlags::PRIMARY);
     for (const auto& port : ports) {
         if (port.ext.getTag() != AudioPortExt::Tag::mix) continue;
         const auto& mixPort = port.ext.get<AudioPortExt::Tag::mix>();
         if (port.flags.getTag() == AudioIoFlags::Tag::output &&
-            ((port.flags.get<AudioIoFlags::Tag::output>() & primaryOutputFlag) != 0)) {
+            isBitPositionFlagSet(port.flags.get<AudioIoFlags::Tag::output>(),
+                                 AudioOutputFlags::PRIMARY)) {
             EXPECT_FALSE(primaryMixPort.has_value())
                     << "At least two mix ports have PRIMARY flag set: " << primaryMixPort.value()
                     << " and " << port.id;
@@ -1447,14 +1435,15 @@ class AudioStream : public AudioCoreModule {
         EXPECT_NO_FATAL_FAILURE(OpenTwiceSamePortConfigImpl(portConfig.value()));
     }
 
-    void ReadOrWrite(bool useImpl2, bool testObservablePosition) {
+    void ReadOrWrite(bool useSetupSequence2, bool validateObservablePosition) {
         const auto allPortConfigs =
                 moduleConfig->getPortConfigsForMixPorts(IOTraits<Stream>::is_input);
         if (allPortConfigs.empty()) {
             GTEST_SKIP() << "No mix ports have attached devices";
         }
         for (const auto& portConfig : allPortConfigs) {
-            EXPECT_NO_FATAL_FAILURE(ReadOrWriteImpl(portConfig, useImpl2, testObservablePosition))
+            EXPECT_NO_FATAL_FAILURE(
+                    ReadOrWriteImpl(portConfig, useSetupSequence2, validateObservablePosition))
                     << portConfig.toString();
         }
     }
@@ -1510,17 +1499,20 @@ class AudioStream : public AudioCoreModule {
         EXPECT_GT(frames, framesInitial);
     }
 
-    void ReadOrWriteImpl(const AudioPortConfig& portConfig, bool useImpl2,
-                         bool testObservablePosition) {
-        if (!useImpl2) {
-            ASSERT_NO_FATAL_FAILURE(ReadOrWriteImpl1(portConfig, testObservablePosition));
+    void ReadOrWriteImpl(const AudioPortConfig& portConfig, bool useSetupSequence2,
+                         bool validateObservablePosition) {
+        if (!useSetupSequence2) {
+            ASSERT_NO_FATAL_FAILURE(
+                    ReadOrWriteSetupSequence1(portConfig, validateObservablePosition));
         } else {
-            ASSERT_NO_FATAL_FAILURE(ReadOrWriteImpl2(portConfig, testObservablePosition));
+            ASSERT_NO_FATAL_FAILURE(
+                    ReadOrWriteSetupSequence2(portConfig, validateObservablePosition));
         }
     }
 
     // Set up a patch first, then open a stream.
-    void ReadOrWriteImpl1(const AudioPortConfig& portConfig, bool testObservablePosition) {
+    void ReadOrWriteSetupSequence1(const AudioPortConfig& portConfig,
+                                   bool validateObservablePosition) {
         auto devicePorts = moduleConfig->getAttachedDevicesPortsForMixPort(
                 IOTraits<Stream>::is_input, portConfig);
         ASSERT_FALSE(devicePorts.empty());
@@ -1534,13 +1526,14 @@ class AudioStream : public AudioCoreModule {
 
         ASSERT_TRUE(worker.start());
         ASSERT_TRUE(worker.waitForAtLeastOneCycle());
-        if (testObservablePosition) {
+        if (validateObservablePosition) {
             ASSERT_NO_FATAL_FAILURE(WaitForObservablePositionAdvance(worker));
         }
     }
 
     // Open a stream, then set up a patch for it.
-    void ReadOrWriteImpl2(const AudioPortConfig& portConfig, bool testObservablePosition) {
+    void ReadOrWriteSetupSequence2(const AudioPortConfig& portConfig,
+                                   bool validateObservablePosition) {
         WithStream<Stream> stream(portConfig);
         ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultBufferSizeFrames));
         typename IOTraits<Stream>::Worker worker(*stream.getContext());
@@ -1554,7 +1547,7 @@ class AudioStream : public AudioCoreModule {
 
         ASSERT_TRUE(worker.start());
         ASSERT_TRUE(worker.waitForAtLeastOneCycle());
-        if (testObservablePosition) {
+        if (validateObservablePosition) {
             ASSERT_NO_FATAL_FAILURE(WaitForObservablePositionAdvance(worker));
         }
     }
@@ -1609,19 +1602,24 @@ TEST_IO_STREAM(OpenInvalidBufferSize);
 TEST_IO_STREAM(OpenInvalidDirection);
 TEST_IO_STREAM(OpenOverMaxCount);
 TEST_IO_STREAM(OpenTwiceSamePortConfig);
-TEST_IO_STREAM_2(ReadOrWrite, false, false);
-TEST_IO_STREAM_2(ReadOrWrite, true, false);
-TEST_IO_STREAM_2(ReadOrWrite, false, true);
-TEST_IO_STREAM_2(ReadOrWrite, true, true);
+// Use of constants makes comprehensible test names.
+constexpr bool SetupSequence1 = false;
+constexpr bool SetupSequence2 = true;
+constexpr bool SetupOnly = false;
+constexpr bool ValidateObservablePosition = true;
+TEST_IO_STREAM_2(ReadOrWrite, SetupSequence1, SetupOnly);
+TEST_IO_STREAM_2(ReadOrWrite, SetupSequence2, SetupOnly);
+TEST_IO_STREAM_2(ReadOrWrite, SetupSequence1, ValidateObservablePosition);
+TEST_IO_STREAM_2(ReadOrWrite, SetupSequence2, ValidateObservablePosition);
 TEST_IO_STREAM(ResetPortConfigWithOpenStream);
 TEST_IO_STREAM(SendInvalidCommand);
 
 TEST_P(AudioStreamOut, OpenTwicePrimary) {
     const auto mixPorts = moduleConfig->getMixPorts(false);
     auto primaryPortIt = std::find_if(mixPorts.begin(), mixPorts.end(), [](const AudioPort& port) {
-        constexpr int primaryOutputFlag = 1 << static_cast<int>(AudioOutputFlags::PRIMARY);
         return port.flags.getTag() == AudioIoFlags::Tag::output &&
-               (port.flags.get<AudioIoFlags::Tag::output>() & primaryOutputFlag) != 0;
+               isBitPositionFlagSet(port.flags.get<AudioIoFlags::Tag::output>(),
+                                    AudioOutputFlags::PRIMARY);
     });
     if (primaryPortIt == mixPorts.end()) {
         GTEST_SKIP() << "No primary mix port";
@@ -1635,19 +1633,14 @@ TEST_P(AudioStreamOut, OpenTwicePrimary) {
 }
 
 TEST_P(AudioStreamOut, RequireOffloadInfo) {
-    const auto mixPorts = moduleConfig->getMixPorts(false);
-    auto offloadPortIt = std::find_if(mixPorts.begin(), mixPorts.end(), [&](const AudioPort& port) {
-        constexpr int compressOffloadFlag = 1
-                                            << static_cast<int>(AudioOutputFlags::COMPRESS_OFFLOAD);
-        return port.flags.getTag() == AudioIoFlags::Tag::output &&
-               (port.flags.get<AudioIoFlags::Tag::output>() & compressOffloadFlag) != 0 &&
-               !moduleConfig->getAttachedSinkDevicesPortsForMixPort(port).empty();
-    });
-    if (offloadPortIt == mixPorts.end()) {
+    const auto offloadMixPorts =
+            moduleConfig->getOffloadMixPorts(true /*attachedOnly*/, true /*singlePort*/);
+    if (offloadMixPorts.empty()) {
         GTEST_SKIP()
                 << "No mix port for compressed offload that could be routed to attached devices";
     }
-    const auto portConfig = moduleConfig->getSingleConfigForMixPort(false, *offloadPortIt);
+    const auto portConfig =
+            moduleConfig->getSingleConfigForMixPort(false, *offloadMixPorts.begin());
     ASSERT_TRUE(portConfig.has_value())
             << "No profiles specified for the compressed offload mix port";
     StreamDescriptor descriptor;
