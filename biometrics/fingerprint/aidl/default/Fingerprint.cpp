@@ -65,8 +65,18 @@ ndk::ScopedAStatus Fingerprint::getSensorProps(std::vector<SensorProps>* out) {
             {SW_COMPONENT_ID, "" /* hardwareVersion */, "" /* firmwareVersion */,
              "" /* serialNumber */, SW_VERSION}};
 
-    common::CommonProps commonProps = {SENSOR_ID, SENSOR_STRENGTH, MAX_ENROLLMENTS_PER_USER,
-                                       componentInfo};
+    auto sensorId = FingerprintHalProperties::sensor_id().value_or(SENSOR_ID);
+    auto sensorStrength =
+            FingerprintHalProperties::sensor_strength().value_or((int)SENSOR_STRENGTH);
+    auto maxEnrollments =
+            FingerprintHalProperties::max_enrollments().value_or(MAX_ENROLLMENTS_PER_USER);
+    auto navigationGuesture = FingerprintHalProperties::navigation_guesture().value_or(false);
+    auto detectInteraction = FingerprintHalProperties::detect_interaction().value_or(false);
+    auto displayTouch = FingerprintHalProperties::display_touch().value_or(true);
+    auto controlIllumination = FingerprintHalProperties::control_illumination().value_or(false);
+
+    common::CommonProps commonProps = {sensorId, (common::SensorStrength)sensorStrength,
+                                       maxEnrollments, componentInfo};
 
     SensorLocation sensorLocation = mEngine->getSensorLocation();
 
@@ -75,8 +85,10 @@ ndk::ScopedAStatus Fingerprint::getSensorProps(std::vector<SensorProps>* out) {
     *out = {{commonProps,
              mSensorType,
              {sensorLocation},
-             SUPPORTS_NAVIGATION_GESTURES,
-             false /* supportsDetectInteraction */}};
+             navigationGuesture,
+             detectInteraction,
+             displayTouch,
+             controlIllumination}};
     return ndk::ScopedAStatus::ok();
 }
 
