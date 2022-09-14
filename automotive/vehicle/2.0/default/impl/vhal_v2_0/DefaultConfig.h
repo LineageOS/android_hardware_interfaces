@@ -1183,12 +1183,14 @@ const ConfigDeclaration kVehicleProperties[]{
         {
                 .config =
                         {
-                                // VHAL_SUPPORTED_PROPERTY_IDS
+                                // SUPPORTED_PROPERTY_IDS
                                 .prop = 289476424,
                                 .access = VehiclePropertyAccess::READ,
                                 .changeMode = VehiclePropertyChangeMode::STATIC,
                                 // Fetch 100 configs in one request. This number is just arbitrarily
-                                // chosen.
+                                // chosen here. But some HAL impl with bigger config data may need a
+                                // smaller number to make sure the configs returned in one request
+                                // fits the binder data size limitation.
                                 .configArray = {100},
                         },
                 // All supported property IDs. This list is checked by
