@@ -17,8 +17,8 @@
 package android.hardware.radio.ims;
 
 import android.hardware.radio.AccessNetwork;
-import android.hardware.radio.ims.ImsFailureReason;
 import android.hardware.radio.ims.ImsRegistrationState;
+import android.hardware.radio.ims.SuggestedAction;
 
 @VintfStability
 @JavaDerive(toString=true)
@@ -42,8 +42,8 @@ parcelable ImsRegistration {
      */
     AccessNetwork accessNetworkType;
 
-    /** Indicates a failure reason for IMS registration. */
-    ImsFailureReason reason;
+    /** Indicates the expected action for the radio to do. */
+    SuggestedAction suggestedAction;
 
     /**
      * Values are bitwise ORs of IMS_MMTEL_CAPABILITY_* constants and IMS_RCS_CAPABILITIES.

@@ -33,9 +33,8 @@
 
 package android.hardware.radio.ims;
 @Backing(type="int") @JavaDerive(toString=true) @VintfStability
-enum ImsFailureReason {
+enum SuggestedAction {
   NONE = 0,
-  FATAL_ERROR = 1,
-  REPEATED_ERROR = 2,
-  TEMPORARY_ERROR = 3,
+  TRIGGER_PLMN_BLOCK = 1,
+  TRIGGER_PLMN_BLOCK_WITH_TIMEOUT = 2,
 }
