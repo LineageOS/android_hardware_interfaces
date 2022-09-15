@@ -259,19 +259,22 @@ class Gralloc1HalImpl : public Hal {
 
         for (int i = 0; i < 3; i++) {
             const auto& plane = flex.planes[i];
-            // must have 8-bit depth
-            if (plane.bits_per_component != 8 || plane.bits_used != 8) {
+            // Must be a positive multiple of 8.
+            if (plane.bits_per_component <= 0 || (plane.bits_per_component % 8) != 0) {
                 return false;
             }
-
+            // Must be between 1 and bits_per_component, inclusive.
+            if (plane.bits_used < 1 || plane.bits_used > plane.bits_per_component) {
+                return false;
+            }
             if (plane.component == FLEX_COMPONENT_Y) {
                 // Y must not be interleaved
-                if (plane.h_increment != 1) {
+                if (plane.h_increment != 1 && plane.h_increment != 2) {
                     return false;
                 }
             } else {
                 // Cb and Cr can be interleaved
-                if (plane.h_increment != 1 && plane.h_increment != 2) {
+                if (plane.h_increment != 1 && plane.h_increment != 2 && plane.h_increment != 4) {
                     return false;
                 }
             }
