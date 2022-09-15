@@ -24,6 +24,7 @@ cc_test {
         "RemoteAccessService",
     ],
     shared_libs: [
+        "libbase",
         "libbinder_ndk",
         "liblog",
         "libutils",

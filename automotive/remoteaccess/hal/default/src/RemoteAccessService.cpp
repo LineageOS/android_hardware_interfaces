@@ -16,8 +16,10 @@
 
 #include "RemoteAccessService.h"
 
+#include <android-base/stringprintf.h>
 #include <android/binder_status.h>
 #include <grpc++/grpc++.h>
+#include <private/android_filesystem_config.h>
 #include <utils/Log.h>
 #include <chrono>
 #include <thread>
@@ -32,6 +34,8 @@ namespace {
 using ::aidl::android::hardware::automotive::remoteaccess::ApState;
 using ::aidl::android::hardware::automotive::remoteaccess::IRemoteTaskCallback;
 using ::android::base::ScopedLockAssertion;
+using ::android::base::StringAppendF;
+using ::android::base::StringPrintf;
 using ::grpc::ClientContext;
 using ::grpc::ClientReaderInterface;
 using ::grpc::Status;
@@ -39,6 +43,10 @@ using ::grpc::StatusCode;
 using ::ndk::ScopedAStatus;
 
 const std::string WAKEUP_SERVICE_NAME = "com.google.vehicle.wakeup";
+constexpr char COMMAND_SET_AP_STATE[] = "--set-ap-state";
+constexpr char COMMAND_START_DEBUG_CALLBACK[] = "--start-debug-callback";
+constexpr char COMMAND_STOP_DEBUG_CALLBACK[] = "--stop-debug-callback";
+constexpr char COMMAND_SHOW_TASK[] = "--show-task";
 
 std::vector<uint8_t> stringToBytes(const std::string& s) {
     const char* data = s.data();
@@ -48,6 +56,18 @@ std::vector<uint8_t> stringToBytes(const std::string& s) {
 ScopedAStatus rpcStatusToScopedAStatus(const Status& status, const std::string& errorMsg) {
     return ScopedAStatus::fromServiceSpecificErrorWithMessage(
             status.error_code(), (errorMsg + ", error: " + status.error_message()).c_str());
+}
+
+std::string printBytes(const std::vector<uint8_t>& bytes) {
+    std::string s;
+    for (size_t i = 0; i < bytes.size(); i++) {
+        StringAppendF(&s, "%02x", bytes[i]);
+    }
+    return s;
+}
+
+bool checkBoolFlag(const char* flag) {
+    return !strcmp(flag, "1") || !strcmp(flag, "0");
 }
 
 }  // namespace
@@ -154,7 +174,7 @@ ScopedAStatus RemoteAccessService::getWakeupServiceName(std::string* wakeupServi
 }
 
 ScopedAStatus RemoteAccessService::setRemoteTaskCallback(
-        [[maybe_unused]] const std::shared_ptr<IRemoteTaskCallback>& callback) {
+        const std::shared_ptr<IRemoteTaskCallback>& callback) {
     std::lock_guard<std::mutex> lockGuard(mLock);
     mRemoteTaskCallback = callback;
     return ScopedAStatus::ok();
@@ -182,6 +202,110 @@ ScopedAStatus RemoteAccessService::notifyApStateChange(const ApState& newState) 
         maybeStopTaskLoop();
     }
     return ScopedAStatus::ok();
+}
+
+bool RemoteAccessService::checkDumpPermission() {
+    uid_t uid = AIBinder_getCallingUid();
+    return uid == AID_ROOT || uid == AID_SHELL || uid == AID_SYSTEM;
+}
+
+void RemoteAccessService::dumpHelp(int fd) {
+    dprintf(fd, "%s",
+            (std::string("RemoteAccess HAL debug interface, Usage: \n") + COMMAND_SET_AP_STATE +
+             " [0/1](isReadyForRemoteTask) [0/1](isWakeupRequired)  Set the new AP state\n" +
+             COMMAND_START_DEBUG_CALLBACK +
+             " Start a debug callback that will record the received tasks\n" +
+             COMMAND_STOP_DEBUG_CALLBACK + " Stop the debug callback\n" + COMMAND_SHOW_TASK +
+             " Show tasks received by debug callback\n")
+                    .c_str());
+}
+
+binder_status_t RemoteAccessService::dump(int fd, const char** args, uint32_t numArgs) {
+    if (!checkDumpPermission()) {
+        dprintf(fd, "Caller must be root, system or shell\n");
+        return STATUS_PERMISSION_DENIED;
+    }
+
+    if (numArgs == 0) {
+        dumpHelp(fd);
+        return STATUS_OK;
+    }
+
+    if (!strcmp(args[0], COMMAND_SET_AP_STATE)) {
+        if (numArgs < 3) {
+            dumpHelp(fd);
+            return STATUS_OK;
+        }
+        ApState apState = {};
+        const char* remoteTaskFlag = args[1];
+        if (!strcmp(remoteTaskFlag, "1") && !strcmp(remoteTaskFlag, "0")) {
+            dumpHelp(fd);
+            return STATUS_OK;
+        }
+        if (!checkBoolFlag(args[1])) {
+            dumpHelp(fd);
+            return STATUS_OK;
+        }
+        if (!strcmp(args[1], "1")) {
+            apState.isReadyForRemoteTask = true;
+        }
+        if (!checkBoolFlag(args[2])) {
+            dumpHelp(fd);
+            return STATUS_OK;
+        }
+        if (!strcmp(args[2], "1")) {
+            apState.isWakeupRequired = true;
+        }
+        auto status = notifyApStateChange(apState);
+        if (!status.isOk()) {
+            dprintf(fd, "Failed to set AP state, code: %d, error: %s\n", status.getStatus(),
+                    status.getMessage());
+        } else {
+            dprintf(fd, "successfully set the new AP state\n");
+        }
+    } else if (!strcmp(args[0], COMMAND_START_DEBUG_CALLBACK)) {
+        mDebugCallback = ndk::SharedRefBase::make<DebugRemoteTaskCallback>();
+        setRemoteTaskCallback(mDebugCallback);
+        dprintf(fd, "Debug callback registered\n");
+    } else if (!strcmp(args[0], COMMAND_STOP_DEBUG_CALLBACK)) {
+        if (mDebugCallback) {
+            mDebugCallback.reset();
+        }
+        clearRemoteTaskCallback();
+        dprintf(fd, "Debug callback unregistered\n");
+    } else if (!strcmp(args[0], COMMAND_SHOW_TASK)) {
+        if (mDebugCallback) {
+            dprintf(fd, "%s", mDebugCallback->printTasks().c_str());
+        } else {
+            dprintf(fd, "Debug callback is not currently used, use \"%s\" first.\n",
+                    COMMAND_START_DEBUG_CALLBACK);
+        }
+    } else {
+        dumpHelp(fd);
+    }
+
+    return STATUS_OK;
+}
+
+ScopedAStatus DebugRemoteTaskCallback::onRemoteTaskRequested(const std::string& clientId,
+                                                             const std::vector<uint8_t>& data) {
+    std::lock_guard<std::mutex> lockGuard(mLock);
+    mTasks.push_back({
+            .clientId = clientId,
+            .data = data,
+    });
+    return ScopedAStatus::ok();
+}
+
+std::string DebugRemoteTaskCallback::printTasks() {
+    std::lock_guard<std::mutex> lockGuard(mLock);
+    std::string s = StringPrintf("Received %zu tasks in %f seconds", mTasks.size(),
+                                 (android::uptimeMillis() - mStartTimeMillis) / 1000.);
+    for (size_t i = 0; i < mTasks.size(); i++) {
+        StringAppendF(&s, "Client Id: %s, Data: %s\n", mTasks[i].clientId.c_str(),
+                      printBytes(mTasks[i].data).c_str());
+    }
+    return s;
 }
 
 }  // namespace remoteaccess
