@@ -34,11 +34,15 @@ using android::hardware::power::Boost;
 using android::hardware::power::IPower;
 using android::hardware::power::IPowerHintSession;
 using android::hardware::power::Mode;
+using android::hardware::power::SessionHint;
 using android::hardware::power::WorkDuration;
 
 const std::vector<Boost> kBoosts{ndk::enum_range<Boost>().begin(), ndk::enum_range<Boost>().end()};
 
 const std::vector<Mode> kModes{ndk::enum_range<Mode>().begin(), ndk::enum_range<Mode>().end()};
+
+const std::vector<SessionHint> kSessionHints{ndk::enum_range<SessionHint>().begin(),
+                                             ndk::enum_range<SessionHint>().end()};
 
 const std::vector<Boost> kInvalidBoosts = {
         static_cast<Boost>(static_cast<int32_t>(kBoosts.front()) - 1),
@@ -48,6 +52,11 @@ const std::vector<Boost> kInvalidBoosts = {
 const std::vector<Mode> kInvalidModes = {
         static_cast<Mode>(static_cast<int32_t>(kModes.front()) - 1),
         static_cast<Mode>(static_cast<int32_t>(kModes.back()) + 1),
+};
+
+const std::vector<SessionHint> kInvalidSessionHints = {
+        static_cast<SessionHint>(static_cast<int32_t>(kSessionHints.front()) - 1),
+        static_cast<SessionHint>(static_cast<int32_t>(kSessionHints.back()) + 1),
 };
 
 class DurationWrapper : public WorkDuration {
@@ -175,6 +184,7 @@ TEST_P(PowerAidl, createAndCloseHintSession) {
     ASSERT_TRUE(session->close().isOk());
     session.reset();
 }
+
 TEST_P(PowerAidl, createHintSessionFailed) {
     std::shared_ptr<IPowerHintSession> session;
     auto status = power->createHintSession(getpid(), getuid(), kEmptyTids, 16666666L, &session);
@@ -196,6 +206,21 @@ TEST_P(PowerAidl, updateAndReportDurations) {
 
     ASSERT_TRUE(session->updateTargetWorkDuration(16666667LL).isOk());
     ASSERT_TRUE(session->reportActualWorkDuration(kDurations).isOk());
+}
+
+TEST_P(PowerAidl, sendSessionHint) {
+    std::shared_ptr<IPowerHintSession> session;
+    auto status = power->createHintSession(getpid(), getuid(), kSelfTids, 16666666L, &session);
+    if (!status.isOk()) {
+        EXPECT_TRUE(isUnknownOrUnsupported(status));
+        return;
+    }
+    for (const auto& sessionHint : kSessionHints) {
+        ASSERT_TRUE(session->sendHint(sessionHint).isOk());
+    }
+    for (const auto& sessionHint : kInvalidSessionHints) {
+        ASSERT_TRUE(session->sendHint(sessionHint).isOk());
+    }
 }
 
 // FIXED_PERFORMANCE mode is required for all devices which ship on Android 11
