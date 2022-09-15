@@ -43,4 +43,5 @@ interface IDvr {
   void stop();
   void flush();
   void close();
+  void setStatusCheckIntervalHint(in long milliseconds);
 }

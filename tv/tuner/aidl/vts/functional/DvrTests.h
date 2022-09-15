@@ -162,8 +162,12 @@ class DvrTests {
     AssertionResult startDvrPlayback();
     AssertionResult stopDvrRecord();
     AssertionResult startDvrRecord();
+    AssertionResult setPlaybackStatusCheckIntervalHint(int64_t milliseconds);
+    AssertionResult setRecordStatusCheckIntervalHint(int64_t milliseconds);
     void closeDvrPlayback();
     void closeDvrRecord();
+    int32_t getDvrPlaybackInterfaceVersion();
+    int32_t getDvrRecordInterfaceVersion();
 
   protected:
     static AssertionResult failure() { return ::testing::AssertionFailure(); }
