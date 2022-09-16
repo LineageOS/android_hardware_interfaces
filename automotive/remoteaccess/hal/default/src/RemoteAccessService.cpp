@@ -16,6 +16,8 @@
 
 #include "RemoteAccessService.h"
 
+#include <VehicleUtils.h>
+#include <aidl/android/hardware/automotive/vehicle/VehicleProperty.h>
 #include <android-base/stringprintf.h>
 #include <android/binder_status.h>
 #include <grpc++/grpc++.h>
@@ -33,9 +35,12 @@ namespace {
 
 using ::aidl::android::hardware::automotive::remoteaccess::ApState;
 using ::aidl::android::hardware::automotive::remoteaccess::IRemoteTaskCallback;
+using ::aidl::android::hardware::automotive::vehicle::VehicleProperty;
 using ::android::base::ScopedLockAssertion;
 using ::android::base::StringAppendF;
 using ::android::base::StringPrintf;
+using ::android::frameworks::automotive::vhal::IVhalClient;
+using ::android::hardware::automotive::vehicle::toInt;
 using ::grpc::ClientContext;
 using ::grpc::ClientReaderInterface;
 using ::grpc::Status;
@@ -47,6 +52,7 @@ constexpr char COMMAND_SET_AP_STATE[] = "--set-ap-state";
 constexpr char COMMAND_START_DEBUG_CALLBACK[] = "--start-debug-callback";
 constexpr char COMMAND_STOP_DEBUG_CALLBACK[] = "--stop-debug-callback";
 constexpr char COMMAND_SHOW_TASK[] = "--show-task";
+constexpr char COMMAND_GET_DEVICE_ID[] = "--get-device-id";
 
 std::vector<uint8_t> stringToBytes(const std::string& s) {
     const char* data = s.data();
@@ -68,6 +74,10 @@ std::string printBytes(const std::vector<uint8_t>& bytes) {
 
 bool checkBoolFlag(const char* flag) {
     return !strcmp(flag, "1") || !strcmp(flag, "0");
+}
+
+void dprintErrorStatus(int fd, const char* detail, const ScopedAStatus& status) {
+    dprintf(fd, "%s, code: %d, error: %s\n", detail, status.getStatus(), status.getMessage());
 }
 
 }  // namespace
@@ -164,7 +174,25 @@ void RemoteAccessService::runTaskLoop() {
 }
 
 ScopedAStatus RemoteAccessService::getDeviceId(std::string* deviceId) {
-    // TODO(b/241483300): Call VHAL to get VIN.
+    auto vhalClient = IVhalClient::tryCreate();
+    if (vhalClient == nullptr) {
+        ALOGE("Failed to connect to VHAL");
+        return ScopedAStatus::fromServiceSpecificErrorWithMessage(
+                /*errorCode=*/0, "Failed to connect to VHAL to get device ID");
+    }
+    return getDeviceIdWithClient(*vhalClient.get(), deviceId);
+}
+
+ScopedAStatus RemoteAccessService::getDeviceIdWithClient(IVhalClient& vhalClient,
+                                                         std::string* deviceId) {
+    auto result = vhalClient.getValueSync(
+            *vhalClient.createHalPropValue(toInt(VehicleProperty::INFO_VIN)));
+    if (!result.ok()) {
+        return ScopedAStatus::fromServiceSpecificErrorWithMessage(
+                /*errorCode=*/0,
+                ("failed to get INFO_VIN from VHAL: " + result.error().message()).c_str());
+    }
+    *deviceId = (*result)->getStringValue();
     return ScopedAStatus::ok();
 }
 
@@ -216,7 +244,8 @@ void RemoteAccessService::dumpHelp(int fd) {
              COMMAND_START_DEBUG_CALLBACK +
              " Start a debug callback that will record the received tasks\n" +
              COMMAND_STOP_DEBUG_CALLBACK + " Stop the debug callback\n" + COMMAND_SHOW_TASK +
-             " Show tasks received by debug callback\n")
+             " Show tasks received by debug callback\n" + COMMAND_GET_DEVICE_ID +
+             " Get device id\n")
                     .c_str());
 }
 
@@ -258,8 +287,7 @@ binder_status_t RemoteAccessService::dump(int fd, const char** args, uint32_t nu
         }
         auto status = notifyApStateChange(apState);
         if (!status.isOk()) {
-            dprintf(fd, "Failed to set AP state, code: %d, error: %s\n", status.getStatus(),
-                    status.getMessage());
+            dprintErrorStatus(fd, "Failed to set AP state", status);
         } else {
             dprintf(fd, "successfully set the new AP state\n");
         }
@@ -279,6 +307,14 @@ binder_status_t RemoteAccessService::dump(int fd, const char** args, uint32_t nu
         } else {
             dprintf(fd, "Debug callback is not currently used, use \"%s\" first.\n",
                     COMMAND_START_DEBUG_CALLBACK);
+        }
+    } else if (!strcmp(args[0], COMMAND_GET_DEVICE_ID)) {
+        std::string deviceId;
+        auto status = getDeviceId(&deviceId);
+        if (!status.isOk()) {
+            dprintErrorStatus(fd, "Failed to get device ID", status);
+        } else {
+            dprintf(fd, "Device Id: %s\n", deviceId.c_str());
         }
     } else {
         dumpHelp(fd);

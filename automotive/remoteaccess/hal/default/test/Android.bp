@@ -37,6 +37,9 @@ cc_test {
         "libgtest",
         "libgmock",
     ],
+    defaults: [
+        "vhalclient_defaults",
+    ],
     cflags: [
         "-Wno-unused-parameter",
     ],
