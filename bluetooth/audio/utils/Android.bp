@@ -40,9 +40,13 @@ cc_library_shared {
         "aidl_session/BluetoothAudioCodecs.cpp",
         "aidl_session/BluetoothAudioSession.cpp",
         "aidl_session/HidlToAidlMiddleware.cpp",
+        "aidl_session/BluetoothLeAudioCodecsProvider.cpp",
     ],
     export_include_dirs: ["aidl_session/"],
-    header_libs: ["libhardware_headers"],
+    header_libs: [
+        "libhardware_headers",
+        "libxsdc-utils",
+    ],
     shared_libs: [
         "android.hardware.bluetooth.audio@2.0",
         "android.hardware.bluetooth.audio@2.1",
@@ -53,5 +57,15 @@ cc_library_shared {
         "liblog",
         "android.hardware.bluetooth.audio-V2-ndk",
         "libhidlbase",
+        "libxml2",
     ],
+    generated_sources: ["le_audio_codec_capabilities"],
+    generated_headers: ["le_audio_codec_capabilities"],
+}
+
+xsd_config {
+    name: "le_audio_codec_capabilities",
+    srcs: ["le_audio_codec_capabilities/le_audio_codec_capabilities.xsd"],
+    package_name: "aidl.android.hardware.bluetooth.audio.setting",
+    api_dir: "le_audio_codec_capabilities/schema",
 }
