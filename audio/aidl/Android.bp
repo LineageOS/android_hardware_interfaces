@@ -148,6 +148,7 @@ aidl_interface {
     vendor_available: true,
     srcs: [
         "android/hardware/audio/effect/Descriptor.aidl",
+        "android/hardware/audio/effect/IEffect.aidl",
         "android/hardware/audio/effect/IFactory.aidl",
     ],
     imports: [
@@ -164,4 +165,20 @@ aidl_interface {
             sdk_version: "module_current",
         },
     },
+}
+
+latest_android_hardware_audio_effect = "android.hardware.audio.effect-V1"
+
+cc_defaults {
+    name: "latest_android_hardware_audio_effect_ndk_shared",
+    shared_libs: [
+        latest_android_hardware_audio_effect + "-ndk",
+    ],
+}
+
+cc_defaults {
+    name: "latest_android_hardware_audio_effect_ndk_static",
+    static_libs: [
+        latest_android_hardware_audio_effect + "-ndk",
+    ],
 }
