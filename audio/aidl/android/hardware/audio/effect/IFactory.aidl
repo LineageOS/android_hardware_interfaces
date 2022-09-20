@@ -17,6 +17,7 @@
 package android.hardware.audio.effect;
 
 import android.hardware.audio.effect.Descriptor;
+import android.hardware.audio.effect.IEffect;
 import android.media.audio.common.AudioUuid;
 
 /**
@@ -42,4 +43,30 @@ interface IFactory {
      */
     Descriptor.Identity[] queryEffects(
             in @nullable AudioUuid type, in @nullable AudioUuid implementation);
+
+    /**
+     * Called by the audio framework to create the effect (identified by the implementation UUID
+     * parameter).
+     *
+     * The effect instance should be able to maintain its own context and parameters after creation.
+     *
+     * @param implUuid UUID for the effect implementation which instance will be created based on.
+     * @return The effect instance handle created.
+     * @throws EX_ILLEGAL_ARGUMENT if the implUuid is not valid.
+     * @throws EX_TRANSACTION_FAILED if device capability/resource is not enough to create the
+     *         effect instance.
+     */
+    IEffect createEffect(in AudioUuid implUuid);
+
+    /**
+     * Called by the framework to destroy the effect and free up all currently allocated resources.
+     * It is recommended to destroy the effect from the client side as soon as it is becomes unused.
+     *
+     * The client must ensure effect instance is closed before destroy.
+     *
+     * @param handle The handle of effect instance to be destroyed.
+     * @throws EX_ILLEGAL_ARGUMENT if the effect handle is not valid.
+     * @throws EX_ILLEGAL_STATE if the effect instance is not in a proper state to be destroyed.
+     */
+    void destroyEffect(in IEffect handle);
 }
