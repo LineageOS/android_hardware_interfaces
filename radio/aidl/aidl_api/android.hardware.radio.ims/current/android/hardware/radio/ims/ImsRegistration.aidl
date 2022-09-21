@@ -36,7 +36,7 @@ package android.hardware.radio.ims;
 parcelable ImsRegistration {
   android.hardware.radio.ims.ImsRegistrationState regState;
   android.hardware.radio.AccessNetwork accessNetworkType;
-  android.hardware.radio.ims.ImsFailureReason reason;
+  android.hardware.radio.ims.SuggestedAction suggestedAction;
   int capabilities;
   const int IMS_MMTEL_CAPABILITY_NONE = 0;
   const int IMS_MMTEL_CAPABILITY_VOICE = 1;

@@ -19,26 +19,19 @@ package android.hardware.radio.ims;
 @VintfStability
 @JavaDerive(toString=true)
 @Backing(type="int")
-enum ImsFailureReason {
+enum SuggestedAction {
     /** Default value */
-    NONE,
-
+    NONE = 0,
     /**
      * Indicates that the IMS registration is failed with fatal error such as 403 or 404
      * on all P-CSCF addresses. The radio shall block the current PLMN or disable
      * the RAT as per the carrier requirements.
      */
-    FATAL_ERROR,
-
+    TRIGGER_PLMN_BLOCK = 1 << 0,
     /**
      * Indicates that the IMS registration on current PLMN failed multiple times.
-     * The radio shall block the current PLMN or disable the RAT as per the
-     * carrier requirements.
+     * The radio shall block the current PLMN or disable the RAT during EPS or 5GS mobility
+     * management timer value as per the carrier requirements.
      */
-    REPEATED_ERROR,
-
-    /**
-     * Indicates that IMS registration has failed temporarily. A retry will be done shortly.
-     */
-    TEMPORARY_ERROR,
+    TRIGGER_PLMN_BLOCK_WITH_TIMEOUT = 1 << 1,
 }
