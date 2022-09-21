@@ -1,0 +1,93 @@
+package {
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "hardware_interfaces_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-Apache-2.0
+    default_applicable_licenses: ["hardware_interfaces_license"],
+}
+
+cc_library_static {
+    name: "libcasexampleimpl",
+    vendor_available: true,
+
+    srcs: [
+        "CasImpl.cpp",
+        "DescramblerImpl.cpp",
+        "MediaCasService.cpp",
+        "SharedLibrary.cpp",
+        "TypeConvert.cpp",
+    ],
+
+    shared_libs: [
+        "android.hardware.cas-V1-ndk",
+        "libbinder_ndk",
+        "liblog",
+        "libutils",
+        "libcutils",
+    ],
+    static_libs: [
+        "libaidlcommonsupport",
+    ],
+    header_libs: [
+        "libstagefright_foundation_headers",
+        "media_plugin_headers",
+    ],
+}
+
+cc_defaults {
+    name: "cas_service_example_defaults",
+    vendor: true,
+    relative_install_path: "hw",
+
+    srcs: ["service.cpp"],
+
+    static_libs: [
+        "libaidlcommonsupport",
+        "libcasexampleimpl",
+    ],
+    shared_libs: [
+        "android.hardware.cas-V1-ndk",
+        "libbinder_ndk",
+        "liblog",
+        "libutils",
+        "libcutils",
+    ],
+    header_libs: ["media_plugin_headers"],
+    vintf_fragments: ["android.hardware.cas-service.xml"],
+}
+
+cc_binary {
+    name: "android.hardware.cas-service.example",
+    defaults: ["cas_service_example_defaults"],
+    init_rc: ["cas-default.rc"],
+}
+
+cc_binary {
+    name: "android.hardware.cas-service.example-lazy",
+    defaults: ["cas_service_example_defaults"],
+    init_rc: ["cas-default-lazy.rc"],
+    cflags: ["-DLAZY_SERVICE"],
+}
+
+cc_fuzz {
+    name: "android.hardware.cas-service_fuzzer",
+    vendor: true,
+
+    defaults: ["service_fuzzer_defaults"],
+    srcs: ["fuzzer.cpp"],
+
+    shared_libs: [
+        "android.hardware.cas-V1-ndk",
+        "libcutils",
+        "liblog",
+    ],
+    static_libs: [
+        "libaidlcommonsupport",
+        "libcasexampleimpl",
+    ],
+    header_libs: ["media_plugin_headers"],
+    fuzz_config: {
+        componentid: 1344,
+    },
+}

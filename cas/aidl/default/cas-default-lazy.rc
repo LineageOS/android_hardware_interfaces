@@ -1,0 +1,9 @@
+service vendor.cas-default-lazy /vendor/bin/hw/android.hardware.cas-service.example-lazy
+    interface aidl android.hardware.cas.IMediaCasService/default
+    class hal
+    user media
+    group mediadrm drmrpc
+    ioprio rt 4
+    task_profiles ProcessCapacityHigh
+    oneshot
+    disabled
