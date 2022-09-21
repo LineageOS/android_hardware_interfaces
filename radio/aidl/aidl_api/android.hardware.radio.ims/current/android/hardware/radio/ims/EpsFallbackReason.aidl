@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2022 The Android Open Source Project
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the Apache License, Version 2.0 (the "License"),
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -32,12 +32,8 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.ims;
-@VintfStability
-interface IRadioImsResponse {
-  oneway void setSrvccCallInfoResponse(in android.hardware.radio.RadioResponseInfo info);
-  oneway void updateImsRegistrationInfoResponse(in android.hardware.radio.RadioResponseInfo info);
-  oneway void startImsTrafficResponse(in android.hardware.radio.RadioResponseInfo info, in @nullable android.hardware.radio.ims.ConnectionFailureInfo failureInfo);
-  oneway void stopImsTrafficResponse(in android.hardware.radio.RadioResponseInfo info);
-  oneway void triggerEpsFallbackResponse(in android.hardware.radio.RadioResponseInfo info);
-  oneway void sendAnbrQueryResponse(in android.hardware.radio.RadioResponseInfo info);
+@Backing(type="int") @JavaDerive(toString=true) @VintfStability
+enum EpsFallbackReason {
+  NO_NETWORK_TRIGGER = 1,
+  NO_NETWORK_RESPONSE = 2,
 }

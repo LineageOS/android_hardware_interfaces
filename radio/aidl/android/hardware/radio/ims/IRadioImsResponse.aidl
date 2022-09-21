@@ -110,5 +110,22 @@ oneway interface IRadioImsResponse {
      *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      */
+    void triggerEpsFallbackResponse(in RadioResponseInfo info);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:INVALID_STATE
+     *   RadioError:NO_MEMORY
+     *   RadioError:SYSTEM_ERR
+     *   RadioError:MODEM_ERR
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:INVALID_ARGUMENTS
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:NO_RESOURCES
+     */
     void sendAnbrQueryResponse(in RadioResponseInfo info);
 }
