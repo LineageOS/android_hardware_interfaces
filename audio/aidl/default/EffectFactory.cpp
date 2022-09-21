@@ -29,23 +29,9 @@ Factory::Factory() {
     // TODO: implement this with xml parser on audio_effect.xml, and filter with optional
     // parameters.
     Descriptor::Identity id;
-    id.type = {static_cast<int32_t>(0x0bed4300),
-               0xddd6,
-               0x11db,
-               0x8f34,
-               {0x00, 0x02, 0xa5, 0xd5, 0xc5, 0x1b}};
-    id.uuid = EqualizerUUID;
+    id.type = EqualizerTypeUUID;
+    id.uuid = EqualizerSwImplUUID;
     mIdentityList.push_back(id);
-    // TODO: Add visualizer with default implementation later
-#if 0
-    id.type = {static_cast<int32_t>(0xd3467faa),
-               0xacc7,
-               0x4d34,
-               0xacaf,
-               {0x00, 0x02, 0xa5, 0xd5, 0xc5, 0x1b}};
-    id.uuid = VisualizerUUID;
-    mIdentityList.push_back(id);
-#endif
 }
 
 ndk::ScopedAStatus Factory::queryEffects(const std::optional<AudioUuid>& in_type,
@@ -63,7 +49,7 @@ ndk::ScopedAStatus Factory::createEffect(
         const AudioUuid& in_impl_uuid,
         std::shared_ptr<::aidl::android::hardware::audio::effect::IEffect>* _aidl_return) {
     LOG(DEBUG) << __func__ << ": UUID " << in_impl_uuid.toString();
-    if (in_impl_uuid == EqualizerUUID) {
+    if (in_impl_uuid == EqualizerSwImplUUID) {
         *_aidl_return = ndk::SharedRefBase::make<Equalizer>();
     } else {
         LOG(ERROR) << __func__ << ": UUID "
