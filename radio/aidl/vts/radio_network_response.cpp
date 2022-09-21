@@ -267,13 +267,15 @@ ndk::ScopedAStatus RadioNetworkResponse::supplyNetworkDepersonalizationResponse(
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioNetworkResponse::setEmergencyModeResponse(const RadioResponseInfo& info, const EmergencyRegResult& /*regState*/) {
+ndk::ScopedAStatus RadioNetworkResponse::setEmergencyModeResponse(
+        const RadioResponseInfo& info, const EmergencyRegResult& /*regState*/) {
     rspInfo = info;
     parent_network.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioNetworkResponse::triggerEmergencyNetworkScanResponse(const RadioResponseInfo& info) {
+ndk::ScopedAStatus RadioNetworkResponse::triggerEmergencyNetworkScanResponse(
+        const RadioResponseInfo& info) {
     rspInfo = info;
     parent_network.notify(info.serial);
     return ndk::ScopedAStatus::ok();
@@ -285,7 +287,8 @@ ndk::ScopedAStatus RadioNetworkResponse::exitEmergencyModeResponse(const RadioRe
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioNetworkResponse::cancelEmergencyNetworkScanResponse(const RadioResponseInfo& info) {
+ndk::ScopedAStatus RadioNetworkResponse::cancelEmergencyNetworkScanResponse(
+        const RadioResponseInfo& info) {
     rspInfo = info;
     parent_network.notify(info.serial);
     return ndk::ScopedAStatus::ok();
