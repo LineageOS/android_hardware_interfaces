@@ -110,6 +110,16 @@
             "minSampleRate": 1.0
         },
         {
+            "property": "VehicleProperty::PERF_VEHICLE_SPEED_DISPLAY",
+            "defaultValue": {
+                "floatValues": [
+                    0.0
+                ]
+            },
+            "maxSampleRate": 10.0,
+            "minSampleRate": 1.0
+        },
+        {
             "property": "VehicleProperty::VEHICLE_SPEED_DISPLAY_UNITS",
             "defaultValue": {
                 "int32Values": [
