@@ -96,6 +96,7 @@ TEST_P(VibratorAidl, ValidatePrepareSyncedExistingVibrators) {
     if (!(capabilities & IVibratorManager::CAP_SYNC)) return;
     if (vibratorIds.empty()) return;
     EXPECT_TRUE(manager->prepareSynced(vibratorIds).isOk());
+    EXPECT_TRUE(manager->cancelSynced().isOk());
 }
 
 TEST_P(VibratorAidl, PrepareSyncedEmptySetIsInvalid) {
@@ -208,6 +209,7 @@ TEST_P(VibratorAidl, TriggerCallbackNotSupported) {
         EXPECT_TRUE(manager->prepareSynced(vibratorIds).isOk());
         Status status = manager->triggerSynced(callback);
         EXPECT_TRUE(isUnknownOrUnsupported(status)) << status;
+        EXPECT_TRUE(manager->cancelSynced().isOk());
     }
 }
 
