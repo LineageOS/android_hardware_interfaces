@@ -18,6 +18,7 @@ package android.hardware.radio.ims;
 
 import android.hardware.radio.RadioIndicationType;
 import android.hardware.radio.ims.ConnectionFailureInfo;
+import android.hardware.radio.ims.ImsDeregistrationReason;
 import android.hardware.radio.ims.ImsStreamDirection;
 import android.hardware.radio.ims.ImsStreamType;
 
@@ -60,6 +61,7 @@ oneway interface IRadioImsIndication {
      * the network detach procedure.
      *
      * @param type Type of radio indication
+     * @param reason the reason why the deregistration is triggered
      */
-     void triggerImsDeregistration(in RadioIndicationType type);
+     void triggerImsDeregistration(in RadioIndicationType type, in ImsDeregistrationReason reason);
 }

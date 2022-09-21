@@ -28,6 +28,7 @@ ndk::ScopedAStatus RadioImsIndication::notifyAnbr(RadioIndicationType /*type*/,
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioImsIndication::triggerImsDeregistration(RadioIndicationType /*type*/) {
+ndk::ScopedAStatus RadioImsIndication::triggerImsDeregistration(RadioIndicationType /*type*/,
+        ImsDeregistrationReason /*reason*/) {
     return ndk::ScopedAStatus::ok();
 }

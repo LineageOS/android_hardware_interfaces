@@ -68,7 +68,8 @@ class RadioImsIndication : public BnRadioImsIndication {
     virtual ndk::ScopedAStatus notifyAnbr(RadioIndicationType type, ImsStreamType mediaType,
             ImsStreamDirection direction, int bitsPerSecond) override;
 
-    virtual ndk::ScopedAStatus triggerImsDeregistration(RadioIndicationType type) override;
+    virtual ndk::ScopedAStatus triggerImsDeregistration(RadioIndicationType type,
+            ImsDeregistrationReason reason) override;
 };
 
 // The main test class for Radio AIDL Ims.

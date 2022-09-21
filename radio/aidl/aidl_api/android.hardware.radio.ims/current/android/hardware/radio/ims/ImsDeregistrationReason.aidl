@@ -32,9 +32,9 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.ims;
-@VintfStability
-interface IRadioImsIndication {
-  oneway void onConnectionSetupFailure(in android.hardware.radio.RadioIndicationType type, in String token, in android.hardware.radio.ims.ConnectionFailureInfo info);
-  oneway void notifyAnbr(in android.hardware.radio.RadioIndicationType type, in android.hardware.radio.ims.ImsStreamType mediaType, in android.hardware.radio.ims.ImsStreamDirection direction, int bitsPerSecond);
-  oneway void triggerImsDeregistration(in android.hardware.radio.RadioIndicationType type, in android.hardware.radio.ims.ImsDeregistrationReason reason);
+@Backing(type="int") @JavaDerive(toString=true) @VintfStability
+enum ImsDeregistrationReason {
+  REASON_SIM_REMOVED = 1,
+  REASON_SIM_REFRESH = 2,
+  REASON_NETWORK_MODE_CHANGED = 3,
 }
