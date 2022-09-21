@@ -15,7 +15,11 @@
  */
 
 #include <iterator>
+#include <memory>
+#include <set>
+#include <string>
 #include <tuple>
+#include "aidl/android/hardware/security/keymint/IRemotelyProvisionedComponent.h"
 
 #include <aidl/android/hardware/security/keymint/RpcHardwareInfo.h>
 #include <android-base/properties.h>
@@ -439,6 +443,133 @@ JsonOutput jsonEncodeCsrWithBuild(const std::string instance_name, const cppbor:
     Json::StreamWriterBuilder factory;
     factory["indentation"] = "";  // disable pretty formatting
     return JsonOutput::Ok(Json::writeString(factory, json));
+}
+
+std::string checkMapEntry(const cppbor::Map& devInfo, cppbor::MajorType majorType,
+                          const std::string& entryName) {
+    const std::unique_ptr<cppbor::Item>& val = devInfo.get(entryName);
+    if (!val) {
+        return entryName + " is missing.\n";
+    }
+    if (val->type() != majorType) {
+        return entryName + " has the wrong type.\n";
+    }
+    switch (majorType) {
+        case cppbor::TSTR:
+            if (val->asTstr()->value().size() <= 0) {
+                return entryName + " is present but the value is empty.\n";
+            }
+            break;
+        case cppbor::BSTR:
+            if (val->asBstr()->value().size() <= 0) {
+                return entryName + " is present but the value is empty.\n";
+            }
+            break;
+        default:
+            break;
+    }
+    return "";
+}
+
+std::string checkMapEntry(const cppbor::Map& devInfo, cppbor::MajorType majorType,
+                          const std::string& entryName, const cppbor::Array& allowList) {
+    std::string error = checkMapEntry(devInfo, majorType, entryName);
+    if (!error.empty()) {
+        return error;
+    }
+
+    const std::unique_ptr<cppbor::Item>& val = devInfo.get(entryName);
+    for (auto i = allowList.begin(); i != allowList.end(); ++i) {
+        if (**i == *val) {
+            return "";
+        }
+    }
+    return entryName + " has an invalid value.\n";
+}
+
+ErrMsgOr<std::unique_ptr<cppbor::Map>> parseAndValidateDeviceInfo(
+        const std::vector<uint8_t>& deviceInfoBytes, IRemotelyProvisionedComponent* provisionable) {
+    const cppbor::Array kAllowedVbStates = {"green", "yellow", "orange"};
+    const cppbor::Array kAllowedBootloaderStates = {"locked", "unlocked"};
+    const cppbor::Array kAllowedSecurityLevels = {"tee", "strongbox"};
+    const cppbor::Array kAllowedAttIdStates = {"locked", "open"};
+    const cppbor::Array kAllowedFused = {0, 1};
+
+    constexpr std::array kAttestationIdEntrySet = {"brand", "manufacturer", "product", "model",
+                                                   "device"};
+
+    auto [parsedVerifiedDeviceInfo, ignore1, errMsg] = cppbor::parse(deviceInfoBytes);
+    if (!parsedVerifiedDeviceInfo) {
+        return errMsg;
+    }
+
+    std::unique_ptr<cppbor::Map> deviceInfo(parsedVerifiedDeviceInfo->asMap());
+    if (!deviceInfo) {
+        return "DeviceInfo must be a CBOR map.";
+    }
+    parsedVerifiedDeviceInfo.release();
+
+    if (deviceInfo->clone()->asMap()->canonicalize().encode() != deviceInfoBytes) {
+        return "DeviceInfo ordering is non-canonical.";
+    }
+    const std::unique_ptr<cppbor::Item>& version = deviceInfo->get("version");
+    if (!version) {
+        return "Device info is missing version";
+    }
+    if (!version->asUint()) {
+        return "version must be an unsigned integer";
+    }
+    RpcHardwareInfo info;
+    provisionable->getHardwareInfo(&info);
+    if (version->asUint()->value() != info.versionNumber) {
+        return "DeviceInfo version (" + std::to_string(version->asUint()->value()) +
+               ") does not match the remotely provisioned component version (" +
+               std::to_string(info.versionNumber) + ").";
+    }
+    std::string errorString;
+    switch (version->asUint()->value()) {
+        case 2:
+            for (const auto& attId : kAttestationIdEntrySet) {
+                errorString += checkMapEntry(*deviceInfo, cppbor::TSTR, attId);
+            }
+            if (!errorString.empty()) {
+                return errorString +
+                       "Attestation IDs are missing or malprovisioned. If this test is being\n"
+                       "run against an early proto or EVT build, this error is probably WAI\n"
+                       "and indicates that Device IDs were not provisioned in the factory. If\n"
+                       "this error is returned on a DVT or later build revision, then\n"
+                       "something is likely wrong with the factory provisioning process.";
+            }
+            // TODO: Refactor the KeyMint code that validates these fields and include it here.
+            errorString += checkMapEntry(*deviceInfo, cppbor::TSTR, "vb_state", kAllowedVbStates);
+            errorString += checkMapEntry(*deviceInfo, cppbor::TSTR, "bootloader_state",
+                                         kAllowedBootloaderStates);
+            errorString += checkMapEntry(*deviceInfo, cppbor::BSTR, "vbmeta_digest");
+            errorString += checkMapEntry(*deviceInfo, cppbor::UINT, "system_patch_level");
+            errorString += checkMapEntry(*deviceInfo, cppbor::UINT, "boot_patch_level");
+            errorString += checkMapEntry(*deviceInfo, cppbor::UINT, "vendor_patch_level");
+            errorString += checkMapEntry(*deviceInfo, cppbor::UINT, "fused", kAllowedFused);
+            errorString += checkMapEntry(*deviceInfo, cppbor::TSTR, "security_level",
+                                         kAllowedSecurityLevels);
+            if (deviceInfo->get("security_level")->asTstr()->value() == "tee") {
+                errorString += checkMapEntry(*deviceInfo, cppbor::TSTR, "os_version");
+            }
+            break;
+        case 1:
+            errorString += checkMapEntry(*deviceInfo, cppbor::TSTR, "security_level",
+                                         kAllowedSecurityLevels);
+            errorString +=
+                    checkMapEntry(*deviceInfo, cppbor::TSTR, "att_id_state", kAllowedAttIdStates);
+            break;
+        default:
+            return "Unrecognized version: " + std::to_string(version->asUint()->value());
+    }
+
+    if (!errorString.empty()) {
+        return errorString;
+    }
+
+    return std::move(deviceInfo);
 }
 
 }  // namespace aidl::android::hardware::security::keymint::remote_prov
