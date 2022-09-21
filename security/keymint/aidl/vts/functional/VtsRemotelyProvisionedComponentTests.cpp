@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <memory>
 #define LOG_TAG "VtsRemotelyProvisionableComponentTests"
 
 #include <AndroidRemotelyProvisionedComponentDevice.h>
@@ -57,26 +58,6 @@ using bytevec = std::vector<uint8_t>;
 using testing::MatchesRegex;
 using namespace remote_prov;
 using namespace keymaster;
-
-std::set<std::string> getAllowedVbStates() {
-    return {"green", "yellow", "orange"};
-}
-
-std::set<std::string> getAllowedBootloaderStates() {
-    return {"locked", "unlocked"};
-}
-
-std::set<std::string> getAllowedSecurityLevels() {
-    return {"tee", "strongbox"};
-}
-
-std::set<std::string> getAllowedAttIdStates() {
-    return {"locked", "open"};
-}
-
-std::set<std::string> getAttestationIdEntrySet() {
-    return {"brand", "manufacturer", "product", "model", "device"};
-}
 
 bytevec string_to_bytevec(const char* s) {
     const uint8_t* p = reinterpret_cast<const uint8_t*>(s);
@@ -433,12 +414,11 @@ class CertificateRequestTest : public VtsRemotelyProvisionedComponentTests {
         ASSERT_TRUE(bccContents) << "\n" << bccContents.message() << "\n" << prettyPrint(bcc.get());
         ASSERT_GT(bccContents->size(), 0U);
 
-        auto [deviceInfoMap, __2, deviceInfoErrMsg] = cppbor::parse(deviceInfo.deviceInfo);
-        ASSERT_TRUE(deviceInfoMap) << "Failed to parse deviceInfo: " << deviceInfoErrMsg;
-        ASSERT_TRUE(deviceInfoMap->asMap());
-        checkDeviceInfo(*deviceInfoMap->asMap(), deviceInfo.deviceInfo);
+        auto deviceInfoResult =
+                parseAndValidateDeviceInfo(deviceInfo.deviceInfo, provisionable_.get());
+        ASSERT_TRUE(deviceInfoResult) << deviceInfoResult.message();
+        std::unique_ptr<cppbor::Map> deviceInfoMap = deviceInfoResult.moveValue();
         auto& signingKey = bccContents->back().pubKey;
-        deviceInfoMap->asMap()->canonicalize();
         auto macKey = verifyAndParseCoseSign1(signedMac->asArray(), signingKey,
                                               cppbor::Array()  // SignedMacAad
                                                       .add(challenge_)
@@ -461,100 +441,6 @@ class CertificateRequestTest : public VtsRemotelyProvisionedComponentTests {
 
         if (bccOutput) {
             *bccOutput = std::move(*bccContents);
-        }
-    }
-
-    std::optional<std::string> assertAttribute(const cppbor::Map& devInfo,
-                                               cppbor::MajorType majorType, std::string entryName) {
-        const auto& val = devInfo.get(entryName);
-        if (!val) return entryName + " is missing.\n";
-        if (val->type() != majorType) return entryName + " has the wrong type.\n";
-        switch (majorType) {
-            case cppbor::TSTR:
-                if (val->asTstr()->value().size() <= 0) {
-                    return entryName + " is present but the value is empty.\n";
-                }
-                break;
-            case cppbor::BSTR:
-                if (val->asBstr()->value().size() <= 0) {
-                    return entryName + " is present but the value is empty.\n";
-                }
-                break;
-            default:
-                break;
-        }
-        return {};
-    }
-
-    void checkType(const cppbor::Map& devInfo, cppbor::MajorType majorType, std::string entryName) {
-        if (auto error = assertAttribute(devInfo, majorType, entryName)) {
-            FAIL() << *error;
-        }
-    }
-
-    void checkDeviceInfo(const cppbor::Map& deviceInfo, bytevec deviceInfoBytes) {
-        EXPECT_EQ(deviceInfo.clone()->asMap()->canonicalize().encode(), deviceInfoBytes)
-                << "DeviceInfo ordering is non-canonical.";
-        const auto& version = deviceInfo.get("version");
-        ASSERT_TRUE(version);
-        ASSERT_TRUE(version->asUint());
-        RpcHardwareInfo info;
-        provisionable_->getHardwareInfo(&info);
-        ASSERT_EQ(version->asUint()->value(), info.versionNumber);
-        std::set<std::string> allowList;
-        std::string problemEntries;
-        switch (version->asUint()->value()) {
-            // These fields became mandated in version 2.
-            case 2:
-                for (auto attId : getAttestationIdEntrySet()) {
-                    if (auto errMsg = assertAttribute(deviceInfo, cppbor::TSTR, attId)) {
-                        problemEntries += *errMsg;
-                    }
-                }
-                EXPECT_EQ("", problemEntries)
-                        << problemEntries
-                        << "Attestation IDs are missing or malprovisioned. If this test is being "
-                           "run against an early proto or EVT build, this error is probably WAI "
-                           "and indicates that Device IDs were not provisioned in the factory. If "
-                           "this error is returned on a DVT or later build revision, then "
-                           "something is likely wrong with the factory provisioning process.";
-                // TODO: Refactor the KeyMint code that validates these fields and include it here.
-                checkType(deviceInfo, cppbor::TSTR, "vb_state");
-                allowList = getAllowedVbStates();
-                EXPECT_NE(allowList.find(deviceInfo.get("vb_state")->asTstr()->value()),
-                          allowList.end());
-                checkType(deviceInfo, cppbor::TSTR, "bootloader_state");
-                allowList = getAllowedBootloaderStates();
-                EXPECT_NE(allowList.find(deviceInfo.get("bootloader_state")->asTstr()->value()),
-                          allowList.end());
-                checkType(deviceInfo, cppbor::BSTR, "vbmeta_digest");
-                checkType(deviceInfo, cppbor::UINT, "system_patch_level");
-                checkType(deviceInfo, cppbor::UINT, "boot_patch_level");
-                checkType(deviceInfo, cppbor::UINT, "vendor_patch_level");
-                checkType(deviceInfo, cppbor::UINT, "fused");
-                EXPECT_LT(deviceInfo.get("fused")->asUint()->value(), 2);  // Must be 0 or 1.
-                checkType(deviceInfo, cppbor::TSTR, "security_level");
-                allowList = getAllowedSecurityLevels();
-                EXPECT_NE(allowList.find(deviceInfo.get("security_level")->asTstr()->value()),
-                          allowList.end());
-                if (deviceInfo.get("security_level")->asTstr()->value() == "tee") {
-                    checkType(deviceInfo, cppbor::TSTR, "os_version");
-                }
-                break;
-            case 1:
-                checkType(deviceInfo, cppbor::TSTR, "security_level");
-                allowList = getAllowedSecurityLevels();
-                EXPECT_NE(allowList.find(deviceInfo.get("security_level")->asTstr()->value()),
-                          allowList.end());
-                if (version->asUint()->value() == 1) {
-                    checkType(deviceInfo, cppbor::TSTR, "att_id_state");
-                    allowList = getAllowedAttIdStates();
-                    EXPECT_NE(allowList.find(deviceInfo.get("att_id_state")->asTstr()->value()),
-                              allowList.end());
-                }
-                break;
-            default:
-                FAIL() << "Unrecognized version: " << version->asUint()->value();
         }
     }
 
