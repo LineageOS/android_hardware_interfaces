@@ -21,21 +21,21 @@ package android.hardware.radio.ims.media;
 @Backing(type="int")
 enum AmrMode {
     /** 4.75 kbps for AMR / 6.6 kbps for AMR-WB */
-    AMR_MODE_0 = 0,
+    AMR_MODE_0 = 1 << 0,
     /** 5.15 kbps for AMR / 8.855 kbps for AMR-WB */
-    AMR_MODE_1 = 1,
+    AMR_MODE_1 = 1 << 1,
     /** 5.9 kbps for AMR / 12.65 kbps for AMR-WB */
-    AMR_MODE_2 = 2,
+    AMR_MODE_2 = 1 << 2,
     /** 6.7 kbps for AMR / 14.25 kbps for AMR-WB */
-    AMR_MODE_3 = 3,
+    AMR_MODE_3 = 1 << 3,
     /** 7.4 kbps for AMR / 15.85 kbps for AMR-WB */
-    AMR_MODE_4 = 4,
+    AMR_MODE_4 = 1 << 4,
     /** 7.95 kbps for AMR / 18.25 kbps for AMR-WB */
-    AMR_MODE_5 = 5,
+    AMR_MODE_5 = 1 << 5,
     /** 10.2 kbps for AMR / 19.85 kbps for AMR-WB */
-    AMR_MODE_6 = 6,
+    AMR_MODE_6 = 1 << 6,
     /** 12.2 kbps for AMR / 23.05 kbps for AMR-WB */
-    AMR_MODE_7 = 7,
+    AMR_MODE_7 = 1 << 7,
     /** Silence frame for AMR / 23.85 kbps for AMR-WB */
-    AMR_MODE_8 = 8,
+    AMR_MODE_8 = 1 << 8,
 }
