@@ -47,7 +47,7 @@ cc_binary {
 
 cc_library {
     name: "RemoteAccessService",
-    vendor: true,
+    vendor_available: true,
     local_include_dirs: ["include"],
     export_include_dirs: ["include"],
     srcs: [
@@ -73,4 +73,37 @@ cc_library {
     cflags: [
         "-Wno-unused-parameter",
     ],
+}
+
+cc_fuzz {
+    name: "android.hardware.automotive.remoteaccess@V1-default-service.aidl_fuzzer",
+    srcs: ["fuzzer/fuzzer.cpp"],
+    whole_static_libs: [
+        "RemoteAccessService",
+    ],
+    static_libs: [
+        "libgtest",
+        "libgmock",
+    ],
+    shared_libs: [
+        "libbase",
+        "libbinder_ndk",
+        "liblog",
+        "libutils",
+        "libgrpc++",
+        "libprotobuf-cpp-full",
+    ],
+    defaults: [
+        "vhalclient_defaults",
+        "service_fuzzer_defaults",
+    ],
+    cflags: [
+        "-Wno-unused-parameter",
+        "-DGRPC_SERVICE_ADDRESS=\"localhost:50051\"",
+    ],
+    fuzz_config: {
+        cc: [
+            "shanyu@google.com",
+        ],
+    },
 }
