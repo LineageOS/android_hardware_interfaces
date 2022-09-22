@@ -94,7 +94,7 @@ TEST_P(RadioImsTest, updateImsRegistrationInfo) {
     ImsRegistration regInfo;
     regInfo.regState = ImsRegistrationState::NOT_REGISTERED;
     regInfo.accessNetworkType = AccessNetwork::EUTRAN;
-    regInfo.reason = ImsFailureReason::NONE;
+    regInfo.suggestedAction = SuggestedAction::NONE;
     regInfo.capabilities = ImsRegistration::IMS_MMTEL_CAPABILITY_NONE;
 
     ndk::ScopedAStatus res =
