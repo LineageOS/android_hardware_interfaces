@@ -93,7 +93,7 @@ ndk::ScopedAStatus RadioNetworkIndication::voiceRadioTechChanged(RadioIndication
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioNetworkIndication::emergencyNetworkScanResult(RadioIndicationType /*type*/,
-                                                     const EmergencyRegResult& /*result*/) {
+ndk::ScopedAStatus RadioNetworkIndication::emergencyNetworkScanResult(
+        RadioIndicationType /*type*/, const EmergencyRegResult& /*result*/) {
     return ndk::ScopedAStatus::ok();
 }

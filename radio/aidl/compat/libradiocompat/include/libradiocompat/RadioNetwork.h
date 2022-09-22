@@ -90,6 +90,16 @@ class RadioNetwork : public RadioCompatBase,
             ::aidl::android::hardware::radio::network::UsageSetting usageSetting) override;
     ::ndk::ScopedAStatus getUsageSetting(int32_t serial) override;
 
+    ::ndk::ScopedAStatus setEmergencyMode(
+            int32_t serial,
+            const ::aidl::android::hardware::radio::network::EmergencyMode emergencyMode) override;
+    ::ndk::ScopedAStatus triggerEmergencyNetworkScan(
+            int32_t serial,
+            const ::aidl::android::hardware::radio::network::EmergencyNetworkScanTrigger&
+                    scanTrigger) override;
+    ::ndk::ScopedAStatus cancelEmergencyNetworkScan(int32_t serial) override;
+    ::ndk::ScopedAStatus exitEmergencyMode(int32_t serial) override;
+
   protected:
     std::shared_ptr<::aidl::android::hardware::radio::network::IRadioNetworkResponse> respond();
 
