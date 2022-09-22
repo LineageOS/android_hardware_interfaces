@@ -311,4 +311,33 @@ ScopedAStatus RadioNetwork::getUsageSetting(int32_t serial) {
     return ok();
 }
 
+ScopedAStatus RadioNetwork::setEmergencyMode(int32_t serial, aidl::EmergencyMode) {
+    LOG_CALL << serial;
+    LOG(ERROR) << " setEmergencyMode is unsupported by HIDL HALs";
+    respond()->setEmergencyModeResponse(notSupported(serial), {});
+    return ok();
+}
+
+ScopedAStatus RadioNetwork::triggerEmergencyNetworkScan(int32_t serial,
+        const aidl::EmergencyNetworkScanTrigger&) {
+    LOG_CALL << serial;
+    LOG(ERROR) << " triggerEmergencyNetworkScan is unsupported by HIDL HALs";
+    respond()->triggerEmergencyNetworkScanResponse(notSupported(serial));
+    return ok();
+}
+
+ScopedAStatus RadioNetwork::cancelEmergencyNetworkScan(int32_t serial) {
+    LOG_CALL << serial;
+    LOG(ERROR) << " cancelEmergencyNetworkScan is unsupported by HIDL HALs";
+    respond()->cancelEmergencyNetworkScanResponse(notSupported(serial));
+    return ok();
+}
+
+ScopedAStatus RadioNetwork::exitEmergencyMode(int32_t serial) {
+    LOG_CALL << serial;
+    LOG(ERROR) << " exitEmergencyMode is unsupported by HIDL HALs";
+    respond()->exitEmergencyModeResponse(notSupported(serial));
+    return ok();
+}
+
 }  // namespace android::hardware::radio::compat
