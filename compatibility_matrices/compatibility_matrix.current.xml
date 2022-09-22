@@ -485,7 +485,7 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.radio.network</name>
-        <version>1</version>
+        <version>2</version>
         <interface>
             <name>IRadioNetwork</name>
             <instance>slot1</instance>

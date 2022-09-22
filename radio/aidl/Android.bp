@@ -132,7 +132,7 @@ aidl_interface {
     host_supported: true,
     srcs: ["android/hardware/radio/network/*.aidl"],
     stability: "vintf",
-    imports: ["android.hardware.radio"],
+    imports: ["android.hardware.radio-V1"],
     backend: {
         cpp: {
             enabled: true,
