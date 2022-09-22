@@ -15,6 +15,7 @@
  */
 
 #include <memory>
+#include <string>
 #define LOG_TAG "VtsRemotelyProvisionableComponentTests"
 
 #include <AndroidRemotelyProvisionedComponentDevice.h>
@@ -368,82 +369,6 @@ class CertificateRequestTest : public VtsRemotelyProvisionedComponentTests {
         }
     }
 
-    ErrMsgOr<bytevec> getSessionKey(ErrMsgOr<std::pair<bytevec, bytevec>>& senderPubkey) {
-        if (rpcHardwareInfo.supportedEekCurve == RpcHardwareInfo::CURVE_25519 ||
-            rpcHardwareInfo.supportedEekCurve == RpcHardwareInfo::CURVE_NONE) {
-            return x25519_HKDF_DeriveKey(testEekChain_.last_pubkey, testEekChain_.last_privkey,
-                                         senderPubkey->first, false /* senderIsA */);
-        } else {
-            return ECDH_HKDF_DeriveKey(testEekChain_.last_pubkey, testEekChain_.last_privkey,
-                                       senderPubkey->first, false /* senderIsA */);
-        }
-    }
-
-    void checkProtectedData(const DeviceInfo& deviceInfo, const cppbor::Array& keysToSign,
-                            const bytevec& keysToSignMac, const ProtectedData& protectedData,
-                            std::vector<BccEntryData>* bccOutput = nullptr) {
-        auto [parsedProtectedData, _, protDataErrMsg] = cppbor::parse(protectedData.protectedData);
-        ASSERT_TRUE(parsedProtectedData) << protDataErrMsg;
-        ASSERT_TRUE(parsedProtectedData->asArray());
-        ASSERT_EQ(parsedProtectedData->asArray()->size(), kCoseEncryptEntryCount);
-
-        auto senderPubkey = getSenderPubKeyFromCoseEncrypt(parsedProtectedData);
-        ASSERT_TRUE(senderPubkey) << senderPubkey.message();
-        EXPECT_EQ(senderPubkey->second, eekId_);
-
-        auto sessionKey = getSessionKey(senderPubkey);
-        ASSERT_TRUE(sessionKey) << sessionKey.message();
-
-        auto protectedDataPayload =
-                decryptCoseEncrypt(*sessionKey, parsedProtectedData.get(), bytevec{} /* aad */);
-        ASSERT_TRUE(protectedDataPayload) << protectedDataPayload.message();
-
-        auto [parsedPayload, __, payloadErrMsg] = cppbor::parse(*protectedDataPayload);
-        ASSERT_TRUE(parsedPayload) << "Failed to parse payload: " << payloadErrMsg;
-        ASSERT_TRUE(parsedPayload->asArray());
-        // Strongbox may contain additional certificate chain.
-        EXPECT_LE(parsedPayload->asArray()->size(), 3U);
-
-        auto& signedMac = parsedPayload->asArray()->get(0);
-        auto& bcc = parsedPayload->asArray()->get(1);
-        ASSERT_TRUE(signedMac && signedMac->asArray());
-        ASSERT_TRUE(bcc && bcc->asArray());
-
-        // BCC is [ pubkey, + BccEntry]
-        auto bccContents = validateBcc(bcc->asArray());
-        ASSERT_TRUE(bccContents) << "\n" << bccContents.message() << "\n" << prettyPrint(bcc.get());
-        ASSERT_GT(bccContents->size(), 0U);
-
-        auto deviceInfoResult =
-                parseAndValidateDeviceInfo(deviceInfo.deviceInfo, provisionable_.get());
-        ASSERT_TRUE(deviceInfoResult) << deviceInfoResult.message();
-        std::unique_ptr<cppbor::Map> deviceInfoMap = deviceInfoResult.moveValue();
-        auto& signingKey = bccContents->back().pubKey;
-        auto macKey = verifyAndParseCoseSign1(signedMac->asArray(), signingKey,
-                                              cppbor::Array()  // SignedMacAad
-                                                      .add(challenge_)
-                                                      .add(std::move(deviceInfoMap))
-                                                      .add(keysToSignMac)
-                                                      .encode());
-        ASSERT_TRUE(macKey) << macKey.message();
-
-        auto coseMac0 = cppbor::Array()
-                                .add(cppbor::Map()  // protected
-                                             .add(ALGORITHM, HMAC_256)
-                                             .canonicalize()
-                                             .encode())
-                                .add(cppbor::Map())        // unprotected
-                                .add(keysToSign.encode())  // payload (keysToSign)
-                                .add(keysToSignMac);       // tag
-
-        auto macPayload = verifyAndParseCoseMac0(&coseMac0, *macKey);
-        ASSERT_TRUE(macPayload) << macPayload.message();
-
-        if (bccOutput) {
-            *bccOutput = std::move(*bccContents);
-        }
-    }
-
     bytevec eekId_;
     size_t testEekLength_;
     EekChain testEekChain_;
@@ -470,7 +395,10 @@ TEST_P(CertificateRequestTest, EmptyRequest_testMode) {
                 &protectedData, &keysToSignMac);
         ASSERT_TRUE(status.isOk()) << status.getMessage();
 
-        checkProtectedData(deviceInfo, cppbor::Array(), keysToSignMac, protectedData);
+        auto result = verifyProductionProtectedData(
+                deviceInfo, cppbor::Array(), keysToSignMac, protectedData, testEekChain_, eekId_,
+                rpcHardwareInfo.supportedEekCurve, provisionable_.get(), challenge_);
+        ASSERT_TRUE(result) << result.message();
     }
 }
 
@@ -492,22 +420,24 @@ TEST_P(CertificateRequestTest, NewKeyPerCallInTestMode) {
             &protectedData, &keysToSignMac);
     ASSERT_TRUE(status.isOk()) << status.getMessage();
 
-    std::vector<BccEntryData> firstBcc;
-    checkProtectedData(deviceInfo, /*keysToSign=*/cppbor::Array(), keysToSignMac, protectedData,
-                       &firstBcc);
+    auto firstBcc = verifyProductionProtectedData(
+            deviceInfo, /*keysToSign=*/cppbor::Array(), keysToSignMac, protectedData, testEekChain_,
+            eekId_, rpcHardwareInfo.supportedEekCurve, provisionable_.get(), challenge_);
+    ASSERT_TRUE(firstBcc) << firstBcc.message();
 
     status = provisionable_->generateCertificateRequest(
             testMode, {} /* keysToSign */, testEekChain_.chain, challenge_, &deviceInfo,
             &protectedData, &keysToSignMac);
     ASSERT_TRUE(status.isOk()) << status.getMessage();
 
-    std::vector<BccEntryData> secondBcc;
-    checkProtectedData(deviceInfo, /*keysToSign=*/cppbor::Array(), keysToSignMac, protectedData,
-                       &secondBcc);
+    auto secondBcc = verifyProductionProtectedData(
+            deviceInfo, /*keysToSign=*/cppbor::Array(), keysToSignMac, protectedData, testEekChain_,
+            eekId_, rpcHardwareInfo.supportedEekCurve, provisionable_.get(), challenge_);
+    ASSERT_TRUE(secondBcc) << secondBcc.message();
 
     // Verify that none of the keys in the first BCC are repeated in the second one.
-    for (const auto& i : firstBcc) {
-        for (auto& j : secondBcc) {
+    for (const auto& i : *firstBcc) {
+        for (auto& j : *secondBcc) {
             ASSERT_THAT(i.pubKey, testing::Not(testing::ElementsAreArray(j.pubKey)))
                     << "Found a repeated pubkey in two generateCertificateRequest test mode calls";
         }
@@ -550,7 +480,10 @@ TEST_P(CertificateRequestTest, NonEmptyRequest_testMode) {
                 &keysToSignMac);
         ASSERT_TRUE(status.isOk()) << status.getMessage();
 
-        checkProtectedData(deviceInfo, cborKeysToSign_, keysToSignMac, protectedData);
+        auto result = verifyProductionProtectedData(
+                deviceInfo, cborKeysToSign_, keysToSignMac, protectedData, testEekChain_, eekId_,
+                rpcHardwareInfo.supportedEekCurve, provisionable_.get(), challenge_);
+        ASSERT_TRUE(result) << result.message();
     }
 }
 
