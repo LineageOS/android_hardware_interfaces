@@ -16,7 +16,9 @@
 
 #pragma once
 
+#include <memory>
 #include <vector>
+#include "aidl/android/hardware/security/keymint/IRemotelyProvisionedComponent.h"
 
 #include <keymaster/cppcose/cppcose.h>
 
@@ -138,5 +140,13 @@ struct JsonOutput {
  */
 JsonOutput jsonEncodeCsrWithBuild(const std::string instance_name,
                                   const cppbor::Array& csr);
+
+/**
+ * Parses a DeviceInfo structure from the given CBOR data. The parsed data is then validated to
+ * ensure it is formatted correctly and that it contains the required values for Remote Key
+ * Provisioning.
+ */
+ErrMsgOr<std::unique_ptr<cppbor::Map>> parseAndValidateDeviceInfo(
+        const std::vector<uint8_t>& deviceInfoBytes, IRemotelyProvisionedComponent* provisionable);
 
 }  // namespace aidl::android::hardware::security::keymint::remote_prov
