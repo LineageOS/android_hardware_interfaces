@@ -54,4 +54,10 @@ parcelable EmergencyRegResult {
      * This should not be set if UE is not in 5G mode.
      */
     byte nwProvidedEmf;
+
+    /** 3-digit Mobile Country Code, 000..999, empty string if unknown. */
+    String mcc;
+
+    /** 2 or 3-digit Mobile Network Code, 00..999, empty string if unknown. */
+    String mnc;
 }
