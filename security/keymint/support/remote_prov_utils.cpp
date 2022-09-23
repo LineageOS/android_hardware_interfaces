@@ -15,7 +15,11 @@
  */
 
 #include <iterator>
+#include <memory>
+#include <set>
+#include <string>
 #include <tuple>
+#include "aidl/android/hardware/security/keymint/IRemotelyProvisionedComponent.h"
 
 #include <aidl/android/hardware/security/keymint/RpcHardwareInfo.h>
 #include <android-base/properties.h>
@@ -439,6 +443,295 @@ JsonOutput jsonEncodeCsrWithBuild(const std::string instance_name, const cppbor:
     Json::StreamWriterBuilder factory;
     factory["indentation"] = "";  // disable pretty formatting
     return JsonOutput::Ok(Json::writeString(factory, json));
+}
+
+std::string checkMapEntry(bool isFactory, const cppbor::Map& devInfo, cppbor::MajorType majorType,
+                          const std::string& entryName) {
+    const std::unique_ptr<cppbor::Item>& val = devInfo.get(entryName);
+    if (!val) {
+        return entryName + " is missing.\n";
+    }
+    if (val->type() != majorType) {
+        return entryName + " has the wrong type.\n";
+    }
+    if (isFactory) {
+        return "";
+    }
+    switch (majorType) {
+        case cppbor::TSTR:
+            if (val->asTstr()->value().size() <= 0) {
+                return entryName + " is present but the value is empty.\n";
+            }
+            break;
+        case cppbor::BSTR:
+            if (val->asBstr()->value().size() <= 0) {
+                return entryName + " is present but the value is empty.\n";
+            }
+            break;
+        default:
+            break;
+    }
+    return "";
+}
+
+std::string checkMapEntry(bool isFactory, const cppbor::Map& devInfo, cppbor::MajorType majorType,
+                          const std::string& entryName, const cppbor::Array& allowList) {
+    std::string error = checkMapEntry(isFactory, devInfo, majorType, entryName);
+    if (!error.empty()) {
+        return error;
+    }
+
+    if (isFactory) {
+        return "";
+    }
+
+    const std::unique_ptr<cppbor::Item>& val = devInfo.get(entryName);
+    for (auto i = allowList.begin(); i != allowList.end(); ++i) {
+        if (**i == *val) {
+            return "";
+        }
+    }
+    return entryName + " has an invalid value.\n";
+}
+
+ErrMsgOr<std::unique_ptr<cppbor::Map>> parseAndValidateDeviceInfo(
+        const std::vector<uint8_t>& deviceInfoBytes, IRemotelyProvisionedComponent* provisionable,
+        bool isFactory) {
+    const cppbor::Array kValidVbStates = {"green", "yellow", "orange"};
+    const cppbor::Array kValidBootloaderStates = {"locked", "unlocked"};
+    const cppbor::Array kValidSecurityLevels = {"tee", "strongbox"};
+    const cppbor::Array kValidAttIdStates = {"locked", "open"};
+    const cppbor::Array kValidFused = {0, 1};
+
+    struct AttestationIdEntry {
+        const char* id;
+        bool alwaysValidate;
+    };
+    constexpr AttestationIdEntry kAttestationIdEntrySet[] = {{"brand", false},
+                                                             {"manufacturer", true},
+                                                             {"product", false},
+                                                             {"model", false},
+                                                             {"device", false}};
+
+    auto [parsedVerifiedDeviceInfo, ignore1, errMsg] = cppbor::parse(deviceInfoBytes);
+    if (!parsedVerifiedDeviceInfo) {
+        return errMsg;
+    }
+
+    std::unique_ptr<cppbor::Map> parsed(parsedVerifiedDeviceInfo->asMap());
+    if (!parsed) {
+        return "DeviceInfo must be a CBOR map.";
+    }
+    parsedVerifiedDeviceInfo.release();
+
+    if (parsed->clone()->asMap()->canonicalize().encode() != deviceInfoBytes) {
+        return "DeviceInfo ordering is non-canonical.";
+    }
+    const std::unique_ptr<cppbor::Item>& version = parsed->get("version");
+    if (!version) {
+        return "Device info is missing version";
+    }
+    if (!version->asUint()) {
+        return "version must be an unsigned integer";
+    }
+    RpcHardwareInfo info;
+    provisionable->getHardwareInfo(&info);
+    if (version->asUint()->value() != info.versionNumber) {
+        return "DeviceInfo version (" + std::to_string(version->asUint()->value()) +
+               ") does not match the remotely provisioned component version (" +
+               std::to_string(info.versionNumber) + ").";
+    }
+    std::string error;
+    switch (version->asUint()->value()) {
+        case 2:
+            for (const auto& entry : kAttestationIdEntrySet) {
+                error += checkMapEntry(isFactory && !entry.alwaysValidate, *parsed, cppbor::TSTR,
+                                       entry.id);
+            }
+            if (!error.empty()) {
+                return error +
+                       "Attestation IDs are missing or malprovisioned. If this test is being\n"
+                       "run against an early proto or EVT build, this error is probably WAI\n"
+                       "and indicates that Device IDs were not provisioned in the factory. If\n"
+                       "this error is returned on a DVT or later build revision, then\n"
+                       "something is likely wrong with the factory provisioning process.";
+            }
+            // TODO: Refactor the KeyMint code that validates these fields and include it here.
+            error += checkMapEntry(isFactory, *parsed, cppbor::TSTR, "vb_state", kValidVbStates);
+            error += checkMapEntry(isFactory, *parsed, cppbor::TSTR, "bootloader_state",
+                                   kValidBootloaderStates);
+            error += checkMapEntry(isFactory, *parsed, cppbor::BSTR, "vbmeta_digest");
+            error += checkMapEntry(isFactory, *parsed, cppbor::UINT, "system_patch_level");
+            error += checkMapEntry(isFactory, *parsed, cppbor::UINT, "boot_patch_level");
+            error += checkMapEntry(isFactory, *parsed, cppbor::UINT, "vendor_patch_level");
+            error += checkMapEntry(isFactory, *parsed, cppbor::UINT, "fused", kValidFused);
+            error += checkMapEntry(isFactory, *parsed, cppbor::TSTR, "security_level",
+                                   kValidSecurityLevels);
+            if (parsed->get("security_level") && parsed->get("security_level")->asTstr() &&
+                parsed->get("security_level")->asTstr()->value() == "tee") {
+                error += checkMapEntry(isFactory, *parsed, cppbor::TSTR, "os_version");
+            }
+            break;
+        case 1:
+            error += checkMapEntry(isFactory, *parsed, cppbor::TSTR, "security_level",
+                                   kValidSecurityLevels);
+            error += checkMapEntry(isFactory, *parsed, cppbor::TSTR, "att_id_state",
+                                   kValidAttIdStates);
+            break;
+        default:
+            return "Unrecognized version: " + std::to_string(version->asUint()->value());
+    }
+
+    if (!error.empty()) {
+        return error;
+    }
+
+    return std::move(parsed);
+}
+
+ErrMsgOr<std::unique_ptr<cppbor::Map>> parseAndValidateFactoryDeviceInfo(
+        const std::vector<uint8_t>& deviceInfoBytes, IRemotelyProvisionedComponent* provisionable) {
+    return parseAndValidateDeviceInfo(deviceInfoBytes, provisionable, /*isFactory=*/true);
+}
+
+ErrMsgOr<std::unique_ptr<cppbor::Map>> parseAndValidateProductionDeviceInfo(
+        const std::vector<uint8_t>& deviceInfoBytes, IRemotelyProvisionedComponent* provisionable) {
+    return parseAndValidateDeviceInfo(deviceInfoBytes, provisionable, /*isFactory=*/false);
+}
+
+ErrMsgOr<bytevec> getSessionKey(ErrMsgOr<std::pair<bytevec, bytevec>>& senderPubkey,
+                                const EekChain& eekChain, int32_t supportedEekCurve) {
+    if (supportedEekCurve == RpcHardwareInfo::CURVE_25519 ||
+        supportedEekCurve == RpcHardwareInfo::CURVE_NONE) {
+        return x25519_HKDF_DeriveKey(eekChain.last_pubkey, eekChain.last_privkey,
+                                     senderPubkey->first, false /* senderIsA */);
+    } else {
+        return ECDH_HKDF_DeriveKey(eekChain.last_pubkey, eekChain.last_privkey, senderPubkey->first,
+                                   false /* senderIsA */);
+    }
+}
+
+ErrMsgOr<std::vector<BccEntryData>> verifyProtectedData(
+        const DeviceInfo& deviceInfo, const cppbor::Array& keysToSign,
+        const std::vector<uint8_t>& keysToSignMac, const ProtectedData& protectedData,
+        const EekChain& eekChain, const std::vector<uint8_t>& eekId, int32_t supportedEekCurve,
+        IRemotelyProvisionedComponent* provisionable, const std::vector<uint8_t>& challenge,
+        bool isFactory) {
+    auto [parsedProtectedData, _, protDataErrMsg] = cppbor::parse(protectedData.protectedData);
+    if (!parsedProtectedData) {
+        return protDataErrMsg;
+    }
+    if (!parsedProtectedData->asArray()) {
+        return "Protected data is not a CBOR array.";
+    }
+    if (parsedProtectedData->asArray()->size() != kCoseEncryptEntryCount) {
+        return "The protected data COSE_encrypt structure must have " +
+               std::to_string(kCoseEncryptEntryCount) + " entries, but it only has " +
+               std::to_string(parsedProtectedData->asArray()->size());
+    }
+
+    auto senderPubkey = getSenderPubKeyFromCoseEncrypt(parsedProtectedData);
+    if (!senderPubkey) {
+        return senderPubkey.message();
+    }
+    if (senderPubkey->second != eekId) {
+        return "The COSE_encrypt recipient does not match the expected EEK identifier";
+    }
+
+    auto sessionKey = getSessionKey(senderPubkey, eekChain, supportedEekCurve);
+    if (!sessionKey) {
+        return sessionKey.message();
+    }
+
+    auto protectedDataPayload =
+            decryptCoseEncrypt(*sessionKey, parsedProtectedData.get(), bytevec{} /* aad */);
+    if (!protectedDataPayload) {
+        return protectedDataPayload.message();
+    }
+
+    auto [parsedPayload, __, payloadErrMsg] = cppbor::parse(*protectedDataPayload);
+    if (!parsedPayload) {
+        return "Failed to parse payload: " + payloadErrMsg;
+    }
+    if (!parsedPayload->asArray()) {
+        return "The protected data payload must be an Array.";
+    }
+    if (parsedPayload->asArray()->size() != 3U && parsedPayload->asArray()->size() != 2U) {
+        return "The protected data payload must contain SignedMAC and BCC. It may optionally "
+               "contain AdditionalDKSignatures. However, the parsed payload has " +
+               std::to_string(parsedPayload->asArray()->size()) + " entries.";
+    }
+
+    auto& signedMac = parsedPayload->asArray()->get(0);
+    auto& bcc = parsedPayload->asArray()->get(1);
+    if (!signedMac->asArray()) {
+        return "The SignedMAC in the protected data payload is not an Array.";
+    }
+    if (!bcc->asArray()) {
+        return "The BCC in the protected data payload is not an Array.";
+    }
+
+    // BCC is [ pubkey, + BccEntry]
+    auto bccContents = validateBcc(bcc->asArray());
+    if (!bccContents) {
+        return bccContents.message() + "\n" + prettyPrint(bcc.get());
+    }
+    if (bccContents->size() == 0U) {
+        return "The BCC is empty. It must contain at least one entry.";
+    }
+
+    auto deviceInfoResult =
+            parseAndValidateDeviceInfo(deviceInfo.deviceInfo, provisionable, isFactory);
+    if (!deviceInfoResult) {
+        return deviceInfoResult.message();
+    }
+    std::unique_ptr<cppbor::Map> deviceInfoMap = deviceInfoResult.moveValue();
+    auto& signingKey = bccContents->back().pubKey;
+    auto macKey = verifyAndParseCoseSign1(signedMac->asArray(), signingKey,
+                                          cppbor::Array()  // SignedMacAad
+                                                  .add(challenge)
+                                                  .add(std::move(deviceInfoMap))
+                                                  .add(keysToSignMac)
+                                                  .encode());
+    if (!macKey) {
+        return macKey.message();
+    }
+
+    auto coseMac0 = cppbor::Array()
+                            .add(cppbor::Map()  // protected
+                                         .add(ALGORITHM, HMAC_256)
+                                         .canonicalize()
+                                         .encode())
+                            .add(cppbor::Map())        // unprotected
+                            .add(keysToSign.encode())  // payload (keysToSign)
+                            .add(keysToSignMac);       // tag
+
+    auto macPayload = verifyAndParseCoseMac0(&coseMac0, *macKey);
+    if (!macPayload) {
+        return macPayload.message();
+    }
+
+    return *bccContents;
+}
+
+ErrMsgOr<std::vector<BccEntryData>> verifyFactoryProtectedData(
+        const DeviceInfo& deviceInfo, const cppbor::Array& keysToSign,
+        const std::vector<uint8_t>& keysToSignMac, const ProtectedData& protectedData,
+        const EekChain& eekChain, const std::vector<uint8_t>& eekId, int32_t supportedEekCurve,
+        IRemotelyProvisionedComponent* provisionable, const std::vector<uint8_t>& challenge) {
+    return verifyProtectedData(deviceInfo, keysToSign, keysToSignMac, protectedData, eekChain,
+                               eekId, supportedEekCurve, provisionable, challenge,
+                               /*isFactory=*/true);
+}
+
+ErrMsgOr<std::vector<BccEntryData>> verifyProductionProtectedData(
+        const DeviceInfo& deviceInfo, const cppbor::Array& keysToSign,
+        const std::vector<uint8_t>& keysToSignMac, const ProtectedData& protectedData,
+        const EekChain& eekChain, const std::vector<uint8_t>& eekId, int32_t supportedEekCurve,
+        IRemotelyProvisionedComponent* provisionable, const std::vector<uint8_t>& challenge) {
+    return verifyProtectedData(deviceInfo, keysToSign, keysToSignMac, protectedData, eekChain,
+                               eekId, supportedEekCurve, provisionable, challenge,
+                               /*isFactory=*/false);
 }
 
 }  // namespace aidl::android::hardware::security::keymint::remote_prov

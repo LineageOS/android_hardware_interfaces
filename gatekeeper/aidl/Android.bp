@@ -1,0 +1,29 @@
+package {
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "hardware_interfaces_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-Apache-2.0
+    default_applicable_licenses: ["hardware_interfaces_license"],
+}
+
+aidl_interface {
+    name: "android.hardware.gatekeeper",
+    vendor_available: true,
+    imports: [
+        "android.hardware.security.keymint-V2",
+    ],
+    srcs: ["android/hardware/gatekeeper/*.aidl"],
+    stability: "vintf",
+    backend: {
+        java: {
+            platform_apis: true,
+        },
+        ndk: {
+            apps_enabled: false,
+        },
+        cpp: {
+            enabled: false,
+        },
+    },
+}

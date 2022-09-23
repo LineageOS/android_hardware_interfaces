@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include <memory>
+#include <string>
 #define LOG_TAG "VtsRemotelyProvisionableComponentTests"
 
 #include <AndroidRemotelyProvisionedComponentDevice.h>
@@ -57,26 +59,6 @@ using bytevec = std::vector<uint8_t>;
 using testing::MatchesRegex;
 using namespace remote_prov;
 using namespace keymaster;
-
-std::set<std::string> getAllowedVbStates() {
-    return {"green", "yellow", "orange"};
-}
-
-std::set<std::string> getAllowedBootloaderStates() {
-    return {"locked", "unlocked"};
-}
-
-std::set<std::string> getAllowedSecurityLevels() {
-    return {"tee", "strongbox"};
-}
-
-std::set<std::string> getAllowedAttIdStates() {
-    return {"locked", "open"};
-}
-
-std::set<std::string> getAttestationIdEntrySet() {
-    return {"brand", "manufacturer", "product", "model", "device"};
-}
 
 bytevec string_to_bytevec(const char* s) {
     const uint8_t* p = reinterpret_cast<const uint8_t*>(s);
@@ -387,177 +369,6 @@ class CertificateRequestTest : public VtsRemotelyProvisionedComponentTests {
         }
     }
 
-    ErrMsgOr<bytevec> getSessionKey(ErrMsgOr<std::pair<bytevec, bytevec>>& senderPubkey) {
-        if (rpcHardwareInfo.supportedEekCurve == RpcHardwareInfo::CURVE_25519 ||
-            rpcHardwareInfo.supportedEekCurve == RpcHardwareInfo::CURVE_NONE) {
-            return x25519_HKDF_DeriveKey(testEekChain_.last_pubkey, testEekChain_.last_privkey,
-                                         senderPubkey->first, false /* senderIsA */);
-        } else {
-            return ECDH_HKDF_DeriveKey(testEekChain_.last_pubkey, testEekChain_.last_privkey,
-                                       senderPubkey->first, false /* senderIsA */);
-        }
-    }
-
-    void checkProtectedData(const DeviceInfo& deviceInfo, const cppbor::Array& keysToSign,
-                            const bytevec& keysToSignMac, const ProtectedData& protectedData,
-                            std::vector<BccEntryData>* bccOutput = nullptr) {
-        auto [parsedProtectedData, _, protDataErrMsg] = cppbor::parse(protectedData.protectedData);
-        ASSERT_TRUE(parsedProtectedData) << protDataErrMsg;
-        ASSERT_TRUE(parsedProtectedData->asArray());
-        ASSERT_EQ(parsedProtectedData->asArray()->size(), kCoseEncryptEntryCount);
-
-        auto senderPubkey = getSenderPubKeyFromCoseEncrypt(parsedProtectedData);
-        ASSERT_TRUE(senderPubkey) << senderPubkey.message();
-        EXPECT_EQ(senderPubkey->second, eekId_);
-
-        auto sessionKey = getSessionKey(senderPubkey);
-        ASSERT_TRUE(sessionKey) << sessionKey.message();
-
-        auto protectedDataPayload =
-                decryptCoseEncrypt(*sessionKey, parsedProtectedData.get(), bytevec{} /* aad */);
-        ASSERT_TRUE(protectedDataPayload) << protectedDataPayload.message();
-
-        auto [parsedPayload, __, payloadErrMsg] = cppbor::parse(*protectedDataPayload);
-        ASSERT_TRUE(parsedPayload) << "Failed to parse payload: " << payloadErrMsg;
-        ASSERT_TRUE(parsedPayload->asArray());
-        // Strongbox may contain additional certificate chain.
-        EXPECT_LE(parsedPayload->asArray()->size(), 3U);
-
-        auto& signedMac = parsedPayload->asArray()->get(0);
-        auto& bcc = parsedPayload->asArray()->get(1);
-        ASSERT_TRUE(signedMac && signedMac->asArray());
-        ASSERT_TRUE(bcc && bcc->asArray());
-
-        // BCC is [ pubkey, + BccEntry]
-        auto bccContents = validateBcc(bcc->asArray());
-        ASSERT_TRUE(bccContents) << "\n" << bccContents.message() << "\n" << prettyPrint(bcc.get());
-        ASSERT_GT(bccContents->size(), 0U);
-
-        auto [deviceInfoMap, __2, deviceInfoErrMsg] = cppbor::parse(deviceInfo.deviceInfo);
-        ASSERT_TRUE(deviceInfoMap) << "Failed to parse deviceInfo: " << deviceInfoErrMsg;
-        ASSERT_TRUE(deviceInfoMap->asMap());
-        checkDeviceInfo(*deviceInfoMap->asMap(), deviceInfo.deviceInfo);
-        auto& signingKey = bccContents->back().pubKey;
-        deviceInfoMap->asMap()->canonicalize();
-        auto macKey = verifyAndParseCoseSign1(signedMac->asArray(), signingKey,
-                                              cppbor::Array()  // SignedMacAad
-                                                      .add(challenge_)
-                                                      .add(std::move(deviceInfoMap))
-                                                      .add(keysToSignMac)
-                                                      .encode());
-        ASSERT_TRUE(macKey) << macKey.message();
-
-        auto coseMac0 = cppbor::Array()
-                                .add(cppbor::Map()  // protected
-                                             .add(ALGORITHM, HMAC_256)
-                                             .canonicalize()
-                                             .encode())
-                                .add(cppbor::Map())        // unprotected
-                                .add(keysToSign.encode())  // payload (keysToSign)
-                                .add(keysToSignMac);       // tag
-
-        auto macPayload = verifyAndParseCoseMac0(&coseMac0, *macKey);
-        ASSERT_TRUE(macPayload) << macPayload.message();
-
-        if (bccOutput) {
-            *bccOutput = std::move(*bccContents);
-        }
-    }
-
-    std::optional<std::string> assertAttribute(const cppbor::Map& devInfo,
-                                               cppbor::MajorType majorType, std::string entryName) {
-        const auto& val = devInfo.get(entryName);
-        if (!val) return entryName + " is missing.\n";
-        if (val->type() != majorType) return entryName + " has the wrong type.\n";
-        switch (majorType) {
-            case cppbor::TSTR:
-                if (val->asTstr()->value().size() <= 0) {
-                    return entryName + " is present but the value is empty.\n";
-                }
-                break;
-            case cppbor::BSTR:
-                if (val->asBstr()->value().size() <= 0) {
-                    return entryName + " is present but the value is empty.\n";
-                }
-                break;
-            default:
-                break;
-        }
-        return {};
-    }
-
-    void checkType(const cppbor::Map& devInfo, cppbor::MajorType majorType, std::string entryName) {
-        if (auto error = assertAttribute(devInfo, majorType, entryName)) {
-            FAIL() << *error;
-        }
-    }
-
-    void checkDeviceInfo(const cppbor::Map& deviceInfo, bytevec deviceInfoBytes) {
-        EXPECT_EQ(deviceInfo.clone()->asMap()->canonicalize().encode(), deviceInfoBytes)
-                << "DeviceInfo ordering is non-canonical.";
-        const auto& version = deviceInfo.get("version");
-        ASSERT_TRUE(version);
-        ASSERT_TRUE(version->asUint());
-        RpcHardwareInfo info;
-        provisionable_->getHardwareInfo(&info);
-        ASSERT_EQ(version->asUint()->value(), info.versionNumber);
-        std::set<std::string> allowList;
-        std::string problemEntries;
-        switch (version->asUint()->value()) {
-            // These fields became mandated in version 2.
-            case 2:
-                for (auto attId : getAttestationIdEntrySet()) {
-                    if (auto errMsg = assertAttribute(deviceInfo, cppbor::TSTR, attId)) {
-                        problemEntries += *errMsg;
-                    }
-                }
-                EXPECT_EQ("", problemEntries)
-                        << problemEntries
-                        << "Attestation IDs are missing or malprovisioned. If this test is being "
-                           "run against an early proto or EVT build, this error is probably WAI "
-                           "and indicates that Device IDs were not provisioned in the factory. If "
-                           "this error is returned on a DVT or later build revision, then "
-                           "something is likely wrong with the factory provisioning process.";
-                // TODO: Refactor the KeyMint code that validates these fields and include it here.
-                checkType(deviceInfo, cppbor::TSTR, "vb_state");
-                allowList = getAllowedVbStates();
-                EXPECT_NE(allowList.find(deviceInfo.get("vb_state")->asTstr()->value()),
-                          allowList.end());
-                checkType(deviceInfo, cppbor::TSTR, "bootloader_state");
-                allowList = getAllowedBootloaderStates();
-                EXPECT_NE(allowList.find(deviceInfo.get("bootloader_state")->asTstr()->value()),
-                          allowList.end());
-                checkType(deviceInfo, cppbor::BSTR, "vbmeta_digest");
-                checkType(deviceInfo, cppbor::UINT, "system_patch_level");
-                checkType(deviceInfo, cppbor::UINT, "boot_patch_level");
-                checkType(deviceInfo, cppbor::UINT, "vendor_patch_level");
-                checkType(deviceInfo, cppbor::UINT, "fused");
-                EXPECT_LT(deviceInfo.get("fused")->asUint()->value(), 2);  // Must be 0 or 1.
-                checkType(deviceInfo, cppbor::TSTR, "security_level");
-                allowList = getAllowedSecurityLevels();
-                EXPECT_NE(allowList.find(deviceInfo.get("security_level")->asTstr()->value()),
-                          allowList.end());
-                if (deviceInfo.get("security_level")->asTstr()->value() == "tee") {
-                    checkType(deviceInfo, cppbor::TSTR, "os_version");
-                }
-                break;
-            case 1:
-                checkType(deviceInfo, cppbor::TSTR, "security_level");
-                allowList = getAllowedSecurityLevels();
-                EXPECT_NE(allowList.find(deviceInfo.get("security_level")->asTstr()->value()),
-                          allowList.end());
-                if (version->asUint()->value() == 1) {
-                    checkType(deviceInfo, cppbor::TSTR, "att_id_state");
-                    allowList = getAllowedAttIdStates();
-                    EXPECT_NE(allowList.find(deviceInfo.get("att_id_state")->asTstr()->value()),
-                              allowList.end());
-                }
-                break;
-            default:
-                FAIL() << "Unrecognized version: " << version->asUint()->value();
-        }
-    }
-
     bytevec eekId_;
     size_t testEekLength_;
     EekChain testEekChain_;
@@ -584,7 +395,10 @@ TEST_P(CertificateRequestTest, EmptyRequest_testMode) {
                 &protectedData, &keysToSignMac);
         ASSERT_TRUE(status.isOk()) << status.getMessage();
 
-        checkProtectedData(deviceInfo, cppbor::Array(), keysToSignMac, protectedData);
+        auto result = verifyProductionProtectedData(
+                deviceInfo, cppbor::Array(), keysToSignMac, protectedData, testEekChain_, eekId_,
+                rpcHardwareInfo.supportedEekCurve, provisionable_.get(), challenge_);
+        ASSERT_TRUE(result) << result.message();
     }
 }
 
@@ -606,22 +420,24 @@ TEST_P(CertificateRequestTest, NewKeyPerCallInTestMode) {
             &protectedData, &keysToSignMac);
     ASSERT_TRUE(status.isOk()) << status.getMessage();
 
-    std::vector<BccEntryData> firstBcc;
-    checkProtectedData(deviceInfo, /*keysToSign=*/cppbor::Array(), keysToSignMac, protectedData,
-                       &firstBcc);
+    auto firstBcc = verifyProductionProtectedData(
+            deviceInfo, /*keysToSign=*/cppbor::Array(), keysToSignMac, protectedData, testEekChain_,
+            eekId_, rpcHardwareInfo.supportedEekCurve, provisionable_.get(), challenge_);
+    ASSERT_TRUE(firstBcc) << firstBcc.message();
 
     status = provisionable_->generateCertificateRequest(
             testMode, {} /* keysToSign */, testEekChain_.chain, challenge_, &deviceInfo,
             &protectedData, &keysToSignMac);
     ASSERT_TRUE(status.isOk()) << status.getMessage();
 
-    std::vector<BccEntryData> secondBcc;
-    checkProtectedData(deviceInfo, /*keysToSign=*/cppbor::Array(), keysToSignMac, protectedData,
-                       &secondBcc);
+    auto secondBcc = verifyProductionProtectedData(
+            deviceInfo, /*keysToSign=*/cppbor::Array(), keysToSignMac, protectedData, testEekChain_,
+            eekId_, rpcHardwareInfo.supportedEekCurve, provisionable_.get(), challenge_);
+    ASSERT_TRUE(secondBcc) << secondBcc.message();
 
     // Verify that none of the keys in the first BCC are repeated in the second one.
-    for (const auto& i : firstBcc) {
-        for (auto& j : secondBcc) {
+    for (const auto& i : *firstBcc) {
+        for (auto& j : *secondBcc) {
             ASSERT_THAT(i.pubKey, testing::Not(testing::ElementsAreArray(j.pubKey)))
                     << "Found a repeated pubkey in two generateCertificateRequest test mode calls";
         }
@@ -664,7 +480,10 @@ TEST_P(CertificateRequestTest, NonEmptyRequest_testMode) {
                 &keysToSignMac);
         ASSERT_TRUE(status.isOk()) << status.getMessage();
 
-        checkProtectedData(deviceInfo, cborKeysToSign_, keysToSignMac, protectedData);
+        auto result = verifyProductionProtectedData(
+                deviceInfo, cborKeysToSign_, keysToSignMac, protectedData, testEekChain_, eekId_,
+                rpcHardwareInfo.supportedEekCurve, provisionable_.get(), challenge_);
+        ASSERT_TRUE(result) << result.message();
     }
 }
 
