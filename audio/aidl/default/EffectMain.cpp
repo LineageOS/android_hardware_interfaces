@@ -23,7 +23,7 @@
 int main() {
     // This is a debug implementation, always enable debug logging.
     android::base::SetMinimumLogSeverity(::android::base::DEBUG);
-    ABinderProcess_setThreadPoolMaxThreadCount(1);
+    ABinderProcess_setThreadPoolMaxThreadCount(0);
 
     auto effectFactory =
             ndk::SharedRefBase::make<aidl::android::hardware::audio::effect::Factory>();
