@@ -22,15 +22,13 @@ import android.hardware.radio.network.NrIndicators;
 @VintfStability
 @JavaDerive(toString=true)
 parcelable EutranRegistrationInfo {
-    enum AttachType {
+    enum AttachResultType {
         /** Default value. */
         NONE,
         /** LTE is attached with eps only. */
         EPS_ONLY,
         /** LTE combined EPS and IMSI attach. */
         COMBINED,
-        /** LTE is attached for emergency bearer service. */
-        EMERGENCY,
     }
 
     /** LTE combined attach with CSFB not preferred */
@@ -55,7 +53,7 @@ parcelable EutranRegistrationInfo {
      * The type of network attachment. This info is valid only on LTE network and must be present
      * when device has attached to the network.
      */
-    AttachType lteAttachType;
+    AttachResultType lteAttachResultType;
 
     /** Values are bitwise ORs of EXTRA_* constants */
     int extraInfo;
