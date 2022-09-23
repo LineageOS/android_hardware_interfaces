@@ -21,23 +21,31 @@
 
 namespace aidl::android::hardware::audio::effect {
 
-// Equalizer implementation UUID.
-static const ::aidl::android::media::audio::common::AudioUuid EqualizerUUID = {
+// Equalizer type UUID.
+static const ::aidl::android::media::audio::common::AudioUuid EqualizerTypeUUID = {
         static_cast<int32_t>(0x0bed4300),
         0xddd6,
         0x11db,
         0x8f34,
         {0x00, 0x02, 0xa5, 0xd5, 0xc5, 0x1b}};
 
+// Equalizer implementation UUID.
+static const ::aidl::android::media::audio::common::AudioUuid EqualizerSwImplUUID = {
+        static_cast<int32_t>(0x0bed4300),
+        0x847d,
+        0x11df,
+        0xbb17,
+        {0x00, 0x02, 0xa5, 0xd5, 0xc5, 0x1b}};
+
 class Equalizer : public BnEffect {
   public:
-    Equalizer();
+    Equalizer() = default;
     ndk::ScopedAStatus open() override;
     ndk::ScopedAStatus close() override;
     ndk::ScopedAStatus getDescriptor(Descriptor* _aidl_return) override;
 
   private:
     // Effect descriptor.
-    Descriptor mDesc = {.common.id.type = EqualizerUUID};
+    Descriptor mDesc = {.common = {.id = {.type = EqualizerTypeUUID, .uuid = EqualizerSwImplUUID}}};
 };
 }  // namespace aidl::android::hardware::audio::effect
