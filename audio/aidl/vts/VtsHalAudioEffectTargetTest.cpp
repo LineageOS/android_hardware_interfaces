@@ -14,7 +14,11 @@
  * limitations under the License.
  */
 
+#include <memory>
 #include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
 #define LOG_TAG "VtsHalAudioEffect"
 
@@ -29,43 +33,88 @@
 #include <aidl/android/hardware/audio/effect/IFactory.h>
 
 #include "AudioHalBinderServiceUtil.h"
+#include "TestUtils.h"
 
 using namespace android;
 
 using ndk::ScopedAStatus;
 
 using aidl::android::hardware::audio::effect::Descriptor;
+using aidl::android::hardware::audio::effect::IEffect;
 using aidl::android::hardware::audio::effect::IFactory;
 using aidl::android::media::audio::common::AudioUuid;
 
-namespace ndk {
-std::ostream& operator<<(std::ostream& str, const ScopedAStatus& status) {
-    str << status.getDescription();
-    return str;
-}
-}  // namespace ndk
-
-class EffectFactory : public testing::TestWithParam<std::string> {
+class EffectFactoryHelper {
   public:
-    void SetUp() override { ASSERT_NO_FATAL_FAILURE(ConnectToService()); }
+    explicit EffectFactoryHelper(const std::string& name) : mServiceName(name) {}
 
-    void TearDown() override {}
-
-    void ConnectToService() {
-        serviceName = GetParam();
-        factory = IFactory::fromBinder(binderUtil.connectToService(serviceName));
-        ASSERT_NE(factory, nullptr);
+    void ConnectToFactoryService() {
+        mEffectFactory = IFactory::fromBinder(binderUtil.connectToService(mServiceName));
+        ASSERT_NE(mEffectFactory, nullptr);
     }
 
-    void RestartService() {
-        ASSERT_NE(factory, nullptr);
-        factory = IFactory::fromBinder(binderUtil.restartService());
-        ASSERT_NE(factory, nullptr);
+    void RestartFactoryService() {
+        ASSERT_NE(mEffectFactory, nullptr);
+        mEffectFactory = IFactory::fromBinder(binderUtil.restartService());
+        ASSERT_NE(mEffectFactory, nullptr);
     }
 
-    std::shared_ptr<IFactory> factory;
-    std::string serviceName;
+    void QueryAllEffects() {
+        EXPECT_NE(mEffectFactory, nullptr);
+        EXPECT_IS_OK(mEffectFactory->queryEffects(std::nullopt, std::nullopt, &mCompleteIds));
+    }
+
+    void QueryEffects(const std::optional<AudioUuid>& in_type,
+                      const std::optional<AudioUuid>& in_instance,
+                      std::vector<Descriptor::Identity>* _aidl_return) {
+        EXPECT_NE(mEffectFactory, nullptr);
+        EXPECT_IS_OK(mEffectFactory->queryEffects(in_type, in_instance, _aidl_return));
+        mIds = *_aidl_return;
+    }
+
+    void CreateEffects() {
+        EXPECT_NE(mEffectFactory, nullptr);
+        for (const auto& id : mIds) {
+            std::shared_ptr<IEffect> effect;
+            EXPECT_IS_OK(mEffectFactory->createEffect(id.uuid, &effect));
+            EXPECT_NE(effect, nullptr) << id.toString();
+            mEffectIdMap[effect] = id;
+        }
+    }
+
+    void DestroyEffects() {
+        EXPECT_NE(mEffectFactory, nullptr);
+        for (const auto& it : mEffectIdMap) {
+            EXPECT_IS_OK(mEffectFactory->destroyEffect(it.first));
+        }
+        mEffectIdMap.clear();
+    }
+
+    std::shared_ptr<IFactory> GetFactory() { return mEffectFactory; }
+    const std::vector<Descriptor::Identity>& GetEffectIds() { return mIds; }
+    const std::vector<Descriptor::Identity>& GetCompleteEffectIdList() { return mCompleteIds; }
+    const std::unordered_map<std::shared_ptr<IEffect>, Descriptor::Identity>& GetEffectMap() {
+        return mEffectIdMap;
+    }
+
+  private:
+    std::shared_ptr<IFactory> mEffectFactory;
+    std::string mServiceName;
     AudioHalBinderServiceUtil binderUtil;
+    std::vector<Descriptor::Identity> mIds;
+    std::vector<Descriptor::Identity> mCompleteIds;
+    std::unordered_map<std::shared_ptr<IEffect>, Descriptor::Identity> mEffectIdMap;
+};
+
+/// Effect factory testing.
+class EffectFactoryTest : public testing::TestWithParam<std::string> {
+  public:
+    void SetUp() override { ASSERT_NO_FATAL_FAILURE(mFactory.ConnectToFactoryService()); }
+
+    void TearDown() override { mFactory.DestroyEffects(); }
+
+    EffectFactoryHelper mFactory = EffectFactoryHelper(GetParam());
+
     // TODO: these UUID can get from config file
     // ec7178ec-e5e1-4432-a3f4-4657e6795210
     const AudioUuid nullUuid = {static_cast<int32_t>(0xec7178ec),
@@ -77,25 +126,23 @@ class EffectFactory : public testing::TestWithParam<std::string> {
             static_cast<int32_t>(0x0), 0x0, 0x0, 0x0, {0x0, 0x0, 0x0, 0x0, 0x0, 0x0}};
 };
 
-TEST_P(EffectFactory, SetupAndTearDown) {
+TEST_P(EffectFactoryTest, SetupAndTearDown) {
     // Intentionally empty test body.
 }
 
-TEST_P(EffectFactory, CanBeRestarted) {
-    ASSERT_NO_FATAL_FAILURE(RestartService());
+TEST_P(EffectFactoryTest, CanBeRestarted) {
+    ASSERT_NO_FATAL_FAILURE(mFactory.RestartFactoryService());
 }
 
-TEST_P(EffectFactory, QueriedDescriptorList) {
+TEST_P(EffectFactoryTest, QueriedDescriptorList) {
     std::vector<Descriptor::Identity> descriptors;
-    ScopedAStatus status = factory->queryEffects(std::nullopt, std::nullopt, &descriptors);
-    EXPECT_EQ(EX_NONE, status.getExceptionCode());
-    EXPECT_NE(static_cast<int>(descriptors.size()), 0);
+    mFactory.QueryEffects(std::nullopt, std::nullopt, &descriptors);
+    EXPECT_NE(descriptors.size(), 0UL);
 }
 
-TEST_P(EffectFactory, DescriptorUUIDNotNull) {
+TEST_P(EffectFactoryTest, DescriptorUUIDNotNull) {
     std::vector<Descriptor::Identity> descriptors;
-    ScopedAStatus status = factory->queryEffects(std::nullopt, std::nullopt, &descriptors);
-    EXPECT_EQ(EX_NONE, status.getExceptionCode());
+    mFactory.QueryEffects(std::nullopt, std::nullopt, &descriptors);
     // TODO: Factory eventually need to return the full list of MUST supported AOSP effects.
     for (auto& desc : descriptors) {
         EXPECT_NE(desc.type, zeroUuid);
@@ -103,24 +150,163 @@ TEST_P(EffectFactory, DescriptorUUIDNotNull) {
     }
 }
 
-TEST_P(EffectFactory, QueriedDescriptorNotExistType) {
+TEST_P(EffectFactoryTest, QueriedDescriptorNotExistType) {
     std::vector<Descriptor::Identity> descriptors;
-    ScopedAStatus status = factory->queryEffects(nullUuid, std::nullopt, &descriptors);
-    EXPECT_EQ(EX_NONE, status.getExceptionCode());
-    EXPECT_EQ(static_cast<int>(descriptors.size()), 0);
+    mFactory.QueryEffects(nullUuid, std::nullopt, &descriptors);
+    EXPECT_EQ(descriptors.size(), 0UL);
 }
 
-TEST_P(EffectFactory, QueriedDescriptorNotExistInstance) {
+TEST_P(EffectFactoryTest, QueriedDescriptorNotExistInstance) {
     std::vector<Descriptor::Identity> descriptors;
-    ScopedAStatus status = factory->queryEffects(std::nullopt, nullUuid, &descriptors);
-    EXPECT_EQ(EX_NONE, status.getExceptionCode());
-    EXPECT_EQ(static_cast<int>(descriptors.size()), 0);
+    mFactory.QueryEffects(std::nullopt, nullUuid, &descriptors);
+    EXPECT_EQ(descriptors.size(), 0UL);
 }
 
-INSTANTIATE_TEST_SUITE_P(EffectFactoryTest, EffectFactory,
+TEST_P(EffectFactoryTest, CreateAndDestroyRepeat) {
+    std::vector<Descriptor::Identity> descriptors;
+    mFactory.QueryEffects(std::nullopt, std::nullopt, &descriptors);
+    auto numIds = mFactory.GetEffectIds().size();
+    EXPECT_NE(numIds, 0UL);
+
+    EXPECT_EQ(mFactory.GetEffectMap().size(), 0UL);
+    mFactory.CreateEffects();
+    EXPECT_EQ(mFactory.GetEffectMap().size(), numIds);
+    mFactory.DestroyEffects();
+    EXPECT_EQ(mFactory.GetEffectMap().size(), 0UL);
+
+    // Create and destroy again
+    mFactory.CreateEffects();
+    EXPECT_EQ(mFactory.GetEffectMap().size(), numIds);
+    mFactory.DestroyEffects();
+    EXPECT_EQ(mFactory.GetEffectMap().size(), 0UL);
+}
+
+TEST_P(EffectFactoryTest, CreateMultipleInstanceOfSameEffect) {
+    std::vector<Descriptor::Identity> descriptors;
+    mFactory.QueryEffects(std::nullopt, std::nullopt, &descriptors);
+    auto numIds = mFactory.GetEffectIds().size();
+    EXPECT_NE(numIds, 0UL);
+
+    EXPECT_EQ(mFactory.GetEffectMap().size(), 0UL);
+    mFactory.CreateEffects();
+    EXPECT_EQ(mFactory.GetEffectMap().size(), numIds);
+    // Create effect instances of same implementation
+    mFactory.CreateEffects();
+    EXPECT_EQ(mFactory.GetEffectMap().size(), 2 * numIds);
+
+    mFactory.CreateEffects();
+    EXPECT_EQ(mFactory.GetEffectMap().size(), 3 * numIds);
+
+    mFactory.DestroyEffects();
+    EXPECT_EQ(mFactory.GetEffectMap().size(), 0UL);
+}
+
+INSTANTIATE_TEST_SUITE_P(EffectFactoryTest, EffectFactoryTest,
                          testing::ValuesIn(android::getAidlHalInstanceNames(IFactory::descriptor)),
                          android::PrintInstanceNameToString);
-GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(EffectFactory);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(EffectFactoryTest);
+
+/// Effect testing.
+class AudioEffect : public testing::TestWithParam<std::string> {
+  public:
+    void SetUp() override {
+        ASSERT_NO_FATAL_FAILURE(mFactory.ConnectToFactoryService());
+        ASSERT_NO_FATAL_FAILURE(mFactory.CreateEffects());
+    }
+
+    void TearDown() override {
+        CloseEffects();
+        ASSERT_NO_FATAL_FAILURE(mFactory.DestroyEffects());
+    }
+
+    void OpenEffects() {
+        auto open = [](const std::shared_ptr<IEffect>& effect) { EXPECT_IS_OK(effect->open()); };
+        EXPECT_NO_FATAL_FAILURE(ForEachEffect(open));
+    }
+
+    void CloseEffects() {
+        auto close = [](const std::shared_ptr<IEffect>& effect) { EXPECT_IS_OK(effect->close()); };
+        EXPECT_NO_FATAL_FAILURE(ForEachEffect(close));
+    }
+
+    void GetEffectDescriptors() {
+        auto get = [](const std::shared_ptr<IEffect>& effect) {
+            Descriptor desc;
+            EXPECT_IS_OK(effect->getDescriptor(&desc));
+        };
+        EXPECT_NO_FATAL_FAILURE(ForEachEffect(get));
+    }
+
+    template <typename Functor>
+    void ForEachEffect(Functor functor) {
+        auto effectMap = mFactory.GetEffectMap();
+        for (const auto& it : effectMap) {
+            SCOPED_TRACE(it.second.toString());
+            functor(it.first);
+        }
+    }
+
+    EffectFactoryHelper mFactory = EffectFactoryHelper(GetParam());
+};
+
+TEST_P(AudioEffect, OpenEffectTest) {
+    EXPECT_NO_FATAL_FAILURE(OpenEffects());
+}
+
+TEST_P(AudioEffect, OpenAndCloseEffect) {
+    EXPECT_NO_FATAL_FAILURE(OpenEffects());
+    EXPECT_NO_FATAL_FAILURE(CloseEffects());
+}
+
+TEST_P(AudioEffect, CloseUnopenedEffectTest) {
+    EXPECT_NO_FATAL_FAILURE(CloseEffects());
+}
+
+TEST_P(AudioEffect, DoubleOpenCloseEffects) {
+    EXPECT_NO_FATAL_FAILURE(OpenEffects());
+    EXPECT_NO_FATAL_FAILURE(CloseEffects());
+    EXPECT_NO_FATAL_FAILURE(OpenEffects());
+    EXPECT_NO_FATAL_FAILURE(CloseEffects());
+
+    EXPECT_NO_FATAL_FAILURE(OpenEffects());
+    EXPECT_NO_FATAL_FAILURE(OpenEffects());
+    EXPECT_NO_FATAL_FAILURE(CloseEffects());
+
+    EXPECT_NO_FATAL_FAILURE(OpenEffects());
+    EXPECT_NO_FATAL_FAILURE(CloseEffects());
+    EXPECT_NO_FATAL_FAILURE(CloseEffects());
+}
+
+TEST_P(AudioEffect, GetDescriptors) {
+    EXPECT_NO_FATAL_FAILURE(GetEffectDescriptors());
+}
+
+TEST_P(AudioEffect, DescriptorIdExistAndUnique) {
+    auto checker = [&](const std::shared_ptr<IEffect>& effect) {
+        Descriptor desc;
+        std::vector<Descriptor::Identity> idList;
+        EXPECT_IS_OK(effect->getDescriptor(&desc));
+        mFactory.QueryEffects(desc.common.id.type, desc.common.id.uuid, &idList);
+        EXPECT_EQ(idList.size(), 1UL);
+    };
+    EXPECT_NO_FATAL_FAILURE(ForEachEffect(checker));
+
+    // Check unique with a set
+    auto stringHash = [](const Descriptor::Identity& id) {
+        return std::hash<std::string>()(id.toString());
+    };
+    auto vec = mFactory.GetCompleteEffectIdList();
+    std::unordered_set<Descriptor::Identity, decltype(stringHash)> idSet(0, stringHash);
+    for (auto it : vec) {
+        EXPECT_EQ(idSet.count(it), 0UL);
+        idSet.insert(it);
+    }
+}
+
+INSTANTIATE_TEST_SUITE_P(AudioEffectTest, AudioEffect,
+                         testing::ValuesIn(android::getAidlHalInstanceNames(IFactory::descriptor)),
+                         android::PrintInstanceNameToString);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(AudioEffect);
 
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
