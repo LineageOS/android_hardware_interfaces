@@ -68,6 +68,7 @@ cc_defaults {
         "libbase",
         "libbinder_ndk",
         "android.hardware.audio.effect-V1-ndk",
+        "libequalizer",
     ],
     cflags: [
         "-Wall",
@@ -80,7 +81,10 @@ cc_defaults {
 cc_library_static {
     name: "libaudioeffectserviceexampleimpl",
     defaults: ["aidlaudioeffectservice_defaults"],
-    export_include_dirs: ["include"],
+    export_include_dirs: [
+        "include",
+        "include/equalizer-impl/",
+    ],
     srcs: [
         "EffectFactory.cpp",
     ],
