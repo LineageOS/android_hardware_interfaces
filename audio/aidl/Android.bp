@@ -148,6 +148,7 @@ aidl_interface {
     vendor_available: true,
     srcs: [
         "android/hardware/audio/effect/Descriptor.aidl",
+        "android/hardware/audio/effect/IEffect.aidl",
         "android/hardware/audio/effect/IFactory.aidl",
     ],
     imports: [
