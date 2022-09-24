@@ -21,15 +21,6 @@
 
 namespace aidl::android::hardware::audio::effect {
 
-Equalizer::Equalizer() {
-    // Implementation UUID
-    mDesc.common.id.uuid = {static_cast<int32_t>(0xce772f20),
-                            0x847d,
-                            0x11df,
-                            0xbb17,
-                            {0x00, 0x02, 0xa5, 0xd5, 0xc5, 0x1b}};
-}
-
 ndk::ScopedAStatus Equalizer::open() {
     LOG(DEBUG) << __func__;
     return ndk::ScopedAStatus::ok();

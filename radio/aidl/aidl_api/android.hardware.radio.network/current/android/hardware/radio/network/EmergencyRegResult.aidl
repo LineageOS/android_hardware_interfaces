@@ -40,4 +40,6 @@ parcelable EmergencyRegResult {
   boolean isEmcBearerSupported;
   byte nwProvidedEmc;
   byte nwProvidedEmf;
+  String mcc;
+  String mnc;
 }
