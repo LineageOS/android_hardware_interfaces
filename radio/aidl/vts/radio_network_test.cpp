@@ -1833,3 +1833,81 @@ TEST_P(RadioNetworkTest, supplyNetworkDepersonalization) {
     }
     LOG(DEBUG) << "supplyNetworkDepersonalization finished";
 }
+
+/*
+ * Test IRadioNetwork.setEmergencyMode() for the response returned.
+ */
+TEST_P(RadioNetworkTest, setEmergencyMode) {
+    LOG(DEBUG) << "setEmergencyMode";
+    serial = GetRandomSerialNumber();
+
+    radio_network->setEmergencyMode(serial, EmergencyMode::EMERGENCY_WWAN);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_network->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_network->rspInfo.serial);
+
+    ASSERT_TRUE(CheckAnyOfErrors(
+            radioRsp_network->rspInfo.error,
+            {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE,
+             RadioError::MODEM_ERR, RadioError::INVALID_ARGUMENTS}));
+    LOG(DEBUG) << "setEmergencyMode finished";
+}
+
+/*
+ * Test IRadioNetwork.triggerEmergencyNetworkScan() for the response returned.
+ */
+TEST_P(RadioNetworkTest, triggerEmergencyNetworkScan) {
+    LOG(DEBUG) << "triggerEmergencyNetworkScan";
+    serial = GetRandomSerialNumber();
+
+    EmergencyNetworkScanTrigger scanRequest;
+    scanRequest.accessNetwork = {AccessNetwork::EUTRAN};
+    scanRequest.scanType = EmergencyScanType::NO_PREFERENCE;
+
+    radio_network->triggerEmergencyNetworkScan(serial, scanRequest);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_network->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_network->rspInfo.serial);
+
+    ASSERT_TRUE(CheckAnyOfErrors(
+            radioRsp_network->rspInfo.error,
+            {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE,
+             RadioError::MODEM_ERR, RadioError::INVALID_ARGUMENTS}));
+    LOG(DEBUG) << "triggerEmergencyNetworkScan finished";
+}
+
+/*
+ * Test IRadioNetwork.cancelEmergencyNetworkScan() for the response returned.
+ */
+TEST_P(RadioNetworkTest, cancelEmergencyNetworkScan) {
+    LOG(DEBUG) << "cancelEmergencyNetworkScan";
+    serial = GetRandomSerialNumber();
+
+    radio_network->cancelEmergencyNetworkScan(serial);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_network->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_network->rspInfo.serial);
+
+    ASSERT_TRUE(CheckAnyOfErrors(
+            radioRsp_network->rspInfo.error,
+            {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::MODEM_ERR}));
+    LOG(DEBUG) << "cancelEmergencyNetworkScan finished";
+}
+
+/*
+ * Test IRadioNetwork.exitEmergencyMode() for the response returned.
+ */
+TEST_P(RadioNetworkTest, exitEmergencyMode) {
+    LOG(DEBUG) << "exitEmergencyMode";
+    serial = GetRandomSerialNumber();
+
+    radio_network->exitEmergencyMode(serial);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_network->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_network->rspInfo.serial);
+
+    ASSERT_TRUE(CheckAnyOfErrors(
+            radioRsp_network->rspInfo.error,
+            {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::MODEM_ERR}));
+    LOG(DEBUG) << "exitEmergencyMode finished";
+}

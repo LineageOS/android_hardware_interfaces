@@ -580,7 +580,6 @@ oneway interface IRadioNetworkResponse {
      *
      * Valid errors returned:
      *   RadioError:NONE
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:MODEM_ERR
      *   RadioError:INVALID_ARGUMENTS
@@ -592,7 +591,6 @@ oneway interface IRadioNetworkResponse {
      *
      * Valid errors returned:
      *   RadioError:NONE
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:MODEM_ERR
      *   RadioError:INVALID_ARGUMENTS
@@ -604,7 +602,6 @@ oneway interface IRadioNetworkResponse {
      *
      * Valid errors returned:
      *   RadioError:NONE
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:MODEM_ERR
      */
@@ -615,7 +612,6 @@ oneway interface IRadioNetworkResponse {
      *
      * Valid errors returned:
      *   RadioError:NONE
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:MODEM_ERR
      */
