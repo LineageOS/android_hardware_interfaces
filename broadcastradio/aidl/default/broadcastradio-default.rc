@@ -1,0 +1,6 @@
+service vendor.broadcastradio-default /vendor/bin/hw/android.hardware.broadcastradio-service.default
+    interface aidl android.hardware.broadcastradio.IBroadcastRadio/amfm
+    interface aidl android.hardware.broadcastradio.IBroadcastRadio/dab
+    class hal
+    user audioserver
+    group audio
