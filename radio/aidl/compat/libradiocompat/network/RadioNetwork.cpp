@@ -340,4 +340,16 @@ ScopedAStatus RadioNetwork::exitEmergencyMode(int32_t serial) {
     return ok();
 }
 
+ScopedAStatus RadioNetwork::getRegistrationState(
+        int32_t serial, ::aidl::android::hardware::radio::RadioTechnologyFamily ratFamily,
+        aidl::Domain domain) {
+    LOG_CALL << serial;
+    if (ratFamily == ::aidl::android::hardware::radio::RadioTechnologyFamily::THREE_GPP &&
+        domain == aidl::Domain::PS) {
+        LOG_CALL << " Radio Technology Family 3GPP and Domain PS";
+    }
+    LOG(ERROR) << " geRegistrationState is unsupported by HIDL HALs";
+    respond()->getRegistrationStateResponse(notSupported(serial), {});
+    return ok();
+}
 }  // namespace android::hardware::radio::compat

@@ -28,4 +28,8 @@ enum RadioTechnologyFamily {
      * 3GPP2 Technologies - CDMA
      */
     THREE_GPP2,
+    /**
+     * Non 3GPP Technologies - IWLAN, N3IWF
+     */
+    NON_3GPP,
 }

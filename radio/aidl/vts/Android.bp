@@ -63,9 +63,9 @@ cc_test {
         "libvintf",
     ],
     static_libs: [
-        "android.hardware.radio-V1-ndk",
+        "android.hardware.radio-V2-ndk",
         "android.hardware.radio.config-V1-ndk",
-        "android.hardware.radio.data-V1-ndk",
+        "android.hardware.radio.data-V2-ndk",
         "android.hardware.radio.messaging-V1-ndk",
         "android.hardware.radio.modem-V1-ndk",
         "android.hardware.radio.network-V2-ndk",
