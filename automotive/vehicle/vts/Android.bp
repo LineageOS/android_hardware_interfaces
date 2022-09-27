@@ -45,6 +45,7 @@ cc_test {
         "general-tests",
         "vts",
         "automotive-tests",
+        "automotive-general-tests",
     ],
     require_root: true,
 }
