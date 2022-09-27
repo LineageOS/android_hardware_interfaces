@@ -1105,8 +1105,12 @@ TYPED_TEST(FilterTest, FilterOutNonVendorTags) {
     TypeParam emptyTags;
     EXPECT_EQ(emptyTags, HidlUtils::filterOutNonVendorTags(emptyTags));
 
-    TypeParam allVendorTags = {{"VX_GOOGLE_VR_42", "VX_GOOGLE_1E100"}};
-    EXPECT_EQ(allVendorTags, HidlUtils::filterOutNonVendorTags(allVendorTags));
+    // b/248421569, allocate two vendor tags at a time can run out of memory
+    // TypeParam allVendorTags = {{"VX_GOOGLE_VR_42", "VX_GOOGLE_1E100"}};
+    TypeParam allVendorTags1 = {{"VX_GOOGLE_VR_42"}};
+    EXPECT_EQ(allVendorTags1, HidlUtils::filterOutNonVendorTags(allVendorTags1));
+    TypeParam allVendorTags2 = {{"VX_GOOGLE_1E100"}};
+    EXPECT_EQ(allVendorTags2, HidlUtils::filterOutNonVendorTags(allVendorTags2));
 
     TypeParam oneVendorTag = {{"", "VX_GOOGLE_VR", "random_string"}};
     TypeParam oneVendorTagOnly = HidlUtils::filterOutNonVendorTags(oneVendorTag);
