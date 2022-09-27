@@ -166,6 +166,20 @@ inline std::string vectorToString(const std::vector<aidl_type>& in_values) {
                            });
 }
 
+IdentifierType getType(int typeAsInt);
+
+bool parseArgInt(const std::string& s, int* out);
+
+bool parseArgLong(const std::string& s, long* out);
+
+bool parseArgBool(const std::string& s, bool* out);
+
+bool parseArgDirection(const std::string& s, bool* out);
+
+bool parseArgIdentifierTypeArray(const std::string& s, std::vector<IdentifierType>* out);
+
+bool parseProgramIdentifierList(const std::string& s, std::vector<ProgramIdentifier>* out);
+
 }  // namespace utils
 
 utils::IdentifierIterator begin(const ProgramSelector& sel);
