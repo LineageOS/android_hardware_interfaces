@@ -418,17 +418,14 @@ AssertionResult FrontendTests::closeFrontend() {
 
 void FrontendTests::getFrontendIdByType(FrontendType feType, uint32_t& feId) {
     ASSERT_TRUE(getFrontendIds());
-    if (mFeIds.size() > 0) {
-        for (size_t i = 0; i < mFeIds.size(); i++) {
-            ASSERT_TRUE(getFrontendInfo(mFeIds[i]));
-            if (mFrontendInfo.type != feType) {
+    feId = INVALID_ID;
+    for (size_t i = 0; i < mFeIds.size(); i++) {
+        ASSERT_TRUE(getFrontendInfo(mFeIds[i]));
+        if (mFrontendInfo.type != feType) {
                 continue;
-            }
-            feId = mFeIds[i];
-            return;
         }
-    } else {
-        feId = INVALID_ID;
+        feId = mFeIds[i];
+        return;
     }
 }
 
