@@ -43,6 +43,8 @@ using android::hardware::tv::tuner::V1_0::FrontendDvbtHierarchy;
 using android::hardware::tv::tuner::V1_0::FrontendDvbtSettings;
 using android::hardware::tv::tuner::V1_0::FrontendDvbtStandard;
 using android::hardware::tv::tuner::V1_0::FrontendDvbtTransmissionMode;
+using android::hardware::tv::tuner::V1_0::FrontendDvbsModulation;
+using android::hardware::tv::tuner::V1_0::FrontendDvbsStandard;
 using android::hardware::tv::tuner::V1_0::FrontendSettings;
 using android::hardware::tv::tuner::V1_0::FrontendStatus;
 using android::hardware::tv::tuner::V1_0::FrontendStatusType;
@@ -116,6 +118,7 @@ typedef enum {
 
 typedef enum {
     SCAN_DVBT,
+    SCAN_DVBS,
     SCAN_MAX,
 } FrontendScan;
 
@@ -192,8 +195,8 @@ static DemuxFilterType filterLinkageTypes[LINKAGE_DIR][FILTER_MAIN_TYPE_BIT_COUN
 static DvrConfig dvrArray[DVR_MAX];
 static DescramblerConfig descramblerArray[DESC_MAX];
 static vector<string> goldenOutputFiles;
-static int defaultFrontend = DVBT;
-static int defaultScanFrontend = SCAN_DVBT;
+static int defaultFrontend = DVBS;
+static int defaultScanFrontend = SCAN_DVBS;
 
 /** Configuration array for the frontend tune test */
 inline void initFrontendConfig() {
@@ -239,6 +242,14 @@ inline void initFrontendScanConfig() {
             .guardInterval = FrontendDvbtGuardInterval::AUTO,
             .isHighPriority = true,
             .standard = FrontendDvbtStandard::T,
+    });
+
+    frontendScanArray[SCAN_DVBS].type = FrontendType::DVBS;
+    frontendScanArray[SCAN_DVBS].settings.dvbs({
+            .frequency = 1000000,
+            .symbolRate = 27500,
+            .modulation = FrontendDvbsModulation::MOD_QPSK,
+            .standard = FrontendDvbsStandard::S,
     });
 };
 
