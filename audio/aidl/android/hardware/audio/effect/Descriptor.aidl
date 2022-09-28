@@ -16,12 +16,13 @@
 
 package android.hardware.audio.effect;
 
+import android.hardware.audio.effect.Capability;
+import android.hardware.audio.effect.Flags;
 import android.media.audio.common.AudioUuid;
 
 /**
- * Effect descriptor contains all information (capabilities, attributes, and ownership) for an
- * effect implemented in the Audio Effect HAL. Framework uses this information to decide when and
- * how to apply the effect.
+ * Descriptor contains all information (capabilities, attributes, etc) for an effect implementation.
+ * The client uses this information to decide when and how to apply an effect implementation.
  */
 @VintfStability
 parcelable Descriptor {
@@ -77,6 +78,15 @@ parcelable Descriptor {
          * Identity of effect implementation.
          */
         Identity id;
+        /**
+         * Effect engine defined capabilities/requirements flags.
+         */
+        Flags flags;
     }
     Common common;
+
+    /**
+     * Effect implementation capability.
+     */
+    Capability capability;
 }
