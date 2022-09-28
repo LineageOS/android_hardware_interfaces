@@ -10,6 +10,10 @@ package {
 cc_library_static {
     name: "android.hardware.identity-libeic-hal-common",
     vendor_available: true,
+    defaults: [
+        "identity_use_latest_hal_aidl_ndk_static",
+        "keymint_use_latest_hal_aidl_ndk_static",
+    ],
     srcs: [
         "common/IdentityCredential.cpp",
         "common/IdentityCredentialStore.cpp",
@@ -40,9 +44,7 @@ cc_library_static {
         "libsoft_attestation_cert",
         "libpuresoftkeymasterdevice",
         "android.hardware.identity-support-lib",
-        "android.hardware.identity-V4-ndk",
         "android.hardware.keymaster-V3-ndk",
-        "android.hardware.security.keymint-V2-ndk",
     ],
 }
 
@@ -83,6 +85,7 @@ cc_binary {
     vintf_fragments: ["identity-default.xml"],
     vendor: true,
     defaults: [
+        "identity_use_latest_hal_aidl_ndk_static",
         "keymint_use_latest_hal_aidl_ndk_static",
     ],
     cflags: [
@@ -106,7 +109,6 @@ cc_binary {
         "libsoft_attestation_cert",
         "libpuresoftkeymasterdevice",
         "android.hardware.identity-support-lib",
-        "android.hardware.identity-V4-ndk",
         "android.hardware.keymaster-V3-ndk",
         "android.hardware.identity-libeic-hal-common",
         "android.hardware.identity-libeic-library",
