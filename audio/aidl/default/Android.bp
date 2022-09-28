@@ -81,16 +81,21 @@ cc_defaults {
 cc_library_static {
     name: "libaudioeffectserviceexampleimpl",
     defaults: ["aidlaudioeffectservice_defaults"],
-    export_include_dirs: [
-        "include",
-        "include/equalizer-impl/",
-    ],
+    export_include_dirs: ["include"],
     srcs: [
         "EffectFactory.cpp",
+    ],
+    header_libs: [
+        "libsystem_headers",
     ],
     visibility: [
         ":__subpackages__",
     ],
+}
+
+filegroup {
+    name: "effectCommonFile",
+    srcs: ["EffectThread.cpp"],
 }
 
 cc_binary {
