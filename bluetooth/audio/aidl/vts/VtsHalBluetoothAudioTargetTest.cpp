@@ -23,6 +23,7 @@
 #include <android/binder_process.h>
 #include <binder/IServiceManager.h>
 #include <binder/ProcessState.h>
+#include <cutils/properties.h>
 #include <fmq/AidlMessageQueue.h>
 
 #include <cstdint>
@@ -248,7 +249,8 @@ class BluetoothAudioProviderFactoryAidl
       case SessionType::LE_AUDIO_HARDWARE_OFFLOAD_ENCODING_DATAPATH:
       case SessionType::LE_AUDIO_HARDWARE_OFFLOAD_DECODING_DATAPATH:
       case SessionType::LE_AUDIO_BROADCAST_HARDWARE_OFFLOAD_ENCODING_DATAPATH: {
-        ASSERT_FALSE(temp_provider_capabilities_.empty());
+        // empty capability means offload is unsupported since capabilities are
+        // not hardcoded
         for (auto audio_capability : temp_provider_capabilities_) {
           ASSERT_EQ(audio_capability.getTag(),
                     AudioCapabilities::leAudioCapabilities);
@@ -513,8 +515,9 @@ class BluetoothAudioProviderFactoryAidl
         for (auto channel_mode : opus_capability->channelMode) {
           OpusConfiguration opus_data{
               .samplingFrequencyHz = samplingFrequencyHz,
+              .frameDurationUs = frameDurationUs,
               .channelMode = channel_mode,
-              .frameDurationUs = frameDurationUs};
+          };
           opus_codec_specifics.push_back(
               CodecConfiguration::CodecSpecific(opus_data));
         }
@@ -623,8 +626,8 @@ TEST_P(BluetoothAudioProviderA2dpEncodingSoftwareAidl,
       for (auto channel_mode : a2dp_channel_modes) {
         PcmConfiguration pcm_config{
             .sampleRateHz = sample_rate,
-            .bitsPerSample = bits_per_sample,
             .channelMode = channel_mode,
+            .bitsPerSample = bits_per_sample,
         };
         bool is_codec_config_valid = IsPcmConfigSupported(pcm_config);
         DataMQDesc mq_desc;
@@ -937,8 +940,8 @@ TEST_P(BluetoothAudioProviderHearingAidSoftwareAidl,
       for (auto channel_mode : hearing_aid_channel_modes_) {
         PcmConfiguration pcm_config{
             .sampleRateHz = sample_rate,
-            .bitsPerSample = bits_per_sample,
             .channelMode = channel_mode,
+            .bitsPerSample = bits_per_sample,
         };
         bool is_codec_config_valid = IsPcmConfigSupported(pcm_config);
         DataMQDesc mq_desc;
@@ -1008,8 +1011,8 @@ TEST_P(BluetoothAudioProviderLeAudioOutputSoftwareAidl,
         for (auto data_interval_us : le_audio_output_data_interval_us_) {
           PcmConfiguration pcm_config{
               .sampleRateHz = sample_rate,
-              .bitsPerSample = bits_per_sample,
               .channelMode = channel_mode,
+              .bitsPerSample = bits_per_sample,
               .dataIntervalUs = data_interval_us,
           };
           bool is_codec_config_valid =
@@ -1081,8 +1084,8 @@ TEST_P(BluetoothAudioProviderLeAudioInputSoftwareAidl,
         for (auto data_interval_us : le_audio_input_data_interval_us_) {
           PcmConfiguration pcm_config{
               .sampleRateHz = sample_rate,
-              .bitsPerSample = bits_per_sample,
               .channelMode = channel_mode,
+              .bitsPerSample = bits_per_sample,
               .dataIntervalUs = data_interval_us,
           };
           bool is_codec_config_valid =
@@ -1144,7 +1147,7 @@ class BluetoothAudioProviderLeAudioOutputHardwareAidl
                                                            bool supported) {
     std::vector<Lc3Configuration> le_audio_codec_configs;
     if (!supported) {
-      Lc3Configuration lc3_config{.samplingFrequencyHz = 0, .pcmBitDepth = 0};
+      Lc3Configuration lc3_config{.pcmBitDepth = 0, .samplingFrequencyHz = 0};
       le_audio_codec_configs.push_back(lc3_config);
       return le_audio_codec_configs;
     }
@@ -1428,8 +1431,8 @@ TEST_P(BluetoothAudioProviderLeAudioBroadcastSoftwareAidl,
         for (auto data_interval_us : le_audio_output_data_interval_us_) {
           PcmConfiguration pcm_config{
               .sampleRateHz = sample_rate,
-              .bitsPerSample = bits_per_sample,
               .channelMode = channel_mode,
+              .bitsPerSample = bits_per_sample,
               .dataIntervalUs = data_interval_us,
           };
           bool is_codec_config_valid =
@@ -1490,7 +1493,7 @@ class BluetoothAudioProviderLeAudioBroadcastHardwareAidl
   std::vector<Lc3Configuration> GetBroadcastLc3SupportedList(bool supported) {
     std::vector<Lc3Configuration> le_audio_codec_configs;
     if (!supported) {
-      Lc3Configuration lc3_config{.samplingFrequencyHz = 0, .pcmBitDepth = 0};
+      Lc3Configuration lc3_config{.pcmBitDepth = 0, .samplingFrequencyHz = 0};
       le_audio_codec_configs.push_back(lc3_config);
       return le_audio_codec_configs;
     }
@@ -1650,8 +1653,8 @@ TEST_P(BluetoothAudioProviderA2dpDecodingSoftwareAidl,
       for (auto channel_mode : a2dp_channel_modes) {
         PcmConfiguration pcm_config{
             .sampleRateHz = sample_rate,
-            .bitsPerSample = bits_per_sample,
             .channelMode = channel_mode,
+            .bitsPerSample = bits_per_sample,
         };
         bool is_codec_config_valid = IsPcmConfigSupported(pcm_config);
         DataMQDesc mq_desc;
