@@ -20,7 +20,7 @@ aidl_interface {
     name: "android.hardware.confirmationui",
     vendor_available: true,
     imports: [
-        "android.hardware.security.keymint-V2",
+        "android.hardware.security.keymint-V3",
     ],
     srcs: ["android/hardware/confirmationui/*.aidl"],
     stability: "vintf",
