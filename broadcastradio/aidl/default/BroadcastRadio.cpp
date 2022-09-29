@@ -22,11 +22,15 @@
 #include <aidl/android/hardware/broadcastradio/Result.h>
 
 #include <android-base/logging.h>
+#include <android-base/strings.h>
+
+#include <private/android_filesystem_config.h>
 
 namespace aidl::android::hardware::broadcastradio {
 
 using ::aidl::android::hardware::broadcastradio::utils::resultToInt;
 using ::aidl::android::hardware::broadcastradio::utils::tunesTo;
+using ::android::base::EqualsIgnoreCase;
 using ::ndk::ScopedAStatus;
 using ::std::literals::chrono_literals::operator""ms;
 using ::std::literals::chrono_literals::operator""s;
@@ -81,6 +85,15 @@ ProgramInfo makeSampleProgramInfo(const ProgramSelector& selector) {
                                   utils::getId(selector, IdentifierType::AMFM_FREQUENCY_KHZ));
     info.physicallyTunedTo = info.logicallyTunedTo;
     return info;
+}
+
+static bool checkDumpCallerHasWritePermissions(int fd) {
+    uid_t uid = AIBinder_getCallingUid();
+    if (uid == AID_ROOT || uid == AID_SHELL || uid == AID_SYSTEM) {
+        return true;
+    }
+    dprintf(fd, "BroadcastRadio HAL dump must be root, shell or system\n");
+    return false;
 }
 
 }  // namespace
@@ -468,6 +481,308 @@ ScopedAStatus BroadcastRadio::registerAnnouncementListener(
     return ScopedAStatus::fromServiceSpecificErrorWithMessage(
             resultToInt(Result::NOT_SUPPORTED),
             "registering announcementListener is not supported");
+}
+
+binder_status_t BroadcastRadio::dump(int fd, const char** args, uint32_t numArgs) {
+    if (numArgs == 0) {
+        return dumpsys(fd);
+    }
+
+    string option = string(args[0]);
+    if (EqualsIgnoreCase(option, "--help")) {
+        return cmdHelp(fd);
+    } else if (EqualsIgnoreCase(option, "--tune")) {
+        return cmdTune(fd, args, numArgs);
+    } else if (EqualsIgnoreCase(option, "--seek")) {
+        return cmdSeek(fd, args, numArgs);
+    } else if (EqualsIgnoreCase(option, "--step")) {
+        return cmdStep(fd, args, numArgs);
+    } else if (EqualsIgnoreCase(option, "--cancel")) {
+        return cmdCancel(fd, numArgs);
+    } else if (EqualsIgnoreCase(option, "--startProgramListUpdates")) {
+        return cmdStartProgramListUpdates(fd, args, numArgs);
+    } else if (EqualsIgnoreCase(option, "--stopProgramListUpdates")) {
+        return cmdStopProgramListUpdates(fd, numArgs);
+    }
+    dprintf(fd, "Invalid option: %s\n", option.c_str());
+    return STATUS_BAD_VALUE;
+}
+
+binder_status_t BroadcastRadio::dumpsys(int fd) {
+    if (!checkDumpCallerHasWritePermissions(fd)) {
+        return STATUS_PERMISSION_DENIED;
+    }
+    lock_guard<mutex> lk(mMutex);
+    dprintf(fd, "AmFmRegionConfig: %s\n", mAmFmConfig.toString().c_str());
+    dprintf(fd, "Properties: %s \n", mProperties.toString().c_str());
+    if (mIsTuneCompleted) {
+        dprintf(fd, "Tune completed\n");
+    } else {
+        dprintf(fd, "Tune not completed\n");
+    }
+    if (mCallback == nullptr) {
+        dprintf(fd, "No ITunerCallback registered\n");
+    } else {
+        dprintf(fd, "ITunerCallback registered\n");
+    }
+    dprintf(fd, "CurrentProgram: %s \n", mCurrentProgram.toString().c_str());
+    return STATUS_OK;
+}
+
+binder_status_t BroadcastRadio::cmdHelp(int fd) const {
+    dprintf(fd, "Usage: \n\n");
+    dprintf(fd, "[no args]: dumps focus listener / gain callback registered status\n");
+    dprintf(fd, "--help: shows this help\n");
+    dprintf(fd,
+            "--tune amfm <FREQUENCY>: tunes amfm radio to frequency (in Hz) specified: "
+            "frequency (int) \n"
+            "--tune dab <SID> <ENSEMBLE>: tunes dab radio to sid and ensemble specified: "
+            "sidExt (int), ensemble (int) \n");
+    dprintf(fd,
+            "--seek [up|down] <SKIP_SUB_CHANNEL>: seek with direction (up or down) and "
+            "option whether skipping sub channel: "
+            "skipSubChannel (string, should be either \"true\" or \"false\")\n");
+    dprintf(fd, "--step [up|down]: step in direction (up or down) specified\n");
+    dprintf(fd, "--cancel: cancel current pending tune, step, and seek\n");
+    dprintf(fd,
+            "--startProgramListUpdates <IDENTIFIER_TYPES> <IDENTIFIERS> <INCLUDE_CATEGORIES> "
+            "<EXCLUDE_MODIFICATIONS>: start update program list with the filter specified: "
+            "identifier types (string, in format <TYPE>,<TYPE>,...,<TYPE> or \"null\" (if empty), "
+            "where TYPE is int), "
+            "program identifiers (string, in format "
+            "<TYPE>:<VALUE>,<TYPE>:<VALUE>,...,<TYPE>:<VALUE> or \"null\" (if empty), "
+            "where TYPE is int and VALUE is long), "
+            "includeCategories (string, should be either \"true\" or \"false\"), "
+            "excludeModifications (string, should be either \"true\" or \"false\")\n");
+    dprintf(fd, "--stopProgramListUpdates: stop current pending program list updates\n");
+    dprintf(fd,
+            "Note on <TYPE> for --startProgramList command: it is int for identifier type. "
+            "Please see broadcastradio/aidl/android/hardware/broadcastradio/IdentifierType.aidl "
+            "for its definition.\n");
+    dprintf(fd,
+            "Note on <VALUE> for --startProgramList command: it is long type for identifier value. "
+            "Please see broadcastradio/aidl/android/hardware/broadcastradio/IdentifierType.aidl "
+            "for its value.\n");
+
+    return STATUS_OK;
+}
+
+binder_status_t BroadcastRadio::cmdTune(int fd, const char** args, uint32_t numArgs) {
+    if (!checkDumpCallerHasWritePermissions(fd)) {
+        return STATUS_PERMISSION_DENIED;
+    }
+    if (numArgs != 3 && numArgs != 4) {
+        dprintf(fd,
+                "Invalid number of arguments: please provide --tune amfm <FREQUENCY> "
+                "or --tune dab <SID> <ENSEMBLE>\n");
+        return STATUS_BAD_VALUE;
+    }
+    bool isDab = false;
+    if (EqualsIgnoreCase(string(args[1]), "dab")) {
+        isDab = true;
+    } else if (!EqualsIgnoreCase(string(args[1]), "amfm")) {
+        dprintf(fd, "Unknown radio type provided with tune: %s\n", args[1]);
+        return STATUS_BAD_VALUE;
+    }
+    ProgramSelector sel = {};
+    if (isDab) {
+        if (numArgs != 4) {
+            dprintf(fd,
+                    "Invalid number of arguments: please provide --tune dab <SID> <ENSEMBLE>\n");
+            return STATUS_BAD_VALUE;
+        }
+        int sid;
+        if (!utils::parseArgInt(string(args[2]), &sid)) {
+            dprintf(fd, "Non-integer sid provided with tune: %s\n", string(args[2]).c_str());
+            return STATUS_BAD_VALUE;
+        }
+        int ensemble;
+        if (!utils::parseArgInt(string(args[3]), &ensemble)) {
+            dprintf(fd, "Non-integer ensemble provided with tune: %s\n", string(args[3]).c_str());
+            return STATUS_BAD_VALUE;
+        }
+        sel = utils::makeSelectorDab(sid, ensemble);
+    } else {
+        if (numArgs != 3) {
+            dprintf(fd, "Invalid number of arguments: please provide --tune amfm <FREQUENCY>\n");
+            return STATUS_BAD_VALUE;
+        }
+        int freq;
+        if (!utils::parseArgInt(string(args[2]), &freq)) {
+            dprintf(fd, "Non-integer frequency provided with tune: %s\n", string(args[2]).c_str());
+            return STATUS_BAD_VALUE;
+        }
+        sel = utils::makeSelectorAmfm(freq);
+    }
+
+    auto tuneResult = tune(sel);
+    if (!tuneResult.isOk()) {
+        dprintf(fd, "Unable to tune %s radio to %s\n", args[1], sel.toString().c_str());
+        return STATUS_BAD_VALUE;
+    }
+    dprintf(fd, "Tune %s radio to %s \n", args[1], sel.toString().c_str());
+    return STATUS_OK;
+}
+
+binder_status_t BroadcastRadio::cmdSeek(int fd, const char** args, uint32_t numArgs) {
+    if (!checkDumpCallerHasWritePermissions(fd)) {
+        return STATUS_PERMISSION_DENIED;
+    }
+    if (numArgs != 3) {
+        dprintf(fd,
+                "Invalid number of arguments: please provide --seek <DIRECTION> "
+                "<SKIP_SUB_CHANNEL>\n");
+        return STATUS_BAD_VALUE;
+    }
+    string seekDirectionIn = string(args[1]);
+    bool seekDirectionUp;
+    if (!utils::parseArgDirection(seekDirectionIn, &seekDirectionUp)) {
+        dprintf(fd, "Invalid direction (\"up\" or \"down\") provided with seek: %s\n",
+                seekDirectionIn.c_str());
+        return STATUS_BAD_VALUE;
+    }
+    string skipSubChannelIn = string(args[2]);
+    bool skipSubChannel;
+    if (!utils::parseArgBool(skipSubChannelIn, &skipSubChannel)) {
+        dprintf(fd, "Invalid skipSubChannel (\"true\" or \"false\") provided with seek: %s\n",
+                skipSubChannelIn.c_str());
+        return STATUS_BAD_VALUE;
+    }
+
+    auto seekResult = seek(seekDirectionUp, skipSubChannel);
+    if (!seekResult.isOk()) {
+        dprintf(fd, "Unable to seek in %s direction\n", seekDirectionIn.c_str());
+        return STATUS_BAD_VALUE;
+    }
+    dprintf(fd, "Seek in %s direction\n", seekDirectionIn.c_str());
+    return STATUS_OK;
+}
+
+binder_status_t BroadcastRadio::cmdStep(int fd, const char** args, uint32_t numArgs) {
+    if (!checkDumpCallerHasWritePermissions(fd)) {
+        return STATUS_PERMISSION_DENIED;
+    }
+    if (numArgs != 2) {
+        dprintf(fd, "Invalid number of arguments: please provide --step <DIRECTION>\n");
+        return STATUS_BAD_VALUE;
+    }
+    string stepDirectionIn = string(args[1]);
+    bool stepDirectionUp;
+    if (!utils::parseArgDirection(stepDirectionIn, &stepDirectionUp)) {
+        dprintf(fd, "Invalid direction (\"up\" or \"down\") provided with step: %s\n",
+                stepDirectionIn.c_str());
+        return STATUS_BAD_VALUE;
+    }
+
+    auto stepResult = step(stepDirectionUp);
+    if (!stepResult.isOk()) {
+        dprintf(fd, "Unable to step in %s direction\n", stepDirectionIn.c_str());
+        return STATUS_BAD_VALUE;
+    }
+    dprintf(fd, "Step in %s direction\n", stepDirectionIn.c_str());
+    return STATUS_OK;
+}
+
+binder_status_t BroadcastRadio::cmdCancel(int fd, uint32_t numArgs) {
+    if (!checkDumpCallerHasWritePermissions(fd)) {
+        return STATUS_PERMISSION_DENIED;
+    }
+    if (numArgs != 1) {
+        dprintf(fd,
+                "Invalid number of arguments: please provide --cancel "
+                "only and no more arguments\n");
+        return STATUS_BAD_VALUE;
+    }
+
+    auto cancelResult = cancel();
+    if (!cancelResult.isOk()) {
+        dprintf(fd, "Unable to cancel pending tune, seek, and step\n");
+        return STATUS_BAD_VALUE;
+    }
+    dprintf(fd, "Canceled pending tune, seek, and step\n");
+    return STATUS_OK;
+}
+
+binder_status_t BroadcastRadio::cmdStartProgramListUpdates(int fd, const char** args,
+                                                           uint32_t numArgs) {
+    if (!checkDumpCallerHasWritePermissions(fd)) {
+        return STATUS_PERMISSION_DENIED;
+    }
+    if (numArgs != 5) {
+        dprintf(fd,
+                "Invalid number of arguments: please provide --startProgramListUpdates "
+                "<IDENTIFIER_TYPES> <IDENTIFIERS> <INCLUDE_CATEGORIES> "
+                "<EXCLUDE_MODIFICATIONS>\n");
+        return STATUS_BAD_VALUE;
+    }
+    string filterTypesStr = string(args[1]);
+    std::vector<IdentifierType> filterTypeList;
+    if (!EqualsIgnoreCase(filterTypesStr, "null") &&
+        !utils::parseArgIdentifierTypeArray(filterTypesStr, &filterTypeList)) {
+        dprintf(fd,
+                "Invalid identifier types provided with startProgramListUpdates: %s, "
+                "should be: <TYPE>,<TYPE>,...,<TYPE>\n",
+                filterTypesStr.c_str());
+        return STATUS_BAD_VALUE;
+    }
+    string filtersStr = string(args[2]);
+    std::vector<ProgramIdentifier> filterList;
+    if (!EqualsIgnoreCase(filtersStr, "null") &&
+        !utils::parseProgramIdentifierList(filtersStr, &filterList)) {
+        dprintf(fd,
+                "Invalid program identifiers provided with startProgramListUpdates: %s, "
+                "should be: <TYPE>:<VALUE>,<TYPE>:<VALUE>,...,<TYPE>:<VALUE>\n",
+                filtersStr.c_str());
+        return STATUS_BAD_VALUE;
+    }
+    string includeCategoriesStr = string(args[3]);
+    bool includeCategories;
+    if (!utils::parseArgBool(includeCategoriesStr, &includeCategories)) {
+        dprintf(fd,
+                "Invalid includeCategories (\"true\" or \"false\") "
+                "provided with startProgramListUpdates : %s\n",
+                includeCategoriesStr.c_str());
+        return STATUS_BAD_VALUE;
+    }
+    string excludeModificationsStr = string(args[4]);
+    bool excludeModifications;
+    if (!utils::parseArgBool(excludeModificationsStr, &excludeModifications)) {
+        dprintf(fd,
+                "Invalid excludeModifications(\"true\" or \"false\") "
+                "provided with startProgramListUpdates : %s\n",
+                excludeModificationsStr.c_str());
+        return STATUS_BAD_VALUE;
+    }
+    ProgramFilter filter = {filterTypeList, filterList, includeCategories, excludeModifications};
+
+    auto updateResult = startProgramListUpdates(filter);
+    if (!updateResult.isOk()) {
+        dprintf(fd, "Unable to start program list update for filter %s \n",
+                filter.toString().c_str());
+        return STATUS_BAD_VALUE;
+    }
+    dprintf(fd, "Start program list update for filter %s\n", filter.toString().c_str());
+    return STATUS_OK;
+}
+
+binder_status_t BroadcastRadio::cmdStopProgramListUpdates(int fd, uint32_t numArgs) {
+    if (!checkDumpCallerHasWritePermissions(fd)) {
+        return STATUS_PERMISSION_DENIED;
+    }
+    if (numArgs != 1) {
+        dprintf(fd,
+                "Invalid number of arguments: please provide --stopProgramListUpdates "
+                "only and no more arguments\n");
+        return STATUS_BAD_VALUE;
+    }
+
+    auto stopResult = stopProgramListUpdates();
+    if (!stopResult.isOk()) {
+        dprintf(fd, "Unable to stop pending program list update\n");
+        return STATUS_BAD_VALUE;
+    }
+    dprintf(fd, "Stop pending program list update\n");
+    return STATUS_OK;
 }
 
 }  // namespace aidl::android::hardware::broadcastradio

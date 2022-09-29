@@ -19,6 +19,8 @@
 #include "broadcastradio-utils-aidl/Utils.h"
 
 #include <android-base/logging.h>
+#include <android-base/parseint.h>
+#include <android-base/strings.h>
 
 #include <math/HashCombine.h>
 
@@ -28,6 +30,7 @@ namespace utils {
 
 namespace {
 
+using ::android::base::EqualsIgnoreCase;
 using ::std::string;
 using ::std::vector;
 
@@ -462,6 +465,71 @@ ProgramIdentifier makeHdRadioStationName(const string& name) {
     }
 
     return makeIdentifier(IdentifierType::HD_STATION_NAME, val);
+}
+
+IdentifierType getType(int typeAsInt) {
+    return static_cast<IdentifierType>(typeAsInt);
+}
+
+bool parseArgInt(const string& s, int* out) {
+    return ::android::base::ParseInt(s, out);
+}
+
+bool parseArgLong(const std::string& s, long* out) {
+    return ::android::base::ParseInt(s, out);
+}
+
+bool parseArgBool(const string& s, bool* out) {
+    if (EqualsIgnoreCase(s, "true")) {
+        *out = true;
+    } else if (EqualsIgnoreCase(s, "false")) {
+        *out = false;
+    } else {
+        return false;
+    }
+    return true;
+}
+
+bool parseArgDirection(const string& s, bool* out) {
+    if (EqualsIgnoreCase(s, "up")) {
+        *out = true;
+    } else if (EqualsIgnoreCase(s, "down")) {
+        *out = false;
+    } else {
+        return false;
+    }
+    return true;
+}
+
+bool parseArgIdentifierTypeArray(const string& s, vector<IdentifierType>* out) {
+    for (const string& val : ::android::base::Split(s, ",")) {
+        int outInt;
+        if (!parseArgInt(val, &outInt)) {
+            return false;
+        }
+        out->push_back(getType(outInt));
+    }
+    return true;
+}
+
+bool parseProgramIdentifierList(const std::string& s, vector<ProgramIdentifier>* out) {
+    for (const string& idStr : ::android::base::Split(s, ",")) {
+        const vector<string> idStrPair = ::android::base::Split(idStr, ":");
+        if (idStrPair.size() != 2) {
+            return false;
+        }
+        int idType;
+        if (!parseArgInt(idStrPair[0], &idType)) {
+            return false;
+        }
+        long idVal;
+        if (!parseArgLong(idStrPair[1], &idVal)) {
+            return false;
+        }
+        ProgramIdentifier id = {getType(idType), idVal};
+        out->push_back(id);
+    }
+    return true;
 }
 
 }  // namespace utils
