@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,12 +32,10 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.power;
-@VintfStability
-interface IPowerHintSession {
-  oneway void updateTargetWorkDuration(long targetDurationNanos);
-  oneway void reportActualWorkDuration(in android.hardware.power.WorkDuration[] durations);
-  oneway void pause();
-  oneway void resume();
-  oneway void close();
-  oneway void sendHint(android.hardware.power.SessionHint hint);
+@Backing(type="int") @VintfStability
+enum SessionHint {
+  CPU_LOAD_UP = 0,
+  CPU_LOAD_DOWN = 1,
+  CPU_LOAD_RESET = 2,
+  CPU_LOAD_RESUME = 3,
 }
