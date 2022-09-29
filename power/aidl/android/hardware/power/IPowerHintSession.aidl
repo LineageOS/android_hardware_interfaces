@@ -16,6 +16,7 @@
 
 package android.hardware.power;
 
+import android.hardware.power.SessionHint;
 import android.hardware.power.WorkDuration;
 
 @VintfStability
@@ -56,4 +57,12 @@ oneway interface IPowerHintSession {
      * Close the session to release resources.
      */
     void close();
+
+    /**
+     * Gives information to the PowerHintSession about upcoming or unexpected
+     * changes in load to supplement the normal updateTarget/reportActual cycle.
+     *
+     * @param hint The hint to provide to the PowerHintSession
+     */
+    void sendHint(SessionHint hint);
 }
