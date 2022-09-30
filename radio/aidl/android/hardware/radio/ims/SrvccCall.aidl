@@ -33,9 +33,6 @@ parcelable SrvccCall {
         NONE,
         /** Pre-alerting state. Applicable for MT calls only */
         PREALERTING,
-        ANSWERED,
-        HOLD_REQUESTED,
-        RESUME_REQUESTED,
     }
 
     @VintfStability
