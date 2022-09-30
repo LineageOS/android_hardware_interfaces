@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,13 +31,12 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.power;
+package android.hardware.automotive.remoteaccess;
 @VintfStability
-interface IPowerHintSession {
-  oneway void updateTargetWorkDuration(long targetDurationNanos);
-  oneway void reportActualWorkDuration(in android.hardware.power.WorkDuration[] durations);
-  oneway void pause();
-  oneway void resume();
-  oneway void close();
-  oneway void sendHint(android.hardware.power.SessionHint hint);
+interface IRemoteAccess {
+  String getDeviceId();
+  String getWakeupServiceName();
+  void setRemoteTaskCallback(android.hardware.automotive.remoteaccess.IRemoteTaskCallback callback);
+  void clearRemoteTaskCallback();
+  void notifyApStateChange(in android.hardware.automotive.remoteaccess.ApState state);
 }
