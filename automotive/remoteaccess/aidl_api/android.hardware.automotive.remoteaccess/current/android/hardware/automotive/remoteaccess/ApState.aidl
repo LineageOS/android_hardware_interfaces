@@ -31,15 +31,9 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.radio.network;
-@JavaDerive(toString=true) @VintfStability
-parcelable EmergencyRegResult {
-  android.hardware.radio.AccessNetwork accessNetwork;
-  android.hardware.radio.network.RegState regState;
-  android.hardware.radio.network.Domain emcDomain;
-  boolean isEmcBearerSupported;
-  byte nwProvidedEmc;
-  byte nwProvidedEmf;
-  String mcc = "";
-  String mnc = "";
+package android.hardware.automotive.remoteaccess;
+@VintfStability
+parcelable ApState {
+  boolean isReadyForRemoteTask;
+  boolean isWakeupRequired;
 }
