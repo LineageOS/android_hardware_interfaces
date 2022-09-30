@@ -54,9 +54,6 @@ parcelable SrvccCall {
   enum CallSubState {
     NONE = 0,
     PREALERTING = 1,
-    ANSWERED = 2,
-    HOLD_REQUESTED = 3,
-    RESUME_REQUESTED = 4,
   }
   @Backing(type="int") @VintfStability
   enum ToneType {
