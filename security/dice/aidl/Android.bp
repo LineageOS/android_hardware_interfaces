@@ -23,6 +23,7 @@ package {
 
 aidl_interface {
     name: "android.hardware.security.dice",
+    system_ext_specific: true,
     vendor_available: true,
     srcs: [
         "android/hardware/security/dice/*.aidl",
