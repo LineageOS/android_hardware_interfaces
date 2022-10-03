@@ -37,10 +37,8 @@ cc_defaults {
         "libutils",
     ],
     sanitize: {
-        address: true,
         undefined: true,
         all_undefined: true,
-        fuzzer: true,
         cfi: true,
         integer_overflow: true,
         scs: true,
