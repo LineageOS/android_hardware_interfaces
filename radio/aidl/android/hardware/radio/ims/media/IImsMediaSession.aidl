@@ -44,37 +44,6 @@ oneway interface IImsMediaSession {
     void modifySession(in RtpConfig config);
 
     /**
-     * Adds a new remote configuration to a RTP session during early media
-     * scenarios where the IMS network could add more than one remote endpoint.
-     *
-     * @param config provides remote end point info and codec details
-     */
-    void addConfig(in RtpConfig config);
-
-    /**
-     * Deletes a remote configuration from a RTP session during early media
-     * scenarios. A session shall have at least one config so this API shall
-     * not delete the last config.
-     *
-     * @param config remote config to be deleted
-     */
-    void deleteConfig(in RtpConfig config);
-
-    /**
-     * Confirms a remote configuration for a Rtp session for early media scenarios
-     * when there are more than one remote configs. All other early remote configs
-     * (potentially including the config created as part of openSession) are auto
-     * deleted when one config is confirmed.
-     * Confirming a remote configuration is necessary only if additional
-     * configurations were created.
-     * New remote configurations cannot be added after a remote configuration is
-     * confirmed.
-     *
-     * @param config remote config to be confirmed
-     */
-    void confirmConfig(in RtpConfig config);
-
-    /**
      * Send DTMF digit until the duration expires.
      *
      * @param dtmfDigit single char having one of 12 values: 0-9, *, #

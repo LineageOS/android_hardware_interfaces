@@ -36,9 +36,6 @@ package android.hardware.radio.ims.media;
 interface IImsMediaSession {
   oneway void setListener(in android.hardware.radio.ims.media.IImsMediaSessionListener sessionListener);
   oneway void modifySession(in android.hardware.radio.ims.media.RtpConfig config);
-  oneway void addConfig(in android.hardware.radio.ims.media.RtpConfig config);
-  oneway void deleteConfig(in android.hardware.radio.ims.media.RtpConfig config);
-  oneway void confirmConfig(in android.hardware.radio.ims.media.RtpConfig config);
   oneway void sendDtmf(char dtmfDigit, int duration);
   oneway void startDtmf(char dtmfDigit);
   oneway void stopDtmf();
