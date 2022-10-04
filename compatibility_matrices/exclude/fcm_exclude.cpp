@@ -68,6 +68,8 @@ bool ShouldCheckMissingHalsInFcm(const std::string& package) {
             // does not depend on this HAL, hence it is not declared in any manifests or matrices.
             "android.hardware.fastboot@1.0",
             "android.hardware.fastboot@1.1",
+            // Fastboot AIDL
+            "android.hardware.fastboot",
 
             // Deprecated HALs.
             // HIDL
