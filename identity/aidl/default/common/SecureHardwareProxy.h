@@ -194,11 +194,12 @@ class SecureHardwarePresentationProxy : public RefBase {
                                         const vector<uint8_t>& requestMessage, int coseSignAlg,
                                         const vector<uint8_t>& readerSignatureOfToBeSigned) = 0;
 
-    virtual bool calcMacKey(const vector<uint8_t>& sessionTranscript,
-                            const vector<uint8_t>& readerEphemeralPublicKey,
-                            const vector<uint8_t>& signingKeyBlob, const string& docType,
-                            unsigned int numNamespacesWithValues,
-                            size_t expectedProofOfProvisioningSize) = 0;
+    virtual bool prepareDeviceAuthentication(const vector<uint8_t>& sessionTranscript,
+                                             const vector<uint8_t>& readerEphemeralPublicKey,
+                                             const vector<uint8_t>& signingKeyBlob,
+                                             const string& docType,
+                                             unsigned int numNamespacesWithValues,
+                                             size_t expectedDeviceNamespacesSize) = 0;
 
     virtual AccessCheckResult startRetrieveEntryValue(
             const string& nameSpace, const string& name, unsigned int newNamespaceNumEntries,
@@ -209,6 +210,7 @@ class SecureHardwarePresentationProxy : public RefBase {
             const vector<int32_t>& accessControlProfileIds) = 0;
 
     virtual optional<vector<uint8_t>> finishRetrieval();
+    virtual optional<pair<vector<uint8_t>, vector<uint8_t>>> finishRetrievalWithSignature();
 
     virtual optional<vector<uint8_t>> deleteCredential(const string& docType,
                                                        const vector<uint8_t>& challenge,

@@ -92,6 +92,10 @@ class IdentityCredential : public BnIdentityCredential {
     ndk::ScopedAStatus updateCredential(
             shared_ptr<IWritableIdentityCredential>* outWritableCredential) override;
 
+    ndk::ScopedAStatus finishRetrievalWithSignature(vector<uint8_t>* outMac,
+                                                    vector<uint8_t>* outDeviceNameSpaces,
+                                                    vector<uint8_t>* outEcdsaSignature) override;
+
   private:
     ndk::ScopedAStatus deleteCredentialCommon(const vector<uint8_t>& challenge,
                                               bool includeChallenge,
