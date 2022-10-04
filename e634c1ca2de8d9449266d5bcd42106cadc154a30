@@ -16,6 +16,23 @@
       "message": "Can\u0027t validate with VTS since VTS is waived for Pie launched devices.",
       "revId": "e634c1ca2de8d9449266d5bcd42106cadc154a30",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "fc683fb5_bb3c2aaa",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 16185
+      },
+      "writtenOn": "2022-10-04T16:14:48Z",
+      "side": 1,
+      "message": "All good on lake.",
+      "revId": "e634c1ca2de8d9449266d5bcd42106cadc154a30",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
