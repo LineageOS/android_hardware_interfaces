@@ -151,7 +151,8 @@ interface IRemotelyProvisionedComponent {
 
     /**
      * This method has been removed in version 3 of the HAL. The header is kept around for
-     * backwards compatibility purposes. Calling this method should return STATUS_REMOVED on v3.
+     * backwards compatibility purposes. From v3, this method should raise a
+     * ServiceSpecificException with an error code of STATUS_REMOVED.
      *
      * For v1 and v2 implementations:
      * generateCertificateRequest creates a certificate request to be sent to the provisioning
@@ -378,8 +379,8 @@ interface IRemotelyProvisionedComponent {
      *                                      ; Last certificate corresponds to KeyMint's DICE key.
      * ]
      *
-     * ; This is the signed payload for each entry in the DCC. Note that the "Configuration
-     * ; Input Values" described by the Open Profile are not used here. Instead, the Dcc
+     * ; This is the signed payload for each entry in the DICE chain. Note that the "Configuration
+     * ; Input Values" described by the Open Profile are not used here. Instead, the DICE chain
      * ; defines its own configuration values for the Configuration Descriptor field. See
      * ; the Open Profile for DICE for more details on the fields. SHA256 and SHA512 are acceptable
      * ; hash algorithms. The digest bstr values in the payload are the digest values without any
@@ -408,8 +409,8 @@ interface IRemotelyProvisionedComponent {
      *     -4670551 : bstr,                         ; Mode
      * }
      *
-     * ; Each entry in the Dcc is a DiceChainEntryPayload signed by the key from the previous entry
-     * ; in the Dcc array.
+     * ; Each entry in the DICE chain is a DiceChainEntryPayload signed by the key from the previous
+     * ; entry in the DICE chain array.
      * DiceChainEntry = [                            ; COSE_Sign1 (untagged)
      *     protected : bstr .cbor { 1 : AlgorithmEdDSA / AlgorithmES256 },
      *     unprotected: {},
