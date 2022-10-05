@@ -12,32 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package {
-    default_applicable_licenses: ["Android-Apache-2.0"],
-}
-
-cc_test {
-    name: "RemoteAccessServiceUnitTest",
+cc_binary {
+    name: "TestWakeupClientServer",
     vendor: true,
-    srcs: ["*.cpp"],
-    whole_static_libs: [
-        "RemoteAccessService",
-    ],
+    srcs: ["src/*.cpp"],
+    local_include_dirs: ["include"],
     shared_libs: [
-        "libbinder_ndk",
+        "libbase",
         "liblog",
         "libutils",
         "libgrpc++",
         "libprotobuf-cpp-full",
     ],
-    // libgrpc++.so is installed as root, require root to access it.
-    require_root: true,
-    static_libs: [
-        "libgtest",
-        "libgmock",
+    whole_static_libs: [
+        "wakeup_client_protos",
     ],
     cflags: [
         "-Wno-unused-parameter",
+        "-DGRPC_SERVICE_ADDRESS=\"localhost:50051\"",
     ],
-    test_suites: ["device-tests"],
 }

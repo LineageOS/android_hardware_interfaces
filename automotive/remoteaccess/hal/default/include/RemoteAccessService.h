@@ -18,8 +18,11 @@
 
 #include <aidl/android/hardware/automotive/remoteaccess/ApState.h>
 #include <aidl/android/hardware/automotive/remoteaccess/BnRemoteAccess.h>
+#include <aidl/android/hardware/automotive/remoteaccess/BnRemoteTaskCallback.h>
 #include <aidl/android/hardware/automotive/remoteaccess/IRemoteTaskCallback.h>
 #include <android-base/thread_annotations.h>
+#include <android/binder_auto_utils.h>
+#include <utils/SystemClock.h>
 #include <wakeup_client.grpc.pb.h>
 
 #include <string>
@@ -29,6 +32,27 @@ namespace android {
 namespace hardware {
 namespace automotive {
 namespace remoteaccess {
+
+// A IRemoteTaskCallback implementation for debug purpose.
+class DebugRemoteTaskCallback final
+    : public aidl::android::hardware::automotive::remoteaccess::BnRemoteTaskCallback {
+  public:
+    DebugRemoteTaskCallback() { mStartTimeMillis = android::uptimeMillis(); };
+
+    ndk::ScopedAStatus onRemoteTaskRequested(const std::string& clientId,
+                                             const std::vector<uint8_t>& data) override;
+    std::string printTasks();
+
+  private:
+    struct TaskData {
+        std::string clientId;
+        std::vector<uint8_t> data;
+    };
+
+    std::mutex mLock;
+    int64_t mStartTimeMillis;
+    std::vector<TaskData> mTasks;
+};
 
 class RemoteAccessService
     : public aidl::android::hardware::automotive::remoteaccess::BnRemoteAccess {
@@ -51,9 +75,13 @@ class RemoteAccessService
     ndk::ScopedAStatus notifyApStateChange(
             const aidl::android::hardware::automotive::remoteaccess::ApState& newState) override;
 
+    binder_status_t dump(int fd, const char** args, uint32_t numArgs) override;
+
   private:
     // For testing.
     friend class RemoteAccessServiceUnitTest;
+
+    static bool checkDumpPermission();
 
     WakeupClient::StubInterface* mGrpcStub;
     std::thread mThread;
@@ -69,12 +97,14 @@ class RemoteAccessService
     bool mTaskLoopRunning GUARDED_BY(mStartStopTaskLoopLock);
     // Default wait time before retry connecting to remote access client is 10s.
     size_t mRetryWaitInMs = 10'000;
+    std::shared_ptr<DebugRemoteTaskCallback> mDebugCallback;
 
     void runTaskLoop();
     void maybeStartTaskLoop();
     void maybeStopTaskLoop();
 
     void setRetryWaitInMs(size_t retryWaitInMs) { mRetryWaitInMs = retryWaitInMs; }
+    void dumpHelp(int fd);
 };
 
 }  // namespace remoteaccess
