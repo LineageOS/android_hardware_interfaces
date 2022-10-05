@@ -15,6 +15,7 @@
  */
 
 #include <algorithm>
+#include <cmath>
 #include <limits>
 #include <memory>
 #include <optional>
@@ -29,8 +30,8 @@
 #include <Utils.h>
 #include <aidl/Gtest.h>
 #include <aidl/Vintf.h>
-#include <aidl/android/hardware/audio/core/IConfig.h>
 #include <aidl/android/hardware/audio/core/IModule.h>
+#include <aidl/android/hardware/audio/core/ITelephony.h>
 #include <aidl/android/media/audio/common/AudioIoFlags.h>
 #include <aidl/android/media/audio/common/AudioOutputFlags.h>
 #include <android-base/chrono_utils.h>
@@ -46,11 +47,13 @@ using aidl::android::hardware::audio::common::PlaybackTrackMetadata;
 using aidl::android::hardware::audio::common::RecordTrackMetadata;
 using aidl::android::hardware::audio::common::SinkMetadata;
 using aidl::android::hardware::audio::common::SourceMetadata;
+using aidl::android::hardware::audio::core::AudioMode;
 using aidl::android::hardware::audio::core::AudioPatch;
 using aidl::android::hardware::audio::core::AudioRoute;
 using aidl::android::hardware::audio::core::IModule;
 using aidl::android::hardware::audio::core::IStreamIn;
 using aidl::android::hardware::audio::core::IStreamOut;
+using aidl::android::hardware::audio::core::ITelephony;
 using aidl::android::hardware::audio::core::ModuleDebug;
 using aidl::android::hardware::audio::core::StreamDescriptor;
 using aidl::android::hardware::common::fmq::SynchronizedReadWrite;
@@ -172,6 +175,29 @@ class WithAudioPortConfig {
     IModule* mModule = nullptr;
     AudioPortConfig mConfig;
 };
+
+template <typename PropType, class Instance, typename Getter, typename Setter>
+void TestAccessors(Instance* inst, Getter getter, Setter setter,
+                   const std::vector<PropType>& validValues,
+                   const std::vector<PropType>& invalidValues, bool* isSupported) {
+    PropType initialValue{};
+    ScopedAStatus status = (inst->*getter)(&initialValue);
+    if (status.getExceptionCode() == EX_UNSUPPORTED_OPERATION) {
+        *isSupported = false;
+        return;
+    }
+    *isSupported = true;
+    for (const auto v : validValues) {
+        EXPECT_IS_OK((inst->*setter)(v)) << "for valid value: " << v;
+        PropType currentValue{};
+        EXPECT_IS_OK((inst->*getter)(&currentValue));
+        EXPECT_EQ(v, currentValue);
+    }
+    for (const auto v : invalidValues) {
+        EXPECT_STATUS(EX_ILLEGAL_ARGUMENT, (inst->*setter)(v)) << "for invalid value: " << v;
+    }
+    EXPECT_IS_OK((inst->*setter)(initialValue)) << "Failed to restore the initial value";
+}
 
 // Can be used as a base for any test here, does not depend on the fixture GTest parameters.
 class AudioCoreModuleBase {
@@ -1242,6 +1268,112 @@ TEST_P(AudioCoreModule, ExternalDevicePortRoutes) {
     }
 }
 
+TEST_P(AudioCoreModule, MasterMute) {
+    bool isSupported = false;
+    EXPECT_NO_FATAL_FAILURE(TestAccessors<bool>(module.get(), &IModule::getMasterMute,
+                                                &IModule::setMasterMute, {false, true}, {},
+                                                &isSupported));
+    if (!isSupported) {
+        GTEST_SKIP() << "Master mute is not supported";
+    }
+    // TODO: Test that master mute actually mutes output.
+}
+
+TEST_P(AudioCoreModule, MasterVolume) {
+    bool isSupported = false;
+    EXPECT_NO_FATAL_FAILURE(TestAccessors<float>(
+            module.get(), &IModule::getMasterVolume, &IModule::setMasterVolume, {0.0f, 0.5f, 1.0f},
+            {-0.1, 1.1, NAN, INFINITY, -INFINITY, 1 + std::numeric_limits<float>::epsilon()},
+            &isSupported));
+    if (!isSupported) {
+        GTEST_SKIP() << "Master volume is not supported";
+    }
+    // TODO: Test that master volume actually attenuates output.
+}
+
+TEST_P(AudioCoreModule, MicMute) {
+    bool isSupported = false;
+    EXPECT_NO_FATAL_FAILURE(TestAccessors<bool>(module.get(), &IModule::getMicMute,
+                                                &IModule::setMicMute, {false, true}, {},
+                                                &isSupported));
+    if (!isSupported) {
+        GTEST_SKIP() << "Mic mute is not supported";
+    }
+    // TODO: Test that mic mute actually mutes input.
+}
+
+TEST_P(AudioCoreModule, UpdateAudioMode) {
+    for (const auto mode : ::ndk::enum_range<AudioMode>()) {
+        EXPECT_IS_OK(module->updateAudioMode(mode)) << toString(mode);
+    }
+    EXPECT_IS_OK(module->updateAudioMode(AudioMode::NORMAL));
+}
+
+TEST_P(AudioCoreModule, UpdateScreenRotation) {
+    for (const auto rotation : ::ndk::enum_range<IModule::ScreenRotation>()) {
+        EXPECT_IS_OK(module->updateScreenRotation(rotation)) << toString(rotation);
+    }
+    EXPECT_IS_OK(module->updateScreenRotation(IModule::ScreenRotation::DEG_0));
+}
+
+TEST_P(AudioCoreModule, UpdateScreenState) {
+    EXPECT_IS_OK(module->updateScreenState(false));
+    EXPECT_IS_OK(module->updateScreenState(true));
+}
+
+class AudioCoreTelephony : public AudioCoreModuleBase, public testing::TestWithParam<std::string> {
+  public:
+    void SetUp() override {
+        ASSERT_NO_FATAL_FAILURE(SetUpImpl(GetParam()));
+        ASSERT_IS_OK(module->getTelephony(&telephony));
+    }
+
+    void TearDown() override { ASSERT_NO_FATAL_FAILURE(TearDownImpl()); }
+
+    std::shared_ptr<ITelephony> telephony;
+};
+
+TEST_P(AudioCoreTelephony, GetSupportedAudioModes) {
+    if (telephony == nullptr) {
+        GTEST_SKIP() << "Telephony is not supported";
+    }
+    std::vector<AudioMode> modes1;
+    ASSERT_IS_OK(telephony->getSupportedAudioModes(&modes1));
+    const std::vector<AudioMode> kMandatoryModes = {AudioMode::NORMAL, AudioMode::RINGTONE,
+                                                    AudioMode::IN_CALL,
+                                                    AudioMode::IN_COMMUNICATION};
+    for (const auto mode : kMandatoryModes) {
+        EXPECT_NE(modes1.end(), std::find(modes1.begin(), modes1.end(), mode))
+                << "Mandatory mode not supported: " << toString(mode);
+    }
+    std::vector<AudioMode> modes2;
+    ASSERT_IS_OK(telephony->getSupportedAudioModes(&modes2));
+    ASSERT_EQ(modes1.size(), modes2.size())
+            << "Sizes of audio mode arrays do not match across consequent calls to "
+            << "getSupportedAudioModes";
+    std::sort(modes1.begin(), modes1.end());
+    std::sort(modes2.begin(), modes2.end());
+    EXPECT_EQ(modes1, modes2);
+};
+
+TEST_P(AudioCoreTelephony, SwitchAudioMode) {
+    if (telephony == nullptr) {
+        GTEST_SKIP() << "Telephony is not supported";
+    }
+    std::vector<AudioMode> supportedModes;
+    ASSERT_IS_OK(telephony->getSupportedAudioModes(&supportedModes));
+    std::set<AudioMode> unsupportedModes = {
+            // Start with all, remove supported ones
+            ::ndk::enum_range<AudioMode>().begin(), ::ndk::enum_range<AudioMode>().end()};
+    for (const auto mode : supportedModes) {
+        EXPECT_IS_OK(telephony->switchAudioMode(mode)) << toString(mode);
+        unsupportedModes.erase(mode);
+    }
+    for (const auto mode : unsupportedModes) {
+        EXPECT_STATUS(EX_UNSUPPORTED_OPERATION, telephony->switchAudioMode(mode)) << toString(mode);
+    }
+}
+
 class StreamLogicDriverInvalidCommand : public StreamLogicDriver {
   public:
     StreamLogicDriverInvalidCommand(const std::vector<StreamDescriptor::Command>& commands)
@@ -1823,6 +1955,9 @@ TEST_P(AudioModulePatch, ResetInvalidPatchId) {
 }
 
 INSTANTIATE_TEST_SUITE_P(AudioCoreModuleTest, AudioCoreModule,
+                         testing::ValuesIn(android::getAidlHalInstanceNames(IModule::descriptor)),
+                         android::PrintInstanceNameToString);
+INSTANTIATE_TEST_SUITE_P(AudioCoreTelephonyTest, AudioCoreTelephony,
                          testing::ValuesIn(android::getAidlHalInstanceNames(IModule::descriptor)),
                          android::PrintInstanceNameToString);
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(AudioCoreModule);
