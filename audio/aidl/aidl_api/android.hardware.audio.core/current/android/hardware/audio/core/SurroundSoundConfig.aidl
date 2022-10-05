@@ -32,7 +32,12 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.audio.core;
-@VintfStability
-interface IConfig {
-  android.hardware.audio.core.SurroundSoundConfig getSurroundSoundConfig();
+@JavaDerive(equals=true, toString=true) @VintfStability
+parcelable SurroundSoundConfig {
+  android.hardware.audio.core.SurroundSoundConfig.SurroundFormatFamily[] formatFamilies;
+  @VintfStability
+  parcelable SurroundFormatFamily {
+    android.media.audio.common.AudioFormatDescription primaryFormat;
+    android.media.audio.common.AudioFormatDescription[] subFormats;
+  }
 }
