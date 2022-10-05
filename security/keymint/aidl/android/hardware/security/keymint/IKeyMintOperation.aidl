@@ -40,31 +40,7 @@ interface IKeyMintOperation {
      *
      * == Authorization Enforcement ==
      *
-     * Key authorization enforcement is performed primarily in begin().  The one exception is the
-     * case where the key has:
-     *
-     * o One or more Tag::USER_SECURE_IDs, and
-     *
-     * o Does not have a Tag::AUTH_TIMEOUT
-     *
-     * In this case, the key requires an authorization per operation, and the update method must
-     * receive a non-null and valid HardwareAuthToken.  For the auth token to be valid, all of the
-     * following has to be true:
-     *
-     *   o The HMAC field must validate correctly.
-     *
-     *   o At least one of the Tag::USER_SECURE_ID values from the key must match at least one of
-     *     the secure ID values in the token.
-     *
-     *   o The key must have a Tag::USER_AUTH_TYPE that matches the auth type in the token.
-     *
-     *   o The challenge field in the auth token must contain the value returned from
-     *     IKeyMintDevice::begin(), given by the challenge field of the BeginResult structure.
-     *
-     *   If any of these conditions are not met, updateAad() must return
-     *   ErrorCode::KEY_USER_NOT_AUTHENTICATED.
-     *
-     * The caller must provide the auth token on every call to updateAad(), update() and finish().
+     * See the Authorization Enforcement section for the update() method.
      *
      *
      * For GCM encryption, the AEAD tag must be appended to the ciphertext by finish().  During
@@ -104,16 +80,22 @@ interface IKeyMintOperation {
      *
      * == Authorization Enforcement ==
      *
-     * Key authorization enforcement is performed primarily in IKeyMintDevice::begin().  The one
-     * exception is the case where the key has:
+     * Key authorization enforcement is performed primarily in IKeyMintDevice::begin().  There are
+     * two exceptions to this:
      *
-     * o One or more Tag::USER_SECURE_IDs, and
+     *  1) Key with USER_SECURE_IDs but no AUTH_TIMEOUT
      *
-     * o Does not have a Tag::AUTH_TIMEOUT
+     *  2) Key with USER_SECURE_IDs and AUTH_TIMEOUT, but the device does not support secure time.
      *
-     * In this case, the key requires an authorization per operation, and the update method must
-     * receive a non-empty and valid HardwareAuthToken.  For the auth token to be valid, all of the
-     * following has to be true:
+     * The first exception is the case where the key:
+     *
+     *   o Has one or more Tag::USER_SECURE_IDs, and
+     *
+     *   o Does not have a Tag::AUTH_TIMEOUT
+     *
+     * In this case, the key requires an authorization per operation, and update() / updateAad() /
+     * finish() methods must receive a non-null and valid HardwareAuthToken.  For the auth token to
+     * be valid, all of the following has to be true:
      *
      *   o The HMAC field must validate correctly.
      *
@@ -125,10 +107,47 @@ interface IKeyMintOperation {
      *   o The challenge field in the auth token must contain the challenge value contained in the
      *     BeginResult returned from IKeyMintDevice::begin().
      *
-     *   If any of these conditions are not met, update() must return
+     *   If any of these conditions are not met, the method must return
      *   ErrorCode::KEY_USER_NOT_AUTHENTICATED.
      *
-     * The caller must provide the auth token on every call to update() and finish().
+     * The caller must provide the auth token on every call to update(), updateAad() and finish().
+     *
+     *
+     * The second exception is the case where the key:
+     *
+     *   o Has one or more Tag::USER_SECURE_IDs, and
+     *
+     *   o Has a Tag::AUTH_TIMEOUT value, but the device does not have a source of secure time (as
+     *     indicated by the KeyMintHardwareInfo.timestampTokenRequired field).
+     *
+     * In this case, the key requires an per-operation authorization on the first call to update(),
+     * updateAad() or finish() for the operation, using the provided timeStampToken as a source of
+     * secure time.  For this timeStampToken to be valid, all of the following has to be true:
+     *
+     *   o The HMAC field must validate correctly.
+     *
+     *   o The challenge field in the auth token must contain the challenge value contained in the
+     *     BeginResult returned from IKeyMintDevice::begin().
+     *
+     * The resulting secure time value is then used to authenticate the HardwareAuthToken. For the
+     * auth token to be valid, all of the following has to be true:
+     *
+     *   o The HMAC field must validate correctly.
+     *
+     *   o At least one of the Tag::USER_SECURE_ID values from the key must match at least one of
+     *     the secure ID values in the token.
+     *
+     *   o The key must have a Tag::USER_AUTH_TYPE that matches the auth type in the token.
+     *
+     *   o The challenge field in the auth token must contain the challenge value contained in the
+     *     BeginResult returned from IKeyMintDevice::begin().
+     *
+     *   o The timestamp in the auth token plus the value of the Tag::AUTH_TIMEOUT must be greater
+     *     than the provided secure timestamp.
+
+     *   If any of these conditions are not met, the method must return
+     *   ErrorCode::KEY_USER_NOT_AUTHENTICATED.
+     *
      *
      * -- RSA keys --
      *
@@ -187,24 +206,7 @@ interface IKeyMintOperation {
      * Key authorization enforcement is performed primarily in begin().  The exceptions are
      * authorization per operation keys and confirmation-required keys.
      *
-     * Authorization per operation keys are the case where the key has one or more
-     * Tag::USER_SECURE_IDs, and does not have a Tag::AUTH_TIMEOUT.  In this case, the key requires
-     * an authorization per operation, and the finish method must receive a non-empty and valid
-     * authToken.  For the auth token to be valid, all of the following has to be true:
-     *
-     *   o The HMAC field must validate correctly.
-     *
-     *   o At least one of the Tag::USER_SECURE_ID values from the key must match at least one of
-     *     the secure ID values in the token.
-     *
-     *   o The key must have a Tag::USER_AUTH_TYPE that matches the auth type in the token.
-     *
-     *   o The challenge field in the auth token must contain the operation challenge.
-     *
-     *   If any of these conditions are not met, update() must return
-     *   ErrorCode::KEY_USER_NOT_AUTHENTICATED.
-     *
-     * The caller must provide the auth token on every call to update() and finish().
+     * Authorization per operation keys must be authorized as described for the update() method.
      *
      * Confirmation-required keys are keys that were generated with
      * Tag::TRUSTED_CONFIRMATION_REQUIRED.  For these keys, when doing a signing operation the
