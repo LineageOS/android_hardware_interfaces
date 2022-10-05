@@ -20,27 +20,35 @@
 
 #include <android/binder_manager.h>
 #include <android/binder_process.h>
+#include <grpcpp/create_channel.h>
+#include <stdlib.h>
 #include <utils/Log.h>
+
+constexpr char SERVICE_NAME[] = "android.hardware.automotive.remoteaccess.IRemoteAccess/default";
 
 int main(int /* argc */, char* /* argv */[]) {
     ALOGI("Registering RemoteAccessService as service...");
 
-    // TODO(b/241483300): Create GrpcClientStub here.
+#ifndef GRPC_SERVICE_ADDRESS
+    ALOGE("GRPC_SERVICE_ADDRESS is not defined, exiting");
+    exit(1);
+#endif
+    auto channel = grpc::CreateChannel(GRPC_SERVICE_ADDRESS, grpc::InsecureChannelCredentials());
+    auto clientStub = android::hardware::automotive::remoteaccess::WakeupClient::NewStub(channel);
     auto service = ndk::SharedRefBase::make<
-            android::hardware::automotive::remoteaccess::RemoteAccessService>(nullptr);
+            android::hardware::automotive::remoteaccess::RemoteAccessService>(clientStub.get());
 
-    binder_exception_t err = AServiceManager_addService(
-            service->asBinder().get(), "android.hardware.automotive.remote.IRemoteAccess/default");
+    binder_exception_t err = AServiceManager_addService(service->asBinder().get(), SERVICE_NAME);
     if (err != EX_NONE) {
         ALOGE("failed to register android.hardware.automotive.remote.IRemoteAccess service, "
               "exception: %d",
               err);
-        return 1;
+        exit(1);
     }
 
     if (!ABinderProcess_setThreadPoolMaxThreadCount(1)) {
         ALOGE("%s", "failed to set thread pool max thread count");
-        return 1;
+        exit(1);
     }
     ABinderProcess_startThreadPool();
 
