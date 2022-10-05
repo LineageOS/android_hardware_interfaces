@@ -48,30 +48,6 @@ oneway interface IImsMediaSessionListener {
     void onModifySessionResponse(in RtpConfig config, RtpError error);
 
     /**
-     * Notifies the result of IImsMediaSession#addConfig() API.
-     *
-     * @param config The RTP config passed in IImsMediaSession#addConfig() API
-     * @param error RtpError.NONE in case of success else one of the following
-     *   RtpError :INVALID_PARAM
-     *   RtpError :INTERNAL_ERR
-     *   RtpError :NO_MEMORY
-     *   RtpError :NO_RESOURCES
-     *   RtpError :PORT_UNAVAILABLE
-     */
-    void onAddConfigResponse(in RtpConfig config, RtpError error);
-
-    /**
-     * Notifies the result of IImsMediaSession#confirmConfig() API.
-     *
-     * @param config The RtpConfig passed in IImsMediaSession#confirmConfig() API
-     * @param error RtpError.NONE in case of success else one of the following
-     *   RtpError :INVALID_PARAM
-     *   RtpError :INTERNAL_ERR
-     *   RtpError :NO_RESOURCES
-     */
-    void onConfirmConfigResponse(in RtpConfig config, RtpError error);
-
-    /**
      * Indicates when the first Rtp media packet is received by the UE during ring
      * back, call hold or early media scenarios. This is sent only if the packet is
      * received on the active remote configuration.
