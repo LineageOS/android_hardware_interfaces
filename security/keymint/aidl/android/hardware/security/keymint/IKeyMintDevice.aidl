@@ -624,9 +624,15 @@ interface IKeyMintDevice {
      *
      *   o The key must have a Tag::USER_AUTH_TYPE that matches the auth type in the token.
      *
-     *   o The timestamp in the auth token plus the value of the Tag::AUTH_TIMEOUT must be less than
-     *     the current secure timestamp (which is a monotonic timer counting milliseconds since
-     *     boot.)
+     *   o If the device has a source of secure time, then the timestamp in the auth token plus the
+     *     value of the Tag::AUTH_TIMEOUT must be greater than the current secure timestamp (which
+     *     is a monotonic timer counting milliseconds since boot).
+     *
+     *   o If the device does not have a source of secure time, then the timestamp check should be
+     *     performed on the first update(), updateAad() or finish() invocation for the operation,
+     *     using the timeStampToken parameter provided on the invocation to indicate the current
+     *     timestamp. It may optionally also be performed on subsequent update() / updateAad() /
+     *     finish() invocations.
      *
      *   If any of these conditions are not met, begin() must return
      *   ErrorCode::KEY_USER_NOT_AUTHENTICATED.
