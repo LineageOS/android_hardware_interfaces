@@ -31,7 +31,7 @@ class AudioHalBinderServiceUtil {
   public:
     ndk::SpAIBinder connectToService(const std::string& serviceName) {
         mServiceName = serviceName;
-        mBinder = ndk::SpAIBinder(AServiceManager_getService(serviceName.c_str()));
+        mBinder = ndk::SpAIBinder(AServiceManager_waitForService(serviceName.c_str()));
         if (mBinder == nullptr) {
             LOG(ERROR) << "Failed to get service " << serviceName;
         } else {

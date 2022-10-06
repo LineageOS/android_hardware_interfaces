@@ -17,6 +17,7 @@
 package android.hardware.audio.core;
 
 import android.hardware.audio.common.SinkMetadata;
+import android.hardware.audio.core.MicrophoneDynamicInfo;
 
 /**
  * This interface provides means for receiving audio data from input devices.
@@ -37,6 +38,92 @@ interface IStreamIn {
      * @throws EX_ILLEGAL_STATE If the stream has already been closed.
      */
     void close();
+
+    /**
+     * Provides information on the microphones that are active for this stream.
+     *
+     * The returned array contains dynamic information on the microphones which
+     * are active for this stream. Each entry in the returned array must have a
+     * corresponding entry (matched by the 'MicrophoneInfo.id' field value) in
+     * the list of all available microphones which is provided by the
+     * 'IModule.getMicrophones' method.
+     *
+     * This method must be supported by the HAL module if
+     * 'IModule.getMicrophones' is supported.
+     *
+     * @return The vector with dynamic information on the microphones.
+     * @throws EX_ILLEGAL_STATE If the stream has already been closed.
+     * @throws EX_UNSUPPORTED_OPERATION If the information is unavailable.
+     */
+    MicrophoneDynamicInfo[] getActiveMicrophones();
+
+    @VintfStability
+    @Backing(type="int")
+    enum MicrophoneDirection {
+        /**
+         * Don't do any directionality processing of the activated microphone(s).
+         */
+        UNSPECIFIED = 0,
+        /**
+         * Optimize capture for audio coming from the screen-side of the device.
+         */
+        FRONT = 1,
+        /**
+         * Optimize capture for audio coming from the side of the device opposite the screen.
+         */
+        BACK = 2,
+        /**
+         * Optimize capture for audio coming from an off-device microphone.
+         */
+        EXTERNAL = 3,
+    }
+    /**
+     * Get the current logical microphone direction.
+     *
+     * @return The current logical microphone direction.
+     * @throws EX_ILLEGAL_STATE If the stream has already been closed.
+     * @throws EX_UNSUPPORTED_OPERATION If the information is unavailable.
+     */
+    MicrophoneDirection getMicrophoneDirection();
+    /**
+     * Set the current logical microphone direction.
+     *
+     * The client sets this parameter in order to specify its preference for
+     * optimizing the direction of capture when multiple microphones are in use.
+     *
+     * @param direction The preferred capture direction.
+     * @throws EX_ILLEGAL_STATE If the stream has already been closed.
+     * @throws EX_UNSUPPORTED_OPERATION If the operation is not supported.
+     */
+    void setMicrophoneDirection(MicrophoneDirection direction);
+
+    const int MIC_FIELD_DIMENSION_WIDE_ANGLE = -1;
+    const int MIC_FIELD_DIMENSION_NO_ZOOM = 0;
+    const int MIC_FIELD_DIMENSION_MAX_ZOOM = 1;
+    /**
+     * Get the "zoom factor" for the logical microphone.
+     *
+     * The returned value must be within the range of [-1.0, 1.0] (see
+     * MIC_FIELD_DIMENSION_* constants).
+     *
+     * @throws EX_ILLEGAL_STATE If the stream has already been closed.
+     * @throws EX_UNSUPPORTED_OPERATION If the information is unavailable.
+     */
+    float getMicrophoneFieldDimension();
+    /**
+     * Set the "zoom factor" for the logical microphone.
+     *
+     * If multiple microphones are in use, the provided zoom factor must be
+     * treated as a preference for their combined field dimension. The zoom
+     * factor must be within the range of [-1.0, 1.0] (see MIC_FIELD_DIMENSION_*
+     * constants).
+     *
+     * @param zoom The preferred field dimension of the microphone capture.
+     * @throws EX_ILLEGAL_ARGUMENT If the dimension value is outside of the range.
+     * @throws EX_ILLEGAL_STATE If the stream has already been closed.
+     * @throws EX_UNSUPPORTED_OPERATION If the operation is not supported.
+     */
+    void setMicrophoneFieldDimension(float zoom);
 
     /**
      * Update stream metadata.
