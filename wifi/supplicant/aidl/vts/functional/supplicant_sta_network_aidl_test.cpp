@@ -19,6 +19,7 @@
 #include <aidl/Vintf.h>
 #include <aidl/android/hardware/wifi/supplicant/BnSupplicant.h>
 #include <aidl/android/hardware/wifi/supplicant/BnSupplicantStaNetworkCallback.h>
+#include <aidl/android/hardware/wifi/supplicant/TlsVersion.h>
 #include <android/binder_manager.h>
 #include <android/binder_status.h>
 #include <binder/IServiceManager.h>
@@ -51,6 +52,7 @@ using aidl::android::hardware::wifi::supplicant::OcspType;
 using aidl::android::hardware::wifi::supplicant::PairwiseCipherMask;
 using aidl::android::hardware::wifi::supplicant::ProtoMask;
 using aidl::android::hardware::wifi::supplicant::SaeH2eMode;
+using aidl::android::hardware::wifi::supplicant::TlsVersion;
 using aidl::android::hardware::wifi::supplicant::TransitionDisableIndication;
 using aidl::android::hardware::wifi::supplicant::WpaDriverCapabilitiesMask;
 using android::ProcessState;
@@ -789,6 +791,13 @@ TEST_P(SupplicantStaNetworkAidlTest, GetWpsNfcConfigurationToken) {
 TEST_P(SupplicantStaNetworkAidlTest, SetRoamingConsortiumSelection) {
     const std::vector<uint8_t> testSelection = std::vector<uint8_t>({0x11, 0x21, 0x33, 0x44});
     EXPECT_TRUE(sta_network_->setRoamingConsortiumSelection(testSelection).isOk());
+}
+
+/*
+ * SetMinimumTlsVersionEapPhase1Param
+ */
+TEST_P(SupplicantStaNetworkAidlTest, SetMinimumTlsVersionEapPhase1Param) {
+    EXPECT_TRUE(sta_network_->setMinimumTlsVersionEapPhase1Param(TlsVersion::TLS_V1_3).isOk());
 }
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(SupplicantStaNetworkAidlTest);
