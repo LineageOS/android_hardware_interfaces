@@ -25,6 +25,7 @@ import android.hardware.wifi.IWifiStaIface;
 import android.hardware.wifi.IfaceConcurrencyType;
 import android.hardware.wifi.IfaceType;
 import android.hardware.wifi.WifiBand;
+import android.hardware.wifi.WifiChipCapabilities;
 import android.hardware.wifi.WifiDebugHostWakeReasonStats;
 import android.hardware.wifi.WifiDebugRingBufferStatus;
 import android.hardware.wifi.WifiDebugRingBufferVerboseLevel;
@@ -783,6 +784,18 @@ interface IWifiChip {
      *
      */
     WifiRadioCombinationMatrix getSupportedRadioCombinationsMatrix();
+
+    /**
+     * Get capabilities supported by this chip.
+     *
+     * @return Chip capabilities represented by |WifiChipCapabilities|.
+     * @throws ServiceSpecificException with one of the following values:
+     *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|,
+     *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+     *         |WifiStatusCode.FAILURE_UNKNOWN|
+     *
+     */
+    WifiChipCapabilities getWifiChipCapabilities();
 
     /**
      * Retrieve a list of usable Wifi channels for the specified band &
