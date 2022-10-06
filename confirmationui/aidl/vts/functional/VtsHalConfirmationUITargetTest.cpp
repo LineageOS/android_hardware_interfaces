@@ -266,7 +266,7 @@ TEST_P(ConfirmationUIAidlTest, UserOkTest) {
     static constexpr uint8_t test_extra[] = {0x1, 0x2, 0x3};
     shared_ptr<ConfirmationTestCallback> conf_cb =
             ::ndk::SharedRefBase::make<ConfirmationTestCallback>(*this);
-    vector<uint8_t> prompt_text(test_prompt, test_prompt + sizeof(test_prompt));
+    vector<uint8_t> prompt_text(test_prompt, test_prompt + strlen(test_prompt));
     vector<uint8_t> extra(test_extra, test_extra + 3);
     ASSERT_TRUE(confirmator_->promptUserConfirmation(conf_cb, prompt_text, extra, "en", {}).isOk());
     // Simulate the user taping ok.
@@ -309,7 +309,7 @@ TEST_P(ConfirmationUIAidlTest, MessageTooLongTest) {
     static constexpr char test_prompt[] = "D\'oh!";
     shared_ptr<ConfirmationTestCallback> conf_cb =
             ::ndk::SharedRefBase::make<ConfirmationTestCallback>(*this);
-    vector<uint8_t> prompt_text(test_prompt, test_prompt + sizeof(test_prompt));
+    vector<uint8_t> prompt_text(test_prompt, test_prompt + strlen(test_prompt));
     vector<uint8_t> extra(test_extra, test_extra + sizeof(test_extra));
     auto result = confirmator_->promptUserConfirmation(conf_cb, prompt_text, extra, "en", {});
     ASSERT_EQ(IConfirmationUI::UI_ERROR_MESSAGE_TOO_LONG, getReturnCode(result));
@@ -322,7 +322,7 @@ TEST_P(ConfirmationUIAidlTest, MessageWayTooLongTest) {
     static constexpr char test_prompt[] = "D\'oh!";
     shared_ptr<ConfirmationTestCallback> conf_cb =
             ::ndk::SharedRefBase::make<ConfirmationTestCallback>(*this);
-    vector<uint8_t> prompt_text(test_prompt, test_prompt + sizeof(test_prompt));
+    vector<uint8_t> prompt_text(test_prompt, test_prompt + strlen(test_prompt));
     vector<uint8_t> extra(test_extra, test_extra + sizeof(test_extra));
     auto result = confirmator_->promptUserConfirmation(conf_cb, prompt_text, extra, "en", {});
     ASSERT_EQ(IConfirmationUI::UI_ERROR_MESSAGE_TOO_LONG, getReturnCode(result));
@@ -334,7 +334,7 @@ TEST_P(ConfirmationUIAidlTest, UserCancelTest) {
     static constexpr uint8_t test_extra[] = {0x1, 0x2, 0x3};
     shared_ptr<ConfirmationTestCallback> conf_cb =
             ::ndk::SharedRefBase::make<ConfirmationTestCallback>(*this);
-    vector<uint8_t> prompt_text(test_prompt, test_prompt + sizeof(test_prompt));
+    vector<uint8_t> prompt_text(test_prompt, test_prompt + strlen(test_prompt));
     vector<uint8_t> extra(test_extra, test_extra + 3);
     ASSERT_TRUE(confirmator_->promptUserConfirmation(conf_cb, prompt_text, extra, "en", {}).isOk());
 
@@ -355,7 +355,7 @@ TEST_P(ConfirmationUIAidlTest, AbortTest) {
     static constexpr uint8_t test_extra[] = {0x1, 0x2, 0x3};
     shared_ptr<ConfirmationTestCallback> conf_cb =
             ::ndk::SharedRefBase::make<ConfirmationTestCallback>(*this);
-    vector<uint8_t> prompt_text(test_prompt, test_prompt + sizeof(test_prompt));
+    vector<uint8_t> prompt_text(test_prompt, test_prompt + strlen(test_prompt));
     vector<uint8_t> extra(test_extra, test_extra + 3);
     ASSERT_TRUE(confirmator_->promptUserConfirmation(conf_cb, prompt_text, extra, "en", {}).isOk());
 
@@ -377,7 +377,7 @@ TEST_P(ConfirmationUIAidlTest, PortableMessageTest1) {
     static constexpr uint8_t test_extra[] = {0x1, 0x2, 0x3};
     shared_ptr<ConfirmationTestCallback> conf_cb =
             ::ndk::SharedRefBase::make<ConfirmationTestCallback>(*this);
-    vector<uint8_t> prompt_text(test_prompt, test_prompt + sizeof(test_prompt));
+    vector<uint8_t> prompt_text(test_prompt, test_prompt + strlen(test_prompt));
     vector<uint8_t> extra(test_extra, test_extra + 3);
     ASSERT_TRUE(confirmator_->promptUserConfirmation(conf_cb, prompt_text, extra, "en", {}).isOk());
 
@@ -399,7 +399,7 @@ TEST_P(ConfirmationUIAidlTest, PortableMessageTest1Magnified) {
     static constexpr uint8_t test_extra[] = {0x1, 0x2, 0x3};
     shared_ptr<ConfirmationTestCallback> conf_cb =
             ::ndk::SharedRefBase::make<ConfirmationTestCallback>(*this);
-    vector<uint8_t> prompt_text(test_prompt, test_prompt + sizeof(test_prompt));
+    vector<uint8_t> prompt_text(test_prompt, test_prompt + strlen(test_prompt));
     vector<uint8_t> extra(test_extra, test_extra + 3);
     ASSERT_TRUE(confirmator_
                         ->promptUserConfirmation(conf_cb, prompt_text, extra, "en",
@@ -424,7 +424,7 @@ TEST_P(ConfirmationUIAidlTest, PortableMessageTest2) {
     static constexpr uint8_t test_extra[] = {0x1, 0x2, 0x3};
     shared_ptr<ConfirmationTestCallback> conf_cb =
             ::ndk::SharedRefBase::make<ConfirmationTestCallback>(*this);
-    vector<uint8_t> prompt_text(test_prompt, test_prompt + sizeof(test_prompt));
+    vector<uint8_t> prompt_text(test_prompt, test_prompt + strlen(test_prompt));
     vector<uint8_t> extra(test_extra, test_extra + 3);
     ASSERT_TRUE(confirmator_->promptUserConfirmation(conf_cb, prompt_text, extra, "en", {}).isOk());
 
@@ -446,7 +446,7 @@ TEST_P(ConfirmationUIAidlTest, PortableMessageTest2Magnified) {
     static constexpr uint8_t test_extra[] = {0x1, 0x2, 0x3};
     shared_ptr<ConfirmationTestCallback> conf_cb =
             ::ndk::SharedRefBase::make<ConfirmationTestCallback>(*this);
-    vector<uint8_t> prompt_text(test_prompt, test_prompt + sizeof(test_prompt));
+    vector<uint8_t> prompt_text(test_prompt, test_prompt + strlen(test_prompt));
     vector<uint8_t> extra(test_extra, test_extra + 3);
     ASSERT_TRUE(confirmator_
                         ->promptUserConfirmation(conf_cb, prompt_text, extra, "en",
@@ -469,7 +469,7 @@ TEST_P(ConfirmationUIAidlTest, MalformedUTF8Test1) {
     static constexpr uint8_t test_extra[] = {0x1, 0x2, 0x3};
     shared_ptr<ConfirmationTestCallback> conf_cb =
             ::ndk::SharedRefBase::make<ConfirmationTestCallback>(*this);
-    vector<uint8_t> prompt_text(test_prompt, test_prompt + sizeof(test_prompt));
+    vector<uint8_t> prompt_text(test_prompt, test_prompt + strlen(test_prompt));
     vector<uint8_t> extra(test_extra, test_extra + 3);
     auto result = confirmator_->promptUserConfirmation(conf_cb, prompt_text, extra, "en", {});
     ASSERT_EQ(IConfirmationUI::UI_ERROR_MALFORMED_UTF8ENCODING, getReturnCode(result));
@@ -483,7 +483,7 @@ TEST_P(ConfirmationUIAidlTest, MalformedUTF8Test2) {
     static constexpr uint8_t test_extra[] = {0x1, 0x2, 0x3};
     shared_ptr<ConfirmationTestCallback> conf_cb =
             ::ndk::SharedRefBase::make<ConfirmationTestCallback>(*this);
-    vector<uint8_t> prompt_text(test_prompt, test_prompt + sizeof(test_prompt));
+    vector<uint8_t> prompt_text(test_prompt, test_prompt + strlen(test_prompt));
     vector<uint8_t> extra(test_extra, test_extra + 3);
     auto result = confirmator_->promptUserConfirmation(conf_cb, prompt_text, extra, "en", {});
     ASSERT_EQ(IConfirmationUI::UI_ERROR_MALFORMED_UTF8ENCODING, getReturnCode(result));
@@ -496,7 +496,7 @@ TEST_P(ConfirmationUIAidlTest, MalformedUTF8Test3) {
     static constexpr uint8_t test_extra[] = {0x1, 0x2, 0x3};
     shared_ptr<ConfirmationTestCallback> conf_cb =
             ::ndk::SharedRefBase::make<ConfirmationTestCallback>(*this);
-    vector<uint8_t> prompt_text(test_prompt, test_prompt + sizeof(test_prompt));
+    vector<uint8_t> prompt_text(test_prompt, test_prompt + strlen(test_prompt));
     vector<uint8_t> extra(test_extra, test_extra + 3);
     auto result = confirmator_->promptUserConfirmation(conf_cb, prompt_text, extra, "en", {});
     ASSERT_EQ(IConfirmationUI::UI_ERROR_MALFORMED_UTF8ENCODING, getReturnCode(result));
