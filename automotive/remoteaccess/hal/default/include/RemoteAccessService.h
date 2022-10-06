@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <IVhalClient.h>
 #include <aidl/android/hardware/automotive/remoteaccess/ApState.h>
 #include <aidl/android/hardware/automotive/remoteaccess/BnRemoteAccess.h>
 #include <aidl/android/hardware/automotive/remoteaccess/BnRemoteTaskCallback.h>
@@ -102,6 +103,8 @@ class RemoteAccessService
     void runTaskLoop();
     void maybeStartTaskLoop();
     void maybeStopTaskLoop();
+    ndk::ScopedAStatus getDeviceIdWithClient(
+            android::frameworks::automotive::vhal::IVhalClient& client, std::string* deviceId);
 
     void setRetryWaitInMs(size_t retryWaitInMs) { mRetryWaitInMs = retryWaitInMs; }
     void dumpHelp(int fd);
