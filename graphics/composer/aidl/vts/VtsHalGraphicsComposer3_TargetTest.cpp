@@ -2170,6 +2170,20 @@ TEST_P(GraphicsComposerAidlTest, GetDisplayConfigNoRepetitions) {
     }
 }
 
+TEST_P(GraphicsComposerAidlCommandTest, MultiThreadedPresent) {
+    std::vector<VtsDisplay*> displays;
+    for (auto& display : mDisplays) {
+        if (hasDisplayCapability(display.getDisplayId(),
+                                 DisplayCapability::MULTI_THREADED_PRESENT)) {
+            displays.push_back(&display);
+        }
+    }
+    if (displays.size() <= 1u) {
+        return;
+    }
+    // TODO(b/251842321): Try to present on multiple threads.
+}
+
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(GraphicsComposerAidlCommandTest);
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, GraphicsComposerAidlCommandTest,
