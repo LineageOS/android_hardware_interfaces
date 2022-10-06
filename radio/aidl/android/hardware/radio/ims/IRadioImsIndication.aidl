@@ -32,12 +32,12 @@ oneway interface IRadioImsIndication {
      * on cellular networks. IMS service shall call stopImsTraffic when receiving
      * this indication.
      *
-     * @param token The token of startImsTraffic() associated with this indication
      * @param type Type of radio indication
+     * @param token The token of startImsTraffic() associated with this indication
      * @param info Connection failure information
      */
-    void onConnectionSetupFailure(in RadioIndicationType type, in String token,
-            in ConnectionFailureInfo info);
+    void onConnectionSetupFailure(
+            in RadioIndicationType type, in String token, in ConnectionFailureInfo info);
 
     /**
      * Access Network Bitrate Recommendation (ANBR), see 3GPP TS 26.114.
@@ -49,19 +49,18 @@ oneway interface IRadioImsIndication {
      * @param bitsPerSecond The recommended bit rate for the UE
      * for a specific logical channel and a specific direction by NW
      */
-     void notifyAnbr(in RadioIndicationType type, in ImsStreamType mediaType,
+    void notifyAnbr(in RadioIndicationType type, in ImsStreamType mediaType,
             in ImsStreamDirection direction, int bitsPerSecond);
 
     /**
-     * Fired by radio when a graceful IMS deregistration needs to be performed by telephony
-     * prior to radio performing network detach. Example scenarios are SIM refresh or user
-     * mode preference change which would cause network detach. The radio waits for the
-     * IMS deregistration, which will be notified by telephony via
+     * Requests IMS stack to perform graceful IMS deregistration before radio performing
+     * network detach in the events of SIM remove, refresh or and so on. The radio waits for
+     * the IMS deregistration, which will be notified by telephony via
      * {@link IRadioIms#updateImsRegistrationInfo()}, or a certain timeout interval to start
      * the network detach procedure.
      *
      * @param type Type of radio indication
      * @param reason the reason why the deregistration is triggered
      */
-     void triggerImsDeregistration(in RadioIndicationType type, in ImsDeregistrationReason reason);
+    void triggerImsDeregistration(in RadioIndicationType type, in ImsDeregistrationReason reason);
 }
