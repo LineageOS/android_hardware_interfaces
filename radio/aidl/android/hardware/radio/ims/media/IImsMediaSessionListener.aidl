@@ -21,20 +21,12 @@ import android.hardware.radio.ims.media.MediaProtocolType;
 import android.hardware.radio.ims.media.RtpConfig;
 import android.hardware.radio.ims.media.RtpError;
 import android.hardware.radio.ims.media.RtpHeaderExtension;
-import android.hardware.radio.ims.media.RtpSessionState;
 
 /**
  * Interface declaring listener functions for unsolicited IMS media notifications per session.
  */
 @VintfStability
 oneway interface IImsMediaSessionListener {
-    /**
-     * Notifies whenever the session state changed.
-     *
-     * @param state RTP session state
-     */
-    void onSessionChanged(RtpSessionState state);
-
     /**
      * Notifies the result of IImsMediaSession#modifySession() API.
      *
