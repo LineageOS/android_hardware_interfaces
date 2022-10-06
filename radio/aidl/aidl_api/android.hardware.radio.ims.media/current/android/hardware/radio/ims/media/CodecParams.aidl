@@ -38,7 +38,6 @@ parcelable CodecParams {
   byte rxPayloadTypeNumber;
   byte txPayloadTypeNumber;
   byte samplingRateKHz;
-  byte codecModeRequest;
   boolean dtxEnabled;
   android.hardware.radio.ims.media.CodecSpecificParams codecSpecificParams;
 }

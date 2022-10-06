@@ -47,4 +47,10 @@ parcelable EvsParams {
      * If this value is true, the codec operates in AMR-WB IO mode
      */
     boolean useEvsModeSwitch;
+    /**
+     * cmr: Codec mode request is used to request the speech codec encoder of the
+     * other party to set the frame type index of speech mode via RTP header, See
+     * 3GPP TS 26.445 section A.3. Allowed values are -1, 0 and 1.
+     */
+    byte codecModeRequest;
 }

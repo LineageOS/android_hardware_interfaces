@@ -37,12 +37,6 @@ parcelable CodecParams {
     byte txPayloadTypeNumber;
     /** Sampling rate in kHz*/
     byte samplingRateKHz;
-    /**
-     * cmr: Codec mode request is used to request the speech codec encoder of the
-     * other party to set the frame type index of speech mode via RTP header, See
-     * 3GPP TS 26.445 section A.3. Allowed values are -1, 0 and 1.
-     */
-    byte codecModeRequest;
     /** dtx: Whether discontinuous transmission is enabled or not */
     boolean dtxEnabled;
     /** Codec specific parameters */
