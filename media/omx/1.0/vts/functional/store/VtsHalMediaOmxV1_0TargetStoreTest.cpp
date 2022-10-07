@@ -374,21 +374,16 @@ TEST_P(StoreHidlTest, ListRoles) {
     }
 }
 
-static int getFirstApiLevel() {
-    int boardApiLevel = android::base::GetIntProperty("ro.board.first_api_level", 0);
-    if (boardApiLevel != 0) {
-        return boardApiLevel;
-    }
-
-    return android::base::GetIntProperty("ro.product.first_api_level", __ANDROID_API_T__);
-}
-
 static bool isTV() {
     return testing::deviceSupportsFeature("android.software.leanback");
 }
 
 // list components and roles.
 TEST_P(StoreHidlTest, OmxCodecAllowedTest) {
+    static int sBoardFirstApiLevel = android::base::GetIntProperty("ro.board.first_api_level", 0);
+    if (sBoardFirstApiLevel == 0) {
+        GTEST_SKIP() << "board first API level not detected";
+    }
     hidl_vec<IOmx::ComponentInfo> componentInfos = getComponentInfoList(omx);
     for (IOmx::ComponentInfo info : componentInfos) {
         for (std::string role : info.mRoles) {
@@ -396,27 +391,27 @@ TEST_P(StoreHidlTest, OmxCodecAllowedTest) {
                 role.find("video_encoder") != std::string::npos) {
                 // Codec2 is not mandatory on Android TV devices that launched with Android S
                 if (isTV()) {
-                    ASSERT_LT(getFirstApiLevel(), __ANDROID_API_T__)
+                    ASSERT_LT(sBoardFirstApiLevel, __ANDROID_API_T__)
                             << " Component: " << info.mName.c_str() << " Role: " << role.c_str()
                             << " not allowed for devices launching with Android T and above";
                 } else {
                     std::string codecName = info.mName;
                     bool isAndroidCodec = (codecName.rfind("OMX.google", 0) != std::string::npos);
-                    if (isAndroidCodec && (getFirstApiLevel() <= __ANDROID_API_S__)) {
+                    if (isAndroidCodec && (sBoardFirstApiLevel <= __ANDROID_API_S__)) {
                         // refer b/230582620
                         // S AOSP build did not remove the OMX.google video codecs
                         // so it is infeasible to require no OMX.google.* video codecs
                         // on S launching devices
                     } else {
-                        ASSERT_LT(getFirstApiLevel(), __ANDROID_API_S__)
-                            << " Component: " << info.mName.c_str() << " Role: " << role.c_str()
-                            << " not allowed for devices launching with Android S and above";
+                        ASSERT_LT(sBoardFirstApiLevel, __ANDROID_API_S__)
+                                << " Component: " << info.mName.c_str() << " Role: " << role.c_str()
+                                << " not allowed for devices launching with Android S and above";
                     }
                 }
             }
             if (role.find("audio_decoder") != std::string::npos ||
                 role.find("audio_encoder") != std::string::npos) {
-                ASSERT_LT(getFirstApiLevel(), __ANDROID_API_T__)
+                ASSERT_LT(sBoardFirstApiLevel, __ANDROID_API_T__)
                         << " Component: " << info.mName.c_str() << " Role: " << role.c_str()
                         << " not allowed for devices launching with Android T and above";
             }
