@@ -100,6 +100,7 @@ aidl_interface {
         "android/hardware/audio/core/MmapBufferDescriptor.aidl",
         "android/hardware/audio/core/ModuleDebug.aidl",
         "android/hardware/audio/core/StreamDescriptor.aidl",
+        "android/hardware/audio/core/SurroundSoundConfig.aidl",
     ],
     imports: [
         "android.hardware.common-V2",
