@@ -5,13 +5,28 @@ props {
     api_name: "authenticator_id"
     type: Long
     access: ReadWrite
-    prop_name: "vendor.fingerprint.virtual.authenticator_id"
+    prop_name: "persist.vendor.fingerprint.virtual.authenticator_id"
   }
   prop {
     api_name: "challenge"
     type: Long
     access: ReadWrite
     prop_name: "vendor.fingerprint.virtual.challenge"
+  }
+  prop {
+    api_name: "control_illumination"
+    access: ReadWrite
+    prop_name: "persist.vendor.fingerprint.virtual.udfps.control_illumination"
+  }
+  prop {
+    api_name: "detect_interaction"
+    access: ReadWrite
+    prop_name: "persist.vendor.fingerprint.virtual.detect_interaction"
+  }
+  prop {
+    api_name: "display_touch"
+    access: ReadWrite
+    prop_name: "persist.vendor.fingerprint.virtual.udfps.display_touch"
   }
   prop {
     api_name: "enrollment_hit"
@@ -28,7 +43,18 @@ props {
   prop {
     api_name: "lockout"
     access: ReadWrite
-    prop_name: "vendor.fingerprint.virtual.lockout"
+    prop_name: "persist.vendor.fingerprint.virtual.lockout"
+  }
+  prop {
+    api_name: "max_enrollments"
+    type: Integer
+    access: ReadWrite
+    prop_name: "persist.vendor.fingerprint.virtual.max_enrollments"
+  }
+  prop {
+    api_name: "navigation_guesture"
+    access: ReadWrite
+    prop_name: "persist.vendor.fingerprint.virtual.navigation_guesture"
   }
   prop {
     api_name: "next_enrollment"
@@ -37,10 +63,22 @@ props {
     prop_name: "vendor.fingerprint.virtual.next_enrollment"
   }
   prop {
+    api_name: "operation_authenticate_acquired"
+    type: String
+    access: ReadWrite
+    prop_name: "vendor.fingerprint.virtual.operation_authenticate_acquired"
+  }
+  prop {
     api_name: "operation_authenticate_duration"
     type: Integer
     access: ReadWrite
     prop_name: "vendor.fingerprint.virtual.operation_authenticate_duration"
+  }
+  prop {
+    api_name: "operation_authenticate_error"
+    type: Integer
+    access: ReadWrite
+    prop_name: "vendor.fingerprint.virtual.operation_authenticate_error"
   }
   prop {
     api_name: "operation_authenticate_fails"
@@ -54,9 +92,22 @@ props {
     prop_name: "vendor.fingerprint.virtual.operation_authenticate_latency"
   }
   prop {
-    api_name: "operation_detect_interaction_fails"
+    api_name: "operation_detect_interaction_acquired"
+    type: String
     access: ReadWrite
-    prop_name: "vendor.fingerprint.virtual.operation_detect_interaction_fails"
+    prop_name: "vendor.fingerprint.virtual.operation_detect_interaction_acquired"
+  }
+  prop {
+    api_name: "operation_detect_interaction_duration"
+    type: Integer
+    access: ReadWrite
+    prop_name: "vendor.fingerprint.virtual.operation_detect_interaction_duration"
+  }
+  prop {
+    api_name: "operation_detect_interaction_error"
+    type: Integer
+    access: ReadWrite
+    prop_name: "vendor.fingerprint.virtual.operation_detect_interaction_error"
   }
   prop {
     api_name: "operation_detect_interaction_latency"
@@ -65,9 +116,10 @@ props {
     prop_name: "vendor.fingerprint.virtual.operation_detect_interaction_latency"
   }
   prop {
-    api_name: "operation_enroll_fails"
+    api_name: "operation_enroll_error"
+    type: Integer
     access: ReadWrite
-    prop_name: "vendor.fingerprint.virtual.operation_enroll_fails"
+    prop_name: "vendor.fingerprint.virtual.operation_enroll_error"
   }
   prop {
     api_name: "operation_enroll_latency"
@@ -76,10 +128,22 @@ props {
     prop_name: "vendor.fingerprint.virtual.operation_enroll_latency"
   }
   prop {
+    api_name: "sensor_id"
+    type: Integer
+    access: ReadWrite
+    prop_name: "persist.vendor.fingerprint.virtual.sensor_id"
+  }
+  prop {
     api_name: "sensor_location"
     type: String
     access: ReadWrite
     prop_name: "persist.vendor.fingerprint.virtual.sensor_location"
+  }
+  prop {
+    api_name: "sensor_strength"
+    type: Integer
+    access: ReadWrite
+    prop_name: "persist.vendor.fingerprint.virtual.sensor_strength"
   }
   prop {
     api_name: "type"

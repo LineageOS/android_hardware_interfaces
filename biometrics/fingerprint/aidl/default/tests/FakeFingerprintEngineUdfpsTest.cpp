@@ -47,14 +47,10 @@ bool isDefaultLocation(SensorLocation& sc) {
             sc.sensorRadius == FakeFingerprintEngineUdfps::defaultSensorRadius && sc.display == "");
 }
 
-TEST_F(FakeFingerprintEngineUdfpsTest, getSensorLocation) {
-    FingerprintHalProperties::sensor_location("");
-    SensorLocation sc = mEngine.getSensorLocation();
-    ASSERT_TRUE(isDefaultLocation(sc));
-
+TEST_F(FakeFingerprintEngineUdfpsTest, getSensorLocationOk) {
     auto loc = "100:200:30";
     FingerprintHalProperties::sensor_location(loc);
-    sc = mEngine.getSensorLocation();
+    SensorLocation sc = mEngine.getSensorLocation();
     ASSERT_TRUE(sc.sensorLocationX == 100);
     ASSERT_TRUE(sc.sensorLocationY == 200);
     ASSERT_TRUE(sc.sensorRadius == 30);
@@ -66,8 +62,14 @@ TEST_F(FakeFingerprintEngineUdfpsTest, getSensorLocation) {
     ASSERT_TRUE(sc.sensorLocationY == 200);
     ASSERT_TRUE(sc.sensorRadius == 30);
     ASSERT_TRUE(sc.display == "screen1");
+}
 
-    loc = "100";
+TEST_F(FakeFingerprintEngineUdfpsTest, getSensorLocationBad) {
+    FingerprintHalProperties::sensor_location("");
+    SensorLocation sc = mEngine.getSensorLocation();
+    ASSERT_TRUE(isDefaultLocation(sc));
+
+    auto loc = "100";
     FingerprintHalProperties::sensor_location(loc);
     sc = mEngine.getSensorLocation();
     ASSERT_TRUE(isDefaultLocation(sc));
