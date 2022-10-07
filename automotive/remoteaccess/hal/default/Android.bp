@@ -29,14 +29,19 @@ cc_binary {
         "RemoteAccessService",
     ],
     shared_libs: [
+        "libbase",
         "libbinder_ndk",
         "liblog",
         "libutils",
         "libgrpc++",
         "libprotobuf-cpp-full",
     ],
+    defaults: [
+        "vhalclient_defaults",
+    ],
     cflags: [
         "-Wno-unused-parameter",
+        "-DGRPC_SERVICE_ADDRESS=\"localhost:50051\"",
     ],
 }
 
@@ -51,10 +56,15 @@ cc_library {
     whole_static_libs: [
         "android.hardware.automotive.remoteaccess-V1-ndk",
         "wakeup_client_protos",
+        "libvhalclient",
+    ],
+    defaults: [
+        "vhalclient_defaults",
     ],
     shared_libs: [
         "libbase",
         "libbinder_ndk",
+        "libcutils",
         "liblog",
         "libutils",
         "libgrpc++",
