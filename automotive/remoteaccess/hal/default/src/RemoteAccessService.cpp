@@ -174,6 +174,7 @@ void RemoteAccessService::runTaskLoop() {
 }
 
 ScopedAStatus RemoteAccessService::getDeviceId(std::string* deviceId) {
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     auto vhalClient = IVhalClient::tryCreate();
     if (vhalClient == nullptr) {
         ALOGE("Failed to connect to VHAL");
@@ -181,6 +182,10 @@ ScopedAStatus RemoteAccessService::getDeviceId(std::string* deviceId) {
                 /*errorCode=*/0, "Failed to connect to VHAL to get device ID");
     }
     return getDeviceIdWithClient(*vhalClient.get(), deviceId);
+#else
+    // Don't use VHAL client in fuzzing since IPC is not allowed.
+    return ScopedAStatus::ok();
+#endif
 }
 
 ScopedAStatus RemoteAccessService::getDeviceIdWithClient(IVhalClient& vhalClient,
