@@ -16,8 +16,11 @@
 
 #include "RemoteAccessService.h"
 
+#include <AidlHalPropValue.h>
+#include <IVhalClient.h>
 #include <aidl/android/hardware/automotive/remoteaccess/ApState.h>
 #include <aidl/android/hardware/automotive/remoteaccess/BnRemoteTaskCallback.h>
+#include <aidl/android/hardware/automotive/vehicle/VehiclePropValue.h>
 #include <gmock/gmock.h>
 #include <grpcpp/test/mock_stream.h>
 #include <gtest/gtest.h>
@@ -30,10 +33,20 @@ namespace hardware {
 namespace automotive {
 namespace remoteaccess {
 
+namespace {
+
 using ::android::base::ScopedLockAssertion;
+using ::android::frameworks::automotive::vhal::AidlHalPropValue;
+using ::android::frameworks::automotive::vhal::IHalPropConfig;
+using ::android::frameworks::automotive::vhal::IHalPropValue;
+using ::android::frameworks::automotive::vhal::ISubscriptionCallback;
+using ::android::frameworks::automotive::vhal::ISubscriptionClient;
+using ::android::frameworks::automotive::vhal::IVhalClient;
+using ::android::frameworks::automotive::vhal::VhalClientResult;
 
 using ::aidl::android::hardware::automotive::remoteaccess::ApState;
 using ::aidl::android::hardware::automotive::remoteaccess::BnRemoteTaskCallback;
+using ::aidl::android::hardware::automotive::vehicle::VehiclePropValue;
 
 using ::grpc::ClientAsyncReaderInterface;
 using ::grpc::ClientAsyncResponseReaderInterface;
@@ -48,6 +61,10 @@ using ::testing::_;
 using ::testing::DoAll;
 using ::testing::Return;
 using ::testing::SetArgPointee;
+
+constexpr char kTestVin[] = "test_VIN";
+
+}  // namespace
 
 class MockGrpcClientStub : public WakeupClient::StubInterface {
   public:
@@ -71,6 +88,62 @@ class MockGrpcClientStub : public WakeupClient::StubInterface {
                 PrepareAsyncNotifyWakeupRequiredRaw,
                 (ClientContext * context, const NotifyWakeupRequiredRequest& request,
                  CompletionQueue* cq));
+};
+
+class FakeVhalClient final : public android::frameworks::automotive::vhal::IVhalClient {
+  public:
+    inline bool isAidlVhal() { return true; }
+
+    VhalClientResult<std::unique_ptr<IHalPropValue>> getValueSync(
+            const IHalPropValue& requestValue) override {
+        auto propValue = std::make_unique<AidlHalPropValue>(requestValue.getPropId());
+        propValue->setStringValue(kTestVin);
+        return propValue;
+    }
+
+    std::unique_ptr<IHalPropValue> createHalPropValue(int32_t propId) override {
+        return std::make_unique<AidlHalPropValue>(propId);
+    }
+
+    // Functions we do not care.
+    std::unique_ptr<IHalPropValue> createHalPropValue([[maybe_unused]] int32_t propId,
+                                                      [[maybe_unused]] int32_t areaId) override {
+        return nullptr;
+    }
+
+    void getValue([[maybe_unused]] const IHalPropValue& requestValue,
+                  [[maybe_unused]] std::shared_ptr<GetValueCallbackFunc> callback) override {}
+
+    void setValue([[maybe_unused]] const IHalPropValue& requestValue,
+                  [[maybe_unused]] std::shared_ptr<SetValueCallbackFunc> callback) override {}
+
+    VhalClientResult<void> setValueSync([[maybe_unused]] const IHalPropValue& requestValue) {
+        return {};
+    }
+
+    VhalClientResult<void> addOnBinderDiedCallback(
+            [[maybe_unused]] std::shared_ptr<OnBinderDiedCallbackFunc> callback) override {
+        return {};
+    }
+
+    VhalClientResult<void> removeOnBinderDiedCallback(
+            [[maybe_unused]] std::shared_ptr<OnBinderDiedCallbackFunc> callback) override {
+        return {};
+    }
+
+    VhalClientResult<std::vector<std::unique_ptr<IHalPropConfig>>> getAllPropConfigs() override {
+        return std::vector<std::unique_ptr<IHalPropConfig>>();
+    }
+
+    VhalClientResult<std::vector<std::unique_ptr<IHalPropConfig>>> getPropConfigs(
+            [[maybe_unused]] std::vector<int32_t> propIds) override {
+        return std::vector<std::unique_ptr<IHalPropConfig>>();
+    }
+
+    std::unique_ptr<ISubscriptionClient> getSubscriptionClient(
+            [[maybe_unused]] std::shared_ptr<ISubscriptionCallback> callback) override {
+        return nullptr;
+    }
 };
 
 class FakeRemoteTaskCallback : public BnRemoteTaskCallback {
@@ -114,10 +187,13 @@ class RemoteAccessServiceUnitTest : public ::testing::Test {
 
     void setRetryWaitInMs(size_t retryWaitInMs) { mService->setRetryWaitInMs(retryWaitInMs); }
 
+    ScopedAStatus getDeviceIdWithClient(IVhalClient& vhalClient, std::string* deviceId) {
+        return mService->getDeviceIdWithClient(vhalClient, deviceId);
+    }
+
   private:
     std::unique_ptr<MockGrpcClientStub> mGrpcWakeupClientStub;
     std::shared_ptr<RemoteAccessService> mService;
-    MockClientReader<GetRemoteTasksResponse>* mMockTaskReader;
 };
 
 TEST_F(RemoteAccessServiceUnitTest, TestGetWakeupServiceName) {
@@ -280,6 +356,15 @@ TEST_F(RemoteAccessServiceUnitTest, TestGetRemoteTasksNotReadyAfterReady) {
 
     // Wait for the retry delay, but the loop should already exit.
     std::this_thread::sleep_for(std::chrono::milliseconds(150));
+}
+
+TEST_F(RemoteAccessServiceUnitTest, testGetDeviceId) {
+    std::string deviceId;
+
+    FakeVhalClient vhalClient;
+
+    ASSERT_TRUE(getDeviceIdWithClient(vhalClient, &deviceId).isOk());
+    ASSERT_EQ(deviceId, kTestVin);
 }
 
 }  // namespace remoteaccess

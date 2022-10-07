@@ -24,6 +24,7 @@ cc_test {
         "RemoteAccessService",
     ],
     shared_libs: [
+        "libbase",
         "libbinder_ndk",
         "liblog",
         "libutils",
@@ -35,6 +36,9 @@ cc_test {
     static_libs: [
         "libgtest",
         "libgmock",
+    ],
+    defaults: [
+        "vhalclient_defaults",
     ],
     cflags: [
         "-Wno-unused-parameter",
