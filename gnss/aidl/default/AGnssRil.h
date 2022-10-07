@@ -26,6 +26,8 @@ struct AGnssRil : public BnAGnssRil {
     ndk::ScopedAStatus setRefLocation(const AGnssRefLocation& agnssReflocation) override;
     ndk::ScopedAStatus setSetId(SetIdType type, const std::string& setid) override;
     ndk::ScopedAStatus updateNetworkState(const NetworkAttributes& attributes) override;
+    ndk::ScopedAStatus injectNiSuplMessageData(const std::vector<uint8_t>& msgData,
+                                               int slotIndex) override;
 
   private:
     // Synchronization lock for sCallback
