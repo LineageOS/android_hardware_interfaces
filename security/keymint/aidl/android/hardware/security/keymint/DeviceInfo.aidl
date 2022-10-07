@@ -49,16 +49,7 @@ parcelable DeviceInfo {
      *         "security_level" : "tee" / "strongbox",
      *         "fused": 1 / 0,  ; 1 if secure boot is enforced for the processor that the IRPC
      *                          ; implementation is contained in. 0 otherwise.
-     *         "cert_type": CertificateType;
      *     }
-     *
-     *     ; A tstr identifying the type of certificate. The set of supported certificate types may
-     *     ; be extended without requiring a version bump of the HAL. Custom certificate types may
-     *     ; be used, but the provisioning server may reject the request for an unknown certificate
-     *     ; type. The currently defined certificate types are:
-     *     ;  - "widevine"
-     *     ;  - "keymint"
-     *     CertificateType = tstr
      */
     byte[] deviceInfo;
 }
