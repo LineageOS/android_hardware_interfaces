@@ -672,9 +672,9 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="false">
+    <hal format="aidl" optional="false">
         <name>android.hardware.thermal</name>
-        <version>2.0</version>
+        <version>1</version>
         <interface>
             <name>IThermal</name>
             <instance>default</instance>
