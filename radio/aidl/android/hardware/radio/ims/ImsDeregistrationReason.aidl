@@ -34,5 +34,5 @@ enum ImsDeregistrationReason {
      * Radio shall send this reason to IMS stack to perform graceful de-registration
      * due to allowed network types bitmask changed that results in NAS detach.
      */
-    REASON_NETWORK_MODE_CHANGED = 3,
+    REASON_ALLOWED_NETWORK_TYPES_CHANGED = 3,
 }

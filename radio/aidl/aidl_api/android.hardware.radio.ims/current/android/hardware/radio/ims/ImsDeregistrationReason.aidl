@@ -36,5 +36,5 @@ package android.hardware.radio.ims;
 enum ImsDeregistrationReason {
   REASON_SIM_REMOVED = 1,
   REASON_SIM_REFRESH = 2,
-  REASON_NETWORK_MODE_CHANGED = 3,
+  REASON_ALLOWED_NETWORK_TYPES_CHANGED = 3,
 }
