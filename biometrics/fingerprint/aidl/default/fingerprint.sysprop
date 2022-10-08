@@ -32,8 +32,12 @@ prop {
     api_name: "enrollment_hit"
 }
 
-# the next enrollment in the format: "<id>:<delay>,<delay>,...:<result>"
-# for example: "2:0:true"
+# the next enrollment in the format of:
+# "<id>:<delay>,<delay>,...:<result>"
+# <delay> = <duration-[acquiredInfos]>
+# [acquiredInfos] = [acquiredInfo1, acquiredInfo2, ...]
+# (refer to README.md file for acquiredInfo values)
+# e.g. "2:100,20:true", "2:100-[5,1],20:true"
 # this property is reset after enroll completes
 prop {
     prop_name: "vendor.fingerprint.virtual.next_enrollment"
@@ -45,7 +49,7 @@ prop {
 
 # value for getAuthenticatorId or 0
 prop {
-    prop_name: "vendor.fingerprint.virtual.authenticator_id"
+    prop_name: "persist.vendor.fingerprint.virtual.authenticator_id"
     type: Long
     scope: Public
     access: ReadWrite
@@ -63,7 +67,7 @@ prop {
 
 # if locked out
 prop {
-    prop_name: "vendor.fingerprint.virtual.lockout"
+    prop_name: "persist.vendor.fingerprint.virtual.lockout"
     type: Boolean
     scope: Public
     access: ReadWrite
@@ -79,22 +83,26 @@ prop {
     api_name: "operation_authenticate_fails"
 }
 
-# force all detectInteraction operations to fail
+# force all detectInteraction operations to error out
+# error consists of errorCode and vendorErrorCode
+# valid errorCodes are listed in README.md file
+# vendorErrorCode = (error>1000) ? error-1000 : 0
+# e.g. error(1002) --> errorCode(7) and vendorErrorCode(2)
 prop {
-    prop_name: "vendor.fingerprint.virtual.operation_detect_interaction_fails"
-    type: Boolean
+    prop_name: "vendor.fingerprint.virtual.operation_detect_interaction_error"
+    type: Integer
     scope: Public
     access: ReadWrite
-    api_name: "operation_detect_interaction_fails"
+    api_name: "operation_detect_interaction_error"
 }
 
-# force all enroll operations to fail
+# force all enroll operations to result in error
 prop {
-    prop_name: "vendor.fingerprint.virtual.operation_enroll_fails"
-    type: Boolean
+    prop_name: "vendor.fingerprint.virtual.operation_enroll_error"
+    type: Integer
     scope: Public
     access: ReadWrite
-    api_name: "operation_enroll_fails"
+    api_name: "operation_enroll_error"
 }
 
 # add a latency to authentication operations
@@ -134,6 +142,15 @@ prop {
     api_name: "operation_authenticate_duration"
 }
 
+# insert error for authenticate operations
+prop {
+    prop_name: "vendor.fingerprint.virtual.operation_authenticate_error"
+    type: Integer
+    scope: Public
+    access: ReadWrite
+    api_name: "operation_authenticate_error"
+}
+
 # sensor location
 #    <x>:<y>:<radius> in pixel
 prop {
@@ -142,4 +159,100 @@ prop {
     scope: Public
     access: ReadWrite
     api_name: "sensor_location"
+}
+
+# acquired info during authentication in format of sequence
+prop {
+    prop_name: "vendor.fingerprint.virtual.operation_authenticate_acquired"
+    type: String
+    scope: Public
+    access: ReadWrite
+    api_name: "operation_authenticate_acquired"
+}
+
+# millisecond duration for detect interaction operations
+# (waits for changes to enrollment_hit)
+prop {
+    prop_name: "vendor.fingerprint.virtual.operation_detect_interaction_duration"
+    type: Integer
+    scope: Public
+    access: ReadWrite
+    api_name: "operation_detect_interaction_duration"
+}
+
+# acquired info during detect interaction operation in format of sequence
+# e.g. 5,6,1  (TOO_SLOW, TOO_FAST, GOOD)
+# onAcquired() callback will be invoked in sequence
+# vendorAcquiredCode = (acquired>1000) ? acquired-1000 : 0
+prop {
+    prop_name: "vendor.fingerprint.virtual.operation_detect_interaction_acquired"
+    type: String
+    scope: Public
+    access: ReadWrite
+    api_name: "operation_detect_interaction_acquired"
+}
+
+# sensor id (default: 5)
+prop {
+    prop_name: "persist.vendor.fingerprint.virtual.sensor_id"
+    type: Integer
+    scope: Public
+    access: ReadWrite
+    api_name: "sensor_id"
+}
+
+# sensor strength (default: 2)
+# [0=CONVENECE, 1=WEAK, 2=STRONG]
+prop {
+    prop_name: "persist.vendor.fingerprint.virtual.sensor_strength"
+    type: Integer
+    scope: Public
+    access: ReadWrite
+    api_name: "sensor_strength"
+}
+
+# max enrollments per user (default: 5)
+#
+prop {
+    prop_name: "persist.vendor.fingerprint.virtual.max_enrollments"
+    type: Integer
+    scope: Public
+    access: ReadWrite
+    api_name: "max_enrollments"
+}
+
+# whether support navigation guestures (default: false)
+prop {
+    prop_name: "persist.vendor.fingerprint.virtual.navigation_guesture"
+    type: Boolean
+    scope: Public
+    access: ReadWrite
+    api_name: "navigation_guesture"
+}
+
+# whether support detect interaction (default: false)
+prop {
+    prop_name: "persist.vendor.fingerprint.virtual.detect_interaction"
+    type: Boolean
+    scope: Public
+    access: ReadWrite
+    api_name: "detect_interaction"
+}
+
+# whether support display touch by hal (default: true)
+prop {
+    prop_name: "persist.vendor.fingerprint.virtual.udfps.display_touch"
+    type: Boolean
+    scope: Public
+    access: ReadWrite
+    api_name: "display_touch"
+}
+
+# whether support illumination control  by hal (default: false)
+prop {
+    prop_name: "persist.vendor.fingerprint.virtual.udfps.control_illumination"
+    type: Boolean
+    scope: Public
+    access: ReadWrite
+    api_name: "control_illumination"
 }

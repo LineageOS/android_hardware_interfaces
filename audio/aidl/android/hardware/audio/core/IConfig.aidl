@@ -16,9 +16,22 @@
 
 package android.hardware.audio.core;
 
+import android.hardware.audio.core.SurroundSoundConfig;
+
 /**
  * This interface provides system-wide configuration parameters for audio I/O
  * (by "system" here we mean the device running Android).
  */
 @VintfStability
-interface IConfig {}
+interface IConfig {
+    /**
+     * Returns the surround sound configuration used for the Audio Policy
+     * Manager initial configuration.
+     *
+     * This method will only be called during the initialization of the Audio
+     * Policy Manager, and must always return the same result.
+     *
+     * @return The surround sound configuration
+     */
+    SurroundSoundConfig getSurroundSoundConfig();
+}

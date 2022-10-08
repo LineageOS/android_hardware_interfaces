@@ -65,7 +65,7 @@ $ adb shell cmd fingerprint sync
       $ adb shell getprop persist.vendor.fingerprint.virtual.enrollments
       ```
 
-### Authenticate
+## Authenticate
 
 To authenticate successfully set the enrolled id that should succeed. Unset it
 or change the value to make authenticate operations fail:
@@ -74,7 +74,52 @@ or change the value to make authenticate operations fail:
 $ adb shell setprop vendor.fingerprint.virtual.enrollment_hit 1
 ````
 
-### View HAL State
+## Acquired Info Insertion
+
+Fingerprint image acquisition states at HAL are reported to framework via onAcquired() callback. The valid acquired state info for AIDL HAL include
+
+{UNKNOWN(0), GOOD(1), PARTIAL(2), INSUFFICIENT(3), SENSOR_DIRTY(4), TOO_SLOW(5), TOO_FAST(6), VENDOR(7), START(8), TOO_DARK(9), TOO_BRIGHT(10), IMMOBILE(11), RETRYING_CAPTURE(12)}
+
+Refer to [AcquiredInfo.aidl](../android/hardware/biometrics/fingerprint/AcquiredInfo.aidl) for details
+
+
+The states can be specified in sequence for the HAL operations involving fingerprint image captures, namely authenticate, enrollment and detectInteraction
+
+```shell
+$ adb shell setprop vendor.fingerprint.virtual.operation_authenticate_acquired 6,9,1
+$ adb shell setprop vendor.fingerprint.virtual.operation_detect_interaction_acquired 6,1
+$ adb shell setprop vendor.fingerprint.virtual.next_enrollment 2:1000-[5,1],500:true
+
+#next_enrollment format example:
+.---------------------- enrollment id (2)
+|   .------------------ the image capture 1 duration (1000ms)
+|   |   .--------------   acquired info first (TOO_SLOW)
+|   |   | .------------   acquired info second (GOOD)
+|   |   | |   .-------- the image capture 2 duration (500ms)
+|   |   | |   |   .---- enrollment end status (success)
+|   |   | |   |   |
+|   |   | |   |   |
+|   |   | |   |   |
+2:1000-[5,1],500:true
+```
+For vendor specific acquired info, acquiredInfo = 1000 + vendorAcquiredInfo
+
+## Error Insertion
+The valid error codes for AIDL HAL include
+
+{UNKNOWN(0), HW_UNAVAILABLE(1), UNABLE_TO_PROCESS(2), TIMEOUT(3), NO_SPACE(4), CANCELED(5), UNABLE_TO_REMOVE(6), VENDOR(7), BAD_CALIBRATION(8)}
+
+Refer to [Error.aidl](../android/hardware/biometrics/fingerprint/Error.aidl) for details
+
+
+There are many HAL operations which can result in errors, refer to [here](fingerprint.sysprop) file for details.
+
+```shell
+$ adb shell setprop vendor.fingerprint.virtual.operation_authenticate_error 8
+```
+For vendor specific error, errorCode = 1000 + vendorErrorCode
+
+## View HAL State
 
 To view all the properties of the HAL (see `fingerprint.sysprop` file for the API):
 

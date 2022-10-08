@@ -56,43 +56,58 @@ void FakeFingerprintEngine::enrollImpl(ISessionCallback* cb,
         return;
     }
 
-    if (FingerprintHalProperties::operation_enroll_fails().value_or(false)) {
-        LOG(ERROR) << "Fail: operation_enroll_fails";
-        cb->onError(Error::VENDOR, 0 /* vendorError */);
+    // Force error-out
+    auto err = FingerprintHalProperties::operation_enroll_error().value_or(0);
+    if (err != 0) {
+        LOG(ERROR) << "Fail: operation_enroll_error";
+        auto ec = convertError(err);
+        cb->onError(ec.first, ec.second);
         return;
     }
 
-    // format is "<id>:<progress_ms>,<progress_ms>,...:<result>
+    // Format is "<id>:<progress_ms-[acquiredInfo..]>,...:<result>
     auto nextEnroll = FingerprintHalProperties::next_enrollment().value_or("");
     auto parts = Util::split(nextEnroll, ":");
     if (parts.size() != 3) {
-        LOG(ERROR) << "Fail: invalid next_enrollment";
+        LOG(ERROR) << "Fail: invalid next_enrollment:" << nextEnroll;
         cb->onError(Error::VENDOR, 0 /* vendorError */);
         return;
     }
     auto enrollmentId = std::stoi(parts[0]);
-    auto progress = Util::split(parts[1], ",");
-    for (size_t i = 0; i < progress.size(); i++) {
-        auto left = progress.size() - i - 1;
-        SLEEP_MS(std::stoi(progress[i]));
+    auto progress = parseEnrollmentCapture(parts[1]);
+    for (size_t i = 0; i < progress.size(); i += 2) {
+        auto left = (progress.size() - i) / 2 - 1;
+        auto duration = progress[i][0];
+        auto acquired = progress[i + 1];
+        auto N = acquired.size();
 
-        if (shouldCancel(cancel)) {
-            LOG(ERROR) << "Fail: cancel";
-            cb->onError(Error::CANCELED, 0 /* vendorCode */);
-            return;
+        for (int j = 0; j < N; j++) {
+            SLEEP_MS(duration / N);
+
+            if (shouldCancel(cancel)) {
+                LOG(ERROR) << "Fail: cancel";
+                cb->onError(Error::CANCELED, 0 /* vendorCode */);
+                return;
+            }
+            auto ac = convertAcquiredInfo(acquired[j]);
+            cb->onAcquired(ac.first, ac.second);
         }
 
-        cb->onAcquired(AcquiredInfo::GOOD, 0 /* vendorCode */);
         if (left == 0 && !IS_TRUE(parts[2])) {  // end and failed
             LOG(ERROR) << "Fail: requested by caller: " << nextEnroll;
             FingerprintHalProperties::next_enrollment({});
             cb->onError(Error::UNABLE_TO_PROCESS, 0 /* vendorCode */);
         } else {  // progress and update props if last time
+            LOG(INFO) << "onEnroll: " << enrollmentId << " left: " << left;
             if (left == 0) {
                 auto enrollments = FingerprintHalProperties::enrollments();
                 enrollments.emplace_back(enrollmentId);
                 FingerprintHalProperties::enrollments(enrollments);
                 FingerprintHalProperties::next_enrollment({});
+                // change authenticatorId after new enrollment
+                auto id = FingerprintHalProperties::authenticator_id().value_or(0);
+                auto newId = id + 1;
+                FingerprintHalProperties::authenticator_id(newId);
                 LOG(INFO) << "Enrolled: " << enrollmentId;
             }
             cb->onEnrollmentProgress(enrollmentId, left);
@@ -104,12 +119,31 @@ void FakeFingerprintEngine::authenticateImpl(ISessionCallback* cb, int64_t /* op
                                              const std::future<void>& cancel) {
     BEGIN_OP(FingerprintHalProperties::operation_authenticate_latency().value_or(DEFAULT_LATENCY));
 
-    auto now = Util::getSystemNanoTime();
-    int64_t duration = FingerprintHalProperties::operation_authenticate_duration().value_or(0);
+    int64_t now = Util::getSystemNanoTime();
+    int64_t duration = FingerprintHalProperties::operation_authenticate_duration().value_or(10);
+    auto acquired = FingerprintHalProperties::operation_authenticate_acquired().value_or("1");
+    auto acquiredInfos = parseIntSequence(acquired);
+    int N = acquiredInfos.size();
+
+    if (N == 0) {
+        LOG(ERROR) << "Fail to parse authentiate acquired info: " + acquired;
+        cb->onError(Error::UNABLE_TO_PROCESS, 0 /* vendorError */);
+        return;
+    }
+
+    int i = 0;
     do {
         if (FingerprintHalProperties::operation_authenticate_fails().value_or(false)) {
             LOG(ERROR) << "Fail: operation_authenticate_fails";
-            cb->onError(Error::VENDOR, 0 /* vendorError */);
+            cb->onAuthenticationFailed();
+            return;
+        }
+
+        auto err = FingerprintHalProperties::operation_authenticate_error().value_or(0);
+        if (err != 0) {
+            LOG(ERROR) << "Fail: operation_authenticate_error";
+            auto ec = convertError(err);
+            cb->onError(ec.first, ec.second);
             return;
         }
 
@@ -126,20 +160,25 @@ void FakeFingerprintEngine::authenticateImpl(ISessionCallback* cb, int64_t /* op
             return;
         }
 
-        auto id = FingerprintHalProperties::enrollment_hit().value_or(0);
-        auto enrolls = FingerprintHalProperties::enrollments();
-        auto isEnrolled = std::find(enrolls.begin(), enrolls.end(), id) != enrolls.end();
-        if (id > 0 && isEnrolled) {
-            cb->onAuthenticationSucceeded(id, {} /* hat */);
-            return;
+        if (i < N) {
+            auto ac = convertAcquiredInfo(acquiredInfos[i]);
+            cb->onAcquired(ac.first, ac.second);
+            i++;
         }
 
-        SLEEP_MS(100);
+        SLEEP_MS(duration / N);
     } while (!Util::hasElapsed(now, duration));
 
-    LOG(ERROR) << "Fail: not enrolled";
-    cb->onAuthenticationFailed();
-    cb->onError(Error::UNABLE_TO_PROCESS, 0 /* vendorError */);
+    auto id = FingerprintHalProperties::enrollment_hit().value_or(0);
+    auto enrolls = FingerprintHalProperties::enrollments();
+    auto isEnrolled = std::find(enrolls.begin(), enrolls.end(), id) != enrolls.end();
+    if (id > 0 && isEnrolled) {
+        cb->onAuthenticationSucceeded(id, {} /* hat */);
+        return;
+    } else {
+        LOG(ERROR) << "Fail: fingerprint not enrolled";
+        cb->onAuthenticationFailed();
+    }
 }
 
 void FakeFingerprintEngine::detectInteractionImpl(ISessionCallback* cb,
@@ -147,17 +186,42 @@ void FakeFingerprintEngine::detectInteractionImpl(ISessionCallback* cb,
     BEGIN_OP(FingerprintHalProperties::operation_detect_interaction_latency().value_or(
             DEFAULT_LATENCY));
 
-    if (FingerprintHalProperties::operation_detect_interaction_fails().value_or(false)) {
-        LOG(ERROR) << "Fail: operation_detect_interaction_fails";
-        cb->onError(Error::VENDOR, 0 /* vendorError */);
+    int64_t duration =
+            FingerprintHalProperties::operation_detect_interaction_duration().value_or(10);
+    auto acquired = FingerprintHalProperties::operation_detect_interaction_acquired().value_or("1");
+    auto acquiredInfos = parseIntSequence(acquired);
+    int N = acquiredInfos.size();
+    int64_t now = Util::getSystemNanoTime();
+
+    if (N == 0) {
+        LOG(ERROR) << "Fail to parse detect interaction acquired info: " + acquired;
+        cb->onError(Error::UNABLE_TO_PROCESS, 0 /* vendorError */);
         return;
     }
 
-    if (shouldCancel(cancel)) {
-        LOG(ERROR) << "Fail: cancel";
-        cb->onError(Error::CANCELED, 0 /* vendorCode */);
-        return;
-    }
+    int i = 0;
+    do {
+        auto err = FingerprintHalProperties::operation_detect_interaction_error().value_or(0);
+        if (err != 0) {
+            LOG(ERROR) << "Fail: operation_detect_interaction_error";
+            auto ec = convertError(err);
+            cb->onError(ec.first, ec.second);
+            return;
+        }
+
+        if (shouldCancel(cancel)) {
+            LOG(ERROR) << "Fail: cancel";
+            cb->onError(Error::CANCELED, 0 /* vendorCode */);
+            return;
+        }
+
+        if (i < N) {
+            auto ac = convertAcquiredInfo(acquiredInfos[i]);
+            cb->onAcquired(ac.first, ac.second);
+            i++;
+        }
+        SLEEP_MS(duration / N);
+    } while (!Util::hasElapsed(now, duration));
 
     auto id = FingerprintHalProperties::enrollment_hit().value_or(0);
     auto enrolls = FingerprintHalProperties::enrollments();
@@ -211,24 +275,37 @@ void FakeFingerprintEngine::removeEnrollmentsImpl(ISessionCallback* cb,
 
 void FakeFingerprintEngine::getAuthenticatorIdImpl(ISessionCallback* cb) {
     BEGIN_OP(0);
-    int64_t authenticatorId = FingerprintHalProperties::authenticator_id().value_or(0);
-    if (FingerprintHalProperties::enrollments().size() > 0 && authenticatorId == 0) {
-        authenticatorId = 99999999;  // default authenticatorId, TODO(b/230515082)
+    int64_t authenticatorId;
+    if (FingerprintHalProperties::enrollments().size() == 0) {
+        authenticatorId = 0;
+    } else {
+        authenticatorId = FingerprintHalProperties::authenticator_id().value_or(0);
+        if (authenticatorId == 0) authenticatorId = 1;
     }
     cb->onAuthenticatorIdRetrieved(authenticatorId);
 }
 
 void FakeFingerprintEngine::invalidateAuthenticatorIdImpl(ISessionCallback* cb) {
     BEGIN_OP(0);
-    auto id = FingerprintHalProperties::authenticator_id().value_or(0);
-    auto newId = id + 1;
+    int64_t newId;
+    if (FingerprintHalProperties::enrollments().size() == 0) {
+        newId = 0;
+    } else {
+        auto id = FingerprintHalProperties::authenticator_id().value_or(0);
+        newId = id + 1;
+    }
     FingerprintHalProperties::authenticator_id(newId);
     cb->onAuthenticatorIdInvalidated(newId);
 }
 
 void FakeFingerprintEngine::resetLockoutImpl(ISessionCallback* cb,
-                                             const keymaster::HardwareAuthToken& /*hat*/) {
+                                             const keymaster::HardwareAuthToken& hat) {
     BEGIN_OP(0);
+    if (hat.mac.empty()) {
+        LOG(ERROR) << "Fail: hat in resetLockout()";
+        cb->onError(Error::UNABLE_TO_PROCESS, 0 /* vendorError */);
+        return;
+    }
     FingerprintHalProperties::lockout(false);
     cb->onLockoutCleared();
 }
@@ -286,4 +363,96 @@ SensorLocation FakeFingerprintEngine::defaultSensorLocation() {
     return {0 /* displayId (not used) */, 0 /* sensorLocationX */, 0 /* sensorLocationY */,
             0 /* sensorRadius */, "" /* display */};
 }
+
+std::vector<int32_t> FakeFingerprintEngine::parseIntSequence(const std::string& str,
+                                                             const std::string& sep) {
+    std::vector<std::string> seqs = Util::split(str, sep);
+    std::vector<int32_t> res;
+
+    for (const auto& seq : seqs) {
+        int32_t val;
+        if (ParseInt(seq, &val)) {
+            res.push_back(val);
+        } else {
+            LOG(WARNING) << "Invalid int sequence:" + str;
+            res.clear();
+            break;
+        }
+    }
+
+    return res;
+}
+
+std::vector<std::vector<int32_t>> FakeFingerprintEngine::parseEnrollmentCapture(
+        const std::string& str) {
+    std::vector<int32_t> defaultAcquiredInfo = {(int32_t)AcquiredInfo::GOOD};
+    std::vector<std::vector<int32_t>> res;
+    int i = 0, N = str.length();
+    std::size_t found = 0;
+    bool aborted = true;
+
+    while (found != std::string::npos) {
+        std::string durationStr, acquiredStr;
+        found = str.find_first_of("-,", i);
+        if (found == std::string::npos) {
+            if (N - i < 1) break;
+            durationStr = str.substr(i, N - i);
+        } else {
+            durationStr = str.substr(i, found - i);
+            if (str[found] == '-') {
+                found = str.find_first_of('[', found + 1);
+                if (found == std::string::npos) break;
+                i = found + 1;
+                found = str.find_first_of(']', found + 1);
+                if (found == std::string::npos) break;
+                acquiredStr = str.substr(i, found - i);
+                found = str.find_first_of(',', found + 1);
+            }
+        }
+        std::vector<int32_t> duration{0};
+        if (!ParseInt(durationStr, &duration[0])) break;
+        res.push_back(duration);
+        if (!acquiredStr.empty()) {
+            std::vector<int32_t> acquiredInfo = parseIntSequence(acquiredStr);
+            if (acquiredInfo.empty()) break;
+            res.push_back(acquiredInfo);
+        } else
+            res.push_back(defaultAcquiredInfo);
+
+        i = found + 1;
+        if (found == std::string::npos || found == N - 1) aborted = false;
+    }
+
+    if (aborted) {
+        LOG(ERROR) << "Failed to parse enrollment captures:" + str;
+        res.clear();
+    }
+
+    return res;
+}
+
+std::pair<AcquiredInfo, int32_t> FakeFingerprintEngine::convertAcquiredInfo(int32_t code) {
+    std::pair<AcquiredInfo, int32_t> res;
+    if (code > FINGERPRINT_ACQUIRED_VENDOR_BASE) {
+        res.first = AcquiredInfo::VENDOR;
+        res.second = code - FINGERPRINT_ACQUIRED_VENDOR_BASE;
+    } else {
+        res.first = (AcquiredInfo)code;
+        res.second = 0;
+    }
+    return res;
+}
+
+std::pair<Error, int32_t> FakeFingerprintEngine::convertError(int32_t code) {
+    std::pair<Error, int32_t> res;
+    if (code > FINGERPRINT_ERROR_VENDOR_BASE) {
+        res.first = Error::VENDOR;
+        res.second = code - FINGERPRINT_ERROR_VENDOR_BASE;
+    } else {
+        res.first = (Error)code;
+        res.second = 0;
+    }
+    return res;
+}
+
 }  // namespace aidl::android::hardware::biometrics::fingerprint
