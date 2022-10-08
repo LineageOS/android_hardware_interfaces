@@ -35,7 +35,6 @@ genrule {
         "wakeup_client.pb.h",
         "wakeup_client.grpc.pb.h",
     ],
-    vendor: true,
 }
 
 genrule {
@@ -52,12 +51,11 @@ genrule {
         "wakeup_client.pb.cc",
         "wakeup_client.grpc.pb.cc",
     ],
-    vendor: true,
 }
 
 cc_library_static {
     name: "wakeup_client_protos",
-    vendor: true,
+    vendor_available: true,
     host_supported: true,
     include_dirs: [
         "external/protobuf/src",

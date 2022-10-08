@@ -315,37 +315,49 @@ interface IRemotelyProvisionedComponent {
      *
      * @return the following CBOR Certificate Signing Request (Csr) serialized into a byte array:
      *
-     * Csr = [
-     *    version: 3,              ; The CDDL Schema version.
-     *    UdsCerts,
-     *    DiceCertChain,
-     *    SignedData
-     * ]
+     * Csr = AuthenticatedMessage<CsrPayload>
      *
-     * ; COSE_Sign1 (untagged)
-     * SignedData = [
-     *     protected: bstr .cbor { 1 : AlgorithmEdDSA / AlgorithmES256 },
-     *     unprotected: {},
-     *     payload: bstr .cbor SignedDataPayload,
-     *     signature: bstr            ; PureEd25519(CDI_Leaf_Priv, bstr .cbor SignedDataSigStruct) /
-     *                                ; ECDSA(CDI_Leaf_Priv, bstr .cbor SignedDataSigStruct)
-     * ]
-     *
-     * ; Sig_structure for SignedData
-     * SignedDataSigStruct = [
-     *     context: "Signature1",
-     *     protected: bstr .cbor { 1 : AlgorithmEdDSA / AlgorithmES256 },
-     *     external_aad: bstr .size 0,
-     *     payload: bstr .cbor SignedDataPayload
-     * ]
-     *
-     * SignedDataPayload = [               ; CBOR Array defining the payload for SignedData
+     * CsrPayload = [                      ; CBOR Array defining the payload for Csr
+     *     version: 1,                     ; The CsrPayload CDDL Schema version.
+     *     CertificateType,                ; The type of certificate being requested.
      *     DeviceInfo,                     ; Defined in DeviceInfo.aidl
      *     challenge: bstr .size (32..64), ; Provided by the method parameters
      *     KeysToSign,                     ; Provided by the method parameters
      * ]
      *
+     *  ; A tstr identifying the type of certificate. The set of supported certificate types may
+     *  ; be extended without requiring a version bump of the HAL. Custom certificate types may
+     *  ; be used, but the provisioning server may reject the request for an unknown certificate
+     *  ; type. The currently defined certificate types are:
+     *  ;  - "widevine"
+     *  ;  - "keymint"
+     *  CertificateType = tstr
+     *
      * KeysToSign = [ * PublicKey ]   ; Please see MacedPublicKey.aidl for the PublicKey definition.
+     *
+     * AuthenticatedMessage<T> = [
+     *    version: 3,              ; The AuthenticatedMessage CDDL Schema version.
+     *    UdsCerts,
+     *    DiceCertChain,
+     *    SignedData<T>,
+     * ]
+     *
+     * ; COSE_Sign1 (untagged)
+     * SignedData<T> = [
+     *     protected: bstr .cbor { 1 : AlgorithmEdDSA / AlgorithmES256 },
+     *     unprotected: {},
+     *     payload: bstr .cbor T / nil,
+     *     signature: bstr         ; PureEd25519(CDI_Leaf_Priv, bstr .cbor SignedDataSigStruct<T>) /
+     *                             ; ECDSA(CDI_Leaf_Priv, bstr .cbor SignedDataSigStruct<T>)
+     * ]
+     *
+     * ; Sig_structure for SignedData
+     * SignedDataSigStruct<T> = [
+     *     context: "Signature1",
+     *     protected: bstr .cbor { 1 : AlgorithmEdDSA / AlgorithmES256 },
+     *     external_aad: bstr .size 0,
+     *     payload: bstr .cbor T
+     * ]
      *
      * ; UdsCerts allows the platform to provide additional certifications for the UDS_Pub. For
      * ; example, this could be provided by the hardware vendor, who certifies all of their chips.
