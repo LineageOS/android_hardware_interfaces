@@ -668,6 +668,19 @@ enum Dataspace {
     HEIF = 0x1004,
 
     /**
+     * ISO/IEC TBD
+     *
+     * JPEG image with embedded 10-bit recovery map following the Jpeg/R specification.
+     *
+     * This value must always remain aligned with the public ImageFormat Jpeg/R definition and is
+     * valid with formats:
+     *    HAL_PIXEL_FORMAT_BLOB: JPEG image encoded by Jpeg/R encoder according to ISO/IEC TBD.
+     * The image contains a standard SDR JPEG and a recovery map. Jpeg/R decoders can use the
+     * map to recover the 10-bit input image.
+     */
+    JPEG_R = 0x1005,
+
+    /**
      * ITU-R Recommendation 709 (BT.709)
      *
      * High-definition television
