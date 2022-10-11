@@ -36,4 +36,5 @@ package android.hardware.radio;
 enum RadioTechnologyFamily {
   THREE_GPP = 0,
   THREE_GPP2 = 1,
+  NON_3GPP = 2,
 }

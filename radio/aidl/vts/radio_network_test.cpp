@@ -15,7 +15,9 @@
  */
 
 #include <aidl/android/hardware/radio/RadioAccessFamily.h>
+#include <aidl/android/hardware/radio/RadioTechnologyFamily.h>
 #include <aidl/android/hardware/radio/config/IRadioConfig.h>
+#include <aidl/android/hardware/radio/network/Domain.h>
 #include <aidl/android/hardware/radio/network/IndicationFilter.h>
 #include <android-base/logging.h>
 #include <android/binder_manager.h>
@@ -1915,4 +1917,92 @@ TEST_P(RadioNetworkTest, exitEmergencyMode) {
             radioRsp_network->rspInfo.error,
             {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::MODEM_ERR}));
     LOG(DEBUG) << "exitEmergencyMode finished";
+}
+
+/*
+ * Test IRadioNetwork.getRegistrationState() for the response returned.
+ */
+TEST_P(RadioNetworkTest, getRegistrationState) {
+    serial = GetRandomSerialNumber();
+
+    ndk::ScopedAStatus res = radio_network->getRegistrationState(
+            serial, RadioTechnologyFamily::THREE_GPP, Domain::PS);
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_network->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_network->rspInfo.serial);
+
+    ALOGI("getRegistrationStateResponse, rspInfo.error = %s\n",
+          toString(radioRsp_network->rspInfo.error).c_str());
+    ASSERT_TRUE(CheckAnyOfErrors(
+            radioRsp_network->rspInfo.error,
+            {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::NOT_PROVISIONED}));
+    // Check the mcc [0, 999] and mnc [0, 999].
+    std::string mcc;
+    std::string mnc;
+    bool checkMccMnc = true;
+    CellIdentity cellIdentity = radioRsp_network->regResp.cellIdentity;
+    switch (cellIdentity.getTag()) {
+        case CellIdentity::noinit: {
+            checkMccMnc = false;
+            break;
+        }
+        case CellIdentity::gsm: {
+            CellIdentityGsm cig = cellIdentity.get<CellIdentity::gsm>();
+            mcc = cig.mcc;
+            mnc = cig.mnc;
+            break;
+        }
+        case CellIdentity::wcdma: {
+            CellIdentityWcdma ciw = cellIdentity.get<CellIdentity::wcdma>();
+            mcc = ciw.mcc;
+            mnc = ciw.mnc;
+            break;
+        }
+        case CellIdentity::tdscdma: {
+            CellIdentityTdscdma cit = cellIdentity.get<CellIdentity::tdscdma>();
+            mcc = cit.mcc;
+            mnc = cit.mnc;
+            break;
+        }
+        case CellIdentity::cdma: {
+            // CellIdentityCdma has no mcc/mnc
+            CellIdentityCdma cic = cellIdentity.get<CellIdentity::cdma>();
+            checkMccMnc = false;
+            break;
+        }
+        case CellIdentity::lte: {
+            CellIdentityLte cil = cellIdentity.get<CellIdentity::lte>();
+            mcc = cil.mcc;
+            mnc = cil.mnc;
+            break;
+        }
+        case CellIdentity::nr: {
+            CellIdentityNr cin = cellIdentity.get<CellIdentity::nr>();
+            mcc = cin.mcc;
+            mnc = cin.mnc;
+            break;
+        }
+    }
+
+    // 32 bit system might return invalid mcc and mnc string "\xff\xff..."
+    if (checkMccMnc && mcc.size() < 4 && mnc.size() < 4) {
+        int mcc_int = stoi(mcc);
+        int mnc_int = stoi(mnc);
+        EXPECT_TRUE(mcc_int >= 0 && mcc_int <= 999);
+        EXPECT_TRUE(mnc_int >= 0 && mnc_int <= 999);
+    }
+
+    // Check for access technology specific info
+    AccessTechnologySpecificInfo info = radioRsp_network->regResp.accessTechnologySpecificInfo;
+    RadioTechnology rat = radioRsp_network->regResp.rat;
+    // TODO: add logic for cdmaInfo
+    if (rat == RadioTechnology::LTE || rat == RadioTechnology::LTE_CA) {
+        ASSERT_EQ(info.getTag(), AccessTechnologySpecificInfo::eutranInfo);
+    } else if (rat == RadioTechnology::NR) {
+        ASSERT_EQ(info.getTag(), AccessTechnologySpecificInfo::ngranNrVopsInfo);
+    }
+    AccessNetwork an = radioRsp_network->regResp.accessNetwork;
+    ASSERT_NE(an, AccessNetwork::N3AN5GS);
+    ASSERT_NE(an, AccessNetwork::N3ANEPS);
 }

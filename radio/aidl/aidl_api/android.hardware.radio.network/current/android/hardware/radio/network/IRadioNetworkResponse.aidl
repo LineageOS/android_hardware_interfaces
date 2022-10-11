@@ -41,6 +41,9 @@ interface IRadioNetworkResponse {
   oneway void getBarringInfoResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.network.CellIdentity cellIdentity, in android.hardware.radio.network.BarringInfo[] barringInfos);
   oneway void getCdmaRoamingPreferenceResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.network.CdmaRoamingType type);
   oneway void getCellInfoListResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.network.CellInfo[] cellInfo);
+  /**
+   * @deprecated use getRegistrationStateResponse()
+   */
   oneway void getDataRegistrationStateResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.network.RegStateResult dataRegResponse);
   oneway void getImsRegistrationStateResponse(in android.hardware.radio.RadioResponseInfo info, in boolean isRegistered, in android.hardware.radio.RadioTechnologyFamily ratFamily);
   oneway void getNetworkSelectionModeResponse(in android.hardware.radio.RadioResponseInfo info, in boolean manual);
@@ -48,6 +51,9 @@ interface IRadioNetworkResponse {
   oneway void getSignalStrengthResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.network.SignalStrength signalStrength);
   oneway void getSystemSelectionChannelsResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.network.RadioAccessSpecifier[] specifiers);
   oneway void getVoiceRadioTechnologyResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.RadioTechnology rat);
+  /**
+   * @deprecated use getRegistrationStateResponse()
+   */
   oneway void getVoiceRegistrationStateResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.network.RegStateResult voiceRegResponse);
   oneway void isNrDualConnectivityEnabledResponse(in android.hardware.radio.RadioResponseInfo info, in boolean isEnabled);
   oneway void setAllowedNetworkTypesBitmapResponse(in android.hardware.radio.RadioResponseInfo info);
@@ -73,4 +79,5 @@ interface IRadioNetworkResponse {
   oneway void triggerEmergencyNetworkScanResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void exitEmergencyModeResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void cancelEmergencyNetworkScanResponse(in android.hardware.radio.RadioResponseInfo info);
+  oneway void getRegistrationStateResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.network.RegStateResult regResponse);
 }

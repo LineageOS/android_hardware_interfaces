@@ -39,6 +39,11 @@ enum AccessNetwork {
   UTRAN = 2,
   EUTRAN = 3,
   CDMA2000 = 4,
+  /**
+   * @deprecated should use N3ANEPS or N3AN5GS based on N3AN selection.
+   */
   IWLAN = 5,
   NGRAN = 6,
+  N3ANEPS = 5,
+  N3AN5GS = 7,
 }
