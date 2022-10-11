@@ -48,7 +48,7 @@ void RecurrentTimer::registerTimerCallback(int64_t intervalInNano,
         std::scoped_lock<std::mutex> lockGuard(mLock);
 
         // Aligns the nextTime to multiply of interval.
-        int64_t nextTime = ceil(elapsedRealtimeNano() / intervalInNano) * intervalInNano;
+        int64_t nextTime = ceil(uptimeNanos() / intervalInNano) * intervalInNano;
 
         std::unique_ptr<CallbackInfo> info = std::make_unique<CallbackInfo>();
         info->callback = callback;
@@ -128,7 +128,7 @@ void RecurrentTimer::loop() {
             }
             // The first element is the nearest next event.
             int64_t nextTime = mCallbackQueue[0]->nextTime;
-            int64_t now = elapsedRealtimeNano();
+            int64_t now = uptimeNanos();
             if (nextTime > now) {
                 interval = nextTime - now;
             } else {
@@ -146,7 +146,7 @@ void RecurrentTimer::loop() {
 
         {
             ScopedLockAssertion lockAssertion(mLock);
-            int64_t now = elapsedRealtimeNano();
+            int64_t now = uptimeNanos();
             while (mCallbackQueue.size() > 0) {
                 int64_t nextTime = mCallbackQueue[0]->nextTime;
                 if (nextTime > now) {
