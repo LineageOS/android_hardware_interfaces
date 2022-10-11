@@ -97,6 +97,9 @@ class RadioDataIndication : public BnRadioDataIndication {
                                              const DataProfileInfo& dataProfile) override;
     virtual ndk::ScopedAStatus slicingConfigChanged(RadioIndicationType type,
                                                     const SlicingConfig& slicingConfig) override;
+    virtual ndk::ScopedAStatus unthrottleDataProfile(
+            RadioIndicationType type, ::aidl::android::hardware::radio::AccessNetwork accessNetwork,
+            const DataProfileInfo& dataProfile) override;
 };
 
 // The main test class for Radio AIDL Data.

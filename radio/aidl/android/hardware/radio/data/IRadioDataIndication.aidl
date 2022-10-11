@@ -16,6 +16,7 @@
 
 package android.hardware.radio.data;
 
+import android.hardware.radio.AccessNetwork;
 import android.hardware.radio.RadioIndicationType;
 import android.hardware.radio.data.DataProfileInfo;
 import android.hardware.radio.data.KeepaliveStatus;
@@ -71,6 +72,7 @@ oneway interface IRadioDataIndication {
      *
      * @param type Type of radio indication
      * @param dataProfileInfo Data profile info.
+     * @deprecated use unthrottleDataProfile to clarify access network for this event.
      */
     void unthrottleApn(in RadioIndicationType type, in DataProfileInfo dataProfileInfo);
 
@@ -86,4 +88,19 @@ oneway interface IRadioDataIndication {
      *
      */
     void slicingConfigChanged(in RadioIndicationType type, in SlicingConfig slicingConfig);
+
+    /**
+     * The modem can explicitly set SetupDataCallResult::suggestedRetryTime after a failure in
+     * IRadioData.SetupDataCall. During that time, no new calls are allowed to
+     * IRadioData.SetupDataCall that use the same APN(or DNN) in DataProfile.
+     * When IRadioDataIndication.unthrottleDataProfile is sent, AOSP will no longer throttle calls
+     * to IRadioData.SetupDataCall for the given APN(or DNN) in DataProfile.
+     *
+     * @param type Type of radio indication
+     * @param accessNetwork Access network this throttling occurred, this must match the access
+     *                      network passed in setup data call request.
+     * @param dataProfileInfo Data profile info.
+     */
+    void unthrottleDataProfile(in RadioIndicationType type, in AccessNetwork accessNetwork,
+            in DataProfileInfo dataProfileInfo);
 }

@@ -16,6 +16,7 @@
 
 package android.hardware.radio.network;
 
+import android.hardware.radio.AccessNetwork;
 import android.hardware.radio.RadioTechnology;
 import android.hardware.radio.network.AccessTechnologySpecificInfo;
 import android.hardware.radio.network.CellIdentity;
@@ -59,4 +60,8 @@ parcelable RegStateResult {
      * Access-technology-specific registration information, such as for CDMA2000.
      */
     AccessTechnologySpecificInfo accessTechnologySpecificInfo;
+    /**
+     * Indicates the access network used for this registration.
+     */
+    AccessNetwork accessNetwork = AccessNetwork.UNKNOWN;
 }
