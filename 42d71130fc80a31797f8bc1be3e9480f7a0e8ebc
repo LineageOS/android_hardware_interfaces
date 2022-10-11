@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e70bdf7f_248cc300",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 28232
+      },
+      "writtenOn": "2022-10-11T06:59:09Z",
+      "side": 1,
+      "message": "Fixes android.hardware.nativehardware.cts.AHardwareBufferNativeTests#AHardwareBufferTest_PlanarLockAndUnlockYuvP010Succeed test.\n\n",
+      "revId": "42d71130fc80a31797f8bc1be3e9480f7a0e8ebc",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
