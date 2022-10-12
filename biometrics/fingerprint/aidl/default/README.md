@@ -57,6 +57,7 @@ $ adb shell cmd fingerprint sync
       ```shell
       $ adb shell setprop vendor.fingerprint.virtual.next_enrollment 1:100,100,100:true
       ```
+
 3. Navigate to `Settings -> Security -> Fingerprint Unlock` and follow the
    prompts.
 4. Verify the enrollments in the UI:
@@ -119,10 +120,46 @@ $ adb shell setprop vendor.fingerprint.virtual.operation_authenticate_error 8
 ```
 For vendor specific error, errorCode = 1000 + vendorErrorCode
 
+## Latency Insertion
+Three HAL operations (authenticate, enrollment and detect interaction) latency can be optionally specified in multiple ways
+1. default latency is fixed at 400 ms if not specified via sysprop
+2. specify authenticate operation latency to 900 ms
+      ```shell adb shell setprop vendor.fingerprint.virtual.operation_authenticate_latency 900```
+3. specify authenticate operation latency between 600 to 1200 ms in unifrom distribution
+      ```shelladb shell setprop vendor.fingerprint.virtual.operation_authenticate_latency 600,1200```
+
+## Lockout
+To force the device into lockout state
+```shell
+$ adb shell setprop persist.vendor.fingerprint.virtual.lockout true
+```
+To test permanent lockout based on the failed authentication attempts (e.g. 7)
+```shell
+$ adb shell setprop persist.vendor.fingerprint.virtual.lockout_permanent_threshold 7
+$ adb shell setprop persist.vendor.fingerprint.virtual.lockout_enable true
+```
+To test timed lockout based on the failed authentication attempts (e.g. 8 seconds on 5 attempts)
+```shell
+$ adb shell setprop persist.vendor.fingerprint.virtual.lockout_timed_duration 8000
+$ adb shell setprop persist.vendor.fingerprint.virtual.lockout_timed_threshold 5
+$ adb shell setprop persist.vendor.fingerprint.virtual.lockout_enable true
+```
+
+## Reset all configurations to default
+The following command will reset virtual configurations (related system properties) to default value.
+```shell
+$ adb shell cmd android.hardware.biometrics.fingerprint.IFingerprint/virtual resetconfig
+$ adb reboot
+```
+
 ## View HAL State
 
 To view all the properties of the HAL (see `fingerprint.sysprop` file for the API):
 
 ```shell
 $ adb shell getprop | grep vendor.fingerprint.virtual
+```
+To dump virtual HAL internal data
+```shell
+adb shell dumpsys android.hardware.biometrics.fingerprint.IFingerprint/virtual
 ```

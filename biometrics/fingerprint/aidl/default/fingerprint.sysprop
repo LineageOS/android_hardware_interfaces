@@ -7,7 +7,7 @@ owner: Vendor
 prop {
     prop_name: "persist.vendor.fingerprint.virtual.type"
     type: String
-    scope: Public
+    scope: Internal
     access: ReadWrite
     enum_values: "default|rear|udfps|side"
     api_name: "type"
@@ -17,7 +17,7 @@ prop {
 prop {
     prop_name: "persist.vendor.fingerprint.virtual.enrollments"
     type: IntegerList
-    scope: Public
+    scope: Internal
     access: ReadWrite
     api_name: "enrollments"
 }
@@ -27,7 +27,7 @@ prop {
 prop {
     prop_name: "vendor.fingerprint.virtual.enrollment_hit"
     type: Integer
-    scope: Public
+    scope: Internal
     access: ReadWrite
     api_name: "enrollment_hit"
 }
@@ -42,7 +42,7 @@ prop {
 prop {
     prop_name: "vendor.fingerprint.virtual.next_enrollment"
     type: String
-    scope: Public
+    scope: Internal
     access: ReadWrite
     api_name: "next_enrollment"
 }
@@ -51,7 +51,7 @@ prop {
 prop {
     prop_name: "persist.vendor.fingerprint.virtual.authenticator_id"
     type: Long
-    scope: Public
+    scope: Internal
     access: ReadWrite
     api_name: "authenticator_id"
 }
@@ -60,25 +60,16 @@ prop {
 prop {
     prop_name: "vendor.fingerprint.virtual.challenge"
     type: Long
-    scope: Public
+    scope: Internal
     access: ReadWrite
     api_name: "challenge"
-}
-
-# if locked out
-prop {
-    prop_name: "persist.vendor.fingerprint.virtual.lockout"
-    type: Boolean
-    scope: Public
-    access: ReadWrite
-    api_name: "lockout"
 }
 
 # force all authenticate operations to fail
 prop {
     prop_name: "vendor.fingerprint.virtual.operation_authenticate_fails"
     type: Boolean
-    scope: Public
+    scope: Internal
     access: ReadWrite
     api_name: "operation_authenticate_fails"
 }
@@ -91,7 +82,7 @@ prop {
 prop {
     prop_name: "vendor.fingerprint.virtual.operation_detect_interaction_error"
     type: Integer
-    scope: Public
+    scope: Internal
     access: ReadWrite
     api_name: "operation_detect_interaction_error"
 }
@@ -100,34 +91,40 @@ prop {
 prop {
     prop_name: "vendor.fingerprint.virtual.operation_enroll_error"
     type: Integer
-    scope: Public
+    scope: Internal
     access: ReadWrite
     api_name: "operation_enroll_error"
 }
 
 # add a latency to authentication operations
+#   default to 400ms
+#   [x] = x ms
+#   [x,y] = randomly between x and y ms
+#   others = invalid
 prop {
     prop_name: "vendor.fingerprint.virtual.operation_authenticate_latency"
-    type: Integer
-    scope: Public
+    type: IntegerList
+    scope: Internal
     access: ReadWrite
     api_name: "operation_authenticate_latency"
 }
 
 # add a latency to detectInteraction operations
+#   refer to `operation_authenticate_latency` above for usage
 prop {
     prop_name: "vendor.fingerprint.virtual.operation_detect_interaction_latency"
-    type: Integer
-    scope: Public
+    type: IntegerList
+    scope: Internal
     access: ReadWrite
     api_name: "operation_detect_interaction_latency"
 }
 
 # add a latency to enroll operations
+#   refer to `operation_authenticate_latency` above for usage
 prop {
     prop_name: "vendor.fingerprint.virtual.operation_enroll_latency"
-    type: Integer
-    scope: Public
+    type: IntegerList
+    scope: Internal
     access: ReadWrite
     api_name: "operation_enroll_latency"
 }
@@ -137,7 +134,7 @@ prop {
 prop {
     prop_name: "vendor.fingerprint.virtual.operation_authenticate_duration"
     type: Integer
-    scope: Public
+    scope: Internal
     access: ReadWrite
     api_name: "operation_authenticate_duration"
 }
@@ -146,7 +143,7 @@ prop {
 prop {
     prop_name: "vendor.fingerprint.virtual.operation_authenticate_error"
     type: Integer
-    scope: Public
+    scope: Internal
     access: ReadWrite
     api_name: "operation_authenticate_error"
 }
@@ -156,7 +153,7 @@ prop {
 prop {
     prop_name: "persist.vendor.fingerprint.virtual.sensor_location"
     type: String
-    scope: Public
+    scope: Internal
     access: ReadWrite
     api_name: "sensor_location"
 }
@@ -165,7 +162,7 @@ prop {
 prop {
     prop_name: "vendor.fingerprint.virtual.operation_authenticate_acquired"
     type: String
-    scope: Public
+    scope: Internal
     access: ReadWrite
     api_name: "operation_authenticate_acquired"
 }
@@ -175,7 +172,7 @@ prop {
 prop {
     prop_name: "vendor.fingerprint.virtual.operation_detect_interaction_duration"
     type: Integer
-    scope: Public
+    scope: Internal
     access: ReadWrite
     api_name: "operation_detect_interaction_duration"
 }
@@ -187,7 +184,7 @@ prop {
 prop {
     prop_name: "vendor.fingerprint.virtual.operation_detect_interaction_acquired"
     type: String
-    scope: Public
+    scope: Internal
     access: ReadWrite
     api_name: "operation_detect_interaction_acquired"
 }
@@ -196,7 +193,7 @@ prop {
 prop {
     prop_name: "persist.vendor.fingerprint.virtual.sensor_id"
     type: Integer
-    scope: Public
+    scope: Internal
     access: ReadWrite
     api_name: "sensor_id"
 }
@@ -206,7 +203,7 @@ prop {
 prop {
     prop_name: "persist.vendor.fingerprint.virtual.sensor_strength"
     type: Integer
-    scope: Public
+    scope: Internal
     access: ReadWrite
     api_name: "sensor_strength"
 }
@@ -216,7 +213,7 @@ prop {
 prop {
     prop_name: "persist.vendor.fingerprint.virtual.max_enrollments"
     type: Integer
-    scope: Public
+    scope: Internal
     access: ReadWrite
     api_name: "max_enrollments"
 }
@@ -225,7 +222,7 @@ prop {
 prop {
     prop_name: "persist.vendor.fingerprint.virtual.navigation_guesture"
     type: Boolean
-    scope: Public
+    scope: Internal
     access: ReadWrite
     api_name: "navigation_guesture"
 }
@@ -234,7 +231,7 @@ prop {
 prop {
     prop_name: "persist.vendor.fingerprint.virtual.detect_interaction"
     type: Boolean
-    scope: Public
+    scope: Internal
     access: ReadWrite
     api_name: "detect_interaction"
 }
@@ -243,7 +240,7 @@ prop {
 prop {
     prop_name: "persist.vendor.fingerprint.virtual.udfps.display_touch"
     type: Boolean
-    scope: Public
+    scope: Internal
     access: ReadWrite
     api_name: "display_touch"
 }
@@ -252,7 +249,52 @@ prop {
 prop {
     prop_name: "persist.vendor.fingerprint.virtual.udfps.control_illumination"
     type: Boolean
-    scope: Public
+    scope: Internal
     access: ReadWrite
     api_name: "control_illumination"
+}
+
+# force to be locked out (default: false)
+prop {
+    prop_name: "persist.vendor.fingerprint.virtual.lockout"
+    type: Boolean
+    scope: Internal
+    access: ReadWrite
+    api_name: "lockout"
+}
+
+# whether support lockout based on the failed auth attempts (default: false)
+prop {
+    prop_name: "persist.vendor.fingerprint.virtual.lockout_enable"
+    type: Boolean
+    scope: Internal
+    access: ReadWrite
+    api_name: "lockout_enable"
+}
+
+# temporarily lockout threshold in number of consecutive failed auth attempts (default: 5)
+prop {
+    prop_name: "persist.vendor.fingerprint.virtual.lockout_timed_threshold"
+    type: Integer
+    scope: Internal
+    access: ReadWrite
+    api_name: "lockout_timed_threshold"
+}
+
+# temporary lockout duration in ms (default: 10000ms)
+prop {
+    prop_name: "persist.vendor.fingerprint.virtual.lockout_timed_duration"
+    type: Integer
+    scope: Internal
+    access: ReadWrite
+    api_name: "lockout_timed_duration"
+}
+
+# permanently lockout threshold  in number of consecutive failed auth attempts (default: 20)
+prop {
+    prop_name: "persist.vendor.fingerprint.virtual.lockout_permanent_threshold"
+    type: Integer
+    scope: Internal
+    access: ReadWrite
+    api_name: "lockout_permanent_threshold"
 }
