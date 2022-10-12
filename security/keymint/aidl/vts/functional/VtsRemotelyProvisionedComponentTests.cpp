@@ -200,9 +200,7 @@ TEST(NonParameterizedTests, eachRpcHasAUniqueId) {
         RpcHardwareInfo hwInfo;
         ASSERT_TRUE(rpc->getHardwareInfo(&hwInfo).isOk());
 
-        int32_t version;
-        ASSERT_TRUE(rpc->getInterfaceVersion(&version).isOk());
-        if (version >= VERSION_WITH_UNIQUE_ID_SUPPORT) {
+        if (hwInfo.versionNumber >= VERSION_WITH_UNIQUE_ID_SUPPORT) {
             ASSERT_TRUE(hwInfo.uniqueId);
             auto [_, wasInserted] = uniqueIds.insert(*hwInfo.uniqueId);
             EXPECT_TRUE(wasInserted);
@@ -232,10 +230,7 @@ TEST_P(GetHardwareInfoTests, supportsValidCurve) {
  * Verify that the unique id is within the length limits as described in RpcHardwareInfo.aidl.
  */
 TEST_P(GetHardwareInfoTests, uniqueId) {
-    int32_t version;
-    ASSERT_TRUE(provisionable_->getInterfaceVersion(&version).isOk());
-
-    if (version < VERSION_WITH_UNIQUE_ID_SUPPORT) {
+    if (rpcHardwareInfo.versionNumber < VERSION_WITH_UNIQUE_ID_SUPPORT) {
         return;
     }
 
