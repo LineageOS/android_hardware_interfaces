@@ -39,6 +39,10 @@ parcelable NrVopsInfo {
      * Emergency services supported in NR connected to 5GCN and E-UTRA connected to 5GCN
      */
     const byte EMC_INDICATOR_BOTH_NR_EUTRA_CONNECTED_TO_5GCN = 3;
+    /**
+     * Emergency services supported over 5G N3GPP access.
+     */
+    const byte EMC_INDICATOR_EMC_OVER_NON_3GPP = 4;
 
     /**
      * Emergency services fallback not supported
@@ -96,6 +100,7 @@ parcelable NrVopsInfo {
      * NR REGISTRATION ACCEPT.
      * Refer 3GPP 24.501 EPS 5GS network feature support -> EMF
      * Values are EMF_INDICATOR_ from TS 24.501 sec 9.10.3.5.
+     * Not Applicable for the registration via non-3GPP access.
      */
     byte emfSupported;
 }

@@ -40,4 +40,5 @@ parcelable RegStateResult {
   android.hardware.radio.network.CellIdentity cellIdentity;
   String registeredPlmn;
   android.hardware.radio.network.AccessTechnologySpecificInfo accessTechnologySpecificInfo;
+  android.hardware.radio.AccessNetwork accessNetwork = android.hardware.radio.AccessNetwork.UNKNOWN;
 }

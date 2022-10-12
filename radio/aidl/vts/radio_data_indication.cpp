@@ -42,3 +42,10 @@ ndk::ScopedAStatus RadioDataIndication::slicingConfigChanged(
         RadioIndicationType /*type*/, const SlicingConfig& /*slicingConfig*/) {
     return ndk::ScopedAStatus::ok();
 }
+
+ndk::ScopedAStatus RadioDataIndication::unthrottleDataProfile(
+        RadioIndicationType /*type*/,
+        ::aidl::android::hardware::radio::AccessNetwork /*accessNetwork*/,
+        const DataProfileInfo& /*dataProfileInfo*/) {
+    return ndk::ScopedAStatus::ok();
+}
