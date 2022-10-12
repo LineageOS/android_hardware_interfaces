@@ -33,8 +33,8 @@ import android.hardware.common.NativeHandle;
 parcelable StreamBuffer {
     /**
      * The ID of the stream this buffer is associated with. -1 indicates an
-     * invalid (empty) StreamBuffer, in which case buffer must also point to
-     * null and bufferId must be 0.
+     * invalid (empty) StreamBuffer, in which case buffer must be empty
+     * and bufferId must be 0.
      */
     int streamId;
 
@@ -48,7 +48,7 @@ parcelable StreamBuffer {
      * corresponding stream is removed from stream configuration or until camera
      * device session is closed. After the first time a buffer is introduced to
      * HAL, in the future camera service must refer to the same buffer using
-     * only bufferId, and keep the buffer handle null.
+     * only bufferId, and keep the buffer handle empty.
      */
     long bufferId;
 
@@ -59,10 +59,10 @@ parcelable StreamBuffer {
      * is not seen by the HAL before, this buffer handle is guaranteed to be a
      * valid handle to a graphics buffer, with dimensions and format matching
      * that of the stream. If the bufferId has been sent to the HAL before, this
-     * buffer handle must be null and HAL must look up the actual buffer handle
+     * buffer handle must be empty and HAL must look up the actual buffer handle
      * to use from its own bufferId to buffer handle map.
      *
-     * For StreamBuffers returned in a CaptureResult, this must be null, since
+     * For StreamBuffers returned in a CaptureResult, this must be empty, since
      * the handle to the buffer is already known to the client (since the client
      * sent it in the matching CaptureRequest), and the handle can be identified
      * by the combination of frame number and stream ID.
@@ -81,11 +81,11 @@ parcelable StreamBuffer {
      * The acquire sync fence for this buffer. The HAL must wait on this fence
      * fd before attempting to read from or write to this buffer.
      *
-     * In a buffer included in a CaptureRequest, the client may set this to null
+     * In a buffer included in a CaptureRequest, the client may leave this empty
      * to indicate that no waiting is necessary for this buffer.
      *
      * When the HAL returns an input or output buffer to the framework with
-     * processCaptureResult(), the acquireFence must be set to null. If the HAL
+     * processCaptureResult(), the acquireFence must be empty. If the HAL
      * never waits on the acquireFence due to an error in filling or reading a
      * buffer, when calling processCaptureResult() the HAL must set the
      * releaseFence of the buffer to be the acquireFence passed to it by the
@@ -97,17 +97,17 @@ parcelable StreamBuffer {
     /**
      * The release sync fence for this buffer. The HAL must set this to a valid
      * fence fd when returning the input buffer or output buffers to the client
-     * in a CaptureResult, or set it to null to indicate that no waiting is
+     * in a CaptureResult, or leave it empty to indicate that no waiting is
      * required for this buffer.
      *
-     * The client must set this to be null for all buffers included in a
+     * The client must leave this empty for all buffers included in a
      * processCaptureRequest call.
      *
      * After signaling the releaseFence for this buffer, the HAL
      * must not make any further attempts to access this buffer as the
      * ownership has been fully transferred back to the client.
      *
-     * If this is null, then the ownership of this buffer is transferred back
+     * If this is empty, then the ownership of the buffer is transferred back
      * immediately upon the call of processCaptureResult.
      */
     NativeHandle releaseFence;
