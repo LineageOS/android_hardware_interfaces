@@ -241,6 +241,28 @@ void TunerPlaybackAidlTest::playbackSingleFilterTest(FilterConfig filterConf, Dv
     ASSERT_TRUE(mDemuxTests.closeDemux());
 }
 
+void TunerPlaybackAidlTest::setStatusCheckIntervalHintTest(int64_t statusCheckIntervalHint,
+                                                           DvrConfig dvrConf) {
+    int32_t demuxId;
+    std::shared_ptr<IDemux> demux;
+
+    ASSERT_TRUE(mDemuxTests.openDemux(demux, demuxId));
+    mDvrTests.setDemux(demux);
+    ASSERT_TRUE(mDvrTests.openDvrInDemux(dvrConf.type, dvrConf.bufferSize));
+    ASSERT_TRUE(mDvrTests.configDvrPlayback(dvrConf.settings));
+    ASSERT_TRUE(mDvrTests.getDvrPlaybackMQDescriptor());
+
+    ASSERT_TRUE(mDvrTests.setPlaybackStatusCheckIntervalHint(statusCheckIntervalHint));
+
+    mDvrTests.startPlaybackInputThread(dvrConf.playbackInputFile,
+                                       dvrConf.settings.get<DvrSettings::Tag::playback>());
+    ASSERT_TRUE(mDvrTests.startDvrPlayback());
+    mDvrTests.stopPlaybackThread();
+    ASSERT_TRUE(mDvrTests.stopDvrPlayback());
+    mDvrTests.closeDvrPlayback();
+    ASSERT_TRUE(mDemuxTests.closeDemux());
+}
+
 void TunerRecordAidlTest::recordSingleFilterTestWithLnb(FilterConfig filterConf,
                                                         FrontendConfig frontendConf,
                                                         DvrConfig dvrConf, LnbConfig lnbConf) {
@@ -424,6 +446,45 @@ void TunerRecordAidlTest::recordSingleFilterTest(FilterConfig filterConf,
     }
 
     ASSERT_TRUE(mDemuxTests.closeDemux());
+}
+
+void TunerRecordAidlTest::setStatusCheckIntervalHintTest(int64_t statusCheckIntervalHint,
+                                                         FrontendConfig frontendConf,
+                                                         DvrConfig dvrConf) {
+    int32_t demuxId;
+    std::shared_ptr<IDemux> demux;
+    ASSERT_TRUE(mDemuxTests.openDemux(demux, demuxId));
+    mDvrTests.setDemux(demux);
+
+    DvrConfig dvrSourceConfig;
+    if (record.hasFrontendConnection) {
+        int32_t feId;
+        mFrontendTests.getFrontendIdByType(frontendConf.type, feId);
+        ASSERT_TRUE(feId != INVALID_ID);
+        ASSERT_TRUE(mFrontendTests.openFrontendById(feId));
+        ASSERT_TRUE(mFrontendTests.setFrontendCallback());
+        ASSERT_TRUE(mDemuxTests.setDemuxFrontendDataSource(feId));
+    } else {
+        dvrSourceConfig = dvrMap[record.dvrSourceId];
+        ASSERT_TRUE(mDvrTests.openDvrInDemux(dvrSourceConfig.type, dvrSourceConfig.bufferSize));
+        ASSERT_TRUE(mDvrTests.configDvrPlayback(dvrSourceConfig.settings));
+        ASSERT_TRUE(mDvrTests.getDvrPlaybackMQDescriptor());
+    }
+
+    ASSERT_TRUE(mDvrTests.openDvrInDemux(dvrConf.type, dvrConf.bufferSize));
+    ASSERT_TRUE(mDvrTests.configDvrRecord(dvrConf.settings));
+    ASSERT_TRUE(mDvrTests.getDvrRecordMQDescriptor());
+
+    ASSERT_TRUE(mDvrTests.setRecordStatusCheckIntervalHint(statusCheckIntervalHint));
+
+    ASSERT_TRUE(mDvrTests.startDvrRecord());
+    ASSERT_TRUE(mDvrTests.stopDvrRecord());
+    mDvrTests.closeDvrRecord();
+    ASSERT_TRUE(mDemuxTests.closeDemux());
+
+    if (record.hasFrontendConnection) {
+        ASSERT_TRUE(mFrontendTests.closeFrontend());
+    }
 }
 
 void TunerDescramblerAidlTest::scrambledBroadcastTest(set<struct FilterConfig> mediaFilterConfs,
@@ -1000,6 +1061,18 @@ TEST_P(TunerPlaybackAidlTest, PlaybackDataFlowWithTsVideoFilterTest) {
     }
 }
 
+TEST_P(TunerPlaybackAidlTest, SetStatusCheckIntervalHintToPlaybackTest) {
+    description("Set status check interval hint to playback test.");
+    if (!playback.support) {
+        return;
+    }
+    vector<DvrPlaybackHardwareConnections> playback_configs = generatePlaybackConfigs();
+    for (auto& configuration : playback_configs) {
+        playback = configuration;
+        setStatusCheckIntervalHintTest(STATUS_CHECK_INTERVAL_MS, dvrMap[playback.dvrId]);
+    }
+}
+
 TEST_P(TunerRecordAidlTest, RecordDataFlowWithTsRecordFilterTest) {
     description("Feed ts data from frontend to recording and test with ts record filter");
     if (!record.support) {
@@ -1043,6 +1116,19 @@ TEST_P(TunerRecordAidlTest, LnbRecordDataFlowWithTsRecordFilterTest) {
         recordSingleFilterTestWithLnb(filterMap[lnbRecord.recordFilterId],
                                       frontendMap[lnbRecord.frontendId],
                                       dvrMap[lnbRecord.dvrRecordId], lnbMap[lnbRecord.lnbId]);
+    }
+}
+
+TEST_P(TunerRecordAidlTest, SetStatusCheckIntervalHintToRecordTest) {
+    description("Set status check interval hint to record test.");
+    if (!record.support) {
+        return;
+    }
+    auto record_configs = generateRecordConfigurations();
+    for (auto& configuration : record_configs) {
+        record = configuration;
+        setStatusCheckIntervalHintTest(STATUS_CHECK_INTERVAL_MS, frontendMap[record.frontendId],
+                                       dvrMap[record.dvrRecordId]);
     }
 }
 
