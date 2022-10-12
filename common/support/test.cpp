@@ -62,6 +62,7 @@ static NativeHandle makeTestAidlHandle() {
 
 TEST(ConvertNativeHandle, MakeFromAidlEmpty) {
     NativeHandle handle;
+    EXPECT_TRUE(isAidlNativeHandleEmpty(handle));
     native_handle_t* to = makeFromAidl(handle);
     checkEq(handle, to, false /*exceptFds*/);
     // no native_handle_close b/c fds are owned by NativeHandle
@@ -70,6 +71,7 @@ TEST(ConvertNativeHandle, MakeFromAidlEmpty) {
 
 TEST(ConvertNativeHandle, MakeFromAidl) {
     NativeHandle handle = makeTestAidlHandle();
+    EXPECT_FALSE(isAidlNativeHandleEmpty(handle));
     native_handle_t* to = makeFromAidl(handle);
     checkEq(handle, to, false /*exceptFds*/);
     // no native_handle_close b/c fds are owned by NativeHandle
@@ -106,6 +108,7 @@ static native_handle_t* makeTestLibcutilsHandle() {
 TEST(ConvertNativeHandle, MakeToAidlEmpty) {
     native_handle_t* handle = native_handle_create(0, 0);
     NativeHandle to = makeToAidl(handle);
+    EXPECT_TRUE(isAidlNativeHandleEmpty(to));
     checkEq(to, handle, false /*exceptFds*/);
     // no native_handle_close b/c fds are owned by NativeHandle now
     EXPECT_EQ(0, native_handle_delete(handle));
@@ -114,6 +117,7 @@ TEST(ConvertNativeHandle, MakeToAidlEmpty) {
 TEST(ConvertNativeHandle, MakeToAidl) {
     native_handle_t* handle = makeTestLibcutilsHandle();
     NativeHandle to = makeToAidl(handle);
+    EXPECT_FALSE(isAidlNativeHandleEmpty(to));
     checkEq(to, handle, false /*exceptFds*/);
     // no native_handle_close b/c fds are owned by NativeHandle now
     EXPECT_EQ(0, native_handle_delete(handle));
@@ -122,6 +126,7 @@ TEST(ConvertNativeHandle, MakeToAidl) {
 TEST(ConvertNativeHandle, DupToAidlEmpty) {
     native_handle_t* handle = native_handle_create(0, 0);
     NativeHandle to = dupToAidl(handle);
+    EXPECT_TRUE(isAidlNativeHandleEmpty(to));
     checkEq(to, handle, true /*exceptFds*/);
     EXPECT_EQ(0, native_handle_close(handle));
     EXPECT_EQ(0, native_handle_delete(handle));
@@ -130,6 +135,7 @@ TEST(ConvertNativeHandle, DupToAidlEmpty) {
 TEST(ConvertNativeHandle, DupToAidl) {
     native_handle_t* handle = makeTestLibcutilsHandle();
     NativeHandle to = dupToAidl(handle);
+    EXPECT_FALSE(isAidlNativeHandleEmpty(to));
     checkEq(to, handle, true /*exceptFds*/);
     EXPECT_EQ(0, native_handle_close(handle));
     EXPECT_EQ(0, native_handle_delete(handle));
