@@ -255,6 +255,8 @@ class TunerPlaybackAidlTest : public testing::TestWithParam<std::string> {
     AssertionResult filterDataOutputTest();
 
     void playbackSingleFilterTest(FilterConfig filterConf, DvrConfig dvrConf);
+
+    void setStatusCheckIntervalHintTest(int64_t milliseconds, DvrConfig dvrConf);
 };
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(TunerPlaybackAidlTest);
@@ -294,6 +296,8 @@ class TunerRecordAidlTest : public testing::TestWithParam<std::string> {
                                        DvrConfig dvrConf, LnbConfig lnbConf);
     void recordSingleFilterTest(FilterConfig filterConf, FrontendConfig frontendConf,
                                 DvrConfig dvrConf, Dataflow_Context context);
+    void setStatusCheckIntervalHintTest(int64_t milliseconds, FrontendConfig frontendConf,
+                                        DvrConfig dvrConf);
 
     std::shared_ptr<ITuner> mService;
     FrontendTests mFrontendTests;

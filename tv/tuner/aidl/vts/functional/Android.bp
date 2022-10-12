@@ -53,7 +53,7 @@ cc_test {
         "android.hardware.cas@1.2",
         "android.hardware.common-V2-ndk",
         "android.hardware.common.fmq-V1-ndk",
-        "android.hardware.tv.tuner-V1-ndk",
+        "android.hardware.tv.tuner-V2-ndk",
         "libaidlcommonsupport",
         "libfmq",
         "libcutils",
