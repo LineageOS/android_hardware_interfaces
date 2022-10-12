@@ -37,6 +37,10 @@ interface IRadioDataIndication {
   oneway void dataCallListChanged(in android.hardware.radio.RadioIndicationType type, in android.hardware.radio.data.SetupDataCallResult[] dcList);
   oneway void keepaliveStatus(in android.hardware.radio.RadioIndicationType type, in android.hardware.radio.data.KeepaliveStatus status);
   oneway void pcoData(in android.hardware.radio.RadioIndicationType type, in android.hardware.radio.data.PcoDataInfo pco);
+  /**
+   * @deprecated use unthrottleDataProfile to clarify access network for this event.
+   */
   oneway void unthrottleApn(in android.hardware.radio.RadioIndicationType type, in android.hardware.radio.data.DataProfileInfo dataProfileInfo);
   oneway void slicingConfigChanged(in android.hardware.radio.RadioIndicationType type, in android.hardware.radio.data.SlicingConfig slicingConfig);
+  oneway void unthrottleDataProfile(in android.hardware.radio.RadioIndicationType type, in android.hardware.radio.AccessNetwork accessNetwork, in android.hardware.radio.data.DataProfileInfo dataProfileInfo);
 }
