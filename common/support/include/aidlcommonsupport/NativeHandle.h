@@ -22,6 +22,11 @@
 namespace android {
 
 /**
+ * Checks if a NativeHandle is empty.
+ */
+bool isAidlNativeHandleEmpty(const aidl::android::hardware::common::NativeHandle& handle);
+
+/**
  * Creates a libcutils native handle from an AIDL native handle, but it does not
  * dup internally, so it will contain the same FDs as the handle itself. The
  * result should be deleted with native_handle_delete.
