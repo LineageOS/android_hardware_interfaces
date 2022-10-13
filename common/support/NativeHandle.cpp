@@ -22,6 +22,13 @@ namespace android {
 
 using aidl::android::hardware::common::NativeHandle;
 
+/**
+ * Checks if a NativeHandle is null
+ */
+bool isAidlNativeHandleEmpty(const NativeHandle& handle) {
+    return handle.fds.empty() && handle.ints.empty();
+}
+
 static native_handle_t* fromAidl(const NativeHandle& handle, bool doDup) {
     native_handle_t* to = native_handle_create(handle.fds.size(), handle.ints.size());
     if (!to) return nullptr;
