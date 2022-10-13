@@ -43,6 +43,36 @@ cc_test {
 }
 
 cc_test {
+    name: "VtsHalAudioEffectFactoryTargetTest",
+    defaults: [
+        "latest_android_media_audio_common_types_ndk_static",
+        "VtsHalTargetTestDefaults",
+        "use_libaidlvintf_gtest_helper_static",
+    ],
+    srcs: [
+        "VtsHalAudioEffectFactoryTargetTest.cpp",
+    ],
+    shared_libs: [
+        "libbinder_ndk",
+    ],
+    static_libs: [
+        "android.hardware.audio.effect-V1-ndk",
+        "android.hardware.common-V2-ndk",
+        "android.hardware.common.fmq-V1-ndk",
+    ],
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-Wthread-safety",
+    ],
+    test_suites: [
+        "general-tests",
+        "vts",
+    ],
+}
+
+cc_test {
     name: "VtsHalAudioEffectTargetTest",
     defaults: [
         "latest_android_media_audio_common_types_ndk_static",
@@ -57,6 +87,8 @@ cc_test {
     ],
     static_libs: [
         "android.hardware.audio.effect-V1-ndk",
+        "android.hardware.common-V2-ndk",
+        "android.hardware.common.fmq-V1-ndk",
     ],
     cflags: [
         "-Wall",
