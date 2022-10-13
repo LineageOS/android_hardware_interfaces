@@ -14,18 +14,13 @@
  * limitations under the License.
  */
 
-#pragma once
+package android.hardware.audio.effect;
 
-#include <cstdlib>
-
-namespace aidl::android::hardware::audio::effect {
-
-// Visualizer implementation UUID.
-static const ::aidl::android::media::audio::common::AudioUuid VisualizerUUID = {
-        static_cast<int32_t>(0x1d4033c0),
-        0x8557,
-        0x11df,
-        0x9f2d,
-        {0x00, 0x02, 0xa5, 0xd5, 0xc5, 0x1b}};
-
-}  // namespace aidl::android::hardware::audio::effect
+/**
+ * The common part of available capability/configuration for effects. For effect type specific
+ * capability, see @c android.hardware.audio.effect.Capability.
+ */
+@VintfStability
+parcelable Flags {
+    // TODO: add Effect engine defined capabilities/requirements flags.
+}

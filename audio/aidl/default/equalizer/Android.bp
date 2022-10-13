@@ -27,17 +27,28 @@ cc_library_shared {
     name: "libequalizer",
     vendor: true,
     shared_libs: [
+        "libaudioaidlcommon",
         "libbase",
-        "libbinder_ndk",
-        "libstagefright_foundation",
+        "android.hardware.common-V2-ndk",
     ],
     defaults: [
+        "aidlaudioservice_defaults",
         "latest_android_media_audio_common_types_ndk_shared",
         "latest_android_hardware_audio_effect_ndk_shared",
     ],
-    include_dirs: ["hardware/interfaces/audio/aidl/default/include/equalizer-impl"],
+    include_dirs: [
+        "hardware/interfaces/audio/aidl/default/include",
+        "system/media/audio/include",
+    ],
     srcs: [
         "Equalizer.cpp",
+        ":effectCommonFile",
+    ],
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-Wthread-safety",
     ],
     visibility: [
         "//hardware/interfaces/audio/aidl/default",

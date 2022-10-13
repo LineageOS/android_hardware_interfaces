@@ -32,31 +32,19 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.audio.effect;
-@VintfStability
-parcelable Descriptor {
-  android.hardware.audio.effect.Descriptor.Common common;
-  android.hardware.audio.effect.Capability capability;
-  const String EFFECT_TYPE_UUID_ENV_REVERB = "c2e5d5f0-94bd-4763-9cac-4e234d06839e";
-  const String EFFECT_TYPE_UUID_PRESET_REVERB = "47382d60-ddd8-11db-bf3a-0002a5d5c51b";
-  const String EFFECT_TYPE_UUID_EQUALIZER = "0bed4300-ddd6-11db-8f34-0002a5d5c51b";
-  const String EFFECT_TYPE_UUID_BASS_BOOST = "0634f220-ddd4-11db-a0fc-0002a5d5c51b";
-  const String EFFECT_TYPE_UUID_VIRTUALIZER = "37cc2c00-dddd-11db-8577-0002a5d5c51b";
-  const String EFFECT_TYPE_UUID_AGC = "0a8abfe0-654c-11e0-ba26-0002a5d5c51b";
-  const String EFFECT_TYPE_UUID_AEC = "7b491460-8d4d-11e0-bd61-0002a5d5c51b";
-  const String EFFECT_TYPE_UUID_NS = "58b4b260-8e06-11e0-aa8e-0002a5d5c51b";
-  const String EFFECT_TYPE_UUID_LOUDNESS_ENHANCER = "fe3199be-aed0-413f-87bb-11260eb63cf1";
-  const String EFFECT_TYPE_UUID_DYNAMICS_PROCESSING = "7261676f-6d75-7369-6364-28e2fd3ac39e";
-  const String EFFECT_TYPE_UUID_HAPTIC_GENERATOR = "1411e6d6-aecd-4021-a1cf-a6aceb0d71e5";
-  const String EFFECT_TYPE_UUID_SPATIALIZER = "ccd4cf09-a79d-46c2-9aae-06a1698d6c8f";
-  const String EFFECT_TYPE_UUID_VOLUME = "09e8ede0-ddde-11db-b4f6-0002a5d5c51b";
-  @VintfStability
-  parcelable Identity {
-    android.media.audio.common.AudioUuid type;
-    android.media.audio.common.AudioUuid uuid;
-  }
-  @VintfStability
-  parcelable Common {
-    android.hardware.audio.effect.Descriptor.Identity id;
-    android.hardware.audio.effect.Flags flags;
-  }
+@Backing(type="int") @VintfStability
+enum CommandId {
+  START = 0,
+  STOP = 1,
+  RESET = 2,
+  VENDOR_COMMAND_0 = 256,
+  VENDOR_COMMAND_1 = 257,
+  VENDOR_COMMAND_2 = 258,
+  VENDOR_COMMAND_3 = 259,
+  VENDOR_COMMAND_4 = 260,
+  VENDOR_COMMAND_5 = 261,
+  VENDOR_COMMAND_6 = 262,
+  VENDOR_COMMAND_7 = 263,
+  VENDOR_COMMAND_8 = 264,
+  VENDOR_COMMAND_9 = 265,
 }
