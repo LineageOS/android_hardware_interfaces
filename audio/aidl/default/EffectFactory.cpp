@@ -73,6 +73,17 @@ ndk::ScopedAStatus Factory::queryEffects(const std::optional<AudioUuid>& in_type
     return ndk::ScopedAStatus::ok();
 }
 
+ndk::ScopedAStatus Factory::queryProcessing(const std::optional<Processing::Type>& in_type,
+                                            std::vector<Processing>* _aidl_return) {
+    // TODO: implement this with audio_effect.xml.
+    if (in_type.has_value()) {
+        // return all matching process filter
+        LOG(DEBUG) << __func__ << " process type: " << in_type.value().toString();
+    }
+    LOG(DEBUG) << __func__ << " return " << _aidl_return->size();
+    return ndk::ScopedAStatus::ok();
+}
+
 #define RETURN_IF_BINDER_EXCEPTION(functor)                                 \
     {                                                                       \
         binder_exception_t exception = functor;                             \
