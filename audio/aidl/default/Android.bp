@@ -21,6 +21,9 @@ cc_defaults {
         "android.hardware.common-V2-ndk",
         "android.hardware.common.fmq-V1-ndk",
     ],
+    header_libs: [
+        "libaudioaidl_headers",
+    ],
 }
 
 cc_library_static {
@@ -108,4 +111,11 @@ cc_binary {
         "libaudioeffectserviceexampleimpl",
     ],
     srcs: ["EffectMain.cpp"],
+}
+
+cc_library_headers {
+    name: "libaudioaidl_headers",
+    export_include_dirs: ["include"],
+    vendor: true,
+    host_supported: true,
 }
