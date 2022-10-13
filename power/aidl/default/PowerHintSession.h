@@ -32,6 +32,7 @@ class PowerHintSession : public BnPowerHintSession {
     ndk::ScopedAStatus resume() override;
     ndk::ScopedAStatus close() override;
     ndk::ScopedAStatus sendHint(SessionHint hint) override;
+    ndk::ScopedAStatus setThreads(const std::vector<int32_t>& threadIds) override;
 };
 
 }  // namespace aidl::android::hardware::power::impl::example
