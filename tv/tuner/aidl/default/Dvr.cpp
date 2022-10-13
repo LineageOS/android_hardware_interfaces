@@ -154,6 +154,14 @@ Dvr::~Dvr() {
     return ::ndk::ScopedAStatus::ok();
 }
 
+::ndk::ScopedAStatus Dvr::setStatusCheckIntervalHint(int64_t /* in_milliseconds */) {
+    ALOGV("%s", __FUNCTION__);
+
+    // There is no active polling in this default implementation,
+    // so directly return ok here.
+    return ::ndk::ScopedAStatus::ok();
+}
+
 bool Dvr::createDvrMQ() {
     ALOGV("%s", __FUNCTION__);
 
