@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include <aidl/Gtest.h>
 #include <aidl/Vintf.h>
 #include <aidl/android/hardware/graphics/common/BlendMode.h>
@@ -806,6 +807,18 @@ TEST_P(GraphicsComposerAidlTest, GetDisplayConfig_BadDisplay) {
 TEST_P(GraphicsComposerAidlTest, GetDisplayName) {
     const auto& [status, _] = mComposerClient->getDisplayName(getPrimaryDisplayId());
     EXPECT_TRUE(status.isOk());
+}
+
+// TODO(b/250036572): disable this due to no implementation and revup on cuttlefish
+TEST_P(GraphicsComposerAidlTest, DISABLED_GetOverlaySupport) {
+    const auto& [status, _] = mComposerClient->getOverlaySupport();
+    if (!status.isOk() && status.getExceptionCode() == EX_SERVICE_SPECIFIC &&
+        status.getServiceSpecificError() == IComposerClient::EX_UNSUPPORTED) {
+        GTEST_SUCCEED() << "getOverlaySupport is not supported";
+        return;
+    }
+
+    ASSERT_TRUE(status.isOk());
 }
 
 TEST_P(GraphicsComposerAidlTest, GetDisplayPhysicalOrientation_BadDisplay) {
