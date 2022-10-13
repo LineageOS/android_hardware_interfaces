@@ -30,203 +30,66 @@
 #include <android/binder_manager.h>
 #include <android/binder_process.h>
 
+#include <aidl/android/hardware/audio/effect/IEffect.h>
 #include <aidl/android/hardware/audio/effect/IFactory.h>
+#include <aidl/android/media/audio/common/AudioChannelLayout.h>
+#include <aidl/android/media/audio/common/AudioDeviceType.h>
 
 #include "AudioHalBinderServiceUtil.h"
+#include "EffectFactoryHelper.h"
 #include "TestUtils.h"
 
 using namespace android;
 
 using ndk::ScopedAStatus;
 
+using aidl::android::hardware::audio::effect::CommandId;
 using aidl::android::hardware::audio::effect::Descriptor;
 using aidl::android::hardware::audio::effect::IEffect;
 using aidl::android::hardware::audio::effect::IFactory;
-using aidl::android::media::audio::common::AudioUuid;
+using aidl::android::hardware::audio::effect::Parameter;
+using aidl::android::hardware::audio::effect::State;
+using aidl::android::media::audio::common::AudioChannelLayout;
+using aidl::android::media::audio::common::AudioDeviceType;
 
-class EffectFactoryHelper {
-  public:
-    explicit EffectFactoryHelper(const std::string& name) : mServiceName(name) {}
-
-    void ConnectToFactoryService() {
-        mEffectFactory = IFactory::fromBinder(binderUtil.connectToService(mServiceName));
-        ASSERT_NE(mEffectFactory, nullptr);
-    }
-
-    void RestartFactoryService() {
-        ASSERT_NE(mEffectFactory, nullptr);
-        mEffectFactory = IFactory::fromBinder(binderUtil.restartService());
-        ASSERT_NE(mEffectFactory, nullptr);
-    }
-
-    void QueryAllEffects() {
-        EXPECT_NE(mEffectFactory, nullptr);
-        EXPECT_IS_OK(mEffectFactory->queryEffects(std::nullopt, std::nullopt, &mCompleteIds));
-    }
-
-    void QueryEffects(const std::optional<AudioUuid>& in_type,
-                      const std::optional<AudioUuid>& in_instance,
-                      std::vector<Descriptor::Identity>* _aidl_return) {
-        EXPECT_NE(mEffectFactory, nullptr);
-        EXPECT_IS_OK(mEffectFactory->queryEffects(in_type, in_instance, _aidl_return));
-        mIds = *_aidl_return;
-    }
-
-    void CreateEffects() {
-        EXPECT_NE(mEffectFactory, nullptr);
-        for (const auto& id : mIds) {
-            std::shared_ptr<IEffect> effect;
-            EXPECT_IS_OK(mEffectFactory->createEffect(id.uuid, &effect));
-            EXPECT_NE(effect, nullptr) << id.toString();
-            mEffectIdMap[effect] = id;
-        }
-    }
-
-    void DestroyEffects() {
-        EXPECT_NE(mEffectFactory, nullptr);
-        for (const auto& it : mEffectIdMap) {
-            EXPECT_IS_OK(mEffectFactory->destroyEffect(it.first));
-        }
-        mEffectIdMap.clear();
-    }
-
-    std::shared_ptr<IFactory> GetFactory() { return mEffectFactory; }
-    const std::vector<Descriptor::Identity>& GetEffectIds() { return mIds; }
-    const std::vector<Descriptor::Identity>& GetCompleteEffectIdList() { return mCompleteIds; }
-    const std::unordered_map<std::shared_ptr<IEffect>, Descriptor::Identity>& GetEffectMap() {
-        return mEffectIdMap;
-    }
-
-  private:
-    std::shared_ptr<IFactory> mEffectFactory;
-    std::string mServiceName;
-    AudioHalBinderServiceUtil binderUtil;
-    std::vector<Descriptor::Identity> mIds;
-    std::vector<Descriptor::Identity> mCompleteIds;
-    std::unordered_map<std::shared_ptr<IEffect>, Descriptor::Identity> mEffectIdMap;
-};
-
-/// Effect factory testing.
-class EffectFactoryTest : public testing::TestWithParam<std::string> {
-  public:
-    void SetUp() override { ASSERT_NO_FATAL_FAILURE(mFactory.ConnectToFactoryService()); }
-
-    void TearDown() override { mFactory.DestroyEffects(); }
-
-    EffectFactoryHelper mFactory = EffectFactoryHelper(GetParam());
-
-    // TODO: these UUID can get from config file
-    // ec7178ec-e5e1-4432-a3f4-4657e6795210
-    const AudioUuid nullUuid = {static_cast<int32_t>(0xec7178ec),
-                                0xe5e1,
-                                0x4432,
-                                0xa3f4,
-                                {0x46, 0x57, 0xe6, 0x79, 0x52, 0x10}};
-    const AudioUuid zeroUuid = {
-            static_cast<int32_t>(0x0), 0x0, 0x0, 0x0, {0x0, 0x0, 0x0, 0x0, 0x0, 0x0}};
-};
-
-TEST_P(EffectFactoryTest, SetupAndTearDown) {
-    // Intentionally empty test body.
-}
-
-TEST_P(EffectFactoryTest, CanBeRestarted) {
-    ASSERT_NO_FATAL_FAILURE(mFactory.RestartFactoryService());
-}
-
-TEST_P(EffectFactoryTest, QueriedDescriptorList) {
-    std::vector<Descriptor::Identity> descriptors;
-    mFactory.QueryEffects(std::nullopt, std::nullopt, &descriptors);
-    EXPECT_NE(descriptors.size(), 0UL);
-}
-
-TEST_P(EffectFactoryTest, DescriptorUUIDNotNull) {
-    std::vector<Descriptor::Identity> descriptors;
-    mFactory.QueryEffects(std::nullopt, std::nullopt, &descriptors);
-    // TODO: Factory eventually need to return the full list of MUST supported AOSP effects.
-    for (auto& desc : descriptors) {
-        EXPECT_NE(desc.type, zeroUuid);
-        EXPECT_NE(desc.uuid, zeroUuid);
-    }
-}
-
-TEST_P(EffectFactoryTest, QueriedDescriptorNotExistType) {
-    std::vector<Descriptor::Identity> descriptors;
-    mFactory.QueryEffects(nullUuid, std::nullopt, &descriptors);
-    EXPECT_EQ(descriptors.size(), 0UL);
-}
-
-TEST_P(EffectFactoryTest, QueriedDescriptorNotExistInstance) {
-    std::vector<Descriptor::Identity> descriptors;
-    mFactory.QueryEffects(std::nullopt, nullUuid, &descriptors);
-    EXPECT_EQ(descriptors.size(), 0UL);
-}
-
-TEST_P(EffectFactoryTest, CreateAndDestroyRepeat) {
-    std::vector<Descriptor::Identity> descriptors;
-    mFactory.QueryEffects(std::nullopt, std::nullopt, &descriptors);
-    auto numIds = mFactory.GetEffectIds().size();
-    EXPECT_NE(numIds, 0UL);
-
-    EXPECT_EQ(mFactory.GetEffectMap().size(), 0UL);
-    mFactory.CreateEffects();
-    EXPECT_EQ(mFactory.GetEffectMap().size(), numIds);
-    mFactory.DestroyEffects();
-    EXPECT_EQ(mFactory.GetEffectMap().size(), 0UL);
-
-    // Create and destroy again
-    mFactory.CreateEffects();
-    EXPECT_EQ(mFactory.GetEffectMap().size(), numIds);
-    mFactory.DestroyEffects();
-    EXPECT_EQ(mFactory.GetEffectMap().size(), 0UL);
-}
-
-TEST_P(EffectFactoryTest, CreateMultipleInstanceOfSameEffect) {
-    std::vector<Descriptor::Identity> descriptors;
-    mFactory.QueryEffects(std::nullopt, std::nullopt, &descriptors);
-    auto numIds = mFactory.GetEffectIds().size();
-    EXPECT_NE(numIds, 0UL);
-
-    EXPECT_EQ(mFactory.GetEffectMap().size(), 0UL);
-    mFactory.CreateEffects();
-    EXPECT_EQ(mFactory.GetEffectMap().size(), numIds);
-    // Create effect instances of same implementation
-    mFactory.CreateEffects();
-    EXPECT_EQ(mFactory.GetEffectMap().size(), 2 * numIds);
-
-    mFactory.CreateEffects();
-    EXPECT_EQ(mFactory.GetEffectMap().size(), 3 * numIds);
-
-    mFactory.DestroyEffects();
-    EXPECT_EQ(mFactory.GetEffectMap().size(), 0UL);
-}
-
-INSTANTIATE_TEST_SUITE_P(EffectFactoryTest, EffectFactoryTest,
-                         testing::ValuesIn(android::getAidlHalInstanceNames(IFactory::descriptor)),
-                         android::PrintInstanceNameToString);
-GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(EffectFactoryTest);
-
-/// Effect testing.
 class AudioEffect : public testing::TestWithParam<std::string> {
   public:
     void SetUp() override {
-        ASSERT_NO_FATAL_FAILURE(mFactory.ConnectToFactoryService());
-        ASSERT_NO_FATAL_FAILURE(mFactory.CreateEffects());
+        ASSERT_NO_FATAL_FAILURE(mFactoryHelper.ConnectToFactoryService());
+        CreateEffects();
+        initParamCommon();
+        initParamSpecific();
     }
 
     void TearDown() override {
         CloseEffects();
-        ASSERT_NO_FATAL_FAILURE(mFactory.DestroyEffects());
+        DestroyEffects();
     }
 
     void OpenEffects() {
-        auto open = [](const std::shared_ptr<IEffect>& effect) { EXPECT_IS_OK(effect->open()); };
+        auto open = [&](const std::shared_ptr<IEffect>& effect) {
+            IEffect::OpenEffectReturn ret;
+            EXPECT_IS_OK(effect->open(mCommon, mSpecific, &ret));
+        };
         EXPECT_NO_FATAL_FAILURE(ForEachEffect(open));
     }
 
-    void CloseEffects() {
-        auto close = [](const std::shared_ptr<IEffect>& effect) { EXPECT_IS_OK(effect->close()); };
+    void CloseEffects(const binder_status_t status = EX_NONE) {
+        auto close = [&](const std::shared_ptr<IEffect>& effect) {
+            EXPECT_STATUS(status, effect->close());
+        };
+
         EXPECT_NO_FATAL_FAILURE(ForEachEffect(close));
+    }
+
+    void CreateEffects(const int n = 1) {
+        for (int i = 0; i < n; i++) {
+            ASSERT_NO_FATAL_FAILURE(mFactoryHelper.QueryAndCreateAllEffects());
+        }
+    }
+
+    void DestroyEffects(const binder_status_t status = EX_NONE, const int remaining = 0) {
+        ASSERT_NO_FATAL_FAILURE(mFactoryHelper.DestroyEffects(status, remaining));
     }
 
     void GetEffectDescriptors() {
@@ -237,16 +100,101 @@ class AudioEffect : public testing::TestWithParam<std::string> {
         EXPECT_NO_FATAL_FAILURE(ForEachEffect(get));
     }
 
+    void CommandEffects(CommandId command) {
+        auto close = [&](const std::shared_ptr<IEffect>& effect) {
+            EXPECT_IS_OK(effect->command(command));
+        };
+        EXPECT_NO_FATAL_FAILURE(ForEachEffect(close));
+    }
+
+    void CommandEffectsExpectStatus(CommandId command, const binder_status_t status) {
+        auto func = [&](const std::shared_ptr<IEffect>& effect) {
+            EXPECT_STATUS(status, effect->command(command));
+        };
+        EXPECT_NO_FATAL_FAILURE(ForEachEffect(func));
+    }
+
+    void ExpectState(State expected) {
+        auto get = [&](const std::shared_ptr<IEffect>& effect) {
+            State state = State::INIT;
+            EXPECT_IS_OK(effect->getState(&state));
+            EXPECT_EQ(expected, state);
+        };
+        EXPECT_NO_FATAL_FAILURE(ForEachEffect(get));
+    }
+
+    void SetParameter() {
+        auto func = [&](const std::shared_ptr<IEffect>& effect) {
+            Parameter param;
+            param.set<Parameter::common>(mCommon);
+            EXPECT_IS_OK(effect->setParameter(param));
+        };
+        EXPECT_NO_FATAL_FAILURE(ForEachEffect(func));
+    }
+
+    void VerifyParameters() {
+        auto func = [&](const std::shared_ptr<IEffect>& effect) {
+            Parameter paramCommonGet = Parameter(), paramCommonExpect = Parameter();
+            Parameter::Id id;
+            id.set<Parameter::Id::commonTag>(0);
+            paramCommonExpect.set<Parameter::common>(mCommon);
+            EXPECT_IS_OK(effect->getParameter(id, &paramCommonGet));
+            EXPECT_EQ(paramCommonExpect, paramCommonGet)
+                    << paramCommonExpect.toString() << " vs " << paramCommonGet.toString();
+        };
+        EXPECT_NO_FATAL_FAILURE(ForEachEffect(func));
+    }
+
     template <typename Functor>
     void ForEachEffect(Functor functor) {
-        auto effectMap = mFactory.GetEffectMap();
+        auto effectMap = mFactoryHelper.GetEffectMap();
         for (const auto& it : effectMap) {
             SCOPED_TRACE(it.second.toString());
             functor(it.first);
         }
     }
 
-    EffectFactoryHelper mFactory = EffectFactoryHelper(GetParam());
+    void initParamCommon(int session = -1, int ioHandle = -1,
+                         AudioDeviceType deviceType = AudioDeviceType::NONE,
+                         int iSampleRate = 48000, int oSampleRate = 48000, long iFrameCount = 0x100,
+                         long oFrameCount = 0x100) {
+        mCommon.session = session;
+        mCommon.ioHandle = ioHandle;
+        mCommon.device.type = deviceType;
+        mCommon.input.base.sampleRate = iSampleRate;
+        mCommon.input.base.channelMask = mInputChannelLayout;
+        mCommon.input.frameCount = iFrameCount;
+        mCommon.output.base.sampleRate = oSampleRate;
+        mCommon.output.base.channelMask = mOutputChannelLayout;
+        mCommon.output.frameCount = oFrameCount;
+    }
+
+    void initParamSpecific(Parameter::Specific::Tag tag = Parameter::Specific::equalizer) {
+        switch (tag) {
+            case Parameter::Specific::equalizer:
+                mSpecific.set<Parameter::Specific::equalizer>();
+                break;
+            default:
+                return;
+        }
+    }
+
+    void setInputChannelLayout(AudioChannelLayout input) { mInputChannelLayout = input; }
+    void setOutputChannelLayout(AudioChannelLayout output) { mOutputChannelLayout = output; }
+
+    EffectFactoryHelper mFactoryHelper = EffectFactoryHelper(GetParam());
+
+  private:
+    AudioChannelLayout mInputChannelLayout =
+            AudioChannelLayout::make<AudioChannelLayout::layoutMask>(
+                    AudioChannelLayout::LAYOUT_STEREO);
+    AudioChannelLayout mOutputChannelLayout =
+            AudioChannelLayout::make<AudioChannelLayout::layoutMask>(
+                    AudioChannelLayout::LAYOUT_STEREO);
+
+    Parameter::Common mCommon;
+    Parameter::Specific mSpecific;
+    static IEffect::OpenEffectReturn mOpenReturn;
 };
 
 TEST_P(AudioEffect, OpenEffectTest) {
@@ -286,7 +234,7 @@ TEST_P(AudioEffect, DescriptorIdExistAndUnique) {
         Descriptor desc;
         std::vector<Descriptor::Identity> idList;
         EXPECT_IS_OK(effect->getDescriptor(&desc));
-        mFactory.QueryEffects(desc.common.id.type, desc.common.id.uuid, &idList);
+        mFactoryHelper.QueryEffects(desc.common.id.type, desc.common.id.uuid, &idList);
         EXPECT_EQ(idList.size(), 1UL);
     };
     EXPECT_NO_FATAL_FAILURE(ForEachEffect(checker));
@@ -295,12 +243,218 @@ TEST_P(AudioEffect, DescriptorIdExistAndUnique) {
     auto stringHash = [](const Descriptor::Identity& id) {
         return std::hash<std::string>()(id.toString());
     };
-    auto vec = mFactory.GetCompleteEffectIdList();
+    auto vec = mFactoryHelper.GetCompleteEffectIdList();
     std::unordered_set<Descriptor::Identity, decltype(stringHash)> idSet(0, stringHash);
     for (auto it : vec) {
         EXPECT_EQ(idSet.count(it), 0UL);
         idSet.insert(it);
     }
+}
+
+/// State testing.
+// An effect instance is in INIT state by default after it was created.
+TEST_P(AudioEffect, InitStateAfterCreation) {
+    ExpectState(State::INIT);
+}
+
+// An effect instance transfer to INIT state after it was open successfully with IEffect.open().
+TEST_P(AudioEffect, IdleStateAfterOpen) {
+    EXPECT_NO_FATAL_FAILURE(OpenEffects());
+    ExpectState(State::IDLE);
+    EXPECT_NO_FATAL_FAILURE(CloseEffects());
+}
+
+// An effect instance is in PROCESSING state after it receive an START command.
+TEST_P(AudioEffect, ProcessingStateAfterStart) {
+    EXPECT_NO_FATAL_FAILURE(OpenEffects());
+    EXPECT_NO_FATAL_FAILURE(CommandEffects(CommandId::START));
+    ExpectState(State::PROCESSING);
+    EXPECT_NO_FATAL_FAILURE(CommandEffects(CommandId::STOP));
+    EXPECT_NO_FATAL_FAILURE(CloseEffects());
+}
+
+// An effect instance transfer to IDLE state after Command.Id.STOP in PROCESSING state.
+TEST_P(AudioEffect, IdleStateAfterStop) {
+    EXPECT_NO_FATAL_FAILURE(OpenEffects());
+    EXPECT_NO_FATAL_FAILURE(CommandEffects(CommandId::START));
+    ExpectState(State::PROCESSING);
+    EXPECT_NO_FATAL_FAILURE(CommandEffects(CommandId::STOP));
+    ExpectState(State::IDLE);
+    EXPECT_NO_FATAL_FAILURE(CloseEffects());
+}
+
+// An effect instance transfer to IDLE state after Command.Id.RESET in PROCESSING state.
+TEST_P(AudioEffect, IdleStateAfterReset) {
+    EXPECT_NO_FATAL_FAILURE(OpenEffects());
+    EXPECT_NO_FATAL_FAILURE(CommandEffects(CommandId::START));
+    ExpectState(State::PROCESSING);
+    EXPECT_NO_FATAL_FAILURE(CommandEffects(CommandId::RESET));
+    ExpectState(State::IDLE);
+    EXPECT_NO_FATAL_FAILURE(CloseEffects());
+}
+
+// An effect instance transfer to INIT if instance receive a close() call.
+TEST_P(AudioEffect, InitStateAfterClose) {
+    EXPECT_NO_FATAL_FAILURE(OpenEffects());
+    EXPECT_NO_FATAL_FAILURE(CommandEffects(CommandId::START));
+    ExpectState(State::PROCESSING);
+    EXPECT_NO_FATAL_FAILURE(CommandEffects(CommandId::STOP));
+    ExpectState(State::IDLE);
+    EXPECT_NO_FATAL_FAILURE(CloseEffects());
+    ExpectState(State::INIT);
+}
+
+// An effect instance shouldn't accept any command before open.
+TEST_P(AudioEffect, NoCommandAcceptedBeforeOpen) {
+    ExpectState(State::INIT);
+    EXPECT_NO_FATAL_FAILURE(CommandEffectsExpectStatus(CommandId::START, EX_ILLEGAL_STATE));
+    EXPECT_NO_FATAL_FAILURE(CommandEffectsExpectStatus(CommandId::STOP, EX_ILLEGAL_STATE));
+    EXPECT_NO_FATAL_FAILURE(CommandEffectsExpectStatus(CommandId::RESET, EX_ILLEGAL_STATE));
+    ExpectState(State::INIT);
+}
+
+// No-op when receive STOP command in IDLE state.
+TEST_P(AudioEffect, StopCommandInIdleStateNoOp) {
+    ExpectState(State::INIT);
+    EXPECT_NO_FATAL_FAILURE(OpenEffects());
+    ExpectState(State::IDLE);
+    EXPECT_NO_FATAL_FAILURE(CommandEffects(CommandId::STOP));
+    ExpectState(State::IDLE);
+    EXPECT_NO_FATAL_FAILURE(CloseEffects());
+}
+
+// No-op when receive STOP command in IDLE state.
+TEST_P(AudioEffect, ResetCommandInIdleStateNoOp) {
+    ExpectState(State::INIT);
+    EXPECT_NO_FATAL_FAILURE(OpenEffects());
+    ExpectState(State::IDLE);
+    EXPECT_NO_FATAL_FAILURE(CommandEffects(CommandId::RESET));
+    ExpectState(State::IDLE);
+    EXPECT_NO_FATAL_FAILURE(CloseEffects());
+}
+
+// Repeat START and STOP command.
+TEST_P(AudioEffect, RepeatStartAndStop) {
+    EXPECT_NO_FATAL_FAILURE(OpenEffects());
+    EXPECT_NO_FATAL_FAILURE(CommandEffects(CommandId::START));
+    ExpectState(State::PROCESSING);
+    EXPECT_NO_FATAL_FAILURE(CommandEffects(CommandId::STOP));
+    ExpectState(State::IDLE);
+    EXPECT_NO_FATAL_FAILURE(CommandEffects(CommandId::START));
+    ExpectState(State::PROCESSING);
+    EXPECT_NO_FATAL_FAILURE(CommandEffects(CommandId::STOP));
+    ExpectState(State::IDLE);
+    EXPECT_NO_FATAL_FAILURE(CloseEffects());
+}
+
+// Repeat START and RESET command.
+TEST_P(AudioEffect, RepeatStartAndReset) {
+    EXPECT_NO_FATAL_FAILURE(OpenEffects());
+    EXPECT_NO_FATAL_FAILURE(CommandEffects(CommandId::START));
+    ExpectState(State::PROCESSING);
+    EXPECT_NO_FATAL_FAILURE(CommandEffects(CommandId::RESET));
+    ExpectState(State::IDLE);
+    EXPECT_NO_FATAL_FAILURE(CommandEffects(CommandId::START));
+    ExpectState(State::PROCESSING);
+    EXPECT_NO_FATAL_FAILURE(CommandEffects(CommandId::RESET));
+    ExpectState(State::IDLE);
+    EXPECT_NO_FATAL_FAILURE(CloseEffects());
+}
+
+// Repeat START and STOP command, try to close at PROCESSING state.
+TEST_P(AudioEffect, CloseProcessingStateEffects) {
+    EXPECT_NO_FATAL_FAILURE(OpenEffects());
+    EXPECT_NO_FATAL_FAILURE(CommandEffects(CommandId::START));
+    ExpectState(State::PROCESSING);
+    EXPECT_NO_FATAL_FAILURE(CommandEffects(CommandId::STOP));
+    ExpectState(State::IDLE);
+    EXPECT_NO_FATAL_FAILURE(CommandEffects(CommandId::START));
+    ExpectState(State::PROCESSING);
+    EXPECT_NO_FATAL_FAILURE(CloseEffects(EX_ILLEGAL_STATE));
+    // cleanup
+    EXPECT_NO_FATAL_FAILURE(CommandEffects(CommandId::STOP));
+    ExpectState(State::IDLE);
+}
+
+// Expect EX_ILLEGAL_STATE if the effect instance is not in a proper state to be destroyed.
+TEST_P(AudioEffect, DestroyOpenEffects) {
+    // cleanup all effects.
+    EXPECT_NO_FATAL_FAILURE(CloseEffects());
+    ASSERT_NO_FATAL_FAILURE(DestroyEffects());
+
+    // open effects, destroy without close, expect to get EX_ILLEGAL_STATE status.
+    EXPECT_NO_FATAL_FAILURE(CreateEffects());
+    EXPECT_NO_FATAL_FAILURE(OpenEffects());
+    EXPECT_NO_FATAL_FAILURE(DestroyEffects(EX_ILLEGAL_STATE, 1));
+    EXPECT_NO_FATAL_FAILURE(CloseEffects());
+}
+
+/// Parameter testing.
+// Verify parameters pass in open can be successfully get.
+TEST_P(AudioEffect, VerifyParametersAfterOpen) {
+    EXPECT_NO_FATAL_FAILURE(OpenEffects());
+    EXPECT_NO_FATAL_FAILURE(VerifyParameters());
+    EXPECT_NO_FATAL_FAILURE(CloseEffects());
+}
+
+// Verify parameters pass in set can be successfully get.
+TEST_P(AudioEffect, SetAndGetParameter) {
+    EXPECT_NO_FATAL_FAILURE(OpenEffects());
+    EXPECT_NO_FATAL_FAILURE(VerifyParameters());
+    initParamCommon(1 /* session */, 1 /* ioHandle */, AudioDeviceType::IN_DEFAULT /* deviceType */,
+                    44100 /* iSampleRate */, 44100 /* oSampleRate */);
+    EXPECT_NO_FATAL_FAILURE(SetParameter());
+    EXPECT_NO_FATAL_FAILURE(VerifyParameters());
+    EXPECT_NO_FATAL_FAILURE(CloseEffects());
+}
+
+// Verify parameters pass in set can be successfully get.
+TEST_P(AudioEffect, SetAndGetParameterInProcessing) {
+    EXPECT_NO_FATAL_FAILURE(OpenEffects());
+    EXPECT_NO_FATAL_FAILURE(VerifyParameters());
+    EXPECT_NO_FATAL_FAILURE(CommandEffects(CommandId::START));
+    ExpectState(State::PROCESSING);
+    initParamCommon(1 /* session */, 1 /* ioHandle */, AudioDeviceType::IN_DEFAULT /* deviceType */,
+                    44100 /* iSampleRate */, 44100 /* oSampleRate */);
+    EXPECT_NO_FATAL_FAILURE(SetParameter());
+    EXPECT_NO_FATAL_FAILURE(VerifyParameters());
+    EXPECT_NO_FATAL_FAILURE(CommandEffects(CommandId::STOP));
+    ExpectState(State::IDLE);
+    EXPECT_NO_FATAL_FAILURE(CloseEffects());
+}
+
+// Parameters kept after reset.
+TEST_P(AudioEffect, ResetAndVerifyParameter) {
+    EXPECT_NO_FATAL_FAILURE(OpenEffects());
+    EXPECT_NO_FATAL_FAILURE(VerifyParameters());
+    EXPECT_NO_FATAL_FAILURE(CommandEffects(CommandId::START));
+    ExpectState(State::PROCESSING);
+    initParamCommon(1 /* session */, 1 /* ioHandle */, AudioDeviceType::IN_DEFAULT /* deviceType */,
+                    44100 /* iSampleRate */, 44100 /* oSampleRate */);
+    EXPECT_NO_FATAL_FAILURE(SetParameter());
+    EXPECT_NO_FATAL_FAILURE(VerifyParameters());
+    EXPECT_NO_FATAL_FAILURE(CommandEffects(CommandId::RESET));
+    ExpectState(State::IDLE);
+    EXPECT_NO_FATAL_FAILURE(VerifyParameters());
+    EXPECT_NO_FATAL_FAILURE(CloseEffects());
+}
+
+// Multiple instances of same implementation running.
+TEST_P(AudioEffect, MultipleInstancesRunning) {
+    EXPECT_NO_FATAL_FAILURE(CreateEffects(3));
+    ExpectState(State::INIT);
+    EXPECT_NO_FATAL_FAILURE(OpenEffects());
+    ExpectState(State::IDLE);
+    EXPECT_NO_FATAL_FAILURE(CommandEffects(CommandId::START));
+    ExpectState(State::PROCESSING);
+    initParamCommon(1 /* session */, 1 /* ioHandle */, AudioDeviceType::IN_DEFAULT /* deviceType */,
+                    44100 /* iSampleRate */, 44100 /* oSampleRate */);
+    EXPECT_NO_FATAL_FAILURE(SetParameter());
+    EXPECT_NO_FATAL_FAILURE(VerifyParameters());
+    EXPECT_NO_FATAL_FAILURE(CommandEffects(CommandId::STOP));
+    ExpectState(State::IDLE);
+    EXPECT_NO_FATAL_FAILURE(VerifyParameters());
+    EXPECT_NO_FATAL_FAILURE(CloseEffects());
 }
 
 INSTANTIATE_TEST_SUITE_P(AudioEffectTest, AudioEffect,
