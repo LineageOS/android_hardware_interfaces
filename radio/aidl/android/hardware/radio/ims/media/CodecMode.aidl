@@ -16,13 +16,16 @@
 
 package android.hardware.radio.ims.media;
 
-@VintfStability
-parcelable AnbrBitrate {
-    /** default value to represent NOT_SET */
-    const int INVALID_ANBR_BITRATE = -1;
+import android.hardware.radio.ims.media.AmrMode;
+import android.hardware.radio.ims.media.EvsMode;
 
-    /** Received bitrate in seconds for Uplink from NW or peer UE for ANBR */
-    int uplinkBps;
-    /** Received bitrate in secondsfor Downlink from NW or peer UE for ANBR */
-    int downlinkBps;
+@VintfStability
+@JavaDerive(toString=true)
+union CodecMode {
+    /** Default value */
+    boolean noinit;
+    /** AMR codec mode to represent the bit rate. See 3ggp Specs 26.976 & 26.071 */
+    AmrMode amr;
+    /** EVS codec mode to represent the bit rate. See 3ggp Spec 26.952 Table 5.1 */
+    EvsMode evs;
 }
