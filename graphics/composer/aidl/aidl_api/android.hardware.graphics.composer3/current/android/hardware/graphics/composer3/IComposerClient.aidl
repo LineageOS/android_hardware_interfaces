@@ -75,6 +75,7 @@ interface IComposerClient {
   void setReadbackBuffer(long display, in android.hardware.common.NativeHandle buffer, in @nullable ParcelFileDescriptor releaseFence);
   void setVsyncEnabled(long display, boolean enabled);
   void setIdleTimerEnabled(long display, int timeoutMs);
+  android.hardware.graphics.composer3.OverlayProperties getOverlaySupport();
   const int EX_BAD_CONFIG = 1;
   const int EX_BAD_DISPLAY = 2;
   const int EX_BAD_LAYER = 3;

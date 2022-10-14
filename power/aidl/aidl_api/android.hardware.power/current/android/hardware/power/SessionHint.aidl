@@ -38,4 +38,5 @@ enum SessionHint {
   CPU_LOAD_DOWN = 1,
   CPU_LOAD_RESET = 2,
   CPU_LOAD_RESUME = 3,
+  POWER_EFFICIENCY = 4,
 }

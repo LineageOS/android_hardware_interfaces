@@ -38,6 +38,11 @@ parcelable EmergencyRegResult {
     Domain emcDomain;
 
     /**
+     * This indicates whether the network supports voice over PS network.
+     */
+    boolean isVopsSupported;
+
+    /**
      * This indicates if camped network support VoLTE emergency bearers.
      * This should only be set if the UE is in LTE mode.
      */
