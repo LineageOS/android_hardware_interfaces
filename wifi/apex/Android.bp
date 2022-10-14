@@ -1,0 +1,55 @@
+package {
+    default_applicable_licenses: ["hardware_interfaces_license"],
+}
+
+apex_key {
+    name: "com.android.hardware.wifi.key",
+    public_key: "com.android.hardware.wifi.avbpubkey",
+    private_key: "com.android.hardware.wifi.pem",
+}
+
+android_app_certificate {
+    name: "com.android.hardware.wifi.certificate",
+    certificate: "com.android.hardware.wifi",
+}
+
+genrule {
+    name: "gen-android.hardware.wifi.rc",
+    srcs: [":default-android.hardware.wifi@1.0-service.rc"],
+    out: ["com.android.hardware.wifi-service.rc"],
+    cmd: "sed -e 's@/vendor/bin/@/apex/com.android.hardware.wifi/bin/@' $(in) > $(out)",
+}
+
+prebuilt_etc {
+    name: "com.android.hardware.wifi.rc",
+    src: ":gen-android.hardware.wifi.rc",
+    installable: false,
+}
+
+prebuilt_etc {
+    name: "com.android.hardware.wifi.xml",
+    src: ":default-android.hardware.wifi@1.0-service.xml",
+    installable: false,
+}
+
+apex {
+    name: "com.android.hardware.wifi",
+    manifest: "apex_manifest.json",
+    key: "com.android.hardware.wifi.key",
+    certificate: ":com.android.hardware.wifi.certificate",
+    file_contexts: "file_contexts",
+    vintf_fragments: [":com.android.hardware.wifi.xml"],
+    use_vndk_as_stable: true,
+    updatable: false,
+    soc_specific: true,
+    binaries: [
+        "android.hardware.wifi@1.0-service",
+    ],
+    prebuilts: [
+        "com.android.hardware.wifi.rc",
+        "com.android.hardware.wifi.xml",
+    ],
+    overrides: [
+        "android.hardware.wifi@1.0-service",
+    ],
+}
