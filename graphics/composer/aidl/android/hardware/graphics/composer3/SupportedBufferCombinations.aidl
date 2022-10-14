@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,18 +14,12 @@
  * limitations under the License.
  */
 
-#pragma once
+package android.hardware.graphics.composer3;
 
-#include <cstdlib>
-
-namespace aidl::android::hardware::audio::effect {
-
-// Visualizer implementation UUID.
-static const ::aidl::android::media::audio::common::AudioUuid VisualizerUUID = {
-        static_cast<int32_t>(0x1d4033c0),
-        0x8557,
-        0x11df,
-        0x9f2d,
-        {0x00, 0x02, 0xa5, 0xd5, 0xc5, 0x1b}};
-
-}  // namespace aidl::android::hardware::audio::effect
+@VintfStability
+parcelable SupportedBufferCombinations {
+    // List of pixelformats and dataspaces that can be used together.
+    // All pixelformats and dataspaces stored inside are valid combinations.
+    android.hardware.graphics.common.PixelFormat[] pixelFormats;
+    android.hardware.graphics.common.Dataspace[] dataspaces;
+}

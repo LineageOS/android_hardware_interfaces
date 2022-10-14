@@ -37,6 +37,7 @@ parcelable EmergencyRegResult {
   android.hardware.radio.AccessNetwork accessNetwork;
   android.hardware.radio.network.RegState regState;
   android.hardware.radio.network.Domain emcDomain;
+  boolean isVopsSupported;
   boolean isEmcBearerSupported;
   byte nwProvidedEmc;
   byte nwProvidedEmf;

@@ -226,3 +226,13 @@ cc_test {
         "libwifi-system-iface",
     ],
 }
+
+filegroup {
+    name: "default-android.hardware.wifi@1.0-service.rc",
+    srcs: ["android.hardware.wifi@1.0-service.rc"],
+}
+
+filegroup {
+    name: "default-android.hardware.wifi@1.0-service.xml",
+    srcs: ["android.hardware.wifi@1.0-service.xml"],
+}

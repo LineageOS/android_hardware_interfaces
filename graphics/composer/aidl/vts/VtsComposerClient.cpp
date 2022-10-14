@@ -338,6 +338,11 @@ std::pair<ScopedAStatus, common::Transform> VtsComposerClient::getDisplayPhysica
             outDisplayOrientation};
 }
 
+std::pair<ScopedAStatus, composer3::OverlayProperties> VtsComposerClient::getOverlaySupport() {
+    OverlayProperties properties;
+    return {mComposerClient->getOverlaySupport(&properties), properties};
+}
+
 ScopedAStatus VtsComposerClient::setIdleTimerEnabled(int64_t display, int32_t timeoutMs) {
     return mComposerClient->setIdleTimerEnabled(display, timeoutMs);
 }
