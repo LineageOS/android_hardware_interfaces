@@ -32,8 +32,8 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.audio.core;
-@VintfStability
-interface IStreamOut {
-  android.hardware.audio.core.IStreamCommon getStreamCommon();
-  void updateMetadata(in android.hardware.audio.common.SourceMetadata sourceMetadata);
+@JavaDerive(equals=true, toString=true) @VintfStability
+parcelable VendorParameter {
+  @utf8InCpp String id;
+  ParcelableHolder ext;
 }
