@@ -22,11 +22,9 @@
 #include <android-base/thread_annotations.h>
 #include <system/thread_defs.h>
 
+#include "effect-impl/EffectTypes.h"
+
 namespace aidl::android::hardware::audio::effect {
-
-enum class RetCode { SUCCESS, ERROR };
-
-std::string toString(RetCode& code);
 
 class EffectThread {
   public:
@@ -35,10 +33,11 @@ class EffectThread {
     virtual ~EffectThread();
 
     // called by effect implementation.
-    RetCode create(const std::string& name, const int priority = ANDROID_PRIORITY_URGENT_AUDIO);
-    RetCode destroy();
-    RetCode start();
-    RetCode stop();
+    RetCode createThread(const std::string& name,
+                         const int priority = ANDROID_PRIORITY_URGENT_AUDIO);
+    RetCode destroyThread();
+    RetCode startThread();
+    RetCode stopThread();
 
     // Will call process() in a loop if the thread is running.
     void threadLoop();

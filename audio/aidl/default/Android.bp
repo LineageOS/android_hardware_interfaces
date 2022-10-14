@@ -116,6 +116,6 @@ cc_binary {
 cc_library_headers {
     name: "libaudioaidl_headers",
     export_include_dirs: ["include"],
-    vendor: true,
+    vendor_available: true,
     host_supported: true,
 }

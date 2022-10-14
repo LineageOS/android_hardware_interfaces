@@ -37,6 +37,8 @@
 using namespace android;
 
 using aidl::android::hardware::audio::effect::Descriptor;
+using aidl::android::hardware::audio::effect::EffectNullUuid;
+using aidl::android::hardware::audio::effect::EffectZeroUuid;
 using aidl::android::hardware::audio::effect::IFactory;
 using aidl::android::hardware::audio::effect::Processing;
 using aidl::android::media::audio::common::AudioUuid;
@@ -50,17 +52,8 @@ class EffectFactoryTest : public testing::TestWithParam<std::string> {
 
     EffectFactoryHelper mFactory = EffectFactoryHelper(GetParam());
 
-    // TODO: these UUID can get from config file
-    // ec7178ec-e5e1-4432-a3f4-4657e6795210
-    const AudioUuid nullUuid = {static_cast<int32_t>(0xec7178ec),
-                                0xe5e1,
-                                0x4432,
-                                0xa3f4,
-                                {0x46, 0x57, 0xe6, 0x79, 0x52, 0x10}};
-    const AudioUuid zeroUuid = {
-            static_cast<int32_t>(0x0), 0x0, 0x0, 0x0, {0x0, 0x0, 0x0, 0x0, 0x0, 0x0}};
-    const Descriptor::Identity nullDesc = {.uuid = nullUuid};
-    const Descriptor::Identity zeroDesc = {.uuid = zeroUuid};
+    const Descriptor::Identity nullDesc = {.uuid = EffectNullUuid};
+    const Descriptor::Identity zeroDesc = {.uuid = EffectZeroUuid};
 };
 
 TEST_P(EffectFactoryTest, SetupAndTearDown) {
@@ -82,20 +75,20 @@ TEST_P(EffectFactoryTest, DescriptorUUIDNotNull) {
     mFactory.QueryEffects(std::nullopt, std::nullopt, &descriptors);
     // TODO: Factory eventually need to return the full list of MUST supported AOSP effects.
     for (auto& desc : descriptors) {
-        EXPECT_NE(desc.type, zeroUuid);
-        EXPECT_NE(desc.uuid, zeroUuid);
+        EXPECT_NE(desc.type, EffectNullUuid);
+        EXPECT_NE(desc.uuid, EffectNullUuid);
     }
 }
 
 TEST_P(EffectFactoryTest, QueriedDescriptorNotExistType) {
     std::vector<Descriptor::Identity> descriptors;
-    mFactory.QueryEffects(nullUuid, std::nullopt, &descriptors);
+    mFactory.QueryEffects(EffectNullUuid, std::nullopt, &descriptors);
     EXPECT_EQ(descriptors.size(), 0UL);
 }
 
 TEST_P(EffectFactoryTest, QueriedDescriptorNotExistInstance) {
     std::vector<Descriptor::Identity> descriptors;
-    mFactory.QueryEffects(std::nullopt, nullUuid, &descriptors);
+    mFactory.QueryEffects(std::nullopt, EffectNullUuid, &descriptors);
     EXPECT_EQ(descriptors.size(), 0UL);
 }
 
