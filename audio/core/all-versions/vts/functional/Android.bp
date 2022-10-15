@@ -34,6 +34,7 @@ cc_defaults {
     ],
     shared_libs: [
         "libbinder",
+        "libcutils",
         "libfmq",
         "libxml2",
     ],
@@ -190,6 +191,7 @@ cc_test {
     ],
     data: [
         ":audio_policy_configuration_V7_0",
+        "data/sine882hz3s.mp3",
     ],
     // Use test_config for vts suite.
     // TODO(b/146104851): Add auto-gen rules and remove it.
@@ -223,6 +225,7 @@ cc_test {
     ],
     data: [
         ":audio_policy_configuration_V7_1",
+        "data/sine882hz3s.mp3",
     ],
     // Use test_config for vts suite.
     // TODO(b/146104851): Add auto-gen rules and remove it.

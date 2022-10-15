@@ -617,7 +617,8 @@ static std::string DeviceConfigParameterToString(
                     std::get<PARAM_FLAGS>(info.param)));
 #elif MAJOR_VERSION >= 7
     const auto configPart =
-            std::to_string(config.base.sampleRateHz) + "_" +
+            ::testing::PrintToString(std::get<PARAM_ATTACHED_DEV_ADDR>(info.param).deviceType) +
+            "_" + std::to_string(config.base.sampleRateHz) + "_" +
             // The channel masks and flags are vectors of strings, just need to sanitize them.
             SanitizeStringForGTestName(::testing::PrintToString(config.base.channelMask)) + "_" +
             SanitizeStringForGTestName(::testing::PrintToString(std::get<PARAM_FLAGS>(info.param)));
@@ -658,6 +659,9 @@ class AudioHidlTestWithDeviceConfigParameter
                 std::get<INDEX_OUTPUT>(std::get<PARAM_FLAGS>(GetParam())));
     }
 #elif MAJOR_VERSION >= 7
+    DeviceAddress getAttachedDeviceAddress() const {
+        return std::get<PARAM_ATTACHED_DEV_ADDR>(GetParam());
+    }
     hidl_vec<AudioInOutFlag> getInputFlags() const { return std::get<PARAM_FLAGS>(GetParam()); }
     hidl_vec<AudioInOutFlag> getOutputFlags() const { return std::get<PARAM_FLAGS>(GetParam()); }
 #endif
@@ -933,6 +937,15 @@ class StreamWriter : public StreamWorker<StreamWriter> {
 
     StreamWriter(IStreamOut* stream, size_t bufferSize)
         : mStream(stream), mBufferSize(bufferSize), mData(mBufferSize) {}
+    StreamWriter(IStreamOut* stream, size_t bufferSize, std::vector<uint8_t>&& data,
+                 std::function<void()> onDataStart, std::function<bool()> onDataWrap)
+        : mStream(stream),
+          mBufferSize(bufferSize),
+          mData(std::move(data)),
+          mOnDataStart(onDataStart),
+          mOnDataWrap(onDataWrap) {
+        ALOGI("StreamWriter data size: %d", (int)mData.size());
+    }
     ~StreamWriter() {
         stop();
         if (mEfGroup) {
@@ -998,9 +1011,12 @@ class StreamWriter : public StreamWorker<StreamWriter> {
             ALOGE("command message queue write failed");
             return false;
         }
-        const size_t dataSize = std::min(mData.size(), mDataMQ->availableToWrite());
-        bool success = mDataMQ->write(mData.data(), dataSize);
+        if (mDataPosition == 0) mOnDataStart();
+        const size_t dataSize = std::min(mData.size() - mDataPosition, mDataMQ->availableToWrite());
+        bool success = mDataMQ->write(mData.data() + mDataPosition, dataSize);
         ALOGE_IF(!success, "data message queue write failed");
+        mDataPosition += dataSize;
+        if (mDataPosition >= mData.size()) mDataPosition = 0;
         mEfGroup->wake(static_cast<uint32_t>(MessageQueueFlagBits::NOT_EMPTY));
 
         uint32_t efState = 0;
@@ -1026,6 +1042,9 @@ class StreamWriter : public StreamWorker<StreamWriter> {
             ALOGE("bad wait status: %d", ret);
             success = false;
         }
+        if (success && mDataPosition == 0) {
+            success = mOnDataWrap();
+        }
         return success;
     }
 
@@ -1033,6 +1052,9 @@ class StreamWriter : public StreamWorker<StreamWriter> {
     IStreamOut* const mStream;
     const size_t mBufferSize;
     std::vector<uint8_t> mData;
+    std::function<void()> mOnDataStart = []() {};
+    std::function<bool()> mOnDataWrap = []() { return true; };
+    size_t mDataPosition = 0;
     std::unique_ptr<CommandMQ> mCommandMQ;
     std::unique_ptr<DataMQ> mDataMQ;
     std::unique_ptr<StatusMQ> mStatusMQ;
@@ -1047,7 +1069,7 @@ class OutputStreamTest
 #if MAJOR_VERSION <= 6
         address.device = AudioDevice::OUT_DEFAULT;
 #elif MAJOR_VERSION >= 7
-        address.deviceType = toString(xsd::AudioDevice::AUDIO_DEVICE_OUT_DEFAULT);
+        address = getAttachedDeviceAddress();
 #endif
         const AudioConfig& config = getConfig();
         auto flags = getOutputFlags();
@@ -1243,16 +1265,11 @@ class InputStreamTest
 #if MAJOR_VERSION <= 6
         address.device = AudioDevice::IN_DEFAULT;
 #elif MAJOR_VERSION >= 7
-        auto maybeSourceAddress = getCachedPolicyConfig().getSourceDeviceForMixPort(
-                getDeviceName(), getMixPortName());
+        address = getAttachedDeviceAddress();
         auto& metadata = initMetadata.tracks[0];
-        if (maybeSourceAddress.has_value() &&
-            !xsd::isTelephonyDevice(maybeSourceAddress.value().deviceType)) {
-            address = maybeSourceAddress.value();
+        if (!xsd::isTelephonyDevice(address.deviceType)) {
             metadata.source = toString(xsd::AudioSource::AUDIO_SOURCE_UNPROCESSED);
             metadata.channelMask = getConfig().base.channelMask;
-        } else {
-            address.deviceType = toString(xsd::AudioDevice::AUDIO_DEVICE_IN_DEFAULT);
         }
 #if MAJOR_VERSION == 7 && MINOR_VERSION >= 1
         auto flagsIt = std::find(flags.begin(), flags.end(),

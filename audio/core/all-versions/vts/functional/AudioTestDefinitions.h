@@ -39,9 +39,10 @@ using DeviceConfigParameter = std::tuple<
         std::variant<android::hardware::audio::common::COMMON_TYPES_CPP_VERSION::AudioInputFlag,
                      android::hardware::audio::common::COMMON_TYPES_CPP_VERSION::AudioOutputFlag>>;
 #elif MAJOR_VERSION >= 7
-enum { PARAM_DEVICE, PARAM_PORT_NAME, PARAM_CONFIG, PARAM_FLAGS };
+enum { PARAM_DEVICE, PARAM_PORT_NAME, PARAM_ATTACHED_DEV_ADDR, PARAM_CONFIG, PARAM_FLAGS };
 using DeviceConfigParameter =
         std::tuple<DeviceParameter, std::string,
+                   android::hardware::audio::common::COMMON_TYPES_CPP_VERSION::DeviceAddress,
                    android::hardware::audio::common::COMMON_TYPES_CPP_VERSION::AudioConfig,
                    std::vector<android::hardware::audio::CORE_TYPES_CPP_VERSION::AudioInOutFlag>>;
 #endif
