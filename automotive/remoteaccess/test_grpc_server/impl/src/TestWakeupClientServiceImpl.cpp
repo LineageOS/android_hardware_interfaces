@@ -18,7 +18,6 @@
 
 #include <android-base/stringprintf.h>
 #include <inttypes.h>
-#include <utils/Log.h>
 #include <utils/Looper.h>
 #include <utils/SystemClock.h>
 #include <chrono>
@@ -133,8 +132,6 @@ void TaskQueue::checkForTestTimeoutLoop() {
         {
             std::unique_lock<std::mutex> lock(mLock);
             if (mStopped) {
-                ALOGW("The TestWakeupClientServiceImpl is stopping, "
-                      "exiting checkForTestTimeoutLoop");
                 return;
             }
         }
@@ -155,8 +152,8 @@ void TaskQueue::handleTaskTimeout() {
             break;
         }
         // In real implementation, this should report task failure to remote wakeup server.
-        ALOGW("Task for client ID: %s timed-out, added at %" PRId64 " ms, now %" PRId64 " ms",
-              taskInfo.taskData.clientid().c_str(), taskInfo.timestampInMs, now);
+        printf("Task for client ID: %s timed-out, added at %" PRId64 " ms, now %" PRId64 " ms",
+               taskInfo.taskData.clientid().c_str(), taskInfo.timestampInMs, now);
         mTasks.pop();
     }
 }
@@ -182,7 +179,7 @@ void TestWakeupClientServiceImpl::fakeTaskGenerateLoop() {
     // from it. Here we simulate receiving one remote task every {kTaskIntervalInMs}ms.
     while (true) {
         mTaskQueue.add(mFakeTaskGenerator.generateTask());
-        ALOGI("Sleeping for %d seconds until next task", kTaskIntervalInMs);
+        printf("Sleeping for %d seconds until next task\n", kTaskIntervalInMs);
 
         std::unique_lock lk(mLock);
         if (mServerStoppedCv.wait_for(lk, std::chrono::milliseconds(kTaskIntervalInMs), [this] {
@@ -198,7 +195,7 @@ void TestWakeupClientServiceImpl::fakeTaskGenerateLoop() {
 Status TestWakeupClientServiceImpl::GetRemoteTasks(ServerContext* context,
                                                    const GetRemoteTasksRequest* request,
                                                    ServerWriter<GetRemoteTasksResponse>* writer) {
-    ALOGD("GetRemoteTasks called");
+    printf("GetRemoteTasks called\n");
     while (true) {
         mTaskQueue.waitForTask();
 
@@ -213,7 +210,7 @@ Status TestWakeupClientServiceImpl::GetRemoteTasks(ServerContext* context,
             const GetRemoteTasksResponse& response = maybeTask.value();
             if (!writer->Write(response)) {
                 // Broken stream, maybe the client is shutting down.
-                ALOGW("Failed to deliver remote task to remote access HAL");
+                printf("Failed to deliver remote task to remote access HAL\n");
                 // The task failed to be sent, add it back to the queue. The order might change, but
                 // it is okay.
                 mTaskQueue.add(response);
