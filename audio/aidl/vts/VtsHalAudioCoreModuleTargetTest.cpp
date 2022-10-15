@@ -82,6 +82,7 @@ using aidl::android::media::audio::common::AudioPortExt;
 using aidl::android::media::audio::common::AudioSource;
 using aidl::android::media::audio::common::AudioUsage;
 using aidl::android::media::audio::common::Void;
+using android::hardware::audio::common::getChannelCount;
 using android::hardware::audio::common::isBitPositionFlagSet;
 using android::hardware::audio::common::isTelephonyDeviceType;
 using android::hardware::audio::common::StreamLogic;
@@ -189,6 +190,29 @@ class WithAudioPortConfig {
     AudioPortConfig mConfig;
 };
 
+template <typename T>
+void GenerateTestArrays(size_t validElementCount, T validMin, T validMax,
+                        std::vector<std::vector<T>>* validValues,
+                        std::vector<std::vector<T>>* invalidValues) {
+    validValues->emplace_back(validElementCount, validMin);
+    validValues->emplace_back(validElementCount, validMax);
+    validValues->emplace_back(validElementCount, (validMin + validMax) / 2.f);
+    if (validElementCount > 0) {
+        invalidValues->emplace_back(validElementCount - 1, validMin);
+    }
+    invalidValues->emplace_back(validElementCount + 1, validMin);
+    for (auto m : {-2, -1, 2}) {
+        const auto invalidMin = m * validMin;
+        if (invalidMin < validMin || invalidMin > validMax) {
+            invalidValues->emplace_back(validElementCount, invalidMin);
+        }
+        const auto invalidMax = m * validMax;
+        if (invalidMax < validMin || invalidMax > validMax) {
+            invalidValues->emplace_back(validElementCount, invalidMax);
+        }
+    }
+}
+
 template <typename PropType, class Instance, typename Getter, typename Setter>
 void TestAccessors(Instance* inst, Getter getter, Setter setter,
                    const std::vector<PropType>& validValues,
@@ -202,13 +226,14 @@ void TestAccessors(Instance* inst, Getter getter, Setter setter,
     ASSERT_TRUE(status.isOk()) << "Unexpected status from a getter: " << status;
     *isSupported = true;
     for (const auto v : validValues) {
-        EXPECT_IS_OK((inst->*setter)(v)) << "for valid value: " << v;
+        EXPECT_IS_OK((inst->*setter)(v)) << "for a valid value: " << ::testing::PrintToString(v);
         PropType currentValue{};
         EXPECT_IS_OK((inst->*getter)(&currentValue));
         EXPECT_EQ(v, currentValue);
     }
     for (const auto v : invalidValues) {
-        EXPECT_STATUS(EX_ILLEGAL_ARGUMENT, (inst->*setter)(v)) << "for invalid value: " << v;
+        EXPECT_STATUS(EX_ILLEGAL_ARGUMENT, (inst->*setter)(v))
+                << "for an invalid value: " << ::testing::PrintToString(v);
     }
     EXPECT_IS_OK((inst->*setter)(initialValue)) << "Failed to restore the initial value";
 }
@@ -2019,6 +2044,42 @@ class AudioStream : public AudioCoreModule {
         }
     }
 
+    void HwGainHwVolume() {
+        const auto ports =
+                moduleConfig->getMixPorts(IOTraits<Stream>::is_input, false /*attachedOnly*/);
+        if (ports.empty()) {
+            GTEST_SKIP() << "No mix ports";
+        }
+        bool atLeastOneSupports = false;
+        for (const auto& port : ports) {
+            const auto portConfig = moduleConfig->getSingleConfigForMixPort(true, port);
+            if (!portConfig.has_value()) continue;
+            WithStream<Stream> stream(portConfig.value());
+            ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultBufferSizeFrames));
+            std::vector<std::vector<float>> validValues, invalidValues;
+            bool isSupported = false;
+            if constexpr (IOTraits<Stream>::is_input) {
+                GenerateTestArrays<float>(getChannelCount(portConfig.value().channelMask.value()),
+                                          IStreamIn::HW_GAIN_MIN, IStreamIn::HW_GAIN_MAX,
+                                          &validValues, &invalidValues);
+                EXPECT_NO_FATAL_FAILURE(TestAccessors<std::vector<float>>(
+                        stream.get(), &IStreamIn::getHwGain, &IStreamIn::setHwGain, validValues,
+                        invalidValues, &isSupported));
+            } else {
+                GenerateTestArrays<float>(getChannelCount(portConfig.value().channelMask.value()),
+                                          IStreamOut::HW_VOLUME_MIN, IStreamOut::HW_VOLUME_MAX,
+                                          &validValues, &invalidValues);
+                EXPECT_NO_FATAL_FAILURE(TestAccessors<std::vector<float>>(
+                        stream.get(), &IStreamOut::getHwVolume, &IStreamOut::setHwVolume,
+                        validValues, invalidValues, &isSupported));
+            }
+            if (isSupported) atLeastOneSupports = true;
+        }
+        if (!atLeastOneSupports) {
+            GTEST_SKIP() << "Hardware gain / volume is not supported";
+        }
+    }
+
     void OpenTwiceSamePortConfigImpl(const AudioPortConfig& portConfig) {
         WithStream<Stream> stream1(portConfig);
         ASSERT_NO_FATAL_FAILURE(stream1.SetUp(module.get(), kDefaultBufferSizeFrames));
@@ -2095,6 +2156,7 @@ TEST_IN_AND_OUT_STREAM(SendInvalidCommand);
 TEST_IN_AND_OUT_STREAM(UpdateHwAvSyncId);
 TEST_IN_AND_OUT_STREAM(GetVendorParameters);
 TEST_IN_AND_OUT_STREAM(SetVendorParameters);
+TEST_IN_AND_OUT_STREAM(HwGainHwVolume);
 
 namespace aidl::android::hardware::audio::core {
 std::ostream& operator<<(std::ostream& os, const IStreamIn::MicrophoneDirection& md) {
