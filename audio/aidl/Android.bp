@@ -156,6 +156,7 @@ aidl_interface {
         "android/hardware/audio/effect/IEffect.aidl",
         "android/hardware/audio/effect/IFactory.aidl",
         "android/hardware/audio/effect/Parameter.aidl",
+        "android/hardware/audio/effect/Processing.aidl",
         "android/hardware/audio/effect/State.aidl",
     ],
     imports: [
