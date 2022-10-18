@@ -23,6 +23,13 @@ import android.media.audio.common.AudioUuid;
 /**
  * Descriptor contains all information (capabilities, attributes, etc) for an effect implementation.
  * The client uses this information to decide when and how to apply an effect implementation.
+ *
+ * Each type of effect can have more than one implementation (differentiated by implementation
+ * UUID), the effect proxy act as a combination of two implementations (usually one software and
+ * one offload implementation), so effect processing can be seamlessly switched between
+ * implementations in same proxy depending on the configuration and/or use case. If the optional
+ * proxy UUID is specified in Descriptor.Identity, then client must consider the effect instance as
+ * part of the effect proxy.
  */
 @VintfStability
 parcelable Descriptor {
@@ -69,6 +76,15 @@ parcelable Descriptor {
          * UUID for this particular implementation.
          */
         AudioUuid uuid;
+        /**
+         * Optional proxy UUID. This field must be set to the proxy effect type UUID if the effect
+         * implementation is part of a proxy effect.
+         */
+        @nullable AudioUuid proxy;
+        /**
+         * Capability flags defined for the effect implementation.
+         */
+        Flags flags;
     }
 
     // Common attributes of all effect implementation.
@@ -78,10 +94,6 @@ parcelable Descriptor {
          * Identity of effect implementation.
          */
         Identity id;
-        /**
-         * Effect engine defined capabilities/requirements flags.
-         */
-        Flags flags;
     }
     Common common;
 
