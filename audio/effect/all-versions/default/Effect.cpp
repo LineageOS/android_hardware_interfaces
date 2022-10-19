@@ -700,8 +700,21 @@ Return<void> Effect::command(uint32_t commandId, const hidl_vec<uint8_t>& data,
 
     void* dataPtr = halDataSize > 0 ? &halData[0] : NULL;
     void* resultPtr = halResultSize > 0 ? &halResult[0] : NULL;
-    status_t status =
-        (*mHandle)->command(mHandle, commandId, halDataSize, dataPtr, &halResultSize, resultPtr);
+    status_t status = BAD_VALUE;
+    switch (commandId) {
+        case 'gtid':  // retrieve the tid, used for spatializer priority boost
+            if (halDataSize == 0 && resultMaxSize == sizeof(int32_t)) {
+                auto ptid = (int32_t*)resultPtr;
+                ptid[0] = mProcessThread ? mProcessThread->getTid() : -1;
+                status = OK;
+                break;  // we have handled 'gtid' here.
+            }
+            [[fallthrough]];  // allow 'gtid' overload (checked halDataSize and resultMaxSize).
+        default:
+            status = (*mHandle)->command(mHandle, commandId, halDataSize, dataPtr, &halResultSize,
+                                         resultPtr);
+            break;
+    }
     hidl_vec<uint8_t> result;
     if (status == OK && resultPtr != NULL) {
         result.setToExternal(&halResult[0], halResultSize);
