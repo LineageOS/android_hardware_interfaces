@@ -18,7 +18,10 @@ package android.hardware.audio.effect;
 
 import android.hardware.audio.effect.Equalizer;
 import android.media.audio.common.AudioConfig;
-import android.media.audio.common.AudioDeviceDescription;
+import android.media.audio.common.AudioDeviceType;
+import android.media.audio.common.AudioMode;
+import android.media.audio.common.AudioSource;
+
 /**
  * Defines all parameters supported by the effect instance.
  *
@@ -40,12 +43,18 @@ union Parameter {
      */
     @VintfStability
     union Id {
-        // Common parameter tag.
+        /**
+         *  Common parameter tag.
+         */
         int commonTag;
-        // Vendor defined parameter tag.
+        /**
+         * Vendor defined parameter tag.
+         */
         int vendorTag;
-        // Specific effect parameter tag.
-        Specific.Tag specificTag;
+        /**
+         * Specific effect parameter tag.
+         */
+        Specific.Id specificId;
     }
 
     /**
@@ -53,18 +62,60 @@ union Parameter {
      */
     @VintfStability
     parcelable Common {
-        // Type of Audio device.
+        /**
+         * Type of Audio device.
+         */
         int session;
-        // I/O Handle.
+        /**
+         * I/O Handle.
+         */
         int ioHandle;
-        // Type of Audio device.
-        AudioDeviceDescription device;
-        // Input config.
+        /**
+         * Input config.
+         */
         AudioConfig input;
-        // Output config.
+        /**
+         * Output config.
+         */
         AudioConfig output;
     }
     Common common;
+
+    /**
+     * Used by audio framework to set the device type to effect engine.
+     * Effect must implement setParameter(device) if Flags.deviceIndication set to true.
+     */
+    AudioDeviceType device;
+    /**
+     * Used by audio framework to set the audio mode to effect engine.
+     * Effect must implement setParameter(mode) if Flags.audioModeIndication set to true.
+     */
+    AudioMode mode;
+    /**
+     * Used by audio framework to set the audio source to effect engine.
+     * Effect must implement setParameter(source) if Flags.audioSourceIndication set to true.
+     */
+    AudioSource source;
+
+    /**
+     * The volume gain for left and right channel, left and right equals to same value if it's mono.
+     */
+    @VintfStability
+    parcelable Volume {
+        float left;
+        float right;
+    }
+    /**
+     * Used by audio framework to delegate volume control to effect engine.
+     * Effect must implement setParameter(volume) if Flags.volume set to Volume.IND.
+     */
+    Volume volume;
+
+    /**
+     * Used by audio framework to delegate offload information to effect engine.
+     * Effect must implement setParameter(offload) if Flags.offloadSupported set to true.
+     */
+    boolean offload;
 
     /**
      * Parameters for vendor extension effect implementation usage.
@@ -80,8 +131,16 @@ union Parameter {
      */
     @VintfStability
     union Specific {
+        @VintfStability
+        union Id {
+            /**
+             * Equalizer.Tag to identify the parameters in Equalizer.
+             */
+            Equalizer.Tag equalizerTag = Equalizer.Tag.vendor;
+        }
+        Id id;
+
         Equalizer equalizer;
-        // TODO: add other effect definitions here
     }
     Specific specific;
 }

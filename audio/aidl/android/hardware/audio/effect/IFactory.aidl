@@ -50,7 +50,7 @@ interface IFactory {
      * An effect can exist more than once in the returned list, which means this effect must be used
      * in more than one processing type.
      *
-     * @param type Type of processing to query, can be AudioStreamType or AudioSource.
+     * @param type Type of processing to query, can be AudioStreamType, AudioSource, or null.
      * @return list of processing defined with the optional filter by Processing.Type.
      */
     Processing[] queryProcessing(in @nullable Processing.Type type);
