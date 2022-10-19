@@ -96,8 +96,7 @@ void TvInput::init() {
     }
     mStreamConfigs[in_deviceId][in_streamId]->handle = createNativeHandle(in_streamId);
     mStreamConfigs[in_deviceId][in_streamId]->isOpen = true;
-    NativeHandle aidlHandle = makeToAidl(mStreamConfigs[in_deviceId][in_streamId]->handle);
-    _aidl_return = &aidlHandle;
+    *_aidl_return = makeToAidl(mStreamConfigs[in_deviceId][in_streamId]->handle);
     return ::ndk::ScopedAStatus::ok();
 }
 
