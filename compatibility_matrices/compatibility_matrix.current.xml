@@ -610,14 +610,6 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
-        <name>android.hardware.tv.input</name>
-        <version>1.0</version>
-        <interface>
-            <name>ITvInput</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.tv.tuner</name>
         <version>1</version>
