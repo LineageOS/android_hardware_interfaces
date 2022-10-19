@@ -107,6 +107,17 @@ void GnssHalTest::SetUpGnssCallback() {
     }
 }
 
+void GnssHalTest::TearDown() {
+    GnssHalTestTemplate<IGnss_V2_1>::TearDown();
+    if (aidl_gnss_hal_ != nullptr) {
+        aidl_gnss_hal_->close();
+        aidl_gnss_hal_ = nullptr;
+    }
+
+    // Set to nullptr to destruct the callback event queues and warn of any unprocessed events.
+    aidl_gnss_cb_ = nullptr;
+}
+
 void GnssHalTest::CheckLocation(const GnssLocation& location, bool check_speed) {
     Utils::checkLocation(location, check_speed, /* check_more_accuracies= */ true);
 }
