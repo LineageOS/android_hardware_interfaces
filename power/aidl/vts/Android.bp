@@ -35,6 +35,7 @@ cc_test {
         "android.hardware.power-V4-ndk",
     ],
     test_suites: [
+        "general-tests",
         "vts",
     ],
 }
