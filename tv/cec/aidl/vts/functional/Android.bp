@@ -1,10 +1,10 @@
-// Copyright (C) 2020 The Android Open Source Project
+// Copyright (C) 2022 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+//       http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,29 +13,26 @@
 // limitations under the License.
 
 package {
-    // See: http://go/android-license-faq
-    // A large-scale-change added 'default_applicable_licenses' to import
-    // all of the 'license_kinds' from "hardware_interfaces_license"
-    // to get the below license kinds:
-    //   SPDX-license-identifier-Apache-2.0
     default_applicable_licenses: ["hardware_interfaces_license"],
 }
 
 cc_test {
-    name: "VtsHalPowerTargetTest",
+    name: "VtsHalTvCecAidlTargetTest",
     defaults: [
         "VtsHalTargetTestDefaults",
         "use_libaidlvintf_gtest_helper_static",
     ],
-    srcs: ["VtsHalPowerTargetTest.cpp"],
+    srcs: ["VtsHalTvCecAidlTargetTest.cpp"],
+    static_libs: [
+        "android.hardware.tv.cec-V1-ndk",
+        "android.hardware.tv.hdmi-V1-ndk",
+    ],
     shared_libs: [
         "libbinder_ndk",
-    ],
-    static_libs: [
-        "android.hardware.power-V4-ndk",
     ],
     test_suites: [
         "general-tests",
         "vts",
     ],
+    disable_framework: true,
 }
