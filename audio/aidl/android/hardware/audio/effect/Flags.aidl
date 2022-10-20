@@ -17,10 +17,131 @@
 package android.hardware.audio.effect;
 
 /**
- * The common part of available capability/configuration for effects. For effect type specific
- * capability, see @c android.hardware.audio.effect.Capability.
+ * Some common capability for an effect instance.
  */
 @VintfStability
 parcelable Flags {
-    // TODO: add Effect engine defined capabilities/requirements flags.
+    /**
+     * Type of connection.
+     */
+    @VintfStability
+    @Backing(type="byte")
+    enum Type {
+        /**
+         * After track process.
+         */
+        INSERT = 0,
+        /**
+         * Connect to track auxiliary output and use send level.
+         */
+        AUXILIARY = 1,
+        /**
+         * Rreplaces track process function; must implement SRC, volume and mono to stereo.
+         */
+        REPLACE = 2,
+        /**
+         * Applied below audio HAL on in.
+         */
+        PRE_PROC = 3,
+        /**
+         * Applied below audio HAL on out.
+         */
+        POST_PROC = 4,
+    }
+    Type type = Type.INSERT;
+
+    /**
+     * Insertion preference.
+     */
+    @VintfStability
+    @Backing(type="byte")
+    enum Insert {
+        ANY = 0,
+        /**
+         * First of the chain.
+         */
+        FIRST = 1,
+        /**
+         * Last of the chain.
+         */
+        LAST = 2,
+        /**
+         * Exclusive (only effect in the insert chain.
+         */
+        EXCLUSIVE = 3,
+    }
+    Insert insert = Insert.ANY;
+
+    @VintfStability
+    @Backing(type="byte")
+    enum Volume {
+        NONE = 0,
+        /**
+         * Implements volume control.
+         */
+        CTRL = 1,
+        /**
+         * Requires volume indication.
+         */
+        IND = 2,
+        /**
+         * Monitors requested volume.
+         */
+        MONITOR = 3,
+    }
+    Volume volume = Volume.NONE;
+
+    @VintfStability
+    @Backing(type="byte")
+    enum HardwareAccelerator {
+        /**
+         * No hardware acceleration
+         */
+        NONE = 0,
+        /**
+         * Non tunneled hw acceleration: effect reads the samples, send them to HW accelerated
+         * effect processor, reads back the processed samples and returns them to the output buffer.
+         */
+        SIMPLE = 1,
+        /**
+         * The effect interface is only used to control the effect engine. This mode is relevant for
+         * global effects actually applied by the audio hardware on the output stream.
+         */
+        TUNNEL = 2,
+    }
+    HardwareAccelerator hwAcceleratorMode = HardwareAccelerator.NONE;
+
+    /**
+     * Effect instance set this flag to true if it requires update on if the playback thread the
+     * effect attached to is offloaded or not. In this case the framework must call
+     * IEffect.setParameter(Parameter.offload) to notify effect instance when playback thread
+     * offload changes.
+     */
+    boolean offloadIndication;
+
+    /**
+     * Effect instance set this flag to true if it requires device change update. In this case the
+     * framework must call IEffect.setParameter(Parameter.device) to notify effect instance when the
+     * device changes.
+     */
+    boolean deviceIndication;
+
+    /**
+     * Effect instance set this flag to true if it requires audio mode change update. In this case
+     * the framework must call IEffect.setParameter(Parameter.mode) to notify effect instance when
+     * the audio mode changes.
+     */
+    boolean audioModeIndication;
+
+    /**
+     * Effect instance set this flag to true if it requires audio source change update. In this case
+     * the framework must call IEffect.setParameter(Parameter.source) to notify effect instance when
+     * the audio source changes.
+     */
+    boolean audioSourceIndication;
+
+    /**
+     * Set to true if no processing done for this effect instance.
+     */
+    boolean noProcessing;
 }

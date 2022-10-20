@@ -53,14 +53,22 @@ interface IEffect {
         int fmqByteProduced;
     }
 
-    // Return data structure of IEffect.open() interface.
+    /**
+     * Return data structure of IEffect.open() interface.
+     */
     @VintfStability
     parcelable OpenEffectReturn {
-        // Message queue for effect processing status.
+        /**
+         * Message queue for effect processing status.
+         */
         MQDescriptor<Status, SynchronizedReadWrite> statusMQ;
-        // Message queue for input data buffer.
+        /**
+         * Message queue for input data buffer.
+         */
         MQDescriptor<byte, SynchronizedReadWrite> inputDataMQ;
-        // Message queue for output data buffer.
+        /**
+         * Message queue for output data buffer.
+         */
         MQDescriptor<byte, SynchronizedReadWrite> outputDataMQ;
     }
 

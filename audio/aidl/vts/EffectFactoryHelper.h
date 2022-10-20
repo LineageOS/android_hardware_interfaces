@@ -24,13 +24,14 @@
 #include <android/binder_auto_utils.h>
 
 #include "TestUtils.h"
+#include "effect-impl/EffectUUID.h"
 
 using namespace android;
 
 using aidl::android::hardware::audio::effect::Descriptor;
+using aidl::android::hardware::audio::effect::EffectNullUuid;
 using aidl::android::hardware::audio::effect::IEffect;
 using aidl::android::hardware::audio::effect::IFactory;
-using aidl::android::hardware::audio::effect::Parameter;
 using aidl::android::hardware::audio::effect::Processing;
 using aidl::android::media::audio::common::AudioUuid;
 
@@ -69,8 +70,27 @@ class EffectFactoryHelper {
     }
 
     void CreateEffects() {
-        ASSERT_NE(mEffectFactory, nullptr);
         for (const auto& id : mIds) {
+            std::shared_ptr<IEffect> effect;
+            EXPECT_IS_OK(mEffectFactory->createEffect(id.uuid, &effect));
+            EXPECT_NE(effect, nullptr) << id.toString();
+            if (effect) {
+                mEffectIdMap[effect] = id;
+            }
+        }
+    }
+
+    void QueryAndCreateEffects(const AudioUuid& type = EffectNullUuid) {
+        std::vector<Descriptor::Identity> ids;
+        ASSERT_NE(mEffectFactory, nullptr);
+
+        if (type == EffectNullUuid) {
+            EXPECT_IS_OK(mEffectFactory->queryEffects(std::nullopt, std::nullopt, &ids));
+        } else {
+            EXPECT_IS_OK(mEffectFactory->queryEffects(type, std::nullopt, &ids));
+        }
+        for (const auto& id : ids) {
+            ASSERT_EQ(id.type, type);
             std::shared_ptr<IEffect> effect;
             EXPECT_IS_OK(mEffectFactory->createEffect(id.uuid, &effect));
             EXPECT_NE(effect, nullptr) << id.toString();
@@ -126,8 +146,10 @@ class EffectFactoryHelper {
 
     std::shared_ptr<IFactory> GetFactory() { return mEffectFactory; }
     const std::vector<Descriptor::Identity>& GetEffectIds() { return mIds; }
-    const std::vector<Descriptor::Identity>& GetCompleteEffectIdList() { return mCompleteIds; }
-    const std::map<std::shared_ptr<IEffect>, Descriptor::Identity>& GetEffectMap() {
+    const std::vector<Descriptor::Identity>& GetCompleteEffectIdList() const {
+        return mCompleteIds;
+    }
+    const std::map<std::shared_ptr<IEffect>, Descriptor::Identity>& GetEffectMap() const {
         return mEffectIdMap;
     }
     void ClearEffectMap() { mEffectIdMap.clear(); }

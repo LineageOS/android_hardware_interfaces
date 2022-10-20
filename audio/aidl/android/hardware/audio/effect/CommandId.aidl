@@ -27,7 +27,9 @@ package android.hardware.audio.effect;
 @VintfStability
 @Backing(type="int")
 enum CommandId {
-    /// MUST be supported by all effects
+    /**
+     * Commands MUST be supported by all effects.
+     */
     /**
      * Start effect engine processing.
      * An effect instance must start processing data and transfer to PROCESSING state if it is in
@@ -53,10 +55,13 @@ enum CommandId {
      */
     RESET = 2,
 
-    /// MUST be supported by a specific type of effect.
-    // Commands must supported by Equalizer.
+    /**
+     * Commands MUST be supported by a specific type of effect.
+     */
 
-    /// Extension commands for vendor.
+    /**
+     * Extension commands for vendor.
+     */
     VENDOR_COMMAND_0 = 0x100,
     VENDOR_COMMAND_1,
     VENDOR_COMMAND_2,
