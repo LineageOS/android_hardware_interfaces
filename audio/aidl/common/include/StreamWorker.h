@@ -50,6 +50,10 @@ class ThreadController {
         return mError;
     }
     void stop();
+    // Direct use of 'join' assumes that the StreamLogic is not intended
+    // to run forever, and is guaranteed to exit by itself. This normally
+    // only happen in tests.
+    void join();
     bool waitForAtLeastOneCycle();
 
     // Only used by unit tests.
@@ -133,7 +137,8 @@ class StreamWorker : public LogicImpl {
     void resume() { mThread.resume(); }
     bool hasError() { return mThread.hasError(); }
     std::string getError() { return mThread.getError(); }
-    void stop() { return mThread.stop(); }
+    void stop() { mThread.stop(); }
+    void join() { mThread.join(); }
     bool waitForAtLeastOneCycle() { return mThread.waitForAtLeastOneCycle(); }
 
     // Only used by unit tests.
