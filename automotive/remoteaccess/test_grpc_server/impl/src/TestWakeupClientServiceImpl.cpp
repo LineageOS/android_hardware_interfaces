@@ -125,6 +125,11 @@ void TaskQueue::stopWait() {
     mTasksNotEmptyCv.notify_all();
 }
 
+bool TaskQueue::isEmpty() {
+    std::lock_guard<std::mutex> lockGuard(mLock);
+    return mTasks.size() == 0 || mStopped;
+}
+
 void TaskQueue::checkForTestTimeoutLoop() {
     Looper::setForThread(mLooper);
 
@@ -179,6 +184,11 @@ void TestWakeupClientServiceImpl::fakeTaskGenerateLoop() {
     // from it. Here we simulate receiving one remote task every {kTaskIntervalInMs}ms.
     while (true) {
         mTaskQueue.add(mFakeTaskGenerator.generateTask());
+        printf("Received a new task\n");
+        if (mWakeupRequired) {
+            wakeupApplicationProcessor();
+        }
+
         printf("Sleeping for %d seconds until next task\n", kTaskIntervalInMs);
 
         std::unique_lock lk(mLock);
@@ -224,7 +234,19 @@ Status TestWakeupClientServiceImpl::GetRemoteTasks(ServerContext* context,
 Status TestWakeupClientServiceImpl::NotifyWakeupRequired(ServerContext* context,
                                                          const NotifyWakeupRequiredRequest* request,
                                                          NotifyWakeupRequiredResponse* response) {
+    if (request->iswakeuprequired() && !mWakeupRequired && !mTaskQueue.isEmpty()) {
+        // If wakeup is now required and previously not required, this means we have finished
+        // shutting down the device. If there are still pending tasks, try waking up AP again
+        // to finish executing those tasks.
+        wakeupApplicationProcessor();
+    }
+    mWakeupRequired = request->iswakeuprequired();
     return Status::OK;
+}
+
+void TestWakeupClientServiceImpl::wakeupApplicationProcessor() {
+    printf("Waking up application processor...\n");
+    // TODO(b/254547153): Send can bus message using socket CAN once we know what the message is.
 }
 
 }  // namespace remoteaccess
