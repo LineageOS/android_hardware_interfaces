@@ -74,7 +74,21 @@ ScopedAStatus Gnss::setCallback(const std::shared_ptr<IGnssCallback>& callback) 
     if (!status.isOk()) {
         ALOGE("%s: Unable to invoke callback.gnssSetSystemInfoCb", __func__);
     }
-
+    GnssSignalType signalType1 = {
+            .constellation = GnssConstellationType::GPS,
+            .carrierFrequencyHz = 1.59975e+09,
+            .codeType = GnssSignalType::CODE_TYPE_C,
+    };
+    GnssSignalType signalType2 = {
+            .constellation = GnssConstellationType::GLONASS,
+            .carrierFrequencyHz = 1.59975e+09,
+            .codeType = GnssSignalType::CODE_TYPE_C,
+    };
+    status = sGnssCallback->gnssSetSignalTypeCapabilitiesCb(
+            std::vector<GnssSignalType>({signalType1, signalType2}));
+    if (!status.isOk()) {
+        ALOGE("%s: Unable to invoke callback.gnssSetSignalTypeCapabilitiesCb", __func__);
+    }
     return ScopedAStatus::ok();
 }
 
