@@ -77,4 +77,6 @@ interface IRadioNetworkResponse {
   oneway void exitEmergencyModeResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void cancelEmergencyNetworkScanResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void setNullCipherAndIntegrityEnabledResponse(in android.hardware.radio.RadioResponseInfo info);
+  oneway void isN1ModeEnabledResponse(in android.hardware.radio.RadioResponseInfo info, boolean isEnabled);
+  oneway void setN1ModeEnabledResponse(in android.hardware.radio.RadioResponseInfo info);
 }

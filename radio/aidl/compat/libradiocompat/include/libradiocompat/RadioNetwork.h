@@ -99,6 +99,8 @@ class RadioNetwork : public RadioCompatBase,
                     scanTrigger) override;
     ::ndk::ScopedAStatus cancelEmergencyNetworkScan(int32_t serial, bool resetScan) override;
     ::ndk::ScopedAStatus exitEmergencyMode(int32_t serial) override;
+    ::ndk::ScopedAStatus isN1ModeEnabled(int32_t serial) override;
+    ::ndk::ScopedAStatus setN1ModeEnabled(int32_t serial, bool enable) override;
 
     ::ndk::ScopedAStatus setNullCipherAndIntegrityEnabled(int32_t serial, bool enabled) override;
 
