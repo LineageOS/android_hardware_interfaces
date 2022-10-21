@@ -28,11 +28,11 @@ EffectThread::EffectThread() {
 }
 
 EffectThread::~EffectThread() {
-    destroy();
+    destroyThread();
     LOG(DEBUG) << __func__ << " done";
 };
 
-RetCode EffectThread::create(const std::string& name, const int priority) {
+RetCode EffectThread::createThread(const std::string& name, const int priority) {
     if (mThread.joinable()) {
         LOG(WARNING) << __func__ << " thread already created, no-op";
         return RetCode::SUCCESS;
@@ -44,7 +44,7 @@ RetCode EffectThread::create(const std::string& name, const int priority) {
     return RetCode::SUCCESS;
 }
 
-RetCode EffectThread::destroy() {
+RetCode EffectThread::destroyThread() {
     {
         std::lock_guard lg(mMutex);
         mStop = mExit = true;
@@ -58,10 +58,10 @@ RetCode EffectThread::destroy() {
     return RetCode::SUCCESS;
 }
 
-RetCode EffectThread::start() {
+RetCode EffectThread::startThread() {
     if (!mThread.joinable()) {
         LOG(ERROR) << __func__ << " thread already destroyed";
-        return RetCode::ERROR;
+        return RetCode::ERROR_THREAD;
     }
 
     {
@@ -78,10 +78,10 @@ RetCode EffectThread::start() {
     return RetCode::SUCCESS;
 }
 
-RetCode EffectThread::stop() {
+RetCode EffectThread::stopThread() {
     if (!mThread.joinable()) {
         LOG(ERROR) << __func__ << " thread already destroyed";
-        return RetCode::ERROR;
+        return RetCode::ERROR_THREAD;
     }
 
     {
@@ -114,17 +114,6 @@ void EffectThread::threadLoop() {
         }
         // process without lock
         process();
-    }
-}
-
-std::string toString(RetCode& code) {
-    switch (code) {
-        case RetCode::SUCCESS:
-            return "SUCCESS";
-        case RetCode::ERROR:
-            return "ERROR";
-        default:
-            return "EnumError";
     }
 }
 

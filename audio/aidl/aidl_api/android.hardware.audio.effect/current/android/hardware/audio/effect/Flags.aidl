@@ -34,4 +34,41 @@
 package android.hardware.audio.effect;
 @VintfStability
 parcelable Flags {
+  android.hardware.audio.effect.Flags.Type type = android.hardware.audio.effect.Flags.Type.INSERT;
+  android.hardware.audio.effect.Flags.Insert insert = android.hardware.audio.effect.Flags.Insert.ANY;
+  android.hardware.audio.effect.Flags.Volume volume = android.hardware.audio.effect.Flags.Volume.NONE;
+  android.hardware.audio.effect.Flags.HardwareAccelerator hwAcceleratorMode = android.hardware.audio.effect.Flags.HardwareAccelerator.NONE;
+  boolean offloadIndication;
+  boolean deviceIndication;
+  boolean audioModeIndication;
+  boolean audioSourceIndication;
+  boolean noProcessing;
+  @Backing(type="byte") @VintfStability
+  enum Type {
+    INSERT = 0,
+    AUXILIARY = 1,
+    REPLACE = 2,
+    PRE_PROC = 3,
+    POST_PROC = 4,
+  }
+  @Backing(type="byte") @VintfStability
+  enum Insert {
+    ANY = 0,
+    FIRST = 1,
+    LAST = 2,
+    EXCLUSIVE = 3,
+  }
+  @Backing(type="byte") @VintfStability
+  enum Volume {
+    NONE = 0,
+    CTRL = 1,
+    IND = 2,
+    MONITOR = 3,
+  }
+  @Backing(type="byte") @VintfStability
+  enum HardwareAccelerator {
+    NONE = 0,
+    SIMPLE = 1,
+    TUNNEL = 2,
+  }
 }

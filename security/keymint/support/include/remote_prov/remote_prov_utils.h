@@ -177,4 +177,19 @@ ErrMsgOr<std::vector<BccEntryData>> verifyProductionProtectedData(
         const EekChain& eekChain, const std::vector<uint8_t>& eekId, int32_t supportedEekCurve,
         IRemotelyProvisionedComponent* provisionable, const std::vector<uint8_t>& challenge);
 
+/**
+ * Verify the CSR as if the device is still early in the factory process and may not
+ * have all device identifiers provisioned yet.
+ */
+ErrMsgOr<std::vector<BccEntryData>> verifyFactoryCsr(const cppbor::Array& keysToSign,
+                                                     const std::vector<uint8_t>& csr,
+                                                     IRemotelyProvisionedComponent* provisionable,
+                                                     const std::vector<uint8_t>& challenge);
+/**
+ * Verify the CSR as if the device is a final production sample.
+ */
+ErrMsgOr<std::vector<BccEntryData>> verifyProductionCsr(
+        const cppbor::Array& keysToSign, const std::vector<uint8_t>& csr,
+        IRemotelyProvisionedComponent* provisionable, const std::vector<uint8_t>& challenge);
+
 }  // namespace aidl::android::hardware::security::keymint::remote_prov

@@ -21,6 +21,17 @@ namespace aidl::android::hardware::audio::effect {
 
 using ::aidl::android::media::audio::common::AudioUuid;
 
+// Null UUID
+static const AudioUuid EffectNullUuid = {static_cast<int32_t>(0xec7178ec),
+                                         0xe5e1,
+                                         0x4432,
+                                         0xa3f4,
+                                         {0x46, 0x57, 0xe6, 0x79, 0x52, 0x10}};
+
+// Zero UUID
+static const AudioUuid EffectZeroUuid = {
+        static_cast<int32_t>(0x0), 0x0, 0x0, 0x0, {0x0, 0x0, 0x0, 0x0, 0x0, 0x0}};
+
 // Equalizer type UUID.
 static const AudioUuid EqualizerTypeUUID = {static_cast<int32_t>(0x0bed4300),
                                             0xddd6,

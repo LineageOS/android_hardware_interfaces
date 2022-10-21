@@ -59,5 +59,9 @@ parcelable Descriptor {
   @VintfStability
   parcelable Common {
     android.hardware.audio.effect.Descriptor.Identity id;
+    int cpuLoad;
+    int memoryUsage;
+    @utf8InCpp String name;
+    @utf8InCpp String implementor;
   }
 }
