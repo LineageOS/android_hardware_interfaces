@@ -23,39 +23,30 @@ enum AccessNetwork {
     /**
      * Unknown access network
      */
-    UNKNOWN = 0,
+    UNKNOWN,
     /**
      * GSM EDGE Radio Access Network
      */
-    GERAN = 1,
+    GERAN,
     /**
      * Universal Terrestrial Radio Access Network
      */
-    UTRAN = 2,
+    UTRAN,
     /**
      * Evolved Universal Terrestrial Radio Access Network
      */
-    EUTRAN = 3,
+    EUTRAN,
     /**
      * CDMA 2000 network
      */
-    CDMA2000 = 4,
+    CDMA2000,
     /**
-     * Interworking Wireless LAN.
-     * @deprecated should use N3ANEPS or N3AN5GS based on N3AN selection.
+     * Interworking Wireless LAN
      */
-    IWLAN = 5,
+    IWLAN,
     /**
      * Next-Generation Radio Access Network (NGRAN).
      * Note NGRAN is only for standalone mode. Non-standalone mode uses AccessNetwork EUTRAN.
      */
-    NGRAN = 6,
-    /**
-     * Non-3GPP Access Network for EPS.
-     */
-    N3ANEPS = 5,
-    /**
-     * Non-3GPP Access Network for 5GS.
-     */
-    N3AN5GS = 7,
+    NGRAN,
 }
