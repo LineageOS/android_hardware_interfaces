@@ -23,13 +23,13 @@ import android.hardware.radio.network.BarringInfo;
 import android.hardware.radio.network.CdmaRoamingType;
 import android.hardware.radio.network.CellIdentity;
 import android.hardware.radio.network.CellInfo;
-import android.hardware.radio.network.EmergencyRegResult;
 import android.hardware.radio.network.OperatorInfo;
 import android.hardware.radio.network.RadioAccessSpecifier;
 import android.hardware.radio.network.RadioBandMode;
 import android.hardware.radio.network.RegStateResult;
 import android.hardware.radio.network.SignalStrength;
 import android.hardware.radio.network.UsageSetting;
+import android.hardware.radio.network.EmergencyRegResult;
 
 /**
  * Interface declaring response functions to solicited radio requests for network APIs.
@@ -153,8 +153,6 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INTERNAL_ERR
      *   RadioError:NOT_PROVISIONED
-     *
-     * @deprecated use getRegistrationStateResponse()
      */
     void getDataRegistrationStateResponse(
             in RadioResponseInfo info, in RegStateResult dataRegResponse);
@@ -261,8 +259,6 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INTERNAL_ERR
-     *
-     * @deprecated use getRegistrationStateResponse()
      */
     void getVoiceRegistrationStateResponse(
             in RadioResponseInfo info, in RegStateResult voiceRegResponse);
@@ -620,16 +616,4 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:MODEM_ERR
      */
     void cancelEmergencyNetworkScanResponse(in RadioResponseInfo info);
-
-    /**
-     * @param info Response info struct containing response type, serial no. and error
-     * @param regResponse Current registration response as defined by RegStateResult
-     *
-     * Valid errors returned:
-     *   RadioError:NONE
-     *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:INTERNAL_ERR
-     *   RadioError:NOT_PROVISIONED
-     */
-    void getRegistrationStateResponse(in RadioResponseInfo info, in RegStateResult regResponse);
 }
