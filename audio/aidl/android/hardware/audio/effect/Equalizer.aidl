@@ -20,14 +20,23 @@ import android.media.audio.common.AudioProfile;
 
 /**
  * Equalizer specific definitions.
+ *
+ * All parameters defined in union Equalizer must be gettable and settable. The capabilities defined
+ * in Equalizer.Capability can only acquired with IEffect.getDescriptor() and not settable.
  */
 @VintfStability
 union Equalizer {
     /**
-     * Defines Equalizer implementation capabilities, it MUST be supported by all equalizer
-     * implementations.
-     *
-     * Equalizer.Capability definition is used by android.hardware.audio.effect.Capability.
+     * Vendor Equalizer implementation definition for additional parameters.
+     */
+    @VintfStability
+    parcelable VendorExtension {
+        ParcelableHolder extension;
+    }
+    VendorExtension vendor;
+
+    /**
+     * Capability MUST be supported by Equalizer implementation.
      */
     @VintfStability
     parcelable Capability {
@@ -36,12 +45,55 @@ union Equalizer {
          * definition not enough.
          */
         ParcelableHolder extension;
+
+        /**
+         * Bands frequency ranges supported.
+         */
+        BandFrequency[] bandFrequencies;
+
+        /**
+         * Presets name and index.
+         */
+        Preset[] presets;
     }
 
-    // Vendor Equalizer implementation definition for additional parameters.
+    /**
+     * Level setting for each band.
+     */
     @VintfStability
-    parcelable VendorExtension {
-        ParcelableHolder extension;
+    parcelable BandLevel {
+        int index;
+        int level;
     }
-    VendorExtension vendor;
+
+    /**
+     * Supported minimal and maximal frequency for each band.
+     */
+    @VintfStability
+    parcelable BandFrequency {
+        int index;
+        int min;
+        int max;
+    }
+
+    /**
+     * Factory presets supported.
+     */
+    @VintfStability
+    parcelable Preset {
+        int index;
+        /**
+         * Preset name, used to identify presets but no intended to display on UI directly.
+         */
+        @utf8InCpp String name;
+    }
+
+    /**
+     * Level for each band.
+     */
+    BandLevel[] bandLevels;
+    /**
+     * Index of current preset.
+     */
+    int preset;
 }
