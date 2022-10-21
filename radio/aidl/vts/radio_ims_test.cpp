@@ -125,7 +125,7 @@ TEST_P(RadioImsTest, startImsTraffic) {
 
     ndk::ScopedAStatus res =
             radio_ims->startImsTraffic(serial, 1,
-            ImsTrafficType::REGISTRATION, AccessNetwork::EUTRAN);
+            ImsTrafficType::REGISTRATION, AccessNetwork::EUTRAN, ImsCall::Direction::OUTGOING);
     ASSERT_OK(res);
     EXPECT_EQ(std::cv_status::no_timeout, wait());
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_ims->rspInfo.type);
@@ -209,6 +209,34 @@ TEST_P(RadioImsTest, sendAnbrQuery) {
     EXPECT_EQ(serial, radioRsp_ims->rspInfo.serial);
 
     ALOGI("sendAnbrQuery, rspInfo.error = %s\n",
+              toString(radioRsp_ims->rspInfo.error).c_str());
+
+    verifyError(radioRsp_ims->rspInfo.error);
+}
+
+/*
+ * Test IRadioIms.updateImsCallStatus() for the response returned.
+ */
+TEST_P(RadioImsTest, updateImsCallStatus) {
+    if (!deviceSupportsFeature(FEATURE_TELEPHONY_IMS)) {
+        ALOGI("Skipping updateImsCallStatus because ims is not supported in device");
+        return;
+    } else {
+        ALOGI("Running updateImsCallStatus because ims is supported in device");
+    }
+
+    serial = GetRandomSerialNumber();
+
+    ImsCall imsCall;
+
+    ndk::ScopedAStatus res =
+            radio_ims->updateImsCallStatus(serial, { imsCall });
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_ims->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_ims->rspInfo.serial);
+
+    ALOGI("updateImsCallStatus, rspInfo.error = %s\n",
               toString(radioRsp_ims->rspInfo.error).c_str());
 
     verifyError(radioRsp_ims->rspInfo.error);
