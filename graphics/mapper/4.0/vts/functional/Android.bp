@@ -27,6 +27,8 @@ cc_test {
     name: "VtsHalGraphicsMapperV4_0TargetTest",
     defaults: [
         "VtsHalTargetTestDefaults",
+        "android.hardware.graphics.allocator-ndk_shared",
+        "android.hardware.graphics.common-ndk_static",
         "use_libaidlvintf_gtest_helper_static",
     ],
     srcs: ["VtsHalGraphicsMapperV4_0TargetTest.cpp"],
@@ -38,7 +40,6 @@ cc_test {
         "libsync",
     ],
     shared_libs: [
-        "android.hardware.graphics.allocator-V1-ndk",
         "android.hardware.graphics.allocator@4.0",
         "android.hardware.graphics.common@1.0",
         "android.hardware.graphics.common@1.1",
