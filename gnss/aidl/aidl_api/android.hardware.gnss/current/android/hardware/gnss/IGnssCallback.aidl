@@ -45,6 +45,7 @@ interface IGnssCallback {
   void gnssSetSystemInfoCb(in android.hardware.gnss.IGnssCallback.GnssSystemInfo info);
   void gnssRequestTimeCb();
   void gnssRequestLocationCb(in boolean independentFromGnss, in boolean isUserEmergency);
+  void gnssSetSignalTypeCapabilitiesCb(in android.hardware.gnss.GnssSignalType[] gnssSignalTypes);
   const int CAPABILITY_SCHEDULING = 1;
   const int CAPABILITY_MSB = 2;
   const int CAPABILITY_MSA = 4;

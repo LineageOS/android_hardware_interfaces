@@ -15,7 +15,7 @@ aidl_interface {
     ],
     imports: [
         "android.hardware.keymaster-V3",
-        "android.hardware.security.keymint",
+        "android.hardware.security.keymint-V3",
     ],
     stability: "vintf",
     backend: {

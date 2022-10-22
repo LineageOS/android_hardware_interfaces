@@ -105,6 +105,15 @@ void GnssHalTest::SetUpGnssCallback() {
         EXPECT_TRUE(aidl_gnss_cb_->info_cbq_.retrieve(aidl_gnss_cb_->last_info_, TIMEOUT_SEC));
         EXPECT_EQ(aidl_gnss_cb_->info_cbq_.calledCount(), 1);
     }
+
+    /*
+     * SignalTypeCapabilities callback should trigger.
+     */
+    if (aidl_gnss_hal_->getInterfaceVersion() >= 3) {
+        EXPECT_TRUE(aidl_gnss_cb_->signal_type_capabilities_cbq_.retrieve(
+                aidl_gnss_cb_->last_signal_type_capabilities, TIMEOUT_SEC));
+        EXPECT_EQ(aidl_gnss_cb_->signal_type_capabilities_cbq_.calledCount(), 1);
+    }
 }
 
 void GnssHalTest::TearDown() {

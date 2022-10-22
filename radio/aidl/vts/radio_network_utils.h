@@ -42,7 +42,6 @@ class RadioNetworkResponse : public BnRadioNetworkResponse {
     int networkTypeBitmapResponse;
     RegStateResult voiceRegResp;
     RegStateResult dataRegResp;
-    RegStateResult regResp;
     CellIdentity barringCellIdentity;
     std::vector<BarringInfo> barringInfoList;
     UsageSetting usageSetting;
@@ -159,9 +158,6 @@ class RadioNetworkResponse : public BnRadioNetworkResponse {
 
     virtual ndk::ScopedAStatus cancelEmergencyNetworkScanResponse(
             const RadioResponseInfo& info) override;
-
-    virtual ndk::ScopedAStatus getRegistrationStateResponse(
-            const RadioResponseInfo& info, const RegStateResult& regResponse) override;
 };
 
 /* Callback class for radio network indication */
