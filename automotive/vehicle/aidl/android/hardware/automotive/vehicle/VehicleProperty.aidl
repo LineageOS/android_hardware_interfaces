@@ -457,6 +457,9 @@ enum VehicleProperty {
     /**
      * Parking brake state.
      *
+     * This property is true indicates that the car's parking brake is currently engaged. False
+     * implies that the car's parking brake is currently disengaged.
+     *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ
      */
@@ -464,6 +467,15 @@ enum VehicleProperty {
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:BOOLEAN
     /**
      * Auto-apply parking brake.
+     *
+     * This property is true indicates that the car's automatic parking brake feature is currently
+     * enabled. False indicates that the car's automatic parking brake feature is currently
+     * disabled.
+     *
+     * This property is often confused with PARKING_BRAKE_ON. The difference is that
+     * PARKING_BRAKE_ON describes whether the actual parking brake is currently on/off, whereas
+     * PARKING_BRAKE_AUTO_APPLY describes whether the feature of automatic parking brake is enabled/
+     * disabled, and does not describe the current state of the actual parking brake.
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ
