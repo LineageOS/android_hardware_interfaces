@@ -1964,6 +1964,36 @@
             ]
         },
         {
+            "property": "VehicleProperty::DOOR_MOVE",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "Constants::DOOR_1_LEFT",
+                    "minInt32Value": -1,
+                    "maxInt32Value": 1
+                },
+                {
+                    "areaId": "Constants::DOOR_1_RIGHT",
+                    "minInt32Value": -1,
+                    "maxInt32Value": 1
+                },
+                {
+                    "areaId": "Constants::DOOR_2_LEFT",
+                    "minInt32Value": -1,
+                    "maxInt32Value": 1
+                },
+                {
+                    "areaId": "Constants::DOOR_2_RIGHT",
+                    "minInt32Value": -1,
+                    "maxInt32Value": 1
+                }
+            ]
+        },
+        {
             "property": "VehicleProperty::MIRROR_Z_POS",
             "defaultValue": {
                 "int32Values": [
