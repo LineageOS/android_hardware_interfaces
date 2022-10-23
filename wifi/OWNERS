@@ -1,0 +1,10 @@
+# Bug component: 33618
+
+# Please assign all bugs related to /hardware/interfaces/wifi to the team alias:
+#
+#    android-wifi-team@google.com
+#
+# This will get them auto-assigned to the on-call triage engineer, ensuring quickest response.
+#
+arabawy@google.com
+etancohen@google.com
