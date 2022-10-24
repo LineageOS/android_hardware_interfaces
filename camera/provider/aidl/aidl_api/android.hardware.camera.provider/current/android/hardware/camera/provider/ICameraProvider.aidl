@@ -41,6 +41,7 @@ interface ICameraProvider {
   void notifyDeviceStateChange(long deviceState);
   android.hardware.camera.provider.ConcurrentCameraIdCombination[] getConcurrentCameraIds();
   boolean isConcurrentStreamCombinationSupported(in android.hardware.camera.provider.CameraIdAndStreamCombination[] configs);
+  void placeholder();
   const long DEVICE_STATE_NORMAL = 0;
   const long DEVICE_STATE_BACK_COVERED = 1;
   const long DEVICE_STATE_FRONT_COVERED = 2;

@@ -168,7 +168,7 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.camera.provider</name>
-        <version>1</version>
+        <version>1-2</version>
         <interface>
             <name>ICameraProvider</name>
             <regex-instance>[^/]+/[0-9]+</regex-instance>
