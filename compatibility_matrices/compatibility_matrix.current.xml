@@ -168,7 +168,7 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.camera.provider</name>
-        <version>1</version>
+        <version>1-2</version>
         <interface>
             <name>ICameraProvider</name>
             <regex-instance>[^/]+/[0-9]+</regex-instance>
@@ -599,14 +599,6 @@
         <name>android.hardware.tv.hdmi</name>
         <interface>
             <name>IHdmi</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
-    <hal format="hidl" optional="true">
-        <name>android.hardware.tv.input</name>
-        <version>1.0</version>
-        <interface>
-            <name>ITvInput</name>
             <instance>default</instance>
         </interface>
     </hal>

@@ -36,6 +36,7 @@ using ::aidl::android::hardware::camera::common::CameraResourceCost;
 using ::aidl::android::hardware::camera::common::TorchModeStatus;
 using ::aidl::android::hardware::camera::common::VendorTagSection;
 using ::aidl::android::hardware::camera::device::ICameraDevice;
+using ::aidl::android::hardware::camera::metadata::RequestAvailableColorSpaceProfilesMap;
 using ::aidl::android::hardware::camera::metadata::RequestAvailableDynamicRangeProfilesMap;
 using ::aidl::android::hardware::camera::metadata::SensorPixelMode;
 using ::aidl::android::hardware::camera::provider::CameraIdAndStreamCombination;
@@ -2034,6 +2035,49 @@ TEST_P(CameraAidlTest, process10BitDynamicRangeRequest) {
             mSession = nullptr;
             ASSERT_TRUE(ret.isOk());
         }
+    }
+}
+
+TEST_P(CameraAidlTest, process8BitColorSpaceRequests) {
+    static int profiles[] = {
+        ColorSpaceNamed::BT709,
+        ColorSpaceNamed::DCI_P3,
+        ColorSpaceNamed::DISPLAY_P3,
+        ColorSpaceNamed::EXTENDED_SRGB,
+        ColorSpaceNamed::LINEAR_EXTENDED_SRGB,
+        ColorSpaceNamed::NTSC_1953,
+        ColorSpaceNamed::SMPTE_C,
+        ColorSpaceNamed::SRGB
+    };
+
+    for (int32_t i = 0; i < sizeof(profiles) / sizeof(profiles[0]); i++) {
+        processColorSpaceRequest(static_cast<RequestAvailableColorSpaceProfilesMap>(profiles[i]),
+                static_cast<RequestAvailableDynamicRangeProfilesMap>(
+                ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_STANDARD));
+    }
+}
+
+TEST_P(CameraAidlTest, process10BitColorSpaceRequests) {
+    static const camera_metadata_enum_android_request_available_dynamic_range_profiles_map
+            dynamicRangeProfiles[] = {
+        ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_HLG10,
+        ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_HDR10,
+        ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_HDR10_PLUS,
+        ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_DOLBY_VISION_10B_HDR_REF,
+        ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_DOLBY_VISION_10B_HDR_REF_PO,
+        ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_DOLBY_VISION_10B_HDR_OEM,
+        ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_DOLBY_VISION_10B_HDR_OEM_PO,
+        ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_DOLBY_VISION_8B_HDR_REF,
+        ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_DOLBY_VISION_8B_HDR_REF_PO,
+        ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_DOLBY_VISION_8B_HDR_OEM,
+        ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_DOLBY_VISION_8B_HDR_OEM_PO
+    };
+
+    // Process all dynamic range profiles with BT2020
+    for (int32_t i = 0; i < sizeof(dynamicRangeProfiles) / sizeof(dynamicRangeProfiles[0]); i++) {
+        processColorSpaceRequest(
+                static_cast<RequestAvailableColorSpaceProfilesMap>(ColorSpaceNamed::BT2020),
+                static_cast<RequestAvailableDynamicRangeProfilesMap>(dynamicRangeProfiles[i]));
     }
 }
 

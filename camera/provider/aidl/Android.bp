@@ -14,8 +14,8 @@ aidl_interface {
         "android/hardware/camera/provider/*.aidl",
     ],
     imports: [
-        "android.hardware.camera.device",
-        "android.hardware.camera.common",
+        "android.hardware.camera.device-V2",
+        "android.hardware.camera.common-V1",
     ],
     stability: "vintf",
     backend: {

@@ -1030,6 +1030,12 @@ enum CameraMetadataTag {
      */
     ANDROID_REQUEST_RECOMMENDED_TEN_BIT_DYNAMIC_RANGE_PROFILE,
     /**
+     * android.request.availableColorSpaceProfilesMap [static, enum[], ndk_public]
+     *
+     * <p>A list of all possible color space profiles supported by a camera device.</p>
+     */
+    ANDROID_REQUEST_AVAILABLE_COLOR_SPACE_PROFILES_MAP,
+    /**
      * android.scaler.cropRegion [dynamic, int32[], public]
      *
      * <p>The desired region of the sensor to read out for this capture.</p>
