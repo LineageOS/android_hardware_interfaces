@@ -108,13 +108,13 @@ interface.
 
 * Under android root, `source build/envsetup.sh`
 
-* 'lunch gcar_emu_x86_64-userdebug'
+* `lunch gcar_emu_x86_64-userdebug`
 
 * `m -j`
 
-* Run the emulator:
+* Run the emulator, the '-read-only' flag is required to run multiple instances:
 
-  `aae emulator run`
+  `aae emulator run -read-only`
 
 * The android lunch target: gcar_emu_x86_64-userdebug and
   cf_x86_64_auto-userdebug already contains the default remote access HAL. For
@@ -209,3 +209,78 @@ interface.
 
 * Now you can issue `ctrl c` on the first adb shell to stop the test wakeup
   client.
+
+## How to build and test the test wakeup client using two gcar emulators.
+
+In this test case, we are going to use two gcar emulators, one as the
+Application Processor, one as the TCU.
+
+* Change the IP address to allow IP communication between different emulator
+  instances. For detail about why we change it this way, see [interconnecting
+  emulator instance](https://developer.android.com/studio/run/emulator-networking#connecting).
+
+  Change 'DGRPC_SERVICE_ADDRESS' in `test_grpc_server/Android.bp` to
+  `10.0.2.15:50051`.
+
+  Change `DGRPC_SERVICE_ADDRESS` in 'hal/defaut/Android.bp' to
+  `10.0.2.2:50051`.
+
+* Under android root: `source build/envsetup.sh`
+
+* `lunch gcar_emu_x86_64-userdebug`
+
+*  `m -j`
+
+* Start one gcar emulator as TCU
+
+  `aae emulator run -read-only`
+
+* Start a new shell session. Connect to the emulator's console,
+  see [Start and stop a console session](https://developer.android.com/studio/run/emulator-console#console-session)
+  for detail.
+
+  `telnet localhost 5554`
+
+* `auth auth_token` where auth_token must match the contents of the
+  `.emulator_console_auth_token` file.
+
+* `redir add tcp:50051:50051`
+
+* Exit the telnet session
+
+ Make the target device writable:
+
+  `adb root`
+
+  `adb remount`
+
+  `adb reboot`
+
+  `adb root`
+
+  `adb remount`
+
+* `make -j TestWakeupClientServer`
+
+* `cd out/target/product/emulator_car64_x86_64/`
+
+* `adb push vendor/bin/TestWakeupClientServer /vendor/bin`
+
+* `adb shell`
+
+* `su`
+
+* `/vendor/bin/TestWakeupClientServer`
+
+* Start a new shell, start another gcar emulator as the Application Processor:
+
+  `aae emulator run -read-only`
+
+* Connect to adb shell for the application processor:
+
+  `adb -s emulator-5556 shell`
+
+  `su`
+
+* Follow the test instructions for one gcar emulator using the 'dumpsys'
+  commands.
