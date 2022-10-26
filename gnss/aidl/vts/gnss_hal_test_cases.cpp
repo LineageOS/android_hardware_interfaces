@@ -1514,6 +1514,7 @@ TEST_P(GnssHalTest, TestGnssMeasurementSetCallback) {
     collectMeasurementIntervals(callback, /* numEvents= */ 1, /* timeoutSeconds= */ 10, deltas);
 
     // setCallback at 1s interval and wait for 5 measurements
+    callback->gnss_data_cbq_.reset();
     startMeasurementWithInterval(1000, iGnssMeasurement, callback);
     collectMeasurementIntervals(callback, /* numEvents= */ 5, /* timeoutSeconds= */ 10, deltas);
 

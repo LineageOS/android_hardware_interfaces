@@ -1,0 +1,6 @@
+<manifest version="1.0" type="device">
+    <hal format="aidl">
+        <name>android.hardware.cas</name>
+        <fqname>IMediaCasService/default</fqname>
+    </hal>
+</manifest>

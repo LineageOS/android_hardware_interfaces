@@ -22,7 +22,6 @@
 #include <grpcpp/security/server_credentials.h>
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
-#include <utils/Log.h>
 
 using ::android::hardware::automotive::remoteaccess::TestWakeupClientServiceImpl;
 using ::grpc::Server;
@@ -38,7 +37,7 @@ void RunServer() {
     builder.AddListeningPort(serverAddress, grpc::InsecureServerCredentials());
     builder.RegisterService(service.get());
     std::unique_ptr<Server> server(builder.BuildAndStart());
-    ALOGI("Test Remote Access GRPC Server listening on %s", serverAddress.c_str());
+    printf("Test Remote Access GRPC Server listening on %s\n", serverAddress.c_str());
     server->Wait();
 }
 
