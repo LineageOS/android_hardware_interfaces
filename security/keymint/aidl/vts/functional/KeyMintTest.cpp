@@ -4946,15 +4946,15 @@ TEST_P(ImportWrappedKeyTest, WrongPaddingMode) {
 TEST_P(ImportWrappedKeyTest, WrongDigest) {
     auto wrapping_key_desc = AuthorizationSetBuilder()
                                      .RsaEncryptionKey(2048, 65537)
-                                     .Digest(Digest::SHA_2_512)
                                      .Padding(PaddingMode::RSA_OAEP)
+                                     .Digest(Digest::SHA_2_256)
                                      .Authorization(TAG_PURPOSE, KeyPurpose::WRAP_KEY)
                                      .SetDefaultValidity();
 
     ASSERT_EQ(ErrorCode::INCOMPATIBLE_DIGEST,
               ImportWrappedKey(wrapped_key, wrapping_key, wrapping_key_desc, zero_masking_key,
                                AuthorizationSetBuilder()
-                                       .Digest(Digest::SHA_2_256)
+                                       .Digest(Digest::SHA_2_512)
                                        .Padding(PaddingMode::RSA_OAEP)));
 }
 
