@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,18 +31,14 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.radio.network;
-@Backing(type="int") @JavaDerive(toString=true) @VintfStability
-enum RegState {
-  NOT_REG_MT_NOT_SEARCHING_OP = 0,
-  REG_HOME = 1,
-  NOT_REG_MT_SEARCHING_OP = 2,
-  REG_DENIED = 3,
-  UNKNOWN = 4,
-  REG_ROAMING = 5,
-  NOT_REG_MT_NOT_SEARCHING_OP_EM = 10,
-  NOT_REG_MT_SEARCHING_OP_EM = 12,
-  REG_DENIED_EM = 13,
-  UNKNOWN_EM = 14,
-  REG_EM = 20,
+package android.hardware.radio.ims;
+@VintfStability
+interface IRadioIms {
+  oneway void setSrvccCallInfo(int serial, in android.hardware.radio.ims.SrvccCall[] srvccCalls);
+  oneway void updateImsRegistrationInfo(int serial, in android.hardware.radio.ims.ImsRegistration imsRegistration);
+  oneway void startImsTraffic(int serial, in String token, android.hardware.radio.ims.ImsTrafficType imsTrafficType, android.hardware.radio.AccessNetwork accessNetworkType);
+  oneway void stopImsTraffic(int serial, in String token);
+  oneway void triggerEpsFallback(int serial, in android.hardware.radio.ims.EpsFallbackReason reason);
+  oneway void setResponseFunctions(in android.hardware.radio.ims.IRadioImsResponse radioImsResponse, in android.hardware.radio.ims.IRadioImsIndication radioImsIndication);
+  oneway void sendAnbrQuery(int serial, android.hardware.radio.ims.ImsStreamType mediaType, android.hardware.radio.ims.ImsStreamDirection direction, int bitsPerSecond);
 }

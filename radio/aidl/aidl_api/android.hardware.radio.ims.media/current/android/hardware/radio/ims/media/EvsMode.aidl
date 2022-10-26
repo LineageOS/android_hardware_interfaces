@@ -31,18 +31,28 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.radio.network;
-@Backing(type="int") @JavaDerive(toString=true) @VintfStability
-enum RegState {
-  NOT_REG_MT_NOT_SEARCHING_OP = 0,
-  REG_HOME = 1,
-  NOT_REG_MT_SEARCHING_OP = 2,
-  REG_DENIED = 3,
-  UNKNOWN = 4,
-  REG_ROAMING = 5,
-  NOT_REG_MT_NOT_SEARCHING_OP_EM = 10,
-  NOT_REG_MT_SEARCHING_OP_EM = 12,
-  REG_DENIED_EM = 13,
-  UNKNOWN_EM = 14,
-  REG_EM = 20,
+package android.hardware.radio.ims.media;
+@Backing(type="int") @VintfStability
+enum EvsMode {
+  EVS_MODE_0 = 1 << 0,
+  EVS_MODE_1 = 1 << 1,
+  EVS_MODE_2 = 1 << 2,
+  EVS_MODE_3 = 1 << 3,
+  EVS_MODE_4 = 1 << 4,
+  EVS_MODE_5 = 1 << 5,
+  EVS_MODE_6 = 1 << 6,
+  EVS_MODE_7 = 1 << 7,
+  EVS_MODE_8 = 1 << 8,
+  EVS_MODE_9 = 1 << 9,
+  EVS_MODE_10 = 1 << 10,
+  EVS_MODE_11 = 1 << 11,
+  EVS_MODE_12 = 1 << 12,
+  EVS_MODE_13 = 1 << 13,
+  EVS_MODE_14 = 1 << 14,
+  EVS_MODE_15 = 1 << 15,
+  EVS_MODE_16 = 1 << 16,
+  EVS_MODE_17 = 1 << 17,
+  EVS_MODE_18 = 1 << 18,
+  EVS_MODE_19 = 1 << 19,
+  EVS_MODE_20 = 1 << 20,
 }
