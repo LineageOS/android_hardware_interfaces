@@ -326,7 +326,7 @@ ScopedAStatus RadioNetwork::triggerEmergencyNetworkScan(int32_t serial,
     return ok();
 }
 
-ScopedAStatus RadioNetwork::cancelEmergencyNetworkScan(int32_t serial) {
+ScopedAStatus RadioNetwork::cancelEmergencyNetworkScan(int32_t serial, bool) {
     LOG_CALL << serial;
     LOG(ERROR) << " cancelEmergencyNetworkScan is unsupported by HIDL HALs";
     respond()->cancelEmergencyNetworkScanResponse(notSupported(serial));
