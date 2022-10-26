@@ -450,6 +450,20 @@ enum CameraMetadataTag {
      */
     ANDROID_CONTROL_AVAILABLE_HIGH_SPEED_VIDEO_CONFIGURATIONS_MAXIMUM_RESOLUTION,
     /**
+     * android.control.settingsOverride [dynamic, enum, public]
+     *
+     * <p>The desired CaptureRequest settings override with which certain keys are
+     * applied earlier so that they can take effect sooner.</p>
+     */
+    ANDROID_CONTROL_SETTINGS_OVERRIDE = 65588,
+    /**
+     * android.control.availableSettingsOverrides [static, int32[], public]
+     *
+     * <p>List of available settings overrides supported by the camera device that can
+     * be used to speed up certain controls.</p>
+     */
+    ANDROID_CONTROL_AVAILABLE_SETTINGS_OVERRIDES,
+    /**
      * android.demosaic.mode [controls, enum, system]
      *
      * <p>Controls the quality of the demosaicing
