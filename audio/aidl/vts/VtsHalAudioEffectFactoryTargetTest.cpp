@@ -66,13 +66,13 @@ TEST_P(EffectFactoryTest, CanBeRestarted) {
 
 TEST_P(EffectFactoryTest, QueriedDescriptorList) {
     std::vector<Descriptor::Identity> descriptors;
-    mFactory.QueryEffects(std::nullopt, std::nullopt, &descriptors);
+    mFactory.QueryEffects(std::nullopt, std::nullopt, std::nullopt, &descriptors);
     EXPECT_NE(descriptors.size(), 0UL);
 }
 
 TEST_P(EffectFactoryTest, DescriptorUUIDNotNull) {
     std::vector<Descriptor::Identity> descriptors;
-    mFactory.QueryEffects(std::nullopt, std::nullopt, &descriptors);
+    mFactory.QueryEffects(std::nullopt, std::nullopt, std::nullopt, &descriptors);
     // TODO: Factory eventually need to return the full list of MUST supported AOSP effects.
     for (auto& desc : descriptors) {
         EXPECT_NE(desc.type, EffectNullUuid);
@@ -82,19 +82,19 @@ TEST_P(EffectFactoryTest, DescriptorUUIDNotNull) {
 
 TEST_P(EffectFactoryTest, QueriedDescriptorNotExistType) {
     std::vector<Descriptor::Identity> descriptors;
-    mFactory.QueryEffects(EffectNullUuid, std::nullopt, &descriptors);
+    mFactory.QueryEffects(EffectNullUuid, std::nullopt, std::nullopt, &descriptors);
     EXPECT_EQ(descriptors.size(), 0UL);
 }
 
 TEST_P(EffectFactoryTest, QueriedDescriptorNotExistInstance) {
     std::vector<Descriptor::Identity> descriptors;
-    mFactory.QueryEffects(std::nullopt, EffectNullUuid, &descriptors);
+    mFactory.QueryEffects(std::nullopt, EffectNullUuid, std::nullopt, &descriptors);
     EXPECT_EQ(descriptors.size(), 0UL);
 }
 
 TEST_P(EffectFactoryTest, CreateAndDestroyOnce) {
     std::vector<Descriptor::Identity> descriptors;
-    mFactory.QueryEffects(std::nullopt, std::nullopt, &descriptors);
+    mFactory.QueryEffects(std::nullopt, std::nullopt, std::nullopt, &descriptors);
     auto numIds = mFactory.GetEffectIds().size();
     EXPECT_NE(numIds, 0UL);
 
@@ -108,7 +108,7 @@ TEST_P(EffectFactoryTest, CreateAndDestroyOnce) {
 
 TEST_P(EffectFactoryTest, CreateAndDestroyRepeat) {
     std::vector<Descriptor::Identity> descriptors;
-    mFactory.QueryEffects(std::nullopt, std::nullopt, &descriptors);
+    mFactory.QueryEffects(std::nullopt, std::nullopt, std::nullopt, &descriptors);
     auto numIds = mFactory.GetEffectIds().size();
     EXPECT_NE(numIds, 0UL);
 
@@ -128,7 +128,7 @@ TEST_P(EffectFactoryTest, CreateAndDestroyRepeat) {
 
 TEST_P(EffectFactoryTest, CreateMultipleInstanceOfSameEffect) {
     std::vector<Descriptor::Identity> descriptors;
-    mFactory.QueryEffects(std::nullopt, std::nullopt, &descriptors);
+    mFactory.QueryEffects(std::nullopt, std::nullopt, std::nullopt, &descriptors);
     auto numIds = mFactory.GetEffectIds().size();
     EXPECT_NE(numIds, 0UL);
 
@@ -167,7 +167,7 @@ TEST_P(EffectFactoryTest, DestroyWithInvalidInterface) {
 
 TEST_P(EffectFactoryTest, CreateAndRemoveReference) {
     std::vector<Descriptor::Identity> descriptors;
-    mFactory.QueryEffects(std::nullopt, std::nullopt, &descriptors);
+    mFactory.QueryEffects(std::nullopt, std::nullopt, std::nullopt, &descriptors);
     auto numIds = mFactory.GetEffectIds().size();
     EXPECT_NE(numIds, 0UL);
 
@@ -182,7 +182,7 @@ TEST_P(EffectFactoryTest, CreateAndRemoveReference) {
 
 TEST_P(EffectFactoryTest, CreateRemoveReferenceAndCreateDestroy) {
     std::vector<Descriptor::Identity> descriptors;
-    mFactory.QueryEffects(std::nullopt, std::nullopt, &descriptors);
+    mFactory.QueryEffects(std::nullopt, std::nullopt, std::nullopt, &descriptors);
     auto numIds = mFactory.GetEffectIds().size();
     EXPECT_NE(numIds, 0UL);
 
@@ -203,7 +203,7 @@ TEST_P(EffectFactoryTest, CreateRemoveReferenceAndCreateDestroy) {
 
 TEST_P(EffectFactoryTest, CreateRestartAndCreateDestroy) {
     std::vector<Descriptor::Identity> descriptors;
-    mFactory.QueryEffects(std::nullopt, std::nullopt, &descriptors);
+    mFactory.QueryEffects(std::nullopt, std::nullopt, std::nullopt, &descriptors);
     auto numIds = mFactory.GetEffectIds().size();
     auto& effectMap = mFactory.GetEffectMap();
     mFactory.CreateEffects();

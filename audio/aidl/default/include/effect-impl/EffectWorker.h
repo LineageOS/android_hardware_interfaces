@@ -36,34 +36,33 @@ class EffectWorker : public EffectThread {
 
     // handle FMQ and call effect implemented virtual function
     void process() override {
-        if (!mContext) {
-            LOG(ERROR) << __func__ << " invalid context!";
-            return;
-        }
+        RETURN_VALUE_IF(!mContext, void(), "nullContext");
         std::shared_ptr<EffectContext::StatusMQ> statusMQ = mContext->getStatusFmq();
         std::shared_ptr<EffectContext::DataMQ> inputMQ = mContext->getInputDataFmq();
         std::shared_ptr<EffectContext::DataMQ> outputMQ = mContext->getOutputDataFmq();
 
         // Only this worker will read from input data MQ and write to output data MQ.
-        auto readSize = inputMQ->availableToRead(), writeSize = outputMQ->availableToWrite();
-        if (readSize && writeSize) {
-            LOG(DEBUG) << __func__ << " available to read " << readSize << " available to write "
-                       << writeSize;
+        auto readSamples = inputMQ->availableToRead(), writeSamples = outputMQ->availableToWrite();
+        if (readSamples && writeSamples) {
+            auto processSamples = std::min(readSamples, writeSamples);
+            LOG(DEBUG) << __func__ << " available to read " << readSamples << " available to write "
+                       << writeSamples << " process " << processSamples;
+
             auto buffer = mContext->getWorkBuffer();
-            inputMQ->read(buffer, readSize);
-            IEffect::Status status = effectProcessImpl();
-            writeSize = std::min((int32_t)writeSize, status.fmqByteProduced);
-            outputMQ->write(buffer, writeSize);
+            inputMQ->read(buffer, processSamples);
+
+            IEffect::Status status = effectProcessImpl(buffer, buffer, processSamples);
+            outputMQ->write(buffer, status.fmqProduced);
             statusMQ->writeBlocking(&status, 1);
-            LOG(DEBUG) << __func__ << " done processing, effect consumed " << status.fmqByteConsumed
-                       << " produced " << status.fmqByteProduced;
+            LOG(DEBUG) << __func__ << " done processing, effect consumed " << status.fmqConsumed
+                       << " produced " << status.fmqProduced;
         } else {
             // TODO: maybe add some sleep here to avoid busy waiting
         }
     }
 
     // must implement by each effect implementation
-    virtual IEffect::Status effectProcessImpl() = 0;
+    virtual IEffect::Status effectProcessImpl(float* in, float* out, int processSamples) = 0;
 
   private:
     // make sure the context only set once.
