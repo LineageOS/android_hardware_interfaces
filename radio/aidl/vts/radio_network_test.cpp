@@ -1848,7 +1848,7 @@ TEST_P(RadioNetworkTest, setEmergencyMode) {
 
     ASSERT_TRUE(CheckAnyOfErrors(
             radioRsp_network->rspInfo.error,
-            {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE,
+            {RadioError::NONE, RadioError::REQUEST_NOT_SUPPORTED, RadioError::RADIO_NOT_AVAILABLE,
              RadioError::MODEM_ERR, RadioError::INVALID_ARGUMENTS}));
     LOG(DEBUG) << "setEmergencyMode finished";
 }
@@ -1871,7 +1871,7 @@ TEST_P(RadioNetworkTest, triggerEmergencyNetworkScan) {
 
     ASSERT_TRUE(CheckAnyOfErrors(
             radioRsp_network->rspInfo.error,
-            {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE,
+            {RadioError::NONE, RadioError::REQUEST_NOT_SUPPORTED, RadioError::RADIO_NOT_AVAILABLE,
              RadioError::MODEM_ERR, RadioError::INVALID_ARGUMENTS}));
     LOG(DEBUG) << "triggerEmergencyNetworkScan finished";
 }
@@ -1883,14 +1883,15 @@ TEST_P(RadioNetworkTest, cancelEmergencyNetworkScan) {
     LOG(DEBUG) << "cancelEmergencyNetworkScan";
     serial = GetRandomSerialNumber();
 
-    radio_network->cancelEmergencyNetworkScan(serial);
+    radio_network->cancelEmergencyNetworkScan(serial, true);
     EXPECT_EQ(std::cv_status::no_timeout, wait());
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_network->rspInfo.type);
     EXPECT_EQ(serial, radioRsp_network->rspInfo.serial);
 
     ASSERT_TRUE(CheckAnyOfErrors(
             radioRsp_network->rspInfo.error,
-            {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::MODEM_ERR}));
+            {RadioError::NONE, RadioError::REQUEST_NOT_SUPPORTED, RadioError::RADIO_NOT_AVAILABLE,
+             RadioError::MODEM_ERR}));
     LOG(DEBUG) << "cancelEmergencyNetworkScan finished";
 }
 
@@ -1908,6 +1909,7 @@ TEST_P(RadioNetworkTest, exitEmergencyMode) {
 
     ASSERT_TRUE(CheckAnyOfErrors(
             radioRsp_network->rspInfo.error,
-            {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::MODEM_ERR}));
+            {RadioError::NONE, RadioError::REQUEST_NOT_SUPPORTED, RadioError::RADIO_NOT_AVAILABLE,
+             RadioError::MODEM_ERR}));
     LOG(DEBUG) << "exitEmergencyMode finished";
 }

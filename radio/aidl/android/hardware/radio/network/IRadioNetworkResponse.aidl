@@ -23,13 +23,13 @@ import android.hardware.radio.network.BarringInfo;
 import android.hardware.radio.network.CdmaRoamingType;
 import android.hardware.radio.network.CellIdentity;
 import android.hardware.radio.network.CellInfo;
+import android.hardware.radio.network.EmergencyRegResult;
 import android.hardware.radio.network.OperatorInfo;
 import android.hardware.radio.network.RadioAccessSpecifier;
 import android.hardware.radio.network.RadioBandMode;
 import android.hardware.radio.network.RegStateResult;
 import android.hardware.radio.network.SignalStrength;
 import android.hardware.radio.network.UsageSetting;
-import android.hardware.radio.network.EmergencyRegResult;
 
 /**
  * Interface declaring response functions to solicited radio requests for network APIs.
@@ -575,11 +575,15 @@ oneway interface IRadioNetworkResponse {
     oneway void getUsageSettingResponse(in RadioResponseInfo info, in UsageSetting usageSetting);
 
     /**
+     * Response of setEmergencyMode.
+     * This is an optional API.
+     *
      * @param info Response info struct containing response type, serial no. and error.
      * @param regState the current registration state of the modem.
      *
      * Valid errors returned:
      *   RadioError:NONE
+     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:MODEM_ERR
      *   RadioError:INVALID_ARGUMENTS
@@ -587,10 +591,14 @@ oneway interface IRadioNetworkResponse {
     void setEmergencyModeResponse(in RadioResponseInfo info, in EmergencyRegResult regState);
 
     /**
-     * @param info Response info struct containing response type, serial no. and error
+     * Response of triggerEmergencyNetworkScan.
+     * This is an optional API.
+     *
+     * @param info Response info struct containing response type, serial no. and error.
      *
      * Valid errors returned:
      *   RadioError:NONE
+     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:MODEM_ERR
      *   RadioError:INVALID_ARGUMENTS
@@ -598,20 +606,28 @@ oneway interface IRadioNetworkResponse {
     void triggerEmergencyNetworkScanResponse(in RadioResponseInfo info);
 
     /**
-     * @param info Response info struct containing response type, serial no. and error
+     * Response of exitEmergencyMode.
+     * This is an optional API.
+     *
+     * @param info Response info struct containing response type, serial no. and error.
      *
      * Valid errors returned:
      *   RadioError:NONE
+     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:MODEM_ERR
      */
     void exitEmergencyModeResponse(in RadioResponseInfo info);
 
     /**
-     * @param info Response info struct containing response type, serial no. and error
+     * Response of cancelEmergencyNetworkScan.
+     * This is an optional API.
+     *
+     * @param info Response info struct containing response type, serial no. and error.
      *
      * Valid errors returned:
      *   RadioError:NONE
+     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:MODEM_ERR
      */

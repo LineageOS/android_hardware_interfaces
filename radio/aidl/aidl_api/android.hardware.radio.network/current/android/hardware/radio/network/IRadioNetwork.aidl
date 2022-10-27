@@ -72,6 +72,6 @@ interface IRadioNetwork {
   oneway void getUsageSetting(in int serial);
   oneway void setEmergencyMode(int serial, in android.hardware.radio.network.EmergencyMode emcModeType);
   oneway void triggerEmergencyNetworkScan(int serial, in android.hardware.radio.network.EmergencyNetworkScanTrigger request);
-  oneway void cancelEmergencyNetworkScan(in int serial);
+  oneway void cancelEmergencyNetworkScan(int serial, boolean resetScan);
   oneway void exitEmergencyMode(in int serial);
 }
