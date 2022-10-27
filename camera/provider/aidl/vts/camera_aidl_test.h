@@ -252,6 +252,8 @@ class CameraAidlTest : public ::testing::TestWithParam<std::string> {
 
     static void verifyStreamUseCaseCharacteristics(const camera_metadata_t* metadata);
 
+    static void verifySettingsOverrideCharacteristics(const camera_metadata_t* metadata);
+
     static void verifyStreamCombination(const std::shared_ptr<ICameraDevice>& device,
                                         const StreamConfiguration& config, bool expectedStatus,
                                         bool expectStreamCombQuery);

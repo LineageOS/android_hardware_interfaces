@@ -18,6 +18,8 @@ package android.hardware.radio.network;
 
 import android.hardware.radio.AccessNetwork;
 import android.hardware.radio.network.CdmaRoamingType;
+import android.hardware.radio.network.EmergencyMode;
+import android.hardware.radio.network.EmergencyNetworkScanTrigger;
 import android.hardware.radio.network.IRadioNetworkIndication;
 import android.hardware.radio.network.IRadioNetworkResponse;
 import android.hardware.radio.network.IndicationFilter;
@@ -27,8 +29,6 @@ import android.hardware.radio.network.RadioAccessSpecifier;
 import android.hardware.radio.network.RadioBandMode;
 import android.hardware.radio.network.SignalThresholdInfo;
 import android.hardware.radio.network.UsageSetting;
-import android.hardware.radio.network.EmergencyNetworkScanTrigger;
-import android.hardware.radio.network.EmergencyMode;
 
 /**
  * This interface is used by telephony and telecom to talk to cellular radio for network APIs.
@@ -449,27 +449,30 @@ oneway interface IRadioNetwork {
      *
      * Response function is IRadioEmergencyResponse.setEmergencyModeResponse()
      */
-    void setEmergencyMode(int serial, in EmergencyMode emcModeType );
+    void setEmergencyMode(int serial, in EmergencyMode emcModeType);
 
     /**
      * Triggers an Emergency network scan.
      *
      * @param serial Serial number of the request.
-     * @param request Defines the radio target networks/preferred network/
-     * Max Scan Time and type of service to be scanned.
+     * @param request Contains the preferred networks and type of service to be scanned.
+     *                See {@link EmergencyNetworkScanTrigger}.
      *
      * Response function is IRadioEmergencyResponse.triggerEmergencyNetworkScanResponse()
      */
-    void triggerEmergencyNetworkScan( int serial, in EmergencyNetworkScanTrigger request);
+    void triggerEmergencyNetworkScan(int serial, in EmergencyNetworkScanTrigger request);
 
     /**
      * Cancels ongoing Emergency network scan
      *
      * @param serial Serial number of the request.
+     * @param resetScan Indicates how the next {@link #triggerEmergencyNetworkScan} should work.
+     *        If {@code true}, then the modem shall start the new scan from the beginning,
+     *        otherwise the modem shall resume from the last search.
      *
      * Response function is IRadioEmergencyResponse.cancelEmergencyNetworkScan()
      */
-    void cancelEmergencyNetworkScan(in int serial);
+    void cancelEmergencyNetworkScan(int serial, boolean resetScan);
 
     /**
      * Exits ongoing Emergency Mode
