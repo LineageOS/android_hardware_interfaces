@@ -112,6 +112,13 @@
             <regex-instance>.*</regex-instance>
         </interface>
     </hal>
+    <hal format="aidl" optional="true">
+        <name>android.hardware.automotive.remoteaccess</name>
+        <interface>
+            <name>IRemoteAccess</name>
+            <regex-instance>.*</regex-instance>
+        </interface>
+    </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.automotive.vehicle</name>
         <version>2.0</version>
