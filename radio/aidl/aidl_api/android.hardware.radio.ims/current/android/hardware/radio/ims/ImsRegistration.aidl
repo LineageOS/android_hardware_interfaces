@@ -1,7 +1,7 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the Apache License, Version 2.0 (the "License"),
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -31,18 +31,16 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.radio.network;
-@Backing(type="int") @JavaDerive(toString=true) @VintfStability
-enum RegState {
-  NOT_REG_MT_NOT_SEARCHING_OP = 0,
-  REG_HOME = 1,
-  NOT_REG_MT_SEARCHING_OP = 2,
-  REG_DENIED = 3,
-  UNKNOWN = 4,
-  REG_ROAMING = 5,
-  NOT_REG_MT_NOT_SEARCHING_OP_EM = 10,
-  NOT_REG_MT_SEARCHING_OP_EM = 12,
-  REG_DENIED_EM = 13,
-  UNKNOWN_EM = 14,
-  REG_EM = 20,
+package android.hardware.radio.ims;
+@JavaDerive(toString=true) @VintfStability
+parcelable ImsRegistration {
+  android.hardware.radio.ims.ImsRegistrationState regState;
+  android.hardware.radio.AccessNetwork accessNetworkType;
+  android.hardware.radio.ims.SuggestedAction suggestedAction;
+  int capabilities;
+  const int IMS_MMTEL_CAPABILITY_NONE = 0;
+  const int IMS_MMTEL_CAPABILITY_VOICE = 1;
+  const int IMS_MMTEL_CAPABILITY_VIDEO = 2;
+  const int IMS_MMTEL_CAPABILITY_SMS = 4;
+  const int IMS_RCS_CAPABILITIES = 8;
 }

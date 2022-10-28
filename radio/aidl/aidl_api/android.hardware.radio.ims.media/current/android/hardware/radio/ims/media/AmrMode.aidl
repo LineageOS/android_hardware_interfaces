@@ -31,18 +31,16 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.radio.network;
-@Backing(type="int") @JavaDerive(toString=true) @VintfStability
-enum RegState {
-  NOT_REG_MT_NOT_SEARCHING_OP = 0,
-  REG_HOME = 1,
-  NOT_REG_MT_SEARCHING_OP = 2,
-  REG_DENIED = 3,
-  UNKNOWN = 4,
-  REG_ROAMING = 5,
-  NOT_REG_MT_NOT_SEARCHING_OP_EM = 10,
-  NOT_REG_MT_SEARCHING_OP_EM = 12,
-  REG_DENIED_EM = 13,
-  UNKNOWN_EM = 14,
-  REG_EM = 20,
+package android.hardware.radio.ims.media;
+@Backing(type="int") @VintfStability
+enum AmrMode {
+  AMR_MODE_0 = 1 << 0,
+  AMR_MODE_1 = 1 << 1,
+  AMR_MODE_2 = 1 << 2,
+  AMR_MODE_3 = 1 << 3,
+  AMR_MODE_4 = 1 << 4,
+  AMR_MODE_5 = 1 << 5,
+  AMR_MODE_6 = 1 << 6,
+  AMR_MODE_7 = 1 << 7,
+  AMR_MODE_8 = 1 << 8,
 }

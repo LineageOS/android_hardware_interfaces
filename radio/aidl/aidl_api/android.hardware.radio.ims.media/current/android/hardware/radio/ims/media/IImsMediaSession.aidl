@@ -31,18 +31,14 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.radio.network;
-@Backing(type="int") @JavaDerive(toString=true) @VintfStability
-enum RegState {
-  NOT_REG_MT_NOT_SEARCHING_OP = 0,
-  REG_HOME = 1,
-  NOT_REG_MT_SEARCHING_OP = 2,
-  REG_DENIED = 3,
-  UNKNOWN = 4,
-  REG_ROAMING = 5,
-  NOT_REG_MT_NOT_SEARCHING_OP_EM = 10,
-  NOT_REG_MT_SEARCHING_OP_EM = 12,
-  REG_DENIED_EM = 13,
-  UNKNOWN_EM = 14,
-  REG_EM = 20,
+package android.hardware.radio.ims.media;
+@VintfStability
+interface IImsMediaSession {
+  oneway void setListener(in android.hardware.radio.ims.media.IImsMediaSessionListener sessionListener);
+  oneway void modifySession(in android.hardware.radio.ims.media.RtpConfig config);
+  oneway void sendDtmf(char dtmfDigit, int duration);
+  oneway void startDtmf(char dtmfDigit);
+  oneway void stopDtmf();
+  oneway void sendHeaderExtension(in List<android.hardware.radio.ims.media.RtpHeaderExtension> extensions);
+  oneway void setMediaQualityThreshold(in android.hardware.radio.ims.media.MediaQualityThreshold threshold);
 }
