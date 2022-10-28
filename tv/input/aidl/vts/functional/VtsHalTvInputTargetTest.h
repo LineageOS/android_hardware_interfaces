@@ -84,7 +84,6 @@ class TvInputAidlTest : public testing::TestWithParam<string> {
     android::KeyedVector<int32_t, TvInputDeviceInfo> device_info_;
     android::KeyedVector<int32_t, vector<TvStreamConfig>> stream_config_;
     mutex mutex_;
-    NativeHandle handle_;
 };
 
 }  // namespace VtsHalTvInputTargetTest

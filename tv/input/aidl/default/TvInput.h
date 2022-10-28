@@ -48,7 +48,6 @@ class TvInput : public BnTvInput {
 
   private:
     native_handle_t* createNativeHandle(int fd);
-    void releaseNativeHandle(native_handle_t* handle);
 
     shared_ptr<ITvInputCallback> mCallback;
     map<int32_t, shared_ptr<TvInputDeviceInfoWrapper>> mDeviceInfos;
