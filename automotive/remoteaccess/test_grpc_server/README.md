@@ -41,7 +41,7 @@ following behavior:
   pending tasks through the 'ServerWriter'. If no task is pending, then it must
   block and wait for a new task to arrive.
 
-  If one task data is failed to be sent through the channel, it likely means
+  If one task data fails to be sent through the channel, it likely means
   the other side (Application processor) is shutting down or has closed the
   channel. The wakeup client must put the task back to the pending queue and
   wait for a new 'GetRemoteTasks' request to retry sending the task.
@@ -89,7 +89,7 @@ following behavior:
 
   `adb remount`
 
-* Under android root: `cd out/target/product/[product_name]`
+* Under android root: `cd $ANDROID_PRODUCT_OUT`
 
 * `adb push vendor/bin/TestWakeupClientServer /vendor/bin`
 
@@ -99,24 +99,24 @@ following behavior:
 
 * `/vendor/bin/TestWakeupClientServer`
 
-## How to build and test the test wakeup client using one gcar emulator.
+## How to build and test the test wakeup client using one car emulator.
 
 In this test setup we will use one google car emulator
-(gcar_emu_x86_64-userdebug). We assume both the TCU and the remote access HAL
+(sdk_car_x86_64-userdebug). We assume both the TCU and the remote access HAL
 runs on the same Android system, and they communicate through local loopback
 interface.
 
 * Under android root, `source build/envsetup.sh`
 
-* `lunch gcar_emu_x86_64-userdebug`
+* `lunch sdk_car_x86_64-userdebug`
 
 * `m -j`
 
 * Run the emulator, the '-read-only' flag is required to run multiple instances:
 
-  `aae emulator run -read-only`
+  `emulator -writable-system -read-only`
 
-* The android lunch target: gcar_emu_x86_64-userdebug and
+* The android lunch target: sdk_car_x86_64-userdebug and
   cf_x86_64_auto-userdebug already contains the default remote access HAL. For
   other lunch target, you can add the default remote access HAL by adding
   'android.hardware.automotive.remoteaccess@V1-default-service' to
@@ -142,9 +142,7 @@ interface.
 
 * `make -j TestWakeupClientServer`
 
-* `cd out/target/product/emulator_car64_x86_64/`
-
-* `adb push vendor/bin/TestWakeupClientServer /vendor/bin`
+* `adb push $ANDROID_PRODUCT_OUT/vendor/bin/TestWakeupClientServer /vendor/bin`
 
 * `adb shell`
 
@@ -152,7 +150,7 @@ interface.
 
 * `/vendor/bin/TestWakeupClientServer`
 
-* Remote access HAL should start by default when the gcar emulator starts. Now
+* Remote access HAL should start by default when the car emulator starts. Now
   the test wake up client should also be running and generating fake tasks.
 
   Start a new adb shell session by
@@ -210,9 +208,9 @@ interface.
 * Now you can issue `ctrl c` on the first adb shell to stop the test wakeup
   client.
 
-## How to build and test the test wakeup client using two gcar emulators.
+## How to build and test the test wakeup client using two car emulators.
 
-In this test case, we are going to use two gcar emulators, one as the
+In this test case, we are going to use two car emulators, one as the
 Application Processor, one as the TCU.
 
 * Change the IP address to allow IP communication between different emulator
@@ -227,13 +225,13 @@ Application Processor, one as the TCU.
 
 * Under android root: `source build/envsetup.sh`
 
-* `lunch gcar_emu_x86_64-userdebug`
+* `lunch sdk_car_x86_64-userdebug`
 
 *  `m -j`
 
-* Start one gcar emulator as TCU
+* Start one car emulator as TCU
 
-  `aae emulator run -read-only`
+  `emulator -writable-system -read-only`
 
 * Start a new shell session. Connect to the emulator's console,
   see [Start and stop a console session](https://developer.android.com/studio/run/emulator-console#console-session)
@@ -262,9 +260,7 @@ Application Processor, one as the TCU.
 
 * `make -j TestWakeupClientServer`
 
-* `cd out/target/product/emulator_car64_x86_64/`
-
-* `adb push vendor/bin/TestWakeupClientServer /vendor/bin`
+* `adb push $ANDROID_PRODUCT_OUT/vendor/bin/TestWakeupClientServer /vendor/bin`
 
 * `adb shell`
 
@@ -272,9 +268,9 @@ Application Processor, one as the TCU.
 
 * `/vendor/bin/TestWakeupClientServer`
 
-* Start a new shell, start another gcar emulator as the Application Processor:
+* Start a new shell, start another car emulator as the Application Processor:
 
-  `aae emulator run -read-only`
+  `emulator -writable-system -read-only`
 
 * Connect to adb shell for the application processor:
 
@@ -282,5 +278,5 @@ Application Processor, one as the TCU.
 
   `su`
 
-* Follow the test instructions for one gcar emulator using the 'dumpsys'
+* Follow the test instructions for one car emulator using the 'dumpsys'
   commands.

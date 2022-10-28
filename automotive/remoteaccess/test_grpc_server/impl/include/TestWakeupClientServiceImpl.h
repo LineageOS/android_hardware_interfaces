@@ -81,6 +81,7 @@ class TaskQueue final {
     void waitForTask();
     void stopWait();
     void handleTaskTimeout();
+    bool isEmpty();
 
   private:
     std::thread mCheckTaskTimeoutThread;
@@ -117,6 +118,8 @@ class TestWakeupClientServiceImpl final : public WakeupClient::Service {
     std::thread mThread;
     // A variable to notify server is stopping.
     std::condition_variable mServerStoppedCv;
+    // Whether wakeup AP is required for executing tasks.
+    std::atomic<bool> mWakeupRequired = false;
     std::mutex mLock;
     bool mServerStopped GUARDED_BY(mLock);
 
@@ -126,6 +129,8 @@ class TestWakeupClientServiceImpl final : public WakeupClient::Service {
     TaskQueue mTaskQueue;
 
     void fakeTaskGenerateLoop();
+
+    void wakeupApplicationProcessor();
 };
 
 }  // namespace remoteaccess
