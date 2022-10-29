@@ -44,4 +44,5 @@ enum RegState {
   NOT_REG_MT_SEARCHING_OP_EM = 12,
   REG_DENIED_EM = 13,
   UNKNOWN_EM = 14,
+  REG_EM = 20,
 }

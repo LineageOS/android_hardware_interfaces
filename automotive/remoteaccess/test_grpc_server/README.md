@@ -62,7 +62,7 @@ following behavior:
   'WakeupRequired' will be set to true and this wakeup client must try to wake
   up the device again to execute the pending tasks.
 
-* Every pending task has a timeout: 'KTaskTimeoutInMs'. If the pending task
+* Every pending task has a timeout: 'kTaskTimeoutInMs'. If the pending task
   is not delivered to remote access HAL before the timeout (through
   GetRemoteTasks), the task timed out and a warning message is logged.
 
@@ -73,7 +73,11 @@ following behavior:
 
 ## How to build the test wakeup client
 
-* Under android root: `make -j TestWakeupClientServer`
+* Under android root: `source build/envsetup.sh`
+
+* `lunch sdk_car_x86_64-userdebug`
+
+* `make -j TestWakeupClientServer`
 
 ## How to push the test wakeup client to a TCU which runs Android.
 
@@ -81,7 +85,7 @@ following behavior:
 
   `adb root`
 
-  `adb remount`
+  `adb remount` (remount might take a while)
 
   `adb reboot`
 
@@ -101,7 +105,7 @@ following behavior:
 
 ## How to build and test the test wakeup client using one car emulator.
 
-In this test setup we will use one google car emulator
+In this test setup we will use one car emulator
 (sdk_car_x86_64-userdebug). We assume both the TCU and the remote access HAL
 runs on the same Android system, and they communicate through local loopback
 interface.
@@ -132,7 +136,7 @@ interface.
 
   `adb root`
 
-  `adb remount`
+  `adb remount` (remount might take a while)
 
   `adb reboot`
 
@@ -146,44 +150,48 @@ interface.
 
 * `adb shell`
 
-* `su`
+* `emulator_car_x86_64:/ # su`
 
-* `/vendor/bin/TestWakeupClientServer`
+* `emulator_car_x86_64:/ # /vendor/bin/TestWakeupClientServer`
 
 * Remote access HAL should start by default when the car emulator starts. Now
   the test wake up client should also be running and generating fake tasks.
 
-  Start a new adb shell session by
+  Start a new session under android root
+
+  `source build/envsetup.sh`
+
+  `lunch sdk_car_x86_64-userdebug`
 
   `adb shell`
 
-  `su`
+  `emulator_car_x86_64:/ # su`
 
 * Issue the command to start a simple debug callback that will capture all the
   received tasks at the remote access HAL side:
 
-  `dumpsys android.hardware.automotive.remoteaccess.IRemoteAccess/default --start-debug-callback`
+  `emulator_car_x86_64:/ # dumpsys android.hardware.automotive.remoteaccess.IRemoteAccess/default --start-debug-callback`
 
 * Issue the following debug command to remote access HAL to establish the
   communication channel between it and the test wakeup client. This command
   also notifies that wakeup is not required:
 
-  `dumpsys android.hardware.automotive.remoteaccess.IRemoteAccess/default --set-ap-state 1 0`
+  `emulator_car_x86_64:/ # dumpsys android.hardware.automotive.remoteaccess.IRemoteAccess/default --set-ap-state 1 0`
 
 * Wait for a while, issue the following command to show the received fake tasks:
 
-  `dumpsys android.hardware.automotive.remoteaccess.IRemoteAccess/default --show-task`
+  `emulator_car_x86_64:/ # dumpsys android.hardware.automotive.remoteaccess.IRemoteAccess/default --show-task`
 
   You should expect to see some received tasks printed out.
 
 * Simulate the Application Processor is shutting down by issuing the following
   command:
 
-  `dumpsys android.hardware.automotive.remoteaccess.IRemoteAccess/default --set-ap-state 0 0`
+  `emulator_car_x86_64:/ # dumpsys android.hardware.automotive.remoteaccess.IRemoteAccess/default --set-ap-state 0 0`
 
 * Wait for a while, issue the following command to show received tasks again:
 
-  `dumpsys android.hardware.automotive.remoteaccess.IRemoteAccess/default --show-task`
+  `emulator_car_x86_64:/ # dumpsys android.hardware.automotive.remoteaccess.IRemoteAccess/default --show-task`
 
   You should expect to see no new tasks received since remote access HAL already
   closed the communication channel.
@@ -191,22 +199,24 @@ interface.
 * Simulate the Application Processor is already shutdown and wake up is required
   now:
 
-  `dumpsys android.hardware.automotive.remoteaccess.IRemoteAccess/default --set-ap-state 0 1`
+  `emulator_car_x86_64:/ # dumpsys android.hardware.automotive.remoteaccess.IRemoteAccess/default --set-ap-state 0 1`
 
   Now you should expect to see the test wakeup client printing out messages
   that it is trying to wake up application processor.
 
 * Simulate the Application Processor is waken up:
 
-  `dumpsys android.hardware.automotive.remoteaccess.IRemoteAccess/default --set-ap-state 1 0`
+  `emulator_car_x86_64:/ # dumpsys android.hardware.automotive.remoteaccess.IRemoteAccess/default --set-ap-state 1 0`
 
 * A new communication channel should have been established and all pending
   non-expired tasks should be delivered to the remote access HAL.
 
-  `dumpsys android.hardware.automotive.remoteaccess.IRemoteAccess/default --show-task`
+  `emulator_car_x86_64:/ # dumpsys android.hardware.automotive.remoteaccess.IRemoteAccess/default --show-task`
 
 * Now you can issue `ctrl c` on the first adb shell to stop the test wakeup
   client.
+
+* After the test, you can use `ctrl D` to exit the adb shell.
 
 ## How to build and test the test wakeup client using two car emulators.
 
@@ -217,10 +227,10 @@ Application Processor, one as the TCU.
   instances. For detail about why we change it this way, see [interconnecting
   emulator instance](https://developer.android.com/studio/run/emulator-networking#connecting).
 
-  Change 'DGRPC_SERVICE_ADDRESS' in `test_grpc_server/Android.bp` to
+  Change 'DGRPC_SERVICE_ADDRESS' in `[android_root]/hardware/interfaces/automotive/remoteaccess/test_grpc_server/impl/Android.bp` to
   `10.0.2.15:50051`.
 
-  Change `DGRPC_SERVICE_ADDRESS` in 'hal/defaut/Android.bp' to
+  Change `DGRPC_SERVICE_ADDRESS` in '[android_root]/hardware/interfaces/automotive/remoteaccess/hal/defaut/Android.bp' to
   `10.0.2.2:50051`.
 
 * Under android root: `source build/envsetup.sh`
@@ -240,17 +250,23 @@ Application Processor, one as the TCU.
   `telnet localhost 5554`
 
 * `auth auth_token` where auth_token must match the contents of the
-  `.emulator_console_auth_token` file.
+  `~/.emulator_console_auth_token` file.
 
 * `redir add tcp:50051:50051`
 
-* Exit the telnet session
+* Exit the telnet session using 'ctrl-C'
 
- Make the target device writable:
+  Make the target device writable:
+
+  Under android root:
+
+  `source build/envsetup.sh`
+
+  `lunch sdk_car_x86_64-userdebug`
 
   `adb root`
 
-  `adb remount`
+  `adb remount` (remount might take a while)
 
   `adb reboot`
 
@@ -264,19 +280,31 @@ Application Processor, one as the TCU.
 
 * `adb shell`
 
-* `su`
+* `emulator_car_x86_64:/ # su`
 
-* `/vendor/bin/TestWakeupClientServer`
+* `emulator_car_x86_64:/ # /vendor/bin/TestWakeupClientServer`
 
-* Start a new shell, start another car emulator as the Application Processor:
+* Start a new shell under android root, start another car emulator as the Application Processor:
+
+  `source build/envsetup.sh`
+
+  `lunch sdk_car_x86_64-userdebug`
 
   `emulator -writable-system -read-only`
+
+* Open a new shell under android root:
+
+  `source build/envsetup.sh`
+
+  `lunch sdk_car_x86_64-userdebug`
 
 * Connect to adb shell for the application processor:
 
   `adb -s emulator-5556 shell`
 
-  `su`
+  `emulator_car_x86_64:/ # su`
 
 * Follow the test instructions for one car emulator using the 'dumpsys'
   commands.
+
+* After the test, you can use `ctrl D` to exit the adb shell.
