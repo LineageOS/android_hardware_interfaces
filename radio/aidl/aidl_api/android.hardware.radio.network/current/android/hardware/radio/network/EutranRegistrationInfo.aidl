@@ -36,4 +36,13 @@ package android.hardware.radio.network;
 parcelable EutranRegistrationInfo {
   android.hardware.radio.network.LteVopsInfo lteVopsInfo;
   android.hardware.radio.network.NrIndicators nrIndicators;
+  android.hardware.radio.network.EutranRegistrationInfo.AttachResultType lteAttachResultType;
+  int extraInfo;
+  const int EXTRA_CSFB_NOT_PREFERRED = 1;
+  const int EXTRA_SMS_ONLY = 2;
+  enum AttachResultType {
+    NONE = 0,
+    EPS_ONLY = 1,
+    COMBINED = 2,
+  }
 }
