@@ -36,7 +36,7 @@ class ConsumerIr : public BnConsumerIr {
     ::ndk::ScopedAStatus getCarrierFreqs(std::vector<ConsumerIrFreqRange>* _aidl_return) override;
     ::ndk::ScopedAStatus transmit(int32_t in_carrierFreqHz,
                                   const std::vector<int32_t>& in_pattern) override;
-    consumerir_device_t *mDevice;
+    consumerir_device_t *mDevice = nullptr;
 };
 
 ConsumerIr::ConsumerIr() {
@@ -49,7 +49,10 @@ ConsumerIr::ConsumerIr() {
     }
     ret = hw_module->methods->open(hw_module, CONSUMERIR_TRANSMITTER, (hw_device_t **) &mDevice);
     if (ret < 0) {
+        // note - may want to make this a fatal error - otherwise the service will crash when it's used
         ALOGE("Can't open consumer IR transmitter, error: %d", ret);
+        // in case it's modified
+        mDevice = nullptr;
     }
 }
 
