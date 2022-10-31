@@ -58,16 +58,26 @@ using aidl::android::hardware::audio::effect::Parameter;
  * Here we focus on specific parameter checking, general IEffect interfaces testing performed in
  * VtsAudioEfectTargetTest.
  */
-using EqualizerParamTestParam = std::tuple<int, int, int>;
+enum ParamName { PARAM_INSTANCE_NAME, PARAM_PRESET_INDEX, PARAM_BAND_INDEX, PARAM_BAND_LEVEL };
+using EqualizerParamTestParam = std::tuple<std::string, int, int, int>;
+
+/*
+Testing parameter range, assuming the parameter supported by effect is in this range.
+This range is verified with IEffect.getDescriptor(), for any index supported vts expect EX_NONE
+from IEffect.setParameter(), otherwise expect EX_ILLEGAL_ARGUMENT.
+*/
+constexpr std::pair<int, int> kPresetIndexRange = {-1, 10};  // valid range [0, 9]
+constexpr std::pair<int, int> kBandIndexRange = {-1, 5};     // valid range [0, 4]
+constexpr std::pair<int, int> kBandLevelRange = {-5, 5};     // needs update with implementation
 
 class EqualizerParamTest : public ::testing::TestWithParam<EqualizerParamTestParam>,
                            public EffectHelper {
   public:
     EqualizerParamTest()
-        : EffectHelper(android::getAidlHalInstanceNames(IFactory::descriptor)[0]),
-          mParamPresetIndex(std::get<0 /* kPresetIndexRange */>(GetParam())),
-          mParamBandIndex(std::get<1 /* kBandIndexRange */>(GetParam())),
-          mParamBandLevel(std::get<2 /* kBandLevelRange */>(GetParam())) {}
+        : EffectHelper(std::get<PARAM_INSTANCE_NAME>(GetParam())),
+          mParamPresetIndex(std::get<PARAM_PRESET_INDEX>(GetParam())),
+          mParamBandIndex(std::get<PARAM_BAND_INDEX>(GetParam())),
+          mParamBandLevel(std::get<PARAM_BAND_LEVEL>(GetParam())) {}
 
     void SetUp() override {
         CreateEffectsWithUUID(EqualizerTypeUUID);
@@ -109,7 +119,7 @@ class EqualizerParamTest : public ::testing::TestWithParam<EqualizerParamTestPar
                 EXPECT_STATUS(expected, effect->setParameter(expectParam))
                         << expectParam.toString();
 
-                // get
+                // only get if parameter in range and set success
                 if (expected == EX_NONE) {
                     Parameter getParam;
                     Parameter::Specific::Id id;
@@ -208,22 +218,27 @@ TEST_P(EqualizerParamTest, SetAndGetSingleBand) {
     SetAndGetEqualizerParameters();
 }
 
-/**
- Testing preset index range with [-10, 10], assuming the min/max preset index supported by
-effect is in this range.
- This range is verified with IEffect.getDescriptor(): for any index supported vts expect EX_NONE
-from IEffect.setParameter(), otherwise expect EX_ILLEGAL_ARGUMENT.
- */
-constexpr std::pair<int, int> kPresetIndexRange = {-1, 10};  // valid range [0, 9]
-constexpr std::pair<int, int> kBandIndexRange = {-1, 5};     // valid range [0, 4]
-constexpr std::pair<int, int> kBandLevelRange = {-5, 5};     // needs update with implementation
-
 INSTANTIATE_TEST_SUITE_P(
         EqualizerTest, EqualizerParamTest,
-        ::testing::Combine(testing::Range(kPresetIndexRange.first, kPresetIndexRange.second),
-                           testing::Range(kBandIndexRange.first, kBandIndexRange.second),
-                           testing::Range(kBandLevelRange.first, kBandLevelRange.second)));
-GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(EqualizerTest);
+        ::testing::Combine(
+                testing::ValuesIn(android::getAidlHalInstanceNames(IFactory::descriptor)),
+                testing::Range(kPresetIndexRange.first, kPresetIndexRange.second),
+                testing::Range(kBandIndexRange.first, kBandIndexRange.second),
+                testing::Range(kBandLevelRange.first, kBandLevelRange.second)),
+        [](const testing::TestParamInfo<EqualizerParamTest::ParamType>& info) {
+            std::string instance = std::get<PARAM_INSTANCE_NAME>(info.param);
+            std::string presetIdx = std::to_string(std::get<PARAM_PRESET_INDEX>(info.param));
+            std::string bandIdx = std::to_string(std::get<PARAM_BAND_INDEX>(info.param));
+            std::string bandLevel = std::to_string(std::get<PARAM_BAND_LEVEL>(info.param));
+
+            std::string name = instance + "_presetIndex" + presetIdx + "_bandIndex" + bandIdx +
+                               "_bandLevel" + bandLevel;
+            std::replace_if(
+                    name.begin(), name.end(), [](const char c) { return !std::isalnum(c); }, '_');
+            return name;
+        });
+
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(EqualizerParamTest);
 
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
