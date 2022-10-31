@@ -33,16 +33,37 @@
 
 package android.hardware.audio.effect;
 @VintfStability
-union Capability {
+union HapticGenerator {
   android.hardware.audio.effect.VendorExtension vendorExtension;
-  android.hardware.audio.effect.BassBoost.Capability bassBoost;
-  android.hardware.audio.effect.Downmix.Capability downmix;
-  android.hardware.audio.effect.DynamicsProcessing.Capability dynamicsProcessing;
-  android.hardware.audio.effect.Equalizer.Capability equalizer;
-  android.hardware.audio.effect.HapticGenerator.Capability hapticGenerator;
-  android.hardware.audio.effect.LoudnessEnhancer.Capability loudnessEnhancer;
-  android.hardware.audio.effect.Reverb.Capability reverb;
-  android.hardware.audio.effect.Virtualizer.Capability virtualizer;
-  android.hardware.audio.effect.Visualizer.Capability visualizer;
-  android.hardware.audio.effect.Volume.Capability volume;
+  android.hardware.audio.effect.HapticGenerator.HapticScale hapticScale;
+  android.hardware.audio.effect.HapticGenerator.VibratorInformation vibratorInfo;
+  @VintfStability
+  union Id {
+    int vendorExtensionTag;
+    android.hardware.audio.effect.HapticGenerator.Tag commonTag;
+  }
+  @VintfStability
+  parcelable Capability {
+    android.hardware.audio.effect.VendorExtension extension;
+  }
+  @Backing(type="int") @VintfStability
+  enum VibratorScale {
+    MUTE = -100,
+    VERY_LOW = -2,
+    LOW = -1,
+    NONE = 0,
+    HIGH = 1,
+    VERY_HIGH = 2,
+  }
+  @VintfStability
+  parcelable HapticScale {
+    int id;
+    android.hardware.audio.effect.HapticGenerator.VibratorScale scale = android.hardware.audio.effect.HapticGenerator.VibratorScale.MUTE;
+  }
+  @VintfStability
+  parcelable VibratorInformation {
+    float resonantFrequencyHz;
+    float qFactor;
+    float maxAmplitude;
+  }
 }
