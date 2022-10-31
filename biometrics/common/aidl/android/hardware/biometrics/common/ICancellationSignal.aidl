@@ -15,9 +15,10 @@
  */
 
 package android.hardware.biometrics.common;
-
+/**
+ * @hide
+ */
 @VintfStability
 oneway interface ICancellationSignal {
     void cancel();
 }
-

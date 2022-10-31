@@ -15,10 +15,10 @@ cc_test {
     ],
     srcs: ["VtsHalBiometricsFaceTargetTest.cpp"],
     static_libs: [
-        "android.hardware.biometrics.common-V2-ndk",
-        "android.hardware.biometrics.face-V2-ndk",
+        "android.hardware.biometrics.common-V3-ndk",
+        "android.hardware.biometrics.face-V3-ndk",
         "android.hardware.common-V2-ndk",
-        "android.hardware.keymaster-V3-ndk",
+        "android.hardware.keymaster-V4-ndk",
     ],
     shared_libs: [
         "libbinder_ndk",

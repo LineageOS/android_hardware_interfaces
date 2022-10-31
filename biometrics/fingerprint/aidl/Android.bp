@@ -14,8 +14,8 @@ aidl_interface {
         "android/hardware/biometrics/fingerprint/**/*.aidl",
     ],
     imports: [
-        "android.hardware.biometrics.common",
-        "android.hardware.keymaster-V3",
+        "android.hardware.biometrics.common-V3",
+        "android.hardware.keymaster-V4",
     ],
     stability: "vintf",
     backend: {
@@ -41,7 +41,5 @@ aidl_interface {
                 "android.hardware.keymaster-V3",
             ],
         },
-
     ],
-
 }

@@ -16,8 +16,8 @@ cc_binary {
     shared_libs: [
         "libbase",
         "libbinder_ndk",
-        "android.hardware.biometrics.face-V2-ndk",
-        "android.hardware.biometrics.common-V2-ndk",
+        "android.hardware.biometrics.face-V3-ndk",
+        "android.hardware.biometrics.common-V3-ndk",
         "android.hardware.biometrics.common.thread",
         "android.hardware.biometrics.common.util",
     ],
@@ -49,9 +49,9 @@ cc_test {
     ],
     static_libs: [
         "libandroid.hardware.biometrics.face.VirtualProps",
-        "android.hardware.biometrics.face-V2-ndk",
-        "android.hardware.biometrics.common-V2-ndk",
-        "android.hardware.keymaster-V3-ndk",
+        "android.hardware.biometrics.face-V3-ndk",
+        "android.hardware.biometrics.common-V3-ndk",
+        "android.hardware.keymaster-V4-ndk",
         "android.hardware.biometrics.common.util",
     ],
     vendor: true,
