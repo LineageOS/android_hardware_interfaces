@@ -36,6 +36,7 @@ cc_binary {
         "liblog",
         "libutils",
         "android.hardware.ir-V1-ndk",
+        "libhardware"
     ],
 
     srcs: ["main.cpp"],
