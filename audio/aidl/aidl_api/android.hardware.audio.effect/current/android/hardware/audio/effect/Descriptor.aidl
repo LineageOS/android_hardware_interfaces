@@ -54,11 +54,11 @@ parcelable Descriptor {
     android.media.audio.common.AudioUuid type;
     android.media.audio.common.AudioUuid uuid;
     @nullable android.media.audio.common.AudioUuid proxy;
-    android.hardware.audio.effect.Flags flags;
   }
   @VintfStability
   parcelable Common {
     android.hardware.audio.effect.Descriptor.Identity id;
+    android.hardware.audio.effect.Flags flags;
     int cpuLoad;
     int memoryUsage;
     @utf8InCpp String name;

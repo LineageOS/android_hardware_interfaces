@@ -107,10 +107,6 @@ parcelable Descriptor {
          * implementation is part of a proxy effect.
          */
         @nullable AudioUuid proxy;
-        /**
-         * Capability flags defined for the effect implementation.
-         */
-        Flags flags;
     }
 
     /**
@@ -122,6 +118,10 @@ parcelable Descriptor {
          * Identity of effect implementation.
          */
         Identity id;
+        /**
+         * Capability flags defined for the effect implementation.
+         */
+        Flags flags;
         /**
          * CPU load indication expressed in 0.1 MIPS units as estimated on an ARM9E core (ARMv5TE)
          * with 0 WS.
