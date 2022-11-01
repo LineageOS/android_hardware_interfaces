@@ -39,11 +39,14 @@ interface IFactory {
      *        null, used as a filter for effect type UUIDs.
      * @param implementation Indicates the particular implementation of the effect in that type.
      *        This is an optional parameter, pass in null if this parameter is not necessary; if
-     *        non null, used as a filter for effect type UUIDs.
+     *        non null, used as a filter for effect implementation UUIDs.
+     * @param proxy Indicates the proxy UUID filter to query.
+     *        This is an optional parameter, pass in null if this parameter is not necessary; if
+     *        non null, used as a filter for effect proxy UUIDs.
      * @return List of effect identities supported and filtered by type/implementation UUID.
      */
-    Descriptor.Identity[] queryEffects(
-            in @nullable AudioUuid type, in @nullable AudioUuid implementation);
+    Descriptor.Identity[] queryEffects(in @nullable AudioUuid type,
+            in @nullable AudioUuid implementation, in @nullable AudioUuid proxy);
 
     /**
      * Return a list of defined processings, with the optional filter by Processing type.

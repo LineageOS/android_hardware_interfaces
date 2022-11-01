@@ -34,12 +34,14 @@ class Factory : public BnFactory {
      *
      * @param in_type Type UUID.
      * @param in_instance Instance UUID.
+     * @param in_proxy Proxy UUID.
      * @param out_descriptor List of identities .
      * @return ndk::ScopedAStatus
      */
     ndk::ScopedAStatus queryEffects(
             const std::optional<::aidl::android::media::audio::common::AudioUuid>& in_type,
             const std::optional<::aidl::android::media::audio::common::AudioUuid>& in_instance,
+            const std::optional<::aidl::android::media::audio::common::AudioUuid>& in_proxy,
             std::vector<Descriptor::Identity>* out_descriptor) override;
 
     /**
@@ -79,16 +81,9 @@ class Factory : public BnFactory {
     // List of effect descriptors supported by the devices.
     std::vector<Descriptor::Identity> mIdentityList;
 
-    typedef binder_exception_t (*EffectCreateFunctor)(std::shared_ptr<IEffect>*);
-    typedef binder_exception_t (*EffectDestroyFunctor)(const std::shared_ptr<IEffect>&);
-    struct effect_interface_s {
-        EffectCreateFunctor createEffectFunc;
-        EffectDestroyFunctor destroyEffectFunc;
-    };
-
     std::map<aidl::android::media::audio::common::AudioUuid /* implementationUUID */,
              std::pair<std::unique_ptr<void, std::function<void(void*)>> /* dlHandle */,
-                       std::unique_ptr<struct effect_interface_s>>>
+                       std::unique_ptr<struct effect_dl_interface_s>>>
             mEffectLibMap;
     std::map<std::weak_ptr<IEffect>, aidl::android::media::audio::common::AudioUuid,
              std::owner_less<>>
@@ -96,5 +91,10 @@ class Factory : public BnFactory {
 
     ndk::ScopedAStatus destroyEffectImpl(const std::shared_ptr<IEffect>& in_handle);
     void cleanupEffectMap();
+    void openEffectLibrary(
+            const ::aidl::android::media::audio::common::AudioUuid& type,
+            const ::aidl::android::media::audio::common::AudioUuid& impl,
+            const std::optional<::aidl::android::media::audio::common::AudioUuid>& proxy,
+            const std::string& libName);
 };
 }  // namespace aidl::android::hardware::audio::effect

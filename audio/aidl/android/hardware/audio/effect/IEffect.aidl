@@ -44,13 +44,15 @@ interface IEffect {
          */
         int status;
         /**
-         * The amount of bytes consumed by the effect instance.
+         * The amount of audio data samples in the floating point format consumed by the effect
+         * instance.
          */
-        int fmqByteConsumed;
+        int fmqConsumed;
         /**
-         * The amount of bytes produced by the effect instance.
+         * The amount of audio data samples in the floating point format produced by the effect
+         * instance.
          */
-        int fmqByteProduced;
+        int fmqProduced;
     }
 
     /**
@@ -65,11 +67,11 @@ interface IEffect {
         /**
          * Message queue for input data buffer.
          */
-        MQDescriptor<byte, SynchronizedReadWrite> inputDataMQ;
+        MQDescriptor<float, SynchronizedReadWrite> inputDataMQ;
         /**
          * Message queue for output data buffer.
          */
-        MQDescriptor<byte, SynchronizedReadWrite> outputDataMQ;
+        MQDescriptor<float, SynchronizedReadWrite> outputDataMQ;
     }
 
     /**
@@ -79,13 +81,15 @@ interface IEffect {
      * the effect instance must be able to handle all IEffect interface calls.
      *
      * @param common Parameters which MUST pass from client at open time.
+     * @param specific Effect specific parameters which can optional pass from client at open time.
      *
      * @throws EX_ILLEGAL_ARGUMENT if the effect instance receive unsupported command.
      * @throws a EX_UNSUPPORTED_OPERATION if device capability/resource is not enough or system
      *         failure happens.
      * @note Open an already-opened effect instance should do nothing and should not throw an error.
      */
-    OpenEffectReturn open(in Parameter.Common common, in Parameter.Specific specific);
+    OpenEffectReturn open(
+            in Parameter.Common common, in @nullable Parameter.Specific specific);
 
     /**
      * Called by the client to close the effect instance, processing thread should be destroyed and
