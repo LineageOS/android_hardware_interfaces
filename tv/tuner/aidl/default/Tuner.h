@@ -61,6 +61,7 @@ class Tuner : public BnTuner {
                                                  int32_t in_maxNumber) override;
     ::ndk::ScopedAStatus getMaxNumberOfFrontends(FrontendType in_frontendType,
                                                  int32_t* _aidl_return) override;
+    ::ndk::ScopedAStatus isLnaSupported(bool* _aidl_return) override;
 
     binder_status_t dump(int fd, const char** args, uint32_t numArgs) override;
 

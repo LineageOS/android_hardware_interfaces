@@ -47,4 +47,5 @@ interface ITuner {
   void setLna(in boolean bEnable);
   void setMaxNumberOfFrontends(in android.hardware.tv.tuner.FrontendType frontendType, in int maxNumber);
   int getMaxNumberOfFrontends(in android.hardware.tv.tuner.FrontendType frontendType);
+  boolean isLnaSupported();
 }
