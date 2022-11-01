@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a54eb2ba_8aff8e7b",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 21290
+      },
+      "writtenOn": "2022-11-01T15:46:04Z",
+      "side": 1,
+      "message": "This is a straight pick from CLO. Fixes slow motion on Mi 11 Lite 5G (xiaomi sm7350)",
+      "revId": "0ec01ee11dfc582cd624037d02a2c986c899284b",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
