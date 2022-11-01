@@ -88,7 +88,7 @@ oneway interface IRadioIms {
      *
      * Response function is IRadioImsResponse.startImsTrafficResponse()
      */
-    void startImsTraffic(int serial, in String token,
+    void startImsTraffic(int serial, int token,
             ImsTrafficType imsTrafficType, AccessNetwork accessNetworkType);
 
     /**
@@ -101,7 +101,7 @@ oneway interface IRadioIms {
      *
      * Response function is IRadioImsResponse.stopImsTrafficResponse()
      */
-    void stopImsTraffic(int serial, in String token);
+    void stopImsTraffic(int serial, int token);
 
     /**
      * Triggers the UE initiated EPS fallback when a MO voice call failed to establish on 5G NR

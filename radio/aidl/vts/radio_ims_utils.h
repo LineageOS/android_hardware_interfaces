@@ -64,7 +64,7 @@ class RadioImsIndication : public BnRadioImsIndication {
     virtual ~RadioImsIndication() = default;
 
     virtual ndk::ScopedAStatus onConnectionSetupFailure(RadioIndicationType type,
-            const std::string& token, const ConnectionFailureInfo& info) override;
+            int32_t token, const ConnectionFailureInfo& info) override;
 
     virtual ndk::ScopedAStatus notifyAnbr(RadioIndicationType type, ImsStreamType mediaType,
             ImsStreamDirection direction, int bitsPerSecond) override;
