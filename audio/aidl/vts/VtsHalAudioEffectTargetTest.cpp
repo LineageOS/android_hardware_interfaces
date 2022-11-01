@@ -59,7 +59,6 @@ class AudioEffectTest : public testing::TestWithParam<std::string>, public Effec
         CreateEffects();
         initParamCommonFormat();
         initParamCommon();
-        // initParamSpecific();
     }
 
     void TearDown() override {
@@ -105,8 +104,9 @@ TEST_P(AudioEffectTest, DescriptorIdExistAndUnique) {
         Descriptor desc;
         std::vector<Descriptor::Identity> idList;
         EXPECT_IS_OK(effect->getDescriptor(&desc));
-        QueryEffects(desc.common.id.type, desc.common.id.uuid, &idList);
-        EXPECT_EQ(idList.size(), 1UL);
+        QueryEffects(desc.common.id.type, desc.common.id.uuid, desc.common.id.proxy, &idList);
+        // Must have at least one instance.
+        EXPECT_NE(idList.size(), 0UL);
     };
     ForEachEffect(checker);
 
@@ -117,7 +117,7 @@ TEST_P(AudioEffectTest, DescriptorIdExistAndUnique) {
     auto vec = GetCompleteEffectIdList();
     std::unordered_set<Descriptor::Identity, decltype(stringHash)> idSet(0, stringHash);
     for (auto it : vec) {
-        EXPECT_EQ(idSet.count(it), 0UL);
+        EXPECT_EQ(idSet.count(it), 0UL) << it.toString();
         idSet.insert(it);
     }
 }
@@ -256,7 +256,8 @@ TEST_P(AudioEffectTest, DestroyOpenEffects) {
     // open effects, destroy without close, expect to get EX_ILLEGAL_STATE status.
     CreateEffects();
     OpenEffects();
-    DestroyEffects(EX_ILLEGAL_STATE, 1);
+    auto vec = GetCompleteEffectIdList();
+    DestroyEffects(EX_ILLEGAL_STATE, vec.size());
     CloseEffects();
 }
 
@@ -310,9 +311,11 @@ TEST_P(AudioEffectTest, ResetAndVerifyParameter) {
     CloseEffects();
 }
 
+// TODO: need a way to support setting different sessionId to different effect instances
+#if 0
 // Multiple instances of same implementation running.
-TEST_P(AudioEffectTest, MultipleInstancesRunning) {
-    CreateEffects(3);
+TEST_P(AudioEffectTest, MultipleInstancesRunningWithDiffSessionId) {
+    CreateEffects();
     ExpectState(State::INIT);
     OpenEffects();
     ExpectState(State::IDLE);
@@ -327,15 +330,16 @@ TEST_P(AudioEffectTest, MultipleInstancesRunning) {
     VerifyParameters();
     CloseEffects();
 }
+#endif
 
 // Send data to effects and expect it to consume by check statusMQ.
 TEST_P(AudioEffectTest, ExpectEffectsToConsumeDataInMQ) {
     OpenEffects();
-    PrepareInputData(mWriteMQSize);
+    PrepareInputData(mWriteMQBytes);
 
     CommandEffects(CommandId::START);
-    writeToFmq(mWriteMQSize);
-    readFromFmq(mWriteMQSize);
+    writeToFmq(mWriteMQBytes);
+    readFromFmq(mWriteMQBytes);
 
     ExpectState(State::PROCESSING);
     CommandEffects(CommandId::STOP);

@@ -34,12 +34,13 @@
 package android.hardware.audio.effect;
 @VintfStability
 union Equalizer {
-  android.hardware.audio.effect.Equalizer.VendorExtension vendor;
+  android.hardware.audio.effect.VendorExtension vendorExtension;
   android.hardware.audio.effect.Equalizer.BandLevel[] bandLevels;
   int preset;
   @VintfStability
-  parcelable VendorExtension {
-    ParcelableHolder extension;
+  union Id {
+    int vendorExtensionTag;
+    android.hardware.audio.effect.Equalizer.Tag commonTag;
   }
   @VintfStability
   parcelable Capability {
@@ -50,13 +51,13 @@ union Equalizer {
   @VintfStability
   parcelable BandLevel {
     int index;
-    int level;
+    int levelMb;
   }
   @VintfStability
   parcelable BandFrequency {
     int index;
-    int min;
-    int max;
+    int minMh;
+    int maxMh;
   }
   @VintfStability
   parcelable Preset {

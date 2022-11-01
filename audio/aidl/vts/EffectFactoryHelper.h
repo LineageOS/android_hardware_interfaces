@@ -53,9 +53,10 @@ class EffectFactoryHelper {
 
     void QueryEffects(const std::optional<AudioUuid>& in_type,
                       const std::optional<AudioUuid>& in_instance,
+                      const std::optional<AudioUuid>& in_proxy,
                       std::vector<Descriptor::Identity>* _aidl_return) {
         ASSERT_NE(mEffectFactory, nullptr);
-        EXPECT_IS_OK(mEffectFactory->queryEffects(in_type, in_instance, _aidl_return));
+        EXPECT_IS_OK(mEffectFactory->queryEffects(in_type, in_instance, in_proxy, _aidl_return));
         mIds = *_aidl_return;
     }
 
@@ -85,9 +86,10 @@ class EffectFactoryHelper {
         ASSERT_NE(mEffectFactory, nullptr);
 
         if (type == EffectNullUuid) {
-            EXPECT_IS_OK(mEffectFactory->queryEffects(std::nullopt, std::nullopt, &ids));
+            EXPECT_IS_OK(
+                    mEffectFactory->queryEffects(std::nullopt, std::nullopt, std::nullopt, &ids));
         } else {
-            EXPECT_IS_OK(mEffectFactory->queryEffects(type, std::nullopt, &ids));
+            EXPECT_IS_OK(mEffectFactory->queryEffects(type, std::nullopt, std::nullopt, &ids));
         }
         for (const auto& id : ids) {
             ASSERT_EQ(id.type, type);
@@ -121,7 +123,8 @@ class EffectFactoryHelper {
 
     void QueryAndCreateAllEffects() {
         ASSERT_NE(mEffectFactory, nullptr);
-        EXPECT_IS_OK(mEffectFactory->queryEffects(std::nullopt, std::nullopt, &mCompleteIds));
+        EXPECT_IS_OK(mEffectFactory->queryEffects(std::nullopt, std::nullopt, std::nullopt,
+                                                  &mCompleteIds));
         for (const auto& id : mCompleteIds) {
             std::shared_ptr<IEffect> effect;
             EXPECT_IS_OK(mEffectFactory->createEffect(id.uuid, &effect));
