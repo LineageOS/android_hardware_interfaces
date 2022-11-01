@@ -35,6 +35,25 @@ cc_library_headers {
     ],
 }
 
+cc_library_shared {
+    name: "libimapper_stablec_abicheck",
+    visibility: ["//visibility:private"],
+    defaults: [
+        "android.hardware.graphics.allocator-ndk_shared",
+        "android.hardware.graphics.common-ndk_shared",
+    ],
+    header_libs: [
+        "libimapper_stablec",
+    ],
+    srcs: [
+        "imapper5_abicheck.cpp",
+    ],
+    header_abi_checker: {
+        enabled: true,
+        symbol_file: "imapper.map.txt",
+    },
+}
+
 cc_library_headers {
     name: "libimapper_providerutils",
     vendor_available: true,
