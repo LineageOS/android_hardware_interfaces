@@ -68,10 +68,20 @@ cc_defaults {
     ],
     vendor: true,
     shared_libs: [
+        "libaudioaidlcommon",
         "libbase",
         "libbinder_ndk",
+        "libcutils",
+        "libfmq",
+        "liblog",
+        "libutils",
+        "android.hardware.common-V2-ndk",
+        "android.hardware.common.fmq-V1-ndk",
         "android.hardware.audio.effect-V1-ndk",
-        "libequalizer",
+    ],
+    header_libs: [
+        "libaudioaidl_headers",
+        "libsystem_headers",
     ],
     cflags: [
         "-Wall",
@@ -81,24 +91,12 @@ cc_defaults {
     ],
 }
 
-cc_library_static {
-    name: "libaudioeffectserviceexampleimpl",
-    defaults: ["aidlaudioeffectservice_defaults"],
-    export_include_dirs: ["include"],
-    srcs: [
-        "EffectFactory.cpp",
-    ],
-    header_libs: [
-        "libsystem_headers",
-    ],
-    visibility: [
-        ":__subpackages__",
-    ],
-}
-
 filegroup {
     name: "effectCommonFile",
-    srcs: ["EffectThread.cpp"],
+    srcs: [
+        "EffectThread.cpp",
+        "EffectImpl.cpp",
+    ],
 }
 
 cc_binary {
@@ -107,10 +105,21 @@ cc_binary {
     init_rc: ["android.hardware.audio.effect.service-aidl.example.rc"],
     vintf_fragments: ["android.hardware.audio.effect.service-aidl.xml"],
     defaults: ["aidlaudioeffectservice_defaults"],
-    static_libs: [
-        "libaudioeffectserviceexampleimpl",
+    shared_libs: [
+        "libbassboostsw",
+        "libdynamicsprocessingsw",
+        "libequalizersw",
+        "libhapticgeneratorsw",
+        "libloudnessenhancersw",
+        "libreverbsw",
+        "libvirtualizersw",
+        "libvisualizersw",
+        "libvolumesw",
     ],
-    srcs: ["EffectMain.cpp"],
+    srcs: [
+        "EffectMain.cpp",
+        "EffectFactory.cpp",
+    ],
 }
 
 cc_library_headers {

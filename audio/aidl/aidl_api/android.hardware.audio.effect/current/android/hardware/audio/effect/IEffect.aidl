@@ -34,7 +34,7 @@
 package android.hardware.audio.effect;
 @VintfStability
 interface IEffect {
-  android.hardware.audio.effect.IEffect.OpenEffectReturn open(in android.hardware.audio.effect.Parameter.Common common, in android.hardware.audio.effect.Parameter.Specific specific);
+  android.hardware.audio.effect.IEffect.OpenEffectReturn open(in android.hardware.audio.effect.Parameter.Common common, in @nullable android.hardware.audio.effect.Parameter.Specific specific);
   void close();
   android.hardware.audio.effect.Descriptor getDescriptor();
   void command(in android.hardware.audio.effect.CommandId commandId);
@@ -44,13 +44,13 @@ interface IEffect {
   @FixedSize @VintfStability
   parcelable Status {
     int status;
-    int fmqByteConsumed;
-    int fmqByteProduced;
+    int fmqConsumed;
+    int fmqProduced;
   }
   @VintfStability
   parcelable OpenEffectReturn {
     android.hardware.common.fmq.MQDescriptor<android.hardware.audio.effect.IEffect.Status,android.hardware.common.fmq.SynchronizedReadWrite> statusMQ;
-    android.hardware.common.fmq.MQDescriptor<byte,android.hardware.common.fmq.SynchronizedReadWrite> inputDataMQ;
-    android.hardware.common.fmq.MQDescriptor<byte,android.hardware.common.fmq.SynchronizedReadWrite> outputDataMQ;
+    android.hardware.common.fmq.MQDescriptor<float,android.hardware.common.fmq.SynchronizedReadWrite> inputDataMQ;
+    android.hardware.common.fmq.MQDescriptor<float,android.hardware.common.fmq.SynchronizedReadWrite> outputDataMQ;
   }
 }

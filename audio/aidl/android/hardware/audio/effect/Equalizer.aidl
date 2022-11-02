@@ -16,7 +16,7 @@
 
 package android.hardware.audio.effect;
 
-import android.media.audio.common.AudioProfile;
+import android.hardware.audio.effect.VendorExtension;
 
 /**
  * Equalizer specific definitions.
@@ -27,13 +27,18 @@ import android.media.audio.common.AudioProfile;
 @VintfStability
 union Equalizer {
     /**
-     * Vendor Equalizer implementation definition for additional parameters.
+     * Effect parameter tag to identify the parameters for getParameter().
      */
     @VintfStability
-    parcelable VendorExtension {
-        ParcelableHolder extension;
+    union Id {
+        int vendorExtensionTag;
+        Equalizer.Tag commonTag;
     }
-    VendorExtension vendor;
+
+    /**
+     * Vendor Equalizer implementation definition for additional parameters.
+     */
+    VendorExtension vendorExtension;
 
     /**
      * Capability MUST be supported by Equalizer implementation.
@@ -58,22 +63,22 @@ union Equalizer {
     }
 
     /**
-     * Level setting for each band.
+     * Level setting for each band in millibels.
      */
     @VintfStability
     parcelable BandLevel {
         int index;
-        int level;
+        int levelMb;
     }
 
     /**
-     * Supported minimal and maximal frequency for each band.
+     * Supported minimal and maximal frequency for each band in millihertz.
      */
     @VintfStability
     parcelable BandFrequency {
         int index;
-        int min;
-        int max;
+        int minMh;
+        int maxMh;
     }
 
     /**
