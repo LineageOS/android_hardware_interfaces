@@ -26,7 +26,7 @@
 
 namespace aidl::android::hardware::audio::effect {
 
-class BassBoostSwContext : public EffectContext {
+class BassBoostSwContext final : public EffectContext {
   public:
     BassBoostSwContext(int statusDepth, const Parameter::Common& common)
         : EffectContext(statusDepth, common) {
@@ -35,7 +35,7 @@ class BassBoostSwContext : public EffectContext {
     // TODO: add specific context here
 };
 
-class BassBoostSw : public EffectImpl {
+class BassBoostSw final : public EffectImpl {
   public:
     BassBoostSw() { LOG(DEBUG) << __func__; }
     ~BassBoostSw() {
