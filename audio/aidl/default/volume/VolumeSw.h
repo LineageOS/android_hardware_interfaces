@@ -26,7 +26,7 @@
 
 namespace aidl::android::hardware::audio::effect {
 
-class VolumeSwContext : public EffectContext {
+class VolumeSwContext final : public EffectContext {
   public:
     VolumeSwContext(int statusDepth, const Parameter::Common& common)
         : EffectContext(statusDepth, common) {
@@ -35,7 +35,7 @@ class VolumeSwContext : public EffectContext {
     // TODO: add specific context here
 };
 
-class VolumeSw : public EffectImpl {
+class VolumeSw final : public EffectImpl {
   public:
     VolumeSw() { LOG(DEBUG) << __func__; }
     ~VolumeSw() {
