@@ -18,6 +18,7 @@
 
 #include <aidl/android/hardware/graphics/composer3/CommandResultPayload.h>
 #include <aidl/android/hardware/graphics/composer3/IComposerClient.h>
+#include <android-base/logging.h>
 #include <inttypes.h>
 #include <string.h>
 
@@ -25,8 +26,6 @@
 #include <limits>
 #include <memory>
 #include <vector>
-
-#include "Util.h"
 
 namespace aidl::android::hardware::graphics::composer3::impl {
 
