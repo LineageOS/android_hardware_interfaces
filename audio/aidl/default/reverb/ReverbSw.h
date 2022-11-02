@@ -26,7 +26,7 @@
 
 namespace aidl::android::hardware::audio::effect {
 
-class ReverbSwContext : public EffectContext {
+class ReverbSwContext final : public EffectContext {
   public:
     ReverbSwContext(int statusDepth, const Parameter::Common& common)
         : EffectContext(statusDepth, common) {
@@ -35,7 +35,7 @@ class ReverbSwContext : public EffectContext {
     // TODO: add specific context here
 };
 
-class ReverbSw : public EffectImpl {
+class ReverbSw final : public EffectImpl {
   public:
     ReverbSw() { LOG(DEBUG) << __func__; }
     ~ReverbSw() {

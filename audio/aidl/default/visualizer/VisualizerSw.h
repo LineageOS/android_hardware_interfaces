@@ -26,7 +26,7 @@
 
 namespace aidl::android::hardware::audio::effect {
 
-class VisualizerSwContext : public EffectContext {
+class VisualizerSwContext final : public EffectContext {
   public:
     VisualizerSwContext(int statusDepth, const Parameter::Common& common)
         : EffectContext(statusDepth, common) {
@@ -35,7 +35,7 @@ class VisualizerSwContext : public EffectContext {
     // TODO: add specific context here
 };
 
-class VisualizerSw : public EffectImpl {
+class VisualizerSw final : public EffectImpl {
   public:
     VisualizerSw() { LOG(DEBUG) << __func__; }
     ~VisualizerSw() {

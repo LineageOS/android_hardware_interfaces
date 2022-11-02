@@ -26,7 +26,7 @@
 
 namespace aidl::android::hardware::audio::effect {
 
-class LoudnessEnhancerSwContext : public EffectContext {
+class LoudnessEnhancerSwContext final : public EffectContext {
   public:
     LoudnessEnhancerSwContext(int statusDepth, const Parameter::Common& common)
         : EffectContext(statusDepth, common) {
@@ -35,7 +35,7 @@ class LoudnessEnhancerSwContext : public EffectContext {
     // TODO: add specific context here
 };
 
-class LoudnessEnhancerSw : public EffectImpl {
+class LoudnessEnhancerSw final : public EffectImpl {
   public:
     LoudnessEnhancerSw() { LOG(DEBUG) << __func__; }
     ~LoudnessEnhancerSw() {
