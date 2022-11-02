@@ -38,5 +38,6 @@ parcelable HdmiPortInfo {
   int portId;
   boolean cecSupported;
   boolean arcSupported;
+  boolean eArcSupported;
   int physicalAddress;
 }
