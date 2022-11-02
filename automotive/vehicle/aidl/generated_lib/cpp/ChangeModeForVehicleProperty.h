@@ -126,6 +126,8 @@ std::unordered_map<VehicleProperty, VehiclePropertyChangeMode> ChangeModeForVehi
         {VehicleProperty::MIRROR_Y_MOVE, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::MIRROR_LOCK, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::MIRROR_FOLD, VehiclePropertyChangeMode::ON_CHANGE},
+        {VehicleProperty::MIRROR_AUTO_FOLD_ENABLED, VehiclePropertyChangeMode::ON_CHANGE},
+        {VehicleProperty::MIRROR_AUTO_TILT_ENABLED, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::SEAT_MEMORY_SELECT, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::SEAT_MEMORY_SET, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::SEAT_BELT_BUCKLED, VehiclePropertyChangeMode::ON_CHANGE},

@@ -126,6 +126,8 @@ std::unordered_map<VehicleProperty, VehiclePropertyAccess> AccessForVehiclePrope
         {VehicleProperty::MIRROR_Y_MOVE, VehiclePropertyAccess::READ_WRITE},
         {VehicleProperty::MIRROR_LOCK, VehiclePropertyAccess::READ_WRITE},
         {VehicleProperty::MIRROR_FOLD, VehiclePropertyAccess::READ_WRITE},
+        {VehicleProperty::MIRROR_AUTO_FOLD_ENABLED, VehiclePropertyAccess::READ_WRITE},
+        {VehicleProperty::MIRROR_AUTO_TILT_ENABLED, VehiclePropertyAccess::READ_WRITE},
         {VehicleProperty::SEAT_MEMORY_SELECT, VehiclePropertyAccess::WRITE},
         {VehicleProperty::SEAT_MEMORY_SET, VehiclePropertyAccess::WRITE},
         {VehicleProperty::SEAT_BELT_BUCKLED, VehiclePropertyAccess::READ_WRITE},

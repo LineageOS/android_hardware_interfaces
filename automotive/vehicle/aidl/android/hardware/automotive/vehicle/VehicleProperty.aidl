@@ -1391,6 +1391,35 @@ enum VehicleProperty {
      */
     MIRROR_FOLD = 0x0B45 + 0x10000000 + 0x01000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:BOOLEAN
+
+    /**
+     * Represents property for Mirror Auto Fold feature.
+     *
+     * This property is true when the feature for automatically folding the vehicle's side mirrors
+     * (for example, when the mirrors fold inward automatically when one exits and locks the
+     * vehicle) is enabled.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     */
+
+    MIRROR_AUTO_FOLD_ENABLED =
+            0x0B46 + VehiclePropertyGroup.SYSTEM + VehicleArea.MIRROR + VehiclePropertyType.BOOLEAN,
+
+    /**
+     * Represents property for Mirror Auto Tilt feature.
+     *
+     * This property is true when the feature for automatically tilting the vehicle's side mirrors
+     * (for example, when the mirrors tilt downward automatically when one reverses the vehicle) is
+     * enabled.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     */
+
+    MIRROR_AUTO_TILT_ENABLED =
+            0x0B47 + VehiclePropertyGroup.SYSTEM + VehicleArea.MIRROR + VehiclePropertyType.BOOLEAN,
+
     /**
      * Seat memory select
      *
