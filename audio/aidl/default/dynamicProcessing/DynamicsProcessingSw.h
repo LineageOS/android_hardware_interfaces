@@ -26,7 +26,7 @@
 
 namespace aidl::android::hardware::audio::effect {
 
-class DynamicsProcessingSwContext : public EffectContext {
+class DynamicsProcessingSwContext final : public EffectContext {
   public:
     DynamicsProcessingSwContext(int statusDepth, const Parameter::Common& common)
         : EffectContext(statusDepth, common) {
@@ -35,7 +35,7 @@ class DynamicsProcessingSwContext : public EffectContext {
     // TODO: add specific context here
 };
 
-class DynamicsProcessingSw : public EffectImpl {
+class DynamicsProcessingSw final : public EffectImpl {
   public:
     DynamicsProcessingSw() { LOG(DEBUG) << __func__; }
     ~DynamicsProcessingSw() {
