@@ -62,6 +62,7 @@ class EffectWorker : public EffectThread {
     }
 
     // must implement by each effect implementation
+    // TODO: consider if this interface need adjustment to handle in-place processing
     virtual IEffect::Status effectProcessImpl(float* in, float* out, int processSamples) = 0;
 
   private:
