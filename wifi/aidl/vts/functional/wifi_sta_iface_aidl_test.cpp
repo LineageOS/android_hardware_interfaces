@@ -145,7 +145,7 @@ TEST_P(WifiStaIfaceAidlTest, GetLinkLayerStats) {
     std::shared_ptr<IWifiStaIface> iface;
     auto status = createStaIface(&iface);
     if (status.isOk()) {
-        EXPECT_GT(link_layer_stats.iface.timeSliceDutyCycleInPercent, 0);
+        EXPECT_GT(link_layer_stats.iface.links[0].timeSliceDutyCycleInPercent, 0);
     }
 
     // Disable link layer stats collection.
