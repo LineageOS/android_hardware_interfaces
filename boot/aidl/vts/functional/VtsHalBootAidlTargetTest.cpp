@@ -192,3 +192,4 @@ TEST_P(BootHidlTest, GetSuffix) {
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, BootHidlTest,
         testing::ValuesIn(android::getAidlHalInstanceNames(IBootControl::descriptor)));
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(BootHidlTest);
