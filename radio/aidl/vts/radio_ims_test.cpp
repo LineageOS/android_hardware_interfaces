@@ -124,7 +124,7 @@ TEST_P(RadioImsTest, startImsTraffic) {
     serial = GetRandomSerialNumber();
 
     ndk::ScopedAStatus res =
-            radio_ims->startImsTraffic(serial, std::string("1"),
+            radio_ims->startImsTraffic(serial, 1,
             ImsTrafficType::REGISTRATION, AccessNetwork::EUTRAN);
     ASSERT_OK(res);
     EXPECT_EQ(std::cv_status::no_timeout, wait());
@@ -150,8 +150,7 @@ TEST_P(RadioImsTest, stopImsTraffic) {
 
     serial = GetRandomSerialNumber();
 
-    ndk::ScopedAStatus res =
-            radio_ims->stopImsTraffic(serial, std::string("2"));
+    ndk::ScopedAStatus res = radio_ims->stopImsTraffic(serial, 2);
     ASSERT_OK(res);
     EXPECT_EQ(std::cv_status::no_timeout, wait());
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_ims->rspInfo.type);

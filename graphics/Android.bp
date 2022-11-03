@@ -33,14 +33,14 @@ cc_defaults {
 cc_defaults {
     name: "android.hardware.graphics.common-ndk_static",
     static_libs: [
-        "android.hardware.graphics.common-V3-ndk",
+        "android.hardware.graphics.common-V4-ndk",
     ],
 }
 
 cc_defaults {
     name: "android.hardware.graphics.common-ndk_shared",
     shared_libs: [
-        "android.hardware.graphics.common-V3-ndk",
+        "android.hardware.graphics.common-V4-ndk",
     ],
 }
 

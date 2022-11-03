@@ -26,7 +26,7 @@
 
 namespace aidl::android::hardware::audio::effect {
 
-class HapticGeneratorSwContext : public EffectContext {
+class HapticGeneratorSwContext final : public EffectContext {
   public:
     HapticGeneratorSwContext(int statusDepth, const Parameter::Common& common)
         : EffectContext(statusDepth, common) {
@@ -35,7 +35,7 @@ class HapticGeneratorSwContext : public EffectContext {
     // TODO: add specific context here
 };
 
-class HapticGeneratorSw : public EffectImpl {
+class HapticGeneratorSw final : public EffectImpl {
   public:
     HapticGeneratorSw() { LOG(DEBUG) << __func__; }
     ~HapticGeneratorSw() {

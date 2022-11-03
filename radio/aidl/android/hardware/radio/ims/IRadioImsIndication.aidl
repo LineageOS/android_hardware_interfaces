@@ -37,7 +37,7 @@ oneway interface IRadioImsIndication {
      * @param info Connection failure information
      */
     void onConnectionSetupFailure(
-            in RadioIndicationType type, in String token, in ConnectionFailureInfo info);
+            in RadioIndicationType type, int token, in ConnectionFailureInfo info);
 
     /**
      * Access Network Bitrate Recommendation (ANBR), see 3GPP TS 26.114.

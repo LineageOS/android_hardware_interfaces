@@ -1,0 +1,46 @@
+package {
+    default_applicable_licenses: ["hardware_interfaces_license"],
+}
+
+cc_library_static {
+    name: "android.hardware.bluetooth.hci",
+    vendor_available: true,
+    host_supported: true,
+    defaults: ["hidl_defaults"],
+    srcs: [
+        "hci_packetizer.cc",
+        "h4_protocol.cc",
+    ],
+    export_include_dirs: ["."],
+    shared_libs: [
+        "libbase",
+        "libhidlbase",
+        "liblog",
+        "libutils",
+    ],
+}
+
+cc_test {
+    name: "bluetooth-vendor-interface-hci-test",
+    host_supported: true,
+    defaults: ["hidl_defaults"],
+    srcs: [
+        "test/h4_protocol_unittest.cc",
+    ],
+    shared_libs: [
+        "libbase",
+        "libhidlbase",
+        "liblog",
+        "libutils",
+    ],
+    static_libs: [
+        "android.hardware.bluetooth.async",
+        "android.hardware.bluetooth.hci",
+        "libgmock",
+    ],
+    sanitize: {
+        address: true,
+        cfi: true,
+    },
+    test_suites: ["general-tests"],
+}
