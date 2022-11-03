@@ -28,7 +28,7 @@ namespace android::nlinterceptor {
 using namespace std::chrono_literals;
 
 static constexpr std::chrono::milliseconds kPollTimeout = 300ms;
-static constexpr bool kSuperVerbose = true;
+static constexpr bool kSuperVerbose = false;
 
 InterceptorRelay::InterceptorRelay(uint32_t nlFamily, uint32_t clientNlPid,
                                    const std::string& clientName)

@@ -19,7 +19,6 @@
 #include "GuaranteedCallback.h"
 
 #include <aidl/android/hardware/radio/data/IRadioDataIndication.h>
-#include <aidl/android/hardware/radio/ims/IRadioImsIndication.h>
 #include <aidl/android/hardware/radio/messaging/IRadioMessagingIndication.h>
 #include <aidl/android/hardware/radio/modem/IRadioModemIndication.h>
 #include <aidl/android/hardware/radio/network/IRadioNetworkIndication.h>
@@ -56,10 +55,6 @@ class RadioIndication : public V1_6::IRadioIndication {
             ::aidl::android::hardware::radio::voice::IRadioVoiceIndication,
             ::aidl::android::hardware::radio::voice::IRadioVoiceIndicationDefault, true>
             mVoiceCb;
-    GuaranteedCallback<  //
-            ::aidl::android::hardware::radio::ims::IRadioImsIndication,
-            ::aidl::android::hardware::radio::ims::IRadioImsIndicationDefault, true>
-            mImsCb;
 
     // IRadioIndication @ 1.0
     Return<void> radioStateChanged(V1_0::RadioIndicationType type,
@@ -225,8 +220,6 @@ class RadioIndication : public V1_6::IRadioIndication {
             std::shared_ptr<::aidl::android::hardware::radio::sim::IRadioSimIndication> simCb);
     void setResponseFunction(
             std::shared_ptr<::aidl::android::hardware::radio::voice::IRadioVoiceIndication> voicCb);
-    void setResponseFunction(
-            std::shared_ptr<::aidl::android::hardware::radio::ims::IRadioImsIndication> imsCb);
 
     std::shared_ptr<::aidl::android::hardware::radio::data::IRadioDataIndication> dataCb();
     std::shared_ptr<::aidl::android::hardware::radio::messaging::IRadioMessagingIndication>
@@ -235,7 +228,6 @@ class RadioIndication : public V1_6::IRadioIndication {
     std::shared_ptr<::aidl::android::hardware::radio::network::IRadioNetworkIndication> networkCb();
     std::shared_ptr<::aidl::android::hardware::radio::sim::IRadioSimIndication> simCb();
     std::shared_ptr<::aidl::android::hardware::radio::voice::IRadioVoiceIndication> voiceCb();
-    std::shared_ptr<::aidl::android::hardware::radio::ims::IRadioImsIndication> imsCb();
 };
 
 }  // namespace android::hardware::radio::compat

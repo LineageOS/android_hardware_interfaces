@@ -387,22 +387,6 @@ TEST_P(CameraAidlTest, setTorchMode) {
                 mTorchStatus = TorchModeStatus::NOT_AVAILABLE;
             }
 
-            // register a new callback; make sure it receives the
-            // flash-on callback.
-            std::shared_ptr<TorchProviderCb> cb2 = ndk::SharedRefBase::make<TorchProviderCb>(this);
-            ret = mProvider->setCallback(cb2);
-            ASSERT_TRUE(ret.isOk());
-            ASSERT_NE(cb2, nullptr);
-            {
-                std::unique_lock<std::mutex> l(mTorchLock);
-                while (TorchModeStatus::NOT_AVAILABLE == mTorchStatus) {
-                    auto timeout = std::chrono::system_clock::now() +
-                                   std::chrono::seconds(kTorchTimeoutSec);
-                    ASSERT_NE(std::cv_status::timeout, mTorchCond.wait_until(l, timeout));
-                }
-                ASSERT_EQ(TorchModeStatus::AVAILABLE_ON, mTorchStatus);
-            }
-
             ret = device->setTorchMode(false);
             ASSERT_TRUE(ret.isOk());
             {

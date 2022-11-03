@@ -46,11 +46,124 @@ static const AudioUuid EqualizerSwImplUUID = {static_cast<int32_t>(0x0bed4300),
                                               0xbb17,
                                               {0x00, 0x02, 0xa5, 0xd5, 0xc5, 0x1b}};
 
-// Visualizer type UUID.
-static const AudioUuid VisualizerTypeUUID = {static_cast<int32_t>(0x1d4033c0),
-                                             0x8557,
-                                             0x11df,
-                                             0x9f2d,
-                                             {0x00, 0x02, 0xa5, 0xd5, 0xc5, 0x1b}};
+// Equalizer bundle implementation UUID.
+static const AudioUuid EqualizerBundleImplUUID = {static_cast<int32_t>(0xce772f20),
+                                                  0x847d,
+                                                  0x11df,
+                                                  0xbb17,
+                                                  {0x00, 0x02, 0xa5, 0xd5, 0xc5, 0x1b}};
+
+// fa8184a4-588b-11ed-9b6a-0242ac120002
+static const AudioUuid BassBoostTypeUUID = {static_cast<int32_t>(0xfa8184a4),
+                                            0x588b,
+                                            0x11ed,
+                                            0x9b6a,
+                                            {0x02, 0x42, 0xac, 0x12, 0x00, 0x02}};
+// fa8181f2-588b-11ed-9b6a-0242ac120002
+static const AudioUuid BassBoostSwImplUUID = {static_cast<int32_t>(0xfa8181f2),
+                                              0x588b,
+                                              0x11ed,
+                                              0x9b6a,
+                                              {0x02, 0x42, 0xac, 0x12, 0x00, 0x02}};
+// fa81862a-588b-11ed-9b6a-0242ac120002
+static const AudioUuid DownmixTypeUUID = {static_cast<int32_t>(0xfa81862a),
+                                          0x588b,
+                                          0x11ed,
+                                          0x9b6a,
+                                          {0x02, 0x42, 0xac, 0x12, 0x00, 0x02}};
+// fa8187ba-588b-11ed-9b6a-0242ac120002
+static const AudioUuid DownmixSwImplUUID = {static_cast<int32_t>(0xfa8187ba),
+                                            0x588b,
+                                            0x11ed,
+                                            0x9b6a,
+                                            {0x02, 0x42, 0xac, 0x12, 0x00, 0x02}};
+// fa818954-588b-11ed-9b6a-0242ac120002
+static const AudioUuid DynamicsProcessingTypeUUID = {static_cast<int32_t>(0xfa818954),
+                                                     0x588b,
+                                                     0x11ed,
+                                                     0x9b6a,
+                                                     {0x02, 0x42, 0xac, 0x12, 0x00, 0x02}};
+// fa818d78-588b-11ed-9b6a-0242ac120002
+static const AudioUuid DynamicsProcessingSwImplUUID = {static_cast<int32_t>(0xfa818d78),
+                                                       0x588b,
+                                                       0x11ed,
+                                                       0x9b6a,
+                                                       {0x02, 0x42, 0xac, 0x12, 0x00, 0x02}};
+// fa818f62-588b-11ed-9b6a-0242ac120002
+static const AudioUuid HapticGeneratorTypeUUID = {static_cast<int32_t>(0xfa818f62),
+                                                  0x588b,
+                                                  0x11ed,
+                                                  0x9b6a,
+                                                  {0x02, 0x42, 0xac, 0x12, 0x00, 0x02}};
+// fa819110-588b-11ed-9b6a-0242ac120002
+static const AudioUuid HapticGeneratorSwImplUUID = {static_cast<int32_t>(0xfa819110),
+                                                    0x588b,
+                                                    0x11ed,
+                                                    0x9b6a,
+                                                    {0x02, 0x42, 0xac, 0x12, 0x00, 0x02}};
+
+// fa8194a8-588b-11ed-9b6a-0242ac120002
+static const AudioUuid LoudnessEnhancerTypeUUID = {static_cast<int32_t>(0xfa8194a8),
+                                                   0x588b,
+                                                   0x11ed,
+                                                   0x9b6a,
+                                                   {0x02, 0x42, 0xac, 0x12, 0x00, 0x02}};
+// fa819610-588b-11ed-9b6a-0242ac120002
+static const AudioUuid LoudnessEnhancerSwImplUUID = {static_cast<int32_t>(0xfa819610),
+                                                     0x588b,
+                                                     0x11ed,
+                                                     0x9b6a,
+                                                     {0x02, 0x42, 0xac, 0x12, 0x00, 0x02}};
+// fa819886-588b-11ed-9b6a-0242ac120002
+static const AudioUuid ReverbTypeUUID = {static_cast<int32_t>(0xfa819886),
+                                         0x588b,
+                                         0x11ed,
+                                         0x9b6a,
+                                         {0x02, 0x42, 0xac, 0x12, 0x00, 0x02}};
+// fa8199c6-588b-11ed-9b6a-0242ac120002
+static const AudioUuid ReverbSwImplUUID = {static_cast<int32_t>(0xfa8199c6),
+                                           0x588b,
+                                           0x11ed,
+                                           0x9b6a,
+                                           {0x02, 0x42, 0xac, 0x12, 0x00, 0x02}};
+
+// fa819af2-588b-11ed-9b6a-0242ac120002
+static const AudioUuid VirtualizerTypeUUID = {static_cast<int32_t>(0xfa819af2),
+                                              0x588b,
+                                              0x11ed,
+                                              0x9b6a,
+                                              {0x02, 0x42, 0xac, 0x12, 0x00, 0x02}};
+// fa819d86-588b-11ed-9b6a-0242ac120002
+static const AudioUuid VirtualizerSwImplUUID = {static_cast<int32_t>(0xfa819d86),
+                                                0x588b,
+                                                0x11ed,
+                                                0x9b6a,
+                                                {0x02, 0x42, 0xac, 0x12, 0x00, 0x02}};
+
+// fa819f3e-588b-11ed-9b6a-0242ac120002
+static const AudioUuid VisualizerTypeUUID = {static_cast<int32_t>(0xfa819f3e),
+                                             0x588b,
+                                             0x11ed,
+                                             0x9b6a,
+                                             {0x02, 0x42, 0xac, 0x12, 0x00, 0x02}};
+// fa81a0f6-588b-11ed-9b6a-0242ac120002
+static const AudioUuid VisualizerSwImplUUID = {static_cast<int32_t>(0xfa81a0f6),
+                                               0x588b,
+                                               0x11ed,
+                                               0x9b6a,
+                                               {0x02, 0x42, 0xac, 0x12, 0x00, 0x02}};
+
+// fa81a2b8-588b-11ed-9b6a-0242ac120002
+static const AudioUuid VolumeTypeUUID = {static_cast<int32_t>(0xfa81a2b8),
+                                         0x588b,
+                                         0x11ed,
+                                         0x9b6a,
+                                         {0x02, 0x42, 0xac, 0x12, 0x00, 0x02}};
+// fa81a718-588b-11ed-9b6a-0242ac120002
+static const AudioUuid VolumeSwImplUUID = {static_cast<int32_t>(0xfa81a718),
+                                           0x588b,
+                                           0x11ed,
+                                           0x9b6a,
+                                           {0x02, 0x42, 0xac, 0x12, 0x00, 0x02}};
 
 }  // namespace aidl::android::hardware::audio::effect

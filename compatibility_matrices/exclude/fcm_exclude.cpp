@@ -61,6 +61,7 @@ bool ShouldCheckMissingHalsInFcm(const std::string& package) {
             "android.hardware.graphics.common",
             "android.hardware.input.common",
             "android.hardware.keymaster",
+            "android.hardware.media.bufferpool2",
             "android.hardware.radio",
             "android.hardware.uwb.fira_android",
 

@@ -74,12 +74,12 @@ oneway interface IRadioIms {
      * shall be prioritized to the subscription which handles higher priority service.
      * When both subscriptions are handling the same type of service then RF shall be
      * prioritized to the voice preferred sub.
-     *  3. To evaluate the overall access barring in the case of ACB, ACB-Skp/SCM,
-     * SSAC and UAC. If the specific failure including network access, modem
-     * internal and RF resource prioritization from the modem happen,
-     * {@link IRadioImsResponse#startImsTrafficResponse()} or
-     * {@link IRadioImsIndication#onConnectionSetupFailure()} shall be invoked with the
-     * failure reason.
+     *  3. To evaluate the overall access barring in the case of ACB, ACB-Skp/SCM and UAC.
+     * The response {@link IRadioImsResponse#startImsTrafficResponse()} with success shall
+     * be sent by modem upon access class is allowed and RF resource is allotted. Otherwise
+     * the same API shall be invoked with appropriate {@link ConnectionFailureInfo}. Further
+     * if RRC connection setup fails then {@link IRadioImsIndication#onConnectionSetupFailure()}
+     * shall be invoked by modem with appropriate {@link ConnectionFailureInfo}.
      *
      * @param serial Serial number of request
      * @param token A nonce to identify the request
@@ -88,7 +88,7 @@ oneway interface IRadioIms {
      *
      * Response function is IRadioImsResponse.startImsTrafficResponse()
      */
-    void startImsTraffic(int serial, in String token,
+    void startImsTraffic(int serial, int token,
             ImsTrafficType imsTrafficType, AccessNetwork accessNetworkType);
 
     /**
@@ -101,7 +101,7 @@ oneway interface IRadioIms {
      *
      * Response function is IRadioImsResponse.stopImsTrafficResponse()
      */
-    void stopImsTraffic(int serial, in String token);
+    void stopImsTraffic(int serial, int token);
 
     /**
      * Triggers the UE initiated EPS fallback when a MO voice call failed to establish on 5G NR
