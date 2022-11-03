@@ -3,6 +3,7 @@
 aidl_interface {
     name: "android.hardware.bluetooth",
     vendor_available: true,
+    host_supported: true,
     srcs: ["android/hardware/bluetooth/*.aidl"],
     stability: "vintf",
     backend: {
