@@ -24,6 +24,7 @@ import android.hardware.keymaster.Timestamp;
  *
  * This version of the parcelable currently don't use the parametersVerified field since it's not
  * needed for time-based verification. This can be added in a later version, if needed.
+ * @hide
  */
 @VintfStability
 parcelable VerificationToken {
@@ -38,7 +39,6 @@ parcelable VerificationToken {
      * synchronize clocks.
      */
     Timestamp timestamp;
-
 
     /**
      * SecurityLevel of the secure environment that generated the token.
