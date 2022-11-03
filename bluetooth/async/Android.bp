@@ -1,0 +1,41 @@
+package {
+    default_applicable_licenses: ["hardware_interfaces_license"],
+}
+
+cc_library_static {
+    name: "android.hardware.bluetooth.async",
+    vendor_available: true,
+    host_supported: true,
+    srcs: [
+        "async_fd_watcher.cc",
+    ],
+    export_include_dirs: ["."],
+    shared_libs: [
+        "liblog",
+    ],
+    cflags: [
+        "-Wall",
+        "-Werror",
+    ],
+}
+
+cc_test {
+    name: "bluetooth-vendor-interface-async-test",
+    host_supported: true,
+    srcs: [
+        "test/async_fd_watcher_unittest.cc",
+    ],
+    shared_libs: [
+        "liblog",
+        "libutils",
+    ],
+    static_libs: [
+        "android.hardware.bluetooth.async",
+        "libgmock",
+    ],
+    cflags: [
+        "-Wall",
+        "-Werror",
+    ],
+    test_suites: ["general-tests"],
+}
