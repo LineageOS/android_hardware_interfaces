@@ -82,7 +82,7 @@ class BluetoothDeathRecipient {
   bool getHasDied() const { return has_died_; }
 
  private:
-  bool has_died_;
+  bool has_died_{false};
 };
 
 void OnDeath(void* cookie) {
