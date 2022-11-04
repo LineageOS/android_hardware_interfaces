@@ -18,6 +18,7 @@ aidl_interface {
         "android.hardware.security.keymint-V3",
     ],
     stability: "vintf",
+    frozen: false,
     backend: {
         java: {
             platform_apis: true,

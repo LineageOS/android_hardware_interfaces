@@ -1077,6 +1077,7 @@ TEST_P(GnssHalTest, TestAGnssExtension) {
  * 2. Sets AGnssRilCallback.
  * 3. Update network state to connected and then disconnected.
  * 4. Sets reference location.
+ * 5. Injects empty NI message data and verifies that it returns an error.
  */
 TEST_P(GnssHalTest, TestAGnssRilExtension) {
     if (aidl_gnss_hal_->getInterfaceVersion() <= 1) {
@@ -1120,6 +1121,9 @@ TEST_P(GnssHalTest, TestAGnssRilExtension) {
 
     status = iAGnssRil->setRefLocation(agnssReflocation);
     ASSERT_TRUE(status.isOk());
+
+    status = iAGnssRil->injectNiSuplMessageData(std::vector<uint8_t>(), 0);
+    ASSERT_FALSE(status.isOk());
 }
 
 /*

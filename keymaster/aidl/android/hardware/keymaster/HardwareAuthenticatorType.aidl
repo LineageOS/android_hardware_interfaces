@@ -20,6 +20,7 @@ package android.hardware.keymaster;
  * Hardware authentication type, used by HardwareAuthTokens to specify the mechanism used to
  * authentiate the user, and in KeyCharacteristics to specify the allowable mechanisms for
  * authenticating to activate a key.
+ * @hide
  */
 @VintfStability
 @Backing(type="int")

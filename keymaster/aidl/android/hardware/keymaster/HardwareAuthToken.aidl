@@ -16,8 +16,8 @@
 
 package android.hardware.keymaster;
 
-import android.hardware.keymaster.Timestamp;
 import android.hardware.keymaster.HardwareAuthenticatorType;
+import android.hardware.keymaster.Timestamp;
 
 /**
  * HardwareAuthToken is used to prove successful user authentication, to unlock the use of a key.
@@ -27,10 +27,10 @@ import android.hardware.keymaster.HardwareAuthenticatorType;
  * begin(), update(), and finish() to prove that authentication occurred.  See those methods for
  * more details.  It is up to the caller to determine which of the generated auth tokens is
  * appropriate for a given key operation.
+ * @hide
  */
 @VintfStability
 parcelable HardwareAuthToken {
-
     /**
      * challenge is a value that's used to enable authentication tokens to authorize specific
      * events.  The primary use case for challenge is to authorize an IKeymasterDevice cryptographic
@@ -49,7 +49,7 @@ parcelable HardwareAuthToken {
      *  but is created in an authentication application in the secure environment, such as the
      *  Fingerprint application.
      */
-    long authenticatorId;  // Secure authenticator ID.
+    long authenticatorId; // Secure authenticator ID.
 
     /**
      * authenticatorType describes the type of authentication that took place, e.g. password or
