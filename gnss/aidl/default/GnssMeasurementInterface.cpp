@@ -54,7 +54,7 @@ ndk::ScopedAStatus GnssMeasurementInterface::setCallback(
         ALOGW("GnssMeasurement callback already set. Resetting the callback...");
         stop();
     }
-    start(enableCorrVecOutputs);
+    start(enableCorrVecOutputs, enableFullTracking);
 
     return ndk::ScopedAStatus::ok();
 }
@@ -73,7 +73,7 @@ ndk::ScopedAStatus GnssMeasurementInterface::setCallbackWithOptions(
         stop();
     }
     mIntervalMs = std::max(options.intervalMs, 1000);
-    start(options.enableCorrVecOutputs);
+    start(options.enableCorrVecOutputs, options.enableFullTracking);
 
     return ndk::ScopedAStatus::ok();
 }
@@ -91,7 +91,8 @@ ndk::ScopedAStatus GnssMeasurementInterface::close() {
     return ndk::ScopedAStatus::ok();
 }
 
-void GnssMeasurementInterface::start(const bool enableCorrVecOutputs) {
+void GnssMeasurementInterface::start(const bool enableCorrVecOutputs,
+                                     const bool enableFullTracking) {
     ALOGD("start");
 
     if (mIsActive) {
@@ -103,7 +104,7 @@ void GnssMeasurementInterface::start(const bool enableCorrVecOutputs) {
 
     mIsActive = true;
     mThreadBlocker.reset();
-    mThread = std::thread([this, enableCorrVecOutputs]() {
+    mThread = std::thread([this, enableCorrVecOutputs, enableFullTracking]() {
         int intervalMs;
         do {
             if (!mIsActive) {
@@ -122,7 +123,8 @@ void GnssMeasurementInterface::start(const bool enableCorrVecOutputs) {
                     this->reportMeasurement(*measurement);
                 }
             } else {
-                auto measurement = Utils::getMockMeasurement(enableCorrVecOutputs);
+                auto measurement =
+                        Utils::getMockMeasurement(enableCorrVecOutputs, enableFullTracking);
                 this->reportMeasurement(measurement);
             }
             intervalMs =

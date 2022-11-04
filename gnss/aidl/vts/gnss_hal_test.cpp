@@ -477,6 +477,26 @@ void GnssHalTest::collectMeasurementIntervals(const sp<GnssMeasurementCallbackAi
     }
 }
 
+void GnssHalTest::checkGnssDataFields(const sp<GnssMeasurementCallbackAidl>& callback,
+                                      const int numMeasurementEvents, const int timeoutSeconds,
+                                      const bool isFullTracking) {
+    for (int i = 0; i < numMeasurementEvents; i++) {
+        GnssData lastGnssData;
+        ASSERT_TRUE(callback->gnss_data_cbq_.retrieve(lastGnssData, timeoutSeconds));
+        EXPECT_EQ(callback->gnss_data_cbq_.calledCount(), i + 1);
+        ASSERT_TRUE(lastGnssData.measurements.size() > 0);
+
+        // Validity check GnssData fields
+        checkGnssMeasurementClockFields(lastGnssData);
+        if (aidl_gnss_hal_->getInterfaceVersion() >= 3) {
+            EXPECT_EQ(lastGnssData.isFullTracking, isFullTracking);
+        }
+        for (const auto& measurement : lastGnssData.measurements) {
+            checkGnssMeasurementFields(measurement, lastGnssData);
+        }
+    }
+}
+
 void GnssHalTest::assertMeanAndStdev(int intervalMs, std::vector<int>& deltasMs) {
     double mean = computeMean(deltasMs);
     double stdev = computeStdev(mean, deltasMs);

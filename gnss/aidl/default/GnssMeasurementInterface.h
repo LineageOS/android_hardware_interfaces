@@ -41,7 +41,7 @@ struct GnssMeasurementInterface : public BnGnssMeasurementInterface {
     void setLocationEnabled(const bool enabled);
 
   private:
-    void start(const bool enableCorrVecOutputs);
+    void start(const bool enableCorrVecOutputs, const bool enableFullTracking);
     void stop();
     void reportMeasurement(const GnssData&);
     void waitForStoppingThreads();
