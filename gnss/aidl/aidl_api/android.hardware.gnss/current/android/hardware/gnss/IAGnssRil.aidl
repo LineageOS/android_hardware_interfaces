@@ -39,6 +39,7 @@ interface IAGnssRil {
   void setRefLocation(in android.hardware.gnss.IAGnssRil.AGnssRefLocation agnssReflocation);
   void setSetId(in android.hardware.gnss.IAGnssRil.SetIdType type, in @utf8InCpp String setid);
   void updateNetworkState(in android.hardware.gnss.IAGnssRil.NetworkAttributes attributes);
+  void injectNiSuplMessageData(in byte[] msgData, in int slotIndex);
   const int NETWORK_CAPABILITY_NOT_METERED = 1;
   const int NETWORK_CAPABILITY_NOT_ROAMING = 2;
   @Backing(type="int") @VintfStability
