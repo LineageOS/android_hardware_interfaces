@@ -63,9 +63,6 @@ cc_library {
     defaults: [
         "keymint_use_latest_hal_aidl_ndk_shared",
     ],
-    static_libs: [
-        "android.hardware.security.rkp-V3-ndk",
-    ],
     shared_libs: [
         "libbase",
         "libbinder_ndk",
