@@ -22,6 +22,8 @@
 #include "bt_vendor_lib.h"
 #include "hci_protocol.h"
 
+extern std::mutex initcb_mutex_;
+
 namespace android {
 namespace hardware {
 namespace bluetooth {
@@ -45,10 +47,9 @@ class VendorInterface {
   size_t Send(uint8_t type, const uint8_t* data, size_t length);
 
   void OnFirmwareConfigured(uint8_t result);
-
- private:
   virtual ~VendorInterface() = default;
 
+ private:
   bool Open(InitializeCompleteCallback initialize_complete_cb,
             PacketReadCallback event_cb, PacketReadCallback acl_cb,
             PacketReadCallback sco_cb, PacketReadCallback iso_cb);
