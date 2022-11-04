@@ -36,6 +36,8 @@ static const char* VENDOR_LIBRARY_SYMBOL_NAME =
     "BLUETOOTH_VENDOR_LIB_INTERFACE";
 
 static const int INVALID_FD = -1;
+std::mutex vendor_mutex_;
+std::mutex initcb_mutex_;
 
 namespace {
 
@@ -47,13 +49,25 @@ struct {
   uint16_t opcode;
 } internal_command;
 
+enum {
+  VENDOR_STATE_INIT = 1,
+  VENDOR_STATE_OPENING,	/* during opening */
+  VENDOR_STATE_OPENED,	/* open in fops_open */
+  VENDOR_STATE_CLOSING,	/* during closing */
+  VENDOR_STATE_CLOSED,	/* closed */
+
+  VENDOR_STATE_MSG_NUM
+} ;
+
+uint8_t vstate = VENDOR_STATE_INIT;
+
 // True when LPM is not enabled yet or wake is not asserted.
 bool lpm_wake_deasserted;
 uint32_t lpm_timeout_ms;
 bool recent_activity_flag;
 
 VendorInterface* g_vendor_interface = nullptr;
-std::mutex wakeup_mutex_;
+static VendorInterface vendor_interface;
 
 HC_BT_HDR* WrapPacketAndCopy(uint16_t event, const hidl_vec<uint8_t>& data) {
   size_t packet_size = data.size() + sizeof(HC_BT_HDR);
@@ -167,11 +181,8 @@ bool VendorInterface::Initialize(
     InitializeCompleteCallback initialize_complete_cb,
     PacketReadCallback event_cb, PacketReadCallback acl_cb,
     PacketReadCallback sco_cb, PacketReadCallback iso_cb) {
-  if (g_vendor_interface) {
-    ALOGE("%s: No previous Shutdown()?", __func__);
-    return false;
-  }
-  g_vendor_interface = new VendorInterface();
+  ALOGI("%s: VendorInterface::Initialize", __func__);
+  g_vendor_interface = &vendor_interface;
   return g_vendor_interface->Open(initialize_complete_cb, event_cb, acl_cb,
                                   sco_cb, iso_cb);
 }
@@ -179,9 +190,8 @@ bool VendorInterface::Initialize(
 void VendorInterface::Shutdown() {
   LOG_ALWAYS_FATAL_IF(!g_vendor_interface, "%s: No Vendor interface!",
                       __func__);
+  ALOGI("%s: VendorInterface::Shutdown", __func__);
   g_vendor_interface->Close();
-  delete g_vendor_interface;
-  g_vendor_interface = nullptr;
 }
 
 VendorInterface* VendorInterface::get() { return g_vendor_interface; }
@@ -191,144 +201,189 @@ bool VendorInterface::Open(InitializeCompleteCallback initialize_complete_cb,
                            PacketReadCallback acl_cb,
                            PacketReadCallback sco_cb,
                            PacketReadCallback iso_cb) {
-  initialize_complete_cb_ = initialize_complete_cb;
+  {
+    std::unique_lock<std::mutex> guard(vendor_mutex_);
+    if (vstate == VENDOR_STATE_OPENED) {
+      ALOGW("VendorInterface opened!");
+      return true;
+    }
 
-  // Initialize vendor interface
+    if ((vstate == VENDOR_STATE_CLOSING) ||
+        (vstate == VENDOR_STATE_OPENING)) {
+      ALOGW("VendorInterface open/close is on-going !");
+      return true;
+    }
 
-  lib_handle_ = dlopen(VENDOR_LIBRARY_NAME, RTLD_NOW);
-  if (!lib_handle_) {
-    ALOGE("%s unable to open %s (%s)", __func__, VENDOR_LIBRARY_NAME,
-          dlerror());
-    return false;
-  }
+    vstate = VENDOR_STATE_OPENING;
+    ALOGI("%s: VendorInterface::Open", __func__);
 
-  lib_interface_ = reinterpret_cast<bt_vendor_interface_t*>(
-      dlsym(lib_handle_, VENDOR_LIBRARY_SYMBOL_NAME));
-  if (!lib_interface_) {
-    ALOGE("%s unable to find symbol %s in %s (%s)", __func__,
-          VENDOR_LIBRARY_SYMBOL_NAME, VENDOR_LIBRARY_NAME, dlerror());
-    return false;
-  }
+    initialize_complete_cb_ = initialize_complete_cb;
+    // Initialize vendor interface
+
+    lib_handle_ = dlopen(VENDOR_LIBRARY_NAME, RTLD_NOW);
+    if (!lib_handle_) {
+      ALOGE("%s unable to open %s (%s)", __func__, VENDOR_LIBRARY_NAME,
+            dlerror());
+      return false;
+    }
+
+    lib_interface_ = reinterpret_cast<bt_vendor_interface_t*>(
+        dlsym(lib_handle_, VENDOR_LIBRARY_SYMBOL_NAME));
+    if (!lib_interface_) {
+      ALOGE("%s unable to find symbol %s in %s (%s)", __func__,
+            VENDOR_LIBRARY_SYMBOL_NAME, VENDOR_LIBRARY_NAME, dlerror());
+      return false;
+    }
 
   // Get the local BD address
 
-  uint8_t local_bda[BluetoothAddress::kBytes];
-  if (!BluetoothAddress::get_local_address(local_bda)) {
-    LOG_ALWAYS_FATAL("%s: No Bluetooth Address!", __func__);
-  }
-  int status = lib_interface_->init(&lib_callbacks, (unsigned char*)local_bda);
-  if (status) {
-    ALOGE("%s unable to initialize vendor library: %d", __func__, status);
-    return false;
-  }
+    uint8_t local_bda[BluetoothAddress::kBytes] = {0, 0, 0, 0, 0, 0};
+    if (!BluetoothAddress::get_local_address(local_bda)) {
+      // BT driver will get BD address from NVRAM for MTK solution
+      ALOGW("%s: No pre-set Bluetooth Address!", __func__);
+    }
+    int status = lib_interface_->init(&lib_callbacks, (unsigned char*)local_bda);
+    if (status) {
+      ALOGE("%s unable to initialize vendor library: %d", __func__, status);
+      return false;
+    }
 
-  ALOGD("%s vendor library loaded", __func__);
+    ALOGD("%s vendor library loaded", __func__);
 
   // Power on the controller
 
-  int power_state = BT_VND_PWR_ON;
-  lib_interface_->op(BT_VND_OP_POWER_CTRL, &power_state);
+    int power_state = BT_VND_PWR_ON;
+    lib_interface_->op(BT_VND_OP_POWER_CTRL, &power_state);
 
   // Get the UART socket(s)
 
-  int fd_list[CH_MAX] = {0};
-  int fd_count = lib_interface_->op(BT_VND_OP_USERIAL_OPEN, &fd_list);
+    int fd_list[CH_MAX] = {0};
+    int fd_count = lib_interface_->op(BT_VND_OP_USERIAL_OPEN, &fd_list);
 
-  if (fd_count < 1 || fd_count > CH_MAX - 1) {
-    ALOGE("%s: fd_count %d is invalid!", __func__, fd_count);
-    return false;
-  }
-
-  for (int i = 0; i < fd_count; i++) {
-    if (fd_list[i] == INVALID_FD) {
-      ALOGE("%s: fd %d is invalid!", __func__, fd_list[i]);
+    if (fd_count < 1 || fd_count > CH_MAX - 1) {
+      ALOGE("%s: fd_count %d is invalid!", __func__, fd_count);
       return false;
     }
-  }
 
-  event_cb_ = event_cb;
-  PacketReadCallback intercept_events = [this](const hidl_vec<uint8_t>& event) {
-    HandleIncomingEvent(event);
-  };
+    for (int i = 0; i < fd_count; i++) {
+      if (fd_list[i] == INVALID_FD) {
+        ALOGE("%s: fd %d is invalid!", __func__, fd_list[i]);
+        return false;
+      }
+    }
 
-  if (fd_count == 1) {
-    hci::H4Protocol* h4_hci =
-        new hci::H4Protocol(fd_list[0], intercept_events, acl_cb, sco_cb, iso_cb);
-    fd_watcher_.WatchFdForNonBlockingReads(
-        fd_list[0], [h4_hci](int fd) { h4_hci->OnDataReady(fd); });
-    hci_ = h4_hci;
-  } else {
-    hci::MctProtocol* mct_hci =
-        new hci::MctProtocol(fd_list, intercept_events, acl_cb);
-    fd_watcher_.WatchFdForNonBlockingReads(
-        fd_list[CH_EVT], [mct_hci](int fd) { mct_hci->OnEventDataReady(fd); });
-    fd_watcher_.WatchFdForNonBlockingReads(
-        fd_list[CH_ACL_IN], [mct_hci](int fd) { mct_hci->OnAclDataReady(fd); });
-    hci_ = mct_hci;
-  }
+    event_cb_ = event_cb;
+    PacketReadCallback intercept_events = [this](const hidl_vec<uint8_t>& event) {
+      HandleIncomingEvent(event);
+    };
+
+    if (fd_count == 1) {
+      hci::H4Protocol* h4_hci =
+          new hci::H4Protocol(fd_list[0], intercept_events, acl_cb, sco_cb, iso_cb);
+      fd_watcher_.WatchFdForNonBlockingReads(
+          fd_list[0], [h4_hci](int fd) { h4_hci->OnDataReady(fd); });
+      hci_ = h4_hci;
+    } else {
+      hci::MctProtocol* mct_hci =
+          new hci::MctProtocol(fd_list, intercept_events, acl_cb);
+      fd_watcher_.WatchFdForNonBlockingReads(
+          fd_list[CH_EVT], [mct_hci](int fd) { mct_hci->OnEventDataReady(fd); });
+      fd_watcher_.WatchFdForNonBlockingReads(
+          fd_list[CH_ACL_IN],
+          [mct_hci](int fd) { mct_hci->OnAclDataReady(fd); });
+      hci_ = mct_hci;
+    }
 
   // Initially, the power management is off.
-  lpm_wake_deasserted = true;
+    lpm_wake_deasserted = true;
 
   // Start configuring the firmware
-  firmware_startup_timer_ = new FirmwareStartupTimer();
-  lib_interface_->op(BT_VND_OP_FW_CFG, nullptr);
+    firmware_startup_timer_ = new FirmwareStartupTimer();
+    lib_interface_->op(BT_VND_OP_FW_CFG, nullptr);
 
+    vstate = VENDOR_STATE_OPENED;
+    ALOGI("%s: VendorInterface::Open done!!!", __func__);
+  }  // vendor_mutex_ done
   return true;
 }
 
 void VendorInterface::Close() {
   // These callbacks may send HCI events (vendor-dependent), so make sure to
   // StopWatching the file descriptor after this.
+
+  if (vstate != VENDOR_STATE_OPENED) {
+    ALOGW("VendorInterface is not allow close(%d)", vstate);
+    return;
+  }
+  vstate = VENDOR_STATE_CLOSING;
+  ALOGI("%s: VendorInterface::Close", __func__);
+
   if (lib_interface_ != nullptr) {
+    lib_interface_->cleanup();
     bt_vendor_lpm_mode_t mode = BT_VND_LPM_DISABLE;
     lib_interface_->op(BT_VND_OP_LPM_SET_MODE, &mode);
   }
 
-  fd_watcher_.StopWatchingFileDescriptors();
+  {
+    std::unique_lock<std::mutex> guard(vendor_mutex_);
 
-  if (hci_ != nullptr) {
-    delete hci_;
-    hci_ = nullptr;
-  }
+    fd_watcher_.StopWatchingFileDescriptors();
+    if (hci_ != nullptr) {
+      delete hci_;
+      hci_ = nullptr;
+    }
 
-  if (lib_interface_ != nullptr) {
-    lib_interface_->op(BT_VND_OP_USERIAL_CLOSE, nullptr);
+    if (lib_interface_ != nullptr) {
+      lib_interface_->op(BT_VND_OP_USERIAL_CLOSE, nullptr);
 
-    int power_state = BT_VND_PWR_OFF;
-    lib_interface_->op(BT_VND_OP_POWER_CTRL, &power_state);
+      int power_state = BT_VND_PWR_OFF;
+      lib_interface_->op(BT_VND_OP_POWER_CTRL, &power_state);
 
-    lib_interface_->cleanup();
-    lib_interface_ = nullptr;
-  }
+      lib_interface_ = nullptr;
+    }
 
-  if (lib_handle_ != nullptr) {
-    dlclose(lib_handle_);
-    lib_handle_ = nullptr;
-  }
+    if (lib_handle_ != nullptr) {
+      dlclose(lib_handle_);
+      lib_handle_ = nullptr;
+    }
 
-  if (firmware_startup_timer_ != nullptr) {
-    delete firmware_startup_timer_;
-    firmware_startup_timer_ = nullptr;
-  }
+    if (firmware_startup_timer_ != nullptr) {
+      delete firmware_startup_timer_;
+      firmware_startup_timer_ = nullptr;
+    }
+    vstate = VENDOR_STATE_CLOSED;
+  }  // vendor_mutex_ done
+  ALOGI("%s: VendorInterface::Close done!!!", __func__);
 }
 
 size_t VendorInterface::Send(uint8_t type, const uint8_t* data, size_t length) {
-  std::unique_lock<std::mutex> lock(wakeup_mutex_);
-  recent_activity_flag = true;
+  {
+    std::unique_lock<std::mutex> guard(vendor_mutex_);
 
-  if (lpm_wake_deasserted == true) {
-    // Restart the timer.
-    fd_watcher_.ConfigureTimeout(std::chrono::milliseconds(lpm_timeout_ms),
+    if (vstate != VENDOR_STATE_OPENED) {
+      ALOGW("VendorInterface is not open yet(%d)!", vstate);
+      return 0;
+    }
+    ALOGI("%s: VendorInterface::Send", __func__);
+
+    if (lib_interface_ == nullptr) {
+      ALOGE("lib_interface_ is null");
+      return 0;
+    }
+    recent_activity_flag = true;
+    if (lpm_wake_deasserted == true) {
+      // Restart the timer.
+      fd_watcher_.ConfigureTimeout(std::chrono::milliseconds(lpm_timeout_ms),
                                  [this]() { OnTimeout(); });
-    // Assert wake.
-    lpm_wake_deasserted = false;
-    bt_vendor_lpm_wake_state_t wakeState = BT_VND_LPM_WAKE_ASSERT;
-    lib_interface_->op(BT_VND_OP_LPM_WAKE_SET_STATE, &wakeState);
-    ALOGV("%s: Sent wake before (%02x)", __func__, data[0] | (data[1] << 8));
-  }
+      // Assert wake.
+      lpm_wake_deasserted = false;
+      bt_vendor_lpm_wake_state_t wakeState = BT_VND_LPM_WAKE_ASSERT;
+      lib_interface_->op(BT_VND_OP_LPM_WAKE_SET_STATE, &wakeState);
+      ALOGV("%s: Sent wake before (%02x)", __func__, data[0] | (data[1] << 8));
+    }
 
-  return hci_->Send(type, data, length);
+    return hci_ ? hci_->Send(type, data, length) : 0;
+  }  // vendor_mutex_ done
 }
 
 void VendorInterface::OnFirmwareConfigured(uint8_t result) {
@@ -339,25 +394,36 @@ void VendorInterface::OnFirmwareConfigured(uint8_t result) {
     firmware_startup_timer_ = nullptr;
   }
 
-  if (initialize_complete_cb_ != nullptr) {
-    initialize_complete_cb_(result == 0);
-    initialize_complete_cb_ = nullptr;
+  {
+    std::unique_lock<std::mutex> guard(initcb_mutex_);
+    ALOGD("%s OnFirmwareConfigured get lock", __func__);
+    if (initialize_complete_cb_ != nullptr) {
+      LOG_ALWAYS_FATAL_IF((result != 0),
+          "%s: Failed to init firmware!", __func__);
+      initialize_complete_cb_(result == 0);
+    }
+  }  // initcb_mutex_ done
+
+  if (lib_interface_ != nullptr) {
+    lib_interface_->op(BT_VND_OP_GET_LPM_IDLE_TIMEOUT, &lpm_timeout_ms);
+    ALOGI("%s: lpm_timeout_ms %d", __func__, lpm_timeout_ms);
+
+    bt_vendor_lpm_mode_t mode = BT_VND_LPM_ENABLE;
+    lib_interface_->op(BT_VND_OP_LPM_SET_MODE, &mode);
+
+    ALOGD("%s Calling StartLowPowerWatchdog()", __func__);
+    fd_watcher_.ConfigureTimeout(std::chrono::milliseconds(lpm_timeout_ms),
+                                 [this]() { OnTimeout(); });
+  }
+  else {
+    ALOGE("lib_interface_ is null");
   }
 
-  lib_interface_->op(BT_VND_OP_GET_LPM_IDLE_TIMEOUT, &lpm_timeout_ms);
-  ALOGI("%s: lpm_timeout_ms %d", __func__, lpm_timeout_ms);
-
-  bt_vendor_lpm_mode_t mode = BT_VND_LPM_ENABLE;
-  lib_interface_->op(BT_VND_OP_LPM_SET_MODE, &mode);
-
-  ALOGD("%s Calling StartLowPowerWatchdog()", __func__);
-  fd_watcher_.ConfigureTimeout(std::chrono::milliseconds(lpm_timeout_ms),
-                               [this]() { OnTimeout(); });
+  initialize_complete_cb_ = nullptr;
 }
 
 void VendorInterface::OnTimeout() {
   ALOGV("%s", __func__);
-  std::unique_lock<std::mutex> lock(wakeup_mutex_);
   if (recent_activity_flag == false) {
     lpm_wake_deasserted = true;
     bt_vendor_lpm_wake_state_t wakeState = BT_VND_LPM_WAKE_DEASSERT;
