@@ -15,7 +15,7 @@ aidl_interface {
     ],
     imports: [
         "android.hardware.keymaster-V3",
-        "android.hardware.security.keymint-V3",
+        "android.hardware.security.rkp-V3",
     ],
     stability: "vintf",
     frozen: false,
@@ -32,28 +32,28 @@ aidl_interface {
             version: "1",
             imports: [
                 "android.hardware.keymaster-V3",
-                "android.hardware.security.keymint-V1",
+                "android.hardware.security.rkp-V1",
             ],
         },
         {
             version: "2",
             imports: [
                 "android.hardware.keymaster-V3",
-                "android.hardware.security.keymint-V1",
+                "android.hardware.security.rkp-V1",
             ],
         },
         {
             version: "3",
             imports: [
                 "android.hardware.keymaster-V3",
-                "android.hardware.security.keymint-V1",
+                "android.hardware.security.rkp-V1",
             ],
         },
         {
             version: "4",
             imports: [
                 "android.hardware.keymaster-V3",
-                "android.hardware.security.keymint-V2",
+                "android.hardware.security.rkp-V3",
             ],
         },
 
