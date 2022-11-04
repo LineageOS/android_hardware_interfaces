@@ -50,6 +50,8 @@ cc_test {
         "VtsHalWifiV1_0TargetTestUtil",
         "VtsHalWifiV1_5TargetTestUtil",
         "VtsHalWifiSupplicantV1_0TargetTestUtil",
+        "android.hardware.wifi-V1-ndk",
+        "VtsHalWifiTargetTestUtil",
     ],
     test_suites: [
         "general-tests",
@@ -84,6 +86,8 @@ cc_test {
         "VtsHalWifiV1_0TargetTestUtil",
         "VtsHalWifiV1_5TargetTestUtil",
         "VtsHalWifiSupplicantV1_0TargetTestUtil",
+        "android.hardware.wifi-V1-ndk",
+        "VtsHalWifiTargetTestUtil",
     ],
     test_suites: [
         "general-tests",
@@ -118,6 +122,8 @@ cc_test {
         "VtsHalWifiV1_0TargetTestUtil",
         "VtsHalWifiV1_5TargetTestUtil",
         "VtsHalWifiSupplicantV1_0TargetTestUtil",
+        "android.hardware.wifi-V1-ndk",
+        "VtsHalWifiTargetTestUtil",
     ],
     test_suites: [
         "general-tests",
