@@ -21,15 +21,6 @@
 #include <android/binder_auto_utils.h>
 #include <gtest/gtest_pred_impl.h>
 
-namespace ndk {
-
-std::ostream& operator<<(std::ostream& str, const ScopedAStatus& status) {
-    str << status.getDescription();
-    return str;
-}
-
-}  // namespace ndk
-
 namespace android::hardware::audio::common::testing {
 
 namespace detail {
