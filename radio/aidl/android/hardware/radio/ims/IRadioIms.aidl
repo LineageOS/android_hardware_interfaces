@@ -18,14 +18,14 @@ package android.hardware.radio.ims;
 
 import android.hardware.radio.AccessNetwork;
 import android.hardware.radio.ims.EpsFallbackReason;
-import android.hardware.radio.ims.ImsRegistration;
-import android.hardware.radio.ims.ImsStreamDirection;
-import android.hardware.radio.ims.ImsTrafficType;
 import android.hardware.radio.ims.IRadioImsIndication;
 import android.hardware.radio.ims.IRadioImsResponse;
-import android.hardware.radio.ims.SrvccCall;
+import android.hardware.radio.ims.ImsCall;
+import android.hardware.radio.ims.ImsRegistration;
 import android.hardware.radio.ims.ImsStreamDirection;
 import android.hardware.radio.ims.ImsStreamType;
+import android.hardware.radio.ims.ImsTrafficType;
+import android.hardware.radio.ims.SrvccCall;
 
 /**
  * This interface is used by IMS telephony layer to talk to cellular radio.
@@ -85,11 +85,14 @@ oneway interface IRadioIms {
      * @param token A nonce to identify the request
      * @param imsTrafficType IMS traffic type like registration, voice, and video
      * @param accessNetworkType The type of the radio access network used
+     * @param trafficDirection Indicates whether traffic is originated by mobile originated or
+     *        mobile terminated use case eg. MO/MT call/SMS etc
      *
      * Response function is IRadioImsResponse.startImsTrafficResponse()
      */
     void startImsTraffic(int serial, int token,
-            ImsTrafficType imsTrafficType, AccessNetwork accessNetworkType);
+            ImsTrafficType imsTrafficType, AccessNetwork accessNetworkType,
+            ImsCall.Direction trafficDirection);
 
     /**
      * Indicates IMS traffic has been stopped.
@@ -136,4 +139,14 @@ oneway interface IRadioIms {
      * Response function is IRadioImsResponse.sendAnbrQueryResponse()
      */
     void sendAnbrQuery(int serial, ImsStreamType mediaType, ImsStreamDirection direction, int bitsPerSecond);
+
+    /**
+     * Provides a list of IMS call information to radio.
+     *
+     * @param serial Serial number of request
+     * @param imsCalls The list of IMS calls
+     *
+     * Response function is IRadioImsResponse.updateImsCallStatusResponse()
+     */
+    void updateImsCallStatus(int serial, in ImsCall[] imsCalls);
 }
