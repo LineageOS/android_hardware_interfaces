@@ -52,6 +52,8 @@ class RadioImsResponse : public BnRadioImsResponse {
     virtual ndk::ScopedAStatus triggerEpsFallbackResponse(const RadioResponseInfo& info) override;
 
     virtual ndk::ScopedAStatus sendAnbrQueryResponse(const RadioResponseInfo& info) override;
+
+    virtual ndk::ScopedAStatus updateImsCallStatusResponse(const RadioResponseInfo& info) override;
 };
 
 /* Callback class for radio ims indication */

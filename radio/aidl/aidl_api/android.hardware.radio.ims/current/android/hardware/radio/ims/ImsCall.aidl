@@ -32,13 +32,33 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.ims;
-@VintfStability
-interface IRadioImsResponse {
-  oneway void setSrvccCallInfoResponse(in android.hardware.radio.RadioResponseInfo info);
-  oneway void updateImsRegistrationInfoResponse(in android.hardware.radio.RadioResponseInfo info);
-  oneway void startImsTrafficResponse(in android.hardware.radio.RadioResponseInfo info, in @nullable android.hardware.radio.ims.ConnectionFailureInfo failureInfo);
-  oneway void stopImsTrafficResponse(in android.hardware.radio.RadioResponseInfo info);
-  oneway void triggerEpsFallbackResponse(in android.hardware.radio.RadioResponseInfo info);
-  oneway void sendAnbrQueryResponse(in android.hardware.radio.RadioResponseInfo info);
-  oneway void updateImsCallStatusResponse(in android.hardware.radio.RadioResponseInfo info);
+@JavaDerive(toString=true) @VintfStability
+parcelable ImsCall {
+  int index;
+  android.hardware.radio.ims.ImsCall.CallType callType;
+  android.hardware.radio.AccessNetwork accessNetwork;
+  android.hardware.radio.ims.ImsCall.CallState callState;
+  android.hardware.radio.ims.ImsCall.Direction direction;
+  boolean isHeldByRemote;
+  @Backing(type="int")
+  enum CallType {
+    NORMAL = 0,
+    EMERGENCY = 1,
+  }
+  @Backing(type="int")
+  enum CallState {
+    ACTIVE = 0,
+    HOLDING = 1,
+    DIALING = 2,
+    ALERTING = 3,
+    INCOMING = 4,
+    WAITING = 5,
+    DISCONNECTING = 6,
+    DISCONNECTED = 7,
+  }
+  @Backing(type="int")
+  enum Direction {
+    INCOMING = 0,
+    OUTGOING = 1,
+  }
 }
