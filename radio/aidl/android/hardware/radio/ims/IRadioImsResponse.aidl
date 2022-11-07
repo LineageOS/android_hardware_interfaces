@@ -37,7 +37,6 @@ oneway interface IRadioImsResponse {
      *   RadioError:MODEM_ERR
      *   RadioError:INTERNAL_ERR
      *   RadioError:INVALID_ARGUMENTS
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      */
     void setSrvccCallInfoResponse(in RadioResponseInfo info);
@@ -54,7 +53,6 @@ oneway interface IRadioImsResponse {
      *   RadioError:MODEM_ERR
      *   RadioError:INTERNAL_ERR
      *   RadioError:INVALID_ARGUMENTS
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      */
     void updateImsRegistrationInfoResponse(in RadioResponseInfo info);
@@ -72,7 +70,6 @@ oneway interface IRadioImsResponse {
      *   RadioError:MODEM_ERR
      *   RadioError:INTERNAL_ERR
      *   RadioError:INVALID_ARGUMENTS
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      */
     void startImsTrafficResponse(in RadioResponseInfo info,
@@ -90,7 +87,6 @@ oneway interface IRadioImsResponse {
      *   RadioError:MODEM_ERR
      *   RadioError:INTERNAL_ERR
      *   RadioError:INVALID_ARGUMENTS
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      */
     void stopImsTrafficResponse(in RadioResponseInfo info);
@@ -107,7 +103,6 @@ oneway interface IRadioImsResponse {
      *   RadioError:MODEM_ERR
      *   RadioError:INTERNAL_ERR
      *   RadioError:INVALID_ARGUMENTS
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      */
     void triggerEpsFallbackResponse(in RadioResponseInfo info);
@@ -124,7 +119,6 @@ oneway interface IRadioImsResponse {
      *   RadioError:MODEM_ERR
      *   RadioError:INTERNAL_ERR
      *   RadioError:INVALID_ARGUMENTS
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      */
     void sendAnbrQueryResponse(in RadioResponseInfo info);
@@ -141,7 +135,6 @@ oneway interface IRadioImsResponse {
      *   RadioError:MODEM_ERR
      *   RadioError:INTERNAL_ERR
      *   RadioError:INVALID_ARGUMENTS
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      */
     void updateImsCallStatusResponse(in RadioResponseInfo info);
