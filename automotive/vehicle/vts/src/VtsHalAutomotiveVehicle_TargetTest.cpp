@@ -535,6 +535,12 @@ TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyMirrorAutoTiltEnabledConfig) {
                    VehicleArea::MIRROR, VehiclePropertyType::BOOLEAN);
 }
 
+TEST_P(VtsHalAutomotiveVehicleTargetTest, verifySeatEasyAccessEnabledConfig) {
+    verifyProperty(VehicleProperty::SEAT_EASY_ACCESS_ENABLED, VehiclePropertyAccess::READ_WRITE,
+                   VehiclePropertyChangeMode::ON_CHANGE, VehiclePropertyGroup::SYSTEM,
+                   VehicleArea::SEAT, VehiclePropertyType::BOOLEAN);
+}
+
 std::vector<ServiceDescriptor> getDescriptors() {
     std::vector<ServiceDescriptor> descriptors;
     for (std::string name : getAidlHalInstanceNames(IVehicle::descriptor)) {

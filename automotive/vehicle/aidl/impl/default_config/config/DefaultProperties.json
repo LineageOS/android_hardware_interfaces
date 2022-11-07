@@ -1036,6 +1036,22 @@
             ]
         },
         {
+            "property": "VehicleProperty::SEAT_EASY_ACCESS_ENABLED",
+            "defaultValue": {
+                "int32Values": [
+                    1
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "Constants::SEAT_1_LEFT"
+                },
+                {
+                    "areaId": "Constants::SEAT_1_RIGHT"
+                }
+            ]
+        },
+        {
             "property": "VehicleProperty::SEAT_OCCUPANCY",
             "areas": [
                 {

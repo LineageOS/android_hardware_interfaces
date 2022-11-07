@@ -1722,6 +1722,17 @@ enum VehicleProperty {
     SEAT_HEADREST_FORE_AFT_MOVE = 0x0B9A + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
     /**
+     * Represents property for Seat easy access feature.
+     *
+     * If true, the seat will automatically adjust to make it easier for the occupant to enter and
+     * exit the vehicle.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     */
+    SEAT_EASY_ACCESS_ENABLED =
+            0x0B9D + VehiclePropertyGroup.SYSTEM + VehicleArea.SEAT + VehiclePropertyType.BOOLEAN,
+    /**
      * Seat Occupancy
      *
      * Indicates whether a particular seat is occupied or not, to the best of the car's ability
