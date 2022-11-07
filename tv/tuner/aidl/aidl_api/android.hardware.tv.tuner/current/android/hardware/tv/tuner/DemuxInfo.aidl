@@ -33,22 +33,7 @@
 
 package android.hardware.tv.tuner;
 /* @hide */
-@SuppressWarnings(value={"out-array"}) @VintfStability
-interface ITuner {
-  int[] getFrontendIds();
-  android.hardware.tv.tuner.IFrontend openFrontendById(in int frontendId);
-  android.hardware.tv.tuner.IDemux openDemux(out int[] demuxId);
-  android.hardware.tv.tuner.DemuxCapabilities getDemuxCaps();
-  android.hardware.tv.tuner.IDescrambler openDescrambler();
-  android.hardware.tv.tuner.FrontendInfo getFrontendInfo(in int frontendId);
-  int[] getLnbIds();
-  android.hardware.tv.tuner.ILnb openLnbById(in int lnbId);
-  android.hardware.tv.tuner.ILnb openLnbByName(in String lnbName, out int[] lnbId);
-  void setLna(in boolean bEnable);
-  void setMaxNumberOfFrontends(in android.hardware.tv.tuner.FrontendType frontendType, in int maxNumber);
-  int getMaxNumberOfFrontends(in android.hardware.tv.tuner.FrontendType frontendType);
-  boolean isLnaSupported();
-  int[] getDemuxIds();
-  android.hardware.tv.tuner.IDemux openDemuxById(in int demuxId);
-  android.hardware.tv.tuner.DemuxInfo getDemuxInfo(in int demuxId);
+@VintfStability
+parcelable DemuxInfo {
+  int filterTypes = 0;
 }
