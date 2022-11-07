@@ -21,6 +21,7 @@ import android.hardware.audio.common.SourceMetadata;
 import android.hardware.audio.core.AudioMode;
 import android.hardware.audio.core.AudioPatch;
 import android.hardware.audio.core.AudioRoute;
+import android.hardware.audio.core.ISoundDose;
 import android.hardware.audio.core.IStreamCallback;
 import android.hardware.audio.core.IStreamIn;
 import android.hardware.audio.core.IStreamOut;
@@ -668,4 +669,19 @@ interface IModule {
      * @param isTurnedOn True if the screen is turned on.
      */
     void updateScreenState(boolean isTurnedOn);
+
+    /**
+     * Retrieve the sound dose interface.
+     *
+     * If a device must comply to IEC62368-1 3rd edition audio safety requirements and is
+     * implementing audio offload decoding or other direct playback paths where volume control
+     * happens below the audio HAL, it must return an instance of the ISoundDose interface.
+     * The same instance must be returned during the lifetime of the HAL module.
+     * If the HAL module does not support sound dose, null must be returned, without throwing
+     * any errors.
+     *
+     * @return An instance of the ISoundDose interface implementation.
+     * @throws EX_ILLEGAL_STATE If there was an error creating an instance.
+     */
+    @nullable ISoundDose getSoundDose();
 }
