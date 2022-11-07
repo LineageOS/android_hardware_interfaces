@@ -86,6 +86,7 @@ class Module : public BnModule {
     ndk::ScopedAStatus updateScreenRotation(
             ::aidl::android::hardware::audio::core::IModule::ScreenRotation in_rotation) override;
     ndk::ScopedAStatus updateScreenState(bool in_isTurnedOn) override;
+    ndk::ScopedAStatus getSoundDose(std::shared_ptr<ISoundDose>* _aidl_return) override;
 
     void cleanUpPatch(int32_t patchId);
     ndk::ScopedAStatus createStreamContext(

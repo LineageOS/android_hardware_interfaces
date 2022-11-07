@@ -931,4 +931,10 @@ ndk::ScopedAStatus Module::updateScreenState(bool in_isTurnedOn) {
     return ndk::ScopedAStatus::ok();
 }
 
+ndk::ScopedAStatus Module::getSoundDose(std::shared_ptr<ISoundDose>* _aidl_return) {
+    *_aidl_return = nullptr;
+    LOG(DEBUG) << __func__ << ": ISoundDose not implemented";
+    return ndk::ScopedAStatus::ok();
+}
+
 }  // namespace aidl::android::hardware::audio::core
