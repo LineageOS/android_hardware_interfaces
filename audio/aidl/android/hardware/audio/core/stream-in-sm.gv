@@ -1,0 +1,42 @@
+// Copyright (C) 2022 The Android Open Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// To render: dot -Tpng stream-in-sm.gv -o stream-in-sm.png
+digraph stream_in_state_machine {
+    node [shape=doublecircle style=filled fillcolor=black width=0.5] I;
+    node [shape=point width=0.5] F;
+    node [shape=oval width=1];
+    node [fillcolor=lightgreen] STANDBY;  // buffer is empty
+    node [fillcolor=tomato] CLOSED;
+    node [fillcolor=tomato] ERROR;
+    node [style=dashed] ANY_STATE;
+    node [fillcolor=lightblue style=filled];
+    I -> STANDBY;
+    STANDBY -> IDLE [label="START"];    // producer -> active
+    IDLE -> STANDBY [label="STANDBY"];  // producer -> passive, buffer is cleared
+    IDLE -> ACTIVE [label="BURST"];     // consumer -> active
+    ACTIVE -> ACTIVE [label="BURST"];
+    ACTIVE -> PAUSED [label="PAUSE"];   // consumer -> passive
+    ACTIVE -> DRAINING [label="DRAIN"]; // producer -> passive
+    PAUSED -> ACTIVE [label="BURST"];   // consumer -> active
+    PAUSED -> STANDBY [label="FLUSH"];  // producer -> passive, buffer is cleared
+    DRAINING -> DRAINING [label="BURST"];
+    DRAINING -> ACTIVE [label="START"];  // producer -> active
+    DRAINING -> STANDBY [label="<empty buffer>"];  // consumer deactivates
+    IDLE -> ERROR [label="<hardware failure>"];
+    ACTIVE -> ERROR [label="<hardware failure>"];
+    PAUSED -> ERROR [label="<hardware failure>"];
+    ANY_STATE -> CLOSED [label="→IStream*.close"];
+    CLOSED -> F;
+}

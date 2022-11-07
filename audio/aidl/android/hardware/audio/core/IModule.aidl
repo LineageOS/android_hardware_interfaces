@@ -263,6 +263,9 @@ interface IModule {
      * be completing with an error, although data (zero filled) will still be
      * provided.
      *
+     * After the stream has been opened, it remains in the STANDBY state, see
+     * StreamDescriptor for more details.
+     *
      * @return An opened input stream and the associated descriptor.
      * @param args The pack of arguments, see 'OpenInputStreamArguments' parcelable.
      * @throws EX_ILLEGAL_ARGUMENT In the following cases:
@@ -324,6 +327,9 @@ interface IModule {
      * is no "external observer," thus write operations done via
      * StreamDescriptor will be completing with an error, although the data
      * will still be accepted and immediately discarded.
+     *
+     * After the stream has been opened, it remains in the STANDBY state, see
+     * StreamDescriptor for more details.
      *
      * @return An opened output stream and the associated descriptor.
      * @param args The pack of arguments, see 'OpenOutputStreamArguments' parcelable.

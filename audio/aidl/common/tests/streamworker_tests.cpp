@@ -160,6 +160,14 @@ TEST_P(StreamWorkerTest, WorkerExit) {
     EXPECT_TRUE(worker.hasNoWorkerCycleCalled(kWorkerIdleCheckTime));
 }
 
+TEST_P(StreamWorkerTest, WorkerJoin) {
+    ASSERT_TRUE(worker.start());
+    stream.setStopStatus();
+    worker.join();
+    EXPECT_FALSE(worker.hasError());
+    EXPECT_TRUE(worker.hasNoWorkerCycleCalled(kWorkerIdleCheckTime));
+}
+
 TEST_P(StreamWorkerTest, WorkerError) {
     ASSERT_TRUE(worker.start());
     stream.setErrorStatus();
