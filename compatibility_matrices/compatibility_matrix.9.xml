@@ -70,6 +70,7 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.automotive.audiocontrol</name>
+        <version>2</version>
         <interface>
             <name>IAudioControl</name>
             <instance>default</instance>
