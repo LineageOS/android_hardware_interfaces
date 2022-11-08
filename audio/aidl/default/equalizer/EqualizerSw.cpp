@@ -23,7 +23,7 @@
 #include <android-base/logging.h>
 #include <fmq/AidlMessageQueue.h>
 
-#include "equalizer-impl/EqualizerSw.h"
+#include "EqualizerSw.h"
 
 using aidl::android::hardware::audio::effect::EqualizerSw;
 using aidl::android::hardware::audio::effect::EqualizerSwImplUUID;
