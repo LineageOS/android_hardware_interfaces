@@ -6,8 +6,8 @@ Design a HAL to support over-the-air provisioning of certificates for asymmetric
 keys. The HAL must interact effectively with Keystore (and other daemons) and
 protect device privacy and security.
 
-Note that this API is designed for KeyMint, but with the intention that it
-should be usable for other HALs that require certificate provisioning.
+Note that this API was originally designed for KeyMint, with the intention that
+it should be usable for other HALs that require certificate provisioning.
 Throughout this document we'll refer to the Keystore and KeyMint (formerly
 called Keymaster) components, but only for concreteness and convenience; those
 labels could be replaced with the names of any system and secure area
@@ -312,7 +312,7 @@ the range \[-70000, -70999\] (these are reserved for future additions here).
 ```
 
 Please see
-[ProtectedData.aidl](https://cs.android.com/android/platform/superproject/+/master:hardware/interfaces/security/keymint/aidl/android/hardware/security/keymint/ProtectedData.aidl)
+[ProtectedData.aidl](https://cs.android.com/android/platform/superproject/+/master:hardware/interfaces/security/rkp/aidl/android/hardware/security/keymint/ProtectedData.aidl)
 for a full CDDL definition of the BCC.
 
 ### `CertificateRequest`
@@ -366,9 +366,9 @@ Please see the related HAL documentation directly in the source code at the
 following links:
 
 *   [IRemotelyProvisionedComponent
-    HAL](https://cs.android.com/android/platform/superproject/+/master:hardware/interfaces/security/keymint/aidl/android/hardware/security/keymint/IRemotelyProvisionedComponent.aidl)
-*   [ProtectedData](https://cs.android.com/android/platform/superproject/+/master:hardware/interfaces/security/keymint/aidl/android/hardware/security/keymint/ProtectedData.aidl)
-*   [MacedPublicKey](https://cs.android.com/android/platform/superproject/+/master:hardware/interfaces/security/keymint/aidl/android/hardware/security/keymint/MacedPublicKey.aidl)
-*   [RpcHardwareInfo](https://cs.android.com/android/platform/superproject/+/master:hardware/interfaces/security/keymint/aidl/android/hardware/security/keymint/RpcHardwareInfo.aidl)
-*   [DeviceInfo](https://cs.android.com/android/platform/superproject/+/master:hardware/interfaces/security/keymint/aidl/android/hardware/security/keymint/DeviceInfo.aidl)
+    HAL](https://cs.android.com/android/platform/superproject/+/master:hardware/interfaces/security/rkp/aidl/android/hardware/security/keymint/IRemotelyProvisionedComponent.aidl)
+*   [ProtectedData](https://cs.android.com/android/platform/superproject/+/master:hardware/interfaces/security/rkp/aidl/android/hardware/security/keymint/ProtectedData.aidl)
+*   [MacedPublicKey](https://cs.android.com/android/platform/superproject/+/master:hardware/interfaces/security/rkp/aidl/android/hardware/security/keymint/MacedPublicKey.aidl)
+*   [RpcHardwareInfo](https://cs.android.com/android/platform/superproject/+/master:hardware/interfaces/security/rkp/aidl/android/hardware/security/keymint/RpcHardwareInfo.aidl)
+*   [DeviceInfo](https://cs.android.com/android/platform/superproject/+/master:hardware/interfaces/security/rkp/aidl/android/hardware/security/keymint/DeviceInfo.aidl)
 

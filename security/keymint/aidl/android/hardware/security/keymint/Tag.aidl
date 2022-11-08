@@ -726,9 +726,10 @@ enum Tag {
     ATTESTATION_ID_SERIAL = TagType.BYTES | 713,
 
     /**
-     * Tag::ATTESTATION_ID_IMEI provides the IMEIs for all radios on the device to attested key
+     * Tag::ATTESTATION_ID_IMEI provides the IMEI one of the radios on the device to attested key
      * generation/import operations.  This field must be set only when requesting attestation of the
-     * device's identifiers.
+     * device's identifiers. If the device has more than one IMEI, a second IMEI may be included
+     * by using the Tag::ATTESTATION_ID_SECOND_IMEI tag.
      *
      * If the device does not support ID attestation (or destroyAttestationIds() was previously
      * called and the device can no longer attest its IDs), any key attestation request that
@@ -881,6 +882,20 @@ enum Tag {
      * begin().
      */
     STORAGE_KEY = TagType.BOOL | 722,
+
+    /**
+     * Tag::ATTESTATION_ID_SECOND_IMEI provides an additional IMEI of one of the radios on the
+     * device to attested key generation/import operations. This field MUST be accompanied by
+     * the Tag::ATTESTATION_ID_IMEI tag. It would only be used to convery a second IMEI the device
+     * has, after Tag::ATTESTATION_ID_SECOND_IMEI has been used to convery the first IMEI.
+     *
+     * If the device does not support ID attestation (or destroyAttestationIds() was previously
+     * called and the device can no longer attest its IDs), any key attestation request that
+     * includes this tag must fail with ErrorCode::CANNOT_ATTEST_IDS.
+     *
+     * Must never appear in KeyCharacteristics.
+     */
+    ATTESTATION_ID_SECOND_IMEI = TagType.BYTES | 723,
 
     /**
      * OBSOLETE: Do not use.
