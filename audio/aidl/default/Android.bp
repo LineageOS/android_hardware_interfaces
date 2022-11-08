@@ -81,6 +81,7 @@ cc_defaults {
     ],
     header_libs: [
         "libaudioaidl_headers",
+        "libaudio_system_headers",
         "libsystem_headers",
     ],
     cflags: [
@@ -112,13 +113,15 @@ cc_binary {
         "libhapticgeneratorsw",
         "libloudnessenhancersw",
         "libreverbsw",
+        "libtinyxml2",
         "libvirtualizersw",
         "libvisualizersw",
         "libvolumesw",
     ],
     srcs: [
-        "EffectMain.cpp",
+        "EffectConfig.cpp",
         "EffectFactory.cpp",
+        "EffectMain.cpp",
     ],
 }
 
