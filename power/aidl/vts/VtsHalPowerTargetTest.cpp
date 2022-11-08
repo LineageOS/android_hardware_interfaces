@@ -100,6 +100,10 @@ const uint64_t kCompatibilityMatrix5ApiLevel = 30;
 // target-level=7 compatibility_matrix file.
 const uint64_t kCompatibilityMatrix7ApiLevel = 33;
 
+// DEVICEs launching with Android 14 MUST meet the requirements for the
+// target-level=8 compatibility_matrix file.
+const uint64_t kCompatibilityMatrix8ApiLevel = 34;
+
 inline bool isUnknownOrUnsupported(const ndk::ScopedAStatus& status) {
     return status.getStatus() == STATUS_UNKNOWN_TRANSACTION ||
            status.getExceptionCode() == EX_UNSUPPORTED_OPERATION;
@@ -240,6 +244,27 @@ TEST_P(PowerAidl, sendSessionHint) {
     for (const auto& sessionHint : kInvalidSessionHints) {
         ASSERT_TRUE(session->sendHint(sessionHint).isOk());
     }
+}
+
+TEST_P(PowerAidl, setThreads) {
+    std::shared_ptr<IPowerHintSession> session;
+    auto status = power->createHintSession(getpid(), getuid(), kSelfTids, 16666666L, &session);
+    if (mApiLevel < kCompatibilityMatrix7ApiLevel && !status.isOk()) {
+        EXPECT_TRUE(isUnknownOrUnsupported(status));
+        GTEST_SKIP() << "DEVICE not launching with Android 13 and beyond.";
+    }
+    ASSERT_TRUE(status.isOk());
+
+    if (mApiLevel < kCompatibilityMatrix8ApiLevel) {
+        GTEST_SKIP() << "DEVICE not launching with Android 14 and beyond.";
+    }
+
+    status = session->setThreads(kEmptyTids);
+    ASSERT_FALSE(status.isOk());
+    ASSERT_EQ(EX_ILLEGAL_ARGUMENT, status.getExceptionCode());
+
+    status = session->setThreads(kSelfTids);
+    ASSERT_TRUE(status.isOk());
 }
 
 // FIXED_PERFORMANCE mode is required for all devices which ship on Android 11

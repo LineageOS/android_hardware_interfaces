@@ -40,4 +40,5 @@ interface IPowerHintSession {
   oneway void resume();
   oneway void close();
   oneway void sendHint(android.hardware.power.SessionHint hint);
+  void setThreads(in int[] threadIds);
 }
