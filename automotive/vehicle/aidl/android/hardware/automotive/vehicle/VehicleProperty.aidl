@@ -1817,6 +1817,24 @@ enum VehicleProperty {
     STEERING_WHEEL_HEIGHT_POS =
             0x0BE2 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
     /**
+     * Steering wheel height movement
+     *
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined. All values between
+     * minInt32Value and maxInt32Value must be supported.
+     *
+     * The maxInt32Value in default area's VehicleAreaConfig indicates the steering wheel moving
+     * upwards. The minInt32Value in default area's VehicleAreaConfig indicates the steering wheel
+     * moving downwards. Larger integers, either positive or negative, indicate a faster movement
+     * speed. Once the steering wheel reaches the positional limit, the value resets to 0.
+     *
+     * This value is not in any particular unit but in a specified range of steps.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     */
+    STEERING_WHEEL_HEIGHT_MOVE =
+            0x0BE3 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
+    /**
      * Vehicle Maps Service (VMS) message
      *
      * This property uses MIXED data to communicate vms messages.
