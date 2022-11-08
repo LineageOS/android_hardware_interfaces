@@ -22,6 +22,7 @@
 #include <android-base/thread_annotations.h>
 #include <system/thread_defs.h>
 
+#include "effect-impl/EffectContext.h"
 #include "effect-impl/EffectTypes.h"
 
 namespace aidl::android::hardware::audio::effect {
@@ -33,7 +34,7 @@ class EffectThread {
     virtual ~EffectThread();
 
     // called by effect implementation.
-    RetCode createThread(const std::string& name,
+    RetCode createThread(std::shared_ptr<EffectContext> context, const std::string& name,
                          const int priority = ANDROID_PRIORITY_URGENT_AUDIO);
     RetCode destroyThread();
     RetCode startThread();
@@ -42,15 +43,43 @@ class EffectThread {
     // Will call process() in a loop if the thread is running.
     void threadLoop();
 
-    // User of EffectThread must implement the effect processing logic in this method.
-    virtual void process() = 0;
-    const int MAX_TASK_COMM_LEN = 15;
+    /**
+     * @brief effectProcessImpl is running in worker thread which created in EffectThread.
+     *
+     * Effect implementation should think about concurrency in the implementation if necessary.
+     * Parameter setting usually implemented in context (derived from EffectContext), and some
+     * parameter maybe used in the processing, then effect implementation should consider using a
+     * mutex to protect these parameter.
+     *
+     * EffectThread will make sure effectProcessImpl only be called after startThread() successful
+     * and before stopThread() successful.
+     *
+     * @param in address of input float buffer.
+     * @param out address of output float buffer.
+     * @param samples number of samples to process.
+     * @return IEffect::Status
+     */
+    virtual IEffect::Status effectProcessImpl(float* in, float* out, int samples) = 0;
+
+    /**
+     * The default EffectThread::process() implementation doesn't need to lock. It will only
+     * access the FMQ and mWorkBuffer in  EffectContext, since they will only be changed in
+     * EffectImpl IEffect::open() (in this case EffectThread just created and not running yet) and
+     * IEffect::command(CommandId::RESET) (in this case EffectThread already stopped).
+     *
+     * process() call effectProcessImpl for effect processing, and because effectProcessImpl is
+     * implemented by effects, process() must not hold lock before call into effectProcessImpl to
+     * avoid deadlock.
+     */
+    virtual void process();
 
   private:
-    std::mutex mMutex;
+    const int kMaxTaskNameLen = 15;
+    std::mutex mThreadMutex;
     std::condition_variable mCv;
-    bool mExit GUARDED_BY(mMutex) = false;
-    bool mStop GUARDED_BY(mMutex) = true;
+    bool mExit GUARDED_BY(mThreadMutex) = false;
+    bool mStop GUARDED_BY(mThreadMutex) = true;
+    std::shared_ptr<EffectContext> mThreadContext GUARDED_BY(mThreadMutex);
     std::thread mThread;
     int mPriority;
     std::string mName;
