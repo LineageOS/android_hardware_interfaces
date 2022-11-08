@@ -33,7 +33,7 @@ using std::string;
 using std::unordered_set;
 
 // The main test class for the Boot HIDL HAL.
-class BootAidlTest : public ::testing::TestWithParam<std::string> {
+class BootHidlTest : public ::testing::TestWithParam<std::string> {
   public:
     virtual void SetUp() override {
         const auto instance_name = GetParam();
@@ -48,14 +48,14 @@ class BootAidlTest : public ::testing::TestWithParam<std::string> {
 };
 
 // validity check Boot::getNumberSlots().
-TEST_P(BootAidlTest, GetNumberSlots) {
+TEST_P(BootHidlTest, GetNumberSlots) {
     int32_t slots{};
     boot->getNumberSlots(&slots);
     ASSERT_LE(2, slots);
 }
 
 // validity check Boot::getCurrentSlot().
-TEST_P(BootAidlTest, GetCurrentSlot) {
+TEST_P(BootHidlTest, GetCurrentSlot) {
     int curSlot = -1;
     boot->getCurrentSlot(&curSlot);
     int slots = 0;
@@ -64,7 +64,7 @@ TEST_P(BootAidlTest, GetCurrentSlot) {
 }
 
 // validity check Boot::markBootSuccessful().
-TEST_P(BootAidlTest, MarkBootSuccessful) {
+TEST_P(BootHidlTest, MarkBootSuccessful) {
     const auto result = boot->markBootSuccessful();
     ASSERT_TRUE(result.isOk());
     int curSlot = 0;
@@ -74,7 +74,7 @@ TEST_P(BootAidlTest, MarkBootSuccessful) {
     ASSERT_TRUE(ret);
 }
 
-TEST_P(BootAidlTest, SetActiveBootSlot) {
+TEST_P(BootHidlTest, SetActiveBootSlot) {
     int curSlot = -1;
     boot->getCurrentSlot(&curSlot);
     ASSERT_GE(curSlot, 0);
@@ -107,7 +107,7 @@ TEST_P(BootAidlTest, SetActiveBootSlot) {
     }
 }
 
-TEST_P(BootAidlTest, SetSlotAsUnbootable) {
+TEST_P(BootHidlTest, SetSlotAsUnbootable) {
     int curSlot = -1;
     boot->getCurrentSlot(&curSlot);
     ASSERT_GE(curSlot, 0);
@@ -139,7 +139,7 @@ TEST_P(BootAidlTest, SetSlotAsUnbootable) {
 }
 
 // validity check Boot::isSlotBootable() on good and bad inputs.
-TEST_P(BootAidlTest, IsSlotBootable) {
+TEST_P(BootHidlTest, IsSlotBootable) {
     for (int s = 0; s < 2; s++) {
         bool bootable = false;
         const auto res = boot->isSlotBootable(s, &bootable);
@@ -153,7 +153,7 @@ TEST_P(BootAidlTest, IsSlotBootable) {
 }
 
 // validity check Boot::isSlotMarkedSuccessful() on good and bad inputs.
-TEST_P(BootAidlTest, IsSlotMarkedSuccessful) {
+TEST_P(BootHidlTest, IsSlotMarkedSuccessful) {
     for (int32_t s = 0; s < 2; s++) {
         bool isSuccess = false;
         const auto res = boot->isSlotMarkedSuccessful(s, &isSuccess);
@@ -166,7 +166,7 @@ TEST_P(BootAidlTest, IsSlotMarkedSuccessful) {
 }
 
 // validity check Boot::getSuffix() on good and bad inputs.
-TEST_P(BootAidlTest, GetSuffix) {
+TEST_P(BootHidlTest, GetSuffix) {
     string suffixStr;
     unordered_set<string> suffixes;
     int numSlots = 0;
@@ -190,6 +190,5 @@ TEST_P(BootAidlTest, GetSuffix) {
 }
 
 INSTANTIATE_TEST_SUITE_P(
-        PerInstance, BootAidlTest,
+        PerInstance, BootHidlTest,
         testing::ValuesIn(android::getAidlHalInstanceNames(IBootControl::descriptor)));
-GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(BootAidlTest);

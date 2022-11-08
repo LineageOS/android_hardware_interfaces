@@ -56,9 +56,3 @@ ndk::ScopedAStatus RadioImsResponse::sendAnbrQueryResponse(const RadioResponseIn
     parent_ims.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
-
-ndk::ScopedAStatus RadioImsResponse::updateImsCallStatusResponse(const RadioResponseInfo& info) {
-    rspInfo = info;
-    parent_ims.notify(info.serial);
-    return ndk::ScopedAStatus::ok();
-}

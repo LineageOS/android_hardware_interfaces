@@ -40,5 +40,4 @@ interface IRadioImsResponse {
   oneway void stopImsTrafficResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void triggerEpsFallbackResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void sendAnbrQueryResponse(in android.hardware.radio.RadioResponseInfo info);
-  oneway void updateImsCallStatusResponse(in android.hardware.radio.RadioResponseInfo info);
 }

@@ -36,10 +36,9 @@ package android.hardware.radio.ims;
 interface IRadioIms {
   oneway void setSrvccCallInfo(int serial, in android.hardware.radio.ims.SrvccCall[] srvccCalls);
   oneway void updateImsRegistrationInfo(int serial, in android.hardware.radio.ims.ImsRegistration imsRegistration);
-  oneway void startImsTraffic(int serial, int token, android.hardware.radio.ims.ImsTrafficType imsTrafficType, android.hardware.radio.AccessNetwork accessNetworkType, android.hardware.radio.ims.ImsCall.Direction trafficDirection);
+  oneway void startImsTraffic(int serial, int token, android.hardware.radio.ims.ImsTrafficType imsTrafficType, android.hardware.radio.AccessNetwork accessNetworkType);
   oneway void stopImsTraffic(int serial, int token);
   oneway void triggerEpsFallback(int serial, in android.hardware.radio.ims.EpsFallbackReason reason);
   oneway void setResponseFunctions(in android.hardware.radio.ims.IRadioImsResponse radioImsResponse, in android.hardware.radio.ims.IRadioImsIndication radioImsIndication);
   oneway void sendAnbrQuery(int serial, android.hardware.radio.ims.ImsStreamType mediaType, android.hardware.radio.ims.ImsStreamDirection direction, int bitsPerSecond);
-  oneway void updateImsCallStatus(int serial, in android.hardware.radio.ims.ImsCall[] imsCalls);
 }
