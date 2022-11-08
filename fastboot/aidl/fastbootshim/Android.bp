@@ -1,4 +1,3 @@
-//
 // Copyright (C) 2022 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,22 +21,41 @@ package {
     default_applicable_licenses: ["hardware_interfaces_license"],
 }
 
-cc_binary {
-    name: "android.hardware.fastboot-service.example_recovery",
-    init_rc: ["android.hardware.fastboot-service.example_recovery.rc"],
-    vintf_fragments: ["android.hardware.fastboot-service.example.xml"],
-    recovery_available: true,
-    srcs: [
-        "Fastboot.cpp",
-        "main.cpp",
+cc_defaults {
+    name: "libfastbootshim_defaults",
+    target: {
+        darwin: {
+            enabled: false,
+        },
+    },
+    cflags: [
+        "-Wall",
+        "-Werror",
     ],
-    relative_install_path: "hw",
+    static_libs: [
+        "android.hardware.fastboot-V1-ndk",
+        "android.hardware.fastboot@1.0",
+        "android.hardware.fastboot@1.1",
+    ],
     shared_libs: [
         "libbase",
         "libbinder_ndk",
+        "libcutils",
+        "libhidlbase",
         "liblog",
         "libutils",
-        "libcutils",
-        "android.hardware.fastboot-V1-ndk",
+    ],
+}
+
+// Shim library that wraps a HIDL Fastboot object into an AIDL Fastboot object.
+cc_library_static {
+    name: "libfastbootshim",
+    defaults: ["libfastbootshim_defaults"],
+    recovery_available: true,
+    srcs: [
+        "fastbootshim.cpp",
+    ],
+    export_include_dirs: [
+        "include",
     ],
 }
