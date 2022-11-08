@@ -31,7 +31,7 @@ cc_library_shared {
         "latest_android_hardware_audio_effect_ndk_shared",
     ],
     srcs: [
-        "Equalizer.cpp",
+        "EqualizerSw.cpp",
         ":effectCommonFile",
     ],
     visibility: [
