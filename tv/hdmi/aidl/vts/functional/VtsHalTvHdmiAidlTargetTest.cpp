@@ -31,6 +31,7 @@
 using ::aidl::android::hardware::tv::hdmi::BnHdmiCallback;
 using ::aidl::android::hardware::tv::hdmi::HdmiPortInfo;
 using ::aidl::android::hardware::tv::hdmi::HdmiPortType;
+using ::aidl::android::hardware::tv::hdmi::HpdSignal;
 using ::aidl::android::hardware::tv::hdmi::IHdmi;
 using ::aidl::android::hardware::tv::hdmi::IHdmiCallback;
 using ::ndk::SpAIBinder;
@@ -100,4 +101,19 @@ TEST_P(HdmiTest, IsConnected) {
         bool connected;
         ASSERT_TRUE(hdmi->isConnected(ports[i].portId, &connected).isOk());
     }
+}
+
+TEST_P(HdmiTest, HdpSignal) {
+    HpdSignal originalSignal;
+    HpdSignal signal = HpdSignal::HDMI_HPD_STATUS_BIT;
+    HpdSignal readSignal;
+    ASSERT_TRUE(hdmi->getHpdSignal(&originalSignal).isOk());
+    ASSERT_TRUE(hdmi->setHpdSignal(signal).isOk());
+    ASSERT_TRUE(hdmi->getHpdSignal(&readSignal).isOk());
+    EXPECT_EQ(readSignal, signal);
+    signal = HpdSignal::HDMI_HPD_PHYSICAL;
+    ASSERT_TRUE(hdmi->setHpdSignal(signal).isOk());
+    ASSERT_TRUE(hdmi->getHpdSignal(&readSignal).isOk());
+    EXPECT_EQ(readSignal, signal);
+    ASSERT_TRUE(hdmi->setHpdSignal(originalSignal).isOk());
 }
