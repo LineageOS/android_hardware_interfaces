@@ -153,6 +153,7 @@ public final class AccessForVehicleProperty {
         Map.entry(VehicleProperty.STEERING_WHEEL_DEPTH_MOVE, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.STEERING_WHEEL_HEIGHT_POS, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.STEERING_WHEEL_HEIGHT_MOVE, VehiclePropertyAccess.READ_WRITE),
+        Map.entry(VehicleProperty.STEERING_WHEEL_THEFT_LOCK_ENABLED, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.VEHICLE_MAP_SERVICE, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.OBD2_LIVE_FRAME, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.OBD2_FREEZE_FRAME, VehiclePropertyAccess.READ),

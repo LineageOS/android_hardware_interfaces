@@ -2269,6 +2269,14 @@
             ]
         },
         {
+            "property": "VehicleProperty::STEERING_WHEEL_THEFT_LOCK_ENABLED",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            }
+        },
+        {
             "property": "VehicleProperty::WHEEL_TICK",
             "defaultValue": {
                 "int64Values": [

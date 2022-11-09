@@ -1835,6 +1835,17 @@ enum VehicleProperty {
     STEERING_WHEEL_HEIGHT_MOVE =
             0x0BE3 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
     /**
+     * Steering wheel theft lock feature enabled
+     *
+     * If true, the steering wheel will lock automatically to prevent theft in certain
+     * situations.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     */
+    STEERING_WHEEL_THEFT_LOCK_ENABLED =
+            0x0BE4 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+    /**
      * Vehicle Maps Service (VMS) message
      *
      * This property uses MIXED data to communicate vms messages.
