@@ -26,7 +26,7 @@
 
 namespace aidl::android::hardware::audio::effect {
 
-class EqualizerSwContext : public EffectContext {
+class EqualizerSwContext final : public EffectContext {
   public:
     EqualizerSwContext(int statusDepth, const Parameter::Common& common)
         : EffectContext(statusDepth, common) {
@@ -78,7 +78,7 @@ class EqualizerSwContext : public EffectContext {
     // Add equalizer specific context for processing here
 };
 
-class EqualizerSw : public EffectImpl {
+class EqualizerSw final : public EffectImpl {
   public:
     EqualizerSw() { LOG(DEBUG) << __func__; }
     ~EqualizerSw() {
