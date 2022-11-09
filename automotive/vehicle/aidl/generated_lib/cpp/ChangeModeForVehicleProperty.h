@@ -156,6 +156,7 @@ std::unordered_map<VehicleProperty, VehiclePropertyChangeMode> ChangeModeForVehi
         {VehicleProperty::SEAT_HEADREST_FORE_AFT_POS, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::SEAT_HEADREST_FORE_AFT_MOVE, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::SEAT_EASY_ACCESS_ENABLED, VehiclePropertyChangeMode::ON_CHANGE},
+        {VehicleProperty::SEAT_AIRBAG_ENABLED, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::SEAT_CUSHION_SIDE_SUPPORT_POS, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::SEAT_OCCUPANCY, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::WINDOW_POS, VehiclePropertyChangeMode::ON_CHANGE},

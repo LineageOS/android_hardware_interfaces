@@ -541,6 +541,12 @@ TEST_P(VtsHalAutomotiveVehicleTargetTest, verifySeatEasyAccessEnabledConfig) {
                    VehicleArea::SEAT, VehiclePropertyType::BOOLEAN);
 }
 
+TEST_P(VtsHalAutomotiveVehicleTargetTest, verifySeatAirbagEnabledConfig) {
+    verifyProperty(VehicleProperty::SEAT_AIRBAG_ENABLED, VehiclePropertyAccess::READ_WRITE,
+                   VehiclePropertyChangeMode::ON_CHANGE, VehiclePropertyGroup::SYSTEM,
+                   VehicleArea::SEAT, VehiclePropertyType::BOOLEAN);
+}
+
 TEST_P(VtsHalAutomotiveVehicleTargetTest, verifySeatCushionSideSupportPosConfig) {
     verifyProperty(VehicleProperty::SEAT_CUSHION_SIDE_SUPPORT_POS,
                    VehiclePropertyAccess::READ_WRITE, VehiclePropertyChangeMode::ON_CHANGE,

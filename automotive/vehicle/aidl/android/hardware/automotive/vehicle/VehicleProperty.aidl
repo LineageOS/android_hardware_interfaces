@@ -1733,6 +1733,19 @@ enum VehicleProperty {
     SEAT_EASY_ACCESS_ENABLED =
             0x0B9D + VehiclePropertyGroup.SYSTEM + VehicleArea.SEAT + VehiclePropertyType.BOOLEAN,
     /**
+     * Represents feature to enable/disable a seat's ability to deploy airbag(s) when triggered
+     * (e.g. by a crash).
+     *
+     * If true, it means the seat's airbags are enabled, and if triggered (e.g. by a crash), they
+     * will deploy. If false, it means the seat's airbags are disabled, and they will not deploy
+     * under any circumstance. This property does not indicate if the airbags are deployed or not.
+     *
+     * This property can be set to VehiclePropertyAccess.READ read only for the sake of regulation
+     * or safety concerns.
+     */
+    SEAT_AIRBAG_ENABLED =
+            0x0B9E + VehiclePropertyGroup.SYSTEM + VehicleArea.SEAT + VehiclePropertyType.BOOLEAN,
+    /**
      * Represents property for seat’s hipside (bottom cushion’s side) support position.
      *
      * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined. All integers
