@@ -16,10 +16,12 @@
 
 package android.hardware.usb;
 
+import android.hardware.usb.AltModeData;
+import android.hardware.usb.ComplianceWarning;
 import android.hardware.usb.ContaminantDetectionStatus;
 import android.hardware.usb.ContaminantProtectionMode;
 import android.hardware.usb.ContaminantProtectionStatus;
-import android.hardware.usb.ComplianceWarning;
+import android.hardware.usb.PlugOrientation;
 import android.hardware.usb.PortDataRole;
 import android.hardware.usb.PortMode;
 import android.hardware.usb.PortPowerRole;
@@ -102,7 +104,8 @@ parcelable PortStatus {
     /**
      * Current status of contaminant detection algorithm.
      */
-    ContaminantDetectionStatus contaminantDetectionStatus = ContaminantDetectionStatus.NOT_SUPPORTED;
+    ContaminantDetectionStatus contaminantDetectionStatus =
+            ContaminantDetectionStatus.NOT_SUPPORTED;
     /**
      * UsbData status of the port.
      * Lists reasons for USB data being disabled.
@@ -127,4 +130,14 @@ parcelable PortStatus {
      * power source/cable/accessory is non compliant.
      */
     ComplianceWarning[] complianceWarnings = {};
+    /**
+     * Indicates the current orientation of the cable/adapter
+     * plugged into the device.
+     */
+    PlugOrientation plugOrientation = PlugOrientation.UNKNOWN;
+    /**
+     * Lists Alt Modes supported by the device and holds their
+     * current information.
+     */
+    AltModeData[] supportedAltModes = {};
 }

@@ -517,11 +517,11 @@ Status getPortStatusHelper(std::vector<PortStatus> *currentPortStatus) {
             (*currentPortStatus)[i].usbDataStatus.push_back(UsbDataStatus::ENABLED);
 
             ALOGI("%d:%s connected:%d canChangeMode:%d canChagedata:%d canChangePower:%d "
-                "usbDataEnabled:%d",
-                i, port.first.c_str(), port.second,
-                (*currentPortStatus)[i].canChangeMode,
-                (*currentPortStatus)[i].canChangeDataRole,
-                (*currentPortStatus)[i].canChangePowerRole, 0);
+                  "usbDataEnabled:%d plugOrientation:%d",
+                  i, port.first.c_str(), port.second, (*currentPortStatus)[i].canChangeMode,
+                  (*currentPortStatus)[i].canChangeDataRole,
+                  (*currentPortStatus)[i].canChangePowerRole, 0,
+                  (*currentPortStatus)[i].plugOrientation);
         }
 
         return Status::SUCCESS;
