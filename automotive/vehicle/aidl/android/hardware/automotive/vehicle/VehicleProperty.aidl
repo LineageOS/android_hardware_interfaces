@@ -1733,6 +1733,22 @@ enum VehicleProperty {
     SEAT_EASY_ACCESS_ENABLED =
             0x0B9D + VehiclePropertyGroup.SYSTEM + VehicleArea.SEAT + VehiclePropertyType.BOOLEAN,
     /**
+     * Represents property for seat’s hipside (bottom cushion’s side) support position.
+     *
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined. All integers
+     * between minInt32Value and maxInt32Value are supported.
+     *
+     * maxInt32Value indicates the widest cushion side support setting (i.e. least support).
+     * minInt32Value indicates the thinnest cushion side support setting (i.e most support).
+     *
+     * This value is not in any particular unit but in a specified range of steps.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     */
+    SEAT_CUSHION_SIDE_SUPPORT_POS =
+            0x0B9F + VehiclePropertyGroup.SYSTEM + VehicleArea.SEAT + VehiclePropertyType.INT32,
+    /**
      * Seat Occupancy
      *
      * Indicates whether a particular seat is occupied or not, to the best of the car's ability
