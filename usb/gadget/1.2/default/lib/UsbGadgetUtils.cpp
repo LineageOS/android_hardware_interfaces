@@ -170,7 +170,6 @@ Status addGenericAndroidFunctions(MonitorFfs* monitorFfs, uint64_t functions, bo
 
     if ((functions & GadgetFunction::RNDIS) != 0) {
         ALOGI("setCurrentUsbFunctions rndis");
-        if (linkFunction("gsi.rndis", (*functionCount)++)) return Status::ERROR;
         std::string rndisFunction = GetProperty(kVendorRndisConfig, "");
         if (rndisFunction != "") {
             if (linkFunction(rndisFunction.c_str(), (*functionCount)++)) return Status::ERROR;
