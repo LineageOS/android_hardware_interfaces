@@ -54,8 +54,10 @@ class StreamContext {
             int8_t, ::aidl::android::hardware::common::fmq::SynchronizedReadWrite>
             DataMQ;
 
-    // Ensure that this value is not used by any of StreamDescriptor.COMMAND_*
-    static constexpr int COMMAND_EXIT = -1;
+    // Ensure that this value is not used by any of StreamDescriptor.CommandCode enums
+    static constexpr int32_t COMMAND_EXIT = -1;
+    // Ensure that this value is not used by any of StreamDescriptor.State enums
+    static constexpr int32_t STATE_CLOSED = -1;
 
     StreamContext() = default;
     StreamContext(std::unique_ptr<CommandMQ> commandMQ, std::unique_ptr<ReplyMQ> replyMQ,
@@ -99,6 +101,10 @@ class StreamContext {
 
 class StreamWorkerCommonLogic : public ::android::hardware::audio::common::StreamLogic {
   public:
+    bool isClosed() const {
+        return static_cast<int32_t>(mState.load()) == StreamContext::STATE_CLOSED;
+    }
+    void setClosed() { mState = static_cast<StreamDescriptor::State>(StreamContext::STATE_CLOSED); }
     void setIsConnected(bool connected) { mIsConnected = connected; }
 
   protected:
@@ -109,9 +115,12 @@ class StreamWorkerCommonLogic : public ::android::hardware::audio::common::Strea
           mReplyMQ(context.getReplyMQ()),
           mDataMQ(context.getDataMQ()) {}
     std::string init() override;
+    void populateReply(StreamDescriptor::Reply* reply, bool isConnected) const;
 
-    // Used both by the main and worker threads.
+    // Atomic fields are used both by the main and worker threads.
     std::atomic<bool> mIsConnected = false;
+    static_assert(std::atomic<StreamDescriptor::State>::is_always_lock_free);
+    std::atomic<StreamDescriptor::State> mState = StreamDescriptor::State::STANDBY;
     // All fields are used on the worker thread only.
     const int mInternalCommandCookie;
     const size_t mFrameSize;
@@ -132,6 +141,9 @@ class StreamInWorkerLogic : public StreamWorkerCommonLogic {
 
   protected:
     Status cycle() override;
+
+  private:
+    bool read(size_t clientSize, StreamDescriptor::Reply* reply);
 };
 using StreamInWorker = ::android::hardware::audio::common::StreamWorker<StreamInWorkerLogic>;
 
@@ -143,6 +155,9 @@ class StreamOutWorkerLogic : public StreamWorkerCommonLogic {
 
   protected:
     Status cycle() override;
+
+  private:
+    bool write(size_t clientSize, StreamDescriptor::Reply* reply);
 };
 using StreamOutWorker = ::android::hardware::audio::common::StreamWorker<StreamOutWorkerLogic>;
 
@@ -155,7 +170,7 @@ class StreamCommon {
                        ? ndk::ScopedAStatus::ok()
                        : ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
     }
-    bool isClosed() const { return mIsClosed; }
+    bool isClosed() const { return mWorker.isClosed(); }
     void setIsConnected(bool connected) { mWorker.setIsConnected(connected); }
     ndk::ScopedAStatus updateMetadata(const Metadata& metadata);
 
@@ -168,9 +183,6 @@ class StreamCommon {
     Metadata mMetadata;
     StreamContext mContext;
     StreamWorker mWorker;
-    // This variable is checked in the destructor which can be called on an arbitrary Binder thread,
-    // thus we need to ensure that any changes made by other threads are sequentially consistent.
-    std::atomic<bool> mIsClosed = false;
 };
 
 class StreamIn

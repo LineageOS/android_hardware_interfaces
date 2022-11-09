@@ -44,6 +44,10 @@ void ThreadController::stop() {
             mWorkerStateChangeRequest = true;
         }
     }
+    join();
+}
+
+void ThreadController::join() {
     if (mWorker.joinable()) {
         mWorker.join();
     }
