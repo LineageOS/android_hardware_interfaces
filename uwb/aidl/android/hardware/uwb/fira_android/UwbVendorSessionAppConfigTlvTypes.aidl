@@ -66,4 +66,23 @@ enum UwbVendorSessionAppConfigTlvTypes {
     NB_OF_AZIMUTH_MEASUREMENTS = 0xE4,
     /** 1 byte data */
     NB_OF_ELEVATION_MEASUREMENTS = 0xE5,
+
+    /**
+     * Supported only if the UwbVendorCapabilityTlvTypes
+     * .SUPPORTED_DIAGNOSTICS set to 1.
+     */
+    /**
+     * 1 byte data
+     * 1 - Enable,
+     * 0 - Disable
+     */
+    ENABLE_DIAGNOSTICS = 0xE8,
+    /**
+     * 1 byte bitmask
+     * b0: Activate RSSIs field,
+     * b1: Activate AoAs field,
+     * b2: Activate CIRs field,
+     * b3 - b7: RFU
+     */
+    DIAGRAMS_FRAME_REPORTS_FIELDS = 0xE9,
 }
