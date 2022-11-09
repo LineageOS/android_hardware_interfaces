@@ -163,4 +163,12 @@ enum UwbVendorCapabilityTlvTypes {
      * RANGE_DATA_NTF_CONFIG in SET_APP_CFG_CMD
      */
     SUPPORTED_RANGE_DATA_NTF_CONFIG = 0xE5,
+
+    /**
+     * 1 byte bitmask to indicate the supported RSSI_REPORTING values
+     * Values:
+     * 1 - Feature supported.
+     * 0 - Feature not supported.
+     */
+    SUPPORTED_RSSI_REPORTING = 0xE6,
 }
