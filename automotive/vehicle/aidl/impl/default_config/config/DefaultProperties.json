@@ -2277,6 +2277,14 @@
             }
         },
         {
+            "property": "VehicleProperty::STEERING_WHEEL_LOCKED",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            }
+        },
+        {
             "property": "VehicleProperty::WHEEL_TICK",
             "defaultValue": {
                 "int64Values": [

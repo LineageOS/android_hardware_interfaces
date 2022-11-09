@@ -1846,6 +1846,16 @@ enum VehicleProperty {
     STEERING_WHEEL_THEFT_LOCK_ENABLED =
             0x0BE4 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
     /**
+     * Steering wheel locked
+     *
+     * If true, the steering wheel's position is locked and not changeable.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     */
+    STEERING_WHEEL_LOCKED =
+            0x0BE5 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+    /**
      * Vehicle Maps Service (VMS) message
      *
      * This property uses MIXED data to communicate vms messages.

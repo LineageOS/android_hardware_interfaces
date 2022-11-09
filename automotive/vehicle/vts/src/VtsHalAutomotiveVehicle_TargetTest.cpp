@@ -517,6 +517,12 @@ TEST_P(VtsHalAutomotiveVehicleTargetTest, verifySteeringWheelTheftLockEnabledCon
                    VehiclePropertyGroup::SYSTEM, VehicleArea::GLOBAL, VehiclePropertyType::BOOLEAN);
 }
 
+TEST_P(VtsHalAutomotiveVehicleTargetTest, verifySteeringWheelLockedConfig) {
+    verifyProperty(VehicleProperty::STEERING_WHEEL_LOCKED, VehiclePropertyAccess::READ_WRITE,
+                   VehiclePropertyChangeMode::ON_CHANGE, VehiclePropertyGroup::SYSTEM,
+                   VehicleArea::GLOBAL, VehiclePropertyType::BOOLEAN);
+}
+
 std::vector<ServiceDescriptor> getDescriptors() {
     std::vector<ServiceDescriptor> descriptors;
     for (std::string name : getAidlHalInstanceNames(IVehicle::descriptor)) {
