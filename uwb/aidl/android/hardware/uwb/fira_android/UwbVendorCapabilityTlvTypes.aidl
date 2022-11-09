@@ -150,4 +150,33 @@ enum UwbVendorCapabilityTlvTypes {
      *  0 - Feature not supported.
      */
     SUPPORTED_AOA_RESULT_REQ_ANTENNA_INTERLEAVING = 0xE3,
+
+    /**
+     * 4 byte value to indicate supported min ranging interval in ms.
+     */
+    SUPPORTED_MIN_RANGING_INTERVAL_MS = 0xE4,
+
+    /**
+     * 4 byte bitmask to indicate the supported RANGE_DATA_NTF_CONFIG values
+     *
+     * Bitmask where each bit corresponds to values used in
+     * RANGE_DATA_NTF_CONFIG in SET_APP_CFG_CMD
+     */
+    SUPPORTED_RANGE_DATA_NTF_CONFIG = 0xE5,
+
+    /**
+     * 1 byte bitmask to indicate the supported RSSI_REPORTING values
+     * Values:
+     * 1 - Feature supported.
+     * 0 - Feature not supported.
+     */
+    SUPPORTED_RSSI_REPORTING = 0xE6,
+
+    /**
+     * 1 byte value to indicate support for diagnostics feature.
+     * Values:
+     *  1 - Feature supported.
+     *  0 - Feature not supported.
+     */
+    SUPPORTED_DIAGNOSTICS = 0xE7,
 }
