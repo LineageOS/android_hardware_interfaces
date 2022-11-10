@@ -44,6 +44,8 @@ using ::aidl::android::hardware::automotive::vehicle::SubscribeOptions;
 using ::aidl::android::hardware::automotive::vehicle::VehicleArea;
 using ::aidl::android::hardware::automotive::vehicle::VehicleProperty;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyAccess;
+using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyChangeMode;
+using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyGroup;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType;
 using ::android::getAidlHalInstanceNames;
 using ::android::base::ScopedLockAssertion;
@@ -114,6 +116,9 @@ class VtsVehicleCallback final : public ISubscriptionCallback {
 
 class VtsHalAutomotiveVehicleTargetTest : public testing::TestWithParam<ServiceDescriptor> {
   public:
+    void verifyProperty(VehicleProperty propId, VehiclePropertyAccess access,
+                        VehiclePropertyChangeMode changeMode, VehiclePropertyGroup group,
+                        VehicleArea area, VehiclePropertyType propertyType);
     virtual void SetUp() override {
         auto descriptor = GetParam();
         if (descriptor.isAidlService) {
@@ -418,6 +423,68 @@ TEST_P(VtsHalAutomotiveVehicleTargetTest, testGetValuesTimestampAIDL) {
                 << "getValue result must contain a timestamp updated when the value was updated, if"
                    "the value changes, expect the newer value has a larger timestamp";
     }
+}
+
+// Helper function to compare actual vs expected property config
+void VtsHalAutomotiveVehicleTargetTest::verifyProperty(VehicleProperty propId,
+                                                       VehiclePropertyAccess access,
+                                                       VehiclePropertyChangeMode changeMode,
+                                                       VehiclePropertyGroup group, VehicleArea area,
+                                                       VehiclePropertyType propertyType) {
+    int expectedPropId = toInt(propId);
+    int expectedAccess = toInt(access);
+    int expectedChangeMode = toInt(changeMode);
+    int expectedGroup = toInt(group);
+    int expectedArea = toInt(area);
+    int expectedPropertyType = toInt(propertyType);
+
+    auto result = mVhalClient->getPropConfigs({expectedPropId});
+    ASSERT_TRUE(result.ok()) << "Failed to get required property config, error: "
+                             << result.error().message();
+
+    if (result.value().size() == 0) {
+        GTEST_SKIP() << "Property has not been implemented";
+    }
+    ASSERT_EQ(result.value().size(), 1u)
+            << StringPrintf("Expect to get exactly 1 config, got %zu", result.value().size());
+
+    const auto& config = result.value().at(0);
+    int actualPropId = config->getPropId();
+    int actualAccess = config->getAccess();
+    int actualChangeMode = config->getChangeMode();
+    int actualGroup = actualPropId & toInt(VehiclePropertyGroup::MASK);
+    int actualArea = actualPropId & toInt(VehicleArea::MASK);
+    int actualPropertyType = actualPropId & toInt(VehiclePropertyType::MASK);
+
+    ASSERT_EQ(actualPropId, expectedPropId)
+            << StringPrintf("Expect to get property ID: %i, got %i", expectedPropId, actualPropId);
+
+    if (expectedAccess == toInt(VehiclePropertyAccess::READ_WRITE)) {
+        ASSERT_TRUE(actualAccess == expectedAccess ||
+                    actualAccess == toInt(VehiclePropertyAccess::READ))
+                << StringPrintf("Expect to get VehiclePropertyAccess: %i or %i, got %i",
+                                expectedAccess, toInt(VehiclePropertyAccess::READ), actualAccess);
+    } else {
+        ASSERT_EQ(actualAccess, expectedAccess) << StringPrintf(
+                "Expect to get VehiclePropertyAccess: %i, got %i", expectedAccess, actualAccess);
+    }
+
+    ASSERT_EQ(actualChangeMode, expectedChangeMode)
+            << StringPrintf("Expect to get VehiclePropertyChangeMode: %i, got %i",
+                            expectedChangeMode, actualChangeMode);
+    ASSERT_EQ(actualGroup, expectedGroup) << StringPrintf(
+            "Expect to get VehiclePropertyGroup: %i, got %i", expectedGroup, actualGroup);
+    ASSERT_EQ(actualArea, expectedArea)
+            << StringPrintf("Expect to get VehicleArea: %i, got %i", expectedArea, actualArea);
+    ASSERT_EQ(actualPropertyType, expectedPropertyType)
+            << StringPrintf("Expect to get VehiclePropertyType: %i, got %i", expectedPropertyType,
+                            actualPropertyType);
+}
+
+TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyDoorChildLockEnabledConfig) {
+    verifyProperty(VehicleProperty::DOOR_CHILD_LOCK_ENABLED, VehiclePropertyAccess::READ_WRITE,
+                   VehiclePropertyChangeMode::ON_CHANGE, VehiclePropertyGroup::SYSTEM,
+                   VehicleArea::DOOR, VehiclePropertyType::BOOLEAN);
 }
 
 std::vector<ServiceDescriptor> getDescriptors() {

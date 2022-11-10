@@ -111,6 +111,7 @@ public final class AccessForVehicleProperty {
         Map.entry(VehicleProperty.DOOR_POS, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.DOOR_MOVE, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.DOOR_LOCK, VehiclePropertyAccess.READ_WRITE),
+        Map.entry(VehicleProperty.DOOR_CHILD_LOCK_ENABLED, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.MIRROR_Z_POS, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.MIRROR_Z_MOVE, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.MIRROR_Y_POS, VehiclePropertyAccess.READ_WRITE),
