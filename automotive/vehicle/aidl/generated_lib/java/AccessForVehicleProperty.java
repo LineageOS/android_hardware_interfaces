@@ -187,6 +187,7 @@ public final class AccessForVehicleProperty {
         Map.entry(VehicleProperty.CABIN_LIGHTS_SWITCH, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.READING_LIGHTS_STATE, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.READING_LIGHTS_SWITCH, VehiclePropertyAccess.READ_WRITE),
+        Map.entry(VehicleProperty.STEERING_WHEEL_LIGHTS_STATE, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.SUPPORT_CUSTOMIZE_VENDOR_PERMISSION, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.DISABLED_OPTIONAL_FEATURES, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.INITIAL_USER_INFO, VehiclePropertyAccess.READ_WRITE),
