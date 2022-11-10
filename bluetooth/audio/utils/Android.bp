@@ -63,6 +63,31 @@ cc_library_shared {
     generated_headers: ["le_audio_codec_capabilities"],
 }
 
+cc_test {
+    name: "BluetoothLeAudioCodecsProviderTest",
+    srcs: [
+        "aidl_session/BluetoothLeAudioCodecsProvider.cpp",
+        "aidl_session/BluetoothLeAudioCodecsProviderTest.cpp",
+    ],
+    header_libs: [
+        "libxsdc-utils",
+    ],
+    shared_libs: [
+        "libbase",
+        "libbinder_ndk",
+        "android.hardware.bluetooth.audio-V2-ndk",
+        "libxml2",
+    ],
+    test_suites: [
+        "general-tests",
+    ],
+    test_options: {
+        unit_test: false,
+    },
+    generated_sources: ["le_audio_codec_capabilities"],
+    generated_headers: ["le_audio_codec_capabilities"],
+}
+
 xsd_config {
     name: "le_audio_codec_capabilities",
     srcs: ["le_audio_codec_capabilities/le_audio_codec_capabilities.xsd"],
