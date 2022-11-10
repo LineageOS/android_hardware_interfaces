@@ -92,6 +92,10 @@ bool isDsDsEnabled() {
     return testing::checkSubstringInCommandOutput("getprop persist.radio.multisim.config", "dsds");
 }
 
+bool isDsDaEnabled() {
+    return testing::checkSubstringInCommandOutput("getprop persist.radio.multisim.config", "dsda");
+}
+
 bool isTsTsEnabled() {
     return testing::checkSubstringInCommandOutput("getprop persist.radio.multisim.config", "tsts");
 }
