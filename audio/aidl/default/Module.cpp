@@ -25,6 +25,7 @@
 #include <aidl/android/media/audio/common/AudioOutputFlags.h>
 
 #include "core-impl/Module.h"
+#include "core-impl/Telephony.h"
 #include "core-impl/utils.h"
 
 using aidl::android::hardware::audio::common::SinkMetadata;
@@ -242,6 +243,15 @@ ndk::ScopedAStatus Module::setModuleDebug(
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
     }
     mDebug = in_debug;
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus Module::getTelephony(std::shared_ptr<ITelephony>* _aidl_return) {
+    if (mTelephony == nullptr) {
+        mTelephony = ndk::SharedRefBase::make<Telephony>();
+    }
+    *_aidl_return = mTelephony;
+    LOG(DEBUG) << __func__ << ": returning instance of ITelephony: " << _aidl_return->get();
     return ndk::ScopedAStatus::ok();
 }
 
@@ -777,6 +787,62 @@ ndk::ScopedAStatus Module::resetAudioPortConfig(int32_t in_portConfigId) {
     }
     LOG(ERROR) << __func__ << ": port config id " << in_portConfigId << " not found";
     return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+}
+
+ndk::ScopedAStatus Module::getMasterMute(bool* _aidl_return) {
+    *_aidl_return = mMasterMute;
+    LOG(DEBUG) << __func__ << ": returning " << *_aidl_return;
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus Module::setMasterMute(bool in_mute) {
+    LOG(DEBUG) << __func__ << ": " << in_mute;
+    mMasterMute = in_mute;
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus Module::getMasterVolume(float* _aidl_return) {
+    *_aidl_return = mMasterVolume;
+    LOG(DEBUG) << __func__ << ": returning " << *_aidl_return;
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus Module::setMasterVolume(float in_volume) {
+    LOG(DEBUG) << __func__ << ": " << in_volume;
+    if (in_volume >= 0.0f && in_volume <= 1.0f) {
+        mMasterVolume = in_volume;
+        return ndk::ScopedAStatus::ok();
+    }
+    LOG(ERROR) << __func__ << ": invalid master volume value: " << in_volume;
+    return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+}
+
+ndk::ScopedAStatus Module::getMicMute(bool* _aidl_return) {
+    *_aidl_return = mMicMute;
+    LOG(DEBUG) << __func__ << ": returning " << *_aidl_return;
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus Module::setMicMute(bool in_mute) {
+    LOG(DEBUG) << __func__ << ": " << in_mute;
+    mMicMute = in_mute;
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus Module::updateAudioMode(AudioMode in_mode) {
+    // No checks for supported audio modes here, it's an informative notification.
+    LOG(DEBUG) << __func__ << ": " << toString(in_mode);
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus Module::updateScreenRotation(ScreenRotation in_rotation) {
+    LOG(DEBUG) << __func__ << ": " << toString(in_rotation);
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus Module::updateScreenState(bool in_isTurnedOn) {
+    LOG(DEBUG) << __func__ << ": " << in_isTurnedOn;
+    return ndk::ScopedAStatus::ok();
 }
 
 }  // namespace aidl::android::hardware::audio::core
