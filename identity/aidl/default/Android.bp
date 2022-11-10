@@ -45,6 +45,7 @@ cc_library_static {
         "libpuresoftkeymasterdevice",
         "android.hardware.identity-support-lib",
         "android.hardware.keymaster-V3-ndk",
+        "android.hardware.security.rkp-V3-ndk",
     ],
 }
 
@@ -112,6 +113,7 @@ cc_binary {
         "android.hardware.keymaster-V3-ndk",
         "android.hardware.identity-libeic-hal-common",
         "android.hardware.identity-libeic-library",
+        "android.hardware.security.rkp-V3-ndk",
     ],
     srcs: [
         "service.cpp",

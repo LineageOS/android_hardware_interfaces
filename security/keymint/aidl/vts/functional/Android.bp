@@ -35,6 +35,7 @@ cc_defaults {
         "libcrypto",
     ],
     static_libs: [
+        "android.hardware.security.rkp-V3-ndk",
         "android.hardware.security.secureclock-V1-ndk",
         "libcppbor_external",
         "libcppcose_rkp",
