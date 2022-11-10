@@ -1912,6 +1912,17 @@ enum VehicleProperty {
     STEERING_WHEEL_LOCKED =
             0x0BE5 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
     /**
+     * Steering wheel easy access feature enabled
+     *
+     * If true, the driver’s steering wheel will automatically adjust to make it easier for the
+     * driver to enter and exit the vehicle.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     */
+    STEERING_WHEEL_EASY_ACCESS_ENABLED =
+            0x0BE6 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+    /**
      * Vehicle Maps Service (VMS) message
      *
      * This property uses MIXED data to communicate vms messages.
