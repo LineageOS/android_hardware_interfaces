@@ -17,6 +17,7 @@
 #define LOG_TAG "AHAL_EffectFactory"
 #include <android-base/logging.h>
 #include <dlfcn.h>
+#include <unordered_set>
 
 #include "effect-impl/EffectTypes.h"
 #include "effect-impl/EffectUUID.h"
@@ -26,22 +27,9 @@ using aidl::android::media::audio::common::AudioUuid;
 
 namespace aidl::android::hardware::audio::effect {
 
-Factory::Factory() {
-    // TODO: get list of library UUID and name from audio_effect.xml.
-    openEffectLibrary(EqualizerTypeUUID, EqualizerSwImplUUID, std::nullopt, "libequalizersw.so");
-    openEffectLibrary(EqualizerTypeUUID, EqualizerBundleImplUUID, std::nullopt, "libbundleaidl.so");
-    openEffectLibrary(BassBoostTypeUUID, BassBoostSwImplUUID, std::nullopt, "libbassboostsw.so");
-    openEffectLibrary(DynamicsProcessingTypeUUID, DynamicsProcessingSwImplUUID, std::nullopt,
-                      "libdynamicsprocessingsw.so");
-    openEffectLibrary(HapticGeneratorTypeUUID, HapticGeneratorSwImplUUID, std::nullopt,
-                      "libhapticgeneratorsw.so");
-    openEffectLibrary(LoudnessEnhancerTypeUUID, LoudnessEnhancerSwImplUUID, std::nullopt,
-                      "libloudnessenhancersw.so");
-    openEffectLibrary(ReverbTypeUUID, ReverbSwImplUUID, std::nullopt, "libreverbsw.so");
-    openEffectLibrary(VirtualizerTypeUUID, VirtualizerSwImplUUID, std::nullopt,
-                      "libvirtualizersw.so");
-    openEffectLibrary(VisualizerTypeUUID, VisualizerSwImplUUID, std::nullopt, "libvisualizersw.so");
-    openEffectLibrary(VolumeTypeUUID, VolumeSwImplUUID, std::nullopt, "libvolumesw.so");
+Factory::Factory(const std::string& file) : mConfig(EffectConfig(file)) {
+    LOG(DEBUG) << __func__ << " with config file: " << file;
+    loadEffectLibs();
 }
 
 Factory::~Factory() {
@@ -62,7 +50,7 @@ ndk::ScopedAStatus Factory::queryEffects(const std::optional<AudioUuid>& in_type
                                          const std::optional<AudioUuid>& in_proxy_uuid,
                                          std::vector<Descriptor::Identity>* _aidl_return) {
     std::copy_if(
-            mIdentityList.begin(), mIdentityList.end(), std::back_inserter(*_aidl_return),
+            mIdentitySet.begin(), mIdentitySet.end(), std::back_inserter(*_aidl_return),
             [&](auto& desc) {
                 return (!in_type_uuid.has_value() || in_type_uuid.value() == desc.type) &&
                        (!in_impl_uuid.has_value() || in_impl_uuid.value() == desc.uuid) &&
@@ -172,8 +160,7 @@ ndk::ScopedAStatus Factory::destroyEffect(const std::shared_ptr<IEffect>& in_han
     return status;
 }
 
-void Factory::openEffectLibrary(const AudioUuid& type, const AudioUuid& impl,
-                                const std::optional<AudioUuid>& proxy, const std::string& libName) {
+void Factory::openEffectLibrary(const AudioUuid& impl, const std::string& libName) {
     std::function<void(void*)> dlClose = [](void* handle) -> void {
         if (handle && dlclose(handle)) {
             LOG(ERROR) << "dlclose failed " << dlerror();
@@ -187,19 +174,51 @@ void Factory::openEffectLibrary(const AudioUuid& type, const AudioUuid& impl,
         return;
     }
 
-    LOG(DEBUG) << __func__ << " dlopen lib:" << libName << " for uuid:\ntype:" << type.toString()
-               << "\nimpl:" << impl.toString()
-               << "\nproxy:" << (proxy.has_value() ? proxy.value().toString() : "null")
+    LOG(DEBUG) << __func__ << " dlopen lib:" << libName << "\nimpl:" << impl.toString()
                << "\nhandle:" << libHandle;
     mEffectLibMap.insert({impl, std::make_pair(std::move(libHandle), nullptr)});
+}
 
-    Descriptor::Identity id;
-    id.type = type;
-    id.uuid = impl;
-    if (proxy.has_value()) {
-        id.proxy = proxy.value();
+void Factory::createIdentityWithConfig(const EffectConfig::LibraryUuid& configLib,
+                                       const AudioUuid& typeUuid,
+                                       const std::optional<AudioUuid> proxyUuid) {
+    static const auto& libMap = mConfig.getLibraryMap();
+    const std::string& libName = configLib.name;
+    if (auto path = libMap.find(libName); path != libMap.end()) {
+        Descriptor::Identity id;
+        id.type = typeUuid;
+        id.uuid = configLib.uuid;
+        id.proxy = proxyUuid;
+        LOG(DEBUG) << __func__ << ": typeUuid " << id.type.toString() << "\nimplUuid "
+                   << id.uuid.toString() << " proxyUuid "
+                   << (proxyUuid.has_value() ? proxyUuid->toString() : "null");
+        openEffectLibrary(id.uuid, path->second);
+        mIdentitySet.insert(std::move(id));
+    } else {
+        LOG(ERROR) << __func__ << ": library " << libName << " not exist!";
+        return;
     }
-    mIdentityList.push_back(id);
+}
+
+void Factory::loadEffectLibs() {
+    const auto& configEffectsMap = mConfig.getEffectsMap();
+    for (const auto& configEffects : configEffectsMap) {
+        if (auto typeUuid = kUuidNameTypeMap.find(configEffects.first /* effect name */);
+            typeUuid != kUuidNameTypeMap.end()) {
+            const auto& configLibs = configEffects.second;
+            std::optional<AudioUuid> proxyUuid;
+            if (configLibs.proxyLibrary.has_value()) {
+                const auto& proxyLib = configLibs.proxyLibrary.value();
+                proxyUuid = proxyLib.uuid;
+            }
+            for (const auto& configLib : configLibs.libraries) {
+                createIdentityWithConfig(configLib, typeUuid->second, proxyUuid);
+            }
+        } else {
+            LOG(ERROR) << __func__ << ": can not find type UUID for effect " << configEffects.first
+                       << " skipping!";
+        }
+    }
 }
 
 }  // namespace aidl::android::hardware::audio::effect

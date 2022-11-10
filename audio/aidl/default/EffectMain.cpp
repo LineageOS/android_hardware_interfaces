@@ -19,21 +19,31 @@
 #include <android-base/logging.h>
 #include <android/binder_manager.h>
 #include <android/binder_process.h>
+#include <system/audio_config.h>
+
+/** Default name of effect configuration file. */
+static const char* kDefaultConfigName = "audio_effects_config.xml";
 
 int main() {
     // This is a debug implementation, always enable debug logging.
     android::base::SetMinimumLogSeverity(::android::base::DEBUG);
     ABinderProcess_setThreadPoolMaxThreadCount(0);
 
+    auto configFile = android::audio_find_readable_configuration_file(kDefaultConfigName);
+    if (configFile == "") {
+        LOG(ERROR) << __func__ << ": config file " << kDefaultConfigName << " not found!";
+        return EXIT_FAILURE;
+    }
+    LOG(DEBUG) << __func__ << ": start factory with configFile:" << configFile;
     auto effectFactory =
-            ndk::SharedRefBase::make<aidl::android::hardware::audio::effect::Factory>();
+            ndk::SharedRefBase::make<aidl::android::hardware::audio::effect::Factory>(configFile);
 
     std::string serviceName = std::string() + effectFactory->descriptor + "/default";
     binder_status_t status =
             AServiceManager_addService(effectFactory->asBinder().get(), serviceName.c_str());
     CHECK_EQ(STATUS_OK, status);
-    LOG(DEBUG) << __func__ << ": effectFactoryName:" << serviceName;
 
+    LOG(DEBUG) << __func__ << ": effectFactory: " << serviceName << " start";
     ABinderProcess_joinThreadPool();
     return EXIT_FAILURE;  // should not reach
 }
