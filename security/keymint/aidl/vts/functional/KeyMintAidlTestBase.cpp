@@ -1919,30 +1919,32 @@ void check_cose_key(const vector<uint8_t>& data, bool testMode) {
 
     // The following check assumes that canonical CBOR encoding is used for the COSE_Key.
     if (testMode) {
-        EXPECT_THAT(cppbor::prettyPrint(parsedPayload.get()),
-                    MatchesRegex("{\n"
-                                 "  1 : 2,\n"   // kty: EC2
-                                 "  3 : -7,\n"  // alg: ES256
-                                 "  -1 : 1,\n"  // EC id: P256
-                                 // The regex {(0x[0-9a-f]{2}, ){31}0x[0-9a-f]{2}} matches a
-                                 // sequence of 32 hexadecimal bytes, enclosed in braces and
-                                 // separated by commas. In this case, some Ed25519 public key.
-                                 "  -2 : {(0x[0-9a-f]{2}, ){31}0x[0-9a-f]{2}},\n"  // pub_x: data
-                                 "  -3 : {(0x[0-9a-f]{2}, ){31}0x[0-9a-f]{2}},\n"  // pub_y: data
-                                 "  -70000 : null,\n"                              // test marker
-                                 "}"));
+        EXPECT_THAT(
+                cppbor::prettyPrint(parsedPayload.get()),
+                MatchesRegex("\\{\n"
+                             "  1 : 2,\n"   // kty: EC2
+                             "  3 : -7,\n"  // alg: ES256
+                             "  -1 : 1,\n"  // EC id: P256
+                             // The regex {(0x[0-9a-f]{2}, ){31}0x[0-9a-f]{2}} matches a
+                             // sequence of 32 hexadecimal bytes, enclosed in braces and
+                             // separated by commas. In this case, some Ed25519 public key.
+                             "  -2 : \\{(0x[0-9a-f]{2}, ){31}0x[0-9a-f]{2}\\},\n"  // pub_x: data
+                             "  -3 : \\{(0x[0-9a-f]{2}, ){31}0x[0-9a-f]{2}\\},\n"  // pub_y: data
+                             "  -70000 : null,\n"                                  // test marker
+                             "\\}"));
     } else {
-        EXPECT_THAT(cppbor::prettyPrint(parsedPayload.get()),
-                    MatchesRegex("{\n"
-                                 "  1 : 2,\n"   // kty: EC2
-                                 "  3 : -7,\n"  // alg: ES256
-                                 "  -1 : 1,\n"  // EC id: P256
-                                 // The regex {(0x[0-9a-f]{2}, ){31}0x[0-9a-f]{2}} matches a
-                                 // sequence of 32 hexadecimal bytes, enclosed in braces and
-                                 // separated by commas. In this case, some Ed25519 public key.
-                                 "  -2 : {(0x[0-9a-f]{2}, ){31}0x[0-9a-f]{2}},\n"  // pub_x: data
-                                 "  -3 : {(0x[0-9a-f]{2}, ){31}0x[0-9a-f]{2}},\n"  // pub_y: data
-                                 "}"));
+        EXPECT_THAT(
+                cppbor::prettyPrint(parsedPayload.get()),
+                MatchesRegex("\\{\n"
+                             "  1 : 2,\n"   // kty: EC2
+                             "  3 : -7,\n"  // alg: ES256
+                             "  -1 : 1,\n"  // EC id: P256
+                             // The regex {(0x[0-9a-f]{2}, ){31}0x[0-9a-f]{2}} matches a
+                             // sequence of 32 hexadecimal bytes, enclosed in braces and
+                             // separated by commas. In this case, some Ed25519 public key.
+                             "  -2 : \\{(0x[0-9a-f]{2}, ){31}0x[0-9a-f]{2}\\},\n"  // pub_x: data
+                             "  -3 : \\{(0x[0-9a-f]{2}, ){31}0x[0-9a-f]{2}\\},\n"  // pub_y: data
+                             "\\}"));
     }
 }
 
