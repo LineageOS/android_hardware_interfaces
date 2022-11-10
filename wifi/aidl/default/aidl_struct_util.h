@@ -161,6 +161,9 @@ bool convertLegacyRttCapabilitiesToAidl(
 bool convertLegacyVectorOfRttResultToAidl(
         const std::vector<const legacy_hal::wifi_rtt_result*>& legacy_results,
         std::vector<RttResult>* aidl_results);
+bool convertLegacyVectorOfRttResultV2ToAidl(
+        const std::vector<const legacy_hal::wifi_rtt_result_v2*>& legacy_results,
+        std::vector<RttResult>* aidl_results);
 uint32_t convertAidlWifiBandToLegacyMacBand(WifiBand band);
 uint32_t convertAidlWifiIfaceModeToLegacy(uint32_t aidl_iface_mask);
 uint32_t convertAidlUsableChannelFilterToLegacy(uint32_t aidl_filter_mask);

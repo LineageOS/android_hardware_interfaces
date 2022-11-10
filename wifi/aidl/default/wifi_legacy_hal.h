@@ -305,6 +305,7 @@ using ::WIFI_RTT_BW_320;
 using ::WIFI_RTT_BW_40;
 using ::WIFI_RTT_BW_5;
 using ::WIFI_RTT_BW_80;
+using ::WIFI_RTT_BW_UNSPECIFIED;
 using ::wifi_rtt_capabilities;
 using ::wifi_rtt_config;
 using ::wifi_rtt_preamble;
@@ -315,6 +316,7 @@ using ::WIFI_RTT_PREAMBLE_LEGACY;
 using ::WIFI_RTT_PREAMBLE_VHT;
 using ::wifi_rtt_responder;
 using ::wifi_rtt_result;
+using ::wifi_rtt_result_v2;
 using ::wifi_rtt_status;
 using ::wifi_rtt_type;
 using ::wifi_rx_packet_fate;
@@ -420,6 +422,8 @@ using on_rssi_threshold_breached_callback =
 // the pointer.
 using on_rtt_results_callback =
         std::function<void(wifi_request_id, const std::vector<const wifi_rtt_result*>&)>;
+using on_rtt_results_callback_v2 =
+        std::function<void(wifi_request_id, const std::vector<const wifi_rtt_result_v2*>&)>;
 
 // Callback for ring buffer data.
 using on_ring_buffer_data_callback = std::function<void(
@@ -590,7 +594,8 @@ class WifiLegacyHal {
     // RTT functions.
     wifi_error startRttRangeRequest(const std::string& iface_name, wifi_request_id id,
                                     const std::vector<wifi_rtt_config>& rtt_configs,
-                                    const on_rtt_results_callback& on_results_callback);
+                                    const on_rtt_results_callback& on_results_callback,
+                                    const on_rtt_results_callback_v2& on_results_callback_v2);
     wifi_error cancelRttRangeRequest(const std::string& iface_name, wifi_request_id id,
                                      const std::vector<std::array<uint8_t, ETH_ALEN>>& mac_addrs);
     std::pair<wifi_error, wifi_rtt_capabilities> getRttCapabilities(const std::string& iface_name);

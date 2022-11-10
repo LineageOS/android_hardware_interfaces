@@ -161,8 +161,28 @@ ndk::ScopedAStatus WifiRttController::rangeRequestInternal(
                     }
                 }
             };
+    const auto& on_results_callback_v2 =
+            [weak_ptr_this](legacy_hal::wifi_request_id id,
+                            const std::vector<const legacy_hal::wifi_rtt_result_v2*>& results) {
+                const auto shared_ptr_this = weak_ptr_this.lock();
+                if (!shared_ptr_this.get() || !shared_ptr_this->isValid()) {
+                    LOG(ERROR) << "v2 Callback invoked on an invalid object";
+                    return;
+                }
+                std::vector<RttResult> aidl_results;
+                if (!aidl_struct_util::convertLegacyVectorOfRttResultV2ToAidl(results,
+                                                                              &aidl_results)) {
+                    LOG(ERROR) << "Failed to convert rtt results v2 to AIDL structs";
+                    return;
+                }
+                for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
+                    if (!callback->onResults(id, aidl_results).isOk()) {
+                        LOG(ERROR) << "Failed to invoke the v2 callback";
+                    }
+                }
+            };
     legacy_hal::wifi_error legacy_status = legacy_hal_.lock()->startRttRangeRequest(
-            ifname_, cmd_id, legacy_configs, on_results_callback);
+            ifname_, cmd_id, legacy_configs, on_results_callback, on_results_callback_v2);
     return createWifiStatusFromLegacyError(legacy_status);
 }
 
