@@ -21,6 +21,7 @@
 #include <mutex>
 
 #include <android-base/properties.h>
+#include <android/binder_auto_utils.h>
 #include <android/binder_manager.h>
 #include <android/binder_process.h>
 
@@ -34,7 +35,7 @@ class AudioHalBinderServiceUtil {
         if (mBinder == nullptr) {
             LOG(ERROR) << "Failed to get service " << serviceName;
         } else {
-            LOG(DEBUG) << "succeed to get service " << serviceName;
+            LOG(DEBUG) << "Succeeded to get service " << serviceName;
         }
         return mBinder;
     }

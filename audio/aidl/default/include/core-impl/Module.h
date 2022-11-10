@@ -35,6 +35,7 @@ class Module : public BnModule {
   private:
     ndk::ScopedAStatus setModuleDebug(
             const ::aidl::android::hardware::audio::core::ModuleDebug& in_debug) override;
+    ndk::ScopedAStatus getTelephony(std::shared_ptr<ITelephony>* _aidl_return) override;
     ndk::ScopedAStatus connectExternalDevice(
             const ::aidl::android::media::audio::common::AudioPort& in_templateIdAndAdditionalData,
             ::aidl::android::media::audio::common::AudioPort* _aidl_return) override;
@@ -70,6 +71,17 @@ class Module : public BnModule {
             bool* _aidl_return) override;
     ndk::ScopedAStatus resetAudioPatch(int32_t in_patchId) override;
     ndk::ScopedAStatus resetAudioPortConfig(int32_t in_portConfigId) override;
+    ndk::ScopedAStatus getMasterMute(bool* _aidl_return) override;
+    ndk::ScopedAStatus setMasterMute(bool in_mute) override;
+    ndk::ScopedAStatus getMasterVolume(float* _aidl_return) override;
+    ndk::ScopedAStatus setMasterVolume(float in_volume) override;
+    ndk::ScopedAStatus getMicMute(bool* _aidl_return) override;
+    ndk::ScopedAStatus setMicMute(bool in_mute) override;
+    ndk::ScopedAStatus updateAudioMode(
+            ::aidl::android::hardware::audio::core::AudioMode in_mode) override;
+    ndk::ScopedAStatus updateScreenRotation(
+            ::aidl::android::hardware::audio::core::IModule::ScreenRotation in_rotation) override;
+    ndk::ScopedAStatus updateScreenState(bool in_isTurnedOn) override;
 
     void cleanUpPatch(int32_t patchId);
     ndk::ScopedAStatus createStreamContext(
@@ -88,12 +100,18 @@ class Module : public BnModule {
 
     std::unique_ptr<internal::Configuration> mConfig;
     ModuleDebug mDebug;
+    // Since it is required to return the same instance of the ITelephony, even
+    // if the client has released it on its side, we need to hold it via a strong pointer.
+    std::shared_ptr<ITelephony> mTelephony;
     // ids of ports created at runtime via 'connectExternalDevice'.
     std::set<int32_t> mConnectedDevicePorts;
     Streams mStreams;
     // Maps port ids and port config ids to patch ids.
     // Multimap because both ports and configs can be used by multiple patches.
     std::multimap<int32_t, int32_t> mPatches;
+    bool mMasterMute = false;
+    float mMasterVolume = 1.0f;
+    bool mMicMute = false;
 };
 
 }  // namespace aidl::android::hardware::audio::core
