@@ -252,7 +252,6 @@ void RadioImsTest::verifyError(RadioError resp) {
         case RadioError::MODEM_ERR:
         case RadioError::INTERNAL_ERR:
         case RadioError::INVALID_ARGUMENTS:
-        case RadioError::REQUEST_NOT_SUPPORTED:
         case RadioError::NO_RESOURCES:
             SUCCEED();
             break;
