@@ -111,6 +111,7 @@ public final class ChangeModeForVehicleProperty {
         Map.entry(VehicleProperty.DOOR_POS, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.DOOR_MOVE, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.DOOR_LOCK, VehiclePropertyChangeMode.ON_CHANGE),
+        Map.entry(VehicleProperty.DOOR_CHILD_LOCK_ENABLED, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.MIRROR_Z_POS, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.MIRROR_Z_MOVE, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.MIRROR_Y_POS, VehiclePropertyChangeMode.ON_CHANGE),

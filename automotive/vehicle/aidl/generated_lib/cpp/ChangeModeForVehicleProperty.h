@@ -119,6 +119,7 @@ std::unordered_map<VehicleProperty, VehiclePropertyChangeMode> ChangeModeForVehi
         {VehicleProperty::DOOR_POS, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::DOOR_MOVE, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::DOOR_LOCK, VehiclePropertyChangeMode::ON_CHANGE},
+        {VehicleProperty::DOOR_CHILD_LOCK_ENABLED, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::MIRROR_Z_POS, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::MIRROR_Z_MOVE, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::MIRROR_Y_POS, VehiclePropertyChangeMode::ON_CHANGE},
