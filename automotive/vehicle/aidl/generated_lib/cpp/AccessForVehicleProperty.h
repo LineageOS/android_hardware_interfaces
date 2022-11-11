@@ -119,6 +119,7 @@ std::unordered_map<VehicleProperty, VehiclePropertyAccess> AccessForVehiclePrope
         {VehicleProperty::DOOR_POS, VehiclePropertyAccess::READ_WRITE},
         {VehicleProperty::DOOR_MOVE, VehiclePropertyAccess::READ_WRITE},
         {VehicleProperty::DOOR_LOCK, VehiclePropertyAccess::READ_WRITE},
+        {VehicleProperty::DOOR_CHILD_LOCK_ENABLED, VehiclePropertyAccess::READ_WRITE},
         {VehicleProperty::MIRROR_Z_POS, VehiclePropertyAccess::READ_WRITE},
         {VehicleProperty::MIRROR_Z_MOVE, VehiclePropertyAccess::READ_WRITE},
         {VehicleProperty::MIRROR_Y_POS, VehiclePropertyAccess::READ_WRITE},

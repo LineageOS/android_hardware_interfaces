@@ -1929,6 +1929,22 @@
             ]
         },
         {
+            "property": "VehicleProperty::DOOR_CHILD_LOCK_ENABLED",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "Constants::DOOR_2_LEFT"
+                },
+                {
+                    "areaId": "Constants::DOOR_2_RIGHT"
+                }
+            ]
+        },
+        {
             "property": "VehicleProperty::DOOR_POS",
             "defaultValue": {
                 "int32Values": [

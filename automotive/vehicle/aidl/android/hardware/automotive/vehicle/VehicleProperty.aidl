@@ -16,6 +16,8 @@
 
 package android.hardware.automotive.vehicle;
 
+import android.hardware.automotive.vehicle.VehicleArea;
+import android.hardware.automotive.vehicle.VehiclePropertyGroup;
 import android.hardware.automotive.vehicle.VehiclePropertyType;
 /**
  * Declares all vehicle properties. VehicleProperty has a bitwise structure.
@@ -1317,6 +1319,18 @@ enum VehicleProperty {
      */
     DOOR_LOCK = 0x0B02 + 0x10000000 + 0x06000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:DOOR,VehiclePropertyType:BOOLEAN
+    /**
+     * Door child lock feature enabled
+     *
+     * Returns true if the door child lock feature is enabled and false if it is disabled.
+     *
+     * If enabled, the door is unable to be opened from the inside.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     */
+    DOOR_CHILD_LOCK_ENABLED =
+            0x0B03 + VehiclePropertyGroup.SYSTEM + VehicleArea.DOOR + VehiclePropertyType.BOOLEAN,
     /**
      * Mirror Z Position
      *
@@ -2889,5 +2903,4 @@ enum VehicleProperty {
      */
     SUPPORTED_PROPERTY_IDS = 0x0F48 + 0x10000000 + 0x01000000
             + 0x00410000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32_VEC
-
 }
