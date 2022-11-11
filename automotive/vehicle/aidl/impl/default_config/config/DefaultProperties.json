@@ -1122,6 +1122,41 @@
             ]
         },
         {
+            "property": "VehicleProperty::SEAT_LUMBAR_VERTICAL_POS",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "Constants::SEAT_1_LEFT",
+                    "minInt32Value": -10,
+                    "maxInt32Value": 10
+                },
+                {
+                    "areaId": "Constants::SEAT_1_RIGHT",
+                    "minInt32Value": -10,
+                    "maxInt32Value": 10
+                },
+                {
+                    "areaId": "Constants::SEAT_2_LEFT",
+                    "minInt32Value": -10,
+                    "maxInt32Value": 10
+                },
+                {
+                    "areaId": "Constants::SEAT_2_RIGHT",
+                    "minInt32Value": -10,
+                    "maxInt32Value": 10
+                },
+                {
+                    "areaId": "Constants::SEAT_2_CENTER",
+                    "minInt32Value": -10,
+                    "maxInt32Value": 10
+                }
+            ]
+        },
+        {
             "property": "VehicleProperty::SEAT_OCCUPANCY",
             "areas": [
                 {
