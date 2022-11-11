@@ -55,19 +55,15 @@ parcelable StreamDescriptor {
     DRAIN_PAUSED = 6,
     ERROR = 100,
   }
-  @Backing(type="int") @VintfStability
-  enum CommandCode {
-    START = 1,
-    BURST = 2,
-    DRAIN = 3,
-    STANDBY = 4,
-    PAUSE = 5,
-    FLUSH = 6,
-  }
   @FixedSize @VintfStability
-  parcelable Command {
-    android.hardware.audio.core.StreamDescriptor.CommandCode code = android.hardware.audio.core.StreamDescriptor.CommandCode.START;
-    int fmqByteCount;
+  union Command {
+    int hal_reserved_exit;
+    android.media.audio.common.Void start;
+    int burst;
+    android.media.audio.common.Void drain;
+    android.media.audio.common.Void standby;
+    android.media.audio.common.Void pause;
+    android.media.audio.common.Void flush;
   }
   @FixedSize @VintfStability
   parcelable Reply {
