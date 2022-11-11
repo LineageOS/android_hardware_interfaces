@@ -79,6 +79,8 @@ following behavior:
 
 * `make -j TestWakeupClientServer`
 
+* `make -j ApPowerControlLib`
+
 ## How to push the test wakeup client to a TCU which runs Android.
 
 * Make the target device writable:
@@ -96,6 +98,8 @@ following behavior:
 * Under android root: `cd $ANDROID_PRODUCT_OUT`
 
 * `adb push vendor/bin/TestWakeupClientServer /vendor/bin`
+
+* `adb push vendor/lib/ApPowerControlLib.so /vendor/lib`
 
 * `adb shell`
 

@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+soong_namespace {}
+
 package {
     // See: http://go/android-license-faq
     // A large-scale-change added 'default_applicable_licenses' to import
@@ -21,23 +23,10 @@ package {
     default_applicable_licenses: ["hardware_interfaces_license"],
 }
 
-cc_binary {
-    name: "TestWakeupClientServer",
+cc_library_shared {
+    name: "ApPowerControlLib",
     vendor: true,
-    srcs: ["src/*.cpp"],
-    local_include_dirs: ["include"],
-    shared_libs: [
-        "libbase",
-        "libutils",
-        "libgrpc++",
-        "libprotobuf-cpp-full",
-        "//hardware/interfaces/automotive/remoteaccess/test_grpc_server/lib:ApPowerControlLib",
-    ],
-    whole_static_libs: [
-        "wakeup_client_protos",
-    ],
-    cflags: [
-        "-Wno-unused-parameter",
-        "-DGRPC_SERVICE_ADDRESS=\"localhost:50051\"",
-    ],
+    srcs: ["*.cpp"],
+    local_include_dirs: ["."],
+    export_include_dirs: ["."],
 }
