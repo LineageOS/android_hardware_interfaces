@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,21 @@
  */
 
 #pragma once
+
+#define LOG_TAG "FingerprintVirtualHal"
+
 #include <aidl/android/hardware/biometrics/common/SensorStrength.h>
 #include <aidl/android/hardware/biometrics/fingerprint/ISessionCallback.h>
+#include <android/binder_to_string.h>
+#include <string>
 
 #include <random>
 
 #include <aidl/android/hardware/biometrics/fingerprint/SensorLocation.h>
 #include <future>
 #include <vector>
+
+#include "FakeLockoutTracker.h"
 
 using namespace ::aidl::android::hardware::biometrics::common;
 
@@ -36,11 +43,11 @@ class FakeFingerprintEngine {
 
     void generateChallengeImpl(ISessionCallback* cb);
     void revokeChallengeImpl(ISessionCallback* cb, int64_t challenge);
-    void enrollImpl(ISessionCallback* cb, const keymaster::HardwareAuthToken& hat,
-                    const std::future<void>& cancel);
-    void authenticateImpl(ISessionCallback* cb, int64_t operationId,
-                          const std::future<void>& cancel);
-    void detectInteractionImpl(ISessionCallback* cb, const std::future<void>& cancel);
+    virtual void enrollImpl(ISessionCallback* cb, const keymaster::HardwareAuthToken& hat,
+                            const std::future<void>& cancel);
+    virtual void authenticateImpl(ISessionCallback* cb, int64_t operationId,
+                                  const std::future<void>& cancel);
+    virtual void detectInteractionImpl(ISessionCallback* cb, const std::future<void>& cancel);
     void enumerateEnrollmentsImpl(ISessionCallback* cb);
     void removeEnrollmentsImpl(ISessionCallback* cb, const std::vector<int32_t>& enrollmentIds);
     void getAuthenticatorIdImpl(ISessionCallback* cb);
@@ -63,13 +70,29 @@ class FakeFingerprintEngine {
 
     std::vector<std::vector<int32_t>> parseEnrollmentCapture(const std::string& str);
 
+    int32_t getLatency(const std::vector<std::optional<std::int32_t>>& latencyVec);
+
     std::mt19937 mRandom;
+
+    virtual std::string toString() const {
+        std::ostringstream os;
+        os << "----- FakeFingerprintEngine:: -----" << std::endl;
+        os << "acquiredVendorInfoBase:" << FINGERPRINT_ACQUIRED_VENDOR_BASE;
+        os << ", errorVendorBase:" << FINGERPRINT_ERROR_VENDOR_BASE << std::endl;
+        os << mLockoutTracker.toString();
+        return os.str();
+    }
 
   private:
     static constexpr int32_t FINGERPRINT_ACQUIRED_VENDOR_BASE = 1000;
     static constexpr int32_t FINGERPRINT_ERROR_VENDOR_BASE = 1000;
     std::pair<AcquiredInfo, int32_t> convertAcquiredInfo(int32_t code);
     std::pair<Error, int32_t> convertError(int32_t code);
+    bool parseEnrollmentCaptureSingle(const std::string& str,
+                                      std::vector<std::vector<int32_t>>& res);
+    int32_t getRandomInRange(int32_t bound1, int32_t bound2);
+
+    FakeLockoutTracker mLockoutTracker;
 };
 
 }  // namespace aidl::android::hardware::biometrics::fingerprint

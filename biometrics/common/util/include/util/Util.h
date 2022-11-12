@@ -40,7 +40,7 @@ namespace aidl::android::hardware::biometrics {
 // by parts of the UI or fail if there is no latency. For example, the
 // Face settings page constantly runs auth and the enrollment UI uses a
 // cancel/restart cycle that requires some latency while the activities change.
-#define DEFAULT_LATENCY 800
+#define DEFAULT_LATENCY 400
 
 class Util {
   public:

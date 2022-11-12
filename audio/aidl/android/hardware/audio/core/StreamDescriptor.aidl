@@ -19,6 +19,7 @@ package android.hardware.audio.core;
 import android.hardware.audio.core.MmapBufferDescriptor;
 import android.hardware.common.fmq.MQDescriptor;
 import android.hardware.common.fmq.SynchronizedReadWrite;
+import android.media.audio.common.Void;
 
 /**
  * Stream descriptor contains fast message queues and buffers used for sending
@@ -177,76 +178,41 @@ parcelable StreamDescriptor {
         ERROR = 100,
     }
 
-    @VintfStability
-    @Backing(type="int")
-    enum CommandCode {
-        /**
-         * See the state machines on the applicability of this command to
-         * different states. The 'fmqByteCount' field must always be set to 0.
-         */
-        START = 1,
-        /**
-         * The BURST command used for audio I/O, see 'AudioBuffer'. Differences
-         * for the MMap No IRQ mode:
-         *
-         *  - this command only provides updated positions and latency because
-         *    actual audio I/O is done via the 'AudioBuffer.mmap' shared buffer.
-         *    The client does not synchronize reads and writes into the buffer
-         *    with sending of this command.
-         *
-         *  - the 'fmqByteCount' must always be set to 0.
-         */
-        BURST = 2,
-        /**
-         * See the state machines on the applicability of this command to
-         * different states. The 'fmqByteCount' field must always be set to 0.
-         */
-        DRAIN = 3,
-        /**
-         * See the state machines on the applicability of this command to
-         * different states. The 'fmqByteCount' field must always be set to 0.
-         *
-         * Note that it's left on the discretion of the HAL implementation to
-         * assess all the necessary conditions that could prevent hardware from
-         * being suspended. Even if it can not be suspended, the state machine
-         * must still enter the 'STANDBY' state for consistency. Since the
-         * buffer must remain empty in this state, even if capturing hardware is
-         * still active, captured data must be discarded.
-         */
-        STANDBY = 4,
-        /**
-         * See the state machines on the applicability of this command to
-         * different states. The 'fmqByteCount' field must always be set to 0.
-         */
-        PAUSE = 5,
-        /**
-         * See the state machines on the applicability of this command to
-         * different states. The 'fmqByteCount' field must always be set to 0.
-         */
-        FLUSH = 6,
-    }
-
     /**
      * Used for sending commands to the HAL module. The client writes into
      * the queue, the HAL module reads. The queue can only contain a single
      * command.
+     *
+     * Variants of type 'Void' correspond to commands without
+     * arguments. Variants of other types correspond to commands with an
+     * argument. Would in future a need for a command with multiple argument
+     * arise, a Parcelable type should be used for the corresponding variant.
      */
     @VintfStability
     @FixedSize
-    parcelable Command {
+    union Command {
         /**
-         * The code of the command.
+         * Reserved for the HAL implementation to allow unblocking the wait on a
+         * command and exiting the I/O thread. A command of this variant must
+         * never be sent from the client side. To prevent that, the
+         * implementation must pass a random cookie as the command argument,
+         * which is only known to the implementation.
          */
-        CommandCode code = CommandCode.START;
+        int hal_reserved_exit;
         /**
-         * This field is only used for the BURST command. For all other commands
-         * it must be set to 0. The following description applies to the use
-         * of this field for the BURST command.
+         * See the state machines on the applicability of this command to
+         * different states.
+         */
+        Void start;
+        /**
+         * The 'burst' command used for audio I/O, see 'AudioBuffer'. The value
+         * specifies:
          *
-         * For output streams: the amount of bytes that the client requests the
-         *   HAL module to use out of the data contained in the 'audio.fmq' queue.
-         * For input streams: the amount of bytes requested by the client to
-         *   read from the hardware into the 'audio.fmq' queue.
+         *  - for output streams: the amount of bytes that the client requests the
+         *    HAL module to use out of the data contained in the 'audio.fmq' queue.
+         *
+         *  - for input streams: the amount of bytes requested by the client to
+         *    read from the hardware into the 'audio.fmq' queue.
          *
          * In both cases it is allowed for this field to contain any
          * non-negative number. The value 0 can be used if the client only needs
@@ -258,8 +224,44 @@ parcelable StreamDescriptor {
          * return the amount of actually read or written data via the
          * 'Reply.fmqByteCount' field. Thus, only attempts to pass a negative
          * number must be constituted as a client's error.
+         *
+         * Differences for the MMap No IRQ mode:
+         *
+         *  - this command only provides updated positions and latency because
+         *    actual audio I/O is done via the 'AudioBuffer.mmap' shared buffer.
+         *    The client does not synchronize reads and writes into the buffer
+         *    with sending of this command.
+         *
+         *  - the value must always be set to 0.
          */
-        int fmqByteCount;
+        int burst;
+        /**
+         * See the state machines on the applicability of this command to
+         * different states.
+         */
+        Void drain;
+        /**
+         * See the state machines on the applicability of this command to
+         * different states.
+         *
+         * Note that it's left on the discretion of the HAL implementation to
+         * assess all the necessary conditions that could prevent hardware from
+         * being suspended. Even if it can not be suspended, the state machine
+         * must still enter the 'STANDBY' state for consistency. Since the
+         * buffer must remain empty in this state, even if capturing hardware is
+         * still active, captured data must be discarded.
+         */
+        Void standby;
+        /**
+         * See the state machines on the applicability of this command to
+         * different states.
+         */
+        Void pause;
+        /**
+         * See the state machines on the applicability of this command to
+         * different states.
+         */
+        Void flush;
     }
     MQDescriptor<Command, SynchronizedReadWrite> command;
 
@@ -293,15 +295,15 @@ parcelable StreamDescriptor {
          */
         int status;
         /**
-         * Used with the BURST command only.
+         * Used with the 'burst' command only.
          *
          * For output streams: the amount of bytes of data actually consumed
          *   by the HAL module.
          * For input streams: the amount of bytes actually provided by the HAL
          *   in the 'audio.fmq' queue.
          *
-         * The returned value must not exceed the value passed in the
-         * 'fmqByteCount' field of the corresponding command or be negative.
+         * The returned value must not exceed the value passed as the
+         * argument of the corresponding command, or be negative.
          */
         int fmqByteCount;
         /**

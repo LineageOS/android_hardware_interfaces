@@ -20,6 +20,9 @@
 
 #include "util/CancellationSignal.h"
 
+#undef LOG_TAG
+#define LOG_TAG "FingerprintVirtualHalSession"
+
 namespace aidl::android::hardware::biometrics::fingerprint {
 
 Session::Session(int sensorId, int userId, std::shared_ptr<ISessionCallback> cb,
