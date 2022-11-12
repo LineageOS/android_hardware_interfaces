@@ -150,6 +150,7 @@ public final class AccessForVehicleProperty {
         Map.entry(VehicleProperty.WINDOW_MOVE, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.WINDOW_LOCK, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.STEERING_WHEEL_DEPTH_POS, VehiclePropertyAccess.READ_WRITE),
+        Map.entry(VehicleProperty.STEERING_WHEEL_DEPTH_MOVE, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.VEHICLE_MAP_SERVICE, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.OBD2_LIVE_FRAME, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.OBD2_FREEZE_FRAME, VehiclePropertyAccess.READ),

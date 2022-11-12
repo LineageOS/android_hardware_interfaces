@@ -158,6 +158,7 @@ std::unordered_map<VehicleProperty, VehiclePropertyChangeMode> ChangeModeForVehi
         {VehicleProperty::WINDOW_MOVE, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::WINDOW_LOCK, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::STEERING_WHEEL_DEPTH_POS, VehiclePropertyChangeMode::ON_CHANGE},
+        {VehicleProperty::STEERING_WHEEL_DEPTH_MOVE, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::VEHICLE_MAP_SERVICE, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::OBD2_LIVE_FRAME, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::OBD2_FREEZE_FRAME, VehiclePropertyChangeMode::ON_CHANGE},
