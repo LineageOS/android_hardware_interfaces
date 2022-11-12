@@ -1784,6 +1784,27 @@ enum VehicleProperty {
     SEAT_LUMBAR_VERTICAL_POS =
             0x0BA1 + VehiclePropertyGroup.SYSTEM + VehicleArea.SEAT + VehiclePropertyType.INT32,
     /**
+     * Represents property for vertical movement direction and speed of seat lumbar support.
+     *
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined. All integers
+     * between minInt32Value and maxInt32Value must be supported.
+     *
+     * maxInt32Value in default area's VehicleAreaConfig indicates the lumbar support is moving at
+     * the fastest upward speed.
+     * minInt32Value in default area's VehicleAreaConfig indicates the lumbar support is moving at
+     * the fastest downward speed.
+     *
+     * Larger absolute values, either positive or negative, indicate a faster movement speed. Once
+     * the seat cushion side support reaches the positional limit, the value resets to 0.
+     *
+     * This value is not in any particular unit but in a specified range of steps.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     */
+    SEAT_LUMBAR_VERTICAL_MOVE =
+            0x0BA2 + VehiclePropertyGroup.SYSTEM + VehicleArea.SEAT + VehiclePropertyType.INT32,
+    /**
      * Seat Occupancy
      *
      * Indicates whether a particular seat is occupied or not, to the best of the car's ability
