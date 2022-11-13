@@ -15,11 +15,13 @@
  */
 
 #include "Fingerprint.h"
-
-#include <fingerprint.sysprop.h>
 #include "Session.h"
 
+#include <fingerprint.sysprop.h>
+
+#include <android-base/file.h>
 #include <android-base/logging.h>
+#include <android-base/stringprintf.h>
 
 using namespace ::android::fingerprint::virt;
 
@@ -64,7 +66,6 @@ ndk::ScopedAStatus Fingerprint::getSensorProps(std::vector<SensorProps>* out) {
             {HW_COMPONENT_ID, HW_VERSION, FW_VERSION, SERIAL_NUMBER, "" /* softwareVersion */},
             {SW_COMPONENT_ID, "" /* hardwareVersion */, "" /* firmwareVersion */,
              "" /* serialNumber */, SW_VERSION}};
-
     auto sensorId = FingerprintHalProperties::sensor_id().value_or(SENSOR_ID);
     auto sensorStrength =
             FingerprintHalProperties::sensor_strength().value_or((int)SENSOR_STRENGTH);
@@ -80,7 +81,8 @@ ndk::ScopedAStatus Fingerprint::getSensorProps(std::vector<SensorProps>* out) {
 
     SensorLocation sensorLocation = mEngine->getSensorLocation();
 
-    LOG(INFO) << "sensor type:" << (int)mSensorType << " location:" << sensorLocation.toString();
+    LOG(INFO) << "sensor type:" << ::android::internal::ToString(mSensorType)
+              << " location:" << sensorLocation.toString();
 
     *out = {{commonProps,
              mSensorType,
@@ -102,6 +104,98 @@ ndk::ScopedAStatus Fingerprint::createSession(int32_t sensorId, int32_t userId,
 
     LOG(INFO) << "createSession: sensorId:" << sensorId << " userId:" << userId;
     return ndk::ScopedAStatus::ok();
+}
+
+binder_status_t Fingerprint::dump(int fd, const char** /*args*/, uint32_t numArgs) {
+    if (fd < 0) {
+        LOG(ERROR) << "Fingerprint::dump fd invalid: " << fd;
+        return STATUS_BAD_VALUE;
+    } else {
+        LOG(INFO) << "Fingerprint::dump fd:" << fd << "numArgs:" << numArgs;
+    }
+
+    dprintf(fd, "----- FingerprintVirtualHal::dump -----\n");
+    std::vector<SensorProps> sps(1);
+    getSensorProps(&sps);
+    for (auto& sp : sps) {
+        ::android::base::WriteStringToFd(sp.toString(), fd);
+    }
+    ::android::base::WriteStringToFd(mEngine->toString(), fd);
+
+    fsync(fd);
+    return STATUS_OK;
+}
+
+binder_status_t Fingerprint::handleShellCommand(int in, int out, int err, const char** args,
+                                                uint32_t numArgs) {
+    LOG(INFO) << "Fingerprint::handleShellCommand in:" << in << " out:" << out << " err:" << err
+              << " numArgs:" << numArgs;
+
+    if (numArgs == 0) {
+        LOG(INFO) << "Fingerprint::handleShellCommand: available commands";
+        onHelp(out);
+        return STATUS_OK;
+    }
+
+    for (auto&& str : std::vector<std::string_view>(args, args + numArgs)) {
+        std::string option = str.data();
+        if (option.find("clearconfig") != std::string::npos ||
+            option.find("resetconfig") != std::string::npos) {
+            resetConfigToDefault();
+        }
+        if (option.find("help") != std::string::npos) {
+            onHelp(out);
+        }
+    }
+
+    return STATUS_OK;
+}
+
+void Fingerprint::onHelp(int fd) {
+    dprintf(fd, "Virtual HAL commands:\n");
+    dprintf(fd, "         help: print this help\n");
+    dprintf(fd, "  resetconfig: reset all configuration to default\n");
+    dprintf(fd, "\n");
+    fsync(fd);
+}
+
+void Fingerprint::resetConfigToDefault() {
+    LOG(INFO) << "reset virtual HAL configuration to default";
+#define RESET_CONFIG_O(__NAME__) \
+    if (FingerprintHalProperties::__NAME__()) FingerprintHalProperties::__NAME__(std::nullopt)
+#define RESET_CONFIG_V(__NAME__)                       \
+    if (!FingerprintHalProperties::__NAME__().empty()) \
+    FingerprintHalProperties::__NAME__({std::nullopt})
+
+    RESET_CONFIG_O(type);
+    RESET_CONFIG_V(enrollments);
+    RESET_CONFIG_O(enrollment_hit);
+    RESET_CONFIG_O(authenticator_id);
+    RESET_CONFIG_O(challenge);
+    RESET_CONFIG_O(lockout);
+    RESET_CONFIG_O(operation_authenticate_fails);
+    RESET_CONFIG_O(operation_detect_interaction_error);
+    RESET_CONFIG_O(operation_enroll_error);
+    RESET_CONFIG_V(operation_authenticate_latency);
+    RESET_CONFIG_V(operation_detect_interaction_latency);
+    RESET_CONFIG_V(operation_enroll_latency);
+    RESET_CONFIG_O(operation_authenticate_duration);
+    RESET_CONFIG_O(operation_authenticate_error);
+    RESET_CONFIG_O(sensor_location);
+    RESET_CONFIG_O(operation_authenticate_acquired);
+    RESET_CONFIG_O(operation_detect_interaction_duration);
+    RESET_CONFIG_O(operation_detect_interaction_acquired);
+    RESET_CONFIG_O(sensor_id);
+    RESET_CONFIG_O(sensor_strength);
+    RESET_CONFIG_O(max_enrollments);
+    RESET_CONFIG_O(navigation_guesture);
+    RESET_CONFIG_O(detect_interaction);
+    RESET_CONFIG_O(display_touch);
+    RESET_CONFIG_O(control_illumination);
+    RESET_CONFIG_O(lockout_enable);
+    RESET_CONFIG_O(lockout_timed_threshold);
+    RESET_CONFIG_O(lockout_timed_duration);
+    RESET_CONFIG_O(lockout_permanent_threshold);
 }
 
 }  // namespace aidl::android::hardware::biometrics::fingerprint

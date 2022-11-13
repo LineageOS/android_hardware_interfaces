@@ -16,8 +16,6 @@
 
 #pragma once
 
-#define LOG_TAG "FingerprintVirtualHal"
-
 #include <aidl/android/hardware/biometrics/fingerprint/BnFingerprint.h>
 
 #include "FakeFingerprintEngine.h"
@@ -39,8 +37,13 @@ class Fingerprint : public BnFingerprint {
     ndk::ScopedAStatus createSession(int32_t sensorId, int32_t userId,
                                      const std::shared_ptr<ISessionCallback>& cb,
                                      std::shared_ptr<ISession>* out) override;
+    binder_status_t dump(int fd, const char** args, uint32_t numArgs);
+    binder_status_t handleShellCommand(int in, int out, int err, const char** argv, uint32_t argc);
 
   private:
+    void resetConfigToDefault();
+    void onHelp(int);
+
     std::unique_ptr<FakeFingerprintEngine> mEngine;
     WorkerThread mWorker;
     std::shared_ptr<Session> mSession;

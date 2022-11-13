@@ -23,16 +23,16 @@ digraph stream_in_state_machine {
     node [style=dashed] ANY_STATE;
     node [fillcolor=lightblue style=filled];
     I -> STANDBY;
-    STANDBY -> IDLE [label="START"];    // producer -> active
-    IDLE -> STANDBY [label="STANDBY"];  // producer -> passive, buffer is cleared
-    IDLE -> ACTIVE [label="BURST"];     // consumer -> active
-    ACTIVE -> ACTIVE [label="BURST"];
-    ACTIVE -> PAUSED [label="PAUSE"];   // consumer -> passive
-    ACTIVE -> DRAINING [label="DRAIN"]; // producer -> passive
-    PAUSED -> ACTIVE [label="BURST"];   // consumer -> active
-    PAUSED -> STANDBY [label="FLUSH"];  // producer -> passive, buffer is cleared
-    DRAINING -> DRAINING [label="BURST"];
-    DRAINING -> ACTIVE [label="START"];  // producer -> active
+    STANDBY -> IDLE [label="start"];    // producer -> active
+    IDLE -> STANDBY [label="standby"];  // producer -> passive, buffer is cleared
+    IDLE -> ACTIVE [label="burst"];     // consumer -> active
+    ACTIVE -> ACTIVE [label="burst"];
+    ACTIVE -> PAUSED [label="pause"];   // consumer -> passive
+    ACTIVE -> DRAINING [label="drain"]; // producer -> passive
+    PAUSED -> ACTIVE [label="burst"];   // consumer -> active
+    PAUSED -> STANDBY [label="flush"];  // producer -> passive, buffer is cleared
+    DRAINING -> DRAINING [label="burst"];
+    DRAINING -> ACTIVE [label="start"];  // producer -> active
     DRAINING -> STANDBY [label="<empty buffer>"];  // consumer deactivates
     IDLE -> ERROR [label="<hardware failure>"];
     ACTIVE -> ERROR [label="<hardware failure>"];

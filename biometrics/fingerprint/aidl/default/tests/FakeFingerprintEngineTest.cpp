@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@
 #include <aidl/android/hardware/biometrics/fingerprint/BnSessionCallback.h>
 
 #include "FakeFingerprintEngine.h"
+#include "util/Util.h"
 
 using namespace ::android::fingerprint::virt;
 using namespace ::aidl::android::hardware::biometrics::fingerprint;
@@ -118,9 +119,9 @@ class TestSessionCallback : public BnSessionCallback {
 class FakeFingerprintEngineTest : public ::testing::Test {
   protected:
     void SetUp() override {
-        FingerprintHalProperties::operation_enroll_latency(0);
-        FingerprintHalProperties::operation_authenticate_latency(0);
-        FingerprintHalProperties::operation_detect_interaction_latency(0);
+        FingerprintHalProperties::operation_enroll_latency({0});
+        FingerprintHalProperties::operation_authenticate_latency({0});
+        FingerprintHalProperties::operation_detect_interaction_latency({0});
         mCallback = ndk::SharedRefBase::make<TestSessionCallback>();
     }
 
@@ -128,6 +129,9 @@ class FakeFingerprintEngineTest : public ::testing::Test {
         FingerprintHalProperties::operation_authenticate_error(0);
         FingerprintHalProperties::operation_detect_interaction_error(0);
         FingerprintHalProperties::operation_authenticate_acquired("");
+        FingerprintHalProperties::operation_enroll_latency({});
+        FingerprintHalProperties::operation_authenticate_latency({});
+        FingerprintHalProperties::operation_detect_interaction_latency({});
     }
 
     FakeFingerprintEngine mEngine;
@@ -291,6 +295,7 @@ TEST_F(FakeFingerprintEngineTest, AuthenticateAcquired) {
 }
 
 TEST_F(FakeFingerprintEngineTest, InteractionDetect) {
+    FingerprintHalProperties::detect_interaction(true);
     FingerprintHalProperties::enrollments({1, 2});
     FingerprintHalProperties::enrollment_hit(2);
     FingerprintHalProperties::operation_detect_interaction_acquired("");
@@ -300,6 +305,7 @@ TEST_F(FakeFingerprintEngineTest, InteractionDetect) {
 }
 
 TEST_F(FakeFingerprintEngineTest, InteractionDetectCancel) {
+    FingerprintHalProperties::detect_interaction(true);
     FingerprintHalProperties::enrollments({1, 2});
     FingerprintHalProperties::enrollment_hit(2);
     mCancel.set_value();
@@ -309,6 +315,7 @@ TEST_F(FakeFingerprintEngineTest, InteractionDetectCancel) {
 }
 
 TEST_F(FakeFingerprintEngineTest, InteractionDetectNotSet) {
+    FingerprintHalProperties::detect_interaction(true);
     FingerprintHalProperties::enrollments({1, 2});
     FingerprintHalProperties::enrollment_hit({});
     mEngine.detectInteractionImpl(mCallback.get(), mCancel.get_future());
@@ -323,6 +330,7 @@ TEST_F(FakeFingerprintEngineTest, InteractionDetectNotEnrolled) {
 }
 
 TEST_F(FakeFingerprintEngineTest, InteractionDetectError) {
+    FingerprintHalProperties::detect_interaction(true);
     FingerprintHalProperties::operation_detect_interaction_error(8);
     mEngine.detectInteractionImpl(mCallback.get(), mCancel.get_future());
     ASSERT_EQ(0, mCallback->mInteractionDetectedCount);
@@ -331,6 +339,7 @@ TEST_F(FakeFingerprintEngineTest, InteractionDetectError) {
 }
 
 TEST_F(FakeFingerprintEngineTest, InteractionDetectAcquired) {
+    FingerprintHalProperties::detect_interaction(true);
     FingerprintHalProperties::enrollments({1, 2});
     FingerprintHalProperties::enrollment_hit(2);
     FingerprintHalProperties::operation_detect_interaction_acquired("4,1013");
@@ -435,10 +444,27 @@ TEST_F(FakeFingerprintEngineTest, parseEnrollmentCaptureFail) {
     std::vector<std::string> badStr{"10c",         "100-5",   "100-[5,6,7", "100-5,6,7]",
                                     "100,2x0,300", "200-[f]", "a,b"};
     std::vector<std::vector<int32_t>> ecV;
-    for (const auto s : badStr) {
+    for (const auto& s : badStr) {
         ecV = mEngine.parseEnrollmentCapture(s);
         ASSERT_EQ(ecV.size(), 0);
     }
+}
+
+TEST_F(FakeFingerprintEngineTest, randomLatency) {
+    FingerprintHalProperties::operation_detect_interaction_latency({});
+    ASSERT_EQ(DEFAULT_LATENCY,
+              mEngine.getLatency(FingerprintHalProperties::operation_detect_interaction_latency()));
+    FingerprintHalProperties::operation_detect_interaction_latency({10});
+    ASSERT_EQ(10,
+              mEngine.getLatency(FingerprintHalProperties::operation_detect_interaction_latency()));
+    FingerprintHalProperties::operation_detect_interaction_latency({1, 1000});
+    std::set<int32_t> latencySet;
+    for (int i = 0; i < 100; i++) {
+        latencySet.insert(mEngine.getLatency(
+                FingerprintHalProperties::operation_detect_interaction_latency()));
+    }
+    ASSERT_TRUE(latencySet.size() > 95);
+    FingerprintHalProperties::operation_detect_interaction_latency({});
 }
 
 }  // namespace aidl::android::hardware::biometrics::fingerprint

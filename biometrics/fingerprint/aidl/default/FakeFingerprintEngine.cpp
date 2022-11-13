@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 
 #include "FakeFingerprintEngine.h"
+#include <regex>
 #include "Fingerprint.h"
 
 #include <android-base/logging.h>
@@ -47,7 +48,7 @@ void FakeFingerprintEngine::revokeChallengeImpl(ISessionCallback* cb, int64_t ch
 void FakeFingerprintEngine::enrollImpl(ISessionCallback* cb,
                                        const keymaster::HardwareAuthToken& hat,
                                        const std::future<void>& cancel) {
-    BEGIN_OP(FingerprintHalProperties::operation_enroll_latency().value_or(DEFAULT_LATENCY));
+    BEGIN_OP(getLatency(FingerprintHalProperties::operation_enroll_latency()));
 
     // Do proper HAT verification in the real implementation.
     if (hat.mac.empty()) {
@@ -117,7 +118,7 @@ void FakeFingerprintEngine::enrollImpl(ISessionCallback* cb,
 
 void FakeFingerprintEngine::authenticateImpl(ISessionCallback* cb, int64_t /* operationId */,
                                              const std::future<void>& cancel) {
-    BEGIN_OP(FingerprintHalProperties::operation_authenticate_latency().value_or(DEFAULT_LATENCY));
+    BEGIN_OP(getLatency(FingerprintHalProperties::operation_authenticate_latency()));
 
     int64_t now = Util::getSystemNanoTime();
     int64_t duration = FingerprintHalProperties::operation_authenticate_duration().value_or(10);
@@ -131,10 +132,23 @@ void FakeFingerprintEngine::authenticateImpl(ISessionCallback* cb, int64_t /* op
         return;
     }
 
+    // got lockout?
+    FakeLockoutTracker::LockoutMode lockoutMode = mLockoutTracker.getMode();
+    if (lockoutMode == FakeLockoutTracker::LockoutMode::kPermanent) {
+        LOG(ERROR) << "Fail: lockout permanent";
+        cb->onLockoutPermanent();
+        return;
+    } else if (lockoutMode == FakeLockoutTracker::LockoutMode::kTimed) {
+        int64_t timeLeft = mLockoutTracker.getLockoutTimeLeft();
+        LOG(ERROR) << "Fail: lockout timed " << timeLeft;
+        cb->onLockoutTimed(timeLeft);
+    }
+
     int i = 0;
     do {
         if (FingerprintHalProperties::operation_authenticate_fails().value_or(false)) {
             LOG(ERROR) << "Fail: operation_authenticate_fails";
+            mLockoutTracker.addFailedAttempt();
             cb->onAuthenticationFailed();
             return;
         }
@@ -174,20 +188,30 @@ void FakeFingerprintEngine::authenticateImpl(ISessionCallback* cb, int64_t /* op
     auto isEnrolled = std::find(enrolls.begin(), enrolls.end(), id) != enrolls.end();
     if (id > 0 && isEnrolled) {
         cb->onAuthenticationSucceeded(id, {} /* hat */);
+        mLockoutTracker.reset();
         return;
     } else {
         LOG(ERROR) << "Fail: fingerprint not enrolled";
         cb->onAuthenticationFailed();
+        mLockoutTracker.addFailedAttempt();
     }
 }
 
 void FakeFingerprintEngine::detectInteractionImpl(ISessionCallback* cb,
                                                   const std::future<void>& cancel) {
-    BEGIN_OP(FingerprintHalProperties::operation_detect_interaction_latency().value_or(
-            DEFAULT_LATENCY));
+    BEGIN_OP(getLatency(FingerprintHalProperties::operation_detect_interaction_latency()));
 
     int64_t duration =
             FingerprintHalProperties::operation_detect_interaction_duration().value_or(10);
+
+    auto detectInteractionSupported =
+            FingerprintHalProperties::detect_interaction().value_or(false);
+    if (!detectInteractionSupported) {
+        LOG(ERROR) << "Detect interaction is not supported";
+        cb->onError(Error::UNABLE_TO_PROCESS, 0 /* vendorError */);
+        return;
+    }
+
     auto acquired = FingerprintHalProperties::operation_detect_interaction_acquired().value_or("1");
     auto acquiredInfos = parseIntSequence(acquired);
     int N = acquiredInfos.size();
@@ -308,6 +332,7 @@ void FakeFingerprintEngine::resetLockoutImpl(ISessionCallback* cb,
     }
     FingerprintHalProperties::lockout(false);
     cb->onLockoutCleared();
+    mLockoutTracker.reset();
 }
 
 ndk::ScopedAStatus FakeFingerprintEngine::onPointerDownImpl(int32_t /*pointerId*/, int32_t /*x*/,
@@ -383,49 +408,52 @@ std::vector<int32_t> FakeFingerprintEngine::parseIntSequence(const std::string& 
     return res;
 }
 
-std::vector<std::vector<int32_t>> FakeFingerprintEngine::parseEnrollmentCapture(
-        const std::string& str) {
+bool FakeFingerprintEngine::parseEnrollmentCaptureSingle(const std::string& str,
+                                                         std::vector<std::vector<int32_t>>& res) {
     std::vector<int32_t> defaultAcquiredInfo = {(int32_t)AcquiredInfo::GOOD};
-    std::vector<std::vector<int32_t>> res;
-    int i = 0, N = str.length();
-    std::size_t found = 0;
     bool aborted = true;
 
-    while (found != std::string::npos) {
-        std::string durationStr, acquiredStr;
-        found = str.find_first_of("-,", i);
-        if (found == std::string::npos) {
-            if (N - i < 1) break;
-            durationStr = str.substr(i, N - i);
-        } else {
-            durationStr = str.substr(i, found - i);
-            if (str[found] == '-') {
-                found = str.find_first_of('[', found + 1);
-                if (found == std::string::npos) break;
-                i = found + 1;
-                found = str.find_first_of(']', found + 1);
-                if (found == std::string::npos) break;
-                acquiredStr = str.substr(i, found - i);
-                found = str.find_first_of(',', found + 1);
-            }
-        }
-        std::vector<int32_t> duration{0};
-        if (!ParseInt(durationStr, &duration[0])) break;
-        res.push_back(duration);
-        if (!acquiredStr.empty()) {
-            std::vector<int32_t> acquiredInfo = parseIntSequence(acquiredStr);
-            if (acquiredInfo.empty()) break;
-            res.push_back(acquiredInfo);
+    do {
+        std::smatch sms;
+        // Parses strings like "1000-[5,1]" or "500"
+        std::regex ex("((\\d+)(-\\[([\\d|,]+)\\])?)");
+        if (!regex_match(str.cbegin(), str.cend(), sms, ex)) break;
+        int32_t duration;
+        if (!ParseInt(sms.str(2), &duration)) break;
+        res.push_back({duration});
+        if (!sms.str(4).empty()) {
+            auto acqv = parseIntSequence(sms.str(4));
+            if (acqv.empty()) break;
+            res.push_back(acqv);
         } else
             res.push_back(defaultAcquiredInfo);
+        aborted = false;
+    } while (0);
 
-        i = found + 1;
-        if (found == std::string::npos || found == N - 1) aborted = false;
+    return !aborted;
+}
+
+std::vector<std::vector<int32_t>> FakeFingerprintEngine::parseEnrollmentCapture(
+        const std::string& str) {
+    std::vector<std::vector<int32_t>> res;
+
+    std::string s(str);
+    s.erase(std::remove_if(s.begin(), s.end(), ::isspace), s.end());
+    bool aborted = false;
+    std::smatch sms;
+    // Parses strings like "1000-[5,1],500,800-[6,5,1]"
+    //                      ---------- --- -----------
+    //  into parts:             A       B       C
+    while (regex_search(s, sms, std::regex("^(,)?(\\d+(-\\[[\\d|,]+\\])?)"))) {
+        if (!parseEnrollmentCaptureSingle(sms.str(2), res)) {
+            aborted = true;
+            break;
+        }
+        s = sms.suffix();
     }
-
-    if (aborted) {
-        LOG(ERROR) << "Failed to parse enrollment captures:" + str;
+    if (aborted || s.length() != 0) {
         res.clear();
+        LOG(ERROR) << "Failed to parse enrollment captures:" + str;
     }
 
     return res;
@@ -453,6 +481,36 @@ std::pair<Error, int32_t> FakeFingerprintEngine::convertError(int32_t code) {
         res.second = 0;
     }
     return res;
+}
+
+int32_t FakeFingerprintEngine::getLatency(
+        const std::vector<std::optional<std::int32_t>>& latencyIn) {
+    int32_t res = DEFAULT_LATENCY;
+
+    std::vector<int32_t> latency;
+    for (auto x : latencyIn)
+        if (x.has_value()) latency.push_back(*x);
+
+    switch (latency.size()) {
+        case 0:
+            break;
+        case 1:
+            res = latency[0];
+            break;
+        case 2:
+            res = getRandomInRange(latency[0], latency[1]);
+            break;
+        default:
+            LOG(ERROR) << "ERROR: unexpected input of size " << latency.size();
+            break;
+    }
+
+    return res;
+}
+
+int32_t FakeFingerprintEngine::getRandomInRange(int32_t bound1, int32_t bound2) {
+    std::uniform_int_distribution<int32_t> dist(std::min(bound1, bound2), std::max(bound1, bound2));
+    return dist(mRandom);
 }
 
 }  // namespace aidl::android::hardware::biometrics::fingerprint
