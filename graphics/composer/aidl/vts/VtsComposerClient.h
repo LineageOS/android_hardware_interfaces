@@ -35,6 +35,7 @@
 #include <string>
 #include <thread>
 #include <unordered_map>
+#include <unordered_set>
 #include "GraphicsComposerCallback.h"
 
 using aidl::android::hardware::graphics::common::Dataspace;

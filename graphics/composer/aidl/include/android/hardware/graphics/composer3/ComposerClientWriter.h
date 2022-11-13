@@ -19,8 +19,6 @@
 #include <algorithm>
 #include <limits>
 #include <memory>
-#include <unordered_map>
-#include <unordered_set>
 #include <vector>
 
 #include <inttypes.h>
@@ -63,9 +61,14 @@ class ComposerClientWriter final {
   public:
     static constexpr std::optional<ClockMonotonicTimestamp> kNoTimestamp = std::nullopt;
 
-    ComposerClientWriter() { reset(); }
+    explicit ComposerClientWriter(int64_t display) : mDisplay(display) { reset(); }
 
     ~ComposerClientWriter() { reset(); }
+
+    ComposerClientWriter(ComposerClientWriter&&) = default;
+
+    ComposerClientWriter(const ComposerClientWriter&) = delete;
+    ComposerClientWriter& operator=(const ComposerClientWriter&) = delete;
 
     void reset() {
         mDisplayCommand.reset();
@@ -229,6 +232,7 @@ class ComposerClientWriter final {
     std::optional<DisplayCommand> mDisplayCommand;
     std::optional<LayerCommand> mLayerCommand;
     std::vector<DisplayCommand> mCommands;
+    const int64_t mDisplay;
 
     Buffer getBuffer(uint32_t slot, const native_handle_t* bufferHandle, int fence) {
         Buffer bufferCommand;
@@ -254,6 +258,7 @@ class ComposerClientWriter final {
 
     DisplayCommand& getDisplayCommand(int64_t display) {
         if (!mDisplayCommand.has_value() || mDisplayCommand->display != display) {
+            LOG_ALWAYS_FATAL_IF(display != mDisplay);
             flushLayerCommand();
             flushDisplayCommand();
             mDisplayCommand.emplace();

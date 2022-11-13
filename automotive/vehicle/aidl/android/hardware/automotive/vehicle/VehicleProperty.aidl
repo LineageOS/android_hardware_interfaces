@@ -1762,6 +1762,44 @@ enum VehicleProperty {
     WINDOW_LOCK = 0x0BC4 + 0x10000000 + 0x03000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:WINDOW,VehiclePropertyType:BOOLEAN
     /**
+     * Steering wheel depth position
+     *
+     * All steering wheel properties' unique ids start from 0x0BE0.
+     *
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined. All values between
+     * minInt32Value and maxInt32Value must be supported.
+     *
+     * The maxInt32Value in default area's VehicleAreaConfig indicates the steering wheel position
+     * closest to the driver. The minInt32Value in default area's VehicleAreaConfig indicates the
+     * steering wheel position furthest to the driver.
+     *
+     * This value is not in any particular unit but in a specified range of steps.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     */
+    STEERING_WHEEL_DEPTH_POS =
+            0x0BE0 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
+    /**
+     * Steering wheel depth movement
+     *
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined. All values between
+     * minInt32Value and maxInt32Value must be supported.
+     *
+     * The maxInt32Value in default area's VehicleAreaConfig indicates the steering wheel moving
+     * towards the driver. The minInt32Value in default area's VehicleAreaConfig indicates the
+     * steering wheel moving away from the driver. Larger integers, either positive or negative,
+     * indicate a faster movement speed. Once the steering wheel reaches the positional limit, the
+     * value resets to 0.
+     *
+     * This value is not in any particular unit but in a specified range of steps.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     */
+    STEERING_WHEEL_DEPTH_MOVE =
+            0x0BE1 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
+    /**
      * Vehicle Maps Service (VMS) message
      *
      * This property uses MIXED data to communicate vms messages.
