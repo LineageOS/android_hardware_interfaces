@@ -1027,6 +1027,15 @@ TEST_P(NewKeyGenerationTest, Rsa) {
  * without providing NOT_BEFORE and NOT_AFTER parameters.
  */
 TEST_P(NewKeyGenerationTest, RsaWithMissingValidity) {
+    if (AidlVersion() < 2) {
+        /*
+         * The KeyMint V1 spec required that CERTIFICATE_NOT_{BEFORE,AFTER} be
+         * specified for asymmetric key generation. However, this was not
+         * checked at the time so we can only be strict about checking this for
+         * implementations of KeyMint version 2 and above.
+         */
+        GTEST_SKIP() << "Validity strict since KeyMint v2";
+    }
     // Per RFC 5280 4.1.2.5, an undefined expiration (not-after) field should be set to
     // GeneralizedTime 999912312359559, which is 253402300799000 ms from Jan 1, 1970.
     constexpr uint64_t kUndefinedExpirationDateTime = 253402300799000;
@@ -1680,6 +1689,15 @@ TEST_P(NewKeyGenerationTest, EcdsaCurve25519MultiPurposeFail) {
  * without providing NOT_BEFORE and NOT_AFTER parameters.
  */
 TEST_P(NewKeyGenerationTest, EcdsaWithMissingValidity) {
+    if (AidlVersion() < 2) {
+        /*
+         * The KeyMint V1 spec required that CERTIFICATE_NOT_{BEFORE,AFTER} be
+         * specified for asymmetric key generation. However, this was not
+         * checked at the time so we can only be strict about checking this for
+         * implementations of KeyMint version 2 and above.
+         */
+        GTEST_SKIP() << "Validity strict since KeyMint v2";
+    }
     // Per RFC 5280 4.1.2.5, an undefined expiration (not-after) field should be set to
     // GeneralizedTime 999912312359559, which is 253402300799000 ms from Jan 1, 1970.
     constexpr uint64_t kUndefinedExpirationDateTime = 253402300799000;
