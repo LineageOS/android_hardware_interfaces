@@ -36,7 +36,7 @@ aidl_interface {
                 "android.hardware.common.fmq-V1",
                 "android.hardware.camera.common-V1",
                 "android.hardware.camera.metadata-V1",
-                "android.hardware.graphics.common-V3",
+                "android.hardware.graphics.common-V4",
             ],
         },
     ],
