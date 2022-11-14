@@ -10,6 +10,9 @@
       "name": "VtsHalAudioEffectTargetTest"
     },
     {
+      "name": "VtsHalDownmixTargetTest"
+    },
+    {
       "name": "VtsHalEqualizerTargetTest"
     },
     {
