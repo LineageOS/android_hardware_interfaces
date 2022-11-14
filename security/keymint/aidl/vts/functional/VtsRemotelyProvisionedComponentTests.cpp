@@ -701,7 +701,8 @@ TEST_P(CertificateRequestV2Test, NonEmptyRequest) {
 }
 
 /**
- * Generate a non-empty certificate request.  Make sure contents are reproducible.
+ * Generate a non-empty certificate request.  Make sure contents are reproducible but allow for the
+ * signature to be different since algorithms including ECDSA P-256 can include a random value.
  */
 TEST_P(CertificateRequestV2Test, NonEmptyRequestReproducible) {
     generateKeys(false /* testMode */, 1 /* numKeys */);
@@ -711,19 +712,16 @@ TEST_P(CertificateRequestV2Test, NonEmptyRequestReproducible) {
     auto status = provisionable_->generateCertificateRequestV2(keysToSign_, challenge_, &csr);
     ASSERT_TRUE(status.isOk()) << status.getMessage();
 
-    auto firstBcc = verifyProductionCsr(cborKeysToSign_, csr, provisionable_.get(), challenge_);
-    ASSERT_TRUE(firstBcc) << firstBcc.message();
+    auto firstCsr = verifyProductionCsr(cborKeysToSign_, csr, provisionable_.get(), challenge_);
+    ASSERT_TRUE(firstCsr) << firstCsr.message();
 
     status = provisionable_->generateCertificateRequestV2(keysToSign_, challenge_, &csr);
     ASSERT_TRUE(status.isOk()) << status.getMessage();
 
-    auto secondBcc = verifyProductionCsr(cborKeysToSign_, csr, provisionable_.get(), challenge_);
-    ASSERT_TRUE(secondBcc) << secondBcc.message();
+    auto secondCsr = verifyProductionCsr(cborKeysToSign_, csr, provisionable_.get(), challenge_);
+    ASSERT_TRUE(secondCsr) << secondCsr.message();
 
-    ASSERT_EQ(firstBcc->size(), secondBcc->size());
-    for (auto i = 0; i < firstBcc->size(); i++) {
-        ASSERT_EQ(firstBcc->at(i).pubKey, secondBcc->at(i).pubKey);
-    }
+    ASSERT_EQ(**firstCsr, **secondCsr);
 }
 
 /**
