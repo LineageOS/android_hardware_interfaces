@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<audio_effects_conf version="2.0" xmlns="http://schemas.android.com/audio/audio_effects_conf/v2_0">
+    <!-- Overview.
+         This example config file was copy from existing one: frameworks/av/media/libeffects/data/
+         audio_effects.xml, with effect library names updated to AIDL libraries we currently have.
+
+         All "library" attributes in "effect" element must must match a "library" element with the
+         same value of the "name" attribute.
+         All "effect" attributes in "preprocess" and "postprocess" element must match an "effect"
+         element with the same value of the "name" attribute.
+
+         AIDL EffectFactory are relying on the "name" attribute in "effect" element to identify the
+         effect type, so it's necessary to have the mapping from name to effect type UUID. Make
+         sure to either use existing effect name as key of
+         ::android::hardware::audio::effect::kUuidNameTypeMap, or add a new {name, typeUUID} map
+         item to the kUuidNameTypeMap.
+
+         Existing audio_effects.xml should working without any change as long as:
+         1. "path" attribute of "library" element matches with the actual effect library name.
+         2. "name" attribute of "effect" and "effectProxy" element correctly added as key of
+            kUuidNameTypeMap, with value matches Identity.type in Descriptor.aidl.
+         3. "uuid" attribute of "effect" element matches Identity.uuid in Descriptor.aidl.
+         4. "uuid" attribute of "effectProxy" element matches Identity.proxy in Descriptor.aidl.
+    -->
+
+    <!-- List of effect libraries to load.
+         Each library element must contain a "name" attribute and a "path" attribute giving the
+         name of a library .so file on the target device.
+    -->
+    <libraries>
+        <library name="bassboostsw" path="libbassboostsw.so"/>
+        <library name="bundle" path="libbundleaidl.so"/>
+        <library name="dynamics_processingsw" path="libdynamicsprocessingsw.so"/>
+        <library name="equalizersw" path="libequalizersw.so"/>
+        <library name="haptic_generatorsw" path="libhapticgeneratorsw.so"/>
+        <library name="loudness_enhancersw" path="libloudnessenhancersw.so"/>
+        <library name="reverbsw" path="libreverbsw.so"/>
+        <library name="virtualizersw" path="libvirtualizersw.so"/>
+        <library name="visualizersw" path="libvisualizersw.so"/>
+        <library name="volumesw" path="libvolumesw.so"/>
+    </libraries>
+
+    <!-- list of effects to load.
+         Each "effect" element must contain a "name", "library" and a "uuid" attribute.
+         The value of the "library" attribute must correspond to the name of one library element in
+         the "libraries" element.
+         The "name" attribute used to specific effect type, and should be mapping to a key of
+         aidl::android::hardware::audio::effect::kUuidNameTypeMap.
+         The "uuid" attribute is the implementation specific UUID as specified by the effect vendor.
+
+         Effect proxy can be supported with "effectProxy" element, each sub-element should contain
+         "library" and "uuid" attribute, all other attributes were ignored. Framework side use
+         result of IFactory.queryEffects() to decide which effect implementation should be part of
+         proxy and which not.
+
+         Only "name", "library", and "uuid" attributes in "effects" element are meaningful and
+         parsed out by EffectConfig class, all other attributes are ignored.
+         Only "name" and "uuid" attributes in "effectProxy" element are meaningful and parsed out
+         by EffectConfig class, all other attributes are ignored.
+    -->
+
+    <effects>
+        <effect name="bassboost" library="bassboostsw" uuid="fa8181f2-588b-11ed-9b6a-0242ac120002"/>
+        <effect name="dynamics_processing" library="dynamics_processingsw" uuid="fa818d78-588b-11ed-9b6a-0242ac120002"/>
+        <effect name="haptic_generator" library="haptic_generatorsw" uuid="fa819110-588b-11ed-9b6a-0242ac120002"/>
+        <effect name="loudness_enhancer" library="loudness_enhancersw" uuid="fa819610-588b-11ed-9b6a-0242ac120002"/>
+        <effect name="reverb" library="reverbsw" uuid="fa8199c6-588b-11ed-9b6a-0242ac120002"/>
+        <effect name="virtualizer" library="virtualizersw" uuid="fa819d86-588b-11ed-9b6a-0242ac120002"/>
+        <effect name="visualizer" library="visualizersw" uuid="fa81a0f6-588b-11ed-9b6a-0242ac120002"/>
+        <effect name="volume" library="volumesw" uuid="fa81a718-588b-11ed-9b6a-0242ac120002"/>
+        <effectProxy name="equalizer" uuid="14804144-a5ee-4d24-aa88-0002a5d5c51b">
+            <libsw library="equalizersw" uuid="0bed4300-847d-11df-bb17-0002a5d5c51b"/>
+            <libsw library="bundle" uuid="ce772f20-847d-11df-bb17-0002a5d5c51b"/>
+        </effectProxy>
+    </effects>
+
+    <!-- Audio pre processor configurations.
+         The pre processor configuration is described in a "preprocess" element and consists in a
+         list of elements each describing pre processor settings for a given use case or "stream".
+         Each stream element has a "type" attribute corresponding to the input source used.
+         Valid types are these defined in system/hardware/interfaces/media/aidl/android/media/audio/
+         common/AudioSource.aidl.
+         Each "stream" element contains a list of "apply" elements indicating one effect to apply.
+         The effect to apply is designated by its name in the "effects" elements.
+         If there are more than one effect apply to one stream, the audio framework will apply them
+         in the same equence as they listed in "stream" element.
+
+        <preprocess>
+            <stream type="voice_communication">
+                <apply effect="aec"/>
+                <apply effect="ns"/>
+            </stream>
+        </preprocess>
+    -->
+
+    <!-- Audio post processor configurations.
+         The post processor configuration is described in a "postprocess" element and consists in a
+         list of elements each describing post processor settings for a given use case or "stream".
+         Each stream element has a "type" attribute corresponding to the stream type used.
+         Valid types are these defined in system/hardware/interfaces/media/aidl/android/media/audio/
+         common/AudioStreamType.aidl.
+         Each "stream" element contains a list of "apply" elements indicating one effect to apply.
+         The effect to apply is designated by its name in the "effects" elements.
+         If there are more than one effect apply to one stream, the audio framework will apply them
+         in the same equence as they listed in "stream" element.
+
+        <postprocess>
+            <stream type="music">
+                <apply effect="music_post_proc"/>
+            </stream>
+            <stream type="voice_call">
+                <apply effect="voice_post_proc"/>
+            </stream>
+            <stream type="notification">
+                <apply effect="notification_post_proc"/>
+            </stream>
+        </postprocess>
+    -->
+
+</audio_effects_conf>
