@@ -35,3 +35,9 @@ and operation of the pre-HIDL camera HAL module v2.4.
 First HIDL version of the camara provider HAL callback interface, closely
 matching the feature set and operation of the pre-HIDL camera HAL module
 callbacks v2.4.
+
+### AIDL Camera HAL Default Implementation ###
+
+The default implementation can be found at
+$ANDROID_BUILD_TOP/hardware/google/camera/common/hal/aidl_service and
+$ANDROID_BUILD_TOP/hardware/google/camera/devices/EmulatedCamera

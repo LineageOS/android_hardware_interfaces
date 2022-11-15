@@ -218,6 +218,7 @@ using ::WIFI_BAND_ABG;
 using ::WIFI_BAND_ABG_WITH_DFS;
 using ::WIFI_BAND_BG;
 using ::WIFI_BAND_UNSPECIFIED;
+using ::wifi_cached_scan_report;
 using ::wifi_cached_scan_results;
 using ::WIFI_CHAN_WIDTH_10;
 using ::WIFI_CHAN_WIDTH_160;
@@ -465,6 +466,12 @@ struct ChreCallbackHandlers {
     std::function<void(chre_nan_rtt_state)> on_wifi_chre_nan_rtt_state;
 };
 
+// Cached Scan Results response and event callbacks struct.
+struct CachedScanResultsCallbackHandlers {
+    // Callback for Cached Scan Results
+    std::function<void(wifi_cached_scan_report*)> on_cached_scan_results;
+};
+
 /**
  * Class that encapsulates all legacy HAL interactions.
  * This class manages the lifetime of the event loop thread used by legacy HAL.
@@ -684,6 +691,8 @@ class WifiLegacyHal {
                                    const ChreCallbackHandlers& handler);
 
     wifi_error enableWifiTxPowerLimits(const std::string& iface_name, bool enable);
+    wifi_error getWifiCachedScanResults(const std::string& iface_name,
+                                        const CachedScanResultsCallbackHandlers& handler);
 
   private:
     // Retrieve interface handles for all the available interfaces.
