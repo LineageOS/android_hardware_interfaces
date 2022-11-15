@@ -293,3 +293,10 @@ ndk::ScopedAStatus RadioNetworkResponse::cancelEmergencyNetworkScanResponse(
     parent_network.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
+
+ndk::ScopedAStatus RadioNetworkResponse::setNullCipherAndIntegrityEnabledResponse(
+        const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_network.notify(info.serial);
+    return ndk::ScopedAStatus::ok();
+}
