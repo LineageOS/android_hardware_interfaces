@@ -100,8 +100,6 @@ class RadioNetwork : public RadioCompatBase,
     ::ndk::ScopedAStatus cancelEmergencyNetworkScan(int32_t serial, bool resetScan) override;
     ::ndk::ScopedAStatus exitEmergencyMode(int32_t serial) override;
 
-    ::ndk::ScopedAStatus setNullCipherAndIntegrityEnabled(int32_t serial, bool enabled) override;
-
   protected:
     std::shared_ptr<::aidl::android::hardware::radio::network::IRadioNetworkResponse> respond();
 
