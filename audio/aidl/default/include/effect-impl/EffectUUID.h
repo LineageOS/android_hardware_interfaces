@@ -15,6 +15,8 @@
  */
 
 #pragma once
+#include <map>
+
 #include <aidl/android/media/audio/common/AudioUuid.h>
 
 namespace aidl::android::hardware::audio::effect {
@@ -39,14 +41,14 @@ static const AudioUuid EqualizerTypeUUID = {static_cast<int32_t>(0x0bed4300),
                                             0x8f34,
                                             {0x00, 0x02, 0xa5, 0xd5, 0xc5, 0x1b}};
 
-// Equalizer implementation UUID.
+// 0bed4300-847d-11df-bb17-0002a5d5c51b
 static const AudioUuid EqualizerSwImplUUID = {static_cast<int32_t>(0x0bed4300),
                                               0x847d,
                                               0x11df,
                                               0xbb17,
                                               {0x00, 0x02, 0xa5, 0xd5, 0xc5, 0x1b}};
 
-// Equalizer bundle implementation UUID.
+// ce772f20-847d-11df-bb17-0002a5d5c51b
 static const AudioUuid EqualizerBundleImplUUID = {static_cast<int32_t>(0xce772f20),
                                                   0x847d,
                                                   0x11df,
@@ -165,5 +167,27 @@ static const AudioUuid VolumeSwImplUUID = {static_cast<int32_t>(0xfa81a718),
                                            0x11ed,
                                            0x9b6a,
                                            {0x02, 0x42, 0xac, 0x12, 0x00, 0x02}};
+
+/**
+ * @brief A map between effect name and effect type UUID.
+ * All <name> attribution in effect/effectProxy of audio_effects.xml should be listed in this map.
+ * We need this map is because existing audio_effects.xml don't have a type UUID defined.
+ */
+static const std::map<const std::string /* effect type */, const AudioUuid&> kUuidNameTypeMap = {
+        {"bassboost", BassBoostTypeUUID},
+        {"downmix", DownmixTypeUUID},
+        {"dynamics_processing", DynamicsProcessingTypeUUID},
+        {"equalizer", EqualizerTypeUUID},
+        {"haptic_generator", HapticGeneratorTypeUUID},
+        {"loudness_enhancer", LoudnessEnhancerTypeUUID},
+        {"reverb", ReverbTypeUUID},
+        {"reverb_env_aux", ReverbTypeUUID},
+        {"reverb_env_ins", ReverbTypeUUID},
+        {"reverb_pre_aux", ReverbTypeUUID},
+        {"reverb_pre_ins", ReverbTypeUUID},
+        {"virtualizer", VirtualizerTypeUUID},
+        {"visualizer", VisualizerTypeUUID},
+        {"volume", VolumeTypeUUID},
+};
 
 }  // namespace aidl::android::hardware::audio::effect

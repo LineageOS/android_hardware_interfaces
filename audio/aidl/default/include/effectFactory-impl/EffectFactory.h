@@ -19,15 +19,17 @@
 #include <any>
 #include <map>
 #include <optional>
+#include <set>
 #include <vector>
 
 #include <aidl/android/hardware/audio/effect/BnFactory.h>
+#include "EffectConfig.h"
 
 namespace aidl::android::hardware::audio::effect {
 
 class Factory : public BnFactory {
   public:
-    Factory();
+    explicit Factory(const std::string& file);
     /**
      * @brief Get identity of all effects supported by the device, with the optional filter by type
      * and/or by instance UUID.
@@ -77,9 +79,10 @@ class Factory : public BnFactory {
             override;
 
   private:
+    const EffectConfig mConfig;
     ~Factory();
-    // List of effect descriptors supported by the devices.
-    std::vector<Descriptor::Identity> mIdentityList;
+    // Set of effect descriptors supported by the devices.
+    std::set<Descriptor::Identity> mIdentitySet;
 
     std::map<aidl::android::media::audio::common::AudioUuid /* implementationUUID */,
              std::pair<std::unique_ptr<void, std::function<void(void*)>> /* dlHandle */,
@@ -91,10 +94,13 @@ class Factory : public BnFactory {
 
     ndk::ScopedAStatus destroyEffectImpl(const std::shared_ptr<IEffect>& in_handle);
     void cleanupEffectMap();
-    void openEffectLibrary(
-            const ::aidl::android::media::audio::common::AudioUuid& type,
-            const ::aidl::android::media::audio::common::AudioUuid& impl,
-            const std::optional<::aidl::android::media::audio::common::AudioUuid>& proxy,
-            const std::string& libName);
+    void openEffectLibrary(const ::aidl::android::media::audio::common::AudioUuid& impl,
+                           const std::string& libName);
+    void createIdentityWithConfig(
+            const EffectConfig::LibraryUuid& configLib,
+            const ::aidl::android::media::audio::common::AudioUuid& typeUuid,
+            const std::optional<::aidl::android::media::audio::common::AudioUuid> proxyUuid);
+    void loadEffectLibs();
 };
+
 }  // namespace aidl::android::hardware::audio::effect
