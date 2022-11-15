@@ -64,4 +64,10 @@ interface ISupplicantStaIfaceCallback {
   oneway void onQosPolicyReset();
   oneway void onQosPolicyRequest(in int qosPolicyRequestId, in android.hardware.wifi.supplicant.QosPolicyData[] qosPolicyData);
   oneway void onStateChangedWithAkm(in android.hardware.wifi.supplicant.StaIfaceCallbackState newState, in byte[] bssid, in int id, in byte[] ssid, in boolean filsHlpSent, in android.hardware.wifi.supplicant.KeyMgmtMask keyMgmtMask);
+  oneway void onMloLinksInfoChanged(in android.hardware.wifi.supplicant.ISupplicantStaIfaceCallback.MloLinkInfoChangeReason reason);
+  @Backing(type="int") @VintfStability
+  enum MloLinkInfoChangeReason {
+    TID_TO_LINK_MAP = 0,
+    MULTI_LINK_RECONFIG_AP_REMOVAL = 1,
+  }
 }

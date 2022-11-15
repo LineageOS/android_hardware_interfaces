@@ -213,6 +213,11 @@ class SupplicantStaIfaceCallback : public BnSupplicantStaIfaceCallback {
             ::aidl::android::hardware::wifi::supplicant::KeyMgmtMask /* keyMgmtMask*/) override {
         return ndk::ScopedAStatus::ok();
     }
+    ::ndk::ScopedAStatus onMloLinksInfoChanged(
+            ::aidl::android::hardware::wifi::supplicant::ISupplicantStaIfaceCallback::
+                    MloLinkInfoChangeReason /* reason */) override {
+        return ndk::ScopedAStatus::ok();
+    }
 };
 
 class SupplicantStaIfaceAidlTest : public testing::TestWithParam<std::string> {
