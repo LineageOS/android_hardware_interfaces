@@ -67,6 +67,7 @@ oneway interface IRadioModem {
      * @param serial Serial number of request.
      *
      * Response function is IRadioModemResponse.getDeviceIdentityResponse()
+     * @deprecated use getImei(int serial)
      */
     void getDeviceIdentity(in int serial);
 
@@ -235,4 +236,13 @@ oneway interface IRadioModem {
      */
     void setResponseFunctions(in IRadioModemResponse radioModemResponse,
             in IRadioModemIndication radioModemIndication);
+
+    /**
+     * Request the IMEI associated with the radio.
+     *
+     * @param serial : Serial number of request.
+     *
+     * Response function is IRadioModemResponse.getImeiResponse()
+     */
+     void getImei(in int serial);
 }
