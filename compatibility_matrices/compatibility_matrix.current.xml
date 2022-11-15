@@ -319,7 +319,7 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.graphics.allocator</name>
-        <version>1</version>
+        <version>1-2</version>
         <interface>
             <name>IAllocator</name>
             <instance>default</instance>
@@ -344,7 +344,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="false">
+    <hal format="hidl" optional="true">
         <name>android.hardware.graphics.mapper</name>
         <!-- New, non-Go devices should use 4.0, tested in vts_treble_vintf_vendor_test -->
         <version>2.1</version>
