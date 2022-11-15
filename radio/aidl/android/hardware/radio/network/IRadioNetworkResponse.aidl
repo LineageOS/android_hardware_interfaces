@@ -57,7 +57,6 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:INTERNAL_ERR
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:MODEM_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      */
     void getAllowedNetworkTypesBitmapResponse(in RadioResponseInfo info, in int networkTypeBitmap);
@@ -74,7 +73,6 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:INTERNAL_ERR
      *   RadioError:SYSTEM_ERR
      *   RadioError:MODEM_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
@@ -93,7 +91,6 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:INTERNAL_ERR
      *   RadioError:NO_MEMORY
      *   RadioError:MODEM_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:CANCELLED
      *   RadioError:NO_RESOURCES
      *   RadioError:INTERNAL_ERR
@@ -126,7 +123,6 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:INTERNAL_ERR
      *   RadioError:SYSTEM_ERR
      *   RadioError:MODEM_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      *   RadioError:SIM_ABSENT
@@ -170,7 +166,8 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      *   RadioError:INVALID_MODEM_STATE
-     *   RadioError:REQUEST_NOT_SUPPORTED
+     *
+     * @deprecated Deprecated starting from Android U.
      */
     void getImsRegistrationStateResponse(
             in RadioResponseInfo info, in boolean isRegistered, in RadioTechnologyFamily ratFamily);
@@ -187,7 +184,6 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:SYSTEM_ERR
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:MODEM_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
@@ -205,7 +201,6 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:NO_MEMORY
      *   RadioError:INTERNAL_ERR
      *   RadioError:SYSTEM_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
@@ -247,7 +242,6 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:NO_MEMORY
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
-     *   RadioError:REQUEST_NOT_SUPPORTED
      */
     void getVoiceRadioTechnologyResponse(in RadioResponseInfo info, in RadioTechnology rat);
 
@@ -272,7 +266,6 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INTERNAL_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
      */
     void isNrDualConnectivityEnabledResponse(in RadioResponseInfo info, in boolean isEnabled);
 
@@ -287,7 +280,6 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:INTERNAL_ERR
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:MODEM_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      */
     void setAllowedNetworkTypesBitmapResponse(in RadioResponseInfo info);
@@ -304,7 +296,6 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:SYSTEM_ERR
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:MODEM_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
@@ -325,7 +316,6 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:INTERNAL_ERR
      *   RadioError:SYSTEM_ERR
      *   RadioError:FDN_CHECK_FAILURE
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
@@ -342,7 +332,6 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:SYSTEM_ERR
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:MODEM_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:OPERATION_NOT_ALLOWED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
@@ -362,7 +351,6 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
-     *   RadioError:REQUEST_NOT_SUPPORTED
      */
     void setCellInfoListRateResponse(in RadioResponseInfo info);
 
@@ -400,7 +388,6 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:SYSTEM_ERR
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:MODEM_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      *   RadioError:SIM_ABSENT
@@ -420,7 +407,6 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:SYSTEM_ERR
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:MODEM_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      *
@@ -443,7 +429,6 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:SYSTEM_ERR
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:MODEM_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      *
@@ -459,7 +444,6 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INTERNAL_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:INVALID_STATE
      */
     void setNrDualConnectivityStateResponse(in RadioResponseInfo info);
@@ -486,7 +470,6 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:SYSTEM_ERR
      *   RadioError:MODEM_ERR
      *   RadioError:INTERNAL_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      *   RadioError:SIM_ABSENT
@@ -543,7 +526,6 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:SIM_ABSENT
      */
     void supplyNetworkDepersonalizationResponse(in RadioResponseInfo info, in int remainingRetries);

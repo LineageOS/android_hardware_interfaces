@@ -36,7 +36,6 @@ oneway interface IRadioMessagingResponse {
      *   RadioError:NO_MEMORY
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
-     *   RadioError:REQUEST_NOT_SUPPORTED
      */
     void acknowledgeIncomingGsmSmsWithPduResponse(in RadioResponseInfo info);
 
@@ -56,7 +55,6 @@ oneway interface IRadioMessagingResponse {
      *   RadioError:NETWORK_NOT_READY
      *   RadioError:INVALID_MODEM_STATE
      *   RadioError:INTERNAL_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:OPERATION_NOT_ALLOWED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
@@ -73,7 +71,6 @@ oneway interface IRadioMessagingResponse {
      *   RadioError:NO_MEMORY
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
-     *   RadioError:REQUEST_NOT_SUPPORTED
      */
     void acknowledgeLastIncomingGsmSmsResponse(in RadioResponseInfo info);
 
@@ -98,7 +95,6 @@ oneway interface IRadioMessagingResponse {
      *   RadioError:MODEM_ERR
      *   RadioError:NO_SUCH_ENTRY
      *   RadioError:INTERNAL_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:OPERATION_NOT_ALLOWED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
@@ -122,7 +118,6 @@ oneway interface IRadioMessagingResponse {
      *   RadioError:NO_SUCH_ENTRY
      *   RadioError:INTERNAL_ERR
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      *   RadioError:INVALID_MODEM_STATE
@@ -145,7 +140,6 @@ oneway interface IRadioMessagingResponse {
      *   RadioError:MODEM_ERR
      *   RadioError:NO_RESOURCES
      *   RadioError:INTERNAL_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      *   RadioError:INVALID_MODEM_STATE
@@ -168,7 +162,6 @@ oneway interface IRadioMessagingResponse {
      *   RadioError:MODEM_ERR
      *   RadioError:NO_RESOURCES
      *   RadioError:INTERNAL_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      *   RadioError:INVALID_MODEM_STATE
@@ -191,7 +184,6 @@ oneway interface IRadioMessagingResponse {
      *   RadioError:MODEM_ERR
      *   RadioError:INVALID_MODEM_STATE
      *   RadioError:NOT_PROVISIONED
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:OPERATION_NOT_ALLOWED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
@@ -212,7 +204,6 @@ oneway interface IRadioMessagingResponse {
      *   RadioError:MODEM_ERR
      *   RadioError:INVALID_STATE
      *   RadioError:INTERNAL_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      *   RadioError:SIM_ABSENT
@@ -240,7 +231,6 @@ oneway interface IRadioMessagingResponse {
      *   RadioError:MODEM_ERR
      *   RadioError:NETWORK_ERR
      *   RadioError:INTERNAL_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:INVALID_MODEM_STATE
      *   RadioError:NETWORK_NOT_READY
      *   RadioError:OPERATION_NOT_ALLOWED
@@ -275,7 +265,6 @@ oneway interface IRadioMessagingResponse {
      *   RadioError:INVALID_SMSC_ADDRESS
      *   RadioError:INTERNAL_ERR
      *   RadioError:SYSTEM_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:OPERATION_NOT_ALLOWED
      *   RadioError:ENCODING_ERR
      *   RadioError:NO_RESOURCES
@@ -308,7 +297,6 @@ oneway interface IRadioMessagingResponse {
      *   RadioError:ENCODING_ERR
      *   RadioError:OPERATION_NOT_ALLOWED
      *   RadioError:INTERNAL_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NETWORK_NOT_READY
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
@@ -336,7 +324,6 @@ oneway interface IRadioMessagingResponse {
      *   RadioError:MODEM_ERR
      *   RadioError:NETWORK_ERR
      *   RadioError:INTERNAL_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:INVALID_MODEM_STATE
      *   RadioError:NETWORK_NOT_READY
      *   RadioError:OPERATION_NOT_ALLOWED
@@ -368,7 +355,6 @@ oneway interface IRadioMessagingResponse {
      *   RadioError:MODEM_ERR
      *   RadioError:NETWORK_ERR
      *   RadioError:INTERNAL_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:INVALID_MODEM_STATE
      *   RadioError:NETWORK_NOT_READY
      *   RadioError:OPERATION_NOT_ALLOWED
@@ -393,7 +379,6 @@ oneway interface IRadioMessagingResponse {
      *   RadioError:SYSTEM_ERR
      *   RadioError:MODEM_ERR
      *   RadioError:INTERNAL_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:OPERATION_NOT_ALLOWED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
@@ -414,7 +399,6 @@ oneway interface IRadioMessagingResponse {
      *   RadioError:SYSTEM_ERR
      *   RadioError:MODEM_ERR
      *   RadioError:INTERNAL_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      *   RadioError:INVALID_MODEM_STATE
@@ -434,7 +418,6 @@ oneway interface IRadioMessagingResponse {
      *   RadioError:SYSTEM_ERR
      *   RadioError:MODEM_ERR
      *   RadioError:INTERNAL_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:OPERATION_NOT_ALLOWED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
@@ -455,7 +438,6 @@ oneway interface IRadioMessagingResponse {
      *   RadioError:SYSTEM_ERR
      *   RadioError:MODEM_ERR
      *   RadioError:INTERNAL_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      *   RadioError:INVALID_MODEM_STATE
@@ -476,7 +458,6 @@ oneway interface IRadioMessagingResponse {
      *   RadioError:MODEM_ERR
      *   RadioError:NO_RESOURCES
      *   RadioError:INTERNAL_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:OPERATION_NOT_ALLOWED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
@@ -502,7 +483,6 @@ oneway interface IRadioMessagingResponse {
      *   RadioError:INVALID_MODEM_STATE
      *   RadioError:INVALID_SMSC_ADDRESS
      *   RadioError:SYSTEM_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:OPERATION_NOT_ALLOWED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
@@ -531,7 +511,6 @@ oneway interface IRadioMessagingResponse {
      *   RadioError:INVALID_SMSC_ADDRESS
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:SYSTEM_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:CANCELLED
      *   RadioError:INVALID_MODEM_STATE
      *   RadioError:SIM_ABSENT

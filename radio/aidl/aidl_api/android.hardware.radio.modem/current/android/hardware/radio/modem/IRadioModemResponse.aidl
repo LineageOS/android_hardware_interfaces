@@ -42,9 +42,18 @@ interface IRadioModemResponse {
   oneway void getModemActivityInfoResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.modem.ActivityStatsInfo activityInfo);
   oneway void getModemStackStatusResponse(in android.hardware.radio.RadioResponseInfo info, in boolean isEnabled);
   oneway void getRadioCapabilityResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.modem.RadioCapability rc);
+  /**
+   * @deprecated NV APIs are deprecated starting from Android U.
+   */
   oneway void nvReadItemResponse(in android.hardware.radio.RadioResponseInfo info, in String result);
   oneway void nvResetConfigResponse(in android.hardware.radio.RadioResponseInfo info);
+  /**
+   * @deprecated NV APIs are deprecated starting from Android U.
+   */
   oneway void nvWriteCdmaPrlResponse(in android.hardware.radio.RadioResponseInfo info);
+  /**
+   * @deprecated NV APIs are deprecated starting from Android U.
+   */
   oneway void nvWriteItemResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void requestShutdownResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void sendDeviceStateResponse(in android.hardware.radio.RadioResponseInfo info);
