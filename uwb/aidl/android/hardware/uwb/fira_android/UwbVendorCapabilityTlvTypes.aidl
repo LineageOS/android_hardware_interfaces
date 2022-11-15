@@ -179,4 +179,9 @@ enum UwbVendorCapabilityTlvTypes {
      *  0 - Feature not supported.
      */
     SUPPORTED_DIAGNOSTICS = 0xE7,
+
+    /**
+     * 4 byte value to indicate supported min slot duration in ms.
+     */
+    SUPPORTED_MIN_SLOT_DURATION = 0xE8,
 }
