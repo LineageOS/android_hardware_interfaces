@@ -632,14 +632,4 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:MODEM_ERR
      */
     void cancelEmergencyNetworkScanResponse(in RadioResponseInfo info);
-
-    /**
-     * @param info Response info struct containing response type, serial no. and error
-     *
-     * Valid errors returned:
-     *   RadioError:NONE
-     *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:MODEM_ERR
-     */
-    void setNullCipherAndIntegrityEnabledResponse(in RadioResponseInfo info);
 }

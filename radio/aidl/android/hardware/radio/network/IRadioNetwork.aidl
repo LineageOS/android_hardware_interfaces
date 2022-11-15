@@ -482,24 +482,4 @@ oneway interface IRadioNetwork {
      * Response function is IRadioEmergencyResponse.exitEmergencyModeResponse()
      */
     void exitEmergencyMode(in int serial);
-
-    /**
-     * Set if null encryption and integrity modes are enabled. If the value of enabled is false
-     * the modem must not allow any network communications with null ciphering or null integrity
-     * modes. In case of an emergency call, the modem must bypass this setting.
-     *
-     * Null ciphering and integrity modes include (but are not limited to):
-     * 2G: A5/0
-     * 3G: UEA0 and UIA0
-     * 4G: EEA0 and EIA0
-     * 5G: NEA0 and NIA0
-     *
-     *
-     * @param serial Serial number of the request.
-     * @param enabled To allow null encryption/integrity, set to true.
-     *                Otherwise, false.
-     *
-     * Response callback is IRadioResponse.setNullCipherAndIntegrityEnabledResponse()
-     */
-    void setNullCipherAndIntegrityEnabled(in int serial, in boolean enabled);
 }
