@@ -2435,6 +2435,27 @@ enum VehicleProperty {
     STEERING_WHEEL_LIGHTS_STATE =
             0x0F0C + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
     /**
+     * Steering wheel lights switch
+     *
+     * Represents the position of the switch controlling the steering wheel lights. This is
+     * different from STEERING_WHEEL_LIGHTS_STATE which represents the current state of the steering
+     * wheel lights. Therefore, STEERING_WHEEL_LIGHTS_SWITCH may not match the value of
+     * STEERING_WHEEL_LIGHTS_STATE (e.g. STEERING_WHEEL_LIGHTS_SWITCH=AUTOMATIC and
+     * STEERING_WHEEL_LIGHTS_STATE=ON).
+     *
+     * This property should only be implemented if STEERING_WHEEL_LIGHTS_SWITCH's value may be
+     * different from that of CABIN_LIGHTS_SWITCH.
+     *
+     * For the global area ID (0), the VehicleAreaConfig#supportedEnumValues must be defined unless
+     * all enum values of VehicleLightSwitch are supported.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     * @data_enum VehicleLightSwitch
+     */
+    STEERING_WHEEL_LIGHTS_SWITCH =
+            0x0F0D + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
+    /**
      * Support customize permissions for vendor properties
      *
      * Implement this property if vehicle hal support customize vendor permissions feature.

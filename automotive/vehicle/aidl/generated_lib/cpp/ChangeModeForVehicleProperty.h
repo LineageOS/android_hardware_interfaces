@@ -196,6 +196,7 @@ std::unordered_map<VehicleProperty, VehiclePropertyChangeMode> ChangeModeForVehi
         {VehicleProperty::READING_LIGHTS_STATE, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::READING_LIGHTS_SWITCH, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::STEERING_WHEEL_LIGHTS_STATE, VehiclePropertyChangeMode::ON_CHANGE},
+        {VehicleProperty::STEERING_WHEEL_LIGHTS_SWITCH, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::SUPPORT_CUSTOMIZE_VENDOR_PERMISSION, VehiclePropertyChangeMode::STATIC},
         {VehicleProperty::DISABLED_OPTIONAL_FEATURES, VehiclePropertyChangeMode::STATIC},
         {VehicleProperty::INITIAL_USER_INFO, VehiclePropertyChangeMode::ON_CHANGE},

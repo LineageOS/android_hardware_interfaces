@@ -188,6 +188,7 @@ public final class ChangeModeForVehicleProperty {
         Map.entry(VehicleProperty.READING_LIGHTS_STATE, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.READING_LIGHTS_SWITCH, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.STEERING_WHEEL_LIGHTS_STATE, VehiclePropertyChangeMode.ON_CHANGE),
+        Map.entry(VehicleProperty.STEERING_WHEEL_LIGHTS_SWITCH, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.SUPPORT_CUSTOMIZE_VENDOR_PERMISSION, VehiclePropertyChangeMode.STATIC),
         Map.entry(VehicleProperty.DISABLED_OPTIONAL_FEATURES, VehiclePropertyChangeMode.STATIC),
         Map.entry(VehicleProperty.INITIAL_USER_INFO, VehiclePropertyChangeMode.ON_CHANGE),

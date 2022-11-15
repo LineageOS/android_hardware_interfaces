@@ -2797,6 +2797,24 @@
             ]
         },
         {
+            "property": "VehicleProperty::STEERING_WHEEL_LIGHTS_SWITCH",
+            "defaultValue": {
+                "int32Values": [
+                    "Constants::LIGHT_SWITCH_AUTO"
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": 0,
+                    "supportedEnumValues": [
+                        "Constants::LIGHT_SWITCH_OFF",
+                        "Constants::LIGHT_SWITCH_ON",
+                        "Constants::LIGHT_SWITCH_AUTO"
+                    ]
+                }
+            ]
+        },
+        {
             "property": "VehicleProperty::EVS_SERVICE_REQUEST",
             "defaultValue": {
                 "int32Values": [
