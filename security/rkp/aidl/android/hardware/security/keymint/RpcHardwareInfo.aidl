@@ -74,4 +74,17 @@ parcelable RpcHardwareInfo {
      *
      */
     @nullable @utf8InCpp String uniqueId;
+
+    /**
+     * supportedNumKeysInCsr is the maximum number of keys in a CSR that this implementation can
+     * support. This value is implementation defined.
+     *
+     * From version 3 onwards, supportedNumKeysInCsr must be larger or equal to
+     * MIN_SUPPORTED_NUM_KEYS_IN_CSR.
+     *
+     * The default value was chosen as the value enforced by the VTS test in versions 1 and 2 of
+     * this interface.
+     */
+    const int MIN_SUPPORTED_NUM_KEYS_IN_CSR = 20;
+    int supportedNumKeysInCsr = 4;
 }

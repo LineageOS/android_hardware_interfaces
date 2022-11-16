@@ -39,7 +39,9 @@ parcelable RpcHardwareInfo {
   @utf8InCpp String rpcAuthorName;
   int supportedEekCurve = 0;
   @nullable @utf8InCpp String uniqueId;
+  int supportedNumKeysInCsr = 4;
   const int CURVE_NONE = 0;
   const int CURVE_P256 = 1;
   const int CURVE_25519 = 2;
+  const int MIN_SUPPORTED_NUM_KEYS_IN_CSR = 20;
 }
