@@ -181,14 +181,13 @@ ErrMsgOr<std::vector<BccEntryData>> verifyProductionProtectedData(
  * Verify the CSR as if the device is still early in the factory process and may not
  * have all device identifiers provisioned yet.
  */
-ErrMsgOr<std::vector<BccEntryData>> verifyFactoryCsr(const cppbor::Array& keysToSign,
-                                                     const std::vector<uint8_t>& csr,
-                                                     IRemotelyProvisionedComponent* provisionable,
-                                                     const std::vector<uint8_t>& challenge);
+ErrMsgOr<std::unique_ptr<cppbor::Array>> verifyFactoryCsr(
+        const cppbor::Array& keysToSign, const std::vector<uint8_t>& csr,
+        IRemotelyProvisionedComponent* provisionable, const std::vector<uint8_t>& challenge);
 /**
  * Verify the CSR as if the device is a final production sample.
  */
-ErrMsgOr<std::vector<BccEntryData>> verifyProductionCsr(
+ErrMsgOr<std::unique_ptr<cppbor::Array>> verifyProductionCsr(
         const cppbor::Array& keysToSign, const std::vector<uint8_t>& csr,
         IRemotelyProvisionedComponent* provisionable, const std::vector<uint8_t>& challenge);
 
