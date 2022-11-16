@@ -112,6 +112,8 @@ oneway interface IRadioNetwork {
      * @param serial Serial number of request.
      *
      * Response function is IRadioNetworkResponse.getImsRegistrationStateResponse()
+     *
+     * @deprecated Deprecated starting from Android U.
      */
     void getImsRegistrationState(in int serial);
 

@@ -41,6 +41,9 @@ interface IRadioNetwork {
   oneway void getCdmaRoamingPreference(in int serial);
   oneway void getCellInfoList(in int serial);
   oneway void getDataRegistrationState(in int serial);
+  /**
+   * @deprecated Deprecated starting from Android U.
+   */
   oneway void getImsRegistrationState(in int serial);
   oneway void getNetworkSelectionMode(in int serial);
   oneway void getOperator(in int serial);
