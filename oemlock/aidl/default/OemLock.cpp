@@ -24,29 +24,31 @@ namespace oemlock {
 // Methods from ::android::hardware::oemlock::IOemLock follow.
 
 ::ndk::ScopedAStatus OemLock::getName(std::string *out_name) {
-    (void)out_name;
+    *out_name = "SomeCoolName";
     return ::ndk::ScopedAStatus::ok();
 }
 
 ::ndk::ScopedAStatus OemLock::setOemUnlockAllowedByCarrier(bool in_allowed, const std::vector<uint8_t> &in_signature, OemLockSecureStatus *_aidl_return) {
-    (void)in_allowed;
+    // Default impl doesn't care about a valid vendor signature
     (void)in_signature;
-    (void)_aidl_return;
+
+    mAllowedByCarrier = in_allowed;
+    *_aidl_return = OemLockSecureStatus::OK;
     return ::ndk::ScopedAStatus::ok();
 }
 
 ::ndk::ScopedAStatus OemLock::isOemUnlockAllowedByCarrier(bool *out_allowed) {
-    (void)out_allowed;
+    *out_allowed = mAllowedByCarrier;
     return ::ndk::ScopedAStatus::ok();
 }
 
 ::ndk::ScopedAStatus OemLock::setOemUnlockAllowedByDevice(bool in_allowed) {
-    (void)in_allowed;
+    mAllowedByDevice = in_allowed;
     return ::ndk::ScopedAStatus::ok();
 }
 
 ::ndk::ScopedAStatus OemLock::isOemUnlockAllowedByDevice(bool *out_allowed) {
-    (void)out_allowed;
+    *out_allowed = mAllowedByDevice;
     return ::ndk::ScopedAStatus::ok();
 }
 

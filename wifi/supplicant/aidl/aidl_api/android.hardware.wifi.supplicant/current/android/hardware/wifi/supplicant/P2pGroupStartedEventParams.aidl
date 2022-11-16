@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * You may not use this file except in compliance with the License.
+ * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *        http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -31,22 +31,16 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.uwb.fira_android;
-@Backing(type="int") @VintfStability
-enum UwbVendorCapabilityTlvTypes {
-  SUPPORTED_POWER_STATS_QUERY = 192,
-  CCC_SUPPORTED_CHAPS_PER_SLOT = 160,
-  CCC_SUPPORTED_SYNC_CODES = 161,
-  CCC_SUPPORTED_HOPPING_CONFIG_MODES_AND_SEQUENCES = 162,
-  CCC_SUPPORTED_CHANNELS = 163,
-  CCC_SUPPORTED_VERSIONS = 164,
-  CCC_SUPPORTED_UWB_CONFIGS = 165,
-  CCC_SUPPORTED_PULSE_SHAPE_COMBOS = 166,
-  CCC_SUPPORTED_RAN_MULTIPLIER = 167,
-  SUPPORTED_AOA_RESULT_REQ_ANTENNA_INTERLEAVING = 227,
-  SUPPORTED_MIN_RANGING_INTERVAL_MS = 228,
-  SUPPORTED_RANGE_DATA_NTF_CONFIG = 229,
-  SUPPORTED_RSSI_REPORTING = 230,
-  SUPPORTED_DIAGNOSTICS = 231,
-  SUPPORTED_MIN_SLOT_DURATION = 232,
+package android.hardware.wifi.supplicant;
+@VintfStability
+parcelable P2pGroupStartedEventParams {
+  String groupInterfaceName;
+  boolean isGroupOwner;
+  byte[] ssid;
+  int frequencyMHz;
+  byte[] psk;
+  String passphrase;
+  boolean isPersistent;
+  byte[] goDeviceAddress;
+  byte[] goInterfaceAddress;
 }

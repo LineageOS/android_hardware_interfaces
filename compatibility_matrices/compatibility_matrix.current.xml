@@ -173,7 +173,7 @@
             <regex-instance>.*</regex-instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl" optional="true" updatable-via-apex="true">
         <name>android.hardware.camera.provider</name>
         <version>1-2</version>
         <interface>
@@ -731,6 +731,7 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.wifi.supplicant</name>
+        <version>2</version>
         <interface>
             <name>ISupplicant</name>
             <instance>default</instance>

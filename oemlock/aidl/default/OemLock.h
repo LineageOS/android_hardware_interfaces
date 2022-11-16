@@ -36,6 +36,10 @@ public:
     ::ndk::ScopedAStatus isOemUnlockAllowedByDevice(bool* out_allowed) override;
     ::ndk::ScopedAStatus setOemUnlockAllowedByCarrier(bool in_allowed, const std::vector<uint8_t>& in_signature, OemLockSecureStatus* _aidl_return) override;
     ::ndk::ScopedAStatus setOemUnlockAllowedByDevice(bool in_allowed) override;
+
+  private:
+    bool mAllowedByCarrier = false;
+    bool mAllowedByDevice = false;
 };
 
 } // namespace oemlock
