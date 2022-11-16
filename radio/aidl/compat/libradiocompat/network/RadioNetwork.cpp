@@ -340,4 +340,11 @@ ScopedAStatus RadioNetwork::exitEmergencyMode(int32_t serial) {
     return ok();
 }
 
+ScopedAStatus RadioNetwork::setNullCipherAndIntegrityEnabled(int32_t serial, bool) {
+    LOG_CALL << serial;
+    LOG(ERROR) << " setNullCipherAndIntegrityEnabled is unsupported by HIDL HALs";
+    respond()->setNullCipherAndIntegrityEnabledResponse(notSupported(serial));
+    return ok();
+}
+
 }  // namespace android::hardware::radio::compat
