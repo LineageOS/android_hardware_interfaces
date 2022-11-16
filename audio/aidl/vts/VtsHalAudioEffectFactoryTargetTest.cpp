@@ -15,6 +15,7 @@
  */
 
 #include <memory>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -37,23 +38,81 @@
 using namespace android;
 
 using aidl::android::hardware::audio::effect::Descriptor;
-using aidl::android::hardware::audio::effect::EffectNullUuid;
-using aidl::android::hardware::audio::effect::EffectZeroUuid;
+using aidl::android::hardware::audio::effect::IEffect;
 using aidl::android::hardware::audio::effect::IFactory;
+using aidl::android::hardware::audio::effect::kEffectNullUuid;
+using aidl::android::hardware::audio::effect::kEffectZeroUuid;
 using aidl::android::hardware::audio::effect::Processing;
+using aidl::android::media::audio::common::AudioSource;
+using aidl::android::media::audio::common::AudioStreamType;
 using aidl::android::media::audio::common::AudioUuid;
 
 /// Effect factory testing.
 class EffectFactoryTest : public testing::TestWithParam<std::string> {
   public:
-    void SetUp() override { ASSERT_NO_FATAL_FAILURE(mFactory.ConnectToFactoryService()); }
+    void SetUp() override {
+        mFactoryHelper = std::make_unique<EffectFactoryHelper>(GetParam());
+        connectAndGetFactory();
+    }
 
-    void TearDown() override { mFactory.DestroyEffects(); }
+    void TearDown() override {
+        for (auto& effect : mEffects) {
+            const auto status = mEffectFactory->destroyEffect(effect);
+            EXPECT_STATUS(EX_NONE, status);
+        }
+    }
 
-    EffectFactoryHelper mFactory = EffectFactoryHelper(GetParam());
+    std::unique_ptr<EffectFactoryHelper> mFactoryHelper;
+    std::shared_ptr<IFactory> mEffectFactory;
+    std::vector<std::shared_ptr<IEffect>> mEffects;
+    const Descriptor::Identity kNullDesc = {.uuid = kEffectNullUuid};
+    const Descriptor::Identity kZeroDesc = {.uuid = kEffectZeroUuid};
 
-    const Descriptor::Identity nullDesc = {.uuid = EffectNullUuid};
-    const Descriptor::Identity zeroDesc = {.uuid = EffectZeroUuid};
+    template <typename Functor>
+    void ForEachId(const std::vector<Descriptor::Identity> ids, Functor functor) {
+        for (const auto& id : ids) {
+            SCOPED_TRACE(id.toString());
+            functor(id);
+        }
+    }
+    template <typename Functor>
+    void ForEachEffect(std::vector<std::shared_ptr<IEffect>> effects, Functor functor) {
+        for (auto& effect : effects) {
+            functor(effect);
+        }
+    }
+
+    std::vector<std::shared_ptr<IEffect>> createWithIds(
+            const std::vector<Descriptor::Identity> ids,
+            const binder_status_t expectStatus = EX_NONE) {
+        std::vector<std::shared_ptr<IEffect>> effects;
+        for (const auto& id : ids) {
+            std::shared_ptr<IEffect> effect;
+            EXPECT_STATUS(expectStatus, mEffectFactory->createEffect(id.uuid, &effect));
+            if (expectStatus == EX_NONE) {
+                EXPECT_NE(effect, nullptr) << " null effect with uuid: " << id.uuid.toString();
+                effects.push_back(std::move(effect));
+            }
+        }
+        return effects;
+    }
+    void destroyEffects(std::vector<std::shared_ptr<IEffect>> effects,
+                        const binder_status_t expectStatus = EX_NONE) {
+        for (const auto& effect : effects) {
+            EXPECT_STATUS(expectStatus, mEffectFactory->destroyEffect(effect));
+        }
+    }
+    void creatAndDestroyIds(const std::vector<Descriptor::Identity> ids) {
+        for (const auto& id : ids) {
+            auto effects = createWithIds({id});
+            ASSERT_NO_FATAL_FAILURE(destroyEffects(effects));
+        }
+    }
+    void connectAndGetFactory() {
+        ASSERT_NO_FATAL_FAILURE(mFactoryHelper->ConnectToFactoryService());
+        mEffectFactory = mFactoryHelper->GetFactory();
+        ASSERT_NE(mEffectFactory, nullptr);
+    }
 };
 
 TEST_P(EffectFactoryTest, SetupAndTearDown) {
@@ -61,165 +120,160 @@ TEST_P(EffectFactoryTest, SetupAndTearDown) {
 }
 
 TEST_P(EffectFactoryTest, CanBeRestarted) {
-    ASSERT_NO_FATAL_FAILURE(mFactory.RestartFactoryService());
+    ASSERT_NO_FATAL_FAILURE(mFactoryHelper->RestartFactoryService());
 }
 
-TEST_P(EffectFactoryTest, QueriedDescriptorList) {
-    std::vector<Descriptor::Identity> descriptors;
-    mFactory.QueryEffects(std::nullopt, std::nullopt, std::nullopt, &descriptors);
-    EXPECT_NE(descriptors.size(), 0UL);
-}
+/**
+ * @brief Check at least support list of effect must be supported by aosp:
+ * https://developer.android.com/reference/android/media/audiofx/AudioEffect
+ */
+TEST_P(EffectFactoryTest, ExpectAllAospEffectTypes) {
+    std::vector<Descriptor::Identity> ids;
+    std::set<AudioUuid> typeUuidSet(
+            {aidl::android::hardware::audio::effect::kBassBoostTypeUUID,
+             aidl::android::hardware::audio::effect::kEqualizerTypeUUID,
+             aidl::android::hardware::audio::effect::kEnvReverbTypeUUID,
+             aidl::android::hardware::audio::effect::kPresetReverbTypeUUID,
+             aidl::android::hardware::audio::effect::kDynamicsProcessingTypeUUID,
+             aidl::android::hardware::audio::effect::kHapticGeneratorTypeUUID,
+             aidl::android::hardware::audio::effect::kVirtualizerTypeUUID});
 
-TEST_P(EffectFactoryTest, DescriptorUUIDNotNull) {
-    std::vector<Descriptor::Identity> descriptors;
-    mFactory.QueryEffects(std::nullopt, std::nullopt, std::nullopt, &descriptors);
-    // TODO: Factory eventually need to return the full list of MUST supported AOSP effects.
-    for (auto& desc : descriptors) {
-        EXPECT_NE(desc.type, EffectNullUuid);
-        EXPECT_NE(desc.uuid, EffectNullUuid);
+    EXPECT_IS_OK(mEffectFactory->queryEffects(std::nullopt, std::nullopt, std::nullopt, &ids));
+    EXPECT_TRUE(ids.size() >= typeUuidSet.size());
+    for (const auto& id : ids) {
+        typeUuidSet.erase(id.type);
     }
+    std::string msg = " missing type UUID:\n";
+    for (const auto& uuid : typeUuidSet) {
+        msg += (uuid.toString() + "\n");
+    }
+    SCOPED_TRACE(msg);
+    EXPECT_EQ(0UL, typeUuidSet.size());
 }
 
-TEST_P(EffectFactoryTest, QueriedDescriptorNotExistType) {
-    std::vector<Descriptor::Identity> descriptors;
-    mFactory.QueryEffects(EffectNullUuid, std::nullopt, std::nullopt, &descriptors);
-    EXPECT_EQ(descriptors.size(), 0UL);
+TEST_P(EffectFactoryTest, QueryNullTypeUuid) {
+    std::vector<Descriptor::Identity> ids;
+    EXPECT_IS_OK(mEffectFactory->queryEffects(kEffectNullUuid, std::nullopt, std::nullopt, &ids));
+    EXPECT_EQ(ids.size(), 0UL);
 }
 
-TEST_P(EffectFactoryTest, QueriedDescriptorNotExistInstance) {
-    std::vector<Descriptor::Identity> descriptors;
-    mFactory.QueryEffects(std::nullopt, EffectNullUuid, std::nullopt, &descriptors);
-    EXPECT_EQ(descriptors.size(), 0UL);
+TEST_P(EffectFactoryTest, QueriedNullImplUuid) {
+    std::vector<Descriptor::Identity> ids;
+    EXPECT_IS_OK(mEffectFactory->queryEffects(std::nullopt, kEffectNullUuid, std::nullopt, &ids));
+    EXPECT_EQ(ids.size(), 0UL);
 }
 
-TEST_P(EffectFactoryTest, CreateAndDestroyOnce) {
-    std::vector<Descriptor::Identity> descriptors;
-    mFactory.QueryEffects(std::nullopt, std::nullopt, std::nullopt, &descriptors);
-    auto numIds = mFactory.GetEffectIds().size();
-    EXPECT_NE(numIds, 0UL);
-
-    auto& effectMap = mFactory.GetEffectMap();
-    EXPECT_EQ(effectMap.size(), 0UL);
-    mFactory.CreateEffects();
-    EXPECT_EQ(effectMap.size(), numIds);
-    mFactory.DestroyEffects();
-    EXPECT_EQ(effectMap.size(), 0UL);
+TEST_P(EffectFactoryTest, QueriedNullProxyUuid) {
+    std::vector<Descriptor::Identity> ids;
+    EXPECT_IS_OK(mEffectFactory->queryEffects(std::nullopt, std::nullopt, kEffectNullUuid, &ids));
+    EXPECT_EQ(ids.size(), 0UL);
 }
 
-TEST_P(EffectFactoryTest, CreateAndDestroyRepeat) {
-    std::vector<Descriptor::Identity> descriptors;
-    mFactory.QueryEffects(std::nullopt, std::nullopt, std::nullopt, &descriptors);
-    auto numIds = mFactory.GetEffectIds().size();
-    EXPECT_NE(numIds, 0UL);
+// create all effects, and then destroy them all together
+TEST_P(EffectFactoryTest, CreateAndDestroyEffects) {
+    std::vector<Descriptor::Identity> ids;
+    EXPECT_IS_OK(mEffectFactory->queryEffects(std::nullopt, std::nullopt, std::nullopt, &ids));
+    EXPECT_NE(ids.size(), 0UL);
 
-    auto& effectMap = mFactory.GetEffectMap();
-    EXPECT_EQ(effectMap.size(), 0UL);
-    mFactory.CreateEffects();
-    EXPECT_EQ(effectMap.size(), numIds);
-    mFactory.DestroyEffects();
-    EXPECT_EQ(effectMap.size(), 0UL);
-
-    // Create and destroy again
-    mFactory.CreateEffects();
-    EXPECT_EQ(effectMap.size(), numIds);
-    mFactory.DestroyEffects();
-    EXPECT_EQ(effectMap.size(), 0UL);
+    std::vector<std::shared_ptr<IEffect>> effects;
+    effects = createWithIds(ids);
+    EXPECT_EQ(ids.size(), effects.size());
+    destroyEffects(effects);
 }
 
 TEST_P(EffectFactoryTest, CreateMultipleInstanceOfSameEffect) {
-    std::vector<Descriptor::Identity> descriptors;
-    mFactory.QueryEffects(std::nullopt, std::nullopt, std::nullopt, &descriptors);
-    auto numIds = mFactory.GetEffectIds().size();
-    EXPECT_NE(numIds, 0UL);
+    std::vector<Descriptor::Identity> ids;
+    EXPECT_IS_OK(mEffectFactory->queryEffects(std::nullopt, std::nullopt, std::nullopt, &ids));
+    EXPECT_NE(ids.size(), 0UL);
 
-    auto& effectMap = mFactory.GetEffectMap();
-    EXPECT_EQ(effectMap.size(), 0UL);
-    mFactory.CreateEffects();
-    EXPECT_EQ(effectMap.size(), numIds);
-    // Create effect instances of same implementation
-    mFactory.CreateEffects();
-    EXPECT_EQ(effectMap.size(), 2 * numIds);
+    std::vector<std::shared_ptr<IEffect>> effects = createWithIds(ids);
+    EXPECT_EQ(ids.size(), effects.size());
+    std::vector<std::shared_ptr<IEffect>> effects2 = createWithIds(ids);
+    EXPECT_EQ(ids.size(), effects2.size());
+    std::vector<std::shared_ptr<IEffect>> effects3 = createWithIds(ids);
+    EXPECT_EQ(ids.size(), effects3.size());
 
-    mFactory.CreateEffects();
-    EXPECT_EQ(effectMap.size(), 3 * numIds);
+    destroyEffects(effects);
+    destroyEffects(effects2);
+    destroyEffects(effects3);
+}
 
-    mFactory.DestroyEffects();
-    EXPECT_EQ(effectMap.size(), 0UL);
+// create and destroy each effect one by one
+TEST_P(EffectFactoryTest, CreateAndDestroyEffectsOneByOne) {
+    std::vector<Descriptor::Identity> ids;
+    EXPECT_IS_OK(mEffectFactory->queryEffects(std::nullopt, std::nullopt, std::nullopt, &ids));
+    EXPECT_NE(ids.size(), 0UL);
+
+    creatAndDestroyIds(ids);
+}
+
+// for each effect: repeat 3 times create and destroy
+TEST_P(EffectFactoryTest, CreateAndDestroyRepeat) {
+    std::vector<Descriptor::Identity> ids;
+    EXPECT_IS_OK(mEffectFactory->queryEffects(std::nullopt, std::nullopt, std::nullopt, &ids));
+    EXPECT_NE(ids.size(), 0UL);
+
+    creatAndDestroyIds(ids);
+    creatAndDestroyIds(ids);
+    creatAndDestroyIds(ids);
 }
 
 // Expect EX_ILLEGAL_ARGUMENT when create with invalid UUID.
 TEST_P(EffectFactoryTest, CreateWithInvalidUuid) {
-    std::vector<std::pair<Descriptor::Identity, binder_status_t>> descriptors;
-    descriptors.push_back(std::make_pair(nullDesc, EX_ILLEGAL_ARGUMENT));
-    descriptors.push_back(std::make_pair(zeroDesc, EX_ILLEGAL_ARGUMENT));
-
-    auto& effectMap = mFactory.GetEffectMap();
-    mFactory.CreateEffectsAndExpect(descriptors);
-    EXPECT_EQ(effectMap.size(), 0UL);
+    std::vector<Descriptor::Identity> ids = {kNullDesc, kZeroDesc};
+    auto effects = createWithIds(ids, EX_ILLEGAL_ARGUMENT);
+    EXPECT_EQ(effects.size(), 0UL);
 }
 
 // Expect EX_ILLEGAL_ARGUMENT when destroy null interface.
 TEST_P(EffectFactoryTest, DestroyWithInvalidInterface) {
     std::shared_ptr<IEffect> spDummyEffect(nullptr);
-
-    mFactory.DestroyEffectAndExpect(spDummyEffect, EX_ILLEGAL_ARGUMENT);
+    destroyEffects({spDummyEffect}, EX_ILLEGAL_ARGUMENT);
 }
 
-TEST_P(EffectFactoryTest, CreateAndRemoveReference) {
-    std::vector<Descriptor::Identity> descriptors;
-    mFactory.QueryEffects(std::nullopt, std::nullopt, std::nullopt, &descriptors);
-    auto numIds = mFactory.GetEffectIds().size();
-    EXPECT_NE(numIds, 0UL);
+// Same descriptor ID should work after service restart.
+TEST_P(EffectFactoryTest, CreateDestroyWithRestart) {
+    std::vector<Descriptor::Identity> ids;
+    EXPECT_IS_OK(mEffectFactory->queryEffects(std::nullopt, std::nullopt, std::nullopt, &ids));
+    EXPECT_NE(ids.size(), 0UL);
+    creatAndDestroyIds(ids);
 
-    auto& effectMap = mFactory.GetEffectMap();
-    EXPECT_EQ(effectMap.size(), 0UL);
-    mFactory.CreateEffects();
-    EXPECT_EQ(effectMap.size(), numIds);
-    // remove all reference
-    mFactory.ClearEffectMap();
-    EXPECT_EQ(effectMap.size(), 0UL);
+    mFactoryHelper->RestartFactoryService();
+
+    connectAndGetFactory();
+    creatAndDestroyIds(ids);
 }
 
-TEST_P(EffectFactoryTest, CreateRemoveReferenceAndCreateDestroy) {
-    std::vector<Descriptor::Identity> descriptors;
-    mFactory.QueryEffects(std::nullopt, std::nullopt, std::nullopt, &descriptors);
-    auto numIds = mFactory.GetEffectIds().size();
-    EXPECT_NE(numIds, 0UL);
+// Effect handle invalid after restart.
+TEST_P(EffectFactoryTest, EffectInvalidAfterRestart) {
+    std::vector<Descriptor::Identity> ids;
+    EXPECT_IS_OK(mEffectFactory->queryEffects(std::nullopt, std::nullopt, std::nullopt, &ids));
+    EXPECT_NE(ids.size(), 0UL);
+    std::vector<std::shared_ptr<IEffect>> effects = createWithIds(ids);
 
-    auto& effectMap = mFactory.GetEffectMap();
-    EXPECT_EQ(effectMap.size(), 0UL);
-    mFactory.CreateEffects();
-    EXPECT_EQ(effectMap.size(), numIds);
-    // remove all reference
-    mFactory.ClearEffectMap();
-    EXPECT_EQ(effectMap.size(), 0UL);
+    ASSERT_NO_FATAL_FAILURE(mFactoryHelper->RestartFactoryService());
 
-    // Create and destroy again
-    mFactory.CreateEffects();
-    EXPECT_EQ(effectMap.size(), numIds);
-    mFactory.DestroyEffects();
-    EXPECT_EQ(effectMap.size(), 0UL);
+    connectAndGetFactory();
+    destroyEffects(effects, EX_ILLEGAL_ARGUMENT);
 }
 
-TEST_P(EffectFactoryTest, CreateRestartAndCreateDestroy) {
-    std::vector<Descriptor::Identity> descriptors;
-    mFactory.QueryEffects(std::nullopt, std::nullopt, std::nullopt, &descriptors);
-    auto numIds = mFactory.GetEffectIds().size();
-    auto& effectMap = mFactory.GetEffectMap();
-    mFactory.CreateEffects();
-    EXPECT_EQ(effectMap.size(), numIds);
-    ASSERT_NO_FATAL_FAILURE(mFactory.RestartFactoryService());
-
-    mFactory.CreateEffects();
-    EXPECT_EQ(effectMap.size(), numIds);
-    mFactory.DestroyEffects();
-    EXPECT_EQ(effectMap.size(), 0UL);
-}
-
+// expect no error with the queryProcessing interface, but don't check number of processing
 TEST_P(EffectFactoryTest, QueryProcess) {
     std::vector<Processing> processing;
-    mFactory.QueryProcessing(std::nullopt, &processing);
-    // TODO: verify the number of process in example implementation after audio_effects.xml migrated
+    EXPECT_IS_OK(mEffectFactory->queryProcessing(std::nullopt, &processing));
+
+    Processing::Type streamType =
+            Processing::Type::make<Processing::Type::streamType>(AudioStreamType::SYSTEM);
+    std::vector<Processing> processingFilteredByStream;
+    EXPECT_IS_OK(mEffectFactory->queryProcessing(streamType, &processingFilteredByStream));
+
+    Processing::Type source =
+            Processing::Type::make<Processing::Type::source>(AudioSource::DEFAULT);
+    std::vector<Processing> processingFilteredBySource;
+    EXPECT_IS_OK(mEffectFactory->queryProcessing(source, &processingFilteredBySource));
+
+    EXPECT_TRUE(processing.size() >= processingFilteredByStream.size());
+    EXPECT_TRUE(processing.size() >= processingFilteredBySource.size());
 }
 
 INSTANTIATE_TEST_SUITE_P(EffectFactoryTest, EffectFactoryTest,

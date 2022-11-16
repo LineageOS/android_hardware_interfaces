@@ -26,19 +26,19 @@
 
 namespace aidl::android::hardware::audio::effect {
 
-class DynamicsProcessingSwContext final : public EffectContext {
+class PresetReverbSwContext final : public EffectContext {
   public:
-    DynamicsProcessingSwContext(int statusDepth, const Parameter::Common& common)
+    PresetReverbSwContext(int statusDepth, const Parameter::Common& common)
         : EffectContext(statusDepth, common) {
         LOG(DEBUG) << __func__;
     }
     // TODO: add specific context here
 };
 
-class DynamicsProcessingSw final : public EffectImpl {
+class PresetReverbSw final : public EffectImpl {
   public:
-    DynamicsProcessingSw() { LOG(DEBUG) << __func__; }
-    ~DynamicsProcessingSw() {
+    PresetReverbSw() { LOG(DEBUG) << __func__; }
+    ~PresetReverbSw() {
         cleanUp();
         LOG(DEBUG) << __func__;
     }
@@ -52,22 +52,22 @@ class DynamicsProcessingSw final : public EffectImpl {
     RetCode releaseContext() override;
 
   private:
-    std::shared_ptr<DynamicsProcessingSwContext> mContext;
+    std::shared_ptr<PresetReverbSwContext> mContext;
     /* capabilities */
-    const DynamicsProcessing::Capability kCapability;
+    const Reverb::Capability kCapability;
     /* Effect descriptor */
     const Descriptor kDescriptor = {
-            .common = {.id = {.type = kDynamicsProcessingTypeUUID,
-                              .uuid = kDynamicsProcessingSwImplUUID,
+            .common = {.id = {.type = kPresetReverbTypeUUID,
+                              .uuid = kPresetReverbSwImplUUID,
                               .proxy = std::nullopt},
                        .flags = {.type = Flags::Type::INSERT,
                                  .insert = Flags::Insert::FIRST,
                                  .volume = Flags::Volume::CTRL},
-                       .name = "DynamicsProcessingSw",
+                       .name = "PresetReverbSw",
                        .implementor = "The Android Open Source Project"},
-            .capability = Capability::make<Capability::dynamicsProcessing>(kCapability)};
+            .capability = Capability::make<Capability::reverb>(kCapability)};
 
     /* parameters */
-    DynamicsProcessing mSpecificParam;
+    Reverb mSpecificParam;
 };
 }  // namespace aidl::android::hardware::audio::effect
