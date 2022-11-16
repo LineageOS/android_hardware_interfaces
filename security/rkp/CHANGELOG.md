@@ -36,4 +36,5 @@ This document provides an exact description of which changes have occurred in th
     * the chain of signing, MACing, and encryption operations has been replaced with a single
       COSE_Sign1 object.
     * CertificateType has been added to identify the type of certificate being requested.
-
+* RpcHardwareInfo
+  * `supportedNumKeysInCsr` added to report the maximum number of keys supported in a CSR.
