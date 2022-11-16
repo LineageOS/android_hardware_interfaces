@@ -399,14 +399,6 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
-        <name>android.hardware.neuralnetworks</name>
-        <version>1.0-3</version>
-        <interface>
-            <name>IDevice</name>
-            <regex-instance>.*</regex-instance>
-        </interface>
-    </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.neuralnetworks</name>
         <version>1-4</version>
