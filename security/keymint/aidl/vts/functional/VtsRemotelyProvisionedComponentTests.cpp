@@ -251,6 +251,19 @@ TEST_P(GetHardwareInfoTests, uniqueId) {
     EXPECT_LE(hwInfo.uniqueId->size(), 32);
 }
 
+/**
+ * Verify implementation supports at least MIN_SUPPORTED_NUM_KEYS_IN_CSR keys in a CSR.
+ */
+TEST_P(GetHardwareInfoTests, supportedNumKeysInCsr) {
+    if (rpcHardwareInfo.versionNumber < VERSION_WITHOUT_TEST_MODE) {
+        return;
+    }
+
+    RpcHardwareInfo hwInfo;
+    ASSERT_TRUE(provisionable_->getHardwareInfo(&hwInfo).isOk());
+    ASSERT_GE(hwInfo.supportedNumKeysInCsr, RpcHardwareInfo::MIN_SUPPORTED_NUM_KEYS_IN_CSR);
+}
+
 using GenerateKeyTests = VtsRemotelyProvisionedComponentTests;
 
 INSTANTIATE_REM_PROV_AIDL_TEST(GenerateKeyTests);
@@ -728,8 +741,7 @@ TEST_P(CertificateRequestV2Test, NonEmptyRequestReproducible) {
  * Generate a non-empty certificate request with multiple keys.
  */
 TEST_P(CertificateRequestV2Test, NonEmptyRequestMultipleKeys) {
-    // TODO(b/254137722): define a minimum number of keys that must be supported.
-    generateKeys(false /* testMode */, 5 /* numKeys */);
+    generateKeys(false /* testMode */, rpcHardwareInfo.supportedNumKeysInCsr /* numKeys */);
 
     bytevec csr;
 

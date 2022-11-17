@@ -2239,6 +2239,52 @@
             ]
         },
         {
+            "property": "VehicleProperty::STEERING_WHEEL_HEIGHT_POS",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": 0,
+                    "minInt32Value": 0,
+                    "maxInt32Value": 10
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::STEERING_WHEEL_HEIGHT_MOVE",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": 0,
+                    "minInt32Value": -2,
+                    "maxInt32Value": 2
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::STEERING_WHEEL_THEFT_LOCK_ENABLED",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::STEERING_WHEEL_LOCKED",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            }
+        },
+        {
             "property": "VehicleProperty::WHEEL_TICK",
             "defaultValue": {
                 "int64Values": [

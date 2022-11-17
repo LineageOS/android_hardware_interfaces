@@ -41,9 +41,18 @@ interface IRadioModem {
   oneway void getModemActivityInfo(in int serial);
   oneway void getModemStackStatus(in int serial);
   oneway void getRadioCapability(in int serial);
+  /**
+   * @deprecated NV APIs are deprecated starting from Android U.
+   */
   oneway void nvReadItem(in int serial, in android.hardware.radio.modem.NvItem itemId);
   oneway void nvResetConfig(in int serial, in android.hardware.radio.modem.ResetNvType resetType);
+  /**
+   * @deprecated NV APIs are deprecated starting from Android U.
+   */
   oneway void nvWriteCdmaPrl(in int serial, in byte[] prl);
+  /**
+   * @deprecated NV APIs are deprecated starting from Android U.
+   */
   oneway void nvWriteItem(in int serial, in android.hardware.radio.modem.NvWriteItem item);
   oneway void requestShutdown(in int serial);
   oneway void responseAcknowledgement();

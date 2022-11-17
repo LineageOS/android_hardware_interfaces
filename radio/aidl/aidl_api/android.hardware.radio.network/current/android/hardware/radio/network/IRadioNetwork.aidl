@@ -41,6 +41,9 @@ interface IRadioNetwork {
   oneway void getCdmaRoamingPreference(in int serial);
   oneway void getCellInfoList(in int serial);
   oneway void getDataRegistrationState(in int serial);
+  /**
+   * @deprecated Deprecated starting from Android U.
+   */
   oneway void getImsRegistrationState(in int serial);
   oneway void getNetworkSelectionMode(in int serial);
   oneway void getOperator(in int serial);
@@ -74,4 +77,5 @@ interface IRadioNetwork {
   oneway void triggerEmergencyNetworkScan(int serial, in android.hardware.radio.network.EmergencyNetworkScanTrigger request);
   oneway void cancelEmergencyNetworkScan(int serial, boolean resetScan);
   oneway void exitEmergencyMode(in int serial);
+  oneway void setNullCipherAndIntegrityEnabled(in int serial, in boolean enabled);
 }
