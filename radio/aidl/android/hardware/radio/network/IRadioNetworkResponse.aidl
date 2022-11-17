@@ -624,4 +624,34 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:MODEM_ERR
      */
     void setNullCipherAndIntegrityEnabledResponse(in RadioResponseInfo info);
+
+    /**
+     * Response of isN1ModeEnabled.
+     * This is an optional API.
+     *
+     * @param info Response info struct containing response type, serial no. and error.
+     * @param isEnabled Indicates whether N1 mode is enabled or not.
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     */
+    void isN1ModeEnabledResponse(in RadioResponseInfo info, boolean isEnabled);
+
+    /**
+     * Response of setN1ModeEnabled.
+     * This is an optional API.
+     *
+     * @param info Response info struct containing response type, serial no. and error.
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:INVALID_STATE
+     */
+    void setN1ModeEnabledResponse(in RadioResponseInfo info);
 }

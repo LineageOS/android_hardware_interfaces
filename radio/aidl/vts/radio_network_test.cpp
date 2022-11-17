@@ -1914,3 +1914,50 @@ TEST_P(RadioNetworkTest, exitEmergencyMode) {
              RadioError::MODEM_ERR}));
     LOG(DEBUG) << "exitEmergencyMode finished";
 }
+
+/*
+ * Test IRadioNetwork.setN1ModeEnabled() for the response returned.
+ */
+TEST_P(RadioNetworkTest, setN1ModeEnabled) {
+    serial = GetRandomSerialNumber();
+
+    ndk::ScopedAStatus res =
+            radio_network->setN1ModeEnabled(serial, false);
+    ASSERT_OK(res);
+
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_network->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_network->rspInfo.serial);
+    if (getRadioHalCapabilities()) {
+        ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error,
+                                     {RadioError::REQUEST_NOT_SUPPORTED}));
+    } else {
+        ASSERT_TRUE(CheckAnyOfErrors(
+                radioRsp_network->rspInfo.error,
+                {RadioError::RADIO_NOT_AVAILABLE, RadioError::INTERNAL_ERR,
+                 RadioError::INVALID_STATE, RadioError::REQUEST_NOT_SUPPORTED, RadioError::NONE}));
+    }
+}
+
+/*
+ * Test IRadioNetwork.isN1ModeEnabled() for the response returned.
+ */
+TEST_P(RadioNetworkTest, isN1ModeEnabled) {
+    serial = GetRandomSerialNumber();
+
+    ndk::ScopedAStatus res = radio_network->isN1ModeEnabled(serial);
+    ASSERT_OK(res);
+
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_network->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_network->rspInfo.serial);
+    if (getRadioHalCapabilities()) {
+        ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error,
+                                     {RadioError::REQUEST_NOT_SUPPORTED}));
+    } else {
+        ASSERT_TRUE(CheckAnyOfErrors(
+                radioRsp_network->rspInfo.error,
+                {RadioError::RADIO_NOT_AVAILABLE, RadioError::INTERNAL_ERR,
+                 RadioError::REQUEST_NOT_SUPPORTED, RadioError::NONE}));
+    }
+}
