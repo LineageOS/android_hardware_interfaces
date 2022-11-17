@@ -27,19 +27,6 @@ android_app_certificate {
     certificate: "com.android.hardware.usb",
 }
 
-genrule {
-    name: "com.android.hardware.usb.rc-gen",
-    srcs: [":android.hardware.usb@1.0-service.rc"],
-    out: ["com.android.hardware.usb.rc"],
-    cmd: "sed -E 's/\\/vendor/\\/apex\\/com.android.hardware.usb/' $(in) > $(out)",
-}
-
-prebuilt_etc {
-    name: "com.android.hardware.usb.rc",
-    src: ":com.android.hardware.usb.rc-gen",
-    installable: false,
-}
-
 apex {
     name: "com.android.hardware.usb",
     manifest: "manifest.json",
@@ -49,11 +36,25 @@ apex {
     updatable: false,
     soc_specific: true,
     use_vndk_as_stable: true,
-    binaries: ["android.hardware.usb@1.0-service"],
+    binaries: ["android.hardware.usb-service.example"],
     prebuilts: [
-        "com.android.hardware.usb.rc",
+        "com.android.hardware.usb.rc", // init .rc
         "android.hardware.usb.accessory.prebuilt.xml",
         "android.hardware.usb.host.prebuilt.xml",
     ],
-    vintf_fragments: [":android.hardware.usb@1.0-service.xml"],
+    vintf_fragments: [":android.hardware.usb-service.example.xml"],
+}
+
+// Replace the binary path from /vendor/bin to /apex/{name}/bin in the init .rc file
+genrule {
+    name: "com.android.hardware.usb.rc-gen",
+    srcs: [":android.hardware.usb-service.example.rc"],
+    out: ["com.android.hardware.usb.rc"],
+    cmd: "sed -E 's/\\/vendor/\\/apex\\/com.android.hardware.usb/' $(in) > $(out)",
+}
+
+prebuilt_etc {
+    name: "com.android.hardware.usb.rc",
+    src: ":com.android.hardware.usb.rc-gen",
+    installable: false,
 }
