@@ -105,6 +105,7 @@ const std::unordered_map<std::string, int> CONSTANTS_BY_NAME = {
          FAN_DIRECTION_FLOOR | FAN_DIRECTION_DEFROST | FAN_DIRECTION_FACE},
         {"FUEL_DOOR_REAR_LEFT", FUEL_DOOR_REAR_LEFT},
         {"LIGHT_STATE_ON", LIGHT_STATE_ON},
+        {"LIGHT_STATE_OFF", LIGHT_STATE_OFF},
         {"LIGHT_SWITCH_OFF", LIGHT_SWITCH_OFF},
         {"LIGHT_SWITCH_AUTO", LIGHT_SWITCH_AUTO},
         {"MIRROR_DRIVER_LEFT_RIGHT",
@@ -460,6 +461,13 @@ void JsonConfigParser::parseAreas(const Json::Value& parentJsonNode, const std::
                                     &areaConfig.minFloatValue, errors);
         tryParseJsonValueToVariable(jsonAreaConfig, "maxFloatValue", /*optional=*/true,
                                     &areaConfig.maxFloatValue, errors);
+
+        std::vector<int64_t> supportedEnumValues;
+        tryParseJsonArrayToVariable(jsonAreaConfig, "supportedEnumValues", /*optional=*/true,
+                                    &supportedEnumValues, errors);
+        if (!supportedEnumValues.empty()) {
+            areaConfig.supportedEnumValues = std::move(supportedEnumValues);
+        }
         config->config.areaConfigs.push_back(std::move(areaConfig));
 
         RawPropValues areaValue = {};
