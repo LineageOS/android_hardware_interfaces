@@ -1501,7 +1501,7 @@ TEST_P(RadioNetworkTest, getDataRegistrationState) {
     RadioTechnology rat = radioRsp_network->dataRegResp.rat;
 
     // TODO: add logic for cdmaInfo
-    if (rat == RadioTechnology::LTE || rat == RadioTechnology::LTE_CA) {
+    if (rat == RadioTechnology::LTE) {
         ASSERT_EQ(info.getTag(), AccessTechnologySpecificInfo::eutranInfo);
     } else if (rat == RadioTechnology::NR) {
         ASSERT_TRUE(info.getTag() == AccessTechnologySpecificInfo::ngranNrVopsInfo);
