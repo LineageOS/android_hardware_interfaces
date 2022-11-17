@@ -57,7 +57,8 @@ parcelable StreamDescriptor {
   }
   @FixedSize @VintfStability
   union Command {
-    int hal_reserved_exit;
+    int halReservedExit;
+    android.media.audio.common.Void getStatus;
     android.media.audio.common.Void start;
     int burst;
     android.media.audio.common.Void drain;

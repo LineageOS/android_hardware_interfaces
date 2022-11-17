@@ -96,23 +96,36 @@ void StreamWorkerCommonLogic::populateReply(StreamDescriptor::Reply* reply,
     }
 }
 
+void StreamWorkerCommonLogic::populateReplyWrongState(
+        StreamDescriptor::Reply* reply, const StreamDescriptor::Command& command) const {
+    LOG(WARNING) << "command '" << toString(command.getTag())
+                 << "' can not be handled in the state " << toString(mState);
+    reply->status = STATUS_INVALID_OPERATION;
+}
+
 const std::string StreamInWorkerLogic::kThreadName = "reader";
 
 StreamInWorkerLogic::Status StreamInWorkerLogic::cycle() {
+    // Note: for input streams, draining is driven by the client, thus
+    // "empty buffer" condition can only happen while handling the 'burst'
+    // command. Thus, unlike for output streams, it does not make sense to
+    // delay the 'DRAINING' state here by 'mTransientStateDelayMs'.
+    // TODO: Add a delay for transitions of async operations when/if they added.
+
     StreamDescriptor::Command command{};
     if (!mCommandMQ->readBlocking(&command, 1)) {
         LOG(ERROR) << __func__ << ": reading of command from MQ failed";
         mState = StreamDescriptor::State::ERROR;
         return Status::ABORT;
     }
+    LOG(DEBUG) << __func__ << ": received command " << command.toString() << " in " << kThreadName;
     StreamDescriptor::Reply reply{};
     reply.status = STATUS_BAD_VALUE;
     using Tag = StreamDescriptor::Command::Tag;
     switch (command.getTag()) {
-        case Tag::hal_reserved_exit:
-            if (const int32_t cookie = command.get<Tag::hal_reserved_exit>();
+        case Tag::halReservedExit:
+            if (const int32_t cookie = command.get<Tag::halReservedExit>();
                 cookie == mInternalCommandCookie) {
-                LOG(DEBUG) << __func__ << ": received EXIT command";
                 setClosed();
                 // This is an internal command, no need to reply.
                 return Status::EXIT;
@@ -120,8 +133,10 @@ StreamInWorkerLogic::Status StreamInWorkerLogic::cycle() {
                 LOG(WARNING) << __func__ << ": EXIT command has a bad cookie: " << cookie;
             }
             break;
+        case Tag::getStatus:
+            populateReply(&reply, mIsConnected);
+            break;
         case Tag::start:
-            LOG(DEBUG) << __func__ << ": received START read command";
             if (mState == StreamDescriptor::State::STANDBY ||
                 mState == StreamDescriptor::State::DRAINING) {
                 populateReply(&reply, mIsConnected);
@@ -129,15 +144,13 @@ StreamInWorkerLogic::Status StreamInWorkerLogic::cycle() {
                                  ? StreamDescriptor::State::IDLE
                                  : StreamDescriptor::State::ACTIVE;
             } else {
-                LOG(WARNING) << __func__ << ": START command can not be handled in the state "
-                             << toString(mState);
-                reply.status = STATUS_INVALID_OPERATION;
+                populateReplyWrongState(&reply, command);
             }
             break;
         case Tag::burst:
             if (const int32_t fmqByteCount = command.get<Tag::burst>(); fmqByteCount >= 0) {
-                LOG(DEBUG) << __func__ << ": received BURST read command for " << fmqByteCount
-                           << " bytes";
+                LOG(DEBUG) << __func__ << ": '" << toString(command.getTag()) << "' command for "
+                           << fmqByteCount << " bytes";
                 if (mState == StreamDescriptor::State::IDLE ||
                     mState == StreamDescriptor::State::ACTIVE ||
                     mState == StreamDescriptor::State::PAUSED ||
@@ -151,69 +164,56 @@ StreamInWorkerLogic::Status StreamInWorkerLogic::cycle() {
                     } else if (mState == StreamDescriptor::State::DRAINING) {
                         // To simplify the reference code, we assume that the read operation
                         // has consumed all the data remaining in the hardware buffer.
-                        // TODO: Provide parametrization on the duration of draining to test
-                        //       handling of commands during the 'DRAINING' state.
+                        // In a real implementation, here we would either remain in
+                        // the 'DRAINING' state, or transfer to 'STANDBY' depending on the
+                        // buffer state.
                         mState = StreamDescriptor::State::STANDBY;
                     }
                 } else {
-                    LOG(WARNING) << __func__ << ": BURST command can not be handled in the state "
-                                 << toString(mState);
-                    reply.status = STATUS_INVALID_OPERATION;
+                    populateReplyWrongState(&reply, command);
                 }
             } else {
                 LOG(WARNING) << __func__ << ": invalid burst byte count: " << fmqByteCount;
             }
             break;
         case Tag::drain:
-            LOG(DEBUG) << __func__ << ": received DRAIN read command";
             if (mState == StreamDescriptor::State::ACTIVE) {
                 usleep(1000);  // Simulate a blocking call into the driver.
                 populateReply(&reply, mIsConnected);
                 // Can switch the state to ERROR if a driver error occurs.
                 mState = StreamDescriptor::State::DRAINING;
             } else {
-                LOG(WARNING) << __func__ << ": DRAIN command can not be handled in the state "
-                             << toString(mState);
-                reply.status = STATUS_INVALID_OPERATION;
+                populateReplyWrongState(&reply, command);
             }
             break;
         case Tag::standby:
-            LOG(DEBUG) << __func__ << ": received STANDBY read command";
             if (mState == StreamDescriptor::State::IDLE) {
                 usleep(1000);  // Simulate a blocking call into the driver.
                 populateReply(&reply, mIsConnected);
                 // Can switch the state to ERROR if a driver error occurs.
                 mState = StreamDescriptor::State::STANDBY;
             } else {
-                LOG(WARNING) << __func__ << ": FLUSH command can not be handled in the state "
-                             << toString(mState);
-                reply.status = STATUS_INVALID_OPERATION;
+                populateReplyWrongState(&reply, command);
             }
             break;
         case Tag::pause:
-            LOG(DEBUG) << __func__ << ": received PAUSE read command";
             if (mState == StreamDescriptor::State::ACTIVE) {
                 usleep(1000);  // Simulate a blocking call into the driver.
                 populateReply(&reply, mIsConnected);
                 // Can switch the state to ERROR if a driver error occurs.
                 mState = StreamDescriptor::State::PAUSED;
             } else {
-                LOG(WARNING) << __func__ << ": PAUSE command can not be handled in the state "
-                             << toString(mState);
-                reply.status = STATUS_INVALID_OPERATION;
+                populateReplyWrongState(&reply, command);
             }
             break;
         case Tag::flush:
-            LOG(DEBUG) << __func__ << ": received FLUSH read command";
             if (mState == StreamDescriptor::State::PAUSED) {
                 usleep(1000);  // Simulate a blocking call into the driver.
                 populateReply(&reply, mIsConnected);
                 // Can switch the state to ERROR if a driver error occurs.
                 mState = StreamDescriptor::State::STANDBY;
             } else {
-                LOG(WARNING) << __func__ << ": FLUSH command can not be handled in the state "
-                             << toString(mState);
-                reply.status = STATUS_INVALID_OPERATION;
+                populateReplyWrongState(&reply, command);
             }
             break;
     }
@@ -261,20 +261,32 @@ bool StreamInWorkerLogic::read(size_t clientSize, StreamDescriptor::Reply* reply
 const std::string StreamOutWorkerLogic::kThreadName = "writer";
 
 StreamOutWorkerLogic::Status StreamOutWorkerLogic::cycle() {
+    if (mState == StreamDescriptor::State::DRAINING) {
+        if (auto stateDurationMs = std::chrono::duration_cast<std::chrono::milliseconds>(
+                    std::chrono::steady_clock::now() - mTransientStateStart);
+            stateDurationMs >= mTransientStateDelayMs) {
+            mState = StreamDescriptor::State::IDLE;
+            if (mTransientStateDelayMs.count() != 0) {
+                LOG(DEBUG) << __func__ << ": switched to state " << toString(mState)
+                           << " after a timeout";
+            }
+        }
+    }
+
     StreamDescriptor::Command command{};
     if (!mCommandMQ->readBlocking(&command, 1)) {
         LOG(ERROR) << __func__ << ": reading of command from MQ failed";
         mState = StreamDescriptor::State::ERROR;
         return Status::ABORT;
     }
+    LOG(DEBUG) << __func__ << ": received command " << command.toString() << " in " << kThreadName;
     StreamDescriptor::Reply reply{};
     reply.status = STATUS_BAD_VALUE;
     using Tag = StreamDescriptor::Command::Tag;
     switch (command.getTag()) {
-        case Tag::hal_reserved_exit:
-            if (const int32_t cookie = command.get<Tag::hal_reserved_exit>();
+        case Tag::halReservedExit:
+            if (const int32_t cookie = command.get<Tag::halReservedExit>();
                 cookie == mInternalCommandCookie) {
-                LOG(DEBUG) << __func__ << ": received EXIT command";
                 setClosed();
                 // This is an internal command, no need to reply.
                 return Status::EXIT;
@@ -282,31 +294,31 @@ StreamOutWorkerLogic::Status StreamOutWorkerLogic::cycle() {
                 LOG(WARNING) << __func__ << ": EXIT command has a bad cookie: " << cookie;
             }
             break;
+        case Tag::getStatus:
+            populateReply(&reply, mIsConnected);
+            break;
         case Tag::start:
-            LOG(DEBUG) << __func__ << ": received START write command";
             switch (mState) {
                 case StreamDescriptor::State::STANDBY:
                     mState = StreamDescriptor::State::IDLE;
+                    populateReply(&reply, mIsConnected);
                     break;
                 case StreamDescriptor::State::PAUSED:
                     mState = StreamDescriptor::State::ACTIVE;
+                    populateReply(&reply, mIsConnected);
                     break;
                 case StreamDescriptor::State::DRAIN_PAUSED:
-                    mState = StreamDescriptor::State::PAUSED;
+                    switchToTransientState(StreamDescriptor::State::DRAINING);
+                    populateReply(&reply, mIsConnected);
                     break;
                 default:
-                    LOG(WARNING) << __func__ << ": START command can not be handled in the state "
-                                 << toString(mState);
-                    reply.status = STATUS_INVALID_OPERATION;
-            }
-            if (reply.status != STATUS_INVALID_OPERATION) {
-                populateReply(&reply, mIsConnected);
+                    populateReplyWrongState(&reply, command);
             }
             break;
         case Tag::burst:
             if (const int32_t fmqByteCount = command.get<Tag::burst>(); fmqByteCount >= 0) {
-                LOG(DEBUG) << __func__ << ": received BURST write command for " << fmqByteCount
-                           << " bytes";
+                LOG(DEBUG) << __func__ << ": '" << toString(command.getTag()) << "' command for "
+                           << fmqByteCount << " bytes";
                 if (mState !=
                     StreamDescriptor::State::ERROR) {  // BURST can be handled in all valid states
                     if (!write(fmqByteCount, &reply)) {
@@ -320,47 +332,33 @@ StreamOutWorkerLogic::Status StreamOutWorkerLogic::cycle() {
                         mState = StreamDescriptor::State::ACTIVE;
                     }  // When in 'ACTIVE' and 'PAUSED' do not need to change the state.
                 } else {
-                    LOG(WARNING) << __func__ << ": BURST command can not be handled in the state "
-                                 << toString(mState);
-                    reply.status = STATUS_INVALID_OPERATION;
+                    populateReplyWrongState(&reply, command);
                 }
             } else {
                 LOG(WARNING) << __func__ << ": invalid burst byte count: " << fmqByteCount;
             }
             break;
         case Tag::drain:
-            LOG(DEBUG) << __func__ << ": received DRAIN write command";
             if (mState == StreamDescriptor::State::ACTIVE) {
                 usleep(1000);  // Simulate a blocking call into the driver.
                 populateReply(&reply, mIsConnected);
                 // Can switch the state to ERROR if a driver error occurs.
-                mState = StreamDescriptor::State::IDLE;
-                // Since there is no actual hardware that would be draining the buffer,
-                // in order to simplify the reference code, we assume that draining
-                // happens instantly, thus skipping the 'DRAINING' state.
-                // TODO: Provide parametrization on the duration of draining to test
-                //       handling of commands during the 'DRAINING' state.
+                switchToTransientState(StreamDescriptor::State::DRAINING);
             } else {
-                LOG(WARNING) << __func__ << ": DRAIN command can not be handled in the state "
-                             << toString(mState);
-                reply.status = STATUS_INVALID_OPERATION;
+                populateReplyWrongState(&reply, command);
             }
             break;
         case Tag::standby:
-            LOG(DEBUG) << __func__ << ": received STANDBY write command";
             if (mState == StreamDescriptor::State::IDLE) {
                 usleep(1000);  // Simulate a blocking call into the driver.
                 populateReply(&reply, mIsConnected);
                 // Can switch the state to ERROR if a driver error occurs.
                 mState = StreamDescriptor::State::STANDBY;
             } else {
-                LOG(WARNING) << __func__ << ": STANDBY command can not be handled in the state "
-                             << toString(mState);
-                reply.status = STATUS_INVALID_OPERATION;
+                populateReplyWrongState(&reply, command);
             }
             break;
         case Tag::pause:
-            LOG(DEBUG) << __func__ << ": received PAUSE write command";
             if (mState == StreamDescriptor::State::ACTIVE ||
                 mState == StreamDescriptor::State::DRAINING) {
                 populateReply(&reply, mIsConnected);
@@ -368,21 +366,16 @@ StreamOutWorkerLogic::Status StreamOutWorkerLogic::cycle() {
                                  ? StreamDescriptor::State::PAUSED
                                  : StreamDescriptor::State::DRAIN_PAUSED;
             } else {
-                LOG(WARNING) << __func__ << ": PAUSE command can not be handled in the state "
-                             << toString(mState);
-                reply.status = STATUS_INVALID_OPERATION;
+                populateReplyWrongState(&reply, command);
             }
             break;
         case Tag::flush:
-            LOG(DEBUG) << __func__ << ": received FLUSH write command";
             if (mState == StreamDescriptor::State::PAUSED ||
                 mState == StreamDescriptor::State::DRAIN_PAUSED) {
                 populateReply(&reply, mIsConnected);
                 mState = StreamDescriptor::State::IDLE;
             } else {
-                LOG(WARNING) << __func__ << ": FLUSH command can not be handled in the state "
-                             << toString(mState);
-                reply.status = STATUS_INVALID_OPERATION;
+                populateReplyWrongState(&reply, command);
             }
             break;
     }
@@ -450,9 +443,8 @@ template <class Metadata, class StreamWorker>
 void StreamCommon<Metadata, StreamWorker>::stopWorker() {
     if (auto commandMQ = mContext.getCommandMQ(); commandMQ != nullptr) {
         LOG(DEBUG) << __func__ << ": asking the worker to exit...";
-        auto cmd =
-                StreamDescriptor::Command::make<StreamDescriptor::Command::Tag::hal_reserved_exit>(
-                        mContext.getInternalCommandCookie());
+        auto cmd = StreamDescriptor::Command::make<StreamDescriptor::Command::Tag::halReservedExit>(
+                mContext.getInternalCommandCookie());
         // Note: never call 'pause' and 'resume' methods of StreamWorker
         // in the HAL implementation. These methods are to be used by
         // the client side only. Preventing the worker loop from running

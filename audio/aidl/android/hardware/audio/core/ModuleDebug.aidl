@@ -35,4 +35,13 @@ parcelable ModuleDebug {
      *    profiles.
      */
     boolean simulateDeviceConnections;
+    /**
+     * Must be non-negative. When set to non-zero, HAL module must delay
+     * transition from "transient" stream states (see StreamDescriptor.aidl)
+     * by the specified amount of milliseconds. The purpose of this delay
+     * is to allow VTS to test sending of stream commands while the stream is
+     * in a transient state. The delay must apply to newly created streams,
+     * it is not required to apply the delay to already opened streams.
+     */
+    int streamTransientStateDelayMs;
 }

@@ -17,6 +17,7 @@
 #pragma once
 
 #include <atomic>
+#include <chrono>
 #include <cstdlib>
 #include <map>
 #include <memory>
@@ -59,24 +60,27 @@ class StreamContext {
 
     StreamContext() = default;
     StreamContext(std::unique_ptr<CommandMQ> commandMQ, std::unique_ptr<ReplyMQ> replyMQ,
-                  size_t frameSize, std::unique_ptr<DataMQ> dataMQ)
+                  size_t frameSize, std::unique_ptr<DataMQ> dataMQ, int transientStateDelayMs)
         : mCommandMQ(std::move(commandMQ)),
           mInternalCommandCookie(std::rand()),
           mReplyMQ(std::move(replyMQ)),
           mFrameSize(frameSize),
-          mDataMQ(std::move(dataMQ)) {}
+          mDataMQ(std::move(dataMQ)),
+          mTransientStateDelayMs(transientStateDelayMs) {}
     StreamContext(StreamContext&& other)
         : mCommandMQ(std::move(other.mCommandMQ)),
           mInternalCommandCookie(other.mInternalCommandCookie),
           mReplyMQ(std::move(other.mReplyMQ)),
           mFrameSize(other.mFrameSize),
-          mDataMQ(std::move(other.mDataMQ)) {}
+          mDataMQ(std::move(other.mDataMQ)),
+          mTransientStateDelayMs(other.mTransientStateDelayMs) {}
     StreamContext& operator=(StreamContext&& other) {
         mCommandMQ = std::move(other.mCommandMQ);
         mInternalCommandCookie = other.mInternalCommandCookie;
         mReplyMQ = std::move(other.mReplyMQ);
         mFrameSize = other.mFrameSize;
         mDataMQ = std::move(other.mDataMQ);
+        mTransientStateDelayMs = other.mTransientStateDelayMs;
         return *this;
     }
 
@@ -86,6 +90,7 @@ class StreamContext {
     size_t getFrameSize() const { return mFrameSize; }
     int getInternalCommandCookie() const { return mInternalCommandCookie; }
     ReplyMQ* getReplyMQ() const { return mReplyMQ.get(); }
+    int getTransientStateDelayMs() const { return mTransientStateDelayMs; }
     bool isValid() const;
     void reset();
 
@@ -95,6 +100,7 @@ class StreamContext {
     std::unique_ptr<ReplyMQ> mReplyMQ;
     size_t mFrameSize;
     std::unique_ptr<DataMQ> mDataMQ;
+    int mTransientStateDelayMs;
 };
 
 class StreamWorkerCommonLogic : public ::android::hardware::audio::common::StreamLogic {
@@ -111,9 +117,16 @@ class StreamWorkerCommonLogic : public ::android::hardware::audio::common::Strea
           mFrameSize(context.getFrameSize()),
           mCommandMQ(context.getCommandMQ()),
           mReplyMQ(context.getReplyMQ()),
-          mDataMQ(context.getDataMQ()) {}
+          mDataMQ(context.getDataMQ()),
+          mTransientStateDelayMs(context.getTransientStateDelayMs()) {}
     std::string init() override;
     void populateReply(StreamDescriptor::Reply* reply, bool isConnected) const;
+    void populateReplyWrongState(StreamDescriptor::Reply* reply,
+                                 const StreamDescriptor::Command& command) const;
+    void switchToTransientState(StreamDescriptor::State state) {
+        mState = state;
+        mTransientStateStart = std::chrono::steady_clock::now();
+    }
 
     // Atomic fields are used both by the main and worker threads.
     std::atomic<bool> mIsConnected = false;
@@ -125,6 +138,8 @@ class StreamWorkerCommonLogic : public ::android::hardware::audio::common::Strea
     StreamContext::CommandMQ* mCommandMQ;
     StreamContext::ReplyMQ* mReplyMQ;
     StreamContext::DataMQ* mDataMQ;
+    const std::chrono::duration<int, std::milli> mTransientStateDelayMs;
+    std::chrono::time_point<std::chrono::steady_clock> mTransientStateStart;
     // We use an array and the "size" field instead of a vector to be able to detect
     // memory allocation issues.
     std::unique_ptr<int8_t[]> mDataBuffer;

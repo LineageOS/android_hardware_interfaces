@@ -53,9 +53,13 @@ interface IModule {
      * the HAL module behavior that would otherwise require human intervention.
      *
      * The HAL module must throw an error if there is an attempt to change
-     * the debug behavior for the aspect which is currently in use.
+     * the debug behavior for the aspect which is currently in use, or when
+     * the value of any of the debug flags is invalid. See 'ModuleDebug' for
+     * the full list of constraints.
      *
      * @param debug The debug options.
+     * @throws EX_ILLEGAL_ARGUMENT If some of the configuration parameters are
+     *                             invalid.
      * @throws EX_ILLEGAL_STATE If the flag(s) being changed affect functionality
      *                          which is currently in use.
      */

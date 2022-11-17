@@ -84,13 +84,13 @@ import android.media.audio.common.Void;
  *     are different.
  *
  * State machines of both input and output streams start from the 'STANDBY'
- * state.  Transitions between states happen naturally with changes in the
+ * state. Transitions between states happen naturally with changes in the
  * states of the model elements. For simplicity, we restrict the change to one
  * element only, for example, in the 'STANDBY' state, either the producer or the
  * consumer can become active, but not both at the same time. States 'STANDBY',
  * 'IDLE', 'READY', and '*PAUSED' are "stable"—they require an external event,
  * whereas a change from the 'DRAINING' state can happen with time as the buffer
- * gets empty.
+ * gets empty, thus it's a "transient" state.
  *
  * The state machine for input streams is defined in the `stream-in-sm.gv` file,
  * for output streams—in the `stream-out-sm.gv` file. State machines define how
@@ -198,7 +198,14 @@ parcelable StreamDescriptor {
          * implementation must pass a random cookie as the command argument,
          * which is only known to the implementation.
          */
-        int hal_reserved_exit;
+        int halReservedExit;
+        /**
+         * Retrieve the current state of the stream. This command must be
+         * processed by the stream in any state. The stream must provide current
+         * positions, counters, and its state in the reply. This command must be
+         * handled by the HAL module without any observable side effects.
+         */
+        Void getStatus;
         /**
          * See the state machines on the applicability of this command to
          * different states.
@@ -215,15 +222,14 @@ parcelable StreamDescriptor {
          *    read from the hardware into the 'audio.fmq' queue.
          *
          * In both cases it is allowed for this field to contain any
-         * non-negative number. The value 0 can be used if the client only needs
-         * to retrieve current positions and latency. Any sufficiently big value
-         * which exceeds the size of the queue's area which is currently
-         * available for reading or writing by the HAL module must be trimmed by
-         * the HAL module to the available size. Note that the HAL module is
-         * allowed to consume or provide less data than requested, and it must
-         * return the amount of actually read or written data via the
-         * 'Reply.fmqByteCount' field. Thus, only attempts to pass a negative
-         * number must be constituted as a client's error.
+         * non-negative number. Any sufficiently big value which exceeds the
+         * size of the queue's area which is currently available for reading or
+         * writing by the HAL module must be trimmed by the HAL module to the
+         * available size. Note that the HAL module is allowed to consume or
+         * provide less data than requested, and it must return the amount of
+         * actually read or written data via the 'Reply.fmqByteCount'
+         * field. Thus, only attempts to pass a negative number must be
+         * constituted as a client's error.
          *
          * Differences for the MMap No IRQ mode:
          *
@@ -233,6 +239,9 @@ parcelable StreamDescriptor {
          *    with sending of this command.
          *
          *  - the value must always be set to 0.
+         *
+         * See the state machines on the applicability of this command to
+         * different states.
          */
         int burst;
         /**

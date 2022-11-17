@@ -135,8 +135,8 @@ ndk::ScopedAStatus Module::createStreamContext(int32_t in_portConfigId, int64_t 
         StreamContext temp(
                 std::make_unique<StreamContext::CommandMQ>(1, true /*configureEventFlagWord*/),
                 std::make_unique<StreamContext::ReplyMQ>(1, true /*configureEventFlagWord*/),
-                frameSize,
-                std::make_unique<StreamContext::DataMQ>(frameSize * in_bufferSizeFrames));
+                frameSize, std::make_unique<StreamContext::DataMQ>(frameSize * in_bufferSizeFrames),
+                mDebug.streamTransientStateDelayMs);
         if (temp.isValid()) {
             *out_context = std::move(temp);
         } else {
@@ -241,6 +241,11 @@ ndk::ScopedAStatus Module::setModuleDebug(
         LOG(ERROR) << __func__ << ": attempting to change device connections simulation "
                    << "while having external devices connected";
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
+    }
+    if (in_debug.streamTransientStateDelayMs < 0) {
+        LOG(ERROR) << __func__ << ": streamTransientStateDelayMs is negative: "
+                   << in_debug.streamTransientStateDelayMs;
+        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
     }
     mDebug = in_debug;
     return ndk::ScopedAStatus::ok();

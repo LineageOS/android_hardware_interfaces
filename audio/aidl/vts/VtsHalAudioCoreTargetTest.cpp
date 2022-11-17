@@ -1557,8 +1557,7 @@ class AudioStream : public AudioCoreModule {
 
     void SendInvalidCommandImpl(const AudioPortConfig& portConfig) {
         std::vector<StreamDescriptor::Command> commands = {
-                StreamDescriptor::Command::make<StreamDescriptor::Command::Tag::hal_reserved_exit>(
-                        0),
+                StreamDescriptor::Command::make<StreamDescriptor::Command::Tag::halReservedExit>(0),
                 // TODO: For proper testing of input streams, need to put the stream into
                 // a state which accepts BURST commands.
                 StreamDescriptor::Command::make<StreamDescriptor::Command::Tag::burst>(-1),
@@ -1695,7 +1694,8 @@ class StreamLogicDefaultDriver : public StreamLogicDriver {
     std::string mUnexpectedTransition;
 };
 
-using NamedCommandSequence = std::pair<std::string, std::vector<CommandAndState>>;
+enum { NAMED_CMD_NAME, NAMED_CMD_DELAY_MS, NAMED_CMD_CMDS };
+using NamedCommandSequence = std::tuple<std::string, int, std::vector<CommandAndState>>;
 enum { PARAM_MODULE_NAME, PARAM_CMD_SEQ, PARAM_SETUP_SEQ };
 using StreamIoTestParameters =
         std::tuple<std::string /*moduleName*/, NamedCommandSequence, bool /*useSetupSequence2*/>;
@@ -1716,7 +1716,12 @@ class AudioStreamIo : public AudioCoreModuleBase,
         }
         for (const auto& portConfig : allPortConfigs) {
             SCOPED_TRACE(portConfig.toString());
-            const auto& commandsAndStates = std::get<PARAM_CMD_SEQ>(GetParam()).second;
+            WithDebugFlags delayTransientStates = WithDebugFlags::createNested(debug);
+            delayTransientStates.flags().streamTransientStateDelayMs =
+                    std::get<NAMED_CMD_DELAY_MS>(std::get<PARAM_CMD_SEQ>(GetParam()));
+            ASSERT_NO_FATAL_FAILURE(delayTransientStates.SetUp(module.get()));
+            const auto& commandsAndStates =
+                    std::get<NAMED_CMD_CMDS>(std::get<PARAM_CMD_SEQ>(GetParam()));
             if (!std::get<PARAM_SETUP_SEQ>(GetParam())) {
                 ASSERT_NO_FATAL_FAILURE(RunStreamIoCommandsImplSeq1(portConfig, commandsAndStates));
             } else {
@@ -1974,6 +1979,11 @@ INSTANTIATE_TEST_SUITE_P(AudioStreamOutTest, AudioStreamOut,
                          android::PrintInstanceNameToString);
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(AudioStreamOut);
 
+// This is the value used in test sequences for which the test needs to ensure
+// that the HAL stays in a transient state long enough to receive the next command.
+static const int kStreamTransientStateTransitionDelayMs = 3000;
+static const StreamDescriptor::Command kGetStatusCommand =
+        StreamDescriptor::Command::make<StreamDescriptor::Command::Tag::getStatus>(Void{});
 static const StreamDescriptor::Command kStartCommand =
         StreamDescriptor::Command::make<StreamDescriptor::Command::Tag::start>(Void{});
 static const StreamDescriptor::Command kBurstCommand =
@@ -1987,83 +1997,100 @@ static const StreamDescriptor::Command kPauseCommand =
 static const StreamDescriptor::Command kFlushCommand =
         StreamDescriptor::Command::make<StreamDescriptor::Command::Tag::flush>(Void{});
 static const NamedCommandSequence kReadOrWriteSeq =
-        std::make_pair(std::string("ReadOrWrite"),
-                       std::vector<CommandAndState>{
-                               std::make_pair(kStartCommand, StreamDescriptor::State::IDLE),
-                               std::make_pair(kBurstCommand, StreamDescriptor::State::ACTIVE),
-                               std::make_pair(kBurstCommand, StreamDescriptor::State::ACTIVE),
-                               std::make_pair(kBurstCommand, StreamDescriptor::State::ACTIVE)});
+        std::make_tuple(std::string("ReadOrWrite"), 0,
+                        std::vector<CommandAndState>{
+                                std::make_pair(kStartCommand, StreamDescriptor::State::IDLE),
+                                std::make_pair(kBurstCommand, StreamDescriptor::State::ACTIVE),
+                                std::make_pair(kBurstCommand, StreamDescriptor::State::ACTIVE),
+                                std::make_pair(kBurstCommand, StreamDescriptor::State::ACTIVE)});
 static const NamedCommandSequence kDrainInSeq =
-        std::make_pair(std::string("Drain"),
-                       std::vector<CommandAndState>{
-                               std::make_pair(kStartCommand, StreamDescriptor::State::IDLE),
-                               std::make_pair(kBurstCommand, StreamDescriptor::State::ACTIVE),
-                               std::make_pair(kDrainCommand, StreamDescriptor::State::DRAINING),
-                               std::make_pair(kStartCommand, StreamDescriptor::State::ACTIVE),
-                               std::make_pair(kDrainCommand, StreamDescriptor::State::DRAINING),
-                               // TODO: This will need to be changed once DRAIN starts taking time.
-                               std::make_pair(kBurstCommand, StreamDescriptor::State::STANDBY)});
+        std::make_tuple(std::string("Drain"), 0,
+                        std::vector<CommandAndState>{
+                                std::make_pair(kStartCommand, StreamDescriptor::State::IDLE),
+                                std::make_pair(kBurstCommand, StreamDescriptor::State::ACTIVE),
+                                std::make_pair(kDrainCommand, StreamDescriptor::State::DRAINING),
+                                std::make_pair(kStartCommand, StreamDescriptor::State::ACTIVE),
+                                std::make_pair(kDrainCommand, StreamDescriptor::State::DRAINING)
+                                // TODO: Test that from DRAINING the stream goes either to DRAINING
+                                // or to STANDBY. Supporting this in a generic would complicate the
+                                // test code because after state bifurcation we probably need to use
+                                // different commands for each state, this way a sequence of
+                                // commands and states becomes a tree.
+                        });
 static const NamedCommandSequence kDrainOutSeq =
-        std::make_pair(std::string("Drain"),
-                       std::vector<CommandAndState>{
-                               std::make_pair(kStartCommand, StreamDescriptor::State::IDLE),
-                               std::make_pair(kBurstCommand, StreamDescriptor::State::ACTIVE),
-                               // TODO: This will need to be changed once DRAIN starts taking time.
-                               std::make_pair(kDrainCommand, StreamDescriptor::State::IDLE)});
-// TODO: This will need to be changed once DRAIN starts taking time so we can pause it.
-static const NamedCommandSequence kDrainPauseOutSeq = std::make_pair(
-        std::string("DrainPause"),
-        std::vector<CommandAndState>{std::make_pair(kStartCommand, StreamDescriptor::State::IDLE),
-                                     std::make_pair(kBurstCommand, StreamDescriptor::State::ACTIVE),
-                                     std::make_pair(kDrainCommand, StreamDescriptor::State::IDLE)});
+        std::make_tuple(std::string("Drain"), 0,
+                        std::vector<CommandAndState>{
+                                std::make_pair(kStartCommand, StreamDescriptor::State::IDLE),
+                                std::make_pair(kBurstCommand, StreamDescriptor::State::ACTIVE),
+                                std::make_pair(kDrainCommand, StreamDescriptor::State::DRAINING),
+                                // Draining is synchronous, the stream switches to IDLE afterwards.
+                                std::make_pair(kGetStatusCommand, StreamDescriptor::State::IDLE)});
+static const NamedCommandSequence kDrainPauseOutSeq = std::make_tuple(
+        std::string("DrainPause"), kStreamTransientStateTransitionDelayMs,
+        std::vector<CommandAndState>{
+                std::make_pair(kStartCommand, StreamDescriptor::State::IDLE),
+                std::make_pair(kBurstCommand, StreamDescriptor::State::ACTIVE),
+                std::make_pair(kDrainCommand, StreamDescriptor::State::DRAINING),
+                std::make_pair(kPauseCommand, StreamDescriptor::State::DRAIN_PAUSED),
+                std::make_pair(kStartCommand, StreamDescriptor::State::DRAINING),
+                std::make_pair(kPauseCommand, StreamDescriptor::State::DRAIN_PAUSED),
+                std::make_pair(kBurstCommand, StreamDescriptor::State::PAUSED)});
 static const NamedCommandSequence kStandbySeq =
-        std::make_pair(std::string("Standby"),
-                       std::vector<CommandAndState>{
-                               std::make_pair(kStartCommand, StreamDescriptor::State::IDLE),
-                               std::make_pair(kStandbyCommand, StreamDescriptor::State::STANDBY),
-                               // Perform a read or write in order to advance observable position
-                               // (this is verified by tests).
-                               std::make_pair(kStartCommand, StreamDescriptor::State::IDLE),
-                               std::make_pair(kBurstCommand, StreamDescriptor::State::ACTIVE)});
+        std::make_tuple(std::string("Standby"), 0,
+                        std::vector<CommandAndState>{
+                                std::make_pair(kStartCommand, StreamDescriptor::State::IDLE),
+                                std::make_pair(kStandbyCommand, StreamDescriptor::State::STANDBY),
+                                // Perform a read or write in order to advance observable position
+                                // (this is verified by tests).
+                                std::make_pair(kStartCommand, StreamDescriptor::State::IDLE),
+                                std::make_pair(kBurstCommand, StreamDescriptor::State::ACTIVE)});
 static const NamedCommandSequence kPauseInSeq =
-        std::make_pair(std::string("Pause"),
-                       std::vector<CommandAndState>{
-                               std::make_pair(kStartCommand, StreamDescriptor::State::IDLE),
-                               std::make_pair(kBurstCommand, StreamDescriptor::State::ACTIVE),
-                               std::make_pair(kPauseCommand, StreamDescriptor::State::PAUSED),
-                               std::make_pair(kBurstCommand, StreamDescriptor::State::ACTIVE),
-                               std::make_pair(kPauseCommand, StreamDescriptor::State::PAUSED),
-                               std::make_pair(kFlushCommand, StreamDescriptor::State::STANDBY)});
+        std::make_tuple(std::string("Pause"), 0,
+                        std::vector<CommandAndState>{
+                                std::make_pair(kStartCommand, StreamDescriptor::State::IDLE),
+                                std::make_pair(kBurstCommand, StreamDescriptor::State::ACTIVE),
+                                std::make_pair(kPauseCommand, StreamDescriptor::State::PAUSED),
+                                std::make_pair(kBurstCommand, StreamDescriptor::State::ACTIVE),
+                                std::make_pair(kPauseCommand, StreamDescriptor::State::PAUSED),
+                                std::make_pair(kFlushCommand, StreamDescriptor::State::STANDBY)});
 static const NamedCommandSequence kPauseOutSeq =
-        std::make_pair(std::string("Pause"),
-                       std::vector<CommandAndState>{
-                               std::make_pair(kStartCommand, StreamDescriptor::State::IDLE),
-                               std::make_pair(kBurstCommand, StreamDescriptor::State::ACTIVE),
-                               std::make_pair(kPauseCommand, StreamDescriptor::State::PAUSED),
-                               std::make_pair(kStartCommand, StreamDescriptor::State::ACTIVE),
-                               std::make_pair(kPauseCommand, StreamDescriptor::State::PAUSED),
-                               std::make_pair(kBurstCommand, StreamDescriptor::State::PAUSED),
-                               std::make_pair(kStartCommand, StreamDescriptor::State::ACTIVE),
-                               std::make_pair(kPauseCommand, StreamDescriptor::State::PAUSED)});
+        std::make_tuple(std::string("Pause"), 0,
+                        std::vector<CommandAndState>{
+                                std::make_pair(kStartCommand, StreamDescriptor::State::IDLE),
+                                std::make_pair(kBurstCommand, StreamDescriptor::State::ACTIVE),
+                                std::make_pair(kPauseCommand, StreamDescriptor::State::PAUSED),
+                                std::make_pair(kStartCommand, StreamDescriptor::State::ACTIVE),
+                                std::make_pair(kPauseCommand, StreamDescriptor::State::PAUSED),
+                                std::make_pair(kBurstCommand, StreamDescriptor::State::PAUSED),
+                                std::make_pair(kStartCommand, StreamDescriptor::State::ACTIVE),
+                                std::make_pair(kPauseCommand, StreamDescriptor::State::PAUSED)});
 static const NamedCommandSequence kFlushInSeq =
-        std::make_pair(std::string("Flush"),
-                       std::vector<CommandAndState>{
-                               std::make_pair(kStartCommand, StreamDescriptor::State::IDLE),
-                               std::make_pair(kBurstCommand, StreamDescriptor::State::ACTIVE),
-                               std::make_pair(kPauseCommand, StreamDescriptor::State::PAUSED),
-                               std::make_pair(kFlushCommand, StreamDescriptor::State::STANDBY)});
-static const NamedCommandSequence kFlushOutSeq = std::make_pair(
-        std::string("Flush"),
+        std::make_tuple(std::string("Flush"), 0,
+                        std::vector<CommandAndState>{
+                                std::make_pair(kStartCommand, StreamDescriptor::State::IDLE),
+                                std::make_pair(kBurstCommand, StreamDescriptor::State::ACTIVE),
+                                std::make_pair(kPauseCommand, StreamDescriptor::State::PAUSED),
+                                std::make_pair(kFlushCommand, StreamDescriptor::State::STANDBY)});
+static const NamedCommandSequence kFlushOutSeq = std::make_tuple(
+        std::string("Flush"), 0,
         std::vector<CommandAndState>{std::make_pair(kStartCommand, StreamDescriptor::State::IDLE),
                                      std::make_pair(kBurstCommand, StreamDescriptor::State::ACTIVE),
                                      std::make_pair(kPauseCommand, StreamDescriptor::State::PAUSED),
                                      std::make_pair(kFlushCommand, StreamDescriptor::State::IDLE)});
+static const NamedCommandSequence kDrainPauseFlushOutSeq = std::make_tuple(
+        std::string("DrainPauseFlush"), kStreamTransientStateTransitionDelayMs,
+        std::vector<CommandAndState>{
+                std::make_pair(kStartCommand, StreamDescriptor::State::IDLE),
+                std::make_pair(kBurstCommand, StreamDescriptor::State::ACTIVE),
+                std::make_pair(kDrainCommand, StreamDescriptor::State::DRAINING),
+                std::make_pair(kPauseCommand, StreamDescriptor::State::DRAIN_PAUSED),
+                std::make_pair(kFlushCommand, StreamDescriptor::State::IDLE)});
 std::string GetStreamIoTestName(const testing::TestParamInfo<StreamIoTestParameters>& info) {
     return android::PrintInstanceNameToString(
                    testing::TestParamInfo<std::string>{std::get<PARAM_MODULE_NAME>(info.param),
                                                        info.index})
             .append("_")
-            .append(std::get<PARAM_CMD_SEQ>(info.param).first)
+            .append(std::get<NAMED_CMD_NAME>(std::get<PARAM_CMD_SEQ>(info.param)))
             .append("_SetupSeq")
             .append(std::get<PARAM_SETUP_SEQ>(info.param) ? "2" : "1");
 }
@@ -2079,7 +2106,8 @@ INSTANTIATE_TEST_SUITE_P(
         AudioStreamIoOutTest, AudioStreamIoOut,
         testing::Combine(testing::ValuesIn(android::getAidlHalInstanceNames(IModule::descriptor)),
                          testing::Values(kReadOrWriteSeq, kDrainOutSeq, kDrainPauseOutSeq,
-                                         kStandbySeq, kPauseOutSeq, kFlushOutSeq),
+                                         kStandbySeq, kPauseOutSeq, kFlushOutSeq,
+                                         kDrainPauseFlushOutSeq),
                          testing::Values(false, true)),
         GetStreamIoTestName);
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(AudioStreamIoOut);
