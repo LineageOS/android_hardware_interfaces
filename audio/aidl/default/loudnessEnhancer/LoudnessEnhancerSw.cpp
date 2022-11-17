@@ -76,16 +76,60 @@ ndk::ScopedAStatus LoudnessEnhancerSw::setParameterSpecific(const Parameter::Spe
     std::lock_guard lg(mMutex);
     RETURN_IF(!mContext, EX_NULL_POINTER, "nullContext");
 
-    mSpecificParam = specific.get<Parameter::Specific::loudnessEnhancer>();
-    LOG(DEBUG) << __func__ << " success with: " << specific.toString();
-    return ndk::ScopedAStatus::ok();
+    auto& leParam = specific.get<Parameter::Specific::loudnessEnhancer>();
+    auto tag = leParam.getTag();
+
+    switch (tag) {
+        case LoudnessEnhancer::gainMb: {
+            RETURN_IF(mContext->setLeGainMb(leParam.get<LoudnessEnhancer::gainMb>()) !=
+                              RetCode::SUCCESS,
+                      EX_ILLEGAL_ARGUMENT, "setGainMbFailed");
+            return ndk::ScopedAStatus::ok();
+        }
+        default: {
+            LOG(ERROR) << __func__ << " unsupported tag: " << toString(tag);
+            return ndk::ScopedAStatus::fromExceptionCodeWithMessage(
+                    EX_ILLEGAL_ARGUMENT, "LoudnessEnhancerTagNotSupported");
+        }
+    }
 }
 
 ndk::ScopedAStatus LoudnessEnhancerSw::getParameterSpecific(const Parameter::Id& id,
                                                             Parameter::Specific* specific) {
     auto tag = id.getTag();
     RETURN_IF(Parameter::Id::loudnessEnhancerTag != tag, EX_ILLEGAL_ARGUMENT, "wrongIdTag");
-    specific->set<Parameter::Specific::loudnessEnhancer>(mSpecificParam);
+    auto leId = id.get<Parameter::Id::loudnessEnhancerTag>();
+    auto leIdTag = leId.getTag();
+    switch (leIdTag) {
+        case LoudnessEnhancer::Id::commonTag:
+            return getParameterLoudnessEnhancer(leId.get<LoudnessEnhancer::Id::commonTag>(),
+                                                specific);
+        default:
+            LOG(ERROR) << __func__ << " unsupported tag: " << toString(leIdTag);
+            return ndk::ScopedAStatus::fromExceptionCodeWithMessage(
+                    EX_ILLEGAL_ARGUMENT, "LoudnessEnhancerTagNotSupported");
+    }
+}
+
+ndk::ScopedAStatus LoudnessEnhancerSw::getParameterLoudnessEnhancer(
+        const LoudnessEnhancer::Tag& tag, Parameter::Specific* specific) {
+    std::lock_guard lg(mMutex);
+    RETURN_IF(!mContext, EX_NULL_POINTER, "nullContext");
+
+    LoudnessEnhancer leParam;
+    switch (tag) {
+        case LoudnessEnhancer::gainMb: {
+            leParam.set<LoudnessEnhancer::gainMb>(mContext->getLeGainMb());
+            break;
+        }
+        default: {
+            LOG(ERROR) << __func__ << " unsupported tag: " << toString(tag);
+            return ndk::ScopedAStatus::fromExceptionCodeWithMessage(
+                    EX_ILLEGAL_ARGUMENT, "LoudnessEnhancerTagNotSupported");
+        }
+    }
+
+    specific->set<Parameter::Specific::loudnessEnhancer>(leParam);
     return ndk::ScopedAStatus::ok();
 }
 
