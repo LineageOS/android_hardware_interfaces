@@ -68,7 +68,7 @@ ScopedAStatus Gnss::setCallback(const std::shared_ptr<IGnssCallback>& callback) 
 
     IGnssCallback::GnssSystemInfo systemInfo = {
             .yearOfHw = 2022,
-            .name = "Google Mock GNSS Implementation AIDL v2",
+            .name = "Google, Cuttlefish, AIDL v2",
     };
     status = sGnssCallback->gnssSetSystemInfoCb(systemInfo);
     if (!status.isOk()) {
