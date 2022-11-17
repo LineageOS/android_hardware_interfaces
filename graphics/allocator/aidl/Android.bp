@@ -14,6 +14,7 @@ aidl_interface {
         enabled: true,
         support_system_process: true,
     },
+    vndk_use_version: "1",
     srcs: ["android/hardware/graphics/allocator/*.aidl"],
     imports: [
         "android.hardware.common-V2",
