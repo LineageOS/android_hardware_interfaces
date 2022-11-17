@@ -42,6 +42,9 @@ interface IRadioNetworkResponse {
   oneway void getCdmaRoamingPreferenceResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.network.CdmaRoamingType type);
   oneway void getCellInfoListResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.network.CellInfo[] cellInfo);
   oneway void getDataRegistrationStateResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.network.RegStateResult dataRegResponse);
+  /**
+   * @deprecated Deprecated starting from Android U.
+   */
   oneway void getImsRegistrationStateResponse(in android.hardware.radio.RadioResponseInfo info, in boolean isRegistered, in android.hardware.radio.RadioTechnologyFamily ratFamily);
   oneway void getNetworkSelectionModeResponse(in android.hardware.radio.RadioResponseInfo info, in boolean manual);
   oneway void getOperatorResponse(in android.hardware.radio.RadioResponseInfo info, in String longName, in String shortName, in String numeric);
@@ -73,4 +76,5 @@ interface IRadioNetworkResponse {
   oneway void triggerEmergencyNetworkScanResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void exitEmergencyModeResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void cancelEmergencyNetworkScanResponse(in android.hardware.radio.RadioResponseInfo info);
+  oneway void setNullCipherAndIntegrityEnabledResponse(in android.hardware.radio.RadioResponseInfo info);
 }

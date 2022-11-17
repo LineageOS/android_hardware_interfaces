@@ -41,6 +41,9 @@ enum RadioError {
      * Operation requires SIM PUK2 to be entered
      */
     SIM_PUK2 = 5,
+    /**
+     * Optional API
+     */
     REQUEST_NOT_SUPPORTED = 6,
     CANCELLED = 7,
     /**

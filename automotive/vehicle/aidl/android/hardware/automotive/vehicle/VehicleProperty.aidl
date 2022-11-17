@@ -1800,6 +1800,62 @@ enum VehicleProperty {
     STEERING_WHEEL_DEPTH_MOVE =
             0x0BE1 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
     /**
+     * Steering wheel height position
+     *
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined. All values between
+     * minInt32Value and maxInt32Value must be supported.
+     *
+     * The maxInt32Value in default area's VehicleAreaConfig indicates the steering wheel being in
+     * the highest position. The minInt32Value in default area's VehicleAreaConfig indicates the
+     * steering wheel being in the lowest position.
+     *
+     * This value is not in any particular unit but in a specified range of steps.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     */
+    STEERING_WHEEL_HEIGHT_POS =
+            0x0BE2 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
+    /**
+     * Steering wheel height movement
+     *
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined. All values between
+     * minInt32Value and maxInt32Value must be supported.
+     *
+     * The maxInt32Value in default area's VehicleAreaConfig indicates the steering wheel moving
+     * upwards. The minInt32Value in default area's VehicleAreaConfig indicates the steering wheel
+     * moving downwards. Larger integers, either positive or negative, indicate a faster movement
+     * speed. Once the steering wheel reaches the positional limit, the value resets to 0.
+     *
+     * This value is not in any particular unit but in a specified range of steps.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     */
+    STEERING_WHEEL_HEIGHT_MOVE =
+            0x0BE3 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
+    /**
+     * Steering wheel theft lock feature enabled
+     *
+     * If true, the steering wheel will lock automatically to prevent theft in certain
+     * situations.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     */
+    STEERING_WHEEL_THEFT_LOCK_ENABLED =
+            0x0BE4 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+    /**
+     * Steering wheel locked
+     *
+     * If true, the steering wheel's position is locked and not changeable.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     */
+    STEERING_WHEEL_LOCKED =
+            0x0BE5 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+    /**
      * Vehicle Maps Service (VMS) message
      *
      * This property uses MIXED data to communicate vms messages.

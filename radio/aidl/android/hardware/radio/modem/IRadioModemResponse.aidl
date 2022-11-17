@@ -61,7 +61,6 @@ oneway interface IRadioModemResponse {
      *   RadioError:SYSTEM_ERR
      *   RadioError:MODEM_ERR
      *   RadioError:NOT_PROVISIONED
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
@@ -88,7 +87,6 @@ oneway interface IRadioModemResponse {
      *   RadioError:NOT_PROVISIONED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
-     *   RadioError:REQUEST_NOT_SUPPORTED
      */
     void getDeviceIdentityResponse(in RadioResponseInfo info, in String imei, in String imeisv,
             in String esn, in String meid);
@@ -100,7 +98,6 @@ oneway interface IRadioModemResponse {
      * Valid errors returned:
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:REQUEST_NOT_SUPPORTED
      */
     void getHardwareConfigResponse(in RadioResponseInfo info, in HardwareConfig[] config);
 
@@ -118,7 +115,6 @@ oneway interface IRadioModemResponse {
      *   RadioError:NOT_PROVISIONED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
-     *   RadioError:REQUEST_NOT_SUPPORTED
      */
     void getModemActivityInfoResponse(in RadioResponseInfo info, in ActivityStatsInfo activityInfo);
 
@@ -141,7 +137,6 @@ oneway interface IRadioModemResponse {
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:OPERATION_NOT_ALLOWED
      *   RadioError:INVALID_STATE
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:INTERNAL_ERR
      *   RadioError:NO_MEMORY
      *   RadioError:NO_RESOURCES
@@ -156,7 +151,8 @@ oneway interface IRadioModemResponse {
      * Valid errors returned:
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:REQUEST_NOT_SUPPORTED
+     *
+     * @deprecated NV APIs are deprecated starting from Android U.
      */
     void nvReadItemResponse(in RadioResponseInfo info, in String result);
 
@@ -166,7 +162,8 @@ oneway interface IRadioModemResponse {
      * Valid errors returned:
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:REQUEST_NOT_SUPPORTED
+     *
+     * Note: This will be deprecated in favor of a rebootModemResponse API in Android U.
      */
     void nvResetConfigResponse(in RadioResponseInfo info);
 
@@ -176,7 +173,8 @@ oneway interface IRadioModemResponse {
      * Valid errors returned:
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:REQUEST_NOT_SUPPORTED
+     *
+     * @deprecated NV APIs are deprecated starting from Android U.
      */
     void nvWriteCdmaPrlResponse(in RadioResponseInfo info);
 
@@ -186,7 +184,8 @@ oneway interface IRadioModemResponse {
      * Valid errors returned:
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:REQUEST_NOT_SUPPORTED
+     *
+     * @deprecated NV APIs are deprecated starting from Android U.
      */
     void nvWriteItemResponse(in RadioResponseInfo info);
 
@@ -200,7 +199,6 @@ oneway interface IRadioModemResponse {
      *   RadioError:NO_MEMORY
      *   RadioError:INTERNAL_ERR
      *   RadioError:SYSTEM_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
@@ -216,7 +214,6 @@ oneway interface IRadioModemResponse {
      *   RadioError:INTERNAL_ERR
      *   RadioError:SYSTEM_ERR
      *   RadioError:INVALID_ARGUMENTS
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
@@ -237,7 +234,6 @@ oneway interface IRadioModemResponse {
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:MODEM_ERR
      *   RadioError:INVALID_STATE
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
