@@ -2065,6 +2065,28 @@ TEST_P(CameraAidlTest, process10BitColorSpaceRequests) {
     }
 }
 
+TEST_P(CameraAidlTest, processZoomSettingsOverrideRequests) {
+    const int32_t kFrameCount = 5;
+    const int32_t kTestCases = 2;
+    const bool kOverrideSequence[kTestCases][kFrameCount] = {
+        // ZOOM, ZOOM, ZOOM, ZOOM, ZOOM;
+        { true, true, true, true, true },
+        // OFF, OFF, ZOOM, ZOOM, OFF;
+        { false, false, true, true, false } };
+    const bool kExpectedOverrideResults[kTestCases][kFrameCount] = {
+        // All resuls should be overridden except the last one. The last result's
+        // zoom doesn't have speed-up.
+        { true, true, true, true, false },
+        // Because we require at least 2 frames speed-up, request #1, #2 and #3
+        // will be overridden.
+        { true, true, true, false, false } };
+
+    for (int i = 0; i < kTestCases; i++) {
+        processZoomSettingsOverrideRequests(kFrameCount, kOverrideSequence[i],
+                kExpectedOverrideResults[i]);
+    }
+}
+
 // Generate and verify a burst containing alternating sensor sensitivity values
 TEST_P(CameraAidlTest, processCaptureRequestBurstISO) {
     std::vector<std::string> cameraDeviceNames = getCameraDeviceNames(mProvider);
