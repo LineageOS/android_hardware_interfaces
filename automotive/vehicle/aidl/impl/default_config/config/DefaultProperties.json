@@ -1329,22 +1329,26 @@
         },
         {
             "property": "VehicleProperty::SEAT_OCCUPANCY",
+            "defaultValue": {
+                "int32Values": [
+                    "VehicleSeatOccupancyState::VACANT"
+                ]
+            },
             "areas": [
                 {
-                    "defaultValue": {
-                        "int32Values": [
-                            "VehicleSeatOccupancyState::VACANT"
-                        ]
-                    },
                     "areaId": "Constants::SEAT_1_LEFT"
                 },
                 {
-                    "defaultValue": {
-                        "int32Values": [
-                            "VehicleSeatOccupancyState::VACANT"
-                        ]
-                    },
                     "areaId": "Constants::SEAT_1_RIGHT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_LEFT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_RIGHT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_CENTER"
                 }
             ]
         },
@@ -1854,7 +1858,19 @@
             },
             "areas": [
                 {
-                    "areaId": "Constants::HVAC_ALL"
+                    "areaId": "Constants::SEAT_1_LEFT"
+                },
+                {
+                    "areaId": "Constants::SEAT_1_RIGHT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_LEFT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_RIGHT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_CENTER"
                 }
             ]
         },
@@ -1867,7 +1883,19 @@
             },
             "areas": [
                 {
-                    "areaId": "Constants::HVAC_ALL"
+                    "areaId": "Constants::SEAT_1_LEFT"
+                },
+                {
+                    "areaId": "Constants::SEAT_1_RIGHT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_LEFT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_RIGHT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_CENTER"
                 }
             ],
             "configArray": [
@@ -1918,7 +1946,19 @@
             },
             "areas": [
                 {
-                    "areaId": "Constants::HVAC_ALL"
+                    "areaId": "Constants::SEAT_1_LEFT"
+                },
+                {
+                    "areaId": "Constants::SEAT_1_RIGHT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_LEFT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_RIGHT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_CENTER"
                 }
             ]
         },
@@ -1931,7 +1971,19 @@
             },
             "areas": [
                 {
-                    "areaId": "Constants::HVAC_ALL"
+                    "areaId": "Constants::SEAT_1_LEFT"
+                },
+                {
+                    "areaId": "Constants::SEAT_1_RIGHT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_LEFT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_RIGHT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_CENTER"
                 }
             ]
         },
@@ -1944,7 +1996,19 @@
             },
             "areas": [
                 {
-                    "areaId": "Constants::HVAC_ALL"
+                    "areaId": "Constants::SEAT_1_LEFT"
+                },
+                {
+                    "areaId": "Constants::SEAT_1_RIGHT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_LEFT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_RIGHT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_CENTER"
                 }
             ]
         },
@@ -1957,7 +2021,19 @@
             },
             "areas": [
                 {
-                    "areaId": "Constants::HVAC_ALL"
+                    "areaId": "Constants::SEAT_1_LEFT"
+                },
+                {
+                    "areaId": "Constants::SEAT_1_RIGHT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_LEFT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_RIGHT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_CENTER"
                 }
             ]
         },
@@ -1970,7 +2046,19 @@
             },
             "areas": [
                 {
-                    "areaId": "Constants::HVAC_ALL"
+                    "areaId": "Constants::SEAT_1_LEFT"
+                },
+                {
+                    "areaId": "Constants::SEAT_1_RIGHT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_LEFT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_RIGHT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_CENTER"
                 }
             ]
         },
@@ -1983,7 +2071,19 @@
             },
             "areas": [
                 {
-                    "areaId": "Constants::HVAC_ALL"
+                    "areaId": "Constants::SEAT_1_LEFT"
+                },
+                {
+                    "areaId": "Constants::SEAT_1_RIGHT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_LEFT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_RIGHT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_CENTER"
                 }
             ]
         },
@@ -2009,7 +2109,27 @@
             },
             "areas": [
                 {
-                    "areaId": "Constants::HVAC_ALL",
+                    "areaId": "Constants::SEAT_1_LEFT",
+                    "minInt32Value": 1,
+                    "maxInt32Value": 7
+                },
+                {
+                    "areaId": "Constants::SEAT_1_RIGHT",
+                    "minInt32Value": 1,
+                    "maxInt32Value": 7
+                },
+                {
+                    "areaId": "Constants::SEAT_2_LEFT",
+                    "minInt32Value": 1,
+                    "maxInt32Value": 7
+                },
+                {
+                    "areaId": "Constants::SEAT_2_RIGHT",
+                    "minInt32Value": 1,
+                    "maxInt32Value": 7
+                },
+                {
+                    "areaId": "Constants::SEAT_2_CENTER",
                     "minInt32Value": 1,
                     "maxInt32Value": 7
                 }
@@ -2024,7 +2144,19 @@
             },
             "areas": [
                 {
-                    "areaId": "Constants::HVAC_ALL"
+                    "areaId": "Constants::SEAT_1_LEFT"
+                },
+                {
+                    "areaId": "Constants::SEAT_1_RIGHT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_LEFT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_RIGHT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_CENTER"
                 }
             ]
         },
@@ -2043,7 +2175,19 @@
             },
             "areas": [
                 {
-                    "areaId": "Constants::HVAC_ALL"
+                    "areaId": "Constants::SEAT_1_LEFT"
+                },
+                {
+                    "areaId": "Constants::SEAT_1_RIGHT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_LEFT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_RIGHT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_CENTER"
                 }
             ]
         },
@@ -2062,6 +2206,21 @@
                 },
                 {
                     "areaId": "Constants::SEAT_1_RIGHT",
+                    "minInt32Value": 0,
+                    "maxInt32Value": 3
+                },
+                {
+                    "areaId": "Constants::SEAT_2_LEFT",
+                    "minInt32Value": 0,
+                    "maxInt32Value": 3
+                },
+                {
+                    "areaId": "Constants::SEAT_2_RIGHT",
+                    "minInt32Value": 0,
+                    "maxInt32Value": 3
+                },
+                {
+                    "areaId": "Constants::SEAT_2_CENTER",
                     "minInt32Value": 0,
                     "maxInt32Value": 3
                 }
@@ -2101,6 +2260,21 @@
                     "areaId": "Constants::SEAT_1_RIGHT",
                     "minInt32Value": -2,
                     "maxInt32Value": 2
+                },
+                {
+                    "areaId": "Constants::SEAT_2_LEFT",
+                    "minInt32Value": -2,
+                    "maxInt32Value": 2
+                },
+                {
+                    "areaId": "Constants::SEAT_2_RIGHT",
+                    "minInt32Value": -2,
+                    "maxInt32Value": 2
+                },
+                {
+                    "areaId": "Constants::SEAT_2_CENTER",
+                    "minInt32Value": -2,
+                    "maxInt32Value": 2
                 }
             ],
             "comment": "+ve values for heating and -ve for cooling"
@@ -2122,45 +2296,59 @@
         },
         {
             "property": "VehicleProperty::HVAC_TEMPERATURE_CURRENT",
+            "defaultValue": {
+                "floatValues": [
+                    19.1
+                ]
+            },
             "areas": [
                 {
-                    "defaultValue": {
-                        "floatValues": [
-                            17.3
-                        ]
-                    },
-                    "areaId": 49
+                    "areaId": "Constants::SEAT_1_LEFT"
                 },
                 {
-                    "defaultValue": {
-                        "floatValues": [
-                            19.1
-                        ]
-                    },
-                    "areaId": 68
+                    "areaId": "Constants::SEAT_1_RIGHT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_LEFT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_RIGHT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_CENTER"
                 }
             ]
         },
         {
             "property": "VehicleProperty::HVAC_TEMPERATURE_SET",
+            "defaultValue": {
+                "floatValues": [
+                    17.0
+                ]
+            },
             "areas": [
                 {
-                    "defaultValue": {
-                        "floatValues": [
-                            16.0
-                        ]
-                    },
-                    "areaId": 49,
+                    "areaId": "Constants::SEAT_1_LEFT",
                     "minFloatValue": 16.0,
                     "maxFloatValue": 28.0
                 },
                 {
-                    "defaultValue": {
-                        "floatValues": [
-                            20.0
-                        ]
-                    },
-                    "areaId": 68,
+                    "areaId": "Constants::SEAT_1_RIGHT",
+                    "minFloatValue": 16.0,
+                    "maxFloatValue": 28.0
+                },
+                {
+                    "areaId": "Constants::SEAT_2_LEFT",
+                    "minFloatValue": 16.0,
+                    "maxFloatValue": 28.0
+                },
+                {
+                    "areaId": "Constants::SEAT_2_RIGHT",
+                    "minFloatValue": 16.0,
+                    "maxFloatValue": 28.0
+                },
+                {
+                    "areaId": "Constants::SEAT_2_CENTER",
                     "minFloatValue": 16.0,
                     "maxFloatValue": 28.0
                 }
