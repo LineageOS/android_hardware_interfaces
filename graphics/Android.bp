@@ -19,14 +19,14 @@ package {
 cc_defaults {
     name: "android.hardware.graphics.allocator-ndk_static",
     static_libs: [
-        "android.hardware.graphics.allocator-V1-ndk",
+        "android.hardware.graphics.allocator-V2-ndk",
     ],
 }
 
 cc_defaults {
     name: "android.hardware.graphics.allocator-ndk_shared",
     shared_libs: [
-        "android.hardware.graphics.allocator-V1-ndk",
+        "android.hardware.graphics.allocator-V2-ndk",
     ],
 }
 
