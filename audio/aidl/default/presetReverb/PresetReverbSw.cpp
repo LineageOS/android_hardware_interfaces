@@ -15,7 +15,7 @@
  */
 
 #include <cstddef>
-#define LOG_TAG "AHAL_ReverbSw"
+#define LOG_TAG "AHAL_PresetReverbSw"
 #include <Utils.h>
 #include <algorithm>
 #include <unordered_set>
@@ -23,22 +23,22 @@
 #include <android-base/logging.h>
 #include <fmq/AidlMessageQueue.h>
 
-#include "ReverbSw.h"
+#include "PresetReverbSw.h"
 
 using aidl::android::hardware::audio::effect::IEffect;
-using aidl::android::hardware::audio::effect::ReverbSw;
-using aidl::android::hardware::audio::effect::ReverbSwImplUUID;
+using aidl::android::hardware::audio::effect::kPresetReverbSwImplUUID;
+using aidl::android::hardware::audio::effect::PresetReverbSw;
 using aidl::android::hardware::audio::effect::State;
 using aidl::android::media::audio::common::AudioUuid;
 
 extern "C" binder_exception_t createEffect(const AudioUuid* in_impl_uuid,
                                            std::shared_ptr<IEffect>* instanceSpp) {
-    if (!in_impl_uuid || *in_impl_uuid != ReverbSwImplUUID) {
+    if (!in_impl_uuid || *in_impl_uuid != kPresetReverbSwImplUUID) {
         LOG(ERROR) << __func__ << "uuid not supported";
         return EX_ILLEGAL_ARGUMENT;
     }
     if (instanceSpp) {
-        *instanceSpp = ndk::SharedRefBase::make<ReverbSw>();
+        *instanceSpp = ndk::SharedRefBase::make<PresetReverbSw>();
         LOG(DEBUG) << __func__ << " instance " << instanceSpp->get() << " created";
         return EX_NONE;
     } else {
@@ -64,13 +64,13 @@ extern "C" binder_exception_t destroyEffect(const std::shared_ptr<IEffect>& inst
 
 namespace aidl::android::hardware::audio::effect {
 
-ndk::ScopedAStatus ReverbSw::getDescriptor(Descriptor* _aidl_return) {
+ndk::ScopedAStatus PresetReverbSw::getDescriptor(Descriptor* _aidl_return) {
     LOG(DEBUG) << __func__ << kDescriptor.toString();
     *_aidl_return = kDescriptor;
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus ReverbSw::setParameterSpecific(const Parameter::Specific& specific) {
+ndk::ScopedAStatus PresetReverbSw::setParameterSpecific(const Parameter::Specific& specific) {
     RETURN_IF(Parameter::Specific::reverb != specific.getTag(), EX_ILLEGAL_ARGUMENT,
               "EffectNotSupported");
     std::lock_guard lg(mMutex);
@@ -81,24 +81,24 @@ ndk::ScopedAStatus ReverbSw::setParameterSpecific(const Parameter::Specific& spe
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus ReverbSw::getParameterSpecific(const Parameter::Id& id,
-                                                  Parameter::Specific* specific) {
+ndk::ScopedAStatus PresetReverbSw::getParameterSpecific(const Parameter::Id& id,
+                                                        Parameter::Specific* specific) {
     auto tag = id.getTag();
     RETURN_IF(Parameter::Id::reverbTag != tag, EX_ILLEGAL_ARGUMENT, "wrongIdTag");
     specific->set<Parameter::Specific::reverb>(mSpecificParam);
     return ndk::ScopedAStatus::ok();
 }
 
-std::shared_ptr<EffectContext> ReverbSw::createContext(const Parameter::Common& common) {
+std::shared_ptr<EffectContext> PresetReverbSw::createContext(const Parameter::Common& common) {
     if (mContext) {
         LOG(DEBUG) << __func__ << " context already exist";
         return mContext;
     }
-    mContext = std::make_shared<ReverbSwContext>(1 /* statusFmqDepth */, common);
+    mContext = std::make_shared<PresetReverbSwContext>(1 /* statusFmqDepth */, common);
     return mContext;
 }
 
-RetCode ReverbSw::releaseContext() {
+RetCode PresetReverbSw::releaseContext() {
     if (mContext) {
         mContext.reset();
     }
@@ -106,7 +106,7 @@ RetCode ReverbSw::releaseContext() {
 }
 
 // Processing method running in EffectWorker thread.
-IEffect::Status ReverbSw::effectProcessImpl(float* in, float* out, int process) {
+IEffect::Status PresetReverbSw::effectProcessImpl(float* in, float* out, int process) {
     // TODO: get data buffer and process.
     LOG(DEBUG) << __func__ << " in " << in << " out " << out << " process " << process;
     for (int i = 0; i < process; i++) {

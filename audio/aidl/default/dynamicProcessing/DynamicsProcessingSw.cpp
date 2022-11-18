@@ -26,14 +26,14 @@
 #include "DynamicsProcessingSw.h"
 
 using aidl::android::hardware::audio::effect::DynamicsProcessingSw;
-using aidl::android::hardware::audio::effect::DynamicsProcessingSwImplUUID;
 using aidl::android::hardware::audio::effect::IEffect;
+using aidl::android::hardware::audio::effect::kDynamicsProcessingSwImplUUID;
 using aidl::android::hardware::audio::effect::State;
 using aidl::android::media::audio::common::AudioUuid;
 
 extern "C" binder_exception_t createEffect(const AudioUuid* in_impl_uuid,
                                            std::shared_ptr<IEffect>* instanceSpp) {
-    if (!in_impl_uuid || *in_impl_uuid != DynamicsProcessingSwImplUUID) {
+    if (!in_impl_uuid || *in_impl_uuid != kDynamicsProcessingSwImplUUID) {
         LOG(ERROR) << __func__ << "uuid not supported";
         return EX_ILLEGAL_ARGUMENT;
     }

@@ -26,21 +26,21 @@
 
 namespace aidl::android::hardware::audio::effect {
 
-class ReverbSwContext final : public EffectContext {
+class EnvReverbSwContext final : public EffectContext {
   public:
-    ReverbSwContext(int statusDepth, const Parameter::Common& common)
+    EnvReverbSwContext(int statusDepth, const Parameter::Common& common)
         : EffectContext(statusDepth, common) {
         LOG(DEBUG) << __func__;
     }
     // TODO: add specific context here
 };
 
-class ReverbSw final : public EffectImpl {
+class EnvReverbSw final : public EffectImpl {
   public:
-    ReverbSw() { LOG(DEBUG) << __func__; }
-    ~ReverbSw() {
+    EnvReverbSw() { LOG(DEBUG) << __func__; }
+    ~EnvReverbSw() {
+        cleanUp();
         LOG(DEBUG) << __func__;
-        releaseContext();
     }
 
     ndk::ScopedAStatus getDescriptor(Descriptor* _aidl_return) override;
@@ -52,18 +52,19 @@ class ReverbSw final : public EffectImpl {
     RetCode releaseContext() override;
 
   private:
-    std::shared_ptr<ReverbSwContext> mContext;
+    std::shared_ptr<EnvReverbSwContext> mContext;
     /* capabilities */
     const Reverb::Capability kCapability;
     /* Effect descriptor */
     const Descriptor kDescriptor = {
-            .common = {.id = {.type = ReverbTypeUUID,
-                              .uuid = ReverbSwImplUUID,
+            .common = {.id = {.type = kEnvReverbTypeUUID,
+                              .uuid = kEnvReverbSwImplUUID,
                               .proxy = std::nullopt},
                        .flags = {.type = Flags::Type::INSERT,
                                  .insert = Flags::Insert::FIRST,
                                  .volume = Flags::Volume::CTRL},
-                       .name = "ReverbSw"},
+                       .name = "EnvReverbSw",
+                       .implementor = "The Android Open Source Project"},
             .capability = Capability::make<Capability::reverb>(kCapability)};
 
     /* parameters */

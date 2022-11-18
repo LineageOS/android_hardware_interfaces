@@ -39,8 +39,8 @@ class HapticGeneratorSw final : public EffectImpl {
   public:
     HapticGeneratorSw() { LOG(DEBUG) << __func__; }
     ~HapticGeneratorSw() {
+        cleanUp();
         LOG(DEBUG) << __func__;
-        releaseContext();
     }
 
     ndk::ScopedAStatus getDescriptor(Descriptor* _aidl_return) override;
@@ -57,13 +57,14 @@ class HapticGeneratorSw final : public EffectImpl {
     const HapticGenerator::Capability kCapability;
     /* Effect descriptor */
     const Descriptor kDescriptor = {
-            .common = {.id = {.type = HapticGeneratorTypeUUID,
-                              .uuid = HapticGeneratorSwImplUUID,
+            .common = {.id = {.type = kHapticGeneratorTypeUUID,
+                              .uuid = kHapticGeneratorSwImplUUID,
                               .proxy = std::nullopt},
                        .flags = {.type = Flags::Type::INSERT,
                                  .insert = Flags::Insert::FIRST,
                                  .volume = Flags::Volume::CTRL},
-                       .name = "HapticGeneratorSw"},
+                       .name = "HapticGeneratorSw",
+                       .implementor = "The Android Open Source Project"},
             .capability = Capability::make<Capability::hapticGenerator>(kCapability)};
 
     /* parameters */
