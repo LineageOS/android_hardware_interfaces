@@ -523,6 +523,18 @@ TEST_P(VtsHalAutomotiveVehicleTargetTest, verifySteeringWheelLockedConfig) {
                    VehicleArea::GLOBAL, VehiclePropertyType::BOOLEAN);
 }
 
+TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyMirrorAutoFoldEnabledConfig) {
+    verifyProperty(VehicleProperty::MIRROR_AUTO_FOLD_ENABLED, VehiclePropertyAccess::READ_WRITE,
+                   VehiclePropertyChangeMode::ON_CHANGE, VehiclePropertyGroup::SYSTEM,
+                   VehicleArea::MIRROR, VehiclePropertyType::BOOLEAN);
+}
+
+TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyMirrorAutoTiltEnabledConfig) {
+    verifyProperty(VehicleProperty::MIRROR_AUTO_TILT_ENABLED, VehiclePropertyAccess::READ_WRITE,
+                   VehiclePropertyChangeMode::ON_CHANGE, VehiclePropertyGroup::SYSTEM,
+                   VehicleArea::MIRROR, VehiclePropertyType::BOOLEAN);
+}
+
 std::vector<ServiceDescriptor> getDescriptors() {
     std::vector<ServiceDescriptor> descriptors;
     for (std::string name : getAidlHalInstanceNames(IVehicle::descriptor)) {

@@ -118,6 +118,8 @@ public final class ChangeModeForVehicleProperty {
         Map.entry(VehicleProperty.MIRROR_Y_MOVE, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.MIRROR_LOCK, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.MIRROR_FOLD, VehiclePropertyChangeMode.ON_CHANGE),
+        Map.entry(VehicleProperty.MIRROR_AUTO_FOLD_ENABLED, VehiclePropertyChangeMode.ON_CHANGE),
+        Map.entry(VehicleProperty.MIRROR_AUTO_TILT_ENABLED, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.SEAT_MEMORY_SELECT, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.SEAT_MEMORY_SET, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.SEAT_BELT_BUCKLED, VehiclePropertyChangeMode.ON_CHANGE),

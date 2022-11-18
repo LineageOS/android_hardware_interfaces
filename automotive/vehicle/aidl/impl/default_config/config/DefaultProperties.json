@@ -2126,6 +2126,32 @@
             }
         },
         {
+            "property": "VehicleProperty::MIRROR_AUTO_FOLD_ENABLED",
+            "defaultValue": {
+                "int32Values": [
+                    1
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "Constants::MIRROR_DRIVER_LEFT_RIGHT"
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::MIRROR_AUTO_TILT_ENABLED",
+            "defaultValue": {
+                "int32Values": [
+                    1
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "Constants::MIRROR_DRIVER_LEFT_RIGHT"
+                }
+            ]
+        },
+        {
             "property": "VehicleProperty::WINDOW_LOCK",
             "areas": [
                 {
