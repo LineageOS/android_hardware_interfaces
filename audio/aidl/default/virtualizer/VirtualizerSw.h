@@ -39,8 +39,8 @@ class VirtualizerSw final : public EffectImpl {
   public:
     VirtualizerSw() { LOG(DEBUG) << __func__; }
     ~VirtualizerSw() {
+        cleanUp();
         LOG(DEBUG) << __func__;
-        releaseContext();
     }
 
     ndk::ScopedAStatus getDescriptor(Descriptor* _aidl_return) override;
@@ -57,13 +57,14 @@ class VirtualizerSw final : public EffectImpl {
     const Virtualizer::Capability kCapability;
     /* Effect descriptor */
     const Descriptor kDescriptor = {
-            .common = {.id = {.type = VirtualizerTypeUUID,
-                              .uuid = VirtualizerSwImplUUID,
+            .common = {.id = {.type = kVirtualizerTypeUUID,
+                              .uuid = kVirtualizerSwImplUUID,
                               .proxy = std::nullopt},
                        .flags = {.type = Flags::Type::INSERT,
                                  .insert = Flags::Insert::FIRST,
                                  .volume = Flags::Volume::CTRL},
-                       .name = "VirtualizerSw"},
+                       .name = "VirtualizerSw",
+                       .implementor = "The Android Open Source Project"},
             .capability = Capability::make<Capability::virtualizer>(kCapability)};
 
     /* parameters */

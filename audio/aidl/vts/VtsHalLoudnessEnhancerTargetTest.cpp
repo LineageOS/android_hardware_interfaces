@@ -27,8 +27,8 @@ using aidl::android::hardware::audio::effect::Capability;
 using aidl::android::hardware::audio::effect::Descriptor;
 using aidl::android::hardware::audio::effect::IEffect;
 using aidl::android::hardware::audio::effect::IFactory;
+using aidl::android::hardware::audio::effect::kLoudnessEnhancerTypeUUID;
 using aidl::android::hardware::audio::effect::LoudnessEnhancer;
-using aidl::android::hardware::audio::effect::LoudnessEnhancerTypeUUID;
 using aidl::android::hardware::audio::effect::Parameter;
 
 /**
@@ -36,7 +36,8 @@ using aidl::android::hardware::audio::effect::Parameter;
  * VtsAudioEffectTargetTest.
  */
 enum ParamName { PARAM_INSTANCE_NAME, PARAM_GAIN_MB };
-using LoudnessEnhancerParamTestParam = std::tuple<std::string, int>;
+using LoudnessEnhancerParamTestParam =
+        std::tuple<std::pair<std::shared_ptr<IFactory>, Descriptor::Identity>, int>;
 
 // Every int 32 bit value is a valid gain, so testing the corner cases and one regular value.
 // TODO : Update the test values once range/capability is updated by implementation.
@@ -46,53 +47,64 @@ const std::vector<int> kGainMbValues = {std::numeric_limits<int>::min(), 100,
 class LoudnessEnhancerParamTest : public ::testing::TestWithParam<LoudnessEnhancerParamTestParam>,
                                   public EffectHelper {
   public:
-    LoudnessEnhancerParamTest()
-        : EffectHelper(std::get<PARAM_INSTANCE_NAME>(GetParam())),
-          mParamGainMb(std::get<PARAM_GAIN_MB>(GetParam())) {}
+    LoudnessEnhancerParamTest() : mParamGainMb(std::get<PARAM_GAIN_MB>(GetParam())) {
+        std::tie(mFactory, mIdentity) = std::get<PARAM_INSTANCE_NAME>(GetParam());
+    }
 
     void SetUp() override {
-        CreateEffectsWithUUID(LoudnessEnhancerTypeUUID);
-        initParamCommonFormat();
-        initParamCommon();
-        initParamSpecific();
-        OpenEffects(LoudnessEnhancerTypeUUID);
-        SCOPED_TRACE(testing::Message() << "gainMb: " << mParamGainMb);
-    }
+        ASSERT_NE(nullptr, mFactory);
+        ASSERT_NO_FATAL_FAILURE(create(mFactory, mEffect, mIdentity));
 
+        Parameter::Specific specific = getDefaultParamSpecific();
+        Parameter::Common common = EffectHelper::createParamCommon(
+                0 /* session */, 1 /* ioHandle */, 44100 /* iSampleRate */, 44100 /* oSampleRate */,
+                kInputFrameCount /* iFrameCount */, kOutputFrameCount /* oFrameCount */);
+        IEffect::OpenEffectReturn ret;
+        ASSERT_NO_FATAL_FAILURE(open(mEffect, common, specific, &ret, EX_NONE));
+        ASSERT_NE(nullptr, mEffect);
+    }
     void TearDown() override {
-        CloseEffects();
-        DestroyEffects();
-        CleanUp();
+        ASSERT_NO_FATAL_FAILURE(close(mEffect));
+        ASSERT_NO_FATAL_FAILURE(destroy(mFactory, mEffect));
     }
 
+    Parameter::Specific getDefaultParamSpecific() {
+        LoudnessEnhancer le = LoudnessEnhancer::make<LoudnessEnhancer::gainMb>(0);
+        Parameter::Specific specific =
+                Parameter::Specific::make<Parameter::Specific::loudnessEnhancer>(le);
+        return specific;
+    }
+
+    static const long kInputFrameCount = 0x100, kOutputFrameCount = 0x100;
+    std::shared_ptr<IFactory> mFactory;
+    std::shared_ptr<IEffect> mEffect;
+    Descriptor::Identity mIdentity;
     int mParamGainMb = 0;
 
-    void SetAndGetLoudnessEnhancerParameters() {
-        auto functor = [&](const std::shared_ptr<IEffect>& effect) {
-            for (auto& it : mTags) {
-                auto& tag = it.first;
-                auto& le = it.second;
+    void SetAndGetParameters() {
+        for (auto& it : mTags) {
+            auto& tag = it.first;
+            auto& le = it.second;
 
-                // set parameter
-                Parameter expectParam;
-                Parameter::Specific specific;
-                specific.set<Parameter::Specific::loudnessEnhancer>(le);
-                expectParam.set<Parameter::specific>(specific);
-                // All values are valid, set parameter should succeed
-                EXPECT_STATUS(EX_NONE, effect->setParameter(expectParam)) << expectParam.toString();
+            // set parameter
+            Parameter expectParam;
+            Parameter::Specific specific;
+            specific.set<Parameter::Specific::loudnessEnhancer>(le);
+            expectParam.set<Parameter::specific>(specific);
+            // All values are valid, set parameter should succeed
+            EXPECT_STATUS(EX_NONE, mEffect->setParameter(expectParam)) << expectParam.toString();
 
-                // get parameter
-                Parameter getParam;
-                Parameter::Id id;
-                LoudnessEnhancer::Id leId;
-                leId.set<LoudnessEnhancer::Id::commonTag>(tag);
-                id.set<Parameter::Id::loudnessEnhancerTag>(leId);
-                EXPECT_STATUS(EX_NONE, effect->getParameter(id, &getParam));
+            // get parameter
+            Parameter getParam;
+            Parameter::Id id;
+            LoudnessEnhancer::Id leId;
+            leId.set<LoudnessEnhancer::Id::commonTag>(tag);
+            id.set<Parameter::Id::loudnessEnhancerTag>(leId);
+            EXPECT_STATUS(EX_NONE, mEffect->getParameter(id, &getParam));
 
-                EXPECT_EQ(expectParam, getParam);
-            }
-        };
-        EXPECT_NO_FATAL_FAILURE(ForEachEffect(functor));
+            EXPECT_EQ(expectParam, getParam) << "\nexpect:" << expectParam.toString()
+                                             << "\ngetParam:" << getParam.toString();
+        }
     }
 
     void addGainMbParam(int gainMb) {
@@ -103,33 +115,33 @@ class LoudnessEnhancerParamTest : public ::testing::TestWithParam<LoudnessEnhanc
 
   private:
     std::vector<std::pair<LoudnessEnhancer::Tag, LoudnessEnhancer>> mTags;
-
-    void initParamSpecific() {
-        LoudnessEnhancer le;
-        le.set<LoudnessEnhancer::gainMb>(0);
-        Parameter::Specific specific;
-        specific.set<Parameter::Specific::loudnessEnhancer>(le);
-        setSpecific(specific);
-    }
-
     void CleanUp() { mTags.clear(); }
 };
 
 TEST_P(LoudnessEnhancerParamTest, SetAndGetGainMb) {
     EXPECT_NO_FATAL_FAILURE(addGainMbParam(mParamGainMb));
-    SetAndGetLoudnessEnhancerParameters();
+    SetAndGetParameters();
 }
 
 INSTANTIATE_TEST_SUITE_P(
         LoudnessEnhancerTest, LoudnessEnhancerParamTest,
-        ::testing::Combine(
-                testing::ValuesIn(android::getAidlHalInstanceNames(IFactory::descriptor)),
-                testing::ValuesIn(kGainMbValues)),
+        ::testing::Combine(testing::ValuesIn(EffectFactoryHelper::getAllEffectDescriptors(
+                                   IFactory::descriptor, kLoudnessEnhancerTypeUUID)),
+                           testing::ValuesIn(kGainMbValues)),
         [](const testing::TestParamInfo<LoudnessEnhancerParamTest::ParamType>& info) {
-            std::string instance = std::get<PARAM_INSTANCE_NAME>(info.param);
+            auto msSinceEpoch = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                                        std::chrono::system_clock::now().time_since_epoch())
+                                        .count();
+            auto instance = std::get<PARAM_INSTANCE_NAME>(info.param);
             std::string gainMb = std::to_string(std::get<PARAM_GAIN_MB>(info.param));
 
-            std::string name = instance + "_gainMb" + gainMb;
+            std::ostringstream address;
+            address << msSinceEpoch << "_factory_" << instance.first.get();
+            std::string name = address.str() + "_UUID_timeLow_" +
+                               ::android::internal::ToString(instance.second.uuid.timeLow) +
+                               "_timeMid_" +
+                               ::android::internal::ToString(instance.second.uuid.timeMid) +
+                               "_gainMb" + gainMb;
             std::replace_if(
                     name.begin(), name.end(), [](const char c) { return !std::isalnum(c); }, '_');
             return name;

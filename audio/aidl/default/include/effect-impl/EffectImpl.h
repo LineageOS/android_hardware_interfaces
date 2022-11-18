@@ -30,11 +30,8 @@ namespace aidl::android::hardware::audio::effect {
 
 class EffectImpl : public BnEffect, public EffectWorker {
   public:
-    EffectImpl() { LOG(DEBUG) << __func__; }
-    ~EffectImpl() {
-        cleanUp();
-        LOG(DEBUG) << __func__;
-    }
+    EffectImpl() = default;
+    virtual ~EffectImpl() = default;
 
     /**
      * Each effect implementation CAN override these methods if necessary
@@ -78,9 +75,9 @@ class EffectImpl : public BnEffect, public EffectWorker {
     State mState GUARDED_BY(mMutex) = State::INIT;
 
     IEffect::Status status(binder_status_t status, size_t consumed, size_t produced);
+    void cleanUp();
 
   private:
-    void cleanUp();
     std::shared_ptr<EffectContext> mContext GUARDED_BY(mMutex);
 };
 }  // namespace aidl::android::hardware::audio::effect
