@@ -552,4 +552,20 @@ interface IWifiStaIface {
      *         |WifiStatusCode.ERROR_UNKNOWN|
      */
     void stopSendingKeepAlivePackets(in int cmdId);
+
+    /**
+     * Set DTIM multiplier used when the system is in the suspended mode.
+     * When STA is in the power saving mode and system is suspended,
+     * the wake up interval will be set to:
+     *              1) multiplier * DTIM period if multiplier > 0.
+     *              2) the driver default value if multiplier <= 0.
+     * Some implementations may apply an additional cap to wake up interval in the case of 1).
+     *
+     * @param multiplier integer DTIM multiplier value to set.
+     * @throws ServiceSpecificException with one of the following values:
+     *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
+     *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+     *         |WifiStatusCode.ERROR_UNKNOWN|
+     */
+    void setDtimMultiplier(in int multiplier);
 }
