@@ -39,6 +39,7 @@ parcelable GnssData {
   android.hardware.gnss.GnssClock clock;
   android.hardware.gnss.ElapsedRealtime elapsedRealtime;
   android.hardware.gnss.GnssData.GnssAgc[] gnssAgcs = {};
+  boolean isFullTracking;
   @VintfStability
   parcelable GnssAgc {
     double agcLevelDb;
