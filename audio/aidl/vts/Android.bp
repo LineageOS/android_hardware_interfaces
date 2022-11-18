@@ -80,6 +80,12 @@ cc_test {
 }
 
 cc_test {
+    name: "VtsHalHapticGeneratorTargetTest",
+    defaults: ["VtsHalAudioTargetTestDefaults"],
+    srcs: ["VtsHalHapticGeneratorTargetTest.cpp"],
+}
+
+cc_test {
     name: "VtsHalLoudnessEnhancerTargetTest",
     defaults: ["VtsHalAudioTargetTestDefaults"],
     srcs: ["VtsHalLoudnessEnhancerTargetTest.cpp"],
