@@ -147,6 +147,8 @@ public final class AccessForVehicleProperty {
         Map.entry(VehicleProperty.SEAT_HEADREST_ANGLE_MOVE, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.SEAT_HEADREST_FORE_AFT_POS, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.SEAT_HEADREST_FORE_AFT_MOVE, VehiclePropertyAccess.READ_WRITE),
+        Map.entry(VehicleProperty.SEAT_EASY_ACCESS_ENABLED, VehiclePropertyAccess.READ_WRITE),
+        Map.entry(VehicleProperty.SEAT_CUSHION_SIDE_SUPPORT_POS, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.SEAT_OCCUPANCY, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.WINDOW_POS, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.WINDOW_MOVE, VehiclePropertyAccess.READ_WRITE),

@@ -147,6 +147,8 @@ public final class ChangeModeForVehicleProperty {
         Map.entry(VehicleProperty.SEAT_HEADREST_ANGLE_MOVE, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.SEAT_HEADREST_FORE_AFT_POS, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.SEAT_HEADREST_FORE_AFT_MOVE, VehiclePropertyChangeMode.ON_CHANGE),
+        Map.entry(VehicleProperty.SEAT_EASY_ACCESS_ENABLED, VehiclePropertyChangeMode.ON_CHANGE),
+        Map.entry(VehicleProperty.SEAT_CUSHION_SIDE_SUPPORT_POS, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.SEAT_OCCUPANCY, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.WINDOW_POS, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.WINDOW_MOVE, VehiclePropertyChangeMode.ON_CHANGE),
