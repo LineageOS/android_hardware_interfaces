@@ -37,8 +37,18 @@ cc_binary {
         "android.hardware.usb-V1-ndk",
         "libbase",
         "libbinder_ndk",
-	"libcutils",
+        "libcutils",
         "liblog",
         "libutils",
     ],
+}
+
+filegroup {
+    name: "android.hardware.usb-service.example.xml",
+    srcs: ["android.hardware.usb-service.example.xml"],
+}
+
+filegroup {
+    name: "android.hardware.usb-service.example.rc",
+    srcs: ["android.hardware.usb-service.example.rc"],
 }
