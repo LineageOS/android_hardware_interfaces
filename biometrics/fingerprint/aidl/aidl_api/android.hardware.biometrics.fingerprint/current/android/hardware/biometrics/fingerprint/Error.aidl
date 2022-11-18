@@ -32,6 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.biometrics.fingerprint;
+/* @hide */
 @Backing(type="byte") @VintfStability
 enum Error {
   UNKNOWN = 0,

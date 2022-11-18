@@ -32,6 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.biometrics.fingerprint;
+/* @hide */
 @VintfStability
 interface IFingerprint {
   android.hardware.biometrics.fingerprint.SensorProps[] getSensorProps();

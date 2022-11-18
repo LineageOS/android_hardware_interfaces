@@ -121,7 +121,7 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.biometrics.face</name>
-        <version>2</version>
+        <version>3</version>
         <interface>
             <name>IFace</name>
             <instance>default</instance>
@@ -129,7 +129,7 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.biometrics.fingerprint</name>
-        <version>2</version>
+        <version>3</version>
         <interface>
             <name>IFingerprint</name>
             <instance>default</instance>
