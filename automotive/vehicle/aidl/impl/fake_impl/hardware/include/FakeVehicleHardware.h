@@ -194,7 +194,7 @@ class FakeVehicleHardware : public IVehicleHardware {
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value) const;
     ValueResultType getEchoReverseBytes(
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value) const;
-    bool isHvacPropAndHvacNotAvailable(int32_t propId) const;
+    bool isHvacPropAndHvacNotAvailable(int32_t propId, int32_t areaId) const;
 
     std::unordered_map<int32_t, ConfigDeclaration> loadConfigDeclarations();
 
@@ -236,7 +236,7 @@ class FakeVehicleHardware : public IVehicleHardware {
             const aidl::android::hardware::automotive::vehicle::SetValueRequest& request);
 
     std::string genFakeDataCommand(const std::vector<std::string>& options);
-    void sendHvacPropertiesCurrentValues();
+    void sendHvacPropertiesCurrentValues(int32_t areaId);
 
     static aidl::android::hardware::automotive::vehicle::VehiclePropValue createHwInputKeyProp(
             aidl::android::hardware::automotive::vehicle::VehicleHwKeyInputAction action,
