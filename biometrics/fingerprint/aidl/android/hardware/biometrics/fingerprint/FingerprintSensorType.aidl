@@ -15,7 +15,9 @@
  */
 
 package android.hardware.biometrics.fingerprint;
-
+/**
+ * @hide
+ */
 @VintfStability
 @Backing(type="byte")
 enum FingerprintSensorType {

@@ -24,9 +24,11 @@ using android::hardware::gnss::GnssData;
 
 android::binder::Status GnssMeasurementCallbackAidl::gnssMeasurementCb(const GnssData& gnssData) {
     ALOGI("gnssMeasurementCb");
-    ALOGV("elapsedRealtime: flags = 0x%X, timestampNs: %" PRId64 ", timeUncertaintyNs=%lf",
+    ALOGV("elapsedRealtime: flags = 0x%X, timestampNs: %" PRId64
+          ", timeUncertaintyNs=%lf"
+          " isFullTracking=%s",
           gnssData.elapsedRealtime.flags, gnssData.elapsedRealtime.timestampNs,
-          gnssData.elapsedRealtime.timeUncertaintyNs);
+          gnssData.elapsedRealtime.timeUncertaintyNs, gnssData.isFullTracking ? "true" : "false");
 
     gnss_data_cbq_.store(gnssData);
     return android::binder::Status::ok();

@@ -32,6 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.biometrics.common;
+/* @hide */
 @Backing(type="byte") @VintfStability
 enum OperationReason {
   UNKNOWN = 0,

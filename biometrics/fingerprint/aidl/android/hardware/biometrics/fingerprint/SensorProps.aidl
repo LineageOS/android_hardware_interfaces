@@ -19,7 +19,9 @@ package android.hardware.biometrics.fingerprint;
 import android.hardware.biometrics.common.CommonProps;
 import android.hardware.biometrics.fingerprint.FingerprintSensorType;
 import android.hardware.biometrics.fingerprint.SensorLocation;
-
+/**
+ * @hide
+ */
 @VintfStability
 parcelable SensorProps {
     /**

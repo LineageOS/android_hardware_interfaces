@@ -1,0 +1,65 @@
+/*
+ * Copyright 2022 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.graphics.allocator;
+
+import android.hardware.graphics.common.BufferUsage;
+import android.hardware.graphics.common.PixelFormat;
+
+@VintfStability
+parcelable BufferDescriptorInfo {
+    /**
+     * The name of the buffer in ASCII. Useful for debugging/tracing.
+     */
+    byte[128] name;
+
+    /**
+     * The width specifies how many columns of pixels must be in the
+     * allocated buffer, but does not necessarily represent the offset in
+     * columns between the same column in adjacent rows. The rows may be
+     * padded.
+     */
+    int width;
+
+    /**
+     * The height specifies how many rows of pixels must be in the
+     * allocated buffer.
+     */
+    int height;
+
+    /**
+     * The number of image layers that must be in the allocated buffer.
+     */
+    int layerCount;
+
+    /**
+     * Buffer pixel format. See PixelFormat.aidl in graphics/common for
+     * valid values
+     */
+    PixelFormat format = PixelFormat.UNSPECIFIED;
+
+    /**
+     * Buffer usage mask; valid flags can be found in the definition of
+     * BufferUsage.aidl in graphics/common
+     */
+    BufferUsage usage = BufferUsage.CPU_READ_NEVER;
+
+    /**
+     * The size in bytes of the reserved region associated with the buffer.
+     * See getReservedRegion for more information.
+     */
+    long reservedSize;
+}

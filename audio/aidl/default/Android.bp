@@ -66,6 +66,7 @@ cc_defaults {
     name: "aidlaudioeffectservice_defaults",
     defaults: [
         "latest_android_media_audio_common_types_ndk_shared",
+        "latest_android_hardware_audio_effect_ndk_shared",
     ],
     vendor: true,
     shared_libs: [
@@ -78,7 +79,6 @@ cc_defaults {
         "libutils",
         "android.hardware.common-V2-ndk",
         "android.hardware.common.fmq-V1-ndk",
-        "android.hardware.audio.effect-V1-ndk",
     ],
     header_libs: [
         "libaudioaidl_headers",
@@ -111,10 +111,11 @@ cc_binary {
         "libbassboostsw",
         "libbundleaidl",
         "libdynamicsprocessingsw",
+        "libenvreverbsw",
         "libequalizersw",
         "libhapticgeneratorsw",
         "libloudnessenhancersw",
-        "libreverbsw",
+        "libpresetreverbsw",
         "libtinyxml2",
         "libvirtualizersw",
         "libvisualizersw",

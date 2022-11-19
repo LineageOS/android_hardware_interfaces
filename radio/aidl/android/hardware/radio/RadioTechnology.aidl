@@ -45,6 +45,10 @@ enum RadioTechnology {
     GSM,
     TD_SCDMA,
     IWLAN,
+    /**
+     * @deprecated use LTE instead and indicate carrier aggregation through multiple
+     * physical channel configurations in IRadioNetwork::currentPhysicalChannelConfigs.
+     */
     LTE_CA,
     /**
      * 5G NR. This is only used in 5G Standalone mode.

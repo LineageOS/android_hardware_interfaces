@@ -20,6 +20,7 @@ import android.hardware.biometrics.common.OperationReason;
 
 /**
  * Additional context associated with an operation.
+ * @hide
  */
 @VintfStability
 parcelable OperationContext {

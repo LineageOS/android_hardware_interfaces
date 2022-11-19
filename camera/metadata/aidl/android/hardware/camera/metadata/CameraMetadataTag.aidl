@@ -464,6 +464,12 @@ enum CameraMetadataTag {
      */
     ANDROID_CONTROL_AVAILABLE_SETTINGS_OVERRIDES,
     /**
+     * android.control.settingsOverridingFrameNumber [dynamic, int32, system]
+     *
+     * <p>The frame number of the newer request overriding this capture.</p>
+     */
+    ANDROID_CONTROL_SETTINGS_OVERRIDING_FRAME_NUMBER,
+    /**
      * android.control.autoframing [dynamic, enum, public]
      *
      * <p>Automatic crop, pan and zoom to keep objects in the center of the frame.</p>

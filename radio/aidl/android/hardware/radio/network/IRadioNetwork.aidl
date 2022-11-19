@@ -504,4 +504,30 @@ oneway interface IRadioNetwork {
      * Response callback is IRadioResponse.setNullCipherAndIntegrityEnabledResponse()
      */
     void setNullCipherAndIntegrityEnabled(in int serial, in boolean enabled);
+
+    /**
+     * Checks whether N1 mode (access to 5G core network) is enabled or not.
+     *
+     * @param serial Serial number of request.
+     *
+     * Response function is IRadioNetworkResponse.isN1ModeEnabledResponse()
+     */
+    void isN1ModeEnabled(in int serial);
+
+    /**
+     * Enables or disables N1 mode (access to 5G core network) in accordance with
+     * 3GPP TS 24.501 4.9.
+     *
+     * Note: The default value of N1 mode shall be based on the modem's internal configuration
+     * as per device or carrier. This API may be invoked on demand first to disable N1 mode and
+     * later to re-enable for certain use case. This setting shall not be persisted by modem.
+     * This setting shall not interfere with the allowed network type bitmap set using
+     * {@link IRadioNetwork#setAllowedNetworkTypesBitmap()} API.
+     *
+     * @param serial Serial number of request.
+     * @param enable {@code true} to enable N1 mode, {@code false} to disable N1 mode.
+     *
+     * Response function is IRadioNetworkResponse.setN1ModeEnabledResponse()
+     */
+    void setN1ModeEnabled(in int serial, boolean enable);
 }

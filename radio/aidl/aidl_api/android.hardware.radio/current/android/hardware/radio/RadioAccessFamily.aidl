@@ -53,6 +53,9 @@ enum RadioAccessFamily {
   GSM = 65536,
   TD_SCDMA = 131072,
   IWLAN = 262144,
+  /**
+   * @deprecated use LTE instead.
+   */
   LTE_CA = 524288,
   NR = 1048576,
 }

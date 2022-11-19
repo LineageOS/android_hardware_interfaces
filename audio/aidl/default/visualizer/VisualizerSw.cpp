@@ -26,14 +26,14 @@
 #include "VisualizerSw.h"
 
 using aidl::android::hardware::audio::effect::IEffect;
+using aidl::android::hardware::audio::effect::kVisualizerSwImplUUID;
 using aidl::android::hardware::audio::effect::State;
 using aidl::android::hardware::audio::effect::VisualizerSw;
-using aidl::android::hardware::audio::effect::VisualizerSwImplUUID;
 using aidl::android::media::audio::common::AudioUuid;
 
 extern "C" binder_exception_t createEffect(const AudioUuid* in_impl_uuid,
                                            std::shared_ptr<IEffect>* instanceSpp) {
-    if (!in_impl_uuid || *in_impl_uuid != VisualizerSwImplUUID) {
+    if (!in_impl_uuid || *in_impl_uuid != kVisualizerSwImplUUID) {
         LOG(ERROR) << __func__ << "uuid not supported";
         return EX_ILLEGAL_ARGUMENT;
     }

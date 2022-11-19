@@ -363,10 +363,15 @@ void CameraAidlTest::verifySettingsOverrideCharacteristics(const camera_metadata
     retcode = find_camera_metadata_ro_entry(metadata,
             ANDROID_REQUEST_AVAILABLE_RESULT_KEYS, &entry);
     bool hasSettingsOverrideResultKey = false;
+    bool hasOverridingFrameNumberKey = false;
     if ((0 == retcode) && (entry.count > 0)) {
         hasSettingsOverrideResultKey =
                 std::find(entry.data.i32, entry.data.i32 + entry.count,
                         ANDROID_CONTROL_SETTINGS_OVERRIDE) != entry.data.i32 + entry.count;
+        hasOverridingFrameNumberKey =
+                std::find(entry.data.i32, entry.data.i32 + entry.count,
+                        ANDROID_CONTROL_SETTINGS_OVERRIDING_FRAME_NUMBER)
+                        != entry.data.i32 + entry.count;
     } else {
         ADD_FAILURE() << "Get camera availableResultKeys failed!";
     }
@@ -385,6 +390,7 @@ void CameraAidlTest::verifySettingsOverrideCharacteristics(const camera_metadata
 
     ASSERT_EQ(supportSettingsOverride, hasSettingsOverrideRequestKey);
     ASSERT_EQ(supportSettingsOverride, hasSettingsOverrideResultKey);
+    ASSERT_EQ(supportSettingsOverride, hasOverridingFrameNumberKey);
     ASSERT_EQ(supportSettingsOverride, hasSettingsOverrideCharacteristicsKey);
 }
 
@@ -1579,7 +1585,7 @@ void CameraAidlTest::verifyRequestTemplate(const camera_metadata_t* metadata,
     // Check settings override
     camera_metadata_ro_entry settingsOverrideEntry;
     int foundSettingsOverride = find_camera_metadata_ro_entry(metadata,
-           ANDROID_CONTROL_SETTINGS_OVERRIDE,&settingsOverrideEntry);
+           ANDROID_CONTROL_SETTINGS_OVERRIDE, &settingsOverrideEntry);
     if (foundSettingsOverride == 0) {
         ASSERT_EQ(settingsOverrideEntry.count, 1);
         ASSERT_EQ(settingsOverrideEntry.data.u8[0], ANDROID_CONTROL_SETTINGS_OVERRIDE_OFF);
@@ -3019,6 +3025,30 @@ int32_t CameraAidlTest::halFormatToPublicFormat(
     }
 }
 
+bool CameraAidlTest::supportZoomSettingsOverride(const camera_metadata_t* staticMeta) {
+    camera_metadata_ro_entry availableOverridesEntry;
+    int rc = find_camera_metadata_ro_entry(staticMeta, ANDROID_CONTROL_AVAILABLE_SETTINGS_OVERRIDES,
+                                           &availableOverridesEntry);
+    if (rc == 0) {
+        for (size_t i = 0; i < availableOverridesEntry.count; i++) {
+            if (availableOverridesEntry.data.i32[i] == ANDROID_CONTROL_SETTINGS_OVERRIDE_ZOOM) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool CameraAidlTest::isPerFrameControl(const camera_metadata_t* staticMeta) {
+    camera_metadata_ro_entry syncLatencyEntry;
+    int rc = find_camera_metadata_ro_entry(staticMeta, ANDROID_SYNC_MAX_LATENCY,
+                                           &syncLatencyEntry);
+    if (rc == 0 && syncLatencyEntry.data.i32[0] == ANDROID_SYNC_MAX_LATENCY_PER_FRAME_CONTROL) {
+        return true;
+    }
+    return false;
+}
+
 void CameraAidlTest::configurePreviewStream(
         const std::string& name, const std::shared_ptr<ICameraProvider>& provider,
         const AvailableStream* previewThreshold, std::shared_ptr<ICameraDeviceSession>* session,
@@ -3378,6 +3408,161 @@ void CameraAidlTest::processColorSpaceRequest(
             }
             mSession->signalStreamFlush(streamIds, /*streamConfigCounter*/ 0);
             cb->waitForBuffersReturned();
+        }
+
+        ret = mSession->close();
+        mSession = nullptr;
+        ASSERT_TRUE(ret.isOk());
+    }
+}
+
+void CameraAidlTest::processZoomSettingsOverrideRequests(
+        int32_t frameCount, const bool *overrideSequence, const bool *expectedResults) {
+    std::vector<std::string> cameraDeviceNames = getCameraDeviceNames(mProvider);
+    AvailableStream previewThreshold = {kMaxPreviewWidth, kMaxPreviewHeight,
+                                        static_cast<int32_t>(PixelFormat::IMPLEMENTATION_DEFINED)};
+    int64_t bufferId = 1;
+    int32_t frameNumber = 1;
+    CameraMetadata settings;
+    ndk::ScopedAStatus ret;
+    for (const auto& name : cameraDeviceNames) {
+        CameraMetadata meta;
+        std::shared_ptr<ICameraDevice> device;
+        openEmptyDeviceSession(name, mProvider, &mSession /*out*/, &meta /*out*/,
+                               &device /*out*/);
+        camera_metadata_t* staticMeta =
+                clone_camera_metadata(reinterpret_cast<camera_metadata_t*>(meta.metadata.data()));
+
+        ret = mSession->close();
+        mSession = nullptr;
+        ASSERT_TRUE(ret.isOk());
+
+        // Device does not support zoom settnigs override
+        if (!supportZoomSettingsOverride(staticMeta)) {
+            continue;
+        }
+
+        if (!isPerFrameControl(staticMeta)) {
+            continue;
+        }
+
+        bool supportsPartialResults = false;
+        bool useHalBufManager = false;
+        int32_t partialResultCount = 0;
+        Stream previewStream;
+        std::vector<HalStream> halStreams;
+        std::shared_ptr<DeviceCb> cb;
+        configurePreviewStream(name, mProvider, &previewThreshold, &mSession /*out*/,
+                               &previewStream /*out*/, &halStreams /*out*/,
+                               &supportsPartialResults /*out*/, &partialResultCount /*out*/,
+                               &useHalBufManager /*out*/, &cb /*out*/);
+        ASSERT_NE(mSession, nullptr);
+
+        ::aidl::android::hardware::common::fmq::MQDescriptor<
+                int8_t, aidl::android::hardware::common::fmq::SynchronizedReadWrite>
+                descriptor;
+        auto resultQueueRet = mSession->getCaptureResultMetadataQueue(&descriptor);
+        ASSERT_TRUE(resultQueueRet.isOk());
+
+        std::shared_ptr<ResultMetadataQueue> resultQueue =
+                std::make_shared<ResultMetadataQueue>(descriptor);
+        if (!resultQueue->isValid() || resultQueue->availableToWrite() <= 0) {
+            ALOGE("%s: HAL returns empty result metadata fmq, not use it", __func__);
+            resultQueue = nullptr;
+            // Don't use the queue onwards.
+        }
+
+        ret = mSession->constructDefaultRequestSettings(RequestTemplate::PREVIEW, &settings);
+        ASSERT_TRUE(ret.isOk());
+
+        mInflightMap.clear();
+        ::android::hardware::camera::common::V1_0::helper::CameraMetadata requestMeta;
+        std::vector<CaptureRequest> requests(frameCount);
+        std::vector<buffer_handle_t> buffers(frameCount);
+        std::vector<std::shared_ptr<InFlightRequest>> inflightReqs(frameCount);
+        std::vector<CameraMetadata> requestSettings(frameCount);
+
+        for (int32_t i = 0; i < frameCount; i++) {
+            std::unique_lock<std::mutex> l(mLock);
+            CaptureRequest& request = requests[i];
+            std::vector<StreamBuffer>& outputBuffers = request.outputBuffers;
+            outputBuffers.resize(1);
+            StreamBuffer& outputBuffer = outputBuffers[0];
+
+            if (useHalBufManager) {
+                outputBuffer = {halStreams[0].id, 0,
+                                NativeHandle(),   BufferStatus::OK,
+                                NativeHandle(),   NativeHandle()};
+            } else {
+                allocateGraphicBuffer(previewStream.width, previewStream.height,
+                                      android_convertGralloc1To0Usage(
+                                              static_cast<uint64_t>(halStreams[0].producerUsage),
+                                              static_cast<uint64_t>(halStreams[0].consumerUsage)),
+                                      halStreams[0].overrideFormat, &buffers[i]);
+                outputBuffer = {halStreams[0].id, bufferId + i,   ::android::makeToAidl(buffers[i]),
+                                BufferStatus::OK, NativeHandle(), NativeHandle()};
+            }
+
+            // Set appropriate settings override tag
+            requestMeta.append(reinterpret_cast<camera_metadata_t*>(settings.metadata.data()));
+            int32_t settingsOverride = overrideSequence[i] ?
+                    ANDROID_CONTROL_SETTINGS_OVERRIDE_ZOOM : ANDROID_CONTROL_SETTINGS_OVERRIDE_OFF;
+            ASSERT_EQ(::android::OK, requestMeta.update(ANDROID_CONTROL_SETTINGS_OVERRIDE,
+                    &settingsOverride, 1));
+            camera_metadata_t* metaBuffer = requestMeta.release();
+            uint8_t* rawMetaBuffer = reinterpret_cast<uint8_t*>(metaBuffer);
+            requestSettings[i].metadata = std::vector(
+                    rawMetaBuffer, rawMetaBuffer + get_camera_metadata_size(metaBuffer));
+            overrideRotateAndCrop(&(requestSettings[i]));
+            request.frameNumber = frameNumber + i;
+            request.fmqSettingsSize = 0;
+            request.settings = requestSettings[i];
+            request.inputBuffer = {
+                    -1, 0, NativeHandle(), BufferStatus::ERROR, NativeHandle(), NativeHandle()};
+
+            inflightReqs[i] = std::make_shared<InFlightRequest>(1, false, supportsPartialResults,
+                                                                partialResultCount, resultQueue);
+            mInflightMap[frameNumber + i] = inflightReqs[i];
+        }
+
+        int32_t numRequestProcessed = 0;
+        std::vector<BufferCache> cachesToRemove;
+
+        ndk::ScopedAStatus returnStatus =
+                mSession->processCaptureRequest(requests, cachesToRemove, &numRequestProcessed);
+        ASSERT_TRUE(returnStatus.isOk());
+        ASSERT_EQ(numRequestProcessed, frameCount);
+
+        for (size_t i = 0; i < frameCount; i++) {
+            std::unique_lock<std::mutex> l(mLock);
+            while (!inflightReqs[i]->errorCodeValid && ((0 < inflightReqs[i]->numBuffersLeft) ||
+                                                        (!inflightReqs[i]->haveResultMetadata))) {
+                auto timeout = std::chrono::system_clock::now() +
+                               std::chrono::seconds(kStreamBufferTimeoutSec);
+                ASSERT_NE(std::cv_status::timeout, mResultCondition.wait_until(l, timeout));
+            }
+
+            ASSERT_FALSE(inflightReqs[i]->errorCodeValid);
+            ASSERT_NE(inflightReqs[i]->resultOutputBuffers.size(), 0u);
+            ASSERT_EQ(previewStream.id, inflightReqs[i]->resultOutputBuffers[0].buffer.streamId);
+            ASSERT_FALSE(inflightReqs[i]->collectedResult.isEmpty());
+            ASSERT_TRUE(inflightReqs[i]->collectedResult.exists(ANDROID_CONTROL_SETTINGS_OVERRIDE));
+            camera_metadata_entry_t overrideResult =
+                    inflightReqs[i]->collectedResult.find(ANDROID_CONTROL_SETTINGS_OVERRIDE);
+            ASSERT_EQ(overrideResult.data.i32[0] == ANDROID_CONTROL_SETTINGS_OVERRIDE_ZOOM,
+                    expectedResults[i]);
+            ASSERT_TRUE(inflightReqs[i]->collectedResult.exists(
+                    ANDROID_CONTROL_SETTINGS_OVERRIDING_FRAME_NUMBER));
+            camera_metadata_entry_t frameNumberEntry = inflightReqs[i]->collectedResult.find(
+                    ANDROID_CONTROL_SETTINGS_OVERRIDING_FRAME_NUMBER);
+            ALOGV("%s: i %zu, expcetedResults[i] %d, overrideResult is %d, frameNumber %d",
+                  __FUNCTION__, i, expectedResults[i], overrideResult.data.i32[0],
+                  frameNumberEntry.data.i32[0]);
+            if (expectedResults[i]) {
+                ASSERT_GT(frameNumberEntry.data.i32[0], inflightReqs[i]->frameNumber);
+            } else {
+                ASSERT_EQ(frameNumberEntry.data.i32[0], frameNumber + i);
+            }
         }
 
         ret = mSession->close();

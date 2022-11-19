@@ -55,6 +55,7 @@ cc_test {
     ],
     header_libs: [
         "libhwui_internal_headers",
+        "libimapper_stablec",
     ],
     cflags: [
         "-Wall",
