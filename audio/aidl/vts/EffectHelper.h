@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -24,7 +25,6 @@
 #include <aidl/android/hardware/audio/effect/IEffect.h>
 #include <aidl/android/hardware/audio/effect/IFactory.h>
 #include <aidl/android/media/audio/common/AudioChannelLayout.h>
-#include <aidl/android/media/audio/common/AudioDeviceType.h>
 #include <android/binder_auto_utils.h>
 #include <fmq/AidlMessageQueue.h>
 
@@ -35,274 +35,138 @@
 using namespace android;
 using aidl::android::hardware::audio::effect::CommandId;
 using aidl::android::hardware::audio::effect::Descriptor;
-using aidl::android::hardware::audio::effect::EffectNullUuid;
-using aidl::android::hardware::audio::effect::EffectZeroUuid;
 using aidl::android::hardware::audio::effect::IEffect;
 using aidl::android::hardware::audio::effect::Parameter;
 using aidl::android::hardware::audio::effect::State;
 using aidl::android::hardware::common::fmq::SynchronizedReadWrite;
 using aidl::android::media::audio::common::AudioChannelLayout;
-using aidl::android::media::audio::common::AudioDeviceType;
 using aidl::android::media::audio::common::AudioFormatDescription;
 using aidl::android::media::audio::common::AudioFormatType;
 using aidl::android::media::audio::common::AudioUuid;
 using aidl::android::media::audio::common::PcmType;
 
-const AudioFormatDescription DefaultFormat = {
+const AudioFormatDescription kDefaultFormatDescription = {
         .type = AudioFormatType::PCM, .pcm = PcmType::FLOAT_32_BIT, .encoding = ""};
+
+typedef ::android::AidlMessageQueue<IEffect::Status,
+                                    ::aidl::android::hardware::common::fmq::SynchronizedReadWrite>
+        StatusMQ;
+typedef ::android::AidlMessageQueue<float,
+                                    ::aidl::android::hardware::common::fmq::SynchronizedReadWrite>
+        DataMQ;
 
 class EffectHelper {
   public:
-    explicit EffectHelper(const std::string& name) : mFactoryHelper(EffectFactoryHelper(name)) {
-        mFactoryHelper.ConnectToFactoryService();
+    static void create(std::shared_ptr<IFactory> factory, std::shared_ptr<IEffect>& effect,
+                       Descriptor::Identity id, binder_status_t status = EX_NONE) {
+        ASSERT_NE(factory, nullptr);
+        EXPECT_STATUS(status, factory->createEffect(id.uuid, &effect));
+        if (status == EX_NONE) {
+            ASSERT_NE(effect, nullptr) << id.uuid.toString();
+        }
     }
 
-    void OpenEffects(const AudioUuid& type = EffectNullUuid) {
-        auto open = [&](const std::shared_ptr<IEffect>& effect) {
-            ASSERT_NE(effect, nullptr);
-            IEffect::OpenEffectReturn ret;
-            EXPECT_IS_OK(effect->open(mCommon, mSpecific, &ret));
-            EffectParam params;
-            params.statusMQ = std::make_unique<StatusMQ>(ret.statusMQ);
-            params.inputMQ = std::make_unique<DataMQ>(ret.inputDataMQ);
-            params.outputMQ = std::make_unique<DataMQ>(ret.outputDataMQ);
-            mEffectParams.push_back(std::move(params));
-        };
-        EXPECT_NO_FATAL_FAILURE(ForEachEffect(open, type));
+    static void destroy(std::shared_ptr<IFactory> factory, std::shared_ptr<IEffect> effect,
+                        binder_status_t status = EX_NONE) {
+        ASSERT_NE(factory, nullptr);
+        ASSERT_NE(effect, nullptr);
+        EXPECT_STATUS(status, factory->destroyEffect(effect));
     }
 
-    void CloseEffects(const binder_status_t status = EX_NONE) {
-        auto close = [&](const std::shared_ptr<IEffect>& effect) {
-            ASSERT_NE(effect, nullptr);
+    static void open(std::shared_ptr<IEffect> effect, const Parameter::Common& common,
+                     const std::optional<Parameter::Specific>& specific,
+                     IEffect::OpenEffectReturn* ret, binder_status_t status = EX_NONE) {
+        ASSERT_NE(effect, nullptr);
+        EXPECT_STATUS(status, effect->open(common, specific, ret));
+    }
+
+    static void open(std::shared_ptr<IEffect> effect, int session = 0,
+                     binder_status_t status = EX_NONE) {
+        ASSERT_NE(effect, nullptr);
+        Parameter::Common common = EffectHelper::createParamCommon(session);
+        IEffect::OpenEffectReturn ret;
+        open(effect, common, std::nullopt /* specific */, &ret, status);
+    }
+
+    static void close(std::shared_ptr<IEffect> effect, binder_status_t status = EX_NONE) {
+        if (effect) {
             EXPECT_STATUS(status, effect->close());
-        };
-
-        EXPECT_NO_FATAL_FAILURE(ForEachEffect(close));
-    }
-
-    void CreateEffects(const int n = 1) {
-        for (int i = 0; i < n; i++) {
-            ASSERT_NO_FATAL_FAILURE(mFactoryHelper.QueryAndCreateAllEffects());
         }
     }
-
-    void CreateEffectsWithUUID(const AudioUuid& type = EffectNullUuid) {
-        ASSERT_NO_FATAL_FAILURE(mFactoryHelper.QueryAndCreateEffects(type));
+    static void getDescriptor(std::shared_ptr<IEffect> effect, Descriptor& desc,
+                              binder_status_t status = EX_NONE) {
+        ASSERT_NE(effect, nullptr);
+        EXPECT_STATUS(status, effect->getDescriptor(&desc));
     }
-
-    void QueryEffects() { ASSERT_NO_FATAL_FAILURE(mFactoryHelper.QueryAndCreateAllEffects()); }
-
-    void DestroyEffects(const binder_status_t status = EX_NONE, const int remaining = 0) {
-        ASSERT_NO_FATAL_FAILURE(mFactoryHelper.DestroyEffects(status, remaining));
-        mEffectDescriptors.clear();
+    static void expectState(std::shared_ptr<IEffect> effect, State expectState,
+                            binder_status_t status = EX_NONE) {
+        ASSERT_NE(effect, nullptr);
+        State state;
+        EXPECT_STATUS(status, effect->getState(&state));
+        EXPECT_EQ(expectState, state);
     }
-
-    void GetEffectDescriptors() {
-        auto get = [&](const std::shared_ptr<IEffect>& effect) {
-            ASSERT_NE(effect, nullptr);
-            Descriptor desc;
-            EXPECT_IS_OK(effect->getDescriptor(&desc));
-            mEffectDescriptors.push_back(std::move(desc));
-        };
-        EXPECT_NO_FATAL_FAILURE(ForEachEffect(get));
+    static void command(std::shared_ptr<IEffect> effect, CommandId command,
+                        binder_status_t status = EX_NONE) {
+        ASSERT_NE(effect, nullptr);
+        EXPECT_STATUS(status, effect->command(command));
     }
-
-    void CommandEffects(CommandId command) {
-        auto close = [&](const std::shared_ptr<IEffect>& effect) {
-            ASSERT_NE(effect, nullptr);
-            EXPECT_IS_OK(effect->command(command));
-        };
-        EXPECT_NO_FATAL_FAILURE(ForEachEffect(close));
+    static void allocateInputData(const Parameter::Common common, std::unique_ptr<DataMQ>& mq,
+                                  std::vector<float>& buffer) {
+        ASSERT_NE(mq, nullptr);
+        auto frameSize = android::hardware::audio::common::getFrameSizeInBytes(
+                common.input.base.format, common.input.base.channelMask);
+        const size_t floatsToWrite = mq->availableToWrite();
+        EXPECT_NE(0UL, floatsToWrite);
+        EXPECT_EQ(frameSize * common.input.frameCount, floatsToWrite * sizeof(float));
+        buffer.resize(floatsToWrite);
+        std::fill(buffer.begin(), buffer.end(), 0x5a);
     }
-
-    void CommandEffectsExpectStatus(CommandId command, const binder_status_t status) {
-        auto func = [&](const std::shared_ptr<IEffect>& effect) {
-            ASSERT_NE(effect, nullptr);
-            EXPECT_STATUS(status, effect->command(command));
-        };
-        EXPECT_NO_FATAL_FAILURE(ForEachEffect(func));
+    static void writeToFmq(std::unique_ptr<DataMQ>& mq, const std::vector<float>& buffer) {
+        const size_t available = mq->availableToWrite();
+        EXPECT_NE(0Ul, available);
+        auto bufferFloats = buffer.size();
+        auto floatsToWrite = std::min(available, bufferFloats);
+        EXPECT_TRUE(mq->write(buffer.data(), floatsToWrite));
     }
-
-    void ExpectState(State expected) {
-        auto get = [&](const std::shared_ptr<IEffect>& effect) {
-            ASSERT_NE(effect, nullptr);
-            State state = State::INIT;
-            EXPECT_IS_OK(effect->getState(&state));
-            EXPECT_EQ(expected, state);
-        };
-        EXPECT_NO_FATAL_FAILURE(ForEachEffect(get));
-    }
-
-    void SetParameter() {
-        auto func = [&](const std::shared_ptr<IEffect>& effect) {
-            ASSERT_NE(effect, nullptr);
-            Parameter param;
-            param.set<Parameter::common>(mCommon);
-            EXPECT_IS_OK(effect->setParameter(param));
-        };
-        EXPECT_NO_FATAL_FAILURE(ForEachEffect(func));
-    }
-
-    void VerifyParameters() {
-        auto func = [&](const std::shared_ptr<IEffect>& effect) {
-            ASSERT_NE(effect, nullptr);
-            Parameter paramCommonGet = Parameter(), paramCommonExpect = Parameter();
-            Parameter::Id id;
-            id.set<Parameter::Id::commonTag>(Parameter::common);
-            paramCommonExpect.set<Parameter::common>(mCommon);
-            EXPECT_IS_OK(effect->getParameter(id, &paramCommonGet));
-            EXPECT_EQ(paramCommonExpect, paramCommonGet)
-                    << paramCommonExpect.toString() << " vs " << paramCommonGet.toString();
-        };
-        EXPECT_NO_FATAL_FAILURE(ForEachEffect(func));
-    }
-
-    void QueryEffects(const std::optional<AudioUuid>& in_type,
-                      const std::optional<AudioUuid>& in_instance,
-                      const std::optional<AudioUuid>& in_proxy,
-                      std::vector<Descriptor::Identity>* _aidl_return) {
-        mFactoryHelper.QueryEffects(in_type, in_instance, in_proxy, _aidl_return);
-    }
-
-    template <typename Functor>
-    void ForEachEffect(Functor functor, const std::optional<AudioUuid>& type = EffectNullUuid) {
-        auto effectMap = mFactoryHelper.GetEffectMap();
-        for (const auto& it : effectMap) {
-            SCOPED_TRACE(it.second.toString());
-            if (type != EffectNullUuid && it.second.type != type) continue;
-            functor(it.first);
+    static void readFromFmq(std::unique_ptr<StatusMQ>& statusMq, size_t statusNum,
+                            std::unique_ptr<DataMQ>& dataMq, size_t expectFloats,
+                            std::vector<float>& buffer) {
+        IEffect::Status status{};
+        EXPECT_TRUE(statusMq->readBlocking(&status, statusNum));
+        EXPECT_EQ(STATUS_OK, status.status);
+        if (statusNum != 0) {
+            EXPECT_EQ(expectFloats, (unsigned)status.fmqProduced);
+            EXPECT_EQ(expectFloats, dataMq->availableToRead());
+            if (expectFloats != 0) {
+                EXPECT_TRUE(dataMq->read(buffer.data(), expectFloats));
+            }
         }
     }
+    static Parameter::Common createParamCommon(
+            int session = 0, int ioHandle = -1, int iSampleRate = 48000, int oSampleRate = 48000,
+            long iFrameCount = 0x100, long oFrameCount = 0x100,
+            AudioChannelLayout inputChannelLayout =
+                    AudioChannelLayout::make<AudioChannelLayout::layoutMask>(
+                            AudioChannelLayout::LAYOUT_STEREO),
+            AudioChannelLayout outputChannelLayout =
+                    AudioChannelLayout::make<AudioChannelLayout::layoutMask>(
+                            AudioChannelLayout::LAYOUT_STEREO)) {
+        Parameter::Common common;
+        common.session = session;
+        common.ioHandle = ioHandle;
 
-    template <typename Functor>
-    void ForEachDescriptor(Functor functor) {
-        for (size_t i = 0; i < mEffectDescriptors.size(); i++) {
-            SCOPED_TRACE(mEffectDescriptors[i].toString());
-            functor(i, mEffectDescriptors[i]);
-        }
-    }
-
-    static const size_t mWriteMQBytes = 0x400;
-
-    enum class IO : char { INPUT = 0, OUTPUT = 1, INOUT = 2 };
-
-    void initParamCommonFormat(IO io = IO::INOUT,
-                               const AudioFormatDescription& format = DefaultFormat) {
-        if (io == IO::INPUT || io == IO::INOUT) {
-            mCommon.input.base.format = format;
-        }
-        if (io == IO::OUTPUT || io == IO::INOUT) {
-            mCommon.output.base.format = format;
-        }
-    }
-
-    void initParamCommonSampleRate(IO io = IO::INOUT, const int& sampleRate = 48000) {
-        if (io == IO::INPUT || io == IO::INOUT) {
-            mCommon.input.base.sampleRate = sampleRate;
-        }
-        if (io == IO::OUTPUT || io == IO::INOUT) {
-            mCommon.output.base.sampleRate = sampleRate;
-        }
-    }
-
-    void initParamCommonFrameCount(IO io = IO::INOUT, const long& frameCount = 48000) {
-        if (io == IO::INPUT || io == IO::INOUT) {
-            mCommon.input.frameCount = frameCount;
-        }
-        if (io == IO::OUTPUT || io == IO::INOUT) {
-            mCommon.output.frameCount = frameCount;
-        }
-    }
-    void initParamCommon(int session = 0, int ioHandle = -1, int iSampleRate = 48000,
-                         int oSampleRate = 48000, long iFrameCount = 0x100,
-                         long oFrameCount = 0x100) {
-        mCommon.session = session;
-        mCommon.ioHandle = ioHandle;
-
-        auto& input = mCommon.input;
-        auto& output = mCommon.output;
+        auto& input = common.input;
+        auto& output = common.output;
         input.base.sampleRate = iSampleRate;
-        input.base.channelMask = mInputChannelLayout;
+        input.base.channelMask = inputChannelLayout;
+        input.base.format = kDefaultFormatDescription;
         input.frameCount = iFrameCount;
-        input.base.format = DefaultFormat;
         output.base.sampleRate = oSampleRate;
-        output.base.channelMask = mOutputChannelLayout;
-        output.base.format = DefaultFormat;
+        output.base.channelMask = outputChannelLayout;
+        output.base.format = kDefaultFormatDescription;
         output.frameCount = oFrameCount;
-        output.base.format = DefaultFormat;
-        inputFrameSize = android::hardware::audio::common::getFrameSizeInBytes(
-                input.base.format, input.base.channelMask);
-        outputFrameSize = android::hardware::audio::common::getFrameSizeInBytes(
-                output.base.format, output.base.channelMask);
+        return common;
     }
-
-    void setSpecific(Parameter::Specific& specific) { mSpecific = specific; }
-
-    // usually this function only call once.
-    void PrepareInputData(size_t bytes = mWriteMQBytes) {
-        size_t maxInputBytes = mWriteMQBytes;
-        for (auto& it : mEffectParams) {
-            auto& mq = it.inputMQ;
-            EXPECT_NE(nullptr, mq);
-            EXPECT_TRUE(mq->isValid());
-            const size_t bytesToWrite = mq->availableToWrite() * sizeof(float);
-            EXPECT_EQ(inputFrameSize * mCommon.input.frameCount, bytesToWrite);
-            EXPECT_NE(0UL, bytesToWrite);
-            EXPECT_TRUE(bytes <= bytesToWrite);
-            maxInputBytes = std::max(maxInputBytes, bytesToWrite);
-        }
-        mInputBuffer.resize(maxInputBytes / sizeof(float));
-        std::fill(mInputBuffer.begin(), mInputBuffer.end(), 0x5a);
-    }
-
-    void writeToFmq(size_t bytes = mWriteMQBytes) {
-        for (auto& it : mEffectParams) {
-            auto& mq = it.inputMQ;
-            EXPECT_NE(nullptr, mq);
-            const size_t bytesToWrite = mq->availableToWrite() * sizeof(float);
-            EXPECT_NE(0Ul, bytesToWrite);
-            EXPECT_TRUE(bytes <= bytesToWrite);
-            EXPECT_TRUE(mq->write(mInputBuffer.data(), bytes / sizeof(float)));
-        }
-    }
-
-    void readFromFmq(size_t expectBytes = mWriteMQBytes) {
-        for (auto& it : mEffectParams) {
-            IEffect::Status status{};
-            auto& statusMq = it.statusMQ;
-            EXPECT_NE(nullptr, statusMq);
-            EXPECT_TRUE(statusMq->readBlocking(&status, 1));
-            EXPECT_EQ(STATUS_OK, status.status);
-            EXPECT_EQ(expectBytes, (unsigned)status.fmqProduced * sizeof(float));
-
-            auto& outputMq = it.outputMQ;
-            EXPECT_NE(nullptr, outputMq);
-            EXPECT_EQ(expectBytes, outputMq->availableToRead() * sizeof(float));
-        }
-    }
-
-    void setInputChannelLayout(AudioChannelLayout input) { mInputChannelLayout = input; }
-    void setOutputChannelLayout(AudioChannelLayout output) { mOutputChannelLayout = output; }
-    const std::vector<Descriptor::Identity>& GetCompleteEffectIdList() const {
-        return mFactoryHelper.GetCompleteEffectIdList();
-    }
-    const std::vector<Descriptor>& getDescriptorVec() const { return mEffectDescriptors; }
-
-  private:
-    EffectFactoryHelper mFactoryHelper;
-
-    AudioChannelLayout mInputChannelLayout =
-            AudioChannelLayout::make<AudioChannelLayout::layoutMask>(
-                    AudioChannelLayout::LAYOUT_STEREO);
-    AudioChannelLayout mOutputChannelLayout =
-            AudioChannelLayout::make<AudioChannelLayout::layoutMask>(
-                    AudioChannelLayout::LAYOUT_STEREO);
-
-    Parameter::Common mCommon;
-    std::optional<Parameter::Specific> mSpecific = std::nullopt;
-
-    size_t inputFrameSize, outputFrameSize;
-    std::vector<float> mInputBuffer;  // reuse same buffer for all effects testing
 
     typedef ::android::AidlMessageQueue<
             IEffect::Status, ::aidl::android::hardware::common::fmq::SynchronizedReadWrite>
@@ -317,6 +181,4 @@ class EffectHelper {
         std::unique_ptr<DataMQ> inputMQ;
         std::unique_ptr<DataMQ> outputMQ;
     };
-    std::vector<EffectParam> mEffectParams;
-    std::vector<Descriptor> mEffectDescriptors;
 };
