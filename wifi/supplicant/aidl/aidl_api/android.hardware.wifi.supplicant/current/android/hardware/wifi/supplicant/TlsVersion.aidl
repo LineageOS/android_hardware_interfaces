@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,12 +33,9 @@
 
 package android.hardware.wifi.supplicant;
 @Backing(type="int") @VintfStability
-enum WpaDriverCapabilitiesMask {
-  MBO = 1,
-  OCE = 2,
-  SAE_PK = 4,
-  WFD_R2 = 8,
-  TRUST_ON_FIRST_USE = 16,
-  SET_TLS_MINIMUM_VERSION = 32,
-  TLS_V1_3 = 64,
+enum TlsVersion {
+  TLS_V1_0 = 0,
+  TLS_V1_1 = 1,
+  TLS_V1_2 = 2,
+  TLS_V1_3 = 3,
 }
