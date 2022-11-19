@@ -32,7 +32,7 @@ namespace common {
 
 struct Utils {
     static aidl::android::hardware::gnss::GnssData getMockMeasurement(
-            const bool enableCorrVecOutputs);
+            const bool enableCorrVecOutputs, const bool enableFullTracking);
     static V2_0::IGnssMeasurementCallback::GnssData getMockMeasurementV2_0();
     static V2_1::IGnssMeasurementCallback::GnssData getMockMeasurementV2_1();
 

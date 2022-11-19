@@ -32,15 +32,24 @@ class LoudnessEnhancerSwContext final : public EffectContext {
         : EffectContext(statusDepth, common) {
         LOG(DEBUG) << __func__;
     }
-    // TODO: add specific context here
+
+    RetCode setLeGainMb(int gainMb) {
+        // TODO : Add implementation to apply new gain
+        mGainMb = gainMb;
+        return RetCode::SUCCESS;
+    }
+    int getLeGainMb() const { return mGainMb; }
+
+  private:
+    int mGainMb = 0;  // Default Gain
 };
 
 class LoudnessEnhancerSw final : public EffectImpl {
   public:
     LoudnessEnhancerSw() { LOG(DEBUG) << __func__; }
     ~LoudnessEnhancerSw() {
+        cleanUp();
         LOG(DEBUG) << __func__;
-        releaseContext();
     }
 
     ndk::ScopedAStatus getDescriptor(Descriptor* _aidl_return) override;
@@ -57,16 +66,17 @@ class LoudnessEnhancerSw final : public EffectImpl {
     const LoudnessEnhancer::Capability kCapability;
     /* Effect descriptor */
     const Descriptor kDescriptor = {
-            .common = {.id = {.type = LoudnessEnhancerTypeUUID,
-                              .uuid = LoudnessEnhancerSwImplUUID,
+            .common = {.id = {.type = kLoudnessEnhancerTypeUUID,
+                              .uuid = kLoudnessEnhancerSwImplUUID,
                               .proxy = std::nullopt},
                        .flags = {.type = Flags::Type::INSERT,
                                  .insert = Flags::Insert::FIRST,
                                  .volume = Flags::Volume::CTRL},
-                       .name = "LoudnessEnhancerSw"},
+                       .name = "LoudnessEnhancerSw",
+                       .implementor = "The Android Open Source Project"},
             .capability = Capability::make<Capability::loudnessEnhancer>(kCapability)};
 
-    /* parameters */
-    LoudnessEnhancer mSpecificParam;
+    ndk::ScopedAStatus getParameterLoudnessEnhancer(const LoudnessEnhancer::Tag& tag,
+                                                    Parameter::Specific* specific);
 };
 }  // namespace aidl::android::hardware::audio::effect

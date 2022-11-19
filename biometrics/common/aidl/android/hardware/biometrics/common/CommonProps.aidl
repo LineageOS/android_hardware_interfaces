@@ -18,7 +18,9 @@ package android.hardware.biometrics.common;
 
 import android.hardware.biometrics.common.ComponentInfo;
 import android.hardware.biometrics.common.SensorStrength;
-
+/**
+ * @hide
+ */
 @VintfStability
 parcelable CommonProps {
     /**

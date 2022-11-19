@@ -53,6 +53,9 @@ enum RadioTechnology {
   GSM = 16,
   TD_SCDMA = 17,
   IWLAN = 18,
+  /**
+   * @deprecated use LTE instead and indicate carrier aggregation through multiple physical channel configurations in IRadioNetwork::currentPhysicalChannelConfigs.
+   */
   LTE_CA = 19,
   NR = 20,
 }

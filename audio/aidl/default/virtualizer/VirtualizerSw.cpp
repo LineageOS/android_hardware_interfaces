@@ -26,14 +26,14 @@
 #include "VirtualizerSw.h"
 
 using aidl::android::hardware::audio::effect::IEffect;
+using aidl::android::hardware::audio::effect::kVirtualizerSwImplUUID;
 using aidl::android::hardware::audio::effect::State;
 using aidl::android::hardware::audio::effect::VirtualizerSw;
-using aidl::android::hardware::audio::effect::VirtualizerSwImplUUID;
 using aidl::android::media::audio::common::AudioUuid;
 
 extern "C" binder_exception_t createEffect(const AudioUuid* in_impl_uuid,
                                            std::shared_ptr<IEffect>* instanceSpp) {
-    if (!in_impl_uuid || *in_impl_uuid != VirtualizerSwImplUUID) {
+    if (!in_impl_uuid || *in_impl_uuid != kVirtualizerSwImplUUID) {
         LOG(ERROR) << __func__ << "uuid not supported";
         return EX_ILLEGAL_ARGUMENT;
     }

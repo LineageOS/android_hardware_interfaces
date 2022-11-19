@@ -18,7 +18,9 @@ package android.hardware.biometrics.fingerprint;
 
 /**
  * Additional context associated with a pointer event.
+ * @hide
  */
+@JavaDerive(equals=true)
 @VintfStability
 parcelable PointerContext {
     /**
@@ -64,7 +66,7 @@ parcelable PointerContext {
     boolean isAod = false;
 
     /**
-     * The time of the user interaction that produced this event, in milliseconds.
+     * The time when this event was created, in milliseconds.
      *
      * This is obtained from MotionEvent#getEventTime, which uses SystemClock.uptimeMillis() as
      * the clock.
@@ -74,10 +76,10 @@ parcelable PointerContext {
     long time = 0;
 
     /**
-     * The time of the first user interaction in this gesture, in milliseconds.
+     * This event is part of some gesture. This is the time when MotionEvent#ACTION_DOWN was
+     * created for that gesture, in milliseconds.
      *
-     * If this event is MotionEvent#ACTION_DOWN, it means it's the first event in this gesture,
-     * and `gestureStart` will be equal to `time`.
+     * If this event is MotionEvent#ACTION_DOWN, then this value is equal to `time`.
      *
      * This is obtained from MotionEvent#getDownTime, which uses SystemClock.uptimeMillis() as
      * the clock.

@@ -15,7 +15,9 @@
  */
 
 package android.hardware.biometrics.common;
-
+/**
+ * @hide
+ */
 @VintfStability
 parcelable ComponentInfo {
     /**

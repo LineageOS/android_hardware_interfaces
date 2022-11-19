@@ -347,4 +347,17 @@ ScopedAStatus RadioNetwork::setNullCipherAndIntegrityEnabled(int32_t serial, boo
     return ok();
 }
 
+ScopedAStatus RadioNetwork::isN1ModeEnabled(int32_t serial) {
+    LOG_CALL << serial;
+    LOG(ERROR) << " isN1ModeEnabled is unsupported by HIDL HALs";
+    respond()->isN1ModeEnabledResponse(notSupported(serial), false);
+    return ok();
+}
+
+ScopedAStatus RadioNetwork::setN1ModeEnabled(int32_t serial, bool /*enable*/) {
+    LOG_CALL << serial;
+    LOG(ERROR) << " setN1ModeEnabled is unsupported by HIDL HALs";
+    respond()->setN1ModeEnabledResponse(notSupported(serial));
+    return ok();
+}
 }  // namespace android::hardware::radio::compat

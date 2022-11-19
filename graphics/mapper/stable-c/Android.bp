@@ -1,0 +1,104 @@
+/**
+ * Copyright (c) 2022, The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package {
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "hardware_interfaces_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-Apache-2.0
+    default_applicable_licenses: ["hardware_interfaces_license"],
+}
+
+cc_library_headers {
+    name: "libimapper_stablec",
+    export_include_dirs: ["include"],
+    vendor_available: true,
+    header_libs: [
+        "libarect_headers",
+    ],
+    export_header_lib_headers: [
+        "libarect_headers",
+    ],
+}
+
+cc_library_headers {
+    name: "libimapper_providerutils",
+    vendor_available: true,
+    export_include_dirs: ["implutils/include"],
+    header_libs: [
+        "libbase_headers",
+        "libimapper_stablec",
+    ],
+    export_header_lib_headers: [
+        "libbase_headers",
+        "libimapper_stablec",
+    ],
+}
+
+cc_test {
+    name: "libimapper_providerutils_tests",
+    defaults: [
+        "android.hardware.graphics.allocator-ndk_shared",
+        "android.hardware.graphics.common-ndk_shared",
+    ],
+    header_libs: [
+        "libimapper_providerutils",
+    ],
+    srcs: [
+        "implutils/impltests.cpp",
+    ],
+    visibility: [":__subpackages__"],
+    cpp_std: "experimental",
+}
+
+cc_test {
+    name: "VtsHalGraphicsMapperStableC_TargetTest",
+    cpp_std: "experimental",
+    defaults: [
+        "VtsHalTargetTestDefaults",
+        "use_libaidlvintf_gtest_helper_static",
+        "android.hardware.graphics.allocator-ndk_shared",
+        "android.hardware.graphics.common-ndk_shared",
+    ],
+    srcs: [
+        "vts/VtsHalGraphicsMapperStableC_TargetTest.cpp",
+    ],
+
+    shared_libs: [
+        "libbinder_ndk",
+        "libbase",
+        "libsync",
+        "libvndksupport",
+    ],
+    static_libs: [
+        "libaidlcommonsupport",
+        "libgralloctypes",
+        "libgtest",
+    ],
+    header_libs: [
+        "libimapper_stablec",
+        "libimapper_providerutils",
+    ],
+    cflags: [
+        "-Wall",
+        "-Werror",
+    ],
+    test_suites: [
+        "general-tests",
+        "vts",
+    ],
+}

@@ -406,6 +406,12 @@ class CameraAidlTest : public ::testing::TestWithParam<std::string> {
             aidl::android::hardware::camera::metadata::
             RequestAvailableDynamicRangeProfilesMap dynamicRangeProfile);
 
+    void processZoomSettingsOverrideRequests(
+            int32_t frameCount, const bool *overrideSequence, const bool *expectedResults);
+
+    bool supportZoomSettingsOverride(const camera_metadata_t* staticMeta);
+    bool isPerFrameControl(const camera_metadata_t* staticMeta);
+
   protected:
     // In-flight queue for tracking completion of capture requests.
     struct InFlightRequest {

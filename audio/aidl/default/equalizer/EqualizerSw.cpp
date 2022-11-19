@@ -26,14 +26,14 @@
 #include "EqualizerSw.h"
 
 using aidl::android::hardware::audio::effect::EqualizerSw;
-using aidl::android::hardware::audio::effect::EqualizerSwImplUUID;
 using aidl::android::hardware::audio::effect::IEffect;
+using aidl::android::hardware::audio::effect::kEqualizerSwImplUUID;
 using aidl::android::hardware::audio::effect::State;
 using aidl::android::media::audio::common::AudioUuid;
 
 extern "C" binder_exception_t createEffect(const AudioUuid* in_impl_uuid,
                                            std::shared_ptr<IEffect>* instanceSpp) {
-    if (!in_impl_uuid || *in_impl_uuid != EqualizerSwImplUUID) {
+    if (!in_impl_uuid || *in_impl_uuid != kEqualizerSwImplUUID) {
         LOG(ERROR) << __func__ << "uuid not supported";
         return EX_ILLEGAL_ARGUMENT;
     }

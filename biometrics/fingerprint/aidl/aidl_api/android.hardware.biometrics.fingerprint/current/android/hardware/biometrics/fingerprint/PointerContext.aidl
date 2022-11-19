@@ -32,7 +32,8 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.biometrics.fingerprint;
-@VintfStability
+/* @hide */
+@JavaDerive(equals=true) @VintfStability
 parcelable PointerContext {
   int pointerId = -1;
   float x = 0.000000f;

@@ -78,4 +78,6 @@ interface IRadioNetwork {
   oneway void cancelEmergencyNetworkScan(int serial, boolean resetScan);
   oneway void exitEmergencyMode(in int serial);
   oneway void setNullCipherAndIntegrityEnabled(in int serial, in boolean enabled);
+  oneway void isN1ModeEnabled(in int serial);
+  oneway void setN1ModeEnabled(in int serial, boolean enable);
 }

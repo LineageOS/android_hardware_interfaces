@@ -15,7 +15,9 @@
  */
 
 package android.hardware.biometrics.fingerprint;
-
+/**
+ * @hide
+ */
 @VintfStability
 parcelable SensorLocation {
     /**
