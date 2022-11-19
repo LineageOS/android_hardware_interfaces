@@ -15,7 +15,7 @@
  */
 
 #include <cstddef>
-#define LOG_TAG "AHAL_VisualizerSw"
+#define LOG_TAG "AHAL_EnvReverbSw"
 #include <Utils.h>
 #include <algorithm>
 #include <unordered_set>
@@ -23,22 +23,22 @@
 #include <android-base/logging.h>
 #include <fmq/AidlMessageQueue.h>
 
-#include "VisualizerSw.h"
+#include "EnvReverbSw.h"
 
+using aidl::android::hardware::audio::effect::EnvReverbSw;
 using aidl::android::hardware::audio::effect::IEffect;
-using aidl::android::hardware::audio::effect::kVisualizerSwImplUUID;
+using aidl::android::hardware::audio::effect::kEnvReverbSwImplUUID;
 using aidl::android::hardware::audio::effect::State;
-using aidl::android::hardware::audio::effect::VisualizerSw;
 using aidl::android::media::audio::common::AudioUuid;
 
 extern "C" binder_exception_t createEffect(const AudioUuid* in_impl_uuid,
                                            std::shared_ptr<IEffect>* instanceSpp) {
-    if (!in_impl_uuid || *in_impl_uuid != kVisualizerSwImplUUID) {
+    if (!in_impl_uuid || *in_impl_uuid != kEnvReverbSwImplUUID) {
         LOG(ERROR) << __func__ << "uuid not supported";
         return EX_ILLEGAL_ARGUMENT;
     }
     if (instanceSpp) {
-        *instanceSpp = ndk::SharedRefBase::make<VisualizerSw>();
+        *instanceSpp = ndk::SharedRefBase::make<EnvReverbSw>();
         LOG(DEBUG) << __func__ << " instance " << instanceSpp->get() << " created";
         return EX_NONE;
     } else {
@@ -64,41 +64,41 @@ extern "C" binder_exception_t destroyEffect(const std::shared_ptr<IEffect>& inst
 
 namespace aidl::android::hardware::audio::effect {
 
-ndk::ScopedAStatus VisualizerSw::getDescriptor(Descriptor* _aidl_return) {
+ndk::ScopedAStatus EnvReverbSw::getDescriptor(Descriptor* _aidl_return) {
     LOG(DEBUG) << __func__ << kDescriptor.toString();
     *_aidl_return = kDescriptor;
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus VisualizerSw::setParameterSpecific(const Parameter::Specific& specific) {
-    RETURN_IF(Parameter::Specific::visualizer != specific.getTag(), EX_ILLEGAL_ARGUMENT,
+ndk::ScopedAStatus EnvReverbSw::setParameterSpecific(const Parameter::Specific& specific) {
+    RETURN_IF(Parameter::Specific::reverb != specific.getTag(), EX_ILLEGAL_ARGUMENT,
               "EffectNotSupported");
     std::lock_guard lg(mMutex);
     RETURN_IF(!mContext, EX_NULL_POINTER, "nullContext");
 
-    mSpecificParam = specific.get<Parameter::Specific::visualizer>();
+    mSpecificParam = specific.get<Parameter::Specific::reverb>();
     LOG(DEBUG) << __func__ << " success with: " << specific.toString();
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus VisualizerSw::getParameterSpecific(const Parameter::Id& id,
-                                                      Parameter::Specific* specific) {
+ndk::ScopedAStatus EnvReverbSw::getParameterSpecific(const Parameter::Id& id,
+                                                     Parameter::Specific* specific) {
     auto tag = id.getTag();
-    RETURN_IF(Parameter::Id::visualizerTag != tag, EX_ILLEGAL_ARGUMENT, "wrongIdTag");
-    specific->set<Parameter::Specific::visualizer>(mSpecificParam);
+    RETURN_IF(Parameter::Id::reverbTag != tag, EX_ILLEGAL_ARGUMENT, "wrongIdTag");
+    specific->set<Parameter::Specific::reverb>(mSpecificParam);
     return ndk::ScopedAStatus::ok();
 }
 
-std::shared_ptr<EffectContext> VisualizerSw::createContext(const Parameter::Common& common) {
+std::shared_ptr<EffectContext> EnvReverbSw::createContext(const Parameter::Common& common) {
     if (mContext) {
         LOG(DEBUG) << __func__ << " context already exist";
         return mContext;
     }
-    mContext = std::make_shared<VisualizerSwContext>(1 /* statusFmqDepth */, common);
+    mContext = std::make_shared<EnvReverbSwContext>(1 /* statusFmqDepth */, common);
     return mContext;
 }
 
-RetCode VisualizerSw::releaseContext() {
+RetCode EnvReverbSw::releaseContext() {
     if (mContext) {
         mContext.reset();
     }
@@ -106,7 +106,7 @@ RetCode VisualizerSw::releaseContext() {
 }
 
 // Processing method running in EffectWorker thread.
-IEffect::Status VisualizerSw::effectProcessImpl(float* in, float* out, int process) {
+IEffect::Status EnvReverbSw::effectProcessImpl(float* in, float* out, int process) {
     // TODO: get data buffer and process.
     LOG(DEBUG) << __func__ << " in " << in << " out " << out << " process " << process;
     for (int i = 0; i < process; i++) {

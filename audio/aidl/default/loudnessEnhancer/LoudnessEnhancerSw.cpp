@@ -26,14 +26,14 @@
 #include "LoudnessEnhancerSw.h"
 
 using aidl::android::hardware::audio::effect::IEffect;
+using aidl::android::hardware::audio::effect::kLoudnessEnhancerSwImplUUID;
 using aidl::android::hardware::audio::effect::LoudnessEnhancerSw;
-using aidl::android::hardware::audio::effect::LoudnessEnhancerSwImplUUID;
 using aidl::android::hardware::audio::effect::State;
 using aidl::android::media::audio::common::AudioUuid;
 
 extern "C" binder_exception_t createEffect(const AudioUuid* in_impl_uuid,
                                            std::shared_ptr<IEffect>* instanceSpp) {
-    if (!in_impl_uuid || *in_impl_uuid != LoudnessEnhancerSwImplUUID) {
+    if (!in_impl_uuid || *in_impl_uuid != kLoudnessEnhancerSwImplUUID) {
         LOG(ERROR) << __func__ << "uuid not supported";
         return EX_ILLEGAL_ARGUMENT;
     }
