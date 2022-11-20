@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,37 +17,13 @@
 package android.hardware.wifi.supplicant;
 
 /**
- * WPA Driver capability.
+ * TlsVersion: TLS version.
  */
 @VintfStability
 @Backing(type="int")
-enum WpaDriverCapabilitiesMask {
-    /**
-     * Multi Band Operation.
-     */
-    MBO = 1 << 0,
-    /**
-     * Optimized Connectivity Experience.
-     */
-    OCE = 1 << 1,
-    /**
-     * WPA3 SAE Public-Key.
-     */
-    SAE_PK = 1 << 2,
-    /**
-     * Wi-Fi Display R2
-     */
-    WFD_R2 = 1 << 3,
-    /**
-     * Trust On First Use
-     */
-    TRUST_ON_FIRST_USE = 1 << 4,
-    /**
-     * TLS minimum version
-     */
-    SET_TLS_MINIMUM_VERSION = 1 << 5,
-    /**
-     * TLS V1.3
-     */
-    TLS_V1_3 = 1 << 6,
+enum TlsVersion {
+    TLS_V1_0,
+    TLS_V1_1,
+    TLS_V1_2,
+    TLS_V1_3,
 }
