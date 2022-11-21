@@ -36,9 +36,13 @@ parcelable NrQos {
     QosBandwidth downlink;
     QosBandwidth uplink;
     /**
-     * QOS flow identifier of the QOS flow description in the range
-     * (FLOW_ID_RANGE_MIN, FLOW_ID_RANGE_MAX)
+     * @deprecated use qosFlowIdentifier.
      */
     byte qfi;
     char averagingWindowMs;
+    /**
+     * QOS flow identifier of the QOS flow description in the range
+     * (FLOW_ID_RANGE_MIN, FLOW_ID_RANGE_MAX).
+     **/
+    int qosFlowIdentifier;
 }
