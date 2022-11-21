@@ -1,0 +1,2 @@
+rule android.hardware.** example.vib.ah.@1
+
