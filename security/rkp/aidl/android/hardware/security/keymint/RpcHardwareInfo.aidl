@@ -29,9 +29,9 @@ parcelable RpcHardwareInfo {
     const int CURVE_25519 = 2;
 
     /**
-     * Implementation version of the remotely provisioned component hardware.  The version number is
-     * implementation defined, and not necessarily globally meaningful.  The version is used to
-     * distinguish between different versions of a given implementation.
+     * Implementation version of the remotely provisioned component hardware. The version provided
+     * here must match the version reported in the CsrPayload produced by the HAL interface. This
+     * field primarily acts as a convenience for the system components interacting with the HALs.
      */
     int versionNumber;
 
@@ -43,6 +43,9 @@ parcelable RpcHardwareInfo {
     @utf8InCpp String rpcAuthorName;
 
     /**
+     * NOTE: This field is no longer used as of version 3 of the HAL interface. This is because the
+     *       Endpoint Encryption Key is no longer used in the provisioning scheme.
+     *
      * supportedEekCurve returns an int representing which curve is supported for validating
      * signatures over the Endpoint Encryption Key certificate chain and for using the corresponding
      * signed encryption key in ECDH. Only one curve should be supported, with preference for 25519
