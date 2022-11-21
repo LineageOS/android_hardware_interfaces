@@ -218,7 +218,7 @@ AccelSensor::AccelSensor(int32_t sensorHandle, ISensorsEventCallback* callback) 
 void AccelSensor::readEventPayload(EventPayload& payload) {
     payload.vec3.x = 0;
     payload.vec3.y = 0;
-    payload.vec3.z = -9.8;
+    payload.vec3.z = 9.8;
     payload.vec3.status = SensorStatus::ACCURACY_HIGH;
 }
 
