@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,15 +31,11 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.radio.sim;
-@JavaDerive(toString=true) @VintfStability
-parcelable SimApdu {
-  int sessionId;
-  int cla;
-  int instruction;
-  int p1;
-  int p2;
-  int p3;
-  String data;
-  boolean isEs10;
+package android.hardware.radio.config;
+@Backing(type="int") @JavaDerive(toString=true) @VintfStability
+enum MultipleEnabledProfilesMode {
+  NONE = 0,
+  MEP_A1 = 1,
+  MEP_A2 = 2,
+  MEP_B = 3,
 }
