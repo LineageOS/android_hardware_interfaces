@@ -1632,10 +1632,8 @@ enum VehicleProperty : int32_t {
      *
      * The Android properties are:
      *
-     * int32Values[0] : Input code identifying the function representing this event. Valid event
-     *                  types are defined by CustomInputType.CUSTOM_EVENT_F1 up to
-     *                  CustomInputType.CUSTOM_EVENT_F10. They represent the custom event to be
-     *                  defined by OEM partners.
+     * int32Values[0] : Input code identifying the function representing this event. OEMs are free
+     *                  to use any signed 32 bits number to represent the input code value.
      * int32Values[1] : target display type defined in VehicleDisplay. Events not tied to specific
      *                  display must be sent to VehicleDisplay#MAIN.
      * int32Values[2] : repeat counter, if 0 then event is not repeated. Values 1 or above means
@@ -5326,10 +5324,11 @@ enum ProcessTerminationReason : int32_t {
  */
 enum CustomInputType : int32_t {
     /**
-     * Ten functions representing the custom input code to be defined and implemented by OEM
-     * partners.
+     * Ten optional function codes to be used in case OEM don't need more than 10 input code values.
      *
-     * OEMs need to formally contact Android team if more than 10 functions are required.
+     * OEMs are free to use any signed 32 bits number to represent the input code value.
+     * The following function keys are only for convenience and any other integer values are
+     * also allowed.
      */
     CUSTOM_EVENT_F1 = 1001,
     CUSTOM_EVENT_F2 = 1002,
