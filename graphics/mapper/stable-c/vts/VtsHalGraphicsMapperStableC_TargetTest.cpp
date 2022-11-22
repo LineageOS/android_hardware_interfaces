@@ -215,7 +215,7 @@ class GraphicsTestsBase {
             sizeRequired = mapper()->v5.getStandardMetadata(bufferHandle, static_cast<int64_t>(T),
                                                             buffer.data(), buffer.size());
         }
-        if (sizeRequired < 0 || sizeRequired >= buffer.size()) {
+        if (sizeRequired < 0 || sizeRequired > buffer.size()) {
             ADD_FAILURE() << "getStandardMetadata failed, received " << sizeRequired
                           << " with buffer size " << buffer.size();
             // Generate a fail type
