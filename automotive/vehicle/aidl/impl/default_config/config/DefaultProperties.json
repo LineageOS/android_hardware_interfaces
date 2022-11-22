@@ -1529,6 +1529,21 @@
             }
         },
         {
+            "property": "VehicleProperty::EV_BRAKE_REGENERATION_LEVEL",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": 0,
+                    "minInt32Value": 0,
+                    "maxInt32Value": 3
+                }
+            ]
+        },
+        {
             "property": "VehicleProperty::FUEL_LEVEL_LOW",
             "defaultValue": {
                 "int32Values": [

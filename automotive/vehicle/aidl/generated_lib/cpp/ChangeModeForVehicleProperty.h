@@ -71,6 +71,7 @@ std::unordered_map<VehicleProperty, VehiclePropertyChangeMode> ChangeModeForVehi
         {VehicleProperty::CURRENT_GEAR, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::PARKING_BRAKE_ON, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::PARKING_BRAKE_AUTO_APPLY, VehiclePropertyChangeMode::ON_CHANGE},
+        {VehicleProperty::EV_BRAKE_REGENERATION_LEVEL, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::FUEL_LEVEL_LOW, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::NIGHT_MODE, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::TURN_SIGNAL_STATE, VehiclePropertyChangeMode::ON_CHANGE},
