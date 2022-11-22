@@ -16,6 +16,8 @@
 
 #include "TestWakeupClientServiceImpl.h"
 
+#include "ApPowerControl.h"
+
 #include <android-base/stringprintf.h>
 #include <inttypes.h>
 #include <utils/Looper.h>
@@ -245,8 +247,7 @@ Status TestWakeupClientServiceImpl::NotifyWakeupRequired(ServerContext* context,
 }
 
 void TestWakeupClientServiceImpl::wakeupApplicationProcessor() {
-    printf("Waking up application processor...\n");
-    // TODO(b/254547153): Send can bus message using socket CAN once we know what the message is.
+    wakeupAp();
 }
 
 }  // namespace remoteaccess
