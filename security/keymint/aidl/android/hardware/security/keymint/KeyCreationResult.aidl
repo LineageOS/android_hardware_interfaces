@@ -125,9 +125,9 @@ parcelable KeyCreationResult {
      * straightforward translation of the KeyMint tag/value parameter lists to ASN.1.
      *
      * KeyDescription ::= SEQUENCE {
-     *     attestationVersion         INTEGER, # Value 200
+     *     attestationVersion         INTEGER, # Value 300
      *     attestationSecurityLevel   SecurityLevel, # See below
-     *     keyMintVersion             INTEGER, # Value 200
+     *     keyMintVersion             INTEGER, # Value 300
      *     keymintSecurityLevel       SecurityLevel, # See below
      *     attestationChallenge       OCTET_STRING, # Tag::ATTESTATION_CHALLENGE from attestParams
      *     uniqueId                   OCTET_STRING, # Empty unless key has Tag::INCLUDE_UNIQUE_ID
@@ -209,6 +209,7 @@ parcelable KeyCreationResult {
      *     vendorPatchLevel           [718] EXPLICIT INTEGER OPTIONAL,
      *     bootPatchLevel             [719] EXPLICIT INTEGER OPTIONAL,
      *     deviceUniqueAttestation    [720] EXPLICIT NULL OPTIONAL,
+     *     attestationIdSecondImei    [723] EXPLICIT OCTET_STRING OPTIONAL,
      * }
      */
     Certificate[] certificateChain;
