@@ -304,12 +304,4 @@ interface ICameraProvider {
      *
      */
     boolean isConcurrentStreamCombinationSupported(in CameraIdAndStreamCombination[] configs);
-
-    /*
-     * Due to a bug in vintf regarding aidl changes that are contained to fields,
-     * we need a placeholder method that will be removed after this patch.
-     *
-     * TODO(b/237048744): Remove this once fixed.
-     */
-    void placeholder();
 }

@@ -167,6 +167,7 @@ std::unordered_map<VehicleProperty, VehiclePropertyChangeMode> ChangeModeForVehi
         {VehicleProperty::STEERING_WHEEL_HEIGHT_MOVE, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::STEERING_WHEEL_THEFT_LOCK_ENABLED, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::STEERING_WHEEL_LOCKED, VehiclePropertyChangeMode::ON_CHANGE},
+        {VehicleProperty::STEERING_WHEEL_EASY_ACCESS_ENABLED, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::VEHICLE_MAP_SERVICE, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::OBD2_LIVE_FRAME, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::OBD2_FREEZE_FRAME, VehiclePropertyChangeMode::ON_CHANGE},
