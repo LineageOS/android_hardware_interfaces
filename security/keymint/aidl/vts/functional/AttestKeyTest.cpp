@@ -892,6 +892,7 @@ TEST_P(AttestKeyTest, EcdsaAttestationMismatchID) {
 
         ASSERT_TRUE(result == ErrorCode::CANNOT_ATTEST_IDS || result == ErrorCode::INVALID_TAG)
                 << "result = " << result;
+        device_id_attestation_vsr_check(result);
     }
     CheckedDeleteKey(&attest_key.keyBlob);
 }
