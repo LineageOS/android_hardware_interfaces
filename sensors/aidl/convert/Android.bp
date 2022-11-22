@@ -26,6 +26,7 @@ package {
 cc_library_static {
     name: "android.hardware.sensors-V1-convert",
     vendor_available: true,
+    host_supported: true,
     srcs: ["convert.cpp"],
     export_include_dirs: ["include"],
     shared_libs: [
