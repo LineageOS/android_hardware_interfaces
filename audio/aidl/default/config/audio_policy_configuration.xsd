@@ -424,6 +424,8 @@
             <xs:enumeration value="AUDIO_FORMAT_DRA"/>
             <xs:enumeration value="AUDIO_FORMAT_APTX_ADAPTIVE_QLEA"/>
             <xs:enumeration value="AUDIO_FORMAT_APTX_ADAPTIVE_R4"/>
+            <xs:enumeration value="AUDIO_FORMAT_DTS_HD_MA"/>
+            <xs:enumeration value="AUDIO_FORMAT_DTS_UHD_P2"/>
         </xs:restriction>
     </xs:simpleType>
     <xs:simpleType name="extendableAudioFormat">
