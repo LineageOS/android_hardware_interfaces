@@ -31,6 +31,7 @@ import android.hardware.wifi.supplicant.KeyMgmtMask;
 import android.hardware.wifi.supplicant.MloLinksInfo;
 import android.hardware.wifi.supplicant.QosPolicyStatus;
 import android.hardware.wifi.supplicant.RxFilterType;
+import android.hardware.wifi.supplicant.SignalPollResult;
 import android.hardware.wifi.supplicant.WpaDriverCapabilitiesMask;
 import android.hardware.wifi.supplicant.WpsConfigMethods;
 
@@ -781,4 +782,15 @@ interface ISupplicantStaIface {
      *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
      */
     void stopRxFilter();
+
+    /**
+     * This method returns the signal poll results. Results will be for each
+     * link in case of Multiple Link Operation (MLO).
+     *
+     * @return Signal Poll Results per link.
+     * @throws ServiceSpecificException with one of the following values:
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+     *         |SupplicantStatusCode.FAILURE_UNSUPPORTED|
+     */
+    SignalPollResult[] getSignalPollResults();
 }
