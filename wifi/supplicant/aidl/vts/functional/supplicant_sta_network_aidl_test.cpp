@@ -650,6 +650,14 @@ TEST_P(SupplicantStaNetworkAidlTest, SetEapEncryptedImsiIdentity) {
 }
 
 /*
+ * SetStrictConservativePeerMode
+ */
+TEST_P(SupplicantStaNetworkAidlTest, SetStrictConversativePeerMode) {
+    EXPECT_TRUE(sta_network_->setStrictConservativePeerMode(true).isOk());
+    EXPECT_TRUE(sta_network_->setStrictConservativePeerMode(false).isOk());
+}
+
+/*
  * SendNetworkEapIdentityResponse
  */
 TEST_P(SupplicantStaNetworkAidlTest, SendNetworkEapIdentityResponse) {
