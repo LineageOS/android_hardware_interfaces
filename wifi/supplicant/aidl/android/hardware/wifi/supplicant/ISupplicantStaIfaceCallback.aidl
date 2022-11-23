@@ -27,6 +27,7 @@ import android.hardware.wifi.supplicant.DppEventType;
 import android.hardware.wifi.supplicant.DppFailureCode;
 import android.hardware.wifi.supplicant.DppProgressCode;
 import android.hardware.wifi.supplicant.Hs20AnqpData;
+import android.hardware.wifi.supplicant.KeyMgmtMask;
 import android.hardware.wifi.supplicant.OsuMethod;
 import android.hardware.wifi.supplicant.QosPolicyData;
 import android.hardware.wifi.supplicant.StaIfaceCallbackState;
@@ -252,6 +253,8 @@ oneway interface ISupplicantStaIfaceCallback {
      * event is triggered by a particular network, the |SupplicantNetworkId|,
      * |ssid|, |bssid| parameters must indicate the parameters of the network/AP
      * which caused this state transition.
+     * <p>
+     * This callback is deprecated from AIDL v2, newer HAL should call onStateChangedWithAkm().
      *
      * @param newState New State of the interface. This must be one of the |State|
      *        values above.
@@ -303,4 +306,27 @@ oneway interface ISupplicantStaIfaceCallback {
      * @param qosPolicyData QoS policies info requested by the AP.
      */
     void onQosPolicyRequest(in int qosPolicyRequestId, in QosPolicyData[] qosPolicyData);
+
+    /**
+     * Used to indicate a state change event on this particular iface. If this
+     * event is triggered by a particular network, the |id|,
+     * |ssid|, |bssid| parameters must indicate the parameters of the network/AP
+     * which caused this state transition.
+     *
+     * @param newState New State of the interface. This must be one of the
+     *        |StaIfaceCallbackState| values above.
+     * @param bssid BSSID of the corresponding AP which caused this state
+     *        change event. This must be zero'ed if this event is not
+     *        specific to a particular network.
+     * @param id ID of the corresponding network which caused this
+     *        state change event. This must be invalid (-1) if this
+     *        event is not specific to a particular network.
+     * @param ssid SSID of the corresponding network which caused this state
+     *        change event. This must be empty if this event is not specific
+     *        to a particular network.
+     * @param filsHlpSent Whether FILS HLP IEs were included in this association.
+     * @param keyMgmtMask current used key mgmt mask.
+     */
+    void onStateChangedWithAkm(in StaIfaceCallbackState newState, in byte[] bssid, in int id,
+            in byte[] ssid, in boolean filsHlpSent, in KeyMgmtMask keyMgmtMask);
 }

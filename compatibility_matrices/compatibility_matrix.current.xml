@@ -109,14 +109,14 @@
         <name>android.hardware.automotive.vehicle</name>
         <interface>
             <name>IVehicle</name>
-            <regex-instance>.*</regex-instance>
+            <instance>default</instance>
         </interface>
     </hal>
      <hal format="aidl" optional="true">
         <name>android.hardware.automotive.remoteaccess</name>
         <interface>
             <name>IRemoteAccess</name>
-            <regex-instance>.*</regex-instance>
+            <instance>default</instance>
         </interface>
     </hal>
     <hal format="aidl" optional="true">

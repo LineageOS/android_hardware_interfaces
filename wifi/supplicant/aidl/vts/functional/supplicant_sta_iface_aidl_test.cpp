@@ -206,6 +206,13 @@ class SupplicantStaIfaceCallback : public BnSupplicantStaIfaceCallback {
                                       QosPolicyData /* qosPolicyData */>&) override {
         return ndk::ScopedAStatus::ok();
     }
+    ::ndk::ScopedAStatus onStateChangedWithAkm(
+            ::aidl::android::hardware::wifi::supplicant::StaIfaceCallbackState /* newState */,
+            const std::vector<uint8_t>& /* bssid */, int32_t /* id */,
+            const std::vector<uint8_t>& /* ssid */, bool /* filsHlpSent */,
+            ::aidl::android::hardware::wifi::supplicant::KeyMgmtMask /* keyMgmtMask*/) override {
+        return ndk::ScopedAStatus::ok();
+    }
 };
 
 class SupplicantStaIfaceAidlTest : public testing::TestWithParam<std::string> {

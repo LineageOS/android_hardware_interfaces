@@ -82,6 +82,9 @@ interface IGnssCallback {
     /** Capability bit mask indicating that GNSS supports measurement corrections for driving */
     const int CAPABILITY_MEASUREMENT_CORRECTIONS_FOR_DRIVING = 1 << 14;
 
+    /** Capability bit mask indicating that GNSS supports accumulated delta range */
+    const int CAPABILITY_ACCUMULATED_DELTA_RANGE = 1 << 15;
+
     /**
      * Callback to inform framework of the GNSS HAL implementation's capabilities.
      *
