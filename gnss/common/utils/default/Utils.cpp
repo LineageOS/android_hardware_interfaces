@@ -170,7 +170,7 @@ GnssData Utils::getMockMeasurement(const bool enableCorrVecOutputs, const bool e
             .agcLevelDb = 2.3,
             .pseudorangeRateMps = -484.13739013671875,
             .pseudorangeRateUncertaintyMps = 1.0379999876022339,
-            .accumulatedDeltaRangeState = GnssMeasurement::ADR_STATE_UNKNOWN,
+            .accumulatedDeltaRangeState = GnssMeasurement::ADR_STATE_VALID,
             .accumulatedDeltaRangeM = 1.52,
             .accumulatedDeltaRangeUncertaintyM = 2.43,
             .multipathIndicator = aidl::android::hardware::gnss::GnssMultipathIndicator::UNKNOWN,

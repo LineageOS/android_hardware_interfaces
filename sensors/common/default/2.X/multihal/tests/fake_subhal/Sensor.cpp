@@ -237,7 +237,7 @@ std::vector<Event> AccelSensor::readEvents() {
     event.timestamp = ::android::elapsedRealtimeNano();
     event.u.vec3.x = 0;
     event.u.vec3.y = 0;
-    event.u.vec3.z = -9.815;
+    event.u.vec3.z = 9.815;
     event.u.vec3.status = SensorStatus::ACCURACY_HIGH;
     events.push_back(event);
     return events;

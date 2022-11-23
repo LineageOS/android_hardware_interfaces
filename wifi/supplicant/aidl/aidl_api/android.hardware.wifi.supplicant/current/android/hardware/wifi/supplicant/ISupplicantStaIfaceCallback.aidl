@@ -63,4 +63,5 @@ interface ISupplicantStaIfaceCallback {
   oneway void onWpsEventSuccess();
   oneway void onQosPolicyReset();
   oneway void onQosPolicyRequest(in int qosPolicyRequestId, in android.hardware.wifi.supplicant.QosPolicyData[] qosPolicyData);
+  oneway void onStateChangedWithAkm(in android.hardware.wifi.supplicant.StaIfaceCallbackState newState, in byte[] bssid, in int id, in byte[] ssid, in boolean filsHlpSent, in android.hardware.wifi.supplicant.KeyMgmtMask keyMgmtMask);
 }

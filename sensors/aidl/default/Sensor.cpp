@@ -223,7 +223,7 @@ void AccelSensor::readEventPayload(EventPayload& payload) {
     EventPayload::Vec3 vec3 = {
             .x = 0,
             .y = 0,
-            .z = -9.8,
+            .z = 9.8,
             .status = SensorStatus::ACCURACY_HIGH,
     };
     payload.set<EventPayload::Tag::vec3>(vec3);
