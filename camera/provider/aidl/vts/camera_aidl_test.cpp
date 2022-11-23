@@ -321,8 +321,8 @@ void CameraAidlTest::verifyStreamUseCaseCharacteristics(const camera_metadata_t*
             if (entry.data.i64[i] == ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_DEFAULT) {
                 supportDefaultUseCase = true;
             }
-            ASSERT_TRUE(entry.data.i64[i] <= ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_VIDEO_CALL ||
-                        entry.data.i64[i] >=
+            ASSERT_TRUE(entry.data.i64[i] <= ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_CROPPED_RAW
+                        || entry.data.i64[i] >=
                                 ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_VENDOR_START);
         }
         ASSERT_TRUE(supportDefaultUseCase);
@@ -2164,6 +2164,121 @@ void CameraAidlTest::processCaptureRequestInternal(uint64_t bufferUsage,
     }
 }
 
+void CameraAidlTest::configureStreamUseCaseInternal(const AvailableStream &threshold) {
+    std::vector<std::string> cameraDeviceNames = getCameraDeviceNames(mProvider);
+
+    for (const auto& name : cameraDeviceNames) {
+        CameraMetadata meta;
+        std::shared_ptr<ICameraDevice> cameraDevice;
+
+        openEmptyDeviceSession(name, mProvider, &mSession /*out*/, &meta /*out*/,
+                               &cameraDevice /*out*/);
+
+        camera_metadata_t* staticMeta = reinterpret_cast<camera_metadata_t*>(meta.metadata.data());
+        // Check if camera support depth only
+        if (isDepthOnly(staticMeta) ||
+                (threshold.format == static_cast<int32_t>(PixelFormat::RAW16) &&
+                        !supportsCroppedRawUseCase(staticMeta))) {
+            ndk::ScopedAStatus ret = mSession->close();
+            mSession = nullptr;
+            ASSERT_TRUE(ret.isOk());
+            continue;
+        }
+
+        std::vector<AvailableStream> outputPreviewStreams;
+
+        ASSERT_EQ(Status::OK,
+                  getAvailableOutputStreams(staticMeta, outputPreviewStreams, &threshold));
+        ASSERT_NE(0u, outputPreviewStreams.size());
+
+        // Combine valid and invalid stream use cases
+        std::vector<int64_t> useCases(kMandatoryUseCases);
+        useCases.push_back(ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_CROPPED_RAW + 1);
+
+        std::vector<int64_t> supportedUseCases;
+        if (threshold.format == static_cast<int32_t>(PixelFormat::RAW16)) {
+            // If the format is RAW16, supported use case is only CROPPED_RAW.
+            // All others are unsupported for this format.
+            useCases.push_back(ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_CROPPED_RAW);
+            supportedUseCases.push_back(ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_CROPPED_RAW);
+            supportedUseCases.push_back(ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_DEFAULT);
+        } else {
+            camera_metadata_ro_entry entry;
+            auto retcode = find_camera_metadata_ro_entry(
+                    staticMeta, ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES, &entry);
+            if ((0 == retcode) && (entry.count > 0)) {
+                supportedUseCases.insert(supportedUseCases.end(), entry.data.i64,
+                                         entry.data.i64 + entry.count);
+            } else {
+                supportedUseCases.push_back(ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_DEFAULT);
+            }
+        }
+
+        std::vector<Stream> streams(1);
+        streams[0] = {0,
+                      StreamType::OUTPUT,
+                      outputPreviewStreams[0].width,
+                      outputPreviewStreams[0].height,
+                      static_cast<PixelFormat>(outputPreviewStreams[0].format),
+                      static_cast<::aidl::android::hardware::graphics::common::BufferUsage>(
+                              GRALLOC1_CONSUMER_USAGE_CPU_READ),
+                      Dataspace::UNKNOWN,
+                      StreamRotation::ROTATION_0,
+                      std::string(),
+                      0,
+                      -1,
+                      {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT},
+                      RequestAvailableDynamicRangeProfilesMap::
+                              ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_STANDARD};
+
+        int32_t streamConfigCounter = 0;
+        CameraMetadata req;
+        StreamConfiguration config;
+        RequestTemplate reqTemplate = RequestTemplate::STILL_CAPTURE;
+        ndk::ScopedAStatus ret = mSession->constructDefaultRequestSettings(reqTemplate, &req);
+        ASSERT_TRUE(ret.isOk());
+        config.sessionParams = req;
+
+        for (int64_t useCase : useCases) {
+            bool useCaseSupported = std::find(supportedUseCases.begin(), supportedUseCases.end(),
+                                              useCase) != supportedUseCases.end();
+
+            streams[0].useCase = static_cast<
+                    aidl::android::hardware::camera::metadata::ScalerAvailableStreamUseCases>(
+                    useCase);
+            config.streams = streams;
+            config.operationMode = StreamConfigurationMode::NORMAL_MODE;
+            config.streamConfigCounter = streamConfigCounter;
+            config.multiResolutionInputImage = false;
+
+            bool combSupported;
+            ret = cameraDevice->isStreamCombinationSupported(config, &combSupported);
+            if (static_cast<int32_t>(Status::OPERATION_NOT_SUPPORTED) ==
+                ret.getServiceSpecificError()) {
+                continue;
+            }
+
+            ASSERT_TRUE(ret.isOk());
+            ASSERT_EQ(combSupported, useCaseSupported);
+
+            std::vector<HalStream> halStreams;
+            ret = mSession->configureStreams(config, &halStreams);
+            ALOGI("configureStreams returns status: %d", ret.getServiceSpecificError());
+            if (useCaseSupported) {
+                ASSERT_TRUE(ret.isOk());
+                ASSERT_EQ(1u, halStreams.size());
+            } else {
+                ASSERT_EQ(static_cast<int32_t>(Status::ILLEGAL_ARGUMENT),
+                          ret.getServiceSpecificError());
+            }
+        }
+        ret = mSession->close();
+        mSession = nullptr;
+        ASSERT_TRUE(ret.isOk());
+    }
+
+}
+
 void CameraAidlTest::configureSingleStream(
         const std::string& name, const std::shared_ptr<ICameraProvider>& provider,
         const AvailableStream* previewThreshold, uint64_t bufferUsage, RequestTemplate reqTemplate,
@@ -3032,6 +3147,21 @@ bool CameraAidlTest::supportZoomSettingsOverride(const camera_metadata_t* static
     if (rc == 0) {
         for (size_t i = 0; i < availableOverridesEntry.count; i++) {
             if (availableOverridesEntry.data.i32[i] == ANDROID_CONTROL_SETTINGS_OVERRIDE_ZOOM) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool CameraAidlTest::supportsCroppedRawUseCase(const camera_metadata_t *staticMeta) {
+    camera_metadata_ro_entry availableStreamUseCasesEntry;
+    int rc = find_camera_metadata_ro_entry(staticMeta, ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES,
+                                           &availableStreamUseCasesEntry);
+    if (rc == 0) {
+        for (size_t i = 0; i < availableStreamUseCasesEntry.count; i++) {
+            if (availableStreamUseCasesEntry.data.i64[i] ==
+                    ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_CROPPED_RAW) {
                 return true;
             }
         }

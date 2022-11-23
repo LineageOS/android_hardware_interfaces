@@ -1284,6 +1284,13 @@ enum CameraMetadataTag {
      */
     ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES = 851994,
     /**
+     * android.scaler.rawCropRegion [dynamic, int32[], public]
+     *
+     * <p>The region of the sensor that corresponds to the RAW read out for this
+     * capture when the stream use case of a RAW stream is set to CROPPED_RAW.</p>
+     */
+    ANDROID_SCALER_RAW_CROP_REGION,
+    /**
      * android.sensor.exposureTime [dynamic, int64, public]
      *
      * <p>Duration each pixel is exposed to
