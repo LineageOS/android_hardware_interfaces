@@ -49,4 +49,6 @@ parcelable NanMatchInd {
   int rangingMeasurementInMm;
   android.hardware.wifi.NanRangingIndication rangingIndicationType;
   byte[] scid;
+  android.hardware.wifi.NanPairingConfig peerPairingConfig;
+  android.hardware.wifi.NanIdentityResolutionAttribute peerNira;
 }

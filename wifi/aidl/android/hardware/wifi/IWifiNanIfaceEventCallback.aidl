@@ -16,6 +16,8 @@
 
 package android.hardware.wifi;
 
+import android.hardware.wifi.NanBootstrappingConfirmInd;
+import android.hardware.wifi.NanBootstrappingRequestInd;
 import android.hardware.wifi.NanCapabilities;
 import android.hardware.wifi.NanClusterEventInd;
 import android.hardware.wifi.NanDataPathConfirmInd;
@@ -23,6 +25,8 @@ import android.hardware.wifi.NanDataPathRequestInd;
 import android.hardware.wifi.NanDataPathScheduleUpdateInd;
 import android.hardware.wifi.NanFollowupReceivedInd;
 import android.hardware.wifi.NanMatchInd;
+import android.hardware.wifi.NanPairingConfirmInd;
+import android.hardware.wifi.NanPairingRequestInd;
 import android.hardware.wifi.NanStatus;
 
 /**
@@ -319,4 +323,95 @@ oneway interface IWifiNanIfaceEventCallback {
      *        |NanStatusCode.FOLLOWUP_TX_QUEUE_FULL|
      */
     void notifyTransmitFollowupResponse(in char id, in NanStatus status);
+
+    /**
+     * Callback indicating that a NAN pairing setup/verification has been requested by
+     * an Initiator peer (received by the intended Responder).
+     *
+     * @param event NanPairingRequestInd containing event details.
+     */
+    void eventPairingRequest(in NanPairingRequestInd event);
+
+    /**
+     * Callback indicating that a NAN pairing setup/verification has been completed.
+     * Received by both Initiator and Responder.
+     *
+     * @param event NanPairingConfirmInd containing event details.
+     */
+    void eventPairingConfirm(in NanPairingConfirmInd event);
+
+    /**
+     * Callback invoked in response to an initiate NAN pairing request
+     * |IWifiNanIface.initiatePairingRequest|.
+     *
+     * @param cmdId Command Id corresponding to the original request.
+     * @param status NanStatus of the operation. Possible status codes are:
+     *        |NanStatusCode.SUCCESS|
+     *        |NanStatusCode.INVALID_ARGS|
+     *        |NanStatusCode.INTERNAL_FAILURE|
+     *        |NanStatusCode.PROTOCOL_FAILURE|
+     *        |NanStatusCode.INVALID_PEER_ID|
+     * @param pairingInstanceId ID of the new pairing being negotiated (on successful status).
+     */
+    void notifyInitiatePairingResponse(in char id, in NanStatus status, in int pairingInstanceId);
+
+    /**
+     * Callback invoked in response to a respond to NAN pairing indication request
+     * |IWifiNanIface.respondToPairingIndicationRequest|.
+     *
+     * @param cmdId Command Id corresponding to the original request.
+     * @param status NanStatus of the operation. Possible status codes are:
+     *        |NanStatusCode.SUCCESS|
+     *        |NanStatusCode.INVALID_ARGS|
+     *        |NanStatusCode.INTERNAL_FAILURE|
+     *        |NanStatusCode.PROTOCOL_FAILURE|
+     *        |NanStatusCode.INVALID_NDP_ID|
+     */
+    void notifyRespondToPairingIndicationResponse(in char id, in NanStatus status);
+
+    /**
+     * Callback indicating that a NAN bootstrapping setup has been requested by
+     * an Initiator peer (received by the intended Responder).
+     *
+     * @param event NanBootstrappingRequestInd containing event details.
+     */
+    void eventBootstrappingRequest(in NanBootstrappingRequestInd event);
+
+    /**
+     * Callback indicating that a NAN bootstrapping setuphas been completed.
+     * Received by Initiator.
+     *
+     * @param event NanBootstrappingConfirmInd containing event details.
+     */
+    void eventBootstrappingConfirm(in NanBootstrappingConfirmInd event);
+
+    /**
+     * Callback invoked in response to an initiate NAN pairing bootstrapping request
+     * |IWifiNanIface.initiateBootstrappingRequest|.
+     *
+     * @param cmdId Command Id corresponding to the original request.
+     * @param status NanStatus of the operation. Possible status codes are:
+     *        |NanStatusCode.SUCCESS|
+     *        |NanStatusCode.INVALID_ARGS|
+     *        |NanStatusCode.INTERNAL_FAILURE|
+     *        |NanStatusCode.PROTOCOL_FAILURE|
+     *        |NanStatusCode.INVALID_PEER_ID|
+     * @param bootstrappingInstanceId ID of the new pairing being negotiated (on successful status).
+     */
+    void notifyInitiateBootstrappingResponse(
+            in char id, in NanStatus status, in int bootstrappingInstanceId);
+
+    /**
+     * Callback invoked in response to a respond to pairing bootstrapping indication request
+     * |IWifiNanIface.respondToBootstrappingIndicationRequest|.
+     *
+     * @param cmdId Command Id corresponding to the original request.
+     * @param status NanStatus of the operation. Possible status codes are:
+     *        |NanStatusCode.SUCCESS|
+     *        |NanStatusCode.INVALID_ARGS|
+     *        |NanStatusCode.INTERNAL_FAILURE|
+     *        |NanStatusCode.PROTOCOL_FAILURE|
+     *        |NanStatusCode.INVALID_NDP_ID|
+     */
+    void notifyRespondToBootstrappingIndicationResponse(in char id, in NanStatus status);
 }

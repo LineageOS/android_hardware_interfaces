@@ -41,4 +41,6 @@ parcelable NanSubscribeRequest {
   boolean shouldUseSrf;
   boolean isSsiRequiredForMatch;
   android.hardware.wifi.MacAddress[] intfAddr;
+  android.hardware.wifi.NanPairingConfig pairingConfig;
+  byte[16] identityKey;
 }

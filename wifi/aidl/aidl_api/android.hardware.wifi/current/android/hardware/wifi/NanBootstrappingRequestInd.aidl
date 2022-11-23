@@ -32,21 +32,11 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.wifi;
-@Backing(type="int") @VintfStability
-enum NanStatusCode {
-  SUCCESS = 0,
-  INTERNAL_FAILURE = 1,
-  PROTOCOL_FAILURE = 2,
-  INVALID_SESSION_ID = 3,
-  NO_RESOURCES_AVAILABLE = 4,
-  INVALID_ARGS = 5,
-  INVALID_PEER_ID = 6,
-  INVALID_NDP_ID = 7,
-  NAN_NOT_ALLOWED = 8,
-  NO_OTA_ACK = 9,
-  ALREADY_ENABLED = 10,
-  FOLLOWUP_TX_QUEUE_FULL = 11,
-  UNSUPPORTED_CONCURRENCY_NAN_DISABLED = 12,
-  INVALID_PAIRING_ID = 13,
-  INVALID_BOOTSTRAPPING_ID = 14,
+@VintfStability
+parcelable NanBootstrappingRequestInd {
+  byte discoverySessionId;
+  int peerId;
+  byte[6] peerDiscMacAddr;
+  int bootstrappingInstanceId;
+  android.hardware.wifi.NanBootstrappingMethod requestBootstrappingMethod;
 }
