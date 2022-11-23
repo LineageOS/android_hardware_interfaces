@@ -87,12 +87,13 @@ std::string StreamWorkerCommonLogic::init() {
 
 void StreamWorkerCommonLogic::populateReply(StreamDescriptor::Reply* reply,
                                             bool isConnected) const {
+    reply->status = STATUS_OK;
     if (isConnected) {
-        reply->status = STATUS_OK;
         reply->observable.frames = mFrameCount;
         reply->observable.timeNs = ::android::elapsedRealtimeNano();
     } else {
-        reply->status = STATUS_NO_INIT;
+        reply->observable.frames = StreamDescriptor::Position::UNKNOWN;
+        reply->observable.timeNs = StreamDescriptor::Position::UNKNOWN;
     }
 }
 

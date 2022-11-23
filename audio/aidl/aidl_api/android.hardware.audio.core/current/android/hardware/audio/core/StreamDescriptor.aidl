@@ -42,8 +42,9 @@ parcelable StreamDescriptor {
   const int LATENCY_UNKNOWN = -1;
   @FixedSize @VintfStability
   parcelable Position {
-    long frames;
-    long timeNs;
+    long frames = -1;
+    long timeNs = -1;
+    const long UNKNOWN = -1;
   }
   @Backing(type="int") @VintfStability
   enum State {

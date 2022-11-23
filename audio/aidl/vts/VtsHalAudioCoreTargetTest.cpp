@@ -1660,14 +1660,16 @@ class StreamLogicDefaultDriver : public StreamLogicDriver {
     }
     bool interceptRawReply(const StreamDescriptor::Reply&) override { return false; }
     bool processValidReply(const StreamDescriptor::Reply& reply) override {
-        if (mPreviousFrames.has_value()) {
-            if (reply.observable.frames > mPreviousFrames.value()) {
-                mObservablePositionIncrease = true;
-            } else if (reply.observable.frames < mPreviousFrames.value()) {
-                mRetrogradeObservablePosition = true;
+        if (reply.observable.frames != StreamDescriptor::Position::UNKNOWN) {
+            if (mPreviousFrames.has_value()) {
+                if (reply.observable.frames > mPreviousFrames.value()) {
+                    mObservablePositionIncrease = true;
+                } else if (reply.observable.frames < mPreviousFrames.value()) {
+                    mRetrogradeObservablePosition = true;
+                }
             }
+            mPreviousFrames = reply.observable.frames;
         }
-        mPreviousFrames = reply.observable.frames;
 
         const auto& lastCommandState = mCommands[mNextCommand - 1];
         if (lastCommandState.second != reply.state) {

@@ -116,10 +116,15 @@ parcelable StreamDescriptor {
     @VintfStability
     @FixedSize
     parcelable Position {
+        /**
+         * The value used when the position can not be reported by the HAL
+         * module.
+         */
+        const long UNKNOWN = -1;
         /** Frame count. */
-        long frames;
+        long frames = UNKNOWN;
         /** Timestamp in nanoseconds. */
-        long timeNs;
+        long timeNs = UNKNOWN;
     }
 
     @VintfStability
@@ -295,10 +300,6 @@ parcelable StreamDescriptor {
          *  - STATUS_INVALID_OPERATION: the command is not applicable in the
          *                              current state of the stream, or to this
          *                              type of the stream;
-         *  - STATUS_NO_INIT: positions can not be reported because the mix port
-         *                    is not connected to any producer or consumer, or
-         *                    because the HAL module does not support positions
-         *                    reporting for this AudioSource (on input streams).
          *  - STATUS_NOT_ENOUGH_DATA: a read or write error has
          *                            occurred for the 'audio.fmq' queue;
          */
@@ -316,9 +317,11 @@ parcelable StreamDescriptor {
          */
         int fmqByteCount;
         /**
-         * It is recommended to report the current position for any command.
-         * If the position can not be reported, the 'status' field must be
-         * set to 'NO_INIT'.
+         * It is recommended to report the current position for any command. If
+         * the position can not be reported, for example because the mix port is
+         * not connected to any producer or consumer, or because the HAL module
+         * does not support positions reporting for this AudioSource (on input
+         * streams), the 'Position::UNKNOWN' value must be used.
          *
          * For output streams: the moment when the specified stream position
          *   was presented to an external observer (i.e. presentation position).
