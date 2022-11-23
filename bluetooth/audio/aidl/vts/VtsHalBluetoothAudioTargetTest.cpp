@@ -1566,6 +1566,7 @@ TEST_P(BluetoothAudioProviderLeAudioBroadcastHardwareAidl,
   };
 
   for (auto& lc3_config : lc3_codec_configs) {
+    le_audio_broadcast_config.streamMap.resize(1);
     le_audio_broadcast_config.streamMap[0]
         .leAudioCodecConfig.set<LeAudioCodecConfiguration::lc3Config>(
             lc3_config);

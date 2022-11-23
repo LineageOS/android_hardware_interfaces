@@ -46,7 +46,11 @@ typedef std::tuple<std::vector<ScenarioList>, std::vector<ConfigurationList>,
 // Define valid components for each list
 // Scenario
 static const Scenario kValidScenario(std::make_optional("OneChanStereo_16_1"),
-                                     std::make_optional("OneChanStereo_16_1"));
+                                     std::make_optional("OneChanStereo_16_1"),
+                                     std::nullopt);
+static const Scenario kValidBroadcastScenario(
+    std::nullopt, std::nullopt, std::make_optional("BcastStereo_16_2"));
+
 // Configuration
 static const Configuration kValidConfigOneChanStereo_16_1(
     std::make_optional("OneChanStereo_16_1"), std::make_optional("LC3_16k_1"),
@@ -69,11 +73,15 @@ static const StrategyConfiguration kValidStrategyMonoOneCis(
     std::make_optional("MONO_ONE_CIS_PER_DEVICE"),
     std::make_optional(AudioLocation::MONO), std::make_optional(1),
     std::make_optional(1));
+static const StrategyConfiguration kValidStrategyBroadcastStereo(
+    std::make_optional("BROADCAST_STEREO"),
+    std::make_optional(AudioLocation::STEREO), std::make_optional(0),
+    std::make_optional(2));
 
 // Define valid test list built from above valid components
 // Scenario, Configuration, CodecConfiguration, StrategyConfiguration
-static const std::vector<ScenarioList> kValidScenarioList = {
-    ScenarioList(std::vector<Scenario>{kValidScenario})};
+static const std::vector<ScenarioList> kValidScenarioList = {ScenarioList(
+    std::vector<Scenario>{kValidScenario, kValidBroadcastScenario})};
 static const std::vector<ConfigurationList> kValidConfigurationList = {
     ConfigurationList(
         std::vector<Configuration>{kValidConfigOneChanStereo_16_1})};
@@ -84,7 +92,7 @@ static const std::vector<StrategyConfigurationList>
     kValidStrategyConfigurationList = {
         StrategyConfigurationList(std::vector<StrategyConfiguration>{
             kValidStrategyStereoOneCis, kValidStrategyStereoTwoCis,
-            kValidStrategyMonoOneCis})};
+            kValidStrategyMonoOneCis, kValidStrategyBroadcastStereo})};
 
 class BluetoothLeAudioCodecsProviderTest
     : public ::testing::TestWithParam<OffloadSetting> {
@@ -151,13 +159,15 @@ class GetScenariosTest : public BluetoothLeAudioCodecsProviderTest {
   static std::vector<ScenarioList> CreateInvalidScenarios() {
     std::vector<ScenarioList> invalid_scenario_test_cases;
     invalid_scenario_test_cases.push_back(ScenarioList(std::vector<Scenario>{
-        Scenario(std::nullopt, std::make_optional("OneChanStereo_16_1"))}));
-
-    invalid_scenario_test_cases.push_back(ScenarioList(std::vector<Scenario>{
-        Scenario(std::make_optional("OneChanStereo_16_1"), std::nullopt)}));
+        Scenario(std::nullopt, std::make_optional("OneChanStereo_16_1"),
+                 std::nullopt)}));
 
     invalid_scenario_test_cases.push_back(ScenarioList(
-        std::vector<Scenario>{Scenario(std::nullopt, std::nullopt)}));
+        std::vector<Scenario>{Scenario(std::make_optional("OneChanStereo_16_1"),
+                                       std::nullopt, std::nullopt)}));
+
+    invalid_scenario_test_cases.push_back(ScenarioList(std::vector<Scenario>{
+        Scenario(std::nullopt, std::nullopt, std::nullopt)}));
 
     invalid_scenario_test_cases.push_back(
         ScenarioList(std::vector<Scenario>{}));

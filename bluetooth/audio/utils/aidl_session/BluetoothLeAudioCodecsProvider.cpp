@@ -200,13 +200,21 @@ BluetoothLeAudioCodecsProvider::ComposeLeAudioCodecCapabilities(
         GetUnicastCapability(scenario.getEncode());
     UnicastCapability unicast_decode_capability =
         GetUnicastCapability(scenario.getDecode());
-    // encode and decode cannot be unknown at the same time
-    if (unicast_encode_capability.codecType == CodecType::UNKNOWN &&
-        unicast_decode_capability.codecType == CodecType::UNKNOWN) {
-      continue;
-    }
     BroadcastCapability broadcast_capability = {.codecType =
                                                     CodecType::UNKNOWN};
+
+    if (scenario.hasBroadcast()) {
+      broadcast_capability = GetBroadcastCapability(scenario.getBroadcast());
+    }
+
+    // At least one capability should be valid
+    if (unicast_encode_capability.codecType == CodecType::UNKNOWN &&
+        unicast_decode_capability.codecType == CodecType::UNKNOWN &&
+        broadcast_capability.codecType == CodecType::UNKNOWN) {
+      LOG(ERROR) << __func__ << ": None of the capability is valid.";
+      continue;
+    }
+
     le_audio_codec_capabilities.push_back(
         {.unicastEncodeCapability = unicast_encode_capability,
          .unicastDecodeCapability = unicast_decode_capability,
@@ -250,6 +258,54 @@ UnicastCapability BluetoothLeAudioCodecsProvider::GetUnicastCapability(
         ComposeLc3Capability(codec_configuration_iter->second));
   }
   return {.codecType = CodecType::UNKNOWN};
+}
+
+BroadcastCapability BluetoothLeAudioCodecsProvider::GetBroadcastCapability(
+    const std::string& coding_direction) {
+  if (coding_direction == "invalid") {
+    return {.codecType = CodecType::UNKNOWN};
+  }
+
+  auto configuration_iter = configuration_map_.find(coding_direction);
+  if (configuration_iter == configuration_map_.end()) {
+    return {.codecType = CodecType::UNKNOWN};
+  }
+
+  auto codec_configuration_iter = codec_configuration_map_.find(
+      configuration_iter->second.getCodecConfiguration());
+  if (codec_configuration_iter == codec_configuration_map_.end()) {
+    return {.codecType = CodecType::UNKNOWN};
+  }
+
+  auto strategy_configuration_iter = strategy_configuration_map_.find(
+      configuration_iter->second.getStrategyConfiguration());
+  if (strategy_configuration_iter == strategy_configuration_map_.end()) {
+    return {.codecType = CodecType::UNKNOWN};
+  }
+
+  CodecType codec_type =
+      GetCodecType(codec_configuration_iter->second.getCodec());
+  std::vector<std::optional<Lc3Capabilities>> bcastLc3Cap(
+      1, std::optional(ComposeLc3Capability(codec_configuration_iter->second)));
+
+  if (codec_type == CodecType::LC3) {
+    return ComposeBroadcastCapability(
+        codec_type,
+        GetAudioLocation(
+            strategy_configuration_iter->second.getAudioLocation()),
+        strategy_configuration_iter->second.getChannelCount(), bcastLc3Cap);
+  }
+  return {.codecType = CodecType::UNKNOWN};
+}
+
+template <class T>
+BroadcastCapability BluetoothLeAudioCodecsProvider::ComposeBroadcastCapability(
+    const CodecType& codec_type, const AudioLocation& audio_location,
+    const uint8_t& channel_count, const std::vector<T>& capability) {
+  return {.codecType = codec_type,
+          .supportedChannel = audio_location,
+          .channelCountPerStream = channel_count,
+          .leAudioCodecCapabilities = std::optional(capability)};
 }
 
 template <class T>
@@ -321,6 +377,10 @@ bool BluetoothLeAudioCodecsProvider::IsValidStrategyConfiguration(
       // Stereo
       // 1. two connected device, one for L one for R
       // 2. one connected device for both L and R
+      return true;
+    } else if (strategy_configuration.getConnectedDevice() == 0 &&
+               strategy_configuration.getChannelCount() == 2) {
+      // Broadcast
       return true;
     }
   } else if (strategy_configuration.getAudioLocation() ==
