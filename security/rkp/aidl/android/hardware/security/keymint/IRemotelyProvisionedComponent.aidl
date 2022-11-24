@@ -345,20 +345,20 @@ interface IRemotelyProvisionedComponent {
      * ]
      *
      * ; COSE_Sign1 (untagged)
-     * SignedData<T> = [
+     * SignedData<Data> = [
      *     protected: bstr .cbor { 1 : AlgorithmEdDSA / AlgorithmES256 },
      *     unprotected: {},
-     *     payload: bstr .cbor T / nil,
-     *     signature: bstr         ; PureEd25519(CDI_Leaf_Priv, bstr .cbor SignedDataSigStruct<T>) /
-     *                             ; ECDSA(CDI_Leaf_Priv, bstr .cbor SignedDataSigStruct<T>)
+     *     payload: bstr .cbor Data / nil,
+     *     signature: bstr      ; PureEd25519(CDI_Leaf_Priv, bstr .cbor SignedDataSigStruct<Data>) /
+     *                          ; ECDSA(CDI_Leaf_Priv, bstr .cbor SignedDataSigStruct<Data>)
      * ]
      *
      * ; Sig_structure for SignedData
-     * SignedDataSigStruct<T> = [
+     * SignedDataSigStruct<Data> = [
      *     context: "Signature1",
      *     protected: bstr .cbor { 1 : AlgorithmEdDSA / AlgorithmES256 },
      *     external_aad: bstr .size 0,
-     *     payload: bstr .cbor T
+     *     payload: bstr .cbor Data / nil,
      * ]
      *
      * ; UdsCerts allows the platform to provide additional certifications for the UDS_Pub. For
