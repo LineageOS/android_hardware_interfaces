@@ -1603,14 +1603,14 @@ TEST_P(GnssHalTest, TestAccumulatedDeltaRange) {
     auto callback = sp<GnssMeasurementCallbackAidl>::make();
     sp<IGnssMeasurementInterface> iGnssMeasurement;
     auto status = aidl_gnss_hal_->getExtensionGnssMeasurement(&iGnssMeasurement);
+    ASSERT_TRUE(status.isOk());
+    ASSERT_TRUE(iGnssMeasurement != nullptr);
 
     IGnssMeasurementInterface::Options options;
     options.intervalMs = 1000;
     options.enableFullTracking = true;
     status = iGnssMeasurement->setCallbackWithOptions(callback, options);
-
     ASSERT_TRUE(status.isOk());
-    ASSERT_TRUE(iGnssMeasurement != nullptr);
 
     bool accumulatedDeltaRangeFound = false;
     const int kNumMeasurementEvents = 15;
