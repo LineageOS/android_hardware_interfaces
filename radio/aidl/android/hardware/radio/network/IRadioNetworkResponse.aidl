@@ -626,6 +626,17 @@ oneway interface IRadioNetworkResponse {
     void setNullCipherAndIntegrityEnabledResponse(in RadioResponseInfo info);
 
     /**
+     * @param info Response info struct containing response type, serial no. and error
+     * @param enabled the last known state of null ciphering and integrity algorithms
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:MODEM_ERR
+     */
+    void isNullCipherAndIntegrityEnabledResponse(in RadioResponseInfo info, in boolean isEnabled);
+
+    /**
      * Response of isN1ModeEnabled.
      * This is an optional API.
      *
