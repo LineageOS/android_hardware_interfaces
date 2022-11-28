@@ -489,7 +489,9 @@ void GnssHalTest::checkGnssDataFields(const sp<GnssMeasurementCallbackAidl>& cal
         // Validity check GnssData fields
         checkGnssMeasurementClockFields(lastGnssData);
         if (aidl_gnss_hal_->getInterfaceVersion() >= 3) {
-            EXPECT_EQ(lastGnssData.isFullTracking, isFullTracking);
+            if (isFullTracking) {
+                EXPECT_EQ(lastGnssData.isFullTracking, isFullTracking);
+            }
         }
         for (const auto& measurement : lastGnssData.measurements) {
             checkGnssMeasurementFields(measurement, lastGnssData);
