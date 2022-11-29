@@ -2031,6 +2031,16 @@ void p256_pub_key(const vector<uint8_t>& coseKeyData, EVP_PKEY_Ptr* signingKey) 
     *signingKey = std::move(pubKey);
 }
 
+void device_id_attestation_vsr_check(const ErrorCode& result) {
+    if (get_vsr_api_level() >= 34) {
+        ASSERT_FALSE(result == ErrorCode::INVALID_TAG)
+                << "It is a specification violation for INVALID_TAG to be returned due to ID "
+                << "mismatch in a Device ID Attestation call. INVALID_TAG is only intended to "
+                << "be used for a case where updateAad() is called after update(). As of "
+                << "VSR-14, this is now enforced as an error.";
+    }
+}
+
 }  // namespace test
 
 }  // namespace aidl::android::hardware::security::keymint
