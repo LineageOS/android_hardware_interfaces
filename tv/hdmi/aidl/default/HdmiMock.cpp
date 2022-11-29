@@ -166,6 +166,7 @@ HdmiMock::HdmiMock() {
                      .portId = static_cast<uint32_t>(1),
                      .cecSupported = true,
                      .arcSupported = false,
+                     .eArcSupported = false,
                      .physicalAddress = mPhysicalAddress};
     mPortConnectionStatus[0] = false;
     mDeathRecipient = ndk::ScopedAIBinder_DeathRecipient(AIBinder_DeathRecipient_new(serviceDied));
