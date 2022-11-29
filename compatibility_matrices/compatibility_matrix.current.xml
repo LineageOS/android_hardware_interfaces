@@ -529,6 +529,16 @@
         </interface>
     </hal>
     <hal format="aidl" optional="true">
+        <name>android.hardware.radio.satellite</name>
+        <version>1</version>
+        <interface>
+            <name>IRadioSatellite</name>
+            <instance>slot1</instance>
+            <instance>slot2</instance>
+            <instance>slot3</instance>
+        </interface>
+    </hal>
+    <hal format="aidl" optional="true">
         <name>android.hardware.radio.ims.media</name>
         <version>1</version>
         <interface>

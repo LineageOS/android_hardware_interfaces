@@ -23,6 +23,7 @@
 #include <aidl/android/hardware/radio/messaging/IRadioMessagingResponse.h>
 #include <aidl/android/hardware/radio/modem/IRadioModemResponse.h>
 #include <aidl/android/hardware/radio/network/IRadioNetworkResponse.h>
+#include <aidl/android/hardware/radio/satellite/IRadioSatelliteResponse.h>
 #include <aidl/android/hardware/radio/sim/IRadioSimResponse.h>
 #include <aidl/android/hardware/radio/voice/IRadioVoiceResponse.h>
 #include <android/hardware/radio/1.6/IRadioResponse.h>
@@ -53,6 +54,9 @@ class RadioResponse : public V1_6::IRadioResponse {
     GuaranteedCallback<::aidl::android::hardware::radio::ims::IRadioImsResponse,
                        ::aidl::android::hardware::radio::ims::IRadioImsResponseDefault>
             mImsCb;
+    GuaranteedCallback<::aidl::android::hardware::radio::satellite::IRadioSatelliteResponse,
+                       ::aidl::android::hardware::radio::satellite::IRadioSatelliteResponseDefault>
+            mSatelliteCb;
 
     // IRadioResponse @ 1.0
     Return<void> getIccCardStatusResponse(const V1_0::RadioResponseInfo& info,
@@ -446,6 +450,9 @@ class RadioResponse : public V1_6::IRadioResponse {
             std::shared_ptr<::aidl::android::hardware::radio::voice::IRadioVoiceResponse> voiceCb);
     void setResponseFunction(
             std::shared_ptr<::aidl::android::hardware::radio::ims::IRadioImsResponse> imsCb);
+    void setResponseFunction(
+            std::shared_ptr<::aidl::android::hardware::radio::satellite::IRadioSatelliteResponse>
+                    satelliteCb);
 
     std::shared_ptr<::aidl::android::hardware::radio::data::IRadioDataResponse> dataCb();
     std::shared_ptr<::aidl::android::hardware::radio::messaging::IRadioMessagingResponse>
@@ -455,6 +462,8 @@ class RadioResponse : public V1_6::IRadioResponse {
     std::shared_ptr<::aidl::android::hardware::radio::sim::IRadioSimResponse> simCb();
     std::shared_ptr<::aidl::android::hardware::radio::voice::IRadioVoiceResponse> voiceCb();
     std::shared_ptr<::aidl::android::hardware::radio::ims::IRadioImsResponse> imsCb();
+    std::shared_ptr<::aidl::android::hardware::radio::satellite::IRadioSatelliteResponse>
+    satelliteCb();
 };
 
 }  // namespace android::hardware::radio::compat

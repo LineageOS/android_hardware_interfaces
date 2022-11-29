@@ -69,6 +69,8 @@ static constexpr const char* FEATURE_TELEPHONY_CDMA = "android.hardware.telephon
 
 static constexpr const char* FEATURE_TELEPHONY_IMS = "android.hardware.telephony.ims";
 
+static constexpr const char* FEATURE_TELEPHONY_SATELLITE = "android.hardware.telephony.satellite";
+
 #define MODEM_EMERGENCY_CALL_ESTABLISH_TIME 3
 #define MODEM_EMERGENCY_CALL_DISCONNECT_TIME 3
 #define MODEM_SET_SIM_POWER_DELAY_IN_SECONDS 2

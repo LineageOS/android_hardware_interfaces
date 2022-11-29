@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,10 +31,23 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.radio;
-@Backing(type="int") @JavaDerive(toString=true) @VintfStability
-enum RadioResponseType {
-  SOLICITED,
-  SOLICITED_ACK,
-  SOLICITED_ACK_EXP,
+package android.hardware.radio.satellite;
+@VintfStability
+interface IRadioSatellite {
+  oneway void addAllowedSatelliteContacts(in int serial, in String[] contacts);
+  oneway void getCapabilities(in int serial);
+  oneway void getMaxCharactersPerTextMessage(in int serial);
+  oneway void getPendingMessages(in int serial);
+  oneway void getPowerState(in int serial);
+  oneway void getSatelliteMode(in int serial);
+  oneway void getTimeForNextSatelliteVisibility(in int serial);
+  oneway void provisionService(in int serial, in String imei, in String msisdn, in String imsi, in android.hardware.radio.satellite.SatelliteFeature[] features);
+  oneway void removeAllowedSatelliteContacts(in int serial, in String[] contacts);
+  oneway void responseAcknowledgement();
+  oneway void sendMessages(in int serial, in String[] messages, in String destination, in double latitude, in double longitude);
+  oneway void setIndicationFilter(in int serial, in int filterBitmask);
+  oneway void setPower(in int serial, in boolean on);
+  oneway void setResponseFunctions(in android.hardware.radio.satellite.IRadioSatelliteResponse satelliteResponse, in android.hardware.radio.satellite.IRadioSatelliteIndication satelliteIndication);
+  oneway void startSendingSatellitePointingInfo(in int serial);
+  oneway void stopSendingSatellitePointingInfo(in int serial);
 }
