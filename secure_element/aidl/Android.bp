@@ -1,0 +1,35 @@
+aidl_interface {
+    name: "android.hardware.secure_element",
+    vendor_available: true,
+    host_supported: true,
+    srcs: ["android/hardware/secure_element/*.aidl"],
+    stability: "vintf",
+    backend: {
+        cpp: {
+            enabled: false,
+        },
+        java: {
+            sdk_version: "system_current",
+        },
+    },
+}
+
+cc_test {
+    name: "VtsHalSecureElementTargetTest",
+    defaults: [
+        "VtsHalTargetTestDefaults",
+        "use_libaidlvintf_gtest_helper_static",
+    ],
+    srcs: ["vts/VtsHalSecureElementTargetTest.cpp"],
+    shared_libs: [
+        "libbinder_ndk",
+    ],
+    static_libs: [
+        "android.hardware.secure_element-V1-ndk",
+        "libgmock",
+    ],
+    test_suites: [
+        "general-tests",
+        "vts",
+    ],
+}
