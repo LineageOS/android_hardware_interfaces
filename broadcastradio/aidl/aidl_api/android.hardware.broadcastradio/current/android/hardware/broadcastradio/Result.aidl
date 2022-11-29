@@ -40,5 +40,6 @@ enum Result {
   INVALID_STATE = 3,
   NOT_SUPPORTED = 4,
   TIMEOUT = 5,
-  UNKNOWN_ERROR = 6,
+  CANCELED = 6,
+  UNKNOWN_ERROR = 7,
 }

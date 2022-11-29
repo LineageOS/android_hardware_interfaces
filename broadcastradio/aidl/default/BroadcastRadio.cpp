@@ -238,7 +238,8 @@ ScopedAStatus BroadcastRadio::tune(const ProgramSelector& program) {
         }
         callback->onCurrentProgramInfoChanged(programInfo);
     };
-    mThread->schedule(task, kTuneDelayTimeMs);
+    auto cancelTask = [program, callback]() { callback->onTuneFailed(Result::CANCELED, program); };
+    mThread->schedule(task, cancelTask, kTuneDelayTimeMs);
 
     return ScopedAStatus::ok();
 }
@@ -258,6 +259,7 @@ ScopedAStatus BroadcastRadio::seek(bool directionUp, bool skipSubChannel) {
 
     const auto& list = mVirtualRadio.getProgramList();
     std::shared_ptr<ITunerCallback> callback = mCallback;
+    auto cancelTask = [callback]() { callback->onTuneFailed(Result::CANCELED, {}); };
     if (list.empty()) {
         mIsTuneCompleted = false;
         auto task = [callback]() {
@@ -265,7 +267,7 @@ ScopedAStatus BroadcastRadio::seek(bool directionUp, bool skipSubChannel) {
 
             callback->onTuneFailed(Result::TIMEOUT, {});
         };
-        mThread->schedule(task, kSeekDelayTimeMs);
+        mThread->schedule(task, cancelTask, kSeekDelayTimeMs);
 
         return ScopedAStatus::ok();
     }
@@ -298,7 +300,7 @@ ScopedAStatus BroadcastRadio::seek(bool directionUp, bool skipSubChannel) {
         }
         callback->onCurrentProgramInfoChanged(programInfo);
     };
-    mThread->schedule(task, kSeekDelayTimeMs);
+    mThread->schedule(task, cancelTask, kSeekDelayTimeMs);
 
     return ScopedAStatus::ok();
 }
@@ -352,7 +354,8 @@ ScopedAStatus BroadcastRadio::step(bool directionUp) {
         }
         callback->onCurrentProgramInfoChanged(programInfo);
     };
-    mThread->schedule(task, kStepDelayTimeMs);
+    auto cancelTask = [callback]() { callback->onTuneFailed(Result::CANCELED, {}); };
+    mThread->schedule(task, cancelTask, kStepDelayTimeMs);
 
     return ScopedAStatus::ok();
 }
