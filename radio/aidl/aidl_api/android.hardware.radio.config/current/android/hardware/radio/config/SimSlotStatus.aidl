@@ -38,4 +38,5 @@ parcelable SimSlotStatus {
   String atr;
   String eid;
   android.hardware.radio.config.SimPortInfo[] portInfo;
+  android.hardware.radio.config.MultipleEnabledProfilesMode supportedMepMode;
 }
