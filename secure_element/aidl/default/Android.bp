@@ -1,0 +1,15 @@
+cc_binary {
+    name: "android.hardware.secure_element-service.example",
+    relative_install_path: "hw",
+    vendor: true,
+    init_rc: ["secure_element.rc"],
+    vintf_fragments: ["secure_element.xml"],
+    shared_libs: [
+        "libbase",
+        "libbinder_ndk",
+        "android.hardware.secure_element-V1-ndk",
+    ],
+    srcs: [
+        "main.cpp",
+    ],
+}
