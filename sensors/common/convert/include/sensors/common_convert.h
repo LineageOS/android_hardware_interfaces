@@ -16,22 +16,18 @@
 
 #pragma once
 
-#include <aidl/android/hardware/sensors/ISensors.h>
+#include <android/sensor.h>
 #include <hardware/sensors.h>
-#include <sensors/common_convert.h>
 
 namespace android {
 namespace hardware {
 namespace sensors {
 namespace implementation {
+namespace common {
 
-status_t convertToStatus(ndk::ScopedAStatus status);
-void convertToSensor(const aidl::android::hardware::sensors::SensorInfo& src, sensor_t* dst);
-void convertToSensorEvent(const aidl::android::hardware::sensors::Event& src, sensors_event_t* dst);
-void convertFromSensorEvent(const sensors_event_t& src,
-                            aidl::android::hardware::sensors::Event* dst);
-void convertFromASensorEvent(const ASensorEvent& src, aidl::android::hardware::sensors::Event* dst);
+sensors_event_t convertASensorEvent(const ASensorEvent& aEvent);
 
+}  // namespace common
 }  // namespace implementation
 }  // namespace sensors
 }  // namespace hardware
