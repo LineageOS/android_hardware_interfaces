@@ -1845,6 +1845,27 @@ enum VehicleProperty {
     SEAT_FOOTWELL_LIGHTS_STATE =
             0x0B9B + VehiclePropertyGroup.SYSTEM + VehicleArea.SEAT + VehiclePropertyType.INT32,
     /**
+     * Represents property for the seat footwell lights switch.
+     *
+     * SEAT_FOOTWELL_LIGHTS_SWITCH represents the position of the switch controlling the lights.
+     * This is different from the function of SEAT_FOOTWELL_LIGHTS_STATE which reflects the current
+     * state of the lights at any point in time. Therefore, SEAT_FOOTWELL_LIGHTS_SWITCH may not
+     * match the value of SEAT_FOOTWELL_LIGHTS_STATE (e.g. SEAT_FOOTWELL_LIGHTS_SWITCH=AUTOMATIC and
+     * SEAT_FOOTWELL_LIGHTS_STATE=ON).
+     *
+     * This property should only be implemented if SEAT_FOOTWELL_LIGHTS_SWITCH's value may be
+     * different from that of CABIN_LIGHTS_SWITCH.
+     *
+     * For each supported area ID, the VehicleAreaConfig#supportedEnumValues must be defined unless
+     * all enum values of VehicleLightSwitch are supported.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     * @data_enum VehicleLightSwitch
+     */
+    SEAT_FOOTWELL_LIGHTS_SWITCH =
+            0x0B9C + VehiclePropertyGroup.SYSTEM + VehicleArea.SEAT + VehiclePropertyType.INT32,
+    /**
      * Represents property for Seat easy access feature.
      *
      * If true, the seat will automatically adjust to make it easier for the occupant to enter and
