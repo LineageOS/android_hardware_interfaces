@@ -490,10 +490,6 @@ void convertFromSensorEvent(const sensors_event_t& src, Event* dst) {
     }
 }
 
-void convertFromASensorEvent(const ASensorEvent& src, Event* dst) {
-    convertFromSensorEvent(common::convertASensorEvent(src), dst);
-}
-
 }  // namespace implementation
 }  // namespace sensors
 }  // namespace hardware
