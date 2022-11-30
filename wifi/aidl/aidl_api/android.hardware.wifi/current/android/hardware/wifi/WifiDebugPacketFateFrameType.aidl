@@ -34,7 +34,7 @@
 package android.hardware.wifi;
 @Backing(type="int") @VintfStability
 enum WifiDebugPacketFateFrameType {
-  UNKNOWN = 0,
-  ETHERNET_II = 1,
-  MGMT_80211 = 2,
+  UNKNOWN,
+  ETHERNET_II,
+  MGMT_80211,
 }

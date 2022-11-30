@@ -34,9 +34,9 @@
 package android.hardware.wifi;
 @Backing(type="int") @VintfStability
 enum IfaceConcurrencyType {
-  STA = 0,
-  AP = 1,
-  AP_BRIDGED = 2,
-  P2P = 3,
-  NAN_IFACE = 4,
+  STA,
+  AP,
+  AP_BRIDGED,
+  P2P,
+  NAN_IFACE,
 }

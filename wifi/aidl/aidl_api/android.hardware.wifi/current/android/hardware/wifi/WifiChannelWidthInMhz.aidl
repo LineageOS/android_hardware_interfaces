@@ -34,7 +34,7 @@
 package android.hardware.wifi;
 @Backing(type="int") @VintfStability
 enum WifiChannelWidthInMhz {
-  WIDTH_INVALID = -1,
+  WIDTH_INVALID = (-1),
   WIDTH_20 = 0,
   WIDTH_40 = 1,
   WIDTH_80 = 2,

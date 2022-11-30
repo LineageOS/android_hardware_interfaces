@@ -34,7 +34,7 @@
 package android.hardware.wifi;
 @Backing(type="int") @VintfStability
 enum StaBackgroundScanBucketEventReportSchemeMask {
-  EACH_SCAN = 1,
-  FULL_RESULTS = 2,
-  NO_BATCH = 4,
+  EACH_SCAN = (1 << 0),
+  FULL_RESULTS = (1 << 1),
+  NO_BATCH = (1 << 2),
 }
