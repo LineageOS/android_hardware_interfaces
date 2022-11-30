@@ -41,4 +41,5 @@ parcelable SimApdu {
   int p2;
   int p3;
   String data;
+  boolean isEs10;
 }

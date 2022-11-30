@@ -125,6 +125,9 @@ interface ITuner {
     /**
      * Enable or Disable Low Noise Amplifier (LNA).
      *
+     * If the device doesn't support LNA, the HAL implement should set {@link Result#UNAVAILABLE}
+     * to EX_SERVICE_SPECIFIC as the service specific error.
+     *
      * @param bEnable true if activate LNA module; false if deactivate LNA
      */
     void setLna(in boolean bEnable);
@@ -148,4 +151,11 @@ interface ITuner {
      * @return the maximum usable number of the queried frontend type.
      */
     int getMaxNumberOfFrontends(in FrontendType frontendType);
+
+    /**
+     * Is Low Noise Amplifier (LNA) supported.
+     *
+     * @return true if supported, otherwise false
+     */
+    boolean isLnaSupported();
 }
