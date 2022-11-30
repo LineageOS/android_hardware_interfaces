@@ -24,6 +24,7 @@
 #include <aidl/android/hardware/graphics/common/BufferUsage.h>
 #include <aidl/android/hardware/graphics/common/PixelFormat.h>
 #include <aidlcommonsupport/NativeHandle.h>
+#include <android/binder_enums.h>
 #include <android/binder_manager.h>
 #include <android/dlext.h>
 #include <android/hardware/graphics/mapper/IMapper.h>
@@ -65,6 +66,24 @@ struct YCbCr {
     int64_t horizontalSubSampling;
     int64_t verticalSubSampling;
 };
+
+constexpr const char* STANDARD_METADATA_NAME =
+        "android.hardware.graphics.common.StandardMetadataType";
+
+static bool isStandardMetadata(AIMapper_MetadataType metadataType) {
+    return strcmp(STANDARD_METADATA_NAME, metadataType.name) == 0;
+}
+
+static std::string toString(const std::vector<StandardMetadataType> types) {
+    std::stringstream buf;
+    buf << "[";
+    for (auto type : types) {
+        buf << toString(type) << ", ";
+    }
+    buf.seekp(-2, buf.cur);
+    buf << "]";
+    return buf.str();
+}
 
 class BufferHandle {
     AIMapper* mIMapper;
@@ -1533,8 +1552,187 @@ TEST_P(GraphicsMapperStableCTests, GetSmpte2094_40) {
     auto bufferHandle = buffer->import();
     ASSERT_TRUE(bufferHandle);
     auto value = getStandardMetadata<StandardMetadataType::SMPTE2094_40>(*bufferHandle);
-    ASSERT_TRUE(value.has_value());
-    EXPECT_FALSE(value->has_value());
+    if (value.has_value()) {
+        EXPECT_FALSE(value->has_value());
+    }
+}
+
+TEST_P(GraphicsMapperStableCTests, SupportsRequiredGettersSetters) {
+    auto buffer = allocateGeneric();
+    ASSERT_TRUE(buffer);
+    auto bufferHandle = buffer->import();
+    ASSERT_TRUE(bufferHandle);
+    const AIMapper_MetadataTypeDescription* descriptions = nullptr;
+    size_t descriptionCount = 0;
+    ASSERT_EQ(AIMAPPER_ERROR_NONE,
+              mapper()->v5.listSupportedMetadataTypes(&descriptions, &descriptionCount));
+    std::vector<StandardMetadataType> requiredGetters = {
+            StandardMetadataType::BUFFER_ID,
+            StandardMetadataType::NAME,
+            StandardMetadataType::WIDTH,
+            StandardMetadataType::HEIGHT,
+            StandardMetadataType::LAYER_COUNT,
+            StandardMetadataType::PIXEL_FORMAT_REQUESTED,
+            StandardMetadataType::PIXEL_FORMAT_FOURCC,
+            StandardMetadataType::PIXEL_FORMAT_MODIFIER,
+            StandardMetadataType::USAGE,
+            StandardMetadataType::ALLOCATION_SIZE,
+            StandardMetadataType::PROTECTED_CONTENT,
+            StandardMetadataType::COMPRESSION,
+            StandardMetadataType::INTERLACED,
+            StandardMetadataType::CHROMA_SITING,
+            StandardMetadataType::PLANE_LAYOUTS,
+            StandardMetadataType::CROP,
+            StandardMetadataType::DATASPACE,
+            StandardMetadataType::BLEND_MODE,
+            StandardMetadataType::SMPTE2086,
+            StandardMetadataType::CTA861_3,
+    };
+
+    std::vector<StandardMetadataType> requiredSetters = {
+            StandardMetadataType::DATASPACE,
+            StandardMetadataType::BLEND_MODE,
+            StandardMetadataType::SMPTE2086,
+            StandardMetadataType::CTA861_3,
+    };
+
+    for (int i = 0; i < descriptionCount; i++) {
+        const auto& it = descriptions[i];
+        if (isStandardMetadata(it.metadataType)) {
+            EXPECT_GT(it.metadataType.value, static_cast<int64_t>(StandardMetadataType::INVALID));
+            EXPECT_LT(it.metadataType.value,
+                      ndk::internal::enum_values<StandardMetadataType>.size());
+
+            if (it.isGettable) {
+                std::erase(requiredGetters,
+                           static_cast<StandardMetadataType>(it.metadataType.value));
+            }
+            if (it.isSettable) {
+                std::erase(requiredSetters,
+                           static_cast<StandardMetadataType>(it.metadataType.value));
+            }
+        } else {
+            EXPECT_NE(nullptr, it.description) << "Non-standard metadata must have a description";
+            int len = strlen(it.description);
+            EXPECT_GE(len, 0) << "Non-standard metadata must have a description";
+        }
+    }
+
+    EXPECT_EQ(0, requiredGetters.size()) << "Missing required getters" << toString(requiredGetters);
+    EXPECT_EQ(0, requiredSetters.size()) << "Missing required setters" << toString(requiredSetters);
+}
+
+/*
+ * Test that verifies that if the optional StandardMetadataTypes have getters, they have
+ * the required setters as well
+ */
+TEST_P(GraphicsMapperStableCTests, CheckRequiredSettersIfHasGetters) {
+    auto buffer = allocateGeneric();
+    ASSERT_TRUE(buffer);
+    auto bufferHandle = buffer->import();
+    ASSERT_TRUE(bufferHandle);
+    const AIMapper_MetadataTypeDescription* descriptions = nullptr;
+    size_t descriptionCount = 0;
+    ASSERT_EQ(AIMAPPER_ERROR_NONE,
+              mapper()->v5.listSupportedMetadataTypes(&descriptions, &descriptionCount));
+
+    for (int i = 0; i < descriptionCount; i++) {
+        const auto& it = descriptions[i];
+        if (isStandardMetadata(it.metadataType)) {
+            const auto type = static_cast<StandardMetadataType>(it.metadataType.value);
+            switch (type) {
+                case StandardMetadataType::SMPTE2094_10:
+                case StandardMetadataType::SMPTE2094_40:
+                    if (it.isGettable) {
+                        EXPECT_TRUE(it.isSettable)
+                                << "Type " << toString(type) << " must be settable if gettable";
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+}
+
+TEST_P(GraphicsMapperStableCTests, ListSupportedWorks) {
+    auto buffer = allocateGeneric();
+    ASSERT_TRUE(buffer);
+    auto bufferHandle = buffer->import();
+    ASSERT_TRUE(bufferHandle);
+    const AIMapper_MetadataTypeDescription* descriptions = nullptr;
+    size_t descriptionCount = 0;
+    ASSERT_EQ(AIMAPPER_ERROR_NONE,
+              mapper()->v5.listSupportedMetadataTypes(&descriptions, &descriptionCount));
+
+    std::vector<uint8_t> metadataBuffer;
+    auto get = [&](AIMapper_MetadataType metadataType) -> int32_t {
+        int32_t size = mapper()->v5.getMetadata(*bufferHandle, metadataType, nullptr, 0);
+        if (size >= 0) {
+            metadataBuffer.resize(size);
+            size = mapper()->v5.getMetadata(*bufferHandle, metadataType, metadataBuffer.data(),
+                                            metadataBuffer.size());
+            EXPECT_EQ(size, metadataBuffer.size());
+        }
+        return size;
+    };
+
+    for (int i = 0; i < descriptionCount; i++) {
+        const auto& it = descriptions[i];
+        if (!isStandardMetadata(it.metadataType)) {
+            continue;
+        }
+        if (!it.isGettable) {
+            EXPECT_FALSE(it.isSettable)
+                    << "StandardMetadata that isn't gettable must not be settable";
+            continue;
+        }
+        EXPECT_GE(get(it.metadataType), 0)
+                << "Get failed for claimed supported getter of "
+                << toString(static_cast<StandardMetadataType>(it.metadataType.value));
+        if (it.isSettable) {
+            EXPECT_EQ(AIMAPPER_ERROR_NONE,
+                      mapper()->v5.setMetadata(*bufferHandle, it.metadataType,
+                                               metadataBuffer.data(), metadataBuffer.size()))
+                    << "Failed to set metadata for "
+                    << toString(static_cast<StandardMetadataType>(it.metadataType.value));
+        }
+    }
+}
+
+TEST_P(GraphicsMapperStableCTests, GetMetadataBadValue) {
+    auto get = [this](StandardMetadataType type) -> AIMapper_Error {
+        // This is a _Nonnull parameter, but this is enough obfuscation to fool the linter
+        buffer_handle_t buffer = nullptr;
+        int32_t ret =
+                mapper()->v5.getStandardMetadata(buffer, static_cast<int64_t>(type), nullptr, 0);
+        return (ret < 0) ? (AIMapper_Error)-ret : AIMAPPER_ERROR_NONE;
+    };
+
+    for (auto type : ndk::enum_range<StandardMetadataType>()) {
+        if (type == StandardMetadataType::INVALID) {
+            continue;
+        }
+        EXPECT_EQ(AIMAPPER_ERROR_BAD_BUFFER, get(type)) << "Wrong error for " << toString(type);
+    }
+}
+
+TEST_P(GraphicsMapperStableCTests, GetUnsupportedMetadata) {
+    auto buffer = allocateGeneric();
+    ASSERT_TRUE(buffer);
+    auto bufferHandle = buffer->import();
+    ASSERT_TRUE(bufferHandle);
+
+    int result = mapper()->v5.getMetadata(*bufferHandle, {"Fake", 1}, nullptr, 0);
+    EXPECT_EQ(AIMAPPER_ERROR_UNSUPPORTED, -result);
+
+    result = mapper()->v5.getStandardMetadata(
+            *bufferHandle, static_cast<int64_t>(StandardMetadataType::INVALID), nullptr, 0);
+    EXPECT_EQ(AIMAPPER_ERROR_UNSUPPORTED, -result);
+
+    constexpr int64_t unknownStandardType = ndk::internal::enum_values<StandardMetadataType>.size();
+    result = mapper()->v5.getStandardMetadata(*bufferHandle, unknownStandardType, nullptr, 0);
+    EXPECT_EQ(AIMAPPER_ERROR_UNSUPPORTED, -result);
 }
 
 std::vector<std::tuple<std::string, std::shared_ptr<IAllocator>>> getIAllocatorsAtLeastVersion(
