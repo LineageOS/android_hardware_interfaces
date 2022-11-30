@@ -1274,6 +1274,8 @@ class InputStreamTest
         if (!xsd::isTelephonyDevice(address.deviceType)) {
             metadata.source = toString(xsd::AudioSource::AUDIO_SOURCE_UNPROCESSED);
             metadata.channelMask = getConfig().base.channelMask;
+        } else {
+            address.deviceType = toString(xsd::AudioDevice::AUDIO_DEVICE_IN_DEFAULT);
         }
 #if MAJOR_VERSION == 7 && MINOR_VERSION >= 1
         auto flagsIt = std::find(flags.begin(), flags.end(),
