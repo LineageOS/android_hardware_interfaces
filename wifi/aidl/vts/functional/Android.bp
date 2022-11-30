@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2021 The Android Open Source Project
+// Copyright (C) 2022 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,23 +24,23 @@ package {
 }
 
 cc_test {
-    name: "VtsHalWifiSupplicantStaIfaceTargetTest",
+    name: "VtsHalWifiChipTargetTest",
     defaults: [
         "VtsHalTargetTestDefaults",
         "use_libaidlvintf_gtest_helper_static",
     ],
-    srcs: ["supplicant_sta_iface_aidl_test.cpp"],
+    srcs: [
+        "wifi_chip_aidl_test.cpp",
+    ],
     shared_libs: [
         "libbinder",
         "libbinder_ndk",
         "libvndksupport",
     ],
     static_libs: [
-        "android.hardware.wifi-V1-ndk",
-        "android.hardware.wifi.supplicant-V2-ndk",
-        "libwifi-system",
-        "libwifi-system-iface",
         "VtsHalWifiTargetTestUtil",
+        "android.hardware.wifi-V1-ndk",
+        "libwifi-system-iface",
     ],
     test_suites: [
         "general-tests",
@@ -49,23 +49,23 @@ cc_test {
 }
 
 cc_test {
-    name: "VtsHalWifiSupplicantStaNetworkTargetTest",
+    name: "VtsHalWifiStaIfaceTargetTest",
     defaults: [
         "VtsHalTargetTestDefaults",
         "use_libaidlvintf_gtest_helper_static",
     ],
-    srcs: ["supplicant_sta_network_aidl_test.cpp"],
+    srcs: [
+        "wifi_sta_iface_aidl_test.cpp",
+    ],
     shared_libs: [
         "libbinder",
         "libbinder_ndk",
         "libvndksupport",
     ],
     static_libs: [
-        "android.hardware.wifi-V1-ndk",
-        "android.hardware.wifi.supplicant-V2-ndk",
-        "libwifi-system",
-        "libwifi-system-iface",
         "VtsHalWifiTargetTestUtil",
+        "android.hardware.wifi-V1-ndk",
+        "libwifi-system-iface",
     ],
     test_suites: [
         "general-tests",
@@ -74,26 +74,96 @@ cc_test {
 }
 
 cc_test {
-    name: "VtsHalWifiSupplicantP2pIfaceTargetTest",
+    name: "VtsHalWifiApIfaceTargetTest",
     defaults: [
         "VtsHalTargetTestDefaults",
         "use_libaidlvintf_gtest_helper_static",
     ],
-    srcs: ["supplicant_p2p_iface_aidl_test.cpp"],
+    srcs: [
+        "wifi_ap_iface_aidl_test.cpp",
+    ],
     shared_libs: [
         "libbinder",
         "libbinder_ndk",
         "libvndksupport",
     ],
     static_libs: [
-        "android.hardware.wifi-V1-ndk",
-        "android.hardware.wifi.supplicant-V2-ndk",
-        "libwifi-system",
-        "libwifi-system-iface",
         "VtsHalWifiTargetTestUtil",
+        "android.hardware.wifi-V1-ndk",
+        "libwifi-system-iface",
     ],
     test_suites: [
         "general-tests",
         "vts",
+    ],
+}
+
+cc_test {
+    name: "VtsHalWifiNanIfaceTargetTest",
+    defaults: [
+        "VtsHalTargetTestDefaults",
+        "use_libaidlvintf_gtest_helper_static",
+    ],
+    srcs: [
+        "wifi_nan_iface_aidl_test.cpp",
+    ],
+    shared_libs: [
+        "libbinder",
+        "libbinder_ndk",
+        "libvndksupport",
+    ],
+    static_libs: [
+        "VtsHalWifiTargetTestUtil",
+        "android.hardware.wifi-V1-ndk",
+        "libwifi-system-iface",
+    ],
+    test_suites: [
+        "general-tests",
+        "vts",
+    ],
+}
+
+cc_test {
+    name: "VtsHalWifiRttControllerTargetTest",
+    defaults: [
+        "VtsHalTargetTestDefaults",
+        "use_libaidlvintf_gtest_helper_static",
+    ],
+    srcs: [
+        "wifi_rtt_controller_aidl_test.cpp",
+    ],
+    shared_libs: [
+        "libbinder",
+        "libbinder_ndk",
+        "libvndksupport",
+    ],
+    static_libs: [
+        "VtsHalWifiTargetTestUtil",
+        "android.hardware.wifi-V1-ndk",
+        "libwifi-system-iface",
+    ],
+    test_suites: [
+        "general-tests",
+        "vts",
+    ],
+}
+
+cc_library_static {
+    name: "VtsHalWifiTargetTestUtil",
+    defaults: ["VtsHalTargetTestDefaults"],
+    srcs: [
+        "wifi_aidl_test_utils.cpp",
+    ],
+    export_include_dirs: [
+        ".",
+    ],
+    shared_libs: [
+        "libbinder",
+        "libbinder_ndk",
+        "libnativehelper",
+    ],
+    static_libs: [
+        "android.hardware.wifi-V1-ndk",
+        "libwifi-system-iface",
     ],
 }
