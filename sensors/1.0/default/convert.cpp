@@ -196,11 +196,6 @@ void convertFromSensorEvent(const sensors_event_t &src, Event *dst) {
     }
 }
 
-void convertFromASensorEvent(const ASensorEvent& src, Event* dst) {
-    convertFromSensorEvent(
-            android::hardware::sensors::implementation::common::convertASensorEvent(src), dst);
-}
-
 void convertToSensorEvent(const Event &src, sensors_event_t *dst) {
     *dst = {.version = sizeof(sensors_event_t),
             .sensor = src.sensorHandle,
