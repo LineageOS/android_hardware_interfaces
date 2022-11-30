@@ -18,7 +18,6 @@
 
 #include <aidl/android/hardware/sensors/ISensors.h>
 #include <hardware/sensors.h>
-#include <sensors/common_convert.h>
 
 namespace android {
 namespace hardware {
@@ -30,7 +29,6 @@ void convertToSensor(const aidl::android::hardware::sensors::SensorInfo& src, se
 void convertToSensorEvent(const aidl::android::hardware::sensors::Event& src, sensors_event_t* dst);
 void convertFromSensorEvent(const sensors_event_t& src,
                             aidl::android::hardware::sensors::Event* dst);
-void convertFromASensorEvent(const ASensorEvent& src, aidl::android::hardware::sensors::Event* dst);
 
 }  // namespace implementation
 }  // namespace sensors
