@@ -119,7 +119,7 @@ class TestWakeupClientServiceImpl final : public WakeupClient::Service {
     // A variable to notify server is stopping.
     std::condition_variable mServerStoppedCv;
     // Whether wakeup AP is required for executing tasks.
-    std::atomic<bool> mWakeupRequired = false;
+    std::atomic<bool> mWakeupRequired = true;
     std::mutex mLock;
     bool mServerStopped GUARDED_BY(mLock);
 
