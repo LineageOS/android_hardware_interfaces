@@ -44,12 +44,6 @@ cc_library_static {
         "libhidlbase",
         "android.hardware.sensors@1.0",
     ],
-    whole_static_libs: [
-        "sensors_common_convert",
-    ],
-    export_static_lib_headers: [
-        "sensors_common_convert",
-    ],
     local_include_dirs: ["include/sensors"],
     export_shared_lib_headers: [
         "libhardware",
