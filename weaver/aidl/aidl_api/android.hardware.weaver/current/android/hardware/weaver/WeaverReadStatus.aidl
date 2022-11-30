@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,9 +32,10 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.weaver;
-@VintfStability
-parcelable WeaverReadResponse {
-  long timeout;
-  byte[] value;
-  android.hardware.weaver.WeaverReadStatus status = android.hardware.weaver.WeaverReadStatus.FAILED;
+@Backing(type="int") @VintfStability
+enum WeaverReadStatus {
+  OK = 0,
+  FAILED = 1,
+  INCORRECT_KEY = 2,
+  THROTTLE = 3,
 }
