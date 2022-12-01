@@ -25,7 +25,10 @@
 #include <aidl/android/hardware/graphics/common/PixelFormat.h>
 #include <aidlcommonsupport/NativeHandle.h>
 #include <android/binder_manager.h>
+#include <android/dlext.h>
 #include <android/hardware/graphics/mapper/4.0/IMapper.h>
+#include <android/hardware/graphics/mapper/IMapper.h>
+#include <dlfcn.h>
 #include <gtest/gtest.h>
 #include <hidl/GtestPrinter.h>
 #include <hidl/ServiceManagement.h>
@@ -33,6 +36,7 @@
 #include <renderthread/EglManager.h>
 #include <utils/GLUtils.h>
 #include <vndk/hardware_buffer.h>
+#include <vndksupport/linker.h>
 #include <initializer_list>
 #include <optional>
 #include <string>
@@ -42,60 +46,70 @@ using namespace aidl::android::hardware::graphics::allocator;
 using namespace aidl::android::hardware::graphics::common;
 using namespace android;
 using namespace android::hardware;
-using namespace android::hardware::graphics::mapper::V4_0;
+using IMapper4 = android::hardware::graphics::mapper::V4_0::IMapper;
+using Error = android::hardware::graphics::mapper::V4_0::Error;
+using android::hardware::graphics::mapper::V4_0::BufferDescriptor;
 using android::uirenderer::AutoEglImage;
 using android::uirenderer::AutoGLFramebuffer;
 using android::uirenderer::AutoSkiaGlTexture;
 using android::uirenderer::renderthread::EglManager;
 
-static constexpr uint64_t pack(const std::initializer_list<BufferUsage>& usages) {
-    uint64_t ret = 0;
-    for (const auto u : usages) {
-        ret |= static_cast<uint64_t>(u);
-    }
-    return ret;
+typedef AIMapper_Error (*AIMapper_loadIMapperFn)(AIMapper* _Nullable* _Nonnull outImplementation);
+
+inline BufferUsage operator|(BufferUsage lhs, BufferUsage rhs) {
+    using T = std::underlying_type_t<BufferUsage>;
+    return static_cast<BufferUsage>(static_cast<T>(lhs) | static_cast<T>(rhs));
 }
 
-static constexpr hardware::graphics::common::V1_2::PixelFormat cast(PixelFormat format) {
-    return static_cast<hardware::graphics::common::V1_2::PixelFormat>(format);
+inline BufferUsage& operator|=(BufferUsage& lhs, BufferUsage rhs) {
+    lhs = lhs | rhs;
+    return lhs;
 }
+
+static IMapper4::BufferDescriptorInfo convert(const BufferDescriptorInfo& info) {
+    return IMapper4::BufferDescriptorInfo{
+            .name{reinterpret_cast<const char*>(info.name.data())},
+            .width = static_cast<uint32_t>(info.width),
+            .height = static_cast<uint32_t>(info.height),
+            .layerCount = static_cast<uint32_t>(info.layerCount),
+            .format = static_cast<hardware::graphics::common::V1_2::PixelFormat>(info.format),
+            .usage = static_cast<uint64_t>(info.usage),
+            .reservedSize = 0,
+    };
+}
+
+class GraphicsTestsBase;
 
 class BufferHandle {
-    sp<IMapper> mMapper;
+    GraphicsTestsBase& mTestBase;
     native_handle_t* mRawHandle;
     bool mImported = false;
     uint32_t mStride;
-    const IMapper::BufferDescriptorInfo mInfo;
+    const BufferDescriptorInfo mInfo;
 
     BufferHandle(const BufferHandle&) = delete;
     void operator=(const BufferHandle&) = delete;
 
   public:
-    BufferHandle(const sp<IMapper> mapper, native_handle_t* handle, bool imported, uint32_t stride,
-                 const IMapper::BufferDescriptorInfo& info)
-        : mMapper(mapper), mRawHandle(handle), mImported(imported), mStride(stride), mInfo(info) {}
+    BufferHandle(GraphicsTestsBase& testBase, native_handle_t* handle, bool imported,
+                 uint32_t stride, const BufferDescriptorInfo& info)
+        : mTestBase(testBase),
+          mRawHandle(handle),
+          mImported(imported),
+          mStride(stride),
+          mInfo(info) {}
 
-    ~BufferHandle() {
-        if (mRawHandle == nullptr) return;
-
-        if (mImported) {
-            Error error = mMapper->freeBuffer(mRawHandle);
-            EXPECT_EQ(Error::NONE, error) << "failed to free buffer " << mRawHandle;
-        } else {
-            native_handle_close(mRawHandle);
-            native_handle_delete(mRawHandle);
-        }
-    }
+    ~BufferHandle();
 
     uint32_t stride() const { return mStride; }
 
     AHardwareBuffer_Desc describe() const {
         return {
-                .width = mInfo.width,
-                .height = mInfo.height,
-                .layers = mInfo.layerCount,
+                .width = static_cast<uint32_t>(mInfo.width),
+                .height = static_cast<uint32_t>(mInfo.height),
+                .layers = static_cast<uint32_t>(mInfo.layerCount),
                 .format = static_cast<uint32_t>(mInfo.format),
-                .usage = mInfo.usage,
+                .usage = static_cast<uint64_t>(mInfo.usage),
                 .stride = stride(),
                 .rfu0 = 0,
                 .rfu1 = 0,
@@ -114,25 +128,43 @@ class BufferHandle {
 
 class GraphicsTestsBase {
   private:
+    friend class BufferHandle;
+    int32_t mIAllocatorVersion = 1;
     std::shared_ptr<IAllocator> mAllocator;
-    sp<IMapper> mMapper;
+    sp<IMapper4> mMapper4;
+    AIMapper* mAIMapper = nullptr;
 
   protected:
-    void Initialize(std::string allocatorService, std::string mapperService) {
+    void Initialize(std::string allocatorService) {
         mAllocator = IAllocator::fromBinder(
                 ndk::SpAIBinder(AServiceManager_checkService(allocatorService.c_str())));
-        mMapper = IMapper::getService(mapperService);
+        ASSERT_TRUE(mAllocator->getInterfaceVersion(&mIAllocatorVersion).isOk());
+        if (mIAllocatorVersion >= 2) {
+            std::string mapperSuffix;
+            auto status = mAllocator->getIMapperLibrarySuffix(&mapperSuffix);
+            ASSERT_TRUE(status.isOk());
+            std::string lib_name = "mapper." + mapperSuffix + ".so";
+            void* so = android_load_sphal_library(lib_name.c_str(), RTLD_LOCAL | RTLD_NOW);
+            ASSERT_NE(nullptr, so) << "Failed to load " << lib_name;
+            auto loadIMapper = (AIMapper_loadIMapperFn)dlsym(so, "AIMapper_loadIMapper");
+            ASSERT_NE(nullptr, loadIMapper) << "AIMapper_locaIMapper missing from " << lib_name;
+            ASSERT_EQ(AIMAPPER_ERROR_NONE, loadIMapper(&mAIMapper));
+            ASSERT_NE(mAIMapper, nullptr);
+        } else {
+            // Don't have IMapper 5, fall back to IMapper 4
+            mMapper4 = IMapper4::getService();
+            ASSERT_NE(nullptr, mMapper4.get()) << "failed to get mapper service";
+            ASSERT_FALSE(mMapper4->isRemote()) << "mapper is not in passthrough mode";
+        }
 
         ASSERT_NE(nullptr, mAllocator.get()) << "failed to get allocator service";
-        ASSERT_NE(nullptr, mMapper.get()) << "failed to get mapper service";
-        ASSERT_FALSE(mMapper->isRemote()) << "mapper is not in passthrough mode";
     }
 
-  public:
-    BufferDescriptor createDescriptor(const IMapper::BufferDescriptorInfo& descriptorInfo) {
+  private:
+    BufferDescriptor createDescriptor(const BufferDescriptorInfo& descriptorInfo) {
         BufferDescriptor descriptor;
-        mMapper->createDescriptor(
-                descriptorInfo, [&](const auto& tmpError, const auto& tmpDescriptor) {
+        mMapper4->createDescriptor(
+                convert(descriptorInfo), [&](const auto& tmpError, const auto& tmpDescriptor) {
                     ASSERT_EQ(Error::NONE, tmpError) << "failed to create descriptor";
                     descriptor = tmpDescriptor;
                 });
@@ -140,14 +172,22 @@ class GraphicsTestsBase {
         return descriptor;
     }
 
-    std::unique_ptr<BufferHandle> allocate(const IMapper::BufferDescriptorInfo& descriptorInfo) {
-        auto descriptor = createDescriptor(descriptorInfo);
-        if (::testing::Test::HasFatalFailure()) {
-            return nullptr;
-        }
-
+  public:
+    std::unique_ptr<BufferHandle> allocate(const BufferDescriptorInfo& descriptorInfo) {
         AllocationResult result;
-        auto status = mAllocator->allocate(descriptor, 1, &result);
+        ::ndk::ScopedAStatus status;
+        if (mIAllocatorVersion >= 2) {
+            status = mAllocator->allocate2(descriptorInfo, 1, &result);
+        } else {
+            auto descriptor = createDescriptor(descriptorInfo);
+            if (::testing::Test::HasFatalFailure()) {
+                return nullptr;
+            }
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+            status = mAllocator->allocate(descriptor, 1, &result);
+#pragma clang diagnostic pop  // deprecation
+        }
         if (!status.isOk()) {
             status_t error = status.getExceptionCode();
             if (error == EX_SERVICE_SPECIFIC) {
@@ -158,28 +198,48 @@ class GraphicsTestsBase {
             }
             return nullptr;
         } else {
-            return std::make_unique<BufferHandle>(mMapper, dupFromAidl(result.buffers[0]), false,
+            return std::make_unique<BufferHandle>(*this, dupFromAidl(result.buffers[0]), false,
                                                   result.stride, descriptorInfo);
         }
     }
 
-    bool isSupported(const IMapper::BufferDescriptorInfo& descriptorInfo) {
+    bool isSupported(const BufferDescriptorInfo& descriptorInfo) {
         bool ret = false;
-        EXPECT_TRUE(mMapper->isSupported(descriptorInfo,
-                                         [&](auto error, bool supported) {
-                                             ASSERT_EQ(Error::NONE, error);
-                                             ret = supported;
-                                         })
-                            .isOk());
+        if (mIAllocatorVersion >= 2) {
+            EXPECT_TRUE(mAllocator->isSupported(descriptorInfo, &ret).isOk());
+        } else {
+            EXPECT_TRUE(mMapper4->isSupported(convert(descriptorInfo),
+                                              [&](auto error, bool supported) {
+                                                  ASSERT_EQ(Error::NONE, error);
+                                                  ret = supported;
+                                              })
+                                .isOk());
+        }
         return ret;
     }
 };
 
-class GraphicsAllocatorAidlTests
-    : public GraphicsTestsBase,
-      public ::testing::TestWithParam<std::tuple<std::string, std::string>> {
+BufferHandle::~BufferHandle() {
+    if (mRawHandle == nullptr) return;
+
+    if (mImported) {
+        if (mTestBase.mAIMapper) {
+            AIMapper_Error error = mTestBase.mAIMapper->v5.freeBuffer(mRawHandle);
+            EXPECT_EQ(AIMAPPER_ERROR_NONE, error);
+        } else {
+            Error error = mTestBase.mMapper4->freeBuffer(mRawHandle);
+            EXPECT_EQ(Error::NONE, error) << "failed to free buffer " << mRawHandle;
+        }
+    } else {
+        native_handle_close(mRawHandle);
+        native_handle_delete(mRawHandle);
+    }
+}
+
+class GraphicsAllocatorAidlTests : public GraphicsTestsBase,
+                                   public ::testing::TestWithParam<std::string> {
   public:
-    void SetUp() override { Initialize(std::get<0>(GetParam()), std::get<1>(GetParam())); }
+    void SetUp() override { Initialize(GetParam()); }
 
     void TearDown() override {}
 };
@@ -191,22 +251,22 @@ struct FlushMethod {
 
 class GraphicsFrontBufferTests
     : public GraphicsTestsBase,
-      public ::testing::TestWithParam<std::tuple<std::string, std::string, FlushMethod>> {
+      public ::testing::TestWithParam<std::tuple<std::string, FlushMethod>> {
   private:
     EglManager eglManager;
     std::function<void(EglManager&)> flush;
 
   public:
     void SetUp() override {
-        Initialize(std::get<0>(GetParam()), std::get<1>(GetParam()));
-        flush = std::get<2>(GetParam()).func;
+        Initialize(std::get<0>(GetParam()));
+        flush = std::get<1>(GetParam()).func;
         eglManager.initialize();
     }
 
     void TearDown() override { eglManager.destroy(); }
 
     void fillWithGpu(AHardwareBuffer* buffer, float red, float green, float blue, float alpha) {
-        const EGLClientBuffer clientBuffer = eglGetNativeClientBufferANDROID(buffer);
+        EGLClientBuffer clientBuffer = eglGetNativeClientBufferANDROID(buffer);
         AutoEglImage eglImage(eglManager.eglDisplay(), clientBuffer);
         AutoSkiaGlTexture glTexture;
         AutoGLFramebuffer glFbo;
@@ -235,26 +295,14 @@ class GraphicsFrontBufferTests
     }
 };
 
-TEST_P(GraphicsAllocatorAidlTests, CreateDescriptorBasic) {
-    ASSERT_NO_FATAL_FAILURE(createDescriptor({
-            .name = "CPU_8888",
-            .width = 64,
-            .height = 64,
-            .layerCount = 1,
-            .format = cast(PixelFormat::RGBA_8888),
-            .usage = pack({BufferUsage::CPU_WRITE_OFTEN, BufferUsage::CPU_READ_OFTEN}),
-            .reservedSize = 0,
-    }));
-}
-
 TEST_P(GraphicsAllocatorAidlTests, CanAllocate) {
     auto buffer = allocate({
-            .name = "CPU_8888",
+            .name = {"CPU_8888"},
             .width = 64,
             .height = 64,
             .layerCount = 1,
-            .format = cast(PixelFormat::RGBA_8888),
-            .usage = pack({BufferUsage::CPU_WRITE_OFTEN, BufferUsage::CPU_READ_OFTEN}),
+            .format = PixelFormat::RGBA_8888,
+            .usage = BufferUsage::CPU_WRITE_OFTEN | BufferUsage::CPU_READ_OFTEN,
             .reservedSize = 0,
     });
     ASSERT_NE(nullptr, buffer.get());
@@ -262,14 +310,14 @@ TEST_P(GraphicsAllocatorAidlTests, CanAllocate) {
 }
 
 TEST_P(GraphicsFrontBufferTests, FrontBufferGpuToCpu) {
-    IMapper::BufferDescriptorInfo info{
-            .name = "CPU_8888",
+    BufferDescriptorInfo info{
+            .name = {"CPU_8888"},
             .width = 64,
             .height = 64,
             .layerCount = 1,
-            .format = cast(PixelFormat::RGBA_8888),
-            .usage = pack({BufferUsage::GPU_RENDER_TARGET, BufferUsage::CPU_READ_OFTEN,
-                           BufferUsage::FRONT_BUFFER}),
+            .format = PixelFormat::RGBA_8888,
+            .usage = BufferUsage::GPU_RENDER_TARGET | BufferUsage::CPU_READ_OFTEN |
+                     BufferUsage::FRONT_BUFFER,
             .reservedSize = 0,
     };
     const bool supported = isSupported(info);
@@ -304,14 +352,14 @@ TEST_P(GraphicsFrontBufferTests, FrontBufferGpuToCpu) {
 }
 
 TEST_P(GraphicsFrontBufferTests, FrontBufferGpuToGpu) {
-    IMapper::BufferDescriptorInfo info{
-            .name = "CPU_8888",
+    BufferDescriptorInfo info{
+            .name = {"CPU_8888"},
             .width = 64,
             .height = 64,
             .layerCount = 1,
-            .format = cast(PixelFormat::RGBA_8888),
-            .usage = pack({BufferUsage::GPU_RENDER_TARGET, BufferUsage::GPU_TEXTURE,
-                           BufferUsage::FRONT_BUFFER}),
+            .format = PixelFormat::RGBA_8888,
+            .usage = BufferUsage::GPU_RENDER_TARGET | BufferUsage::GPU_TEXTURE |
+                     BufferUsage::FRONT_BUFFER,
             .reservedSize = 0,
     };
     const bool supported = isSupported(info);
@@ -344,11 +392,9 @@ TEST_P(GraphicsFrontBufferTests, FrontBufferGpuToGpu) {
 }
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(GraphicsAllocatorAidlTests);
-INSTANTIATE_TEST_CASE_P(
-        PerInstance, GraphicsAllocatorAidlTests,
-        testing::Combine(testing::ValuesIn(getAidlHalInstanceNames(IAllocator::descriptor)),
-                         testing::ValuesIn(getAllHalInstanceNames(IMapper::descriptor))),
-        PrintInstanceTupleNameToString<>);
+INSTANTIATE_TEST_CASE_P(PerInstance, GraphicsAllocatorAidlTests,
+                        testing::ValuesIn(getAidlHalInstanceNames(IAllocator::descriptor)),
+                        PrintInstanceNameToString);
 
 const auto FlushMethodsValues = testing::Values(
         FlushMethod{"glFinish", [](EglManager&) { glFinish(); }},
@@ -362,7 +408,7 @@ const auto FlushMethodsValues = testing::Values(
                     }},
         FlushMethod{"eglClientWaitSync", [](EglManager& eglManager) {
                         EGLDisplay display = eglManager.eglDisplay();
-                        EGLSyncKHR fence = eglCreateSyncKHR(display, EGL_SYNC_FENCE_KHR, NULL);
+                        EGLSyncKHR fence = eglCreateSyncKHR(display, EGL_SYNC_FENCE_KHR, nullptr);
                         eglClientWaitSyncKHR(display, fence, EGL_SYNC_FLUSH_COMMANDS_BIT_KHR,
                                              EGL_FOREVER_KHR);
                         eglDestroySyncKHR(display, fence);
@@ -371,9 +417,8 @@ GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(GraphicsFrontBufferTests);
 INSTANTIATE_TEST_CASE_P(
         PerInstance, GraphicsFrontBufferTests,
         testing::Combine(testing::ValuesIn(getAidlHalInstanceNames(IAllocator::descriptor)),
-                         testing::ValuesIn(getAllHalInstanceNames(IMapper::descriptor)),
                          FlushMethodsValues),
         [](auto info) -> std::string {
-            std::string name = std::to_string(info.index) + "/" + std::get<2>(info.param).name;
+            std::string name = std::to_string(info.index) + "/" + std::get<1>(info.param).name;
             return Sanitize(name);
         });
