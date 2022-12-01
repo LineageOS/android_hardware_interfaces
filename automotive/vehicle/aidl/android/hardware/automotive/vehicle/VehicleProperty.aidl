@@ -97,8 +97,12 @@ enum VehicleProperty {
     INFO_FUEL_TYPE = 0x0105 + 0x10000000 + 0x01000000
             + 0x00410000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32_VEC
     /**
-     * Battery capacity of the vehicle, if EV or hybrid.  This is the nominal
-     * battery capacity when the vehicle is new.
+     * Nominal battery capacity for EV or hybrid vehicle
+     *
+     * Returns the nominal battery capacity, if EV or hybrid. This is the battery capacity when the
+     * vehicle is new. This value might be different from EV_CURRENT_BATTERY_CAPACITY because
+     * EV_CURRENT_BATTERY_CAPACITY returns the real-time battery capacity taking into account
+     * factors such as battery aging and temperature dependency.
      *
      * @change_mode VehiclePropertyChangeMode.STATIC
      * @access VehiclePropertyAccess.READ
