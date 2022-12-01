@@ -1742,6 +1742,9 @@ enum VehicleProperty {
      *
      * This property can be set to VehiclePropertyAccess.READ read only for the sake of regulation
      * or safety concerns.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     SEAT_AIRBAG_ENABLED =
             0x0B9E + VehiclePropertyGroup.SYSTEM + VehicleArea.SEAT + VehiclePropertyType.BOOLEAN,
