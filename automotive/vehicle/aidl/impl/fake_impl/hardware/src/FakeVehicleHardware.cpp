@@ -320,7 +320,11 @@ VhalResult<void> FakeVehicleHardware::setUserHalProp(const VehiclePropValue& val
     if (updatedValue != nullptr) {
         ALOGI("onSetProperty(): updating property returned by HAL: %s",
               updatedValue->toString().c_str());
-        if (auto writeResult = mServerSidePropStore->writeValue(std::move(result.value()));
+        // Update timestamp otherwise writeValue might fail because the timestamp is outdated.
+        updatedValue->timestamp = elapsedRealtimeNano();
+        if (auto writeResult = mServerSidePropStore->writeValue(
+                    std::move(result.value()),
+                    /*updateStatus=*/true, VehiclePropertyStore::EventMode::ALWAYS);
             !writeResult.ok()) {
             return StatusError(getErrorCode(writeResult))
                    << "failed to write value into property store, error: "
