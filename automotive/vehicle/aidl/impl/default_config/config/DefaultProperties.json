@@ -1052,6 +1052,22 @@
             ]
         },
         {
+            "property": "VehicleProperty::SEAT_AIRBAG_ENABLED",
+            "defaultValue": {
+                "int32Values": [
+                    1
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "Constants::SEAT_1_LEFT"
+                },
+                {
+                    "areaId": "Constants::SEAT_1_RIGHT"
+                }
+            ]
+        },
+        {
             "property": "VehicleProperty::SEAT_CUSHION_SIDE_SUPPORT_POS",
             "defaultValue": {
                 "int32Values": [

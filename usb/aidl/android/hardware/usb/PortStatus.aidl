@@ -19,6 +19,7 @@ package android.hardware.usb;
 import android.hardware.usb.ContaminantDetectionStatus;
 import android.hardware.usb.ContaminantProtectionMode;
 import android.hardware.usb.ContaminantProtectionStatus;
+import android.hardware.usb.ComplianceWarning;
 import android.hardware.usb.PortDataRole;
 import android.hardware.usb.PortMode;
 import android.hardware.usb.PortPowerRole;
@@ -115,4 +116,15 @@ parcelable PortStatus {
      * Denotes whether Power brick is connected.
      */
     PowerBrickStatus powerBrickStatus;
+    /**
+     * True if the hal implementation can support identifying
+     * non compliant USB power source/cable/accessory. False other
+     * otherwise.
+     */
+    boolean supportsComplianceWarnings = false;
+    /**
+     * List of reasons as to why the attached USB
+     * power source/cable/accessory is non compliant.
+     */
+    ComplianceWarning[] complianceWarnings = {};
 }

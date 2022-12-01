@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,15 +31,8 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.usb;
+package android.hardware.secure_element;
 @VintfStability
-interface IUsb {
-  oneway void enableContaminantPresenceDetection(in String portName, in boolean enable, long transactionId);
-  oneway void enableUsbData(in String portName, boolean enable, long transactionId);
-  oneway void enableUsbDataWhileDocked(in String portName, long transactionId);
-  oneway void queryPortStatus(long transactionId);
-  oneway void setCallback(in android.hardware.usb.IUsbCallback callback);
-  oneway void switchRole(in String portName, in android.hardware.usb.PortRole role, long transactionId);
-  oneway void limitPowerTransfer(in String portName, boolean limit, long transactionId);
-  oneway void resetUsbPort(in String portName, long transactionId);
+interface ISecureElementCallback {
+  void onStateChange(in boolean connected, in String debugReason);
 }

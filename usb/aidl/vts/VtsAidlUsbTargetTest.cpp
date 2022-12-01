@@ -43,6 +43,7 @@
 #define TIMEOUT_PERIOD 10
 
 using ::aidl::android::hardware::usb::BnUsbCallback;
+using ::aidl::android::hardware::usb::ComplianceWarning;
 using ::aidl::android::hardware::usb::IUsb;
 using ::aidl::android::hardware::usb::IUsbCallback;
 using ::aidl::android::hardware::usb::PortDataRole;
@@ -558,6 +559,53 @@ TEST_P(UsbAidlTest, DISABLED_resetUsbPort) {
     EXPECT_EQ(transactionId, last_transactionId);
   }
   ALOGI("UsbAidlTest resetUsbPort end");
+}
+
+/*
+ * Test charger compliance warning
+ * The test asserts that complianceWarnings is
+ * empty when the feature is not supported. i.e.
+ * supportsComplianceWarning is false.
+ */
+TEST_P(UsbAidlTest, nonCompliantChargerStatus) {
+    ALOGI("UsbAidlTest nonCompliantChargerStatus start");
+    int64_t transactionId = rand() % 10000;
+    const auto& ret = usb->queryPortStatus(transactionId);
+    ASSERT_TRUE(ret.isOk());
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(2, usb_last_cookie);
+    EXPECT_EQ(transactionId, last_transactionId);
+
+    if (!usb_last_port_status.supportsComplianceWarnings) {
+      EXPECT_TRUE(usb_last_port_status.complianceWarnings.empty());
+    }
+
+    ALOGI("UsbAidlTest nonCompliantChargerStatus end");
+}
+
+/*
+ * Test charger compliance warning values
+ * The test asserts that complianceWarning values
+ * are valid.
+ */
+TEST_P(UsbAidlTest, nonCompliantChargerValues) {
+    ALOGI("UsbAidlTest nonCompliantChargerValues start");
+    int64_t transactionId = rand() % 10000;
+    const auto& ret = usb->queryPortStatus(transactionId);
+    ASSERT_TRUE(ret.isOk());
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(2, usb_last_cookie);
+    EXPECT_EQ(transactionId, last_transactionId);
+
+    // Current compliance values range from [1, 4]
+    if (usb_last_port_status.supportsComplianceWarnings) {
+      for (auto warning : usb_last_port_status.complianceWarnings) {
+        EXPECT_TRUE((int)warning >= (int)ComplianceWarning::OTHER);
+        EXPECT_TRUE((int)warning <= (int)ComplianceWarning::MISSING_RP);
+      }
+    }
+
+    ALOGI("UsbAidlTest nonCompliantChargerValues end");
 }
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(UsbAidlTest);
