@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,10 +33,18 @@
 
 package android.hardware.automotive.vehicle;
 @Backing(type="int") @VintfStability
-enum VehicleDisplay {
-  MAIN = 0,
-  INSTRUMENT_CLUSTER = 1,
-  HUD = 2,
-  INPUT = 3,
-  AUXILIARY = 4,
+enum VehicleHwMotionInputAction {
+  ACTION_DOWN = 0,
+  ACTION_UP = 1,
+  ACTION_MOVE = 2,
+  ACTION_CANCEL = 3,
+  ACTION_OUTSIDE = 4,
+  ACTION_POINTER_DOWN = 5,
+  ACTION_POINTER_UP = 6,
+  ACTION_HOVER_MOVE = 7,
+  ACTION_SCROLL = 8,
+  ACTION_HOVER_ENTER = 9,
+  ACTION_HOVER_EXIT = 10,
+  ACTION_BUTTON_PRESS = 11,
+  ACTION_BUTTON_RELEASE = 12,
 }

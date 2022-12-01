@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,10 +33,12 @@
 
 package android.hardware.automotive.vehicle;
 @Backing(type="int") @VintfStability
-enum VehicleDisplay {
-  MAIN = 0,
-  INSTRUMENT_CLUSTER = 1,
-  HUD = 2,
-  INPUT = 3,
-  AUXILIARY = 4,
+enum VehicleHwMotionButtonStateFlag {
+  BUTTON_PRIMARY = 1,
+  BUTTON_SECONDARY = 2,
+  BUTTON_TERTIARY = 4,
+  BUTTON_BACK = 8,
+  BUTTON_FORWARD = 16,
+  BUTTON_STYLUS_PRIMARY = 32,
+  BUTTON_STYLUS_SECONDARY = 64,
 }
