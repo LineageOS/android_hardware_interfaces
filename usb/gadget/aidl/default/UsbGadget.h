@@ -89,9 +89,9 @@ struct UsbGadget : public BnUsbGadget {
     bool mCurrentUsbFunctionsApplied;
     UsbSpeed mUsbSpeed;
 
-    ScopedAStatus setCurrentUsbFunctions(long functions,
+    ScopedAStatus setCurrentUsbFunctions(int64_t functions,
             const shared_ptr<IUsbGadgetCallback> &callback,
-            int64_t timeout, int64_t in_transactionId) override;
+            int64_t timeoutMs, int64_t in_transactionId) override;
 
     ScopedAStatus getCurrentUsbFunctions(const shared_ptr<IUsbGadgetCallback> &callback,
 	    int64_t in_transactionId) override;
