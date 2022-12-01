@@ -32,6 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.thermal;
+/* @hide */
 @VintfStability
 parcelable Temperature {
   android.hardware.thermal.TemperatureType type;
