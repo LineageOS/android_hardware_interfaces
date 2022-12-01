@@ -23,9 +23,18 @@ package {
     default_applicable_licenses: ["hardware_interfaces_license"],
 }
 
+aidl_interface_defaults {
+    name: "android.hardware.audio_defaults",
+    host_supported: true,
+    vendor_available: true,
+    stability: "vintf",
+}
+
 aidl_interface {
     name: "android.hardware.audio.common",
-    vendor_available: true,
+    defaults: [
+        "android.hardware.audio_defaults",
+    ],
     srcs: [
         "android/hardware/audio/common/PlaybackTrackMetadata.aidl",
         "android/hardware/audio/common/RecordTrackMetadata.aidl",
@@ -35,7 +44,6 @@ aidl_interface {
     imports: [
         "android.media.audio.common.types-V2",
     ],
-    stability: "vintf",
     backend: {
         cpp: {
             enabled: true,
@@ -87,9 +95,18 @@ cc_defaults {
     ],
 }
 
+cc_defaults {
+    name: "latest_android_hardware_audio_common_ndk_shared",
+    shared_libs: [
+        latest_android_hardware_audio_common + "-ndk",
+    ],
+}
+
 aidl_interface {
     name: "android.hardware.audio.core",
-    vendor_available: true,
+    defaults: [
+        "android.hardware.audio_defaults",
+    ],
     srcs: [
         "android/hardware/audio/core/AudioMode.aidl",
         "android/hardware/audio/core/AudioPatch.aidl",
@@ -110,7 +127,6 @@ aidl_interface {
         "android.hardware.audio.common-V1",
         "android.media.audio.common.types-V2",
     ],
-    stability: "vintf",
     backend: {
         // The C++ backend is disabled transitively due to use of FMQ.
         cpp: {
@@ -148,7 +164,9 @@ cc_defaults {
 
 aidl_interface {
     name: "android.hardware.audio.effect",
-    vendor_available: true,
+    defaults: [
+        "android.hardware.audio_defaults",
+    ],
     srcs: [
         "android/hardware/audio/effect/BassBoost.aidl",
         "android/hardware/audio/effect/Capability.aidl",
@@ -177,7 +195,6 @@ aidl_interface {
         "android.hardware.audio.common-V1",
         "android.media.audio.common.types-V2",
     ],
-    stability: "vintf",
     backend: {
         // The C++ backend is disabled transitively due to use of FMQ.
         cpp: {
