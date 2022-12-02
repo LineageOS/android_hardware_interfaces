@@ -24,6 +24,7 @@ import android.hardware.wifi.IWifiRttController;
 import android.hardware.wifi.IWifiStaIface;
 import android.hardware.wifi.IfaceConcurrencyType;
 import android.hardware.wifi.IfaceType;
+import android.hardware.wifi.MloCapabilities;
 import android.hardware.wifi.WifiBand;
 import android.hardware.wifi.WifiDebugHostWakeReasonStats;
 import android.hardware.wifi.WifiDebugRingBufferStatus;
@@ -783,6 +784,18 @@ interface IWifiChip {
      *
      */
     WifiRadioCombinationMatrix getSupportedRadioCombinationsMatrix();
+
+    /**
+     * Get MLO capabilities supported by this chip.
+     *
+     * @return MLO capabilities represented by |MloCapabilities|.
+     * @throws ServiceSpecificException with one of the following values:
+     *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|,
+     *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+     *         |WifiStatusCode.FAILURE_UNKNOWN|
+     *
+     */
+    MloCapabilities getMloCapabilities();
 
     /**
      * Retrieve a list of usable Wifi channels for the specified band &
