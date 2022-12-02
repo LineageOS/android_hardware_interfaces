@@ -27,7 +27,6 @@ cc_defaults {
     name: "neuralnetworks_vts_functional_defaults",
     defaults: [
         "VtsHalTargetTestDefaults",
-        "neuralnetworks_float16",
     ],
 }
 

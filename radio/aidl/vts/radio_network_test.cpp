@@ -1961,3 +1961,21 @@ TEST_P(RadioNetworkTest, isN1ModeEnabled) {
                  RadioError::REQUEST_NOT_SUPPORTED, RadioError::NONE}));
     }
 }
+
+/*
+ * Test IRadioNetwork.setNullCipherAndIntegrityEnabled() for the response returned.
+ */
+TEST_P(RadioNetworkTest, setNullCipherAndIntegrityEnabled) {
+    LOG(DEBUG) << "setNullCipherAndIntegrityEnabled";
+    serial = GetRandomSerialNumber();
+
+    radio_network->setNullCipherAndIntegrityEnabled(serial, false);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_network->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_network->rspInfo.serial);
+
+    ASSERT_TRUE(CheckAnyOfErrors(
+            radioRsp_network->rspInfo.error,
+            {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::MODEM_ERR}));
+    LOG(DEBUG) << "setNullCipherAndIntegrityEnabled finished";
+}
