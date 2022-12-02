@@ -599,15 +599,6 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
-        <name>android.hardware.secure_element</name>
-        <version>1.0-2</version>
-        <interface>
-            <name>ISecureElement</name>
-            <regex-instance>eSE[1-9][0-9]*</regex-instance>
-            <regex-instance>SIM[1-9][0-9]*</regex-instance>
-        </interface>
-    </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.secure_element</name>
         <version>1</version>
