@@ -46,6 +46,13 @@ ndk::ScopedAStatus RadioModemResponse::getDeviceIdentityResponse(const RadioResp
     return ndk::ScopedAStatus::ok();
 }
 
+ndk::ScopedAStatus RadioModemResponse::getImeiResponse(const RadioResponseInfo& info,
+                   const std::optional<ImeiInfo>& /*imeiInfo*/) {
+    rspInfo = info;
+    parent_modem.notify(info.serial);
+    return ndk::ScopedAStatus::ok();
+}
+
 ndk::ScopedAStatus RadioModemResponse::getHardwareConfigResponse(
         const RadioResponseInfo& info, const std::vector<HardwareConfig>& /*config*/) {
     rspInfo = info;
