@@ -488,7 +488,11 @@ oneway interface IRadioNetwork {
     /**
      * Set if null encryption and integrity modes are enabled. If the value of enabled is false
      * the modem must not allow any network communications with null ciphering or null integrity
-     * modes. In case of an emergency call, the modem must bypass this setting.
+     * modes.
+     *
+     * In the case when enabled is false, integrity protection for user data is optional, but
+     * ciphering for user data is required. In case of an emergency call, the modem must bypass
+     * this setting.
      *
      * Null ciphering and integrity modes include (but are not limited to):
      * 2G: A5/0

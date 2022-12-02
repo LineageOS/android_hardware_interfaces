@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <android/hardware/wifi/1.0/IWifi.h>
-#include <android/hardware/wifi/hostapd/1.3/IHostapd.h>
+#include <aidl/android/hardware/wifi/IWifi.h>
 
 #include <VtsCoreUtil.h>
 #include <aidl/Gtest.h>
@@ -24,12 +23,11 @@
 #include <android/binder_manager.h>
 #include <binder/IServiceManager.h>
 #include <binder/ProcessState.h>
-#include <hidl/ServiceManagement.h>
-#include <hostapd_hidl_call_util.h>
-#include <hostapd_hidl_test_utils.h>
-#include <wifi_hidl_test_utils.h>
-#include <wifi_hidl_test_utils_1_5.h>
 
+#include "wifi_aidl_test_utils.h"
+
+using aidl::android::hardware::wifi::IWifi;
+using aidl::android::hardware::wifi::IWifiApIface;
 using aidl::android::hardware::wifi::hostapd::BandMask;
 using aidl::android::hardware::wifi::hostapd::BnHostapdCallback;
 using aidl::android::hardware::wifi::hostapd::ChannelBandwidth;
@@ -44,6 +42,8 @@ using aidl::android::hardware::wifi::hostapd::NetworkParams;
 using android::ProcessState;
 
 namespace {
+const std::string kWifiInstanceNameStr = std::string() + IWifi::descriptor + "/default";
+const char* kWifiInstanceName = kWifiInstanceNameStr.c_str();
 const unsigned char kNwSsid[] = {'t', 'e', 's', 't', '1', '2', '3', '4', '5'};
 const std::string kPassphrase = "test12345";
 const std::string kInvalidMinPassphrase = "test";
@@ -75,17 +75,13 @@ class HostapdAidl : public testing::TestWithParam<std::string> {
             "/system/bin/cmd wifi get-softap-supported-features",
             "wifi_softap_wpa3_sae_supported");
         isBridgedSupport = testing::checkSubstringInCommandOutput(
-            "/system/bin/cmd wifi get-softap-supported-features",
-            "wifi_softap_bridged_ap_supported");
-        const std::vector<std::string> instances = android::hardware::getAllHalInstanceNames(
-                ::android::hardware::wifi::V1_0::IWifi::descriptor);
-        EXPECT_NE(0, instances.size());
-        wifiInstanceName = instances[0];
+                "/system/bin/cmd wifi get-softap-supported-features",
+                "wifi_softap_bridged_ap_supported");
     }
 
     virtual void TearDown() override {
-        if (getWifi(wifiInstanceName) != nullptr) {
-            stopWifi(wifiInstanceName);
+        if (getWifi(kWifiInstanceName) != nullptr) {
+            stopWifiService(kWifiInstanceName);
         }
         hostapd->terminate();
         //  Wait 3 seconds to allow terminate to complete
@@ -93,24 +89,23 @@ class HostapdAidl : public testing::TestWithParam<std::string> {
     }
 
     std::shared_ptr<IHostapd> hostapd;
-    std::string wifiInstanceName;
     bool isAcsSupport;
     bool isWpa3SaeSupport;
     bool isBridgedSupport;
 
     std::string setupApIfaceAndGetName(bool isBridged) {
-        android::sp<::android::hardware::wifi::V1_0::IWifiApIface> wifi_ap_iface;
+        std::shared_ptr<IWifiApIface> wifi_ap_iface;
         if (isBridged) {
-            wifi_ap_iface = getBridgedWifiApIface_1_5(wifiInstanceName);
+            wifi_ap_iface = getBridgedWifiApIface(kWifiInstanceName);
         } else {
-            wifi_ap_iface = getWifiApIface_1_5(wifiInstanceName);
+            wifi_ap_iface = getWifiApIface(kWifiInstanceName);
         }
         EXPECT_NE(nullptr, wifi_ap_iface.get());
 
-        const auto& status_and_name = HIDL_INVOKE(wifi_ap_iface, getName);
-        EXPECT_EQ(android::hardware::wifi::V1_0::WifiStatusCode::SUCCESS,
-                  status_and_name.first.code);
-        return status_and_name.second;
+        std::string ap_iface_name;
+        auto status = wifi_ap_iface->getName(&ap_iface_name);
+        EXPECT_TRUE(status.isOk());
+        return ap_iface_name;
     }
 
     IfaceParams getIfaceParamsWithoutAcs(std::string iface_name) {
