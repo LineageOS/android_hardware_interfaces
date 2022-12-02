@@ -18,17 +18,16 @@
 #define LOG_TAG "CameraParams"
 #include <log/log.h>
 
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
+#include <system/graphics.h>
 #include <unistd.h>
 #include "CameraParameters.h"
-#include <system/graphics.h>
 
 namespace android {
 namespace hardware {
 namespace camera {
 namespace common {
-namespace V1_0 {
 namespace helper {
 
 // Parameter keys to communicate between camera application and driver.
@@ -79,7 +78,8 @@ const char CameraParameters::KEY_EXPOSURE_COMPENSATION_STEP[] = "exposure-compen
 const char CameraParameters::KEY_AUTO_EXPOSURE_LOCK[] = "auto-exposure-lock";
 const char CameraParameters::KEY_AUTO_EXPOSURE_LOCK_SUPPORTED[] = "auto-exposure-lock-supported";
 const char CameraParameters::KEY_AUTO_WHITEBALANCE_LOCK[] = "auto-whitebalance-lock";
-const char CameraParameters::KEY_AUTO_WHITEBALANCE_LOCK_SUPPORTED[] = "auto-whitebalance-lock-supported";
+const char CameraParameters::KEY_AUTO_WHITEBALANCE_LOCK_SUPPORTED[] =
+        "auto-whitebalance-lock-supported";
 const char CameraParameters::KEY_MAX_NUM_METERING_AREAS[] = "max-num-metering-areas";
 const char CameraParameters::KEY_METERING_AREAS[] = "metering-areas";
 const char CameraParameters::KEY_ZOOM[] = "zoom";
@@ -91,7 +91,8 @@ const char CameraParameters::KEY_FOCUS_DISTANCES[] = "focus-distances";
 const char CameraParameters::KEY_VIDEO_FRAME_FORMAT[] = "video-frame-format";
 const char CameraParameters::KEY_VIDEO_SIZE[] = "video-size";
 const char CameraParameters::KEY_SUPPORTED_VIDEO_SIZES[] = "video-size-values";
-const char CameraParameters::KEY_PREFERRED_PREVIEW_SIZE_FOR_VIDEO[] = "preferred-preview-size-for-video";
+const char CameraParameters::KEY_PREFERRED_PREVIEW_SIZE_FOR_VIDEO[] =
+        "preferred-preview-size-for-video";
 const char CameraParameters::KEY_MAX_NUM_DETECTED_FACES_HW[] = "max-num-detected-faces-hw";
 const char CameraParameters::KEY_MAX_NUM_DETECTED_FACES_SW[] = "max-num-detected-faces-sw";
 const char CameraParameters::KEY_RECORDING_HINT[] = "recording-hint";
@@ -160,7 +161,7 @@ const char CameraParameters::SCENE_MODE_HDR[] = "hdr";
 const char CameraParameters::PIXEL_FORMAT_YUV422SP[] = "yuv422sp";
 const char CameraParameters::PIXEL_FORMAT_YUV420SP[] = "yuv420sp";
 const char CameraParameters::PIXEL_FORMAT_YUV422I[] = "yuv422i-yuyv";
-const char CameraParameters::PIXEL_FORMAT_YUV420P[]  = "yuv420p";
+const char CameraParameters::PIXEL_FORMAT_YUV420P[] = "yuv420p";
 const char CameraParameters::PIXEL_FORMAT_RGB565[] = "rgb565";
 const char CameraParameters::PIXEL_FORMAT_RGBA8888[] = "rgba8888";
 const char CameraParameters::PIXEL_FORMAT_JPEG[] = "jpeg";
@@ -180,17 +181,11 @@ const char CameraParameters::FOCUS_MODE_CONTINUOUS_PICTURE[] = "continuous-pictu
 const char CameraParameters::LIGHTFX_LOWLIGHT[] = "low-light";
 const char CameraParameters::LIGHTFX_HDR[] = "high-dynamic-range";
 
-CameraParameters::CameraParameters()
-                : mMap()
-{
-}
+CameraParameters::CameraParameters() : mMap() {}
 
-CameraParameters::~CameraParameters()
-{
-}
+CameraParameters::~CameraParameters() {}
 
-String8 CameraParameters::flatten() const
-{
+String8 CameraParameters::flatten() const {
     String8 flattened("");
     size_t size = mMap.size();
 
@@ -202,31 +197,28 @@ String8 CameraParameters::flatten() const
         flattened += k;
         flattened += "=";
         flattened += v;
-        if (i != size-1)
-            flattened += ";";
+        if (i != size - 1) flattened += ";";
     }
 
     return flattened;
 }
 
-void CameraParameters::unflatten(const String8 &params)
-{
-    const char *a = params.string();
-    const char *b;
+void CameraParameters::unflatten(const String8& params) {
+    const char* a = params.string();
+    const char* b;
 
     mMap.clear();
 
     for (;;) {
         // Find the bounds of the key name.
         b = strchr(a, '=');
-        if (b == 0)
-            break;
+        if (b == 0) break;
 
         // Create the key string.
-        String8 k(a, (size_t)(b-a));
+        String8 k(a, (size_t)(b - a));
 
         // Find the value.
-        a = b+1;
+        a = b + 1;
         b = strchr(a, ';');
         if (b == 0) {
             // If there's no semicolon, this is the last item.
@@ -235,15 +227,13 @@ void CameraParameters::unflatten(const String8 &params)
             break;
         }
 
-        String8 v(a, (size_t)(b-a));
+        String8 v(a, (size_t)(b - a));
         mMap.add(k, v);
-        a = b+1;
+        a = b + 1;
     }
 }
 
-
-void CameraParameters::set(const char *key, const char *value)
-{
+void CameraParameters::set(const char* key, const char* value) {
     // i think i can do this with strspn()
     if (strchr(key, '=') || strchr(key, ';')) {
         // ALOGE("Key \"%s\"contains invalid character (= or ;)", key);
@@ -258,54 +248,44 @@ void CameraParameters::set(const char *key, const char *value)
     mMap.replaceValueFor(String8(key), String8(value));
 }
 
-void CameraParameters::set(const char *key, int value)
-{
+void CameraParameters::set(const char* key, int value) {
     char str[16];
     sprintf(str, "%d", value);
     set(key, str);
 }
 
-void CameraParameters::setFloat(const char *key, float value)
-{
+void CameraParameters::setFloat(const char* key, float value) {
     char str[16];  // 14 should be enough. We overestimate to be safe.
     snprintf(str, sizeof(str), "%g", value);
     set(key, str);
 }
 
-const char *CameraParameters::get(const char *key) const
-{
+const char* CameraParameters::get(const char* key) const {
     String8 v = mMap.valueFor(String8(key));
-    if (v.length() == 0)
-        return 0;
+    if (v.length() == 0) return 0;
     return v.string();
 }
 
-int CameraParameters::getInt(const char *key) const
-{
-    const char *v = get(key);
-    if (v == 0)
-        return -1;
+int CameraParameters::getInt(const char* key) const {
+    const char* v = get(key);
+    if (v == 0) return -1;
     return strtol(v, 0, 0);
 }
 
-float CameraParameters::getFloat(const char *key) const
-{
-    const char *v = get(key);
+float CameraParameters::getFloat(const char* key) const {
+    const char* v = get(key);
     if (v == 0) return -1;
     return strtof(v, 0);
 }
 
-void CameraParameters::remove(const char *key)
-{
+void CameraParameters::remove(const char* key) {
     mMap.removeItem(String8(key));
 }
 
 // Parse string like "640x480" or "10000,20000"
-static int parse_pair(const char *str, int *first, int *second, char delim,
-                      char **endptr = NULL)
-{
+static int parse_pair(const char* str, int* first, int* second, char delim, char** endptr = NULL) {
     // Find the first integer.
-    char *end;
+    char* end;
     int w = (int)strtol(str, &end, 10);
     // If a delimeter does not immediately follow, give up.
     if (*end != delim) {
@@ -314,7 +294,7 @@ static int parse_pair(const char *str, int *first, int *second, char delim,
     }
 
     // Find the second integer, immediately after the delimeter.
-    int h = (int)strtol(end+1, &end, 10);
+    int h = (int)strtol(end + 1, &end, 10);
 
     *first = w;
     *second = h;
@@ -326,18 +306,16 @@ static int parse_pair(const char *str, int *first, int *second, char delim,
     return 0;
 }
 
-static void parseSizesList(const char *sizesStr, Vector<Size> &sizes)
-{
+static void parseSizesList(const char* sizesStr, Vector<Size>& sizes) {
     if (sizesStr == 0) {
         return;
     }
 
-    char *sizeStartPtr = (char *)sizesStr;
+    char* sizeStartPtr = (char*)sizesStr;
 
     while (true) {
         int width, height;
-        int success = parse_pair(sizeStartPtr, &width, &height, 'x',
-                                 &sizeStartPtr);
+        int success = parse_pair(sizeStartPtr, &width, &height, 'x', &sizeStartPtr);
         if (success == -1 || (*sizeStartPtr != ',' && *sizeStartPtr != '\0')) {
             ALOGE("Picture sizes string \"%s\" contains invalid character.", sizesStr);
             return;
@@ -351,119 +329,101 @@ static void parseSizesList(const char *sizesStr, Vector<Size> &sizes)
     }
 }
 
-void CameraParameters::setPreviewSize(int width, int height)
-{
+void CameraParameters::setPreviewSize(int width, int height) {
     char str[32];
     sprintf(str, "%dx%d", width, height);
     set(KEY_PREVIEW_SIZE, str);
 }
 
-void CameraParameters::getPreviewSize(int *width, int *height) const
-{
+void CameraParameters::getPreviewSize(int* width, int* height) const {
     *width = *height = -1;
     // Get the current string, if it doesn't exist, leave the -1x-1
-    const char *p = get(KEY_PREVIEW_SIZE);
-    if (p == 0)  return;
+    const char* p = get(KEY_PREVIEW_SIZE);
+    if (p == 0) return;
     parse_pair(p, width, height, 'x');
 }
 
-void CameraParameters::getPreferredPreviewSizeForVideo(int *width, int *height) const
-{
+void CameraParameters::getPreferredPreviewSizeForVideo(int* width, int* height) const {
     *width = *height = -1;
-    const char *p = get(KEY_PREFERRED_PREVIEW_SIZE_FOR_VIDEO);
-    if (p == 0)  return;
+    const char* p = get(KEY_PREFERRED_PREVIEW_SIZE_FOR_VIDEO);
+    if (p == 0) return;
     parse_pair(p, width, height, 'x');
 }
 
-void CameraParameters::getSupportedPreviewSizes(Vector<Size> &sizes) const
-{
-    const char *previewSizesStr = get(KEY_SUPPORTED_PREVIEW_SIZES);
+void CameraParameters::getSupportedPreviewSizes(Vector<Size>& sizes) const {
+    const char* previewSizesStr = get(KEY_SUPPORTED_PREVIEW_SIZES);
     parseSizesList(previewSizesStr, sizes);
 }
 
-void CameraParameters::setVideoSize(int width, int height)
-{
+void CameraParameters::setVideoSize(int width, int height) {
     char str[32];
     sprintf(str, "%dx%d", width, height);
     set(KEY_VIDEO_SIZE, str);
 }
 
-void CameraParameters::getVideoSize(int *width, int *height) const
-{
+void CameraParameters::getVideoSize(int* width, int* height) const {
     *width = *height = -1;
-    const char *p = get(KEY_VIDEO_SIZE);
+    const char* p = get(KEY_VIDEO_SIZE);
     if (p == 0) return;
     parse_pair(p, width, height, 'x');
 }
 
-void CameraParameters::getSupportedVideoSizes(Vector<Size> &sizes) const
-{
-    const char *videoSizesStr = get(KEY_SUPPORTED_VIDEO_SIZES);
+void CameraParameters::getSupportedVideoSizes(Vector<Size>& sizes) const {
+    const char* videoSizesStr = get(KEY_SUPPORTED_VIDEO_SIZES);
     parseSizesList(videoSizesStr, sizes);
 }
 
-void CameraParameters::setPreviewFrameRate(int fps)
-{
+void CameraParameters::setPreviewFrameRate(int fps) {
     set(KEY_PREVIEW_FRAME_RATE, fps);
 }
 
-int CameraParameters::getPreviewFrameRate() const
-{
+int CameraParameters::getPreviewFrameRate() const {
     return getInt(KEY_PREVIEW_FRAME_RATE);
 }
 
-void CameraParameters::getPreviewFpsRange(int *min_fps, int *max_fps) const
-{
+void CameraParameters::getPreviewFpsRange(int* min_fps, int* max_fps) const {
     *min_fps = *max_fps = -1;
-    const char *p = get(KEY_PREVIEW_FPS_RANGE);
+    const char* p = get(KEY_PREVIEW_FPS_RANGE);
     if (p == 0) return;
     parse_pair(p, min_fps, max_fps, ',');
 }
 
-void CameraParameters::setPreviewFormat(const char *format)
-{
+void CameraParameters::setPreviewFormat(const char* format) {
     set(KEY_PREVIEW_FORMAT, format);
 }
 
-const char *CameraParameters::getPreviewFormat() const
-{
+const char* CameraParameters::getPreviewFormat() const {
     return get(KEY_PREVIEW_FORMAT);
 }
 
-void CameraParameters::setPictureSize(int width, int height)
-{
+void CameraParameters::setPictureSize(int width, int height) {
     char str[32];
     sprintf(str, "%dx%d", width, height);
     set(KEY_PICTURE_SIZE, str);
 }
 
-void CameraParameters::getPictureSize(int *width, int *height) const
-{
+void CameraParameters::getPictureSize(int* width, int* height) const {
     *width = *height = -1;
     // Get the current string, if it doesn't exist, leave the -1x-1
-    const char *p = get(KEY_PICTURE_SIZE);
+    const char* p = get(KEY_PICTURE_SIZE);
     if (p == 0) return;
     parse_pair(p, width, height, 'x');
 }
 
-void CameraParameters::getSupportedPictureSizes(Vector<Size> &sizes) const
-{
-    const char *pictureSizesStr = get(KEY_SUPPORTED_PICTURE_SIZES);
+void CameraParameters::getSupportedPictureSizes(Vector<Size>& sizes) const {
+    const char* pictureSizesStr = get(KEY_SUPPORTED_PICTURE_SIZES);
     parseSizesList(pictureSizesStr, sizes);
 }
 
-void CameraParameters::setPictureFormat(const char *format)
-{
+void CameraParameters::setPictureFormat(const char* format) {
     set(KEY_PICTURE_FORMAT, format);
 }
 
-const char *CameraParameters::getPictureFormat() const
-{
+const char* CameraParameters::getPictureFormat() const {
     return get(KEY_PICTURE_FORMAT);
 }
 
-void CameraParameters::dump() const
-{
+void CameraParameters::dump() const {
     ALOGD("dump: mMap.size = %zu", mMap.size());
     for (size_t i = 0; i < mMap.size(); i++) {
         String8 k, v;
@@ -473,8 +433,7 @@ void CameraParameters::dump() const
     }
 }
 
-status_t CameraParameters::dump(int fd, const Vector<String16>& /*args*/) const
-{
+status_t CameraParameters::dump(int fd, const Vector<String16>& /*args*/) const {
     const size_t SIZE = 256;
     char buffer[SIZE];
     String8 result;
@@ -492,8 +451,7 @@ status_t CameraParameters::dump(int fd, const Vector<String16>& /*args*/) const
 }
 
 void CameraParameters::getSupportedPreviewFormats(Vector<int>& formats) const {
-    const char* supportedPreviewFormats =
-          get(CameraParameters::KEY_SUPPORTED_PREVIEW_FORMATS);
+    const char* supportedPreviewFormats = get(CameraParameters::KEY_SUPPORTED_PREVIEW_FORMATS);
 
     if (supportedPreviewFormats == NULL) {
         ALOGW("%s: No supported preview formats.", __FUNCTION__);
@@ -515,35 +473,31 @@ void CameraParameters::getSupportedPreviewFormats(Vector<int>& formats) const {
     fmtStr.unlockBuffer(fmtStr.size());
 }
 
-
 int CameraParameters::previewFormatToEnum(const char* format) {
-    return
-        !format ?
-            HAL_PIXEL_FORMAT_YCrCb_420_SP :
-        !strcmp(format, PIXEL_FORMAT_YUV422SP) ?
-            HAL_PIXEL_FORMAT_YCbCr_422_SP : // NV16
-        !strcmp(format, PIXEL_FORMAT_YUV420SP) ?
-            HAL_PIXEL_FORMAT_YCrCb_420_SP : // NV21
-        !strcmp(format, PIXEL_FORMAT_YUV422I) ?
-            HAL_PIXEL_FORMAT_YCbCr_422_I :  // YUY2
-        !strcmp(format, PIXEL_FORMAT_YUV420P) ?
-            HAL_PIXEL_FORMAT_YV12 :         // YV12
-        !strcmp(format, PIXEL_FORMAT_RGB565) ?
-            HAL_PIXEL_FORMAT_RGB_565 :      // RGB565
-        !strcmp(format, PIXEL_FORMAT_RGBA8888) ?
-            HAL_PIXEL_FORMAT_RGBA_8888 :    // RGB8888
-        !strcmp(format, PIXEL_FORMAT_BAYER_RGGB) ?
-            HAL_PIXEL_FORMAT_RAW16 :   // Raw sensor data
-        -1;
+    return !format                                  ? HAL_PIXEL_FORMAT_YCrCb_420_SP
+           : !strcmp(format, PIXEL_FORMAT_YUV422SP) ? HAL_PIXEL_FORMAT_YCbCr_422_SP
+                                                    :  // NV16
+                   !strcmp(format, PIXEL_FORMAT_YUV420SP) ? HAL_PIXEL_FORMAT_YCrCb_420_SP
+                                                          :  // NV21
+                   !strcmp(format, PIXEL_FORMAT_YUV422I) ? HAL_PIXEL_FORMAT_YCbCr_422_I
+                                                         :  // YUY2
+                   !strcmp(format, PIXEL_FORMAT_YUV420P) ? HAL_PIXEL_FORMAT_YV12
+                                                         :  // YV12
+                   !strcmp(format, PIXEL_FORMAT_RGB565) ? HAL_PIXEL_FORMAT_RGB_565
+                                                        :  // RGB565
+                   !strcmp(format, PIXEL_FORMAT_RGBA8888) ? HAL_PIXEL_FORMAT_RGBA_8888
+                                                          :  // RGB8888
+                   !strcmp(format, PIXEL_FORMAT_BAYER_RGGB) ? HAL_PIXEL_FORMAT_RAW16
+                                                            :  // Raw sensor data
+                   -1;
 }
 
 bool CameraParameters::isEmpty() const {
     return mMap.isEmpty();
 }
 
-};
-};
-};
-};
-};
-}; // namespace android
+};  // namespace helper
+};  // namespace common
+};  // namespace camera
+};  // namespace hardware
+};  // namespace android

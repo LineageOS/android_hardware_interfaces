@@ -16,7 +16,7 @@
 
 #define LOG_TAG "CamComm1.0-CamModule"
 #define ATRACE_TAG ATRACE_TAG_CAMERA
-//#define LOG_NDEBUG 0
+// #define LOG_NDEBUG 0
 
 #include <utils/Trace.h>
 
@@ -26,11 +26,9 @@ namespace android {
 namespace hardware {
 namespace camera {
 namespace common {
-namespace V1_0 {
 namespace helper {
 
-void CameraModule::deriveCameraCharacteristicsKeys(
-        uint32_t deviceVersion, CameraMetadata &chars) {
+void CameraModule::deriveCameraCharacteristicsKeys(uint32_t deviceVersion, CameraMetadata& chars) {
     ATRACE_CALL();
 
     Vector<int32_t> derivedCharKeys;
@@ -40,9 +38,9 @@ void CameraModule::deriveCameraCharacteristicsKeys(
     if (deviceVersion < CAMERA_DEVICE_API_VERSION_3_3) {
         Vector<uint8_t> controlModes;
         uint8_t data = ANDROID_CONTROL_AE_LOCK_AVAILABLE_TRUE;
-        chars.update(ANDROID_CONTROL_AE_LOCK_AVAILABLE, &data, /*count*/1);
+        chars.update(ANDROID_CONTROL_AE_LOCK_AVAILABLE, &data, /*count*/ 1);
         data = ANDROID_CONTROL_AWB_LOCK_AVAILABLE_TRUE;
-        chars.update(ANDROID_CONTROL_AWB_LOCK_AVAILABLE, &data, /*count*/1);
+        chars.update(ANDROID_CONTROL_AWB_LOCK_AVAILABLE, &data, /*count*/ 1);
         controlModes.push(ANDROID_CONTROL_MODE_AUTO);
         camera_metadata_entry entry = chars.find(ANDROID_CONTROL_AVAILABLE_SCENE_MODES);
         if (entry.count > 1 || entry.data.u8[0] != ANDROID_CONTROL_SCENE_MODE_DISABLED) {
@@ -121,14 +119,14 @@ void CameraModule::deriveCameraCharacteristicsKeys(
         if (entry.count > 0) {
             Vector<int32_t> highSpeedConfig;
             for (size_t i = 0; i < entry.count; i += 4) {
-                highSpeedConfig.add(entry.data.i32[i]); // width
-                highSpeedConfig.add(entry.data.i32[i + 1]); // height
-                highSpeedConfig.add(entry.data.i32[i + 2]); // fps_min
-                highSpeedConfig.add(entry.data.i32[i + 3]); // fps_max
-                highSpeedConfig.add(1); // batchSize_max. default to 1 for HAL3.2
+                highSpeedConfig.add(entry.data.i32[i]);      // width
+                highSpeedConfig.add(entry.data.i32[i + 1]);  // height
+                highSpeedConfig.add(entry.data.i32[i + 2]);  // fps_min
+                highSpeedConfig.add(entry.data.i32[i + 3]);  // fps_max
+                highSpeedConfig.add(1);  // batchSize_max. default to 1 for HAL3.2
             }
             chars.update(ANDROID_CONTROL_AVAILABLE_HIGH_SPEED_VIDEO_CONFIGURATIONS,
-                    highSpeedConfig);
+                         highSpeedConfig);
         }
     }
 
@@ -145,25 +143,23 @@ void CameraModule::deriveCameraCharacteristicsKeys(
         const int STREAM_IS_INPUT_OFFSET = 3;
         Vector<int32_t> rawOpaqueSizes;
 
-        for (size_t i=0; i < entry.count; i += STREAM_CONFIGURATION_SIZE) {
+        for (size_t i = 0; i < entry.count; i += STREAM_CONFIGURATION_SIZE) {
             int32_t format = entry.data.i32[i + STREAM_FORMAT_OFFSET];
             int32_t width = entry.data.i32[i + STREAM_WIDTH_OFFSET];
             int32_t height = entry.data.i32[i + STREAM_HEIGHT_OFFSET];
             int32_t isInput = entry.data.i32[i + STREAM_IS_INPUT_OFFSET];
             if (isInput == ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT &&
-                    format == HAL_PIXEL_FORMAT_RAW_OPAQUE) {
+                format == HAL_PIXEL_FORMAT_RAW_OPAQUE) {
                 supportRawOpaque = true;
                 rawOpaqueSizes.push(width);
                 rawOpaqueSizes.push(height);
                 // 2 bytes per pixel. This rough estimation is only used when
                 // HAL does not fill in the opaque raw size
-                rawOpaqueSizes.push(width * height *2);
+                rawOpaqueSizes.push(width * height * 2);
             }
             if (isInput == ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT &&
-                    (format == HAL_PIXEL_FORMAT_RAW16 ||
-                     format == HAL_PIXEL_FORMAT_RAW10 ||
-                     format == HAL_PIXEL_FORMAT_RAW12 ||
-                     format == HAL_PIXEL_FORMAT_RAW_OPAQUE)) {
+                (format == HAL_PIXEL_FORMAT_RAW16 || format == HAL_PIXEL_FORMAT_RAW10 ||
+                 format == HAL_PIXEL_FORMAT_RAW12 || format == HAL_PIXEL_FORMAT_RAW_OPAQUE)) {
                 supportAnyRaw = true;
             }
         }
@@ -183,9 +179,7 @@ void CameraModule::deriveCameraCharacteristicsKeys(
             entry = chars.find(ANDROID_CONTROL_POST_RAW_SENSITIVITY_BOOST_RANGE);
             if (entry.count == 0) {
                 // Fill in default value (100, 100)
-                chars.update(
-                        ANDROID_CONTROL_POST_RAW_SENSITIVITY_BOOST_RANGE,
-                        defaultRange, 2);
+                chars.update(ANDROID_CONTROL_POST_RAW_SENSITIVITY_BOOST_RANGE, defaultRange, 2);
                 derivedCharKeys.push(ANDROID_CONTROL_POST_RAW_SENSITIVITY_BOOST_RANGE);
                 // Actual request/results will be derived by camera device.
                 derivedRequestKeys.push(ANDROID_CONTROL_POST_RAW_SENSITIVITY_BOOST);
@@ -197,22 +191,19 @@ void CameraModule::deriveCameraCharacteristicsKeys(
     // Add those newly added keys to AVAILABLE_CHARACTERISTICS_KEYS
     // This has to be done at this end of this function.
     if (derivedCharKeys.size() > 0) {
-        appendAvailableKeys(
-                chars, ANDROID_REQUEST_AVAILABLE_CHARACTERISTICS_KEYS, derivedCharKeys);
+        appendAvailableKeys(chars, ANDROID_REQUEST_AVAILABLE_CHARACTERISTICS_KEYS, derivedCharKeys);
     }
     if (derivedRequestKeys.size() > 0) {
-        appendAvailableKeys(
-                chars, ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS, derivedRequestKeys);
+        appendAvailableKeys(chars, ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS, derivedRequestKeys);
     }
     if (derivedResultKeys.size() > 0) {
-        appendAvailableKeys(
-                chars, ANDROID_REQUEST_AVAILABLE_RESULT_KEYS, derivedResultKeys);
+        appendAvailableKeys(chars, ANDROID_REQUEST_AVAILABLE_RESULT_KEYS, derivedResultKeys);
     }
     return;
 }
 
-void CameraModule::appendAvailableKeys(CameraMetadata &chars,
-        int32_t keyTag, const Vector<int32_t>& appendKeys) {
+void CameraModule::appendAvailableKeys(CameraMetadata& chars, int32_t keyTag,
+                                       const Vector<int32_t>& appendKeys) {
     camera_metadata_entry entry = chars.find(keyTag);
     Vector<int32_t> availableKeys;
     availableKeys.setCapacity(entry.count + appendKeys.size());
@@ -225,7 +216,7 @@ void CameraModule::appendAvailableKeys(CameraMetadata &chars,
     chars.update(keyTag, availableKeys);
 }
 
-CameraModule::CameraModule(camera_module_t *module) : mNumberOfCameras(0) {
+CameraModule::CameraModule(camera_module_t* module) : mNumberOfCameras(0) {
     if (module == NULL) {
         ALOGE("%s: camera hardware module must not be null", __FUNCTION__);
         assert(0);
@@ -233,8 +224,7 @@ CameraModule::CameraModule(camera_module_t *module) : mNumberOfCameras(0) {
     mModule = module;
 }
 
-CameraModule::~CameraModule()
-{
+CameraModule::~CameraModule() {
     while (mCameraInfoMap.size() > 0) {
         camera_info cameraInfo = mCameraInfoMap.editValueAt(0);
         if (cameraInfo.static_camera_characteristics != NULL) {
@@ -256,8 +246,7 @@ CameraModule::~CameraModule()
 int CameraModule::init() {
     ATRACE_CALL();
     int res = OK;
-    if (getModuleApiVersion() >= CAMERA_MODULE_API_VERSION_2_4 &&
-            mModule->init != NULL) {
+    if (getModuleApiVersion() >= CAMERA_MODULE_API_VERSION_2_4 && mModule->init != NULL) {
         ATRACE_BEGIN("camera_module->init");
         res = mModule->init();
         ATRACE_END();
@@ -267,7 +256,7 @@ int CameraModule::init() {
     return res;
 }
 
-int CameraModule::getCameraInfo(int cameraId, struct camera_info *info) {
+int CameraModule::getCameraInfo(int cameraId, struct camera_info* info) {
     ATRACE_CALL();
     Mutex::Autolock lock(mCameraInfoLock);
     if (cameraId < 0) {
@@ -318,7 +307,7 @@ int CameraModule::getCameraInfo(int cameraId, struct camera_info *info) {
     return OK;
 }
 
-int CameraModule::getPhysicalCameraInfo(int physicalCameraId, camera_metadata_t **physicalInfo) {
+int CameraModule::getPhysicalCameraInfo(int physicalCameraId, camera_metadata_t** physicalInfo) {
     ATRACE_CALL();
     Mutex::Autolock lock(mCameraInfoLock);
     if (physicalCameraId < mNumberOfCameras) {
@@ -330,7 +319,7 @@ int CameraModule::getPhysicalCameraInfo(int physicalCameraId, camera_metadata_t 
     int apiVersion = mModule->common.module_api_version;
     if (apiVersion < CAMERA_MODULE_API_VERSION_2_5) {
         ALOGE("%s: Module version must be at least 2.5 to handle getPhysicalCameraInfo",
-                __FUNCTION__);
+              __FUNCTION__);
         return -ENODEV;
     }
     if (mModule->get_physical_camera_info == nullptr) {
@@ -341,7 +330,7 @@ int CameraModule::getPhysicalCameraInfo(int physicalCameraId, camera_metadata_t 
     ssize_t index = mPhysicalCameraInfoMap.indexOfKey(physicalCameraId);
     if (index == NAME_NOT_FOUND) {
         // Get physical camera characteristics, and cache it
-        camera_metadata_t *info = nullptr;
+        camera_metadata_t* info = nullptr;
         ATRACE_BEGIN("camera_module->get_physical_camera_info");
         int ret = mModule->get_physical_camera_info(physicalCameraId, &info);
         ATRACE_END();
@@ -396,8 +385,7 @@ bool CameraModule::isOpenLegacyDefined() const {
     return mModule->open_legacy != NULL;
 }
 
-int CameraModule::openLegacy(
-        const char* id, uint32_t halVersion, struct hw_device_t** device) {
+int CameraModule::openLegacy(const char* id, uint32_t halVersion, struct hw_device_t** device) {
     int res;
     ATRACE_BEGIN("camera_module->open_legacy");
     res = mModule->open_legacy(&mModule->common, id, halVersion, device);
@@ -413,7 +401,7 @@ int CameraModule::getNumberOfCameras() {
     return numCameras;
 }
 
-int CameraModule::setCallbacks(const camera_module_callbacks_t *callbacks) {
+int CameraModule::setCallbacks(const camera_module_callbacks_t* callbacks) {
     int res = OK;
     ATRACE_BEGIN("camera_module->set_callbacks");
     if (getModuleApiVersion() >= CAMERA_MODULE_API_VERSION_2_1) {
@@ -438,8 +426,7 @@ void CameraModule::getVendorTagOps(vendor_tag_ops_t* ops) {
 bool CameraModule::isSetTorchModeSupported() const {
     if (getModuleApiVersion() >= CAMERA_MODULE_API_VERSION_2_4) {
         if (mModule->set_torch_mode == NULL) {
-            ALOGE("%s: Module 2.4 device must support set torch API!",
-                    __FUNCTION__);
+            ALOGE("%s: Module 2.4 device must support set torch API!", __FUNCTION__);
             return false;
         }
         return true;
@@ -457,7 +444,7 @@ int CameraModule::setTorchMode(const char* camera_id, bool enable) {
     return res;
 }
 
-int CameraModule::isStreamCombinationSupported(int cameraId, camera_stream_combination_t *streams) {
+int CameraModule::isStreamCombinationSupported(int cameraId, camera_stream_combination_t* streams) {
     int res = INVALID_OPERATION;
     if (mModule->is_stream_combination_supported != NULL) {
         ATRACE_BEGIN("camera_module->is_stream_combination_supported");
@@ -468,44 +455,41 @@ int CameraModule::isStreamCombinationSupported(int cameraId, camera_stream_combi
 }
 
 void CameraModule::notifyDeviceStateChange(uint64_t deviceState) {
-   if (getModuleApiVersion() >= CAMERA_MODULE_API_VERSION_2_5 &&
-           mModule->notify_device_state_change != NULL) {
-       ATRACE_BEGIN("camera_module->notify_device_state_change");
-       ALOGI("%s: calling notify_device_state_change with state %" PRId64, __FUNCTION__,
-               deviceState);
-       mModule->notify_device_state_change(deviceState);
-       ATRACE_END();
-   }
+    if (getModuleApiVersion() >= CAMERA_MODULE_API_VERSION_2_5 &&
+        mModule->notify_device_state_change != NULL) {
+        ATRACE_BEGIN("camera_module->notify_device_state_change");
+        ALOGI("%s: calling notify_device_state_change with state %" PRId64, __FUNCTION__,
+              deviceState);
+        mModule->notify_device_state_change(deviceState);
+        ATRACE_END();
+    }
 }
 
-bool CameraModule::isLogicalMultiCamera(
-        const common::V1_0::helper::CameraMetadata& metadata,
-        std::unordered_set<std::string>* physicalCameraIds) {
+bool CameraModule::isLogicalMultiCamera(const common::helper::CameraMetadata& metadata,
+                                        std::unordered_set<std::string>* physicalCameraIds) {
     if (physicalCameraIds == nullptr) {
         ALOGE("%s: physicalCameraIds must not be null", __FUNCTION__);
         return false;
     }
 
     bool isLogicalMultiCamera = false;
-    camera_metadata_ro_entry_t capabilities =
-            metadata.find(ANDROID_REQUEST_AVAILABLE_CAPABILITIES);
+    camera_metadata_ro_entry_t capabilities = metadata.find(ANDROID_REQUEST_AVAILABLE_CAPABILITIES);
     for (size_t i = 0; i < capabilities.count; i++) {
         if (capabilities.data.u8[i] ==
-                ANDROID_REQUEST_AVAILABLE_CAPABILITIES_LOGICAL_MULTI_CAMERA) {
+            ANDROID_REQUEST_AVAILABLE_CAPABILITIES_LOGICAL_MULTI_CAMERA) {
             isLogicalMultiCamera = true;
             break;
         }
     }
 
     if (isLogicalMultiCamera) {
-        camera_metadata_ro_entry_t entry =
-                metadata.find(ANDROID_LOGICAL_MULTI_CAMERA_PHYSICAL_IDS);
+        camera_metadata_ro_entry_t entry = metadata.find(ANDROID_LOGICAL_MULTI_CAMERA_PHYSICAL_IDS);
         const uint8_t* ids = entry.data.u8;
         size_t start = 0;
         for (size_t i = 0; i < entry.count; ++i) {
             if (ids[i] == '\0') {
                 if (start != i) {
-                    const char* physicalId = reinterpret_cast<const char*>(ids+start);
+                    const char* physicalId = reinterpret_cast<const char*>(ids + start);
                     physicalCameraIds->emplace(physicalId);
                 }
                 start = i + 1;
@@ -516,7 +500,7 @@ bool CameraModule::isLogicalMultiCamera(
 }
 
 status_t CameraModule::filterOpenErrorCode(status_t err) {
-    switch(err) {
+    switch (err) {
         case NO_ERROR:
         case -EBUSY:
         case -EINVAL:
@@ -533,9 +517,9 @@ void CameraModule::removeCamera(int cameraId) {
     // static_camera_characteristics
     if (getDeviceVersion(cameraId) >= CAMERA_DEVICE_API_VERSION_3_0) {
         std::unordered_set<std::string> physicalIds;
-        camera_metadata_t *metadata = const_cast<camera_metadata_t*>(
+        camera_metadata_t* metadata = const_cast<camera_metadata_t*>(
                 mCameraInfoMap.valueFor(cameraId).static_camera_characteristics);
-        common::V1_0::helper::CameraMetadata hidlMetadata(metadata);
+        common::helper::CameraMetadata hidlMetadata(metadata);
 
         if (isLogicalMultiCamera(hidlMetadata, &physicalIds)) {
             for (const auto& id : physicalIds) {
@@ -545,7 +529,7 @@ void CameraModule::removeCamera(int cameraId) {
                     mPhysicalCameraInfoMap.removeItem(idInt);
                 } else {
                     ALOGE("%s: Cannot find corresponding static metadata for physical id %s",
-                            __FUNCTION__, id.c_str());
+                          __FUNCTION__, id.c_str());
                 }
             }
         }
@@ -575,9 +559,8 @@ void* CameraModule::getDso() {
     return mModule->common.dso;
 }
 
-} // namespace helper
-} // namespace V1_0
-} // namespace common
-} // namespace camera
-} // namespace hardware
-} // namespace android
+}  // namespace helper
+}  // namespace common
+}  // namespace camera
+}  // namespace hardware
+}  // namespace android

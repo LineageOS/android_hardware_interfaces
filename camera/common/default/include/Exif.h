@@ -23,9 +23,7 @@ namespace android {
 namespace hardware {
 namespace camera {
 namespace common {
-namespace V1_0 {
 namespace helper {
-
 
 // This is based on the original ChromeOS ARC implementation of a V4L2 HAL
 
@@ -44,8 +42,7 @@ namespace helper {
 //  uint8_t* app1Buffer = new uint8_t[app1Length];
 //  memcpy(app1Buffer, utils->GetApp1Buffer(), app1Length);
 class ExifUtils {
-
- public:
+  public:
     virtual ~ExifUtils();
 
     static ExifUtils* create();
@@ -55,8 +52,7 @@ class ExifUtils {
     virtual bool initialize() = 0;
 
     // Set all known fields from a metadata structure
-    virtual bool setFromMetadata(const CameraMetadata& metadata,
-                                 const size_t imageWidth,
+    virtual bool setFromMetadata(const CameraMetadata& metadata, const size_t imageWidth,
                                  const size_t imageHeight) = 0;
 
     // Sets the len aperture.
@@ -244,13 +240,17 @@ class ExifUtils {
     virtual unsigned int getApp1Length() = 0;
 };
 
+}  // namespace helper
 
-} // namespace helper
-} // namespace V1_0
-} // namespace common
-} // namespace camera
-} // namespace hardware
-} // namespace android
+// NOTE: Deprecated namespace. This namespace should no longer be used for the following symbols
+namespace V1_0::helper {
+// Export symbols to the old namespace to preserve compatibility
+typedef android::hardware::camera::common::helper::ExifUtils ExifUtils;
+}  // namespace V1_0::helper
 
+}  // namespace common
+}  // namespace camera
+}  // namespace hardware
+}  // namespace android
 
 #endif  // ANDROID_HARDWARE_INTERFACES_CAMERA_COMMON_1_0_EXIF_H

@@ -26,7 +26,6 @@ namespace android {
 namespace hardware {
 namespace camera {
 namespace common {
-namespace V1_0 {
 namespace helper {
 
 class VendorTagDescriptor;
@@ -46,15 +45,15 @@ class CameraMetadata {
     ~CameraMetadata();
 
     /** Takes ownership of passed-in buffer */
-    CameraMetadata(camera_metadata_t *buffer);
+    CameraMetadata(camera_metadata_t* buffer);
     /** Clones the metadata */
-    CameraMetadata(const CameraMetadata &other);
+    CameraMetadata(const CameraMetadata& other);
 
     /**
      * Assignment clones metadata buffer.
      */
-    CameraMetadata &operator=(const CameraMetadata &other);
-    CameraMetadata &operator=(const camera_metadata_t *buffer);
+    CameraMetadata& operator=(const CameraMetadata& other);
+    CameraMetadata& operator=(const camera_metadata_t* buffer);
 
     /**
      * Get reference to the underlying metadata buffer. Ownership remains with
@@ -71,7 +70,7 @@ class CameraMetadata {
      * from getAndLock must be provided to guarantee that the right object is
      * being unlocked.
      */
-    status_t unlock(const camera_metadata_t *buffer) const;
+    status_t unlock(const camera_metadata_t* buffer) const;
 
     /**
      * Release a raw metadata buffer to the caller. After this call,
@@ -98,12 +97,12 @@ class CameraMetadata {
      * Acquires raw buffer from other CameraMetadata object. After the call, the argument
      * object no longer has any metadata.
      */
-    void acquire(CameraMetadata &other);
+    void acquire(CameraMetadata& other);
 
     /**
      * Append metadata from another CameraMetadata object.
      */
-    status_t append(const CameraMetadata &other);
+    status_t append(const CameraMetadata& other);
 
     /**
      * Append metadata from a raw camera_metadata buffer
@@ -130,24 +129,16 @@ class CameraMetadata {
      * will reallocate the buffer if insufficient space exists. Overloaded for
      * the various types of valid data.
      */
-    status_t update(uint32_t tag,
-            const uint8_t *data, size_t data_count);
-    status_t update(uint32_t tag,
-            const int32_t *data, size_t data_count);
-    status_t update(uint32_t tag,
-            const float *data, size_t data_count);
-    status_t update(uint32_t tag,
-            const int64_t *data, size_t data_count);
-    status_t update(uint32_t tag,
-            const double *data, size_t data_count);
-    status_t update(uint32_t tag,
-            const camera_metadata_rational_t *data, size_t data_count);
-    status_t update(uint32_t tag,
-            const String8 &string);
-    status_t update(const camera_metadata_ro_entry &entry);
+    status_t update(uint32_t tag, const uint8_t* data, size_t data_count);
+    status_t update(uint32_t tag, const int32_t* data, size_t data_count);
+    status_t update(uint32_t tag, const float* data, size_t data_count);
+    status_t update(uint32_t tag, const int64_t* data, size_t data_count);
+    status_t update(uint32_t tag, const double* data, size_t data_count);
+    status_t update(uint32_t tag, const camera_metadata_rational_t* data, size_t data_count);
+    status_t update(uint32_t tag, const String8& string);
+    status_t update(const camera_metadata_ro_entry& entry);
 
-
-    template<typename T>
+    template <typename T>
     status_t update(uint32_t tag, Vector<T> data) {
         return update(tag, data.array(), data.size());
     }
@@ -177,7 +168,7 @@ class CameraMetadata {
      * Swap the underlying camera metadata between this and the other
      * metadata object.
      */
-    void swap(CameraMetadata &other);
+    void swap(CameraMetadata& other);
 
     /**
      * Dump contents into FD for debugging. The verbosity levels are
@@ -196,12 +187,12 @@ class CameraMetadata {
      *
      * This is a slow method.
      */
-    static status_t getTagFromName(const char *name,
-            const VendorTagDescriptor* vTags, uint32_t *tag);
+    static status_t getTagFromName(const char* name, const VendorTagDescriptor* vTags,
+                                   uint32_t* tag);
 
   private:
-    camera_metadata_t *mBuffer;
-    mutable bool       mLocked;
+    camera_metadata_t* mBuffer;
+    mutable bool mLocked;
 
     /**
      * Check if tag has a given type
@@ -211,20 +202,25 @@ class CameraMetadata {
     /**
      * Base update entry method
      */
-    status_t updateImpl(uint32_t tag, const void *data, size_t data_count);
+    status_t updateImpl(uint32_t tag, const void* data, size_t data_count);
 
     /**
      * Resize metadata buffer if needed by reallocating it and copying it over.
      */
     status_t resizeIfNeeded(size_t extraEntries, size_t extraData);
-
 };
 
-} // namespace helper
-} // namespace V1_0
-} // namespace common
-} // namespace camera
-} // namespace hardware
-} // namespace android
+}  // namespace helper
+
+// NOTE: Deprecated namespace. This namespace should no longer be used.
+namespace V1_0::helper {
+// Export symbols to the old namespace to preserve compatibility
+typedef android::hardware::camera::common::helper::CameraMetadata CameraMetadata;
+}  // namespace V1_0::helper
+
+}  // namespace common
+}  // namespace camera
+}  // namespace hardware
+}  // namespace android
 
 #endif
