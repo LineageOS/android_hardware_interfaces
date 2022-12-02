@@ -792,7 +792,7 @@ binder_status_t DefaultVehicleHal::dump(int fd, const char** args, uint32_t numA
     DumpResult result = mVehicleHardware->dump(options);
     dprintf(fd, "%s", (result.buffer + "\n").c_str());
     if (!result.callerShouldDumpState) {
-        dprintf(fd, "Skip dumping Vehicle HAL State.\n");
+        ALOGE("Skip dumping Vehicle HAL State.");
         return STATUS_OK;
     }
     dprintf(fd, "Vehicle HAL State: \n");
