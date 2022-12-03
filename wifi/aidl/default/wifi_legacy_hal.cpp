@@ -334,6 +334,40 @@ void onAsyncNanEventScheduleUpdate(NanDataPathScheduleUpdateInd* event) {
     }
 }
 
+std::function<void(const NanPairingRequestInd&)> on_nan_event_pairing_request_user_callback;
+void onAsyncNanEventPairingRequest(NanPairingRequestInd* event) {
+    const auto lock = aidl_sync_util::acquireGlobalLock();
+    if (on_nan_event_pairing_request_user_callback && event) {
+        on_nan_event_pairing_request_user_callback(*event);
+    }
+}
+
+std::function<void(const NanPairingConfirmInd&)> on_nan_event_pairing_confirm_user_callback;
+void onAsyncNanEventPairingConfirm(NanPairingConfirmInd* event) {
+    const auto lock = aidl_sync_util::acquireGlobalLock();
+    if (on_nan_event_pairing_confirm_user_callback && event) {
+        on_nan_event_pairing_confirm_user_callback(*event);
+    }
+}
+
+std::function<void(const NanBootstrappingRequestInd&)>
+        on_nan_event_bootstrapping_request_user_callback;
+void onAsyncNanEventBootstrappingRequest(NanBootstrappingRequestInd* event) {
+    const auto lock = aidl_sync_util::acquireGlobalLock();
+    if (on_nan_event_bootstrapping_request_user_callback && event) {
+        on_nan_event_bootstrapping_request_user_callback(*event);
+    }
+}
+
+std::function<void(const NanBootstrappingConfirmInd&)>
+        on_nan_event_bootstrapping_confirm_user_callback;
+void onAsyncNanEventBootstrappingConfirm(NanBootstrappingConfirmInd* event) {
+    const auto lock = aidl_sync_util::acquireGlobalLock();
+    if (on_nan_event_bootstrapping_confirm_user_callback && event) {
+        on_nan_event_bootstrapping_confirm_user_callback(*event);
+    }
+}
+
 // Callbacks for the various TWT operations.
 std::function<void(const TwtSetupResponse&)> on_twt_event_setup_response_callback;
 void onAsyncTwtEventSetupResponse(TwtSetupResponse* event) {
@@ -1298,6 +1332,12 @@ wifi_error WifiLegacyHal::nanRegisterCallbackHandlers(const std::string& iface_n
     on_nan_event_tca_user_callback = user_callbacks.on_event_tca;
     on_nan_event_beacon_sdf_payload_user_callback = user_callbacks.on_event_beacon_sdf_payload;
     on_nan_event_data_path_request_user_callback = user_callbacks.on_event_data_path_request;
+    on_nan_event_pairing_request_user_callback = user_callbacks.on_event_pairing_request;
+    on_nan_event_pairing_confirm_user_callback = user_callbacks.on_event_pairing_confirm;
+    on_nan_event_bootstrapping_request_user_callback =
+            user_callbacks.on_event_bootstrapping_request;
+    on_nan_event_bootstrapping_confirm_user_callback =
+            user_callbacks.on_event_bootstrapping_confirm;
     on_nan_event_data_path_confirm_user_callback = user_callbacks.on_event_data_path_confirm;
     on_nan_event_data_path_end_user_callback = user_callbacks.on_event_data_path_end;
     on_nan_event_transmit_follow_up_user_callback = user_callbacks.on_event_transmit_follow_up;
@@ -1305,16 +1345,29 @@ wifi_error WifiLegacyHal::nanRegisterCallbackHandlers(const std::string& iface_n
     on_nan_event_range_report_user_callback = user_callbacks.on_event_range_report;
     on_nan_event_schedule_update_user_callback = user_callbacks.on_event_schedule_update;
 
-    return global_func_table_.wifi_nan_register_handler(
-            getIfaceHandle(iface_name),
-            {onAsyncNanNotifyResponse, onAsyncNanEventPublishReplied,
-             onAsyncNanEventPublishTerminated, onAsyncNanEventMatch, onAsyncNanEventMatchExpired,
-             onAsyncNanEventSubscribeTerminated, onAsyncNanEventFollowup,
-             onAsyncNanEventDiscEngEvent, onAsyncNanEventDisabled, onAsyncNanEventTca,
-             onAsyncNanEventBeaconSdfPayload, onAsyncNanEventDataPathRequest,
-             onAsyncNanEventDataPathConfirm, onAsyncNanEventDataPathEnd,
-             onAsyncNanEventTransmitFollowUp, onAsyncNanEventRangeRequest,
-             onAsyncNanEventRangeReport, onAsyncNanEventScheduleUpdate});
+    return global_func_table_.wifi_nan_register_handler(getIfaceHandle(iface_name),
+                                                        {onAsyncNanNotifyResponse,
+                                                         onAsyncNanEventPublishReplied,
+                                                         onAsyncNanEventPublishTerminated,
+                                                         onAsyncNanEventMatch,
+                                                         onAsyncNanEventMatchExpired,
+                                                         onAsyncNanEventSubscribeTerminated,
+                                                         onAsyncNanEventFollowup,
+                                                         onAsyncNanEventDiscEngEvent,
+                                                         onAsyncNanEventDisabled,
+                                                         onAsyncNanEventTca,
+                                                         onAsyncNanEventBeaconSdfPayload,
+                                                         onAsyncNanEventDataPathRequest,
+                                                         onAsyncNanEventDataPathConfirm,
+                                                         onAsyncNanEventDataPathEnd,
+                                                         onAsyncNanEventTransmitFollowUp,
+                                                         onAsyncNanEventRangeRequest,
+                                                         onAsyncNanEventRangeReport,
+                                                         onAsyncNanEventScheduleUpdate,
+                                                         onAsyncNanEventPairingRequest,
+                                                         onAsyncNanEventPairingConfirm,
+                                                         onAsyncNanEventBootstrappingRequest,
+                                                         onAsyncNanEventBootstrappingConfirm});
 }
 
 wifi_error WifiLegacyHal::nanEnableRequest(const std::string& iface_name, transaction_id id,
@@ -1427,6 +1480,36 @@ wifi_error WifiLegacyHal::nanDataIndicationResponse(const std::string& iface_nam
     NanDataPathIndicationResponse msg_internal(msg);
     return global_func_table_.wifi_nan_data_indication_response(id, getIfaceHandle(iface_name),
                                                                 &msg_internal);
+}
+
+wifi_error WifiLegacyHal::nanPairingRequest(const std::string& iface_name, transaction_id id,
+                                            const NanPairingRequest& msg) {
+    NanPairingRequest msg_internal(msg);
+    return global_func_table_.wifi_nan_pairing_request(id, getIfaceHandle(iface_name),
+                                                       &msg_internal);
+}
+
+wifi_error WifiLegacyHal::nanPairingIndicationResponse(const std::string& iface_name,
+                                                       transaction_id id,
+                                                       const NanPairingIndicationResponse& msg) {
+    NanPairingIndicationResponse msg_internal(msg);
+    return global_func_table_.wifi_nan_pairing_indication_response(id, getIfaceHandle(iface_name),
+                                                                   &msg_internal);
+}
+
+wifi_error WifiLegacyHal::nanBootstrappingRequest(const std::string& iface_name, transaction_id id,
+                                                  const NanBootstrappingRequest& msg) {
+    NanBootstrappingRequest msg_internal(msg);
+    return global_func_table_.wifi_nan_bootstrapping_request(id, getIfaceHandle(iface_name),
+                                                             &msg_internal);
+}
+
+wifi_error WifiLegacyHal::nanBootstrappingIndicationResponse(
+        const std::string& iface_name, transaction_id id,
+        const NanBootstrappingIndicationResponse& msg) {
+    NanBootstrappingIndicationResponse msg_internal(msg);
+    return global_func_table_.wifi_nan_bootstrapping_indication_response(
+            id, getIfaceHandle(iface_name), &msg_internal);
 }
 
 typedef struct {
@@ -1746,6 +1829,10 @@ void WifiLegacyHal::invalidate() {
     on_nan_event_tca_user_callback = nullptr;
     on_nan_event_beacon_sdf_payload_user_callback = nullptr;
     on_nan_event_data_path_request_user_callback = nullptr;
+    on_nan_event_pairing_request_user_callback = nullptr;
+    on_nan_event_pairing_confirm_user_callback = nullptr;
+    on_nan_event_bootstrapping_request_user_callback = nullptr;
+    on_nan_event_bootstrapping_confirm_user_callback = nullptr;
     on_nan_event_data_path_confirm_user_callback = nullptr;
     on_nan_event_data_path_end_user_callback = nullptr;
     on_nan_event_transmit_follow_up_user_callback = nullptr;

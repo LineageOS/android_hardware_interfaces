@@ -176,6 +176,27 @@ bool convertLegacyWifiRateInfoToAidl(const legacy_hal::wifi_rate& legacy_rate,
 bool convertLegacyWifiChipCapabilitiesToAidl(
         const legacy_hal::wifi_chip_capabilities& legacy_chip_capabilities,
         WifiChipCapabilities& aidl_chip_capabilities);
+bool convertAidlNanPairingInitiatorRequestToLegacy(const NanPairingRequest& aidl_request,
+                                                   legacy_hal::NanPairingRequest* legacy_request);
+bool convertAidlNanPairingIndicationResponseToLegacy(
+        const NanRespondToPairingIndicationRequest& aidl_response,
+        legacy_hal::NanPairingIndicationResponse* legacy_response);
+bool convertAidlNanBootstrappingInitiatorRequestToLegacy(
+        const NanBootstrappingRequest& aidl_request,
+        legacy_hal::NanBootstrappingRequest* legacy_request);
+bool convertAidlNanBootstrappingIndicationResponseToLegacy(
+        const NanBootstrappingResponse& aidl_response,
+        legacy_hal::NanBootstrappingIndicationResponse* legacy_response);
+bool convertLegacyNanPairingRequestIndToAidl(const legacy_hal::NanPairingRequestInd& legacy_ind,
+                                             NanPairingRequestInd* aidl_ind);
+bool convertLegacyNanPairingConfirmIndToAidl(const legacy_hal::NanPairingConfirmInd& legacy_ind,
+                                             NanPairingConfirmInd* aidl_ind);
+bool convertLegacyNanBootstrappingRequestIndToAidl(
+        const legacy_hal::NanBootstrappingRequestInd& legacy_ind,
+        NanBootstrappingRequestInd* aidl_ind);
+bool convertLegacyNanBootstrappingConfirmIndToAidl(
+        const legacy_hal::NanBootstrappingConfirmInd& legacy_ind,
+        NanBootstrappingConfirmInd* aidl_ind);
 }  // namespace aidl_struct_util
 }  // namespace wifi
 }  // namespace hardware
