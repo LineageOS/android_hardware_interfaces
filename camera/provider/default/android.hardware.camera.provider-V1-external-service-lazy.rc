@@ -1,0 +1,10 @@
+service vendor.camera.provider-ext /vendor/bin/hw/android.hardware.camera.provider-V1-external-service-lazy
+    interface aidl android.hardware.camera.provider.ICameraProvider/external/0
+    class hal
+    oneshot
+    disabled
+    user cameraserver
+    group audio camera input drmrpc usb
+    ioprio rt 4
+    capabilities SYS_NICE
+    task_profiles CameraServiceCapacity MaxPerformance

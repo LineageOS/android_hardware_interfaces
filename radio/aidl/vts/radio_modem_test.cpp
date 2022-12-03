@@ -188,6 +188,25 @@ TEST_P(RadioModemTest, getDeviceIdentity) {
 }
 
 /*
+ * Test IRadioModem.getImei() for the response returned.
+ */
+TEST_P(RadioModemTest, getImei) {
+    LOG(DEBUG) << "getImei";
+    serial = GetRandomSerialNumber();
+
+    radio_modem->getImei(serial);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_modem->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_modem->rspInfo.serial);
+
+    if (cardStatus.cardState == CardStatus::STATE_ABSENT) {
+        ASSERT_TRUE(CheckAnyOfErrors(radioRsp_modem->rspInfo.error,
+                                     {RadioError::NONE, RadioError::EMPTY_RECORD}));
+    }
+    LOG(DEBUG) << "getImei finished";
+}
+
+/*
  * Test IRadioModem.nvReadItem() for the response returned.
  */
 TEST_P(RadioModemTest, nvReadItem) {

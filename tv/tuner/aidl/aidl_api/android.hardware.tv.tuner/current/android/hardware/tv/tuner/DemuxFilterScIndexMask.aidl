@@ -38,4 +38,5 @@ union DemuxFilterScIndexMask {
   int scIndex;
   int scAvc;
   int scHevc;
+  int scVvc;
 }
