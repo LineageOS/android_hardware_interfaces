@@ -111,7 +111,9 @@ void RemoteAccessService::maybeStopTaskLoop() {
         // Try to stop the reading stream.
         if (mGetRemoteTasksContext) {
             mGetRemoteTasksContext->TryCancel();
-            mGetRemoteTasksContext.reset();
+            // Don't reset mGetRemoteTaskContext here since the read stream might still be affective
+            // and might still be using it. This will cause reader->Read to return false and
+            // mGetRemoteTasksContext will be cleared after reader->Finish() is called.
         }
         mTaskWaitStopped = true;
         mCv.notify_all();
@@ -155,6 +157,7 @@ void RemoteAccessService::runTaskLoop() {
             }
         }
         Status status = reader->Finish();
+        mGetRemoteTasksContext.reset();
 
         ALOGE("GetRemoteTasks stream breaks, code: %d, message: %s, sleeping for 10s and retry",
               status.error_code(), status.error_message().c_str());
