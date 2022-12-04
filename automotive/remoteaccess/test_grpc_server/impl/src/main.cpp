@@ -28,20 +28,23 @@ using ::grpc::Server;
 using ::grpc::ServerBuilder;
 using ::grpc::ServerWriter;
 
-void RunServer() {
-    std::string serverAddress(GRPC_SERVICE_ADDRESS);
+void RunServer(const std::string& serviceAddr) {
     std::shared_ptr<TestWakeupClientServiceImpl> service =
             std::make_unique<TestWakeupClientServiceImpl>();
 
     ServerBuilder builder;
-    builder.AddListeningPort(serverAddress, grpc::InsecureServerCredentials());
+    builder.AddListeningPort(serviceAddr, grpc::InsecureServerCredentials());
     builder.RegisterService(service.get());
     std::unique_ptr<Server> server(builder.BuildAndStart());
-    printf("Test Remote Access GRPC Server listening on %s\n", serverAddress.c_str());
+    printf("Test Remote Access GRPC Server listening on %s\n", serviceAddr.c_str());
     server->Wait();
 }
 
 int main(int argc, char** argv) {
-    RunServer();
+    std::string serviceAddr = GRPC_SERVICE_ADDRESS;
+    if (argc > 1) {
+        serviceAddr = argv[1];
+    }
+    RunServer(serviceAddr);
     return 0;
 }
