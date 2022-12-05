@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <functional>
 #include <optional>
 #include <set>
 #include <utility>
@@ -48,6 +49,8 @@ class ModuleConfig {
     std::vector<aidl::android::media::audio::common::AudioPort> getMixPorts(bool isInput) const {
         return isInput ? getInputMixPorts() : getOutputMixPorts();
     }
+    std::vector<aidl::android::media::audio::common::AudioPort> getNonBlockingMixPorts(
+            bool attachedOnly, bool singlePort) const;
     std::vector<aidl::android::media::audio::common::AudioPort> getOffloadMixPorts(
             bool attachedOnly, bool singlePort) const;
 
@@ -121,6 +124,9 @@ class ModuleConfig {
     std::string toString() const;
 
   private:
+    std::vector<aidl::android::media::audio::common::AudioPort> findMixPorts(
+            bool isInput, bool singlePort,
+            std::function<bool(const aidl::android::media::audio::common::AudioPort&)> pred) const;
     std::vector<aidl::android::media::audio::common::AudioPortConfig> generateAudioMixPortConfigs(
             const std::vector<aidl::android::media::audio::common::AudioPort>& ports, bool isInput,
             bool singleProfile) const;

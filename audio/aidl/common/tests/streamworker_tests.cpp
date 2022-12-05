@@ -283,4 +283,16 @@ TEST_P(StreamWorkerTest, ThreadPriority) {
     EXPECT_EQ(priority, worker.getPriority());
 }
 
+TEST_P(StreamWorkerTest, DeferredStartCheckNoError) {
+    stream.setStopStatus();
+    EXPECT_TRUE(worker.start(android::hardware::audio::common::internal::kTestSingleThread));
+    EXPECT_FALSE(worker.hasError());
+}
+
+TEST_P(StreamWorkerTest, DeferredStartCheckWithError) {
+    stream.setErrorStatus();
+    EXPECT_FALSE(worker.start(android::hardware::audio::common::internal::kTestSingleThread));
+    EXPECT_TRUE(worker.hasError());
+}
+
 INSTANTIATE_TEST_SUITE_P(StreamWorker, StreamWorkerTest, testing::Bool());
