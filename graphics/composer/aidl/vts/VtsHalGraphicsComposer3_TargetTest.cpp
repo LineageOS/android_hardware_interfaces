@@ -621,6 +621,63 @@ TEST_P(GraphicsComposerAidlTest, BootDisplayConfig_Unsupported) {
     }
 }
 
+TEST_P(GraphicsComposerAidlTest, GetHdrConversionCapabilities) {
+    if (!hasCapability(Capability::HDR_OUTPUT_CONVERSION_CONFIG)) {
+        GTEST_SUCCEED() << "HDR output conversion not supported";
+        return;
+    }
+    const auto& [status, conversionCapabilities] = mComposerClient->getHdrConversionCapabilities();
+    EXPECT_TRUE(status.isOk());
+}
+
+TEST_P(GraphicsComposerAidlTest, SetHdrConversionStrategy_Passthrough) {
+    if (!hasCapability(Capability::HDR_OUTPUT_CONVERSION_CONFIG)) {
+        GTEST_SUCCEED() << "HDR output conversion not supported";
+        return;
+    }
+    common::HdrConversionStrategy hdrConversionStrategy;
+    hdrConversionStrategy.set<common::HdrConversionStrategy::Tag::passthrough>(true);
+    const auto& status = mComposerClient->setHdrConversionStrategy(hdrConversionStrategy);
+    EXPECT_TRUE(status.isOk());
+}
+
+TEST_P(GraphicsComposerAidlTest, SetHdrConversionStrategy_Force) {
+    if (!hasCapability(Capability::HDR_OUTPUT_CONVERSION_CONFIG)) {
+        GTEST_SUCCEED() << "HDR output conversion not supported";
+        return;
+    }
+    const auto& [status, conversionCapabilities] = mComposerClient->getHdrConversionCapabilities();
+    for (auto conversionCapability : conversionCapabilities) {
+        if (conversionCapability.outputType) {
+            common::HdrConversionStrategy hdrConversionStrategy;
+            hdrConversionStrategy.set<common::HdrConversionStrategy::Tag::forceHdrConversion>(
+                    conversionCapability.outputType->hdr);
+            const auto& statusSet =
+                    mComposerClient->setHdrConversionStrategy(hdrConversionStrategy);
+            EXPECT_TRUE(status.isOk());
+        }
+    }
+}
+
+TEST_P(GraphicsComposerAidlTest, SetHdrConversionStrategy_Auto) {
+    if (!hasCapability(Capability::HDR_OUTPUT_CONVERSION_CONFIG)) {
+        GTEST_SUCCEED() << "HDR output conversion not supported";
+        return;
+    }
+    const auto& [status, conversionCapabilities] = mComposerClient->getHdrConversionCapabilities();
+    std::vector<aidl::android::hardware::graphics::common::Hdr> autoHdrTypes;
+    for (auto conversionCapability : conversionCapabilities) {
+        if (conversionCapability.outputType) {
+            autoHdrTypes.push_back(conversionCapability.outputType->hdr);
+        }
+    }
+    common::HdrConversionStrategy hdrConversionStrategy;
+    hdrConversionStrategy.set<common::HdrConversionStrategy::Tag::autoAllowedHdrTypes>(
+            autoHdrTypes);
+    const auto& statusSet = mComposerClient->setHdrConversionStrategy(hdrConversionStrategy);
+    EXPECT_TRUE(status.isOk());
+}
+
 TEST_P(GraphicsComposerAidlTest, SetAutoLowLatencyMode_BadDisplay) {
     auto status = mComposerClient->setAutoLowLatencyMode(getInvalidDisplayId(), /*isEnabled*/ true);
     EXPECT_FALSE(status.isOk());
