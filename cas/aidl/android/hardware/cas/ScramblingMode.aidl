@@ -18,6 +18,7 @@ package android.hardware.cas;
 
 /**
  * The Scrambling Mode.
+ * @hide
  */
 @VintfStability
 @Backing(type="int")
