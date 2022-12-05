@@ -424,14 +424,6 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
-        <name>android.hardware.oemlock</name>
-        <version>1.0</version>
-        <interface>
-            <name>IOemLock</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
     <hal format="aidl" optional="false">
         <name>android.hardware.power</name>
         <version>2-4</version>
