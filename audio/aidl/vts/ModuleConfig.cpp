@@ -125,21 +125,21 @@ std::vector<AudioPort> ModuleConfig::getOutputMixPorts() const {
     return result;
 }
 
+std::vector<AudioPort> ModuleConfig::getNonBlockingMixPorts(bool attachedOnly,
+                                                            bool singlePort) const {
+    return findMixPorts(false /*isInput*/, singlePort, [&](const AudioPort& port) {
+        return isBitPositionFlagSet(port.flags.get<AudioIoFlags::Tag::output>(),
+                                    AudioOutputFlags::NON_BLOCKING) &&
+               (!attachedOnly || !getAttachedSinkDevicesPortsForMixPort(port).empty());
+    });
+}
+
 std::vector<AudioPort> ModuleConfig::getOffloadMixPorts(bool attachedOnly, bool singlePort) const {
-    std::vector<AudioPort> result;
-    const auto mixPorts = getMixPorts(false /*isInput*/);
-    auto offloadPortIt = mixPorts.begin();
-    while (offloadPortIt != mixPorts.end()) {
-        offloadPortIt = std::find_if(offloadPortIt, mixPorts.end(), [&](const AudioPort& port) {
-            return isBitPositionFlagSet(port.flags.get<AudioIoFlags::Tag::output>(),
-                                        AudioOutputFlags::COMPRESS_OFFLOAD) &&
-                   (!attachedOnly || !getAttachedSinkDevicesPortsForMixPort(port).empty());
-        });
-        if (offloadPortIt == mixPorts.end()) break;
-        result.push_back(*offloadPortIt++);
-        if (singlePort) break;
-    }
-    return result;
+    return findMixPorts(false /*isInput*/, singlePort, [&](const AudioPort& port) {
+        return isBitPositionFlagSet(port.flags.get<AudioIoFlags::Tag::output>(),
+                                    AudioOutputFlags::COMPRESS_OFFLOAD) &&
+               (!attachedOnly || !getAttachedSinkDevicesPortsForMixPort(port).empty());
+    });
 }
 
 std::vector<AudioPort> ModuleConfig::getAttachedDevicesPortsForMixPort(
@@ -341,6 +341,19 @@ static size_t combineAudioConfigs(const AudioPort& port, const AudioProfile& pro
 static bool isDynamicProfile(const AudioProfile& profile) {
     return (profile.format.type == AudioFormatType::DEFAULT && profile.format.encoding.empty()) ||
            profile.sampleRates.empty() || profile.channelMasks.empty();
+}
+
+std::vector<AudioPort> ModuleConfig::findMixPorts(
+        bool isInput, bool singlePort, std::function<bool(const AudioPort&)> pred) const {
+    std::vector<AudioPort> result;
+    const auto mixPorts = getMixPorts(isInput);
+    for (auto mixPortIt = mixPorts.begin(); mixPortIt != mixPorts.end();) {
+        mixPortIt = std::find_if(mixPortIt, mixPorts.end(), pred);
+        if (mixPortIt == mixPorts.end()) break;
+        result.push_back(*mixPortIt++);
+        if (singlePort) break;
+    }
+    return result;
 }
 
 std::vector<AudioPortConfig> ModuleConfig::generateAudioMixPortConfigs(
