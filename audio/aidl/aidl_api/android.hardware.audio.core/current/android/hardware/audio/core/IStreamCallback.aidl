@@ -32,8 +32,9 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.audio.core;
-@JavaDerive(equals=true, toString=true) @VintfStability
-parcelable ModuleDebug {
-  boolean simulateDeviceConnections;
-  int streamTransientStateDelayMs;
+@VintfStability
+interface IStreamCallback {
+  oneway void onTransferReady();
+  oneway void onError();
+  oneway void onDrainReady();
 }

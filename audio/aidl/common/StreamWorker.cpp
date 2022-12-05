@@ -25,15 +25,20 @@ namespace android::hardware::audio::common::internal {
 bool ThreadController::start(const std::string& name, int priority) {
     mThreadName = name;
     mThreadPriority = priority;
-    mWorker = std::thread(&ThreadController::workerThread, this);
+    if (kTestSingleThread != name) {
+        mWorker = std::thread(&ThreadController::workerThread, this);
+    } else {
+        // Simulate the case when the workerThread completes prior
+        // to the moment when we being waiting for its start.
+        workerThread();
+    }
     std::unique_lock<std::mutex> lock(mWorkerLock);
     android::base::ScopedLockAssertion lock_assertion(mWorkerLock);
     mWorkerCv.wait(lock, [&]() {
         android::base::ScopedLockAssertion lock_assertion(mWorkerLock);
-        return mWorkerState == WorkerState::RUNNING || !mError.empty();
+        return mWorkerState != WorkerState::INITIAL || !mError.empty();
     });
-    mWorkerStateChangeRequest = false;
-    return mWorkerState == WorkerState::RUNNING;
+    return mError.empty();
 }
 
 void ThreadController::stop() {
@@ -81,8 +86,8 @@ void ThreadController::switchWorkerStateSync(WorkerState oldState, WorkerState n
 void ThreadController::workerThread() {
     using Status = StreamLogic::Status;
 
-    std::string error = mLogic->init();
-    if (error.empty() && !mThreadName.empty()) {
+    std::string error;
+    if (!mThreadName.empty()) {
         std::string compliantName(mThreadName.substr(0, 15));
         if (int errCode = pthread_setname_np(pthread_self(), compliantName.c_str()); errCode != 0) {
             error.append("Failed to set thread name: ").append(strerror(errCode));
@@ -93,6 +98,9 @@ void ThreadController::workerThread() {
             int errCode = errno;
             error.append("Failed to set thread priority: ").append(strerror(errCode));
         }
+    }
+    if (error.empty()) {
+        error.append(mLogic->init());
     }
     {
         std::lock_guard<std::mutex> lock(mWorkerLock);

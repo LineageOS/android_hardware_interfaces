@@ -32,7 +32,7 @@ class StreamLogic;
 namespace internal {
 
 class ThreadController {
-    enum class WorkerState { STOPPED, RUNNING, PAUSE_REQUESTED, PAUSED, RESUME_REQUESTED };
+    enum class WorkerState { INITIAL, STOPPED, RUNNING, PAUSE_REQUESTED, PAUSED, RESUME_REQUESTED };
 
   public:
     explicit ThreadController(StreamLogic* logic) : mLogic(logic) {}
@@ -76,7 +76,7 @@ class ThreadController {
     std::thread mWorker;
     std::mutex mWorkerLock;
     std::condition_variable mWorkerCv;
-    WorkerState mWorkerState GUARDED_BY(mWorkerLock) = WorkerState::STOPPED;
+    WorkerState mWorkerState GUARDED_BY(mWorkerLock) = WorkerState::INITIAL;
     std::string mError GUARDED_BY(mWorkerLock);
     // The atomic lock-free variable is used to prevent priority inversions
     // that can occur when a high priority worker tries to acquire the lock
@@ -89,6 +89,9 @@ class ThreadController {
     static_assert(std::atomic<bool>::is_always_lock_free);
     std::atomic<bool> mWorkerStateChangeRequest GUARDED_BY(mWorkerLock) = false;
 };
+
+// A special thread name used in tests only.
+static const std::string kTestSingleThread = "__testST__";
 
 }  // namespace internal
 
