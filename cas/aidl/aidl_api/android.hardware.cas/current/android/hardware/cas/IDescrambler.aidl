@@ -32,6 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.cas;
+/* @hide */
 @VintfStability
 interface IDescrambler {
   int descramble(in android.hardware.cas.ScramblingControl scramblingControl, in android.hardware.cas.SubSample[] subSamples, in android.hardware.cas.SharedBuffer srcBuffer, in long srcOffset, in android.hardware.cas.DestinationBuffer dstBuffer, in long dstOffset);

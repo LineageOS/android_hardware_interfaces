@@ -16,6 +16,9 @@
 
 package android.hardware.cas;
 
+/**
+ * @hide
+ */
 @VintfStability
 parcelable Status {
     /**

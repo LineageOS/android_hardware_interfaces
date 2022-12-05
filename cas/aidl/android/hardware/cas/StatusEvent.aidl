@@ -18,6 +18,7 @@ package android.hardware.cas;
 
 /**
  * The Event Type for status change.
+ * @hide
  */
 @VintfStability
 @Backing(type="byte")
