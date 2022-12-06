@@ -19,6 +19,7 @@ package android.hardware.thermal;
 import android.hardware.thermal.TemperatureType;
 import android.hardware.thermal.ThrottlingSeverity;
 
+/* @hide */
 @VintfStability
 parcelable Temperature {
     /**

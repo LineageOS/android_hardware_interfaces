@@ -23,6 +23,7 @@ import android.hardware.thermal.Temperature;
 import android.hardware.thermal.TemperatureThreshold;
 import android.hardware.thermal.TemperatureType;
 
+/* @hide */
 @VintfStability
 interface IThermal {
     /**

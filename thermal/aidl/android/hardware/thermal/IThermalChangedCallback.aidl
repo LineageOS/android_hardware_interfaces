@@ -20,6 +20,7 @@ import android.hardware.thermal.Temperature;
 
 /**
  * IThermalChangedCallback send throttling notification to clients.
+ * @hide
  */
 @VintfStability
 interface IThermalChangedCallback {
