@@ -18,6 +18,7 @@ package android.hardware.thermal;
 
 /**
  * Device temperature types
+ * @hide
  */
 @VintfStability
 @Backing(type="int")

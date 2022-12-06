@@ -18,6 +18,7 @@ package android.hardware.thermal;
 
 /**
  * Device throttling severity
+ * @hide
  */
 @VintfStability
 @Backing(type="int")

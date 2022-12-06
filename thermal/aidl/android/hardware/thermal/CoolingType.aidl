@@ -18,6 +18,7 @@ package android.hardware.thermal;
 
 /**
  * Device cooling device types
+ * @hide
  */
 @VintfStability
 @Backing(type="int")
