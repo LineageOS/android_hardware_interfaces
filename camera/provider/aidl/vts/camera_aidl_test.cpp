@@ -2639,8 +2639,20 @@ void CameraAidlTest::configureStreams(const std::string& name,
 
     outputStreams.clear();
     Size maxSize;
-    auto rc = getMaxOutputSizeForFormat(staticMeta, format, &maxSize, maxResolution);
-    ASSERT_EQ(Status::OK, rc);
+    if (maxResolution) {
+        auto rc = getMaxOutputSizeForFormat(staticMeta, format, &maxSize, maxResolution);
+        ASSERT_EQ(Status::OK, rc);
+    } else {
+        AvailableStream previewThreshold = {kMaxPreviewWidth, kMaxPreviewHeight,
+            static_cast<int32_t>(format)};
+        auto rc = getAvailableOutputStreams(staticMeta, outputStreams, &previewThreshold);
+
+        ASSERT_EQ(Status::OK, rc);
+        ASSERT_FALSE(outputStreams.empty());
+        maxSize.width = outputStreams[0].width;
+        maxSize.height = outputStreams[0].height;
+    }
+
 
     std::vector<Stream> streams(1);
     streams[0] = {0,
@@ -2648,9 +2660,8 @@ void CameraAidlTest::configureStreams(const std::string& name,
                   maxSize.width,
                   maxSize.height,
                   format,
-                  static_cast<::aidl::android::hardware::graphics::common::BufferUsage>(
-                          GRALLOC1_CONSUMER_USAGE_CPU_READ),
-                  Dataspace::UNKNOWN,
+                  previewStream->usage,
+                  previewStream->dataSpace,
                   StreamRotation::ROTATION_0,
                   "",
                   0,
@@ -2736,7 +2747,8 @@ void CameraAidlTest::verify10BitMetadata(
         HandleImporter& importer, const InFlightRequest& request,
         aidl::android::hardware::camera::metadata::RequestAvailableDynamicRangeProfilesMap
                 profile) {
-    for (const auto& b : request.resultOutputBuffers) {
+    for (auto b : request.resultOutputBuffers) {
+        importer.importBuffer(b.buffer.buffer);
         bool smpte2086Present = importer.isSmpte2086Present(b.buffer.buffer);
         bool smpte2094_10Present = importer.isSmpte2094_10Present(b.buffer.buffer);
         bool smpte2094_40Present = importer.isSmpte2094_40Present(b.buffer.buffer);
@@ -2753,7 +2765,6 @@ void CameraAidlTest::verify10BitMetadata(
                 ASSERT_FALSE(smpte2094_40Present);
                 break;
             case ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_HDR10_PLUS:
-                ASSERT_FALSE(smpte2086Present);
                 ASSERT_FALSE(smpte2094_10Present);
                 ASSERT_TRUE(smpte2094_40Present);
                 break;
@@ -2774,6 +2785,7 @@ void CameraAidlTest::verify10BitMetadata(
                       profile);
                 ADD_FAILURE();
         }
+        importer.freeBuffer(b.buffer.buffer);
     }
 }
 

@@ -60,12 +60,14 @@ void BluetoothAudioSession::OnSessionStarted(
     LOG(ERROR) << __func__ << " - SessionType=" << toString(session_type_)
                << " MqDescriptor Invalid";
     audio_config_ = nullptr;
+    leaudio_connection_map_ = nullptr;
   } else {
     stack_iface_ = stack_iface;
     latency_modes_ = latency_modes;
     LOG(INFO) << __func__ << " - SessionType=" << toString(session_type_)
               << ", AudioConfiguration=" << audio_config.toString();
     ReportSessionStatus();
+    is_streaming_ = false;
   }
 }
 
@@ -74,11 +76,13 @@ void BluetoothAudioSession::OnSessionEnded() {
   bool toggled = IsSessionReady();
   LOG(INFO) << __func__ << " - SessionType=" << toString(session_type_);
   audio_config_ = nullptr;
+  leaudio_connection_map_ = nullptr;
   stack_iface_ = nullptr;
   UpdateDataPath(nullptr);
   if (toggled) {
     ReportSessionStatus();
   }
+  is_streaming_ = false;
 }
 
 /***
@@ -106,6 +110,14 @@ const AudioConfiguration BluetoothAudioSession::GetAudioConfig() {
   return *audio_config_;
 }
 
+const AudioConfiguration BluetoothAudioSession::GetLeAudioConnectionMap() {
+  std::lock_guard<std::recursive_mutex> guard(mutex_);
+  if (!IsSessionReady()) {
+    return AudioConfiguration(LeAudioConfiguration{});
+  }
+  return *leaudio_connection_map_;
+}
+
 void BluetoothAudioSession::ReportAudioConfigChanged(
     const AudioConfiguration& audio_config) {
   if (session_type_ !=
@@ -114,8 +126,56 @@ void BluetoothAudioSession::ReportAudioConfigChanged(
           SessionType::LE_AUDIO_HARDWARE_OFFLOAD_DECODING_DATAPATH) {
     return;
   }
+
   std::lock_guard<std::recursive_mutex> guard(mutex_);
-  audio_config_ = std::make_unique<AudioConfiguration>(audio_config);
+  if (audio_config.getTag() != AudioConfiguration::leAudioConfig) {
+    LOG(ERROR) << __func__ << " invalid audio config type for SessionType ="
+               << toString(session_type_);
+    return;
+  }
+
+  if (is_streaming_) {
+    if (audio_config_ == nullptr) {
+      LOG(ERROR) << __func__ << " for SessionType=" << toString(session_type_)
+                 << " audio_config_ is nullptr during streaming. It shouldn't "
+                    "be happened";
+      return;
+    }
+
+    auto new_leaudio_config =
+        audio_config.get<AudioConfiguration::leAudioConfig>();
+    auto current_leaudio_config =
+        (*audio_config_).get<AudioConfiguration::leAudioConfig>();
+    if (new_leaudio_config.codecType != current_leaudio_config.codecType) {
+      LOG(ERROR)
+          << __func__ << " for SessionType=" << toString(session_type_)
+          << " codec type changed during streaming. It shouldn't be happened ";
+    }
+    auto new_lc3_config = new_leaudio_config.leAudioCodecConfig
+                              .get<LeAudioCodecConfiguration::lc3Config>();
+    auto current_lc3_config = current_leaudio_config.leAudioCodecConfig
+                                  .get<LeAudioCodecConfiguration::lc3Config>();
+    if ((new_lc3_config.pcmBitDepth != current_lc3_config.pcmBitDepth) ||
+        (new_lc3_config.samplingFrequencyHz !=
+         current_lc3_config.samplingFrequencyHz) ||
+        (new_lc3_config.frameDurationUs !=
+         current_lc3_config.frameDurationUs) ||
+        (new_lc3_config.octetsPerFrame != current_lc3_config.octetsPerFrame) ||
+        (new_lc3_config.blocksPerSdu != current_lc3_config.blocksPerSdu)) {
+      LOG(ERROR)
+          << __func__ << " for SessionType=" << toString(session_type_)
+          << " lc3 config changed during streaming. It shouldn't be happened";
+      return;
+    }
+
+    leaudio_connection_map_ =
+        std::make_unique<AudioConfiguration>(audio_config);
+  } else {
+    audio_config_ = std::make_unique<AudioConfiguration>(audio_config);
+    leaudio_connection_map_ =
+        std::make_unique<AudioConfiguration>(audio_config);
+  }
+
   if (observers_.empty()) {
     LOG(WARNING) << __func__ << " - SessionType=" << toString(session_type_)
                  << " has NO port state observer";
@@ -127,7 +187,11 @@ void BluetoothAudioSession::ReportAudioConfigChanged(
     LOG(INFO) << __func__ << " for SessionType=" << toString(session_type_)
               << ", bluetooth_audio=0x"
               << ::android::base::StringPrintf("%04x", cookie);
-    if (cb->audio_configuration_changed_cb_ != nullptr) {
+    if (is_streaming_) {
+      if (cb->soft_audio_configuration_changed_cb_ != nullptr) {
+        cb->soft_audio_configuration_changed_cb_(cookie);
+      }
+    } else if (cb->audio_configuration_changed_cb_ != nullptr) {
       cb->audio_configuration_changed_cb_(cookie);
     }
   }
@@ -274,11 +338,14 @@ bool BluetoothAudioSession::UpdateAudioConfig(
   bool is_offload_a2dp_session =
       (session_type_ == SessionType::A2DP_HARDWARE_OFFLOAD_ENCODING_DATAPATH ||
        session_type_ == SessionType::A2DP_HARDWARE_OFFLOAD_DECODING_DATAPATH);
-  bool is_offload_le_audio_session =
+  bool is_offload_le_audio_unicast_session =
       (session_type_ ==
            SessionType::LE_AUDIO_HARDWARE_OFFLOAD_ENCODING_DATAPATH ||
        session_type_ ==
            SessionType::LE_AUDIO_HARDWARE_OFFLOAD_DECODING_DATAPATH);
+  bool is_offload_le_audio_broadcast_session =
+      (session_type_ ==
+       SessionType::LE_AUDIO_BROADCAST_HARDWARE_OFFLOAD_ENCODING_DATAPATH);
   auto audio_config_tag = audio_config.getTag();
   bool is_software_audio_config =
       (is_software_session &&
@@ -286,11 +353,15 @@ bool BluetoothAudioSession::UpdateAudioConfig(
   bool is_a2dp_offload_audio_config =
       (is_offload_a2dp_session &&
        audio_config_tag == AudioConfiguration::a2dpConfig);
-  bool is_le_audio_offload_audio_config =
-      (is_offload_le_audio_session &&
+  bool is_le_audio_offload_unicast_audio_config =
+      (is_offload_le_audio_unicast_session &&
        audio_config_tag == AudioConfiguration::leAudioConfig);
+  bool is_le_audio_offload_broadcast_audio_config =
+      (is_offload_le_audio_broadcast_session &&
+       audio_config_tag == AudioConfiguration::leAudioBroadcastConfig);
   if (!is_software_audio_config && !is_a2dp_offload_audio_config &&
-      !is_le_audio_offload_audio_config) {
+      !is_le_audio_offload_unicast_audio_config &&
+      !is_le_audio_offload_broadcast_audio_config) {
     return false;
   }
   audio_config_ = std::make_unique<AudioConfiguration>(audio_config);
@@ -409,6 +480,12 @@ void BluetoothAudioSession::ReportControlStatus(bool start_resp,
     LOG(WARNING) << __func__ << " - SessionType=" << toString(session_type_)
                  << " has NO port state observer";
     return;
+  }
+  if (start_resp && status == BluetoothAudioStatus::SUCCESS) {
+    is_streaming_ = true;
+  } else if (!start_resp && (status == BluetoothAudioStatus::SUCCESS ||
+                             status == BluetoothAudioStatus::RECONFIGURATION)) {
+    is_streaming_ = false;
   }
   for (auto& observer : observers_) {
     uint16_t cookie = observer.first;
