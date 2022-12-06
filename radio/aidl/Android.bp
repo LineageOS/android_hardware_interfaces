@@ -12,6 +12,7 @@ aidl_interface {
     vendor_available: true,
     host_supported: true,
     srcs: ["android/hardware/radio/*.aidl"],
+    frozen: true,
     stability: "vintf",
     backend: {
         cpp: {
@@ -35,6 +36,7 @@ aidl_interface {
     vendor_available: true,
     host_supported: true,
     srcs: ["android/hardware/radio/config/*.aidl"],
+    frozen: true,
     stability: "vintf",
     imports: ["android.hardware.radio"],
     backend: {
