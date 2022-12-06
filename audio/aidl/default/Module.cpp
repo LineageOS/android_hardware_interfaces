@@ -19,6 +19,7 @@
 
 #define LOG_TAG "AHAL_Module"
 #include <android-base/logging.h>
+#include <android/binder_ibinder_platform.h>
 
 #include <Utils.h>
 #include <aidl/android/media/audio/common/AudioInputFlags.h>
@@ -307,6 +308,8 @@ ndk::ScopedAStatus Module::setModuleDebug(
 ndk::ScopedAStatus Module::getTelephony(std::shared_ptr<ITelephony>* _aidl_return) {
     if (mTelephony == nullptr) {
         mTelephony = ndk::SharedRefBase::make<Telephony>();
+        AIBinder_setMinSchedulerPolicy(mTelephony->asBinder().get(), SCHED_NORMAL,
+                                       ANDROID_PRIORITY_AUDIO);
     }
     *_aidl_return = mTelephony;
     LOG(DEBUG) << __func__ << ": returning instance of ITelephony: " << _aidl_return->get();
@@ -525,6 +528,7 @@ ndk::ScopedAStatus Module::openInputStream(const OpenInputStreamArguments& in_ar
     if (auto status = stream->init(); !status.isOk()) {
         return status;
     }
+    AIBinder_setMinSchedulerPolicy(stream->asBinder().get(), SCHED_NORMAL, ANDROID_PRIORITY_AUDIO);
     StreamWrapper streamWrapper(stream);
     auto patchIt = mPatches.find(in_args.portConfigId);
     if (patchIt != mPatches.end()) {
@@ -575,6 +579,7 @@ ndk::ScopedAStatus Module::openOutputStream(const OpenOutputStreamArguments& in_
     if (auto status = stream->init(); !status.isOk()) {
         return status;
     }
+    AIBinder_setMinSchedulerPolicy(stream->asBinder().get(), SCHED_NORMAL, ANDROID_PRIORITY_AUDIO);
     StreamWrapper streamWrapper(stream);
     auto patchIt = mPatches.find(in_args.portConfigId);
     if (patchIt != mPatches.end()) {

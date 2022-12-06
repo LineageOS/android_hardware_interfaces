@@ -21,6 +21,7 @@
 #include "core-impl/Module.h"
 
 #include <android-base/logging.h>
+#include <android/binder_ibinder_platform.h>
 #include <android/binder_manager.h>
 #include <android/binder_process.h>
 
@@ -44,6 +45,8 @@ int main() {
 
     // Make the default module
     auto moduleDefault = ndk::SharedRefBase::make<Module>();
+    AIBinder_setMinSchedulerPolicy(moduleDefault->asBinder().get(), SCHED_NORMAL,
+                                   ANDROID_PRIORITY_AUDIO);
     const std::string moduleDefaultName = std::string() + Module::descriptor + "/default";
     status = AServiceManager_addService(moduleDefault->asBinder().get(), moduleDefaultName.c_str());
     CHECK_EQ(STATUS_OK, status);
