@@ -30,6 +30,7 @@
 #include <algorithm>
 
 #include <android/log.h>
+#include <hidl/HidlTransportSupport.h>
 #include <mediautils/MemoryLeakTrackUtil.h>
 #include <memunreachable/memunreachable.h>
 
@@ -183,6 +184,7 @@ std::tuple<Result, sp<IStreamOut>> Device::openOutputStreamCore(int32_t ioHandle
     if (status == OK) {
         streamOut = new StreamOut(this, halStream);
         ++mOpenedStreamsCount;
+        android::hardware::setMinSchedulerPolicy(streamOut, SCHED_NORMAL, ANDROID_PRIORITY_AUDIO);
     }
     status_t convertStatus =
             HidlUtils::audioConfigFromHal(halConfig, false /*isInput*/, suggestedConfig);
@@ -220,6 +222,7 @@ std::tuple<Result, sp<IStreamIn>> Device::openInputStreamCore(
     if (status == OK) {
         streamIn = new StreamIn(this, halStream);
         ++mOpenedStreamsCount;
+        android::hardware::setMinSchedulerPolicy(streamIn, SCHED_NORMAL, ANDROID_PRIORITY_AUDIO);
     }
     status_t convertStatus =
             HidlUtils::audioConfigFromHal(halConfig, true /*isInput*/, suggestedConfig);
