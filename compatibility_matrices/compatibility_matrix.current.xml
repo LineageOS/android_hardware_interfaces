@@ -593,6 +593,7 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.sensors</name>
+        <version>2</version>
         <interface>
             <name>ISensors</name>
             <instance>default</instance>
