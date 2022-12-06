@@ -39,5 +39,4 @@ enum DemuxRecordScIndexType {
   SC = 1,
   SC_HEVC = 2,
   SC_AVC = 3,
-  SC_VVC = 4,
 }

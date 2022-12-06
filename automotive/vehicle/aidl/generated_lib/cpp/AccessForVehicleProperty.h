@@ -224,7 +224,6 @@ std::unordered_map<VehicleProperty, VehiclePropertyAccess> AccessForVehiclePrope
         {VehicleProperty::VEHICLE_CURB_WEIGHT, VehiclePropertyAccess::READ},
         {VehicleProperty::GENERAL_SAFETY_REGULATION_COMPLIANCE_REQUIREMENT, VehiclePropertyAccess::READ},
         {VehicleProperty::SUPPORTED_PROPERTY_IDS, VehiclePropertyAccess::READ},
-        {VehicleProperty::SHUTDOWN_REQUEST, VehiclePropertyAccess::WRITE},
 };
 
 }  // namespace vehicle

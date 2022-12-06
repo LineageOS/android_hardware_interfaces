@@ -19,7 +19,6 @@
 #include <aidl/android/hardware/contexthub/BnContextHub.h>
 
 #include <unordered_set>
-#include <vector>
 
 namespace aidl {
 namespace android {
@@ -38,8 +37,6 @@ class ContextHub : public BnContextHub {
                                        int32_t in_transactionId) override;
     ::ndk::ScopedAStatus onSettingChanged(Setting in_setting, bool in_enabled) override;
     ::ndk::ScopedAStatus queryNanoapps(int32_t in_contextHubId) override;
-    ::ndk::ScopedAStatus getPreloadedNanoappIds(
-            std::vector<int64_t>* out_preloadedNanoappIds) override;
     ::ndk::ScopedAStatus registerCallback(
             int32_t in_contextHubId, const std::shared_ptr<IContextHubCallback>& in_cb) override;
     ::ndk::ScopedAStatus sendMessageToHub(int32_t in_contextHubId,

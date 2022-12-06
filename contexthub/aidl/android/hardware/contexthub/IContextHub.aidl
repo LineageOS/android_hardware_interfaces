@@ -21,7 +21,6 @@ import android.hardware.contexthub.ContextHubMessage;
 import android.hardware.contexthub.HostEndpointInfo;
 import android.hardware.contexthub.IContextHubCallback;
 import android.hardware.contexthub.NanoappBinary;
-import android.hardware.contexthub.NanoappInfo;
 import android.hardware.contexthub.Setting;
 
 @VintfStability
@@ -194,14 +193,6 @@ interface IContextHub {
      *                       parameter should be ignored (no-op).
      */
     void onHostEndpointDisconnected(char hostEndpointId);
-
-    /**
-     * Provides the list of preloaded nanoapp IDs on the system. The output of this API must
-     * not change.
-     *
-     * @return The list of preloaded nanoapp IDs
-     */
-    long[] getPreloadedNanoappIds();
 
     /**
      * Error codes that are used as service specific errors with the AIDL return

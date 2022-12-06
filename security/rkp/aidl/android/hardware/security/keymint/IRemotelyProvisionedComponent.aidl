@@ -132,7 +132,11 @@ interface IRemotelyProvisionedComponent {
      * generateKeyPair generates a new ECDSA P-256 key pair that can be attested by the remote
      * server.
      *
-     * @param in boolean testMode indicates whether the generated key is for testing only. Test keys
+     * @param in boolean testMode this field is now deprecated. It is ignored by the implementation
+     *        in v3, but retained to simplify backwards compatibility support. V1 and V2
+     *        implementations must still respect the testMode flag.
+     *
+     *        testMode indicates whether the generated key is for testing only. Test keys
      *        are marked (see the definition of PublicKey in the MacedPublicKey structure) to
      *        prevent them from being confused with production keys.
      *
@@ -146,8 +150,8 @@ interface IRemotelyProvisionedComponent {
     byte[] generateEcdsaP256KeyPair(in boolean testMode, out MacedPublicKey macedPublicKey);
 
     /**
-     * This method can be removed in version 3 of the HAL. The header is kept around for
-     * backwards compatibility purposes. From v3, this method is allowed to raise a
+     * This method has been removed in version 3 of the HAL. The header is kept around for
+     * backwards compatibility purposes. From v3, this method should raise a
      * ServiceSpecificException with an error code of STATUS_REMOVED.
      *
      * For v1 and v2 implementations:
@@ -302,9 +306,7 @@ interface IRemotelyProvisionedComponent {
      *
      * @param in MacedPublicKey[] keysToSign contains the set of keys to certify. The
      *        IRemotelyProvisionedComponent must validate the MACs on each key.  If any entry in the
-     *        array lacks a valid MAC, the method must return STATUS_INVALID_MAC.  This method must
-     *        not accept test keys. If any entry in the array is a test key, the method must return
-     *        STATUS_TEST_KEY_IN_PRODUCTION_REQUEST.
+     *        array lacks a valid MAC, the method must return STATUS_INVALID_MAC.
      *
      * @param in challenge contains a byte string from the provisioning server which will be
      *        included in the signed data of the CSR structure. Different provisioned backends may

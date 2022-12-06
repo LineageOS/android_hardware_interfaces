@@ -84,9 +84,4 @@ enum VideoStreamType {
      * New Chinese Standard
      */
     AVS2,
-
-    /*
-     * ITU-T Rec. H.266 and ISO/IEC 23090-3
-     */
-    VVC,
 }

@@ -37,9 +37,6 @@ interface IRadioModemResponse {
   oneway void acknowledgeRequest(in int serial);
   oneway void enableModemResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void getBasebandVersionResponse(in android.hardware.radio.RadioResponseInfo info, in String version);
-  /**
-   * @deprecated use getImeiResponse(RadioResponseInfo responseInfo, ImeiInfo imeiInfo)
-   */
   oneway void getDeviceIdentityResponse(in android.hardware.radio.RadioResponseInfo info, in String imei, in String imeisv, in String esn, in String meid);
   oneway void getHardwareConfigResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.modem.HardwareConfig[] config);
   oneway void getModemActivityInfoResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.modem.ActivityStatsInfo activityInfo);
@@ -62,5 +59,4 @@ interface IRadioModemResponse {
   oneway void sendDeviceStateResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void setRadioCapabilityResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.modem.RadioCapability rc);
   oneway void setRadioPowerResponse(in android.hardware.radio.RadioResponseInfo info);
-  oneway void getImeiResponse(in android.hardware.radio.RadioResponseInfo responseInfo, in @nullable android.hardware.radio.modem.ImeiInfo imeiInfo);
 }

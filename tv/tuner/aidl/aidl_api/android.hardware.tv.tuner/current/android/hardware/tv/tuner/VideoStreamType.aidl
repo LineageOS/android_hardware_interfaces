@@ -48,5 +48,4 @@ enum VideoStreamType {
   AV1 = 10,
   AVS = 11,
   AVS2 = 12,
-  VVC = 13,
 }

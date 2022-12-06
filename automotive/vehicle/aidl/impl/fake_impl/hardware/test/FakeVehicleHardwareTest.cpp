@@ -1223,8 +1223,6 @@ TEST_F(FakeVehicleHardwareTest, testSwitchUser) {
     ASSERT_EQ(events.size(), static_cast<size_t>(1));
 
     events[0].timestamp = 0;
-    // The returned event will have area ID 0.
-    valueToSet.areaId = 0;
     ASSERT_EQ(events[0], valueToSet);
 
     // Try to get switch_user again, should return default value.
@@ -1279,8 +1277,6 @@ TEST_F(FakeVehicleHardwareTest, testCreateUser) {
     auto events = getChangedProperties();
     ASSERT_EQ(events.size(), static_cast<size_t>(1));
     events[0].timestamp = 0;
-    // The returned event will have area ID 0.
-    valueToSet.areaId = 0;
     EXPECT_EQ(events[0], valueToSet);
 
     // Try to get create_user again, should return default value.
@@ -1334,7 +1330,7 @@ TEST_F(FakeVehicleHardwareTest, testInitialUserInfo) {
     ASSERT_EQ(events.size(), static_cast<size_t>(1));
     events[0].timestamp = 0;
     EXPECT_EQ(events[0], (VehiclePropValue{
-                                 .areaId = 0,
+                                 .areaId = 1,
                                  .prop = toInt(VehicleProperty::INITIAL_USER_INFO),
                                  .value.int32Values = {3, 1, 11},
                          }));

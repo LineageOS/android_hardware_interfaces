@@ -45,6 +45,5 @@ interface IContextHub {
   void sendMessageToHub(in int contextHubId, in android.hardware.contexthub.ContextHubMessage message);
   void onHostEndpointConnected(in android.hardware.contexthub.HostEndpointInfo hostEndpointInfo);
   void onHostEndpointDisconnected(char hostEndpointId);
-  long[] getPreloadedNanoappIds();
   const int EX_CONTEXT_HUB_UNSPECIFIED = -1;
 }

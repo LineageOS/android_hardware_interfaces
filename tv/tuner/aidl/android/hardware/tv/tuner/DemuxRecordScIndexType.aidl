@@ -42,9 +42,4 @@ enum DemuxRecordScIndexType {
      * Use Start Code index for AVC
      */
     SC_AVC,
-
-    /**
-     * Use Start Code index for VVC
-     */
-    SC_VVC,
 }

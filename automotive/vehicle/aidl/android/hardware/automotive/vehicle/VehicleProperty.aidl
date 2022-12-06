@@ -97,12 +97,8 @@ enum VehicleProperty {
     INFO_FUEL_TYPE = 0x0105 + 0x10000000 + 0x01000000
             + 0x00410000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32_VEC
     /**
-     * Nominal battery capacity for EV or hybrid vehicle
-     *
-     * Returns the nominal battery capacity, if EV or hybrid. This is the battery capacity when the
-     * vehicle is new. This value might be different from EV_CURRENT_BATTERY_CAPACITY because
-     * EV_CURRENT_BATTERY_CAPACITY returns the real-time battery capacity taking into account
-     * factors such as battery aging and temperature dependency.
+     * Battery capacity of the vehicle, if EV or hybrid.  This is the nominal
+     * battery capacity when the vehicle is new.
      *
      * @change_mode VehiclePropertyChangeMode.STATIC
      * @access VehiclePropertyAccess.READ
@@ -1154,7 +1150,7 @@ enum VehicleProperty {
      * It is assumed that AP's power state is controlled by a separate power
      * controller.
      *
-     * For configuration information, VehiclePropConfig.configArray must have bit flag combining
+     * For configuration information, VehiclePropConfig.configArray can have bit flag combining
      * values in VehicleApPowerStateConfigFlag.
      *
      *   int32Values[0] : VehicleApPowerStateReq enum value
@@ -1746,9 +1742,6 @@ enum VehicleProperty {
      *
      * This property can be set to VehiclePropertyAccess.READ read only for the sake of regulation
      * or safety concerns.
-     *
-     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
-     * @access VehiclePropertyAccess.READ_WRITE
      */
     SEAT_AIRBAG_ENABLED =
             0x0B9E + VehiclePropertyGroup.SYSTEM + VehicleArea.SEAT + VehiclePropertyType.BOOLEAN,
@@ -3140,41 +3133,4 @@ enum VehicleProperty {
      */
     SUPPORTED_PROPERTY_IDS = 0x0F48 + 0x10000000 + 0x01000000
             + 0x00410000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32_VEC
-
-    /**
-     * Request the head unit to be shutdown.
-     *
-     * <p>This usually involves telling a separate system outside the head unit (e.g. a power
-     * controller) to prepare shutting down the head unit.
-     *
-     * <p>This does not mean the head unit will shutdown immediately.
-     *
-     * <p>This means that another system will start sending a shutdown signal to the head unit,
-     * which will cause VHAL to send SHUTDOWN_PREPARE message to Android. Android will then start
-     * the shut down process by handling the message.
-     *
-     * <p>This property is only for issuing a request and only supports writing. Every time this
-     * property value is set, the request to shutdown will be issued no matter what the current
-     * property value is. The current property value is meaningless.
-     *
-     * <p>Since this property is write-only, subscribing is not allowed and no property change
-     * event will be generated.
-     *
-     * <p>The value to set indicates the shutdown option, it must be one of
-     * {@code VehicleApPowerStateShutdownParam}, e.g.,
-     * VehicleApPowerStateShutdownParam.SLEEP_IMMEDIATELY. This shutdown option might not be honored
-     * if the system doesn't support such option. In such case, an error will not be returned.
-     *
-     * <p>For configuration information, VehiclePropConfig.configArray must have bit flag combining
-     * values in {@code VehicleApPowerStateConfigFlag} to indicate which shutdown options are
-     * supported.
-     *
-     * <p>Returns error if failed to send the shutdown request to the other system.
-     *
-     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
-     * @access VehiclePropertyAccess.WRITE
-     * @data_enum VehicleApPowerStateShutdownParam
-     */
-    SHUTDOWN_REQUEST =
-            0x0F49 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
 }

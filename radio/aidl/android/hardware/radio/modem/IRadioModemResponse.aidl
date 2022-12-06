@@ -20,7 +20,6 @@ import android.hardware.radio.RadioResponseInfo;
 import android.hardware.radio.modem.ActivityStatsInfo;
 import android.hardware.radio.modem.HardwareConfig;
 import android.hardware.radio.modem.RadioCapability;
-import android.hardware.radio.modem.ImeiInfo;
 
 /**
  * Interface declaring response functions to solicited radio requests for modem APIs.
@@ -88,8 +87,6 @@ oneway interface IRadioModemResponse {
      *   RadioError:NOT_PROVISIONED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
-     *   RadioError:REQUEST_NOT_SUPPORTED
-     * @deprecated use getImeiResponse(RadioResponseInfo responseInfo, ImeiInfo imeiInfo)
      */
     void getDeviceIdentityResponse(in RadioResponseInfo info, in String imei, in String imeisv,
             in String esn, in String meid);
@@ -253,20 +250,4 @@ oneway interface IRadioModemResponse {
      *   RadioError:NO_RF_CALIBRATION_INFO
      */
     void setRadioPowerResponse(in RadioResponseInfo info);
-
-    /**
-     * ImeiInfo to encapsulate the IMEI information from modem. When the return error code
-     * is {@code RadioError:NONE}, {@code imeiInfo} must be non-null, and a valid IMEITYPE,
-     * IMEI and SVN must be filled in {@code imeiInfo}. When the error code is not
-     * {@code RadioError:NONE}, {@code imeiInfo} must be {@code null}.
-     *
-     * @param responseInfo Response info struct containing response type, serial no. and error
-     * @param imeiInfo IMEI information
-     *
-     * Valid errors returned:
-     *   RadioError:NONE
-     *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:MODEM_ERR
-     */
-    void getImeiResponse(in RadioResponseInfo responseInfo, in @nullable ImeiInfo imeiInfo);
 }

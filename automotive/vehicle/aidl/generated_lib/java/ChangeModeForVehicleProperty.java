@@ -215,8 +215,7 @@ public final class ChangeModeForVehicleProperty {
         Map.entry(VehicleProperty.TRAILER_PRESENT, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.VEHICLE_CURB_WEIGHT, VehiclePropertyChangeMode.STATIC),
         Map.entry(VehicleProperty.GENERAL_SAFETY_REGULATION_COMPLIANCE_REQUIREMENT, VehiclePropertyChangeMode.STATIC),
-        Map.entry(VehicleProperty.SUPPORTED_PROPERTY_IDS, VehiclePropertyChangeMode.STATIC),
-        Map.entry(VehicleProperty.SHUTDOWN_REQUEST, VehiclePropertyChangeMode.ON_CHANGE)
+        Map.entry(VehicleProperty.SUPPORTED_PROPERTY_IDS, VehiclePropertyChangeMode.STATIC)
     );
 
 }

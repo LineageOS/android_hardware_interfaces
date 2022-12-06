@@ -36,9 +36,6 @@ package android.hardware.radio.modem;
 interface IRadioModem {
   oneway void enableModem(in int serial, in boolean on);
   oneway void getBasebandVersion(in int serial);
-  /**
-   * @deprecated use getImei(int serial)
-   */
   oneway void getDeviceIdentity(in int serial);
   oneway void getHardwareConfig(in int serial);
   oneway void getModemActivityInfo(in int serial);
@@ -63,5 +60,4 @@ interface IRadioModem {
   oneway void setRadioCapability(in int serial, in android.hardware.radio.modem.RadioCapability rc);
   oneway void setRadioPower(in int serial, in boolean powerOn, in boolean forEmergencyCall, in boolean preferredForEmergencyCall);
   oneway void setResponseFunctions(in android.hardware.radio.modem.IRadioModemResponse radioModemResponse, in android.hardware.radio.modem.IRadioModemIndication radioModemIndication);
-  oneway void getImei(in int serial);
 }

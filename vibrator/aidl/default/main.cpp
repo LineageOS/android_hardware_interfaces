@@ -29,15 +29,15 @@ int main() {
 
     // make a default vibrator service
     auto vib = ndk::SharedRefBase::make<Vibrator>();
-    binder_status_t status = AServiceManager_addService(
-            vib->asBinder().get(), Vibrator::makeServiceName("default").c_str());
+    const std::string vibName = std::string() + Vibrator::descriptor + "/default";
+    binder_status_t status = AServiceManager_addService(vib->asBinder().get(), vibName.c_str());
     CHECK_EQ(status, STATUS_OK);
 
     // make the vibrator manager service with a different vibrator
     auto managedVib = ndk::SharedRefBase::make<Vibrator>();
     auto vibManager = ndk::SharedRefBase::make<VibratorManager>(std::move(managedVib));
-    status = AServiceManager_addService(vibManager->asBinder().get(),
-                                        VibratorManager::makeServiceName("default").c_str());
+    const std::string vibManagerName = std::string() + VibratorManager::descriptor + "/default";
+    status = AServiceManager_addService(vibManager->asBinder().get(), vibManagerName.c_str());
     CHECK_EQ(status, STATUS_OK);
 
     ABinderProcess_joinThreadPool();
