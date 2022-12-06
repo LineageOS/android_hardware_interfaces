@@ -141,7 +141,7 @@ class DefaultVhalImplTest : public ::testing::Test {
 TEST_F(DefaultVhalImplTest, testListProperties) {
     std::vector<VehiclePropConfig> configs = mHal->listProperties();
 
-    EXPECT_EQ((size_t)121, configs.size());
+    EXPECT_EQ((size_t)123, configs.size());
 }
 
 TEST_F(DefaultVhalImplTest, testGetDefaultPropertyFloat) {

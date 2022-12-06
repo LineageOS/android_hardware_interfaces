@@ -59,7 +59,10 @@ ndk::ScopedAStatus Vibrator::on(int32_t timeoutMs,
                                 const std::shared_ptr<IVibratorCallback>& callback) {
     LOG(VERBOSE) << "Vibrator on for timeoutMs: " << timeoutMs;
     if (callback != nullptr) {
-        std::thread([=] {
+        // Note that thread lambdas aren't using implicit capture [=], to avoid capturing "this",
+        // which may be asynchronously destructed.
+        // If "this" is needed, use [sharedThis = this->ref<Vibrator>()].
+        std::thread([timeoutMs, callback] {
             LOG(VERBOSE) << "Starting on on another thread";
             usleep(timeoutMs * 1000);
             LOG(VERBOSE) << "Notifying on complete";
@@ -87,7 +90,7 @@ ndk::ScopedAStatus Vibrator::perform(Effect effect, EffectStrength strength,
     constexpr size_t kEffectMillis = 100;
 
     if (callback != nullptr) {
-        std::thread([=] {
+        std::thread([callback] {
             LOG(VERBOSE) << "Starting perform on another thread";
             usleep(kEffectMillis * 1000);
             LOG(VERBOSE) << "Notifying perform complete";
@@ -174,7 +177,8 @@ ndk::ScopedAStatus Vibrator::compose(const std::vector<CompositeEffect>& composi
         }
     }
 
-    std::thread([=] {
+    // The thread may theoretically outlive the vibrator, so take a proper reference to it.
+    std::thread([sharedThis = this->ref<Vibrator>(), composite, callback] {
         LOG(VERBOSE) << "Starting compose on another thread";
 
         for (auto& e : composite) {
@@ -185,7 +189,7 @@ ndk::ScopedAStatus Vibrator::compose(const std::vector<CompositeEffect>& composi
                          << e.scale;
 
             int32_t durationMs;
-            getPrimitiveDuration(e.primitive, &durationMs);
+            sharedThis->getPrimitiveDuration(e.primitive, &durationMs);
             usleep(durationMs * 1000);
         }
 
@@ -396,7 +400,7 @@ ndk::ScopedAStatus Vibrator::composePwle(const std::vector<PrimitivePwle> &compo
         }
     }
 
-    std::thread([=] {
+    std::thread([totalDuration, callback] {
         LOG(VERBOSE) << "Starting composePwle on another thread";
         usleep(totalDuration * 1000);
         if (callback != nullptr) {
