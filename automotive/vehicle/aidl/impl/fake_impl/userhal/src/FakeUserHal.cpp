@@ -328,6 +328,9 @@ FakeUserHal::ValueResultType FakeUserHal::sendUserHalResponse(
                    << "invalid action on lshal response: " << response->toString();
     }
 
+    // Update area ID to 0 since this is a global property (and the area ID was only set to emulate
+    // the request id behavior).
+    response->areaId = 0;
     ALOGD("updating property to: %s", response->toString().c_str());
     return response;
 }

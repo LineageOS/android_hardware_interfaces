@@ -156,6 +156,19 @@ TEST_P(ContextHubAidl, TestQueryApps) {
     }
 }
 
+// Calls getPreloadedNanoapps() and verifies there are preloaded nanoapps
+TEST_P(ContextHubAidl, TestGetPreloadedNanoapps) {
+    std::vector<int64_t> preloadedNanoappIds;
+    Status status = contextHub->getPreloadedNanoappIds(&preloadedNanoappIds);
+    if (status.exceptionCode() == Status::EX_UNSUPPORTED_OPERATION ||
+        status.transactionError() == android::UNKNOWN_TRANSACTION) {
+        return;  // not supported -> old API; or not implemented
+    }
+
+    ASSERT_TRUE(status.isOk());
+    ASSERT_FALSE(preloadedNanoappIds.empty());
+}
+
 // Helper callback that puts the TransactionResult for the expectedTransactionId into a
 // promise
 class TransactionResultCallback : public android::hardware::contexthub::BnContextHubCallback {
