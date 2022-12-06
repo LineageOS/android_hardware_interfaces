@@ -34,7 +34,15 @@
 package android.hardware.radio.sim;
 @JavaDerive(toString=true) @VintfStability
 parcelable CarrierRestrictions {
-  android.hardware.radio.sim.Carrier[] allowedCarriers;
-  android.hardware.radio.sim.Carrier[] excludedCarriers;
-  boolean allowedCarriersPrioritized;
+    @Backing(type="int") @VintfStability
+    enum CarrierRestrictionStatus {
+        UNKNOWN = 0,
+        NOT_RESTRICTED = 1,
+        RESTRICTED = 2,
+    }
+    android.hardware.radio.sim.Carrier[] allowedCarriers;
+    android.hardware.radio.sim.Carrier[] excludedCarriers;
+    boolean allowedCarriersPrioritized;
+    CarrierRestrictionStatus status;
+    int carrierId;
 }
