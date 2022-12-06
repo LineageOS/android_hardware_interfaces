@@ -24,6 +24,7 @@ package {
 aidl_interface {
     name: "android.hardware.media.bufferpool2",
     vendor_available: true,
+    double_loadable: true,
     srcs: ["android/hardware/media/bufferpool2/*.aidl"],
     imports: [
         "android.hardware.common-V2",
