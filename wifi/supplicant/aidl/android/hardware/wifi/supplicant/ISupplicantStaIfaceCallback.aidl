@@ -329,4 +329,42 @@ oneway interface ISupplicantStaIfaceCallback {
      */
     void onStateChangedWithAkm(in StaIfaceCallbackState newState, in byte[] bssid, in int id,
             in byte[] ssid, in boolean filsHlpSent, in KeyMgmtMask keyMgmtMask);
+
+    /**
+     * Reason codes to be used with the callback |ISupplicantStaIfaceCallback.onMloLinksInfoChanged|
+     */
+    @VintfStability
+    @Backing(type="int")
+    enum MloLinkInfoChangeReason {
+        /**
+         * TID-to-link mapping has changed. Updated mappings will be set in
+         * |MloLinksInfo.MloLink[].tids_downlink_map| and
+         * |MloLinksInfo.MloLink[].tids_uplink_map| for each of the links.
+         *
+         * STA MLD will operate in default mode if a TID-to-link mapping is not
+         * indicated by the callback. In default mode, all TIDs are mapped to
+         * all setup links in downlink and uplink directions.
+         */
+        TID_TO_LINK_MAP = 0,
+        /**
+         * Multi-link reconfiguration - AP removal as described in
+         * IEEE 802.11be spec, section 35.3.6. This is a mandatory feature for
+         * station.
+         *
+         * Removed link will not be present in |ISupplicantStaIface.getConnectionMloLinksInfo|.
+         */
+        MULTI_LINK_RECONFIG_AP_REMOVAL = 1,
+    }
+
+    /**
+     * Used to indicate that Multi Link status has changed due to the provided
+     * reason. Upadted MLO link status can be fetched using
+     * |ISupplicantStaIface.getConnectionMloLinksInfo|
+     *
+     * |MloLink.linkId| and |MloLink.staLinkMacAddress| are not expected
+     * to change.
+     *
+     * @param reason Reason as given in MloLinkInfoChangeReason.
+     */
+    void onMloLinksInfoChanged(in MloLinkInfoChangeReason reason);
 }
