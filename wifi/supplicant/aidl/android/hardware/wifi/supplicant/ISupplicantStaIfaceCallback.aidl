@@ -22,10 +22,12 @@ import android.hardware.wifi.supplicant.AuxiliarySupplicantEventCode;
 import android.hardware.wifi.supplicant.BssTmData;
 import android.hardware.wifi.supplicant.BssidChangeReason;
 import android.hardware.wifi.supplicant.DppAkm;
+import android.hardware.wifi.supplicant.DppConfigurationData;
 import android.hardware.wifi.supplicant.DppConnectionKeys;
 import android.hardware.wifi.supplicant.DppEventType;
 import android.hardware.wifi.supplicant.DppFailureCode;
 import android.hardware.wifi.supplicant.DppProgressCode;
+import android.hardware.wifi.supplicant.DppStatusErrorCode;
 import android.hardware.wifi.supplicant.Hs20AnqpData;
 import android.hardware.wifi.supplicant.KeyMgmtMask;
 import android.hardware.wifi.supplicant.OsuMethod;
@@ -144,6 +146,9 @@ oneway interface ISupplicantStaIfaceCallback {
      * Indicates DPP configuration received success event in Enrolee mode.
      * This is also triggered when Configurator generates credentials for itself
      * using generateSelfDppConfiguration() API
+     * <p>
+     * @deprecated This callback is deprecated from AIDL v2, newer HAL should call
+     * onDppConfigReceived.
      */
     void onDppSuccessConfigReceived(in byte[] ssid, in String password, in byte[] psk,
             in DppAkm securityAkm, in DppConnectionKeys dppConnectionKeys);
@@ -367,4 +372,16 @@ oneway interface ISupplicantStaIfaceCallback {
      * @param reason Reason as given in MloLinkInfoChangeReason.
      */
     void onMloLinksInfoChanged(in MloLinkInfoChangeReason reason);
+
+    /**
+     * Indicates DPP configuration received success event in Enrollee mode.
+     * This is also triggered when Configurator generates credentials for itself
+     * using generateSelfDppConfiguration() API
+     */
+    void onDppConfigReceived(in DppConfigurationData configData);
+
+    /**
+     * Indicates that DPP connection status result frame is sent.
+     */
+    void onDppConnectionStatusResultSent(in DppStatusErrorCode code);
 }
