@@ -116,11 +116,12 @@ class IVehicleHardware {
     virtual aidl::android::hardware::automotive::vehicle::StatusCode checkHealth() = 0;
 
     // Register a callback that would be called when there is a property change event from vehicle.
+    // Must only be called once during initialization.
     virtual void registerOnPropertyChangeEvent(
             std::unique_ptr<const PropertyChangeCallback> callback) = 0;
 
     // Register a callback that would be called when there is a property set error event from
-    // vehicle.
+    // vehicle. Must only be called once during initialization.
     virtual void registerOnPropertySetErrorEvent(
             std::unique_ptr<const PropertySetErrorCallback> callback) = 0;
 };
