@@ -627,11 +627,7 @@ DumpResult FakeVehicleHardware::dump(const std::vector<std::string>& options) {
     } else if (EqualsIgnoreCase(option, "--inject-event")) {
         result.buffer = dumpInjectEvent(options);
     } else if (EqualsIgnoreCase(option, kUserHalDumpOption)) {
-        if (options.size() == 1) {
-            result.buffer = mFakeUserHal->showDumpHelp();
-        } else {
-            result.buffer = mFakeUserHal->dump(options[1]);
-        }
+        result.buffer = mFakeUserHal->dump();
     } else if (EqualsIgnoreCase(option, "--genfakedata")) {
         result.buffer = genFakeDataCommand(options);
     } else {

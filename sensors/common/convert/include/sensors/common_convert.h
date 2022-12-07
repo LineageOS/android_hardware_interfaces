@@ -14,24 +14,21 @@
  * limitations under the License.
  */
 
-package android.hardware.thermal;
+#pragma once
 
-/**
- * Device cooling device types
- * @hide
- */
-@VintfStability
-@Backing(type="int")
-enum CoolingType {
-    FAN,
-    BATTERY,
-    CPU,
-    GPU,
-    MODEM,
-    NPU,
-    COMPONENT,
-    TPU,
-    POWER_AMPLIFIER,
-    DISPLAY,
-    SPEAKER,
-}
+#include <android/sensor.h>
+#include <hardware/sensors.h>
+
+namespace android {
+namespace hardware {
+namespace sensors {
+namespace implementation {
+namespace common {
+
+sensors_event_t convertASensorEvent(const ASensorEvent& aEvent);
+
+}  // namespace common
+}  // namespace implementation
+}  // namespace sensors
+}  // namespace hardware
+}  // namespace android

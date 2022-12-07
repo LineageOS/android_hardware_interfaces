@@ -1520,26 +1520,16 @@ TEST_F(FakeVehicleHardwareTest, testDumpInvalidOptions) {
     ASSERT_THAT(result.buffer, ContainsRegex("Invalid option: --invalid"));
 }
 
-TEST_F(FakeVehicleHardwareTest, testDumpFakeUserHalHelp) {
-    std::vector<std::string> options;
-    options.push_back("--user-hal");
-
-    DumpResult result = getHardware()->dump(options);
-    ASSERT_FALSE(result.callerShouldDumpState);
-    ASSERT_NE(result.buffer, "");
-    ASSERT_THAT(result.buffer, ContainsRegex("dumps state used for user management"));
-}
-
 TEST_F(FakeVehicleHardwareTest, testDumpFakeUserHal) {
     std::vector<std::string> options;
     options.push_back("--user-hal");
-    // Indent: " ".
-    options.push_back(" ");
 
     DumpResult result = getHardware()->dump(options);
     ASSERT_FALSE(result.callerShouldDumpState);
     ASSERT_NE(result.buffer, "");
-    ASSERT_THAT(result.buffer, ContainsRegex(" No InitialUserInfo response\n"));
+    ASSERT_THAT(result.buffer,
+                ContainsRegex("No InitialUserInfo response\nNo SwitchUser response\nNo CreateUser "
+                              "response\nNo SetUserIdentificationAssociation response\n"));
 }
 
 struct SetPropTestCase {

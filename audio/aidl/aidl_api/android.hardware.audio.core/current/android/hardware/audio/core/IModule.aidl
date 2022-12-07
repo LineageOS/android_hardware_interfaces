@@ -76,6 +76,7 @@ interface IModule {
     android.hardware.audio.common.SourceMetadata sourceMetadata;
     @nullable android.media.audio.common.AudioOffloadInfo offloadInfo;
     long bufferSizeFrames;
+    @nullable android.hardware.audio.core.IStreamCallback callback;
   }
   @VintfStability
   parcelable OpenOutputStreamReturn {

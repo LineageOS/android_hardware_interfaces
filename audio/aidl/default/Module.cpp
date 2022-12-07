@@ -97,6 +97,7 @@ void Module::cleanUpPatch(int32_t patchId) {
 }
 
 ndk::ScopedAStatus Module::createStreamContext(int32_t in_portConfigId, int64_t in_bufferSizeFrames,
+                                               std::shared_ptr<IStreamCallback> asyncCallback,
                                                StreamContext* out_context) {
     if (in_bufferSizeFrames <= 0) {
         LOG(ERROR) << __func__ << ": non-positive buffer size " << in_bufferSizeFrames;
@@ -135,8 +136,8 @@ ndk::ScopedAStatus Module::createStreamContext(int32_t in_portConfigId, int64_t 
         StreamContext temp(
                 std::make_unique<StreamContext::CommandMQ>(1, true /*configureEventFlagWord*/),
                 std::make_unique<StreamContext::ReplyMQ>(1, true /*configureEventFlagWord*/),
-                frameSize,
-                std::make_unique<StreamContext::DataMQ>(frameSize * in_bufferSizeFrames));
+                frameSize, std::make_unique<StreamContext::DataMQ>(frameSize * in_bufferSizeFrames),
+                asyncCallback, mDebug.streamTransientStateDelayMs);
         if (temp.isValid()) {
             *out_context = std::move(temp);
         } else {
@@ -241,6 +242,11 @@ ndk::ScopedAStatus Module::setModuleDebug(
         LOG(ERROR) << __func__ << ": attempting to change device connections simulation "
                    << "while having external devices connected";
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
+    }
+    if (in_debug.streamTransientStateDelayMs < 0) {
+        LOG(ERROR) << __func__ << ": streamTransientStateDelayMs is negative: "
+                   << in_debug.streamTransientStateDelayMs;
+        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
     }
     mDebug = in_debug;
     return ndk::ScopedAStatus::ok();
@@ -456,7 +462,8 @@ ndk::ScopedAStatus Module::openInputStream(const OpenInputStreamArguments& in_ar
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
     }
     StreamContext context;
-    if (auto status = createStreamContext(in_args.portConfigId, in_args.bufferSizeFrames, &context);
+    if (auto status = createStreamContext(in_args.portConfigId, in_args.bufferSizeFrames, nullptr,
+                                          &context);
         !status.isOk()) {
         return status;
     }
@@ -496,8 +503,16 @@ ndk::ScopedAStatus Module::openOutputStream(const OpenOutputStreamArguments& in_
                    << " has COMPRESS_OFFLOAD flag set, requires offload info";
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
     }
+    const bool isNonBlocking = isBitPositionFlagSet(port->flags.get<AudioIoFlags::Tag::output>(),
+                                                    AudioOutputFlags::NON_BLOCKING);
+    if (isNonBlocking && in_args.callback == nullptr) {
+        LOG(ERROR) << __func__ << ": port id " << port->id
+                   << " has NON_BLOCKING flag set, requires async callback";
+        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+    }
     StreamContext context;
-    if (auto status = createStreamContext(in_args.portConfigId, in_args.bufferSizeFrames, &context);
+    if (auto status = createStreamContext(in_args.portConfigId, in_args.bufferSizeFrames,
+                                          isNonBlocking ? in_args.callback : nullptr, &context);
         !status.isOk()) {
         return status;
     }
