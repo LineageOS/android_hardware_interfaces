@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,32 +14,20 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_HARDWARE_MEDIA_BUFFERPOOL_V2_0_OBSERVER_H
-#define ANDROID_HARDWARE_MEDIA_BUFFERPOOL_V2_0_OBSERVER_H
+#pragma once
 
-#include <android/hardware/media/bufferpool/2.0/IObserver.h>
-#include <hidl/MQDescriptor.h>
-#include <hidl/Status.h>
-#include "BufferPoolClient.h"
+#include <map>
+#include <memory>
+#include <mutex>
+#include <aidl/android/hardware/media/bufferpool2/BnObserver.h>
+#include <bufferpool2/BufferPoolTypes.h>
 
-namespace android {
-namespace hardware {
-namespace media {
-namespace bufferpool {
-namespace V2_0 {
-namespace implementation {
+namespace aidl::android::hardware::media::bufferpool2::implementation {
 
-using ::android::hardware::hidl_array;
-using ::android::hardware::hidl_memory;
-using ::android::hardware::hidl_string;
-using ::android::hardware::hidl_vec;
-using ::android::hardware::Return;
-using ::android::hardware::Void;
-using ::android::sp;
+class BufferPoolClient;
 
-struct Observer : public IObserver {
-    // Methods from ::android::hardware::media::bufferpool::V2_0::IObserver follow.
-    Return<void> onMessage(int64_t connectionId, uint32_t msgId) override;
+struct Observer : public BnObserver {
+    ::ndk::ScopedAStatus onMessage(int64_t in_connectionId, int32_t in_msgId) override;
 
     ~Observer();
 
@@ -51,17 +39,11 @@ struct Observer : public IObserver {
 private:
     Observer();
 
-    friend struct ClientManager;
+    friend class ::ndk::SharedRefBase;
 
     std::mutex mLock;
     std::map<ConnectionId, const std::weak_ptr<BufferPoolClient>> mClients;
 };
 
-}  // namespace implementation
-}  // namespace V2_0
-}  // namespace bufferpool
-}  // namespace media
-}  // namespace hardware
-}  // namespace android
+}  // namespace aidl::android::hardware::media::bufferpool2::implementation
 
-#endif  // ANDROID_HARDWARE_MEDIA_BUFFERPOOL_V2_0_OBSERVER_H

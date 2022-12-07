@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,28 +14,16 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_HARDWARE_MEDIA_BUFFERPOOL_V2_0_BUFFERSTATUS_H
-#define ANDROID_HARDWARE_MEDIA_BUFFERPOOL_V2_0_BUFFERSTATUS_H
+#pragma once
 
-#include <android/hardware/media/bufferpool/2.0/types.h>
-#include <bufferpool/BufferPoolTypes.h>
-#include <fmq/MessageQueue.h>
-#include <hidl/MQDescriptor.h>
-#include <hidl/Status.h>
+#include <bufferpool2/BufferPoolTypes.h>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <vector>
 #include <list>
 
-namespace android {
-namespace hardware {
-namespace media {
-namespace bufferpool {
-namespace V2_0 {
-namespace implementation {
-
-/** Returns monotonic timestamp in Us since fixed point in time. */
-int64_t getTimestampNow();
+namespace aidl::android::hardware::media::bufferpool2::implementation {
 
 bool isMessageLater(uint32_t curMsgId, uint32_t prevMsgId);
 
@@ -55,13 +43,13 @@ public:
      * connection(client).
      *
      * @param connectionId  connection Id of the specified client.
-     * @param fmqDescPtr    double ptr of created FMQ's descriptor.
+     * @param fmqDescPtr    ptr of created FMQ's descriptor.
      *
      * @return OK if FMQ is created successfully.
      *         NO_MEMORY when there is no memory.
      *         CRITICAL_ERROR otherwise.
      */
-    ResultStatus open(ConnectionId id, const StatusDescriptor** fmqDescPtr);
+    BufferPoolStatus open(ConnectionId id, StatusDescriptor* _Nonnull fmqDescPtr);
 
     /** Closes a buffer status message FMQ for the specified
      * connection(client).
@@ -71,7 +59,7 @@ public:
      * @return OK if the specified connection is closed successfully.
      *         CRITICAL_ERROR otherwise.
      */
-    ResultStatus close(ConnectionId id);
+    BufferPoolStatus close(ConnectionId id);
 
     /** Retrieves all pending FMQ buffer status messages from clients.
      *
@@ -140,7 +128,7 @@ public:
             std::list<BufferId> &pending, std::list<BufferId> &posted);
 
     /**
-     * Posts a buffer invaliadation messge to the buffer pool.
+     * Posts a buffer invaliadation message to the buffer pool.
      *
      * @param connectionId  connection Id of the client.
      * @param invalidateId  invalidation ack to the buffer pool.
@@ -152,7 +140,7 @@ public:
     void postBufferInvalidateAck(
             ConnectionId connectionId,
             uint32_t invalidateId,
-            bool *invalidated);
+            bool* _Nonnull invalidated);
 };
 
 /**
@@ -179,7 +167,7 @@ public:
      */
     void getInvalidations(std::vector<BufferInvalidationMessage> &messages);
 
-    /** Returns whether the FMQ is connected succesfully. */
+    /** Returns whether the FMQ is connected successfully. */
     bool isValid();
 };
 
@@ -199,16 +187,16 @@ public:
      */
     BufferInvalidationChannel();
 
-    /** Returns whether the FMQ is connected succesfully. */
+    /** Returns whether the FMQ is connected successfully. */
     bool isValid();
 
     /**
      * Retrieves the descriptor of a buffer invalidation FMQ. the descriptor may
      * be passed to the client for buffer invalidation handling.
      *
-     * @param fmqDescPtr    double ptr of created FMQ's descriptor.
+     * @param fmqDescPtr    ptr of created FMQ's descriptor.
      */
-    void getDesc(const InvalidationDescriptor **fmqDescPtr);
+    void getDesc(InvalidationDescriptor* _Nonnull fmqDescPtr);
 
     /** Posts a buffer invalidation for invalidated buffers.
      *
@@ -220,11 +208,4 @@ public:
     void postInvalidation(uint32_t msgId, BufferId fromId, BufferId toId);
 };
 
-}  // namespace implementation
-}  // namespace V2_0
-}  // namespace bufferpool
-}  // namespace media
-}  // namespace hardware
-}  // namespace android
-
-#endif  // ANDROID_HARDWARE_MEDIA_BUFFERPOOL_V2_0_BUFFERSTATUS_H
+}  // namespace aidl::android::hardware::media::bufferpool2::implementation

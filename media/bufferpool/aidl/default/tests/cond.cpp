@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,34 +18,35 @@
 
 #include <gtest/gtest.h>
 
+#include <android/binder_manager.h>
+#include <android/binder_process.h>
+#include <android/binder_stability.h>
 #include <android-base/logging.h>
-#include <binder/ProcessState.h>
-#include <bufferpool/ClientManager.h>
+#include <bufferpool2/ClientManager.h>
+
 #include <errno.h>
-#include <hidl/HidlSupport.h>
-#include <hidl/HidlTransportSupport.h>
-#include <hidl/LegacySupport.h>
-#include <hidl/Status.h>
 #include <signal.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
+
 #include <iostream>
 #include <memory>
 #include <vector>
+
 #include "allocator.h"
 
-using android::hardware::configureRpcThreadpool;
-using android::hardware::hidl_handle;
-using android::hardware::media::bufferpool::V2_0::IClientManager;
-using android::hardware::media::bufferpool::V2_0::ResultStatus;
-using android::hardware::media::bufferpool::V2_0::implementation::BufferId;
-using android::hardware::media::bufferpool::V2_0::implementation::ClientManager;
-using android::hardware::media::bufferpool::V2_0::implementation::ConnectionId;
-using android::hardware::media::bufferpool::V2_0::implementation::TransactionId;
-using android::hardware::media::bufferpool::BufferPoolData;
+using aidl::android::hardware::media::bufferpool2::IClientManager;
+using aidl::android::hardware::media::bufferpool2::ResultStatus;
+using aidl::android::hardware::media::bufferpool2::implementation::BufferId;
+using aidl::android::hardware::media::bufferpool2::implementation::ClientManager;
+using aidl::android::hardware::media::bufferpool2::implementation::ConnectionId;
+using aidl::android::hardware::media::bufferpool2::implementation::TransactionId;
+using aidl::android::hardware::media::bufferpool2::BufferPoolData;
 
 namespace {
+
+const std::string testInstance  = std::string() + ClientManager::descriptor + "/condtest";
 
 // communication message types between processes.
 enum PipeCommand : int32_t {
@@ -74,7 +75,7 @@ constexpr int kSignalInt = 200;
 class BufferpoolMultiTest : public ::testing::Test {
  public:
   virtual void SetUp() override {
-    ResultStatus status;
+    BufferPoolStatus status;
     mReceiverPid = -1;
     mConnectionValid = false;
 
@@ -119,7 +120,7 @@ class BufferpoolMultiTest : public ::testing::Test {
     RecordProperty("description", description);
   }
 
-  android::sp<ClientManager> mManager;
+  std::shared_ptr<ClientManager> mManager;
   std::shared_ptr<BufferPoolAllocator> mAllocator;
   bool mConnectionValid;
   ConnectionId mConnectionId;
@@ -138,7 +139,8 @@ class BufferpoolMultiTest : public ::testing::Test {
   }
 
   void doReceiver() {
-    configureRpcThreadpool(1, false);
+    ABinderProcess_setThreadPoolMaxThreadCount(1);
+    ABinderProcess_startThreadPool();
     PipeMessage message;
     mManager = ClientManager::getInstance();
     if (!mManager) {
@@ -146,7 +148,11 @@ class BufferpoolMultiTest : public ::testing::Test {
       sendMessage(mResultPipeFds, message);
       return;
     }
-    android::status_t status = mManager->registerAsService();
+    auto binder = mManager->asBinder();
+    AIBinder_forceDowngradeToSystemStability(binder.get());
+    binder_status_t status =
+        AServiceManager_addService(binder.get(), testInstance.c_str());
+    CHECK_EQ(status, STATUS_OK);
     if (status != android::OK) {
       message.data.command = PipeCommand::INIT_ERROR;
       sendMessage(mResultPipeFds, message);
@@ -162,7 +168,7 @@ class BufferpoolMultiTest : public ::testing::Test {
       std::shared_ptr<BufferPoolData> rbuffer;
       void *mem = nullptr;
       IpcMutex *mutex = nullptr;
-      ResultStatus status = mManager->receive(
+      BufferPoolStatus status = mManager->receive(
           message.data.connectionId, message.data.transactionId,
           message.data.bufferId, message.data.timestampUs, &rhandle, &rbuffer);
       mManager->close(message.data.connectionId);
@@ -201,16 +207,22 @@ class BufferpoolMultiTest : public ::testing::Test {
 
 // Buffer transfer test between processes.
 TEST_F(BufferpoolMultiTest, TransferBuffer) {
-  ResultStatus status;
+  BufferPoolStatus status;
   PipeMessage message;
 
   ASSERT_TRUE(receiveMessage(mResultPipeFds, &message));
+  ABinderProcess_setThreadPoolMaxThreadCount(1);
+  ABinderProcess_startThreadPool();
 
-  android::sp<IClientManager> receiver = IClientManager::getService();
+
+  std::shared_ptr<IClientManager> receiver =
+      IClientManager::fromBinder(
+          ndk::SpAIBinder(AServiceManager_waitForService(testInstance.c_str())));
+  ASSERT_NE(receiver, nullptr);
   ConnectionId receiverId;
-  ASSERT_TRUE((bool)receiver);
 
-  status = mManager->registerSender(receiver, mConnectionId, &receiverId);
+  bool isNew = true;
+  status = mManager->registerSender(receiver, mConnectionId, &receiverId, &isNew);
   ASSERT_TRUE(status == ResultStatus::OK);
   {
     native_handle_t *shandle = nullptr;
@@ -261,7 +273,6 @@ TEST_F(BufferpoolMultiTest, TransferBuffer) {
 }  // anonymous namespace
 
 int main(int argc, char** argv) {
-  android::hardware::details::setTrebleTestingOverride(true);
   ::testing::InitGoogleTest(&argc, argv);
   int status = RUN_ALL_TESTS();
   LOG(INFO) << "Test result = " << status;

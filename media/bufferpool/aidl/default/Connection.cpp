@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,42 +13,63 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#define LOG_TAG "AidlBufferPoolCon"
+//#define LOG_NDEBUG 0
+
+#include <aidlcommonsupport/NativeHandle.h>
 
 #include "Connection.h"
+#include "Accessor.h"
 
-namespace android {
-namespace hardware {
-namespace media {
-namespace bufferpool {
-namespace V2_0 {
-namespace implementation {
+namespace aidl::android::hardware::media::bufferpool2::implementation {
 
-// Methods from ::android::hardware::media::bufferpool::V2_0::IConnection follow.
-Return<void> Connection::fetch(uint64_t transactionId, uint32_t bufferId, fetch_cb _hidl_cb) {
-    ResultStatus status = ResultStatus::CRITICAL_ERROR;
+using aidl::android::hardware::media::bufferpool2::ResultStatus;
+using Buffer = aidl::android::hardware::media::bufferpool2::Buffer;
+using FetchInfo = aidl::android::hardware::media::bufferpool2::IConnection::FetchInfo;
+using FetchResult = aidl::android::hardware::media::bufferpool2::IConnection::FetchResult;
+
+::ndk::ScopedAStatus Connection::fetch(const std::vector<FetchInfo>& in_fetchInfos,
+                           std::vector<FetchResult>* _aidl_return) {
+    int success = 0;
+    int failure = 0;
     if (mInitialized && mAccessor) {
-        if (bufferId != SYNC_BUFFERID) {
-            const native_handle_t *handle = nullptr;
-            status = mAccessor->fetch(
-                    mConnectionId, transactionId, bufferId, &handle);
-            if (status == ResultStatus::OK) {
-                Buffer buffer = {};
-                buffer.id = bufferId;
-                buffer.buffer = handle;
-                _hidl_cb(status, buffer);
-                return Void();
+        for (auto it = in_fetchInfos.begin(); it != in_fetchInfos.end(); ++it) {
+            if (fetch(it->transactionId, it->bufferId, _aidl_return)) {
+                success++;
+            } else {
+                failure++;
             }
-        } else {
-            mAccessor->cleanUp(false);
         }
+        if (failure > 0) {
+            ALOGD("total fetch %d, failure %d", success + failure, failure);
+        }
+        return ::ndk::ScopedAStatus::ok();
     }
+    return ::ndk::ScopedAStatus::fromServiceSpecificError(ResultStatus::CRITICAL_ERROR);
+}
 
-    Buffer buffer = {};
-    buffer.id = 0;
-    buffer.buffer = nullptr;
+::ndk::ScopedAStatus Connection::sync() {
+    if (mInitialized && mAccessor) {
+        mAccessor->cleanUp(false);
+    }
+    return ::ndk::ScopedAStatus::ok();
+}
 
-    _hidl_cb(status, buffer);
-    return Void();
+
+bool Connection::fetch(TransactionId transactionId, BufferId bufferId,
+                       std::vector<FetchResult> *result) {
+    BufferPoolStatus status = ResultStatus::CRITICAL_ERROR;
+    const native_handle_t *handle = nullptr;
+    status = mAccessor->fetch(
+            mConnectionId, transactionId, bufferId, &handle);
+    if (status == ResultStatus::OK) {
+        result->emplace_back(FetchResult::make<FetchResult::buffer>());
+        result->back().get<FetchResult::buffer>().id = bufferId;
+        result->back().get<FetchResult::buffer>().buffer = ::android::dupToAidl(handle);
+        return true;
+    }
+    result->emplace_back(FetchResult::make<FetchResult::failure>(status));
+    return false;
 }
 
 Connection::Connection() : mInitialized(false), mConnectionId(-1LL) {}
@@ -60,7 +81,7 @@ Connection::~Connection() {
 }
 
 void Connection::initialize(
-        const sp<Accessor>& accessor, ConnectionId connectionId) {
+        const std::shared_ptr<Accessor>& accessor, ConnectionId connectionId) {
     if (!mInitialized) {
         mAccessor = accessor;
         mConnectionId = connectionId;
@@ -68,14 +89,14 @@ void Connection::initialize(
     }
 }
 
-ResultStatus Connection::flush() {
+BufferPoolStatus Connection::flush() {
     if (mInitialized && mAccessor) {
         return mAccessor->flush();
     }
     return ResultStatus::CRITICAL_ERROR;
 }
 
-ResultStatus Connection::allocate(
+BufferPoolStatus Connection::allocate(
         const std::vector<uint8_t> &params, BufferId *bufferId,
         const native_handle_t **handle) {
     if (mInitialized && mAccessor) {
@@ -90,15 +111,4 @@ void Connection::cleanUp(bool clearCache) {
     }
 }
 
-// Methods from ::android::hidl::base::V1_0::IBase follow.
-
-//IConnection* HIDL_FETCH_IConnection(const char* /* name */) {
-//    return new Connection();
-//}
-
-}  // namespace implementation
-}  // namespace V2_0
-}  // namespace bufferpool
-}  // namespace media
-}  // namespace hardware
-}  // namespace android
+}  // namespace ::aidl::android::hardware::media::bufferpool2::implementation

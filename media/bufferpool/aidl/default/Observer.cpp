@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,9 @@
  */
 
 #include "Observer.h"
+#include "BufferPoolClient.h"
 
-namespace android {
-namespace hardware {
-namespace media {
-namespace bufferpool {
-namespace V2_0 {
-namespace implementation {
+namespace aidl::android::hardware::media::bufferpool2::implementation {
 
 Observer::Observer() {
 }
@@ -29,20 +25,19 @@ Observer::Observer() {
 Observer::~Observer() {
 }
 
-// Methods from ::android::hardware::media::bufferpool::V2_0::IObserver follow.
-Return<void> Observer::onMessage(int64_t connectionId, uint32_t msgId) {
+::ndk::ScopedAStatus Observer::onMessage(int64_t in_connectionId, int32_t in_msgId) {
     std::unique_lock<std::mutex> lock(mLock);
-    auto it = mClients.find(connectionId);
+    auto it = mClients.find(in_connectionId);
     if (it != mClients.end()) {
         const std::shared_ptr<BufferPoolClient> client = it->second.lock();
         if (!client) {
             mClients.erase(it);
         } else {
             lock.unlock();
-            client->receiveInvalidation(msgId);
+            client->receiveInvalidation(in_msgId);
         }
     }
-    return Void();
+    return ::ndk::ScopedAStatus::ok();
 }
 
 void Observer::addClient(ConnectionId connectionId,
@@ -65,9 +60,4 @@ void Observer::delClient(ConnectionId connectionId) {
 }
 
 
-}  // namespace implementation
-}  // namespace V2_0
-}  // namespace bufferpool
-}  // namespace media
-}  // namespace hardware
-}  // namespace android
+}  // namespace aidl::android::hardware::media::bufferpool2::implementation
