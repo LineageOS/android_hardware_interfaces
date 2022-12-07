@@ -125,6 +125,9 @@ TEST_F(AidlStructUtilTest, canConvertLegacyLinkLayerMlStatsToAidl) {
         link.peers.push_back(legacy_hal::WifiPeerInfo{});
         link.peers.push_back(legacy_hal::WifiPeerInfo{});
         link.stat.beacon_rx = rand();
+        link.stat.link_id = rand() % 15;
+        link.stat.radio = rand() % 4;
+        link.stat.frequency = rand();
         link.stat.rssi_mgmt = rand();
         link.stat.ac[legacy_hal::WIFI_AC_BE].rx_mpdu = rand();
         link.stat.ac[legacy_hal::WIFI_AC_BE].tx_mpdu = rand();
@@ -227,6 +230,8 @@ TEST_F(AidlStructUtilTest, canConvertLegacyLinkLayerMlStatsToAidl) {
     int l = 0;
     for (legacy_hal::LinkStats& link : legacy_ml_stats.links) {
         EXPECT_EQ(link.stat.link_id, (uint8_t)converted.iface.links[l].linkId);
+        EXPECT_EQ(link.stat.radio, converted.iface.links[l].radioId);
+        EXPECT_EQ(link.stat.frequency, (uint32_t)converted.iface.links[l].frequencyMhz);
         EXPECT_EQ(link.stat.beacon_rx, (uint32_t)converted.iface.links[l].beaconRx);
         EXPECT_EQ(link.stat.rssi_mgmt, converted.iface.links[l].avgRssiMgmt);
         EXPECT_EQ(link.stat.ac[legacy_hal::WIFI_AC_BE].rx_mpdu,

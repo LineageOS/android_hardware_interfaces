@@ -32,6 +32,15 @@ parcelable StaLinkLayerLinkStats {
      */
     int linkId;
     /**
+     * Radio identifier on which the link is currently operating. Refer
+     * |StaLinkLayerRadioStats.radioId|.
+     */
+    int radioId;
+    /**
+     * Frequency of the link in Mhz.
+     */
+    int frequencyMhz;
+    /**
      * Number of beacons received from the connected AP on the link.
      */
     int beaconRx;
