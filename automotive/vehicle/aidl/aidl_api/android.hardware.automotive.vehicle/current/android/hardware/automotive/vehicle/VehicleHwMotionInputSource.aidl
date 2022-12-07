@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,10 +33,21 @@
 
 package android.hardware.automotive.vehicle;
 @Backing(type="int") @VintfStability
-enum VehicleDisplay {
-  MAIN = 0,
-  INSTRUMENT_CLUSTER = 1,
-  HUD = 2,
-  INPUT = 3,
-  AUXILIARY = 4,
+enum VehicleHwMotionInputSource {
+  SOURCE_UNKNOWN = 0,
+  SOURCE_KEYBOARD = 1,
+  SOURCE_DPAD = 2,
+  SOURCE_GAMEPAD = 3,
+  SOURCE_TOUCHSCREEN = 4,
+  SOURCE_MOUSE = 5,
+  SOURCE_STYLUS = 6,
+  SOURCE_BLUETOOTH_STYLUS = 7,
+  SOURCE_TRACKBALL = 8,
+  SOURCE_MOUSE_RELATIVE = 9,
+  SOURCE_TOUCHPAD = 10,
+  SOURCE_TOUCH_NAVIGATION = 11,
+  SOURCE_ROTARY_ENCODER = 12,
+  SOURCE_JOYSTICK = 13,
+  SOURCE_HDMI = 14,
+  SOURCE_SENSOR = 15,
 }

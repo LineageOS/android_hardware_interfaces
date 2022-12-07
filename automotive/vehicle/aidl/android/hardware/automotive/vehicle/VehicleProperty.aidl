@@ -1230,6 +1230,62 @@ enum VehicleProperty {
     HW_KEY_INPUT = 0x0A10 + 0x10000000 + 0x01000000
             + 0x00410000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32_VEC
     /**
+     * Property to feed H/W input events to android
+     *
+     * int32array[0]: target display defined by VehicleDisplay like VehicleDisplay::MAIN,
+     *                VehicleDisplay::INSTRUMENT_CLUSTER, VehicleDisplay::AUX
+     * int32array[1]: key code, must use standard android key code like KEYCODE_HOME, KEYCODE_BACK
+     * int32array[2]: action defined in VehicleHwKeyInputAction like
+     *                VehicleHwKeyInputAction::ACTION_UP, VehicleHwKeyInputAction::ACTION_UP
+     * int32array[3]: repeat count of the event. For key down events, this is the repeat count
+     *                with the first down starting at 0 and counting up from there. For key up
+     *                events, this is always equal to 0
+     *
+     * int64array[0]: down time, elapsed nanoseconds since boot. Denotes the time of the most
+     *                recent key down event. For the down event, it will be the event time of the
+     *                down event itself
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     * @config_flags
+     */
+    HW_KEY_INPUT_V2 =
+            0x0A11 + VehiclePropertyGroup.SYSTEM + VehicleArea.SEAT + VehiclePropertyType.MIXED,
+    /**
+     * Property to feed H/W input events to android
+     *
+     * int32array[0]: target display defined by VehicleDisplay like VehicleDisplay::MAIN,
+     *                VehicleDisplay::INSTRUMENT_CLUSTER, VehicleDisplay::AUX
+     * int32array[1]: input type defined in VehicleHwMotionInputSource like
+     *                VehicleHwMotionInputSource::SOURCE_KEYBOARD,
+     *                VehicleHwMotionInputSource::SOURCE_DPAD
+     * int32array[2]: action code defined in VehicleHwMotionInputAction like
+     *                VehicleHwMotionInputAction::ACTION_UP, VehicleHwMotionInputAction::ACTION_DOWN
+     * int32array[3]: button state flag defined in VehicleHwMotionButtonStateFlag like
+     *                VehicleHwMotionButtonStateFlag::BUTTON_PRIMARY,
+     *                VehicleHwMotionButtonStateFlag::BUTTON_SECONDARY
+     * int32array[4]: pointer events count, N. N must be a positive integer
+     * int32array[5:5+N-1]: pointer id, length N
+     * int32array[5+N:5+2*N-1] : tool type, length N. As defined in VehicleHwMotionToolType like
+     *                           VehicleHwMotionToolType::TOOL_TYPE_FINGER,
+     *                           VehicleHwMotionToolType::TOOL_TYPE_STYLUS
+     *
+     * floatArray[0:N-1] : x data, length N
+     * floatArray[N:2*N-1] : y data, length N
+     * floatArray[2*N:3*N-1] : pressure data, length N
+     * floatArray[3*N:4*N-1] : size data, length N
+     *
+     * int64array[0]: down time, elapsed nanoseconds since boot. Denotes the time when the user
+     *                originally pressed down to start a stream of position events. For the down
+     *                event, it will be the event time of the down event itself
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     * @config_flags
+     */
+    HW_MOTION_INPUT =
+            0x0A12 + VehiclePropertyGroup.SYSTEM + VehicleArea.SEAT + VehiclePropertyType.MIXED,
+    /**
      * Property to feed H/W rotary events to android
      *
      * int32Values[0] : RotaryInputType identifying which rotary knob rotated

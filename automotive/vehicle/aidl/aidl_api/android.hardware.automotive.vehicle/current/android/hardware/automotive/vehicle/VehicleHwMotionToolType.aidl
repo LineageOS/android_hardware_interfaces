@@ -33,10 +33,10 @@
 
 package android.hardware.automotive.vehicle;
 @Backing(type="int") @VintfStability
-enum VehicleDisplay {
-  MAIN = 0,
-  INSTRUMENT_CLUSTER = 1,
-  HUD = 2,
-  INPUT = 3,
-  AUXILIARY = 4,
+enum VehicleHwMotionToolType {
+  TOOL_TYPE_UNKNOWN = 0,
+  TOOL_TYPE_FINGER = 1,
+  TOOL_TYPE_STYLUS = 2,
+  TOOL_TYPE_MOUSE = 3,
+  TOOL_TYPE_ERASER = 4,
 }

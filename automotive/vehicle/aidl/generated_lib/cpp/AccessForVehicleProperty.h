@@ -114,6 +114,8 @@ std::unordered_map<VehicleProperty, VehiclePropertyAccess> AccessForVehiclePrope
         {VehicleProperty::AP_POWER_BOOTUP_REASON, VehiclePropertyAccess::READ},
         {VehicleProperty::DISPLAY_BRIGHTNESS, VehiclePropertyAccess::READ_WRITE},
         {VehicleProperty::HW_KEY_INPUT, VehiclePropertyAccess::READ},
+        {VehicleProperty::HW_KEY_INPUT_V2, VehiclePropertyAccess::READ},
+        {VehicleProperty::HW_MOTION_INPUT, VehiclePropertyAccess::READ},
         {VehicleProperty::HW_ROTARY_INPUT, VehiclePropertyAccess::READ},
         {VehicleProperty::HW_CUSTOM_INPUT, VehiclePropertyAccess::READ},
         {VehicleProperty::DOOR_POS, VehiclePropertyAccess::READ_WRITE},
