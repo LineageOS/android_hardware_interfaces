@@ -63,6 +63,7 @@ public final class AccessForVehicleProperty {
         Map.entry(VehicleProperty.CURRENT_GEAR, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.PARKING_BRAKE_ON, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.PARKING_BRAKE_AUTO_APPLY, VehiclePropertyAccess.READ),
+        Map.entry(VehicleProperty.EV_BRAKE_REGENERATION_LEVEL, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.FUEL_LEVEL_LOW, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.NIGHT_MODE, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.TURN_SIGNAL_STATE, VehiclePropertyAccess.READ),

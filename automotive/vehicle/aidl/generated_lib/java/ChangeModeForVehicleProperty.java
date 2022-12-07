@@ -63,6 +63,7 @@ public final class ChangeModeForVehicleProperty {
         Map.entry(VehicleProperty.CURRENT_GEAR, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.PARKING_BRAKE_ON, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.PARKING_BRAKE_AUTO_APPLY, VehiclePropertyChangeMode.ON_CHANGE),
+        Map.entry(VehicleProperty.EV_BRAKE_REGENERATION_LEVEL, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.FUEL_LEVEL_LOW, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.NIGHT_MODE, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.TURN_SIGNAL_STATE, VehiclePropertyChangeMode.ON_CHANGE),

@@ -71,6 +71,7 @@ std::unordered_map<VehicleProperty, VehiclePropertyAccess> AccessForVehiclePrope
         {VehicleProperty::CURRENT_GEAR, VehiclePropertyAccess::READ},
         {VehicleProperty::PARKING_BRAKE_ON, VehiclePropertyAccess::READ},
         {VehicleProperty::PARKING_BRAKE_AUTO_APPLY, VehiclePropertyAccess::READ},
+        {VehicleProperty::EV_BRAKE_REGENERATION_LEVEL, VehiclePropertyAccess::READ_WRITE},
         {VehicleProperty::FUEL_LEVEL_LOW, VehiclePropertyAccess::READ},
         {VehicleProperty::NIGHT_MODE, VehiclePropertyAccess::READ},
         {VehicleProperty::TURN_SIGNAL_STATE, VehiclePropertyAccess::READ},

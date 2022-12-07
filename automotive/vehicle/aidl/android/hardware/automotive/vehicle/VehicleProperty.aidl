@@ -491,6 +491,21 @@ enum VehicleProperty {
     PARKING_BRAKE_AUTO_APPLY = 0x0403 + 0x10000000 + 0x01000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:BOOLEAN
     /**
+     * Regenerative braking level of a electronic vehicle
+     *
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined. All values between
+     * minInt32Value and maxInt32Value must be supported. The minInt32Value must be 0.
+     *
+     * The maxInt32Value in default area's VehicleAreaConfig indicates the maximum amount of energy
+     * regenerated from braking. The minInt32Value in default area's VehicleAreaConfig indicates no
+     * regenerative braking.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     */
+    EV_BRAKE_REGENERATION_LEVEL =
+            0x040C + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
+    /**
      * Warning for fuel low level.
      *
      * This property corresponds to the low fuel warning on the dashboard.
