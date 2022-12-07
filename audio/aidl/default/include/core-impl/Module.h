@@ -77,6 +77,7 @@ class Module : public BnModule {
     ndk::ScopedAStatus setMasterVolume(float in_volume) override;
     ndk::ScopedAStatus getMicMute(bool* _aidl_return) override;
     ndk::ScopedAStatus setMicMute(bool in_mute) override;
+    ndk::ScopedAStatus getMicrophones(std::vector<MicrophoneInfo>* _aidl_return) override;
     ndk::ScopedAStatus updateAudioMode(
             ::aidl::android::hardware::audio::core::AudioMode in_mode) override;
     ndk::ScopedAStatus updateScreenRotation(
@@ -88,9 +89,14 @@ class Module : public BnModule {
             int32_t in_portConfigId, int64_t in_bufferSizeFrames,
             std::shared_ptr<IStreamCallback> asyncCallback,
             ::aidl::android::hardware::audio::core::StreamContext* out_context);
+    std::vector<::aidl::android::media::audio::common::AudioDevice> findConnectedDevices(
+            int32_t portConfigId);
+    std::set<int32_t> findConnectedPortConfigIds(int32_t portConfigId);
     ndk::ScopedAStatus findPortIdForNewStream(
             int32_t in_portConfigId, ::aidl::android::media::audio::common::AudioPort** port);
     internal::Configuration& getConfig();
+    template <typename C>
+    std::set<int32_t> portIdsFromPortConfigIds(C portConfigIds);
     void registerPatch(const AudioPatch& patch);
     void updateStreamsConnectedState(const AudioPatch& oldPatch, const AudioPatch& newPatch);
 
