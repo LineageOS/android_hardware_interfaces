@@ -29,6 +29,7 @@ cc_library_static {
         "android.hardware.graphics.allocator-ndk_static",
         "android.hardware.graphics.composer3-ndk_static",
         "hidl_defaults",
+        "librenderengine_deps",
     ],
     srcs: [
         "ComposerVts.cpp",
