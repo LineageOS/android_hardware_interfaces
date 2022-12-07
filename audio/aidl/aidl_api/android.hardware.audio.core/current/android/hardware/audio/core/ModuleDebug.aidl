@@ -35,4 +35,5 @@ package android.hardware.audio.core;
 @JavaDerive(equals=true, toString=true) @VintfStability
 parcelable ModuleDebug {
   boolean simulateDeviceConnections;
+  int streamTransientStateDelayMs;
 }

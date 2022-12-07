@@ -1131,4 +1131,14 @@ interface ISupplicantStaNetwork {
      *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
      */
     void setMinimumTlsVersionEapPhase1Param(TlsVersion tlsVersion);
+
+    /**
+     * Enable the strict conservative peer mode for EAP-SIM/AKA/AKA'
+     *
+     * @param enable true to enable, false to disable.
+     * @throws ServiceSpecificException with one of the following values:
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+     */
+    void setStrictConservativePeerMode(in boolean enable);
 }

@@ -31,23 +31,10 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.thermal;
-/* @hide */
-@Backing(type="int") @VintfStability
-enum TemperatureType {
-  UNKNOWN = -1,
-  CPU = 0,
-  GPU = 1,
-  BATTERY = 2,
-  SKIN = 3,
-  USB_PORT = 4,
-  POWER_AMPLIFIER = 5,
-  BCL_VOLTAGE = 6,
-  BCL_CURRENT = 7,
-  BCL_PERCENTAGE = 8,
-  NPU = 9,
-  TPU = 10,
-  DISPLAY = 11,
-  MODEM = 12,
-  SOC = 13,
+package android.hardware.audio.core;
+@VintfStability
+interface IStreamCallback {
+  oneway void onTransferReady();
+  oneway void onError();
+  oneway void onDrainReady();
 }

@@ -84,13 +84,13 @@ import android.media.audio.common.Void;
  *     are different.
  *
  * State machines of both input and output streams start from the 'STANDBY'
- * state.  Transitions between states happen naturally with changes in the
+ * state. Transitions between states happen naturally with changes in the
  * states of the model elements. For simplicity, we restrict the change to one
  * element only, for example, in the 'STANDBY' state, either the producer or the
  * consumer can become active, but not both at the same time. States 'STANDBY',
  * 'IDLE', 'READY', and '*PAUSED' are "stable"—they require an external event,
  * whereas a change from the 'DRAINING' state can happen with time as the buffer
- * gets empty.
+ * gets empty, thus it's a "transient" state.
  *
  * The state machine for input streams is defined in the `stream-in-sm.gv` file,
  * for output streams—in the `stream-out-sm.gv` file. State machines define how
@@ -100,6 +100,28 @@ import android.media.audio.common.Void;
  * client can never observe a stream with a functioning command queue in this
  * state. The 'ERROR' state is a special state which the state machine enters
  * when an unrecoverable hardware error is detected by the HAL module.
+ *
+ * Non-blocking (asynchronous) modes introduce a new 'TRANSFERRING' state, which
+ * the state machine can enter after replying to the 'burst' command, instead of
+ * staying in the 'ACTIVE' state. In this case the client gets unblocked
+ * earlier, while the actual audio delivery to / from the observer is not
+ * complete yet. Once the HAL module is ready for the next transfer, it notifies
+ * the client via a oneway callback, and the machine switches to 'ACTIVE'
+ * state. The 'TRANSFERRING' state is thus "transient", similar to the
+ * 'DRAINING' state. For output streams, asynchronous transfer can be paused,
+ * and it's another new state: 'TRANSFER_PAUSED'. It differs from 'PAUSED' by
+ * the fact that no new writes are allowed. Please see 'stream-in-async-sm.gv'
+ * and 'stream-out-async-sm.gv' files for details. Below is the table summary
+ * for asynchronous only-states:
+ *
+ *  Producer | Buffer state | Consumer | Applies | State
+ *  active?  |              | active?  | to      |
+ * ==========|==============|==========|=========|==============================
+ *  Yes      | Not empty    | Yes      | Both    | TRANSFERRING, s/w x-runs counted
+ * ----------|--------------|----------|---------|-----------------------------
+ *  Yes      | Not empty    | No       | Output  | TRANSFER_PAUSED,
+ *           |              |          |         | h/w emits silence.
+ *
  */
 @JavaDerive(equals=true, toString=true)
 @VintfStability
@@ -116,10 +138,15 @@ parcelable StreamDescriptor {
     @VintfStability
     @FixedSize
     parcelable Position {
+        /**
+         * The value used when the position can not be reported by the HAL
+         * module.
+         */
+        const long UNKNOWN = -1;
         /** Frame count. */
-        long frames;
+        long frames = UNKNOWN;
         /** Timestamp in nanoseconds. */
-        long timeNs;
+        long timeNs = UNKNOWN;
     }
 
     @VintfStability
@@ -166,16 +193,52 @@ parcelable StreamDescriptor {
         /**
          * Used for output streams only, pauses draining. This state is similar
          * to the 'PAUSED' state, except that the client is not adding any
-         * new data. If it emits a 'BURST' command, this brings the stream
+         * new data. If it emits a 'burst' command, this brings the stream
          * into the regular 'PAUSED' state.
          */
         DRAIN_PAUSED = 6,
+        /**
+         * Used only for streams in asynchronous mode. The stream enters this
+         * state after receiving a 'burst' command and returning control back
+         * to the client, thus unblocking it.
+         */
+        TRANSFERRING = 7,
+        /**
+         * Used only for output streams in asynchronous mode only. The stream
+         * enters this state after receiving a 'pause' command while being in
+         * the 'TRANSFERRING' state. Unlike 'PAUSED' state, this state does not
+         * accept new writes.
+         */
+        TRANSFER_PAUSED = 8,
         /**
          * The ERROR state is entered when the stream has encountered an
          * irrecoverable error from the lower layer. After entering it, the
          * stream can only be closed.
          */
         ERROR = 100,
+    }
+
+    @VintfStability
+    @Backing(type="byte")
+    enum DrainMode {
+        /**
+         * Unspecified—used with input streams only, because the client controls
+         * draining.
+         */
+        DRAIN_UNSPECIFIED = 0,
+        /**
+         * Used with output streams only, the HAL module indicates drain
+         * completion when all remaining audio data has been consumed.
+         */
+        DRAIN_ALL = 1,
+        /**
+         * Used with output streams only, the HAL module indicates drain
+         * completion shortly before all audio data has been consumed in order
+         * to give the client an opportunity to provide data for the next track
+         * for gapless playback. The exact amount of provided time is specific
+         * to the HAL implementation.
+         */
+        DRAIN_EARLY_NOTIFY = 2,
     }
 
     /**
@@ -198,7 +261,14 @@ parcelable StreamDescriptor {
          * implementation must pass a random cookie as the command argument,
          * which is only known to the implementation.
          */
-        int hal_reserved_exit;
+        int halReservedExit;
+        /**
+         * Retrieve the current state of the stream. This command must be
+         * processed by the stream in any state. The stream must provide current
+         * positions, counters, and its state in the reply. This command must be
+         * handled by the HAL module without any observable side effects.
+         */
+        Void getStatus;
         /**
          * See the state machines on the applicability of this command to
          * different states.
@@ -215,15 +285,14 @@ parcelable StreamDescriptor {
          *    read from the hardware into the 'audio.fmq' queue.
          *
          * In both cases it is allowed for this field to contain any
-         * non-negative number. The value 0 can be used if the client only needs
-         * to retrieve current positions and latency. Any sufficiently big value
-         * which exceeds the size of the queue's area which is currently
-         * available for reading or writing by the HAL module must be trimmed by
-         * the HAL module to the available size. Note that the HAL module is
-         * allowed to consume or provide less data than requested, and it must
-         * return the amount of actually read or written data via the
-         * 'Reply.fmqByteCount' field. Thus, only attempts to pass a negative
-         * number must be constituted as a client's error.
+         * non-negative number. Any sufficiently big value which exceeds the
+         * size of the queue's area which is currently available for reading or
+         * writing by the HAL module must be trimmed by the HAL module to the
+         * available size. Note that the HAL module is allowed to consume or
+         * provide less data than requested, and it must return the amount of
+         * actually read or written data via the 'Reply.fmqByteCount'
+         * field. Thus, only attempts to pass a negative number must be
+         * constituted as a client's error.
          *
          * Differences for the MMap No IRQ mode:
          *
@@ -233,13 +302,16 @@ parcelable StreamDescriptor {
          *    with sending of this command.
          *
          *  - the value must always be set to 0.
+         *
+         * See the state machines on the applicability of this command to
+         * different states.
          */
         int burst;
         /**
          * See the state machines on the applicability of this command to
          * different states.
          */
-        Void drain;
+        DrainMode drain;
         /**
          * See the state machines on the applicability of this command to
          * different states.
@@ -286,10 +358,6 @@ parcelable StreamDescriptor {
          *  - STATUS_INVALID_OPERATION: the command is not applicable in the
          *                              current state of the stream, or to this
          *                              type of the stream;
-         *  - STATUS_NO_INIT: positions can not be reported because the mix port
-         *                    is not connected to any producer or consumer, or
-         *                    because the HAL module does not support positions
-         *                    reporting for this AudioSource (on input streams).
          *  - STATUS_NOT_ENOUGH_DATA: a read or write error has
          *                            occurred for the 'audio.fmq' queue;
          */
@@ -307,9 +375,11 @@ parcelable StreamDescriptor {
          */
         int fmqByteCount;
         /**
-         * It is recommended to report the current position for any command.
-         * If the position can not be reported, the 'status' field must be
-         * set to 'NO_INIT'.
+         * It is recommended to report the current position for any command. If
+         * the position can not be reported, for example because the mix port is
+         * not connected to any producer or consumer, or because the HAL module
+         * does not support positions reporting for this AudioSource (on input
+         * streams), the 'Position::UNKNOWN' value must be used.
          *
          * For output streams: the moment when the specified stream position
          *   was presented to an external observer (i.e. presentation position).
@@ -401,6 +471,10 @@ parcelable StreamDescriptor {
          *     into 'reply' queue, and hangs on waiting on a read from
          *     the 'command' queue.
          *  6. The client wakes up due to 5. and reads the reply.
+         *     Note: in non-blocking mode, when the HAL module goes to
+         *           the 'TRANSFERRING' state (as indicated by the 'reply.state'
+         *           field), the client must wait for the 'IStreamCallback.onTransferReady'
+         *           notification to arrive before starting the next burst.
          *
          * For input streams the following sequence of operations is used:
          *  1. The client writes the BURST command into the 'command' queue,
@@ -415,6 +489,10 @@ parcelable StreamDescriptor {
          *  5. The client wakes up due to 4.
          *  6. The client reads the reply and audio data. The client must
          *     always read from the FMQ all the data it contains.
+         *     Note: in non-blocking mode, when the HAL module goes to
+         *           the 'TRANSFERRING' state (as indicated by the 'reply.state'
+         *           field) the client must wait for the 'IStreamCallback.onTransferReady'
+         *           notification to arrive before starting the next burst.
          *
          */
         MQDescriptor<byte, SynchronizedReadWrite> fmq;

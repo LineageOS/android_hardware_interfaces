@@ -714,8 +714,8 @@ Status ExternalCameraDeviceSession::switchToOffline(
         return Status::ILLEGAL_ARGUMENT;
     }
 
-    if (info == nullptr || results == nullptr || info == nullptr || session == nullptr) {
-        ALOGE("%s, output arguments (%p, %p, %p, %p) much not be null", __FUNCTION__, msgs, results,
+    if (msgs == nullptr || results == nullptr || info == nullptr || session == nullptr) {
+        ALOGE("%s, output arguments (%p, %p, %p, %p) must not be null", __FUNCTION__, msgs, results,
               info, session);
     }
 

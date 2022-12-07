@@ -331,9 +331,11 @@ enum VehicleProperty {
     FUEL_DOOR_OPEN = 0x0308 + 0x10000000 + 0x01000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:BOOLEAN
     /**
-     * EV battery level in WH, if EV or hybrid
+     * Battery level for EV or hybrid vehicle
      *
-     * Value may not exceed INFO_EV_BATTERY_CAPACITY
+     * Returns the current battery level, if EV or hybrid. This value will not exceed
+     * EV_CURRENT_BATTERY_CAPACITY. To calculate the battery percentage, use:
+     * (EV_BATTERY_LEVEL/EV_CURRENT_BATTERY_CAPACITY)*100.
      *
      * @change_mode VehiclePropertyChangeMode.CONTINUOUS
      * @access VehiclePropertyAccess.READ
