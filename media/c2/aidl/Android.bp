@@ -3,6 +3,7 @@
 aidl_interface {
     name: "android.hardware.media.c2",
     vendor_available: true,
+    double_loadable: true,
     srcs: ["android/hardware/media/c2/*.aidl"],
     include_dirs: [
         "frameworks/native/aidl/gui",
