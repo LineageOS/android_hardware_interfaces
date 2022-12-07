@@ -37,18 +37,19 @@ std::array<struct Slotinfo, 16> slot_array;
 }
 
 ::ndk::ScopedAStatus Weaver::read(int32_t in_slotId, const std::vector<uint8_t>& in_key, WeaverReadResponse* out_response) {
+    using ::aidl::android::hardware::weaver::WeaverReadStatus;
 
     if (in_slotId > 15 || in_key.size() > 16) {
-        *out_response = {0, {}};
-        return ndk::ScopedAStatus(AStatus_fromServiceSpecificError(Weaver::STATUS_FAILED));
+        *out_response = {0, {}, WeaverReadStatus::FAILED};
+        return ndk::ScopedAStatus::ok();
     }
 
     if (slot_array[in_slotId].key != in_key) {
-        *out_response = {0, {}};
-        return ndk::ScopedAStatus(AStatus_fromServiceSpecificError(Weaver::STATUS_INCORRECT_KEY));
+        *out_response = {0, {}, WeaverReadStatus::INCORRECT_KEY};
+        return ndk::ScopedAStatus::ok();
     }
 
-    *out_response = {0, slot_array[in_slotId].value};
+    *out_response = {0, slot_array[in_slotId].value, WeaverReadStatus::OK};
 
     return ::ndk::ScopedAStatus::ok();
 }
