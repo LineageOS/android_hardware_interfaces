@@ -29,4 +29,5 @@ parcelable AacConfiguration {
     ChannelMode channelMode;
     boolean variableBitRateEnabled;
     byte bitsPerSample;
+    boolean adaptiveBitRateSupported;
 }
