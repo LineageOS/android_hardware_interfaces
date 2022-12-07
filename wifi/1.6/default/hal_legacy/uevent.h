@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2008 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,24 +14,22 @@
  * limitations under the License.
  */
 
-#ifndef WIFI_LEGACY_HAL_STUBS_H_
-#define WIFI_LEGACY_HAL_STUBS_H_
+#ifndef _HARDWARE_UEVENT_H
+#define _HARDWARE_UEVENT_H
 
-#include <hal_legacy/wifi_hal.h>
+#if __cplusplus
+extern "C" {
+#endif
 
-namespace android {
-namespace hardware {
-namespace wifi {
-namespace V1_6 {
-namespace implementation {
-namespace legacy_hal {
+int uevent_init();
+int uevent_get_fd();
+int uevent_next_event(char* buffer, int buffer_length);
+int uevent_add_native_handler(void (*handler)(void* data, const char* msg, int msg_len),
+                              void* handler_data);
+int uevent_remove_native_handler(void (*handler)(void* data, const char* msg, int msg_len));
 
-bool initHalFuncTableWithStubs(wifi_hal_fn* hal_fn);
-}  // namespace legacy_hal
-}  // namespace implementation
-}  // namespace V1_6
-}  // namespace wifi
-}  // namespace hardware
-}  // namespace android
+#if __cplusplus
+}  // extern "C"
+#endif
 
-#endif  // WIFI_LEGACY_HAL_STUBS_H_
+#endif  // _HARDWARE_UEVENT_H
