@@ -18,11 +18,9 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-cc_binary {
-    name: "android.hardware.automotive.remoteaccess@V1-default-service",
+cc_defaults {
+    name: "remote-access-hal-defaults",
     vendor: true,
-    vintf_fragments: ["remoteaccess-default-service.xml"],
-    init_rc: ["remoteaccess-default-service.rc"],
     relative_install_path: "hw",
     srcs: ["src/RemoteAccessImpl.cpp"],
     whole_static_libs: [
@@ -41,7 +39,26 @@ cc_binary {
     ],
     cflags: [
         "-Wno-unused-parameter",
+    ],
+}
+
+cc_binary {
+    name: "android.hardware.automotive.remoteaccess@V1-default-service",
+    defaults: ["remote-access-hal-defaults"],
+    vintf_fragments: ["remoteaccess-default-service.xml"],
+    init_rc: ["remoteaccess-default-service.rc"],
+    cflags: [
         "-DGRPC_SERVICE_ADDRESS=\"localhost:50051\"",
+    ],
+}
+
+cc_binary {
+    name: "android.hardware.automotive.remoteaccess@V1-tcu-test-service",
+    defaults: ["remote-access-hal-defaults"],
+    vintf_fragments: ["remoteaccess-default-service.xml"],
+    init_rc: ["remoteaccess-tcu-test-service.rc"],
+    cflags: [
+        "-DGRPC_SERVICE_ADDRESS=\"10.10.10.1:50051\"",
     ],
 }
 
