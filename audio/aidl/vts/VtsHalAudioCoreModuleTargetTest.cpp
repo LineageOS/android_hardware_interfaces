@@ -36,6 +36,7 @@
 #include <aidl/Vintf.h>
 #include <aidl/android/hardware/audio/core/BnStreamCallback.h>
 #include <aidl/android/hardware/audio/core/IModule.h>
+#include <aidl/android/hardware/audio/core/ISoundDose.h>
 #include <aidl/android/hardware/audio/core/ITelephony.h>
 #include <aidl/android/media/audio/common/AudioIoFlags.h>
 #include <aidl/android/media/audio/common/AudioOutputFlags.h>
@@ -56,6 +57,7 @@ using aidl::android::hardware::audio::core::AudioMode;
 using aidl::android::hardware::audio::core::AudioPatch;
 using aidl::android::hardware::audio::core::AudioRoute;
 using aidl::android::hardware::audio::core::IModule;
+using aidl::android::hardware::audio::core::ISoundDose;
 using aidl::android::hardware::audio::core::IStreamIn;
 using aidl::android::hardware::audio::core::IStreamOut;
 using aidl::android::hardware::audio::core::ITelephony;
@@ -2468,6 +2470,92 @@ TEST_P(AudioModulePatch, ResetInvalidPatchId) {
     }
 }
 
+class AudioCoreSoundDose : public AudioCoreModuleBase, public testing::TestWithParam<std::string> {
+  public:
+    class NoOpHalSoundDoseCallback : public ISoundDose::BnHalSoundDoseCallback {
+      public:
+        ndk::ScopedAStatus onMomentaryExposureWarning(float in_currentDbA,
+                                                      const AudioDevice& in_audioDevice) override;
+        ndk::ScopedAStatus onNewMelValues(
+                const ISoundDose::IHalSoundDoseCallback::MelRecord& in_melRecord,
+                const AudioDevice& in_audioDevice) override;
+    };
+
+    void SetUp() override {
+        ASSERT_NO_FATAL_FAILURE(SetUpImpl(GetParam()));
+        ASSERT_IS_OK(module->getSoundDose(&soundDose));
+        callback = ndk::SharedRefBase::make<NoOpHalSoundDoseCallback>();
+    }
+
+    void TearDown() override { ASSERT_NO_FATAL_FAILURE(TearDownImpl()); }
+
+    std::shared_ptr<ISoundDose> soundDose;
+    std::shared_ptr<ISoundDose::IHalSoundDoseCallback> callback;
+};
+
+ndk::ScopedAStatus AudioCoreSoundDose::NoOpHalSoundDoseCallback::onMomentaryExposureWarning(
+        float in_currentDbA, const AudioDevice& in_audioDevice) {
+    // Do nothing
+    (void)in_currentDbA;
+    (void)in_audioDevice;
+    LOG(INFO) << "NoOpHalSoundDoseCallback::onMomentaryExposureWarning called";
+
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus AudioCoreSoundDose::NoOpHalSoundDoseCallback::onNewMelValues(
+        const ISoundDose::IHalSoundDoseCallback::MelRecord& in_melRecord,
+        const AudioDevice& in_audioDevice) {
+    // Do nothing
+    (void)in_melRecord;
+    (void)in_audioDevice;
+    LOG(INFO) << "NoOpHalSoundDoseCallback::onNewMelValues called";
+
+    return ndk::ScopedAStatus::ok();
+}
+
+TEST_P(AudioCoreSoundDose, GetSetOutputRs2) {
+    if (soundDose == nullptr) {
+        GTEST_SKIP() << "SoundDose is not supported";
+    }
+
+    bool isSupported = false;
+    EXPECT_NO_FATAL_FAILURE(TestAccessors<float>(soundDose.get(), &ISoundDose::getOutputRs2,
+                                                 &ISoundDose::setOutputRs2,
+                                                 /*validValues=*/{80.f, 90.f, 100.f},
+                                                 /*invalidValues=*/{79.f, 101.f}, &isSupported));
+    EXPECT_TRUE(isSupported) << "Getting/Setting RS2 must be supported";
+}
+
+TEST_P(AudioCoreSoundDose, CheckDefaultRs2Value) {
+    if (soundDose == nullptr) {
+        GTEST_SKIP() << "SoundDose is not supported";
+    }
+
+    float rs2Value;
+    ASSERT_IS_OK(soundDose->getOutputRs2(&rs2Value));
+    EXPECT_EQ(rs2Value, ISoundDose::DEFAULT_MAX_RS2);
+}
+
+TEST_P(AudioCoreSoundDose, RegisterSoundDoseCallbackTwiceThrowsException) {
+    if (soundDose == nullptr) {
+        GTEST_SKIP() << "SoundDose is not supported";
+    }
+
+    ASSERT_IS_OK(soundDose->registerSoundDoseCallback(callback));
+    EXPECT_STATUS(EX_ILLEGAL_STATE, soundDose->registerSoundDoseCallback(callback))
+            << "Registering sound dose callback twice should throw EX_ILLEGAL_STATE";
+}
+
+TEST_P(AudioCoreSoundDose, RegisterSoundDoseNullCallbackThrowsException) {
+    if (soundDose == nullptr) {
+        GTEST_SKIP() << "SoundDose is not supported";
+    }
+
+    EXPECT_STATUS(EX_ILLEGAL_ARGUMENT, soundDose->registerSoundDoseCallback(nullptr))
+            << "Registering nullptr sound dose callback should throw EX_ILLEGAL_ARGUMENT";
+}
+
 INSTANTIATE_TEST_SUITE_P(AudioCoreModuleTest, AudioCoreModule,
                          testing::ValuesIn(android::getAidlHalInstanceNames(IModule::descriptor)),
                          android::PrintInstanceNameToString);
@@ -2484,6 +2572,10 @@ INSTANTIATE_TEST_SUITE_P(AudioStreamOutTest, AudioStreamOut,
                          testing::ValuesIn(android::getAidlHalInstanceNames(IModule::descriptor)),
                          android::PrintInstanceNameToString);
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(AudioStreamOut);
+INSTANTIATE_TEST_SUITE_P(AudioCoreSoundDoseTest, AudioCoreSoundDose,
+                         testing::ValuesIn(android::getAidlHalInstanceNames(IModule::descriptor)),
+                         android::PrintInstanceNameToString);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(AudioCoreSoundDose);
 
 // This is the value used in test sequences for which the test needs to ensure
 // that the HAL stays in a transient state long enough to receive the next command.
