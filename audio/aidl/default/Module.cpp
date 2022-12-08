@@ -31,6 +31,7 @@
 using aidl::android::hardware::audio::common::SinkMetadata;
 using aidl::android::hardware::audio::common::SourceMetadata;
 using aidl::android::media::audio::common::AudioChannelLayout;
+using aidl::android::media::audio::common::AudioDevice;
 using aidl::android::media::audio::common::AudioFormatDescription;
 using aidl::android::media::audio::common::AudioFormatType;
 using aidl::android::media::audio::common::AudioInputFlags;
@@ -136,7 +137,8 @@ ndk::ScopedAStatus Module::createStreamContext(int32_t in_portConfigId, int64_t 
         StreamContext temp(
                 std::make_unique<StreamContext::CommandMQ>(1, true /*configureEventFlagWord*/),
                 std::make_unique<StreamContext::ReplyMQ>(1, true /*configureEventFlagWord*/),
-                frameSize, std::make_unique<StreamContext::DataMQ>(frameSize * in_bufferSizeFrames),
+                portConfigIt->format.value(), portConfigIt->channelMask.value(),
+                std::make_unique<StreamContext::DataMQ>(frameSize * in_bufferSizeFrames),
                 asyncCallback, mDebug.streamTransientStateDelayMs);
         if (temp.isValid()) {
             *out_context = std::move(temp);
@@ -147,6 +149,39 @@ ndk::ScopedAStatus Module::createStreamContext(int32_t in_portConfigId, int64_t 
         // TODO: Implement simulation of MMAP buffer allocation
     }
     return ndk::ScopedAStatus::ok();
+}
+
+std::vector<AudioDevice> Module::findConnectedDevices(int32_t portConfigId) {
+    std::vector<AudioDevice> result;
+    auto& ports = getConfig().ports;
+    auto portIds = portIdsFromPortConfigIds(findConnectedPortConfigIds(portConfigId));
+    for (auto it = portIds.begin(); it != portIds.end(); ++it) {
+        auto portIt = findById<AudioPort>(ports, *it);
+        if (portIt != ports.end() && portIt->ext.getTag() == AudioPortExt::Tag::device) {
+            result.push_back(portIt->ext.template get<AudioPortExt::Tag::device>().device);
+        }
+    }
+    return result;
+}
+
+std::set<int32_t> Module::findConnectedPortConfigIds(int32_t portConfigId) {
+    std::set<int32_t> result;
+    auto patchIdsRange = mPatches.equal_range(portConfigId);
+    auto& patches = getConfig().patches;
+    for (auto it = patchIdsRange.first; it != patchIdsRange.second; ++it) {
+        auto patchIt = findById<AudioPatch>(patches, it->second);
+        if (patchIt == patches.end()) {
+            LOG(FATAL) << __func__ << ": patch with id " << it->second << " taken from mPatches "
+                       << "not found in the configuration";
+        }
+        if (std::find(patchIt->sourcePortConfigIds.begin(), patchIt->sourcePortConfigIds.end(),
+                      portConfigId) != patchIt->sourcePortConfigIds.end()) {
+            result.insert(patchIt->sinkPortConfigIds.begin(), patchIt->sinkPortConfigIds.end());
+        } else {
+            result.insert(patchIt->sourcePortConfigIds.begin(), patchIt->sourcePortConfigIds.end());
+        }
+    }
+    return result;
 }
 
 ndk::ScopedAStatus Module::findPortIdForNewStream(int32_t in_portConfigId, AudioPort** port) {
@@ -187,6 +222,19 @@ ndk::ScopedAStatus Module::findPortIdForNewStream(int32_t in_portConfigId, Audio
     return ndk::ScopedAStatus::ok();
 }
 
+template <typename C>
+std::set<int32_t> Module::portIdsFromPortConfigIds(C portConfigIds) {
+    std::set<int32_t> result;
+    auto& portConfigs = getConfig().portConfigs;
+    for (auto it = portConfigIds.begin(); it != portConfigIds.end(); ++it) {
+        auto portConfigIt = findById<AudioPortConfig>(portConfigs, *it);
+        if (portConfigIt != portConfigs.end()) {
+            result.insert(portConfigIt->portId);
+        }
+    }
+    return result;
+}
+
 internal::Configuration& Module::getConfig() {
     if (!mConfig) {
         mConfig.reset(new internal::Configuration(internal::getNullPrimaryConfiguration()));
@@ -223,12 +271,16 @@ void Module::updateStreamsConnectedState(const AudioPatch& oldPatch, const Audio
     idsToConnect.insert(newPatch.sinkPortConfigIds.begin(), newPatch.sinkPortConfigIds.end());
     std::for_each(idsToDisconnect.begin(), idsToDisconnect.end(), [&](const auto& portConfigId) {
         if (idsToConnect.count(portConfigId) == 0) {
-            mStreams.setStreamIsConnected(portConfigId, false);
+            LOG(DEBUG) << "The stream on port config id " << portConfigId << " is not connected";
+            mStreams.setStreamIsConnected(portConfigId, {});
         }
     });
     std::for_each(idsToConnect.begin(), idsToConnect.end(), [&](const auto& portConfigId) {
         if (idsToDisconnect.count(portConfigId) == 0) {
-            mStreams.setStreamIsConnected(portConfigId, true);
+            const auto connectedDevices = findConnectedDevices(portConfigId);
+            LOG(DEBUG) << "The stream on port config id " << portConfigId
+                       << " is connected to: " << ::android::internal::ToString(connectedDevices);
+            mStreams.setStreamIsConnected(portConfigId, connectedDevices);
         }
     });
 }
@@ -468,14 +520,15 @@ ndk::ScopedAStatus Module::openInputStream(const OpenInputStreamArguments& in_ar
         return status;
     }
     context.fillDescriptor(&_aidl_return->desc);
-    auto stream = ndk::SharedRefBase::make<StreamIn>(in_args.sinkMetadata, std::move(context));
+    auto stream = ndk::SharedRefBase::make<StreamIn>(in_args.sinkMetadata, std::move(context),
+                                                     mConfig->microphones);
     if (auto status = stream->init(); !status.isOk()) {
         return status;
     }
     StreamWrapper streamWrapper(stream);
     auto patchIt = mPatches.find(in_args.portConfigId);
     if (patchIt != mPatches.end()) {
-        streamWrapper.setStreamIsConnected(true);
+        streamWrapper.setStreamIsConnected(findConnectedDevices(in_args.portConfigId));
     }
     mStreams.insert(port->id, in_args.portConfigId, std::move(streamWrapper));
     _aidl_return->stream = std::move(stream);
@@ -525,7 +578,7 @@ ndk::ScopedAStatus Module::openOutputStream(const OpenOutputStreamArguments& in_
     StreamWrapper streamWrapper(stream);
     auto patchIt = mPatches.find(in_args.portConfigId);
     if (patchIt != mPatches.end()) {
-        streamWrapper.setStreamIsConnected(true);
+        streamWrapper.setStreamIsConnected(findConnectedDevices(in_args.portConfigId));
     }
     mStreams.insert(port->id, in_args.portConfigId, std::move(streamWrapper));
     _aidl_return->stream = std::move(stream);
@@ -841,6 +894,12 @@ ndk::ScopedAStatus Module::getMicMute(bool* _aidl_return) {
 ndk::ScopedAStatus Module::setMicMute(bool in_mute) {
     LOG(DEBUG) << __func__ << ": " << in_mute;
     mMicMute = in_mute;
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus Module::getMicrophones(std::vector<MicrophoneInfo>* _aidl_return) {
+    *_aidl_return = mConfig->microphones;
+    LOG(DEBUG) << __func__ << ": returning " << ::android::internal::ToString(*_aidl_return);
     return ndk::ScopedAStatus::ok();
 }
 
