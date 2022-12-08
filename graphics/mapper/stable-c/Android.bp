@@ -33,6 +33,13 @@ cc_library_headers {
     export_header_lib_headers: [
         "libarect_headers",
     ],
+    // TODO(b/214400477) Remove apex_available
+    apex_available: [
+        "//apex_available:platform",
+        "com.android.media.swcodec",
+        "test_com.android.media.swcodec",
+    ],
+    min_sdk_version: "29",
 }
 
 cc_library_shared {
@@ -66,6 +73,13 @@ cc_library_headers {
         "libbase_headers",
         "libimapper_stablec",
     ],
+    // TODO(b/214400477) Remove apex_available
+    apex_available: [
+        "//apex_available:platform",
+        "com.android.media.swcodec",
+        "test_com.android.media.swcodec",
+    ],
+    min_sdk_version: "29",
 }
 
 cc_test {
