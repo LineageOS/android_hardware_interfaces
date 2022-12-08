@@ -384,21 +384,4 @@ enum Axis {
      * The interpretation of a generic axis is device-specific.
      */
     GENERIC_16 = 47,
-
-    /**
-     * Axis constant: X gesture offset axis of a motion event.
-     *
-     * - For a touch pad, reports the distance that a swipe gesture has moved in the X
-     *   axis, as a proportion of the touch pad's size. For example, if a touch pad is
-     *   1000 units wide, and a swipe gesture starts at X = 500 then moves to X = 400,
-     *   this axis would have a value of -0.1.
-     */
-    GESTURE_X_OFFSET = 48,
-
-    /**
-     * Axis constant: Y gesture offset axis of a motion event.
-     *
-     * The same as GESTURE_X_OFFSET, but for the Y axis.
-     */
-    GESTURE_Y_OFFSET = 49,
 }
