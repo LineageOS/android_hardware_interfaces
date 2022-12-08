@@ -59,6 +59,8 @@ using aidl::android::hardware::audio::core::IModule;
 using aidl::android::hardware::audio::core::IStreamIn;
 using aidl::android::hardware::audio::core::IStreamOut;
 using aidl::android::hardware::audio::core::ITelephony;
+using aidl::android::hardware::audio::core::MicrophoneDynamicInfo;
+using aidl::android::hardware::audio::core::MicrophoneInfo;
 using aidl::android::hardware::audio::core::ModuleDebug;
 using aidl::android::hardware::audio::core::StreamDescriptor;
 using aidl::android::hardware::common::fmq::SynchronizedReadWrite;
@@ -192,6 +194,7 @@ void TestAccessors(Instance* inst, Getter getter, Setter setter,
         *isSupported = false;
         return;
     }
+    ASSERT_TRUE(status.isOk()) << "Unexpected status from a getter: " << status;
     *isSupported = true;
     for (const auto v : validValues) {
         EXPECT_IS_OK((inst->*setter)(v)) << "for valid value: " << v;
@@ -1567,6 +1570,42 @@ TEST_P(AudioCoreModule, MicMute) {
     // TODO: Test that mic mute actually mutes input.
 }
 
+TEST_P(AudioCoreModule, GetMicrophones) {
+    ASSERT_NO_FATAL_FAILURE(SetUpModuleConfig());
+    const std::vector<AudioPort> builtInMicPorts = moduleConfig->getAttachedMicrophonePorts();
+    std::vector<MicrophoneInfo> micInfos;
+    ScopedAStatus status = module->getMicrophones(&micInfos);
+    if (!status.isOk()) {
+        EXPECT_EQ(EX_UNSUPPORTED_OPERATION, status.getExceptionCode());
+        ASSERT_FALSE(builtInMicPorts.empty())
+                << "When the HAL module does not have built-in microphones, IModule.getMicrophones"
+                << " must complete with no error and return an empty list";
+        GTEST_SKIP() << "Microphone info is not supported";
+    }
+    std::set<int32_t> micPortIdsWithInfo;
+    for (const auto& micInfo : micInfos) {
+        const auto& micDevice = micInfo.device;
+        const auto it =
+                std::find_if(builtInMicPorts.begin(), builtInMicPorts.end(), [&](const auto& port) {
+                    return port.ext.template get<AudioPortExt::Tag::device>().device == micDevice;
+                });
+        if (it != builtInMicPorts.end()) {
+            micPortIdsWithInfo.insert(it->id);
+        } else {
+            ADD_FAILURE() << "No device port found with a device specified for the microphone \""
+                          << micInfo.id << "\": " << micDevice.toString();
+        }
+    }
+    if (micPortIdsWithInfo.size() != builtInMicPorts.size()) {
+        std::vector<AudioPort> micPortsNoInfo;
+        std::copy_if(builtInMicPorts.begin(), builtInMicPorts.end(),
+                     std::back_inserter(micPortsNoInfo),
+                     [&](const auto& port) { return micPortIdsWithInfo.count(port.id) == 0; });
+        ADD_FAILURE() << "No MicrophoneInfo is provided for the following microphone device ports: "
+                      << ::android::internal::ToString(micPortsNoInfo);
+    }
+}
+
 TEST_P(AudioCoreModule, UpdateAudioMode) {
     for (const auto mode : ::ndk::enum_range<AudioMode>()) {
         EXPECT_IS_OK(module->updateAudioMode(mode)) << toString(mode);
@@ -1747,13 +1786,11 @@ class AudioStream : public AudioCoreModule {
 
     void OpenOverMaxCount() {
         constexpr bool isInput = IOTraits<Stream>::is_input;
-        auto ports = moduleConfig->getMixPorts(isInput);
+        auto ports = moduleConfig->getMixPorts(isInput, true /*attachedOnly*/);
         bool hasSingleRun = false;
         for (const auto& port : ports) {
             const size_t maxStreamCount = port.ext.get<AudioPortExt::Tag::mix>().maxOpenStreamCount;
-            if (maxStreamCount == 0 ||
-                moduleConfig->getAttachedDevicesPortsForMixPort(isInput, port).empty()) {
-                // No restrictions or no permanently attached devices.
+            if (maxStreamCount == 0) {
                 continue;
             }
             auto portConfigs = moduleConfig->getPortConfigsForMixPorts(isInput, port);
@@ -1878,20 +1915,127 @@ TEST_IN_AND_OUT_STREAM(OpenTwiceSamePortConfig);
 TEST_IN_AND_OUT_STREAM(ResetPortConfigWithOpenStream);
 TEST_IN_AND_OUT_STREAM(SendInvalidCommand);
 
+namespace aidl::android::hardware::audio::core {
+std::ostream& operator<<(std::ostream& os, const IStreamIn::MicrophoneDirection& md) {
+    os << toString(md);
+    return os;
+}
+}  // namespace aidl::android::hardware::audio::core
+
+TEST_P(AudioStreamIn, ActiveMicrophones) {
+    std::vector<MicrophoneInfo> micInfos;
+    ScopedAStatus status = module->getMicrophones(&micInfos);
+    if (!status.isOk()) {
+        GTEST_SKIP() << "Microphone info is not supported";
+    }
+    const auto ports = moduleConfig->getInputMixPorts(true /*attachedOnly*/);
+    if (ports.empty()) {
+        GTEST_SKIP() << "No input mix ports for attached devices";
+    }
+    for (const auto& port : ports) {
+        const auto portConfig = moduleConfig->getSingleConfigForMixPort(true, port);
+        ASSERT_TRUE(portConfig.has_value()) << "No profiles specified for input mix port";
+        WithStream<IStreamIn> stream(portConfig.value());
+        ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultBufferSizeFrames));
+        {
+            // The port of the stream is not connected, thus the list of active mics must be empty.
+            std::vector<MicrophoneDynamicInfo> activeMics;
+            EXPECT_IS_OK(stream.get()->getActiveMicrophones(&activeMics));
+            EXPECT_TRUE(activeMics.empty()) << "a stream on an unconnected port returns a "
+                                               "non-empty list of active microphones";
+        }
+        if (auto micDevicePorts = ModuleConfig::getBuiltInMicPorts(
+                    moduleConfig->getAttachedSourceDevicesPortsForMixPort(port));
+            !micDevicePorts.empty()) {
+            auto devicePortConfig = moduleConfig->getSingleConfigForDevicePort(micDevicePorts[0]);
+            WithAudioPatch patch(true /*isInput*/, stream.getPortConfig(), devicePortConfig);
+            ASSERT_NO_FATAL_FAILURE(patch.SetUp(module.get()));
+            std::vector<MicrophoneDynamicInfo> activeMics;
+            EXPECT_IS_OK(stream.get()->getActiveMicrophones(&activeMics));
+            for (const auto& mic : activeMics) {
+                EXPECT_NE(micInfos.end(),
+                          std::find_if(micInfos.begin(), micInfos.end(),
+                                       [&](const auto& micInfo) { return micInfo.id == mic.id; }))
+                        << "active microphone \"" << mic.id << "\" is not listed in "
+                        << "microphone infos returned by the module: "
+                        << ::android::internal::ToString(micInfos);
+                EXPECT_NE(0UL, mic.channelMapping.size())
+                        << "No channels specified for the microphone \"" << mic.id << "\"";
+            }
+        }
+        {
+            // Now the port of the stream is not connected again, re-check that there are no
+            // active microphones.
+            std::vector<MicrophoneDynamicInfo> activeMics;
+            EXPECT_IS_OK(stream.get()->getActiveMicrophones(&activeMics));
+            EXPECT_TRUE(activeMics.empty()) << "a stream on an unconnected port returns a "
+                                               "non-empty list of active microphones";
+        }
+    }
+}
+
+TEST_P(AudioStreamIn, MicrophoneDirection) {
+    using MD = IStreamIn::MicrophoneDirection;
+    const auto ports = moduleConfig->getInputMixPorts(true /*attachedOnly*/);
+    if (ports.empty()) {
+        GTEST_SKIP() << "No input mix ports for attached devices";
+    }
+    bool isSupported = false;
+    for (const auto& port : ports) {
+        const auto portConfig = moduleConfig->getSingleConfigForMixPort(true, port);
+        ASSERT_TRUE(portConfig.has_value()) << "No profiles specified for input mix port";
+        WithStream<IStreamIn> stream(portConfig.value());
+        ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultBufferSizeFrames));
+        EXPECT_NO_FATAL_FAILURE(
+                TestAccessors<MD>(stream.get(), &IStreamIn::getMicrophoneDirection,
+                                  &IStreamIn::setMicrophoneDirection,
+                                  std::vector<MD>(enum_range<MD>().begin(), enum_range<MD>().end()),
+                                  {}, &isSupported));
+        if (!isSupported) break;
+    }
+    if (!isSupported) {
+        GTEST_SKIP() << "Microphone direction is not supported";
+    }
+}
+
+TEST_P(AudioStreamIn, MicrophoneFieldDimension) {
+    const auto ports = moduleConfig->getInputMixPorts(true /*attachedOnly*/);
+    if (ports.empty()) {
+        GTEST_SKIP() << "No input mix ports for attached devices";
+    }
+    bool isSupported = false;
+    for (const auto& port : ports) {
+        const auto portConfig = moduleConfig->getSingleConfigForMixPort(true, port);
+        ASSERT_TRUE(portConfig.has_value()) << "No profiles specified for input mix port";
+        WithStream<IStreamIn> stream(portConfig.value());
+        ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultBufferSizeFrames));
+        EXPECT_NO_FATAL_FAILURE(TestAccessors<float>(
+                stream.get(), &IStreamIn::getMicrophoneFieldDimension,
+                &IStreamIn::setMicrophoneFieldDimension,
+                {IStreamIn::MIC_FIELD_DIMENSION_WIDE_ANGLE,
+                 IStreamIn::MIC_FIELD_DIMENSION_WIDE_ANGLE / 2.0f,
+                 IStreamIn::MIC_FIELD_DIMENSION_NO_ZOOM,
+                 IStreamIn::MIC_FIELD_DIMENSION_MAX_ZOOM / 2.0f,
+                 IStreamIn::MIC_FIELD_DIMENSION_MAX_ZOOM},
+                {IStreamIn::MIC_FIELD_DIMENSION_WIDE_ANGLE * 2,
+                 IStreamIn::MIC_FIELD_DIMENSION_MAX_ZOOM * 2,
+                 IStreamIn::MIC_FIELD_DIMENSION_WIDE_ANGLE * 1.1f,
+                 IStreamIn::MIC_FIELD_DIMENSION_MAX_ZOOM * 1.1f, -INFINITY, INFINITY, -NAN, NAN},
+                &isSupported));
+        if (!isSupported) break;
+    }
+    if (!isSupported) {
+        GTEST_SKIP() << "Microphone direction is not supported";
+    }
+}
+
 TEST_P(AudioStreamOut, OpenTwicePrimary) {
-    const auto mixPorts = moduleConfig->getMixPorts(false);
-    auto primaryPortIt = std::find_if(mixPorts.begin(), mixPorts.end(), [](const AudioPort& port) {
-        return port.flags.getTag() == AudioIoFlags::Tag::output &&
-               isBitPositionFlagSet(port.flags.get<AudioIoFlags::Tag::output>(),
-                                    AudioOutputFlags::PRIMARY);
-    });
-    if (primaryPortIt == mixPorts.end()) {
-        GTEST_SKIP() << "No primary mix port";
+    const auto mixPorts =
+            moduleConfig->getPrimaryMixPorts(true /*attachedOnly*/, true /*singlePort*/);
+    if (mixPorts.empty()) {
+        GTEST_SKIP() << "No primary mix port which could be routed to attached devices";
     }
-    if (moduleConfig->getAttachedSinkDevicesPortsForMixPort(*primaryPortIt).empty()) {
-        GTEST_SKIP() << "Primary mix port can not be routed to any of attached devices";
-    }
-    const auto portConfig = moduleConfig->getSingleConfigForMixPort(false, *primaryPortIt);
+    const auto portConfig = moduleConfig->getSingleConfigForMixPort(false, *mixPorts.begin());
     ASSERT_TRUE(portConfig.has_value()) << "No profiles specified for the primary mix port";
     EXPECT_NO_FATAL_FAILURE(OpenTwiceSamePortConfigImpl(portConfig.value()));
 }
