@@ -131,7 +131,7 @@ cc_binary {
         "libenvreverbsw",
         "libequalizersw",
         "libhapticgeneratorsw",
-        "libloudnessenhancersw",
+        "libloudnessenhanceraidl",
         "libpresetreverbsw",
         "libtinyxml2",
         "libvirtualizersw",
