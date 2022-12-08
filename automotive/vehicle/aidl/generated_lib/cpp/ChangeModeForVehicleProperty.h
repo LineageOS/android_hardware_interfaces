@@ -61,6 +61,7 @@ std::unordered_map<VehicleProperty, VehiclePropertyChangeMode> ChangeModeForVehi
         {VehicleProperty::FUEL_LEVEL, VehiclePropertyChangeMode::CONTINUOUS},
         {VehicleProperty::FUEL_DOOR_OPEN, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::EV_BATTERY_LEVEL, VehiclePropertyChangeMode::CONTINUOUS},
+        {VehicleProperty::EV_CURRENT_BATTERY_CAPACITY, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::EV_CHARGE_PORT_OPEN, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::EV_CHARGE_PORT_CONNECTED, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::EV_BATTERY_INSTANTANEOUS_CHARGE_RATE, VehiclePropertyChangeMode::CONTINUOUS},

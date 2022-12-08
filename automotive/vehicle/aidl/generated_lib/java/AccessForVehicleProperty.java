@@ -53,6 +53,7 @@ public final class AccessForVehicleProperty {
         Map.entry(VehicleProperty.FUEL_LEVEL, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.FUEL_DOOR_OPEN, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.EV_BATTERY_LEVEL, VehiclePropertyAccess.READ),
+        Map.entry(VehicleProperty.EV_CURRENT_BATTERY_CAPACITY, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.EV_CHARGE_PORT_OPEN, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.EV_CHARGE_PORT_CONNECTED, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.EV_BATTERY_INSTANTANEOUS_CHARGE_RATE, VehiclePropertyAccess.READ),

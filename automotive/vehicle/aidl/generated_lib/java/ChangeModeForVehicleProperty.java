@@ -53,6 +53,7 @@ public final class ChangeModeForVehicleProperty {
         Map.entry(VehicleProperty.FUEL_LEVEL, VehiclePropertyChangeMode.CONTINUOUS),
         Map.entry(VehicleProperty.FUEL_DOOR_OPEN, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.EV_BATTERY_LEVEL, VehiclePropertyChangeMode.CONTINUOUS),
+        Map.entry(VehicleProperty.EV_CURRENT_BATTERY_CAPACITY, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.EV_CHARGE_PORT_OPEN, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.EV_CHARGE_PORT_CONNECTED, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.EV_BATTERY_INSTANTANEOUS_CHARGE_RATE, VehiclePropertyChangeMode.CONTINUOUS),
