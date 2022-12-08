@@ -1310,6 +1310,14 @@
             "minSampleRate": 1.0
         },
         {
+            "property": "VehicleProperty::EV_CURRENT_BATTERY_CAPACITY",
+            "defaultValue": {
+                "floatValues": [
+                    150000.0
+                ]
+            }
+        },
+        {
             "property": "VehicleProperty::EV_CHARGE_PORT_OPEN",
             "defaultValue": {
                 "int32Values": [

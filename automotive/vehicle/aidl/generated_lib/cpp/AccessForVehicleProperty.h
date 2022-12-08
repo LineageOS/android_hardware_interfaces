@@ -61,6 +61,7 @@ std::unordered_map<VehicleProperty, VehiclePropertyAccess> AccessForVehiclePrope
         {VehicleProperty::FUEL_LEVEL, VehiclePropertyAccess::READ},
         {VehicleProperty::FUEL_DOOR_OPEN, VehiclePropertyAccess::READ_WRITE},
         {VehicleProperty::EV_BATTERY_LEVEL, VehiclePropertyAccess::READ},
+        {VehicleProperty::EV_CURRENT_BATTERY_CAPACITY, VehiclePropertyAccess::READ},
         {VehicleProperty::EV_CHARGE_PORT_OPEN, VehiclePropertyAccess::READ_WRITE},
         {VehicleProperty::EV_CHARGE_PORT_CONNECTED, VehiclePropertyAccess::READ},
         {VehicleProperty::EV_BATTERY_INSTANTANEOUS_CHARGE_RATE, VehiclePropertyAccess::READ},

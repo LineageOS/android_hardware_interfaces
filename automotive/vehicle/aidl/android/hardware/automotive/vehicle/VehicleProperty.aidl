@@ -344,6 +344,20 @@ enum VehicleProperty {
     EV_BATTERY_LEVEL = 0x0309 + 0x10000000 + 0x01000000
             + 0x00600000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:FLOAT
     /**
+     * Current battery capacity for EV or hybrid vehicle
+     *
+     * Returns the actual value of battery capacity, if EV or hybrid. This property captures the
+     * real-time battery capacity taking into account factors such as battery aging and temperature
+     * dependency. Therefore, this value might be different from INFO_EV_BATTERY_CAPACITY because
+     * INFO_EV_BATTERY_CAPACITY returns the nominal battery capacity from when the vehicle was new.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     * @unit VehicleUnit:WH
+     */
+    EV_CURRENT_BATTERY_CAPACITY =
+            0x030D + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.FLOAT,
+    /**
      * EV charge port open
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
