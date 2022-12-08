@@ -77,6 +77,8 @@ enum Dataspace : @1.1::Dataspace {
     HEIF = 0x1004,
 };
 
+@export(name="android_color_mode_v1_2_t", value_prefix="HAL_COLOR_MODE_",
+        export_parent="false")
 enum ColorMode : @1.1::ColorMode {
     /**
      * DISPLAY_BT2020 corresponds with display settings that implement the ITU-R
