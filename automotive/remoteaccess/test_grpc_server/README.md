@@ -75,11 +75,18 @@ following behavior:
 
 * Under android root: `source build/envsetup.sh`
 
+* Add
+  ```
+  PRODUCT_SOONG_NAMESPACES += hardware/interfaces/automotive/remoteaccess/test_grpc_server/lib`
+  ```
+
+  to `device/generic/car/common/car.mk`.
+
 * `lunch sdk_car_x86_64-userdebug`
 
 * `make -j TestWakeupClientServer`
 
-* `make -j ApPowerControlLib`
+* `make -j ApPOwerControlLib`
 
 ## How to push the test wakeup client to a TCU which runs Android.
 
@@ -99,7 +106,7 @@ following behavior:
 
 * `adb push vendor/bin/TestWakeupClientServer /vendor/bin`
 
-* `adb push vendor/lib/ApPowerControlLib.so /vendor/lib`
+* `adb push vendor/lib64/ApPowerControlLib.so /vendor/lib64`
 
 * `adb shell`
 
@@ -115,6 +122,13 @@ runs on the same Android system, and they communicate through local loopback
 interface.
 
 * Under android root, `source build/envsetup.sh`
+
+* Add
+  ```
+  PRODUCT_SOONG_NAMESPACES += hardware/interfaces/automotive/remoteaccess/test_grpc_server/lib`
+  ```
+
+  to `device/generic/car/common/car.mk`.
 
 * `lunch sdk_car_x86_64-userdebug`
 
@@ -150,7 +164,11 @@ interface.
 
 * `make -j TestWakeupClientServer`
 
+* `make -j ApPOwerControlLib`
+
 * `adb push $ANDROID_PRODUCT_OUT/vendor/bin/TestWakeupClientServer /vendor/bin`
+
+* `adb push $ANDROID_PRODUCT_OUT/vendor/lib64/ApPowerControlLib.so /vendor/lib64`
 
 * `adb shell`
 
