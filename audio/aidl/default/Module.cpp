@@ -26,6 +26,7 @@
 #include <aidl/android/media/audio/common/AudioOutputFlags.h>
 
 #include "core-impl/Module.h"
+#include "core-impl/SoundDose.h"
 #include "core-impl/Telephony.h"
 #include "core-impl/utils.h"
 
@@ -932,8 +933,11 @@ ndk::ScopedAStatus Module::updateScreenState(bool in_isTurnedOn) {
 }
 
 ndk::ScopedAStatus Module::getSoundDose(std::shared_ptr<ISoundDose>* _aidl_return) {
-    *_aidl_return = nullptr;
-    LOG(DEBUG) << __func__ << ": ISoundDose not implemented";
+    if (mSoundDose == nullptr) {
+        mSoundDose = ndk::SharedRefBase::make<SoundDose>();
+    }
+    *_aidl_return = mSoundDose;
+    LOG(DEBUG) << __func__ << ": returning instance of ISoundDose: " << _aidl_return->get();
     return ndk::ScopedAStatus::ok();
 }
 
