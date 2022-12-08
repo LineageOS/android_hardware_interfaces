@@ -39,6 +39,9 @@ aidl_interface {
             ],
             min_sdk_version: "29",
         },
+        rust: {
+            enabled: true,
+        }
     },
     frozen: false,
     versions_with_info: [

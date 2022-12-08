@@ -16,28 +16,30 @@
 
 package android.hardware.automotive.vehicle;
 
+/**
+ * See {@code android.view.MotionEvent#TOOL_TYPE_*} for more details.
+ */
 @VintfStability
 @Backing(type="int")
-enum VehicleDisplay {
+enum VehicleHwMotionToolType {
     /**
-     * The primary Android display (for example, center console)
+     * Unknown type such as for a trackballl or other non-pointing device
      */
-    MAIN = 0,
+    TOOL_TYPE_UNKNOWN = 0,
     /**
-     * Instrument cluster display. This may exist only for driver
+     * Finger type
      */
-    INSTRUMENT_CLUSTER = 1,
-
+    TOOL_TYPE_FINGER = 1,
     /**
-     * Head Up Display. This may exist only for driver
+     * Stylus type
      */
-    HUD = 2,
+    TOOL_TYPE_STYLUS = 2,
     /**
-     * Dedicated display for showing IME for {@code MAIN}
+     * Mouse type
      */
-    INPUT = 3,
+    TOOL_TYPE_MOUSE = 3,
     /**
-     * Auxiliary display which can provide additional screen for {@code MAIN} display
+     * Eraser type
      */
-    AUXILIARY = 4,
+    TOOL_TYPE_ERASER = 4,
 }
