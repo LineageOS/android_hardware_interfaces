@@ -79,6 +79,4 @@ enum Axis {
   GENERIC_14 = 45,
   GENERIC_15 = 46,
   GENERIC_16 = 47,
-  GESTURE_X_OFFSET = 48,
-  GESTURE_Y_OFFSET = 49,
 }
