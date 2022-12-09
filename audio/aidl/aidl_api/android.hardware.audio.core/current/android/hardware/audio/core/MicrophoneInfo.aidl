@@ -31,52 +31,52 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.input.common;
-@Backing(type="int") @VintfStability
-enum Axis {
-  X = 0,
-  Y = 1,
-  PRESSURE = 2,
-  SIZE = 3,
-  TOUCH_MAJOR = 4,
-  TOUCH_MINOR = 5,
-  TOOL_MAJOR = 6,
-  TOOL_MINOR = 7,
-  ORIENTATION = 8,
-  VSCROLL = 9,
-  HSCROLL = 10,
-  Z = 11,
-  RX = 12,
-  RY = 13,
-  RZ = 14,
-  HAT_X = 15,
-  HAT_Y = 16,
-  LTRIGGER = 17,
-  RTRIGGER = 18,
-  THROTTLE = 19,
-  RUDDER = 20,
-  WHEEL = 21,
-  GAS = 22,
-  BRAKE = 23,
-  DISTANCE = 24,
-  TILT = 25,
-  SCROLL = 26,
-  RELATIVE_X = 27,
-  RELATIVE_Y = 28,
-  GENERIC_1 = 32,
-  GENERIC_2 = 33,
-  GENERIC_3 = 34,
-  GENERIC_4 = 35,
-  GENERIC_5 = 36,
-  GENERIC_6 = 37,
-  GENERIC_7 = 38,
-  GENERIC_8 = 39,
-  GENERIC_9 = 40,
-  GENERIC_10 = 41,
-  GENERIC_11 = 42,
-  GENERIC_12 = 43,
-  GENERIC_13 = 44,
-  GENERIC_14 = 45,
-  GENERIC_15 = 46,
-  GENERIC_16 = 47,
+package android.hardware.audio.core;
+@JavaDerive(equals=true, toString=true) @VintfStability
+parcelable MicrophoneInfo {
+  @utf8InCpp String id;
+  android.media.audio.common.AudioDevice device;
+  android.hardware.audio.core.MicrophoneInfo.Location location = android.hardware.audio.core.MicrophoneInfo.Location.UNKNOWN;
+  int group = -1;
+  int indexInTheGroup = -1;
+  @nullable android.hardware.audio.core.MicrophoneInfo.Sensitivity sensitivity;
+  android.hardware.audio.core.MicrophoneInfo.Directionality directionality = android.hardware.audio.core.MicrophoneInfo.Directionality.UNKNOWN;
+  android.hardware.audio.core.MicrophoneInfo.FrequencyResponsePoint[] frequencyResponse;
+  @nullable android.hardware.audio.core.MicrophoneInfo.Coordinate position;
+  @nullable android.hardware.audio.core.MicrophoneInfo.Coordinate orientation;
+  const int GROUP_UNKNOWN = -1;
+  const int INDEX_IN_THE_GROUP_UNKNOWN = -1;
+  @Backing(type="int") @VintfStability
+  enum Location {
+    UNKNOWN = 0,
+    MAINBODY = 1,
+    MAINBODY_MOVABLE = 2,
+    PERIPHERAL = 3,
+  }
+  @VintfStability
+  parcelable Sensitivity {
+    float leveldBFS;
+    float maxSpldB;
+    float minSpldB;
+  }
+  @Backing(type="int") @VintfStability
+  enum Directionality {
+    UNKNOWN = 0,
+    OMNI = 1,
+    BI_DIRECTIONAL = 2,
+    CARDIOID = 3,
+    HYPER_CARDIOID = 4,
+    SUPER_CARDIOID = 5,
+  }
+  @VintfStability
+  parcelable FrequencyResponsePoint {
+    float frequencyHz;
+    float leveldB;
+  }
+  @VintfStability
+  parcelable Coordinate {
+    float x;
+    float y;
+    float z;
+  }
 }

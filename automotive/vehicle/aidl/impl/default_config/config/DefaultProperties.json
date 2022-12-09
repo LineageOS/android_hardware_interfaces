@@ -1310,6 +1310,14 @@
             "minSampleRate": 1.0
         },
         {
+            "property": "VehicleProperty::EV_CURRENT_BATTERY_CAPACITY",
+            "defaultValue": {
+                "floatValues": [
+                    150000.0
+                ]
+            }
+        },
+        {
             "property": "VehicleProperty::EV_CHARGE_PORT_OPEN",
             "defaultValue": {
                 "int32Values": [
@@ -1543,6 +1551,21 @@
                     1
                 ]
             }
+        },
+        {
+            "property": "VehicleProperty::EV_BRAKE_REGENERATION_LEVEL",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": 0,
+                    "minInt32Value": 0,
+                    "maxInt32Value": 3
+                }
+            ]
         },
         {
             "property": "VehicleProperty::FUEL_LEVEL_LOW",

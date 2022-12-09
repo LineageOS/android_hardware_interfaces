@@ -21,12 +21,14 @@
 
 #include <aidl/android/hardware/audio/core/AudioPatch.h>
 #include <aidl/android/hardware/audio/core/AudioRoute.h>
+#include <aidl/android/hardware/audio/core/MicrophoneInfo.h>
 #include <aidl/android/media/audio/common/AudioPort.h>
 #include <aidl/android/media/audio/common/AudioPortConfig.h>
 
 namespace aidl::android::hardware::audio::core::internal {
 
 struct Configuration {
+    std::vector<MicrophoneInfo> microphones;
     std::vector<::aidl::android::media::audio::common::AudioPort> ports;
     std::vector<::aidl::android::media::audio::common::AudioPortConfig> portConfigs;
     std::vector<::aidl::android::media::audio::common::AudioPortConfig> initialConfigs;

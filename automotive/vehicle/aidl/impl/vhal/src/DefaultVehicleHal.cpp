@@ -789,10 +789,13 @@ binder_status_t DefaultVehicleHal::dump(int fd, const char** args, uint32_t numA
     for (uint32_t i = 0; i < numArgs; i++) {
         options.push_back(args[i]);
     }
+    if (options.size() == 1 && options[0] == "-a") {
+        // Ignore "-a" option. Bugreport will call with this option.
+        options.clear();
+    }
     DumpResult result = mVehicleHardware->dump(options);
     dprintf(fd, "%s", (result.buffer + "\n").c_str());
     if (!result.callerShouldDumpState) {
-        ALOGE("Skip dumping Vehicle HAL State.");
         return STATUS_OK;
     }
     dprintf(fd, "Vehicle HAL State: \n");
