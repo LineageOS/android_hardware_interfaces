@@ -84,7 +84,10 @@ cc_library_static {
     name: "android.hardware.automotive.vehicle@2.0-default-impl-lib",
     vendor: true,
     defaults: ["vhal_v2_0_target_defaults"],
-    cflags: ["-DENABLE_VENDOR_CLUSTER_PROPERTY_FOR_TESTING"],
+    cflags: [
+        "-DENABLE_VENDOR_CLUSTER_PROPERTY_FOR_TESTING",
+        "-DENABLE_GET_PROP_CONFIGS_BY_MULTIPLE_REQUESTS",
+    ],
     srcs: [
         "impl/vhal_v2_0/DefaultVehicleHal.cpp",
         "impl/vhal_v2_0/VehicleHalClient.cpp",
@@ -221,6 +224,25 @@ cc_test {
     data: [
         ":vhal_test_json",
         ":vhal_test_override_json",
+    ],
+    test_suites: ["general-tests"],
+}
+
+cc_test {
+    name: "android.hardware.automotive.vehicle@2.0-default-config-test",
+    vendor: true,
+    defaults: ["vhal_v2_0_target_defaults"],
+    srcs: [
+        "impl/vhal_v2_0/tests/DefaultConfigSupportedPropertyIds_test.cpp",
+    ],
+    cflags: [
+        "-DENABLE_VENDOR_CLUSTER_PROPERTY_FOR_TESTING",
+        "-DENABLE_GET_PROP_CONFIGS_BY_MULTIPLE_REQUESTS",
+    ],
+    static_libs: [
+        "android.hardware.automotive.vehicle@2.0-default-impl-lib",
+        "libgtest",
+        "libgmock",
     ],
     test_suites: ["general-tests"],
 }

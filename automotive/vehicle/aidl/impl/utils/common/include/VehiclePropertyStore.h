@@ -46,6 +46,33 @@ class VehiclePropertyStore final {
     using ValueResultType = VhalResult<VehiclePropValuePool::RecyclableType>;
     using ValuesResultType = VhalResult<std::vector<VehiclePropValuePool::RecyclableType>>;
 
+    enum class EventMode : uint8_t {
+        /**
+         * Only invoke OnValueChangeCallback if the new property value (ignoring timestamp) is
+         * different than the existing value.
+         *
+         * This should be used for regular cases.
+         */
+        ON_VALUE_CHANGE,
+        /**
+         * Always invoke OnValueChangeCallback.
+         *
+         * This should be used for the special properties that are used for delivering event, e.g.
+         * HW_KEY_INPUT.
+         */
+        ALWAYS,
+        /**
+         * Never invoke OnValueChangeCallback.
+         *
+         * This should be used for continuous property subscription when the sample rate for the
+         * subscription is smaller than the refresh rate for the property. E.g., the vehicle speed
+         * is refreshed at 20hz, but we are only subscribing at 10hz. In this case, we want to
+         * generate the property change event at 10hz, not 20hz, but we still want to refresh the
+         * timestamp (via writeValue) at 20hz.
+         */
+        NEVER,
+    };
+
     explicit VehiclePropertyStore(std::shared_ptr<VehiclePropValuePool> valuePool)
         : mValuePool(valuePool) {}
 
@@ -72,8 +99,10 @@ class VehiclePropertyStore final {
     // 'status' would be initialized to {@code VehiclePropertyStatus::AVAILABLE}, if this is to
     // override an existing value, the status for the existing value would be used for the
     // overridden value.
+    // 'EventMode' controls whether the 'OnValueChangeCallback' will be called for this operation.
     VhalResult<void> writeValue(VehiclePropValuePool::RecyclableType propValue,
-                                bool updateStatus = false);
+                                bool updateStatus = false,
+                                EventMode mode = EventMode::ON_VALUE_CHANGE);
 
     // Remove a given property value from the property store. The 'propValue' would be used to
     // generate the key for the value to remove.

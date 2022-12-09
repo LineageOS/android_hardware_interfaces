@@ -1109,6 +1109,19 @@ const ConfigDeclaration kVehicleProperties[]{
                         },
                 .initialValue = {.stringValue = {"Test"}},
         },
+        // This property is later defined in the AIDL VHAL interface. However, HIDL VHAL might
+        // require support for this property to meet EU regulation.
+        {
+                .config =
+                        {
+                                // GENERAL_SAFETY_REGULATION_COMPLIANCE_REQUIREMENT
+                                .prop = 0x11400F47,
+                                .access = VehiclePropertyAccess::READ,
+                                .changeMode = VehiclePropertyChangeMode::STATIC,
+                        },
+                // GsrComplianceRequirementType::GSR_COMPLIANCE_REQUIRED_V1
+                .initialValue = {.int32Values = {1}},
+        },
 #ifdef ENABLE_VENDOR_CLUSTER_PROPERTY_FOR_TESTING
         // Vendor propetry for E2E ClusterHomeService testing.
         {
@@ -1157,6 +1170,46 @@ const ConfigDeclaration kVehicleProperties[]{
                         },
         },
 #endif  // ENABLE_VENDOR_CLUSTER_PROPERTY_FOR_TESTING
+#ifdef ENABLE_GET_PROP_CONFIGS_BY_MULTIPLE_REQUESTS
+        {
+                .config =
+                        {
+                                // VHAL_SUPPORTED_PROPERTY_IDS
+                                .prop = 289476424,
+                                .access = VehiclePropertyAccess::READ,
+                                .changeMode = VehiclePropertyChangeMode::STATIC,
+                                // Fetch 100 configs in one request. This number is just arbitrarily
+                                // chosen here. But some HAL impl with bigger config data may need a
+                                // smaller number.
+                                .configArray = {100},
+                        },
+                // All supported property IDs. This list is checked by
+                // DefaultConfigSupportedPropertyIds_test.
+                .initialValue =
+                        {.int32Values =
+                                 {291504388, 289472773, 291504390, 289472775, 289407240, 289407241,
+                                  289472780, 286261505, 286261506, 289407235, 289472779, 291504647,
+                                  289408517, 356518832, 356516106, 291504644, 291504649, 291504656,
+                                  291504901, 291504903, 287310600, 291504905, 287310602, 287310603,
+                                  291504908, 291504904, 392168201, 392168202, 289408514, 289408001,
+                                  287310850, 287310851, 287310853, 289475088, 289475104, 289475120,
+                                  354419984, 320865540, 320865556, 354419975, 354419976, 354419986,
+                                  354419973, 354419974, 354419978, 354419977, 356517120, 356517121,
+                                  356582673, 356517139, 289408269, 356517131, 358614275, 291570965,
+                                  291505923, 289408270, 289408512, 287310855, 289408000, 289408008,
+                                  289408009, 289407747, 291504900, 568332561, 371198722, 373295872,
+                                  320867268, 322964416, 290521862, 287310858, 287310859, 289475072,
+                                  289475073, 289409539, 299896064, 299896065, 299896066, 299896067,
+                                  289410560, 289410561, 289410562, 289410563, 289410576, 289410577,
+                                  289410578, 289410579, 289476368, 299895808, 639631617, 627048706,
+                                  591397123, 554696964, 289410873, 289410874, 287313669, 299896583,
+                                  299896584, 299896585, 299896586, 299896587, 286265121, 286265122,
+                                  286265123, 290457094, 290459441, 299896626, 290459443, 289410868,
+                                  289476405, 299896630, 289410871, 292556600, 557853201, 559950353,
+                                  555756049, 554707473, 289410887, 557846324, 557911861, 568332086,
+                                  557846327, 560992056, 289476424}},
+        },
+#endif  // ENABLE_GET_PROP_CONFIGS_BY_MULTIPLE_REQUESTS
 };
 
 }  // impl
