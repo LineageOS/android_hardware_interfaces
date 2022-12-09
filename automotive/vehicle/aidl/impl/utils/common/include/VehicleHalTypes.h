@@ -42,6 +42,7 @@
 #include <aidl/android/hardware/automotive/vehicle/VehicleApPowerStateReq.h>
 #include <aidl/android/hardware/automotive/vehicle/VehicleArea.h>
 #include <aidl/android/hardware/automotive/vehicle/VehicleAreaDoor.h>
+#include <aidl/android/hardware/automotive/vehicle/VehicleAreaMirror.h>
 #include <aidl/android/hardware/automotive/vehicle/VehicleAreaSeat.h>
 #include <aidl/android/hardware/automotive/vehicle/VehicleAreaWheel.h>
 #include <aidl/android/hardware/automotive/vehicle/VehicleAreaWindow.h>
