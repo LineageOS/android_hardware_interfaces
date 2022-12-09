@@ -600,21 +600,21 @@ TEST_P(EvsAidlTest, CameraToDisplayRoundTrip) {
     EXPECT_GT(displayIds.size(), 0);
     targetDisplayId = displayIds[0];
 
-    // Request exclusive access to the first EVS display
-    std::shared_ptr<IEvsDisplay> pDisplay;
-    ASSERT_TRUE(mEnumerator->openDisplay(targetDisplayId, &pDisplay).isOk());
-    EXPECT_NE(pDisplay, nullptr);
-    LOG(INFO) << "Display " << static_cast<int>(targetDisplayId) << " is in use.";
-
-    // Get the display descriptor
-    DisplayDesc displayDesc;
-    ASSERT_TRUE(pDisplay->getDisplayInfo(&displayDesc).isOk());
-    LOG(INFO) << "    Resolution: " << displayDesc.width << "x" << displayDesc.height;
-    ASSERT_GT(displayDesc.width, 0);
-    ASSERT_GT(displayDesc.height, 0);
-
     // Test each reported camera
     for (auto&& cam : mCameraInfo) {
+        // Request exclusive access to the first EVS display
+        std::shared_ptr<IEvsDisplay> pDisplay;
+        ASSERT_TRUE(mEnumerator->openDisplay(targetDisplayId, &pDisplay).isOk());
+        EXPECT_NE(pDisplay, nullptr);
+        LOG(INFO) << "Display " << static_cast<int>(targetDisplayId) << " is in use.";
+
+        // Get the display descriptor
+        DisplayDesc displayDesc;
+        ASSERT_TRUE(pDisplay->getDisplayInfo(&displayDesc).isOk());
+        LOG(INFO) << "    Resolution: " << displayDesc.width << "x" << displayDesc.height;
+        ASSERT_GT(displayDesc.width, 0);
+        ASSERT_GT(displayDesc.height, 0);
+
         bool isLogicalCam = false;
         getPhysicalCameraIds(cam.id, isLogicalCam);
         if (mIsHwModule && isLogicalCam) {
@@ -668,10 +668,10 @@ TEST_P(EvsAidlTest, CameraToDisplayRoundTrip) {
         // Explicitly release the camera
         ASSERT_TRUE(mEnumerator->closeCamera(pCam).isOk());
         mActiveCameras.clear();
-    }
 
-    // Explicitly release the display
-    ASSERT_TRUE(mEnumerator->closeDisplay(pDisplay).isOk());
+        // Explicitly release the display
+        ASSERT_TRUE(mEnumerator->closeDisplay(pDisplay).isOk());
+    }
 }
 
 /*
@@ -1395,20 +1395,20 @@ TEST_P(EvsAidlTest, HighPriorityCameraClient) {
     // Get the camera list
     loadCameraList();
 
-    // Request available display IDs
-    uint8_t targetDisplayId = 0;
-    std::vector<uint8_t> displayIds;
-    ASSERT_TRUE(mEnumerator->getDisplayIdList(&displayIds).isOk());
-    EXPECT_GT(displayIds.size(), 0);
-    targetDisplayId = displayIds[0];
-
-    // Request exclusive access to the EVS display
-    std::shared_ptr<IEvsDisplay> pDisplay;
-    ASSERT_TRUE(mEnumerator->openDisplay(targetDisplayId, &pDisplay).isOk());
-    EXPECT_NE(pDisplay, nullptr);
-
     // Test each reported camera
     for (auto&& cam : mCameraInfo) {
+        // Request available display IDs
+        uint8_t targetDisplayId = 0;
+        std::vector<uint8_t> displayIds;
+        ASSERT_TRUE(mEnumerator->getDisplayIdList(&displayIds).isOk());
+        EXPECT_GT(displayIds.size(), 0);
+        targetDisplayId = displayIds[0];
+
+        // Request exclusive access to the EVS display
+        std::shared_ptr<IEvsDisplay> pDisplay;
+        ASSERT_TRUE(mEnumerator->openDisplay(targetDisplayId, &pDisplay).isOk());
+        EXPECT_NE(pDisplay, nullptr);
+
         // Read a target resolution from the metadata
         Stream targetCfg = getFirstStreamConfiguration(
                 reinterpret_cast<camera_metadata_t*>(cam.metadata.data()));
@@ -1687,10 +1687,10 @@ TEST_P(EvsAidlTest, HighPriorityCameraClient) {
         ASSERT_TRUE(mEnumerator->closeCamera(pCam0).isOk());
         ASSERT_TRUE(mEnumerator->closeCamera(pCam1).isOk());
         mActiveCameras.clear();
-    }
 
-    // Explicitly release the display
-    ASSERT_TRUE(mEnumerator->closeDisplay(pDisplay).isOk());
+        // Explicitly release the display
+        ASSERT_TRUE(mEnumerator->closeDisplay(pDisplay).isOk());
+    }
 }
 
 /*
@@ -1712,13 +1712,13 @@ TEST_P(EvsAidlTest, CameraUseStreamConfigToDisplay) {
     EXPECT_GT(displayIds.size(), 0);
     targetDisplayId = displayIds[0];
 
-    // Request exclusive access to the EVS display
-    std::shared_ptr<IEvsDisplay> pDisplay;
-    ASSERT_TRUE(mEnumerator->openDisplay(targetDisplayId, &pDisplay).isOk());
-    EXPECT_NE(pDisplay, nullptr);
-
     // Test each reported camera
     for (auto&& cam : mCameraInfo) {
+        // Request exclusive access to the EVS display
+        std::shared_ptr<IEvsDisplay> pDisplay;
+        ASSERT_TRUE(mEnumerator->openDisplay(targetDisplayId, &pDisplay).isOk());
+        EXPECT_NE(pDisplay, nullptr);
+
         // choose a configuration that has a frame rate faster than minReqFps.
         Stream targetCfg = {};
         const int32_t minReqFps = 15;
@@ -1791,10 +1791,10 @@ TEST_P(EvsAidlTest, CameraUseStreamConfigToDisplay) {
         // Explicitly release the camera
         ASSERT_TRUE(mEnumerator->closeCamera(pCam).isOk());
         mActiveCameras.clear();
-    }
 
-    // Explicitly release the display
-    ASSERT_TRUE(mEnumerator->closeDisplay(pDisplay).isOk());
+        // Explicitly release the display
+        ASSERT_TRUE(mEnumerator->closeDisplay(pDisplay).isOk());
+    }
 }
 
 /*
