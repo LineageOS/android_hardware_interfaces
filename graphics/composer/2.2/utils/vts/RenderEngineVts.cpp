@@ -83,9 +83,7 @@ void TestRenderEngine::drawLayers() {
 void TestRenderEngine::checkColorBuffer(std::vector<V2_2::IComposerClient::Color>& expectedColors) {
     void* bufferData;
     ASSERT_EQ(0, mGraphicBuffer->lock(mGraphicBuffer->getUsage(), &bufferData));
-    ReadbackHelper::compareColorBuffers(expectedColors, bufferData, mGraphicBuffer->getStride(),
-                                        mGraphicBuffer->getWidth(), mGraphicBuffer->getHeight(),
-                                        mFormat);
+    ReadbackHelper::compareColorsToBuffer(expectedColors, mGraphicBuffer, -1 /* fence */);
     ASSERT_EQ(0, mGraphicBuffer->unlock());
 }
 
