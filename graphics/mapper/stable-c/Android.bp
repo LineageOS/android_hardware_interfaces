@@ -61,6 +61,10 @@ cc_test {
     srcs: [
         "implutils/impltests.cpp",
     ],
+    shared_libs: [
+        "libgralloctypes",
+        "libhidlbase",
+    ],
     visibility: [":__subpackages__"],
     cpp_std: "experimental",
 }
