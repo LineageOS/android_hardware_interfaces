@@ -36,4 +36,7 @@ package android.hardware.automotive.vehicle;
 enum VehicleDisplay {
   MAIN = 0,
   INSTRUMENT_CLUSTER = 1,
+  HUD = 2,
+  INPUT = 3,
+  AUXILIARY = 4,
 }

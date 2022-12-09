@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,54 +31,12 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.input.common;
+package android.hardware.automotive.vehicle;
 @Backing(type="int") @VintfStability
-enum Axis {
-  X = 0,
-  Y = 1,
-  PRESSURE = 2,
-  SIZE = 3,
-  TOUCH_MAJOR = 4,
-  TOUCH_MINOR = 5,
-  TOOL_MAJOR = 6,
-  TOOL_MINOR = 7,
-  ORIENTATION = 8,
-  VSCROLL = 9,
-  HSCROLL = 10,
-  Z = 11,
-  RX = 12,
-  RY = 13,
-  RZ = 14,
-  HAT_X = 15,
-  HAT_Y = 16,
-  LTRIGGER = 17,
-  RTRIGGER = 18,
-  THROTTLE = 19,
-  RUDDER = 20,
-  WHEEL = 21,
-  GAS = 22,
-  BRAKE = 23,
-  DISTANCE = 24,
-  TILT = 25,
-  SCROLL = 26,
-  RELATIVE_X = 27,
-  RELATIVE_Y = 28,
-  GENERIC_1 = 32,
-  GENERIC_2 = 33,
-  GENERIC_3 = 34,
-  GENERIC_4 = 35,
-  GENERIC_5 = 36,
-  GENERIC_6 = 37,
-  GENERIC_7 = 38,
-  GENERIC_8 = 39,
-  GENERIC_9 = 40,
-  GENERIC_10 = 41,
-  GENERIC_11 = 42,
-  GENERIC_12 = 43,
-  GENERIC_13 = 44,
-  GENERIC_14 = 45,
-  GENERIC_15 = 46,
-  GENERIC_16 = 47,
-  GESTURE_X_OFFSET = 48,
-  GESTURE_Y_OFFSET = 49,
+enum VehicleHwMotionToolType {
+  TOOL_TYPE_UNKNOWN = 0,
+  TOOL_TYPE_FINGER = 1,
+  TOOL_TYPE_STYLUS = 2,
+  TOOL_TYPE_MOUSE = 3,
+  TOOL_TYPE_ERASER = 4,
 }

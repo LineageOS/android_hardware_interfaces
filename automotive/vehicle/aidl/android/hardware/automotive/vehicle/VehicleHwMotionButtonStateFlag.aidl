@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,28 +16,38 @@
 
 package android.hardware.automotive.vehicle;
 
+/**
+ * See {@code android.view.MotionEvent#getButtonState()} for more details.
+ */
 @VintfStability
 @Backing(type="int")
-enum VehicleDisplay {
+enum VehicleHwMotionButtonStateFlag {
     /**
-     * The primary Android display (for example, center console)
+     * Button state primary
      */
-    MAIN = 0,
+    BUTTON_PRIMARY = 0x0001,
     /**
-     * Instrument cluster display. This may exist only for driver
+     * Button state secondary
      */
-    INSTRUMENT_CLUSTER = 1,
-
+    BUTTON_SECONDARY = 0x0002,
     /**
-     * Head Up Display. This may exist only for driver
+     * Button state tertiary
      */
-    HUD = 2,
+    BUTTON_TERTIARY = 0x0004,
     /**
-     * Dedicated display for showing IME for {@code MAIN}
+     * Button state back
      */
-    INPUT = 3,
+    BUTTON_BACK = 0x0008,
     /**
-     * Auxiliary display which can provide additional screen for {@code MAIN} display
+     * Button state forward
      */
-    AUXILIARY = 4,
+    BUTTON_FORWARD = 0x0010,
+    /**
+     * Button state stylus primary
+     */
+    BUTTON_STYLUS_PRIMARY = 0x0020,
+    /**
+     * Button state stylus secondary
+     */
+    BUTTON_STYLUS_SECONDARY = 0x0040,
 }

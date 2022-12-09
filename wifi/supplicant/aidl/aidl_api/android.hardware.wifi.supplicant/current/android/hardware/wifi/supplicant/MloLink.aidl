@@ -36,4 +36,6 @@ package android.hardware.wifi.supplicant;
 parcelable MloLink {
   byte linkId;
   byte[] staLinkMacAddress;
+  byte tidsUplinkMap;
+  byte tidsDownlinkMap;
 }

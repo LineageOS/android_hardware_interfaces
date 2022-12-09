@@ -44,6 +44,9 @@ interface ISupplicantStaIfaceCallback {
   oneway void onDppFailure(in android.hardware.wifi.supplicant.DppFailureCode code, in String ssid, in String channelList, in char[] bandList);
   oneway void onDppProgress(in android.hardware.wifi.supplicant.DppProgressCode code);
   oneway void onDppSuccess(in android.hardware.wifi.supplicant.DppEventType event);
+  /**
+   * @deprecated This callback is deprecated from AIDL v2, newer HAL should call onDppConfigReceived.
+   */
   oneway void onDppSuccessConfigReceived(in byte[] ssid, in String password, in byte[] psk, in android.hardware.wifi.supplicant.DppAkm securityAkm, in android.hardware.wifi.supplicant.DppConnectionKeys dppConnectionKeys);
   oneway void onDppSuccessConfigSent();
   oneway void onEapFailure(in byte[] bssid, in int errorCode);
@@ -64,4 +67,12 @@ interface ISupplicantStaIfaceCallback {
   oneway void onQosPolicyReset();
   oneway void onQosPolicyRequest(in int qosPolicyRequestId, in android.hardware.wifi.supplicant.QosPolicyData[] qosPolicyData);
   oneway void onStateChangedWithAkm(in android.hardware.wifi.supplicant.StaIfaceCallbackState newState, in byte[] bssid, in int id, in byte[] ssid, in boolean filsHlpSent, in android.hardware.wifi.supplicant.KeyMgmtMask keyMgmtMask);
+  oneway void onMloLinksInfoChanged(in android.hardware.wifi.supplicant.ISupplicantStaIfaceCallback.MloLinkInfoChangeReason reason);
+  oneway void onDppConfigReceived(in android.hardware.wifi.supplicant.DppConfigurationData configData);
+  oneway void onDppConnectionStatusResultSent(in android.hardware.wifi.supplicant.DppStatusErrorCode code);
+  @Backing(type="int") @VintfStability
+  enum MloLinkInfoChangeReason {
+    TID_TO_LINK_MAP = 0,
+    MULTI_LINK_RECONFIG_AP_REMOVAL = 1,
+  }
 }
