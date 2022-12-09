@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2008 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,24 +14,27 @@
  * limitations under the License.
  */
 
-#ifndef WIFI_LEGACY_HAL_STUBS_H_
-#define WIFI_LEGACY_HAL_STUBS_H_
+#ifndef _HARDWARE_POWER_H
+#define _HARDWARE_POWER_H
 
-#include <hal_legacy/wifi_hal.h>
+#include <stdint.h>
 
-namespace android {
-namespace hardware {
-namespace wifi {
-namespace V1_6 {
-namespace implementation {
-namespace legacy_hal {
+#if __cplusplus
+extern "C" {
+#endif
 
-bool initHalFuncTableWithStubs(wifi_hal_fn* hal_fn);
-}  // namespace legacy_hal
-}  // namespace implementation
-}  // namespace V1_6
-}  // namespace wifi
-}  // namespace hardware
-}  // namespace android
+enum {
+    PARTIAL_WAKE_LOCK = 1,  // the cpu stays on, but the screen is off
+    FULL_WAKE_LOCK = 2      // the screen is also on
+};
 
-#endif  // WIFI_LEGACY_HAL_STUBS_H_
+// while you have a lock held, the device will stay on at least at the
+// level you request.
+int acquire_wake_lock(int lock, const char* id);
+int release_wake_lock(const char* id);
+
+#if __cplusplus
+}  // extern "C"
+#endif
+
+#endif  // _HARDWARE_POWER_H
