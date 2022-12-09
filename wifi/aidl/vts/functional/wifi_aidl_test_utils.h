@@ -46,3 +46,4 @@ bool configureChipToSupportConcurrencyType(const std::shared_ptr<IWifiChip>& wif
 void stopWifiService(const char* instance_name);
 int32_t getChipCapabilities(const std::shared_ptr<IWifiChip>& wifi_chip);
 bool checkStatusCode(ndk::ScopedAStatus* status, WifiStatusCode expected_code);
+bool isAidlServiceAvailable(const char* instance_name);
