@@ -15,9 +15,12 @@
  */
 
 #define LOG_TAG "AHAL_EffectFactory"
-#include <android-base/logging.h>
 #include <dlfcn.h>
 #include <unordered_set>
+
+#include <android-base/logging.h>
+#include <android/binder_ibinder_platform.h>
+#include <system/thread_defs.h>
 
 #include "effect-impl/EffectTypes.h"
 #include "effect-impl/EffectUUID.h"
@@ -109,6 +112,8 @@ ndk::ScopedAStatus Factory::createEffect(const AudioUuid& in_impl_uuid,
             return ndk::ScopedAStatus::fromExceptionCode(EX_TRANSACTION_FAILED);
         }
         *_aidl_return = effectSp;
+        AIBinder_setMinSchedulerPolicy(effectSp->asBinder().get(), SCHED_NORMAL,
+                                       ANDROID_PRIORITY_AUDIO);
         mEffectUuidMap[std::weak_ptr<IEffect>(effectSp)] = in_impl_uuid;
         LOG(DEBUG) << __func__ << ": instance " << effectSp.get() << " created successfully";
         return ndk::ScopedAStatus::ok();
