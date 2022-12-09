@@ -68,7 +68,7 @@ cc_test {
     ],
     static_libs: [
         "android.hardware.graphics.composer3-V1-ndk",
-        "android.hardware.graphics.common-V3-ndk",
+        "android.hardware.graphics.common-V4-ndk",
         "android.hardware.graphics.common@1.2",
         "android.hardware.common-V2-ndk",
         "android.hardware.common.fmq-V1-ndk",

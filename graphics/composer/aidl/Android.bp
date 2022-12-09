@@ -37,7 +37,7 @@ aidl_interface {
     ],
     stability: "vintf",
     imports: [
-        "android.hardware.graphics.common-V3",
+        "android.hardware.graphics.common-V4",
         "android.hardware.common-V2",
     ],
     backend: {
@@ -58,7 +58,7 @@ aidl_interface {
         {
             version: "1",
             imports: [
-                "android.hardware.graphics.common-V3",
+                "android.hardware.graphics.common-V4",
                 "android.hardware.common-V2",
             ],
         },

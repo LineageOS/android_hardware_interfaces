@@ -15,7 +15,7 @@ aidl_interface {
         enabled: true,
         support_system_process: true,
     },
-    vndk_use_version: "3",
+    vndk_use_version: "4",
     srcs: [
         "android/hardware/graphics/common/*.aidl",
     ],
@@ -40,7 +40,7 @@ aidl_interface {
             min_sdk_version: "29",
         },
     },
-    frozen: true,
+    frozen: false,
     versions_with_info: [
         {
             version: "1",
