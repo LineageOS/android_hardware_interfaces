@@ -53,7 +53,7 @@ VirtualProgram::operator ProgramInfo() const {
             break;
         case IdentifierType::DAB_SID_EXT:
             info.logicallyTunedTo = selectId(IdentifierType::DAB_SID_EXT);
-            info.physicallyTunedTo = selectId(IdentifierType::DAB_ENSEMBLE);
+            info.physicallyTunedTo = selectId(IdentifierType::DAB_FREQUENCY_KHZ);
             break;
         case IdentifierType::DRMO_SERVICE_ID:
             info.logicallyTunedTo = selectId(IdentifierType::DRMO_SERVICE_ID);

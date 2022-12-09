@@ -51,7 +51,8 @@ parcelable ProgramSelector {
      *  - analogue AM/FM: AMFM_FREQUENCY_KHZ;
      *  - FM RDS: RDS_PI;
      *  - HD Radio: HD_STATION_ID_EXT;
-     *  - DAB: DAB_SID_EXT;
+     *  - DAB/DMB: DAB_SID_EXT (when used, DAB_ENSEMBLE and DAB_FREQUENCY_KHZ
+     *    must present in secondaryIds);
      *  - Digital Radio Mondiale: DRMO_SERVICE_ID;
      *  - SiriusXM: SXM_SERVICE_ID;
      *  - vendor-specific: VENDOR_START..VENDOR_END.
