@@ -1132,15 +1132,19 @@ class GraphicsComposerAidlCommandTest : public GraphicsComposerAidlTest {
         }
     }
 
-    sp<GraphicBuffer> allocate(::android::PixelFormat pixelFormat) {
+    sp<GraphicBuffer> allocate(uint32_t width, uint32_t height,
+                               ::android::PixelFormat pixelFormat) {
         return sp<GraphicBuffer>::make(
-                static_cast<uint32_t>(getPrimaryDisplay().getDisplayWidth()),
-                static_cast<uint32_t>(getPrimaryDisplay().getDisplayHeight()), pixelFormat,
-                /*layerCount*/ 1U,
-                (static_cast<uint64_t>(common::BufferUsage::CPU_WRITE_OFTEN) |
-                 static_cast<uint64_t>(common::BufferUsage::CPU_READ_OFTEN) |
-                 static_cast<uint64_t>(common::BufferUsage::COMPOSER_OVERLAY)),
+                width, height, pixelFormat, /*layerCount*/ 1U,
+                static_cast<uint64_t>(common::BufferUsage::CPU_WRITE_OFTEN) |
+                        static_cast<uint64_t>(common::BufferUsage::CPU_READ_OFTEN) |
+                        static_cast<uint64_t>(common::BufferUsage::COMPOSER_OVERLAY),
                 "VtsHalGraphicsComposer3_TargetTest");
+    }
+
+    sp<GraphicBuffer> allocate(::android::PixelFormat pixelFormat) {
+        return allocate(static_cast<uint32_t>(getPrimaryDisplay().getDisplayWidth()),
+                        static_cast<uint32_t>(getPrimaryDisplay().getDisplayHeight()), pixelFormat);
     }
 
     void sendRefreshFrame(const VtsDisplay& display, const VsyncPeriodChangeTimeline* timeline) {
@@ -1641,6 +1645,33 @@ TEST_P(GraphicsComposerAidlCommandTest, SetLayerBuffer) {
     auto& writer = getWriter(getPrimaryDisplayId());
     writer.setLayerBuffer(getPrimaryDisplayId(), layer, /*slot*/ 0, handle, /*acquireFence*/ -1);
     execute();
+}
+
+TEST_P(GraphicsComposerAidlCommandTest, SetLayerBufferWithSlotsToClear) {
+    auto clearSlotBuffer = allocate(1u, 1u, ::android::PIXEL_FORMAT_RGB_888);
+    ASSERT_NE(nullptr, clearSlotBuffer);
+    auto clearSlotBufferHandle = clearSlotBuffer->handle;
+
+    const auto buffer1 = allocate(::android::PIXEL_FORMAT_RGBA_8888);
+    ASSERT_NE(nullptr, buffer1);
+    const auto handle1 = buffer1->handle;
+    const auto& [layerStatus, layer] =
+            mComposerClient->createLayer(getPrimaryDisplayId(), kBufferSlotCount);
+    EXPECT_TRUE(layerStatus.isOk());
+    auto& writer = getWriter(getPrimaryDisplayId());
+    writer.setLayerBuffer(getPrimaryDisplayId(), layer, /*slot*/ 0, handle1, /*acquireFence*/ -1);
+    execute();
+    ASSERT_TRUE(mReader.takeErrors().empty());
+
+    // Ensure we can clear a buffer slot and then set that same slot with a new buffer
+    const auto buffer2 = allocate(::android::PIXEL_FORMAT_RGBA_8888);
+    ASSERT_NE(nullptr, buffer2);
+    const auto handle2 = buffer2->handle;
+    writer.setLayerBufferWithNewCommand(getPrimaryDisplayId(), layer, /* slot */ 0,
+                                        clearSlotBufferHandle, /*acquireFence*/ -1);
+    writer.setLayerBuffer(getPrimaryDisplayId(), layer, /*slot*/ 0, handle2, /*acquireFence*/ -1);
+    execute();
+    ASSERT_TRUE(mReader.takeErrors().empty());
 }
 
 TEST_P(GraphicsComposerAidlCommandTest, SetLayerSurfaceDamage) {
