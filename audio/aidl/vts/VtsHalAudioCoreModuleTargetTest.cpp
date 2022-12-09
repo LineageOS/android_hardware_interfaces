@@ -79,6 +79,7 @@ using aidl::android::media::audio::common::AudioSource;
 using aidl::android::media::audio::common::AudioUsage;
 using aidl::android::media::audio::common::Void;
 using android::hardware::audio::common::isBitPositionFlagSet;
+using android::hardware::audio::common::isTelephonyDeviceType;
 using android::hardware::audio::common::StreamLogic;
 using android::hardware::audio::common::StreamWorker;
 using ndk::enum_range;
@@ -2220,9 +2221,9 @@ class AudioStreamIo : public AudioCoreModuleBase,
         }
     }
 
-    bool ValidateObservablePosition(const AudioPortConfig& /*portConfig*/) {
-        // May return false based on the portConfig, e.g. for telephony ports.
-        return true;
+    bool ValidateObservablePosition(const AudioPortConfig& devicePortConfig) {
+        return !isTelephonyDeviceType(
+                devicePortConfig.ext.get<AudioPortExt::Tag::device>().device.type.type);
     }
 
     // Set up a patch first, then open a stream.
@@ -2247,7 +2248,7 @@ class AudioStreamIo : public AudioCoreModuleBase,
         worker.join();
         EXPECT_FALSE(worker.hasError()) << worker.getError();
         EXPECT_EQ("", driver.getUnexpectedStateTransition());
-        if (ValidateObservablePosition(portConfig)) {
+        if (ValidateObservablePosition(devicePortConfig)) {
             EXPECT_TRUE(driver.hasObservablePositionIncrease());
             EXPECT_FALSE(driver.hasRetrogradeObservablePosition());
         }
@@ -2275,7 +2276,7 @@ class AudioStreamIo : public AudioCoreModuleBase,
         worker.join();
         EXPECT_FALSE(worker.hasError()) << worker.getError();
         EXPECT_EQ("", driver.getUnexpectedStateTransition());
-        if (ValidateObservablePosition(portConfig)) {
+        if (ValidateObservablePosition(devicePortConfig)) {
             EXPECT_TRUE(driver.hasObservablePositionIncrease());
             EXPECT_FALSE(driver.hasRetrogradeObservablePosition());
         }
