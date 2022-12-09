@@ -1228,13 +1228,19 @@ StatusCode FakeVehicleHardware::checkHealth() {
 
 void FakeVehicleHardware::registerOnPropertyChangeEvent(
         std::unique_ptr<const PropertyChangeCallback> callback) {
-    std::scoped_lock<std::mutex> lockGuard(mLock);
+    if (mOnPropertyChangeCallback != nullptr) {
+        ALOGE("registerOnPropertyChangeEvent must only be called once");
+        return;
+    }
     mOnPropertyChangeCallback = std::move(callback);
 }
 
 void FakeVehicleHardware::registerOnPropertySetErrorEvent(
         std::unique_ptr<const PropertySetErrorCallback> callback) {
-    std::scoped_lock<std::mutex> lockGuard(mLock);
+    if (mOnPropertySetErrorCallback != nullptr) {
+        ALOGE("registerOnPropertySetErrorEvent must only be called once");
+        return;
+    }
     mOnPropertySetErrorCallback = std::move(callback);
 }
 
@@ -1278,8 +1284,6 @@ StatusCode FakeVehicleHardware::updateSampleRate(int32_t propId, int32_t areaId,
 }
 
 void FakeVehicleHardware::onValueChangeCallback(const VehiclePropValue& value) {
-    std::scoped_lock<std::mutex> lockGuard(mLock);
-
     if (mOnPropertyChangeCallback == nullptr) {
         return;
     }
