@@ -91,7 +91,7 @@ class ComposerClientWriter final {
     void setClientTarget(int64_t display, uint32_t slot, const native_handle_t* target,
                          int acquireFence, Dataspace dataspace, const std::vector<Rect>& damage) {
         ClientTarget clientTargetCommand;
-        clientTargetCommand.buffer = getBuffer(slot, target, acquireFence);
+        clientTargetCommand.buffer = getBufferCommand(slot, target, acquireFence);
         clientTargetCommand.dataspace = dataspace;
         clientTargetCommand.damage.assign(damage.begin(), damage.end());
         getDisplayCommand(display).clientTarget.emplace(std::move(clientTargetCommand));
@@ -100,7 +100,7 @@ class ComposerClientWriter final {
     void setOutputBuffer(int64_t display, uint32_t slot, const native_handle_t* buffer,
                          int releaseFence) {
         getDisplayCommand(display).virtualDisplayOutputBuffer.emplace(
-                getBuffer(slot, buffer, releaseFence));
+                getBufferCommand(slot, buffer, releaseFence));
     }
 
     void validateDisplay(int64_t display,
@@ -132,7 +132,14 @@ class ComposerClientWriter final {
 
     void setLayerBuffer(int64_t display, int64_t layer, uint32_t slot,
                         const native_handle_t* buffer, int acquireFence) {
-        getLayerCommand(display, layer).buffer = getBuffer(slot, buffer, acquireFence);
+        getLayerCommand(display, layer).buffer = getBufferCommand(slot, buffer, acquireFence);
+    }
+
+    void setLayerBufferWithNewCommand(int64_t display, int64_t layer, uint32_t slot,
+                                      const native_handle_t* buffer, int acquireFence) {
+        flushLayerCommand();
+        getLayerCommand(display, layer).buffer = getBufferCommand(slot, buffer, acquireFence);
+        flushLayerCommand();
     }
 
     void setLayerSurfaceDamage(int64_t display, int64_t layer, const std::vector<Rect>& damage) {
@@ -234,7 +241,7 @@ class ComposerClientWriter final {
     std::vector<DisplayCommand> mCommands;
     const int64_t mDisplay;
 
-    Buffer getBuffer(uint32_t slot, const native_handle_t* bufferHandle, int fence) {
+    Buffer getBufferCommand(uint32_t slot, const native_handle_t* bufferHandle, int fence) {
         Buffer bufferCommand;
         bufferCommand.slot = static_cast<int32_t>(slot);
         if (bufferHandle) bufferCommand.handle.emplace(::android::dupToAidl(bufferHandle));
