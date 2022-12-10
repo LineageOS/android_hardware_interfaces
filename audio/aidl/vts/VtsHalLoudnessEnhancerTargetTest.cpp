@@ -15,6 +15,7 @@
  */
 
 #include <aidl/Vintf.h>
+#include <string>
 
 #define LOG_TAG "VtsHalLoudnessEnhancerTest"
 
@@ -129,19 +130,9 @@ INSTANTIATE_TEST_SUITE_P(
                                    IFactory::descriptor, kLoudnessEnhancerTypeUUID)),
                            testing::ValuesIn(kGainMbValues)),
         [](const testing::TestParamInfo<LoudnessEnhancerParamTest::ParamType>& info) {
-            auto msSinceEpoch = std::chrono::duration_cast<std::chrono::nanoseconds>(
-                                        std::chrono::system_clock::now().time_since_epoch())
-                                        .count();
             auto instance = std::get<PARAM_INSTANCE_NAME>(info.param);
             std::string gainMb = std::to_string(std::get<PARAM_GAIN_MB>(info.param));
-
-            std::ostringstream address;
-            address << msSinceEpoch << "_factory_" << instance.first.get();
-            std::string name = address.str() + "_UUID_timeLow_" +
-                               ::android::internal::ToString(instance.second.uuid.timeLow) +
-                               "_timeMid_" +
-                               ::android::internal::ToString(instance.second.uuid.timeMid) +
-                               "_gainMb" + gainMb;
+            std::string name = instance.second.uuid.toString() + "_gainMb_" + gainMb;
             std::replace_if(
                     name.begin(), name.end(), [](const char c) { return !std::isalnum(c); }, '_');
             return name;

@@ -752,16 +752,9 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Combine(testing::ValuesIn(
                 EffectFactoryHelper::getAllEffectDescriptors(IFactory::descriptor))),
         [](const testing::TestParamInfo<AudioEffectTest::ParamType>& info) {
-            auto msSinceEpoch = std::chrono::duration_cast<std::chrono::nanoseconds>(
-                                        std::chrono::system_clock::now().time_since_epoch())
-                                        .count();
             auto instance = std::get<PARAM_INSTANCE_NAME>(info.param);
-            std::ostringstream address;
-            address << msSinceEpoch << "_factory_" << instance.first.get();
-            std::string name = address.str() + "_UUID_timeLow_" +
-                               ::android::internal::ToString(instance.second.uuid.timeLow) +
-                               "_timeMid_" +
-                               ::android::internal::ToString(instance.second.uuid.timeMid);
+            std::string name = "TYPE_" + instance.second.type.toString() + "_UUID_" +
+                               instance.second.uuid.toString();
             std::replace_if(
                     name.begin(), name.end(), [](const char c) { return !std::isalnum(c); }, '_');
             return name;

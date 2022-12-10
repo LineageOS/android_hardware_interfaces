@@ -32,7 +32,21 @@ class BassBoostSwContext final : public EffectContext {
         : EffectContext(statusDepth, common) {
         LOG(DEBUG) << __func__;
     }
-    // TODO: add specific context here
+
+    RetCode setBbStrengthPm(int strength) {
+        if (strength < BassBoost::MIN_PER_MILLE_STRENGTH ||
+            strength > BassBoost::MAX_PER_MILLE_STRENGTH) {
+            LOG(ERROR) << __func__ << " invalid strength: " << strength;
+            return RetCode::ERROR_ILLEGAL_PARAMETER;
+        }
+        // TODO : Add implementation to apply new strength
+        mStrength = strength;
+        return RetCode::SUCCESS;
+    }
+    int getBbStrengthPm() const { return mStrength; }
+
+  private:
+    int mStrength;
 };
 
 class BassBoostSw final : public EffectImpl {
@@ -47,14 +61,20 @@ class BassBoostSw final : public EffectImpl {
     ndk::ScopedAStatus setParameterSpecific(const Parameter::Specific& specific) override;
     ndk::ScopedAStatus getParameterSpecific(const Parameter::Id& id,
                                             Parameter::Specific* specific) override;
-    IEffect::Status effectProcessImpl(float* in, float* out, int process) override;
+
     std::shared_ptr<EffectContext> createContext(const Parameter::Common& common) override;
+    std::shared_ptr<EffectContext> getContext() override;
     RetCode releaseContext() override;
 
+    std::string getEffectName() override { return kEffectName; };
+    IEffect::Status effectProcessImpl(float* in, float* out, int samples) override;
+
   private:
+    const std::string kEffectName = "BassBoostSw";
     std::shared_ptr<BassBoostSwContext> mContext;
     /* capabilities */
-    const BassBoost::Capability kCapability;
+    const bool mStrengthSupported = true;
+    const BassBoost::Capability kCapability = {.strengthSupported = mStrengthSupported};
     /* Effect descriptor */
     const Descriptor kDescriptor = {
             .common = {.id = {.type = kBassBoostTypeUUID,
@@ -63,11 +83,11 @@ class BassBoostSw final : public EffectImpl {
                        .flags = {.type = Flags::Type::INSERT,
                                  .insert = Flags::Insert::FIRST,
                                  .volume = Flags::Volume::CTRL},
-                       .name = "BassBoostSw",
+                       .name = kEffectName,
                        .implementor = "The Android Open Source Project"},
             .capability = Capability::make<Capability::bassBoost>(kCapability)};
 
-    /* parameters */
-    BassBoost mSpecificParam;
+    ndk::ScopedAStatus getParameterBassBoost(const BassBoost::Tag& tag,
+                                             Parameter::Specific* specific);
 };
 }  // namespace aidl::android::hardware::audio::effect
