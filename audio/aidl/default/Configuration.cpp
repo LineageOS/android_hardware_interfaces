@@ -243,6 +243,13 @@ Configuration& getNullPrimaryConfiguration() {
                                  AudioChannelLayout::LAYOUT_MONO, 48000, 0, true,
                                  createDeviceExt(AudioDeviceType::IN_MICROPHONE, 0)));
 
+        MicrophoneInfo mic;
+        mic.id = "zero";
+        mic.device = zeroInDevice.ext.get<AudioPortExt::Tag::device>().device;
+        mic.group = 0;
+        mic.indexInTheGroup = 0;
+        c.microphones = std::vector<MicrophoneInfo>{mic};
+
         AudioPort primaryInMix =
                 createPort(c.nextPortId++, "primary input", 0, true, createPortMixExt(2, 2));
         primaryInMix.profiles.push_back(

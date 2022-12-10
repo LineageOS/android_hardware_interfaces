@@ -344,6 +344,20 @@ enum VehicleProperty {
     EV_BATTERY_LEVEL = 0x0309 + 0x10000000 + 0x01000000
             + 0x00600000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:FLOAT
     /**
+     * Current battery capacity for EV or hybrid vehicle
+     *
+     * Returns the actual value of battery capacity, if EV or hybrid. This property captures the
+     * real-time battery capacity taking into account factors such as battery aging and temperature
+     * dependency. Therefore, this value might be different from INFO_EV_BATTERY_CAPACITY because
+     * INFO_EV_BATTERY_CAPACITY returns the nominal battery capacity from when the vehicle was new.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     * @unit VehicleUnit:WH
+     */
+    EV_CURRENT_BATTERY_CAPACITY =
+            0x030D + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.FLOAT,
+    /**
      * EV charge port open
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
@@ -490,6 +504,21 @@ enum VehicleProperty {
      */
     PARKING_BRAKE_AUTO_APPLY = 0x0403 + 0x10000000 + 0x01000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:BOOLEAN
+    /**
+     * Regenerative braking level of a electronic vehicle
+     *
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined. All values between
+     * minInt32Value and maxInt32Value must be supported. The minInt32Value must be 0.
+     *
+     * The maxInt32Value in default area's VehicleAreaConfig indicates the maximum amount of energy
+     * regenerated from braking. The minInt32Value in default area's VehicleAreaConfig indicates no
+     * regenerative braking.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     */
+    EV_BRAKE_REGENERATION_LEVEL =
+            0x040C + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
     /**
      * Warning for fuel low level.
      *

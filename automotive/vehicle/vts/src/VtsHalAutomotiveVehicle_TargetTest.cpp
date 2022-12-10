@@ -481,6 +481,18 @@ void VtsHalAutomotiveVehicleTargetTest::verifyProperty(VehicleProperty propId,
                             actualPropertyType);
 }
 
+TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyEvBrakeRegenerationLevelConfig) {
+    verifyProperty(VehicleProperty::EV_BRAKE_REGENERATION_LEVEL,
+                   VehiclePropertyAccess::READ_WRITE, VehiclePropertyChangeMode::ON_CHANGE,
+                   VehiclePropertyGroup::SYSTEM, VehicleArea::GLOBAL, VehiclePropertyType::INT32);
+}
+
+TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyEvCurrentBatteryCapacityConfig) {
+    verifyProperty(VehicleProperty::EV_CURRENT_BATTERY_CAPACITY, VehiclePropertyAccess::READ,
+                   VehiclePropertyChangeMode::ON_CHANGE, VehiclePropertyGroup::SYSTEM,
+                   VehicleArea::GLOBAL, VehiclePropertyType::FLOAT);
+}
+
 TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyDoorChildLockEnabledConfig) {
     verifyProperty(VehicleProperty::DOOR_CHILD_LOCK_ENABLED, VehiclePropertyAccess::READ_WRITE,
                    VehiclePropertyChangeMode::ON_CHANGE, VehiclePropertyGroup::SYSTEM,
