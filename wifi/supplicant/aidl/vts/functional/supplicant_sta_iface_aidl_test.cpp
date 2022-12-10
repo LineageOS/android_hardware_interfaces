@@ -227,6 +227,9 @@ class SupplicantStaIfaceCallback : public BnSupplicantStaIfaceCallback {
             ::aidl::android::hardware::wifi::supplicant::DppStatusErrorCode /* code */) override {
         return ndk::ScopedAStatus::ok();
     }
+    ::ndk::ScopedAStatus onBssFrequencyChanged(int32_t /* frequencyMhz */) override {
+        return ndk::ScopedAStatus::ok();
+    }
 };
 
 class SupplicantStaIfaceAidlTest : public testing::TestWithParam<std::string> {
