@@ -71,4 +71,11 @@ oneway interface ISupplicantStaNetworkCallback {
      */
     void onServerCertificateAvailable(
             in int depth, in byte[] subject, in byte[] certHash, in byte[] certBlob);
+
+    /**
+     * Used to notify the AT_PERMANENT_ID_REQ denied event.
+     *
+     * In strict conservative mode, AT_PERMANENT_ID_REQ is denied from eap_peer side.
+     */
+    void onPermanentIdReqDenied();
 }

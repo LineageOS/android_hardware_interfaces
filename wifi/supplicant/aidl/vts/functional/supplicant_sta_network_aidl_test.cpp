@@ -100,6 +100,7 @@ class SupplicantStaNetworkCallback : public BnSupplicantStaNetworkCallback {
             const std::vector<uint8_t>& /* certBlob */) override {
         return ndk::ScopedAStatus::ok();
     }
+    ::ndk::ScopedAStatus onPermanentIdReqDenied() override { return ndk::ScopedAStatus::ok(); }
 };
 
 class SupplicantStaNetworkAidlTest
