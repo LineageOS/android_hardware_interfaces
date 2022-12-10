@@ -83,8 +83,9 @@ class RecurrentTimer final {
     // each time we might introduce outdated elements to the top. We must make sure the heap is
     // always valid from the top.
     void removeInvalidCallbackLocked() REQUIRES(mLock);
-    // Pops the next closest callback (must be valid) from the heap.
-    std::unique_ptr<CallbackInfo> popNextCallbackLocked() REQUIRES(mLock);
+    // Gets the next calblack to run (must be valid) from the heap, update its nextTime and put
+    // it back to the heap.
+    std::shared_ptr<Callback> getNextCallbackLocked(int64_t now) REQUIRES(mLock);
 };
 
 }  // namespace vehicle

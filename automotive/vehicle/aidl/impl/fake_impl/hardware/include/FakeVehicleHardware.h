@@ -138,9 +138,12 @@ class FakeVehicleHardware : public IVehicleHardware {
     std::unique_ptr<RecurrentTimer> mRecurrentTimer;
     // GeneratorHub is thread-safe.
     std::unique_ptr<GeneratorHub> mGeneratorHub;
+
+    // Only allowed to set once.
+    std::unique_ptr<const PropertyChangeCallback> mOnPropertyChangeCallback;
+    std::unique_ptr<const PropertySetErrorCallback> mOnPropertySetErrorCallback;
+
     std::mutex mLock;
-    std::unique_ptr<const PropertyChangeCallback> mOnPropertyChangeCallback GUARDED_BY(mLock);
-    std::unique_ptr<const PropertySetErrorCallback> mOnPropertySetErrorCallback GUARDED_BY(mLock);
     std::unordered_map<PropIdAreaId, std::shared_ptr<RecurrentTimer::Callback>, PropIdAreaIdHash>
             mRecurrentActions GUARDED_BY(mLock);
     std::unordered_map<PropIdAreaId, VehiclePropValuePool::RecyclableType, PropIdAreaIdHash>

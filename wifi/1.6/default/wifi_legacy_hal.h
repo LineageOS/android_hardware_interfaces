@@ -23,7 +23,7 @@
 #include <thread>
 #include <vector>
 
-#include <hardware_legacy/wifi_hal.h>
+#include <hal_legacy/wifi_hal.h>
 #include <wifi_system/interface_tool.h>
 
 namespace android {

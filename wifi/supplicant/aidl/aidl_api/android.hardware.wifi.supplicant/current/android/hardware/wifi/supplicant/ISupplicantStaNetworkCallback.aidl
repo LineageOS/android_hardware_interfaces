@@ -39,4 +39,5 @@ interface ISupplicantStaNetworkCallback {
   oneway void onNetworkEapSimUmtsAuthRequest(in android.hardware.wifi.supplicant.NetworkRequestEapSimUmtsAuthParams params);
   oneway void onTransitionDisable(in android.hardware.wifi.supplicant.TransitionDisableIndication ind);
   oneway void onServerCertificateAvailable(in int depth, in byte[] subject, in byte[] certHash, in byte[] certBlob);
+  oneway void onPermanentIdReqDenied();
 }
