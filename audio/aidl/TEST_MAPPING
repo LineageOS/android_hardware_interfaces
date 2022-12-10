@@ -2,6 +2,18 @@
   "presubmit": [
     {
       "name": "VtsHalAudioCoreTargetTest"
+    },
+    {
+      "name": "VtsHalAudioEffectFactoryTargetTest"
+    },
+    {
+      "name": "VtsHalAudioEffectTargetTest"
+    },
+    {
+      "name": "VtsHalEqualizerTargetTest"
+    },
+    {
+      "name": "VtsHalLoudnessEnhancerTargetTest"
     }
   ]
 }
