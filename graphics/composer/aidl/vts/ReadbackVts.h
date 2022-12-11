@@ -33,6 +33,8 @@ using ::android::renderengine::LayerSettings;
 using common::Dataspace;
 using common::PixelFormat;
 using IMapper2_1 = ::android::hardware::graphics::mapper::V2_1::IMapper;
+using ::android::GraphicBuffer;
+using ::android::sp;
 
 static const Color BLACK = {0.0f, 0.0f, 0.0f, 1.0f};
 static const Color RED = {1.0f, 0.0f, 0.0f, 1.0f};
@@ -146,7 +148,7 @@ class TestBufferLayer : public TestLayer {
 
   protected:
     Composition mComposition;
-    ::android::sp<::android::GraphicBuffer> mGraphicBuffer;
+    sp<GraphicBuffer> mGraphicBuffer;
     TestRenderEngine& mRenderEngine;
     int32_t mFillFence;
     uint32_t mWidth;
@@ -162,6 +164,11 @@ class TestBufferLayer : public TestLayer {
 
 class ReadbackHelper {
   public:
+    static bool readbackSupported(const PixelFormat& pixelFormat, const Dataspace& dataspace);
+
+    static void createReadbackBuffer(ReadbackBufferAttributes readbackBufferAttributes,
+                                     const VtsDisplay& display, sp<GraphicBuffer>* graphicBuffer);
+
     static std::string getColorModeString(ColorMode mode);
 
     static std::string getDataspaceString(Dataspace dataspace);
@@ -171,28 +178,36 @@ class ReadbackHelper {
     static int32_t GetBytesPerPixel(PixelFormat pixelFormat);
 
     static void fillBuffer(uint32_t width, uint32_t height, uint32_t stride, void* bufferData,
-                           PixelFormat pixelFormat, std::vector<Color> desiredPixelColors);
+                           PixelFormat pixelFormat, const std::vector<Color>& desriedColors);
 
-    static void clearColors(std::vector<Color>& expectedColors, int32_t width, int32_t height,
+    static void clearColors(std::vector<Color>& colors, int32_t width, int32_t height,
                             int32_t displayWidth);
 
-    static void fillColorsArea(std::vector<Color>& expectedColors, int32_t stride, Rect area,
-                               Color color);
+    static void fillColorsArea(std::vector<Color>& colors, int32_t stride, Rect area,
+                               Color desiredColor);
 
-    static bool readbackSupported(const PixelFormat& pixelFormat, const Dataspace& dataspace);
+    static void fillBufferAndGetFence(const sp<GraphicBuffer>& buffer, Color desiredColor,
+                                      int* fillFence);
+
+    static void fillBufferAndGetFence(const sp<GraphicBuffer>& buffer,
+                                      const std::vector<Color>& desiredColors, int* fillFence);
+
+    static void compareColorToBuffer(
+            Color expectedColor, const sp<GraphicBuffer>& graphicBuffer,
+            const ndk::ScopedFileDescriptor& fence = ::ndk::ScopedFileDescriptor(-1));
+
+    static void compareColorsToBuffer(
+            const std::vector<Color>& expectedColors, const sp<GraphicBuffer>& graphicBuffer,
+            const ndk::ScopedFileDescriptor& fence = ::ndk::ScopedFileDescriptor(-1));
 
     static const std::vector<ColorMode> colorModes;
     static const std::vector<Dataspace> dataspaces;
-
-    static void compareColorBuffers(const std::vector<Color>& expectedColors, void* bufferData,
-                                    const uint32_t stride, const uint32_t width,
-                                    const uint32_t height, PixelFormat pixelFormat);
 };
 
 class ReadbackBuffer {
   public:
     ReadbackBuffer(int64_t display, const std::shared_ptr<VtsComposerClient>& client, int32_t width,
-                   int32_t height, common::PixelFormat pixelFormat, common::Dataspace dataspace);
+                   int32_t height, common::PixelFormat pixelFormat);
 
     void setReadbackBuffer();
 
@@ -201,18 +216,12 @@ class ReadbackBuffer {
   protected:
     uint32_t mWidth;
     uint32_t mHeight;
+    PixelFormat mPixelFormat;
     uint32_t mLayerCount;
     uint32_t mUsage;
-    PixelFormat mPixelFormat;
-    Dataspace mDataspace;
     int64_t mDisplay;
-    ::android::sp<::android::GraphicBuffer> mGraphicBuffer;
+    sp<GraphicBuffer> mGraphicBuffer;
     std::shared_ptr<VtsComposerClient> mComposerClient;
-    ::android::Rect mAccessRegion;
-    native_handle_t mBufferHandle;
-
-  private:
-    ::android::sp<::android::GraphicBuffer> allocateBuffer();
 };
 
 }  // namespace aidl::android::hardware::graphics::composer3::vts
