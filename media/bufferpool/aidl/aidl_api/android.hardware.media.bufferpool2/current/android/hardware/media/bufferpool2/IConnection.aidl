@@ -35,12 +35,13 @@ package android.hardware.media.bufferpool2;
 @VintfStability
 interface IConnection {
   android.hardware.media.bufferpool2.IConnection.FetchResult[] fetch(in android.hardware.media.bufferpool2.IConnection.FetchInfo[] fetchInfos);
+  void sync();
   parcelable FetchInfo {
     long transactionId;
     int bufferId;
   }
   union FetchResult {
     android.hardware.media.bufferpool2.Buffer buffer;
-    android.hardware.media.bufferpool2.ResultStatus failure;
+    int failure;
   }
 }

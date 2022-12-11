@@ -23,6 +23,4 @@ parcelable ResultStatus {
     const int ALREADY_EXISTS = 2;
     const int NOT_FOUND = 3;
     const int CRITICAL_ERROR = 4;
-
-    int resultStatus;
 }

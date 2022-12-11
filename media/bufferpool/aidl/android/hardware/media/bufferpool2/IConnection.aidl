@@ -49,7 +49,7 @@ interface IConnection {
          * ResultStatus::NOT_FOUND        - A buffer was not found due to invalidation.
          * ResultStatus::CRITICAL_ERROR   - Other errors.
          */
-        ResultStatus failure;
+        int failure;
     }
 
     /**
@@ -70,4 +70,12 @@ interface IConnection {
      *     ResultStatus::CRITICAL_ERROR   - Other errors.
      */
     FetchResult[] fetch(in FetchInfo[] fetchInfos);
+
+    /**
+     * Enforce processing of unprocessed bufferpool messages.
+     *
+     * BufferPool implementation optimizes message processing by piggy-backing approach.
+     * This method can ensure pending bufferpool messages being processed timely.
+     */
+    void sync();
 }

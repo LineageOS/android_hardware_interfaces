@@ -214,3 +214,7 @@ int32_t getChipCapabilities(const std::shared_ptr<IWifiChip>& wifi_chip) {
     }
     return 0;
 }
+
+bool isAidlServiceAvailable(const char* instance_name) {
+    return AServiceManager_isDeclared(instance_name);
+}
