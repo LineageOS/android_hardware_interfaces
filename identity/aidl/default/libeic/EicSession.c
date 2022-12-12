@@ -84,30 +84,35 @@ bool eicSessionGetAuthChallenge(EicSession* ctx, uint64_t* outAuthChallenge) {
 bool eicSessionGetEphemeralKeyPair(EicSession* ctx,
                                    uint8_t ephemeralPrivateKey[EIC_P256_PRIV_KEY_SIZE]) {
     eicMemCpy(ephemeralPrivateKey, ctx->ephemeralPrivateKey, EIC_P256_PRIV_KEY_SIZE);
+    ctx->getEphemeralKeyPairCalled = true;
     return true;
 }
 
 bool eicSessionSetReaderEphemeralPublicKey(
         EicSession* ctx, const uint8_t readerEphemeralPublicKey[EIC_P256_PUB_KEY_SIZE]) {
     eicMemCpy(ctx->readerEphemeralPublicKey, readerEphemeralPublicKey, EIC_P256_PUB_KEY_SIZE);
+    ctx->readerEphemeralPublicKeySize = EIC_P256_PUB_KEY_SIZE;
     return true;
 }
 
 bool eicSessionSetSessionTranscript(EicSession* ctx, const uint8_t* sessionTranscript,
                                     size_t sessionTranscriptSize) {
-    // Only accept the SessionTranscript if X and Y from the ephemeral key
-    // we created is somewhere in SessionTranscript...
+    // If mdoc session encryption is in use, only accept the
+    // SessionTranscript if X and Y from the ephemeral key we created
+    // is somewhere in SessionTranscript...
     //
-    if (eicMemMem(sessionTranscript, sessionTranscriptSize, ctx->ephemeralPublicKey,
-                  EIC_P256_PUB_KEY_SIZE / 2) == NULL) {
-        eicDebug("Error finding X from ephemeralPublicKey in sessionTranscript");
-        return false;
-    }
-    if (eicMemMem(sessionTranscript, sessionTranscriptSize,
-                  ctx->ephemeralPublicKey + EIC_P256_PUB_KEY_SIZE / 2,
-                  EIC_P256_PUB_KEY_SIZE / 2) == NULL) {
-        eicDebug("Error finding Y from ephemeralPublicKey in sessionTranscript");
-        return false;
+    if (ctx->getEphemeralKeyPairCalled) {
+        if (eicMemMem(sessionTranscript, sessionTranscriptSize, ctx->ephemeralPublicKey,
+                      EIC_P256_PUB_KEY_SIZE / 2) == NULL) {
+            eicDebug("Error finding X from ephemeralPublicKey in sessionTranscript");
+            return false;
+        }
+        if (eicMemMem(sessionTranscript, sessionTranscriptSize,
+                      ctx->ephemeralPublicKey + EIC_P256_PUB_KEY_SIZE / 2,
+                      EIC_P256_PUB_KEY_SIZE / 2) == NULL) {
+            eicDebug("Error finding Y from ephemeralPublicKey in sessionTranscript");
+            return false;
+        }
     }
 
     // To save space we only store the SHA-256 of SessionTranscript

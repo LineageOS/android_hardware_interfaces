@@ -596,10 +596,10 @@ bool FakeSecureHardwarePresentationProxy::startRetrieveEntries() {
     return eicPresentationStartRetrieveEntries(&ctx_);
 }
 
-bool FakeSecureHardwarePresentationProxy::calcMacKey(
+bool FakeSecureHardwarePresentationProxy::prepareDeviceAuthentication(
         const vector<uint8_t>& sessionTranscript, const vector<uint8_t>& readerEphemeralPublicKey,
         const vector<uint8_t>& signingKeyBlob, const string& docType,
-        unsigned int numNamespacesWithValues, size_t expectedProofOfProvisioningSize) {
+        unsigned int numNamespacesWithValues, size_t expectedDeviceNamespacesSize) {
     if (!validateId(__func__)) {
         return false;
     }
@@ -608,10 +608,10 @@ bool FakeSecureHardwarePresentationProxy::calcMacKey(
         eicDebug("Unexpected size %zd of signingKeyBlob, expected 60", signingKeyBlob.size());
         return false;
     }
-    return eicPresentationCalcMacKey(&ctx_, sessionTranscript.data(), sessionTranscript.size(),
-                                     readerEphemeralPublicKey.data(), signingKeyBlob.data(),
-                                     docType.c_str(), docType.size(), numNamespacesWithValues,
-                                     expectedProofOfProvisioningSize);
+    return eicPresentationPrepareDeviceAuthentication(
+            &ctx_, sessionTranscript.data(), sessionTranscript.size(),
+            readerEphemeralPublicKey.data(), readerEphemeralPublicKey.size(), signingKeyBlob.data(),
+            docType.c_str(), docType.size(), numNamespacesWithValues, expectedDeviceNamespacesSize);
 }
 
 AccessCheckResult FakeSecureHardwarePresentationProxy::startRetrieveEntryValue(
@@ -671,6 +671,25 @@ optional<vector<uint8_t>> FakeSecureHardwarePresentationProxy::retrieveEntryValu
         return std::nullopt;
     }
     return content;
+}
+
+optional<pair<vector<uint8_t>, vector<uint8_t>>>
+FakeSecureHardwarePresentationProxy::finishRetrievalWithSignature() {
+    if (!validateId(__func__)) {
+        return std::nullopt;
+    }
+
+    vector<uint8_t> mac(32);
+    size_t macSize = 32;
+    vector<uint8_t> ecdsaSignature(EIC_ECDSA_P256_SIGNATURE_SIZE);
+    size_t ecdsaSignatureSize = EIC_ECDSA_P256_SIGNATURE_SIZE;
+    if (!eicPresentationFinishRetrievalWithSignature(&ctx_, mac.data(), &macSize,
+                                                     ecdsaSignature.data(), &ecdsaSignatureSize)) {
+        return std::nullopt;
+    }
+    mac.resize(macSize);
+    ecdsaSignature.resize(ecdsaSignatureSize);
+    return std::make_pair(mac, ecdsaSignature);
 }
 
 optional<vector<uint8_t>> FakeSecureHardwarePresentationProxy::finishRetrieval() {

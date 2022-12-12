@@ -54,19 +54,6 @@ int PresentationSession::initialize() {
     }
     id_ = id.value();
 
-    optional<vector<uint8_t>> ephemeralKeyPriv = hwProxy_->getEphemeralKeyPair();
-    if (!ephemeralKeyPriv) {
-        LOG(ERROR) << "Error getting ephemeral private key for session";
-        return IIdentityCredentialStore::STATUS_FAILED;
-    }
-    optional<vector<uint8_t>> ephemeralKeyPair =
-            support::ecPrivateKeyToKeyPair(ephemeralKeyPriv.value());
-    if (!ephemeralKeyPair) {
-        LOG(ERROR) << "Error creating ephemeral key-pair";
-        return IIdentityCredentialStore::STATUS_FAILED;
-    }
-    ephemeralKeyPair_ = ephemeralKeyPair.value();
-
     optional<uint64_t> authChallenge = hwProxy_->getAuthChallenge();
     if (!authChallenge) {
         LOG(ERROR) << "Error getting authChallenge for session";
@@ -78,6 +65,23 @@ int PresentationSession::initialize() {
 }
 
 ndk::ScopedAStatus PresentationSession::getEphemeralKeyPair(vector<uint8_t>* outKeyPair) {
+    if (ephemeralKeyPair_.size() == 0) {
+        optional<vector<uint8_t>> ephemeralKeyPriv = hwProxy_->getEphemeralKeyPair();
+        if (!ephemeralKeyPriv) {
+            LOG(ERROR) << "Error getting ephemeral private key for session";
+            return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                    IIdentityCredentialStore::STATUS_FAILED,
+                    "Error getting ephemeral private key for session"));
+        }
+        optional<vector<uint8_t>> ephemeralKeyPair =
+                support::ecPrivateKeyToKeyPair(ephemeralKeyPriv.value());
+        if (!ephemeralKeyPair) {
+            LOG(ERROR) << "Error creating ephemeral key-pair";
+            return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                    IIdentityCredentialStore::STATUS_FAILED, "Error creating ephemeral key-pair"));
+        }
+        ephemeralKeyPair_ = ephemeralKeyPair.value();
+    }
     *outKeyPair = ephemeralKeyPair_;
     return ndk::ScopedAStatus::ok();
 }
