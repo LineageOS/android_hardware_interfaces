@@ -457,17 +457,16 @@ ndk::ScopedAStatus IdentityCredential::startRetrieval(
     }
 
     if (session_) {
-        // If presenting in a session, the TA has already done this check.
-
+        // If presenting in a session, the TA has already done the check for (X, Y) as done
+        // below, see eicSessionSetSessionTranscript().
     } else {
-        // To prevent replay-attacks, we check that the public part of the ephemeral
-        // key we previously created, is present in the DeviceEngagement part of
-        // SessionTranscript as a COSE_Key, in uncompressed form.
+        // If mdoc session encryption is in use, check that the
+        // public part of the ephemeral key we previously created, is
+        // present in the DeviceEngagement part of SessionTranscript
+        // as a COSE_Key, in uncompressed form.
         //
         // We do this by just searching for the X and Y coordinates.
-        //
-        // Would be nice to move this check to the TA.
-        if (sessionTranscript.size() > 0) {
+        if (sessionTranscript.size() > 0 && ephemeralPublicKey_.size() > 0) {
             auto [getXYSuccess, ePubX, ePubY] = support::ecPublicKeyGetXandY(ephemeralPublicKey_);
             if (!getXYSuccess) {
                 return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
@@ -608,33 +607,36 @@ ndk::ScopedAStatus IdentityCredential::startRetrieval(
     // Finally, pass info so the HMAC key can be derived and the TA can start
     // creating the DeviceNameSpaces CBOR...
     if (!session_) {
-        if (sessionTranscript_.size() > 0 && readerPublicKey_.size() > 0 &&
-            signingKeyBlob.size() > 0) {
-            // We expect the reader ephemeral public key to be same size and curve
-            // as the ephemeral key we generated (e.g. P-256 key), otherwise ECDH
-            // won't work. So its length should be 65 bytes and it should be
-            // starting with 0x04.
-            if (readerPublicKey_.size() != 65 || readerPublicKey_[0] != 0x04) {
-                return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
-                        IIdentityCredentialStore::STATUS_FAILED,
-                        "Reader public key is not in expected format"));
+        if (sessionTranscript_.size() > 0 && signingKeyBlob.size() > 0) {
+            vector<uint8_t> eReaderKeyP256;
+            if (readerPublicKey_.size() > 0) {
+                // If set, we expect the reader ephemeral public key to be same size and curve
+                // as the ephemeral key we generated (e.g. P-256 key), otherwise ECDH won't
+                // work. So its length should be 65 bytes and it should be starting with 0x04.
+                if (readerPublicKey_.size() != 65 || readerPublicKey_[0] != 0x04) {
+                    return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                            IIdentityCredentialStore::STATUS_FAILED,
+                            "Reader public key is not in expected format"));
+                }
+                eReaderKeyP256 =
+                        vector<uint8_t>(readerPublicKey_.begin() + 1, readerPublicKey_.end());
             }
-            vector<uint8_t> pubKeyP256(readerPublicKey_.begin() + 1, readerPublicKey_.end());
-            if (!hwProxy_->calcMacKey(sessionTranscript_, pubKeyP256, signingKeyBlob, docType_,
-                                      numNamespacesWithValues, expectedDeviceNameSpacesSize_)) {
+            if (!hwProxy_->prepareDeviceAuthentication(
+                        sessionTranscript_, eReaderKeyP256, signingKeyBlob, docType_,
+                        numNamespacesWithValues, expectedDeviceNameSpacesSize_)) {
                 return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
                         IIdentityCredentialStore::STATUS_FAILED,
                         "Error starting retrieving entries"));
             }
         }
     } else {
-        if (session_->getSessionTranscript().size() > 0 &&
-            session_->getReaderEphemeralPublicKey().size() > 0 && signingKeyBlob.size() > 0) {
+        if (session_->getSessionTranscript().size() > 0 && signingKeyBlob.size() > 0) {
             // Don't actually pass the reader ephemeral public key in, the TA will get
             // it from the session object.
             //
-            if (!hwProxy_->calcMacKey(sessionTranscript_, {}, signingKeyBlob, docType_,
-                                      numNamespacesWithValues, expectedDeviceNameSpacesSize_)) {
+            if (!hwProxy_->prepareDeviceAuthentication(sessionTranscript_, {}, signingKeyBlob,
+                                                       docType_, numNamespacesWithValues,
+                                                       expectedDeviceNameSpacesSize_)) {
                 return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
                         IIdentityCredentialStore::STATUS_FAILED,
                         "Error starting retrieving entries"));
@@ -924,8 +926,9 @@ ndk::ScopedAStatus IdentityCredential::retrieveEntryValue(const vector<uint8_t>&
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus IdentityCredential::finishRetrieval(vector<uint8_t>* outMac,
-                                                       vector<uint8_t>* outDeviceNameSpaces) {
+ndk::ScopedAStatus IdentityCredential::finishRetrievalWithSignature(
+        vector<uint8_t>* outMac, vector<uint8_t>* outDeviceNameSpaces,
+        vector<uint8_t>* outEcdsaSignature) {
     ndk::ScopedAStatus status = ensureHwProxy();
     if (!status.isOk()) {
         return status;
@@ -948,17 +951,34 @@ ndk::ScopedAStatus IdentityCredential::finishRetrieval(vector<uint8_t>* outMac,
                         .c_str()));
     }
 
+    optional<vector<uint8_t>> digestToBeMaced;
+    optional<vector<uint8_t>> signatureToBeSigned;
+
+    // This relies on the fact that binder calls never pass a nullptr
+    // for out parameters. Hence if it's null here we know this was
+    // called from finishRetrieval() below.
+    if (outEcdsaSignature == nullptr) {
+        digestToBeMaced = hwProxy_->finishRetrieval();
+        if (!digestToBeMaced) {
+            return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                    IIdentityCredentialStore::STATUS_INVALID_DATA,
+                    "Error generating digestToBeMaced"));
+        }
+    } else {
+        auto macAndSignature = hwProxy_->finishRetrievalWithSignature();
+        if (!macAndSignature) {
+            return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                    IIdentityCredentialStore::STATUS_INVALID_DATA,
+                    "Error generating digestToBeMaced and signatureToBeSigned"));
+        }
+        digestToBeMaced = macAndSignature->first;
+        signatureToBeSigned = macAndSignature->second;
+    }
+
     // If the TA calculated a MAC (it might not have), format it as a COSE_Mac0
     //
-    optional<vector<uint8_t>> mac;
-    optional<vector<uint8_t>> digestToBeMaced = hwProxy_->finishRetrieval();
-
-    // The MAC not being set means an error occurred.
-    if (!digestToBeMaced) {
-        return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
-                IIdentityCredentialStore::STATUS_INVALID_DATA, "Error generating digestToBeMaced"));
-    }
     // Size 0 means that the MAC isn't set. If it's set, it has to be 32 bytes.
+    optional<vector<uint8_t>> mac;
     if (digestToBeMaced.value().size() != 0) {
         if (digestToBeMaced.value().size() != 32) {
             return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
@@ -967,10 +987,25 @@ ndk::ScopedAStatus IdentityCredential::finishRetrieval(vector<uint8_t>* outMac,
         }
         mac = support::coseMacWithDigest(digestToBeMaced.value(), {} /* data */);
     }
-
     *outMac = mac.value_or(vector<uint8_t>({}));
+
+    optional<vector<uint8_t>> signature;
+    if (signatureToBeSigned && signatureToBeSigned.value().size() != 0) {
+        signature = support::coseSignEcDsaWithSignature(signatureToBeSigned.value(), {},  // data
+                                                        {});  // certificateChain
+    }
+    if (outEcdsaSignature != nullptr) {
+        *outEcdsaSignature = signature.value_or(vector<uint8_t>({}));
+    }
+
     *outDeviceNameSpaces = encodedDeviceNameSpaces;
+
     return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus IdentityCredential::finishRetrieval(vector<uint8_t>* outMac,
+                                                       vector<uint8_t>* outDeviceNameSpaces) {
+    return finishRetrievalWithSignature(outMac, outDeviceNameSpaces, nullptr);
 }
 
 ndk::ScopedAStatus IdentityCredential::generateSigningKeyPair(

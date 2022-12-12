@@ -441,8 +441,18 @@ TEST_P(EndToEndTests, createAndRetrieveCredential) {
     }
 
     vector<uint8_t> mac;
+    vector<uint8_t> ecdsaSignature;
     vector<uint8_t> deviceNameSpacesEncoded;
-    ASSERT_TRUE(credential->finishRetrieval(&mac, &deviceNameSpacesEncoded).isOk());
+    // API version 5 (feature version 202301) returns both MAC and ECDSA signature.
+    if (halApiVersion_ >= 5) {
+        ASSERT_TRUE(credential
+                            ->finishRetrievalWithSignature(&mac, &deviceNameSpacesEncoded,
+                                                           &ecdsaSignature)
+                            .isOk());
+        ASSERT_GT(ecdsaSignature.size(), 0);
+    } else {
+        ASSERT_TRUE(credential->finishRetrieval(&mac, &deviceNameSpacesEncoded).isOk());
+    }
     cborPretty = cppbor::prettyPrint(deviceNameSpacesEncoded, 32, {});
     ASSERT_EQ(
             "{\n"
@@ -475,6 +485,21 @@ TEST_P(EndToEndTests, createAndRetrieveCredential) {
     ASSERT_TRUE(calculatedMac);
     EXPECT_EQ(mac, calculatedMac);
 
+    if (ecdsaSignature.size() > 0) {
+        vector<uint8_t> encodedDeviceAuthentication =
+                cppbor::Array()
+                        .add("DeviceAuthentication")
+                        .add(sessionTranscript.clone())
+                        .add(docType)
+                        .add(cppbor::SemanticTag(24, deviceNameSpacesEncoded))
+                        .encode();
+        vector<uint8_t> deviceAuthenticationBytes =
+                cppbor::SemanticTag(24, encodedDeviceAuthentication).encode();
+        EXPECT_TRUE(support::coseCheckEcDsaSignature(ecdsaSignature,
+                                                     deviceAuthenticationBytes,  // Detached content
+                                                     signingPubKey.value()));
+    }
+
     // Also perform an additional empty request. This is what mDL applications
     // are envisioned to do - one call to get the data elements, another to get
     // an empty DeviceSignedItems and corresponding MAC.
@@ -486,7 +511,16 @@ TEST_P(EndToEndTests, createAndRetrieveCredential) {
                                 signingKeyBlob, sessionTranscriptEncoded, {},  // readerSignature,
                                 testEntriesEntryCounts)
                         .isOk());
-    ASSERT_TRUE(credential->finishRetrieval(&mac, &deviceNameSpacesEncoded).isOk());
+    // API version 5 (feature version 202301) returns both MAC and ECDSA signature.
+    if (halApiVersion_ >= 5) {
+        ASSERT_TRUE(credential
+                            ->finishRetrievalWithSignature(&mac, &deviceNameSpacesEncoded,
+                                                           &ecdsaSignature)
+                            .isOk());
+        ASSERT_GT(ecdsaSignature.size(), 0);
+    } else {
+        ASSERT_TRUE(credential->finishRetrieval(&mac, &deviceNameSpacesEncoded).isOk());
+    }
     cborPretty = cppbor::prettyPrint(deviceNameSpacesEncoded, 32, {});
     ASSERT_EQ("{}", cborPretty);
     // Calculate DeviceAuthentication and MAC (MACing key hasn't changed)
@@ -496,6 +530,21 @@ TEST_P(EndToEndTests, createAndRetrieveCredential) {
                                      eMacKey.value());            // EMacKey
     ASSERT_TRUE(calculatedMac);
     EXPECT_EQ(mac, calculatedMac);
+
+    if (ecdsaSignature.size() > 0) {
+        vector<uint8_t> encodedDeviceAuthentication =
+                cppbor::Array()
+                        .add("DeviceAuthentication")
+                        .add(sessionTranscript.clone())
+                        .add(docType)
+                        .add(cppbor::SemanticTag(24, deviceNameSpacesEncoded))
+                        .encode();
+        vector<uint8_t> deviceAuthenticationBytes =
+                cppbor::SemanticTag(24, encodedDeviceAuthentication).encode();
+        EXPECT_TRUE(support::coseCheckEcDsaSignature(ecdsaSignature,
+                                                     deviceAuthenticationBytes,  // Detached content
+                                                     signingPubKey.value()));
+    }
 
     // Some mDL apps might send a request but with a single empty
     // namespace. Check that too.
@@ -508,7 +557,16 @@ TEST_P(EndToEndTests, createAndRetrieveCredential) {
                                 signingKeyBlob, sessionTranscriptEncoded, {},  // readerSignature,
                                 testEntriesEntryCounts)
                         .isOk());
-    ASSERT_TRUE(credential->finishRetrieval(&mac, &deviceNameSpacesEncoded).isOk());
+    // API version 5 (feature version 202301) returns both MAC and ECDSA signature.
+    if (halApiVersion_ >= 5) {
+        ASSERT_TRUE(credential
+                            ->finishRetrievalWithSignature(&mac, &deviceNameSpacesEncoded,
+                                                           &ecdsaSignature)
+                            .isOk());
+        ASSERT_GT(ecdsaSignature.size(), 0);
+    } else {
+        ASSERT_TRUE(credential->finishRetrieval(&mac, &deviceNameSpacesEncoded).isOk());
+    }
     cborPretty = cppbor::prettyPrint(deviceNameSpacesEncoded, 32, {});
     ASSERT_EQ("{}", cborPretty);
     // Calculate DeviceAuthentication and MAC (MACing key hasn't changed)
@@ -518,6 +576,248 @@ TEST_P(EndToEndTests, createAndRetrieveCredential) {
                                      eMacKey.value());            // EMacKey
     ASSERT_TRUE(calculatedMac);
     EXPECT_EQ(mac, calculatedMac);
+
+    if (ecdsaSignature.size() > 0) {
+        vector<uint8_t> encodedDeviceAuthentication =
+                cppbor::Array()
+                        .add("DeviceAuthentication")
+                        .add(sessionTranscript.clone())
+                        .add(docType)
+                        .add(cppbor::SemanticTag(24, deviceNameSpacesEncoded))
+                        .encode();
+        vector<uint8_t> deviceAuthenticationBytes =
+                cppbor::SemanticTag(24, encodedDeviceAuthentication).encode();
+        EXPECT_TRUE(support::coseCheckEcDsaSignature(ecdsaSignature,
+                                                     deviceAuthenticationBytes,  // Detached content
+                                                     signingPubKey.value()));
+    }
+}
+
+TEST_P(EndToEndTests, noSessionEncryption) {
+    if (halApiVersion_ < 5) {
+        GTEST_SKIP() << "Need HAL API version 5, have " << halApiVersion_;
+    }
+
+    const vector<test_utils::TestProfile> testProfiles = {// Profile 0 (no authentication)
+                                                          {0, {}, false, 0}};
+
+    HardwareAuthToken authToken;
+    VerificationToken verificationToken;
+    authToken.challenge = 0;
+    authToken.userId = 0;
+    authToken.authenticatorId = 0;
+    authToken.authenticatorType = ::android::hardware::keymaster::HardwareAuthenticatorType::NONE;
+    authToken.timestamp.milliSeconds = 0;
+    authToken.mac.clear();
+    verificationToken.challenge = 0;
+    verificationToken.timestamp.milliSeconds = 0;
+    verificationToken.securityLevel = ::android::hardware::keymaster::SecurityLevel::SOFTWARE;
+    verificationToken.mac.clear();
+
+    // Here's the actual test data:
+    const vector<test_utils::TestEntryData> testEntries = {
+            {"PersonalData", "Last name", string("Turing"), vector<int32_t>{0}},
+            {"PersonalData", "Birth date", string("19120623"), vector<int32_t>{0}},
+            {"PersonalData", "First name", string("Alan"), vector<int32_t>{0}},
+    };
+    const vector<int32_t> testEntriesEntryCounts = {3};
+    HardwareInformation hwInfo;
+    ASSERT_TRUE(credentialStore_->getHardwareInformation(&hwInfo).isOk());
+
+    string cborPretty;
+    sp<IWritableIdentityCredential> writableCredential;
+    ASSERT_TRUE(test_utils::setupWritableCredential(writableCredential, credentialStore_,
+                                                    true /* testCredential */));
+
+    string challenge = "attestationChallenge";
+    test_utils::AttestationData attData(writableCredential, challenge,
+                                        {1} /* atteestationApplicationId */);
+    ASSERT_TRUE(attData.result.isOk())
+            << attData.result.exceptionCode() << "; " << attData.result.exceptionMessage() << endl;
+
+    // This is kinda of a hack but we need to give the size of
+    // ProofOfProvisioning that we'll expect to receive.
+    const int32_t expectedProofOfProvisioningSize = 230;
+    // OK to fail, not available in v1 HAL
+    writableCredential->setExpectedProofOfProvisioningSize(expectedProofOfProvisioningSize);
+    ASSERT_TRUE(
+            writableCredential->startPersonalization(testProfiles.size(), testEntriesEntryCounts)
+                    .isOk());
+
+    optional<vector<SecureAccessControlProfile>> secureProfiles =
+            test_utils::addAccessControlProfiles(writableCredential, testProfiles);
+    ASSERT_TRUE(secureProfiles);
+
+    // Uses TestEntryData* pointer as key and values are the encrypted blobs. This
+    // is a little hacky but it works well enough.
+    map<const test_utils::TestEntryData*, vector<vector<uint8_t>>> encryptedBlobs;
+
+    for (const auto& entry : testEntries) {
+        ASSERT_TRUE(test_utils::addEntry(writableCredential, entry, hwInfo.dataChunkSize,
+                                         encryptedBlobs, true));
+    }
+
+    vector<uint8_t> credentialData;
+    vector<uint8_t> proofOfProvisioningSignature;
+    ASSERT_TRUE(
+            writableCredential->finishAddingEntries(&credentialData, &proofOfProvisioningSignature)
+                    .isOk());
+
+    // Validate the proofOfProvisioning which was returned
+    optional<vector<uint8_t>> proofOfProvisioning =
+            support::coseSignGetPayload(proofOfProvisioningSignature);
+    ASSERT_TRUE(proofOfProvisioning);
+    cborPretty = cppbor::prettyPrint(proofOfProvisioning.value(), 32, {"readerCertificate"});
+    EXPECT_EQ(
+            "[\n"
+            "  'ProofOfProvisioning',\n"
+            "  'org.iso.18013-5.2019.mdl',\n"
+            "  [\n"
+            "    {\n"
+            "      'id' : 0,\n"
+            "    },\n"
+            "  ],\n"
+            "  {\n"
+            "    'PersonalData' : [\n"
+            "      {\n"
+            "        'name' : 'Last name',\n"
+            "        'value' : 'Turing',\n"
+            "        'accessControlProfiles' : [0, ],\n"
+            "      },\n"
+            "      {\n"
+            "        'name' : 'Birth date',\n"
+            "        'value' : '19120623',\n"
+            "        'accessControlProfiles' : [0, ],\n"
+            "      },\n"
+            "      {\n"
+            "        'name' : 'First name',\n"
+            "        'value' : 'Alan',\n"
+            "        'accessControlProfiles' : [0, ],\n"
+            "      },\n"
+            "    ],\n"
+            "  },\n"
+            "  true,\n"
+            "]",
+            cborPretty);
+
+    optional<vector<uint8_t>> credentialPubKey = support::certificateChainGetTopMostKey(
+            attData.attestationCertificate[0].encodedCertificate);
+    ASSERT_TRUE(credentialPubKey);
+    EXPECT_TRUE(support::coseCheckEcDsaSignature(proofOfProvisioningSignature,
+                                                 {},  // Additional data
+                                                 credentialPubKey.value()));
+    writableCredential = nullptr;
+
+    // Extract doctype, storage key, and credentialPrivKey from credentialData... this works
+    // only because we asked for a test-credential meaning that the HBK is all zeroes.
+    auto [exSuccess, exDocType, exStorageKey, exCredentialPrivKey, exSha256Pop] =
+            extractFromTestCredentialData(credentialData);
+
+    ASSERT_TRUE(exSuccess);
+    ASSERT_EQ(exDocType, "org.iso.18013-5.2019.mdl");
+    // ... check that the public key derived from the private key matches what was
+    // in the certificate.
+    optional<vector<uint8_t>> exCredentialKeyPair =
+            support::ecPrivateKeyToKeyPair(exCredentialPrivKey);
+    ASSERT_TRUE(exCredentialKeyPair);
+    optional<vector<uint8_t>> exCredentialPubKey =
+            support::ecKeyPairGetPublicKey(exCredentialKeyPair.value());
+    ASSERT_TRUE(exCredentialPubKey);
+    ASSERT_EQ(exCredentialPubKey.value(), credentialPubKey.value());
+
+    sp<IIdentityCredential> credential;
+    ASSERT_TRUE(credentialStore_
+                        ->getCredential(
+                                CipherSuite::CIPHERSUITE_ECDHE_HKDF_ECDSA_WITH_AES_256_GCM_SHA256,
+                                credentialData, &credential)
+                        .isOk());
+    ASSERT_NE(credential, nullptr);
+
+    // Calculate sessionTranscript, make something that resembles what you'd use for
+    // an over-the-Internet presentation not using mdoc session encryption.
+    cppbor::Array sessionTranscript =
+            cppbor::Array()
+                    .add(cppbor::Null())  // DeviceEngagementBytes isn't used.
+                    .add(cppbor::Null())  // EReaderKeyBytes isn't used.
+                    .add(cppbor::Array()  // Proprietary handover structure follows.
+                                 .add(cppbor::Tstr("TestHandover"))
+                                 .add(cppbor::Bstr(vector<uint8_t>{1, 2, 3}))
+                                 .add(cppbor::Bstr(vector<uint8_t>{9, 8, 7, 6})));
+    vector<uint8_t> sessionTranscriptEncoded = sessionTranscript.encode();
+
+    // Generate the key that will be used to sign AuthenticatedData.
+    vector<uint8_t> signingKeyBlob;
+    Certificate signingKeyCertificate;
+    ASSERT_TRUE(credential->generateSigningKeyPair(&signingKeyBlob, &signingKeyCertificate).isOk());
+    optional<vector<uint8_t>> signingPubKey =
+            support::certificateChainGetTopMostKey(signingKeyCertificate.encodedCertificate);
+    EXPECT_TRUE(signingPubKey);
+    test_utils::verifyAuthKeyCertificate(signingKeyCertificate.encodedCertificate);
+
+    vector<RequestNamespace> requestedNamespaces = test_utils::buildRequestNamespaces(testEntries);
+    ASSERT_TRUE(credential->setRequestedNamespaces(requestedNamespaces).isOk());
+    ASSERT_TRUE(credential->setVerificationToken(verificationToken).isOk());
+    Status status = credential->startRetrieval(
+            secureProfiles.value(), authToken, {} /* itemsRequestBytes*/, signingKeyBlob,
+            sessionTranscriptEncoded, {} /* readerSignature */, testEntriesEntryCounts);
+    ASSERT_TRUE(status.isOk()) << status.exceptionCode() << ": " << status.exceptionMessage();
+
+    for (const auto& entry : testEntries) {
+        ASSERT_TRUE(credential
+                            ->startRetrieveEntryValue(entry.nameSpace, entry.name,
+                                                      entry.valueCbor.size(), entry.profileIds)
+                            .isOk());
+
+        auto it = encryptedBlobs.find(&entry);
+        ASSERT_NE(it, encryptedBlobs.end());
+        const vector<vector<uint8_t>>& encryptedChunks = it->second;
+
+        vector<uint8_t> content;
+        for (const auto& encryptedChunk : encryptedChunks) {
+            vector<uint8_t> chunk;
+            ASSERT_TRUE(credential->retrieveEntryValue(encryptedChunk, &chunk).isOk());
+            content.insert(content.end(), chunk.begin(), chunk.end());
+        }
+        EXPECT_EQ(content, entry.valueCbor);
+    }
+
+    vector<uint8_t> mac;
+    vector<uint8_t> ecdsaSignature;
+    vector<uint8_t> deviceNameSpacesEncoded;
+    status = credential->finishRetrievalWithSignature(&mac, &deviceNameSpacesEncoded,
+                                                      &ecdsaSignature);
+    ASSERT_TRUE(status.isOk()) << status.exceptionCode() << ": " << status.exceptionMessage();
+    // MACing should NOT work since we're not using session encryption
+    ASSERT_EQ(0, mac.size());
+
+    // ECDSA signatures should work, however. Check this.
+    ASSERT_GT(ecdsaSignature.size(), 0);
+
+    cborPretty = cppbor::prettyPrint(deviceNameSpacesEncoded, 32, {});
+    ASSERT_EQ(
+            "{\n"
+            "  'PersonalData' : {\n"
+            "    'Last name' : 'Turing',\n"
+            "    'Birth date' : '19120623',\n"
+            "    'First name' : 'Alan',\n"
+            "  },\n"
+            "}",
+            cborPretty);
+
+    string docType = "org.iso.18013-5.2019.mdl";
+
+    vector<uint8_t> encodedDeviceAuthentication =
+            cppbor::Array()
+                    .add("DeviceAuthentication")
+                    .add(sessionTranscript.clone())
+                    .add(docType)
+                    .add(cppbor::SemanticTag(24, deviceNameSpacesEncoded))
+                    .encode();
+    vector<uint8_t> deviceAuthenticationBytes =
+            cppbor::SemanticTag(24, encodedDeviceAuthentication).encode();
+    EXPECT_TRUE(support::coseCheckEcDsaSignature(ecdsaSignature,
+                                                 deviceAuthenticationBytes,  // Detached content
+                                                 signingPubKey.value()));
 }
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(EndToEndTests);
