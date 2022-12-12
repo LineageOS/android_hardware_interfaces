@@ -16,21 +16,21 @@
 
 // To render: "dot -Tpng state.gv -o state.png"
 digraph effect_state_machine {
-    node [shape=point style=filled fillcolor=black width=0.5] I;
-    node [shape=doublecircle] F;
-    node [shape=oval width=1];
-    node [fillcolor=lightgreen] INIT;
-    node [fillcolor=lightblue] IDLE;
-    node [fillcolor=lightyellow] PROCESSING;
+    node[shape = point style = filled fillcolor = black width = 0.5] I;
+    node[shape = doublecircle] F;
+    node[shape = oval width = 1];
+    node[fillcolor = lightgreen] INIT;
+    node[fillcolor = lightblue] IDLE;
+    node[fillcolor = lightyellow] PROCESSING;
 
-    I -> INIT [label="IFactory.createEffect" labelfontcolor="navy"];
-    INIT -> F [label="IFactory.destroyEffect"];
-    INIT -> IDLE [label="open()" labelfontcolor="lime"];
-    IDLE -> PROCESSING [label="command(START"];
-    PROCESSING -> IDLE [label="command(STOP)\ncommand(RESET)"];
-    IDLE -> INIT [label="close()"];
+    I -> INIT[label = "IFactory.createEffect" labelfontcolor = "navy"];
+    INIT -> F[label = "IFactory.destroyEffect"];
+    INIT -> IDLE[label = "open()" labelfontcolor = "lime"];
+    IDLE -> PROCESSING[label = "command(START"];
+    PROCESSING -> IDLE[label = "command(STOP)\ncommand(RESET)"];
+    IDLE -> INIT[label = "close()"];
 
-    INIT -> INIT [label="getState\ngetDescriptor"];
-    IDLE -> IDLE [label="getXXX\nsetParameter\ncommand(RESET)"];
-    PROCESSING -> PROCESSING [label="getXXX\nsetParameter"];
+    INIT -> INIT[label = "getState\ngetDescriptor"];
+    IDLE -> IDLE[label = "getXXX\nsetParameter\ncommand(RESET)"];
+    PROCESSING -> PROCESSING[label = "getXXX\nsetParameter"];
 }

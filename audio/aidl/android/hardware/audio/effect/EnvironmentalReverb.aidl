@@ -19,24 +19,26 @@ package android.hardware.audio.effect;
 import android.hardware.audio.effect.VendorExtension;
 
 /**
- * Reverb specific definitions.
+ * Environmental Reverb specific definitions.
  *
- * All parameters defined in union Reverb must be gettable and settable. The capabilities defined in
- * Reverb.Capability can only acquired with IEffect.getDescriptor() and not settable.
+ * All parameters defined in union Environmental must be gettable and settable. The capabilities
+ * * defined in EnvironmentalReverb.Capability can only acquired with IEffect.getDescriptor() and
+ * not * settable.
  */
+
 @VintfStability
-union Reverb {
+union EnvironmentalReverb {
     /**
      * Effect parameter tag to identify the parameters for getParameter().
      */
     @VintfStability
     union Id {
         int vendorExtensionTag;
-        Reverb.Tag commonTag;
+        EnvironmentalReverb.Tag commonTag;
     }
 
     /**
-     * Vendor Reverb implementation definition for additional parameters.
+     * Vendor EnvironmentalReverb implementation definition for additional parameters.
      */
     VendorExtension vendor;
 

@@ -31,8 +31,8 @@ import android.media.audio.common.AudioUuid;
 @VintfStability
 interface IFactory {
     /**
-     * Return a list of effect identities supported by this device, with the optional
-     * filter by type and/or by instance UUID.
+     * Return a list of effect descriptors supported by this device, with the optional filter by
+     * type and/or by instance UUID.
      *
      * @param type UUID identifying the effect type.
      *        This is an optional parameter, pass in null if this parameter is not necessary; if non
@@ -43,9 +43,9 @@ interface IFactory {
      * @param proxy Indicates the proxy UUID filter to query.
      *        This is an optional parameter, pass in null if this parameter is not necessary; if
      *        non null, used as a filter for effect proxy UUIDs.
-     * @return List of effect identities supported and filtered by type/implementation UUID.
+     * @return List of effect Descriptors supported and filtered by type/implementation/proxy UUID.
      */
-    Descriptor.Identity[] queryEffects(in @nullable AudioUuid type,
+    Descriptor[] queryEffects(in @nullable AudioUuid type,
             in @nullable AudioUuid implementation, in @nullable AudioUuid proxy);
 
     /**

@@ -33,25 +33,27 @@
 
 package android.hardware.audio.effect;
 @VintfStability
-union Reverb {
+union PresetReverb {
   android.hardware.audio.effect.VendorExtension vendor;
-  int roomLevelMb;
-  int roomHfLevelMb;
-  int decayTimeMs;
-  int decayHfRatioPm;
-  int levelMb;
-  int delayMs;
-  int diffusionPm;
-  int densityPm;
-  boolean bypass;
+  android.hardware.audio.effect.PresetReverb.Presets preset;
+  @Backing(type="int") @VintfStability
+  enum Presets {
+    NONE = 0,
+    SMALLROOM = 1,
+    MEDIUMROOM = 2,
+    LARGEROOM = 3,
+    MEDIUMHALL = 4,
+    LARGEHALL = 5,
+    PLATE = 6,
+  }
   @VintfStability
   union Id {
     int vendorExtensionTag;
-    android.hardware.audio.effect.Reverb.Tag commonTag;
+    android.hardware.audio.effect.PresetReverb.Tag commonTag;
   }
   @VintfStability
   parcelable Capability {
     android.hardware.audio.effect.VendorExtension extension;
-    int maxDecayTimeMs;
+    android.hardware.audio.effect.PresetReverb.Presets[] supportedPresets;
   }
 }
