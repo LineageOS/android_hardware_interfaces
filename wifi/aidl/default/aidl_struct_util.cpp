@@ -2772,6 +2772,8 @@ bool convertLegacyWifiChipCapabilitiesToAidl(
         const legacy_hal::wifi_chip_capabilities& legacy_chip_capabilities,
         WifiChipCapabilities& aidl_chip_capabilities) {
     aidl_chip_capabilities.maxMloLinkCount = legacy_chip_capabilities.max_mlo_link_count;
+    aidl_chip_capabilities.maxConcurrentTdlsSessionCount =
+            legacy_chip_capabilities.max_concurrent_tdls_session_count;
     return true;
 }
 
