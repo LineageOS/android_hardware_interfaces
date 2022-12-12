@@ -18,11 +18,14 @@ cc_defaults {
         "libfmq",
         "libstagefright_foundation",
         "libutils",
+        "libxml2",
         "android.hardware.common-V2-ndk",
         "android.hardware.common.fmq-V1-ndk",
     ],
     header_libs: [
+        "libaudio_system_headers",
         "libaudioaidl_headers",
+        "libxsdc-utils",
     ],
 }
 
@@ -35,11 +38,25 @@ cc_library_static {
     ],
     export_include_dirs: ["include"],
     srcs: [
+        "AudioPolicyConfigXmlConverter.cpp",
         "Config.cpp",
         "Configuration.cpp",
+        "EngineConfigXmlConverter.cpp",
         "Module.cpp",
         "Stream.cpp",
         "Telephony.cpp",
+    ],
+    generated_sources: [
+        "audio_policy_configuration_aidl_default",
+        "audio_policy_engine_configuration_aidl_default",
+    ],
+    generated_headers: [
+        "audio_policy_configuration_aidl_default",
+        "audio_policy_engine_configuration_aidl_default",
+    ],
+    export_generated_headers: [
+        "audio_policy_configuration_aidl_default",
+        "audio_policy_engine_configuration_aidl_default",
     ],
     visibility: [
         ":__subpackages__",
