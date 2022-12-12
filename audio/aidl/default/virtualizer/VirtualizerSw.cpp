@@ -73,8 +73,6 @@ ndk::ScopedAStatus VirtualizerSw::getDescriptor(Descriptor* _aidl_return) {
 ndk::ScopedAStatus VirtualizerSw::setParameterSpecific(const Parameter::Specific& specific) {
     RETURN_IF(Parameter::Specific::virtualizer != specific.getTag(), EX_ILLEGAL_ARGUMENT,
               "EffectNotSupported");
-    std::lock_guard lg(mMutex);
-    RETURN_IF(!mContext, EX_NULL_POINTER, "nullContext");
 
     mSpecificParam = specific.get<Parameter::Specific::virtualizer>();
     LOG(DEBUG) << __func__ << " success with: " << specific.toString();
@@ -92,9 +90,14 @@ ndk::ScopedAStatus VirtualizerSw::getParameterSpecific(const Parameter::Id& id,
 std::shared_ptr<EffectContext> VirtualizerSw::createContext(const Parameter::Common& common) {
     if (mContext) {
         LOG(DEBUG) << __func__ << " context already exist";
-        return mContext;
+    } else {
+        mContext = std::make_shared<VirtualizerSwContext>(1 /* statusFmqDepth */, common);
     }
-    mContext = std::make_shared<VirtualizerSwContext>(1 /* statusFmqDepth */, common);
+
+    return mContext;
+}
+
+std::shared_ptr<EffectContext> VirtualizerSw::getContext() {
     return mContext;
 }
 
@@ -106,13 +109,13 @@ RetCode VirtualizerSw::releaseContext() {
 }
 
 // Processing method running in EffectWorker thread.
-IEffect::Status VirtualizerSw::effectProcessImpl(float* in, float* out, int process) {
+IEffect::Status VirtualizerSw::effectProcessImpl(float* in, float* out, int samples) {
     // TODO: get data buffer and process.
-    LOG(DEBUG) << __func__ << " in " << in << " out " << out << " process " << process;
-    for (int i = 0; i < process; i++) {
+    LOG(DEBUG) << __func__ << " in " << in << " out " << out << " samples " << samples;
+    for (int i = 0; i < samples; i++) {
         *out++ = *in++;
     }
-    return {STATUS_OK, process, process};
+    return {STATUS_OK, samples, samples};
 }
 
 }  // namespace aidl::android::hardware::audio::effect

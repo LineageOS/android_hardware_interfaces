@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <memory>
 #define LOG_TAG "AHAL_EffectThread"
 #include <android-base/logging.h>
 #include <pthread.h>
@@ -32,13 +33,18 @@ EffectThread::~EffectThread() {
     LOG(DEBUG) << __func__ << " done";
 };
 
-RetCode EffectThread::createThread(const std::string& name, const int priority) {
+RetCode EffectThread::createThread(std::shared_ptr<EffectContext> context, const std::string& name,
+                                   const int priority) {
     if (mThread.joinable()) {
         LOG(WARNING) << __func__ << " thread already created, no-op";
         return RetCode::SUCCESS;
     }
     mName = name;
     mPriority = priority;
+    {
+        std::lock_guard lg(mThreadMutex);
+        mThreadContext = std::move(context);
+    }
     mThread = std::thread(&EffectThread::threadLoop, this);
     LOG(DEBUG) << __func__ << " " << name << " priority " << mPriority << " done";
     return RetCode::SUCCESS;
@@ -46,13 +52,18 @@ RetCode EffectThread::createThread(const std::string& name, const int priority) 
 
 RetCode EffectThread::destroyThread() {
     {
-        std::lock_guard lg(mMutex);
+        std::lock_guard lg(mThreadMutex);
         mStop = mExit = true;
     }
     mCv.notify_one();
 
     if (mThread.joinable()) {
         mThread.join();
+    }
+
+    {
+        std::lock_guard lg(mThreadMutex);
+        mThreadContext.reset();
     }
     LOG(DEBUG) << __func__ << " done";
     return RetCode::SUCCESS;
@@ -65,7 +76,7 @@ RetCode EffectThread::startThread() {
     }
 
     {
-        std::lock_guard lg(mMutex);
+        std::lock_guard lg(mThreadMutex);
         if (!mStop) {
             LOG(WARNING) << __func__ << " already start";
             return RetCode::SUCCESS;
@@ -85,7 +96,7 @@ RetCode EffectThread::stopThread() {
     }
 
     {
-        std::lock_guard lg(mMutex);
+        std::lock_guard lg(mThreadMutex);
         if (mStop) {
             LOG(WARNING) << __func__ << " already stop";
             return RetCode::SUCCESS;
@@ -97,13 +108,13 @@ RetCode EffectThread::stopThread() {
 }
 
 void EffectThread::threadLoop() {
-    pthread_setname_np(pthread_self(), mName.substr(0, MAX_TASK_COMM_LEN - 1).c_str());
+    pthread_setname_np(pthread_self(), mName.substr(0, kMaxTaskNameLen - 1).c_str());
     setpriority(PRIO_PROCESS, 0, mPriority);
     while (true) {
         bool needExit = false;
         {
-            std::unique_lock l(mMutex);
-            mCv.wait(l, [&]() REQUIRES(mMutex) {
+            std::unique_lock l(mThreadMutex);
+            mCv.wait(l, [&]() REQUIRES(mThreadMutex) {
                 needExit = mExit;
                 return mExit || !mStop;
             });
@@ -112,8 +123,40 @@ void EffectThread::threadLoop() {
             LOG(WARNING) << __func__ << " EXIT!";
             return;
         }
-        // process without lock
+
         process();
+    }
+}
+
+void EffectThread::process() {
+    std::shared_ptr<EffectContext> context;
+    {
+        std::lock_guard lg(mThreadMutex);
+        context = mThreadContext;
+        RETURN_VALUE_IF(!context, void(), "nullContext");
+    }
+    std::shared_ptr<EffectContext::StatusMQ> statusMQ = context->getStatusFmq();
+    std::shared_ptr<EffectContext::DataMQ> inputMQ = context->getInputDataFmq();
+    std::shared_ptr<EffectContext::DataMQ> outputMQ = context->getOutputDataFmq();
+    auto buffer = context->getWorkBuffer();
+
+    // Only this worker will read from input data MQ and write to output data MQ.
+    auto readSamples = inputMQ->availableToRead(), writeSamples = outputMQ->availableToWrite();
+    if (readSamples && writeSamples) {
+        auto processSamples = std::min(readSamples, writeSamples);
+        LOG(DEBUG) << __func__ << " available to read " << readSamples << " available to write "
+                   << writeSamples << " process " << processSamples;
+
+        inputMQ->read(buffer, processSamples);
+
+        // call effectProcessImpl without lock
+        IEffect::Status status = effectProcessImpl(buffer, buffer, processSamples);
+        outputMQ->write(buffer, status.fmqProduced);
+        statusMQ->writeBlocking(&status, 1);
+        LOG(DEBUG) << __func__ << " done processing, effect consumed " << status.fmqConsumed
+                   << " produced " << status.fmqProduced;
+    } else {
+        // TODO: maybe add some sleep here to avoid busy waiting
     }
 }
 

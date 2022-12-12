@@ -70,7 +70,6 @@ ndk::ScopedAStatus EqualizerSw::getDescriptor(Descriptor* _aidl_return) {
 ndk::ScopedAStatus EqualizerSw::setParameterSpecific(const Parameter::Specific& specific) {
     RETURN_IF(Parameter::Specific::equalizer != specific.getTag(), EX_ILLEGAL_ARGUMENT,
               "EffectNotSupported");
-    std::lock_guard lg(mMutex);
     RETURN_IF(!mContext, EX_NULL_POINTER, "nullContext");
 
     auto& eqParam = specific.get<Parameter::Specific::equalizer>();
@@ -117,7 +116,6 @@ ndk::ScopedAStatus EqualizerSw::getParameterSpecific(const Parameter::Id& id,
 
 ndk::ScopedAStatus EqualizerSw::getParameterEqualizer(const Equalizer::Tag& tag,
                                                       Parameter::Specific* specific) {
-    std::lock_guard lg(mMutex);
     RETURN_IF(!mContext, EX_NULL_POINTER, "nullContext");
 
     Equalizer eqParam;
@@ -144,9 +142,14 @@ ndk::ScopedAStatus EqualizerSw::getParameterEqualizer(const Equalizer::Tag& tag,
 std::shared_ptr<EffectContext> EqualizerSw::createContext(const Parameter::Common& common) {
     if (mContext) {
         LOG(DEBUG) << __func__ << " context already exist";
-        return mContext;
+    } else {
+        mContext = std::make_shared<EqualizerSwContext>(1 /* statusFmqDepth */, common);
     }
-    mContext = std::make_shared<EqualizerSwContext>(1 /* statusFmqDepth */, common);
+
+    return mContext;
+}
+
+std::shared_ptr<EffectContext> EqualizerSw::getContext() {
     return mContext;
 }
 
@@ -158,13 +161,13 @@ RetCode EqualizerSw::releaseContext() {
 }
 
 // Processing method running in EffectWorker thread.
-IEffect::Status EqualizerSw::effectProcessImpl(float* in, float* out, int process) {
+IEffect::Status EqualizerSw::effectProcessImpl(float* in, float* out, int samples) {
     // TODO: get data buffer and process.
-    LOG(DEBUG) << __func__ << " in " << in << " out " << out << " process " << process;
-    for (int i = 0; i < process; i++) {
+    LOG(DEBUG) << __func__ << " in " << in << " out " << out << " samples " << samples;
+    for (int i = 0; i < samples; i++) {
         *out++ = *in++;
     }
-    return {STATUS_OK, process, process};
+    return {STATUS_OK, samples, samples};
 }
 
 }  // namespace aidl::android::hardware::audio::effect

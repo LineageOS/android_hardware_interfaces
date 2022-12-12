@@ -327,18 +327,9 @@ INSTANTIATE_TEST_SUITE_P(
                                    IFactory::descriptor, kEqualizerTypeUUID)),
                            testing::ValuesIn(kBandLevels)),
         [](const testing::TestParamInfo<EqualizerTest::ParamType>& info) {
-            auto msSinceEpoch = std::chrono::duration_cast<std::chrono::nanoseconds>(
-                                        std::chrono::system_clock::now().time_since_epoch())
-                                        .count();
             auto instance = std::get<PARAM_INSTANCE_NAME>(info.param);
             std::string bandLevel = std::to_string(std::get<PARAM_BAND_LEVEL>(info.param));
-            std::ostringstream address;
-            address << msSinceEpoch << "_factory_" << instance.first.get();
-            std::string name = address.str() + "_UUID_timeLow_" +
-                               ::android::internal::ToString(instance.second.uuid.timeLow) +
-                               "_timeMid_" +
-                               ::android::internal::ToString(instance.second.uuid.timeMid) +
-                               "_bandLevel_" + bandLevel;
+            std::string name = instance.second.uuid.toString() + "_bandLevel_" + bandLevel;
             std::replace_if(
                     name.begin(), name.end(), [](const char c) { return !std::isalnum(c); }, '_');
             return name;
