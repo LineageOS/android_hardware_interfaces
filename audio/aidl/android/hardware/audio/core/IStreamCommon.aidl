@@ -17,6 +17,7 @@
 package android.hardware.audio.core;
 
 import android.hardware.audio.core.VendorParameter;
+import android.hardware.audio.effect.IEffect;
 
 /**
  * This interface contains operations that are common to input and output
@@ -86,4 +87,30 @@ interface IStreamCommon {
      * @throws EX_UNSUPPORTED_OPERATION If the stream does not support vendor parameters.
      */
     void setVendorParameters(in VendorParameter[] parameters, boolean async);
+
+    /**
+     * Apply an audio effect to the stream.
+     *
+     * This method is intended for the cases when the effect has an offload
+     * implementation, since software effects can be applied at the client side.
+     *
+     * @param effect The effect instance.
+     * @throws EX_ILLEGAL_ARGUMENT If the effect reference is invalid.
+     * @throws EX_ILLEGAL_STATE If the stream is closed.
+     * @throws EX_UNSUPPORTED_OPERATION If the module does not support audio effects.
+     */
+    void addEffect(in IEffect effect);
+
+    /**
+     * Stop applying an audio effect to the stream.
+     *
+     * Undo the action of the 'addEffect' method.
+     *
+     * @param effect The effect instance.
+     * @throws EX_ILLEGAL_ARGUMENT If the effect reference is invalid, or the effect is
+     *                             not currently applied to the stream.
+     * @throws EX_ILLEGAL_STATE If the stream is closed.
+     * @throws EX_UNSUPPORTED_OPERATION If the module does not support audio effects.
+     */
+    void removeEffect(in IEffect effect);
 }

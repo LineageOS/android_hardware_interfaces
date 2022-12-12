@@ -212,6 +212,12 @@ struct StreamCommonInterface {
                                                    std::vector<VendorParameter>* _aidl_return) = 0;
     virtual ndk::ScopedAStatus setVendorParameters(
             const std::vector<VendorParameter>& in_parameters, bool in_async) = 0;
+    virtual ndk::ScopedAStatus addEffect(
+            const std::shared_ptr<::aidl::android::hardware::audio::effect::IEffect>&
+                    in_effect) = 0;
+    virtual ndk::ScopedAStatus removeEffect(
+            const std::shared_ptr<::aidl::android::hardware::audio::effect::IEffect>&
+                    in_effect) = 0;
 };
 
 class StreamCommon : public BnStreamCommon {
@@ -242,6 +248,20 @@ class StreamCommon : public BnStreamCommon {
         return delegate != nullptr ? delegate->setVendorParameters(in_parameters, in_async)
                                    : ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
     }
+    ndk::ScopedAStatus addEffect(
+            const std::shared_ptr<::aidl::android::hardware::audio::effect::IEffect>& in_effect)
+            override {
+        auto delegate = mDelegate.lock();
+        return delegate != nullptr ? delegate->addEffect(in_effect)
+                                   : ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
+    }
+    ndk::ScopedAStatus removeEffect(
+            const std::shared_ptr<::aidl::android::hardware::audio::effect::IEffect>& in_effect)
+            override {
+        auto delegate = mDelegate.lock();
+        return delegate != nullptr ? delegate->removeEffect(in_effect)
+                                   : ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
+    }
     // It is possible that on the client side the proxy for IStreamCommon will outlive
     // the IStream* instance, and the server side IStream* instance will get destroyed
     // while this IStreamCommon instance is still alive.
@@ -257,6 +277,12 @@ class StreamCommonImpl : public StreamCommonInterface {
                                            std::vector<VendorParameter>* _aidl_return) override;
     ndk::ScopedAStatus setVendorParameters(const std::vector<VendorParameter>& in_parameters,
                                            bool in_async) override;
+    ndk::ScopedAStatus addEffect(
+            const std::shared_ptr<::aidl::android::hardware::audio::effect::IEffect>& in_effect)
+            override;
+    ndk::ScopedAStatus removeEffect(
+            const std::shared_ptr<::aidl::android::hardware::audio::effect::IEffect>& in_effect)
+            override;
 
     ndk::ScopedAStatus getStreamCommon(std::shared_ptr<IStreamCommon>* _aidl_return);
     ndk::ScopedAStatus init() {
