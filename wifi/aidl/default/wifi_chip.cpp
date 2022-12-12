@@ -680,6 +680,11 @@ ndk::ScopedAStatus WifiChip::getSupportedRadioCombinationsMatrix(
                            &WifiChip::getSupportedRadioCombinationsMatrixInternal, _aidl_return);
 }
 
+ndk::ScopedAStatus WifiChip::getWifiChipCapabilities(WifiChipCapabilities* _aidl_return) {
+    return validateAndCall(this, WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
+                           &WifiChip::getWifiChipCapabilitiesInternal, _aidl_return);
+}
+
 void WifiChip::invalidateAndRemoveAllIfaces() {
     invalidateAndClearBridgedApAll();
     invalidateAndClearAll(ap_ifaces_);
@@ -1401,6 +1406,26 @@ WifiChip::getSupportedRadioCombinationsMatrixInternal() {
         return {WifiRadioCombinationMatrix(), createWifiStatus(WifiStatusCode::ERROR_INVALID_ARGS)};
     }
     return {aidl_matrix, ndk::ScopedAStatus::ok()};
+}
+
+std::pair<WifiChipCapabilities, ndk::ScopedAStatus> WifiChip::getWifiChipCapabilitiesInternal() {
+    legacy_hal::wifi_error legacy_status;
+    legacy_hal::wifi_chip_capabilities legacy_chip_capabilities;
+    std::tie(legacy_status, legacy_chip_capabilities) =
+            legacy_hal_.lock()->getWifiChipCapabilities();
+    if (legacy_status != legacy_hal::WIFI_SUCCESS) {
+        LOG(ERROR) << "Failed to get chip capabilities from legacy HAL: "
+                   << legacyErrorToString(legacy_status);
+        return {WifiChipCapabilities(), createWifiStatusFromLegacyError(legacy_status)};
+    }
+    WifiChipCapabilities aidl_chip_capabilities;
+    if (!aidl_struct_util::convertLegacyWifiChipCapabilitiesToAidl(legacy_chip_capabilities,
+                                                                   aidl_chip_capabilities)) {
+        LOG(ERROR) << "Failed convertLegacyWifiChipCapabilitiesToAidl() ";
+        return {WifiChipCapabilities(), createWifiStatus(WifiStatusCode::ERROR_INVALID_ARGS)};
+    }
+
+    return {aidl_chip_capabilities, ndk::ScopedAStatus::ok()};
 }
 
 ndk::ScopedAStatus WifiChip::triggerSubsystemRestartInternal() {
