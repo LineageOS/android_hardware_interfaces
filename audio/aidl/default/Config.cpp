@@ -14,10 +14,14 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "AHAL_Module"
+#define LOG_TAG "AHAL_Config"
 #include <android-base/logging.h>
 
+#include <system/audio_config.h>
+
+#include "core-impl/AudioPolicyConfigXmlConverter.h"
 #include "core-impl/Config.h"
+#include "core-impl/EngineConfigXmlConverter.h"
 
 using aidl::android::media::audio::common::AudioHalEngineConfig;
 
@@ -31,9 +35,21 @@ ndk::ScopedAStatus Config::getSurroundSoundConfig(SurroundSoundConfig* _aidl_ret
 }
 
 ndk::ScopedAStatus Config::getEngineConfig(AudioHalEngineConfig* _aidl_return) {
-    AudioHalEngineConfig engineConfig;
-    // TODO: parse from XML; for now, use empty config as default
-    *_aidl_return = std::move(engineConfig);
+    static const AudioHalEngineConfig returnEngCfg = [this]() {
+        AudioHalEngineConfig engConfig;
+        if (mEngConfigConverter.getStatus() == ::android::OK) {
+            engConfig = mEngConfigConverter.getAidlEngineConfig();
+        } else {
+            LOG(INFO) << __func__ << mEngConfigConverter.getError();
+            if (mAudioPolicyConverter.getStatus() == ::android::OK) {
+                engConfig = mAudioPolicyConverter.getAidlEngineConfig();
+            } else {
+                LOG(WARNING) << __func__ << mAudioPolicyConverter.getError();
+            }
+        }
+        return engConfig;
+    }();
+    *_aidl_return = returnEngCfg;
     LOG(DEBUG) << __func__ << ": returning " << _aidl_return->toString();
     return ndk::ScopedAStatus::ok();
 }
