@@ -27,9 +27,16 @@ using aidl::android::media::audio::common::AudioHalEngineConfig;
 
 namespace aidl::android::hardware::audio::core {
 ndk::ScopedAStatus Config::getSurroundSoundConfig(SurroundSoundConfig* _aidl_return) {
-    SurroundSoundConfig surroundSoundConfig;
-    // TODO: parse from XML; for now, use empty config as default
-    *_aidl_return = std::move(surroundSoundConfig);
+    static const SurroundSoundConfig surroundSoundConfig = [this]() {
+        SurroundSoundConfig surroundCfg;
+        if (mAudioPolicyConverter.getStatus() == ::android::OK) {
+            surroundCfg = mAudioPolicyConverter.getSurroundSoundConfig();
+        } else {
+            LOG(WARNING) << __func__ << mAudioPolicyConverter.getError();
+        }
+        return surroundCfg;
+    }();
+    *_aidl_return = surroundSoundConfig;
     LOG(DEBUG) << __func__ << ": returning " << _aidl_return->toString();
     return ndk::ScopedAStatus::ok();
 }
