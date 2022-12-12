@@ -53,5 +53,5 @@ parcelable SimApdu {
      * isEs10 indicates that the current streaming APDU contains an ES10 command or it is a regular
      * APDU. (As per spec SGP.22 V3.0, ES10 commands needs to be sent over command port of MEP-A1)
      */
-    boolean isEs10;
+    boolean isEs10 = false;
 }
