@@ -17,13 +17,13 @@
 #include <cstdlib>
 #include <ctime>
 
-#include "core-impl/Config.h"
-#include "core-impl/Module.h"
-
 #include <android-base/logging.h>
 #include <android/binder_ibinder_platform.h>
 #include <android/binder_manager.h>
 #include <android/binder_process.h>
+
+#include "core-impl/Config.h"
+#include "core-impl/Module.h"
 
 using aidl::android::hardware::audio::core::Config;
 using aidl::android::hardware::audio::core::Module;
