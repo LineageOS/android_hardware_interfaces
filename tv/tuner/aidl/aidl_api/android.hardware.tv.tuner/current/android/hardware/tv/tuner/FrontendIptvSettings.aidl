@@ -33,18 +33,12 @@
 
 package android.hardware.tv.tuner;
 /* @hide */
-@Backing(type="int") @VintfStability
-enum FrontendType {
-  UNDEFINED = 0,
-  ANALOG = 1,
-  ATSC = 2,
-  ATSC3 = 3,
-  DVBC = 4,
-  DVBS = 5,
-  DVBT = 6,
-  ISDBS = 7,
-  ISDBS3 = 8,
-  ISDBT = 9,
-  DTMB = 10,
-  IPTV = 11,
+@VintfStability
+parcelable FrontendIptvSettings {
+  android.hardware.tv.tuner.FrontendIptvSettingsProtocol protocol = android.hardware.tv.tuner.FrontendIptvSettingsProtocol.UNDEFINED;
+  android.hardware.tv.tuner.FrontendIptvSettingsFec fec;
+  android.hardware.tv.tuner.FrontendIptvSettingsIgmp igmp = android.hardware.tv.tuner.FrontendIptvSettingsIgmp.UNDEFINED;
+  long bitrate;
+  android.hardware.tv.tuner.DemuxIpAddress ipAddr;
+  String contentUrl;
 }
