@@ -35,4 +35,5 @@ package android.hardware.audio.core;
 @VintfStability
 interface IConfig {
   android.hardware.audio.core.SurroundSoundConfig getSurroundSoundConfig();
+  android.media.audio.common.AudioHalEngineConfig getEngineConfig();
 }
