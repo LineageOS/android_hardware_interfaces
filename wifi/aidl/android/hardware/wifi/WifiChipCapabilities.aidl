@@ -29,4 +29,9 @@ parcelable WifiChipCapabilities {
      * This is a static configuration of the chip.
      */
     int maxMloLinkCount;
+    /**
+     * Maximum number of concurrent TDLS sessions that can be enabled
+     * by framework via ISupplicantStaIface#initiateTdlsSetup().
+     */
+    int maxConcurrentTdlsSessionCount;
 }
