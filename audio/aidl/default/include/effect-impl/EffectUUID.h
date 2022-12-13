@@ -69,6 +69,12 @@ static const AudioUuid kDownmixSwImplUUID = {static_cast<int32_t>(0xfa8187ba),
                                              0x11ed,
                                              0x9b6a,
                                              {0x02, 0x42, 0xac, 0x12, 0x00, 0x02}};
+// 93f04452-e4fe-41cc-91f9-e475b6d1d69f
+static const AudioUuid kDownmixImplUUID = {static_cast<int32_t>(0x93f04452),
+                                           0xe4fe,
+                                           0x41cc,
+                                           0x91f9,
+                                           {0xe4, 0x75, 0xb6, 0xd1, 0xd6, 0x9f}};
 // 0bed4300-ddd6-11db-8f34-0002a5d5c51b.
 static const AudioUuid kEqualizerTypeUUID = {static_cast<int32_t>(0x0bed4300),
                                              0xddd6,
