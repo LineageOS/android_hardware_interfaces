@@ -37,6 +37,9 @@ class VisualizerSwContext final : public EffectContext {
 
 class VisualizerSw final : public EffectImpl {
   public:
+    static const std::string kEffectName;
+    static const Visualizer::Capability kCapability;
+    static const Descriptor kDescriptor;
     VisualizerSw() { LOG(DEBUG) << __func__; }
     ~VisualizerSw() {
         cleanUp();
@@ -56,22 +59,7 @@ class VisualizerSw final : public EffectImpl {
     std::string getEffectName() override { return kEffectName; }
 
   private:
-    const std::string kEffectName = "VisualizerSw";
     std::shared_ptr<VisualizerSwContext> mContext;
-    /* capabilities */
-    const Visualizer::Capability kCapability;
-    /* Effect descriptor */
-    const Descriptor kDescriptor = {
-            .common = {.id = {.type = kVisualizerTypeUUID,
-                              .uuid = kVisualizerSwImplUUID,
-                              .proxy = std::nullopt},
-                       .flags = {.type = Flags::Type::INSERT,
-                                 .insert = Flags::Insert::FIRST,
-                                 .volume = Flags::Volume::CTRL},
-                       .name = kEffectName,
-                       .implementor = "The Android Open Source Project"},
-            .capability = Capability::make<Capability::visualizer>(kCapability)};
-
     /* parameters */
     Visualizer mSpecificParam;
 };

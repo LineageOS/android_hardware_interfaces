@@ -37,6 +37,9 @@ class DynamicsProcessingSwContext final : public EffectContext {
 
 class DynamicsProcessingSw final : public EffectImpl {
   public:
+    static const std::string kEffectName;
+    static const DynamicsProcessing::Capability kCapability;
+    static const Descriptor kDescriptor;
     DynamicsProcessingSw() { LOG(DEBUG) << __func__; }
     ~DynamicsProcessingSw() {
         cleanUp();
@@ -56,22 +59,7 @@ class DynamicsProcessingSw final : public EffectImpl {
     std::string getEffectName() override { return kEffectName; };
 
   private:
-    const std::string kEffectName = "DynamicsProcessingSw";
     std::shared_ptr<DynamicsProcessingSwContext> mContext;
-    /* capabilities */
-    const DynamicsProcessing::Capability kCapability;
-    /* Effect descriptor */
-    const Descriptor kDescriptor = {
-            .common = {.id = {.type = kDynamicsProcessingTypeUUID,
-                              .uuid = kDynamicsProcessingSwImplUUID,
-                              .proxy = std::nullopt},
-                       .flags = {.type = Flags::Type::INSERT,
-                                 .insert = Flags::Insert::FIRST,
-                                 .volume = Flags::Volume::CTRL},
-                       .name = kEffectName,
-                       .implementor = "The Android Open Source Project"},
-            .capability = Capability::make<Capability::dynamicsProcessing>(kCapability)};
-
     /* parameters */
     DynamicsProcessing mSpecificParam;
 };

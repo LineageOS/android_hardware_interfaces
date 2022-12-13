@@ -25,6 +25,7 @@
 
 #include "LoudnessEnhancerSw.h"
 
+using aidl::android::hardware::audio::effect::Descriptor;
 using aidl::android::hardware::audio::effect::IEffect;
 using aidl::android::hardware::audio::effect::kLoudnessEnhancerSwImplUUID;
 using aidl::android::hardware::audio::effect::LoudnessEnhancerSw;
@@ -47,22 +48,27 @@ extern "C" binder_exception_t createEffect(const AudioUuid* in_impl_uuid,
     }
 }
 
-extern "C" binder_exception_t destroyEffect(const std::shared_ptr<IEffect>& instanceSp) {
-    if (!instanceSp) {
-        return EX_NONE;
+extern "C" binder_exception_t queryEffect(const AudioUuid* in_impl_uuid, Descriptor* _aidl_return) {
+    if (!in_impl_uuid || *in_impl_uuid != kLoudnessEnhancerSwImplUUID) {
+        LOG(ERROR) << __func__ << "uuid not supported";
+        return EX_ILLEGAL_ARGUMENT;
     }
-    State state;
-    ndk::ScopedAStatus status = instanceSp->getState(&state);
-    if (!status.isOk() || State::INIT != state) {
-        LOG(ERROR) << __func__ << " instance " << instanceSp.get()
-                   << " in state: " << toString(state) << ", status: " << status.getDescription();
-        return EX_ILLEGAL_STATE;
-    }
-    LOG(DEBUG) << __func__ << " instance " << instanceSp.get() << " destroyed";
+    *_aidl_return = LoudnessEnhancerSw::kDescriptor;
     return EX_NONE;
 }
 
 namespace aidl::android::hardware::audio::effect {
+
+const std::string LoudnessEnhancerSw::kEffectName = "LoudnessEnhancerSw";
+const Descriptor LoudnessEnhancerSw::kDescriptor = {
+        .common = {.id = {.type = kLoudnessEnhancerTypeUUID,
+                          .uuid = kLoudnessEnhancerSwImplUUID,
+                          .proxy = std::nullopt},
+                   .flags = {.type = Flags::Type::INSERT,
+                             .insert = Flags::Insert::FIRST,
+                             .volume = Flags::Volume::CTRL},
+                   .name = LoudnessEnhancerSw::kEffectName,
+                   .implementor = "The Android Open Source Project"}};
 
 ndk::ScopedAStatus LoudnessEnhancerSw::getDescriptor(Descriptor* _aidl_return) {
     LOG(DEBUG) << __func__ << kDescriptor.toString();

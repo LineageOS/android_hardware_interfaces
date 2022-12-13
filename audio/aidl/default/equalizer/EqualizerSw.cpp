@@ -25,6 +25,7 @@
 
 #include "EqualizerSw.h"
 
+using aidl::android::hardware::audio::effect::Descriptor;
 using aidl::android::hardware::audio::effect::EqualizerSw;
 using aidl::android::hardware::audio::effect::IEffect;
 using aidl::android::hardware::audio::effect::kEqualizerSwImplUUID;
@@ -47,19 +48,40 @@ extern "C" binder_exception_t createEffect(const AudioUuid* in_impl_uuid,
     }
 }
 
-extern "C" binder_exception_t destroyEffect(const std::shared_ptr<IEffect>& instanceSp) {
-    State state;
-    ndk::ScopedAStatus status = instanceSp->getState(&state);
-    if (!status.isOk() || State::INIT != state) {
-        LOG(ERROR) << __func__ << " instance " << instanceSp.get()
-                   << " in state: " << toString(state) << ", status: " << status.getDescription();
-        return EX_ILLEGAL_STATE;
+extern "C" binder_exception_t queryEffect(const AudioUuid* in_impl_uuid, Descriptor* _aidl_return) {
+    if (!in_impl_uuid || *in_impl_uuid != kEqualizerSwImplUUID) {
+        LOG(ERROR) << __func__ << "uuid not supported";
+        return EX_ILLEGAL_ARGUMENT;
     }
-    LOG(DEBUG) << __func__ << " instance " << instanceSp.get() << " destroyed";
+    *_aidl_return = EqualizerSw::kDesc;
     return EX_NONE;
 }
 
 namespace aidl::android::hardware::audio::effect {
+
+const std::string EqualizerSw::kEffectName = "EqualizerSw";
+const std::vector<Equalizer::BandFrequency> EqualizerSw::kBandFrequency = {{0, 30000, 120000},
+                                                                           {1, 120001, 460000},
+                                                                           {2, 460001, 1800000},
+                                                                           {3, 1800001, 7000000},
+                                                                           {4, 7000001, 20000000}};
+const std::vector<Equalizer::Preset> EqualizerSw::kPresets = {
+        {0, "Normal"},      {1, "Classical"}, {2, "Dance"}, {3, "Flat"}, {4, "Folk"},
+        {5, "Heavy Metal"}, {6, "Hip Hop"},   {7, "Jazz"},  {8, "Pop"},  {9, "Rock"}};
+
+const Equalizer::Capability EqualizerSw::kEqCap = {.bandFrequencies = kBandFrequency,
+                                                   .presets = kPresets};
+
+const Descriptor EqualizerSw::kDesc = {
+        .common = {.id = {.type = kEqualizerTypeUUID,
+                          .uuid = kEqualizerSwImplUUID,
+                          .proxy = kEqualizerProxyUUID},
+                   .flags = {.type = Flags::Type::INSERT,
+                             .insert = Flags::Insert::FIRST,
+                             .volume = Flags::Volume::CTRL},
+                   .name = EqualizerSw::kEffectName,
+                   .implementor = "The Android Open Source Project"},
+        .capability = Capability::make<Capability::equalizer>(EqualizerSw::kEqCap)};
 
 ndk::ScopedAStatus EqualizerSw::getDescriptor(Descriptor* _aidl_return) {
     LOG(DEBUG) << __func__ << kDesc.toString();

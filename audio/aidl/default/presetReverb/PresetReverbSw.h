@@ -37,6 +37,9 @@ class PresetReverbSwContext final : public EffectContext {
 
 class PresetReverbSw final : public EffectImpl {
   public:
+    static const std::string kEffectName;
+    static const PresetReverb::Capability kCapability;
+    static const Descriptor kDescriptor;
     PresetReverbSw() { LOG(DEBUG) << __func__; }
     ~PresetReverbSw() {
         cleanUp();
@@ -56,23 +59,8 @@ class PresetReverbSw final : public EffectImpl {
     std::string getEffectName() override { return kEffectName; }
 
   private:
-    const std::string kEffectName = "PresetReverbSw";
     std::shared_ptr<PresetReverbSwContext> mContext;
-    /* capabilities */
-    const Reverb::Capability kCapability;
-    /* Effect descriptor */
-    const Descriptor kDescriptor = {
-            .common = {.id = {.type = kPresetReverbTypeUUID,
-                              .uuid = kPresetReverbSwImplUUID,
-                              .proxy = std::nullopt},
-                       .flags = {.type = Flags::Type::INSERT,
-                                 .insert = Flags::Insert::FIRST,
-                                 .volume = Flags::Volume::CTRL},
-                       .name = kEffectName,
-                       .implementor = "The Android Open Source Project"},
-            .capability = Capability::make<Capability::reverb>(kCapability)};
-
     /* parameters */
-    Reverb mSpecificParam;
+    PresetReverb mSpecificParam;
 };
 }  // namespace aidl::android::hardware::audio::effect
