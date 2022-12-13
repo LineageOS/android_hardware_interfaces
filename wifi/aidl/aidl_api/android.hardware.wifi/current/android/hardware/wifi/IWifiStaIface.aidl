@@ -61,6 +61,7 @@ interface IWifiStaIface {
   void stopBackgroundScan(in int cmdId);
   void stopRssiMonitoring(in int cmdId);
   void stopSendingKeepAlivePackets(in int cmdId);
+  void setDtimMultiplier(in int multiplier);
   @Backing(type="int") @VintfStability
   enum StaIfaceCapabilityMask {
     APF = 1,
