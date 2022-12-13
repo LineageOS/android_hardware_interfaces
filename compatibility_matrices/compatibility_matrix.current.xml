@@ -31,6 +31,13 @@
         <interface>
             <name>IModule</name>
             <instance>default</instance>
+            <instance>a2dp</instance>
+            <instance>bluetooth</instance>
+            <instance>hearing_aid</instance>
+            <instance>msd</instance>
+            <instance>r_submix</instance>
+            <instance>stub</instance>
+            <instance>usb</instance>
         </interface>
         <interface>
             <name>IConfig</name>
