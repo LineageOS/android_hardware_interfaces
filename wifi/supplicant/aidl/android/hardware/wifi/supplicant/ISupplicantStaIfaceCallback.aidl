@@ -384,4 +384,13 @@ oneway interface ISupplicantStaIfaceCallback {
      * Indicates that DPP connection status result frame is sent.
      */
     void onDppConnectionStatusResultSent(in DppStatusErrorCode code);
+
+    /**
+     * Used to indicate that the operating frequency has changed for this BSS.
+     * This event is triggered when STA switches the channel due to channel
+     * switch announcement from the connected access point.
+     *
+     * @param frequencyMhz New operating frequency in MHz.
+     */
+    void onBssFrequencyChanged(in int frequencyMhz);
 }
