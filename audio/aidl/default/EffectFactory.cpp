@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+#include <iterator>
+#include <memory>
+#include <tuple>
+#include "include/effect-impl/EffectTypes.h"
 #define LOG_TAG "AHAL_EffectFactory"
 #include <dlfcn.h>
 #include <unordered_set>
@@ -51,15 +55,29 @@ Factory::~Factory() {
 ndk::ScopedAStatus Factory::queryEffects(const std::optional<AudioUuid>& in_type_uuid,
                                          const std::optional<AudioUuid>& in_impl_uuid,
                                          const std::optional<AudioUuid>& in_proxy_uuid,
-                                         std::vector<Descriptor::Identity>* _aidl_return) {
-    std::copy_if(
-            mIdentitySet.begin(), mIdentitySet.end(), std::back_inserter(*_aidl_return),
-            [&](auto& desc) {
-                return (!in_type_uuid.has_value() || in_type_uuid.value() == desc.type) &&
-                       (!in_impl_uuid.has_value() || in_impl_uuid.value() == desc.uuid) &&
-                       (!in_proxy_uuid.has_value() ||
-                        (desc.proxy.has_value() && in_proxy_uuid.value() == desc.proxy.value()));
-            });
+                                         std::vector<Descriptor>* _aidl_return) {
+    // get the matching list
+    std::vector<Descriptor::Identity> idList;
+    std::copy_if(mIdentitySet.begin(), mIdentitySet.end(), std::back_inserter(idList),
+                 [&](auto& id) {
+                     return (!in_type_uuid.has_value() || in_type_uuid.value() == id.type) &&
+                            (!in_impl_uuid.has_value() || in_impl_uuid.value() == id.uuid) &&
+                            (!in_proxy_uuid.has_value() ||
+                             (id.proxy.has_value() && in_proxy_uuid.value() == id.proxy.value()));
+                 });
+    // query through the matching list
+    for (const auto& id : idList) {
+        if (mEffectLibMap.count(id.uuid)) {
+            Descriptor desc;
+            auto& entry = mEffectLibMap[id.uuid];
+            getDlSyms(entry);
+            auto& libInterface = std::get<kMapEntryInterfaceIndex>(entry);
+            RETURN_IF(!libInterface || !libInterface->queryEffectFunc, EX_NULL_POINTER,
+                      "dlNullQueryEffectFunc");
+            RETURN_IF_BINDER_EXCEPTION(libInterface->queryEffectFunc(&id.uuid, &desc));
+            _aidl_return->emplace_back(std::move(desc));
+        }
+    }
     return ndk::ScopedAStatus::ok();
 }
 
@@ -74,37 +92,16 @@ ndk::ScopedAStatus Factory::queryProcessing(const std::optional<Processing::Type
     return ndk::ScopedAStatus::ok();
 }
 
-#define RETURN_IF_BINDER_EXCEPTION(functor)                                 \
-    {                                                                       \
-        binder_exception_t exception = functor;                             \
-        if (EX_NONE != exception) {                                         \
-            LOG(ERROR) << #functor << ":  failed with error " << exception; \
-            return ndk::ScopedAStatus::fromExceptionCode(exception);        \
-        }                                                                   \
-    }
-
 ndk::ScopedAStatus Factory::createEffect(const AudioUuid& in_impl_uuid,
                                          std::shared_ptr<IEffect>* _aidl_return) {
     LOG(DEBUG) << __func__ << ": UUID " << in_impl_uuid.toString();
     if (mEffectLibMap.count(in_impl_uuid)) {
-        auto& lib = mEffectLibMap[in_impl_uuid];
-        // didn't do dlsym yet
-        if (nullptr == lib.second) {
-            void* libHandle = lib.first.get();
-            auto dlInterface = std::make_unique<struct effect_dl_interface_s>();
-            dlInterface->createEffectFunc = (EffectCreateFunctor)dlsym(libHandle, "createEffect");
-            dlInterface->destroyEffectFunc =
-                    (EffectDestroyFunctor)dlsym(libHandle, "destroyEffect");
-            if (!dlInterface->createEffectFunc || !dlInterface->destroyEffectFunc) {
-                LOG(ERROR) << __func__
-                           << ": create or destroy symbol not exist in library: " << libHandle
-                           << " with dlerror: " << dlerror();
-                return ndk::ScopedAStatus::fromExceptionCode(EX_TRANSACTION_FAILED);
-            }
-            lib.second = std::move(dlInterface);
-        }
+        auto& entry = mEffectLibMap[in_impl_uuid];
+        getDlSyms(entry);
 
-        auto& libInterface = lib.second;
+        auto& libInterface = std::get<kMapEntryInterfaceIndex>(entry);
+        RETURN_IF(!libInterface || !libInterface->createEffectFunc, EX_NULL_POINTER,
+                  "dlNullcreateEffectFunc");
         std::shared_ptr<IEffect> effectSp;
         RETURN_IF_BINDER_EXCEPTION(libInterface->createEffectFunc(&in_impl_uuid, &effectSp));
         if (!effectSp) {
@@ -131,9 +128,10 @@ ndk::ScopedAStatus Factory::destroyEffectImpl(const std::shared_ptr<IEffect>& in
         auto& uuid = uuidIt->second;
         // find implementation library with UUID
         if (auto libIt = mEffectLibMap.find(uuid); libIt != mEffectLibMap.end()) {
-            if (libIt->second.second->destroyEffectFunc) {
-                RETURN_IF_BINDER_EXCEPTION(libIt->second.second->destroyEffectFunc(in_handle));
-            }
+            auto& interface = std::get<kMapEntryInterfaceIndex>(libIt->second);
+            RETURN_IF(!interface || !interface->destroyEffectFunc, EX_NULL_POINTER,
+                      "dlNulldestroyEffectFunc");
+            RETURN_IF_BINDER_EXCEPTION(interface->destroyEffectFunc(in_handle));
         } else {
             LOG(ERROR) << __func__ << ": UUID " << uuid.toString() << " does not exist in libMap!";
             return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
@@ -179,9 +177,13 @@ void Factory::openEffectLibrary(const AudioUuid& impl, const std::string& libNam
         return;
     }
 
-    LOG(DEBUG) << __func__ << " dlopen lib:" << libName << "\nimpl:" << impl.toString()
-               << "\nhandle:" << libHandle;
-    mEffectLibMap.insert({impl, std::make_pair(std::move(libHandle), nullptr)});
+    LOG(INFO) << __func__ << " dlopen lib:" << libName << "\nimpl:" << impl.toString()
+              << "\nhandle:" << libHandle;
+    auto interface = new effect_dl_interface_s{nullptr, nullptr, nullptr};
+    mEffectLibMap.insert(
+            {impl,
+             std::make_tuple(std::move(libHandle),
+                             std::unique_ptr<struct effect_dl_interface_s>(interface), libName)});
 }
 
 void Factory::createIdentityWithConfig(const EffectConfig::LibraryUuid& configLib,
@@ -223,6 +225,34 @@ void Factory::loadEffectLibs() {
             LOG(ERROR) << __func__ << ": can not find type UUID for effect " << configEffects.first
                        << " skipping!";
         }
+    }
+}
+
+void Factory::getDlSyms(DlEntry& entry) {
+    auto& dlHandle = std::get<kMapEntryHandleIndex>(entry);
+    RETURN_VALUE_IF(!dlHandle, void(), "dlNullHandle");
+    // Get the reference of the DL interfaces in library map tuple.
+    auto& dlInterface = std::get<kMapEntryInterfaceIndex>(entry);
+    // return if interface already exist
+    if (!dlInterface->createEffectFunc) {
+        dlInterface->createEffectFunc = (EffectCreateFunctor)dlsym(dlHandle.get(), "createEffect");
+    }
+    if (!dlInterface->queryEffectFunc) {
+        dlInterface->queryEffectFunc = (EffectQueryFunctor)dlsym(dlHandle.get(), "queryEffect");
+    }
+    if (!dlInterface->destroyEffectFunc) {
+        dlInterface->destroyEffectFunc =
+                (EffectDestroyFunctor)dlsym(dlHandle.get(), "destroyEffect");
+    }
+
+    if (!dlInterface->createEffectFunc || !dlInterface->destroyEffectFunc ||
+        !dlInterface->queryEffectFunc) {
+        LOG(ERROR) << __func__ << ": create (" << dlInterface->createEffectFunc << "), query ("
+                   << dlInterface->queryEffectFunc << "), or destroy ("
+                   << dlInterface->destroyEffectFunc
+                   << ") not exist in library: " << std::get<kMapEntryLibNameIndex>(entry)
+                   << " handle: " << dlHandle << " with dlerror: " << dlerror();
+        return;
     }
 }
 

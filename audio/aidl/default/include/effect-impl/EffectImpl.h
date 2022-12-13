@@ -28,6 +28,9 @@
 #include "effect-impl/EffectThread.h"
 #include "effect-impl/EffectTypes.h"
 
+extern "C" binder_exception_t destroyEffect(
+        const std::shared_ptr<aidl::android::hardware::audio::effect::IEffect>& instanceSp);
+
 namespace aidl::android::hardware::audio::effect {
 
 class EffectImpl : public BnEffect, public EffectThread {

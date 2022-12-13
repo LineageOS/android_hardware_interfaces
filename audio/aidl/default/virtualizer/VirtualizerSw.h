@@ -37,6 +37,9 @@ class VirtualizerSwContext final : public EffectContext {
 
 class VirtualizerSw final : public EffectImpl {
   public:
+    static const std::string kEffectName;
+    static const Virtualizer::Capability kCapability;
+    static const Descriptor kDescriptor;
     VirtualizerSw() { LOG(DEBUG) << __func__; }
     ~VirtualizerSw() {
         cleanUp();
@@ -56,22 +59,7 @@ class VirtualizerSw final : public EffectImpl {
     std::string getEffectName() override { return kEffectName; }
 
   private:
-    const std::string kEffectName = "VirtualizerSw";
     std::shared_ptr<VirtualizerSwContext> mContext;
-    /* capabilities */
-    const Virtualizer::Capability kCapability;
-    /* Effect descriptor */
-    const Descriptor kDescriptor = {
-            .common = {.id = {.type = kVirtualizerTypeUUID,
-                              .uuid = kVirtualizerSwImplUUID,
-                              .proxy = std::nullopt},
-                       .flags = {.type = Flags::Type::INSERT,
-                                 .insert = Flags::Insert::FIRST,
-                                 .volume = Flags::Volume::CTRL},
-                       .name = kEffectName,
-                       .implementor = "The Android Open Source Project"},
-            .capability = Capability::make<Capability::virtualizer>(kCapability)};
-
     /* parameters */
     Virtualizer mSpecificParam;
 };
