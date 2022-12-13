@@ -44,6 +44,7 @@ parcelable CardStatus {
   String iccid;
   String eid;
   android.hardware.radio.config.SlotPortMapping slotMap;
+  android.hardware.radio.config.MultipleEnabledProfilesMode supportedMepMode = android.hardware.radio.config.MultipleEnabledProfilesMode.NONE;
   const int STATE_ABSENT = 0;
   const int STATE_PRESENT = 1;
   const int STATE_ERROR = 2;
