@@ -25,6 +25,7 @@
 
 #include "HapticGeneratorSw.h"
 
+using aidl::android::hardware::audio::effect::Descriptor;
 using aidl::android::hardware::audio::effect::HapticGeneratorSw;
 using aidl::android::hardware::audio::effect::IEffect;
 using aidl::android::hardware::audio::effect::kHapticGeneratorSwImplUUID;
@@ -47,22 +48,32 @@ extern "C" binder_exception_t createEffect(const AudioUuid* in_impl_uuid,
     }
 }
 
-extern "C" binder_exception_t destroyEffect(const std::shared_ptr<IEffect>& instanceSp) {
-    if (!instanceSp) {
-        return EX_NONE;
+extern "C" binder_exception_t queryEffect(const AudioUuid* in_impl_uuid, Descriptor* _aidl_return) {
+    if (!in_impl_uuid || *in_impl_uuid != kHapticGeneratorSwImplUUID) {
+        LOG(ERROR) << __func__ << "uuid not supported";
+        return EX_ILLEGAL_ARGUMENT;
     }
-    State state;
-    ndk::ScopedAStatus status = instanceSp->getState(&state);
-    if (!status.isOk() || State::INIT != state) {
-        LOG(ERROR) << __func__ << " instance " << instanceSp.get()
-                   << " in state: " << toString(state) << ", status: " << status.getDescription();
-        return EX_ILLEGAL_STATE;
-    }
-    LOG(DEBUG) << __func__ << " instance " << instanceSp.get() << " destroyed";
+    *_aidl_return = HapticGeneratorSw::kDescriptor;
     return EX_NONE;
 }
 
 namespace aidl::android::hardware::audio::effect {
+
+const std::string HapticGeneratorSw::kEffectName = "HapticGeneratorSw";
+/* capabilities */
+const HapticGenerator::Capability HapticGeneratorSw::kCapability;
+/* Effect descriptor */
+const Descriptor HapticGeneratorSw::kDescriptor = {
+        .common = {.id = {.type = kHapticGeneratorTypeUUID,
+                          .uuid = kHapticGeneratorSwImplUUID,
+                          .proxy = std::nullopt},
+                   .flags = {.type = Flags::Type::INSERT,
+                             .insert = Flags::Insert::FIRST,
+                             .volume = Flags::Volume::CTRL},
+                   .name = HapticGeneratorSw::kEffectName,
+                   .implementor = "The Android Open Source Project"},
+        .capability =
+                Capability::make<Capability::hapticGenerator>(HapticGeneratorSw::kCapability)};
 
 ndk::ScopedAStatus HapticGeneratorSw::getDescriptor(Descriptor* _aidl_return) {
     LOG(DEBUG) << __func__ << kDescriptor.toString();

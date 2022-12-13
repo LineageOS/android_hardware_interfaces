@@ -51,6 +51,10 @@ class BassBoostSwContext final : public EffectContext {
 
 class BassBoostSw final : public EffectImpl {
   public:
+    static const std::string kEffectName;
+    static const bool kStrengthSupported;
+    static const BassBoost::Capability kCapability;
+    static const Descriptor kDescriptor;
     BassBoostSw() { LOG(DEBUG) << __func__; }
     ~BassBoostSw() {
         cleanUp();
@@ -70,23 +74,7 @@ class BassBoostSw final : public EffectImpl {
     IEffect::Status effectProcessImpl(float* in, float* out, int samples) override;
 
   private:
-    const std::string kEffectName = "BassBoostSw";
     std::shared_ptr<BassBoostSwContext> mContext;
-    /* capabilities */
-    const bool mStrengthSupported = true;
-    const BassBoost::Capability kCapability = {.strengthSupported = mStrengthSupported};
-    /* Effect descriptor */
-    const Descriptor kDescriptor = {
-            .common = {.id = {.type = kBassBoostTypeUUID,
-                              .uuid = kBassBoostSwImplUUID,
-                              .proxy = std::nullopt},
-                       .flags = {.type = Flags::Type::INSERT,
-                                 .insert = Flags::Insert::FIRST,
-                                 .volume = Flags::Volume::CTRL},
-                       .name = kEffectName,
-                       .implementor = "The Android Open Source Project"},
-            .capability = Capability::make<Capability::bassBoost>(kCapability)};
-
     ndk::ScopedAStatus getParameterBassBoost(const BassBoost::Tag& tag,
                                              Parameter::Specific* specific);
 };

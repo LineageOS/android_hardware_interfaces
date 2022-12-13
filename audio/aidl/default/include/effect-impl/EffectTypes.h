@@ -26,10 +26,14 @@ typedef binder_exception_t (*EffectCreateFunctor)(
         std::shared_ptr<aidl::android::hardware::audio::effect::IEffect>*);
 typedef binder_exception_t (*EffectDestroyFunctor)(
         const std::shared_ptr<aidl::android::hardware::audio::effect::IEffect>&);
+typedef binder_exception_t (*EffectQueryFunctor)(
+        const ::aidl::android::media::audio::common::AudioUuid*,
+        aidl::android::hardware::audio::effect::Descriptor*);
 
 struct effect_dl_interface_s {
     EffectCreateFunctor createEffectFunc;
     EffectDestroyFunctor destroyEffectFunc;
+    EffectQueryFunctor queryEffectFunc;
 };
 
 namespace aidl::android::hardware::audio::effect {
@@ -101,6 +105,15 @@ inline std::ostream& operator<<(std::ostream& out, const RetCode& code) {
             return ret;                                                                          \
         }                                                                                        \
     } while (0)
+
+#define RETURN_IF_BINDER_EXCEPTION(functor)                                 \
+    {                                                                       \
+        binder_exception_t exception = functor;                             \
+        if (EX_NONE != exception) {                                         \
+            LOG(ERROR) << #functor << ":  failed with error " << exception; \
+            return ndk::ScopedAStatus::fromExceptionCode(exception);        \
+        }                                                                   \
+    }
 
 static inline bool stringToUuid(const char* str,
                                 ::aidl::android::media::audio::common::AudioUuid* uuid) {
