@@ -31,6 +31,9 @@ class Module : public BnModule {
   public:
     // This value is used for all AudioPatches and reported by all streams.
     static constexpr int32_t kLatencyMs = 10;
+    enum Type : int { DEFAULT, R_SUBMIX };
+
+    explicit Module(Type type) : mType(type) {}
 
   private:
     ndk::ScopedAStatus setModuleDebug(
@@ -105,6 +108,7 @@ class Module : public BnModule {
     // The maximum stream buffer size is 1 GiB = 2 ** 30 bytes;
     static constexpr int32_t kMaximumStreamBufferSizeBytes = 1 << 30;
 
+    const Type mType;
     std::unique_ptr<internal::Configuration> mConfig;
     ModuleDebug mDebug;
     // Since it is required to return the same instance of the ITelephony, even
