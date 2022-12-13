@@ -26,4 +26,5 @@ enum EnergyConsumerType {
     GNSS,
     MOBILE_RADIO,
     WIFI,
+    CAMERA,
 }
