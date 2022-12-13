@@ -11,6 +11,7 @@ aidl_interface {
     name: "android.hardware.camera.common",
     vendor_available: true,
     srcs: ["android/hardware/camera/common/*.aidl"],
+    frozen: true,
     stability: "vintf",
     backend: {
         cpp: {

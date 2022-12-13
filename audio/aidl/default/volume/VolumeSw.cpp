@@ -73,8 +73,6 @@ ndk::ScopedAStatus VolumeSw::getDescriptor(Descriptor* _aidl_return) {
 ndk::ScopedAStatus VolumeSw::setParameterSpecific(const Parameter::Specific& specific) {
     RETURN_IF(Parameter::Specific::volume != specific.getTag(), EX_ILLEGAL_ARGUMENT,
               "EffectNotSupported");
-    std::lock_guard lg(mMutex);
-    RETURN_IF(!mContext, EX_NULL_POINTER, "nullContext");
 
     mSpecificParam = specific.get<Parameter::Specific::volume>();
     LOG(DEBUG) << __func__ << " success with: " << specific.toString();
@@ -92,9 +90,14 @@ ndk::ScopedAStatus VolumeSw::getParameterSpecific(const Parameter::Id& id,
 std::shared_ptr<EffectContext> VolumeSw::createContext(const Parameter::Common& common) {
     if (mContext) {
         LOG(DEBUG) << __func__ << " context already exist";
-        return mContext;
+    } else {
+        mContext = std::make_shared<VolumeSwContext>(1 /* statusFmqDepth */, common);
     }
-    mContext = std::make_shared<VolumeSwContext>(1 /* statusFmqDepth */, common);
+
+    return mContext;
+}
+
+std::shared_ptr<EffectContext> VolumeSw::getContext() {
     return mContext;
 }
 
@@ -106,13 +109,13 @@ RetCode VolumeSw::releaseContext() {
 }
 
 // Processing method running in EffectWorker thread.
-IEffect::Status VolumeSw::effectProcessImpl(float* in, float* out, int process) {
+IEffect::Status VolumeSw::effectProcessImpl(float* in, float* out, int samples) {
     // TODO: get data buffer and process.
-    LOG(DEBUG) << __func__ << " in " << in << " out " << out << " process " << process;
-    for (int i = 0; i < process; i++) {
+    LOG(DEBUG) << __func__ << " in " << in << " out " << out << " samples " << samples;
+    for (int i = 0; i < samples; i++) {
         *out++ = *in++;
     }
-    return {STATUS_OK, process, process};
+    return {STATUS_OK, samples, samples};
 }
 
 }  // namespace aidl::android::hardware::audio::effect

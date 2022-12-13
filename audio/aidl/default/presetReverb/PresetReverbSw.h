@@ -47,11 +47,16 @@ class PresetReverbSw final : public EffectImpl {
     ndk::ScopedAStatus setParameterSpecific(const Parameter::Specific& specific) override;
     ndk::ScopedAStatus getParameterSpecific(const Parameter::Id& id,
                                             Parameter::Specific* specific) override;
-    IEffect::Status effectProcessImpl(float* in, float* out, int process) override;
+
     std::shared_ptr<EffectContext> createContext(const Parameter::Common& common) override;
+    std::shared_ptr<EffectContext> getContext() override;
     RetCode releaseContext() override;
 
+    IEffect::Status effectProcessImpl(float* in, float* out, int samples) override;
+    std::string getEffectName() override { return kEffectName; }
+
   private:
+    const std::string kEffectName = "PresetReverbSw";
     std::shared_ptr<PresetReverbSwContext> mContext;
     /* capabilities */
     const Reverb::Capability kCapability;
@@ -63,7 +68,7 @@ class PresetReverbSw final : public EffectImpl {
                        .flags = {.type = Flags::Type::INSERT,
                                  .insert = Flags::Insert::FIRST,
                                  .volume = Flags::Volume::CTRL},
-                       .name = "PresetReverbSw",
+                       .name = kEffectName,
                        .implementor = "The Android Open Source Project"},
             .capability = Capability::make<Capability::reverb>(kCapability)};
 

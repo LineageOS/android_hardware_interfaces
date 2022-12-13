@@ -371,4 +371,13 @@ interface ISensors {
     const int DIRECT_REPORT_SENSOR_EVENT_OFFSET_SIZE_DATA = 0x18;
     const int DIRECT_REPORT_SENSOR_EVENT_OFFSET_SIZE_RESERVED = 0x58;
     const int DIRECT_REPORT_SENSOR_EVENT_TOTAL_LENGTH = 104;
+
+    /**
+     * Constants related to reserved sensor handle ranges.
+     *
+     * The following range (inclusive) is reserved for usage by the system for
+     * runtime sensors.
+     */
+    const int RUNTIME_SENSORS_HANDLE_BASE = 0x5F000000;
+    const int RUNTIME_SENSORS_HANDLE_END = 0x5FFFFFFF;
 }

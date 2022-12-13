@@ -144,6 +144,7 @@ class WifiChip : public BnWifiChip {
     ndk::ScopedAStatus triggerSubsystemRestart() override;
     ndk::ScopedAStatus getSupportedRadioCombinationsMatrix(
             WifiRadioCombinationMatrix* _aidl_return) override;
+    ndk::ScopedAStatus getWifiChipCapabilities(WifiChipCapabilities* _aidl_return) override;
     binder_status_t dump(int fd, const char** args, uint32_t numArgs) override;
 
   private:
@@ -250,6 +251,7 @@ class WifiChip : public BnWifiChip {
     ndk::ScopedAStatus triggerSubsystemRestartInternal();
     std::pair<WifiRadioCombinationMatrix, ndk::ScopedAStatus>
     getSupportedRadioCombinationsMatrixInternal();
+    std::pair<WifiChipCapabilities, ndk::ScopedAStatus> getWifiChipCapabilitiesInternal();
     void setWeakPtr(std::weak_ptr<WifiChip> ptr);
 
     int32_t chip_id_;

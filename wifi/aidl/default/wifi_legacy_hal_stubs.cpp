@@ -167,6 +167,7 @@ bool initHalFuncTableWithStubs(wifi_hal_fn* hal_fn) {
     populateStubFor(&hal_fn->wifi_chre_register_handler);
     populateStubFor(&hal_fn->wifi_enable_tx_power_limits);
     populateStubFor(&hal_fn->wifi_get_cached_scan_results);
+    populateStubFor(&hal_fn->wifi_get_chip_capabilities);
     return true;
 }
 
