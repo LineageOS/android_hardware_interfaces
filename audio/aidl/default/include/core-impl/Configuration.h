@@ -17,6 +17,7 @@
 #pragma once
 
 #include <map>
+#include <memory>
 #include <vector>
 
 #include <aidl/android/hardware/audio/core/AudioPatch.h>
@@ -41,6 +42,7 @@ struct Configuration {
     int32_t nextPatchId = 1;
 };
 
-Configuration& getNullPrimaryConfiguration();
+std::unique_ptr<Configuration> getPrimaryConfiguration();
+std::unique_ptr<Configuration> getRSubmixConfiguration();
 
 }  // namespace aidl::android::hardware::audio::core::internal
