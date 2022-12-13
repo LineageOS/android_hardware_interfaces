@@ -20,6 +20,7 @@
 #include <type_traits>
 
 #include <aidl/android/media/audio/common/AudioChannelLayout.h>
+#include <aidl/android/media/audio/common/AudioDeviceType.h>
 #include <aidl/android/media/audio/common/AudioFormatDescription.h>
 #include <aidl/android/media/audio/common/AudioInputFlags.h>
 #include <aidl/android/media/audio/common/AudioOutputFlags.h>
@@ -81,6 +82,12 @@ constexpr size_t getFrameSizeInBytes(
     }
     // Something unexpected.
     return 0;
+}
+
+constexpr bool isTelephonyDeviceType(
+        ::aidl::android::media::audio::common::AudioDeviceType device) {
+    return device == ::aidl::android::media::audio::common::AudioDeviceType::IN_TELEPHONY_RX ||
+           device == ::aidl::android::media::audio::common::AudioDeviceType::OUT_TELEPHONY_TX;
 }
 
 // The helper functions defined below are only applicable to the case when an enum type
