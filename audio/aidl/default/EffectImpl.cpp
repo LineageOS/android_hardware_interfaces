@@ -19,6 +19,21 @@
 #include "effect-impl/EffectTypes.h"
 #include "include/effect-impl/EffectTypes.h"
 
+using aidl::android::hardware::audio::effect::IEffect;
+using aidl::android::hardware::audio::effect::State;
+
+extern "C" binder_exception_t destroyEffect(const std::shared_ptr<IEffect>& instanceSp) {
+    State state;
+    ndk::ScopedAStatus status = instanceSp->getState(&state);
+    if (!status.isOk() || State::INIT != state) {
+        LOG(ERROR) << __func__ << " instance " << instanceSp.get()
+                   << " in state: " << toString(state) << ", status: " << status.getDescription();
+        return EX_ILLEGAL_STATE;
+    }
+    LOG(DEBUG) << __func__ << " instance " << instanceSp.get() << " destroyed";
+    return EX_NONE;
+}
+
 namespace aidl::android::hardware::audio::effect {
 
 ndk::ScopedAStatus EffectImpl::open(const Parameter::Common& common,

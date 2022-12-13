@@ -65,8 +65,10 @@ class EffectFactoryTest : public testing::TestWithParam<std::string> {
     std::unique_ptr<EffectFactoryHelper> mFactoryHelper;
     std::shared_ptr<IFactory> mEffectFactory;
     std::vector<std::shared_ptr<IEffect>> mEffects;
-    const Descriptor::Identity kNullDesc = {.uuid = kEffectNullUuid};
-    const Descriptor::Identity kZeroDesc = {.uuid = kEffectZeroUuid};
+    const Descriptor::Identity kNullId = {.uuid = kEffectNullUuid};
+    const Descriptor::Identity kZeroId = {.uuid = kEffectZeroUuid};
+    const Descriptor kNullDesc = {.common.id = kNullId};
+    const Descriptor kZeroDesc = {.common.id = kZeroId};
 
     template <typename Functor>
     void ForEachId(const std::vector<Descriptor::Identity> ids, Functor functor) {
@@ -82,15 +84,15 @@ class EffectFactoryTest : public testing::TestWithParam<std::string> {
         }
     }
 
-    std::vector<std::shared_ptr<IEffect>> createWithIds(
-            const std::vector<Descriptor::Identity> ids,
-            const binder_status_t expectStatus = EX_NONE) {
+    std::vector<std::shared_ptr<IEffect>> createWithDescs(
+            const std::vector<Descriptor> descs, const binder_status_t expectStatus = EX_NONE) {
         std::vector<std::shared_ptr<IEffect>> effects;
-        for (const auto& id : ids) {
+        for (const auto& desc : descs) {
+            const auto& uuid = desc.common.id.uuid;
             std::shared_ptr<IEffect> effect;
-            EXPECT_STATUS(expectStatus, mEffectFactory->createEffect(id.uuid, &effect));
+            EXPECT_STATUS(expectStatus, mEffectFactory->createEffect(uuid, &effect));
             if (expectStatus == EX_NONE) {
-                EXPECT_NE(effect, nullptr) << " null effect with uuid: " << id.uuid.toString();
+                EXPECT_NE(effect, nullptr) << " null effect with uuid: " << uuid.toString();
                 effects.push_back(std::move(effect));
             }
         }
@@ -102,9 +104,9 @@ class EffectFactoryTest : public testing::TestWithParam<std::string> {
             EXPECT_STATUS(expectStatus, mEffectFactory->destroyEffect(effect));
         }
     }
-    void creatAndDestroyIds(const std::vector<Descriptor::Identity> ids) {
-        for (const auto& id : ids) {
-            auto effects = createWithIds({id});
+    void creatAndDestroyDescs(const std::vector<Descriptor> descs) {
+        for (const auto& desc : descs) {
+            auto effects = createWithDescs({desc});
             ASSERT_NO_FATAL_FAILURE(destroyEffects(effects));
         }
     }
@@ -128,7 +130,7 @@ TEST_P(EffectFactoryTest, CanBeRestarted) {
  * https://developer.android.com/reference/android/media/audiofx/AudioEffect
  */
 TEST_P(EffectFactoryTest, ExpectAllAospEffectTypes) {
-    std::vector<Descriptor::Identity> ids;
+    std::vector<Descriptor> descs;
     std::set<AudioUuid> typeUuidSet(
             {aidl::android::hardware::audio::effect::kBassBoostTypeUUID,
              aidl::android::hardware::audio::effect::kEqualizerTypeUUID,
@@ -138,10 +140,10 @@ TEST_P(EffectFactoryTest, ExpectAllAospEffectTypes) {
              aidl::android::hardware::audio::effect::kHapticGeneratorTypeUUID,
              aidl::android::hardware::audio::effect::kVirtualizerTypeUUID});
 
-    EXPECT_IS_OK(mEffectFactory->queryEffects(std::nullopt, std::nullopt, std::nullopt, &ids));
-    EXPECT_TRUE(ids.size() >= typeUuidSet.size());
-    for (const auto& id : ids) {
-        typeUuidSet.erase(id.type);
+    EXPECT_IS_OK(mEffectFactory->queryEffects(std::nullopt, std::nullopt, std::nullopt, &descs));
+    EXPECT_TRUE(descs.size() >= typeUuidSet.size());
+    for (const auto& desc : descs) {
+        typeUuidSet.erase(desc.common.id.type);
     }
     std::string msg = " missing type UUID:\n";
     for (const auto& uuid : typeUuidSet) {
@@ -152,46 +154,46 @@ TEST_P(EffectFactoryTest, ExpectAllAospEffectTypes) {
 }
 
 TEST_P(EffectFactoryTest, QueryNullTypeUuid) {
-    std::vector<Descriptor::Identity> ids;
-    EXPECT_IS_OK(mEffectFactory->queryEffects(kEffectNullUuid, std::nullopt, std::nullopt, &ids));
-    EXPECT_EQ(ids.size(), 0UL);
+    std::vector<Descriptor> descs;
+    EXPECT_IS_OK(mEffectFactory->queryEffects(kEffectNullUuid, std::nullopt, std::nullopt, &descs));
+    EXPECT_EQ(descs.size(), 0UL);
 }
 
 TEST_P(EffectFactoryTest, QueriedNullImplUuid) {
-    std::vector<Descriptor::Identity> ids;
-    EXPECT_IS_OK(mEffectFactory->queryEffects(std::nullopt, kEffectNullUuid, std::nullopt, &ids));
-    EXPECT_EQ(ids.size(), 0UL);
+    std::vector<Descriptor> descs;
+    EXPECT_IS_OK(mEffectFactory->queryEffects(std::nullopt, kEffectNullUuid, std::nullopt, &descs));
+    EXPECT_EQ(descs.size(), 0UL);
 }
 
 TEST_P(EffectFactoryTest, QueriedNullProxyUuid) {
-    std::vector<Descriptor::Identity> ids;
-    EXPECT_IS_OK(mEffectFactory->queryEffects(std::nullopt, std::nullopt, kEffectNullUuid, &ids));
-    EXPECT_EQ(ids.size(), 0UL);
+    std::vector<Descriptor> descs;
+    EXPECT_IS_OK(mEffectFactory->queryEffects(std::nullopt, std::nullopt, kEffectNullUuid, &descs));
+    EXPECT_EQ(descs.size(), 0UL);
 }
 
 // create all effects, and then destroy them all together
 TEST_P(EffectFactoryTest, CreateAndDestroyEffects) {
-    std::vector<Descriptor::Identity> ids;
-    EXPECT_IS_OK(mEffectFactory->queryEffects(std::nullopt, std::nullopt, std::nullopt, &ids));
-    EXPECT_NE(ids.size(), 0UL);
+    std::vector<Descriptor> descs;
+    EXPECT_IS_OK(mEffectFactory->queryEffects(std::nullopt, std::nullopt, std::nullopt, &descs));
+    EXPECT_NE(descs.size(), 0UL);
 
     std::vector<std::shared_ptr<IEffect>> effects;
-    effects = createWithIds(ids);
-    EXPECT_EQ(ids.size(), effects.size());
+    effects = createWithDescs(descs);
+    EXPECT_EQ(descs.size(), effects.size());
     destroyEffects(effects);
 }
 
 TEST_P(EffectFactoryTest, CreateMultipleInstanceOfSameEffect) {
-    std::vector<Descriptor::Identity> ids;
-    EXPECT_IS_OK(mEffectFactory->queryEffects(std::nullopt, std::nullopt, std::nullopt, &ids));
-    EXPECT_NE(ids.size(), 0UL);
+    std::vector<Descriptor> descs;
+    EXPECT_IS_OK(mEffectFactory->queryEffects(std::nullopt, std::nullopt, std::nullopt, &descs));
+    EXPECT_NE(descs.size(), 0UL);
 
-    std::vector<std::shared_ptr<IEffect>> effects = createWithIds(ids);
-    EXPECT_EQ(ids.size(), effects.size());
-    std::vector<std::shared_ptr<IEffect>> effects2 = createWithIds(ids);
-    EXPECT_EQ(ids.size(), effects2.size());
-    std::vector<std::shared_ptr<IEffect>> effects3 = createWithIds(ids);
-    EXPECT_EQ(ids.size(), effects3.size());
+    std::vector<std::shared_ptr<IEffect>> effects = createWithDescs(descs);
+    EXPECT_EQ(descs.size(), effects.size());
+    std::vector<std::shared_ptr<IEffect>> effects2 = createWithDescs(descs);
+    EXPECT_EQ(descs.size(), effects2.size());
+    std::vector<std::shared_ptr<IEffect>> effects3 = createWithDescs(descs);
+    EXPECT_EQ(descs.size(), effects3.size());
 
     destroyEffects(effects);
     destroyEffects(effects2);
@@ -200,28 +202,28 @@ TEST_P(EffectFactoryTest, CreateMultipleInstanceOfSameEffect) {
 
 // create and destroy each effect one by one
 TEST_P(EffectFactoryTest, CreateAndDestroyEffectsOneByOne) {
-    std::vector<Descriptor::Identity> ids;
-    EXPECT_IS_OK(mEffectFactory->queryEffects(std::nullopt, std::nullopt, std::nullopt, &ids));
-    EXPECT_NE(ids.size(), 0UL);
+    std::vector<Descriptor> descs;
+    EXPECT_IS_OK(mEffectFactory->queryEffects(std::nullopt, std::nullopt, std::nullopt, &descs));
+    EXPECT_NE(descs.size(), 0UL);
 
-    creatAndDestroyIds(ids);
+    creatAndDestroyDescs(descs);
 }
 
 // for each effect: repeat 3 times create and destroy
 TEST_P(EffectFactoryTest, CreateAndDestroyRepeat) {
-    std::vector<Descriptor::Identity> ids;
-    EXPECT_IS_OK(mEffectFactory->queryEffects(std::nullopt, std::nullopt, std::nullopt, &ids));
-    EXPECT_NE(ids.size(), 0UL);
+    std::vector<Descriptor> descs;
+    EXPECT_IS_OK(mEffectFactory->queryEffects(std::nullopt, std::nullopt, std::nullopt, &descs));
+    EXPECT_NE(descs.size(), 0UL);
 
-    creatAndDestroyIds(ids);
-    creatAndDestroyIds(ids);
-    creatAndDestroyIds(ids);
+    creatAndDestroyDescs(descs);
+    creatAndDestroyDescs(descs);
+    creatAndDestroyDescs(descs);
 }
 
 // Expect EX_ILLEGAL_ARGUMENT when create with invalid UUID.
 TEST_P(EffectFactoryTest, CreateWithInvalidUuid) {
-    std::vector<Descriptor::Identity> ids = {kNullDesc, kZeroDesc};
-    auto effects = createWithIds(ids, EX_ILLEGAL_ARGUMENT);
+    std::vector<Descriptor> descs = {kNullDesc, kZeroDesc};
+    auto effects = createWithDescs(descs, EX_ILLEGAL_ARGUMENT);
     EXPECT_EQ(effects.size(), 0UL);
 }
 
@@ -233,23 +235,23 @@ TEST_P(EffectFactoryTest, DestroyWithInvalidInterface) {
 
 // Same descriptor ID should work after service restart.
 TEST_P(EffectFactoryTest, CreateDestroyWithRestart) {
-    std::vector<Descriptor::Identity> ids;
-    EXPECT_IS_OK(mEffectFactory->queryEffects(std::nullopt, std::nullopt, std::nullopt, &ids));
-    EXPECT_NE(ids.size(), 0UL);
-    creatAndDestroyIds(ids);
+    std::vector<Descriptor> descs;
+    EXPECT_IS_OK(mEffectFactory->queryEffects(std::nullopt, std::nullopt, std::nullopt, &descs));
+    EXPECT_NE(descs.size(), 0UL);
+    creatAndDestroyDescs(descs);
 
     mFactoryHelper->RestartFactoryService();
 
     connectAndGetFactory();
-    creatAndDestroyIds(ids);
+    creatAndDestroyDescs(descs);
 }
 
 // Effect handle invalid after restart.
 TEST_P(EffectFactoryTest, EffectInvalidAfterRestart) {
-    std::vector<Descriptor::Identity> ids;
-    EXPECT_IS_OK(mEffectFactory->queryEffects(std::nullopt, std::nullopt, std::nullopt, &ids));
-    EXPECT_NE(ids.size(), 0UL);
-    std::vector<std::shared_ptr<IEffect>> effects = createWithIds(ids);
+    std::vector<Descriptor> descs;
+    EXPECT_IS_OK(mEffectFactory->queryEffects(std::nullopt, std::nullopt, std::nullopt, &descs));
+    EXPECT_NE(descs.size(), 0UL);
+    std::vector<std::shared_ptr<IEffect>> effects = createWithDescs(descs);
 
     ASSERT_NO_FATAL_FAILURE(mFactoryHelper->RestartFactoryService());
 

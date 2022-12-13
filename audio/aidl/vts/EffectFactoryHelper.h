@@ -58,9 +58,11 @@ class EffectFactoryHelper {
         for (const auto& name : names) {
             auto factory = IFactory::fromBinder(util.connectToService(name));
             if (factory) {
-                if (std::vector<Descriptor::Identity> ids;
-                    factory->queryEffects(std::nullopt, std::nullopt, std::nullopt, &ids).isOk()) {
-                    for (const auto& id : ids) {
+                if (std::vector<Descriptor> descs;
+                    factory->queryEffects(std::nullopt, std::nullopt, std::nullopt, &descs)
+                            .isOk()) {
+                    for (const auto& desc : descs) {
+                        const auto& id = desc.common.id;
                         if (type.has_value() && id.type != type.value()) {
                             continue;
                         }
