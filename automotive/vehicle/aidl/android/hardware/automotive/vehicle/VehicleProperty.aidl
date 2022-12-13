@@ -3296,4 +3296,28 @@ enum VehicleProperty {
      */
     SHUTDOWN_REQUEST =
             0x0F49 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
+
+    /***************************************************************************
+     * Start of ADAS Properties
+     * Allocate IDs in range of 0x1000 (inclusive) to 0x1100 (exclusive) for ADAS properties
+     **************************************************************************/
+
+    /**
+     * Enable or disable automatic emergency braking (AEB).
+     *
+     * Set true to enable AEB and false to disable AEB. When AEB is enabled, the ADAS system in the
+     * vehicle should be turned on and monitoring to avoid potential collisions.
+     *
+     * This property is defined as read_write, but OEMs have the option to implement it as read
+     * only.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     */
+    AUTOMATIC_EMERGENCY_BRAKING_ENABLED =
+            0x1000 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+
+    /***************************************************************************
+     * End of ADAS Properties
+     **************************************************************************/
 }
