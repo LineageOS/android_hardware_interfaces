@@ -1609,6 +1609,13 @@ wifi_error WifiLegacyHal::getWifiCachedScanResults(
     return status;
 }
 
+std::pair<wifi_error, wifi_chip_capabilities> WifiLegacyHal::getWifiChipCapabilities() {
+    wifi_chip_capabilities chip_capabilities;
+    wifi_error status =
+            global_func_table_.wifi_get_chip_capabilities(global_handle_, &chip_capabilities);
+    return {status, chip_capabilities};
+}
+
 void WifiLegacyHal::invalidate() {
     global_handle_ = nullptr;
     iface_name_to_handle_.clear();

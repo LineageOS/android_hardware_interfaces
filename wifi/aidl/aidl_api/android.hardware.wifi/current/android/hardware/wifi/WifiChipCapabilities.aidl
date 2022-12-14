@@ -31,21 +31,9 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.audio.effect;
+package android.hardware.wifi;
 @VintfStability
-union BassBoost {
-  android.hardware.audio.effect.VendorExtension vendor;
-  int strengthPm;
-  const int MIN_PER_MILLE_STRENGTH = 0;
-  const int MAX_PER_MILLE_STRENGTH = 1000;
-  @VintfStability
-  union Id {
-    int vendorExtensionTag;
-    android.hardware.audio.effect.BassBoost.Tag commonTag;
-  }
-  @VintfStability
-  parcelable Capability {
-    ParcelableHolder extension;
-    boolean strengthSupported;
-  }
+parcelable WifiChipCapabilities {
+  int maxMloLinkCount;
+  int maxConcurrentTdlsSessionCount;
 }

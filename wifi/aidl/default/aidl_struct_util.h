@@ -171,6 +171,9 @@ bool convertLegacyPeerInfoStatsToAidl(const legacy_hal::WifiPeerInfo& legacy_pee
                                       StaPeerInfo* aidl_peer_info_stats);
 bool convertLegacyWifiRateInfoToAidl(const legacy_hal::wifi_rate& legacy_rate,
                                      WifiRateInfo* aidl_rate);
+bool convertLegacyWifiChipCapabilitiesToAidl(
+        const legacy_hal::wifi_chip_capabilities& legacy_chip_capabilities,
+        WifiChipCapabilities& aidl_chip_capabilities);
 }  // namespace aidl_struct_util
 }  // namespace wifi
 }  // namespace hardware

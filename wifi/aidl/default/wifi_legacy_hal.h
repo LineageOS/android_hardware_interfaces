@@ -232,6 +232,7 @@ using ::WIFI_CHAN_WIDTH_INVALID;
 using ::wifi_channel_info;
 using ::wifi_channel_stat;
 using ::wifi_channel_width;
+using ::wifi_chip_capabilities;
 using ::wifi_coex_restriction;
 using ::wifi_coex_unsafe_channel;
 using ::WIFI_DUAL_STA_NON_TRANSIENT_UNBIASED;
@@ -693,6 +694,7 @@ class WifiLegacyHal {
     wifi_error enableWifiTxPowerLimits(const std::string& iface_name, bool enable);
     wifi_error getWifiCachedScanResults(const std::string& iface_name,
                                         const CachedScanResultsCallbackHandlers& handler);
+    std::pair<wifi_error, wifi_chip_capabilities> getWifiChipCapabilities();
 
   private:
     // Retrieve interface handles for all the available interfaces.
