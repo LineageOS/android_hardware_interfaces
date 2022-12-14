@@ -90,24 +90,3 @@ cc_test_library {
         "libgmock_ndk",
     ],
 }
-
-cc_test {
-    name: "VtsHalRemotelyProvisionedComponentTargetTest",
-    defaults: [
-        "keymint_vts_defaults",
-    ],
-    srcs: [
-        "VtsRemotelyProvisionedComponentTests.cpp",
-    ],
-    static_libs: [
-        "libgmock_ndk",
-        "libkeymaster_portable",
-        "libkeymint_vts_test_utils",
-        "libpuresoftkeymasterdevice",
-    ],
-    test_config: "VtsRemotelyProvisionedComponentTests.xml",
-    test_suites: [
-        "general-tests",
-        "vts",
-    ],
-}
