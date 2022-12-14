@@ -38,10 +38,11 @@ union Capability {
   android.hardware.audio.effect.BassBoost.Capability bassBoost;
   android.hardware.audio.effect.Downmix.Capability downmix;
   android.hardware.audio.effect.DynamicsProcessing.Capability dynamicsProcessing;
+  android.hardware.audio.effect.EnvironmentalReverb.Capability environmentalReverb;
   android.hardware.audio.effect.Equalizer.Capability equalizer;
   android.hardware.audio.effect.HapticGenerator.Capability hapticGenerator;
   android.hardware.audio.effect.LoudnessEnhancer.Capability loudnessEnhancer;
-  android.hardware.audio.effect.Reverb.Capability reverb;
+  android.hardware.audio.effect.PresetReverb.Capability presetReverb;
   android.hardware.audio.effect.Virtualizer.Capability virtualizer;
   android.hardware.audio.effect.Visualizer.Capability visualizer;
   android.hardware.audio.effect.Volume.Capability volume;

@@ -20,6 +20,7 @@
 #include <map>
 #include <optional>
 #include <set>
+#include <tuple>
 #include <vector>
 
 #include <aidl/android/hardware/audio/effect/BnFactory.h>
@@ -37,14 +38,14 @@ class Factory : public BnFactory {
      * @param in_type Type UUID.
      * @param in_instance Instance UUID.
      * @param in_proxy Proxy UUID.
-     * @param out_descriptor List of identities .
+     * @param out_descriptor List of Descriptors.
      * @return ndk::ScopedAStatus
      */
     ndk::ScopedAStatus queryEffects(
             const std::optional<::aidl::android::media::audio::common::AudioUuid>& in_type,
             const std::optional<::aidl::android::media::audio::common::AudioUuid>& in_instance,
             const std::optional<::aidl::android::media::audio::common::AudioUuid>& in_proxy,
-            std::vector<Descriptor::Identity>* out_descriptor) override;
+            std::vector<Descriptor>* out_descriptor) override;
 
     /**
      * @brief Query list of defined processing, with the optional filter by AudioStreamType
@@ -82,12 +83,19 @@ class Factory : public BnFactory {
     const EffectConfig mConfig;
     ~Factory();
     // Set of effect descriptors supported by the devices.
+    std::set<Descriptor> mDescSet;
     std::set<Descriptor::Identity> mIdentitySet;
 
-    std::map<aidl::android::media::audio::common::AudioUuid /* implementationUUID */,
-             std::pair<std::unique_ptr<void, std::function<void(void*)>> /* dlHandle */,
-                       std::unique_ptr<struct effect_dl_interface_s>>>
-            mEffectLibMap;
+    static constexpr int kMapEntryHandleIndex = 0;
+    static constexpr int kMapEntryInterfaceIndex = 1;
+    static constexpr int kMapEntryLibNameIndex = 2;
+    typedef std::tuple<std::unique_ptr<void, std::function<void(void*)>> /* dlHandle */,
+                       std::unique_ptr<struct effect_dl_interface_s> /* interfaces */,
+                       std::string /* library name */>
+            DlEntry;
+
+    std::map<aidl::android::media::audio::common::AudioUuid /* implUUID */, DlEntry> mEffectLibMap;
+
     std::map<std::weak_ptr<IEffect>, aidl::android::media::audio::common::AudioUuid,
              std::owner_less<>>
             mEffectUuidMap;
@@ -101,6 +109,8 @@ class Factory : public BnFactory {
             const ::aidl::android::media::audio::common::AudioUuid& typeUuid,
             const std::optional<::aidl::android::media::audio::common::AudioUuid> proxyUuid);
     void loadEffectLibs();
+    /* Get effect_dl_interface_s from library handle */
+    void getDlSyms(DlEntry& entry);
 };
 
 }  // namespace aidl::android::hardware::audio::effect

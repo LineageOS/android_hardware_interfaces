@@ -16,6 +16,7 @@
 
 package android.hardware.radio.sim;
 
+import android.hardware.radio.config.MultipleEnabledProfilesMode;
 import android.hardware.radio.config.SlotPortMapping;
 import android.hardware.radio.sim.AppStatus;
 import android.hardware.radio.sim.PinState;
@@ -93,4 +94,8 @@ parcelable CardStatus {
      * PortId is the id (enumerated value) for the associated port available on the SIM.
      */
     SlotPortMapping slotMap;
+    /**
+     * Jointly supported Multiple Enabled Profiles(MEP) mode as per SGP.22 V3.0
+     */
+    MultipleEnabledProfilesMode supportedMepMode = MultipleEnabledProfilesMode.NONE;
 }

@@ -1979,3 +1979,23 @@ TEST_P(RadioNetworkTest, setNullCipherAndIntegrityEnabled) {
             {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::MODEM_ERR}));
     LOG(DEBUG) << "setNullCipherAndIntegrityEnabled finished";
 }
+
+/**
+ * Test IRadioNetwork.isNullCipherAndIntegrityEnabled() for the response returned.
+ */
+TEST_P(RadioNetworkTest, isNullCipherAndIntegrityEnabled) {
+    LOG(DEBUG) << "isNullCipherAndIntegrityEnabled";
+    serial = GetRandomSerialNumber();
+
+    ndk::ScopedAStatus res = radio_network->isNullCipherAndIntegrityEnabled(serial);
+    ASSERT_OK(res);
+
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_network->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_network->rspInfo.serial);
+
+    ASSERT_TRUE(CheckAnyOfErrors(
+            radioRsp_network->rspInfo.error,
+            {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::MODEM_ERR}));
+    LOG(DEBUG) << "isNullCipherAndIntegrityEnabled finished";
+}

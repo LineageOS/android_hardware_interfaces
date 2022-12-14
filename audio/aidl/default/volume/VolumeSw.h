@@ -37,6 +37,9 @@ class VolumeSwContext final : public EffectContext {
 
 class VolumeSw final : public EffectImpl {
   public:
+    static const std::string kEffectName;
+    static const Volume::Capability kCapability;
+    static const Descriptor kDescriptor;
     VolumeSw() { LOG(DEBUG) << __func__; }
     ~VolumeSw() {
         cleanUp();
@@ -56,22 +59,7 @@ class VolumeSw final : public EffectImpl {
     std::string getEffectName() override { return kEffectName; }
 
   private:
-    const std::string kEffectName = "VolumeSw";
     std::shared_ptr<VolumeSwContext> mContext;
-    /* capabilities */
-    const Volume::Capability kCapability;
-    /* Effect descriptor */
-    const Descriptor kDescriptor = {
-            .common = {.id = {.type = kVolumeTypeUUID,
-                              .uuid = kVolumeSwImplUUID,
-                              .proxy = std::nullopt},
-                       .flags = {.type = Flags::Type::INSERT,
-                                 .insert = Flags::Insert::FIRST,
-                                 .volume = Flags::Volume::CTRL},
-                       .name = kEffectName,
-                       .implementor = "The Android Open Source Project"},
-            .capability = Capability::make<Capability::volume>(kCapability)};
-
     /* parameters */
     Volume mSpecificParam;
 };

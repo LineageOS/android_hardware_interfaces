@@ -510,6 +510,21 @@ oneway interface IRadioNetwork {
     void setNullCipherAndIntegrityEnabled(in int serial, in boolean enabled);
 
     /**
+     * Get whether null encryption and integrity modes are enabled.
+     *
+     * Null ciphering and integrity modes include, (but are not limited to):
+     * 2G: A5/0, GAE0 (no integrity algorithm supported)
+     * 3G: UEA0 and UIA0
+     * 4G: EEA0 and EIA
+     * 5G: NEA0 and NIA0
+     *
+     * @param serial Serial number of the request.
+     *
+     * Response callback is IRadioNetworkResponse.isNullCipherAndIntegrityEnabledResponse()
+     */
+    void isNullCipherAndIntegrityEnabled(in int serial);
+
+    /**
      * Checks whether N1 mode (access to 5G core network) is enabled or not.
      *
      * @param serial Serial number of request.

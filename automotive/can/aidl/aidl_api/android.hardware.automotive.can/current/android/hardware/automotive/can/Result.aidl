@@ -31,27 +31,15 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.audio.effect;
-@VintfStability
-union Reverb {
-  android.hardware.audio.effect.VendorExtension vendor;
-  int roomLevelMb;
-  int roomHfLevelMb;
-  int decayTimeMs;
-  int decayHfRatioPm;
-  int levelMb;
-  int delayMs;
-  int diffusionPm;
-  int densityPm;
-  boolean bypass;
-  @VintfStability
-  union Id {
-    int vendorExtensionTag;
-    android.hardware.audio.effect.Reverb.Tag commonTag;
-  }
-  @VintfStability
-  parcelable Capability {
-    android.hardware.audio.effect.VendorExtension extension;
-    int maxDecayTimeMs;
-  }
+package android.hardware.automotive.can;
+@Backing(type="int") @VintfStability
+enum Result {
+  OK = 0,
+  UNKNOWN_ERROR = 1,
+  INVALID_STATE = 2,
+  NOT_SUPPORTED = 3,
+  BAD_INTERFACE_ID = 4,
+  BAD_BITRATE = 5,
+  BAD_BUS_NAME = 6,
+  INTERFACE_DOWN = 7,
 }

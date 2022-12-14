@@ -70,6 +70,7 @@ interface ISupplicantStaIfaceCallback {
   oneway void onMloLinksInfoChanged(in android.hardware.wifi.supplicant.ISupplicantStaIfaceCallback.MloLinkInfoChangeReason reason);
   oneway void onDppConfigReceived(in android.hardware.wifi.supplicant.DppConfigurationData configData);
   oneway void onDppConnectionStatusResultSent(in android.hardware.wifi.supplicant.DppStatusErrorCode code);
+  oneway void onBssFrequencyChanged(in int frequencyMhz);
   @Backing(type="int") @VintfStability
   enum MloLinkInfoChangeReason {
     TID_TO_LINK_MAP = 0,

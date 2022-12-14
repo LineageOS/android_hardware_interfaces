@@ -80,6 +80,12 @@ class EqualizerSwContext final : public EffectContext {
 
 class EqualizerSw final : public EffectImpl {
   public:
+    static const std::string kEffectName;
+    static const std::vector<Equalizer::BandFrequency> kBandFrequency;
+    static const std::vector<Equalizer::Preset> kPresets;
+    static const Equalizer::Capability kEqCap;
+    static const Descriptor kDesc;
+
     EqualizerSw() { LOG(DEBUG) << __func__; }
     ~EqualizerSw() {
         cleanUp();
@@ -99,32 +105,9 @@ class EqualizerSw final : public EffectImpl {
     std::string getEffectName() override { return kEffectName; }
 
   private:
-    const std::string kEffectName = "EqualizerSw";
-    std::shared_ptr<EqualizerSwContext> mContext;
-    /* capabilities */
-    const std::vector<Equalizer::BandFrequency> mBandFrequency = {{0, 30000, 120000},
-                                                                  {1, 120001, 460000},
-                                                                  {2, 460001, 1800000},
-                                                                  {3, 1800001, 7000000},
-                                                                  {4, 7000001, 20000000}};
-    // presets supported by the device
-    const std::vector<Equalizer::Preset> mPresets = {
-            {0, "Normal"},      {1, "Classical"}, {2, "Dance"}, {3, "Flat"}, {4, "Folk"},
-            {5, "Heavy Metal"}, {6, "Hip Hop"},   {7, "Jazz"},  {8, "Pop"},  {9, "Rock"}};
-
-    const Equalizer::Capability kEqCap = {.bandFrequencies = mBandFrequency, .presets = mPresets};
-    // Effect descriptor.
-    const Descriptor kDesc = {.common = {.id = {.type = kEqualizerTypeUUID,
-                                                .uuid = kEqualizerSwImplUUID,
-                                                .proxy = kEqualizerProxyUUID},
-                                         .flags = {.type = Flags::Type::INSERT,
-                                                   .insert = Flags::Insert::FIRST,
-                                                   .volume = Flags::Volume::CTRL},
-                                         .name = kEffectName,
-                                         .implementor = "The Android Open Source Project"},
-                              .capability = Capability::make<Capability::equalizer>(kEqCap)};
-
     ndk::ScopedAStatus getParameterEqualizer(const Equalizer::Tag& tag,
                                              Parameter::Specific* specific);
+    std::shared_ptr<EqualizerSwContext> mContext;
 };
+
 }  // namespace aidl::android::hardware::audio::effect
