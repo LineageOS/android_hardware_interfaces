@@ -1,0 +1,70 @@
+/*
+ * Copyright (C) 2022 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package {
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "hardware_interfaces_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-Apache-2.0
+    default_applicable_licenses: ["hardware_interfaces_license"],
+}
+
+aidl_interface {
+    name: "android.hardware.audio.sounddose",
+    host_supported: true,
+    vendor_available: true,
+    stability: "vintf",
+    srcs: [
+        "android/hardware/audio/sounddose/ISoundDoseFactory.aidl",
+    ],
+    imports: [
+        latest_android_hardware_audio_core_sounddose,
+    ],
+    backend: {
+        // The C++ backend is disabled transitively due to use by core audio HAL.
+        cpp: {
+            enabled: false,
+        },
+        java: {
+            sdk_version: "module_current",
+        },
+    },
+    versions_with_info: [
+        // IMPORTANT: Update latest_android_hardware_audio_sounddose every time you
+        // add the latest frozen version to versions_with_info
+    ],
+}
+
+// Note: This should always be one version ahead of the last frozen version
+latest_android_hardware_audio_sounddose = "android.hardware.audio.sounddose-V1"
+
+// Modules that depend on android.hardware.audio.sounddose directly can include
+// the following cc_defaults to avoid explicitly managing dependency versions
+// across many scattered files.
+cc_defaults {
+    name: "latest_android_hardware_audio_sounddose_ndk_shared",
+    shared_libs: [
+        latest_android_hardware_audio_sounddose + "-ndk",
+    ],
+}
+
+cc_defaults {
+    name: "latest_android_hardware_audio_sounddose_ndk_static",
+    static_libs: [
+        latest_android_hardware_audio_sounddose + "-ndk",
+    ],
+}
