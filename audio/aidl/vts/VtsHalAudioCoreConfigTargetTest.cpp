@@ -10,6 +10,8 @@
 #include <aidl/Gtest.h>
 #include <aidl/Vintf.h>
 #include <aidl/android/hardware/audio/core/IConfig.h>
+#include <aidl/android/media/audio/common/AudioFlag.h>
+#include <aidl/android/media/audio/common/AudioProductStrategyType.h>
 
 #include "AudioHalBinderServiceUtil.h"
 #include "TestUtils.h"
