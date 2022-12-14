@@ -95,4 +95,5 @@ interface ISupplicantStaIface {
   void stopDppInitiator();
   void stopDppResponder(in int ownBootstrapId);
   void stopRxFilter();
+  android.hardware.wifi.supplicant.SignalPollResult[] getSignalPollResults();
 }
