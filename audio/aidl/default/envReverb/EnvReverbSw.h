@@ -37,6 +37,9 @@ class EnvReverbSwContext final : public EffectContext {
 
 class EnvReverbSw final : public EffectImpl {
   public:
+    static const std::string kEffectName;
+    static const EnvironmentalReverb::Capability kCapability;
+    static const Descriptor kDescriptor;
     EnvReverbSw() { LOG(DEBUG) << __func__; }
     ~EnvReverbSw() {
         cleanUp();
@@ -56,23 +59,8 @@ class EnvReverbSw final : public EffectImpl {
     std::string getEffectName() override { return kEffectName; }
 
   private:
-    const std::string kEffectName = "EnvReverbSw";
     std::shared_ptr<EnvReverbSwContext> mContext;
-    /* capabilities */
-    const Reverb::Capability kCapability;
-    /* Effect descriptor */
-    const Descriptor kDescriptor = {
-            .common = {.id = {.type = kEnvReverbTypeUUID,
-                              .uuid = kEnvReverbSwImplUUID,
-                              .proxy = std::nullopt},
-                       .flags = {.type = Flags::Type::INSERT,
-                                 .insert = Flags::Insert::FIRST,
-                                 .volume = Flags::Volume::CTRL},
-                       .name = kEffectName,
-                       .implementor = "The Android Open Source Project"},
-            .capability = Capability::make<Capability::reverb>(kCapability)};
-
     /* parameters */
-    Reverb mSpecificParam;
+    EnvironmentalReverb mSpecificParam;
 };
 }  // namespace aidl::android::hardware::audio::effect

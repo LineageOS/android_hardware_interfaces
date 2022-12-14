@@ -27,7 +27,7 @@
 #include <variant>
 #include <vector>
 
-#define LOG_TAG "VtsHalAudioCore"
+#define LOG_TAG "VtsHalAudioCore.Module"
 #include <android-base/logging.h>
 
 #include <StreamWorker.h>
@@ -79,6 +79,7 @@ using aidl::android::media::audio::common::AudioSource;
 using aidl::android::media::audio::common::AudioUsage;
 using aidl::android::media::audio::common::Void;
 using android::hardware::audio::common::isBitPositionFlagSet;
+using android::hardware::audio::common::isTelephonyDeviceType;
 using android::hardware::audio::common::StreamLogic;
 using android::hardware::audio::common::StreamWorker;
 using ndk::enum_range;
@@ -490,16 +491,16 @@ class SmartStateSequence : public StateSequence {
   private:
     StreamDescriptor::State getState() const { return mSteps[mCurrentStep].second; }
     bool isBurstBifurcation() {
-        return getTrigger() == TransitionTrigger{kBurstCommand}&& getState() ==
-               StreamDescriptor::State::TRANSFERRING;
+        return getTrigger() == TransitionTrigger{kBurstCommand} &&
+               getState() == StreamDescriptor::State::TRANSFERRING;
     }
     bool isPauseBifurcation() {
-        return getTrigger() == TransitionTrigger{kPauseCommand}&& getState() ==
-               StreamDescriptor::State::TRANSFER_PAUSED;
+        return getTrigger() == TransitionTrigger{kPauseCommand} &&
+               getState() == StreamDescriptor::State::TRANSFER_PAUSED;
     }
     bool isStartBifurcation() {
-        return getTrigger() == TransitionTrigger{kStartCommand}&& getState() ==
-               StreamDescriptor::State::TRANSFERRING;
+        return getTrigger() == TransitionTrigger{kStartCommand} &&
+               getState() == StreamDescriptor::State::TRANSFERRING;
     }
     const std::vector<StateTransition> mSteps;
     size_t mCurrentStep = 0;
@@ -1902,9 +1903,13 @@ class AudioStream : public AudioCoreModule {
 using AudioStreamIn = AudioStream<IStreamIn>;
 using AudioStreamOut = AudioStream<IStreamOut>;
 
-#define TEST_IN_AND_OUT_STREAM(method_name)                                        \
-    TEST_P(AudioStreamIn, method_name) { ASSERT_NO_FATAL_FAILURE(method_name()); } \
-    TEST_P(AudioStreamOut, method_name) { ASSERT_NO_FATAL_FAILURE(method_name()); }
+#define TEST_IN_AND_OUT_STREAM(method_name)     \
+    TEST_P(AudioStreamIn, method_name) {        \
+        ASSERT_NO_FATAL_FAILURE(method_name()); \
+    }                                           \
+    TEST_P(AudioStreamOut, method_name) {       \
+        ASSERT_NO_FATAL_FAILURE(method_name()); \
+    }
 
 TEST_IN_AND_OUT_STREAM(CloseTwice);
 TEST_IN_AND_OUT_STREAM(OpenAllConfigs);
@@ -2216,9 +2221,9 @@ class AudioStreamIo : public AudioCoreModuleBase,
         }
     }
 
-    bool ValidateObservablePosition(const AudioPortConfig& /*portConfig*/) {
-        // May return false based on the portConfig, e.g. for telephony ports.
-        return true;
+    bool ValidateObservablePosition(const AudioPortConfig& devicePortConfig) {
+        return !isTelephonyDeviceType(
+                devicePortConfig.ext.get<AudioPortExt::Tag::device>().device.type.type);
     }
 
     // Set up a patch first, then open a stream.
@@ -2243,7 +2248,7 @@ class AudioStreamIo : public AudioCoreModuleBase,
         worker.join();
         EXPECT_FALSE(worker.hasError()) << worker.getError();
         EXPECT_EQ("", driver.getUnexpectedStateTransition());
-        if (ValidateObservablePosition(portConfig)) {
+        if (ValidateObservablePosition(devicePortConfig)) {
             EXPECT_TRUE(driver.hasObservablePositionIncrease());
             EXPECT_FALSE(driver.hasRetrogradeObservablePosition());
         }
@@ -2271,7 +2276,7 @@ class AudioStreamIo : public AudioCoreModuleBase,
         worker.join();
         EXPECT_FALSE(worker.hasError()) << worker.getError();
         EXPECT_EQ("", driver.getUnexpectedStateTransition());
-        if (ValidateObservablePosition(portConfig)) {
+        if (ValidateObservablePosition(devicePortConfig)) {
             EXPECT_TRUE(driver.hasObservablePositionIncrease());
             EXPECT_FALSE(driver.hasRetrogradeObservablePosition());
         }
@@ -2280,9 +2285,13 @@ class AudioStreamIo : public AudioCoreModuleBase,
 using AudioStreamIoIn = AudioStreamIo<IStreamIn>;
 using AudioStreamIoOut = AudioStreamIo<IStreamOut>;
 
-#define TEST_IN_AND_OUT_STREAM_IO(method_name)                                       \
-    TEST_P(AudioStreamIoIn, method_name) { ASSERT_NO_FATAL_FAILURE(method_name()); } \
-    TEST_P(AudioStreamIoOut, method_name) { ASSERT_NO_FATAL_FAILURE(method_name()); }
+#define TEST_IN_AND_OUT_STREAM_IO(method_name)  \
+    TEST_P(AudioStreamIoIn, method_name) {      \
+        ASSERT_NO_FATAL_FAILURE(method_name()); \
+    }                                           \
+    TEST_P(AudioStreamIoOut, method_name) {     \
+        ASSERT_NO_FATAL_FAILURE(method_name()); \
+    }
 
 TEST_IN_AND_OUT_STREAM_IO(Run);
 
@@ -2435,9 +2444,13 @@ class AudioModulePatch : public AudioCoreModule {
 
 // Not all tests require both directions, so parametrization would require
 // more abstractions.
-#define TEST_PATCH_BOTH_DIRECTIONS(method_name)                                                  \
-    TEST_P(AudioModulePatch, method_name##Input) { ASSERT_NO_FATAL_FAILURE(method_name(true)); } \
-    TEST_P(AudioModulePatch, method_name##Output) { ASSERT_NO_FATAL_FAILURE(method_name(false)); }
+#define TEST_PATCH_BOTH_DIRECTIONS(method_name)      \
+    TEST_P(AudioModulePatch, method_name##Input) {   \
+        ASSERT_NO_FATAL_FAILURE(method_name(true));  \
+    }                                                \
+    TEST_P(AudioModulePatch, method_name##Output) {  \
+        ASSERT_NO_FATAL_FAILURE(method_name(false)); \
+    }
 
 TEST_PATCH_BOTH_DIRECTIONS(ResetPortConfigUsedByPatch);
 TEST_PATCH_BOTH_DIRECTIONS(SetInvalidPatch);

@@ -162,6 +162,9 @@ class RadioNetworkResponse : public BnRadioNetworkResponse {
     virtual ndk::ScopedAStatus setNullCipherAndIntegrityEnabledResponse(
             const RadioResponseInfo& info) override;
 
+    virtual ndk::ScopedAStatus isNullCipherAndIntegrityEnabledResponse(
+            const RadioResponseInfo& info, const bool isEnabled) override;
+
     virtual ndk::ScopedAStatus isN1ModeEnabledResponse(
             const RadioResponseInfo& info, bool isEnabled) override;
 

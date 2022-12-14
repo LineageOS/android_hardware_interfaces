@@ -301,6 +301,13 @@ ndk::ScopedAStatus RadioNetworkResponse::setNullCipherAndIntegrityEnabledRespons
     return ndk::ScopedAStatus::ok();
 }
 
+ndk::ScopedAStatus RadioNetworkResponse::isNullCipherAndIntegrityEnabledResponse(
+        const RadioResponseInfo& info, bool /*isEnabled*/) {
+    rspInfo = info;
+    parent_network.notify(info.serial);
+    return ndk::ScopedAStatus::ok();
+}
+
 ndk::ScopedAStatus RadioNetworkResponse::isN1ModeEnabledResponse(
         const RadioResponseInfo& info, bool /*isEnabled*/) {
     rspInfo = info;

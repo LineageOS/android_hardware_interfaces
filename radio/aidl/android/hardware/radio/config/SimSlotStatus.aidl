@@ -54,7 +54,8 @@ parcelable SimSlotStatus {
      */
     SimPortInfo[] portInfo;
     /**
-     * Jointly supported Multiple Enabled Profiles(MEP) mode as per SGP.22 V3.0
+     * Jointly supported Multiple Enabled Profiles(MEP) mode as per SGP.22 V3.0. Should always
+     * report proper MEP mode irrespective of whether the slot is active or inactive.
      */
-    MultipleEnabledProfilesMode supportedMepMode;
+    MultipleEnabledProfilesMode supportedMepMode = MultipleEnabledProfilesMode.NONE;
 }

@@ -175,11 +175,11 @@ class FakeSecureHardwarePresentationProxy : public SecureHardwarePresentationPro
                                 const vector<uint8_t>& requestMessage, int coseSignAlg,
                                 const vector<uint8_t>& readerSignatureOfToBeSigned) override;
 
-    bool calcMacKey(const vector<uint8_t>& sessionTranscript,
-                    const vector<uint8_t>& readerEphemeralPublicKey,
-                    const vector<uint8_t>& signingKeyBlob, const string& docType,
-                    unsigned int numNamespacesWithValues,
-                    size_t expectedProofOfProvisioningSize) override;
+    bool prepareDeviceAuthentication(const vector<uint8_t>& sessionTranscript,
+                                     const vector<uint8_t>& readerEphemeralPublicKey,
+                                     const vector<uint8_t>& signingKeyBlob, const string& docType,
+                                     unsigned int numNamespacesWithValues,
+                                     size_t expectedDeviceNamespacesSize) override;
 
     AccessCheckResult startRetrieveEntryValue(
             const string& nameSpace, const string& name, unsigned int newNamespaceNumEntries,
@@ -190,6 +190,8 @@ class FakeSecureHardwarePresentationProxy : public SecureHardwarePresentationPro
             const vector<int32_t>& accessControlProfileIds) override;
 
     optional<vector<uint8_t>> finishRetrieval() override;
+
+    optional<pair<vector<uint8_t>, vector<uint8_t>>> finishRetrievalWithSignature() override;
 
     optional<vector<uint8_t>> deleteCredential(const string& docType,
                                                const vector<uint8_t>& challenge,

@@ -37,6 +37,9 @@ class HapticGeneratorSwContext final : public EffectContext {
 
 class HapticGeneratorSw final : public EffectImpl {
   public:
+    static const std::string kEffectName;
+    static const HapticGenerator::Capability kCapability;
+    static const Descriptor kDescriptor;
     HapticGeneratorSw() { LOG(DEBUG) << __func__; }
     ~HapticGeneratorSw() {
         cleanUp();
@@ -56,22 +59,7 @@ class HapticGeneratorSw final : public EffectImpl {
     std::string getEffectName() override { return kEffectName; }
 
   private:
-    const std::string kEffectName = "HapticGeneratorSw";
     std::shared_ptr<HapticGeneratorSwContext> mContext;
-    /* capabilities */
-    const HapticGenerator::Capability kCapability;
-    /* Effect descriptor */
-    const Descriptor kDescriptor = {
-            .common = {.id = {.type = kHapticGeneratorTypeUUID,
-                              .uuid = kHapticGeneratorSwImplUUID,
-                              .proxy = std::nullopt},
-                       .flags = {.type = Flags::Type::INSERT,
-                                 .insert = Flags::Insert::FIRST,
-                                 .volume = Flags::Volume::CTRL},
-                       .name = kEffectName,
-                       .implementor = "The Android Open Source Project"},
-            .capability = Capability::make<Capability::hapticGenerator>(kCapability)};
-
     /* parameters */
     HapticGenerator mSpecificParam;
 };

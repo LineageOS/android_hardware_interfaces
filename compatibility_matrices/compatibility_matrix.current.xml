@@ -31,6 +31,13 @@
         <interface>
             <name>IModule</name>
             <instance>default</instance>
+            <instance>a2dp</instance>
+            <instance>bluetooth</instance>
+            <instance>hearing_aid</instance>
+            <instance>msd</instance>
+            <instance>r_submix</instance>
+            <instance>stub</instance>
+            <instance>usb</instance>
         </interface>
         <interface>
             <name>IConfig</name>
@@ -65,6 +72,14 @@
         <name>android.hardware.automotive.audiocontrol</name>
         <interface>
             <name>IAudioControl</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="aidl" optional="true">
+        <name>android.hardware.automotive.can</name>
+        <version>1</version>
+        <interface>
+            <name>ICanController</name>
             <instance>default</instance>
         </interface>
     </hal>

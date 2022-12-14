@@ -25,6 +25,7 @@
 
 #include "PresetReverbSw.h"
 
+using aidl::android::hardware::audio::effect::Descriptor;
 using aidl::android::hardware::audio::effect::IEffect;
 using aidl::android::hardware::audio::effect::kPresetReverbSwImplUUID;
 using aidl::android::hardware::audio::effect::PresetReverbSw;
@@ -47,22 +48,29 @@ extern "C" binder_exception_t createEffect(const AudioUuid* in_impl_uuid,
     }
 }
 
-extern "C" binder_exception_t destroyEffect(const std::shared_ptr<IEffect>& instanceSp) {
-    if (!instanceSp) {
-        return EX_NONE;
+extern "C" binder_exception_t queryEffect(const AudioUuid* in_impl_uuid, Descriptor* _aidl_return) {
+    if (!in_impl_uuid || *in_impl_uuid != kPresetReverbSwImplUUID) {
+        LOG(ERROR) << __func__ << "uuid not supported";
+        return EX_ILLEGAL_ARGUMENT;
     }
-    State state;
-    ndk::ScopedAStatus status = instanceSp->getState(&state);
-    if (!status.isOk() || State::INIT != state) {
-        LOG(ERROR) << __func__ << " instance " << instanceSp.get()
-                   << " in state: " << toString(state) << ", status: " << status.getDescription();
-        return EX_ILLEGAL_STATE;
-    }
-    LOG(DEBUG) << __func__ << " instance " << instanceSp.get() << " destroyed";
+    *_aidl_return = PresetReverbSw::kDescriptor;
     return EX_NONE;
 }
 
 namespace aidl::android::hardware::audio::effect {
+
+const std::string PresetReverbSw::kEffectName = "PresetReverbSw";
+const PresetReverb::Capability PresetReverbSw::kCapability;
+const Descriptor PresetReverbSw::kDescriptor = {
+        .common = {.id = {.type = kPresetReverbTypeUUID,
+                          .uuid = kPresetReverbSwImplUUID,
+                          .proxy = std::nullopt},
+                   .flags = {.type = Flags::Type::INSERT,
+                             .insert = Flags::Insert::FIRST,
+                             .volume = Flags::Volume::CTRL},
+                   .name = PresetReverbSw::kEffectName,
+                   .implementor = "The Android Open Source Project"},
+        .capability = Capability::make<Capability::presetReverb>(PresetReverbSw::kCapability)};
 
 ndk::ScopedAStatus PresetReverbSw::getDescriptor(Descriptor* _aidl_return) {
     LOG(DEBUG) << __func__ << kDescriptor.toString();
@@ -71,10 +79,10 @@ ndk::ScopedAStatus PresetReverbSw::getDescriptor(Descriptor* _aidl_return) {
 }
 
 ndk::ScopedAStatus PresetReverbSw::setParameterSpecific(const Parameter::Specific& specific) {
-    RETURN_IF(Parameter::Specific::reverb != specific.getTag(), EX_ILLEGAL_ARGUMENT,
+    RETURN_IF(Parameter::Specific::presetReverb != specific.getTag(), EX_ILLEGAL_ARGUMENT,
               "EffectNotSupported");
 
-    mSpecificParam = specific.get<Parameter::Specific::reverb>();
+    mSpecificParam = specific.get<Parameter::Specific::presetReverb>();
     LOG(DEBUG) << __func__ << " success with: " << specific.toString();
     return ndk::ScopedAStatus::ok();
 }
@@ -82,8 +90,8 @@ ndk::ScopedAStatus PresetReverbSw::setParameterSpecific(const Parameter::Specifi
 ndk::ScopedAStatus PresetReverbSw::getParameterSpecific(const Parameter::Id& id,
                                                         Parameter::Specific* specific) {
     auto tag = id.getTag();
-    RETURN_IF(Parameter::Id::reverbTag != tag, EX_ILLEGAL_ARGUMENT, "wrongIdTag");
-    specific->set<Parameter::Specific::reverb>(mSpecificParam);
+    RETURN_IF(Parameter::Id::presetReverbTag != tag, EX_ILLEGAL_ARGUMENT, "wrongIdTag");
+    specific->set<Parameter::Specific::presetReverb>(mSpecificParam);
     return ndk::ScopedAStatus::ok();
 }
 
