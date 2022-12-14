@@ -3317,6 +3317,27 @@ enum VehicleProperty {
     AUTOMATIC_EMERGENCY_BRAKING_ENABLED =
             0x1000 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
 
+    /**
+     * Enable or disable lane centering assist (LCA).
+     *
+     * Set true to enable LCA and false to disable LCA. When LCA is enabled, the ADAS system in the
+     * vehicle should be turned on and waiting for an activation signal from the driver. Once the
+     * feature is activated, the ADAS system should be steering the vehicle to keep it centered in
+     * its current lane.
+     *
+     * This is different from Lane Keep Assist (LKA) which monitors if the driver unintentionally
+     * drifts toward or over the lane marking. If an unintentional lane departure is detected, the
+     * system applies steering control to return the vehicle into the current lane.
+     *
+     * This property is defined as read_write, but OEMs have the option to implement it as read
+     * only.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     */
+    LANE_CENTERING_ASSIST_ENABLED =
+            0x100A + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+
     /***************************************************************************
      * End of ADAS Properties
      **************************************************************************/
