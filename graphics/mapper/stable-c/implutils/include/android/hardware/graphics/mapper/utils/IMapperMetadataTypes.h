@@ -82,7 +82,12 @@ class MetadataWriter {
     explicit MetadataWriter(void* _Nullable destBuffer, size_t destBufferSize)
         : mDest(reinterpret_cast<uint8_t*>(destBuffer)), mSizeRemaining(destBufferSize) {}
 
-    int32_t desiredSize() const { return mDesiredSize; }
+    [[nodiscard]] int32_t desiredSize() const { return mDesiredSize; }
+
+    template <typename HEADER>
+    MetadataWriter& writeHeader() {
+        return write(HEADER::name).template write<int64_t>(HEADER::value);
+    }
 
     template <typename T, typename = std::enable_if_t<std::is_integral_v<T>>>
     MetadataWriter& write(T value) {
@@ -149,6 +154,18 @@ class MetadataReader {
 
     [[nodiscard]] size_t remaining() const { return mSizeRemaining; }
     [[nodiscard]] bool ok() const { return mOk; }
+
+    template <typename HEADER>
+    MetadataReader& checkHeader() {
+        if (HEADER::name != readString()) {
+            mOk = false;
+        }
+        auto value = readInt<int64_t>();
+        if (!value || *value != HEADER::value) {
+            mOk = false;
+        }
+        return *this;
+    }
 
     template <typename T, typename = std::enable_if_t<std::is_integral_v<T>>>
     MetadataReader& read(T& dest) {
@@ -228,27 +245,33 @@ class MetadataReader {
     }
 };
 
-template <typename T, class Enable = void>
+template <typename HEADER, typename T, class Enable = void>
 struct MetadataValue {};
 
-template <typename T>
-struct MetadataValue<T, std::enable_if_t<std::is_integral_v<T>>> {
+template <typename HEADER, typename T>
+struct MetadataValue<HEADER, T, std::enable_if_t<std::is_integral_v<T>>> {
     [[nodiscard]] static int32_t encode(T value, void* _Nullable destBuffer,
                                         size_t destBufferSize) {
-        return MetadataWriter{destBuffer, destBufferSize}.write(value).desiredSize();
+        return MetadataWriter{destBuffer, destBufferSize}
+                .template writeHeader<HEADER>()
+                .write(value)
+                .desiredSize();
     }
 
     [[nodiscard]] static std::optional<T> decode(const void* _Nonnull metadata,
                                                  size_t metadataSize) {
-        return MetadataReader{metadata, metadataSize}.readInt<T>();
+        return MetadataReader{metadata, metadataSize}
+                .template checkHeader<HEADER>()
+                .template readInt<T>();
     }
 };
 
-template <typename T>
-struct MetadataValue<T, std::enable_if_t<std::is_enum_v<T>>> {
+template <typename HEADER, typename T>
+struct MetadataValue<HEADER, T, std::enable_if_t<std::is_enum_v<T>>> {
     [[nodiscard]] static int32_t encode(T value, void* _Nullable destBuffer,
                                         size_t destBufferSize) {
         return MetadataWriter{destBuffer, destBufferSize}
+                .template writeHeader<HEADER>()
                 .write(static_cast<std::underlying_type_t<T>>(value))
                 .desiredSize();
     }
@@ -256,47 +279,56 @@ struct MetadataValue<T, std::enable_if_t<std::is_enum_v<T>>> {
     [[nodiscard]] static std::optional<T> decode(const void* _Nonnull metadata,
                                                  size_t metadataSize) {
         std::underlying_type_t<T> temp;
-        return MetadataReader{metadata, metadataSize}.read(temp).ok()
+        return MetadataReader{metadata, metadataSize}.template checkHeader<HEADER>().read(temp).ok()
                        ? std::optional<T>(static_cast<T>(temp))
                        : std::nullopt;
     }
 };
 
-template <>
-struct MetadataValue<std::string> {
+template <typename HEADER>
+struct MetadataValue<HEADER, std::string> {
     [[nodiscard]] static int32_t encode(const std::string_view& value, void* _Nullable destBuffer,
                                         size_t destBufferSize) {
-        return MetadataWriter{destBuffer, destBufferSize}.write(value).desiredSize();
+        return MetadataWriter{destBuffer, destBufferSize}
+                .template writeHeader<HEADER>()
+                .write(value)
+                .desiredSize();
     }
 
     [[nodiscard]] static std::optional<std::string> decode(const void* _Nonnull metadata,
                                                            size_t metadataSize) {
-        auto reader = MetadataReader{metadata, metadataSize};
+        auto reader = MetadataReader{metadata, metadataSize}.template checkHeader<HEADER>();
         auto result = reader.readString();
         return reader.ok() ? std::optional<std::string>{result} : std::nullopt;
     }
 };
 
-template <>
-struct MetadataValue<ExtendableType> {
+template <typename HEADER>
+struct MetadataValue<HEADER, ExtendableType> {
     static_assert(sizeof(int64_t) == sizeof(ExtendableType::value));
 
     [[nodiscard]] static int32_t encode(const ExtendableType& value, void* _Nullable destBuffer,
                                         size_t destBufferSize) {
-        return MetadataWriter{destBuffer, destBufferSize}.write(value).desiredSize();
+        return MetadataWriter{destBuffer, destBufferSize}
+                .template writeHeader<HEADER>()
+                .write(value)
+                .desiredSize();
     }
 
     [[nodiscard]] static std::optional<ExtendableType> decode(const void* _Nonnull metadata,
                                                               size_t metadataSize) {
-        return MetadataReader{metadata, metadataSize}.readExtendable();
+        return MetadataReader{metadata, metadataSize}
+                .template checkHeader<HEADER>()
+                .readExtendable();
     }
 };
 
-template <>
-struct MetadataValue<std::vector<PlaneLayout>> {
+template <typename HEADER>
+struct MetadataValue<HEADER, std::vector<PlaneLayout>> {
     [[nodiscard]] static int32_t encode(const std::vector<PlaneLayout>& values,
                                         void* _Nullable destBuffer, size_t destBufferSize) {
         MetadataWriter writer{destBuffer, destBufferSize};
+        writer.template writeHeader<HEADER>();
         writer.write<int64_t>(values.size());
         for (const auto& value : values) {
             writer.write<int64_t>(value.components.size());
@@ -321,13 +353,14 @@ struct MetadataValue<std::vector<PlaneLayout>> {
     [[nodiscard]] static DecodeResult decode(const void* _Nonnull metadata, size_t metadataSize) {
         std::vector<PlaneLayout> values;
         MetadataReader reader{metadata, metadataSize};
+        reader.template checkHeader<HEADER>();
         auto numPlanes = reader.readInt<int64_t>().value_or(0);
         values.reserve(numPlanes);
         for (int i = 0; i < numPlanes && reader.ok(); i++) {
             PlaneLayout& value = values.emplace_back();
             auto numPlaneComponents = reader.readInt<int64_t>().value_or(0);
             value.components.reserve(numPlaneComponents);
-            for (int i = 0; i < numPlaneComponents && reader.ok(); i++) {
+            for (int j = 0; j < numPlaneComponents && reader.ok(); j++) {
                 PlaneLayoutComponent& component = value.components.emplace_back();
                 reader.read(component.type)
                         .read<int64_t>(component.offsetInBits)
@@ -346,11 +379,12 @@ struct MetadataValue<std::vector<PlaneLayout>> {
     }
 };
 
-template <>
-struct MetadataValue<std::vector<Rect>> {
+template <typename HEADER>
+struct MetadataValue<HEADER, std::vector<Rect>> {
     [[nodiscard]] static int32_t encode(const std::vector<Rect>& value, void* _Nullable destBuffer,
                                         size_t destBufferSize) {
         MetadataWriter writer{destBuffer, destBufferSize};
+        writer.template writeHeader<HEADER>();
         writer.write<int64_t>(value.size());
         for (auto& rect : value) {
             writer.write<int32_t>(rect.left)
@@ -364,6 +398,7 @@ struct MetadataValue<std::vector<Rect>> {
     using DecodeResult = std::optional<std::vector<Rect>>;
     [[nodiscard]] static DecodeResult decode(const void* _Nonnull metadata, size_t metadataSize) {
         MetadataReader reader{metadata, metadataSize};
+        reader.template checkHeader<HEADER>();
         std::vector<Rect> value;
         auto numRects = reader.readInt<int64_t>().value_or(0);
         value.reserve(numRects);
@@ -378,13 +413,14 @@ struct MetadataValue<std::vector<Rect>> {
     }
 };
 
-template <>
-struct MetadataValue<std::optional<Smpte2086>> {
+template <typename HEADER>
+struct MetadataValue<HEADER, std::optional<Smpte2086>> {
     [[nodiscard]] static int32_t encode(const std::optional<Smpte2086>& optValue,
                                         void* _Nullable destBuffer, size_t destBufferSize) {
         if (optValue.has_value()) {
             const auto& value = *optValue;
             return MetadataWriter{destBuffer, destBufferSize}
+                    .template writeHeader<HEADER>()
                     .write(value.primaryRed)
                     .write(value.primaryGreen)
                     .write(value.primaryBlue)
@@ -404,6 +440,7 @@ struct MetadataValue<std::optional<Smpte2086>> {
         if (metadataSize > 0) {
             Smpte2086 value;
             MetadataReader reader{metadata, metadataSize};
+            reader.template checkHeader<HEADER>();
             reader.read(value.primaryRed)
                     .read(value.primaryGreen)
                     .read(value.primaryBlue)
@@ -420,13 +457,14 @@ struct MetadataValue<std::optional<Smpte2086>> {
     }
 };
 
-template <>
-struct MetadataValue<std::optional<Cta861_3>> {
+template <typename HEADER>
+struct MetadataValue<HEADER, std::optional<Cta861_3>> {
     [[nodiscard]] static int32_t encode(const std::optional<Cta861_3>& optValue,
                                         void* _Nullable destBuffer, size_t destBufferSize) {
         if (optValue.has_value()) {
             const auto& value = *optValue;
             return MetadataWriter{destBuffer, destBufferSize}
+                    .template writeHeader<HEADER>()
                     .write(value.maxContentLightLevel)
                     .write(value.maxFrameAverageLightLevel)
                     .desiredSize();
@@ -441,6 +479,7 @@ struct MetadataValue<std::optional<Cta861_3>> {
         std::optional<Cta861_3> optValue{std::nullopt};
         if (metadataSize > 0) {
             MetadataReader reader{metadata, metadataSize};
+            reader.template checkHeader<HEADER>();
             Cta861_3 value;
             reader.read(value.maxContentLightLevel).read(value.maxFrameAverageLightLevel);
             if (reader.ok()) {
@@ -453,14 +492,17 @@ struct MetadataValue<std::optional<Cta861_3>> {
     }
 };
 
-template <>
-struct MetadataValue<std::optional<std::vector<uint8_t>>> {
+template <typename HEADER>
+struct MetadataValue<HEADER, std::optional<std::vector<uint8_t>>> {
     [[nodiscard]] static int32_t encode(const std::optional<std::vector<uint8_t>>& value,
                                         void* _Nullable destBuffer, size_t destBufferSize) {
         if (!value.has_value()) {
             return 0;
         }
-        return MetadataWriter{destBuffer, destBufferSize}.write(*value).desiredSize();
+        return MetadataWriter{destBuffer, destBufferSize}
+                .template writeHeader<HEADER>()
+                .write(*value)
+                .desiredSize();
     }
 
     using DecodeResult = std::optional<std::optional<std::vector<uint8_t>>>;
@@ -468,6 +510,7 @@ struct MetadataValue<std::optional<std::vector<uint8_t>>> {
         std::optional<std::vector<uint8_t>> optValue;
         if (metadataSize > 0) {
             MetadataReader reader{metadata, metadataSize};
+            reader.template checkHeader<HEADER>();
             auto value = reader.readBuffer();
             if (reader.ok()) {
                 optValue = std::move(value);
@@ -482,16 +525,20 @@ struct MetadataValue<std::optional<std::vector<uint8_t>>> {
 template <StandardMetadataType>
 struct StandardMetadata {};
 
-#define DEFINE_TYPE(name, typeArg)                                                            \
-    template <>                                                                               \
-    struct StandardMetadata<StandardMetadataType::name> {                                     \
-        using value_type = typeArg;                                                           \
-        using value = MetadataValue<value_type>;                                              \
-        static_assert(                                                                        \
-                StandardMetadataType::name ==                                                 \
-                        ndk::internal::enum_values<StandardMetadataType>[static_cast<size_t>( \
-                                StandardMetadataType::name)],                                 \
-                "StandardMetadataType must have equivalent value to index");                  \
+#define DEFINE_TYPE(typeName, typeArg)                                                            \
+    template <>                                                                                   \
+    struct StandardMetadata<StandardMetadataType::typeName> {                                     \
+        using value_type = typeArg;                                                               \
+        struct Header {                                                                           \
+            static constexpr auto name = "android.hardware.graphics.common.StandardMetadataType"; \
+            static constexpr auto value = static_cast<int64_t>(StandardMetadataType::typeName);   \
+        };                                                                                        \
+        using value = MetadataValue<Header, value_type>;                                          \
+        static_assert(                                                                            \
+                StandardMetadataType::typeName ==                                                 \
+                        ndk::internal::enum_values<StandardMetadataType>[static_cast<size_t>(     \
+                                StandardMetadataType::typeName)],                                 \
+                "StandardMetadataType must have equivalent value to index");                      \
     }
 
 DEFINE_TYPE(BUFFER_ID, uint64_t);
