@@ -2902,6 +2902,14 @@
             }
         },
         {
+            "property": "VehicleProperty::DRIVER_ATTENTION_MONITORING_ENABLED",
+            "defaultValue": {
+                "int32Values": [
+                    1
+                ]
+            }
+        },
+        {
             "property": "VehicleProperty::INITIAL_USER_INFO"
         },
         {

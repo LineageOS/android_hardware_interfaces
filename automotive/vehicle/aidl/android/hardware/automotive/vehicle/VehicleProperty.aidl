@@ -3500,6 +3500,23 @@ enum VehicleProperty {
     HANDS_ON_DETECTION_ENABLED =
             0x1015 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
 
+    /**
+     * Enable or disable driver attention monitoring.
+     *
+     * Set true to enable driver attention monitoring and false to disable driver attention
+     * monitoring. When driver attention monitoring is enabled, a system inside the vehicle should
+     * be monitoring the attention level of the driver and should send a warning if it detects that
+     * the driver is distracted.
+     *
+     * This property is defined as read_write, but OEMs have the option to implement it as read
+     * only.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     */
+    DRIVER_ATTENTION_MONITORING_ENABLED =
+            0x1018 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+
     /***************************************************************************
      * End of ADAS Properties
      **************************************************************************/
