@@ -1027,7 +1027,7 @@ TEST_P(NewKeyGenerationTest, Rsa) {
  * without providing NOT_BEFORE and NOT_AFTER parameters.
  */
 TEST_P(NewKeyGenerationTest, RsaWithMissingValidity) {
-    if (AidlVersion() < 2) {
+    if (AidlVersion() < 3) {
         /*
          * The KeyMint V1 spec required that CERTIFICATE_NOT_{BEFORE,AFTER} be
          * specified for asymmetric key generation. However, this was not
@@ -1130,16 +1130,16 @@ TEST_P(NewKeyGenerationTest, RsaWithAttestation) {
 }
 
 /*
- * NewKeyGenerationTest.RsaWithRpkAttestation
+ * NewKeyGenerationTest.RsaWithRkpAttestation
  *
- * Verifies that keymint can generate all required RSA key sizes, using an attestation key
+ * Verifies that keymint can generate all required RSA key sizes using an attestation key
  * that has been generated using an associate IRemotelyProvisionedComponent.
- *
- * This test is disabled because the KeyMint specification does not require that implementations
- * of the first version of KeyMint have to also implement IRemotelyProvisionedComponent.
- * However, the test is kept in the code because KeyMint v2 will impose this requirement.
  */
-TEST_P(NewKeyGenerationTest, DISABLED_RsaWithRpkAttestation) {
+TEST_P(NewKeyGenerationTest, RsaWithRkpAttestation) {
+    if (AidlVersion() < 2) {
+        GTEST_SKIP() << "Only required starting with KeyMint v2";
+    }
+
     // There should be an IRemotelyProvisionedComponent instance associated with the KeyMint
     // instance.
     std::shared_ptr<IRemotelyProvisionedComponent> rp;
@@ -1187,6 +1187,81 @@ TEST_P(NewKeyGenerationTest, DISABLED_RsaWithRpkAttestation) {
         EXPECT_TRUE(crypto_params.Contains(TAG_KEY_SIZE, key_size))
                 << "Key size " << key_size << "missing";
         EXPECT_TRUE(crypto_params.Contains(TAG_RSA_PUBLIC_EXPONENT, 65537U));
+
+        // Attestation by itself is not valid (last entry is not self-signed).
+        EXPECT_FALSE(ChainSignaturesAreValid(cert_chain_));
+
+        // The signature over the attested key should correspond to the P256 public key.
+        ASSERT_GT(cert_chain_.size(), 0);
+        X509_Ptr key_cert(parse_cert_blob(cert_chain_[0].encodedCertificate));
+        ASSERT_TRUE(key_cert.get());
+        EVP_PKEY_Ptr signing_pubkey;
+        p256_pub_key(coseKeyData, &signing_pubkey);
+        ASSERT_TRUE(signing_pubkey.get());
+
+        ASSERT_TRUE(X509_verify(key_cert.get(), signing_pubkey.get()))
+                << "Verification of attested certificate failed "
+                << "OpenSSL error string: " << ERR_error_string(ERR_get_error(), NULL);
+
+        CheckedDeleteKey(&key_blob);
+    }
+}
+
+/*
+ * NewKeyGenerationTest.EcdsaWithRkpAttestation
+ *
+ * Verifies that keymint can generate all required ECDSA key sizes using an attestation key
+ * that has been generated using an associate IRemotelyProvisionedComponent.
+ */
+TEST_P(NewKeyGenerationTest, EcdsaWithRkpAttestation) {
+    if (AidlVersion() < 2) {
+        GTEST_SKIP() << "Only required starting with KeyMint v2";
+    }
+
+    // There should be an IRemotelyProvisionedComponent instance associated with the KeyMint
+    // instance.
+    std::shared_ptr<IRemotelyProvisionedComponent> rp;
+    ASSERT_TRUE(matching_rp_instance(GetParam(), &rp))
+            << "No IRemotelyProvisionedComponent found that matches KeyMint device " << GetParam();
+
+    // Generate a P-256 keypair to use as an attestation key.
+    MacedPublicKey macedPubKey;
+    std::vector<uint8_t> privateKeyBlob;
+    auto status =
+            rp->generateEcdsaP256KeyPair(/* testMode= */ false, &macedPubKey, &privateKeyBlob);
+    ASSERT_TRUE(status.isOk());
+    vector<uint8_t> coseKeyData;
+    check_maced_pubkey(macedPubKey, /* testMode= */ false, &coseKeyData);
+
+    AttestationKey attestation_key;
+    attestation_key.keyBlob = std::move(privateKeyBlob);
+    attestation_key.issuerSubjectName = make_name_from_str("Android Keystore Key");
+
+    for (auto curve : ValidCurves()) {
+        SCOPED_TRACE(testing::Message() << "Curve::" << curve);
+        auto challenge = "hello";
+        auto app_id = "foo";
+
+        vector<uint8_t> key_blob;
+        vector<KeyCharacteristics> key_characteristics;
+        ASSERT_EQ(ErrorCode::OK,
+                  GenerateKey(AuthorizationSetBuilder()
+                                      .EcdsaSigningKey(curve)
+                                      .Digest(Digest::NONE)
+                                      .AttestationChallenge(challenge)
+                                      .AttestationApplicationId(app_id)
+                                      .Authorization(TAG_NO_AUTH_REQUIRED)
+                                      .SetDefaultValidity(),
+                              attestation_key, &key_blob, &key_characteristics, &cert_chain_));
+
+        ASSERT_GT(key_blob.size(), 0U);
+        CheckBaseParams(key_characteristics);
+        CheckCharacteristics(key_blob, key_characteristics);
+
+        AuthorizationSet crypto_params = SecLevelAuthorizations(key_characteristics);
+
+        EXPECT_TRUE(crypto_params.Contains(TAG_ALGORITHM, Algorithm::EC));
+        EXPECT_TRUE(crypto_params.Contains(TAG_EC_CURVE, curve)) << "Curve " << curve << "missing";
 
         // Attestation by itself is not valid (last entry is not self-signed).
         EXPECT_FALSE(ChainSignaturesAreValid(cert_chain_));

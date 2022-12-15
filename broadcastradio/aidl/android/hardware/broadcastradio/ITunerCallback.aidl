@@ -36,6 +36,7 @@ oneway interface ITunerCallback {
      * @param result {@link Result#TIMEOUT} in case that tune(), seek() or
      *               step() is not completed within
      *               @link IBroadcastRadio#TUNER_TIMEOUT_MS}
+     *               or {@link Result#CANCELED} if the command was canceled.
      * @param selector A ProgramSelector structure passed from tune() call;
      *                 empty for step() and seek().
      */

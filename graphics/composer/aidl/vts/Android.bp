@@ -28,8 +28,7 @@ cc_test {
     defaults: [
         "VtsHalTargetTestDefaults",
         "use_libaidlvintf_gtest_helper_static",
-        // Needed for librenderengine
-        "skia_deps",
+        "librenderengine_deps",
         "android.hardware.graphics.common-ndk_static",
         "android.hardware.graphics.composer3-ndk_static",
     ],

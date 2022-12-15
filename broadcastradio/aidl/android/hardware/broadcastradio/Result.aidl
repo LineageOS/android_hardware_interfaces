@@ -55,6 +55,12 @@ enum Result {
     TIMEOUT,
 
     /**
+     * Error used when a tune, seek, step or operation is canceled before
+     * being processed.
+     */
+    CANCELED,
+
+    /**
      * Error that does not follow into the error categories above.
      */
     UNKNOWN_ERROR,
