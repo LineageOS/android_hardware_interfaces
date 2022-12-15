@@ -3318,6 +3318,21 @@ enum VehicleProperty {
             0x1000 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
 
     /**
+     * Enable or disable forward collision warning (FCW).
+     *
+     * Set true to enable FCW and false to disable FCW. When FCW is enabled, the ADAS system in the
+     * vehicle should be turned on and monitoring for potential collisions.
+     *
+     * This property is defined as read_write, but OEMs have the option to implement it as read
+     * only.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     */
+    FORWARD_COLLISION_WARNING_ENABLED =
+            0x1002 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+
+    /**
      * Enable or disable lane centering assist (LCA).
      *
      * Set true to enable LCA and false to disable LCA. When LCA is enabled, the ADAS system in the

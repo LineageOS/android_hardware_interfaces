@@ -224,6 +224,7 @@ public final class AccessForVehicleProperty {
         Map.entry(VehicleProperty.SUPPORTED_PROPERTY_IDS, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.SHUTDOWN_REQUEST, VehiclePropertyAccess.WRITE),
         Map.entry(VehicleProperty.AUTOMATIC_EMERGENCY_BRAKING_ENABLED, VehiclePropertyAccess.READ_WRITE),
+        Map.entry(VehicleProperty.FORWARD_COLLISION_WARNING_ENABLED, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.LANE_CENTERING_ASSIST_ENABLED, VehiclePropertyAccess.READ_WRITE)
     );
 
