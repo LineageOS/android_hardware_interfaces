@@ -18,13 +18,17 @@ package android.hardware.graphics.allocator;
 
 import android.hardware.common.NativeHandle;
 
- /**
+/**
  * Result of an IAllocator::allocate call.
  *
  * @sa +ndk libnativewindow#AHardwareBuffer_Desc
  */
 @VintfStability
 parcelable AllocationResult {
+    /**
+     * The number of pixels between two consecutive rows of an allocated buffer, when the concept
+     * of consecutive rows is defined. Otherwise, it has no meaning.
+     */
     int stride;
     NativeHandle[] buffers;
 }
