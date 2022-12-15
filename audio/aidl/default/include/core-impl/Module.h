@@ -124,6 +124,7 @@ class Module : public BnModule {
     bool mMasterMute = false;
     float mMasterVolume = 1.0f;
     bool mMicMute = false;
+    std::shared_ptr<ISoundDose> mSoundDose;
 };
 
 }  // namespace aidl::android::hardware::audio::core
