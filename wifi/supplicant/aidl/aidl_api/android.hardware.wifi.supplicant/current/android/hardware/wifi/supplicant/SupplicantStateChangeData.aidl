@@ -31,15 +31,14 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.broadcastradio;
-@Backing(type="int") @VintfStability
-enum Result {
-  OK = 0,
-  INTERNAL_ERROR = 1,
-  INVALID_ARGUMENTS = 2,
-  INVALID_STATE = 3,
-  NOT_SUPPORTED = 4,
-  TIMEOUT = 5,
-  CANCELED = 6,
-  UNKNOWN_ERROR = 7,
+package android.hardware.wifi.supplicant;
+@VintfStability
+parcelable SupplicantStateChangeData {
+  android.hardware.wifi.supplicant.StaIfaceCallbackState newState;
+  int id;
+  byte[] ssid;
+  byte[] bssid;
+  android.hardware.wifi.supplicant.KeyMgmtMask keyMgmtMask;
+  int frequencyMhz;
+  boolean filsHlpSent;
 }
