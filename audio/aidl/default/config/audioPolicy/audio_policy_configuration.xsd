@@ -181,6 +181,7 @@
             <xs:enumeration value="AUDIO_OUTPUT_FLAG_GAPLESS_OFFLOAD" />
             <xs:enumeration value="AUDIO_OUTPUT_FLAG_SPATIALIZER" />
             <xs:enumeration value="AUDIO_OUTPUT_FLAG_ULTRASOUND" />
+            <xs:enumeration value="AUDIO_OUTPUT_FLAG_BIT_PERFECT" />
             <xs:enumeration value="AUDIO_INPUT_FLAG_FAST" />
             <xs:enumeration value="AUDIO_INPUT_FLAG_HW_HOTWORD" />
             <xs:enumeration value="AUDIO_INPUT_FLAG_RAW" />

@@ -281,6 +281,7 @@ package android.audio.policy.configuration {
     enum_constant public static final android.audio.policy.configuration.AudioInOutFlag AUDIO_INPUT_FLAG_SYNC;
     enum_constant public static final android.audio.policy.configuration.AudioInOutFlag AUDIO_INPUT_FLAG_ULTRASOUND;
     enum_constant public static final android.audio.policy.configuration.AudioInOutFlag AUDIO_INPUT_FLAG_VOIP_TX;
+    enum_constant public static final android.audio.policy.configuration.AudioInOutFlag AUDIO_OUTPUT_FLAG_BIT_PERFECT;
     enum_constant public static final android.audio.policy.configuration.AudioInOutFlag AUDIO_OUTPUT_FLAG_COMPRESS_OFFLOAD;
     enum_constant public static final android.audio.policy.configuration.AudioInOutFlag AUDIO_OUTPUT_FLAG_DEEP_BUFFER;
     enum_constant public static final android.audio.policy.configuration.AudioInOutFlag AUDIO_OUTPUT_FLAG_DIRECT;
