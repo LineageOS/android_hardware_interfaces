@@ -241,6 +241,7 @@ std::unordered_map<VehicleProperty, VehiclePropertyAccess> AccessForVehiclePrope
         {VehicleProperty::LANE_CENTERING_ASSIST_ENABLED, VehiclePropertyAccess::READ_WRITE},
         {VehicleProperty::EMERGENCY_LANE_KEEP_ASSIST_ENABLED, VehiclePropertyAccess::READ_WRITE},
         {VehicleProperty::ADAPTIVE_CRUISE_CONTROL_ENABLED, VehiclePropertyAccess::READ_WRITE},
+        {VehicleProperty::HANDS_ON_DETECTION_ENABLED, VehiclePropertyAccess::READ_WRITE},
 };
 
 }  // namespace vehicle
