@@ -147,6 +147,7 @@ public final class ChangeModeForVehicleProperty {
         Map.entry(VehicleProperty.SEAT_LUMBAR_SIDE_SUPPORT_POS, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.SEAT_LUMBAR_SIDE_SUPPORT_MOVE, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.SEAT_HEADREST_HEIGHT_POS, VehiclePropertyChangeMode.ON_CHANGE),
+        Map.entry(VehicleProperty.SEAT_HEADREST_HEIGHT_POS_V2, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.SEAT_HEADREST_HEIGHT_MOVE, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.SEAT_HEADREST_ANGLE_POS, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.SEAT_HEADREST_ANGLE_MOVE, VehiclePropertyChangeMode.ON_CHANGE),
