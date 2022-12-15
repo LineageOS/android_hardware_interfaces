@@ -509,11 +509,12 @@ typedef struct AIMapperV5 {
      * particular Metadata field.
      *
      * The framework will attempt to set the following StandardMetadataType
-     * values: DATASPACE, SMPTE2086, CTA861_3, SMPTE2094_40 and BLEND_MODE.
-     * We require everyone to support setting those fields. If a device's Composer
-     * implementation supports a field, it should be supported here. Over time these
-     * metadata fields will be moved out of Composer/BufferQueue/etc. and into the
-     * buffer's Metadata fields.
+     * values: DATASPACE, SMPTE2086, CTA861_3, and BLEND_MODE.
+     * We require everyone to support setting those fields. Framework will also attempt to set
+     * SMPTE2094_40 and SMPTE2094_10 if available, and it is required to support setting those
+     * if it is possible to get them. If a device's Composer implementation supports a field,
+     * it should be supported here. Over time these metadata fields will be moved out of
+     * Composer/BufferQueue/etc. and into the buffer's Metadata fields.
      *
      * @param buffer Buffer receiving desired metadata
      * @param metadataType MetadataType for the metadata value being set
@@ -546,11 +547,12 @@ typedef struct AIMapperV5 {
      * particular Metadata field.
      *
      * The framework will attempt to set the following StandardMetadataType
-     * values: DATASPACE, SMPTE2086, CTA861_3, SMPTE2094_40 and BLEND_MODE.
-     * We require everyone to support setting those fields. If a device's Composer
-     * implementation supports a field, it should be supported here. Over time these
-     * metadata fields will be moved out of Composer/BufferQueue/etc. and into the
-     * buffer's Metadata fields.
+     * values: DATASPACE, SMPTE2086, CTA861_3, and BLEND_MODE.
+     * We require everyone to support setting those fields. Framework will also attempt to set
+     * SMPTE2094_40 and SMPTE2094_10 if available, and it is required to support setting those
+     * if it is possible to get them. If a device's Composer implementation supports a field,
+     * it should be supported here. Over time these metadata fields will be moved out of
+     * Composer/BufferQueue/etc. and into the buffer's Metadata fields.
      *
      * @param buffer Buffer receiving desired metadata
      * @param standardMetadataType StandardMetadataType for the metadata value being set
