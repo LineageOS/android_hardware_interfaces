@@ -16,6 +16,7 @@
 
 #define LOG_TAG "AHAL_Stream"
 #include <android-base/logging.h>
+#include <android/binder_ibinder_platform.h>
 #include <utils/SystemClock.h>
 
 #include <Utils.h>
@@ -486,7 +487,7 @@ bool StreamOutWorkerLogic::write(size_t clientSize, StreamDescriptor::Reply* rep
 }
 
 template <class Metadata, class StreamWorker>
-StreamCommon<Metadata, StreamWorker>::~StreamCommon() {
+StreamCommonImpl<Metadata, StreamWorker>::~StreamCommonImpl() {
     if (!isClosed()) {
         LOG(ERROR) << __func__ << ": stream was not closed prior to destruction, resource leak";
         stopWorker();
@@ -495,7 +496,52 @@ StreamCommon<Metadata, StreamWorker>::~StreamCommon() {
 }
 
 template <class Metadata, class StreamWorker>
-ndk::ScopedAStatus StreamCommon<Metadata, StreamWorker>::close() {
+void StreamCommonImpl<Metadata, StreamWorker>::createStreamCommon(
+        const std::shared_ptr<StreamCommonInterface>& delegate) {
+    if (mCommon != nullptr) {
+        LOG(FATAL) << __func__ << ": attempting to create the common interface twice";
+    }
+    mCommon = ndk::SharedRefBase::make<StreamCommon>(delegate);
+    mCommonBinder = mCommon->asBinder();
+    AIBinder_setMinSchedulerPolicy(mCommonBinder.get(), SCHED_NORMAL, ANDROID_PRIORITY_AUDIO);
+}
+
+template <class Metadata, class StreamWorker>
+ndk::ScopedAStatus StreamCommonImpl<Metadata, StreamWorker>::getStreamCommon(
+        std::shared_ptr<IStreamCommon>* _aidl_return) {
+    if (mCommon == nullptr) {
+        LOG(FATAL) << __func__ << ": the common interface was not created";
+    }
+    *_aidl_return = mCommon;
+    LOG(DEBUG) << __func__ << ": returning " << _aidl_return->get()->asBinder().get();
+    return ndk::ScopedAStatus::ok();
+}
+
+template <class Metadata, class StreamWorker>
+ndk::ScopedAStatus StreamCommonImpl<Metadata, StreamWorker>::updateHwAvSyncId(
+        int32_t in_hwAvSyncId) {
+    LOG(DEBUG) << __func__ << ": id " << in_hwAvSyncId;
+    return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+}
+
+template <class Metadata, class StreamWorker>
+ndk::ScopedAStatus StreamCommonImpl<Metadata, StreamWorker>::getVendorParameters(
+        const std::vector<std::string>& in_ids, std::vector<VendorParameter>* _aidl_return) {
+    LOG(DEBUG) << __func__ << ": id count: " << in_ids.size();
+    (void)_aidl_return;
+    return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+}
+
+template <class Metadata, class StreamWorker>
+ndk::ScopedAStatus StreamCommonImpl<Metadata, StreamWorker>::setVendorParameters(
+        const std::vector<VendorParameter>& in_parameters, bool in_async) {
+    LOG(DEBUG) << __func__ << ": parameters count " << in_parameters.size()
+               << ", async: " << in_async;
+    return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+}
+
+template <class Metadata, class StreamWorker>
+ndk::ScopedAStatus StreamCommonImpl<Metadata, StreamWorker>::close() {
     LOG(DEBUG) << __func__;
     if (!isClosed()) {
         stopWorker();
@@ -512,7 +558,7 @@ ndk::ScopedAStatus StreamCommon<Metadata, StreamWorker>::close() {
 }
 
 template <class Metadata, class StreamWorker>
-void StreamCommon<Metadata, StreamWorker>::stopWorker() {
+void StreamCommonImpl<Metadata, StreamWorker>::stopWorker() {
     if (auto commandMQ = mContext.getCommandMQ(); commandMQ != nullptr) {
         LOG(DEBUG) << __func__ << ": asking the worker to exit...";
         auto cmd = StreamDescriptor::Command::make<StreamDescriptor::Command::Tag::halReservedExit>(
@@ -529,7 +575,8 @@ void StreamCommon<Metadata, StreamWorker>::stopWorker() {
 }
 
 template <class Metadata, class StreamWorker>
-ndk::ScopedAStatus StreamCommon<Metadata, StreamWorker>::updateMetadata(const Metadata& metadata) {
+ndk::ScopedAStatus StreamCommonImpl<Metadata, StreamWorker>::updateMetadata(
+        const Metadata& metadata) {
     LOG(DEBUG) << __func__;
     if (!isClosed()) {
         mMetadata = metadata;
@@ -537,6 +584,20 @@ ndk::ScopedAStatus StreamCommon<Metadata, StreamWorker>::updateMetadata(const Me
     }
     LOG(ERROR) << __func__ << ": stream was closed";
     return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
+}
+
+// static
+ndk::ScopedAStatus StreamIn::createInstance(const common::SinkMetadata& sinkMetadata,
+                                            StreamContext context,
+                                            const std::vector<MicrophoneInfo>& microphones,
+                                            std::shared_ptr<StreamIn>* result) {
+    auto stream = ndk::SharedRefBase::make<StreamIn>(sinkMetadata, std::move(context), microphones);
+    if (auto status = stream->init(); !status.isOk()) {
+        return status;
+    }
+    stream->createStreamCommon(stream);
+    *result = std::move(stream);
+    return ndk::ScopedAStatus::ok();
 }
 
 namespace {
@@ -549,9 +610,9 @@ static std::map<AudioDevice, std::string> transformMicrophones(
 }
 }  // namespace
 
-StreamIn::StreamIn(const SinkMetadata& sinkMetadata, StreamContext context,
+StreamIn::StreamIn(const SinkMetadata& sinkMetadata, StreamContext&& context,
                    const std::vector<MicrophoneInfo>& microphones)
-    : StreamCommon<SinkMetadata, StreamInWorker>(sinkMetadata, std::move(context)),
+    : StreamCommonImpl<SinkMetadata, StreamInWorker>(sinkMetadata, std::move(context)),
       mMicrophones(transformMicrophones(microphones)) {
     LOG(DEBUG) << __func__;
 }
@@ -597,9 +658,24 @@ ndk::ScopedAStatus StreamIn::setMicrophoneFieldDimension(float in_zoom) {
     return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
 }
 
-StreamOut::StreamOut(const SourceMetadata& sourceMetadata, StreamContext context,
+// static
+ndk::ScopedAStatus StreamOut::createInstance(const SourceMetadata& sourceMetadata,
+                                             StreamContext context,
+                                             const std::optional<AudioOffloadInfo>& offloadInfo,
+                                             std::shared_ptr<StreamOut>* result) {
+    auto stream =
+            ndk::SharedRefBase::make<StreamOut>(sourceMetadata, std::move(context), offloadInfo);
+    if (auto status = stream->init(); !status.isOk()) {
+        return status;
+    }
+    stream->createStreamCommon(stream);
+    *result = std::move(stream);
+    return ndk::ScopedAStatus::ok();
+}
+
+StreamOut::StreamOut(const SourceMetadata& sourceMetadata, StreamContext&& context,
                      const std::optional<AudioOffloadInfo>& offloadInfo)
-    : StreamCommon<SourceMetadata, StreamOutWorker>(sourceMetadata, std::move(context)),
+    : StreamCommonImpl<SourceMetadata, StreamOutWorker>(sourceMetadata, std::move(context)),
       mOffloadInfo(offloadInfo) {
     LOG(DEBUG) << __func__;
 }

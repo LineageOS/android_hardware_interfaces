@@ -29,6 +29,7 @@ import android.hardware.audio.core.ITelephony;
 import android.hardware.audio.core.MicrophoneInfo;
 import android.hardware.audio.core.ModuleDebug;
 import android.hardware.audio.core.StreamDescriptor;
+import android.hardware.audio.core.VendorParameter;
 import android.media.audio.common.AudioOffloadInfo;
 import android.media.audio.common.AudioPort;
 import android.media.audio.common.AudioPortConfig;
@@ -684,4 +685,47 @@ interface IModule {
      * @throws EX_ILLEGAL_STATE If there was an error creating an instance.
      */
     @nullable ISoundDose getSoundDose();
+
+    /**
+     * Generate a HW AV Sync identifier for a new audio session.
+     *
+     * Creates a new unique identifier which can be further used by the client
+     * for tagging input / output streams that belong to the same audio
+     * session and thus must use the same HW AV Sync timestamps sequence.
+     *
+     * HW AV Sync timestamps are used for "tunneled" I/O modes and thus
+     * are not mandatory.
+     *
+     * @throws EX_ILLEGAL_STATE If the identifier can not be provided at the moment.
+     * @throws EX_UNSUPPORTED_OPERATION If synchronization with HW AV Sync markers
+     *                                  is not supported.
+     */
+    int generateHwAvSyncId();
+
+    /**
+     * Get current values of vendor parameters.
+     *
+     * Return current values for the parameters corresponding to the provided ids.
+     *
+     * @param ids Ids of the parameters to retrieve values of.
+     * @return Current values of parameters, one per each id.
+     * @throws EX_ILLEGAL_ARGUMENT If the module does not recognize provided ids.
+     * @throws EX_ILLEGAL_STATE If parameter values can not be retrieved at the moment.
+     * @throws EX_UNSUPPORTED_OPERATION If the module does not support vendor parameters.
+     */
+    VendorParameter[] getVendorParameters(in @utf8InCpp String[] ids);
+    /**
+     * Set vendor parameters.
+     *
+     * Update values for provided vendor parameters. If the 'async' parameter
+     * is set to 'true', the implementation must return the control back without
+     * waiting for the application of parameters to complete.
+     *
+     * @param parameters Ids and values of parameters to set.
+     * @param async Whether to return from the method as early as possible.
+     * @throws EX_ILLEGAL_ARGUMENT If the module does not recognize provided parameters.
+     * @throws EX_ILLEGAL_STATE If parameters can not be set at the moment.
+     * @throws EX_UNSUPPORTED_OPERATION If the module does not support vendor parameters.
+     */
+    void setVendorParameters(in VendorParameter[] parameters, boolean async);
 }
