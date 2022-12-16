@@ -37,8 +37,7 @@ using aidl::android::hardware::audio::effect::Parameter;
  * VtsAudioEffectTargetTest.
  */
 enum ParamName { PARAM_INSTANCE_NAME, PARAM_STRENGTH };
-using BassBoostParamTestParam =
-        std::tuple<std::pair<std::shared_ptr<IFactory>, Descriptor::Identity>, int>;
+using BassBoostParamTestParam = std::tuple<std::pair<std::shared_ptr<IFactory>, Descriptor>, int>;
 
 /*
  * Testing parameter range, assuming the parameter supported by effect is in this range.
@@ -60,12 +59,12 @@ class BassBoostParamTest : public ::testing::TestWithParam<BassBoostParamTestPar
                            public EffectHelper {
   public:
     BassBoostParamTest() : mParamStrength(std::get<PARAM_STRENGTH>(GetParam())) {
-        std::tie(mFactory, mIdentity) = std::get<PARAM_INSTANCE_NAME>(GetParam());
+        std::tie(mFactory, mDescriptor) = std::get<PARAM_INSTANCE_NAME>(GetParam());
     }
 
     void SetUp() override {
         ASSERT_NE(nullptr, mFactory);
-        ASSERT_NO_FATAL_FAILURE(create(mFactory, mEffect, mIdentity));
+        ASSERT_NO_FATAL_FAILURE(create(mFactory, mEffect, mDescriptor));
 
         Parameter::Specific specific = getDefaultParamSpecific();
         Parameter::Common common = EffectHelper::createParamCommon(
@@ -91,7 +90,7 @@ class BassBoostParamTest : public ::testing::TestWithParam<BassBoostParamTestPar
     static const long kInputFrameCount = 0x100, kOutputFrameCount = 0x100;
     std::shared_ptr<IFactory> mFactory;
     std::shared_ptr<IEffect> mEffect;
-    Descriptor::Identity mIdentity;
+    Descriptor mDescriptor;
     int mParamStrength = BassBoost::MIN_PER_MILLE_STRENGTH;
 
     void SetAndGetBassBoostParameters() {
@@ -167,9 +166,11 @@ INSTANTIATE_TEST_SUITE_P(
                                    IFactory::descriptor, kBassBoostTypeUUID)),
                            testing::ValuesIn(kStrengthValues)),
         [](const testing::TestParamInfo<BassBoostParamTest::ParamType>& info) {
-            auto instance = std::get<PARAM_INSTANCE_NAME>(info.param);
+            auto descriptor = std::get<PARAM_INSTANCE_NAME>(info.param).second;
             std::string strength = std::to_string(std::get<PARAM_STRENGTH>(info.param));
-            std::string name = instance.second.uuid.toString() + "_strength_" + strength;
+            std::string name = "Implementor_" + descriptor.common.implementor + "_name_" +
+                               descriptor.common.name + "_UUID_" +
+                               descriptor.common.id.uuid.toString() + "_strength_" + strength;
             std::replace_if(
                     name.begin(), name.end(), [](const char c) { return !std::isalnum(c); }, '_');
             return name;
