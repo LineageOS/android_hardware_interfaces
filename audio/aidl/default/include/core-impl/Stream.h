@@ -27,6 +27,7 @@
 #include <StreamWorker.h>
 #include <aidl/android/hardware/audio/common/SinkMetadata.h>
 #include <aidl/android/hardware/audio/common/SourceMetadata.h>
+#include <aidl/android/hardware/audio/core/BnStreamCommon.h>
 #include <aidl/android/hardware/audio/core/BnStreamIn.h>
 #include <aidl/android/hardware/audio/core/BnStreamOut.h>
 #include <aidl/android/hardware/audio/core/IStreamCallback.h>
@@ -197,10 +198,67 @@ class StreamOutWorkerLogic : public StreamWorkerCommonLogic {
 };
 using StreamOutWorker = ::android::hardware::audio::common::StreamWorker<StreamOutWorkerLogic>;
 
-template <class Metadata, class StreamWorker>
-class StreamCommon {
+// This provides a C++ interface with methods of the IStreamCommon Binder interface,
+// but intentionally does not inherit from it. This is needed to avoid inheriting
+// StreamIn and StreamOut from two Binder interface classes, as these parts of the class
+// will be reference counted separately.
+//
+// The implementation of these common methods is in the StreamCommonImpl template class.
+struct StreamCommonInterface {
+    virtual ~StreamCommonInterface() = default;
+    virtual ndk::ScopedAStatus close() = 0;
+    virtual ndk::ScopedAStatus updateHwAvSyncId(int32_t in_hwAvSyncId) = 0;
+    virtual ndk::ScopedAStatus getVendorParameters(const std::vector<std::string>& in_ids,
+                                                   std::vector<VendorParameter>* _aidl_return) = 0;
+    virtual ndk::ScopedAStatus setVendorParameters(
+            const std::vector<VendorParameter>& in_parameters, bool in_async) = 0;
+};
+
+class StreamCommon : public BnStreamCommon {
   public:
-    ndk::ScopedAStatus close();
+    explicit StreamCommon(const std::shared_ptr<StreamCommonInterface>& delegate)
+        : mDelegate(delegate) {}
+
+  private:
+    ndk::ScopedAStatus close() override {
+        auto delegate = mDelegate.lock();
+        return delegate != nullptr ? delegate->close()
+                                   : ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
+    }
+    ndk::ScopedAStatus updateHwAvSyncId(int32_t in_hwAvSyncId) override {
+        auto delegate = mDelegate.lock();
+        return delegate != nullptr ? delegate->updateHwAvSyncId(in_hwAvSyncId)
+                                   : ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
+    }
+    ndk::ScopedAStatus getVendorParameters(const std::vector<std::string>& in_ids,
+                                           std::vector<VendorParameter>* _aidl_return) override {
+        auto delegate = mDelegate.lock();
+        return delegate != nullptr ? delegate->getVendorParameters(in_ids, _aidl_return)
+                                   : ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
+    }
+    ndk::ScopedAStatus setVendorParameters(const std::vector<VendorParameter>& in_parameters,
+                                           bool in_async) override {
+        auto delegate = mDelegate.lock();
+        return delegate != nullptr ? delegate->setVendorParameters(in_parameters, in_async)
+                                   : ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
+    }
+    // It is possible that on the client side the proxy for IStreamCommon will outlive
+    // the IStream* instance, and the server side IStream* instance will get destroyed
+    // while this IStreamCommon instance is still alive.
+    std::weak_ptr<StreamCommonInterface> mDelegate;
+};
+
+template <class Metadata, class StreamWorker>
+class StreamCommonImpl : public StreamCommonInterface {
+  public:
+    ndk::ScopedAStatus close() override;
+    ndk::ScopedAStatus updateHwAvSyncId(int32_t in_hwAvSyncId) override;
+    ndk::ScopedAStatus getVendorParameters(const std::vector<std::string>& in_ids,
+                                           std::vector<VendorParameter>* _aidl_return) override;
+    ndk::ScopedAStatus setVendorParameters(const std::vector<VendorParameter>& in_parameters,
+                                           bool in_async) override;
+
+    ndk::ScopedAStatus getStreamCommon(std::shared_ptr<IStreamCommon>* _aidl_return);
     ndk::ScopedAStatus init() {
         return mWorker.start(StreamWorker::kThreadName, ANDROID_PRIORITY_AUDIO)
                        ? ndk::ScopedAStatus::ok()
@@ -215,23 +273,26 @@ class StreamCommon {
     ndk::ScopedAStatus updateMetadata(const Metadata& metadata);
 
   protected:
-    StreamCommon(const Metadata& metadata, StreamContext context)
+    StreamCommonImpl(const Metadata& metadata, StreamContext&& context)
         : mMetadata(metadata), mContext(std::move(context)), mWorker(mContext) {}
-    ~StreamCommon();
+    ~StreamCommonImpl();
     void stopWorker();
+    void createStreamCommon(const std::shared_ptr<StreamCommonInterface>& delegate);
 
+    std::shared_ptr<StreamCommon> mCommon;
+    ndk::SpAIBinder mCommonBinder;
     Metadata mMetadata;
     StreamContext mContext;
     StreamWorker mWorker;
     std::vector<::aidl::android::media::audio::common::AudioDevice> mConnectedDevices;
 };
 
-class StreamIn
-    : public StreamCommon<::aidl::android::hardware::audio::common::SinkMetadata, StreamInWorker>,
-      public BnStreamIn {
-    ndk::ScopedAStatus close() override {
-        return StreamCommon<::aidl::android::hardware::audio::common::SinkMetadata,
-                            StreamInWorker>::close();
+class StreamIn : public StreamCommonImpl<::aidl::android::hardware::audio::common::SinkMetadata,
+                                         StreamInWorker>,
+                 public BnStreamIn {
+    ndk::ScopedAStatus getStreamCommon(std::shared_ptr<IStreamCommon>* _aidl_return) override {
+        return StreamCommonImpl<::aidl::android::hardware::audio::common::SinkMetadata,
+                                StreamInWorker>::getStreamCommon(_aidl_return);
     }
     ndk::ScopedAStatus getActiveMicrophones(
             std::vector<MicrophoneDynamicInfo>* _aidl_return) override;
@@ -241,39 +302,61 @@ class StreamIn
     ndk::ScopedAStatus setMicrophoneFieldDimension(float in_zoom) override;
     ndk::ScopedAStatus updateMetadata(const ::aidl::android::hardware::audio::common::SinkMetadata&
                                               in_sinkMetadata) override {
-        return StreamCommon<::aidl::android::hardware::audio::common::SinkMetadata,
-                            StreamInWorker>::updateMetadata(in_sinkMetadata);
+        return StreamCommonImpl<::aidl::android::hardware::audio::common::SinkMetadata,
+                                StreamInWorker>::updateMetadata(in_sinkMetadata);
     }
 
   public:
-    StreamIn(const ::aidl::android::hardware::audio::common::SinkMetadata& sinkMetadata,
-             StreamContext context, const std::vector<MicrophoneInfo>& microphones);
+    static ndk::ScopedAStatus createInstance(
+            const ::aidl::android::hardware::audio::common::SinkMetadata& sinkMetadata,
+            StreamContext context, const std::vector<MicrophoneInfo>& microphones,
+            std::shared_ptr<StreamIn>* result);
 
   private:
+    friend class ndk::SharedRefBase;
+    StreamIn(const ::aidl::android::hardware::audio::common::SinkMetadata& sinkMetadata,
+             StreamContext&& context, const std::vector<MicrophoneInfo>& microphones);
+    void createStreamCommon(const std::shared_ptr<StreamIn>& myPtr) {
+        StreamCommonImpl<::aidl::android::hardware::audio::common::SinkMetadata,
+                         StreamInWorker>::createStreamCommon(myPtr);
+    }
+
     const std::map<::aidl::android::media::audio::common::AudioDevice, std::string> mMicrophones;
 };
 
-class StreamOut : public StreamCommon<::aidl::android::hardware::audio::common::SourceMetadata,
-                                      StreamOutWorker>,
+class StreamOut : public StreamCommonImpl<::aidl::android::hardware::audio::common::SourceMetadata,
+                                          StreamOutWorker>,
                   public BnStreamOut {
-    ndk::ScopedAStatus close() override {
-        return StreamCommon<::aidl::android::hardware::audio::common::SourceMetadata,
-                            StreamOutWorker>::close();
+    ndk::ScopedAStatus getStreamCommon(std::shared_ptr<IStreamCommon>* _aidl_return) override {
+        return StreamCommonImpl<::aidl::android::hardware::audio::common::SourceMetadata,
+                                StreamOutWorker>::getStreamCommon(_aidl_return);
     }
     ndk::ScopedAStatus updateMetadata(
             const ::aidl::android::hardware::audio::common::SourceMetadata& in_sourceMetadata)
             override {
-        return StreamCommon<::aidl::android::hardware::audio::common::SourceMetadata,
-                            StreamOutWorker>::updateMetadata(in_sourceMetadata);
+        return StreamCommonImpl<::aidl::android::hardware::audio::common::SourceMetadata,
+                                StreamOutWorker>::updateMetadata(in_sourceMetadata);
     }
 
   public:
-    StreamOut(const ::aidl::android::hardware::audio::common::SourceMetadata& sourceMetadata,
-              StreamContext context,
-              const std::optional<::aidl::android::media::audio::common::AudioOffloadInfo>&
-                      offloadInfo);
+    static ndk::ScopedAStatus createInstance(
+            const ::aidl::android::hardware::audio::common::SourceMetadata& sourceMetadata,
+            StreamContext context,
+            const std::optional<::aidl::android::media::audio::common::AudioOffloadInfo>&
+                    offloadInfo,
+            std::shared_ptr<StreamOut>* result);
 
   private:
+    friend class ndk::SharedRefBase;
+    StreamOut(const ::aidl::android::hardware::audio::common::SourceMetadata& sourceMetadata,
+              StreamContext&& context,
+              const std::optional<::aidl::android::media::audio::common::AudioOffloadInfo>&
+                      offloadInfo);
+    void createStreamCommon(const std::shared_ptr<StreamOut>& myPtr) {
+        StreamCommonImpl<::aidl::android::hardware::audio::common::SourceMetadata,
+                         StreamOutWorker>::createStreamCommon(myPtr);
+    }
+
     std::optional<::aidl::android::media::audio::common::AudioOffloadInfo> mOffloadInfo;
 };
 

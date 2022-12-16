@@ -58,6 +58,7 @@ using aidl::android::hardware::audio::core::AudioPatch;
 using aidl::android::hardware::audio::core::AudioRoute;
 using aidl::android::hardware::audio::core::IModule;
 using aidl::android::hardware::audio::core::ISoundDose;
+using aidl::android::hardware::audio::core::IStreamCommon;
 using aidl::android::hardware::audio::core::IStreamIn;
 using aidl::android::hardware::audio::core::IStreamOut;
 using aidl::android::hardware::audio::core::ITelephony;
@@ -65,6 +66,7 @@ using aidl::android::hardware::audio::core::MicrophoneDynamicInfo;
 using aidl::android::hardware::audio::core::MicrophoneInfo;
 using aidl::android::hardware::audio::core::ModuleDebug;
 using aidl::android::hardware::audio::core::StreamDescriptor;
+using aidl::android::hardware::audio::core::VendorParameter;
 using aidl::android::hardware::common::fmq::SynchronizedReadWrite;
 using aidl::android::media::audio::common::AudioContentType;
 using aidl::android::media::audio::common::AudioDevice;
@@ -209,6 +211,56 @@ void TestAccessors(Instance* inst, Getter getter, Setter setter,
         EXPECT_STATUS(EX_ILLEGAL_ARGUMENT, (inst->*setter)(v)) << "for invalid value: " << v;
     }
     EXPECT_IS_OK((inst->*setter)(initialValue)) << "Failed to restore the initial value";
+}
+
+template <class Instance>
+void TestGetVendorParameters(Instance* inst, bool* isSupported) {
+    static const std::vector<std::vector<std::string>> kIdsLists = {{}, {"zero"}, {"one", "two"}};
+    static const auto kStatuses = {EX_ILLEGAL_ARGUMENT, EX_ILLEGAL_STATE, EX_UNSUPPORTED_OPERATION};
+    for (const auto& ids : kIdsLists) {
+        std::vector<VendorParameter> params;
+        if (ndk::ScopedAStatus status = inst->getVendorParameters(ids, &params); status.isOk()) {
+            EXPECT_EQ(ids.size(), params.size()) << "Size of the returned parameters list must "
+                                                 << "match the size of the provided ids list";
+            for (const auto& param : params) {
+                EXPECT_NE(ids.end(), std::find(ids.begin(), ids.end(), param.id))
+                        << "Returned parameter id \"" << param.id << "\" is unexpected";
+            }
+            for (const auto& id : ids) {
+                EXPECT_NE(params.end(),
+                          std::find_if(params.begin(), params.end(),
+                                       [&](const auto& param) { return param.id == id; }))
+                        << "Requested parameter with id \"" << id << "\" was not returned";
+            }
+        } else {
+            EXPECT_STATUS(kStatuses, status);
+            if (status.getExceptionCode() == EX_UNSUPPORTED_OPERATION) {
+                *isSupported = false;
+                return;
+            }
+        }
+    }
+    *isSupported = true;
+}
+
+template <class Instance>
+void TestSetVendorParameters(Instance* inst, bool* isSupported) {
+    static const auto kStatuses = {EX_NONE, EX_ILLEGAL_ARGUMENT, EX_ILLEGAL_STATE,
+                                   EX_UNSUPPORTED_OPERATION};
+    static const std::vector<std::vector<VendorParameter>> kParamsLists = {
+            {}, {VendorParameter{"zero"}}, {VendorParameter{"one"}, VendorParameter{"two"}}};
+    for (const auto& params : kParamsLists) {
+        ndk::ScopedAStatus status = inst->setVendorParameters(params, false);
+        if (status.getExceptionCode() == EX_UNSUPPORTED_OPERATION) {
+            *isSupported = false;
+            return;
+        }
+        EXPECT_STATUS(kStatuses, status)
+                << ::android::internal::ToString(params) << ", async: false";
+        EXPECT_STATUS(kStatuses, inst->setVendorParameters(params, true))
+                << ::android::internal::ToString(params) << ", async: true";
+    }
+    *isSupported = true;
 }
 
 // Can be used as a base for any test here, does not depend on the fixture GTest parameters.
@@ -837,6 +889,13 @@ struct IOTraits {
 template <typename Stream>
 class WithStream {
   public:
+    static ndk::ScopedAStatus callClose(std::shared_ptr<Stream> stream) {
+        std::shared_ptr<IStreamCommon> common;
+        ndk::ScopedAStatus status = stream->getStreamCommon(&common);
+        if (!status.isOk()) return status;
+        return common->close();
+    }
+
     WithStream() {}
     explicit WithStream(const AudioPortConfig& portConfig) : mPortConfig(portConfig) {}
     WithStream(const WithStream&) = delete;
@@ -844,7 +903,7 @@ class WithStream {
     ~WithStream() {
         if (mStream != nullptr) {
             mContext.reset();
-            EXPECT_IS_OK(mStream->close()) << "port config id " << getPortId();
+            EXPECT_IS_OK(callClose(mStream)) << "port config id " << getPortId();
         }
     }
     void SetUpPortConfig(IModule* module) { ASSERT_NO_FATAL_FAILURE(mPortConfig.SetUp(module)); }
@@ -1628,6 +1687,40 @@ TEST_P(AudioCoreModule, UpdateScreenState) {
     EXPECT_IS_OK(module->updateScreenState(true));
 }
 
+TEST_P(AudioCoreModule, GenerateHwAvSyncId) {
+    const auto kStatuses = {EX_NONE, EX_ILLEGAL_STATE};
+    int32_t id1;
+    ndk::ScopedAStatus status = module->generateHwAvSyncId(&id1);
+    if (status.getExceptionCode() == EX_UNSUPPORTED_OPERATION) {
+        GTEST_SKIP() << "HW AV Sync is not supported";
+    }
+    EXPECT_STATUS(kStatuses, status);
+    if (status.isOk()) {
+        int32_t id2;
+        ASSERT_IS_OK(module->generateHwAvSyncId(&id2));
+        EXPECT_NE(id1, id2) << "HW AV Sync IDs must be unique";
+    }
+}
+
+TEST_P(AudioCoreModule, GetVendorParameters) {
+    bool isGetterSupported = false;
+    EXPECT_NO_FATAL_FAILURE(TestGetVendorParameters(module.get(), &isGetterSupported));
+    ndk::ScopedAStatus status = module->setVendorParameters({}, false);
+    EXPECT_EQ(isGetterSupported, status.getExceptionCode() != EX_UNSUPPORTED_OPERATION)
+            << "Support for getting and setting of vendor parameters must be consistent";
+    if (!isGetterSupported) {
+        GTEST_SKIP() << "Vendor parameters are not supported";
+    }
+}
+
+TEST_P(AudioCoreModule, SetVendorParameters) {
+    bool isSupported = false;
+    EXPECT_NO_FATAL_FAILURE(TestSetVendorParameters(module.get(), &isSupported));
+    if (!isSupported) {
+        GTEST_SKIP() << "Vendor parameters are not supported";
+    }
+}
+
 class AudioCoreTelephony : public AudioCoreModuleBase, public testing::TestWithParam<std::string> {
   public:
     void SetUp() override {
@@ -1733,6 +1826,23 @@ class AudioStream : public AudioCoreModule {
         ASSERT_NO_FATAL_FAILURE(SetUpModuleConfig());
     }
 
+    void GetStreamCommon() {
+        const auto portConfig = moduleConfig->getSingleConfigForMixPort(IOTraits<Stream>::is_input);
+        if (!portConfig.has_value()) {
+            GTEST_SKIP() << "No mix port for attached devices";
+        }
+        WithStream<Stream> stream(portConfig.value());
+        ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultBufferSizeFrames));
+        std::shared_ptr<IStreamCommon> streamCommon1;
+        EXPECT_IS_OK(stream.get()->getStreamCommon(&streamCommon1));
+        EXPECT_NE(nullptr, streamCommon1);
+        std::shared_ptr<IStreamCommon> streamCommon2;
+        EXPECT_IS_OK(stream.get()->getStreamCommon(&streamCommon2));
+        EXPECT_NE(nullptr, streamCommon2);
+        EXPECT_EQ(streamCommon1->asBinder(), streamCommon2->asBinder())
+                << "getStreamCommon must return the same interface instance across invocations";
+    }
+
     void CloseTwice() {
         const auto portConfig = moduleConfig->getSingleConfigForMixPort(IOTraits<Stream>::is_input);
         if (!portConfig.has_value()) {
@@ -1744,7 +1854,8 @@ class AudioStream : public AudioCoreModule {
             ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultBufferSizeFrames));
             heldStream = stream.getSharedPointer();
         }
-        EXPECT_STATUS(EX_ILLEGAL_STATE, heldStream->close()) << "when closing the stream twice";
+        EXPECT_STATUS(EX_ILLEGAL_STATE, WithStream<Stream>::callClose(heldStream))
+                << "when closing the stream twice";
     }
 
     void OpenAllConfigs() {
@@ -1849,6 +1960,65 @@ class AudioStream : public AudioCoreModule {
         EXPECT_NO_FATAL_FAILURE(SendInvalidCommandImpl(portConfig.value()));
     }
 
+    void UpdateHwAvSyncId() {
+        const auto portConfig = moduleConfig->getSingleConfigForMixPort(IOTraits<Stream>::is_input);
+        if (!portConfig.has_value()) {
+            GTEST_SKIP() << "No mix port for attached devices";
+        }
+        WithStream<Stream> stream(portConfig.value());
+        ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultBufferSizeFrames));
+        std::shared_ptr<IStreamCommon> streamCommon;
+        ASSERT_IS_OK(stream.get()->getStreamCommon(&streamCommon));
+        ASSERT_NE(nullptr, streamCommon);
+        const auto kStatuses = {EX_NONE, EX_ILLEGAL_ARGUMENT, EX_ILLEGAL_STATE};
+        for (const auto id : {-100, -1, 0, 1, 100}) {
+            ndk::ScopedAStatus status = streamCommon->updateHwAvSyncId(id);
+            if (status.getExceptionCode() == EX_UNSUPPORTED_OPERATION) {
+                GTEST_SKIP() << "HW AV Sync is not supported";
+            }
+            EXPECT_STATUS(kStatuses, status) << "id: " << id;
+        }
+    }
+
+    void GetVendorParameters() {
+        const auto portConfig = moduleConfig->getSingleConfigForMixPort(IOTraits<Stream>::is_input);
+        if (!portConfig.has_value()) {
+            GTEST_SKIP() << "No mix port for attached devices";
+        }
+        WithStream<Stream> stream(portConfig.value());
+        ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultBufferSizeFrames));
+        std::shared_ptr<IStreamCommon> streamCommon;
+        ASSERT_IS_OK(stream.get()->getStreamCommon(&streamCommon));
+        ASSERT_NE(nullptr, streamCommon);
+
+        bool isGetterSupported = false;
+        EXPECT_NO_FATAL_FAILURE(TestGetVendorParameters(module.get(), &isGetterSupported));
+        ndk::ScopedAStatus status = module->setVendorParameters({}, false);
+        EXPECT_EQ(isGetterSupported, status.getExceptionCode() != EX_UNSUPPORTED_OPERATION)
+                << "Support for getting and setting of vendor parameters must be consistent";
+        if (!isGetterSupported) {
+            GTEST_SKIP() << "Vendor parameters are not supported";
+        }
+    }
+
+    void SetVendorParameters() {
+        const auto portConfig = moduleConfig->getSingleConfigForMixPort(IOTraits<Stream>::is_input);
+        if (!portConfig.has_value()) {
+            GTEST_SKIP() << "No mix port for attached devices";
+        }
+        WithStream<Stream> stream(portConfig.value());
+        ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultBufferSizeFrames));
+        std::shared_ptr<IStreamCommon> streamCommon;
+        ASSERT_IS_OK(stream.get()->getStreamCommon(&streamCommon));
+        ASSERT_NE(nullptr, streamCommon);
+
+        bool isSupported = false;
+        EXPECT_NO_FATAL_FAILURE(TestSetVendorParameters(module.get(), &isSupported));
+        if (!isSupported) {
+            GTEST_SKIP() << "Vendor parameters are not supported";
+        }
+    }
+
     void OpenTwiceSamePortConfigImpl(const AudioPortConfig& portConfig) {
         WithStream<Stream> stream1(portConfig);
         ASSERT_NO_FATAL_FAILURE(stream1.SetUp(module.get(), kDefaultBufferSizeFrames));
@@ -1914,6 +2084,7 @@ using AudioStreamOut = AudioStream<IStreamOut>;
     }
 
 TEST_IN_AND_OUT_STREAM(CloseTwice);
+TEST_IN_AND_OUT_STREAM(GetStreamCommon);
 TEST_IN_AND_OUT_STREAM(OpenAllConfigs);
 TEST_IN_AND_OUT_STREAM(OpenInvalidBufferSize);
 TEST_IN_AND_OUT_STREAM(OpenInvalidDirection);
@@ -1921,6 +2092,9 @@ TEST_IN_AND_OUT_STREAM(OpenOverMaxCount);
 TEST_IN_AND_OUT_STREAM(OpenTwiceSamePortConfig);
 TEST_IN_AND_OUT_STREAM(ResetPortConfigWithOpenStream);
 TEST_IN_AND_OUT_STREAM(SendInvalidCommand);
+TEST_IN_AND_OUT_STREAM(UpdateHwAvSyncId);
+TEST_IN_AND_OUT_STREAM(GetVendorParameters);
+TEST_IN_AND_OUT_STREAM(SetVendorParameters);
 
 namespace aidl::android::hardware::audio::core {
 std::ostream& operator<<(std::ostream& os, const IStreamIn::MicrophoneDirection& md) {

@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <algorithm>
+#include <initializer_list>
 #include <iostream>
 
 #include <android/binder_auto_utils.h>
@@ -43,6 +45,19 @@ inline ::testing::AssertionResult assertResult(const char* exp_expr, const char*
     return ::testing::AssertionFailure()
            << "Expected the transaction \'" << act_expr << "\' to fail with " << exp_expr
            << "\n  but is has completed with: " << status;
+}
+
+template <typename T>
+inline ::testing::AssertionResult assertResult(const char* exp_expr, const char* act_expr,
+                                               const std::initializer_list<T>& expected,
+                                               const ::ndk::ScopedAStatus& status) {
+    if (std::find(expected.begin(), expected.end(), status.getExceptionCode()) != expected.end()) {
+        return ::testing::AssertionSuccess();
+    }
+    return ::testing::AssertionFailure() << "Expected the transaction \'" << act_expr
+                                         << "\' to complete with one of: " << exp_expr
+                                         << "\n  which is: " << ::testing::PrintToString(expected)
+                                         << "\n  but is has completed with: " << status;
 }
 
 }  // namespace detail
