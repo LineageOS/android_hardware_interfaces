@@ -279,8 +279,11 @@ class StreamOut : public StreamCommon<::aidl::android::hardware::audio::common::
 
 class StreamWrapper {
   public:
-    explicit StreamWrapper(std::shared_ptr<StreamIn> streamIn) : mStream(streamIn) {}
-    explicit StreamWrapper(std::shared_ptr<StreamOut> streamOut) : mStream(streamOut) {}
+    explicit StreamWrapper(const std::shared_ptr<StreamIn>& streamIn)
+        : mStream(streamIn), mStreamBinder(streamIn->asBinder()) {}
+    explicit StreamWrapper(const std::shared_ptr<StreamOut>& streamOut)
+        : mStream(streamOut), mStreamBinder(streamOut->asBinder()) {}
+    ndk::SpAIBinder getBinder() const { return mStreamBinder; }
     bool isStreamOpen() const {
         return std::visit(
                 [](auto&& ws) -> bool {
@@ -301,6 +304,7 @@ class StreamWrapper {
 
   private:
     std::variant<std::weak_ptr<StreamIn>, std::weak_ptr<StreamOut>> mStream;
+    ndk::SpAIBinder mStreamBinder;
 };
 
 class Streams {

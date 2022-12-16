@@ -40,12 +40,13 @@ Factory::Factory(const std::string& file) : mConfig(EffectConfig(file)) {
 }
 
 Factory::~Factory() {
-    if (auto count = mEffectUuidMap.size()) {
+    if (auto count = mEffectMap.size()) {
         LOG(ERROR) << __func__ << " remaining " << count
                    << " effect instances not destroyed indicating resource leak!";
-        for (const auto& it : mEffectUuidMap) {
+        for (const auto& it : mEffectMap) {
             if (auto spEffect = it.first.lock()) {
-                LOG(ERROR) << __func__ << " erase remaining instance UUID " << it.second.toString();
+                LOG(ERROR) << __func__ << " erase remaining instance UUID "
+                           << it.second.first.toString();
                 destroyEffectImpl(spEffect);
             }
         }
@@ -109,9 +110,10 @@ ndk::ScopedAStatus Factory::createEffect(const AudioUuid& in_impl_uuid,
             return ndk::ScopedAStatus::fromExceptionCode(EX_TRANSACTION_FAILED);
         }
         *_aidl_return = effectSp;
-        AIBinder_setMinSchedulerPolicy(effectSp->asBinder().get(), SCHED_NORMAL,
-                                       ANDROID_PRIORITY_AUDIO);
-        mEffectUuidMap[std::weak_ptr<IEffect>(effectSp)] = in_impl_uuid;
+        ndk::SpAIBinder effectBinder = effectSp->asBinder();
+        AIBinder_setMinSchedulerPolicy(effectBinder.get(), SCHED_NORMAL, ANDROID_PRIORITY_AUDIO);
+        mEffectMap[std::weak_ptr<IEffect>(effectSp)] =
+                std::make_pair(in_impl_uuid, std::move(effectBinder));
         LOG(DEBUG) << __func__ << ": instance " << effectSp.get() << " created successfully";
         return ndk::ScopedAStatus::ok();
     } else {
@@ -123,9 +125,9 @@ ndk::ScopedAStatus Factory::createEffect(const AudioUuid& in_impl_uuid,
 
 ndk::ScopedAStatus Factory::destroyEffectImpl(const std::shared_ptr<IEffect>& in_handle) {
     std::weak_ptr<IEffect> wpHandle(in_handle);
-    // find UUID with key (std::weak_ptr<IEffect>)
-    if (auto uuidIt = mEffectUuidMap.find(wpHandle); uuidIt != mEffectUuidMap.end()) {
-        auto& uuid = uuidIt->second;
+    // find the effect entry with key (std::weak_ptr<IEffect>)
+    if (auto effectIt = mEffectMap.find(wpHandle); effectIt != mEffectMap.end()) {
+        auto& uuid = effectIt->second.first;
         // find implementation library with UUID
         if (auto libIt = mEffectLibMap.find(uuid); libIt != mEffectLibMap.end()) {
             auto& interface = std::get<kMapEntryInterfaceIndex>(libIt->second);
@@ -136,7 +138,7 @@ ndk::ScopedAStatus Factory::destroyEffectImpl(const std::shared_ptr<IEffect>& in
             LOG(ERROR) << __func__ << ": UUID " << uuid.toString() << " does not exist in libMap!";
             return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
         }
-        mEffectUuidMap.erase(uuidIt);
+        mEffectMap.erase(effectIt);
         return ndk::ScopedAStatus::ok();
     } else {
         LOG(ERROR) << __func__ << ": instance " << in_handle << " does not exist!";
@@ -146,9 +148,9 @@ ndk::ScopedAStatus Factory::destroyEffectImpl(const std::shared_ptr<IEffect>& in
 
 // go over the map and cleanup all expired weak_ptrs.
 void Factory::cleanupEffectMap() {
-    for (auto it = mEffectUuidMap.begin(); it != mEffectUuidMap.end();) {
+    for (auto it = mEffectMap.begin(); it != mEffectMap.end();) {
         if (nullptr == it->first.lock()) {
-            it = mEffectUuidMap.erase(it);
+            it = mEffectMap.erase(it);
         } else {
             ++it;
         }
