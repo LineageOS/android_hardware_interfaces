@@ -165,6 +165,7 @@ std::unordered_map<VehicleProperty, VehiclePropertyChangeMode> ChangeModeForVehi
         {VehicleProperty::SEAT_CUSHION_SIDE_SUPPORT_MOVE, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::SEAT_LUMBAR_VERTICAL_POS, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::SEAT_LUMBAR_VERTICAL_MOVE, VehiclePropertyChangeMode::ON_CHANGE},
+        {VehicleProperty::SEAT_WALK_IN_POS, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::SEAT_OCCUPANCY, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::WINDOW_POS, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::WINDOW_MOVE, VehiclePropertyChangeMode::ON_CHANGE},

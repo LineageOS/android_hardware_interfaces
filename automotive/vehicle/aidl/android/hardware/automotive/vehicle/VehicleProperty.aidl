@@ -1912,6 +1912,27 @@ enum VehicleProperty {
     SEAT_LUMBAR_VERTICAL_MOVE =
             0x0BA2 + VehiclePropertyGroup.SYSTEM + VehicleArea.SEAT + VehiclePropertyType.INT32,
     /**
+     * Represents property that indicates the current walk-in position of the seat.
+     *
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined.
+     * The minInt32Value must be 0.
+     * All integers between minInt32Value and maxInt32Value must be supported.
+     *
+     * minInt32Value indicates the normal seat position.
+     * maxInt32Value indicates the seat is in the full walk-in position.
+     *
+     * Values in between minInt32Value and maxInt32Value indicate a transition state between the
+     * normal and walk-in positions.
+     *
+     * The area ID must match the seat that actually moves when the walk-in feature activates, not
+     * the intended seat the passengers will sit in.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     */
+    SEAT_WALK_IN_POS =
+            0x0BA3 + VehiclePropertyGroup.SYSTEM + VehicleArea.SEAT + VehiclePropertyType.INT32,
+    /**
      * Seat Occupancy
      *
      * Indicates whether a particular seat is occupied or not, to the best of the car's ability
