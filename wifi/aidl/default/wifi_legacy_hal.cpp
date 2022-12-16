@@ -119,6 +119,16 @@ void onSyncLinkLayerStatsResult(wifi_request_id id, wifi_iface_stat* iface_stat,
     }
 }
 
+// Callback to be invoked for Multi link layer stats results.
+std::function<void((wifi_request_id, wifi_iface_ml_stat*, int, wifi_radio_stat*))>
+        on_link_layer_ml_stats_result_internal_callback;
+void onSyncLinkLayerMlStatsResult(wifi_request_id id, wifi_iface_ml_stat* iface_ml_stat,
+                                  int num_radios, wifi_radio_stat* radio_stat) {
+    if (on_link_layer_ml_stats_result_internal_callback) {
+        on_link_layer_ml_stats_result_internal_callback(id, iface_ml_stat, num_radios, radio_stat);
+    }
+}
+
 // Callback to be invoked for rssi threshold breach.
 std::function<void((wifi_request_id, uint8_t*, int8_t))>
         on_rssi_threshold_breached_internal_callback;
@@ -682,10 +692,44 @@ wifi_error WifiLegacyHal::disableLinkLayerStats(const std::string& iface_name) {
                                                     &clear_mask_rsp, 1, &stop_rsp);
 }
 
-std::pair<wifi_error, LinkLayerStats> WifiLegacyHal::getLinkLayerStats(
-        const std::string& iface_name) {
-    LinkLayerStats link_stats{};
+// Copies wifi_peer_info* to vector<WifiPeerInfo> and returns poiner to next element.
+wifi_peer_info* WifiLegacyHal::copyPeerInfo(wifi_peer_info* peer_ptr,
+                                            std::vector<WifiPeerInfo> peers) {
+    WifiPeerInfo peer;
+    peer.peer_info = *peer_ptr;
+    if (peer_ptr->num_rate > 0) {
+        // Copy the rate stats.
+        peer.rate_stats.assign(peer_ptr->rate_stats, peer_ptr->rate_stats + peer_ptr->num_rate);
+    }
+    peer.peer_info.num_rate = 0;
+    // Push peer info.
+    peers.push_back(peer);
+    // Return the address of next peer info.
+    return (wifi_peer_info*)((u8*)peer_ptr + sizeof(wifi_peer_info) +
+                             (sizeof(wifi_rate_stat) * peer_ptr->num_rate));
+}
+// Copies wifi_link_stat* to vector<LinkStats> and returns poiner to next element.
+wifi_link_stat* WifiLegacyHal::copyLinkStat(wifi_link_stat* stat_ptr,
+                                            std::vector<LinkStats> stats) {
+    LinkStats linkStat;
+    linkStat.stat = *stat_ptr;
+    wifi_peer_info* l_peer_info_stats_ptr = stat_ptr->peer_info;
+    for (uint32_t i = 0; i < linkStat.stat.num_peers; i++) {
+        l_peer_info_stats_ptr = copyPeerInfo(l_peer_info_stats_ptr, linkStat.peers);
+    }
+    // Copied all peers to linkStat.peers.
+    linkStat.stat.num_peers = 0;
+    // Push link stat.
+    stats.push_back(linkStat);
+    // Read all peers, return the address of next wifi_link_stat.
+    return (wifi_link_stat*)l_peer_info_stats_ptr;
+}
+
+wifi_error WifiLegacyHal::getLinkLayerStats(const std::string& iface_name,
+                                            LinkLayerStats& link_stats,
+                                            LinkLayerMlStats& link_ml_stats) {
     LinkLayerStats* link_stats_ptr = &link_stats;
+    link_stats_ptr->valid = false;
 
     on_link_layer_stats_result_internal_callback = [&link_stats_ptr](
                                                            wifi_request_id /* id */,
@@ -694,6 +738,7 @@ std::pair<wifi_error, LinkLayerStats> WifiLegacyHal::getLinkLayerStats(
                                                            wifi_radio_stat* radio_stats_ptr) {
         wifi_radio_stat* l_radio_stats_ptr;
         wifi_peer_info* l_peer_info_stats_ptr;
+        link_stats_ptr->valid = true;
 
         if (iface_stats_ptr != nullptr) {
             link_stats_ptr->iface = *iface_stats_ptr;
@@ -751,10 +796,69 @@ std::pair<wifi_error, LinkLayerStats> WifiLegacyHal::getLinkLayerStats(
         }
     };
 
-    wifi_error status = global_func_table_.wifi_get_link_stats(0, getIfaceHandle(iface_name),
-                                                               {onSyncLinkLayerStatsResult});
+    LinkLayerMlStats* link_ml_stats_ptr = &link_ml_stats;
+    link_ml_stats_ptr->valid = false;
+
+    on_link_layer_ml_stats_result_internal_callback =
+            [this, &link_ml_stats_ptr](wifi_request_id /* id */,
+                                       wifi_iface_ml_stat* iface_ml_stats_ptr, int num_radios,
+                                       wifi_radio_stat* radio_stats_ptr) {
+                wifi_radio_stat* l_radio_stats_ptr;
+                wifi_link_stat* l_link_stat_ptr;
+                link_ml_stats_ptr->valid = true;
+
+                if (iface_ml_stats_ptr != nullptr && iface_ml_stats_ptr->num_links > 0) {
+                    // Copy stats from wifi_iface_ml_stat to LinkLayerMlStats,
+                    //  - num_links * links[] to vector of links.
+                    //  - num_peers * peer_info[] to vector of links[i].peers.
+                    link_ml_stats_ptr->iface = *iface_ml_stats_ptr;
+                    l_link_stat_ptr = iface_ml_stats_ptr->links;
+                    for (int l = 0; l < iface_ml_stats_ptr->num_links; ++l) {
+                        l_link_stat_ptr = copyLinkStat(l_link_stat_ptr, link_ml_stats_ptr->links);
+                    }
+                } else {
+                    LOG(ERROR) << "Invalid iface stats in link layer stats";
+                }
+                if (num_radios <= 0 || radio_stats_ptr == nullptr) {
+                    LOG(ERROR) << "Invalid radio stats in link layer stats";
+                    return;
+                }
+                l_radio_stats_ptr = radio_stats_ptr;
+                for (int i = 0; i < num_radios; i++) {
+                    LinkLayerRadioStats radio;
+
+                    radio.stats = *l_radio_stats_ptr;
+                    // Copy over the tx level array to the separate vector.
+                    if (l_radio_stats_ptr->num_tx_levels > 0 &&
+                        l_radio_stats_ptr->tx_time_per_levels != nullptr) {
+                        radio.tx_time_per_levels.assign(l_radio_stats_ptr->tx_time_per_levels,
+                                                        l_radio_stats_ptr->tx_time_per_levels +
+                                                                l_radio_stats_ptr->num_tx_levels);
+                    }
+                    radio.stats.num_tx_levels = 0;
+                    radio.stats.tx_time_per_levels = nullptr;
+                    /* Copy over the channel stat to separate vector */
+                    if (l_radio_stats_ptr->num_channels > 0) {
+                        /* Copy the channel stats */
+                        radio.channel_stats.assign(
+                                l_radio_stats_ptr->channels,
+                                l_radio_stats_ptr->channels + l_radio_stats_ptr->num_channels);
+                    }
+                    link_ml_stats_ptr->radios.push_back(radio);
+                    l_radio_stats_ptr =
+                            (wifi_radio_stat*)((u8*)l_radio_stats_ptr + sizeof(wifi_radio_stat) +
+                                               (sizeof(wifi_channel_stat) *
+                                                l_radio_stats_ptr->num_channels));
+                }
+            };
+
+    wifi_error status = global_func_table_.wifi_get_link_stats(
+            0, getIfaceHandle(iface_name),
+            {onSyncLinkLayerStatsResult, onSyncLinkLayerMlStatsResult});
     on_link_layer_stats_result_internal_callback = nullptr;
-    return {status, link_stats};
+    on_link_layer_ml_stats_result_internal_callback = nullptr;
+
+    return status;
 }
 
 wifi_error WifiLegacyHal::startRssiMonitoring(
@@ -1624,6 +1728,7 @@ void WifiLegacyHal::invalidate() {
     on_gscan_event_internal_callback = nullptr;
     on_gscan_full_result_internal_callback = nullptr;
     on_link_layer_stats_result_internal_callback = nullptr;
+    on_link_layer_ml_stats_result_internal_callback = nullptr;
     on_rssi_threshold_breached_internal_callback = nullptr;
     on_ring_buffer_data_internal_callback = nullptr;
     on_error_alert_internal_callback = nullptr;
