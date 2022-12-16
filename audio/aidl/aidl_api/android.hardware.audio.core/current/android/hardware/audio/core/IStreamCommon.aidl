@@ -33,7 +33,9 @@
 
 package android.hardware.audio.core;
 @VintfStability
-interface IStreamOut {
-  android.hardware.audio.core.IStreamCommon getStreamCommon();
-  void updateMetadata(in android.hardware.audio.common.SourceMetadata sourceMetadata);
+interface IStreamCommon {
+  void close();
+  void updateHwAvSyncId(int hwAvSyncId);
+  android.hardware.audio.core.VendorParameter[] getVendorParameters(in @utf8InCpp String[] ids);
+  void setVendorParameters(in android.hardware.audio.core.VendorParameter[] parameters, boolean async);
 }

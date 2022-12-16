@@ -116,6 +116,7 @@ aidl_interface {
         "android/hardware/audio/core/IModule.aidl",
         "android/hardware/audio/core/ISoundDose.aidl",
         "android/hardware/audio/core/IStreamCallback.aidl",
+        "android/hardware/audio/core/IStreamCommon.aidl",
         "android/hardware/audio/core/IStreamIn.aidl",
         "android/hardware/audio/core/IStreamOut.aidl",
         "android/hardware/audio/core/ITelephony.aidl",
@@ -125,6 +126,7 @@ aidl_interface {
         "android/hardware/audio/core/ModuleDebug.aidl",
         "android/hardware/audio/core/StreamDescriptor.aidl",
         "android/hardware/audio/core/SurroundSoundConfig.aidl",
+        "android/hardware/audio/core/VendorParameter.aidl",
     ],
     imports: [
         "android.hardware.common-V2",

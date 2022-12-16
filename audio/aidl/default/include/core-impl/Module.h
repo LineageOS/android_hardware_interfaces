@@ -87,6 +87,11 @@ class Module : public BnModule {
             ::aidl::android::hardware::audio::core::IModule::ScreenRotation in_rotation) override;
     ndk::ScopedAStatus updateScreenState(bool in_isTurnedOn) override;
     ndk::ScopedAStatus getSoundDose(std::shared_ptr<ISoundDose>* _aidl_return) override;
+    ndk::ScopedAStatus generateHwAvSyncId(int32_t* _aidl_return) override;
+    ndk::ScopedAStatus getVendorParameters(const std::vector<std::string>& in_ids,
+                                           std::vector<VendorParameter>* _aidl_return) override;
+    ndk::ScopedAStatus setVendorParameters(const std::vector<VendorParameter>& in_parameters,
+                                           bool in_async) override;
 
     void cleanUpPatch(int32_t patchId);
     ndk::ScopedAStatus createStreamContext(
