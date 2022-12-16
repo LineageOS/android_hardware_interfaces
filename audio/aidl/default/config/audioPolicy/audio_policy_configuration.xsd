@@ -576,6 +576,7 @@
         <xs:restriction base="xs:string">
             <xs:enumeration value="AUDIO_ENCAPSULATION_TYPE_NONE"/>
             <xs:enumeration value="AUDIO_ENCAPSULATION_TYPE_IEC61937"/>
+            <xs:enumeration value="AUDIO_ENCAPSULATION_TYPE_PCM"/>
         </xs:restriction>
     </xs:simpleType>
     <xs:complexType name="profile">
