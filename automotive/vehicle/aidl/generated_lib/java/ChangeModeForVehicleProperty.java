@@ -60,6 +60,7 @@ public final class ChangeModeForVehicleProperty {
         Map.entry(VehicleProperty.RANGE_REMAINING, VehiclePropertyChangeMode.CONTINUOUS),
         Map.entry(VehicleProperty.TIRE_PRESSURE, VehiclePropertyChangeMode.CONTINUOUS),
         Map.entry(VehicleProperty.CRITICALLY_LOW_TIRE_PRESSURE, VehiclePropertyChangeMode.STATIC),
+        Map.entry(VehicleProperty.ENGINE_IDLE_AUTO_STOP_ENABLED, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.GEAR_SELECTION, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.CURRENT_GEAR, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.PARKING_BRAKE_ON, VehiclePropertyChangeMode.ON_CHANGE),

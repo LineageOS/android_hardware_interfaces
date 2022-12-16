@@ -2107,6 +2107,14 @@
             "minSampleRate": 0.10000000149011612
         },
         {
+            "property": "VehicleProperty::ENGINE_IDLE_AUTO_STOP_ENABLED",
+            "defaultValue": {
+                "int32Values": [
+                    1
+                ]
+            }
+        },
+        {
             "property": "VehicleProperty::DOOR_LOCK",
             "areas": [
                 {

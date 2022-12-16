@@ -441,6 +441,17 @@ enum VehicleProperty {
     CRITICALLY_LOW_TIRE_PRESSURE = 0x030A + 0x10000000 + 0x07000000
             + 0x00600000, // VehiclePropertyGroup:SYSTEM,VehicleArea:WHEEL,VehiclePropertyType:FLOAT
     /**
+     * Represents feature for engine idle automatic stop.
+     *
+     * If true, the vehicle may automatically shut off the engine when it is not needed and then
+     * automatically restart it when needed.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     */
+    ENGINE_IDLE_AUTO_STOP_ENABLED =
+            0x0320 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+    /**
      * Currently selected gear
      *
      * This is the gear selected by the user.
