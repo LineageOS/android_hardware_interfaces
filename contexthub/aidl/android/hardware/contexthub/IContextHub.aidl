@@ -204,6 +204,19 @@ interface IContextHub {
     long[] getPreloadedNanoappIds();
 
     /**
+     * Invoked when the state of the NAN session requested through handleNanSessionRequest()
+     * changes. This function may be invoked without a corresponding handleNanSessionRequest to
+     * indicate if a NAN session was terminated without a request due to resource limitations.
+     *
+     * If the state becomes disabled without an explicit request from the HAL, the HAL MUST
+     * explicitly invoke handleNanSessionRequest() at a later point in time to attempt to
+     * re-enable NAN.
+     *
+     * @param state True if the NAN session is currently enabled.
+     */
+    void onNanSessionStateChanged(in boolean state);
+
+    /**
      * Error codes that are used as service specific errors with the AIDL return
      * value EX_SERVICE_SPECIFIC.
      */
