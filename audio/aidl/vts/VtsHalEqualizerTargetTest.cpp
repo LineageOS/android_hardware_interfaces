@@ -57,8 +57,7 @@ using aidl::android::hardware::audio::effect::Parameter;
  */
 
 enum ParamName { PARAM_INSTANCE_NAME, PARAM_BAND_LEVEL };
-using EqualizerParamTestParam =
-        std::tuple<std::pair<std::shared_ptr<IFactory>, Descriptor::Identity>, int>;
+using EqualizerParamTestParam = std::tuple<std::pair<std::shared_ptr<IFactory>, Descriptor>, int>;
 
 /*
 Testing parameter range, assuming the parameter supported by effect is in this range.
@@ -71,12 +70,12 @@ class EqualizerTest : public ::testing::TestWithParam<EqualizerParamTestParam>,
                       public EffectHelper {
   public:
     EqualizerTest() : mBandLevel(std::get<PARAM_BAND_LEVEL>(GetParam())) {
-        std::tie(mFactory, mIdentity) = std::get<PARAM_INSTANCE_NAME>(GetParam());
+        std::tie(mFactory, mDescriptor) = std::get<PARAM_INSTANCE_NAME>(GetParam());
     }
 
     void SetUp() override {
         ASSERT_NE(nullptr, mFactory);
-        ASSERT_NO_FATAL_FAILURE(create(mFactory, mEffect, mIdentity));
+        ASSERT_NO_FATAL_FAILURE(create(mFactory, mEffect, mDescriptor));
 
         Parameter::Specific specific = getDefaultParamSpecific();
         Parameter::Common common = EffectHelper::createParamCommon(
@@ -115,7 +114,7 @@ class EqualizerTest : public ::testing::TestWithParam<EqualizerParamTestParam>,
     static const long kInputFrameCount = 0x100, kOutputFrameCount = 0x100;
     std::shared_ptr<IFactory> mFactory;
     std::shared_ptr<IEffect> mEffect;
-    Descriptor::Identity mIdentity;
+    Descriptor mDescriptor;
     std::pair<int, int> mPresetIndex;
     std::pair<int, int> mBandIndex;
     const int mBandLevel;
@@ -327,9 +326,11 @@ INSTANTIATE_TEST_SUITE_P(
                                    IFactory::descriptor, kEqualizerTypeUUID)),
                            testing::ValuesIn(kBandLevels)),
         [](const testing::TestParamInfo<EqualizerTest::ParamType>& info) {
-            auto instance = std::get<PARAM_INSTANCE_NAME>(info.param);
+            auto descriptor = std::get<PARAM_INSTANCE_NAME>(info.param).second;
             std::string bandLevel = std::to_string(std::get<PARAM_BAND_LEVEL>(info.param));
-            std::string name = instance.second.uuid.toString() + "_bandLevel_" + bandLevel;
+            std::string name = "Implementor_" + descriptor.common.implementor + "_name_" +
+                               descriptor.common.name + "_UUID_" +
+                               descriptor.common.id.uuid.toString() + "_bandLevel_" + bandLevel;
             std::replace_if(
                     name.begin(), name.end(), [](const char c) { return !std::isalnum(c); }, '_');
             return name;
