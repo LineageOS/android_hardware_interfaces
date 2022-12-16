@@ -43,6 +43,7 @@ cc_library_static {
         "Configuration.cpp",
         "EngineConfigXmlConverter.cpp",
         "Module.cpp",
+        "SoundDose.cpp",
         "Stream.cpp",
         "Telephony.cpp",
     ],
