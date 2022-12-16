@@ -181,6 +181,7 @@
             <xs:enumeration value="AUDIO_OUTPUT_FLAG_GAPLESS_OFFLOAD" />
             <xs:enumeration value="AUDIO_OUTPUT_FLAG_SPATIALIZER" />
             <xs:enumeration value="AUDIO_OUTPUT_FLAG_ULTRASOUND" />
+            <xs:enumeration value="AUDIO_OUTPUT_FLAG_BIT_PERFECT" />
             <xs:enumeration value="AUDIO_INPUT_FLAG_FAST" />
             <xs:enumeration value="AUDIO_INPUT_FLAG_HW_HOTWORD" />
             <xs:enumeration value="AUDIO_INPUT_FLAG_RAW" />
@@ -575,6 +576,7 @@
         <xs:restriction base="xs:string">
             <xs:enumeration value="AUDIO_ENCAPSULATION_TYPE_NONE"/>
             <xs:enumeration value="AUDIO_ENCAPSULATION_TYPE_IEC61937"/>
+            <xs:enumeration value="AUDIO_ENCAPSULATION_TYPE_PCM"/>
         </xs:restriction>
     </xs:simpleType>
     <xs:complexType name="profile">
