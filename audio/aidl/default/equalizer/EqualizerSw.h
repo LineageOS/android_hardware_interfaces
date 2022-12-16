@@ -53,8 +53,9 @@ class EqualizerSwContext final : public EffectContext {
                 LOG(ERROR) << __func__ << " index illegal, skip: " << it.index << " - "
                            << it.levelMb;
                 ret = RetCode::ERROR_ILLEGAL_PARAMETER;
+            } else {
+                mBandLevels[it.index] = it.levelMb;
             }
-            mBandLevels[it.index] = it.levelMb;
         }
         return ret;
     }
