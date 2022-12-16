@@ -167,6 +167,7 @@ package android.audio.policy.configuration {
     method @NonNull public String getRawName();
     enum_constant public static final android.audio.policy.configuration.AudioEncapsulationType AUDIO_ENCAPSULATION_TYPE_IEC61937;
     enum_constant public static final android.audio.policy.configuration.AudioEncapsulationType AUDIO_ENCAPSULATION_TYPE_NONE;
+    enum_constant public static final android.audio.policy.configuration.AudioEncapsulationType AUDIO_ENCAPSULATION_TYPE_PCM;
   }
 
   public enum AudioFormat {
