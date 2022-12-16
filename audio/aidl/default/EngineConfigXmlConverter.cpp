@@ -20,7 +20,9 @@
 #include <functional>
 #include <unordered_map>
 
+#include <aidl/android/media/audio/common/AudioFlag.h>
 #include <aidl/android/media/audio/common/AudioHalEngineConfig.h>
+#include <aidl/android/media/audio/common/AudioProductStrategyType.h>
 
 #include "core-impl/EngineConfigXmlConverter.h"
 
