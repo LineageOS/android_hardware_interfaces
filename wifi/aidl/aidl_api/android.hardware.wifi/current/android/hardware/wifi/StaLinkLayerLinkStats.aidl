@@ -35,6 +35,8 @@ package android.hardware.wifi;
 @VintfStability
 parcelable StaLinkLayerLinkStats {
   int linkId;
+  int radioId;
+  int frequencyMhz;
   int beaconRx;
   int avgRssiMgmt;
   android.hardware.wifi.StaLinkLayerIfacePacketStats wmeBePktStats;

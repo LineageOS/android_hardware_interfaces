@@ -951,6 +951,8 @@ bool convertLegacyLinkLayerMlStatsToAidl(const legacy_hal::LinkLayerMlStats& leg
     for (const auto& link : legacy_ml_stats.links) {
         StaLinkLayerLinkStats linkStats = {};
         linkStats.linkId = link.stat.link_id;
+        linkStats.radioId = link.stat.radio;
+        linkStats.frequencyMhz = link.stat.frequency;
         linkStats.beaconRx = link.stat.beacon_rx;
         linkStats.avgRssiMgmt = link.stat.rssi_mgmt;
         linkStats.wmeBePktStats.rxMpdu = link.stat.ac[legacy_hal::WIFI_AC_BE].rx_mpdu;
