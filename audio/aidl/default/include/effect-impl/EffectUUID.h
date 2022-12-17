@@ -45,6 +45,18 @@ static const AudioUuid kBassBoostSwImplUUID = {static_cast<int32_t>(0xfa8181f2),
                                                0x11ed,
                                                0x9b6a,
                                                {0x02, 0x42, 0xac, 0x12, 0x00, 0x02}};
+// 8631f300-72e2-11df-b57e-0002a5d5c51b
+static const AudioUuid kBassBoostBundleImplUUID = {static_cast<int32_t>(0x8631f300),
+                                                   0x72e2,
+                                                   0x11df,
+                                                   0xb57e,
+                                                   {0x00, 0x02, 0xa5, 0xd5, 0xc5, 0x1b}};
+// 14804144-a5ee-4d24-aa88-0002a5d5c51b
+static const AudioUuid kBassBoostProxyUUID = {static_cast<int32_t>(0x14804144),
+                                              0xa5ee,
+                                              0x4d24,
+                                              0xaa88,
+                                              {0x00, 0x02, 0xa5, 0xd5, 0xc5, 0x1b}};
 // fa81862a-588b-11ed-9b6a-0242ac120002
 static const AudioUuid kDownmixTypeUUID = {static_cast<int32_t>(0xfa81862a),
                                            0x588b,
