@@ -19,6 +19,7 @@ package android.hardware.cas;
 /**
  * A subsample consists of some number of bytes of clear (unscrambled)
  * data followed by a number of bytes of scrambled data.
+ * @hide
  */
 @VintfStability
 parcelable SubSample {
