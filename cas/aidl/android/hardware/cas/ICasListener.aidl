@@ -18,6 +18,9 @@ package android.hardware.cas;
 
 import android.hardware.cas.StatusEvent;
 
+/**
+ * @hide
+ */
 @VintfStability
 interface ICasListener {
     /**

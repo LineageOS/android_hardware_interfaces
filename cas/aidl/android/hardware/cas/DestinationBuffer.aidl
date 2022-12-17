@@ -19,6 +19,9 @@ package android.hardware.cas;
 import android.hardware.cas.SharedBuffer;
 import android.hardware.common.NativeHandle;
 
+/**
+ * @hide
+ */
 @VintfStability
 union DestinationBuffer {
     /**

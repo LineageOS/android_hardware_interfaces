@@ -32,6 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.cas;
+/* @hide */
 @VintfStability
 interface IMediaCasService {
   android.hardware.cas.IDescrambler createDescrambler(in int CA_system_id);
