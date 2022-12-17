@@ -32,6 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.cas;
+/* @hide */
 @Backing(type="byte") @VintfStability
 enum StatusEvent {
   PLUGIN_PHYSICAL_MODULE_CHANGED = 0,
