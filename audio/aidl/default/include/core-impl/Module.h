@@ -87,6 +87,11 @@ class Module : public BnModule {
             ::aidl::android::hardware::audio::core::IModule::ScreenRotation in_rotation) override;
     ndk::ScopedAStatus updateScreenState(bool in_isTurnedOn) override;
     ndk::ScopedAStatus getSoundDose(std::shared_ptr<ISoundDose>* _aidl_return) override;
+    ndk::ScopedAStatus generateHwAvSyncId(int32_t* _aidl_return) override;
+    ndk::ScopedAStatus getVendorParameters(const std::vector<std::string>& in_ids,
+                                           std::vector<VendorParameter>* _aidl_return) override;
+    ndk::ScopedAStatus setVendorParameters(const std::vector<VendorParameter>& in_parameters,
+                                           bool in_async) override;
 
     void cleanUpPatch(int32_t patchId);
     ndk::ScopedAStatus createStreamContext(
@@ -115,6 +120,7 @@ class Module : public BnModule {
     // Since it is required to return the same instance of the ITelephony, even
     // if the client has released it on its side, we need to hold it via a strong pointer.
     std::shared_ptr<ITelephony> mTelephony;
+    ndk::SpAIBinder mTelephonyBinder;
     // ids of ports created at runtime via 'connectExternalDevice'.
     std::set<int32_t> mConnectedDevicePorts;
     Streams mStreams;
@@ -125,6 +131,7 @@ class Module : public BnModule {
     float mMasterVolume = 1.0f;
     bool mMicMute = false;
     std::shared_ptr<ISoundDose> mSoundDose;
+    ndk::SpAIBinder mSoundDoseBinder;
 };
 
 }  // namespace aidl::android::hardware::audio::core

@@ -616,6 +616,89 @@ TEST_F(JsonConfigLoaderUnitTest, testAreas_FailInvalidTypeForOneAreaValue) {
             << "Wrong type for DefaultValue for one area must cause error";
 }
 
+TEST_F(JsonConfigLoaderUnitTest, testAreas_HandlesNoSupportedEnumValuesDeclared) {
+    std::istringstream iss(R"(
+    {
+        "properties": [{
+            "property": "VehicleProperty::CABIN_LIGHTS_STATE",
+            "areas": [{
+                "areaId": 0,
+            }]
+        }]
+    }
+    )");
+
+    auto result = mLoader.loadPropConfig(iss);
+    ASSERT_TRUE(result.ok());
+
+    auto configs = result.value();
+    ASSERT_EQ(configs.size(), 1u);
+
+    const VehiclePropConfig& config = configs.begin()->second.config;
+    ASSERT_EQ(config.areaConfigs.size(), 1u);
+
+    const VehicleAreaConfig& areaConfig = config.areaConfigs[0];
+    ASSERT_EQ(areaConfig.areaId, 0);
+    ASSERT_FALSE(areaConfig.supportedEnumValues);
+}
+
+TEST_F(JsonConfigLoaderUnitTest, testAreas_HandlesSupportedEnumValues) {
+    std::istringstream iss(R"(
+    {
+        "properties": [{
+            "property": "VehicleProperty::CABIN_LIGHTS_STATE",
+            "areas": [{
+                "areaId": 0,
+                "supportedEnumValues": ["Constants::LIGHT_STATE_ON", "Constants::LIGHT_STATE_OFF"]
+            }]
+        }]
+    }
+    )");
+
+    auto result = mLoader.loadPropConfig(iss);
+    ASSERT_TRUE(result.ok());
+
+    auto configs = result.value();
+    ASSERT_EQ(configs.size(), 1u);
+
+    const VehiclePropConfig& config = configs.begin()->second.config;
+    ASSERT_EQ(config.areaConfigs.size(), 1u);
+
+    const VehicleAreaConfig& areaConfig = config.areaConfigs[0];
+    ASSERT_EQ(areaConfig.areaId, 0);
+    ASSERT_TRUE(areaConfig.supportedEnumValues);
+    ASSERT_EQ(areaConfig.supportedEnumValues.value().size(), 2u);
+    ASSERT_EQ(areaConfig.supportedEnumValues.value(),
+              std::vector<int64_t>({LIGHT_STATE_ON, LIGHT_STATE_OFF}));
+}
+
+TEST_F(JsonConfigLoaderUnitTest, testAreas_HandlesEmptySupportedEnumValues) {
+    std::istringstream iss(R"(
+    {
+        "properties": [{
+            "property": "VehicleProperty::CABIN_LIGHTS_STATE",
+            "areas": [{
+                "areaId": 0,
+                "supportedEnumValues": []
+            }]
+        }]
+    }
+    )");
+
+    auto result = mLoader.loadPropConfig(iss);
+    ASSERT_TRUE(result.ok());
+
+    auto configs = result.value();
+    ASSERT_EQ(configs.size(), 1u);
+
+    const VehiclePropConfig& config = configs.begin()->second.config;
+    ASSERT_EQ(config.areaConfigs.size(), 1u);
+
+    const VehicleAreaConfig& areaConfig = config.areaConfigs[0];
+    ASSERT_EQ(areaConfig.areaId, 0);
+    ASSERT_FALSE(areaConfig.supportedEnumValues);
+}
+
 }  // namespace vehicle
 }  // namespace automotive
 }  // namespace hardware

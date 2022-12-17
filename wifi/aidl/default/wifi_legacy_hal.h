@@ -363,7 +363,21 @@ struct LinkLayerStats {
     wifi_iface_stat iface;
     std::vector<LinkLayerRadioStats> radios;
     std::vector<WifiPeerInfo> peers;
+    bool valid;
 };
+
+struct LinkStats {
+    wifi_link_stat stat;
+    std::vector<WifiPeerInfo> peers;
+};
+
+struct LinkLayerMlStats {
+    wifi_iface_ml_stat iface;
+    std::vector<LinkStats> links;
+    std::vector<LinkLayerRadioStats> radios;
+    bool valid;
+};
+
 #pragma GCC diagnostic pop
 
 // The |WLAN_DRIVER_WAKE_REASON_CNT.cmd_event_wake_cnt| and
@@ -537,7 +551,9 @@ class WifiLegacyHal {
     // Link layer stats functions.
     wifi_error enableLinkLayerStats(const std::string& iface_name, bool debug);
     wifi_error disableLinkLayerStats(const std::string& iface_name);
-    std::pair<wifi_error, LinkLayerStats> getLinkLayerStats(const std::string& iface_name);
+    wifi_error getLinkLayerStats(const std::string& iface_name,
+                                 legacy_hal::LinkLayerStats& legacy_stats,
+                                 legacy_hal::LinkLayerMlStats& legacy_ml_stats);
     // RSSI monitor functions.
     wifi_error startRssiMonitoring(
             const std::string& iface_name, wifi_request_id id, int8_t max_rssi, int8_t min_rssi,
@@ -710,6 +726,8 @@ class WifiLegacyHal {
     // Handles wifi (error) status of Virtual interface create/delete
     wifi_error handleVirtualInterfaceCreateOrDeleteStatus(const std::string& ifname,
                                                           wifi_error status);
+    wifi_link_stat* copyLinkStat(wifi_link_stat* stat_ptr, std::vector<LinkStats> stats);
+    wifi_peer_info* copyPeerInfo(wifi_peer_info* peer_ptr, std::vector<WifiPeerInfo> peers);
 
     // Global function table of legacy HAL.
     wifi_hal_fn global_func_table_;

@@ -34,7 +34,7 @@
 package android.hardware.audio.core;
 @VintfStability
 interface IStreamIn {
-  void close();
+  android.hardware.audio.core.IStreamCommon getStreamCommon();
   android.hardware.audio.core.MicrophoneDynamicInfo[] getActiveMicrophones();
   android.hardware.audio.core.IStreamIn.MicrophoneDirection getMicrophoneDirection();
   void setMicrophoneDirection(android.hardware.audio.core.IStreamIn.MicrophoneDirection direction);
