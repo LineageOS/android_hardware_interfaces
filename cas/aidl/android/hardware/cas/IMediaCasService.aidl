@@ -26,6 +26,7 @@ import android.hardware.cas.IDescrambler;
  * cas HAL to create cas and descrambler plugin instances. A cas plugin instance
  * opens cas sessions which are used to obtain keys for a descrambler session,
  * which can in turn be used to descramble protected video content.
+ * @hide
  */
 @VintfStability
 interface IMediaCasService {

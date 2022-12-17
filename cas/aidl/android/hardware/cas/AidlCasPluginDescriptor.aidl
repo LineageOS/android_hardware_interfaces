@@ -18,6 +18,7 @@ package android.hardware.cas;
 
 /**
  * Describes a CAS plugin with its system ID and name.
+ * @hide
  */
 @VintfStability
 parcelable AidlCasPluginDescriptor {
