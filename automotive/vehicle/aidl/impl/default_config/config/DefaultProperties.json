@@ -2923,6 +2923,14 @@
             }
         },
         {
+            "property": "VehicleProperty::LANE_DEPARTURE_WARNING_ENABLED",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            }
+        },
+        {
             "property": "VehicleProperty::LANE_CENTERING_ASSIST_ENABLED",
             "defaultValue": {
                 "int32Values": [
