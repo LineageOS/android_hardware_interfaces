@@ -14,14 +14,9 @@
  * limitations under the License.
  */
 
-#include <cstddef>
 #define LOG_TAG "AHAL_VisualizerSw"
-#include <Utils.h>
-#include <algorithm>
-#include <unordered_set>
 
 #include <android-base/logging.h>
-#include <fmq/AidlMessageQueue.h>
 
 #include "VisualizerSw.h"
 
@@ -60,7 +55,10 @@ extern "C" binder_exception_t queryEffect(const AudioUuid* in_impl_uuid, Descrip
 namespace aidl::android::hardware::audio::effect {
 
 const std::string VisualizerSw::kEffectName = "VisualizerSw";
-const Visualizer::Capability VisualizerSw::kCapability;
+/* capabilities */
+const Visualizer::CaptureSizeRange mCaptureSizeRange = {MIN_CAPTURE_SIZE, MAX_CAPTURE_SIZE};
+const Visualizer::Capability VisualizerSw::kCapability = {.maxLatencyMs = MAX_LATENCY,
+                                                          .captureSizeRange = mCaptureSizeRange};
 const Descriptor VisualizerSw::kDescriptor = {
         .common = {.id = {.type = kVisualizerTypeUUID,
                           .uuid = kVisualizerSwImplUUID,
@@ -82,8 +80,53 @@ ndk::ScopedAStatus VisualizerSw::setParameterSpecific(const Parameter::Specific&
     RETURN_IF(Parameter::Specific::visualizer != specific.getTag(), EX_ILLEGAL_ARGUMENT,
               "EffectNotSupported");
 
-    mSpecificParam = specific.get<Parameter::Specific::visualizer>();
-    LOG(DEBUG) << __func__ << " success with: " << specific.toString();
+    auto& vsParam = specific.get<Parameter::Specific::visualizer>();
+    auto tag = vsParam.getTag();
+
+    switch (tag) {
+        case Visualizer::captureSizeBytes: {
+            RETURN_IF(mContext->setVsCaptureSize(vsParam.get<Visualizer::captureSizeBytes>()) !=
+                              RetCode::SUCCESS,
+                      EX_ILLEGAL_ARGUMENT, "captureSizeNotSupported");
+            return ndk::ScopedAStatus::ok();
+        }
+        case Visualizer::scalingMode: {
+            RETURN_IF(mContext->setVsScalingMode(vsParam.get<Visualizer::scalingMode>()) !=
+                              RetCode::SUCCESS,
+                      EX_ILLEGAL_ARGUMENT, "scalingModeNotSupported");
+            return ndk::ScopedAStatus::ok();
+        }
+        case Visualizer::measurementMode: {
+            RETURN_IF(mContext->setVsMeasurementMode(vsParam.get<Visualizer::measurementMode>()) !=
+                              RetCode::SUCCESS,
+                      EX_ILLEGAL_ARGUMENT, "measurementModeNotSupported");
+            return ndk::ScopedAStatus::ok();
+        }
+        case Visualizer::setOnlyParameters: {
+            return setSetOnlyParameterVisualizer(vsParam.get<Visualizer::setOnlyParameters>());
+        }
+        case Visualizer::getOnlyParameters: {
+            LOG(ERROR) << __func__ << " unsupported settable getOnlyParam";
+            return ndk::ScopedAStatus::fromExceptionCodeWithMessage(
+                    EX_ILLEGAL_ARGUMENT, "SetofGetOnlyParamsNotSupported");
+        }
+        default: {
+            LOG(ERROR) << __func__ << " unsupported tag: " << toString(tag);
+            return ndk::ScopedAStatus::fromExceptionCodeWithMessage(EX_ILLEGAL_ARGUMENT,
+                                                                    "VisualizerTagNotSupported");
+        }
+    }
+}
+
+ndk::ScopedAStatus VisualizerSw::setSetOnlyParameterVisualizer(
+        Visualizer::SetOnlyParameters setOnlyParam) {
+    auto tag = setOnlyParam.getTag();
+    RETURN_IF(Visualizer::SetOnlyParameters::latencyMs != tag, EX_ILLEGAL_ARGUMENT,
+              "SetOnlyParametersTagNotSupported");
+    RETURN_IF(
+            mContext->setVsLatency(setOnlyParam.get<Visualizer::SetOnlyParameters::latencyMs>()) !=
+                    RetCode::SUCCESS,
+            EX_ILLEGAL_ARGUMENT, "latencyNotSupported");
     return ndk::ScopedAStatus::ok();
 }
 
@@ -91,7 +134,76 @@ ndk::ScopedAStatus VisualizerSw::getParameterSpecific(const Parameter::Id& id,
                                                       Parameter::Specific* specific) {
     auto tag = id.getTag();
     RETURN_IF(Parameter::Id::visualizerTag != tag, EX_ILLEGAL_ARGUMENT, "wrongIdTag");
-    specific->set<Parameter::Specific::visualizer>(mSpecificParam);
+    auto vsId = id.get<Parameter::Id::visualizerTag>();
+    auto vsIdTag = vsId.getTag();
+    switch (vsIdTag) {
+        case Visualizer::Id::commonTag:
+            return getParameterVisualizer(vsId.get<Visualizer::Id::commonTag>(), specific);
+        case Visualizer::Id::getOnlyParamTag:
+            return getGetOnlyParameterVisualizer(vsId.get<Visualizer::Id::getOnlyParamTag>(),
+                                                 specific);
+        case Visualizer::Id::setOnlyParamTag: {
+            LOG(ERROR) << __func__ << " unsupported gettable setOnlyParam";
+            return ndk::ScopedAStatus::fromExceptionCodeWithMessage(
+                    EX_ILLEGAL_ARGUMENT, "GetofSetOnlyParamsNotSupported");
+        }
+        default:
+            LOG(ERROR) << __func__ << " unsupported tag: " << toString(tag);
+            return ndk::ScopedAStatus::fromExceptionCodeWithMessage(EX_ILLEGAL_ARGUMENT,
+                                                                    "VisualizerTagNotSupported");
+    }
+}
+ndk::ScopedAStatus VisualizerSw::getParameterVisualizer(const Visualizer::Tag& tag,
+                                                        Parameter::Specific* specific) {
+    RETURN_IF(!mContext, EX_NULL_POINTER, "nullContext");
+
+    Visualizer vsParam;
+    switch (tag) {
+        case Visualizer::captureSizeBytes: {
+            vsParam.set<Visualizer::captureSizeBytes>(mContext->getVsCaptureSize());
+            break;
+        }
+        case Visualizer::scalingMode: {
+            vsParam.set<Visualizer::scalingMode>(mContext->getVsScalingMode());
+            break;
+        }
+        case Visualizer::measurementMode: {
+            vsParam.set<Visualizer::measurementMode>(mContext->getVsMeasurementMode());
+            break;
+        }
+        default: {
+            LOG(ERROR) << __func__ << " unsupported tag: " << toString(tag);
+            return ndk::ScopedAStatus::fromExceptionCodeWithMessage(EX_ILLEGAL_ARGUMENT,
+                                                                    "VisualizerTagNotSupported");
+        }
+    }
+    specific->set<Parameter::Specific::visualizer>(vsParam);
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus VisualizerSw::getGetOnlyParameterVisualizer(
+        const Visualizer::GetOnlyParameters::Tag& tag, Parameter::Specific* specific) {
+    Visualizer::GetOnlyParameters getOnlyParam;
+    switch (tag) {
+        case Visualizer::GetOnlyParameters::measurement: {
+            getOnlyParam.set<Visualizer::GetOnlyParameters::measurement>(
+                    mContext->getVsMeasurement());
+            break;
+        }
+        case Visualizer::GetOnlyParameters::captureBytes: {
+            getOnlyParam.set<Visualizer::GetOnlyParameters::captureBytes>(
+                    mContext->getVsCaptureBytes());
+            break;
+        }
+        default: {
+            LOG(ERROR) << __func__ << " unsupported tag: " << toString(tag);
+            return ndk::ScopedAStatus::fromExceptionCodeWithMessage(
+                    EX_ILLEGAL_ARGUMENT, "GetOnlyParameterTagNotSupported");
+        }
+    }
+    Visualizer vsParam;
+    vsParam.set<Visualizer::getOnlyParameters>(getOnlyParam);
+    specific->set<Parameter::Specific::visualizer>(vsParam);
     return ndk::ScopedAStatus::ok();
 }
 
