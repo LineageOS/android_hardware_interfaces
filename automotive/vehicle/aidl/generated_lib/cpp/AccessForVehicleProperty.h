@@ -233,6 +233,7 @@ std::unordered_map<VehicleProperty, VehiclePropertyAccess> AccessForVehiclePrope
         {VehicleProperty::SHUTDOWN_REQUEST, VehiclePropertyAccess::WRITE},
         {VehicleProperty::AUTOMATIC_EMERGENCY_BRAKING_ENABLED, VehiclePropertyAccess::READ_WRITE},
         {VehicleProperty::FORWARD_COLLISION_WARNING_ENABLED, VehiclePropertyAccess::READ_WRITE},
+        {VehicleProperty::BLIND_SPOT_WARNING_ENABLED, VehiclePropertyAccess::READ_WRITE},
         {VehicleProperty::LANE_CENTERING_ASSIST_ENABLED, VehiclePropertyAccess::READ_WRITE},
 };
 
