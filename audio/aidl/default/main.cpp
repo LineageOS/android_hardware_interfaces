@@ -16,6 +16,7 @@
 
 #include <cstdlib>
 #include <ctime>
+#include <utility>
 
 #include <android-base/logging.h>
 #include <android/binder_ibinder_platform.h>
@@ -44,19 +45,17 @@ int main() {
     CHECK_EQ(STATUS_OK, status);
 
     // Make modules
-    auto moduleDefault = ndk::SharedRefBase::make<Module>(Module::Type::DEFAULT);
-    const std::string moduleDefaultName = std::string() + Module::descriptor + "/default";
-    AIBinder_setMinSchedulerPolicy(moduleDefault->asBinder().get(), SCHED_NORMAL,
-                                   ANDROID_PRIORITY_AUDIO);
-    status = AServiceManager_addService(moduleDefault->asBinder().get(), moduleDefaultName.c_str());
-    CHECK_EQ(STATUS_OK, status);
-
-    auto moduleRSubmix = ndk::SharedRefBase::make<Module>(Module::Type::R_SUBMIX);
-    const std::string moduleRSubmixName = std::string() + Module::descriptor + "/r_submix";
-    AIBinder_setMinSchedulerPolicy(moduleRSubmix->asBinder().get(), SCHED_NORMAL,
-                                   ANDROID_PRIORITY_AUDIO);
-    status = AServiceManager_addService(moduleRSubmix->asBinder().get(), moduleRSubmixName.c_str());
-    CHECK_EQ(STATUS_OK, status);
+    auto createModule = [](Module::Type type, const std::string& instance) {
+        auto module = ndk::SharedRefBase::make<Module>(type);
+        ndk::SpAIBinder moduleBinder = module->asBinder();
+        const std::string moduleName = std::string(Module::descriptor).append("/").append(instance);
+        AIBinder_setMinSchedulerPolicy(moduleBinder.get(), SCHED_NORMAL, ANDROID_PRIORITY_AUDIO);
+        binder_status_t status = AServiceManager_addService(moduleBinder.get(), moduleName.c_str());
+        CHECK_EQ(STATUS_OK, status);
+        return std::make_pair(module, moduleBinder);
+    };
+    auto modules = {createModule(Module::Type::DEFAULT, "default"),
+                    createModule(Module::Type::R_SUBMIX, "r_submix")};
 
     ABinderProcess_joinThreadPool();
     return EXIT_FAILURE;  // should not reach

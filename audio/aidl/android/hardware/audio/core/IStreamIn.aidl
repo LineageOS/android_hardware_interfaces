@@ -17,6 +17,7 @@
 package android.hardware.audio.core;
 
 import android.hardware.audio.common.SinkMetadata;
+import android.hardware.audio.core.IStreamCommon;
 import android.hardware.audio.core.MicrophoneDynamicInfo;
 
 /**
@@ -25,19 +26,15 @@ import android.hardware.audio.core.MicrophoneDynamicInfo;
 @VintfStability
 interface IStreamIn {
     /**
-     * Close the stream.
+     * Return the interface for common stream operations.
      *
-     * Releases any resources allocated for this stream on the HAL module side.
-     * This includes the fast message queues and shared memories returned via
-     * the StreamDescriptor. Thus, the stream can not be operated anymore after
-     * it has been closed. The client needs to release the audio data I/O
-     * objects after the call to this method returns.
+     * This method must always succeed. The implementation must
+     * return the same instance object for all subsequent calls to
+     * this method.
      *
-     * Methods of this interface throw EX_ILLEGAL_STATE for a closed stream.
-     *
-     * @throws EX_ILLEGAL_STATE If the stream has already been closed.
+     * @return The interface for common operations.
      */
-    void close();
+    IStreamCommon getStreamCommon();
 
     /**
      * Provides information on the microphones that are active for this stream.

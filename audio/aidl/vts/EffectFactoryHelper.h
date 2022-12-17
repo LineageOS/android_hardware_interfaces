@@ -49,11 +49,11 @@ class EffectFactoryHelper {
 
     std::shared_ptr<IFactory> GetFactory() const { return mEffectFactory; }
 
-    static std::vector<std::pair<std::shared_ptr<IFactory>, Descriptor::Identity>>
-    getAllEffectDescriptors(std::string serviceName, std::optional<AudioUuid> type = std::nullopt) {
+    static std::vector<std::pair<std::shared_ptr<IFactory>, Descriptor>> getAllEffectDescriptors(
+            std::string serviceName, std::optional<AudioUuid> type = std::nullopt) {
         AudioHalBinderServiceUtil util;
         auto names = android::getAidlHalInstanceNames(serviceName);
-        std::vector<std::pair<std::shared_ptr<IFactory>, Descriptor::Identity>> result;
+        std::vector<std::pair<std::shared_ptr<IFactory>, Descriptor>> result;
 
         for (const auto& name : names) {
             auto factory = IFactory::fromBinder(util.connectToService(name));
@@ -62,11 +62,10 @@ class EffectFactoryHelper {
                     factory->queryEffects(std::nullopt, std::nullopt, std::nullopt, &descs)
                             .isOk()) {
                     for (const auto& desc : descs) {
-                        const auto& id = desc.common.id;
-                        if (type.has_value() && id.type != type.value()) {
+                        if (type.has_value() && desc.common.id.type != type.value()) {
                             continue;
                         }
-                        result.emplace_back(factory, id);
+                        result.emplace_back(factory, desc);
                     }
                 }
             }

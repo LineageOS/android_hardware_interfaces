@@ -41,4 +41,5 @@ parcelable VehicleAreaConfig {
   long maxInt64Value;
   float minFloatValue;
   float maxFloatValue;
+  @nullable long[] supportedEnumValues;
 }

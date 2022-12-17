@@ -34,16 +34,5 @@
 package android.hardware.wifi;
 @VintfStability
 parcelable StaLinkLayerIfaceStats {
-  int beaconRx;
-  int avgRssiMgmt;
-  android.hardware.wifi.StaLinkLayerIfacePacketStats wmeBePktStats;
-  android.hardware.wifi.StaLinkLayerIfacePacketStats wmeBkPktStats;
-  android.hardware.wifi.StaLinkLayerIfacePacketStats wmeViPktStats;
-  android.hardware.wifi.StaLinkLayerIfacePacketStats wmeVoPktStats;
-  byte timeSliceDutyCycleInPercent;
-  android.hardware.wifi.StaLinkLayerIfaceContentionTimeStats wmeBeContentionTimeStats;
-  android.hardware.wifi.StaLinkLayerIfaceContentionTimeStats wmeBkContentionTimeStats;
-  android.hardware.wifi.StaLinkLayerIfaceContentionTimeStats wmeViContentionTimeStats;
-  android.hardware.wifi.StaLinkLayerIfaceContentionTimeStats wmeVoContentionTimeStats;
-  android.hardware.wifi.StaPeerInfo[] peers;
+  android.hardware.wifi.StaLinkLayerLinkStats[] links;
 }

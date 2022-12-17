@@ -40,4 +40,11 @@ parcelable VehicleAreaConfig {
 
     float minFloatValue;
     float maxFloatValue;
+
+    /**
+     * If the property has a @data_enum, then it is possible to specify a supported subset of the
+     * @data_enum. If the property has a @data_enum and supportedEnumValues is null, then it is
+     * assumed all @data_enum values are supported unless specified through another mechanism.
+     */
+    @nullable long[] supportedEnumValues;
 }

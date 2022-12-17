@@ -22,6 +22,7 @@
 #include "radio_messaging_utils.h"
 #include "radio_modem_utils.h"
 #include "radio_network_utils.h"
+#include "radio_sap_utils.h"
 #include "radio_sim_utils.h"
 #include "radio_voice_utils.h"
 
@@ -54,6 +55,11 @@ INSTANTIATE_TEST_SUITE_P(
         PerInstance, RadioNetworkTest,
         testing::ValuesIn(android::getAidlHalInstanceNames(IRadioNetwork::descriptor)),
         android::PrintInstanceNameToString);
+
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(RadioSapTest);
+INSTANTIATE_TEST_SUITE_P(PerInstance, SapTest,
+                         testing::ValuesIn(android::getAidlHalInstanceNames(ISap::descriptor)),
+                         android::PrintInstanceNameToString);
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(RadioSimTest);
 INSTANTIATE_TEST_SUITE_P(PerInstance, RadioSimTest,

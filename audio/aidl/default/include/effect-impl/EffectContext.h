@@ -72,13 +72,11 @@ class EffectContext {
 
     float* getWorkBuffer() { return static_cast<float*>(mWorkBuffer.data()); }
 
-    // reset buffer status by abandon all data and status in FMQ
+    // reset buffer status by abandon input data in FMQ
     void resetBuffer() {
         auto buffer = static_cast<float*>(mWorkBuffer.data());
         std::vector<IEffect::Status> status(mStatusMQ->availableToRead());
         mInputMQ->read(buffer, mInputMQ->availableToRead());
-        mOutputMQ->read(buffer, mOutputMQ->availableToRead());
-        mStatusMQ->read(status.data(), mStatusMQ->availableToRead());
     }
 
     void dupeFmq(IEffect::OpenEffectReturn* effectRet) {

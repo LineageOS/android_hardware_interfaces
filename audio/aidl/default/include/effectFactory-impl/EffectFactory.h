@@ -96,9 +96,8 @@ class Factory : public BnFactory {
 
     std::map<aidl::android::media::audio::common::AudioUuid /* implUUID */, DlEntry> mEffectLibMap;
 
-    std::map<std::weak_ptr<IEffect>, aidl::android::media::audio::common::AudioUuid,
-             std::owner_less<>>
-            mEffectUuidMap;
+    typedef std::pair<aidl::android::media::audio::common::AudioUuid, ndk::SpAIBinder> EffectEntry;
+    std::map<std::weak_ptr<IEffect>, EffectEntry, std::owner_less<>> mEffectMap;
 
     ndk::ScopedAStatus destroyEffectImpl(const std::shared_ptr<IEffect>& in_handle);
     void cleanupEffectMap();
