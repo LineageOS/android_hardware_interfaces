@@ -32,6 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.cas;
+/* @hide */
 @VintfStability
 interface ICasListener {
   void onEvent(in int event, in int arg, in byte[] data);

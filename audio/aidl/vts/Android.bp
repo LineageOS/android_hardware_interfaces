@@ -83,3 +83,9 @@ cc_test {
     defaults: ["VtsHalAudioTargetTestDefaults"],
     srcs: ["VtsHalLoudnessEnhancerTargetTest.cpp"],
 }
+
+cc_test {
+    name: "VtsHalVisualizerTargetTest",
+    defaults: ["VtsHalAudioTargetTestDefaults"],
+    srcs: ["VtsHalVisualizerTargetTest.cpp"],
+}

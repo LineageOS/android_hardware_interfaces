@@ -1835,10 +1835,10 @@ class AudioStream : public AudioCoreModule {
         ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultBufferSizeFrames));
         std::shared_ptr<IStreamCommon> streamCommon1;
         EXPECT_IS_OK(stream.get()->getStreamCommon(&streamCommon1));
-        EXPECT_NE(nullptr, streamCommon1);
         std::shared_ptr<IStreamCommon> streamCommon2;
         EXPECT_IS_OK(stream.get()->getStreamCommon(&streamCommon2));
-        EXPECT_NE(nullptr, streamCommon2);
+        ASSERT_NE(nullptr, streamCommon1);
+        ASSERT_NE(nullptr, streamCommon2);
         EXPECT_EQ(streamCommon1->asBinder(), streamCommon2->asBinder())
                 << "getStreamCommon must return the same interface instance across invocations";
     }
