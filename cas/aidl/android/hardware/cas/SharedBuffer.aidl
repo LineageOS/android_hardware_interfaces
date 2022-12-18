@@ -22,6 +22,7 @@ import android.hardware.common.Ashmem;
  * SharedBuffer describes a shared buffer which is defined by a heapBase, an
  * offset and a size. The offset is relative to the shared memory base for the
  * memory region identified by heapBase.
+ * @hide
  */
 @VintfStability
 parcelable SharedBuffer {

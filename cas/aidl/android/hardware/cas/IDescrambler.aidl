@@ -23,6 +23,7 @@ import android.hardware.cas.SubSample;
 
 /**
  * IDescrambler is the API to control the descrambling operations.
+ * @hide
  */
 @VintfStability
 interface IDescrambler {
