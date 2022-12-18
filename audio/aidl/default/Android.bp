@@ -155,7 +155,7 @@ cc_binary {
         "libdynamicsprocessingsw",
         "libenvreverbsw",
         "libequalizersw",
-        "libhapticgeneratorsw",
+        "libhapticgeneratoraidl",
         "libloudnessenhanceraidl",
         "libpresetreverbsw",
         "libtinyxml2",
