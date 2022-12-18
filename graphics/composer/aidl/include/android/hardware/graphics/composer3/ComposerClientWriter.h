@@ -142,6 +142,14 @@ class ComposerClientWriter final {
         flushLayerCommand();
     }
 
+    void setLayerBufferSlotsToClear(int64_t display, int64_t layer,
+                                    const std::vector<uint32_t>& slotsToClear) {
+        LayerCommand& layerCommand = getLayerCommand(display, layer);
+        for (auto slot : slotsToClear) {
+            layerCommand.bufferSlotsToClear.emplace(static_cast<int32_t>(slot));
+        }
+    }
+
     void setLayerSurfaceDamage(int64_t display, int64_t layer, const std::vector<Rect>& damage) {
         getLayerCommand(display, layer).damage.emplace(damage.begin(), damage.end());
     }
