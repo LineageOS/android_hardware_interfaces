@@ -3311,6 +3311,19 @@ bool convertLegacyWifiChipCapabilitiesToAidl(
     return true;
 }
 
+uint32_t convertAidlChannelCategoryToLegacy(uint32_t aidl_channel_category_mask) {
+    uint32_t channel_category_mask = 0;
+    if (aidl_channel_category_mask &
+        static_cast<int32_t>(IWifiChip::ChannelCategoryMask::INDOOR_CHANNEL)) {
+        channel_category_mask |= legacy_hal::WIFI_INDOOR_CHANNEL;
+    }
+    if (aidl_channel_category_mask &
+        static_cast<int32_t>(IWifiChip::ChannelCategoryMask::DFS_CHANNEL)) {
+        channel_category_mask |= legacy_hal::WIFI_DFS_CHANNEL;
+    }
+    return channel_category_mask;
+}
+
 }  // namespace aidl_struct_util
 }  // namespace wifi
 }  // namespace hardware
