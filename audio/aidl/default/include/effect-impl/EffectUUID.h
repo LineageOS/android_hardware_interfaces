@@ -129,6 +129,12 @@ static const AudioUuid kLoudnessEnhancerSwImplUUID = {static_cast<int32_t>(0xfa8
                                                       0x11ed,
                                                       0x9b6a,
                                                       {0x02, 0x42, 0xac, 0x12, 0x00, 0x02}};
+// fa415329-2034-4bea-b5dc-5b381c8d1e2c
+static const AudioUuid kLoudnessEnhancerImplUUID = {static_cast<int32_t>(0xfa415329),
+                                                    0x2034,
+                                                    0x4bea,
+                                                    0xb5dc,
+                                                    {0x5b, 0x38, 0x1c, 0x8d, 0x1e, 0x2c}};
 // c2e5d5f0-94bd-4763-9cac-4e234d06839e
 static const AudioUuid kEnvReverbTypeUUID = {static_cast<int32_t>(0xc2e5d5f0),
                                              0x94bd,
