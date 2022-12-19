@@ -658,6 +658,17 @@ ndk::ScopedAStatus StreamIn::setMicrophoneFieldDimension(float in_zoom) {
     return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
 }
 
+ndk::ScopedAStatus StreamIn::getHwGain(std::vector<float>* _aidl_return) {
+    LOG(DEBUG) << __func__;
+    (void)_aidl_return;
+    return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+}
+
+ndk::ScopedAStatus StreamIn::setHwGain(const std::vector<float>& in_channelGains) {
+    LOG(DEBUG) << __func__ << ": gains " << ::android::internal::ToString(in_channelGains);
+    return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+}
+
 // static
 ndk::ScopedAStatus StreamOut::createInstance(const SourceMetadata& sourceMetadata,
                                              StreamContext context,
@@ -678,6 +689,17 @@ StreamOut::StreamOut(const SourceMetadata& sourceMetadata, StreamContext&& conte
     : StreamCommonImpl<SourceMetadata, StreamOutWorker>(sourceMetadata, std::move(context)),
       mOffloadInfo(offloadInfo) {
     LOG(DEBUG) << __func__;
+}
+
+ndk::ScopedAStatus StreamOut::getHwVolume(std::vector<float>* _aidl_return) {
+    LOG(DEBUG) << __func__;
+    (void)_aidl_return;
+    return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+}
+
+ndk::ScopedAStatus StreamOut::setHwVolume(const std::vector<float>& in_channelVolumes) {
+    LOG(DEBUG) << __func__ << ": gains " << ::android::internal::ToString(in_channelVolumes);
+    return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
 }
 
 }  // namespace aidl::android::hardware::audio::core
