@@ -66,6 +66,8 @@ class Module : public BnModule {
                     in_args,
             ::aidl::android::hardware::audio::core::IModule::OpenOutputStreamReturn* _aidl_return)
             override;
+    ndk::ScopedAStatus getSupportedPlaybackRateFactors(
+            SupportedPlaybackRateFactors* _aidl_return) override;
     ndk::ScopedAStatus setAudioPatch(const AudioPatch& in_requested,
                                      AudioPatch* _aidl_return) override;
     ndk::ScopedAStatus setAudioPortConfig(

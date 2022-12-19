@@ -27,7 +27,10 @@
 using aidl::android::hardware::audio::common::SinkMetadata;
 using aidl::android::hardware::audio::common::SourceMetadata;
 using aidl::android::media::audio::common::AudioDevice;
+using aidl::android::media::audio::common::AudioDualMonoMode;
+using aidl::android::media::audio::common::AudioLatencyMode;
 using aidl::android::media::audio::common::AudioOffloadInfo;
+using aidl::android::media::audio::common::AudioPlaybackRate;
 using android::hardware::audio::common::getChannelCount;
 using android::hardware::audio::common::getFrameSizeInBytes;
 
@@ -721,6 +724,57 @@ ndk::ScopedAStatus StreamOut::getHwVolume(std::vector<float>* _aidl_return) {
 
 ndk::ScopedAStatus StreamOut::setHwVolume(const std::vector<float>& in_channelVolumes) {
     LOG(DEBUG) << __func__ << ": gains " << ::android::internal::ToString(in_channelVolumes);
+    return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+}
+
+ndk::ScopedAStatus StreamOut::getAudioDescriptionMixLevel(float* _aidl_return) {
+    LOG(DEBUG) << __func__;
+    (void)_aidl_return;
+    return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+}
+
+ndk::ScopedAStatus StreamOut::setAudioDescriptionMixLevel(float in_leveldB) {
+    LOG(DEBUG) << __func__ << ": description mix level " << in_leveldB;
+    return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+}
+
+ndk::ScopedAStatus StreamOut::getDualMonoMode(AudioDualMonoMode* _aidl_return) {
+    LOG(DEBUG) << __func__;
+    (void)_aidl_return;
+    return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+}
+
+ndk::ScopedAStatus StreamOut::setDualMonoMode(AudioDualMonoMode in_mode) {
+    LOG(DEBUG) << __func__ << ": dual mono mode " << toString(in_mode);
+    return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+}
+
+ndk::ScopedAStatus StreamOut::getRecommendedLatencyModes(
+        std::vector<AudioLatencyMode>* _aidl_return) {
+    LOG(DEBUG) << __func__;
+    (void)_aidl_return;
+    return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+}
+
+ndk::ScopedAStatus StreamOut::setLatencyMode(AudioLatencyMode in_mode) {
+    LOG(DEBUG) << __func__ << ": latency mode " << toString(in_mode);
+    return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+}
+
+ndk::ScopedAStatus StreamOut::getPlaybackRateParameters(AudioPlaybackRate* _aidl_return) {
+    LOG(DEBUG) << __func__;
+    (void)_aidl_return;
+    return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+}
+
+ndk::ScopedAStatus StreamOut::setPlaybackRateParameters(const AudioPlaybackRate& in_playbackRate) {
+    LOG(DEBUG) << __func__ << ": " << in_playbackRate.toString();
+    return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+}
+
+ndk::ScopedAStatus StreamOut::selectPresentation(int32_t in_presentationId, int32_t in_programId) {
+    LOG(DEBUG) << __func__ << ": presentationId " << in_presentationId << ", programId "
+               << in_programId;
     return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
 }
 
