@@ -305,6 +305,8 @@ class StreamIn : public StreamCommonImpl<::aidl::android::hardware::audio::commo
         return StreamCommonImpl<::aidl::android::hardware::audio::common::SinkMetadata,
                                 StreamInWorker>::updateMetadata(in_sinkMetadata);
     }
+    ndk::ScopedAStatus getHwGain(std::vector<float>* _aidl_return) override;
+    ndk::ScopedAStatus setHwGain(const std::vector<float>& in_channelGains) override;
 
   public:
     static ndk::ScopedAStatus createInstance(
@@ -337,6 +339,8 @@ class StreamOut : public StreamCommonImpl<::aidl::android::hardware::audio::comm
         return StreamCommonImpl<::aidl::android::hardware::audio::common::SourceMetadata,
                                 StreamOutWorker>::updateMetadata(in_sourceMetadata);
     }
+    ndk::ScopedAStatus getHwVolume(std::vector<float>* _aidl_return) override;
+    ndk::ScopedAStatus setHwVolume(const std::vector<float>& in_channelVolumes) override;
 
   public:
     static ndk::ScopedAStatus createInstance(
