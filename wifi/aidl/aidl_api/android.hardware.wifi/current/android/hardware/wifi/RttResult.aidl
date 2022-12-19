@@ -57,4 +57,6 @@ parcelable RttResult {
   int negotiatedBurstNum;
   android.hardware.wifi.WifiInformationElement lci;
   android.hardware.wifi.WifiInformationElement lcr;
+  int channelFreqMHz;
+  android.hardware.wifi.RttBw packetBw;
 }
