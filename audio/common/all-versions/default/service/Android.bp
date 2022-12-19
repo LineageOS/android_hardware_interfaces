@@ -38,8 +38,14 @@ cc_binary {
     name: "android.hardware.audio.service",
 
     init_rc: ["android.hardware.audio.service.rc"],
+    vintf_fragments: ["android.hardware.audio.sounddose-aidl.xml"],
     relative_install_path: "hw",
     vendor: true,
+
+    defaults: [
+        "android_hardware_audio_config_defaults",
+        "latest_android_hardware_audio_sounddose_ndk_shared",
+    ],
 
     srcs: ["service.cpp"],
 
@@ -50,6 +56,7 @@ cc_binary {
     ],
 
     shared_libs: [
+        "//hardware/interfaces/audio/aidl/sounddose/default:libsounddoseserviceexampleimpl",
         "libcutils",
         "libbinder",
         "libbinder_ndk",
@@ -57,10 +64,6 @@ cc_binary {
         "liblog",
         "libutils",
         "libhardware",
-    ],
-
-    defaults: [
-        "android_hardware_audio_config_defaults",
     ],
 }
 
