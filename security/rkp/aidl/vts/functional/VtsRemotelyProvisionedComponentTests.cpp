@@ -783,4 +783,20 @@ TEST_P(CertificateRequestV2Test, NonEmptyRequest_testKeyInProdCert) {
 
 INSTANTIATE_REM_PROV_AIDL_TEST(CertificateRequestV2Test);
 
+using VsrRequirementTest = VtsRemotelyProvisionedComponentTests;
+
+INSTANTIATE_REM_PROV_AIDL_TEST(VsrRequirementTest);
+
+TEST_P(VsrRequirementTest, VsrEnforcementTest) {
+    RpcHardwareInfo hwInfo;
+    ASSERT_TRUE(provisionable_->getHardwareInfo(&hwInfo).isOk());
+    int vsr_api_level = get_vsr_api_level();
+    if (vsr_api_level < 34) {
+        GTEST_SKIP() << "Applies only to VSR API level 34 or newer, this device is: "
+                     << vsr_api_level;
+    }
+    EXPECT_GE(hwInfo.versionNumber, 3)
+            << "VSR 14+ requires IRemotelyProvisionedComponent v3 or newer.";
+}
+
 }  // namespace aidl::android::hardware::security::keymint::test
