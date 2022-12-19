@@ -33,7 +33,7 @@
         <library name="dynamics_processingsw" path="libdynamicsprocessingsw.so"/>
         <library name="equalizersw" path="libequalizersw.so"/>
         <library name="haptic_generatorsw" path="libhapticgeneratorsw.so"/>
-        <library name="loudness_enhancersw" path="libloudnessenhancersw.so"/>
+        <library name="loudness_enhancer" path="libloudnessenhanceraidl.so"/>
         <library name="env_reverbsw" path="libenvreverbsw.so"/>
         <library name="preset_reverbsw" path="libpresetreverbsw.so"/>
         <library name="virtualizersw" path="libvirtualizersw.so"/>
@@ -67,7 +67,7 @@
         </effectProxy>
         <effect name="dynamics_processing" library="dynamics_processingsw" uuid="fa818d78-588b-11ed-9b6a-0242ac120002"/>
         <effect name="haptic_generator" library="haptic_generatorsw" uuid="fa819110-588b-11ed-9b6a-0242ac120002"/>
-        <effect name="loudness_enhancer" library="loudness_enhancersw" uuid="fa819610-588b-11ed-9b6a-0242ac120002"/>
+        <effect name="loudness_enhancer" library="loudness_enhancer" uuid="fa415329-2034-4bea-b5dc-5b381c8d1e2c"/>
         <effect name="env_reverb" library="env_reverbsw" uuid="fa819886-588b-11ed-9b6a-0242ac120002"/>
         <effect name="preset_reverb" library="preset_reverbsw" uuid="fa8199c6-588b-11ed-9b6a-0242ac120002"/>
         <effect name="virtualizer" library="virtualizersw" uuid="fa819d86-588b-11ed-9b6a-0242ac120002"/>
