@@ -53,6 +53,14 @@
         </interface>
     </hal>
     <hal format="aidl" optional="true">
+        <name>android.hardware.audio.sounddose</name>
+        <version>1</version>
+        <interface>
+            <name>ISoundDoseFactory</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="aidl" optional="true">
          <name>android.hardware.authsecret</name>
          <version>1</version>
          <interface>

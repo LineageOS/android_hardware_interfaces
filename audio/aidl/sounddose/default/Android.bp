@@ -1,0 +1,46 @@
+package {
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "hardware_interfaces_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-Apache-2.0
+    default_applicable_licenses: ["hardware_interfaces_license"],
+}
+
+cc_defaults {
+    name: "aidlsounddoseservice_defaults",
+    vendor: true,
+    header_libs: [
+        "libsounddoseaidl_headers",
+    ],
+}
+
+cc_library {
+    name: "libsounddoseserviceexampleimpl",
+    defaults: [
+        "aidlsounddoseservice_defaults",
+        "latest_android_media_audio_common_types_ndk_shared",
+        "latest_android_hardware_audio_core_sounddose_ndk_shared",
+        "latest_android_hardware_audio_sounddose_ndk_shared",
+    ],
+    export_include_dirs: ["include"],
+    srcs: [
+        "SoundDoseFactory.cpp",
+    ],
+    shared_libs: [
+        "libaudioservicesounddoseimpl",
+        "libbase",
+        "libbinder_ndk",
+    ],
+
+    visibility: [
+        "//hardware/interfaces/audio/common/all-versions/default/service",
+    ],
+}
+
+cc_library_headers {
+    name: "libsounddoseaidl_headers",
+    export_include_dirs: ["include"],
+    vendor_available: true,
+    host_supported: true,
+}

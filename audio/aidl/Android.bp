@@ -169,6 +169,53 @@ cc_defaults {
     ],
 }
 
+// Used for the standalone sounddose HAL
+aidl_interface {
+    name: "android.hardware.audio.core.sounddose",
+    defaults: [
+        "android.hardware.audio_defaults",
+    ],
+    srcs: [
+        "android/hardware/audio/core/ISoundDose.aidl",
+    ],
+    imports: [
+        "android.media.audio.common.types-V2",
+    ],
+    backend: {
+        // The C++ backend is disabled transitively due to use of FMQ by the core HAL.
+        cpp: {
+            enabled: false,
+        },
+        java: {
+            sdk_version: "module_current",
+        },
+    },
+    versions_with_info: [
+        // IMPORTANT: Update latest_android_hardware_audio_core_sounddose every time you
+        // add the latest frozen version to versions_with_info
+    ],
+}
+
+// Note: This should always be one version ahead of the last frozen version
+latest_android_hardware_audio_core_sounddose = "android.hardware.audio.core.sounddose-V1"
+
+// Modules that depend on android.hardware.audio.core.sounddose directly can include
+// the following cc_defaults to avoid explicitly managing dependency versions
+// across many scattered files.
+cc_defaults {
+    name: "latest_android_hardware_audio_core_sounddose_ndk_shared",
+    shared_libs: [
+        latest_android_hardware_audio_core_sounddose + "-ndk",
+    ],
+}
+
+cc_defaults {
+    name: "latest_android_hardware_audio_core_sounddose_ndk_static",
+    static_libs: [
+        latest_android_hardware_audio_core_sounddose + "-ndk",
+    ],
+}
+
 aidl_interface {
     name: "android.hardware.audio.effect",
     defaults: [
