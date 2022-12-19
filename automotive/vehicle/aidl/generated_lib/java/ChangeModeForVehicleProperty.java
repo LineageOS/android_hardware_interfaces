@@ -176,6 +176,7 @@ public final class ChangeModeForVehicleProperty {
         Map.entry(VehicleProperty.STEERING_WHEEL_THEFT_LOCK_ENABLED, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.STEERING_WHEEL_LOCKED, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.STEERING_WHEEL_EASY_ACCESS_ENABLED, VehiclePropertyChangeMode.ON_CHANGE),
+        Map.entry(VehicleProperty.GLOVE_BOX_DOOR_POS, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.VEHICLE_MAP_SERVICE, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.OBD2_LIVE_FRAME, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.OBD2_FREEZE_FRAME, VehiclePropertyChangeMode.ON_CHANGE),

@@ -606,6 +606,12 @@ TEST_P(VtsHalAutomotiveVehicleTargetTest, verifySteeringWheelLightsSwitchConfig)
                    VehicleArea::GLOBAL, VehiclePropertyType::INT32);
 }
 
+TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyGloveBoxDoorPosConfig) {
+    verifyProperty(VehicleProperty::GLOVE_BOX_DOOR_POS, VehiclePropertyAccess::READ_WRITE,
+                   VehiclePropertyChangeMode::ON_CHANGE, VehiclePropertyGroup::SYSTEM,
+                   VehicleArea::SEAT, VehiclePropertyType::INT32);
+}
+
 TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyMirrorAutoFoldEnabledConfig) {
     verifyProperty(VehicleProperty::MIRROR_AUTO_FOLD_ENABLED, VehiclePropertyAccess::READ_WRITE,
                    VehiclePropertyChangeMode::ON_CHANGE, VehiclePropertyGroup::SYSTEM,
