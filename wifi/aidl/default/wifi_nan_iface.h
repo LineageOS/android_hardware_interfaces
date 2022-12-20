@@ -78,6 +78,14 @@ class WifiNanIface : public BnWifiNanIface {
             char16_t in_cmdId, const NanRespondToDataPathIndicationRequest& in_msg) override;
     ndk::ScopedAStatus terminateDataPathRequest(char16_t in_cmdId,
                                                 int32_t in_ndpInstanceId) override;
+    ndk::ScopedAStatus initiatePairingRequest(char16_t in_cmdId,
+                                              const NanPairingRequest& in_msg) override;
+    ndk::ScopedAStatus respondToPairingIndicationRequest(
+            char16_t in_cmdId, const NanRespondToPairingIndicationRequest& in_msg) override;
+    ndk::ScopedAStatus initiateBootstrappingRequest(char16_t in_cmdId,
+                                                    const NanBootstrappingRequest& in_msg) override;
+    ndk::ScopedAStatus respondToBootstrappingIndicationRequest(
+            char16_t in_cmdId, const NanBootstrappingResponse& in_msg) override;
 
   protected:
     // Accessible to child class in the gTest suite.
@@ -111,6 +119,14 @@ class WifiNanIface : public BnWifiNanIface {
     ndk::ScopedAStatus respondToDataPathIndicationRequestInternal(
             char16_t cmd_id, const NanRespondToDataPathIndicationRequest& msg);
     ndk::ScopedAStatus terminateDataPathRequestInternal(char16_t cmd_id, int32_t ndpInstanceId);
+    ndk::ScopedAStatus initiatePairingRequestInternal(char16_t cmd_id,
+                                                      const NanPairingRequest& msg);
+    ndk::ScopedAStatus respondToPairingIndicationRequestInternal(
+            char16_t cmd_id, const NanRespondToPairingIndicationRequest& msg);
+    ndk::ScopedAStatus initiateBootstrappingRequestInternal(char16_t cmd_id,
+                                                            const NanBootstrappingRequest& msg);
+    ndk::ScopedAStatus respondToBootstrappingIndicationRequestInternal(
+            char16_t cmd_id, const NanBootstrappingResponse& msg);
 
     // Overridden in the gTest suite.
     virtual std::set<std::shared_ptr<IWifiNanIfaceEventCallback>> getEventCallbacks();

@@ -1261,6 +1261,165 @@ legacy_hal::NanDataPathChannelCfg convertAidlNanDataPathChannelCfgToLegacy(
     CHECK(false);
 }
 
+legacy_hal::NanPairingRequestType convertAidlNanPairingRequestTypeToLegacy(
+        NanPairingRequestType type) {
+    switch (type) {
+        case NanPairingRequestType::NAN_PAIRING_SETUP:
+            return legacy_hal::NAN_PAIRING_SETUP;
+        case NanPairingRequestType::NAN_PAIRING_VERIFICATION:
+            return legacy_hal::NAN_PAIRING_VERIFICATION;
+    }
+    LOG(FATAL);
+}
+
+NanPairingRequestType convertLegacyNanPairingRequestTypeToAidl(
+        legacy_hal::NanPairingRequestType type) {
+    switch (type) {
+        case legacy_hal::NAN_PAIRING_SETUP:
+            return NanPairingRequestType::NAN_PAIRING_SETUP;
+        case legacy_hal::NAN_PAIRING_VERIFICATION:
+            return NanPairingRequestType::NAN_PAIRING_VERIFICATION;
+    }
+    LOG(FATAL);
+}
+
+legacy_hal::Akm convertAidlAkmTypeToLegacy(NanPairingAkm type) {
+    switch (type) {
+        case NanPairingAkm::SAE:
+            return legacy_hal::SAE;
+        case NanPairingAkm::PASN:
+            return legacy_hal::PASN;
+    }
+    LOG(FATAL);
+}
+
+NanPairingAkm convertLegacyAkmTypeToAidl(legacy_hal::Akm type) {
+    switch (type) {
+        case legacy_hal::SAE:
+            return NanPairingAkm::SAE;
+        case legacy_hal::PASN:
+            return NanPairingAkm::PASN;
+    }
+    LOG(FATAL);
+}
+
+uint16_t convertAidlBootstrappingMethodToLegacy(NanBootstrappingMethod type) {
+    switch (type) {
+        case NanBootstrappingMethod::BOOTSTRAPPING_OPPORTUNISTIC_MASK:
+            return NAN_PAIRING_BOOTSTRAPPING_OPPORTUNISTIC_MASK;
+        case NanBootstrappingMethod::BOOTSTRAPPING_PIN_CODE_DISPLAY_MASK:
+            return NAN_PAIRING_BOOTSTRAPPING_PIN_CODE_DISPLAY_MASK;
+        case NanBootstrappingMethod::BOOTSTRAPPING_PASSPHRASE_DISPLAY_MASK:
+            return NAN_PAIRING_BOOTSTRAPPING_PASSPHRASE_DISPLAY_MASK;
+        case NanBootstrappingMethod::BOOTSTRAPPING_QR_DISPLAY_MASK:
+            return NAN_PAIRING_BOOTSTRAPPING_QR_DISPLAY_MASK;
+        case NanBootstrappingMethod::BOOTSTRAPPING_NFC_TAG_MASK:
+            return NAN_PAIRING_BOOTSTRAPPING_NFC_TAG_MASK;
+        case NanBootstrappingMethod::BOOTSTRAPPING_PIN_CODE_KEYPAD_MASK:
+            return NAN_PAIRING_BOOTSTRAPPING_PIN_CODE_KEYPAD_MASK;
+        case NanBootstrappingMethod::BOOTSTRAPPING_PASSPHRASE_KEYPAD_MASK:
+            return NAN_PAIRING_BOOTSTRAPPING_PASSPHRASE_KEYPAD_MASK;
+        case NanBootstrappingMethod::BOOTSTRAPPING_QR_SCAN_MASK:
+            return NAN_PAIRING_BOOTSTRAPPING_QR_SCAN_MASK;
+        case NanBootstrappingMethod::BOOTSTRAPPING_NFC_READER_MASK:
+            return NAN_PAIRING_BOOTSTRAPPING_NFC_READER_MASK;
+        case NanBootstrappingMethod::BOOTSTRAPPING_SERVICE_MANAGED_MASK:
+            return NAN_PAIRING_BOOTSTRAPPING_SERVICE_MANAGED_MASK;
+        case NanBootstrappingMethod::BOOTSTRAPPING_HANDSHAKE_SHIP_MASK:
+            return NAN_PAIRING_BOOTSTRAPPING_HANDSHAKE_SHIP_MASK;
+    }
+    LOG(FATAL);
+}
+
+NanBootstrappingMethod convertLegacyBootstrappingMethodToAidl(uint16_t type) {
+    switch (type) {
+        case NAN_PAIRING_BOOTSTRAPPING_OPPORTUNISTIC_MASK:
+            return NanBootstrappingMethod::BOOTSTRAPPING_OPPORTUNISTIC_MASK;
+        case NAN_PAIRING_BOOTSTRAPPING_PIN_CODE_DISPLAY_MASK:
+            return NanBootstrappingMethod::BOOTSTRAPPING_PIN_CODE_DISPLAY_MASK;
+        case NAN_PAIRING_BOOTSTRAPPING_PASSPHRASE_DISPLAY_MASK:
+            return NanBootstrappingMethod::BOOTSTRAPPING_PASSPHRASE_DISPLAY_MASK;
+        case NAN_PAIRING_BOOTSTRAPPING_QR_DISPLAY_MASK:
+            return NanBootstrappingMethod::BOOTSTRAPPING_QR_DISPLAY_MASK;
+        case NAN_PAIRING_BOOTSTRAPPING_NFC_TAG_MASK:
+            return NanBootstrappingMethod::BOOTSTRAPPING_NFC_TAG_MASK;
+        case NAN_PAIRING_BOOTSTRAPPING_PIN_CODE_KEYPAD_MASK:
+            return NanBootstrappingMethod::BOOTSTRAPPING_PIN_CODE_KEYPAD_MASK;
+        case NAN_PAIRING_BOOTSTRAPPING_PASSPHRASE_KEYPAD_MASK:
+            return NanBootstrappingMethod::BOOTSTRAPPING_PASSPHRASE_KEYPAD_MASK;
+        case NAN_PAIRING_BOOTSTRAPPING_QR_SCAN_MASK:
+            return NanBootstrappingMethod::BOOTSTRAPPING_QR_SCAN_MASK;
+        case NAN_PAIRING_BOOTSTRAPPING_NFC_READER_MASK:
+            return NanBootstrappingMethod::BOOTSTRAPPING_NFC_READER_MASK;
+        case NAN_PAIRING_BOOTSTRAPPING_SERVICE_MANAGED_MASK:
+            return NanBootstrappingMethod::BOOTSTRAPPING_SERVICE_MANAGED_MASK;
+        case NAN_PAIRING_BOOTSTRAPPING_HANDSHAKE_SHIP_MASK:
+            return NanBootstrappingMethod::BOOTSTRAPPING_HANDSHAKE_SHIP_MASK;
+    }
+    LOG(FATAL);
+    return {};
+}
+
+bool covertAidlPairingConfigToLegacy(const NanPairingConfig& aidl_config,
+                                     legacy_hal::NanPairingConfig* legacy_config) {
+    if (!legacy_config) {
+        LOG(ERROR) << "covertAidlPairingConfigToLegacy: legacy_config is null";
+        return false;
+    }
+    legacy_config->enable_pairing_setup = aidl_config.enablePairingSetup ? 0x1 : 0x0;
+    legacy_config->enable_pairing_cache = aidl_config.enablePairingCache ? 0x1 : 0x0;
+    legacy_config->enable_pairing_verification = aidl_config.enablePairingVerification ? 0x1 : 0x0;
+    legacy_config->supported_bootstrapping_methods = aidl_config.supportedBootstrappingMethods;
+    return true;
+}
+
+bool convertLegacyPairingConfigToAidl(const legacy_hal::NanPairingConfig& legacy_config,
+                                      NanPairingConfig* aidl_config) {
+    if (!aidl_config) {
+        LOG(ERROR) << "convertLegacyPairingConfigToAidl: aidl_nira is null";
+        return false;
+    }
+    *aidl_config = {};
+    aidl_config->enablePairingSetup = legacy_config.enable_pairing_setup == 0x1;
+    aidl_config->enablePairingCache = legacy_config.enable_pairing_cache == 0x1;
+    aidl_config->enablePairingVerification = legacy_config.enable_pairing_verification == 0x1;
+    aidl_config->supportedBootstrappingMethods = legacy_config.supported_bootstrapping_methods;
+    return true;
+}
+
+bool convertLegacyNiraToAidl(const legacy_hal::NanIdentityResolutionAttribute& legacy_nira,
+                             NanIdentityResolutionAttribute* aidl_nira) {
+    if (!aidl_nira) {
+        LOG(ERROR) << "convertLegacyNiraToAidl: aidl_nira is null";
+        return false;
+    }
+    *aidl_nira = {};
+    aidl_nira->nonce = std::array<uint8_t, 8>();
+    std::copy(legacy_nira.nonce, legacy_nira.nonce + 8, std::begin(aidl_nira->nonce));
+    aidl_nira->tag = std::array<uint8_t, 8>();
+    std::copy(legacy_nira.tag, legacy_nira.tag + 8, std::begin(aidl_nira->tag));
+    return true;
+}
+
+bool convertLegacyNpsaToAidl(const legacy_hal::NpkSecurityAssociation& legacy_npsa,
+                             NpkSecurityAssociation* aidl_npsa) {
+    if (!aidl_npsa) {
+        LOG(ERROR) << "convertLegacyNiraToAidl: aidl_nira is null";
+        return false;
+    }
+    *aidl_npsa = {};
+    aidl_npsa->peerNanIdentityKey = std::array<uint8_t, 16>();
+    std::copy(legacy_npsa.peer_nan_identity_key, legacy_npsa.peer_nan_identity_key + 16,
+              std::begin(aidl_npsa->peerNanIdentityKey));
+    aidl_npsa->localNanIdentityKey = std::array<uint8_t, 16>();
+    std::copy(legacy_npsa.local_nan_identity_key, legacy_npsa.local_nan_identity_key + 16,
+              std::begin(aidl_npsa->localNanIdentityKey));
+    aidl_npsa->npk = std::array<uint8_t, 32>();
+    std::copy(legacy_npsa.npk.pmk, legacy_npsa.npk.pmk + 32, std::begin(aidl_npsa->npk));
+    aidl_npsa->akm = convertLegacyAkmTypeToAidl(legacy_npsa.akm);
+    return true;
+}
+
 NanStatusCode convertLegacyNanStatusTypeToAidl(legacy_hal::NanStatusType type) {
     switch (type) {
         case legacy_hal::NAN_STATUS_SUCCESS:
@@ -1289,6 +1448,10 @@ NanStatusCode convertLegacyNanStatusTypeToAidl(legacy_hal::NanStatusType type) {
             return NanStatusCode::FOLLOWUP_TX_QUEUE_FULL;
         case legacy_hal::NAN_STATUS_UNSUPPORTED_CONCURRENCY_NAN_DISABLED:
             return NanStatusCode::UNSUPPORTED_CONCURRENCY_NAN_DISABLED;
+        case legacy_hal::NAN_STATUS_INVALID_PAIRING_ID:
+            return NanStatusCode::INVALID_PAIRING_ID;
+        case legacy_hal::NAN_STATUS_INVALID_BOOTSTRAPPING_ID:
+            return NanStatusCode::INVALID_BOOTSTRAPPING_ID;
     }
     CHECK(false);
 }
@@ -1679,6 +1842,12 @@ bool convertAidlNanPublishRequestToLegacy(const NanPublishRequest& aidl_request,
     legacy_request->service_responder_policy = aidl_request.autoAcceptDataPathRequests
                                                        ? legacy_hal::NAN_SERVICE_ACCEPT_POLICY_ALL
                                                        : legacy_hal::NAN_SERVICE_ACCEPT_POLICY_NONE;
+    memcpy(legacy_request->nan_identity_key, aidl_request.identityKey.data(), NAN_IDENTITY_KEY_LEN);
+    if (!covertAidlPairingConfigToLegacy(aidl_request.pairingConfig,
+                                         &legacy_request->nan_pairing_config)) {
+        LOG(ERROR) << "convertAidlNanPublishRequestToLegacy: invalid pairing config";
+        return false;
+    }
 
     return true;
 }
@@ -1819,7 +1988,12 @@ bool convertAidlNanSubscribeRequestToLegacy(const NanSubscribeRequest& aidl_requ
     for (int i = 0; i < legacy_request->num_intf_addr_present; i++) {
         memcpy(legacy_request->intf_addr[i], aidl_request.intfAddr[i].data.data(), 6);
     }
-
+    memcpy(legacy_request->nan_identity_key, aidl_request.identityKey.data(), NAN_IDENTITY_KEY_LEN);
+    if (!covertAidlPairingConfigToLegacy(aidl_request.pairingConfig,
+                                         &legacy_request->nan_pairing_config)) {
+        LOG(ERROR) << "convertAidlNanSubscribeRequestToLegacy: invalid pairing config";
+        return false;
+    }
     return true;
 }
 
@@ -2068,7 +2242,9 @@ bool convertLegacyNanCapabilitiesResponseToAidl(const legacy_hal::NanCapabilitie
     aidl_response->supportedCipherSuites =
             static_cast<NanCipherSuiteType>(legacy_response.cipher_suites_supported);
     aidl_response->instantCommunicationModeSupportFlag = legacy_response.is_instant_mode_supported;
-
+    aidl_response->supports6g = legacy_response.is_6g_supported;
+    aidl_response->supportsHe = legacy_response.is_he_supported;
+    aidl_response->supportsPairing = legacy_response.is_pairing_supported;
     return true;
 }
 
@@ -2105,6 +2281,16 @@ bool convertLegacyNanMatchIndToAidl(const legacy_hal::NanMatchInd& legacy_ind,
     aidl_ind->rangingIndicationType =
             static_cast<NanRangingIndication>(legacy_ind.range_info.ranging_event_type);
     aidl_ind->scid = std::vector<uint8_t>(legacy_ind.scid, legacy_ind.scid + legacy_ind.scid_len);
+
+    if (!convertLegacyNiraToAidl(legacy_ind.nira, &aidl_ind->peerNira)) {
+        LOG(ERROR) << "convertLegacyNanMatchIndToAidl: invalid NIRA";
+        return false;
+    }
+    if (!convertLegacyPairingConfigToAidl(legacy_ind.peer_pairing_config,
+                                          &aidl_ind->peerPairingConfig)) {
+        LOG(ERROR) << "convertLegacyNanMatchIndToAidl: invalid pairing config";
+        return false;
+    }
     return true;
 }
 
@@ -2884,6 +3070,235 @@ bool convertLegacyRadioCombinationsMatrixToAidl(
                                           (sizeof(wifi_radio_configuration) * num_configurations));
     }
     aidl_matrix->radioCombinations = radio_combinations_vec;
+    return true;
+}
+
+bool convertAidlNanPairingInitiatorRequestToLegacy(const NanPairingRequest& aidl_request,
+                                                   legacy_hal::NanPairingRequest* legacy_request) {
+    if (!legacy_request) {
+        LOG(ERROR) << "convertAidlNanPairingInitiatorRequestToLegacy: "
+                      "legacy_request is null";
+        return false;
+    }
+    *legacy_request = {};
+
+    legacy_request->requestor_instance_id = aidl_request.peerId;
+    memcpy(legacy_request->peer_disc_mac_addr, aidl_request.peerDiscMacAddr.data(), 6);
+    legacy_request->nan_pairing_request_type =
+            convertAidlNanPairingRequestTypeToLegacy(aidl_request.requestType);
+    legacy_request->enable_pairing_cache = aidl_request.enablePairingCache;
+
+    memcpy(legacy_request->nan_identity_key, aidl_request.pairingIdentityKey.data(),
+           NAN_IDENTITY_KEY_LEN);
+
+    legacy_request->is_opportunistic =
+            aidl_request.securityConfig.securityType == NanPairingSecurityType::OPPORTUNISTIC ? 1
+                                                                                              : 0;
+    legacy_request->akm = convertAidlAkmTypeToLegacy(aidl_request.securityConfig.akm);
+    if (aidl_request.securityConfig.securityType == NanPairingSecurityType::PMK) {
+        legacy_request->key_info.key_type = legacy_hal::NAN_SECURITY_KEY_INPUT_PMK;
+        legacy_request->key_info.body.pmk_info.pmk_len = aidl_request.securityConfig.pmk.size();
+        if (legacy_request->key_info.body.pmk_info.pmk_len != NAN_PMK_INFO_LEN) {
+            LOG(ERROR) << "convertAidlNanPairingInitiatorRequestToLegacy: "
+                          "invalid pmk_len";
+            return false;
+        }
+        memcpy(legacy_request->key_info.body.pmk_info.pmk, aidl_request.securityConfig.pmk.data(),
+               legacy_request->key_info.body.pmk_info.pmk_len);
+    }
+    if (aidl_request.securityConfig.securityType == NanPairingSecurityType::PASSPHRASE) {
+        legacy_request->key_info.key_type = legacy_hal::NAN_SECURITY_KEY_INPUT_PASSPHRASE;
+        legacy_request->key_info.body.passphrase_info.passphrase_len =
+                aidl_request.securityConfig.passphrase.size();
+        if (legacy_request->key_info.body.passphrase_info.passphrase_len <
+            NAN_SECURITY_MIN_PASSPHRASE_LEN) {
+            LOG(ERROR) << "convertAidlNanPairingInitiatorRequestToLegacy: "
+                          "passphrase_len too small";
+            return false;
+        }
+        if (legacy_request->key_info.body.passphrase_info.passphrase_len >
+            NAN_SECURITY_MAX_PASSPHRASE_LEN) {
+            LOG(ERROR) << "convertAidlNanPairingInitiatorRequestToLegacy: "
+                          "passphrase_len too large";
+            return false;
+        }
+        memcpy(legacy_request->key_info.body.passphrase_info.passphrase,
+               aidl_request.securityConfig.passphrase.data(),
+               legacy_request->key_info.body.passphrase_info.passphrase_len);
+    }
+
+    return true;
+}
+
+bool convertAidlNanPairingIndicationResponseToLegacy(
+        const NanRespondToPairingIndicationRequest& aidl_request,
+        legacy_hal::NanPairingIndicationResponse* legacy_request) {
+    if (!legacy_request) {
+        LOG(ERROR) << "convertAidlNanPairingIndicationResponseToLegacy: "
+                      "legacy_request is null";
+        return false;
+    }
+    *legacy_request = {};
+
+    legacy_request->pairing_instance_id = aidl_request.pairingInstanceId;
+    legacy_request->nan_pairing_request_type =
+            convertAidlNanPairingRequestTypeToLegacy(aidl_request.requestType);
+    legacy_request->enable_pairing_cache = aidl_request.enablePairingCache;
+
+    memcpy(legacy_request->nan_identity_key, aidl_request.pairingIdentityKey.data(),
+           NAN_IDENTITY_KEY_LEN);
+
+    legacy_request->is_opportunistic =
+            aidl_request.securityConfig.securityType == NanPairingSecurityType::OPPORTUNISTIC ? 1
+                                                                                              : 0;
+    legacy_request->akm = convertAidlAkmTypeToLegacy(aidl_request.securityConfig.akm);
+    legacy_request->rsp_code =
+            aidl_request.acceptRequest ? NAN_PAIRING_REQUEST_ACCEPT : NAN_PAIRING_REQUEST_REJECT;
+    if (aidl_request.securityConfig.securityType == NanPairingSecurityType::PMK) {
+        legacy_request->key_info.key_type = legacy_hal::NAN_SECURITY_KEY_INPUT_PMK;
+        legacy_request->key_info.body.pmk_info.pmk_len = aidl_request.securityConfig.pmk.size();
+        if (legacy_request->key_info.body.pmk_info.pmk_len != NAN_PMK_INFO_LEN) {
+            LOG(ERROR) << "convertAidlNanPairingIndicationResponseToLegacy: "
+                          "invalid pmk_len";
+            return false;
+        }
+        memcpy(legacy_request->key_info.body.pmk_info.pmk, aidl_request.securityConfig.pmk.data(),
+               legacy_request->key_info.body.pmk_info.pmk_len);
+    }
+    if (aidl_request.securityConfig.securityType == NanPairingSecurityType::PASSPHRASE) {
+        legacy_request->key_info.key_type = legacy_hal::NAN_SECURITY_KEY_INPUT_PASSPHRASE;
+        legacy_request->key_info.body.passphrase_info.passphrase_len =
+                aidl_request.securityConfig.passphrase.size();
+        if (legacy_request->key_info.body.passphrase_info.passphrase_len <
+            NAN_SECURITY_MIN_PASSPHRASE_LEN) {
+            LOG(ERROR) << "convertAidlNanPairingIndicationResponseToLegacy: "
+                          "passphrase_len too small";
+            return false;
+        }
+        if (legacy_request->key_info.body.passphrase_info.passphrase_len >
+            NAN_SECURITY_MAX_PASSPHRASE_LEN) {
+            LOG(ERROR) << "convertAidlNanPairingIndicationResponseToLegacy: "
+                          "passphrase_len too large";
+            return false;
+        }
+        memcpy(legacy_request->key_info.body.passphrase_info.passphrase,
+               aidl_request.securityConfig.passphrase.data(),
+               legacy_request->key_info.body.passphrase_info.passphrase_len);
+    }
+
+    return true;
+}
+
+bool convertAidlNanBootstrappingInitiatorRequestToLegacy(
+        const NanBootstrappingRequest& aidl_request,
+        legacy_hal::NanBootstrappingRequest* legacy_request) {
+    if (!legacy_request) {
+        LOG(ERROR) << "convertAidlNanBootstrappingInitiatorRequestToLegacy: "
+                      "legacy_request is null";
+        return false;
+    }
+    *legacy_request = {};
+
+    legacy_request->requestor_instance_id = aidl_request.peerId;
+    memcpy(legacy_request->peer_disc_mac_addr, aidl_request.peerDiscMacAddr.data(), 6);
+    legacy_request->request_bootstrapping_method =
+            convertAidlBootstrappingMethodToLegacy(aidl_request.requestBootstrappingMethod);
+
+    return true;
+}
+
+bool convertAidlNanBootstrappingIndicationResponseToLegacy(
+        const NanBootstrappingResponse& aidl_request,
+        legacy_hal::NanBootstrappingIndicationResponse* legacy_request) {
+    if (!legacy_request) {
+        LOG(ERROR) << "convertAidlNanBootstrappingIndicationResponseToLegacy: "
+                      "legacy_request is null";
+        return false;
+    }
+    *legacy_request = {};
+
+    legacy_request->service_instance_id = aidl_request.bootstrappingInstanceId;
+    legacy_request->rsp_code = aidl_request.acceptRequest ? NAN_BOOTSTRAPPING_REQUEST_ACCEPT
+                                                          : NAN_BOOTSTRAPPING_REQUEST_REJECT;
+
+    return true;
+}
+
+bool convertLegacyNanPairingRequestIndToAidl(const legacy_hal::NanPairingRequestInd& legacy_ind,
+                                             NanPairingRequestInd* aidl_ind) {
+    if (!aidl_ind) {
+        LOG(ERROR) << "convertLegacyNanPairingRequestIndToAidl: aidl_ind is null";
+        return false;
+    }
+    *aidl_ind = {};
+
+    aidl_ind->discoverySessionId = legacy_ind.publish_subscribe_id;
+    aidl_ind->peerId = legacy_ind.requestor_instance_id;
+    aidl_ind->peerDiscMacAddr = std::array<uint8_t, 6>();
+    std::copy(legacy_ind.peer_disc_mac_addr, legacy_ind.peer_disc_mac_addr + 6,
+              std::begin(aidl_ind->peerDiscMacAddr));
+    aidl_ind->pairingInstanceId = legacy_ind.pairing_instance_id;
+    aidl_ind->enablePairingCache = legacy_ind.enable_pairing_cache == 1;
+    aidl_ind->requestType =
+            convertLegacyNanPairingRequestTypeToAidl(legacy_ind.nan_pairing_request_type);
+    if (!convertLegacyNiraToAidl(legacy_ind.nira, &aidl_ind->peerNira)) {
+        return false;
+    }
+    return true;
+}
+
+bool convertLegacyNanPairingConfirmIndToAidl(const legacy_hal::NanPairingConfirmInd& legacy_ind,
+                                             NanPairingConfirmInd* aidl_ind) {
+    if (!aidl_ind) {
+        LOG(ERROR) << "convertLegacyNanPairingRequestIndToAidl: aidl_ind is null";
+        return false;
+    }
+    *aidl_ind = {};
+
+    aidl_ind->pairingInstanceId = legacy_ind.pairing_instance_id;
+    aidl_ind->enablePairingCache = legacy_ind.enable_pairing_cache == 1;
+    aidl_ind->requestType =
+            convertLegacyNanPairingRequestTypeToAidl(legacy_ind.nan_pairing_request_type);
+    aidl_ind->pairingSuccess = legacy_ind.rsp_code == NAN_PAIRING_REQUEST_ACCEPT;
+    aidl_ind->status.status = convertLegacyNanStatusTypeToAidl(legacy_ind.reason_code);
+    if (!convertLegacyNpsaToAidl(legacy_ind.npk_security_association, &aidl_ind->npksa)) {
+        return false;
+    }
+    return true;
+}
+
+bool convertLegacyNanBootstrappingRequestIndToAidl(
+        const legacy_hal::NanBootstrappingRequestInd& legacy_ind,
+        NanBootstrappingRequestInd* aidl_ind) {
+    if (!aidl_ind) {
+        LOG(ERROR) << "convertLegacyNanBootstrappingRequestIndToAidl: aidl_ind is null";
+        return false;
+    }
+    *aidl_ind = {};
+
+    aidl_ind->discoverySessionId = legacy_ind.publish_subscribe_id;
+    aidl_ind->peerId = legacy_ind.requestor_instance_id;
+    aidl_ind->peerDiscMacAddr = std::array<uint8_t, 6>();
+    std::copy(legacy_ind.peer_disc_mac_addr, legacy_ind.peer_disc_mac_addr + 6,
+              std::begin(aidl_ind->peerDiscMacAddr));
+    aidl_ind->bootstrappingInstanceId = legacy_ind.bootstrapping_instance_id;
+    aidl_ind->requestBootstrappingMethod =
+            convertLegacyBootstrappingMethodToAidl(legacy_ind.request_bootstrapping_method);
+    return true;
+}
+
+bool convertLegacyNanBootstrappingConfirmIndToAidl(
+        const legacy_hal::NanBootstrappingConfirmInd& legacy_ind,
+        NanBootstrappingConfirmInd* aidl_ind) {
+    if (!aidl_ind) {
+        LOG(ERROR) << "convertLegacyNanBootstrappingConfirmIndToAidl: aidl_ind is null";
+        return false;
+    }
+    *aidl_ind = {};
+
+    aidl_ind->bootstrappingInstanceId = legacy_ind.bootstrapping_instance_id;
+    aidl_ind->acceptRequest = legacy_ind.rsp_code == NAN_BOOTSTRAPPING_REQUEST_ACCEPT;
+    aidl_ind->reasonCode.status = convertLegacyNanStatusTypeToAidl(legacy_ind.reason_code);
     return true;
 }
 

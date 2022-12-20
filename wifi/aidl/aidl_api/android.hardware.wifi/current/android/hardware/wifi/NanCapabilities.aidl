@@ -49,4 +49,7 @@ parcelable NanCapabilities {
   int maxSubscribeInterfaceAddresses;
   android.hardware.wifi.NanCipherSuiteType supportedCipherSuites;
   boolean instantCommunicationModeSupportFlag;
+  boolean supports6g;
+  boolean supportsHe;
+  boolean supportsPairing;
 }
