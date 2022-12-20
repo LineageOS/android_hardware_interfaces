@@ -38,7 +38,7 @@ parcelable Processing {
      */
     Type type;
     /**
-     * List of effect identities for this processing.
+     * List of effect descriptors for this processing.
      */
-    Descriptor.Identity[] ids;
+    Descriptor[] ids;
 }

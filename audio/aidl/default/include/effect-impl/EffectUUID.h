@@ -33,6 +33,30 @@ static const AudioUuid kEffectNullUuid = {static_cast<int32_t>(0xec7178ec),
 static const AudioUuid kEffectZeroUuid = {
         static_cast<int32_t>(0x0), 0x0, 0x0, 0x0, {0x0, 0x0, 0x0, 0x0, 0x0, 0x0}};
 
+// 7b491460-8d4d-11e0-bd61-0002a5d5c51b.
+static const AudioUuid kAcousticEchoCancelerTypeUUID = {static_cast<int32_t>(0x7b491460),
+                                                        0x8d4d,
+                                                        0x11e0,
+                                                        0xbd61,
+                                                        {0x00, 0x02, 0xa5, 0xd5, 0xc5, 0x1b}};
+// bb392ec0-8d4d-11e0-a896-0002a5d5c51b
+static const AudioUuid kAcousticEchoCancelerSwImplUUID = {static_cast<int32_t>(0xbb392ec0),
+                                                          0x8d4d,
+                                                          0x11e0,
+                                                          0xa896,
+                                                          {0x00, 0x02, 0xa5, 0xd5, 0xc5, 0x1b}};
+// 0xae3c653b-be18-4ab8-8938-418f0a7f06ac
+static const AudioUuid kAutomaticGainControlTypeUUID = {static_cast<int32_t>(0xae3c653b),
+                                                        0xbe18,
+                                                        0x4ab8,
+                                                        0x8938,
+                                                        {0x41, 0x8f, 0x0a, 0x7f, 0x06, 0xac}};
+// 89f38e65-d4d2-4d64-ad0e-2b3e799ea886
+static const AudioUuid kAutomaticGainControlSwImplUUID = {static_cast<int32_t>(0x89f38e65),
+                                                          0xd4d2,
+                                                          0x4d64,
+                                                          0xad0e,
+                                                          {0x2b, 0x3e, 0x79, 0x9e, 0xa8, 0x86}};
 // 0634f220-ddd4-11db-a0fc-0002a5d5c51b
 static const AudioUuid kBassBoostTypeUUID = {static_cast<int32_t>(0x0634f220),
                                              0xddd4,
@@ -153,6 +177,18 @@ static const AudioUuid kEnvReverbSwImplUUID = {static_cast<int32_t>(0xfa819886),
                                                0x11ed,
                                                0x9b6a,
                                                {0x02, 0x42, 0xac, 0x12, 0x00, 0x02}};
+// 58b4b260-8e06-11e0-aa8e-0002a5d5c51b
+static const AudioUuid kNoiseSuppressionTypeUUID = {static_cast<int32_t>(0x58b4b260),
+                                                    0x8e06,
+                                                    0x11e0,
+                                                    0xaa8e,
+                                                    {0x00, 0x02, 0xa5, 0xd5, 0xc5, 0x1b}};
+// c06c8400-8e06-11e0-9cb6-0002a5d5c51b
+static const AudioUuid kNoiseSuppressionSwImplUUID = {static_cast<int32_t>(0xc06c8400),
+                                                      0x8e06,
+                                                      0x11e0,
+                                                      0x9cb6,
+                                                      {0x00, 0x02, 0xa5, 0xd5, 0xc5, 0x1b}};
 // 47382d60-ddd8-11db-bf3a-0002a5d5c51b
 static const AudioUuid kPresetReverbTypeUUID = {static_cast<int32_t>(0x47382d60),
                                                 0xddd8,
@@ -208,6 +244,8 @@ static const AudioUuid kVolumeSwImplUUID = {static_cast<int32_t>(0xfa81a718),
  * We need this map is because existing audio_effects.xml don't have a type UUID defined.
  */
 static const std::map<const std::string /* effect type */, const AudioUuid&> kUuidNameTypeMap = {
+        {"acoustic_echo_canceler", kAcousticEchoCancelerTypeUUID},
+        {"automatic_gain_control", kAutomaticGainControlTypeUUID},
         {"bassboost", kBassBoostTypeUUID},
         {"downmix", kDownmixTypeUUID},
         {"dynamics_processing", kDynamicsProcessingTypeUUID},
@@ -215,6 +253,7 @@ static const std::map<const std::string /* effect type */, const AudioUuid&> kUu
         {"haptic_generator", kHapticGeneratorTypeUUID},
         {"loudness_enhancer", kLoudnessEnhancerTypeUUID},
         {"env_reverb", kEnvReverbTypeUUID},
+        {"noise_suppression", kNoiseSuppressionTypeUUID},
         {"preset_reverb", kPresetReverbTypeUUID},
         {"reverb_env_aux", kEnvReverbTypeUUID},
         {"reverb_env_ins", kEnvReverbTypeUUID},

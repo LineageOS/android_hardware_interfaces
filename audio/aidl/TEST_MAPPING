@@ -23,6 +23,15 @@
     },
     {
       "name": "VtsHalVisualizerTargetTest"
+    },
+    {
+      "name": "VtsHalAECTargetTest"
+    },
+    {
+      "name": "VtsHalAGCTargetTest"
+    },
+    {
+      "name": "VtsHalNSTargetTest"
     }
   ]
 }

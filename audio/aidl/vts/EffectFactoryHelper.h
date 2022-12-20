@@ -70,7 +70,6 @@ class EffectFactoryHelper {
                 }
             }
         }
-
         return result;
     }
 
