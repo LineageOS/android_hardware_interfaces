@@ -25,6 +25,9 @@
       "name": "VtsHalLoudnessEnhancerTargetTest"
     },
     {
+      "name": "VtsHalPresetReverbTargetTest"
+    },
+    {
       "name": "VtsHalVirtualizerTargetTest"
     },
     {

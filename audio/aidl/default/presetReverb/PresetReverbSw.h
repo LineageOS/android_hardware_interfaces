@@ -32,7 +32,15 @@ class PresetReverbSwContext final : public EffectContext {
         : EffectContext(statusDepth, common) {
         LOG(DEBUG) << __func__;
     }
-    // TODO: add specific context here
+    RetCode setPRPreset(PresetReverb::Presets preset) {
+        // TODO : Add implementation to modify Presets
+        mPreset = preset;
+        return RetCode::SUCCESS;
+    }
+    PresetReverb::Presets getPRPreset() const { return mPreset; }
+
+  private:
+    PresetReverb::Presets mPreset = PresetReverb::Presets::NONE;
 };
 
 class PresetReverbSw final : public EffectImpl {
@@ -60,7 +68,8 @@ class PresetReverbSw final : public EffectImpl {
 
   private:
     std::shared_ptr<PresetReverbSwContext> mContext;
-    /* parameters */
-    PresetReverb mSpecificParam;
+
+    ndk::ScopedAStatus getParameterPresetReverb(const PresetReverb::Tag& tag,
+                                                Parameter::Specific* specific);
 };
 }  // namespace aidl::android::hardware::audio::effect

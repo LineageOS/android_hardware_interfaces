@@ -104,6 +104,12 @@ cc_test {
 }
 
 cc_test {
+    name: "VtsHalPresetReverbTargetTest",
+    defaults: ["VtsHalAudioTargetTestDefaults"],
+    srcs: ["VtsHalPresetReverbTargetTest.cpp"],
+}
+
+cc_test {
     name: "VtsHalVirtualizerTargetTest",
     defaults: ["VtsHalAudioTargetTestDefaults"],
     srcs: ["VtsHalVirtualizerTargetTest.cpp"],
