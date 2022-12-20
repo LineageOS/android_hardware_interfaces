@@ -2878,6 +2878,14 @@
             }
         },
         {
+            "property": "VehicleProperty::EMERGENCY_LANE_KEEP_ASSIST_ENABLED",
+            "defaultValue": {
+                "int32Values": [
+                    1
+                ]
+            }
+        },
+        {
             "property": "VehicleProperty::INITIAL_USER_INFO"
         },
         {

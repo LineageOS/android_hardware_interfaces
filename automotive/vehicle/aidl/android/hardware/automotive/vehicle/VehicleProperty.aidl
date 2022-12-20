@@ -3449,6 +3449,23 @@ enum VehicleProperty {
     LANE_CENTERING_ASSIST_ENABLED =
             0x100A + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
 
+    /*
+     * Enable or disable emergency lane keep assist (ELKA).
+     *
+     * Set true to enable ELKA and false to disable ELKA. When ELKA is enabled, the ADAS system in
+     * the vehicle should be on and monitoring for unsafe lane changes by the driver. When an unsafe
+     * maneuver is detected, ELKA alerts the driver and applies steering corrections to keep the
+     * vehicle in its original lane.
+     *
+     * This property is defined as read_write, but OEMs have the option to implement it as read
+     * only.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     */
+    EMERGENCY_LANE_KEEP_ASSIST_ENABLED =
+            0x100D + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+
     /***************************************************************************
      * End of ADAS Properties
      **************************************************************************/
