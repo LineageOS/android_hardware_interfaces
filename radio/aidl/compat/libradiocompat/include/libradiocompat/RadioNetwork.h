@@ -18,6 +18,9 @@
 #include "RadioCompatBase.h"
 
 #include <aidl/android/hardware/radio/network/BnRadioNetwork.h>
+#include <aidl/android/hardware/radio/network/IRadioNetwork.h>
+
+// using namespace aidl::android::hardware::radio::network;
 
 namespace android::hardware::radio::compat {
 
