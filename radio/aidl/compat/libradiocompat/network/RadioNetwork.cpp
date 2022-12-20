@@ -261,6 +261,11 @@ ScopedAStatus RadioNetwork::setSignalStrengthReportingCriteria(
     if (infos.size() > 1) {
         LOG(WARNING) << "Multi-element reporting criteria are not supported with HIDL HAL";
     }
+    if (infos[0].signalMeasurement == aidl::SignalThresholdInfo::SIGNAL_MEASUREMENT_TYPE_ECNO) {
+        LOG(WARNING) << "SIGNAL_MEASUREMENT_TYPE_ECNO are not supported with HIDL HAL";
+        respond()->setSignalStrengthReportingCriteriaResponse(notSupported(serial));
+        return ok();
+    }
     mHal1_5->setSignalStrengthReportingCriteria_1_5(serial, toHidl(infos[0]),
                                                     V1_5::AccessNetwork(infos[0].ran));
     return ok();
