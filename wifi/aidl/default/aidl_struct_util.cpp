@@ -2363,6 +2363,8 @@ legacy_hal::wifi_rtt_bw convertAidlRttBwToLegacy(RttBw type) {
             return legacy_hal::WIFI_RTT_BW_160;
         case RttBw::BW_320MHZ:
             return legacy_hal::WIFI_RTT_BW_320;
+        case RttBw::BW_UNSPECIFIED:
+            return legacy_hal::WIFI_RTT_BW_UNSPECIFIED;
     };
     CHECK(false);
 }
@@ -2383,6 +2385,8 @@ RttBw convertLegacyRttBwToAidl(legacy_hal::wifi_rtt_bw type) {
             return RttBw::BW_160MHZ;
         case legacy_hal::WIFI_RTT_BW_320:
             return RttBw::BW_320MHZ;
+        case legacy_hal::WIFI_RTT_BW_UNSPECIFIED:
+            return RttBw::BW_UNSPECIFIED;
     };
     CHECK(false) << "Unknown legacy type: " << type;
 }
@@ -2712,6 +2716,28 @@ bool convertLegacyVectorOfRttResultToAidl(
         if (!convertLegacyRttResultToAidl(*legacy_result, &aidl_result)) {
             return false;
         }
+        aidl_result.channelFreqMHz = 0;
+        aidl_result.packetBw = RttBw::BW_UNSPECIFIED;
+        aidl_results->push_back(aidl_result);
+    }
+    return true;
+}
+
+bool convertLegacyVectorOfRttResultV2ToAidl(
+        const std::vector<const legacy_hal::wifi_rtt_result_v2*>& legacy_results,
+        std::vector<RttResult>* aidl_results) {
+    if (!aidl_results) {
+        return false;
+    }
+    *aidl_results = {};
+    for (const auto legacy_result : legacy_results) {
+        RttResult aidl_result;
+        if (!convertLegacyRttResultToAidl(legacy_result->rtt_result, &aidl_result)) {
+            return false;
+        }
+        aidl_result.channelFreqMHz =
+                legacy_result->frequency != UNSPECIFIED ? legacy_result->frequency : 0;
+        aidl_result.packetBw = convertLegacyRttBwToAidl(legacy_result->packet_bw);
         aidl_results->push_back(aidl_result);
     }
     return true;

@@ -29,6 +29,29 @@ cc_defaults {
     ],
 }
 
+cc_library {
+    name: "libaudioservicesounddoseimpl",
+    vendor: true,
+    defaults: [
+        "latest_android_media_audio_common_types_ndk_shared",
+        "latest_android_hardware_audio_core_sounddose_ndk_shared",
+        "latest_android_hardware_audio_sounddose_ndk_shared",
+    ],
+    export_include_dirs: ["include"],
+    srcs: [
+        "SoundDose.cpp",
+    ],
+    shared_libs: [
+        "libbase",
+        "libbinder_ndk",
+        "libcutils",
+        "libutils",
+    ],
+    visibility: [
+        "//hardware/interfaces/audio/aidl/sounddose/default",
+    ],
+}
+
 cc_library_static {
     name: "libaudioserviceexampleimpl",
     defaults: [

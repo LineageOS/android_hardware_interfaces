@@ -34,6 +34,7 @@
 package android.hardware.wifi;
 @Backing(type="int") @VintfStability
 enum RttBw {
+  BW_UNSPECIFIED = 0,
   BW_5MHZ = 1,
   BW_10MHZ = 2,
   BW_20MHZ = 4,

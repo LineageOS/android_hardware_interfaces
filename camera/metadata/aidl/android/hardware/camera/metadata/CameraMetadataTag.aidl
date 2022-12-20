@@ -2298,4 +2298,56 @@ enum CameraMetadataTag {
      * passenger seats.</p>
      */
     ANDROID_AUTOMOTIVE_LENS_FACING = CameraMetadataSectionStart.ANDROID_AUTOMOTIVE_LENS_START,
+    /**
+     * android.jpegr.availableJpegRStreamConfigurations [static, enum[], ndk_public]
+     *
+     * <p>The available Jpeg/R stream
+     * configurations that this camera device supports
+     * (i.e. format, width, height, output/input stream).</p>
+     */
+    ANDROID_JPEGR_AVAILABLE_JPEG_R_STREAM_CONFIGURATIONS = CameraMetadataSectionStart.ANDROID_JPEGR_START,
+    /**
+     * android.jpegr.availableJpegRMinFrameDurations [static, int64[], ndk_public]
+     *
+     * <p>This lists the minimum frame duration for each
+     * format/size combination for Jpeg/R output formats.</p>
+     */
+    ANDROID_JPEGR_AVAILABLE_JPEG_R_MIN_FRAME_DURATIONS,
+    /**
+     * android.jpegr.availableJpegRStallDurations [static, int64[], ndk_public]
+     *
+     * <p>This lists the maximum stall duration for each
+     * output format/size combination for Jpeg/R streams.</p>
+     */
+    ANDROID_JPEGR_AVAILABLE_JPEG_R_STALL_DURATIONS,
+    /**
+     * android.jpegr.availableJpegRStreamConfigurationsMaximumResolution [static, enum[], ndk_public]
+     *
+     * <p>The available Jpeg/R stream
+     * configurations that this camera device supports
+     * (i.e. format, width, height, output/input stream).</p>
+     */
+    ANDROID_JPEGR_AVAILABLE_JPEG_R_STREAM_CONFIGURATIONS_MAXIMUM_RESOLUTION,
+    /**
+     * android.jpegr.availableJpegRMinFrameDurationsMaximumResolution [static, int64[], ndk_public]
+     *
+     * <p>This lists the minimum frame duration for each
+     * format/size combination for Jpeg/R output formats for CaptureRequests where
+     * ANDROID_SENSOR_PIXEL_MODE is set to
+     * <a href="https://developer.android.com/reference/android/hardware/camera2/CameraMetadata.html#SENSOR_PIXEL_MODE_MAXIMUM_RESOLUTION">CameraMetadata#SENSOR_PIXEL_MODE_MAXIMUM_RESOLUTION</a>.</p>
+     *
+     * @see ANDROID_SENSOR_PIXEL_MODE
+     */
+    ANDROID_JPEGR_AVAILABLE_JPEG_R_MIN_FRAME_DURATIONS_MAXIMUM_RESOLUTION,
+    /**
+     * android.jpegr.availableJpegRStallDurationsMaximumResolution [static, int64[], ndk_public]
+     *
+     * <p>This lists the maximum stall duration for each
+     * output format/size combination for Jpeg/R streams for CaptureRequests where
+     * ANDROID_SENSOR_PIXEL_MODE is set to
+     * <a href="https://developer.android.com/reference/android/hardware/camera2/CameraMetadata.html#SENSOR_PIXEL_MODE_MAXIMUM_RESOLUTION">CameraMetadata#SENSOR_PIXEL_MODE_MAXIMUM_RESOLUTION</a>.</p>
+     *
+     * @see ANDROID_SENSOR_PIXEL_MODE
+     */
+    ANDROID_JPEGR_AVAILABLE_JPEG_R_STALL_DURATIONS_MAXIMUM_RESOLUTION,
 }

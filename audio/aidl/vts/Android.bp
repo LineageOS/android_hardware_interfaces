@@ -24,6 +24,7 @@ cc_defaults {
         "android.hardware.common-V2-ndk",
         "android.hardware.common.fmq-V1-ndk",
         "libaudioaidlcommon",
+        "libaidlcommonsupport",
     ],
     header_libs: ["libaudioaidl_headers"],
     cflags: [
