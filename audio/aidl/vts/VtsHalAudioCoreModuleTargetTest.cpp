@@ -1746,6 +1746,33 @@ TEST_P(AudioCoreModule, SetVendorParameters) {
     }
 }
 
+// See b/262930731. In the absence of offloaded effect implementations,
+// currently we can only pass a nullptr, and the HAL module must either reject
+// it as an invalid argument, or say that offloaded effects are not supported.
+TEST_P(AudioCoreModule, AddRemoveEffectInvalidArguments) {
+    ndk::ScopedAStatus addEffectStatus = module->addDeviceEffect(-1, nullptr);
+    ndk::ScopedAStatus removeEffectStatus = module->removeDeviceEffect(-1, nullptr);
+    const bool isSupported = addEffectStatus.getExceptionCode() != EX_UNSUPPORTED_OPERATION;
+    if (isSupported) {
+        EXPECT_EQ(EX_ILLEGAL_ARGUMENT, addEffectStatus.getExceptionCode());
+        EXPECT_EQ(EX_ILLEGAL_ARGUMENT, removeEffectStatus.getExceptionCode());
+    } else if (EX_UNSUPPORTED_OPERATION != removeEffectStatus.getExceptionCode()) {
+        GTEST_FAIL() << "addEffect and removeEffect must be either supported or not supported "
+                     << "together";
+    } else {
+        GTEST_SKIP() << "Offloaded effects not supported";
+    }
+    // Test rejection of a nullptr effect with a valid device port Id.
+    ASSERT_NO_FATAL_FAILURE(SetUpModuleConfig());
+    const auto configs = moduleConfig->getPortConfigsForAttachedDevicePorts();
+    for (const auto& config : configs) {
+        WithAudioPortConfig portConfig(config);
+        ASSERT_NO_FATAL_FAILURE(portConfig.SetUp(module.get()));
+        EXPECT_STATUS(EX_ILLEGAL_ARGUMENT, module->addDeviceEffect(portConfig.getId(), nullptr));
+        EXPECT_STATUS(EX_ILLEGAL_ARGUMENT, module->removeDeviceEffect(portConfig.getId(), nullptr));
+    }
+}
+
 class AudioCoreTelephony : public AudioCoreModuleBase, public testing::TestWithParam<std::string> {
   public:
     void SetUp() override {
@@ -2080,6 +2107,43 @@ class AudioStream : public AudioCoreModule {
         }
     }
 
+    // See b/262930731. In the absence of offloaded effect implementations,
+    // currently we can only pass a nullptr, and the HAL module must either reject
+    // it as an invalid argument, or say that offloaded effects are not supported.
+    void AddRemoveEffectInvalidArguments() {
+        const auto ports =
+                moduleConfig->getMixPorts(IOTraits<Stream>::is_input, false /*attachedOnly*/);
+        if (ports.empty()) {
+            GTEST_SKIP() << "No mix ports";
+        }
+        bool atLeastOneSupports = false;
+        for (const auto& port : ports) {
+            const auto portConfig = moduleConfig->getSingleConfigForMixPort(true, port);
+            if (!portConfig.has_value()) continue;
+            WithStream<Stream> stream(portConfig.value());
+            ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultBufferSizeFrames));
+            std::shared_ptr<IStreamCommon> streamCommon;
+            ASSERT_IS_OK(stream.get()->getStreamCommon(&streamCommon));
+            ASSERT_NE(nullptr, streamCommon);
+            ndk::ScopedAStatus addEffectStatus = streamCommon->addEffect(nullptr);
+            ndk::ScopedAStatus removeEffectStatus = streamCommon->removeEffect(nullptr);
+            const bool isSupported = addEffectStatus.getExceptionCode() != EX_UNSUPPORTED_OPERATION;
+            if (isSupported) {
+                EXPECT_EQ(EX_ILLEGAL_ARGUMENT, addEffectStatus.getExceptionCode());
+                EXPECT_EQ(EX_ILLEGAL_ARGUMENT, removeEffectStatus.getExceptionCode());
+                atLeastOneSupports = true;
+            } else if (EX_UNSUPPORTED_OPERATION != removeEffectStatus.getExceptionCode()) {
+                ADD_FAILURE()
+                        << "addEffect and removeEffect must be either supported or not supported "
+                        << "together";
+                atLeastOneSupports = true;
+            }
+        }
+        if (!atLeastOneSupports) {
+            GTEST_SKIP() << "Offloaded effects not supported";
+        }
+    }
+
     void OpenTwiceSamePortConfigImpl(const AudioPortConfig& portConfig) {
         WithStream<Stream> stream1(portConfig);
         ASSERT_NO_FATAL_FAILURE(stream1.SetUp(module.get(), kDefaultBufferSizeFrames));
@@ -2157,6 +2221,7 @@ TEST_IN_AND_OUT_STREAM(UpdateHwAvSyncId);
 TEST_IN_AND_OUT_STREAM(GetVendorParameters);
 TEST_IN_AND_OUT_STREAM(SetVendorParameters);
 TEST_IN_AND_OUT_STREAM(HwGainHwVolume);
+TEST_IN_AND_OUT_STREAM(AddRemoveEffectInvalidArguments);
 
 namespace aidl::android::hardware::audio::core {
 std::ostream& operator<<(std::ostream& os, const IStreamIn::MicrophoneDirection& md) {
