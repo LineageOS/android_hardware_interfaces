@@ -29,6 +29,12 @@ constexpr uint32_t kIfaceChannel1 = 3;
 constexpr uint32_t kIfaceChannel2 = 5;
 constexpr char kIfaceName1[] = "wlan0";
 constexpr char kIfaceName2[] = "wlan1";
+constexpr uint8_t kMacAddress[] = {0x02, 0x12, 0x45, 0x56, 0xab, 0xcc};
+byte LCI[] = {0x27, 0x1A, 0x1,  0x00, 0x8,  0x01, 0x00, 0x08, 0x00, 0x10, 0x52,
+              0x83, 0x4d, 0x12, 0xef, 0xd2, 0xb0, 0x8b, 0x9b, 0x4b, 0xf1, 0xcc,
+              0x2c, 0x00, 0x00, 0x41, 0x06, 0x03, 0x06, 0x00, 0x80};
+byte LCR[] = {0x27, 0xE,  0x1,  0x00, 0xB,  0x01, 0x00, 0x0b, 0x00, 0x09,
+              0x55, 0x53, 0x18, 0x05, 0x39, 0x34, 0x30, 0x34, 0x33};
 }  // namespace
 
 namespace aidl {
@@ -762,6 +768,100 @@ TEST_F(AidlStructUtilTest, canConvertLegacyRadioCombinationsMatrixToAidl) {
             &converted_matrix.radioCombinations[2],
             sizeof(radio_configurations_array3) / sizeof(radio_configurations_array3[0]),
             radio_configurations_array3);
+}
+
+void verifyRttResult(wifi_rtt_result* legacy_rtt_result_ptr, RttResult* aidl_results_ptr) {
+    EXPECT_EQ((int)legacy_rtt_result_ptr->burst_num, aidl_results_ptr->burstNum);
+    EXPECT_EQ((int)legacy_rtt_result_ptr->measurement_number, aidl_results_ptr->measurementNumber);
+    EXPECT_EQ((int)legacy_rtt_result_ptr->success_number, aidl_results_ptr->successNumber);
+    EXPECT_EQ(legacy_rtt_result_ptr->number_per_burst_peer, aidl_results_ptr->numberPerBurstPeer);
+    EXPECT_EQ(legacy_rtt_result_ptr->retry_after_duration, aidl_results_ptr->retryAfterDuration);
+    EXPECT_EQ(legacy_rtt_result_ptr->rssi, aidl_results_ptr->rssi);
+    EXPECT_EQ(legacy_rtt_result_ptr->rssi_spread, aidl_results_ptr->rssiSpread);
+    EXPECT_EQ(legacy_rtt_result_ptr->rtt, aidl_results_ptr->rtt);
+    EXPECT_EQ(legacy_rtt_result_ptr->rtt_sd, aidl_results_ptr->rttSd);
+    EXPECT_EQ(legacy_rtt_result_ptr->rtt_spread, aidl_results_ptr->rttSpread);
+    EXPECT_EQ(legacy_rtt_result_ptr->distance_mm, aidl_results_ptr->distanceInMm);
+    EXPECT_EQ(legacy_rtt_result_ptr->distance_sd_mm, aidl_results_ptr->distanceSdInMm);
+    EXPECT_EQ(legacy_rtt_result_ptr->distance_spread_mm, aidl_results_ptr->distanceSpreadInMm);
+    EXPECT_EQ(legacy_rtt_result_ptr->ts, aidl_results_ptr->timeStampInUs);
+    EXPECT_EQ(legacy_rtt_result_ptr->burst_duration, aidl_results_ptr->burstDurationInMs);
+    EXPECT_EQ(legacy_rtt_result_ptr->negotiated_burst_num, aidl_results_ptr->negotiatedBurstNum);
+    EXPECT_EQ(legacy_rtt_result_ptr->LCI->id, aidl_results_ptr->lci.id);
+    for (int i = 0; i < legacy_rtt_result_ptr->LCI->len; i++) {
+        EXPECT_EQ(legacy_rtt_result_ptr->LCI->data[i], aidl_results_ptr->lci.data[i]);
+    }
+    EXPECT_EQ(legacy_rtt_result_ptr->LCR->id, aidl_results_ptr->lcr.id);
+    for (int i = 0; i < legacy_rtt_result_ptr->LCR->len; i++) {
+        EXPECT_EQ(legacy_rtt_result_ptr->LCR->data[i], aidl_results_ptr->lcr.data[i]);
+    }
+}
+
+void fillLegacyRttResult(wifi_rtt_result* rtt_result_ptr) {
+    std::copy(std::begin(kMacAddress), std::end(kMacAddress), std::begin(rtt_result_ptr->addr));
+    rtt_result_ptr->burst_num = rand();
+    rtt_result_ptr->measurement_number = rand();
+    rtt_result_ptr->success_number = rand();
+    rtt_result_ptr->number_per_burst_peer = 0xF & rand();
+    rtt_result_ptr->status = RTT_STATUS_SUCCESS;
+    rtt_result_ptr->retry_after_duration = 0xF & rand();
+    rtt_result_ptr->type = RTT_TYPE_2_SIDED;
+    rtt_result_ptr->rssi = rand();
+    rtt_result_ptr->rssi_spread = rand();
+    rtt_result_ptr->rtt = rand();
+    rtt_result_ptr->rtt_sd = rand();
+    rtt_result_ptr->rtt_spread = rand();
+    rtt_result_ptr->distance_mm = rand();
+    rtt_result_ptr->distance_sd_mm = rand();
+    rtt_result_ptr->distance_spread_mm = rand();
+    rtt_result_ptr->burst_duration = rand();
+    rtt_result_ptr->negotiated_burst_num = rand();
+    rtt_result_ptr->LCI = (wifi_information_element*)LCI;
+    rtt_result_ptr->LCR = (wifi_information_element*)LCR;
+}
+
+TEST_F(AidlStructUtilTest, convertLegacyVectorOfRttResultToAidl) {
+    std::vector<const wifi_rtt_result*> rtt_results_vec;
+    wifi_rtt_result rttResults[2];
+
+    // fill legacy rtt results
+    for (int i = 0; i < 2; i++) {
+        fillLegacyRttResult(&rttResults[i]);
+        rtt_results_vec.push_back(&rttResults[i]);
+    }
+
+    std::vector<RttResult> aidl_results;
+    aidl_struct_util::convertLegacyVectorOfRttResultToAidl(rtt_results_vec, &aidl_results);
+
+    EXPECT_EQ(rtt_results_vec.size(), aidl_results.size());
+    for (size_t i = 0; i < rtt_results_vec.size(); i++) {
+        verifyRttResult(&rttResults[i], &aidl_results[i]);
+        EXPECT_EQ(aidl_results[i].channelFreqMHz, 0);
+        EXPECT_EQ(aidl_results[i].packetBw, RttBw::BW_UNSPECIFIED);
+    }
+}
+
+TEST_F(AidlStructUtilTest, convertLegacyVectorOfRttResultV2ToAidl) {
+    std::vector<const wifi_rtt_result_v2*> rtt_results_vec_v2;
+    wifi_rtt_result_v2 rttResults_v2[2];
+
+    // fill legacy rtt results v2
+    for (int i = 0; i < 2; i++) {
+        fillLegacyRttResult(&rttResults_v2[i].rtt_result);
+        rttResults_v2[i].frequency = 2412 + i * 5;
+        rttResults_v2[i].packet_bw = WIFI_RTT_BW_80;
+        rtt_results_vec_v2.push_back(&rttResults_v2[i]);
+    }
+
+    std::vector<RttResult> aidl_results;
+    aidl_struct_util::convertLegacyVectorOfRttResultV2ToAidl(rtt_results_vec_v2, &aidl_results);
+
+    EXPECT_EQ(rtt_results_vec_v2.size(), aidl_results.size());
+    for (size_t i = 0; i < rtt_results_vec_v2.size(); i++) {
+        verifyRttResult(&rttResults_v2[i].rtt_result, &aidl_results[i]);
+        EXPECT_EQ(aidl_results[i].channelFreqMHz, rttResults_v2[i].frequency);
+        EXPECT_EQ(aidl_results[i].packetBw, RttBw::BW_80MHZ);
+    }
 }
 
 }  // namespace wifi

@@ -1,0 +1,36 @@
+package {
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "hardware_interfaces_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-Apache-2.0
+    default_applicable_licenses: ["hardware_interfaces_license"],
+}
+
+cc_test {
+    name: "VtsHalSoundDoseFactoryTargetTest",
+    defaults: [
+        "latest_android_hardware_audio_core_sounddose_ndk_static",
+        "latest_android_hardware_audio_sounddose_ndk_static",
+        "latest_android_media_audio_common_types_ndk_static",
+        "use_libaidlvintf_gtest_helper_static",
+        "VtsHalTargetTestDefaults",
+    ],
+    shared_libs: [
+        "libbinder_ndk",
+        "libcutils",
+    ],
+    srcs: [
+        "VtsHalSoundDoseFactoryTargetTest.cpp",
+    ],
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-Wthread-safety",
+    ],
+    test_suites: [
+        "general-tests",
+        "vts",
+    ],
+}
