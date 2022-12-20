@@ -1926,9 +1926,7 @@ class AudioStream : public AudioCoreModule {
         }
         WithStream<Stream> stream(portConfig.value());
         ASSERT_NO_FATAL_FAILURE(stream.SetUpPortConfig(module.get()));
-        // The buffer size of 1 frame should be impractically small, and thus
-        // less than any minimum buffer size suggested by any HAL.
-        for (long bufferSize : std::array<long, 4>{-1, 0, 1, std::numeric_limits<long>::max()}) {
+        for (long bufferSize : std::array<long, 3>{-1, 0, std::numeric_limits<long>::max()}) {
             EXPECT_STATUS(EX_ILLEGAL_ARGUMENT, stream.SetUpNoChecks(module.get(), bufferSize))
                     << "for the buffer size " << bufferSize;
             EXPECT_EQ(nullptr, stream.get());
