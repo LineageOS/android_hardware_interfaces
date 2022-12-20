@@ -2248,6 +2248,8 @@ bool convertLegacyNanCapabilitiesResponseToAidl(const legacy_hal::NanCapabilitie
     aidl_response->supportsHe = legacy_response.is_he_supported;
     aidl_response->supportsPairing = legacy_response.is_pairing_supported;
     aidl_response->supportsSetClusterId = legacy_response.is_set_cluster_id_supported;
+    aidl_response->supportsSuspension = legacy_response.is_suspension_supported;
+
     return true;
 }
 
