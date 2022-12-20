@@ -61,6 +61,8 @@ class VtsComposerClient {
 
     bool tearDown();
 
+    std::pair<ScopedAStatus, int32_t> getInterfaceVersion();
+
     std::pair<ScopedAStatus, VirtualDisplay> createVirtualDisplay(int32_t width, int32_t height,
                                                                   PixelFormat pixelFormat,
                                                                   int32_t bufferSlotCount);

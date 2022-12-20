@@ -58,6 +58,12 @@ bool VtsComposerClient::tearDown() {
     return verifyComposerCallbackParams() && destroyAllLayers();
 }
 
+std::pair<ScopedAStatus, int32_t> VtsComposerClient::getInterfaceVersion() {
+    int32_t version = 1;
+    auto status = mComposerClient->getInterfaceVersion(&version);
+    return {std::move(status), version};
+}
+
 std::pair<ScopedAStatus, VirtualDisplay> VtsComposerClient::createVirtualDisplay(
         int32_t width, int32_t height, PixelFormat pixelFormat, int32_t bufferSlotCount) {
     VirtualDisplay outVirtualDisplay;
