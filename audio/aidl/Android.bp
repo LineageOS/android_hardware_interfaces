@@ -223,6 +223,8 @@ aidl_interface {
         "android.hardware.audio_defaults",
     ],
     srcs: [
+        "android/hardware/audio/effect/AcousticEchoCanceler.aidl",
+        "android/hardware/audio/effect/AutomaticGainControl.aidl",
         "android/hardware/audio/effect/BassBoost.aidl",
         "android/hardware/audio/effect/Capability.aidl",
         "android/hardware/audio/effect/CommandId.aidl",
@@ -236,6 +238,7 @@ aidl_interface {
         "android/hardware/audio/effect/IEffect.aidl",
         "android/hardware/audio/effect/IFactory.aidl",
         "android/hardware/audio/effect/LoudnessEnhancer.aidl",
+        "android/hardware/audio/effect/NoiseSuppression.aidl",
         "android/hardware/audio/effect/Parameter.aidl",
         "android/hardware/audio/effect/PresetReverb.aidl",
         "android/hardware/audio/effect/Processing.aidl",
