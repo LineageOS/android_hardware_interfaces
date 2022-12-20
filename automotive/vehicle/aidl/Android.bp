@@ -27,6 +27,7 @@ aidl_interface {
     srcs: [
         "android/hardware/automotive/vehicle/**/*.aidl",
     ],
+    frozen: true,
     stability: "vintf",
     backend: {
         cpp: {
