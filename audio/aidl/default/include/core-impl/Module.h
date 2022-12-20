@@ -92,6 +92,14 @@ class Module : public BnModule {
                                            std::vector<VendorParameter>* _aidl_return) override;
     ndk::ScopedAStatus setVendorParameters(const std::vector<VendorParameter>& in_parameters,
                                            bool in_async) override;
+    ndk::ScopedAStatus addDeviceEffect(
+            int32_t in_portConfigId,
+            const std::shared_ptr<::aidl::android::hardware::audio::effect::IEffect>& in_effect)
+            override;
+    ndk::ScopedAStatus removeDeviceEffect(
+            int32_t in_portConfigId,
+            const std::shared_ptr<::aidl::android::hardware::audio::effect::IEffect>& in_effect)
+            override;
 
     void cleanUpPatch(int32_t patchId);
     ndk::ScopedAStatus createStreamContext(

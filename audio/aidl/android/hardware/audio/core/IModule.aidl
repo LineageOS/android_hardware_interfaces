@@ -30,6 +30,7 @@ import android.hardware.audio.core.MicrophoneInfo;
 import android.hardware.audio.core.ModuleDebug;
 import android.hardware.audio.core.StreamDescriptor;
 import android.hardware.audio.core.VendorParameter;
+import android.hardware.audio.effect.IEffect;
 import android.media.audio.common.AudioOffloadInfo;
 import android.media.audio.common.AudioPort;
 import android.media.audio.common.AudioPortConfig;
@@ -515,7 +516,8 @@ interface IModule {
      * @throws EX_ILLEGAL_ARGUMENT If the port config can not be found by the ID.
      * @throws EX_ILLEGAL_STATE In the following cases:
      *                          - If the port config has a stream opened on it;
-     *                          - If the port config is used by a patch.
+     *                          - If the port config is used by a patch;
+     *                          - If the port config has an audio effect on it.
      */
     void resetAudioPortConfig(int portConfigId);
 
@@ -728,4 +730,34 @@ interface IModule {
      * @throws EX_UNSUPPORTED_OPERATION If the module does not support vendor parameters.
      */
     void setVendorParameters(in VendorParameter[] parameters, boolean async);
+
+    /**
+     * Apply an audio effect to a device port.
+     *
+     * The audio effect applies to all audio input or output on the specific
+     * configuration of the device audio port. The effect is inserted according
+     * to its insertion preference specified by the 'flags.insert' field of the
+     * EffectDescriptor.
+     *
+     * @param portConfigId The ID of the audio port config.
+     * @param effect The effect instance.
+     * @throws EX_ILLEGAL_ARGUMENT If the device port config can not be found by the ID,
+     *                             or the effect reference is invalid.
+     * @throws EX_UNSUPPORTED_OPERATION If the module does not support device port effects.
+     */
+    void addDeviceEffect(int portConfigId, in IEffect effect);
+
+    /**
+     * Stop applying an audio effect to a device port.
+     *
+     * Undo the action of the 'addDeviceEffect' method.
+     *
+     * @param portConfigId The ID of the audio port config.
+     * @param effect The effect instance.
+     * @throws EX_ILLEGAL_ARGUMENT If the device port config can not be found by the ID,
+     *                             or the effect reference is invalid, or the effect is
+     *                             not currently applied to the port config.
+     * @throws EX_UNSUPPORTED_OPERATION If the module does not support device port effects.
+     */
+    void removeDeviceEffect(int portConfigId, in IEffect effect);
 }
