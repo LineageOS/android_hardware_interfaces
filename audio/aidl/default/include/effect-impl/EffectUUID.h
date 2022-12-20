@@ -135,6 +135,12 @@ static const AudioUuid kDynamicsProcessingSwImplUUID = {static_cast<int32_t>(0xf
                                                         0x11ed,
                                                         0x9b6a,
                                                         {0x02, 0x42, 0xac, 0x12, 0x00, 0x02}};
+// e0e6539b-1781-7261-676f-6d7573696340
+static const AudioUuid kDynamicsProcessingImplUUID = {static_cast<int32_t>(0xe0e6539b),
+                                                      0x1781,
+                                                      0x7261,
+                                                      0x676f,
+                                                      {0x6d, 0x75, 0x73, 0x69, 0x63, 0x40}};
 // 1411e6d6-aecd-4021-a1cf-a6aceb0d71e5
 static const AudioUuid kHapticGeneratorTypeUUID = {static_cast<int32_t>(0x1411e6d6),
                                                    0xaecd,
