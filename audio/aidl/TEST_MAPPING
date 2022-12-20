@@ -16,6 +16,9 @@
       "name": "VtsHalEqualizerTargetTest"
     },
     {
+      "name": "VtsHalHapticGeneratorTargetTest"
+    },
+    {
       "name": "VtsHalLoudnessEnhancerTargetTest"
     },
     {
