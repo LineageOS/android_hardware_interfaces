@@ -603,6 +603,20 @@ enum VehicleProperty {
     TRACTION_CONTROL_ACTIVE = 0x040B + 0x10000000 + 0x01000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:BOOLEAN
     /**
+     * Represents property for the current stopping mode of the vehicle.
+     *
+     * For the global area ID (0), the VehicleAreaConfig#supportedEnumValues must be defined unless
+     * all enum values of EvStoppingMode are supported.
+     *
+     * The EvStoppingMode enum may be extended to include more states in the future.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     * @data_enum EvStoppingMode
+     */
+    EV_STOPPING_MODE =
+            0x040D + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
+    /**
      * HVAC Properties
      *
      * Additional rules for mapping a zoned HVAC property (except
