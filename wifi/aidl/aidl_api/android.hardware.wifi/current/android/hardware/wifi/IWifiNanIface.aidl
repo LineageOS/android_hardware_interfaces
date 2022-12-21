@@ -50,6 +50,10 @@ interface IWifiNanIface {
   void stopSubscribeRequest(in char cmdId, in byte sessionId);
   void terminateDataPathRequest(in char cmdId, in int ndpInstanceId);
   void transmitFollowupRequest(in char cmdId, in android.hardware.wifi.NanTransmitFollowupRequest msg);
+  void initiatePairingRequest(in char cmdId, in android.hardware.wifi.NanPairingRequest msg);
+  void respondToPairingIndicationRequest(in char cmdId, in android.hardware.wifi.NanRespondToPairingIndicationRequest msg);
+  void initiateBootstrappingRequest(in char cmdId, in android.hardware.wifi.NanBootstrappingRequest msg);
+  void respondToBootstrappingIndicationRequest(in char cmdId, in android.hardware.wifi.NanBootstrappingResponse msg);
   const int MIN_DATA_PATH_CONFIG_PASSPHRASE_LENGTH = 8;
   const int MAX_DATA_PATH_CONFIG_PASSPHRASE_LENGTH = 63;
 }

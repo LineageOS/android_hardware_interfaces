@@ -38,4 +38,6 @@ interface IStreamCommon {
   void updateHwAvSyncId(int hwAvSyncId);
   android.hardware.audio.core.VendorParameter[] getVendorParameters(in @utf8InCpp String[] ids);
   void setVendorParameters(in android.hardware.audio.core.VendorParameter[] parameters, boolean async);
+  void addEffect(in android.hardware.audio.effect.IEffect effect);
+  void removeEffect(in android.hardware.audio.effect.IEffect effect);
 }

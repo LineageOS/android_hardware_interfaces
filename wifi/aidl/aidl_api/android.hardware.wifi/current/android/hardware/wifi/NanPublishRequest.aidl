@@ -38,4 +38,6 @@ parcelable NanPublishRequest {
   android.hardware.wifi.NanPublishType publishType;
   android.hardware.wifi.NanTxType txType;
   boolean autoAcceptDataPathRequests;
+  android.hardware.wifi.NanPairingConfig pairingConfig;
+  byte[16] identityKey;
 }

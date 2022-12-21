@@ -126,6 +126,10 @@ bool initHalFuncTableWithStubs(wifi_hal_fn* hal_fn) {
     populateStubFor(&hal_fn->wifi_nan_data_interface_delete);
     populateStubFor(&hal_fn->wifi_nan_data_request_initiator);
     populateStubFor(&hal_fn->wifi_nan_data_indication_response);
+    populateStubFor(&hal_fn->wifi_nan_pairing_request);
+    populateStubFor(&hal_fn->wifi_nan_pairing_indication_response);
+    populateStubFor(&hal_fn->wifi_nan_bootstrapping_request);
+    populateStubFor(&hal_fn->wifi_nan_bootstrapping_indication_response);
     populateStubFor(&hal_fn->wifi_nan_data_end);
     populateStubFor(&hal_fn->wifi_get_packet_filter_capabilities);
     populateStubFor(&hal_fn->wifi_set_packet_filter);

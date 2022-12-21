@@ -205,6 +205,46 @@ void WifiNanIface::registerCallbackHandlers() {
                 }
                 break;
             }
+            case legacy_hal::NAN_PAIRING_INITIATOR_RESPONSE: {
+                for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
+                    if (!callback->notifyInitiatePairingResponse(
+                                         id, nanStatus,
+                                         msg.body.pairing_request_response.paring_instance_id)
+                                 .isOk()) {
+                        LOG(ERROR) << "Failed to invoke the callback";
+                    }
+                }
+                break;
+            }
+            case legacy_hal::NAN_PAIRING_RESPONDER_RESPONSE: {
+                for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
+                    if (!callback->notifyRespondToPairingIndicationResponse(id, nanStatus).isOk()) {
+                        LOG(ERROR) << "Failed to invoke the callback";
+                    }
+                }
+                break;
+            }
+            case legacy_hal::NAN_BOOTSTRAPPING_INITIATOR_RESPONSE: {
+                for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
+                    if (!callback->notifyInitiateBootstrappingResponse(
+                                         id, nanStatus,
+                                         msg.body.bootstrapping_request_response
+                                                 .bootstrapping_instance_id)
+                                 .isOk()) {
+                        LOG(ERROR) << "Failed to invoke the callback";
+                    }
+                }
+                break;
+            }
+            case legacy_hal::NAN_BOOTSTRAPPING_RESPONDER_RESPONSE: {
+                for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
+                    if (!callback->notifyRespondToBootstrappingIndicationResponse(id, nanStatus)
+                                 .isOk()) {
+                        LOG(ERROR) << "Failed to invoke the callback";
+                    }
+                }
+                break;
+            }
             case legacy_hal::NAN_RESPONSE_BEACON_SDF_PAYLOAD:
             /* fall through */
             case legacy_hal::NAN_RESPONSE_TCA:
@@ -421,6 +461,85 @@ void WifiNanIface::registerCallbackHandlers() {
                 }
             };
 
+    callback_handlers.on_event_pairing_request =
+            [weak_ptr_this](const legacy_hal::NanPairingRequestInd& msg) {
+                const auto shared_ptr_this = weak_ptr_this.lock();
+                if (!shared_ptr_this.get() || !shared_ptr_this->isValid()) {
+                    LOG(ERROR) << "Callback invoked on an invalid object";
+                    return;
+                }
+                NanPairingRequestInd aidl_struct;
+                if (!aidl_struct_util::convertLegacyNanPairingRequestIndToAidl(msg, &aidl_struct)) {
+                    LOG(ERROR) << "Failed to convert nan capabilities response";
+                    return;
+                }
+
+                for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
+                    if (!callback->eventPairingRequest(aidl_struct).isOk()) {
+                        LOG(ERROR) << "Failed to invoke the callback";
+                    }
+                }
+            };
+    callback_handlers.on_event_pairing_confirm =
+            [weak_ptr_this](const legacy_hal::NanPairingConfirmInd& msg) {
+                const auto shared_ptr_this = weak_ptr_this.lock();
+                if (!shared_ptr_this.get() || !shared_ptr_this->isValid()) {
+                    LOG(ERROR) << "Callback invoked on an invalid object";
+                    return;
+                }
+                NanPairingConfirmInd aidl_struct;
+                if (!aidl_struct_util::convertLegacyNanPairingConfirmIndToAidl(msg, &aidl_struct)) {
+                    LOG(ERROR) << "Failed to convert nan capabilities response";
+                    return;
+                }
+
+                for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
+                    if (!callback->eventPairingConfirm(aidl_struct).isOk()) {
+                        LOG(ERROR) << "Failed to invoke the callback";
+                    }
+                }
+            };
+    callback_handlers.on_event_bootstrapping_request =
+            [weak_ptr_this](const legacy_hal::NanBootstrappingRequestInd& msg) {
+                const auto shared_ptr_this = weak_ptr_this.lock();
+                if (!shared_ptr_this.get() || !shared_ptr_this->isValid()) {
+                    LOG(ERROR) << "Callback invoked on an invalid object";
+                    return;
+                }
+                NanBootstrappingRequestInd aidl_struct;
+                if (!aidl_struct_util::convertLegacyNanBootstrappingRequestIndToAidl(
+                            msg, &aidl_struct)) {
+                    LOG(ERROR) << "Failed to convert nan capabilities response";
+                    return;
+                }
+
+                for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
+                    if (!callback->eventBootstrappingRequest(aidl_struct).isOk()) {
+                        LOG(ERROR) << "Failed to invoke the callback";
+                    }
+                }
+            };
+    callback_handlers.on_event_bootstrapping_confirm =
+            [weak_ptr_this](const legacy_hal::NanBootstrappingConfirmInd& msg) {
+                const auto shared_ptr_this = weak_ptr_this.lock();
+                if (!shared_ptr_this.get() || !shared_ptr_this->isValid()) {
+                    LOG(ERROR) << "Callback invoked on an invalid object";
+                    return;
+                }
+                NanBootstrappingConfirmInd aidl_struct;
+                if (!aidl_struct_util::convertLegacyNanBootstrappingConfirmIndToAidl(
+                            msg, &aidl_struct)) {
+                    LOG(ERROR) << "Failed to convert nan capabilities response";
+                    return;
+                }
+
+                for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
+                    if (!callback->eventBootstrappingConfirm(aidl_struct).isOk()) {
+                        LOG(ERROR) << "Failed to invoke the callback";
+                    }
+                }
+            };
+
     callback_handlers.on_event_beacon_sdf_payload =
             [](const legacy_hal::NanBeaconSdfPayloadInd& /* msg */) {
                 LOG(ERROR) << "on_event_beacon_sdf_payload - should not be called";
@@ -611,6 +730,32 @@ ndk::ScopedAStatus WifiNanIface::terminateDataPathRequest(char16_t in_cmdId,
                            in_ndpInstanceId);
 }
 
+ndk::ScopedAStatus WifiNanIface::initiatePairingRequest(char16_t in_cmdId,
+                                                        const NanPairingRequest& in_msg) {
+    return validateAndCall(this, WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
+                           &WifiNanIface::initiatePairingRequestInternal, in_cmdId, in_msg);
+}
+
+ndk::ScopedAStatus WifiNanIface::respondToPairingIndicationRequest(
+        char16_t in_cmdId, const NanRespondToPairingIndicationRequest& in_msg) {
+    return validateAndCall(this, WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
+                           &WifiNanIface::respondToPairingIndicationRequestInternal, in_cmdId,
+                           in_msg);
+}
+
+ndk::ScopedAStatus WifiNanIface::initiateBootstrappingRequest(
+        char16_t in_cmdId, const NanBootstrappingRequest& in_msg) {
+    return validateAndCall(this, WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
+                           &WifiNanIface::initiateBootstrappingRequestInternal, in_cmdId, in_msg);
+}
+
+ndk::ScopedAStatus WifiNanIface::respondToBootstrappingIndicationRequest(
+        char16_t in_cmdId, const NanBootstrappingResponse& in_msg) {
+    return validateAndCall(this, WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
+                           &WifiNanIface::respondToBootstrappingIndicationRequestInternal, in_cmdId,
+                           in_msg);
+}
+
 std::pair<std::string, ndk::ScopedAStatus> WifiNanIface::getNameInternal() {
     return {ifname_, ndk::ScopedAStatus::ok()};
 }
@@ -742,6 +887,47 @@ ndk::ScopedAStatus WifiNanIface::terminateDataPathRequestInternal(char16_t cmd_i
                                                                   int32_t ndpInstanceId) {
     legacy_hal::wifi_error legacy_status =
             legacy_hal_.lock()->nanDataEnd(ifname_, cmd_id, ndpInstanceId);
+    return createWifiStatusFromLegacyError(legacy_status);
+}
+ndk::ScopedAStatus WifiNanIface::initiatePairingRequestInternal(char16_t cmd_id,
+                                                                const NanPairingRequest& msg) {
+    legacy_hal::NanPairingRequest legacy_msg;
+    if (!aidl_struct_util::convertAidlNanPairingInitiatorRequestToLegacy(msg, &legacy_msg)) {
+        return createWifiStatus(WifiStatusCode::ERROR_INVALID_ARGS);
+    }
+    legacy_hal::wifi_error legacy_status =
+            legacy_hal_.lock()->nanPairingRequest(ifname_, cmd_id, legacy_msg);
+    return createWifiStatusFromLegacyError(legacy_status);
+}
+ndk::ScopedAStatus WifiNanIface::respondToPairingIndicationRequestInternal(
+        char16_t cmd_id, const NanRespondToPairingIndicationRequest& msg) {
+    legacy_hal::NanPairingIndicationResponse legacy_msg;
+    if (!aidl_struct_util::convertAidlNanPairingIndicationResponseToLegacy(msg, &legacy_msg)) {
+        return createWifiStatus(WifiStatusCode::ERROR_INVALID_ARGS);
+    }
+    legacy_hal::wifi_error legacy_status =
+            legacy_hal_.lock()->nanPairingIndicationResponse(ifname_, cmd_id, legacy_msg);
+    return createWifiStatusFromLegacyError(legacy_status);
+}
+ndk::ScopedAStatus WifiNanIface::initiateBootstrappingRequestInternal(
+        char16_t cmd_id, const NanBootstrappingRequest& msg) {
+    legacy_hal::NanBootstrappingRequest legacy_msg;
+    if (!aidl_struct_util::convertAidlNanBootstrappingInitiatorRequestToLegacy(msg, &legacy_msg)) {
+        return createWifiStatus(WifiStatusCode::ERROR_INVALID_ARGS);
+    }
+    legacy_hal::wifi_error legacy_status =
+            legacy_hal_.lock()->nanBootstrappingRequest(ifname_, cmd_id, legacy_msg);
+    return createWifiStatusFromLegacyError(legacy_status);
+}
+ndk::ScopedAStatus WifiNanIface::respondToBootstrappingIndicationRequestInternal(
+        char16_t cmd_id, const NanBootstrappingResponse& msg) {
+    legacy_hal::NanBootstrappingIndicationResponse legacy_msg;
+    if (!aidl_struct_util::convertAidlNanBootstrappingIndicationResponseToLegacy(msg,
+                                                                                 &legacy_msg)) {
+        return createWifiStatus(WifiStatusCode::ERROR_INVALID_ARGS);
+    }
+    legacy_hal::wifi_error legacy_status =
+            legacy_hal_.lock()->nanBootstrappingIndicationResponse(ifname_, cmd_id, legacy_msg);
     return createWifiStatusFromLegacyError(legacy_status);
 }
 

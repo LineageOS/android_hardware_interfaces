@@ -82,7 +82,19 @@ parcelable NanCapabilities {
      */
     NanCipherSuiteType supportedCipherSuites;
     /**
-     * Flag to indicate id instant communication mode is supported.
+     * Flag to indicate if instant communication mode is supported.
      */
     boolean instantCommunicationModeSupportFlag;
+    /**
+     * Flag to indicate if 6 GHz is supported.
+     */
+    boolean supports6g;
+    /**
+     * Flag to indicate if High Efficiency is supported.
+     */
+    boolean supportsHe;
+    /**
+     * Flag to indicate if NAN pairing is supported.
+     */
+    boolean supportsPairing;
 }

@@ -969,4 +969,28 @@ ndk::ScopedAStatus Module::setVendorParameters(const std::vector<VendorParameter
     return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
 }
 
+ndk::ScopedAStatus Module::addDeviceEffect(
+        int32_t in_portConfigId,
+        const std::shared_ptr<::aidl::android::hardware::audio::effect::IEffect>& in_effect) {
+    if (in_effect == nullptr) {
+        LOG(DEBUG) << __func__ << ": port id " << in_portConfigId << ", null effect";
+    } else {
+        LOG(DEBUG) << __func__ << ": port id " << in_portConfigId << ", effect Binder "
+                   << in_effect->asBinder().get();
+    }
+    return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+}
+
+ndk::ScopedAStatus Module::removeDeviceEffect(
+        int32_t in_portConfigId,
+        const std::shared_ptr<::aidl::android::hardware::audio::effect::IEffect>& in_effect) {
+    if (in_effect == nullptr) {
+        LOG(DEBUG) << __func__ << ": port id " << in_portConfigId << ", null effect";
+    } else {
+        LOG(DEBUG) << __func__ << ": port id " << in_portConfigId << ", effect Binder "
+                   << in_effect->asBinder().get();
+    }
+    return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+}
+
 }  // namespace aidl::android::hardware::audio::core

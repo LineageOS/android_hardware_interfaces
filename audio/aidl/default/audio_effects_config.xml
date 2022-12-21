@@ -28,12 +28,16 @@
          name of a library .so file on the target device.
     -->
     <libraries>
+        <library name="aecsw" path="libaecsw.so"/>
+        <library name="agcsw" path="libagcsw.so"/>
         <library name="bassboostsw" path="libbassboostsw.so"/>
         <library name="bundle" path="libbundleaidl.so"/>
+        <library name="downmix" path="libdownmixaidl.so"/>
         <library name="dynamics_processingsw" path="libdynamicsprocessingsw.so"/>
         <library name="equalizersw" path="libequalizersw.so"/>
         <library name="haptic_generatorsw" path="libhapticgeneratorsw.so"/>
-        <library name="loudness_enhancersw" path="libloudnessenhancersw.so"/>
+        <library name="loudness_enhancer" path="libloudnessenhanceraidl.so"/>
+        <library name="nssw" path="libnssw.so"/>
         <library name="env_reverbsw" path="libenvreverbsw.so"/>
         <library name="preset_reverbsw" path="libpresetreverbsw.so"/>
         <library name="virtualizersw" path="libvirtualizersw.so"/>
@@ -61,14 +65,18 @@
     -->
 
     <effects>
+        <effect name="acoustic_echo_canceler" library="aecsw" uuid="bb392ec0-8d4d-11e0-a896-0002a5d5c51b"/>
+        <effect name="automatic_gain_control" library="agcsw" uuid="89f38e65-d4d2-4d64-ad0e-2b3e799ea886"/>
         <effectProxy name="bassboost" uuid="14804144-a5ee-4d24-aa88-0002a5d5c51b">
             <libsw library="bassboostsw" uuid="fa8181f2-588b-11ed-9b6a-0242ac120002"/>
             <libsw library="bundle" uuid="8631f300-72e2-11df-b57e-0002a5d5c51b"/>
         </effectProxy>
+        <effect name="downmix" library="downmix" uuid="93f04452-e4fe-41cc-91f9-e475b6d1d69f"/>
         <effect name="dynamics_processing" library="dynamics_processingsw" uuid="fa818d78-588b-11ed-9b6a-0242ac120002"/>
         <effect name="haptic_generator" library="haptic_generatorsw" uuid="fa819110-588b-11ed-9b6a-0242ac120002"/>
-        <effect name="loudness_enhancer" library="loudness_enhancersw" uuid="fa819610-588b-11ed-9b6a-0242ac120002"/>
+        <effect name="loudness_enhancer" library="loudness_enhancer" uuid="fa415329-2034-4bea-b5dc-5b381c8d1e2c"/>
         <effect name="env_reverb" library="env_reverbsw" uuid="fa819886-588b-11ed-9b6a-0242ac120002"/>
+        <effect name="noise_suppression" library="nssw" uuid="c06c8400-8e06-11e0-9cb6-0002a5d5c51b"/>
         <effect name="preset_reverb" library="preset_reverbsw" uuid="fa8199c6-588b-11ed-9b6a-0242ac120002"/>
         <effect name="virtualizer" library="virtualizersw" uuid="fa819d86-588b-11ed-9b6a-0242ac120002"/>
         <effect name="visualizer" library="visualizersw" uuid="fa81a0f6-588b-11ed-9b6a-0242ac120002"/>
