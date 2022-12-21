@@ -1976,7 +1976,8 @@
                     "maxFloatValue": 28.0
                 }
             ],
-	    "comment": "minFloatValue and maxFloatValue in area config should match corresponding values in configArray",
+            "comment":
+                    "minFloatValue and maxFloatValue in area config should match corresponding values in configArray",
             "configArray": [
                 160,
                 280,
