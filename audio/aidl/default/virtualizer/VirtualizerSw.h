@@ -32,12 +32,26 @@ class VirtualizerSwContext final : public EffectContext {
         : EffectContext(statusDepth, common) {
         LOG(DEBUG) << __func__;
     }
-    // TODO: add specific context here
+    RetCode setVrStrength(int strength) {
+        if (strength < Virtualizer::MIN_PER_MILLE_STRENGTH ||
+            strength > Virtualizer::MAX_PER_MILLE_STRENGTH) {
+            LOG(ERROR) << __func__ << " invalid strength " << strength;
+            return RetCode::ERROR_ILLEGAL_PARAMETER;
+        }
+        // TODO : Add implementation to apply new strength
+        mStrength = strength;
+        return RetCode::SUCCESS;
+    }
+    int getVrStrength() const { return mStrength; }
+
+  private:
+    int mStrength;
 };
 
 class VirtualizerSw final : public EffectImpl {
   public:
     static const std::string kEffectName;
+    static const bool kStrengthSupported;
     static const Virtualizer::Capability kCapability;
     static const Descriptor kDescriptor;
     VirtualizerSw() { LOG(DEBUG) << __func__; }
@@ -60,7 +74,8 @@ class VirtualizerSw final : public EffectImpl {
 
   private:
     std::shared_ptr<VirtualizerSwContext> mContext;
-    /* parameters */
-    Virtualizer mSpecificParam;
+
+    ndk::ScopedAStatus getParameterVirtualizer(const Virtualizer::Tag& tag,
+                                               Parameter::Specific* specific);
 };
 }  // namespace aidl::android::hardware::audio::effect

@@ -60,6 +60,16 @@ union Virtualizer {
     }
 
     /**
+     * Minimal possible per mille strength.
+     */
+    const int MIN_PER_MILLE_STRENGTH = 0;
+
+    /**
+     * Maximum possible per mille strength.
+     */
+    const int MAX_PER_MILLE_STRENGTH = 1000;
+
+    /**
      * The per mille strength of the virtualizer effect.
      *
      * If the implementation does not support per mille accuracy for setting the strength, it is
