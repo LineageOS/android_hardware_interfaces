@@ -122,6 +122,18 @@ class MockNanIfaceEventCallback : public IWifiNanIfaceEventCallback {
     MOCK_METHOD1(eventDataPathTerminated, ndk::ScopedAStatus(int32_t));
     MOCK_METHOD1(eventDataPathScheduleUpdate,
                  ndk::ScopedAStatus(const NanDataPathScheduleUpdateInd&));
+    MOCK_METHOD1(eventPairingConfirm, ndk::ScopedAStatus(const NanPairingConfirmInd&));
+    MOCK_METHOD1(eventPairingRequest, ndk::ScopedAStatus(const NanPairingRequestInd&));
+    MOCK_METHOD1(eventBootstrappingConfirm, ndk::ScopedAStatus(const NanBootstrappingConfirmInd&));
+    MOCK_METHOD1(eventBootstrappingRequest, ndk::ScopedAStatus(const NanBootstrappingRequestInd&));
+    MOCK_METHOD3(notifyInitiatePairingResponse,
+                 ndk::ScopedAStatus(char16_t, const NanStatus&, int32_t));
+    MOCK_METHOD2(notifyRespondToPairingIndicationResponse,
+                 ndk::ScopedAStatus(char16_t, const NanStatus&));
+    MOCK_METHOD3(notifyInitiateBootstrappingResponse,
+                 ndk::ScopedAStatus(char16_t, const NanStatus&, int32_t));
+    MOCK_METHOD2(notifyRespondToBootstrappingIndicationResponse,
+                 ndk::ScopedAStatus(char16_t, const NanStatus&));
 };
 
 class WifiNanIfaceTest : public Test {

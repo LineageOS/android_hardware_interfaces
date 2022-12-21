@@ -151,11 +151,12 @@ cc_binary {
     shared_libs: [
         "libbassboostsw",
         "libbundleaidl",
+        "libdownmixaidl",
         "libdynamicsprocessingsw",
         "libenvreverbsw",
         "libequalizersw",
         "libhapticgeneratorsw",
-        "libloudnessenhancersw",
+        "libloudnessenhanceraidl",
         "libpresetreverbsw",
         "libtinyxml2",
         "libvirtualizersw",

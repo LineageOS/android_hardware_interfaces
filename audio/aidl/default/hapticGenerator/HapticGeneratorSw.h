@@ -32,7 +32,31 @@ class HapticGeneratorSwContext final : public EffectContext {
         : EffectContext(statusDepth, common) {
         LOG(DEBUG) << __func__;
     }
-    // TODO: add specific context here
+
+    RetCode setHgHapticScale(const HapticGenerator::HapticScale& hapticScale) {
+        // All int values are valid for ID
+        mHapticScale = hapticScale;
+        return RetCode::SUCCESS;
+    }
+    HapticGenerator::HapticScale getHgHapticScale() const { return mHapticScale; }
+
+    RetCode setHgVibratorInformation(const HapticGenerator::VibratorInformation& vibratorInfo) {
+        // All float values are valid for resonantFrequencyHz, qFactor, maxAmplitude
+        mVibratorInformation = vibratorInfo;
+        return RetCode::SUCCESS;
+    }
+
+    HapticGenerator::VibratorInformation getHgVibratorInformation() const {
+        return mVibratorInformation;
+    }
+
+  private:
+    static constexpr float DEFAULT_RESONANT_FREQUENCY = 150.0f;
+    static constexpr float DEFAULT_Q_FACTOR = 1.0f;
+    static constexpr float DEFAULT_MAX_AMPLITUDE = 0.0f;
+    HapticGenerator::HapticScale mHapticScale = {0, HapticGenerator::VibratorScale::MUTE};
+    HapticGenerator::VibratorInformation mVibratorInformation = {
+            DEFAULT_RESONANT_FREQUENCY, DEFAULT_Q_FACTOR, DEFAULT_MAX_AMPLITUDE};
 };
 
 class HapticGeneratorSw final : public EffectImpl {
@@ -60,7 +84,8 @@ class HapticGeneratorSw final : public EffectImpl {
 
   private:
     std::shared_ptr<HapticGeneratorSwContext> mContext;
-    /* parameters */
-    HapticGenerator mSpecificParam;
+
+    ndk::ScopedAStatus getParameterHapticGenerator(const HapticGenerator::Tag& tag,
+                                                   Parameter::Specific* specific);
 };
 }  // namespace aidl::android::hardware::audio::effect

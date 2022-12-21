@@ -10,13 +10,28 @@
       "name": "VtsHalAudioEffectTargetTest"
     },
     {
+      "name": "VtsHalDownmixTargetTest"
+    },
+    {
       "name": "VtsHalEqualizerTargetTest"
+    },
+    {
+      "name": "VtsHalHapticGeneratorTargetTest"
     },
     {
       "name": "VtsHalLoudnessEnhancerTargetTest"
     },
     {
       "name": "VtsHalVisualizerTargetTest"
+    },
+    {
+      "name": "VtsHalAECTargetTest"
+    },
+    {
+      "name": "VtsHalAGCTargetTest"
+    },
+    {
+      "name": "VtsHalNSTargetTest"
     }
   ]
 }

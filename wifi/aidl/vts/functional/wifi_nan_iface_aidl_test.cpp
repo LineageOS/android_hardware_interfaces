@@ -33,6 +33,8 @@ using aidl::android::hardware::wifi::BnWifiNanIfaceEventCallback;
 using aidl::android::hardware::wifi::IWifiNanIface;
 using aidl::android::hardware::wifi::NanBandIndex;
 using aidl::android::hardware::wifi::NanBandSpecificConfig;
+using aidl::android::hardware::wifi::NanBootstrappingConfirmInd;
+using aidl::android::hardware::wifi::NanBootstrappingRequestInd;
 using aidl::android::hardware::wifi::NanCapabilities;
 using aidl::android::hardware::wifi::NanClusterEventInd;
 using aidl::android::hardware::wifi::NanConfigRequest;
@@ -46,6 +48,8 @@ using aidl::android::hardware::wifi::NanFollowupReceivedInd;
 using aidl::android::hardware::wifi::NanInitiateDataPathRequest;
 using aidl::android::hardware::wifi::NanMatchAlg;
 using aidl::android::hardware::wifi::NanMatchInd;
+using aidl::android::hardware::wifi::NanPairingConfirmInd;
+using aidl::android::hardware::wifi::NanPairingRequestInd;
 using aidl::android::hardware::wifi::NanPublishRequest;
 using aidl::android::hardware::wifi::NanPublishType;
 using aidl::android::hardware::wifi::NanRespondToDataPathIndicationRequest;
@@ -96,6 +100,10 @@ class WifiNanIfaceAidlTest : public testing::TestWithParam<std::string> {
         NOTIFY_INITIATE_DATA_PATH_RESPONSE,
         NOTIFY_RESPOND_TO_DATA_PATH_INDICATION_RESPONSE,
         NOTIFY_TERMINATE_DATA_PATH_RESPONSE,
+        NOTIFY_INITIATE_PAIRING_RESPONSE,
+        NOTIFY_RESPOND_TO_PAIRING_INDICATION_RESPONSE,
+        NOTIFY_INITIATE_BOOTSTRAPPING_RESPONSE,
+        NOTIFY_RESPOND_TO_BOOTSTRAPPING_INDICATION_RESPONSE,
 
         EVENT_CLUSTER_EVENT,
         EVENT_DISABLED,
@@ -109,6 +117,10 @@ class WifiNanIfaceAidlTest : public testing::TestWithParam<std::string> {
         EVENT_DATA_PATH_CONFIRM,
         EVENT_DATA_PATH_TERMINATED,
         EVENT_DATA_PATH_SCHEDULE_UPDATE,
+        EVENT_PAIRING_REQUEST,
+        EVENT_PAIRING_CONFIRM,
+        EVENT_BOOTSTRAPPING_REQUEST,
+        EVENT_BOOTSTRAPPING_CONFIRM,
     };
 
     // Test code calls this function to wait for data/event callback.
@@ -211,6 +223,32 @@ class WifiNanIfaceAidlTest : public testing::TestWithParam<std::string> {
             parent_.callback_type_ = EVENT_TRANSMIT_FOLLOWUP;
             parent_.id_ = id;
             parent_.status_ = status;
+            parent_.notify();
+            return ndk::ScopedAStatus::ok();
+        }
+        ::ndk::ScopedAStatus eventPairingConfirm(const NanPairingConfirmInd& event) override {
+            parent_.callback_type_ = EVENT_PAIRING_CONFIRM;
+            parent_.nan_pairing_confirm_ind_ = event;
+            parent_.notify();
+            return ndk::ScopedAStatus::ok();
+        }
+        ::ndk::ScopedAStatus eventPairingRequest(const NanPairingRequestInd& event) override {
+            parent_.callback_type_ = EVENT_PAIRING_REQUEST;
+            parent_.nan_pairing_request_ind_ = event;
+            parent_.notify();
+            return ndk::ScopedAStatus::ok();
+        }
+        ::ndk::ScopedAStatus eventBootstrappingConfirm(
+                const NanBootstrappingConfirmInd& event) override {
+            parent_.callback_type_ = EVENT_BOOTSTRAPPING_CONFIRM;
+            parent_.nan_bootstrapping_confirm_ind_ = event;
+            parent_.notify();
+            return ndk::ScopedAStatus::ok();
+        }
+        ::ndk::ScopedAStatus eventBootstrappingRequest(
+                const NanBootstrappingRequestInd& event) override {
+            parent_.callback_type_ = EVENT_BOOTSTRAPPING_REQUEST;
+            parent_.nan_bootstrapping_request_ind_ = event;
             parent_.notify();
             return ndk::ScopedAStatus::ok();
         }
@@ -328,6 +366,40 @@ class WifiNanIfaceAidlTest : public testing::TestWithParam<std::string> {
             parent_.notify();
             return ndk::ScopedAStatus::ok();
         }
+        ::ndk::ScopedAStatus notifyInitiatePairingResponse(char16_t id, const NanStatus& status,
+                                                           int32_t pairingInstanceId) override {
+            parent_.callback_type_ = NOTIFY_INITIATE_PAIRING_RESPONSE;
+            parent_.id_ = id;
+            parent_.status_ = status;
+            parent_.pairing_instance_id_ = pairingInstanceId;
+            parent_.notify();
+            return ndk::ScopedAStatus::ok();
+        }
+        ::ndk::ScopedAStatus notifyRespondToPairingIndicationResponse(
+                char16_t id, const NanStatus& status) override {
+            parent_.callback_type_ = NOTIFY_RESPOND_TO_PAIRING_INDICATION_RESPONSE;
+            parent_.id_ = id;
+            parent_.status_ = status;
+            parent_.notify();
+            return ndk::ScopedAStatus::ok();
+        }
+        ::ndk::ScopedAStatus notifyInitiateBootstrappingResponse(
+                char16_t id, const NanStatus& status, int32_t bootstrapppingInstanceId) override {
+            parent_.callback_type_ = NOTIFY_INITIATE_BOOTSTRAPPING_RESPONSE;
+            parent_.id_ = id;
+            parent_.status_ = status;
+            parent_.bootstrappping_instance_id_ = bootstrapppingInstanceId;
+            parent_.notify();
+            return ndk::ScopedAStatus::ok();
+        }
+        ::ndk::ScopedAStatus notifyRespondToBootstrappingIndicationResponse(
+                char16_t id, const NanStatus& status) override {
+            parent_.callback_type_ = NOTIFY_RESPOND_TO_BOOTSTRAPPING_INDICATION_RESPONSE;
+            parent_.id_ = id;
+            parent_.status_ = status;
+            parent_.notify();
+            return ndk::ScopedAStatus::ok();
+        }
 
       private:
         WifiNanIfaceAidlTest& parent_;
@@ -339,6 +411,8 @@ class WifiNanIfaceAidlTest : public testing::TestWithParam<std::string> {
     uint16_t id_;
     uint8_t session_id_;
     uint32_t ndp_instance_id_;
+    uint32_t pairing_instance_id_;
+    uint32_t bootstrappping_instance_id_;
     uint32_t peer_id_;
     NanCapabilities capabilities_;
     NanClusterEventInd nan_cluster_event_ind_;
@@ -348,6 +422,10 @@ class WifiNanIfaceAidlTest : public testing::TestWithParam<std::string> {
     NanFollowupReceivedInd nan_followup_received_ind_;
     NanMatchInd nan_match_ind_;
     NanStatus status_;
+    NanPairingRequestInd nan_pairing_request_ind_;
+    NanPairingConfirmInd nan_pairing_confirm_ind_;
+    NanBootstrappingRequestInd nan_bootstrapping_request_ind_;
+    NanBootstrappingConfirmInd nan_bootstrapping_confirm_ind_;
 
     const char* getInstanceName() { return GetParam().c_str(); }
 

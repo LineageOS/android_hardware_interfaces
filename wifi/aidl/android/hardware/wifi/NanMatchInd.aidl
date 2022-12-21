@@ -17,6 +17,8 @@
 package android.hardware.wifi;
 
 import android.hardware.wifi.NanCipherSuiteType;
+import android.hardware.wifi.NanIdentityResolutionAttribute;
+import android.hardware.wifi.NanPairingConfig;
 import android.hardware.wifi.NanRangingIndication;
 
 /**
@@ -126,4 +128,12 @@ parcelable NanMatchInd {
      * setting up the Secure Data Path.
      */
     byte[] scid;
+    /**
+     * The config for NAN pairing set by the peer
+     */
+    NanPairingConfig peerPairingConfig;
+    /**
+     * The NIRA from peer for NAN pairing verification
+     */
+    NanIdentityResolutionAttribute peerNira;
 }

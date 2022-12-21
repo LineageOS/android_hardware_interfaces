@@ -43,6 +43,8 @@ union Parameter {
   @VintfStability
   union Id {
     int vendorEffectTag;
+    android.hardware.audio.effect.AcousticEchoCanceler.Id acousticEchoCancelerTag;
+    android.hardware.audio.effect.AutomaticGainControl.Id automaticGainControlTag;
     android.hardware.audio.effect.BassBoost.Id bassBoostTag;
     android.hardware.audio.effect.Downmix.Id downmixTag;
     android.hardware.audio.effect.DynamicsProcessing.Id dynamicsProcessingTag;
@@ -50,6 +52,7 @@ union Parameter {
     android.hardware.audio.effect.Equalizer.Id equalizerTag;
     android.hardware.audio.effect.HapticGenerator.Id hapticGeneratorTag;
     android.hardware.audio.effect.LoudnessEnhancer.Id loudnessEnhancerTag;
+    android.hardware.audio.effect.NoiseSuppression.Id noiseSuppressionTag;
     android.hardware.audio.effect.PresetReverb.Id presetReverbTag;
     android.hardware.audio.effect.Virtualizer.Id virtualizerTag;
     android.hardware.audio.effect.Visualizer.Id visualizerTag;
@@ -71,6 +74,8 @@ union Parameter {
   @VintfStability
   union Specific {
     android.hardware.audio.effect.VendorExtension vendorEffect;
+    android.hardware.audio.effect.AcousticEchoCanceler acousticEchoCanceler;
+    android.hardware.audio.effect.AutomaticGainControl automaticGainControl;
     android.hardware.audio.effect.BassBoost bassBoost;
     android.hardware.audio.effect.Downmix downmix;
     android.hardware.audio.effect.DynamicsProcessing dynamicsProcessing;
@@ -78,6 +83,7 @@ union Parameter {
     android.hardware.audio.effect.Equalizer equalizer;
     android.hardware.audio.effect.HapticGenerator hapticGenerator;
     android.hardware.audio.effect.LoudnessEnhancer loudnessEnhancer;
+    android.hardware.audio.effect.NoiseSuppression noiseSuppression;
     android.hardware.audio.effect.PresetReverb presetReverb;
     android.hardware.audio.effect.Virtualizer virtualizer;
     android.hardware.audio.effect.Visualizer visualizer;

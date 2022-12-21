@@ -17,12 +17,16 @@
 package android.hardware.wifi;
 
 import android.hardware.wifi.IWifiNanIfaceEventCallback;
+import android.hardware.wifi.NanBootstrappingRequest;
+import android.hardware.wifi.NanBootstrappingResponse;
 import android.hardware.wifi.NanConfigRequest;
 import android.hardware.wifi.NanConfigRequestSupplemental;
 import android.hardware.wifi.NanEnableRequest;
 import android.hardware.wifi.NanInitiateDataPathRequest;
+import android.hardware.wifi.NanPairingRequest;
 import android.hardware.wifi.NanPublishRequest;
 import android.hardware.wifi.NanRespondToDataPathIndicationRequest;
+import android.hardware.wifi.NanRespondToPairingIndicationRequest;
 import android.hardware.wifi.NanSubscribeRequest;
 import android.hardware.wifi.NanTransmitFollowupRequest;
 
@@ -248,4 +252,62 @@ interface IWifiNanIface {
      *         |WifiStatusCode.ERROR_UNKNOWN|
      */
     void transmitFollowupRequest(in char cmdId, in NanTransmitFollowupRequest msg);
+
+    /**
+     * Initiate a NAN pairing operation: Initiator.
+     * Asynchronous response is with |IWifiNanIfaceEventCallback.notifyInitiatePairingResponse|.
+     *
+     * @param cmdId Command Id to use for this invocation.
+     * @param msg Instance of |NanPairingRequest|.
+     * @throws ServiceSpecificException with one of the following values:
+     *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
+     *         |WifiStatusCode.ERROR_INVALID_ARGS|,
+     *         |WifiStatusCode.ERROR_UNKNOWN|
+     */
+    void initiatePairingRequest(in char cmdId, in NanPairingRequest msg);
+
+    /**
+     * Respond to a received request indication of NAN pairing setup operation.
+     * An indication is received by the Responder from the Initiator.
+     * Asynchronous response is with
+     * |IWifiNanIfaceEventCallback.notifyRespondToPairingIndicationResponse|.
+     *
+     * @param cmdId Command Id to use for this invocation.
+     * @param msg Instance of |NanRespondToPairingIndicationRequest|.
+     * @throws ServiceSpecificException with one of the following values:
+     *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
+     *         |WifiStatusCode.ERROR_INVALID_ARGS|,
+     *         |WifiStatusCode.ERROR_UNKNOWN|
+     */
+    void respondToPairingIndicationRequest(
+            in char cmdId, in NanRespondToPairingIndicationRequest msg);
+
+    /**
+     * Initiate a NAN pairing bootstrapping operation: Initiator.
+     * Asynchronous response is with
+     * |IWifiNanIfaceEventCallback.notifyInitiateBootstrappingResponse|.
+     *
+     * @param cmdId Command Id to use for this invocation.
+     * @param msg Instance of |NanBootstrappingRequest|.
+     * @throws ServiceSpecificException with one of the following values:
+     *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
+     *         |WifiStatusCode.ERROR_INVALID_ARGS|,
+     *         |WifiStatusCode.ERROR_UNKNOWN|
+     */
+    void initiateBootstrappingRequest(in char cmdId, in NanBootstrappingRequest msg);
+
+    /**
+     * Respond to a received request indication of NAN pairing bootstrapping operation.
+     * An indication is received by the Responder from the Initiator.
+     * Asynchronous response is with
+     * |IWifiNanIfaceEventCallback.notifyRespondToPairingIndicationResponse|.
+     *
+     * @param cmdId Command Id to use for this invocation.
+     * @param msg Instance of |notifyRespondToBootstrappingIndicationResponse|.
+     * @throws ServiceSpecificException with one of the following values:
+     *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
+     *         |WifiStatusCode.ERROR_INVALID_ARGS|,
+     *         |WifiStatusCode.ERROR_UNKNOWN|
+     */
+    void respondToBootstrappingIndicationRequest(in char cmdId, in NanBootstrappingResponse msg);
 }

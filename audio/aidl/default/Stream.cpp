@@ -541,6 +541,28 @@ ndk::ScopedAStatus StreamCommonImpl<Metadata, StreamWorker>::setVendorParameters
 }
 
 template <class Metadata, class StreamWorker>
+ndk::ScopedAStatus StreamCommonImpl<Metadata, StreamWorker>::addEffect(
+        const std::shared_ptr<::aidl::android::hardware::audio::effect::IEffect>& in_effect) {
+    if (in_effect == nullptr) {
+        LOG(DEBUG) << __func__ << ": null effect";
+    } else {
+        LOG(DEBUG) << __func__ << ": effect Binder" << in_effect->asBinder().get();
+    }
+    return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+}
+
+template <class Metadata, class StreamWorker>
+ndk::ScopedAStatus StreamCommonImpl<Metadata, StreamWorker>::removeEffect(
+        const std::shared_ptr<::aidl::android::hardware::audio::effect::IEffect>& in_effect) {
+    if (in_effect == nullptr) {
+        LOG(DEBUG) << __func__ << ": null effect";
+    } else {
+        LOG(DEBUG) << __func__ << ": effect Binder" << in_effect->asBinder().get();
+    }
+    return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+}
+
+template <class Metadata, class StreamWorker>
 ndk::ScopedAStatus StreamCommonImpl<Metadata, StreamWorker>::close() {
     LOG(DEBUG) << __func__;
     if (!isClosed()) {

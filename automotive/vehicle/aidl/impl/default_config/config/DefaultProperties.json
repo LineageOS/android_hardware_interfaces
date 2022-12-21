@@ -1943,7 +1943,7 @@
                     },
                     "areaId": 49,
                     "minFloatValue": 16.0,
-                    "maxFloatValue": 32.0
+                    "maxFloatValue": 28.0
                 },
                 {
                     "defaultValue": {
@@ -1953,9 +1953,10 @@
                     },
                     "areaId": 68,
                     "minFloatValue": 16.0,
-                    "maxFloatValue": 32.0
+                    "maxFloatValue": 28.0
                 }
             ],
+	    "comment": "minFloatValue and maxFloatValue in area config should match corresponding values in configArray",
             "configArray": [
                 160,
                 280,

@@ -35,7 +35,7 @@ package android.hardware.audio.effect;
 @VintfStability
 parcelable Processing {
   android.hardware.audio.effect.Processing.Type type;
-  android.hardware.audio.effect.Descriptor.Identity[] ids;
+  android.hardware.audio.effect.Descriptor[] ids;
   @VintfStability
   union Type {
     android.media.audio.common.AudioStreamType streamType = android.media.audio.common.AudioStreamType.INVALID;
