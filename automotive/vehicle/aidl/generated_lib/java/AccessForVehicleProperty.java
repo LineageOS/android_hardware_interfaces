@@ -231,7 +231,8 @@ public final class AccessForVehicleProperty {
         Map.entry(VehicleProperty.BLIND_SPOT_WARNING_ENABLED, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.LANE_DEPARTURE_WARNING_ENABLED, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.LANE_CENTERING_ASSIST_ENABLED, VehiclePropertyAccess.READ_WRITE),
-        Map.entry(VehicleProperty.EMERGENCY_LANE_KEEP_ASSIST_ENABLED, VehiclePropertyAccess.READ_WRITE)
+        Map.entry(VehicleProperty.EMERGENCY_LANE_KEEP_ASSIST_ENABLED, VehiclePropertyAccess.READ_WRITE),
+        Map.entry(VehicleProperty.ADAPTIVE_CRUISE_CONTROL_ENABLED, VehiclePropertyAccess.READ_WRITE)
     );
 
 }

@@ -3466,6 +3466,24 @@ enum VehicleProperty {
     EMERGENCY_LANE_KEEP_ASSIST_ENABLED =
             0x100D + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
 
+    /**
+     * Enable or disable adaptive cruise control (ACC).
+     *
+     * Set true to enable ACC and false to disable ACC. When ACC is enabled, the ADAS system in the
+     * vehicle should be turned on and waiting for an activation signal from the driver. Once the
+     * feature is activated, the ADAS system in the car should be accelerating and braking in a way
+     * that allows the vehicle to maintain a set speed and to maintain a set distance gap from a
+     * leading vehicle.
+     *
+     * This property is defined as read_write, but OEMs have the option to implement it as read
+     * only.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     */
+    ADAPTIVE_CRUISE_CONTROL_ENABLED =
+            0x100F + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+
     /***************************************************************************
      * End of ADAS Properties
      **************************************************************************/
