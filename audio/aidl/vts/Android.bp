@@ -80,12 +80,6 @@ cc_test {
 }
 
 cc_test {
-    name: "VtsHalEnvironmentalReverbTargetTest",
-    defaults: ["VtsHalAudioTargetTestDefaults"],
-    srcs: ["VtsHalEnvironmentalReverbTargetTest.cpp"],
-}
-
-cc_test {
     name: "VtsHalEqualizerTargetTest",
     defaults: ["VtsHalAudioTargetTestDefaults"],
     srcs: ["VtsHalEqualizerTargetTest.cpp"],
