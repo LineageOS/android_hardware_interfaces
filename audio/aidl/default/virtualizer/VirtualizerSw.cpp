@@ -66,7 +66,7 @@ const Virtualizer::Capability VirtualizerSw::kCapability = {.strengthSupported =
 const Descriptor VirtualizerSw::kDescriptor = {
         .common = {.id = {.type = kVirtualizerTypeUUID,
                           .uuid = kVirtualizerSwImplUUID,
-                          .proxy = std::nullopt},
+                          .proxy = kVirtualizerProxyUUID},
                    .flags = {.type = Flags::Type::INSERT,
                              .insert = Flags::Insert::FIRST,
                              .volume = Flags::Volume::CTRL},
