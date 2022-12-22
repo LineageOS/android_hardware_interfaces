@@ -295,7 +295,7 @@ VhalResult<void> FakeVehicleHardware::setApPowerStateReport(const VehiclePropVal
     return {};
 }
 
-bool FakeVehicleHardware::isHvacPropAndHvacNotAvailable(int32_t propId) {
+bool FakeVehicleHardware::isHvacPropAndHvacNotAvailable(int32_t propId) const {
     std::unordered_set<int32_t> powerProps(std::begin(HVAC_POWER_PROPERTIES),
                                            std::end(HVAC_POWER_PROPERTIES));
     if (powerProps.count(propId)) {
@@ -366,6 +366,11 @@ FakeVehicleHardware::ValueResultType FakeVehicleHardware::maybeGetSpecialValue(
         return getUserHalProp(value);
     }
 
+    if (isHvacPropAndHvacNotAvailable(propId)) {
+        *isSpecialValue = true;
+        return StatusError(StatusCode::NOT_AVAILABLE) << "hvac not available";
+    }
+
     switch (propId) {
         case OBD2_FREEZE_FRAME:
             *isSpecialValue = true;
@@ -408,6 +413,27 @@ FakeVehicleHardware::ValueResultType FakeVehicleHardware::getEchoReverseBytes(
     return std::move(gotValue);
 }
 
+void FakeVehicleHardware::sendHvacPropertiesCurrentValues() {
+    for (size_t i = 0; i < sizeof(HVAC_POWER_PROPERTIES) / sizeof(int32_t); i++) {
+        int powerPropId = HVAC_POWER_PROPERTIES[i];
+        auto powerPropResults = mServerSidePropStore->readValuesForProperty(powerPropId);
+        if (!powerPropResults.ok()) {
+            ALOGW("failed to get power prop 0x%x, error: %s", powerPropId,
+                  getErrorMsg(powerPropResults).c_str());
+            continue;
+        }
+        auto& powerPropValues = powerPropResults.value();
+        for (size_t j = 0; j < powerPropValues.size(); j++) {
+            auto powerPropValue = std::move(powerPropValues[j]);
+            powerPropValue->status = VehiclePropertyStatus::AVAILABLE;
+            powerPropValue->timestamp = elapsedRealtimeNano();
+            // This will trigger a property change event for the current hvac property value.
+            mServerSidePropStore->writeValue(std::move(powerPropValue), /*updateStatus=*/true,
+                                             VehiclePropertyStore::EventMode::ALWAYS);
+        }
+    }
+}
+
 VhalResult<void> FakeVehicleHardware::maybeSetSpecialValue(const VehiclePropValue& value,
                                                            bool* isSpecialValue) {
     *isSpecialValue = false;
@@ -417,6 +443,13 @@ VhalResult<void> FakeVehicleHardware::maybeSetSpecialValue(const VehiclePropValu
     if (mFakeUserHal->isSupported(propId)) {
         *isSpecialValue = true;
         return setUserHalProp(value);
+    }
+
+    if (propId == toInt(VehicleProperty::HVAC_POWER_ON) && value.value.int32Values.size() == 1 &&
+        value.value.int32Values[0] == 1) {
+        // If we are turning HVAC power on, send current hvac property values through on change
+        // event.
+        sendHvacPropertiesCurrentValues();
     }
 
     if (isHvacPropAndHvacNotAvailable(propId)) {
