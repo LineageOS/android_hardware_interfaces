@@ -18,6 +18,9 @@
 
 #include <Utils.h>
 #include <aidl/Vintf.h>
+#include <android/binder_enums.h>
+#include <unordered_set>
+
 #include "EffectHelper.h"
 
 using namespace android;
@@ -61,9 +64,8 @@ const float MAX_FLOAT = std::numeric_limits<float>::max();
 
 const std::vector<int> kHapticScaleIdValues = {MIN_ID, 0, MAX_ID};
 const std::vector<HapticGenerator::VibratorScale> kVibratorScaleValues = {
-        HapticGenerator::VibratorScale::MUTE, HapticGenerator::VibratorScale::VERY_LOW,
-        HapticGenerator::VibratorScale::LOW,  HapticGenerator::VibratorScale::NONE,
-        HapticGenerator::VibratorScale::HIGH, HapticGenerator::VibratorScale::VERY_HIGH};
+        ndk::enum_range<HapticGenerator::VibratorScale>().begin(),
+        ndk::enum_range<HapticGenerator::VibratorScale>().end()};
 
 const std::vector<float> kResonantFrequencyValues = {MIN_FLOAT, 100, MAX_FLOAT};
 const std::vector<float> kQFactorValues = {MIN_FLOAT, 100, MAX_FLOAT};
