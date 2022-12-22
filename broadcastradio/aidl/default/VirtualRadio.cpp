@@ -53,15 +53,18 @@ const VirtualRadio& VirtualRadio::getAmFmRadio() {
     static VirtualRadio amFmRadioMock(
         "AM/FM radio mock",
         {
-            {makeSelectorAmfm(94900), "Wild 94.9", "Drake ft. Rihanna", "Too Good"},
-            {makeSelectorAmfm(96500), "KOIT", "Celine Dion", "All By Myself"},
-            {makeSelectorAmfm(97300), "Alice@97.3", "Drops of Jupiter", "Train"},
-            {makeSelectorAmfm(99700), "99.7 Now!", "The Chainsmokers", "Closer"},
-            {makeSelectorAmfm(101300), "101-3 KISS-FM", "Justin Timberlake", "Rock Your Body"},
-            {makeSelectorAmfm(103700), "iHeart80s @ 103.7", "Michael Jackson", "Billie Jean"},
-            {makeSelectorAmfm(106100), "106 KMEL", "Drake", "Marvins Room"},
-            {makeSelectorAmfm(700), "700 AM", "Artist700", "Title700"},
-            {makeSelectorAmfm(1700), "1700 AM", "Artist1700", "Title1700"},
+            {makeSelectorAmfm(/* frequency= */ 94900), "Wild 94.9", "Drake ft. Rihanna",
+                "Too Good"},
+            {makeSelectorAmfm(/* frequency= */ 96500), "KOIT", "Celine Dion", "All By Myself"},
+            {makeSelectorAmfm(/* frequency= */ 97300), "Alice@97.3", "Drops of Jupiter", "Train"},
+            {makeSelectorAmfm(/* frequency= */ 99700), "99.7 Now!", "The Chainsmokers", "Closer"},
+            {makeSelectorAmfm(/* frequency= */ 101300), "101-3 KISS-FM", "Justin Timberlake",
+                "Rock Your Body"},
+            {makeSelectorAmfm(/* frequency= */ 103700), "iHeart80s @ 103.7", "Michael Jackson",
+                "Billie Jean"},
+            {makeSelectorAmfm(/* frequency= */ 106100), "106 KMEL", "Drake", "Marvins Room"},
+            {makeSelectorAmfm(/* frequency= */ 700), "700 AM", "Artist700", "Title700"},
+            {makeSelectorAmfm(/* frequency= */ 1700), "1700 AM", "Artist1700", "Title1700"},
         });
     // clang-format on
     return amFmRadioMock;
@@ -73,9 +76,14 @@ const VirtualRadio& VirtualRadio::getDabRadio() {
     static VirtualRadio dabRadioMock(
         "DAB radio mock",
         {
-            {makeSelectorDab(0xA00001u, 0x0001u), "BBC Radio 1", "Khalid", "Talk"},
-            {makeSelectorDab(0xB00001u, 0x1001u), "Classic FM", "Jean Sibelius", "Andante Festivo"},
-            {makeSelectorDab(0xB00002u, 0x1001u), "Absolute Radio", "Coldplay", "Clocks"},
+            {makeSelectorDab(/* sidExt= */ 0xA000000001u, /* ensemble= */ 0x0001u,
+                /* freq= */ 225648), "BBC Radio 1", "Khalid", "Talk"},
+            {makeSelectorDab(/* sidExt= */ 0xB000000001u, /* ensemble= */ 0x1001u,
+                /* freq= */ 222064), "Classic FM", "Jean Sibelius", "Andante Festivo"},
+            {makeSelectorDab(/* sidExt= */ 0xB000000002u, /* ensemble= */ 0x1002u,
+                /* freq= */ 227360), "Absolute Radio", "Coldplay", "Clocks"},
+            {makeSelectorDab(/* sidExt= */ 0xB000000002u, /* ensemble= */ 0x1002u,
+                /* freq= */ 222064), "Absolute Radio", "Coldplay", "Clocks"},
         });
     // clang-format on
     return dabRadioMock;

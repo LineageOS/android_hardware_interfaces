@@ -46,6 +46,7 @@ namespace {
 
 using ::aidl::android::hardware::broadcastradio::utils::makeIdentifier;
 using ::aidl::android::hardware::broadcastradio::utils::makeSelectorAmfm;
+using ::aidl::android::hardware::broadcastradio::utils::makeSelectorDab;
 using ::aidl::android::hardware::broadcastradio::utils::resultToInt;
 using ::ndk::ScopedAStatus;
 using ::ndk::SharedRefBase;
@@ -110,8 +111,7 @@ bool supportsFM(const AmFmRegionConfig& config) {
 class TunerCallbackMock : public BnTunerCallback {
   public:
     TunerCallbackMock();
-
-    MOCK_METHOD2(onTuneFailed, ScopedAStatus(Result, const ProgramSelector&));
+    ScopedAStatus onTuneFailed(Result result, const ProgramSelector& selector) override;
     MOCK_TIMEOUT_METHOD1(onCurrentProgramInfoChangedMock, ScopedAStatus(const ProgramInfo&));
     ScopedAStatus onCurrentProgramInfoChanged(const ProgramInfo& info) override;
     ScopedAStatus onProgramListUpdated(const ProgramListChunk& chunk) override;
@@ -154,6 +154,12 @@ TunerCallbackMock::TunerCallbackMock() {
     EXPECT_CALL(*this, onAntennaStateChange(false)).Times(0);
 }
 
+ScopedAStatus TunerCallbackMock::onTuneFailed(Result result, const ProgramSelector& selector) {
+    LOG(DEBUG) << "Tune failed for selector" << selector.toString();
+    EXPECT_TRUE(result == Result::CANCELED);
+    return ndk::ScopedAStatus::ok();
+}
+
 ScopedAStatus TunerCallbackMock::onCurrentProgramInfoChanged(const ProgramInfo& info) {
     for (const auto& id : info.selector) {
         EXPECT_NE(id.type, IdentifierType::INVALID);
@@ -175,7 +181,7 @@ ScopedAStatus TunerCallbackMock::onCurrentProgramInfoChanged(const ProgramInfo& 
     IdentifierType physically = info.physicallyTunedTo.type;
     // ditto (see "logically" above)
     EXPECT_TRUE(physically == IdentifierType::AMFM_FREQUENCY_KHZ ||
-                physically == IdentifierType::DAB_ENSEMBLE ||
+                physically == IdentifierType::DAB_FREQUENCY_KHZ ||
                 physically == IdentifierType::DRMO_FREQUENCY_KHZ ||
                 physically == IdentifierType::SXM_CHANNEL ||
                 (physically >= IdentifierType::VENDOR_START &&
@@ -593,10 +599,43 @@ TEST_P(BroadcastRadioHalTest, DabTune) {
     ASSERT_TRUE(halResult.isOk());
     ASSERT_NE(config.size(), 0U);
 
-    // TODO(245787803): use a DAB frequency that can actually be tuned to.
+    auto programList = getProgramList();
+
+    if (!programList) {
+        printSkipped("Empty DAB station list, tune cannot be performed");
+        return;
+    }
+
     ProgramSelector sel = {};
-    int64_t freq = config[config.size() / 2].frequencyKhz;
-    sel.primaryId = makeIdentifier(IdentifierType::DAB_FREQUENCY_KHZ, freq);
+    uint64_t freq = 0;
+    bool dabStationPresent = false;
+    for (auto&& programInfo : *programList) {
+        if (!utils::hasId(programInfo.selector, IdentifierType::DAB_FREQUENCY_KHZ)) {
+            continue;
+        }
+        for (auto&& config_entry : config) {
+            if (config_entry.frequencyKhz ==
+                utils::getId(programInfo.selector, IdentifierType::DAB_FREQUENCY_KHZ, 0)) {
+                freq = config_entry.frequencyKhz;
+                break;
+            }
+        }
+        // Do not trigger a tune request if the programList entry does not contain
+        // a valid DAB frequency.
+        if (freq == 0) {
+            continue;
+        }
+        int64_t dabSidExt = utils::getId(programInfo.selector, IdentifierType::DAB_SID_EXT, 0);
+        int64_t dabEns = utils::getId(programInfo.selector, IdentifierType::DAB_ENSEMBLE, 0);
+        sel = makeSelectorDab(dabSidExt, (int32_t)dabEns, freq);
+        dabStationPresent = true;
+        break;
+    }
+
+    if (!dabStationPresent) {
+        printSkipped("No DAB stations in the list, tune cannot be performed");
+        return;
+    }
 
     // try tuning
     ProgramInfo infoCb = {};
@@ -623,7 +662,6 @@ TEST_P(BroadcastRadioHalTest, DabTune) {
     vector<int> freqs = bcutils::getAllIds(infoCb.selector, IdentifierType::DAB_FREQUENCY_KHZ);
     EXPECT_NE(freqs.end(), find(freqs.begin(), freqs.end(), freq))
             << "DAB freq " << freq << " kHz is not sent back by callback.";
-    ;
 }
 
 /**

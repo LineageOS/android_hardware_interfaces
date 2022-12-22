@@ -136,7 +136,9 @@ bool tunesTo(const ProgramSelector& a, const ProgramSelector& b) {
             return getHdSubchannel(b) == 0 &&
                    haveEqualIds(a, b, IdentifierType::AMFM_FREQUENCY_KHZ);
         case IdentifierType::DAB_SID_EXT:
-            return haveEqualIds(a, b, IdentifierType::DAB_SID_EXT);
+            return haveEqualIds(a, b, IdentifierType::DAB_SID_EXT) &&
+                   haveEqualIds(a, b, IdentifierType::DAB_ENSEMBLE) &&
+                   haveEqualIds(a, b, IdentifierType::DAB_FREQUENCY_KHZ);
         case IdentifierType::DRMO_SERVICE_ID:
             return haveEqualIds(a, b, IdentifierType::DRMO_SERVICE_ID);
         case IdentifierType::SXM_SERVICE_ID:
@@ -241,8 +243,8 @@ bool isValid(const ProgramIdentifier& id) {
             break;
         }
         case IdentifierType::DAB_SID_EXT: {
-            int64_t sid = val & 0xFFFF;  // 16bit
-            val >>= 16;
+            int64_t sid = val & 0xFFFFFFFF;  // 32bit
+            val >>= 32;
             int64_t ecc = val & 0xFF;  // 8bit
             expect(sid != 0u, "DAB SId != 0");
             expect(ecc >= 0xA0u && ecc <= 0xF6u, "Invalid ECC, see ETSI TS 101 756 V2.1.1");
@@ -277,13 +279,35 @@ bool isValid(const ProgramIdentifier& id) {
 }
 
 bool isValid(const ProgramSelector& sel) {
-    // iterate through primaryId and secondaryIds
-    for (auto it = begin(sel); it != end(sel); it++) {
+    if (sel.primaryId.type != IdentifierType::AMFM_FREQUENCY_KHZ &&
+        sel.primaryId.type != IdentifierType::RDS_PI &&
+        sel.primaryId.type != IdentifierType::HD_STATION_ID_EXT &&
+        sel.primaryId.type != IdentifierType::DAB_SID_EXT &&
+        sel.primaryId.type != IdentifierType::DRMO_SERVICE_ID &&
+        sel.primaryId.type != IdentifierType::SXM_SERVICE_ID &&
+        (sel.primaryId.type < IdentifierType::VENDOR_START ||
+         sel.primaryId.type > IdentifierType::VENDOR_END)) {
+        return false;
+    }
+    if (!isValid(sel.primaryId)) {
+        return false;
+    }
+
+    bool isDab = sel.primaryId.type == IdentifierType::DAB_SID_EXT;
+    bool hasDabEnsemble = false;
+    bool hasDabFrequency = false;
+    for (auto it = sel.secondaryIds.begin(); it != sel.secondaryIds.end(); it++) {
         if (!isValid(*it)) {
             return false;
         }
+        if (isDab && it->type == IdentifierType::DAB_ENSEMBLE) {
+            hasDabEnsemble = true;
+        }
+        if (isDab && it->type == IdentifierType::DAB_FREQUENCY_KHZ) {
+            hasDabFrequency = true;
+        }
     }
-    return true;
+    return !isDab || (hasDabEnsemble && hasDabFrequency);
 }
 
 ProgramIdentifier makeIdentifier(IdentifierType type, int64_t value) {
@@ -296,16 +320,12 @@ ProgramSelector makeSelectorAmfm(int32_t frequency) {
     return sel;
 }
 
-ProgramSelector makeSelectorDab(int32_t sidExt, int32_t ensemble) {
+ProgramSelector makeSelectorDab(int64_t sidExt, int32_t ensemble, int64_t freq) {
     ProgramSelector sel = {};
-    // TODO(243686545): Have a helper function to create the sidExt instead of
-    // passing the whole identifier here. Something like makeDabSidExt.
     sel.primaryId = makeIdentifier(IdentifierType::DAB_SID_EXT, sidExt);
     vector<ProgramIdentifier> secondaryIds = {
             makeIdentifier(IdentifierType::DAB_ENSEMBLE, ensemble),
-            // TODO(243686545): Include frequency here when the helper method to
-            // translate between ensemble and frequency is implemented.
-    };
+            makeIdentifier(IdentifierType::DAB_FREQUENCY_KHZ, freq)};
     sel.secondaryIds = std::move(secondaryIds);
     return sel;
 }
@@ -328,10 +348,6 @@ bool satisfies(const ProgramFilter& filter, const ProgramSelector& sel) {
         if (it == end(sel)) {
             return false;
         }
-    }
-
-    if (!filter.includeCategories && sel.primaryId.type == IdentifierType::DAB_ENSEMBLE) {
-        return false;
     }
 
     return true;

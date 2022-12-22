@@ -110,10 +110,11 @@ enum IdentifierType {
     HD_STATION_NAME,
 
     /**
-     * 28bit compound primary identifier for Digital Audio Broadcasting.
+     * 44bit compound primary identifier for Digital Audio Broadcasting and
+     * Digital Multimeida Broadcasting.
      *
      * Consists of (from the LSB):
-     * - 16bit: SId;
+     * - 32bit: SId;
      * - 8bit: ECC code;
      * - 4bit: SCIdS.
      *
