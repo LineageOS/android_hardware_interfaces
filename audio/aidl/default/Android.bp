@@ -160,7 +160,7 @@ cc_binary {
         "libpresetreverbsw",
         "libtinyxml2",
         "libvirtualizersw",
-        "libvisualizersw",
+        "libvisualizeraidl",
         "libvolumesw",
     ],
     srcs: [
