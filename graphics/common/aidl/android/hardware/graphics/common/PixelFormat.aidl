@@ -506,4 +506,30 @@ enum PixelFormat {
      * The component values are unsigned normalized to the range [0, 1].
      */
     R_8 = 0x38,
+
+    /**
+     * 16-bit format with a single 16-bit component
+     *
+     * The component values are unsigned integers, whose interpretation is
+     * defined by the dataspace.
+     */
+    R_16_UINT = 0x39,
+
+    /**
+     * 32-bit format that has 16-bit R and G components, in that order,
+     * from the lowest memory address to the highest memory address.
+     *
+     * The component values are unsigned integers, whose interpretation is
+     * defined by the dataspace.
+     */
+    RG_1616_UINT = 0x3a,
+
+    /**
+     * 40-bit format that has 10-bit R, G, B, and A components, in that order,
+     * from the lowest memory address to the highest memory address.
+     *
+     * The component values are unsigned normalized to the range [0, 1], whose
+     * interpretation is defined by the dataspace.
+     */
+    RGBA_10101010 = 0x3b,
 }

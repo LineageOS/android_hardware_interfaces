@@ -18,6 +18,7 @@ package android.hardware.cas;
 
 /**
  * Enumerates the keys used to scramble the content.
+ * @hide
  */
 @VintfStability
 @Backing(type="int")
