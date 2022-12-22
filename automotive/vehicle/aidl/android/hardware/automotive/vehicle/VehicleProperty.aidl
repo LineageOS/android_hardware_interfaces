@@ -3485,6 +3485,26 @@ enum VehicleProperty {
             0x1006 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
 
     /**
+     * Enable or disable Lane Keep Assist (LKA).
+     *
+     * Set true to enable LKA and false to disable LKA. When LKA is enabled, the ADAS system in the
+     * vehicle should be turned on and monitoring if the driver unintentionally drifts toward or
+     * over the lane marking. If an unintentional lane departure is detected, the system applies
+     * steering control to return the vehicle into the current lane.
+     *
+     * This is different from Lane Centering Assist (LCA) which, when activated, applies continuous
+     * steering control to keep the vehicle centered in the current lane.
+     *
+     * This property is defined as read_write, but OEMs have the option to implement it as read
+     * only.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     */
+    LANE_KEEP_ASSIST_ENABLED =
+            0x1008 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+
+    /**
      * Enable or disable lane centering assist (LCA).
      *
      * Set true to enable LCA and false to disable LCA. When LCA is enabled, the ADAS system in the
