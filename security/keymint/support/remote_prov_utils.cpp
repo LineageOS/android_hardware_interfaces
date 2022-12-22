@@ -23,6 +23,7 @@
 
 #include <aidl/android/hardware/security/keymint/RpcHardwareInfo.h>
 #include <android-base/properties.h>
+#include <cert_request_validator/cert_request_validator.h>
 #include <cppbor.h>
 #include <json/json.h>
 #include <keymaster/km_openssl/ec_key.h>
@@ -289,129 +290,16 @@ bytevec getProdEekChain(int32_t supportedEekCurve) {
     return chain.encode();
 }
 
-ErrMsgOr<bytevec> validatePayloadAndFetchPubKey(const cppbor::Map* payload) {
-    const auto& issuer = payload->get(kBccPayloadIssuer);
-    if (!issuer || !issuer->asTstr()) return "Issuer is not present or not a tstr.";
-    const auto& subject = payload->get(kBccPayloadSubject);
-    if (!subject || !subject->asTstr()) return "Subject is not present or not a tstr.";
-    const auto& keyUsage = payload->get(kBccPayloadKeyUsage);
-    if (!keyUsage || !keyUsage->asBstr()) return "Key usage is not present or not a bstr.";
-    const auto& serializedKey = payload->get(kBccPayloadSubjPubKey);
-    if (!serializedKey || !serializedKey->asBstr()) return "Key is not present or not a bstr.";
-    return serializedKey->asBstr()->value();
-}
-
-ErrMsgOr<bytevec> verifyAndParseCoseSign1Cwt(const cppbor::Array* coseSign1,
-                                             const bytevec& signingCoseKey, const bytevec& aad) {
-    if (!coseSign1 || coseSign1->size() != kCoseSign1EntryCount) {
-        return "Invalid COSE_Sign1";
-    }
-
-    const cppbor::Bstr* protectedParams = coseSign1->get(kCoseSign1ProtectedParams)->asBstr();
-    const cppbor::Map* unprotectedParams = coseSign1->get(kCoseSign1UnprotectedParams)->asMap();
-    const cppbor::Bstr* payload = coseSign1->get(kCoseSign1Payload)->asBstr();
-    const cppbor::Bstr* signature = coseSign1->get(kCoseSign1Signature)->asBstr();
-
-    if (!protectedParams || !unprotectedParams || !payload || !signature) {
-        return "Invalid COSE_Sign1";
-    }
-
-    auto [parsedProtParams, _, errMsg] = cppbor::parse(protectedParams);
-    if (!parsedProtParams) {
-        return errMsg + " when parsing protected params.";
-    }
-    if (!parsedProtParams->asMap()) {
-        return "Protected params must be a map";
-    }
-
-    auto& algorithm = parsedProtParams->asMap()->get(ALGORITHM);
-    if (!algorithm || !algorithm->asInt() ||
-        (algorithm->asInt()->value() != EDDSA && algorithm->asInt()->value() != ES256)) {
-        return "Unsupported signature algorithm";
-    }
-
-    auto [parsedPayload, __, payloadErrMsg] = cppbor::parse(payload);
-    if (!parsedPayload) return payloadErrMsg + " when parsing key";
-    if (!parsedPayload->asMap()) return "CWT must be a map";
-    auto serializedKey = validatePayloadAndFetchPubKey(parsedPayload->asMap());
-    if (!serializedKey) {
-        return "CWT validation failed: " + serializedKey.moveMessage();
-    }
-
-    bool selfSigned = signingCoseKey.empty();
-    bytevec signatureInput =
-        cppbor::Array().add("Signature1").add(*protectedParams).add(aad).add(*payload).encode();
-
-    if (algorithm->asInt()->value() == EDDSA) {
-        auto key = CoseKey::parseEd25519(selfSigned ? *serializedKey : signingCoseKey);
-
-        if (!key) return "Bad signing key: " + key.moveMessage();
-
-        if (!ED25519_verify(signatureInput.data(), signatureInput.size(), signature->value().data(),
-                            key->getBstrValue(CoseKey::PUBKEY_X)->data())) {
-            return "Signature verification failed";
-        }
-    } else {  // P256
-        auto key = CoseKey::parseP256(selfSigned ? *serializedKey : signingCoseKey);
-        if (!key || key->getBstrValue(CoseKey::PUBKEY_X)->empty() ||
-            key->getBstrValue(CoseKey::PUBKEY_Y)->empty()) {
-            return "Bad signing key: " + key.moveMessage();
-        }
-        auto publicKey = key->getEcPublicKey();
-        if (!publicKey) return publicKey.moveMessage();
-
-        auto ecdsaDerSignature = ecdsaCoseSignatureToDer(signature->value());
-        if (!ecdsaDerSignature) return ecdsaDerSignature.moveMessage();
-
-        // convert public key to uncompressed form.
-        publicKey->insert(publicKey->begin(), 0x04);
-
-        if (!verifyEcdsaDigest(publicKey.moveValue(), sha256(signatureInput), *ecdsaDerSignature)) {
-            return "Signature verification failed";
-        }
-    }
-
-    return serializedKey.moveValue();
-}
-
 ErrMsgOr<std::vector<BccEntryData>> validateBcc(const cppbor::Array* bcc) {
-    if (!bcc || bcc->size() == 0) return "Invalid BCC";
-
+    auto encodedBcc = bcc->encode();
+    auto chain = cert_request_validator::DiceChain::verify(encodedBcc);
+    if (!chain.ok()) return chain.error().message();
+    auto keys = chain->cose_public_keys();
+    if (!keys.ok()) return keys.error().message();
     std::vector<BccEntryData> result;
-
-    const auto& devicePubKey = bcc->get(0);
-    if (!devicePubKey->asMap()) return "Invalid device public key at the 1st entry in the BCC";
-
-    bytevec prevKey;
-
-    for (size_t i = 1; i < bcc->size(); ++i) {
-        const cppbor::Array* entry = bcc->get(i)->asArray();
-        if (!entry || entry->size() != kCoseSign1EntryCount) {
-            return "Invalid BCC entry " + std::to_string(i) + ": " + prettyPrint(entry);
-        }
-        auto payload = verifyAndParseCoseSign1Cwt(entry, std::move(prevKey), bytevec{} /* AAD */);
-        if (!payload) {
-            return "Failed to verify entry " + std::to_string(i) + ": " + payload.moveMessage();
-        }
-
-        auto& certProtParms = entry->get(kCoseSign1ProtectedParams);
-        if (!certProtParms || !certProtParms->asBstr()) return "Invalid prot params";
-        auto [parsedProtParms, _, errMsg] = cppbor::parse(certProtParms->asBstr()->value());
-        if (!parsedProtParms || !parsedProtParms->asMap()) return "Invalid prot params";
-
-        result.push_back(BccEntryData{*payload});
-
-        // This entry's public key is the signing key for the next entry.
-        prevKey = payload.moveValue();
-        if (i == 1) {
-            auto [parsedRootKey, _, errMsg] = cppbor::parse(prevKey);
-            if (!parsedRootKey || !parsedRootKey->asMap()) return "Invalid payload entry in BCC.";
-            if (*parsedRootKey != *devicePubKey) {
-                return "Device public key doesn't match BCC root.";
-            }
-        }
+    for (auto& key : *keys) {
+        result.push_back({std::move(key)});
     }
-
     return result;
 }
 
@@ -682,9 +570,6 @@ ErrMsgOr<std::vector<BccEntryData>> verifyProtectedData(
     auto bccContents = validateBcc(bcc->asArray());
     if (!bccContents) {
         return bccContents.message() + "\n" + prettyPrint(bcc.get());
-    }
-    if (bccContents->size() == 0U) {
-        return "The BCC is empty. It must contain at least one entry.";
     }
 
     auto deviceInfoResult =
@@ -976,9 +861,6 @@ ErrMsgOr<bytevec> parseAndValidateAuthenticatedRequest(const std::vector<uint8_t
     auto diceContents = validateBcc(diceCertChain);
     if (!diceContents) {
         return diceContents.message() + "\n" + prettyPrint(diceCertChain);
-    }
-    if (diceContents->size() == 0U) {
-        return "The DICE chain is empty. It must contain at least one entry.";
     }
 
     auto& udsPub = diceContents->back().pubKey;
