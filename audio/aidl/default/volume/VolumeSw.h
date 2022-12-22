@@ -32,7 +32,30 @@ class VolumeSwContext final : public EffectContext {
         : EffectContext(statusDepth, common) {
         LOG(DEBUG) << __func__;
     }
-    // TODO: add specific context here
+
+    RetCode setVolLevel(int level) {
+        if (level < Volume::MIN_LEVEL_DB || level > Volume::MAX_LEVEL_DB) {
+            LOG(ERROR) << __func__ << " invalid level " << level;
+            return RetCode::ERROR_ILLEGAL_PARAMETER;
+        }
+        // TODO : Add implementation to apply new level
+        mLevel = level;
+        return RetCode::SUCCESS;
+    }
+
+    int getVolLevel() const { return mLevel; }
+
+    RetCode setVolMute(bool mute) {
+        // TODO : Add implementation to modify mute
+        mMute = mute;
+        return RetCode::SUCCESS;
+    }
+
+    bool getVolMute() const { return mMute; }
+
+  private:
+    int mLevel = 0;
+    bool mMute = false;
 };
 
 class VolumeSw final : public EffectImpl {
@@ -60,7 +83,7 @@ class VolumeSw final : public EffectImpl {
 
   private:
     std::shared_ptr<VolumeSwContext> mContext;
-    /* parameters */
-    Volume mSpecificParam;
+
+    ndk::ScopedAStatus getParameterVolume(const Volume::Tag& tag, Parameter::Specific* specific);
 };
 }  // namespace aidl::android::hardware::audio::effect
