@@ -243,6 +243,13 @@ static const AudioUuid kVisualizerSwImplUUID = {static_cast<int32_t>(0xfa81a0f6)
                                                 0x11ed,
                                                 0x9b6a,
                                                 {0x02, 0x42, 0xac, 0x12, 0x00, 0x02}};
+// d069d9e0-8329-11df-9168-0002a5d5c51b
+// {0xd069d9e0, 0x8329, 0x11df, 0x9168, {0x00, 0x02, 0xa5, 0xd5, 0xc5, 0x1b}},
+static const AudioUuid kVisualizerImplUUID = {static_cast<int32_t>(0xd069d9e0),
+                                              0x8329,
+                                              0x11df,
+                                              0x9168,
+                                              {0x00, 0x02, 0xa5, 0xd5, 0xc5, 0x1b}};
 // fa81a2b8-588b-11ed-9b6a-0242ac120002
 static const AudioUuid kVolumeTypeUUID = {static_cast<int32_t>(0xfa81a2b8),
                                           0x588b,
