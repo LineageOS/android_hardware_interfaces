@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
+#include <Utils.h>
 #include <aidl/Vintf.h>
+#include <android/binder_enums.h>
+#include <unordered_set>
 
 #define LOG_TAG "VtsHalAGCParamTest"
 
-#include <Utils.h>
 #include "EffectHelper.h"
 
 using namespace android;
@@ -78,9 +80,9 @@ class AGCParamTest : public ::testing::TestWithParam<AGCParamTestParam>, public 
 
     static const long kInputFrameCount = 0x100, kOutputFrameCount = 0x100;
     static const std::vector<std::pair<std::shared_ptr<IFactory>, Descriptor>> kFactoryDescList;
-    static const std::vector<int> kDigitalGainValues;
-    static const std::vector<int> kSaturationMarginValues;
-    static const std::vector<AutomaticGainControl::LevelEstimator> kLevelEstimatorValues;
+    static const std::unordered_set<int> kDigitalGainValues;
+    static const std::unordered_set<int> kSaturationMarginValues;
+    static const std::unordered_set<AutomaticGainControl::LevelEstimator> kLevelEstimatorValues;
 
     std::shared_ptr<IFactory> mFactory;
     std::shared_ptr<IEffect> mEffect;
@@ -158,7 +160,7 @@ class AGCParamTest : public ::testing::TestWithParam<AGCParamTestParam>, public 
                 return false;
         }
     }
-    static std::vector<int> getDigitalGainValues() {
+    static std::unordered_set<int> getDigitalGainValues() {
         const auto max = std::max_element(
                 kFactoryDescList.begin(), kFactoryDescList.end(),
                 [](const std::pair<std::shared_ptr<IFactory>, Descriptor>& a,
@@ -175,7 +177,7 @@ class AGCParamTest : public ::testing::TestWithParam<AGCParamTestParam>, public 
                               .maxFixedDigitalGainMb;
         return {-1, 0, maxGain - 1, maxGain, maxGain + 1};
     }
-    static std::vector<int> getSaturationMarginValues() {
+    static std::unordered_set<int> getSaturationMarginValues() {
         const auto max = std::max_element(
                 kFactoryDescList.begin(), kFactoryDescList.end(),
                 [](const std::pair<std::shared_ptr<IFactory>, Descriptor>& a,
@@ -201,11 +203,13 @@ class AGCParamTest : public ::testing::TestWithParam<AGCParamTestParam>, public 
 const std::vector<std::pair<std::shared_ptr<IFactory>, Descriptor>> AGCParamTest::kFactoryDescList =
         EffectFactoryHelper::getAllEffectDescriptors(IFactory::descriptor,
                                                      kAutomaticGainControlTypeUUID);
-const std::vector<int> AGCParamTest::kDigitalGainValues = AGCParamTest::getDigitalGainValues();
-const std::vector<int> AGCParamTest::kSaturationMarginValues =
+const std::unordered_set<int> AGCParamTest::kDigitalGainValues =
+        AGCParamTest::getDigitalGainValues();
+const std::unordered_set<int> AGCParamTest::kSaturationMarginValues =
         AGCParamTest::getSaturationMarginValues();
-const std::vector<AutomaticGainControl::LevelEstimator> AGCParamTest::kLevelEstimatorValues = {
-        AutomaticGainControl::LevelEstimator::RMS, AutomaticGainControl::LevelEstimator::PEAK};
+const std::unordered_set<AutomaticGainControl::LevelEstimator> AGCParamTest::kLevelEstimatorValues =
+        {ndk::enum_range<AutomaticGainControl::LevelEstimator>().begin(),
+         ndk::enum_range<AutomaticGainControl::LevelEstimator>().end()};
 
 TEST_P(AGCParamTest, SetAndGetDigitalGainParam) {
     EXPECT_NO_FATAL_FAILURE(addDigitalGainParam(mGain));

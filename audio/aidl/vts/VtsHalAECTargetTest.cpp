@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
+#include <Utils.h>
 #include <aidl/Vintf.h>
 #include <algorithm>
+#include <unordered_set>
 
 #define LOG_TAG "VtsHalAECParamTest"
 
-#include <Utils.h>
 #include "EffectHelper.h"
 
 using namespace android;
@@ -70,8 +71,8 @@ class AECParamTest : public ::testing::TestWithParam<AECParamTestParam>, public 
     }
 
     static const std::vector<std::pair<std::shared_ptr<IFactory>, Descriptor>> kFactoryDescList;
-    static const std::vector<int> kEchoDelayValues;
-    static const std::vector<bool> kMobileModeValues;
+    static const std::unordered_set<int> kEchoDelayValues;
+    static const std::unordered_set<bool> kMobileModeValues;
 
     static const long kInputFrameCount = 0x100, kOutputFrameCount = 0x100;
     std::shared_ptr<IFactory> mFactory;
@@ -155,7 +156,7 @@ class AECParamTest : public ::testing::TestWithParam<AECParamTestParam>, public 
         }
     }
 
-    static std::vector<int> getEchoDelayTestValues() {
+    static std::unordered_set<int> getEchoDelayTestValues() {
         const auto max = std::max_element(
                 kFactoryDescList.begin(), kFactoryDescList.end(),
                 [](const std::pair<std::shared_ptr<IFactory>, Descriptor>& a,
@@ -181,8 +182,9 @@ class AECParamTest : public ::testing::TestWithParam<AECParamTestParam>, public 
 const std::vector<std::pair<std::shared_ptr<IFactory>, Descriptor>> AECParamTest::kFactoryDescList =
         EffectFactoryHelper::getAllEffectDescriptors(IFactory::descriptor,
                                                      kAcousticEchoCancelerTypeUUID);
-const std::vector<int> AECParamTest::kEchoDelayValues = AECParamTest::getEchoDelayTestValues();
-const std::vector<bool> AECParamTest::kMobileModeValues = {true, false};
+const std::unordered_set<int> AECParamTest::kEchoDelayValues =
+        AECParamTest::getEchoDelayTestValues();
+const std::unordered_set<bool> AECParamTest::kMobileModeValues = {true, false};
 
 TEST_P(AECParamTest, SetAndGetEchoDelay) {
     EXPECT_NO_FATAL_FAILURE(addEchoDelayParam(mEchoDelay));
