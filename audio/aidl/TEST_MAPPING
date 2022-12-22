@@ -28,6 +28,9 @@
       "name": "VtsHalVisualizerTargetTest"
     },
     {
+      "name": "VtsHalVolumeTargetTest"
+    },
+    {
       "name": "VtsHalAECTargetTest"
     },
     {
