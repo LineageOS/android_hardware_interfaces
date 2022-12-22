@@ -829,4 +829,12 @@
             <instance>default</instance>
         </interface>
     </hal>
+    <hal format="native">
+        <name>mapper</name>
+        <version>1.0</version>
+        <interface>
+            <name>I</name>
+            <regex-instance>.*</regex-instance>
+        </interface>
+    </hal>
 </compatibility-matrix>
