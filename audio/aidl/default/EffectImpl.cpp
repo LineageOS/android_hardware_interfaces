@@ -21,6 +21,7 @@
 
 using aidl::android::hardware::audio::effect::IEffect;
 using aidl::android::hardware::audio::effect::State;
+using aidl::android::media::audio::common::PcmType;
 
 extern "C" binder_exception_t destroyEffect(const std::shared_ptr<IEffect>& instanceSp) {
     State state;
@@ -40,6 +41,10 @@ ndk::ScopedAStatus EffectImpl::open(const Parameter::Common& common,
                                     const std::optional<Parameter::Specific>& specific,
                                     OpenEffectReturn* ret) {
     LOG(DEBUG) << __func__;
+    // effect only support 32bits float
+    RETURN_IF(common.input.base.format.pcm != common.output.base.format.pcm ||
+                      common.input.base.format.pcm != PcmType::FLOAT_32_BIT,
+              EX_ILLEGAL_ARGUMENT, "dataMustBe32BitsFloat");
     RETURN_OK_IF(mState != State::INIT);
     auto context = createContext(common);
     RETURN_IF(!context, EX_NULL_POINTER, "createContextFailed");
