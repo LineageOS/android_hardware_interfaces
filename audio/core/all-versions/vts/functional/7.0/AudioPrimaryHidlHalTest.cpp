@@ -687,7 +687,12 @@ class PcmOnlyConfigInputStreamTest : public InputStreamTest {
         InputStreamTest::TearDown();
     }
 
-    bool canQueryCapturePosition() const { return !xsd::isTelephonyDevice(address.deviceType); }
+    bool canQueryCapturePosition() const {
+        // See b/263305254 and b/259636577. Must use the device initially passed in
+        // as a parameter, not 'address' which gets adjusted during test setup for
+        // the telephony case.
+        return !xsd::isTelephonyDevice(getAttachedDeviceAddress().deviceType);
+    }
 
     void createPatchIfNeeded() {
         if (areAudioPatchesSupported()) {
