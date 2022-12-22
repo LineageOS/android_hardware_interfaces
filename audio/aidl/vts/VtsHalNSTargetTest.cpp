@@ -19,6 +19,7 @@
 #define LOG_TAG "VtsHalNSParamTest"
 
 #include <Utils.h>
+#include <unordered_set>
 #include "EffectHelper.h"
 
 using namespace android;
@@ -69,7 +70,7 @@ class NSParamTest : public ::testing::TestWithParam<NSParamTestParam>, public Ef
 
     static const long kInputFrameCount = 0x100, kOutputFrameCount = 0x100;
     static const std::vector<std::pair<std::shared_ptr<IFactory>, Descriptor>> kFactoryDescList;
-    static const std::vector<NoiseSuppression::Level> kLevelValues;
+    static const std::unordered_set<NoiseSuppression::Level> kLevelValues;
 
     std::shared_ptr<IFactory> mFactory;
     std::shared_ptr<IEffect> mEffect;
@@ -122,9 +123,9 @@ class NSParamTest : public ::testing::TestWithParam<NSParamTestParam>, public Ef
 const std::vector<std::pair<std::shared_ptr<IFactory>, Descriptor>> kFactoryDescList =
         EffectFactoryHelper::getAllEffectDescriptors(IFactory::descriptor,
                                                      kNoiseSuppressionTypeUUID);
-const std::vector<NoiseSuppression::Level> NSParamTest::kLevelValues = {
-        NoiseSuppression::Level::LOW, NoiseSuppression::Level::MEDIUM,
-        NoiseSuppression::Level::HIGH};
+const std::unordered_set<NoiseSuppression::Level> NSParamTest::kLevelValues = {
+        ndk::enum_range<NoiseSuppression::Level>().begin(),
+        ndk::enum_range<NoiseSuppression::Level>().end()};
 
 TEST_P(NSParamTest, SetAndGetLevel) {
     EXPECT_NO_FATAL_FAILURE(addLevelParam(mLevel));
