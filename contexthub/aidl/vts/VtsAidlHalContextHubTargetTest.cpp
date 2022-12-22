@@ -100,6 +100,8 @@ class EmptyContextHubCallback : public android::hardware::contexthub::BnContextH
     Status handleTransactionResult(int32_t /* transactionId */, bool /* success */) override {
         return Status::ok();
     }
+
+    Status handleNanSessionRequest(bool /* enable */) override { return Status::ok(); }
 };
 
 TEST_P(ContextHubAidl, TestRegisterCallback) {
@@ -130,6 +132,8 @@ class QueryAppsCallback : public android::hardware::contexthub::BnContextHubCall
     Status handleTransactionResult(int32_t /* transactionId */, bool /* success */) override {
         return Status::ok();
     }
+
+    Status handleNanSessionRequest(bool /* enable */) override { return Status::ok(); }
 
     std::promise<std::vector<NanoappInfo>> promise;
 };
@@ -193,6 +197,8 @@ class TransactionResultCallback : public android::hardware::contexthub::BnContex
         }
         return Status::ok();
     }
+
+    Status handleNanSessionRequest(bool /* enable */) override { return Status::ok(); }
 
     uint32_t expectedTransactionId = 0;
     std::promise<bool> promise;
@@ -352,6 +358,11 @@ TEST_P(ContextHubAidl, TestInvalidHostConnection) {
     constexpr char16_t kHostEndpointId = 1;
 
     ASSERT_TRUE(contextHub->onHostEndpointDisconnected(kHostEndpointId).isOk());
+}
+
+TEST_P(ContextHubAidl, TestNanSessionStateChange) {
+    ASSERT_TRUE(contextHub->onNanSessionStateChanged(true /*state*/).isOk());
+    ASSERT_TRUE(contextHub->onNanSessionStateChanged(false /*state*/).isOk());
 }
 
 std::string PrintGeneratedTest(const testing::TestParamInfo<ContextHubAidl::ParamType>& info) {
