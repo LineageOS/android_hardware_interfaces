@@ -65,4 +65,7 @@ enum PixelFormat {
   YCBCR_P010 = 54,
   HSV_888 = 55,
   R_8 = 56,
+  R_16_UINT = 57,
+  RG_1616_UINT = 58,
+  RGBA_10101010 = 59,
 }
