@@ -52,7 +52,6 @@ using ::aidl::android::hardware::usb::PortPowerRole;
 using ::aidl::android::hardware::usb::PortRole;
 using ::aidl::android::hardware::usb::PortStatus;
 using ::aidl::android::hardware::usb::Status;
-using ::aidl::android::hardware::usb::UsbDataStatus;
 
 using ::ndk::ScopedAStatus;
 using ::ndk::SpAIBinder;
@@ -279,36 +278,6 @@ TEST_P(UsbAidlTest, queryPortStatus) {
   EXPECT_EQ(2, usb_last_cookie);
   EXPECT_EQ(transactionId, last_transactionId);
   ALOGI("UsbAidlTest queryPortStatus end: %s", usb_last_port_status.portName.c_str());
-}
-
-/*
- * Query port status to Check to see whether only one of DISABLED_DOCK,
- * DISABLED_DOCK_DEVICE_MODE, DISABLED_DOCK_HOST_MODE is set at the most.
- * The callback parameters are checked to see if the transaction id
- * matches.
- */
-TEST_P(UsbAidlTest, DisabledDataStatusCheck) {
-  int disabledCount = 0;
-
-  ALOGI("UsbAidlTest DataStatusCheck  start");
-  int64_t transactionId = rand() % 10000;
-  const auto& ret = usb->queryPortStatus(transactionId);
-  ASSERT_TRUE(ret.isOk());
-  EXPECT_EQ(std::cv_status::no_timeout, wait());
-  EXPECT_EQ(2, usb_last_cookie);
-  EXPECT_EQ(transactionId, last_transactionId);
-  ALOGI("UsbAidlTest DataStatusCheck portName: %s", usb_last_port_status.portName.c_str());
-  if (usb_last_port_status.usbDataStatus.size() > 1) {
-    for (UsbDataStatus dataStatus : usb_last_port_status.usbDataStatus) {
-      if (dataStatus == UsbDataStatus::DISABLED_DOCK ||
-          dataStatus == UsbDataStatus::DISABLED_DOCK_DEVICE_MODE ||
-          dataStatus == UsbDataStatus::DISABLED_DOCK_HOST_MODE) {
-        disabledCount++;
-      }
-    }
-  }
-  EXPECT_LE(1, disabledCount);
-  ALOGI("UsbAidlTest DataStatusCheck end");
 }
 
 /*

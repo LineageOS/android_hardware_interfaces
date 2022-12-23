@@ -22,9 +22,6 @@
       "name": "VtsHalLoudnessEnhancerTargetTest"
     },
     {
-      "name": "VtsHalVirtualizerTargetTest"
-    },
-    {
       "name": "VtsHalVisualizerTargetTest"
     },
     {

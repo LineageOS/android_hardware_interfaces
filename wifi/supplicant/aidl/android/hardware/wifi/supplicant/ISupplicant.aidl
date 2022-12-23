@@ -17,7 +17,6 @@
 package android.hardware.wifi.supplicant;
 
 import android.hardware.wifi.supplicant.DebugLevel;
-import android.hardware.wifi.supplicant.INonStandardCertCallback;
 import android.hardware.wifi.supplicant.ISupplicantCallback;
 import android.hardware.wifi.supplicant.ISupplicantP2pIface;
 import android.hardware.wifi.supplicant.ISupplicantStaIface;
@@ -159,14 +158,4 @@ interface ISupplicant {
      * wait to be restarted.
      */
     oneway void terminate();
-
-    /**
-     * Register a Non-Standard Certificate callback with supplicant.
-     *
-     * @param callback An instance of the |INonStandardCertCallback| AIDL interface
-     *        object.
-     * @throws ServiceSpecificException with one of the following values:
-     *         |SupplicantStatusCode.FAILURE_UNKNOWN|
-     */
-    void registerNonStandardCertCallback(in INonStandardCertCallback callback);
 }

@@ -1208,26 +1208,6 @@
             ]
         },
         {
-            "property": "VehicleProperty::SEAT_WALK_IN_POS",
-            "defaultValue": {
-                "int32Values": [
-                    0
-                ]
-            },
-            "areas": [
-                {
-                    "areaId": "Constants::SEAT_1_LEFT",
-                    "minInt32Value": 0,
-                    "maxInt32Value": 5
-                },
-                {
-                    "areaId": "Constants::SEAT_1_RIGHT",
-                    "minInt32Value": 0,
-                    "maxInt32Value": 5
-                }
-            ]
-        },
-        {
             "property": "VehicleProperty::SEAT_OCCUPANCY",
             "areas": [
                 {
@@ -2106,14 +2086,6 @@
             },
             "maxSampleRate": 10.0,
             "minSampleRate": 0.10000000149011612
-        },
-        {
-            "property": "VehicleProperty::ENGINE_IDLE_AUTO_STOP_ENABLED",
-            "defaultValue": {
-                "int32Values": [
-                    1
-                ]
-            }
         },
         {
             "property": "VehicleProperty::DOOR_LOCK",

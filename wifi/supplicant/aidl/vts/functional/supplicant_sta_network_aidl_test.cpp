@@ -806,15 +806,7 @@ TEST_P(SupplicantStaNetworkAidlTest, SetRoamingConsortiumSelection) {
  * SetMinimumTlsVersionEapPhase1Param
  */
 TEST_P(SupplicantStaNetworkAidlTest, SetMinimumTlsVersionEapPhase1Param) {
-    WpaDriverCapabilitiesMask caps;
-    EXPECT_TRUE(sta_iface_->getWpaDriverCapabilities(&caps).isOk());
-    const bool tlsV13Supported = !!(static_cast<uint32_t>(caps) &
-                                    static_cast<uint32_t>(WpaDriverCapabilitiesMask::TLS_V1_3));
-    LOG(INFO) << "TLS_V1_3 Supported: " << tlsV13Supported;
-
-    // Operation will succeed if TLS_V1_3 is supported, or fail otherwise.
-    EXPECT_EQ(sta_network_->setMinimumTlsVersionEapPhase1Param(TlsVersion::TLS_V1_3).isOk(),
-              tlsV13Supported);
+    EXPECT_TRUE(sta_network_->setMinimumTlsVersionEapPhase1Param(TlsVersion::TLS_V1_3).isOk());
 }
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(SupplicantStaNetworkAidlTest);

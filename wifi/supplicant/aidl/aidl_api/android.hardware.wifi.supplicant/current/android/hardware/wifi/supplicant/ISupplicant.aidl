@@ -47,6 +47,5 @@ interface ISupplicant {
   void setConcurrencyPriority(in android.hardware.wifi.supplicant.IfaceType type);
   void setDebugParams(in android.hardware.wifi.supplicant.DebugLevel level, in boolean showTimestamp, in boolean showKeys);
   oneway void terminate();
-  void registerNonStandardCertCallback(in android.hardware.wifi.supplicant.INonStandardCertCallback callback);
   const int EXT_RADIO_WORK_TIMEOUT_IN_SECS = 10;
 }

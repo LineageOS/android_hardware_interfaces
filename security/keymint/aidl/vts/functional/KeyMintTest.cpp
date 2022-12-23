@@ -8609,14 +8609,6 @@ TEST_P(VsrRequirementTest, Vsr13Test) {
     EXPECT_GE(AidlVersion(), 2) << "VSR 13+ requires KeyMint version 2";
 }
 
-TEST_P(VsrRequirementTest, Vsr14Test) {
-    int vsr_api_level = get_vsr_api_level();
-    if (vsr_api_level < 34) {
-        GTEST_SKIP() << "Applies only to VSR API level 34, this device is: " << vsr_api_level;
-    }
-    EXPECT_GE(AidlVersion(), 3) << "VSR 14+ requires KeyMint version 3";
-}
-
 INSTANTIATE_KEYMINT_AIDL_TEST(VsrRequirementTest);
 
 }  // namespace aidl::android::hardware::security::keymint::test

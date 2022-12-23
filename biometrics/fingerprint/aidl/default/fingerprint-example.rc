@@ -2,7 +2,8 @@ service vendor.fingerprint-example /vendor/bin/hw/android.hardware.biometrics.fi
     class hal
     user nobody
     group nobody
-    interface aidl android.hardware.biometrics.fingerprint.IFingerprint/virtual
-    oneshot
     disabled
-
+on property:ro.vendor.fingerprint_virtual_hal_start=true
+    enable vendor.fingerprint-example
+on property:persist.vendor.fingerprint.virtual.type=*
+    enable vendor.fingerprint-example

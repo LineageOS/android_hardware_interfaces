@@ -18,7 +18,6 @@ package android.hardware.cas;
 
 /**
  * The intented usage for the session.
- * @hide
  */
 @VintfStability
 @Backing(type="int")

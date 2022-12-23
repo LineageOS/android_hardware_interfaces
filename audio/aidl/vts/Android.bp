@@ -98,12 +98,6 @@ cc_test {
 }
 
 cc_test {
-    name: "VtsHalVirtualizerTargetTest",
-    defaults: ["VtsHalAudioTargetTestDefaults"],
-    srcs: ["VtsHalVirtualizerTargetTest.cpp"],
-}
-
-cc_test {
     name: "VtsHalVisualizerTargetTest",
     defaults: ["VtsHalAudioTargetTestDefaults"],
     srcs: ["VtsHalVisualizerTargetTest.cpp"],

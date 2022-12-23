@@ -268,7 +268,7 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.gnss</name>
-        <version>2-3</version>
+        <version>3</version>
         <interface>
             <name>IGnss</name>
             <instance>default</instance>
