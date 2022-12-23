@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-#include <aidl/Vintf.h>
-
-#define LOG_TAG "VtsHalNSParamTest"
+#define LOG_TAG "VtsHalVolumeTest"
 
 #include <Utils.h>
-#include <unordered_set>
+#include <aidl/Vintf.h>
 #include "EffectHelper.h"
 
 using namespace android;
@@ -28,17 +26,26 @@ using aidl::android::hardware::audio::effect::Capability;
 using aidl::android::hardware::audio::effect::Descriptor;
 using aidl::android::hardware::audio::effect::IEffect;
 using aidl::android::hardware::audio::effect::IFactory;
-using aidl::android::hardware::audio::effect::kNoiseSuppressionTypeUUID;
-using aidl::android::hardware::audio::effect::NoiseSuppression;
+using aidl::android::hardware::audio::effect::kVolumeTypeUUID;
 using aidl::android::hardware::audio::effect::Parameter;
+using aidl::android::hardware::audio::effect::Volume;
 
-enum ParamName { PARAM_INSTANCE_NAME, PARAM_LEVEL };
-using NSParamTestParam =
-        std::tuple<std::pair<std::shared_ptr<IFactory>, Descriptor>, NoiseSuppression::Level>;
+/**
+ * Here we focus on specific parameter checking, general IEffect interfaces testing performed in
+ * VtsAudioEffectTargetTest.
+ */
+enum ParamName { PARAM_INSTANCE_NAME, PARAM_LEVEL_DB, PARAM_MUTE };
+using VolumeParamTestParam =
+        std::tuple<std::pair<std::shared_ptr<IFactory>, Descriptor>, int, bool>;
 
-class NSParamTest : public ::testing::TestWithParam<NSParamTestParam>, public EffectHelper {
+const std::vector<int> kLevelValues = {Volume::MIN_LEVEL_DB - 1, Volume::MIN_LEVEL_DB, -100,
+                                       Volume::MAX_LEVEL_DB, Volume::MAX_LEVEL_DB + 1};
+
+class VolumeParamTest : public ::testing::TestWithParam<VolumeParamTestParam>, public EffectHelper {
   public:
-    NSParamTest() : mLevel(std::get<PARAM_LEVEL>(GetParam())) {
+    VolumeParamTest()
+        : mParamLevel(std::get<PARAM_LEVEL_DB>(GetParam())),
+          mParamMute(std::get<PARAM_MUTE>(GetParam())) {
         std::tie(mFactory, mDescriptor) = std::get<PARAM_INSTANCE_NAME>(GetParam());
     }
 
@@ -54,43 +61,39 @@ class NSParamTest : public ::testing::TestWithParam<NSParamTestParam>, public Ef
         ASSERT_NO_FATAL_FAILURE(open(mEffect, common, specific, &ret, EX_NONE));
         ASSERT_NE(nullptr, mEffect);
     }
-
     void TearDown() override {
         ASSERT_NO_FATAL_FAILURE(close(mEffect));
         ASSERT_NO_FATAL_FAILURE(destroy(mFactory, mEffect));
     }
 
     Parameter::Specific getDefaultParamSpecific() {
-        NoiseSuppression ns =
-                NoiseSuppression::make<NoiseSuppression::level>(NoiseSuppression::Level::MEDIUM);
-        Parameter::Specific specific =
-                Parameter::Specific::make<Parameter::Specific::noiseSuppression>(ns);
+        Volume vol = Volume::make<Volume::levelDb>(Volume::MIN_LEVEL_DB);
+        Parameter::Specific specific = Parameter::Specific::make<Parameter::Specific::volume>(vol);
         return specific;
     }
 
     static const long kInputFrameCount = 0x100, kOutputFrameCount = 0x100;
-    static const std::vector<std::pair<std::shared_ptr<IFactory>, Descriptor>> kFactoryDescList;
-    static const std::unordered_set<NoiseSuppression::Level> kLevelValues;
-
     std::shared_ptr<IFactory> mFactory;
     std::shared_ptr<IEffect> mEffect;
     Descriptor mDescriptor;
-    NoiseSuppression::Level mLevel;
+    int mParamLevel = 0;
+    bool mParamMute = false;
 
     void SetAndGetParameters() {
         for (auto& it : mTags) {
             auto& tag = it.first;
-            auto& ns = it.second;
+            auto& vol = it.second;
 
             // validate parameter
             Descriptor desc;
             ASSERT_STATUS(EX_NONE, mEffect->getDescriptor(&desc));
-            const binder_exception_t expected = EX_NONE;
+            const bool valid = isTagInRange(it.first, it.second, desc);
+            const binder_exception_t expected = valid ? EX_NONE : EX_ILLEGAL_ARGUMENT;
 
             // set parameter
             Parameter expectParam;
             Parameter::Specific specific;
-            specific.set<Parameter::Specific::noiseSuppression>(ns);
+            specific.set<Parameter::Specific::volume>(vol);
             expectParam.set<Parameter::specific>(specific);
             EXPECT_STATUS(expected, mEffect->setParameter(expectParam)) << expectParam.toString();
 
@@ -98,9 +101,9 @@ class NSParamTest : public ::testing::TestWithParam<NSParamTestParam>, public Ef
             if (expected == EX_NONE) {
                 Parameter getParam;
                 Parameter::Id id;
-                NoiseSuppression::Id specificId;
-                specificId.set<NoiseSuppression::Id::commonTag>(tag);
-                id.set<Parameter::Id::noiseSuppressionTag>(specificId);
+                Volume::Id volId;
+                volId.set<Volume::Id::commonTag>(tag);
+                id.set<Parameter::Id::volumeTag>(volId);
                 EXPECT_STATUS(EX_NONE, mEffect->getParameter(id, &getParam));
 
                 EXPECT_EQ(expectParam, getParam) << "\nexpect:" << expectParam.toString()
@@ -109,47 +112,71 @@ class NSParamTest : public ::testing::TestWithParam<NSParamTestParam>, public Ef
         }
     }
 
-    void addLevelParam(NoiseSuppression::Level level) {
-        NoiseSuppression ns;
-        ns.set<NoiseSuppression::level>(level);
-        mTags.push_back({NoiseSuppression::level, ns});
+    void addLevelParam(int level) {
+        Volume vol;
+        vol.set<Volume::levelDb>(level);
+        mTags.push_back({Volume::levelDb, vol});
+    }
+
+    void addMuteParam(bool mute) {
+        Volume vol;
+        vol.set<Volume::mute>(mute);
+        mTags.push_back({Volume::mute, vol});
+    }
+
+    bool isTagInRange(const Volume::Tag& tag, const Volume& vol, const Descriptor& desc) const {
+        const Volume::Capability& volCap = desc.capability.get<Capability::volume>();
+        switch (tag) {
+            case Volume::levelDb: {
+                int level = vol.get<Volume::levelDb>();
+                return isLevelInRange(volCap, level);
+            }
+            case Volume::mute:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    bool isLevelInRange(const Volume::Capability& cap, int level) const {
+        return level >= Volume::MIN_LEVEL_DB && level <= Volume::MAX_LEVEL_DB &&
+               level <= cap.maxLevel;
     }
 
   private:
-    std::vector<std::pair<NoiseSuppression::Tag, NoiseSuppression>> mTags;
+    std::vector<std::pair<Volume::Tag, Volume>> mTags;
     void CleanUp() { mTags.clear(); }
 };
 
-const std::vector<std::pair<std::shared_ptr<IFactory>, Descriptor>> kFactoryDescList =
-        EffectFactoryHelper::getAllEffectDescriptors(IFactory::descriptor,
-                                                     kNoiseSuppressionTypeUUID);
-const std::unordered_set<NoiseSuppression::Level> NSParamTest::kLevelValues = {
-        ndk::enum_range<NoiseSuppression::Level>().begin(),
-        ndk::enum_range<NoiseSuppression::Level>().end()};
+TEST_P(VolumeParamTest, SetAndGetLevel) {
+    EXPECT_NO_FATAL_FAILURE(addLevelParam(mParamLevel));
+    SetAndGetParameters();
+}
 
-TEST_P(NSParamTest, SetAndGetLevel) {
-    EXPECT_NO_FATAL_FAILURE(addLevelParam(mLevel));
+TEST_P(VolumeParamTest, SetAndGetMute) {
+    EXPECT_NO_FATAL_FAILURE(addMuteParam(mParamMute));
     SetAndGetParameters();
 }
 
 INSTANTIATE_TEST_SUITE_P(
-        NSParamTest, NSParamTest,
+        VolumeTest, VolumeParamTest,
         ::testing::Combine(testing::ValuesIn(EffectFactoryHelper::getAllEffectDescriptors(
-                                   IFactory::descriptor, kNoiseSuppressionTypeUUID)),
-                           testing::ValuesIn(NSParamTest::kLevelValues)),
-        [](const testing::TestParamInfo<NSParamTest::ParamType>& info) {
+                                   IFactory::descriptor, kVolumeTypeUUID)),
+                           testing::ValuesIn(kLevelValues), testing::Bool()),
+        [](const testing::TestParamInfo<VolumeParamTest::ParamType>& info) {
             auto descriptor = std::get<PARAM_INSTANCE_NAME>(info.param).second;
-            std::string level = aidl::android::hardware::audio::effect::toString(
-                    std::get<PARAM_LEVEL>(info.param));
+            std::string level = std::to_string(std::get<PARAM_LEVEL_DB>(info.param));
+            std::string mute = std::to_string(std::get<PARAM_MUTE>(info.param));
             std::string name = "Implementor_" + descriptor.common.implementor + "_name_" +
                                descriptor.common.name + "_UUID_" +
-                               descriptor.common.id.uuid.toString() + "_level_" + level;
+                               descriptor.common.id.uuid.toString() + "_level" + level + "_mute" +
+                               mute;
             std::replace_if(
                     name.begin(), name.end(), [](const char c) { return !std::isalnum(c); }, '_');
             return name;
         });
 
-GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(NSParamTest);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(VolumeParamTest);
 
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);

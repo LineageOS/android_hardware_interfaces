@@ -223,6 +223,8 @@ class CameraAidlTest : public ::testing::TestWithParam<std::string> {
             int32_t* partialResultCount /*out*/, bool* useHalBufManager /*out*/,
             std::shared_ptr<DeviceCb>* cb /*out*/, uint32_t streamConfigCounter = 0);
 
+    void configureStreamUseCaseInternal(const AvailableStream &threshold);
+
     void configureSingleStream(
             const std::string& name, const std::shared_ptr<ICameraProvider>& provider,
             const AvailableStream* previewThreshold, uint64_t bufferUsage,
@@ -410,6 +412,7 @@ class CameraAidlTest : public ::testing::TestWithParam<std::string> {
             int32_t frameCount, const bool *overrideSequence, const bool *expectedResults);
 
     bool supportZoomSettingsOverride(const camera_metadata_t* staticMeta);
+    bool supportsCroppedRawUseCase(const camera_metadata_t *staticMeta);
     bool isPerFrameControl(const camera_metadata_t* staticMeta);
 
   protected:

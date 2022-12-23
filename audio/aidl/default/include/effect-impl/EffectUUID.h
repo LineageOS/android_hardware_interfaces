@@ -147,6 +147,12 @@ static const AudioUuid kHapticGeneratorSwImplUUID = {static_cast<int32_t>(0xfa81
                                                      0x11ed,
                                                      0x9b6a,
                                                      {0x02, 0x42, 0xac, 0x12, 0x00, 0x02}};
+// 97c4acd1-8b82-4f2f-832e-c2fe5d7a9931
+static const AudioUuid kHapticGeneratorImplUUID = {static_cast<int32_t>(0x97c4acd1),
+                                                   0x8b82,
+                                                   0x4f2f,
+                                                   0x832e,
+                                                   {0xc2, 0xfe, 0x5d, 0x7a, 0x99, 0x31}};
 // fe3199be-aed0-413f-87bb-11260eb63cf1
 static const AudioUuid kLoudnessEnhancerTypeUUID = {static_cast<int32_t>(0xfe3199be),
                                                     0xaed0,
@@ -249,6 +255,12 @@ static const AudioUuid kVolumeSwImplUUID = {static_cast<int32_t>(0xfa81a718),
                                             0x11ed,
                                             0x9b6a,
                                             {0x02, 0x42, 0xac, 0x12, 0x00, 0x02}};
+// 119341a0-8469-11df-81f9-0002a5d5c51b
+static const AudioUuid kVolumeBundleImplUUID = {static_cast<int32_t>(0x119341a0),
+                                                0x8469,
+                                                0x11df,
+                                                0x81f9,
+                                                {0x00, 0x02, 0xa5, 0xd5, 0xc5, 0x1b}};
 
 /**
  * @brief A map between effect name and effect type UUID.
