@@ -24,7 +24,11 @@ package android.hardware.automotive.vehicle;
 enum StatusCode {
     OK = 0,
     /**
-     * Try again.
+     * Caller should try again.
+     *
+     * This code must be returned when an ephemeral error happens and a retry
+     * will likely succeed. E.g., when the device is currently booting up
+     * and the property is not ready yet.
      */
     TRY_AGAIN = 1,
     /**
@@ -32,9 +36,22 @@ enum StatusCode {
      */
     INVALID_ARG = 2,
     /**
+     * The property is currently unavailable and will be unavailable unless
+     * some other state changes.
+     *
      * This code must be returned when device that associated with the vehicle
      * property is not available. For example, when client tries to set HVAC
      * temperature when the whole HVAC unit is turned OFF.
+     *
+     * The difference between this and TRY_AGAIN is that if NOT_AVAILABLE is
+     * returned for a property, it will remain NOT_AVAILABLE unless some other
+     * state changes. This means a retry will likely still return NOT_AVAILABLE.
+     * However, for TRY_AGAIN error, a retry will likely return OK.
+     *
+     * When subscribing to a property that is currently unavailable for getting.
+     * VHAL must return OK even if getting/setting must return NOT_AVAILABLE.
+     * VHAL must not generate property change event when the property is not
+     * available for getting.
      */
     NOT_AVAILABLE = 3,
     /**
