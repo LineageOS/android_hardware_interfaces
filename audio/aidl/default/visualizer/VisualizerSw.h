@@ -22,24 +22,24 @@
 #include "effect-impl/EffectImpl.h"
 #include "effect-impl/EffectUUID.h"
 
-#define MIN_CAPTURE_SIZE 128
-#define MAX_CAPTURE_SIZE 1024
-#define MAX_LATENCY 3000
-#define CAPTURE_BUF_SIZE 65536
-
 namespace aidl::android::hardware::audio::effect {
 
 class VisualizerSwContext final : public EffectContext {
   public:
+    static const int kMinCaptureSize = 0x80;
+    static const int kMaxCaptureSize = 0x400;
+    static const int kMaxLatencyMs = 3000;
+    static const int kMaxCaptureBufSize = 0xffff;
+    static const Visualizer::CaptureSamplesRange kCaptureSamplesRange;
     VisualizerSwContext(int statusDepth, const Parameter::Common& common)
         : EffectContext(statusDepth, common) {
         LOG(DEBUG) << __func__;
-        mCaptureBytes.resize(CAPTURE_BUF_SIZE);
-        fill(mCaptureBytes.begin(), mCaptureBytes.end(), 0x80);
+        mCaptureSampleBuffer.resize(kMaxCaptureBufSize);
+        fill(mCaptureSampleBuffer.begin(), mCaptureSampleBuffer.end(), 0x80);
     }
 
     RetCode setVsCaptureSize(int captureSize) {
-        if (captureSize < MIN_CAPTURE_SIZE || captureSize > MAX_CAPTURE_SIZE) {
+        if (captureSize < kMinCaptureSize || captureSize > kMaxCaptureSize) {
             LOG(ERROR) << __func__ << " invalid captureSize " << captureSize;
             return RetCode::ERROR_ILLEGAL_PARAMETER;
         }
@@ -64,7 +64,7 @@ class VisualizerSwContext final : public EffectContext {
     Visualizer::MeasurementMode getVsMeasurementMode() const { return mMeasurementMode; }
 
     RetCode setVsLatency(int latency) {
-        if (latency < 0 || latency > MAX_LATENCY) {
+        if (latency < 0 || latency > kMaxLatencyMs) {
             LOG(ERROR) << __func__ << " invalid latency " << latency;
             return RetCode::ERROR_ILLEGAL_PARAMETER;
         }
@@ -74,15 +74,15 @@ class VisualizerSwContext final : public EffectContext {
     }
 
     Visualizer::GetOnlyParameters::Measurement getVsMeasurement() const { return mMeasurement; }
-    std::vector<uint8_t> getVsCaptureBytes() const { return mCaptureBytes; }
+    std::vector<uint8_t> getVsCaptureSampleBuffer() const { return mCaptureSampleBuffer; }
 
   private:
-    int mCaptureSize = MAX_CAPTURE_SIZE;
+    int mCaptureSize = kMaxCaptureSize;
     Visualizer::ScalingMode mScalingMode = Visualizer::ScalingMode::NORMALIZED;
     Visualizer::MeasurementMode mMeasurementMode = Visualizer::MeasurementMode::NONE;
     int mLatency;
     const Visualizer::GetOnlyParameters::Measurement mMeasurement = {0, 0};
-    std::vector<uint8_t> mCaptureBytes;
+    std::vector<uint8_t> mCaptureSampleBuffer;
 };
 
 class VisualizerSw final : public EffectImpl {
