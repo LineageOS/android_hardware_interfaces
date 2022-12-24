@@ -82,7 +82,7 @@ static const AptxCapabilities kDefaultOffloadAptxCapability = {
 static const AptxCapabilities kDefaultOffloadAptxHdCapability = {
     .sampleRateHz = {44100, 48000},
     .channelMode = {ChannelMode::STEREO},
-    .bitsPerSample = {24},
+    .bitsPerSample = {16, 24},
 };
 
 static const OpusCapabilities kDefaultOffloadOpusCapability = {
