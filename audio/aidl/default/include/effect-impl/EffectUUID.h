@@ -147,6 +147,12 @@ static const AudioUuid kHapticGeneratorSwImplUUID = {static_cast<int32_t>(0xfa81
                                                      0x11ed,
                                                      0x9b6a,
                                                      {0x02, 0x42, 0xac, 0x12, 0x00, 0x02}};
+// 97c4acd1-8b82-4f2f-832e-c2fe5d7a9931
+static const AudioUuid kHapticGeneratorImplUUID = {static_cast<int32_t>(0x97c4acd1),
+                                                   0x8b82,
+                                                   0x4f2f,
+                                                   0x832e,
+                                                   {0xc2, 0xfe, 0x5d, 0x7a, 0x99, 0x31}};
 // fe3199be-aed0-413f-87bb-11260eb63cf1
 static const AudioUuid kLoudnessEnhancerTypeUUID = {static_cast<int32_t>(0xfe3199be),
                                                     0xaed0,
@@ -213,6 +219,18 @@ static const AudioUuid kVirtualizerSwImplUUID = {static_cast<int32_t>(0xfa819d86
                                                  0x11ed,
                                                  0x9b6a,
                                                  {0x02, 0x42, 0xac, 0x12, 0x00, 0x02}};
+// 1d4033c0-8557-11df-9f2d-0002a5d5c51b
+static const AudioUuid kVirtualizerBundleImplUUID = {static_cast<int32_t>(0x1d4033c0),
+                                                     0x8557,
+                                                     0x11df,
+                                                     0x9f2d,
+                                                     {0x00, 0x02, 0xa5, 0xd5, 0xc5, 0x1b}};
+// d3467faa-acc7-4d34-acaf-0002a5d5c51b
+static const AudioUuid kVirtualizerProxyUUID = {static_cast<int32_t>(0xd3467faa),
+                                                0xacc7,
+                                                0x4d34,
+                                                0xacaf,
+                                                {0x00, 0x02, 0xa5, 0xd5, 0xc5, 0x1b}};
 // fa819f3e-588b-11ed-9b6a-0242ac120002
 static const AudioUuid kVisualizerTypeUUID = {static_cast<int32_t>(0xfa819f3e),
                                               0x588b,
@@ -225,6 +243,13 @@ static const AudioUuid kVisualizerSwImplUUID = {static_cast<int32_t>(0xfa81a0f6)
                                                 0x11ed,
                                                 0x9b6a,
                                                 {0x02, 0x42, 0xac, 0x12, 0x00, 0x02}};
+// d069d9e0-8329-11df-9168-0002a5d5c51b
+// {0xd069d9e0, 0x8329, 0x11df, 0x9168, {0x00, 0x02, 0xa5, 0xd5, 0xc5, 0x1b}},
+static const AudioUuid kVisualizerImplUUID = {static_cast<int32_t>(0xd069d9e0),
+                                              0x8329,
+                                              0x11df,
+                                              0x9168,
+                                              {0x00, 0x02, 0xa5, 0xd5, 0xc5, 0x1b}};
 // fa81a2b8-588b-11ed-9b6a-0242ac120002
 static const AudioUuid kVolumeTypeUUID = {static_cast<int32_t>(0xfa81a2b8),
                                           0x588b,
@@ -237,6 +262,12 @@ static const AudioUuid kVolumeSwImplUUID = {static_cast<int32_t>(0xfa81a718),
                                             0x11ed,
                                             0x9b6a,
                                             {0x02, 0x42, 0xac, 0x12, 0x00, 0x02}};
+// 119341a0-8469-11df-81f9-0002a5d5c51b
+static const AudioUuid kVolumeBundleImplUUID = {static_cast<int32_t>(0x119341a0),
+                                                0x8469,
+                                                0x11df,
+                                                0x81f9,
+                                                {0x00, 0x02, 0xa5, 0xd5, 0xc5, 0x1b}};
 
 /**
  * @brief A map between effect name and effect type UUID.

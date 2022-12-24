@@ -589,22 +589,28 @@ binder_status_t BroadcastRadio::cmdTune(int fd, const char** args, uint32_t numA
     }
     ProgramSelector sel = {};
     if (isDab) {
-        if (numArgs != 4) {
+        if (numArgs != 5) {
             dprintf(fd,
-                    "Invalid number of arguments: please provide --tune dab <SID> <ENSEMBLE>\n");
+                    "Invalid number of arguments: please provide "
+                    "--tune dab <SID> <ENSEMBLE> <FREQUENCY>\n");
             return STATUS_BAD_VALUE;
         }
         int sid;
         if (!utils::parseArgInt(string(args[2]), &sid)) {
-            dprintf(fd, "Non-integer sid provided with tune: %s\n", string(args[2]).c_str());
+            dprintf(fd, "Non-integer sid provided with tune: %s\n", args[2]);
             return STATUS_BAD_VALUE;
         }
         int ensemble;
         if (!utils::parseArgInt(string(args[3]), &ensemble)) {
-            dprintf(fd, "Non-integer ensemble provided with tune: %s\n", string(args[3]).c_str());
+            dprintf(fd, "Non-integer ensemble provided with tune: %s\n", args[3]);
             return STATUS_BAD_VALUE;
         }
-        sel = utils::makeSelectorDab(sid, ensemble);
+        int freq;
+        if (!utils::parseArgInt(string(args[4]), &freq)) {
+            dprintf(fd, "Non-integer frequency provided with tune: %s\n", args[4]);
+            return STATUS_BAD_VALUE;
+        }
+        sel = utils::makeSelectorDab(sid, ensemble, freq);
     } else {
         if (numArgs != 3) {
             dprintf(fd, "Invalid number of arguments: please provide --tune amfm <FREQUENCY>\n");
@@ -612,7 +618,7 @@ binder_status_t BroadcastRadio::cmdTune(int fd, const char** args, uint32_t numA
         }
         int freq;
         if (!utils::parseArgInt(string(args[2]), &freq)) {
-            dprintf(fd, "Non-integer frequency provided with tune: %s\n", string(args[2]).c_str());
+            dprintf(fd, "Non-integer frequency provided with tune: %s\n", args[2]);
             return STATUS_BAD_VALUE;
         }
         sel = utils::makeSelectorAmfm(freq);

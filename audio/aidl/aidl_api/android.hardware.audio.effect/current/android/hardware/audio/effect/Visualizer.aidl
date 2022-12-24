@@ -38,7 +38,7 @@ union Visualizer {
   android.hardware.audio.effect.VendorExtension vendor;
   android.hardware.audio.effect.Visualizer.GetOnlyParameters getOnlyParameters;
   android.hardware.audio.effect.Visualizer.SetOnlyParameters setOnlyParameters;
-  int captureSizeBytes;
+  int captureSamples;
   android.hardware.audio.effect.Visualizer.ScalingMode scalingMode;
   android.hardware.audio.effect.Visualizer.MeasurementMode measurementMode;
   @VintfStability
@@ -52,12 +52,12 @@ union Visualizer {
   parcelable Capability {
     android.hardware.audio.effect.VendorExtension extension;
     int maxLatencyMs;
-    android.hardware.audio.effect.Visualizer.CaptureSizeRange captureSizeRange;
+    android.hardware.audio.effect.Visualizer.CaptureSamplesRange captureSampleRange;
   }
   @VintfStability
-  parcelable CaptureSizeRange {
-    int minBytes;
-    int maxBytes;
+  parcelable CaptureSamplesRange {
+    int min;
+    int max;
   }
   @VintfStability
   enum ScalingMode {
@@ -72,7 +72,7 @@ union Visualizer {
   @VintfStability
   union GetOnlyParameters {
     android.hardware.audio.effect.Visualizer.GetOnlyParameters.Measurement measurement;
-    byte[] captureBytes;
+    byte[] captureSampleBuffer;
     @VintfStability
     parcelable Measurement {
       int rms;

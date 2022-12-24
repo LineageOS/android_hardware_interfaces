@@ -34,12 +34,10 @@ interface IEffect {
         /**
          * One of Binder STATUS_* statuses:
          *  - STATUS_OK: the command has completed successfully;
-         *  - STATUS_BAD_VALUE: invalid value in the 'Command' structure;
-         *  - STATUS_INVALID_OPERATION: the mix port is not connected
-         *                              to any producer or consumer, thus
-         *                              positions can not be reported;
-         *  - STATUS_NOT_ENOUGH_DATA: a read or write error has
-         *                            occurred for the 'audio.fmq' queue;
+         *  - STATUS_BAD_VALUE: invalid parameters or state detected in effects;
+         *  - STATUS_INVALID_OPERATION: an internal error happens in effect audio buffer processing;
+         *  - STATUS_NOT_ENOUGH_DATA: a read or write error has occurred for the 'inputDataMQ' or
+         * 'outputDataMQ';
          *
          */
         int status;

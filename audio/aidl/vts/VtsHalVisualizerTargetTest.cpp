@@ -19,6 +19,9 @@
 #define LOG_TAG "VtsHalVisualizerTest"
 
 #include <Utils.h>
+#include <android/binder_enums.h>
+#include <unordered_set>
+
 #include "EffectHelper.h"
 
 using namespace android;
@@ -45,18 +48,6 @@ enum ParamName {
 using VisualizerParamTestParam =
         std::tuple<std::pair<std::shared_ptr<IFactory>, Descriptor>, int, Visualizer::ScalingMode,
                    Visualizer::MeasurementMode, int>;
-
-const int MIN_CAPTURE_SIZE = 128;
-const int MAX_CAPTURE_SIZE = 1024;
-const int MAX_LATENCY = 3000;
-
-const std::vector<int> kCaptureSizeValues = {MIN_CAPTURE_SIZE - 1, MIN_CAPTURE_SIZE,
-                                             MAX_CAPTURE_SIZE, MAX_CAPTURE_SIZE + 1};
-const std::vector<Visualizer::ScalingMode> kScalingModeValues = {
-        Visualizer::ScalingMode::NORMALIZED, Visualizer::ScalingMode::AS_PLAYED};
-const std::vector<Visualizer::MeasurementMode> kMeasurementModeValues = {
-        Visualizer::MeasurementMode::NONE, Visualizer::MeasurementMode::PEAK_RMS};
-const std::vector<int> kLatencyValues = {-1, 0, MAX_LATENCY, MAX_LATENCY + 1};
 
 class VisualizerParamTest : public ::testing::TestWithParam<VisualizerParamTestParam>,
                             public EffectHelper {
@@ -86,19 +77,25 @@ class VisualizerParamTest : public ::testing::TestWithParam<VisualizerParamTestP
         ASSERT_NO_FATAL_FAILURE(close(mEffect));
         ASSERT_NO_FATAL_FAILURE(destroy(mFactory, mEffect));
     }
-
     Parameter::Specific getDefaultParamSpecific() {
-        Visualizer vs = Visualizer::make<Visualizer::captureSizeBytes>(MIN_CAPTURE_SIZE);
+        Visualizer vs = Visualizer::make<Visualizer::captureSamples>(
+                mDescriptor.capability.get<Capability::visualizer>().captureSampleRange.max);
         Parameter::Specific specific =
                 Parameter::Specific::make<Parameter::Specific::visualizer>(vs);
         return specific;
     }
 
+    static const std::vector<std::pair<std::shared_ptr<IFactory>, Descriptor>> kFactoryDescList;
+    static const std::unordered_set<Visualizer::ScalingMode> kScalingModeValues;
+    static const std::unordered_set<Visualizer::MeasurementMode> kMeasurementModeValues;
+    static const std::unordered_set<int> kLatencyValues;
+    static const std::unordered_set<int> kCaptureSizeValues;
+
     static const long kInputFrameCount = 0x100, kOutputFrameCount = 0x100;
     std::shared_ptr<IFactory> mFactory;
     std::shared_ptr<IEffect> mEffect;
     Descriptor mDescriptor;
-    int mCaptureSize = MAX_CAPTURE_SIZE;
+    int mCaptureSize;
     Visualizer::ScalingMode mScalingMode = Visualizer::ScalingMode::NORMALIZED;
     Visualizer::MeasurementMode mMeasurementMode = Visualizer::MeasurementMode::NONE;
     int mLatency = 0;
@@ -184,8 +181,8 @@ class VisualizerParamTest : public ::testing::TestWithParam<VisualizerParamTestP
 
     void addCaptureSizeParam(int captureSize) {
         Visualizer vs;
-        vs.set<Visualizer::captureSizeBytes>(captureSize);
-        mCommonTags.push_back({Visualizer::captureSizeBytes, vs});
+        vs.set<Visualizer::captureSamples>(captureSize);
+        mCommonTags.push_back({Visualizer::captureSamples, vs});
     }
 
     void addScalingModeParam(Visualizer::ScalingMode scalingMode) {
@@ -213,15 +210,15 @@ class VisualizerParamTest : public ::testing::TestWithParam<VisualizerParamTestP
     }
 
     void addCaptureBytesTag() {
-        mGetOnlyParamTags.push_back(Visualizer::GetOnlyParameters::captureBytes);
+        mGetOnlyParamTags.push_back(Visualizer::GetOnlyParameters::captureSampleBuffer);
     }
 
     bool isTagInRange(const Visualizer::Tag& tag, const Visualizer& vs,
                       const Descriptor& desc) const {
         const Visualizer::Capability& vsCap = desc.capability.get<Capability::visualizer>();
         switch (tag) {
-            case Visualizer::captureSizeBytes: {
-                int captureSize = vs.get<Visualizer::captureSizeBytes>();
+            case Visualizer::captureSamples: {
+                int captureSize = vs.get<Visualizer::captureSamples>();
                 return isCaptureSizeInRange(vsCap, captureSize);
             }
             case Visualizer::scalingMode:
@@ -243,12 +240,43 @@ class VisualizerParamTest : public ::testing::TestWithParam<VisualizerParamTestP
     }
 
     bool isCaptureSizeInRange(const Visualizer::Capability& cap, int captureSize) const {
-        return (captureSize >= cap.captureSizeRange.minBytes &&
-                captureSize <= cap.captureSizeRange.maxBytes);
+        return (captureSize >= cap.captureSampleRange.min &&
+                captureSize <= cap.captureSampleRange.max);
     }
 
     bool isLatencyInRange(const Visualizer::Capability& cap, int latency) const {
         return (latency >= 0 && latency <= cap.maxLatencyMs);
+    }
+
+    static std::unordered_set<int> getCaptureSizeValues() {
+        int minCaptureSize = std::numeric_limits<int>::max();
+        int maxCaptureSize = std::numeric_limits<int>::min();
+        for (const auto& it : kFactoryDescList) {
+            maxCaptureSize = std::max(
+                    it.second.capability.get<Capability::visualizer>().captureSampleRange.max,
+                    maxCaptureSize);
+            minCaptureSize = std::min(
+                    it.second.capability.get<Capability ::visualizer>().captureSampleRange.min,
+                    minCaptureSize);
+        }
+        return {std::numeric_limits<int>::min(),        minCaptureSize - 1, minCaptureSize,
+                (minCaptureSize + maxCaptureSize) >> 1, maxCaptureSize,     maxCaptureSize + 1,
+                std::numeric_limits<int>::max()};
+    }
+
+    static std::unordered_set<int> getLatencyValues() {
+        const auto max = std::max_element(
+                kFactoryDescList.begin(), kFactoryDescList.end(),
+                [](const std::pair<std::shared_ptr<IFactory>, Descriptor>& a,
+                   const std::pair<std::shared_ptr<IFactory>, Descriptor>& b) {
+                    return a.second.capability.get<Capability::visualizer>().maxLatencyMs <
+                           b.second.capability.get<Capability::visualizer>().maxLatencyMs;
+                });
+        if (max == kFactoryDescList.end()) {
+            return {0};
+        }
+        int maxDelay = max->second.capability.get<Capability::visualizer>().maxLatencyMs;
+        return {-1, 0, maxDelay >> 1, maxDelay - 1, maxDelay, maxDelay + 1};
     }
 
   private:
@@ -261,6 +289,20 @@ class VisualizerParamTest : public ::testing::TestWithParam<VisualizerParamTestP
         mGetOnlyParamTags.clear();
     }
 };
+
+const std::vector<std::pair<std::shared_ptr<IFactory>, Descriptor>>
+        VisualizerParamTest::kFactoryDescList = EffectFactoryHelper::getAllEffectDescriptors(
+                IFactory::descriptor, kVisualizerTypeUUID);
+const std::unordered_set<int> VisualizerParamTest::kCaptureSizeValues =
+        VisualizerParamTest::getCaptureSizeValues();
+const std::unordered_set<Visualizer::MeasurementMode> VisualizerParamTest::kMeasurementModeValues(
+        ndk::enum_range<Visualizer::MeasurementMode>().begin(),
+        ndk::enum_range<Visualizer::MeasurementMode>().end());
+const std::unordered_set<Visualizer::ScalingMode> VisualizerParamTest::kScalingModeValues(
+        ndk::enum_range<Visualizer::ScalingMode>().begin(),
+        ndk::enum_range<Visualizer::ScalingMode>().end());
+const std::unordered_set<int> VisualizerParamTest::kLatencyValues =
+        VisualizerParamTest::getLatencyValues();
 
 TEST_P(VisualizerParamTest, SetAndGetCaptureSize) {
     EXPECT_NO_FATAL_FAILURE(addCaptureSizeParam(mCaptureSize));
@@ -293,13 +335,13 @@ TEST_P(VisualizerParamTest, GetAndSetCaptureBytes) {
 }
 
 INSTANTIATE_TEST_SUITE_P(
-        VisualizerTest, VisualizerParamTest,
+        VisualizerParamTest, VisualizerParamTest,
         ::testing::Combine(testing::ValuesIn(EffectFactoryHelper::getAllEffectDescriptors(
                                    IFactory::descriptor, kVisualizerTypeUUID)),
-                           testing::ValuesIn(kCaptureSizeValues),
-                           testing::ValuesIn(kScalingModeValues),
-                           testing::ValuesIn(kMeasurementModeValues),
-                           testing::ValuesIn(kLatencyValues)),
+                           testing::ValuesIn(VisualizerParamTest::kCaptureSizeValues),
+                           testing::ValuesIn(VisualizerParamTest::kScalingModeValues),
+                           testing::ValuesIn(VisualizerParamTest::kMeasurementModeValues),
+                           testing::ValuesIn(VisualizerParamTest::kLatencyValues)),
         [](const testing::TestParamInfo<VisualizerParamTest::ParamType>& info) {
             auto descriptor = std::get<PARAM_INSTANCE_NAME>(info.param).second;
             std::string captureSize = std::to_string(std::get<PARAM_CAPTURE_SIZE>(info.param));
