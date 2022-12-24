@@ -120,7 +120,7 @@ parcelable ProgramInfo {
      *
      * Only physical identifiers are valid:
      *  - AMFM_FREQUENCY_KHZ;
-     *  - DAB_ENSEMBLE;
+     *  - DAB_FREQUENCY_KHZ;
      *  - DRMO_FREQUENCY_KHZ;
      *  - SXM_CHANNEL;
      *  - VENDOR_*;

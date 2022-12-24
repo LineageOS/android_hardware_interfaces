@@ -63,16 +63,16 @@ union Visualizer {
         /**
          *  Capture size range.
          */
-        CaptureSizeRange captureSizeRange;
+        CaptureSamplesRange captureSampleRange;
     }
 
     /**
-     * Supported capture size range in bytes.
+     * Supported capture size range in samples.
      */
     @VintfStability
-    parcelable CaptureSizeRange {
-        int minBytes;
-        int maxBytes;
+    parcelable CaptureSamplesRange {
+        int min;
+        int max;
     }
 
     /**
@@ -131,9 +131,9 @@ union Visualizer {
         Measurement measurement;
 
         /**
-         * Gets the latest PCM capture, size of returned vector equals to @c captureSize.
+         * Get the latest captureSamples of PCM samples (8 bits per sample).
          */
-        byte[] captureBytes;
+        byte[] captureSampleBuffer;
     }
     GetOnlyParameters getOnlyParameters;
 
@@ -152,10 +152,10 @@ union Visualizer {
     SetOnlyParameters setOnlyParameters;
 
     /**
-     * Current capture size in bytes. The capture size must be a power of 2 in the range
+     * Current capture size in number of samples. The capture size must be inside
      * Capability.captureSizeRange.
      */
-    int captureSizeBytes;
+    int captureSamples;
     /**
      * Visualizer capture mode
      */

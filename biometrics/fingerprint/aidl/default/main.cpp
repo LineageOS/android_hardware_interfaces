@@ -28,8 +28,7 @@ int main() {
     std::shared_ptr<Fingerprint> hal = ndk::SharedRefBase::make<Fingerprint>();
 
     const std::string instance = std::string(Fingerprint::descriptor) + "/virtual";
-    binder_status_t status =
-            AServiceManager_registerLazyService(hal->asBinder().get(), instance.c_str());
+    binder_status_t status = AServiceManager_addService(hal->asBinder().get(), instance.c_str());
     CHECK_EQ(status, STATUS_OK);
 
     ABinderProcess_joinThreadPool();

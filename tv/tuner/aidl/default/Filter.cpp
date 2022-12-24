@@ -691,6 +691,8 @@ DemuxFilterStatus Filter::checkFilterStatusChange(uint32_t availableToWrite,
         return DemuxFilterStatus::OVERFLOW;
     } else if (availableToRead > highThreshold) {
         return DemuxFilterStatus::HIGH_WATER;
+    } else if (availableToRead == 0) {
+        return DemuxFilterStatus::NO_DATA;
     } else if (availableToRead < lowThreshold) {
         return DemuxFilterStatus::LOW_WATER;
     }
