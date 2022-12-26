@@ -97,8 +97,3 @@ ndk::ScopedAStatus RadioNetworkIndication::emergencyNetworkScanResult(
         RadioIndicationType /*type*/, const EmergencyRegResult& /*result*/) {
     return ndk::ScopedAStatus::ok();
 }
-
-ndk::ScopedAStatus RadioNetworkIndication::onNetworkInitiatedLocationResult(
-        RadioIndicationType /*type*/, LocationResponseType /*locationResponseType*/) {
-    return ndk::ScopedAStatus::ok();
-}
