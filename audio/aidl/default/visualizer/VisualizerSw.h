@@ -80,7 +80,7 @@ class VisualizerSwContext final : public EffectContext {
     int mCaptureSize = kMaxCaptureSize;
     Visualizer::ScalingMode mScalingMode = Visualizer::ScalingMode::NORMALIZED;
     Visualizer::MeasurementMode mMeasurementMode = Visualizer::MeasurementMode::NONE;
-    int mLatency;
+    int mLatency = 0;
     const Visualizer::GetOnlyParameters::Measurement mMeasurement = {0, 0};
     std::vector<uint8_t> mCaptureSampleBuffer;
 };
