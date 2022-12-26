@@ -654,26 +654,4 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:INVALID_STATE
      */
     void setN1ModeEnabledResponse(in RadioResponseInfo info);
-
-    /**
-     * @param info Response info struct containing response type, serial no. and error
-     *
-     * Valid errors returned:
-     *   RadioError:NONE
-     *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:INTERNAL_ERR
-     */
-    void setLocationPrivacySettingResponse(in RadioResponseInfo info);
-
-    /**
-     * @param info Response info struct containing response type, serial no. and error
-     * @param shareLocation Indicates whether the location sharing is allowed or not, True if
-     *         allowed else false.
-     *
-     * Valid errors returned:
-     *   RadioError:NONE
-     *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:INTERNAL_ERR
-     */
-    void getLocationPrivacySettingResponse(in RadioResponseInfo info, boolean shareLocation);
 }
