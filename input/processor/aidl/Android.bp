@@ -13,7 +13,7 @@ aidl_interface {
     vendor_available: true,
     srcs: ["android/hardware/input/processor/*.aidl"],
     imports: [
-        "android.hardware.input.common",
+        "android.hardware.input.common-V1",
     ],
     stability: "vintf",
     backend: {
