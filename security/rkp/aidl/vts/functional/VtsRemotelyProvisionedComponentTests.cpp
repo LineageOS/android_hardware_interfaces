@@ -390,6 +390,7 @@ class CertificateRequestTest : public CertificateRequestTestBase {
   protected:
     void SetUp() override {
         CertificateRequestTestBase::SetUp();
+        ASSERT_FALSE(HasFatalFailure());
 
         if (rpcHardwareInfo.versionNumber >= VERSION_WITHOUT_TEST_MODE) {
             bytevec keysToSignMac;
@@ -675,6 +676,7 @@ INSTANTIATE_REM_PROV_AIDL_TEST(CertificateRequestTest);
 class CertificateRequestV2Test : public CertificateRequestTestBase {
     void SetUp() override {
         CertificateRequestTestBase::SetUp();
+        ASSERT_FALSE(HasFatalFailure());
 
         if (rpcHardwareInfo.versionNumber < VERSION_WITHOUT_TEST_MODE) {
             GTEST_SKIP() << "This test case only applies to RKP v3 and above. "
