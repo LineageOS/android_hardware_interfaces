@@ -23,12 +23,18 @@
 namespace aidl::android::hardware::audio::core {
 
 class Telephony : public BnTelephony {
+  public:
+    Telephony();
+
   private:
     ndk::ScopedAStatus getSupportedAudioModes(std::vector<AudioMode>* _aidl_return) override;
     ndk::ScopedAStatus switchAudioMode(AudioMode in_mode) override;
+    ndk::ScopedAStatus setTelecomConfig(const TelecomConfig& in_config,
+                                        TelecomConfig* _aidl_return) override;
 
     const std::vector<AudioMode> mSupportedAudioModes = {::ndk::enum_range<AudioMode>().begin(),
                                                          ::ndk::enum_range<AudioMode>().end()};
+    TelecomConfig mTelecomConfig;
 };
 
 }  // namespace aidl::android::hardware::audio::core

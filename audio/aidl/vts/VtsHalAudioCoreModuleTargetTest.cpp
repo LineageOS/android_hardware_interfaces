@@ -81,6 +81,7 @@ using aidl::android::media::audio::common::AudioPortDeviceExt;
 using aidl::android::media::audio::common::AudioPortExt;
 using aidl::android::media::audio::common::AudioSource;
 using aidl::android::media::audio::common::AudioUsage;
+using aidl::android::media::audio::common::Float;
 using aidl::android::media::audio::common::Void;
 using android::hardware::audio::common::getChannelCount;
 using android::hardware::audio::common::isBitPositionFlagSet;
@@ -1824,6 +1825,46 @@ TEST_P(AudioCoreTelephony, SwitchAudioMode) {
     for (const auto mode : unsupportedModes) {
         EXPECT_STATUS(EX_UNSUPPORTED_OPERATION, telephony->switchAudioMode(mode)) << toString(mode);
     }
+}
+
+TEST_P(AudioCoreTelephony, TelecomConfig) {
+    static const auto kStatuses = {EX_NONE, EX_UNSUPPORTED_OPERATION};
+    if (telephony == nullptr) {
+        GTEST_SKIP() << "Telephony is not supported";
+    }
+    ndk::ScopedAStatus status;
+    ITelephony::TelecomConfig telecomConfig;
+    ASSERT_STATUS(kStatuses, status = telephony->setTelecomConfig({}, &telecomConfig));
+    if (status.getExceptionCode() == EX_UNSUPPORTED_OPERATION) {
+        GTEST_SKIP() << "Telecom is not supported";
+    }
+    EXPECT_TRUE(telecomConfig.voiceVolume.has_value());
+    EXPECT_NE(ITelephony::TelecomConfig::TtyMode::UNSPECIFIED, telecomConfig.ttyMode);
+    EXPECT_TRUE(telecomConfig.isHacEnabled.has_value());
+    ITelephony::TelecomConfig telecomConfig2;
+    ASSERT_IS_OK(telephony->setTelecomConfig(telecomConfig, &telecomConfig2));
+    EXPECT_EQ(telecomConfig, telecomConfig2);
+}
+
+TEST_P(AudioCoreTelephony, TelecomConfigInvalid) {
+    static const auto kStatuses = {EX_NONE, EX_UNSUPPORTED_OPERATION};
+    if (telephony == nullptr) {
+        GTEST_SKIP() << "Telephony is not supported";
+    }
+    ndk::ScopedAStatus status;
+    ITelephony::TelecomConfig telecomConfig;
+    ASSERT_STATUS(kStatuses, status = telephony->setTelecomConfig({}, &telecomConfig));
+    if (status.getExceptionCode() == EX_UNSUPPORTED_OPERATION) {
+        GTEST_SKIP() << "Telecom is not supported";
+    }
+    EXPECT_STATUS(EX_ILLEGAL_ARGUMENT,
+                  telephony->setTelecomConfig(
+                          {.voiceVolume = Float{ITelephony::TelecomConfig::VOICE_VOLUME_MIN - 1}},
+                          &telecomConfig));
+    EXPECT_STATUS(EX_ILLEGAL_ARGUMENT,
+                  telephony->setTelecomConfig(
+                          {.voiceVolume = Float{ITelephony::TelecomConfig::VOICE_VOLUME_MAX + 1}},
+                          &telecomConfig));
 }
 
 using CommandSequence = std::vector<StreamDescriptor::Command>;

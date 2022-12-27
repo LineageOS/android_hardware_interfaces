@@ -43,7 +43,7 @@ interface IStreamIn {
   void updateMetadata(in android.hardware.audio.common.SinkMetadata sinkMetadata);
   float[] getHwGain();
   void setHwGain(in float[] channelGains);
-  const int MIC_FIELD_DIMENSION_WIDE_ANGLE = -1;
+  const int MIC_FIELD_DIMENSION_WIDE_ANGLE = (-1);
   const int MIC_FIELD_DIMENSION_NO_ZOOM = 0;
   const int MIC_FIELD_DIMENSION_MAX_ZOOM = 1;
   const int HW_GAIN_MIN = 0;
