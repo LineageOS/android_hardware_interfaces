@@ -61,8 +61,8 @@ namespace aidl::android::hardware::audio::effect {
 
 const std::string VirtualizerSw::kEffectName = "VirtualizerSw";
 const bool VirtualizerSw::kStrengthSupported = true;
-const Virtualizer::Capability VirtualizerSw::kCapability = {.strengthSupported =
-                                                                    kStrengthSupported};
+const Virtualizer::Capability VirtualizerSw::kCapability = {
+        .maxStrengthPm = 1000, .strengthSupported = kStrengthSupported};
 const Descriptor VirtualizerSw::kDescriptor = {
         .common = {.id = {.type = kVirtualizerTypeUUID,
                           .uuid = kVirtualizerSwImplUUID,
@@ -170,6 +170,16 @@ IEffect::Status VirtualizerSw::effectProcessImpl(float* in, float* out, int samp
         *out++ = *in++;
     }
     return {STATUS_OK, samples, samples};
+}
+
+RetCode VirtualizerSwContext::setVrStrength(int strength) {
+    if (strength < 0 || strength > VirtualizerSw::kCapability.maxStrengthPm) {
+        LOG(ERROR) << __func__ << " invalid strength: " << strength;
+        return RetCode::ERROR_ILLEGAL_PARAMETER;
+    }
+    // TODO : Add implementation to apply new strength
+    mStrength = strength;
+    return RetCode::SUCCESS;
 }
 
 }  // namespace aidl::android::hardware::audio::effect
