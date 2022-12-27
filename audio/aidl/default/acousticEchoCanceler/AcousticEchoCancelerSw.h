@@ -37,7 +37,7 @@ class AcousticEchoCancelerSwContext final : public EffectContext {
     int getEchoDelay() const { return mEchoDelayUs; }
 
   private:
-    int mEchoDelayUs;
+    int mEchoDelayUs = 0;
 };
 
 class AcousticEchoCancelerSw final : public EffectImpl {
