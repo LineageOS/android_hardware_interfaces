@@ -367,6 +367,23 @@ class StreamOut : public StreamCommonImpl<::aidl::android::hardware::audio::comm
     }
     ndk::ScopedAStatus getHwVolume(std::vector<float>* _aidl_return) override;
     ndk::ScopedAStatus setHwVolume(const std::vector<float>& in_channelVolumes) override;
+    ndk::ScopedAStatus getAudioDescriptionMixLevel(float* _aidl_return) override;
+    ndk::ScopedAStatus setAudioDescriptionMixLevel(float in_leveldB) override;
+    ndk::ScopedAStatus getDualMonoMode(
+            ::aidl::android::media::audio::common::AudioDualMonoMode* _aidl_return) override;
+    ndk::ScopedAStatus setDualMonoMode(
+            ::aidl::android::media::audio::common::AudioDualMonoMode in_mode) override;
+    ndk::ScopedAStatus getRecommendedLatencyModes(
+            std::vector<::aidl::android::media::audio::common::AudioLatencyMode>* _aidl_return)
+            override;
+    ndk::ScopedAStatus setLatencyMode(
+            ::aidl::android::media::audio::common::AudioLatencyMode in_mode) override;
+    ndk::ScopedAStatus getPlaybackRateParameters(
+            ::aidl::android::media::audio::common::AudioPlaybackRate* _aidl_return) override;
+    ndk::ScopedAStatus setPlaybackRateParameters(
+            const ::aidl::android::media::audio::common::AudioPlaybackRate& in_playbackRate)
+            override;
+    ndk::ScopedAStatus selectPresentation(int32_t in_presentationId, int32_t in_programId) override;
 
   public:
     static ndk::ScopedAStatus createInstance(

@@ -603,6 +603,13 @@ ndk::ScopedAStatus Module::openOutputStream(const OpenOutputStreamArguments& in_
     return ndk::ScopedAStatus::ok();
 }
 
+ndk::ScopedAStatus Module::getSupportedPlaybackRateFactors(
+        SupportedPlaybackRateFactors* _aidl_return) {
+    LOG(DEBUG) << __func__;
+    (void)_aidl_return;
+    return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+}
+
 ndk::ScopedAStatus Module::setAudioPatch(const AudioPatch& in_requested, AudioPatch* _aidl_return) {
     LOG(DEBUG) << __func__ << ": requested patch " << in_requested.toString();
     if (in_requested.sourcePortConfigIds.empty()) {
