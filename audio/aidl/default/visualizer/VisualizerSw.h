@@ -38,40 +38,16 @@ class VisualizerSwContext final : public EffectContext {
         fill(mCaptureSampleBuffer.begin(), mCaptureSampleBuffer.end(), 0x80);
     }
 
-    RetCode setVsCaptureSize(int captureSize) {
-        if (captureSize < kMinCaptureSize || captureSize > kMaxCaptureSize) {
-            LOG(ERROR) << __func__ << " invalid captureSize " << captureSize;
-            return RetCode::ERROR_ILLEGAL_PARAMETER;
-        }
-        // TODO : Add implementation to apply new captureSize
-        mCaptureSize = captureSize;
-        return RetCode::SUCCESS;
-    }
+    RetCode setVsCaptureSize(int captureSize);
     int getVsCaptureSize() const { return mCaptureSize; }
 
-    RetCode setVsScalingMode(Visualizer::ScalingMode scalingMode) {
-        // TODO : Add implementation to apply new scalingMode
-        mScalingMode = scalingMode;
-        return RetCode::SUCCESS;
-    }
+    RetCode setVsScalingMode(Visualizer::ScalingMode scalingMode);
     Visualizer::ScalingMode getVsScalingMode() const { return mScalingMode; }
 
-    RetCode setVsMeasurementMode(Visualizer::MeasurementMode measurementMode) {
-        // TODO : Add implementation to apply new measurementMode
-        mMeasurementMode = measurementMode;
-        return RetCode::SUCCESS;
-    }
+    RetCode setVsMeasurementMode(Visualizer::MeasurementMode measurementMode);
     Visualizer::MeasurementMode getVsMeasurementMode() const { return mMeasurementMode; }
 
-    RetCode setVsLatency(int latency) {
-        if (latency < 0 || latency > kMaxLatencyMs) {
-            LOG(ERROR) << __func__ << " invalid latency " << latency;
-            return RetCode::ERROR_ILLEGAL_PARAMETER;
-        }
-        // TODO : Add implementation to modify latency
-        mLatency = latency;
-        return RetCode::SUCCESS;
-    }
+    RetCode setVsLatency(int latency);
 
     Visualizer::GetOnlyParameters::Measurement getVsMeasurement() const { return mMeasurement; }
     std::vector<uint8_t> getVsCaptureSampleBuffer() const { return mCaptureSampleBuffer; }
