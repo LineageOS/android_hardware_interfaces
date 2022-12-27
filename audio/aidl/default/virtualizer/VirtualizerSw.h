@@ -45,7 +45,7 @@ class VirtualizerSwContext final : public EffectContext {
     int getVrStrength() const { return mStrength; }
 
   private:
-    int mStrength;
+    int mStrength = 0;
 };
 
 class VirtualizerSw final : public EffectImpl {

@@ -41,9 +41,10 @@ class AutomaticGainControlSwContext final : public EffectContext {
     int getSaturationMargin();
 
   private:
-    int mDigitalGain;
-    AutomaticGainControl::LevelEstimator mLevelEstimator;
-    int mSaturationMargin;
+    int mDigitalGain = 0;
+    AutomaticGainControl::LevelEstimator mLevelEstimator =
+            AutomaticGainControl::LevelEstimator::RMS;
+    int mSaturationMargin = 0;
 };
 
 class AutomaticGainControlSw final : public EffectImpl {
