@@ -46,7 +46,7 @@ class BassBoostSwContext final : public EffectContext {
     int getBbStrengthPm() const { return mStrength; }
 
   private:
-    int mStrength;
+    int mStrength = 0;
 };
 
 class BassBoostSw final : public EffectImpl {
