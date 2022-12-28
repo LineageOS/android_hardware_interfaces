@@ -60,7 +60,8 @@ extern "C" binder_exception_t queryEffect(const AudioUuid* in_impl_uuid, Descrip
 namespace aidl::android::hardware::audio::effect {
 
 const std::string EnvReverbSw::kEffectName = "EnvReverbSw";
-const EnvironmentalReverb::Capability EnvReverbSw::kCapability;
+const EnvironmentalReverb::Capability EnvReverbSw::kCapability = {
+        .maxDecayTimeMs = EnvironmentalReverb::MAX_DECAY_TIME_MS};
 const Descriptor EnvReverbSw::kDescriptor = {
         .common = {.id = {.type = kEnvReverbTypeUUID,
                           .uuid = kEnvReverbSwImplUUID,
@@ -82,16 +83,140 @@ ndk::ScopedAStatus EnvReverbSw::setParameterSpecific(const Parameter::Specific& 
     RETURN_IF(Parameter::Specific::environmentalReverb != specific.getTag(), EX_ILLEGAL_ARGUMENT,
               "EffectNotSupported");
 
-    mSpecificParam = specific.get<Parameter::Specific::environmentalReverb>();
-    LOG(DEBUG) << __func__ << " success with: " << specific.toString();
-    return ndk::ScopedAStatus::ok();
+    auto& erParam = specific.get<Parameter::Specific::environmentalReverb>();
+    auto tag = erParam.getTag();
+
+    switch (tag) {
+        case EnvironmentalReverb::roomLevelMb: {
+            RETURN_IF(mContext->setErRoomLevel(erParam.get<EnvironmentalReverb::roomLevelMb>()) !=
+                              RetCode::SUCCESS,
+                      EX_ILLEGAL_ARGUMENT, "setRoomLevelFailed");
+            return ndk::ScopedAStatus::ok();
+        }
+        case EnvironmentalReverb::roomHfLevelMb: {
+            RETURN_IF(
+                    mContext->setErRoomHfLevel(erParam.get<EnvironmentalReverb::roomHfLevelMb>()) !=
+                            RetCode::SUCCESS,
+                    EX_ILLEGAL_ARGUMENT, "setRoomHfLevelFailed");
+            return ndk::ScopedAStatus::ok();
+        }
+        case EnvironmentalReverb::decayTimeMs: {
+            RETURN_IF(mContext->setErDecayTime(erParam.get<EnvironmentalReverb::decayTimeMs>()) !=
+                              RetCode::SUCCESS,
+                      EX_ILLEGAL_ARGUMENT, "setDecayTimeFailed");
+            return ndk::ScopedAStatus::ok();
+        }
+        case EnvironmentalReverb::decayHfRatioPm: {
+            RETURN_IF(
+                    mContext->setErDecayHfRatio(
+                            erParam.get<EnvironmentalReverb::decayHfRatioPm>()) != RetCode::SUCCESS,
+                    EX_ILLEGAL_ARGUMENT, "setDecayHfRatioFailed");
+            return ndk::ScopedAStatus::ok();
+        }
+        case EnvironmentalReverb::levelMb: {
+            RETURN_IF(mContext->setErLevel(erParam.get<EnvironmentalReverb::levelMb>()) !=
+                              RetCode::SUCCESS,
+                      EX_ILLEGAL_ARGUMENT, "setLevelFailed");
+            return ndk::ScopedAStatus::ok();
+        }
+        case EnvironmentalReverb::delayMs: {
+            RETURN_IF(mContext->setErDelay(erParam.get<EnvironmentalReverb::delayMs>()) !=
+                              RetCode::SUCCESS,
+                      EX_ILLEGAL_ARGUMENT, "setDelayFailed");
+            return ndk::ScopedAStatus::ok();
+        }
+        case EnvironmentalReverb::diffusionPm: {
+            RETURN_IF(mContext->setErDiffusion(erParam.get<EnvironmentalReverb::diffusionPm>()) !=
+                              RetCode::SUCCESS,
+                      EX_ILLEGAL_ARGUMENT, "setDiffusionFailed");
+            return ndk::ScopedAStatus::ok();
+        }
+        case EnvironmentalReverb::densityPm: {
+            RETURN_IF(mContext->setErDensity(erParam.get<EnvironmentalReverb::densityPm>()) !=
+                              RetCode::SUCCESS,
+                      EX_ILLEGAL_ARGUMENT, "setDensityFailed");
+            return ndk::ScopedAStatus::ok();
+        }
+        case EnvironmentalReverb::bypass: {
+            RETURN_IF(mContext->setErBypass(erParam.get<EnvironmentalReverb::bypass>()) !=
+                              RetCode::SUCCESS,
+                      EX_ILLEGAL_ARGUMENT, "setBypassFailed");
+            return ndk::ScopedAStatus::ok();
+        }
+        default: {
+            LOG(ERROR) << __func__ << " unsupported tag: " << toString(tag);
+            return ndk::ScopedAStatus::fromExceptionCodeWithMessage(
+                    EX_ILLEGAL_ARGUMENT, "EnvironmentalReverbTagNotSupported");
+        }
+    }
 }
 
 ndk::ScopedAStatus EnvReverbSw::getParameterSpecific(const Parameter::Id& id,
                                                      Parameter::Specific* specific) {
     auto tag = id.getTag();
     RETURN_IF(Parameter::Id::environmentalReverbTag != tag, EX_ILLEGAL_ARGUMENT, "wrongIdTag");
-    specific->set<Parameter::Specific::environmentalReverb>(mSpecificParam);
+    auto erId = id.get<Parameter::Id::environmentalReverbTag>();
+    auto erIdTag = erId.getTag();
+    switch (erIdTag) {
+        case EnvironmentalReverb::Id::commonTag:
+            return getParameterEnvironmentalReverb(erId.get<EnvironmentalReverb::Id::commonTag>(),
+                                                   specific);
+        default:
+            LOG(ERROR) << __func__ << " unsupported tag: " << toString(erIdTag);
+            return ndk::ScopedAStatus::fromExceptionCodeWithMessage(
+                    EX_ILLEGAL_ARGUMENT, "EnvironmentalReverbTagNotSupported");
+    }
+}
+
+ndk::ScopedAStatus EnvReverbSw::getParameterEnvironmentalReverb(const EnvironmentalReverb::Tag& tag,
+                                                                Parameter::Specific* specific) {
+    RETURN_IF(!mContext, EX_NULL_POINTER, "nullContext");
+    EnvironmentalReverb erParam;
+    switch (tag) {
+        case EnvironmentalReverb::roomLevelMb: {
+            erParam.set<EnvironmentalReverb::roomLevelMb>(mContext->getErRoomLevel());
+            break;
+        }
+        case EnvironmentalReverb::roomHfLevelMb: {
+            erParam.set<EnvironmentalReverb::roomHfLevelMb>(mContext->getErRoomHfLevel());
+            break;
+        }
+        case EnvironmentalReverb::decayTimeMs: {
+            erParam.set<EnvironmentalReverb::decayTimeMs>(mContext->getErDecayTime());
+            break;
+        }
+        case EnvironmentalReverb::decayHfRatioPm: {
+            erParam.set<EnvironmentalReverb::decayHfRatioPm>(mContext->getErDecayHfRatio());
+            break;
+        }
+        case EnvironmentalReverb::levelMb: {
+            erParam.set<EnvironmentalReverb::levelMb>(mContext->getErLevel());
+            break;
+        }
+        case EnvironmentalReverb::delayMs: {
+            erParam.set<EnvironmentalReverb::delayMs>(mContext->getErDelay());
+            break;
+        }
+        case EnvironmentalReverb::diffusionPm: {
+            erParam.set<EnvironmentalReverb::diffusionPm>(mContext->getErDiffusion());
+            break;
+        }
+        case EnvironmentalReverb::densityPm: {
+            erParam.set<EnvironmentalReverb::densityPm>(mContext->getErDensity());
+            break;
+        }
+        case EnvironmentalReverb::bypass: {
+            erParam.set<EnvironmentalReverb::bypass>(mContext->getErBypass());
+            break;
+        }
+        default: {
+            LOG(ERROR) << __func__ << " unsupported tag: " << toString(tag);
+            return ndk::ScopedAStatus::fromExceptionCodeWithMessage(
+                    EX_ILLEGAL_ARGUMENT, "EnvironmentalReverbTagNotSupported");
+        }
+    }
+
+    specific->set<Parameter::Specific::environmentalReverb>(erParam);
     return ndk::ScopedAStatus::ok();
 }
 
