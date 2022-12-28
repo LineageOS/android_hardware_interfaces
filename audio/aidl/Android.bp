@@ -119,6 +119,7 @@ aidl_interface {
         "android/hardware/audio/core/IStreamCommon.aidl",
         "android/hardware/audio/core/IStreamIn.aidl",
         "android/hardware/audio/core/IStreamOut.aidl",
+        "android/hardware/audio/core/IStreamOutEventCallback.aidl",
         "android/hardware/audio/core/ITelephony.aidl",
         "android/hardware/audio/core/MicrophoneDynamicInfo.aidl",
         "android/hardware/audio/core/MicrophoneInfo.aidl",
