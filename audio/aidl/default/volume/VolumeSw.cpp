@@ -60,7 +60,7 @@ extern "C" binder_exception_t queryEffect(const AudioUuid* in_impl_uuid, Descrip
 namespace aidl::android::hardware::audio::effect {
 
 const std::string VolumeSw::kEffectName = "VolumeSw";
-const Volume::Capability VolumeSw::kCapability = {.maxLevel = Volume::MAX_LEVEL_DB};
+const Volume::Capability VolumeSw::kCapability = {.minLevelDb = -9600, .maxLevelDb = 0};
 const Descriptor VolumeSw::kDescriptor = {
         .common = {.id = {.type = kVolumeTypeUUID,
                           .uuid = kVolumeSwImplUUID,
@@ -174,6 +174,22 @@ IEffect::Status VolumeSw::effectProcessImpl(float* in, float* out, int samples) 
         *out++ = *in++;
     }
     return {STATUS_OK, samples, samples};
+}
+
+RetCode VolumeSwContext::setVolLevel(int level) {
+    if (level < VolumeSw::kCapability.minLevelDb || level > VolumeSw::kCapability.maxLevelDb) {
+        LOG(ERROR) << __func__ << " invalid level " << level;
+        return RetCode::ERROR_ILLEGAL_PARAMETER;
+    }
+    // TODO : Add implementation to apply new level
+    mLevel = level;
+    return RetCode::SUCCESS;
+}
+
+RetCode VolumeSwContext::setVolMute(bool mute) {
+    // TODO : Add implementation to modify mute
+    mMute = mute;
+    return RetCode::SUCCESS;
 }
 
 }  // namespace aidl::android::hardware::audio::effect
