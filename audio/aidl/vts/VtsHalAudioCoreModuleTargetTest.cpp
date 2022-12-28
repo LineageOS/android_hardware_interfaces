@@ -72,9 +72,12 @@ using aidl::android::media::audio::common::AudioContentType;
 using aidl::android::media::audio::common::AudioDevice;
 using aidl::android::media::audio::common::AudioDeviceAddress;
 using aidl::android::media::audio::common::AudioDeviceType;
+using aidl::android::media::audio::common::AudioDualMonoMode;
 using aidl::android::media::audio::common::AudioFormatType;
 using aidl::android::media::audio::common::AudioIoFlags;
+using aidl::android::media::audio::common::AudioLatencyMode;
 using aidl::android::media::audio::common::AudioOutputFlags;
+using aidl::android::media::audio::common::AudioPlaybackRate;
 using aidl::android::media::audio::common::AudioPort;
 using aidl::android::media::audio::common::AudioPortConfig;
 using aidl::android::media::audio::common::AudioPortDeviceExt;
@@ -2390,6 +2393,192 @@ TEST_P(AudioStreamOut, RequireAsyncCallback) {
     aidl::android::hardware::audio::core::IModule::OpenOutputStreamReturn ret;
     EXPECT_STATUS(EX_ILLEGAL_ARGUMENT, module->openOutputStream(args, &ret))
             << "when no async callback is provided for a non-blocking mix port";
+}
+
+TEST_P(AudioStreamOut, AudioDescriptionMixLevel) {
+    const auto ports = moduleConfig->getOutputMixPorts(false /*attachedOnly*/);
+    if (ports.empty()) {
+        GTEST_SKIP() << "No output mix ports";
+    }
+    bool atLeastOneSupports = false;
+    for (const auto& port : ports) {
+        const auto portConfig = moduleConfig->getSingleConfigForMixPort(false, port);
+        ASSERT_TRUE(portConfig.has_value()) << "No profiles specified for output mix port";
+        WithStream<IStreamOut> stream(portConfig.value());
+        ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultBufferSizeFrames));
+        bool isSupported = false;
+        EXPECT_NO_FATAL_FAILURE(
+                TestAccessors<float>(stream.get(), &IStreamOut::getAudioDescriptionMixLevel,
+                                     &IStreamOut::setAudioDescriptionMixLevel,
+                                     {IStreamOut::AUDIO_DESCRIPTION_MIX_LEVEL_MAX,
+                                      IStreamOut::AUDIO_DESCRIPTION_MIX_LEVEL_MAX - 1, 0,
+                                      -INFINITY /*IStreamOut::AUDIO_DESCRIPTION_MIX_LEVEL_MIN*/},
+                                     {IStreamOut::AUDIO_DESCRIPTION_MIX_LEVEL_MAX * 2,
+                                      IStreamOut::AUDIO_DESCRIPTION_MIX_LEVEL_MAX * 1.1f},
+                                     &isSupported));
+        if (isSupported) atLeastOneSupports = true;
+    }
+    if (!atLeastOneSupports) {
+        GTEST_SKIP() << "Audio description mix level is not supported";
+    }
+}
+
+TEST_P(AudioStreamOut, DualMonoMode) {
+    const auto ports = moduleConfig->getOutputMixPorts(false /*attachedOnly*/);
+    if (ports.empty()) {
+        GTEST_SKIP() << "No output mix ports";
+    }
+    bool atLeastOneSupports = false;
+    for (const auto& port : ports) {
+        const auto portConfig = moduleConfig->getSingleConfigForMixPort(false, port);
+        ASSERT_TRUE(portConfig.has_value()) << "No profiles specified for output mix port";
+        WithStream<IStreamOut> stream(portConfig.value());
+        ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultBufferSizeFrames));
+        bool isSupported = false;
+        EXPECT_NO_FATAL_FAILURE(TestAccessors<AudioDualMonoMode>(
+                stream.get(), &IStreamOut::getDualMonoMode, &IStreamOut::setDualMonoMode,
+                std::vector<AudioDualMonoMode>(enum_range<AudioDualMonoMode>().begin(),
+                                               enum_range<AudioDualMonoMode>().end()),
+                {}, &isSupported));
+        if (isSupported) atLeastOneSupports = true;
+    }
+    if (!atLeastOneSupports) {
+        GTEST_SKIP() << "Audio dual mono mode is not supported";
+    }
+}
+
+TEST_P(AudioStreamOut, LatencyMode) {
+    const auto ports = moduleConfig->getOutputMixPorts(false /*attachedOnly*/);
+    if (ports.empty()) {
+        GTEST_SKIP() << "No output mix ports";
+    }
+    bool atLeastOneSupports = false;
+    for (const auto& port : ports) {
+        const auto portConfig = moduleConfig->getSingleConfigForMixPort(false, port);
+        ASSERT_TRUE(portConfig.has_value()) << "No profiles specified for output mix port";
+        WithStream<IStreamOut> stream(portConfig.value());
+        ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultBufferSizeFrames));
+        bool isSupported = false;
+        std::vector<AudioLatencyMode> supportedModes;
+        ndk::ScopedAStatus status = stream.get()->getRecommendedLatencyModes(&supportedModes);
+        if (status.getExceptionCode() == EX_UNSUPPORTED_OPERATION) continue;
+        if (!status.isOk()) {
+            ADD_FAILURE() << "When latency modes are supported, getRecommendedLatencyModes "
+                          << "must succeed on a non-closed stream, but it failed with " << status;
+            continue;
+        }
+        std::set<AudioLatencyMode> unsupportedModes(enum_range<AudioLatencyMode>().begin(),
+                                                    enum_range<AudioLatencyMode>().end());
+        for (const auto mode : supportedModes) {
+            unsupportedModes.erase(mode);
+            ndk::ScopedAStatus status = stream.get()->setLatencyMode(mode);
+            if (status.getExceptionCode() == EX_UNSUPPORTED_OPERATION) {
+                ADD_FAILURE() << "When latency modes are supported, both getRecommendedLatencyModes"
+                              << " and setLatencyMode must be supported";
+            }
+            EXPECT_IS_OK(status) << "Setting of supported latency mode must succeed";
+        }
+        for (const auto mode : unsupportedModes) {
+            EXPECT_STATUS(EX_ILLEGAL_ARGUMENT, stream.get()->setLatencyMode(mode));
+        }
+        if (isSupported) atLeastOneSupports = true;
+    }
+    if (!atLeastOneSupports) {
+        GTEST_SKIP() << "Audio latency modes are not supported";
+    }
+}
+
+TEST_P(AudioStreamOut, PlaybackRate) {
+    static const auto kStatuses = {EX_NONE, EX_UNSUPPORTED_OPERATION};
+    const auto offloadMixPorts =
+            moduleConfig->getOffloadMixPorts(true /*attachedOnly*/, false /*singlePort*/);
+    if (offloadMixPorts.empty()) {
+        GTEST_SKIP()
+                << "No mix port for compressed offload that could be routed to attached devices";
+    }
+    ndk::ScopedAStatus status;
+    IModule::SupportedPlaybackRateFactors factors;
+    EXPECT_STATUS(kStatuses, status = module.get()->getSupportedPlaybackRateFactors(&factors));
+    if (status.getExceptionCode() == EX_UNSUPPORTED_OPERATION) {
+        GTEST_SKIP() << "Audio playback rate configuration is not supported";
+    }
+    EXPECT_LE(factors.minSpeed, factors.maxSpeed);
+    EXPECT_LE(factors.minPitch, factors.maxPitch);
+    EXPECT_LE(factors.minSpeed, 1.0f);
+    EXPECT_GE(factors.maxSpeed, 1.0f);
+    EXPECT_LE(factors.minPitch, 1.0f);
+    EXPECT_GE(factors.maxPitch, 1.0f);
+    constexpr auto tsDefault = AudioPlaybackRate::TimestretchMode::DEFAULT;
+    constexpr auto tsVoice = AudioPlaybackRate::TimestretchMode::VOICE;
+    constexpr auto fbFail = AudioPlaybackRate::TimestretchFallbackMode::FAIL;
+    constexpr auto fbMute = AudioPlaybackRate::TimestretchFallbackMode::MUTE;
+    const std::vector<AudioPlaybackRate> validValues = {
+            AudioPlaybackRate{1.0f, 1.0f, tsDefault, fbFail},
+            AudioPlaybackRate{1.0f, 1.0f, tsDefault, fbMute},
+            AudioPlaybackRate{factors.maxSpeed, factors.maxPitch, tsDefault, fbMute},
+            AudioPlaybackRate{factors.minSpeed, factors.minPitch, tsDefault, fbMute},
+            AudioPlaybackRate{1.0f, 1.0f, tsVoice, fbMute},
+            AudioPlaybackRate{1.0f, 1.0f, tsVoice, fbFail},
+            AudioPlaybackRate{factors.maxSpeed, factors.maxPitch, tsVoice, fbMute},
+            AudioPlaybackRate{factors.minSpeed, factors.minPitch, tsVoice, fbMute},
+            // Out of range speed / pitch values must not be rejected if the fallback mode is "mute"
+            AudioPlaybackRate{factors.maxSpeed * 2, factors.maxPitch * 2, tsDefault, fbMute},
+            AudioPlaybackRate{factors.minSpeed / 2, factors.minPitch / 2, tsDefault, fbMute},
+            AudioPlaybackRate{factors.maxSpeed * 2, factors.maxPitch * 2, tsVoice, fbMute},
+            AudioPlaybackRate{factors.minSpeed / 2, factors.minPitch / 2, tsVoice, fbMute},
+    };
+    const std::vector<AudioPlaybackRate> invalidValues = {
+            AudioPlaybackRate{factors.maxSpeed, factors.maxPitch * 2, tsDefault, fbFail},
+            AudioPlaybackRate{factors.maxSpeed * 2, factors.maxPitch, tsDefault, fbFail},
+            AudioPlaybackRate{factors.minSpeed, factors.minPitch / 2, tsDefault, fbFail},
+            AudioPlaybackRate{factors.minSpeed / 2, factors.minPitch, tsDefault, fbFail},
+            AudioPlaybackRate{factors.maxSpeed, factors.maxPitch * 2, tsVoice, fbFail},
+            AudioPlaybackRate{factors.maxSpeed * 2, factors.maxPitch, tsVoice, fbFail},
+            AudioPlaybackRate{factors.minSpeed, factors.minPitch / 2, tsVoice, fbFail},
+            AudioPlaybackRate{factors.minSpeed / 2, factors.minPitch, tsVoice, fbFail},
+            AudioPlaybackRate{1.0f, 1.0f, tsDefault,
+                              AudioPlaybackRate::TimestretchFallbackMode::SYS_RESERVED_CUT_REPEAT},
+            AudioPlaybackRate{1.0f, 1.0f, tsDefault,
+                              AudioPlaybackRate::TimestretchFallbackMode::SYS_RESERVED_DEFAULT},
+    };
+    bool atLeastOneSupports = false;
+    for (const auto& port : offloadMixPorts) {
+        const auto portConfig = moduleConfig->getSingleConfigForMixPort(false, port);
+        ASSERT_TRUE(portConfig.has_value()) << "No profiles specified for output mix port";
+        WithStream<IStreamOut> stream(portConfig.value());
+        ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultBufferSizeFrames));
+        bool isSupported = false;
+        EXPECT_NO_FATAL_FAILURE(TestAccessors<AudioPlaybackRate>(
+                stream.get(), &IStreamOut::getPlaybackRateParameters,
+                &IStreamOut::setPlaybackRateParameters, validValues, invalidValues, &isSupported));
+        if (isSupported) atLeastOneSupports = true;
+    }
+    if (!atLeastOneSupports) {
+        GTEST_SKIP() << "Audio playback rate configuration is not supported";
+    }
+}
+
+TEST_P(AudioStreamOut, SelectPresentation) {
+    static const auto kStatuses = {EX_ILLEGAL_ARGUMENT, EX_UNSUPPORTED_OPERATION};
+    const auto offloadMixPorts =
+            moduleConfig->getOffloadMixPorts(true /*attachedOnly*/, false /*singlePort*/);
+    if (offloadMixPorts.empty()) {
+        GTEST_SKIP()
+                << "No mix port for compressed offload that could be routed to attached devices";
+    }
+    bool atLeastOneSupports = false;
+    for (const auto& port : offloadMixPorts) {
+        const auto portConfig = moduleConfig->getSingleConfigForMixPort(false, port);
+        ASSERT_TRUE(portConfig.has_value()) << "No profiles specified for output mix port";
+        WithStream<IStreamOut> stream(portConfig.value());
+        ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultBufferSizeFrames));
+        ndk::ScopedAStatus status;
+        EXPECT_STATUS(kStatuses, status = stream.get()->selectPresentation(0, 0));
+        if (status.getExceptionCode() != EX_UNSUPPORTED_OPERATION) atLeastOneSupports = true;
+    }
+    if (!atLeastOneSupports) {
+        GTEST_SKIP() << "Presentation selection is not supported";
+    }
 }
 
 class StreamLogicDefaultDriver : public StreamLogicDriver {

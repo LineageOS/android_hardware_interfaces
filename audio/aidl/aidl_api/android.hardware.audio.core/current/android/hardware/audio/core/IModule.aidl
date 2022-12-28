@@ -46,6 +46,7 @@ interface IModule {
   android.hardware.audio.core.AudioRoute[] getAudioRoutesForAudioPort(int portId);
   android.hardware.audio.core.IModule.OpenInputStreamReturn openInputStream(in android.hardware.audio.core.IModule.OpenInputStreamArguments args);
   android.hardware.audio.core.IModule.OpenOutputStreamReturn openOutputStream(in android.hardware.audio.core.IModule.OpenOutputStreamArguments args);
+  android.hardware.audio.core.IModule.SupportedPlaybackRateFactors getSupportedPlaybackRateFactors();
   android.hardware.audio.core.AudioPatch setAudioPatch(in android.hardware.audio.core.AudioPatch requested);
   boolean setAudioPortConfig(in android.media.audio.common.AudioPortConfig requested, out android.media.audio.common.AudioPortConfig suggested);
   void resetAudioPatch(int patchId);
@@ -84,11 +85,19 @@ interface IModule {
     @nullable android.media.audio.common.AudioOffloadInfo offloadInfo;
     long bufferSizeFrames;
     @nullable android.hardware.audio.core.IStreamCallback callback;
+    @nullable android.hardware.audio.core.IStreamOutEventCallback eventCallback;
   }
   @VintfStability
   parcelable OpenOutputStreamReturn {
     android.hardware.audio.core.IStreamOut stream;
     android.hardware.audio.core.StreamDescriptor desc;
+  }
+  @VintfStability
+  parcelable SupportedPlaybackRateFactors {
+    float minSpeed;
+    float maxSpeed;
+    float minPitch;
+    float maxPitch;
   }
   @Backing(type="int") @VintfStability
   enum ScreenRotation {
