@@ -47,7 +47,7 @@ inline ::testing::AssertionResult assertIsOk(const char* expr, const ::ndk::Scop
 
 using namespace android;
 
-using aidl::android::hardware::audio::core::ISoundDose;
+using aidl::android::hardware::audio::core::sounddose::ISoundDose;
 using aidl::android::hardware::audio::sounddose::ISoundDoseFactory;
 
 class SoundDoseFactory : public testing::TestWithParam<std::string> {

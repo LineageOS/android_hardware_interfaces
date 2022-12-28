@@ -18,12 +18,12 @@
 
 #include <mutex>
 
-#include <aidl/android/hardware/audio/core/BnSoundDose.h>
+#include <aidl/android/hardware/audio/core/sounddose/BnSoundDose.h>
 #include <aidl/android/media/audio/common/AudioDevice.h>
 
 using aidl::android::media::audio::common::AudioDevice;
 
-namespace aidl::android::hardware::audio::core {
+namespace aidl::android::hardware::audio::core::sounddose {
 
 class SoundDose : public BnSoundDose {
   public:
@@ -39,4 +39,4 @@ class SoundDose : public BnSoundDose {
     float mRs2Value;
 };
 
-}  // namespace aidl::android::hardware::audio::core
+}  // namespace aidl::android::hardware::audio::core::sounddose

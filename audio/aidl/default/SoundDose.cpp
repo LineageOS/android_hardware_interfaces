@@ -20,7 +20,7 @@
 
 #include <android-base/logging.h>
 
-namespace aidl::android::hardware::audio::core {
+namespace aidl::android::hardware::audio::core::sounddose {
 
 ndk::ScopedAStatus SoundDose::setOutputRs2(float in_rs2ValueDbA) {
     if (in_rs2ValueDbA < MIN_RS2 || in_rs2ValueDbA > DEFAULT_MAX_RS2) {
@@ -54,4 +54,4 @@ ndk::ScopedAStatus SoundDose::registerSoundDoseCallback(
     return ndk::ScopedAStatus::ok();
 }
 
-}  // namespace aidl::android::hardware::audio::core
+}  // namespace aidl::android::hardware::audio::core::sounddose

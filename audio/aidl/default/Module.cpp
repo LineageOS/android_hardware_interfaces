@@ -32,6 +32,7 @@
 
 using aidl::android::hardware::audio::common::SinkMetadata;
 using aidl::android::hardware::audio::common::SourceMetadata;
+using aidl::android::hardware::audio::core::sounddose::ISoundDose;
 using aidl::android::media::audio::common::AudioChannelLayout;
 using aidl::android::media::audio::common::AudioDevice;
 using aidl::android::media::audio::common::AudioFormatDescription;
@@ -946,7 +947,7 @@ ndk::ScopedAStatus Module::updateScreenState(bool in_isTurnedOn) {
 
 ndk::ScopedAStatus Module::getSoundDose(std::shared_ptr<ISoundDose>* _aidl_return) {
     if (mSoundDose == nullptr) {
-        mSoundDose = ndk::SharedRefBase::make<SoundDose>();
+        mSoundDose = ndk::SharedRefBase::make<sounddose::SoundDose>();
         mSoundDoseBinder = mSoundDose->asBinder();
         AIBinder_setMinSchedulerPolicy(mSoundDoseBinder.get(), SCHED_NORMAL,
                                        ANDROID_PRIORITY_AUDIO);

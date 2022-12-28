@@ -16,7 +16,7 @@
 
 package android.hardware.audio.sounddose;
 
-import android.hardware.audio.core.ISoundDose;
+import android.hardware.audio.core.sounddose.ISoundDose;
 
 /**
  * This interface is used to provide an easy way to implement the ISoundDose interface
