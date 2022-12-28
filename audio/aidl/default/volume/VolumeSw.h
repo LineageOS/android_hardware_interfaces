@@ -33,23 +33,11 @@ class VolumeSwContext final : public EffectContext {
         LOG(DEBUG) << __func__;
     }
 
-    RetCode setVolLevel(int level) {
-        if (level < Volume::MIN_LEVEL_DB || level > Volume::MAX_LEVEL_DB) {
-            LOG(ERROR) << __func__ << " invalid level " << level;
-            return RetCode::ERROR_ILLEGAL_PARAMETER;
-        }
-        // TODO : Add implementation to apply new level
-        mLevel = level;
-        return RetCode::SUCCESS;
-    }
+    RetCode setVolLevel(int level);
 
     int getVolLevel() const { return mLevel; }
 
-    RetCode setVolMute(bool mute) {
-        // TODO : Add implementation to modify mute
-        mMute = mute;
-        return RetCode::SUCCESS;
-    }
+    RetCode setVolMute(bool mute);
 
     bool getVolMute() const { return mMute; }
 
