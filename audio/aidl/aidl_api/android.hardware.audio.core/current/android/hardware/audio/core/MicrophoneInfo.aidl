@@ -37,15 +37,15 @@ parcelable MicrophoneInfo {
   @utf8InCpp String id;
   android.media.audio.common.AudioDevice device;
   android.hardware.audio.core.MicrophoneInfo.Location location = android.hardware.audio.core.MicrophoneInfo.Location.UNKNOWN;
-  int group = -1;
-  int indexInTheGroup = -1;
+  int group = GROUP_UNKNOWN;
+  int indexInTheGroup = INDEX_IN_THE_GROUP_UNKNOWN;
   @nullable android.hardware.audio.core.MicrophoneInfo.Sensitivity sensitivity;
   android.hardware.audio.core.MicrophoneInfo.Directionality directionality = android.hardware.audio.core.MicrophoneInfo.Directionality.UNKNOWN;
   android.hardware.audio.core.MicrophoneInfo.FrequencyResponsePoint[] frequencyResponse;
   @nullable android.hardware.audio.core.MicrophoneInfo.Coordinate position;
   @nullable android.hardware.audio.core.MicrophoneInfo.Coordinate orientation;
-  const int GROUP_UNKNOWN = -1;
-  const int INDEX_IN_THE_GROUP_UNKNOWN = -1;
+  const int GROUP_UNKNOWN = (-1);
+  const int INDEX_IN_THE_GROUP_UNKNOWN = (-1);
   @Backing(type="int") @VintfStability
   enum Location {
     UNKNOWN = 0,

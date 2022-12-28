@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <aidl/android/hardware/audio/core/ISoundDose.h>
+#include <aidl/android/hardware/audio/core/sounddose/ISoundDose.h>
 #include <aidl/android/hardware/audio/sounddose/BnSoundDoseFactory.h>
 #include <android/binder_interface_utils.h>
 
@@ -24,7 +24,7 @@
 
 namespace aidl::android::hardware::audio::sounddose {
 
-using ::aidl::android::hardware::audio::core::ISoundDose;
+using ::aidl::android::hardware::audio::core::sounddose::ISoundDose;
 
 class SoundDoseFactory : public BnSoundDoseFactory {
   public:
