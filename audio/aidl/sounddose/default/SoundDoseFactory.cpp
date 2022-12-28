@@ -23,7 +23,7 @@
 
 namespace aidl::android::hardware::audio::sounddose {
 
-using ::aidl::android::hardware::audio::core::SoundDose;
+using ::aidl::android::hardware::audio::core::sounddose::SoundDose;
 
 ndk::ScopedAStatus SoundDoseFactory::getSoundDose(const std::string& in_module,
                                                   std::shared_ptr<ISoundDose>* _aidl_return) {

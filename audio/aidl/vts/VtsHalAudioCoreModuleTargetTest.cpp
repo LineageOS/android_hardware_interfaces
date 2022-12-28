@@ -36,8 +36,8 @@
 #include <aidl/Vintf.h>
 #include <aidl/android/hardware/audio/core/BnStreamCallback.h>
 #include <aidl/android/hardware/audio/core/IModule.h>
-#include <aidl/android/hardware/audio/core/ISoundDose.h>
 #include <aidl/android/hardware/audio/core/ITelephony.h>
+#include <aidl/android/hardware/audio/core/sounddose/ISoundDose.h>
 #include <aidl/android/media/audio/common/AudioIoFlags.h>
 #include <aidl/android/media/audio/common/AudioOutputFlags.h>
 #include <android-base/chrono_utils.h>
@@ -57,7 +57,6 @@ using aidl::android::hardware::audio::core::AudioMode;
 using aidl::android::hardware::audio::core::AudioPatch;
 using aidl::android::hardware::audio::core::AudioRoute;
 using aidl::android::hardware::audio::core::IModule;
-using aidl::android::hardware::audio::core::ISoundDose;
 using aidl::android::hardware::audio::core::IStreamCommon;
 using aidl::android::hardware::audio::core::IStreamIn;
 using aidl::android::hardware::audio::core::IStreamOut;
@@ -67,6 +66,7 @@ using aidl::android::hardware::audio::core::MicrophoneInfo;
 using aidl::android::hardware::audio::core::ModuleDebug;
 using aidl::android::hardware::audio::core::StreamDescriptor;
 using aidl::android::hardware::audio::core::VendorParameter;
+using aidl::android::hardware::audio::core::sounddose::ISoundDose;
 using aidl::android::hardware::common::fmq::SynchronizedReadWrite;
 using aidl::android::media::audio::common::AudioContentType;
 using aidl::android::media::audio::common::AudioDevice;
