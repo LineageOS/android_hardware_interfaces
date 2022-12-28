@@ -1755,13 +1755,12 @@ TEST_P(AudioCoreModule, SetVendorParameters) {
 TEST_P(AudioCoreModule, AddRemoveEffectInvalidArguments) {
     ndk::ScopedAStatus addEffectStatus = module->addDeviceEffect(-1, nullptr);
     ndk::ScopedAStatus removeEffectStatus = module->removeDeviceEffect(-1, nullptr);
-    const bool isSupported = addEffectStatus.getExceptionCode() != EX_UNSUPPORTED_OPERATION;
-    if (isSupported) {
+    if (addEffectStatus.getExceptionCode() != EX_UNSUPPORTED_OPERATION) {
         EXPECT_EQ(EX_ILLEGAL_ARGUMENT, addEffectStatus.getExceptionCode());
         EXPECT_EQ(EX_ILLEGAL_ARGUMENT, removeEffectStatus.getExceptionCode());
-    } else if (EX_UNSUPPORTED_OPERATION != removeEffectStatus.getExceptionCode()) {
-        GTEST_FAIL() << "addEffect and removeEffect must be either supported or not supported "
-                     << "together";
+    } else if (removeEffectStatus.getExceptionCode() != EX_UNSUPPORTED_OPERATION) {
+        GTEST_FAIL() << "addDeviceEffect and removeDeviceEffect must be either supported or "
+                     << "not supported together";
     } else {
         GTEST_SKIP() << "Offloaded effects not supported";
     }
@@ -2128,15 +2127,13 @@ class AudioStream : public AudioCoreModule {
             ASSERT_NE(nullptr, streamCommon);
             ndk::ScopedAStatus addEffectStatus = streamCommon->addEffect(nullptr);
             ndk::ScopedAStatus removeEffectStatus = streamCommon->removeEffect(nullptr);
-            const bool isSupported = addEffectStatus.getExceptionCode() != EX_UNSUPPORTED_OPERATION;
-            if (isSupported) {
+            if (addEffectStatus.getExceptionCode() != EX_UNSUPPORTED_OPERATION) {
                 EXPECT_EQ(EX_ILLEGAL_ARGUMENT, addEffectStatus.getExceptionCode());
                 EXPECT_EQ(EX_ILLEGAL_ARGUMENT, removeEffectStatus.getExceptionCode());
                 atLeastOneSupports = true;
-            } else if (EX_UNSUPPORTED_OPERATION != removeEffectStatus.getExceptionCode()) {
-                ADD_FAILURE()
-                        << "addEffect and removeEffect must be either supported or not supported "
-                        << "together";
+            } else if (removeEffectStatus.getExceptionCode() != EX_UNSUPPORTED_OPERATION) {
+                ADD_FAILURE() << "addEffect and removeEffect must be either supported or "
+                              << "not supported together";
                 atLeastOneSupports = true;
             }
         }
@@ -2458,10 +2455,10 @@ TEST_P(AudioStreamOut, LatencyMode) {
         ASSERT_TRUE(portConfig.has_value()) << "No profiles specified for output mix port";
         WithStream<IStreamOut> stream(portConfig.value());
         ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultBufferSizeFrames));
-        bool isSupported = false;
         std::vector<AudioLatencyMode> supportedModes;
         ndk::ScopedAStatus status = stream.get()->getRecommendedLatencyModes(&supportedModes);
         if (status.getExceptionCode() == EX_UNSUPPORTED_OPERATION) continue;
+        atLeastOneSupports = true;
         if (!status.isOk()) {
             ADD_FAILURE() << "When latency modes are supported, getRecommendedLatencyModes "
                           << "must succeed on a non-closed stream, but it failed with " << status;
@@ -2481,7 +2478,6 @@ TEST_P(AudioStreamOut, LatencyMode) {
         for (const auto mode : unsupportedModes) {
             EXPECT_STATUS(EX_ILLEGAL_ARGUMENT, stream.get()->setLatencyMode(mode));
         }
-        if (isSupported) atLeastOneSupports = true;
     }
     if (!atLeastOneSupports) {
         GTEST_SKIP() << "Audio latency modes are not supported";
