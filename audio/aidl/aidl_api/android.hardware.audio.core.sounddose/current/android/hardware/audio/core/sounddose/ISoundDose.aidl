@@ -31,18 +31,18 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.audio.core;
+package android.hardware.audio.core.sounddose;
 @VintfStability
 interface ISoundDose {
   void setOutputRs2(float rs2ValueDbA);
   float getOutputRs2();
-  void registerSoundDoseCallback(in android.hardware.audio.core.ISoundDose.IHalSoundDoseCallback callback);
+  void registerSoundDoseCallback(in android.hardware.audio.core.sounddose.ISoundDose.IHalSoundDoseCallback callback);
   const int DEFAULT_MAX_RS2 = 100;
   const int MIN_RS2 = 80;
   @VintfStability
   interface IHalSoundDoseCallback {
     oneway void onMomentaryExposureWarning(float currentDbA, in android.media.audio.common.AudioDevice audioDevice);
-    oneway void onNewMelValues(in android.hardware.audio.core.ISoundDose.IHalSoundDoseCallback.MelRecord melRecord, in android.media.audio.common.AudioDevice audioDevice);
+    oneway void onNewMelValues(in android.hardware.audio.core.sounddose.ISoundDose.IHalSoundDoseCallback.MelRecord melRecord, in android.media.audio.common.AudioDevice audioDevice);
     @VintfStability
     parcelable MelRecord {
       float[] melValues;
