@@ -14,7 +14,7 @@ aidl_interface {
         "android/hardware/biometrics/face/**/*.aidl",
     ],
     imports: [
-        "android.hardware.biometrics.common",
+        "android.hardware.biometrics.common-V2",
         "android.hardware.common-V2",
         "android.hardware.keymaster-V3",
     ],
