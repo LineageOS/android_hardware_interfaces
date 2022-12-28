@@ -37,7 +37,7 @@ class NoiseSuppressionSwContext final : public EffectContext {
     NoiseSuppression::Level getLevel();
 
   private:
-    NoiseSuppression::Level mLevel;
+    NoiseSuppression::Level mLevel = NoiseSuppression::Level::LOW;
 };
 
 class NoiseSuppressionSw final : public EffectImpl {
