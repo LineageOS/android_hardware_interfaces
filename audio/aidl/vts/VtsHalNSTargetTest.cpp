@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
+#include <Utils.h>
 #include <aidl/Vintf.h>
+#include <android/binder_enums.h>
+#include <unordered_set>
 
 #define LOG_TAG "VtsHalNSParamTest"
 
-#include <Utils.h>
-#include <unordered_set>
+#include <aidl/android/hardware/audio/effect/NoiseSuppression.h>
 #include "EffectHelper.h"
 
 using namespace android;
@@ -69,9 +71,6 @@ class NSParamTest : public ::testing::TestWithParam<NSParamTestParam>, public Ef
     }
 
     static const long kInputFrameCount = 0x100, kOutputFrameCount = 0x100;
-    static const std::vector<std::pair<std::shared_ptr<IFactory>, Descriptor>> kFactoryDescList;
-    static const std::unordered_set<NoiseSuppression::Level> kLevelValues;
-
     std::shared_ptr<IFactory> mFactory;
     std::shared_ptr<IEffect> mEffect;
     Descriptor mDescriptor;
@@ -114,18 +113,15 @@ class NSParamTest : public ::testing::TestWithParam<NSParamTestParam>, public Ef
         ns.set<NoiseSuppression::level>(level);
         mTags.push_back({NoiseSuppression::level, ns});
     }
+    static std::unordered_set<NoiseSuppression::Level> getLevelValues() {
+        return {ndk::enum_range<NoiseSuppression::Level>().begin(),
+                ndk::enum_range<NoiseSuppression::Level>().end()};
+    }
 
   private:
     std::vector<std::pair<NoiseSuppression::Tag, NoiseSuppression>> mTags;
     void CleanUp() { mTags.clear(); }
 };
-
-const std::vector<std::pair<std::shared_ptr<IFactory>, Descriptor>> kFactoryDescList =
-        EffectFactoryHelper::getAllEffectDescriptors(IFactory::descriptor,
-                                                     kNoiseSuppressionTypeUUID);
-const std::unordered_set<NoiseSuppression::Level> NSParamTest::kLevelValues = {
-        ndk::enum_range<NoiseSuppression::Level>().begin(),
-        ndk::enum_range<NoiseSuppression::Level>().end()};
 
 TEST_P(NSParamTest, SetAndGetLevel) {
     EXPECT_NO_FATAL_FAILURE(addLevelParam(mLevel));
@@ -136,7 +132,7 @@ INSTANTIATE_TEST_SUITE_P(
         NSParamTest, NSParamTest,
         ::testing::Combine(testing::ValuesIn(EffectFactoryHelper::getAllEffectDescriptors(
                                    IFactory::descriptor, kNoiseSuppressionTypeUUID)),
-                           testing::ValuesIn(NSParamTest::kLevelValues)),
+                           testing::ValuesIn(NSParamTest::getLevelValues())),
         [](const testing::TestParamInfo<NSParamTest::ParamType>& info) {
             auto descriptor = std::get<PARAM_INSTANCE_NAME>(info.param).second;
             std::string level = aidl::android::hardware::audio::effect::toString(
