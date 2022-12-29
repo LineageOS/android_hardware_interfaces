@@ -62,7 +62,8 @@ namespace aidl::android::hardware::audio::effect {
 
 const std::string BassBoostSw::kEffectName = "BassBoostSw";
 const bool BassBoostSw::kStrengthSupported = true;
-const BassBoost::Capability BassBoostSw::kCapability = {.strengthSupported = kStrengthSupported};
+const BassBoost::Capability BassBoostSw::kCapability = {.maxStrengthPm = 1000,
+                                                        .strengthSupported = kStrengthSupported};
 const Descriptor BassBoostSw::kDescriptor = {
         .common = {.id = {.type = kBassBoostTypeUUID,
                           .uuid = kBassBoostSwImplUUID,
@@ -169,6 +170,16 @@ IEffect::Status BassBoostSw::effectProcessImpl(float* in, float* out, int sample
         *out++ = *in++;
     }
     return {STATUS_OK, samples, samples};
+}
+
+RetCode BassBoostSwContext::setBbStrengthPm(int strength) {
+    if (strength < 0 || strength > BassBoostSw::kCapability.maxStrengthPm) {
+        LOG(ERROR) << __func__ << " invalid strength: " << strength;
+        return RetCode::ERROR_ILLEGAL_PARAMETER;
+    }
+    // TODO : Add implementation to apply new strength
+    mStrength = strength;
+    return RetCode::SUCCESS;
 }
 
 }  // namespace aidl::android::hardware::audio::effect

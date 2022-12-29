@@ -32,6 +32,7 @@
 
 using aidl::android::hardware::audio::common::SinkMetadata;
 using aidl::android::hardware::audio::common::SourceMetadata;
+using aidl::android::hardware::audio::core::sounddose::ISoundDose;
 using aidl::android::media::audio::common::AudioChannelLayout;
 using aidl::android::media::audio::common::AudioDevice;
 using aidl::android::media::audio::common::AudioFormatDescription;
@@ -603,6 +604,13 @@ ndk::ScopedAStatus Module::openOutputStream(const OpenOutputStreamArguments& in_
     return ndk::ScopedAStatus::ok();
 }
 
+ndk::ScopedAStatus Module::getSupportedPlaybackRateFactors(
+        SupportedPlaybackRateFactors* _aidl_return) {
+    LOG(DEBUG) << __func__;
+    (void)_aidl_return;
+    return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+}
+
 ndk::ScopedAStatus Module::setAudioPatch(const AudioPatch& in_requested, AudioPatch* _aidl_return) {
     LOG(DEBUG) << __func__ << ": requested patch " << in_requested.toString();
     if (in_requested.sourcePortConfigIds.empty()) {
@@ -939,7 +947,7 @@ ndk::ScopedAStatus Module::updateScreenState(bool in_isTurnedOn) {
 
 ndk::ScopedAStatus Module::getSoundDose(std::shared_ptr<ISoundDose>* _aidl_return) {
     if (mSoundDose == nullptr) {
-        mSoundDose = ndk::SharedRefBase::make<SoundDose>();
+        mSoundDose = ndk::SharedRefBase::make<sounddose::SoundDose>();
         mSoundDoseBinder = mSoundDose->asBinder();
         AIBinder_setMinSchedulerPolicy(mSoundDoseBinder.get(), SCHED_NORMAL,
                                        ANDROID_PRIORITY_AUDIO);

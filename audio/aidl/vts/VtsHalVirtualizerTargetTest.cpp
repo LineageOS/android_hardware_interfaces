@@ -44,11 +44,6 @@ using VirtualizerParamTestParam = std::tuple<std::pair<std::shared_ptr<IFactory>
  * otherwise expect EX_ILLEGAL_ARGUMENT.
  */
 
-const std::vector<int> kStrengthValues = {
-        std::numeric_limits<int>::min(),         Virtualizer::MIN_PER_MILLE_STRENGTH - 1,
-        Virtualizer::MIN_PER_MILLE_STRENGTH,     Virtualizer::MAX_PER_MILLE_STRENGTH,
-        Virtualizer::MAX_PER_MILLE_STRENGTH + 1, std::numeric_limits<int>::max()};
-
 class VirtualizerParamTest : public ::testing::TestWithParam<VirtualizerParamTestParam>,
                              public EffectHelper {
   public:
@@ -75,8 +70,7 @@ class VirtualizerParamTest : public ::testing::TestWithParam<VirtualizerParamTes
     }
 
     Parameter::Specific getDefaultParamSpecific() {
-        Virtualizer vr =
-                Virtualizer::make<Virtualizer::strengthPm>(Virtualizer::MIN_PER_MILLE_STRENGTH);
+        Virtualizer vr = Virtualizer::make<Virtualizer::strengthPm>(0);
         Parameter::Specific specific =
                 Parameter::Specific::make<Parameter::Specific::virtualizer>(vr);
         return specific;
@@ -86,7 +80,7 @@ class VirtualizerParamTest : public ::testing::TestWithParam<VirtualizerParamTes
     std::shared_ptr<IFactory> mFactory;
     std::shared_ptr<IEffect> mEffect;
     Descriptor mDescriptor;
-    int mParamStrength = Virtualizer::MIN_PER_MILLE_STRENGTH;
+    int mParamStrength = 0;
 
     void SetAndGetVirtualizerParameters() {
         for (auto& it : mTags) {
@@ -141,8 +135,29 @@ class VirtualizerParamTest : public ::testing::TestWithParam<VirtualizerParamTes
     }
 
     bool isStrengthInRange(const Virtualizer::Capability& cap, int strength) const {
-        return cap.strengthSupported && strength >= Virtualizer::MIN_PER_MILLE_STRENGTH &&
-               strength <= Virtualizer::MAX_PER_MILLE_STRENGTH;
+        return cap.strengthSupported && strength >= 0 && strength <= cap.maxStrengthPm;
+    }
+
+    static std::vector<int> getStrengthTestValues(
+            std::vector<std::pair<std::shared_ptr<IFactory>, Descriptor>> kFactoryDescList) {
+        const auto max = std::max_element(
+                kFactoryDescList.begin(), kFactoryDescList.end(),
+                [](const std::pair<std::shared_ptr<IFactory>, Descriptor>& a,
+                   const std::pair<std::shared_ptr<IFactory>, Descriptor>& b) {
+                    return a.second.capability.get<Capability::virtualizer>().maxStrengthPm <
+                           b.second.capability.get<Capability::virtualizer>().maxStrengthPm;
+                });
+        if (max == kFactoryDescList.end()) {
+            return {0};
+        }
+        int maxStrength = max->second.capability.get<Capability::virtualizer>().maxStrengthPm;
+        return {std::numeric_limits<int>::min(),
+                -1,
+                0,
+                maxStrength >> 1,
+                maxStrength,
+                maxStrength + 1,
+                std::numeric_limits<int>::max()};
     }
 
   private:
@@ -159,7 +174,9 @@ INSTANTIATE_TEST_SUITE_P(
         VirtualizerTest, VirtualizerParamTest,
         ::testing::Combine(testing::ValuesIn(EffectFactoryHelper::getAllEffectDescriptors(
                                    IFactory::descriptor, kVirtualizerTypeUUID)),
-                           testing::ValuesIn(kStrengthValues)),
+                           testing::ValuesIn(VirtualizerParamTest::getStrengthTestValues(
+                                   EffectFactoryHelper::getAllEffectDescriptors(
+                                           IFactory::descriptor, kVirtualizerTypeUUID)))),
         [](const testing::TestParamInfo<VirtualizerParamTest::ParamType>& info) {
             auto descriptor = std::get<PARAM_INSTANCE_NAME>(info.param).second;
             std::string strength = std::to_string(std::get<PARAM_STRENGTH>(info.param));

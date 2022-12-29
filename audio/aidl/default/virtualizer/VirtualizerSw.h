@@ -32,20 +32,11 @@ class VirtualizerSwContext final : public EffectContext {
         : EffectContext(statusDepth, common) {
         LOG(DEBUG) << __func__;
     }
-    RetCode setVrStrength(int strength) {
-        if (strength < Virtualizer::MIN_PER_MILLE_STRENGTH ||
-            strength > Virtualizer::MAX_PER_MILLE_STRENGTH) {
-            LOG(ERROR) << __func__ << " invalid strength " << strength;
-            return RetCode::ERROR_ILLEGAL_PARAMETER;
-        }
-        // TODO : Add implementation to apply new strength
-        mStrength = strength;
-        return RetCode::SUCCESS;
-    }
+    RetCode setVrStrength(int strength);
     int getVrStrength() const { return mStrength; }
 
   private:
-    int mStrength;
+    int mStrength = 0;
 };
 
 class VirtualizerSw final : public EffectImpl {

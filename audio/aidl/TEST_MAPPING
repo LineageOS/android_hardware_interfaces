@@ -13,6 +13,9 @@
       "name": "VtsHalDownmixTargetTest"
     },
     {
+      "name": "VtsHalEnvironmentalReverbTargetTest"
+    },
+    {
       "name": "VtsHalEqualizerTargetTest"
     },
     {
@@ -20,6 +23,9 @@
     },
     {
       "name": "VtsHalLoudnessEnhancerTargetTest"
+    },
+    {
+      "name": "VtsHalPresetReverbTargetTest"
     },
     {
       "name": "VtsHalVirtualizerTargetTest"

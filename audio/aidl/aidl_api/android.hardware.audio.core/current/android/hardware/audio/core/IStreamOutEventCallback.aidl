@@ -33,20 +33,7 @@
 
 package android.hardware.audio.core;
 @VintfStability
-interface ISoundDose {
-  void setOutputRs2(float rs2ValueDbA);
-  float getOutputRs2();
-  void registerSoundDoseCallback(in android.hardware.audio.core.ISoundDose.IHalSoundDoseCallback callback);
-  const int DEFAULT_MAX_RS2 = 100;
-  const int MIN_RS2 = 80;
-  @VintfStability
-  interface IHalSoundDoseCallback {
-    oneway void onMomentaryExposureWarning(float currentDbA, in android.media.audio.common.AudioDevice audioDevice);
-    oneway void onNewMelValues(in android.hardware.audio.core.ISoundDose.IHalSoundDoseCallback.MelRecord melRecord, in android.media.audio.common.AudioDevice audioDevice);
-    @VintfStability
-    parcelable MelRecord {
-      float[] melValues;
-      long timestamp;
-    }
-  }
+interface IStreamOutEventCallback {
+  oneway void onCodecFormatChanged(in byte[] audioMetadata);
+  oneway void onRecommendedLatencyModeChanged(in android.media.audio.common.AudioLatencyMode[] modes);
 }

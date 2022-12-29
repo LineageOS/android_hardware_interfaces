@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.hardware.audio.core;
+package android.hardware.audio.core.sounddose;
 
 import android.media.audio.common.AudioDevice;
 

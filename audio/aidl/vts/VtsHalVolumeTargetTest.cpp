@@ -34,17 +34,14 @@ using aidl::android::hardware::audio::effect::Volume;
  * Here we focus on specific parameter checking, general IEffect interfaces testing performed in
  * VtsAudioEffectTargetTest.
  */
-enum ParamName { PARAM_INSTANCE_NAME, PARAM_LEVEL_DB, PARAM_MUTE };
+enum ParamName { PARAM_INSTANCE_NAME, PARAM_LEVEL, PARAM_MUTE };
 using VolumeParamTestParam =
         std::tuple<std::pair<std::shared_ptr<IFactory>, Descriptor>, int, bool>;
-
-const std::vector<int> kLevelValues = {Volume::MIN_LEVEL_DB - 1, Volume::MIN_LEVEL_DB, -100,
-                                       Volume::MAX_LEVEL_DB, Volume::MAX_LEVEL_DB + 1};
 
 class VolumeParamTest : public ::testing::TestWithParam<VolumeParamTestParam>, public EffectHelper {
   public:
     VolumeParamTest()
-        : mParamLevel(std::get<PARAM_LEVEL_DB>(GetParam())),
+        : mParamLevel(std::get<PARAM_LEVEL>(GetParam())),
           mParamMute(std::get<PARAM_MUTE>(GetParam())) {
         std::tie(mFactory, mDescriptor) = std::get<PARAM_INSTANCE_NAME>(GetParam());
     }
@@ -67,7 +64,7 @@ class VolumeParamTest : public ::testing::TestWithParam<VolumeParamTestParam>, p
     }
 
     Parameter::Specific getDefaultParamSpecific() {
-        Volume vol = Volume::make<Volume::levelDb>(Volume::MIN_LEVEL_DB);
+        Volume vol = Volume::make<Volume::levelDb>(-9600);
         Parameter::Specific specific = Parameter::Specific::make<Parameter::Specific::volume>(vol);
         return specific;
     }
@@ -87,6 +84,8 @@ class VolumeParamTest : public ::testing::TestWithParam<VolumeParamTestParam>, p
             // validate parameter
             Descriptor desc;
             ASSERT_STATUS(EX_NONE, mEffect->getDescriptor(&desc));
+            // only set and get parameter if capability is valid
+            ASSERT_TRUE(isCapabilityValid(desc));
             const bool valid = isTagInRange(it.first, it.second, desc);
             const binder_exception_t expected = valid ? EX_NONE : EX_ILLEGAL_ARGUMENT;
 
@@ -97,7 +96,7 @@ class VolumeParamTest : public ::testing::TestWithParam<VolumeParamTestParam>, p
             expectParam.set<Parameter::specific>(specific);
             EXPECT_STATUS(expected, mEffect->setParameter(expectParam)) << expectParam.toString();
 
-            // only get if parameter in range and set success
+            // only get if parameter is in range and set success
             if (expected == EX_NONE) {
                 Parameter getParam;
                 Parameter::Id id;
@@ -124,6 +123,11 @@ class VolumeParamTest : public ::testing::TestWithParam<VolumeParamTestParam>, p
         mTags.push_back({Volume::mute, vol});
     }
 
+    bool isCapabilityValid(const Descriptor& desc) {
+        const Volume::Capability& volCap = desc.capability.get<Capability::volume>();
+        return (volCap.minLevelDb <= volCap.maxLevelDb);
+    }
+
     bool isTagInRange(const Volume::Tag& tag, const Volume& vol, const Descriptor& desc) const {
         const Volume::Capability& volCap = desc.capability.get<Capability::volume>();
         switch (tag) {
@@ -138,9 +142,21 @@ class VolumeParamTest : public ::testing::TestWithParam<VolumeParamTestParam>, p
         }
     }
 
-    bool isLevelInRange(const Volume::Capability& cap, int level) const {
-        return level >= Volume::MIN_LEVEL_DB && level <= Volume::MAX_LEVEL_DB &&
-               level <= cap.maxLevel;
+    static std::vector<int> getLevelTestValues(
+            std::vector<std::pair<std::shared_ptr<IFactory>, Descriptor>> kFactoryDescList) {
+        int minLevelDb = std::numeric_limits<int>::max();
+        int maxLevelDb = std::numeric_limits<int>::min();
+        for (const auto& it : kFactoryDescList) {
+            maxLevelDb =
+                    std::max(it.second.capability.get<Capability::volume>().maxLevelDb, maxLevelDb);
+            minLevelDb = std::min(it.second.capability.get<Capability ::volume>().minLevelDb,
+                                  minLevelDb);
+        }
+        return {minLevelDb - 1, minLevelDb, -100, maxLevelDb, maxLevelDb + 1};
+    }
+
+    bool isLevelInRange(const Volume::Capability& volCap, int level) const {
+        return level >= volCap.minLevelDb && level <= volCap.maxLevelDb;
     }
 
   private:
@@ -160,12 +176,16 @@ TEST_P(VolumeParamTest, SetAndGetMute) {
 
 INSTANTIATE_TEST_SUITE_P(
         VolumeTest, VolumeParamTest,
-        ::testing::Combine(testing::ValuesIn(EffectFactoryHelper::getAllEffectDescriptors(
-                                   IFactory::descriptor, kVolumeTypeUUID)),
-                           testing::ValuesIn(kLevelValues), testing::Bool()),
+        ::testing::Combine(
+                testing::ValuesIn(EffectFactoryHelper::getAllEffectDescriptors(IFactory::descriptor,
+                                                                               kVolumeTypeUUID)),
+                testing::ValuesIn(VolumeParamTest::getLevelTestValues(
+                        EffectFactoryHelper::getAllEffectDescriptors(IFactory::descriptor,
+                                                                     kVolumeTypeUUID))),
+                testing::Bool() /* mute */),
         [](const testing::TestParamInfo<VolumeParamTest::ParamType>& info) {
             auto descriptor = std::get<PARAM_INSTANCE_NAME>(info.param).second;
-            std::string level = std::to_string(std::get<PARAM_LEVEL_DB>(info.param));
+            std::string level = std::to_string(std::get<PARAM_LEVEL>(info.param));
             std::string mute = std::to_string(std::get<PARAM_MUTE>(info.param));
             std::string name = "Implementor_" + descriptor.common.implementor + "_name_" +
                                descriptor.common.name + "_UUID_" +

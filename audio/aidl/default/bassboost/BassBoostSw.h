@@ -33,20 +33,11 @@ class BassBoostSwContext final : public EffectContext {
         LOG(DEBUG) << __func__;
     }
 
-    RetCode setBbStrengthPm(int strength) {
-        if (strength < BassBoost::MIN_PER_MILLE_STRENGTH ||
-            strength > BassBoost::MAX_PER_MILLE_STRENGTH) {
-            LOG(ERROR) << __func__ << " invalid strength: " << strength;
-            return RetCode::ERROR_ILLEGAL_PARAMETER;
-        }
-        // TODO : Add implementation to apply new strength
-        mStrength = strength;
-        return RetCode::SUCCESS;
-    }
+    RetCode setBbStrengthPm(int strength);
     int getBbStrengthPm() const { return mStrength; }
 
   private:
-    int mStrength;
+    int mStrength = 0;
 };
 
 class BassBoostSw final : public EffectImpl {

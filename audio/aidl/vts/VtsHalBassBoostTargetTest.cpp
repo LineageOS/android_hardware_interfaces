@@ -46,15 +46,6 @@ using BassBoostParamTestParam = std::tuple<std::pair<std::shared_ptr<IFactory>, 
  * otherwise expect EX_ILLEGAL_ARGUMENT.
  */
 
-const std::vector<int> kStrengthValues = {
-        std::numeric_limits<int>::min(),
-        BassBoost::MIN_PER_MILLE_STRENGTH - 1,
-        BassBoost::MIN_PER_MILLE_STRENGTH,
-        (BassBoost::MIN_PER_MILLE_STRENGTH + BassBoost::MAX_PER_MILLE_STRENGTH) >> 1,
-        BassBoost::MAX_PER_MILLE_STRENGTH,
-        BassBoost::MAX_PER_MILLE_STRENGTH + 2,
-        std::numeric_limits<int>::max()};
-
 class BassBoostParamTest : public ::testing::TestWithParam<BassBoostParamTestParam>,
                            public EffectHelper {
   public:
@@ -81,7 +72,7 @@ class BassBoostParamTest : public ::testing::TestWithParam<BassBoostParamTestPar
     }
 
     Parameter::Specific getDefaultParamSpecific() {
-        BassBoost bb = BassBoost::make<BassBoost::strengthPm>(BassBoost::MIN_PER_MILLE_STRENGTH);
+        BassBoost bb = BassBoost::make<BassBoost::strengthPm>(0);
         Parameter::Specific specific =
                 Parameter::Specific::make<Parameter::Specific::bassBoost>(bb);
         return specific;
@@ -91,7 +82,7 @@ class BassBoostParamTest : public ::testing::TestWithParam<BassBoostParamTestPar
     std::shared_ptr<IFactory> mFactory;
     std::shared_ptr<IEffect> mEffect;
     Descriptor mDescriptor;
-    int mParamStrength = BassBoost::MIN_PER_MILLE_STRENGTH;
+    int mParamStrength = 0;
 
     void SetAndGetBassBoostParameters() {
         for (auto& it : mTags) {
@@ -146,8 +137,29 @@ class BassBoostParamTest : public ::testing::TestWithParam<BassBoostParamTestPar
     }
 
     bool isStrengthInRange(const BassBoost::Capability& cap, int strength) const {
-        return cap.strengthSupported && strength >= BassBoost::MIN_PER_MILLE_STRENGTH &&
-               strength <= BassBoost::MAX_PER_MILLE_STRENGTH;
+        return cap.strengthSupported && strength >= 0 && strength <= cap.maxStrengthPm;
+    }
+
+    static std::vector<int> getStrengthTestValues(
+            std::vector<std::pair<std::shared_ptr<IFactory>, Descriptor>> kFactoryDescList) {
+        const auto max = std::max_element(
+                kFactoryDescList.begin(), kFactoryDescList.end(),
+                [](const std::pair<std::shared_ptr<IFactory>, Descriptor>& a,
+                   const std::pair<std::shared_ptr<IFactory>, Descriptor>& b) {
+                    return a.second.capability.get<Capability::bassBoost>().maxStrengthPm <
+                           b.second.capability.get<Capability::bassBoost>().maxStrengthPm;
+                });
+        if (max == kFactoryDescList.end()) {
+            return {0};
+        }
+        int maxStrength = max->second.capability.get<Capability::bassBoost>().maxStrengthPm;
+        return {std::numeric_limits<int>::min(),
+                -1,
+                0,
+                maxStrength >> 1,
+                maxStrength,
+                maxStrength + 1,
+                std::numeric_limits<int>::max()};
     }
 
   private:
@@ -162,9 +174,12 @@ TEST_P(BassBoostParamTest, SetAndGetStrength) {
 
 INSTANTIATE_TEST_SUITE_P(
         BassBoostTest, BassBoostParamTest,
-        ::testing::Combine(testing::ValuesIn(EffectFactoryHelper::getAllEffectDescriptors(
-                                   IFactory::descriptor, kBassBoostTypeUUID)),
-                           testing::ValuesIn(kStrengthValues)),
+        ::testing::Combine(
+                testing::ValuesIn(EffectFactoryHelper::getAllEffectDescriptors(IFactory::descriptor,
+                                                                               kBassBoostTypeUUID)),
+                testing::ValuesIn(BassBoostParamTest::getStrengthTestValues(
+                        EffectFactoryHelper::getAllEffectDescriptors(IFactory::descriptor,
+                                                                     kBassBoostTypeUUID)))),
         [](const testing::TestParamInfo<BassBoostParamTest::ParamType>& info) {
             auto descriptor = std::get<PARAM_INSTANCE_NAME>(info.param).second;
             std::string strength = std::to_string(std::get<PARAM_STRENGTH>(info.param));

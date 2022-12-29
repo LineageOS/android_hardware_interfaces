@@ -34,5 +34,5 @@
 package android.hardware.audio.sounddose;
 @VintfStability
 interface ISoundDoseFactory {
-  @nullable android.hardware.audio.core.ISoundDose getSoundDose(in @utf8InCpp String module);
+  @nullable android.hardware.audio.core.sounddose.ISoundDose getSoundDose(in @utf8InCpp String module);
 }

@@ -66,6 +66,8 @@ class Module : public BnModule {
                     in_args,
             ::aidl::android::hardware::audio::core::IModule::OpenOutputStreamReturn* _aidl_return)
             override;
+    ndk::ScopedAStatus getSupportedPlaybackRateFactors(
+            SupportedPlaybackRateFactors* _aidl_return) override;
     ndk::ScopedAStatus setAudioPatch(const AudioPatch& in_requested,
                                      AudioPatch* _aidl_return) override;
     ndk::ScopedAStatus setAudioPortConfig(
@@ -86,7 +88,7 @@ class Module : public BnModule {
     ndk::ScopedAStatus updateScreenRotation(
             ::aidl::android::hardware::audio::core::IModule::ScreenRotation in_rotation) override;
     ndk::ScopedAStatus updateScreenState(bool in_isTurnedOn) override;
-    ndk::ScopedAStatus getSoundDose(std::shared_ptr<ISoundDose>* _aidl_return) override;
+    ndk::ScopedAStatus getSoundDose(std::shared_ptr<sounddose::ISoundDose>* _aidl_return) override;
     ndk::ScopedAStatus generateHwAvSyncId(int32_t* _aidl_return) override;
     ndk::ScopedAStatus getVendorParameters(const std::vector<std::string>& in_ids,
                                            std::vector<VendorParameter>* _aidl_return) override;
@@ -138,7 +140,7 @@ class Module : public BnModule {
     bool mMasterMute = false;
     float mMasterVolume = 1.0f;
     bool mMicMute = false;
-    std::shared_ptr<ISoundDose> mSoundDose;
+    std::shared_ptr<sounddose::ISoundDose> mSoundDose;
     ndk::SpAIBinder mSoundDoseBinder;
 };
 
