@@ -163,6 +163,7 @@ cc_binary {
         "libloudnessenhanceraidl",
         "libnssw",
         "libpresetreverbsw",
+        "libreverbaidl",
         "libtinyxml2",
         "libvirtualizersw",
         "libvisualizeraidl",
