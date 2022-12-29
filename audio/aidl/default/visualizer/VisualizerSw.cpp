@@ -241,4 +241,37 @@ IEffect::Status VisualizerSw::effectProcessImpl(float* in, float* out, int sampl
     return {STATUS_OK, samples, samples};
 }
 
+RetCode VisualizerSwContext::setVsCaptureSize(int captureSize) {
+    if (captureSize < VisualizerSw::kCapability.captureSampleRange.min ||
+        captureSize > VisualizerSw::kCapability.captureSampleRange.max) {
+        LOG(ERROR) << __func__ << " invalid captureSize " << captureSize;
+        return RetCode::ERROR_ILLEGAL_PARAMETER;
+    }
+    // TODO : Add implementation to apply new captureSize
+    mCaptureSize = captureSize;
+    return RetCode::SUCCESS;
+}
+
+RetCode VisualizerSwContext::setVsScalingMode(Visualizer::ScalingMode scalingMode) {
+    // TODO : Add implementation to apply new scalingMode
+    mScalingMode = scalingMode;
+    return RetCode::SUCCESS;
+}
+
+RetCode VisualizerSwContext::setVsMeasurementMode(Visualizer::MeasurementMode measurementMode) {
+    // TODO : Add implementation to apply new measurementMode
+    mMeasurementMode = measurementMode;
+    return RetCode::SUCCESS;
+}
+
+RetCode VisualizerSwContext::setVsLatency(int latency) {
+    if (latency < 0 || latency > VisualizerSw::kCapability.maxLatencyMs) {
+        LOG(ERROR) << __func__ << " invalid latency " << latency;
+        return RetCode::ERROR_ILLEGAL_PARAMETER;
+    }
+    // TODO : Add implementation to modify latency
+    mLatency = latency;
+    return RetCode::SUCCESS;
+}
+
 }  // namespace aidl::android::hardware::audio::effect
