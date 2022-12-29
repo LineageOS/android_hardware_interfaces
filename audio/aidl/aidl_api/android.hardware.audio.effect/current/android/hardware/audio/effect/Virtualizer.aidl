@@ -36,8 +36,6 @@ package android.hardware.audio.effect;
 union Virtualizer {
   android.hardware.audio.effect.VendorExtension vendor;
   int strengthPm;
-  const int MIN_PER_MILLE_STRENGTH = 0;
-  const int MAX_PER_MILLE_STRENGTH = 1000;
   @VintfStability
   union Id {
     int vendorExtensionTag;
@@ -46,6 +44,7 @@ union Virtualizer {
   @VintfStability
   parcelable Capability {
     android.hardware.audio.effect.VendorExtension extension;
+    int maxStrengthPm;
     boolean strengthSupported;
   }
 }

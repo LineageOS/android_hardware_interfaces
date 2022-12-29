@@ -95,6 +95,7 @@ cc_binary {
     defaults: [
         "aidlaudioservice_defaults",
         "latest_android_media_audio_common_types_ndk_shared",
+        "latest_android_hardware_audio_core_sounddose_ndk_shared",
         "latest_android_hardware_audio_core_ndk_shared",
     ],
     static_libs: [
@@ -149,6 +150,8 @@ cc_binary {
     vintf_fragments: ["android.hardware.audio.effect.service-aidl.xml"],
     defaults: ["aidlaudioeffectservice_defaults"],
     shared_libs: [
+        "libaecsw",
+        "libagcsw",
         "libbassboostsw",
         "libbundleaidl",
         "libdownmixaidl",
@@ -157,6 +160,7 @@ cc_binary {
         "libequalizersw",
         "libhapticgeneratoraidl",
         "libloudnessenhanceraidl",
+        "libnssw",
         "libpresetreverbsw",
         "libtinyxml2",
         "libvirtualizersw",

@@ -1718,7 +1718,7 @@ bool convertAidlNanPublishRequestToLegacy(const NanPublishRequest& aidl_request,
     }
     *legacy_request = {};
 
-    legacy_request->publish_id = aidl_request.baseConfigs.sessionId;
+    legacy_request->publish_id = static_cast<uint8_t>(aidl_request.baseConfigs.sessionId);
     legacy_request->ttl = aidl_request.baseConfigs.ttlSec;
     legacy_request->period = aidl_request.baseConfigs.discoveryWindowPeriod;
     legacy_request->publish_count = aidl_request.baseConfigs.discoveryCount;
@@ -1860,7 +1860,7 @@ bool convertAidlNanSubscribeRequestToLegacy(const NanSubscribeRequest& aidl_requ
     }
     *legacy_request = {};
 
-    legacy_request->subscribe_id = aidl_request.baseConfigs.sessionId;
+    legacy_request->subscribe_id = static_cast<uint8_t>(aidl_request.baseConfigs.sessionId);
     legacy_request->ttl = aidl_request.baseConfigs.ttlSec;
     legacy_request->period = aidl_request.baseConfigs.discoveryWindowPeriod;
     legacy_request->subscribe_count = aidl_request.baseConfigs.discoveryCount;
@@ -2007,7 +2007,7 @@ bool convertAidlNanTransmitFollowupRequestToLegacy(
     }
     *legacy_request = {};
 
-    legacy_request->publish_subscribe_id = aidl_request.discoverySessionId;
+    legacy_request->publish_subscribe_id = static_cast<uint8_t>(aidl_request.discoverySessionId);
     legacy_request->requestor_instance_id = aidl_request.peerId;
     memcpy(legacy_request->addr, aidl_request.addr.data(), 6);
     legacy_request->priority = aidl_request.isHighPriority ? legacy_hal::NAN_TX_PRIORITY_HIGH
