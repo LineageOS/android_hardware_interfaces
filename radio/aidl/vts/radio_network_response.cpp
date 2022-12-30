@@ -320,17 +320,3 @@ ndk::ScopedAStatus RadioNetworkResponse::setN1ModeEnabledResponse(const RadioRes
     parent_network.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
-
-ndk::ScopedAStatus RadioNetworkResponse::setLocationPrivacySettingResponse(
-        const RadioResponseInfo& info) {
-    rspInfo = info;
-    parent_network.notify(info.serial);
-    return ndk::ScopedAStatus::ok();
-}
-
-ndk::ScopedAStatus RadioNetworkResponse::getLocationPrivacySettingResponse(
-        const RadioResponseInfo& info, bool /*shareLocation*/) {
-    rspInfo = info;
-    parent_network.notify(info.serial);
-    return ndk::ScopedAStatus::ok();
-}
