@@ -40,4 +40,5 @@ parcelable NanConfigRequestSupplemental {
   boolean enableRanging;
   boolean enableInstantCommunicationMode;
   int instantModeChannel;
+  int clusterId;
 }
