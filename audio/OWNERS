@@ -1,1 +1,4 @@
-per-file README.md = elaurent@google.com,mnaganov@google.com
+# Bug component: 48436
+
+elaurent@google.com
+mnaganov@google.com
