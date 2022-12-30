@@ -182,7 +182,9 @@ Frontend::~Frontend() {
     // Reset callback
     mCallback = nullptr;
     mIsLocked = false;
-    mTuner->removeFrontend(mId);
+    if (mTuner != nullptr) {
+        mTuner->removeFrontend(mId);
+    }
     mTuner = nullptr;
 
     return ::ndk::ScopedAStatus::ok();
