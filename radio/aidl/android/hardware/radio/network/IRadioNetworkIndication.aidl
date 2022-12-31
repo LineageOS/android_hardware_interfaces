@@ -21,14 +21,13 @@ import android.hardware.radio.RadioTechnology;
 import android.hardware.radio.network.BarringInfo;
 import android.hardware.radio.network.CellIdentity;
 import android.hardware.radio.network.CellInfo;
-import android.hardware.radio.network.EmergencyRegResult;
 import android.hardware.radio.network.LinkCapacityEstimate;
-import android.hardware.radio.network.LocationResponseType;
 import android.hardware.radio.network.NetworkScanResult;
 import android.hardware.radio.network.PhoneRestrictedState;
 import android.hardware.radio.network.PhysicalChannelConfig;
 import android.hardware.radio.network.SignalStrength;
 import android.hardware.radio.network.SuppSvcNotification;
+import android.hardware.radio.network.EmergencyRegResult;
 
 /**
  * Interface declaring unsolicited radio indications for network APIs.
@@ -200,13 +199,4 @@ oneway interface IRadioNetworkIndication {
      * @param result the result of the Emergency Network Scan
      */
     void emergencyNetworkScanResult(in RadioIndicationType type, in EmergencyRegResult result);
-
-    /**
-     * Reports the result of the network initiated location request.
-     *
-     * @param type Type of radio indication
-     * @param locationResponseType result of the network initiated location request.
-     */
-    void onNetworkInitiatedLocationResult(
-            in RadioIndicationType type, in LocationResponseType locationResponseType);
 }

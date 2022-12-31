@@ -372,18 +372,4 @@ ScopedAStatus RadioNetwork::setN1ModeEnabled(int32_t serial, bool /*enable*/) {
     respond()->setN1ModeEnabledResponse(notSupported(serial));
     return ok();
 }
-
-ScopedAStatus RadioNetwork::setLocationPrivacySetting(int32_t serial, bool /*shareLocation*/) {
-    LOG_CALL << serial;
-    LOG(ERROR) << " setLocationPrivacySetting is unsupported by HIDL HALs";
-    respond()->setLocationPrivacySettingResponse(notSupported(serial));
-    return ok();
-}
-
-ScopedAStatus RadioNetwork::getLocationPrivacySetting(int32_t serial) {
-    LOG_CALL << serial;
-    LOG(ERROR) << " getLocationPrivacySetting is unsupported by HIDL HALs";
-    respond()->getLocationPrivacySettingResponse(notSupported(serial), false);
-    return ok();
-}
 }  // namespace android::hardware::radio::compat
