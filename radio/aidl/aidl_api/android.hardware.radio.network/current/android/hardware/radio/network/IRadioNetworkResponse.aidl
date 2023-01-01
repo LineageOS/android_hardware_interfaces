@@ -80,6 +80,4 @@ interface IRadioNetworkResponse {
   oneway void isNullCipherAndIntegrityEnabledResponse(in android.hardware.radio.RadioResponseInfo info, in boolean isEnabled);
   oneway void isN1ModeEnabledResponse(in android.hardware.radio.RadioResponseInfo info, boolean isEnabled);
   oneway void setN1ModeEnabledResponse(in android.hardware.radio.RadioResponseInfo info);
-  oneway void setLocationPrivacySettingResponse(in android.hardware.radio.RadioResponseInfo info);
-  oneway void getLocationPrivacySettingResponse(in android.hardware.radio.RadioResponseInfo info, boolean shareLocation);
 }

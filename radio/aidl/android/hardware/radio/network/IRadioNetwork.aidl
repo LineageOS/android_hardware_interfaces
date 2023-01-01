@@ -555,30 +555,4 @@ oneway interface IRadioNetwork {
      * Response function is IRadioNetworkResponse.setN1ModeEnabledResponse()
      */
     void setN1ModeEnabled(in int serial, boolean enable);
-
-    /**
-     * This API updates the current user setting of sharing the location data. This value must be
-     * used by radio before honoring a network initiated location request for non emergency use
-     * cases. The radio shall ignore this setting during emergency call, emergency SMS or emergency
-     * call back modes and continue to provide the location information to the network initiated
-     * location requests.
-     *
-     * @param serial Serial number of request.
-     * @param shareLocation Whether to share location data to the network or not. true means the
-     *         radio is allowed to provide location data for any network initiated locations
-     *         request. false means the radio must not share location data for any network initiated
-     *         location requests for non-emergency use cases.
-     *
-     * Response function is IRadioNetworkResponse.setLocationPrivacySettingResponse()
-     */
-    void setLocationPrivacySetting(in int serial, in boolean shareLocation);
-
-    /**
-     * Request the current setting of sharing the location data.
-     *
-     * @param serial Serial number of request.
-     *
-     * Response function is IRadioNetworkResponse.getLocationPrivacySettingResponse()
-     */
-    void getLocationPrivacySetting(in int serial);
 }

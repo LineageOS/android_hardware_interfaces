@@ -169,12 +169,6 @@ class RadioNetworkResponse : public BnRadioNetworkResponse {
             const RadioResponseInfo& info, bool isEnabled) override;
 
     virtual ndk::ScopedAStatus setN1ModeEnabledResponse(const RadioResponseInfo& info) override;
-
-    virtual ndk::ScopedAStatus setLocationPrivacySettingResponse(
-            const RadioResponseInfo& info) override;
-
-    virtual ndk::ScopedAStatus getLocationPrivacySettingResponse(const RadioResponseInfo& info,
-                                                                 bool shareLocation) override;
 };
 
 /* Callback class for radio network indication */
@@ -232,9 +226,6 @@ class RadioNetworkIndication : public BnRadioNetworkIndication {
 
     virtual ndk::ScopedAStatus emergencyNetworkScanResult(
             RadioIndicationType type, const EmergencyRegResult& result) override;
-
-    virtual ndk::ScopedAStatus onNetworkInitiatedLocationResult(
-            RadioIndicationType type, LocationResponseType locationResponseType) override;
 };
 
 // The main test class for Radio AIDL Network.

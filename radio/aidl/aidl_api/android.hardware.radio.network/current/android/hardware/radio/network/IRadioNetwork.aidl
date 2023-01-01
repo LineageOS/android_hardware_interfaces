@@ -81,6 +81,4 @@ interface IRadioNetwork {
   oneway void isNullCipherAndIntegrityEnabled(in int serial);
   oneway void isN1ModeEnabled(in int serial);
   oneway void setN1ModeEnabled(in int serial, boolean enable);
-  oneway void setLocationPrivacySetting(in int serial, in boolean shareLocation);
-  oneway void getLocationPrivacySetting(in int serial);
 }
