@@ -8649,6 +8649,15 @@ int main(int argc, char** argv) {
                 // interactions.
                 aidl::android::hardware::security::keymint::test::check_boot_pl = false;
             }
+            if (std::string(argv[i]) == "--keyblob_dir") {
+                if (i + 1 >= argc) {
+                    std::cerr << "Missing argument for --keyblob_dir\n";
+                    return 1;
+                }
+                aidl::android::hardware::security::keymint::test::KeyMintAidlTestBase::keyblob_dir =
+                        std::string(argv[i + 1]);
+                ++i;
+            }
         }
     }
     return RUN_ALL_TESTS();
