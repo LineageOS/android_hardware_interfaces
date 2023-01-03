@@ -1760,7 +1760,11 @@ enum VehicleProperty {
     SEAT_LUMBAR_SIDE_SUPPORT_MOVE = 0x0B94 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
     /**
-     * Headrest height position
+     * (Deprecated) Headrest height position
+     *
+     * This property is deprecated because it is defined as type VehicleArea:GLOBAL, which means all
+     * seats use the same value. Use SEAT_HEADREST_HEIGHT_POS_V2 instead which fixes this issue by
+     * being defined as type VehicleArea:SEAT.
      *
      * Sets the headrest height.
      * Max value indicates tallest setting.
@@ -1771,6 +1775,25 @@ enum VehicleProperty {
      */
     SEAT_HEADREST_HEIGHT_POS = 0x0B95 + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
+
+    /**
+     * Headrest height position
+     *
+     * Sets the headrest height for supported seats. VehiclePropConfig.areaConfigs specifies which
+     * seats are supported.
+     *
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined. All values between
+     * minInt32Value and maxInt32Value must be supported. The maxInt32Value indicates the tallest
+     * setting and the minInt32Value indicates the shortest setting.
+     *
+     * This value is not in any particular unit but in a specified range of steps.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     */
+    SEAT_HEADREST_HEIGHT_POS_V2 =
+            0x0BA4 + VehiclePropertyGroup.SYSTEM + VehicleArea.SEAT + VehiclePropertyType.INT32,
+
     /**
      * Headrest height move
      *

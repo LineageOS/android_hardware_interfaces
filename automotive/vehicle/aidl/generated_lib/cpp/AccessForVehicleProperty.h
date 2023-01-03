@@ -155,6 +155,7 @@ std::unordered_map<VehicleProperty, VehiclePropertyAccess> AccessForVehiclePrope
         {VehicleProperty::SEAT_LUMBAR_SIDE_SUPPORT_POS, VehiclePropertyAccess::READ_WRITE},
         {VehicleProperty::SEAT_LUMBAR_SIDE_SUPPORT_MOVE, VehiclePropertyAccess::READ_WRITE},
         {VehicleProperty::SEAT_HEADREST_HEIGHT_POS, VehiclePropertyAccess::READ_WRITE},
+        {VehicleProperty::SEAT_HEADREST_HEIGHT_POS_V2, VehiclePropertyAccess::READ_WRITE},
         {VehicleProperty::SEAT_HEADREST_HEIGHT_MOVE, VehiclePropertyAccess::READ_WRITE},
         {VehicleProperty::SEAT_HEADREST_ANGLE_POS, VehiclePropertyAccess::READ_WRITE},
         {VehicleProperty::SEAT_HEADREST_ANGLE_MOVE, VehiclePropertyAccess::READ_WRITE},
