@@ -39,6 +39,7 @@ class Module : public BnModule {
     ndk::ScopedAStatus setModuleDebug(
             const ::aidl::android::hardware::audio::core::ModuleDebug& in_debug) override;
     ndk::ScopedAStatus getTelephony(std::shared_ptr<ITelephony>* _aidl_return) override;
+    ndk::ScopedAStatus getBluetooth(std::shared_ptr<IBluetooth>* _aidl_return) override;
     ndk::ScopedAStatus connectExternalDevice(
             const ::aidl::android::media::audio::common::AudioPort& in_templateIdAndAdditionalData,
             ::aidl::android::media::audio::common::AudioPort* _aidl_return) override;
@@ -127,10 +128,12 @@ class Module : public BnModule {
     const Type mType;
     std::unique_ptr<internal::Configuration> mConfig;
     ModuleDebug mDebug;
-    // Since it is required to return the same instance of the ITelephony, even
-    // if the client has released it on its side, we need to hold it via a strong pointer.
+    // For the interfaces requiring to return the same instance, we need to hold them
+    // via a strong pointer. The binder token is retained for a call to 'setMinSchedulerPolicy'.
     std::shared_ptr<ITelephony> mTelephony;
     ndk::SpAIBinder mTelephonyBinder;
+    std::shared_ptr<IBluetooth> mBluetooth;
+    ndk::SpAIBinder mBluetoothBinder;
     // ids of ports created at runtime via 'connectExternalDevice'.
     std::set<int32_t> mConnectedDevicePorts;
     Streams mStreams;

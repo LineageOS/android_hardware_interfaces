@@ -25,6 +25,7 @@
 #include <aidl/android/media/audio/common/AudioInputFlags.h>
 #include <aidl/android/media/audio/common/AudioOutputFlags.h>
 
+#include "core-impl/Bluetooth.h"
 #include "core-impl/Module.h"
 #include "core-impl/SoundDose.h"
 #include "core-impl/Telephony.h"
@@ -323,6 +324,18 @@ ndk::ScopedAStatus Module::getTelephony(std::shared_ptr<ITelephony>* _aidl_retur
     }
     *_aidl_return = mTelephony;
     LOG(DEBUG) << __func__ << ": returning instance of ITelephony: " << _aidl_return->get();
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus Module::getBluetooth(std::shared_ptr<IBluetooth>* _aidl_return) {
+    if (mBluetooth == nullptr) {
+        mBluetooth = ndk::SharedRefBase::make<Bluetooth>();
+        mBluetoothBinder = mBluetooth->asBinder();
+        AIBinder_setMinSchedulerPolicy(mBluetoothBinder.get(), SCHED_NORMAL,
+                                       ANDROID_PRIORITY_AUDIO);
+    }
+    *_aidl_return = mBluetooth;
+    LOG(DEBUG) << __func__ << ": returning instance of IBluetooth: " << _aidl_return->get();
     return ndk::ScopedAStatus::ok();
 }
 
