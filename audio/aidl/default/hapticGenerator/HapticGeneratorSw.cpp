@@ -90,8 +90,8 @@ ndk::ScopedAStatus HapticGeneratorSw::setParameterSpecific(const Parameter::Spec
     auto tag = hgParam.getTag();
 
     switch (tag) {
-        case HapticGenerator::hapticScale: {
-            RETURN_IF(mContext->setHgHapticScale(hgParam.get<HapticGenerator::hapticScale>()) !=
+        case HapticGenerator::hapticScales: {
+            RETURN_IF(mContext->setHgHapticScales(hgParam.get<HapticGenerator::hapticScales>()) !=
                               RetCode::SUCCESS,
                       EX_ILLEGAL_ARGUMENT, "HapticScaleNotSupported");
             return ndk::ScopedAStatus::ok();
@@ -133,8 +133,8 @@ ndk::ScopedAStatus HapticGeneratorSw::getParameterHapticGenerator(const HapticGe
 
     HapticGenerator hgParam;
     switch (tag) {
-        case HapticGenerator::hapticScale: {
-            hgParam.set<HapticGenerator::hapticScale>(mContext->getHgHapticScale());
+        case HapticGenerator::hapticScales: {
+            hgParam.set<HapticGenerator::hapticScales>(mContext->getHgHapticScales());
             break;
         }
         case HapticGenerator::vibratorInfo: {
@@ -181,6 +181,22 @@ IEffect::Status HapticGeneratorSw::effectProcessImpl(float* in, float* out, int 
         *out++ = *in++;
     }
     return {STATUS_OK, samples, samples};
+}
+
+RetCode HapticGeneratorSwContext::setHgHapticScales(
+        const std::vector<HapticGenerator::HapticScale>& hapticScales) {
+    // Assume any audio track ID is valid
+    for (auto& it : hapticScales) {
+        mHapticScales[it.id] = it;
+    }
+    return RetCode::SUCCESS;
+}
+
+std::vector<HapticGenerator::HapticScale> HapticGeneratorSwContext::getHgHapticScales() const {
+    std::vector<HapticGenerator::HapticScale> result;
+    std::transform(mHapticScales.begin(), mHapticScales.end(), std::back_inserter(result),
+                   [](auto& scaleIt) { return scaleIt.second; });
+    return result;
 }
 
 }  // namespace aidl::android::hardware::audio::effect
