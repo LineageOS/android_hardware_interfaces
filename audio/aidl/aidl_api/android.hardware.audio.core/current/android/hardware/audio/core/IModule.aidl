@@ -36,6 +36,7 @@ package android.hardware.audio.core;
 interface IModule {
   void setModuleDebug(in android.hardware.audio.core.ModuleDebug debug);
   @nullable android.hardware.audio.core.ITelephony getTelephony();
+  @nullable android.hardware.audio.core.IBluetooth getBluetooth();
   android.media.audio.common.AudioPort connectExternalDevice(in android.media.audio.common.AudioPort templateIdAndAdditionalData);
   void disconnectExternalDevice(int portId);
   android.hardware.audio.core.AudioPatch[] getAudioPatches();
