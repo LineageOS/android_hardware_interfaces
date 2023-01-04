@@ -184,6 +184,7 @@ string x509NameToStr(X509_NAME* name) {
 
 bool KeyMintAidlTestBase::arm_deleteAllKeys = false;
 bool KeyMintAidlTestBase::dump_Attestations = false;
+std::string KeyMintAidlTestBase::keyblob_dir;
 
 uint32_t KeyMintAidlTestBase::boot_patch_level(
         const vector<KeyCharacteristics>& key_characteristics) {
@@ -946,9 +947,15 @@ void KeyMintAidlTestBase::LocalVerifyMessage(const string& message, const string
                                              const AuthorizationSet& params) {
     SCOPED_TRACE("LocalVerifyMessage");
 
-    // Retrieve the public key from the leaf certificate.
     ASSERT_GT(cert_chain_.size(), 0);
-    X509_Ptr key_cert(parse_cert_blob(cert_chain_[0].encodedCertificate));
+    LocalVerifyMessage(cert_chain_[0].encodedCertificate, message, signature, params);
+}
+
+void KeyMintAidlTestBase::LocalVerifyMessage(const vector<uint8_t>& der_cert, const string& message,
+                                             const string& signature,
+                                             const AuthorizationSet& params) {
+    // Retrieve the public key from the leaf certificate.
+    X509_Ptr key_cert(parse_cert_blob(der_cert));
     ASSERT_TRUE(key_cert.get());
     EVP_PKEY_Ptr pub_key(X509_get_pubkey(key_cert.get()));
     ASSERT_TRUE(pub_key.get());

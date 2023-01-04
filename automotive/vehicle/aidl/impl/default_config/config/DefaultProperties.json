@@ -2897,6 +2897,14 @@
                     "GsrComplianceRequirementType::GSR_COMPLIANCE_REQUIRED_V1"
                 ]
             }
+        },
+        {
+            "property": "VehicleProperty::AUTOMATIC_EMERGENCY_BRAKING_ENABLED",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            }
         }
     ]
 }
