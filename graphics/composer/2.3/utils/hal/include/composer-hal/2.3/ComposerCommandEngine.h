@@ -73,9 +73,7 @@ class ComposerCommandEngine : public V2_2::hal::ComposerCommandEngine {
     }
 
     bool executeSetLayerPerFrameMetadataBlobs(uint16_t length) {
-        // must have at least one metadata blob
-        // of at least size 1 in queue (i.e {/*numBlobs=*/1, key, size, blob})
-        if (length < 4) {
+        if (length == 0) {
             return false;
         }
 
