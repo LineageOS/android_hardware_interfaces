@@ -20,6 +20,7 @@
 #include <aidl/android/hardware/automotive/vehicle/DiagnosticFloatSensorIndex.h>
 #include <aidl/android/hardware/automotive/vehicle/DiagnosticIntegerSensorIndex.h>
 #include <aidl/android/hardware/automotive/vehicle/EvConnectorType.h>
+#include <aidl/android/hardware/automotive/vehicle/EvStoppingMode.h>
 #include <aidl/android/hardware/automotive/vehicle/EvsServiceState.h>
 #include <aidl/android/hardware/automotive/vehicle/EvsServiceType.h>
 #include <aidl/android/hardware/automotive/vehicle/FuelType.h>

@@ -1688,6 +1688,24 @@
             ]
         },
         {
+            "property": "VehicleProperty::EV_STOPPING_MODE",
+            "defaultValue": {
+                "int32Values": [
+                    "Constants::EV_STOPPING_MODE_CREEP"
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": 0,
+                    "supportedEnumValues": [
+                        "Constants::EV_STOPPING_MODE_CREEP",
+                        "Constants::EV_STOPPING_MODE_ROLL",
+                        "Constants::EV_STOPPING_MODE_HOLD"
+                    ]
+                }
+            ]
+        },
+        {
             "property": "VehicleProperty::FUEL_LEVEL_LOW",
             "defaultValue": {
                 "int32Values": [

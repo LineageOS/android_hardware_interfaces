@@ -487,6 +487,12 @@ TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyEvBrakeRegenerationLevelConfig) 
                    VehiclePropertyGroup::SYSTEM, VehicleArea::GLOBAL, VehiclePropertyType::INT32);
 }
 
+TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyEvStoppingModeConfig) {
+    verifyProperty(VehicleProperty::EV_STOPPING_MODE, VehiclePropertyAccess::READ_WRITE,
+                   VehiclePropertyChangeMode::ON_CHANGE, VehiclePropertyGroup::SYSTEM,
+                   VehicleArea::GLOBAL, VehiclePropertyType::INT32);
+}
+
 TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyEvCurrentBatteryCapacityConfig) {
     verifyProperty(VehicleProperty::EV_CURRENT_BATTERY_CAPACITY, VehiclePropertyAccess::READ,
                    VehiclePropertyChangeMode::ON_CHANGE, VehiclePropertyGroup::SYSTEM,
