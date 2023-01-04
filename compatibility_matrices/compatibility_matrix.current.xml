@@ -713,6 +713,13 @@
         </interface>
     </hal>
     <hal format="aidl" optional="true">
+        <name>android.hardware.tv.earc</name>
+        <interface>
+            <name>IEArc</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="aidl" optional="true">
         <name>android.hardware.tv.hdmi</name>
         <interface>
             <name>IHdmi</name>
