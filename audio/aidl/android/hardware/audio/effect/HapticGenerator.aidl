@@ -90,6 +90,6 @@ union HapticGenerator {
         float maxAmplitude;
     }
 
-    HapticScale hapticScale;
+    HapticScale[] hapticScales;
     VibratorInformation vibratorInfo;
 }
