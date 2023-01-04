@@ -196,6 +196,8 @@ std::unordered_map<VehicleProperty, VehiclePropertyAccess> AccessForVehiclePrope
         {VehicleProperty::CABIN_LIGHTS_SWITCH, VehiclePropertyAccess::READ_WRITE},
         {VehicleProperty::READING_LIGHTS_STATE, VehiclePropertyAccess::READ},
         {VehicleProperty::READING_LIGHTS_SWITCH, VehiclePropertyAccess::READ_WRITE},
+        {VehicleProperty::STEERING_WHEEL_LIGHTS_STATE, VehiclePropertyAccess::READ},
+        {VehicleProperty::STEERING_WHEEL_LIGHTS_SWITCH, VehiclePropertyAccess::READ_WRITE},
         {VehicleProperty::SUPPORT_CUSTOMIZE_VENDOR_PERMISSION, VehiclePropertyAccess::READ},
         {VehicleProperty::DISABLED_OPTIONAL_FEATURES, VehiclePropertyAccess::READ},
         {VehicleProperty::INITIAL_USER_INFO, VehiclePropertyAccess::READ_WRITE},
