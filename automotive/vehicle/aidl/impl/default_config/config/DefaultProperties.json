@@ -1071,6 +1071,71 @@
             ]
         },
         {
+            "property": "VehicleProperty::SEAT_FOOTWELL_LIGHTS_STATE",
+            "defaultValue": {
+                "int32Values": [
+                    "Constants::LIGHT_STATE_OFF"
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "Constants::SEAT_1_LEFT",
+                    "supportedEnumValues": [
+                        "Constants::LIGHT_STATE_OFF",
+                        "Constants::LIGHT_STATE_ON"
+                    ]
+                },
+                {
+                    "areaId": "Constants::SEAT_1_RIGHT",
+                    "supportedEnumValues": [
+                        "Constants::LIGHT_STATE_OFF",
+                        "Constants::LIGHT_STATE_ON"
+                    ]
+                },
+                {
+                    "areaId": "Constants::SEAT_2_LEFT_2_RIGHT_2_CENTER",
+                    "supportedEnumValues": [
+                        "Constants::LIGHT_STATE_OFF",
+                        "Constants::LIGHT_STATE_ON"
+                    ]
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::SEAT_FOOTWELL_LIGHTS_SWITCH",
+            "defaultValue": {
+                "int32Values": [
+                    "Constants::LIGHT_SWITCH_OFF"
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "Constants::SEAT_1_LEFT",
+                    "supportedEnumValues": [
+                        "Constants::LIGHT_SWITCH_OFF",
+                        "Constants::LIGHT_SWITCH_ON",
+                        "Constants::LIGHT_SWITCH_AUTO"
+                    ]
+                },
+                {
+                    "areaId": "Constants::SEAT_1_RIGHT",
+                    "supportedEnumValues": [
+                        "Constants::LIGHT_SWITCH_OFF",
+                        "Constants::LIGHT_SWITCH_ON",
+                        "Constants::LIGHT_SWITCH_AUTO"
+                    ]
+                },
+                {
+                    "areaId": "Constants::SEAT_2_LEFT_2_RIGHT_2_CENTER",
+                    "supportedEnumValues": [
+                        "Constants::LIGHT_SWITCH_OFF",
+                        "Constants::LIGHT_SWITCH_ON",
+                        "Constants::LIGHT_SWITCH_AUTO"
+                    ]
+                }
+            ]
+        },
+        {
             "property": "VehicleProperty::SEAT_EASY_ACCESS_ENABLED",
             "defaultValue": {
                 "int32Values": [

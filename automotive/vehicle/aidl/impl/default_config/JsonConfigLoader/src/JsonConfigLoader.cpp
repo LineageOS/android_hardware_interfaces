@@ -89,6 +89,7 @@ const std::unordered_map<std::string, int> CONSTANTS_BY_NAME = {
         {"SEAT_2_LEFT", SEAT_2_LEFT},
         {"SEAT_2_RIGHT", SEAT_2_RIGHT},
         {"SEAT_2_CENTER", SEAT_2_CENTER},
+        {"SEAT_2_LEFT_2_RIGHT_2_CENTER", SEAT_2_LEFT | SEAT_2_RIGHT | SEAT_2_CENTER},
         {"WHEEL_REAR_RIGHT", WHEEL_REAR_RIGHT},
         {"WHEEL_REAR_LEFT", WHEEL_REAR_LEFT},
         {"WHEEL_FRONT_RIGHT", WHEEL_FRONT_RIGHT},
