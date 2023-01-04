@@ -3505,6 +3505,57 @@ enum VehicleProperty {
     LANE_CENTERING_ASSIST_ENABLED =
             0x100A + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
 
+    /*
+     * Enable or disable emergency lane keep assist (ELKA).
+     *
+     * Set true to enable ELKA and false to disable ELKA. When ELKA is enabled, the ADAS system in
+     * the vehicle should be on and monitoring for unsafe lane changes by the driver. When an unsafe
+     * maneuver is detected, ELKA alerts the driver and applies steering corrections to keep the
+     * vehicle in its original lane.
+     *
+     * This property is defined as read_write, but OEMs have the option to implement it as read
+     * only.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     */
+    EMERGENCY_LANE_KEEP_ASSIST_ENABLED =
+            0x100D + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+
+    /**
+     * Enable or disable adaptive cruise control (ACC).
+     *
+     * Set true to enable ACC and false to disable ACC. When ACC is enabled, the ADAS system in the
+     * vehicle should be turned on and waiting for an activation signal from the driver. Once the
+     * feature is activated, the ADAS system in the car should be accelerating and braking in a way
+     * that allows the vehicle to maintain a set speed and to maintain a set distance gap from a
+     * leading vehicle.
+     *
+     * This property is defined as read_write, but OEMs have the option to implement it as read
+     * only.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     */
+    ADAPTIVE_CRUISE_CONTROL_ENABLED =
+            0x100F + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+
+    /**
+     * Enable or disable hands on detection (HOD).
+     *
+     * Set true to enable HOD and false to disable HOD. When HOD is enabled, a system inside the
+     * vehicle should be monitoring the presence of the driver's hands on the steering wheel and
+     * send a warning if it detects that the driver's hands are no longer on the steering wheel.
+     *
+     * This property is defined as read_write, but OEMs have the option to implement it as read
+     * only.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     */
+    HANDS_ON_DETECTION_ENABLED =
+            0x1015 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+
     /***************************************************************************
      * End of ADAS Properties
      **************************************************************************/

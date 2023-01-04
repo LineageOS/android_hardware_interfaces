@@ -2961,6 +2961,30 @@
             }
         },
         {
+            "property": "VehicleProperty::EMERGENCY_LANE_KEEP_ASSIST_ENABLED",
+            "defaultValue": {
+                "int32Values": [
+                    1
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::ADAPTIVE_CRUISE_CONTROL_ENABLED",
+            "defaultValue": {
+                "int32Values": [
+                    1
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::HANDS_ON_DETECTION_ENABLED",
+            "defaultValue": {
+                "int32Values": [
+                    1
+                ]
+            }
+        },
+        {
             "property": "VehicleProperty::INITIAL_USER_INFO"
         },
         {
