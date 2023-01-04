@@ -2977,6 +2977,30 @@
             }
         },
         {
+            "property": "VehicleProperty::FORWARD_COLLISION_WARNING_ENABLED",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::BLIND_SPOT_WARNING_ENABLED",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::LANE_DEPARTURE_WARNING_ENABLED",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            }
+        },
+        {
             "property": "VehicleProperty::LANE_CENTERING_ASSIST_ENABLED",
             "defaultValue": {
                 "int32Values": [

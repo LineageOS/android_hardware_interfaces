@@ -3383,6 +3383,52 @@ enum VehicleProperty {
             0x1000 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
 
     /**
+     * Enable or disable forward collision warning (FCW).
+     *
+     * Set true to enable FCW and false to disable FCW. When FCW is enabled, the ADAS system in the
+     * vehicle should be turned on and monitoring for potential collisions.
+     *
+     * This property is defined as read_write, but OEMs have the option to implement it as read
+     * only.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     */
+    FORWARD_COLLISION_WARNING_ENABLED =
+            0x1002 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+
+    /**
+     * Enable and disable blind spot warning (BSW).
+     *
+     * Set true to enable BSW and false to disable BSW. When BSW is enabled, the ADAS system in the
+     * vehicle should be turned on and monitoring for objects in the vehicle’s blind spots.
+     *
+     * This property is defined as read_write, but OEMs have the option to implement it as read
+     * only.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     */
+    BLIND_SPOT_WARNING_ENABLED =
+            0x1004 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+
+    /**
+     * Enable or disable lane departure warning (LDW).
+     *
+     * Set true to enable LDW and false to disable LDW. When LDW is enabled, the ADAS system in the
+     * vehicle should be turned on and monitoring if the vehicle is approaching or crossing lane
+     * lines, in which case a warning will be given.
+     *
+     * This property is defined as read_write, but OEMs have the option to implement it as read
+     * only.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     */
+    LANE_DEPARTURE_WARNING_ENABLED =
+            0x1006 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+
+    /**
      * Enable or disable lane centering assist (LCA).
      *
      * Set true to enable LCA and false to disable LCA. When LCA is enabled, the ADAS system in the
