@@ -36,6 +36,11 @@ class Module : public BnModule {
     explicit Module(Type type) : mType(type) {}
 
   private:
+    struct VendorDebug {
+        static const std::string kForceTransientBurstName;
+        bool forceTransientBurst = false;
+    };
+
     ndk::ScopedAStatus setModuleDebug(
             const ::aidl::android::hardware::audio::core::ModuleDebug& in_debug) override;
     ndk::ScopedAStatus getTelephony(std::shared_ptr<ITelephony>* _aidl_return) override;
@@ -128,6 +133,7 @@ class Module : public BnModule {
     const Type mType;
     std::unique_ptr<internal::Configuration> mConfig;
     ModuleDebug mDebug;
+    VendorDebug mVendorDebug;
     // For the interfaces requiring to return the same instance, we need to hold them
     // via a strong pointer. The binder token is retained for a call to 'setMinSchedulerPolicy'.
     std::shared_ptr<ITelephony> mTelephony;

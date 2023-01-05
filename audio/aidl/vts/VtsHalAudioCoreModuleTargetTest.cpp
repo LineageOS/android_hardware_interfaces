@@ -86,6 +86,7 @@ using aidl::android::media::audio::common::AudioPortDeviceExt;
 using aidl::android::media::audio::common::AudioPortExt;
 using aidl::android::media::audio::common::AudioSource;
 using aidl::android::media::audio::common::AudioUsage;
+using aidl::android::media::audio::common::Boolean;
 using aidl::android::media::audio::common::Float;
 using aidl::android::media::audio::common::Int;
 using aidl::android::media::audio::common::Void;
@@ -127,7 +128,7 @@ class WithDebugFlags {
         return WithDebugFlags(parent.mFlags);
     }
 
-    WithDebugFlags() {}
+    WithDebugFlags() = default;
     explicit WithDebugFlags(const ModuleDebug& initial) : mInitial(initial), mFlags(initial) {}
     WithDebugFlags(const WithDebugFlags&) = delete;
     WithDebugFlags& operator=(const WithDebugFlags&) = delete;
@@ -136,7 +137,10 @@ class WithDebugFlags {
             EXPECT_IS_OK(mModule->setModuleDebug(mInitial));
         }
     }
-    void SetUp(IModule* module) { ASSERT_IS_OK(module->setModuleDebug(mFlags)); }
+    void SetUp(IModule* module) {
+        ASSERT_IS_OK(module->setModuleDebug(mFlags));
+        mModule = module;
+    }
     ModuleDebug& flags() { return mFlags; }
 
   private:
@@ -145,13 +149,65 @@ class WithDebugFlags {
     IModule* mModule = nullptr;
 };
 
+template <typename T>
+class WithModuleParameter {
+  public:
+    WithModuleParameter(const std::string parameterId, const T& value)
+        : mParameterId(parameterId), mValue(value) {}
+    WithModuleParameter(const WithModuleParameter&) = delete;
+    WithModuleParameter& operator=(const WithModuleParameter&) = delete;
+    ~WithModuleParameter() {
+        if (mModule != nullptr) {
+            VendorParameter parameter{.id = mParameterId};
+            parameter.ext.setParcelable(mInitial);
+            EXPECT_IS_OK(mModule->setVendorParameters({parameter}, false));
+        }
+    }
+    ScopedAStatus SetUpNoChecks(IModule* module, bool failureExpected) {
+        std::vector<VendorParameter> parameters;
+        ScopedAStatus result = module->getVendorParameters({mParameterId}, &parameters);
+        if (result.isOk() && parameters.size() == 1) {
+            std::optional<T> maybeInitial;
+            binder_status_t status = parameters[0].ext.getParcelable(&maybeInitial);
+            if (status == STATUS_OK && maybeInitial.has_value()) {
+                mInitial = maybeInitial.value();
+                VendorParameter parameter{.id = mParameterId};
+                parameter.ext.setParcelable(mValue);
+                result = module->setVendorParameters({parameter}, false);
+                if (result.isOk()) {
+                    LOG(INFO) << __func__ << ": overriding parameter \"" << mParameterId
+                              << "\" with " << mValue.toString()
+                              << ", old value: " << mInitial.toString();
+                    mModule = module;
+                }
+            } else {
+                LOG(ERROR) << __func__ << ": error while retrieving the value of \"" << mParameterId
+                           << "\"";
+                return ScopedAStatus::fromStatus(status);
+            }
+        }
+        if (!result.isOk()) {
+            LOG(failureExpected ? INFO : ERROR)
+                    << __func__ << ": can not override vendor parameter \"" << mParameterId << "\""
+                    << result;
+        }
+        return result;
+    }
+
+  private:
+    const std::string mParameterId;
+    const T mValue;
+    IModule* mModule = nullptr;
+    T mInitial;
+};
+
 // For consistency, WithAudioPortConfig can start both with a non-existent
 // port config, and with an existing one. Existence is determined by the
 // id of the provided config. If it's not 0, then WithAudioPortConfig is
 // essentially a no-op wrapper.
 class WithAudioPortConfig {
   public:
-    WithAudioPortConfig() {}
+    WithAudioPortConfig() = default;
     explicit WithAudioPortConfig(const AudioPortConfig& config) : mInitialConfig(config) {}
     WithAudioPortConfig(const WithAudioPortConfig&) = delete;
     WithAudioPortConfig& operator=(const WithAudioPortConfig&) = delete;
@@ -303,26 +359,31 @@ class AudioCoreModuleBase {
 
     void SetUpImpl(const std::string& moduleName) {
         ASSERT_NO_FATAL_FAILURE(ConnectToService(moduleName));
-        debug.flags().simulateDeviceConnections = true;
-        ASSERT_NO_FATAL_FAILURE(debug.SetUp(module.get()));
     }
 
-    void TearDownImpl() {
-        if (module != nullptr) {
-            EXPECT_IS_OK(module->setModuleDebug(ModuleDebug{}));
-        }
-    }
+    void TearDownImpl() { debug.reset(); }
 
     void ConnectToService(const std::string& moduleName) {
+        ASSERT_EQ(module, nullptr);
+        ASSERT_EQ(debug, nullptr);
         module = IModule::fromBinder(binderUtil.connectToService(moduleName));
         ASSERT_NE(module, nullptr);
+        ASSERT_NO_FATAL_FAILURE(SetUpDebug());
     }
 
     void RestartService() {
         ASSERT_NE(module, nullptr);
         moduleConfig.reset();
+        debug.reset();
         module = IModule::fromBinder(binderUtil.restartService());
         ASSERT_NE(module, nullptr);
+        ASSERT_NO_FATAL_FAILURE(SetUpDebug());
+    }
+
+    void SetUpDebug() {
+        debug.reset(new WithDebugFlags());
+        debug->flags().simulateDeviceConnections = true;
+        ASSERT_NO_FATAL_FAILURE(debug->SetUp(module.get()));
     }
 
     void ApplyEveryConfig(const std::vector<AudioPortConfig>& configs) {
@@ -391,7 +452,7 @@ class AudioCoreModuleBase {
     std::shared_ptr<IModule> module;
     std::unique_ptr<ModuleConfig> moduleConfig;
     AudioHalBinderServiceUtil binderUtil;
-    WithDebugFlags debug;
+    std::unique_ptr<WithDebugFlags> debug;
 };
 
 class AudioCoreModule : public AudioCoreModuleBase, public testing::TestWithParam<std::string> {
@@ -466,6 +527,7 @@ class StreamContext {
     size_t getBufferSizeFrames() const { return mBufferSizeFrames; }
     CommandMQ* getCommandMQ() const { return mCommandMQ.get(); }
     DataMQ* getDataMQ() const { return mDataMQ.get(); }
+    size_t getFrameSizeBytes() const { return mFrameSizeBytes; }
     ReplyMQ* getReplyMQ() const { return mReplyMQ.get(); }
 
   private:
@@ -969,7 +1031,7 @@ class WithStream {
         return common->close();
     }
 
-    WithStream() {}
+    WithStream() = default;
     explicit WithStream(const AudioPortConfig& portConfig) : mPortConfig(portConfig) {}
     WithStream(const WithStream&) = delete;
     WithStream& operator=(const WithStream&) = delete;
@@ -1074,7 +1136,7 @@ ScopedAStatus WithStream<IStreamOut>::SetUpNoChecks(IModule* module,
 
 class WithAudioPatch {
   public:
-    WithAudioPatch() {}
+    WithAudioPatch() = default;
     WithAudioPatch(const AudioPortConfig& srcPortConfig, const AudioPortConfig& sinkPortConfig)
         : mSrcPortConfig(srcPortConfig), mSinkPortConfig(sinkPortConfig) {}
     WithAudioPatch(bool sinkIsCfg1, const AudioPortConfig& portConfig1,
@@ -1515,7 +1577,7 @@ TEST_P(AudioCoreModule, TryConnectMissingDevice) {
         GTEST_SKIP() << "No external devices in the module.";
     }
     AudioPort ignored;
-    WithDebugFlags doNotSimulateConnections = WithDebugFlags::createNested(debug);
+    WithDebugFlags doNotSimulateConnections = WithDebugFlags::createNested(*debug);
     doNotSimulateConnections.flags().simulateDeviceConnections = false;
     ASSERT_NO_FATAL_FAILURE(doNotSimulateConnections.SetUp(module.get()));
     for (const auto& port : ports) {
@@ -1535,7 +1597,7 @@ TEST_P(AudioCoreModule, TryChangingConnectionSimulationMidway) {
     }
     WithDevicePortConnectedState portConnected(*ports.begin(), GenerateUniqueDeviceAddress());
     ASSERT_NO_FATAL_FAILURE(portConnected.SetUp(module.get()));
-    ModuleDebug midwayDebugChange = debug.flags();
+    ModuleDebug midwayDebugChange = debug->flags();
     midwayDebugChange.simulateDeviceConnections = false;
     EXPECT_STATUS(EX_ILLEGAL_STATE, module->setModuleDebug(midwayDebugChange))
             << "when trying to disable connections simulation while having a connected device";
@@ -2758,8 +2820,8 @@ TEST_P(AudioStreamOut, SelectPresentation) {
 
 class StreamLogicDefaultDriver : public StreamLogicDriver {
   public:
-    explicit StreamLogicDefaultDriver(std::shared_ptr<StateSequence> commands)
-        : mCommands(commands) {
+    StreamLogicDefaultDriver(std::shared_ptr<StateSequence> commands, size_t frameSizeBytes)
+        : mCommands(commands), mFrameSizeBytes(frameSizeBytes) {
         mCommands->rewind();
     }
 
@@ -2778,7 +2840,10 @@ class StreamLogicDefaultDriver : public StreamLogicDriver {
                 if (actualSize != nullptr) {
                     // In the output scenario, reduce slightly the fmqByteCount to verify
                     // that the HAL module always consumes all data from the MQ.
-                    if (maxDataSize > 1) maxDataSize--;
+                    if (maxDataSize > static_cast<int>(mFrameSizeBytes)) {
+                        LOG(DEBUG) << __func__ << ": reducing data size by " << mFrameSizeBytes;
+                        maxDataSize -= mFrameSizeBytes;
+                    }
                     *actualSize = maxDataSize;
                 }
                 command->set<StreamDescriptor::Command::Tag::burst>(maxDataSize);
@@ -2824,6 +2889,7 @@ class StreamLogicDefaultDriver : public StreamLogicDriver {
 
   protected:
     std::shared_ptr<StateSequence> mCommands;
+    const size_t mFrameSizeBytes;
     std::optional<StreamDescriptor::State> mPreviousState;
     std::optional<int64_t> mPreviousFrames;
     bool mObservablePositionIncrease = false;
@@ -2872,7 +2938,7 @@ class AudioStreamIo : public AudioCoreModuleBase,
                 (!isNonBlocking && streamType == StreamTypeFilter::ASYNC)) {
                 continue;
             }
-            WithDebugFlags delayTransientStates = WithDebugFlags::createNested(debug);
+            WithDebugFlags delayTransientStates = WithDebugFlags::createNested(*debug);
             delayTransientStates.flags().streamTransientStateDelayMs =
                     std::get<NAMED_CMD_DELAY_MS>(std::get<PARAM_CMD_SEQ>(GetParam()));
             ASSERT_NO_FATAL_FAILURE(delayTransientStates.SetUp(module.get()));
@@ -2882,6 +2948,23 @@ class AudioStreamIo : public AudioCoreModuleBase,
                 ASSERT_NO_FATAL_FAILURE(RunStreamIoCommandsImplSeq1(portConfig, commandsAndStates));
             } else {
                 ASSERT_NO_FATAL_FAILURE(RunStreamIoCommandsImplSeq2(portConfig, commandsAndStates));
+            }
+            if (isNonBlocking) {
+                // Also try running the same sequence with "aosp.forceTransientBurst" set.
+                // This will only work with the default implementation. When it works, the stream
+                // tries always to move to the 'TRANSFERRING' state after a burst.
+                // This helps to check more paths for our test scenarios.
+                WithModuleParameter forceTransientBurst("aosp.forceTransientBurst", Boolean{true});
+                if (forceTransientBurst.SetUpNoChecks(module.get(), true /*failureExpected*/)
+                            .isOk()) {
+                    if (!std::get<PARAM_SETUP_SEQ>(GetParam())) {
+                        ASSERT_NO_FATAL_FAILURE(
+                                RunStreamIoCommandsImplSeq1(portConfig, commandsAndStates));
+                    } else {
+                        ASSERT_NO_FATAL_FAILURE(
+                                RunStreamIoCommandsImplSeq2(portConfig, commandsAndStates));
+                    }
+                }
             }
         }
     }
@@ -2903,7 +2986,8 @@ class AudioStreamIo : public AudioCoreModuleBase,
 
         WithStream<Stream> stream(patch.getPortConfig(IOTraits<Stream>::is_input));
         ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultBufferSizeFrames));
-        StreamLogicDefaultDriver driver(commandsAndStates);
+        StreamLogicDefaultDriver driver(commandsAndStates,
+                                        stream.getContext()->getFrameSizeBytes());
         typename IOTraits<Stream>::Worker worker(*stream.getContext(), &driver,
                                                  stream.getEventReceiver());
 
@@ -2924,7 +3008,8 @@ class AudioStreamIo : public AudioCoreModuleBase,
                                      std::shared_ptr<StateSequence> commandsAndStates) {
         WithStream<Stream> stream(portConfig);
         ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultBufferSizeFrames));
-        StreamLogicDefaultDriver driver(commandsAndStates);
+        StreamLogicDefaultDriver driver(commandsAndStates,
+                                        stream.getContext()->getFrameSizeBytes());
         typename IOTraits<Stream>::Worker worker(*stream.getContext(), &driver,
                                                  stream.getEventReceiver());
 

@@ -467,14 +467,19 @@ StreamOutWorkerLogic::Status StreamOutWorkerLogic::cycle() {
 
 bool StreamOutWorkerLogic::write(size_t clientSize, StreamDescriptor::Reply* reply) {
     const size_t readByteCount = mDataMQ->availableToRead();
-    // Amount of data that the HAL module is going to actually use.
-    const size_t byteCount = std::min({clientSize, readByteCount, mDataBufferSize});
     bool fatal = false;
     if (bool success = readByteCount > 0 ? mDataMQ->read(&mDataBuffer[0], readByteCount) : true) {
         const bool isConnected = mIsConnected;
         LOG(DEBUG) << __func__ << ": reading of " << readByteCount << " bytes from data MQ"
                    << " succeeded; connected? " << isConnected;
-        // Frames are consumed and counted regardless of connection status.
+        // Amount of data that the HAL module is going to actually use.
+        size_t byteCount = std::min({clientSize, readByteCount, mDataBufferSize});
+        if (byteCount >= mFrameSize && mForceTransientBurst) {
+            // In order to prevent the state machine from going to ACTIVE state,
+            // simulate partial write.
+            byteCount -= mFrameSize;
+        }
+        // Frames are consumed and counted regardless of the connection status.
         reply->fmqByteCount += byteCount;
         mFrameCount += byteCount / mFrameSize;
         populateReply(reply, isConnected);
