@@ -21,6 +21,7 @@ import android.hardware.audio.common.SourceMetadata;
 import android.hardware.audio.core.AudioMode;
 import android.hardware.audio.core.AudioPatch;
 import android.hardware.audio.core.AudioRoute;
+import android.hardware.audio.core.IBluetooth;
 import android.hardware.audio.core.IStreamCallback;
 import android.hardware.audio.core.IStreamIn;
 import android.hardware.audio.core.IStreamOut;
@@ -84,6 +85,20 @@ interface IModule {
      * @throws EX_ILLEGAL_STATE If there was an error creating an instance.
      */
     @nullable ITelephony getTelephony();
+
+    /**
+     * Retrieve the interface to control Bluetooth SCO and HFP.
+     *
+     * If the HAL module supports either the SCO Link or Hands-Free Profile
+     * functionality (or both) for Bluetooth, it must return an instance of the
+     * IBluetooth interface. The same instance must be returned during the
+     * lifetime of the HAL module. If the HAL module does not support BT SCO and
+     * HFP, a null must be returned, without throwing any errors.
+     *
+     * @return An instance of the IBluetooth interface implementation.
+     * @throws EX_ILLEGAL_STATE If there was an error creating an instance.
+     */
+    @nullable IBluetooth getBluetooth();
 
     /**
      * Set a device port of an external device into connected state.

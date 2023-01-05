@@ -2117,6 +2117,12 @@ enum VehicleProperty : int32_t {
         | VehicleArea:SEAT),
 
     /**
+     * DO NOT USE
+     *
+     * This property is defined as type VehicleArea:GLOBAL, which means all seats use the same
+     * value. Use SEAT_HEADREST_HEIGHT_POS_V2 instead which fixes this issue by being defined as
+     * type VehicleArea:SEAT.
+     *
      * Headrest height position
      *
      * Sets the headrest height.

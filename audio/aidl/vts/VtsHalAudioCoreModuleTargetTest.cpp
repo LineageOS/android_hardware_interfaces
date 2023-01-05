@@ -56,6 +56,7 @@ using aidl::android::hardware::audio::common::SourceMetadata;
 using aidl::android::hardware::audio::core::AudioMode;
 using aidl::android::hardware::audio::core::AudioPatch;
 using aidl::android::hardware::audio::core::AudioRoute;
+using aidl::android::hardware::audio::core::IBluetooth;
 using aidl::android::hardware::audio::core::IModule;
 using aidl::android::hardware::audio::core::IStreamCommon;
 using aidl::android::hardware::audio::core::IStreamIn;
@@ -85,6 +86,7 @@ using aidl::android::media::audio::common::AudioPortExt;
 using aidl::android::media::audio::common::AudioSource;
 using aidl::android::media::audio::common::AudioUsage;
 using aidl::android::media::audio::common::Float;
+using aidl::android::media::audio::common::Int;
 using aidl::android::media::audio::common::Void;
 using android::hardware::audio::common::getChannelCount;
 using android::hardware::audio::common::isBitPositionFlagSet;
@@ -1776,6 +1778,89 @@ TEST_P(AudioCoreModule, AddRemoveEffectInvalidArguments) {
     }
 }
 
+class AudioCoreBluetooth : public AudioCoreModuleBase, public testing::TestWithParam<std::string> {
+  public:
+    void SetUp() override {
+        ASSERT_NO_FATAL_FAILURE(SetUpImpl(GetParam()));
+        ASSERT_IS_OK(module->getBluetooth(&bluetooth));
+    }
+
+    void TearDown() override { ASSERT_NO_FATAL_FAILURE(TearDownImpl()); }
+
+    std::shared_ptr<IBluetooth> bluetooth;
+};
+
+TEST_P(AudioCoreBluetooth, SameInstance) {
+    if (bluetooth == nullptr) {
+        GTEST_SKIP() << "Bluetooth is not supported";
+    }
+    std::shared_ptr<IBluetooth> bluetooth2;
+    EXPECT_IS_OK(module->getBluetooth(&bluetooth2));
+    ASSERT_NE(nullptr, bluetooth2.get());
+    EXPECT_EQ(bluetooth->asBinder(), bluetooth2->asBinder())
+            << "getBluetooth must return the same interface instance across invocations";
+}
+
+TEST_P(AudioCoreBluetooth, ScoConfig) {
+    static const auto kStatuses = {EX_NONE, EX_UNSUPPORTED_OPERATION};
+    if (bluetooth == nullptr) {
+        GTEST_SKIP() << "Bluetooth is not supported";
+    }
+    ndk::ScopedAStatus status;
+    IBluetooth::ScoConfig scoConfig;
+    ASSERT_STATUS(kStatuses, status = bluetooth->setScoConfig({}, &scoConfig));
+    if (status.getExceptionCode() == EX_UNSUPPORTED_OPERATION) {
+        GTEST_SKIP() << "BT SCO is not supported";
+    }
+    EXPECT_TRUE(scoConfig.isEnabled.has_value());
+    EXPECT_TRUE(scoConfig.isNrecEnabled.has_value());
+    EXPECT_NE(IBluetooth::ScoConfig::Mode::UNSPECIFIED, scoConfig.mode);
+    IBluetooth::ScoConfig scoConfig2;
+    ASSERT_IS_OK(bluetooth->setScoConfig(scoConfig, &scoConfig2));
+    EXPECT_EQ(scoConfig, scoConfig2);
+}
+
+TEST_P(AudioCoreBluetooth, HfpConfig) {
+    static const auto kStatuses = {EX_NONE, EX_UNSUPPORTED_OPERATION};
+    if (bluetooth == nullptr) {
+        GTEST_SKIP() << "Bluetooth is not supported";
+    }
+    ndk::ScopedAStatus status;
+    IBluetooth::HfpConfig hfpConfig;
+    ASSERT_STATUS(kStatuses, status = bluetooth->setHfpConfig({}, &hfpConfig));
+    if (status.getExceptionCode() == EX_UNSUPPORTED_OPERATION) {
+        GTEST_SKIP() << "BT HFP is not supported";
+    }
+    EXPECT_TRUE(hfpConfig.isEnabled.has_value());
+    EXPECT_TRUE(hfpConfig.sampleRate.has_value());
+    EXPECT_TRUE(hfpConfig.volume.has_value());
+    IBluetooth::HfpConfig hfpConfig2;
+    ASSERT_IS_OK(bluetooth->setHfpConfig(hfpConfig, &hfpConfig2));
+    EXPECT_EQ(hfpConfig, hfpConfig2);
+}
+
+TEST_P(AudioCoreBluetooth, HfpConfigInvalid) {
+    static const auto kStatuses = {EX_NONE, EX_UNSUPPORTED_OPERATION};
+    if (bluetooth == nullptr) {
+        GTEST_SKIP() << "Bluetooth is not supported";
+    }
+    ndk::ScopedAStatus status;
+    IBluetooth::HfpConfig hfpConfig;
+    ASSERT_STATUS(kStatuses, status = bluetooth->setHfpConfig({}, &hfpConfig));
+    if (status.getExceptionCode() == EX_UNSUPPORTED_OPERATION) {
+        GTEST_SKIP() << "BT HFP is not supported";
+    }
+    EXPECT_STATUS(EX_ILLEGAL_ARGUMENT,
+                  bluetooth->setHfpConfig({.sampleRate = Int{-1}}, &hfpConfig));
+    EXPECT_STATUS(EX_ILLEGAL_ARGUMENT, bluetooth->setHfpConfig({.sampleRate = Int{0}}, &hfpConfig));
+    EXPECT_STATUS(EX_ILLEGAL_ARGUMENT,
+                  bluetooth->setHfpConfig({.volume = Float{IBluetooth::HfpConfig::VOLUME_MIN - 1}},
+                                          &hfpConfig));
+    EXPECT_STATUS(EX_ILLEGAL_ARGUMENT,
+                  bluetooth->setHfpConfig({.volume = Float{IBluetooth::HfpConfig::VOLUME_MAX + 1}},
+                                          &hfpConfig));
+}
+
 class AudioCoreTelephony : public AudioCoreModuleBase, public testing::TestWithParam<std::string> {
   public:
     void SetUp() override {
@@ -1787,6 +1872,17 @@ class AudioCoreTelephony : public AudioCoreModuleBase, public testing::TestWithP
 
     std::shared_ptr<ITelephony> telephony;
 };
+
+TEST_P(AudioCoreTelephony, SameInstance) {
+    if (telephony == nullptr) {
+        GTEST_SKIP() << "Telephony is not supported";
+    }
+    std::shared_ptr<ITelephony> telephony2;
+    EXPECT_IS_OK(module->getTelephony(&telephony2));
+    ASSERT_NE(nullptr, telephony2.get());
+    EXPECT_EQ(telephony->asBinder(), telephony2->asBinder())
+            << "getTelephony must return the same interface instance across invocations";
+}
 
 TEST_P(AudioCoreTelephony, GetSupportedAudioModes) {
     if (telephony == nullptr) {
@@ -3039,6 +3135,17 @@ ndk::ScopedAStatus AudioCoreSoundDose::NoOpHalSoundDoseCallback::onNewMelValues(
     return ndk::ScopedAStatus::ok();
 }
 
+TEST_P(AudioCoreSoundDose, SameInstance) {
+    if (soundDose == nullptr) {
+        GTEST_SKIP() << "SoundDose is not supported";
+    }
+    std::shared_ptr<ISoundDose> soundDose2;
+    EXPECT_IS_OK(module->getSoundDose(&soundDose2));
+    ASSERT_NE(nullptr, soundDose2.get());
+    EXPECT_EQ(soundDose->asBinder(), soundDose2->asBinder())
+            << "getSoundDose must return the same interface instance across invocations";
+}
+
 TEST_P(AudioCoreSoundDose, GetSetOutputRs2) {
     if (soundDose == nullptr) {
         GTEST_SKIP() << "SoundDose is not supported";
@@ -3085,6 +3192,10 @@ INSTANTIATE_TEST_SUITE_P(AudioCoreModuleTest, AudioCoreModule,
                          testing::ValuesIn(android::getAidlHalInstanceNames(IModule::descriptor)),
                          android::PrintInstanceNameToString);
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(AudioCoreModule);
+INSTANTIATE_TEST_SUITE_P(AudioCoreBluetoothTest, AudioCoreBluetooth,
+                         testing::ValuesIn(android::getAidlHalInstanceNames(IModule::descriptor)),
+                         android::PrintInstanceNameToString);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(AudioCoreBluetooth);
 INSTANTIATE_TEST_SUITE_P(AudioCoreTelephonyTest, AudioCoreTelephony,
                          testing::ValuesIn(android::getAidlHalInstanceNames(IModule::descriptor)),
                          android::PrintInstanceNameToString);

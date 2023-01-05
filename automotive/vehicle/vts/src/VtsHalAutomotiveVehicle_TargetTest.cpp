@@ -547,6 +547,18 @@ TEST_P(VtsHalAutomotiveVehicleTargetTest, verifySteeringWheelEasyAccessEnabledCo
                    VehiclePropertyGroup::SYSTEM, VehicleArea::GLOBAL, VehiclePropertyType::BOOLEAN);
 }
 
+TEST_P(VtsHalAutomotiveVehicleTargetTest, verifySteeringWheelLightsStateConfig) {
+    verifyProperty(VehicleProperty::STEERING_WHEEL_LIGHTS_STATE, VehiclePropertyAccess::READ,
+                   VehiclePropertyChangeMode::ON_CHANGE, VehiclePropertyGroup::SYSTEM,
+                   VehicleArea::GLOBAL, VehiclePropertyType::INT32);
+}
+
+TEST_P(VtsHalAutomotiveVehicleTargetTest, verifySteeringWheelLightsSwitchConfig) {
+    verifyProperty(VehicleProperty::STEERING_WHEEL_LIGHTS_SWITCH, VehiclePropertyAccess::READ_WRITE,
+                   VehiclePropertyChangeMode::ON_CHANGE, VehiclePropertyGroup::SYSTEM,
+                   VehicleArea::GLOBAL, VehiclePropertyType::INT32);
+}
+
 TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyMirrorAutoFoldEnabledConfig) {
     verifyProperty(VehicleProperty::MIRROR_AUTO_FOLD_ENABLED, VehiclePropertyAccess::READ_WRITE,
                    VehiclePropertyChangeMode::ON_CHANGE, VehiclePropertyGroup::SYSTEM,
@@ -559,8 +571,26 @@ TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyMirrorAutoTiltEnabledConfig) {
                    VehicleArea::MIRROR, VehiclePropertyType::BOOLEAN);
 }
 
+TEST_P(VtsHalAutomotiveVehicleTargetTest, verifySeatHeadrestHeightPosV2Config) {
+    verifyProperty(VehicleProperty::SEAT_HEADREST_HEIGHT_POS_V2, VehiclePropertyAccess::READ_WRITE,
+                   VehiclePropertyChangeMode::ON_CHANGE, VehiclePropertyGroup::SYSTEM,
+                   VehicleArea::SEAT, VehiclePropertyType::INT32);
+}
+
 TEST_P(VtsHalAutomotiveVehicleTargetTest, verifySeatWalkInPosConfig) {
     verifyProperty(VehicleProperty::SEAT_WALK_IN_POS, VehiclePropertyAccess::READ_WRITE,
+                   VehiclePropertyChangeMode::ON_CHANGE, VehiclePropertyGroup::SYSTEM,
+                   VehicleArea::SEAT, VehiclePropertyType::INT32);
+}
+
+TEST_P(VtsHalAutomotiveVehicleTargetTest, verifySeatFootwellLightsStateConfig) {
+    verifyProperty(VehicleProperty::SEAT_FOOTWELL_LIGHTS_STATE, VehiclePropertyAccess::READ,
+                   VehiclePropertyChangeMode::ON_CHANGE, VehiclePropertyGroup::SYSTEM,
+                   VehicleArea::SEAT, VehiclePropertyType::INT32);
+}
+
+TEST_P(VtsHalAutomotiveVehicleTargetTest, verifySeatFootwellLightsSwitchConfig) {
+    verifyProperty(VehicleProperty::SEAT_FOOTWELL_LIGHTS_SWITCH, VehiclePropertyAccess::READ_WRITE,
                    VehiclePropertyChangeMode::ON_CHANGE, VehiclePropertyGroup::SYSTEM,
                    VehicleArea::SEAT, VehiclePropertyType::INT32);
 }
@@ -603,6 +633,30 @@ TEST_P(VtsHalAutomotiveVehicleTargetTest, verifySeatLumbarVerticalMoveConfig) {
 
 TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyAutomaticEmergencyBrakingEnabledConfig) {
     verifyProperty(VehicleProperty::AUTOMATIC_EMERGENCY_BRAKING_ENABLED,
+                   VehiclePropertyAccess::READ_WRITE, VehiclePropertyChangeMode::ON_CHANGE,
+                   VehiclePropertyGroup::SYSTEM, VehicleArea::GLOBAL, VehiclePropertyType::BOOLEAN);
+}
+
+TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyForwardCollisionWarningEnabledConfig) {
+    verifyProperty(VehicleProperty::FORWARD_COLLISION_WARNING_ENABLED,
+                   VehiclePropertyAccess::READ_WRITE, VehiclePropertyChangeMode::ON_CHANGE,
+                   VehiclePropertyGroup::SYSTEM, VehicleArea::GLOBAL, VehiclePropertyType::BOOLEAN);
+}
+
+TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyBlindSpotWarningEnabledConfig) {
+    verifyProperty(VehicleProperty::BLIND_SPOT_WARNING_ENABLED, VehiclePropertyAccess::READ_WRITE,
+                   VehiclePropertyChangeMode::ON_CHANGE, VehiclePropertyGroup::SYSTEM,
+                   VehicleArea::GLOBAL, VehiclePropertyType::BOOLEAN);
+}
+
+TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyLaneDepartureWarningEnabledConfig) {
+    verifyProperty(VehicleProperty::LANE_DEPARTURE_WARNING_ENABLED,
+                   VehiclePropertyAccess::READ_WRITE, VehiclePropertyChangeMode::ON_CHANGE,
+                   VehiclePropertyGroup::SYSTEM, VehicleArea::GLOBAL, VehiclePropertyType::BOOLEAN);
+}
+
+TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyLaneCenteringAssistEnabledConfig) {
+    verifyProperty(VehicleProperty::LANE_CENTERING_ASSIST_ENABLED,
                    VehiclePropertyAccess::READ_WRITE, VehiclePropertyChangeMode::ON_CHANGE,
                    VehiclePropertyGroup::SYSTEM, VehicleArea::GLOBAL, VehiclePropertyType::BOOLEAN);
 }
