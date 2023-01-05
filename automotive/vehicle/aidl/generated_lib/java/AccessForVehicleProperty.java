@@ -237,7 +237,8 @@ public final class AccessForVehicleProperty {
         Map.entry(VehicleProperty.LANE_CENTERING_ASSIST_ENABLED, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.EMERGENCY_LANE_KEEP_ASSIST_ENABLED, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.ADAPTIVE_CRUISE_CONTROL_ENABLED, VehiclePropertyAccess.READ_WRITE),
-        Map.entry(VehicleProperty.HANDS_ON_DETECTION_ENABLED, VehiclePropertyAccess.READ_WRITE)
+        Map.entry(VehicleProperty.HANDS_ON_DETECTION_ENABLED, VehiclePropertyAccess.READ_WRITE),
+        Map.entry(VehicleProperty.DRIVER_ATTENTION_MONITORING_ENABLED, VehiclePropertyAccess.READ_WRITE)
     );
 
 }

@@ -246,6 +246,7 @@ std::unordered_map<VehicleProperty, VehiclePropertyChangeMode> ChangeModeForVehi
         {VehicleProperty::EMERGENCY_LANE_KEEP_ASSIST_ENABLED, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::ADAPTIVE_CRUISE_CONTROL_ENABLED, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::HANDS_ON_DETECTION_ENABLED, VehiclePropertyChangeMode::ON_CHANGE},
+        {VehicleProperty::DRIVER_ATTENTION_MONITORING_ENABLED, VehiclePropertyChangeMode::ON_CHANGE},
 };
 
 }  // namespace vehicle
