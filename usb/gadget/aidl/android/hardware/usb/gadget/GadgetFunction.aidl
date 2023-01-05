@@ -29,29 +29,29 @@ parcelable GadgetFunction {
     /**
      * Android open accessory protocol function.
      */
-    const long ACCESSORY = 2;
+    const long ACCESSORY = 1 << 1;
     /**
      * Media Transfer protocol function.
      */
-    const long MTP = 4;
+    const long MTP = 1 << 2;
     /**
      * Peripheral mode USB Midi function.
      */
-    const long MIDI = 8;
+    const long MIDI = 1 << 3;
     /**
      * Picture transfer protocol function.
      */
-    const long PTP = 16;
+    const long PTP = 1 << 4;
     /**
      * Tethering function.
      */
-    const long RNDIS = 32;
+    const long RNDIS = 1 << 5;
     /**
      * AOAv2.0 - Audio Source function.
      */
-    const long AUDIO_SOURCE = 64;
+    const long AUDIO_SOURCE = 1 << 6;
     /**
      * NCM - NCM function.
      */
-    const long NCM = 1024;
+    const long NCM = 1 << 10;
 }
