@@ -141,6 +141,10 @@ We support the following constant types:
 
 * FuelType
 
+* AutomaticEmergencyBrakingState
+
+* ErrorState
+
 * Constants
 
 Every constant type except "Constants" corresponds to a enum defined in Vehicle
