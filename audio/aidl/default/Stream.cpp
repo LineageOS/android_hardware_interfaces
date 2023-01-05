@@ -402,7 +402,11 @@ StreamOutWorkerLogic::Status StreamOutWorkerLogic::cycle() {
                     usleep(1000);  // Simulate a blocking call into the driver.
                     populateReply(&reply, mIsConnected);
                     // Can switch the state to ERROR if a driver error occurs.
-                    switchToTransientState(StreamDescriptor::State::DRAINING);
+                    if (mState == StreamDescriptor::State::ACTIVE && mForceSynchronousDrain) {
+                        mState = StreamDescriptor::State::IDLE;
+                    } else {
+                        switchToTransientState(StreamDescriptor::State::DRAINING);
+                    }
                 } else if (mState == StreamDescriptor::State::TRANSFER_PAUSED) {
                     mState = StreamDescriptor::State::DRAIN_PAUSED;
                     populateReply(&reply, mIsConnected);

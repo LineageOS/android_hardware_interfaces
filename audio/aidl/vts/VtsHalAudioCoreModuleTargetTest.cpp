@@ -2965,6 +2965,23 @@ class AudioStreamIo : public AudioCoreModuleBase,
                                 RunStreamIoCommandsImplSeq2(portConfig, commandsAndStates));
                     }
                 }
+            } else if (!IOTraits<Stream>::is_input) {
+                // Also try running the same sequence with "aosp.forceSynchronousDrain" set.
+                // This will only work with the default implementation. When it works, the stream
+                // tries always to move to the 'IDLE' state after a drain.
+                // This helps to check more paths for our test scenarios.
+                WithModuleParameter forceSynchronousDrain("aosp.forceSynchronousDrain",
+                                                          Boolean{true});
+                if (forceSynchronousDrain.SetUpNoChecks(module.get(), true /*failureExpected*/)
+                            .isOk()) {
+                    if (!std::get<PARAM_SETUP_SEQ>(GetParam())) {
+                        ASSERT_NO_FATAL_FAILURE(
+                                RunStreamIoCommandsImplSeq1(portConfig, commandsAndStates));
+                    } else {
+                        ASSERT_NO_FATAL_FAILURE(
+                                RunStreamIoCommandsImplSeq2(portConfig, commandsAndStates));
+                    }
+                }
             }
         }
     }
@@ -3402,14 +3419,17 @@ static const NamedCommandSequence kDrainInSeq = std::make_tuple(
 std::shared_ptr<StateSequence> makeDrainOutCommands(bool isSync) {
     using State = StreamDescriptor::State;
     auto d = std::make_unique<StateDag>();
+    StateDag::Node last = d->makeFinalNode(State::IDLE);
     StateDag::Node active = d->makeNodes(
             {std::make_pair(State::ACTIVE, kDrainOutAllCommand),
              std::make_pair(State::DRAINING, isSync ? TransitionTrigger(kGetStatusCommand)
                                                     : TransitionTrigger(kDrainReadyEvent))},
-            State::IDLE);
+            last);
     StateDag::Node idle = d->makeNode(State::IDLE, kBurstCommand, active);
     if (!isSync) {
         idle.children().push_back(d->makeNode(State::TRANSFERRING, kTransferReadyEvent, active));
+    } else {
+        active.children().push_back(last);
     }
     d->makeNode(State::STANDBY, kStartCommand, idle);
     return std::make_shared<StateSequenceFollower>(std::move(d));
@@ -3431,6 +3451,9 @@ std::shared_ptr<StateSequence> makeDrainPauseOutCommands(bool isSync) {
     StateDag::Node idle = d->makeNode(State::IDLE, kBurstCommand, active);
     if (!isSync) {
         idle.children().push_back(d->makeNode(State::TRANSFERRING, kDrainOutAllCommand, draining));
+    } else {
+        // If we get straight into IDLE on drain, no further testing is possible.
+        active.children().push_back(d->makeFinalNode(State::IDLE));
     }
     d->makeNode(State::STANDBY, kStartCommand, idle);
     return std::make_shared<StateSequenceFollower>(std::move(d));
@@ -3569,11 +3592,13 @@ std::shared_ptr<StateSequence> makeDrainPauseFlushOutCommands(bool isSync) {
     StateDag::Node draining = d->makeNodes({std::make_pair(State::DRAINING, kPauseCommand),
                                             std::make_pair(State::DRAIN_PAUSED, kFlushCommand)},
                                            State::IDLE);
-    StateDag::Node idle = d->makeNodes({std::make_pair(State::IDLE, kBurstCommand),
-                                        std::make_pair(State::ACTIVE, kDrainOutAllCommand)},
-                                       draining);
+    StateDag::Node active = d->makeNode(State::ACTIVE, kDrainOutAllCommand, draining);
+    StateDag::Node idle = d->makeNode(State::IDLE, kBurstCommand, active);
     if (!isSync) {
         idle.children().push_back(d->makeNode(State::TRANSFERRING, kDrainOutAllCommand, draining));
+    } else {
+        // If we get straight into IDLE on drain, no further testing is possible.
+        active.children().push_back(d->makeFinalNode(State::IDLE));
     }
     d->makeNode(State::STANDBY, kStartCommand, idle);
     return std::make_shared<StateSequenceFollower>(std::move(d));

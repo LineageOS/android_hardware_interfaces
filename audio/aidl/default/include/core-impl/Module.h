@@ -38,7 +38,9 @@ class Module : public BnModule {
   private:
     struct VendorDebug {
         static const std::string kForceTransientBurstName;
+        static const std::string kForceSynchronousDrainName;
         bool forceTransientBurst = false;
+        bool forceSynchronousDrain = false;
     };
 
     ndk::ScopedAStatus setModuleDebug(

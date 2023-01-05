@@ -67,6 +67,8 @@ class StreamContext {
         int transientStateDelayMs = 0;
         // Force the "burst" command to move the SM to the TRANSFERRING state.
         bool forceTransientBurst = false;
+        // Force the "drain" command to be synchronous, going directly to the IDLE state.
+        bool forceSynchronousDrain = false;
     };
 
     StreamContext() = default;
@@ -115,6 +117,7 @@ class StreamContext {
         return mFormat;
     }
     bool getForceTransientBurst() const { return mDebugParameters.forceTransientBurst; }
+    bool getForceSynchronousDrain() const { return mDebugParameters.forceSynchronousDrain; }
     size_t getFrameSize() const;
     int getInternalCommandCookie() const { return mInternalCommandCookie; }
     ReplyMQ* getReplyMQ() const { return mReplyMQ.get(); }
@@ -150,7 +153,8 @@ class StreamWorkerCommonLogic : public ::android::hardware::audio::common::Strea
           mDataMQ(context.getDataMQ()),
           mAsyncCallback(context.getAsyncCallback()),
           mTransientStateDelayMs(context.getTransientStateDelayMs()),
-          mForceTransientBurst(context.getForceTransientBurst()) {}
+          mForceTransientBurst(context.getForceTransientBurst()),
+          mForceSynchronousDrain(context.getForceSynchronousDrain()) {}
     std::string init() override;
     void populateReply(StreamDescriptor::Reply* reply, bool isConnected) const;
     void populateReplyWrongState(StreamDescriptor::Reply* reply,
@@ -174,6 +178,7 @@ class StreamWorkerCommonLogic : public ::android::hardware::audio::common::Strea
     const std::chrono::duration<int, std::milli> mTransientStateDelayMs;
     std::chrono::time_point<std::chrono::steady_clock> mTransientStateStart;
     const bool mForceTransientBurst;
+    const bool mForceSynchronousDrain;
     // We use an array and the "size" field instead of a vector to be able to detect
     // memory allocation issues.
     std::unique_ptr<int8_t[]> mDataBuffer;
