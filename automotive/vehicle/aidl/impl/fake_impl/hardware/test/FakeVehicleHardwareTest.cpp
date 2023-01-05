@@ -1776,7 +1776,61 @@ std::vector<OptionsTestCase> GenInvalidOptions() {
              "failed to parse keyCode as int: \"0.1\""},
             {"genfakedata_keypress_invalid_display",
              {"--genfakedata", "--keypress", "1", "0.1"},
-             "failed to parse display as int: \"0.1\""}};
+             "failed to parse display as int: \"0.1\""},
+            {"genfakedata_keyinputv2_incorrect_arguments",
+             {"--genfakedata", "--keyinputv2", "1", "1"},
+             "incorrect argument count, need 7 arguments for --genfakedata --keyinputv2\n"},
+            {"genfakedata_keyinputv2_invalid_area",
+             {"--genfakedata", "--keyinputv2", "0.1", "1", "1", "1", "1"},
+             "failed to parse area as int: \"0.1\""},
+            {"genfakedata_keyinputv2_invalid_display",
+             {"--genfakedata", "--keyinputv2", "1", "0.1", "1", "1", "1"},
+             "failed to parse display as int: \"0.1\""},
+            {"genfakedata_keyinputv2_invalid_keycode",
+             {"--genfakedata", "--keyinputv2", "1", "1", "0.1", "1", "1"},
+             "failed to parse keyCode as int: \"0.1\""},
+            {"genfakedata_keyinputv2_invalid_action",
+             {"--genfakedata", "--keyinputv2", "1", "1", "1", "0.1", "1"},
+             "failed to parse action as int: \"0.1\""},
+            {"genfakedata_keyinputv2_invalid_repeatcount",
+             {"--genfakedata", "--keyinputv2", "1", "1", "1", "1", "0.1"},
+             "failed to parse repeatCount as int: \"0.1\""},
+            {"genfakedata_motioninput_invalid_argument_count",
+             {"--genfakedata", "--motioninput", "1", "1", "1", "1", "1"},
+             "incorrect argument count, need at least 14 arguments for --genfakedata "
+             "--motioninput including at least 1 --pointer\n"},
+            {"genfakedata_motioninput_pointer_invalid_argument_count",
+             {"--genfakedata", "--motioninput", "1", "1", "1", "1", "1", "--pointer", "1", "1", "1",
+              "1", "1", "1", "--pointer"},
+             "incorrect argument count, need 6 arguments for every --pointer\n"},
+            {"genfakedata_motioninput_invalid_area",
+             {"--genfakedata", "--motioninput", "0.1", "1", "1", "1", "1", "--pointer", "1", "1",
+              "1", "1", "1", "1"},
+             "failed to parse area as int: \"0.1\""},
+            {"genfakedata_motioninput_invalid_display",
+             {"--genfakedata", "--motioninput", "1", "0.1", "1", "1", "1", "--pointer", "1", "1",
+              "1", "1", "1", "1"},
+             "failed to parse display as int: \"0.1\""},
+            {"genfakedata_motioninput_invalid_inputtype",
+             {"--genfakedata", "--motioninput", "1", "1", "0.1", "1", "1", "--pointer", "1", "1",
+              "1", "1", "1", "1"},
+             "failed to parse inputType as int: \"0.1\""},
+            {"genfakedata_motioninput_invalid_action",
+             {"--genfakedata", "--motioninput", "1", "1", "1", "0.1", "1", "--pointer", "1", "1",
+              "1", "1", "1", "1"},
+             "failed to parse action as int: \"0.1\""},
+            {"genfakedata_motioninput_invalid_buttonstate",
+             {"--genfakedata", "--motioninput", "1", "1", "1", "1", "0.1", "--pointer", "1", "1",
+              "1.2", "1.2", "1.2", "1.2"},
+             "failed to parse buttonState as int: \"0.1\""},
+            {"genfakedata_motioninput_invalid_pointerid",
+             {"--genfakedata", "--motioninput", "1", "1", "1", "1", "1", "--pointer", "0.1", "1",
+              "1.2", "1", "1", "1"},
+             "failed to parse pointerId as int: \"0.1\""},
+            {"genfakedata_motioninput_invalid_tooltype",
+             {"--genfakedata", "--motioninput", "1", "1", "1", "1", "1", "--pointer", "1", "0.1",
+              "1.2", "1", "1", "1"},
+             "failed to parse toolType as int: \"0.1\""}};
 }
 
 TEST_P(FakeVehicleHardwareOptionsTest, testInvalidOptions) {
@@ -1963,6 +2017,78 @@ TEST_F(FakeVehicleHardwareTest, testDebugGenFakeDataKeyPress) {
     EXPECT_EQ(toInt(VehicleHwKeyInputAction::ACTION_UP), events[1].value.int32Values[0]);
     EXPECT_EQ(1, events[1].value.int32Values[1]);
     EXPECT_EQ(2, events[1].value.int32Values[2]);
+}
+
+TEST_F(FakeVehicleHardwareTest, testDebugGenFakeDataKeyInputV2) {
+    std::vector<std::string> options = {"--genfakedata", "--keyinputv2", "1", "2", "3", "4", "5"};
+
+    DumpResult result = getHardware()->dump(options);
+
+    ASSERT_FALSE(result.callerShouldDumpState);
+    ASSERT_THAT(result.buffer, HasSubstr("successfully"));
+
+    auto events = getChangedProperties();
+    ASSERT_EQ(1u, events.size());
+    EXPECT_EQ(toInt(VehicleProperty::HW_KEY_INPUT_V2), events[0].prop);
+    ASSERT_EQ(4u, events[0].value.int32Values.size());
+    EXPECT_EQ(2, events[0].value.int32Values[0]);
+    EXPECT_EQ(3, events[0].value.int32Values[1]);
+    EXPECT_EQ(4, events[0].value.int32Values[2]);
+    EXPECT_EQ(5, events[0].value.int32Values[3]);
+    ASSERT_EQ(1u, events[0].value.int64Values.size());
+}
+
+TEST_F(FakeVehicleHardwareTest, testDebugGenFakeDataMotionInput) {
+    std::vector<std::string> options = {"--genfakedata",
+                                        "--motioninput",
+                                        "1",
+                                        "2",
+                                        "3",
+                                        "4",
+                                        "5",
+                                        "--pointer",
+                                        "11",
+                                        "22",
+                                        "33.3",
+                                        "44.4",
+                                        "55.5",
+                                        "66.6",
+                                        "--pointer",
+                                        "21",
+                                        "32",
+                                        "43.3",
+                                        "54.4",
+                                        "65.5",
+                                        "76.6"};
+
+    DumpResult result = getHardware()->dump(options);
+
+    ASSERT_FALSE(result.callerShouldDumpState);
+    ASSERT_THAT(result.buffer, HasSubstr("successfully"));
+
+    auto events = getChangedProperties();
+    ASSERT_EQ(1u, events.size());
+    EXPECT_EQ(toInt(VehicleProperty::HW_MOTION_INPUT), events[0].prop);
+    ASSERT_EQ(9u, events[0].value.int32Values.size());
+    EXPECT_EQ(2, events[0].value.int32Values[0]);
+    EXPECT_EQ(3, events[0].value.int32Values[1]);
+    EXPECT_EQ(4, events[0].value.int32Values[2]);
+    EXPECT_EQ(5, events[0].value.int32Values[3]);
+    EXPECT_EQ(2, events[0].value.int32Values[4]);
+    EXPECT_EQ(11, events[0].value.int32Values[5]);
+    EXPECT_EQ(21, events[0].value.int32Values[6]);
+    EXPECT_EQ(22, events[0].value.int32Values[7]);
+    EXPECT_EQ(32, events[0].value.int32Values[8]);
+    ASSERT_EQ(8u, events[0].value.floatValues.size());
+    EXPECT_FLOAT_EQ(33.3, events[0].value.floatValues[0]);
+    EXPECT_FLOAT_EQ(43.3, events[0].value.floatValues[1]);
+    EXPECT_FLOAT_EQ(44.4, events[0].value.floatValues[2]);
+    EXPECT_FLOAT_EQ(54.4, events[0].value.floatValues[3]);
+    EXPECT_FLOAT_EQ(55.5, events[0].value.floatValues[4]);
+    EXPECT_FLOAT_EQ(65.5, events[0].value.floatValues[5]);
+    EXPECT_FLOAT_EQ(66.6, events[0].value.floatValues[6]);
+    EXPECT_FLOAT_EQ(76.6, events[0].value.floatValues[7]);
+    ASSERT_EQ(1u, events[0].value.int64Values.size());
 }
 
 TEST_F(FakeVehicleHardwareTest, testGetEchoReverseBytes) {
