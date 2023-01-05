@@ -47,8 +47,8 @@ union NoiseSuppression {
   }
   @Backing(type="int") @VintfStability
   enum Level {
-    LOW = 0,
-    MEDIUM = 1,
-    HIGH = 2,
+    LOW,
+    MEDIUM,
+    HIGH,
   }
 }
