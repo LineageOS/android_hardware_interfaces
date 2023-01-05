@@ -98,6 +98,7 @@ constexpr int CHARGE_PORT_REAR_LEFT = toInt(propertyutils_impl::PortLocationType
 constexpr int LIGHT_STATE_ON = toInt(propertyutils_impl::VehicleLightState::ON);
 constexpr int LIGHT_STATE_OFF = toInt(propertyutils_impl::VehicleLightState::OFF);
 constexpr int LIGHT_SWITCH_OFF = toInt(propertyutils_impl::VehicleLightSwitch::OFF);
+constexpr int LIGHT_SWITCH_ON = toInt(propertyutils_impl::VehicleLightSwitch::ON);
 constexpr int LIGHT_SWITCH_AUTO = toInt(propertyutils_impl::VehicleLightSwitch::AUTOMATIC);
 constexpr int WHEEL_FRONT_LEFT = toInt(propertyutils_impl::VehicleAreaWheel::LEFT_FRONT);
 constexpr int WHEEL_FRONT_RIGHT = toInt(propertyutils_impl::VehicleAreaWheel::RIGHT_FRONT);

@@ -78,6 +78,7 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.automotive.audiocontrol</name>
+        <version>2</version>
         <interface>
             <name>IAudioControl</name>
             <instance>default</instance>
@@ -652,6 +653,13 @@
         <name>android.hardware.tv.cec</name>
         <interface>
             <name>IHdmiCec</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="aidl" optional="true">
+        <name>android.hardware.tv.earc</name>
+        <interface>
+            <name>IEArc</name>
             <instance>default</instance>
         </interface>
     </hal>

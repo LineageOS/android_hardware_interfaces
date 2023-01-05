@@ -15,6 +15,7 @@
  */
 
 #include <aidl/android/hardware/tv/hdmi/BnHdmi.h>
+#include <aidl/android/hardware/tv/hdmi/Result.h>
 #include <algorithm>
 #include <vector>
 
@@ -29,8 +30,10 @@ namespace implementation {
 using ::aidl::android::hardware::tv::hdmi::BnHdmi;
 using ::aidl::android::hardware::tv::hdmi::HdmiPortInfo;
 using ::aidl::android::hardware::tv::hdmi::HdmiPortType;
+using ::aidl::android::hardware::tv::hdmi::HpdSignal;
 using ::aidl::android::hardware::tv::hdmi::IHdmi;
 using ::aidl::android::hardware::tv::hdmi::IHdmiCallback;
+using ::aidl::android::hardware::tv::hdmi::Result;
 
 #define HDMI_MSG_IN_FIFO "/dev/hdmi_in_pipe"
 #define MESSAGE_BODY_MAX_LENGTH 4
@@ -41,6 +44,8 @@ struct HdmiMock : public BnHdmi {
     ::ndk::ScopedAStatus getPortInfo(std::vector<HdmiPortInfo>* _aidl_return) override;
     ::ndk::ScopedAStatus isConnected(int32_t portId, bool* _aidl_return) override;
     ::ndk::ScopedAStatus setCallback(const std::shared_ptr<IHdmiCallback>& callback) override;
+    ::ndk::ScopedAStatus setHpdSignal(HpdSignal signal) override;
+    ::ndk::ScopedAStatus getHpdSignal(HpdSignal* _aidl_return) override;
 
     void printEventBuf(const char* msg_buf, int len);
 
@@ -61,6 +66,9 @@ struct HdmiMock : public BnHdmi {
     // Port configuration
     uint16_t mPhysicalAddress = 0xFFFF;
     int mTotalPorts = 1;
+
+    // HPD Signal being used
+    HpdSignal mHpdSignal = HpdSignal::HDMI_HPD_PHYSICAL;
 
     // Testing variables
     // Input file descriptor

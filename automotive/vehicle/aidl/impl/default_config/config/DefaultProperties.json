@@ -861,6 +861,41 @@
             ]
         },
         {
+            "property": "VehicleProperty::SEAT_HEADREST_HEIGHT_POS_V2",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "Constants::SEAT_1_LEFT",
+                    "minInt32Value": 0,
+                    "maxInt32Value": 10
+                },
+                {
+                    "areaId": "Constants::SEAT_1_RIGHT",
+                    "minInt32Value": 0,
+                    "maxInt32Value": 10
+                },
+                {
+                    "areaId": "Constants::SEAT_2_LEFT",
+                    "minInt32Value": 0,
+                    "maxInt32Value": 10
+                },
+                {
+                    "areaId": "Constants::SEAT_2_RIGHT",
+                    "minInt32Value": 0,
+                    "maxInt32Value": 10
+                },
+                {
+                    "areaId": "Constants::SEAT_2_CENTER",
+                    "minInt32Value": 0,
+                    "maxInt32Value": 10
+                }
+            ]
+        },
+        {
             "property": "VehicleProperty::SEAT_HEADREST_HEIGHT_MOVE",
             "defaultValue": {
                 "int32Values": [
@@ -1032,6 +1067,71 @@
                     "areaId": "Constants::SEAT_2_CENTER",
                     "minInt32Value": -1,
                     "maxInt32Value": 1
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::SEAT_FOOTWELL_LIGHTS_STATE",
+            "defaultValue": {
+                "int32Values": [
+                    "Constants::LIGHT_STATE_OFF"
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "Constants::SEAT_1_LEFT",
+                    "supportedEnumValues": [
+                        "Constants::LIGHT_STATE_OFF",
+                        "Constants::LIGHT_STATE_ON"
+                    ]
+                },
+                {
+                    "areaId": "Constants::SEAT_1_RIGHT",
+                    "supportedEnumValues": [
+                        "Constants::LIGHT_STATE_OFF",
+                        "Constants::LIGHT_STATE_ON"
+                    ]
+                },
+                {
+                    "areaId": "Constants::SEAT_2_LEFT_2_RIGHT_2_CENTER",
+                    "supportedEnumValues": [
+                        "Constants::LIGHT_STATE_OFF",
+                        "Constants::LIGHT_STATE_ON"
+                    ]
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::SEAT_FOOTWELL_LIGHTS_SWITCH",
+            "defaultValue": {
+                "int32Values": [
+                    "Constants::LIGHT_SWITCH_OFF"
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "Constants::SEAT_1_LEFT",
+                    "supportedEnumValues": [
+                        "Constants::LIGHT_SWITCH_OFF",
+                        "Constants::LIGHT_SWITCH_ON",
+                        "Constants::LIGHT_SWITCH_AUTO"
+                    ]
+                },
+                {
+                    "areaId": "Constants::SEAT_1_RIGHT",
+                    "supportedEnumValues": [
+                        "Constants::LIGHT_SWITCH_OFF",
+                        "Constants::LIGHT_SWITCH_ON",
+                        "Constants::LIGHT_SWITCH_AUTO"
+                    ]
+                },
+                {
+                    "areaId": "Constants::SEAT_2_LEFT_2_RIGHT_2_CENTER",
+                    "supportedEnumValues": [
+                        "Constants::LIGHT_SWITCH_OFF",
+                        "Constants::LIGHT_SWITCH_ON",
+                        "Constants::LIGHT_SWITCH_AUTO"
+                    ]
                 }
             ]
         },
@@ -2707,6 +2807,23 @@
             ]
         },
         {
+            "property": "VehicleProperty::STEERING_WHEEL_LIGHTS_STATE",
+            "defaultValue": {
+                "int32Values": [
+                    "Constants::LIGHT_STATE_ON"
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": 0,
+                    "supportedEnumValues": [
+                        "Constants::LIGHT_STATE_OFF",
+                        "Constants::LIGHT_STATE_ON"
+                    ]
+                }
+            ]
+        },
+        {
             "property": "VehicleProperty::HEADLIGHTS_SWITCH",
             "defaultValue": {
                 "int32Values": [
@@ -2776,6 +2893,24 @@
                 },
                 {
                     "areaId": "Constants::SEAT_2_CENTER"
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::STEERING_WHEEL_LIGHTS_SWITCH",
+            "defaultValue": {
+                "int32Values": [
+                    "Constants::LIGHT_SWITCH_AUTO"
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": 0,
+                    "supportedEnumValues": [
+                        "Constants::LIGHT_SWITCH_OFF",
+                        "Constants::LIGHT_SWITCH_ON",
+                        "Constants::LIGHT_SWITCH_AUTO"
+                    ]
                 }
             ]
         },
@@ -2900,6 +3035,38 @@
         },
         {
             "property": "VehicleProperty::AUTOMATIC_EMERGENCY_BRAKING_ENABLED",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::FORWARD_COLLISION_WARNING_ENABLED",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::BLIND_SPOT_WARNING_ENABLED",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::LANE_DEPARTURE_WARNING_ENABLED",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::LANE_CENTERING_ASSIST_ENABLED",
             "defaultValue": {
                 "int32Values": [
                     0
