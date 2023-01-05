@@ -38,6 +38,9 @@ enum Capability {
   SIDEBAND_STREAM = 1,
   SKIP_CLIENT_COLOR_TRANSFORM = 2,
   PRESENT_FENCE_IS_NOT_RELIABLE = 3,
+  /**
+   * @deprecated - enabled by default.
+   */
   SKIP_VALIDATE = 4,
   BOOT_DISPLAY_CONFIG = 5,
 }

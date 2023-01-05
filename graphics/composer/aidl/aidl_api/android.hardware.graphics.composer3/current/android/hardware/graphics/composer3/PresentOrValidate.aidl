@@ -38,7 +38,7 @@ parcelable PresentOrValidate {
   android.hardware.graphics.composer3.PresentOrValidate.Result result;
   @VintfStability
   enum Result {
-    Validated = 0,
-    Presented = 1,
+    Validated,
+    Presented,
   }
 }

@@ -2319,6 +2319,22 @@ TEST_P(GraphicsComposerAidlCommandTest, MultiThreadedPresent) {
     // TODO(b/251842321): Try to present on multiple threads.
 }
 
+/**
+ * Test Capability::SKIP_VALIDATE
+ *
+ * Capability::SKIP_VALIDATE has been deprecated and should not be enabled.
+ */
+TEST_P(GraphicsComposerAidlCommandTest, SkipValidateDeprecatedTest) {
+    const auto& [versionStatus, version] = mComposerClient->getInterfaceVersion();
+    ASSERT_TRUE(versionStatus.isOk());
+    if (version <= 1) {
+        GTEST_SUCCEED() << "HAL at version 1 or lower can contain Capability::SKIP_VALIDATE.";
+        return;
+    }
+    ASSERT_FALSE(hasCapability(Capability::SKIP_VALIDATE))
+            << "Found Capability::SKIP_VALIDATE capability.";
+}
+
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(GraphicsComposerAidlCommandTest);
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, GraphicsComposerAidlCommandTest,
