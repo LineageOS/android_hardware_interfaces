@@ -34,8 +34,8 @@
 package android.hardware.radio.data;
 @Backing(type="int") @JavaDerive(toString=true) @VintfStability
 enum ApnAuthType {
-  NO_PAP_NO_CHAP = 0,
-  PAP_NO_CHAP = 1,
-  NO_PAP_CHAP = 2,
-  PAP_CHAP = 3,
+  NO_PAP_NO_CHAP,
+  PAP_NO_CHAP,
+  NO_PAP_CHAP,
+  PAP_CHAP,
 }

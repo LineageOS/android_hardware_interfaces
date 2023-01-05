@@ -60,7 +60,7 @@ parcelable DataProfileInfo {
   const int ID_FOTA = 3;
   const int ID_CBS = 4;
   const int ID_OEM_BASE = 1000;
-  const int ID_INVALID = -1;
+  const int ID_INVALID = 0xFFFFFFFF;
   const int TYPE_COMMON = 0;
   const int TYPE_3GPP = 1;
   const int TYPE_3GPP2 = 2;
