@@ -153,6 +153,28 @@ aidl_interface {
 }
 
 aidl_interface {
+    name: "android.hardware.radio.sap",
+    vendor_available: true,
+    host_supported: true,
+    srcs: ["android/hardware/radio/sap/*.aidl"],
+    stability: "vintf",
+    backend: {
+        cpp: {
+            enabled: true,
+        },
+        java: {
+            apex_available: [
+                "//apex_available:platform",
+                "com.android.btservices",
+            ],
+            sdk_version: "module_current",
+            min_sdk_version: "Tiramisu",
+        },
+    },
+
+}
+
+aidl_interface {
     name: "android.hardware.radio.sim",
     vendor_available: true,
     host_supported: true,
