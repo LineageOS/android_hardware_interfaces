@@ -27,6 +27,13 @@ using ::android::hardware::automotive::vehicle::DefaultVehicleHal;
 using ::android::hardware::automotive::vehicle::fake::FakeVehicleHardware;
 
 int main(int /* argc */, char* /* argv */[]) {
+    ALOGI("Starting thread pool...");
+    if (!ABinderProcess_setThreadPoolMaxThreadCount(4)) {
+        ALOGE("%s", "failed to set thread pool max thread count");
+        return 1;
+    }
+    ABinderProcess_startThreadPool();
+
     std::unique_ptr<FakeVehicleHardware> hardware = std::make_unique<FakeVehicleHardware>();
     std::shared_ptr<DefaultVehicleHal> vhal =
             ::ndk::SharedRefBase::make<DefaultVehicleHal>(std::move(hardware));
@@ -38,12 +45,6 @@ int main(int /* argc */, char* /* argv */[]) {
         ALOGE("failed to register android.hardware.automotive.vehicle service, exception: %d", err);
         return 1;
     }
-
-    if (!ABinderProcess_setThreadPoolMaxThreadCount(4)) {
-        ALOGE("%s", "failed to set thread pool max thread count");
-        return 1;
-    }
-    ABinderProcess_startThreadPool();
 
     ALOGI("Vehicle Service Ready");
 
