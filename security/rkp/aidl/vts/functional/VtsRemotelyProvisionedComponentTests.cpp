@@ -223,6 +223,20 @@ TEST_P(GetHardwareInfoTests, supportsValidCurve) {
     ASSERT_TRUE(provisionable_->getHardwareInfo(&hwInfo).isOk());
 
     const std::set<int> validCurves = {RpcHardwareInfo::CURVE_P256, RpcHardwareInfo::CURVE_25519};
+    // First check for the implementations that supports only IRPC V3+.
+    if (rpcHardwareInfo.versionNumber >= VERSION_WITHOUT_TEST_MODE) {
+        bytevec keysToSignMac;
+        DeviceInfo deviceInfo;
+        ProtectedData protectedData;
+        auto status = provisionable_->generateCertificateRequest(false, {}, {}, {}, &deviceInfo,
+                                                                 &protectedData, &keysToSignMac);
+        if (!status.isOk() &&
+            (status.getServiceSpecificError() == BnRemotelyProvisionedComponent::STATUS_REMOVED)) {
+            ASSERT_EQ(hwInfo.supportedEekCurve, RpcHardwareInfo::CURVE_NONE)
+                    << "Invalid curve: " << hwInfo.supportedEekCurve;
+            return;
+        }
+    }
     ASSERT_EQ(validCurves.count(hwInfo.supportedEekCurve), 1)
             << "Invalid curve: " << hwInfo.supportedEekCurve;
 }
