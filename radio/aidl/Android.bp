@@ -163,7 +163,12 @@ aidl_interface {
             enabled: true,
         },
         java: {
+            apex_available: [
+                "//apex_available:platform",
+                "com.android.btservices",
+            ],
             sdk_version: "module_current",
+            min_sdk_version: "Tiramisu",
         },
     },
 
