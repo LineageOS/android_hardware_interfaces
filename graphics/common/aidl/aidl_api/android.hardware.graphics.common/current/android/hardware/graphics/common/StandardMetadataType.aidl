@@ -58,4 +58,5 @@ enum StandardMetadataType {
   CTA861_3 = 20,
   SMPTE2094_40 = 21,
   SMPTE2094_10 = 22,
+  STRIDE = 23,
 }
