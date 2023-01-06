@@ -418,29 +418,37 @@ class EmulatedSecureElement : public BnSecureElement {
                                      test_applet});
     }
 
-    ScopedAStatus init(const std::shared_ptr<ISecureElementCallback>& clientCallback) override {
-        LOG(INFO) << __func__ << " callback: " << clientCallback.get();
-        if (!clientCallback) {
+    ScopedAStatus init(const std::shared_ptr<ISecureElementCallback>& client_callback) override {
+        LOG(INFO) << __func__ << " callback: " << client_callback.get();
+        if (client_callback == nullptr) {
             return ScopedAStatus::fromExceptionCode(EX_NULL_POINTER);
         }
-        client_callback_ = clientCallback;
+        for (auto& channel : channels_) {
+            channel = Channel();
+        }
+        client_callback_ = client_callback;
         client_callback_->onStateChange(true, "init");
         return ScopedAStatus::ok();
     }
 
     ScopedAStatus getAtr(std::vector<uint8_t>* aidl_return) override {
         LOG(INFO) << __func__;
+        if (client_callback_ == nullptr) {
+            return ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
+        }
         *aidl_return = atr_;
         return ScopedAStatus::ok();
     }
 
     ScopedAStatus reset() override {
         LOG(INFO) << __func__;
-        CHECK(client_callback_ != nullptr) << " init not invoked";
+        if (client_callback_ == nullptr) {
+            return ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
+        }
         client_callback_->onStateChange(false, "reset");
         client_callback_->onStateChange(true, "reset");
         // All channels are closed after reset.
-        for (auto channel : channels_) {
+        for (auto& channel : channels_) {
             channel = Channel();
         }
         return ScopedAStatus::ok();
@@ -448,6 +456,9 @@ class EmulatedSecureElement : public BnSecureElement {
 
     ScopedAStatus isCardPresent(bool* aidl_return) override {
         LOG(INFO) << __func__;
+        if (client_callback_ == nullptr) {
+            return ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
+        }
         *aidl_return = true;
         return ScopedAStatus::ok();
     }
@@ -456,6 +467,9 @@ class EmulatedSecureElement : public BnSecureElement {
                                    std::vector<uint8_t>* aidl_return) override {
         LOG(INFO) << __func__ << " aid: " << HexString(aid.data(), aid.size()) << " (" << aid.size()
                   << ") p2 " << p2;
+        if (client_callback_ == nullptr) {
+            return ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
+        }
 
         std::vector<uint8_t> select_response;
         std::shared_ptr<se::Applet> applet = nullptr;
@@ -507,6 +521,10 @@ class EmulatedSecureElement : public BnSecureElement {
             override {
         LOG(INFO) << __func__ << " aid: " << HexString(aid.data(), aid.size()) << " (" << aid.size()
                   << ") p2 " << p2;
+
+        if (client_callback_ == nullptr) {
+            return ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
+        }
 
         size_t channel_number = 1;
         std::vector<uint8_t> select_response;
@@ -562,6 +580,10 @@ class EmulatedSecureElement : public BnSecureElement {
 
     ScopedAStatus closeChannel(int8_t channel_number) override {
         LOG(INFO) << __func__ << " channel number: " << static_cast<int>(channel_number);
+        if (client_callback_ == nullptr) {
+            return ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
+        }
+
         // The selected basic or logical channel is not opened.
         if (channel_number >= channels_.size() || !channels_[channel_number].opened) {
             return ScopedAStatus::ok();
@@ -580,6 +602,9 @@ class EmulatedSecureElement : public BnSecureElement {
                            std::vector<uint8_t>* aidl_return) override {
         LOG(INFO) << __func__ << " data: " << HexString(data.data(), data.size()) << " ("
                   << data.size() << ")";
+        if (client_callback_ == nullptr) {
+            return ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
+        }
 
         se::Apdu apdu(data);
         uint8_t channel_number = apdu.get_channel_number();
@@ -648,7 +673,7 @@ class EmulatedSecureElement : public BnSecureElement {
 
     // Channel 0 is the basic channel, channels 1-19 are the logical channels.
     std::array<Channel, 20> channels_{};
-    std::shared_ptr<ISecureElementCallback> client_callback_;
+    std::shared_ptr<ISecureElementCallback> client_callback_{nullptr};
 
     // Secure element abstraction.
 
