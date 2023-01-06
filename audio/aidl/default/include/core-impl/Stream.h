@@ -31,6 +31,7 @@
 #include <aidl/android/hardware/audio/core/BnStreamIn.h>
 #include <aidl/android/hardware/audio/core/BnStreamOut.h>
 #include <aidl/android/hardware/audio/core/IStreamCallback.h>
+#include <aidl/android/hardware/audio/core/IStreamOutEventCallback.h>
 #include <aidl/android/hardware/audio/core/MicrophoneInfo.h>
 #include <aidl/android/hardware/audio/core/StreamDescriptor.h>
 #include <aidl/android/media/audio/common/AudioDevice.h>
@@ -76,6 +77,7 @@ class StreamContext {
                   const ::aidl::android::media::audio::common::AudioFormatDescription& format,
                   const ::aidl::android::media::audio::common::AudioChannelLayout& channelLayout,
                   std::unique_ptr<DataMQ> dataMQ, std::shared_ptr<IStreamCallback> asyncCallback,
+                  std::shared_ptr<IStreamOutEventCallback> outEventCallback,
                   DebugParameters debugParameters)
         : mCommandMQ(std::move(commandMQ)),
           mInternalCommandCookie(std::rand()),
@@ -84,6 +86,7 @@ class StreamContext {
           mChannelLayout(channelLayout),
           mDataMQ(std::move(dataMQ)),
           mAsyncCallback(asyncCallback),
+          mOutEventCallback(outEventCallback),
           mDebugParameters(debugParameters) {}
     StreamContext(StreamContext&& other)
         : mCommandMQ(std::move(other.mCommandMQ)),
@@ -93,6 +96,7 @@ class StreamContext {
           mChannelLayout(other.mChannelLayout),
           mDataMQ(std::move(other.mDataMQ)),
           mAsyncCallback(std::move(other.mAsyncCallback)),
+          mOutEventCallback(std::move(other.mOutEventCallback)),
           mDebugParameters(std::move(other.mDebugParameters)) {}
     StreamContext& operator=(StreamContext&& other) {
         mCommandMQ = std::move(other.mCommandMQ);
@@ -102,6 +106,7 @@ class StreamContext {
         mChannelLayout = std::move(other.mChannelLayout);
         mDataMQ = std::move(other.mDataMQ);
         mAsyncCallback = std::move(other.mAsyncCallback);
+        mOutEventCallback = std::move(other.mOutEventCallback);
         mDebugParameters = std::move(other.mDebugParameters);
         return *this;
     }
@@ -120,6 +125,9 @@ class StreamContext {
     bool getForceSynchronousDrain() const { return mDebugParameters.forceSynchronousDrain; }
     size_t getFrameSize() const;
     int getInternalCommandCookie() const { return mInternalCommandCookie; }
+    std::shared_ptr<IStreamOutEventCallback> getOutEventCallback() const {
+        return mOutEventCallback;
+    }
     ReplyMQ* getReplyMQ() const { return mReplyMQ.get(); }
     int getTransientStateDelayMs() const { return mDebugParameters.transientStateDelayMs; }
     bool isValid() const;
@@ -133,6 +141,7 @@ class StreamContext {
     ::aidl::android::media::audio::common::AudioChannelLayout mChannelLayout;
     std::unique_ptr<DataMQ> mDataMQ;
     std::shared_ptr<IStreamCallback> mAsyncCallback;
+    std::shared_ptr<IStreamOutEventCallback> mOutEventCallback;  // Only used by output streams
     DebugParameters mDebugParameters;
 };
 
@@ -203,13 +212,15 @@ class StreamOutWorkerLogic : public StreamWorkerCommonLogic {
   public:
     static const std::string kThreadName;
     explicit StreamOutWorkerLogic(const StreamContext& context)
-        : StreamWorkerCommonLogic(context) {}
+        : StreamWorkerCommonLogic(context), mEventCallback(context.getOutEventCallback()) {}
 
   protected:
     Status cycle() override;
 
   private:
     bool write(size_t clientSize, StreamDescriptor::Reply* reply);
+
+    std::shared_ptr<IStreamOutEventCallback> mEventCallback;
 };
 using StreamOutWorker = ::android::hardware::audio::common::StreamWorker<StreamOutWorkerLogic>;
 

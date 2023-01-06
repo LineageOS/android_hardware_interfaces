@@ -102,9 +102,10 @@ void Module::cleanUpPatch(int32_t patchId) {
     erase_all_values(mPatches, std::set<int32_t>{patchId});
 }
 
-ndk::ScopedAStatus Module::createStreamContext(int32_t in_portConfigId, int64_t in_bufferSizeFrames,
-                                               std::shared_ptr<IStreamCallback> asyncCallback,
-                                               StreamContext* out_context) {
+ndk::ScopedAStatus Module::createStreamContext(
+        int32_t in_portConfigId, int64_t in_bufferSizeFrames,
+        std::shared_ptr<IStreamCallback> asyncCallback,
+        std::shared_ptr<IStreamOutEventCallback> outEventCallback, StreamContext* out_context) {
     if (in_bufferSizeFrames <= 0) {
         LOG(ERROR) << __func__ << ": non-positive buffer size " << in_bufferSizeFrames;
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
@@ -147,7 +148,7 @@ ndk::ScopedAStatus Module::createStreamContext(int32_t in_portConfigId, int64_t 
                 std::make_unique<StreamContext::ReplyMQ>(1, true /*configureEventFlagWord*/),
                 portConfigIt->format.value(), portConfigIt->channelMask.value(),
                 std::make_unique<StreamContext::DataMQ>(frameSize * in_bufferSizeFrames),
-                asyncCallback, params);
+                asyncCallback, outEventCallback, params);
         if (temp.isValid()) {
             *out_context = std::move(temp);
         } else {
@@ -545,7 +546,7 @@ ndk::ScopedAStatus Module::openInputStream(const OpenInputStreamArguments& in_ar
     }
     StreamContext context;
     if (auto status = createStreamContext(in_args.portConfigId, in_args.bufferSizeFrames, nullptr,
-                                          &context);
+                                          nullptr, &context);
         !status.isOk()) {
         return status;
     }
@@ -598,7 +599,8 @@ ndk::ScopedAStatus Module::openOutputStream(const OpenOutputStreamArguments& in_
     }
     StreamContext context;
     if (auto status = createStreamContext(in_args.portConfigId, in_args.bufferSizeFrames,
-                                          isNonBlocking ? in_args.callback : nullptr, &context);
+                                          isNonBlocking ? in_args.callback : nullptr,
+                                          in_args.eventCallback, &context);
         !status.isOk()) {
         return status;
     }
