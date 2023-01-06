@@ -1835,6 +1835,11 @@ std::pair<wifi_error, wifi_chip_capabilities> WifiLegacyHal::getWifiChipCapabili
     return {status, chip_capabilities};
 }
 
+wifi_error WifiLegacyHal::enableStaChannelForPeerNetwork(uint32_t channelCategoryEnableFlag) {
+    return global_func_table_.wifi_enable_sta_channel_for_peer_network(global_handle_,
+                                                                       channelCategoryEnableFlag);
+}
+
 void WifiLegacyHal::invalidate() {
     global_handle_ = nullptr;
     iface_name_to_handle_.clear();

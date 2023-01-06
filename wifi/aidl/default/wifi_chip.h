@@ -145,6 +145,8 @@ class WifiChip : public BnWifiChip {
     ndk::ScopedAStatus getSupportedRadioCombinationsMatrix(
             WifiRadioCombinationMatrix* _aidl_return) override;
     ndk::ScopedAStatus getWifiChipCapabilities(WifiChipCapabilities* _aidl_return) override;
+    ndk::ScopedAStatus enableStaChannelForPeerNetwork(
+            ChannelCategoryMask in_channelCategoryEnableFlag) override;
     binder_status_t dump(int fd, const char** args, uint32_t numArgs) override;
 
   private:
@@ -214,6 +216,8 @@ class WifiChip : public BnWifiChip {
     ndk::ScopedAStatus setCountryCodeInternal(const std::array<uint8_t, 2>& in_code);
     std::pair<std::vector<WifiUsableChannel>, ndk::ScopedAStatus> getUsableChannelsInternal(
             WifiBand band, WifiIfaceMode ifaceModeMask, UsableChannelFilter filterMask);
+    ndk::ScopedAStatus enableStaChannelForPeerNetworkInternal(
+            ChannelCategoryMask channelCategoryEnableFlag);
     ndk::ScopedAStatus handleChipConfiguration(std::unique_lock<std::recursive_mutex>* lock,
                                                int32_t mode_id);
     ndk::ScopedAStatus registerDebugRingBufferCallback();
