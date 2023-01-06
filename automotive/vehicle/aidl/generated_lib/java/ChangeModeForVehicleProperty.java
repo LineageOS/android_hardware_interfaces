@@ -72,6 +72,7 @@ public final class ChangeModeForVehicleProperty {
         Map.entry(VehicleProperty.IGNITION_STATE, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.ABS_ACTIVE, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.TRACTION_CONTROL_ACTIVE, VehiclePropertyChangeMode.ON_CHANGE),
+        Map.entry(VehicleProperty.EV_STOPPING_MODE, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.HVAC_FAN_SPEED, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.HVAC_FAN_DIRECTION, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.HVAC_TEMPERATURE_CURRENT, VehiclePropertyChangeMode.ON_CHANGE),
@@ -232,7 +233,12 @@ public final class ChangeModeForVehicleProperty {
         Map.entry(VehicleProperty.FORWARD_COLLISION_WARNING_ENABLED, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.BLIND_SPOT_WARNING_ENABLED, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.LANE_DEPARTURE_WARNING_ENABLED, VehiclePropertyChangeMode.ON_CHANGE),
-        Map.entry(VehicleProperty.LANE_CENTERING_ASSIST_ENABLED, VehiclePropertyChangeMode.ON_CHANGE)
+        Map.entry(VehicleProperty.LANE_KEEP_ASSIST_ENABLED, VehiclePropertyChangeMode.ON_CHANGE),
+        Map.entry(VehicleProperty.LANE_CENTERING_ASSIST_ENABLED, VehiclePropertyChangeMode.ON_CHANGE),
+        Map.entry(VehicleProperty.EMERGENCY_LANE_KEEP_ASSIST_ENABLED, VehiclePropertyChangeMode.ON_CHANGE),
+        Map.entry(VehicleProperty.ADAPTIVE_CRUISE_CONTROL_ENABLED, VehiclePropertyChangeMode.ON_CHANGE),
+        Map.entry(VehicleProperty.HANDS_ON_DETECTION_ENABLED, VehiclePropertyChangeMode.ON_CHANGE),
+        Map.entry(VehicleProperty.DRIVER_ATTENTION_MONITORING_ENABLED, VehiclePropertyChangeMode.ON_CHANGE)
     );
 
 }

@@ -603,6 +603,20 @@ enum VehicleProperty {
     TRACTION_CONTROL_ACTIVE = 0x040B + 0x10000000 + 0x01000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:BOOLEAN
     /**
+     * Represents property for the current stopping mode of the vehicle.
+     *
+     * For the global area ID (0), the VehicleAreaConfig#supportedEnumValues must be defined unless
+     * all enum values of EvStoppingMode are supported.
+     *
+     * The EvStoppingMode enum may be extended to include more states in the future.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     * @data_enum EvStoppingMode
+     */
+    EV_STOPPING_MODE =
+            0x040D + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
+    /**
      * HVAC Properties
      *
      * Additional rules for mapping a zoned HVAC property (except
@@ -3471,6 +3485,26 @@ enum VehicleProperty {
             0x1006 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
 
     /**
+     * Enable or disable Lane Keep Assist (LKA).
+     *
+     * Set true to enable LKA and false to disable LKA. When LKA is enabled, the ADAS system in the
+     * vehicle should be turned on and monitoring if the driver unintentionally drifts toward or
+     * over the lane marking. If an unintentional lane departure is detected, the system applies
+     * steering control to return the vehicle into the current lane.
+     *
+     * This is different from Lane Centering Assist (LCA) which, when activated, applies continuous
+     * steering control to keep the vehicle centered in the current lane.
+     *
+     * This property is defined as read_write, but OEMs have the option to implement it as read
+     * only.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     */
+    LANE_KEEP_ASSIST_ENABLED =
+            0x1008 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+
+    /**
      * Enable or disable lane centering assist (LCA).
      *
      * Set true to enable LCA and false to disable LCA. When LCA is enabled, the ADAS system in the
@@ -3490,6 +3524,74 @@ enum VehicleProperty {
      */
     LANE_CENTERING_ASSIST_ENABLED =
             0x100A + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+
+    /*
+     * Enable or disable emergency lane keep assist (ELKA).
+     *
+     * Set true to enable ELKA and false to disable ELKA. When ELKA is enabled, the ADAS system in
+     * the vehicle should be on and monitoring for unsafe lane changes by the driver. When an unsafe
+     * maneuver is detected, ELKA alerts the driver and applies steering corrections to keep the
+     * vehicle in its original lane.
+     *
+     * This property is defined as read_write, but OEMs have the option to implement it as read
+     * only.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     */
+    EMERGENCY_LANE_KEEP_ASSIST_ENABLED =
+            0x100D + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+
+    /**
+     * Enable or disable adaptive cruise control (ACC).
+     *
+     * Set true to enable ACC and false to disable ACC. When ACC is enabled, the ADAS system in the
+     * vehicle should be turned on and waiting for an activation signal from the driver. Once the
+     * feature is activated, the ADAS system in the car should be accelerating and braking in a way
+     * that allows the vehicle to maintain a set speed and to maintain a set distance gap from a
+     * leading vehicle.
+     *
+     * This property is defined as read_write, but OEMs have the option to implement it as read
+     * only.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     */
+    ADAPTIVE_CRUISE_CONTROL_ENABLED =
+            0x100F + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+
+    /**
+     * Enable or disable hands on detection (HOD).
+     *
+     * Set true to enable HOD and false to disable HOD. When HOD is enabled, a system inside the
+     * vehicle should be monitoring the presence of the driver's hands on the steering wheel and
+     * send a warning if it detects that the driver's hands are no longer on the steering wheel.
+     *
+     * This property is defined as read_write, but OEMs have the option to implement it as read
+     * only.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     */
+    HANDS_ON_DETECTION_ENABLED =
+            0x1015 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+
+    /**
+     * Enable or disable driver attention monitoring.
+     *
+     * Set true to enable driver attention monitoring and false to disable driver attention
+     * monitoring. When driver attention monitoring is enabled, a system inside the vehicle should
+     * be monitoring the attention level of the driver and should send a warning if it detects that
+     * the driver is distracted.
+     *
+     * This property is defined as read_write, but OEMs have the option to implement it as read
+     * only.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     */
+    DRIVER_ATTENTION_MONITORING_ENABLED =
+            0x1018 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
 
     /***************************************************************************
      * End of ADAS Properties

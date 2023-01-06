@@ -36,9 +36,9 @@ interface IGnssMeasurementInterface {
          * If true, GNSS chipset must switch off duty cycling. In such mode no clock discontinuities
          * are expected and, when supported, carrier phase should be continuous in good signal
          * conditions. All non-blocklisted, healthy constellations, satellites and frequency bands
-         * that the chipset supports must be reported in this mode. The GNSS chipset is allowed to
-         * consume more power in this mode. If false, API must optimize power via duty cycling,
-         * constellations and frequency limits, etc.
+         * that are meaningful to positioning accuracy must be tracked and reported in this mode.
+         * The GNSS chipset is allowed to consume more power in this mode. If false, API must
+         * optimize power via duty cycling, constellations and frequency limits, etc.
          */
         boolean enableFullTracking;
 

@@ -566,6 +566,8 @@ DEFINE_TYPE(SMPTE2094_40, std::optional<std::vector<uint8_t>>);
 
 #undef DEFINE_TYPE
 
+#if defined(__cplusplus) && __cplusplus >= 202002L
+
 template <typename F, std::size_t... I>
 void invokeWithStandardMetadata(F&& f, StandardMetadataType type, std::index_sequence<I...>) {
     // Setup the jump table, mapping from each type to a springboard that invokes the template
@@ -619,5 +621,7 @@ AIMapper_Error applyStandardMetadata(StandardMetadataType type, const void* _Non
             type, StandardMetadataSequence{});
     return retVal;
 }
+
+#endif
 
 }  // namespace android::hardware::graphics::mapper
