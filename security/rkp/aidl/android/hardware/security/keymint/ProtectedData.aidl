@@ -209,7 +209,7 @@ parcelable ProtectedData {
      *     PubKeyX25519 = {                 ; COSE_Key
      *          1 : 1,                      ; Key type : Octet Key Pair
      *         -1 : 4,                      ; Curve : X25519
-     *         -2 : bstr                    ; Sender X25519 public key
+     *         -2 : bstr                    ; Sender X25519 public key, little-endian
      *     }
      *
      *     PubKeyEd25519 = {                ; COSE_Key
@@ -222,16 +222,16 @@ parcelable ProtectedData {
      *     PubKeyEcdhP256 = {               ; COSE_Key
      *          1 : 2,                      ; Key type : EC2
      *          -1 : 1,                     ; Curve : P256
-     *          -2 : bstr                   ; Sender X coordinate
-     *          -3 : bstr                   ; Sender Y coordinate
+     *          -2 : bstr                   ; Sender X coordinate, big-endian
+     *          -3 : bstr                   ; Sender Y coordinate, big-endian
      *     }
      *
      *     PubKeyECDSA256 = {               ; COSE_Key
      *         1 : 2,                       ; Key type : EC2
      *         3 : AlgorithmES256,          ; Algorithm : ECDSA w/ SHA-256
      *         -1 : 1,                      ; Curve: P256
-     *         -2 : bstr,                   ; X coordinate
-     *         -3 : bstr                    ; Y coordinate
+     *         -2 : bstr,                   ; X coordinate, big-endian
+     *         -3 : bstr                    ; Y coordinate, big-endian
      *     }
      *
      *     AlgorithmES256 = -7
