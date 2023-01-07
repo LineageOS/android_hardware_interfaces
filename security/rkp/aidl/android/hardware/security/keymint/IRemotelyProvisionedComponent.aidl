@@ -222,7 +222,7 @@ interface IRemotelyProvisionedComponent {
      *                2 : bstr             ; KID : EEK ID
      *                3 : -25,             ; Algorithm : ECDH-ES + HKDF-256
      *                -1 : 4,              ; Curve : X25519
-     *                -2 : bstr            ; X25519 public key
+     *                -2 : bstr            ; X25519 public key, little-endian
      *            }
      *
      *            EekP256 = {              ; COSE_Key
@@ -440,6 +440,9 @@ interface IRemotelyProvisionedComponent {
      *
      * ; The following section defines some types that are reused throughout the above
      * ; data structures.
+     * ; NOTE: Integer encoding is different for Ed25519 and P256 keys:
+     * ;       - Ed25519 is LE: https://www.rfc-editor.org/rfc/rfc8032#section-3.1
+     * ;       - P256 is BE: https://www.secg.org/sec1-v2.pdf#page=19 (section 2.3.7)
      * PubKeyEd25519 = {                ; COSE_Key
      *     1 : 1,                       ; Key type : octet key pair
      *     3 : AlgorithmEdDSA,          ; Algorithm : EdDSA
@@ -451,8 +454,8 @@ interface IRemotelyProvisionedComponent {
      *     1 : 2,                       ; Key type : EC2
      *     3 : AlgorithmES256,          ; Algorithm : ECDSA w/ SHA-256
      *     -1 : 1,                      ; Curve: P256
-     *     -2 : bstr,                   ; X coordinate
-     *     -3 : bstr                    ; Y coordinate
+     *     -2 : bstr,                   ; X coordinate, big-endian
+     *     -3 : bstr                    ; Y coordinate, big-endian
      * }
      *
      * AlgorithmES256 = -7
