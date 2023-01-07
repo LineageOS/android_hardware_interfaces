@@ -38,13 +38,13 @@ union PresetReverb {
   android.hardware.audio.effect.PresetReverb.Presets preset;
   @Backing(type="int") @VintfStability
   enum Presets {
-    NONE = 0,
-    SMALLROOM = 1,
-    MEDIUMROOM = 2,
-    LARGEROOM = 3,
-    MEDIUMHALL = 4,
-    LARGEHALL = 5,
-    PLATE = 6,
+    NONE,
+    SMALLROOM,
+    MEDIUMROOM,
+    LARGEROOM,
+    MEDIUMHALL,
+    LARGEHALL,
+    PLATE,
   }
   @VintfStability
   union Id {

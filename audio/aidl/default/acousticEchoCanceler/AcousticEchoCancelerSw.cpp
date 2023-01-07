@@ -54,7 +54,6 @@ extern "C" binder_exception_t queryEffect(const AudioUuid* in_impl_uuid, Descrip
         return EX_ILLEGAL_ARGUMENT;
     }
     *_aidl_return = AcousticEchoCancelerSw::kDescriptor;
-    LOG(ERROR) << __func__ << "xxx " << _aidl_return->toString();
     return EX_NONE;
 }
 
