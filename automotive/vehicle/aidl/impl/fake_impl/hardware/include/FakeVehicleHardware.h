@@ -240,6 +240,14 @@ class FakeVehicleHardware : public IVehicleHardware {
     static aidl::android::hardware::automotive::vehicle::VehiclePropValue createHwInputKeyProp(
             aidl::android::hardware::automotive::vehicle::VehicleHwKeyInputAction action,
             int32_t keyCode, int32_t targetDisplay);
+    static aidl::android::hardware::automotive::vehicle::VehiclePropValue createHwKeyInputV2Prop(
+            int32_t area, int32_t targetDisplay, int32_t keyCode, int32_t action,
+            int32_t repeatCount);
+    static aidl::android::hardware::automotive::vehicle::VehiclePropValue createHwMotionInputProp(
+            int32_t area, int32_t display, int32_t inputType, int32_t action, int32_t buttonState,
+            int32_t pointerCount, int32_t pointerId[], int32_t toolType[], float xData[],
+            float yData[], float pressure[], float size[]);
+
     static std::string genFakeDataHelp();
     static std::string parseErrMsg(std::string fieldName, std::string value, std::string type);
 };
