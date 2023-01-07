@@ -28,6 +28,7 @@
 #include "core-impl/Bluetooth.h"
 #include "core-impl/Module.h"
 #include "core-impl/SoundDose.h"
+#include "core-impl/StreamStub.h"
 #include "core-impl/Telephony.h"
 #include "core-impl/utils.h"
 
@@ -552,8 +553,9 @@ ndk::ScopedAStatus Module::openInputStream(const OpenInputStreamArguments& in_ar
     }
     context.fillDescriptor(&_aidl_return->desc);
     std::shared_ptr<StreamIn> stream;
-    if (auto status = StreamIn::createInstance(in_args.sinkMetadata, std::move(context),
-                                               mConfig->microphones, &stream);
+    // TODO: Add a mapping from module instance names to a corresponding 'createInstance'.
+    if (auto status = StreamInStub::createInstance(in_args.sinkMetadata, std::move(context),
+                                                   mConfig->microphones, &stream);
         !status.isOk()) {
         return status;
     }
@@ -606,8 +608,9 @@ ndk::ScopedAStatus Module::openOutputStream(const OpenOutputStreamArguments& in_
     }
     context.fillDescriptor(&_aidl_return->desc);
     std::shared_ptr<StreamOut> stream;
-    if (auto status = StreamOut::createInstance(in_args.sourceMetadata, std::move(context),
-                                                in_args.offloadInfo, &stream);
+    // TODO: Add a mapping from module instance names to a corresponding 'createInstance'.
+    if (auto status = StreamOutStub::createInstance(in_args.sourceMetadata, std::move(context),
+                                                    in_args.offloadInfo, &stream);
         !status.isOk()) {
         return status;
     }
