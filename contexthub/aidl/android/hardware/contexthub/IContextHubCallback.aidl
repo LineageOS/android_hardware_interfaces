@@ -74,4 +74,25 @@ interface IContextHubCallback {
      *
      */
     void handleTransactionResult(in int transactionId, in boolean success);
+
+    /**
+     * This callback is passed by the Contexthub service to the HAL implementation to allow the HAL
+     * to request a WiFi NAN session is created to allow the Contexthub to be able to utilize NAN
+     * functionality.
+     *
+     * onNanSessionStateChanged() will be invoked asynchronously after the NAN session request has
+     * been completed. This must be done within CONTEXTHUB_NAN_TRANSACTION_TIMEOUT_MS. If the
+     * request times out, onNanSessionStateChanged() will be invoked with the state that the session
+     * was previously in.
+     *
+     * @param enable Whether the NAN session should be enabled or disabled depending on whether the
+     *        Contexthub needs access to NAN.
+     */
+    void handleNanSessionRequest(in boolean enable);
+
+    /**
+     * Amount of time, in milliseconds, that a handleNanSessionRequest can be pending before the
+     * Contexthub service must respond.
+     */
+    const int CONTEXTHUB_NAN_TRANSACTION_TIMEOUT_MS = 10000;
 }

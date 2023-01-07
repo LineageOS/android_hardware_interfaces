@@ -563,6 +563,7 @@ DEFINE_TYPE(SMPTE2086, std::optional<Smpte2086>);
 DEFINE_TYPE(CTA861_3, std::optional<Cta861_3>);
 DEFINE_TYPE(SMPTE2094_10, std::optional<std::vector<uint8_t>>);
 DEFINE_TYPE(SMPTE2094_40, std::optional<std::vector<uint8_t>>);
+DEFINE_TYPE(STRIDE, uint32_t);
 
 #undef DEFINE_TYPE
 

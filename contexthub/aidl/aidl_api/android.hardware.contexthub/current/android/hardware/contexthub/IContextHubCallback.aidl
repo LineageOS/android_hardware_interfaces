@@ -38,4 +38,6 @@ interface IContextHubCallback {
   void handleContextHubMessage(in android.hardware.contexthub.ContextHubMessage msg, in String[] msgContentPerms);
   void handleContextHubAsyncEvent(in android.hardware.contexthub.AsyncEventType evt);
   void handleTransactionResult(in int transactionId, in boolean success);
+  void handleNanSessionRequest(in boolean enable);
+  const int CONTEXTHUB_NAN_TRANSACTION_TIMEOUT_MS = 10000;
 }
