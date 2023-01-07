@@ -368,4 +368,17 @@ enum StandardMetadataType {
      * If this is unset when encoded into a byte stream, the byte stream is empty.
      */
     SMPTE2094_10 = 22,
+
+    /**
+     * Can be used to get the stride in pixels of the buffer allocation. This is the number of
+     * pixels between two consecutive rows of an allocated buffer, when the concept of consecutive
+     * rows is defined. Otherwise, it has no meaning.
+     *
+     * Must match the value returned in android.hardware.graphics.allocator.AllocationResult#stride
+     *
+     * This is required metadata in mapper5 and should be read-only.
+     *
+     * The metadata type is a uint32_t.
+     */
+    STRIDE = 23,
 }

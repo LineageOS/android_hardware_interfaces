@@ -256,12 +256,14 @@ using ::WIFI_CHAN_WIDTH_5;
 using ::WIFI_CHAN_WIDTH_80;
 using ::WIFI_CHAN_WIDTH_80P80;
 using ::WIFI_CHAN_WIDTH_INVALID;
+using ::wifi_channel_category;
 using ::wifi_channel_info;
 using ::wifi_channel_stat;
 using ::wifi_channel_width;
 using ::wifi_chip_capabilities;
 using ::wifi_coex_restriction;
 using ::wifi_coex_unsafe_channel;
+using ::WIFI_DFS_CHANNEL;
 using ::WIFI_DUAL_STA_NON_TRANSIENT_UNBIASED;
 using ::WIFI_DUAL_STA_TRANSIENT_PREFER_PRIMARY;
 using ::wifi_error;
@@ -278,6 +280,7 @@ using ::WIFI_ERROR_UNINITIALIZED;
 using ::WIFI_ERROR_UNKNOWN;
 using ::wifi_gscan_capabilities;
 using ::wifi_hal_fn;
+using ::WIFI_INDOOR_CHANNEL;
 using ::wifi_information_element;
 using ::WIFI_INTERFACE_IBSS;
 using ::WIFI_INTERFACE_MESH;
@@ -755,6 +758,7 @@ class WifiLegacyHal {
     wifi_error getWifiCachedScanResults(const std::string& iface_name,
                                         const CachedScanResultsCallbackHandlers& handler);
     std::pair<wifi_error, wifi_chip_capabilities> getWifiChipCapabilities();
+    wifi_error enableStaChannelForPeerNetwork(uint32_t channelCategoryEnableFlag);
 
   private:
     // Retrieve interface handles for all the available interfaces.

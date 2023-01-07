@@ -200,6 +200,7 @@ bool convertLegacyNanBootstrappingRequestIndToAidl(
 bool convertLegacyNanBootstrappingConfirmIndToAidl(
         const legacy_hal::NanBootstrappingConfirmInd& legacy_ind,
         NanBootstrappingConfirmInd* aidl_ind);
+uint32_t convertAidlChannelCategoryToLegacy(uint32_t aidl_channel_category_mask);
 }  // namespace aidl_struct_util
 }  // namespace wifi
 }  // namespace hardware

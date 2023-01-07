@@ -1557,6 +1557,16 @@ TEST_P(GraphicsMapperStableCTests, GetSmpte2094_40) {
     }
 }
 
+TEST_P(GraphicsMapperStableCTests, GetStride) {
+    auto buffer = allocateGeneric();
+    ASSERT_TRUE(buffer);
+    auto bufferHandle = buffer->import();
+    ASSERT_TRUE(bufferHandle);
+    auto value = getStandardMetadata<StandardMetadataType::STRIDE>(*bufferHandle);
+    ASSERT_TRUE(value.has_value());
+    EXPECT_EQ(buffer->stride(), *value);
+}
+
 TEST_P(GraphicsMapperStableCTests, SupportsRequiredGettersSetters) {
     auto buffer = allocateGeneric();
     ASSERT_TRUE(buffer);
@@ -1587,6 +1597,7 @@ TEST_P(GraphicsMapperStableCTests, SupportsRequiredGettersSetters) {
             StandardMetadataType::BLEND_MODE,
             StandardMetadataType::SMPTE2086,
             StandardMetadataType::CTA861_3,
+            StandardMetadataType::STRIDE,
     };
 
     std::vector<StandardMetadataType> requiredSetters = {

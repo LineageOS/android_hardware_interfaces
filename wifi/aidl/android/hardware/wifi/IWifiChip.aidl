@@ -1106,4 +1106,29 @@ interface IWifiChip {
      *         |WifiStatusCode.ERROR_UNKNOWN|
      */
     void triggerSubsystemRestart();
+
+    /**
+     * Channel category mask.
+     */
+    @VintfStability
+    @Backing(type="int")
+    enum ChannelCategoryMask {
+        INDOOR_CHANNEL = 1 << 0,
+        DFS_CHANNEL = 1 << 1,
+    }
+
+    /**
+     * API to enable or disable the feature of allowing current STA-connected channel for WFA GO,
+     * SAP and Aware when the regulatory allows.
+     * If the channel category is enabled and allowed by the regulatory, the HAL method
+     * getUsableChannels() will contain the current STA-connected channel if that channel belongs
+     * to that category.
+     * @param channelCategoryEnableFlag bitmask of |ChannelCategoryMask|.
+     *        For each bit, 1 enables the channel category and 0 disables that channel category.
+     * @throws ServiceSpecificException with one of the following values:
+     *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|,
+     *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+     *         |WifiStatusCode.FAILURE_UNKNOWN|
+     */
+    void enableStaChannelForPeerNetwork(in ChannelCategoryMask channelCategoryEnableFlag);
 }
