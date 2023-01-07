@@ -198,6 +198,18 @@ TEST_P(DrmHalTest, OfflineLicenseTest) {
         EXPECT_NE(keySetId, keySetId2.keySetId);
     }
 
+    for (auto level : {kHwSecureAll, kSwSecureCrypto}) {
+        Status err = Status::OK;
+        auto sid = openSession(level, &err);
+        if (err == Status::OK) {
+            closeSession(sid);
+        } else if (err == Status::ERROR_DRM_CANNOT_HANDLE) {
+            continue;
+        } else {
+            EXPECT_EQ(Status::ERROR_DRM_NOT_PROVISIONED, err);
+            provision();
+        }
+    }
     ret = drmPlugin->removeOfflineLicense({keySetId});
     EXPECT_TXN(ret);
     EXPECT_EQ(Status::BAD_VALUE, DrmErr(ret));
