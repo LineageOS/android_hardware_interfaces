@@ -34,7 +34,7 @@
 package android.hardware.audio.effect;
 @Backing(type="byte") @VintfStability
 enum State {
-  INIT = 0,
-  IDLE = 1,
-  PROCESSING = 2,
+  INIT,
+  IDLE,
+  PROCESSING,
 }
