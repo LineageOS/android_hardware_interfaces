@@ -29,11 +29,77 @@ namespace aidl::android::hardware::audio::effect {
 class DynamicsProcessingSwContext final : public EffectContext {
   public:
     DynamicsProcessingSwContext(int statusDepth, const Parameter::Common& common)
-        : EffectContext(statusDepth, common) {
+        : EffectContext(statusDepth, common),
+          mChannelCount(::android::hardware::audio::common::getChannelCount(
+                  common.input.base.channelMask)),
+          mPreEqChCfgs(mChannelCount, {.channel = kInvalidChannelId}),
+          mPostEqChCfgs(mChannelCount, {.channel = kInvalidChannelId}),
+          mMbcChCfgs(mChannelCount, {.channel = kInvalidChannelId}),
+          mLimiterCfgs(mChannelCount, {.channel = kInvalidChannelId}) {
         LOG(DEBUG) << __func__;
     }
-    // TODO: add specific context here
-};
+
+    // utils
+    RetCode setChannelCfgs(const std::vector<DynamicsProcessing::ChannelConfig>& cfgs,
+                           std::vector<DynamicsProcessing::ChannelConfig>& targetCfgs,
+                           const DynamicsProcessing::StageEnablement& engineSetting);
+
+    RetCode setEqBandCfgs(const std::vector<DynamicsProcessing::EqBandConfig>& cfgs,
+                          std::vector<DynamicsProcessing::EqBandConfig>& targetCfgs,
+                          const DynamicsProcessing::StageEnablement& stage,
+                          const std::vector<DynamicsProcessing::ChannelConfig>& channelConfig);
+
+    // set params
+    RetCode setCommon(const Parameter::Common& common) override;
+    RetCode setEngineArchitecture(const DynamicsProcessing::EngineArchitecture& cfg);
+    RetCode setPreEqChannelCfgs(const std::vector<DynamicsProcessing::ChannelConfig>& cfgs);
+    RetCode setPostEqChannelCfgs(const std::vector<DynamicsProcessing::ChannelConfig>& cfgs);
+    RetCode setMbcChannelCfgs(const std::vector<DynamicsProcessing::ChannelConfig>& cfgs);
+    RetCode setPreEqBandCfgs(const std::vector<DynamicsProcessing::EqBandConfig>& cfgs);
+    RetCode setPostEqBandCfgs(const std::vector<DynamicsProcessing::EqBandConfig>& cfgs);
+    RetCode setMbcBandCfgs(const std::vector<DynamicsProcessing::MbcBandConfig>& cfgs);
+    RetCode setLimiterCfgs(const std::vector<DynamicsProcessing::LimiterConfig>& cfgs);
+    RetCode setInputGainCfgs(const std::vector<DynamicsProcessing::InputGain>& cfgs);
+
+    // get params
+    DynamicsProcessing::EngineArchitecture getEngineArchitecture() { return mEngineSettings; }
+    std::vector<DynamicsProcessing::ChannelConfig> getPreEqChannelCfgs() { return mPreEqChCfgs; }
+    std::vector<DynamicsProcessing::ChannelConfig> getPostEqChannelCfgs() { return mPostEqChCfgs; }
+    std::vector<DynamicsProcessing::ChannelConfig> getMbcChannelCfgs() { return mMbcChCfgs; }
+    std::vector<DynamicsProcessing::EqBandConfig> getPreEqBandCfgs() { return mPreEqChBands; }
+    std::vector<DynamicsProcessing::EqBandConfig> getPostEqBandCfgs() { return mPostEqChBands; }
+    std::vector<DynamicsProcessing::MbcBandConfig> getMbcBandCfgs() { return mMbcChBands; }
+    std::vector<DynamicsProcessing::LimiterConfig> getLimiterCfgs() { return mLimiterCfgs; }
+    std::vector<DynamicsProcessing::InputGain> getInputGainCfgs();
+
+  private:
+    static constexpr int32_t kInvalidChannelId = -1;
+    size_t mChannelCount = 0;
+    DynamicsProcessing::EngineArchitecture mEngineSettings;
+    // Channel config vector with size of mChannelCount
+    std::vector<DynamicsProcessing::ChannelConfig> mPreEqChCfgs;
+    std::vector<DynamicsProcessing::ChannelConfig> mPostEqChCfgs;
+    std::vector<DynamicsProcessing::ChannelConfig> mMbcChCfgs;
+    std::vector<DynamicsProcessing::LimiterConfig> mLimiterCfgs;
+    std::vector<DynamicsProcessing::InputGain> mInputGainCfgs;
+    // Band config vector with size of mChannelCount * bandCount
+    std::vector<DynamicsProcessing::EqBandConfig> mPreEqChBands;
+    std::vector<DynamicsProcessing::EqBandConfig> mPostEqChBands;
+    std::vector<DynamicsProcessing::MbcBandConfig> mMbcChBands;
+
+    bool validateCutoffFrequency(float freq);
+    bool validateStageEnablement(const DynamicsProcessing::StageEnablement& enablement);
+    bool validateEngineConfig(const DynamicsProcessing::EngineArchitecture& engine);
+    bool validateEqBandConfig(const DynamicsProcessing::EqBandConfig& band, int maxChannel,
+                              int maxBand,
+                              const std::vector<DynamicsProcessing::ChannelConfig>& channelConfig);
+    bool validateMbcBandConfig(const DynamicsProcessing::MbcBandConfig& band, int maxChannel,
+                               int maxBand,
+                               const std::vector<DynamicsProcessing::ChannelConfig>& channelConfig);
+    bool validateLimiterConfig(const DynamicsProcessing::LimiterConfig& limiter, int maxChannel);
+    void resizeChannels();
+    void resizeBands();
+};  // DynamicsProcessingSwContext
 
 class DynamicsProcessingSw final : public EffectImpl {
   public:
@@ -60,7 +126,9 @@ class DynamicsProcessingSw final : public EffectImpl {
 
   private:
     std::shared_ptr<DynamicsProcessingSwContext> mContext;
-    /* parameters */
-    DynamicsProcessing mSpecificParam;
-};
+    ndk::ScopedAStatus getParameterDynamicsProcessing(const DynamicsProcessing::Tag& tag,
+                                                      Parameter::Specific* specific);
+
+};  // DynamicsProcessingSw
+
 }  // namespace aidl::android::hardware::audio::effect

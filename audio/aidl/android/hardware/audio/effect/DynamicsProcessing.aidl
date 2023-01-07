@@ -51,6 +51,14 @@ union DynamicsProcessing {
          * capability definition not enough.
          */
         ParcelableHolder extension;
+        /**
+         * Min Cut off frequency (in Hz) for all Bands.
+         */
+        float minCutOffFreq;
+        /**
+         * Max Cut off frequency (in Hz) for all Bands.
+         */
+        float maxCutOffFreq;
     }
 
     /**
@@ -68,16 +76,16 @@ union DynamicsProcessing {
     }
 
     /**
-     * Band enablement configuration.
+     * Stage enablement configuration.
      */
     @VintfStability
-    parcelable BandEnablement {
+    parcelable StageEnablement {
         /**
-         * True if multi-band stage is in use.
+         * True if stage is in use.
          */
         boolean inUse;
         /**
-         * Number of bands configured for this stage.
+         * Number of bands configured for this stage. Must be positive when inUse is true.
          */
         int bandCount;
     }
@@ -92,21 +100,22 @@ union DynamicsProcessing {
          */
         ResolutionPreference resolutionPreference = ResolutionPreference.FAVOR_FREQUENCY_RESOLUTION;
         /**
-         * Preferred frame duration in milliseconds (ms).
+         * Preferred processing duration in milliseconds (ms). Must not be negative, 0 means no
+         * preference.
          */
-        float preferredFrameDurationMs;
+        float preferredProcessingDurationMs;
         /**
          * PreEq stage (Multi-band Equalizer) configuration.
          */
-        BandEnablement preEqBand;
+        StageEnablement preEqStage;
         /**
          * PostEq stage (Multi-band Equalizer) configuration.
          */
-        BandEnablement postEqBand;
+        StageEnablement postEqStage;
         /**
          * MBC stage (Multi-band Compressor) configuration.
          */
-        BandEnablement mbcBand;
+        StageEnablement mbcStage;
         /**
          * True if Limiter stage is in use.
          */
@@ -114,18 +123,19 @@ union DynamicsProcessing {
     }
 
     /**
-     * Band enablement configuration for a specific channel.
+     * Enablement configuration for a specific channel.
      */
     @VintfStability
-    parcelable BandChannelConfig {
+    parcelable ChannelConfig {
         /**
-         * Channel index.
+         * Channel index. Must not be negative, and not exceed the channel count calculated from
+         * Parameter.common.input.base.channelMask.
          */
         int channel;
         /**
-         * Channel index.
+         * Channel enablement configuration. Can not be true if corresponding stage is not in use.
          */
-        BandEnablement enablement;
+        boolean enable;
     }
 
     /**
@@ -134,7 +144,8 @@ union DynamicsProcessing {
     @VintfStability
     parcelable EqBandConfig {
         /**
-         * Channel index.
+         * Channel index. Must not be negative, and not exceed the channel count calculated from
+         * Parameter.common.input.base.channelMask.
          */
         int channel;
         /**
@@ -142,17 +153,20 @@ union DynamicsProcessing {
          */
         int band;
         /**
-         * True if EQ stage is enabled.
+         * True if EQ band is enabled.
+         * If EngineArchitecture EQ stage inUse was set to false, then enable can not be set to
+         * true.
          */
         boolean enable;
         /**
-         * Topmost frequency number (in Hz) this band will process.
+         * Topmost frequency number (in Hz) this band will process. Must be in the range of
+         * [minCutOffFreq, maxCutOffFreq] defined in Capability.
          */
-        float cutoffFrequency;
+        float cutoffFrequencyHz;
         /**
          * Gain factor in decibels (dB).
          */
-        float gain;
+        float gainDb;
     }
 
     /**
@@ -161,51 +175,53 @@ union DynamicsProcessing {
     @VintfStability
     parcelable MbcBandConfig {
         /**
-         * Channel index.
+         * Channel index. Must not be negative, and not exceed the channel count calculated from
+         * Parameter.common.input.base.channelMask.
          */
         int channel;
         /**
-         * Band index, must in the range of [0, bandCount-1].
+         * Band index. Must be in the range of [0, bandCount-1].
          */
         int band;
         /**
-         * True if MBC stage is enabled.
+         * True if MBC band is enabled.
+         * If EngineArchitecture MBC inUse was set to false, then enable here can not be set to
+         * true.
          */
         boolean enable;
         /**
-         * Topmost frequency number (in Hz) this band will process.
+         * Topmost frequency number (in Hz) this band will process. Must be in the range of
+         * [minCutOffFreq, maxCutOffFreq] defined in Capability.
          */
         float cutoffFrequencyHz;
         /**
-         * Gain factor in decibels (dB).
-         */
-        float gainDb;
-        /**
-         * Attack Time for compressor in milliseconds (ms).
+         * Attack Time for compressor in milliseconds (ms). Must not be negative.
          */
         float attackTimeMs;
         /**
-         * Release Time for compressor in milliseconds (ms).
+         * Release Time for compressor in milliseconds (ms). Must not be negative.
          */
         float releaseTimeMs;
         /**
-         * Compressor ratio (N:1) (input:output).
+         * Compressor ratio (N:1) (input:output). Must not be negative.
          */
         float ratio;
         /**
-         * Compressor threshold measured in decibels (dB) from 0 dB Full Scale (dBFS).
+         * Compressor threshold measured in decibels (dB) from 0 dB Full Scale (dBFS).  Must not be
+         * positive.
          */
         float thresholdDb;
         /**
-         * Width in decibels (dB) around compressor threshold point.
+         * Width in decibels (dB) around compressor threshold point. Must not be negative.
          */
         float kneeWidthDb;
         /**
-         * Noise gate threshold in decibels (dB) from 0 dB Full Scale (dBFS).
+         * Noise gate threshold in decibels (dB) from 0 dB Full Scale (dBFS). Must not be positive.
          */
         float noiseGateThresholdDb;
         /**
-         * Expander ratio (1:N) (input:output) for signals below the Noise Gate Threshold.
+         * Expander ratio (1:N) (input:output) for signals below the Noise Gate Threshold. Must not
+         * be negative.
          */
         float expanderRatio;
         /**
@@ -224,36 +240,35 @@ union DynamicsProcessing {
     @VintfStability
     parcelable LimiterConfig {
         /**
-         * Channel index.
+         * Channel index. Must not be negative, and not exceed the channel count calculated from
+         * Parameter.common.input.base.channelMask.
          */
         int channel;
         /**
-         * True if Limiter stage is enabled.
+         * True if Limiter band is enabled.
+         * If EngineArchitecture limiterInUse was set to false, then enable can not be set to true.
          */
         boolean enable;
-        /**
-         * True if Limiter stage is in use.
-         */
-        boolean inUse;
         /**
          * Index of group assigned to this Limiter. Only limiters that share the same linkGroup
          * index will react together.
          */
         int linkGroup;
         /**
-         * Attack Time for compressor in milliseconds (ms).
+         * Attack Time for compressor in milliseconds (ms). Must not be negative.
          */
         float attackTimeMs;
         /**
-         * Release Time for compressor in milliseconds (ms).
+         * Release Time for compressor in milliseconds (ms). Must not be negative.
          */
         float releaseTimeMs;
         /**
-         * Compressor ratio (N:1) (input:output).
+         * Compressor ratio (N:1) (input:output). Must not be negative.
          */
         float ratio;
         /**
-         * Compressor threshold measured in decibels (dB) from 0 dB Full Scale (dBFS).
+         * Compressor threshold measured in decibels (dB) from 0 dB Full Scale (dBFS). Must not be
+         * positive.
          */
         float thresholdDb;
         /**
@@ -263,39 +278,55 @@ union DynamicsProcessing {
     }
 
     /**
+     * Input gain for a channel (specified by the channel index).
+     */
+    @VintfStability
+    parcelable InputGain {
+        /**
+         * Channel index. Must not be negative, and not exceed the channel count calculated from
+         * Parameter.common.input.base.channelMask.
+         */
+        int channel;
+        /**
+         * Gain applied to the input signal in decibels (dB). 0 dB means no change in level.
+         */
+        float gainDb;
+    }
+
+    /**
      * Effect engine architecture.
      */
     EngineArchitecture engineArchitecture;
     /**
-     * PreEq stage per channel configuration.
+     * PreEq stage per channel configuration. Only valid when pre EQ stage inUse is true.
      */
-    BandChannelConfig preEq;
+    ChannelConfig[] preEq;
     /**
-     * PostEq stage per channel configuration.
+     * PostEq stage per channel configuration. Only valid when post EQ stage inUse is true.
      */
-    BandChannelConfig postEq;
+    ChannelConfig[] postEq;
     /**
-     * PreEq stage per band configuration.
+     * PreEq stage per band configuration. Only valid when pre EQ stage inUse is true.
      */
-    EqBandConfig preEqBand;
+    EqBandConfig[] preEqBand;
     /**
-     * PostEq stage per band configuration.
+     * PostEq stage per band configuration. Only valid when post EQ stage inUse is true.
      */
-    EqBandConfig postEqBand;
+    EqBandConfig[] postEqBand;
     /**
-     * MBC stage per channel configuration.
+     * MBC stage per channel configuration. Only valid when MBC stage inUse is true.
      */
-    BandChannelConfig mbc;
+    ChannelConfig[] mbc;
     /**
-     * PostEq stage per band configuration.
+     * PostEq stage per band configuration. Only valid when MBC stage inUse is true.
      */
-    MbcBandConfig mbcBand;
+    MbcBandConfig[] mbcBand;
     /**
-     * Limiter stage configuration.
+     * Limiter stage configuration. Only valid when limiter stage inUse is true.
      */
-    LimiterConfig limiter;
+    LimiterConfig[] limiter;
     /**
-     * Input gain factor in decibels (dB). 0 dB means no change in level.
+     * Input gain factor.
      */
-    float inputGainDb;
+    InputGain[] inputGain;
 }

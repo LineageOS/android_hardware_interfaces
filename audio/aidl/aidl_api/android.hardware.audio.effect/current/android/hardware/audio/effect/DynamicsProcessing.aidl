@@ -36,14 +36,14 @@ package android.hardware.audio.effect;
 union DynamicsProcessing {
   android.hardware.audio.effect.VendorExtension vendorExtension;
   android.hardware.audio.effect.DynamicsProcessing.EngineArchitecture engineArchitecture;
-  android.hardware.audio.effect.DynamicsProcessing.BandChannelConfig preEq;
-  android.hardware.audio.effect.DynamicsProcessing.BandChannelConfig postEq;
-  android.hardware.audio.effect.DynamicsProcessing.EqBandConfig preEqBand;
-  android.hardware.audio.effect.DynamicsProcessing.EqBandConfig postEqBand;
-  android.hardware.audio.effect.DynamicsProcessing.BandChannelConfig mbc;
-  android.hardware.audio.effect.DynamicsProcessing.MbcBandConfig mbcBand;
-  android.hardware.audio.effect.DynamicsProcessing.LimiterConfig limiter;
-  float inputGainDb;
+  android.hardware.audio.effect.DynamicsProcessing.ChannelConfig[] preEq;
+  android.hardware.audio.effect.DynamicsProcessing.ChannelConfig[] postEq;
+  android.hardware.audio.effect.DynamicsProcessing.EqBandConfig[] preEqBand;
+  android.hardware.audio.effect.DynamicsProcessing.EqBandConfig[] postEqBand;
+  android.hardware.audio.effect.DynamicsProcessing.ChannelConfig[] mbc;
+  android.hardware.audio.effect.DynamicsProcessing.MbcBandConfig[] mbcBand;
+  android.hardware.audio.effect.DynamicsProcessing.LimiterConfig[] limiter;
+  android.hardware.audio.effect.DynamicsProcessing.InputGain[] inputGain;
   @VintfStability
   union Id {
     int vendorExtensionTag;
@@ -52,37 +52,39 @@ union DynamicsProcessing {
   @VintfStability
   parcelable Capability {
     ParcelableHolder extension;
+    float minCutOffFreq;
+    float maxCutOffFreq;
   }
   enum ResolutionPreference {
-    FAVOR_FREQUENCY_RESOLUTION = 0,
-    FAVOR_TIME_RESOLUTION = 1,
+    FAVOR_FREQUENCY_RESOLUTION,
+    FAVOR_TIME_RESOLUTION,
   }
   @VintfStability
-  parcelable BandEnablement {
+  parcelable StageEnablement {
     boolean inUse;
     int bandCount;
   }
   @VintfStability
   parcelable EngineArchitecture {
     android.hardware.audio.effect.DynamicsProcessing.ResolutionPreference resolutionPreference = android.hardware.audio.effect.DynamicsProcessing.ResolutionPreference.FAVOR_FREQUENCY_RESOLUTION;
-    float preferredFrameDurationMs;
-    android.hardware.audio.effect.DynamicsProcessing.BandEnablement preEqBand;
-    android.hardware.audio.effect.DynamicsProcessing.BandEnablement postEqBand;
-    android.hardware.audio.effect.DynamicsProcessing.BandEnablement mbcBand;
+    float preferredProcessingDurationMs;
+    android.hardware.audio.effect.DynamicsProcessing.StageEnablement preEqStage;
+    android.hardware.audio.effect.DynamicsProcessing.StageEnablement postEqStage;
+    android.hardware.audio.effect.DynamicsProcessing.StageEnablement mbcStage;
     boolean limiterInUse;
   }
   @VintfStability
-  parcelable BandChannelConfig {
+  parcelable ChannelConfig {
     int channel;
-    android.hardware.audio.effect.DynamicsProcessing.BandEnablement enablement;
+    boolean enable;
   }
   @VintfStability
   parcelable EqBandConfig {
     int channel;
     int band;
     boolean enable;
-    float cutoffFrequency;
-    float gain;
+    float cutoffFrequencyHz;
+    float gainDb;
   }
   @VintfStability
   parcelable MbcBandConfig {
@@ -90,7 +92,6 @@ union DynamicsProcessing {
     int band;
     boolean enable;
     float cutoffFrequencyHz;
-    float gainDb;
     float attackTimeMs;
     float releaseTimeMs;
     float ratio;
@@ -105,12 +106,16 @@ union DynamicsProcessing {
   parcelable LimiterConfig {
     int channel;
     boolean enable;
-    boolean inUse;
     int linkGroup;
     float attackTimeMs;
     float releaseTimeMs;
     float ratio;
     float thresholdDb;
     float postGainDb;
+  }
+  @VintfStability
+  parcelable InputGain {
+    int channel;
+    float gainDb;
   }
 }

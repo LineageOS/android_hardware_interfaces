@@ -119,11 +119,11 @@ class EffectContext {
 
     virtual RetCode setCommon(const Parameter::Common& common) {
         mCommon = common;
-        LOG(ERROR) << __func__ << mCommon.toString();
+        LOG(INFO) << __func__ << mCommon.toString();
         return RetCode::SUCCESS;
     }
     virtual Parameter::Common getCommon() {
-        LOG(ERROR) << __func__ << mCommon.toString();
+        LOG(INFO) << __func__ << mCommon.toString();
         return mCommon;
     }
 
