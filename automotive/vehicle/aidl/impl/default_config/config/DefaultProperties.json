@@ -1744,6 +1744,77 @@
             }
         },
         {
+            "property": "VehicleProperty::HW_KEY_INPUT_V2",
+            "defaultValue": {
+                "int32Values": [
+                    0,
+                    0,
+                    0,
+                    0
+                ],
+                "int64Values": [
+                    0
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "Constants::SEAT_1_LEFT"
+                },
+                {
+                    "areaId": "Constants::SEAT_1_RIGHT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_LEFT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_RIGHT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_CENTER"
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::HW_MOTION_INPUT",
+            "defaultValue": {
+                "int32Values": [
+                    0,
+                    0,
+                    0,
+                    0,
+                    1,
+                    0,
+                    0
+                ],
+                "floatValues": [
+                    0,
+                    0,
+                    0,
+                    0
+                ],
+                "int64Values": [
+                    0
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "Constants::SEAT_1_LEFT"
+                },
+                {
+                    "areaId": "Constants::SEAT_1_RIGHT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_LEFT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_RIGHT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_CENTER"
+                }
+            ]
+        },
+        {
             "property": "VehicleProperty::HW_ROTARY_INPUT",
             "defaultValue": {
                 "int32Values": [

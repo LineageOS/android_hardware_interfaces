@@ -62,12 +62,12 @@ union Visualizer {
   @VintfStability
   enum ScalingMode {
     NORMALIZED = 0,
-    AS_PLAYED = 1,
+    AS_PLAYED,
   }
   @VintfStability
   enum MeasurementMode {
     NONE = 0,
-    PEAK_RMS = 1,
+    PEAK_RMS,
   }
   @VintfStability
   union GetOnlyParameters {
