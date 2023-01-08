@@ -98,12 +98,13 @@ inline std::ostream& operator<<(std::ostream& out, const RetCode& code) {
         }                                                                              \
     } while (0)
 
-#define RETURN_VALUE_IF(expr, ret, log)                                                          \
-    do {                                                                                         \
-        if (expr) {                                                                              \
-            LOG(ERROR) << __func__ << ":" << __LINE__ << " return with expr " << #expr << (log); \
-            return ret;                                                                          \
-        }                                                                                        \
+#define RETURN_VALUE_IF(expr, ret, log)                                                  \
+    do {                                                                                 \
+        if (expr) {                                                                      \
+            LOG(ERROR) << __func__ << ":" << __LINE__ << " return with expr \"" << #expr \
+                       << "\":" << (log);                                                \
+            return ret;                                                                  \
+        }                                                                                \
     } while (0)
 
 #define RETURN_IF_BINDER_EXCEPTION(functor)                                 \

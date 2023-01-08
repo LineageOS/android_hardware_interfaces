@@ -307,7 +307,7 @@ TEST_P(UsbAidlTest, DisabledDataStatusCheck) {
       }
     }
   }
-  EXPECT_LE(1, disabledCount);
+  EXPECT_GE(1, disabledCount);
   ALOGI("UsbAidlTest DataStatusCheck end");
 }
 

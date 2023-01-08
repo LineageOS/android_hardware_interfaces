@@ -156,7 +156,7 @@ cc_binary {
         "libbassboostsw",
         "libbundleaidl",
         "libdownmixaidl",
-        "libdynamicsprocessingsw",
+        "libdynamicsprocessingaidl",
         "libenvreverbsw",
         "libequalizersw",
         "libhapticgeneratoraidl",
