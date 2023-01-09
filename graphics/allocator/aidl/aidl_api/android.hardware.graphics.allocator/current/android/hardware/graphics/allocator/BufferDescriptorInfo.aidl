@@ -41,4 +41,5 @@ parcelable BufferDescriptorInfo {
   android.hardware.graphics.common.PixelFormat format = android.hardware.graphics.common.PixelFormat.UNSPECIFIED;
   android.hardware.graphics.common.BufferUsage usage = android.hardware.graphics.common.BufferUsage.CPU_READ_NEVER;
   long reservedSize;
+  android.hardware.graphics.common.ExtendableType[] additionalOptions;
 }
