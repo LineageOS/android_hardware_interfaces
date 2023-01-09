@@ -307,6 +307,7 @@
             <instance>default</instance>
         </interface>
     </hal>
+    <!-- Either the native or the HIDL mapper HAL must exist on the device -->
     <hal format="hidl" optional="true">
         <name>android.hardware.graphics.mapper</name>
         <!-- New, non-Go devices should use 4.0, tested in vts_treble_vintf_vendor_test -->
@@ -781,9 +782,10 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="native">
+    <!-- Either the native or the HIDL mapper HAL must exist on the device -->
+    <hal format="native" optional="true">
         <name>mapper</name>
-        <version>1.0</version>
+        <version>5.0</version>
         <interface>
             <name>I</name>
             <regex-instance>.*</regex-instance>
