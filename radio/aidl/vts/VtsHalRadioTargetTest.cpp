@@ -55,7 +55,7 @@ INSTANTIATE_TEST_SUITE_P(
         testing::ValuesIn(android::getAidlHalInstanceNames(IRadioNetwork::descriptor)),
         android::PrintInstanceNameToString);
 
-GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(RadioSapTest);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(SapTest);
 INSTANTIATE_TEST_SUITE_P(PerInstance, SapTest,
                          testing::ValuesIn(android::getAidlHalInstanceNames(ISap::descriptor)),
                          android::PrintInstanceNameToString);
