@@ -10,7 +10,8 @@ package {
 cc_library {
     name: "libexample_vib_getter",
     srcs: ["getter.cpp"],
-    vendor: true,
+    product_available: true,
+    vendor_available: true,
     shared_libs: [
         "liblog",
         "libbinder_ndk",
@@ -26,6 +27,21 @@ android_app {
     vendor: true,
     static_libs: ["android.hardware.vibrator-V1-java"],
     jni_libs: ["libexample_vib_getter"],
+    use_embedded_native_libs: true,
+    jarjar_rules: "jarjar.txt",
+    stl: "c++_shared",
+    srcs: ["example/vib/MyActivity.java"],
+    sdk_version: "system_current",
+    visibility: [":__subpackages__"],
+}
+
+android_app {
+    name: "ExampleVibratorJavaProductClient",
+    privileged: true,
+    product_specific: true,
+    static_libs: ["android.hardware.vibrator-V1-java"],
+    jni_libs: ["libexample_vib_getter"],
+    use_embedded_native_libs: true,
     jarjar_rules: "jarjar.txt",
     stl: "c++_shared",
     srcs: ["example/vib/MyActivity.java"],
