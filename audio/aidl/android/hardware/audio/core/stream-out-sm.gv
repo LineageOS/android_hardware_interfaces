@@ -31,6 +31,7 @@ digraph stream_out_state_machine {
     ACTIVE -> ACTIVE [label="burst"];
     ACTIVE -> PAUSED [label="pause"];          // consumer -> passive (not consuming)
     ACTIVE -> DRAINING [label="drain"];        // producer -> passive
+    ACTIVE -> IDLE [label="drain"];            // synchronous drain
     PAUSED -> PAUSED [label="burst"];
     PAUSED -> ACTIVE [label="start"];          // consumer -> active
     PAUSED -> IDLE [label="flush"];            // producer -> passive, buffer is cleared

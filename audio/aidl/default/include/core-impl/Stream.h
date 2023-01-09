@@ -62,12 +62,21 @@ class StreamContext {
     // Ensure that this value is not used by any of StreamDescriptor.State enums
     static constexpr int32_t STATE_CLOSED = -1;
 
+    struct DebugParameters {
+        // An extra delay for transient states, in ms.
+        int transientStateDelayMs = 0;
+        // Force the "burst" command to move the SM to the TRANSFERRING state.
+        bool forceTransientBurst = false;
+        // Force the "drain" command to be synchronous, going directly to the IDLE state.
+        bool forceSynchronousDrain = false;
+    };
+
     StreamContext() = default;
     StreamContext(std::unique_ptr<CommandMQ> commandMQ, std::unique_ptr<ReplyMQ> replyMQ,
                   const ::aidl::android::media::audio::common::AudioFormatDescription& format,
                   const ::aidl::android::media::audio::common::AudioChannelLayout& channelLayout,
                   std::unique_ptr<DataMQ> dataMQ, std::shared_ptr<IStreamCallback> asyncCallback,
-                  int transientStateDelayMs)
+                  DebugParameters debugParameters)
         : mCommandMQ(std::move(commandMQ)),
           mInternalCommandCookie(std::rand()),
           mReplyMQ(std::move(replyMQ)),
@@ -75,7 +84,7 @@ class StreamContext {
           mChannelLayout(channelLayout),
           mDataMQ(std::move(dataMQ)),
           mAsyncCallback(asyncCallback),
-          mTransientStateDelayMs(transientStateDelayMs) {}
+          mDebugParameters(debugParameters) {}
     StreamContext(StreamContext&& other)
         : mCommandMQ(std::move(other.mCommandMQ)),
           mInternalCommandCookie(other.mInternalCommandCookie),
@@ -83,8 +92,8 @@ class StreamContext {
           mFormat(other.mFormat),
           mChannelLayout(other.mChannelLayout),
           mDataMQ(std::move(other.mDataMQ)),
-          mAsyncCallback(other.mAsyncCallback),
-          mTransientStateDelayMs(other.mTransientStateDelayMs) {}
+          mAsyncCallback(std::move(other.mAsyncCallback)),
+          mDebugParameters(std::move(other.mDebugParameters)) {}
     StreamContext& operator=(StreamContext&& other) {
         mCommandMQ = std::move(other.mCommandMQ);
         mInternalCommandCookie = other.mInternalCommandCookie;
@@ -92,8 +101,8 @@ class StreamContext {
         mFormat = std::move(other.mFormat);
         mChannelLayout = std::move(other.mChannelLayout);
         mDataMQ = std::move(other.mDataMQ);
-        mAsyncCallback = other.mAsyncCallback;
-        mTransientStateDelayMs = other.mTransientStateDelayMs;
+        mAsyncCallback = std::move(other.mAsyncCallback);
+        mDebugParameters = std::move(other.mDebugParameters);
         return *this;
     }
 
@@ -107,10 +116,12 @@ class StreamContext {
     ::aidl::android::media::audio::common::AudioFormatDescription getFormat() const {
         return mFormat;
     }
+    bool getForceTransientBurst() const { return mDebugParameters.forceTransientBurst; }
+    bool getForceSynchronousDrain() const { return mDebugParameters.forceSynchronousDrain; }
     size_t getFrameSize() const;
     int getInternalCommandCookie() const { return mInternalCommandCookie; }
     ReplyMQ* getReplyMQ() const { return mReplyMQ.get(); }
-    int getTransientStateDelayMs() const { return mTransientStateDelayMs; }
+    int getTransientStateDelayMs() const { return mDebugParameters.transientStateDelayMs; }
     bool isValid() const;
     void reset();
 
@@ -122,7 +133,7 @@ class StreamContext {
     ::aidl::android::media::audio::common::AudioChannelLayout mChannelLayout;
     std::unique_ptr<DataMQ> mDataMQ;
     std::shared_ptr<IStreamCallback> mAsyncCallback;
-    int mTransientStateDelayMs;
+    DebugParameters mDebugParameters;
 };
 
 class StreamWorkerCommonLogic : public ::android::hardware::audio::common::StreamLogic {
@@ -141,7 +152,9 @@ class StreamWorkerCommonLogic : public ::android::hardware::audio::common::Strea
           mReplyMQ(context.getReplyMQ()),
           mDataMQ(context.getDataMQ()),
           mAsyncCallback(context.getAsyncCallback()),
-          mTransientStateDelayMs(context.getTransientStateDelayMs()) {}
+          mTransientStateDelayMs(context.getTransientStateDelayMs()),
+          mForceTransientBurst(context.getForceTransientBurst()),
+          mForceSynchronousDrain(context.getForceSynchronousDrain()) {}
     std::string init() override;
     void populateReply(StreamDescriptor::Reply* reply, bool isConnected) const;
     void populateReplyWrongState(StreamDescriptor::Reply* reply,
@@ -164,6 +177,8 @@ class StreamWorkerCommonLogic : public ::android::hardware::audio::common::Strea
     std::shared_ptr<IStreamCallback> mAsyncCallback;
     const std::chrono::duration<int, std::milli> mTransientStateDelayMs;
     std::chrono::time_point<std::chrono::steady_clock> mTransientStateStart;
+    const bool mForceTransientBurst;
+    const bool mForceSynchronousDrain;
     // We use an array and the "size" field instead of a vector to be able to detect
     // memory allocation issues.
     std::unique_ptr<int8_t[]> mDataBuffer;
