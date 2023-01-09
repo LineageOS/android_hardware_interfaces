@@ -46,6 +46,7 @@ using aidl::android::media::audio::common::AudioPort;
 using aidl::android::media::audio::common::AudioPortConfig;
 using aidl::android::media::audio::common::AudioPortExt;
 using aidl::android::media::audio::common::AudioProfile;
+using aidl::android::media::audio::common::Boolean;
 using aidl::android::media::audio::common::Int;
 using aidl::android::media::audio::common::PcmType;
 using android::hardware::audio::common::getFrameSizeInBytes;
@@ -138,12 +139,15 @@ ndk::ScopedAStatus Module::createStreamContext(int32_t in_portConfigId, int64_t 
         (flags.getTag() == AudioIoFlags::Tag::output &&
          !isBitPositionFlagSet(flags.get<AudioIoFlags::Tag::output>(),
                                AudioOutputFlags::MMAP_NOIRQ))) {
+        StreamContext::DebugParameters params{mDebug.streamTransientStateDelayMs,
+                                              mVendorDebug.forceTransientBurst,
+                                              mVendorDebug.forceSynchronousDrain};
         StreamContext temp(
                 std::make_unique<StreamContext::CommandMQ>(1, true /*configureEventFlagWord*/),
                 std::make_unique<StreamContext::ReplyMQ>(1, true /*configureEventFlagWord*/),
                 portConfigIt->format.value(), portConfigIt->channelMask.value(),
                 std::make_unique<StreamContext::DataMQ>(frameSize * in_bufferSizeFrames),
-                asyncCallback, mDebug.streamTransientStateDelayMs);
+                asyncCallback, params);
         if (temp.isValid()) {
             *out_context = std::move(temp);
         } else {
@@ -976,18 +980,69 @@ ndk::ScopedAStatus Module::generateHwAvSyncId(int32_t* _aidl_return) {
     return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
 }
 
+const std::string Module::VendorDebug::kForceTransientBurstName = "aosp.forceTransientBurst";
+const std::string Module::VendorDebug::kForceSynchronousDrainName = "aosp.forceSynchronousDrain";
+
 ndk::ScopedAStatus Module::getVendorParameters(const std::vector<std::string>& in_ids,
                                                std::vector<VendorParameter>* _aidl_return) {
     LOG(DEBUG) << __func__ << ": id count: " << in_ids.size();
-    (void)_aidl_return;
-    return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+    bool allParametersKnown = true;
+    for (const auto& id : in_ids) {
+        if (id == VendorDebug::kForceTransientBurstName) {
+            VendorParameter forceTransientBurst{.id = id};
+            forceTransientBurst.ext.setParcelable(Boolean{mVendorDebug.forceTransientBurst});
+            _aidl_return->push_back(std::move(forceTransientBurst));
+        } else if (id == VendorDebug::kForceSynchronousDrainName) {
+            VendorParameter forceSynchronousDrain{.id = id};
+            forceSynchronousDrain.ext.setParcelable(Boolean{mVendorDebug.forceSynchronousDrain});
+            _aidl_return->push_back(std::move(forceSynchronousDrain));
+        } else {
+            allParametersKnown = false;
+            LOG(ERROR) << __func__ << ": unrecognized parameter \"" << id << "\"";
+        }
+    }
+    if (allParametersKnown) return ndk::ScopedAStatus::ok();
+    return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
 }
+
+namespace {
+
+template <typename W>
+bool extractParameter(const VendorParameter& p, decltype(W::value)* v) {
+    std::optional<W> value;
+    binder_status_t result = p.ext.getParcelable(&value);
+    if (result == STATUS_OK && value.has_value()) {
+        *v = value.value().value;
+        return true;
+    }
+    LOG(ERROR) << __func__ << ": failed to read the value of the parameter \"" << p.id
+               << "\": " << result;
+    return false;
+}
+
+}  // namespace
 
 ndk::ScopedAStatus Module::setVendorParameters(const std::vector<VendorParameter>& in_parameters,
                                                bool in_async) {
     LOG(DEBUG) << __func__ << ": parameter count " << in_parameters.size()
                << ", async: " << in_async;
-    return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+    bool allParametersKnown = true;
+    for (const auto& p : in_parameters) {
+        if (p.id == VendorDebug::kForceTransientBurstName) {
+            if (!extractParameter<Boolean>(p, &mVendorDebug.forceTransientBurst)) {
+                return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+            }
+        } else if (p.id == VendorDebug::kForceSynchronousDrainName) {
+            if (!extractParameter<Boolean>(p, &mVendorDebug.forceSynchronousDrain)) {
+                return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+            }
+        } else {
+            allParametersKnown = false;
+            LOG(ERROR) << __func__ << ": unrecognized parameter \"" << p.id << "\"";
+        }
+    }
+    if (allParametersKnown) return ndk::ScopedAStatus::ok();
+    return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
 }
 
 ndk::ScopedAStatus Module::addDeviceEffect(
