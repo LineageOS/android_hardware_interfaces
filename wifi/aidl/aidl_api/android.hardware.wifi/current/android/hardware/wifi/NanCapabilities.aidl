@@ -52,5 +52,4 @@ parcelable NanCapabilities {
   boolean supports6g;
   boolean supportsHe;
   boolean supportsPairing;
-  boolean supportsSetClusterId;
 }

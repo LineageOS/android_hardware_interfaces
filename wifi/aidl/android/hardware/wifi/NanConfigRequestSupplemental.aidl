@@ -60,8 +60,4 @@ parcelable NanConfigRequestSupplemental {
      * Controls which channel NAN instant communication mode operates on.
      */
     int instantModeChannel;
-    /**
-     * Controls which cluster to join.
-     */
-    int clusterId;
 }
