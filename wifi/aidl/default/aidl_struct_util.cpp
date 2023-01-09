@@ -1706,6 +1706,8 @@ bool convertAidlNanConfigRequestToLegacy(const NanConfigRequest& aidl_request1,
     legacy_request->enable_instant_mode = aidl_request2.enableInstantCommunicationMode;
     legacy_request->config_instant_mode_channel = 1;
     legacy_request->instant_mode_channel = aidl_request2.instantModeChannel;
+    legacy_request->config_cluster_id = 1;
+    legacy_request->cluster_id_val = aidl_request2.clusterId;
 
     return true;
 }
@@ -2245,6 +2247,7 @@ bool convertLegacyNanCapabilitiesResponseToAidl(const legacy_hal::NanCapabilitie
     aidl_response->supports6g = legacy_response.is_6g_supported;
     aidl_response->supportsHe = legacy_response.is_he_supported;
     aidl_response->supportsPairing = legacy_response.is_pairing_supported;
+    aidl_response->supportsSetClusterId = legacy_response.is_set_cluster_id_supported;
     return true;
 }
 
