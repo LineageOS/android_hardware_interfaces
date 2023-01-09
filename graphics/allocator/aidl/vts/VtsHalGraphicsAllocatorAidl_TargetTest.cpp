@@ -217,6 +217,8 @@ class GraphicsTestsBase {
         }
         return ret;
     }
+
+    int32_t allocatorVersion() const { return mIAllocatorVersion; }
 };
 
 BufferHandle::~BufferHandle() {
@@ -307,6 +309,62 @@ TEST_P(GraphicsAllocatorAidlTests, CanAllocate) {
     });
     ASSERT_NE(nullptr, buffer.get());
     EXPECT_GE(buffer->stride(), 64);
+}
+
+TEST_P(GraphicsAllocatorAidlTests, RejectsUnknownUsages) {
+    if (allocatorVersion() < 2) {
+        GTEST_SKIP() << "Must be version 2+";
+        return;
+    }
+
+    constexpr auto FirstInvalidV2Usage = static_cast<BufferUsage>(1LL << 33);
+
+    BufferUsage invalidUsage;
+    if (allocatorVersion() == 2) {
+        invalidUsage = FirstInvalidV2Usage;
+    } else {
+        GTEST_FAIL() << "Unknown version " << allocatorVersion();
+    }
+
+    BufferDescriptorInfo info{
+            .name = {"CPU_8888"},
+            .width = 64,
+            .height = 64,
+            .layerCount = 1,
+            .format = PixelFormat::RGBA_8888,
+            .usage = BufferUsage::CPU_READ_OFTEN | BufferUsage::CPU_WRITE_OFTEN,
+            .reservedSize = 0,
+    };
+
+    // First make sure we can allocate a known usage buffer as expected
+    EXPECT_TRUE(isSupported(info));
+    EXPECT_TRUE(allocate(info));
+
+    // Now add the unknown bit and verify it's rejected
+    info.usage |= invalidUsage;
+    EXPECT_FALSE(isSupported(info)) << "isSupported() returned true for unknown-to-HAL usage";
+    EXPECT_FALSE(allocate(info)) << "allocate succeeded for unknown-to-HAL usage";
+}
+
+TEST_P(GraphicsAllocatorAidlTests, RejectsUnknownOptions) {
+    if (allocatorVersion() < 2) {
+        GTEST_SKIP() << "Must be version 2+";
+        return;
+    }
+
+    BufferDescriptorInfo info{
+            .name = {"CPU_8888"},
+            .width = 64,
+            .height = 64,
+            .layerCount = 1,
+            .format = PixelFormat::RGBA_8888,
+            .usage = BufferUsage::CPU_READ_OFTEN | BufferUsage::CPU_WRITE_OFTEN,
+            .reservedSize = 0,
+    };
+    info.additionalOptions.push_back({"android.hardware.graphics.common.NotARealOption", 1});
+
+    EXPECT_FALSE(isSupported(info)) << "isSupported() returned true for unknown-to-HAL option";
+    EXPECT_FALSE(allocate(info)) << "allocate succeeded for unknown-to-HAL option";
 }
 
 TEST_P(GraphicsFrontBufferTests, FrontBufferGpuToCpu) {
