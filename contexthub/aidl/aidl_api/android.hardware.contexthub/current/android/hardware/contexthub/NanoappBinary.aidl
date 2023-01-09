@@ -40,7 +40,7 @@ parcelable NanoappBinary {
   byte targetChreApiMajorVersion;
   byte targetChreApiMinorVersion;
   byte[] customBinary;
-  const int FLAG_SIGNED = 1;
-  const int FLAG_ENCRYPTED = 2;
-  const int FLAG_TCM_CAPABLE = 4;
+  const int FLAG_SIGNED = (1 << 0);
+  const int FLAG_ENCRYPTED = (1 << 1);
+  const int FLAG_TCM_CAPABLE = (1 << 2);
 }
