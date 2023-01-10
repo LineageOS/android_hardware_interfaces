@@ -47,7 +47,10 @@ oneway interface IEvsCameraStream {
     /**
      * Receives calls from the HAL each time an event happens.
      *
-     * @param in event EVS event with possible event information.
+     * @param in event EVS event with possible event information.  If ths HIDL
+     *                 recipients are expected to exist, the size of the event
+     *                 payload must not exceed 16 bytes; otherwise, a notification
+     *                 will not reach them.
      */
     void notify(in EvsEventDesc event);
 }
