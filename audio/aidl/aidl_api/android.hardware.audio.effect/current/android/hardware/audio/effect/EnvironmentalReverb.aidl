@@ -44,22 +44,6 @@ union EnvironmentalReverb {
   int diffusionPm;
   int densityPm;
   boolean bypass;
-  const int MIN_ROOM_LEVEL_MB = (-6000);
-  const int MAX_ROOM_LEVEL_MB = 0;
-  const int MIN_ROOM_HF_LEVEL_MB = (-4000);
-  const int MAX_ROOM_HF_LEVEL_MB = 0;
-  const int MIN_DECAY_TIME_MS = 100;
-  const int MAX_DECAY_TIME_MS = 20000;
-  const int MIN_DECAY_HF_RATIO_PM = 100;
-  const int MAX_DECAY_HF_RATIO_PM = 1000;
-  const int MIN_LEVEL_MB = (-6000);
-  const int MAX_LEVEL_MB = 0;
-  const int MIN_DELAY_MS = 0;
-  const int MAX_DELAY_MS = 65;
-  const int MIN_DIFFUSION_PM = 0;
-  const int MAX_DIFFUSION_PM = 1000;
-  const int MIN_DENSITY_PM = 0;
-  const int MAX_DENSITY_PM = 1000;
   @VintfStability
   union Id {
     int vendorExtensionTag;
@@ -68,6 +52,17 @@ union EnvironmentalReverb {
   @VintfStability
   parcelable Capability {
     android.hardware.audio.effect.VendorExtension extension;
+    int minRoomLevelMb;
+    int maxRoomLevelMb;
+    int minRoomHfLevelMb;
+    int maxRoomHfLevelMb;
     int maxDecayTimeMs;
+    int minDecayHfRatioPm;
+    int maxDecayHfRatioPm;
+    int minLevelMb;
+    int maxLevelMb;
+    int maxDelayMs;
+    int maxDiffusionPm;
+    int maxDensityPm;
   }
 }
