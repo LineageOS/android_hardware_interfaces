@@ -32,8 +32,10 @@ interface IAllocator {
      * @param count The number of buffers to allocate.
      * @return An AllocationResult containing the result of the allocation
      * @throws AllocationError on failure
-     * @deprecated As of android.hardware.graphics.allocator-V2, this is deprecated & replaced with
-     *         allocate2
+     * @deprecated As of android.hardware.graphics.allocator-V2 in combination with
+     *             AIMAPPER_VERSION_5 this is deprecated & replaced with allocate2.
+     *             If android.hardware.graphics.mapper@4 is still in use, however, this is
+     *             still required to be implemented.
      */
     AllocationResult allocate(in byte[] descriptor, in int count);
 
