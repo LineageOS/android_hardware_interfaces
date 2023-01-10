@@ -544,14 +544,6 @@
             <instance>slot3</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
-        <name>android.hardware.radio</name>
-        <version>1.2</version>
-        <interface>
-            <name>ISap</name>
-            <instance>slot1</instance>
-        </interface>
-    </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.radio.ims.media</name>
         <version>1</version>
