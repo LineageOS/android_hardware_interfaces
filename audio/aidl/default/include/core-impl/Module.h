@@ -115,6 +115,7 @@ class Module : public BnModule {
     ndk::ScopedAStatus createStreamContext(
             int32_t in_portConfigId, int64_t in_bufferSizeFrames,
             std::shared_ptr<IStreamCallback> asyncCallback,
+            std::shared_ptr<IStreamOutEventCallback> outEventCallback,
             ::aidl::android::hardware::audio::core::StreamContext* out_context);
     std::vector<::aidl::android::media::audio::common::AudioDevice> findConnectedDevices(
             int32_t portConfigId);
