@@ -42,10 +42,14 @@
 
 #define TIMEOUT_PERIOD 10
 
+using ::aidl::android::hardware::usb::AltModeData;
 using ::aidl::android::hardware::usb::BnUsbCallback;
 using ::aidl::android::hardware::usb::ComplianceWarning;
+using ::aidl::android::hardware::usb::DisplayPortAltModePinAssignment;
+using ::aidl::android::hardware::usb::DisplayPortAltModeStatus;
 using ::aidl::android::hardware::usb::IUsb;
 using ::aidl::android::hardware::usb::IUsbCallback;
+using ::aidl::android::hardware::usb::PlugOrientation;
 using ::aidl::android::hardware::usb::PortDataRole;
 using ::aidl::android::hardware::usb::PortMode;
 using ::aidl::android::hardware::usb::PortPowerRole;
@@ -637,6 +641,60 @@ TEST_P(UsbAidlTest, nonCompliantChargerValues) {
     }
 
     ALOGI("UsbAidlTest nonCompliantChargerValues end");
+}
+
+/*
+ * Test PlugOrientation Values are within range in PortStatus
+ */
+TEST_P(UsbAidlTest, plugOrientationValues) {
+    ALOGI("UsbAidlTest plugOrientationValues start");
+    int64_t transactionId = rand() % 10000;
+    const auto& ret = usb->queryPortStatus(transactionId);
+    ASSERT_TRUE(ret.isOk());
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(2, usb_last_cookie);
+    EXPECT_EQ(transactionId, last_transactionId);
+
+    EXPECT_TRUE((int)usb_last_port_status.plugOrientation >= (int)PlugOrientation::UNKNOWN);
+    EXPECT_TRUE((int)usb_last_port_status.plugOrientation <= (int)PlugOrientation::PLUGGED_FLIPPED);
+}
+
+/*
+ * Test DisplayPortAltMode Values when DisplayPort Alt Mode
+ * is active.
+ */
+TEST_P(UsbAidlTest, dpAltModeValues) {
+    ALOGI("UsbAidlTest dpAltModeValues start");
+    int64_t transactionId = rand() % 10000;
+    const auto& ret = usb->queryPortStatus(transactionId);
+    ASSERT_TRUE(ret.isOk());
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(2, usb_last_cookie);
+    EXPECT_EQ(transactionId, last_transactionId);
+
+    // Discover DisplayPort Alt Mode
+    for (AltModeData altMode : usb_last_port_status.supportedAltModes) {
+      if (altMode.getTag() == AltModeData::displayPortAltModeData) {
+        AltModeData::DisplayPortAltModeData displayPortAltModeData =
+                altMode.get<AltModeData::displayPortAltModeData>();
+        EXPECT_TRUE((int)displayPortAltModeData.partnerSinkStatus >=
+                    (int)DisplayPortAltModeStatus::UNKNOWN);
+        EXPECT_TRUE((int)displayPortAltModeData.partnerSinkStatus <=
+                    (int)DisplayPortAltModeStatus::ENABLED);
+
+        EXPECT_TRUE((int)displayPortAltModeData.cableStatus >=
+                    (int)DisplayPortAltModeStatus::UNKNOWN);
+        EXPECT_TRUE((int)displayPortAltModeData.cableStatus <=
+                    (int)DisplayPortAltModeStatus::ENABLED);
+
+        EXPECT_TRUE((int)displayPortAltModeData.pinAssignment >=
+                    (int)DisplayPortAltModePinAssignment::NONE);
+        EXPECT_TRUE((int)displayPortAltModeData.pinAssignment <=
+                    (int)DisplayPortAltModePinAssignment::F);
+      }
+    }
+
+    ALOGI("UsbAidlTest dpAltModeValues end");
 }
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(UsbAidlTest);
