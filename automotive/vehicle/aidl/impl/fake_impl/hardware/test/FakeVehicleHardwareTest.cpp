@@ -61,6 +61,7 @@ using ::android::base::expected;
 using ::android::base::ScopedLockAssertion;
 using ::android::base::StringPrintf;
 using ::android::base::unexpected;
+using ::testing::AnyOfArray;
 using ::testing::ContainerEq;
 using ::testing::ContainsRegex;
 using ::testing::Eq;
@@ -1138,6 +1139,71 @@ TEST_F(FakeVehicleHardwareTest, testSetVehicleMapService) {
 
     EXPECT_FALSE(getValueResult.ok());
     EXPECT_EQ(getValueResult.error(), StatusCode::NOT_AVAILABLE);
+}
+
+TEST_F(FakeVehicleHardwareTest, testGetHvacPropNotAvailable) {
+    StatusCode status = setValue(VehiclePropValue{.prop = toInt(VehicleProperty::HVAC_POWER_ON),
+                                                  .areaId = HVAC_ALL,
+                                                  .value.int32Values = {0}});
+
+    ASSERT_EQ(status, StatusCode::OK);
+
+    for (size_t i = 0; i < sizeof(HVAC_POWER_PROPERTIES) / sizeof(int32_t); i++) {
+        int powerPropId = HVAC_POWER_PROPERTIES[i];
+        auto getValueResult = getValue(VehiclePropValue{
+                .prop = powerPropId,
+                .areaId = HVAC_ALL,
+        });
+
+        EXPECT_FALSE(getValueResult.ok());
+        EXPECT_EQ(getValueResult.error(), StatusCode::NOT_AVAILABLE);
+    }
+}
+
+TEST_F(FakeVehicleHardwareTest, testSetHvacPropNotAvailable) {
+    StatusCode status = setValue(VehiclePropValue{.prop = toInt(VehicleProperty::HVAC_POWER_ON),
+                                                  .areaId = HVAC_ALL,
+                                                  .value.int32Values = {0}});
+
+    ASSERT_EQ(status, StatusCode::OK);
+
+    for (size_t i = 0; i < sizeof(HVAC_POWER_PROPERTIES) / sizeof(int32_t); i++) {
+        int powerPropId = HVAC_POWER_PROPERTIES[i];
+        status = setValue(VehiclePropValue{
+                .prop = powerPropId,
+                .areaId = HVAC_ALL,
+        });
+
+        EXPECT_EQ(status, StatusCode::NOT_AVAILABLE);
+    }
+}
+
+TEST_F(FakeVehicleHardwareTest, testHvacPowerOnSendCurrentHvacPropValues) {
+    StatusCode status = setValue(VehiclePropValue{.prop = toInt(VehicleProperty::HVAC_POWER_ON),
+                                                  .areaId = HVAC_ALL,
+                                                  .value.int32Values = {0}});
+
+    ASSERT_EQ(status, StatusCode::OK);
+
+    clearChangedProperties();
+
+    status = setValue(VehiclePropValue{.prop = toInt(VehicleProperty::HVAC_POWER_ON),
+                                       .areaId = HVAC_ALL,
+                                       .value.int32Values = {1}});
+
+    auto events = getChangedProperties();
+    // If we turn HVAC power on, we expect to receive one property event for every HVAC prop areas
+    // plus one event for HVAC_POWER_ON.
+    std::vector<int32_t> changedPropIds;
+    for (size_t i = 0; i < sizeof(HVAC_POWER_PROPERTIES) / sizeof(int32_t); i++) {
+        changedPropIds.push_back(HVAC_POWER_PROPERTIES[i]);
+    }
+    changedPropIds.push_back(toInt(VehicleProperty::HVAC_POWER_ON));
+    ASSERT_EQ(events.size(), changedPropIds.size());
+    for (const auto& event : events) {
+        EXPECT_EQ(event.areaId, HVAC_ALL);
+        EXPECT_THAT(event.prop, AnyOfArray(changedPropIds));
+    }
 }
 
 TEST_F(FakeVehicleHardwareTest, testGetUserPropertySetOnly) {

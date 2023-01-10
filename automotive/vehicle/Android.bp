@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,24 +19,8 @@ package {
 }
 
 cc_defaults {
-    name: "VehicleHalDefaults",
+    name: "VehicleHalInterfaceDefaults",
     static_libs: [
-        "android-automotive-large-parcelable-lib",
-        "libmath",
-    ],
-    shared_libs: [
-        "libbase",
-        "liblog",
-        "libutils",
-    ],
-    cflags: [
-        "-Wall",
-        "-Wextra",
-        "-Werror",
-        "-Wthread-safety",
-    ],
-    defaults: [
-        "VehicleHalInterfaceDefaults",
-        "android-automotive-large-parcelable-defaults",
+        "android.hardware.automotive.vehicle-V2-ndk",
     ],
 }
