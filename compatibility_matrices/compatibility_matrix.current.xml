@@ -1,12 +1,4 @@
 <compatibility-matrix version="1.0" type="framework" level="8">
-    <hal format="hidl" optional="true">
-        <name>android.hardware.atrace</name>
-        <version>1.0</version>
-        <interface>
-            <name>IAtraceDevice</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
     <hal format="hidl" optional="false">
         <name>android.hardware.audio</name>
         <version>6.0</version>
