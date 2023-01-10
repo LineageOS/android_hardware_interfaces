@@ -60,8 +60,18 @@ extern "C" binder_exception_t queryEffect(const AudioUuid* in_impl_uuid, Descrip
 namespace aidl::android::hardware::audio::effect {
 
 const std::string EnvReverbSw::kEffectName = "EnvReverbSw";
-const EnvironmentalReverb::Capability EnvReverbSw::kCapability = {
-        .maxDecayTimeMs = EnvironmentalReverb::MAX_DECAY_TIME_MS};
+const EnvironmentalReverb::Capability EnvReverbSw::kCapability = {.minRoomLevelMb = -6000,
+                                                                  .maxRoomLevelMb = 0,
+                                                                  .minRoomHfLevelMb = -4000,
+                                                                  .maxRoomHfLevelMb = 0,
+                                                                  .maxDecayTimeMs = 7000,
+                                                                  .minDecayHfRatioPm = 100,
+                                                                  .maxDecayHfRatioPm = 2000,
+                                                                  .minLevelMb = -6000,
+                                                                  .maxLevelMb = 0,
+                                                                  .maxDelayMs = 65,
+                                                                  .maxDiffusionPm = 1000,
+                                                                  .maxDensityPm = 1000};
 const Descriptor EnvReverbSw::kDescriptor = {
         .common = {.id = {.type = kEnvReverbTypeUUID,
                           .uuid = kEnvReverbSwImplUUID,
@@ -249,6 +259,90 @@ IEffect::Status EnvReverbSw::effectProcessImpl(float* in, float* out, int sample
         *out++ = *in++;
     }
     return {STATUS_OK, samples, samples};
+}
+
+RetCode EnvReverbSwContext::setErRoomLevel(int roomLevel) {
+    if (roomLevel < EnvReverbSw::kCapability.minRoomLevelMb ||
+        roomLevel > EnvReverbSw::kCapability.maxRoomLevelMb) {
+        LOG(ERROR) << __func__ << " invalid roomLevel: " << roomLevel;
+        return RetCode::ERROR_ILLEGAL_PARAMETER;
+    }
+    // TODO : Add implementation to apply new room level
+    mRoomLevel = roomLevel;
+    return RetCode::SUCCESS;
+}
+
+RetCode EnvReverbSwContext::setErRoomHfLevel(int roomHfLevel) {
+    if (roomHfLevel < EnvReverbSw::kCapability.minRoomHfLevelMb ||
+        roomHfLevel > EnvReverbSw::kCapability.maxRoomHfLevelMb) {
+        LOG(ERROR) << __func__ << " invalid roomHfLevel: " << roomHfLevel;
+        return RetCode::ERROR_ILLEGAL_PARAMETER;
+    }
+    // TODO : Add implementation to apply new room HF level
+    mRoomHfLevel = roomHfLevel;
+    return RetCode::SUCCESS;
+}
+
+RetCode EnvReverbSwContext::setErDecayTime(int decayTime) {
+    if (decayTime < 0 || decayTime > EnvReverbSw::kCapability.maxDecayTimeMs) {
+        LOG(ERROR) << __func__ << " invalid decayTime: " << decayTime;
+        return RetCode::ERROR_ILLEGAL_PARAMETER;
+    }
+    // TODO : Add implementation to apply new decay time
+    mDecayTime = decayTime;
+    return RetCode::SUCCESS;
+}
+
+RetCode EnvReverbSwContext::setErDecayHfRatio(int decayHfRatio) {
+    if (decayHfRatio < EnvReverbSw::kCapability.minDecayHfRatioPm ||
+        decayHfRatio > EnvReverbSw::kCapability.maxDecayHfRatioPm) {
+        LOG(ERROR) << __func__ << " invalid decayHfRatio: " << decayHfRatio;
+        return RetCode::ERROR_ILLEGAL_PARAMETER;
+    }
+    // TODO : Add implementation to apply new decay HF ratio
+    mDecayHfRatio = decayHfRatio;
+    return RetCode::SUCCESS;
+}
+
+RetCode EnvReverbSwContext::setErLevel(int level) {
+    if (level < EnvReverbSw::kCapability.minLevelMb ||
+        level > EnvReverbSw::kCapability.maxLevelMb) {
+        LOG(ERROR) << __func__ << " invalid level: " << level;
+        return RetCode::ERROR_ILLEGAL_PARAMETER;
+    }
+    // TODO : Add implementation to apply new level
+    mLevel = level;
+    return RetCode::SUCCESS;
+}
+
+RetCode EnvReverbSwContext::setErDelay(int delay) {
+    if (delay < 0 || delay > EnvReverbSw::kCapability.maxDelayMs) {
+        LOG(ERROR) << __func__ << " invalid delay: " << delay;
+        return RetCode::ERROR_ILLEGAL_PARAMETER;
+    }
+    // TODO : Add implementation to apply new delay
+    mDelay = delay;
+    return RetCode::SUCCESS;
+}
+
+RetCode EnvReverbSwContext::setErDiffusion(int diffusion) {
+    if (diffusion < 0 || diffusion > EnvReverbSw::kCapability.maxDiffusionPm) {
+        LOG(ERROR) << __func__ << " invalid diffusion: " << diffusion;
+        return RetCode::ERROR_ILLEGAL_PARAMETER;
+    }
+    // TODO : Add implementation to apply new diffusion
+    mDiffusion = diffusion;
+    return RetCode::SUCCESS;
+}
+
+RetCode EnvReverbSwContext::setErDensity(int density) {
+    if (density < 0 || density > EnvReverbSw::kCapability.maxDensityPm) {
+        LOG(ERROR) << __func__ << " invalid density: " << density;
+        return RetCode::ERROR_ILLEGAL_PARAMETER;
+    }
+    // TODO : Add implementation to apply new density
+    mDensity = density;
+    return RetCode::SUCCESS;
 }
 
 }  // namespace aidl::android::hardware::audio::effect
