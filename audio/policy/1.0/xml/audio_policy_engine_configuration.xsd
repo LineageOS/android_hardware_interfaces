@@ -347,6 +347,11 @@
             <xs:enumeration value="AUDIO_USAGE_ALARM"/>
             <xs:enumeration value="AUDIO_USAGE_NOTIFICATION"/>
             <xs:enumeration value="AUDIO_USAGE_NOTIFICATION_TELEPHONY_RINGTONE"/>
+            <!-- Note: the following 3 values were deprecated in Android T (13) SDK -->
+            <xs:enumeration value="AUDIO_USAGE_NOTIFICATION_COMMUNICATION_REQUEST"/>
+            <xs:enumeration value="AUDIO_USAGE_NOTIFICATION_COMMUNICATION_INSTANT"/>
+            <xs:enumeration value="AUDIO_USAGE_NOTIFICATION_COMMUNICATION_DELAYED"/>
+            <xs:enumeration value="AUDIO_USAGE_NOTIFICATION_EVENT"/>
             <xs:enumeration value="AUDIO_USAGE_ASSISTANCE_ACCESSIBILITY"/>
             <xs:enumeration value="AUDIO_USAGE_ASSISTANCE_NAVIGATION_GUIDANCE"/>
             <xs:enumeration value="AUDIO_USAGE_ASSISTANCE_SONIFICATION"/>

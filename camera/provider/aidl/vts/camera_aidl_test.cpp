@@ -1181,6 +1181,7 @@ void CameraAidlTest::verifyLogicalOrUltraHighResCameraMetadata(
         camera_metadata_ro_entry physicalMultiResStreamConfigs;
         camera_metadata_ro_entry physicalStreamConfigs;
         camera_metadata_ro_entry physicalMaxResolutionStreamConfigs;
+        CameraMetadata physChars;
         bool isUltraHighRes = false;
         std::unordered_set<int32_t> subCameraPrivacyTestPatterns;
         if (isPublicId) {
@@ -1189,12 +1190,11 @@ void CameraAidlTest::verifyLogicalOrUltraHighResCameraMetadata(
             ASSERT_TRUE(ret.isOk());
             ASSERT_NE(subDevice, nullptr);
 
-            CameraMetadata subDeviceChars;
-            ret = subDevice->getCameraCharacteristics(&subDeviceChars);
+            ret = subDevice->getCameraCharacteristics(&physChars);
             ASSERT_TRUE(ret.isOk());
 
             const camera_metadata_t* staticMetadata =
-                    reinterpret_cast<const camera_metadata_t*>(subDeviceChars.metadata.data());
+                    reinterpret_cast<const camera_metadata_t*>(physChars.metadata.data());
             retStatus = getSystemCameraKind(staticMetadata, &physSystemCameraKind);
             ASSERT_EQ(retStatus, Status::OK);
 
@@ -1215,7 +1215,6 @@ void CameraAidlTest::verifyLogicalOrUltraHighResCameraMetadata(
             getPrivacyTestPatternModes(staticMetadata, &subCameraPrivacyTestPatterns);
         } else {
             // Check camera characteristics for hidden camera id
-            CameraMetadata physChars;
             ndk::ScopedAStatus ret =
                     device->getPhysicalCameraCharacteristics(physicalId, &physChars);
             ASSERT_TRUE(ret.isOk());
