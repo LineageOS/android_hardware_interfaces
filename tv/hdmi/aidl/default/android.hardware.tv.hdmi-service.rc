@@ -1,5 +1,0 @@
-service vendor.hdmi-default /vendor/bin/hw/android.hardware.tv.hdmi-service
-    interface aidl android.hardware.tv.hdmi.IHdmi/default
-    class hal
-    user system
-    group system
