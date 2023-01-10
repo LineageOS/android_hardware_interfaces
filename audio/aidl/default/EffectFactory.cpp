@@ -165,7 +165,7 @@ ndk::ScopedAStatus Factory::destroyEffect(const std::shared_ptr<IEffect>& in_han
     return status;
 }
 
-void Factory::openEffectLibrary(const AudioUuid& impl, const std::string& libName) {
+bool Factory::openEffectLibrary(const AudioUuid& impl, const std::string& libName) {
     std::function<void(void*)> dlClose = [](void* handle) -> void {
         if (handle && dlclose(handle)) {
             LOG(ERROR) << "dlclose failed " << dlerror();
@@ -176,7 +176,7 @@ void Factory::openEffectLibrary(const AudioUuid& impl, const std::string& libNam
             std::unique_ptr<void, decltype(dlClose)>{dlopen(libName.c_str(), RTLD_LAZY), dlClose};
     if (!libHandle) {
         LOG(ERROR) << __func__ << ": dlopen failed, err: " << dlerror();
-        return;
+        return false;
     }
 
     LOG(INFO) << __func__ << " dlopen lib:" << libName << "\nimpl:" << impl.toString()
@@ -186,6 +186,7 @@ void Factory::openEffectLibrary(const AudioUuid& impl, const std::string& libNam
             {impl,
              std::make_tuple(std::move(libHandle),
                              std::unique_ptr<struct effect_dl_interface_s>(interface), libName)});
+    return true;
 }
 
 void Factory::createIdentityWithConfig(const EffectConfig::LibraryUuid& configLib,
@@ -201,8 +202,9 @@ void Factory::createIdentityWithConfig(const EffectConfig::LibraryUuid& configLi
         LOG(DEBUG) << __func__ << ": typeUuid " << id.type.toString() << "\nimplUuid "
                    << id.uuid.toString() << " proxyUuid "
                    << (proxyUuid.has_value() ? proxyUuid->toString() : "null");
-        openEffectLibrary(id.uuid, path->second);
-        mIdentitySet.insert(std::move(id));
+        if (openEffectLibrary(id.uuid, path->second)) {
+            mIdentitySet.insert(std::move(id));
+        }
     } else {
         LOG(ERROR) << __func__ << ": library " << libName << " not exist!";
         return;
