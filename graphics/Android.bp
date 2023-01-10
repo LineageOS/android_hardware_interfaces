@@ -21,12 +21,18 @@ cc_defaults {
     static_libs: [
         "android.hardware.graphics.allocator-V2-ndk",
     ],
+    defaults: [
+        "android.hardware.graphics.common-ndk_static",
+    ],
 }
 
 cc_defaults {
     name: "android.hardware.graphics.allocator-ndk_shared",
     shared_libs: [
         "android.hardware.graphics.allocator-V2-ndk",
+    ],
+    defaults: [
+        "android.hardware.graphics.common-ndk_shared",
     ],
 }
 

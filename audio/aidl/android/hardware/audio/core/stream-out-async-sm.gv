@@ -30,6 +30,7 @@ digraph stream_out_async_state_machine {
     STANDBY -> PAUSED [label="burst"];                // producer -> active
     IDLE -> STANDBY [label="standby"];                // consumer -> passive
     IDLE -> TRANSFERRING [label="burst"];             // producer -> active
+    IDLE -> ACTIVE [label="burst"];                   // full write
     ACTIVE -> PAUSED [label="pause"];                 // consumer -> passive (not consuming)
     ACTIVE -> DRAINING [label="drain"];               // producer -> passive
     ACTIVE -> TRANSFERRING [label="burst"];           // early unblocking
@@ -45,6 +46,7 @@ digraph stream_out_async_state_machine {
     PAUSED -> IDLE [label="flush"];                   // producer -> passive, buffer is cleared
     DRAINING -> IDLE [label="←IStreamCallback.onDrainReady"];
     DRAINING -> TRANSFERRING [label="burst"];         // producer -> active
+    DRAINING -> ACTIVE [label="burst"];               // full write
     DRAINING -> DRAIN_PAUSED [label="pause"];         // consumer -> passive (not consuming)
     DRAIN_PAUSED -> DRAINING [label="start"];         // consumer -> active
     DRAIN_PAUSED -> TRANSFER_PAUSED [label="burst"];  // producer -> active

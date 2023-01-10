@@ -178,6 +178,7 @@ class VtsComposerClient {
     std::pair<ScopedAStatus, OverlayProperties> getOverlaySupport();
 
   private:
+    ScopedAStatus addDisplayConfig(VtsDisplay* vtsDisplay, int32_t config);
     ScopedAStatus updateDisplayProperties(VtsDisplay* vtsDisplay, int32_t config);
 
     ScopedAStatus addDisplayToDisplayResources(int64_t display, bool isVirtual);

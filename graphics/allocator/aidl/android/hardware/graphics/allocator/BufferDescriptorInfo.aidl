@@ -17,6 +17,7 @@
 package android.hardware.graphics.allocator;
 
 import android.hardware.graphics.common.BufferUsage;
+import android.hardware.graphics.common.ExtendableType;
 import android.hardware.graphics.common.PixelFormat;
 
 @VintfStability
@@ -54,6 +55,9 @@ parcelable BufferDescriptorInfo {
     /**
      * Buffer usage mask; valid flags can be found in the definition of
      * BufferUsage.aidl in graphics/common
+     *
+     * The allocator must report isSupported() == false and reject any allocations
+     * with unrecognized buffer usages.
      */
     BufferUsage usage = BufferUsage.CPU_READ_NEVER;
 
@@ -62,4 +66,16 @@ parcelable BufferDescriptorInfo {
      * See getReservedRegion for more information.
      */
     long reservedSize;
+
+    /**
+     * Extensible additional options that can be set.
+     *
+     * This is intended for options that do not change the overall usage, but which do impact
+     * how a buffer is allocated. An example of this is compression level, such as for
+     * the EGL_EXT_surface_compression extension.
+     *
+     * The allocator must report isSupported() == false and reject any allocations
+     * with unrecognized options.
+     */
+    ExtendableType[] additionalOptions;
 }
