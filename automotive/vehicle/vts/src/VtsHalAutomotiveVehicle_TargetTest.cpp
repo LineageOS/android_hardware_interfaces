@@ -438,13 +438,30 @@ void VtsHalAutomotiveVehicleTargetTest::verifyProperty(VehicleProperty propId,
     int expectedArea = toInt(area);
     int expectedPropertyType = toInt(propertyType);
 
-    auto result = mVhalClient->getPropConfigs({expectedPropId});
+    auto result = mVhalClient->getAllPropConfigs();
+    ASSERT_TRUE(result.ok()) << "Failed to get all property configs, error: "
+                             << result.error().message();
+
+    // Check if property is implemented by getting all configs and looking to see if the expected
+    // property id is in that list.
+    bool isExpectedPropIdImplemented = false;
+    for (const auto& cfgPtr : result.value()) {
+        const IHalPropConfig& cfg = *cfgPtr;
+        if (expectedPropId == cfg.getPropId()) {
+            isExpectedPropIdImplemented = true;
+            break;
+        }
+    }
+
+    if (!isExpectedPropIdImplemented) {
+        GTEST_SKIP() << StringPrintf("Property %" PRId32 " has not been implemented",
+                                     expectedPropId);
+    }
+
+    result = mVhalClient->getPropConfigs({expectedPropId});
     ASSERT_TRUE(result.ok()) << "Failed to get required property config, error: "
                              << result.error().message();
 
-    if (result.value().size() == 0) {
-        GTEST_SKIP() << "Property has not been implemented";
-    }
     ASSERT_EQ(result.value().size(), 1u)
             << StringPrintf("Expect to get exactly 1 config, got %zu", result.value().size());
 
