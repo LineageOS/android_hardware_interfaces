@@ -50,112 +50,96 @@ union EnvironmentalReverb {
         VendorExtension extension;
 
         /**
+         * Minimal possible room level in millibels.
+         */
+        int minRoomLevelMb;
+        /**
+         * Maximum possible room level in millibels.
+         */
+        int maxRoomLevelMb;
+        /**
+         * Minimal possible room hf level in millibels.
+         */
+        int minRoomHfLevelMb;
+        /**
+         * Maximum possible room hf level in millibels.
+         */
+        int maxRoomHfLevelMb;
+        /**
          * Max decay time supported in millisecond.
          */
         int maxDecayTimeMs;
+        /**
+         * Minimal possible per mille decay hf ratio.
+         */
+        int minDecayHfRatioPm;
+        /**
+         * Maximum possible per mille decay hf ratio.
+         */
+        int maxDecayHfRatioPm;
+        /**
+         * Minimal possible room level in millibels.
+         */
+        int minLevelMb;
+        /**
+         * Maximum possible room level in millibels.
+         */
+        int maxLevelMb;
+        /**
+         * Maximum possible delay time in milliseconds.
+         */
+        int maxDelayMs;
+        /**
+         * Maximum possible per mille diffusion.
+         */
+        int maxDiffusionPm;
+        /**
+         * Maximum possible per mille density.
+         */
+        int maxDensityPm;
     }
 
     /**
-     * Minimal possible room level in millibels.
-     */
-    const int MIN_ROOM_LEVEL_MB = -6000;
-    /**
-     * Maximum possible room level in millibels.
-     */
-    const int MAX_ROOM_LEVEL_MB = 0;
-    /**
-     * Room level apply to the reverb effect in millibels.
+     * Room level apply to the reverb effect in millibels. The value of the roomLevelMb must be in
+     * range of the value specified by the 'minRoomLevelMb' capability and the 'maxRoomLevelMb'
+     * capability.
      */
     int roomLevelMb;
-
     /**
-     * Minimal possible room hf level in millibels.
-     */
-    const int MIN_ROOM_HF_LEVEL_MB = -4000;
-    /**
-     * Maximum possible room hf level in millibels.
-     */
-    const int MAX_ROOM_HF_LEVEL_MB = 0;
-    /**
-     * Room HF level apply to the reverb effect in millibels.
+     * Room HF level apply to the reverb effect in millibels. The value of the roomHfLevelMb must be
+     * in range of the value specified by the 'minRoomHfLevelMb' capability and the
+     * 'maxRoomHfLevelMb' capability.
      */
     int roomHfLevelMb;
-
     /**
-     * Minimal possible decay time in milliseconds.
-     */
-    const int MIN_DECAY_TIME_MS = 100;
-    /**
-     * Maximum possible decay time in milliseconds.
-     */
-    const int MAX_DECAY_TIME_MS = 20000;
-    /**
-     * Delay time apply to the reverb effect in milliseconds.
+     * Delay time apply to the reverb effect in milliseconds.The value of the decayTimeMs must
+     * be non-negative and not exceed the value specified by the 'maxDecayTimeMs' capability.
      */
     int decayTimeMs;
-
     /**
-     * Minimal possible per mille decay hf ratio.
-     */
-    const int MIN_DECAY_HF_RATIO_PM = 100;
-    /**
-     * Maximum possible per mille decay hf ratio.
-     */
-    const int MAX_DECAY_HF_RATIO_PM = 1000;
-    /**
-     * HF decay ratio in permilles.
+     * HF decay ratio in permilles. The value of the decayHfRatioPm must be in range
+     * of the value specified by the 'minDecayHfRatioPm' capability and the 'maxDecayHfRatioPm'
+     * capability.
      */
     int decayHfRatioPm;
-
     /**
-     * Minimal possible room level in millibels.
-     */
-    const int MIN_LEVEL_MB = -6000;
-    /**
-     * Maximum possible room level in millibels.
-     */
-    const int MAX_LEVEL_MB = 0;
-    /**
-     * Reverb level in millibels.
+     * Reverb level in millibels. The value of the levelMb must be in range
+     * of the value specified by the 'minLevelMb' capability and the 'maxLevelMb' capability.
      */
     int levelMb;
-
     /**
-     * Minimal possible delay time in milliseconds.
-     */
-    const int MIN_DELAY_MS = 0;
-    /**
-     * Maximum possible delay time in milliseconds.
-     */
-    const int MAX_DELAY_MS = 65;
-    /**
-     * Reverb delay in milliseconds.
+     * Reverb delay in milliseconds. The value of the delayMs must be non-negative and not
+     * exceed the value specified by the 'maxDelayMs' capability.
      */
     int delayMs;
-
     /**
-     * Minimal possible per mille diffusion.
-     */
-    const int MIN_DIFFUSION_PM = 0;
-    /**
-     * Maximum possible per mille diffusion.
-     */
-    const int MAX_DIFFUSION_PM = 1000;
-    /**
-     * Diffusion in permilles.
+     * Diffusion in permilles. The value of the diffusionPm must be non-negative and not
+     * exceed the value specified by the 'maxDiffusionPm' capability.
      */
     int diffusionPm;
-
     /**
-     * Minimal possible per mille density.
-     */
-    const int MIN_DENSITY_PM = 0;
-    /**
-     * Maximum possible per mille density.
-     */
-    const int MAX_DENSITY_PM = 1000;
-    /**
-     * Density in permilles.
+     * Density in permilles. The value of the densityPm must be non-negative and not
+     * exceed the value specified by the 'maxDensityPm' capability.
      */
     int densityPm;
 
