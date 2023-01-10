@@ -36,11 +36,11 @@ package android.hardware.broadcastradio;
 enum AnnouncementType {
   INVALID = 0,
   EMERGENCY = 1,
-  WARNING = 2,
-  TRAFFIC = 3,
-  WEATHER = 4,
-  NEWS = 5,
-  EVENT = 6,
-  SPORT = 7,
-  MISC = 8,
+  WARNING,
+  TRAFFIC,
+  WEATHER,
+  NEWS,
+  EVENT,
+  SPORT,
+  MISC,
 }
