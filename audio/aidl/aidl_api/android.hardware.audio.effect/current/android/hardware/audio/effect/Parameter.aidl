@@ -35,7 +35,7 @@ package android.hardware.audio.effect;
 @VintfStability
 union Parameter {
   android.hardware.audio.effect.Parameter.Common common;
-  android.media.audio.common.AudioDeviceDescription deviceDescription;
+  android.media.audio.common.AudioDeviceDescription[] deviceDescription;
   android.media.audio.common.AudioMode mode;
   android.media.audio.common.AudioSource source;
   android.hardware.audio.effect.Parameter.VolumeStereo volumeStereo;
