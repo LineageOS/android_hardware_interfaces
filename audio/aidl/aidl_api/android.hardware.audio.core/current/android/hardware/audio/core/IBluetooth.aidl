@@ -44,10 +44,10 @@ interface IBluetooth {
     @nullable @utf8InCpp String debugName;
     @VintfStability
     enum Mode {
-      UNSPECIFIED = 0,
-      SCO = 1,
-      SCO_WB = 2,
-      SCO_SWB = 3,
+      UNSPECIFIED,
+      SCO,
+      SCO_WB,
+      SCO_SWB,
     }
   }
   @JavaDerive(equals=true, toString=true) @VintfStability

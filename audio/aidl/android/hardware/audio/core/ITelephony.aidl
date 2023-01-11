@@ -16,7 +16,7 @@
 
 package android.hardware.audio.core;
 
-import android.hardware.audio.core.AudioMode;
+import android.media.audio.common.AudioMode;
 import android.media.audio.common.Boolean;
 import android.media.audio.common.Float;
 
@@ -52,6 +52,7 @@ interface ITelephony {
      *
      * @param mode The mode to switch to.
      * @throws EX_UNSUPPORTED_OPERATION If the HAL does not support the specified mode.
+     * @throws EX_ILLEGAL_ARGUMENT If the mode is out of range of valid values.
      * @throws EX_ILLEGAL_STATE If there was an error during switching.
      */
     void switchAudioMode(AudioMode mode);
