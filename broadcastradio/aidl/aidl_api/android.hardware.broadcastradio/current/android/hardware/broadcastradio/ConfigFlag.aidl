@@ -35,12 +35,12 @@ package android.hardware.broadcastradio;
 @Backing(type="int") @JavaDerive(equals=true, toString=true) @VintfStability
 enum ConfigFlag {
   FORCE_MONO = 1,
-  FORCE_ANALOG = 2,
-  FORCE_DIGITAL = 3,
-  RDS_AF = 4,
-  RDS_REG = 5,
-  DAB_DAB_LINKING = 6,
-  DAB_FM_LINKING = 7,
-  DAB_DAB_SOFT_LINKING = 8,
-  DAB_FM_SOFT_LINKING = 9,
+  FORCE_ANALOG,
+  FORCE_DIGITAL,
+  RDS_AF,
+  RDS_REG,
+  DAB_DAB_LINKING,
+  DAB_FM_LINKING,
+  DAB_DAB_SOFT_LINKING,
+  DAB_FM_SOFT_LINKING,
 }
