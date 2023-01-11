@@ -3288,9 +3288,33 @@
             "property": "VehicleProperty::LANE_CENTERING_ASSIST_ENABLED",
             "defaultValue": {
                 "int32Values": [
-                    0
+                    1
                 ]
             }
+        },
+        {
+            "property": "VehicleProperty::LANE_CENTERING_ASSIST_STATE",
+            "defaultValue": {
+                "int32Values": [
+                    "LaneCenteringAssistState::ENABLED"
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": 0,
+                    "supportedEnumValues": [
+                        "ErrorState::NOT_AVAILABLE_SAFETY",
+                        "ErrorState::NOT_AVAILABLE_SPEED_HIGH",
+                        "ErrorState::NOT_AVAILABLE_SPEED_LOW",
+                        "ErrorState::NOT_AVAILABLE_DISABLED",
+                        "LaneCenteringAssistState::ENABLED",
+                        "LaneCenteringAssistState::ACTIVATION_REQUESTED",
+                        "LaneCenteringAssistState::ACTIVATED",
+                        "LaneCenteringAssistState::USER_OVERRIDE",
+                        "LaneCenteringAssistState::FORCED_DEACTIVATION_WARNING"
+                    ]
+                }
+            ]
         }
     ]
 }

@@ -250,6 +250,7 @@ std::unordered_map<VehicleProperty, VehiclePropertyChangeMode> ChangeModeForVehi
         {VehicleProperty::LANE_KEEP_ASSIST_ENABLED, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::LANE_KEEP_ASSIST_STATE, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::LANE_CENTERING_ASSIST_ENABLED, VehiclePropertyChangeMode::ON_CHANGE},
+        {VehicleProperty::LANE_CENTERING_ASSIST_STATE, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::EMERGENCY_LANE_KEEP_ASSIST_ENABLED, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::ADAPTIVE_CRUISE_CONTROL_ENABLED, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::HANDS_ON_DETECTION_ENABLED, VehiclePropertyChangeMode::ON_CHANGE},

@@ -3652,6 +3652,28 @@ enum VehicleProperty {
     LANE_CENTERING_ASSIST_ENABLED =
             0x100A + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
 
+    /**
+     * Lane Centering Assist (LCA) state.
+     *
+     * Returns the current state of LCA. This property must always return a valid state defined in
+     * LaneCenteringAssistState or ErrorState. It must not surface errors through StatusCode
+     * and must use the supported error states instead.
+     *
+     * If LCA includes lane departure warnings, those warnings must be surfaced through the Lane
+     * Departure Warning (LDW) properties.
+     *
+     * For the global area ID (0), the VehicleAreaConfig#supportedEnumValues array must be defined
+     * unless all states of both LaneCenteringAssistState (including OTHER, which is not
+     * recommended) and ErrorState are supported.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     * @data_enum LaneCenteringAssistState
+     * @data_enum ErrorState
+     */
+    LANE_CENTERING_ASSIST_STATE =
+            0x100C + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
+
     /*
      * Enable or disable emergency lane keep assist (ELKA).
      *
