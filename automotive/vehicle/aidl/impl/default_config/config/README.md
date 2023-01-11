@@ -149,6 +149,8 @@ We support the following constant types:
 
 * LaneKeepAssistState
 
+* LaneCenteringAssistCommand
+
 * LaneCenteringAssistState
 
 * ErrorState

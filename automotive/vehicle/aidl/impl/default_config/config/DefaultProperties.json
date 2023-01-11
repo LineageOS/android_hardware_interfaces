@@ -3293,6 +3293,9 @@
             }
         },
         {
+            "property": "VehicleProperty::LANE_CENTERING_ASSIST_COMMAND"
+        },
+        {
             "property": "VehicleProperty::LANE_CENTERING_ASSIST_STATE",
             "defaultValue": {
                 "int32Values": [
