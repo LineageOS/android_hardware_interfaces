@@ -3643,6 +3643,11 @@ enum VehicleProperty {
      * drifts toward or over the lane marking. If an unintentional lane departure is detected, the
      * system applies steering control to return the vehicle into the current lane.
      *
+     * In general, LANE_CENTERING_ASSIST_ENABLED should always return true or false. If the feature
+     * is not available due to some temporary state, such as the vehicle speed being too low or too
+     * high, that information must be conveyed through the ErrorState values in the
+     * LANE_CENTERING_ASSIST_STATE property.
+     *
      * This property is defined as read_write, but OEMs have the option to implement it as read
      * only.
      *
