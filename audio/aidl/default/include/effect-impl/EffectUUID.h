@@ -189,6 +189,18 @@ static const AudioUuid kEnvReverbSwImplUUID = {static_cast<int32_t>(0xfa819886),
                                                0x11ed,
                                                0x9b6a,
                                                {0x02, 0x42, 0xac, 0x12, 0x00, 0x02}};
+// 4a387fc0-8ab3-11df-8bad-0002a5d5c51b
+static const AudioUuid kAuxEnvReverbImplUUID = {static_cast<int32_t>(0x4a387fc0),
+                                                0x8ab3,
+                                                0x11df,
+                                                0x8bad,
+                                                {0x00, 0x02, 0xa5, 0xd5, 0xc5, 0x1b}};
+// c7a511a0-a3bb-11df-860e-0002a5d5c51b
+static const AudioUuid kInsertEnvReverbImplUUID = {static_cast<int32_t>(0xc7a511a0),
+                                                   0xa3bb,
+                                                   0x11df,
+                                                   0x860e,
+                                                   {0x00, 0x02, 0xa5, 0xd5, 0xc5, 0x1b}};
 // 58b4b260-8e06-11e0-aa8e-0002a5d5c51b
 static const AudioUuid kNoiseSuppressionTypeUUID = {static_cast<int32_t>(0x58b4b260),
                                                     0x8e06,
@@ -213,6 +225,18 @@ static const AudioUuid kPresetReverbSwImplUUID = {static_cast<int32_t>(0xfa8199c
                                                   0x11ed,
                                                   0x9b6a,
                                                   {0x02, 0x42, 0xac, 0x12, 0x00, 0x02}};
+// f29a1400-a3bb-11df-8ddc-0002a5d5c51b
+static const AudioUuid kAuxPresetReverbImplUUID = {static_cast<int32_t>(0xf29a1400),
+                                                   0xa3bb,
+                                                   0x11df,
+                                                   0x8ddc,
+                                                   {0x00, 0x02, 0xa5, 0xd5, 0xc5, 0x1b}};
+// 172cdf00-a3bc-11df-a72f-0002a5d5c51b
+static const AudioUuid kInsertPresetReverbImplUUID = {static_cast<int32_t>(0x172cdf00),
+                                                      0xa3bc,
+                                                      0x11df,
+                                                      0xa72f,
+                                                      {0x00, 0x02, 0xa5, 0xd5, 0xc5, 0x1b}};
 // 37cc2c00-dddd-11db-8577-0002a5d5c51b
 static const AudioUuid kVirtualizerTypeUUID = {static_cast<int32_t>(0x37cc2c00),
                                                0xdddd,
