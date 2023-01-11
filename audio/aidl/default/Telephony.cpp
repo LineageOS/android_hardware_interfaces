@@ -14,14 +14,18 @@
  * limitations under the License.
  */
 
-#include <android/binder_to_string.h>
 #define LOG_TAG "AHAL_Telephony"
 #include <android-base/logging.h>
 
+#include <Utils.h>
+#include <android/binder_to_string.h>
+
 #include "core-impl/Telephony.h"
 
+using aidl::android::media::audio::common::AudioMode;
 using aidl::android::media::audio::common::Boolean;
 using aidl::android::media::audio::common::Float;
+using android::hardware::audio::common::isValidAudioMode;
 
 namespace aidl::android::hardware::audio::core {
 
@@ -38,6 +42,10 @@ ndk::ScopedAStatus Telephony::getSupportedAudioModes(std::vector<AudioMode>* _ai
 }
 
 ndk::ScopedAStatus Telephony::switchAudioMode(AudioMode in_mode) {
+    if (!isValidAudioMode(in_mode)) {
+        LOG(ERROR) << __func__ << ": invalid mode " << toString(in_mode);
+        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+    }
     if (std::find(mSupportedAudioModes.begin(), mSupportedAudioModes.end(), in_mode) !=
         mSupportedAudioModes.end()) {
         LOG(DEBUG) << __func__ << ": " << toString(in_mode);
