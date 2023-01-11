@@ -3429,9 +3429,9 @@ enum VehicleProperty {
      * Set true to enable AEB and false to disable AEB. When AEB is enabled, the ADAS system in the
      * vehicle should be turned on and monitoring to avoid potential collisions.
      *
-     * IVehicle#get must not return any NOT_AVAILABLE value in StatusCode. Other StatusCode values
-     * like TRY_AGAIN may still be used as needed. For example, if AEB is not available because the
-     * vehicle speed is too low, IVehicle#get must return false.
+     * If AEB is not available, IVehicle#get must not return any NOT_AVAILABLE value in StatusCode.
+     * Other StatusCode values like TRY_AGAIN may still be used as needed. For example, if AEB is
+     * not available because the vehicle speed is too low, IVehicle#get must return false.
      *
      * This property is defined as read_write, but OEMs have the option to implement it as read
      * only.
@@ -3469,6 +3469,10 @@ enum VehicleProperty {
      *
      * Set true to enable FCW and false to disable FCW. When FCW is enabled, the ADAS system in the
      * vehicle should be turned on and monitoring for potential collisions.
+     *
+     * If FCW is not available, IVehicle#get must not return any NOT_AVAILABLE value in StatusCode.
+     * Other StatusCode values like TRY_AGAIN may still be used as needed. For example, if FCW is
+     * not available because the vehicle speed is too low, IVehicle#get must return false.
      *
      * This property is defined as read_write, but OEMs have the option to implement it as read
      * only.
