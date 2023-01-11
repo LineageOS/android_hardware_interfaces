@@ -31,6 +31,7 @@ import android.hardware.wifi.supplicant.DppStatusErrorCode;
 import android.hardware.wifi.supplicant.Hs20AnqpData;
 import android.hardware.wifi.supplicant.OsuMethod;
 import android.hardware.wifi.supplicant.QosPolicyData;
+import android.hardware.wifi.supplicant.QosPolicyScsResponseStatus;
 import android.hardware.wifi.supplicant.StaIfaceCallbackState;
 import android.hardware.wifi.supplicant.StaIfaceReasonCode;
 import android.hardware.wifi.supplicant.SupplicantStateChangeData;
@@ -378,4 +379,17 @@ oneway interface ISupplicantStaIfaceCallback {
      * @param stateChangeData Supplicant state change related information.
      */
     void onSupplicantStateChanged(in SupplicantStateChangeData stateChangeData);
+
+    /**
+     * Indicates an SCS response from the AP.
+     *
+     * If the AP does not send a response within the timeout period (1 sec),
+     * supplicant will call this API with the TIMEOUT status for each policy.
+     *
+     * The AP can trigger an unsolicited scs response to indicate the removal of
+     * previously requested policies.
+     *
+     * @param qosPolicyScsResponseStatus[] status for each SCS id.
+     */
+    void onQosPolicyResponseForScs(in QosPolicyScsResponseStatus[] qosPolicyScsResponseStatus);
 }
