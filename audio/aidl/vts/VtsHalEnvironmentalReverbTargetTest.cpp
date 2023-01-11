@@ -18,6 +18,7 @@
 
 #include <Utils.h>
 #include <aidl/Vintf.h>
+#include <unordered_set>
 #include "EffectHelper.h"
 
 using namespace android;
@@ -38,30 +39,6 @@ using aidl::android::hardware::audio::effect::Parameter;
  * any index supported value test expects EX_NONE from IEffect.setParameter(), otherwise expects
  * EX_ILLEGAL_ARGUMENT.
  */
-const std::vector<int> kRoomLevelValues = {
-        EnvironmentalReverb::MIN_ROOM_LEVEL_MB - 1, EnvironmentalReverb::MIN_ROOM_LEVEL_MB,
-        EnvironmentalReverb::MAX_ROOM_LEVEL_MB, EnvironmentalReverb::MAX_ROOM_LEVEL_MB + 1};
-const std::vector<int> kRoomHfLevelValues = {
-        EnvironmentalReverb::MIN_ROOM_HF_LEVEL_MB - 1, EnvironmentalReverb::MIN_ROOM_HF_LEVEL_MB,
-        EnvironmentalReverb::MAX_ROOM_HF_LEVEL_MB, EnvironmentalReverb::MAX_ROOM_HF_LEVEL_MB + 1};
-const std::vector<int> kDecayTimeValues = {
-        EnvironmentalReverb::MIN_DECAY_TIME_MS - 1, EnvironmentalReverb::MIN_DECAY_TIME_MS,
-        EnvironmentalReverb::MAX_DECAY_TIME_MS, EnvironmentalReverb::MAX_DECAY_TIME_MS + 1};
-const std::vector<int> kDecayHfRatioValues = {
-        EnvironmentalReverb::MIN_DECAY_HF_RATIO_PM - 1, EnvironmentalReverb::MIN_DECAY_HF_RATIO_PM,
-        EnvironmentalReverb::MAX_DECAY_HF_RATIO_PM, EnvironmentalReverb::MAX_DECAY_HF_RATIO_PM + 1};
-const std::vector<int> kLevelValues = {
-        EnvironmentalReverb::MIN_LEVEL_MB - 1, EnvironmentalReverb::MIN_LEVEL_MB,
-        EnvironmentalReverb::MAX_LEVEL_MB, EnvironmentalReverb::MAX_LEVEL_MB + 1};
-const std::vector<int> kDelayValues = {
-        EnvironmentalReverb::MIN_DELAY_MS - 1, EnvironmentalReverb::MIN_DELAY_MS,
-        EnvironmentalReverb::MAX_DELAY_MS, EnvironmentalReverb::MAX_DELAY_MS + 1};
-const std::vector<int> kDiffusionValues = {
-        EnvironmentalReverb::MIN_DIFFUSION_PM - 1, EnvironmentalReverb::MIN_DIFFUSION_PM,
-        EnvironmentalReverb::MAX_DIFFUSION_PM, EnvironmentalReverb::MAX_DIFFUSION_PM + 1};
-const std::vector<int> kDensityValues = {
-        EnvironmentalReverb::MIN_DENSITY_PM - 1, EnvironmentalReverb::MIN_DENSITY_PM,
-        EnvironmentalReverb::MAX_DENSITY_PM, EnvironmentalReverb::MAX_DENSITY_PM + 1};
 
 class EnvironmentalReverbHelper : public EffectHelper {
   public:
@@ -88,8 +65,7 @@ class EnvironmentalReverbHelper : public EffectHelper {
     }
 
     Parameter::Specific getDefaultParamSpecific() {
-        EnvironmentalReverb er = EnvironmentalReverb::make<EnvironmentalReverb::roomLevelMb>(
-                EnvironmentalReverb::MIN_ROOM_LEVEL_MB);
+        EnvironmentalReverb er = EnvironmentalReverb::make<EnvironmentalReverb::roomLevelMb>(-6000);
         Parameter::Specific specific =
                 Parameter::Specific::make<Parameter::Specific::environmentalReverb>(er);
         return specific;
@@ -99,14 +75,14 @@ class EnvironmentalReverbHelper : public EffectHelper {
     std::shared_ptr<IFactory> mFactory;
     std::shared_ptr<IEffect> mEffect;
     Descriptor mDescriptor;
-    int mRoomLevel = EnvironmentalReverb::MIN_ROOM_LEVEL_MB;
-    int mRoomHfLevel = EnvironmentalReverb::MAX_ROOM_HF_LEVEL_MB;
+    int mRoomLevel = -6000;
+    int mRoomHfLevel = 0;
     int mDecayTime = 1000;
     int mDecayHfRatio = 500;
-    int mLevel = EnvironmentalReverb::MIN_LEVEL_MB;
+    int mLevel = -6000;
     int mDelay = 40;
-    int mDiffusion = EnvironmentalReverb::MAX_DIFFUSION_PM;
-    int mDensity = EnvironmentalReverb::MAX_DENSITY_PM;
+    int mDiffusion = 1000;
+    int mDensity = 1000;
     bool mBypass = false;
 
     void SetAndGetReverbParameters() {
@@ -202,11 +178,11 @@ class EnvironmentalReverbHelper : public EffectHelper {
         switch (tag) {
             case EnvironmentalReverb::roomLevelMb: {
                 int roomLevel = er.get<EnvironmentalReverb::roomLevelMb>();
-                return isRoomLevelInRange(roomLevel);
+                return isRoomLevelInRange(erCap, roomLevel);
             }
             case EnvironmentalReverb::roomHfLevelMb: {
                 int roomHfLevel = er.get<EnvironmentalReverb::roomHfLevelMb>();
-                return isRoomHfLevelInRange(roomHfLevel);
+                return isRoomHfLevelInRange(erCap, roomHfLevel);
             }
             case EnvironmentalReverb::decayTimeMs: {
                 int decayTime = er.get<EnvironmentalReverb::decayTimeMs>();
@@ -214,23 +190,23 @@ class EnvironmentalReverbHelper : public EffectHelper {
             }
             case EnvironmentalReverb::decayHfRatioPm: {
                 int decayHfRatio = er.get<EnvironmentalReverb::decayHfRatioPm>();
-                return isDecayHfRatioInRange(decayHfRatio);
+                return isDecayHfRatioInRange(erCap, decayHfRatio);
             }
             case EnvironmentalReverb::levelMb: {
                 int level = er.get<EnvironmentalReverb::levelMb>();
-                return isLevelInRange(level);
+                return isLevelInRange(erCap, level);
             }
             case EnvironmentalReverb::delayMs: {
                 int delay = er.get<EnvironmentalReverb::delayMs>();
-                return isDelayInRange(delay);
+                return isDelayInRange(erCap, delay);
             }
             case EnvironmentalReverb::diffusionPm: {
                 int diffusion = er.get<EnvironmentalReverb::diffusionPm>();
-                return isDiffusionInRange(diffusion);
+                return isDiffusionInRange(erCap, diffusion);
             }
             case EnvironmentalReverb::densityPm: {
                 int density = er.get<EnvironmentalReverb::densityPm>();
-                return isDensityInRange(density);
+                return isDensityInRange(erCap, density);
             }
             case EnvironmentalReverb::bypass: {
                 return true;
@@ -241,45 +217,191 @@ class EnvironmentalReverbHelper : public EffectHelper {
         return false;
     }
 
-    bool isRoomLevelInRange(int roomLevel) const {
-        return roomLevel >= EnvironmentalReverb::MIN_ROOM_LEVEL_MB &&
-               roomLevel <= EnvironmentalReverb::MAX_ROOM_LEVEL_MB;
+    bool isRoomLevelInRange(const EnvironmentalReverb::Capability& cap, int roomLevel) const {
+        return roomLevel >= cap.minRoomLevelMb && roomLevel <= cap.maxRoomLevelMb;
     }
 
-    bool isRoomHfLevelInRange(int roomHfLevel) const {
-        return roomHfLevel >= EnvironmentalReverb::MIN_ROOM_HF_LEVEL_MB &&
-               roomHfLevel <= EnvironmentalReverb::MAX_ROOM_HF_LEVEL_MB;
+    bool isRoomHfLevelInRange(const EnvironmentalReverb::Capability& cap, int roomHfLevel) const {
+        return roomHfLevel >= cap.minRoomHfLevelMb && roomHfLevel <= cap.maxRoomHfLevelMb;
     }
 
     bool isDecayTimeInRange(const EnvironmentalReverb::Capability& cap, int decayTime) const {
-        return decayTime >= EnvironmentalReverb::MIN_DECAY_TIME_MS &&
-               decayTime <= EnvironmentalReverb::MAX_DECAY_TIME_MS &&
-               decayTime <= cap.maxDecayTimeMs;
+        return decayTime >= 0 && decayTime <= cap.maxDecayTimeMs;
     }
 
-    bool isDecayHfRatioInRange(int decayHfRatio) const {
-        return decayHfRatio >= EnvironmentalReverb::MIN_DECAY_HF_RATIO_PM &&
-               decayHfRatio <= EnvironmentalReverb::MAX_DECAY_HF_RATIO_PM;
+    bool isDecayHfRatioInRange(const EnvironmentalReverb::Capability& cap, int decayHfRatio) const {
+        return decayHfRatio >= cap.minDecayHfRatioPm && decayHfRatio <= cap.maxDecayHfRatioPm;
     }
 
-    bool isLevelInRange(int level) const {
-        return level >= EnvironmentalReverb::MIN_LEVEL_MB &&
-               level <= EnvironmentalReverb::MAX_LEVEL_MB;
+    bool isLevelInRange(const EnvironmentalReverb::Capability& cap, int level) const {
+        return level >= cap.minLevelMb && level <= cap.maxLevelMb;
     }
 
-    bool isDelayInRange(int delay) const {
-        return delay >= EnvironmentalReverb::MIN_DELAY_MS &&
-               delay <= EnvironmentalReverb::MAX_DELAY_MS;
+    bool isDelayInRange(const EnvironmentalReverb::Capability& cap, int delay) const {
+        return delay >= 0 && delay <= cap.maxDelayMs;
     }
 
-    bool isDiffusionInRange(int diffusion) const {
-        return diffusion >= EnvironmentalReverb::MIN_DIFFUSION_PM &&
-               diffusion <= EnvironmentalReverb::MAX_DIFFUSION_PM;
+    bool isDiffusionInRange(const EnvironmentalReverb::Capability& cap, int diffusion) const {
+        return diffusion >= 0 && diffusion <= cap.maxDiffusionPm;
     }
 
-    bool isDensityInRange(int density) const {
-        return density >= EnvironmentalReverb::MIN_DENSITY_PM &&
-               density <= EnvironmentalReverb::MAX_DENSITY_PM;
+    bool isDensityInRange(const EnvironmentalReverb::Capability& cap, int density) const {
+        return density >= 0 && density <= cap.maxDensityPm;
+    }
+
+    static std::unordered_set<int> getRoomLevelValues() {
+        auto descList = EffectFactoryHelper::getAllEffectDescriptors(IFactory::descriptor,
+                                                                     kEnvReverbTypeUUID);
+        int minRoomLevelMb = std::numeric_limits<int>::max();
+        int maxRoomLevelMb = std::numeric_limits<int>::min();
+        for (const auto& it : descList) {
+            maxRoomLevelMb = std::max(
+                    it.second.capability.get<Capability::environmentalReverb>().maxRoomLevelMb,
+                    maxRoomLevelMb);
+            minRoomLevelMb = std::min(
+                    it.second.capability.get<Capability::environmentalReverb>().minRoomLevelMb,
+                    minRoomLevelMb);
+        }
+        return {std::numeric_limits<int>::min(),        minRoomLevelMb - 1, minRoomLevelMb,
+                (minRoomLevelMb + maxRoomLevelMb) >> 1, maxRoomLevelMb,     maxRoomLevelMb + 1,
+                std::numeric_limits<int>::max()};
+    }
+
+    static std::unordered_set<int> getRoomHfLevelValues() {
+        auto descList = EffectFactoryHelper::getAllEffectDescriptors(IFactory::descriptor,
+                                                                     kEnvReverbTypeUUID);
+        int minRoomHfLevelMb = std::numeric_limits<int>::max();
+        int maxRoomHfLevelMb = std::numeric_limits<int>::min();
+        for (const auto& it : descList) {
+            maxRoomHfLevelMb = std::max(
+                    it.second.capability.get<Capability::environmentalReverb>().maxRoomHfLevelMb,
+                    maxRoomHfLevelMb);
+            minRoomHfLevelMb = std::min(
+                    it.second.capability.get<Capability::environmentalReverb>().minRoomHfLevelMb,
+                    minRoomHfLevelMb);
+        }
+        return {std::numeric_limits<int>::min(),
+                minRoomHfLevelMb - 1,
+                minRoomHfLevelMb,
+                (minRoomHfLevelMb + maxRoomHfLevelMb) >> 1,
+                maxRoomHfLevelMb,
+                maxRoomHfLevelMb + 1,
+                std::numeric_limits<int>::max()};
+    }
+
+    static std::unordered_set<int> getDecayTimeValues() {
+        auto descList = EffectFactoryHelper::getAllEffectDescriptors(IFactory::descriptor,
+                                                                     kEnvReverbTypeUUID);
+        const auto max = std::max_element(
+                descList.begin(), descList.end(),
+                [](const std::pair<std::shared_ptr<IFactory>, Descriptor>& a,
+                   const std::pair<std::shared_ptr<IFactory>, Descriptor>& b) {
+                    return a.second.capability.get<Capability::environmentalReverb>()
+                                   .maxDecayTimeMs <
+                           b.second.capability.get<Capability::environmentalReverb>()
+                                   .maxDecayTimeMs;
+                });
+        if (max == descList.end()) {
+            return {0};
+        }
+        int maxDecayTimeMs =
+                max->second.capability.get<Capability::environmentalReverb>().maxDecayTimeMs;
+        return {-1, 0, maxDecayTimeMs >> 1, maxDecayTimeMs - 1, maxDecayTimeMs, maxDecayTimeMs + 1};
+    }
+
+    static std::unordered_set<int> getDecayHfRatioValues() {
+        auto descList = EffectFactoryHelper::getAllEffectDescriptors(IFactory::descriptor,
+                                                                     kEnvReverbTypeUUID);
+        int minDecayHfRatioPm = std::numeric_limits<int>::max();
+        int maxDecayHfRatioPm = std::numeric_limits<int>::min();
+        for (const auto& it : descList) {
+            maxDecayHfRatioPm = std::max(
+                    it.second.capability.get<Capability::environmentalReverb>().maxDecayHfRatioPm,
+                    maxDecayHfRatioPm);
+            minDecayHfRatioPm = std::min(
+                    it.second.capability.get<Capability::environmentalReverb>().minDecayHfRatioPm,
+                    minDecayHfRatioPm);
+        }
+        return {std::numeric_limits<int>::min(),
+                minDecayHfRatioPm - 1,
+                minDecayHfRatioPm,
+                (minDecayHfRatioPm + maxDecayHfRatioPm) >> 1,
+                maxDecayHfRatioPm,
+                maxDecayHfRatioPm + 1,
+                std::numeric_limits<int>::max()};
+    }
+
+    static std::unordered_set<int> getLevelValues() {
+        auto descList = EffectFactoryHelper::getAllEffectDescriptors(IFactory::descriptor,
+                                                                     kEnvReverbTypeUUID);
+        int minLevelMb = std::numeric_limits<int>::max();
+        int maxLevelMb = std::numeric_limits<int>::min();
+        for (const auto& it : descList) {
+            maxLevelMb =
+                    std::max(it.second.capability.get<Capability::environmentalReverb>().maxLevelMb,
+                             maxLevelMb);
+            minLevelMb =
+                    std::min(it.second.capability.get<Capability::environmentalReverb>().minLevelMb,
+                             minLevelMb);
+        }
+        return {std::numeric_limits<int>::min(), minLevelMb - 1, minLevelMb,
+                (minLevelMb + maxLevelMb) >> 1,  maxLevelMb,     maxLevelMb + 1,
+                std::numeric_limits<int>::max()};
+    }
+
+    static std::unordered_set<int> getDelayValues() {
+        auto descList = EffectFactoryHelper::getAllEffectDescriptors(IFactory::descriptor,
+                                                                     kEnvReverbTypeUUID);
+        const auto max = std::max_element(
+                descList.begin(), descList.end(),
+                [](const std::pair<std::shared_ptr<IFactory>, Descriptor>& a,
+                   const std::pair<std::shared_ptr<IFactory>, Descriptor>& b) {
+                    return a.second.capability.get<Capability::environmentalReverb>().maxDelayMs <
+                           b.second.capability.get<Capability::environmentalReverb>().maxDelayMs;
+                });
+        if (max == descList.end()) {
+            return {0};
+        }
+        int maxDelayMs = max->second.capability.get<Capability::environmentalReverb>().maxDelayMs;
+        return {-1, 0, maxDelayMs >> 1, maxDelayMs - 1, maxDelayMs, maxDelayMs + 1};
+    }
+
+    static std::unordered_set<int> getDiffusionValues() {
+        auto descList = EffectFactoryHelper::getAllEffectDescriptors(IFactory::descriptor,
+                                                                     kEnvReverbTypeUUID);
+        const auto max = std::max_element(
+                descList.begin(), descList.end(),
+                [](const std::pair<std::shared_ptr<IFactory>, Descriptor>& a,
+                   const std::pair<std::shared_ptr<IFactory>, Descriptor>& b) {
+                    return a.second.capability.get<Capability::environmentalReverb>()
+                                   .maxDiffusionPm <
+                           b.second.capability.get<Capability::environmentalReverb>()
+                                   .maxDiffusionPm;
+                });
+        if (max == descList.end()) {
+            return {0};
+        }
+        int maxDiffusionPm =
+                max->second.capability.get<Capability::environmentalReverb>().maxDiffusionPm;
+        return {-1, 0, maxDiffusionPm >> 1, maxDiffusionPm - 1, maxDiffusionPm, maxDiffusionPm + 1};
+    }
+
+    static std::unordered_set<int> getDensityValues() {
+        auto descList = EffectFactoryHelper::getAllEffectDescriptors(IFactory::descriptor,
+                                                                     kEnvReverbTypeUUID);
+        const auto max = std::max_element(
+                descList.begin(), descList.end(),
+                [](const std::pair<std::shared_ptr<IFactory>, Descriptor>& a,
+                   const std::pair<std::shared_ptr<IFactory>, Descriptor>& b) {
+                    return a.second.capability.get<Capability::environmentalReverb>().maxDensityPm <
+                           b.second.capability.get<Capability::environmentalReverb>().maxDensityPm;
+                });
+        if (max == descList.end()) {
+            return {0};
+        }
+        int maxDensityPm =
+                max->second.capability.get<Capability::environmentalReverb>().maxDensityPm;
+        return {-1, 0, maxDensityPm >> 1, maxDensityPm - 1, maxDensityPm, maxDensityPm + 1};
     }
 
   private:
@@ -310,7 +432,7 @@ INSTANTIATE_TEST_SUITE_P(
         EnvironmentalReverbTest, EnvironmentalReverbRoomLevelTest,
         ::testing::Combine(testing::ValuesIn(EffectFactoryHelper::getAllEffectDescriptors(
                                    IFactory::descriptor, kEnvReverbTypeUUID)),
-                           testing::ValuesIn(kRoomLevelValues)),
+                           testing::ValuesIn(EnvironmentalReverbHelper::getRoomLevelValues())),
         [](const testing::TestParamInfo<EnvironmentalReverbRoomLevelTest::ParamType>& info) {
             auto descriptor = std::get<0>(info.param).second;
             std::string roomLevel = std::to_string(std::get<1>(info.param));
@@ -347,7 +469,7 @@ INSTANTIATE_TEST_SUITE_P(
         EnvironmentalReverbTest, EnvironmentalReverbRoomHfLevelTest,
         ::testing::Combine(testing::ValuesIn(EffectFactoryHelper::getAllEffectDescriptors(
                                    IFactory::descriptor, kEnvReverbTypeUUID)),
-                           testing::ValuesIn(kRoomHfLevelValues)),
+                           testing::ValuesIn(EnvironmentalReverbHelper::getRoomHfLevelValues())),
         [](const testing::TestParamInfo<EnvironmentalReverbRoomHfLevelTest::ParamType>& info) {
             auto descriptor = std::get<0>(info.param).second;
             std::string roomHfLevel = std::to_string(std::get<1>(info.param));
@@ -384,7 +506,7 @@ INSTANTIATE_TEST_SUITE_P(
         EnvironmentalReverbTest, EnvironmentalReverbDecayTimeTest,
         ::testing::Combine(testing::ValuesIn(EffectFactoryHelper::getAllEffectDescriptors(
                                    IFactory::descriptor, kEnvReverbTypeUUID)),
-                           testing::ValuesIn(kDecayTimeValues)),
+                           testing::ValuesIn(EnvironmentalReverbHelper::getDecayTimeValues())),
         [](const testing::TestParamInfo<EnvironmentalReverbDecayTimeTest::ParamType>& info) {
             auto descriptor = std::get<0>(info.param).second;
             std::string decayTime = std::to_string(std::get<1>(info.param));
@@ -421,7 +543,7 @@ INSTANTIATE_TEST_SUITE_P(
         EnvironmentalReverbTest, EnvironmentalReverbDecayHfRatioTest,
         ::testing::Combine(testing::ValuesIn(EffectFactoryHelper::getAllEffectDescriptors(
                                    IFactory::descriptor, kEnvReverbTypeUUID)),
-                           testing::ValuesIn(kDecayHfRatioValues)),
+                           testing::ValuesIn(EnvironmentalReverbHelper::getDecayHfRatioValues())),
         [](const testing::TestParamInfo<EnvironmentalReverbDecayHfRatioTest::ParamType>& info) {
             auto descriptor = std::get<0>(info.param).second;
             std::string decayHfRatio = std::to_string(std::get<1>(info.param));
@@ -459,7 +581,7 @@ INSTANTIATE_TEST_SUITE_P(
         EnvironmentalReverbTest, EnvironmentalReverbLevelTest,
         ::testing::Combine(testing::ValuesIn(EffectFactoryHelper::getAllEffectDescriptors(
                                    IFactory::descriptor, kEnvReverbTypeUUID)),
-                           testing::ValuesIn(kLevelValues)),
+                           testing::ValuesIn(EnvironmentalReverbHelper::getLevelValues())),
         [](const testing::TestParamInfo<EnvironmentalReverbDecayHfRatioTest::ParamType>& info) {
             auto descriptor = std::get<0>(info.param).second;
             std::string level = std::to_string(std::get<1>(info.param));
@@ -496,7 +618,7 @@ INSTANTIATE_TEST_SUITE_P(
         EnvironmentalReverbTest, EnvironmentalReverbDelayTest,
         ::testing::Combine(testing::ValuesIn(EffectFactoryHelper::getAllEffectDescriptors(
                                    IFactory::descriptor, kEnvReverbTypeUUID)),
-                           testing::ValuesIn(kDelayValues)),
+                           testing::ValuesIn(EnvironmentalReverbHelper::getDelayValues())),
         [](const testing::TestParamInfo<EnvironmentalReverbDelayTest::ParamType>& info) {
             auto descriptor = std::get<0>(info.param).second;
             std::string delay = std::to_string(std::get<1>(info.param));
@@ -533,7 +655,7 @@ INSTANTIATE_TEST_SUITE_P(
         EnvironmentalReverbTest, EnvironmentalReverbDiffusionTest,
         ::testing::Combine(testing::ValuesIn(EffectFactoryHelper::getAllEffectDescriptors(
                                    IFactory::descriptor, kEnvReverbTypeUUID)),
-                           testing::ValuesIn(kDiffusionValues)),
+                           testing::ValuesIn(EnvironmentalReverbHelper::getDiffusionValues())),
         [](const testing::TestParamInfo<EnvironmentalReverbDiffusionTest::ParamType>& info) {
             auto descriptor = std::get<0>(info.param).second;
             std::string diffusion = std::to_string(std::get<1>(info.param));
@@ -570,7 +692,7 @@ INSTANTIATE_TEST_SUITE_P(
         EnvironmentalReverbTest, EnvironmentalReverbDensityTest,
         ::testing::Combine(testing::ValuesIn(EffectFactoryHelper::getAllEffectDescriptors(
                                    IFactory::descriptor, kEnvReverbTypeUUID)),
-                           testing::ValuesIn(kDensityValues)),
+                           testing::ValuesIn(EnvironmentalReverbHelper::getDensityValues())),
         [](const testing::TestParamInfo<EnvironmentalReverbDensityTest::ParamType>& info) {
             auto descriptor = std::get<0>(info.param).second;
             std::string density = std::to_string(std::get<1>(info.param));

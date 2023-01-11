@@ -1,12 +1,4 @@
 <compatibility-matrix version="1.0" type="framework" level="8">
-    <hal format="hidl" optional="true">
-        <name>android.hardware.atrace</name>
-        <version>1.0</version>
-        <interface>
-            <name>IAtraceDevice</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
     <hal format="hidl" optional="false">
         <name>android.hardware.audio</name>
         <version>6.0</version>
@@ -552,14 +544,6 @@
             <instance>slot3</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
-        <name>android.hardware.radio</name>
-        <version>1.2</version>
-        <interface>
-            <name>ISap</name>
-            <instance>slot1</instance>
-        </interface>
-    </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.radio.ims.media</name>
         <version>1</version>
@@ -659,23 +643,23 @@
         </interface>
     </hal>
     <hal format="aidl" optional="true">
-        <name>android.hardware.tv.cec</name>
+        <name>android.hardware.tv.hdmi.cec</name>
         <interface>
             <name>IHdmiCec</name>
             <instance>default</instance>
         </interface>
     </hal>
     <hal format="aidl" optional="true">
-        <name>android.hardware.tv.earc</name>
+        <name>android.hardware.tv.hdmi.earc</name>
         <interface>
             <name>IEArc</name>
             <instance>default</instance>
         </interface>
     </hal>
     <hal format="aidl" optional="true">
-        <name>android.hardware.tv.hdmi</name>
+        <name>android.hardware.tv.hdmi.connection</name>
         <interface>
-            <name>IHdmi</name>
+            <name>IHdmiConnection</name>
             <instance>default</instance>
         </interface>
     </hal>
