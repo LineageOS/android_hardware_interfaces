@@ -702,6 +702,7 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.tv.hdmi.cec</name>
+        <version>1</version>
         <interface>
             <name>IHdmiCec</name>
             <instance>default</instance>
@@ -709,6 +710,7 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.tv.hdmi.earc</name>
+        <version>1</version>
         <interface>
             <name>IEArc</name>
             <instance>default</instance>
@@ -716,6 +718,7 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.tv.hdmi.connection</name>
+        <version>1</version>
         <interface>
             <name>IHdmiConnection</name>
             <instance>default</instance>
