@@ -17,7 +17,10 @@
 #ifndef HARDWARE_INTERFACES_CAMERA_PROVIDER_AIDL_VTS_CAMERA_AIDL_TEST_H_
 #define HARDWARE_INTERFACES_CAMERA_PROVIDER_AIDL_VTS_CAMERA_AIDL_TEST_H_
 
+// TODO: LOG_TAG should not be in header
+#ifndef LOG_TAG
 #define LOG_TAG "camera_aidl_hal_test"
+#endif
 
 #include <string>
 #include <unordered_map>
