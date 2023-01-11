@@ -3480,6 +3480,25 @@ enum VehicleProperty {
             0x1002 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
 
     /**
+     * Forward Collision Warning (FCW) state.
+     *
+     * Returns the current state of FCW. This property must always return a valid state defined in
+     * ForwardCollisionWarningState or ErrorState. It must not surface errors through StatusCode
+     * and must use the supported error states instead.
+     *
+     * For the global area ID (0), the VehicleAreaConfig#supportedEnumValues array must be defined
+     * unless all states of both ForwardCollisionWarningState (including OTHER, which is not
+     * recommended) and ErrorState are supported.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     * @data_enum ForwardCollisionWarningState
+     * @data_enum ErrorState
+     */
+    FORWARD_COLLISION_WARNING_STATE =
+            0x1003 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
+
+    /**
      * Enable and disable blind spot warning (BSW).
      *
      * Set true to enable BSW and false to disable BSW. When BSW is enabled, the ADAS system in the

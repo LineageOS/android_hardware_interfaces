@@ -3193,6 +3193,27 @@
             }
         },
         {
+            "property": "VehicleProperty::FORWARD_COLLISION_WARNING_STATE",
+            "defaultValue": {
+                "int32Values": [
+                    "ForwardCollisionWarningState::NO_WARNING"
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": 0,
+                    "supportedEnumValues": [
+                        "ErrorState::NOT_AVAILABLE_SAFETY",
+                        "ErrorState::NOT_AVAILABLE_SPEED_HIGH",
+                        "ErrorState::NOT_AVAILABLE_SPEED_LOW",
+                        "ErrorState::NOT_AVAILABLE_DISABLED",
+                        "ForwardCollisionWarningState::NO_WARNING",
+                        "ForwardCollisionWarningState::WARNING"
+                    ]
+                }
+            ]
+        },
+        {
             "property": "VehicleProperty::BLIND_SPOT_WARNING_ENABLED",
             "defaultValue": {
                 "int32Values": [
