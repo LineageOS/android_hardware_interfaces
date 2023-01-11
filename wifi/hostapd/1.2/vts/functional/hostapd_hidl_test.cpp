@@ -122,7 +122,8 @@ class HostapdHidlTest
 
     IHostapd::IfaceParams getIfaceParamsWithAcs(std::string iface_name) {
         // First get the settings for WithoutAcs and then make changes
-        IHostapd::IfaceParams iface_params_1_2 = getIfaceParamsWithoutAcs(iface_name);
+        IHostapd::IfaceParams iface_params_1_2 =
+            getIfaceParamsWithoutAcs(iface_name);
         iface_params_1_2.V1_1.V1_0.channelParams.enableAcs = true;
         iface_params_1_2.V1_1.V1_0.channelParams.acsShouldExcludeDfs = true;
         iface_params_1_2.V1_1.V1_0.channelParams.channel = 0;
@@ -132,8 +133,10 @@ class HostapdHidlTest
         return iface_params_1_2;
     }
 
-    IHostapd::IfaceParams getIfaceParamsWithAcsAndFreqRange(std::string iface_name) {
-        IHostapd::IfaceParams iface_params_1_2 = getIfaceParamsWithAcs(iface_name);
+    IHostapd::IfaceParams getIfaceParamsWithAcsAndFreqRange(
+        std::string iface_name) {
+        IHostapd::IfaceParams iface_params_1_2 =
+            getIfaceParamsWithAcs(iface_name);
         ::android::hardware::wifi::hostapd::V1_2::IHostapd::AcsFrequencyRange
             acsFrequencyRange;
         acsFrequencyRange.start = 2412;
@@ -147,8 +150,10 @@ class HostapdHidlTest
         return iface_params_1_2;
     }
 
-    IHostapd::IfaceParams getIfaceParamsWithAcsAndInvalidFreqRange(std::string iface_name) {
-        IHostapd::IfaceParams iface_params_1_2 = getIfaceParamsWithAcsAndFreqRange(iface_name);
+    IHostapd::IfaceParams getIfaceParamsWithAcsAndInvalidFreqRange(
+        std::string iface_name) {
+        IHostapd::IfaceParams iface_params_1_2 =
+            getIfaceParamsWithAcsAndFreqRange(iface_name);
         iface_params_1_2.channelParams.acsChannelFreqRangesMhz[0].start = 222;
         iface_params_1_2.channelParams.acsChannelFreqRangesMhz[0].end = 999;
         return iface_params_1_2;
@@ -210,8 +215,10 @@ class HostapdHidlTest
         return nw_params_1_2;
     }
 
-    IHostapd::IfaceParams getIfaceParamsWithInvalidChannel(std::string iface_name) {
-        IHostapd::IfaceParams iface_params_1_2 = getIfaceParamsWithoutAcs(iface_name);
+    IHostapd::IfaceParams getIfaceParamsWithInvalidChannel(
+        std::string iface_name) {
+        IHostapd::IfaceParams iface_params_1_2 =
+            getIfaceParamsWithoutAcs(iface_name);
         iface_params_1_2.V1_1.V1_0.channelParams.channel = kIfaceInvalidChannel;
         return iface_params_1_2;
     }
@@ -237,8 +244,8 @@ TEST_P(HostapdHidlTest, AddPskAccessPointWithAcs) {
     if (is_1_3(hostapd_))
         GTEST_SKIP() << "Ignore addAccessPoint_1_2 on hostapd 1_3";
     std::string ifname = setupApIfaceIfNeededAndGetName();
-    auto status = HIDL_INVOKE(hostapd_, addAccessPoint_1_2, getIfaceParamsWithAcs(ifname),
-                              getPskNwParams());
+    auto status = HIDL_INVOKE(hostapd_, addAccessPoint_1_2,
+                              getIfaceParamsWithAcs(ifname), getPskNwParams());
     EXPECT_EQ(HostapdStatusCode::SUCCESS, status.code);
 }
 
@@ -252,7 +259,8 @@ TEST_P(HostapdHidlTest, AddPskAccessPointWithAcsAndFreqRange) {
         GTEST_SKIP() << "Ignore addAccessPoint_1_2 on hostapd 1_3";
     std::string ifname = setupApIfaceIfNeededAndGetName();
     auto status = HIDL_INVOKE(hostapd_, addAccessPoint_1_2,
-                              getIfaceParamsWithAcsAndFreqRange(ifname), getPskNwParams());
+                              getIfaceParamsWithAcsAndFreqRange(ifname),
+                              getPskNwParams());
     EXPECT_EQ(HostapdStatusCode::SUCCESS, status.code);
 }
 
@@ -266,7 +274,8 @@ TEST_P(HostapdHidlTest, AddPskAccessPointWithAcsAndInvalidFreqRange) {
         GTEST_SKIP() << "Ignore addAccessPoint_1_2 on hostapd 1_3";
     std::string ifname = setupApIfaceIfNeededAndGetName();
     auto status = HIDL_INVOKE(hostapd_, addAccessPoint_1_2,
-                              getIfaceParamsWithAcsAndInvalidFreqRange(ifname), getPskNwParams());
+                              getIfaceParamsWithAcsAndInvalidFreqRange(ifname),
+                              getPskNwParams());
     EXPECT_NE(HostapdStatusCode::SUCCESS, status.code);
 }
 
@@ -279,8 +288,8 @@ TEST_P(HostapdHidlTest, AddOpenAccessPointWithAcs) {
     if (is_1_3(hostapd_))
         GTEST_SKIP() << "Ignore addAccessPoint_1_2 on hostapd 1_3";
     std::string ifname = setupApIfaceIfNeededAndGetName();
-    auto status = HIDL_INVOKE(hostapd_, addAccessPoint_1_2, getIfaceParamsWithAcs(ifname),
-                              getOpenNwParams());
+    auto status = HIDL_INVOKE(hostapd_, addAccessPoint_1_2,
+                              getIfaceParamsWithAcs(ifname), getOpenNwParams());
     EXPECT_EQ(HostapdStatusCode::SUCCESS, status.code);
 }
 
@@ -292,8 +301,9 @@ TEST_P(HostapdHidlTest, AddPskAccessPointWithoutAcs) {
     if (is_1_3(hostapd_))
         GTEST_SKIP() << "Ignore addAccessPoint_1_2 on hostapd 1_3";
     std::string ifname = setupApIfaceIfNeededAndGetName();
-    auto status = HIDL_INVOKE(hostapd_, addAccessPoint_1_2, getIfaceParamsWithoutAcs(ifname),
-                              getPskNwParams());
+    auto status =
+        HIDL_INVOKE(hostapd_, addAccessPoint_1_2,
+                    getIfaceParamsWithoutAcs(ifname), getPskNwParams());
     EXPECT_EQ(HostapdStatusCode::SUCCESS, status.code);
 }
 
@@ -305,8 +315,9 @@ TEST_P(HostapdHidlTest, AddOpenAccessPointWithoutAcs) {
     if (is_1_3(hostapd_))
         GTEST_SKIP() << "Ignore addAccessPoint_1_2 on hostapd 1_3";
     std::string ifname = setupApIfaceIfNeededAndGetName();
-    auto status = HIDL_INVOKE(hostapd_, addAccessPoint_1_2, getIfaceParamsWithoutAcs(ifname),
-                              getOpenNwParams());
+    auto status =
+        HIDL_INVOKE(hostapd_, addAccessPoint_1_2,
+                    getIfaceParamsWithoutAcs(ifname), getOpenNwParams());
     EXPECT_EQ(HostapdStatusCode::SUCCESS, status.code);
 }
 
@@ -319,7 +330,8 @@ TEST_P(HostapdHidlTest, AddSaeTransitionAccessPointWithoutAcs) {
     if (is_1_3(hostapd_))
         GTEST_SKIP() << "Ignore addAccessPoint_1_2 on hostapd 1_3";
     std::string ifname = setupApIfaceIfNeededAndGetName();
-    auto status = HIDL_INVOKE(hostapd_, addAccessPoint_1_2, getIfaceParamsWithoutAcs(ifname),
+    auto status = HIDL_INVOKE(hostapd_, addAccessPoint_1_2,
+                              getIfaceParamsWithoutAcs(ifname),
                               getSaeTransitionNwParams());
     EXPECT_EQ(HostapdStatusCode::SUCCESS, status.code);
 }
@@ -333,8 +345,9 @@ TEST_P(HostapdHidlTest, AddSAEAccessPointWithoutAcs) {
     if (is_1_3(hostapd_))
         GTEST_SKIP() << "Ignore addAccessPoint_1_2 on hostapd 1_3";
     std::string ifname = setupApIfaceIfNeededAndGetName();
-    auto status = HIDL_INVOKE(hostapd_, addAccessPoint_1_2, getIfaceParamsWithoutAcs(ifname),
-                              getSaeNwParams());
+    auto status =
+        HIDL_INVOKE(hostapd_, addAccessPoint_1_2,
+                    getIfaceParamsWithoutAcs(ifname), getSaeNwParams());
     EXPECT_EQ(HostapdStatusCode::SUCCESS, status.code);
 }
 
@@ -347,8 +360,9 @@ TEST_P(HostapdHidlTest, RemoveAccessPointWithAcs) {
     if (is_1_3(hostapd_))
         GTEST_SKIP() << "Ignore addAccessPoint_1_2 on hostapd 1_3";
     std::string ifname = setupApIfaceIfNeededAndGetName();
-    auto status_1_2 = HIDL_INVOKE(hostapd_, addAccessPoint_1_2, getIfaceParamsWithAcs(ifname),
-                                  getPskNwParams());
+    auto status_1_2 =
+        HIDL_INVOKE(hostapd_, addAccessPoint_1_2, getIfaceParamsWithAcs(ifname),
+                    getPskNwParams());
     EXPECT_EQ(HostapdStatusCode::SUCCESS, status_1_2.code);
     auto status = HIDL_INVOKE(hostapd_, removeAccessPoint, ifname);
     EXPECT_EQ(
@@ -364,8 +378,9 @@ TEST_P(HostapdHidlTest, RemoveAccessPointWithoutAcs) {
     if (is_1_3(hostapd_))
         GTEST_SKIP() << "Ignore addAccessPoint_1_2 on hostapd 1_3";
     std::string ifname = setupApIfaceIfNeededAndGetName();
-    auto status_1_2 = HIDL_INVOKE(hostapd_, addAccessPoint_1_2, getIfaceParamsWithoutAcs(ifname),
-                                  getPskNwParams());
+    auto status_1_2 =
+        HIDL_INVOKE(hostapd_, addAccessPoint_1_2,
+                    getIfaceParamsWithoutAcs(ifname), getPskNwParams());
     EXPECT_EQ(HostapdStatusCode::SUCCESS, status_1_2.code);
     auto status = HIDL_INVOKE(hostapd_, removeAccessPoint, ifname);
     EXPECT_EQ(
@@ -381,8 +396,9 @@ TEST_P(HostapdHidlTest, AddPskAccessPointWithInvalidChannel) {
     if (is_1_3(hostapd_))
         GTEST_SKIP() << "Ignore addAccessPoint_1_2 on hostapd 1_3";
     std::string ifname = setupApIfaceIfNeededAndGetName();
-    auto status = HIDL_INVOKE(hostapd_, addAccessPoint_1_2,
-                              getIfaceParamsWithInvalidChannel(ifname), getPskNwParams());
+    auto status =
+        HIDL_INVOKE(hostapd_, addAccessPoint_1_2,
+                    getIfaceParamsWithInvalidChannel(ifname), getPskNwParams());
     EXPECT_NE(HostapdStatusCode::SUCCESS, status.code);
 }
 
@@ -394,8 +410,9 @@ TEST_P(HostapdHidlTest, AddInvalidPskAccessPointWithoutAcs) {
     if (is_1_3(hostapd_))
         GTEST_SKIP() << "Ignore addAccessPoint_1_2 on hostapd 1_3";
     std::string ifname = setupApIfaceIfNeededAndGetName();
-    auto status = HIDL_INVOKE(hostapd_, addAccessPoint_1_2, getIfaceParamsWithoutAcs(ifname),
-                              getInvalidPskNwParams());
+    auto status =
+        HIDL_INVOKE(hostapd_, addAccessPoint_1_2,
+                    getIfaceParamsWithoutAcs(ifname), getInvalidPskNwParams());
     EXPECT_NE(HostapdStatusCode::SUCCESS, status.code);
 }
 
@@ -408,7 +425,8 @@ TEST_P(HostapdHidlTest, AddInvalidSaeTransitionAccessPointWithoutAcs) {
     if (is_1_3(hostapd_))
         GTEST_SKIP() << "Ignore addAccessPoint_1_2 on hostapd 1_3";
     std::string ifname = setupApIfaceIfNeededAndGetName();
-    auto status = HIDL_INVOKE(hostapd_, addAccessPoint_1_2, getIfaceParamsWithoutAcs(ifname),
+    auto status = HIDL_INVOKE(hostapd_, addAccessPoint_1_2,
+                              getIfaceParamsWithoutAcs(ifname),
                               getInvalidSaeTransitionNwParams());
     EXPECT_NE(HostapdStatusCode::SUCCESS, status.code);
 }
@@ -422,8 +440,9 @@ TEST_P(HostapdHidlTest, AddInvalidSaeAccessPointWithoutAcs) {
     if (is_1_3(hostapd_))
         GTEST_SKIP() << "Ignore addAccessPoint_1_2 on hostapd 1_3";
     std::string ifname = setupApIfaceIfNeededAndGetName();
-    auto status = HIDL_INVOKE(hostapd_, addAccessPoint_1_2, getIfaceParamsWithoutAcs(ifname),
-                              getInvalidSaeNwParams());
+    auto status =
+        HIDL_INVOKE(hostapd_, addAccessPoint_1_2,
+                    getIfaceParamsWithoutAcs(ifname), getInvalidSaeNwParams());
     EXPECT_NE(HostapdStatusCode::SUCCESS, status.code);
 }
 
@@ -433,8 +452,8 @@ TEST_P(HostapdHidlTest, AddInvalidSaeAccessPointWithoutAcs) {
  */
 TEST_P(HostapdHidlTest, DisconnectClientWhenIfaceNotAvailable) {
     std::string ifname = setupApIfaceIfNeededAndGetName();
-    auto status = HIDL_INVOKE(hostapd_, forceClientDisconnect, ifname, kTestZeroMacAddr,
-                              kTestDisconnectReasonCode);
+    auto status = HIDL_INVOKE(hostapd_, forceClientDisconnect, ifname,
+                              kTestZeroMacAddr, kTestDisconnectReasonCode);
     EXPECT_EQ(HostapdStatusCode::FAILURE_IFACE_UNKNOWN, status.code);
 }
 
@@ -446,12 +465,13 @@ TEST_P(HostapdHidlTest, DisconnectClientWhenIfacAvailable) {
     if (is_1_3(hostapd_))
         GTEST_SKIP() << "Ignore addAccessPoint_1_2 on hostapd 1_3";
     std::string ifname = setupApIfaceIfNeededAndGetName();
-    auto status_1_2 = HIDL_INVOKE(hostapd_, addAccessPoint_1_2, getIfaceParamsWithoutAcs(ifname),
-                                  getOpenNwParams());
+    auto status_1_2 =
+        HIDL_INVOKE(hostapd_, addAccessPoint_1_2,
+                    getIfaceParamsWithoutAcs(ifname), getOpenNwParams());
     EXPECT_EQ(HostapdStatusCode::SUCCESS, status_1_2.code);
 
-    status_1_2 = HIDL_INVOKE(hostapd_, forceClientDisconnect, ifname, kTestZeroMacAddr,
-                             kTestDisconnectReasonCode);
+    status_1_2 = HIDL_INVOKE(hostapd_, forceClientDisconnect, ifname,
+                             kTestZeroMacAddr, kTestDisconnectReasonCode);
     EXPECT_EQ(HostapdStatusCode::FAILURE_CLIENT_UNKNOWN, status_1_2.code);
 }
 
