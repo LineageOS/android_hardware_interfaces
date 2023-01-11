@@ -3605,6 +3605,28 @@ enum VehicleProperty {
             0x1008 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
 
     /**
+     * Lane Keep Assist (LKA) state.
+     *
+     * Returns the current state of LKA. This property must always return a valid state defined in
+     * LaneKeepAssistState or ErrorState. It must not surface errors through StatusCode
+     * and must use the supported error states instead.
+     *
+     * If LKA includes lane departure warnings before applying steering corrections, those warnings
+     * must be surfaced through the Lane Departure Warning (LDW) properties.
+     *
+     * For the global area ID (0), the VehicleAreaConfig#supportedEnumValues array must be defined
+     * unless all states of both LaneKeepAssistState (including OTHER, which is not
+     * recommended) and ErrorState are supported.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     * @data_enum LaneKeepAssistState
+     * @data_enum ErrorState
+     */
+    LANE_KEEP_ASSIST_STATE =
+            0x1009 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
+
+    /**
      * Enable or disable lane centering assist (LCA).
      *
      * Set true to enable LCA and false to disable LCA. When LCA is enabled, the ADAS system in the

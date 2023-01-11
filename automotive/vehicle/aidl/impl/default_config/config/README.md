@@ -147,6 +147,8 @@ We support the following constant types:
 
 * BlindSpotWarningState
 
+* LaneKeepAssistState
+
 * ErrorState
 
 * Constants
