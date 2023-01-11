@@ -35,10 +35,10 @@ package android.hardware.contexthub;
 @Backing(type="byte") @VintfStability
 enum Setting {
   LOCATION = 1,
-  WIFI_MAIN = 2,
-  WIFI_SCANNING = 3,
-  AIRPLANE_MODE = 4,
-  MICROPHONE = 5,
-  BT_MAIN = 6,
-  BT_SCANNING = 7,
+  WIFI_MAIN,
+  WIFI_SCANNING,
+  AIRPLANE_MODE,
+  MICROPHONE,
+  BT_MAIN,
+  BT_SCANNING,
 }

@@ -44,6 +44,7 @@ class ContextHub : public BnContextHub {
             int32_t in_contextHubId, const std::shared_ptr<IContextHubCallback>& in_cb) override;
     ::ndk::ScopedAStatus sendMessageToHub(int32_t in_contextHubId,
                                           const ContextHubMessage& in_message) override;
+    ::ndk::ScopedAStatus setTestMode(bool enable) override;
     ::ndk::ScopedAStatus onHostEndpointConnected(const HostEndpointInfo& in_info) override;
 
     ::ndk::ScopedAStatus onHostEndpointDisconnected(char16_t in_hostEndpointId) override;

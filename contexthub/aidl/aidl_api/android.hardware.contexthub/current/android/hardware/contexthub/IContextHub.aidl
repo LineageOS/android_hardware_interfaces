@@ -47,5 +47,6 @@ interface IContextHub {
   void onHostEndpointDisconnected(char hostEndpointId);
   long[] getPreloadedNanoappIds();
   void onNanSessionStateChanged(in boolean state);
-  const int EX_CONTEXT_HUB_UNSPECIFIED = -1;
+  void setTestMode(in boolean enable);
+  const int EX_CONTEXT_HUB_UNSPECIFIED = (-1);
 }
