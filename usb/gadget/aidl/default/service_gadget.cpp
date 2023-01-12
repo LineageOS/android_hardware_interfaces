@@ -17,11 +17,6 @@
 #include <android/binder_manager.h>
 #include <android/binder_process.h>
 #include "UsbGadget.h"
-/*using android::OK;
-using android::hardware::configureRpcThreadpool;
-using android::hardware::joinRpcThreadpool;
-using android::sp;
-using android::status_t;*/
 using ::aidl::android::hardware::usb::gadget::UsbGadget;
 int main() {
     ABinderProcess_setThreadPoolMaxThreadCount(0);
