@@ -54,4 +54,5 @@ parcelable NanDiscoveryCommonConfig {
   android.hardware.wifi.NanRangingIndication configRangingIndications;
   char distanceIngressCm;
   char distanceEgressCm;
+  boolean enableSessionSuspendability;
 }

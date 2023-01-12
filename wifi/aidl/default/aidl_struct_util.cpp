@@ -1850,6 +1850,7 @@ bool convertAidlNanPublishRequestToLegacy(const NanPublishRequest& aidl_request,
         LOG(ERROR) << "convertAidlNanPublishRequestToLegacy: invalid pairing config";
         return false;
     }
+    legacy_request->enable_suspendability = aidl_request.baseConfigs.enableSessionSuspendability;
 
     return true;
 }
@@ -1996,6 +1997,8 @@ bool convertAidlNanSubscribeRequestToLegacy(const NanSubscribeRequest& aidl_requ
         LOG(ERROR) << "convertAidlNanSubscribeRequestToLegacy: invalid pairing config";
         return false;
     }
+    legacy_request->enable_suspendability = aidl_request.baseConfigs.enableSessionSuspendability;
+
     return true;
 }
 
