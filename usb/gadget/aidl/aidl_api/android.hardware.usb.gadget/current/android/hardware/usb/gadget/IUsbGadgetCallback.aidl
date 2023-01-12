@@ -34,7 +34,7 @@
 package android.hardware.usb.gadget;
 @VintfStability
 interface IUsbGadgetCallback {
+  oneway void setCurrentUsbFunctionsCb(in long functions, in android.hardware.usb.gadget.Status status, long transactionId);
   oneway void getCurrentUsbFunctionsCb(in long functions, in android.hardware.usb.gadget.Status status, long transactionId);
   oneway void getUsbSpeedCb(in android.hardware.usb.gadget.UsbSpeed speed, long transactionId);
-  oneway void setCurrentUsbFunctionsCb(in long functions, in android.hardware.usb.gadget.Status status, long transactionId);
 }
