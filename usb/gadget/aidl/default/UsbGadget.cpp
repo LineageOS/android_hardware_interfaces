@@ -146,7 +146,9 @@ ScopedAStatus UsbGadget::reset() {
 Status UsbGadget::setupFunctions(long functions, const shared_ptr<IUsbGadgetCallback>& callback,
                                  uint64_t timeout, int64_t in_transactionId) {
     bool ffsEnabled = false;
-    ALOGI("functions: %ld, timeout: %ld", functions, timeout);
+    if (timeout == 0) {
+        ALOGI("timeout not setup");
+    }
 
     if ((functions & GadgetFunction::ADB) != 0) {
         ffsEnabled = true;
@@ -190,16 +192,15 @@ Status getI2cBusHelper(string* name) {
     return Status::ERROR;
 }
 
-ScopedAStatus UsbGadget::setCurrentUsbFunctions(long functions,
+ScopedAStatus UsbGadget::setCurrentUsbFunctions(int64_t functions,
                                                 const shared_ptr<IUsbGadgetCallback>& callback,
-                                                int64_t timeout, int64_t in_transactionId) {
+                                                int64_t timeoutMs, int64_t in_transactionId) {
     std::unique_lock<std::mutex> lk(mLockSetCurrentFunction);
     std::string current_usb_power_operation_mode, current_usb_type;
     std::string usb_limit_sink_enable;
 
     string accessoryCurrentLimitEnablePath, accessoryCurrentLimitPath, path;
 
-    ALOGI("enter setCurrentUsbFunctions, in_transactionId=%ld , %ld", in_transactionId, timeout);
     mCurrentUsbFunctions = functions;
     mCurrentUsbFunctionsApplied = false;
 
@@ -232,7 +233,7 @@ ScopedAStatus UsbGadget::setCurrentUsbFunctions(long functions,
                 -1, "Error while calling setCurrentUsbFunctionsCb");
     }
 
-    status = setupFunctions(functions, callback, timeout, in_transactionId);
+    status = setupFunctions(functions, callback, timeoutMs, in_transactionId);
     if (status != Status::SUCCESS) {
         goto error;
     }
