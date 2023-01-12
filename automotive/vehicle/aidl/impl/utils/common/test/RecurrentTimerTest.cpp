@@ -186,6 +186,33 @@ TEST_F(RecurrentTimerTest, testRegisterSameCallbackMultipleTimes) {
     ASSERT_EQ(countTimerCallbackQueue(&timer), static_cast<size_t>(0));
 }
 
+TEST_F(RecurrentTimerTest, testRegisterCallbackMultipleTimesNoDeadLock) {
+    // We want to avoid the following situation:
+    // Caller holds a lock while calling registerTimerCallback, registerTimerCallback will try
+    // to obtain an internal lock inside timer.
+    // Meanwhile an recurrent action happens with timer holding an internal lock. The action
+    // tries to obtain the lock currently hold by the caller.
+    // The solution is that while calling recurrent actions, timer must not hold the internal lock.
+
+    std::unique_ptr<RecurrentTimer> timer = std::make_unique<RecurrentTimer>();
+    std::mutex lock;
+    for (size_t i = 0; i < 1000; i++) {
+        std::scoped_lock<std::mutex> lockGuard(lock);
+        auto action = std::make_shared<RecurrentTimer::Callback>([&lock] {
+            // While calling this function, the timer must not hold lock in order not to dead
+            // lock.
+            std::scoped_lock<std::mutex> lockGuard(lock);
+        });
+        // 10ms
+        int64_t interval = 10'000'000;
+        timer->registerTimerCallback(interval, action);
+        // Sleep for a little while to let the recurrent actions begin.
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+    // Make sure we stop the timer before we destroy lock.
+    timer.reset();
+}
+
 }  // namespace vehicle
 }  // namespace automotive
 }  // namespace hardware
