@@ -34,5 +34,10 @@
 package android.hardware.graphics.composer3;
 @VintfStability
 parcelable OverlayProperties {
-  android.hardware.graphics.composer3.SupportedBufferCombinations[] combinations;
+  android.hardware.graphics.composer3.OverlayProperties.SupportedBufferCombinations[] combinations;
+  boolean supportMixedColorSpaces;
+  parcelable SupportedBufferCombinations {
+    android.hardware.graphics.common.PixelFormat[] pixelFormats;
+    android.hardware.graphics.common.Dataspace[] dataspaces;
+  }
 }

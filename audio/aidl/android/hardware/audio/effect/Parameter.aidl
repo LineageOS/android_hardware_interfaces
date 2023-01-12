@@ -120,10 +120,11 @@ union Parameter {
     Common common;
 
     /**
-     * Used by audio framework to set the device type to effect engine.
-     * Effect must implement setParameter(device) if Flags.deviceIndication set to true.
+     * Used by audio framework to set the device type(s) to effect engine.
+     * Effect engine must apply all AudioDeviceDescription in the list.
+     * Effect must implement setParameter(deviceDescription) if Flags.deviceIndication set to true.
      */
-    AudioDeviceDescription deviceDescription;
+    AudioDeviceDescription[] deviceDescription;
     /**
      * Used by audio framework to set the audio mode to effect engine.
      * Effect must implement setParameter(mode) if Flags.audioModeIndication set to true.

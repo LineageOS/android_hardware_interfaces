@@ -60,14 +60,6 @@
              <instance>default</instance>
          </interface>
     </hal>
-    <hal format="hidl" optional="true">
-        <name>android.hardware.authsecret</name>
-        <version>1.0</version>
-        <interface>
-            <name>IAuthSecret</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.automotive.audiocontrol</name>
         <version>2</version>
@@ -240,14 +232,6 @@
         <name>android.hardware.dumpstate</name>
         <interface>
             <name>IDumpstateDevice</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
-    <hal format="hidl" optional="true">
-        <name>android.hardware.gatekeeper</name>
-        <version>1.0</version>
-        <interface>
-            <name>IGatekeeper</name>
             <instance>default</instance>
         </interface>
     </hal>
@@ -715,14 +699,6 @@
         <version>1-2</version>
         <interface>
             <name>IVibratorManager</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
-    <hal format="hidl" optional="true">
-        <name>android.hardware.weaver</name>
-        <version>1.0</version>
-        <interface>
-            <name>IWeaver</name>
             <instance>default</instance>
         </interface>
     </hal>

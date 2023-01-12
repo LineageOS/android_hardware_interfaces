@@ -84,6 +84,26 @@ TEST_P(ContextHubAidl, TestGetHubs) {
     }
 }
 
+TEST_P(ContextHubAidl, TestEnableTestMode) {
+    Status status = contextHub->setTestMode(true);
+    if (status.exceptionCode() == Status::EX_UNSUPPORTED_OPERATION ||
+        status.transactionError() == android::UNKNOWN_TRANSACTION) {
+        return;  // not supported -> old API; or not implemented
+    }
+
+    ASSERT_TRUE(status.isOk());
+}
+
+TEST_P(ContextHubAidl, TestDisableTestMode) {
+    Status status = contextHub->setTestMode(false);
+    if (status.exceptionCode() == Status::EX_UNSUPPORTED_OPERATION ||
+        status.transactionError() == android::UNKNOWN_TRANSACTION) {
+        return;  // not supported -> old API; or not implemented
+    }
+
+    ASSERT_TRUE(status.isOk());
+}
+
 class EmptyContextHubCallback : public android::hardware::contexthub::BnContextHubCallback {
   public:
     Status handleNanoappInfo(const std::vector<NanoappInfo>& /* appInfo */) override {

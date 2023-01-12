@@ -32,14 +32,14 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.broadcastradio;
-@Backing(type="int") @VintfStability
+@Backing(type="int") @JavaDerive(equals=true, toString=true) @VintfStability
 enum Result {
-  OK = 0,
-  INTERNAL_ERROR = 1,
-  INVALID_ARGUMENTS = 2,
-  INVALID_STATE = 3,
-  NOT_SUPPORTED = 4,
-  TIMEOUT = 5,
-  CANCELED = 6,
-  UNKNOWN_ERROR = 7,
+  OK,
+  INTERNAL_ERROR,
+  INVALID_ARGUMENTS,
+  INVALID_STATE,
+  NOT_SUPPORTED,
+  TIMEOUT,
+  CANCELED,
+  UNKNOWN_ERROR,
 }

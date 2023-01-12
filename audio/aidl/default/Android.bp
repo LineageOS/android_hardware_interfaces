@@ -69,6 +69,7 @@ cc_library_static {
         "Module.cpp",
         "SoundDose.cpp",
         "Stream.cpp",
+        "StreamStub.cpp",
         "Telephony.cpp",
     ],
     generated_sources: [
@@ -163,6 +164,7 @@ cc_binary {
         "libloudnessenhanceraidl",
         "libnssw",
         "libpresetreverbsw",
+        "libreverbaidl",
         "libtinyxml2",
         "libvirtualizersw",
         "libvisualizeraidl",

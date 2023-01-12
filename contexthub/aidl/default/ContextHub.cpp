@@ -113,6 +113,10 @@ ScopedAStatus ContextHub::sendMessageToHub(int32_t in_contextHubId,
     }
 }
 
+ScopedAStatus ContextHub::setTestMode(bool /* enable */) {
+    return ndk::ScopedAStatus::ok();
+}
+
 ScopedAStatus ContextHub::onHostEndpointConnected(const HostEndpointInfo& in_info) {
     mConnectedHostEndpoints.insert(in_info.hostEndpointId);
 

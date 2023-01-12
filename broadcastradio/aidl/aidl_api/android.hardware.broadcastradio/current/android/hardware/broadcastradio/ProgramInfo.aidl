@@ -42,10 +42,10 @@ parcelable ProgramInfo {
   int signalQuality;
   android.hardware.broadcastradio.Metadata[] metadata;
   android.hardware.broadcastradio.VendorKeyValue[] vendorInfo;
-  const int FLAG_LIVE = 1;
-  const int FLAG_MUTED = 2;
-  const int FLAG_TRAFFIC_PROGRAM = 4;
-  const int FLAG_TRAFFIC_ANNOUNCEMENT = 8;
-  const int FLAG_TUNABLE = 16;
-  const int FLAG_STEREO = 32;
+  const int FLAG_LIVE = (1 << 0);
+  const int FLAG_MUTED = (1 << 1);
+  const int FLAG_TRAFFIC_PROGRAM = (1 << 2);
+  const int FLAG_TRAFFIC_ANNOUNCEMENT = (1 << 3);
+  const int FLAG_TUNABLE = (1 << 4);
+  const int FLAG_STEREO = (1 << 5);
 }

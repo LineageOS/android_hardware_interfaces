@@ -91,11 +91,13 @@ class EffectContext {
     int getSessionId() { return mSessionId; }
 
     virtual RetCode setOutputDevice(
-            const aidl::android::media::audio::common::AudioDeviceDescription& device) {
+            const std::vector<aidl::android::media::audio::common::AudioDeviceDescription>&
+                    device) {
         mOutputDevice = device;
         return RetCode::SUCCESS;
     }
-    virtual aidl::android::media::audio::common::AudioDeviceDescription getOutputDevice() {
+    virtual std::vector<aidl::android::media::audio::common::AudioDeviceDescription>
+    getOutputDevice() {
         return mOutputDevice;
     }
 
@@ -133,7 +135,7 @@ class EffectContext {
     size_t mInputFrameSize;
     size_t mOutputFrameSize;
     Parameter::Common mCommon;
-    aidl::android::media::audio::common::AudioDeviceDescription mOutputDevice;
+    std::vector<aidl::android::media::audio::common::AudioDeviceDescription> mOutputDevice;
     aidl::android::media::audio::common::AudioMode mMode;
     aidl::android::media::audio::common::AudioSource mSource;
     Parameter::VolumeStereo mVolumeStereo;
