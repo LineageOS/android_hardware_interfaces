@@ -35,6 +35,10 @@ parcelable LeAudioConfiguration {
          * Audio Location assigned number.
          */
         int audioChannelAllocation;
+        /*
+         * The stream handle status
+         */
+        boolean isStreamActive;
     }
     CodecType codecType;
     StreamMap[] streamMap;

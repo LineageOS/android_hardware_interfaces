@@ -42,5 +42,6 @@ parcelable LeAudioConfiguration {
   parcelable StreamMap {
     char streamHandle;
     int audioChannelAllocation;
+    boolean isStreamActive;
   }
 }
