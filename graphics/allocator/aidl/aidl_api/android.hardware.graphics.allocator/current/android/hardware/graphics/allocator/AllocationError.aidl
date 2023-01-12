@@ -34,7 +34,7 @@
 package android.hardware.graphics.allocator;
 @Backing(type="int") @VintfStability
 enum AllocationError {
-  BAD_DESCRIPTOR = 0,
-  NO_RESOURCES = 1,
-  UNSUPPORTED = 2,
+  BAD_DESCRIPTOR,
+  NO_RESOURCES,
+  UNSUPPORTED,
 }

@@ -46,8 +46,8 @@ aidl_interface {
 
 }
 
-cc_library {
-    name: "android.hardware.health-translate-ndk",
+cc_defaults {
+    name: "android.hardware.health-translate-ndk_defaults",
     vendor_available: true,
     recovery_available: true,
     host_supported: true,
@@ -55,7 +55,6 @@ cc_library {
     shared_libs: [
         "libbinder_ndk",
         "libhidlbase",
-        "android.hardware.health-V1-ndk",
         "android.hardware.health@2.0",
         "android.hardware.health@2.1",
     ],
@@ -69,6 +68,23 @@ cc_library {
             enabled: false,
         },
     },
+}
+
+cc_library {
+    name: "android.hardware.health-translate-ndk",
+    defaults: ["android.hardware.health-translate-ndk_defaults"],
+    shared_libs: [
+        "android.hardware.health-V1-ndk",
+    ],
+}
+
+// TODO(b/251425963): remove when android.hardware.health is upgraded to V2.
+cc_library {
+    name: "android.hardware.health-translate-V1-ndk",
+    defaults: ["android.hardware.health-translate-ndk_defaults"],
+    shared_libs: [
+        "android.hardware.health-V1-ndk",
+    ],
 }
 
 java_library {

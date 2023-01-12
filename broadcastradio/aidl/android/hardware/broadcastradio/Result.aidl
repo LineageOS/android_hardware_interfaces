@@ -21,11 +21,12 @@ package android.hardware.broadcastradio;
  */
 @VintfStability
 @Backing(type="int")
+@JavaDerive(equals=true, toString=true)
 enum Result {
     /**
      * Methods run without error.
      */
-    OK,
+    OK = 0,
 
     /**
      * Internal error in HAL.
