@@ -34,8 +34,8 @@
 package android.hardware.audio.core;
 @VintfStability
 interface ITelephony {
-  android.hardware.audio.core.AudioMode[] getSupportedAudioModes();
-  void switchAudioMode(android.hardware.audio.core.AudioMode mode);
+  android.media.audio.common.AudioMode[] getSupportedAudioModes();
+  void switchAudioMode(android.media.audio.common.AudioMode mode);
   android.hardware.audio.core.ITelephony.TelecomConfig setTelecomConfig(in android.hardware.audio.core.ITelephony.TelecomConfig config);
   @JavaDerive(equals=true, toString=true) @VintfStability
   parcelable TelecomConfig {
