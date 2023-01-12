@@ -43,7 +43,7 @@ struct EArcMock : public BnEArc {
     ::ndk::ScopedAStatus getState(int32_t in_portId, IEArcStatus* _aidl_return) override;
     ::ndk::ScopedAStatus getLastReportedAudioCapabilities(
             int32_t in_portId, std::vector<uint8_t>* _aidl_return) override;
-    ::ndk::ScopedAStatus reportCapabilities(const std::vector<uint8_t> capabilities,
+    ::ndk::ScopedAStatus reportCapabilities(const std::vector<uint8_t>& capabilities,
                                             int32_t portId);
     ::ndk::ScopedAStatus changeState(const IEArcStatus status, int32_t portId);
 
