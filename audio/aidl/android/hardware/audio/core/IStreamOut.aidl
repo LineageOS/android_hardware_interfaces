@@ -157,7 +157,8 @@ interface IStreamOut {
      *
      * Implementation for this method is mandatory only on specific spatial
      * audio streams indicated by AUDIO_OUTPUT_FLAG_SPATIALIZER flag if they can
-     * be routed to a BT classic sink.
+     * be routed to a BT sinks or if the implementation indicates support
+     * on all streams via IModule.supportsVariableLatency().
      *
      * @return Currently supported latency modes.
      * @throws EX_ILLEGAL_STATE If the stream is closed.
@@ -172,7 +173,8 @@ interface IStreamOut {
      *
      * Implementation for this method is mandatory only on specific spatial
      * audio streams indicated by AUDIO_OUTPUT_FLAG_SPATIALIZER flag if they can
-     * be routed to a BT classic sink.
+     * be routed to a BT sinks or if the implementation indicates support
+     * on all streams via IModule.supportsVariableLatency().
      *
      * @throws EX_ILLEGAL_ARGUMENT If the specified mode is not supported.
      * @throws EX_ILLEGAL_STATE If the stream is closed.

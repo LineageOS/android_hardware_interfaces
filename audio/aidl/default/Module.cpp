@@ -1145,4 +1145,10 @@ ndk::ScopedAStatus Module::getMmapPolicyInfos(AudioMMapPolicyType mmapPolicyType
     return ndk::ScopedAStatus::ok();
 }
 
+ndk::ScopedAStatus Module::supportsVariableLatency(bool* _aidl_return) {
+    LOG(DEBUG) << __func__;
+    *_aidl_return = false;
+    return ndk::ScopedAStatus::ok();
+}
+
 }  // namespace aidl::android::hardware::audio::core
