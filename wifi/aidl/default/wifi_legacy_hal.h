@@ -165,12 +165,14 @@ using ::NanPublishType;
 using ::NanRangeReportInd;
 using ::NanRangeRequestInd;
 using ::NanResponseMsg;
+using ::NanResumeRequest;
 using ::NanSRFType;
 using ::NanStatusType;
 using ::NanSubscribeCancelRequest;
 using ::NanSubscribeRequest;
 using ::NanSubscribeTerminatedInd;
 using ::NanSubscribeType;
+using ::NanSuspendRequest;
 using ::NanTransmitFollowupInd;
 using ::NanTransmitFollowupRequest;
 using ::NanTxType;
@@ -701,6 +703,10 @@ class WifiLegacyHal {
     wifi_error nanBootstrappingIndicationResponse(const std::string& iface_name, transaction_id id,
                                                   const NanBootstrappingIndicationResponse& msg);
     wifi_error nanDataEnd(const std::string& iface_name, transaction_id id, uint32_t ndpInstanceId);
+    wifi_error nanSuspendRequest(const std::string& iface_name, transaction_id id,
+                                 const NanSuspendRequest& msg);
+    wifi_error nanResumeRequest(const std::string& iface_name, transaction_id id,
+                                const NanResumeRequest& msg);
     // AP functions.
     wifi_error setCountryCode(const std::string& iface_name, const std::array<uint8_t, 2> code);
 

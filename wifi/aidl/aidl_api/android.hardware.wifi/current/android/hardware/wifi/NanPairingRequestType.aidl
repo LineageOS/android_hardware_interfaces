@@ -35,5 +35,5 @@ package android.hardware.wifi;
 @Backing(type="int") @VintfStability
 enum NanPairingRequestType {
   NAN_PAIRING_SETUP = 0,
-  NAN_PAIRING_VERIFICATION = 1,
+  NAN_PAIRING_VERIFICATION,
 }

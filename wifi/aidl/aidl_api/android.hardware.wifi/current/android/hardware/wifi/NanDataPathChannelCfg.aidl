@@ -35,6 +35,6 @@ package android.hardware.wifi;
 @Backing(type="int") @VintfStability
 enum NanDataPathChannelCfg {
   CHANNEL_NOT_REQUESTED = 0,
-  REQUEST_CHANNEL_SETUP = 1,
-  FORCE_CHANNEL_SETUP = 2,
+  REQUEST_CHANNEL_SETUP,
+  FORCE_CHANNEL_SETUP,
 }

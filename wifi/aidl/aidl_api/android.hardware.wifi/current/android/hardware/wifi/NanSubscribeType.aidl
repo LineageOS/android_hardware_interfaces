@@ -35,5 +35,5 @@ package android.hardware.wifi;
 @Backing(type="int") @VintfStability
 enum NanSubscribeType {
   PASSIVE = 0,
-  ACTIVE = 1,
+  ACTIVE,
 }

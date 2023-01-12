@@ -78,5 +78,9 @@ enum NanStatusCode {
     /**
      * If the bootstrapping id is invalid
      */
-    INVALID_BOOTSTRAPPING_ID = 14
+    INVALID_BOOTSTRAPPING_ID = 14,
+    /**
+     * If the system is not in a valid state for the given request.
+     */
+    INVALID_STATE = 15
 }

@@ -59,6 +59,8 @@ interface IWifiNanIfaceEventCallback {
   oneway void notifyStopPublishResponse(in char id, in android.hardware.wifi.NanStatus status);
   oneway void notifyStopSubscribeResponse(in char id, in android.hardware.wifi.NanStatus status);
   oneway void notifyTerminateDataPathResponse(in char id, in android.hardware.wifi.NanStatus status);
+  oneway void notifySuspendResponse(in char id, in android.hardware.wifi.NanStatus status);
+  oneway void notifyResumeResponse(in char id, in android.hardware.wifi.NanStatus status);
   oneway void notifyTransmitFollowupResponse(in char id, in android.hardware.wifi.NanStatus status);
   oneway void eventPairingRequest(in android.hardware.wifi.NanPairingRequestInd event);
   oneway void eventPairingConfirm(in android.hardware.wifi.NanPairingConfirmInd event);

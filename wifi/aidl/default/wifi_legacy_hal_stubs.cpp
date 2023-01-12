@@ -173,6 +173,8 @@ bool initHalFuncTableWithStubs(wifi_hal_fn* hal_fn) {
     populateStubFor(&hal_fn->wifi_get_cached_scan_results);
     populateStubFor(&hal_fn->wifi_get_chip_capabilities);
     populateStubFor(&hal_fn->wifi_enable_sta_channel_for_peer_network);
+    populateStubFor(&hal_fn->wifi_nan_suspend_request);
+    populateStubFor(&hal_fn->wifi_nan_resume_request);
     return true;
 }
 
