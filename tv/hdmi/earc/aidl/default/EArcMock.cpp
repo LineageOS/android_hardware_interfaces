@@ -85,7 +85,7 @@ ScopedAStatus EArcMock::setCallback(const std::shared_ptr<IEArcCallback>& callba
     return ScopedAStatus::ok();
 }
 
-ScopedAStatus EArcMock::reportCapabilities(const std::vector<uint8_t> capabilities,
+ScopedAStatus EArcMock::reportCapabilities(const std::vector<uint8_t>& capabilities,
                                            int32_t portId) {
     if (mCallback != nullptr) {
         mCallback->onCapabilitiesReported(capabilities, portId);
