@@ -77,4 +77,9 @@ union FrontendStatus {
   int[] streamIdList;
   int[] dvbtCellIds;
   android.hardware.tv.tuner.FrontendScanAtsc3PlpInfo[] allPlpInfo;
+  String iptvContentUrl = "";
+  long iptvPacketsReceived;
+  long iptvPacketsLost;
+  int iptvWorstJitterMs;
+  int iptvAverageJitterMs;
 }

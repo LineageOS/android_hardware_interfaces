@@ -434,6 +434,31 @@ void FrontendTests::verifyFrontendStatus(vector<FrontendStatusType> statusTypes,
                         expectStatuses[i].get<FrontendStatus::Tag::allPlpInfo>().begin()));
                 break;
             }
+            case FrontendStatusType::IPTV_CONTENT_URL: {
+                ASSERT_TRUE(realStatuses[i].get<FrontendStatus::Tag::iptvContentUrl>() ==
+                            expectStatuses[i].get<FrontendStatus::Tag::iptvContentUrl>());
+                break;
+            }
+            case FrontendStatusType::IPTV_PACKETS_LOST: {
+                ASSERT_TRUE(realStatuses[i].get<FrontendStatus::Tag::iptvPacketsLost>() ==
+                            expectStatuses[i].get<FrontendStatus::Tag::iptvPacketsLost>());
+                break;
+            }
+            case FrontendStatusType::IPTV_PACKETS_RECEIVED: {
+                ASSERT_TRUE(realStatuses[i].get<FrontendStatus::Tag::iptvPacketsReceived>() ==
+                            expectStatuses[i].get<FrontendStatus::Tag::iptvPacketsReceived>());
+                break;
+            }
+            case FrontendStatusType::IPTV_WORST_JITTER_MS: {
+                ASSERT_TRUE(realStatuses[i].get<FrontendStatus::Tag::iptvWorstJitterMs>() ==
+                            expectStatuses[i].get<FrontendStatus::Tag::iptvWorstJitterMs>());
+                break;
+            }
+            case FrontendStatusType::IPTV_AVERAGE_JITTER_MS: {
+                ASSERT_TRUE(realStatuses[i].get<FrontendStatus::Tag::iptvAverageJitterMs>() ==
+                            expectStatuses[i].get<FrontendStatus::Tag::iptvAverageJitterMs>());
+                break;
+            }
             default: {
                 continue;
             }
