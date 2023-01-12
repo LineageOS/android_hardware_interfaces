@@ -41,6 +41,7 @@ using aidl::android::media::audio::common::AudioFormatDescription;
 using aidl::android::media::audio::common::AudioFormatType;
 using aidl::android::media::audio::common::AudioInputFlags;
 using aidl::android::media::audio::common::AudioIoFlags;
+using aidl::android::media::audio::common::AudioMode;
 using aidl::android::media::audio::common::AudioOffloadInfo;
 using aidl::android::media::audio::common::AudioOutputFlags;
 using aidl::android::media::audio::common::AudioPort;
@@ -52,6 +53,7 @@ using aidl::android::media::audio::common::Int;
 using aidl::android::media::audio::common::PcmType;
 using android::hardware::audio::common::getFrameSizeInBytes;
 using android::hardware::audio::common::isBitPositionFlagSet;
+using android::hardware::audio::common::isValidAudioMode;
 
 namespace aidl::android::hardware::audio::core {
 
@@ -952,6 +954,10 @@ ndk::ScopedAStatus Module::getMicrophones(std::vector<MicrophoneInfo>* _aidl_ret
 }
 
 ndk::ScopedAStatus Module::updateAudioMode(AudioMode in_mode) {
+    if (!isValidAudioMode(in_mode)) {
+        LOG(ERROR) << __func__ << ": invalid mode " << toString(in_mode);
+        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+    }
     // No checks for supported audio modes here, it's an informative notification.
     LOG(DEBUG) << __func__ << ": " << toString(in_mode);
     return ndk::ScopedAStatus::ok();
