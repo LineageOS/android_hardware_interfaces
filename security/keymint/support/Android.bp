@@ -84,6 +84,7 @@ cc_test {
         "android.hardware.security.rkp-V3-ndk",
         "libgmock",
         "libgtest_main",
+        "libkeymint_remote_prov_support",
     ],
     defaults: [
         "keymint_use_latest_hal_aidl_ndk_shared",
@@ -95,6 +96,5 @@ cc_test {
         "libcrypto",
         "libjsoncpp",
         "libkeymaster_portable",
-        "libkeymint_remote_prov_support",
     ],
 }
