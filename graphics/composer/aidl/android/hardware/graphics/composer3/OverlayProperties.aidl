@@ -19,16 +19,24 @@ package android.hardware.graphics.composer3;
 @VintfStability
 parcelable OverlayProperties {
     parcelable SupportedBufferCombinations {
-        // List of pixelformats and dataspaces that can be used together.
-        // All pixelformats and dataspaces stored inside are valid combinations.
+        // List of pixelformats, standards, transfers and ranges dataspaces that can be used
+        // together.
+        // The pixelformats, standards, transfers and ranges stored inside are valid
+        // combinations.
+        // Dataspace identifies three components of colors - standard, transfer and
+        // range.
         android.hardware.graphics.common.PixelFormat[] pixelFormats;
-        android.hardware.graphics.common.Dataspace[] dataspaces;
+        android.hardware.graphics.common.Dataspace[] standards;
+        android.hardware.graphics.common.Dataspace[] transfers;
+        android.hardware.graphics.common.Dataspace[] ranges;
     }
-    // Array of all valid pixelformat and dataspace combinations.
-    // If all supported formats work with all supported dataspaces,
+    // Array of all valid pixelformat, standard, transfer and range combinations.
+    // If all supported formats work with all standards, transfers and ranges,
     // then this list may only have 1 entry.
-    // If some dataspaces, e.g. scRGB, only work with specific formats,
-    // then this list may contain more than 1 entry.
+    // If some dataspaces, e.g. scRGB (STANDARD_BT709 | TRANSFER_SRGB | RANGE_EXTENDED),
+    // only work with specific formats, then this list may contain more than 1 entry.
+    // If some ranges, e.g. RANGE_LIMITED, only work with specific
+    // formats/standards/transfers, then this list may contain more than 1 entry.
     SupportedBufferCombinations[] combinations;
 
     // True if the DPU is able to color manage at least two overlays
