@@ -39,9 +39,9 @@ using ::aidl::android::hardware::camera::device::Stream;
 using ::aidl::android::hardware::common::fmq::MQDescriptor;
 using ::aidl::android::hardware::common::fmq::SynchronizedReadWrite;
 
-class ExternalCameraOfflineSession : public BnCameraOfflineSession,
-                                     public virtual RefBase,
-                                     public virtual OutputThreadInterface {
+class ExternalCameraOfflineSession final : public BnCameraOfflineSession,
+                                           public virtual RefBase,
+                                           public virtual OutputThreadInterface {
   public:
     ExternalCameraOfflineSession(const CroppingType& croppingType,
                                  const common::V1_0::helper::CameraMetadata& chars,
