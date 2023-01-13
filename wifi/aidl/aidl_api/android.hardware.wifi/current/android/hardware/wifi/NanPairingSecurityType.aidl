@@ -34,7 +34,7 @@
 package android.hardware.wifi;
 @Backing(type="int") @VintfStability
 enum NanPairingSecurityType {
-  OPPORTUNISTIC = 0,
-  PMK = 1,
-  PASSPHRASE = 2,
+  OPPORTUNISTIC,
+  PMK,
+  PASSPHRASE,
 }

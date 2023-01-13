@@ -155,4 +155,10 @@ parcelable NanDiscoveryCommonConfig {
      */
     char distanceIngressCm;
     char distanceEgressCm;
+    /**
+     * Specifies whether suspension can be possible in this discovery session.
+     * The request would fail if |enableSessionSuspendability| is true but
+     * |NanCapabilities.supportsSuspension| is false.
+     */
+    boolean enableSessionSuspendability;
 }

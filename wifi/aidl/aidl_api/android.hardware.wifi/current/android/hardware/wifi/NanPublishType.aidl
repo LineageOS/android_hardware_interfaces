@@ -35,6 +35,6 @@ package android.hardware.wifi;
 @Backing(type="int") @VintfStability
 enum NanPublishType {
   UNSOLICITED = 0,
-  SOLICITED = 1,
-  UNSOLICITED_SOLICITED = 2,
+  SOLICITED,
+  UNSOLICITED_SOLICITED,
 }

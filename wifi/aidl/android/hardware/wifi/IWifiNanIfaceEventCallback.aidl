@@ -310,6 +310,32 @@ oneway interface IWifiNanIfaceEventCallback {
     void notifyTerminateDataPathResponse(in char id, in NanStatus status);
 
     /**
+     * Callback invoked in response to a suspension request
+     * |IWifiNanIface.suspendRequest|.
+     *
+     * @param cmdId Command Id corresponding to the original request.
+     * @param status NanStatus of the operation. Possible status codes are:
+     *        |NanStatusCode.SUCCESS|
+     *        |NanStatusCode.INVALID_SESSION_ID|
+     *        |NanStatusCode.INVALID_STATE|
+     *        |NanStatusCode.INTERNAL_FAILURE|
+     */
+    void notifySuspendResponse(in char id, in NanStatus status);
+
+    /**
+     * Callback invoked in response to a resume request
+     * |IWifiNanIface.resumeRequest|.
+     *
+     * @param cmdId Command Id corresponding to the original request.
+     * @param status NanStatus of the operation. Possible status codes are:
+     *        |NanStatusCode.SUCCESS|
+     *        |NanStatusCode.INVALID_SESSION_ID|
+     *        |NanStatusCode.INVALID_STATE|
+     *        |NanStatusCode.INTERNAL_FAILURE|
+     */
+    void notifyResumeResponse(in char id, in NanStatus status);
+
+    /**
      * Callback invoked in response to a transmit followup request
      * |IWifiNanIface.transmitFollowupRequest|.
      *

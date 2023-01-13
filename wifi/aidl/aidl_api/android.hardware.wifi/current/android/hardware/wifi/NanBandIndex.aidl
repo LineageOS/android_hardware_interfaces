@@ -35,6 +35,6 @@ package android.hardware.wifi;
 @Backing(type="int") @VintfStability
 enum NanBandIndex {
   NAN_BAND_24GHZ = 0,
-  NAN_BAND_5GHZ = 1,
+  NAN_BAND_5GHZ,
   NAN_BAND_6GHZ = 2,
 }

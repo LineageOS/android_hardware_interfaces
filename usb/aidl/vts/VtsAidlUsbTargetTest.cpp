@@ -253,6 +253,9 @@ class UsbAidlTest : public testing::TestWithParam<std::string> {
   std::mutex usb_mtx;
   std::condition_variable usb_cv;
   int usb_count = 0;
+
+  // Stores usb version
+  int32_t usb_version;
 };
 
 /*
@@ -295,6 +298,12 @@ TEST_P(UsbAidlTest, DisabledDataStatusCheck) {
   int disabledCount = 0;
 
   ALOGI("UsbAidlTest DataStatusCheck  start");
+  auto retVersion = usb->getInterfaceVersion(&usb_version);
+  ASSERT_TRUE(retVersion.isOk()) << retVersion;
+  if (usb_version < 2) {
+    ALOGI("UsbAidlTest skipping DataStatusCheck on older interface versions");
+    GTEST_SKIP();
+  }
   int64_t transactionId = rand() % 10000;
   const auto& ret = usb->queryPortStatus(transactionId);
   ASSERT_TRUE(ret.isOk());
@@ -603,19 +612,25 @@ TEST_P(UsbAidlTest, DISABLED_resetUsbPort) {
  * supportsComplianceWarning is false.
  */
 TEST_P(UsbAidlTest, nonCompliantChargerStatus) {
-    ALOGI("UsbAidlTest nonCompliantChargerStatus start");
-    int64_t transactionId = rand() % 10000;
-    const auto& ret = usb->queryPortStatus(transactionId);
-    ASSERT_TRUE(ret.isOk());
-    EXPECT_EQ(std::cv_status::no_timeout, wait());
-    EXPECT_EQ(2, usb_last_cookie);
-    EXPECT_EQ(transactionId, last_transactionId);
+  ALOGI("UsbAidlTest nonCompliantChargerStatus start");
+  auto retVersion = usb->getInterfaceVersion(&usb_version);
+  ASSERT_TRUE(retVersion.isOk()) << retVersion;
+  if (usb_version < 2) {
+    ALOGI("UsbAidlTest skipping nonCompliantChargerStatus on older interface versions");
+    GTEST_SKIP();
+  }
+  int64_t transactionId = rand() % 10000;
+  const auto& ret = usb->queryPortStatus(transactionId);
+  ASSERT_TRUE(ret.isOk());
+  EXPECT_EQ(std::cv_status::no_timeout, wait());
+  EXPECT_EQ(2, usb_last_cookie);
+  EXPECT_EQ(transactionId, last_transactionId);
 
-    if (!usb_last_port_status.supportsComplianceWarnings) {
-      EXPECT_TRUE(usb_last_port_status.complianceWarnings.empty());
-    }
+  if (!usb_last_port_status.supportsComplianceWarnings) {
+    EXPECT_TRUE(usb_last_port_status.complianceWarnings.empty());
+  }
 
-    ALOGI("UsbAidlTest nonCompliantChargerStatus end");
+  ALOGI("UsbAidlTest nonCompliantChargerStatus end");
 }
 
 /*
@@ -624,39 +639,51 @@ TEST_P(UsbAidlTest, nonCompliantChargerStatus) {
  * are valid.
  */
 TEST_P(UsbAidlTest, nonCompliantChargerValues) {
-    ALOGI("UsbAidlTest nonCompliantChargerValues start");
-    int64_t transactionId = rand() % 10000;
-    const auto& ret = usb->queryPortStatus(transactionId);
-    ASSERT_TRUE(ret.isOk());
-    EXPECT_EQ(std::cv_status::no_timeout, wait());
-    EXPECT_EQ(2, usb_last_cookie);
-    EXPECT_EQ(transactionId, last_transactionId);
+  ALOGI("UsbAidlTest nonCompliantChargerValues start");
+  auto retVersion = usb->getInterfaceVersion(&usb_version);
+  ASSERT_TRUE(retVersion.isOk()) << retVersion;
+  if (usb_version < 2) {
+    ALOGI("UsbAidlTest skipping nonCompliantChargerValues on older interface versions");
+    GTEST_SKIP();
+  }
+  int64_t transactionId = rand() % 10000;
+  const auto& ret = usb->queryPortStatus(transactionId);
+  ASSERT_TRUE(ret.isOk());
+  EXPECT_EQ(std::cv_status::no_timeout, wait());
+  EXPECT_EQ(2, usb_last_cookie);
+  EXPECT_EQ(transactionId, last_transactionId);
 
-    // Current compliance values range from [1, 4]
-    if (usb_last_port_status.supportsComplianceWarnings) {
-      for (auto warning : usb_last_port_status.complianceWarnings) {
-        EXPECT_TRUE((int)warning >= (int)ComplianceWarning::OTHER);
-        EXPECT_TRUE((int)warning <= (int)ComplianceWarning::MISSING_RP);
-      }
+  // Current compliance values range from [1, 4]
+  if (usb_last_port_status.supportsComplianceWarnings) {
+    for (auto warning : usb_last_port_status.complianceWarnings) {
+      EXPECT_TRUE((int)warning >= (int)ComplianceWarning::OTHER);
+      EXPECT_TRUE((int)warning <= (int)ComplianceWarning::MISSING_RP);
     }
+  }
 
-    ALOGI("UsbAidlTest nonCompliantChargerValues end");
+  ALOGI("UsbAidlTest nonCompliantChargerValues end");
 }
 
 /*
  * Test PlugOrientation Values are within range in PortStatus
  */
 TEST_P(UsbAidlTest, plugOrientationValues) {
-    ALOGI("UsbAidlTest plugOrientationValues start");
-    int64_t transactionId = rand() % 10000;
-    const auto& ret = usb->queryPortStatus(transactionId);
-    ASSERT_TRUE(ret.isOk());
-    EXPECT_EQ(std::cv_status::no_timeout, wait());
-    EXPECT_EQ(2, usb_last_cookie);
-    EXPECT_EQ(transactionId, last_transactionId);
+  ALOGI("UsbAidlTest plugOrientationValues start");
+  auto retVersion = usb->getInterfaceVersion(&usb_version);
+  ASSERT_TRUE(retVersion.isOk()) << retVersion;
+  if (usb_version < 2) {
+    ALOGI("UsbAidlTest skipping plugOrientationValues on older interface versions");
+    GTEST_SKIP();
+  }
+  int64_t transactionId = rand() % 10000;
+  const auto& ret = usb->queryPortStatus(transactionId);
+  ASSERT_TRUE(ret.isOk());
+  EXPECT_EQ(std::cv_status::no_timeout, wait());
+  EXPECT_EQ(2, usb_last_cookie);
+  EXPECT_EQ(transactionId, last_transactionId);
 
-    EXPECT_TRUE((int)usb_last_port_status.plugOrientation >= (int)PlugOrientation::UNKNOWN);
-    EXPECT_TRUE((int)usb_last_port_status.plugOrientation <= (int)PlugOrientation::PLUGGED_FLIPPED);
+  EXPECT_TRUE((int)usb_last_port_status.plugOrientation >= (int)PlugOrientation::UNKNOWN);
+  EXPECT_TRUE((int)usb_last_port_status.plugOrientation <= (int)PlugOrientation::PLUGGED_FLIPPED);
 }
 
 /*
@@ -664,37 +691,43 @@ TEST_P(UsbAidlTest, plugOrientationValues) {
  * is active.
  */
 TEST_P(UsbAidlTest, dpAltModeValues) {
-    ALOGI("UsbAidlTest dpAltModeValues start");
-    int64_t transactionId = rand() % 10000;
-    const auto& ret = usb->queryPortStatus(transactionId);
-    ASSERT_TRUE(ret.isOk());
-    EXPECT_EQ(std::cv_status::no_timeout, wait());
-    EXPECT_EQ(2, usb_last_cookie);
-    EXPECT_EQ(transactionId, last_transactionId);
+  ALOGI("UsbAidlTest dpAltModeValues start");
+  auto retVersion = usb->getInterfaceVersion(&usb_version);
+  ASSERT_TRUE(retVersion.isOk()) << retVersion;
+  if (usb_version < 2) {
+    ALOGI("UsbAidlTest skipping dpAltModeValues on older interface versions");
+    GTEST_SKIP();
+  }
+  int64_t transactionId = rand() % 10000;
+  const auto& ret = usb->queryPortStatus(transactionId);
+  ASSERT_TRUE(ret.isOk());
+  EXPECT_EQ(std::cv_status::no_timeout, wait());
+  EXPECT_EQ(2, usb_last_cookie);
+  EXPECT_EQ(transactionId, last_transactionId);
 
-    // Discover DisplayPort Alt Mode
-    for (AltModeData altMode : usb_last_port_status.supportedAltModes) {
-      if (altMode.getTag() == AltModeData::displayPortAltModeData) {
-        AltModeData::DisplayPortAltModeData displayPortAltModeData =
-                altMode.get<AltModeData::displayPortAltModeData>();
-        EXPECT_TRUE((int)displayPortAltModeData.partnerSinkStatus >=
-                    (int)DisplayPortAltModeStatus::UNKNOWN);
-        EXPECT_TRUE((int)displayPortAltModeData.partnerSinkStatus <=
-                    (int)DisplayPortAltModeStatus::ENABLED);
+  // Discover DisplayPort Alt Mode
+  for (AltModeData altMode : usb_last_port_status.supportedAltModes) {
+    if (altMode.getTag() == AltModeData::displayPortAltModeData) {
+      AltModeData::DisplayPortAltModeData displayPortAltModeData =
+              altMode.get<AltModeData::displayPortAltModeData>();
+      EXPECT_TRUE((int)displayPortAltModeData.partnerSinkStatus >=
+                  (int)DisplayPortAltModeStatus::UNKNOWN);
+      EXPECT_TRUE((int)displayPortAltModeData.partnerSinkStatus <=
+                  (int)DisplayPortAltModeStatus::ENABLED);
 
-        EXPECT_TRUE((int)displayPortAltModeData.cableStatus >=
-                    (int)DisplayPortAltModeStatus::UNKNOWN);
-        EXPECT_TRUE((int)displayPortAltModeData.cableStatus <=
-                    (int)DisplayPortAltModeStatus::ENABLED);
+      EXPECT_TRUE((int)displayPortAltModeData.cableStatus >=
+                  (int)DisplayPortAltModeStatus::UNKNOWN);
+      EXPECT_TRUE((int)displayPortAltModeData.cableStatus <=
+                  (int)DisplayPortAltModeStatus::ENABLED);
 
-        EXPECT_TRUE((int)displayPortAltModeData.pinAssignment >=
-                    (int)DisplayPortAltModePinAssignment::NONE);
-        EXPECT_TRUE((int)displayPortAltModeData.pinAssignment <=
-                    (int)DisplayPortAltModePinAssignment::F);
-      }
+      EXPECT_TRUE((int)displayPortAltModeData.pinAssignment >=
+                  (int)DisplayPortAltModePinAssignment::NONE);
+      EXPECT_TRUE((int)displayPortAltModeData.pinAssignment <=
+                  (int)DisplayPortAltModePinAssignment::F);
     }
+  }
 
-    ALOGI("UsbAidlTest dpAltModeValues end");
+  ALOGI("UsbAidlTest dpAltModeValues end");
 }
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(UsbAidlTest);

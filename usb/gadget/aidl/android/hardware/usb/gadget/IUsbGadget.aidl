@@ -23,8 +23,7 @@ import android.hardware.usb.gadget.IUsbGadgetCallback;
 oneway interface IUsbGadget {
     /**
      * This function is used to set the current USB gadget configuration.
-     * Usb gadget needs to teared down if an USB configuration is already
-     * active.
+     * Usb gadget needs to be reset if an USB configuration is already.
      *
      * @param functions The GadgetFunction bitmap. See GadgetFunction for
      *                  the value of each bit.

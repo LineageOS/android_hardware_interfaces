@@ -35,6 +35,6 @@ package android.hardware.wifi;
 @Backing(type="int") @VintfStability
 enum NanMatchAlg {
   MATCH_ONCE = 0,
-  MATCH_CONTINUOUS = 1,
-  MATCH_NEVER = 2,
+  MATCH_CONTINUOUS,
+  MATCH_NEVER,
 }

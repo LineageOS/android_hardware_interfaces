@@ -35,6 +35,6 @@ package android.hardware.wifi;
 @Backing(type="int") @VintfStability
 enum NanClusterEventType {
   DISCOVERY_MAC_ADDRESS_CHANGED = 0,
-  STARTED_CLUSTER = 1,
-  JOINED_CLUSTER = 2,
+  STARTED_CLUSTER,
+  JOINED_CLUSTER,
 }

@@ -18,7 +18,6 @@ package android.hardware.audio.core;
 
 import android.hardware.audio.common.SinkMetadata;
 import android.hardware.audio.common.SourceMetadata;
-import android.hardware.audio.core.AudioMode;
 import android.hardware.audio.core.AudioPatch;
 import android.hardware.audio.core.AudioRoute;
 import android.hardware.audio.core.IBluetooth;
@@ -33,6 +32,7 @@ import android.hardware.audio.core.StreamDescriptor;
 import android.hardware.audio.core.VendorParameter;
 import android.hardware.audio.core.sounddose.ISoundDose;
 import android.hardware.audio.effect.IEffect;
+import android.media.audio.common.AudioMode;
 import android.media.audio.common.AudioOffloadInfo;
 import android.media.audio.common.AudioPort;
 import android.media.audio.common.AudioPortConfig;
@@ -684,6 +684,7 @@ interface IModule {
      * method.
      *
      * @param mode The current mode.
+     * @throws EX_ILLEGAL_ARGUMENT If the mode is out of range of valid values.
      */
     void updateAudioMode(AudioMode mode);
 

@@ -54,7 +54,6 @@ using aidl::android::hardware::audio::common::PlaybackTrackMetadata;
 using aidl::android::hardware::audio::common::RecordTrackMetadata;
 using aidl::android::hardware::audio::common::SinkMetadata;
 using aidl::android::hardware::audio::common::SourceMetadata;
-using aidl::android::hardware::audio::core::AudioMode;
 using aidl::android::hardware::audio::core::AudioPatch;
 using aidl::android::hardware::audio::core::AudioRoute;
 using aidl::android::hardware::audio::core::IBluetooth;
@@ -78,6 +77,7 @@ using aidl::android::media::audio::common::AudioDualMonoMode;
 using aidl::android::media::audio::common::AudioFormatType;
 using aidl::android::media::audio::common::AudioIoFlags;
 using aidl::android::media::audio::common::AudioLatencyMode;
+using aidl::android::media::audio::common::AudioMode;
 using aidl::android::media::audio::common::AudioOutputFlags;
 using aidl::android::media::audio::common::AudioPlaybackRate;
 using aidl::android::media::audio::common::AudioPort;
@@ -93,6 +93,7 @@ using aidl::android::media::audio::common::Void;
 using android::hardware::audio::common::getChannelCount;
 using android::hardware::audio::common::isBitPositionFlagSet;
 using android::hardware::audio::common::isTelephonyDeviceType;
+using android::hardware::audio::common::isValidAudioMode;
 using android::hardware::audio::common::StreamLogic;
 using android::hardware::audio::common::StreamWorker;
 using ndk::enum_range;
@@ -1805,7 +1806,11 @@ TEST_P(AudioCoreModule, GetMicrophones) {
 
 TEST_P(AudioCoreModule, UpdateAudioMode) {
     for (const auto mode : ::ndk::enum_range<AudioMode>()) {
-        EXPECT_IS_OK(module->updateAudioMode(mode)) << toString(mode);
+        if (isValidAudioMode(mode)) {
+            EXPECT_IS_OK(module->updateAudioMode(mode)) << toString(mode);
+        } else {
+            EXPECT_STATUS(EX_ILLEGAL_ARGUMENT, module->updateAudioMode(mode)) << toString(mode);
+        }
     }
     EXPECT_IS_OK(module->updateAudioMode(AudioMode::NORMAL));
 }
@@ -1994,6 +1999,9 @@ TEST_P(AudioCoreTelephony, GetSupportedAudioModes) {
     }
     std::vector<AudioMode> modes1;
     ASSERT_IS_OK(telephony->getSupportedAudioModes(&modes1));
+    for (const auto mode : modes1) {
+        EXPECT_TRUE(isValidAudioMode(mode)) << toString(mode);
+    }
     const std::vector<AudioMode> kMandatoryModes = {AudioMode::NORMAL, AudioMode::RINGTONE,
                                                     AudioMode::IN_CALL,
                                                     AudioMode::IN_COMMUNICATION};
@@ -2025,7 +2033,9 @@ TEST_P(AudioCoreTelephony, SwitchAudioMode) {
         unsupportedModes.erase(mode);
     }
     for (const auto mode : unsupportedModes) {
-        EXPECT_STATUS(EX_UNSUPPORTED_OPERATION, telephony->switchAudioMode(mode)) << toString(mode);
+        EXPECT_STATUS(isValidAudioMode(mode) ? EX_UNSUPPORTED_OPERATION : EX_ILLEGAL_ARGUMENT,
+                      telephony->switchAudioMode(mode))
+                << toString(mode);
     }
 }
 

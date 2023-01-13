@@ -35,5 +35,5 @@ package android.hardware.wifi;
 @Backing(type="int") @VintfStability
 enum NanSrfType {
   BLOOM_FILTER = 0,
-  PARTIAL_MAC_ADDR = 1,
+  PARTIAL_MAC_ADDR,
 }
