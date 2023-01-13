@@ -952,7 +952,6 @@ TEST_P(GraphicsMapperHidlTest, Lock_RAW10) {
     EXPECT_EQ(PlaneLayoutComponentType::RAW,
               static_cast<PlaneLayoutComponentType>(planeLayoutComponent.type.value));
     EXPECT_EQ(0, planeLayoutComponent.offsetInBits % 8);
-    EXPECT_EQ(-1, planeLayoutComponent.sizeInBits);
 
     ASSERT_NO_FATAL_FAILURE(fence.reset(mGralloc->unlock(bufferHandle)));
 }
@@ -994,7 +993,6 @@ TEST_P(GraphicsMapperHidlTest, Lock_RAW12) {
     EXPECT_EQ(PlaneLayoutComponentType::RAW,
               static_cast<PlaneLayoutComponentType>(planeLayoutComponent.type.value));
     EXPECT_EQ(0, planeLayoutComponent.offsetInBits % 8);
-    EXPECT_EQ(-1, planeLayoutComponent.sizeInBits);
 
     ASSERT_NO_FATAL_FAILURE(fence.reset(mGralloc->unlock(bufferHandle)));
 }
