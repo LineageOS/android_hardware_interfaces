@@ -144,7 +144,7 @@ const ConfigDeclaration kVehicleProperties[]{
                                          (int)VehicleUnit::MILES_PER_HOUR,
                                          (int)VehicleUnit::KILOMETERS_PER_HOUR},
                  },
-         .initialValue = {.int32Values = {(int)VehicleUnit::KILOMETERS_PER_HOUR}}},
+         .initialValue = {.int32Values = {(int)VehicleUnit::MILES_PER_HOUR}}},
 
         {.config =
                  {
@@ -379,7 +379,7 @@ const ConfigDeclaration kVehicleProperties[]{
                          .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
                          .configArray = {(int)VehicleUnit::LITER, (int)VehicleUnit::US_GALLON},
                  },
-         .initialValue = {.int32Values = {(int)VehicleUnit::LITER}}},
+         .initialValue = {.int32Values = {(int)VehicleUnit::US_GALLON}}},
 
         {.config =
                  {
