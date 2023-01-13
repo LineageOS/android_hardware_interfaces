@@ -9,10 +9,16 @@ package {
 
 cc_test {
     name: "VtsHalTvInputTargetTest",
-    defaults: ["VtsHalTargetTestDefaults","use_libaidlvintf_gtest_helper_static",],
+    defaults: [
+        "VtsHalTargetTestDefaults",
+        "use_libaidlvintf_gtest_helper_static",
+    ],
+    cflags: [
+        "-Werror",
+        "-Wno-unused-parameter",
+    ],
     srcs: ["VtsHalTvInputTargetTest.cpp"],
     static_libs: [
-        "android.hardware.tv.input-V1-ndk",
         "android.media.audio.common.types-V1-ndk",
         "android.hardware.common-V2-ndk",
         "libaidlcommonsupport",
@@ -24,6 +30,9 @@ cc_test {
     shared_libs: [
         "libbinder_ndk",
         "libvndksupport",
+        "libfmq",
+        "android.hardware.common.fmq-V1-ndk",
+        "android.hardware.tv.input-V1-ndk",
     ],
     require_root: true,
 }

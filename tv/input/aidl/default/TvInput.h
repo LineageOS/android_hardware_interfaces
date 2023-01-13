@@ -19,6 +19,8 @@
 #include <aidl/android/hardware/tv/input/BnTvInput.h>
 #include <utils/KeyedVector.h>
 
+#include <aidl/android/hardware/tv/input/TvMessageEventType.h>
+#include <fmq/AidlMessageQueue.h>
 #include <map>
 #include "TvInputDeviceInfoWrapper.h"
 #include "TvStreamConfigWrapper.h"
@@ -26,6 +28,9 @@
 using namespace android;
 using namespace std;
 using ::aidl::android::hardware::common::NativeHandle;
+using ::aidl::android::hardware::common::fmq::MQDescriptor;
+using ::aidl::android::hardware::common::fmq::SynchronizedReadWrite;
+using ::android::AidlMessageQueue;
 
 namespace aidl {
 namespace android {
@@ -38,6 +43,11 @@ class TvInput : public BnTvInput {
     TvInput();
 
     ::ndk::ScopedAStatus setCallback(const shared_ptr<ITvInputCallback>& in_callback) override;
+    ::ndk::ScopedAStatus setTvMessageEnabled(int32_t deviceId, int32_t streamId,
+                                             TvMessageEventType in_type, bool enabled) override;
+    ::ndk::ScopedAStatus getTvMessageQueueDesc(
+            MQDescriptor<int8_t, SynchronizedReadWrite>* out_queue, int32_t in_deviceId,
+            int32_t in_streamId) override;
     ::ndk::ScopedAStatus getStreamConfigurations(int32_t in_deviceId,
                                                  vector<TvStreamConfig>* _aidl_return) override;
     ::ndk::ScopedAStatus openStream(int32_t in_deviceId, int32_t in_streamId,

@@ -43,6 +43,11 @@ TvInputAidlTest::TvInputCallback::TvInputCallback(shared_ptr<TvInputAidlTest> pa
     return ::ndk::ScopedAStatus::ok();
 }
 
+::ndk::ScopedAStatus TvInputAidlTest::TvInputCallback::notifyTvMessageEvent(
+        const TvMessageEvent& in_event) {
+    return ::ndk::ScopedAStatus::ok();
+}
+
 void TvInputAidlTest::SetUp() {
     if (AServiceManager_isDeclared(GetParam().c_str())) {
         ::ndk::SpAIBinder binder(AServiceManager_waitForService(GetParam().c_str()));

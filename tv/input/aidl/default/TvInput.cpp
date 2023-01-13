@@ -65,6 +65,21 @@ void TvInput::init() {
     return ::ndk::ScopedAStatus::ok();
 }
 
+::ndk::ScopedAStatus TvInput::setTvMessageEnabled(int32_t deviceId, int32_t streamId,
+                                                  TvMessageEventType in_type, bool enabled) {
+    ALOGV("%s", __FUNCTION__);
+    // TODO: Implement this
+    return ::ndk::ScopedAStatus::ok();
+}
+
+::ndk::ScopedAStatus TvInput::getTvMessageQueueDesc(
+        MQDescriptor<int8_t, SynchronizedReadWrite>* out_queue, int32_t in_deviceId,
+        int32_t in_streamId) {
+    ALOGV("%s", __FUNCTION__);
+    // TODO: Implement this
+    return ::ndk::ScopedAStatus::ok();
+}
+
 ::ndk::ScopedAStatus TvInput::getStreamConfigurations(int32_t in_deviceId,
                                                       vector<TvStreamConfig>* _aidl_return) {
     ALOGV("%s", __FUNCTION__);

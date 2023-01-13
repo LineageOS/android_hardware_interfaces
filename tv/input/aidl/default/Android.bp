@@ -13,6 +13,10 @@ cc_binary {
     init_rc: ["input-default.rc"],
     vintf_fragments: ["input-default.xml"],
     vendor: true,
+    cflags: [
+        "-Werror",
+        "-Wno-unused-parameter",
+    ],
     srcs: [
         "TvInput.cpp",
         "service.cpp",
@@ -23,9 +27,11 @@ cc_binary {
     shared_libs: [
         "libbase",
         "liblog",
+        "libfmq",
         "libutils",
         "libcutils",
         "libbinder_ndk",
         "android.hardware.tv.input-V1-ndk",
+        "android.hardware.common.fmq-V1-ndk",
     ],
 }
