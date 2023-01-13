@@ -191,7 +191,8 @@ TEST(RemoteProvUtilsTest, JsonEncodeCsr) {
 
     std::string expected = R"({"build_fingerprint":")" +
                            ::android::base::GetProperty("ro.build.fingerprint", /*default=*/"") +
-                           R"(","csr":"gQE=","name":"test"})";
+                           R"(","csr":"gQE=","name":"test","serialno":")" +
+                           ::android::base::GetProperty("ro.serialno", /*default=*/"") + R"("})";
 
     ASSERT_EQ(json, expected);
 }
