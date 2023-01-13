@@ -34,8 +34,8 @@
 package android.hardware.wifi;
 @Backing(type="int") @VintfStability
 enum IfaceType {
-  STA = 0,
-  AP = 1,
-  P2P = 2,
-  NAN_IFACE = 3,
+  STA,
+  AP,
+  P2P,
+  NAN_IFACE,
 }

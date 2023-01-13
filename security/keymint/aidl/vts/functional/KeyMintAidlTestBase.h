@@ -402,6 +402,7 @@ void check_maced_pubkey(const MacedPublicKey& macedPubKey, bool testMode,
                         vector<uint8_t>* payload_value);
 void p256_pub_key(const vector<uint8_t>& coseKeyData, EVP_PKEY_Ptr* signingKey);
 void device_id_attestation_vsr_check(const ErrorCode& result);
+bool check_feature(const std::string& name);
 
 AuthorizationSet HwEnforcedAuthorizations(const vector<KeyCharacteristics>& key_characteristics);
 AuthorizationSet SwEnforcedAuthorizations(const vector<KeyCharacteristics>& key_characteristics);

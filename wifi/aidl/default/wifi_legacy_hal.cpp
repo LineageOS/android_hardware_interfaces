@@ -1559,6 +1559,22 @@ wifi_error WifiLegacyHal::nanDataEnd(const std::string& iface_name, transaction_
     return status;
 }
 
+wifi_error WifiLegacyHal::nanSuspendRequest(const std::string& iface_name, transaction_id id,
+                                            const NanSuspendRequest& msg) {
+    NanSuspendRequest msg_internal(msg);
+    wifi_error status = global_func_table_.wifi_nan_suspend_request(id, getIfaceHandle(iface_name),
+                                                                    &msg_internal);
+    return status;
+}
+
+wifi_error WifiLegacyHal::nanResumeRequest(const std::string& iface_name, transaction_id id,
+                                           const NanResumeRequest& msg) {
+    NanResumeRequest msg_internal(msg);
+    wifi_error status = global_func_table_.wifi_nan_resume_request(id, getIfaceHandle(iface_name),
+                                                                   &msg_internal);
+    return status;
+}
+
 wifi_error WifiLegacyHal::setCountryCode(const std::string& iface_name,
                                          const std::array<uint8_t, 2> code) {
     std::string code_str(code.data(), code.data() + code.size());

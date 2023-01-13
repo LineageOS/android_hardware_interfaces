@@ -34,7 +34,7 @@
 package android.hardware.wifi;
 @Backing(type="int") @VintfStability
 enum WifiDebugRingBufferFlags {
-  HAS_BINARY_ENTRIES = 1,
-  HAS_ASCII_ENTRIES = 2,
-  HAS_PER_PACKET_ENTRIES = 4,
+  HAS_BINARY_ENTRIES = (1 << 0),
+  HAS_ASCII_ENTRIES = (1 << 1),
+  HAS_PER_PACKET_ENTRIES = (1 << 2),
 }

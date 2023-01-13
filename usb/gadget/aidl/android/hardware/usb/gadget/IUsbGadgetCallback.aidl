@@ -23,6 +23,20 @@ import android.hardware.usb.gadget.UsbSpeed;
 @VintfStability
 oneway interface IUsbGadgetCallback {
     /**
+     * Callback function used to propagate the status of configuration
+     * switch to the caller.
+     *
+     * @param functions list of functions defined by GadgetFunction
+     *                  included in the current USB gadget composition.
+     * @param status SUCCESS when the functions are applied.
+     *               FUNCTIONS_NOT_SUPPORTED when the configuration is
+     *                                       not supported.
+     *               ERROR otherwise.
+     * @param transactionId ID to be used when invoking the callback.
+     */
+    void setCurrentUsbFunctionsCb(in long functions, in Status status, long transactionId);
+
+    /**
      * Callback function used to propagate the current USB gadget
      * configuration.
      * @param functions The GadgetFunction bitmap. See GadgetFunction for
@@ -46,18 +60,4 @@ oneway interface IUsbGadgetCallback {
      * @param transactionId ID to be used when invoking the callback.
      */
     void getUsbSpeedCb(in UsbSpeed speed, long transactionId);
-
-    /**
-     * Callback function used to propagate the status of configuration
-     * switch to the caller.
-     *
-     * @param functions list of functions defined by GadgetFunction
-     *                  included in the current USB gadget composition.
-     * @param status SUCCESS when the functions are applied.
-     *               FUNCTIONS_NOT_SUPPORTED when the configuration is
-     *                                       not supported.
-     *               ERROR otherwise.
-     * @param transactionId ID to be used when invoking the callback.
-     */
-    void setCurrentUsbFunctionsCb(in long functions, in Status status, long transactionId);
 }

@@ -35,5 +35,5 @@ package android.hardware.wifi;
 @Backing(type="int") @VintfStability
 enum NanTxType {
   BROADCAST = 0,
-  UNICAST = 1,
+  UNICAST,
 }

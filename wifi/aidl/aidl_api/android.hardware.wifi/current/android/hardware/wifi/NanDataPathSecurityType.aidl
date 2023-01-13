@@ -34,7 +34,7 @@
 package android.hardware.wifi;
 @Backing(type="int") @VintfStability
 enum NanDataPathSecurityType {
-  OPEN = 0,
-  PMK = 1,
-  PASSPHRASE = 2,
+  OPEN,
+  PMK,
+  PASSPHRASE,
 }

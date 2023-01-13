@@ -241,6 +241,32 @@ interface IWifiNanIface {
     void terminateDataPathRequest(in char cmdId, in int ndpInstanceId);
 
     /**
+     * Start the suspension of a discovery service.
+     * Asynchronous response is with |IWifiNanIfaceEventCallback.notifySuspendResponse|.
+     *
+     * @param cmdId Command Id to use for this invocation.
+     * @param sessionId ID of the publish/subscribe discovery session to be suspended.
+     * @throws ServiceSpecificException with one of the following values:
+     *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+     *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
+     *         |WifiStatusCode.ERROR_UNKNOWN|
+     */
+    void suspendRequest(in char cmdId, in byte sessionId);
+
+    /**
+     * Stop the suspension of a discovery service.
+     * Asynchronous response is with |IWifiNanIfaceEventCallback.notifyResumeResponse|.
+     *
+     * @param cmdId Command Id to use for this invocation.
+     * @param sessionId ID of the publish/subscribe discovery session to be resumed.
+     * @throws ServiceSpecificException with one of the following values:
+     *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+     *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
+     *         |WifiStatusCode.ERROR_UNKNOWN|
+     */
+    void resumeRequest(in char cmdId, in byte sessionId);
+
+    /**
      * NAN transmit follow up message request.
      * Asynchronous response is with |IWifiNanIfaceEventCallback.notifyTransmitFollowupResponse|.
      *

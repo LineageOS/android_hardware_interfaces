@@ -34,15 +34,15 @@
 package android.hardware.wifi;
 @Backing(type="int") @VintfStability
 enum WifiDebugRxPacketFate {
-  SUCCESS = 0,
-  FW_QUEUED = 1,
-  FW_DROP_FILTER = 2,
-  FW_DROP_INVALID = 3,
-  FW_DROP_NOBUFS = 4,
-  FW_DROP_OTHER = 5,
-  DRV_QUEUED = 6,
-  DRV_DROP_FILTER = 7,
-  DRV_DROP_INVALID = 8,
-  DRV_DROP_NOBUFS = 9,
-  DRV_DROP_OTHER = 10,
+  SUCCESS,
+  FW_QUEUED,
+  FW_DROP_FILTER,
+  FW_DROP_INVALID,
+  FW_DROP_NOBUFS,
+  FW_DROP_OTHER,
+  DRV_QUEUED,
+  DRV_DROP_FILTER,
+  DRV_DROP_INVALID,
+  DRV_DROP_NOBUFS,
+  DRV_DROP_OTHER,
 }
