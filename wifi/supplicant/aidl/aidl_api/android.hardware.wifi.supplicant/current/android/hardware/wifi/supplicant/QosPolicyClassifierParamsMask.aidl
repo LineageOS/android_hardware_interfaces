@@ -41,4 +41,5 @@ enum QosPolicyClassifierParamsMask {
   PROTOCOL_NEXT_HEADER = 16,
   FLOW_LABEL = 32,
   DOMAIN_NAME = 64,
+  DSCP = 128,
 }

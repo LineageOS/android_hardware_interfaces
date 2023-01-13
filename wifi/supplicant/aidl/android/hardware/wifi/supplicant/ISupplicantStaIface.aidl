@@ -29,6 +29,8 @@ import android.hardware.wifi.supplicant.ISupplicantStaNetwork;
 import android.hardware.wifi.supplicant.IfaceType;
 import android.hardware.wifi.supplicant.KeyMgmtMask;
 import android.hardware.wifi.supplicant.MloLinksInfo;
+import android.hardware.wifi.supplicant.QosPolicyScsData;
+import android.hardware.wifi.supplicant.QosPolicyScsRequestStatus;
 import android.hardware.wifi.supplicant.QosPolicyStatus;
 import android.hardware.wifi.supplicant.RxFilterType;
 import android.hardware.wifi.supplicant.SignalPollResult;
@@ -793,4 +795,75 @@ interface ISupplicantStaIface {
      *         |SupplicantStatusCode.FAILURE_UNSUPPORTED|
      */
     SignalPollResult[] getSignalPollResults();
+
+    /**
+     * Maximum number of policies that can be included in a QoS SCS add/remove request.
+     */
+    const int MAX_POLICIES_PER_QOS_SCS_REQUEST = 16;
+
+    /**
+     * Send a set of QoS SCS policy add requests to the AP.
+     *
+     * This is a request to the AP (if it supports the feature) to apply the QoS policies
+     * on traffic in the downlink.
+     *
+     * Synchronous response will indicate which policies were sent to the AP, and which
+     * were rejected immediately by supplicant. Caller will also receive an asynchronous
+     * response in |ISupplicantStaIfaceCallback.onQosPolicyResponseForScs| indicating
+     * the response from the AP for each policy that was sent.
+     *
+     * @param  qosPolicyScsData QoS policies info provided by STA.
+     * @return QosPolicyScsRequestStatus[] synchronously corresponding to all
+     *         the scs policies. Size of the result array will be the same as
+     *         the size of the input array.
+     * @throws ServiceSpecificException with one of the following values:
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN| if the number of policies in the
+     *          request is greater than |MAX_POLICIES_PER_QOS_SCS_REQUEST|
+     *
+     *         |SupplicantStatusCode.FAILURE_UNSUPPORTED| if the AP does not support
+     *          the feature.
+     *
+     *         |SupplicantStatusCode.FAILURE_ONGOING_REQUEST| if a request is currently
+     *          being processed. Supplicant will only handle one request at a time.
+     */
+    QosPolicyScsRequestStatus[] addQosPolicyRequestForScs(in QosPolicyScsData[] qosPolicyData);
+
+    /**
+     * Request the removal of specific QoS policies for SCS configured by the STA.
+     *
+     * Synchronous response will indicate which policies were sent to the AP, and which
+     * were rejected immediately by supplicant. Caller will also receive an asynchronous
+     * response in |ISupplicantStaIfaceCallback.onQosPolicyResponseForScs| indicating
+     * the response from the AP for each policy that was sent.
+     *
+     * @param  scsPolicyIds policy id's to be removed.
+     * @return QosPolicyScsRequestStatus[] synchronously corresponding to all
+     *         the scs policies.
+     * @throws ServiceSpecificException with one of the following values:
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN| if the number of policies in the
+     *          request is greater than |MAX_POLICIES_PER_QOS_SCS_REQUEST|
+     *
+     *         |SupplicantStatusCode.FAILURE_UNSUPPORTED| if the AP does not support
+     *          the feature.
+     *
+     *         |SupplicantStatusCode.FAILURE_ONGOING_REQUEST| if a request is currently
+     *          being processed. Supplicant will only handle one request at a time.
+     */
+    QosPolicyScsRequestStatus[] removeQosPolicyForScs(in byte[] scsPolicyIds);
+
+    /**
+     * Request the removal of all QoS policies for SCS configured by the STA.
+     *
+     * @return QosPolicyScsRequestStatus[] synchronously corresponding to all
+     *         the scs policies.
+     * @throws ServiceSpecificException with one of the following values:
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN| if there are no policies to remove.
+     *
+     *         |SupplicantStatusCode.FAILURE_UNSUPPORTED| if the AP does not support
+     *          the feature.
+     *
+     *         |SupplicantStatusCode.FAILURE_ONGOING_REQUEST| if a request is currently
+     *          being processed. Supplicant will only handle one request at a time.
+     */
+    QosPolicyScsRequestStatus[] removeAllQosPoliciesForScs();
 }
