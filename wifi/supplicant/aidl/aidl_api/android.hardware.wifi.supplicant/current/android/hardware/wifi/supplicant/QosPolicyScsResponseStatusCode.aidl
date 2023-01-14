@@ -1,18 +1,3 @@
-/*
- * Copyright (C) 2022 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 ///////////////////////////////////////////////////////////////////////////////
 // THIS FILE IS IMMUTABLE. DO NOT EDIT IN ANY CASE.                          //
 ///////////////////////////////////////////////////////////////////////////////
@@ -32,16 +17,15 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.wifi.supplicant;
-@VintfStability
-parcelable QosPolicyClassifierParams {
-  android.hardware.wifi.supplicant.IpVersion ipVersion;
-  android.hardware.wifi.supplicant.QosPolicyClassifierParamsMask classifierParamMask;
-  byte[] srcIp;
-  byte[] dstIp;
-  int srcPort;
-  android.hardware.wifi.supplicant.PortRange dstPortRange;
-  android.hardware.wifi.supplicant.ProtocolNextHeader protocolNextHdr;
-  byte[] flowLabelIpv6;
-  String domainName;
-  byte dscp;
+@Backing(type="int") @VintfStability
+enum QosPolicyScsResponseStatusCode {
+  SUCCESS = 0,
+  TCLAS_REQUEST_DECLINED = 1,
+  TCLAS_NOT_SUPPORTED_BY_AP = 2,
+  TCLAS_INSUFFICIENT_RESOURCES = 3,
+  TCLAS_RESOURCES_EXHAUSTED = 4,
+  TCLAS_PROCESSING_TERMINATED_INSUFFICIENT_QOS = 5,
+  TCLAS_PROCESSING_TERMINATED_POLICY_CONFLICT = 6,
+  TCLAS_PROCESSING_TERMINATED = 7,
+  TIMEOUT = 8,
 }

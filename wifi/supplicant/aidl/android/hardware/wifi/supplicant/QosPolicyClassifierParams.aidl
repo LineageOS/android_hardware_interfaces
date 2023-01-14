@@ -62,4 +62,10 @@ parcelable QosPolicyClassifierParams {
      * "reg-name" in RFC 3986.
      */
     String domainName;
+
+    /**
+     * Differentiated Services Code Point (DSCP) value.
+     * Used by AP for mapping the data streams to apply the user priority.
+     */
+    byte dscp;
 }
