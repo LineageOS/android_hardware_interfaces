@@ -41,6 +41,9 @@ using aidl::android::media::audio::common::AudioFormatDescription;
 using aidl::android::media::audio::common::AudioFormatType;
 using aidl::android::media::audio::common::AudioInputFlags;
 using aidl::android::media::audio::common::AudioIoFlags;
+using aidl::android::media::audio::common::AudioMMapPolicy;
+using aidl::android::media::audio::common::AudioMMapPolicyInfo;
+using aidl::android::media::audio::common::AudioMMapPolicyType;
 using aidl::android::media::audio::common::AudioMode;
 using aidl::android::media::audio::common::AudioOffloadInfo;
 using aidl::android::media::audio::common::AudioOutputFlags;
@@ -1078,6 +1081,68 @@ ndk::ScopedAStatus Module::removeDeviceEffect(
                    << in_effect->asBinder().get();
     }
     return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+}
+
+ndk::ScopedAStatus Module::getMmapPolicyInfos(AudioMMapPolicyType mmapPolicyType,
+                                              std::vector<AudioMMapPolicyInfo>* _aidl_return) {
+    LOG(DEBUG) << __func__ << ": mmap policy type " << toString(mmapPolicyType);
+    std::set<int32_t> mmapSinks;
+    std::set<int32_t> mmapSources;
+    auto& ports = getConfig().ports;
+    for (const auto& port : ports) {
+        if (port.flags.getTag() == AudioIoFlags::Tag::input &&
+            isBitPositionFlagSet(port.flags.get<AudioIoFlags::Tag::input>(),
+                                 AudioInputFlags::MMAP_NOIRQ)) {
+            mmapSinks.insert(port.id);
+        } else if (port.flags.getTag() == AudioIoFlags::Tag::output &&
+                   isBitPositionFlagSet(port.flags.get<AudioIoFlags::Tag::output>(),
+                                        AudioOutputFlags::MMAP_NOIRQ)) {
+            mmapSources.insert(port.id);
+        }
+    }
+    for (const auto& route : getConfig().routes) {
+        if (mmapSinks.count(route.sinkPortId) != 0) {
+            // The sink is a mix port, add the sources if they are device ports.
+            for (int sourcePortId : route.sourcePortIds) {
+                auto sourcePortIt = findById<AudioPort>(ports, sourcePortId);
+                if (sourcePortIt == ports.end()) {
+                    // This must not happen
+                    LOG(ERROR) << __func__ << ": port id " << sourcePortId << " cannot be found";
+                    continue;
+                }
+                if (sourcePortIt->ext.getTag() != AudioPortExt::Tag::device) {
+                    // The source is not a device port, skip
+                    continue;
+                }
+                AudioMMapPolicyInfo policyInfo;
+                policyInfo.device = sourcePortIt->ext.get<AudioPortExt::Tag::device>().device;
+                // Always return AudioMMapPolicy.AUTO if the device supports mmap for
+                // default implementation.
+                policyInfo.mmapPolicy = AudioMMapPolicy::AUTO;
+                _aidl_return->push_back(policyInfo);
+            }
+        } else {
+            auto sinkPortIt = findById<AudioPort>(ports, route.sinkPortId);
+            if (sinkPortIt == ports.end()) {
+                // This must not happen
+                LOG(ERROR) << __func__ << ": port id " << route.sinkPortId << " cannot be found";
+                continue;
+            }
+            if (sinkPortIt->ext.getTag() != AudioPortExt::Tag::device) {
+                // The sink is not a device port, skip
+                continue;
+            }
+            if (count_any(mmapSources, route.sourcePortIds)) {
+                AudioMMapPolicyInfo policyInfo;
+                policyInfo.device = sinkPortIt->ext.get<AudioPortExt::Tag::device>().device;
+                // Always return AudioMMapPolicy.AUTO if the device supports mmap for
+                // default implementation.
+                policyInfo.mmapPolicy = AudioMMapPolicy::AUTO;
+                _aidl_return->push_back(policyInfo);
+            }
+        }
+    }
+    return ndk::ScopedAStatus::ok();
 }
 
 }  // namespace aidl::android::hardware::audio::core
