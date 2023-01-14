@@ -63,6 +63,10 @@ class ModuleConfig {
             bool attachedOnly, bool singlePort) const;
     std::vector<aidl::android::media::audio::common::AudioPort> getPrimaryMixPorts(
             bool attachedOnly, bool singlePort) const;
+    std::vector<aidl::android::media::audio::common::AudioPort> getMmapOutMixPorts(
+            bool attachedOnly, bool singlePort) const;
+    std::vector<aidl::android::media::audio::common::AudioPort> getMmapInMixPorts(
+            bool attachedOnly, bool singlePort) const;
 
     std::vector<aidl::android::media::audio::common::AudioPort> getAttachedDevicesPortsForMixPort(
             bool isInput, const aidl::android::media::audio::common::AudioPort& mixPort) const {
