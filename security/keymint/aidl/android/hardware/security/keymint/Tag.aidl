@@ -885,9 +885,9 @@ enum Tag {
 
     /**
      * Tag::ATTESTATION_ID_SECOND_IMEI provides an additional IMEI of one of the radios on the
-     * device to attested key generation/import operations. This field MUST be accompanied by
-     * the Tag::ATTESTATION_ID_IMEI tag. It would only be used to convery a second IMEI the device
-     * has, after Tag::ATTESTATION_ID_SECOND_IMEI has been used to convery the first IMEI.
+     * device to attested key generation/import operations. It should be used to convey an
+     * IMEI different to the one conveyed by the Tag::ATTESTATION_ID_IMEI tag. Like all other
+     * ID attestation flags, it may be included independently of other tags.
      *
      * If the device does not support ID attestation (or destroyAttestationIds() was previously
      * called and the device can no longer attest its IDs), any key attestation request that
