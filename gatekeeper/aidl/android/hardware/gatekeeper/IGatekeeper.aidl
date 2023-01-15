@@ -30,7 +30,7 @@ interface IGatekeeper {
     const int STATUS_REENROLL = 1;
     /* operation is successful */
     const int STATUS_OK = 0;
-    /* operation is successful. */
+    /* operation failed. */
     const int ERROR_GENERAL_FAILURE = -1;
     /* operation should  be retried after timeout. */
     const int ERROR_RETRY_TIMEOUT = -2;
