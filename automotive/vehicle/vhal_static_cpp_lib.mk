@@ -15,4 +15,6 @@
 # This make file contains the latest version of static cpp libraries for VHAL
 # interface and VHAL properties.
 
-LOCAL_STATIC_LIBRARIES += android.hardware.automotive.vehicle-V2-ndk
+LOCAL_STATIC_LIBRARIES += \
+    android.hardware.automotive.vehicle-V2-ndk \
+    android.hardware.automotive.vehicle.property-V2-ndk

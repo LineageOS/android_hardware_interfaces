@@ -46,7 +46,7 @@ const int kMaxDevicePathLen = 256;
 constexpr char kDevicePath[] = "/dev/";
 constexpr char kPrefix[] = "video";
 constexpr int kPrefixLen = sizeof(kPrefix) - 1;
-constexpr int kDevicePrefixLen = sizeof(kDevicePath) + kPrefixLen + 1;
+constexpr int kDevicePrefixLen = sizeof(kDevicePath) + kPrefixLen - 1;
 
 bool matchDeviceName(int cameraIdOffset, const std::string& deviceName, std::string* deviceVersion,
                      std::string* cameraDevicePath) {

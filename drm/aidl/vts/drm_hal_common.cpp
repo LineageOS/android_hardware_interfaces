@@ -187,18 +187,18 @@ void DrmHalTest::SetUp() {
     auto svc = GetParamService();
     const string drmInstance = HalFullName(kDrmIface, svc);
 
+    if (!vendorModule) {
+        ASSERT_NE(drmInstance, HalFullName(kDrmIface, "widevine")) << "Widevine requires vendor module.";
+        ASSERT_NE(drmInstance, HalFullName(kDrmIface, "clearkey")) << "Clearkey requires vendor module.";
+        GTEST_SKIP() << "No vendor module installed";
+    }
+
     if (drmInstance.find("IDrmFactory") != std::string::npos) {
         drmFactory = IDrmFactory::fromBinder(
                 ::ndk::SpAIBinder(AServiceManager_waitForService(drmInstance.c_str())));
         ASSERT_NE(drmFactory, nullptr);
         drmPlugin = createDrmPlugin();
         cryptoPlugin = createCryptoPlugin();
-    }
-
-    if (!vendorModule) {
-        ASSERT_NE(drmInstance, "widevine") << "Widevine requires vendor module.";
-        ASSERT_NE(drmInstance, "clearkey") << "Clearkey requires vendor module.";
-        GTEST_SKIP() << "No vendor module installed";
     }
 
     ASSERT_EQ(HalBaseName(drmInstance), vendorModule->getServiceName());

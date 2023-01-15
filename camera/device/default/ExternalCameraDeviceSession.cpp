@@ -217,10 +217,8 @@ void ExternalCameraDeviceSession::initOutputThread() {
     // Grab a shared_ptr to 'this' from ndk::SharedRefBase::ref()
     std::shared_ptr<ExternalCameraDeviceSession> thiz = ref<ExternalCameraDeviceSession>();
 
-    if (mSupportBufMgr) {
-        mBufferRequestThread = std::make_shared<BufferRequestThread>(/*parent=*/thiz, mCallback);
-        mBufferRequestThread->run();
-    }
+    mBufferRequestThread = std::make_shared<BufferRequestThread>(/*parent=*/thiz, mCallback);
+    mBufferRequestThread->run();
     mOutputThread = std::make_shared<OutputThread>(/*parent=*/thiz, mCroppingType,
                                                    mCameraCharacteristics, mBufferRequestThread);
 }

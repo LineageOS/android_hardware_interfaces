@@ -365,7 +365,6 @@ class ExternalCameraDeviceSession : public BnCameraDeviceSession, public OutputT
 
     static HandleImporter sHandleImporter;
 
-    bool mSupportBufMgr;
     std::shared_ptr<BufferRequestThread> mBufferRequestThread;
 
     /* Beginning of members not changed after initialize() */
