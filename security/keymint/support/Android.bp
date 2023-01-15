@@ -67,7 +67,7 @@ cc_library {
         "android.hardware.security.rkp-V3-ndk",
     ],
     whole_static_libs: [
-        "libcert_request_validator_cxx",
+        "libhwtrust_cxx",
     ],
     shared_libs: [
         "libbase",
