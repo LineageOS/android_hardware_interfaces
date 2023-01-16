@@ -18,6 +18,7 @@
 #include <chrono>
 
 #include <Utils.h>
+#include <aidl/android/media/audio/common/AudioInputFlags.h>
 #include <aidl/android/media/audio/common/AudioIoFlags.h>
 #include <aidl/android/media/audio/common/AudioOutputFlags.h>
 
@@ -32,6 +33,7 @@ using aidl::android::media::audio::common::AudioDeviceType;
 using aidl::android::media::audio::common::AudioEncapsulationMode;
 using aidl::android::media::audio::common::AudioFormatDescription;
 using aidl::android::media::audio::common::AudioFormatType;
+using aidl::android::media::audio::common::AudioInputFlags;
 using aidl::android::media::audio::common::AudioIoFlags;
 using aidl::android::media::audio::common::AudioOffloadInfo;
 using aidl::android::media::audio::common::AudioOutputFlags;
@@ -159,6 +161,20 @@ std::vector<AudioPort> ModuleConfig::getPrimaryMixPorts(bool attachedOnly, bool 
     return findMixPorts(false /*isInput*/, attachedOnly, singlePort, [&](const AudioPort& port) {
         return isBitPositionFlagSet(port.flags.get<AudioIoFlags::Tag::output>(),
                                     AudioOutputFlags::PRIMARY);
+    });
+}
+
+std::vector<AudioPort> ModuleConfig::getMmapOutMixPorts(bool attachedOnly, bool singlePort) const {
+    return findMixPorts(false /*isInput*/, attachedOnly, singlePort, [&](const AudioPort& port) {
+        return isBitPositionFlagSet(port.flags.get<AudioIoFlags::Tag::output>(),
+                                    AudioOutputFlags::MMAP_NOIRQ);
+    });
+}
+
+std::vector<AudioPort> ModuleConfig::getMmapInMixPorts(bool attachedOnly, bool singlePort) const {
+    return findMixPorts(true /*isInput*/, attachedOnly, singlePort, [&](const AudioPort& port) {
+        return isBitPositionFlagSet(port.flags.get<AudioIoFlags::Tag::input>(),
+                                    AudioInputFlags::MMAP_NOIRQ);
     });
 }
 
