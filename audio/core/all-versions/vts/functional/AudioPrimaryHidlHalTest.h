@@ -1014,9 +1014,8 @@ class StreamWriter : public StreamWorker<StreamWriter> {
         if (mDataPosition == 0) mOnDataStart();
         const size_t dataSize = std::min(mData.size() - mDataPosition, mDataMQ->availableToWrite());
         bool success = mDataMQ->write(mData.data() + mDataPosition, dataSize);
+        bool wrapped = false;
         ALOGE_IF(!success, "data message queue write failed");
-        mDataPosition += dataSize;
-        if (mDataPosition >= mData.size()) mDataPosition = 0;
         mEfGroup->wake(static_cast<uint32_t>(MessageQueueFlagBits::NOT_EMPTY));
 
         uint32_t efState = 0;
@@ -1034,6 +1033,11 @@ class StreamWriter : public StreamWorker<StreamWriter> {
                 ALOGE("bad write status: %d", writeStatus.retval);
                 success = false;
             }
+            mDataPosition += writeStatus.reply.written;
+            if (mDataPosition >= mData.size()) {
+                mDataPosition = 0;
+                wrapped = true;
+            }
         }
         if (ret == -EAGAIN || ret == -EINTR) {
             // Spurious wakeup. This normally retries no more than once.
@@ -1042,7 +1046,7 @@ class StreamWriter : public StreamWorker<StreamWriter> {
             ALOGE("bad wait status: %d", ret);
             success = false;
         }
-        if (success && mDataPosition == 0) {
+        if (wrapped) {
             success = mOnDataWrap();
         }
         return success;
