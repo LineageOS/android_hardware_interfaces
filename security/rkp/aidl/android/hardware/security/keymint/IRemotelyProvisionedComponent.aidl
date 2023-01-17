@@ -335,7 +335,7 @@ interface IRemotelyProvisionedComponent {
      *     UdsCerts,
      *     DiceCertChain,
      *     SignedData<[
-     *         challenge: bstr .size (32..64), ; Provided by the method parameters
+     *         challenge: bstr .size (16..64), ; Provided by the method parameters
      *         bstr .cbor T,
      *     ]>,
      * ]
