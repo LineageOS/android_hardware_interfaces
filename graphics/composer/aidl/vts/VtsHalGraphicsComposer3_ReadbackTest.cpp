@@ -379,155 +379,9 @@ TEST_P(GraphicsCompositionTest, SetLayerBuffer) {
 }
 
 TEST_P(GraphicsCompositionTest, SetLayerBufferWithSlotsToClear) {
-    const auto& [versionStatus, version] = mComposerClient->getInterfaceVersion();
-    ASSERT_TRUE(versionStatus.isOk());
-    if (version == 1) {
-        GTEST_SUCCEED() << "Device does not support the new API for clearing buffer slots";
-        return;
-    }
-
-    const auto& [readbackStatus, readbackBufferAttributes] =
+    const auto& [status, readbackBufferAttributes] =
             mComposerClient->getReadbackBufferAttributes(getPrimaryDisplayId());
-    if (!readbackStatus.isOk()) {
-        GTEST_SUCCEED() << "Readback not supported";
-        return;
-    }
-
-    sp<GraphicBuffer> readbackBuffer;
-    ASSERT_NO_FATAL_FAILURE(ReadbackHelper::createReadbackBuffer(
-            readbackBufferAttributes, getPrimaryDisplay(), &readbackBuffer));
-    if (readbackBuffer == nullptr) {
-        GTEST_SUCCEED() << "Unsupported readback buffer attributes";
-        return;
-    }
-    // no fence needed for the readback buffer
-    ScopedFileDescriptor noFence(-1);
-
-    // red buffer
-    uint64_t usage = GRALLOC_USAGE_SW_WRITE_OFTEN | GRALLOC_USAGE_SW_READ_OFTEN;
-    sp<GraphicBuffer> redBuffer = allocateBuffer(usage);
-    ASSERT_NE(nullptr, redBuffer);
-    int redFence;
-    ASSERT_NO_FATAL_FAILURE(ReadbackHelper::fillBufferAndGetFence(redBuffer, RED, &redFence));
-
-    // blue buffer
-    sp<GraphicBuffer> blueBuffer = allocateBuffer(usage);
-    ASSERT_NE(nullptr, blueBuffer);
-    int blueFence;
-    ASSERT_NO_FATAL_FAILURE(ReadbackHelper::fillBufferAndGetFence(blueBuffer, BLUE, &blueFence));
-
-    // green buffer
-    sp<GraphicBuffer> greenBuffer = allocateBuffer(usage);
-    ASSERT_NE(nullptr, greenBuffer);
-    int greenFence;
-    ASSERT_NO_FATAL_FAILURE(ReadbackHelper::fillBufferAndGetFence(greenBuffer, GREEN, &greenFence));
-
-    // layer defaults
-    common::Rect rectFullDisplay = {0, 0, getDisplayWidth(), getDisplayHeight()};
-    int64_t display = getPrimaryDisplayId();
-    const auto& [layerStatus, layer] = mComposerClient->createLayer(getPrimaryDisplayId(), 3);
-    ASSERT_TRUE(layerStatus.isOk());
-    mWriter->setLayerDisplayFrame(display, layer, rectFullDisplay);
-    mWriter->setLayerCompositionType(display, layer, Composition::DEVICE);
-
-    // set the layer to the blue buffer
-    // should be blue
-    {
-        auto status = mComposerClient->setReadbackBuffer(display, readbackBuffer->handle, noFence);
-        ASSERT_TRUE(status.isOk());
-        mWriter->setLayerBuffer(display, layer, /*slot*/ 0, blueBuffer->handle, blueFence);
-        mWriter->validateDisplay(display, ComposerClientWriter::kNoTimestamp);
-        execute();
-        ASSERT_TRUE(mReader.takeChangedCompositionTypes(display).empty());
-        ASSERT_TRUE(mReader.takeErrors().empty());
-        mWriter->presentDisplay(display);
-        execute();
-        auto [fenceStatus, fence] = mComposerClient->getReadbackBufferFence(display);
-        ASSERT_TRUE(fenceStatus.isOk());
-        ReadbackHelper::compareColorToBuffer(BLUE, readbackBuffer, fence);
-    }
-
-    // change the layer to the red buffer
-    // should be red
-    {
-        auto status = mComposerClient->setReadbackBuffer(display, readbackBuffer->handle, noFence);
-        ASSERT_TRUE(status.isOk());
-        mWriter->setLayerBuffer(display, layer, /*slot*/ 1, redBuffer->handle, redFence);
-        mWriter->validateDisplay(display, ComposerClientWriter::kNoTimestamp);
-        execute();
-        ASSERT_TRUE(mReader.takeChangedCompositionTypes(display).empty());
-        ASSERT_TRUE(mReader.takeErrors().empty());
-        mWriter->presentDisplay(display);
-        execute();
-        auto [fenceStatus, fence] = mComposerClient->getReadbackBufferFence(display);
-        ASSERT_TRUE(fenceStatus.isOk());
-        ReadbackHelper::compareColorToBuffer(RED, readbackBuffer, fence);
-    }
-
-    // change the layer to the green buffer
-    // should be green
-    {
-        auto status = mComposerClient->setReadbackBuffer(display, readbackBuffer->handle, noFence);
-        ASSERT_TRUE(status.isOk());
-        mWriter->setLayerBuffer(display, layer, /*slot*/ 2, greenBuffer->handle, greenFence);
-        mWriter->validateDisplay(display, ComposerClientWriter::kNoTimestamp);
-        execute();
-        ASSERT_TRUE(mReader.takeChangedCompositionTypes(display).empty());
-        ASSERT_TRUE(mReader.takeErrors().empty());
-        mWriter->presentDisplay(display);
-        execute();
-        auto [fenceStatus, fence] = mComposerClient->getReadbackBufferFence(display);
-        ASSERT_TRUE(fenceStatus.isOk());
-        ReadbackHelper::compareColorToBuffer(GREEN, readbackBuffer, fence);
-    }
-
-    // clear the slots for all buffers
-    // should still be green since the active buffer should not be cleared by the HAL implementation
-    {
-        auto status = mComposerClient->setReadbackBuffer(display, readbackBuffer->handle, noFence);
-        ASSERT_TRUE(status.isOk());
-        mWriter->setLayerBufferSlotsToClear(display, layer, /*slotsToClear*/ {0, 1, 2});
-        mWriter->validateDisplay(display, ComposerClientWriter::kNoTimestamp);
-        execute();
-        ASSERT_TRUE(mReader.takeChangedCompositionTypes(display).empty());
-        ASSERT_TRUE(mReader.takeErrors().empty());
-        mWriter->presentDisplay(display);
-        execute();
-        auto [fenceStatus, fence] = mComposerClient->getReadbackBufferFence(display);
-        ASSERT_TRUE(fenceStatus.isOk());
-        ReadbackHelper::compareColorToBuffer(GREEN, readbackBuffer, fence);
-    }
-
-    // clear the slot for the green buffer, and set the buffer with the same slot to the blue buffer
-    // should be blue
-    {
-        auto status = mComposerClient->setReadbackBuffer(display, readbackBuffer->handle, noFence);
-        ASSERT_TRUE(status.isOk());
-        mWriter->setLayerBufferSlotsToClear(display, layer, /*slotsToClear*/ {2});
-        mWriter->setLayerBuffer(display, layer, /*slot*/ 2, blueBuffer->handle, blueFence);
-        mWriter->validateDisplay(display, ComposerClientWriter::kNoTimestamp);
-        execute();
-        ASSERT_TRUE(mReader.takeChangedCompositionTypes(display).empty());
-        ASSERT_TRUE(mReader.takeErrors().empty());
-        mWriter->presentDisplay(display);
-        execute();
-        auto [fenceStatus, fence] = mComposerClient->getReadbackBufferFence(display);
-        ASSERT_TRUE(fenceStatus.isOk());
-        ReadbackHelper::compareColorToBuffer(BLUE, readbackBuffer, fence);
-    }
-}
-
-TEST_P(GraphicsCompositionTest, SetLayerBufferWithSlotsToClear_backwardsCompatible) {
-    const auto& [versionStatus, version] = mComposerClient->getInterfaceVersion();
-    ASSERT_TRUE(versionStatus.isOk());
-    if (version > 1) {
-        GTEST_SUCCEED() << "Device does not need a backwards compatible way to clear buffer slots";
-        return;
-    }
-
-    const auto& [readbackStatus, readbackBufferAttributes] =
-            mComposerClient->getReadbackBufferAttributes(getPrimaryDisplayId());
-    if (!readbackStatus.isOk()) {
+    if (!status.isOk()) {
         GTEST_SUCCEED() << "Readback not supported";
         return;
     }
@@ -558,16 +412,10 @@ TEST_P(GraphicsCompositionTest, SetLayerBufferWithSlotsToClear_backwardsCompatib
     int blueFence;
     ASSERT_NO_FATAL_FAILURE(ReadbackHelper::fillBufferAndGetFence(blueBuffer, BLUE, &blueFence));
 
-    // green buffer
-    sp<GraphicBuffer> greenBuffer = allocateBuffer(usage);
-    ASSERT_NE(nullptr, greenBuffer);
-    int greenFence;
-    ASSERT_NO_FATAL_FAILURE(ReadbackHelper::fillBufferAndGetFence(greenBuffer, GREEN, &greenFence));
-
     // layer defaults
     common::Rect rectFullDisplay = {0, 0, getDisplayWidth(), getDisplayHeight()};
     int64_t display = getPrimaryDisplayId();
-    const auto& [layerStatus, layer] = mComposerClient->createLayer(getPrimaryDisplayId(), 3);
+    auto [layerStatus, layer] = mComposerClient->createLayer(getPrimaryDisplayId(), 3);
     ASSERT_TRUE(layerStatus.isOk());
     mWriter->setLayerDisplayFrame(display, layer, rectFullDisplay);
     mWriter->setLayerCompositionType(display, layer, Composition::DEVICE);
@@ -606,32 +454,12 @@ TEST_P(GraphicsCompositionTest, SetLayerBufferWithSlotsToClear_backwardsCompatib
         ReadbackHelper::compareColorToBuffer(RED, readbackBuffer, fence);
     }
 
-    // change the layer to the green buffer
-    // should be green
-    {
-        auto status = mComposerClient->setReadbackBuffer(display, readbackBuffer->handle, noFence);
-        ASSERT_TRUE(status.isOk());
-        mWriter->setLayerBuffer(display, layer, /*slot*/ 2, greenBuffer->handle, greenFence);
-        mWriter->validateDisplay(display, ComposerClientWriter::kNoTimestamp);
-        execute();
-        ASSERT_TRUE(mReader.takeChangedCompositionTypes(display).empty());
-        ASSERT_TRUE(mReader.takeErrors().empty());
-        mWriter->presentDisplay(display);
-        execute();
-        auto [fenceStatus, fence] = mComposerClient->getReadbackBufferFence(display);
-        ASSERT_TRUE(fenceStatus.isOk());
-        ReadbackHelper::compareColorToBuffer(GREEN, readbackBuffer, fence);
-    }
-
     // clear the slot for the blue buffer
-    // should still be green
+    // should still be red
     {
         auto status = mComposerClient->setReadbackBuffer(display, readbackBuffer->handle, noFence);
         ASSERT_TRUE(status.isOk());
         mWriter->setLayerBufferWithNewCommand(display, layer, /*slot*/ 0, clearSlotBuffer->handle,
-                                              /*fence*/ -1);
-        // SurfaceFlinger will re-set the active buffer slot after other buffer slots are cleared
-        mWriter->setLayerBufferWithNewCommand(display, layer, /*slot*/ 2, /*handle*/ nullptr,
                                               /*fence*/ -1);
         mWriter->validateDisplay(display, ComposerClientWriter::kNoTimestamp);
         execute();
@@ -641,21 +469,17 @@ TEST_P(GraphicsCompositionTest, SetLayerBufferWithSlotsToClear_backwardsCompatib
         execute();
         auto [fenceStatus, fence] = mComposerClient->getReadbackBufferFence(display);
         ASSERT_TRUE(fenceStatus.isOk());
-        ReadbackHelper::compareColorToBuffer(GREEN, readbackBuffer, fence);
+        ReadbackHelper::compareColorToBuffer(RED, readbackBuffer, fence);
     }
 
-    // clear the slot for all buffers, and set the buffer with the same slot as the green buffer
-    // should be blue now
+    // clear the slot for the red buffer, and set the buffer with the same slot to the blue buffer
+    // should be blue
     {
         auto status = mComposerClient->setReadbackBuffer(display, readbackBuffer->handle, noFence);
         ASSERT_TRUE(status.isOk());
-        mWriter->setLayerBufferWithNewCommand(display, layer, /*slot*/ 0, clearSlotBuffer->handle,
-                                              /*fence*/ -1);
         mWriter->setLayerBufferWithNewCommand(display, layer, /*slot*/ 1, clearSlotBuffer->handle,
                                               /*fence*/ -1);
-        // SurfaceFlinger will never clear the active buffer (slot 2), but will free up the
-        // buffer slot so it will be re-used for the next setLayerBuffer command
-        mWriter->setLayerBuffer(display, layer, /*slot*/ 2, blueBuffer->handle, blueFence);
+        mWriter->setLayerBuffer(display, layer, /*slot*/ 1, blueBuffer->handle, blueFence);
         mWriter->validateDisplay(display, ComposerClientWriter::kNoTimestamp);
         execute();
         ASSERT_TRUE(mReader.takeChangedCompositionTypes(display).empty());
@@ -665,6 +489,29 @@ TEST_P(GraphicsCompositionTest, SetLayerBufferWithSlotsToClear_backwardsCompatib
         auto [fenceStatus, fence] = mComposerClient->getReadbackBufferFence(display);
         ASSERT_TRUE(fenceStatus.isOk());
         ReadbackHelper::compareColorToBuffer(BLUE, readbackBuffer, fence);
+    }
+
+    // clear the slot for the now-blue buffer
+    // should be black (no buffer)
+    // TODO(b/262037933) Ensure we never clear the active buffer's slot with the placeholder buffer
+    // by setting the layer to the color black
+    {
+        auto status = mComposerClient->setReadbackBuffer(display, readbackBuffer->handle, noFence);
+        ASSERT_TRUE(status.isOk());
+        mWriter->setLayerBufferWithNewCommand(display, layer, /*slot*/ 1, clearSlotBuffer->handle,
+                                              /*fence*/ -1);
+        mWriter->validateDisplay(display, ComposerClientWriter::kNoTimestamp);
+        execute();
+        if (!mReader.takeChangedCompositionTypes(display).empty()) {
+            GTEST_SUCCEED();
+            return;
+        }
+        ASSERT_TRUE(mReader.takeErrors().empty());
+        mWriter->presentDisplay(display);
+        execute();
+        auto [fenceStatus, fence] = mComposerClient->getReadbackBufferFence(display);
+        ASSERT_TRUE(fenceStatus.isOk());
+        ReadbackHelper::compareColorToBuffer(BLACK, readbackBuffer, fence);
     }
 }
 
