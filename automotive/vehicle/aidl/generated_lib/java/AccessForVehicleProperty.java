@@ -256,6 +256,7 @@ public final class AccessForVehicleProperty {
         Map.entry(VehicleProperty.CRUISE_CONTROL_STATE, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.CRUISE_CONTROL_COMMAND, VehiclePropertyAccess.WRITE),
         Map.entry(VehicleProperty.HANDS_ON_DETECTION_ENABLED, VehiclePropertyAccess.READ_WRITE),
+        Map.entry(VehicleProperty.HANDS_ON_DETECTION_DRIVER_STATE, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.DRIVER_ATTENTION_MONITORING_ENABLED, VehiclePropertyAccess.READ_WRITE)
     );
 

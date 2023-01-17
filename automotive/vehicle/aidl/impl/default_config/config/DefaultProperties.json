@@ -3216,6 +3216,24 @@
             }
         },
         {
+            "property": "VehicleProperty::HANDS_ON_DETECTION_DRIVER_STATE",
+            "defaultValue": {
+                "int32Values": [
+                    "HandsOnDetectionDriverState::HANDS_ON"
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": 0,
+                    "supportedEnumValues": [
+                        "ErrorState::NOT_AVAILABLE_DISABLED",
+                        "HandsOnDetectionDriverState::HANDS_ON",
+                        "HandsOnDetectionDriverState::HANDS_OFF"
+                    ]
+                }
+            ]
+        },
+        {
             "property": "VehicleProperty::DRIVER_ATTENTION_MONITORING_ENABLED",
             "defaultValue": {
                 "int32Values": [

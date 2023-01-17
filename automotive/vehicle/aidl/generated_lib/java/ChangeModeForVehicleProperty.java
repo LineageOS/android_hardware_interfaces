@@ -256,6 +256,7 @@ public final class ChangeModeForVehicleProperty {
         Map.entry(VehicleProperty.CRUISE_CONTROL_STATE, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.CRUISE_CONTROL_COMMAND, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.HANDS_ON_DETECTION_ENABLED, VehiclePropertyChangeMode.ON_CHANGE),
+        Map.entry(VehicleProperty.HANDS_ON_DETECTION_DRIVER_STATE, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.DRIVER_ATTENTION_MONITORING_ENABLED, VehiclePropertyChangeMode.ON_CHANGE)
     );
 

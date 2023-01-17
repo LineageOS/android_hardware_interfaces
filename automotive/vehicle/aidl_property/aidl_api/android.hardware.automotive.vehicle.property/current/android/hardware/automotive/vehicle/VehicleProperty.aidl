@@ -262,5 +262,6 @@ enum VehicleProperty {
   CRUISE_CONTROL_STATE = (((0x1011 + android.hardware.automotive.vehicle.VehiclePropertyGroup.SYSTEM) + android.hardware.automotive.vehicle.VehicleArea.GLOBAL) + android.hardware.automotive.vehicle.VehiclePropertyType.INT32) /* 289411089 */,
   CRUISE_CONTROL_COMMAND = (((0x1012 + android.hardware.automotive.vehicle.VehiclePropertyGroup.SYSTEM) + android.hardware.automotive.vehicle.VehicleArea.GLOBAL) + android.hardware.automotive.vehicle.VehiclePropertyType.INT32) /* 289411090 */,
   HANDS_ON_DETECTION_ENABLED = (((0x1016 + android.hardware.automotive.vehicle.VehiclePropertyGroup.SYSTEM) + android.hardware.automotive.vehicle.VehicleArea.GLOBAL) + android.hardware.automotive.vehicle.VehiclePropertyType.BOOLEAN) /* 287313942 */,
+  HANDS_ON_DETECTION_DRIVER_STATE = (((0x1017 + android.hardware.automotive.vehicle.VehiclePropertyGroup.SYSTEM) + android.hardware.automotive.vehicle.VehicleArea.GLOBAL) + android.hardware.automotive.vehicle.VehiclePropertyType.INT32) /* 289411095 */,
   DRIVER_ATTENTION_MONITORING_ENABLED = (((0x1019 + android.hardware.automotive.vehicle.VehiclePropertyGroup.SYSTEM) + android.hardware.automotive.vehicle.VehicleArea.GLOBAL) + android.hardware.automotive.vehicle.VehiclePropertyType.BOOLEAN) /* 287313945 */,
 }

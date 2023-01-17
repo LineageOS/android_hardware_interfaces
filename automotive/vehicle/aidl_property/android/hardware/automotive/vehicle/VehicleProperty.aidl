@@ -3947,6 +3947,30 @@ enum VehicleProperty {
             0x1016 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
 
     /**
+     * Hands on detection (HOD) driver state.
+     *
+     * Returns whether the driver's hands are on the steering wheel. Generally, this property should
+     * return a valid state defined in the HandsOnDetectionDriverState or ErrorState. For example,
+     * if the feature is not available due to some temporary state, that information should be
+     * conveyed through ErrorState.
+     *
+     * If the vehicle wants to send a warning to the user because the driver's hands have been off
+     * the steering wheel for too long, the warning should be surfaced through
+     * HANDS_ON_DETECTION_WARNING.
+     *
+     * For the global area ID (0), the VehicleAreaConfig#supportedEnumValues array must be defined
+     * unless all states of both HandsOnDetectionDriverState (including OTHER, which is not
+     * recommended) and ErrorState are supported.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     * @data_enum HandsOnDetectionDriverState
+     * @data_enum ErrorState
+     */
+    HANDS_ON_DETECTION_DRIVER_STATE =
+            0x1017 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
+
+    /**
      * Enable or disable driver attention monitoring.
      *
      * Set true to enable driver attention monitoring and false to disable driver attention

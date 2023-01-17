@@ -49,6 +49,7 @@ using ::aidl::android::hardware::automotive::vehicle::EvsServiceType;
 using ::aidl::android::hardware::automotive::vehicle::ForwardCollisionWarningState;
 using ::aidl::android::hardware::automotive::vehicle::FuelType;
 using ::aidl::android::hardware::automotive::vehicle::GsrComplianceRequirementType;
+using ::aidl::android::hardware::automotive::vehicle::HandsOnDetectionDriverState;
 using ::aidl::android::hardware::automotive::vehicle::LaneCenteringAssistCommand;
 using ::aidl::android::hardware::automotive::vehicle::LaneCenteringAssistState;
 using ::aidl::android::hardware::automotive::vehicle::LaneDepartureWarningState;
@@ -230,6 +231,8 @@ JsonValueParser::JsonValueParser() {
             std::make_unique<ConstantParser<CruiseControlState>>();
     mConstantParsersByType["CruiseControlCommand"] =
             std::make_unique<ConstantParser<CruiseControlCommand>>();
+    mConstantParsersByType["HandsOnDetectionDriverState"] =
+            std::make_unique<ConstantParser<HandsOnDetectionDriverState>>();
     mConstantParsersByType["ErrorState"] = std::make_unique<ConstantParser<ErrorState>>();
     mConstantParsersByType["AutomaticEmergencyBrakingState"] =
             std::make_unique<ConstantParser<AutomaticEmergencyBrakingState>>();

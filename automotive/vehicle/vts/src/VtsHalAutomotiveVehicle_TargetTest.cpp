@@ -540,6 +540,12 @@ TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyHandsOnDetectionEnabledConfig) {
                    VehicleArea::GLOBAL, VehiclePropertyType::BOOLEAN);
 }
 
+TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyHandsOnDetectionDriverStateConfig) {
+    verifyProperty(VehicleProperty::HANDS_ON_DETECTION_DRIVER_STATE, VehiclePropertyAccess::READ,
+                   VehiclePropertyChangeMode::ON_CHANGE, VehiclePropertyGroup::SYSTEM,
+                   VehicleArea::GLOBAL, VehiclePropertyType::INT32);
+}
+
 TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyDriverAttentionMonitoringEnabledConfig) {
     verifyProperty(VehicleProperty::DRIVER_ATTENTION_MONITORING_ENABLED,
                    VehiclePropertyAccess::READ_WRITE, VehiclePropertyChangeMode::ON_CHANGE,
