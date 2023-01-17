@@ -34,8 +34,6 @@ namespace composer {
 namespace V2_2 {
 namespace vts {
 
-using android::GraphicBuffer;
-using android::sp;
 using android::hardware::hidl_handle;
 using common::V1_1::BufferUsage;
 using common::V1_1::Dataspace;
@@ -158,13 +156,6 @@ class ReadbackHelper {
 
     static int32_t GetBytesPerPixel(PixelFormat pixelFormat);
 
-    static void fillBufferAndGetFence(const sp<GraphicBuffer>& graphicBuffer,
-                                      IComposerClient::Color desiredColor, int* fillFence);
-
-    static void fillBufferAndGetFence(const sp<GraphicBuffer>& graphicBuffer,
-                                      const std::vector<IComposerClient::Color>& desiredColors,
-                                      int* fillFence);
-
     static void fillBuffer(int32_t width, int32_t height, uint32_t stride, void* bufferData,
                            PixelFormat pixelFormat,
                            std::vector<IComposerClient::Color> desiredPixelColors);
@@ -175,39 +166,40 @@ class ReadbackHelper {
     static void fillColorsArea(std::vector<IComposerClient::Color>& expectedColors, int32_t stride,
                                IComposerClient::Rect area, IComposerClient::Color color);
 
+    static bool readbackSupported(const PixelFormat& pixelFormat, const Dataspace& dataspace,
+                                  const Error error);
+
     static const std::vector<ColorMode> colorModes;
     static const std::vector<Dataspace> dataspaces;
 
-    static bool readbackSupported(PixelFormat pixelFormat, Dataspace dataspace, Error error);
-    static bool readbackSupported(PixelFormat pixelFormat, Dataspace dataspace);
-
-    static void createReadbackBuffer(uint32_t width, uint32_t height, PixelFormat pixelFormat,
-                                     Dataspace dataspace, sp<GraphicBuffer>* graphicBuffer);
-
-    static void compareColorToBuffer(IComposerClient::Color expectedColors,
-                                     const sp<GraphicBuffer>& graphicBuffer, int32_t fence);
-
-    static void compareColorsToBuffer(std::vector<IComposerClient::Color>& expectedColors,
-                                      const sp<GraphicBuffer>& graphicBuffer, int32_t fence);
+    static void compareColorBuffers(std::vector<IComposerClient::Color>& expectedColors,
+                                    void* bufferData, const uint32_t stride, const uint32_t width,
+                                    const uint32_t height, const PixelFormat pixelFormat);
 };
 
 class ReadbackBuffer {
   public:
-    ReadbackBuffer(Display display, const std::shared_ptr<ComposerClient>& client, uint32_t width,
-                   uint32_t height, PixelFormat pixelFormat);
+    ReadbackBuffer(Display display, const std::shared_ptr<ComposerClient>& client,
+                   const std::shared_ptr<Gralloc>& gralloc, uint32_t width, uint32_t height,
+                   PixelFormat pixelFormat, Dataspace dataspace);
 
     void setReadbackBuffer();
 
     void checkReadbackBuffer(std::vector<IComposerClient::Color> expectedColors);
 
   protected:
-    sp<GraphicBuffer> mGraphicBuffer;
     uint32_t mWidth;
     uint32_t mHeight;
-    PixelFormat mPixelFormat;
     uint32_t mLayerCount;
+    PixelFormat mFormat;
     uint64_t mUsage;
+    AccessRegion mAccessRegion;
+    uint32_t mStride;
+    std::unique_ptr<Gralloc::NativeHandleWrapper> mBufferHandle = nullptr;
+    PixelFormat mPixelFormat;
+    Dataspace mDataspace;
     Display mDisplay;
+    std::shared_ptr<Gralloc> mGralloc;
     std::shared_ptr<ComposerClient> mComposerClient;
 };
 

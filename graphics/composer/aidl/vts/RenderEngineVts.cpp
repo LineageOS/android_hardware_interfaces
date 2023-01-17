@@ -76,7 +76,18 @@ void TestRenderEngine::drawLayers() {
 }
 
 void TestRenderEngine::checkColorBuffer(const std::vector<Color>& expectedColors) {
-    ReadbackHelper::compareColorsToBuffer(expectedColors, mGraphicBuffer);
+    void* bufferData;
+    int32_t bytesPerPixel = -1;
+    int32_t bytesPerStride = -1;
+    ASSERT_EQ(0, mGraphicBuffer->lock(static_cast<uint32_t>(mGraphicBuffer->getUsage()),
+                                      &bufferData, &bytesPerPixel, &bytesPerStride));
+    const uint32_t stride = (bytesPerPixel > 0 && bytesPerStride > 0)
+                                    ? static_cast<uint32_t>(bytesPerStride / bytesPerPixel)
+                                    : mGraphicBuffer->getStride();
+    ReadbackHelper::compareColorBuffers(expectedColors, bufferData, stride,
+                                        mGraphicBuffer->getWidth(), mGraphicBuffer->getHeight(),
+                                        mFormat);
+    ASSERT_EQ(::android::OK, mGraphicBuffer->unlock());
 }
 
 }  // namespace aidl::android::hardware::graphics::composer3::vts
