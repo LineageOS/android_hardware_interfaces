@@ -37,13 +37,12 @@ parcelable NrQos {
   int fiveQi;
   android.hardware.radio.data.QosBandwidth downlink;
   android.hardware.radio.data.QosBandwidth uplink;
-  byte qfi;
   /**
-   * @deprecated use averagingWindowMillis;
+   * @deprecated use qosFlowIdentifier.
    */
+  byte qfi;
   char averagingWindowMs;
-  int averagingWindowMillis = AVERAGING_WINDOW_UNKNOWN;
+  int qosFlowIdentifier;
   const byte FLOW_ID_RANGE_MIN = 1;
   const byte FLOW_ID_RANGE_MAX = 63;
-  const int AVERAGING_WINDOW_UNKNOWN = (-1);
 }
