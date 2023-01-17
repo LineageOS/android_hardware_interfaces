@@ -104,6 +104,11 @@ bool isSsSsEnabled();
 bool isDsDsEnabled();
 
 /*
+ * Check if device is in DSDA (Dual SIM Dual Active).
+ */
+bool isDsDaEnabled();
+
+/*
  * Check if device is in TSTS (Triple SIM Triple Standby).
  */
 bool isTsTsEnabled();
