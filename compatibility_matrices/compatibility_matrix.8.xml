@@ -503,6 +503,7 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.power.stats</name>
+        <version>2</version>
         <interface>
             <name>IPowerStats</name>
             <instance>default</instance>
