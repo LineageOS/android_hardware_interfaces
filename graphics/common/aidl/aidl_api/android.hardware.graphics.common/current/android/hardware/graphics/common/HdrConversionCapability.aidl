@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2021, The Android Open Source Project
+ * Copyright (c) 2022, The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,14 +31,10 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.graphics.composer3;
-@Backing(type="int") @VintfStability
-enum Capability {
-  INVALID = 0,
-  SIDEBAND_STREAM = 1,
-  SKIP_CLIENT_COLOR_TRANSFORM = 2,
-  PRESENT_FENCE_IS_NOT_RELIABLE = 3,
-  SKIP_VALIDATE = 4,
-  BOOT_DISPLAY_CONFIG = 5,
-  HDR_OUTPUT_CONVERSION_CONFIG = 6,
+package android.hardware.graphics.common;
+@VintfStability
+parcelable HdrConversionCapability {
+  android.hardware.graphics.common.ParcelableHdr sourceType;
+  @nullable android.hardware.graphics.common.ParcelableHdr outputType;
+  boolean addsLatency;
 }
