@@ -17,6 +17,7 @@
 package android.hardware.tv.tuner;
 
 import android.hardware.tv.tuner.DemuxCapabilities;
+import android.hardware.tv.tuner.DemuxInfo;
 import android.hardware.tv.tuner.FrontendInfo;
 import android.hardware.tv.tuner.FrontendType;
 import android.hardware.tv.tuner.IDemux;
@@ -65,7 +66,7 @@ interface ITuner {
     IDemux openDemux(out int[] demuxId);
 
     /**
-     * Retrieve the Demux's Capabilities.
+     * Retrieve the system wide Demux's Capabilities
      *
      * @return the Demux's Capabilities.
      */
@@ -158,4 +159,32 @@ interface ITuner {
      * @return true if supported, otherwise false
      */
     boolean isLnaSupported();
+
+    /**
+     * Get Demux IDs
+     *
+     * It is used by the client to get all available demuxes' IDs.
+     *
+     * @return an array of IDs for the available Demuxes.
+     */
+    int[] getDemuxIds();
+
+    /**
+     * Create a new instance of Demux given a demuxId.
+     *
+     * It is used by the client to create a demux instance.
+     *
+     * @param demuxId the id of the demux to be opened.
+     *
+     * @return the newly created demux interface.
+     */
+    IDemux openDemuxById(in int demuxId);
+
+    /**
+     * Retrieve the DemuxInfo of the specified Demux.
+     *
+     * @param demuxId the demux ID to query the DemuxInfo for.
+     * @return the DemuxInfo of the specified Demux by demuxId.
+     */
+    DemuxInfo getDemuxInfo(in int demuxId);
 }

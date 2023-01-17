@@ -695,6 +695,34 @@ TEST_P(TunerDemuxAidlTest, openDemux) {
     }
 }
 
+TEST_P(TunerDemuxAidlTest, openDemuxById) {
+    description("Open (with id) and close a Demux.");
+    std::vector<int32_t> demuxIds;
+    ASSERT_TRUE(mDemuxTests.getDemuxIds(demuxIds));
+    for (int i = 0; i < demuxIds.size(); i++) {
+        std::shared_ptr<IDemux> demux;
+        ASSERT_TRUE(mDemuxTests.openDemuxById(demuxIds[i], demux));
+        ASSERT_TRUE(mDemuxTests.closeDemux());
+    }
+}
+
+TEST_P(TunerDemuxAidlTest, getDemuxInfo) {
+    description("Check getDemuxInfo against demux caps");
+    std::vector<int32_t> demuxIds;
+    ASSERT_TRUE(mDemuxTests.getDemuxIds(demuxIds));
+    int32_t combinedFilterTypes = 0;
+    for (int i = 0; i < demuxIds.size(); i++) {
+        DemuxInfo demuxInfo;
+        ASSERT_TRUE(mDemuxTests.getDemuxInfo(demuxIds[i], demuxInfo));
+        combinedFilterTypes |= demuxInfo.filterTypes;
+    }
+    if (demuxIds.size() > 0) {
+        DemuxCapabilities demuxCaps;
+        ASSERT_TRUE(mDemuxTests.getDemuxCaps(demuxCaps));
+        ASSERT_TRUE(demuxCaps.filterCaps == combinedFilterTypes);
+    }
+}
+
 TEST_P(TunerDemuxAidlTest, getAvSyncTime) {
     description("Get the A/V sync time from a PCR filter.");
     if (!live.hasFrontendConnection) {
