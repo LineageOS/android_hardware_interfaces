@@ -15,7 +15,6 @@ as the `<instance>` in the VINTF manifest `<interface>` section. For example:
         <name>mapper</name>
         <version>5.0</version>
         <interface>
-            <name>I</name>
             <instance>minigbm</instance>
         </interface>
     </hal>

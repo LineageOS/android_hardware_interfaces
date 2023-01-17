@@ -836,7 +836,6 @@
         <name>mapper</name>
         <version>5.0</version>
         <interface>
-            <name>I</name>
             <regex-instance>.*</regex-instance>
         </interface>
     </hal>
