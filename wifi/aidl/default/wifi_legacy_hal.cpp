@@ -1766,6 +1766,10 @@ wifi_error WifiLegacyHal::twtClearStats(const std::string& iface_name, uint8_t c
     return global_func_table_.wifi_twt_clear_stats(getIfaceHandle(iface_name), configId);
 }
 
+wifi_error WifiLegacyHal::setScanMode(const std::string& iface_name, bool enable) {
+    return global_func_table_.wifi_set_scan_mode(iface_name.c_str(), enable);
+}
+
 wifi_error WifiLegacyHal::setDtimConfig(const std::string& iface_name, uint32_t multiplier) {
     return global_func_table_.wifi_set_dtim_config(getIfaceHandle(iface_name), multiplier);
 }
