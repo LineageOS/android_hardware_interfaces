@@ -34,7 +34,7 @@
 package android.hardware.radio.network;
 @Backing(type="int") @JavaDerive(toString=true) @VintfStability
 enum CellConnectionStatus {
-  NONE = 0,
-  PRIMARY_SERVING = 1,
-  SECONDARY_SERVING = 2,
+  NONE,
+  PRIMARY_SERVING,
+  SECONDARY_SERVING,
 }

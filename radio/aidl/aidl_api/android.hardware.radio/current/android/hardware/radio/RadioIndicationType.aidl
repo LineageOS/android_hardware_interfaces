@@ -34,6 +34,6 @@
 package android.hardware.radio;
 @Backing(type="int") @JavaDerive(toString=true) @VintfStability
 enum RadioIndicationType {
-  UNSOLICITED = 0,
-  UNSOLICITED_ACK_EXP = 1,
+  UNSOLICITED,
+  UNSOLICITED_ACK_EXP,
 }

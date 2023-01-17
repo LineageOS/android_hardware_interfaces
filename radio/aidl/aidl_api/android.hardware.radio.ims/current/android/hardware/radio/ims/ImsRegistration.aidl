@@ -39,8 +39,8 @@ parcelable ImsRegistration {
   android.hardware.radio.ims.SuggestedAction suggestedAction;
   int capabilities;
   const int IMS_MMTEL_CAPABILITY_NONE = 0;
-  const int IMS_MMTEL_CAPABILITY_VOICE = 1;
-  const int IMS_MMTEL_CAPABILITY_VIDEO = 2;
-  const int IMS_MMTEL_CAPABILITY_SMS = 4;
-  const int IMS_RCS_CAPABILITIES = 8;
+  const int IMS_MMTEL_CAPABILITY_VOICE = (1 << 0);
+  const int IMS_MMTEL_CAPABILITY_VIDEO = (1 << 1);
+  const int IMS_MMTEL_CAPABILITY_SMS = (1 << 2);
+  const int IMS_RCS_CAPABILITIES = (1 << 3);
 }

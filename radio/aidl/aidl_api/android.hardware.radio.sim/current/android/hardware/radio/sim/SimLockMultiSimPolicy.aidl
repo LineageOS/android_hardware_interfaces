@@ -34,6 +34,6 @@
 package android.hardware.radio.sim;
 @Backing(type="int") @JavaDerive(toString=true) @VintfStability
 enum SimLockMultiSimPolicy {
-  NO_MULTISIM_POLICY = 0,
-  ONE_VALID_SIM_MUST_BE_PRESENT = 1,
+  NO_MULTISIM_POLICY,
+  ONE_VALID_SIM_MUST_BE_PRESENT,
 }

@@ -34,9 +34,9 @@
 package android.hardware.radio.sap;
 @Backing(type="int") @VintfStability
 enum SapConnectRsp {
-  SUCCESS = 0,
-  CONNECT_FAILURE = 1,
-  MSG_SIZE_TOO_LARGE = 2,
-  MSG_SIZE_TOO_SMALL = 3,
-  CONNECT_OK_CALL_ONGOING = 4,
+  SUCCESS,
+  CONNECT_FAILURE,
+  MSG_SIZE_TOO_LARGE,
+  MSG_SIZE_TOO_SMALL,
+  CONNECT_OK_CALL_ONGOING,
 }

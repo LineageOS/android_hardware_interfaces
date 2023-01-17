@@ -34,7 +34,7 @@
 package android.hardware.radio.voice;
 @Backing(type="int") @JavaDerive(toString=true) @VintfStability
 enum ClipStatus {
-  CLIP_PROVISIONED = 0,
-  CLIP_UNPROVISIONED = 1,
-  UNKNOWN = 2,
+  CLIP_PROVISIONED,
+  CLIP_UNPROVISIONED,
+  UNKNOWN,
 }
