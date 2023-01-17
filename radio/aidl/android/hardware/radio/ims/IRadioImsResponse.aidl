@@ -58,8 +58,9 @@ oneway interface IRadioImsResponse {
     void updateImsRegistrationInfoResponse(in RadioResponseInfo info);
 
     /**
-     * @param info Response info struct containing response type, serial no. and error
-     * @param failureInfo Information about failure in detail
+     * @param info Response info struct containing response type, serial no. and error.
+     * @param failureInfo Information about failure in detail. If there is no error,
+     *        it should be {@code null}.
      *
      * Valid errors returned:
      *   RadioError:NONE
