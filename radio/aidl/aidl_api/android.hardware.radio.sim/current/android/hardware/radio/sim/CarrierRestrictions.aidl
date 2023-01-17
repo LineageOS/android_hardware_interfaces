@@ -38,7 +38,6 @@ parcelable CarrierRestrictions {
   android.hardware.radio.sim.Carrier[] excludedCarriers;
   boolean allowedCarriersPrioritized;
   android.hardware.radio.sim.CarrierRestrictions.CarrierRestrictionStatus status;
-  int carrierId;
   @Backing(type="int") @VintfStability
   enum CarrierRestrictionStatus {
     UNKNOWN = 0,
