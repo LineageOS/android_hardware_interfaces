@@ -23,8 +23,8 @@
 
 #include <aidl/android/hardware/security/keymint/RpcHardwareInfo.h>
 #include <android-base/properties.h>
-#include <cert_request_validator/cert_request_validator.h>
 #include <cppbor.h>
+#include <hwtrust/hwtrust.h>
 #include <json/json.h>
 #include <keymaster/km_openssl/ec_key.h>
 #include <keymaster/km_openssl/ecdsa_operation.h>
@@ -292,7 +292,7 @@ bytevec getProdEekChain(int32_t supportedEekCurve) {
 
 ErrMsgOr<std::vector<BccEntryData>> validateBcc(const cppbor::Array* bcc) {
     auto encodedBcc = bcc->encode();
-    auto chain = cert_request_validator::DiceChain::verify(encodedBcc);
+    auto chain = hwtrust::DiceChain::verify(encodedBcc);
     if (!chain.ok()) return chain.error().message();
     auto keys = chain->cose_public_keys();
     if (!keys.ok()) return keys.error().message();
