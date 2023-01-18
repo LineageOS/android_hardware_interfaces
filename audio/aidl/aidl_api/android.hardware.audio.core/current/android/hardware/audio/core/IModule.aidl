@@ -70,6 +70,10 @@ interface IModule {
   void removeDeviceEffect(int portConfigId, in android.hardware.audio.effect.IEffect effect);
   android.media.audio.common.AudioMMapPolicyInfo[] getMmapPolicyInfos(android.media.audio.common.AudioMMapPolicyType mmapPolicyType);
   boolean supportsVariableLatency();
+  int getAAudioMixerBurstCount();
+  int getAAudioHardwareBurstMinUsec();
+  const int DEFAULT_AAUDIO_MIXER_BURST_COUNT = 2;
+  const int DEFAULT_AAUDIO_HARDWARE_BURST_MIN_DURATION_US = 1000;
   @VintfStability
   parcelable OpenInputStreamArguments {
     int portConfigId;

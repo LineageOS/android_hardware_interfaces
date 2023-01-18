@@ -1151,4 +1151,41 @@ ndk::ScopedAStatus Module::supportsVariableLatency(bool* _aidl_return) {
     return ndk::ScopedAStatus::ok();
 }
 
+ndk::ScopedAStatus Module::getAAudioMixerBurstCount(int32_t* _aidl_return) {
+    if (!isMmapSupported()) {
+        LOG(DEBUG) << __func__ << ": mmap is not supported ";
+        return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+    }
+    *_aidl_return = DEFAULT_AAUDIO_MIXER_BURST_COUNT;
+    LOG(DEBUG) << __func__ << ": returning " << *_aidl_return;
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus Module::getAAudioHardwareBurstMinUsec(int32_t* _aidl_return) {
+    if (!isMmapSupported()) {
+        LOG(DEBUG) << __func__ << ": mmap is not supported ";
+        return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+    }
+    *_aidl_return = DEFAULT_AAUDIO_HARDWARE_BURST_MIN_DURATION_US;
+    LOG(DEBUG) << __func__ << ": returning " << *_aidl_return;
+    return ndk::ScopedAStatus::ok();
+}
+
+bool Module::isMmapSupported() {
+    if (mIsMmapSupported.has_value()) {
+        return mIsMmapSupported.value();
+    }
+    std::vector<AudioMMapPolicyInfo> mmapPolicyInfos;
+    if (!getMmapPolicyInfos(AudioMMapPolicyType::DEFAULT, &mmapPolicyInfos).isOk()) {
+        mIsMmapSupported = false;
+    } else {
+        mIsMmapSupported =
+                std::find_if(mmapPolicyInfos.begin(), mmapPolicyInfos.end(), [](const auto& info) {
+                    return info.mmapPolicy == AudioMMapPolicy::AUTO ||
+                           info.mmapPolicy == AudioMMapPolicy::ALWAYS;
+                }) != mmapPolicyInfos.end();
+    }
+    return mIsMmapSupported.value();
+}
+
 }  // namespace aidl::android::hardware::audio::core
