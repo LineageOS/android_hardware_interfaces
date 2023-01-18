@@ -152,15 +152,13 @@ class TetheroffloadAidlTestBase : public testing::TestWithParam<std::string> {
     void initOffload(const bool expectedResult) {
         unique_fd ufd1(netlinkSocket(kFd1Groups));
         if (ufd1.get() < 0) {
-            ALOGE("Unable to create conntrack sockets: %d/%s", errno, strerror(errno));
-            FAIL();
+            FAIL() << "Unable to create conntrack sockets: " << strerror(errno);
         }
         ndk::ScopedFileDescriptor fd1 = ndk::ScopedFileDescriptor(ufd1.release());
 
         unique_fd ufd2(netlinkSocket(kFd2Groups));
         if (ufd2.get() < 0) {
-            ALOGE("Unable to create conntrack sockets: %d/%s", errno, strerror(errno));
-            FAIL();
+            FAIL() << "Unable to create conntrack sockets: " << strerror(errno);
         }
         ndk::ScopedFileDescriptor fd2 = ndk::ScopedFileDescriptor(ufd2.release());
 
@@ -214,8 +212,7 @@ TEST_P(TetheroffloadAidlPreInitTest, TestInitOffloadInvalidFd1ReturnsError) {
     ndk::ScopedFileDescriptor fd1 = ndk::ScopedFileDescriptor(-1);
     unique_fd ufd2(netlinkSocket(kFd2Groups));
     if (ufd2.get() < 0) {
-        ALOGE("Unable to create conntrack sockets: %d/%s", errno, strerror(errno));
-        FAIL();
+        FAIL() << "Unable to create conntrack sockets: " << strerror(errno);
     }
     ndk::ScopedFileDescriptor fd2 = ndk::ScopedFileDescriptor(ufd2.release());
     mTetheringOffloadCallback = ndk::SharedRefBase::make<TetheringOffloadCallback>();
@@ -229,8 +226,7 @@ TEST_P(TetheroffloadAidlPreInitTest, TestInitOffloadInvalidFd1ReturnsError) {
 TEST_P(TetheroffloadAidlPreInitTest, TestInitOffloadInvalidFd2ReturnsError) {
     unique_fd ufd1(netlinkSocket(kFd1Groups));
     if (ufd1.get() < 0) {
-        ALOGE("Unable to create conntrack sockets: %d/%s", errno, strerror(errno));
-        FAIL();
+        FAIL() << "Unable to create conntrack sockets: " << strerror(errno);
     }
     ndk::ScopedFileDescriptor fd1 = ndk::ScopedFileDescriptor(ufd1.release());
     ndk::ScopedFileDescriptor fd2 = ndk::ScopedFileDescriptor(-1);
@@ -264,7 +260,8 @@ TEST_P(TetheroffloadAidlPreInitTest, AdditionalStopsWithInitReturnError) {
     const std::string v4Addr("192.0.0.2");
     const std::string v4Gw("192.0.0.1");
     const std::vector<std::string> v6Gws{std::string("fe80::db8:1"), std::string("fe80::db8:2")};
-    EXPECT_TRUE(mOffload->setUpstreamParameters(iface, v4Addr, v4Gw, v6Gws).isOk());
+    auto ret = mOffload->setUpstreamParameters(iface, v4Addr, v4Gw, v6Gws);
+    EXPECT_TRUE(ret.isOk()) << ret;
     if (!interfaceIsUp(TEST_IFACE)) {
         return;
     }
@@ -279,7 +276,7 @@ TEST_P(TetheroffloadAidlPreInitTest, AdditionalStopsWithInitReturnError) {
 // Check that calling setLocalPrefixes() without first having called initOffload() returns error.
 TEST_P(TetheroffloadAidlPreInitTest, SetLocalPrefixesWithoutInitReturnsError) {
     const std::vector<std::string> prefixes{std::string("2001:db8::/64")};
-    EXPECT_EQ(mOffload->setLocalPrefixes(prefixes).getExceptionCode(), EX_ILLEGAL_STATE);
+    EXPECT_EQ(EX_ILLEGAL_STATE, mOffload->setLocalPrefixes(prefixes).getExceptionCode());
 }
 
 // Check that calling getForwardedStats() without first having called initOffload()
@@ -287,9 +284,10 @@ TEST_P(TetheroffloadAidlPreInitTest, SetLocalPrefixesWithoutInitReturnsError) {
 TEST_P(TetheroffloadAidlPreInitTest, GetForwardedStatsWithoutInitReturnsZeroValues) {
     const std::string upstream(TEST_IFACE);
     ForwardedStats stats;
-    EXPECT_TRUE(mOffload->getForwardedStats(upstream, &stats).isOk());
-    EXPECT_EQ(stats.rxBytes, 0ULL);
-    EXPECT_EQ(stats.txBytes, 0ULL);
+    auto ret = mOffload->getForwardedStats(upstream, &stats);
+    EXPECT_TRUE(ret.isOk()) << ret;
+    EXPECT_EQ(0ULL, stats.rxBytes);
+    EXPECT_EQ(0ULL, stats.txBytes);
 }
 
 // Check that calling setDataWarningAndLimit() without first having called initOffload() returns
@@ -298,8 +296,8 @@ TEST_P(TetheroffloadAidlPreInitTest, SetDataWarningAndLimitWithoutInitReturnsErr
     const std::string upstream(TEST_IFACE);
     const int64_t warning = 5000LL;
     const int64_t limit = 5000LL;
-    EXPECT_EQ(mOffload->setDataWarningAndLimit(upstream, warning, limit).getExceptionCode(),
-              EX_ILLEGAL_STATE);
+    EXPECT_EQ(EX_ILLEGAL_STATE,
+              mOffload->setDataWarningAndLimit(upstream, warning, limit).getExceptionCode());
 }
 
 // Check that calling setUpstreamParameters() without first having called initOffload()
@@ -309,8 +307,8 @@ TEST_P(TetheroffloadAidlPreInitTest, SetUpstreamParametersWithoutInitReturnsErro
     const std::string v4Addr("192.0.2.0/24");
     const std::string v4Gw("192.0.2.1");
     const std::vector<std::string> v6Gws{std::string("fe80::db8:1")};
-    EXPECT_EQ(mOffload->setUpstreamParameters(iface, v4Addr, v4Gw, v6Gws).getExceptionCode(),
-              EX_ILLEGAL_STATE);
+    EXPECT_EQ(EX_ILLEGAL_STATE,
+              mOffload->setUpstreamParameters(iface, v4Addr, v4Gw, v6Gws).getExceptionCode());
 }
 
 // Check that calling addDownstream() with an IPv4 prefix without first having called
@@ -318,7 +316,7 @@ TEST_P(TetheroffloadAidlPreInitTest, SetUpstreamParametersWithoutInitReturnsErro
 TEST_P(TetheroffloadAidlPreInitTest, AddIPv4DownstreamWithoutInitReturnsError) {
     const std::string iface(TEST_IFACE);
     const std::string prefix("192.0.2.0/24");
-    EXPECT_EQ(mOffload->addDownstream(iface, prefix).getExceptionCode(), EX_ILLEGAL_STATE);
+    EXPECT_EQ(EX_ILLEGAL_STATE, mOffload->addDownstream(iface, prefix).getExceptionCode());
 }
 
 // Check that calling addDownstream() with an IPv6 prefix without first having called
@@ -326,7 +324,7 @@ TEST_P(TetheroffloadAidlPreInitTest, AddIPv4DownstreamWithoutInitReturnsError) {
 TEST_P(TetheroffloadAidlPreInitTest, AddIPv6DownstreamWithoutInitReturnsError) {
     const std::string iface(TEST_IFACE);
     const std::string prefix("2001:db8::/64");
-    EXPECT_EQ(mOffload->addDownstream(iface, prefix).getExceptionCode(), EX_ILLEGAL_STATE);
+    EXPECT_EQ(EX_ILLEGAL_STATE, mOffload->addDownstream(iface, prefix).getExceptionCode());
 }
 
 // Check that calling removeDownstream() with an IPv4 prefix without first having called
@@ -334,7 +332,7 @@ TEST_P(TetheroffloadAidlPreInitTest, AddIPv6DownstreamWithoutInitReturnsError) {
 TEST_P(TetheroffloadAidlPreInitTest, RemoveIPv4DownstreamWithoutInitReturnsError) {
     const std::string iface(TEST_IFACE);
     const std::string prefix("192.0.2.0/24");
-    EXPECT_EQ(mOffload->removeDownstream(iface, prefix).getExceptionCode(), EX_ILLEGAL_STATE);
+    EXPECT_EQ(EX_ILLEGAL_STATE, mOffload->removeDownstream(iface, prefix).getExceptionCode());
 }
 
 // Check that calling removeDownstream() with an IPv6 prefix without first having called
@@ -342,7 +340,7 @@ TEST_P(TetheroffloadAidlPreInitTest, RemoveIPv4DownstreamWithoutInitReturnsError
 TEST_P(TetheroffloadAidlPreInitTest, RemoveIPv6DownstreamWithoutInitReturnsError) {
     const std::string iface(TEST_IFACE);
     const std::string prefix("2001:db8::/64");
-    EXPECT_EQ(mOffload->removeDownstream(iface, prefix).getExceptionCode(), EX_ILLEGAL_STATE);
+    EXPECT_EQ(EX_ILLEGAL_STATE, mOffload->removeDownstream(iface, prefix).getExceptionCode());
 }
 
 /*
@@ -352,19 +350,20 @@ TEST_P(TetheroffloadAidlPreInitTest, RemoveIPv6DownstreamWithoutInitReturnsError
 // Test setLocalPrefixes() rejects an IPv4 address.
 TEST_P(TetheroffloadAidlGeneralTest, SetLocalPrefixesIPv4AddressFails) {
     const std::vector<std::string> prefixes{std::string("192.0.2.1")};
-    EXPECT_EQ(mOffload->setLocalPrefixes(prefixes).getExceptionCode(), EX_ILLEGAL_ARGUMENT);
+    EXPECT_EQ(EX_ILLEGAL_ARGUMENT, mOffload->setLocalPrefixes(prefixes).getExceptionCode());
 }
 
 // Test setLocalPrefixes() rejects an IPv6 address.
 TEST_P(TetheroffloadAidlGeneralTest, SetLocalPrefixesIPv6AddressFails) {
     const std::vector<std::string> prefixes{std::string("fe80::1")};
-    EXPECT_EQ(mOffload->setLocalPrefixes(prefixes).getExceptionCode(), EX_ILLEGAL_ARGUMENT);
+    EXPECT_EQ(EX_ILLEGAL_ARGUMENT, mOffload->setLocalPrefixes(prefixes).getExceptionCode());
 }
 
 // Test setLocalPrefixes() accepts both IPv4 and IPv6 prefixes.
 TEST_P(TetheroffloadAidlGeneralTest, SetLocalPrefixesIPv4v6PrefixesOk) {
     const std::vector<std::string> prefixes{std::string("192.0.2.0/24"), std::string("fe80::/64")};
-    EXPECT_TRUE(mOffload->setLocalPrefixes(prefixes).isOk());
+    auto ret = mOffload->setLocalPrefixes(prefixes);
+    EXPECT_TRUE(ret.isOk()) << ret;
 }
 
 // Test that setLocalPrefixes() fails given empty input. There is always
@@ -372,13 +371,13 @@ TEST_P(TetheroffloadAidlGeneralTest, SetLocalPrefixesIPv4v6PrefixesOk) {
 // we still apply {127.0.0.0/8, ::1/128, fe80::/64} here.
 TEST_P(TetheroffloadAidlGeneralTest, SetLocalPrefixesEmptyFails) {
     const std::vector<std::string> prefixes{};
-    EXPECT_EQ(mOffload->setLocalPrefixes(prefixes).getExceptionCode(), EX_ILLEGAL_ARGUMENT);
+    EXPECT_EQ(EX_ILLEGAL_ARGUMENT, mOffload->setLocalPrefixes(prefixes).getExceptionCode());
 }
 
 // Test setLocalPrefixes() fails on incorrectly formed input strings.
 TEST_P(TetheroffloadAidlGeneralTest, SetLocalPrefixesInvalidFails) {
     const std::vector<std::string> prefixes{std::string("192.0.2.0/24"), std::string("invalid")};
-    EXPECT_EQ(mOffload->setLocalPrefixes(prefixes).getExceptionCode(), EX_ILLEGAL_ARGUMENT);
+    EXPECT_EQ(EX_ILLEGAL_ARGUMENT, mOffload->setLocalPrefixes(prefixes).getExceptionCode());
 }
 
 /*
@@ -389,9 +388,10 @@ TEST_P(TetheroffloadAidlGeneralTest, SetLocalPrefixesInvalidFails) {
 TEST_P(TetheroffloadAidlGeneralTest, GetForwardedStatsInvalidUpstreamIface) {
     const std::string upstream("invalid");
     ForwardedStats stats;
-    EXPECT_TRUE(mOffload->getForwardedStats(upstream, &stats).isOk());
-    EXPECT_EQ(stats.rxBytes, 0ULL);
-    EXPECT_EQ(stats.txBytes, 0ULL);
+    auto ret = mOffload->getForwardedStats(upstream, &stats);
+    EXPECT_TRUE(ret.isOk()) << ret;
+    EXPECT_EQ(0ULL, stats.rxBytes);
+    EXPECT_EQ(0ULL, stats.txBytes);
 }
 
 // TEST_IFACE is presumed to exist on the device and be up. No packets
@@ -399,9 +399,10 @@ TEST_P(TetheroffloadAidlGeneralTest, GetForwardedStatsInvalidUpstreamIface) {
 TEST_P(TetheroffloadAidlGeneralTest, GetForwardedStatsDummyIface) {
     const std::string upstream(TEST_IFACE);
     ForwardedStats stats;
-    EXPECT_TRUE(mOffload->getForwardedStats(upstream, &stats).isOk());
-    EXPECT_EQ(stats.rxBytes, 0ULL);
-    EXPECT_EQ(stats.txBytes, 0ULL);
+    auto ret = mOffload->getForwardedStats(upstream, &stats);
+    EXPECT_TRUE(ret.isOk()) << ret;
+    EXPECT_EQ(0ULL, stats.rxBytes);
+    EXPECT_EQ(0ULL, stats.txBytes);
 }
 
 /*
@@ -413,8 +414,8 @@ TEST_P(TetheroffloadAidlGeneralTest, SetDataWarningAndLimitEmptyUpstreamIfaceFai
     const std::string upstream("");
     const int64_t warning = 12345LL;
     const int64_t limit = 67890LL;
-    EXPECT_THAT(mOffload->setDataWarningAndLimit(upstream, warning, limit).getExceptionCode(),
-                AnyOf(Eq(EX_ILLEGAL_ARGUMENT), Eq(EX_UNSUPPORTED_OPERATION)));
+    EXPECT_EQ(EX_ILLEGAL_ARGUMENT,
+              mOffload->setDataWarningAndLimit(upstream, warning, limit).getExceptionCode());
 }
 
 // TEST_IFACE is presumed to exist on the device and be up. No packets
@@ -423,8 +424,8 @@ TEST_P(TetheroffloadAidlGeneralTest, SetDataWarningAndLimitNonZeroOk) {
     const std::string upstream(TEST_IFACE);
     const int64_t warning = 4000LL;
     const int64_t limit = 5000LL;
-    EXPECT_THAT(mOffload->setDataWarningAndLimit(upstream, warning, limit).getExceptionCode(),
-                AnyOf(Eq(EX_NONE), Eq(EX_UNSUPPORTED_OPERATION)));
+    auto ret = mOffload->setDataWarningAndLimit(upstream, warning, limit);
+    EXPECT_TRUE(ret.isOk()) << ret;
 }
 
 // TEST_IFACE is presumed to exist on the device and be up. No packets
@@ -433,8 +434,8 @@ TEST_P(TetheroffloadAidlGeneralTest, SetDataWarningAndLimitZeroOk) {
     const std::string upstream(TEST_IFACE);
     const int64_t warning = 0LL;
     const int64_t limit = 0LL;
-    EXPECT_THAT(mOffload->setDataWarningAndLimit(upstream, warning, limit).getExceptionCode(),
-                AnyOf(Eq(EX_NONE), Eq(EX_UNSUPPORTED_OPERATION)));
+    auto ret = mOffload->setDataWarningAndLimit(upstream, warning, limit);
+    EXPECT_TRUE(ret.isOk()) << ret;
 }
 
 // TEST_IFACE is presumed to exist on the device and be up. No packets
@@ -443,7 +444,8 @@ TEST_P(TetheroffloadAidlGeneralTest, SetDataWarningAndLimitUnlimitedWarningOk) {
     const std::string upstream(TEST_IFACE);
     const int64_t warning = LLONG_MAX;
     const int64_t limit = 5000LL;
-    EXPECT_TRUE(mOffload->setDataWarningAndLimit(upstream, warning, limit).isOk());
+    auto ret = mOffload->setDataWarningAndLimit(upstream, warning, limit);
+    EXPECT_TRUE(ret.isOk()) << ret;
 }
 
 // Test that setDataWarningAndLimit() with negative thresholds fails.
@@ -451,8 +453,8 @@ TEST_P(TetheroffloadAidlGeneralTest, SetDataWarningAndLimitNegativeFails) {
     const std::string upstream(TEST_IFACE);
     const int64_t warning = -1LL;
     const int64_t limit = -1LL;
-    EXPECT_THAT(mOffload->setDataWarningAndLimit(upstream, warning, limit).getExceptionCode(),
-                AnyOf(Eq(EX_ILLEGAL_ARGUMENT), Eq(EX_UNSUPPORTED_OPERATION)));
+    EXPECT_EQ(EX_ILLEGAL_ARGUMENT,
+              mOffload->setDataWarningAndLimit(upstream, warning, limit).getExceptionCode());
 }
 
 /*
@@ -466,7 +468,8 @@ TEST_P(TetheroffloadAidlGeneralTest, SetUpstreamParametersIPv6OnlyOk) {
     const std::string v4Addr("");
     const std::string v4Gw("");
     const std::vector<std::string> v6Gws{std::string("fe80::db8:1"), std::string("fe80::db8:2")};
-    EXPECT_TRUE(mOffload->setUpstreamParameters(iface, v4Addr, v4Gw, v6Gws).isOk());
+    auto ret = mOffload->setUpstreamParameters(iface, v4Addr, v4Gw, v6Gws);
+    EXPECT_TRUE(ret.isOk()) << ret;
 }
 
 // TEST_IFACE is presumed to exist on the device and be up. No packets
@@ -476,7 +479,8 @@ TEST_P(TetheroffloadAidlGeneralTest, SetUpstreamParametersAlternateIPv6OnlyOk) {
     const std::string v4Addr("");
     const std::string v4Gw("");
     const std::vector<std::string> v6Gws{std::string("fe80::db8:1"), std::string("fe80::db8:3")};
-    EXPECT_TRUE(mOffload->setUpstreamParameters(iface, v4Addr, v4Gw, v6Gws).isOk());
+    auto ret = mOffload->setUpstreamParameters(iface, v4Addr, v4Gw, v6Gws);
+    EXPECT_TRUE(ret.isOk()) << ret;
 }
 
 // TEST_IFACE is presumed to exist on the device and be up. No packets
@@ -486,7 +490,8 @@ TEST_P(TetheroffloadAidlGeneralTest, SetUpstreamParametersIPv4OnlyOk) {
     const std::string v4Addr("192.0.2.2");
     const std::string v4Gw("192.0.2.1");
     const std::vector<std::string> v6Gws{};
-    EXPECT_TRUE(mOffload->setUpstreamParameters(iface, v4Addr, v4Gw, v6Gws).isOk());
+    auto ret = mOffload->setUpstreamParameters(iface, v4Addr, v4Gw, v6Gws);
+    EXPECT_TRUE(ret.isOk()) << ret;
 }
 
 // TEST_IFACE is presumed to exist on the device and be up. No packets
@@ -496,7 +501,8 @@ TEST_P(TetheroffloadAidlGeneralTest, SetUpstreamParametersIPv4v6Ok) {
     const std::string v4Addr("192.0.2.2");
     const std::string v4Gw("192.0.2.1");
     const std::vector<std::string> v6Gws{std::string("fe80::db8:1"), std::string("fe80::db8:2")};
-    EXPECT_TRUE(mOffload->setUpstreamParameters(iface, v4Addr, v4Gw, v6Gws).isOk());
+    auto ret = mOffload->setUpstreamParameters(iface, v4Addr, v4Gw, v6Gws);
+    EXPECT_TRUE(ret.isOk()) << ret;
 }
 
 // Test that setUpstreamParameters() fails when all parameters are empty.
@@ -505,8 +511,8 @@ TEST_P(TetheroffloadAidlGeneralTest, SetUpstreamParametersEmptyFails) {
     const std::string v4Addr("");
     const std::string v4Gw("");
     const std::vector<std::string> v6Gws{};
-    EXPECT_EQ(mOffload->setUpstreamParameters(iface, v4Addr, v4Gw, v6Gws).getExceptionCode(),
-              EX_ILLEGAL_ARGUMENT);
+    EXPECT_EQ(EX_ILLEGAL_ARGUMENT,
+              mOffload->setUpstreamParameters(iface, v4Addr, v4Gw, v6Gws).getExceptionCode());
 }
 
 // Test that setUpstreamParameters() fails when given empty or non-existent interface names.
@@ -517,8 +523,8 @@ TEST_P(TetheroffloadAidlGeneralTest, SetUpstreamParametersBogusIfaceFails) {
     for (const auto& bogus : {"", "invalid"}) {
         SCOPED_TRACE(testing::Message() << "upstream: " << bogus);
         const std::string iface(bogus);
-        EXPECT_EQ(mOffload->setUpstreamParameters(iface, v4Addr, v4Gw, v6Gws).getExceptionCode(),
-                  EX_ILLEGAL_ARGUMENT);
+        EXPECT_EQ(EX_ILLEGAL_ARGUMENT,
+                  mOffload->setUpstreamParameters(iface, v4Addr, v4Gw, v6Gws).getExceptionCode());
     }
 }
 
@@ -530,8 +536,8 @@ TEST_P(TetheroffloadAidlGeneralTest, SetUpstreamParametersInvalidIPv4AddrFails) 
     for (const auto& bogus : {"invalid", "192.0.2"}) {
         SCOPED_TRACE(testing::Message() << "v4addr: " << bogus);
         const std::string v4Addr(bogus);
-        EXPECT_EQ(mOffload->setUpstreamParameters(iface, v4Addr, v4Gw, v6Gws).getExceptionCode(),
-                  EX_ILLEGAL_ARGUMENT);
+        EXPECT_EQ(EX_ILLEGAL_ARGUMENT,
+                  mOffload->setUpstreamParameters(iface, v4Addr, v4Gw, v6Gws).getExceptionCode());
     }
 }
 
@@ -543,8 +549,8 @@ TEST_P(TetheroffloadAidlGeneralTest, SetUpstreamParametersInvalidIPv4GatewayFail
     for (const auto& bogus : {"invalid", "192.0.2"}) {
         SCOPED_TRACE(testing::Message() << "v4gateway: " << bogus);
         const std::string v4Gw(bogus);
-        EXPECT_EQ(mOffload->setUpstreamParameters(iface, v4Addr, v4Gw, v6Gws).getExceptionCode(),
-                  EX_ILLEGAL_ARGUMENT);
+        EXPECT_EQ(EX_ILLEGAL_ARGUMENT,
+                  mOffload->setUpstreamParameters(iface, v4Addr, v4Gw, v6Gws).getExceptionCode());
     }
 }
 
@@ -556,8 +562,8 @@ TEST_P(TetheroffloadAidlGeneralTest, SetUpstreamParametersBadIPv6GatewaysFail) {
     for (const auto& bogus : {"", "invalid", "fe80::bogus", "192.0.2.66"}) {
         SCOPED_TRACE(testing::Message() << "v6gateway: " << bogus);
         const std::vector<std::string> v6Gws{std::string("fe80::1"), std::string(bogus)};
-        EXPECT_EQ(mOffload->setUpstreamParameters(iface, v4Addr, v4Gw, v6Gws).getExceptionCode(),
-                  EX_ILLEGAL_ARGUMENT);
+        EXPECT_EQ(EX_ILLEGAL_ARGUMENT,
+                  mOffload->setUpstreamParameters(iface, v4Addr, v4Gw, v6Gws).getExceptionCode());
     }
 }
 
@@ -569,21 +575,23 @@ TEST_P(TetheroffloadAidlGeneralTest, SetUpstreamParametersBadIPv6GatewaysFail) {
 TEST_P(TetheroffloadAidlGeneralTest, AddDownstreamIPv4) {
     const std::string iface("dummy0");
     const std::string prefix("192.0.2.0/24");
-    EXPECT_TRUE(mOffload->addDownstream(iface, prefix).isOk());
+    auto ret = mOffload->addDownstream(iface, prefix);
+    EXPECT_TRUE(ret.isOk()) << ret;
 }
 
 // Test addDownstream() works given an IPv6 prefix.
 TEST_P(TetheroffloadAidlGeneralTest, AddDownstreamIPv6) {
     const std::string iface("dummy0");
     const std::string prefix("2001:db8::/64");
-    EXPECT_TRUE(mOffload->addDownstream(iface, prefix).isOk());
+    auto ret = mOffload->addDownstream(iface, prefix);
+    EXPECT_TRUE(ret.isOk()) << ret;
 }
 
 // Test addDownstream() fails given all empty parameters.
 TEST_P(TetheroffloadAidlGeneralTest, AddDownstreamEmptyFails) {
     const std::string iface("");
     const std::string prefix("");
-    EXPECT_EQ(mOffload->addDownstream(iface, prefix).getExceptionCode(), EX_ILLEGAL_ARGUMENT);
+    EXPECT_EQ(EX_ILLEGAL_ARGUMENT, mOffload->addDownstream(iface, prefix).getExceptionCode());
 }
 
 // Test addDownstream() fails given empty or non-existent interface names.
@@ -592,7 +600,7 @@ TEST_P(TetheroffloadAidlGeneralTest, AddDownstreamInvalidIfaceFails) {
     for (const auto& bogus : {"", "invalid"}) {
         SCOPED_TRACE(testing::Message() << "iface: " << bogus);
         const std::string iface(bogus);
-        EXPECT_EQ(mOffload->addDownstream(iface, prefix).getExceptionCode(), EX_ILLEGAL_ARGUMENT);
+        EXPECT_EQ(EX_ILLEGAL_ARGUMENT, mOffload->addDownstream(iface, prefix).getExceptionCode());
     }
 }
 
@@ -602,7 +610,7 @@ TEST_P(TetheroffloadAidlGeneralTest, AddDownstreamBogusPrefixFails) {
     for (const auto& bogus : {"", "192.0.2/24", "2001:db8/64"}) {
         SCOPED_TRACE(testing::Message() << "prefix: " << bogus);
         const std::string prefix(bogus);
-        EXPECT_EQ(mOffload->addDownstream(iface, prefix).getExceptionCode(), EX_ILLEGAL_ARGUMENT);
+        EXPECT_EQ(EX_ILLEGAL_ARGUMENT, mOffload->addDownstream(iface, prefix).getExceptionCode());
     }
 }
 
@@ -616,8 +624,10 @@ TEST_P(TetheroffloadAidlGeneralTest, RemoveDownstreamIPv4) {
     const std::string prefix("192.0.2.0/24");
     // First add the downstream, otherwise removeDownstream logic can reasonably
     // return error for downstreams not previously added.
-    EXPECT_TRUE(mOffload->addDownstream(iface, prefix).isOk());
-    EXPECT_TRUE(mOffload->removeDownstream(iface, prefix).isOk());
+    auto ret = mOffload->addDownstream(iface, prefix);
+    EXPECT_TRUE(ret.isOk()) << ret;
+    ret = mOffload->removeDownstream(iface, prefix);
+    EXPECT_TRUE(ret.isOk()) << ret;
 }
 
 // Test removeDownstream() works given an IPv6 prefix.
@@ -626,15 +636,17 @@ TEST_P(TetheroffloadAidlGeneralTest, RemoveDownstreamIPv6) {
     const std::string prefix("2001:db8::/64");
     // First add the downstream, otherwise removeDownstream logic can reasonably
     // return error for downstreams not previously added.
-    EXPECT_TRUE(mOffload->addDownstream(iface, prefix).isOk());
-    EXPECT_TRUE(mOffload->removeDownstream(iface, prefix).isOk());
+    auto ret = mOffload->addDownstream(iface, prefix);
+    EXPECT_TRUE(ret.isOk()) << ret;
+    ret = mOffload->removeDownstream(iface, prefix);
+    EXPECT_TRUE(ret.isOk()) << ret;
 }
 
 // Test removeDownstream() fails given all empty parameters.
 TEST_P(TetheroffloadAidlGeneralTest, RemoveDownstreamEmptyFails) {
     const std::string iface("");
     const std::string prefix("");
-    EXPECT_EQ(mOffload->removeDownstream(iface, prefix).getExceptionCode(), EX_ILLEGAL_ARGUMENT);
+    EXPECT_EQ(EX_ILLEGAL_ARGUMENT, mOffload->removeDownstream(iface, prefix).getExceptionCode());
 }
 
 // Test removeDownstream() fails given empty or non-existent interface names.
@@ -643,8 +655,8 @@ TEST_P(TetheroffloadAidlGeneralTest, RemoveDownstreamBogusIfaceFails) {
     for (const auto& bogus : {"", "invalid"}) {
         SCOPED_TRACE(testing::Message() << "iface: " << bogus);
         const std::string iface(bogus);
-        EXPECT_EQ(mOffload->removeDownstream(iface, prefix).getExceptionCode(),
-                  EX_ILLEGAL_ARGUMENT);
+        EXPECT_EQ(EX_ILLEGAL_ARGUMENT,
+                  mOffload->removeDownstream(iface, prefix).getExceptionCode());
     }
 }
 
@@ -654,8 +666,8 @@ TEST_P(TetheroffloadAidlGeneralTest, RemoveDownstreamBogusPrefixFails) {
     for (const auto& bogus : {"", "192.0.2/24", "2001:db8/64"}) {
         SCOPED_TRACE(testing::Message() << "prefix: " << bogus);
         const std::string prefix(bogus);
-        EXPECT_EQ(mOffload->removeDownstream(iface, prefix).getExceptionCode(),
-                  EX_ILLEGAL_ARGUMENT);
+        EXPECT_EQ(EX_ILLEGAL_ARGUMENT,
+                  mOffload->removeDownstream(iface, prefix).getExceptionCode());
     }
 }
 
