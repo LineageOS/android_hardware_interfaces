@@ -55,6 +55,7 @@ enum Capability {
      * For this capability to be worthwhile the device implementation of
      * presentDisplay should fail as fast as possible in the case a
      * validateDisplay step is needed.
+     * @deprecated - enabled by default.
      */
     SKIP_VALIDATE = 4,
 
