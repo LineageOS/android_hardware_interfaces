@@ -34,10 +34,10 @@
 package android.hardware.radio.sap;
 @Backing(type="int") @VintfStability
 enum SapStatus {
-  UNKNOWN_ERROR = 0,
-  CARD_RESET = 1,
-  CARD_NOT_ACCESSIBLE = 2,
-  CARD_REMOVED = 3,
-  CARD_INSERTED = 4,
-  RECOVERED = 5,
+  UNKNOWN_ERROR,
+  CARD_RESET,
+  CARD_NOT_ACCESSIBLE,
+  CARD_REMOVED,
+  CARD_INSERTED,
+  RECOVERED,
 }

@@ -34,7 +34,7 @@
 package android.hardware.radio.modem;
 @Backing(type="int") @JavaDerive(toString=true) @VintfStability
 enum DeviceStateType {
-  POWER_SAVE_MODE = 0,
-  CHARGING_STATE = 1,
-  LOW_DATA_EXPECTED = 2,
+  POWER_SAVE_MODE,
+  CHARGING_STATE,
+  LOW_DATA_EXPECTED,
 }

@@ -34,7 +34,7 @@
 package android.hardware.radio.ims;
 @Backing(type="int") @JavaDerive(toString=true) @VintfStability
 enum SuggestedAction {
-  NONE = 0,
-  TRIGGER_PLMN_BLOCK = 1,
-  TRIGGER_PLMN_BLOCK_WITH_TIMEOUT = 2,
+  NONE,
+  TRIGGER_PLMN_BLOCK,
+  TRIGGER_PLMN_BLOCK_WITH_TIMEOUT,
 }

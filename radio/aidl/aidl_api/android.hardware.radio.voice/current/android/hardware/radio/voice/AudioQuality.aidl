@@ -34,14 +34,14 @@
 package android.hardware.radio.voice;
 @Backing(type="int") @JavaDerive(toString=true) @VintfStability
 enum AudioQuality {
-  UNSPECIFIED = 0,
-  AMR = 1,
-  AMR_WB = 2,
-  GSM_EFR = 3,
-  GSM_FR = 4,
-  GSM_HR = 5,
-  EVRC = 6,
-  EVRC_B = 7,
-  EVRC_WB = 8,
-  EVRC_NW = 9,
+  UNSPECIFIED,
+  AMR,
+  AMR_WB,
+  GSM_EFR,
+  GSM_FR,
+  GSM_HR,
+  EVRC,
+  EVRC_B,
+  EVRC_WB,
+  EVRC_NW,
 }

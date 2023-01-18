@@ -34,6 +34,6 @@
 package android.hardware.radio.ims;
 @Backing(type="int") @JavaDerive(toString=true) @VintfStability
 enum ImsRegistrationState {
-  NOT_REGISTERED = 0,
-  REGISTERED = 1,
+  NOT_REGISTERED,
+  REGISTERED,
 }

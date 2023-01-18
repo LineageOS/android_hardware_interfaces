@@ -34,9 +34,9 @@
 package android.hardware.radio.ims.media;
 @Backing(type="int") @VintfStability
 enum CodecType {
-  AMR = 1,
-  AMR_WB = 2,
-  EVS = 4,
-  PCMA = 8,
-  PCMU = 16,
+  AMR = (1 << 0),
+  AMR_WB = (1 << 1),
+  EVS = (1 << 2),
+  PCMA = (1 << 3),
+  PCMU = (1 << 4),
 }

@@ -72,13 +72,13 @@ parcelable StkCcUnsolSsResult {
   const int TELESERVICE_TYPE_SMS_SERVICES = 4;
   const int TELESERVICE_TYPE_ALL_TELESERVICES_EXCEPT_SMS = 5;
   const int SUPP_SERVICE_CLASS_NONE = 0;
-  const int SUPP_SERVICE_CLASS_VOICE = 1;
-  const int SUPP_SERVICE_CLASS_DATA = 2;
-  const int SUPP_SERVICE_CLASS_FAX = 4;
-  const int SUPP_SERVICE_CLASS_SMS = 8;
-  const int SUPP_SERVICE_CLASS_DATA_SYNC = 16;
-  const int SUPP_SERVICE_CLASS_DATA_ASYNC = 32;
-  const int SUPP_SERVICE_CLASS_PACKET = 64;
-  const int SUPP_SERVICE_CLASS_PAD = 128;
-  const int SUPP_SERVICE_CLASS_MAX = 128;
+  const int SUPP_SERVICE_CLASS_VOICE = (1 << 0);
+  const int SUPP_SERVICE_CLASS_DATA = (1 << 1);
+  const int SUPP_SERVICE_CLASS_FAX = (1 << 2);
+  const int SUPP_SERVICE_CLASS_SMS = (1 << 3);
+  const int SUPP_SERVICE_CLASS_DATA_SYNC = (1 << 4);
+  const int SUPP_SERVICE_CLASS_DATA_ASYNC = (1 << 5);
+  const int SUPP_SERVICE_CLASS_PACKET = (1 << 6);
+  const int SUPP_SERVICE_CLASS_PAD = (1 << 7);
+  const int SUPP_SERVICE_CLASS_MAX = (1 << 7);
 }

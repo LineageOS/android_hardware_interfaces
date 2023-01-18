@@ -34,6 +34,6 @@
 package android.hardware.radio;
 @Backing(type="int") @JavaDerive(toString=true) @VintfStability
 enum RadioTechnologyFamily {
-  THREE_GPP = 0,
-  THREE_GPP2 = 1,
+  THREE_GPP,
+  THREE_GPP2,
 }

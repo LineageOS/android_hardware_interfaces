@@ -34,7 +34,7 @@
 package android.hardware.radio.network;
 @Backing(type="int") @JavaDerive(toString=true) @VintfStability
 enum CdmaRoamingType {
-  HOME_NETWORK = 0,
-  AFFILIATED_ROAM = 1,
-  ANY_ROAM = 2,
+  HOME_NETWORK,
+  AFFILIATED_ROAM,
+  ANY_ROAM,
 }

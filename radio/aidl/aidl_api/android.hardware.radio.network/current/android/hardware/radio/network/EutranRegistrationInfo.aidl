@@ -38,11 +38,11 @@ parcelable EutranRegistrationInfo {
   android.hardware.radio.network.NrIndicators nrIndicators;
   android.hardware.radio.network.EutranRegistrationInfo.AttachResultType lteAttachResultType;
   int extraInfo;
-  const int EXTRA_CSFB_NOT_PREFERRED = 1;
-  const int EXTRA_SMS_ONLY = 2;
+  const int EXTRA_CSFB_NOT_PREFERRED = (1 << 0);
+  const int EXTRA_SMS_ONLY = (1 << 1);
   enum AttachResultType {
-    NONE = 0,
-    EPS_ONLY = 1,
-    COMBINED = 2,
+    NONE,
+    EPS_ONLY,
+    COMBINED,
   }
 }

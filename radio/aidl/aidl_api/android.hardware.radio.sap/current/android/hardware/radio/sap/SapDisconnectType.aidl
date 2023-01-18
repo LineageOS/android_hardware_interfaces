@@ -34,6 +34,6 @@
 package android.hardware.radio.sap;
 @Backing(type="int") @VintfStability
 enum SapDisconnectType {
-  GRACEFUL = 0,
-  IMMEDIATE = 1,
+  GRACEFUL,
+  IMMEDIATE,
 }

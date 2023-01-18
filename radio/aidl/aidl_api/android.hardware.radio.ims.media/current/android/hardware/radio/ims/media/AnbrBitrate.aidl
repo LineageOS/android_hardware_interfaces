@@ -36,5 +36,5 @@ package android.hardware.radio.ims.media;
 parcelable AnbrBitrate {
   int uplinkBps;
   int downlinkBps;
-  const int INVALID_ANBR_BITRATE = -1;
+  const int INVALID_ANBR_BITRATE = (-1);
 }
