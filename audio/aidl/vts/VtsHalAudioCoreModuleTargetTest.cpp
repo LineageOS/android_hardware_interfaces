@@ -1894,9 +1894,9 @@ TEST_P(AudioCoreModule, AddRemoveEffectInvalidArguments) {
 TEST_P(AudioCoreModule, GetMmapPolicyInfos) {
     ASSERT_NO_FATAL_FAILURE(SetUpModuleConfig());
     const std::vector<AudioPort> mmapOutMixPorts =
-            moduleConfig->getMmapOutMixPorts(false /*attachedOnly*/, false /*singlePort*/);
+            moduleConfig->getMmapOutMixPorts(true /*attachedOnly*/, false /*singlePort*/);
     const std::vector<AudioPort> mmapInMixPorts =
-            moduleConfig->getMmapInMixPorts(false /*attachedOnly*/, false /*singlePort*/);
+            moduleConfig->getMmapInMixPorts(true /*attachedOnly*/, false /*singlePort*/);
     const bool mmapSupported = (!mmapOutMixPorts.empty() || !mmapInMixPorts.empty());
     for (const auto mmapPolicyType :
          {AudioMMapPolicyType::DEFAULT, AudioMMapPolicyType::EXCLUSIVE}) {
@@ -2344,7 +2344,7 @@ class AudioStream : public AudioCoreModule {
 
     void HwGainHwVolume() {
         const auto ports =
-                moduleConfig->getMixPorts(IOTraits<Stream>::is_input, false /*attachedOnly*/);
+                moduleConfig->getMixPorts(IOTraits<Stream>::is_input, true /*attachedOnly*/);
         if (ports.empty()) {
             GTEST_SKIP() << "No mix ports";
         }
@@ -2383,7 +2383,7 @@ class AudioStream : public AudioCoreModule {
     // it as an invalid argument, or say that offloaded effects are not supported.
     void AddRemoveEffectInvalidArguments() {
         const auto ports =
-                moduleConfig->getMixPorts(IOTraits<Stream>::is_input, false /*attachedOnly*/);
+                moduleConfig->getMixPorts(IOTraits<Stream>::is_input, true /*attachedOnly*/);
         if (ports.empty()) {
             GTEST_SKIP() << "No mix ports";
         }
@@ -2664,7 +2664,7 @@ TEST_P(AudioStreamOut, RequireAsyncCallback) {
 }
 
 TEST_P(AudioStreamOut, AudioDescriptionMixLevel) {
-    const auto ports = moduleConfig->getOutputMixPorts(false /*attachedOnly*/);
+    const auto ports = moduleConfig->getOutputMixPorts(true /*attachedOnly*/);
     if (ports.empty()) {
         GTEST_SKIP() << "No output mix ports";
     }
@@ -2692,7 +2692,7 @@ TEST_P(AudioStreamOut, AudioDescriptionMixLevel) {
 }
 
 TEST_P(AudioStreamOut, DualMonoMode) {
-    const auto ports = moduleConfig->getOutputMixPorts(false /*attachedOnly*/);
+    const auto ports = moduleConfig->getOutputMixPorts(true /*attachedOnly*/);
     if (ports.empty()) {
         GTEST_SKIP() << "No output mix ports";
     }
@@ -2716,7 +2716,7 @@ TEST_P(AudioStreamOut, DualMonoMode) {
 }
 
 TEST_P(AudioStreamOut, LatencyMode) {
-    const auto ports = moduleConfig->getOutputMixPorts(false /*attachedOnly*/);
+    const auto ports = moduleConfig->getOutputMixPorts(true /*attachedOnly*/);
     if (ports.empty()) {
         GTEST_SKIP() << "No output mix ports";
     }
