@@ -3971,6 +3971,28 @@ enum VehicleProperty {
             0x1017 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
 
     /**
+     * Hands on detection (HOD) warning.
+     *
+     * Returns whether a warning is being sent to the driver for having their hands off the wheel
+     * for too long a duration.
+     *
+     * Generally, this property should return a valid state defined in HandsOnDetectionWarning or
+     * ErrorState. For example, if the feature is not available due to some temporary state, that
+     * information should be conveyed through an ErrorState.
+     *
+     * For the global area ID (0), the VehicleAreaConfig#supportedEnumValues array must be defined
+     * unless all states of both HandsOnDetectionWarning (including OTHER, which is not recommended)
+     * and ErrorState are supported.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     * @data_enum HandsOnDetectionWarning
+     * @data_enum ErrorState
+     */
+    HANDS_ON_DETECTION_WARNING =
+            0x1018 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
+
+    /**
      * Enable or disable driver attention monitoring.
      *
      * Set true to enable driver attention monitoring and false to disable driver attention

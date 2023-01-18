@@ -37,6 +37,7 @@
 #include <aidl/android/hardware/automotive/vehicle/GetValueResults.h>
 #include <aidl/android/hardware/automotive/vehicle/GsrComplianceRequirementType.h>
 #include <aidl/android/hardware/automotive/vehicle/HandsOnDetectionDriverState.h>
+#include <aidl/android/hardware/automotive/vehicle/HandsOnDetectionWarning.h>
 #include <aidl/android/hardware/automotive/vehicle/LaneCenteringAssistCommand.h>
 #include <aidl/android/hardware/automotive/vehicle/LaneCenteringAssistState.h>
 #include <aidl/android/hardware/automotive/vehicle/LaneDepartureWarningState.h>
