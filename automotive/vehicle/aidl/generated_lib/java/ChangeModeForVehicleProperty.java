@@ -230,6 +230,7 @@ public final class ChangeModeForVehicleProperty {
         Map.entry(VehicleProperty.SUPPORTED_PROPERTY_IDS, VehiclePropertyChangeMode.STATIC),
         Map.entry(VehicleProperty.SHUTDOWN_REQUEST, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.AUTOMATIC_EMERGENCY_BRAKING_ENABLED, VehiclePropertyChangeMode.ON_CHANGE),
+        Map.entry(VehicleProperty.AUTOMATIC_EMERGENCY_BRAKING_STATE, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.FORWARD_COLLISION_WARNING_ENABLED, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.BLIND_SPOT_WARNING_ENABLED, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.LANE_DEPARTURE_WARNING_ENABLED, VehiclePropertyChangeMode.ON_CHANGE),

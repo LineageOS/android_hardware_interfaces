@@ -35,7 +35,9 @@ namespace vehicle {
 namespace jsonconfigloader_impl {
 
 using ::aidl::android::hardware::automotive::vehicle::AccessForVehicleProperty;
+using ::aidl::android::hardware::automotive::vehicle::AutomaticEmergencyBrakingState;
 using ::aidl::android::hardware::automotive::vehicle::ChangeModeForVehicleProperty;
+using ::aidl::android::hardware::automotive::vehicle::ErrorState;
 using ::aidl::android::hardware::automotive::vehicle::EvConnectorType;
 using ::aidl::android::hardware::automotive::vehicle::EvsServiceState;
 using ::aidl::android::hardware::automotive::vehicle::EvsServiceType;
@@ -207,6 +209,9 @@ JsonValueParser::JsonValueParser() {
     mConstantParsersByType["VehicleIgnitionState"] =
             std::make_unique<ConstantParser<VehicleIgnitionState>>();
     mConstantParsersByType["FuelType"] = std::make_unique<ConstantParser<FuelType>>();
+    mConstantParsersByType["ErrorState"] = std::make_unique<ConstantParser<ErrorState>>();
+    mConstantParsersByType["AutomaticEmergencyBrakingState"] =
+            std::make_unique<ConstantParser<AutomaticEmergencyBrakingState>>();
     mConstantParsersByType["Constants"] = std::make_unique<LocalVariableParser>();
 }
 
