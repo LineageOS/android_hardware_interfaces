@@ -163,6 +163,11 @@ class VtsComposerClient {
 
     std::pair<ScopedAStatus, int32_t> getPreferredBootDisplayConfig(int64_t display);
 
+    std::pair<ScopedAStatus, std::vector<common::HdrConversionCapability>>
+    getHdrConversionCapabilities();
+
+    ScopedAStatus setHdrConversionStrategy(const common::HdrConversionStrategy& conversionStrategy);
+
     std::pair<ScopedAStatus, common::Transform> getDisplayPhysicalOrientation(int64_t display);
 
     ScopedAStatus setIdleTimerEnabled(int64_t display, int32_t timeoutMs);

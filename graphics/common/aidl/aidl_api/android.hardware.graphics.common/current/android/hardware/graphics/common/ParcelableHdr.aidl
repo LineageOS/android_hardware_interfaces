@@ -1,11 +1,11 @@
-/*
- * Copyright 2021 The Android Open Source Project
+/**
+ * Copyright (c) 2023, The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -31,24 +31,8 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.tv.tuner;
-/* @hide */
-@SuppressWarnings(value={"out-array"}) @VintfStability
-interface ITuner {
-  int[] getFrontendIds();
-  android.hardware.tv.tuner.IFrontend openFrontendById(in int frontendId);
-  android.hardware.tv.tuner.IDemux openDemux(out int[] demuxId);
-  android.hardware.tv.tuner.DemuxCapabilities getDemuxCaps();
-  android.hardware.tv.tuner.IDescrambler openDescrambler();
-  android.hardware.tv.tuner.FrontendInfo getFrontendInfo(in int frontendId);
-  int[] getLnbIds();
-  android.hardware.tv.tuner.ILnb openLnbById(in int lnbId);
-  android.hardware.tv.tuner.ILnb openLnbByName(in String lnbName, out int[] lnbId);
-  void setLna(in boolean bEnable);
-  void setMaxNumberOfFrontends(in android.hardware.tv.tuner.FrontendType frontendType, in int maxNumber);
-  int getMaxNumberOfFrontends(in android.hardware.tv.tuner.FrontendType frontendType);
-  boolean isLnaSupported();
-  int[] getDemuxIds();
-  android.hardware.tv.tuner.IDemux openDemuxById(in int demuxId);
-  android.hardware.tv.tuner.DemuxInfo getDemuxInfo(in int demuxId);
+package android.hardware.graphics.common;
+@VintfStability
+parcelable ParcelableHdr {
+  android.hardware.graphics.common.Hdr hdr;
 }

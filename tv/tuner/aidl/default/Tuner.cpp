@@ -17,6 +17,7 @@
 //#define LOG_NDEBUG 0
 #define LOG_TAG "android.hardware.tv.tuner-service.example-Tuner"
 
+#include <aidl/android/hardware/tv/tuner/DemuxFilterMainType.h>
 #include <aidl/android/hardware/tv/tuner/Result.h>
 #include <utils/Log.h>
 
@@ -60,6 +61,16 @@ void Tuner::init() {
     mMaxUsableFrontends[FrontendType::ISDBS3] = 1;
     mMaxUsableFrontends[FrontendType::DTMB] = 1;
 
+    mDemuxes[0] =
+            ndk::SharedRefBase::make<Demux>(0, (static_cast<int32_t>(DemuxFilterMainType::TS) |
+                                                static_cast<int32_t>(DemuxFilterMainType::MMTP) |
+                                                static_cast<int32_t>(DemuxFilterMainType::TLV)));
+    mDemuxes[1] =
+            ndk::SharedRefBase::make<Demux>(1, (static_cast<int32_t>(DemuxFilterMainType::MMTP) |
+                                                static_cast<int32_t>(DemuxFilterMainType::TLV)));
+    mDemuxes[2] = ndk::SharedRefBase::make<Demux>(2, static_cast<int32_t>(DemuxFilterMainType::IP));
+    mDemuxes[3] = ndk::SharedRefBase::make<Demux>(3, static_cast<int32_t>(DemuxFilterMainType::TS));
+
     mLnbs.resize(2);
     mLnbs[0] = ndk::SharedRefBase::make<Lnb>(0);
     mLnbs[1] = ndk::SharedRefBase::make<Lnb>(1);
@@ -75,6 +86,28 @@ Tuner::~Tuner() {}
         (*_aidl_return)[i] = mFrontends[i]->getFrontendId();
     }
 
+    return ::ndk::ScopedAStatus::ok();
+}
+
+::ndk::ScopedAStatus Tuner::getDemuxInfo(int32_t in_demuxId, DemuxInfo* _aidl_return) {
+    if (mDemuxes.find(in_demuxId) == mDemuxes.end()) {
+        return ::ndk::ScopedAStatus::fromServiceSpecificError(
+                static_cast<int32_t>(Result::INVALID_ARGUMENT));
+    } else {
+        mDemuxes[in_demuxId]->getDemuxInfo(_aidl_return);
+        return ::ndk::ScopedAStatus::ok();
+    }
+}
+
+::ndk::ScopedAStatus Tuner::getDemuxIds(std::vector<int32_t>* _aidl_return) {
+    ALOGV("%s", __FUNCTION__);
+
+    int numOfDemuxes = mDemuxes.size();
+    _aidl_return->resize(numOfDemuxes);
+    int i = 0;
+    for (auto e = mDemuxes.begin(); e != mDemuxes.end(); e++) {
+        (*_aidl_return)[i++] = e->first;
+    }
     return ::ndk::ScopedAStatus::ok();
 }
 
@@ -94,17 +127,49 @@ Tuner::~Tuner() {}
     return ::ndk::ScopedAStatus::ok();
 }
 
+::ndk::ScopedAStatus Tuner::openDemuxById(int32_t in_demuxId,
+                                          std::shared_ptr<IDemux>* _aidl_return) {
+    ALOGV("%s", __FUNCTION__);
+
+    if (mDemuxes.find(in_demuxId) == mDemuxes.end()) {
+        ALOGW("[   WARN   ] Demux with id %d isn't available", in_demuxId);
+        *_aidl_return = nullptr;
+        return ::ndk::ScopedAStatus::fromServiceSpecificError(
+                static_cast<int32_t>(Result::INVALID_ARGUMENT));
+    }
+
+    if (mDemuxes[in_demuxId]->isInUse()) {
+        return ::ndk::ScopedAStatus::fromServiceSpecificError(
+                static_cast<int32_t>(Result::UNAVAILABLE));
+    } else {
+        mDemuxes[in_demuxId]->setTunerService(this->ref<Tuner>());
+        mDemuxes[in_demuxId]->setInUse(true);
+
+        *_aidl_return = mDemuxes[in_demuxId];
+        return ::ndk::ScopedAStatus::ok();
+    }
+}
+
 ::ndk::ScopedAStatus Tuner::openDemux(std::vector<int32_t>* out_demuxId,
                                       std::shared_ptr<IDemux>* _aidl_return) {
     ALOGV("%s", __FUNCTION__);
 
-    mLastUsedId += 1;
-    mDemuxes[mLastUsedId] = ndk::SharedRefBase::make<Demux>(mLastUsedId, this->ref<Tuner>());
+    bool found = false;
+    int32_t demuxId = 0;
+    for (auto e = mDemuxes.begin(); e != mDemuxes.end(); e++) {
+        if (!e->second->isInUse()) {
+            found = true;
+            demuxId = e->second->getDemuxId();
+        }
+    }
 
-    out_demuxId->push_back(mLastUsedId);
-    *_aidl_return = mDemuxes[mLastUsedId];
-
-    return ::ndk::ScopedAStatus::ok();
+    if (found) {
+        out_demuxId->push_back(demuxId);
+        return openDemuxById(demuxId, _aidl_return);
+    } else {
+        return ::ndk::ScopedAStatus::fromServiceSpecificError(
+                static_cast<int32_t>(Result::UNAVAILABLE));
+    }
 }
 
 ::ndk::ScopedAStatus Tuner::getDemuxCaps(DemuxCapabilities* _aidl_return) {
@@ -114,6 +179,18 @@ Tuner::~Tuner() {}
     _aidl_return->linkCaps = {0x00, 0x00, 0x02, 0x00, 0x00};
     // Support time filter testing
     _aidl_return->bTimeFilter = true;
+
+    // set filterCaps as the bitwize OR of all the demux' caps
+    std::vector<int32_t> demuxIds;
+    getDemuxIds(&demuxIds);
+    int32_t filterCaps = 0;
+
+    for (int i = 0; i < demuxIds.size(); i++) {
+        DemuxInfo demuxInfo;
+        getDemuxInfo(demuxIds[i], &demuxInfo);
+        filterCaps |= demuxInfo.filterTypes;
+    }
+    _aidl_return->filterCaps = filterCaps;
 
     return ::ndk::ScopedAStatus::ok();
 }
@@ -250,13 +327,13 @@ void Tuner::removeDemux(int32_t demuxId) {
             break;
         }
     }
-    mDemuxes.erase(demuxId);
+    mDemuxes[demuxId]->setInUse(false);
 }
 
 void Tuner::removeFrontend(int32_t frontendId) {
     map<int32_t, int32_t>::iterator it = mFrontendToDemux.find(frontendId);
     if (it != mFrontendToDemux.end()) {
-        mDemuxes.erase(it->second);
+        mDemuxes[it->second]->setInUse(false);
     }
     mFrontendToDemux.erase(frontendId);
 }
