@@ -136,8 +136,8 @@ static aidl::NrQos toAidl(const V1_6::NrQos& qos) {
             .fiveQi = qos.fiveQi,
             .downlink = toAidl(qos.downlink),
             .uplink = toAidl(qos.uplink),
-            .qosFlowIdentifier = static_cast<int8_t>(qos.qfi),
-            .averagingWindowMs = qos.averagingWindowMs,
+            .qfi = static_cast<int8_t>(qos.qfi),
+            .averagingWindowMillis = qos.averagingWindowMs,
     };
 }
 
