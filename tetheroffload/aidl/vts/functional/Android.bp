@@ -19,6 +19,7 @@ cc_test {
         "libgmock_ndk",
     ],
     test_suites: [
+        "general-tests",
         "vts",
     ],
 }
