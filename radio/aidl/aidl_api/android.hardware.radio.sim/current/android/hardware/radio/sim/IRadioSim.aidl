@@ -46,6 +46,9 @@ interface IRadioSim {
   oneway void getImsiForApp(in int serial, in String aid);
   oneway void getSimPhonebookCapacity(in int serial);
   oneway void getSimPhonebookRecords(in int serial);
+  /**
+   * @deprecated use iccCloseLogicalChannelWithSessionInfo instead.
+   */
   oneway void iccCloseLogicalChannel(in int serial, in int channelId);
   oneway void iccIoForApp(in int serial, in android.hardware.radio.sim.IccIo iccIo);
   oneway void iccOpenLogicalChannel(in int serial, in String aid, in int p2);
@@ -70,4 +73,5 @@ interface IRadioSim {
   oneway void supplyIccPukForApp(in int serial, in String puk, in String pin, in String aid);
   oneway void supplySimDepersonalization(in int serial, in android.hardware.radio.sim.PersoSubstate persoType, in String controlKey);
   oneway void updateSimPhonebookRecords(in int serial, in android.hardware.radio.sim.PhonebookRecordInfo recordInfo);
+  oneway void iccCloseLogicalChannelWithSessionInfo(in int serial, in android.hardware.radio.sim.SessionInfo sessionInfo);
 }

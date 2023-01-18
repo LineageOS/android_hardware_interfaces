@@ -118,6 +118,13 @@ ndk::ScopedAStatus RadioSimResponse::iccCloseLogicalChannelResponse(const RadioR
     return ndk::ScopedAStatus::ok();
 }
 
+ndk::ScopedAStatus RadioSimResponse::iccCloseLogicalChannelWithSessionInfoResponse(
+        const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_sim.notify(info.serial);
+    return ndk::ScopedAStatus::ok();
+}
+
 ndk::ScopedAStatus RadioSimResponse::iccIoForAppResponse(const RadioResponseInfo& info,
                                                          const IccIoResult& /*iccIo*/) {
     rspInfo = info;
