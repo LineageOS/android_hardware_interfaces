@@ -291,14 +291,14 @@ TEST_P(KeyBlobUpgradeTest, CreateKeyBlobsBefore) {
                                 .Authorization(TAG_NO_AUTH_REQUIRED)},
             {"hmac-key", AuthorizationSetBuilder()
                                  .HmacKey(128)
-                                 .Digest(Digest::SHA1)
+                                 .Digest(Digest::SHA_2_256)
                                  .Authorization(TAG_MIN_MAC_LENGTH, 128)
                                  .Authorization(TAG_NO_AUTH_REQUIRED)},
             {"rsa-key", AuthorizationSetBuilder()
                                 .RsaEncryptionKey(2048, 65537)
                                 .Authorization(TAG_PURPOSE, KeyPurpose::SIGN)
                                 .Digest(Digest::NONE)
-                                .Digest(Digest::SHA1)
+                                .Digest(Digest::SHA_2_256)
                                 .Padding(PaddingMode::NONE)
                                 .Authorization(TAG_NO_AUTH_REQUIRED)
                                 .SetDefaultValidity()},
@@ -308,7 +308,7 @@ TEST_P(KeyBlobUpgradeTest, CreateKeyBlobsBefore) {
                             .EcdsaSigningKey(EcCurve::P_256)
                             .Authorization(TAG_PURPOSE, KeyPurpose::AGREE_KEY)
                             .Digest(Digest::NONE)
-                            .Digest(Digest::SHA1)
+                            .Digest(Digest::SHA_2_256)
                             .Authorization(TAG_NO_AUTH_REQUIRED)
                             .SetDefaultValidity(),
             },
@@ -465,7 +465,7 @@ TEST_P(KeyBlobUpgradeTest, UseKeyBlobsBeforeOrAfter) {
                 string plaintext = DecryptMessage(keyblob, ciphertext, builder);
                 EXPECT_EQ(message, plaintext);
             } else if (name.find("hmac-key") != std::string::npos) {
-                builder.Digest(Digest::SHA1);
+                builder.Digest(Digest::SHA_2_256);
                 auto sign_builder = builder;
                 sign_builder.Authorization(TAG_MAC_LENGTH, 128);
                 string tag = SignMessage(keyblob, message, sign_builder);
@@ -475,7 +475,7 @@ TEST_P(KeyBlobUpgradeTest, UseKeyBlobsBeforeOrAfter) {
                 string signature = SignMessage(keyblob, message, builder);
                 LocalVerifyMessage(cert, message, signature, builder);
             } else if (name.find("p256-key") != std::string::npos) {
-                builder.Digest(Digest::SHA1);
+                builder.Digest(Digest::SHA_2_256);
                 string signature = SignMessage(keyblob, message, builder);
                 LocalVerifyMessage(cert, message, signature, builder);
             } else if (name.find("ed25519-key") != std::string::npos) {
