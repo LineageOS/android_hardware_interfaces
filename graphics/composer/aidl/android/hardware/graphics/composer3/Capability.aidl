@@ -66,4 +66,12 @@ enum Capability {
      * @see IComposerClient.getPreferredBootDisplayConfig
      */
     BOOT_DISPLAY_CONFIG = 5,
+
+    /**
+     * Specifies that the device supports HDR output conversion.
+     *
+     * @see IComposerClient.getHdrConversionCapabilities
+     * @see IComposerClient.setHdrConversionStrategy
+     */
+    HDR_OUTPUT_CONVERSION_CONFIG = 6,
 }

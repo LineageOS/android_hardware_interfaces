@@ -337,6 +337,18 @@ std::pair<ScopedAStatus, int32_t> VtsComposerClient::getPreferredBootDisplayConf
     return {mComposerClient->getPreferredBootDisplayConfig(display, &outConfig), outConfig};
 }
 
+std::pair<ScopedAStatus, std::vector<common::HdrConversionCapability>>
+VtsComposerClient::getHdrConversionCapabilities() {
+    std::vector<common::HdrConversionCapability> hdrConversionCapability;
+    return {mComposerClient->getHdrConversionCapabilities(&hdrConversionCapability),
+            hdrConversionCapability};
+}
+
+ScopedAStatus VtsComposerClient::setHdrConversionStrategy(
+        const common::HdrConversionStrategy& conversionStrategy) {
+    return mComposerClient->setHdrConversionStrategy(conversionStrategy);
+}
+
 std::pair<ScopedAStatus, common::Transform> VtsComposerClient::getDisplayPhysicalOrientation(
         int64_t display) {
     common::Transform outDisplayOrientation;

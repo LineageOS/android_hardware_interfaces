@@ -31,8 +31,12 @@ namespace tuner {
 
 #define WAIT_TIMEOUT 3000000000
 
-Demux::Demux(int32_t demuxId, std::shared_ptr<Tuner> tuner) {
+Demux::Demux(int32_t demuxId, uint32_t filterTypes) {
     mDemuxId = demuxId;
+    mFilterTypes = filterTypes;
+}
+
+void Demux::setTunerService(std::shared_ptr<Tuner> tuner) {
     mTuner = tuner;
 }
 
@@ -344,6 +348,22 @@ void Demux::updateMediaFilterOutput(int64_t filterId, vector<int8_t> data, uint6
 
 uint16_t Demux::getFilterTpid(int64_t filterId) {
     return mFilters[filterId]->getTpid();
+}
+
+int32_t Demux::getDemuxId() {
+    return mDemuxId;
+}
+
+bool Demux::isInUse() {
+    return mInUse;
+}
+
+void Demux::setInUse(bool inUse) {
+    mInUse = inUse;
+}
+
+void Demux::getDemuxInfo(DemuxInfo* demuxInfo) {
+    *demuxInfo = {.filterTypes = mFilterTypes};
 }
 
 void Demux::startFrontendInputLoop() {

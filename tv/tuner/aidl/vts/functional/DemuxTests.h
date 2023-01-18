@@ -17,6 +17,7 @@
 #pragma once
 
 #include <aidl/android/hardware/tv/tuner/DemuxCapabilities.h>
+#include <aidl/android/hardware/tv/tuner/DemuxInfo.h>
 #include <aidl/android/hardware/tv/tuner/IDemux.h>
 #include <aidl/android/hardware/tv/tuner/IFilter.h>
 #include <aidl/android/hardware/tv/tuner/ITuner.h>
@@ -32,11 +33,14 @@ class DemuxTests {
   public:
     void setService(std::shared_ptr<ITuner> tuner) { mService = tuner; }
 
+    AssertionResult getDemuxIds(std::vector<int32_t>& demuxIds);
     AssertionResult openDemux(std::shared_ptr<IDemux>& demux, int32_t& demuxId);
+    AssertionResult openDemuxById(int32_t demuxId, std::shared_ptr<IDemux>& demux);
     AssertionResult setDemuxFrontendDataSource(int32_t frontendId);
     AssertionResult getAvSyncId(std::shared_ptr<IFilter> filter, int32_t& avSyncHwId);
     AssertionResult getAvSyncTime(int32_t avSyncId);
     AssertionResult getDemuxCaps(DemuxCapabilities& demuxCaps);
+    AssertionResult getDemuxInfo(int32_t demuxId, DemuxInfo& demuxInfo);
     AssertionResult closeDemux();
 
   protected:

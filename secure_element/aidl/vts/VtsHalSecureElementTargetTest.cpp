@@ -18,6 +18,7 @@
 #include <aidl/Vintf.h>
 #include <aidl/android/hardware/secure_element/BnSecureElementCallback.h>
 #include <aidl/android/hardware/secure_element/ISecureElement.h>
+#include <android-base/logging.h>
 #include <android/binder_manager.h>
 #include <android/binder_process.h>
 #include <gmock/gmock.h>
@@ -44,10 +45,29 @@ using testing::ElementsAreArray;
         EXPECT_TRUE(status_impl.isOk()) << status_impl.getDescription(); \
     } while (false)
 
-static const std::vector<uint8_t> kDataApdu = {0x00, 0x08, 0x00, 0x00, 0x00};
-static const std::vector<uint8_t> kAndroidTestAid = {0xA0, 0x00, 0x00, 0x04, 0x76, 0x41,
-                                                     0x6E, 0x64, 0x72, 0x6F, 0x69, 0x64,
-                                                     0x43, 0x54, 0x53, 0x31};
+#define EXPECT_ERR(status)                                                \
+    do {                                                                  \
+        auto status_impl = (status);                                      \
+        EXPECT_FALSE(status_impl.isOk()) << status_impl.getDescription(); \
+    } while (false)
+
+// APDU defined in CTS tests.
+// The applet selected with kSelectableAid will return 256 bytes of data
+// in response.
+static const std::vector<uint8_t> kDataApdu = {
+        0x00, 0x08, 0x00, 0x00, 0x00,
+};
+
+// Selectable test AID defined in CTS tests.
+static const std::vector<uint8_t> kSelectableAid = {
+        0xA0, 0x00, 0x00, 0x04, 0x76, 0x41, 0x6E, 0x64,
+        0x72, 0x6F, 0x69, 0x64, 0x43, 0x54, 0x53, 0x31,
+};
+// Non-selectable test AID defined in CTS tests.
+static const std::vector<uint8_t> kNonSelectableAid = {
+        0xA0, 0x00, 0x00, 0x04, 0x76, 0x41, 0x6E, 0x64,
+        0x72, 0x6F, 0x69, 0x64, 0x43, 0x54, 0x53, 0xFF,
+};
 
 class MySecureElementCallback : public BnSecureElementCallback {
   public:
@@ -75,91 +95,173 @@ class MySecureElementCallback : public BnSecureElementCallback {
 
 class SecureElementAidl : public ::testing::TestWithParam<std::string> {
   public:
-    virtual void SetUp() override {
+    void SetUp() override {
         SpAIBinder binder = SpAIBinder(AServiceManager_waitForService(GetParam().c_str()));
-        se = ISecureElement::fromBinder(binder);
-        ASSERT_NE(se, nullptr);
 
-        cb = SharedRefBase::make<MySecureElementCallback>();
-        EXPECT_OK(se->init(cb));
+        secure_element_ = ISecureElement::fromBinder(binder);
+        ASSERT_NE(secure_element_, nullptr);
 
-        cb->expectCallbackHistory({true});
+        secure_element_callback_ = SharedRefBase::make<MySecureElementCallback>();
+        ASSERT_NE(secure_element_callback_, nullptr);
+
+        EXPECT_OK(secure_element_->init(secure_element_callback_));
+        secure_element_callback_->expectCallbackHistory({true});
     }
 
-    std::shared_ptr<ISecureElement> se;
-    std::shared_ptr<MySecureElementCallback> cb;
+    void TearDown() override {
+        secure_element_ = nullptr;
+        secure_element_callback_ = nullptr;
+    }
+
+    // Call transmit with kDataApdu and the selected channel number.
+    // Return the response sstatus code.
+    uint16_t transmit(uint8_t channel_number) {
+        std::vector<uint8_t> apdu = kDataApdu;
+        std::vector<uint8_t> response;
+
+        // Edit the channel number into the CLA header byte.
+        if (channel_number < 4) {
+            apdu[0] |= channel_number;
+        } else {
+            apdu[0] |= (channel_number - 4) | 0x40;
+        }
+
+        EXPECT_OK(secure_element_->transmit(apdu, &response));
+        EXPECT_GE(response.size(), 2u);
+        uint16_t status =
+                (response[response.size() - 2] << 8) | (response[response.size() - 1] << 0);
+
+        // When the command is successful the response
+        // must contain 256 bytes of data.
+        if (status == 0x9000) {
+            EXPECT_EQ(response.size(), 258);
+        }
+
+        return status;
+    }
+
+    std::shared_ptr<ISecureElement> secure_element_;
+    std::shared_ptr<MySecureElementCallback> secure_element_callback_;
 };
+
+TEST_P(SecureElementAidl, init) {
+    // init(nullptr) shall fail.
+    EXPECT_ERR(secure_element_->init(nullptr));
+
+    // init with a valid callback pointer shall succeed.
+    EXPECT_OK(secure_element_->init(secure_element_callback_));
+    secure_element_callback_->expectCallbackHistory({true, true});
+}
+
+TEST_P(SecureElementAidl, reset) {
+    std::vector<uint8_t> basic_channel_response;
+    LogicalChannelResponse logical_channel_response;
+
+    // reset called after init shall succeed.
+    EXPECT_OK(secure_element_->openBasicChannel(kSelectableAid, 0x00, &basic_channel_response));
+    EXPECT_OK(secure_element_->openLogicalChannel(kSelectableAid, 0x00, &logical_channel_response));
+
+    EXPECT_OK(secure_element_->reset());
+    secure_element_callback_->expectCallbackHistory({true, false, true});
+
+    // All opened channels must be closed.
+    EXPECT_NE(transmit(0), 0x9000);
+    EXPECT_NE(transmit(logical_channel_response.channelNumber), 0x9000);
+}
 
 TEST_P(SecureElementAidl, isCardPresent) {
     bool res = false;
-    EXPECT_OK(se->isCardPresent(&res));
+
+    // isCardPresent called after init shall succeed.
+    EXPECT_OK(secure_element_->isCardPresent(&res));
     EXPECT_TRUE(res);
-}
-
-TEST_P(SecureElementAidl, transmit) {
-    LogicalChannelResponse response;
-    EXPECT_OK(se->openLogicalChannel(kAndroidTestAid, 0x00, &response));
-
-    EXPECT_GE(response.selectResponse.size(), 2u);
-    EXPECT_GE(response.channelNumber, 1);
-
-    std::vector<uint8_t> command = kDataApdu;
-    command[0] |= response.channelNumber;
-
-    std::vector<uint8_t> transmitResponse;
-    EXPECT_OK(se->transmit(command, &transmitResponse));
-
-    EXPECT_LE(transmitResponse.size(), 3);
-    EXPECT_GE(transmitResponse.size(), 2);
-    EXPECT_EQ(transmitResponse[transmitResponse.size() - 1], 0x00);
-    EXPECT_EQ(transmitResponse[transmitResponse.size() - 2], 0x90);
-
-    EXPECT_OK(se->closeChannel(response.channelNumber));
-}
-
-TEST_P(SecureElementAidl, openBasicChannel) {
-    std::vector<uint8_t> response;
-    auto status = se->openBasicChannel(kAndroidTestAid, 0x00, &response);
-
-    if (!status.isOk()) {
-        EXPECT_EQ(status.getServiceSpecificError(), ISecureElement::CHANNEL_NOT_AVAILABLE)
-                << status.getDescription();
-        return;
-    }
-
-    EXPECT_GE(response.size(), 2u);
-    EXPECT_OK(se->closeChannel(0));
 }
 
 TEST_P(SecureElementAidl, getAtr) {
     std::vector<uint8_t> atr;
-    EXPECT_OK(se->getAtr(&atr));
-    if (atr.size() == 0) {
-        return;
-    }
+
+    // getAtr called after init shall succeed.
+    // The ATR has size between 0 and 32 bytes.
+    EXPECT_OK(secure_element_->getAtr(&atr));
     EXPECT_LE(atr.size(), 32u);
-    EXPECT_GE(atr.size(), 1u);
 }
 
-TEST_P(SecureElementAidl, openCloseLogicalChannel) {
+TEST_P(SecureElementAidl, openBasicChannel) {
+    std::vector<uint8_t> response;
+
+    // openBasicChannel called with an invalid AID shall fail.
+    EXPECT_ERR(secure_element_->openBasicChannel(kNonSelectableAid, 0x00, &response));
+
+    // openBasicChannel called after init shall succeed.
+    // The response size must be larger than 2 bytes as it includes the
+    // status code.
+    EXPECT_OK(secure_element_->openBasicChannel(kSelectableAid, 0x00, &response));
+    EXPECT_GE(response.size(), 2u);
+
+    // tramsmit called on the basic channel should succeed.
+    EXPECT_EQ(transmit(0), 0x9000);
+
+    // openBasicChannel called a second time shall fail.
+    // The basic channel can only be opened once.
+    EXPECT_ERR(secure_element_->openBasicChannel(kSelectableAid, 0x00, &response));
+
+    // openBasicChannel called after closing the basic channel shall succeed.
+    EXPECT_OK(secure_element_->closeChannel(0));
+    EXPECT_OK(secure_element_->openBasicChannel(kSelectableAid, 0x00, &response));
+}
+
+TEST_P(SecureElementAidl, openLogicalChannel) {
     LogicalChannelResponse response;
-    EXPECT_OK(se->openLogicalChannel(kAndroidTestAid, 0x00, &response));
+
+    // openLogicalChannel called with an invalid AID shall fail.
+    EXPECT_ERR(secure_element_->openLogicalChannel(kNonSelectableAid, 0x00, &response));
+
+    // openLogicalChannel called after init shall succeed.
+    // The response size must be larger than 2 bytes as it includes the
+    // status code. The channel number must be in the range 1-19.
+    EXPECT_OK(secure_element_->openLogicalChannel(kSelectableAid, 0x00, &response));
     EXPECT_GE(response.selectResponse.size(), 2u);
-    EXPECT_GE(response.channelNumber, 1);
-    EXPECT_OK(se->closeChannel(response.channelNumber));
+    EXPECT_GE(response.channelNumber, 1u);
+    EXPECT_LE(response.channelNumber, 19u);
+
+    // tramsmit called on the logical channel should succeed.
+    EXPECT_EQ(transmit(response.channelNumber), 0x9000);
 }
 
-TEST_P(SecureElementAidl, openInvalidAid) {
-    LogicalChannelResponse response;
-    auto status = se->openLogicalChannel({0x42}, 0x00, &response);
-    EXPECT_EQ(status.getServiceSpecificError(), ISecureElement::NO_SUCH_ELEMENT_ERROR)
-            << status.getDescription();
+TEST_P(SecureElementAidl, closeChannel) {
+    std::vector<uint8_t> basic_channel_response;
+    LogicalChannelResponse logical_channel_response;
+
+    // closeChannel called on non-existing basic or logical channel is a no-op
+    // and shall succeed.
+    EXPECT_OK(secure_element_->closeChannel(0));
+    EXPECT_OK(secure_element_->closeChannel(1));
+
+    // closeChannel called on basic channel closes the basic channel.
+    EXPECT_OK(secure_element_->openBasicChannel(kSelectableAid, 0x00, &basic_channel_response));
+    EXPECT_OK(secure_element_->closeChannel(0));
+
+    // tramsmit called on the basic channel should fail.
+    EXPECT_NE(transmit(0), 0x9000);
+
+    // closeChannel called on logical channel closes the logical channel.
+    EXPECT_OK(secure_element_->openLogicalChannel(kSelectableAid, 0x00, &logical_channel_response));
+    EXPECT_OK(secure_element_->closeChannel(logical_channel_response.channelNumber));
+
+    // tramsmit called on the basic channel should fail.
+    EXPECT_NE(transmit(logical_channel_response.channelNumber), 0x9000);
 }
 
-TEST_P(SecureElementAidl, Reset) {
-    cb->expectCallbackHistory({true});
-    EXPECT_OK(se->reset());
-    cb->expectCallbackHistory({true, false, true});
+TEST_P(SecureElementAidl, transmit) {
+    std::vector<uint8_t> response;
+
+    // transmit called after init shall succeed.
+    // Note: no channel is opened for this test and the transmit
+    // response will have the status SW_LOGICAL_CHANNEL_NOT_SUPPORTED.
+    // The transmit response shall be larger than 2 bytes as it includes the
+    // status code.
+    EXPECT_OK(secure_element_->transmit(kDataApdu, &response));
+    EXPECT_GE(response.size(), 2u);
 }
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(SecureElementAidl);
