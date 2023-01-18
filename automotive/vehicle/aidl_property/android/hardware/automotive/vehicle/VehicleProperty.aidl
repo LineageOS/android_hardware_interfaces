@@ -4009,6 +4009,28 @@ enum VehicleProperty {
     DRIVER_ATTENTION_MONITORING_ENABLED =
             0x1019 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
 
+    /**
+     * Driver attention monitoring warning.
+     *
+     * Returns whether a warning is being sent to the driver for being distracted for too long a
+     * duration.
+     *
+     * Generally, this property should return a valid state defined in the
+     * DriverAttentionMonitoringWarning or ErrorState. For example, if the feature is not available
+     * due to some temporary state, that information should be conveyed through an ErrorState.
+     *
+     * For the global area ID (0), the VehicleAreaConfig#supportedEnumValues array must be defined
+     * unless all states of both DriverAttentionMonitoringWarning (including OTHER, which is not
+     * recommended) and ErrorState are supported.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     * @data_enum DriverAttentionMonitoringWarning
+     * @data_enum ErrorState
+     */
+    DRIVER_ATTENTION_MONITORING_WARNING =
+            0x101B + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
+
     /***************************************************************************
      * End of ADAS Properties
      **************************************************************************/
