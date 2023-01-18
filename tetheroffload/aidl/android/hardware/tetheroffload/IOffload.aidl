@@ -32,8 +32,7 @@ interface IOffload {
     /**
      * Indicates intent to start offload for tethering in immediate future.
      *
-     * This API must be called exactly once the first time that Tethering is requested by
-     * the user.
+     * This API must be called exactly once when Tethering is requested by the user.
      *
      * If this API is called multiple times without first calling stopOffload, then the subsequent
      * calls must fail without changing the state of the server.
@@ -168,7 +167,6 @@ interface IOffload {
      *           or negative number of bytes).
      *         - EX_ILLEGAL_STATE if this method is called before initOffload(), or if this method
      *           is called after stopOffload().
-     *         - EX_UNSUPPORTED_OPERATION if it is not supported.
      *         - EX_SERVICE_SPECIFIC with the error message set to a human-readable reason for the
      *           error.
      */
@@ -269,7 +267,7 @@ interface IOffload {
      * This API may only be called after initOffload and before stopOffload.
      *
      * @param iface  Downstream interface
-     * @param prefix Downstream prefix depicting address that must no longer be offloaded
+     * @param prefix Downstream prefix depicting prefix that must no longer be offloaded
      *               For e.g. 192.168.1.0/24 or 2001:4860:684::/64)
      *
      * @throws:
