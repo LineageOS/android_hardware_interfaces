@@ -670,6 +670,12 @@ ndk::ScopedAStatus WifiChip::getUsableChannels(WifiBand in_band, WifiIfaceMode i
                            in_ifaceModeMask, in_filterMask);
 }
 
+ndk::ScopedAStatus WifiChip::setAfcChannelAllowance(
+        const std::vector<AvailableAfcFrequencyInfo>& availableAfcFrequencyInfo) {
+    return validateAndCall(this, WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
+                           &WifiChip::setAfcChannelAllowanceInternal, availableAfcFrequencyInfo);
+}
+
 ndk::ScopedAStatus WifiChip::triggerSubsystemRestart() {
     return validateAndCall(this, WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
                            &WifiChip::triggerSubsystemRestartInternal);
@@ -1392,6 +1398,12 @@ std::pair<std::vector<WifiUsableChannel>, ndk::ScopedAStatus> WifiChip::getUsabl
         return {std::vector<WifiUsableChannel>(), createWifiStatus(WifiStatusCode::ERROR_UNKNOWN)};
     }
     return {aidl_usable_channels, ndk::ScopedAStatus::ok()};
+}
+
+ndk::ScopedAStatus WifiChip::setAfcChannelAllowanceInternal(
+        const std::vector<AvailableAfcFrequencyInfo>& availableAfcFrequencyInfo) {
+    LOG(INFO) << "setAfcChannelAllowance is not yet supported " << availableAfcFrequencyInfo.size();
+    return createWifiStatus(WifiStatusCode::ERROR_NOT_SUPPORTED);
 }
 
 std::pair<WifiRadioCombinationMatrix, ndk::ScopedAStatus>
