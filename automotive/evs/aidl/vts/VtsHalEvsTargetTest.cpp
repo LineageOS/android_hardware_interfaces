@@ -619,6 +619,7 @@ TEST_P(EvsAidlTest, CameraToDisplayRoundTrip) {
         getPhysicalCameraIds(cam.id, isLogicalCam);
         if (mIsHwModule && isLogicalCam) {
             LOG(INFO) << "Skip a logical device " << cam.id << " for HW target.";
+            ASSERT_TRUE(mEnumerator->closeDisplay(pDisplay).isOk());
             continue;
         }
 
@@ -1437,7 +1438,8 @@ TEST_P(EvsAidlTest, HighPriorityCameraClient) {
         ASSERT_TRUE(pCam1->getParameterList(&cam1Cmds).isOk());
         if (cam0Cmds.size() < 1 || cam1Cmds.size() < 1) {
             // Cannot execute this test.
-            return;
+            ASSERT_TRUE(mEnumerator->closeDisplay(pDisplay).isOk());
+            continue;
         }
 
         // Set up a frame receiver object which will fire up its own thread.
