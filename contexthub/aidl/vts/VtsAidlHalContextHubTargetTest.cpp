@@ -88,20 +88,20 @@ TEST_P(ContextHubAidl, TestEnableTestMode) {
     Status status = contextHub->setTestMode(true);
     if (status.exceptionCode() == Status::EX_UNSUPPORTED_OPERATION ||
         status.transactionError() == android::UNKNOWN_TRANSACTION) {
-        return;  // not supported -> old API; or not implemented
+        GTEST_SKIP() << "Not supported -> old API; or not implemented";
+    } else {
+        ASSERT_TRUE(status.isOk());
     }
-
-    ASSERT_TRUE(status.isOk());
 }
 
 TEST_P(ContextHubAidl, TestDisableTestMode) {
     Status status = contextHub->setTestMode(false);
     if (status.exceptionCode() == Status::EX_UNSUPPORTED_OPERATION ||
         status.transactionError() == android::UNKNOWN_TRANSACTION) {
-        return;  // not supported -> old API; or not implemented
+        GTEST_SKIP() << "Not supported -> old API; or not implemented";
+    } else {
+        ASSERT_TRUE(status.isOk());
     }
-
-    ASSERT_TRUE(status.isOk());
 }
 
 class EmptyContextHubCallback : public android::hardware::contexthub::BnContextHubCallback {
@@ -186,11 +186,11 @@ TEST_P(ContextHubAidl, TestGetPreloadedNanoapps) {
     Status status = contextHub->getPreloadedNanoappIds(&preloadedNanoappIds);
     if (status.exceptionCode() == Status::EX_UNSUPPORTED_OPERATION ||
         status.transactionError() == android::UNKNOWN_TRANSACTION) {
-        return;  // not supported -> old API; or not implemented
+        GTEST_SKIP() << "Not supported -> old API; or not implemented";
+    } else {
+        ASSERT_TRUE(status.isOk());
+        ASSERT_FALSE(preloadedNanoappIds.empty());
     }
-
-    ASSERT_TRUE(status.isOk());
-    ASSERT_FALSE(preloadedNanoappIds.empty());
 }
 
 // Helper callback that puts the TransactionResult for the expectedTransactionId into a
