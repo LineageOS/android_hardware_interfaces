@@ -139,6 +139,8 @@ class ModuleConfig {
         return *config.begin();
     }
 
+    bool isMmapSupported() const;
+
     std::string toString() const;
 
   private:

@@ -115,6 +115,8 @@ class Module : public BnModule {
             std::vector<::aidl::android::media::audio::common::AudioMMapPolicyInfo>* _aidl_return)
             override;
     ndk::ScopedAStatus supportsVariableLatency(bool* _aidl_return) override;
+    ndk::ScopedAStatus getAAudioMixerBurstCount(int32_t* _aidl_return) override;
+    ndk::ScopedAStatus getAAudioHardwareBurstMinUsec(int32_t* _aidl_return) override;
 
     void cleanUpPatch(int32_t patchId);
     ndk::ScopedAStatus createStreamContext(
@@ -132,6 +134,7 @@ class Module : public BnModule {
     std::set<int32_t> portIdsFromPortConfigIds(C portConfigIds);
     void registerPatch(const AudioPatch& patch);
     void updateStreamsConnectedState(const AudioPatch& oldPatch, const AudioPatch& newPatch);
+    bool isMmapSupported();
 
     // This value is used for all AudioPatches.
     static constexpr int32_t kMinimumStreamBufferSizeFrames = 16;
@@ -159,6 +162,7 @@ class Module : public BnModule {
     bool mMicMute = false;
     std::shared_ptr<sounddose::ISoundDose> mSoundDose;
     ndk::SpAIBinder mSoundDoseBinder;
+    std::optional<bool> mIsMmapSupported;
 };
 
 }  // namespace aidl::android::hardware::audio::core

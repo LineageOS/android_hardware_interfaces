@@ -833,4 +833,31 @@ interface IModule {
      * @return Whether the module supports variable latency control.
      */
     boolean supportsVariableLatency();
+
+    /**
+     * Default value for number of bursts per aaudio mixer cycle. This is a suggested value
+     * to return for the HAL module, unless it is known that a better option exists.
+     */
+    const int DEFAULT_AAUDIO_MIXER_BURST_COUNT = 2;
+    /**
+     * Get the number of bursts per aaudio mixer cycle.
+     *
+     * @return The number of burst per aaudio mixer cycle.
+     * @throw EX_UNSUPPORTED_OPERATION If the module does not support aaudio MMAP.
+     */
+    int getAAudioMixerBurstCount();
+
+    /**
+     * Default value for minimum duration in microseconds for a MMAP hardware burst. This
+     * is a suggested value to return for the HAL module, unless it is known that a better
+     * option exists.
+     */
+    const int DEFAULT_AAUDIO_HARDWARE_BURST_MIN_DURATION_US = 1000;
+    /**
+     * Get the minimum duration in microseconds for a MMAP hardware burst.
+     *
+     * @return The minimum number of microseconds for a MMAP hardware burst.
+     * @throw EX_UNSUPPORTED_OPERATION If the module does not support aaudio MMAP.
+     */
+    int getAAudioHardwareBurstMinUsec();
 }
