@@ -141,6 +141,8 @@ class WifiChip : public BnWifiChip {
     ndk::ScopedAStatus getUsableChannels(WifiBand in_band, WifiIfaceMode in_ifaceModeMask,
                                          UsableChannelFilter in_filterMask,
                                          std::vector<WifiUsableChannel>* _aidl_return) override;
+    ndk::ScopedAStatus setAfcChannelAllowance(
+            const std::vector<AvailableAfcFrequencyInfo>& availableAfcFrequencyInfo) override;
     ndk::ScopedAStatus triggerSubsystemRestart() override;
     ndk::ScopedAStatus getSupportedRadioCombinationsMatrix(
             WifiRadioCombinationMatrix* _aidl_return) override;
@@ -218,6 +220,8 @@ class WifiChip : public BnWifiChip {
             WifiBand band, WifiIfaceMode ifaceModeMask, UsableChannelFilter filterMask);
     ndk::ScopedAStatus enableStaChannelForPeerNetworkInternal(
             ChannelCategoryMask channelCategoryEnableFlag);
+    ndk::ScopedAStatus setAfcChannelAllowanceInternal(
+            const std::vector<AvailableAfcFrequencyInfo>& availableAfcFrequencyInfo);
     ndk::ScopedAStatus handleChipConfiguration(std::unique_lock<std::recursive_mutex>* lock,
                                                int32_t mode_id);
     ndk::ScopedAStatus registerDebugRingBufferCallback();

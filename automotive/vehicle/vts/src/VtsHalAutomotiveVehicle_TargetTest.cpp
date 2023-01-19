@@ -684,6 +684,12 @@ TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyAutomaticEmergencyBrakingEnabled
                    VehiclePropertyGroup::SYSTEM, VehicleArea::GLOBAL, VehiclePropertyType::BOOLEAN);
 }
 
+TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyAutomaticEmergencyBrakingStateConfig) {
+    verifyProperty(VehicleProperty::AUTOMATIC_EMERGENCY_BRAKING_STATE, VehiclePropertyAccess::READ,
+                   VehiclePropertyChangeMode::ON_CHANGE, VehiclePropertyGroup::SYSTEM,
+                   VehicleArea::GLOBAL, VehiclePropertyType::INT32);
+}
+
 TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyForwardCollisionWarningEnabledConfig) {
     verifyProperty(VehicleProperty::FORWARD_COLLISION_WARNING_ENABLED,
                    VehiclePropertyAccess::READ_WRITE, VehiclePropertyChangeMode::ON_CHANGE,

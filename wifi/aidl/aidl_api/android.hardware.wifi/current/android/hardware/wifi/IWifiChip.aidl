@@ -61,6 +61,7 @@ interface IWifiChip {
   android.hardware.wifi.WifiRadioCombinationMatrix getSupportedRadioCombinationsMatrix();
   android.hardware.wifi.WifiChipCapabilities getWifiChipCapabilities();
   android.hardware.wifi.WifiUsableChannel[] getUsableChannels(in android.hardware.wifi.WifiBand band, in android.hardware.wifi.WifiIfaceMode ifaceModeMask, in android.hardware.wifi.IWifiChip.UsableChannelFilter filterMask);
+  void setAfcChannelAllowance(in android.hardware.wifi.AvailableAfcFrequencyInfo[] availableAfcFrequencyInfo);
   void registerEventCallback(in android.hardware.wifi.IWifiChipEventCallback callback);
   void removeApIface(in String ifname);
   void removeIfaceInstanceFromBridgedApIface(in String brIfaceName, in String ifaceInstanceName);
@@ -99,6 +100,7 @@ interface IWifiChip {
     SET_LATENCY_MODE = (1 << 12),
     P2P_RAND_MAC = (1 << 13),
     WIGIG = (1 << 14),
+    SET_AFC_CHANNEL_ALLOWANCE = (1 << 15),
   }
   @VintfStability
   parcelable ChipConcurrencyCombinationLimit {

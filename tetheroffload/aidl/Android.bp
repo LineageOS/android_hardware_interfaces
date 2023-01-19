@@ -1,0 +1,27 @@
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
+aidl_interface {
+    name: "android.hardware.tetheroffload",
+    vendor_available: true,
+    srcs: ["android/hardware/tetheroffload/*.aidl"],
+    stability: "vintf",
+    backend: {
+        cpp: {
+            enabled: false,
+        },
+        java: {
+            sdk_version: "module_current",
+            apex_available: [
+                "com.android.tethering",
+            ],
+            min_sdk_version: "30",
+            enabled: true,
+        },
+        ndk: {
+            apps_enabled: false,
+        },
+    },
+    frozen: false,
+}

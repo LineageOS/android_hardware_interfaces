@@ -3429,6 +3429,10 @@ enum VehicleProperty {
      * Set true to enable AEB and false to disable AEB. When AEB is enabled, the ADAS system in the
      * vehicle should be turned on and monitoring to avoid potential collisions.
      *
+     * IVehicle#get must not return any NOT_AVAILABLE value in StatusCode. Other StatusCode values
+     * like TRY_AGAIN may still be used as needed. For example, if AEB is not available because the
+     * vehicle speed is too low, IVehicle#get must return false.
+     *
      * This property is defined as read_write, but OEMs have the option to implement it as read
      * only.
      *
@@ -3437,6 +3441,28 @@ enum VehicleProperty {
      */
     AUTOMATIC_EMERGENCY_BRAKING_ENABLED =
             0x1000 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+
+    /**
+     * Automatic Emergency Braking (AEB) state.
+     *
+     * Returns the current state of AEB. This property must always return a valid state defined in
+     * AutomaticEmergencyBrakingState or ErrorState. It must not surface errors through StatusCode
+     * and must use the supported error states instead.
+     *
+     * If AEB includes forward collision warnings before activating the brakes, those warnings must
+     * be surfaced through the Forward Collision Warning (FCW) properties.
+     *
+     * For the global area ID (0), the VehicleAreaConfig#supportedEnumValues array must be defined
+     * unless all states of both AutomaticEmergencyBrakingState (including OTHER, which is not
+     * recommended) and ErrorState are supported.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     * @data_enum AutomaticEmergencyBrakingState
+     * @data_enum ErrorState
+     */
+    AUTOMATIC_EMERGENCY_BRAKING_STATE =
+            0x1001 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
 
     /**
      * Enable or disable forward collision warning (FCW).

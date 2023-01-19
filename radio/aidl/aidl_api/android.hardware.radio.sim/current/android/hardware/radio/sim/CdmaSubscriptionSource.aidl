@@ -34,6 +34,6 @@
 package android.hardware.radio.sim;
 @Backing(type="int") @JavaDerive(toString=true) @VintfStability
 enum CdmaSubscriptionSource {
-  RUIM_SIM = 0,
-  NV = 1,
+  RUIM_SIM,
+  NV,
 }

@@ -34,6 +34,6 @@
 package android.hardware.radio.sap;
 @Backing(type="int") @VintfStability
 enum SapApduType {
-  APDU = 0,
-  APDU7816 = 1,
+  APDU,
+  APDU7816,
 }

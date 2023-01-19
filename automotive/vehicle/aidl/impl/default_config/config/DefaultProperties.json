@@ -3163,6 +3163,28 @@
             }
         },
         {
+            "property": "VehicleProperty::AUTOMATIC_EMERGENCY_BRAKING_STATE",
+            "defaultValue": {
+                "int32Values": [
+                    "AutomaticEmergencyBrakingState::ENABLED"
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": 0,
+                    "supportedEnumValues": [
+                        "ErrorState::NOT_AVAILABLE_SAFETY",
+                        "ErrorState::NOT_AVAILABLE_SPEED_HIGH",
+                        "ErrorState::NOT_AVAILABLE_SPEED_LOW",
+                        "ErrorState::NOT_AVAILABLE_DISABLED",
+                        "AutomaticEmergencyBrakingState::ENABLED",
+                        "AutomaticEmergencyBrakingState::ACTIVATED",
+                        "AutomaticEmergencyBrakingState::USER_OVERRIDE"
+                    ]
+                }
+            ]
+        },
+        {
             "property": "VehicleProperty::FORWARD_COLLISION_WARNING_ENABLED",
             "defaultValue": {
                 "int32Values": [

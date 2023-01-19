@@ -39,5 +39,5 @@ parcelable LinkAddress {
   long deprecationTime;
   long expirationTime;
   const int ADDRESS_PROPERTY_NONE = 0;
-  const int ADDRESS_PROPERTY_DEPRECATED = 32;
+  const int ADDRESS_PROPERTY_DEPRECATED = 0x20;
 }

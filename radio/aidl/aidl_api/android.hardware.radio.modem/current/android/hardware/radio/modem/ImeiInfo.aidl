@@ -34,12 +34,12 @@
 package android.hardware.radio.modem;
 @JavaDerive(toString=true) @VintfStability
 parcelable ImeiInfo {
+  android.hardware.radio.modem.ImeiInfo.ImeiType type;
+  String imei;
+  String svn;
   @Backing(type="int") @VintfStability
   enum ImeiType {
     PRIMARY = 1,
     SECONDARY = 2,
   }
-  ImeiType type;
-  String imei;
-  String svn;
 }

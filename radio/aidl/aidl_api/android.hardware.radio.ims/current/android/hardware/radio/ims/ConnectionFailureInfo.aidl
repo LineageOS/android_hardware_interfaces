@@ -48,6 +48,6 @@ parcelable ConnectionFailureInfo {
     REASON_NO_SERVICE = 7,
     REASON_PDN_NOT_AVAILABLE = 8,
     REASON_RF_BUSY = 9,
-    REASON_UNSPECIFIED = 65535,
+    REASON_UNSPECIFIED = 0xFFFF,
   }
 }

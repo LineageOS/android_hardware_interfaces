@@ -1,4 +1,4 @@
-service bluetooth_hal_service /vendor/bin/hw/android.hardware.bluetooth-service.default
+service vendor.bluetooth-default /vendor/bin/hw/android.hardware.bluetooth-service.default
     class hal
     capabilities BLOCK_SUSPEND NET_ADMIN SYS_NICE
     user bluetooth

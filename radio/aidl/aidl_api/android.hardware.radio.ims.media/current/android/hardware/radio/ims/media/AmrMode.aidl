@@ -34,13 +34,13 @@
 package android.hardware.radio.ims.media;
 @Backing(type="int") @VintfStability
 enum AmrMode {
-  AMR_MODE_0 = 1 << 0,
-  AMR_MODE_1 = 1 << 1,
-  AMR_MODE_2 = 1 << 2,
-  AMR_MODE_3 = 1 << 3,
-  AMR_MODE_4 = 1 << 4,
-  AMR_MODE_5 = 1 << 5,
-  AMR_MODE_6 = 1 << 6,
-  AMR_MODE_7 = 1 << 7,
-  AMR_MODE_8 = 1 << 8,
+  AMR_MODE_0 = (1 << 0),
+  AMR_MODE_1 = (1 << 1),
+  AMR_MODE_2 = (1 << 2),
+  AMR_MODE_3 = (1 << 3),
+  AMR_MODE_4 = (1 << 4),
+  AMR_MODE_5 = (1 << 5),
+  AMR_MODE_6 = (1 << 6),
+  AMR_MODE_7 = (1 << 7),
+  AMR_MODE_8 = (1 << 8),
 }

@@ -1,0 +1,7 @@
+<manifest version="1.0" type="device">
+    <hal format="aidl">
+        <name>android.hardware.tetheroffload</name>
+        <version>1</version>
+        <fqname>IOffload/default</fqname>
+    </hal>
+</manifest>

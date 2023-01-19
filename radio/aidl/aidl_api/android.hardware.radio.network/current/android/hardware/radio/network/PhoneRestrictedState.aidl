@@ -34,9 +34,9 @@
 package android.hardware.radio.network;
 @Backing(type="int") @JavaDerive(toString=true) @VintfStability
 enum PhoneRestrictedState {
-  NONE = 0,
-  CS_EMERGENCY = 1,
-  CS_NORMAL = 2,
-  CS_ALL = 4,
-  PS_ALL = 16,
+  NONE = 0x00,
+  CS_EMERGENCY = 0x01,
+  CS_NORMAL = 0x02,
+  CS_ALL = 0x04,
+  PS_ALL = 0x10,
 }

@@ -24,6 +24,7 @@
 
 #include "async_fd_watcher.h"
 #include "h4_protocol.h"
+#include "net_bluetooth_mgmt.h"
 
 namespace aidl::android::hardware::bluetooth::impl {
 
@@ -64,8 +65,10 @@ class BluetoothHci : public BnBluetoothHci {
 
   ::android::hardware::bluetooth::async::AsyncFdWatcher mFdWatcher;
 
+  int getFdFromDevPath();
   void send(::android::hardware::bluetooth::hci::PacketType type,
             const std::vector<uint8_t>& packet);
+  std::unique_ptr<NetBluetoothMgmt> management_{};
 };
 
 }  // namespace aidl::android::hardware::bluetooth::impl

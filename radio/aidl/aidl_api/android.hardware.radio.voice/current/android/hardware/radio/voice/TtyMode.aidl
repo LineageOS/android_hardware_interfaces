@@ -34,8 +34,8 @@
 package android.hardware.radio.voice;
 @Backing(type="int") @JavaDerive(toString=true) @VintfStability
 enum TtyMode {
-  OFF = 0,
-  FULL = 1,
-  HCO = 2,
-  VCO = 3,
+  OFF,
+  FULL,
+  HCO,
+  VCO,
 }

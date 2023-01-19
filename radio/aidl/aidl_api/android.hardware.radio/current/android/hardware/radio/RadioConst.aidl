@@ -37,5 +37,5 @@ parcelable RadioConst {
   const int MAX_RILDS = 3;
   const int MAX_UUID_LENGTH = 64;
   const int CARD_MAX_APPS = 8;
-  const int P2_CONSTANT_NO_P2 = -1;
+  const int P2_CONSTANT_NO_P2 = (-1);
 }

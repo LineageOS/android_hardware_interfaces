@@ -35,12 +35,12 @@ package android.hardware.radio.network;
 @Backing(type="int") @JavaDerive(toString=true) @VintfStability
 enum IndicationFilter {
   NONE = 0,
-  ALL = -1,
-  SIGNAL_STRENGTH = 1,
-  FULL_NETWORK_STATE = 2,
-  DATA_CALL_DORMANCY_CHANGED = 4,
-  LINK_CAPACITY_ESTIMATE = 8,
-  PHYSICAL_CHANNEL_CONFIG = 16,
-  REGISTRATION_FAILURE = 32,
-  BARRING_INFO = 64,
+  ALL = (~0),
+  SIGNAL_STRENGTH = (1 << 0),
+  FULL_NETWORK_STATE = (1 << 1),
+  DATA_CALL_DORMANCY_CHANGED = (1 << 2),
+  LINK_CAPACITY_ESTIMATE = (1 << 3),
+  PHYSICAL_CHANNEL_CONFIG = (1 << 4),
+  REGISTRATION_FAILURE = (1 << 5),
+  BARRING_INFO = (1 << 6),
 }
