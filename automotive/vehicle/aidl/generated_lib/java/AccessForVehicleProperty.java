@@ -232,6 +232,7 @@ public final class AccessForVehicleProperty {
         Map.entry(VehicleProperty.AUTOMATIC_EMERGENCY_BRAKING_ENABLED, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.AUTOMATIC_EMERGENCY_BRAKING_STATE, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.FORWARD_COLLISION_WARNING_ENABLED, VehiclePropertyAccess.READ_WRITE),
+        Map.entry(VehicleProperty.FORWARD_COLLISION_WARNING_STATE, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.BLIND_SPOT_WARNING_ENABLED, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.LANE_DEPARTURE_WARNING_ENABLED, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.LANE_KEEP_ASSIST_ENABLED, VehiclePropertyAccess.READ_WRITE),
