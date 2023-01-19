@@ -180,7 +180,8 @@ enum RadioError {
      */
     NO_SMS_TO_ACK = 48,
     /**
-     * Received error from network
+     * Received error from network. This generic error code should be used only when the error
+     * cannot be mapped to other specific network error codes.
      */
     NETWORK_ERR = 49,
     /**
@@ -300,4 +301,51 @@ enum RadioError {
      * Unlike RF_HARDWARE_ISSUE, this is a SW problem and no HW repair is needed.
      */
     NO_RF_CALIBRATION_INFO = 71,
+    /**
+     * The encoding scheme is not supported by either the network or the MS.
+     */
+    ENCODING_NOT_SUPPORTED = 72,
+    /**
+     * The requesting feature is not supported by the service provider/operator.
+     */
+    FEATURE_NOT_SUPPORTED = 73,
+    /**
+     * The contact to be added is either not existing or not valid.
+     */
+    INVALID_CONTACT = 74,
+    /**
+     * The modem of the MS is not compatible with the service provider/operator. This generic error
+     * should be used only when there are some mimatches in the capabilities between the MS and
+     * the operator and the error cannot be mapped properly to other specific network errors.
+     */
+    MODEM_INCOMPATIBLE = 75,
+    /**
+     * Modem timeout to receive ACK or response from network after sending a request to the network.
+     */
+    NETWORK_TIMEOUT = 76,
+    /**
+     * Modem fails to communicate with the satellite network since there is no satellite signal.
+     */
+    NO_SATELLITE_SIGNAL = 77,
+    /**
+     * The request cannot be performed since the subscriber's account balance is not sufficient.
+     */
+    NOT_SUFFICIENT_ACCOUNT_BALANCE = 78,
+    /**
+     * The radio technology is not supported by the service provider/operator.
+     */
+    RADIO_TECHNOLOGY_NOT_SUPPORTED = 79,
+    /**
+     * The subscription is not authorized to register with the service provider/operator.
+     */
+    SUBSCRIBER_NOT_AUTHORIZED = 80,
+    /**
+     * While processing a request from the Framework, the satellite modem detects terrestrial
+     * signal, aborts the request, and switches to the terrestrial network.
+     */
+    SWITCHED_FROM_SATELLITE_TO_TERRESTRIAL = 81,
+    /**
+     * The subscriber is not registered in the service provider.
+     */
+    UNIDENTIFIED_SUBSCRIBER = 82
 }
