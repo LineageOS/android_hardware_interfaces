@@ -49,7 +49,6 @@ ndk::ScopedAStatus EffectImpl::open(const Parameter::Common& common,
     auto context = createContext(common);
     RETURN_IF(!context, EX_NULL_POINTER, "createContextFailed");
 
-    RETURN_IF_ASTATUS_NOT_OK(setParameterCommon(common), "setCommParamErr");
     if (specific.has_value()) {
         RETURN_IF_ASTATUS_NOT_OK(setParameterSpecific(specific.value()), "setSpecParamErr");
     }
