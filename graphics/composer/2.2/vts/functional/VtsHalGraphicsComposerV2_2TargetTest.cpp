@@ -23,7 +23,6 @@
 #include <composer-vts/2.1/TestCommandReader.h>
 #include <composer-vts/2.2/ComposerVts.h>
 #include <gtest/gtest.h>
-#include <hardware/gralloc.h>
 #include <hidl/GtestPrinter.h>
 #include <hidl/ServiceManagement.h>
 #include <mapper-vts/2.0/MapperVts.h>
@@ -36,6 +35,7 @@ namespace V2_2 {
 namespace vts {
 namespace {
 
+using common::V1_0::BufferUsage;
 using common::V1_1::ColorMode;
 using common::V1_1::Dataspace;
 using common::V1_1::PixelFormat;
@@ -65,13 +65,17 @@ class GraphicsComposerHidlTest : public ::testing::TestWithParam<std::string> {
         mComposerClient->setVsyncEnabled(mPrimaryDisplay, false);
         mComposerCallback->setVsyncAllowed(false);
 
-        Error error = mComposerClient->getReadbackBufferAttributes(
-                mPrimaryDisplay, &mReadbackPixelFormat, &mReadbackDataspace);
-        mHasReadbackBuffer = error == Error::NONE;
-        if (mHasReadbackBuffer) {
-            ASSERT_LT(static_cast<PixelFormat>(0), mReadbackPixelFormat);
-            ASSERT_NE(Dataspace::UNKNOWN, mReadbackDataspace);
-        }
+        mComposerClient->getRaw()->getReadbackBufferAttributes(
+                mPrimaryDisplay,
+                [&](const auto& tmpError, const auto& tmpPixelFormat, const auto& tmpDataspace) {
+                    mHasReadbackBuffer = tmpError == Error::NONE;
+                    if (mHasReadbackBuffer) {
+                        mReadbackPixelFormat = tmpPixelFormat;
+                        mReadbackDataspace = tmpDataspace;
+                        ASSERT_LT(static_cast<PixelFormat>(0), mReadbackPixelFormat);
+                        ASSERT_NE(Dataspace::UNKNOWN, mReadbackDataspace);
+                    }
+                });
 
         mInvalidDisplayId = GetInvalidDisplayId();
     }
@@ -149,9 +153,10 @@ class GraphicsComposerHidlCommandTest : public GraphicsComposerHidlTest {
     }
 
     NativeHandleWrapper allocate() {
+        uint64_t usage =
+                static_cast<uint64_t>(BufferUsage::CPU_WRITE_OFTEN | BufferUsage::CPU_READ_OFTEN);
         return mGralloc->allocate(/*width*/ 64, /*height*/ 64, /*layerCount*/ 1,
-                                  PixelFormat::RGBA_8888,
-                                  GRALLOC_USAGE_SW_WRITE_OFTEN | GRALLOC_USAGE_SW_READ_OFTEN);
+                                  PixelFormat::RGBA_8888, usage);
     }
 
     void execute() { mComposerClient->execute(mReader.get(), mWriter.get()); }
@@ -429,7 +434,9 @@ TEST_P(GraphicsComposerHidlTest, SetReadbackBuffer) {
     }
 
     // BufferUsage::COMPOSER_OUTPUT is missing
-    uint64_t usage = GRALLOC_USAGE_HW_COMPOSER | GRALLOC_USAGE_SW_READ_OFTEN;
+    uint64_t usage =
+            static_cast<uint64_t>(BufferUsage::COMPOSER_OVERLAY | BufferUsage::CPU_READ_OFTEN);
+
     std::unique_ptr<Gralloc> gralloc;
     std::unique_ptr<NativeHandleWrapper> buffer;
     ASSERT_NO_FATAL_FAILURE(gralloc = std::make_unique<Gralloc>());
@@ -450,7 +457,9 @@ TEST_P(GraphicsComposerHidlTest, SetReadbackBufferBadDisplay) {
         return;
     }
 
-    uint64_t usage = GRALLOC_USAGE_HW_COMPOSER | GRALLOC_USAGE_SW_READ_OFTEN;
+    uint64_t usage =
+            static_cast<uint64_t>(BufferUsage::COMPOSER_OVERLAY | BufferUsage::CPU_READ_OFTEN);
+
     std::unique_ptr<Gralloc> gralloc;
     std::unique_ptr<NativeHandleWrapper> buffer;
     ASSERT_NO_FATAL_FAILURE(gralloc = std::make_unique<Gralloc>());

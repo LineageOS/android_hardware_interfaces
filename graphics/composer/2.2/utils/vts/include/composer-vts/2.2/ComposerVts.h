@@ -78,10 +78,8 @@ class ComposerClient : public V2_1::vts::ComposerClient {
                                     PixelFormat format, Dataspace dataspace);
     void setPowerMode_2_2(Display display, IComposerClient::PowerMode mode);
     void setReadbackBuffer(Display display, const native_handle_t* buffer, int32_t releaseFence);
-    void getRequiredReadbackBufferAttributes(Display display, PixelFormat* outPixelFormat,
-                                             Dataspace* outDataspace);
-    Error getReadbackBufferAttributes(Display display, PixelFormat* outPixelFormat,
-                                      Dataspace* outDataspace);
+    void getReadbackBufferAttributes(Display display, PixelFormat* outPixelFormat,
+                                     Dataspace* outDataspace);
     void getReadbackBufferFence(Display display, int32_t* outFence);
 
     std::vector<ColorMode> getColorModes(Display display);
