@@ -114,6 +114,7 @@ class Module : public BnModule {
             ::aidl::android::media::audio::common::AudioMMapPolicyType mmapPolicyType,
             std::vector<::aidl::android::media::audio::common::AudioMMapPolicyInfo>* _aidl_return)
             override;
+    ndk::ScopedAStatus supportsVariableLatency(bool* _aidl_return) override;
 
     void cleanUpPatch(int32_t patchId);
     ndk::ScopedAStatus createStreamContext(
