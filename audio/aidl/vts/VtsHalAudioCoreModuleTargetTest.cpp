@@ -1907,6 +1907,12 @@ TEST_P(AudioCoreModule, GetMmapPolicyInfos) {
     }
 }
 
+TEST_P(AudioCoreModule, BluetoothVariableLatency) {
+    bool isSupported = false;
+    EXPECT_IS_OK(module->supportsVariableLatency(&isSupported));
+    LOG(INFO) << "supportsVariableLatency: " << isSupported;
+}
+
 class AudioCoreBluetooth : public AudioCoreModuleBase, public testing::TestWithParam<std::string> {
   public:
     void SetUp() override {
