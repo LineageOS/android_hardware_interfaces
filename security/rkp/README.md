@@ -172,31 +172,28 @@ This document uses:
 
 *   ECDSA P-256 for attestation signing keys;
 *   Remote provisioning protocol signing keys:
-  *  Ed25519 / P-256
+  *  Ed25519 / P-256 / P-384
 *   ECDH keys:
   *  X25519 / P-256
 *   AES-GCM for all encryption;
-*   SHA-256 for all message digesting;
-*   HMAC-SHA-256 for all MACing; and
-*   HKDF-SHA-256 for all key derivation.
+*   SHA-256 / SHA-384 / SHA-512 for message digesting;
+*   HMAC with a supported message digest for all MACing; and
+*   HKDF with a supported message digest for all key derivation.
 
 We believe that Curve25519 offers the best tradeoff in terms of security,
 efficiency and global trustworthiness, and that it is now sufficiently
 widely-used and widely-implemented to make it a practical choice.
 
-However, since Secure Elements (SE) do not currently offer support for curve
-25519, we are allowing implementations to instead make use of EC P-256 for
-signing and ECDH. To put it simply, the device unique key pair will be a P-256
-key pair for ECDSA instead of Ed25519, and the ProtectedData COSE\_Encrypt
-message will have its payload encrypted with P-256 ECDH key exchange instead of
-X25519.
+However, since hardware such as Secure Elements (SE) do not currently offer
+support for curve 25519, we are allowing implementations to instead make use of
+ECDSA and ECDH.
 
 The CDDL in the rest of the document will use the '/' operator to show areas
-where either curve 25519 or P-256 may be used. Since there is no easy way to
-bind choices across different CDDL groups, it is important that the implementor
-stays consistent in which type is chosen. E.g. taking ES256 as the choice for
-algorithm implies the implementor should also choose the P256 public key group
-further down in the COSE structure.
+where either curve 25519, P-256 or P-384 may be used. Since there is no easy way
+to bind choices across different CDDL groups, it is important that the
+implementor stays consistent in which type is chosen. E.g. taking ES256 as the
+choice for algorithm implies the implementor should also choose the P256 public
+key group further down in the COSE structure.
 
 ### Testability
 
