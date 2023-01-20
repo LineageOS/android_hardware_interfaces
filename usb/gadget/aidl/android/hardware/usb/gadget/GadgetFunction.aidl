@@ -51,6 +51,10 @@ parcelable GadgetFunction {
      */
     const long AUDIO_SOURCE = 1 << 6;
     /**
+     * UVC - Universal Video Class function.
+     */
+    const long UVC = 1 << 7;
+    /**
      * NCM - NCM function.
      */
     const long NCM = 1 << 10;
