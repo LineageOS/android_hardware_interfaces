@@ -31,7 +31,7 @@ class Module : public BnModule {
   public:
     // This value is used for all AudioPatches and reported by all streams.
     static constexpr int32_t kLatencyMs = 10;
-    enum Type : int { DEFAULT, R_SUBMIX };
+    enum Type : int { DEFAULT, R_SUBMIX, USB };
 
     explicit Module(Type type) : mType(type) {}
 
