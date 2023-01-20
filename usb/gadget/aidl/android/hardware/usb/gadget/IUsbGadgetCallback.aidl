@@ -16,7 +16,6 @@
 
 package android.hardware.usb.gadget;
 
-import android.hardware.usb.gadget.GadgetFunction;
 import android.hardware.usb.gadget.Status;
 import android.hardware.usb.gadget.UsbSpeed;
 

@@ -34,11 +34,15 @@
 package android.hardware.usb.gadget;
 @Backing(type="int") @VintfStability
 enum UsbSpeed {
-  UNKNOWN = 0,
-  LOWSPEED = 1,
-  FULLSPEED = 2,
-  HIGHSPEED = 3,
-  SUPERSPEED = 4,
-  SUPERSPEED_10Gb = 5,
-  SUPERSPEED_20Gb = 6,
+  UNKNOWN = (-1),
+  LOWSPEED = 0,
+  FULLSPEED = 1,
+  HIGHSPEED = 2,
+  SUPERSPEED = 3,
+  SUPERSPEED_10Gb = 4,
+  SUPERSPEED_20Gb = 5,
+  USB4_GEN2_10Gb = 6,
+  USB4_GEN2_20Gb = 7,
+  USB4_GEN3_20Gb = 8,
+  USB4_GEN3_40Gb = 9,
 }
