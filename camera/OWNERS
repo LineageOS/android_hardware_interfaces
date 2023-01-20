@@ -1,8 +1,3 @@
 # Bug component: 41727
 
-# Camera team
 include platform/frameworks/av:/camera/OWNERS
-
-# VTS team
-yim@google.com
-zhuoyao@google.com
