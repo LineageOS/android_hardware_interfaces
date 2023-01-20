@@ -41,6 +41,7 @@ This document provides an exact description of which changes have occurred in th
       payload and the implementation-defined payload itself. This is done by creating a typed
       `AuthenticatedRequest<T>` object representing the top level data required to authenticate
       the data provided in the payload, `T`.
+  * The new CSR format supports P-384 signing keys and SHA-384 hashes in the DICE chain.
 * RpcHardwareInfo
   * `supportedNumKeysInCsr` added to report the maximum number of keys supported in a CSR.
   * `supportedEekCurve` is no longer used, due to the removal of the EEK from the scheme.
