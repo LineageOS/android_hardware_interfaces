@@ -143,17 +143,17 @@ ndk::ScopedAStatus BluetoothHci::initialize(
       [](const std::vector<uint8_t>& /* raw_command */) {
         LOG_ALWAYS_FATAL("Unexpected command!");
       },
+      [this](const std::vector<uint8_t>& raw_acl) {
+        mCb->aclDataReceived(raw_acl);
+      },
+      [this](const std::vector<uint8_t>& raw_sco) {
+        mCb->scoDataReceived(raw_sco);
+      },
       [this](const std::vector<uint8_t>& raw_event) {
         mCb->hciEventReceived(raw_event);
       },
-      [this](const std::vector<uint8_t>& raw_acl) {
-        mCb->hciEventReceived(raw_acl);
-      },
-      [this](const std::vector<uint8_t>& raw_sco) {
-        mCb->hciEventReceived(raw_sco);
-      },
       [this](const std::vector<uint8_t>& raw_iso) {
-        mCb->hciEventReceived(raw_iso);
+        mCb->isoDataReceived(raw_iso);
       },
       [this]() {
         ALOGI("HCI socket device disconnected");
