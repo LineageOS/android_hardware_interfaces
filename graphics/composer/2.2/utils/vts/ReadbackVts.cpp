@@ -19,8 +19,6 @@
 #include "renderengine/ExternalTexture.h"
 #include "renderengine/impl/ExternalTexture.h"
 
-using ::android::status_t;
-
 namespace android {
 namespace hardware {
 namespace graphics {
@@ -109,40 +107,6 @@ int32_t ReadbackHelper::GetBytesPerPixel(PixelFormat pixelFormat) {
     }
 }
 
-void ReadbackHelper::fillBufferAndGetFence(const sp<GraphicBuffer>& graphicBuffer,
-                                           IComposerClient::Color desiredColor, int* fillFence) {
-    ASSERT_NE(nullptr, fillFence);
-    std::vector<IComposerClient::Color> desiredColors(
-            static_cast<size_t>(graphicBuffer->getWidth() * graphicBuffer->getHeight()));
-    ::android::Rect bounds = graphicBuffer->getBounds();
-    fillColorsArea(desiredColors, static_cast<int32_t>(graphicBuffer->getWidth()),
-                   {bounds.left, bounds.top, bounds.right, bounds.bottom}, desiredColor);
-    ASSERT_NO_FATAL_FAILURE(fillBufferAndGetFence(graphicBuffer, desiredColors, fillFence));
-}
-
-void ReadbackHelper::fillBufferAndGetFence(const sp<GraphicBuffer>& graphicBuffer,
-                                           const std::vector<IComposerClient::Color>& desiredColors,
-                                           int* fillFence) {
-    ASSERT_TRUE(graphicBuffer->getPixelFormat() == ::android::PIXEL_FORMAT_RGB_888 ||
-                graphicBuffer->getPixelFormat() == ::android::PIXEL_FORMAT_RGBA_8888);
-    void* bufData;
-    int32_t bytesPerPixel = -1;
-    int32_t bytesPerStride = -1;
-    status_t status =
-            graphicBuffer->lock(GRALLOC_USAGE_SW_READ_OFTEN | GRALLOC_USAGE_SW_WRITE_OFTEN,
-                                &bufData, &bytesPerPixel, &bytesPerStride);
-    ASSERT_EQ(::android::OK, status);
-
-    const uint32_t stride = (bytesPerPixel > 0 && bytesPerStride > 0)
-                                    ? static_cast<uint32_t>(bytesPerStride / bytesPerPixel)
-                                    : graphicBuffer->getStride();
-    ReadbackHelper::fillBuffer(graphicBuffer->getWidth(), graphicBuffer->getHeight(), stride,
-                               bufData, static_cast<PixelFormat>(graphicBuffer->getPixelFormat()),
-                               desiredColors);
-    status = graphicBuffer->unlockAsync(fillFence);
-    ASSERT_EQ(::android::OK, status);
-}
-
 void ReadbackHelper::fillBuffer(int32_t width, int32_t height, uint32_t stride, void* bufferData,
                                 PixelFormat pixelFormat,
                                 std::vector<IComposerClient::Color> desiredPixelColors) {
@@ -152,16 +116,16 @@ void ReadbackHelper::fillBuffer(int32_t width, int32_t height, uint32_t stride, 
     for (int row = 0; row < height; row++) {
         for (int col = 0; col < width; col++) {
             int pixel = row * width + col;
-            IComposerClient::Color desiredColor = desiredPixelColors[pixel];
+            IComposerClient::Color srcColor = desiredPixelColors[pixel];
 
             int offset = (row * stride + col) * bytesPerPixel;
             uint8_t* pixelColor = (uint8_t*)bufferData + offset;
-            pixelColor[0] = desiredColor.r;
-            pixelColor[1] = desiredColor.g;
-            pixelColor[2] = desiredColor.b;
+            pixelColor[0] = srcColor.r;
+            pixelColor[1] = srcColor.g;
+            pixelColor[2] = srcColor.b;
 
             if (bytesPerPixel == 4) {
-                pixelColor[3] = desiredColor.a;
+                pixelColor[3] = srcColor.a;
             }
         }
     }
@@ -188,14 +152,12 @@ void ReadbackHelper::fillColorsArea(std::vector<IComposerClient::Color>& expecte
     }
 }
 
-bool ReadbackHelper::readbackSupported(PixelFormat pixelFormat, Dataspace dataspace, Error error) {
+bool ReadbackHelper::readbackSupported(const PixelFormat& pixelFormat, const Dataspace& dataspace,
+                                       const Error error) {
     if (error != Error::NONE) {
         return false;
     }
-    return readbackSupported(pixelFormat, dataspace);
-}
-
-bool ReadbackHelper::readbackSupported(PixelFormat pixelFormat, Dataspace dataspace) {
+    // TODO: add support for RGBA_1010102
     if (pixelFormat != PixelFormat::RGB_888 && pixelFormat != PixelFormat::RGBA_8888) {
         return false;
     }
@@ -205,94 +167,71 @@ bool ReadbackHelper::readbackSupported(PixelFormat pixelFormat, Dataspace datasp
     return true;
 }
 
-void ReadbackHelper::createReadbackBuffer(uint32_t width, uint32_t height, PixelFormat pixelFormat,
-                                          Dataspace dataspace, sp<GraphicBuffer>* graphicBuffer) {
-    ASSERT_NE(nullptr, graphicBuffer);
-    if (!readbackSupported(pixelFormat, dataspace)) {
-        *graphicBuffer = nullptr;
-    }
-    android::PixelFormat bufferFormat = static_cast<android::PixelFormat>(pixelFormat);
-    uint32_t layerCount = 1;
-    uint64_t usage = static_cast<uint64_t>(static_cast<uint64_t>(BufferUsage::CPU_READ_OFTEN) |
-                                           static_cast<uint64_t>(BufferUsage::GPU_TEXTURE));
-    *graphicBuffer = sp<GraphicBuffer>::make(width, height, bufferFormat, layerCount, usage,
-                                             "ReadbackBuffer");
-    ASSERT_NE(nullptr, *graphicBuffer);
-    ASSERT_EQ(::android::OK, (*graphicBuffer)->initCheck());
-}
-
-void ReadbackHelper::compareColorToBuffer(IComposerClient::Color expectedColor,
-                                          const sp<GraphicBuffer>& graphicBuffer, int32_t fence) {
-    std::vector<IComposerClient::Color> expectedColors(
-            static_cast<size_t>(graphicBuffer->getWidth() * graphicBuffer->getHeight()));
-    ::android::Rect bounds = graphicBuffer->getBounds();
-    fillColorsArea(expectedColors, static_cast<int32_t>(graphicBuffer->getWidth()),
-                   {bounds.left, bounds.top, bounds.right, bounds.bottom}, expectedColor);
-    compareColorsToBuffer(expectedColors, graphicBuffer, fence);
-}
-
-void ReadbackHelper::compareColorsToBuffer(std::vector<IComposerClient::Color>& expectedColors,
-                                           const sp<GraphicBuffer>& graphicBuffer, int32_t fence) {
-    ASSERT_TRUE(graphicBuffer->getPixelFormat() == ::android::PIXEL_FORMAT_RGB_888 ||
-                graphicBuffer->getPixelFormat() == ::android::PIXEL_FORMAT_RGBA_8888);
-
-    int bytesPerPixel = -1;
-    int bytesPerStride = -1;
-    void* bufData = nullptr;
-    status_t status = graphicBuffer->lockAsync(GRALLOC_USAGE_SW_READ_OFTEN, &bufData, fence,
-                                               &bytesPerPixel, &bytesPerStride);
-    ASSERT_EQ(::android::OK, status);
-
-    const uint32_t stride = (bytesPerPixel > 0 && bytesPerStride > 0)
-                                    ? static_cast<uint32_t>(bytesPerStride / bytesPerPixel)
-                                    : graphicBuffer->getStride();
-
-    if (bytesPerPixel == -1) {
-        PixelFormat pixelFormat = static_cast<PixelFormat>(graphicBuffer->getPixelFormat());
-        bytesPerPixel = ReadbackHelper::GetBytesPerPixel(pixelFormat);
-    }
+void ReadbackHelper::compareColorBuffers(std::vector<IComposerClient::Color>& expectedColors,
+                                         void* bufferData, const uint32_t stride,
+                                         const uint32_t width, const uint32_t height,
+                                         const PixelFormat pixelFormat) {
+    const int32_t bytesPerPixel = ReadbackHelper::GetBytesPerPixel(pixelFormat);
     ASSERT_NE(-1, bytesPerPixel);
-    for (int row = 0; row < graphicBuffer->getHeight(); row++) {
-        for (int col = 0; col < graphicBuffer->getWidth(); col++) {
-            int pixel = row * static_cast<int32_t>(graphicBuffer->getWidth()) + col;
-            int offset = (row * static_cast<int32_t>(stride) + col) * bytesPerPixel;
-            uint8_t* pixelColor = (uint8_t*)bufData + offset;
-            const IComposerClient::Color expectedColor = expectedColors[static_cast<size_t>(pixel)];
-            ASSERT_EQ(std::round(255.0f * expectedColor.r), pixelColor[0]);
-            ASSERT_EQ(std::round(255.0f * expectedColor.g), pixelColor[1]);
-            ASSERT_EQ(std::round(255.0f * expectedColor.b), pixelColor[2]);
+    for (int row = 0; row < height; row++) {
+        for (int col = 0; col < width; col++) {
+            int pixel = row * width + col;
+            int offset = (row * stride + col) * bytesPerPixel;
+            uint8_t* pixelColor = (uint8_t*)bufferData + offset;
+
+            ASSERT_EQ(expectedColors[pixel].r, pixelColor[0]);
+            ASSERT_EQ(expectedColors[pixel].g, pixelColor[1]);
+            ASSERT_EQ(expectedColors[pixel].b, pixelColor[2]);
         }
     }
-
-    status = graphicBuffer->unlock();
-    ASSERT_EQ(::android::OK, status);
 }
 
 ReadbackBuffer::ReadbackBuffer(Display display, const std::shared_ptr<ComposerClient>& client,
-                               uint32_t width, uint32_t height, PixelFormat pixelFormat) {
+                               const std::shared_ptr<Gralloc>& gralloc, uint32_t width,
+                               uint32_t height, PixelFormat pixelFormat, Dataspace dataspace) {
     mDisplay = display;
+
     mComposerClient = client;
+    mGralloc = gralloc;
+
+    mPixelFormat = pixelFormat;
+    mDataspace = dataspace;
+
     mWidth = width;
     mHeight = height;
-    mPixelFormat = pixelFormat;
     mLayerCount = 1;
+    mFormat = mPixelFormat;
     mUsage = static_cast<uint64_t>(BufferUsage::CPU_READ_OFTEN | BufferUsage::GPU_TEXTURE);
+
+    mAccessRegion.top = 0;
+    mAccessRegion.left = 0;
+    mAccessRegion.width = width;
+    mAccessRegion.height = height;
 }
 
 void ReadbackBuffer::setReadbackBuffer() {
-    mGraphicBuffer = sp<GraphicBuffer>::make(mWidth, mHeight,
-                                             static_cast<::android::PixelFormat>(mPixelFormat),
-                                             mLayerCount, mUsage, "ReadbackBuffer");
-    ASSERT_NE(nullptr, mGraphicBuffer);
-    ASSERT_EQ(::android::OK, mGraphicBuffer->initCheck());
-    mComposerClient->setReadbackBuffer(mDisplay, mGraphicBuffer->handle, -1 /* fence */);
+    mBufferHandle.reset(new Gralloc::NativeHandleWrapper(
+            mGralloc->allocate(mWidth, mHeight, mLayerCount, mFormat, mUsage,
+                               /*import*/ true, &mStride)));
+    ASSERT_NE(false, mGralloc->validateBufferSize(mBufferHandle->get(), mWidth, mHeight,
+                                                  mLayerCount, mFormat, mUsage, mStride));
+    ASSERT_NO_FATAL_FAILURE(mComposerClient->setReadbackBuffer(mDisplay, mBufferHandle->get(), -1));
 }
 
 void ReadbackBuffer::checkReadbackBuffer(std::vector<IComposerClient::Color> expectedColors) {
     // lock buffer for reading
     int32_t fenceHandle;
     ASSERT_NO_FATAL_FAILURE(mComposerClient->getReadbackBufferFence(mDisplay, &fenceHandle));
-    ReadbackHelper::compareColorsToBuffer(expectedColors, mGraphicBuffer, fenceHandle);
+
+    void* bufData = mGralloc->lock(mBufferHandle->get(), mUsage, mAccessRegion, fenceHandle);
+    ASSERT_TRUE(mPixelFormat == PixelFormat::RGB_888 || mPixelFormat == PixelFormat::RGBA_8888);
+    ReadbackHelper::compareColorBuffers(expectedColors, bufData, mStride, mWidth, mHeight,
+                                        mPixelFormat);
+    int32_t unlockFence = mGralloc->unlock(mBufferHandle->get());
+    if (unlockFence != -1) {
+        sync_wait(unlockFence, -1);
+        close(unlockFence);
+    }
 }
 
 void TestColorLayer::write(const std::shared_ptr<CommandWriterBase>& writer) {
