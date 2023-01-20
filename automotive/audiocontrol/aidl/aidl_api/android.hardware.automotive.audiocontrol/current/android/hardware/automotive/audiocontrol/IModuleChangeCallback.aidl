@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,19 +33,6 @@
 
 package android.hardware.automotive.audiocontrol;
 @VintfStability
-interface IAudioControl {
-  /**
-   * @deprecated use {@link android.hardware.audio.common.PlaybackTrackMetadata} instead.
-   */
-  oneway void onAudioFocusChange(in String usage, in int zoneId, in android.hardware.automotive.audiocontrol.AudioFocusChange focusChange);
-  oneway void onDevicesToDuckChange(in android.hardware.automotive.audiocontrol.DuckingInfo[] duckingInfos);
-  oneway void onDevicesToMuteChange(in android.hardware.automotive.audiocontrol.MutingInfo[] mutingInfos);
-  oneway void registerFocusListener(in android.hardware.automotive.audiocontrol.IFocusListener listener);
-  oneway void setBalanceTowardRight(in float value);
-  oneway void setFadeTowardFront(in float value);
-  oneway void onAudioFocusChangeWithMetaData(in android.hardware.audio.common.PlaybackTrackMetadata playbackMetaData, in int zoneId, in android.hardware.automotive.audiocontrol.AudioFocusChange focusChange);
-  oneway void setAudioDeviceGainsChanged(in android.hardware.automotive.audiocontrol.Reasons[] reasons, in android.hardware.automotive.audiocontrol.AudioGainConfigInfo[] gains);
-  oneway void registerGainCallback(in android.hardware.automotive.audiocontrol.IAudioGainCallback callback);
-  void setModuleChangeCallback(in android.hardware.automotive.audiocontrol.IModuleChangeCallback callback);
-  void clearModuleChangeCallback();
+interface IModuleChangeCallback {
+  oneway void onAudioPortsChanged(in android.media.audio.common.AudioPort[] audioPorts);
 }
