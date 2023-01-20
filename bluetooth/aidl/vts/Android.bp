@@ -15,12 +15,12 @@ cc_test {
     ],
     srcs: ["VtsHalBluetoothTargetTest.cpp"],
     shared_libs: [
-        "android.hardware.bluetooth-V1-ndk",
         "libbase",
         "libbinder_ndk",
         "libcutils",
     ],
     static_libs: [
+        "android.hardware.bluetooth-V1-ndk",
         "libbluetooth-types",
     ],
     test_config: "VtsHalBluetoothTargetTest.xml",
