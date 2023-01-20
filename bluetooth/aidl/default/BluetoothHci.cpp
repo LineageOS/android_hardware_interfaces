@@ -44,6 +44,7 @@ int SetTerminalRaw(int fd) {
 
 using namespace ::android::hardware::bluetooth::hci;
 using namespace ::android::hardware::bluetooth::async;
+using aidl::android::hardware::bluetooth::Status;
 
 namespace aidl::android::hardware::bluetooth::impl {
 
@@ -97,21 +98,25 @@ BluetoothHci::BluetoothHci(const std::string& dev_path) {
   mDeathRecipient = std::make_shared<BluetoothDeathRecipient>(this);
 }
 
-ndk::ScopedAStatus BluetoothHci::initialize(
-    const std::shared_ptr<IBluetoothHciCallbacks>& cb) {
-  ALOGI(__func__);
-
-  mFd = open(mDevPath.c_str(), O_RDWR);
-  if (mFd < 0) {
+int BluetoothHci::getFdFromDevPath() {
+  int fd = open(mDevPath.c_str(), O_RDWR);
+  if (fd < 0) {
     ALOGE("Could not connect to bt: %s (%s)", mDevPath.c_str(),
           strerror(errno));
-    return ndk::ScopedAStatus::fromServiceSpecificError(STATUS_BAD_VALUE);
+    return fd;
   }
   if (int ret = SetTerminalRaw(mFd) < 0) {
     ALOGE("Could not make %s a raw terminal %d(%s)", mDevPath.c_str(), ret,
           strerror(errno));
-    return ndk::ScopedAStatus::fromServiceSpecificError(STATUS_BAD_VALUE);
+    ::close(fd);
+    return -1;
   }
+  return fd;
+}
+
+ndk::ScopedAStatus BluetoothHci::initialize(
+    const std::shared_ptr<IBluetoothHciCallbacks>& cb) {
+  ALOGI(__func__);
 
   mCb = cb;
   if (mCb == nullptr) {
@@ -119,16 +124,20 @@ ndk::ScopedAStatus BluetoothHci::initialize(
     return ndk::ScopedAStatus::fromServiceSpecificError(STATUS_BAD_VALUE);
   }
 
+  management_.reset(new NetBluetoothMgmt);
+  mFd = management_->openHci();
+  if (mFd < 0) {
+    management_.reset();
+
+    ALOGI("Unable to open Linux interface, trying default path.");
+    mFd = getFdFromDevPath();
+    if (mFd < 0) {
+      return ndk::ScopedAStatus::fromServiceSpecificError(STATUS_BAD_VALUE);
+    }
+  }
+
   mDeathRecipient->LinkToDeath(mCb);
 
-  auto init_ret = cb->initializationComplete(Status::SUCCESS);
-  if (!init_ret.isOk()) {
-    if (!mDeathRecipient->getHasDied()) {
-      ALOGE("Error sending init callback, but no death notification.");
-    }
-    return ndk::ScopedAStatus::fromServiceSpecificError(
-        STATUS_FAILED_TRANSACTION);
-  }
   mH4 = std::make_shared<H4Protocol>(
       mFd,
       [](const std::vector<uint8_t>& /* raw_command */) {
@@ -152,13 +161,29 @@ ndk::ScopedAStatus BluetoothHci::initialize(
       });
   mFdWatcher.WatchFdForNonBlockingReads(mFd,
                                         [this](int) { mH4->OnDataReady(); });
+
+  ALOGI("initialization complete");
+  auto status = mCb->initializationComplete(Status::SUCCESS);
+  if (!status.isOk()) {
+    if (!mDeathRecipient->getHasDied()) {
+      ALOGE("Error sending init callback, but no death notification");
+    }
+    close();
+    return ndk::ScopedAStatus::fromServiceSpecificError(
+        STATUS_FAILED_TRANSACTION);
+  }
+
   return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus BluetoothHci::close() {
   ALOGI(__func__);
   mFdWatcher.StopWatchingFileDescriptors();
-  ::close(mFd);
+  if (management_) {
+    management_->closeHci();
+  } else {
+    ::close(mFd);
+  }
 
   return ndk::ScopedAStatus::ok();
 }

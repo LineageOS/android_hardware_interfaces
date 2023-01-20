@@ -34,7 +34,7 @@
 package android.hardware.radio.data;
 @Backing(type="int") @JavaDerive(toString=true) @VintfStability
 enum PdpProtocolType {
-  UNKNOWN = -1,
+  UNKNOWN = (-1),
   IP = 0,
   IPV6 = 1,
   IPV4V6 = 2,

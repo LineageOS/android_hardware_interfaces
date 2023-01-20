@@ -34,7 +34,7 @@
 package android.hardware.radio.voice;
 @Backing(type="int") @JavaDerive(toString=true) @VintfStability
 enum EmergencyCallRouting {
-  UNKNOWN = 0,
-  EMERGENCY = 1,
-  NORMAL = 2,
+  UNKNOWN,
+  EMERGENCY,
+  NORMAL,
 }

@@ -34,6 +34,6 @@
 package android.hardware.radio.sap;
 @Backing(type="int") @VintfStability
 enum SapTransferProtocol {
-  T0 = 0,
-  T1 = 1,
+  T0,
+  T1,
 }

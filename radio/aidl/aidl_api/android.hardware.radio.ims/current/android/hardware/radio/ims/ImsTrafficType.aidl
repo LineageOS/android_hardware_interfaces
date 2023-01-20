@@ -34,11 +34,11 @@
 package android.hardware.radio.ims;
 @Backing(type="int") @JavaDerive(toString=true) @VintfStability
 enum ImsTrafficType {
-  EMERGENCY = 0,
-  EMERGENCY_SMS = 1,
-  VOICE = 2,
-  VIDEO = 3,
-  SMS = 4,
-  REGISTRATION = 5,
-  UT_XCAP = 6,
+  EMERGENCY,
+  EMERGENCY_SMS,
+  VOICE,
+  VIDEO,
+  SMS,
+  REGISTRATION,
+  UT_XCAP,
 }

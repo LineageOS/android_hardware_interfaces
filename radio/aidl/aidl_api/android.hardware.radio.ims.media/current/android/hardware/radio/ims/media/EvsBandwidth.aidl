@@ -35,8 +35,8 @@ package android.hardware.radio.ims.media;
 @Backing(type="int") @VintfStability
 enum EvsBandwidth {
   NONE = 0,
-  NARROW_BAND = 1,
-  WIDE_BAND = 2,
-  SUPER_WIDE_BAND = 4,
-  FULL_BAND = 8,
+  NARROW_BAND = (1 << 0),
+  WIDE_BAND = (1 << 1),
+  SUPER_WIDE_BAND = (1 << 2),
+  FULL_BAND = (1 << 3),
 }

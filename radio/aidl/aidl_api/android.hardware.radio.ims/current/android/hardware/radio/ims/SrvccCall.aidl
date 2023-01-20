@@ -47,18 +47,18 @@ parcelable SrvccCall {
   int namePresentation;
   @Backing(type="int") @VintfStability
   enum CallType {
-    NORMAL = 0,
-    EMERGENCY = 1,
+    NORMAL,
+    EMERGENCY,
   }
   @Backing(type="int") @VintfStability
   enum CallSubState {
-    NONE = 0,
-    PREALERTING = 1,
+    NONE,
+    PREALERTING,
   }
   @Backing(type="int") @VintfStability
   enum ToneType {
-    NONE = 0,
-    LOCAL = 1,
-    NETWORK = 2,
+    NONE,
+    LOCAL,
+    NETWORK,
   }
 }

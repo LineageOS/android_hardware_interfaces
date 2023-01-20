@@ -1,0 +1,48 @@
+package {
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "hardware_interfaces_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-Apache-2.0
+    default_applicable_licenses: ["hardware_interfaces_license"],
+}
+
+cc_test {
+    name: "VtsHalBluetoothTargetTest",
+    defaults: [
+        "VtsHalTargetTestDefaults",
+        "use_libaidlvintf_gtest_helper_static",
+    ],
+    srcs: ["VtsHalBluetoothTargetTest.cpp"],
+    shared_libs: [
+        "android.hardware.bluetooth-V1-ndk",
+        "libbase",
+        "libbinder_ndk",
+        "libcutils",
+    ],
+    static_libs: [
+        "libbluetooth-types",
+    ],
+    test_config: "VtsHalBluetoothTargetTest.xml",
+    test_suites: [
+        "general-tests",
+        "vts",
+    ],
+    tidy: true,
+    tidy_checks: [
+        "-*",
+        "readability-inconsistent-declaration-parameter-name",
+        "readability-*",
+        "-readability-function-size",
+        "-readability-identifier-length",
+        "-readability-implicit-bool-conversion",
+        "-readability-magic-numbers",
+        "-readability-use-anyofallof",
+    ],
+    tidy_checks_as_errors: [
+        "readability-*",
+    ],
+    tidy_flags: [
+        "--header-filter=^.*tools\\/rootcanal\\/(model|include|net|desktop)\\/(.(?!\\.pb\\.h))*$",
+    ],
+}

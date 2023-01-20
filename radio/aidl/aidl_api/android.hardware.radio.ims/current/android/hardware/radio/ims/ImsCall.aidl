@@ -42,23 +42,23 @@ parcelable ImsCall {
   boolean isHeldByRemote;
   @Backing(type="int")
   enum CallType {
-    NORMAL = 0,
-    EMERGENCY = 1,
+    NORMAL,
+    EMERGENCY,
   }
   @Backing(type="int")
   enum CallState {
-    ACTIVE = 0,
-    HOLDING = 1,
-    DIALING = 2,
-    ALERTING = 3,
-    INCOMING = 4,
-    WAITING = 5,
-    DISCONNECTING = 6,
-    DISCONNECTED = 7,
+    ACTIVE,
+    HOLDING,
+    DIALING,
+    ALERTING,
+    INCOMING,
+    WAITING,
+    DISCONNECTING,
+    DISCONNECTED,
   }
   @Backing(type="int")
   enum Direction {
-    INCOMING = 0,
-    OUTGOING = 1,
+    INCOMING,
+    OUTGOING,
   }
 }

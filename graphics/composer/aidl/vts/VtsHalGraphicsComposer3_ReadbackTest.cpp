@@ -18,6 +18,7 @@
 
 #include <aidl/Gtest.h>
 #include <aidl/Vintf.h>
+#include <aidl/android/hardware/graphics/common/BufferUsage.h>
 #include <aidl/android/hardware/graphics/composer3/IComposer.h>
 #include <gtest/gtest.h>
 #include <ui/DisplayId.h>
@@ -80,11 +81,13 @@ class GraphicsCompositionTestBase : public ::testing::Test {
         clientCompositionDisplay.physicalDisplay = Rect(getDisplayWidth(), getDisplayHeight());
         clientCompositionDisplay.clip = clientCompositionDisplay.physicalDisplay;
 
-        mTestRenderEngine->initGraphicBuffer(static_cast<uint32_t>(getDisplayWidth()),
-                                             static_cast<uint32_t>(getDisplayHeight()),
-                                             /*layerCount*/ 1U,
-                                             GRALLOC_USAGE_HW_RENDER | GRALLOC_USAGE_SW_READ_OFTEN |
-                                                     GRALLOC_USAGE_SW_WRITE_OFTEN);
+        mTestRenderEngine->initGraphicBuffer(
+                static_cast<uint32_t>(getDisplayWidth()), static_cast<uint32_t>(getDisplayHeight()),
+                /*layerCount*/ 1U,
+                static_cast<uint64_t>(
+                        static_cast<uint64_t>(common::BufferUsage::CPU_READ_OFTEN) |
+                        static_cast<uint64_t>(common::BufferUsage::CPU_WRITE_OFTEN) |
+                        static_cast<uint64_t>(common::BufferUsage::GPU_RENDER_TARGET)));
         mTestRenderEngine->setDisplaySettings(clientCompositionDisplay);
     }
 
@@ -112,21 +115,18 @@ class GraphicsCompositionTestBase : public ::testing::Test {
         ASSERT_EQ(status.getServiceSpecificError(), serviceSpecificError);
     }
 
-    sp<GraphicBuffer> allocateBuffer(uint32_t width, uint32_t height, uint64_t usage) {
-        sp<GraphicBuffer> graphicBuffer =
-                sp<GraphicBuffer>::make(width, height, ::android::PIXEL_FORMAT_RGBA_8888,
-                                        /*layerCount*/ 1u, static_cast<uint32_t>(usage),
-                                        "VtsHalGraphicsComposer3_ReadbackTest");
+    std::pair<bool, ::android::sp<::android::GraphicBuffer>> allocateBuffer(uint32_t usage) {
+        const auto width = static_cast<uint32_t>(getDisplayWidth());
+        const auto height = static_cast<uint32_t>(getDisplayHeight());
+
+        const auto& graphicBuffer = ::android::sp<::android::GraphicBuffer>::make(
+                width, height, ::android::PIXEL_FORMAT_RGBA_8888,
+                /*layerCount*/ 1u, usage, "VtsHalGraphicsComposer3_ReadbackTest");
 
         if (graphicBuffer && ::android::OK == graphicBuffer->initCheck()) {
-            return graphicBuffer;
+            return {true, graphicBuffer};
         }
-        return nullptr;
-    }
-
-    sp<GraphicBuffer> allocateBuffer(uint64_t usage) {
-        return allocateBuffer(static_cast<uint32_t>(getDisplayWidth()),
-                              static_cast<uint32_t>(getDisplayHeight()), usage);
+        return {false, graphicBuffer};
     }
 
     uint64_t getStableDisplayId(int64_t display) {
@@ -293,7 +293,7 @@ TEST_P(GraphicsCompositionTest, SingleSolidColorLayer) {
         ReadbackHelper::fillColorsArea(expectedColors, getDisplayWidth(), coloredSquare, BLUE);
 
         ReadbackBuffer readbackBuffer(getPrimaryDisplayId(), mComposerClient, getDisplayWidth(),
-                                      getDisplayHeight(), mPixelFormat);
+                                      getDisplayHeight(), mPixelFormat, mDataspace);
         ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
 
         writeLayers(layers);
@@ -332,7 +332,7 @@ TEST_P(GraphicsCompositionTest, SetLayerBuffer) {
         }
 
         ReadbackBuffer readbackBuffer(getPrimaryDisplayId(), mComposerClient, getDisplayWidth(),
-                                      getDisplayHeight(), mPixelFormat);
+                                      getDisplayHeight(), mPixelFormat, mDataspace);
         ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
         std::vector<Color> expectedColors(
                 static_cast<size_t>(getDisplayWidth() * getDisplayHeight()));
@@ -378,296 +378,6 @@ TEST_P(GraphicsCompositionTest, SetLayerBuffer) {
     }
 }
 
-TEST_P(GraphicsCompositionTest, SetLayerBufferWithSlotsToClear) {
-    const auto& [versionStatus, version] = mComposerClient->getInterfaceVersion();
-    ASSERT_TRUE(versionStatus.isOk());
-    if (version == 1) {
-        GTEST_SUCCEED() << "Device does not support the new API for clearing buffer slots";
-        return;
-    }
-
-    const auto& [readbackStatus, readbackBufferAttributes] =
-            mComposerClient->getReadbackBufferAttributes(getPrimaryDisplayId());
-    if (!readbackStatus.isOk()) {
-        GTEST_SUCCEED() << "Readback not supported";
-        return;
-    }
-
-    sp<GraphicBuffer> readbackBuffer;
-    ASSERT_NO_FATAL_FAILURE(ReadbackHelper::createReadbackBuffer(
-            readbackBufferAttributes, getPrimaryDisplay(), &readbackBuffer));
-    if (readbackBuffer == nullptr) {
-        GTEST_SUCCEED() << "Unsupported readback buffer attributes";
-        return;
-    }
-    // no fence needed for the readback buffer
-    ScopedFileDescriptor noFence(-1);
-
-    // red buffer
-    uint64_t usage = GRALLOC_USAGE_SW_WRITE_OFTEN | GRALLOC_USAGE_SW_READ_OFTEN;
-    sp<GraphicBuffer> redBuffer = allocateBuffer(usage);
-    ASSERT_NE(nullptr, redBuffer);
-    int redFence;
-    ASSERT_NO_FATAL_FAILURE(ReadbackHelper::fillBufferAndGetFence(redBuffer, RED, &redFence));
-
-    // blue buffer
-    sp<GraphicBuffer> blueBuffer = allocateBuffer(usage);
-    ASSERT_NE(nullptr, blueBuffer);
-    int blueFence;
-    ASSERT_NO_FATAL_FAILURE(ReadbackHelper::fillBufferAndGetFence(blueBuffer, BLUE, &blueFence));
-
-    // green buffer
-    sp<GraphicBuffer> greenBuffer = allocateBuffer(usage);
-    ASSERT_NE(nullptr, greenBuffer);
-    int greenFence;
-    ASSERT_NO_FATAL_FAILURE(ReadbackHelper::fillBufferAndGetFence(greenBuffer, GREEN, &greenFence));
-
-    // layer defaults
-    common::Rect rectFullDisplay = {0, 0, getDisplayWidth(), getDisplayHeight()};
-    int64_t display = getPrimaryDisplayId();
-    const auto& [layerStatus, layer] = mComposerClient->createLayer(getPrimaryDisplayId(), 3);
-    ASSERT_TRUE(layerStatus.isOk());
-    mWriter->setLayerDisplayFrame(display, layer, rectFullDisplay);
-    mWriter->setLayerCompositionType(display, layer, Composition::DEVICE);
-
-    // set the layer to the blue buffer
-    // should be blue
-    {
-        auto status = mComposerClient->setReadbackBuffer(display, readbackBuffer->handle, noFence);
-        ASSERT_TRUE(status.isOk());
-        mWriter->setLayerBuffer(display, layer, /*slot*/ 0, blueBuffer->handle, blueFence);
-        mWriter->validateDisplay(display, ComposerClientWriter::kNoTimestamp);
-        execute();
-        ASSERT_TRUE(mReader.takeChangedCompositionTypes(display).empty());
-        ASSERT_TRUE(mReader.takeErrors().empty());
-        mWriter->presentDisplay(display);
-        execute();
-        auto [fenceStatus, fence] = mComposerClient->getReadbackBufferFence(display);
-        ASSERT_TRUE(fenceStatus.isOk());
-        ReadbackHelper::compareColorToBuffer(BLUE, readbackBuffer, fence);
-    }
-
-    // change the layer to the red buffer
-    // should be red
-    {
-        auto status = mComposerClient->setReadbackBuffer(display, readbackBuffer->handle, noFence);
-        ASSERT_TRUE(status.isOk());
-        mWriter->setLayerBuffer(display, layer, /*slot*/ 1, redBuffer->handle, redFence);
-        mWriter->validateDisplay(display, ComposerClientWriter::kNoTimestamp);
-        execute();
-        ASSERT_TRUE(mReader.takeChangedCompositionTypes(display).empty());
-        ASSERT_TRUE(mReader.takeErrors().empty());
-        mWriter->presentDisplay(display);
-        execute();
-        auto [fenceStatus, fence] = mComposerClient->getReadbackBufferFence(display);
-        ASSERT_TRUE(fenceStatus.isOk());
-        ReadbackHelper::compareColorToBuffer(RED, readbackBuffer, fence);
-    }
-
-    // change the layer to the green buffer
-    // should be green
-    {
-        auto status = mComposerClient->setReadbackBuffer(display, readbackBuffer->handle, noFence);
-        ASSERT_TRUE(status.isOk());
-        mWriter->setLayerBuffer(display, layer, /*slot*/ 2, greenBuffer->handle, greenFence);
-        mWriter->validateDisplay(display, ComposerClientWriter::kNoTimestamp);
-        execute();
-        ASSERT_TRUE(mReader.takeChangedCompositionTypes(display).empty());
-        ASSERT_TRUE(mReader.takeErrors().empty());
-        mWriter->presentDisplay(display);
-        execute();
-        auto [fenceStatus, fence] = mComposerClient->getReadbackBufferFence(display);
-        ASSERT_TRUE(fenceStatus.isOk());
-        ReadbackHelper::compareColorToBuffer(GREEN, readbackBuffer, fence);
-    }
-
-    // clear the slots for all buffers
-    // should still be green since the active buffer should not be cleared by the HAL implementation
-    {
-        auto status = mComposerClient->setReadbackBuffer(display, readbackBuffer->handle, noFence);
-        ASSERT_TRUE(status.isOk());
-        mWriter->setLayerBufferSlotsToClear(display, layer, /*slotsToClear*/ {0, 1, 2});
-        mWriter->validateDisplay(display, ComposerClientWriter::kNoTimestamp);
-        execute();
-        ASSERT_TRUE(mReader.takeChangedCompositionTypes(display).empty());
-        ASSERT_TRUE(mReader.takeErrors().empty());
-        mWriter->presentDisplay(display);
-        execute();
-        auto [fenceStatus, fence] = mComposerClient->getReadbackBufferFence(display);
-        ASSERT_TRUE(fenceStatus.isOk());
-        ReadbackHelper::compareColorToBuffer(GREEN, readbackBuffer, fence);
-    }
-
-    // clear the slot for the green buffer, and set the buffer with the same slot to the blue buffer
-    // should be blue
-    {
-        auto status = mComposerClient->setReadbackBuffer(display, readbackBuffer->handle, noFence);
-        ASSERT_TRUE(status.isOk());
-        mWriter->setLayerBufferSlotsToClear(display, layer, /*slotsToClear*/ {2});
-        mWriter->setLayerBuffer(display, layer, /*slot*/ 2, blueBuffer->handle, blueFence);
-        mWriter->validateDisplay(display, ComposerClientWriter::kNoTimestamp);
-        execute();
-        ASSERT_TRUE(mReader.takeChangedCompositionTypes(display).empty());
-        ASSERT_TRUE(mReader.takeErrors().empty());
-        mWriter->presentDisplay(display);
-        execute();
-        auto [fenceStatus, fence] = mComposerClient->getReadbackBufferFence(display);
-        ASSERT_TRUE(fenceStatus.isOk());
-        ReadbackHelper::compareColorToBuffer(BLUE, readbackBuffer, fence);
-    }
-}
-
-TEST_P(GraphicsCompositionTest, SetLayerBufferWithSlotsToClear_backwardsCompatible) {
-    const auto& [versionStatus, version] = mComposerClient->getInterfaceVersion();
-    ASSERT_TRUE(versionStatus.isOk());
-    if (version > 1) {
-        GTEST_SUCCEED() << "Device does not need a backwards compatible way to clear buffer slots";
-        return;
-    }
-
-    const auto& [readbackStatus, readbackBufferAttributes] =
-            mComposerClient->getReadbackBufferAttributes(getPrimaryDisplayId());
-    if (!readbackStatus.isOk()) {
-        GTEST_SUCCEED() << "Readback not supported";
-        return;
-    }
-
-    sp<GraphicBuffer> readbackBuffer;
-    ASSERT_NO_FATAL_FAILURE(ReadbackHelper::createReadbackBuffer(
-            readbackBufferAttributes, getPrimaryDisplay(), &readbackBuffer));
-    if (readbackBuffer == nullptr) {
-        GTEST_SUCCEED() << "Unsupported readback buffer attributes";
-        return;
-    }
-    // no fence needed for the readback buffer
-    ScopedFileDescriptor noFence(-1);
-
-    sp<GraphicBuffer> clearSlotBuffer = allocateBuffer(1u, 1u, GRALLOC_USAGE_HW_COMPOSER);
-    ASSERT_NE(nullptr, clearSlotBuffer);
-
-    // red buffer
-    uint64_t usage = GRALLOC_USAGE_SW_WRITE_OFTEN | GRALLOC_USAGE_SW_READ_OFTEN;
-    sp<GraphicBuffer> redBuffer = allocateBuffer(usage);
-    ASSERT_NE(nullptr, redBuffer);
-    int redFence;
-    ASSERT_NO_FATAL_FAILURE(ReadbackHelper::fillBufferAndGetFence(redBuffer, RED, &redFence));
-
-    // blue buffer
-    sp<GraphicBuffer> blueBuffer = allocateBuffer(usage);
-    ASSERT_NE(nullptr, blueBuffer);
-    int blueFence;
-    ASSERT_NO_FATAL_FAILURE(ReadbackHelper::fillBufferAndGetFence(blueBuffer, BLUE, &blueFence));
-
-    // green buffer
-    sp<GraphicBuffer> greenBuffer = allocateBuffer(usage);
-    ASSERT_NE(nullptr, greenBuffer);
-    int greenFence;
-    ASSERT_NO_FATAL_FAILURE(ReadbackHelper::fillBufferAndGetFence(greenBuffer, GREEN, &greenFence));
-
-    // layer defaults
-    common::Rect rectFullDisplay = {0, 0, getDisplayWidth(), getDisplayHeight()};
-    int64_t display = getPrimaryDisplayId();
-    const auto& [layerStatus, layer] = mComposerClient->createLayer(getPrimaryDisplayId(), 3);
-    ASSERT_TRUE(layerStatus.isOk());
-    mWriter->setLayerDisplayFrame(display, layer, rectFullDisplay);
-    mWriter->setLayerCompositionType(display, layer, Composition::DEVICE);
-
-    // set the layer to the blue buffer
-    // should be blue
-    {
-        auto status = mComposerClient->setReadbackBuffer(display, readbackBuffer->handle, noFence);
-        ASSERT_TRUE(status.isOk());
-        mWriter->setLayerBuffer(display, layer, /*slot*/ 0, blueBuffer->handle, blueFence);
-        mWriter->validateDisplay(display, ComposerClientWriter::kNoTimestamp);
-        execute();
-        ASSERT_TRUE(mReader.takeChangedCompositionTypes(display).empty());
-        ASSERT_TRUE(mReader.takeErrors().empty());
-        mWriter->presentDisplay(display);
-        execute();
-        auto [fenceStatus, fence] = mComposerClient->getReadbackBufferFence(display);
-        ASSERT_TRUE(fenceStatus.isOk());
-        ReadbackHelper::compareColorToBuffer(BLUE, readbackBuffer, fence);
-    }
-
-    // change the layer to the red buffer
-    // should be red
-    {
-        auto status = mComposerClient->setReadbackBuffer(display, readbackBuffer->handle, noFence);
-        ASSERT_TRUE(status.isOk());
-        mWriter->setLayerBuffer(display, layer, /*slot*/ 1, redBuffer->handle, redFence);
-        mWriter->validateDisplay(display, ComposerClientWriter::kNoTimestamp);
-        execute();
-        ASSERT_TRUE(mReader.takeChangedCompositionTypes(display).empty());
-        ASSERT_TRUE(mReader.takeErrors().empty());
-        mWriter->presentDisplay(display);
-        execute();
-        auto [fenceStatus, fence] = mComposerClient->getReadbackBufferFence(display);
-        ASSERT_TRUE(fenceStatus.isOk());
-        ReadbackHelper::compareColorToBuffer(RED, readbackBuffer, fence);
-    }
-
-    // change the layer to the green buffer
-    // should be green
-    {
-        auto status = mComposerClient->setReadbackBuffer(display, readbackBuffer->handle, noFence);
-        ASSERT_TRUE(status.isOk());
-        mWriter->setLayerBuffer(display, layer, /*slot*/ 2, greenBuffer->handle, greenFence);
-        mWriter->validateDisplay(display, ComposerClientWriter::kNoTimestamp);
-        execute();
-        ASSERT_TRUE(mReader.takeChangedCompositionTypes(display).empty());
-        ASSERT_TRUE(mReader.takeErrors().empty());
-        mWriter->presentDisplay(display);
-        execute();
-        auto [fenceStatus, fence] = mComposerClient->getReadbackBufferFence(display);
-        ASSERT_TRUE(fenceStatus.isOk());
-        ReadbackHelper::compareColorToBuffer(GREEN, readbackBuffer, fence);
-    }
-
-    // clear the slot for the blue buffer
-    // should still be green
-    {
-        auto status = mComposerClient->setReadbackBuffer(display, readbackBuffer->handle, noFence);
-        ASSERT_TRUE(status.isOk());
-        mWriter->setLayerBufferWithNewCommand(display, layer, /*slot*/ 0, clearSlotBuffer->handle,
-                                              /*fence*/ -1);
-        // SurfaceFlinger will re-set the active buffer slot after other buffer slots are cleared
-        mWriter->setLayerBufferWithNewCommand(display, layer, /*slot*/ 2, /*handle*/ nullptr,
-                                              /*fence*/ -1);
-        mWriter->validateDisplay(display, ComposerClientWriter::kNoTimestamp);
-        execute();
-        ASSERT_TRUE(mReader.takeChangedCompositionTypes(display).empty());
-        ASSERT_TRUE(mReader.takeErrors().empty());
-        mWriter->presentDisplay(display);
-        execute();
-        auto [fenceStatus, fence] = mComposerClient->getReadbackBufferFence(display);
-        ASSERT_TRUE(fenceStatus.isOk());
-        ReadbackHelper::compareColorToBuffer(GREEN, readbackBuffer, fence);
-    }
-
-    // clear the slot for all buffers, and set the buffer with the same slot as the green buffer
-    // should be blue now
-    {
-        auto status = mComposerClient->setReadbackBuffer(display, readbackBuffer->handle, noFence);
-        ASSERT_TRUE(status.isOk());
-        mWriter->setLayerBufferWithNewCommand(display, layer, /*slot*/ 0, clearSlotBuffer->handle,
-                                              /*fence*/ -1);
-        mWriter->setLayerBufferWithNewCommand(display, layer, /*slot*/ 1, clearSlotBuffer->handle,
-                                              /*fence*/ -1);
-        // SurfaceFlinger will never clear the active buffer (slot 2), but will free up the
-        // buffer slot so it will be re-used for the next setLayerBuffer command
-        mWriter->setLayerBuffer(display, layer, /*slot*/ 2, blueBuffer->handle, blueFence);
-        mWriter->validateDisplay(display, ComposerClientWriter::kNoTimestamp);
-        execute();
-        ASSERT_TRUE(mReader.takeChangedCompositionTypes(display).empty());
-        ASSERT_TRUE(mReader.takeErrors().empty());
-        mWriter->presentDisplay(display);
-        execute();
-        auto [fenceStatus, fence] = mComposerClient->getReadbackBufferFence(display);
-        ASSERT_TRUE(fenceStatus.isOk());
-        ReadbackHelper::compareColorToBuffer(BLUE, readbackBuffer, fence);
-    }
-}
-
 TEST_P(GraphicsCompositionTest, SetLayerBufferNoEffect) {
     for (ColorMode mode : mTestColorModes) {
         EXPECT_TRUE(mComposerClient
@@ -689,9 +399,10 @@ TEST_P(GraphicsCompositionTest, SetLayerBufferNoEffect) {
         layer->write(*mWriter);
 
         // This following buffer call should have no effect
-        uint64_t usage = GRALLOC_USAGE_SW_WRITE_OFTEN | GRALLOC_USAGE_SW_READ_OFTEN;
-        sp<GraphicBuffer> graphicBuffer = allocateBuffer(usage);
-        ASSERT_NE(nullptr, graphicBuffer);
+        const auto usage = static_cast<uint32_t>(common::BufferUsage::CPU_WRITE_OFTEN) |
+                           static_cast<uint32_t>(common::BufferUsage::CPU_READ_OFTEN);
+        const auto& [graphicBufferStatus, graphicBuffer] = allocateBuffer(usage);
+        ASSERT_TRUE(graphicBufferStatus);
         const auto& buffer = graphicBuffer->handle;
         mWriter->setLayerBuffer(getPrimaryDisplayId(), layer->getLayer(), /*slot*/ 0, buffer,
                                 /*acquireFence*/ -1);
@@ -702,7 +413,7 @@ TEST_P(GraphicsCompositionTest, SetLayerBufferNoEffect) {
         ReadbackHelper::fillColorsArea(expectedColors, getDisplayWidth(), coloredSquare, BLUE);
 
         ReadbackBuffer readbackBuffer(getPrimaryDisplayId(), mComposerClient, getDisplayWidth(),
-                                      getDisplayHeight(), mPixelFormat);
+                                      getDisplayHeight(), mPixelFormat, mDataspace);
         ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
 
         mWriter->validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp);
@@ -730,7 +441,7 @@ TEST_P(GraphicsCompositionTest, SetReadbackBuffer) {
     }
 
     ReadbackBuffer readbackBuffer(getPrimaryDisplayId(), mComposerClient, getDisplayWidth(),
-                                  getDisplayHeight(), mPixelFormat);
+                                  getDisplayHeight(), mPixelFormat, mDataspace);
 
     ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
 }
@@ -743,9 +454,10 @@ TEST_P(GraphicsCompositionTest, SetReadbackBuffer_BadDisplay) {
         return;
     }
 
-    uint64_t usage = GRALLOC_USAGE_SW_WRITE_OFTEN | GRALLOC_USAGE_SW_READ_OFTEN;
-    sp<GraphicBuffer> graphicBuffer = allocateBuffer(usage);
-    ASSERT_NE(nullptr, graphicBuffer);
+    const auto usage = static_cast<uint32_t>(common::BufferUsage::CPU_WRITE_OFTEN) |
+                       static_cast<uint32_t>(common::BufferUsage::CPU_READ_OFTEN);
+    const auto& [graphicBufferStatus, graphicBuffer] = allocateBuffer(usage);
+    ASSERT_TRUE(graphicBufferStatus);
     const auto& bufferHandle = graphicBuffer->handle;
     ::ndk::ScopedFileDescriptor fence = ::ndk::ScopedFileDescriptor(-1);
 
@@ -827,7 +539,7 @@ TEST_P(GraphicsCompositionTest, ClientComposition) {
         std::vector<std::shared_ptr<TestLayer>> layers = {layer};
 
         ReadbackBuffer readbackBuffer(getPrimaryDisplayId(), mComposerClient, getDisplayWidth(),
-                                      getDisplayHeight(), mPixelFormat);
+                                      getDisplayHeight(), mPixelFormat, mDataspace);
         ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
         writeLayers(layers);
         ASSERT_TRUE(mReader.takeErrors().empty());
@@ -840,14 +552,16 @@ TEST_P(GraphicsCompositionTest, ClientComposition) {
             ASSERT_EQ(Composition::CLIENT, changedCompositionTypes[0].composition);
 
             PixelFormat clientFormat = PixelFormat::RGBA_8888;
-            auto clientUsage = GRALLOC_USAGE_HW_FB | GRALLOC_USAGE_SW_READ_OFTEN |
-                               GRALLOC_USAGE_SW_WRITE_OFTEN;
+            auto clientUsage = static_cast<uint32_t>(
+                    static_cast<uint32_t>(common::BufferUsage::CPU_READ_OFTEN) |
+                    static_cast<uint32_t>(common::BufferUsage::CPU_WRITE_OFTEN) |
+                    static_cast<uint32_t>(common::BufferUsage::COMPOSER_CLIENT_TARGET));
             Dataspace clientDataspace = ReadbackHelper::getDataspaceForColorMode(mode);
             common::Rect damage{0, 0, getDisplayWidth(), getDisplayHeight()};
 
             // create client target buffer
-            sp<GraphicBuffer> graphicBuffer = allocateBuffer(clientUsage);
-            ASSERT_NE(nullptr, graphicBuffer);
+            const auto& [graphicBufferStatus, graphicBuffer] = allocateBuffer(clientUsage);
+            ASSERT_TRUE(graphicBufferStatus);
             const auto& buffer = graphicBuffer->handle;
             void* clientBufData;
             const auto stride = static_cast<uint32_t>(graphicBuffer->stride);
@@ -904,7 +618,7 @@ TEST_P(GraphicsCompositionTest, DeviceAndClientComposition) {
                 {0, getDisplayHeight() / 2, getDisplayWidth(), getDisplayHeight()}, RED);
 
         ReadbackBuffer readbackBuffer(getPrimaryDisplayId(), mComposerClient, getDisplayWidth(),
-                                      getDisplayHeight(), mPixelFormat);
+                                      getDisplayHeight(), mPixelFormat, mDataspace);
         ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
 
         auto deviceLayer = std::make_shared<TestBufferLayer>(
@@ -923,8 +637,10 @@ TEST_P(GraphicsCompositionTest, DeviceAndClientComposition) {
         deviceLayer->write(*mWriter);
 
         PixelFormat clientFormat = PixelFormat::RGBA_8888;
-        auto clientUsage =
-                GRALLOC_USAGE_HW_FB | GRALLOC_USAGE_SW_READ_OFTEN | GRALLOC_USAGE_SW_WRITE_OFTEN;
+        auto clientUsage = static_cast<uint32_t>(
+                static_cast<uint64_t>(common::BufferUsage::CPU_READ_OFTEN) |
+                static_cast<uint32_t>(common::BufferUsage::CPU_WRITE_OFTEN) |
+                static_cast<uint32_t>(common::BufferUsage::COMPOSER_CLIENT_TARGET));
         Dataspace clientDataspace = ReadbackHelper::getDataspaceForColorMode(mode);
         int32_t clientWidth = getDisplayWidth();
         int32_t clientHeight = getDisplayHeight() / 2;
@@ -946,8 +662,8 @@ TEST_P(GraphicsCompositionTest, DeviceAndClientComposition) {
         }
         // create client target buffer
         ASSERT_EQ(Composition::CLIENT, changedCompositionTypes[0].composition);
-        sp<GraphicBuffer> graphicBuffer = allocateBuffer(clientUsage);
-        ASSERT_NE(nullptr, graphicBuffer);
+        const auto& [graphicBufferStatus, graphicBuffer] = allocateBuffer(clientUsage);
+        ASSERT_TRUE(graphicBufferStatus);
         const auto& buffer = graphicBuffer->handle;
 
         void* clientBufData;
@@ -1009,7 +725,7 @@ TEST_P(GraphicsCompositionTest, SetLayerDamage) {
         std::vector<std::shared_ptr<TestLayer>> layers = {layer};
 
         ReadbackBuffer readbackBuffer(getPrimaryDisplayId(), mComposerClient, getDisplayWidth(),
-                                      getDisplayHeight(), mPixelFormat);
+                                      getDisplayHeight(), mPixelFormat, mDataspace);
         ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
 
         writeLayers(layers);
@@ -1077,7 +793,7 @@ TEST_P(GraphicsCompositionTest, SetLayerPlaneAlpha) {
         std::vector<std::shared_ptr<TestLayer>> layers = {layer};
 
         ReadbackBuffer readbackBuffer(getPrimaryDisplayId(), mComposerClient, getDisplayWidth(),
-                                      getDisplayHeight(), mPixelFormat);
+                                      getDisplayHeight(), mPixelFormat, mDataspace);
 
         ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
 
@@ -1143,7 +859,7 @@ TEST_P(GraphicsCompositionTest, SetLayerSourceCrop) {
         ReadbackHelper::fillColorsArea(expectedColors, getDisplayWidth(),
                                        {0, 0, getDisplayWidth(), getDisplayHeight()}, BLUE);
         ReadbackBuffer readbackBuffer(getPrimaryDisplayId(), mComposerClient, getDisplayWidth(),
-                                      getDisplayHeight(), mPixelFormat);
+                                      getDisplayHeight(), mPixelFormat, mDataspace);
         ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
         writeLayers(layers);
         ASSERT_TRUE(mReader.takeErrors().empty());
@@ -1200,7 +916,7 @@ TEST_P(GraphicsCompositionTest, SetLayerZOrder) {
         ReadbackHelper::fillColorsArea(expectedColors, getDisplayWidth(), redRect, RED);
 
         ReadbackBuffer readbackBuffer(getPrimaryDisplayId(), mComposerClient, getDisplayWidth(),
-                                      getDisplayHeight(), mPixelFormat);
+                                      getDisplayHeight(), mPixelFormat, mDataspace);
         ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
 
         writeLayers(layers);
@@ -1310,7 +1026,7 @@ TEST_P(GraphicsCompositionTest, SetLayerBrightnessDims) {
         ReadbackHelper::fillColorsArea(expectedColors, getDisplayWidth(), dimmerRedRect, DIM_RED);
 
         ReadbackBuffer readbackBuffer(getPrimaryDisplayId(), mComposerClient, getDisplayWidth(),
-                                      getDisplayHeight(), mPixelFormat);
+                                      getDisplayHeight(), mPixelFormat, mDataspace);
         ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
 
         writeLayers(layers);
@@ -1446,7 +1162,7 @@ TEST_P(GraphicsBlendModeCompositionTest, None) {
         setExpectedColors(expectedColors);
 
         ReadbackBuffer readbackBuffer(getPrimaryDisplayId(), mComposerClient, getDisplayWidth(),
-                                      getDisplayHeight(), mPixelFormat);
+                                      getDisplayHeight(), mPixelFormat, mDataspace);
         ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
         writeLayers(mLayers);
         ASSERT_TRUE(mReader.takeErrors().empty());
@@ -1491,7 +1207,7 @@ TEST_P(GraphicsBlendModeCompositionTest, Coverage) {
         setExpectedColors(expectedColors);
 
         ReadbackBuffer readbackBuffer(getPrimaryDisplayId(), mComposerClient, getDisplayWidth(),
-                                      getDisplayHeight(), mPixelFormat);
+                                      getDisplayHeight(), mPixelFormat, mDataspace);
         ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
         writeLayers(mLayers);
         ASSERT_TRUE(mReader.takeErrors().empty());
@@ -1531,7 +1247,7 @@ TEST_P(GraphicsBlendModeCompositionTest, Premultiplied) {
         setExpectedColors(expectedColors);
 
         ReadbackBuffer readbackBuffer(getPrimaryDisplayId(), mComposerClient, getDisplayWidth(),
-                                      getDisplayHeight(), mPixelFormat);
+                                      getDisplayHeight(), mPixelFormat, mDataspace);
         ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
         writeLayers(mLayers);
         ASSERT_TRUE(mReader.takeErrors().empty());
@@ -1605,7 +1321,7 @@ TEST_P(GraphicsTransformCompositionTest, FLIP_H) {
             return;
         }
         ReadbackBuffer readbackBuffer(getPrimaryDisplayId(), mComposerClient, getDisplayWidth(),
-                                      getDisplayHeight(), mPixelFormat);
+                                      getDisplayHeight(), mPixelFormat, mDataspace);
         ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
         mLayer->setTransform(Transform::FLIP_H);
         mLayer->setDataspace(ReadbackHelper::getDataspaceForColorMode(mode), *mWriter);
@@ -1650,7 +1366,7 @@ TEST_P(GraphicsTransformCompositionTest, FLIP_V) {
             return;
         }
         ReadbackBuffer readbackBuffer(getPrimaryDisplayId(), mComposerClient, getDisplayWidth(),
-                                      getDisplayHeight(), mPixelFormat);
+                                      getDisplayHeight(), mPixelFormat, mDataspace);
         ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
 
         mLayer->setTransform(Transform::FLIP_V);
@@ -1695,7 +1411,7 @@ TEST_P(GraphicsTransformCompositionTest, ROT_180) {
             return;
         }
         ReadbackBuffer readbackBuffer(getPrimaryDisplayId(), mComposerClient, getDisplayWidth(),
-                                      getDisplayHeight(), mPixelFormat);
+                                      getDisplayHeight(), mPixelFormat, mDataspace);
         ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
 
         mLayer->setTransform(Transform::ROT_180);

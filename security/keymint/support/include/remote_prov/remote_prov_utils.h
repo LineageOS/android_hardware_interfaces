@@ -108,15 +108,6 @@ struct BccEntryData {
     bytevec pubKey;
 };
 
-/**
- * Validates the provided CBOR-encoded BCC, returning a vector of BccEntryData
- * structs containing the BCC entry contents.  If an entry contains no firmware
- * digest, the corresponding BccEntryData.firmwareDigest will have length zero
- * (there's no way to distinguish between an empty and missing firmware digest,
- * which seems fine).
- */
-ErrMsgOr<std::vector<BccEntryData>> validateBcc(const cppbor::Array* bcc);
-
 struct JsonOutput {
     static JsonOutput Ok(std::string json) { return {std::move(json), ""}; }
     static JsonOutput Error(std::string error) { return {"", std::move(error)}; }

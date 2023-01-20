@@ -34,8 +34,8 @@
 package android.hardware.radio.config;
 @Backing(type="int") @JavaDerive(toString=true) @VintfStability
 enum MultipleEnabledProfilesMode {
-  NONE = 0,
-  MEP_A1 = 1,
-  MEP_A2 = 2,
-  MEP_B = 3,
+  NONE,
+  MEP_A1,
+  MEP_A2,
+  MEP_B,
 }

@@ -126,23 +126,15 @@ void ComposerClient::setReadbackBuffer(Display display, const native_handle_t* b
     ASSERT_EQ(Error::NONE, error) << "failed to setReadbackBuffer";
 }
 
-void ComposerClient::getRequiredReadbackBufferAttributes(Display display,
-                                                         PixelFormat* outPixelFormat,
-                                                         Dataspace* outDataspace) {
-    ASSERT_EQ(Error::NONE, getReadbackBufferAttributes(display, outPixelFormat, outDataspace));
-}
-
-Error ComposerClient::getReadbackBufferAttributes(Display display, PixelFormat* outPixelFormat,
-                                                  Dataspace* outDataspace) {
-    Error error;
+void ComposerClient::getReadbackBufferAttributes(Display display, PixelFormat* outPixelFormat,
+                                                 Dataspace* outDataspace) {
     mClient->getReadbackBufferAttributes(
-            display, [&](const Error& tmpError, const PixelFormat& tmpPixelFormat,
-                         const Dataspace& tmpDataspace) {
-                error = tmpError;
-                *outPixelFormat = tmpPixelFormat;
-                *outDataspace = tmpDataspace;
+            display,
+            [&](const auto& tmpError, const auto& tmpOutPixelFormat, const auto& tmpOutDataspace) {
+                ASSERT_EQ(Error::NONE, tmpError) << "failed to get readback buffer attributes";
+                *outPixelFormat = tmpOutPixelFormat;
+                *outDataspace = tmpOutDataspace;
             });
-    return error;
 }
 
 void ComposerClient::getReadbackBufferFence(Display display, int32_t* outFence) {

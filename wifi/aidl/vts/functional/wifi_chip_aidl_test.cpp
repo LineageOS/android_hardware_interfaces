@@ -583,6 +583,9 @@ TEST_P(WifiChipAidlTest, CreateApIface) {
  * CreateNanIface
  */
 TEST_P(WifiChipAidlTest, CreateNanIface) {
+    if (!::testing::deviceSupportsFeature("android.hardware.wifi.aware")) {
+        GTEST_SKIP() << "Skipping this test since NAN is not supported.";
+    }
     configureChipForNanAndGetIface();
 }
 
@@ -590,7 +593,7 @@ TEST_P(WifiChipAidlTest, CreateNanIface) {
  * CreateP2pIface
  */
 TEST_P(WifiChipAidlTest, CreateP2pIface) {
-    configureChipForNanAndGetIface();
+    configureChipForP2pAndGetIface();
 }
 
 /*
@@ -672,6 +675,9 @@ TEST_P(WifiChipAidlTest, GetApIfaceNames) {
  * GetNanIfaceNames
  */
 TEST_P(WifiChipAidlTest, GetNanIfaceNames) {
+    if (!::testing::deviceSupportsFeature("android.hardware.wifi.aware")) {
+        GTEST_SKIP() << "Skipping this test since NAN is not supported.";
+    }
     configureChipForConcurrencyType(IfaceConcurrencyType::NAN_IFACE);
 
     std::vector<std::string> iface_names;
@@ -753,6 +759,9 @@ TEST_P(WifiChipAidlTest, GetApIface) {
  * GetNanIface
  */
 TEST_P(WifiChipAidlTest, GetNanIface) {
+    if (!::testing::deviceSupportsFeature("android.hardware.wifi.aware")) {
+        GTEST_SKIP() << "Skipping this test since NAN is not supported.";
+    }
     std::shared_ptr<IWifiNanIface> iface = configureChipForNanAndGetIface();
     std::string iface_name = getNanIfaceName(iface);
 
@@ -822,6 +831,9 @@ TEST_P(WifiChipAidlTest, RemoveApIface) {
  * RemoveNanIface
  */
 TEST_P(WifiChipAidlTest, RemoveNanIface) {
+    if (!::testing::deviceSupportsFeature("android.hardware.wifi.aware")) {
+        GTEST_SKIP() << "Skipping this test since NAN is not supported.";
+    }
     std::shared_ptr<IWifiNanIface> iface = configureChipForNanAndGetIface();
     std::string iface_name = getNanIfaceName(iface);
 

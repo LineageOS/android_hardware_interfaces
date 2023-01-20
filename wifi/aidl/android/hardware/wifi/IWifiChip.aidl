@@ -16,6 +16,7 @@
 
 package android.hardware.wifi;
 
+import android.hardware.wifi.AvailableAfcFrequencyInfo;
 import android.hardware.wifi.IWifiApIface;
 import android.hardware.wifi.IWifiChipEventCallback;
 import android.hardware.wifi.IWifiNanIface;
@@ -105,6 +106,11 @@ interface IWifiChip {
          * Chip can operate in the 60GHz band (WiGig chip).
          */
         WIGIG = 1 << 14,
+        /**
+         * Chip supports setting allowed channels along with PSD in 6GHz band
+         * for AFC purposes.
+         */
+        SET_AFC_CHANNEL_ALLOWANCE = 1 << 15,
     }
 
     /**
@@ -834,6 +840,18 @@ interface IWifiChip {
      */
     WifiUsableChannel[] getUsableChannels(
             in WifiBand band, in WifiIfaceMode ifaceModeMask, in UsableChannelFilter filterMask);
+
+    /*
+     * Set the max power level the chip is allowed to transmit on for 6Ghz AFC
+     * using an array of AvailableAfcFrequencyInfo. The max power for
+     * frequencies not included in the input frequency ranges will be reset to
+     * their respective default values.
+     * @param availableAfcFrequencyInfo The list of frequency ranges and
+     * corresponding max allowed power.
+     * @throws ServiceSpecificException with one of the following values:
+     *         |WifiStatusCode.ERROR_NOT_SUPPORTED|
+     */
+    void setAfcChannelAllowance(in AvailableAfcFrequencyInfo[] availableAfcFrequencyInfo);
 
     /**
      * Requests notifications of significant events on this chip. Multiple calls

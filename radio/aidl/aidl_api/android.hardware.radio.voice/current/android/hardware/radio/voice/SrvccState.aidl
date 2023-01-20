@@ -34,8 +34,8 @@
 package android.hardware.radio.voice;
 @Backing(type="int") @JavaDerive(toString=true) @VintfStability
 enum SrvccState {
-  HANDOVER_STARTED = 0,
-  HANDOVER_COMPLETED = 1,
-  HANDOVER_FAILED = 2,
-  HANDOVER_CANCELED = 3,
+  HANDOVER_STARTED,
+  HANDOVER_COMPLETED,
+  HANDOVER_FAILED,
+  HANDOVER_CANCELED,
 }
