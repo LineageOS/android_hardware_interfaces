@@ -177,7 +177,7 @@ const std::vector<ConfigDeclaration> kVehicleProperties = {
                                          toInt(VehicleUnit::MILES_PER_HOUR),
                                          toInt(VehicleUnit::KILOMETERS_PER_HOUR)},
                  },
-         .initialValue = {.int32Values = {toInt(VehicleUnit::KILOMETERS_PER_HOUR)}}},
+         .initialValue = {.int32Values = {toInt(VehicleUnit::MILES_PER_HOUR)}}},
 
         {.config =
                  {
@@ -1025,7 +1025,7 @@ const std::vector<ConfigDeclaration> kVehicleProperties = {
                          .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
                          .configArray = {(int)VehicleUnit::LITER, (int)VehicleUnit::US_GALLON},
                  },
-         .initialValue = {.int32Values = {(int)VehicleUnit::LITER}}},
+         .initialValue = {.int32Values = {(int)VehicleUnit::US_GALLON}}},
 
         {.config =
                  {
