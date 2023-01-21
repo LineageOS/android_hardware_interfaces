@@ -259,6 +259,8 @@ internal::Configuration& Module::getConfig() {
             case Type::R_SUBMIX:
                 mConfig = std::move(internal::getRSubmixConfiguration());
                 break;
+            case Type::USB:
+                mConfig = std::move(internal::getUsbConfiguration());
         }
     }
     return *mConfig;
