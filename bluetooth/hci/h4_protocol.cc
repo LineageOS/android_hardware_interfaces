@@ -58,10 +58,8 @@ size_t H4Protocol::Send(PacketType type, const uint8_t* data, size_t length) {
   while (1) {
     ret = TEMP_FAILURE_RETRY(writev(uart_fd_, iov, 2));
     if (ret == -1) {
-      if (errno == EAGAIN) {
-        ALOGE("%s error writing to UART (%s)", __func__, strerror(errno));
-        continue;
-      }
+      LOG_ALWAYS_FATAL("%s error writing to UART (%s)", __func__,
+                       strerror(errno));
     } else if (ret == 0) {
       // Nothing written :(
       ALOGE("%s zero bytes written - something went wrong...", __func__);
