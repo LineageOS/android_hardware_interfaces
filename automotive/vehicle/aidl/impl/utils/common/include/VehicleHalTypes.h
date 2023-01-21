@@ -25,6 +25,7 @@
 #include <aidl/android/hardware/automotive/vehicle/EvStoppingMode.h>
 #include <aidl/android/hardware/automotive/vehicle/EvsServiceState.h>
 #include <aidl/android/hardware/automotive/vehicle/EvsServiceType.h>
+#include <aidl/android/hardware/automotive/vehicle/ForwardCollisionWarningState.h>
 #include <aidl/android/hardware/automotive/vehicle/FuelType.h>
 #include <aidl/android/hardware/automotive/vehicle/GetValueRequest.h>
 #include <aidl/android/hardware/automotive/vehicle/GetValueResult.h>

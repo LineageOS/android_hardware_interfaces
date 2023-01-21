@@ -438,3 +438,11 @@ std::vector<AudioPortConfig> ModuleConfig::generateAudioDevicePortConfigs(
     }
     return result;
 }
+
+bool ModuleConfig::isMmapSupported() const {
+    const std::vector<AudioPort> mmapOutMixPorts =
+            getMmapOutMixPorts(false /*attachedOnly*/, false /*singlePort*/);
+    const std::vector<AudioPort> mmapInMixPorts =
+            getMmapInMixPorts(false /*attachedOnly*/, false /*singlePort*/);
+    return !mmapOutMixPorts.empty() || !mmapInMixPorts.empty();
+}

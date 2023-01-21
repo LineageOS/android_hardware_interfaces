@@ -696,6 +696,12 @@ TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyForwardCollisionWarningEnabledCo
                    VehiclePropertyGroup::SYSTEM, VehicleArea::GLOBAL, VehiclePropertyType::BOOLEAN);
 }
 
+TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyForwardCollisionWarningStateConfig) {
+    verifyProperty(VehicleProperty::FORWARD_COLLISION_WARNING_STATE, VehiclePropertyAccess::READ,
+                   VehiclePropertyChangeMode::ON_CHANGE, VehiclePropertyGroup::SYSTEM,
+                   VehicleArea::GLOBAL, VehiclePropertyType::INT32);
+}
+
 TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyBlindSpotWarningEnabledConfig) {
     verifyProperty(VehicleProperty::BLIND_SPOT_WARNING_ENABLED, VehiclePropertyAccess::READ_WRITE,
                    VehiclePropertyChangeMode::ON_CHANGE, VehiclePropertyGroup::SYSTEM,

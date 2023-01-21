@@ -1893,17 +1893,13 @@ TEST_P(AudioCoreModule, AddRemoveEffectInvalidArguments) {
 
 TEST_P(AudioCoreModule, GetMmapPolicyInfos) {
     ASSERT_NO_FATAL_FAILURE(SetUpModuleConfig());
-    const std::vector<AudioPort> mmapOutMixPorts =
-            moduleConfig->getMmapOutMixPorts(true /*attachedOnly*/, false /*singlePort*/);
-    const std::vector<AudioPort> mmapInMixPorts =
-            moduleConfig->getMmapInMixPorts(true /*attachedOnly*/, false /*singlePort*/);
-    const bool mmapSupported = (!mmapOutMixPorts.empty() || !mmapInMixPorts.empty());
+    const bool isMmapSupported = moduleConfig->isMmapSupported();
     for (const auto mmapPolicyType :
          {AudioMMapPolicyType::DEFAULT, AudioMMapPolicyType::EXCLUSIVE}) {
         std::vector<AudioMMapPolicyInfo> policyInfos;
         EXPECT_IS_OK(module->getMmapPolicyInfos(mmapPolicyType, &policyInfos))
                 << toString(mmapPolicyType);
-        EXPECT_EQ(mmapSupported, !policyInfos.empty());
+        EXPECT_EQ(isMmapSupported, !policyInfos.empty());
     }
 }
 
@@ -1911,6 +1907,33 @@ TEST_P(AudioCoreModule, BluetoothVariableLatency) {
     bool isSupported = false;
     EXPECT_IS_OK(module->supportsVariableLatency(&isSupported));
     LOG(INFO) << "supportsVariableLatency: " << isSupported;
+}
+
+TEST_P(AudioCoreModule, GetAAudioMixerBurstCount) {
+    ASSERT_NO_FATAL_FAILURE(SetUpModuleConfig());
+    const bool isMmapSupported = moduleConfig->isMmapSupported();
+    int32_t mixerBursts = 0;
+    ndk::ScopedAStatus status = module->getAAudioMixerBurstCount(&mixerBursts);
+    EXPECT_EQ(isMmapSupported, status.getExceptionCode() != EX_UNSUPPORTED_OPERATION)
+            << "Support for AAudio MMAP and getting AAudio mixer burst count must be consistent";
+    if (!isMmapSupported) {
+        GTEST_SKIP() << "AAudio MMAP is not supported";
+    }
+    EXPECT_GE(mixerBursts, 0);
+}
+
+TEST_P(AudioCoreModule, GetAAudioHardwareBurstMinUsec) {
+    ASSERT_NO_FATAL_FAILURE(SetUpModuleConfig());
+    const bool isMmapSupported = moduleConfig->isMmapSupported();
+    int32_t aaudioHardwareBurstMinUsec = 0;
+    ndk::ScopedAStatus status = module->getAAudioHardwareBurstMinUsec(&aaudioHardwareBurstMinUsec);
+    EXPECT_EQ(isMmapSupported, status.getExceptionCode() != EX_UNSUPPORTED_OPERATION)
+            << "Support for AAudio MMAP and getting AAudio hardware burst minimum usec "
+            << "must be consistent";
+    if (!isMmapSupported) {
+        GTEST_SKIP() << "AAudio MMAP is not supported";
+    }
+    EXPECT_GE(aaudioHardwareBurstMinUsec, 0);
 }
 
 class AudioCoreBluetooth : public AudioCoreModuleBase, public testing::TestWithParam<std::string> {
