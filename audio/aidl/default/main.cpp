@@ -55,7 +55,8 @@ int main() {
         return std::make_pair(module, moduleBinder);
     };
     auto modules = {createModule(Module::Type::DEFAULT, "default"),
-                    createModule(Module::Type::R_SUBMIX, "r_submix")};
+                    createModule(Module::Type::R_SUBMIX, "r_submix"),
+                    createModule(Module::Type::USB, "usb")};
 
     ABinderProcess_joinThreadPool();
     return EXIT_FAILURE;  // should not reach

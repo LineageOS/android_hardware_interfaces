@@ -342,7 +342,7 @@ interface IRemotelyProvisionedComponent {
      *
      * ; COSE_Sign1 (untagged)
      * SignedData<Data> = [
-     *     protected: bstr .cbor { 1 : AlgorithmEdDSA / AlgorithmES256 },
+     *     protected: bstr .cbor { 1 : AlgorithmEdDSA / AlgorithmES256 / AlgorithmES384 },
      *     unprotected: {},
      *     payload: bstr .cbor Data / nil,
      *     signature: bstr      ; PureEd25519(CDI_Leaf_Priv, SignedDataSigStruct<Data>) /
@@ -352,7 +352,7 @@ interface IRemotelyProvisionedComponent {
      * ; Sig_structure for SignedData
      * SignedDataSigStruct<Data> = [
      *     context: "Signature1",
-     *     protected: bstr .cbor { 1 : AlgorithmEdDSA / AlgorithmES256 },
+     *     protected: bstr .cbor { 1 : AlgorithmEdDSA / AlgorithmES256 / AlgorithmES384 },
      *     external_aad: bstr .size 0,
      *     payload: bstr .cbor Data / nil,
      * ]
@@ -384,7 +384,7 @@ interface IRemotelyProvisionedComponent {
      * ; after the first describe a link in the boot chain (e.g. bootloaders: BL1, BL2, ... BLN)
      * ; Note that there is no DiceChainEntry for UDS_pub, only a "bare" COSE_key.
      * DiceCertChain = [
-     *     PubKeyEd25519 / PubKeyECDSA256,  ; UDS_Pub
+     *     PubKeyEd25519 / PubKeyECDSA256 / PubKeyECDSA384,  ; UDS_Pub
      *     + DiceChainEntry,                ; First CDI_Certificate -> Last CDI_Certificate
      *                                      ; Last certificate corresponds to KeyMint's DICE key.
      * ]
@@ -392,16 +392,17 @@ interface IRemotelyProvisionedComponent {
      * ; This is the signed payload for each entry in the DICE chain. Note that the "Configuration
      * ; Input Values" described by the Open Profile are not used here. Instead, the DICE chain
      * ; defines its own configuration values for the Configuration Descriptor field. See
-     * ; the Open Profile for DICE for more details on the fields. SHA256 and SHA512 are acceptable
-     * ; hash algorithms. The digest bstr values in the payload are the digest values without any
-     * ; padding. Note that for SHA256, this implies the digest bstr is 32 bytes. This is an
-     * ; intentional, minor deviation from Open Profile for DICE, which specifies all digests are
-     * ; 64 bytes.
+     * ; the Open Profile for DICE for more details on the fields. SHA256, SHA384 and SHA512 are
+     * ; acceptable hash algorithms. The digest bstr values in the payload are the digest values
+     * ; without any padding. Note that this implies that the digest is a 32-byte bstr for SHA256
+     * ; and a 48-byte bstr for SHA384. This is an intentional, minor deviation from Open Profile
+     * ; for DICE, which specifies all digests are 64 bytes.
      * DiceChainEntryPayload = {                    ; CWT [RFC8392]
      *     1 : tstr,                                ; Issuer
      *     2 : tstr,                                ; Subject
      *     -4670552 : bstr .cbor PubKeyEd25519 /
-     *                bstr .cbor PubKeyECDSA256,    ; Subject Public Key
+     *                bstr .cbor PubKeyECDSA256,
+     *                bstr .cbor PubKeyECDSA384,    ; Subject Public Key
      *     -4670553 : bstr                          ; Key Usage
      *
      *     ; NOTE: All of the following fields may be omitted for a "Degenerate DICE Chain", as
@@ -422,7 +423,7 @@ interface IRemotelyProvisionedComponent {
      * ; Each entry in the DICE chain is a DiceChainEntryPayload signed by the key from the previous
      * ; entry in the DICE chain array.
      * DiceChainEntry = [                            ; COSE_Sign1 (untagged)
-     *     protected : bstr .cbor { 1 : AlgorithmEdDSA / AlgorithmES256 },
+     *     protected : bstr .cbor { 1 : AlgorithmEdDSA / AlgorithmES256 / AlgorithmES384 },
      *     unprotected: {},
      *     payload: bstr .cbor DiceChainEntryPayload,
      *     signature: bstr ; PureEd25519(SigningKey, DiceChainEntryInput) /
@@ -433,7 +434,7 @@ interface IRemotelyProvisionedComponent {
      *
      * DiceChainEntryInput = [
      *     context: "Signature1",
-     *     protected: bstr .cbor { 1 : AlgorithmEdDSA / AlgorithmES256 },
+     *     protected: bstr .cbor { 1 : AlgorithmEdDSA / AlgorithmES256 / AlgorithmES384 },
      *     external_aad: bstr .size 0,
      *     payload: bstr .cbor DiceChainEntryPayload
      * ]
@@ -458,7 +459,16 @@ interface IRemotelyProvisionedComponent {
      *     -3 : bstr                    ; Y coordinate, big-endian
      * }
      *
+     * PubKeyECDSA384 = {               ; COSE_Key
+     *     1 : 2,                       ; Key type : EC2
+     *     3 : AlgorithmES384,          ; Algorithm : ECDSA w/ SHA-384
+     *     -1 : 2,                      ; Curve: P384
+     *     -2 : bstr,                   ; X coordinate
+     *     -3 : bstr                    ; Y coordinate
+     * }
+     *
      * AlgorithmES256 = -7
+     * AlgorithmES384 = -35
      * AlgorithmEdDSA = -8
      */
     byte[] generateCertificateRequestV2(in MacedPublicKey[] keysToSign, in byte[] challenge);
