@@ -875,6 +875,26 @@ void Frontend::scanThreadLoop() {
                 status.set<FrontendStatus::allPlpInfo>(infos);
                 break;
             }
+            case FrontendStatusType::IPTV_CONTENT_URL: {
+                status.set<FrontendStatus::iptvContentUrl>("");
+                break;
+            }
+            case FrontendStatusType::IPTV_PACKETS_LOST: {
+                status.set<FrontendStatus::iptvPacketsLost>(5);
+                break;
+            }
+            case FrontendStatusType::IPTV_PACKETS_RECEIVED: {
+                status.set<FrontendStatus::iptvPacketsReceived>(5);
+                break;
+            }
+            case FrontendStatusType::IPTV_WORST_JITTER_MS: {
+                status.set<FrontendStatus::iptvWorstJitterMs>(5);
+                break;
+            }
+            case FrontendStatusType::IPTV_AVERAGE_JITTER_MS: {
+                status.set<FrontendStatus::iptvAverageJitterMs>(5);
+                break;
+            }
             default: {
                 continue;
             }
