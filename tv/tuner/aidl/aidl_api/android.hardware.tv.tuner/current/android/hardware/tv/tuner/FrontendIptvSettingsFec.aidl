@@ -33,18 +33,9 @@
 
 package android.hardware.tv.tuner;
 /* @hide */
-@Backing(type="int") @VintfStability
-enum FrontendType {
-  UNDEFINED = 0,
-  ANALOG = 1,
-  ATSC = 2,
-  ATSC3 = 3,
-  DVBC = 4,
-  DVBS = 5,
-  DVBT = 6,
-  ISDBS = 7,
-  ISDBS3 = 8,
-  ISDBT = 9,
-  DTMB = 10,
-  IPTV = 11,
+@VintfStability
+parcelable FrontendIptvSettingsFec {
+  android.hardware.tv.tuner.FrontendIptvSettingsFecType type;
+  int fecColNum;
+  int fecRowNum;
 }

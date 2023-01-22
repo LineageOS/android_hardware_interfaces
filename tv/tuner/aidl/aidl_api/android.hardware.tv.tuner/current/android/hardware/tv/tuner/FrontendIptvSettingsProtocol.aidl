@@ -34,17 +34,8 @@
 package android.hardware.tv.tuner;
 /* @hide */
 @Backing(type="int") @VintfStability
-enum FrontendType {
+enum FrontendIptvSettingsProtocol {
   UNDEFINED = 0,
-  ANALOG = 1,
-  ATSC = 2,
-  ATSC3 = 3,
-  DVBC = 4,
-  DVBS = 5,
-  DVBT = 6,
-  ISDBS = 7,
-  ISDBS3 = 8,
-  ISDBT = 9,
-  DTMB = 10,
-  IPTV = 11,
+  UDP = 1,
+  RTP = 2,
 }

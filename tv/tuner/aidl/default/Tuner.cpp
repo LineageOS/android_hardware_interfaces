@@ -38,7 +38,7 @@ Tuner::Tuner() {}
 void Tuner::init() {
     // Static Frontends array to maintain local frontends information
     // Array index matches their FrontendId in the default impl
-    mFrontendSize = 10;
+    mFrontendSize = 11;
     mFrontends[0] = ndk::SharedRefBase::make<Frontend>(FrontendType::ISDBS, 0);
     mFrontends[1] = ndk::SharedRefBase::make<Frontend>(FrontendType::ATSC3, 1);
     mFrontends[2] = ndk::SharedRefBase::make<Frontend>(FrontendType::DVBC, 2);
@@ -49,6 +49,7 @@ void Tuner::init() {
     mFrontends[7] = ndk::SharedRefBase::make<Frontend>(FrontendType::ATSC, 7);
     mFrontends[8] = ndk::SharedRefBase::make<Frontend>(FrontendType::ISDBS3, 8);
     mFrontends[9] = ndk::SharedRefBase::make<Frontend>(FrontendType::DTMB, 9);
+    mFrontends[10] = ndk::SharedRefBase::make<Frontend>(FrontendType::IPTV, 10);
 
     mMaxUsableFrontends[FrontendType::ISDBS] = 1;
     mMaxUsableFrontends[FrontendType::ATSC3] = 1;
@@ -60,6 +61,7 @@ void Tuner::init() {
     mMaxUsableFrontends[FrontendType::ATSC] = 1;
     mMaxUsableFrontends[FrontendType::ISDBS3] = 1;
     mMaxUsableFrontends[FrontendType::DTMB] = 1;
+    mMaxUsableFrontends[FrontendType::IPTV] = 1;
 
     mDemuxes[0] =
             ndk::SharedRefBase::make<Demux>(0, (static_cast<int32_t>(DemuxFilterMainType::TS) |
