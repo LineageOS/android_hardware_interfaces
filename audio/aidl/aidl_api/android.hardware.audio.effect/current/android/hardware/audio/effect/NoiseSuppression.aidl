@@ -50,5 +50,6 @@ union NoiseSuppression {
     LOW,
     MEDIUM,
     HIGH,
+    VERY_HIGH,
   }
 }

@@ -62,7 +62,7 @@ union NoiseSuppression {
      * suppression, NsConfig::SuppressionLevel::k12dB for MEDIUM, and
      * NsConfig::SuppressionLevel::k18dB for HIGH.
      */
-    @VintfStability @Backing(type="int") enum Level { LOW, MEDIUM, HIGH }
+    @VintfStability @Backing(type="int") enum Level { LOW, MEDIUM, HIGH, VERY_HIGH }
 
     /**
      * The NS level.
