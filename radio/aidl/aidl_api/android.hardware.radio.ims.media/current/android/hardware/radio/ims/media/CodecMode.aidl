@@ -32,9 +32,9 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.ims.media;
-@VintfStability
-parcelable AnbrBitrate {
-  int uplinkBps;
-  int downlinkBps;
-  const int INVALID_ANBR_BITRATE = (-1);
+@JavaDerive(toString=true) @VintfStability
+union CodecMode {
+  boolean noinit;
+  android.hardware.radio.ims.media.AmrMode amr;
+  android.hardware.radio.ims.media.EvsMode evs;
 }
