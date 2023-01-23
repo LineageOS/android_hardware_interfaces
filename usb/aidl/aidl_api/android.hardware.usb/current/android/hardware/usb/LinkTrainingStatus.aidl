@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2022 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not us e this file except in compliance with the License.
+ * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -32,15 +32,9 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.usb;
-@VintfStability
-union AltModeData {
-  android.hardware.usb.AltModeData.DisplayPortAltModeData displayPortAltModeData;
-  @VintfStability
-  parcelable DisplayPortAltModeData {
-    android.hardware.usb.DisplayPortAltModeStatus partnerSinkStatus = android.hardware.usb.DisplayPortAltModeStatus.UNKNOWN;
-    android.hardware.usb.DisplayPortAltModeStatus cableStatus = android.hardware.usb.DisplayPortAltModeStatus.UNKNOWN;
-    android.hardware.usb.DisplayPortAltModePinAssignment pinAssignment = android.hardware.usb.DisplayPortAltModePinAssignment.NONE;
-    boolean hpd = false;
-    android.hardware.usb.LinkTrainingStatus linkTrainingStatus = android.hardware.usb.LinkTrainingStatus.UNKNOWN;
-  }
+@Backing(type="int") @VintfStability
+enum LinkTrainingStatus {
+  UNKNOWN = 0,
+  SUCCESS = 1,
+  FAILURE = 2,
 }

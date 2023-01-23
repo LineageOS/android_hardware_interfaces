@@ -18,6 +18,7 @@ package android.hardware.usb;
 
 import android.hardware.usb.DisplayPortAltModePinAssignment;
 import android.hardware.usb.DisplayPortAltModeStatus;
+import android.hardware.usb.LinkTrainingStatus;
 
 @VintfStability
 union AltModeData {
@@ -42,6 +43,18 @@ union AltModeData {
          * negotiated between the device, port partner, and cable.
          */
         DisplayPortAltModePinAssignment pinAssignment = DisplayPortAltModePinAssignment.NONE;
+        /**
+         * Indicates DisplayPort Hot Plug Detection (HPD) status for a partner
+         * sink device. If true, then a DisplayPort Alt Mode partner sink is
+         * connected and powered on, and if false, the partner sink is not
+         * powered or no partner sink is connected.
+         */
+        boolean hpd = false;
+        /**
+         * Indicates the current status of DisplayPort link training over USB-C
+         * for the attached DisplayPort Alt Mode partner sink.
+         */
+        LinkTrainingStatus linkTrainingStatus = LinkTrainingStatus.UNKNOWN;
     }
     DisplayPortAltModeData displayPortAltModeData;
 }
