@@ -588,7 +588,7 @@ TEST_P(KeyBlobUpgradeTest, DeleteRRKeyBlobsAfter) {
             ASSERT_EQ(ErrorCode::OK, DeleteKey(&keyblob));
 
             // Remove all files relating to the deleted key.
-            std::cerr << "Deleting files for deleted key '" << name << ";";
+            std::cerr << "Deleting files for deleted key '" << name << "';\n";
             delete_keyblob(subdir, name);
 
             // Attempting to use the keyblob after deletion should fail.
