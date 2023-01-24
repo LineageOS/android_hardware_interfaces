@@ -217,4 +217,20 @@ ScopedAStatus HealthShim::getHealthInfo(HealthInfo* out) {
     return ReturnAndResultToStatus(ret, out_result);
 }
 
+ScopedAStatus HealthShim::setChargingPolicy(BatteryChargingPolicy in_value) {
+    in_value = static_cast<BatteryChargingPolicy>(0);
+    return ResultToStatus(Result::NOT_SUPPORTED);
+}
+
+ScopedAStatus HealthShim::getChargingPolicy(BatteryChargingPolicy* out) {
+    *out = static_cast<BatteryChargingPolicy>(0);
+    return ResultToStatus(Result::NOT_SUPPORTED);
+}
+
+ScopedAStatus HealthShim::getBatteryHealthData(BatteryHealthData* out) {
+    out->batteryManufacturingDateSeconds = 0;
+    out->batteryFirstUsageSeconds = 0;
+    return ResultToStatus(Result::NOT_SUPPORTED);
+}
+
 }  // namespace aidl::android::hardware::health
