@@ -18,19 +18,36 @@ package android.hardware.radio.ims.media;
 
 @VintfStability
 parcelable MediaQualityThreshold {
-    /** Timer in milliseconds for monitoring RTP inactivity */
-    int rtpInactivityTimerMillis;
+    /** Array including threshold values in milliseconds for monitoring RTP inactivity */
+    int[] rtpInactivityTimerMillis;
     /** Timer in milliseconds for monitoring RTCP inactivity */
     int rtcpInactivityTimerMillis;
-    /** Duration in milliseconds for monitoring the RTP packet loss rate */
+    /**
+     * This value determines the size of the time window (in milliseconds)
+     * required to calculate the packet loss rate per second for the manner of
+     * smoothly monitoring changes in the packet loss rate value.
+     */
     int rtpPacketLossDurationMillis;
     /**
-     * Packet loss rate in percentage of (total number of packets lost) /
-     * (total number of packets expected) during rtpPacketLossDurationMs
+     * The threshold hysteresis time for packet loss and jitter. This has a goal to prevent
+     * frequent ping-pong notification. So whenever a notifier needs to report the cross of
+     * threshold in opposite direction, this hysteresis timer should be respected.
      */
-    int rtpPacketLossRate;
-    /** Duration in milliseconds for monitoring the jitter for RTP traffic */
-    int jitterDurationMillis;
-    /** RTP jitter threshold in milliseconds */
-    int rtpJitterMillis;
+    int rtpHysteresisTimeInMillis;
+    /**
+     * Array including threshold values of Packet loss rate in percentage of
+     * (total number of packets lost) / (total number of packets expected) calculated
+     * every one sec with the packet received in rtpPacketLossDurationMillis.
+     */
+    int[] rtpPacketLossRate;
+
+    /** Array including threshold values in milliseconds for RTP jitter */
+    int[] rtpJitterMillis;
+
+    /**
+     * A flag indicating whether the client needs to be notified the current media quality status
+     * right after the threshold is being set. True means the media stack should notify the client
+     * of the current status.
+     */
+    boolean notifyCurrentStatus;
 }
