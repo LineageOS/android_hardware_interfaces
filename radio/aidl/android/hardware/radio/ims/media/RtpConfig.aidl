@@ -17,7 +17,7 @@
 package android.hardware.radio.ims.media;
 
 import android.hardware.radio.AccessNetwork;
-import android.hardware.radio.ims.media.AnbrBitrate;
+import android.hardware.radio.ims.media.AnbrMode;
 import android.hardware.radio.ims.media.MediaDirection;
 import android.hardware.radio.ims.media.RtcpConfig;
 import android.hardware.radio.ims.media.RtpAddress;
@@ -36,13 +36,14 @@ parcelable RtpConfig {
     /** RTCP configuration */
     RtcpConfig rtcpConfig;
     /**
-     * ANBR Bitrate parameters. This is set to valid only when its triggered,
+     * ANBR Mode parameters. This is set to valid only when its triggered,
      * otherwise it shall be set to NULL.
      *
      * This would be used in the following two cases
      * - IImsMediaSession#modifySession(RtpConfig) - When RAN wants to change the bit
-     *   rate via ANBR MAC layer signaling, ImsStack would set the values and direction
-     *   and pass it in the modifySession(). The underlying RTP stack shall adapt to
+     *   rate via ANBR MAC layer signaling, ImsStack converts the received bitrate
+     *   to the codec mode appropriately and passes the codec mode and direction
+     *   using modifySession(). The underlying RTP stack shall adapt to
      *   the changed bitrate.
      *
      * - IImsMediaSessionListener#triggerAnbrQuery(RtpConfig) - When the vendor RTP
@@ -50,5 +51,5 @@ parcelable RtpConfig {
      *   RTCP-APP or TMMBR, it triggers ANBRQ by setting the desired bitrate and the
      *   direction of the stream.
      */
-    AnbrBitrate anbrBitrateParams;
+    AnbrMode anbrModeParams;
 }
