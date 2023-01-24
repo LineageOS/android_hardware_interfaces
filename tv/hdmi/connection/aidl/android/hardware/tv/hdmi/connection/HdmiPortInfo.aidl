@@ -24,7 +24,7 @@ import android.hardware.tv.hdmi.connection.HdmiPortType;
 @VintfStability
 parcelable HdmiPortInfo {
     HdmiPortType type;
-    int portId; // Should start from 1 which corresponds to HDMI "port 1".
+    int portId; // Output ports should start from 1 which corresponds to HDMI "port 1".
     boolean cecSupported;
     boolean arcSupported;
     boolean eArcSupported;
