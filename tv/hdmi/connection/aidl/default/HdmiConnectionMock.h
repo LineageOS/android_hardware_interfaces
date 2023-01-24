@@ -46,8 +46,8 @@ struct HdmiConnectionMock : public BnHdmiConnection {
     ::ndk::ScopedAStatus isConnected(int32_t portId, bool* _aidl_return) override;
     ::ndk::ScopedAStatus setCallback(
             const std::shared_ptr<IHdmiConnectionCallback>& callback) override;
-    ::ndk::ScopedAStatus setHpdSignal(HpdSignal signal) override;
-    ::ndk::ScopedAStatus getHpdSignal(HpdSignal* _aidl_return) override;
+    ::ndk::ScopedAStatus setHpdSignal(HpdSignal signal, int32_t portId) override;
+    ::ndk::ScopedAStatus getHpdSignal(int32_t portId, HpdSignal* _aidl_return) override;
 
     void printEventBuf(const char* msg_buf, int len);
 
@@ -70,7 +70,7 @@ struct HdmiConnectionMock : public BnHdmiConnection {
     int mTotalPorts = 1;
 
     // HPD Signal being used
-    HpdSignal mHpdSignal = HpdSignal::HDMI_HPD_PHYSICAL;
+    std::vector<HpdSignal> mHpdSignal;
 
     // Testing variables
     // Input file descriptor
