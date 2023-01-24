@@ -69,9 +69,9 @@ ScopedAStatus HdmiConnectionMock::setCallback(
     return ScopedAStatus::ok();
 }
 
-ScopedAStatus HdmiConnectionMock::setHpdSignal(HpdSignal signal) {
+ScopedAStatus HdmiConnectionMock::setHpdSignal(HpdSignal signal, int32_t portId) {
     if (mHdmiThreadRun) {
-        mHpdSignal = signal;
+        mHpdSignal.at(portId - 1) = signal;
         return ScopedAStatus::ok();
     } else {
         return ScopedAStatus::fromServiceSpecificError(
@@ -79,8 +79,8 @@ ScopedAStatus HdmiConnectionMock::setHpdSignal(HpdSignal signal) {
     }
 }
 
-ScopedAStatus HdmiConnectionMock::getHpdSignal(HpdSignal* _aidl_return) {
-    *_aidl_return = mHpdSignal;
+ScopedAStatus HdmiConnectionMock::getHpdSignal(int32_t portId, HpdSignal* _aidl_return) {
+    *_aidl_return = mHpdSignal.at(portId - 1);
     return ScopedAStatus::ok();
 }
 
@@ -179,6 +179,7 @@ HdmiConnectionMock::HdmiConnectionMock() {
     mCallback = nullptr;
     mPortInfos.resize(mTotalPorts);
     mPortConnectionStatus.resize(mTotalPorts);
+    mHpdSignal.resize(mTotalPorts);
     mPortInfos[0] = {.type = HdmiPortType::OUTPUT,
                      .portId = static_cast<uint32_t>(1),
                      .cecSupported = true,
@@ -186,6 +187,7 @@ HdmiConnectionMock::HdmiConnectionMock() {
                      .eArcSupported = false,
                      .physicalAddress = mPhysicalAddress};
     mPortConnectionStatus[0] = false;
+    mHpdSignal[0] = HpdSignal::HDMI_HPD_PHYSICAL;
     mDeathRecipient = ndk::ScopedAIBinder_DeathRecipient(AIBinder_DeathRecipient_new(serviceDied));
 }
 
