@@ -16,6 +16,8 @@
 
 package android.hardware.health;
 
+import android.hardware.health.BatteryChargingPolicy;
+import android.hardware.health.BatteryHealthData;
 import android.hardware.health.BatteryStatus;
 import android.hardware.health.DiskStats;
 import android.hardware.health.HealthInfo;
@@ -102,7 +104,7 @@ interface IHealth {
      *           if this property is not supported
      *                 (e.g. the file that stores this property does not exist),
      *         - Return service specific error with code STATUS_UNKNOWN
-     *           for for other errors.
+     *           for other errors.
      */
     int getCurrentNowMicroamps();
 
@@ -120,7 +122,7 @@ interface IHealth {
      *           if this property is not supported
      *                 (e.g. the file that stores this property does not exist),
      *         - Return service specific error with code STATUS_UNKNOWN
-     *           for for other errors.
+     *           for other errors.
      */
     int getCurrentAverageMicroamps();
 
@@ -134,7 +136,7 @@ interface IHealth {
      *           if this property is not supported
      *                 (e.g. the file that stores this property does not exist),
      *         - Return service specific error with code STATUS_UNKNOWN
-     *           for for other errors.
+     *           for other errors.
      */
     int getCapacity();
 
@@ -146,7 +148,7 @@ interface IHealth {
      *         - Return exception with code EX_UNSUPPORTED_OPERATION
      *           if this property is not supported,
      *         - Return service specific error with code STATUS_UNKNOWN
-     *           for for other errors.
+     *           for other errors.
      */
     long getEnergyCounterNwh();
 
@@ -197,7 +199,47 @@ interface IHealth {
      *         - Return exception with code EX_UNSUPPORTED_OPERATION
      *           if this API is not supported,
      *         - Return service specific error with code STATUS_UNKNOWN
-     *           for for other errors.
+     *           for other errors.
      */
     HealthInfo getHealthInfo();
+
+    /**
+     * Set battery charging policy
+     *
+     * @return If error, return service specific error with code:
+     *         - Return exception with code EX_UNSUPPORTED_OPERATION
+     *           if this property is not supported
+     *                 (e.g. the file that stores this property does not exist),
+     *         - Return status with code INVALID_OPERATION
+     *           if the operation failed.
+     *         - Return service specific error with code STATUS_UNKNOWN
+     *           for other errors.
+     */
+    void setChargingPolicy(BatteryChargingPolicy in_value);
+
+    /**
+     * Get current battery charging policy
+     *
+     * @return current battery charging policy if successful.
+     *         If error:
+     *         - Return exception with code EX_UNSUPPORTED_OPERATION
+     *           if this property is not supported
+     *                 (e.g. the file that stores this property does not exist),
+     *         - Return service specific error with code STATUS_UNKNOWN
+     *           for other errors.
+     */
+    BatteryChargingPolicy getChargingPolicy();
+
+    /**
+     * Get battery health data
+     *
+     * @return Battery health data if successful.
+     *         If error:
+     *         - Return exception with code EX_UNSUPPORTED_OPERATION
+     *           if this property is not supported
+     *                 (e.g. the file that stores this property does not exist),
+     *         - Return service specific error with code STATUS_UNKNOWN
+     *           for other errors.
+     */
+    BatteryHealthData getBatteryHealthData();
 }

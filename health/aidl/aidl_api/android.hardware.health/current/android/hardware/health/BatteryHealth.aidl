@@ -41,4 +41,7 @@ enum BatteryHealth {
   OVER_VOLTAGE = 5,
   UNSPECIFIED_FAILURE = 6,
   COLD = 7,
+  FAIR = 8,
+  NOT_AVAILABLE = 11,
+  INCONSISTENT = 12,
 }
