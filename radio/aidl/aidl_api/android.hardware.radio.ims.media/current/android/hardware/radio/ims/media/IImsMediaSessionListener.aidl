@@ -41,6 +41,6 @@ interface IImsMediaSessionListener {
   oneway void notifyPacketLoss(int packetLossPercentage);
   oneway void notifyJitter(int jitter);
   oneway void triggerAnbrQuery(in android.hardware.radio.ims.media.RtpConfig config);
-  oneway void onDtmfReceived(char dtmfDigit);
+  oneway void onDtmfReceived(char dtmfDigit, int durationMs);
   oneway void onCallQualityChanged(in android.hardware.radio.ims.media.CallQuality callQuality);
 }
