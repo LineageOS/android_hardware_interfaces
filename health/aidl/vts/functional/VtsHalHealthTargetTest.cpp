@@ -225,6 +225,61 @@ TEST_P(HealthAidl, getChargeStatus) {
     ASSERT_THAT(value, IsValidEnum<BatteryStatus>());
 }
 
+/*
+ * Tests the values returned by getChargingPolicy() from interface IHealth.
+ */
+TEST_P(HealthAidl, getChargingPolicy) {
+    BatteryChargingPolicy value;
+    auto status = health->getChargingPolicy(&value);
+    ASSERT_THAT(status, AnyOf(IsOk(), ExceptionIs(EX_UNSUPPORTED_OPERATION)));
+    if (!status.isOk()) return;
+    ASSERT_THAT(value, IsValidEnum<BatteryChargingPolicy>());
+}
+
+/*
+ * Tests that setChargingPolicy() writes the value and compared the returned
+ * value by getChargingPolicy() from interface IHealth.
+ */
+TEST_P(HealthAidl, setChargingPolicy) {
+    BatteryChargingPolicy value;
+
+    /* set ChargingPolicy*/
+    auto status = health->setChargingPolicy(static_cast<BatteryChargingPolicy>(2));  // LONG_LIFE
+    ASSERT_THAT(status, AnyOf(IsOk(), ExceptionIs(EX_UNSUPPORTED_OPERATION)));
+    if (!status.isOk()) return;
+
+    /* get ChargingPolicy*/
+    status = health->getChargingPolicy(&value);
+    ASSERT_THAT(status, AnyOf(IsOk(), ExceptionIs(EX_UNSUPPORTED_OPERATION)));
+    if (!status.isOk()) return;
+    ASSERT_THAT(static_cast<int>(value), Eq(2));
+}
+
+MATCHER(IsValidHealthData, "") {
+    *result_listener << "value is " << arg.toString() << ".";
+    if (!ExplainMatchResult(Ge(-1), arg.batteryManufacturingDateSeconds, result_listener)) {
+        *result_listener << " for batteryManufacturingDateSeconds.";
+        return false;
+    }
+    if (!ExplainMatchResult(Ge(-1), arg.batteryFirstUsageSeconds, result_listener)) {
+        *result_listener << " for batteryFirstUsageSeconds.";
+        return false;
+    }
+
+    return true;
+}
+
+/*
+ * Tests the values returned by getBatteryHealthData() from interface IHealth.
+ */
+TEST_P(HealthAidl, getBatteryHealthData) {
+    BatteryHealthData value;
+    auto status = health->getBatteryHealthData(&value);
+    ASSERT_THAT(status, AnyOf(IsOk(), ExceptionIs(EX_UNSUPPORTED_OPERATION)));
+    if (!status.isOk()) return;
+    ASSERT_THAT(value, IsValidHealthData());
+}
+
 MATCHER(IsValidStorageInfo, "") {
     *result_listener << "value is " << arg.toString() << ".";
     if (!ExplainMatchResult(InClosedRange(0, 3), arg.eol, result_listener)) {
