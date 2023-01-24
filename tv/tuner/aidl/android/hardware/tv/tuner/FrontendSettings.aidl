@@ -19,13 +19,14 @@ package android.hardware.tv.tuner;
 import android.hardware.tv.tuner.FrontendAnalogSettings;
 import android.hardware.tv.tuner.FrontendAtsc3Settings;
 import android.hardware.tv.tuner.FrontendAtscSettings;
+import android.hardware.tv.tuner.FrontendDtmbSettings;
 import android.hardware.tv.tuner.FrontendDvbcSettings;
 import android.hardware.tv.tuner.FrontendDvbsSettings;
 import android.hardware.tv.tuner.FrontendDvbtSettings;
+import android.hardware.tv.tuner.FrontendIptvSettings;
 import android.hardware.tv.tuner.FrontendIsdbs3Settings;
 import android.hardware.tv.tuner.FrontendIsdbsSettings;
 import android.hardware.tv.tuner.FrontendIsdbtSettings;
-import android.hardware.tv.tuner.FrontendDtmbSettings;
 
 /**
  * Signal Settings for Frontend.
@@ -52,4 +53,6 @@ union FrontendSettings {
     FrontendIsdbtSettings isdbt;
 
     FrontendDtmbSettings dtmb;
+
+    @nullable FrontendIptvSettings iptv;
 }
