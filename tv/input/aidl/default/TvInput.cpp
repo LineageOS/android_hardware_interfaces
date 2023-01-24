@@ -95,8 +95,8 @@ void TvInput::init() {
         return ::ndk::ScopedAStatus::fromServiceSpecificError(STATUS_INVALID_STATE);
     }
     mStreamConfigs[in_deviceId][in_streamId]->handle = createNativeHandle(in_streamId);
-    mStreamConfigs[in_deviceId][in_streamId]->isOpen = true;
     *_aidl_return = makeToAidl(mStreamConfigs[in_deviceId][in_streamId]->handle);
+    mStreamConfigs[in_deviceId][in_streamId]->isOpen = true;
     return ::ndk::ScopedAStatus::ok();
 }
 
@@ -112,27 +112,21 @@ void TvInput::init() {
         ALOGW("Stream with device id %d, stream id %d is already closed", in_deviceId, in_streamId);
         return ::ndk::ScopedAStatus::fromServiceSpecificError(STATUS_INVALID_STATE);
     }
-    releaseNativeHandle(mStreamConfigs[in_deviceId][in_streamId]->handle);
+    native_handle_delete(mStreamConfigs[in_deviceId][in_streamId]->handle);
     mStreamConfigs[in_deviceId][in_streamId]->handle = nullptr;
     mStreamConfigs[in_deviceId][in_streamId]->isOpen = false;
     return ::ndk::ScopedAStatus::ok();
 }
 
 native_handle_t* TvInput::createNativeHandle(int fd) {
-    native_handle_t* nativeHandle = native_handle_create(1, 0);
-    if (nativeHandle == nullptr) {
+    native_handle_t* handle = native_handle_create(1, 1);
+    if (handle == nullptr) {
         ALOGE("[TVInput] Failed to create native_handle %d", errno);
         return nullptr;
     }
-    if (nativeHandle->numFds > 0) {
-        nativeHandle->data[0] = dup(fd);
-    }
-    return nativeHandle;
-}
-
-void TvInput::releaseNativeHandle(native_handle_t* handle) {
-    native_handle_close(handle);
-    native_handle_delete(handle);
+    handle->data[0] = dup(0);
+    handle->data[1] = fd;
+    return handle;
 }
 
 }  // namespace input
