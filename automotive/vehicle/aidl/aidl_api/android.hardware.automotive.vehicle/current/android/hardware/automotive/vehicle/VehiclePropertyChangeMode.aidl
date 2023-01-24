@@ -34,7 +34,7 @@
 package android.hardware.automotive.vehicle;
 @Backing(type="int") @VintfStability
 enum VehiclePropertyChangeMode {
-  STATIC = 0,
-  ON_CHANGE = 1,
-  CONTINUOUS = 2,
+  STATIC = 0x00,
+  ON_CHANGE = 0x01,
+  CONTINUOUS = 0x02,
 }
