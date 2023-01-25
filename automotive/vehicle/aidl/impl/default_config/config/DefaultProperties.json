@@ -3113,7 +3113,7 @@
             }
         },
         {
-            "property": "VehicleProperty::ADAPTIVE_CRUISE_CONTROL_ENABLED",
+            "property": "VehicleProperty::CRUISE_CONTROL_ENABLED",
             "defaultValue": {
                 "int32Values": [
                     1
