@@ -4866,6 +4866,11 @@ TEST_P(VsrRequirementTest, Vsr13Test) {
     if (vsr_api_level < 33) {
         GTEST_SKIP() << "Applies only to VSR API level 33, this device is: " << vsr_api_level;
     }
+    char soc_model[PROPERTY_VALUE_MAX] = {};
+    property_get("ro.soc.model", soc_model, "");
+    if (!strcmp(soc_model, "SM8550")) {
+        GTEST_SKIP() << "Skip QTI SM8550 chipset, the SOC model of this device is: " << soc_model;
+    }
     FAIL() << "VSR 13+ requires KeyMint version 2";
 }
 
