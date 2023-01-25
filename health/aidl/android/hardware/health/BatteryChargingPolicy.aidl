@@ -14,21 +14,25 @@
  * limitations under the License.
  */
 
-package android.hardware.tv.hdmi.connection;
-
-import android.hardware.tv.hdmi.connection.HdmiPortType;
+package android.hardware.health;
 
 /**
- * HDMI port descriptor
+ * Battery charging policy.
  */
 @VintfStability
-parcelable HdmiPortInfo {
-    HdmiPortType type;
-    int portId; // Output ports should start from 1 which corresponds to HDMI "port 1".
-    boolean cecSupported;
-    boolean arcSupported;
-    boolean eArcSupported;
-    // The physical address of the device connected to this port, valid range is 0x0000 to 0xFFFF
-    // (ref Sec 8.7.2 of HDMI 1.4b).
-    int physicalAddress;
+@Backing(type="int")
+enum BatteryChargingPolicy {
+    INVALID = 0,
+    /**
+     * default policy
+     */
+    DEFAULT = 1,
+    /**
+     * @see BatteryChargingState.LONG_LIFE
+     */
+    LONG_LIFE = 2,
+    /**
+     * @see BatteryChargingState.ADAPTIVE
+     */
+    ADAPTIVE = 3,
 }

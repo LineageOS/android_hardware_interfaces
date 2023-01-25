@@ -31,10 +31,13 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.automotive.vehicle;
+package android.hardware.health;
 @Backing(type="int") @VintfStability
-enum VehiclePropertyChangeMode {
-  STATIC = 0x00,
-  ON_CHANGE = 0x01,
-  CONTINUOUS = 0x02,
+enum BatteryChargingState {
+  INVALID = 0,
+  NORMAL = 1,
+  TOO_COLD = 2,
+  TOO_HOT = 3,
+  LONG_LIFE = 4,
+  ADAPTIVE = 5,
 }

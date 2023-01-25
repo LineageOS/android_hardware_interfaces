@@ -14,21 +14,19 @@
  * limitations under the License.
  */
 
-package android.hardware.tv.hdmi.connection;
+package android.hardware.health;
 
-import android.hardware.tv.hdmi.connection.HdmiPortType;
-
-/**
- * HDMI port descriptor
+/*
+ * Battery health data
  */
 @VintfStability
-parcelable HdmiPortInfo {
-    HdmiPortType type;
-    int portId; // Output ports should start from 1 which corresponds to HDMI "port 1".
-    boolean cecSupported;
-    boolean arcSupported;
-    boolean eArcSupported;
-    // The physical address of the device connected to this port, valid range is 0x0000 to 0xFFFF
-    // (ref Sec 8.7.2 of HDMI 1.4b).
-    int physicalAddress;
+parcelable BatteryHealthData {
+    /**
+     * Battery manufacturing date is reported in epoch.
+     */
+    long batteryManufacturingDateSeconds;
+    /**
+     * The date of first usage is reported in epoch.
+     */
+    long batteryFirstUsageSeconds;
 }

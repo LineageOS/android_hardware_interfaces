@@ -40,5 +40,7 @@ union AltModeData {
     android.hardware.usb.DisplayPortAltModeStatus partnerSinkStatus = android.hardware.usb.DisplayPortAltModeStatus.UNKNOWN;
     android.hardware.usb.DisplayPortAltModeStatus cableStatus = android.hardware.usb.DisplayPortAltModeStatus.UNKNOWN;
     android.hardware.usb.DisplayPortAltModePinAssignment pinAssignment = android.hardware.usb.DisplayPortAltModePinAssignment.NONE;
+    boolean hpd = false;
+    android.hardware.usb.LinkTrainingStatus linkTrainingStatus = android.hardware.usb.LinkTrainingStatus.UNKNOWN;
   }
 }

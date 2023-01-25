@@ -38,6 +38,8 @@ parcelable OverlayProperties {
   boolean supportMixedColorSpaces;
   parcelable SupportedBufferCombinations {
     android.hardware.graphics.common.PixelFormat[] pixelFormats;
-    android.hardware.graphics.common.Dataspace[] dataspaces;
+    android.hardware.graphics.common.Dataspace[] standards;
+    android.hardware.graphics.common.Dataspace[] transfers;
+    android.hardware.graphics.common.Dataspace[] ranges;
   }
 }
