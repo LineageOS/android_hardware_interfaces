@@ -359,35 +359,35 @@ TEST(MetadataGralloc4Interop, BufferId) {
     auto mpbuf = encode<StandardMetadataType::BUFFER_ID>(42);
     hidl_vec<uint8_t> g4buf;
     ASSERT_EQ(NO_ERROR, gralloc4::encodeBufferId(42, &g4buf));
-    EXPECT_EQ(mpbuf, g4buf);
+    EXPECT_EQ(g4buf, mpbuf);
 }
 
 TEST(MetadataGralloc4Interop, Name) {
     auto mpbuf = encode<StandardMetadataType::NAME>("Hello, Interop!");
     hidl_vec<uint8_t> g4buf;
     ASSERT_EQ(NO_ERROR, gralloc4::encodeName("Hello, Interop!", &g4buf));
-    EXPECT_EQ(mpbuf, g4buf);
+    EXPECT_EQ(g4buf, mpbuf);
 }
 
 TEST(MetadataGralloc4Interop, Width) {
     auto mpbuf = encode<StandardMetadataType::WIDTH>(128);
     hidl_vec<uint8_t> g4buf;
     ASSERT_EQ(NO_ERROR, gralloc4::encodeWidth(128, &g4buf));
-    EXPECT_EQ(mpbuf, g4buf);
+    EXPECT_EQ(g4buf, mpbuf);
 }
 
 TEST(MetadataGralloc4Interop, Height) {
     auto mpbuf = encode<StandardMetadataType::HEIGHT>(64);
     hidl_vec<uint8_t> g4buf;
     ASSERT_EQ(NO_ERROR, gralloc4::encodeHeight(64, &g4buf));
-    EXPECT_EQ(mpbuf, g4buf);
+    EXPECT_EQ(g4buf, mpbuf);
 }
 
 TEST(MetadataGralloc4Interop, LayerCount) {
     auto mpbuf = encode<StandardMetadataType::LAYER_COUNT>(3);
     hidl_vec<uint8_t> g4buf;
     ASSERT_EQ(NO_ERROR, gralloc4::encodeLayerCount(3, &g4buf));
-    EXPECT_EQ(mpbuf, g4buf);
+    EXPECT_EQ(g4buf, mpbuf);
 }
 
 TEST(MetadataGralloc4Interop, PixelFormatRequested) {
@@ -395,21 +395,21 @@ TEST(MetadataGralloc4Interop, PixelFormatRequested) {
     hidl_vec<uint8_t> g4buf;
     ASSERT_EQ(NO_ERROR, gralloc4::encodePixelFormatRequested(
                                 hardware::graphics::common::V1_2::PixelFormat::RGBX_8888, &g4buf));
-    EXPECT_EQ(mpbuf, g4buf);
+    EXPECT_EQ(g4buf, mpbuf);
 }
 
 TEST(MetadataGralloc4Interop, PixelFormatFourcc) {
     auto mpbuf = encode<StandardMetadataType::PIXEL_FORMAT_FOURCC>(DRM_FORMAT_ABGR8888);
     hidl_vec<uint8_t> g4buf;
     ASSERT_EQ(NO_ERROR, gralloc4::encodePixelFormatFourCC(DRM_FORMAT_ABGR8888, &g4buf));
-    EXPECT_EQ(mpbuf, g4buf);
+    EXPECT_EQ(g4buf, mpbuf);
 }
 
 TEST(MetadataGralloc4Interop, PixelFormatModifier) {
     auto mpbuf = encode<StandardMetadataType::PIXEL_FORMAT_MODIFIER>(123456);
     hidl_vec<uint8_t> g4buf;
     ASSERT_EQ(NO_ERROR, gralloc4::encodePixelFormatModifier(123456, &g4buf));
-    EXPECT_EQ(mpbuf, g4buf);
+    EXPECT_EQ(g4buf, mpbuf);
 }
 
 TEST(MetadataGralloc4Interop, Usage) {
@@ -420,21 +420,21 @@ TEST(MetadataGralloc4Interop, Usage) {
                       static_cast<uint64_t>(
                               hardware::graphics::common::V1_2::BufferUsage::COMPOSER_OVERLAY),
                       &g4buf));
-    EXPECT_EQ(mpbuf, g4buf);
+    EXPECT_EQ(g4buf, mpbuf);
 }
 
 TEST(MetadataGralloc4Interop, AllocationSize) {
     auto mpbuf = encode<StandardMetadataType::ALLOCATION_SIZE>(10200);
     hidl_vec<uint8_t> g4buf;
     ASSERT_EQ(NO_ERROR, gralloc4::encodeAllocationSize(10200, &g4buf));
-    EXPECT_EQ(mpbuf, g4buf);
+    EXPECT_EQ(g4buf, mpbuf);
 }
 
 TEST(MetadataGralloc4Interop, ProtectedContent) {
     auto mpbuf = encode<StandardMetadataType::PROTECTED_CONTENT>(1);
     hidl_vec<uint8_t> g4buf;
     ASSERT_EQ(NO_ERROR, gralloc4::encodeProtectedContent(1, &g4buf));
-    EXPECT_EQ(mpbuf, g4buf);
+    EXPECT_EQ(g4buf, mpbuf);
 }
 
 TEST(MetadataGralloc4Interop, Compression) {
@@ -443,14 +443,14 @@ TEST(MetadataGralloc4Interop, Compression) {
     hidl_vec<uint8_t> g4buf;
     ASSERT_EQ(NO_ERROR,
               gralloc4::encodeCompression(gralloc4::Compression_DisplayStreamCompression, &g4buf));
-    EXPECT_EQ(mpbuf, g4buf);
+    EXPECT_EQ(g4buf, mpbuf);
 }
 
 TEST(MetadataGralloc4Interop, Interlaced) {
     auto mpbuf = encode<StandardMetadataType::INTERLACED>(gralloc4::Interlaced_TopBottom);
     hidl_vec<uint8_t> g4buf;
     ASSERT_EQ(NO_ERROR, gralloc4::encodeInterlaced(gralloc4::Interlaced_TopBottom, &g4buf));
-    EXPECT_EQ(mpbuf, g4buf);
+    EXPECT_EQ(g4buf, mpbuf);
 }
 
 TEST(MetadataGralloc4Interop, ChromeSitting) {
@@ -459,14 +459,14 @@ TEST(MetadataGralloc4Interop, ChromeSitting) {
     hidl_vec<uint8_t> g4buf;
     ASSERT_EQ(NO_ERROR,
               gralloc4::encodeChromaSiting(gralloc4::ChromaSiting_SitedInterstitial, &g4buf));
-    EXPECT_EQ(mpbuf, g4buf);
+    EXPECT_EQ(g4buf, mpbuf);
 }
 
 TEST(MetadataGralloc4Interop, PlaneLayouts) {
     auto mpbuf = encode<StandardMetadataType::PLANE_LAYOUTS>(fakePlaneLayouts());
     hidl_vec<uint8_t> g4buf;
     ASSERT_EQ(NO_ERROR, gralloc4::encodePlaneLayouts(fakePlaneLayouts(), &g4buf));
-    EXPECT_EQ(mpbuf, g4buf);
+    EXPECT_EQ(g4buf, mpbuf);
 }
 
 TEST(MetadataGralloc4Interop, Crop) {
@@ -474,21 +474,21 @@ TEST(MetadataGralloc4Interop, Crop) {
     auto mpbuf = encode<StandardMetadataType::CROP>(cropRects);
     hidl_vec<uint8_t> g4buf;
     ASSERT_EQ(NO_ERROR, gralloc4::encodeCrop(cropRects, &g4buf));
-    EXPECT_EQ(mpbuf, g4buf);
+    EXPECT_EQ(g4buf, mpbuf);
 }
 
 TEST(MetadataGralloc4Interop, Dataspace) {
     auto mpbuf = encode<StandardMetadataType::DATASPACE>(Dataspace::DISPLAY_P3);
     hidl_vec<uint8_t> g4buf;
     ASSERT_EQ(NO_ERROR, gralloc4::encodeDataspace(Dataspace::DISPLAY_P3, &g4buf));
-    EXPECT_EQ(mpbuf, g4buf);
+    EXPECT_EQ(g4buf, mpbuf);
 }
 
 TEST(MetadataGralloc4Interop, BlendMode) {
     auto mpbuf = encode<StandardMetadataType::BLEND_MODE>(BlendMode::PREMULTIPLIED);
     hidl_vec<uint8_t> g4buf;
     ASSERT_EQ(NO_ERROR, gralloc4::encodeBlendMode(BlendMode::PREMULTIPLIED, &g4buf));
-    EXPECT_EQ(mpbuf, g4buf);
+    EXPECT_EQ(g4buf, mpbuf);
 }
 
 TEST(MetadataGralloc4Interop, Smpte2086) {
@@ -498,7 +498,7 @@ TEST(MetadataGralloc4Interop, Smpte2086) {
     auto mpbuf = encode<StandardMetadataType::SMPTE2086>(hdrdata);
     hidl_vec<uint8_t> g4buf;
     ASSERT_EQ(NO_ERROR, gralloc4::encodeSmpte2086(hdrdata, &g4buf));
-    EXPECT_EQ(mpbuf, g4buf);
+    EXPECT_EQ(g4buf, mpbuf);
 }
 
 TEST(MetadataGralloc4Interop, Cta861_3) {
@@ -506,29 +506,29 @@ TEST(MetadataGralloc4Interop, Cta861_3) {
     auto mpbuf = encode<StandardMetadataType::CTA861_3>(hdrdata);
     hidl_vec<uint8_t> g4buf;
     ASSERT_EQ(NO_ERROR, gralloc4::encodeCta861_3(hdrdata, &g4buf));
-    EXPECT_EQ(mpbuf, g4buf);
+    EXPECT_EQ(g4buf, mpbuf);
 }
 
 TEST(MetadataGralloc4Interop, Smpte2094_10) {
     auto mpbuf = encode<StandardMetadataType::SMPTE2094_10>(std::nullopt);
     hidl_vec<uint8_t> g4buf;
     ASSERT_EQ(NO_ERROR, gralloc4::encodeSmpte2094_10(std::nullopt, &g4buf));
-    EXPECT_EQ(mpbuf, g4buf);
+    EXPECT_EQ(g4buf, mpbuf);
 
     std::vector<uint8_t> hdrdata{1, 2, 3, 4, 5, 6};
     mpbuf = encode<StandardMetadataType::SMPTE2094_10>(hdrdata);
     ASSERT_EQ(NO_ERROR, gralloc4::encodeSmpte2094_10(hdrdata, &g4buf));
-    EXPECT_EQ(mpbuf, g4buf);
+    EXPECT_EQ(g4buf, mpbuf);
 }
 
 TEST(MetadataGralloc4Interop, Smpte2094_40) {
     auto mpbuf = encode<StandardMetadataType::SMPTE2094_40>(std::nullopt);
     hidl_vec<uint8_t> g4buf;
     ASSERT_EQ(NO_ERROR, gralloc4::encodeSmpte2094_40(std::nullopt, &g4buf));
-    EXPECT_EQ(mpbuf, g4buf);
+    EXPECT_EQ(g4buf, mpbuf);
 
     std::vector<uint8_t> hdrdata{1, 2, 3, 4, 5, 6};
     mpbuf = encode<StandardMetadataType::SMPTE2094_40>(hdrdata);
     ASSERT_EQ(NO_ERROR, gralloc4::encodeSmpte2094_40(hdrdata, &g4buf));
-    EXPECT_EQ(mpbuf, g4buf);
+    EXPECT_EQ(g4buf, mpbuf);
 }
