@@ -158,10 +158,11 @@ TEST_P(TvInputAidlTest, OpenAndCloseStreamTest) {
         int32_t device_id = stream_config_.keyAt(j);
         vector<TvStreamConfig> config = stream_config_.valueAt(j);
         for (size_t i = 0; i < config.size(); i++) {
+            NativeHandle handle;
             int32_t stream_id = config[i].streamId;
             ALOGD("OpenAndCloseStreamTest: open stream, device_id=%d, stream_id=%d", device_id,
                   stream_id);
-            ASSERT_TRUE(tv_input_->openStream(device_id, stream_id, &handle_).isOk());
+            ASSERT_TRUE(tv_input_->openStream(device_id, stream_id, &handle).isOk());
             ALOGD("OpenAndCloseStreamTest: close stream, device_id=%d, stream_id=%d", device_id,
                   stream_id);
             ASSERT_TRUE(tv_input_->closeStream(device_id, stream_id).isOk());
@@ -190,9 +191,10 @@ TEST_P(TvInputAidlTest, InvalidDeviceIdTest) {
                 ITvInput::STATUS_INVALID_ARGUMENTS);
 
     int32_t stream_id = 0;
+    NativeHandle handle;
 
     ALOGD("InvalidDeviceIdTest: open stream, device_id=%d, stream_id=%d", id, stream_id);
-    ASSERT_TRUE(tv_input_->openStream(id, stream_id, &handle_).getServiceSpecificError() ==
+    ASSERT_TRUE(tv_input_->openStream(id, stream_id, &handle).getServiceSpecificError() ==
                 ITvInput::STATUS_INVALID_ARGUMENTS);
 
     ALOGD("InvalidDeviceIdTest: close stream, device_id=%d, stream_id=%d", id, stream_id);
@@ -226,8 +228,10 @@ TEST_P(TvInputAidlTest, InvalidStreamIdTest) {
         id = getNumNotIn(stream_ids);
     }
 
+    NativeHandle handle;
+
     ALOGD("InvalidStreamIdTest: open stream, device_id=%d, stream_id=%d", device_id, id);
-    ASSERT_TRUE(tv_input_->openStream(device_id, id, &handle_).getServiceSpecificError() ==
+    ASSERT_TRUE(tv_input_->openStream(device_id, id, &handle).getServiceSpecificError() ==
                 ITvInput::STATUS_INVALID_ARGUMENTS);
 
     ALOGD("InvalidStreamIdTest: close stream, device_id=%d, stream_id=%d", device_id, id);
@@ -252,11 +256,13 @@ TEST_P(TvInputAidlTest, OpenAnOpenedStreamsTest) {
     int32_t device_id = stream_config_.keyAt(indices[0]);
     int32_t stream_id = stream_config_.valueAt(indices[0])[0].streamId;
 
-    ALOGD("OpenAnOpenedStreamsTest: open stream, device_id=%d, stream_id=%d", device_id, stream_id);
-    ASSERT_TRUE(tv_input_->openStream(device_id, stream_id, &handle_).isOk());
+    NativeHandle handle;
 
     ALOGD("OpenAnOpenedStreamsTest: open stream, device_id=%d, stream_id=%d", device_id, stream_id);
-    ASSERT_TRUE(tv_input_->openStream(device_id, stream_id, &handle_).getServiceSpecificError() ==
+    ASSERT_TRUE(tv_input_->openStream(device_id, stream_id, &handle).isOk());
+
+    ALOGD("OpenAnOpenedStreamsTest: open stream, device_id=%d, stream_id=%d", device_id, stream_id);
+    ASSERT_TRUE(tv_input_->openStream(device_id, stream_id, &handle).getServiceSpecificError() ==
                 ITvInput::STATUS_INVALID_STATE);
 
     // close stream as subsequent tests assume no open streams

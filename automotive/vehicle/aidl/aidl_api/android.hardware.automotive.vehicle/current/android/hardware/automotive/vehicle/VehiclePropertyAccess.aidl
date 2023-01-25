@@ -34,8 +34,8 @@
 package android.hardware.automotive.vehicle;
 @Backing(type="int") @VintfStability
 enum VehiclePropertyAccess {
-  NONE = 0,
-  READ = 1,
-  WRITE = 2,
-  READ_WRITE = 3,
+  NONE = 0x00,
+  READ = 0x01,
+  WRITE = 0x02,
+  READ_WRITE = 0x03,
 }

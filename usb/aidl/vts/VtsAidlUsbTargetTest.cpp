@@ -49,6 +49,7 @@ using ::aidl::android::hardware::usb::DisplayPortAltModePinAssignment;
 using ::aidl::android::hardware::usb::DisplayPortAltModeStatus;
 using ::aidl::android::hardware::usb::IUsb;
 using ::aidl::android::hardware::usb::IUsbCallback;
+using ::aidl::android::hardware::usb::LinkTrainingStatus;
 using ::aidl::android::hardware::usb::PlugOrientation;
 using ::aidl::android::hardware::usb::PortDataRole;
 using ::aidl::android::hardware::usb::PortMode;
@@ -724,6 +725,10 @@ TEST_P(UsbAidlTest, dpAltModeValues) {
                   (int)DisplayPortAltModePinAssignment::NONE);
       EXPECT_TRUE((int)displayPortAltModeData.pinAssignment <=
                   (int)DisplayPortAltModePinAssignment::F);
+
+      EXPECT_TRUE((int)displayPortAltModeData.linkTrainingStatus >=
+                  (int)LinkTrainingStatus::UNKNOWN);
+      EXPECT_TRUE((int)displayPortAltModeData.pinAssignment <= (int)LinkTrainingStatus::FAILURE);
     }
   }
 

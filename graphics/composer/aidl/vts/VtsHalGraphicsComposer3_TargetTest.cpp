@@ -869,7 +869,7 @@ TEST_P(GraphicsComposerAidlTest, GetDisplayName) {
 }
 
 TEST_P(GraphicsComposerAidlTest, GetOverlaySupport) {
-    const auto& [status, _] = mComposerClient->getOverlaySupport();
+    const auto& [status, properties] = mComposerClient->getOverlaySupport();
     if (!status.isOk() && status.getExceptionCode() == EX_SERVICE_SPECIFIC &&
         status.getServiceSpecificError() == IComposerClient::EX_UNSUPPORTED) {
         GTEST_SUCCEED() << "getOverlaySupport is not supported";
@@ -877,6 +877,23 @@ TEST_P(GraphicsComposerAidlTest, GetOverlaySupport) {
     }
 
     ASSERT_TRUE(status.isOk());
+    for (const auto& i : properties.combinations) {
+        for (const auto standard : i.standards) {
+            const auto val = static_cast<int32_t>(standard) &
+                             static_cast<int32_t>(common::Dataspace::STANDARD_MASK);
+            ASSERT_TRUE(val == static_cast<int32_t>(standard));
+        }
+        for (const auto transfer : i.transfers) {
+            const auto val = static_cast<int32_t>(transfer) &
+                             static_cast<int32_t>(common::Dataspace::TRANSFER_MASK);
+            ASSERT_TRUE(val == static_cast<int32_t>(transfer));
+        }
+        for (const auto range : i.ranges) {
+            const auto val = static_cast<int32_t>(range) &
+                             static_cast<int32_t>(common::Dataspace::RANGE_MASK);
+            ASSERT_TRUE(val == static_cast<int32_t>(range));
+        }
+    }
 }
 
 TEST_P(GraphicsComposerAidlTest, GetDisplayPhysicalOrientation_BadDisplay) {

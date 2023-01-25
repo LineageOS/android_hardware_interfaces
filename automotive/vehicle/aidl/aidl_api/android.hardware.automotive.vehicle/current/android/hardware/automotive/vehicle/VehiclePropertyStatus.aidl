@@ -34,7 +34,7 @@
 package android.hardware.automotive.vehicle;
 @Backing(type="int") @VintfStability
 enum VehiclePropertyStatus {
-  AVAILABLE = 0,
-  UNAVAILABLE = 1,
-  ERROR = 2,
+  AVAILABLE = 0x00,
+  UNAVAILABLE = 0x01,
+  ERROR = 0x02,
 }
