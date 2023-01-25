@@ -27,8 +27,10 @@
 
 #include "core-impl/Bluetooth.h"
 #include "core-impl/Module.h"
+#include "core-impl/ModuleUsb.h"
 #include "core-impl/SoundDose.h"
 #include "core-impl/StreamStub.h"
+#include "core-impl/StreamUsb.h"
 #include "core-impl/Telephony.h"
 #include "core-impl/utils.h"
 
@@ -104,6 +106,42 @@ bool findAudioProfile(const AudioPort& port, const AudioFormatDescription& forma
 
 }  // namespace
 
+// static
+std::shared_ptr<Module> Module::createInstance(Type type) {
+    switch (type) {
+        case Module::Type::USB:
+            return ndk::SharedRefBase::make<ModuleUsb>(type);
+        case Type::DEFAULT:
+        case Type::R_SUBMIX:
+        default:
+            return ndk::SharedRefBase::make<Module>(type);
+    }
+}
+
+// static
+StreamIn::CreateInstance Module::getStreamInCreator(Type type) {
+    switch (type) {
+        case Type::USB:
+            return StreamInUsb::createInstance;
+        case Type::DEFAULT:
+        case Type::R_SUBMIX:
+        default:
+            return StreamInStub::createInstance;
+    }
+}
+
+// static
+StreamOut::CreateInstance Module::getStreamOutCreator(Type type) {
+    switch (type) {
+        case Type::USB:
+            return StreamOutUsb::createInstance;
+        case Type::DEFAULT:
+        case Type::R_SUBMIX:
+        default:
+            return StreamOutStub::createInstance;
+    }
+}
+
 void Module::cleanUpPatch(int32_t patchId) {
     erase_all_values(mPatches, std::set<int32_t>{patchId});
 }
@@ -153,6 +191,7 @@ ndk::ScopedAStatus Module::createStreamContext(
                 std::make_unique<StreamContext::CommandMQ>(1, true /*configureEventFlagWord*/),
                 std::make_unique<StreamContext::ReplyMQ>(1, true /*configureEventFlagWord*/),
                 portConfigIt->format.value(), portConfigIt->channelMask.value(),
+                portConfigIt->sampleRate.value().value,
                 std::make_unique<StreamContext::DataMQ>(frameSize * in_bufferSizeFrames),
                 asyncCallback, outEventCallback, params);
         if (temp.isValid()) {
@@ -261,6 +300,7 @@ internal::Configuration& Module::getConfig() {
                 break;
             case Type::USB:
                 mConfig = std::move(internal::getUsbConfiguration());
+                break;
         }
     }
     return *mConfig;
@@ -401,6 +441,8 @@ ndk::ScopedAStatus Module::connectExternalDevice(const AudioPort& in_templateIdA
     if (!mDebug.simulateDeviceConnections) {
         // In a real HAL here we would attempt querying the profiles from the device.
         LOG(ERROR) << __func__ << ": failed to query supported device profiles";
+        // TODO: Check the return value when it is ready for actual devices.
+        populateConnectedDevicePort(&connectedPort);
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
     }
 
@@ -560,10 +602,9 @@ ndk::ScopedAStatus Module::openInputStream(const OpenInputStreamArguments& in_ar
     }
     context.fillDescriptor(&_aidl_return->desc);
     std::shared_ptr<StreamIn> stream;
-    // TODO: Add a mapping from module instance names to a corresponding 'createInstance'.
-    if (auto status = StreamInStub::createInstance(in_args.sinkMetadata, std::move(context),
-                                                   mConfig->microphones, &stream);
-        !status.isOk()) {
+    ndk::ScopedAStatus status = getStreamInCreator(mType)(in_args.sinkMetadata, std::move(context),
+                                                          mConfig->microphones, &stream);
+    if (!status.isOk()) {
         return status;
     }
     StreamWrapper streamWrapper(stream);
@@ -615,10 +656,9 @@ ndk::ScopedAStatus Module::openOutputStream(const OpenOutputStreamArguments& in_
     }
     context.fillDescriptor(&_aidl_return->desc);
     std::shared_ptr<StreamOut> stream;
-    // TODO: Add a mapping from module instance names to a corresponding 'createInstance'.
-    if (auto status = StreamOutStub::createInstance(in_args.sourceMetadata, std::move(context),
-                                                    in_args.offloadInfo, &stream);
-        !status.isOk()) {
+    ndk::ScopedAStatus status = getStreamOutCreator(mType)(
+            in_args.sourceMetadata, std::move(context), in_args.offloadInfo, &stream);
+    if (!status.isOk()) {
         return status;
     }
     StreamWrapper streamWrapper(stream);
@@ -694,6 +734,10 @@ ndk::ScopedAStatus Module::setAudioPatch(const AudioPatch& in_requested, AudioPa
             LOG(ERROR) << __func__ << ": there is no route to the sink port id " << sink->portId;
             return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
         }
+    }
+
+    if (auto status = checkAudioPatchEndpointsMatch(sources, sinks); !status.isOk()) {
+        return status;
     }
 
     auto& patches = getConfig().patches;
@@ -1188,6 +1232,18 @@ bool Module::isMmapSupported() {
                 }) != mmapPolicyInfos.end();
     }
     return mIsMmapSupported.value();
+}
+
+ndk::ScopedAStatus Module::populateConnectedDevicePort(AudioPort* audioPort __unused) {
+    LOG(DEBUG) << __func__ << ": do nothing and return ok";
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus Module::checkAudioPatchEndpointsMatch(
+        const std::vector<AudioPortConfig*>& sources __unused,
+        const std::vector<AudioPortConfig*>& sinks __unused) {
+    LOG(DEBUG) << __func__ << ": do nothing and return ok";
+    return ndk::ScopedAStatus::ok();
 }
 
 }  // namespace aidl::android::hardware::audio::core
