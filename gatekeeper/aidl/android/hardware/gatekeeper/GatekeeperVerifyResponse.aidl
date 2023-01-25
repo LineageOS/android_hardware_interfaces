@@ -24,11 +24,12 @@ import android.hardware.security.keymint.HardwareAuthToken;
 @VintfStability
 parcelable GatekeeperVerifyResponse {
     /**
-     * Request completion status
+     * Request completion status. The status code can be IGatekeeper::STATUS_OK
+     * or IGatekeeper::ERROR_RETRY_TIMEOUT or IGatekeeper::STATUS_REENROLL.
      */
     int statusCode;
     /**
-     * Retry timeout in ms, if code == ERROR_RETRY_TIMEOUT
+     * Retry timeout in ms, if code == IGatekeeper::ERROR_RETRY_TIMEOUT
      * otherwise unused (0)
      */
     int timeoutMs;
