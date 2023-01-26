@@ -3623,7 +3623,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ_WRITE
      */
     HANDS_ON_DETECTION_ENABLED =
-            0x1015 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+            0x1016 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
 
     /**
      * Enable or disable driver attention monitoring.
@@ -3640,7 +3640,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ_WRITE
      */
     DRIVER_ATTENTION_MONITORING_ENABLED =
-            0x1018 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+            0x1019 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
 
     /***************************************************************************
      * End of ADAS Properties
