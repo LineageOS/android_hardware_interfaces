@@ -29,6 +29,11 @@
 
 #include "log/log.h"
 
+// TODO: Remove custom logging defines from PDL packets.
+#undef LOG_INFO
+#undef LOG_DEBUG
+#include "hci/hci_packets.h"
+
 namespace {
 int SetTerminalRaw(int fd) {
   termios terminal_settings;
@@ -74,15 +79,22 @@ class BluetoothDeathRecipient {
       ALOGE("BluetoothDeathRecipient::serviceDied called but service not dead");
       return;
     }
-    has_died_ = true;
+    {
+      std::lock_guard<std::mutex> guard(mHasDiedMutex);
+      has_died_ = true;
+    }
     mHci->close();
   }
   BluetoothHci* mHci;
   std::shared_ptr<IBluetoothHciCallbacks> mCb;
   AIBinder_DeathRecipient* clientDeathRecipient_;
-  bool getHasDied() const { return has_died_; }
+  bool getHasDied() {
+    std::lock_guard<std::mutex> guard(mHasDiedMutex);
+    return has_died_;
+  }
 
  private:
+  std::mutex mHasDiedMutex;
   bool has_died_{false};
 };
 
@@ -114,16 +126,95 @@ int BluetoothHci::getFdFromDevPath() {
   return fd;
 }
 
+void BluetoothHci::reset() {
+  // Send a reset command and wait until the command complete comes back.
+
+  std::vector<uint8_t> reset;
+  ::bluetooth::packet::BitInserter bi{reset};
+  ::bluetooth::hci::ResetBuilder::Create()->Serialize(bi);
+
+  auto resetPromise = std::make_shared<std::promise<void>>();
+  auto resetFuture = resetPromise->get_future();
+
+  mH4 = std::make_shared<H4Protocol>(
+      mFd,
+      [](const std::vector<uint8_t>& raw_command) {
+        ALOGI("Discarding %d bytes with command type",
+              static_cast<int>(raw_command.size()));
+      },
+      [](const std::vector<uint8_t>& raw_acl) {
+        ALOGI("Discarding %d bytes with acl type",
+              static_cast<int>(raw_acl.size()));
+      },
+      [](const std::vector<uint8_t>& raw_sco) {
+        ALOGI("Discarding %d bytes with sco type",
+              static_cast<int>(raw_sco.size()));
+      },
+      [resetPromise](const std::vector<uint8_t>& raw_event) {
+        bool valid = ::bluetooth::hci::ResetCompleteView::Create(
+                         ::bluetooth::hci::CommandCompleteView::Create(
+                             ::bluetooth::hci::EventView::Create(
+                                 ::bluetooth::hci::PacketView<true>(
+                                     std::make_shared<std::vector<uint8_t>>(
+                                         raw_event)))))
+                         .IsValid();
+        if (valid) {
+          resetPromise->set_value();
+        } else {
+          ALOGI("Discarding %d bytes with event type",
+                static_cast<int>(raw_event.size()));
+        }
+      },
+      [](const std::vector<uint8_t>& raw_iso) {
+        ALOGI("Discarding %d bytes with iso type",
+              static_cast<int>(raw_iso.size()));
+      },
+      [this]() {
+        ALOGI("HCI socket device disconnected while waiting for reset");
+        mFdWatcher.StopWatchingFileDescriptors();
+      });
+  mFdWatcher.WatchFdForNonBlockingReads(mFd,
+                                        [this](int) { mH4->OnDataReady(); });
+
+  send(PacketType::COMMAND, reset);
+  auto status = resetFuture.wait_for(std::chrono::seconds(1));
+  mFdWatcher.StopWatchingFileDescriptors();
+  if (status == std::future_status::ready) {
+    ALOGI("HCI Reset successful");
+  } else {
+    ALOGE("HCI Reset Response not received in one second");
+  }
+
+  resetPromise.reset();
+}
+
 ndk::ScopedAStatus BluetoothHci::initialize(
     const std::shared_ptr<IBluetoothHciCallbacks>& cb) {
   ALOGI(__func__);
 
-  mCb = cb;
-  if (mCb == nullptr) {
+  if (cb == nullptr) {
     ALOGE("cb == nullptr! -> Unable to call initializationComplete(ERR)");
     return ndk::ScopedAStatus::fromServiceSpecificError(STATUS_BAD_VALUE);
   }
 
+  HalState old_state = HalState::READY;
+  {
+    std::lock_guard<std::mutex> guard(mStateMutex);
+    if (mState != HalState::READY) {
+      old_state = mState;
+    } else {
+      mState = HalState::INITIALIZING;
+    }
+  }
+
+  if (old_state != HalState::READY) {
+    ALOGE("initialize: Unexpected State %d", static_cast<int>(old_state));
+    close();
+    cb->initializationComplete(Status::ALREADY_INITIALIZED);
+    return ndk::ScopedAStatus::ok();
+  }
+
+  mCb = cb;
   management_.reset(new NetBluetoothMgmt);
   mFd = management_->openHci();
   if (mFd < 0) {
@@ -132,11 +223,15 @@ ndk::ScopedAStatus BluetoothHci::initialize(
     ALOGI("Unable to open Linux interface, trying default path.");
     mFd = getFdFromDevPath();
     if (mFd < 0) {
-      return ndk::ScopedAStatus::fromServiceSpecificError(STATUS_BAD_VALUE);
+      cb->initializationComplete(Status::UNABLE_TO_OPEN_INTERFACE);
+      return ndk::ScopedAStatus::ok();
     }
   }
 
   mDeathRecipient->LinkToDeath(mCb);
+
+  // TODO: This should not be necessary when the device implements rfkill.
+  reset();
 
   mH4 = std::make_shared<H4Protocol>(
       mFd,
@@ -162,6 +257,10 @@ ndk::ScopedAStatus BluetoothHci::initialize(
   mFdWatcher.WatchFdForNonBlockingReads(mFd,
                                         [this](int) { mH4->OnDataReady(); });
 
+  {
+    std::lock_guard<std::mutex> guard(mStateMutex);
+    mState = HalState::ONE_CLIENT;
+  }
   ALOGI("initialization complete");
   auto status = mCb->initializationComplete(Status::SUCCESS);
   if (!status.isOk()) {
@@ -178,13 +277,27 @@ ndk::ScopedAStatus BluetoothHci::initialize(
 
 ndk::ScopedAStatus BluetoothHci::close() {
   ALOGI(__func__);
+  {
+    std::lock_guard<std::mutex> guard(mStateMutex);
+    if (mState != HalState::ONE_CLIENT) {
+      ALOGI("Already closed");
+      return ndk::ScopedAStatus::ok();
+    }
+    mState = HalState::CLOSING;
+  }
+
   mFdWatcher.StopWatchingFileDescriptors();
+
   if (management_) {
     management_->closeHci();
   } else {
     ::close(mFd);
   }
 
+  {
+    std::lock_guard<std::mutex> guard(mStateMutex);
+    mState = HalState::READY;
+  }
   return ndk::ScopedAStatus::ok();
 }
 
