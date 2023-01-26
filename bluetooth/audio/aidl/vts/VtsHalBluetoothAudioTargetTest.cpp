@@ -1570,6 +1570,10 @@ TEST_P(BluetoothAudioProviderLeAudioBroadcastHardwareAidl,
     le_audio_broadcast_config.streamMap[0]
         .leAudioCodecConfig.set<LeAudioCodecConfiguration::lc3Config>(
             lc3_config);
+    le_audio_broadcast_config.streamMap[0].streamHandle = 0x0;
+    le_audio_broadcast_config.streamMap[0].pcmStreamId = 0x0;
+    le_audio_broadcast_config.streamMap[0].audioChannelAllocation = 0x1 << 0;
+
     DataMQDesc mq_desc;
     auto aidl_retval = audio_provider_->startSession(
         audio_port_, AudioConfiguration(le_audio_broadcast_config),
