@@ -17,7 +17,7 @@ cc_test {
     srcs: ["VtsHalBluetoothAudioTargetTest.cpp"],
     shared_libs: [
         "android.hardware.audio.common-V1-ndk",
-        "android.hardware.bluetooth.audio-V2-ndk",
+        "android.hardware.bluetooth.audio-V3-ndk",
         "android.hardware.common-V2-ndk",
         "android.hardware.common.fmq-V1-ndk",
         "libbase",
