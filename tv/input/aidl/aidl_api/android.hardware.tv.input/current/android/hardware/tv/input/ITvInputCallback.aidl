@@ -35,4 +35,5 @@ package android.hardware.tv.input;
 @VintfStability
 interface ITvInputCallback {
   void notify(in android.hardware.tv.input.TvInputEvent event);
+  void notifyTvMessageEvent(in android.hardware.tv.input.TvMessageEvent event);
 }

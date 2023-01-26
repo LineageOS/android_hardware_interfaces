@@ -32,16 +32,9 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.tv.input;
-@VintfStability
-interface ITvInput {
-  void closeStream(in int deviceId, in int streamId);
-  android.hardware.tv.input.TvStreamConfig[] getStreamConfigurations(in int deviceId);
-  android.hardware.common.NativeHandle openStream(in int deviceId, in int streamId);
-  void setCallback(in android.hardware.tv.input.ITvInputCallback callback);
-  void setTvMessageEnabled(int deviceId, int streamId, in android.hardware.tv.input.TvMessageEventType type, boolean enabled);
-  void getTvMessageQueueDesc(out android.hardware.common.fmq.MQDescriptor<byte,android.hardware.common.fmq.SynchronizedReadWrite> queue, int deviceId, int streamId);
-  const int STATUS_UNKNOWN = 1;
-  const int STATUS_NO_RESOURCE = 2;
-  const int STATUS_INVALID_ARGUMENTS = 3;
-  const int STATUS_INVALID_STATE = 4;
+@Backing(type="int") @VintfStability
+enum TvMessageEventType {
+  WATERMARK = 1,
+  CLOSED_CAPTION = 2,
+  OTHER = 3,
 }

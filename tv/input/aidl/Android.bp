@@ -14,6 +14,7 @@ aidl_interface {
     imports: [
         "android.hardware.common-V2",
         "android.media.audio.common.types-V1",
+        "android.hardware.common.fmq-V1",
     ],
     stability: "vintf",
     backend: {
