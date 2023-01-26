@@ -50,6 +50,8 @@ parcelable ProtectedData {
      *                                     ; salt = null
      *                                     ; info = .cbor Context (see below)
      *                                     ; K = HKDF-SHA-256(ikm, salt, info)
+     *                                     ; AAD for the encryption is a CBOR-serialized
+     *                                     ; Enc_structure (RFC 8152 s5.3) with empty external_aad.
      *         recipients : [
      *             [                       ; COSE_Recipient
      *                 protected : bstr .cbor {
@@ -65,7 +67,10 @@ parcelable ProtectedData {
      *     ]
      *
      *     ; The COSE_KDF_Context that is used to derive the ProtectedData encryption key with
-     *     ; HKDF. See details on use in ProtectedData comments above.
+     *     ; HKDF. See details on use in ProtectedData comments above. The public key data
+     *     ; included in the other field of PartyUInfo / PartyVInfo is encoded as:
+     *     ;  - a raw 32-byte public key for X25519
+     *     ;  - uncompressed SEC-1 coordinate data (0x04 || x || y) for P-256
      *     Context = [
      *         AlgorithmID : 3             ; AES-GCM 256
      *         PartyUInfo : [
@@ -138,7 +143,7 @@ parcelable ProtectedData {
      *                                            ; bytes inclusive
      *         VerifiedDeviceInfo,
      *         tag: bstr                 ; This is the tag from COSE_Mac0 of
-     *                                   ; KeysToCertify, to tie the key set to
+     *                                   ; KeysToSign, to tie the key set to
      *                                   ; the signature.
      *     ]
      *
