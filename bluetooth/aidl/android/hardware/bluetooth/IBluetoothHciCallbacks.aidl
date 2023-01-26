@@ -39,6 +39,8 @@ interface IBluetoothHciCallbacks {
     /**
      * Invoked when the Bluetooth controller initialization has been
      * completed.
+     * @param status contains a return code indicating success, or the
+     *               reason the initialization failed.
      */
     void initializationComplete(in Status status);
 
