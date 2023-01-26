@@ -58,9 +58,4 @@ parcelable CarrierRestrictions {
     boolean allowedCarriersPrioritized;
     /** Current restriction status as defined in CarrierRestrictionStatus enum */
     CarrierRestrictionStatus status;
-    /**
-    * Android carrier ID of the locked carrier.
-    * see https://source.android.com/docs/core/connect/carrierid
-    */
-    int carrierId;
 }

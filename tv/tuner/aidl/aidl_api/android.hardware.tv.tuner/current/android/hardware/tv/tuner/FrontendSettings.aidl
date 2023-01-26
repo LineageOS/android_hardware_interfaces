@@ -45,4 +45,5 @@ union FrontendSettings {
   android.hardware.tv.tuner.FrontendIsdbs3Settings isdbs3;
   android.hardware.tv.tuner.FrontendIsdbtSettings isdbt;
   android.hardware.tv.tuner.FrontendDtmbSettings dtmb;
+  @nullable android.hardware.tv.tuner.FrontendIptvSettings iptv;
 }

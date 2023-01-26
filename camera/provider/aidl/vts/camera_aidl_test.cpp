@@ -169,7 +169,7 @@ std::vector<std::string> CameraAidlTest::getCameraDeviceNames(
         ScopedAStatus physicalCameraDeviceStatusChange(
                 const std::string&, const std::string&,
                 ::aidl::android::hardware::camera::common::CameraDeviceStatus) override {
-            return ndk::ScopedAStatus();
+            return ScopedAStatus::ok();
         }
 
         std::vector<std::string> externalCameraDeviceNames;
