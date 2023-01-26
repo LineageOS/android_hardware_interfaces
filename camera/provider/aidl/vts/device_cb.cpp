@@ -429,10 +429,11 @@ bool DeviceCb::processCaptureResultLocked(
         CameraAidlTest::InFlightRequest::StreamBufferAndTimestamp streamBufferAndTimestamp;
         auto outstandingBuffers = mUseHalBufManager ? mOutstandingBufferIds :
             request->mOutstandingBufferIds;
+        auto bufferId = mUseHalBufManager ? buffer.bufferId : results.frameNumber;
         auto outputBuffer = outstandingBuffers.empty() ? ::android::makeFromAidl(buffer.buffer) :
-            outstandingBuffers[buffer.streamId][buffer.bufferId];
+            outstandingBuffers[buffer.streamId][bufferId];
         streamBufferAndTimestamp.buffer = {buffer.streamId,
-                                           buffer.bufferId,
+                                           bufferId,
                                            outputBuffer,
                                            buffer.status,
                                            ::android::makeFromAidl(buffer.acquireFence),
