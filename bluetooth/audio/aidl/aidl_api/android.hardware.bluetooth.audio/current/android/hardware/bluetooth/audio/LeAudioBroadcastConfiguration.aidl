@@ -41,5 +41,6 @@ parcelable LeAudioBroadcastConfiguration {
     char streamHandle;
     int audioChannelAllocation;
     android.hardware.bluetooth.audio.LeAudioCodecConfiguration leAudioCodecConfig;
+    char pcmStreamId;
   }
 }
