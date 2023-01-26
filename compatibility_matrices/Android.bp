@@ -83,10 +83,10 @@ vintf_compatibility_matrix {
 }
 
 vintf_compatibility_matrix {
-    name: "framework_compatibility_matrix.current.xml",
-    stem: "compatibility_matrix.current.xml",
+    name: "framework_compatibility_matrix.8.xml",
+    stem: "compatibility_matrix.8.xml",
     srcs: [
-        "compatibility_matrix.current.xml",
+        "compatibility_matrix.8.xml",
     ],
     kernel_configs: [
         "kernel_config_current_5.10",
