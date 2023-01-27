@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * You may not use this file except in compliance with the License.
@@ -32,24 +32,8 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.uwb.fira_android;
-@Backing(type="int") @VintfStability
-enum UwbVendorCapabilityTlvTypes {
-  SUPPORTED_POWER_STATS_QUERY = 192,
-  CCC_SUPPORTED_CHAPS_PER_SLOT = 160,
-  CCC_SUPPORTED_SYNC_CODES = 161,
-  CCC_SUPPORTED_HOPPING_CONFIG_MODES_AND_SEQUENCES = 162,
-  CCC_SUPPORTED_CHANNELS = 163,
-  CCC_SUPPORTED_VERSIONS = 164,
-  CCC_SUPPORTED_UWB_CONFIGS = 165,
-  CCC_SUPPORTED_PULSE_SHAPE_COMBOS = 166,
-  CCC_SUPPORTED_RAN_MULTIPLIER = 167,
-  CCC_SUPPORTED_MAX_RANGING_SESSION_NUMBER = 168,
-  SUPPORTED_AOA_RESULT_REQ_ANTENNA_INTERLEAVING = 227,
-  SUPPORTED_MIN_RANGING_INTERVAL_MS = 228,
-  SUPPORTED_RANGE_DATA_NTF_CONFIG = 229,
-  SUPPORTED_RSSI_REPORTING = 230,
-  SUPPORTED_DIAGNOSTICS = 231,
-  SUPPORTED_MIN_SLOT_DURATION_MS = 232,
-  SUPPORTED_MAX_RANGING_SESSION_NUMBER = 233,
-  SUPPORTED_CHANNELS_AOA = 234,
+@Backing(type="byte") @VintfStability
+enum UwbVendorStatusCodes {
+  STATUS_ERROR_CCC_SE_BUSY = 80,
+  STATUS_ERROR_CCC_LIFECYCLE = 81,
 }

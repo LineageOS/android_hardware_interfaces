@@ -194,4 +194,18 @@ enum UwbVendorCapabilityTlvTypes {
      * Int value to indicate supported max number of fira ranging sessions
      */
     SUPPORTED_MAX_RANGING_SESSION_NUMBER = 0xE9,
+
+    /**
+     * 2 byte bitmask to indicate the channels that support AoA.
+     * Each "1" in this bitmap corresponds to a specific UWB channel where:
+     *  0x01 = "Channel 5",
+     *  0x02 = "Channel 6",
+     *  0x04 = "Channel 8",
+     *  0x08 = "Channel 9",
+     *  0x10 = "Channel 10",
+     *  0x20 = "Channel 12",
+     *  0x40 = "Channel 13",
+     *  0x80 = "Channel 14"
+     */
+    SUPPORTED_CHANNELS_AOA = 0xEA,
 }
