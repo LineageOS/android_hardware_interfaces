@@ -159,18 +159,27 @@ interface IRemotelyProvisionedComponent {
      *        IRemotelyProvisionedComponent must validate the MACs on each key.  If any entry in the
      *        array lacks a valid MAC, the method must return STATUS_INVALID_MAC.
      *
-     *        If testMode is true, the keysToCertify array must contain only keys flagged as test
+     *        If testMode is true, the keysToSign array must contain only keys flagged as test
      *        keys. Otherwise, the method must return STATUS_PRODUCTION_KEY_IN_TEST_REQUEST.
      *
-     *        If testMode is false, the keysToCertify array must not contain any keys flagged as
+     *        If testMode is false, the keysToSign array must not contain any keys flagged as
      *        test keys. Otherwise, the method must return STATUS_TEST_KEY_IN_PRODUCTION_REQUEST.
      *
-     * @param in endpointEncryptionKey contains an X25519 public key which will be used to encrypt
-     *        the BCC. For flexibility, this is represented as a certificate chain, represented as a
-     *        CBOR array of COSE_Sign1 objects, ordered from root to leaf. The leaf contains the
-     *        X25519 encryption key, each other element is an Ed25519 key signing the next in the
-     *        chain. The root is self-signed. An implementor may also choose to use P256 as an
-     *        alternative curve for signing and encryption instead of Curve 25519.
+     * @param in endpointEncryptionKey contains an X25519 or P-256 public key which will be used to
+     *        encrypt the BCC. For flexibility, this is represented as a certificate chain
+     *        in the form of a CBOR array of COSE_Sign1 objects, ordered from root to leaf.  An
+     *        implementor may also choose to use P256 as an alternative curve for signing and
+     *        encryption instead of Curve 25519, as indicated by the supportedEekCurve field in
+     *        RpcHardwareInfo; the contents of the EEK chain will match the specified
+     *        supportedEekCurve.
+     *
+     *        - For CURVE_25519 the leaf contains the X25519 agreement key, each other element is an
+     *          Ed25519 key signing the next in the chain.
+     *
+     *        - For CURVE_P256 the leaf contains the P-256 agreement key, each other element is a
+     *          P-256 key signing the next in the chain.
+     *
+     *        In either case, the root is self-signed.
      *
      *            EekChain = [ + SignedSignatureKey, SignedEek ]
      *
