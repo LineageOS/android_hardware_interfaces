@@ -802,7 +802,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl" optional="true" updatable-via-apex="true">
         <name>android.hardware.wifi</name>
         <version>1</version>
         <interface>
@@ -810,7 +810,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
+    <hal format="hidl" optional="true" updatable-via-apex="true">
         <name>android.hardware.wifi</name>
         <version>1.3-6</version>
         <interface>
