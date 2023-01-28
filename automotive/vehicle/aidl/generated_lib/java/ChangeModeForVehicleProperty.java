@@ -239,6 +239,7 @@ public final class ChangeModeForVehicleProperty {
         Map.entry(VehicleProperty.BLIND_SPOT_WARNING_ENABLED, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.BLIND_SPOT_WARNING_STATE, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.LANE_DEPARTURE_WARNING_ENABLED, VehiclePropertyChangeMode.ON_CHANGE),
+        Map.entry(VehicleProperty.LANE_DEPARTURE_WARNING_STATE, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.LANE_KEEP_ASSIST_ENABLED, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.LANE_KEEP_ASSIST_STATE, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.LANE_CENTERING_ASSIST_ENABLED, VehiclePropertyChangeMode.ON_CHANGE),

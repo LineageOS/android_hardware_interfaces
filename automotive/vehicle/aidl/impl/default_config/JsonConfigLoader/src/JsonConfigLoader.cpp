@@ -47,6 +47,7 @@ using ::aidl::android::hardware::automotive::vehicle::FuelType;
 using ::aidl::android::hardware::automotive::vehicle::GsrComplianceRequirementType;
 using ::aidl::android::hardware::automotive::vehicle::LaneCenteringAssistCommand;
 using ::aidl::android::hardware::automotive::vehicle::LaneCenteringAssistState;
+using ::aidl::android::hardware::automotive::vehicle::LaneDepartureWarningState;
 using ::aidl::android::hardware::automotive::vehicle::LaneKeepAssistState;
 using ::aidl::android::hardware::automotive::vehicle::RawPropValues;
 using ::aidl::android::hardware::automotive::vehicle::VehicleApPowerStateReport;
@@ -221,6 +222,8 @@ JsonValueParser::JsonValueParser() {
             std::make_unique<ConstantParser<ForwardCollisionWarningState>>();
     mConstantParsersByType["BlindSpotWarningState"] =
             std::make_unique<ConstantParser<BlindSpotWarningState>>();
+    mConstantParsersByType["LaneDepartureWarningState"] =
+            std::make_unique<ConstantParser<LaneDepartureWarningState>>();
     mConstantParsersByType["LaneKeepAssistState"] =
             std::make_unique<ConstantParser<LaneKeepAssistState>>();
     mConstantParsersByType["LaneCenteringAssistCommand"] =

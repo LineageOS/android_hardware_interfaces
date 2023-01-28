@@ -3585,6 +3585,25 @@ enum VehicleProperty {
             0x1006 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
 
     /**
+     * Lane Departure Warning (LDW) state.
+     *
+     * Returns the current state of LDW. This property must always return a valid state defined in
+     * LaneDepartureWarningState or ErrorState. It must not surface errors through StatusCode
+     * and must use the supported error states instead.
+     *
+     * For the global area ID (0), the VehicleAreaConfig#supportedEnumValues array must be defined
+     * unless all states of both LaneDepartureWarningState (including OTHER, which is not
+     * recommended) and ErrorState are supported.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     * @data_enum LaneDepartureWarningState
+     * @data_enum ErrorState
+     */
+    LANE_DEPARTURE_WARNING_STATE =
+            0x1007 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
+
+    /**
      * Enable or disable Lane Keep Assist (LKA).
      *
      * Set true to enable LKA and false to disable LKA. When LKA is enabled, the ADAS system in the
