@@ -17,7 +17,10 @@
 package android.hardware.tv.input;
 
 import android.hardware.common.NativeHandle;
+import android.hardware.common.fmq.MQDescriptor;
+import android.hardware.common.fmq.SynchronizedReadWrite;
 import android.hardware.tv.input.ITvInputCallback;
+import android.hardware.tv.input.TvMessageEventType;
 import android.hardware.tv.input.TvStreamConfig;
 
 @VintfStability
@@ -73,4 +76,32 @@ interface ITvInput {
      * @throws ServiceSpecificException with values from the ITvInput::STATUS_* constants
      */
     void setCallback(in ITvInputCallback callback);
+
+    /**
+     * Enables or disables TV message detection for the specified stream on the device.
+     *
+     * @param deviceId The ID of the device that contains the stream to set the flag for.
+     * @param streamId The ID of the stream to set the flag for.
+     * @param type The type of {@link android.hardware.tv.input.TvMessageEventType}.
+     * @param enabled {@code true} if you want to enable TV message detection
+     *                {@code false} otherwise.
+     */
+    void setTvMessageEnabled(
+            int deviceId, int streamId, in TvMessageEventType type, boolean enabled);
+
+    /**
+     * Gets the TV message queue for the specified stream on the device.
+     *
+     * The FMQ is used to relay events that are parsed from the specified stream to the
+     * app or service responsible for processing the message. The HAL implementation
+     * is expected to parse these messages and add them to the queue as new events are
+     * detected from the stream based on whether or not they are enabled by
+     * {@link #setTvMessageEnabled(int, int, TvMessageEventType, boolean)}.
+     *
+     * @param deviceId The ID of the device that contains the stream to get the queue for.
+     * @param streamId THe ID of the stream to get the queue for.
+     * @return The descriptor of the TV message queue.
+     */
+    void getTvMessageQueueDesc(
+            out MQDescriptor<byte, SynchronizedReadWrite> queue, int deviceId, int streamId);
 }

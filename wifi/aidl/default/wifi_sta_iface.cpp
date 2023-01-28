@@ -561,9 +561,8 @@ std::pair<std::array<uint8_t, 6>, ndk::ScopedAStatus> WifiStaIface::getFactoryMa
 }
 
 ndk::ScopedAStatus WifiStaIface::setScanModeInternal(bool enable) {
-    // OEM's need to implement this on their devices if needed.
-    LOG(WARNING) << "setScanModeInternal(" << enable << ") not supported";
-    return createWifiStatus(WifiStatusCode::ERROR_NOT_SUPPORTED);
+    legacy_hal::wifi_error legacy_status = legacy_hal_.lock()->setScanMode(ifname_, enable);
+    return createWifiStatusFromLegacyError(legacy_status);
 }
 
 ndk::ScopedAStatus WifiStaIface::setDtimMultiplierInternal(const int multiplier) {

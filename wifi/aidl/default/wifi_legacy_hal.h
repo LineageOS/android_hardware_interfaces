@@ -741,6 +741,8 @@ class WifiLegacyHal {
 
     wifi_error twtClearStats(const std::string& iface_name, uint8_t configId);
 
+    wifi_error setScanMode(const std::string& iface_name, bool enable);
+
     wifi_error setDtimConfig(const std::string& iface_name, uint32_t multiplier);
 
     // Retrieve the list of usable channels in the requested bands

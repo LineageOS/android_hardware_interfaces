@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The Android Open Source Project
+ * Copyright 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,18 +31,10 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.usb.gadget;
-@Backing(type="int") @VintfStability
-enum UsbSpeed {
-  UNKNOWN = (-1),
-  LOWSPEED = 0,
-  FULLSPEED = 1,
-  HIGHSPEED = 2,
-  SUPERSPEED = 3,
-  SUPERSPEED_10Gb = 4,
-  SUPERSPEED_20Gb = 5,
-  USB4_GEN2_10Gb = 6,
-  USB4_GEN2_20Gb = 7,
-  USB4_GEN3_20Gb = 8,
-  USB4_GEN3_40Gb = 9,
+package android.hardware.tv.input;
+@VintfStability
+parcelable TvMessageEvent {
+  android.hardware.tv.input.TvMessageEventType type;
+  int streamId;
+  android.hardware.tv.input.TvMessage[] messages;
 }

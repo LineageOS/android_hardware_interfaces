@@ -16,23 +16,13 @@
 
 package android.hardware.tv.input;
 
-import android.hardware.tv.input.TvInputEvent;
-import android.hardware.tv.input.TvMessageEvent;
+import android.hardware.tv.input.TvMessage;
+import android.hardware.tv.input.TvMessageEventType;
 
 @VintfStability
-interface ITvInputCallback {
-    /**
-     * Notifies the client that an event has occurred. For possible event types,
-     * check TvInputEventType.
-     *
-     * @param event Event passed to the client.
-     */
-    void notify(in TvInputEvent event);
-    /**
-     * Notifies the client that an TV message event has occurred. For possible event types,
-     * check TvMessageEventType.
-     *
-     * @param event Event passed to the client.
-     */
-    void notifyTvMessageEvent(in TvMessageEvent event);
+parcelable TvMessageEvent {
+    TvMessageEventType type;
+
+    int streamId;
+    TvMessage[] messages;
 }
