@@ -26,7 +26,7 @@ cc_binary {
     name: "android.hardware.fastboot-service.example_recovery",
     init_rc: ["android.hardware.fastboot-service.example_recovery.rc"],
     vintf_fragments: ["android.hardware.fastboot-service.example.xml"],
-    recovery_available: true,
+    recovery: true,
     srcs: [
         "Fastboot.cpp",
         "main.cpp",
