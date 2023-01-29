@@ -16,23 +16,20 @@
 
 package android.hardware.tv.input;
 
-import android.hardware.tv.input.TvInputEvent;
-import android.hardware.tv.input.TvMessageEvent;
-
 @VintfStability
-interface ITvInputCallback {
+parcelable TvMessage {
     /**
-     * Notifies the client that an event has occurred. For possible event types,
-     * check TvInputEventType.
-     *
-     * @param event Event passed to the client.
+     * Extended data type, like “ATSC A/336 Watermark”, “ATSC_CC”, etc. This is opaque
+     * to the framework.
      */
-    void notify(in TvInputEvent event);
+    String subType;
     /**
-     * Notifies the client that an TV message event has occurred. For possible event types,
-     * check TvMessageEventType.
+     * This group id is used to optionally identify messages that belong together, such as
+     * headers and bodies of the same event. For messages that do not have a group, this value
+     * should be -1.
      *
-     * @param event Event passed to the client.
+     * As -1 is a reserved value, -1 should not be used as a valid groupId.
      */
-    void notifyTvMessageEvent(in TvMessageEvent event);
+    long groupId;
+    int dataLengthBytes;
 }

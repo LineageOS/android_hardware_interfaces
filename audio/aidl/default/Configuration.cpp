@@ -76,6 +76,11 @@ static AudioPortExt createDeviceExt(AudioDeviceType devType, int32_t flags,
                                     std::string connection = "") {
     AudioPortDeviceExt deviceExt;
     deviceExt.device.type.type = devType;
+    if (devType == AudioDeviceType::IN_MICROPHONE && connection.empty()) {
+        deviceExt.device.address = "bottom";
+    } else if (devType == AudioDeviceType::IN_MICROPHONE_BACK && connection.empty()) {
+        deviceExt.device.address = "back";
+    }
     deviceExt.device.type.connection = std::move(connection);
     deviceExt.flags = flags;
     return AudioPortExt::make<AudioPortExt::Tag::device>(deviceExt);
