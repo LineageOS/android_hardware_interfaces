@@ -2649,6 +2649,26 @@
             ]
         },
         {
+            "property": "VehicleProperty::WINDSHIELD_WIPERS_PERIOD",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "VehicleAreaWindow::FRONT_WINDSHIELD",
+                    "minInt32Value": 0,
+                    "maxInt32Value": 3000
+                },
+                {
+                    "areaId": "VehicleAreaWindow::REAR_WINDSHIELD",
+                    "minInt32Value": 0,
+                    "maxInt32Value": 3000
+                }
+            ]
+        },
+        {
             "property": "VehicleProperty::STEERING_WHEEL_DEPTH_POS",
             "defaultValue": {
                 "int32Values": [

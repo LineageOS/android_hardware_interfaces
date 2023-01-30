@@ -175,6 +175,7 @@ enum VehicleProperty {
   WINDOW_POS = (((0x0BC0 + 0x10000000) + 0x03000000) + 0x00400000) /* 322964416 */,
   WINDOW_MOVE = (((0x0BC1 + 0x10000000) + 0x03000000) + 0x00400000) /* 322964417 */,
   WINDOW_LOCK = (((0x0BC4 + 0x10000000) + 0x03000000) + 0x00200000) /* 320867268 */,
+  WINDSHIELD_WIPERS_PERIOD = (((0x0BC5 + android.hardware.automotive.vehicle.VehiclePropertyGroup.SYSTEM) + android.hardware.automotive.vehicle.VehicleArea.WINDOW) + android.hardware.automotive.vehicle.VehiclePropertyType.INT32) /* 322964421 */,
   STEERING_WHEEL_DEPTH_POS = (((0x0BE0 + android.hardware.automotive.vehicle.VehiclePropertyGroup.SYSTEM) + android.hardware.automotive.vehicle.VehicleArea.GLOBAL) + android.hardware.automotive.vehicle.VehiclePropertyType.INT32) /* 289410016 */,
   STEERING_WHEEL_DEPTH_MOVE = (((0x0BE1 + android.hardware.automotive.vehicle.VehiclePropertyGroup.SYSTEM) + android.hardware.automotive.vehicle.VehicleArea.GLOBAL) + android.hardware.automotive.vehicle.VehiclePropertyType.INT32) /* 289410017 */,
   STEERING_WHEEL_HEIGHT_POS = (((0x0BE2 + android.hardware.automotive.vehicle.VehiclePropertyGroup.SYSTEM) + android.hardware.automotive.vehicle.VehicleArea.GLOBAL) + android.hardware.automotive.vehicle.VehiclePropertyType.INT32) /* 289410018 */,

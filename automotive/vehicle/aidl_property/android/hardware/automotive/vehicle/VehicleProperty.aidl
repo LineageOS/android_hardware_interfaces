@@ -2092,6 +2092,25 @@ enum VehicleProperty {
     WINDOW_LOCK = 0x0BC4 + 0x10000000 + 0x03000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:WINDOW,VehiclePropertyType:BOOLEAN
     /**
+     * Windshield wipers period (milliseconds).
+     *
+     * Returns the instantaneous time period for 1 full cycle of the windshield wipers in
+     * milliseconds. A full cycle is defined as a wiper moving from and returning to its rest
+     * position.
+     *
+     * When an intermittent wiper setting is selected, this property value must be set to 0 during
+     * the "pause" period of the intermittent wiping.
+     *
+     * The maxInt32Value for each area ID must specify the longest wiper period. The minInt32Value
+     * must be set to 0 for each area ID.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     */
+    WINDSHIELD_WIPERS_PERIOD =
+            0x0BC5 + VehiclePropertyGroup.SYSTEM + VehicleArea.WINDOW + VehiclePropertyType.INT32,
+
+    /**
      * Steering wheel depth position
      *
      * All steering wheel properties' unique ids start from 0x0BE0.

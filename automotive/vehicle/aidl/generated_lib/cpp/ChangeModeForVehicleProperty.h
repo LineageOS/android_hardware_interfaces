@@ -177,6 +177,7 @@ std::unordered_map<VehicleProperty, VehiclePropertyChangeMode> ChangeModeForVehi
         {VehicleProperty::WINDOW_POS, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::WINDOW_MOVE, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::WINDOW_LOCK, VehiclePropertyChangeMode::ON_CHANGE},
+        {VehicleProperty::WINDSHIELD_WIPERS_PERIOD, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::STEERING_WHEEL_DEPTH_POS, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::STEERING_WHEEL_DEPTH_MOVE, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::STEERING_WHEEL_HEIGHT_POS, VehiclePropertyChangeMode::ON_CHANGE},
