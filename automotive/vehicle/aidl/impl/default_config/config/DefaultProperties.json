@@ -3113,6 +3113,31 @@
             }
         },
         {
+            "property": "VehicleProperty::EMERGENCY_LANE_KEEP_ASSIST_STATE",
+            "defaultValue": {
+                "int32Values": [
+                    "EmergencyLaneKeepAssistState::ENABLED"
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": 0,
+                    "supportedEnumValues": [
+                        "ErrorState::NOT_AVAILABLE_SAFETY",
+                        "ErrorState::NOT_AVAILABLE_SPEED_HIGH",
+                        "ErrorState::NOT_AVAILABLE_SPEED_LOW",
+                        "ErrorState::NOT_AVAILABLE_DISABLED",
+                        "EmergencyLaneKeepAssistState::ENABLED",
+                        "EmergencyLaneKeepAssistState::WARNING_LEFT",
+                        "EmergencyLaneKeepAssistState::WARNING_RIGHT",
+                        "EmergencyLaneKeepAssistState::ACTIVATED_STEER_LEFT",
+                        "EmergencyLaneKeepAssistState::ACTIVATED_STEER_RIGHT",
+                        "EmergencyLaneKeepAssistState::USER_OVERRIDE"
+                    ]
+                }
+            ]
+        },
+        {
             "property": "VehicleProperty::CRUISE_CONTROL_ENABLED",
             "defaultValue": {
                 "int32Values": [

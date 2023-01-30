@@ -38,6 +38,7 @@ using ::aidl::android::hardware::automotive::vehicle::AccessForVehicleProperty;
 using ::aidl::android::hardware::automotive::vehicle::AutomaticEmergencyBrakingState;
 using ::aidl::android::hardware::automotive::vehicle::BlindSpotWarningState;
 using ::aidl::android::hardware::automotive::vehicle::ChangeModeForVehicleProperty;
+using ::aidl::android::hardware::automotive::vehicle::EmergencyLaneKeepAssistState;
 using ::aidl::android::hardware::automotive::vehicle::ErrorState;
 using ::aidl::android::hardware::automotive::vehicle::EvConnectorType;
 using ::aidl::android::hardware::automotive::vehicle::EvsServiceState;
@@ -218,6 +219,8 @@ JsonValueParser::JsonValueParser() {
     mConstantParsersByType["FuelType"] = std::make_unique<ConstantParser<FuelType>>();
     mConstantParsersByType["WindshieldWipersState"] =
             std::make_unique<ConstantParser<WindshieldWipersState>>();
+    mConstantParsersByType["EmergencyLaneKeepAssistState"] =
+            std::make_unique<ConstantParser<EmergencyLaneKeepAssistState>>();
     mConstantParsersByType["ErrorState"] = std::make_unique<ConstantParser<ErrorState>>();
     mConstantParsersByType["AutomaticEmergencyBrakingState"] =
             std::make_unique<ConstantParser<AutomaticEmergencyBrakingState>>();

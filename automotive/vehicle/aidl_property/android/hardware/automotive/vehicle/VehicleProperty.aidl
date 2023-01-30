@@ -3833,6 +3833,26 @@ enum VehicleProperty {
             0x100D + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
 
     /**
+     * Emergency Lane Keep Assist (ELKA) state.
+     *
+     * Returns the current state of ELKA. Generally, this property should return a valid state
+     * defined in the EmergencyLaneKeepAssistState or ErrorState. For example, if the feature is not
+     * available due to some temporary state, that information should be conveyed through
+     * ErrorState.
+     *
+     * For the global area ID (0), the VehicleAreaConfig#supportedEnumValues array must be defined
+     * unless all states of EmergencyLaneKeepAssistState (including OTHER, which is not recommended)
+     * and ErrorState are supported.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     * @data_enum EmergencyLaneKeepAssistState
+     * @data_enum ErrorState
+     */
+    EMERGENCY_LANE_KEEP_ASSIST_STATE =
+            0x100E + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
+
+    /**
      * Enable or disable cruise control (CC).
      *
      * Set true to enable CC and false to disable CC. This property is shared by all forms of
