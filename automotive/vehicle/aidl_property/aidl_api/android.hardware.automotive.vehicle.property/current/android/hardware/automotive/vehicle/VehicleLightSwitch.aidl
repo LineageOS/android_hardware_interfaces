@@ -37,5 +37,5 @@ enum VehicleLightSwitch {
   OFF = 0,
   ON = 1,
   DAYTIME_RUNNING = 2,
-  AUTOMATIC = 256,
+  AUTOMATIC = 0x100,
 }

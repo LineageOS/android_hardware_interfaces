@@ -34,10 +34,10 @@
 package android.hardware.automotive.vehicle;
 @Backing(type="int") @VintfStability
 enum VehicleHvacFanDirection {
-  UNKNOWN = 0,
-  FACE = 1,
-  FLOOR = 2,
-  FACE_AND_FLOOR = 3,
-  DEFROST = 4,
-  DEFROST_AND_FLOOR = 6,
+  UNKNOWN = 0x0,
+  FACE = 0x1,
+  FLOOR = 0x2,
+  FACE_AND_FLOOR = 0x3,
+  DEFROST = 0x4,
+  DEFROST_AND_FLOOR = 0x06,
 }

@@ -36,8 +36,8 @@ package android.hardware.automotive.vehicle;
 enum VehicleIgnitionState {
   UNDEFINED = 0,
   LOCK = 1,
-  OFF = 2,
-  ACC = 3,
-  ON = 4,
-  START = 5,
+  OFF,
+  ACC,
+  ON,
+  START,
 }

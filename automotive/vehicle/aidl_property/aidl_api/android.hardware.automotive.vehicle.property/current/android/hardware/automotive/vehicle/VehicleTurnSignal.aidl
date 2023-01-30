@@ -34,7 +34,7 @@
 package android.hardware.automotive.vehicle;
 @Backing(type="int") @VintfStability
 enum VehicleTurnSignal {
-  NONE = 0,
-  RIGHT = 1,
-  LEFT = 2,
+  NONE = 0x00,
+  RIGHT = 0x01,
+  LEFT = 0x02,
 }
