@@ -3575,6 +3575,11 @@ enum VehicleProperty {
      * vehicle should be turned on and monitoring if the vehicle is approaching or crossing lane
      * lines, in which case a warning will be given.
      *
+     * In general, LANE_DEPARTURE_WARNING_ENABLED should always return true or false. If the feature
+     * is not available due to some temporary state, such as the vehicle speed being too low or too
+     * high, that information must be conveyed through the ErrorState values in the
+     * LANE_DEPARTURE_WARNING_STATE property.
+     *
      * This property is defined as read_write, but OEMs have the option to implement it as read
      * only.
      *
