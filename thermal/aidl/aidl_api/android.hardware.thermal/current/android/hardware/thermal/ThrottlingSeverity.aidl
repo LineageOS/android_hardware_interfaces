@@ -36,10 +36,10 @@ package android.hardware.thermal;
 @Backing(type="int") @VintfStability
 enum ThrottlingSeverity {
   NONE = 0,
-  LIGHT = 1,
-  MODERATE = 2,
-  SEVERE = 3,
-  CRITICAL = 4,
-  EMERGENCY = 5,
-  SHUTDOWN = 6,
+  LIGHT,
+  MODERATE,
+  SEVERE,
+  CRITICAL,
+  EMERGENCY,
+  SHUTDOWN,
 }
