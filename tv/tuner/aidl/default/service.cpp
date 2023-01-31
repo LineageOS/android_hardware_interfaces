@@ -26,7 +26,7 @@
 using ::aidl::android::hardware::tv::tuner::Tuner;
 
 int main() {
-    ABinderProcess_setThreadPoolMaxThreadCount(8);
+    ABinderProcess_setThreadPoolMaxThreadCount(16);
     std::shared_ptr<Tuner> tuner = ndk::SharedRefBase::make<Tuner>();
     tuner->init();
 
