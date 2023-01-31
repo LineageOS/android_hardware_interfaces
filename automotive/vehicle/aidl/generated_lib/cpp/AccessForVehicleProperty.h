@@ -261,6 +261,7 @@ std::unordered_map<VehicleProperty, VehiclePropertyAccess> AccessForVehiclePrope
         {VehicleProperty::EMERGENCY_LANE_KEEP_ASSIST_STATE, VehiclePropertyAccess::READ},
         {VehicleProperty::CRUISE_CONTROL_ENABLED, VehiclePropertyAccess::READ_WRITE},
         {VehicleProperty::CRUISE_CONTROL_TYPE, VehiclePropertyAccess::READ_WRITE},
+        {VehicleProperty::CRUISE_CONTROL_STATE, VehiclePropertyAccess::READ},
         {VehicleProperty::HANDS_ON_DETECTION_ENABLED, VehiclePropertyAccess::READ_WRITE},
         {VehicleProperty::DRIVER_ATTENTION_MONITORING_ENABLED, VehiclePropertyAccess::READ_WRITE},
 };

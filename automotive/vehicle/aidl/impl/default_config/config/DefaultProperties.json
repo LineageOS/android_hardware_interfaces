@@ -3168,6 +3168,30 @@
             ]
         },
         {
+            "property": "VehicleProperty::CRUISE_CONTROL_STATE",
+            "defaultValue": {
+                "int32Values": [
+                    "CruiseControlState::ENABLED"
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": 0,
+                    "supportedEnumValues": [
+                        "ErrorState::NOT_AVAILABLE_SAFETY",
+                        "ErrorState::NOT_AVAILABLE_SPEED_HIGH",
+                        "ErrorState::NOT_AVAILABLE_SPEED_LOW",
+                        "ErrorState::NOT_AVAILABLE_DISABLED",
+                        "CruiseControlState::ENABLED",
+                        "CruiseControlState::ACTIVATED",
+                        "CruiseControlState::USER_OVERRIDE",
+                        "CruiseControlState::SUSPENDED",
+                        "CruiseControlState::FORCED_DEACTIVATION_WARNING"
+                    ]
+                }
+            ]
+        },
+        {
             "property": "VehicleProperty::HANDS_ON_DETECTION_ENABLED",
             "defaultValue": {
                 "int32Values": [
