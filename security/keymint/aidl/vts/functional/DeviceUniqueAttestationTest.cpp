@@ -249,13 +249,39 @@ TEST_P(DeviceUniqueAttestationTest, EcdsaDeviceUniqueAttestationID) {
 
     // Collection of valid attestation ID tags.
     auto attestation_id_tags = AuthorizationSetBuilder();
-    add_tag_from_prop(&attestation_id_tags, TAG_ATTESTATION_ID_BRAND, "ro.product.brand");
+    // Use ro.product.brand_for_attestation property for attestation if it is present else fallback
+    // to ro.product.brand
+    std::string prop_value =
+            ::android::base::GetProperty("ro.product.brand_for_attestation", /* default= */ "");
+    if (!prop_value.empty()) {
+        add_tag_from_prop(&attestation_id_tags, TAG_ATTESTATION_ID_BRAND,
+                          "ro.product.brand_for_attestation");
+    } else {
+        add_tag_from_prop(&attestation_id_tags, TAG_ATTESTATION_ID_BRAND, "ro.product.brand");
+    }
     add_tag_from_prop(&attestation_id_tags, TAG_ATTESTATION_ID_DEVICE, "ro.product.device");
-    add_tag_from_prop(&attestation_id_tags, TAG_ATTESTATION_ID_PRODUCT, "ro.product.name");
+    // Use ro.product.name_for_attestation property for attestation if it is present else fallback
+    // to ro.product.name
+    prop_value = ::android::base::GetProperty("ro.product.name_for_attestation", /* default= */ "");
+    if (!prop_value.empty()) {
+        add_tag_from_prop(&attestation_id_tags, TAG_ATTESTATION_ID_PRODUCT,
+                          "ro.product.name_for_attestation");
+    } else {
+        add_tag_from_prop(&attestation_id_tags, TAG_ATTESTATION_ID_PRODUCT, "ro.product.name");
+    }
     add_tag_from_prop(&attestation_id_tags, TAG_ATTESTATION_ID_SERIAL, "ro.serialno");
     add_tag_from_prop(&attestation_id_tags, TAG_ATTESTATION_ID_MANUFACTURER,
                       "ro.product.manufacturer");
-    add_tag_from_prop(&attestation_id_tags, TAG_ATTESTATION_ID_MODEL, "ro.product.model");
+    // Use ro.product.model_for_attestation property for attestation if it is present else fallback
+    // to ro.product.model
+    prop_value =
+            ::android::base::GetProperty("ro.product.model_for_attestation", /* default= */ "");
+    if (!prop_value.empty()) {
+        add_tag_from_prop(&attestation_id_tags, TAG_ATTESTATION_ID_MODEL,
+                          "ro.product.model_for_attestation");
+    } else {
+        add_tag_from_prop(&attestation_id_tags, TAG_ATTESTATION_ID_MODEL, "ro.product.model");
+    }
     vector<uint8_t> key_blob;
     vector<KeyCharacteristics> key_characteristics;
 
