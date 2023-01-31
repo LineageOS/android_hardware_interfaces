@@ -95,8 +95,9 @@ oneway interface IImsMediaSessionListener {
      * Notifies the received DTMF digit from the other party
      *
      * @param dtmfDigit single char having one of 12 values: 0-9, *, #
+     * @param durationMs The duration to play the tone in milliseconds unit
      */
-    void onDtmfReceived(char dtmfDigit);
+    void onDtmfReceived(char dtmfDigit, int durationMs);
 
     /**
      * Notifies when a change to call quality has occurred
