@@ -35,15 +35,15 @@ package android.hardware.thermal;
 /* @hide */
 @Backing(type="int") @VintfStability
 enum CoolingType {
-  FAN = 0,
-  BATTERY = 1,
-  CPU = 2,
-  GPU = 3,
-  MODEM = 4,
-  NPU = 5,
-  COMPONENT = 6,
-  TPU = 7,
-  POWER_AMPLIFIER = 8,
-  DISPLAY = 9,
-  SPEAKER = 10,
+  FAN,
+  BATTERY,
+  CPU,
+  GPU,
+  MODEM,
+  NPU,
+  COMPONENT,
+  TPU,
+  POWER_AMPLIFIER,
+  DISPLAY,
+  SPEAKER,
 }
