@@ -242,6 +242,7 @@ std::unordered_map<VehicleProperty, VehiclePropertyAccess> AccessForVehiclePrope
         {VehicleProperty::FORWARD_COLLISION_WARNING_ENABLED, VehiclePropertyAccess::READ_WRITE},
         {VehicleProperty::FORWARD_COLLISION_WARNING_STATE, VehiclePropertyAccess::READ},
         {VehicleProperty::BLIND_SPOT_WARNING_ENABLED, VehiclePropertyAccess::READ_WRITE},
+        {VehicleProperty::BLIND_SPOT_WARNING_STATE, VehiclePropertyAccess::READ},
         {VehicleProperty::LANE_DEPARTURE_WARNING_ENABLED, VehiclePropertyAccess::READ_WRITE},
         {VehicleProperty::LANE_KEEP_ASSIST_ENABLED, VehiclePropertyAccess::READ_WRITE},
         {VehicleProperty::LANE_CENTERING_ASSIST_ENABLED, VehiclePropertyAccess::READ_WRITE},

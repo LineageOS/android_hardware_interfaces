@@ -3222,6 +3222,27 @@
             }
         },
         {
+            "property": "VehicleProperty::BLIND_SPOT_WARNING_STATE",
+            "defaultValue": {
+                "int32Values": [
+                    "BlindSpotWarningState::NO_WARNING"
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "Constants::MIRROR_DRIVER_LEFT_RIGHT",
+                    "supportedEnumValues": [
+                        "ErrorState::NOT_AVAILABLE_SAFETY",
+                        "ErrorState::NOT_AVAILABLE_SPEED_HIGH",
+                        "ErrorState::NOT_AVAILABLE_SPEED_LOW",
+                        "ErrorState::NOT_AVAILABLE_DISABLED",
+                        "BlindSpotWarningState::NO_WARNING",
+                        "BlindSpotWarningState::WARNING"
+                    ]
+                }
+            ]
+        },
+        {
             "property": "VehicleProperty::LANE_DEPARTURE_WARNING_ENABLED",
             "defaultValue": {
                 "int32Values": [

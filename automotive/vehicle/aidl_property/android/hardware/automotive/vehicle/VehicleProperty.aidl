@@ -3518,6 +3518,25 @@ enum VehicleProperty {
             0x1004 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
 
     /**
+     * Blind Spot Warning (BSW) state.
+     *
+     * Returns the current state of BSW. This property must always return a valid state defined in
+     * BlindSpotWarningState or ErrorState. It must not surface errors through StatusCode
+     * and must use the supported error states instead.
+     *
+     * For each supported area ID, the VehicleAreaConfig#supportedEnumValues array must be defined
+     * unless all states of both BlindSpotWarningState (including OTHER, which is not
+     * recommended) and ErrorState are supported.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     * @data_enum BlindSpotWarningState
+     * @data_enum ErrorState
+     */
+    BLIND_SPOT_WARNING_STATE =
+            0x1005 + VehiclePropertyGroup.SYSTEM + VehicleArea.MIRROR + VehiclePropertyType.INT32,
+
+    /**
      * Enable or disable lane departure warning (LDW).
      *
      * Set true to enable LDW and false to disable LDW. When LDW is enabled, the ADAS system in the

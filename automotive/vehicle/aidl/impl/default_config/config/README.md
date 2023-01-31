@@ -145,6 +145,8 @@ We support the following constant types:
 
 * ForwardCollisionWarningState
 
+* BlindSpotWarningState
+
 * ErrorState
 
 * Constants

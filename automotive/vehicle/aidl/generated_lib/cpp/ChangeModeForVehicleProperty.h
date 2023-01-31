@@ -242,6 +242,7 @@ std::unordered_map<VehicleProperty, VehiclePropertyChangeMode> ChangeModeForVehi
         {VehicleProperty::FORWARD_COLLISION_WARNING_ENABLED, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::FORWARD_COLLISION_WARNING_STATE, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::BLIND_SPOT_WARNING_ENABLED, VehiclePropertyChangeMode::ON_CHANGE},
+        {VehicleProperty::BLIND_SPOT_WARNING_STATE, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::LANE_DEPARTURE_WARNING_ENABLED, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::LANE_KEEP_ASSIST_ENABLED, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::LANE_CENTERING_ASSIST_ENABLED, VehiclePropertyChangeMode::ON_CHANGE},
