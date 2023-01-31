@@ -27,8 +27,8 @@ import os
 import re
 import sys
 
-PROP_AIDL_FILE_PATH = ("hardware/interfaces/automotive/vehicle/aidl/android/hardware/automotive/" +
-    "vehicle/VehicleProperty.aidl")
+PROP_AIDL_FILE_PATH = ("hardware/interfaces/automotive/vehicle/aidl_property/android/hardware/" +
+    "automotive/vehicle/VehicleProperty.aidl")
 CHANGE_MODE_CPP_FILE_PATH = ("hardware/interfaces/automotive/vehicle/aidl/generated_lib/cpp/" +
     "ChangeModeForVehicleProperty.h")
 ACCESS_CPP_FILE_PATH = ("hardware/interfaces/automotive/vehicle/aidl/generated_lib/cpp/" +
