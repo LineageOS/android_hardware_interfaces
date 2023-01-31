@@ -30,6 +30,7 @@ prebuilt_etc {
     name: "com.android.hardware.wifi.xml",
     src: ":default-android.hardware.wifi-service.xml",
     installable: false,
+    sub_dir: "vintf",
 }
 
 apex {
@@ -38,7 +39,6 @@ apex {
     key: "com.android.hardware.wifi.key",
     certificate: ":com.android.hardware.wifi.certificate",
     file_contexts: "file_contexts",
-    vintf_fragments: [":com.android.hardware.wifi.xml"],
     use_vndk_as_stable: true,
     updatable: false,
     soc_specific: true,
