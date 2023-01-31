@@ -3146,6 +3146,28 @@
             }
         },
         {
+            "property": "VehicleProperty::CRUISE_CONTROL_TYPE",
+            "defaultValue": {
+                "int32Values": [
+                    "CruiseControlType::STANDARD"
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": 0,
+                    "supportedEnumValues": [
+                        "ErrorState::NOT_AVAILABLE_SAFETY",
+                        "ErrorState::NOT_AVAILABLE_SPEED_HIGH",
+                        "ErrorState::NOT_AVAILABLE_SPEED_LOW",
+                        "ErrorState::NOT_AVAILABLE_DISABLED",
+                        "CruiseControlType::STANDARD",
+                        "CruiseControlType::ADAPTIVE",
+                        "CruiseControlType::PREDICTIVE"
+                    ]
+                }
+            ]
+        },
+        {
             "property": "VehicleProperty::HANDS_ON_DETECTION_ENABLED",
             "defaultValue": {
                 "int32Values": [

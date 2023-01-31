@@ -3871,6 +3871,30 @@ enum VehicleProperty {
             0x100F + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
 
     /**
+     * Current type of Cruise Control (CC).
+     *
+     * When CRUISE_CONTROL_ENABLED is true, this property returns the type of CC that is currently
+     * enabled (for example, standard CC, adaptive CC, predictive CC, etc.). Generally, this
+     * property should return a valid state defined in the CruiseControlType or ErrorState. For
+     * example, if the feature is not available due to some temporary state, that information should
+     * be conveyed through ErrorState.
+     *
+     * For the global area ID (0), the VehicleAreaConfig#supportedEnumValues array must be defined
+     * unless all states of CruiseControlType (including OTHER, which is not recommended) and
+     * ErrorState are supported.
+     *
+     * Trying to write CruiseControlType#OTHER or an ErrorState to this property will throw an
+     * IllegalArgumentException.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     * @data_enum CruiseControlType
+     * @data_enum ErrorState
+     */
+    CRUISE_CONTROL_TYPE =
+            0x1010 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
+
+    /**
      * Enable or disable hands on detection (HOD).
      *
      * Set true to enable HOD and false to disable HOD. When HOD is enabled, a system inside the
