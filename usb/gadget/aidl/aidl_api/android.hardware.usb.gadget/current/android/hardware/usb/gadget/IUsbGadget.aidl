@@ -37,5 +37,5 @@ interface IUsbGadget {
   oneway void setCurrentUsbFunctions(in long functions, in android.hardware.usb.gadget.IUsbGadgetCallback callback, in long timeoutMs, long transactionId);
   oneway void getCurrentUsbFunctions(in android.hardware.usb.gadget.IUsbGadgetCallback callback, long transactionId);
   oneway void getUsbSpeed(in android.hardware.usb.gadget.IUsbGadgetCallback callback, long transactionId);
-  oneway void reset();
+  oneway void reset(in android.hardware.usb.gadget.IUsbGadgetCallback callback, long transactionId);
 }
