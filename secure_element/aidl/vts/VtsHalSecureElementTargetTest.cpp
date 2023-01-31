@@ -106,6 +106,15 @@ class SecureElementAidl : public ::testing::TestWithParam<std::string> {
 
         EXPECT_OK(secure_element_->init(secure_element_callback_));
         secure_element_callback_->expectCallbackHistory({true});
+
+        // Check if the basic channel is supported by the bound SE.
+        std::vector<uint8_t> basic_channel_response;
+        auto status =
+                secure_element_->openBasicChannel(kSelectableAid, 0x00, &basic_channel_response);
+        if (status.isOk()) {
+            basic_channel_supported_ = true;
+            secure_element_->closeChannel(0);
+        }
     }
 
     void TearDown() override {
@@ -143,6 +152,7 @@ class SecureElementAidl : public ::testing::TestWithParam<std::string> {
 
     std::shared_ptr<ISecureElement> secure_element_;
     std::shared_ptr<MySecureElementCallback> secure_element_callback_;
+    bool basic_channel_supported_{false};
 };
 
 TEST_P(SecureElementAidl, init) {
@@ -159,14 +169,18 @@ TEST_P(SecureElementAidl, reset) {
     LogicalChannelResponse logical_channel_response;
 
     // reset called after init shall succeed.
-    EXPECT_OK(secure_element_->openBasicChannel(kSelectableAid, 0x00, &basic_channel_response));
+    if (basic_channel_supported_) {
+        EXPECT_OK(secure_element_->openBasicChannel(kSelectableAid, 0x00, &basic_channel_response));
+    }
     EXPECT_OK(secure_element_->openLogicalChannel(kSelectableAid, 0x00, &logical_channel_response));
 
     EXPECT_OK(secure_element_->reset());
     secure_element_callback_->expectCallbackHistory({true, false, true});
 
     // All opened channels must be closed.
-    EXPECT_NE(transmit(0), 0x9000);
+    if (basic_channel_supported_) {
+        EXPECT_NE(transmit(0), 0x9000);
+    }
     EXPECT_NE(transmit(logical_channel_response.channelNumber), 0x9000);
 }
 
@@ -190,6 +204,10 @@ TEST_P(SecureElementAidl, getAtr) {
 TEST_P(SecureElementAidl, openBasicChannel) {
     std::vector<uint8_t> response;
 
+    if (!basic_channel_supported_) {
+        return;
+    }
+
     // openBasicChannel called with an invalid AID shall fail.
     EXPECT_ERR(secure_element_->openBasicChannel(kNonSelectableAid, 0x00, &response));
 
@@ -199,7 +217,7 @@ TEST_P(SecureElementAidl, openBasicChannel) {
     EXPECT_OK(secure_element_->openBasicChannel(kSelectableAid, 0x00, &response));
     EXPECT_GE(response.size(), 2u);
 
-    // tramsmit called on the basic channel should succeed.
+    // transmit called on the basic channel should succeed.
     EXPECT_EQ(transmit(0), 0x9000);
 
     // openBasicChannel called a second time shall fail.
@@ -225,7 +243,7 @@ TEST_P(SecureElementAidl, openLogicalChannel) {
     EXPECT_GE(response.channelNumber, 1u);
     EXPECT_LE(response.channelNumber, 19u);
 
-    // tramsmit called on the logical channel should succeed.
+    // transmit called on the logical channel should succeed.
     EXPECT_EQ(transmit(response.channelNumber), 0x9000);
 }
 
@@ -239,17 +257,19 @@ TEST_P(SecureElementAidl, closeChannel) {
     EXPECT_ERR(secure_element_->closeChannel(1));
 
     // closeChannel called on basic channel closes the basic channel.
-    EXPECT_OK(secure_element_->openBasicChannel(kSelectableAid, 0x00, &basic_channel_response));
-    EXPECT_OK(secure_element_->closeChannel(0));
+    if (basic_channel_supported_) {
+        EXPECT_OK(secure_element_->openBasicChannel(kSelectableAid, 0x00, &basic_channel_response));
+        EXPECT_OK(secure_element_->closeChannel(0));
 
-    // tramsmit called on the basic channel should fail.
-    EXPECT_NE(transmit(0), 0x9000);
+        // transmit called on the basic channel should fail.
+        EXPECT_NE(transmit(0), 0x9000);
+    }
 
     // closeChannel called on logical channel closes the logical channel.
     EXPECT_OK(secure_element_->openLogicalChannel(kSelectableAid, 0x00, &logical_channel_response));
     EXPECT_OK(secure_element_->closeChannel(logical_channel_response.channelNumber));
 
-    // tramsmit called on the basic channel should fail.
+    // transmit called on the logical channel should fail.
     EXPECT_NE(transmit(logical_channel_response.channelNumber), 0x9000);
 }
 
