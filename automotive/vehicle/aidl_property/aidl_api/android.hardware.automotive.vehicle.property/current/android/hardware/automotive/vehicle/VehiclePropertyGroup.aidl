@@ -34,7 +34,7 @@
 package android.hardware.automotive.vehicle;
 @Backing(type="int") @VintfStability
 enum VehiclePropertyGroup {
-  SYSTEM = 268435456,
-  VENDOR = 536870912,
-  MASK = -268435456,
+  SYSTEM = 0x10000000,
+  VENDOR = 0x20000000,
+  MASK = 0xf0000000,
 }
