@@ -64,6 +64,7 @@ using ::aidl::android::hardware::automotive::vehicle::VehicleSeatOccupancyState;
 using ::aidl::android::hardware::automotive::vehicle::VehicleTurnSignal;
 using ::aidl::android::hardware::automotive::vehicle::VehicleUnit;
 using ::aidl::android::hardware::automotive::vehicle::VehicleVendorPermission;
+using ::aidl::android::hardware::automotive::vehicle::WindshieldWipersState;
 
 using ::android::base::Error;
 using ::android::base::Result;
@@ -212,6 +213,8 @@ JsonValueParser::JsonValueParser() {
     mConstantParsersByType["VehicleIgnitionState"] =
             std::make_unique<ConstantParser<VehicleIgnitionState>>();
     mConstantParsersByType["FuelType"] = std::make_unique<ConstantParser<FuelType>>();
+    mConstantParsersByType["WindshieldWipersState"] =
+            std::make_unique<ConstantParser<WindshieldWipersState>>();
     mConstantParsersByType["ErrorState"] = std::make_unique<ConstantParser<ErrorState>>();
     mConstantParsersByType["AutomaticEmergencyBrakingState"] =
             std::make_unique<ConstantParser<AutomaticEmergencyBrakingState>>();

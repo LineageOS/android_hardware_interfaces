@@ -151,6 +151,8 @@ We support the following constant types:
 
 * ErrorState
 
+* WindshieldWipersState
+
 * Constants
 
 Every constant type except "Constants" corresponds to a enum defined in Vehicle

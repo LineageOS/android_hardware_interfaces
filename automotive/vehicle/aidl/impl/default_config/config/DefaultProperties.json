@@ -2669,6 +2669,31 @@
             ]
         },
         {
+            "property": "VehicleProperty::WINDSHIELD_WIPERS_STATE",
+            "defaultValue": {
+                "int32Values": [
+                    "WindshieldWipersState::OFF"
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "VehicleAreaWindow::FRONT_WINDSHIELD",
+                    "supportedEnumValues": [
+                        "WindshieldWipersState::OFF",
+                        "WindshieldWipersState::ON",
+                        "WindshieldWipersState::SERVICE"
+                    ]
+                },
+                {
+                    "areaId": "VehicleAreaWindow::REAR_WINDSHIELD",
+                    "supportedEnumValues": [
+                        "WindshieldWipersState::OFF",
+                        "WindshieldWipersState::ON"
+                    ]
+                }
+            ]
+        },
+        {
             "property": "VehicleProperty::STEERING_WHEEL_DEPTH_POS",
             "defaultValue": {
                 "int32Values": [

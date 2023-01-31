@@ -2111,6 +2111,27 @@ enum VehicleProperty {
             0x0BC5 + VehiclePropertyGroup.SYSTEM + VehicleArea.WINDOW + VehiclePropertyType.INT32,
 
     /**
+     * Windshield wipers state.
+     *
+     * Returns the current state of the windshield wipers. The value of WINDSHIELD_WIPERS_STATE may
+     * not match the value of WINDSHIELD_WIPERS_SWITCH. (e.g. WINDSHIELD_WIPERS_STATE = ON and
+     * WINDSHIELD_WIPERS_SWITCH = WindshieldWipersSwitch#AUTO).
+     *
+     * If WINDSHIELD_WIPERS_STATE = ON and WINDSHIELD_WIPERS_PERIOD is implemented, then
+     * WINDSHIELD_WIPERS_PERIOD must reflect the time period of 1 full cycle of the wipers.
+     *
+     * For each supported area ID, the VehicleAreaConfig#supportedEnumValues array must be defined
+     * unless all states in WindshieldWipersState are supported (including OTHER, which is not
+     * recommended).
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     * @data_enum WindshieldWipersState
+     */
+    WINDSHIELD_WIPERS_STATE =
+            0x0BC6 + VehiclePropertyGroup.SYSTEM + VehicleArea.WINDOW + VehiclePropertyType.INT32,
+
+    /**
      * Steering wheel depth position
      *
      * All steering wheel properties' unique ids start from 0x0BE0.
