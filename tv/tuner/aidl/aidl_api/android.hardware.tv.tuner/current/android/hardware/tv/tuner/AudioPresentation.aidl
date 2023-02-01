@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 The Android Open Source Project
+ * Copyright 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,8 +34,7 @@
 package android.hardware.tv.tuner;
 /* @hide */
 @VintfStability
-union DemuxFilterMediaEventExtraMetaData {
-  boolean noinit;
-  android.hardware.tv.tuner.AudioExtraMetaData audio;
-  android.hardware.tv.tuner.AudioPresentation[] audioPresentations = {};
+parcelable AudioPresentation {
+  android.hardware.tv.tuner.AudioPreselection preselection;
+  int ac4ShortProgramId = -1;
 }

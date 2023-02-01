@@ -230,7 +230,7 @@ class Filter : public BnFilter {
     ::ndk::ScopedAStatus createShareMemMediaEvents(vector<int8_t>& output);
     bool sameFile(int fd1, int fd2);
 
-    void createMediaEvent(vector<DemuxFilterEvent>&);
+    void createMediaEvent(vector<DemuxFilterEvent>&, bool isAudioPresentation);
     void createTsRecordEvent(vector<DemuxFilterEvent>&);
     void createMmtpRecordEvent(vector<DemuxFilterEvent>&);
     void createSectionEvent(vector<DemuxFilterEvent>&);

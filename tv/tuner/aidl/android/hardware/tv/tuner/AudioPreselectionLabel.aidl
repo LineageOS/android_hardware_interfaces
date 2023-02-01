@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 The Android Open Source Project
+ * Copyright 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,24 +16,19 @@
 
 package android.hardware.tv.tuner;
 
-import android.hardware.tv.tuner.AudioExtraMetaData;
-import android.hardware.tv.tuner.AudioPresentation;
-
 /**
- * Extra Meta Data for DemuxFilterMediaEvent.
+ * Audio preselection label according to ETSI EN 300 468 V1.17.1.
  * @hide
  */
 @VintfStability
-union DemuxFilterMediaEventExtraMetaData {
+parcelable AudioPreselectionLabel {
     /**
-     * Not additional parameters. it's used for video.
+     * ISO 639-2 3-character code.
      */
-    boolean noinit;
-
-    AudioExtraMetaData audio;
+    String language;
 
     /**
-     * Audio presentations available for user selection.
+     * Text information, written in the language specified, pertaining to the preselection.
      */
-    AudioPresentation[] audioPresentations = {};
+    String text;
 }
