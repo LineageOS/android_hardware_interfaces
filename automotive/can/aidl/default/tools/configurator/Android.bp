@@ -40,4 +40,5 @@ cc_binary {
         "android.hardware.automotive.can-V1-ndk",
         "android.hardware.automotive.can-aidl-config-format",
     ],
+    system_ext_specific: true,
 }
