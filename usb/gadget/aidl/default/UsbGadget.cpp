@@ -90,8 +90,11 @@ void currentFunctionsAppliedCallback(bool functionsApplied, void *payload) {
     gadget->mCurrentUsbFunctionsApplied = functionsApplied;
 }
 
-ScopedAStatus UsbGadget::getCurrentUsbFunctions(const shared_ptr<IUsbGadgetCallback> &callback,
-	int64_t in_transactionId) {
+ScopedAStatus UsbGadget::getCurrentUsbFunctions(const shared_ptr<IUsbGadgetCallback>& callback,
+                                                int64_t in_transactionId) {
+    if (callback == nullptr) {
+        return ScopedAStatus::fromExceptionCode(EX_NULL_POINTER);
+    }
     ScopedAStatus ret = callback->getCurrentUsbFunctionsCb(
         mCurrentUsbFunctions,
         mCurrentUsbFunctionsApplied ? Status::FUNCTIONS_APPLIED : Status::FUNCTIONS_NOT_APPLIED,
