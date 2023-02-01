@@ -42,5 +42,6 @@ parcelable HostEndpointInfo {
   enum Type {
     FRAMEWORK = 1,
     APP = 2,
+    NATIVE = 3,
   }
 }
