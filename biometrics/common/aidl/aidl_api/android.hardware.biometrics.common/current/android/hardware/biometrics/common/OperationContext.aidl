@@ -39,4 +39,5 @@ parcelable OperationContext {
   android.hardware.biometrics.common.OperationReason reason = android.hardware.biometrics.common.OperationReason.UNKNOWN;
   boolean isAod = false;
   boolean isCrypto = false;
+  android.hardware.biometrics.common.WakeReason wakeReason = android.hardware.biometrics.common.WakeReason.UNKNOWN;
 }
