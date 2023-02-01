@@ -21,6 +21,7 @@ package android.hardware.automotive.vehicle;
  * by ADAS STATE properties, but its use may be expanded in future releases.
  */
 @VintfStability
+@Backing(type="int")
 enum ErrorState {
 
     /**
