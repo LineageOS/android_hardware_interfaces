@@ -19,28 +19,29 @@ package android.hardware.audio.effect;
 import android.hardware.audio.effect.VendorExtension;
 
 /**
- * Automatic Gain Control (AGC) is an audio pre-processor which automatically normalizes the output
- * of the captured signal by boosting or lowering input from the microphone to match a preset level
- * so that the output signal level is virtually constant. AGC can be used by applications where the
- * input signal dynamic range is not important but where a constant strong capture level is desired.
+ * Automatic Gain Control V2 (AGC2) is an audio pre-processor which automatically normalizes the
+ * output of the captured signal by boosting or lowering input from the microphone to match a preset
+ * level so that the output signal level is virtually constant. AGC can be used by applications
+ * where the input signal dynamic range is not important but where a constant strong capture level
+ * is desired.
  *
- * All parameter settings must be inside the range of Capability.Range.automaticGainControl
+ * All parameter settings must be inside the range of Capability.Range.automaticGainControlV2
  * definition if the definition for the corresponding parameter tag exist. See more detals about
  * Range in Range.aidl.
  */
 @VintfStability
-union AutomaticGainControl {
+union AutomaticGainControlV2 {
     /**
      * Effect parameter tag to identify the parameters for getParameter().
      */
     @VintfStability
     union Id {
         int vendorExtensionTag;
-        AutomaticGainControl.Tag commonTag;
+        AutomaticGainControlV2.Tag commonTag;
     }
 
     /**
-     * Vendor AutomaticGainControl implementation definition for additional parameters.
+     * Vendor AutomaticGainControlV2 implementation definition for additional parameters.
      */
     VendorExtension vendor;
 

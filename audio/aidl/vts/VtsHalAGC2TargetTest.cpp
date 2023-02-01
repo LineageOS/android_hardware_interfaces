@@ -19,17 +19,17 @@
 #include <android/binder_enums.h>
 #include <unordered_set>
 
-#define LOG_TAG "VtsHalAGCParamTest"
+#define LOG_TAG "VtsHalAGC2ParamTest"
 
 #include "EffectHelper.h"
 
 using namespace android;
 
-using aidl::android::hardware::audio::effect::AutomaticGainControl;
+using aidl::android::hardware::audio::effect::AutomaticGainControlV2;
 using aidl::android::hardware::audio::effect::Descriptor;
 using aidl::android::hardware::audio::effect::IEffect;
 using aidl::android::hardware::audio::effect::IFactory;
-using aidl::android::hardware::audio::effect::kAutomaticGainControlTypeUUID;
+using aidl::android::hardware::audio::effect::kAutomaticGainControlV2TypeUUID;
 using aidl::android::hardware::audio::effect::Parameter;
 
 enum ParamName {
@@ -38,13 +38,13 @@ enum ParamName {
     PARAM_SATURATION_MARGIN,
     PARAM_LEVEL_ESTIMATOR
 };
-using AGCParamTestParam =
+using AGC2ParamTestParam =
         std::tuple<std::pair<std::shared_ptr<IFactory>, Descriptor>, int /* gain */,
-                   int /* margin */, AutomaticGainControl::LevelEstimator>;
+                   int /* margin */, AutomaticGainControlV2::LevelEstimator>;
 
-class AGCParamTest : public ::testing::TestWithParam<AGCParamTestParam>, public EffectHelper {
+class AGC2ParamTest : public ::testing::TestWithParam<AGC2ParamTestParam>, public EffectHelper {
   public:
-    AGCParamTest()
+    AGC2ParamTest()
         : mGain(std::get<PARAM_DIGITAL_GAIN>(GetParam())),
           mMargin(std::get<PARAM_SATURATION_MARGIN>(GetParam())),
           mLevelEstimator(std::get<PARAM_LEVEL_ESTIMATOR>(GetParam())) {
@@ -70,10 +70,10 @@ class AGCParamTest : public ::testing::TestWithParam<AGCParamTestParam>, public 
     }
 
     Parameter::Specific getDefaultParamSpecific() {
-        AutomaticGainControl AGC =
-                AutomaticGainControl::make<AutomaticGainControl::fixedDigitalGainMb>(0);
+        AutomaticGainControlV2 AGC2 =
+                AutomaticGainControlV2::make<AutomaticGainControlV2::fixedDigitalGainMb>(0);
         Parameter::Specific specific =
-                Parameter::Specific::make<Parameter::Specific::automaticGainControl>(AGC);
+                Parameter::Specific::make<Parameter::Specific::automaticGainControlV2>(AGC2);
         return specific;
     }
 
@@ -83,24 +83,25 @@ class AGCParamTest : public ::testing::TestWithParam<AGCParamTestParam>, public 
     Descriptor mDescriptor;
     int mGain;
     int mMargin;
-    AutomaticGainControl::LevelEstimator mLevelEstimator;
+    AutomaticGainControlV2::LevelEstimator mLevelEstimator;
 
     void SetAndGetParameters() {
         for (auto& it : mTags) {
             auto& tag = it.first;
-            auto& AGC = it.second;
+            auto& AGC2 = it.second;
 
             // validate parameter
             Descriptor desc;
             ASSERT_STATUS(EX_NONE, mEffect->getDescriptor(&desc));
             const bool valid =
-                    isParameterValid<AutomaticGainControl, Range::automaticGainControl>(AGC, desc);
+                    isParameterValid<AutomaticGainControlV2, Range::automaticGainControlV2>(AGC2,
+                                                                                            desc);
             const binder_exception_t expected = valid ? EX_NONE : EX_ILLEGAL_ARGUMENT;
 
             // set parameter
             Parameter expectParam;
             Parameter::Specific specific;
-            specific.set<Parameter::Specific::automaticGainControl>(AGC);
+            specific.set<Parameter::Specific::automaticGainControlV2>(AGC2);
             expectParam.set<Parameter::specific>(specific);
             EXPECT_STATUS(expected, mEffect->setParameter(expectParam)) << expectParam.toString();
 
@@ -108,9 +109,9 @@ class AGCParamTest : public ::testing::TestWithParam<AGCParamTestParam>, public 
             if (expected == EX_NONE) {
                 Parameter getParam;
                 Parameter::Id id;
-                AutomaticGainControl::Id specificId;
-                specificId.set<AutomaticGainControl::Id::commonTag>(tag);
-                id.set<Parameter::Id::automaticGainControlTag>(specificId);
+                AutomaticGainControlV2::Id specificId;
+                specificId.set<AutomaticGainControlV2::Id::commonTag>(tag);
+                id.set<Parameter::Id::automaticGainControlV2Tag>(specificId);
                 EXPECT_STATUS(EX_NONE, mEffect->getParameter(id, &getParam));
 
                 EXPECT_EQ(expectParam, getParam) << "\nexpect:" << expectParam.toString()
@@ -120,62 +121,62 @@ class AGCParamTest : public ::testing::TestWithParam<AGCParamTestParam>, public 
     }
 
     void addDigitalGainParam(int gain) {
-        AutomaticGainControl AGC;
-        AGC.set<AutomaticGainControl::fixedDigitalGainMb>(gain);
-        mTags.push_back({AutomaticGainControl::fixedDigitalGainMb, AGC});
+        AutomaticGainControlV2 AGC2;
+        AGC2.set<AutomaticGainControlV2::fixedDigitalGainMb>(gain);
+        mTags.push_back({AutomaticGainControlV2::fixedDigitalGainMb, AGC2});
     }
     void addSaturationMarginParam(int margin) {
-        AutomaticGainControl AGC;
-        AGC.set<AutomaticGainControl::saturationMarginMb>(margin);
-        mTags.push_back({AutomaticGainControl::saturationMarginMb, AGC});
+        AutomaticGainControlV2 AGC2;
+        AGC2.set<AutomaticGainControlV2::saturationMarginMb>(margin);
+        mTags.push_back({AutomaticGainControlV2::saturationMarginMb, AGC2});
     }
-    void addLevelEstimatorParam(AutomaticGainControl::LevelEstimator levelEstimator) {
-        AutomaticGainControl AGC;
-        AGC.set<AutomaticGainControl::levelEstimator>(levelEstimator);
-        mTags.push_back({AutomaticGainControl::levelEstimator, AGC});
+    void addLevelEstimatorParam(AutomaticGainControlV2::LevelEstimator levelEstimator) {
+        AutomaticGainControlV2 AGC2;
+        AGC2.set<AutomaticGainControlV2::levelEstimator>(levelEstimator);
+        mTags.push_back({AutomaticGainControlV2::levelEstimator, AGC2});
     }
 
-    static std::set<AutomaticGainControl::LevelEstimator> getLevelEstimatorValues() {
-        return {ndk::enum_range<AutomaticGainControl::LevelEstimator>().begin(),
-                ndk::enum_range<AutomaticGainControl::LevelEstimator>().end()};
+    static std::set<AutomaticGainControlV2::LevelEstimator> getLevelEstimatorValues() {
+        return {ndk::enum_range<AutomaticGainControlV2::LevelEstimator>().begin(),
+                ndk::enum_range<AutomaticGainControlV2::LevelEstimator>().end()};
     }
 
   private:
-    std::vector<std::pair<AutomaticGainControl::Tag, AutomaticGainControl>> mTags;
+    std::vector<std::pair<AutomaticGainControlV2::Tag, AutomaticGainControlV2>> mTags;
     void CleanUp() { mTags.clear(); }
 };
 
-TEST_P(AGCParamTest, SetAndGetDigitalGainParam) {
+TEST_P(AGC2ParamTest, SetAndGetDigitalGainParam) {
     EXPECT_NO_FATAL_FAILURE(addDigitalGainParam(mGain));
     SetAndGetParameters();
 }
 
-TEST_P(AGCParamTest, SetAndGetSaturationMargin) {
+TEST_P(AGC2ParamTest, SetAndGetSaturationMargin) {
     EXPECT_NO_FATAL_FAILURE(addSaturationMarginParam(mMargin));
     SetAndGetParameters();
 }
 
-TEST_P(AGCParamTest, SetAndGetLevelEstimator) {
+TEST_P(AGC2ParamTest, SetAndGetLevelEstimator) {
     EXPECT_NO_FATAL_FAILURE(addLevelEstimatorParam(mLevelEstimator));
     SetAndGetParameters();
 }
 
 std::vector<std::pair<std::shared_ptr<IFactory>, Descriptor>> kDescPair;
 INSTANTIATE_TEST_SUITE_P(
-        AGCParamTest, AGCParamTest,
+        AGC2ParamTest, AGC2ParamTest,
         ::testing::Combine(
                 testing::ValuesIn(kDescPair = EffectFactoryHelper::getAllEffectDescriptors(
-                                          IFactory::descriptor, kAutomaticGainControlTypeUUID)),
+                                          IFactory::descriptor, kAutomaticGainControlV2TypeUUID)),
                 testing::ValuesIn(EffectHelper::getTestValueSet<
-                                  AutomaticGainControl, int, Range::automaticGainControl,
-                                  AutomaticGainControl::fixedDigitalGainMb>(
+                                  AutomaticGainControlV2, int, Range::automaticGainControlV2,
+                                  AutomaticGainControlV2::fixedDigitalGainMb>(
                         kDescPair, EffectHelper::expandTestValueBasic<int>)),
                 testing::ValuesIn(EffectHelper::getTestValueSet<
-                                  AutomaticGainControl, int, Range::automaticGainControl,
-                                  AutomaticGainControl::saturationMarginMb>(
+                                  AutomaticGainControlV2, int, Range::automaticGainControlV2,
+                                  AutomaticGainControlV2::saturationMarginMb>(
                         kDescPair, EffectHelper::expandTestValueBasic<int>)),
-                testing::ValuesIn(AGCParamTest::getLevelEstimatorValues())),
-        [](const testing::TestParamInfo<AGCParamTest::ParamType>& info) {
+                testing::ValuesIn(AGC2ParamTest::getLevelEstimatorValues())),
+        [](const testing::TestParamInfo<AGC2ParamTest::ParamType>& info) {
             auto descriptor = std::get<PARAM_INSTANCE_NAME>(info.param).second;
             std::string gain = std::to_string(std::get<PARAM_DIGITAL_GAIN>(info.param));
             std::string estimator = aidl::android::hardware::audio::effect::toString(
@@ -192,7 +193,7 @@ INSTANTIATE_TEST_SUITE_P(
             return name;
         });
 
-GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(AGCParamTest);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(AGC2ParamTest);
 
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
