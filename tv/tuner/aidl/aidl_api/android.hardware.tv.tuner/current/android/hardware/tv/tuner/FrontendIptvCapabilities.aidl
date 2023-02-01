@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 The Android Open Source Project
+ * Copyright 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,16 +34,6 @@
 package android.hardware.tv.tuner;
 /* @hide */
 @VintfStability
-union FrontendCapabilities {
-  android.hardware.tv.tuner.FrontendAnalogCapabilities analogCaps;
-  android.hardware.tv.tuner.FrontendAtscCapabilities atscCaps;
-  android.hardware.tv.tuner.FrontendAtsc3Capabilities atsc3Caps;
-  android.hardware.tv.tuner.FrontendDtmbCapabilities dtmbCaps;
-  android.hardware.tv.tuner.FrontendDvbsCapabilities dvbsCaps;
-  android.hardware.tv.tuner.FrontendDvbcCapabilities dvbcCaps;
-  android.hardware.tv.tuner.FrontendDvbtCapabilities dvbtCaps;
-  android.hardware.tv.tuner.FrontendIsdbsCapabilities isdbsCaps;
-  android.hardware.tv.tuner.FrontendIsdbs3Capabilities isdbs3Caps;
-  android.hardware.tv.tuner.FrontendIsdbtCapabilities isdbtCaps;
-  @nullable android.hardware.tv.tuner.FrontendIptvCapabilities iptvCaps;
+parcelable FrontendIptvCapabilities {
+  int protocolCap;
 }
