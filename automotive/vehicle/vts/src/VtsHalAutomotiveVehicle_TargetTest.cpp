@@ -612,6 +612,12 @@ TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyGloveBoxDoorPosConfig) {
                    VehicleArea::SEAT, VehiclePropertyType::INT32);
 }
 
+TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyGloveBoxLockedConfig) {
+    verifyProperty(VehicleProperty::GLOVE_BOX_LOCKED, VehiclePropertyAccess::READ_WRITE,
+                   VehiclePropertyChangeMode::ON_CHANGE, VehiclePropertyGroup::SYSTEM,
+                   VehicleArea::SEAT, VehiclePropertyType::BOOLEAN);
+}
+
 TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyMirrorAutoFoldEnabledConfig) {
     verifyProperty(VehicleProperty::MIRROR_AUTO_FOLD_ENABLED, VehiclePropertyAccess::READ_WRITE,
                    VehiclePropertyChangeMode::ON_CHANGE, VehiclePropertyGroup::SYSTEM,
