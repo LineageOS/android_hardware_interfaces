@@ -165,7 +165,7 @@ ndk::ScopedAStatus Factory::destroyEffect(const std::shared_ptr<IEffect>& in_han
     return status;
 }
 
-bool Factory::openEffectLibrary(const AudioUuid& impl, const std::string& libName) {
+bool Factory::openEffectLibrary(const AudioUuid& impl, const std::string& path) {
     std::function<void(void*)> dlClose = [](void* handle) -> void {
         if (handle && dlclose(handle)) {
             LOG(ERROR) << "dlclose failed " << dlerror();
@@ -173,19 +173,19 @@ bool Factory::openEffectLibrary(const AudioUuid& impl, const std::string& libNam
     };
 
     auto libHandle =
-            std::unique_ptr<void, decltype(dlClose)>{dlopen(libName.c_str(), RTLD_LAZY), dlClose};
+            std::unique_ptr<void, decltype(dlClose)>{dlopen(path.c_str(), RTLD_LAZY), dlClose};
     if (!libHandle) {
         LOG(ERROR) << __func__ << ": dlopen failed, err: " << dlerror();
         return false;
     }
 
-    LOG(INFO) << __func__ << " dlopen lib:" << libName << "\nimpl:" << impl.toString()
+    LOG(INFO) << __func__ << " dlopen lib:" << path << "\nimpl:" << impl.toString()
               << "\nhandle:" << libHandle;
     auto interface = new effect_dl_interface_s{nullptr, nullptr, nullptr};
     mEffectLibMap.insert(
             {impl,
              std::make_tuple(std::move(libHandle),
-                             std::unique_ptr<struct effect_dl_interface_s>(interface), libName)});
+                             std::unique_ptr<struct effect_dl_interface_s>(interface), path)});
     return true;
 }
 
@@ -199,8 +199,8 @@ void Factory::createIdentityWithConfig(const EffectConfig::LibraryUuid& configLi
         id.type = typeUuid;
         id.uuid = configLib.uuid;
         id.proxy = proxyUuid;
-        LOG(DEBUG) << __func__ << ": typeUuid " << id.type.toString() << "\nimplUuid "
-                   << id.uuid.toString() << " proxyUuid "
+        LOG(DEBUG) << __func__ << " loading lib " << path->second << ": typeUuid "
+                   << id.type.toString() << "\nimplUuid " << id.uuid.toString() << " proxyUuid "
                    << (proxyUuid.has_value() ? proxyUuid->toString() : "null");
         if (openEffectLibrary(id.uuid, path->second)) {
             mIdentitySet.insert(std::move(id));
