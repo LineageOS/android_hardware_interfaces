@@ -263,6 +263,9 @@ std::vector<uint8_t> DrmHalTest::getVendorUUID() {
 }
 
 bool DrmHalTest::isCryptoSchemeSupported(Uuid uuid, SecurityLevel level, std::string mime) {
+    if (drmFactory == nullptr) {
+        return false;
+    }
     CryptoSchemes schemes{};
     auto ret = drmFactory->getSupportedCryptoSchemes(&schemes);
     EXPECT_OK(ret);
