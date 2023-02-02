@@ -34,15 +34,15 @@ package android.hardware.confirmationui;
 enum TestModeCommands {
     /**
      * Simulates the user pressing the OK button on the UI. If no operation is pending
-     * ResponseCode::Ignored must be returned. A pending operation is finalized successfully
+     * IConfirmationUI::IGNORED must be returned. A pending operation is finalized successfully
      * see IConfirmationResultCallback::result, however, the test key
      * (see IConfirmationUI::TEST_KEY_BYTE) MUST be used to generate the confirmation token.
      */
     OK_EVENT = 0,
     /**
      * Simulates the user pressing the CANCEL button on the UI. If no operation is pending
-     * Result::Ignored must be returned. A pending operation is finalized as specified in
-     * IConfirmationResultCallback.hal.
+     * IConfirmationUI::IGNORED must be returned. A pending operation is finalized as specified in
+     * IConfirmationResultCallback.aidl.
      */
     CANCEL_EVENT = 1,
 }
