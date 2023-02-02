@@ -24,9 +24,8 @@ import android.media.audio.common.AudioDeviceDescription;
  * Virtualizer specific definitions. An audio virtualizer is a general name for an effect to
  * spatialize audio channels.
  *
- * All parameters defined in union Virtualizer must be gettable and settable. The capabilities
- * defined in Virtualizer.Capability can only acquired with IEffect.getDescriptor() and not
- * settable.
+ * All parameter settings must be inside the range of Capability.Range.virtualizer definition if the
+ * definition for the corresponding parameter tag exist. See more detals about Range in Range.aidl.
  */
 @VintfStability
 union Virtualizer {
@@ -65,35 +64,12 @@ union Virtualizer {
     }
 
     /**
-     * Capability supported by Virtualizer implementation.
-     */
-    @VintfStability
-    parcelable Capability {
-        /**
-         * Virtualizer capability extension, vendor can use this extension in case existing
-         * capability definition not enough.
-         */
-        VendorExtension extension;
-        /**
-         * Maximum possible per mille strength.
-         */
-        int maxStrengthPm;
-        /**
-         * Indicates whether setting strength is supported. False value indicates only one strength
-         * is supported and setParameter() method will always return EX_ILLEGAL_ARGUMENT.
-         */
-        boolean strengthSupported;
-    }
-
-    /**
      * The per mille strength of the virtualizer effect.
      *
      * If the implementation does not support per mille accuracy for setting the strength, it is
      * allowed to round the given strength to the nearest supported value. In this case {@link
      * #IEffect.getParameter()} method should return the rounded value that was actually set.
      *
-     * The value of the strength must be non-negative and not exceed the value specified by
-     * the 'maxStrengthPm' capability.
      */
     int strengthPm;
 
@@ -128,6 +104,7 @@ union Virtualizer {
     ChannelAngle[] speakerAngles;
 
     /**
+     * Get only parameter.
      * The audio device on which virtualzation mode is forced.
      */
     AudioDeviceDescription device;

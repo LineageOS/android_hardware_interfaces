@@ -42,10 +42,4 @@ union Volume {
     int vendorExtensionTag;
     android.hardware.audio.effect.Volume.Tag commonTag;
   }
-  @VintfStability
-  parcelable Capability {
-    android.hardware.audio.effect.VendorExtension extension;
-    int minLevelDb;
-    int maxLevelDb;
-  }
 }

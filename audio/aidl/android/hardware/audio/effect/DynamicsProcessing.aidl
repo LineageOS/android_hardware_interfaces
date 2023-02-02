@@ -21,9 +21,9 @@ import android.hardware.audio.effect.VendorExtension;
 /**
  * DynamicsProcessing specific definitions.
  *
- * All parameters defined in union DynamicsProcessing must be gettable and settable. The
- * capabilities defined in DynamicsProcessing.Capability can only acquired with
- * IEffect.getDescriptor() and not settable.
+ * All parameter settings must be inside the range of Capability.Range.dynamicsProcessing definition
+ * if the definition for the corresponding parameter tag exist. See more detals about Range in
+ * Range.aidl.
  */
 @VintfStability
 union DynamicsProcessing {
@@ -40,26 +40,6 @@ union DynamicsProcessing {
      * Vendor DynamicsProcessing implementation definition for additional parameters.
      */
     VendorExtension vendorExtension;
-
-    /**
-     * Capability supported by DynamicsProcessing implementation.
-     */
-    @VintfStability
-    parcelable Capability {
-        /**
-         * DynamicsProcessing capability extension, vendor can use this extension in case existing
-         * capability definition not enough.
-         */
-        ParcelableHolder extension;
-        /**
-         * Min Cut off frequency (in Hz) for all Bands.
-         */
-        float minCutOffFreq;
-        /**
-         * Max Cut off frequency (in Hz) for all Bands.
-         */
-        float maxCutOffFreq;
-    }
 
     /**
      * Resolution preference definition.
@@ -159,8 +139,7 @@ union DynamicsProcessing {
          */
         boolean enable;
         /**
-         * Topmost frequency number (in Hz) this band will process. Must be in the range of
-         * [minCutOffFreq, maxCutOffFreq] defined in Capability.
+         * Topmost frequency number (in Hz) this band will process.
          */
         float cutoffFrequencyHz;
         /**
@@ -190,8 +169,7 @@ union DynamicsProcessing {
          */
         boolean enable;
         /**
-         * Topmost frequency number (in Hz) this band will process. Must be in the range of
-         * [minCutOffFreq, maxCutOffFreq] defined in Capability.
+         * Topmost frequency number (in Hz) this band will process.
          */
         float cutoffFrequencyHz;
         /**

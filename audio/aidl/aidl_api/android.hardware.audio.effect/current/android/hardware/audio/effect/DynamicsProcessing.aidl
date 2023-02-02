@@ -49,12 +49,6 @@ union DynamicsProcessing {
     int vendorExtensionTag;
     android.hardware.audio.effect.DynamicsProcessing.Tag commonTag;
   }
-  @VintfStability
-  parcelable Capability {
-    ParcelableHolder extension;
-    float minCutOffFreq;
-    float maxCutOffFreq;
-  }
   enum ResolutionPreference {
     FAVOR_FREQUENCY_RESOLUTION,
     FAVOR_TIME_RESOLUTION,

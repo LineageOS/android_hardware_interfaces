@@ -21,9 +21,9 @@ import android.hardware.audio.effect.VendorExtension;
 /**
  * LoudnessEnhancer specific definitions.
  *
- * All parameters defined in union LoudnessEnhancer must be gettable and settable. The capabilities
- * defined in LoudnessEnhancer.Capability can only acquired with IEffect.getDescriptor() and not
- * settable.
+ * All parameter settings must be inside the range of Capability.Range.loudnessEnhancer definition
+ * if the definition for the corresponding parameter tag exist. See more detals about Range in
+ * Range.aidl.
  */
 @VintfStability
 union LoudnessEnhancer {
@@ -40,18 +40,6 @@ union LoudnessEnhancer {
      * Vendor LoudnessEnhancer implementation definition for additional parameters.
      */
     VendorExtension vendor;
-
-    /**
-     * Capability supported by LoudnessEnhancer implementation.
-     */
-    @VintfStability
-    parcelable Capability {
-        /**
-         * LoudnessEnhancer capability extension, vendor can use this extension in case existing
-         * capability definition not enough.
-         */
-        VendorExtension extension;
-    }
 
     /**
      * The maximum gain in millibels (mB) applied to the signal to process, default value is 0 which
