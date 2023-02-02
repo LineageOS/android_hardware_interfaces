@@ -79,14 +79,30 @@ std::vector<std::reference_wrapper<const tinyxml2::XMLElement>> EffectConfig::ge
     return children;
 }
 
+bool EffectConfig::resolveLibrary(const std::string& path, std::string* resolvedPath) {
+    for (auto* libraryDirectory : kEffectLibPath) {
+        std::string candidatePath = std::string(libraryDirectory) + '/' + path;
+        if (access(candidatePath.c_str(), R_OK) == 0) {
+            *resolvedPath = std::move(candidatePath);
+            return true;
+        }
+    }
+    return false;
+}
+
 bool EffectConfig::parseLibrary(const tinyxml2::XMLElement& xml) {
     const char* name = xml.Attribute("name");
     RETURN_VALUE_IF(!name, false, "noNameAttribute");
     const char* path = xml.Attribute("path");
     RETURN_VALUE_IF(!path, false, "noPathAttribute");
 
-    mLibraryMap[name] = path;
-    LOG(DEBUG) << __func__ << " " << name << " : " << path;
+    std::string resolvedPath;
+    if (!resolveLibrary(path, &resolvedPath)) {
+        LOG(ERROR) << __func__ << " can't find " << path;
+        return false;
+    }
+    mLibraryMap[name] = resolvedPath;
+    LOG(DEBUG) << __func__ << " " << name << " : " << resolvedPath;
     return true;
 }
 

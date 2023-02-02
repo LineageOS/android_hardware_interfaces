@@ -34,6 +34,7 @@ cc_library_shared {
         "DownmixSw.cpp",
         ":effectCommonFile",
     ],
+    relative_install_path: "soundfx",
     visibility: [
         "//hardware/interfaces/audio/aidl/default",
     ],
