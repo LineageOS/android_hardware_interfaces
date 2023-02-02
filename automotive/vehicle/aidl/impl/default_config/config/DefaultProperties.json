@@ -3223,6 +3223,22 @@
             ]
         },
         {
+            "property": "VehicleProperty::ADAPTIVE_CRUISE_CONTROL_TARGET_TIME_GAP",
+            "defaultValue": {
+                "int32Values": [
+                    1200
+                ]
+            },
+            "configArray": [
+                1200,
+                1400,
+                1600,
+                1800,
+                2000,
+                2200
+            ]
+        },
+        {
             "property": "VehicleProperty::HANDS_ON_DETECTION_ENABLED",
             "defaultValue": {
                 "int32Values": [

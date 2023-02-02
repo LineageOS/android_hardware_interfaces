@@ -540,6 +540,12 @@ TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyCruiseControlTargetSpeedConfig) 
                    VehicleArea::GLOBAL, VehiclePropertyType::FLOAT);
 }
 
+TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyAdaptiveCruiseControlTargetTimeGapConfig) {
+    verifyProperty(VehicleProperty::ADAPTIVE_CRUISE_CONTROL_TARGET_TIME_GAP,
+                   VehiclePropertyAccess::READ_WRITE, VehiclePropertyChangeMode::ON_CHANGE,
+                   VehiclePropertyGroup::SYSTEM, VehicleArea::GLOBAL, VehiclePropertyType::INT32);
+}
+
 TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyHandsOnDetectionEnabledConfig) {
     verifyProperty(VehicleProperty::HANDS_ON_DETECTION_ENABLED, VehiclePropertyAccess::READ_WRITE,
                    VehiclePropertyChangeMode::ON_CHANGE, VehiclePropertyGroup::SYSTEM,
