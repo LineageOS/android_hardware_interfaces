@@ -34,11 +34,11 @@
 package android.hardware.automotive.vehicle;
 @Backing(type="int") @VintfStability
 enum VehicleArea {
-  GLOBAL = 16777216,
-  WINDOW = 50331648,
-  MIRROR = 67108864,
-  SEAT = 83886080,
-  DOOR = 100663296,
-  WHEEL = 117440512,
-  MASK = 251658240,
+  GLOBAL = 0x01000000,
+  WINDOW = 0x03000000,
+  MIRROR = 0x04000000,
+  SEAT = 0x05000000,
+  DOOR = 0x06000000,
+  WHEEL = 0x07000000,
+  MASK = 0x0f000000,
 }

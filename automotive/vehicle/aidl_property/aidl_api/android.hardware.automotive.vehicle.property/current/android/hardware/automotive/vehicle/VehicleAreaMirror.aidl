@@ -34,7 +34,7 @@
 package android.hardware.automotive.vehicle;
 @Backing(type="int") @VintfStability
 enum VehicleAreaMirror {
-  DRIVER_LEFT = 1,
-  DRIVER_RIGHT = 2,
-  DRIVER_CENTER = 4,
+  DRIVER_LEFT = 0x00000001,
+  DRIVER_RIGHT = 0x00000002,
+  DRIVER_CENTER = 0x00000004,
 }

@@ -36,10 +36,10 @@ package android.hardware.automotive.vehicle;
 parcelable UserInfo {
   int userId = 0;
   int flags;
-  const int USER_FLAG_SYSTEM = 1;
-  const int USER_FLAG_GUEST = 2;
-  const int USER_FLAG_EPHEMERAL = 4;
-  const int USER_FLAG_ADMIN = 8;
-  const int USER_FLAG_DISABLED = 16;
-  const int USER_FLAG_PROFILE = 32;
+  const int USER_FLAG_SYSTEM = 0x01;
+  const int USER_FLAG_GUEST = 0x02;
+  const int USER_FLAG_EPHEMERAL = 0x04;
+  const int USER_FLAG_ADMIN = 0x08;
+  const int USER_FLAG_DISABLED = 0x10;
+  const int USER_FLAG_PROFILE = 0x20;
 }

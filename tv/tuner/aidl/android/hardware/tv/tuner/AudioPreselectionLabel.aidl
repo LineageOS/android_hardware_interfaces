@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,21 @@
  * limitations under the License.
  */
 
-package android.hardware.radio.ims.media;
+package android.hardware.tv.tuner;
 
+/**
+ * Audio preselection label according to ETSI EN 300 468 V1.17.1.
+ * @hide
+ */
 @VintfStability
-@Backing(type="int")
-enum MediaProtocolType {
-   /** Real Time Protocol, see RFC 3550 */
-   RTP = 0,
-   /** Real Time Control Protocol, see RFC 3550 */
-   RTCP = 1,
+parcelable AudioPreselectionLabel {
+    /**
+     * ISO 639-2 3-character code.
+     */
+    String language;
+
+    /**
+     * Text information, written in the language specified, pertaining to the preselection.
+     */
+    String text;
 }

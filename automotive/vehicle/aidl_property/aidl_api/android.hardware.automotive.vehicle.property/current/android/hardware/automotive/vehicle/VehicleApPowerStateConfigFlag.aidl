@@ -34,7 +34,7 @@
 package android.hardware.automotive.vehicle;
 @Backing(type="int") @VintfStability
 enum VehicleApPowerStateConfigFlag {
-  ENABLE_DEEP_SLEEP_FLAG = 1,
-  CONFIG_SUPPORT_TIMER_POWER_ON_FLAG = 2,
-  ENABLE_HIBERNATION_FLAG = 4,
+  ENABLE_DEEP_SLEEP_FLAG = 0x1,
+  CONFIG_SUPPORT_TIMER_POWER_ON_FLAG = 0x2,
+  ENABLE_HIBERNATION_FLAG = 0x4,
 }

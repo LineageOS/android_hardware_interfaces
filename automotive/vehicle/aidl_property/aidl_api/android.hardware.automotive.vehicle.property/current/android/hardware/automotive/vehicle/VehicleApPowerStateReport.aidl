@@ -34,14 +34,14 @@
 package android.hardware.automotive.vehicle;
 @Backing(type="int") @VintfStability
 enum VehicleApPowerStateReport {
-  WAIT_FOR_VHAL = 1,
-  DEEP_SLEEP_ENTRY = 2,
-  DEEP_SLEEP_EXIT = 3,
-  SHUTDOWN_POSTPONE = 4,
-  SHUTDOWN_START = 5,
-  ON = 6,
-  SHUTDOWN_PREPARE = 7,
-  SHUTDOWN_CANCELLED = 8,
-  HIBERNATION_ENTRY = 9,
-  HIBERNATION_EXIT = 10,
+  WAIT_FOR_VHAL = 0x1,
+  DEEP_SLEEP_ENTRY = 0x2,
+  DEEP_SLEEP_EXIT = 0x3,
+  SHUTDOWN_POSTPONE = 0x4,
+  SHUTDOWN_START = 0x5,
+  ON = 0x6,
+  SHUTDOWN_PREPARE = 0x7,
+  SHUTDOWN_CANCELLED = 0x8,
+  HIBERNATION_ENTRY = 0x9,
+  HIBERNATION_EXIT = 0xA,
 }

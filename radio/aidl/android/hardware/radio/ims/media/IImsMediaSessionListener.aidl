@@ -17,7 +17,7 @@
 package android.hardware.radio.ims.media;
 
 import android.hardware.radio.ims.media.CallQuality;
-import android.hardware.radio.ims.media.MediaProtocolType;
+import android.hardware.radio.ims.media.MediaQualityStatus;
 import android.hardware.radio.ims.media.RtpConfig;
 import android.hardware.radio.ims.media.RtpError;
 import android.hardware.radio.ims.media.RtpHeaderExtension;
@@ -59,28 +59,12 @@ oneway interface IImsMediaSessionListener {
     void onHeaderExtensionReceived(in List<RtpHeaderExtension> extensions);
 
     /**
-     * Notifies media inactivity observed as per thresholds set by
-     * setMediaQualityThreshold() API
+     * Notifies when the measured media quality crosses at least one of
+     * {@link MediaQualityThreshold} set by {@link IImsMediaSession#setMediaQualityThreshold()}.
      *
-     * @param packetType either RTP or RTCP
+     * @param quality The object of MediaQualityStatus with the rtp and the rtcp statistics.
      */
-    void notifyMediaInactivity(MediaProtocolType packetType);
-
-    /**
-     * Notifies RTP packet loss observed as per thresholds set by
-     * setMediaQualityThreshold() API
-     *
-     * @param packetLossPercentage percentage of packet loss calculated over the duration
-     */
-    void notifyPacketLoss(int packetLossPercentage);
-
-    /**
-     * Notifies RTP jitter observed as per thresholds set by
-     * IImsMediaSession#setMediaQualityThreshold() API
-     *
-     * @param jitter jitter of the RTP packets in milliseconds calculated over the duration
-     */
-    void notifyJitter(int jitter);
+    void notifyMediaQualityStatus(in MediaQualityStatus quality);
 
     /**
      * The modem RTP stack fires this API to query whether the desired bitrate mentioned

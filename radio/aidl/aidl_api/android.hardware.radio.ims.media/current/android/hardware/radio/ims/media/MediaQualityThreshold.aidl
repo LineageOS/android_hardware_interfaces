@@ -34,10 +34,11 @@
 package android.hardware.radio.ims.media;
 @VintfStability
 parcelable MediaQualityThreshold {
-  int rtpInactivityTimerMillis;
+  int[] rtpInactivityTimerMillis;
   int rtcpInactivityTimerMillis;
   int rtpPacketLossDurationMillis;
-  int rtpPacketLossRate;
-  int jitterDurationMillis;
-  int rtpJitterMillis;
+  int rtpHysteresisTimeInMillis;
+  int[] rtpPacketLossRate;
+  int[] rtpJitterMillis;
+  boolean notifyCurrentStatus;
 }

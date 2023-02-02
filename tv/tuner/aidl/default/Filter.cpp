@@ -329,7 +329,8 @@ Filter::~Filter() {
     // All the filter event callbacks in start are for testing purpose.
     switch (mType.mainType) {
         case DemuxFilterMainType::TS:
-            createMediaEvent(events);
+            createMediaEvent(events, false);
+            createMediaEvent(events, true);
             createTsRecordEvent(events);
             createTemiEvent(events);
             break;
@@ -1221,15 +1222,7 @@ bool Filter::sameFile(int fd1, int fd2) {
     return (stat1.st_dev == stat2.st_dev) && (stat1.st_ino == stat2.st_ino);
 }
 
-void Filter::createMediaEvent(vector<DemuxFilterEvent>& events) {
-    AudioExtraMetaData audio;
-    audio.adFade = 1;
-    audio.adPan = 2;
-    audio.versionTextTag = 3;
-    audio.adGainCenter = 4;
-    audio.adGainFront = 5;
-    audio.adGainSurround = 6;
-
+void Filter::createMediaEvent(vector<DemuxFilterEvent>& events, bool isAudioPresentation) {
     DemuxFilterMediaEvent mediaEvent;
     mediaEvent.streamId = 1;
     mediaEvent.isPtsPresent = true;
@@ -1239,7 +1232,43 @@ void Filter::createMediaEvent(vector<DemuxFilterEvent>& events) {
     mediaEvent.isSecureMemory = true;
     mediaEvent.mpuSequenceNumber = 6;
     mediaEvent.isPesPrivateData = true;
-    mediaEvent.extraMetaData.set<DemuxFilterMediaEventExtraMetaData::Tag::audio>(audio);
+
+    if (isAudioPresentation) {
+        AudioPresentation audioPresentation0{
+                .preselection.preselectionId = 0,
+                .preselection.labels = {{"en", "Commentator"}, {"es", "Comentarista"}},
+                .preselection.language = "en",
+                .preselection.renderingIndication =
+                        AudioPreselectionRenderingIndicationType::THREE_DIMENSIONAL,
+                .preselection.hasAudioDescription = false,
+                .preselection.hasSpokenSubtitles = false,
+                .preselection.hasDialogueEnhancement = true,
+                .ac4ShortProgramId = 42};
+        AudioPresentation audioPresentation1{
+                .preselection.preselectionId = 1,
+                .preselection.labels = {{"en", "Crowd"}, {"es", "Multitud"}},
+                .preselection.language = "en",
+                .preselection.renderingIndication =
+                        AudioPreselectionRenderingIndicationType::THREE_DIMENSIONAL,
+                .preselection.hasAudioDescription = false,
+                .preselection.hasSpokenSubtitles = false,
+                .preselection.hasDialogueEnhancement = false,
+                .ac4ShortProgramId = 42};
+        vector<AudioPresentation> audioPresentations;
+        audioPresentations.push_back(audioPresentation0);
+        audioPresentations.push_back(audioPresentation1);
+        mediaEvent.extraMetaData.set<DemuxFilterMediaEventExtraMetaData::Tag::audioPresentations>(
+                audioPresentations);
+    } else {
+        AudioExtraMetaData audio;
+        audio.adFade = 1;
+        audio.adPan = 2;
+        audio.versionTextTag = 3;
+        audio.adGainCenter = 4;
+        audio.adGainFront = 5;
+        audio.adGainSurround = 6;
+        mediaEvent.extraMetaData.set<DemuxFilterMediaEventExtraMetaData::Tag::audio>(audio);
+    }
 
     int av_fd = createAvIonFd(BUFFER_SIZE);
     if (av_fd == -1) {

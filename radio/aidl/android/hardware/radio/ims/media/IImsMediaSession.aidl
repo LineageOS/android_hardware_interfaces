@@ -17,7 +17,6 @@
 package android.hardware.radio.ims.media;
 
 import android.hardware.radio.ims.media.IImsMediaSessionListener;
-import android.hardware.radio.ims.media.MediaProtocolType;
 import android.hardware.radio.ims.media.MediaQualityThreshold;
 import android.hardware.radio.ims.media.RtpConfig;
 import android.hardware.radio.ims.media.RtpError;

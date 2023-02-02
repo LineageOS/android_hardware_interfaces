@@ -37,4 +37,5 @@ package android.hardware.tv.tuner;
 union DemuxFilterMediaEventExtraMetaData {
   boolean noinit;
   android.hardware.tv.tuner.AudioExtraMetaData audio;
+  android.hardware.tv.tuner.AudioPresentation[] audioPresentations = {};
 }
