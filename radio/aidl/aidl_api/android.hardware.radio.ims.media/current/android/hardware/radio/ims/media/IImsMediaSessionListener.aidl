@@ -37,10 +37,8 @@ interface IImsMediaSessionListener {
   oneway void onModifySessionResponse(in android.hardware.radio.ims.media.RtpConfig config, android.hardware.radio.ims.media.RtpError error);
   oneway void onFirstMediaPacketReceived(in android.hardware.radio.ims.media.RtpConfig config);
   oneway void onHeaderExtensionReceived(in List<android.hardware.radio.ims.media.RtpHeaderExtension> extensions);
-  oneway void notifyMediaInactivity(android.hardware.radio.ims.media.MediaProtocolType packetType);
-  oneway void notifyPacketLoss(int packetLossPercentage);
-  oneway void notifyJitter(int jitter);
+  oneway void notifyMediaQualityStatus(in android.hardware.radio.ims.media.MediaQualityStatus quality);
   oneway void triggerAnbrQuery(in android.hardware.radio.ims.media.RtpConfig config);
-  oneway void onDtmfReceived(char dtmfDigit);
+  oneway void onDtmfReceived(char dtmfDigit, int durationMs);
   oneway void onCallQualityChanged(in android.hardware.radio.ims.media.CallQuality callQuality);
 }

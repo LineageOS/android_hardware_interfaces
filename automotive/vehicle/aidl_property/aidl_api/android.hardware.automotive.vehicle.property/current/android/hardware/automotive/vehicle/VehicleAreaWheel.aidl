@@ -34,9 +34,9 @@
 package android.hardware.automotive.vehicle;
 @Backing(type="int") @VintfStability
 enum VehicleAreaWheel {
-  UNKNOWN = 0,
-  LEFT_FRONT = 1,
-  RIGHT_FRONT = 2,
-  LEFT_REAR = 4,
-  RIGHT_REAR = 8,
+  UNKNOWN = 0x0,
+  LEFT_FRONT = 0x1,
+  RIGHT_FRONT = 0x2,
+  LEFT_REAR = 0x4,
+  RIGHT_REAR = 0x8,
 }

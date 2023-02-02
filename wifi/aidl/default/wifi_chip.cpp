@@ -1146,8 +1146,7 @@ std::pair<std::shared_ptr<IWifiStaIface>, ndk::ScopedAStatus> WifiChip::createSt
                    << legacyErrorToString(legacy_status);
         return {nullptr, createWifiStatusFromLegacyError(legacy_status)};
     }
-    std::shared_ptr<WifiStaIface> iface =
-            ndk::SharedRefBase::make<WifiStaIface>(ifname, legacy_hal_, iface_util_);
+    std::shared_ptr<WifiStaIface> iface = WifiStaIface::create(ifname, legacy_hal_, iface_util_);
     sta_ifaces_.push_back(iface);
     for (const auto& callback : event_cb_handler_.getCallbacks()) {
         if (!callback->onIfaceAdded(IfaceType::STA, ifname).isOk()) {

@@ -1,3 +1,3 @@
-service canhalconfigurator /system/bin/canhalconfigurator
+service canhalconfigurator /system_ext/bin/canhalconfigurator
   class core
   oneshot

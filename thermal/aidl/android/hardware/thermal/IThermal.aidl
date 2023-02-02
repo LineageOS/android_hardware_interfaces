@@ -104,9 +104,9 @@ interface IThermal {
      *    they go offline, if these devices exist on boot. The method
      *    always returns and never removes such temperatures. The thresholds
      *    are returned as static values and must not change across calls. The actual
-     *    throttling state is determined in device thermal mitigation policy/agorithm
+     *    throttling state is determined in device thermal mitigation policy/algorithm
      *    which might not be simple thresholds so these values Thermal HAL provided
-     *    may not be accurate to detemin the throttling status. To get accurate
+     *    may not be accurate to determine the throttling status. To get accurate
      *    throttling status, use getTemperatures or registerThermalChangedCallback
      *    and listen to the callback.
      *
@@ -129,9 +129,9 @@ interface IThermal {
      *    they go offline, if these devices exist on boot. The method
      *    always returns and never removes such temperatures. The thresholds
      *    are returned as static values and must not change across calls. The actual
-     *    throttling state is determined in device thermal mitigation policy/agorithm
+     *    throttling state is determined in device thermal mitigation policy/algorithm
      *    which might not be simple thresholds so these values Thermal HAL provided
-     *    may not be accurate to detemin the throttling status. To get accurate
+     *    may not be accurate to determine the throttling status. To get accurate
      *    throttling status, use getTemperatures or registerThermalChangedCallback
      *    and listen to the callback.
      *

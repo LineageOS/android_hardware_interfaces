@@ -3508,6 +3508,10 @@ enum VehicleProperty {
      * Set true to enable BSW and false to disable BSW. When BSW is enabled, the ADAS system in the
      * vehicle should be turned on and monitoring for objects in the vehicle’s blind spots.
      *
+     * If BSW is not available, IVehicle#get must not return any NOT_AVAILABLE value in StatusCode.
+     * Other StatusCode values like TRY_AGAIN may still be used as needed. For example, if BSW is
+     * not available because the vehicle speed is too low, IVehicle#get must return false.
+     *
      * This property is defined as read_write, but OEMs have the option to implement it as read
      * only.
      *
@@ -3516,6 +3520,25 @@ enum VehicleProperty {
      */
     BLIND_SPOT_WARNING_ENABLED =
             0x1004 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+
+    /**
+     * Blind Spot Warning (BSW) state.
+     *
+     * Returns the current state of BSW. This property must always return a valid state defined in
+     * BlindSpotWarningState or ErrorState. It must not surface errors through StatusCode
+     * and must use the supported error states instead.
+     *
+     * For each supported area ID, the VehicleAreaConfig#supportedEnumValues array must be defined
+     * unless all states of both BlindSpotWarningState (including OTHER, which is not
+     * recommended) and ErrorState are supported.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     * @data_enum BlindSpotWarningState
+     * @data_enum ErrorState
+     */
+    BLIND_SPOT_WARNING_STATE =
+            0x1005 + VehiclePropertyGroup.SYSTEM + VehicleArea.MIRROR + VehiclePropertyType.INT32,
 
     /**
      * Enable or disable lane departure warning (LDW).
@@ -3623,7 +3646,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ_WRITE
      */
     HANDS_ON_DETECTION_ENABLED =
-            0x1015 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+            0x1016 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
 
     /**
      * Enable or disable driver attention monitoring.
@@ -3640,7 +3663,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ_WRITE
      */
     DRIVER_ATTENTION_MONITORING_ENABLED =
-            0x1018 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+            0x1019 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
 
     /***************************************************************************
      * End of ADAS Properties

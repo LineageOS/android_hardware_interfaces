@@ -36,6 +36,7 @@ namespace jsonconfigloader_impl {
 
 using ::aidl::android::hardware::automotive::vehicle::AccessForVehicleProperty;
 using ::aidl::android::hardware::automotive::vehicle::AutomaticEmergencyBrakingState;
+using ::aidl::android::hardware::automotive::vehicle::BlindSpotWarningState;
 using ::aidl::android::hardware::automotive::vehicle::ChangeModeForVehicleProperty;
 using ::aidl::android::hardware::automotive::vehicle::ErrorState;
 using ::aidl::android::hardware::automotive::vehicle::EvConnectorType;
@@ -215,6 +216,8 @@ JsonValueParser::JsonValueParser() {
             std::make_unique<ConstantParser<AutomaticEmergencyBrakingState>>();
     mConstantParsersByType["ForwardCollisionWarningState"] =
             std::make_unique<ConstantParser<ForwardCollisionWarningState>>();
+    mConstantParsersByType["BlindSpotWarningState"] =
+            std::make_unique<ConstantParser<BlindSpotWarningState>>();
     mConstantParsersByType["Constants"] = std::make_unique<LocalVariableParser>();
 }
 

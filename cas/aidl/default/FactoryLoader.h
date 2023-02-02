@@ -139,6 +139,7 @@ bool FactoryLoader<T>::enumeratePlugins(vector<AidlCasPluginDescriptor>* results
             queryPluginsFromPath(pluginPath, results);
         }
     }
+    closedir(pDir);
     return true;
 }
 
