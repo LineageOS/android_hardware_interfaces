@@ -2694,6 +2694,47 @@
             ]
         },
         {
+            "property": "VehicleProperty::WINDSHIELD_WIPERS_SWITCH",
+            "defaultValue": {
+                "int32Values": [
+                    "WindshieldWipersSwitch::OFF"
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "VehicleAreaWindow::FRONT_WINDSHIELD",
+                    "supportedEnumValues": [
+                        "WindshieldWipersSwitch::OFF",
+                        "WindshieldWipersSwitch::MIST",
+                        "WindshieldWipersSwitch::INTERMITTENT_LEVEL_1",
+                        "WindshieldWipersSwitch::INTERMITTENT_LEVEL_2",
+                        "WindshieldWipersSwitch::INTERMITTENT_LEVEL_3",
+                        "WindshieldWipersSwitch::INTERMITTENT_LEVEL_4",
+                        "WindshieldWipersSwitch::INTERMITTENT_LEVEL_5",
+                        "WindshieldWipersSwitch::CONTINUOUS_LEVEL_1",
+                        "WindshieldWipersSwitch::CONTINUOUS_LEVEL_2",
+                        "WindshieldWipersSwitch::CONTINUOUS_LEVEL_3",
+                        "WindshieldWipersSwitch::CONTINUOUS_LEVEL_4",
+                        "WindshieldWipersSwitch::CONTINUOUS_LEVEL_5",
+                        "WindshieldWipersSwitch::AUTO",
+                        "WindshieldWipersSwitch::SERVICE"
+                    ]
+                },
+                {
+                    "areaId": "VehicleAreaWindow::REAR_WINDSHIELD",
+                    "supportedEnumValues": [
+                        "WindshieldWipersSwitch::OFF",
+                        "WindshieldWipersSwitch::INTERMITTENT_LEVEL_1",
+                        "WindshieldWipersSwitch::INTERMITTENT_LEVEL_2",
+                        "WindshieldWipersSwitch::CONTINUOUS_LEVEL_1",
+                        "WindshieldWipersSwitch::CONTINUOUS_LEVEL_2",
+                        "WindshieldWipersSwitch::AUTO",
+                        "WindshieldWipersSwitch::SERVICE"
+                    ]
+                }
+            ]
+        },
+        {
             "property": "VehicleProperty::STEERING_WHEEL_DEPTH_POS",
             "defaultValue": {
                 "int32Values": [
