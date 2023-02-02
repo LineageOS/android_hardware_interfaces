@@ -26,16 +26,16 @@ import android.hardware.confirmationui.IConfirmationUI;
 interface IConfirmationResultCallback {
     /**
      * This callback is called by the confirmation provider when it stops prompting the user.
-     * Iff the user has confirmed the prompted text, error is ErrorCode::OK and the
+     * Iff the user has confirmed the prompted text, error is IConfirmationUI::OK and the
      * parameters formattedMessage and confirmationToken hold the values needed to request
      * a signature from keymaster.
      * In all other cases formattedMessage and confirmationToken must be of length 0.
      *
-     * @param error - OK: IFF the user has confirmed the prompt.
-     *              - CANCELED: If the user has pressed the cancel button.
-     *              - ABORTED: If IConfirmationUI::abort() was called.
-     *              - SYSTEM_ERROR: If an unexpected System error occurred that prevented the TUI
-     *                             from being shut down gracefully.
+     * @param error - IConfirmationUI::OK: IFF the user has confirmed the prompt.
+     *              - IConfirmationUI::CANCELED: If the user has pressed the cancel button.
+     *              - IConfirmationUI::ABORTED: If IConfirmationUI::abort() was called.
+     *              - IConfirmationUI::SYSTEM_ERROR: If an unexpected System error occurred that
+     * prevented the TUI from being shut down gracefully.
      *
      * @param formattedMessage holds the prompt text and extra data.
      *                         The message is CBOR (RFC 7049) encoded and has the following format:
@@ -59,7 +59,7 @@ interface IConfirmationResultCallback {
      *                          the "", concatenated with the formatted message as returned in the
      *                          formattedMessage argument. The HMAC is keyed with a 256-bit secret
      *                          which is shared with Keymaster. In test mode the test key MUST be
-     *                          used (see types.hal TestModeCommands and
+     *                          used (see TestModeCommands.aidl and
      * IConfirmationUI::TEST_KEY_BYTE).
      */
     void result(in int error, in byte[] formattedMessage, in byte[] confirmationToken);
