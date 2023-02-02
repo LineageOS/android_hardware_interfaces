@@ -201,7 +201,6 @@ class BluetoothAidlTest : public ::testing::TestWithParam<std::string> {
   void sendAndCheckAcl(int num_packets, size_t size, uint16_t handle);
 
   // Helper functions to try to get a handle on verbosity
-  void reset();
   void enterLoopbackMode();
   void handle_no_ops();
   void discard_qca_debugging();
@@ -610,12 +609,15 @@ void BluetoothAidlTest::sendAndCheckAcl(int num_packets, size_t size,
 // Return the number of completed packets reported by the controller.
 int BluetoothAidlTest::wait_for_completed_packets_event(uint16_t handle) {
   int packets_processed = 0;
-  wait_for_event(false);
-  if (event_queue.empty()) {
-    ALOGW("%s: waitForBluetoothCallback timed out.", __func__);
-    return packets_processed;
-  }
-  while (!event_queue.empty()) {
+  while (true) {
+    // There should be at least one event.
+    wait_for_event(packets_processed == 0);
+    if (event_queue.empty()) {
+      if (packets_processed == 0) {
+        ALOGW("%s: waitForBluetoothCallback timed out.", __func__);
+      }
+      return packets_processed;
+    }
     std::vector<uint8_t> event;
     EXPECT_TRUE(event_queue.pop(event));
 
@@ -628,15 +630,6 @@ int BluetoothAidlTest::wait_for_completed_packets_event(uint16_t handle) {
     packets_processed += event[5] + (event[6] << 8);
   }
   return packets_processed;
-}
-
-// Send the reset command and wait for a response.
-void BluetoothAidlTest::reset() {
-  std::vector<uint8_t> reset{kCommandHciReset,
-                             kCommandHciReset + sizeof(kCommandHciReset)};
-  hci->sendHciCommand(reset);
-
-  wait_for_command_complete_event(reset);
 }
 
 // Send local loopback command and initialize SCO and ACL handles.
@@ -696,11 +689,16 @@ void BluetoothAidlTest::enterLoopbackMode() {
 TEST_P(BluetoothAidlTest, InitializeAndClose) {}
 
 // Send an HCI Reset with sendHciCommand and wait for a command complete event.
-TEST_P(BluetoothAidlTest, HciReset) { reset(); }
+TEST_P(BluetoothAidlTest, HciReset) {
+  std::vector<uint8_t> reset{kCommandHciReset,
+                             kCommandHciReset + sizeof(kCommandHciReset)};
+  hci->sendHciCommand(reset);
+
+  wait_for_command_complete_event(reset);
+}
 
 // Read and check the HCI version of the controller.
 TEST_P(BluetoothAidlTest, HciVersionTest) {
-  reset();
   std::vector<uint8_t> cmd{kCommandHciReadLocalVersionInformation,
                            kCommandHciReadLocalVersionInformation +
                                sizeof(kCommandHciReadLocalVersionInformation)};
@@ -723,7 +721,6 @@ TEST_P(BluetoothAidlTest, HciVersionTest) {
 
 // Send an unknown HCI command and wait for the error message.
 TEST_P(BluetoothAidlTest, HciUnknownCommand) {
-  reset();
   std::vector<uint8_t> cmd{
       kCommandHciShouldBeUnknown,
       kCommandHciShouldBeUnknown + sizeof(kCommandHciShouldBeUnknown)};
@@ -750,14 +747,10 @@ TEST_P(BluetoothAidlTest, HciUnknownCommand) {
 }
 
 // Enter loopback mode, but don't send any packets.
-TEST_P(BluetoothAidlTest, WriteLoopbackMode) {
-  reset();
-  enterLoopbackMode();
-}
+TEST_P(BluetoothAidlTest, WriteLoopbackMode) { enterLoopbackMode(); }
 
 // Enter loopback mode and send a single command.
 TEST_P(BluetoothAidlTest, LoopbackModeSingleCommand) {
-  reset();
   setBufferSizes();
 
   enterLoopbackMode();
@@ -767,7 +760,6 @@ TEST_P(BluetoothAidlTest, LoopbackModeSingleCommand) {
 
 // Enter loopback mode and send a single SCO packet.
 TEST_P(BluetoothAidlTest, LoopbackModeSingleSco) {
-  reset();
   setBufferSizes();
   setSynchronousFlowControlEnable();
 
@@ -788,7 +780,6 @@ TEST_P(BluetoothAidlTest, LoopbackModeSingleSco) {
 
 // Enter loopback mode and send a single ACL packet.
 TEST_P(BluetoothAidlTest, LoopbackModeSingleAcl) {
-  reset();
   setBufferSizes();
 
   enterLoopbackMode();
@@ -810,7 +801,6 @@ TEST_P(BluetoothAidlTest, LoopbackModeSingleAcl) {
 
 // Enter loopback mode and send command packets for bandwidth measurements.
 TEST_P(BluetoothAidlTest, LoopbackModeCommandBandwidth) {
-  reset();
   setBufferSizes();
 
   enterLoopbackMode();
@@ -820,7 +810,6 @@ TEST_P(BluetoothAidlTest, LoopbackModeCommandBandwidth) {
 
 // Enter loopback mode and send SCO packets for bandwidth measurements.
 TEST_P(BluetoothAidlTest, LoopbackModeScoBandwidth) {
-  reset();
   setBufferSizes();
   setSynchronousFlowControlEnable();
 
@@ -842,7 +831,6 @@ TEST_P(BluetoothAidlTest, LoopbackModeScoBandwidth) {
 
 // Enter loopback mode and send packets for ACL bandwidth measurements.
 TEST_P(BluetoothAidlTest, LoopbackModeAclBandwidth) {
-  reset();
   setBufferSizes();
 
   enterLoopbackMode();
@@ -863,7 +851,6 @@ TEST_P(BluetoothAidlTest, LoopbackModeAclBandwidth) {
 
 // Set all bits in the event mask
 TEST_P(BluetoothAidlTest, SetEventMask) {
-  reset();
   std::vector<uint8_t> set_event_mask{
       0x01, 0x0c, 0x08 /*parameter bytes*/, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
       0xff, 0xff};
@@ -873,7 +860,6 @@ TEST_P(BluetoothAidlTest, SetEventMask) {
 
 // Set all bits in the LE event mask
 TEST_P(BluetoothAidlTest, SetLeEventMask) {
-  reset();
   std::vector<uint8_t> set_event_mask{
       0x20, 0x0c, 0x08 /*parameter bytes*/, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
       0xff, 0xff};
