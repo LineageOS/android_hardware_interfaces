@@ -528,6 +528,12 @@ TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyCruiseControlStateConfig) {
                    VehicleArea::GLOBAL, VehiclePropertyType::INT32);
 }
 
+TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyCruiseControlCommandConfig) {
+    verifyProperty(VehicleProperty::CRUISE_CONTROL_COMMAND, VehiclePropertyAccess::WRITE,
+                   VehiclePropertyChangeMode::ON_CHANGE, VehiclePropertyGroup::SYSTEM,
+                   VehicleArea::GLOBAL, VehiclePropertyType::INT32);
+}
+
 TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyHandsOnDetectionEnabledConfig) {
     verifyProperty(VehicleProperty::HANDS_ON_DETECTION_ENABLED, VehiclePropertyAccess::READ_WRITE,
                    VehiclePropertyChangeMode::ON_CHANGE, VehiclePropertyGroup::SYSTEM,

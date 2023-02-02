@@ -38,6 +38,7 @@ using ::aidl::android::hardware::automotive::vehicle::AccessForVehicleProperty;
 using ::aidl::android::hardware::automotive::vehicle::AutomaticEmergencyBrakingState;
 using ::aidl::android::hardware::automotive::vehicle::BlindSpotWarningState;
 using ::aidl::android::hardware::automotive::vehicle::ChangeModeForVehicleProperty;
+using ::aidl::android::hardware::automotive::vehicle::CruiseControlCommand;
 using ::aidl::android::hardware::automotive::vehicle::CruiseControlState;
 using ::aidl::android::hardware::automotive::vehicle::CruiseControlType;
 using ::aidl::android::hardware::automotive::vehicle::EmergencyLaneKeepAssistState;
@@ -227,6 +228,8 @@ JsonValueParser::JsonValueParser() {
             std::make_unique<ConstantParser<CruiseControlType>>();
     mConstantParsersByType["CruiseControlState"] =
             std::make_unique<ConstantParser<CruiseControlState>>();
+    mConstantParsersByType["CruiseControlCommand"] =
+            std::make_unique<ConstantParser<CruiseControlCommand>>();
     mConstantParsersByType["ErrorState"] = std::make_unique<ConstantParser<ErrorState>>();
     mConstantParsersByType["AutomaticEmergencyBrakingState"] =
             std::make_unique<ConstantParser<AutomaticEmergencyBrakingState>>();

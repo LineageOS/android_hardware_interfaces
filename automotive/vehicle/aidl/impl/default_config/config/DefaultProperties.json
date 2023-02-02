@@ -3192,6 +3192,22 @@
             ]
         },
         {
+            "property": "VehicleProperty::CRUISE_CONTROL_COMMAND",
+            "areas": [
+                {
+                    "areaId": 0,
+                    "supportedEnumValues": [
+                        "CruiseControlCommand::ACTIVATE",
+                        "CruiseControlCommand::SUSPEND",
+                        "CruiseControlCommand::INCREASE_TARGET_SPEED",
+                        "CruiseControlCommand::DECREASE_TARGET_SPEED",
+                        "CruiseControlCommand::INCREASE_TARGET_TIME_GAP",
+                        "CruiseControlCommand::DECREASE_TARGET_TIME_GAP"
+                    ]
+                }
+            ]
+        },
+        {
             "property": "VehicleProperty::HANDS_ON_DETECTION_ENABLED",
             "defaultValue": {
                 "int32Values": [

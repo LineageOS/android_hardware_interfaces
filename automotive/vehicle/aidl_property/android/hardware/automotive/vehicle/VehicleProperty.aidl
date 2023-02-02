@@ -3915,6 +3915,22 @@ enum VehicleProperty {
             0x1011 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
 
     /**
+     * Write Cruise Control (CC) commands.
+     *
+     * See CruiseControlCommand for the details about each supported command.
+     *
+     * For the global area ID (0), the VehicleAreaConfig#supportedEnumValues array must be defined
+     * unless all states of CruiseControlState are supported. Any unsupported commands sent through
+     * this property should return StatusCode.INVALID_ARG.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.WRITE
+     * @data_enum CruiseControlCommand
+     */
+    CRUISE_CONTROL_COMMAND =
+            0x1012 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
+
+    /**
      * Enable or disable hands on detection (HOD).
      *
      * Set true to enable HOD and false to disable HOD. When HOD is enabled, a system inside the
