@@ -18,8 +18,8 @@
 
 #include <aidl/android/hardware/bluetooth/BnBluetoothHci.h>
 #include <aidl/android/hardware/bluetooth/IBluetoothHciCallbacks.h>
-#include <log/log.h>
 
+#include <future>
 #include <string>
 
 #include "async_fd_watcher.h"
@@ -69,6 +69,18 @@ class BluetoothHci : public BnBluetoothHci {
   void send(::android::hardware::bluetooth::hci::PacketType type,
             const std::vector<uint8_t>& packet);
   std::unique_ptr<NetBluetoothMgmt> management_{};
+
+  // Send a reset command and discard all packets until a reset is received.
+  void reset();
+
+  // Don't close twice or open before close is complete
+  std::mutex mStateMutex;
+  enum class HalState {
+    READY,
+    INITIALIZING,
+    ONE_CLIENT,
+    CLOSING,
+  } mState{HalState::READY};
 };
 
 }  // namespace aidl::android::hardware::bluetooth::impl
