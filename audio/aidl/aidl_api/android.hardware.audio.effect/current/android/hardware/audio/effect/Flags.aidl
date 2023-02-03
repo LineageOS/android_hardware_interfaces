@@ -42,7 +42,7 @@ parcelable Flags {
   boolean deviceIndication;
   boolean audioModeIndication;
   boolean audioSourceIndication;
-  boolean noProcessing;
+  boolean bypass;
   @Backing(type="byte") @VintfStability
   enum Type {
     INSERT = 0,
