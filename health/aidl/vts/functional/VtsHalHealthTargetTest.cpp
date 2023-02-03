@@ -229,8 +229,14 @@ TEST_P(HealthAidl, getChargeStatus) {
  * Tests the values returned by getChargingPolicy() from interface IHealth.
  */
 TEST_P(HealthAidl, getChargingPolicy) {
+    int32_t version = 0;
+    auto status = health->getInterfaceVersion(&version);
+    ASSERT_TRUE(status.isOk()) << status;
+    if (version < 2) {
+        GTEST_SKIP() << "Support in health hal v2 for EU Ecodesign";
+    }
     BatteryChargingPolicy value;
-    auto status = health->getChargingPolicy(&value);
+    status = health->getChargingPolicy(&value);
     ASSERT_THAT(status, AnyOf(IsOk(), ExceptionIs(EX_UNSUPPORTED_OPERATION)));
     if (!status.isOk()) return;
     ASSERT_THAT(value, IsValidEnum<BatteryChargingPolicy>());
@@ -241,10 +247,17 @@ TEST_P(HealthAidl, getChargingPolicy) {
  * value by getChargingPolicy() from interface IHealth.
  */
 TEST_P(HealthAidl, setChargingPolicy) {
+    int32_t version = 0;
+    auto status = health->getInterfaceVersion(&version);
+    ASSERT_TRUE(status.isOk()) << status;
+    if (version < 2) {
+        GTEST_SKIP() << "Support in health hal v2 for EU Ecodesign";
+    }
+
     BatteryChargingPolicy value;
 
     /* set ChargingPolicy*/
-    auto status = health->setChargingPolicy(static_cast<BatteryChargingPolicy>(2));  // LONG_LIFE
+    status = health->setChargingPolicy(static_cast<BatteryChargingPolicy>(2));  // LONG_LIFE
     ASSERT_THAT(status, AnyOf(IsOk(), ExceptionIs(EX_UNSUPPORTED_OPERATION)));
     if (!status.isOk()) return;
 
@@ -273,8 +286,15 @@ MATCHER(IsValidHealthData, "") {
  * Tests the values returned by getBatteryHealthData() from interface IHealth.
  */
 TEST_P(HealthAidl, getBatteryHealthData) {
+    int32_t version = 0;
+    auto status = health->getInterfaceVersion(&version);
+    ASSERT_TRUE(status.isOk()) << status;
+    if (version < 2) {
+        GTEST_SKIP() << "Support in health hal v2 for EU Ecodesign";
+    }
+
     BatteryHealthData value;
-    auto status = health->getBatteryHealthData(&value);
+    status = health->getBatteryHealthData(&value);
     ASSERT_THAT(status, AnyOf(IsOk(), ExceptionIs(EX_UNSUPPORTED_OPERATION)));
     if (!status.isOk()) return;
     ASSERT_THAT(value, IsValidHealthData());
