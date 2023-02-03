@@ -1491,7 +1491,7 @@ TEST_P(GnssHalTest, TestGnssMeasurementIntervals_LocationOnAfterMeasurement) {
     ASSERT_TRUE(iGnssMeasurement != nullptr);
 
     int locationIntervalMs = 1000;
-    // Start location first and then start measurement
+    // Start measurement first and then start location
     ALOGD("TestGnssMeasurementIntervals_LocationOnAfterMeasurement");
     for (auto& intervalMs : intervals) {
         auto callback = sp<GnssMeasurementCallbackAidl>::make();
