@@ -35,6 +35,9 @@ interface IBluetoothHci {
 
     /**
      * Initialize the Bluetooth interface and set the callbacks.
+     * Only one client can initialize the interface at a time.  When a
+     * call to initialize fails, the Status parameter of the callback
+     * will indicate the reason for the failure.
      */
     void initialize(in IBluetoothHciCallbacks callback);
 
