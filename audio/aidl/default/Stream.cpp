@@ -135,10 +135,16 @@ StreamInWorkerLogic::Status StreamInWorkerLogic::cycle() {
         mState = StreamDescriptor::State::ERROR;
         return Status::ABORT;
     }
-    LOG(DEBUG) << __func__ << ": received command " << command.toString() << " in " << kThreadName;
+    using Tag = StreamDescriptor::Command::Tag;
+    using LogSeverity = ::android::base::LogSeverity;
+    const LogSeverity severity =
+            command.getTag() == Tag::burst || command.getTag() == Tag::getStatus
+                    ? LogSeverity::VERBOSE
+                    : LogSeverity::DEBUG;
+    LOG(severity) << __func__ << ": received command " << command.toString() << " in "
+                  << kThreadName;
     StreamDescriptor::Reply reply{};
     reply.status = STATUS_BAD_VALUE;
-    using Tag = StreamDescriptor::Command::Tag;
     switch (command.getTag()) {
         case Tag::halReservedExit:
             if (const int32_t cookie = command.get<Tag::halReservedExit>();
@@ -166,8 +172,8 @@ StreamInWorkerLogic::Status StreamInWorkerLogic::cycle() {
             break;
         case Tag::burst:
             if (const int32_t fmqByteCount = command.get<Tag::burst>(); fmqByteCount >= 0) {
-                LOG(DEBUG) << __func__ << ": '" << toString(command.getTag()) << "' command for "
-                           << fmqByteCount << " bytes";
+                LOG(VERBOSE) << __func__ << ": '" << toString(command.getTag()) << "' command for "
+                             << fmqByteCount << " bytes";
                 if (mState == StreamDescriptor::State::IDLE ||
                     mState == StreamDescriptor::State::ACTIVE ||
                     mState == StreamDescriptor::State::PAUSED ||
@@ -253,7 +259,7 @@ StreamInWorkerLogic::Status StreamInWorkerLogic::cycle() {
             break;
     }
     reply.state = mState;
-    LOG(DEBUG) << __func__ << ": writing reply " << reply.toString();
+    LOG(severity) << __func__ << ": writing reply " << reply.toString();
     if (!mReplyMQ->writeBlocking(&reply, 1)) {
         LOG(ERROR) << __func__ << ": writing of reply " << reply.toString() << " to MQ failed";
         mState = StreamDescriptor::State::ERROR;
@@ -284,8 +290,8 @@ bool StreamInWorkerLogic::read(size_t clientSize, StreamDescriptor::Reply* reply
     if (bool success =
                 actualByteCount > 0 ? mDataMQ->write(&mDataBuffer[0], actualByteCount) : true;
         success) {
-        LOG(DEBUG) << __func__ << ": writing of " << actualByteCount << " bytes into data MQ"
-                   << " succeeded; connected? " << isConnected;
+        LOG(VERBOSE) << __func__ << ": writing of " << actualByteCount << " bytes into data MQ"
+                     << " succeeded; connected? " << isConnected;
         // Frames are provided and counted regardless of connection status.
         reply->fmqByteCount += actualByteCount;
         mFrameCount += actualFrameCount;
@@ -340,7 +346,14 @@ StreamOutWorkerLogic::Status StreamOutWorkerLogic::cycle() {
         mState = StreamDescriptor::State::ERROR;
         return Status::ABORT;
     }
-    LOG(DEBUG) << __func__ << ": received command " << command.toString() << " in " << kThreadName;
+    using Tag = StreamDescriptor::Command::Tag;
+    using LogSeverity = ::android::base::LogSeverity;
+    const LogSeverity severity =
+            command.getTag() == Tag::burst || command.getTag() == Tag::getStatus
+                    ? LogSeverity::VERBOSE
+                    : LogSeverity::DEBUG;
+    LOG(severity) << __func__ << ": received command " << command.toString() << " in "
+                  << kThreadName;
     StreamDescriptor::Reply reply{};
     reply.status = STATUS_BAD_VALUE;
     using Tag = StreamDescriptor::Command::Tag;
@@ -383,8 +396,8 @@ StreamOutWorkerLogic::Status StreamOutWorkerLogic::cycle() {
         } break;
         case Tag::burst:
             if (const int32_t fmqByteCount = command.get<Tag::burst>(); fmqByteCount >= 0) {
-                LOG(DEBUG) << __func__ << ": '" << toString(command.getTag()) << "' command for "
-                           << fmqByteCount << " bytes";
+                LOG(VERBOSE) << __func__ << ": '" << toString(command.getTag()) << "' command for "
+                             << fmqByteCount << " bytes";
                 if (mState != StreamDescriptor::State::ERROR &&
                     mState != StreamDescriptor::State::TRANSFERRING &&
                     mState != StreamDescriptor::State::TRANSFER_PAUSED) {
@@ -499,7 +512,7 @@ StreamOutWorkerLogic::Status StreamOutWorkerLogic::cycle() {
             break;
     }
     reply.state = mState;
-    LOG(DEBUG) << __func__ << ": writing reply " << reply.toString();
+    LOG(severity) << __func__ << ": writing reply " << reply.toString();
     if (!mReplyMQ->writeBlocking(&reply, 1)) {
         LOG(ERROR) << __func__ << ": writing of reply " << reply.toString() << " to MQ failed";
         mState = StreamDescriptor::State::ERROR;
@@ -514,8 +527,8 @@ bool StreamOutWorkerLogic::write(size_t clientSize, StreamDescriptor::Reply* rep
     int32_t latency = Module::kLatencyMs;
     if (bool success = readByteCount > 0 ? mDataMQ->read(&mDataBuffer[0], readByteCount) : true) {
         const bool isConnected = mIsConnected;
-        LOG(DEBUG) << __func__ << ": reading of " << readByteCount << " bytes from data MQ"
-                   << " succeeded; connected? " << isConnected;
+        LOG(VERBOSE) << __func__ << ": reading of " << readByteCount << " bytes from data MQ"
+                     << " succeeded; connected? " << isConnected;
         // Amount of data that the HAL module is going to actually use.
         size_t byteCount = std::min({clientSize, readByteCount, mDataBufferSize});
         if (byteCount >= mFrameSize && mForceTransientBurst) {
