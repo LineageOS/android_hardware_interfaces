@@ -867,6 +867,48 @@ TEST_P(BluetoothAidlTest, SetLeEventMask) {
   wait_for_command_complete_event(set_event_mask);
 }
 
+// Call initialize twice, second one should fail.
+TEST_P(BluetoothAidlTest, CallInitializeTwice) {
+  class SecondCb
+      : public aidl::android::hardware::bluetooth::BnBluetoothHciCallbacks {
+   public:
+    ndk::ScopedAStatus initializationComplete(Status status) {
+      EXPECT_EQ(status, Status::ALREADY_INITIALIZED);
+      init_promise.set_value();
+      return ScopedAStatus::ok();
+    };
+
+    ndk::ScopedAStatus hciEventReceived(const std::vector<uint8_t>& /*event*/) {
+      ADD_FAILURE();
+      return ScopedAStatus::ok();
+    };
+
+    ndk::ScopedAStatus aclDataReceived(const std::vector<uint8_t>& /*data*/) {
+      ADD_FAILURE();
+      return ScopedAStatus::ok();
+    };
+
+    ndk::ScopedAStatus scoDataReceived(const std::vector<uint8_t>& /*data*/) {
+      ADD_FAILURE();
+      return ScopedAStatus::ok();
+    };
+
+    ndk::ScopedAStatus isoDataReceived(const std::vector<uint8_t>& /*data*/) {
+      ADD_FAILURE();
+      return ScopedAStatus::ok();
+    };
+    std::promise<void> init_promise;
+  };
+
+  std::shared_ptr<SecondCb> second_cb = ndk::SharedRefBase::make<SecondCb>();
+  ASSERT_NE(second_cb, nullptr);
+
+  auto future = second_cb->init_promise.get_future();
+  ASSERT_TRUE(hci->initialize(second_cb).isOk());
+  auto status = future.wait_for(std::chrono::seconds(1));
+  ASSERT_EQ(status, std::future_status::ready);
+}
+
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(BluetoothAidlTest);
 INSTANTIATE_TEST_SUITE_P(PerInstance, BluetoothAidlTest,
                          testing::ValuesIn(android::getAidlHalInstanceNames(
