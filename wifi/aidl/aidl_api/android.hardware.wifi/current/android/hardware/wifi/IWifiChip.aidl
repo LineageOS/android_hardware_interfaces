@@ -47,7 +47,7 @@ interface IWifiChip {
   @PropagateAllowBlocking android.hardware.wifi.IWifiApIface getApIface(in String ifname);
   String[] getApIfaceNames();
   android.hardware.wifi.IWifiChip.ChipMode[] getAvailableModes();
-  android.hardware.wifi.IWifiChip.ChipCapabilityMask getCapabilities();
+  int getCapabilities();
   android.hardware.wifi.WifiDebugHostWakeReasonStats getDebugHostWakeReasonStats();
   android.hardware.wifi.WifiDebugRingBufferStatus[] getDebugRingBuffersStatus();
   int getId();
@@ -60,7 +60,7 @@ interface IWifiChip {
   String[] getStaIfaceNames();
   android.hardware.wifi.WifiRadioCombination[] getSupportedRadioCombinations();
   android.hardware.wifi.WifiChipCapabilities getWifiChipCapabilities();
-  android.hardware.wifi.WifiUsableChannel[] getUsableChannels(in android.hardware.wifi.WifiBand band, in android.hardware.wifi.WifiIfaceMode ifaceModeMask, in android.hardware.wifi.IWifiChip.UsableChannelFilter filterMask);
+  android.hardware.wifi.WifiUsableChannel[] getUsableChannels(in android.hardware.wifi.WifiBand band, in int ifaceModeMask, in int filterMask);
   void setAfcChannelAllowance(in android.hardware.wifi.AvailableAfcFrequencyInfo[] availableAfcFrequencyInfo);
   void registerEventCallback(in android.hardware.wifi.IWifiChipEventCallback callback);
   void removeApIface(in String ifname);
@@ -73,7 +73,7 @@ interface IWifiChip {
   byte[] requestFirmwareDebugDump();
   void resetTxPowerScenario();
   void selectTxPowerScenario(in android.hardware.wifi.IWifiChip.TxPowerScenario scenario);
-  void setCoexUnsafeChannels(in android.hardware.wifi.IWifiChip.CoexUnsafeChannel[] unsafeChannels, in android.hardware.wifi.IWifiChip.CoexRestriction restrictions);
+  void setCoexUnsafeChannels(in android.hardware.wifi.IWifiChip.CoexUnsafeChannel[] unsafeChannels, in int restrictions);
   void setCountryCode(in byte[2] code);
   void setLatencyMode(in android.hardware.wifi.IWifiChip.LatencyMode mode);
   void setMultiStaPrimaryConnection(in String ifName);
@@ -81,7 +81,7 @@ interface IWifiChip {
   void startLoggingToDebugRingBuffer(in String ringName, in android.hardware.wifi.WifiDebugRingBufferVerboseLevel verboseLevel, in int maxIntervalInSec, in int minDataSizeInBytes);
   void stopLoggingToDebugRingBuffer();
   void triggerSubsystemRestart();
-  void enableStaChannelForPeerNetwork(in android.hardware.wifi.IWifiChip.ChannelCategoryMask channelCategoryEnableFlag);
+  void enableStaChannelForPeerNetwork(in int channelCategoryEnableFlag);
   void setMloMode(in android.hardware.wifi.IWifiChip.ChipMloMode mode);
   const int NO_POWER_CAP_CONSTANT = 0x7FFFFFFF;
   @Backing(type="int") @VintfStability

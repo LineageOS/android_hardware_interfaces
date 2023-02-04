@@ -38,7 +38,7 @@ parcelable StaBackgroundScanBucketParameters {
   android.hardware.wifi.WifiBand band;
   int[] frequencies;
   int periodInMs;
-  android.hardware.wifi.StaBackgroundScanBucketEventReportSchemeMask eventReportScheme;
+  int eventReportScheme;
   int exponentialMaxPeriodInMs;
   int exponentialBase;
   int exponentialStepCount;
