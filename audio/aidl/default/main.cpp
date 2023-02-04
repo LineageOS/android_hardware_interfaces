@@ -35,6 +35,8 @@ int main() {
 
     // This is a debug implementation, always enable debug logging.
     android::base::SetMinimumLogSeverity(::android::base::DEBUG);
+    // For more logs, use VERBOSE, however this may hinder performance.
+    // android::base::SetMinimumLogSeverity(::android::base::VERBOSE);
     ABinderProcess_setThreadPoolMaxThreadCount(16);
 
     // Make the default config service
