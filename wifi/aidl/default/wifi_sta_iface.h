@@ -54,8 +54,7 @@ class WifiStaIface : public BnWifiStaIface {
     ndk::ScopedAStatus getName(std::string* _aidl_return) override;
     ndk::ScopedAStatus registerEventCallback(
             const std::shared_ptr<IWifiStaIfaceEventCallback>& in_callback) override;
-    ndk::ScopedAStatus getCapabilities(
-            IWifiStaIface::StaIfaceCapabilityMask* _aidl_return) override;
+    ndk::ScopedAStatus getCapabilities(int32_t* _aidl_return) override;
     ndk::ScopedAStatus getApfPacketFilterCapabilities(
             StaApfPacketFilterCapabilities* _aidl_return) override;
     ndk::ScopedAStatus installApfPacketFilter(const std::vector<uint8_t>& in_program) override;
@@ -99,7 +98,7 @@ class WifiStaIface : public BnWifiStaIface {
     std::pair<std::string, ndk::ScopedAStatus> getNameInternal();
     ndk::ScopedAStatus registerEventCallbackInternal(
             const std::shared_ptr<IWifiStaIfaceEventCallback>& callback);
-    std::pair<IWifiStaIface::StaIfaceCapabilityMask, ndk::ScopedAStatus> getCapabilitiesInternal();
+    std::pair<int32_t, ndk::ScopedAStatus> getCapabilitiesInternal();
     std::pair<StaApfPacketFilterCapabilities, ndk::ScopedAStatus>
     getApfPacketFilterCapabilitiesInternal();
     ndk::ScopedAStatus installApfPacketFilterInternal(const std::vector<uint8_t>& program);

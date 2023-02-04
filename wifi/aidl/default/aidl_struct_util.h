@@ -20,7 +20,10 @@
 #include <aidl/android/hardware/wifi/IWifiChip.h>
 #include <aidl/android/hardware/wifi/IWifiChipEventCallback.h>
 #include <aidl/android/hardware/wifi/NanBandIndex.h>
+#include <aidl/android/hardware/wifi/StaBackgroundScanBucketEventReportSchemeMask.h>
+#include <aidl/android/hardware/wifi/StaScanDataFlagMask.h>
 #include <aidl/android/hardware/wifi/WifiDebugRingBufferFlags.h>
+#include <aidl/android/hardware/wifi/WifiIfaceMode.h>
 
 #include <vector>
 
