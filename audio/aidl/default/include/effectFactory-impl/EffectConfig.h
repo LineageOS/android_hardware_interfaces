@@ -63,6 +63,13 @@ class EffectConfig {
     }
 
   private:
+    static constexpr const char* kEffectLibPath[] =
+#ifdef __LP64__
+            {"/odm/lib64/soundfx", "/vendor/lib64/soundfx", "/system/lib64/soundfx"};
+#else
+            {"/odm/lib/soundfx", "/vendor/lib/soundfx", "/system/lib/soundfx"};
+#endif
+
     int mSkippedElements;
     /* Parsed Libraries result */
     std::unordered_map<std::string, std::string> mLibraryMap;
@@ -91,6 +98,8 @@ class EffectConfig {
 
     const char* dump(const tinyxml2::XMLElement& element,
                      tinyxml2::XMLPrinter&& printer = {}) const;
+
+    bool resolveLibrary(const std::string& path, std::string* resolvedPath);
 };
 
 }  // namespace aidl::android::hardware::audio::effect

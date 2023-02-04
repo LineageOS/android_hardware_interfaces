@@ -19,6 +19,7 @@
 #include "radio_config_utils.h"
 #include "radio_data_utils.h"
 #include "radio_ims_utils.h"
+#include "radio_imsmedia_utils.h"
 #include "radio_messaging_utils.h"
 #include "radio_modem_utils.h"
 #include "radio_network_utils.h"
@@ -84,6 +85,11 @@ INSTANTIATE_TEST_SUITE_P(
         PerInstance, RadioSatelliteTest,
         testing::ValuesIn(android::getAidlHalInstanceNames(IRadioSatellite::descriptor)),
         android::PrintInstanceNameToString);
+
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(RadioImsMediaTest);
+INSTANTIATE_TEST_SUITE_P(PerInstance, RadioImsMediaTest,
+                         testing::ValuesIn(android::getAidlHalInstanceNames(IImsMedia::descriptor)),
+                         android::PrintInstanceNameToString);
 
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
