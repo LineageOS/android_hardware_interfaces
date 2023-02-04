@@ -34,6 +34,7 @@ cc_library_shared {
         "VisualizerSw.cpp",
         ":effectCommonFile",
     ],
+    relative_install_path: "soundfx",
     visibility: [
         "//hardware/interfaces/audio/aidl/default",
     ],

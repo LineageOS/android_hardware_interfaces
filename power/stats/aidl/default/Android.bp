@@ -30,7 +30,7 @@ cc_binary {
     shared_libs: [
         "libbase",
         "libbinder_ndk",
-        "android.hardware.power.stats-V1-ndk",
+        "android.hardware.power.stats-V2-ndk",
     ],
     srcs: [
         "main.cpp",

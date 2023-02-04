@@ -91,7 +91,7 @@ interface IConfirmationUI {
     /**
      * Aborts a pending user prompt. This allows the framework to gracefully end a TUI dialog.
      * If a TUI operation was pending the corresponding call back is informed with
-     * ErrorCode::Aborted.
+     * IConfirmationUI::ABORTED.
      */
     void abort();
 
@@ -139,7 +139,7 @@ interface IConfirmationUI {
      *                      is an IETF BCP 47 tag.
      *
      * @param uiOptions A set of uiOptions manipulating how the confirmation prompt is displayed.
-     *                  Refer to UIOption in types.hal for possible options.
+     *                  Refer to UIOption in UIOptions.aidl for possible options.
      */
     void promptUserConfirmation(in IConfirmationResultCallback resultCB, in byte[] promptText,
             in byte[] extraData, in @utf8InCpp String locale, in UIOption[] uiOptions);

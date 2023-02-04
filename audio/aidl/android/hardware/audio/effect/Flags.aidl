@@ -141,7 +141,7 @@ parcelable Flags {
     boolean audioSourceIndication;
 
     /**
-     * Set to true if no processing done for this effect instance.
+     * Set to true if the effect instance bypass audio data (no processing).
      */
-    boolean noProcessing;
+    boolean bypass;
 }
