@@ -756,14 +756,6 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
-        <name>android.hardware.usb.gadget</name>
-        <version>1.0-2</version>
-        <interface>
-            <name>IUsbGadget</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.usb.gadget</name>
         <interface>
