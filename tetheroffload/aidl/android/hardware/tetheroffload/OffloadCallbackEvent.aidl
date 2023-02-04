@@ -55,7 +55,7 @@ enum OffloadCallbackEvent {
      */
     OFFLOAD_STOPPED_LIMIT_REACHED = 5,
     /**
-     * This event is fired when the quota, applied in setDataWarning, has expired. It is
+     * This event is fired when the quota, applied in setDataWarningAndLimit, has expired. It is
      * recommended that the client query for statistics immediately after receiving this event.
      * Any offloaded traffic will continue to be offloaded until offload is stopped or
      * OFFLOAD_STOPPED_LIMIT_REACHED is sent.
