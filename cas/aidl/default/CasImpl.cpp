@@ -128,6 +128,19 @@ ScopedAStatus CasImpl::setPrivateData(const vector<uint8_t>& pvtData) {
     return toStatus(holder->setPrivateData(pvtData));
 }
 
+ScopedAStatus CasImpl::openSessionDefault(vector<uint8_t>* sessionId) {
+    ALOGV("%s", __FUNCTION__);
+
+    shared_ptr<CasPlugin> holder = atomic_load(&mPluginHolder);
+    status_t err = INVALID_OPERATION;
+    if (holder.get() != nullptr) {
+        err = holder->openSession(sessionId);
+        holder.reset();
+    }
+
+    return toStatus(err);
+}
+
 ScopedAStatus CasImpl::openSession(SessionIntent intent, ScramblingMode mode,
                                    vector<uint8_t>* sessionId) {
     ALOGV("%s", __FUNCTION__);

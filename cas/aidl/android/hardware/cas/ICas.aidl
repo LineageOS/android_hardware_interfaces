@@ -35,6 +35,14 @@ interface ICas {
     void closeSession(in byte[] sessionId);
 
     /**
+     * Open a session to descramble one or more streams without specifying intention
+     * and scrambling mode.
+     *
+     * @return sessionId The id of the newly opened session.
+     */
+    byte[] openSessionDefault();
+
+    /**
      * Open a session to descramble one or more streams by specifying intention
      * and scrambling mode.
      *
