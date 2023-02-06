@@ -53,6 +53,8 @@ class CasImpl : public BnCas {
 
     virtual ScopedAStatus setPrivateData(const vector<uint8_t>& pvtData) override;
 
+    virtual ScopedAStatus openSessionDefault(vector<uint8_t>* sessionId) override;
+
     virtual ScopedAStatus openSession(SessionIntent intent, ScramblingMode mode,
                                       vector<uint8_t>* sessionId) override;
 

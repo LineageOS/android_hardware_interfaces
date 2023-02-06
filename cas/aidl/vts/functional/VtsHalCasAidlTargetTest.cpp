@@ -286,6 +286,7 @@ class MediaCasAidlTest : public testing::TestWithParam<string> {
     } OobInputTestParams;
 
     AssertionResult createCasPlugin(int32_t caSystemId);
+    AssertionResult openCasSessionDefault(vector<uint8_t>* sessionId);
     AssertionResult openCasSession(vector<uint8_t>* sessionId, SessionIntent intent,
                                    ScramblingMode mode);
     AssertionResult descrambleTestInputBuffer(const shared_ptr<IDescrambler>& descrambler,
@@ -329,6 +330,10 @@ AssertionResult MediaCasAidlTest::createCasPlugin(int32_t caSystemId) {
     }
 
     return AssertionResult(mDescrambler != nullptr);
+}
+
+AssertionResult MediaCasAidlTest::openCasSessionDefault(vector<uint8_t>* sessionId) {
+    return AssertionResult(mMediaCas->openSessionDefault(sessionId).isOk());
 }
 
 AssertionResult MediaCasAidlTest::openCasSession(vector<uint8_t>* sessionId, SessionIntent intent,
@@ -483,6 +488,32 @@ TEST_P(MediaCasAidlTest, TestClearKeyPluginInstalled) {
     }
 
     ADD_FAILURE() << "ClearKey plugin not installed";
+}
+
+TEST_P(MediaCasAidlTest, TestClearKeyDefaultSessionClosedAfterRelease) {
+    description("Test that all sessions are closed after a MediaCas object is released");
+
+    ASSERT_TRUE(createCasPlugin(CLEAR_KEY_SYSTEM_ID));
+
+    EXPECT_TRUE(mMediaCas->provision(PROVISION_STR).isOk());
+
+    vector<uint8_t> sessionId;
+    ASSERT_TRUE(openCasSessionDefault(&sessionId));
+
+    vector<uint8_t> streamSessionId;
+    ASSERT_TRUE(openCasSessionDefault(&streamSessionId));
+
+    EXPECT_TRUE(mMediaCas->release().isOk());
+
+    if (mDescrambler != nullptr) {
+        auto status = mDescrambler->setMediaCasSession(sessionId);
+        EXPECT_FALSE(status.isOk());
+        EXPECT_EQ(Status::ERROR_CAS_SESSION_NOT_OPENED, status.getServiceSpecificError());
+
+        status = mDescrambler->setMediaCasSession(streamSessionId);
+        EXPECT_FALSE(status.isOk());
+        EXPECT_EQ(Status::ERROR_CAS_SESSION_NOT_OPENED, status.getServiceSpecificError());
+    }
 }
 
 TEST_P(MediaCasAidlTest, TestClearKeySessionClosedAfterRelease) {

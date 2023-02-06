@@ -36,6 +36,7 @@ package android.hardware.cas;
 @VintfStability
 interface ICas {
   void closeSession(in byte[] sessionId);
+  byte[] openSessionDefault();
   byte[] openSession(in android.hardware.cas.SessionIntent intent, in android.hardware.cas.ScramblingMode mode);
   void processEcm(in byte[] sessionId, in byte[] ecm);
   void processEmm(in byte[] emm);
