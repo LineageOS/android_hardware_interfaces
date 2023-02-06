@@ -3166,7 +3166,7 @@
             "property": "VehicleProperty::AUTOMATIC_EMERGENCY_BRAKING_STATE",
             "defaultValue": {
                 "int32Values": [
-                    "AutomaticEmergencyBrakingState::ENABLED"
+                    "ErrorState::NOT_AVAILABLE_DISABLED"
                 ]
             },
             "areas": [
@@ -3174,6 +3174,7 @@
                     "areaId": 0,
                     "supportedEnumValues": [
                         "ErrorState::NOT_AVAILABLE_SAFETY",
+                        "ErrorState::NOT_AVAILABLE_POOR_VISIBILITY",
                         "ErrorState::NOT_AVAILABLE_SPEED_HIGH",
                         "ErrorState::NOT_AVAILABLE_SPEED_LOW",
                         "ErrorState::NOT_AVAILABLE_DISABLED",
@@ -3188,7 +3189,7 @@
             "property": "VehicleProperty::FORWARD_COLLISION_WARNING_ENABLED",
             "defaultValue": {
                 "int32Values": [
-                    0
+                    1
                 ]
             }
         },
@@ -3204,6 +3205,7 @@
                     "areaId": 0,
                     "supportedEnumValues": [
                         "ErrorState::NOT_AVAILABLE_SAFETY",
+                        "ErrorState::NOT_AVAILABLE_POOR_VISIBILITY",
                         "ErrorState::NOT_AVAILABLE_SPEED_HIGH",
                         "ErrorState::NOT_AVAILABLE_SPEED_LOW",
                         "ErrorState::NOT_AVAILABLE_DISABLED",
@@ -3217,7 +3219,7 @@
             "property": "VehicleProperty::BLIND_SPOT_WARNING_ENABLED",
             "defaultValue": {
                 "int32Values": [
-                    0
+                    1
                 ]
             }
         },
@@ -3233,6 +3235,7 @@
                     "areaId": "Constants::MIRROR_DRIVER_LEFT_RIGHT",
                     "supportedEnumValues": [
                         "ErrorState::NOT_AVAILABLE_SAFETY",
+                        "ErrorState::NOT_AVAILABLE_POOR_VISIBILITY",
                         "ErrorState::NOT_AVAILABLE_SPEED_HIGH",
                         "ErrorState::NOT_AVAILABLE_SPEED_LOW",
                         "ErrorState::NOT_AVAILABLE_DISABLED",
