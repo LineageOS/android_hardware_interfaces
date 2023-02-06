@@ -34,13 +34,14 @@ using aidl::android::hardware::audio::effect::kNoiseSuppressionTypeUUID;
 using aidl::android::hardware::audio::effect::NoiseSuppression;
 using aidl::android::hardware::audio::effect::Parameter;
 
-enum ParamName { PARAM_INSTANCE_NAME, PARAM_LEVEL };
-using NSParamTestParam =
-        std::tuple<std::pair<std::shared_ptr<IFactory>, Descriptor>, NoiseSuppression::Level>;
+enum ParamName { PARAM_INSTANCE_NAME, PARAM_LEVEL, PARAM_TYPE };
+using NSParamTestParam = std::tuple<std::pair<std::shared_ptr<IFactory>, Descriptor>,
+                                    NoiseSuppression::Level, NoiseSuppression::Type>;
 
 class NSParamTest : public ::testing::TestWithParam<NSParamTestParam>, public EffectHelper {
   public:
-    NSParamTest() : mLevel(std::get<PARAM_LEVEL>(GetParam())) {
+    NSParamTest()
+        : mLevel(std::get<PARAM_LEVEL>(GetParam())), mType(std::get<PARAM_TYPE>(GetParam())) {
         std::tie(mFactory, mDescriptor) = std::get<PARAM_INSTANCE_NAME>(GetParam());
     }
 
@@ -75,6 +76,7 @@ class NSParamTest : public ::testing::TestWithParam<NSParamTestParam>, public Ef
     std::shared_ptr<IEffect> mEffect;
     Descriptor mDescriptor;
     NoiseSuppression::Level mLevel;
+    NoiseSuppression::Type mType;
 
     void SetAndGetParameters() {
         for (auto& it : mTags) {
@@ -113,9 +115,18 @@ class NSParamTest : public ::testing::TestWithParam<NSParamTestParam>, public Ef
         ns.set<NoiseSuppression::level>(level);
         mTags.push_back({NoiseSuppression::level, ns});
     }
+    void addTypeParam(NoiseSuppression::Type type) {
+        NoiseSuppression ns;
+        ns.set<NoiseSuppression::type>(type);
+        mTags.push_back({NoiseSuppression::type, ns});
+    }
     static std::unordered_set<NoiseSuppression::Level> getLevelValues() {
         return {ndk::enum_range<NoiseSuppression::Level>().begin(),
                 ndk::enum_range<NoiseSuppression::Level>().end()};
+    }
+    static std::unordered_set<NoiseSuppression::Type> getTypeValues() {
+        return {ndk::enum_range<NoiseSuppression::Type>().begin(),
+                ndk::enum_range<NoiseSuppression::Type>().end()};
     }
 
   private:
@@ -128,18 +139,27 @@ TEST_P(NSParamTest, SetAndGetLevel) {
     SetAndGetParameters();
 }
 
+TEST_P(NSParamTest, SetAndGetType) {
+    EXPECT_NO_FATAL_FAILURE(addLevelParam(mLevel));
+    SetAndGetParameters();
+}
+
 INSTANTIATE_TEST_SUITE_P(
         NSParamTest, NSParamTest,
         ::testing::Combine(testing::ValuesIn(EffectFactoryHelper::getAllEffectDescriptors(
                                    IFactory::descriptor, kNoiseSuppressionTypeUUID)),
-                           testing::ValuesIn(NSParamTest::getLevelValues())),
+                           testing::ValuesIn(NSParamTest::getLevelValues()),
+                           testing::ValuesIn(NSParamTest::getTypeValues())),
         [](const testing::TestParamInfo<NSParamTest::ParamType>& info) {
             auto descriptor = std::get<PARAM_INSTANCE_NAME>(info.param).second;
             std::string level = aidl::android::hardware::audio::effect::toString(
                     std::get<PARAM_LEVEL>(info.param));
+            std::string type = aidl::android::hardware::audio::effect::toString(
+                    std::get<PARAM_TYPE>(info.param));
             std::string name = "Implementor_" + descriptor.common.implementor + "_name_" +
                                descriptor.common.name + "_UUID_" +
-                               descriptor.common.id.uuid.toString() + "_level_" + level;
+                               descriptor.common.id.uuid.toString() + "_level_" + level + "_type_" +
+                               type;
             std::replace_if(
                     name.begin(), name.end(), [](const char c) { return !std::isalnum(c); }, '_');
             return name;
