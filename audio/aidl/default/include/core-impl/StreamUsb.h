@@ -16,13 +16,22 @@
 
 #pragma once
 
+#include <mutex>
+
+#include <aidl/android/media/audio/common/AudioChannelLayout.h>
+
 #include "core-impl/Stream.h"
+
+extern "C" {
+#include <tinyalsa/pcm.h>
+#include "alsa_device_proxy.h"
+}
 
 namespace aidl::android::hardware::audio::core {
 
-class DriverStub : public DriverInterface {
+class DriverUsb : public DriverInterface {
   public:
-    DriverStub(const StreamContext& context, bool isInput);
+    DriverUsb(const StreamContext& context, bool isInput);
     ::android::status_t init() override;
     ::android::status_t setConnectedDevices(
             const std::vector<::aidl::android::media::audio::common::AudioDevice>& connectedDevices)
@@ -35,11 +44,24 @@ class DriverStub : public DriverInterface {
     ::android::status_t standby() override;
 
   private:
+    ::android::status_t exitStandby();
+
+    std::mutex mLock;
+
     const size_t mFrameSizeBytes;
+    std::optional<struct pcm_config> mConfig;
     const bool mIsInput;
+    // Cached device addresses for connected devices.
+    std::vector<::aidl::android::media::audio::common::AudioDeviceAddress> mConnectedDevices
+            GUARDED_BY(mLock);
+    std::vector<std::shared_ptr<alsa_device_proxy>> mAlsaDeviceProxies GUARDED_BY(mLock);
+    bool mIsStandby = false;
 };
 
-class StreamInStub final : public StreamIn {
+class StreamInUsb final : public StreamIn {
+    ndk::ScopedAStatus getActiveMicrophones(
+            std::vector<MicrophoneDynamicInfo>* _aidl_return) override;
+
   public:
     static ndk::ScopedAStatus createInstance(
             const ::aidl::android::hardware::audio::common::SinkMetadata& sinkMetadata,
@@ -48,11 +70,11 @@ class StreamInStub final : public StreamIn {
 
   private:
     friend class ndk::SharedRefBase;
-    StreamInStub(const ::aidl::android::hardware::audio::common::SinkMetadata& sinkMetadata,
-                 StreamContext&& context, const std::vector<MicrophoneInfo>& microphones);
+    StreamInUsb(const ::aidl::android::hardware::audio::common::SinkMetadata& sinkMetadata,
+                StreamContext&& context, const std::vector<MicrophoneInfo>& microphones);
 };
 
-class StreamOutStub final : public StreamOut {
+class StreamOutUsb final : public StreamOut {
   public:
     static ndk::ScopedAStatus createInstance(
             const ::aidl::android::hardware::audio::common::SourceMetadata& sourceMetadata,
@@ -63,10 +85,10 @@ class StreamOutStub final : public StreamOut {
 
   private:
     friend class ndk::SharedRefBase;
-    StreamOutStub(const ::aidl::android::hardware::audio::common::SourceMetadata& sourceMetadata,
-                  StreamContext&& context,
-                  const std::optional<::aidl::android::media::audio::common::AudioOffloadInfo>&
-                          offloadInfo);
+    StreamOutUsb(const ::aidl::android::hardware::audio::common::SourceMetadata& sourceMetadata,
+                 StreamContext&& context,
+                 const std::optional<::aidl::android::media::audio::common::AudioOffloadInfo>&
+                         offloadInfo);
 };
 
 }  // namespace aidl::android::hardware::audio::core

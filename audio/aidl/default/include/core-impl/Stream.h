@@ -77,7 +77,8 @@ class StreamContext {
     StreamContext(std::unique_ptr<CommandMQ> commandMQ, std::unique_ptr<ReplyMQ> replyMQ,
                   const ::aidl::android::media::audio::common::AudioFormatDescription& format,
                   const ::aidl::android::media::audio::common::AudioChannelLayout& channelLayout,
-                  std::unique_ptr<DataMQ> dataMQ, std::shared_ptr<IStreamCallback> asyncCallback,
+                  int sampleRate, std::unique_ptr<DataMQ> dataMQ,
+                  std::shared_ptr<IStreamCallback> asyncCallback,
                   std::shared_ptr<IStreamOutEventCallback> outEventCallback,
                   DebugParameters debugParameters)
         : mCommandMQ(std::move(commandMQ)),
@@ -85,6 +86,7 @@ class StreamContext {
           mReplyMQ(std::move(replyMQ)),
           mFormat(format),
           mChannelLayout(channelLayout),
+          mSampleRate(sampleRate),
           mDataMQ(std::move(dataMQ)),
           mAsyncCallback(asyncCallback),
           mOutEventCallback(outEventCallback),
@@ -95,6 +97,7 @@ class StreamContext {
           mReplyMQ(std::move(other.mReplyMQ)),
           mFormat(other.mFormat),
           mChannelLayout(other.mChannelLayout),
+          mSampleRate(other.mSampleRate),
           mDataMQ(std::move(other.mDataMQ)),
           mAsyncCallback(std::move(other.mAsyncCallback)),
           mOutEventCallback(std::move(other.mOutEventCallback)),
@@ -105,6 +108,7 @@ class StreamContext {
         mReplyMQ = std::move(other.mReplyMQ);
         mFormat = std::move(other.mFormat);
         mChannelLayout = std::move(other.mChannelLayout);
+        mSampleRate = other.mSampleRate;
         mDataMQ = std::move(other.mDataMQ);
         mAsyncCallback = std::move(other.mAsyncCallback);
         mOutEventCallback = std::move(other.mOutEventCallback);
@@ -131,6 +135,7 @@ class StreamContext {
     }
     ReplyMQ* getReplyMQ() const { return mReplyMQ.get(); }
     int getTransientStateDelayMs() const { return mDebugParameters.transientStateDelayMs; }
+    int getSampleRate() const { return mSampleRate; }
     bool isValid() const;
     void reset();
 
@@ -140,6 +145,7 @@ class StreamContext {
     std::unique_ptr<ReplyMQ> mReplyMQ;
     ::aidl::android::media::audio::common::AudioFormatDescription mFormat;
     ::aidl::android::media::audio::common::AudioChannelLayout mChannelLayout;
+    int mSampleRate;
     std::unique_ptr<DataMQ> mDataMQ;
     std::shared_ptr<IStreamCallback> mAsyncCallback;
     std::shared_ptr<IStreamOutEventCallback> mOutEventCallback;  // Only used by output streams
@@ -151,6 +157,11 @@ struct DriverInterface {
     virtual ~DriverInterface() = default;
     // This function is called once, on the main thread, before starting the worker thread.
     virtual ::android::status_t init() = 0;
+    // This function is called from Binder pool thread. It must be done in a thread-safe manner
+    // if this method and other methods in this interface share data.
+    virtual ::android::status_t setConnectedDevices(
+            const std::vector<::aidl::android::media::audio::common::AudioDevice>&
+                    connectedDevices) = 0;
     // All the functions below are called on the worker thread.
     virtual ::android::status_t drain(StreamDescriptor::DrainMode mode) = 0;
     virtual ::android::status_t flush() = 0;
@@ -370,6 +381,7 @@ class StreamCommonImpl : public StreamCommonInterface {
             const std::vector<::aidl::android::media::audio::common::AudioDevice>& devices) {
         mWorker->setIsConnected(!devices.empty());
         mConnectedDevices = devices;
+        mDriver->setConnectedDevices(devices);
     }
     ndk::ScopedAStatus updateMetadata(const Metadata& metadata);
 

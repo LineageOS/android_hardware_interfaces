@@ -35,6 +35,10 @@ class Module : public BnModule {
 
     explicit Module(Type type) : mType(type) {}
 
+    static std::shared_ptr<Module> createInstance(Type type);
+    static StreamIn::CreateInstance getStreamInCreator(Type type);
+    static StreamOut::CreateInstance getStreamOutCreator(Type type);
+
   private:
     struct VendorDebug {
         static const std::string kForceTransientBurstName;
@@ -163,6 +167,17 @@ class Module : public BnModule {
     std::shared_ptr<sounddose::ISoundDose> mSoundDose;
     ndk::SpAIBinder mSoundDoseBinder;
     std::optional<bool> mIsMmapSupported;
+
+  protected:
+    // If the module is unable to populate the connected device port correctly, the returned error
+    // code must correspond to the errors of `IModule.connectedExternalDevice` method.
+    virtual ndk::ScopedAStatus populateConnectedDevicePort(
+            ::aidl::android::media::audio::common::AudioPort* audioPort);
+    // If the module finds that the patch endpoints configurations are not matched, the returned
+    // error code must correspond to the errors of `IModule.setAudioPatch` method.
+    virtual ndk::ScopedAStatus checkAudioPatchEndpointsMatch(
+            const std::vector<::aidl::android::media::audio::common::AudioPortConfig*>& sources,
+            const std::vector<::aidl::android::media::audio::common::AudioPortConfig*>& sinks);
 };
 
 }  // namespace aidl::android::hardware::audio::core
