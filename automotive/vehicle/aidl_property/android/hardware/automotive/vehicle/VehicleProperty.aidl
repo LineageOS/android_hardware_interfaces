@@ -4010,6 +4010,29 @@ enum VehicleProperty {
             0x1019 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
 
     /**
+     * Driver attention monitoring state.
+     *
+     * Returns whether the driver is currently attentive or distracted. Generally, this property
+     * should return a valid state defined in the DriverAttentionMonitoringState or ErrorState. For
+     * example, if the feature is not available due to some temporary state, that information should
+     * be conveyed through an ErrorState.
+     *
+     * If the vehicle wants to send a warning to the user because the driver has been distracted for
+     * too long, the warning should be surfaced through DRIVER_ATTENTION_MONITORING_WARNING.
+     *
+     * The VehicleAreaConfig#configArray array must define all states from
+     * DriverAttentionMonitoringState (including OTHER, which is not recommended) and ErrorState
+     * that are supported.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     * @data_enum DriverAttentionMonitoringState
+     * @data_enum ErrorState
+     */
+    DRIVER_ATTENTION_MONITORING_STATE =
+            0x101A + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
+
+    /**
      * Driver attention monitoring warning.
      *
      * Returns whether a warning is being sent to the driver for being distracted for too long a

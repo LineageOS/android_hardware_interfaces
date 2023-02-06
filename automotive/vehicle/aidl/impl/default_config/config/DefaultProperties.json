@@ -3260,6 +3260,24 @@
             }
         },
         {
+            "property": "VehicleProperty::DRIVER_ATTENTION_MONITORING_STATE",
+            "defaultValue": {
+                "int32Values": [
+                    "DriverAttentionMonitoringState::NOT_DISTRACTED"
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": 0,
+                    "supportedEnumValues": [
+                        "ErrorState::NOT_AVAILABLE_DISABLED",
+                        "DriverAttentionMonitoringState::DISTRACTED",
+                        "DriverAttentionMonitoringState::NOT_DISTRACTED"
+                    ]
+                }
+            ]
+        },
+        {
             "property": "VehicleProperty::DRIVER_ATTENTION_MONITORING_WARNING",
             "defaultValue": {
                 "int32Values": [
