@@ -35,8 +35,8 @@ package android.hardware.cas;
 /* @hide */
 @Backing(type="int") @VintfStability
 enum SessionIntent {
-  LIVE = 0,
-  PLAYBACK = 1,
-  RECORD = 2,
-  TIMESHIFT = 3,
+  LIVE,
+  PLAYBACK,
+  RECORD,
+  TIMESHIFT,
 }
