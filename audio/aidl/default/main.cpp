@@ -25,9 +25,11 @@
 
 #include "core-impl/Config.h"
 #include "core-impl/Module.h"
+#include "core-impl/ModuleUsb.h"
 
 using aidl::android::hardware::audio::core::Config;
 using aidl::android::hardware::audio::core::Module;
+using aidl::android::hardware::audio::core::ModuleUsb;
 
 int main() {
     // Random values are used in the implementation.
@@ -48,7 +50,7 @@ int main() {
 
     // Make modules
     auto createModule = [](Module::Type type, const std::string& instance) {
-        auto module = ndk::SharedRefBase::make<Module>(type);
+        auto module = Module::createInstance(type);
         ndk::SpAIBinder moduleBinder = module->asBinder();
         const std::string moduleName = std::string(Module::descriptor).append("/").append(instance);
         AIBinder_setMinSchedulerPolicy(moduleBinder.get(), SCHED_NORMAL, ANDROID_PRIORITY_AUDIO);
