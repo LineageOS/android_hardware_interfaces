@@ -16,6 +16,23 @@
       "message": "This is a straight pick from CLO. Fixes slow motion on Mi 11 Lite 5G (xiaomi sm7350)",
       "revId": "0ec01ee11dfc582cd624037d02a2c986c899284b",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e3481735_7b932b01",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 9760
+      },
+      "writtenOn": "2023-02-06T09:02:24Z",
+      "side": 1,
+      "message": "OnePlus 7T/7T Pro devices have an issue with video switching to 60fps.\n1) Launch Aperture\n2) Switch to video\n3) Turn on 60fps\nWe get the freezing of the picture.\n\nReverting this commit fixes the problem.",
+      "revId": "0ec01ee11dfc582cd624037d02a2c986c899284b",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ],
   "submitRequirementResults": []
