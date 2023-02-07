@@ -78,6 +78,10 @@ interface IWifiChip {
          * for AFC purposes.
          */
         SET_AFC_CHANNEL_ALLOWANCE = 1 << 7,
+        /**
+         * Chip supports Tid-To-Link mapping negotiation.
+         */
+        T2LM_NEGOTIATION = 1 << 8,
     }
 
     /**

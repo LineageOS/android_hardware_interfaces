@@ -93,6 +93,7 @@ interface IWifiChip {
     P2P_RAND_MAC = (1 << 5) /* 32 */,
     WIGIG = (1 << 6) /* 64 */,
     SET_AFC_CHANNEL_ALLOWANCE = (1 << 7) /* 128 */,
+    T2LM_NEGOTIATION = (1 << 8) /* 256 */,
   }
   @VintfStability
   parcelable ChipConcurrencyCombinationLimit {
