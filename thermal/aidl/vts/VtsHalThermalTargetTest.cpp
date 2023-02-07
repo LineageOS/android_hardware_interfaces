@@ -95,21 +95,21 @@ class ThermalAidlTest : public testing::TestWithParam<std::string> {
 
         mThermalCallback = ndk::SharedRefBase::make<ThermalCallback>();
         ASSERT_NE(mThermalCallback, nullptr);
-        auto ret = mThermal->registerThermalChangedCallback(mThermalCallback);
-        ASSERT_TRUE(ret.isOk());
+        auto status = mThermal->registerThermalChangedCallback(mThermalCallback);
+        ASSERT_TRUE(status.isOk());
         // Expect to fail if register again
-        ret = mThermal->registerThermalChangedCallback(mThermalCallback);
-        ASSERT_FALSE(ret.isOk());
-        ASSERT_TRUE(ret.getStatus() == STATUS_INVALID_OPERATION);
+        status = mThermal->registerThermalChangedCallback(mThermalCallback);
+        ASSERT_FALSE(status.isOk());
+        ASSERT_EQ(EX_ILLEGAL_ARGUMENT, status.getExceptionCode());
     }
 
     void TearDown() override {
-        auto ret = mThermal->unregisterThermalChangedCallback(mThermalCallback);
-        ASSERT_TRUE(ret.isOk());
+        auto status = mThermal->unregisterThermalChangedCallback(mThermalCallback);
+        ASSERT_TRUE(status.isOk());
         // Expect to fail if unregister again
-        ret = mThermal->unregisterThermalChangedCallback(mThermalCallback);
-        ASSERT_FALSE(ret.isOk());
-        ASSERT_TRUE(ret.getStatus() == STATUS_INVALID_OPERATION);
+        status = mThermal->unregisterThermalChangedCallback(mThermalCallback);
+        ASSERT_FALSE(status.isOk());
+        ASSERT_EQ(EX_ILLEGAL_ARGUMENT, status.getExceptionCode());
     }
 
   protected:
