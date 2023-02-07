@@ -22,6 +22,7 @@
 
 using aidl::android::hardware::audio::common::SinkMetadata;
 using aidl::android::hardware::audio::common::SourceMetadata;
+using aidl::android::media::audio::common::AudioDevice;
 using aidl::android::media::audio::common::AudioOffloadInfo;
 
 namespace aidl::android::hardware::audio::core {
@@ -65,6 +66,11 @@ DriverStub::DriverStub(const StreamContext& context, bool isInput)
 
 ::android::status_t DriverStub::standby() {
     usleep(1000);
+    return ::android::OK;
+}
+
+::android::status_t DriverStub::setConnectedDevices(
+        const std::vector<AudioDevice>& connectedDevices __unused) {
     return ::android::OK;
 }
 
