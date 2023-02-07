@@ -64,8 +64,10 @@ package aidl.android.hardware.bluetooth.audio.setting {
 
   public class Scenario {
     ctor public Scenario();
+    method public String getBroadcast();
     method public String getDecode();
     method public String getEncode();
+    method public void setBroadcast(String);
     method public void setDecode(String);
     method public void setEncode(String);
   }
