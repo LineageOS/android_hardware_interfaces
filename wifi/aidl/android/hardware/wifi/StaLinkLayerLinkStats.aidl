@@ -95,4 +95,33 @@ parcelable StaLinkLayerLinkStats {
      * Per peer statistics for the link.
      */
     StaPeerInfo[] peers;
+    /**
+     * Various states of the link.
+     */
+    @Backing(type="int")
+    @VintfStability
+    enum StaLinkState {
+        /**
+         * Chip does not support reporting the state of the link.
+         */
+        UNKNOWN = 0,
+        /**
+         * Link has not been in use since last report. It is placed in power save. All management,
+         * control and data frames for the MLO connection are carried over other links. In this
+         * state the link will not listen to beacons even in DTIM period and does not perform any
+         * GTK/IGTK/BIGTK updates but remains associated.
+         */
+        NOT_IN_USE = 1 << 0,
+        /**
+         * Link is in use. In presence of traffic, it is set to be power active. When the traffic
+         * stops, the link will go into power save mode and will listen for beacons every DTIM
+         * period.
+         *
+         */
+        IN_USE = 1 << 1,
+    }
+    /**
+     * State of the link. Refer |StaLinkState|.
+     */
+    StaLinkState state;
 }
