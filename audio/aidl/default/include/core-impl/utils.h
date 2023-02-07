@@ -17,6 +17,7 @@
 #pragma once
 
 #include <algorithm>
+#include <map>
 #include <set>
 #include <vector>
 
@@ -99,6 +100,23 @@ std::vector<T*> selectByIds(std::vector<T>& v, const std::vector<int32_t>& ids,
         *missingIds = std::vector(idsSet.begin(), idsSet.end());
     }
     return result;
+}
+
+// Assuming that M is a map whose keys' type is K and values' type is V,
+// return the corresponding value of the given key from the map or default
+// value if the key is not found.
+template <typename M, typename K, typename V>
+auto findValueOrDefault(const M& m, const K& key, V defaultValue) {
+    auto it = m.find(key);
+    return it == m.end() ? defaultValue : it->second;
+}
+
+// Assuming that M is a map whose keys' type is K, return the given key if it
+// is found from the map or default value.
+template <typename M, typename K>
+auto findKeyOrDefault(const M& m, const K& key, K defaultValue) {
+    auto it = m.find(key);
+    return it == m.end() ? defaultValue : key;
 }
 
 }  // namespace aidl::android::hardware::audio::core
