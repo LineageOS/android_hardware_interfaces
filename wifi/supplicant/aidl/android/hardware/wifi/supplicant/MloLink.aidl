@@ -58,4 +58,12 @@ parcelable MloLink {
      */
     byte tidsUplinkMap;
     byte tidsDownlinkMap;
+    /**
+     * AP Link MAC Address
+     */
+    @nullable byte[/* 6 */] apLinkMacAddress;
+    /**
+     * Frequency on which the link operates in MHz.
+     */
+    int frequencyMHz;
 }
