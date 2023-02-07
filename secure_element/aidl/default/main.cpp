@@ -586,7 +586,7 @@ class EmulatedSecureElement : public BnSecureElement {
 
         // The selected basic or logical channel is not opened.
         if (channel_number >= channels_.size() || !channels_[channel_number].opened) {
-            return ScopedAStatus::ok();
+            return ScopedAStatus::fromServiceSpecificError(FAILED);
         }
 
         // TODO(b/123254068) - this is not an implementation of the OMAPI protocol
