@@ -30,6 +30,8 @@ using aidl::android::hardware::audio::effect::IEffect;
 using aidl::android::hardware::audio::effect::kVirtualizerSwImplUUID;
 using aidl::android::hardware::audio::effect::State;
 using aidl::android::hardware::audio::effect::VirtualizerSw;
+using aidl::android::media::audio::common::AudioChannelLayout;
+using aidl::android::media::audio::common::AudioDeviceDescription;
 using aidl::android::media::audio::common::AudioUuid;
 
 extern "C" binder_exception_t createEffect(const AudioUuid* in_impl_uuid,
@@ -93,10 +95,18 @@ ndk::ScopedAStatus VirtualizerSw::setParameterSpecific(const Parameter::Specific
 
             RETURN_IF(mContext->setVrStrength(vrParam.get<Virtualizer::strengthPm>()) !=
                               RetCode::SUCCESS,
-                      EX_ILLEGAL_ARGUMENT, "strengthPmNotSupported");
+                      EX_ILLEGAL_ARGUMENT, "setStrengthPmFailed");
             return ndk::ScopedAStatus::ok();
         }
-        default: {
+        case Virtualizer::device: {
+            RETURN_IF(mContext->setForcedDevice(vrParam.get<Virtualizer::device>()) !=
+                              RetCode::SUCCESS,
+                      EX_ILLEGAL_ARGUMENT, "setDeviceFailed");
+            return ndk::ScopedAStatus::ok();
+        }
+        case Virtualizer::speakerAngles:
+            FALLTHROUGH_INTENDED;
+        case Virtualizer::vendor: {
             LOG(ERROR) << __func__ << " unsupported tag: " << toString(tag);
             return ndk::ScopedAStatus::fromExceptionCodeWithMessage(EX_ILLEGAL_ARGUMENT,
                                                                     "VirtualizerTagNotSupported");
@@ -113,10 +123,13 @@ ndk::ScopedAStatus VirtualizerSw::getParameterSpecific(const Parameter::Id& id,
     switch (vrIdTag) {
         case Virtualizer::Id::commonTag:
             return getParameterVirtualizer(vrId.get<Virtualizer::Id::commonTag>(), specific);
-        default:
+        case Virtualizer::Id::speakerAnglesPayload:
+            return getSpeakerAngles(vrId.get<Virtualizer::Id::speakerAnglesPayload>(), specific);
+        case Virtualizer::Id::vendorExtensionTag: {
             LOG(ERROR) << __func__ << " unsupported tag: " << toString(tag);
             return ndk::ScopedAStatus::fromExceptionCodeWithMessage(EX_ILLEGAL_ARGUMENT,
                                                                     "VirtualizerTagNotSupported");
+        }
     }
 }
 
@@ -130,7 +143,13 @@ ndk::ScopedAStatus VirtualizerSw::getParameterVirtualizer(const Virtualizer::Tag
             vrParam.set<Virtualizer::strengthPm>(mContext->getVrStrength());
             break;
         }
-        default: {
+        case Virtualizer::device: {
+            vrParam.set<Virtualizer::device>(mContext->getForcedDevice());
+            break;
+        }
+        case Virtualizer::speakerAngles:
+            FALLTHROUGH_INTENDED;
+        case Virtualizer::vendor: {
             LOG(ERROR) << __func__ << " unsupported tag: " << toString(tag);
             return ndk::ScopedAStatus::fromExceptionCodeWithMessage(EX_ILLEGAL_ARGUMENT,
                                                                     "VirtualizerTagNotSupported");
@@ -138,6 +157,27 @@ ndk::ScopedAStatus VirtualizerSw::getParameterVirtualizer(const Virtualizer::Tag
     }
 
     specific->set<Parameter::Specific::virtualizer>(vrParam);
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus VirtualizerSw::getSpeakerAngles(const Virtualizer::SpeakerAnglesPayload payload,
+                                                   Parameter::Specific* specific) {
+    std::vector<Virtualizer::ChannelAngle> angles;
+    if (::android::hardware::audio::common::getChannelCount(payload.layout) == 1) {
+        angles = {{.channel = (int32_t)AudioChannelLayout::CHANNEL_FRONT_LEFT,
+                   .azimuthDegree = 0,
+                   .elevationDegree = 0}};
+    } else {
+        angles = {{.channel = (int32_t)AudioChannelLayout::CHANNEL_FRONT_LEFT,
+                   .azimuthDegree = -90,
+                   .elevationDegree = 0},
+                  {.channel = (int32_t)AudioChannelLayout::CHANNEL_FRONT_RIGHT,
+                   .azimuthDegree = 90,
+                   .elevationDegree = 0}};
+    }
+
+    Virtualizer param = Virtualizer::make<Virtualizer::speakerAngles>(angles);
+    specific->set<Parameter::Specific::virtualizer>(param);
     return ndk::ScopedAStatus::ok();
 }
 
