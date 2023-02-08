@@ -45,6 +45,7 @@ using ::aidl::android::hardware::automotive::vehicle::EvsServiceType;
 using ::aidl::android::hardware::automotive::vehicle::ForwardCollisionWarningState;
 using ::aidl::android::hardware::automotive::vehicle::FuelType;
 using ::aidl::android::hardware::automotive::vehicle::GsrComplianceRequirementType;
+using ::aidl::android::hardware::automotive::vehicle::LaneKeepAssistState;
 using ::aidl::android::hardware::automotive::vehicle::RawPropValues;
 using ::aidl::android::hardware::automotive::vehicle::VehicleApPowerStateReport;
 using ::aidl::android::hardware::automotive::vehicle::VehicleApPowerStateReq;
@@ -218,6 +219,8 @@ JsonValueParser::JsonValueParser() {
             std::make_unique<ConstantParser<ForwardCollisionWarningState>>();
     mConstantParsersByType["BlindSpotWarningState"] =
             std::make_unique<ConstantParser<BlindSpotWarningState>>();
+    mConstantParsersByType["LaneKeepAssistState"] =
+            std::make_unique<ConstantParser<LaneKeepAssistState>>();
     mConstantParsersByType["Constants"] = std::make_unique<LocalVariableParser>();
 }
 
