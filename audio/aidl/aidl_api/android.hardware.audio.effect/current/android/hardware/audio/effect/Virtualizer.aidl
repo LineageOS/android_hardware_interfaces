@@ -36,15 +36,29 @@ package android.hardware.audio.effect;
 union Virtualizer {
   android.hardware.audio.effect.VendorExtension vendor;
   int strengthPm;
+  android.hardware.audio.effect.Virtualizer.ChannelAngle[] speakerAngles;
+  android.media.audio.common.AudioDeviceDescription device;
   @VintfStability
   union Id {
     int vendorExtensionTag;
     android.hardware.audio.effect.Virtualizer.Tag commonTag;
+    android.hardware.audio.effect.Virtualizer.SpeakerAnglesPayload speakerAnglesPayload;
+  }
+  @VintfStability
+  parcelable SpeakerAnglesPayload {
+    android.media.audio.common.AudioChannelLayout layout;
+    android.media.audio.common.AudioDeviceDescription device;
   }
   @VintfStability
   parcelable Capability {
     android.hardware.audio.effect.VendorExtension extension;
     int maxStrengthPm;
     boolean strengthSupported;
+  }
+  @VintfStability
+  parcelable ChannelAngle {
+    int channel;
+    int azimuthDegree;
+    int elevationDegree;
   }
 }

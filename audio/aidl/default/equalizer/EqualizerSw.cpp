@@ -150,6 +150,10 @@ ndk::ScopedAStatus EqualizerSw::getParameterEqualizer(const Equalizer::Tag& tag,
             eqParam.set<Equalizer::preset>(mContext->getEqPreset());
             break;
         }
+        case Equalizer::centerFreqMh: {
+            eqParam.set<Equalizer::centerFreqMh>(mContext->getCenterFreqs());
+            break;
+        }
         default: {
             LOG(ERROR) << __func__ << " not handled tag: " << toString(tag);
             return ndk::ScopedAStatus::fromExceptionCodeWithMessage(EX_ILLEGAL_ARGUMENT,
