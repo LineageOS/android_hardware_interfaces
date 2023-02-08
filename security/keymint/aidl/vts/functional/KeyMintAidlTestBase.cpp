@@ -2052,9 +2052,10 @@ void device_id_attestation_vsr_check(const ErrorCode& result) {
 // Check whether the given named feature is available.
 bool check_feature(const std::string& name) {
     ::android::sp<::android::IServiceManager> sm(::android::defaultServiceManager());
-    ::android::sp<::android::IBinder> binder(sm->getService(::android::String16("package_native")));
+    ::android::sp<::android::IBinder> binder(
+        sm->waitForService(::android::String16("package_native")));
     if (binder == nullptr) {
-        GTEST_LOG_(ERROR) << "getService package_native failed";
+        GTEST_LOG_(ERROR) << "waitForService package_native failed";
         return false;
     }
     ::android::sp<::android::content::pm::IPackageManagerNative> packageMgr =
