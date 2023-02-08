@@ -68,4 +68,11 @@ union NoiseSuppression {
      * The NS level.
      */
     Level level;
+
+    /**
+     * Noise suppression type.
+     */
+    @VintfStability @Backing(type="int") enum Type { SINGLE_CHANNEL, MULTI_CHANNEL }
+
+    Type type;
 }
