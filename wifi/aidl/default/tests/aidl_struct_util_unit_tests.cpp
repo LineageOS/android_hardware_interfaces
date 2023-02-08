@@ -131,10 +131,13 @@ TEST_F(AidlStructUtilTest, canConvertLegacyLinkLayerMlStatsToAidl) {
         link.peers.push_back(legacy_hal::WifiPeerInfo{});
         link.peers.push_back(legacy_hal::WifiPeerInfo{});
         link.stat.beacon_rx = rand();
-        link.stat.link_id = rand() % 15;
+        // MLO link id: 0 - 15
+        link.stat.link_id = rand() % 16;
+        // Maximum number of radios is limited to 3 for testing.
         link.stat.radio = rand() % 4;
         link.stat.frequency = rand();
-        link.stat.rssi_mgmt = rand();
+        // RSSI: 0 to -127
+        link.stat.rssi_mgmt = (rand() % 128) * -1;
         link.stat.ac[legacy_hal::WIFI_AC_BE].rx_mpdu = rand();
         link.stat.ac[legacy_hal::WIFI_AC_BE].tx_mpdu = rand();
         link.stat.ac[legacy_hal::WIFI_AC_BE].mpdu_lost = rand();
@@ -171,13 +174,14 @@ TEST_F(AidlStructUtilTest, canConvertLegacyLinkLayerMlStatsToAidl) {
         link.stat.ac[legacy_hal::WIFI_AC_VO].contention_time_avg = rand();
         link.stat.ac[legacy_hal::WIFI_AC_VO].contention_num_samples = rand();
 
-        link.stat.time_slicing_duty_cycle_percent = rand();
+        link.stat.time_slicing_duty_cycle_percent = rand() % 101;
         link.stat.num_peers = 2;
 
         // Set peer stats for each of the peers.
         for (auto& peer : link.peers) {
-            peer.peer_info.bssload.sta_count = rand();
-            peer.peer_info.bssload.chan_util = rand();
+            // Max station count is limited to 32 for testing.
+            peer.peer_info.bssload.sta_count = rand() % 33;
+            peer.peer_info.bssload.chan_util = rand() % 101;
             wifi_rate_stat rate_stat1 = {
                     .rate = {3, 1, 2, 5, 0, 0},
                     .tx_mpdu = 0,
@@ -202,7 +206,8 @@ TEST_F(AidlStructUtilTest, canConvertLegacyLinkLayerMlStatsToAidl) {
     }
     // Set radio stats
     for (auto& radio : legacy_ml_stats.radios) {
-        radio.stats.radio = rand();
+        // Maximum number of radios is limited to 3 for testing.
+        radio.stats.radio = rand() % 4;
         radio.stats.on_time = rand();
         radio.stats.tx_time = rand();
         radio.stats.rx_time = rand();
@@ -409,7 +414,8 @@ TEST_F(AidlStructUtilTest, canConvertLegacyLinkLayerStatsToAidl) {
     legacy_stats.peers.push_back(legacy_hal::WifiPeerInfo{});
     legacy_stats.peers.push_back(legacy_hal::WifiPeerInfo{});
     legacy_stats.iface.beacon_rx = rand();
-    legacy_stats.iface.rssi_mgmt = rand();
+    // RSSI: 0 to -127
+    legacy_stats.iface.rssi_mgmt = rand() % 128;
     legacy_stats.iface.ac[legacy_hal::WIFI_AC_BE].rx_mpdu = rand();
     legacy_stats.iface.ac[legacy_hal::WIFI_AC_BE].tx_mpdu = rand();
     legacy_stats.iface.ac[legacy_hal::WIFI_AC_BE].mpdu_lost = rand();
@@ -446,11 +452,12 @@ TEST_F(AidlStructUtilTest, canConvertLegacyLinkLayerStatsToAidl) {
     legacy_stats.iface.ac[legacy_hal::WIFI_AC_VO].contention_time_avg = rand();
     legacy_stats.iface.ac[legacy_hal::WIFI_AC_VO].contention_num_samples = rand();
 
-    legacy_stats.iface.info.time_slicing_duty_cycle_percent = rand();
+    legacy_stats.iface.info.time_slicing_duty_cycle_percent = rand() % 101;
     legacy_stats.iface.num_peers = 1;
 
     for (auto& radio : legacy_stats.radios) {
-        radio.stats.radio = rand();
+        // Max number of radios limit to 3.
+        radio.stats.radio = rand() % 4;
         radio.stats.on_time = rand();
         radio.stats.tx_time = rand();
         radio.stats.rx_time = rand();
@@ -479,8 +486,9 @@ TEST_F(AidlStructUtilTest, canConvertLegacyLinkLayerStatsToAidl) {
     }
 
     for (auto& peer : legacy_stats.peers) {
-        peer.peer_info.bssload.sta_count = rand();
-        peer.peer_info.bssload.chan_util = rand();
+        // Max number of stations is limited to 32 for testing.
+        peer.peer_info.bssload.sta_count = rand() % 33;
+        peer.peer_info.bssload.chan_util = rand() % 101;
         wifi_rate_stat rate_stat1 = {
                 .rate = {3, 1, 2, 5, 0, 0},
                 .tx_mpdu = 0,

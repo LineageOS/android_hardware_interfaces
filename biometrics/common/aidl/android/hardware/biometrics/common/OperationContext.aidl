@@ -17,6 +17,7 @@
 package android.hardware.biometrics.common;
 
 import android.hardware.biometrics.common.OperationReason;
+import android.hardware.biometrics.common.WakeReason;
 
 /**
  * Additional context associated with an operation.
@@ -47,4 +48,14 @@ parcelable OperationContext {
 
     /** Flag indicating that crypto was requested. */
     boolean isCrypto = false;
+
+    /**
+     * An associated wake reason for this operation or WakeReason.UNKNOWN if this
+     * operation was not associated with a device wake up event.
+     *
+     * This should be interpreted as a hint to enable optimizations or tracing. The
+     * framework may choose to use WakeReason.UNKNOWN at any time based on the device's
+     * policy.
+     */
+    WakeReason wakeReason = WakeReason.UNKNOWN;
 }

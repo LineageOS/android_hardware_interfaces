@@ -35,7 +35,7 @@ package android.hardware.biometrics.common;
 /* @hide */
 @Backing(type="byte") @VintfStability
 enum OperationReason {
-  UNKNOWN = 0,
-  BIOMETRIC_PROMPT = 1,
-  KEYGUARD = 2,
+  UNKNOWN,
+  BIOMETRIC_PROMPT,
+  KEYGUARD,
 }

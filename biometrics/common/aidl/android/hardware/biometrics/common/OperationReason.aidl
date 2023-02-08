@@ -15,7 +15,9 @@
  */
 
 package android.hardware.biometrics.common;
+
 /**
+ * The reason for invoking an operation.
  * @hide
  */
 @VintfStability
