@@ -34,10 +34,10 @@
 package android.hardware.automotive.vehicle;
 @Backing(type="int") @VintfStability
 enum Obd2CommonIgnitionMonitors {
-  COMPONENTS_AVAILABLE = (0x1 << 0),
-  COMPONENTS_INCOMPLETE = (0x1 << 1),
-  FUEL_SYSTEM_AVAILABLE = (0x1 << 2),
-  FUEL_SYSTEM_INCOMPLETE = (0x1 << 3),
-  MISFIRE_AVAILABLE = (0x1 << 4),
-  MISFIRE_INCOMPLETE = (0x1 << 5),
+  COMPONENTS_AVAILABLE = (0x1 << 0) /* 1 */,
+  COMPONENTS_INCOMPLETE = (0x1 << 1) /* 2 */,
+  FUEL_SYSTEM_AVAILABLE = (0x1 << 2) /* 4 */,
+  FUEL_SYSTEM_INCOMPLETE = (0x1 << 3) /* 8 */,
+  MISFIRE_AVAILABLE = (0x1 << 4) /* 16 */,
+  MISFIRE_INCOMPLETE = (0x1 << 5) /* 32 */,
 }

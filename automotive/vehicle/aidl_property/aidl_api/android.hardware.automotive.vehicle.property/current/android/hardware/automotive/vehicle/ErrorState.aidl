@@ -34,9 +34,9 @@
 package android.hardware.automotive.vehicle;
 @Backing(type="int") @VintfStability
 enum ErrorState {
-  OTHER_ERROR_STATE = (-1),
-  NOT_AVAILABLE_DISABLED = (-2),
-  NOT_AVAILABLE_SPEED_LOW = (-3),
-  NOT_AVAILABLE_SPEED_HIGH = (-4),
-  NOT_AVAILABLE_SAFETY = (-5),
+  OTHER_ERROR_STATE = (-1) /* -1 */,
+  NOT_AVAILABLE_DISABLED = (-2) /* -2 */,
+  NOT_AVAILABLE_SPEED_LOW = (-3) /* -3 */,
+  NOT_AVAILABLE_SPEED_HIGH = (-4) /* -4 */,
+  NOT_AVAILABLE_SAFETY = (-5) /* -5 */,
 }

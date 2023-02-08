@@ -231,6 +231,7 @@ public final class AccessForVehicleProperty {
         Map.entry(VehicleProperty.GENERAL_SAFETY_REGULATION_COMPLIANCE_REQUIREMENT, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.SUPPORTED_PROPERTY_IDS, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.SHUTDOWN_REQUEST, VehiclePropertyAccess.WRITE),
+        Map.entry(VehicleProperty.VEHICLE_IN_USE, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.AUTOMATIC_EMERGENCY_BRAKING_ENABLED, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.AUTOMATIC_EMERGENCY_BRAKING_STATE, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.FORWARD_COLLISION_WARNING_ENABLED, VehiclePropertyAccess.READ_WRITE),
