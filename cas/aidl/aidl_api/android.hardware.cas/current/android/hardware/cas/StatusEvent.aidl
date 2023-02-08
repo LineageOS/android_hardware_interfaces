@@ -35,6 +35,6 @@ package android.hardware.cas;
 /* @hide */
 @Backing(type="byte") @VintfStability
 enum StatusEvent {
-  PLUGIN_PHYSICAL_MODULE_CHANGED = 0,
-  PLUGIN_SESSION_NUMBER_CHANGED = 1,
+  PLUGIN_PHYSICAL_MODULE_CHANGED,
+  PLUGIN_SESSION_NUMBER_CHANGED,
 }

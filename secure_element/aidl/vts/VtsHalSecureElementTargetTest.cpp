@@ -109,6 +109,7 @@ class SecureElementAidl : public ::testing::TestWithParam<std::string> {
     }
 
     void TearDown() override {
+        EXPECT_OK(secure_element_->reset());
         secure_element_ = nullptr;
         secure_element_callback_ = nullptr;
     }
@@ -232,10 +233,10 @@ TEST_P(SecureElementAidl, closeChannel) {
     std::vector<uint8_t> basic_channel_response;
     LogicalChannelResponse logical_channel_response;
 
-    // closeChannel called on non-existing basic or logical channel is a no-op
-    // and shall succeed.
-    EXPECT_OK(secure_element_->closeChannel(0));
-    EXPECT_OK(secure_element_->closeChannel(1));
+    // closeChannel called on non-existing basic or logical channel
+    // shall fail.
+    EXPECT_ERR(secure_element_->closeChannel(0));
+    EXPECT_ERR(secure_element_->closeChannel(1));
 
     // closeChannel called on basic channel closes the basic channel.
     EXPECT_OK(secure_element_->openBasicChannel(kSelectableAid, 0x00, &basic_channel_response));

@@ -22,13 +22,13 @@ package android.hardware.wifi;
 @VintfStability
 parcelable WifiChipCapabilities {
     /**
-     * Maximum number of links used in Multi-Link Operation. The maximum
-     * number of links used for MLO can be different from the number of
-     * radios supported by the chip.
+     * Maximum number of Simultaneous Transmit and Receive (STR) links used
+     * in Multi-Link Operation. The maximum number of STR links used can be
+     * different from the maximum number of radios supported by the chip.
      *
      * This is a static configuration of the chip.
      */
-    int maxMloLinkCount;
+    int maxMloStrLinkCount;
     /**
      * Maximum number of concurrent TDLS sessions that can be enabled
      * by framework via ISupplicantStaIface#initiateTdlsSetup().
