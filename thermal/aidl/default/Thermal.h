@@ -54,7 +54,8 @@ class Thermal : public BnThermal {
             const std::shared_ptr<IThermalChangedCallback>& in_callback) override;
 
   private:
-    std::set<std::shared_ptr<IThermalChangedCallback>> mCallbacks;
+    std::mutex thermal_callback_mutex_;
+    std::vector<std::shared_ptr<IThermalChangedCallback>> thermal_callbacks_;
 };
 
 }  // namespace example

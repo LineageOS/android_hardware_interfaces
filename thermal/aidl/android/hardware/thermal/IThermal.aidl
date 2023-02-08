@@ -36,9 +36,8 @@ interface IThermal {
      *    exist on boot. The method always returns and never removes from
      *    the list such cooling devices.
      *
-     * @throws ScopedAStatus Status of the operation. If status code is not
-     *    STATUS_OK, getMessage() must be populated with the human-readable
-     *    error message.
+     * @throws EX_ILLEGAL_STATE If the Thermal HAL is not initialized successfully. And the
+     *         getMessage() must be populated with human-readable error message.
      */
     CoolingDevice[] getCoolingDevices();
 
@@ -54,9 +53,8 @@ interface IThermal {
      *    exist on boot. The method always returns and never removes from
      *    the list such cooling devices.
      *
-     * @throws ScopedAStatus Status of the operation. If status code is not
-     *    STATUS_OK, the getMessage() must be populated with the human-readable
-     *    error message.
+     * @throws EX_ILLEGAL_STATE If the Thermal HAL is not initialized successfully. And the
+     *         getMessage() must be populated with human-readable error message.
      */
     CoolingDevice[] getCoolingDevicesWithType(in CoolingType type);
 
@@ -70,9 +68,8 @@ interface IThermal {
      *    they go offline, if these devices exist on boot. The method
      *    always returns and never removes such temperatures.
      *
-     * @throws ScopedAStatus Status of the operation. If status code is not
-     *    STATUS_OK, the getMessage() must be populated with the human-readable
-     *    error message.
+     * @throws EX_ILLEGAL_STATE If the Thermal HAL is not initialized successfully. And the
+     *         getMessage() must be populated with human-readable error message.
      */
     Temperature[] getTemperatures();
 
@@ -88,9 +85,8 @@ interface IThermal {
      *    they go offline, if these devices exist on boot. The method
      *    always returns and never removes such temperatures.
      *
-     * @throws ScopedAStatus Status of the operation. If status code is not
-     *    STATUS_OK, the getMessage() must be populated with the human-readable
-     *    error message.
+     * @throws EX_ILLEGAL_STATE If the Thermal HAL is not initialized successfully. And the
+     *         getMessage() must be populated with human-readable error message.
      */
     Temperature[] getTemperaturesWithType(in TemperatureType type);
 
@@ -110,9 +106,8 @@ interface IThermal {
      *    throttling status, use getTemperatures or registerThermalChangedCallback
      *    and listen to the callback.
      *
-     * @throws ScopedAStatus Status of the operation. If status code is not
-     *    STATUS_OK, the getMessage() must be populated with the human-readable
-     *    error message.
+     * @throws EX_ILLEGAL_STATE If the Thermal HAL is not initialized successfully. And the
+     *         getMessage() must be populated with human-readable error message.
      */
     TemperatureThreshold[] getTemperatureThresholds();
 
@@ -135,9 +130,8 @@ interface IThermal {
      *    throttling status, use getTemperatures or registerThermalChangedCallback
      *    and listen to the callback.
      *
-     * @throws ScopedAStatus Status of the operation. If status code is not
-     *    STATUS_OK, the getMessage() must be populated with the human-readable
-     *    error message.
+     * @throws EX_ILLEGAL_STATE If the Thermal HAL is not initialized successfully. And the
+     *         getMessage() must be populated with human-readable error message.
      */
     TemperatureThreshold[] getTemperatureThresholdsWithType(in TemperatureType type);
 
@@ -152,12 +146,10 @@ interface IThermal {
      *    thermal events. if nullptr callback is given, the status code will be
      *    STATUS_BAD_VALUE and the operation will fail.
      *
-     * @throws ScopedAStatus Status of the operation. If status code is not
-     *    STATUS_OK, the getMessage() must be populated with the human-readable
-     *    error message. If callback is given nullptr, the returned status code
-     *    will be STATUS_BAD_VALUE and the exception will be EX_ILLEGAL_ARGUMENT.
-     *    if callback is already registered, the returned status code will be
-     *    STATUS_INVALID_OPERATION, the exception will be EX_ILLEGAL_ARGUMENT.
+     * @throws EX_ILLEGAL_ARGUMENT If the callback is given nullptr or already registered. And the
+     *         getMessage() must be populated with human-readable error message.
+     * @throws EX_ILLEGAL_STATE If the Thermal HAL is not initialized successfully. And the
+     *         getMessage() must be populated with human-readable error message.
      */
     void registerThermalChangedCallback(in IThermalChangedCallback callback);
 
@@ -174,12 +166,10 @@ interface IThermal {
      *    STATUS_BAD_VALUE and the operation will fail.
      * @param type the type to be filtered.
      *
-     * @throws ScopedAStatus Status of the operation. If status code is not
-     *    STATUS_OK, the getMessage() must be populated with the human-readable
-     *    error message. If callback is given nullptr, the returned status code
-     *    will be STATUS_BAD_VALUE and the exception will be EX_ILLEGAL_ARGUMENT.
-     *    if callback is already registered, the returned status code will be
-     *    STATUS_INVALID_OPERATION, the exception will be EX_ILLEGAL_ARGUMENT.
+     * @throws EX_ILLEGAL_ARGUMENT If the callback is given nullptr or already registered. And the
+     *         getMessage() must be populated with human-readable error message.
+     * @throws EX_ILLEGAL_STATE If the Thermal HAL is not initialized successfully. And the
+     *         getMessage() must be populated with human-readable error message.
      */
     void registerThermalChangedCallbackWithType(
             in IThermalChangedCallback callback, in TemperatureType type);
@@ -192,12 +182,10 @@ interface IThermal {
      *    thermal events. if nullptr callback is given, the status code will be
      *    STATUS_BAD_VALUE and the operation will fail.
      *
-     * @throws ScopedAStatus Status of the operation. If status code is not
-     *    STATUS_OK, the getMessage() must be populated with the human-readable
-     *    error message. If callback is given nullptr, the returned status code
-     *    will be STATUS_BAD_VALUE and the exception will be EX_ILLEGAL_ARGUMENT.
-     *    if callback is not registered, the returned status code will be
-     *    STATUS_INVALID_OPERATION, the exception will be EX_ILLEGAL_ARGUMENT.
+     * @throws EX_ILLEGAL_ARGUMENT If the callback is given nullptr or not previously registered.
+     *         And the getMessage() must be populated with human-readable error message.
+     * @throws EX_ILLEGAL_STATE If the Thermal HAL is not initialized successfully. And the
+     *         getMessage() must be populated with human-readable error message.
      */
     void unregisterThermalChangedCallback(in IThermalChangedCallback callback);
 }
