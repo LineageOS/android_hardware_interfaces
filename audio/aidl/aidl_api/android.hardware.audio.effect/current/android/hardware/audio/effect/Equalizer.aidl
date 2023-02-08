@@ -37,6 +37,7 @@ union Equalizer {
   android.hardware.audio.effect.VendorExtension vendorExtension;
   android.hardware.audio.effect.Equalizer.BandLevel[] bandLevels;
   int preset;
+  int[] centerFreqMh;
   @VintfStability
   union Id {
     int vendorExtensionTag;

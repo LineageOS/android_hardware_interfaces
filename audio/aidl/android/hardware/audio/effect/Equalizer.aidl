@@ -72,7 +72,7 @@ union Equalizer {
     }
 
     /**
-     * Supported minimal and maximal frequency for each band in millihertz.
+     * Supported minimal and maximal frequency for each band in milliHertz.
      */
     @VintfStability
     parcelable BandFrequency {
@@ -97,8 +97,14 @@ union Equalizer {
      * Level for each band.
      */
     BandLevel[] bandLevels;
+
     /**
      * Index of current preset.
      */
     int preset;
+
+    /**
+     * Get only parameter, get the center frequency for all bands in milliHertz.
+     */
+    int[] centerFreqMh;
 }
