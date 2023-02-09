@@ -18,7 +18,11 @@ aidl_interface {
     backend: {
         java: {
             sdk_version: "module_Tiramisu",
-            enabled: false,
+            enabled: true,
+            apex_available: [
+                "//apex_available:platform",
+                "com.android.uwb",
+            ],
         },
         ndk: {
             apex_available: [
