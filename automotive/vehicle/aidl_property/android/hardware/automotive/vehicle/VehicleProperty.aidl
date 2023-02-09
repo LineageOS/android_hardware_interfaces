@@ -3538,9 +3538,10 @@ enum VehicleProperty {
      * Set true to enable BSW and false to disable BSW. When BSW is enabled, the ADAS system in the
      * vehicle should be turned on and monitoring for objects in the vehicle’s blind spots.
      *
-     * If BSW is not available, IVehicle#get must not return any NOT_AVAILABLE value in StatusCode.
-     * Other StatusCode values like TRY_AGAIN may still be used as needed. For example, if BSW is
-     * not available because the vehicle speed is too low, IVehicle#get must return false.
+     * In general, BLIND_SPOT_WARNING_ENABLED should always return true or false. If the feature is
+     * not available due to some temporary state, such as the vehicle speed being too low, that
+     * information must be conveyed through the ErrorState values in the BLIND_SPOT_WARNING_STATE
+     * property.
      *
      * This property is defined as read_write, but OEMs have the option to implement it as read
      * only.
