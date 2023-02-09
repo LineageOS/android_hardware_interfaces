@@ -86,14 +86,14 @@ RetCode EffectThread::handleStartStop(bool stop) {
     {
         std::lock_guard lg(mThreadMutex);
         if (stop == mStop) {
-            LOG(WARNING) << __func__ << " already " << stop ? "stop" : "start";
+            LOG(WARNING) << __func__ << " already " << (stop ? "stop" : "start");
             return RetCode::SUCCESS;
         }
         mStop = stop;
     }
 
     mCv.notify_one();
-    LOG(DEBUG) << stop ? "stop done" : "start done";
+    LOG(DEBUG) << (stop ? "stop done" : "start done");
     return RetCode::SUCCESS;
 }
 
