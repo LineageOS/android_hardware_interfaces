@@ -2237,6 +2237,44 @@ enum VehicleProperty {
     STEERING_WHEEL_EASY_ACCESS_ENABLED =
             0x0BE6 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
     /**
+     * Property that represents the current position of the glove box door.
+     *
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined.
+     * The minInt32Value must be 0.
+     * All integers between minInt32Value and maxInt32Value must be supported.
+     *
+     * minInt32Value indicates that the glove box door is closed.
+     * maxInt32Value indicates that the glove box door is in the fully open position.
+     *
+     * Values in between minInt32Value and maxInt32Value indicate a transition state between the
+     * closed and fully open positions.
+     *
+     * The area ID must match the seat by which the glove box is intended to be used  (e.g. if the
+     * front right dashboard has a glove box embedded in it, then the area ID should be
+     * SEAT_1_RIGHT).
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     */
+    GLOVE_BOX_DOOR_POS =
+            0x0BF0 + VehiclePropertyGroup.SYSTEM + VehicleArea.SEAT + VehiclePropertyType.INT32,
+
+    /**
+     * Lock or unlock the glove box.
+     *
+     * If true, the glove box is locked. If false, the glove box is unlocked.
+     *
+     * The area ID must match the seat by which the glove box is intended to be used (e.g. if the
+     * front right dashboard has a glove box embedded in it, then the area ID should be
+     * VehicleAreaSeat#ROW_1_RIGHT).
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     */
+    GLOVE_BOX_LOCKED =
+            0x0BF1 + VehiclePropertyGroup.SYSTEM + VehicleArea.SEAT + VehiclePropertyType.BOOLEAN,
+
+    /**
      * Vehicle Maps Service (VMS) message
      *
      * This property uses MIXED data to communicate vms messages.

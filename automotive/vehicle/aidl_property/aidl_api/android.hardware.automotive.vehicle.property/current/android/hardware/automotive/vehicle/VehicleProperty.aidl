@@ -184,6 +184,8 @@ enum VehicleProperty {
   STEERING_WHEEL_THEFT_LOCK_ENABLED = (((0x0BE4 + android.hardware.automotive.vehicle.VehiclePropertyGroup.SYSTEM) + android.hardware.automotive.vehicle.VehicleArea.GLOBAL) + android.hardware.automotive.vehicle.VehiclePropertyType.BOOLEAN) /* 287312868 */,
   STEERING_WHEEL_LOCKED = (((0x0BE5 + android.hardware.automotive.vehicle.VehiclePropertyGroup.SYSTEM) + android.hardware.automotive.vehicle.VehicleArea.GLOBAL) + android.hardware.automotive.vehicle.VehiclePropertyType.BOOLEAN) /* 287312869 */,
   STEERING_WHEEL_EASY_ACCESS_ENABLED = (((0x0BE6 + android.hardware.automotive.vehicle.VehiclePropertyGroup.SYSTEM) + android.hardware.automotive.vehicle.VehicleArea.GLOBAL) + android.hardware.automotive.vehicle.VehiclePropertyType.BOOLEAN) /* 287312870 */,
+  GLOVE_BOX_DOOR_POS = (((0x0BF0 + android.hardware.automotive.vehicle.VehiclePropertyGroup.SYSTEM) + android.hardware.automotive.vehicle.VehicleArea.SEAT) + android.hardware.automotive.vehicle.VehiclePropertyType.INT32) /* 356518896 */,
+  GLOVE_BOX_LOCKED = (((0x0BF1 + android.hardware.automotive.vehicle.VehiclePropertyGroup.SYSTEM) + android.hardware.automotive.vehicle.VehicleArea.SEAT) + android.hardware.automotive.vehicle.VehiclePropertyType.BOOLEAN) /* 354421745 */,
   VEHICLE_MAP_SERVICE = (((0x0C00 + 0x10000000) + 0x01000000) + 0x00e00000) /* 299895808 */,
   OBD2_LIVE_FRAME = (((0x0D00 + 0x10000000) + 0x01000000) + 0x00e00000) /* 299896064 */,
   OBD2_FREEZE_FRAME = (((0x0D01 + 0x10000000) + 0x01000000) + 0x00e00000) /* 299896065 */,

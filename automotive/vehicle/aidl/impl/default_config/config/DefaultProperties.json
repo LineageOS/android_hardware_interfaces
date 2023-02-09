@@ -2778,6 +2778,34 @@
             }
         },
         {
+            "property": "VehicleProperty::GLOVE_BOX_DOOR_POS",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "Constants::SEAT_1_RIGHT",
+                    "minInt32Value": 0,
+                    "maxInt32Value": 10
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::GLOVE_BOX_LOCKED",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "Constants::SEAT_1_RIGHT"
+                }
+            ]
+        },
+        {
             "property": "VehicleProperty::WHEEL_TICK",
             "defaultValue": {
                 "int64Values": [
