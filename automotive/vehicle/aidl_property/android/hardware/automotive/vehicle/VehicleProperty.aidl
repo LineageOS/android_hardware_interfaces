@@ -3673,6 +3673,11 @@ enum VehicleProperty {
      * This is different from Lane Centering Assist (LCA) which, when activated, applies continuous
      * steering control to keep the vehicle centered in the current lane.
      *
+     * In general, LANE_KEEP_ASSIST_ENABLED should always return true or false. If the feature is
+     * not available due to some temporary state, such as the vehicle speed being too low or too
+     * high, that information must be conveyed through the ErrorState values in the
+     * LANE_KEEP_ASSIST_STATE property.
+     *
      * This property is defined as read_write, but OEMs have the option to implement it as read
      * only.
      *
