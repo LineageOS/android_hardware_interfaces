@@ -20,6 +20,7 @@ import android.hardware.thermal.CoolingType;
 
 /* @hide */
 @VintfStability
+@JavaDerive(toString=true)
 parcelable CoolingDevice {
     /**
      * This cooling device type, CPU, GPU, BATTERY, and etc.
