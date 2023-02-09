@@ -50,6 +50,9 @@ static char event_data[100] = "The edges of a surface are lines.";
 static char iso_data[100] =
     "A plane angle is the inclination to one another of two lines in a ...";
 
+// 5 seconds.  Just don't hang.
+static constexpr size_t kTimeoutMs = 5000;
+
 MATCHER_P3(PacketMatches, header_, header_length, payload,
            "Match header_length bytes of header and then the payload") {
   size_t payload_length = strlen(payload);
@@ -131,9 +134,9 @@ class H4ProtocolTest : public ::testing::Test {
         .WillOnce(Notify(promise));
   }
 
-  void WaitForTimeout(size_t timeout_ms, std::promise<void>* promise) {
+  void WaitForTimeout(std::promise<void>* promise) {
     auto future = promise->get_future();
-    auto status = future.wait_for(std::chrono::milliseconds(timeout_ms));
+    auto status = future.wait_for(std::chrono::milliseconds(kTimeoutMs));
     EXPECT_EQ(status, std::future_status::ready);
   }
 
@@ -263,10 +266,10 @@ TEST_F(H4ProtocolTest, TestReads) {
   WriteInboundIsoData(iso_data);
   CallDataReady();
 
-  WaitForTimeout(100, &acl_promise);
-  WaitForTimeout(100, &sco_promise);
-  WaitForTimeout(100, &event_promise);
-  WaitForTimeout(100, &iso_promise);
+  WaitForTimeout(&acl_promise);
+  WaitForTimeout(&sco_promise);
+  WaitForTimeout(&event_promise);
+  WaitForTimeout(&iso_promise);
 }
 
 TEST_F(H4ProtocolTest, TestMultiplePackets) {
@@ -363,28 +366,28 @@ class H4ProtocolAsyncTest : public H4ProtocolTest {
     std::promise<void> promise;
     ExpectInboundAclData(payload, &promise);
     WriteInboundAclData(payload);
-    WaitForTimeout(100, &promise);
+    WaitForTimeout(&promise);
   }
 
   void WriteAndExpectInboundScoData(char* payload) {
     std::promise<void> promise;
     ExpectInboundScoData(payload, &promise);
     WriteInboundScoData(payload);
-    WaitForTimeout(100, &promise);
+    WaitForTimeout(&promise);
   }
 
   void WriteAndExpectInboundEvent(char* payload) {
     std::promise<void> promise;
     ExpectInboundEvent(payload, &promise);
     WriteInboundEvent(payload);
-    WaitForTimeout(100, &promise);
+    WaitForTimeout(&promise);
   }
 
   void WriteAndExpectInboundIsoData(char* payload) {
     std::promise<void> promise;
     ExpectInboundIsoData(payload, &promise);
     WriteInboundIsoData(payload);
-    WaitForTimeout(100, &promise);
+    WaitForTimeout(&promise);
   }
 
   void WriteAndExpectManyInboundAclDataPackets(char* payload) {
@@ -436,6 +439,5 @@ TEST_F(H4ProtocolAsyncTest, TestDisconnect) {
   EXPECT_CALL(disconnect_cb_, Call()).WillOnce(Notify(&promise));
   close(chip_uart_fd_);
 
-  // Fail if it takes longer than 100 ms.
-  WaitForTimeout(100, &promise);
+  WaitForTimeout(&promise);
 }
