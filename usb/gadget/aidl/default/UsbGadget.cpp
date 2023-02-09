@@ -144,7 +144,10 @@ Status UsbGadget::tearDownGadget() {
     return Status::SUCCESS;
 }
 
-ScopedAStatus UsbGadget::reset() {
+ScopedAStatus UsbGadget::reset(const shared_ptr<IUsbGadgetCallback> &callback,
+        int64_t in_transactionId) {
+    if (callback)
+        callback->resetCb(Status::SUCCESS, in_transactionId);
     return ScopedAStatus::ok();
 }
 
