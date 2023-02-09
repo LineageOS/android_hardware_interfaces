@@ -35,6 +35,7 @@ package android.hardware.graphics.common;
 /* @hide */
 @Backing(type="int") @VintfStability
 enum Hdr {
+  INVALID = 0,
   DOLBY_VISION = 1,
   HDR10 = 2,
   HLG = 3,
