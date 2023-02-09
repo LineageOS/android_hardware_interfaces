@@ -35,9 +35,12 @@ class NoiseSuppressionSwContext final : public EffectContext {
 
     RetCode setLevel(NoiseSuppression::Level level);
     NoiseSuppression::Level getLevel();
+    RetCode setType(NoiseSuppression::Type type);
+    NoiseSuppression::Type getType() { return mType; }
 
   private:
     NoiseSuppression::Level mLevel = NoiseSuppression::Level::LOW;
+    NoiseSuppression::Type mType = NoiseSuppression::Type::SINGLE_CHANNEL;
 };
 
 class NoiseSuppressionSw final : public EffectImpl {

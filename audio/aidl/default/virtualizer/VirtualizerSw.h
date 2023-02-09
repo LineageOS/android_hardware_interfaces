@@ -34,9 +34,18 @@ class VirtualizerSwContext final : public EffectContext {
     }
     RetCode setVrStrength(int strength);
     int getVrStrength() const { return mStrength; }
+    RetCode setForcedDevice(
+            const ::aidl::android::media::audio::common::AudioDeviceDescription& device) {
+        mForceDevice = device;
+        return RetCode::SUCCESS;
+    }
+    aidl::android::media::audio::common::AudioDeviceDescription getForcedDevice() const {
+        return mForceDevice;
+    }
 
   private:
     int mStrength = 0;
+    ::aidl::android::media::audio::common::AudioDeviceDescription mForceDevice;
 };
 
 class VirtualizerSw final : public EffectImpl {
@@ -68,5 +77,7 @@ class VirtualizerSw final : public EffectImpl {
 
     ndk::ScopedAStatus getParameterVirtualizer(const Virtualizer::Tag& tag,
                                                Parameter::Specific* specific);
+    ndk::ScopedAStatus getSpeakerAngles(const Virtualizer::SpeakerAnglesPayload payload,
+                                        Parameter::Specific* specific);
 };
 }  // namespace aidl::android::hardware::audio::effect

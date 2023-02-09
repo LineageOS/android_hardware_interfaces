@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The Android Open Source Project
+ * Copyright 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,31 +31,9 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.audio.effect;
+package android.hardware.tv.tuner;
+/* @hide */
 @VintfStability
-union NoiseSuppression {
-  android.hardware.audio.effect.VendorExtension vendor;
-  android.hardware.audio.effect.NoiseSuppression.Level level;
-  android.hardware.audio.effect.NoiseSuppression.Type type;
-  @VintfStability
-  union Id {
-    int vendorExtensionTag;
-    android.hardware.audio.effect.NoiseSuppression.Tag commonTag;
-  }
-  @VintfStability
-  parcelable Capability {
-    ParcelableHolder extension;
-  }
-  @Backing(type="int") @VintfStability
-  enum Level {
-    LOW,
-    MEDIUM,
-    HIGH,
-    VERY_HIGH,
-  }
-  @Backing(type="int") @VintfStability
-  enum Type {
-    SINGLE_CHANNEL,
-    MULTI_CHANNEL,
-  }
+parcelable FrontendIptvCapabilities {
+  int protocolCap;
 }

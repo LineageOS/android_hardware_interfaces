@@ -45,4 +45,5 @@ union FrontendCapabilities {
   android.hardware.tv.tuner.FrontendIsdbsCapabilities isdbsCaps;
   android.hardware.tv.tuner.FrontendIsdbs3Capabilities isdbs3Caps;
   android.hardware.tv.tuner.FrontendIsdbtCapabilities isdbtCaps;
+  @nullable android.hardware.tv.tuner.FrontendIptvCapabilities iptvCaps;
 }

@@ -3418,6 +3418,34 @@ enum VehicleProperty {
     SHUTDOWN_REQUEST =
             0x0F49 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
 
+    /**
+     * Whether the vehicle is currently in use.
+     *
+     * <p>In-use means a human user is present and is intended to use the vehicle. This doesn't
+     * necessarily means the human user is in the vehicle. For example, if the human user unlocks
+     * the vehicle remotely, the vehicle is considered in use.
+     *
+     * <p>If this property is supported:
+     *
+     * <p>Each time user powers on the vehicle or the system detects the user is present,
+     * VEHICLE_IN_USE must be set to true. Each time user powers off the vehicle or the system
+     * detects the user is not present, VEHICLE_IN_USE must be set to false.
+     *
+     * <p>This property is different than AP_POWER_BOOTUP_REASON in the sense that
+     * AP_POWER_BOOTUP_REASON is only set once during the system bootup. However, this property
+     * might change multiple times during a system bootup cycle.
+     *
+     * <p>For example, a device is currently not in use. The system bootup to execute a remote task.
+     * VEHICLE_IN_USE is false. While the remote task is executing, the user enters the vehicle and
+     * powers on the vehicle. VEHICLE_IN_USE is set to true. After a driving session, user powers
+     * off the vehicle, VEHICLE_IN_USE is set to false.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     */
+    VEHICLE_IN_USE =
+            0x0F4A + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+
     /***************************************************************************
      * Start of ADAS Properties
      * Allocate IDs in range of 0x1000 (inclusive) to 0x1100 (exclusive) for ADAS properties

@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#define LOG_TAG "thermal_service_example"
+
 #include "Thermal.h"
 
 #include <android-base/logging.h>

@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#define LOG_TAG "thermal_service_example"
+
 #include "Thermal.h"
 
 #include <android-base/logging.h>
@@ -21,6 +23,18 @@
 namespace aidl::android::hardware::thermal::impl::example {
 
 using ndk::ScopedAStatus;
+
+namespace {
+
+bool interfacesEqual(const std::shared_ptr<::ndk::ICInterface>& left,
+                     const std::shared_ptr<::ndk::ICInterface>& right) {
+    if (left == nullptr || right == nullptr || !left->isRemote() || !right->isRemote()) {
+        return left == right;
+    }
+    return left->asBinder() == right->asBinder();
+}
+
+}  // namespace
 
 ScopedAStatus Thermal::getCoolingDevices(std::vector<CoolingDevice>* /* out_devices */) {
     LOG(VERBOSE) << __func__;
@@ -61,12 +75,20 @@ ScopedAStatus Thermal::registerThermalChangedCallback(
         const std::shared_ptr<IThermalChangedCallback>& in_callback) {
     LOG(VERBOSE) << __func__ << " IThermalChangedCallback: " << in_callback;
     if (in_callback == nullptr) {
-        return ScopedAStatus::fromStatus(STATUS_BAD_VALUE);
+        return ndk::ScopedAStatus::fromExceptionCodeWithMessage(EX_ILLEGAL_ARGUMENT,
+                                                                "Invalid nullptr callback");
     }
-    if (mCallbacks.find(in_callback) != mCallbacks.end()) {
-        return ScopedAStatus::fromStatus(STATUS_INVALID_OPERATION);
+    {
+        std::lock_guard<std::mutex> _lock(thermal_callback_mutex_);
+        if (std::any_of(thermal_callbacks_.begin(), thermal_callbacks_.end(),
+                        [&](const std::shared_ptr<IThermalChangedCallback>& c) {
+                            return interfacesEqual(c, in_callback);
+                        })) {
+            return ndk::ScopedAStatus::fromExceptionCodeWithMessage(EX_ILLEGAL_ARGUMENT,
+                                                                    "Callback already registered");
+        }
+        thermal_callbacks_.push_back(in_callback);
     }
-    mCallbacks.insert(in_callback);
     return ScopedAStatus::ok();
 }
 
@@ -75,26 +97,48 @@ ScopedAStatus Thermal::registerThermalChangedCallbackWithType(
     LOG(VERBOSE) << __func__ << " IThermalChangedCallback: " << in_callback
                  << ", TemperatureType: " << static_cast<int32_t>(in_type);
     if (in_callback == nullptr) {
-        return ScopedAStatus::fromStatus(STATUS_BAD_VALUE);
+        return ndk::ScopedAStatus::fromExceptionCodeWithMessage(EX_ILLEGAL_ARGUMENT,
+                                                                "Invalid nullptr callback");
     }
-    if (mCallbacks.find(in_callback) != mCallbacks.end()) {
-        return ScopedAStatus::fromStatus(STATUS_INVALID_OPERATION);
+    {
+        std::lock_guard<std::mutex> _lock(thermal_callback_mutex_);
+        if (std::any_of(thermal_callbacks_.begin(), thermal_callbacks_.end(),
+                        [&](const std::shared_ptr<IThermalChangedCallback>& c) {
+                            return interfacesEqual(c, in_callback);
+                        })) {
+            return ndk::ScopedAStatus::fromExceptionCodeWithMessage(EX_ILLEGAL_ARGUMENT,
+                                                                    "Callback already registered");
+        }
+        thermal_callbacks_.push_back(in_callback);
     }
-    mCallbacks.insert(in_callback);
     return ScopedAStatus::ok();
 }
 
 ScopedAStatus Thermal::unregisterThermalChangedCallback(
         const std::shared_ptr<IThermalChangedCallback>& in_callback) {
     LOG(VERBOSE) << __func__ << " IThermalChangedCallback: " << in_callback;
-    bool found = false;
     if (in_callback == nullptr) {
-        return ScopedAStatus::fromStatus(STATUS_BAD_VALUE);
+        return ndk::ScopedAStatus::fromExceptionCodeWithMessage(EX_ILLEGAL_ARGUMENT,
+                                                                "Invalid nullptr callback");
     }
-    if (mCallbacks.find(in_callback) == mCallbacks.end()) {
-        return ScopedAStatus::fromStatus(STATUS_INVALID_OPERATION);
+    {
+        std::lock_guard<std::mutex> _lock(thermal_callback_mutex_);
+        bool removed = false;
+        thermal_callbacks_.erase(
+                std::remove_if(thermal_callbacks_.begin(), thermal_callbacks_.end(),
+                               [&](const std::shared_ptr<IThermalChangedCallback>& c) {
+                                   if (interfacesEqual(c, in_callback)) {
+                                       removed = true;
+                                       return true;
+                                   }
+                                   return false;
+                               }),
+                thermal_callbacks_.end());
+        if (!removed) {
+            return ndk::ScopedAStatus::fromExceptionCodeWithMessage(EX_ILLEGAL_ARGUMENT,
+                                                                    "Callback wasn't registered");
+        }
     }
-    mCallbacks.erase(in_callback);
     return ScopedAStatus::ok();
 }
 
