@@ -21,7 +21,6 @@ use diced::{
 };
 use diced_sample_inputs::make_sample_bcc_and_cdis;
 use serde::{Deserialize, Serialize};
-use std::convert::TryInto;
 use std::panic;
 use std::sync::Arc;
 
@@ -76,7 +75,7 @@ fn main() {
     // Saying hi.
     log::info!("android.hardware.security.dice is starting.");
 
-    let (cdi_attest, cdi_seal, bcc) =
+    let dice_artifacts =
         make_sample_bcc_and_cdis().expect("Failed to construct sample dice chain.");
 
     let hal_impl = Arc::new(
@@ -85,13 +84,9 @@ fn main() {
             // This service does not start a thread pool. The main thread is the only thread
             // joining the thread pool, thereby keeping the process single threaded.
             ResidentHal::new(InsecureSerializableArtifacts {
-                cdi_attest: cdi_attest[..]
-                    .try_into()
-                    .expect("Failed to convert cdi_attest to array reference."),
-                cdi_seal: cdi_seal[..]
-                    .try_into()
-                    .expect("Failed to convert cdi_seal to array reference."),
-                bcc,
+                cdi_attest: dice_artifacts.cdi_values.cdi_attest,
+                cdi_seal: dice_artifacts.cdi_values.cdi_seal,
+                bcc: dice_artifacts.bcc[..].to_vec(),
             })
         }
         .expect("Failed to create ResidentHal implementation."),
