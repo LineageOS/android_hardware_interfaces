@@ -68,10 +68,16 @@ class EqualizerSwContext final : public EffectContext {
         return bandLevels;
     }
 
+    std::vector<int> getCenterFreqs() {
+        return {std::begin(kPresetsFrequencies), std::end(kPresetsFrequencies)};
+    }
+
   private:
     static const int NUM_OF_BANDS = 5;
     static const int NUM_OF_PRESETS = 10;
     static const int PRESET_CUSTOM = -1;
+    static constexpr std::array<uint16_t, NUM_OF_BANDS> kPresetsFrequencies = {60, 230, 910, 3600,
+                                                                               14000};
     // preset band level
     int mPreset = PRESET_CUSTOM;
     int32_t mBandLevels[NUM_OF_BANDS] = {3, 0, 0, 0, 3};

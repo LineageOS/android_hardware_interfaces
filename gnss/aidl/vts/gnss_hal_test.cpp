@@ -456,6 +456,7 @@ void GnssHalTest::collectMeasurementIntervals(const sp<GnssMeasurementCallbackAi
                                               const int numMeasurementEvents,
                                               const int timeoutSeconds,
                                               std::vector<int>& deltasMs) {
+    callback->gnss_data_cbq_.reset();  // throw away the initial measurements if any
     int64_t lastElapsedRealtimeMillis = 0;
     for (int i = 0; i < numMeasurementEvents; i++) {
         GnssData lastGnssData;

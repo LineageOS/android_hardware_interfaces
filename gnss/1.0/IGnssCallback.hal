@@ -37,7 +37,13 @@ interface IGnssCallback {
         MSA                             = 1 << 2,
         /** GNSS supports single-shot fixes */
         SINGLE_SHOT                     = 1 << 3,
-        /** GNSS supports on demand time injection */
+        /**
+         * The platform periodically injects time to GNSS in addition to
+         * on-demand and occasional time updates.
+         *
+         * Note: The naming of "on demand" should be "periodic" instead.  This
+         * is the result of a historic implementation bug, b/73893222.
+         */
         ON_DEMAND_TIME                  = 1 << 4,
         /** GNSS supports Geofencing  */
         GEOFENCING                      = 1 << 5,

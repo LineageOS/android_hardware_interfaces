@@ -49,7 +49,13 @@ interface IGnssCallback {
     /** Capability bit mask indicating that GNSS supports single-shot fixes */
     const int CAPABILITY_SINGLE_SHOT = 1 << 3;
 
-    /** Capability bit mask indicating that GNSS supports on demand time injection */
+    /**
+     * Capability bit indicating that the platform should periodically inject
+     * time to GNSS in addition to on-demand and occasional time updates.
+     *
+     * <p>Note:<em>The naming of "on demand" should be "periodic" instead.  This
+     * is the result of a historic implementation bug, b/73893222.</em>
+     */
     const int CAPABILITY_ON_DEMAND_TIME = 1 << 4;
 
     /** Capability bit mask indicating that GNSS supports Geofencing  */

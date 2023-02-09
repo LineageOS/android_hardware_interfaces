@@ -164,6 +164,17 @@ Frontend::Frontend(FrontendType type, int32_t id) {
             };
             break;
         }
+        case FrontendType::IPTV: {
+            mFrontendCaps.set<FrontendCapabilities::Tag::iptvCaps>(FrontendIptvCapabilities());
+            mFrontendStatusCaps = {
+                    FrontendStatusType::IPTV_CONTENT_URL,
+                    FrontendStatusType::IPTV_PACKETS_LOST,
+                    FrontendStatusType::IPTV_PACKETS_RECEIVED,
+                    FrontendStatusType::IPTV_AVERAGE_JITTER_MS,
+                    FrontendStatusType::IPTV_WORST_JITTER_MS,
+            };
+            break;
+        }
         default: {
             break;
         }
@@ -210,7 +221,10 @@ Frontend::~Frontend() {
                 static_cast<int32_t>(Result::INVALID_STATE));
     }
 
-    mTuner->frontendStartTune(mId);
+    if (mType != FrontendType::IPTV) {
+        mTuner->frontendStartTune(mId);
+    }
+
     mCallback->onEvent(FrontendEventType::LOCKED);
     mIsLocked = true;
 
