@@ -824,6 +824,8 @@ interface IComposerClient {
      *
      * This function returns what the device's overlays support.
      *
+     * @exception EX_UNSUPPORTED when not supported by the underlying HAL
+     *
      * @return the overlay properties of the device.
      */
     OverlayProperties getOverlaySupport();
