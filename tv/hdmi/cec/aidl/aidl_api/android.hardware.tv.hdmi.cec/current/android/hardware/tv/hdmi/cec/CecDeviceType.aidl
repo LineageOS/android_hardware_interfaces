@@ -34,7 +34,7 @@
 package android.hardware.tv.hdmi.cec;
 @Backing(type="byte") @VintfStability
 enum CecDeviceType {
-  INACTIVE = -1,
+  INACTIVE = (-1) /* -1 */,
   TV = 0,
   RECORDER = 1,
   TUNER = 3,

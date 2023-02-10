@@ -41,7 +41,7 @@ interface IHdmiCec {
   int getPhysicalAddress();
   int getVendorId();
   android.hardware.tv.hdmi.cec.SendMessageResult sendMessage(in android.hardware.tv.hdmi.cec.CecMessage message);
-  void setCallback(in android.hardware.tv.hdmi.cec.IHdmiCecCallback callback);
+  void setCallback(in @nullable android.hardware.tv.hdmi.cec.IHdmiCecCallback callback);
   void setLanguage(in String language);
   void enableWakeupByOtp(in boolean value);
   void enableCec(in boolean value);
