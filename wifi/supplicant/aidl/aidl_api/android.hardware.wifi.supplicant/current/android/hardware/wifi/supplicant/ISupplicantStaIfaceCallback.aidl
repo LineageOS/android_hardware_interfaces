@@ -59,6 +59,9 @@ interface ISupplicantStaIfaceCallback {
   oneway void onNetworkAdded(in int id);
   oneway void onNetworkNotFound(in byte[] ssid);
   oneway void onNetworkRemoved(in int id);
+  /**
+   * @deprecated use onPmkSaCacheAdded() instead.
+   */
   oneway void onPmkCacheAdded(in long expirationTimeInSec, in byte[] serializedEntry);
   /**
    * @deprecated This callback is deprecated from AIDL v2, newer HAL should call onSupplicantStateChanged()
@@ -75,6 +78,7 @@ interface ISupplicantStaIfaceCallback {
   oneway void onBssFrequencyChanged(in int frequencyMhz);
   oneway void onSupplicantStateChanged(in android.hardware.wifi.supplicant.SupplicantStateChangeData stateChangeData);
   oneway void onQosPolicyResponseForScs(in android.hardware.wifi.supplicant.QosPolicyScsResponseStatus[] qosPolicyScsResponseStatus);
+  oneway void onPmkSaCacheAdded(in android.hardware.wifi.supplicant.PmkSaCacheData pmkSaData);
   @Backing(type="int") @VintfStability
   enum MloLinkInfoChangeReason {
     TID_TO_LINK_MAP = 0,
