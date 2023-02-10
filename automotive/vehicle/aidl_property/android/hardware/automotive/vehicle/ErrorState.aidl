@@ -31,8 +31,28 @@ enum ErrorState {
      * include additional states.
      */
     OTHER_ERROR_STATE = -1,
+    /**
+     * Vehicle property is not available because the feature is disabled.
+     */
     NOT_AVAILABLE_DISABLED = -2,
+    /**
+     * Vehicle property is not available because the vehicle speed is too low to use this feature.
+     */
     NOT_AVAILABLE_SPEED_LOW = -3,
+    /**
+     * Vehicle property is not available because the vehicle speed is too high to use this feature.
+     */
     NOT_AVAILABLE_SPEED_HIGH = -4,
-    NOT_AVAILABLE_SAFETY = -5,
+    /**
+     * Vehicle property is not available because sensor or camera visibility is insufficient to use
+     * this feature. For example, this can be caused by bird poop blocking the camera, poor weather
+     * conditions such as snow or fog, or by any object obstructing the required sensors.
+     */
+    NOT_AVAILABLE_POOR_VISIBILITY = -5,
+    /**
+     * Vehicle property is not available because there is a safety risk that makes this feature
+     * unavailable to use presently. For example, this can be caused by someone blocking the trunk
+     * door while it is closing, or by the system being in a faulty state.
+     */
+    NOT_AVAILABLE_SAFETY = -6,
 }

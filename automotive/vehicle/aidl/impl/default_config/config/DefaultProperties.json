@@ -2649,6 +2649,51 @@
             ]
         },
         {
+            "property": "VehicleProperty::WINDSHIELD_WIPERS_PERIOD",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "VehicleAreaWindow::FRONT_WINDSHIELD",
+                    "minInt32Value": 0,
+                    "maxInt32Value": 3000
+                },
+                {
+                    "areaId": "VehicleAreaWindow::REAR_WINDSHIELD",
+                    "minInt32Value": 0,
+                    "maxInt32Value": 3000
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::WINDSHIELD_WIPERS_STATE",
+            "defaultValue": {
+                "int32Values": [
+                    "WindshieldWipersState::OFF"
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "VehicleAreaWindow::FRONT_WINDSHIELD",
+                    "supportedEnumValues": [
+                        "WindshieldWipersState::OFF",
+                        "WindshieldWipersState::ON",
+                        "WindshieldWipersState::SERVICE"
+                    ]
+                },
+                {
+                    "areaId": "VehicleAreaWindow::REAR_WINDSHIELD",
+                    "supportedEnumValues": [
+                        "WindshieldWipersState::OFF",
+                        "WindshieldWipersState::ON"
+                    ]
+                }
+            ]
+        },
+        {
             "property": "VehicleProperty::STEERING_WHEEL_DEPTH_POS",
             "defaultValue": {
                 "int32Values": [
@@ -2731,6 +2776,34 @@
                     0
                 ]
             }
+        },
+        {
+            "property": "VehicleProperty::GLOVE_BOX_DOOR_POS",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "Constants::SEAT_1_RIGHT",
+                    "minInt32Value": 0,
+                    "maxInt32Value": 10
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::GLOVE_BOX_LOCKED",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "Constants::SEAT_1_RIGHT"
+                }
+            ]
         },
         {
             "property": "VehicleProperty::WHEEL_TICK",
@@ -3166,7 +3239,7 @@
             "property": "VehicleProperty::AUTOMATIC_EMERGENCY_BRAKING_STATE",
             "defaultValue": {
                 "int32Values": [
-                    "AutomaticEmergencyBrakingState::ENABLED"
+                    "ErrorState::NOT_AVAILABLE_DISABLED"
                 ]
             },
             "areas": [
@@ -3174,6 +3247,7 @@
                     "areaId": 0,
                     "supportedEnumValues": [
                         "ErrorState::NOT_AVAILABLE_SAFETY",
+                        "ErrorState::NOT_AVAILABLE_POOR_VISIBILITY",
                         "ErrorState::NOT_AVAILABLE_SPEED_HIGH",
                         "ErrorState::NOT_AVAILABLE_SPEED_LOW",
                         "ErrorState::NOT_AVAILABLE_DISABLED",
@@ -3188,7 +3262,7 @@
             "property": "VehicleProperty::FORWARD_COLLISION_WARNING_ENABLED",
             "defaultValue": {
                 "int32Values": [
-                    0
+                    1
                 ]
             }
         },
@@ -3204,6 +3278,7 @@
                     "areaId": 0,
                     "supportedEnumValues": [
                         "ErrorState::NOT_AVAILABLE_SAFETY",
+                        "ErrorState::NOT_AVAILABLE_POOR_VISIBILITY",
                         "ErrorState::NOT_AVAILABLE_SPEED_HIGH",
                         "ErrorState::NOT_AVAILABLE_SPEED_LOW",
                         "ErrorState::NOT_AVAILABLE_DISABLED",
@@ -3217,7 +3292,7 @@
             "property": "VehicleProperty::BLIND_SPOT_WARNING_ENABLED",
             "defaultValue": {
                 "int32Values": [
-                    0
+                    1
                 ]
             }
         },
@@ -3233,6 +3308,7 @@
                     "areaId": "Constants::MIRROR_DRIVER_LEFT_RIGHT",
                     "supportedEnumValues": [
                         "ErrorState::NOT_AVAILABLE_SAFETY",
+                        "ErrorState::NOT_AVAILABLE_POOR_VISIBILITY",
                         "ErrorState::NOT_AVAILABLE_SPEED_HIGH",
                         "ErrorState::NOT_AVAILABLE_SPEED_LOW",
                         "ErrorState::NOT_AVAILABLE_DISABLED",
@@ -3254,9 +3330,32 @@
             "property": "VehicleProperty::LANE_KEEP_ASSIST_ENABLED",
             "defaultValue": {
                 "int32Values": [
-                    0
+                    1
                 ]
             }
+        },
+        {
+            "property": "VehicleProperty::LANE_KEEP_ASSIST_STATE",
+            "defaultValue": {
+                "int32Values": [
+                    "LaneKeepAssistState::ENABLED"
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": 0,
+                    "supportedEnumValues": [
+                        "ErrorState::NOT_AVAILABLE_SAFETY",
+                        "ErrorState::NOT_AVAILABLE_SPEED_HIGH",
+                        "ErrorState::NOT_AVAILABLE_SPEED_LOW",
+                        "ErrorState::NOT_AVAILABLE_DISABLED",
+                        "LaneKeepAssistState::ENABLED",
+                        "LaneKeepAssistState::ACTIVATED_STEER_LEFT",
+                        "LaneKeepAssistState::ACTIVATED_STEER_RIGHT",
+                        "LaneKeepAssistState::USER_OVERRIDE"
+                    ]
+                }
+            ]
         },
         {
             "property": "VehicleProperty::LANE_CENTERING_ASSIST_ENABLED",

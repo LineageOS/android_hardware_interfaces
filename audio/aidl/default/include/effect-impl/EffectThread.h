@@ -54,6 +54,9 @@ class EffectThread {
      * EffectThread will make sure effectProcessImpl only be called after startThread() successful
      * and before stopThread() successful.
      *
+     * effectProcessImpl implementation must not call any EffectThread interface, otherwise it will
+     * cause deadlock.
+     *
      * @param in address of input float buffer.
      * @param out address of output float buffer.
      * @param samples number of samples to process.
@@ -62,16 +65,11 @@ class EffectThread {
     virtual IEffect::Status effectProcessImpl(float* in, float* out, int samples) = 0;
 
     /**
-     * The default EffectThread::process() implementation doesn't need to lock. It will only
-     * access the FMQ and mWorkBuffer in  EffectContext, since they will only be changed in
-     * EffectImpl IEffect::open() (in this case EffectThread just created and not running yet) and
-     * IEffect::command(CommandId::RESET) (in this case EffectThread already stopped).
-     *
-     * process() call effectProcessImpl for effect processing, and because effectProcessImpl is
-     * implemented by effects, process() must not hold lock before call into effectProcessImpl to
-     * avoid deadlock.
+     * process() call effectProcessImpl() for effect data processing, it is necessary for the
+     * processing to be called under Effect thread mutex mThreadMutex, to avoid the effect state
+     * change before/during data processing, and keep the thread and effect state consistent.
      */
-    virtual void process();
+    virtual void process_l() REQUIRES(mThreadMutex);
 
   private:
     const int kMaxTaskNameLen = 15;
@@ -83,5 +81,7 @@ class EffectThread {
     std::thread mThread;
     int mPriority;
     std::string mName;
+
+    RetCode handleStartStop(bool stop);
 };
 }  // namespace aidl::android::hardware::audio::effect

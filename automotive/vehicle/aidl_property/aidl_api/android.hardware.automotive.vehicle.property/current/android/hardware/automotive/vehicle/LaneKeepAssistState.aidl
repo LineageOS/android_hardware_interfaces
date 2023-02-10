@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,11 +31,12 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.usb.gadget;
-@VintfStability
-interface IUsbGadgetCallback {
-  oneway void setCurrentUsbFunctionsCb(in long functions, in android.hardware.usb.gadget.Status status, long transactionId);
-  oneway void getCurrentUsbFunctionsCb(in long functions, in android.hardware.usb.gadget.Status status, long transactionId);
-  oneway void getUsbSpeedCb(in android.hardware.usb.gadget.UsbSpeed speed, long transactionId);
-  oneway void resetCb(in android.hardware.usb.gadget.Status status, long transactionId);
+package android.hardware.automotive.vehicle;
+@Backing(type="int") @VintfStability
+enum LaneKeepAssistState {
+  OTHER = 0,
+  ENABLED = 1,
+  ACTIVATED_STEER_LEFT = 2,
+  ACTIVATED_STEER_RIGHT = 3,
+  USER_OVERRIDE = 4,
 }
