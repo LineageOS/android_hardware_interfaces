@@ -87,6 +87,9 @@ class RadioSimResponse : public BnRadioSimResponse {
     virtual ndk::ScopedAStatus iccCloseLogicalChannelResponse(
             const RadioResponseInfo& info) override;
 
+    virtual ndk::ScopedAStatus iccCloseLogicalChannelWithSessionInfoResponse(
+            const RadioResponseInfo& info) override;
+
     virtual ndk::ScopedAStatus iccIoForAppResponse(const RadioResponseInfo& info,
                                                    const IccIoResult& iccIo) override;
 

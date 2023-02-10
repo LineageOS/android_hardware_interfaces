@@ -762,6 +762,27 @@ TEST_P(RadioSimTest, iccCloseLogicalChannel) {
 }
 
 /*
+ * Test IRadioSim.iccCloseLogicalChannelWithSessionInfo() for the response returned.
+ */
+TEST_P(RadioSimTest, iccCloseLogicalChannelWithSessionInfo) {
+    LOG(DEBUG) << "iccCloseLogicalChannelWithSessionInfo";
+    serial = GetRandomSerialNumber();
+    SessionInfo info;
+    memset(&info, 0, sizeof(info));
+    info.sessionId = 0;
+    info.isEs10 = false;
+
+    // Try closing invalid channel and check INVALID_ARGUMENTS returned as error
+    radio_sim->iccCloseLogicalChannelWithSessionInfo(serial, info);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_sim->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_sim->rspInfo.serial);
+
+    EXPECT_EQ(RadioError::INVALID_ARGUMENTS, radioRsp_sim->rspInfo.error);
+    LOG(DEBUG) << "iccCloseLogicalChannelWithSessionInfo finished";
+}
+
+/*
  * Test IRadioSim.iccTransmitApduLogicalChannel() for the response returned.
  */
 TEST_P(RadioSimTest, iccTransmitApduLogicalChannel) {
