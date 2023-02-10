@@ -368,6 +368,7 @@ std::vector<std::tuple<std::string, int32_t>> generateContextHubMapping() {
 TEST_P(ContextHubAidl, TestHostConnection) {
     constexpr char16_t kHostEndpointId = 1;
     HostEndpointInfo hostEndpointInfo;
+    hostEndpointInfo.type = HostEndpointInfo::Type::NATIVE;
     hostEndpointInfo.hostEndpointId = kHostEndpointId;
 
     ASSERT_TRUE(contextHub->onHostEndpointConnected(hostEndpointInfo).isOk());
