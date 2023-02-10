@@ -148,16 +148,22 @@ class EffectHelper {
     }
     static void readFromFmq(std::unique_ptr<StatusMQ>& statusMq, size_t statusNum,
                             std::unique_ptr<DataMQ>& dataMq, size_t expectFloats,
-                            std::vector<float>& buffer) {
+                            std::vector<float>& buffer,
+                            std::optional<int> expectStatus = STATUS_OK) {
+        if (0 == statusNum) {
+            ASSERT_EQ(0ul, statusMq->availableToRead());
+            return;
+        }
         IEffect::Status status{};
         ASSERT_TRUE(statusMq->readBlocking(&status, statusNum));
-        ASSERT_EQ(STATUS_OK, status.status);
-        if (statusNum != 0) {
-            ASSERT_EQ(expectFloats, (unsigned)status.fmqProduced);
-            ASSERT_EQ(expectFloats, dataMq->availableToRead());
-            if (expectFloats != 0) {
-                ASSERT_TRUE(dataMq->read(buffer.data(), expectFloats));
-            }
+        if (expectStatus.has_value()) {
+            ASSERT_EQ(expectStatus.value(), status.status);
+        }
+
+        ASSERT_EQ(expectFloats, (unsigned)status.fmqProduced);
+        ASSERT_EQ(expectFloats, dataMq->availableToRead());
+        if (expectFloats != 0) {
+            ASSERT_TRUE(dataMq->read(buffer.data(), expectFloats));
         }
     }
     static Parameter::Common createParamCommon(

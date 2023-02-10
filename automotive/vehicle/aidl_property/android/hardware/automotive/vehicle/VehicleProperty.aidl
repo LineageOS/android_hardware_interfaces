@@ -2092,6 +2092,46 @@ enum VehicleProperty {
     WINDOW_LOCK = 0x0BC4 + 0x10000000 + 0x03000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:WINDOW,VehiclePropertyType:BOOLEAN
     /**
+     * Windshield wipers period (milliseconds).
+     *
+     * Returns the instantaneous time period for 1 full cycle of the windshield wipers in
+     * milliseconds. A full cycle is defined as a wiper moving from and returning to its rest
+     * position.
+     *
+     * When an intermittent wiper setting is selected, this property value must be set to 0 during
+     * the "pause" period of the intermittent wiping.
+     *
+     * The maxInt32Value for each area ID must specify the longest wiper period. The minInt32Value
+     * must be set to 0 for each area ID.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     */
+    WINDSHIELD_WIPERS_PERIOD =
+            0x0BC5 + VehiclePropertyGroup.SYSTEM + VehicleArea.WINDOW + VehiclePropertyType.INT32,
+
+    /**
+     * Windshield wipers state.
+     *
+     * Returns the current state of the windshield wipers. The value of WINDSHIELD_WIPERS_STATE may
+     * not match the value of WINDSHIELD_WIPERS_SWITCH. (e.g. WINDSHIELD_WIPERS_STATE = ON and
+     * WINDSHIELD_WIPERS_SWITCH = WindshieldWipersSwitch#AUTO).
+     *
+     * If WINDSHIELD_WIPERS_STATE = ON and WINDSHIELD_WIPERS_PERIOD is implemented, then
+     * WINDSHIELD_WIPERS_PERIOD must reflect the time period of 1 full cycle of the wipers.
+     *
+     * For each supported area ID, the VehicleAreaConfig#supportedEnumValues array must be defined
+     * unless all states in WindshieldWipersState are supported (including OTHER, which is not
+     * recommended).
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     * @data_enum WindshieldWipersState
+     */
+    WINDSHIELD_WIPERS_STATE =
+            0x0BC6 + VehiclePropertyGroup.SYSTEM + VehicleArea.WINDOW + VehiclePropertyType.INT32,
+
+    /**
      * Steering wheel depth position
      *
      * All steering wheel properties' unique ids start from 0x0BE0.
@@ -2196,6 +2236,44 @@ enum VehicleProperty {
      */
     STEERING_WHEEL_EASY_ACCESS_ENABLED =
             0x0BE6 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+    /**
+     * Property that represents the current position of the glove box door.
+     *
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined.
+     * The minInt32Value must be 0.
+     * All integers between minInt32Value and maxInt32Value must be supported.
+     *
+     * minInt32Value indicates that the glove box door is closed.
+     * maxInt32Value indicates that the glove box door is in the fully open position.
+     *
+     * Values in between minInt32Value and maxInt32Value indicate a transition state between the
+     * closed and fully open positions.
+     *
+     * The area ID must match the seat by which the glove box is intended to be used  (e.g. if the
+     * front right dashboard has a glove box embedded in it, then the area ID should be
+     * SEAT_1_RIGHT).
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     */
+    GLOVE_BOX_DOOR_POS =
+            0x0BF0 + VehiclePropertyGroup.SYSTEM + VehicleArea.SEAT + VehiclePropertyType.INT32,
+
+    /**
+     * Lock or unlock the glove box.
+     *
+     * If true, the glove box is locked. If false, the glove box is unlocked.
+     *
+     * The area ID must match the seat by which the glove box is intended to be used (e.g. if the
+     * front right dashboard has a glove box embedded in it, then the area ID should be
+     * VehicleAreaSeat#ROW_1_RIGHT).
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     */
+    GLOVE_BOX_LOCKED =
+            0x0BF1 + VehiclePropertyGroup.SYSTEM + VehicleArea.SEAT + VehiclePropertyType.BOOLEAN,
+
     /**
      * Vehicle Maps Service (VMS) message
      *
@@ -3603,6 +3681,28 @@ enum VehicleProperty {
      */
     LANE_KEEP_ASSIST_ENABLED =
             0x1008 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+
+    /**
+     * Lane Keep Assist (LKA) state.
+     *
+     * Returns the current state of LKA. This property must always return a valid state defined in
+     * LaneKeepAssistState or ErrorState. It must not surface errors through StatusCode
+     * and must use the supported error states instead.
+     *
+     * If LKA includes lane departure warnings before applying steering corrections, those warnings
+     * must be surfaced through the Lane Departure Warning (LDW) properties.
+     *
+     * For the global area ID (0), the VehicleAreaConfig#supportedEnumValues array must be defined
+     * unless all states of both LaneKeepAssistState (including OTHER, which is not
+     * recommended) and ErrorState are supported.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     * @data_enum LaneKeepAssistState
+     * @data_enum ErrorState
+     */
+    LANE_KEEP_ASSIST_STATE =
+            0x1009 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
 
     /**
      * Enable or disable lane centering assist (LCA).

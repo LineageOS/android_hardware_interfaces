@@ -17,7 +17,9 @@
 package android.hardware.automotive.vehicle;
 
 /**
- * Error codes used in vehicle HAL interface.
+ * Error codes used in vehicle HAL interface. System defined error codes will have the range from
+ * 0x00000000 to 0x0000ffff and vendor error codes will have the range from 0x0000 << 16 to
+ * 0xffff << 16. The error code is formatted as [VENDOR_ERROR] << 16 | [SYSTEM_ERROR]
  */
 @VintfStability
 @Backing(type="int")

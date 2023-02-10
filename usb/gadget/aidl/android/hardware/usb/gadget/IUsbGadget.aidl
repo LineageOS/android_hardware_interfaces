@@ -59,6 +59,10 @@ oneway interface IUsbGadget {
      * This function is used to reset USB gadget driver.
      * Performs USB data connection reset. The connection will disconnect and
      * reconnect.
+     *
+     * @param callback IUsbGadgetCallback::resetCb used to propagate
+     *                 the result of requesting resetUsbGadget.
+     * @param transactionId ID to be used when invoking the callback.
      */
-    void reset();
+    void reset(in IUsbGadgetCallback callback, long transactionId);
 }
