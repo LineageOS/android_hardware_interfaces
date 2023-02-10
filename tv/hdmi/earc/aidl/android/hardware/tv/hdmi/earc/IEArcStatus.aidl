@@ -22,8 +22,8 @@ package android.hardware.tv.hdmi.earc;
 @VintfStability
 @Backing(type="byte")
 enum IEArcStatus {
-    STATUS_IDLE = 0,
-    STATUS_EARC_PENDING = 1,
-    STATUS_ARC_PENDING = 2,
-    STATUS_EARC_CONNECTED = 3,
+    IDLE = 0,
+    EARC_PENDING = 1,
+    ARC_PENDING = 2,
+    EARC_CONNECTED = 3,
 }
