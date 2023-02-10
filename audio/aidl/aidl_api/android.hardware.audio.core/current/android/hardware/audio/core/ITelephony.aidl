@@ -46,7 +46,7 @@ interface ITelephony {
     const int VOICE_VOLUME_MAX = 1;
     @Backing(type="int") @VintfStability
     enum TtyMode {
-      UNSPECIFIED = (-1),
+      UNSPECIFIED = (-1) /* -1 */,
       OFF = 0,
       FULL = 1,
       HCO = 2,

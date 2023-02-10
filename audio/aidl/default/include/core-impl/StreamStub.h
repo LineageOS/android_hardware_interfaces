@@ -43,13 +43,16 @@ class StreamInStub final : public StreamIn {
   public:
     static ndk::ScopedAStatus createInstance(
             const ::aidl::android::hardware::audio::common::SinkMetadata& sinkMetadata,
-            StreamContext&& context, const std::vector<MicrophoneInfo>& microphones,
+            StreamContext&& context,
+            const std::vector<::aidl::android::media::audio::common::MicrophoneInfo>& microphones,
             std::shared_ptr<StreamIn>* result);
 
   private:
     friend class ndk::SharedRefBase;
-    StreamInStub(const ::aidl::android::hardware::audio::common::SinkMetadata& sinkMetadata,
-                 StreamContext&& context, const std::vector<MicrophoneInfo>& microphones);
+    StreamInStub(
+            const ::aidl::android::hardware::audio::common::SinkMetadata& sinkMetadata,
+            StreamContext&& context,
+            const std::vector<::aidl::android::media::audio::common::MicrophoneInfo>& microphones);
 };
 
 class StreamOutStub final : public StreamOut {
