@@ -745,7 +745,7 @@ wifi_error WifiLegacyHal::disableLinkLayerStats(const std::string& iface_name) {
 
 // Copies wifi_peer_info* to vector<WifiPeerInfo> and returns poiner to next element.
 wifi_peer_info* WifiLegacyHal::copyPeerInfo(wifi_peer_info* peer_ptr,
-                                            std::vector<WifiPeerInfo> peers) {
+                                            std::vector<WifiPeerInfo>& peers) {
     WifiPeerInfo peer;
     peer.peer_info = *peer_ptr;
     if (peer_ptr->num_rate > 0) {
@@ -761,7 +761,7 @@ wifi_peer_info* WifiLegacyHal::copyPeerInfo(wifi_peer_info* peer_ptr,
 }
 // Copies wifi_link_stat* to vector<LinkStats> and returns poiner to next element.
 wifi_link_stat* WifiLegacyHal::copyLinkStat(wifi_link_stat* stat_ptr,
-                                            std::vector<LinkStats> stats) {
+                                            std::vector<LinkStats>& stats) {
     LinkStats linkStat;
     linkStat.stat = *stat_ptr;
     wifi_peer_info* l_peer_info_stats_ptr = stat_ptr->peer_info;
