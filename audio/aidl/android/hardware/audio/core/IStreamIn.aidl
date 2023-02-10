@@ -18,7 +18,7 @@ package android.hardware.audio.core;
 
 import android.hardware.audio.common.SinkMetadata;
 import android.hardware.audio.core.IStreamCommon;
-import android.hardware.audio.core.MicrophoneDynamicInfo;
+import android.media.audio.common.MicrophoneDynamicInfo;
 
 /**
  * This interface provides means for receiving audio data from input devices.
