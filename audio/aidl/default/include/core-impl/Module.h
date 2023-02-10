@@ -94,7 +94,9 @@ class Module : public BnModule {
     ndk::ScopedAStatus setMasterVolume(float in_volume) override;
     ndk::ScopedAStatus getMicMute(bool* _aidl_return) override;
     ndk::ScopedAStatus setMicMute(bool in_mute) override;
-    ndk::ScopedAStatus getMicrophones(std::vector<MicrophoneInfo>* _aidl_return) override;
+    ndk::ScopedAStatus getMicrophones(
+            std::vector<::aidl::android::media::audio::common::MicrophoneInfo>* _aidl_return)
+            override;
     ndk::ScopedAStatus updateAudioMode(
             ::aidl::android::media::audio::common::AudioMode in_mode) override;
     ndk::ScopedAStatus updateScreenRotation(

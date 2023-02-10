@@ -39,12 +39,12 @@ parcelable StreamDescriptor {
   int frameSizeBytes;
   long bufferSizeFrames;
   android.hardware.audio.core.StreamDescriptor.AudioBuffer audio;
-  const int LATENCY_UNKNOWN = (-1);
+  const int LATENCY_UNKNOWN = (-1) /* -1 */;
   @FixedSize @VintfStability
   parcelable Position {
-    long frames = UNKNOWN;
-    long timeNs = UNKNOWN;
-    const long UNKNOWN = (-1);
+    long frames = UNKNOWN /* -1 */;
+    long timeNs = UNKNOWN /* -1 */;
+    const long UNKNOWN = (-1) /* -1 */;
   }
   @Backing(type="int") @VintfStability
   enum State {
