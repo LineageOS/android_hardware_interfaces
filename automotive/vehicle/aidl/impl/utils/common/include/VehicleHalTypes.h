@@ -32,6 +32,9 @@
 #include <aidl/android/hardware/automotive/vehicle/GetValueResult.h>
 #include <aidl/android/hardware/automotive/vehicle/GetValueResults.h>
 #include <aidl/android/hardware/automotive/vehicle/GsrComplianceRequirementType.h>
+#include <aidl/android/hardware/automotive/vehicle/LaneCenteringAssistCommand.h>
+#include <aidl/android/hardware/automotive/vehicle/LaneCenteringAssistState.h>
+#include <aidl/android/hardware/automotive/vehicle/LaneDepartureWarningState.h>
 #include <aidl/android/hardware/automotive/vehicle/LaneKeepAssistState.h>
 #include <aidl/android/hardware/automotive/vehicle/Obd2CommonIgnitionMonitors.h>
 #include <aidl/android/hardware/automotive/vehicle/Obd2FuelSystemStatus.h>

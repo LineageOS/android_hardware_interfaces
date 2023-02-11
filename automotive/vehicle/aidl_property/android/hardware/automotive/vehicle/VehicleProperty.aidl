@@ -3524,10 +3524,17 @@ enum VehicleProperty {
     VEHICLE_IN_USE =
             0x0F4A + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
 
-    /***************************************************************************
+    /***********************************************************************************************
      * Start of ADAS Properties
+     *
+     * Android is not a safety critical system and is provided as is without any timing guarantees,
+     * representations or warranties. OEMs implementing these properties, and clients using these
+     * properties should ensure they complete any necessary safety reviews, in accordance with
+     * industry standards, to ensure the use of these APIs do not negatively impact driver safety.
+     * Use of any Google APIs will be at the OEM's sole risk.
+     *
      * Allocate IDs in range of 0x1000 (inclusive) to 0x1100 (exclusive) for ADAS properties
-     **************************************************************************/
+     **********************************************************************************************/
 
     /**
      * Enable or disable automatic emergency braking (AEB).
@@ -3535,9 +3542,10 @@ enum VehicleProperty {
      * Set true to enable AEB and false to disable AEB. When AEB is enabled, the ADAS system in the
      * vehicle should be turned on and monitoring to avoid potential collisions.
      *
-     * If AEB is not available, IVehicle#get must not return any NOT_AVAILABLE value in StatusCode.
-     * Other StatusCode values like TRY_AGAIN may still be used as needed. For example, if AEB is
-     * not available because the vehicle speed is too low, IVehicle#get must return false.
+     * In general, AUTOMATIC_EMERGENCY_BRAKING_ENABLED should always return true or false. If the
+     * feature is not available due to some temporary state, such as the vehicle speed being too
+     * low, that information must be conveyed through the ErrorState values in the
+     * AUTOMATIC_EMERGENCY_BRAKING_STATE property.
      *
      * This property is defined as read_write, but OEMs have the option to implement it as read
      * only.
@@ -3576,9 +3584,10 @@ enum VehicleProperty {
      * Set true to enable FCW and false to disable FCW. When FCW is enabled, the ADAS system in the
      * vehicle should be turned on and monitoring for potential collisions.
      *
-     * If FCW is not available, IVehicle#get must not return any NOT_AVAILABLE value in StatusCode.
-     * Other StatusCode values like TRY_AGAIN may still be used as needed. For example, if FCW is
-     * not available because the vehicle speed is too low, IVehicle#get must return false.
+     * In general, FORWARD_COLLISION_WARNING_ENABLED should always return true or false. If the
+     * feature is not available due to some temporary state, such as the vehicle speed being too
+     * low, that information must be conveyed through the ErrorState values in the
+     * FORWARD_COLLISION_WARNING_STATE property.
      *
      * This property is defined as read_write, but OEMs have the option to implement it as read
      * only.
@@ -3614,9 +3623,10 @@ enum VehicleProperty {
      * Set true to enable BSW and false to disable BSW. When BSW is enabled, the ADAS system in the
      * vehicle should be turned on and monitoring for objects in the vehicle’s blind spots.
      *
-     * If BSW is not available, IVehicle#get must not return any NOT_AVAILABLE value in StatusCode.
-     * Other StatusCode values like TRY_AGAIN may still be used as needed. For example, if BSW is
-     * not available because the vehicle speed is too low, IVehicle#get must return false.
+     * In general, BLIND_SPOT_WARNING_ENABLED should always return true or false. If the feature is
+     * not available due to some temporary state, such as the vehicle speed being too low, that
+     * information must be conveyed through the ErrorState values in the BLIND_SPOT_WARNING_STATE
+     * property.
      *
      * This property is defined as read_write, but OEMs have the option to implement it as read
      * only.
@@ -3653,6 +3663,11 @@ enum VehicleProperty {
      * vehicle should be turned on and monitoring if the vehicle is approaching or crossing lane
      * lines, in which case a warning will be given.
      *
+     * In general, LANE_DEPARTURE_WARNING_ENABLED should always return true or false. If the feature
+     * is not available due to some temporary state, such as the vehicle speed being too low or too
+     * high, that information must be conveyed through the ErrorState values in the
+     * LANE_DEPARTURE_WARNING_STATE property.
+     *
      * This property is defined as read_write, but OEMs have the option to implement it as read
      * only.
      *
@@ -3661,6 +3676,25 @@ enum VehicleProperty {
      */
     LANE_DEPARTURE_WARNING_ENABLED =
             0x1006 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+
+    /**
+     * Lane Departure Warning (LDW) state.
+     *
+     * Returns the current state of LDW. This property must always return a valid state defined in
+     * LaneDepartureWarningState or ErrorState. It must not surface errors through StatusCode
+     * and must use the supported error states instead.
+     *
+     * For the global area ID (0), the VehicleAreaConfig#supportedEnumValues array must be defined
+     * unless all states of both LaneDepartureWarningState (including OTHER, which is not
+     * recommended) and ErrorState are supported.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     * @data_enum LaneDepartureWarningState
+     * @data_enum ErrorState
+     */
+    LANE_DEPARTURE_WARNING_STATE =
+            0x1007 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
 
     /**
      * Enable or disable Lane Keep Assist (LKA).
@@ -3672,6 +3706,11 @@ enum VehicleProperty {
      *
      * This is different from Lane Centering Assist (LCA) which, when activated, applies continuous
      * steering control to keep the vehicle centered in the current lane.
+     *
+     * In general, LANE_KEEP_ASSIST_ENABLED should always return true or false. If the feature is
+     * not available due to some temporary state, such as the vehicle speed being too low or too
+     * high, that information must be conveyed through the ErrorState values in the
+     * LANE_KEEP_ASSIST_STATE property.
      *
      * This property is defined as read_write, but OEMs have the option to implement it as read
      * only.
@@ -3716,6 +3755,11 @@ enum VehicleProperty {
      * drifts toward or over the lane marking. If an unintentional lane departure is detected, the
      * system applies steering control to return the vehicle into the current lane.
      *
+     * In general, LANE_CENTERING_ASSIST_ENABLED should always return true or false. If the feature
+     * is not available due to some temporary state, such as the vehicle speed being too low or too
+     * high, that information must be conveyed through the ErrorState values in the
+     * LANE_CENTERING_ASSIST_STATE property.
+     *
      * This property is defined as read_write, but OEMs have the option to implement it as read
      * only.
      *
@@ -3724,6 +3768,52 @@ enum VehicleProperty {
      */
     LANE_CENTERING_ASSIST_ENABLED =
             0x100A + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+
+    /**
+     * Lane Centering Assist (LCA) commands.
+     *
+     * Commands to activate and suspend LCA. They are only valid when LANE_CENTERING_ASSIST_ENABLED
+     * = true. Otherwise, these commands must return StatusCode#NOT_AVAILABLE or
+     * StatusCode#NOT_AVAILABLE_DISABLED.
+     *
+     * When the command ACTIVATE from LaneCenteringAssistCommmand is sent,
+     * LANE_CENTERING_ASSIST_STATE must be set to LaneCenteringAssistState#ACTIVATION_REQUESTED.
+     * When the ACTIVATE command succeeds, LANE_CENTERING_ASSIST_STATE must be set to
+     * LaneCenteringAssistState#ACTIVATED. When the command DEACTIVATE from
+     * LaneCenteringAssistCommmand succeeds, LANE_CENTERING_ASSIST_STATE must be set to
+     * LaneCenteringAssistState#ENABLED.
+     *
+     * For the global area ID (0), the VehicleAreaConfig#supportedEnumValues must be defined unless
+     * all enum values of LaneCenteringAssistCommand are supported.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.WRITE
+     * @data_enum LaneCenteringAssistCommmand
+     */
+    LANE_CENTERING_ASSIST_COMMAND =
+            0x100B + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
+
+    /**
+     * Lane Centering Assist (LCA) state.
+     *
+     * Returns the current state of LCA. This property must always return a valid state defined in
+     * LaneCenteringAssistState or ErrorState. It must not surface errors through StatusCode
+     * and must use the supported error states instead.
+     *
+     * If LCA includes lane departure warnings, those warnings must be surfaced through the Lane
+     * Departure Warning (LDW) properties.
+     *
+     * For the global area ID (0), the VehicleAreaConfig#supportedEnumValues array must be defined
+     * unless all states of both LaneCenteringAssistState (including OTHER, which is not
+     * recommended) and ErrorState are supported.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     * @data_enum LaneCenteringAssistState
+     * @data_enum ErrorState
+     */
+    LANE_CENTERING_ASSIST_STATE =
+            0x100C + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
 
     /*
      * Enable or disable emergency lane keep assist (ELKA).

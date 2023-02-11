@@ -241,6 +241,8 @@ oneway interface IRadioSimResponse {
      *   RadioError:NO_MEMORY
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
+     *
+     * @deprecated use iccCloseLogicalChannelWithSessionInfoResponse instead.
      */
     void iccCloseLogicalChannelResponse(in RadioResponseInfo info);
 
@@ -591,4 +593,17 @@ oneway interface IRadioSimResponse {
      *   RadioError:NO_RESOURCES
      */
     void updateSimPhonebookRecordsResponse(in RadioResponseInfo info, in int updatedRecordIndex);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:NO_MEMORY
+     *   RadioError:NO_RESOURCES
+     *   RadioError:CANCELLED
+     */
+    void iccCloseLogicalChannelWithSessionInfoResponse(in RadioResponseInfo info);
 }

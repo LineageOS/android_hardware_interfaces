@@ -43,6 +43,7 @@ enum VehicleUnit {
     US_GALLON = 0x42,
     IMPERIAL_GALLON = 0x43,
     NANO_SECS = 0x50,
+    MILLI_SECS = 0x51,
     SECS = 0x53,
     YEAR = 0x59,
     WATT_HOUR = 0x60,
