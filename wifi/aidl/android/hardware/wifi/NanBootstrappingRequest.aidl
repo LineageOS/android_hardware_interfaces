@@ -37,4 +37,9 @@ parcelable NanBootstrappingRequest {
      * Bootstrapping method in the request, one of the |NanBootstrappingMethod|
      */
     NanBootstrappingMethod requestBootstrappingMethod;
+
+    /**
+     * Cookie for the follow up request
+     */
+    byte[] cookie;
 }

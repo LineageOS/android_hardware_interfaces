@@ -34,7 +34,7 @@
 package android.hardware.wifi;
 @Backing(type="int") @VintfStability
 enum NanRangingIndication {
-  CONTINUOUS_INDICATION_MASK = (1 << 0),
-  INGRESS_MET_MASK = (1 << 1),
-  EGRESS_MET_MASK = (1 << 2),
+  CONTINUOUS_INDICATION_MASK = (1 << 0) /* 1 */,
+  INGRESS_MET_MASK = (1 << 1) /* 2 */,
+  EGRESS_MET_MASK = (1 << 2) /* 4 */,
 }

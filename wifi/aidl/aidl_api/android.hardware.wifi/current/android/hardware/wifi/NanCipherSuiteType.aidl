@@ -35,8 +35,10 @@ package android.hardware.wifi;
 @Backing(type="int") @VintfStability
 enum NanCipherSuiteType {
   NONE = 0,
-  SHARED_KEY_128_MASK = (1 << 0),
-  SHARED_KEY_256_MASK = (1 << 1),
-  PUBLIC_KEY_128_MASK = (1 << 2),
-  PUBLIC_KEY_256_MASK = (1 << 3),
+  SHARED_KEY_128_MASK = (1 << 0) /* 1 */,
+  SHARED_KEY_256_MASK = (1 << 1) /* 2 */,
+  PUBLIC_KEY_2WDH_128_MASK = (1 << 2) /* 4 */,
+  PUBLIC_KEY_2WDH_256_MASK = (1 << 3) /* 8 */,
+  PUBLIC_KEY_PASN_128_MASK = (1 << 4) /* 16 */,
+  PUBLIC_KEY_PASN_256_MASK = (1 << 5) /* 32 */,
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,28 +17,12 @@
 package android.hardware.wifi;
 
 /**
- * Cipher suite flags. Wi-Fi Aware Specification 4.0 section 7.1.2
+ * Response code from peer NAN Bootstrapping request
  */
 @VintfStability
 @Backing(type="int")
-enum NanCipherSuiteType {
-    NONE = 0,
-    SHARED_KEY_128_MASK = 1 << 0,
-    SHARED_KEY_256_MASK = 1 << 1,
-    /**
-     *  NCS-PK-2WDH-128
-     */
-    PUBLIC_KEY_2WDH_128_MASK = 1 << 2,
-    /**
-     *  NCS-PK-2WDH-256
-     */
-    PUBLIC_KEY_2WDH_256_MASK = 1 << 3,
-    /**
-     *  NCS-PK-PASN-128
-     */
-    PUBLIC_KEY_PASN_128_MASK = 1 << 4,
-    /**
-     *  NCS-PK-PASN-256
-     */
-    PUBLIC_KEY_PASN_256_MASK = 1 << 5,
+enum NanBootstrappingResponseCode {
+    NAN_BOOTSTRAPPING_REQUEST_ACCEPT = 0,
+    NAN_BOOTSTRAPPING_REQUEST_REJECT,
+    NAN_BOOTSTRAPPING_REQUEST_COMEBACK,
 }

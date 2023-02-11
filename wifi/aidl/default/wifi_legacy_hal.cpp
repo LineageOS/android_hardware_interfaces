@@ -1559,6 +1559,15 @@ wifi_error WifiLegacyHal::nanDataEnd(const std::string& iface_name, transaction_
     return status;
 }
 
+wifi_error WifiLegacyHal::nanPairingEnd(const std::string& iface_name, transaction_id id,
+                                        uint32_t pairingId) {
+    NanPairingEndRequest msg;
+    msg.pairing_instance_id = pairingId;
+    wifi_error status =
+            global_func_table_.wifi_nan_pairing_end(id, getIfaceHandle(iface_name), &msg);
+    return status;
+}
+
 wifi_error WifiLegacyHal::nanSuspendRequest(const std::string& iface_name, transaction_id id,
                                             const NanSuspendRequest& msg) {
     NanSuspendRequest msg_internal(msg);

@@ -336,4 +336,16 @@ interface IWifiNanIface {
      *         |WifiStatusCode.ERROR_UNKNOWN|
      */
     void respondToBootstrappingIndicationRequest(in char cmdId, in NanBootstrappingResponse msg);
+
+    /**
+     * Aware pairing termination request. Executed by either the Initiator or Responder.
+     * Asynchronous response is with |IWifiNanIfaceEventCallback.notifyTerminatePairingResponse|.
+     *
+     * @param cmdId Command Id to use for this invocation.
+     * @param pairingInstanceId Pairing instance ID to be terminated.
+     * @throws ServiceSpecificException with one of the following values:
+     *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
+     *         |WifiStatusCode.ERROR_UNKNOWN|
+     */
+    void terminatePairingRequest(in char cmdId, in int pairingInstanceId);
 }

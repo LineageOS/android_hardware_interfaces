@@ -106,6 +106,7 @@ class WifiNanIfaceAidlTest : public testing::TestWithParam<std::string> {
         NOTIFY_RESPOND_TO_BOOTSTRAPPING_INDICATION_RESPONSE,
         NOTIFY_SUSPEND_RESPONSE,
         NOTIFY_RESUME_RESPONSE,
+        NOTIFY_TERMINATE_PAIRING_RESPONSE,
 
         EVENT_CLUSTER_EVENT,
         EVENT_DISABLED,
@@ -411,6 +412,14 @@ class WifiNanIfaceAidlTest : public testing::TestWithParam<std::string> {
         ::ndk::ScopedAStatus notifyRespondToBootstrappingIndicationResponse(
                 char16_t id, const NanStatus& status) override {
             parent_.callback_type_ = NOTIFY_RESPOND_TO_BOOTSTRAPPING_INDICATION_RESPONSE;
+            parent_.id_ = id;
+            parent_.status_ = status;
+            parent_.notify();
+            return ndk::ScopedAStatus::ok();
+        }
+        ::ndk::ScopedAStatus notifyTerminatePairingResponse(char16_t id,
+                                                            const NanStatus& status) override {
+            parent_.callback_type_ = NOTIFY_TERMINATE_PAIRING_RESPONSE;
             parent_.id_ = id;
             parent_.status_ = status;
             parent_.notify();

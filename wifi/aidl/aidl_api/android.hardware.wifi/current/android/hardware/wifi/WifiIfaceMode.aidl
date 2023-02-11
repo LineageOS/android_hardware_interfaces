@@ -34,12 +34,12 @@
 package android.hardware.wifi;
 @Backing(type="int") @VintfStability
 enum WifiIfaceMode {
-  IFACE_MODE_STA = (1 << 0),
-  IFACE_MODE_SOFTAP = (1 << 1),
-  IFACE_MODE_IBSS = (1 << 2),
-  IFACE_MODE_P2P_CLIENT = (1 << 3),
-  IFACE_MODE_P2P_GO = (1 << 4),
-  IFACE_MODE_NAN = (1 << 5),
-  IFACE_MODE_MESH = (1 << 6),
-  IFACE_MODE_TDLS = (1 << 7),
+  IFACE_MODE_STA = (1 << 0) /* 1 */,
+  IFACE_MODE_SOFTAP = (1 << 1) /* 2 */,
+  IFACE_MODE_IBSS = (1 << 2) /* 4 */,
+  IFACE_MODE_P2P_CLIENT = (1 << 3) /* 8 */,
+  IFACE_MODE_P2P_GO = (1 << 4) /* 16 */,
+  IFACE_MODE_NAN = (1 << 5) /* 32 */,
+  IFACE_MODE_MESH = (1 << 6) /* 64 */,
+  IFACE_MODE_TDLS = (1 << 7) /* 128 */,
 }

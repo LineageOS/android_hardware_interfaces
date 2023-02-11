@@ -1250,7 +1250,7 @@ NanPairingRequestType convertLegacyNanPairingRequestTypeToAidl(
     LOG(FATAL);
 }
 
-legacy_hal::Akm convertAidlAkmTypeToLegacy(NanPairingAkm type) {
+legacy_hal::NanAkm convertAidlAkmTypeToLegacy(NanPairingAkm type) {
     switch (type) {
         case NanPairingAkm::SAE:
             return legacy_hal::SAE;
@@ -1260,7 +1260,7 @@ legacy_hal::Akm convertAidlAkmTypeToLegacy(NanPairingAkm type) {
     LOG(FATAL);
 }
 
-NanPairingAkm convertLegacyAkmTypeToAidl(legacy_hal::Akm type) {
+NanPairingAkm convertLegacyAkmTypeToAidl(legacy_hal::NanAkm type) {
     switch (type) {
         case legacy_hal::SAE:
             return NanPairingAkm::SAE;
@@ -1384,6 +1384,7 @@ bool convertLegacyNpsaToAidl(const legacy_hal::NpkSecurityAssociation& legacy_np
     aidl_npsa->npk = std::array<uint8_t, 32>();
     std::copy(legacy_npsa.npk.pmk, legacy_npsa.npk.pmk + 32, std::begin(aidl_npsa->npk));
     aidl_npsa->akm = convertLegacyAkmTypeToAidl(legacy_npsa.akm);
+    aidl_npsa->cipherType = (NanCipherSuiteType)legacy_npsa.cipher_type;
     return true;
 }
 
@@ -3070,6 +3071,7 @@ bool convertAidlNanPairingInitiatorRequestToLegacy(const NanPairingRequest& aidl
             aidl_request.securityConfig.securityType == NanPairingSecurityType::OPPORTUNISTIC ? 1
                                                                                               : 0;
     legacy_request->akm = convertAidlAkmTypeToLegacy(aidl_request.securityConfig.akm);
+    legacy_request->cipher_type = (unsigned int)aidl_request.securityConfig.cipherType;
     if (aidl_request.securityConfig.securityType == NanPairingSecurityType::PMK) {
         legacy_request->key_info.key_type = legacy_hal::NAN_SECURITY_KEY_INPUT_PMK;
         legacy_request->key_info.body.pmk_info.pmk_len = aidl_request.securityConfig.pmk.size();
@@ -3127,6 +3129,7 @@ bool convertAidlNanPairingIndicationResponseToLegacy(
             aidl_request.securityConfig.securityType == NanPairingSecurityType::OPPORTUNISTIC ? 1
                                                                                               : 0;
     legacy_request->akm = convertAidlAkmTypeToLegacy(aidl_request.securityConfig.akm);
+    legacy_request->cipher_type = (unsigned int)aidl_request.securityConfig.cipherType;
     legacy_request->rsp_code =
             aidl_request.acceptRequest ? NAN_PAIRING_REQUEST_ACCEPT : NAN_PAIRING_REQUEST_REJECT;
     if (aidl_request.securityConfig.securityType == NanPairingSecurityType::PMK) {
@@ -3178,6 +3181,9 @@ bool convertAidlNanBootstrappingInitiatorRequestToLegacy(
     memcpy(legacy_request->peer_disc_mac_addr, aidl_request.peerDiscMacAddr.data(), 6);
     legacy_request->request_bootstrapping_method =
             convertAidlBootstrappingMethodToLegacy(aidl_request.requestBootstrappingMethod);
+    legacy_request->cookie_length = aidl_request.cookie.size();
+
+    memcpy(legacy_request->cookie, aidl_request.cookie.data(), legacy_request->cookie_length);
 
     return true;
 }
@@ -3272,8 +3278,11 @@ bool convertLegacyNanBootstrappingConfirmIndToAidl(
     *aidl_ind = {};
 
     aidl_ind->bootstrappingInstanceId = legacy_ind.bootstrapping_instance_id;
-    aidl_ind->acceptRequest = legacy_ind.rsp_code == NAN_BOOTSTRAPPING_REQUEST_ACCEPT;
+    aidl_ind->responseCode = static_cast<NanBootstrappingResponseCode>(legacy_ind.rsp_code);
     aidl_ind->reasonCode.status = convertLegacyNanStatusTypeToAidl(legacy_ind.reason_code);
+    aidl_ind->comeBackDelay = legacy_ind.come_back_delay;
+    aidl_ind->cookie =
+            std::vector<uint8_t>(legacy_ind.cookie, legacy_ind.cookie + legacy_ind.cookie_length);
     return true;
 }
 
