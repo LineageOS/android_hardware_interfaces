@@ -34,4 +34,13 @@ interface INonStandardCertCallback {
      *         |SupplicantStatusCode.FAILURE_UNKNOWN|
      */
     byte[] getBlob(in String alias);
+
+    /**
+     * List the aliases currently stored in the database.
+     *
+     * @param prefix Prefix to filter the aliases by.
+     * @return List of alias strings in the certificate store.
+               The resulting strings will each exclude the prefix.
+     */
+    String[] listAliases(in String prefix);
 }
