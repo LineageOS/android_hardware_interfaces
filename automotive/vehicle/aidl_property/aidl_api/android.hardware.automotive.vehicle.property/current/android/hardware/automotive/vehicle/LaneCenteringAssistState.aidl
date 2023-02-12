@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,16 +31,13 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.bluetooth.audio;
-@VintfStability
-parcelable LeAudioBroadcastConfiguration {
-  android.hardware.bluetooth.audio.CodecType codecType;
-  android.hardware.bluetooth.audio.LeAudioBroadcastConfiguration.BroadcastStreamMap[] streamMap;
-  @VintfStability
-  parcelable BroadcastStreamMap {
-    char streamHandle;
-    int audioChannelAllocation;
-    android.hardware.bluetooth.audio.LeAudioCodecConfiguration leAudioCodecConfig;
-    char pcmStreamId;
-  }
+package android.hardware.automotive.vehicle;
+@Backing(type="int") @VintfStability
+enum LaneCenteringAssistState {
+  OTHER = 0,
+  ENABLED = 1,
+  ACTIVATION_REQUESTED = 2,
+  ACTIVATED = 3,
+  USER_OVERRIDE = 4,
+  FORCED_DEACTIVATION_WARNING = 5,
 }

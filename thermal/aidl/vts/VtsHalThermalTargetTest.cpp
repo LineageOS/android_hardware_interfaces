@@ -133,6 +133,7 @@ INSTANTIATE_TEST_SUITE_P(
         ::android::PrintInstanceNameToString);
 
 }  // namespace
+}  // namespace aidl::android::hardware::thermal
 
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
@@ -140,5 +141,3 @@ int main(int argc, char** argv) {
     ABinderProcess_startThreadPool();
     return RUN_ALL_TESTS();
 }
-
-}  // namespace aidl::android::hardware::thermal

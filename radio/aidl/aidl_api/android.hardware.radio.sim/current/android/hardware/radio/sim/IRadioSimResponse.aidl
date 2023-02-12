@@ -47,6 +47,9 @@ interface IRadioSimResponse {
   oneway void getImsiForAppResponse(in android.hardware.radio.RadioResponseInfo info, in String imsi);
   oneway void getSimPhonebookCapacityResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.sim.PhonebookCapacity capacity);
   oneway void getSimPhonebookRecordsResponse(in android.hardware.radio.RadioResponseInfo info);
+  /**
+   * @deprecated use iccCloseLogicalChannelWithSessionInfoResponse instead.
+   */
   oneway void iccCloseLogicalChannelResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void iccIoForAppResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.sim.IccIoResult iccIo);
   oneway void iccOpenLogicalChannelResponse(in android.hardware.radio.RadioResponseInfo info, in int channelId, in byte[] selectResponse);
@@ -69,4 +72,5 @@ interface IRadioSimResponse {
   oneway void supplyIccPukForAppResponse(in android.hardware.radio.RadioResponseInfo info, in int remainingRetries);
   oneway void supplySimDepersonalizationResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.sim.PersoSubstate persoType, in int remainingRetries);
   oneway void updateSimPhonebookRecordsResponse(in android.hardware.radio.RadioResponseInfo info, in int updatedRecordIndex);
+  oneway void iccCloseLogicalChannelWithSessionInfoResponse(in android.hardware.radio.RadioResponseInfo info);
 }
