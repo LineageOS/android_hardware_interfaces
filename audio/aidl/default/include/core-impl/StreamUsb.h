@@ -60,18 +60,22 @@ class DriverUsb : public DriverInterface {
 
 class StreamInUsb final : public StreamIn {
     ndk::ScopedAStatus getActiveMicrophones(
-            std::vector<MicrophoneDynamicInfo>* _aidl_return) override;
+            std::vector<::aidl::android::media::audio::common::MicrophoneDynamicInfo>* _aidl_return)
+            override;
 
   public:
     static ndk::ScopedAStatus createInstance(
             const ::aidl::android::hardware::audio::common::SinkMetadata& sinkMetadata,
-            StreamContext&& context, const std::vector<MicrophoneInfo>& microphones,
+            StreamContext&& context,
+            const std::vector<::aidl::android::media::audio::common::MicrophoneInfo>& microphones,
             std::shared_ptr<StreamIn>* result);
 
   private:
     friend class ndk::SharedRefBase;
-    StreamInUsb(const ::aidl::android::hardware::audio::common::SinkMetadata& sinkMetadata,
-                StreamContext&& context, const std::vector<MicrophoneInfo>& microphones);
+    StreamInUsb(
+            const ::aidl::android::hardware::audio::common::SinkMetadata& sinkMetadata,
+            StreamContext&& context,
+            const std::vector<::aidl::android::media::audio::common::MicrophoneInfo>& microphones);
 };
 
 class StreamOutUsb final : public StreamOut {

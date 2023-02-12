@@ -35,7 +35,7 @@ package android.hardware.audio.core;
 @VintfStability
 interface IStreamIn {
   android.hardware.audio.core.IStreamCommon getStreamCommon();
-  android.hardware.audio.core.MicrophoneDynamicInfo[] getActiveMicrophones();
+  android.media.audio.common.MicrophoneDynamicInfo[] getActiveMicrophones();
   android.hardware.audio.core.IStreamIn.MicrophoneDirection getMicrophoneDirection();
   void setMicrophoneDirection(android.hardware.audio.core.IStreamIn.MicrophoneDirection direction);
   float getMicrophoneFieldDimension();
@@ -43,7 +43,7 @@ interface IStreamIn {
   void updateMetadata(in android.hardware.audio.common.SinkMetadata sinkMetadata);
   float[] getHwGain();
   void setHwGain(in float[] channelGains);
-  const int MIC_FIELD_DIMENSION_WIDE_ANGLE = (-1);
+  const int MIC_FIELD_DIMENSION_WIDE_ANGLE = (-1) /* -1 */;
   const int MIC_FIELD_DIMENSION_NO_ZOOM = 0;
   const int MIC_FIELD_DIMENSION_MAX_ZOOM = 1;
   const int HW_GAIN_MIN = 0;
