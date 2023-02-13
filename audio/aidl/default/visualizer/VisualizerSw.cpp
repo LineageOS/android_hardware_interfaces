@@ -55,12 +55,15 @@ extern "C" binder_exception_t queryEffect(const AudioUuid* in_impl_uuid, Descrip
 namespace aidl::android::hardware::audio::effect {
 
 const std::string VisualizerSw::kEffectName = "VisualizerSw";
+
 /* capabilities */
-const Visualizer::CaptureSamplesRange VisualizerSwContext::kCaptureSamplesRange = {
-        VisualizerSwContext::kMinCaptureSize, VisualizerSwContext::kMaxCaptureSize};
-const Visualizer::Capability VisualizerSw::kCapability = {
-        .maxLatencyMs = VisualizerSwContext::kMaxLatencyMs,
-        .captureSampleRange = VisualizerSwContext::kCaptureSamplesRange};
+const std::vector<Range::VisualizerRange> VisualizerSw::kRanges = {
+        MAKE_RANGE(Visualizer, latencyMs, 0, VisualizerSwContext::kMaxLatencyMs),
+        MAKE_RANGE(Visualizer, captureSamples, VisualizerSwContext::kMinCaptureSize,
+                   VisualizerSwContext::kMaxCaptureSize)};
+
+const Capability VisualizerSw::kCapability = {
+        .range = Range::make<Range::visualizer>(VisualizerSw::kRanges)};
 
 const Descriptor VisualizerSw::kDescriptor = {
         .common = {.id = {.type = kVisualizerTypeUUID,
@@ -71,7 +74,7 @@ const Descriptor VisualizerSw::kDescriptor = {
                              .volume = Flags::Volume::CTRL},
                    .name = VisualizerSw::kEffectName,
                    .implementor = "The Android Open Source Project"},
-        .capability = Capability::make<Capability::visualizer>(VisualizerSw::kCapability)};
+        .capability = VisualizerSw::kCapability};
 
 ndk::ScopedAStatus VisualizerSw::getDescriptor(Descriptor* _aidl_return) {
     LOG(DEBUG) << __func__ << kDescriptor.toString();
@@ -84,34 +87,33 @@ ndk::ScopedAStatus VisualizerSw::setParameterSpecific(const Parameter::Specific&
               "EffectNotSupported");
 
     auto& vsParam = specific.get<Parameter::Specific::visualizer>();
+    RETURN_IF(!inRange(vsParam, kRanges), EX_ILLEGAL_ARGUMENT, "outOfRange");
     auto tag = vsParam.getTag();
 
     switch (tag) {
         case Visualizer::captureSamples: {
             RETURN_IF(mContext->setVsCaptureSize(vsParam.get<Visualizer::captureSamples>()) !=
                               RetCode::SUCCESS,
-                      EX_ILLEGAL_ARGUMENT, "captureSizeNotSupported");
+                      EX_ILLEGAL_ARGUMENT, "setCaptureSizeFailed");
             return ndk::ScopedAStatus::ok();
         }
         case Visualizer::scalingMode: {
             RETURN_IF(mContext->setVsScalingMode(vsParam.get<Visualizer::scalingMode>()) !=
                               RetCode::SUCCESS,
-                      EX_ILLEGAL_ARGUMENT, "scalingModeNotSupported");
+                      EX_ILLEGAL_ARGUMENT, "setScalingModeFailed");
             return ndk::ScopedAStatus::ok();
         }
         case Visualizer::measurementMode: {
             RETURN_IF(mContext->setVsMeasurementMode(vsParam.get<Visualizer::measurementMode>()) !=
                               RetCode::SUCCESS,
-                      EX_ILLEGAL_ARGUMENT, "measurementModeNotSupported");
+                      EX_ILLEGAL_ARGUMENT, "setMeasurementModeFailed");
             return ndk::ScopedAStatus::ok();
         }
-        case Visualizer::setOnlyParameters: {
-            return setSetOnlyParameterVisualizer(vsParam.get<Visualizer::setOnlyParameters>());
-        }
-        case Visualizer::getOnlyParameters: {
-            LOG(ERROR) << __func__ << " unsupported settable getOnlyParam";
-            return ndk::ScopedAStatus::fromExceptionCodeWithMessage(
-                    EX_ILLEGAL_ARGUMENT, "SetofGetOnlyParamsNotSupported");
+        case Visualizer::latencyMs: {
+            RETURN_IF(mContext->setVsLatency(vsParam.get<Visualizer::latencyMs>()) !=
+                              RetCode::SUCCESS,
+                      EX_ILLEGAL_ARGUMENT, "setLatencyFailed");
+            return ndk::ScopedAStatus::ok();
         }
         default: {
             LOG(ERROR) << __func__ << " unsupported tag: " << toString(tag);
@@ -119,18 +121,6 @@ ndk::ScopedAStatus VisualizerSw::setParameterSpecific(const Parameter::Specific&
                                                                     "VisualizerTagNotSupported");
         }
     }
-}
-
-ndk::ScopedAStatus VisualizerSw::setSetOnlyParameterVisualizer(
-        Visualizer::SetOnlyParameters setOnlyParam) {
-    auto tag = setOnlyParam.getTag();
-    RETURN_IF(Visualizer::SetOnlyParameters::latencyMs != tag, EX_ILLEGAL_ARGUMENT,
-              "SetOnlyParametersTagNotSupported");
-    RETURN_IF(
-            mContext->setVsLatency(setOnlyParam.get<Visualizer::SetOnlyParameters::latencyMs>()) !=
-                    RetCode::SUCCESS,
-            EX_ILLEGAL_ARGUMENT, "latencyNotSupported");
-    return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus VisualizerSw::getParameterSpecific(const Parameter::Id& id,
@@ -142,14 +132,6 @@ ndk::ScopedAStatus VisualizerSw::getParameterSpecific(const Parameter::Id& id,
     switch (vsIdTag) {
         case Visualizer::Id::commonTag:
             return getParameterVisualizer(vsId.get<Visualizer::Id::commonTag>(), specific);
-        case Visualizer::Id::getOnlyParamTag:
-            return getGetOnlyParameterVisualizer(vsId.get<Visualizer::Id::getOnlyParamTag>(),
-                                                 specific);
-        case Visualizer::Id::setOnlyParamTag: {
-            LOG(ERROR) << __func__ << " unsupported gettable setOnlyParam";
-            return ndk::ScopedAStatus::fromExceptionCodeWithMessage(
-                    EX_ILLEGAL_ARGUMENT, "GetofSetOnlyParamsNotSupported");
-        }
         default:
             LOG(ERROR) << __func__ << " unsupported tag: " << toString(tag);
             return ndk::ScopedAStatus::fromExceptionCodeWithMessage(EX_ILLEGAL_ARGUMENT,
@@ -174,38 +156,24 @@ ndk::ScopedAStatus VisualizerSw::getParameterVisualizer(const Visualizer::Tag& t
             vsParam.set<Visualizer::measurementMode>(mContext->getVsMeasurementMode());
             break;
         }
+        case Visualizer::measurement: {
+            vsParam.set<Visualizer::measurement>(mContext->getVsMeasurement());
+            break;
+        }
+        case Visualizer::captureSampleBuffer: {
+            vsParam.set<Visualizer::captureSampleBuffer>(mContext->getVsCaptureSampleBuffer());
+            break;
+        }
+        case Visualizer::latencyMs: {
+            vsParam.set<Visualizer::latencyMs>(mContext->getVsLatency());
+            break;
+        }
         default: {
             LOG(ERROR) << __func__ << " unsupported tag: " << toString(tag);
             return ndk::ScopedAStatus::fromExceptionCodeWithMessage(EX_ILLEGAL_ARGUMENT,
                                                                     "VisualizerTagNotSupported");
         }
     }
-    specific->set<Parameter::Specific::visualizer>(vsParam);
-    return ndk::ScopedAStatus::ok();
-}
-
-ndk::ScopedAStatus VisualizerSw::getGetOnlyParameterVisualizer(
-        const Visualizer::GetOnlyParameters::Tag& tag, Parameter::Specific* specific) {
-    Visualizer::GetOnlyParameters getOnlyParam;
-    switch (tag) {
-        case Visualizer::GetOnlyParameters::measurement: {
-            getOnlyParam.set<Visualizer::GetOnlyParameters::measurement>(
-                    mContext->getVsMeasurement());
-            break;
-        }
-        case Visualizer::GetOnlyParameters::captureSampleBuffer: {
-            getOnlyParam.set<Visualizer::GetOnlyParameters::captureSampleBuffer>(
-                    mContext->getVsCaptureSampleBuffer());
-            break;
-        }
-        default: {
-            LOG(ERROR) << __func__ << " unsupported tag: " << toString(tag);
-            return ndk::ScopedAStatus::fromExceptionCodeWithMessage(
-                    EX_ILLEGAL_ARGUMENT, "GetOnlyParameterTagNotSupported");
-        }
-    }
-    Visualizer vsParam;
-    vsParam.set<Visualizer::getOnlyParameters>(getOnlyParam);
     specific->set<Parameter::Specific::visualizer>(vsParam);
     return ndk::ScopedAStatus::ok();
 }
@@ -242,34 +210,21 @@ IEffect::Status VisualizerSw::effectProcessImpl(float* in, float* out, int sampl
 }
 
 RetCode VisualizerSwContext::setVsCaptureSize(int captureSize) {
-    if (captureSize < VisualizerSw::kCapability.captureSampleRange.min ||
-        captureSize > VisualizerSw::kCapability.captureSampleRange.max) {
-        LOG(ERROR) << __func__ << " invalid captureSize " << captureSize;
-        return RetCode::ERROR_ILLEGAL_PARAMETER;
-    }
-    // TODO : Add implementation to apply new captureSize
     mCaptureSize = captureSize;
     return RetCode::SUCCESS;
 }
 
 RetCode VisualizerSwContext::setVsScalingMode(Visualizer::ScalingMode scalingMode) {
-    // TODO : Add implementation to apply new scalingMode
     mScalingMode = scalingMode;
     return RetCode::SUCCESS;
 }
 
 RetCode VisualizerSwContext::setVsMeasurementMode(Visualizer::MeasurementMode measurementMode) {
-    // TODO : Add implementation to apply new measurementMode
     mMeasurementMode = measurementMode;
     return RetCode::SUCCESS;
 }
 
 RetCode VisualizerSwContext::setVsLatency(int latency) {
-    if (latency < 0 || latency > VisualizerSw::kCapability.maxLatencyMs) {
-        LOG(ERROR) << __func__ << " invalid latency " << latency;
-        return RetCode::ERROR_ILLEGAL_PARAMETER;
-    }
-    // TODO : Add implementation to modify latency
     mLatency = latency;
     return RetCode::SUCCESS;
 }

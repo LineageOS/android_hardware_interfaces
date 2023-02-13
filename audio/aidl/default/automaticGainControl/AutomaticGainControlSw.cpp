@@ -60,8 +60,13 @@ extern "C" binder_exception_t queryEffect(const AudioUuid* in_impl_uuid, Descrip
 namespace aidl::android::hardware::audio::effect {
 
 const std::string AutomaticGainControlSw::kEffectName = "AutomaticGainControlSw";
-const AutomaticGainControl::Capability AutomaticGainControlSw::kCapability = {
-        .maxFixedDigitalGainMb = 50000, .maxSaturationMarginMb = 10000};
+
+const std::vector<Range::AutomaticGainControlRange> AutomaticGainControlSw::kRanges = {
+        MAKE_RANGE(AutomaticGainControl, fixedDigitalGainMb, 0, 50000),
+        MAKE_RANGE(AutomaticGainControl, saturationMarginMb, 0, 10000)};
+
+const Capability AutomaticGainControlSw::kCapability = {.range = AutomaticGainControlSw::kRanges};
+
 const Descriptor AutomaticGainControlSw::kDescriptor = {
         .common = {.id = {.type = kAutomaticGainControlTypeUUID,
                           .uuid = kAutomaticGainControlSwImplUUID,
@@ -71,8 +76,7 @@ const Descriptor AutomaticGainControlSw::kDescriptor = {
                              .volume = Flags::Volume::CTRL},
                    .name = AutomaticGainControlSw::kEffectName,
                    .implementor = "The Android Open Source Project"},
-        .capability = Capability::make<Capability::automaticGainControl>(
-                AutomaticGainControlSw::kCapability)};
+        .capability = AutomaticGainControlSw::kCapability};
 
 ndk::ScopedAStatus AutomaticGainControlSw::getDescriptor(Descriptor* _aidl_return) {
     LOG(DEBUG) << __func__ << kDescriptor.toString();
@@ -87,8 +91,8 @@ ndk::ScopedAStatus AutomaticGainControlSw::setParameterSpecific(
     RETURN_IF(!mContext, EX_NULL_POINTER, "nullContext");
 
     auto& param = specific.get<Parameter::Specific::automaticGainControl>();
+    RETURN_IF(!inRange(param, kRanges), EX_ILLEGAL_ARGUMENT, "outOfRange");
     auto tag = param.getTag();
-
     switch (tag) {
         case AutomaticGainControl::fixedDigitalGainMb: {
             RETURN_IF(mContext->setDigitalGain(
@@ -196,10 +200,6 @@ IEffect::Status AutomaticGainControlSw::effectProcessImpl(float* in, float* out,
 }
 
 RetCode AutomaticGainControlSwContext::setDigitalGain(int gain) {
-    if (gain < 0 || gain > AutomaticGainControlSw::kCapability.maxFixedDigitalGainMb) {
-        LOG(DEBUG) << __func__ << " illegal digital gain " << gain;
-        return RetCode::ERROR_ILLEGAL_PARAMETER;
-    }
     mDigitalGain = gain;
     return RetCode::SUCCESS;
 }
@@ -219,10 +219,6 @@ AutomaticGainControl::LevelEstimator AutomaticGainControlSwContext::getLevelEsti
 }
 
 RetCode AutomaticGainControlSwContext::setSaturationMargin(int margin) {
-    if (margin < 0 || margin > AutomaticGainControlSw::kCapability.maxSaturationMarginMb) {
-        LOG(DEBUG) << __func__ << " illegal saturationMargin " << margin;
-        return RetCode::ERROR_ILLEGAL_PARAMETER;
-    }
     mSaturationMargin = margin;
     return RetCode::SUCCESS;
 }
