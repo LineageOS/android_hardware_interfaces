@@ -49,4 +49,11 @@ parcelable StaLinkLayerLinkStats {
   android.hardware.wifi.StaLinkLayerIfaceContentionTimeStats wmeViContentionTimeStats;
   android.hardware.wifi.StaLinkLayerIfaceContentionTimeStats wmeVoContentionTimeStats;
   android.hardware.wifi.StaPeerInfo[] peers;
+  android.hardware.wifi.StaLinkLayerLinkStats.StaLinkState state;
+  @Backing(type="int") @VintfStability
+  enum StaLinkState {
+    UNKNOWN = 0,
+    NOT_IN_USE = (1 << 0) /* 1 */,
+    IN_USE = (1 << 1) /* 2 */,
+  }
 }
