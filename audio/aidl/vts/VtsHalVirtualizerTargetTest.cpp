@@ -22,7 +22,6 @@
 
 using namespace android;
 
-using aidl::android::hardware::audio::effect::Capability;
 using aidl::android::hardware::audio::effect::Descriptor;
 using aidl::android::hardware::audio::effect::IEffect;
 using aidl::android::hardware::audio::effect::IFactory;
@@ -90,7 +89,7 @@ class VirtualizerParamTest : public ::testing::TestWithParam<VirtualizerParamTes
             // validate parameter
             Descriptor desc;
             ASSERT_STATUS(EX_NONE, mEffect->getDescriptor(&desc));
-            const bool valid = isTagInRange(it.first, it.second, desc);
+            const bool valid = isParameterValid<Virtualizer, Range::virtualizer>(it.second, desc);
             const binder_exception_t expected = valid ? EX_NONE : EX_ILLEGAL_ARGUMENT;
 
             // set parameter
@@ -120,46 +119,6 @@ class VirtualizerParamTest : public ::testing::TestWithParam<VirtualizerParamTes
         mTags.push_back({Virtualizer::strengthPm, vr});
     }
 
-    bool isTagInRange(const Virtualizer::Tag& tag, const Virtualizer& vr,
-                      const Descriptor& desc) const {
-        const Virtualizer::Capability& vrCap = desc.capability.get<Capability::virtualizer>();
-        switch (tag) {
-            case Virtualizer::strengthPm: {
-                int strength = vr.get<Virtualizer::strengthPm>();
-                return isStrengthInRange(vrCap, strength);
-            }
-            default:
-                return false;
-        }
-        return false;
-    }
-
-    bool isStrengthInRange(const Virtualizer::Capability& cap, int strength) const {
-        return cap.strengthSupported && strength >= 0 && strength <= cap.maxStrengthPm;
-    }
-
-    static std::vector<int> getStrengthTestValues(
-            std::vector<std::pair<std::shared_ptr<IFactory>, Descriptor>> kFactoryDescList) {
-        const auto max = std::max_element(
-                kFactoryDescList.begin(), kFactoryDescList.end(),
-                [](const std::pair<std::shared_ptr<IFactory>, Descriptor>& a,
-                   const std::pair<std::shared_ptr<IFactory>, Descriptor>& b) {
-                    return a.second.capability.get<Capability::virtualizer>().maxStrengthPm <
-                           b.second.capability.get<Capability::virtualizer>().maxStrengthPm;
-                });
-        if (max == kFactoryDescList.end()) {
-            return {0};
-        }
-        int maxStrength = max->second.capability.get<Capability::virtualizer>().maxStrengthPm;
-        return {std::numeric_limits<int>::min(),
-                -1,
-                0,
-                maxStrength >> 1,
-                maxStrength,
-                maxStrength + 1,
-                std::numeric_limits<int>::max()};
-    }
-
   private:
     std::vector<std::pair<Virtualizer::Tag, Virtualizer>> mTags;
     void CleanUp() { mTags.clear(); }
@@ -170,13 +129,15 @@ TEST_P(VirtualizerParamTest, SetAndGetStrength) {
     SetAndGetVirtualizerParameters();
 }
 
+std::vector<std::pair<std::shared_ptr<IFactory>, Descriptor>> kDescPair;
 INSTANTIATE_TEST_SUITE_P(
         VirtualizerTest, VirtualizerParamTest,
-        ::testing::Combine(testing::ValuesIn(EffectFactoryHelper::getAllEffectDescriptors(
-                                   IFactory::descriptor, kVirtualizerTypeUUID)),
-                           testing::ValuesIn(VirtualizerParamTest::getStrengthTestValues(
-                                   EffectFactoryHelper::getAllEffectDescriptors(
-                                           IFactory::descriptor, kVirtualizerTypeUUID)))),
+        ::testing::Combine(
+                testing::ValuesIn(kDescPair = EffectFactoryHelper::getAllEffectDescriptors(
+                                          IFactory::descriptor, kVirtualizerTypeUUID)),
+                testing::ValuesIn(EffectHelper::getTestValueSet<
+                                  Virtualizer, int, Range::virtualizer, Virtualizer::strengthPm>(
+                        kDescPair, EffectHelper::expandTestValueBasic<int>))),
         [](const testing::TestParamInfo<VirtualizerParamTest::ParamType>& info) {
             auto descriptor = std::get<PARAM_INSTANCE_NAME>(info.param).second;
             std::string strength = std::to_string(std::get<PARAM_STRENGTH>(info.param));
