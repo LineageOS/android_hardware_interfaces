@@ -33,7 +33,7 @@
 
 package android.hardware.thermal;
 /* @hide */
-@VintfStability
+@JavaDerive(toString=true) @VintfStability
 parcelable Temperature {
   android.hardware.thermal.TemperatureType type;
   String name;
