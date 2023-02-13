@@ -16,6 +16,8 @@
 
 package android.hardware.wifi.supplicant;
 
+import android.hardware.wifi.supplicant.P2pClientEapolIpAddressInfo;
+
 /**
  * Parameters passed as part of Wifi P2P group start event.
  */
@@ -47,4 +49,18 @@ parcelable P2pGroupStartedEventParams {
 
     /** MAC Address of the P2P interface of the owner of this group. */
     byte[/* 6 */] goInterfaceAddress;
+
+    /**
+     * Flag to indicate that the P2P Client IP address is allocated via EAPOL exchange.
+     */
+    boolean isP2pClientEapolIpAddressInfoPresent;
+
+    /**
+     * The P2P Client IP Address allocated by the P2P Group Owner in EAPOL
+     * key exchange.
+     * Refer Wi-Fi P2P Technical Specification v1.7 - Section  4.2.8
+     * "IP Address Allocation in EAPOL-Key Frames (4-Way Handshake)" for more details.
+     * The value is undefined if isP2pClientEapolIpAddressInfoPresent is false.
+     */
+    P2pClientEapolIpAddressInfo p2pClientIpInfo;
 }

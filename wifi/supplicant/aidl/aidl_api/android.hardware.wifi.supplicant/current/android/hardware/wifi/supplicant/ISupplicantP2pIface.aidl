@@ -96,4 +96,5 @@ interface ISupplicantP2pIface {
   void findOnSocialChannels(in int timeoutInSec);
   void findOnSpecificFrequency(in int freqInHz, in int timeoutInSec);
   void setVendorElements(in android.hardware.wifi.supplicant.P2pFrameTypeMask frameTypeMask, in byte[] vendorElemBytes);
+  void configureEapolIpAddressAllocationParams(in int ipAddressGo, in int ipAddressMask, in int ipAddressStart, in int ipAddressEnd);
 }
