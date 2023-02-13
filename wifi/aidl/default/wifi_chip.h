@@ -150,6 +150,7 @@ class WifiChip : public BnWifiChip {
     ndk::ScopedAStatus enableStaChannelForPeerNetwork(
             ChannelCategoryMask in_channelCategoryEnableFlag) override;
     binder_status_t dump(int fd, const char** args, uint32_t numArgs) override;
+    ndk::ScopedAStatus setMloMode(const ChipMloMode in_mode) override;
 
   private:
     void invalidateAndRemoveAllIfaces();
@@ -260,6 +261,7 @@ class WifiChip : public BnWifiChip {
     std::pair<WifiRadioCombinationMatrix, ndk::ScopedAStatus>
     getSupportedRadioCombinationsMatrixInternal();
     std::pair<WifiChipCapabilities, ndk::ScopedAStatus> getWifiChipCapabilitiesInternal();
+    ndk::ScopedAStatus setMloModeInternal(const ChipMloMode in_mode);
     void setWeakPtr(std::weak_ptr<WifiChip> ptr);
 
     int32_t chip_id_;
