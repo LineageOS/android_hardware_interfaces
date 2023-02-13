@@ -41,4 +41,5 @@ enum Composition {
   CURSOR = 4,
   SIDEBAND = 5,
   DISPLAY_DECORATION = 6,
+  REFRESH_RATE_INDICATOR = 7,
 }

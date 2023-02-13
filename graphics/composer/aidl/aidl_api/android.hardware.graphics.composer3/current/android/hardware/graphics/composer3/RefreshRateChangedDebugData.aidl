@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2021, The Android Open Source Project
+ * Copyright 2023, The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,12 +33,7 @@
 
 package android.hardware.graphics.composer3;
 @VintfStability
-interface IComposerCallback {
-  void onHotplug(long display, boolean connected);
-  oneway void onRefresh(long display);
-  oneway void onSeamlessPossible(long display);
-  oneway void onVsync(long display, long timestamp, int vsyncPeriodNanos);
-  oneway void onVsyncPeriodTimingChanged(long display, in android.hardware.graphics.composer3.VsyncPeriodChangeTimeline updatedTimeline);
-  oneway void onVsyncIdle(long display);
-  oneway void onRefreshRateChangedDebug(in android.hardware.graphics.composer3.RefreshRateChangedDebugData data);
+parcelable RefreshRateChangedDebugData {
+  long display;
+  int vsyncPeriodNanos;
 }
