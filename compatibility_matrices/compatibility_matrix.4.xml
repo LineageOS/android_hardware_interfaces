@@ -171,7 +171,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="false">
+    <hal format="hidl" optional="true">
         <name>android.hardware.gatekeeper</name>
         <version>1.0</version>
         <interface>
