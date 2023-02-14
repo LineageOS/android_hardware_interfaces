@@ -20,6 +20,7 @@ import android.hardware.thermal.TemperatureType;
 
 /* @hide */
 @VintfStability
+@JavaDerive(toString=true)
 parcelable TemperatureThreshold {
     /**
      * This temperature's type.
