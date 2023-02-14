@@ -21,6 +21,7 @@ import android.hardware.thermal.ThrottlingSeverity;
 
 /* @hide */
 @VintfStability
+@JavaDerive(toString=true)
 parcelable Temperature {
     /**
      * This temperature's type.
