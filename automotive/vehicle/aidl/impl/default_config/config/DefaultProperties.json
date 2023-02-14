@@ -3130,6 +3130,14 @@
             "property": "VehicleProperty::VEHICLE_MAP_SERVICE"
         },
         {
+            "property": "VehicleProperty::LOCATION_CHARACTERIZATION",
+            "defaultValue": {
+                "int32Values": [
+                    "LocationCharacterization::RAW_GNSS_ONLY"
+                ]
+            }
+        },
+        {
             "property": "VehicleProperty::ELECTRONIC_TOLL_COLLECTION_CARD_TYPE",
             "defaultValue": {
                 "int32Values": [
