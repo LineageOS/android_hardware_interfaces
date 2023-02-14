@@ -70,7 +70,7 @@ parcelable ProtectedData {
      *     ; HKDF. See details on use in ProtectedData comments above. The public key data
      *     ; included in the other field of PartyUInfo / PartyVInfo is encoded as:
      *     ;  - a raw 32-byte public key for X25519
-     *     ;  - uncompressed SEC-1 coordinate data (0x04 || x || y) for P-256
+     *     ;  - raw coordinate data (x || y) for P-256
      *     Context = [
      *         AlgorithmID : 3             ; AES-GCM 256
      *         PartyUInfo : [
