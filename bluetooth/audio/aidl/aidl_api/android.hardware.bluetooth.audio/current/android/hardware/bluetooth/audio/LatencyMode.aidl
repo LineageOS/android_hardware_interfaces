@@ -34,7 +34,9 @@
 package android.hardware.bluetooth.audio;
 @Backing(type="int") @VintfStability
 enum LatencyMode {
-  UNKNOWN = 0,
-  LOW_LATENCY = 1,
-  FREE = 2,
+  UNKNOWN,
+  LOW_LATENCY,
+  FREE,
+  DYNAMIC_SPATIAL_AUDIO_SOFTWARE,
+  DYNAMIC_SPATIAL_AUDIO_HARDWARE,
 }
