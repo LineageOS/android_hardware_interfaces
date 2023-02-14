@@ -37,9 +37,7 @@ namespace wifi {
 namespace aidl_struct_util {
 
 // Chip conversion methods.
-bool convertLegacyFeaturesToAidlChipCapabilities(uint64_t legacy_feature_set,
-                                                 uint32_t legacy_logger_feature_set,
-                                                 uint32_t* aidl_caps);
+bool convertLegacyFeaturesToAidlChipCapabilities(uint64_t legacy_feature_set, uint32_t* aidl_caps);
 bool convertLegacyDebugRingBufferStatusToAidl(
         const legacy_hal::wifi_ring_buffer_status& legacy_status,
         WifiDebugRingBufferStatus* aidl_status);
