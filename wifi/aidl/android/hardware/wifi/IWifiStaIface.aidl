@@ -99,10 +99,6 @@ interface IWifiStaIface {
          * Support for keep alive packet offload.
          */
         KEEP_ALIVE = 1 << 13,
-        /**
-         * Support for tracking connection packets' fate.
-         */
-        DEBUG_PACKET_FATE = 1 << 14,
     }
 
     /**

@@ -41,16 +41,6 @@ inline std::vector<int32_t> uintToIntVec(const std::vector<uint32_t>& in) {
     return std::vector<int32_t>(in.begin(), in.end());
 }
 
-IWifiStaIface::StaIfaceCapabilityMask convertLegacyLoggerFeatureToAidlStaIfaceCapability(
-        uint32_t feature) {
-    switch (feature) {
-        case legacy_hal::WIFI_LOGGER_PACKET_FATE_SUPPORTED:
-            return IWifiStaIface::StaIfaceCapabilityMask::DEBUG_PACKET_FATE;
-    };
-    CHECK(false) << "Unknown legacy feature: " << feature;
-    return {};
-}
-
 IWifiChip::ChipCapabilityMask convertLegacyFeatureToAidlChipCapability(uint64_t feature) {
     switch (feature) {
         case WIFI_FEATURE_SET_TX_POWER_LIMIT:
@@ -459,19 +449,11 @@ bool convertLegacyWifiMacInfosToAidl(
     return true;
 }
 
-bool convertLegacyFeaturesToAidlStaCapabilities(uint64_t legacy_feature_set,
-                                                uint32_t legacy_logger_feature_set,
-                                                uint32_t* aidl_caps) {
+bool convertLegacyFeaturesToAidlStaCapabilities(uint64_t legacy_feature_set, uint32_t* aidl_caps) {
     if (!aidl_caps) {
         return false;
     }
     *aidl_caps = {};
-    for (const auto feature : {legacy_hal::WIFI_LOGGER_PACKET_FATE_SUPPORTED}) {
-        if (feature & legacy_logger_feature_set) {
-            *aidl_caps |= static_cast<uint32_t>(
-                    convertLegacyLoggerFeatureToAidlStaIfaceCapability(feature));
-        }
-    }
     for (const auto feature :
          {WIFI_FEATURE_GSCAN, WIFI_FEATURE_LINK_LAYER_STATS, WIFI_FEATURE_RSSI_MONITOR,
           WIFI_FEATURE_CONTROL_ROAMING, WIFI_FEATURE_IE_WHITELIST, WIFI_FEATURE_SCAN_RAND,

@@ -249,16 +249,9 @@ WifiStaIface::getCapabilitiesInternal() {
         return {IWifiStaIface::StaIfaceCapabilityMask{},
                 createWifiStatusFromLegacyError(legacy_status)};
     }
-    uint32_t legacy_logger_feature_set;
-    std::tie(legacy_status, legacy_logger_feature_set) =
-            legacy_hal_.lock()->getLoggerSupportedFeatureSet(ifname_);
-    if (legacy_status != legacy_hal::WIFI_SUCCESS) {
-        // some devices don't support querying logger feature set
-        legacy_logger_feature_set = 0;
-    }
     uint32_t aidl_caps;
-    if (!aidl_struct_util::convertLegacyFeaturesToAidlStaCapabilities(
-                legacy_feature_set, legacy_logger_feature_set, &aidl_caps)) {
+    if (!aidl_struct_util::convertLegacyFeaturesToAidlStaCapabilities(legacy_feature_set,
+                                                                      &aidl_caps)) {
         return {IWifiStaIface::StaIfaceCapabilityMask{},
                 createWifiStatus(WifiStatusCode::ERROR_UNKNOWN)};
     }

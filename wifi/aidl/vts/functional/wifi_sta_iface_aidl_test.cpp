@@ -255,18 +255,17 @@ TEST_P(WifiStaIfaceAidlTest, EnableNDOffload) {
  * PacketFateMonitoring
  */
 TEST_P(WifiStaIfaceAidlTest, PacketFateMonitoring) {
-    if (!isCapabilitySupported(IWifiStaIface::StaIfaceCapabilityMask::DEBUG_PACKET_FATE)) {
-        GTEST_SKIP() << "Packet fate monitoring is not supported.";
-    }
-
     // Start packet fate monitoring.
-    EXPECT_TRUE(wifi_sta_iface_->startDebugPacketFateMonitoring().isOk());
+    auto status = wifi_sta_iface_->startDebugPacketFateMonitoring();
+    EXPECT_TRUE(status.isOk() || checkStatusCode(&status, WifiStatusCode::ERROR_NOT_SUPPORTED));
 
     // Retrieve packets.
-    std::vector<WifiDebugRxPacketFateReport> rx_reports;
-    std::vector<WifiDebugTxPacketFateReport> tx_reports;
-    EXPECT_TRUE(wifi_sta_iface_->getDebugRxPacketFates(&rx_reports).isOk());
-    EXPECT_TRUE(wifi_sta_iface_->getDebugTxPacketFates(&tx_reports).isOk());
+    if (status.isOk()) {
+        std::vector<WifiDebugRxPacketFateReport> rx_reports;
+        std::vector<WifiDebugTxPacketFateReport> tx_reports;
+        EXPECT_TRUE(wifi_sta_iface_->getDebugRxPacketFates(&rx_reports).isOk());
+        EXPECT_TRUE(wifi_sta_iface_->getDebugTxPacketFates(&tx_reports).isOk());
+    }
 }
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(WifiStaIfaceAidlTest);
