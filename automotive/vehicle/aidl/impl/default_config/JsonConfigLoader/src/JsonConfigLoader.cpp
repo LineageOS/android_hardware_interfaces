@@ -41,6 +41,8 @@ using ::aidl::android::hardware::automotive::vehicle::ChangeModeForVehicleProper
 using ::aidl::android::hardware::automotive::vehicle::CruiseControlCommand;
 using ::aidl::android::hardware::automotive::vehicle::CruiseControlState;
 using ::aidl::android::hardware::automotive::vehicle::CruiseControlType;
+using ::aidl::android::hardware::automotive::vehicle::DriverAttentionMonitoringState;
+using ::aidl::android::hardware::automotive::vehicle::DriverAttentionMonitoringWarning;
 using ::aidl::android::hardware::automotive::vehicle::EmergencyLaneKeepAssistState;
 using ::aidl::android::hardware::automotive::vehicle::ErrorState;
 using ::aidl::android::hardware::automotive::vehicle::EvConnectorType;
@@ -49,6 +51,8 @@ using ::aidl::android::hardware::automotive::vehicle::EvsServiceType;
 using ::aidl::android::hardware::automotive::vehicle::ForwardCollisionWarningState;
 using ::aidl::android::hardware::automotive::vehicle::FuelType;
 using ::aidl::android::hardware::automotive::vehicle::GsrComplianceRequirementType;
+using ::aidl::android::hardware::automotive::vehicle::HandsOnDetectionDriverState;
+using ::aidl::android::hardware::automotive::vehicle::HandsOnDetectionWarning;
 using ::aidl::android::hardware::automotive::vehicle::LaneCenteringAssistCommand;
 using ::aidl::android::hardware::automotive::vehicle::LaneCenteringAssistState;
 using ::aidl::android::hardware::automotive::vehicle::LaneDepartureWarningState;
@@ -230,6 +234,14 @@ JsonValueParser::JsonValueParser() {
             std::make_unique<ConstantParser<CruiseControlState>>();
     mConstantParsersByType["CruiseControlCommand"] =
             std::make_unique<ConstantParser<CruiseControlCommand>>();
+    mConstantParsersByType["HandsOnDetectionDriverState"] =
+            std::make_unique<ConstantParser<HandsOnDetectionDriverState>>();
+    mConstantParsersByType["HandsOnDetectionWarning"] =
+            std::make_unique<ConstantParser<HandsOnDetectionWarning>>();
+    mConstantParsersByType["DriverAttentionMonitoringState"] =
+            std::make_unique<ConstantParser<DriverAttentionMonitoringState>>();
+    mConstantParsersByType["DriverAttentionMonitoringWarning"] =
+            std::make_unique<ConstantParser<DriverAttentionMonitoringWarning>>();
     mConstantParsersByType["ErrorState"] = std::make_unique<ConstantParser<ErrorState>>();
     mConstantParsersByType["AutomaticEmergencyBrakingState"] =
             std::make_unique<ConstantParser<AutomaticEmergencyBrakingState>>();

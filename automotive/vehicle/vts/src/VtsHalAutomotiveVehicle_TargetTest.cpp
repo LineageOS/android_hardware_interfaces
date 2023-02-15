@@ -540,10 +540,34 @@ TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyHandsOnDetectionEnabledConfig) {
                    VehicleArea::GLOBAL, VehiclePropertyType::BOOLEAN);
 }
 
+TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyHandsOnDetectionDriverStateConfig) {
+    verifyProperty(VehicleProperty::HANDS_ON_DETECTION_DRIVER_STATE, VehiclePropertyAccess::READ,
+                   VehiclePropertyChangeMode::ON_CHANGE, VehiclePropertyGroup::SYSTEM,
+                   VehicleArea::GLOBAL, VehiclePropertyType::INT32);
+}
+
+TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyHandsOnDetectionWarningConfig) {
+    verifyProperty(VehicleProperty::HANDS_ON_DETECTION_WARNING, VehiclePropertyAccess::READ,
+                   VehiclePropertyChangeMode::ON_CHANGE, VehiclePropertyGroup::SYSTEM,
+                   VehicleArea::GLOBAL, VehiclePropertyType::INT32);
+}
+
 TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyDriverAttentionMonitoringEnabledConfig) {
     verifyProperty(VehicleProperty::DRIVER_ATTENTION_MONITORING_ENABLED,
                    VehiclePropertyAccess::READ_WRITE, VehiclePropertyChangeMode::ON_CHANGE,
                    VehiclePropertyGroup::SYSTEM, VehicleArea::GLOBAL, VehiclePropertyType::BOOLEAN);
+}
+
+TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyDriverAttentionMonitoringStateConfig) {
+    verifyProperty(VehicleProperty::DRIVER_ATTENTION_MONITORING_STATE, VehiclePropertyAccess::READ,
+                   VehiclePropertyChangeMode::ON_CHANGE, VehiclePropertyGroup::SYSTEM,
+                   VehicleArea::GLOBAL, VehiclePropertyType::INT32);
+}
+
+TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyDriverAttentionMonitoringWarningConfig) {
+    verifyProperty(VehicleProperty::DRIVER_ATTENTION_MONITORING_WARNING,
+                   VehiclePropertyAccess::READ, VehiclePropertyChangeMode::ON_CHANGE,
+                   VehiclePropertyGroup::SYSTEM, VehicleArea::GLOBAL, VehiclePropertyType::INT32);
 }
 
 TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyEvBrakeRegenerationLevelConfig) {
