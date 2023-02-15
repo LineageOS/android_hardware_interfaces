@@ -14,7 +14,7 @@
 
 //! Main entry point for the android.hardware.security.dice service.
 
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use diced::{
     dice,
     hal_node::{DiceArtifacts, DiceDevice, ResidentHal, UpdatableDiceArtifacts},
@@ -40,8 +40,8 @@ impl DiceArtifacts for InsecureSerializableArtifacts {
     fn cdi_seal(&self) -> &[u8; dice::CDI_SIZE] {
         &self.cdi_seal
     }
-    fn bcc(&self) -> Vec<u8> {
-        self.bcc.clone()
+    fn bcc(&self) -> Option<&[u8]> {
+        Some(&self.bcc)
     }
 }
 
@@ -56,7 +56,10 @@ impl UpdatableDiceArtifacts for InsecureSerializableArtifacts {
         Ok(Self {
             cdi_attest: *new_artifacts.cdi_attest(),
             cdi_seal: *new_artifacts.cdi_seal(),
-            bcc: new_artifacts.bcc(),
+            bcc: new_artifacts
+                .bcc()
+                .ok_or_else(|| anyhow!("bcc is none"))?
+                .to_vec(),
         })
     }
 }
@@ -77,16 +80,19 @@ fn main() {
 
     let dice_artifacts =
         make_sample_bcc_and_cdis().expect("Failed to construct sample dice chain.");
-
+    let mut cdi_attest = [0u8; dice::CDI_SIZE];
+    cdi_attest.copy_from_slice(dice_artifacts.cdi_attest());
+    let mut cdi_seal = [0u8; dice::CDI_SIZE];
+    cdi_seal.copy_from_slice(dice_artifacts.cdi_seal());
     let hal_impl = Arc::new(
         unsafe {
             // Safety: ResidentHal cannot be used in multi threaded processes.
             // This service does not start a thread pool. The main thread is the only thread
             // joining the thread pool, thereby keeping the process single threaded.
             ResidentHal::new(InsecureSerializableArtifacts {
-                cdi_attest: dice_artifacts.cdi_values.cdi_attest,
-                cdi_seal: dice_artifacts.cdi_values.cdi_seal,
-                bcc: dice_artifacts.bcc[..].to_vec(),
+                cdi_attest,
+                cdi_seal,
+                bcc: dice_artifacts.bcc().expect("bcc is none").to_vec(),
             })
         }
         .expect("Failed to create ResidentHal implementation."),
