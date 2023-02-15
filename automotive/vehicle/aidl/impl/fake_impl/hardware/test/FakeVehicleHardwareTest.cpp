@@ -409,6 +409,11 @@ TEST_F(FakeVehicleHardwareTest, testGetDefaultValues) {
             continue;
         }
 
+        if (propId == VENDOR_PROPERTY_ID) {
+            // Ignore VENDOR_PROPERTY_ID, it has special logic.
+            continue;
+        }
+
         if (isGlobalProp(propId)) {
             if (config.initialValue == RawPropValues{}) {
                 addGetValueRequest(getValueRequests, expectedGetValueResults, requestId++,

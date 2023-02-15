@@ -85,7 +85,8 @@ constexpr char OVERRIDE_CONFIG_DIR[] = "/vendor/etc/automotive/vhaloverride/";
 // overwrite the default configs.
 constexpr char OVERRIDE_PROPERTY[] = "persist.vendor.vhal_init_value_override";
 constexpr char POWER_STATE_REQ_CONFIG_PROPERTY[] = "ro.vendor.fake_vhal.ap_power_state_req.config";
-
+// The value to be returned if VENDOR_PROPERTY_ID is set as the property
+constexpr int VENDOR_ERROR_CODE = 0x00ab0005;
 // A list of supported options for "--set" command.
 const std::unordered_set<std::string> SET_PROP_OPTIONS = {
         // integer.
@@ -389,6 +390,9 @@ FakeVehicleHardware::ValueResultType FakeVehicleHardware::maybeGetSpecialValue(
         case ECHO_REVERSE_BYTES:
             *isSpecialValue = true;
             return getEchoReverseBytes(value);
+        case VENDOR_PROPERTY_ID:
+            *isSpecialValue = true;
+            return StatusError((StatusCode)VENDOR_ERROR_CODE);
         default:
             // Do nothing.
             break;
@@ -469,6 +473,9 @@ VhalResult<void> FakeVehicleHardware::maybeSetSpecialValue(const VehiclePropValu
         case OBD2_FREEZE_FRAME_CLEAR:
             *isSpecialValue = true;
             return mFakeObd2Frame->clearObd2FreezeFrames(value);
+        case VENDOR_PROPERTY_ID:
+            *isSpecialValue = true;
+            return StatusError((StatusCode)VENDOR_ERROR_CODE);
 
 #ifdef ENABLE_VEHICLE_HAL_TEST_PROPERTIES
         case toInt(VehicleProperty::CLUSTER_REPORT_STATE):
