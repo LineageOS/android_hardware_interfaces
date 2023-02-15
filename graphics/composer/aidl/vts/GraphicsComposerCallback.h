@@ -55,6 +55,8 @@ class GraphicsComposerCallback : public BnComposerCallback {
             const ::aidl::android::hardware::graphics::composer3::VsyncPeriodChangeTimeline&
                     in_updatedTimeline) override;
     virtual ::ndk::ScopedAStatus onVsyncIdle(int64_t in_display) override;
+    virtual ::ndk::ScopedAStatus onRefreshRateChangedDebug(
+            const RefreshRateChangedDebugData&) override;
 
     mutable std::mutex mMutex;
     // the set of all currently connected displays

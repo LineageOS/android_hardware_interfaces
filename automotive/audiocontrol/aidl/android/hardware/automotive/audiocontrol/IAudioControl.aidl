@@ -51,6 +51,7 @@ import android.hardware.automotive.audiocontrol.AudioGainConfigInfo;
 import android.hardware.automotive.audiocontrol.DuckingInfo;
 import android.hardware.automotive.audiocontrol.IAudioGainCallback;
 import android.hardware.automotive.audiocontrol.IFocusListener;
+import android.hardware.automotive.audiocontrol.IModuleChangeCallback;
 import android.hardware.automotive.audiocontrol.MutingInfo;
 import android.hardware.automotive.audiocontrol.Reasons;
 
@@ -183,4 +184,26 @@ interface IAudioControl {
      *                 interface.
      */
     oneway void registerGainCallback(in IAudioGainCallback callback);
+
+    /**
+     * Sets callback with HAL for notifying changes to hardware module (that is:
+     * {@link android.hardware.audio.core.IModule}) configurations.
+     *
+     * @param callback The {@link android.hardware.automotive.audiocontrol.IModuleChangeCallback}
+     *                 interface to use use when new updates are available for
+     *                 {@link android.hardware.audio.core.IModule} configs
+     * @throws EX_UNSUPPORTED_OPERATION if dynamic audio configs are not supported.
+     * @throws EX_ILLEGAL_STATE if a callback already exists
+     * @throws EX_ILLEGAL_ARGUMENT if the passed callback is (@code null}
+     */
+    void setModuleChangeCallback(in IModuleChangeCallback callback);
+
+    /**
+     * Clears module change callback
+     *
+     * If no callback is registered previously, then this call should be a no-op.
+     *
+     * @throws EX_UNSUPPORTED_OPERATION if dynamic audio configs are not supported.
+     */
+    void clearModuleChangeCallback();
 }

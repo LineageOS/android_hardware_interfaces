@@ -124,6 +124,12 @@ GraphicsComposerCallback::takeLastVsyncPeriodChangeTimeline() {
     return ::ndk::ScopedAStatus::ok();
 }
 
+::ndk::ScopedAStatus GraphicsComposerCallback::onRefreshRateChangedDebug(
+        const RefreshRateChangedDebugData&) {
+    // TODO(b/202734676) Add implementation for Vts tests
+    return ::ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+}
+
 ::ndk::ScopedAStatus GraphicsComposerCallback::onVsyncPeriodTimingChanged(
         int64_t in_display,
         const ::aidl::android::hardware::graphics::composer3::VsyncPeriodChangeTimeline&

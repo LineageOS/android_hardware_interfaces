@@ -36,4 +36,11 @@ package android.hardware.automotive.vehicle;
 enum EvsServiceType {
   REARVIEW = 0,
   SURROUNDVIEW = 1,
+  FRONTVIEW = 2,
+  LEFTVIEW = 3,
+  RIGHTVIEW = 4,
+  DRIVERVIEW = 5,
+  FRONTPASSENGERSVIEW = 6,
+  REARPASSENGERSVIEW = 7,
+  USER_DEFINED = 1000,
 }

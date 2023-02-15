@@ -196,6 +196,9 @@ class VtsComposerClient {
 
     bool verifyComposerCallbackParams();
 
+    ndk::ScopedAStatus setRefreshRateChangedCallbackDebugEnabled(int64_t /* display */,
+                                                                 bool /* enabled */);
+
     // Keep track of displays and layers. When a test fails/ends,
     // the VtsComposerClient::tearDown should be called from the
     // test tearDown to clean up the resources for the test.

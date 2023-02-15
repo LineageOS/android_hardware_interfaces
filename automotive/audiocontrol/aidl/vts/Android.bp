@@ -39,7 +39,7 @@ cc_test {
         "libxml2",
     ],
     static_libs: [
-        "android.hardware.automotive.audiocontrol-V2-cpp",
+        "android.hardware.automotive.audiocontrol-V3-cpp",
         "libgmock",
     ],
     test_suites: [

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,21 +14,17 @@
  * limitations under the License.
  */
 
-package android.hardware.automotive.vehicle;
+package android.hardware.threadnetwork;
 
-/**
- * Used by EVS_SERVICE_REQUEST to enumerate the service's type.
- */
-@VintfStability
-@Backing(type="int")
-enum EvsServiceType {
-    REARVIEW = 0,
-    SURROUNDVIEW = 1,
-    FRONTVIEW = 2,
-    LEFTVIEW = 3,
-    RIGHTVIEW = 4,
-    DRIVERVIEW = 5,
-    FRONTPASSENGERSVIEW = 6,
-    REARPASSENGERSVIEW = 7,
-    USER_DEFINED = 1000,
+interface IThreadChipCallback {
+    /**
+     * This method is called when a spinel frame is received. Thread network
+     * will process the received spinel frame.
+     *
+     * Spinel Protocol:
+     *     https://github.com/openthread/openthread/blob/main/src/lib/spinel/spinel.h
+     *
+     * @param frame  The received spinel frame.
+     */
+    oneway void onReceiveSpinelFrame(in byte[] frame);
 }
