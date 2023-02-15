@@ -67,6 +67,8 @@ bool convertLegacyRadioCombinationsMatrixToAidl(
         WifiRadioCombinationMatrix* aidl_matrix);
 WifiBand convertLegacyMacBandToAidlWifiBand(uint32_t band);
 WifiAntennaMode convertLegacyAntennaConfigurationToAidl(uint32_t antenna_cfg);
+bool convertLegacyIfaceCombinationsMatrixToChipMode(
+        legacy_hal::wifi_iface_concurrency_matrix& legacy_matrix, IWifiChip::ChipMode* chip_mode);
 
 // STA iface conversion methods.
 bool convertLegacyFeaturesToAidlStaCapabilities(uint64_t legacy_feature_set, uint32_t* aidl_caps);
