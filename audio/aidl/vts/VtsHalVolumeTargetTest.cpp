@@ -22,7 +22,6 @@
 
 using namespace android;
 
-using aidl::android::hardware::audio::effect::Capability;
 using aidl::android::hardware::audio::effect::Descriptor;
 using aidl::android::hardware::audio::effect::IEffect;
 using aidl::android::hardware::audio::effect::IFactory;
@@ -84,9 +83,7 @@ class VolumeParamTest : public ::testing::TestWithParam<VolumeParamTestParam>, p
             // validate parameter
             Descriptor desc;
             ASSERT_STATUS(EX_NONE, mEffect->getDescriptor(&desc));
-            // only set and get parameter if capability is valid
-            ASSERT_TRUE(isCapabilityValid(desc));
-            const bool valid = isTagInRange(it.first, it.second, desc);
+            const bool valid = isParameterValid<Volume, Range::volume>(it.second, desc);
             const binder_exception_t expected = valid ? EX_NONE : EX_ILLEGAL_ARGUMENT;
 
             // set parameter
@@ -123,42 +120,6 @@ class VolumeParamTest : public ::testing::TestWithParam<VolumeParamTestParam>, p
         mTags.push_back({Volume::mute, vol});
     }
 
-    bool isCapabilityValid(const Descriptor& desc) {
-        const Volume::Capability& volCap = desc.capability.get<Capability::volume>();
-        return (volCap.minLevelDb <= volCap.maxLevelDb);
-    }
-
-    bool isTagInRange(const Volume::Tag& tag, const Volume& vol, const Descriptor& desc) const {
-        const Volume::Capability& volCap = desc.capability.get<Capability::volume>();
-        switch (tag) {
-            case Volume::levelDb: {
-                int level = vol.get<Volume::levelDb>();
-                return isLevelInRange(volCap, level);
-            }
-            case Volume::mute:
-                return true;
-            default:
-                return false;
-        }
-    }
-
-    static std::vector<int> getLevelTestValues(
-            std::vector<std::pair<std::shared_ptr<IFactory>, Descriptor>> kFactoryDescList) {
-        int minLevelDb = std::numeric_limits<int>::max();
-        int maxLevelDb = std::numeric_limits<int>::min();
-        for (const auto& it : kFactoryDescList) {
-            maxLevelDb =
-                    std::max(it.second.capability.get<Capability::volume>().maxLevelDb, maxLevelDb);
-            minLevelDb = std::min(it.second.capability.get<Capability ::volume>().minLevelDb,
-                                  minLevelDb);
-        }
-        return {minLevelDb - 1, minLevelDb, -100, maxLevelDb, maxLevelDb + 1};
-    }
-
-    bool isLevelInRange(const Volume::Capability& volCap, int level) const {
-        return level >= volCap.minLevelDb && level <= volCap.maxLevelDb;
-    }
-
   private:
     std::vector<std::pair<Volume::Tag, Volume>> mTags;
     void CleanUp() { mTags.clear(); }
@@ -174,14 +135,15 @@ TEST_P(VolumeParamTest, SetAndGetMute) {
     SetAndGetParameters();
 }
 
+std::vector<std::pair<std::shared_ptr<IFactory>, Descriptor>> kDescPair;
 INSTANTIATE_TEST_SUITE_P(
         VolumeTest, VolumeParamTest,
         ::testing::Combine(
-                testing::ValuesIn(EffectFactoryHelper::getAllEffectDescriptors(IFactory::descriptor,
-                                                                               kVolumeTypeUUID)),
-                testing::ValuesIn(VolumeParamTest::getLevelTestValues(
-                        EffectFactoryHelper::getAllEffectDescriptors(IFactory::descriptor,
-                                                                     kVolumeTypeUUID))),
+                testing::ValuesIn(kDescPair = EffectFactoryHelper::getAllEffectDescriptors(
+                                          IFactory::descriptor, kVolumeTypeUUID)),
+                testing::ValuesIn(
+                        EffectHelper::getTestValueSet<Volume, int, Range::volume, Volume::levelDb>(
+                                kDescPair, EffectHelper::expandTestValueBasic<int>)),
                 testing::Bool() /* mute */),
         [](const testing::TestParamInfo<VolumeParamTest::ParamType>& info) {
             auto descriptor = std::get<PARAM_INSTANCE_NAME>(info.param).second;
