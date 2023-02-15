@@ -20,7 +20,7 @@ import android.hardware.tv.hdmi.earc.IEArcCallback;
 import android.hardware.tv.hdmi.earc.IEArcStatus;
 
 /**
- * eARC HAL interface definition
+ * eARC HAL interface definition. This is only relevant to TV Panels that implement eARC TX.
  */
 @VintfStability
 interface IEArc {
@@ -64,10 +64,11 @@ interface IEArc {
     IEArcStatus getState(in int portId);
 
     /**
-     * Getter for the most recent capabilities reported by the device connected to port.
+     * Getter for the most recent audio capabilities reported by the device connected to port.
      *
      * @param portId The port ID on which the device is connected.
-     * @return The raw, unparsed audio capabilities
+     * @return a byte array containing the raw, unparsed audio capabilities (Ref "Section 9.5.3.6 -
+     * eARC RX Capabilities Data Structure" in HDMI 2.1 specification).
      */
     byte[] getLastReportedAudioCapabilities(in int portId);
 }
