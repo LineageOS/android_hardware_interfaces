@@ -47,7 +47,7 @@ class DownmixSwContext final : public EffectContext {
 class DownmixSw final : public EffectImpl {
   public:
     static const std::string kEffectName;
-    static const Downmix::Capability kCapability;
+    static const Capability kCapability;
     static const Descriptor kDescriptor;
     DownmixSw() { LOG(DEBUG) << __func__; }
     ~DownmixSw() {

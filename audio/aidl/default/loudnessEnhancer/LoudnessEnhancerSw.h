@@ -47,7 +47,6 @@ class LoudnessEnhancerSwContext final : public EffectContext {
 class LoudnessEnhancerSw final : public EffectImpl {
   public:
     static const std::string kEffectName;
-    static const LoudnessEnhancer::Capability kCapability;
     static const Descriptor kDescriptor;
     LoudnessEnhancerSw() { LOG(DEBUG) << __func__; }
     ~LoudnessEnhancerSw() {

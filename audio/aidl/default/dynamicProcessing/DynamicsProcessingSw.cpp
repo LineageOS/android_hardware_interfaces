@@ -61,8 +61,33 @@ extern "C" binder_exception_t queryEffect(const AudioUuid* in_impl_uuid, Descrip
 namespace aidl::android::hardware::audio::effect {
 
 const std::string DynamicsProcessingSw::kEffectName = "DynamicsProcessingSw";
-const DynamicsProcessing::Capability DynamicsProcessingSw::kCapability = {.minCutOffFreq = 220,
-                                                                          .maxCutOffFreq = 20000};
+const DynamicsProcessing::EqBandConfig DynamicsProcessingSw::kEqBandConfigMin =
+        DynamicsProcessing::EqBandConfig({.channel = 0,
+                                          .band = 0,
+                                          .enable = false,
+                                          .cutoffFrequencyHz = 220,
+                                          .gainDb = std::numeric_limits<float>::min()});
+const DynamicsProcessing::EqBandConfig DynamicsProcessingSw::kEqBandConfigMax =
+        DynamicsProcessing::EqBandConfig({.channel = std::numeric_limits<int>::max(),
+                                          .band = std::numeric_limits<int>::max(),
+                                          .enable = true,
+                                          .cutoffFrequencyHz = 20000,
+                                          .gainDb = std::numeric_limits<float>::max()});
+const Range::DynamicsProcessingRange DynamicsProcessingSw::kPreEqBandRange = {
+        .min = DynamicsProcessing::make<DynamicsProcessing::preEqBand>(
+                {DynamicsProcessingSw::kEqBandConfigMin}),
+        .max = DynamicsProcessing::make<DynamicsProcessing::preEqBand>(
+                {DynamicsProcessingSw::kEqBandConfigMax})};
+const Range::DynamicsProcessingRange DynamicsProcessingSw::kPostEqBandRange = {
+        .min = DynamicsProcessing::make<DynamicsProcessing::postEqBand>(
+                {DynamicsProcessingSw::kEqBandConfigMin}),
+        .max = DynamicsProcessing::make<DynamicsProcessing::postEqBand>(
+                {DynamicsProcessingSw::kEqBandConfigMax})};
+
+const std::vector<Range::DynamicsProcessingRange> DynamicsProcessingSw::kRanges = {
+        DynamicsProcessingSw::kPreEqBandRange, DynamicsProcessingSw::kPostEqBandRange};
+const Capability DynamicsProcessingSw::kCapability = {.range = DynamicsProcessingSw::kRanges};
+
 const Descriptor DynamicsProcessingSw::kDescriptor = {
         .common = {.id = {.type = kDynamicsProcessingTypeUUID,
                           .uuid = kDynamicsProcessingSwImplUUID,
@@ -72,8 +97,7 @@ const Descriptor DynamicsProcessingSw::kDescriptor = {
                              .volume = Flags::Volume::CTRL},
                    .name = DynamicsProcessingSw::kEffectName,
                    .implementor = "The Android Open Source Project"},
-        .capability = Capability::make<Capability::dynamicsProcessing>(
-                DynamicsProcessingSw::kCapability)};
+        .capability = DynamicsProcessingSw::kCapability};
 
 ndk::ScopedAStatus DynamicsProcessingSw::getDescriptor(Descriptor* _aidl_return) {
     LOG(DEBUG) << __func__ << kDescriptor.toString();
@@ -341,7 +365,6 @@ RetCode DynamicsProcessingSwContext::setEqBandCfgs(
             LOG(WARNING) << __func__ << " skip invalid band " << cfg.toString();
             ret = RetCode::ERROR_ILLEGAL_PARAMETER;
             continue;
-            ;
         }
         targetCfgs[cfg.channel * stage.bandCount + cfg.band] = cfg;
     }
@@ -380,7 +403,6 @@ RetCode DynamicsProcessingSwContext::setMbcBandCfgs(
             LOG(WARNING) << __func__ << " skip invalid band " << it.toString();
             ret = RetCode::ERROR_ILLEGAL_PARAMETER;
             continue;
-            ;
         }
         mMbcChBands[it.channel * bandCount + it.band] = it;
     }
@@ -462,11 +484,6 @@ std::vector<DynamicsProcessing::InputGain> DynamicsProcessingSwContext::getInput
     return ret;
 }
 
-bool DynamicsProcessingSwContext::validateCutoffFrequency(float freq) {
-    return freq >= DynamicsProcessingSw::kCapability.minCutOffFreq &&
-           freq <= DynamicsProcessingSw::kCapability.maxCutOffFreq;
-}
-
 bool DynamicsProcessingSwContext::validateStageEnablement(
         const DynamicsProcessing::StageEnablement& enablement) {
     return !enablement.inUse || (enablement.inUse && enablement.bandCount > 0);
@@ -484,7 +501,7 @@ bool DynamicsProcessingSwContext::validateEqBandConfig(
         const std::vector<DynamicsProcessing::ChannelConfig>& channelConfig) {
     return band.channel >= 0 && band.channel < maxChannel &&
            (size_t)band.channel < channelConfig.size() && channelConfig[band.channel].enable &&
-           band.band >= 0 && band.band < maxBand && validateCutoffFrequency(band.cutoffFrequencyHz);
+           band.band >= 0 && band.band < maxBand;
 }
 
 bool DynamicsProcessingSwContext::validateMbcBandConfig(
@@ -492,8 +509,7 @@ bool DynamicsProcessingSwContext::validateMbcBandConfig(
         const std::vector<DynamicsProcessing::ChannelConfig>& channelConfig) {
     return band.channel >= 0 && band.channel < maxChannel &&
            (size_t)band.channel < channelConfig.size() && channelConfig[band.channel].enable &&
-           band.band >= 0 && band.band < maxBand &&
-           validateCutoffFrequency(band.cutoffFrequencyHz) && band.attackTimeMs >= 0 &&
+           band.band >= 0 && band.band < maxBand && band.attackTimeMs >= 0 &&
            band.releaseTimeMs >= 0 && band.ratio >= 0 && band.thresholdDb <= 0 &&
            band.kneeWidthDb <= 0 && band.noiseGateThresholdDb <= 0 && band.expanderRatio >= 0;
 }

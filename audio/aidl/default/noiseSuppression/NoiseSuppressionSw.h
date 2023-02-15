@@ -47,7 +47,6 @@ class NoiseSuppressionSw final : public EffectImpl {
   public:
     static const std::string kEffectName;
     static const bool kStrengthSupported;
-    static const NoiseSuppression::Capability kCapability;
     static const Descriptor kDescriptor;
     NoiseSuppressionSw() { LOG(DEBUG) << __func__; }
     ~NoiseSuppressionSw() {

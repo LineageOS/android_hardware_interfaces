@@ -78,7 +78,7 @@ ndk::ScopedAStatus EffectImpl::close() {
 ndk::ScopedAStatus EffectImpl::setParameter(const Parameter& param) {
     LOG(DEBUG) << __func__ << " with: " << param.toString();
 
-    auto tag = param.getTag();
+    const auto tag = param.getTag();
     switch (tag) {
         case Parameter::common:
         case Parameter::deviceDescription:
