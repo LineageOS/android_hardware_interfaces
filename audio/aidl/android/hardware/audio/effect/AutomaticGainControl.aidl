@@ -24,9 +24,9 @@ import android.hardware.audio.effect.VendorExtension;
  * so that the output signal level is virtually constant. AGC can be used by applications where the
  * input signal dynamic range is not important but where a constant strong capture level is desired.
  *
- * All parameters defined in union AutomaticGainControl must be gettable and settable. The
- * capabilities defined in AutomaticGainControl.Capability can only acquired with
- * IEffect.getDescriptor() and not settable.
+ * All parameter settings must be inside the range of Capability.Range.automaticGainControl
+ * definition if the definition for the corresponding parameter tag exist. See more detals about
+ * Range in Range.aidl.
  */
 @VintfStability
 union AutomaticGainControl {
@@ -44,26 +44,6 @@ union AutomaticGainControl {
      */
     VendorExtension vendor;
 
-    /**
-     * Capability supported by AutomaticGainControl implementation.
-     */
-    @VintfStability
-    parcelable Capability {
-        /**
-         * AutomaticGainControl capability extension, vendor can use this extension in case existing
-         * capability definition not enough.
-         */
-        ParcelableHolder extension;
-        /**
-         * Max fixed digital gain supported by AGC implementation in millibel.
-         */
-        int maxFixedDigitalGainMb;
-        /**
-         * Max fixed saturation margin supported by AGC implementation in millibel.
-         */
-        int maxSaturationMarginMb;
-    }
-
     @VintfStability
     @Backing(type="int")
     enum LevelEstimator {
@@ -75,7 +55,6 @@ union AutomaticGainControl {
 
     /**
      * The AGC fixed digital gain in millibel.
-     * Must never be negative, and not larger than maxFixedDigitalGainMb in capability.
      */
     int fixedDigitalGainMb;
     /*
@@ -84,7 +63,6 @@ union AutomaticGainControl {
     LevelEstimator levelEstimator;
     /**
      * The AGC saturation margin in millibel.
-     * Must never be negative, and not larger than maxSaturationMarginMb in capability.
      */
     int saturationMarginMb;
 }

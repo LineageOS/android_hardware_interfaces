@@ -42,10 +42,4 @@ union AcousticEchoCanceler {
     int vendorExtensionTag;
     android.hardware.audio.effect.AcousticEchoCanceler.Tag commonTag;
   }
-  @VintfStability
-  parcelable Capability {
-    ParcelableHolder extension;
-    int maxEchoDelayUs;
-    boolean supportMobileMode;
-  }
 }

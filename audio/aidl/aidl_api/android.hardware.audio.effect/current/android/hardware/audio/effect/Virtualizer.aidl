@@ -50,12 +50,6 @@ union Virtualizer {
     android.media.audio.common.AudioDeviceDescription device;
   }
   @VintfStability
-  parcelable Capability {
-    android.hardware.audio.effect.VendorExtension extension;
-    int maxStrengthPm;
-    boolean strengthSupported;
-  }
-  @VintfStability
   parcelable ChannelAngle {
     int channel;
     int azimuthDegree;

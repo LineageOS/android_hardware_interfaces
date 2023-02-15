@@ -21,8 +21,8 @@ import android.hardware.audio.effect.VendorExtension;
 /**
  * Equalizer specific definitions.
  *
- * All parameters defined in union Equalizer must be gettable and settable. The capabilities defined
- * in Equalizer.Capability can only acquired with IEffect.getDescriptor() and not settable.
+ * All parameter settings must be inside the range of Capability.Range.equalizer definition if the
+ * definition for the corresponding parameter tag exist. See more detals about Range in Range.aidl.
  */
 @VintfStability
 union Equalizer {
@@ -39,28 +39,6 @@ union Equalizer {
      * Vendor Equalizer implementation definition for additional parameters.
      */
     VendorExtension vendorExtension;
-
-    /**
-     * Capability MUST be supported by Equalizer implementation.
-     */
-    @VintfStability
-    parcelable Capability {
-        /**
-         * Equalizer capability extension, vendor can use this extension in case existing capability
-         * definition not enough.
-         */
-        ParcelableHolder extension;
-
-        /**
-         * Bands frequency ranges supported.
-         */
-        BandFrequency[] bandFrequencies;
-
-        /**
-         * Presets name and index.
-         */
-        Preset[] presets;
-    }
 
     /**
      * Level setting for each band in millibels.
@@ -107,4 +85,14 @@ union Equalizer {
      * Get only parameter, get the center frequency for all bands in milliHertz.
      */
     int[] centerFreqMh;
+
+    /**
+     * Get only parameter, indicating bands frequency ranges supported by implementation.
+     */
+    BandFrequency[] bandFrequencies;
+
+    /**
+     * Get only parameter, indicating presets name and index supported by implementation.
+     */
+    Preset[] presets;
 }
