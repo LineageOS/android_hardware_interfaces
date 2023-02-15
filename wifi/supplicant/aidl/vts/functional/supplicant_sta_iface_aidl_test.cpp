@@ -234,6 +234,11 @@ class SupplicantStaIfaceCallback : public BnSupplicantStaIfaceCallback {
             override {
         return ndk::ScopedAStatus::ok();
     }
+    ::ndk::ScopedAStatus onPmkSaCacheAdded(
+            const ::aidl::android::hardware::wifi::supplicant::PmkSaCacheData& /* pmkSaData */)
+            override {
+        return ndk::ScopedAStatus::ok();
+    }
 };
 
 class SupplicantStaIfaceAidlTest : public testing::TestWithParam<std::string> {
