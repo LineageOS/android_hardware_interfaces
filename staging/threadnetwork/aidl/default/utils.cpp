@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-package android.hardware.automotive.vehicle;
+#include <openthread/logging.h>
+#include <utils/Log.h>
 
-/**
- * Used by EVS_SERVICE_REQUEST to enumerate the service's type.
- */
-@VintfStability
-@Backing(type="int")
-enum EvsServiceType {
-    REARVIEW = 0,
-    SURROUNDVIEW = 1,
-    FRONTVIEW = 2,
-    LEFTVIEW = 3,
-    RIGHTVIEW = 4,
-    DRIVERVIEW = 5,
-    FRONTPASSENGERSVIEW = 6,
-    REARPASSENGERSVIEW = 7,
-    USER_DEFINED = 1000,
+void otLogCritPlat(const char* format, ...) {
+    va_list args;
+
+    va_start(args, format);
+    __android_log_vprint(ANDROID_LOG_FATAL, LOG_TAG, format, args);
+    va_end(args);
+}
+
+void otLogWarnPlat(const char* format, ...) {
+    va_list args;
+
+    va_start(args, format);
+    __android_log_vprint(ANDROID_LOG_WARN, LOG_TAG, format, args);
+    va_end(args);
 }

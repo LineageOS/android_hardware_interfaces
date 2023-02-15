@@ -35,4 +35,5 @@ package android.hardware.wifi.supplicant;
 @VintfStability
 interface INonStandardCertCallback {
   byte[] getBlob(in String alias);
+  String[] listAliases(in String prefix);
 }

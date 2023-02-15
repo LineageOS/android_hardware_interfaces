@@ -33,7 +33,7 @@
 
 package android.hardware.thermal;
 /* @hide */
-@VintfStability
+@JavaDerive(toString=true) @VintfStability
 parcelable CoolingDevice {
   android.hardware.thermal.CoolingType type;
   String name;

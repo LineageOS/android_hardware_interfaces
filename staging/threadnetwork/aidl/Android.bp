@@ -1,0 +1,17 @@
+aidl_interface {
+    name: "android.hardware.threadnetwork",
+    host_supported: true,
+    vendor_available: true,
+
+    srcs: [
+        "android/hardware/threadnetwork/*.aidl",
+    ],
+
+    unstable: true,
+
+    backend: {
+        ndk: {
+            enabled: true,
+        },
+    },
+}

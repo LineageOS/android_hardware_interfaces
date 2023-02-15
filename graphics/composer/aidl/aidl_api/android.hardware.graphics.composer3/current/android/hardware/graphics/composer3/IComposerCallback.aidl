@@ -40,4 +40,5 @@ interface IComposerCallback {
   oneway void onVsync(long display, long timestamp, int vsyncPeriodNanos);
   oneway void onVsyncPeriodTimingChanged(long display, in android.hardware.graphics.composer3.VsyncPeriodChangeTimeline updatedTimeline);
   oneway void onVsyncIdle(long display);
+  oneway void onRefreshRateChangedDebug(in android.hardware.graphics.composer3.RefreshRateChangedDebugData data);
 }

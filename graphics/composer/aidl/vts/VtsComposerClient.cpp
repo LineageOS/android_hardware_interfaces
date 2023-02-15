@@ -373,6 +373,12 @@ int64_t VtsComposerClient::getVsyncIdleTime() {
     return mComposerCallback->getVsyncIdleTime();
 }
 
+ndk::ScopedAStatus VtsComposerClient::setRefreshRateChangedCallbackDebugEnabled(
+        int64_t /* display */, bool /* enabled */) {
+    // TODO(b/202734676) Add implementation for VTS tests
+    return ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+}
+
 int64_t VtsComposerClient::getInvalidDisplayId() {
     // returns an invalid display id (one that has not been registered to a
     // display. Currently assuming that a device will never have close to

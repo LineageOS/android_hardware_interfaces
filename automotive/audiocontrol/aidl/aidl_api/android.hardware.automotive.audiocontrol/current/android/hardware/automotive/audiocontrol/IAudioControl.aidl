@@ -46,4 +46,6 @@ interface IAudioControl {
   oneway void onAudioFocusChangeWithMetaData(in android.hardware.audio.common.PlaybackTrackMetadata playbackMetaData, in int zoneId, in android.hardware.automotive.audiocontrol.AudioFocusChange focusChange);
   oneway void setAudioDeviceGainsChanged(in android.hardware.automotive.audiocontrol.Reasons[] reasons, in android.hardware.automotive.audiocontrol.AudioGainConfigInfo[] gains);
   oneway void registerGainCallback(in android.hardware.automotive.audiocontrol.IAudioGainCallback callback);
+  void setModuleChangeCallback(in android.hardware.automotive.audiocontrol.IModuleChangeCallback callback);
+  void clearModuleChangeCallback();
 }

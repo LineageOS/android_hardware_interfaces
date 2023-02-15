@@ -75,4 +75,15 @@ enum Capability {
      * @see IComposerClient.setHdrConversionStrategy
      */
     HDR_OUTPUT_CONVERSION_CONFIG = 6,
+
+    /**
+     * Specifies that the device supports the callback onRefreshRateChangedDebug
+     * to pass information about the refresh rate.
+     * The refresh rate from the callback is used to update the refresh rate
+     * overlay indicator.
+     *
+     * @see IComposerClient.setRefreshRateChangedCallbackDebugEnabled
+     * @see IComposerCallback.onRefreshRateChangedDebug
+     */
+    REFRESH_RATE_CHANGED_CALLBACK_DEBUG = 7,
 }
