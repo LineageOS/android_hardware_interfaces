@@ -108,10 +108,17 @@
             <instance>default</instance>
         </interface>
     </hal>
-     <hal format="aidl" optional="true">
+    <hal format="aidl" optional="true">
         <name>android.hardware.automotive.remoteaccess</name>
         <interface>
             <name>IRemoteAccess</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="aidl" optional="true">
+        <name>android.hardware.automotive.ivn</name>
+        <interface>
+            <name>IIvnAndroidDevice</name>
             <instance>default</instance>
         </interface>
     </hal>
