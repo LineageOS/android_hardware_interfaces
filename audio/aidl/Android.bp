@@ -230,6 +230,7 @@ aidl_interface {
         "android/hardware/audio/effect/BassBoost.aidl",
         "android/hardware/audio/effect/Capability.aidl",
         "android/hardware/audio/effect/CommandId.aidl",
+        "android/hardware/audio/effect/DefaultExtension.aidl",
         "android/hardware/audio/effect/Descriptor.aidl",
         "android/hardware/audio/effect/Downmix.aidl",
         "android/hardware/audio/effect/DynamicsProcessing.aidl",
