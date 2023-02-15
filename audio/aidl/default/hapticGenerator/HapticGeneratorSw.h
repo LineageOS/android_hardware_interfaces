@@ -58,7 +58,6 @@ class HapticGeneratorSwContext final : public EffectContext {
 class HapticGeneratorSw final : public EffectImpl {
   public:
     static const std::string kEffectName;
-    static const HapticGenerator::Capability kCapability;
     static const Descriptor kDescriptor;
     HapticGeneratorSw() { LOG(DEBUG) << __func__; }
     ~HapticGeneratorSw() {

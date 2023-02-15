@@ -49,7 +49,7 @@ class VolumeSwContext final : public EffectContext {
 class VolumeSw final : public EffectImpl {
   public:
     static const std::string kEffectName;
-    static const Volume::Capability kCapability;
+    static const Capability kCapability;
     static const Descriptor kDescriptor;
     VolumeSw() { LOG(DEBUG) << __func__; }
     ~VolumeSw() {
@@ -70,6 +70,7 @@ class VolumeSw final : public EffectImpl {
     std::string getEffectName() override { return kEffectName; }
 
   private:
+    static const std::vector<Range::VolumeRange> kRanges;
     std::shared_ptr<VolumeSwContext> mContext;
 
     ndk::ScopedAStatus getParameterVolume(const Volume::Tag& tag, Parameter::Specific* specific);
