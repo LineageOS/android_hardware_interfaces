@@ -166,7 +166,8 @@ class VtsComposerClient {
     std::pair<ScopedAStatus, std::vector<common::HdrConversionCapability>>
     getHdrConversionCapabilities();
 
-    ScopedAStatus setHdrConversionStrategy(const common::HdrConversionStrategy& conversionStrategy);
+    std::pair<ScopedAStatus, common::Hdr> setHdrConversionStrategy(
+            const common::HdrConversionStrategy& conversionStrategy);
 
     std::pair<ScopedAStatus, common::Transform> getDisplayPhysicalOrientation(int64_t display);
 

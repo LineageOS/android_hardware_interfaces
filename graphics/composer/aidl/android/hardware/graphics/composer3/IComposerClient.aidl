@@ -17,6 +17,7 @@
 package android.hardware.graphics.composer3;
 
 import android.hardware.graphics.common.DisplayDecorationSupport;
+import android.hardware.graphics.common.Hdr;
 import android.hardware.graphics.common.HdrConversionCapability;
 import android.hardware.graphics.common.HdrConversionStrategy;
 import android.hardware.graphics.common.Transform;
@@ -844,12 +845,13 @@ interface IComposerClient {
     /**
      * Sets the of HDR conversion strategy.
      *
-     *
+     * @return the chosen HDR type in case HdrConversionStrategy has autoAllowedHdrTypes set. In
+     * other cases, return HDR type INVALID.
      * @exception EX_UNSUPPORTED when not supported by the underlying HAL
      *
      * @see getHdrConversionCapabilities
      */
-    void setHdrConversionStrategy(in HdrConversionStrategy conversionStrategy);
+    Hdr setHdrConversionStrategy(in HdrConversionStrategy conversionStrategy);
 
     /*
      * Sets either the callback for the refresh rate change is enabled or disabled

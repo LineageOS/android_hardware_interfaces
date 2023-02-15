@@ -77,7 +77,7 @@ interface IComposerClient {
   void setIdleTimerEnabled(long display, int timeoutMs);
   android.hardware.graphics.composer3.OverlayProperties getOverlaySupport();
   android.hardware.graphics.common.HdrConversionCapability[] getHdrConversionCapabilities();
-  void setHdrConversionStrategy(in android.hardware.graphics.common.HdrConversionStrategy conversionStrategy);
+  android.hardware.graphics.common.Hdr setHdrConversionStrategy(in android.hardware.graphics.common.HdrConversionStrategy conversionStrategy);
   void setRefreshRateChangedCallbackDebugEnabled(long display, boolean enabled);
   const int EX_BAD_CONFIG = 1;
   const int EX_BAD_DISPLAY = 2;
