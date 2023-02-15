@@ -16,7 +16,6 @@
 
 package android.hardware.audio.effect;
 
-import android.hardware.audio.effect.Range;
 import android.hardware.audio.effect.VendorExtension;
 
 /**
@@ -25,9 +24,9 @@ import android.hardware.audio.effect.VendorExtension;
  * so that the output signal level is virtually constant. AGC can be used by applications where the
  * input signal dynamic range is not important but where a constant strong capture level is desired.
  *
- * All parameters defined in union AutomaticGainControlV1 must be gettable and settable. The
- * capabilities defined in AutomaticGainControlV1.Capability can only acquired with
- * IEffect.getDescriptor() and not settable.
+ * All parameter settings must be inside the range of Capability.Range.automaticGainControlV1
+ * definition if the definition for the corresponding parameter tag exist. See more detals about
+ * Range in Range.aidl.
  */
 @VintfStability
 union AutomaticGainControlV1 {
@@ -46,31 +45,13 @@ union AutomaticGainControlV1 {
     VendorExtension vendor;
 
     /**
-     * Capability supported by AutomaticGainControlV1 implementation.
-     */
-    @VintfStability
-    parcelable Capability {
-        /**
-         * AutomaticGainControlV1 capability extension, vendor can use this extension in case
-         * existing capability definition not enough.
-         */
-        ParcelableHolder extension;
-        /**
-         * Supported range for parameters.
-         */
-        Range[] ranges;
-    }
-
-    /**
      * Target peak level (or envelope) of the AGC implementation in dBFs (dB relative to full
      * scale).
-     * Must be in range of AutomaticGainControlV1.Capability.ranges with targetPeakLevelDbFs tag.
      */
     int targetPeakLevelDbFs;
     /*
      * Sets the maximum gain the digital compression stage may apply, in dB. A higher number
      * corresponds to greater compression, while a value of 0 will leave the signal uncompressed.
-     * Must be in range of AutomaticGainControlV1.Capability.ranges with maxCompressionGainDb tag.
      */
     int maxCompressionGainDb;
     /**

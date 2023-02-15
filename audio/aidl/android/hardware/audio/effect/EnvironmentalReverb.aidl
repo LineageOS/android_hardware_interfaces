@@ -21,9 +21,9 @@ import android.hardware.audio.effect.VendorExtension;
 /**
  * Environmental Reverb specific definitions.
  *
- * All parameters defined in union Environmental must be gettable and settable. The capabilities
- * * defined in EnvironmentalReverb.Capability can only acquired with IEffect.getDescriptor() and
- * not * settable.
+ * All parameter settings must be inside the range of Capability.Range.environmentalReverb
+ * definition if the definition for the corresponding parameter tag exist. See more detals about
+ * Range in Range.aidl.
  */
 
 @VintfStability
@@ -43,103 +43,35 @@ union EnvironmentalReverb {
     VendorExtension vendor;
 
     /**
-     * Capability supported by effect implementation.
-     */
-    @VintfStability
-    parcelable Capability {
-        VendorExtension extension;
-
-        /**
-         * Minimal possible room level in millibels.
-         */
-        int minRoomLevelMb;
-        /**
-         * Maximum possible room level in millibels.
-         */
-        int maxRoomLevelMb;
-        /**
-         * Minimal possible room hf level in millibels.
-         */
-        int minRoomHfLevelMb;
-        /**
-         * Maximum possible room hf level in millibels.
-         */
-        int maxRoomHfLevelMb;
-        /**
-         * Max decay time supported in millisecond.
-         */
-        int maxDecayTimeMs;
-        /**
-         * Minimal possible per mille decay hf ratio.
-         */
-        int minDecayHfRatioPm;
-        /**
-         * Maximum possible per mille decay hf ratio.
-         */
-        int maxDecayHfRatioPm;
-        /**
-         * Minimal possible room level in millibels.
-         */
-        int minLevelMb;
-        /**
-         * Maximum possible room level in millibels.
-         */
-        int maxLevelMb;
-        /**
-         * Maximum possible delay time in milliseconds.
-         */
-        int maxDelayMs;
-        /**
-         * Maximum possible per mille diffusion.
-         */
-        int maxDiffusionPm;
-        /**
-         * Maximum possible per mille density.
-         */
-        int maxDensityPm;
-    }
-
-    /**
-     * Room level apply to the reverb effect in millibels. The value of the roomLevelMb must be in
-     * range of the value specified by the 'minRoomLevelMb' capability and the 'maxRoomLevelMb'
-     * capability.
+     * Room level apply to the reverb effect in millibels.
      */
     int roomLevelMb;
     /**
-     * Room HF level apply to the reverb effect in millibels. The value of the roomHfLevelMb must be
-     * in range of the value specified by the 'minRoomHfLevelMb' capability and the
-     * 'maxRoomHfLevelMb' capability.
+     * Room HF level apply to the reverb effect in millibels.
      */
     int roomHfLevelMb;
     /**
-     * Delay time apply to the reverb effect in milliseconds.The value of the decayTimeMs must
-     * be non-negative and not exceed the value specified by the 'maxDecayTimeMs' capability.
+     * Delay time apply to the reverb effect in milliseconds.
      */
     int decayTimeMs;
     /**
-     * HF decay ratio in permilles. The value of the decayHfRatioPm must be in range
-     * of the value specified by the 'minDecayHfRatioPm' capability and the 'maxDecayHfRatioPm'
-     * capability.
+     * HF decay ratio in permilles.
      */
     int decayHfRatioPm;
     /**
-     * Reverb level in millibels. The value of the levelMb must be in range
-     * of the value specified by the 'minLevelMb' capability and the 'maxLevelMb' capability.
+     * Reverb level in millibels.
      */
     int levelMb;
     /**
-     * Reverb delay in milliseconds. The value of the delayMs must be non-negative and not
-     * exceed the value specified by the 'maxDelayMs' capability.
+     * Reverb delay in milliseconds.
      */
     int delayMs;
     /**
-     * Diffusion in permilles. The value of the diffusionPm must be non-negative and not
-     * exceed the value specified by the 'maxDiffusionPm' capability.
+     * Diffusion in permilles.
      */
     int diffusionPm;
     /**
-     * Density in permilles. The value of the densityPm must be non-negative and not
-     * exceed the value specified by the 'maxDensityPm' capability.
+     * Density in permilles.
      */
     int densityPm;
 

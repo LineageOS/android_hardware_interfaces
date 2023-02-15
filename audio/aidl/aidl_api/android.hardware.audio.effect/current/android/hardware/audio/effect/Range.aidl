@@ -33,34 +33,101 @@
 
 package android.hardware.audio.effect;
 @VintfStability
-parcelable Range {
-  int tag;
-  android.hardware.audio.effect.Range.Types types;
+union Range {
+  android.hardware.audio.effect.Range.VendorExtensionRange[] vendorExtension = {};
+  android.hardware.audio.effect.Range.AcousticEchoCancelerRange[] acousticEchoCanceler;
+  android.hardware.audio.effect.Range.AutomaticGainControlRange[] automaticGainControl;
+  android.hardware.audio.effect.Range.AutomaticGainControlV1Range[] automaticGainControlV1;
+  android.hardware.audio.effect.Range.BassBoostRange[] bassBoost;
+  android.hardware.audio.effect.Range.DownmixRange[] downmix;
+  android.hardware.audio.effect.Range.DynamicsProcessingRange[] dynamicsProcessing;
+  android.hardware.audio.effect.Range.EnvironmentalReverbRange[] environmentalReverb;
+  android.hardware.audio.effect.Range.EqualizerRange[] equalizer;
+  android.hardware.audio.effect.Range.HapticGeneratorRange[] hapticGenerator;
+  android.hardware.audio.effect.Range.LoudnessEnhancerRange[] loudnessEnhancer;
+  android.hardware.audio.effect.Range.NoiseSuppressionRange[] noiseSuppression;
+  android.hardware.audio.effect.Range.PresetReverbRange[] presetReverb;
+  android.hardware.audio.effect.Range.VirtualizerRange[] virtualizer;
+  android.hardware.audio.effect.Range.VisualizerRange[] visualizer;
+  android.hardware.audio.effect.Range.VolumeRange[] volume;
   @VintfStability
-  parcelable Int {
-    int min;
-    int max;
+  parcelable AcousticEchoCancelerRange {
+    android.hardware.audio.effect.AcousticEchoCanceler min;
+    android.hardware.audio.effect.AcousticEchoCanceler max;
   }
   @VintfStability
-  parcelable Float {
-    float min;
-    float max;
+  parcelable AutomaticGainControlRange {
+    android.hardware.audio.effect.AutomaticGainControl min;
+    android.hardware.audio.effect.AutomaticGainControl max;
   }
   @VintfStability
-  parcelable Long {
-    long min;
-    long max;
+  parcelable AutomaticGainControlV1Range {
+    android.hardware.audio.effect.AutomaticGainControlV1 min;
+    android.hardware.audio.effect.AutomaticGainControlV1 max;
   }
   @VintfStability
-  parcelable Byte {
-    byte min;
-    byte max;
+  parcelable BassBoostRange {
+    android.hardware.audio.effect.BassBoost min;
+    android.hardware.audio.effect.BassBoost max;
   }
   @VintfStability
-  union Types {
-    android.hardware.audio.effect.Range.Int rangeInt;
-    android.hardware.audio.effect.Range.Float rangeFloat;
-    android.hardware.audio.effect.Range.Long rangeLong;
-    android.hardware.audio.effect.Range.Byte rangeByte;
+  parcelable DownmixRange {
+    android.hardware.audio.effect.Downmix min;
+    android.hardware.audio.effect.Downmix max;
+  }
+  @VintfStability
+  parcelable DynamicsProcessingRange {
+    android.hardware.audio.effect.DynamicsProcessing min;
+    android.hardware.audio.effect.DynamicsProcessing max;
+  }
+  @VintfStability
+  parcelable EnvironmentalReverbRange {
+    android.hardware.audio.effect.EnvironmentalReverb min;
+    android.hardware.audio.effect.EnvironmentalReverb max;
+  }
+  @VintfStability
+  parcelable EqualizerRange {
+    android.hardware.audio.effect.Equalizer min;
+    android.hardware.audio.effect.Equalizer max;
+  }
+  @VintfStability
+  parcelable HapticGeneratorRange {
+    android.hardware.audio.effect.HapticGenerator min;
+    android.hardware.audio.effect.HapticGenerator max;
+  }
+  @VintfStability
+  parcelable LoudnessEnhancerRange {
+    android.hardware.audio.effect.LoudnessEnhancer min;
+    android.hardware.audio.effect.LoudnessEnhancer max;
+  }
+  @VintfStability
+  parcelable NoiseSuppressionRange {
+    android.hardware.audio.effect.NoiseSuppression min;
+    android.hardware.audio.effect.NoiseSuppression max;
+  }
+  @VintfStability
+  parcelable PresetReverbRange {
+    android.hardware.audio.effect.PresetReverb min;
+    android.hardware.audio.effect.PresetReverb max;
+  }
+  @VintfStability
+  parcelable VendorExtensionRange {
+    android.hardware.audio.effect.VendorExtension min;
+    android.hardware.audio.effect.VendorExtension max;
+  }
+  @VintfStability
+  parcelable VirtualizerRange {
+    android.hardware.audio.effect.Virtualizer min;
+    android.hardware.audio.effect.Virtualizer max;
+  }
+  @VintfStability
+  parcelable VisualizerRange {
+    android.hardware.audio.effect.Visualizer min;
+    android.hardware.audio.effect.Visualizer max;
+  }
+  @VintfStability
+  parcelable VolumeRange {
+    android.hardware.audio.effect.Volume min;
+    android.hardware.audio.effect.Volume max;
   }
 }

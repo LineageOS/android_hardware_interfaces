@@ -43,9 +43,4 @@ union AutomaticGainControlV1 {
     int vendorExtensionTag;
     android.hardware.audio.effect.AutomaticGainControlV1.Tag commonTag;
   }
-  @VintfStability
-  parcelable Capability {
-    ParcelableHolder extension;
-    android.hardware.audio.effect.Range[] ranges;
-  }
 }

@@ -21,8 +21,8 @@ import android.hardware.audio.effect.VendorExtension;
 /**
  * Volume specific definitions. Volume effect provide volume control and mute/unmute functionality.
  *
- * All parameters defined in union Volume must be gettable and settable. The capabilities defined in
- * Volume.Capability can only acquired with IEffect.getDescriptor() and not settable.
+ * All parameter settings must be inside the range of Capability.Range.volume definition if the
+ * definition for the corresponding parameter tag exist. See more detals about Range in Range.aidl.
  */
 @VintfStability
 union Volume {
@@ -41,29 +41,7 @@ union Volume {
     VendorExtension vendor;
 
     /**
-     * Capability supported by Volume implementation.
-     */
-    @VintfStability
-    parcelable Capability {
-        /**
-         * Volume capability extension, vendor can use this extension in case existing capability
-         * definition not enough.
-         */
-        VendorExtension extension;
-
-        /**
-         * Minimum Volume level supported in dB.
-         */
-        int minLevelDb;
-
-        /**
-         * Maximum Volume level supported in dB.
-         */
-        int maxLevelDb;
-    }
-
-    /**
-     * Current level in dB with supported minimum and maximum level specified in capability.
+     * Current level in dB.
      */
     int levelDb;
     /**
