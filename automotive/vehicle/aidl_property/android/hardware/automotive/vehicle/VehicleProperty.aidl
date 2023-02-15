@@ -1252,9 +1252,16 @@ enum VehicleProperty {
     AP_POWER_BOOTUP_REASON = 0x0A02 + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
     /**
-     * Property to represent brightness of the display. Some cars have single
-     * control for the brightness of all displays and this property is to share
-     * change in that control.
+     * Property to represent brightness of the display.
+     *
+     * Some cars have single control for the brightness of all displays and this
+     * property is to share change in that control. In cars which have displays
+     * whose brightness is controlled separately, they must use
+     * PER_DISPLAY_BRIGHTNESS.
+     *
+     * Only one of DISPLAY_BRIGHTNESS and PER_DISPLAY_BRIGHTNESS should be
+     * implemented. If both are available, PER_DISPLAY_BRIGHTNESS is used by
+     * AAOS.
      *
      * If this is writable, android side can set this value when user changes
      * display brightness from Settings. If this is read only, user may still
@@ -1266,6 +1273,29 @@ enum VehicleProperty {
      */
     DISPLAY_BRIGHTNESS = 0x0A03 + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
+    /**
+     * Property to represent brightness of the displays which are controlled separately.
+     *
+     * Some cars have one or more displays whose brightness is controlled
+     * separately and this property is to inform the brightness of each
+     * passenger display. In cars where all displays' brightness is controlled
+     * together, they must use DISPLAY_BRIGHTNESS.
+     *
+     * Only one of DISPLAY_BRIGHTNESS and PER_DISPLAY_BRIGHTNESS should be
+     * implemented. If both are available, PER_DISPLAY_BRIGHTNESS is used by
+     * AAOS.
+     *
+     * The display port uniquely identifies a physical connector on the device
+     * for display output, ranging from 0 to 255.
+     *
+     * int32Values[0] : display port
+     * int32Values[1] : brightness
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     */
+    PER_DISPLAY_BRIGHTNESS = 0x0A04 + 0x10000000 + 0x01000000
+            + 0x00410000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32_VEC
     /**
      * Property to feed H/W input events to android
      *
