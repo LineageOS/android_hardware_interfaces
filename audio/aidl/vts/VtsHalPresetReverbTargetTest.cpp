@@ -23,7 +23,6 @@
 
 using namespace android;
 
-using aidl::android::hardware::audio::effect::Capability;
 using aidl::android::hardware::audio::effect::Descriptor;
 using aidl::android::hardware::audio::effect::IEffect;
 using aidl::android::hardware::audio::effect::IFactory;
@@ -84,7 +83,7 @@ class PresetReverbParamTest : public ::testing::TestWithParam<PresetReverbParamT
             // validate parameter
             Descriptor desc;
             ASSERT_STATUS(EX_NONE, mEffect->getDescriptor(&desc));
-            const bool valid = isTagInRange(it.first, it.second, desc);
+            const bool valid = isParameterValid<PresetReverb, Range::presetReverb>(it.second, desc);
             const binder_exception_t expected = valid ? EX_NONE : EX_ILLEGAL_ARGUMENT;
 
             // set parameter
@@ -111,27 +110,6 @@ class PresetReverbParamTest : public ::testing::TestWithParam<PresetReverbParamT
         PresetReverb pr;
         pr.set<PresetReverb::preset>(preset);
         mTags.push_back({PresetReverb::preset, pr});
-    }
-
-    bool isTagInRange(const PresetReverb::Tag& tag, const PresetReverb& pr,
-                      const Descriptor& desc) const {
-        const PresetReverb::Capability& prCap = desc.capability.get<Capability::presetReverb>();
-        switch (tag) {
-            case PresetReverb::preset: {
-                PresetReverb::Presets preset = pr.get<PresetReverb::preset>();
-                return isPresetInRange(prCap, preset);
-            }
-            default:
-                return false;
-        }
-        return false;
-    }
-
-    bool isPresetInRange(const PresetReverb::Capability& cap, PresetReverb::Presets preset) const {
-        for (auto i : cap.supportedPresets) {
-            if (preset == i) return true;
-        }
-        return false;
     }
 
     Parameter::Specific getDefaultParamSpecific() {

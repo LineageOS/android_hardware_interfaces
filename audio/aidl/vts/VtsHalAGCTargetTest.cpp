@@ -26,7 +26,6 @@
 using namespace android;
 
 using aidl::android::hardware::audio::effect::AutomaticGainControl;
-using aidl::android::hardware::audio::effect::Capability;
 using aidl::android::hardware::audio::effect::Descriptor;
 using aidl::android::hardware::audio::effect::IEffect;
 using aidl::android::hardware::audio::effect::IFactory;
@@ -94,7 +93,8 @@ class AGCParamTest : public ::testing::TestWithParam<AGCParamTestParam>, public 
             // validate parameter
             Descriptor desc;
             ASSERT_STATUS(EX_NONE, mEffect->getDescriptor(&desc));
-            const bool valid = isTagInRange(tag, AGC, desc);
+            const bool valid =
+                    isParameterValid<AutomaticGainControl, Range::automaticGainControl>(AGC, desc);
             const binder_exception_t expected = valid ? EX_NONE : EX_ILLEGAL_ARGUMENT;
 
             // set parameter
@@ -135,65 +135,7 @@ class AGCParamTest : public ::testing::TestWithParam<AGCParamTestParam>, public 
         mTags.push_back({AutomaticGainControl::levelEstimator, AGC});
     }
 
-    bool isTagInRange(const AutomaticGainControl::Tag& tag, const AutomaticGainControl& AGC,
-                      const Descriptor& desc) const {
-        const AutomaticGainControl::Capability& AGCCap =
-                desc.capability.get<Capability::automaticGainControl>();
-        switch (tag) {
-            case AutomaticGainControl::fixedDigitalGainMb: {
-                auto gain = AGC.get<AutomaticGainControl::fixedDigitalGainMb>();
-                return gain >= 0 && gain <= AGCCap.maxFixedDigitalGainMb;
-            }
-            case AutomaticGainControl::levelEstimator: {
-                return true;
-            }
-            case AutomaticGainControl::saturationMarginMb: {
-                auto margin = AGC.get<AutomaticGainControl::saturationMarginMb>();
-                return margin >= 0 && margin <= AGCCap.maxSaturationMarginMb;
-            }
-            default:
-                return false;
-        }
-    }
-    static std::unordered_set<int> getDigitalGainValues() {
-        auto descList = EffectFactoryHelper::getAllEffectDescriptors(IFactory::descriptor,
-                                                                     kAutomaticGainControlTypeUUID);
-        const auto max = std::max_element(
-                descList.begin(), descList.end(),
-                [](const std::pair<std::shared_ptr<IFactory>, Descriptor>& a,
-                   const std::pair<std::shared_ptr<IFactory>, Descriptor>& b) {
-                    return a.second.capability.get<Capability::automaticGainControl>()
-                                   .maxFixedDigitalGainMb <
-                           b.second.capability.get<Capability::automaticGainControl>()
-                                   .maxFixedDigitalGainMb;
-                });
-        if (max == descList.end()) {
-            return {0};
-        }
-        int maxGain = max->second.capability.get<Capability::automaticGainControl>()
-                              .maxFixedDigitalGainMb;
-        return {-1, 0, maxGain - 1, maxGain, maxGain + 1};
-    }
-    static std::unordered_set<int> getSaturationMarginValues() {
-        auto descList = EffectFactoryHelper::getAllEffectDescriptors(IFactory::descriptor,
-                                                                     kAutomaticGainControlTypeUUID);
-        const auto max = std::max_element(
-                descList.begin(), descList.end(),
-                [](const std::pair<std::shared_ptr<IFactory>, Descriptor>& a,
-                   const std::pair<std::shared_ptr<IFactory>, Descriptor>& b) {
-                    return a.second.capability.get<Capability::automaticGainControl>()
-                                   .maxSaturationMarginMb <
-                           b.second.capability.get<Capability::automaticGainControl>()
-                                   .maxSaturationMarginMb;
-                });
-        if (max == descList.end()) {
-            return {0};
-        }
-        int maxMargin = max->second.capability.get<Capability::automaticGainControl>()
-                                .maxSaturationMarginMb;
-        return {-1, 0, maxMargin - 1, maxMargin, maxMargin + 1};
-    }
-    static std::unordered_set<AutomaticGainControl::LevelEstimator> getLevelEstimatorValues() {
+    static std::set<AutomaticGainControl::LevelEstimator> getLevelEstimatorValues() {
         return {ndk::enum_range<AutomaticGainControl::LevelEstimator>().begin(),
                 ndk::enum_range<AutomaticGainControl::LevelEstimator>().end()};
     }
@@ -218,13 +160,21 @@ TEST_P(AGCParamTest, SetAndGetLevelEstimator) {
     SetAndGetParameters();
 }
 
+std::vector<std::pair<std::shared_ptr<IFactory>, Descriptor>> kDescPair;
 INSTANTIATE_TEST_SUITE_P(
         AGCParamTest, AGCParamTest,
-        ::testing::Combine(testing::ValuesIn(EffectFactoryHelper::getAllEffectDescriptors(
-                                   IFactory::descriptor, kAutomaticGainControlTypeUUID)),
-                           testing::ValuesIn(AGCParamTest::getDigitalGainValues()),
-                           testing::ValuesIn(AGCParamTest::getSaturationMarginValues()),
-                           testing::ValuesIn(AGCParamTest::getLevelEstimatorValues())),
+        ::testing::Combine(
+                testing::ValuesIn(kDescPair = EffectFactoryHelper::getAllEffectDescriptors(
+                                          IFactory::descriptor, kAutomaticGainControlTypeUUID)),
+                testing::ValuesIn(EffectHelper::getTestValueSet<
+                                  AutomaticGainControl, int, Range::automaticGainControl,
+                                  AutomaticGainControl::fixedDigitalGainMb>(
+                        kDescPair, EffectHelper::expandTestValueBasic<int>)),
+                testing::ValuesIn(EffectHelper::getTestValueSet<
+                                  AutomaticGainControl, int, Range::automaticGainControl,
+                                  AutomaticGainControl::saturationMarginMb>(
+                        kDescPair, EffectHelper::expandTestValueBasic<int>)),
+                testing::ValuesIn(AGCParamTest::getLevelEstimatorValues())),
         [](const testing::TestParamInfo<AGCParamTest::ParamType>& info) {
             auto descriptor = std::get<PARAM_INSTANCE_NAME>(info.param).second;
             std::string gain = std::to_string(std::get<PARAM_DIGITAL_GAIN>(info.param));

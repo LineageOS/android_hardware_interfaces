@@ -23,16 +23,17 @@
 #define LOG_TAG "VtsHalAECParamTest"
 
 #include "EffectHelper.h"
+#include "effect-impl/EffectTypes.h"
 
 using namespace android;
 
 using aidl::android::hardware::audio::effect::AcousticEchoCanceler;
-using aidl::android::hardware::audio::effect::Capability;
 using aidl::android::hardware::audio::effect::Descriptor;
 using aidl::android::hardware::audio::effect::IEffect;
 using aidl::android::hardware::audio::effect::IFactory;
 using aidl::android::hardware::audio::effect::kAcousticEchoCancelerTypeUUID;
 using aidl::android::hardware::audio::effect::Parameter;
+using aidl::android::hardware::audio::effect::Range;
 
 enum ParamName { PARAM_INSTANCE_NAME, PARAM_ECHO_DELAY, PARAM_MOBILE_MODE };
 using AECParamTestParam = std::tuple<std::pair<std::shared_ptr<IFactory>, Descriptor>,
@@ -87,7 +88,8 @@ class AECParamTest : public ::testing::TestWithParam<AECParamTestParam>, public 
             // validate parameter
             Descriptor desc;
             ASSERT_STATUS(EX_NONE, mEffect->getDescriptor(&desc));
-            const bool valid = isTagInRange(tag, aec, desc);
+            const bool valid =
+                    isParameterValid<AcousticEchoCanceler, Range::acousticEchoCanceler>(aec, desc);
             const binder_exception_t expected = valid ? EX_NONE : EX_ILLEGAL_ARGUMENT;
 
             // set parameter
@@ -124,54 +126,6 @@ class AECParamTest : public ::testing::TestWithParam<AECParamTestParam>, public 
         mTags.push_back({AcousticEchoCanceler::mobileMode, aec});
     }
 
-    bool isTagInRange(const AcousticEchoCanceler::Tag& tag, const AcousticEchoCanceler& aec,
-                      const Descriptor& desc) const {
-        const AcousticEchoCanceler::Capability& aecCap =
-                desc.capability.get<Capability::acousticEchoCanceler>();
-        switch (tag) {
-            case AcousticEchoCanceler::echoDelayUs: {
-                return isEchoDelayInRange(aecCap, aec.get<AcousticEchoCanceler::echoDelayUs>());
-            }
-            case AcousticEchoCanceler::mobileMode: {
-                bool mode = aec.get<AcousticEchoCanceler::mobileMode>();
-                return isMobileModeValid(aecCap, mode);
-            }
-            default:
-                return false;
-        }
-    }
-
-    bool isEchoDelayInRange(const AcousticEchoCanceler::Capability& cap, int delay) const {
-        return (delay >= 0 && delay <= cap.maxEchoDelayUs);
-    }
-
-    bool isMobileModeValid(const AcousticEchoCanceler::Capability& cap, bool mode) const {
-        if (cap.supportMobileMode) {
-            return true;
-        } else {
-            return mode == false;
-        }
-    }
-
-    static std::unordered_set<int> getEchoDelayTestValues() {
-        auto descList = EffectFactoryHelper::getAllEffectDescriptors(IFactory::descriptor,
-                                                                     kAcousticEchoCancelerTypeUUID);
-        const auto max = std::max_element(
-                descList.begin(), descList.end(),
-                [](const std::pair<std::shared_ptr<IFactory>, Descriptor>& a,
-                   const std::pair<std::shared_ptr<IFactory>, Descriptor>& b) {
-                    return a.second.capability.get<Capability::acousticEchoCanceler>()
-                                   .maxEchoDelayUs <
-                           b.second.capability.get<Capability::acousticEchoCanceler>()
-                                   .maxEchoDelayUs;
-                });
-        if (max == descList.end()) {
-            return {0};
-        }
-        int maxDelay =
-                max->second.capability.get<Capability::acousticEchoCanceler>().maxEchoDelayUs;
-        return {-1, 0, maxDelay - 1, maxDelay, maxDelay + 1};
-    }
     static std::unordered_set<bool> getMobileModeValues() { return {true, false}; }
 
   private:
@@ -189,12 +143,20 @@ TEST_P(AECParamTest, SetAndGetMobileMode) {
     SetAndGetParameters();
 }
 
+std::vector<std::pair<std::shared_ptr<IFactory>, Descriptor>> kDescPair;
 INSTANTIATE_TEST_SUITE_P(
         AECParamTest, AECParamTest,
-        ::testing::Combine(testing::ValuesIn(EffectFactoryHelper::getAllEffectDescriptors(
-                                   IFactory::descriptor, kAcousticEchoCancelerTypeUUID)),
-                           testing::ValuesIn(AECParamTest::getEchoDelayTestValues()),
-                           testing::ValuesIn(AECParamTest::getMobileModeValues())),
+        ::testing::Combine(
+                testing::ValuesIn(kDescPair = EffectFactoryHelper::getAllEffectDescriptors(
+                                          IFactory::descriptor, kAcousticEchoCancelerTypeUUID)),
+                testing::ValuesIn(EffectHelper::getTestValueSet<AcousticEchoCanceler, int,
+                                                                Range::acousticEchoCanceler,
+                                                                AcousticEchoCanceler::echoDelayUs>(
+                        kDescPair, EffectHelper::expandTestValueBasic<int>)),
+                testing::ValuesIn(EffectHelper::getTestValueSet<AcousticEchoCanceler, bool,
+                                                                Range::acousticEchoCanceler,
+                                                                AcousticEchoCanceler::mobileMode>(
+                        kDescPair, EffectHelper::expandTestValueBasic<bool>))),
         [](const testing::TestParamInfo<AECParamTest::ParamType>& info) {
             auto descriptor = std::get<PARAM_INSTANCE_NAME>(info.param).second;
             std::string echoDelay = std::to_string(std::get<PARAM_ECHO_DELAY>(info.param));

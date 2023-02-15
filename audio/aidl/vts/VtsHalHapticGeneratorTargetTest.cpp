@@ -27,7 +27,6 @@
 
 using namespace android;
 
-using aidl::android::hardware::audio::effect::Capability;
 using aidl::android::hardware::audio::effect::Descriptor;
 using aidl::android::hardware::audio::effect::HapticGenerator;
 using aidl::android::hardware::audio::effect::IEffect;
