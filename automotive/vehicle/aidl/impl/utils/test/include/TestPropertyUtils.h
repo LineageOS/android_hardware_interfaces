@@ -84,6 +84,13 @@ constexpr int32_t ECHO_REVERSE_BYTES = 0x2a12 |
                                        toInt(testpropertyutils_impl::VehicleArea::GLOBAL) |
                                        toInt(testpropertyutils_impl::VehiclePropertyType::BYTES);
 
+// This property is used for testing vendor error codes end to end.
+// 0x21402a13
+constexpr int32_t VENDOR_PROPERTY_ID = 0x2a13 |
+                                       toInt(testpropertyutils_impl::VehiclePropertyGroup::VENDOR) |
+                                       toInt(testpropertyutils_impl::VehicleArea::GLOBAL) |
+                                       toInt(testpropertyutils_impl::VehiclePropertyType::INT32);
+
 // This property is used for test purpose. End to end tests use this property to test set and get
 // method for MIXED type properties.
 constexpr int32_t kMixedTypePropertyForTest =
