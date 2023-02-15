@@ -19,8 +19,12 @@
 
 #include <aidl/android/hardware/automotive/vehicle/AutomaticEmergencyBrakingState.h>
 #include <aidl/android/hardware/automotive/vehicle/BlindSpotWarningState.h>
+#include <aidl/android/hardware/automotive/vehicle/CruiseControlCommand.h>
+#include <aidl/android/hardware/automotive/vehicle/CruiseControlState.h>
+#include <aidl/android/hardware/automotive/vehicle/CruiseControlType.h>
 #include <aidl/android/hardware/automotive/vehicle/DiagnosticFloatSensorIndex.h>
 #include <aidl/android/hardware/automotive/vehicle/DiagnosticIntegerSensorIndex.h>
+#include <aidl/android/hardware/automotive/vehicle/EmergencyLaneKeepAssistState.h>
 #include <aidl/android/hardware/automotive/vehicle/ErrorState.h>
 #include <aidl/android/hardware/automotive/vehicle/EvConnectorType.h>
 #include <aidl/android/hardware/automotive/vehicle/EvStoppingMode.h>

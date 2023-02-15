@@ -3833,13 +3833,33 @@ enum VehicleProperty {
             0x100D + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
 
     /**
-     * Enable or disable adaptive cruise control (ACC).
+     * Emergency Lane Keep Assist (ELKA) state.
      *
-     * Set true to enable ACC and false to disable ACC. When ACC is enabled, the ADAS system in the
-     * vehicle should be turned on and waiting for an activation signal from the driver. Once the
-     * feature is activated, the ADAS system in the car should be accelerating and braking in a way
-     * that allows the vehicle to maintain a set speed and to maintain a set distance gap from a
-     * leading vehicle.
+     * Returns the current state of ELKA. Generally, this property should return a valid state
+     * defined in the EmergencyLaneKeepAssistState or ErrorState. For example, if the feature is not
+     * available due to some temporary state, that information should be conveyed through
+     * ErrorState.
+     *
+     * For the global area ID (0), the VehicleAreaConfig#supportedEnumValues array must be defined
+     * unless all states of EmergencyLaneKeepAssistState (including OTHER, which is not recommended)
+     * and ErrorState are supported.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     * @data_enum EmergencyLaneKeepAssistState
+     * @data_enum ErrorState
+     */
+    EMERGENCY_LANE_KEEP_ASSIST_STATE =
+            0x100E + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
+
+    /**
+     * Enable or disable cruise control (CC).
+     *
+     * Set true to enable CC and false to disable CC. This property is shared by all forms of
+     * CruiseControlType(s).
+     *
+     * When CC is enabled, the ADAS system in the vehicle should be turned on and responding to
+     * commands.
      *
      * This property is defined as read_write, but OEMs have the option to implement it as read
      * only.
@@ -3847,8 +3867,68 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
      */
-    ADAPTIVE_CRUISE_CONTROL_ENABLED =
+    CRUISE_CONTROL_ENABLED =
             0x100F + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+
+    /**
+     * Current type of Cruise Control (CC).
+     *
+     * When CRUISE_CONTROL_ENABLED is true, this property returns the type of CC that is currently
+     * enabled (for example, standard CC, adaptive CC, predictive CC, etc.). Generally, this
+     * property should return a valid state defined in the CruiseControlType or ErrorState. For
+     * example, if the feature is not available due to some temporary state, that information should
+     * be conveyed through ErrorState.
+     *
+     * For the global area ID (0), the VehicleAreaConfig#supportedEnumValues array must be defined
+     * unless all states of CruiseControlType (including OTHER, which is not recommended) and
+     * ErrorState are supported.
+     *
+     * Trying to write CruiseControlType#OTHER or an ErrorState to this property will throw an
+     * IllegalArgumentException.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     * @data_enum CruiseControlType
+     * @data_enum ErrorState
+     */
+    CRUISE_CONTROL_TYPE =
+            0x1010 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
+
+    /**
+     * Current state of Cruise Control (CC).
+     *
+     * This property returns the current state of CC. Generally, this property should return a valid
+     * state defined in the CruiseControlState or ErrorState. For example, if the feature is not
+     * available due to some temporary state, that information should be conveyed through
+     * ErrorState.
+     *
+     * For the global area ID (0), the VehicleAreaConfig#supportedEnumValues array must be defined
+     * unless all states of CruiseControlState (including OTHER, which is not recommended) and
+     * ErrorState are supported.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     * @data_enum CruiseControlState
+     * @data_enum ErrorState
+     */
+    CRUISE_CONTROL_STATE =
+            0x1011 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
+
+    /**
+     * Write Cruise Control (CC) commands.
+     *
+     * See CruiseControlCommand for the details about each supported command.
+     *
+     * For the global area ID (0), the VehicleAreaConfig#supportedEnumValues array must be defined
+     * unless all states of CruiseControlState are supported. Any unsupported commands sent through
+     * this property should return StatusCode.INVALID_ARG.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.WRITE
+     * @data_enum CruiseControlCommand
+     */
+    CRUISE_CONTROL_COMMAND =
+            0x1012 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
 
     /**
      * Enable or disable hands on detection (HOD).
