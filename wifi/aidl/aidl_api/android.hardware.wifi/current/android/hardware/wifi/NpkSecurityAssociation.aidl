@@ -38,4 +38,5 @@ parcelable NpkSecurityAssociation {
   byte[16] localNanIdentityKey;
   byte[32] npk;
   android.hardware.wifi.NanPairingAkm akm;
+  android.hardware.wifi.NanCipherSuiteType cipherType;
 }

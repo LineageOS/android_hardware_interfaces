@@ -224,6 +224,14 @@ void WifiNanIface::registerCallbackHandlers() {
                 }
                 break;
             }
+            case legacy_hal::NAN_PAIRING_END: {
+                for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
+                    if (!callback->notifyTerminatePairingResponse(id, nanStatus).isOk()) {
+                        LOG(ERROR) << "Failed to invoke the callback";
+                    }
+                }
+                break;
+            }
             case legacy_hal::NAN_BOOTSTRAPPING_INITIATOR_RESPONSE: {
                 for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
                     if (!callback->notifyInitiateBootstrappingResponse(
@@ -743,6 +751,13 @@ ndk::ScopedAStatus WifiNanIface::respondToPairingIndicationRequest(
                            in_msg);
 }
 
+ndk::ScopedAStatus WifiNanIface::terminatePairingRequest(char16_t in_cmdId,
+                                                         int32_t in_ndpInstanceId) {
+    return validateAndCall(this, WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
+                           &WifiNanIface::terminatePairingRequestInternal, in_cmdId,
+                           in_ndpInstanceId);
+}
+
 ndk::ScopedAStatus WifiNanIface::initiateBootstrappingRequest(
         char16_t in_cmdId, const NanBootstrappingRequest& in_msg) {
     return validateAndCall(this, WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
@@ -917,6 +932,12 @@ ndk::ScopedAStatus WifiNanIface::respondToPairingIndicationRequestInternal(
     }
     legacy_hal::wifi_error legacy_status =
             legacy_hal_.lock()->nanPairingIndicationResponse(ifname_, cmd_id, legacy_msg);
+    return createWifiStatusFromLegacyError(legacy_status);
+}
+ndk::ScopedAStatus WifiNanIface::terminatePairingRequestInternal(char16_t cmd_id,
+                                                                 int32_t ndpInstanceId) {
+    legacy_hal::wifi_error legacy_status =
+            legacy_hal_.lock()->nanPairingEnd(ifname_, cmd_id, ndpInstanceId);
     return createWifiStatusFromLegacyError(legacy_status);
 }
 ndk::ScopedAStatus WifiNanIface::initiateBootstrappingRequestInternal(

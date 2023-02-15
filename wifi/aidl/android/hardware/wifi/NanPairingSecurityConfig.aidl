@@ -16,6 +16,7 @@
 
 package android.hardware.wifi;
 
+import android.hardware.wifi.NanCipherSuiteType;
 import android.hardware.wifi.NanPairingAkm;
 import android.hardware.wifi.NanPairingSecurityType;
 
@@ -47,4 +48,9 @@ parcelable NanPairingSecurityConfig {
      * The AKM for key exchange
      */
     NanPairingAkm akm;
+    /**
+     * Cipher type for pairing. Need to be one of the |NanCipherSuiteType.PUBLIC_KEY_PASN_128_MASK|
+     * or |NanCipherSuiteType.PUBLIC_KEY_PASN_256_MASK|
+     */
+    NanCipherSuiteType cipherType;
 }
