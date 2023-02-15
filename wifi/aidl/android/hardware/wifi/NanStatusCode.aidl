@@ -79,8 +79,16 @@ enum NanStatusCode {
      * If the bootstrapping id is invalid
      */
     INVALID_BOOTSTRAPPING_ID = 14,
-    /**
-     * If the system is not in a valid state for the given request.
+    /*
+     * If same request is received again
      */
-    INVALID_STATE = 15
+    REDUNDANT_REQUEST = 15,
+    /*
+     * If current request is not supported
+     */
+    NOT_SUPPORTED = 16,
+    /*
+     * If no Wifi Aware connection is active
+     */
+    NO_CONNECTION = 17
 }

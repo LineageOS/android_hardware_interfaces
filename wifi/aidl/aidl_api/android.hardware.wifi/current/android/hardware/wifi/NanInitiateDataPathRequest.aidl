@@ -42,4 +42,5 @@ parcelable NanInitiateDataPathRequest {
   android.hardware.wifi.NanDataPathSecurityConfig securityConfig;
   byte[] appInfo;
   byte[] serviceNameOutOfBand;
+  byte discoverySessionId;
 }

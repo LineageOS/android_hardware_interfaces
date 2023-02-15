@@ -28,7 +28,7 @@ import android.hardware.wifi.NanMatchInd;
 import android.hardware.wifi.NanPairingConfirmInd;
 import android.hardware.wifi.NanPairingRequestInd;
 import android.hardware.wifi.NanStatus;
-
+import android.hardware.wifi.NanSuspensionModeChangeInd;
 /**
  * NAN Response and Asynchronous Event Callbacks.
  *
@@ -139,6 +139,13 @@ oneway interface IWifiNanIfaceEventCallback {
      *               |NanStatusCode.PROTOCOL_FAILURE|
      */
     void eventTransmitFollowup(in char id, in NanStatus status);
+
+    /**
+     * Callback indicating that device suspension mode status change
+     *
+     * @param event NanSuspensionModeChangeInd containing event details.
+     */
+    void eventSuspensionModeChanged(in NanSuspensionModeChangeInd event);
 
     /**
      * Callback invoked in response to a capability request
