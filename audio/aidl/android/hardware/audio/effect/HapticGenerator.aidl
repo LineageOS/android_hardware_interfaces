@@ -22,9 +22,9 @@ import android.hardware.audio.effect.VendorExtension;
  * HapticGenerator specific definitions. HapticGenerator effect provide HapticGenerator control and
  * mute/unmute functionality.
  *
- * All parameters defined in union HapticGenerator must be gettable and settable. The capabilities
- * defined in HapticGenerator.Capability can only acquired with IEffect.getDescriptor() and not
- * settable.
+ * All parameter settings must be inside the range of Capability.Range.hapticGenerator definition if
+ * the definition for the corresponding parameter tag exist. See more detals about Range in
+ * Range.aidl.
  */
 @VintfStability
 union HapticGenerator {
@@ -41,18 +41,6 @@ union HapticGenerator {
      * Vendor HapticGenerator implementation definition for additional parameters.
      */
     VendorExtension vendorExtension;
-
-    /**
-     * Capability supported by HapticGenerator implementation.
-     */
-    @VintfStability
-    parcelable Capability {
-        /**
-         * HapticGenerator capability extension, vendor can use this extension in case existing
-         * capability definition not enough.
-         */
-        VendorExtension extension;
-    }
 
     @VintfStability
     @Backing(type="int")
