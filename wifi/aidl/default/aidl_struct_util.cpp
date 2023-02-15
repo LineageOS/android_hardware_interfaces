@@ -41,23 +41,6 @@ inline std::vector<int32_t> uintToIntVec(const std::vector<uint32_t>& in) {
     return std::vector<int32_t>(in.begin(), in.end());
 }
 
-IWifiChip::ChipCapabilityMask convertLegacyLoggerFeatureToAidlChipCapability(uint32_t feature) {
-    switch (feature) {
-        case legacy_hal::WIFI_LOGGER_MEMORY_DUMP_SUPPORTED:
-            return IWifiChip::ChipCapabilityMask::DEBUG_MEMORY_FIRMWARE_DUMP;
-        case legacy_hal::WIFI_LOGGER_DRIVER_DUMP_SUPPORTED:
-            return IWifiChip::ChipCapabilityMask::DEBUG_MEMORY_DRIVER_DUMP;
-        case legacy_hal::WIFI_LOGGER_CONNECT_EVENT_SUPPORTED:
-            return IWifiChip::ChipCapabilityMask::DEBUG_RING_BUFFER_CONNECT_EVENT;
-        case legacy_hal::WIFI_LOGGER_POWER_EVENT_SUPPORTED:
-            return IWifiChip::ChipCapabilityMask::DEBUG_RING_BUFFER_POWER_EVENT;
-        case legacy_hal::WIFI_LOGGER_WAKE_LOCK_SUPPORTED:
-            return IWifiChip::ChipCapabilityMask::DEBUG_RING_BUFFER_WAKELOCK_EVENT;
-    };
-    CHECK(false) << "Unknown legacy feature: " << feature;
-    return {};
-}
-
 IWifiStaIface::StaIfaceCapabilityMask convertLegacyLoggerFeatureToAidlStaIfaceCapability(
         uint32_t feature) {
     switch (feature) {
@@ -125,23 +108,11 @@ IWifiStaIface::StaIfaceCapabilityMask convertLegacyFeatureToAidlStaIfaceCapabili
     return {};
 }
 
-bool convertLegacyFeaturesToAidlChipCapabilities(uint64_t legacy_feature_set,
-                                                 uint32_t legacy_logger_feature_set,
-                                                 uint32_t* aidl_caps) {
+bool convertLegacyFeaturesToAidlChipCapabilities(uint64_t legacy_feature_set, uint32_t* aidl_caps) {
     if (!aidl_caps) {
         return false;
     }
     *aidl_caps = {};
-    for (const auto feature : {legacy_hal::WIFI_LOGGER_MEMORY_DUMP_SUPPORTED,
-                               legacy_hal::WIFI_LOGGER_DRIVER_DUMP_SUPPORTED,
-                               legacy_hal::WIFI_LOGGER_CONNECT_EVENT_SUPPORTED,
-                               legacy_hal::WIFI_LOGGER_POWER_EVENT_SUPPORTED,
-                               legacy_hal::WIFI_LOGGER_WAKE_LOCK_SUPPORTED}) {
-        if (feature & legacy_logger_feature_set) {
-            *aidl_caps |=
-                    static_cast<uint32_t>(convertLegacyLoggerFeatureToAidlChipCapability(feature));
-        }
-    }
     std::vector<uint64_t> features = {WIFI_FEATURE_SET_TX_POWER_LIMIT,
                                       WIFI_FEATURE_USE_BODY_HEAD_SAR,
                                       WIFI_FEATURE_D2D_RTT,
@@ -156,13 +127,6 @@ bool convertLegacyFeaturesToAidlChipCapabilities(uint64_t legacy_feature_set,
         }
     }
 
-    // There are no flags for these 3 in the legacy feature set. Adding them to
-    // the set because all the current devices support it.
-    *aidl_caps |=
-            static_cast<uint32_t>(IWifiChip::ChipCapabilityMask::DEBUG_RING_BUFFER_VENDOR_DATA);
-    *aidl_caps |=
-            static_cast<uint32_t>(IWifiChip::ChipCapabilityMask::DEBUG_HOST_WAKE_REASON_STATS);
-    *aidl_caps |= static_cast<uint32_t>(IWifiChip::ChipCapabilityMask::DEBUG_ERROR_ALERTS);
     return true;
 }
 
