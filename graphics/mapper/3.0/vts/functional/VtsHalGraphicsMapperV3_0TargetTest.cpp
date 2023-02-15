@@ -21,6 +21,7 @@
 #include <vector>
 
 #include <android-base/logging.h>
+#include <android-base/properties.h>
 #include <gtest/gtest.h>
 #include <hidl/GtestPrinter.h>
 #include <hidl/ServiceManagement.h>
@@ -330,6 +331,9 @@ TEST_P(GraphicsMapperHidlTest, LockUnlockBasic) {
  * Test IMapper::lockYCbCr.  This locks a YCbCr_P010 buffer and verifies that it's initialized.
  */
 TEST_P(GraphicsMapperHidlTest, LockYCbCrP010) {
+    if (base::GetIntProperty("ro.vendor.api_level", __ANDROID_API_FUTURE__) < __ANDROID_API_T__) {
+        GTEST_SKIP() << "Old vendor grallocs may not support P010";
+    }
     auto info = mDummyDescriptorInfo;
     info.format = PixelFormat::YCBCR_P010;
 
