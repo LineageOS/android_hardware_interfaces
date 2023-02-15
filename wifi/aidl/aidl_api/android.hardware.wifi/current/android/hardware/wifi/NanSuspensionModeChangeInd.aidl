@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,12 +33,6 @@
 
 package android.hardware.wifi;
 @VintfStability
-parcelable NanRespondToDataPathIndicationRequest {
-  boolean acceptRequest;
-  int ndpInstanceId;
-  String ifaceName;
-  android.hardware.wifi.NanDataPathSecurityConfig securityConfig;
-  byte[] appInfo;
-  byte[] serviceNameOutOfBand;
-  byte discoverySessionId;
+parcelable NanSuspensionModeChangeInd {
+  boolean isSuspended;
 }

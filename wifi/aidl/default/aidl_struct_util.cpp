@@ -1420,6 +1420,12 @@ NanStatusCode convertLegacyNanStatusTypeToAidl(legacy_hal::NanStatusType type) {
             return NanStatusCode::INVALID_PAIRING_ID;
         case legacy_hal::NAN_STATUS_INVALID_BOOTSTRAPPING_ID:
             return NanStatusCode::INVALID_BOOTSTRAPPING_ID;
+        case legacy_hal::NAN_STATUS_REDUNDANT_REQUEST:
+            return NanStatusCode::REDUNDANT_REQUEST;
+        case legacy_hal::NAN_STATUS_NOT_SUPPORTED:
+            return NanStatusCode::NOT_SUPPORTED;
+        case legacy_hal::NAN_STATUS_NO_CONNECTION:
+            return NanStatusCode::NO_CONNECTION;
     }
     CHECK(false);
 }
@@ -2090,6 +2096,7 @@ bool convertAidlNanDataPathInitiatorRequestToLegacy(
         return false;
     }
     memcpy(legacy_request->scid, aidl_request.securityConfig.scid.data(), legacy_request->scid_len);
+    legacy_request->publish_subscribe_id = static_cast<uint8_t>(aidl_request.discoverySessionId);
 
     return true;
 }
@@ -2171,6 +2178,7 @@ bool convertAidlNanDataPathIndicationResponseToLegacy(
         return false;
     }
     memcpy(legacy_request->scid, aidl_request.securityConfig.scid.data(), legacy_request->scid_len);
+    legacy_request->publish_subscribe_id = static_cast<uint8_t>(aidl_request.discoverySessionId);
 
     return true;
 }
