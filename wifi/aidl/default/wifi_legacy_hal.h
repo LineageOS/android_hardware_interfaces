@@ -792,8 +792,8 @@ class WifiLegacyHal {
     // Handles wifi (error) status of Virtual interface create/delete
     wifi_error handleVirtualInterfaceCreateOrDeleteStatus(const std::string& ifname,
                                                           wifi_error status);
-    wifi_link_stat* copyLinkStat(wifi_link_stat* stat_ptr, std::vector<LinkStats> stats);
-    wifi_peer_info* copyPeerInfo(wifi_peer_info* peer_ptr, std::vector<WifiPeerInfo> peers);
+    wifi_link_stat* copyLinkStat(wifi_link_stat* stat_ptr, std::vector<LinkStats>& stats);
+    wifi_peer_info* copyPeerInfo(wifi_peer_info* peer_ptr, std::vector<WifiPeerInfo>& peers);
 
     // Global function table of legacy HAL.
     wifi_hal_fn global_func_table_;
