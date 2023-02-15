@@ -60,8 +60,6 @@ extern "C" binder_exception_t queryEffect(const AudioUuid* in_impl_uuid, Descrip
 namespace aidl::android::hardware::audio::effect {
 
 const std::string HapticGeneratorSw::kEffectName = "HapticGeneratorSw";
-/* capabilities */
-const HapticGenerator::Capability HapticGeneratorSw::kCapability;
 /* Effect descriptor */
 const Descriptor HapticGeneratorSw::kDescriptor = {
         .common = {.id = {.type = kHapticGeneratorTypeUUID,
@@ -71,9 +69,7 @@ const Descriptor HapticGeneratorSw::kDescriptor = {
                              .insert = Flags::Insert::FIRST,
                              .volume = Flags::Volume::CTRL},
                    .name = HapticGeneratorSw::kEffectName,
-                   .implementor = "The Android Open Source Project"},
-        .capability =
-                Capability::make<Capability::hapticGenerator>(HapticGeneratorSw::kCapability)};
+                   .implementor = "The Android Open Source Project"}};
 
 ndk::ScopedAStatus HapticGeneratorSw::getDescriptor(Descriptor* _aidl_return) {
     LOG(DEBUG) << __func__ << kDescriptor.toString();

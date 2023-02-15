@@ -86,8 +86,6 @@ class DynamicsProcessingSwContext final : public EffectContext {
     std::vector<DynamicsProcessing::EqBandConfig> mPreEqChBands;
     std::vector<DynamicsProcessing::EqBandConfig> mPostEqChBands;
     std::vector<DynamicsProcessing::MbcBandConfig> mMbcChBands;
-
-    bool validateCutoffFrequency(float freq);
     bool validateStageEnablement(const DynamicsProcessing::StageEnablement& enablement);
     bool validateEngineConfig(const DynamicsProcessing::EngineArchitecture& engine);
     bool validateEqBandConfig(const DynamicsProcessing::EqBandConfig& band, int maxChannel,
@@ -104,7 +102,7 @@ class DynamicsProcessingSwContext final : public EffectContext {
 class DynamicsProcessingSw final : public EffectImpl {
   public:
     static const std::string kEffectName;
-    static const DynamicsProcessing::Capability kCapability;
+    static const Capability kCapability;
     static const Descriptor kDescriptor;
     DynamicsProcessingSw() { LOG(DEBUG) << __func__; }
     ~DynamicsProcessingSw() {
@@ -125,6 +123,11 @@ class DynamicsProcessingSw final : public EffectImpl {
     std::string getEffectName() override { return kEffectName; };
 
   private:
+    static const DynamicsProcessing::EqBandConfig kEqBandConfigMin;
+    static const DynamicsProcessing::EqBandConfig kEqBandConfigMax;
+    static const Range::DynamicsProcessingRange kPreEqBandRange;
+    static const Range::DynamicsProcessingRange kPostEqBandRange;
+    static const std::vector<Range::DynamicsProcessingRange> kRanges;
     std::shared_ptr<DynamicsProcessingSwContext> mContext;
     ndk::ScopedAStatus getParameterDynamicsProcessing(const DynamicsProcessing::Tag& tag,
                                                       Parameter::Specific* specific);
