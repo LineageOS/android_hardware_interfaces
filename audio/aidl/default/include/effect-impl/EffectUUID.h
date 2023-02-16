@@ -93,12 +93,12 @@ static const AudioUuid kBassBoostProxyUUID = {static_cast<int32_t>(0x14804144),
                                               0x4d24,
                                               0xaa88,
                                               {0x00, 0x02, 0xa5, 0xd5, 0xc5, 0x1b}};
-// fa81862a-588b-11ed-9b6a-0242ac120002
-static const AudioUuid kDownmixTypeUUID = {static_cast<int32_t>(0xfa81862a),
-                                           0x588b,
-                                           0x11ed,
-                                           0x9b6a,
-                                           {0x02, 0x42, 0xac, 0x12, 0x00, 0x02}};
+// 381e49cc-a858-4aa2-87f6-e8388e7601b2
+static const AudioUuid kDownmixTypeUUID = {static_cast<int32_t>(0x381e49cc),
+                                           0xa858,
+                                           0x4aa2,
+                                           0x87f6,
+                                           {0xe8, 0x38, 0x8e, 0x76, 0x01, 0xb2}};
 // fa8187ba-588b-11ed-9b6a-0242ac120002
 static const AudioUuid kDownmixSwImplUUID = {static_cast<int32_t>(0xfa8187ba),
                                              0x588b,
@@ -311,6 +311,18 @@ static const AudioUuid kVolumeBundleImplUUID = {static_cast<int32_t>(0x119341a0)
                                                 0x81f9,
                                                 {0x00, 0x02, 0xa5, 0xd5, 0xc5, 0x1b}};
 
+// fa81dbde-588b-11ed-9b6a-0242ac120002
+static const AudioUuid kExtensionEffectTypeUUID = {static_cast<int32_t>(0xfa81dbde),
+                                                   0x588b,
+                                                   0x11ed,
+                                                   0x9b6a,
+                                                   {0x02, 0x42, 0xac, 0x12, 0x00, 0x02}};
+// fa81dd00-588b-11ed-9b6a-0242ac120002
+static const AudioUuid kExtensionEffectImplUUID = {static_cast<int32_t>(0xfa81dd00),
+                                                   0x588b,
+                                                   0x11ed,
+                                                   0x9b6a,
+                                                   {0x02, 0x42, 0xac, 0x12, 0x00, 0x02}};
 /**
  * @brief A map between effect name and effect type UUID.
  * All <name> attribution in effect/effectProxy of audio_effects.xml should be listed in this map.
@@ -324,6 +336,7 @@ static const std::map<const std::string /* effect type */, const AudioUuid&> kUu
         {"downmix", kDownmixTypeUUID},
         {"dynamics_processing", kDynamicsProcessingTypeUUID},
         {"equalizer", kEqualizerTypeUUID},
+        {"extensioneffect", kExtensionEffectTypeUUID},
         {"haptic_generator", kHapticGeneratorTypeUUID},
         {"loudness_enhancer", kLoudnessEnhancerTypeUUID},
         {"env_reverb", kEnvReverbTypeUUID},
