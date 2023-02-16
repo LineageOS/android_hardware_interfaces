@@ -17,7 +17,7 @@
 package android.hardware.wifi;
 
 /**
- * Cipher suite flags.
+ * Cipher suite flags. Wi-Fi Aware Specification 4.0 section 7.1.2
  */
 @VintfStability
 @Backing(type="int")
@@ -26,11 +26,19 @@ enum NanCipherSuiteType {
     SHARED_KEY_128_MASK = 1 << 0,
     SHARED_KEY_256_MASK = 1 << 1,
     /**
-     *  NCS-PK-128
+     *  NCS-PK-2WDH-128
      */
-    PUBLIC_KEY_128_MASK = 1 << 2,
+    PUBLIC_KEY_2WDH_128_MASK = 1 << 2,
     /**
-     *  NCS-PK-256
+     *  NCS-PK-2WDH-256
      */
-    PUBLIC_KEY_256_MASK = 1 << 3,
+    PUBLIC_KEY_2WDH_256_MASK = 1 << 3,
+    /**
+     *  NCS-PK-PASN-128
+     */
+    PUBLIC_KEY_PASN_128_MASK = 1 << 4,
+    /**
+     *  NCS-PK-PASN-256
+     */
+    PUBLIC_KEY_PASN_256_MASK = 1 << 5,
 }

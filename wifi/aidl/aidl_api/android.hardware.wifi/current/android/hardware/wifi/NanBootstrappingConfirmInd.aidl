@@ -35,6 +35,8 @@ package android.hardware.wifi;
 @VintfStability
 parcelable NanBootstrappingConfirmInd {
   int bootstrappingInstanceId;
-  boolean acceptRequest;
+  android.hardware.wifi.NanBootstrappingResponseCode responseCode;
   android.hardware.wifi.NanStatus reasonCode;
+  int comeBackDelay;
+  byte[] cookie;
 }

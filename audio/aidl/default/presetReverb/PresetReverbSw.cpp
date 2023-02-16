@@ -62,12 +62,17 @@ namespace aidl::android::hardware::audio::effect {
 
 const std::string PresetReverbSw::kEffectName = "PresetReverbSw";
 
-const std::vector<PresetReverb::Presets> kSupportedPresets{
+const std::vector<PresetReverb::Presets> PresetReverbSw::kSupportedPresets{
         ndk::enum_range<PresetReverb::Presets>().begin(),
         ndk::enum_range<PresetReverb::Presets>().end()};
 
-const PresetReverb::Capability PresetReverbSw::kCapability = {.supportedPresets =
-                                                                      kSupportedPresets};
+const std::vector<Range::PresetReverbRange> PresetReverbSw::kRanges = {
+        MAKE_RANGE(PresetReverb, supportedPresets, PresetReverbSw::kSupportedPresets,
+                   PresetReverbSw::kSupportedPresets)};
+
+const Capability PresetReverbSw::kCapability = {
+        .range = Range::make<Range::presetReverb>(PresetReverbSw::kRanges)};
+
 const Descriptor PresetReverbSw::kDescriptor = {
         .common = {.id = {.type = kPresetReverbTypeUUID,
                           .uuid = kPresetReverbSwImplUUID,
@@ -77,7 +82,7 @@ const Descriptor PresetReverbSw::kDescriptor = {
                              .volume = Flags::Volume::CTRL},
                    .name = PresetReverbSw::kEffectName,
                    .implementor = "The Android Open Source Project"},
-        .capability = Capability::make<Capability::presetReverb>(PresetReverbSw::kCapability)};
+        .capability = PresetReverbSw::kCapability};
 
 ndk::ScopedAStatus PresetReverbSw::getDescriptor(Descriptor* _aidl_return) {
     LOG(DEBUG) << __func__ << kDescriptor.toString();
@@ -92,6 +97,7 @@ ndk::ScopedAStatus PresetReverbSw::setParameterSpecific(const Parameter::Specifi
     RETURN_IF(!mContext, EX_NULL_POINTER, "nullContext");
 
     auto& prParam = specific.get<Parameter::Specific::presetReverb>();
+    RETURN_IF(!inRange(prParam, kRanges), EX_ILLEGAL_ARGUMENT, "outOfRange");
     auto tag = prParam.getTag();
 
     switch (tag) {

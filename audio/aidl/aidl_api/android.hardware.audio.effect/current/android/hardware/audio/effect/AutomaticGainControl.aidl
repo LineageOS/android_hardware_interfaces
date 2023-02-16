@@ -43,12 +43,6 @@ union AutomaticGainControl {
     int vendorExtensionTag;
     android.hardware.audio.effect.AutomaticGainControl.Tag commonTag;
   }
-  @VintfStability
-  parcelable Capability {
-    ParcelableHolder extension;
-    int maxFixedDigitalGainMb;
-    int maxSaturationMarginMb;
-  }
   @Backing(type="int") @VintfStability
   enum LevelEstimator {
     RMS = 0,

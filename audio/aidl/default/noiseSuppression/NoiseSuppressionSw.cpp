@@ -60,7 +60,6 @@ extern "C" binder_exception_t queryEffect(const AudioUuid* in_impl_uuid, Descrip
 namespace aidl::android::hardware::audio::effect {
 
 const std::string NoiseSuppressionSw::kEffectName = "NoiseSuppressionSw";
-const NoiseSuppression::Capability NoiseSuppressionSw::kCapability;
 const Descriptor NoiseSuppressionSw::kDescriptor = {
         .common = {.id = {.type = kNoiseSuppressionTypeUUID,
                           .uuid = kNoiseSuppressionSwImplUUID,
@@ -69,9 +68,7 @@ const Descriptor NoiseSuppressionSw::kDescriptor = {
                              .insert = Flags::Insert::FIRST,
                              .volume = Flags::Volume::CTRL},
                    .name = NoiseSuppressionSw::kEffectName,
-                   .implementor = "The Android Open Source Project"},
-        .capability =
-                Capability::make<Capability::noiseSuppression>(NoiseSuppressionSw::kCapability)};
+                   .implementor = "The Android Open Source Project"}};
 
 ndk::ScopedAStatus NoiseSuppressionSw::getDescriptor(Descriptor* _aidl_return) {
     LOG(DEBUG) << __func__ << kDescriptor.toString();

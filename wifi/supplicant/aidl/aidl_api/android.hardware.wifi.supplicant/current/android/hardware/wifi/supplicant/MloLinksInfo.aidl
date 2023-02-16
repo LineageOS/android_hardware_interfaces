@@ -35,4 +35,6 @@ package android.hardware.wifi.supplicant;
 @VintfStability
 parcelable MloLinksInfo {
   android.hardware.wifi.supplicant.MloLink[] links;
+  int apMloLinkId;
+  @nullable byte[] apMldMacAddress;
 }

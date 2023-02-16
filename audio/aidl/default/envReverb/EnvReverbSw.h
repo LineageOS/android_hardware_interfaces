@@ -79,7 +79,7 @@ class EnvReverbSwContext final : public EffectContext {
 class EnvReverbSw final : public EffectImpl {
   public:
     static const std::string kEffectName;
-    static const EnvironmentalReverb::Capability kCapability;
+    static const Capability kCapability;
     static const Descriptor kDescriptor;
     EnvReverbSw() { LOG(DEBUG) << __func__; }
     ~EnvReverbSw() {
@@ -100,6 +100,7 @@ class EnvReverbSw final : public EffectImpl {
     std::string getEffectName() override { return kEffectName; }
 
   private:
+    static const std::vector<Range::EnvironmentalReverbRange> kRanges;
     std::shared_ptr<EnvReverbSwContext> mContext;
     ndk::ScopedAStatus getParameterEnvironmentalReverb(const EnvironmentalReverb::Tag& tag,
                                                        Parameter::Specific* specific);

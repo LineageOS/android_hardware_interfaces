@@ -38,4 +38,5 @@ parcelable NanPairingSecurityConfig {
   byte[32] pmk;
   byte[] passphrase;
   android.hardware.wifi.NanPairingAkm akm;
+  android.hardware.wifi.NanCipherSuiteType cipherType;
 }

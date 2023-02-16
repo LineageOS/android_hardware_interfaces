@@ -42,10 +42,6 @@ union HapticGenerator {
     int vendorExtensionTag;
     android.hardware.audio.effect.HapticGenerator.Tag commonTag;
   }
-  @VintfStability
-  parcelable Capability {
-    android.hardware.audio.effect.VendorExtension extension;
-  }
   @Backing(type="int") @VintfStability
   enum VibratorScale {
     MUTE = (-100) /* -100 */,

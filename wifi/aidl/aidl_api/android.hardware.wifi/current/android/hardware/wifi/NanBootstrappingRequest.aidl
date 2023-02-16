@@ -37,4 +37,5 @@ parcelable NanBootstrappingRequest {
   int peerId;
   byte[6] peerDiscMacAddr;
   android.hardware.wifi.NanBootstrappingMethod requestBootstrappingMethod;
+  byte[] cookie;
 }

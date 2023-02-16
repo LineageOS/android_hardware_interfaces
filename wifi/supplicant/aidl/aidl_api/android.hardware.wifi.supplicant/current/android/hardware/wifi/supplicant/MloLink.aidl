@@ -38,4 +38,6 @@ parcelable MloLink {
   byte[] staLinkMacAddress;
   byte tidsUplinkMap;
   byte tidsDownlinkMap;
+  @nullable byte[] apLinkMacAddress;
+  int frequencyMHz;
 }

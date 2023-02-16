@@ -34,5 +34,5 @@
 package android.hardware.wifi;
 @Backing(type="int") @VintfStability
 enum StaScanDataFlagMask {
-  INTERRUPTED = (1 << 0),
+  INTERRUPTED = (1 << 0) /* 1 */,
 }

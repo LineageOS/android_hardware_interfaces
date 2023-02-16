@@ -22,6 +22,10 @@ package android.hardware.wifi;
 @VintfStability
 parcelable WifiChipCapabilities {
     /**
+     * Maximum number of links supported by the chip for MLO association.
+     */
+    int maxMloAssociationLinkCount;
+    /**
      * Maximum number of Simultaneous Transmit and Receive (STR) links used
      * in Multi-Link Operation. The maximum number of STR links used can be
      * different from the maximum number of radios supported by the chip.

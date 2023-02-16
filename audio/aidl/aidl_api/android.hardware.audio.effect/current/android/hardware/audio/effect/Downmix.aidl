@@ -42,10 +42,6 @@ union Downmix {
     android.hardware.audio.effect.Downmix.Tag commonTag;
   }
   @VintfStability
-  parcelable Capability {
-    ParcelableHolder extension;
-  }
-  @VintfStability
   enum Type {
     STRIP,
     FOLD,

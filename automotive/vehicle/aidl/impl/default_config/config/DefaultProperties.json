@@ -3113,12 +3113,99 @@
             }
         },
         {
-            "property": "VehicleProperty::ADAPTIVE_CRUISE_CONTROL_ENABLED",
+            "property": "VehicleProperty::EMERGENCY_LANE_KEEP_ASSIST_STATE",
+            "defaultValue": {
+                "int32Values": [
+                    "EmergencyLaneKeepAssistState::ENABLED"
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": 0,
+                    "supportedEnumValues": [
+                        "ErrorState::NOT_AVAILABLE_SAFETY",
+                        "ErrorState::NOT_AVAILABLE_SPEED_HIGH",
+                        "ErrorState::NOT_AVAILABLE_SPEED_LOW",
+                        "ErrorState::NOT_AVAILABLE_DISABLED",
+                        "EmergencyLaneKeepAssistState::ENABLED",
+                        "EmergencyLaneKeepAssistState::WARNING_LEFT",
+                        "EmergencyLaneKeepAssistState::WARNING_RIGHT",
+                        "EmergencyLaneKeepAssistState::ACTIVATED_STEER_LEFT",
+                        "EmergencyLaneKeepAssistState::ACTIVATED_STEER_RIGHT",
+                        "EmergencyLaneKeepAssistState::USER_OVERRIDE"
+                    ]
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::CRUISE_CONTROL_ENABLED",
             "defaultValue": {
                 "int32Values": [
                     1
                 ]
             }
+        },
+        {
+            "property": "VehicleProperty::CRUISE_CONTROL_TYPE",
+            "defaultValue": {
+                "int32Values": [
+                    "CruiseControlType::STANDARD"
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": 0,
+                    "supportedEnumValues": [
+                        "ErrorState::NOT_AVAILABLE_SAFETY",
+                        "ErrorState::NOT_AVAILABLE_SPEED_HIGH",
+                        "ErrorState::NOT_AVAILABLE_SPEED_LOW",
+                        "ErrorState::NOT_AVAILABLE_DISABLED",
+                        "CruiseControlType::STANDARD",
+                        "CruiseControlType::ADAPTIVE",
+                        "CruiseControlType::PREDICTIVE"
+                    ]
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::CRUISE_CONTROL_STATE",
+            "defaultValue": {
+                "int32Values": [
+                    "CruiseControlState::ENABLED"
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": 0,
+                    "supportedEnumValues": [
+                        "ErrorState::NOT_AVAILABLE_SAFETY",
+                        "ErrorState::NOT_AVAILABLE_SPEED_HIGH",
+                        "ErrorState::NOT_AVAILABLE_SPEED_LOW",
+                        "ErrorState::NOT_AVAILABLE_DISABLED",
+                        "CruiseControlState::ENABLED",
+                        "CruiseControlState::ACTIVATED",
+                        "CruiseControlState::USER_OVERRIDE",
+                        "CruiseControlState::SUSPENDED",
+                        "CruiseControlState::FORCED_DEACTIVATION_WARNING"
+                    ]
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::CRUISE_CONTROL_COMMAND",
+            "areas": [
+                {
+                    "areaId": 0,
+                    "supportedEnumValues": [
+                        "CruiseControlCommand::ACTIVATE",
+                        "CruiseControlCommand::SUSPEND",
+                        "CruiseControlCommand::INCREASE_TARGET_SPEED",
+                        "CruiseControlCommand::DECREASE_TARGET_SPEED",
+                        "CruiseControlCommand::INCREASE_TARGET_TIME_GAP",
+                        "CruiseControlCommand::DECREASE_TARGET_TIME_GAP"
+                    ]
+                }
+            ]
         },
         {
             "property": "VehicleProperty::HANDS_ON_DETECTION_ENABLED",
@@ -3129,12 +3216,84 @@
             }
         },
         {
+            "property": "VehicleProperty::HANDS_ON_DETECTION_DRIVER_STATE",
+            "defaultValue": {
+                "int32Values": [
+                    "HandsOnDetectionDriverState::HANDS_ON"
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": 0,
+                    "supportedEnumValues": [
+                        "ErrorState::NOT_AVAILABLE_DISABLED",
+                        "HandsOnDetectionDriverState::HANDS_ON",
+                        "HandsOnDetectionDriverState::HANDS_OFF"
+                    ]
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::HANDS_ON_DETECTION_WARNING",
+            "defaultValue": {
+                "int32Values": [
+                    "HandsOnDetectionWarning::NO_WARNING"
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": 0,
+                    "supportedEnumValues": [
+                        "ErrorState::NOT_AVAILABLE_DISABLED",
+                        "HandsOnDetectionWarning::NO_WARNING",
+                        "HandsOnDetectionWarning::WARNING"
+                    ]
+                }
+            ]
+        },
+        {
             "property": "VehicleProperty::DRIVER_ATTENTION_MONITORING_ENABLED",
             "defaultValue": {
                 "int32Values": [
                     1
                 ]
             }
+        },
+        {
+            "property": "VehicleProperty::DRIVER_ATTENTION_MONITORING_STATE",
+            "defaultValue": {
+                "int32Values": [
+                    "DriverAttentionMonitoringState::NOT_DISTRACTED"
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": 0,
+                    "supportedEnumValues": [
+                        "ErrorState::NOT_AVAILABLE_DISABLED",
+                        "DriverAttentionMonitoringState::DISTRACTED",
+                        "DriverAttentionMonitoringState::NOT_DISTRACTED"
+                    ]
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::DRIVER_ATTENTION_MONITORING_WARNING",
+            "defaultValue": {
+                "int32Values": [
+                    "DriverAttentionMonitoringWarning::NO_WARNING"
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": 0,
+                    "supportedEnumValues": [
+                        "ErrorState::NOT_AVAILABLE_DISABLED",
+                        "DriverAttentionMonitoringWarning::NO_WARNING",
+                        "DriverAttentionMonitoringWarning::WARNING"
+                    ]
+                }
+            ]
         },
         {
             "property": "VehicleProperty::INITIAL_USER_INFO"

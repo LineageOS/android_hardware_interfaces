@@ -109,7 +109,7 @@ EArcMock::EArcMock() {
     mCallback = nullptr;
     mCapabilities.resize(mTotalPorts);
     mPortStatus.resize(mTotalPorts);
-    mPortStatus[0] = IEArcStatus::STATUS_IDLE;
+    mPortStatus[0] = IEArcStatus::IDLE;
     mDeathRecipient = ndk::ScopedAIBinder_DeathRecipient(AIBinder_DeathRecipient_new(serviceDied));
 }
 

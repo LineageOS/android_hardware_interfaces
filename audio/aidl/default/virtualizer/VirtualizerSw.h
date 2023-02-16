@@ -51,8 +51,7 @@ class VirtualizerSwContext final : public EffectContext {
 class VirtualizerSw final : public EffectImpl {
   public:
     static const std::string kEffectName;
-    static const bool kStrengthSupported;
-    static const Virtualizer::Capability kCapability;
+    static const Capability kCapability;
     static const Descriptor kDescriptor;
     VirtualizerSw() { LOG(DEBUG) << __func__; }
     ~VirtualizerSw() {
@@ -73,6 +72,7 @@ class VirtualizerSw final : public EffectImpl {
     std::string getEffectName() override { return kEffectName; }
 
   private:
+    static const std::vector<Range::VirtualizerRange> kRanges;
     std::shared_ptr<VirtualizerSwContext> mContext;
 
     ndk::ScopedAStatus getParameterVirtualizer(const Virtualizer::Tag& tag,

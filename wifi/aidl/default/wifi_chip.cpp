@@ -769,8 +769,8 @@ std::pair<IWifiChip::ChipCapabilityMask, ndk::ScopedAStatus> WifiChip::getCapabi
         legacy_logger_feature_set = 0;
     }
     uint32_t aidl_caps;
-    if (!aidl_struct_util::convertLegacyFeaturesToAidlChipCapabilities(
-                legacy_feature_set, legacy_logger_feature_set, &aidl_caps)) {
+    if (!aidl_struct_util::convertLegacyFeaturesToAidlChipCapabilities(legacy_feature_set,
+                                                                       &aidl_caps)) {
         return {IWifiChip::ChipCapabilityMask{}, createWifiStatus(WifiStatusCode::ERROR_UNKNOWN)};
     }
     return {static_cast<IWifiChip::ChipCapabilityMask>(aidl_caps), ndk::ScopedAStatus::ok()};
