@@ -45,18 +45,18 @@ static const AudioUuid kAcousticEchoCancelerSwImplUUID = {static_cast<int32_t>(0
                                                           0x11e0,
                                                           0xa896,
                                                           {0x00, 0x02, 0xa5, 0xd5, 0xc5, 0x1b}};
-// 0xae3c653b-be18-4ab8-8938-418f0a7f06ac
-static const AudioUuid kAutomaticGainControlTypeUUID = {static_cast<int32_t>(0xae3c653b),
-                                                        0xbe18,
-                                                        0x4ab8,
-                                                        0x8938,
-                                                        {0x41, 0x8f, 0x0a, 0x7f, 0x06, 0xac}};
+// ae3c653b-be18-4ab8-8938-418f0a7f06ac
+static const AudioUuid kAutomaticGainControlV2TypeUUID = {static_cast<int32_t>(0xae3c653b),
+                                                          0xbe18,
+                                                          0x4ab8,
+                                                          0x8938,
+                                                          {0x41, 0x8f, 0x0a, 0x7f, 0x06, 0xac}};
 // 89f38e65-d4d2-4d64-ad0e-2b3e799ea886
-static const AudioUuid kAutomaticGainControlSwImplUUID = {static_cast<int32_t>(0x89f38e65),
-                                                          0xd4d2,
-                                                          0x4d64,
-                                                          0xad0e,
-                                                          {0x2b, 0x3e, 0x79, 0x9e, 0xa8, 0x86}};
+static const AudioUuid kAutomaticGainControlV2SwImplUUID = {static_cast<int32_t>(0x89f38e65),
+                                                            0xd4d2,
+                                                            0x4d64,
+                                                            0xad0e,
+                                                            {0x2b, 0x3e, 0x79, 0x9e, 0xa8, 0x86}};
 // 0634f220-ddd4-11db-a0fc-0002a5d5c51b
 static const AudioUuid kBassBoostTypeUUID = {static_cast<int32_t>(0x0634f220),
                                              0xddd4,
@@ -306,7 +306,7 @@ static const AudioUuid kVolumeBundleImplUUID = {static_cast<int32_t>(0x119341a0)
  */
 static const std::map<const std::string /* effect type */, const AudioUuid&> kUuidNameTypeMap = {
         {"acoustic_echo_canceler", kAcousticEchoCancelerTypeUUID},
-        {"automatic_gain_control", kAutomaticGainControlTypeUUID},
+        {"automatic_gain_control_v2", kAutomaticGainControlV2TypeUUID},
         {"bassboost", kBassBoostTypeUUID},
         {"downmix", kDownmixTypeUUID},
         {"dynamics_processing", kDynamicsProcessingTypeUUID},

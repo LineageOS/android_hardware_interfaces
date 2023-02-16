@@ -24,14 +24,14 @@ package {
 }
 
 cc_library_shared {
-    name: "libagcsw",
+    name: "libagc2sw",
     defaults: [
         "aidlaudioeffectservice_defaults",
         "latest_android_media_audio_common_types_ndk_shared",
         "latest_android_hardware_audio_effect_ndk_shared",
     ],
     srcs: [
-        "AutomaticGainControlSw.cpp",
+        "AutomaticGainControlV2Sw.cpp",
         ":effectCommonFile",
     ],
     relative_install_path: "soundfx",

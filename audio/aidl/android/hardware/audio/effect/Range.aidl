@@ -17,8 +17,8 @@
 package android.hardware.audio.effect;
 
 import android.hardware.audio.effect.AcousticEchoCanceler;
-import android.hardware.audio.effect.AutomaticGainControl;
 import android.hardware.audio.effect.AutomaticGainControlV1;
+import android.hardware.audio.effect.AutomaticGainControlV2;
 import android.hardware.audio.effect.BassBoost;
 import android.hardware.audio.effect.Downmix;
 import android.hardware.audio.effect.DynamicsProcessing;
@@ -103,15 +103,15 @@ union Range {
     }
 
     @VintfStability
-    parcelable AutomaticGainControlRange {
-        AutomaticGainControl min;
-        AutomaticGainControl max;
-    }
-
-    @VintfStability
     parcelable AutomaticGainControlV1Range {
         AutomaticGainControlV1 min;
         AutomaticGainControlV1 max;
+    }
+
+    @VintfStability
+    parcelable AutomaticGainControlV2Range {
+        AutomaticGainControlV2 min;
+        AutomaticGainControlV2 max;
     }
 
     @VintfStability
@@ -203,8 +203,8 @@ union Range {
      */
     VendorExtensionRange[] vendorExtension = {};
     AcousticEchoCancelerRange[] acousticEchoCanceler;
-    AutomaticGainControlRange[] automaticGainControl;
     AutomaticGainControlV1Range[] automaticGainControlV1;
+    AutomaticGainControlV2Range[] automaticGainControlV2;
     BassBoostRange[] bassBoost;
     DownmixRange[] downmix;
     DynamicsProcessingRange[] dynamicsProcessing;
