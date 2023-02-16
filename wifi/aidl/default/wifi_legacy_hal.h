@@ -318,6 +318,7 @@ using ::WIFI_LOGGER_MEMORY_DUMP_SUPPORTED;
 using ::WIFI_LOGGER_PACKET_FATE_SUPPORTED;
 using ::WIFI_LOGGER_POWER_EVENT_SUPPORTED;
 using ::WIFI_LOGGER_WAKE_LOCK_SUPPORTED;
+using ::wifi_mlo_mode;
 using ::WIFI_MOTION_EXPECTED;
 using ::WIFI_MOTION_NOT_EXPECTED;
 using ::wifi_motion_pattern;
@@ -777,6 +778,7 @@ class WifiLegacyHal {
                                         const CachedScanResultsCallbackHandlers& handler);
     std::pair<wifi_error, wifi_chip_capabilities> getWifiChipCapabilities();
     wifi_error enableStaChannelForPeerNetwork(uint32_t channelCategoryEnableFlag);
+    wifi_error setMloMode(wifi_mlo_mode mode);
 
   private:
     // Retrieve interface handles for all the available interfaces.

@@ -1881,6 +1881,10 @@ wifi_error WifiLegacyHal::enableStaChannelForPeerNetwork(uint32_t channelCategor
                                                                        channelCategoryEnableFlag);
 }
 
+wifi_error WifiLegacyHal::setMloMode(wifi_mlo_mode mode) {
+    return global_func_table_.wifi_set_mlo_mode(global_handle_, mode);
+}
+
 void WifiLegacyHal::invalidate() {
     global_handle_ = nullptr;
     iface_name_to_handle_.clear();

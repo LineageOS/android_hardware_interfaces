@@ -26,6 +26,7 @@
 
 #include "aidl_return_util.h"
 #include "aidl_struct_util.h"
+#include "wifi_legacy_hal.h"
 #include "wifi_status_util.h"
 
 #define P2P_MGMT_DEVICE_PREFIX "p2p-dev-"
@@ -697,6 +698,11 @@ ndk::ScopedAStatus WifiChip::enableStaChannelForPeerNetwork(
     return validateAndCall(this, WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
                            &WifiChip::enableStaChannelForPeerNetworkInternal,
                            in_channelCategoryEnableFlag);
+}
+
+ndk::ScopedAStatus WifiChip::setMloMode(const ChipMloMode in_mode) {
+    return validateAndCall(this, WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
+                           &WifiChip::setMloModeInternal, in_mode);
 }
 
 void WifiChip::invalidateAndRemoveAllIfaces() {
@@ -1954,6 +1960,28 @@ bool WifiChip::findUsingNameFromBridgedApInstances(const std::string& name) {
         }
     }
     return false;
+}
+
+ndk::ScopedAStatus WifiChip::setMloModeInternal(const WifiChip::ChipMloMode in_mode) {
+    legacy_hal::wifi_mlo_mode mode;
+    switch (in_mode) {
+        case WifiChip::ChipMloMode::DEFAULT:
+            mode = legacy_hal::wifi_mlo_mode::WIFI_MLO_MODE_DEFAULT;
+            break;
+        case WifiChip::ChipMloMode::LOW_LATENCY:
+            mode = legacy_hal::wifi_mlo_mode::WIFI_MLO_MODE_LOW_LATENCY;
+            break;
+        case WifiChip::ChipMloMode::HIGH_THROUGHPUT:
+            mode = legacy_hal::wifi_mlo_mode::WIFI_MLO_MODE_HIGH_THROUGHPUT;
+            break;
+        case WifiChip::ChipMloMode::LOW_POWER:
+            mode = legacy_hal::wifi_mlo_mode::WIFI_MLO_MODE_LOW_POWER;
+            break;
+        default:
+            PLOG(ERROR) << "Error: invalid mode: " << toString(in_mode);
+            return createWifiStatus(WifiStatusCode::ERROR_INVALID_ARGS);
+    }
+    return createWifiStatusFromLegacyError(legacy_hal_.lock()->setMloMode(mode));
 }
 
 }  // namespace wifi
