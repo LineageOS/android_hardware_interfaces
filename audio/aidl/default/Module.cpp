@@ -55,6 +55,7 @@ using aidl::android::media::audio::common::AudioPortExt;
 using aidl::android::media::audio::common::AudioProfile;
 using aidl::android::media::audio::common::Boolean;
 using aidl::android::media::audio::common::Int;
+using aidl::android::media::audio::common::MicrophoneInfo;
 using aidl::android::media::audio::common::PcmType;
 using android::hardware::audio::common::getFrameSizeInBytes;
 using android::hardware::audio::common::isBitPositionFlagSet;

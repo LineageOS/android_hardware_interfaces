@@ -26,7 +26,6 @@ import android.hardware.audio.core.IStreamIn;
 import android.hardware.audio.core.IStreamOut;
 import android.hardware.audio.core.IStreamOutEventCallback;
 import android.hardware.audio.core.ITelephony;
-import android.hardware.audio.core.MicrophoneInfo;
 import android.hardware.audio.core.ModuleDebug;
 import android.hardware.audio.core.StreamDescriptor;
 import android.hardware.audio.core.VendorParameter;
@@ -39,6 +38,7 @@ import android.media.audio.common.AudioOffloadInfo;
 import android.media.audio.common.AudioPort;
 import android.media.audio.common.AudioPortConfig;
 import android.media.audio.common.Float;
+import android.media.audio.common.MicrophoneInfo;
 
 /**
  * Each instance of IModule corresponds to a separate audio module. The system

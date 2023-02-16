@@ -31,6 +31,8 @@ using aidl::android::media::audio::common::AudioDualMonoMode;
 using aidl::android::media::audio::common::AudioLatencyMode;
 using aidl::android::media::audio::common::AudioOffloadInfo;
 using aidl::android::media::audio::common::AudioPlaybackRate;
+using aidl::android::media::audio::common::MicrophoneDynamicInfo;
+using aidl::android::media::audio::common::MicrophoneInfo;
 using android::hardware::audio::common::getChannelCount;
 using android::hardware::audio::common::getFrameSizeInBytes;
 
