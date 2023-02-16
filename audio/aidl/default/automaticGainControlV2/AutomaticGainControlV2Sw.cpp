@@ -17,29 +17,29 @@
 #include <algorithm>
 #include <cstddef>
 #include <memory>
-#define LOG_TAG "AHAL_AutomaticGainControlSw"
+#define LOG_TAG "AHAL_AutomaticGainControlV2Sw"
 #include <Utils.h>
 #include <unordered_set>
 
 #include <android-base/logging.h>
 #include <fmq/AidlMessageQueue.h>
 
-#include "AutomaticGainControlSw.h"
+#include "AutomaticGainControlV2Sw.h"
 
-using aidl::android::hardware::audio::effect::AutomaticGainControlSw;
+using aidl::android::hardware::audio::effect::AutomaticGainControlV2Sw;
 using aidl::android::hardware::audio::effect::Descriptor;
 using aidl::android::hardware::audio::effect::IEffect;
-using aidl::android::hardware::audio::effect::kAutomaticGainControlSwImplUUID;
+using aidl::android::hardware::audio::effect::kAutomaticGainControlV2SwImplUUID;
 using aidl::android::media::audio::common::AudioUuid;
 
 extern "C" binder_exception_t createEffect(const AudioUuid* in_impl_uuid,
                                            std::shared_ptr<IEffect>* instanceSpp) {
-    if (!in_impl_uuid || *in_impl_uuid != kAutomaticGainControlSwImplUUID) {
+    if (!in_impl_uuid || *in_impl_uuid != kAutomaticGainControlV2SwImplUUID) {
         LOG(ERROR) << __func__ << "uuid not supported";
         return EX_ILLEGAL_ARGUMENT;
     }
     if (instanceSpp) {
-        *instanceSpp = ndk::SharedRefBase::make<AutomaticGainControlSw>();
+        *instanceSpp = ndk::SharedRefBase::make<AutomaticGainControlV2Sw>();
         LOG(DEBUG) << __func__ << " instance " << instanceSpp->get() << " created";
         return EX_NONE;
     } else {
@@ -49,68 +49,69 @@ extern "C" binder_exception_t createEffect(const AudioUuid* in_impl_uuid,
 }
 
 extern "C" binder_exception_t queryEffect(const AudioUuid* in_impl_uuid, Descriptor* _aidl_return) {
-    if (!in_impl_uuid || *in_impl_uuid != kAutomaticGainControlSwImplUUID) {
+    if (!in_impl_uuid || *in_impl_uuid != kAutomaticGainControlV2SwImplUUID) {
         LOG(ERROR) << __func__ << "uuid not supported";
         return EX_ILLEGAL_ARGUMENT;
     }
-    *_aidl_return = AutomaticGainControlSw::kDescriptor;
+    *_aidl_return = AutomaticGainControlV2Sw::kDescriptor;
     return EX_NONE;
 }
 
 namespace aidl::android::hardware::audio::effect {
 
-const std::string AutomaticGainControlSw::kEffectName = "AutomaticGainControlSw";
+const std::string AutomaticGainControlV2Sw::kEffectName = "AutomaticGainControlV2Sw";
 
-const std::vector<Range::AutomaticGainControlRange> AutomaticGainControlSw::kRanges = {
-        MAKE_RANGE(AutomaticGainControl, fixedDigitalGainMb, 0, 50000),
-        MAKE_RANGE(AutomaticGainControl, saturationMarginMb, 0, 10000)};
+const std::vector<Range::AutomaticGainControlV2Range> AutomaticGainControlV2Sw::kRanges = {
+        MAKE_RANGE(AutomaticGainControlV2, fixedDigitalGainMb, 0, 50000),
+        MAKE_RANGE(AutomaticGainControlV2, saturationMarginMb, 0, 10000)};
 
-const Capability AutomaticGainControlSw::kCapability = {.range = AutomaticGainControlSw::kRanges};
+const Capability AutomaticGainControlV2Sw::kCapability = {
+        .range = AutomaticGainControlV2Sw::kRanges};
 
-const Descriptor AutomaticGainControlSw::kDescriptor = {
-        .common = {.id = {.type = kAutomaticGainControlTypeUUID,
-                          .uuid = kAutomaticGainControlSwImplUUID,
+const Descriptor AutomaticGainControlV2Sw::kDescriptor = {
+        .common = {.id = {.type = kAutomaticGainControlV2TypeUUID,
+                          .uuid = kAutomaticGainControlV2SwImplUUID,
                           .proxy = std::nullopt},
                    .flags = {.type = Flags::Type::INSERT,
                              .insert = Flags::Insert::FIRST,
                              .volume = Flags::Volume::CTRL},
-                   .name = AutomaticGainControlSw::kEffectName,
+                   .name = AutomaticGainControlV2Sw::kEffectName,
                    .implementor = "The Android Open Source Project"},
-        .capability = AutomaticGainControlSw::kCapability};
+        .capability = AutomaticGainControlV2Sw::kCapability};
 
-ndk::ScopedAStatus AutomaticGainControlSw::getDescriptor(Descriptor* _aidl_return) {
+ndk::ScopedAStatus AutomaticGainControlV2Sw::getDescriptor(Descriptor* _aidl_return) {
     LOG(DEBUG) << __func__ << kDescriptor.toString();
     *_aidl_return = kDescriptor;
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus AutomaticGainControlSw::setParameterSpecific(
+ndk::ScopedAStatus AutomaticGainControlV2Sw::setParameterSpecific(
         const Parameter::Specific& specific) {
-    RETURN_IF(Parameter::Specific::automaticGainControl != specific.getTag(), EX_ILLEGAL_ARGUMENT,
+    RETURN_IF(Parameter::Specific::automaticGainControlV2 != specific.getTag(), EX_ILLEGAL_ARGUMENT,
               "EffectNotSupported");
     RETURN_IF(!mContext, EX_NULL_POINTER, "nullContext");
 
-    auto& param = specific.get<Parameter::Specific::automaticGainControl>();
+    auto& param = specific.get<Parameter::Specific::automaticGainControlV2>();
     RETURN_IF(!inRange(param, kRanges), EX_ILLEGAL_ARGUMENT, "outOfRange");
     auto tag = param.getTag();
     switch (tag) {
-        case AutomaticGainControl::fixedDigitalGainMb: {
+        case AutomaticGainControlV2::fixedDigitalGainMb: {
             RETURN_IF(mContext->setDigitalGain(
-                              param.get<AutomaticGainControl::fixedDigitalGainMb>()) !=
+                              param.get<AutomaticGainControlV2::fixedDigitalGainMb>()) !=
                               RetCode::SUCCESS,
                       EX_ILLEGAL_ARGUMENT, "digitalGainNotSupported");
             return ndk::ScopedAStatus::ok();
         }
-        case AutomaticGainControl::levelEstimator: {
-            RETURN_IF(
-                    mContext->setLevelEstimator(
-                            param.get<AutomaticGainControl::levelEstimator>()) != RetCode::SUCCESS,
-                    EX_ILLEGAL_ARGUMENT, "levelEstimatorNotSupported");
+        case AutomaticGainControlV2::levelEstimator: {
+            RETURN_IF(mContext->setLevelEstimator(
+                              param.get<AutomaticGainControlV2::levelEstimator>()) !=
+                              RetCode::SUCCESS,
+                      EX_ILLEGAL_ARGUMENT, "levelEstimatorNotSupported");
             return ndk::ScopedAStatus::ok();
         }
-        case AutomaticGainControl::saturationMarginMb: {
+        case AutomaticGainControlV2::saturationMarginMb: {
             RETURN_IF(mContext->setSaturationMargin(
-                              param.get<AutomaticGainControl::saturationMarginMb>()) !=
+                              param.get<AutomaticGainControlV2::saturationMarginMb>()) !=
                               RetCode::SUCCESS,
                       EX_ILLEGAL_ARGUMENT, "saturationMarginNotSupported");
             return ndk::ScopedAStatus::ok();
@@ -118,71 +119,72 @@ ndk::ScopedAStatus AutomaticGainControlSw::setParameterSpecific(
         default: {
             LOG(ERROR) << __func__ << " unsupported tag: " << toString(tag);
             return ndk::ScopedAStatus::fromExceptionCodeWithMessage(
-                    EX_ILLEGAL_ARGUMENT, "AutomaticGainControlTagNotSupported");
+                    EX_ILLEGAL_ARGUMENT, "AutomaticGainControlV2TagNotSupported");
         }
     }
 }
 
-ndk::ScopedAStatus AutomaticGainControlSw::getParameterSpecific(const Parameter::Id& id,
-                                                                Parameter::Specific* specific) {
+ndk::ScopedAStatus AutomaticGainControlV2Sw::getParameterSpecific(const Parameter::Id& id,
+                                                                  Parameter::Specific* specific) {
     auto tag = id.getTag();
-    RETURN_IF(Parameter::Id::automaticGainControlTag != tag, EX_ILLEGAL_ARGUMENT, "wrongIdTag");
-    auto specificId = id.get<Parameter::Id::automaticGainControlTag>();
+    RETURN_IF(Parameter::Id::automaticGainControlV2Tag != tag, EX_ILLEGAL_ARGUMENT, "wrongIdTag");
+    auto specificId = id.get<Parameter::Id::automaticGainControlV2Tag>();
     auto specificIdTag = specificId.getTag();
     switch (specificIdTag) {
-        case AutomaticGainControl::Id::commonTag:
-            return getParameterAutomaticGainControl(
-                    specificId.get<AutomaticGainControl::Id::commonTag>(), specific);
+        case AutomaticGainControlV2::Id::commonTag:
+            return getParameterAutomaticGainControlV2(
+                    specificId.get<AutomaticGainControlV2::Id::commonTag>(), specific);
         default:
             LOG(ERROR) << __func__ << " unsupported tag: " << toString(tag);
             return ndk::ScopedAStatus::fromExceptionCodeWithMessage(
-                    EX_ILLEGAL_ARGUMENT, "AutomaticGainControlTagNotSupported");
+                    EX_ILLEGAL_ARGUMENT, "AutomaticGainControlV2TagNotSupported");
     }
 }
 
-ndk::ScopedAStatus AutomaticGainControlSw::getParameterAutomaticGainControl(
-        const AutomaticGainControl::Tag& tag, Parameter::Specific* specific) {
+ndk::ScopedAStatus AutomaticGainControlV2Sw::getParameterAutomaticGainControlV2(
+        const AutomaticGainControlV2::Tag& tag, Parameter::Specific* specific) {
     RETURN_IF(!mContext, EX_NULL_POINTER, "nullContext");
-    AutomaticGainControl param;
+    AutomaticGainControlV2 param;
     switch (tag) {
-        case AutomaticGainControl::fixedDigitalGainMb: {
-            param.set<AutomaticGainControl::fixedDigitalGainMb>(mContext->getDigitalGain());
+        case AutomaticGainControlV2::fixedDigitalGainMb: {
+            param.set<AutomaticGainControlV2::fixedDigitalGainMb>(mContext->getDigitalGain());
             break;
         }
-        case AutomaticGainControl::levelEstimator: {
-            param.set<AutomaticGainControl::levelEstimator>(mContext->getLevelEstimator());
+        case AutomaticGainControlV2::levelEstimator: {
+            param.set<AutomaticGainControlV2::levelEstimator>(mContext->getLevelEstimator());
             break;
         }
-        case AutomaticGainControl::saturationMarginMb: {
-            param.set<AutomaticGainControl::saturationMarginMb>(mContext->getSaturationMargin());
+        case AutomaticGainControlV2::saturationMarginMb: {
+            param.set<AutomaticGainControlV2::saturationMarginMb>(mContext->getSaturationMargin());
             break;
         }
         default: {
             LOG(ERROR) << __func__ << " unsupported tag: " << toString(tag);
             return ndk::ScopedAStatus::fromExceptionCodeWithMessage(
-                    EX_ILLEGAL_ARGUMENT, "AutomaticGainControlTagNotSupported");
+                    EX_ILLEGAL_ARGUMENT, "AutomaticGainControlV2TagNotSupported");
         }
     }
 
-    specific->set<Parameter::Specific::automaticGainControl>(param);
+    specific->set<Parameter::Specific::automaticGainControlV2>(param);
     return ndk::ScopedAStatus::ok();
 }
 
-std::shared_ptr<EffectContext> AutomaticGainControlSw::createContext(
+std::shared_ptr<EffectContext> AutomaticGainControlV2Sw::createContext(
         const Parameter::Common& common) {
     if (mContext) {
         LOG(DEBUG) << __func__ << " context already exist";
     } else {
-        mContext = std::make_shared<AutomaticGainControlSwContext>(1 /* statusFmqDepth */, common);
+        mContext =
+                std::make_shared<AutomaticGainControlV2SwContext>(1 /* statusFmqDepth */, common);
     }
     return mContext;
 }
 
-std::shared_ptr<EffectContext> AutomaticGainControlSw::getContext() {
+std::shared_ptr<EffectContext> AutomaticGainControlV2Sw::getContext() {
     return mContext;
 }
 
-RetCode AutomaticGainControlSw::releaseContext() {
+RetCode AutomaticGainControlV2Sw::releaseContext() {
     if (mContext) {
         mContext.reset();
     }
@@ -190,7 +192,7 @@ RetCode AutomaticGainControlSw::releaseContext() {
 }
 
 // Processing method running in EffectWorker thread.
-IEffect::Status AutomaticGainControlSw::effectProcessImpl(float* in, float* out, int samples) {
+IEffect::Status AutomaticGainControlV2Sw::effectProcessImpl(float* in, float* out, int samples) {
     // TODO: get data buffer and process.
     LOG(DEBUG) << __func__ << " in " << in << " out " << out << " samples " << samples;
     for (int i = 0; i < samples; i++) {
@@ -199,31 +201,31 @@ IEffect::Status AutomaticGainControlSw::effectProcessImpl(float* in, float* out,
     return {STATUS_OK, samples, samples};
 }
 
-RetCode AutomaticGainControlSwContext::setDigitalGain(int gain) {
+RetCode AutomaticGainControlV2SwContext::setDigitalGain(int gain) {
     mDigitalGain = gain;
     return RetCode::SUCCESS;
 }
 
-int AutomaticGainControlSwContext::getDigitalGain() {
+int AutomaticGainControlV2SwContext::getDigitalGain() {
     return mDigitalGain;
 }
 
-RetCode AutomaticGainControlSwContext::setLevelEstimator(
-        AutomaticGainControl::LevelEstimator levelEstimator) {
+RetCode AutomaticGainControlV2SwContext::setLevelEstimator(
+        AutomaticGainControlV2::LevelEstimator levelEstimator) {
     mLevelEstimator = levelEstimator;
     return RetCode::SUCCESS;
 }
 
-AutomaticGainControl::LevelEstimator AutomaticGainControlSwContext::getLevelEstimator() {
+AutomaticGainControlV2::LevelEstimator AutomaticGainControlV2SwContext::getLevelEstimator() {
     return mLevelEstimator;
 }
 
-RetCode AutomaticGainControlSwContext::setSaturationMargin(int margin) {
+RetCode AutomaticGainControlV2SwContext::setSaturationMargin(int margin) {
     mSaturationMargin = margin;
     return RetCode::SUCCESS;
 }
 
-int AutomaticGainControlSwContext::getSaturationMargin() {
+int AutomaticGainControlV2SwContext::getSaturationMargin() {
     return mSaturationMargin;
 }
 
