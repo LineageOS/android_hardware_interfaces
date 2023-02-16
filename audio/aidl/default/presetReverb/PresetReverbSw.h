@@ -46,7 +46,9 @@ class PresetReverbSwContext final : public EffectContext {
 class PresetReverbSw final : public EffectImpl {
   public:
     static const std::string kEffectName;
-    static const PresetReverb::Capability kCapability;
+    static const std::vector<PresetReverb::Presets> kSupportedPresets;
+    static const std::vector<Range::PresetReverbRange> kRanges;
+    static const Capability kCapability;
     static const Descriptor kDescriptor;
     PresetReverbSw() { LOG(DEBUG) << __func__; }
     ~PresetReverbSw() {

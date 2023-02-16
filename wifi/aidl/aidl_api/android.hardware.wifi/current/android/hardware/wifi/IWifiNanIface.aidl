@@ -56,6 +56,7 @@ interface IWifiNanIface {
   void respondToPairingIndicationRequest(in char cmdId, in android.hardware.wifi.NanRespondToPairingIndicationRequest msg);
   void initiateBootstrappingRequest(in char cmdId, in android.hardware.wifi.NanBootstrappingRequest msg);
   void respondToBootstrappingIndicationRequest(in char cmdId, in android.hardware.wifi.NanBootstrappingResponse msg);
+  void terminatePairingRequest(in char cmdId, in int pairingInstanceId);
   const int MIN_DATA_PATH_CONFIG_PASSPHRASE_LENGTH = 8;
   const int MAX_DATA_PATH_CONFIG_PASSPHRASE_LENGTH = 63;
 }

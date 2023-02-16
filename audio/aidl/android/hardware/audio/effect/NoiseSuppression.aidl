@@ -24,9 +24,9 @@ import android.hardware.audio.effect.VendorExtension;
  * engine, AC system) or non-stationary (other peoples conversations, car horn) for more advanced
  * implementations.
  *
- * All parameters defined in union NoiseSuppression must be gettable and settable. The capabilities
- * defined in NoiseSuppression.Capability can only acquired with IEffect.getDescriptor() and not
- * settable.
+ * All parameter settings must be inside the range of Capability.Range.noiseSuppression definition
+ * if the definition for the corresponding parameter tag exist. See more detals about Range in
+ * Range.aidl.
  */
 @VintfStability
 union NoiseSuppression {
@@ -43,18 +43,6 @@ union NoiseSuppression {
      * Vendor NoiseSuppression implementation definition for additional parameters.
      */
     VendorExtension vendor;
-
-    /**
-     * Capability supported by NoiseSuppression implementation.
-     */
-    @VintfStability
-    parcelable Capability {
-        /**
-         * NoiseSuppression capability extension, vendor can use this extension in case existing
-         * capability definition not enough.
-         */
-        ParcelableHolder extension;
-    }
 
     /**
      * Different level of Noise Suppression to set.

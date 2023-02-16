@@ -22,9 +22,9 @@ import android.hardware.audio.effect.VendorExtension;
  * Acoustic Echo Canceler (AEC) is an audio pre-processor which removes the contribution of the
  * signal received from the remote party from the captured audio signal.
  *
- * All parameters defined in union AcousticEchoCanceler must be gettable and settable. The
- * capabilities defined in AcousticEchoCanceler.Capability can only acquired with
- * IEffect.getDescriptor() and not settable.
+ * All parameter settings must be inside the range of Capability.Range.acousticEchoCanceler
+ * definition if the definition for the corresponding parameter tag exist. See more detals about
+ * Range in Range.aidl.
  */
 @VintfStability
 union AcousticEchoCanceler {
@@ -43,35 +43,20 @@ union AcousticEchoCanceler {
     VendorExtension vendor;
 
     /**
-     * Capability supported by AEC implementation.
-     */
-    @VintfStability
-    parcelable Capability {
-        /**
-         * AEC capability extension, vendor can use this extension in case existing capability
-         * definition not enough.
-         */
-        ParcelableHolder extension;
-
-        /**
-         * Maximum AEC echo delay in microseconds supported.
-         */
-        int maxEchoDelayUs;
-        /**
-         * If AEC mobile mode was supported by the AEC implementation.
-         */
-        boolean supportMobileMode;
-    }
-
-    /**
      * The AEC echo delay in microseconds.
-     * Must never be negative, and not larger than maxEchoDelayUs in capability.
      */
     int echoDelayUs;
     /**
-     * If AEC mobile mode enabled.
-     * Can only be false if AEC implementation indicate not support mobile mode by set
-     * supportMobileMode to false in capability.
+     * Indicate if the AEC mobile mode is enabled or not.
+     * If an effect implementation supports enabling and disabling mobileMode at runtime, it does
+     * not need to set the min and max range for mobileMode, or report the mobileMode min/max range
+     * as [false, true] in Range.AcousticEchoCancelerRange. If the effect implementation doesn't
+     * support mobileMode, it must report the mobileMode range as [false, false]. If the effect
+     * implementation supports mobileMode and cannot be disabled, it must report the mobileMode
+     * range as [true, true].
+     * If the effect implementation sets the range as invalid: [true, false], it indicates that
+     * mobileMode setParameter is not supported, and clients can only use getParameter to check if
+     * it's enabled or not.
      */
     boolean mobileMode;
 }

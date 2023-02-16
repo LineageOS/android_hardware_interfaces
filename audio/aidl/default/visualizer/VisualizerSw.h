@@ -30,7 +30,6 @@ class VisualizerSwContext final : public EffectContext {
     static const int kMaxCaptureSize = 0x400;
     static const int kMaxLatencyMs = 3000;
     static const int kMaxCaptureBufSize = 0xffff;
-    static const Visualizer::CaptureSamplesRange kCaptureSamplesRange;
     VisualizerSwContext(int statusDepth, const Parameter::Common& common)
         : EffectContext(statusDepth, common) {
         LOG(DEBUG) << __func__;
@@ -48,8 +47,9 @@ class VisualizerSwContext final : public EffectContext {
     Visualizer::MeasurementMode getVsMeasurementMode() const { return mMeasurementMode; }
 
     RetCode setVsLatency(int latency);
+    int getVsLatency() const { return mLatency; }
 
-    Visualizer::GetOnlyParameters::Measurement getVsMeasurement() const { return mMeasurement; }
+    Visualizer::Measurement getVsMeasurement() const { return mMeasurement; }
     std::vector<uint8_t> getVsCaptureSampleBuffer() const { return mCaptureSampleBuffer; }
 
   private:
@@ -57,14 +57,14 @@ class VisualizerSwContext final : public EffectContext {
     Visualizer::ScalingMode mScalingMode = Visualizer::ScalingMode::NORMALIZED;
     Visualizer::MeasurementMode mMeasurementMode = Visualizer::MeasurementMode::NONE;
     int mLatency = 0;
-    const Visualizer::GetOnlyParameters::Measurement mMeasurement = {0, 0};
+    const Visualizer::Measurement mMeasurement = {0, 0};
     std::vector<uint8_t> mCaptureSampleBuffer;
 };
 
 class VisualizerSw final : public EffectImpl {
   public:
     static const std::string kEffectName;
-    static const Visualizer::Capability kCapability;
+    static const Capability kCapability;
     static const Descriptor kDescriptor;
     VisualizerSw() { LOG(DEBUG) << __func__; }
     ~VisualizerSw() {
@@ -85,12 +85,9 @@ class VisualizerSw final : public EffectImpl {
     std::string getEffectName() override { return kEffectName; }
 
   private:
+    static const std::vector<Range::VisualizerRange> kRanges;
     std::shared_ptr<VisualizerSwContext> mContext;
-
-    ndk::ScopedAStatus setSetOnlyParameterVisualizer(Visualizer::SetOnlyParameters setOnlyParam);
     ndk::ScopedAStatus getParameterVisualizer(const Visualizer::Tag& tag,
                                               Parameter::Specific* specific);
-    ndk::ScopedAStatus getGetOnlyParameterVisualizer(const Visualizer::GetOnlyParameters::Tag& tag,
-                                                     Parameter::Specific* specific);
 };
 }  // namespace aidl::android::hardware::audio::effect

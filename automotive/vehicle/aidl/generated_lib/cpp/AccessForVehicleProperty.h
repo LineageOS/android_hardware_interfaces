@@ -258,9 +258,17 @@ std::unordered_map<VehicleProperty, VehiclePropertyAccess> AccessForVehiclePrope
         {VehicleProperty::LANE_CENTERING_ASSIST_COMMAND, VehiclePropertyAccess::WRITE},
         {VehicleProperty::LANE_CENTERING_ASSIST_STATE, VehiclePropertyAccess::READ},
         {VehicleProperty::EMERGENCY_LANE_KEEP_ASSIST_ENABLED, VehiclePropertyAccess::READ_WRITE},
-        {VehicleProperty::ADAPTIVE_CRUISE_CONTROL_ENABLED, VehiclePropertyAccess::READ_WRITE},
+        {VehicleProperty::EMERGENCY_LANE_KEEP_ASSIST_STATE, VehiclePropertyAccess::READ},
+        {VehicleProperty::CRUISE_CONTROL_ENABLED, VehiclePropertyAccess::READ_WRITE},
+        {VehicleProperty::CRUISE_CONTROL_TYPE, VehiclePropertyAccess::READ_WRITE},
+        {VehicleProperty::CRUISE_CONTROL_STATE, VehiclePropertyAccess::READ},
+        {VehicleProperty::CRUISE_CONTROL_COMMAND, VehiclePropertyAccess::WRITE},
         {VehicleProperty::HANDS_ON_DETECTION_ENABLED, VehiclePropertyAccess::READ_WRITE},
+        {VehicleProperty::HANDS_ON_DETECTION_DRIVER_STATE, VehiclePropertyAccess::READ},
+        {VehicleProperty::HANDS_ON_DETECTION_WARNING, VehiclePropertyAccess::READ},
         {VehicleProperty::DRIVER_ATTENTION_MONITORING_ENABLED, VehiclePropertyAccess::READ_WRITE},
+        {VehicleProperty::DRIVER_ATTENTION_MONITORING_STATE, VehiclePropertyAccess::READ},
+        {VehicleProperty::DRIVER_ATTENTION_MONITORING_WARNING, VehiclePropertyAccess::READ},
 };
 
 }  // namespace vehicle

@@ -36,7 +36,6 @@ namespace wifi {
 namespace legacy_hal {
 // Import all the types defined inside the legacy HAL header files into this
 // namespace.
-using ::Akm;
 using ::chre_nan_rtt_state;
 using ::frame_info;
 using ::frame_type;
@@ -68,6 +67,7 @@ using ::NAN_GET_CAPABILITIES;
 using ::NAN_MATCH_ALG_MATCH_CONTINUOUS;
 using ::NAN_MATCH_ALG_MATCH_NEVER;
 using ::NAN_MATCH_ALG_MATCH_ONCE;
+using ::NAN_PAIRING_END;
 using ::NAN_PAIRING_INITIATOR_RESPONSE;
 using ::NAN_PAIRING_RESPONDER_RESPONSE;
 using ::NAN_PAIRING_SETUP;
@@ -125,6 +125,7 @@ using ::NAN_TX_PRIORITY_NORMAL;
 using ::NAN_TX_TYPE_BROADCAST;
 using ::NAN_TX_TYPE_UNICAST;
 using ::NAN_USE_SRF;
+using ::NanAkm;
 using ::NanBeaconSdfPayloadInd;
 using ::NanBootstrappingConfirmInd;
 using ::NanBootstrappingIndicationResponse;
@@ -152,6 +153,7 @@ using ::NanMatchExpiredInd;
 using ::NanMatchInd;
 using ::NanPairingConfig;
 using ::NanPairingConfirmInd;
+using ::NanPairingEndRequest;
 using ::NanPairingIndicationResponse;
 using ::NanPairingRequest;
 using ::NanPairingRequestInd;
@@ -703,6 +705,7 @@ class WifiLegacyHal {
     wifi_error nanBootstrappingIndicationResponse(const std::string& iface_name, transaction_id id,
                                                   const NanBootstrappingIndicationResponse& msg);
     wifi_error nanDataEnd(const std::string& iface_name, transaction_id id, uint32_t ndpInstanceId);
+    wifi_error nanPairingEnd(const std::string& iface_name, transaction_id id, uint32_t pairingId);
     wifi_error nanSuspendRequest(const std::string& iface_name, transaction_id id,
                                  const NanSuspendRequest& msg);
     wifi_error nanResumeRequest(const std::string& iface_name, transaction_id id,

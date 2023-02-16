@@ -77,7 +77,7 @@ interface IHdmiCec {
      * plugged off and on again. It is advised to call getPhysicalAddress to get
      * the updated address when hot plug event takes place.
      *
-     * @param out addr Physical address of this device.
+     * @return Physical address of this device.
      */
     int getPhysicalAddress();
 
@@ -116,7 +116,7 @@ interface IHdmiCec {
      *        previously registered callback must be replaced with this one.
      *        setCallback(null) should deregister the callback.
      */
-    void setCallback(in IHdmiCecCallback callback);
+    void setCallback(in @nullable IHdmiCecCallback callback);
 
     /**
      * Passes the updated language information of Android system. Contains

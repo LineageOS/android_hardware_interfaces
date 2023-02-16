@@ -17,6 +17,7 @@
 package android.hardware.wifi;
 
 import android.hardware.wifi.NanBootstrappingMethod;
+import android.hardware.wifi.NanBootstrappingResponseCode;
 import android.hardware.wifi.NanStatus;
 
 @VintfStability
@@ -30,10 +31,20 @@ parcelable NanBootstrappingConfirmInd {
     /**
      * Indicate whether the bootstrapping method negotiation accept or not
      */
-    boolean acceptRequest;
+    NanBootstrappingResponseCode responseCode;
 
     /**
      * Failure reason if |acceptRequest| is false.
      */
     NanStatus reasonCode;
+
+    /**
+     * The delay of bootstrapping in seconds for the follow up request.
+     */
+    int comeBackDelay;
+
+    /**
+     * Cookie received from the comeback response.
+     */
+    byte[] cookie;
 }

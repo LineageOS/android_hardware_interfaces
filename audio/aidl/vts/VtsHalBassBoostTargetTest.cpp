@@ -31,6 +31,7 @@ using aidl::android::hardware::audio::effect::IEffect;
 using aidl::android::hardware::audio::effect::IFactory;
 using aidl::android::hardware::audio::effect::kBassBoostTypeUUID;
 using aidl::android::hardware::audio::effect::Parameter;
+using aidl::android::hardware::audio::effect::Range;
 
 /**
  * Here we focus on specific parameter checking, general IEffect interfaces testing performed in
@@ -92,7 +93,7 @@ class BassBoostParamTest : public ::testing::TestWithParam<BassBoostParamTestPar
             // validate parameter
             Descriptor desc;
             ASSERT_STATUS(EX_NONE, mEffect->getDescriptor(&desc));
-            const bool valid = isTagInRange(it.first, it.second, desc);
+            const bool valid = isParameterValid<BassBoost, Range::bassBoost>(it.second, desc);
             const binder_exception_t expected = valid ? EX_NONE : EX_ILLEGAL_ARGUMENT;
 
             // set parameter
@@ -122,46 +123,6 @@ class BassBoostParamTest : public ::testing::TestWithParam<BassBoostParamTestPar
         mTags.push_back({BassBoost::strengthPm, bb});
     }
 
-    bool isTagInRange(const BassBoost::Tag& tag, const BassBoost& bb,
-                      const Descriptor& desc) const {
-        const BassBoost::Capability& bbCap = desc.capability.get<Capability::bassBoost>();
-        switch (tag) {
-            case BassBoost::strengthPm: {
-                int strength = bb.get<BassBoost::strengthPm>();
-                return isStrengthInRange(bbCap, strength);
-            }
-            default:
-                return false;
-        }
-        return false;
-    }
-
-    bool isStrengthInRange(const BassBoost::Capability& cap, int strength) const {
-        return cap.strengthSupported && strength >= 0 && strength <= cap.maxStrengthPm;
-    }
-
-    static std::vector<int> getStrengthTestValues(
-            std::vector<std::pair<std::shared_ptr<IFactory>, Descriptor>> kFactoryDescList) {
-        const auto max = std::max_element(
-                kFactoryDescList.begin(), kFactoryDescList.end(),
-                [](const std::pair<std::shared_ptr<IFactory>, Descriptor>& a,
-                   const std::pair<std::shared_ptr<IFactory>, Descriptor>& b) {
-                    return a.second.capability.get<Capability::bassBoost>().maxStrengthPm <
-                           b.second.capability.get<Capability::bassBoost>().maxStrengthPm;
-                });
-        if (max == kFactoryDescList.end()) {
-            return {0};
-        }
-        int maxStrength = max->second.capability.get<Capability::bassBoost>().maxStrengthPm;
-        return {std::numeric_limits<int>::min(),
-                -1,
-                0,
-                maxStrength >> 1,
-                maxStrength,
-                maxStrength + 1,
-                std::numeric_limits<int>::max()};
-    }
-
   private:
     std::vector<std::pair<BassBoost::Tag, BassBoost>> mTags;
     void CleanUp() { mTags.clear(); }
@@ -172,14 +133,15 @@ TEST_P(BassBoostParamTest, SetAndGetStrength) {
     SetAndGetBassBoostParameters();
 }
 
+std::vector<std::pair<std::shared_ptr<IFactory>, Descriptor>> kDescPair;
 INSTANTIATE_TEST_SUITE_P(
         BassBoostTest, BassBoostParamTest,
         ::testing::Combine(
-                testing::ValuesIn(EffectFactoryHelper::getAllEffectDescriptors(IFactory::descriptor,
-                                                                               kBassBoostTypeUUID)),
-                testing::ValuesIn(BassBoostParamTest::getStrengthTestValues(
-                        EffectFactoryHelper::getAllEffectDescriptors(IFactory::descriptor,
-                                                                     kBassBoostTypeUUID)))),
+                testing::ValuesIn(kDescPair = EffectFactoryHelper::getAllEffectDescriptors(
+                                          IFactory::descriptor, kBassBoostTypeUUID)),
+                testing::ValuesIn(EffectHelper::getTestValueSet<BassBoost, int, Range::bassBoost,
+                                                                BassBoost::strengthPm>(
+                        kDescPair, EffectHelper::expandTestValueBasic<int>))),
         [](const testing::TestParamInfo<BassBoostParamTest::ParamType>& info) {
             auto descriptor = std::get<PARAM_INSTANCE_NAME>(info.param).second;
             std::string strength = std::to_string(std::get<PARAM_STRENGTH>(info.param));

@@ -85,22 +85,14 @@ interface IWifiChip {
   const int NO_POWER_CAP_CONSTANT = 0x7FFFFFFF;
   @Backing(type="int") @VintfStability
   enum ChipCapabilityMask {
-    DEBUG_MEMORY_FIRMWARE_DUMP = (1 << 0),
-    DEBUG_MEMORY_DRIVER_DUMP = (1 << 1),
-    DEBUG_RING_BUFFER_CONNECT_EVENT = (1 << 2),
-    DEBUG_RING_BUFFER_POWER_EVENT = (1 << 3),
-    DEBUG_RING_BUFFER_WAKELOCK_EVENT = (1 << 4),
-    DEBUG_RING_BUFFER_VENDOR_DATA = (1 << 5),
-    DEBUG_HOST_WAKE_REASON_STATS = (1 << 6),
-    DEBUG_ERROR_ALERTS = (1 << 7),
-    SET_TX_POWER_LIMIT = (1 << 8),
-    D2D_RTT = (1 << 9),
-    D2AP_RTT = (1 << 10),
-    USE_BODY_HEAD_SAR = (1 << 11),
-    SET_LATENCY_MODE = (1 << 12),
-    P2P_RAND_MAC = (1 << 13),
-    WIGIG = (1 << 14),
-    SET_AFC_CHANNEL_ALLOWANCE = (1 << 15),
+    SET_TX_POWER_LIMIT = (1 << 0) /* 1 */,
+    D2D_RTT = (1 << 1) /* 2 */,
+    D2AP_RTT = (1 << 2) /* 4 */,
+    USE_BODY_HEAD_SAR = (1 << 3) /* 8 */,
+    SET_LATENCY_MODE = (1 << 4) /* 16 */,
+    P2P_RAND_MAC = (1 << 5) /* 32 */,
+    WIGIG = (1 << 6) /* 64 */,
+    SET_AFC_CHANNEL_ALLOWANCE = (1 << 7) /* 128 */,
   }
   @VintfStability
   parcelable ChipConcurrencyCombinationLimit {
@@ -132,9 +124,9 @@ interface IWifiChip {
   }
   @Backing(type="int") @VintfStability
   enum CoexRestriction {
-    WIFI_DIRECT = (1 << 0),
-    SOFTAP = (1 << 1),
-    WIFI_AWARE = (1 << 2),
+    WIFI_DIRECT = (1 << 0) /* 1 */,
+    SOFTAP = (1 << 1) /* 2 */,
+    WIFI_AWARE = (1 << 2) /* 4 */,
   }
   @VintfStability
   parcelable CoexUnsafeChannel {
@@ -162,13 +154,13 @@ interface IWifiChip {
   }
   @Backing(type="int") @VintfStability
   enum UsableChannelFilter {
-    CELLULAR_COEXISTENCE = (1 << 0),
-    CONCURRENCY = (1 << 1),
-    NAN_INSTANT_MODE = (1 << 2),
+    CELLULAR_COEXISTENCE = (1 << 0) /* 1 */,
+    CONCURRENCY = (1 << 1) /* 2 */,
+    NAN_INSTANT_MODE = (1 << 2) /* 4 */,
   }
   @Backing(type="int") @VintfStability
   enum ChannelCategoryMask {
-    INDOOR_CHANNEL = (1 << 0),
-    DFS_CHANNEL = (1 << 1),
+    INDOOR_CHANNEL = (1 << 0) /* 1 */,
+    DFS_CHANNEL = (1 << 1) /* 2 */,
   }
 }

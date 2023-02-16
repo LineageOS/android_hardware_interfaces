@@ -22,7 +22,6 @@
 
 using namespace android;
 
-using aidl::android::hardware::audio::effect::Capability;
 using aidl::android::hardware::audio::effect::Descriptor;
 using aidl::android::hardware::audio::effect::Downmix;
 using aidl::android::hardware::audio::effect::IEffect;

@@ -60,17 +60,14 @@ extern "C" binder_exception_t queryEffect(const AudioUuid* in_impl_uuid, Descrip
 namespace aidl::android::hardware::audio::effect {
 
 const std::string DownmixSw::kEffectName = "DownmixSw";
-const Downmix::Capability DownmixSw::kCapability;
 const Descriptor DownmixSw::kDescriptor = {
-        .common = {.id = {.type = kDownmixTypeUUID,
-                          .uuid = kDownmixSwImplUUID,
-                          .proxy = std::nullopt},
-                   .flags = {.type = Flags::Type::INSERT,
-                             .insert = Flags::Insert::FIRST,
-                             .volume = Flags::Volume::CTRL},
-                   .name = kEffectName,
-                   .implementor = "The Android Open Source Project"},
-        .capability = Capability::make<Capability::downmix>(kCapability)};
+        .common = {
+                .id = {.type = kDownmixTypeUUID, .uuid = kDownmixSwImplUUID, .proxy = std::nullopt},
+                .flags = {.type = Flags::Type::INSERT,
+                          .insert = Flags::Insert::FIRST,
+                          .volume = Flags::Volume::CTRL},
+                .name = kEffectName,
+                .implementor = "The Android Open Source Project"}};
 
 ndk::ScopedAStatus DownmixSw::getDescriptor(Descriptor* _aidl_return) {
     LOG(DEBUG) << __func__ << kDescriptor.toString();

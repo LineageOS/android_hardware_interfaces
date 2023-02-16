@@ -82,6 +82,7 @@ class WifiNanIface : public BnWifiNanIface {
                                               const NanPairingRequest& in_msg) override;
     ndk::ScopedAStatus respondToPairingIndicationRequest(
             char16_t in_cmdId, const NanRespondToPairingIndicationRequest& in_msg) override;
+    ndk::ScopedAStatus terminatePairingRequest(char16_t in_cmdId, int32_t in_pairingId) override;
     ndk::ScopedAStatus initiateBootstrappingRequest(char16_t in_cmdId,
                                                     const NanBootstrappingRequest& in_msg) override;
     ndk::ScopedAStatus respondToBootstrappingIndicationRequest(
@@ -125,6 +126,7 @@ class WifiNanIface : public BnWifiNanIface {
                                                       const NanPairingRequest& msg);
     ndk::ScopedAStatus respondToPairingIndicationRequestInternal(
             char16_t cmd_id, const NanRespondToPairingIndicationRequest& msg);
+    ndk::ScopedAStatus terminatePairingRequestInternal(char16_t cmd_id, int32_t pairingId);
     ndk::ScopedAStatus initiateBootstrappingRequestInternal(char16_t cmd_id,
                                                             const NanBootstrappingRequest& msg);
     ndk::ScopedAStatus respondToBootstrappingIndicationRequestInternal(

@@ -42,10 +42,6 @@ union NoiseSuppression {
     int vendorExtensionTag;
     android.hardware.audio.effect.NoiseSuppression.Tag commonTag;
   }
-  @VintfStability
-  parcelable Capability {
-    ParcelableHolder extension;
-  }
   @Backing(type="int") @VintfStability
   enum Level {
     LOW,

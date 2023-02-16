@@ -661,18 +661,12 @@ TEST_F(AidlStructUtilTest, CanConvertLegacyFeaturesToAidl) {
     using AidlChipCaps = IWifiChip::ChipCapabilityMask;
 
     uint32_t aidl_caps;
-
     uint32_t legacy_feature_set = WIFI_FEATURE_D2D_RTT | WIFI_FEATURE_SET_LATENCY_MODE;
-    uint32_t legacy_logger_feature_set = legacy_hal::WIFI_LOGGER_DRIVER_DUMP_SUPPORTED;
 
-    ASSERT_TRUE(aidl_struct_util::convertLegacyFeaturesToAidlChipCapabilities(
-            legacy_feature_set, legacy_logger_feature_set, &aidl_caps));
+    ASSERT_TRUE(aidl_struct_util::convertLegacyFeaturesToAidlChipCapabilities(legacy_feature_set,
+                                                                              &aidl_caps));
 
-    EXPECT_EQ((uint32_t)AidlChipCaps::DEBUG_RING_BUFFER_VENDOR_DATA |
-                      (uint32_t)AidlChipCaps::DEBUG_HOST_WAKE_REASON_STATS |
-                      (uint32_t)AidlChipCaps::DEBUG_ERROR_ALERTS | (uint32_t)AidlChipCaps::D2D_RTT |
-                      (uint32_t)AidlChipCaps::SET_LATENCY_MODE |
-                      (uint32_t)AidlChipCaps::DEBUG_MEMORY_DRIVER_DUMP,
+    EXPECT_EQ((uint32_t)AidlChipCaps::D2D_RTT | (uint32_t)AidlChipCaps::SET_LATENCY_MODE,
               aidl_caps);
 }
 

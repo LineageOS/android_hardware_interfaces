@@ -24,10 +24,16 @@ import android.hardware.tv.hdmi.connection.HdmiPortType;
 @VintfStability
 parcelable HdmiPortInfo {
     HdmiPortType type;
-    int portId; // Output ports should start from 1 which corresponds to HDMI "port 1".
+    int portId; // For devices with input ports (e.g. TV Panels), input ports should start from 1
+                // which corresponds to HDMI "port 1".
+
+    // In the following, 'supported' refers to having the necessary hardware and firmware on the
+    // device to support CEC/ARC/eARC on this port.
     boolean cecSupported;
-    boolean arcSupported;
+    boolean arcSupported; // If true, cecSupported has to be true as well. ARC cannot be supported
+                          // without CEC support.
     boolean eArcSupported;
+
     // The physical address of the device connected to this port, valid range is 0x0000 to 0xFFFF
     // (ref Sec 8.7.2 of HDMI 1.4b).
     int physicalAddress;

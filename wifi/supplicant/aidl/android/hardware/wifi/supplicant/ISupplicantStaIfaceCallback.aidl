@@ -30,6 +30,7 @@ import android.hardware.wifi.supplicant.DppProgressCode;
 import android.hardware.wifi.supplicant.DppStatusErrorCode;
 import android.hardware.wifi.supplicant.Hs20AnqpData;
 import android.hardware.wifi.supplicant.OsuMethod;
+import android.hardware.wifi.supplicant.PmkSaCacheData;
 import android.hardware.wifi.supplicant.QosPolicyData;
 import android.hardware.wifi.supplicant.QosPolicyScsResponseStatus;
 import android.hardware.wifi.supplicant.StaIfaceCallbackState;
@@ -248,6 +249,8 @@ oneway interface ISupplicantStaIfaceCallback {
     /**
      * Indicates pairwise master key (PMK) cache added event.
      *
+     * @deprecated use onPmkSaCacheAdded() instead.
+     *
      * @param expirationTimeInSec expiration time in seconds
      * @param serializedEntry is serialized PMK cache entry, the content is
      *              opaque for the framework and depends on the native implementation.
@@ -392,4 +395,12 @@ oneway interface ISupplicantStaIfaceCallback {
      * @param qosPolicyScsResponseStatus[] status for each SCS id.
      */
     void onQosPolicyResponseForScs(in QosPolicyScsResponseStatus[] qosPolicyScsResponseStatus);
+
+    /**
+     * Indicates pairwise master key (PMK) cache added event.
+     *
+     * @param pmkSaData PMKSA cache entry added details.
+     *
+     */
+    void onPmkSaCacheAdded(in PmkSaCacheData pmkSaData);
 }
