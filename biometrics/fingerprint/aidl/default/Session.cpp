@@ -289,4 +289,12 @@ ndk::ScopedAStatus Session::onContextChanged(const common::OperationContext& /*c
     return ndk::ScopedAStatus::ok();
 }
 
+ndk::ScopedAStatus Session::onPointerCancelWithContext(const PointerContext& /*context*/) {
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus Session::setIgnoreDisplayTouches(bool /*shouldIgnore*/) {
+    return ndk::ScopedAStatus::ok();
+}
+
 }  // namespace aidl::android::hardware::biometrics::fingerprint
