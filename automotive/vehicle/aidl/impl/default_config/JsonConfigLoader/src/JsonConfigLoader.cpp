@@ -76,6 +76,7 @@ using ::aidl::android::hardware::automotive::vehicle::VehicleTurnSignal;
 using ::aidl::android::hardware::automotive::vehicle::VehicleUnit;
 using ::aidl::android::hardware::automotive::vehicle::VehicleVendorPermission;
 using ::aidl::android::hardware::automotive::vehicle::WindshieldWipersState;
+using ::aidl::android::hardware::automotive::vehicle::WindshieldWipersSwitch;
 
 using ::android::base::Error;
 using ::android::base::Result;
@@ -226,6 +227,8 @@ JsonValueParser::JsonValueParser() {
     mConstantParsersByType["FuelType"] = std::make_unique<ConstantParser<FuelType>>();
     mConstantParsersByType["WindshieldWipersState"] =
             std::make_unique<ConstantParser<WindshieldWipersState>>();
+    mConstantParsersByType["WindshieldWipersSwitch"] =
+            std::make_unique<ConstantParser<WindshieldWipersSwitch>>();
     mConstantParsersByType["EmergencyLaneKeepAssistState"] =
             std::make_unique<ConstantParser<EmergencyLaneKeepAssistState>>();
     mConstantParsersByType["CruiseControlType"] =

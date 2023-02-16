@@ -171,6 +171,7 @@ public final class ChangeModeForVehicleProperty {
         Map.entry(VehicleProperty.WINDOW_LOCK, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.WINDSHIELD_WIPERS_PERIOD, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.WINDSHIELD_WIPERS_STATE, VehiclePropertyChangeMode.ON_CHANGE),
+        Map.entry(VehicleProperty.WINDSHIELD_WIPERS_SWITCH, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.STEERING_WHEEL_DEPTH_POS, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.STEERING_WHEEL_DEPTH_MOVE, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.STEERING_WHEEL_HEIGHT_POS, VehiclePropertyChangeMode.ON_CHANGE),
