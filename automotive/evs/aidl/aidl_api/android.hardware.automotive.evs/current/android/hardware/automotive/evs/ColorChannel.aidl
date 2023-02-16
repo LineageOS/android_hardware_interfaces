@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,16 +33,9 @@
 
 package android.hardware.automotive.evs;
 @Backing(type="int") @VintfStability
-enum EvsResult {
-  OK = 0,
-  INVALID_ARG,
-  STREAM_ALREADY_RUNNING,
-  BUFFER_NOT_AVAILABLE,
-  OWNERSHIP_LOST,
-  UNDERLYING_SERVICE_ERROR,
-  PERMISSION_DENIED,
-  RESOURCE_NOT_AVAILABLE,
-  RESOURCE_BUSY,
-  NOT_IMPLEMENTED,
-  NOT_SUPPORTED,
+enum ColorChannel {
+  R,
+  G_EVEN,
+  B,
+  G_ODD_OR_Y,
 }

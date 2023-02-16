@@ -35,8 +35,8 @@ package android.hardware.automotive.evs;
 @Backing(type="int") @VintfStability
 enum DisplayState {
   NOT_OPEN = 0,
-  NOT_VISIBLE = 1,
-  VISIBLE_ON_NEXT_FRAME = 2,
-  VISIBLE = 3,
-  DEAD = 4,
+  NOT_VISIBLE,
+  VISIBLE_ON_NEXT_FRAME,
+  VISIBLE,
+  DEAD,
 }

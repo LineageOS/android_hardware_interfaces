@@ -40,4 +40,8 @@ parcelable BufferDesc {
   @utf8InCpp String deviceId;
   long timestamp;
   byte[] metadata;
+  @nullable android.hardware.automotive.evs.ExposureParameters[] exposureSettings;
+  @nullable android.hardware.automotive.evs.Histogram[] histograms;
+  @nullable android.hardware.automotive.evs.GridStatistics[] grids;
+  @nullable android.hardware.automotive.evs.EmbeddedData embeddedData;
 }
