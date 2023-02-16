@@ -26,35 +26,35 @@
 
 namespace aidl::android::hardware::audio::effect {
 
-class AutomaticGainControlSwContext final : public EffectContext {
+class AutomaticGainControlV2SwContext final : public EffectContext {
   public:
-    AutomaticGainControlSwContext(int statusDepth, const Parameter::Common& common)
+    AutomaticGainControlV2SwContext(int statusDepth, const Parameter::Common& common)
         : EffectContext(statusDepth, common) {
         LOG(DEBUG) << __func__;
     }
 
     RetCode setDigitalGain(int gain);
     int getDigitalGain();
-    RetCode setLevelEstimator(AutomaticGainControl::LevelEstimator levelEstimator);
-    AutomaticGainControl::LevelEstimator getLevelEstimator();
+    RetCode setLevelEstimator(AutomaticGainControlV2::LevelEstimator levelEstimator);
+    AutomaticGainControlV2::LevelEstimator getLevelEstimator();
     RetCode setSaturationMargin(int margin);
     int getSaturationMargin();
 
   private:
     int mDigitalGain = 0;
-    AutomaticGainControl::LevelEstimator mLevelEstimator =
-            AutomaticGainControl::LevelEstimator::RMS;
+    AutomaticGainControlV2::LevelEstimator mLevelEstimator =
+            AutomaticGainControlV2::LevelEstimator::RMS;
     int mSaturationMargin = 0;
 };
 
-class AutomaticGainControlSw final : public EffectImpl {
+class AutomaticGainControlV2Sw final : public EffectImpl {
   public:
     static const std::string kEffectName;
     static const bool kStrengthSupported;
     static const Capability kCapability;
     static const Descriptor kDescriptor;
-    AutomaticGainControlSw() { LOG(DEBUG) << __func__; }
-    ~AutomaticGainControlSw() {
+    AutomaticGainControlV2Sw() { LOG(DEBUG) << __func__; }
+    ~AutomaticGainControlV2Sw() {
         cleanUp();
         LOG(DEBUG) << __func__;
     }
@@ -72,9 +72,9 @@ class AutomaticGainControlSw final : public EffectImpl {
     IEffect::Status effectProcessImpl(float* in, float* out, int samples) override;
 
   private:
-    static const std::vector<Range::AutomaticGainControlRange> kRanges;
-    std::shared_ptr<AutomaticGainControlSwContext> mContext;
-    ndk::ScopedAStatus getParameterAutomaticGainControl(const AutomaticGainControl::Tag& tag,
-                                                        Parameter::Specific* specific);
+    static const std::vector<Range::AutomaticGainControlV2Range> kRanges;
+    std::shared_ptr<AutomaticGainControlV2SwContext> mContext;
+    ndk::ScopedAStatus getParameterAutomaticGainControlV2(const AutomaticGainControlV2::Tag& tag,
+                                                          Parameter::Specific* specific);
 };
 }  // namespace aidl::android::hardware::audio::effect
