@@ -17,6 +17,7 @@
 package android.hardware.audio.effect;
 
 import android.hardware.audio.effect.AcousticEchoCanceler;
+import android.hardware.audio.effect.AutomaticGainControlV1;
 import android.hardware.audio.effect.AutomaticGainControlV2;
 import android.hardware.audio.effect.BassBoost;
 import android.hardware.audio.effect.Downmix;
@@ -83,6 +84,7 @@ union Parameter {
          *
          */
         AcousticEchoCanceler.Id acousticEchoCancelerTag;
+        AutomaticGainControlV1.Id automaticGainControlV1Tag;
         AutomaticGainControlV2.Id automaticGainControlV2Tag;
         BassBoost.Id bassBoostTag;
         Downmix.Id downmixTag;
@@ -165,6 +167,7 @@ union Parameter {
     union Specific {
         VendorExtension vendorEffect;
         AcousticEchoCanceler acousticEchoCanceler;
+        AutomaticGainControlV1 automaticGainControlV1;
         AutomaticGainControlV2 automaticGainControlV2;
         BassBoost bassBoost;
         Downmix downmix;
