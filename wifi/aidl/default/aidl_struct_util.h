@@ -69,9 +69,7 @@ WifiBand convertLegacyMacBandToAidlWifiBand(uint32_t band);
 WifiAntennaMode convertLegacyAntennaConfigurationToAidl(uint32_t antenna_cfg);
 
 // STA iface conversion methods.
-bool convertLegacyFeaturesToAidlStaCapabilities(uint64_t legacy_feature_set,
-                                                uint32_t legacy_logger_feature_set,
-                                                uint32_t* aidl_caps);
+bool convertLegacyFeaturesToAidlStaCapabilities(uint64_t legacy_feature_set, uint32_t* aidl_caps);
 bool convertLegacyApfCapabilitiesToAidl(const legacy_hal::PacketFilterCapabilities& legacy_caps,
                                         StaApfPacketFilterCapabilities* aidl_caps);
 bool convertLegacyGscanCapabilitiesToAidl(const legacy_hal::wifi_gscan_capabilities& legacy_caps,

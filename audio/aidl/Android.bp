@@ -223,11 +223,12 @@ aidl_interface {
     ],
     srcs: [
         "android/hardware/audio/effect/AcousticEchoCanceler.aidl",
-        "android/hardware/audio/effect/AutomaticGainControl.aidl",
         "android/hardware/audio/effect/AutomaticGainControlV1.aidl",
+        "android/hardware/audio/effect/AutomaticGainControlV2.aidl",
         "android/hardware/audio/effect/BassBoost.aidl",
         "android/hardware/audio/effect/Capability.aidl",
         "android/hardware/audio/effect/CommandId.aidl",
+        "android/hardware/audio/effect/DefaultExtension.aidl",
         "android/hardware/audio/effect/Descriptor.aidl",
         "android/hardware/audio/effect/Downmix.aidl",
         "android/hardware/audio/effect/DynamicsProcessing.aidl",

@@ -141,9 +141,15 @@ cc_test {
 }
 
 cc_test {
-    name: "VtsHalAGCTargetTest",
+    name: "VtsHalAGC1TargetTest",
     defaults: ["VtsHalAudioTargetTestDefaults"],
-    srcs: ["VtsHalAGCTargetTest.cpp"],
+    srcs: ["VtsHalAGC1TargetTest.cpp"],
+}
+
+cc_test {
+    name: "VtsHalAGC2TargetTest",
+    defaults: ["VtsHalAudioTargetTestDefaults"],
+    srcs: ["VtsHalAGC2TargetTest.cpp"],
 }
 
 cc_test {

@@ -36,8 +36,8 @@ package android.hardware.audio.effect;
 union Range {
   android.hardware.audio.effect.Range.VendorExtensionRange[] vendorExtension = {};
   android.hardware.audio.effect.Range.AcousticEchoCancelerRange[] acousticEchoCanceler;
-  android.hardware.audio.effect.Range.AutomaticGainControlRange[] automaticGainControl;
   android.hardware.audio.effect.Range.AutomaticGainControlV1Range[] automaticGainControlV1;
+  android.hardware.audio.effect.Range.AutomaticGainControlV2Range[] automaticGainControlV2;
   android.hardware.audio.effect.Range.BassBoostRange[] bassBoost;
   android.hardware.audio.effect.Range.DownmixRange[] downmix;
   android.hardware.audio.effect.Range.DynamicsProcessingRange[] dynamicsProcessing;
@@ -56,14 +56,14 @@ union Range {
     android.hardware.audio.effect.AcousticEchoCanceler max;
   }
   @VintfStability
-  parcelable AutomaticGainControlRange {
-    android.hardware.audio.effect.AutomaticGainControl min;
-    android.hardware.audio.effect.AutomaticGainControl max;
-  }
-  @VintfStability
   parcelable AutomaticGainControlV1Range {
     android.hardware.audio.effect.AutomaticGainControlV1 min;
     android.hardware.audio.effect.AutomaticGainControlV1 max;
+  }
+  @VintfStability
+  parcelable AutomaticGainControlV2Range {
+    android.hardware.audio.effect.AutomaticGainControlV2 min;
+    android.hardware.audio.effect.AutomaticGainControlV2 max;
   }
   @VintfStability
   parcelable BassBoostRange {

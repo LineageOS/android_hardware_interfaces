@@ -34,8 +34,8 @@
 package android.hardware.automotive.evs;
 @Backing(type="int") @VintfStability
 enum DeviceStatusType {
-  CAMERA_AVAILABLE = 0,
-  CAMERA_NOT_AVAILABLE = 1,
-  DISPLAY_AVAILABLE = 2,
-  DISPLAY_NOT_AVAILABLE = 3,
+  CAMERA_AVAILABLE,
+  CAMERA_NOT_AVAILABLE,
+  DISPLAY_AVAILABLE,
+  DISPLAY_NOT_AVAILABLE,
 }

@@ -78,6 +78,5 @@ interface IWifiStaIface {
     TDLS_OFFCHANNEL = (1 << 11) /* 2048 */,
     ND_OFFLOAD = (1 << 12) /* 4096 */,
     KEEP_ALIVE = (1 << 13) /* 8192 */,
-    DEBUG_PACKET_FATE = (1 << 14) /* 16384 */,
   }
 }

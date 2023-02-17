@@ -39,4 +39,5 @@ parcelable ConnectionCapabilities {
   int maxNumberTxSpatialStreams;
   int maxNumberRxSpatialStreams;
   android.hardware.wifi.supplicant.LegacyMode legacyMode;
+  boolean apTidToLinkMapNegotiationSupported;
 }

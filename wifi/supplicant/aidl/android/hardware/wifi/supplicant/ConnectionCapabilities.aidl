@@ -44,4 +44,8 @@ parcelable ConnectionCapabilities {
      * detailed network mode for legacy network
      */
     LegacyMode legacyMode;
+    /**
+     * Indicates the AP support for TID-to-link mapping negotiation.
+     */
+    boolean apTidToLinkMapNegotiationSupported;
 }

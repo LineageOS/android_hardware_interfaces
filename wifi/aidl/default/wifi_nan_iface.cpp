@@ -253,6 +253,22 @@ void WifiNanIface::registerCallbackHandlers() {
                 }
                 break;
             }
+            case legacy_hal::NAN_SUSPEND_REQUEST_RESPONSE: {
+                for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
+                    if (!callback->notifySuspendResponse(id, nanStatus).isOk()) {
+                        LOG(ERROR) << "Failed to invoke the callback";
+                    }
+                }
+                break;
+            }
+            case legacy_hal::NAN_RESUME_REQUEST_RESPONSE: {
+                for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
+                    if (!callback->notifyResumeResponse(id, nanStatus).isOk()) {
+                        LOG(ERROR) << "Failed to invoke the callback";
+                    }
+                }
+                break;
+            }
             case legacy_hal::NAN_RESPONSE_BEACON_SDF_PAYLOAD:
             /* fall through */
             case legacy_hal::NAN_RESPONSE_TCA:
@@ -577,6 +593,22 @@ void WifiNanIface::registerCallbackHandlers() {
 
                 for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
                     if (!callback->eventDataPathScheduleUpdate(aidl_struct).isOk()) {
+                        LOG(ERROR) << "Failed to invoke the callback";
+                    }
+                }
+            };
+    callback_handlers.on_event_suspension_mode_change =
+            [weak_ptr_this](const legacy_hal::NanSuspensionModeChangeInd& msg) {
+                const auto shared_ptr_this = weak_ptr_this.lock();
+                if (!shared_ptr_this.get() || !shared_ptr_this->isValid()) {
+                    LOG(ERROR) << "Callback invoked on an invalid object";
+                    return;
+                }
+                NanSuspensionModeChangeInd aidl_struct;
+                aidl_struct.isSuspended = msg.is_suspended;
+
+                for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
+                    if (!callback->eventSuspensionModeChanged(aidl_struct).isOk()) {
                         LOG(ERROR) << "Failed to invoke the callback";
                     }
                 }

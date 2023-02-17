@@ -29,7 +29,8 @@
     -->
     <libraries>
         <library name="aecsw" path="libaecsw.so"/>
-        <library name="agcsw" path="libagcsw.so"/>
+        <library name="agc1sw" path="libagc1sw.so"/>
+        <library name="agc2sw" path="libagc2sw.so"/>
         <library name="bassboostsw" path="libbassboostsw.so"/>
         <library name="bundle" path="libbundleaidl.so"/>
         <library name="downmix" path="libdownmixaidl.so"/>
@@ -44,6 +45,7 @@
         <library name="virtualizersw" path="libvirtualizersw.so"/>
         <library name="visualizer" path="libvisualizeraidl.so"/>
         <library name="volumesw" path="libvolumesw.so"/>
+        <library name="extensioneffect" path="libextensioneffect.so"/>
     </libraries>
 
     <!-- list of effects to load.
@@ -67,7 +69,8 @@
 
     <effects>
         <effect name="acoustic_echo_canceler" library="aecsw" uuid="bb392ec0-8d4d-11e0-a896-0002a5d5c51b"/>
-        <effect name="automatic_gain_control" library="agcsw" uuid="89f38e65-d4d2-4d64-ad0e-2b3e799ea886"/>
+        <effect name="automatic_gain_control_v1" library="agc1sw" uuid="aa8130e0-66fc-11e0-bad0-0002a5d5c51b"/>
+        <effect name="automatic_gain_control_v2" library="agc2sw" uuid="89f38e65-d4d2-4d64-ad0e-2b3e799ea886"/>
         <effectProxy name="bassboost" uuid="14804144-a5ee-4d24-aa88-0002a5d5c51b">
             <libsw library="bassboostsw" uuid="fa8181f2-588b-11ed-9b6a-0242ac120002"/>
             <libsw library="bundle" uuid="8631f300-72e2-11df-b57e-0002a5d5c51b"/>
@@ -93,6 +96,7 @@
             <libsw library="equalizersw" uuid="0bed4300-847d-11df-bb17-0002a5d5c51b"/>
             <libsw library="bundle" uuid="ce772f20-847d-11df-bb17-0002a5d5c51b"/>
         </effectProxy>
+        <effect name="extensioneffect" library="extensioneffect" uuid="fa81dd00-588b-11ed-9b6a-0242ac120002"/>
     </effects>
 
     <!-- Audio pre processor configurations.

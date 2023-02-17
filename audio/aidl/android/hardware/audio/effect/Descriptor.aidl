@@ -57,9 +57,13 @@ parcelable Descriptor {
      */
     const String EFFECT_TYPE_UUID_VIRTUALIZER = "37cc2c00-dddd-11db-8577-0002a5d5c51b";
     /**
-     * UUID for Automatic Gain Control (AGC) type.
+     * UUID for Automatic Gain Control V1 (AGC1) type.
      */
-    const String EFFECT_TYPE_UUID_AGC = "0a8abfe0-654c-11e0-ba26-0002a5d5c51b";
+    const String EFFECT_TYPE_UUID_AGC1 = "0a8abfe0-654c-11e0-ba26-0002a5d5c51b";
+    /**
+     * UUID for Automatic Gain Control V2 (AGC2) type.
+     */
+    const String EFFECT_TYPE_UUID_AGC2 = "ae3c653b-be18-4ab8-8938-418f0a7f06ac";
     /**
      * UUID for Acoustic Echo Canceler (AEC) type.
      */

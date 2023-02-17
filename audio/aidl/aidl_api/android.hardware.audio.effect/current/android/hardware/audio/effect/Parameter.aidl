@@ -44,7 +44,8 @@ union Parameter {
   union Id {
     int vendorEffectTag;
     android.hardware.audio.effect.AcousticEchoCanceler.Id acousticEchoCancelerTag;
-    android.hardware.audio.effect.AutomaticGainControl.Id automaticGainControlTag;
+    android.hardware.audio.effect.AutomaticGainControlV1.Id automaticGainControlV1Tag;
+    android.hardware.audio.effect.AutomaticGainControlV2.Id automaticGainControlV2Tag;
     android.hardware.audio.effect.BassBoost.Id bassBoostTag;
     android.hardware.audio.effect.Downmix.Id downmixTag;
     android.hardware.audio.effect.DynamicsProcessing.Id dynamicsProcessingTag;
@@ -75,7 +76,8 @@ union Parameter {
   union Specific {
     android.hardware.audio.effect.VendorExtension vendorEffect;
     android.hardware.audio.effect.AcousticEchoCanceler acousticEchoCanceler;
-    android.hardware.audio.effect.AutomaticGainControl automaticGainControl;
+    android.hardware.audio.effect.AutomaticGainControlV1 automaticGainControlV1;
+    android.hardware.audio.effect.AutomaticGainControlV2 automaticGainControlV2;
     android.hardware.audio.effect.BassBoost bassBoost;
     android.hardware.audio.effect.Downmix downmix;
     android.hardware.audio.effect.DynamicsProcessing dynamicsProcessing;
