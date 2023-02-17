@@ -111,6 +111,7 @@ public final class AccessForVehicleProperty {
         Map.entry(VehicleProperty.AP_POWER_STATE_REPORT, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.AP_POWER_BOOTUP_REASON, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.DISPLAY_BRIGHTNESS, VehiclePropertyAccess.READ_WRITE),
+        Map.entry(VehicleProperty.PER_DISPLAY_BRIGHTNESS, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.HW_KEY_INPUT, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.HW_KEY_INPUT_V2, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.HW_MOTION_INPUT, VehiclePropertyAccess.READ),
