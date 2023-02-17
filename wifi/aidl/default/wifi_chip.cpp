@@ -377,6 +377,35 @@ WifiChip::WifiChip(int32_t chip_id, bool is_primary,
       debug_ring_buffer_cb_registered_(false),
       subsystemCallbackHandler_(handler) {
     setActiveWlanIfaceNameProperty(kNoActiveWlanIfaceNamePropertyValue);
+    using_dynamic_iface_combination_ = false;
+}
+
+void WifiChip::retrieveDynamicIfaceCombination() {
+    if (using_dynamic_iface_combination_) return;
+
+    legacy_hal::wifi_iface_concurrency_matrix legacy_matrix;
+    legacy_hal::wifi_error legacy_status;
+
+    std::tie(legacy_status, legacy_matrix) =
+            legacy_hal_.lock()->getSupportedIfaceConcurrencyMatrix();
+    if (legacy_status != legacy_hal::WIFI_SUCCESS) {
+        LOG(ERROR) << "Failed to get SupportedIfaceCombinations matrix from legacy HAL: "
+                   << legacyErrorToString(legacy_status);
+        return;
+    }
+
+    IWifiChip::ChipMode aidl_chip_mode;
+    if (!aidl_struct_util::convertLegacyIfaceCombinationsMatrixToChipMode(legacy_matrix,
+                                                                          &aidl_chip_mode)) {
+        LOG(ERROR) << "Failed convertLegacyIfaceCombinationsMatrixToChipMode() ";
+        return;
+    }
+
+    LOG(INFO) << "Reloading iface concurrency combination from driver";
+    aidl_chip_mode.id = feature_flags::chip_mode_ids::kV3;
+    modes_.clear();
+    modes_.push_back(aidl_chip_mode);
+    using_dynamic_iface_combination_ = true;
 }
 
 std::shared_ptr<WifiChip> WifiChip::create(
@@ -1509,6 +1538,8 @@ ndk::ScopedAStatus WifiChip::handleChipConfiguration(
                      version_info.first.firmwareDescription.c_str());
         property_set("vendor.wlan.driver.version", version_info.first.driverDescription.c_str());
     }
+    // Get the driver supported interface combination.
+    retrieveDynamicIfaceCombination();
 
     return ndk::ScopedAStatus::ok();
 }
