@@ -107,11 +107,8 @@ ndk::ScopedAStatus EffectImpl::getParameter(const Parameter::Id& id, Parameter* 
                                      "CommonParamNotSupported");
             break;
         }
-        case Parameter::Id::vendorEffectTag: {
-            LOG(DEBUG) << __func__ << " noop for vendor tag";
-            return ndk::ScopedAStatus::fromExceptionCodeWithMessage(EX_ILLEGAL_ARGUMENT,
-                                                                    "vendortagNotSupported");
-        }
+        case Parameter::Id::vendorEffectTag:
+            FALLTHROUGH_INTENDED;
         default: {
             Parameter::Specific specific;
             RETURN_IF_ASTATUS_NOT_OK(getParameterSpecific(id, &specific), "SpecParamNotSupported");

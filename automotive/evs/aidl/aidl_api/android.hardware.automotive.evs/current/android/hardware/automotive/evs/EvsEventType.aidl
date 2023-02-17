@@ -35,10 +35,10 @@ package android.hardware.automotive.evs;
 @Backing(type="int") @VintfStability
 enum EvsEventType {
   STREAM_STARTED = 0,
-  STREAM_STOPPED = 1,
-  FRAME_DROPPED = 2,
-  TIMEOUT = 3,
-  PARAMETER_CHANGED = 4,
-  MASTER_RELEASED = 5,
-  STREAM_ERROR = 6,
+  STREAM_STOPPED,
+  FRAME_DROPPED,
+  TIMEOUT,
+  PARAMETER_CHANGED,
+  MASTER_RELEASED,
+  STREAM_ERROR,
 }

@@ -177,6 +177,7 @@ bool initHalFuncTableWithStubs(wifi_hal_fn* hal_fn) {
     populateStubFor(&hal_fn->wifi_nan_suspend_request);
     populateStubFor(&hal_fn->wifi_nan_resume_request);
     populateStubFor(&hal_fn->wifi_set_scan_mode);
+    populateStubFor(&hal_fn->wifi_set_mlo_mode);
     return true;
 }
 

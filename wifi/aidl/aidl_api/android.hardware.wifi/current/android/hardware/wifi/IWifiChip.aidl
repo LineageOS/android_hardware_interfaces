@@ -82,6 +82,7 @@ interface IWifiChip {
   void stopLoggingToDebugRingBuffer();
   void triggerSubsystemRestart();
   void enableStaChannelForPeerNetwork(in android.hardware.wifi.IWifiChip.ChannelCategoryMask channelCategoryEnableFlag);
+  void setMloMode(in android.hardware.wifi.IWifiChip.ChipMloMode mode);
   const int NO_POWER_CAP_CONSTANT = 0x7FFFFFFF;
   @Backing(type="int") @VintfStability
   enum ChipCapabilityMask {
@@ -93,6 +94,7 @@ interface IWifiChip {
     P2P_RAND_MAC = (1 << 5) /* 32 */,
     WIGIG = (1 << 6) /* 64 */,
     SET_AFC_CHANNEL_ALLOWANCE = (1 << 7) /* 128 */,
+    T2LM_NEGOTIATION = (1 << 8) /* 256 */,
   }
   @VintfStability
   parcelable ChipConcurrencyCombinationLimit {
@@ -162,5 +164,12 @@ interface IWifiChip {
   enum ChannelCategoryMask {
     INDOOR_CHANNEL = (1 << 0) /* 1 */,
     DFS_CHANNEL = (1 << 1) /* 2 */,
+  }
+  @Backing(type="int") @VintfStability
+  enum ChipMloMode {
+    DEFAULT = 0,
+    LOW_LATENCY = 1,
+    HIGH_THROUGHPUT = 2,
+    LOW_POWER = 3,
   }
 }

@@ -2132,6 +2132,31 @@ enum VehicleProperty {
             0x0BC6 + VehiclePropertyGroup.SYSTEM + VehicleArea.WINDOW + VehiclePropertyType.INT32,
 
     /**
+     * Windshield wipers switch.
+     *
+     * Represents the position of the switch controlling the windshield wipers. The value of
+     * WINDSHIELD_WIPERS_SWITCH may not match the value of WINDSHIELD_WIPERS_STATE (e.g.
+     * WINDSHIELD_WIPERS_SWITCH = AUTO and WINDSHIELD_WIPERS_STATE = WindshieldWipersState#ON).
+     *
+     * For each supported area ID, the VehicleAreaConfig#supportedEnumValues array must be defined
+     * unless all states in WindshieldWipersSwitch are supported (including OTHER, which is not
+     * recommended).
+     *
+     * This property is defined as read_write, but OEMs have the option to implement it as read
+     * only.
+     *
+     * If this property is implemented as read_write and the OTHER state is listed in the
+     * VehicleAreaConfig#supportedEnumValues array, then OTHER is not a supported value for writing.
+     * It is only a supported value for reading.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     * @data_enum WindshieldWipersSwitch
+     */
+    WINDSHIELD_WIPERS_SWITCH =
+            0x0BC7 + VehiclePropertyGroup.SYSTEM + VehicleArea.WINDOW + VehiclePropertyType.INT32,
+
+    /**
      * Steering wheel depth position
      *
      * All steering wheel properties' unique ids start from 0x0BE0.

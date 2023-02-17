@@ -40,7 +40,10 @@
       "name": "VtsHalAECTargetTest"
     },
     {
-      "name": "VtsHalAGCTargetTest"
+      "name": "VtsHalAGC1TargetTest"
+    },
+    {
+      "name": "VtsHalAGC2TargetTest"
     },
     {
       "name": "VtsHalNSTargetTest"

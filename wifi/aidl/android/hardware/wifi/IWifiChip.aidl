@@ -78,6 +78,10 @@ interface IWifiChip {
          * for AFC purposes.
          */
         SET_AFC_CHANNEL_ALLOWANCE = 1 << 7,
+        /**
+         * Chip supports Tid-To-Link mapping negotiation.
+         */
+        T2LM_NEGOTIATION = 1 << 8,
     }
 
     /**
@@ -1115,4 +1119,40 @@ interface IWifiChip {
      *         |WifiStatusCode.FAILURE_UNKNOWN|
      */
     void enableStaChannelForPeerNetwork(in ChannelCategoryMask channelCategoryEnableFlag);
+
+    /**
+     * Multi-Link Operation modes.
+     */
+    @VintfStability
+    @Backing(type="int")
+    enum ChipMloMode {
+        /**
+         * Default mode for Multi-Link Operation.
+         */
+        DEFAULT = 0,
+        /**
+         * Low latency mode for Multi-link operation.
+         */
+        LOW_LATENCY = 1,
+        /**
+         * High throughput mode for Multi-link operation.
+         */
+        HIGH_THROUGHPUT = 2,
+        /**
+         * Low power mode for Multi-link operation.
+         */
+        LOW_POWER = 3,
+    }
+
+    /**
+     * Set mode for Multi-Link Operation. Various modes are defined by the enum |ChipMloMode|.
+     *
+     * @param mode MLO mode as defined by the enum |ChipMloMode|
+     * @throws ServiceSpecificException with one of the following values:
+     *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
+     *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+     *         |WifiStatusCode.ERROR_UNKNOWN|
+     *
+     */
+    void setMloMode(in ChipMloMode mode);
 }

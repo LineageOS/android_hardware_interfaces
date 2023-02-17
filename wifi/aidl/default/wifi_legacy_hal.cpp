@@ -351,6 +351,15 @@ void onAsyncNanEventScheduleUpdate(NanDataPathScheduleUpdateInd* event) {
     }
 }
 
+std::function<void(const NanSuspensionModeChangeInd&)>
+        on_nan_event_suspension_mode_change_user_callback;
+void onAsyncNanEventSuspensionModeChange(NanSuspensionModeChangeInd* event) {
+    const auto lock = aidl_sync_util::acquireGlobalLock();
+    if (on_nan_event_suspension_mode_change_user_callback && event) {
+        on_nan_event_suspension_mode_change_user_callback(*event);
+    }
+}
+
 std::function<void(const NanPairingRequestInd&)> on_nan_event_pairing_request_user_callback;
 void onAsyncNanEventPairingRequest(NanPairingRequestInd* event) {
     const auto lock = aidl_sync_util::acquireGlobalLock();
@@ -745,7 +754,7 @@ wifi_error WifiLegacyHal::disableLinkLayerStats(const std::string& iface_name) {
 
 // Copies wifi_peer_info* to vector<WifiPeerInfo> and returns poiner to next element.
 wifi_peer_info* WifiLegacyHal::copyPeerInfo(wifi_peer_info* peer_ptr,
-                                            std::vector<WifiPeerInfo> peers) {
+                                            std::vector<WifiPeerInfo>& peers) {
     WifiPeerInfo peer;
     peer.peer_info = *peer_ptr;
     if (peer_ptr->num_rate > 0) {
@@ -761,7 +770,7 @@ wifi_peer_info* WifiLegacyHal::copyPeerInfo(wifi_peer_info* peer_ptr,
 }
 // Copies wifi_link_stat* to vector<LinkStats> and returns poiner to next element.
 wifi_link_stat* WifiLegacyHal::copyLinkStat(wifi_link_stat* stat_ptr,
-                                            std::vector<LinkStats> stats) {
+                                            std::vector<LinkStats>& stats) {
     LinkStats linkStat;
     linkStat.stat = *stat_ptr;
     wifi_peer_info* l_peer_info_stats_ptr = stat_ptr->peer_info;
@@ -1376,6 +1385,8 @@ wifi_error WifiLegacyHal::nanRegisterCallbackHandlers(const std::string& iface_n
     on_nan_event_range_request_user_callback = user_callbacks.on_event_range_request;
     on_nan_event_range_report_user_callback = user_callbacks.on_event_range_report;
     on_nan_event_schedule_update_user_callback = user_callbacks.on_event_schedule_update;
+    on_nan_event_suspension_mode_change_user_callback =
+            user_callbacks.on_event_suspension_mode_change;
 
     return global_func_table_.wifi_nan_register_handler(getIfaceHandle(iface_name),
                                                         {onAsyncNanNotifyResponse,
@@ -1399,7 +1410,8 @@ wifi_error WifiLegacyHal::nanRegisterCallbackHandlers(const std::string& iface_n
                                                          onAsyncNanEventPairingRequest,
                                                          onAsyncNanEventPairingConfirm,
                                                          onAsyncNanEventBootstrappingRequest,
-                                                         onAsyncNanEventBootstrappingConfirm});
+                                                         onAsyncNanEventBootstrappingConfirm,
+                                                         onAsyncNanEventSuspensionModeChange});
 }
 
 wifi_error WifiLegacyHal::nanEnableRequest(const std::string& iface_name, transaction_id id,
@@ -1867,6 +1879,10 @@ std::pair<wifi_error, wifi_chip_capabilities> WifiLegacyHal::getWifiChipCapabili
 wifi_error WifiLegacyHal::enableStaChannelForPeerNetwork(uint32_t channelCategoryEnableFlag) {
     return global_func_table_.wifi_enable_sta_channel_for_peer_network(global_handle_,
                                                                        channelCategoryEnableFlag);
+}
+
+wifi_error WifiLegacyHal::setMloMode(wifi_mlo_mode mode) {
+    return global_func_table_.wifi_set_mlo_mode(global_handle_, mode);
 }
 
 void WifiLegacyHal::invalidate() {

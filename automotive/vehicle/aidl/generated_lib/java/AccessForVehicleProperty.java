@@ -171,6 +171,7 @@ public final class AccessForVehicleProperty {
         Map.entry(VehicleProperty.WINDOW_LOCK, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.WINDSHIELD_WIPERS_PERIOD, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.WINDSHIELD_WIPERS_STATE, VehiclePropertyAccess.READ),
+        Map.entry(VehicleProperty.WINDSHIELD_WIPERS_SWITCH, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.STEERING_WHEEL_DEPTH_POS, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.STEERING_WHEEL_DEPTH_MOVE, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.STEERING_WHEEL_HEIGHT_POS, VehiclePropertyAccess.READ_WRITE),

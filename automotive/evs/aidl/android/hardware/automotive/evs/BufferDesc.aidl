@@ -16,7 +16,12 @@
 
 package android.hardware.automotive.evs;
 
+import android.hardware.automotive.evs.EmbeddedData;
+import android.hardware.automotive.evs.ExposureParameters;
+import android.hardware.automotive.evs.GridStatistics;
+import android.hardware.automotive.evs.Histogram;
 import android.hardware.graphics.common.HardwareBuffer;
+import android.hardware.graphics.common.Rect;
 
 /**
  * Structure representing an image buffer through our APIs
@@ -57,4 +62,28 @@ parcelable BufferDesc {
      * Frame metadata.  This is opaque to EvsManager.
      */
     byte[] metadata;
+    /**
+     * ExposureParameters are expected to be in the ascending
+     * order of their exposure time; from the shortest to the
+     * longest.  For example, if the imaging sensor output has
+     * two exposures, a shorter exposure setting is at index 0
+     * and a longer exposure setting is at index 1.
+     */
+    @nullable ExposureParameters[] exposureSettings;
+    /**
+     * Histogram statistics calculated on this buffer.  This
+     * may contain zero or more histograms.
+     */
+    @nullable Histogram[] histograms;
+    /**
+     * Grid statistics calculated on this buffer.  This field
+     * also may contain zero or more grid statistics.
+     */
+    @nullable GridStatistics[] grids;
+    /**
+     * This may contain raw embedded data lines and can be
+     * used to share data other than exposure parameters,
+     * histograms, or grid statistics.
+     */
+    @nullable EmbeddedData embeddedData;
 }
