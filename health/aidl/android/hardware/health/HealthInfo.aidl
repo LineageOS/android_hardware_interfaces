@@ -137,13 +137,6 @@ parcelable HealthInfo {
      */
     int batteryFullChargeDesignCapacityUah;
     /**
-     * Measured battery state of health (remaining estimate full charge capacity
-     * relative to the rated capacity in %).
-     * Value must be 0 if batteryStatus is UNKNOWN.
-     * Otherwise, value must be in the range 0 to 100.
-     */
-    int batteryStateOfHealth;
-    /**
      * Battery charging state
      */
     BatteryChargingState chargingState;
