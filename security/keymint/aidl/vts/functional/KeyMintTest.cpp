@@ -1214,7 +1214,7 @@ TEST_P(NewKeyGenerationTest, RsaWithRkpAttestation) {
  * that has been generated using an associate IRemotelyProvisionedComponent.
  */
 TEST_P(NewKeyGenerationTest, EcdsaWithRkpAttestation) {
-    if (get_vsr_api_level() < 32 || AidlVersion() < 2) {
+    if (get_vsr_api_level() <= 32 || AidlVersion() < 2) {
         GTEST_SKIP() << "Only required for VSR 12+ and KeyMint 2+";
     }
 
