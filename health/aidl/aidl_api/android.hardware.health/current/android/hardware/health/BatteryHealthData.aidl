@@ -36,4 +36,5 @@ package android.hardware.health;
 parcelable BatteryHealthData {
   long batteryManufacturingDateSeconds;
   long batteryFirstUsageSeconds;
+  long batteryStateOfHealth;
 }
