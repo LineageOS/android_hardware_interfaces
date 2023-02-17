@@ -3249,6 +3249,54 @@
             ]
         },
         {
+            "property": "VehicleProperty::CRUISE_CONTROL_TARGET_SPEED",
+            "defaultValue": {
+                "floatValues": [
+                    25.0
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": 0,
+                    "minFloatValue": 20.0,
+                    "maxFloatValue": 35.0
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::ADAPTIVE_CRUISE_CONTROL_TARGET_TIME_GAP",
+            "defaultValue": {
+                "int32Values": [
+                    1200
+                ]
+            },
+            "configArray": [
+                1200,
+                1400,
+                1600,
+                1800,
+                2000,
+                2200
+            ]
+        },
+        {
+            "property": "VehicleProperty::ADAPTIVE_CRUISE_CONTROL_LEAD_VEHICLE_MEASURED_DISTANCE",
+            "defaultValue": {
+                "int32Values": [
+                    100000
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": 0,
+                    "minInt32Value": 0,
+                    "maxInt32Value": 200000
+                }
+            ],
+            "maxSampleRate": 10.0,
+            "minSampleRate": 1.0
+        },
+        {
             "property": "VehicleProperty::HANDS_ON_DETECTION_ENABLED",
             "defaultValue": {
                 "int32Values": [

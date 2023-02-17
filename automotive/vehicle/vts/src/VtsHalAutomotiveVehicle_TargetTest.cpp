@@ -534,6 +534,25 @@ TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyCruiseControlCommandConfig) {
                    VehicleArea::GLOBAL, VehiclePropertyType::INT32);
 }
 
+TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyCruiseControlTargetSpeedConfig) {
+    verifyProperty(VehicleProperty::CRUISE_CONTROL_TARGET_SPEED, VehiclePropertyAccess::READ,
+                   VehiclePropertyChangeMode::ON_CHANGE, VehiclePropertyGroup::SYSTEM,
+                   VehicleArea::GLOBAL, VehiclePropertyType::FLOAT);
+}
+
+TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyAdaptiveCruiseControlTargetTimeGapConfig) {
+    verifyProperty(VehicleProperty::ADAPTIVE_CRUISE_CONTROL_TARGET_TIME_GAP,
+                   VehiclePropertyAccess::READ_WRITE, VehiclePropertyChangeMode::ON_CHANGE,
+                   VehiclePropertyGroup::SYSTEM, VehicleArea::GLOBAL, VehiclePropertyType::INT32);
+}
+
+TEST_P(VtsHalAutomotiveVehicleTargetTest,
+       verifyAdaptiveCruiseControlLeadVehicleMeasuredDistanceConfig) {
+    verifyProperty(VehicleProperty::ADAPTIVE_CRUISE_CONTROL_LEAD_VEHICLE_MEASURED_DISTANCE,
+                   VehiclePropertyAccess::READ, VehiclePropertyChangeMode::CONTINUOUS,
+                   VehiclePropertyGroup::SYSTEM, VehicleArea::GLOBAL, VehiclePropertyType::INT32);
+}
+
 TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyHandsOnDetectionEnabledConfig) {
     verifyProperty(VehicleProperty::HANDS_ON_DETECTION_ENABLED, VehiclePropertyAccess::READ_WRITE,
                    VehiclePropertyChangeMode::ON_CHANGE, VehiclePropertyGroup::SYSTEM,
