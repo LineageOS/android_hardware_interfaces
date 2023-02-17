@@ -25,6 +25,7 @@
 #include <optional>
 #include <set>
 #include <string>
+#include <string_view>
 #include <variant>
 #include <vector>
 
@@ -72,6 +73,7 @@ using aidl::android::hardware::common::fmq::SynchronizedReadWrite;
 using aidl::android::media::audio::common::AudioContentType;
 using aidl::android::media::audio::common::AudioDevice;
 using aidl::android::media::audio::common::AudioDeviceAddress;
+using aidl::android::media::audio::common::AudioDeviceDescription;
 using aidl::android::media::audio::common::AudioDeviceType;
 using aidl::android::media::audio::common::AudioDualMonoMode;
 using aidl::android::media::audio::common::AudioFormatType;
@@ -119,10 +121,49 @@ std::vector<int32_t> GetNonExistentIds(const C& allIds) {
     return nonExistentIds;
 }
 
-AudioDeviceAddress GenerateUniqueDeviceAddress() {
-    static int nextId = 1;
-    // TODO: Use connection-specific ID.
-    return AudioDeviceAddress::make<AudioDeviceAddress::Tag::id>(std::to_string(++nextId));
+AudioDeviceAddress::Tag suggestDeviceAddressTag(const AudioDeviceDescription& description) {
+    using Tag = AudioDeviceAddress::Tag;
+    if (std::string_view connection = description.connection;
+        connection == AudioDeviceDescription::CONNECTION_BT_A2DP ||
+        connection == AudioDeviceDescription::CONNECTION_BT_LE ||
+        connection == AudioDeviceDescription::CONNECTION_BT_SCO ||
+        connection == AudioDeviceDescription::CONNECTION_WIRELESS) {
+        return Tag::mac;
+    } else if (connection == AudioDeviceDescription::CONNECTION_IP_V4) {
+        return Tag::ipv4;
+    } else if (connection == AudioDeviceDescription::CONNECTION_USB) {
+        return Tag::alsa;
+    }
+    return Tag::id;
+}
+
+AudioPort GenerateUniqueDeviceAddress(const AudioPort& port) {
+    static int nextId = 0;
+    using Tag = AudioDeviceAddress::Tag;
+    AudioDeviceAddress address;
+    switch (suggestDeviceAddressTag(port.ext.get<AudioPortExt::Tag::device>().device.type)) {
+        case Tag::id:
+            address = AudioDeviceAddress::make<Tag::id>(std::to_string(++nextId));
+            break;
+        case Tag::mac:
+            address = AudioDeviceAddress::make<Tag::mac>(
+                    std::vector<uint8_t>{1, 2, 3, 4, 5, static_cast<uint8_t>(++nextId & 0xff)});
+            break;
+        case Tag::ipv4:
+            address = AudioDeviceAddress::make<Tag::ipv4>(
+                    std::vector<uint8_t>{192, 168, 0, static_cast<uint8_t>(++nextId & 0xff)});
+            break;
+        case Tag::ipv6:
+            address = AudioDeviceAddress::make<Tag::ipv6>(std::vector<int32_t>{
+                    0xfc00, 0x0123, 0x4567, 0x89ab, 0xcdef, 0, 0, ++nextId & 0xffff});
+            break;
+        case Tag::alsa:
+            address = AudioDeviceAddress::make<Tag::alsa>(std::vector<int32_t>{1, ++nextId});
+            break;
+    }
+    AudioPort result = port;
+    result.ext.get<AudioPortExt::Tag::device>().device.address = std::move(address);
+    return result;
 }
 
 // All 'With*' classes are move-only because they are associated with some
@@ -470,8 +511,6 @@ class AudioCoreModule : public AudioCoreModuleBase, public testing::TestWithPara
 class WithDevicePortConnectedState {
   public:
     explicit WithDevicePortConnectedState(const AudioPort& idAndData) : mIdAndData(idAndData) {}
-    WithDevicePortConnectedState(const AudioPort& id, const AudioDeviceAddress& address)
-        : mIdAndData(setAudioPortAddress(id, address)) {}
     WithDevicePortConnectedState(const WithDevicePortConnectedState&) = delete;
     WithDevicePortConnectedState& operator=(const WithDevicePortConnectedState&) = delete;
     ~WithDevicePortConnectedState() {
@@ -491,12 +530,6 @@ class WithDevicePortConnectedState {
     const AudioPort& get() { return mConnectedPort; }
 
   private:
-    static AudioPort setAudioPortAddress(const AudioPort& id, const AudioDeviceAddress& address) {
-        AudioPort result = id;
-        result.ext.get<AudioPortExt::Tag::device>().device.address = address;
-        return result;
-    }
-
     const AudioPort mIdAndData;
     IModule* mModule = nullptr;
     AudioPort mConnectedPort;
@@ -1378,9 +1411,7 @@ TEST_P(AudioCoreModule, GetAudioPortWithExternalDevices) {
         GTEST_SKIP() << "No external devices in the module.";
     }
     for (const auto& port : ports) {
-        AudioPort portWithData = port;
-        portWithData.ext.get<AudioPortExt::Tag::device>().device.address =
-                GenerateUniqueDeviceAddress();
+        AudioPort portWithData = GenerateUniqueDeviceAddress(port);
         WithDevicePortConnectedState portConnected(portWithData);
         ASSERT_NO_FATAL_FAILURE(portConnected.SetUp(module.get()));
         const int32_t connectedPortId = portConnected.getId();
@@ -1531,7 +1562,7 @@ TEST_P(AudioCoreModule, SetAllExternalDevicePortConfigs) {
         GTEST_SKIP() << "No external devices in the module.";
     }
     for (const auto& port : ports) {
-        WithDevicePortConnectedState portConnected(port, GenerateUniqueDeviceAddress());
+        WithDevicePortConnectedState portConnected(GenerateUniqueDeviceAddress(port));
         ASSERT_NO_FATAL_FAILURE(portConnected.SetUp(module.get()));
         ASSERT_NO_FATAL_FAILURE(
                 ApplyEveryConfig(moduleConfig->getPortConfigsForDevicePort(portConnected.get())));
@@ -1586,9 +1617,7 @@ TEST_P(AudioCoreModule, TryConnectMissingDevice) {
     doNotSimulateConnections.flags().simulateDeviceConnections = false;
     ASSERT_NO_FATAL_FAILURE(doNotSimulateConnections.SetUp(module.get()));
     for (const auto& port : ports) {
-        AudioPort portWithData = port;
-        portWithData.ext.get<AudioPortExt::Tag::device>().device.address =
-                GenerateUniqueDeviceAddress();
+        AudioPort portWithData = GenerateUniqueDeviceAddress(port);
         EXPECT_STATUS(EX_ILLEGAL_STATE, module->connectExternalDevice(portWithData, &ignored))
                 << "static port " << portWithData.toString();
     }
@@ -1600,7 +1629,7 @@ TEST_P(AudioCoreModule, TryChangingConnectionSimulationMidway) {
     if (ports.empty()) {
         GTEST_SKIP() << "No external devices in the module.";
     }
-    WithDevicePortConnectedState portConnected(*ports.begin(), GenerateUniqueDeviceAddress());
+    WithDevicePortConnectedState portConnected(GenerateUniqueDeviceAddress(*ports.begin()));
     ASSERT_NO_FATAL_FAILURE(portConnected.SetUp(module.get()));
     ModuleDebug midwayDebugChange = debug->flags();
     midwayDebugChange.simulateDeviceConnections = false;
@@ -1654,9 +1683,7 @@ TEST_P(AudioCoreModule, ConnectDisconnectExternalDeviceTwice) {
     for (const auto& port : ports) {
         EXPECT_STATUS(EX_ILLEGAL_ARGUMENT, module->disconnectExternalDevice(port.id))
                 << "when disconnecting already disconnected device port ID " << port.id;
-        AudioPort portWithData = port;
-        portWithData.ext.get<AudioPortExt::Tag::device>().device.address =
-                GenerateUniqueDeviceAddress();
+        AudioPort portWithData = GenerateUniqueDeviceAddress(port);
         WithDevicePortConnectedState portConnected(portWithData);
         ASSERT_NO_FATAL_FAILURE(portConnected.SetUp(module.get()));
         EXPECT_STATUS(EX_ILLEGAL_ARGUMENT,
@@ -1679,7 +1706,7 @@ TEST_P(AudioCoreModule, DisconnectExternalDeviceNonResetPortConfig) {
         GTEST_SKIP() << "No external devices in the module.";
     }
     for (const auto& port : ports) {
-        WithDevicePortConnectedState portConnected(port, GenerateUniqueDeviceAddress());
+        WithDevicePortConnectedState portConnected(GenerateUniqueDeviceAddress(port));
         ASSERT_NO_FATAL_FAILURE(portConnected.SetUp(module.get()));
         const auto portConfig = moduleConfig->getSingleConfigForDevicePort(portConnected.get());
         {
@@ -1707,7 +1734,7 @@ TEST_P(AudioCoreModule, ExternalDevicePortRoutes) {
 
         int32_t connectedPortId;
         {
-            WithDevicePortConnectedState portConnected(port, GenerateUniqueDeviceAddress());
+            WithDevicePortConnectedState portConnected(GenerateUniqueDeviceAddress(port));
             ASSERT_NO_FATAL_FAILURE(portConnected.SetUp(module.get()));
             connectedPortId = portConnected.getId();
             std::vector<AudioRoute> connectedPortRoutes;
