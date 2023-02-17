@@ -188,7 +188,7 @@ enum UwbVendorCapabilityTlvTypes {
     /**
      * 4 byte value to indicate supported min slot duration in ms.
      */
-    SUPPORTED_MIN_SLOT_DURATION = 0xE8,
+    SUPPORTED_MIN_SLOT_DURATION_MS = 0xE8,
 
     /**
      * Int value to indicate supported max number of fira ranging sessions
