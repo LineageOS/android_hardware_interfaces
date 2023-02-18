@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2022 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
+ * You may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -31,10 +31,26 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.health;
-@VintfStability
-parcelable BatteryHealthData {
-  long batteryManufacturingDateSeconds;
-  long batteryFirstUsageSeconds;
-  long batteryStateOfHealth;
+package android.hardware.uwb.fira_android;
+@Backing(type="long") @VintfStability
+enum UwbVendorCapabilityTlvValues {
+  UWB_CONFIG_0 = 0,
+  UWB_CONFIG_1 = 1,
+  PULSE_SHAPE_SYMMETRICAL_ROOT_RAISED_COSINE = 0,
+  PULSE_SHAPE_PRECURSOR_FREE = 1,
+  PULSE_SHAPE_PRECURSOR_FREE_SPECIAL = 2,
+  CHAPS_PER_SLOT_3 = 1,
+  CHAPS_PER_SLOT_4 = 2,
+  CHAPS_PER_SLOT_6 = 4,
+  CHAPS_PER_SLOT_8 = 8,
+  CHAPS_PER_SLOT_9 = 16,
+  CHAPS_PER_SLOT_12 = 32,
+  CHAPS_PER_SLOT_24 = 64,
+  HOPPING_SEQUENCE_DEFAULT = 16,
+  HOPPING_SEQUENCE_AES = 8,
+  HOPPING_CONFIG_MODE_NONE = 128,
+  HOPPING_CONFIG_MODE_CONTINUOUS = 64,
+  HOPPING_CONFIG_MODE_ADAPTIVE = 32,
+  CCC_CHANNEL_5 = 1,
+  CCC_CHANNEL_9 = 2,
 }

@@ -278,6 +278,10 @@ MATCHER(IsValidHealthData, "") {
         *result_listener << " for batteryFirstUsageSeconds.";
         return false;
     }
+    if (!ExplainMatchResult(Ge(-1), arg.batteryStateOfHealth, result_listener)) {
+        *result_listener << " for batteryStateOfHealth.";
+        return false;
+    }
 
     return true;
 }

@@ -262,6 +262,7 @@ class WifiChip : public BnWifiChip {
     getSupportedRadioCombinationsMatrixInternal();
     std::pair<WifiChipCapabilities, ndk::ScopedAStatus> getWifiChipCapabilitiesInternal();
     ndk::ScopedAStatus setMloModeInternal(const ChipMloMode in_mode);
+    void retrieveDynamicIfaceCombination();
     void setWeakPtr(std::weak_ptr<WifiChip> ptr);
 
     int32_t chip_id_;
@@ -283,6 +284,7 @@ class WifiChip : public BnWifiChip {
     // registration mechanism. Use this to check if we have already
     // registered a callback.
     bool debug_ring_buffer_cb_registered_;
+    bool using_dynamic_iface_combination_;
     aidl_callback_util::AidlCallbackHandler<IWifiChipEventCallback> event_cb_handler_;
     std::weak_ptr<WifiChip> weak_ptr_this_;
 

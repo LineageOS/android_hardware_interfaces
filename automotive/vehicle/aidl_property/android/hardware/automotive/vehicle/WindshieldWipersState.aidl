@@ -30,9 +30,14 @@ enum WindshieldWipersState {
      * WindshieldWipersState is extended to include additional states.
      */
     OTHER = 0,
+    /**
+     * This state indicates the windshield wipers are currently off. If
+     * VehicleProperty#WINDSHIELD_WIPERS_SWITCH is implemented, then it may be set to any of the
+     * following modes: OFF or AUTO.
+     */
     OFF = 1,
     /**
-     * This state indicates windshield wipers are currently on. If
+     * This state indicates the windshield wipers are currently on. If
      * VehicleProperty#WINDSHIELD_WIPERS_SWITCH is implemented, then it may be set to any of the
      * following modes: MIST, INTERMITTENT_LEVEL_*, CONTINUOUS_LEVEL_*, or AUTO.
      */

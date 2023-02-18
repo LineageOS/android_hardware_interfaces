@@ -119,6 +119,7 @@ std::unordered_map<VehicleProperty, VehiclePropertyChangeMode> ChangeModeForVehi
         {VehicleProperty::AP_POWER_STATE_REPORT, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::AP_POWER_BOOTUP_REASON, VehiclePropertyChangeMode::STATIC},
         {VehicleProperty::DISPLAY_BRIGHTNESS, VehiclePropertyChangeMode::ON_CHANGE},
+        {VehicleProperty::PER_DISPLAY_BRIGHTNESS, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::HW_KEY_INPUT, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::HW_KEY_INPUT_V2, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::HW_MOTION_INPUT, VehiclePropertyChangeMode::ON_CHANGE},
