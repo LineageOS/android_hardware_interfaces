@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3c74707d_4deadc39",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 26067
+      },
+      "writtenOn": "2023-02-18T14:24:19Z",
+      "side": 1,
+      "message": "This fixes video recording on Nothing Phone (1)",
+      "revId": "2d8180df3b996880451f018c884f928fbe65c45d",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
