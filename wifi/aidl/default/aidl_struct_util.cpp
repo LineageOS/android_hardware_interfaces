@@ -3300,6 +3300,64 @@ uint32_t convertAidlChannelCategoryToLegacy(uint32_t aidl_channel_category_mask)
     return channel_category_mask;
 }
 
+bool convertLegacyIfaceMaskToIfaceConcurrencyType(u32 mask,
+                                                  std::vector<IfaceConcurrencyType>* types) {
+    if (!mask) return false;
+
+#ifndef BIT
+#define BIT(x) (1 << (x))
+#endif
+    if (mask & BIT(WIFI_INTERFACE_TYPE_STA)) types->push_back(IfaceConcurrencyType::STA);
+    if (mask & BIT(WIFI_INTERFACE_TYPE_AP)) types->push_back(IfaceConcurrencyType::AP);
+    if (mask & BIT(WIFI_INTERFACE_TYPE_AP_BRIDGED))
+        types->push_back(IfaceConcurrencyType::AP_BRIDGED);
+    if (mask & BIT(WIFI_INTERFACE_TYPE_P2P)) types->push_back(IfaceConcurrencyType::P2P);
+    if (mask & BIT(WIFI_INTERFACE_TYPE_NAN)) types->push_back(IfaceConcurrencyType::NAN_IFACE);
+
+    return true;
+}
+
+bool convertLegacyIfaceCombinationsMatrixToChipMode(
+        legacy_hal::wifi_iface_concurrency_matrix& legacy_matrix, IWifiChip::ChipMode* chip_mode) {
+    if (!chip_mode) {
+        LOG(ERROR) << "chip_mode is null";
+        return false;
+    }
+    *chip_mode = {};
+
+    int num_combinations = legacy_matrix.num_iface_combinations;
+    std::vector<IWifiChip::ChipConcurrencyCombination> driver_Combinations_vec;
+    if (!num_combinations) {
+        LOG(ERROR) << "zero iface combinations";
+        return false;
+    }
+
+    for (int i = 0; i < num_combinations; i++) {
+        IWifiChip::ChipConcurrencyCombination chipComb;
+        std::vector<IWifiChip::ChipConcurrencyCombinationLimit> limits;
+        wifi_iface_combination* comb = &legacy_matrix.iface_combinations[i];
+        if (!comb->num_iface_limits) continue;
+        for (u32 j = 0; j < comb->num_iface_limits; j++) {
+            IWifiChip::ChipConcurrencyCombinationLimit chipLimit;
+            chipLimit.maxIfaces = comb->iface_limits[j].max_limit;
+            std::vector<IfaceConcurrencyType> types;
+            if (!convertLegacyIfaceMaskToIfaceConcurrencyType(comb->iface_limits[j].iface_mask,
+                                                              &types)) {
+                LOG(ERROR) << "Failed to convert from iface_mask:"
+                           << comb->iface_limits[j].iface_mask;
+                return false;
+            }
+            chipLimit.types = types;
+            limits.push_back(chipLimit);
+        }
+        chipComb.limits = limits;
+        driver_Combinations_vec.push_back(chipComb);
+    }
+
+    chip_mode->availableCombinations = driver_Combinations_vec;
+    return true;
+}
+
 }  // namespace aidl_struct_util
 }  // namespace wifi
 }  // namespace hardware

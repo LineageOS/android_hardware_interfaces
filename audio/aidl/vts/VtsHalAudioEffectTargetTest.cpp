@@ -82,7 +82,7 @@ class AudioEffectTest : public testing::TestWithParam<EffectTestParam>, public E
         Parameter get;
         EXPECT_IS_OK(mEffect->setParameter(set));
         EXPECT_IS_OK(mEffect->getParameter(id, &get));
-        EXPECT_EQ(set, get) << set.toString() << " vs " << get.toString();
+        EXPECT_EQ(set, get) << set.toString() << "\n vs \n" << get.toString();
     }
 };
 
@@ -390,7 +390,7 @@ TEST_P(AudioEffectTest, VerifyCommonParametersAfterOpen) {
     Parameter::Id id;
     id.set<Parameter::Id::commonTag>(Parameter::common);
     EXPECT_IS_OK(mEffect->getParameter(id, &get));
-    EXPECT_EQ(expect, get) << expect.toString() << " vs " << get.toString();
+    EXPECT_EQ(expect, get) << expect.toString() << "\n vs \n" << get.toString();
 
     ASSERT_NO_FATAL_FAILURE(close(mEffect));
     ASSERT_NO_FATAL_FAILURE(destroy(mFactory, mEffect));

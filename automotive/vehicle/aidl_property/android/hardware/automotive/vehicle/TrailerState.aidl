@@ -17,14 +17,28 @@
 package android.hardware.automotive.vehicle;
 
 /**
- * Used by the trailer present property to enumerate the current state
- * of the trailer.
+ * Used to enumerate the current state of VehicleProperty#TRAILER_PRESENT.
  */
 @VintfStability
 @Backing(type="int")
 enum TrailerState {
+    /**
+     * This state is used as an alternative for any TrailerState value that is not defined in the
+     * platform. Ideally, implementations of VehicleProperty#TRAILER_PRESENT should not use this
+     * state. The framework can use this field to remain backwards compatible if TrailerState is
+     * extended to include additional states.
+     */
     UNKNOWN = 0,
+    /**
+     * A trailer is not attached to the vehicle.
+     */
     NOT_PRESENT = 1,
+    /**
+     * A trailer is attached to the vehicle.
+     */
     PRESENT = 2,
+    /**
+     * The state of the trailer is not available due to an error.
+     */
     ERROR = 3,
 }

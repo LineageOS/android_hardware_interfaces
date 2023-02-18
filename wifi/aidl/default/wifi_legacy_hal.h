@@ -290,6 +290,7 @@ using ::WIFI_ERROR_UNINITIALIZED;
 using ::WIFI_ERROR_UNKNOWN;
 using ::wifi_gscan_capabilities;
 using ::wifi_hal_fn;
+using ::wifi_iface_concurrency_matrix;
 using ::WIFI_INDOOR_CHANNEL;
 using ::wifi_information_element;
 using ::WIFI_INTERFACE_IBSS;
@@ -779,6 +780,7 @@ class WifiLegacyHal {
     std::pair<wifi_error, wifi_chip_capabilities> getWifiChipCapabilities();
     wifi_error enableStaChannelForPeerNetwork(uint32_t channelCategoryEnableFlag);
     wifi_error setMloMode(wifi_mlo_mode mode);
+    std::pair<wifi_error, wifi_iface_concurrency_matrix> getSupportedIfaceConcurrencyMatrix();
 
   private:
     // Retrieve interface handles for all the available interfaces.

@@ -16,15 +16,30 @@
 
 package android.hardware.automotive.vehicle;
 
+/**
+ * Used to enumerate the current level of VehicleProperty#ENGINE_OIL_LEVEL.
+ */
 @VintfStability
 @Backing(type="int")
 enum VehicleOilLevel {
     /**
-     * Oil level values
+     * The oil level of the engine is critically low, so the vehicle may be unsafe to drive.
      */
     CRITICALLY_LOW = 0,
+    /**
+     * The oil level of the engine is low and needs to be replaced.
+     */
     LOW = 1,
+    /**
+     * The oil level of the engine is normal for the vehicle.
+     */
     NORMAL = 2,
+    /**
+     * The oil level of the engine is high, so the vehicle may be unsafe to drive.
+     */
     HIGH = 3,
+    /**
+     * This value represents an error when retrieving the oil level of the engine.
+     */
     ERROR = 4,
 }

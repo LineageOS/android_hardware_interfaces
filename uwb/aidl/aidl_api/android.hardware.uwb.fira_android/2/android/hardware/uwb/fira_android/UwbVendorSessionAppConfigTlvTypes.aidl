@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2022 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
+ * You may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -31,10 +31,18 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.health;
-@VintfStability
-parcelable BatteryHealthData {
-  long batteryManufacturingDateSeconds;
-  long batteryFirstUsageSeconds;
-  long batteryStateOfHealth;
+package android.hardware.uwb.fira_android;
+@Backing(type="int") @VintfStability
+enum UwbVendorSessionAppConfigTlvTypes {
+  CCC_HOP_MODE_KEY = 160,
+  CCC_UWB_TIME0 = 161,
+  CCC_RANGING_PROTOCOL_VER = 163,
+  CCC_UWB_CONFIG_ID = 164,
+  CCC_PULSESHAPE_COMBO = 165,
+  CCC_URSK_TTL = 166,
+  NB_OF_RANGE_MEASUREMENTS = 227,
+  NB_OF_AZIMUTH_MEASUREMENTS = 228,
+  NB_OF_ELEVATION_MEASUREMENTS = 229,
+  ENABLE_DIAGNOSTICS = 232,
+  DIAGRAMS_FRAME_REPORTS_FIELDS = 233,
 }
