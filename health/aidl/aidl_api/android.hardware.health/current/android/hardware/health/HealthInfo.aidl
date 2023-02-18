@@ -57,8 +57,9 @@ parcelable HealthInfo {
   android.hardware.health.BatteryCapacityLevel batteryCapacityLevel;
   long batteryChargeTimeToFullNowSeconds;
   int batteryFullChargeDesignCapacityUah;
+  int batteryStateOfHealth;
   android.hardware.health.BatteryChargingState chargingState;
   android.hardware.health.BatteryChargingPolicy chargingPolicy;
   @nullable android.hardware.health.BatteryHealthData batteryHealthData;
-  const int BATTERY_CHARGE_TIME_TO_FULL_NOW_SECONDS_UNSUPPORTED = (-1) /* -1 */;
+  const int BATTERY_CHARGE_TIME_TO_FULL_NOW_SECONDS_UNSUPPORTED = -1;
 }
