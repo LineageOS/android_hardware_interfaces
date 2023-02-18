@@ -42,5 +42,5 @@ parcelable NrSignalStrength {
   int csiSinr;
   int csiCqiTableIndex;
   byte[] csiCqiReport;
-  int timingAdvance;
+  int timingAdvance = 0x7FFFFFFF;
 }
