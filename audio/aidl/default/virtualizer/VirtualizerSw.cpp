@@ -68,11 +68,7 @@ const std::vector<Range::VirtualizerRange> VirtualizerSw::kRanges = {
         MAKE_RANGE(Virtualizer, strengthPm, 0, 1000),
         /* speakerAngle is get-only, set min > max */
         MAKE_RANGE(Virtualizer, speakerAngles, {Virtualizer::ChannelAngle({.channel = 1})},
-                   {Virtualizer::ChannelAngle({.channel = 0})}),
-        /* device is get-only */
-        MAKE_RANGE(Virtualizer, device,
-                   AudioDeviceDescription({.type = AudioDeviceType::IN_DEFAULT}),
-                   AudioDeviceDescription({.type = AudioDeviceType::NONE}))};
+                   {Virtualizer::ChannelAngle({.channel = 0})})};
 
 const Capability VirtualizerSw::kCapability = {
         .range = Range::make<Range::virtualizer>(VirtualizerSw::kRanges)};
@@ -174,17 +170,21 @@ ndk::ScopedAStatus VirtualizerSw::getParameterVirtualizer(const Virtualizer::Tag
 ndk::ScopedAStatus VirtualizerSw::getSpeakerAngles(const Virtualizer::SpeakerAnglesPayload payload,
                                                    Parameter::Specific* specific) {
     std::vector<Virtualizer::ChannelAngle> angles;
-    if (::android::hardware::audio::common::getChannelCount(payload.layout) == 1) {
+    const auto chNum = ::android::hardware::audio::common::getChannelCount(payload.layout);
+    if (chNum == 1) {
         angles = {{.channel = (int32_t)AudioChannelLayout::CHANNEL_FRONT_LEFT,
                    .azimuthDegree = 0,
                    .elevationDegree = 0}};
-    } else {
+    } else if (chNum == 2) {
         angles = {{.channel = (int32_t)AudioChannelLayout::CHANNEL_FRONT_LEFT,
                    .azimuthDegree = -90,
                    .elevationDegree = 0},
                   {.channel = (int32_t)AudioChannelLayout::CHANNEL_FRONT_RIGHT,
                    .azimuthDegree = 90,
                    .elevationDegree = 0}};
+    } else {
+        return ndk::ScopedAStatus::fromExceptionCodeWithMessage(EX_ILLEGAL_ARGUMENT,
+                                                                "supportUpTo2Ch");
     }
 
     Virtualizer param = Virtualizer::make<Virtualizer::speakerAngles>(angles);
