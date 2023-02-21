@@ -35,9 +35,13 @@ package android.hardware.biometrics.fingerprint;
 /* @hide */
 @VintfStability
 parcelable SensorLocation {
+  /**
+   * @deprecated use the display field instead. This field was never used.
+   */
   int displayId;
   int sensorLocationX;
   int sensorLocationY;
   int sensorRadius;
   String display = "";
+  android.hardware.biometrics.fingerprint.SensorShape sensorShape = android.hardware.biometrics.fingerprint.SensorShape.CIRCLE;
 }
