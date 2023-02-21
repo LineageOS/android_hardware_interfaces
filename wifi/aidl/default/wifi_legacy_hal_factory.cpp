@@ -128,7 +128,7 @@ bool WifiLegacyHalFactory::initLinkedHalFunctionTable(wifi_hal_fn* hal_fn) {
 void WifiLegacyHalFactory::initVendorHalsDescriptorList() {
     xmlDocPtr xml;
     xmlNodePtr node, cnode;
-    char* version;
+    char* version = NULL;
     std::string path;
     xmlChar* value;
     wifi_hal_lib_desc desc;
@@ -200,6 +200,10 @@ void WifiLegacyHalFactory::initVendorHalsDescriptorList() {
         }
     skip:
         xmlFreeDoc(xml);
+        if (version) {
+            xmlFree(version);
+            version = NULL;
+        }
     }
     ::closedir(dirPtr);
 }
