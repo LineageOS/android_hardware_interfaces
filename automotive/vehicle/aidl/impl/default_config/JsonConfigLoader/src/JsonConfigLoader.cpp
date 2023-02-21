@@ -136,6 +136,7 @@ const std::unordered_map<std::string, int> CONSTANTS_BY_NAME = {
 #ifdef ENABLE_VEHICLE_HAL_TEST_PROPERTIES
         // Following are test properties:
         {"ECHO_REVERSE_BYTES", ECHO_REVERSE_BYTES},
+        {"VENDOR_PROPERTY_ID", VENDOR_PROPERTY_ID},
         {"kMixedTypePropertyForTest", kMixedTypePropertyForTest},
         {"VENDOR_CLUSTER_NAVIGATION_STATE", VENDOR_CLUSTER_NAVIGATION_STATE},
         {"VENDOR_CLUSTER_REQUEST_DISPLAY", VENDOR_CLUSTER_REQUEST_DISPLAY},
