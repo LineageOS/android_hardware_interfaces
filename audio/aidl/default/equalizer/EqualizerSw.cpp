@@ -76,11 +76,10 @@ const std::vector<Equalizer::Preset> EqualizerSw::kPresets = {
 const std::vector<Range::EqualizerRange> EqualizerSw::kRanges = {
         MAKE_RANGE(Equalizer, preset, 0, EqualizerSw::kPresets.size() - 1),
         MAKE_RANGE(Equalizer, bandLevels,
-                   std::vector<Equalizer::BandLevel>{Equalizer::BandLevel(
-                           {.index = 0, .levelMb = std::numeric_limits<int>::min()})},
                    std::vector<Equalizer::BandLevel>{
-                           Equalizer::BandLevel({.index = EqualizerSwContext::kMaxBandNumber - 1,
-                                                 .levelMb = std::numeric_limits<int>::max()})}),
+                           Equalizer::BandLevel({.index = 0, .levelMb = -15})},
+                   std::vector<Equalizer::BandLevel>{Equalizer::BandLevel(
+                           {.index = EqualizerSwContext::kMaxBandNumber - 1, .levelMb = 15})}),
         /* capability definition */
         MAKE_RANGE(Equalizer, bandFrequencies, EqualizerSw::kBandFrequency,
                    EqualizerSw::kBandFrequency),
@@ -169,6 +168,14 @@ ndk::ScopedAStatus EqualizerSw::getParameterEqualizer(const Equalizer::Tag& tag,
         }
         case Equalizer::centerFreqMh: {
             eqParam.set<Equalizer::centerFreqMh>(mContext->getCenterFreqs());
+            break;
+        }
+        case Equalizer::bandFrequencies: {
+            eqParam.set<Equalizer::bandFrequencies>(kBandFrequency);
+            break;
+        }
+        case Equalizer::presets: {
+            eqParam.set<Equalizer::presets>(kPresets);
             break;
         }
         default: {
