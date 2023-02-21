@@ -77,5 +77,5 @@ parcelable NrSignalStrength {
      * INT_MAX: 0x7FFFFFFF denotes invalid/unreported value.
      * Reference: 3GPP 36.213 section 4.2.3
      */
-    int timingAdvance;
+    int timingAdvance = 0x7FFFFFFF;
 }
