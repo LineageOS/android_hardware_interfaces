@@ -217,6 +217,14 @@ bool KeyMintAidlTestBase::isDeviceIdAttestationRequired() {
     return AidlVersion() >= 2 || property_get_int32("ro.vendor.api_level", 0) >= 33;
 }
 
+/**
+ * An API to determine second IMEI ID attestation is required or not,
+ * which is supported for KeyMint version 3 or first_api_level greater than 33.
+ */
+bool KeyMintAidlTestBase::isSecondImeiIdAttestationRequired() {
+    return AidlVersion() >= 3 && property_get_int32("ro.vendor.api_level", 0) > 33;
+}
+
 bool KeyMintAidlTestBase::Curve25519Supported() {
     // Strongbox never supports curve 25519.
     if (SecLevel() == SecurityLevel::STRONGBOX) {

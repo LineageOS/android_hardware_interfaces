@@ -85,6 +85,7 @@ class KeyMintAidlTestBase : public ::testing::TestWithParam<string> {
     uint32_t boot_patch_level(const vector<KeyCharacteristics>& key_characteristics);
     uint32_t boot_patch_level();
     bool isDeviceIdAttestationRequired();
+    bool isSecondImeiIdAttestationRequired();
 
     bool Curve25519Supported();
 
