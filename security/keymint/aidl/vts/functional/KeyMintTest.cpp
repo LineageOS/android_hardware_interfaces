@@ -1136,7 +1136,7 @@ TEST_P(NewKeyGenerationTest, RsaWithAttestation) {
  * that has been generated using an associate IRemotelyProvisionedComponent.
  */
 TEST_P(NewKeyGenerationTest, RsaWithRkpAttestation) {
-    if (get_vsr_api_level() < 32 || AidlVersion() < 2) {
+    if (get_vsr_api_level() < __ANDROID_API_T__ || AidlVersion() < 2) {
         GTEST_SKIP() << "Only required for VSR 12+ and KeyMint 2+";
     }
 
@@ -1214,7 +1214,7 @@ TEST_P(NewKeyGenerationTest, RsaWithRkpAttestation) {
  * that has been generated using an associate IRemotelyProvisionedComponent.
  */
 TEST_P(NewKeyGenerationTest, EcdsaWithRkpAttestation) {
-    if (get_vsr_api_level() <= 32 || AidlVersion() < 2) {
+    if (get_vsr_api_level() < __ANDROID_API_T__ || AidlVersion() < 2) {
         GTEST_SKIP() << "Only required for VSR 12+ and KeyMint 2+";
     }
 
@@ -8629,7 +8629,7 @@ using VsrRequirementTest = KeyMintAidlTestBase;
 
 TEST_P(VsrRequirementTest, Vsr13Test) {
     int vsr_api_level = get_vsr_api_level();
-    if (vsr_api_level < 33) {
+    if (vsr_api_level < __ANDROID_API_T__) {
         GTEST_SKIP() << "Applies only to VSR API level 33, this device is: " << vsr_api_level;
     }
     EXPECT_GE(AidlVersion(), 2) << "VSR 13+ requires KeyMint version 2";
@@ -8637,7 +8637,7 @@ TEST_P(VsrRequirementTest, Vsr13Test) {
 
 TEST_P(VsrRequirementTest, Vsr14Test) {
     int vsr_api_level = get_vsr_api_level();
-    if (vsr_api_level < 34) {
+    if (vsr_api_level < __ANDROID_API_U__) {
         GTEST_SKIP() << "Applies only to VSR API level 34, this device is: " << vsr_api_level;
     }
     EXPECT_GE(AidlVersion(), 3) << "VSR 14+ requires KeyMint version 3";
