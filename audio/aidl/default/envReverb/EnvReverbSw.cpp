@@ -66,6 +66,8 @@ const std::vector<Range::EnvironmentalReverbRange> EnvReverbSw::kRanges = {
         MAKE_RANGE(EnvironmentalReverb, roomHfLevelMb, -4000, 0),
         MAKE_RANGE(EnvironmentalReverb, decayTimeMs, 0, 7000),
         MAKE_RANGE(EnvironmentalReverb, decayHfRatioPm, 100, 2000),
+        MAKE_RANGE(EnvironmentalReverb, reflectionsLevelMb, -6000, 0),
+        MAKE_RANGE(EnvironmentalReverb, reflectionsDelayMs, 0, 65),
         MAKE_RANGE(EnvironmentalReverb, levelMb, -6000, 0),
         MAKE_RANGE(EnvironmentalReverb, delayMs, 0, 65),
         MAKE_RANGE(EnvironmentalReverb, diffusionPm, 0, 1000),
@@ -123,6 +125,20 @@ ndk::ScopedAStatus EnvReverbSw::setParameterSpecific(const Parameter::Specific& 
                     mContext->setErDecayHfRatio(
                             erParam.get<EnvironmentalReverb::decayHfRatioPm>()) != RetCode::SUCCESS,
                     EX_ILLEGAL_ARGUMENT, "setDecayHfRatioFailed");
+            return ndk::ScopedAStatus::ok();
+        }
+        case EnvironmentalReverb::reflectionsLevelMb: {
+            RETURN_IF(mContext->setErReflectionsLevel(
+                              erParam.get<EnvironmentalReverb::reflectionsLevelMb>()) !=
+                              RetCode::SUCCESS,
+                      EX_ILLEGAL_ARGUMENT, "setReflectionsLevelFailed");
+            return ndk::ScopedAStatus::ok();
+        }
+        case EnvironmentalReverb::reflectionsDelayMs: {
+            RETURN_IF(mContext->setErReflectionsDelay(
+                              erParam.get<EnvironmentalReverb::reflectionsDelayMs>()) !=
+                              RetCode::SUCCESS,
+                      EX_ILLEGAL_ARGUMENT, "setReflectionsDelayFailed");
             return ndk::ScopedAStatus::ok();
         }
         case EnvironmentalReverb::levelMb: {
@@ -199,6 +215,14 @@ ndk::ScopedAStatus EnvReverbSw::getParameterEnvironmentalReverb(const Environmen
         }
         case EnvironmentalReverb::decayHfRatioPm: {
             erParam.set<EnvironmentalReverb::decayHfRatioPm>(mContext->getErDecayHfRatio());
+            break;
+        }
+        case EnvironmentalReverb::reflectionsLevelMb: {
+            erParam.set<EnvironmentalReverb::reflectionsLevelMb>(mContext->getErReflectionsLevel());
+            break;
+        }
+        case EnvironmentalReverb::reflectionsDelayMs: {
+            erParam.set<EnvironmentalReverb::reflectionsDelayMs>(mContext->getErReflectionsDelay());
             break;
         }
         case EnvironmentalReverb::levelMb: {
