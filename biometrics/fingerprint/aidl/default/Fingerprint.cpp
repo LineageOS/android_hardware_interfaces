@@ -90,7 +90,8 @@ ndk::ScopedAStatus Fingerprint::getSensorProps(std::vector<SensorProps>* out) {
              navigationGuesture,
              detectInteraction,
              displayTouch,
-             controlIllumination}};
+             controlIllumination,
+             std::nullopt}};
     return ndk::ScopedAStatus::ok();
 }
 

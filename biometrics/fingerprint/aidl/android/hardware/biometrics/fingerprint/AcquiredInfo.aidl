@@ -98,4 +98,9 @@ enum AcquiredInfo {
      * However, RETRYING_CAPTURE must not be sent after ACQUIRED_GOOD is sent.
      */
     RETRYING_CAPTURE,
+
+    /**
+     * Fingerprint was lifted before the capture completed.
+     */
+    LIFT_TOO_SOON,
 }

@@ -35,12 +35,12 @@ package android.hardware.biometrics.fingerprint;
 /* @hide */
 @JavaDerive(equals=true) @VintfStability
 parcelable PointerContext {
-  int pointerId = -1;
-  float x = 0.000000f;
-  float y = 0.000000f;
-  float minor = 0.000000f;
-  float major = 0.000000f;
-  float orientation = 0.000000f;
+  int pointerId = (-1) /* -1 */;
+  float x = 0f;
+  float y = 0f;
+  float minor = 0f;
+  float major = 0f;
+  float orientation = 0f;
   boolean isAod = false;
   long time = 0;
   long gestureStart = 0;

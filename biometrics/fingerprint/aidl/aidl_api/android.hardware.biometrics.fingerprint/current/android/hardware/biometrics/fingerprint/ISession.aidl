@@ -46,7 +46,13 @@ interface ISession {
   void invalidateAuthenticatorId();
   void resetLockout(in android.hardware.keymaster.HardwareAuthToken hat);
   void close();
+  /**
+   * @deprecated use onPointerDownWithContext instead.
+   */
   void onPointerDown(in int pointerId, in int x, in int y, in float minor, in float major);
+  /**
+   * @deprecated use onPointerUpWithContext instead.
+   */
   void onPointerUp(in int pointerId);
   void onUiReady();
   android.hardware.biometrics.common.ICancellationSignal authenticateWithContext(in long operationId, in android.hardware.biometrics.common.OperationContext context);
@@ -55,4 +61,6 @@ interface ISession {
   void onPointerDownWithContext(in android.hardware.biometrics.fingerprint.PointerContext context);
   void onPointerUpWithContext(in android.hardware.biometrics.fingerprint.PointerContext context);
   void onContextChanged(in android.hardware.biometrics.common.OperationContext context);
+  void onPointerCancelWithContext(in android.hardware.biometrics.fingerprint.PointerContext context);
+  void setIgnoreDisplayTouches(in boolean shouldIgnore);
 }
