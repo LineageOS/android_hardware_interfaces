@@ -31,5 +31,5 @@ git commit -am "convert $1" --no-edit
 git revert HEAD --no-edit
 git commit --amend --no-edit
 git diff HEAD~1 --stat
-repo upload . --no-verify
+repo upload . --no-verify --wip --hashtag=anapic_release_review
 popd

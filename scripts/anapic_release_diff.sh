@@ -26,5 +26,5 @@ git diff "$1".."$2" android | git apply
 git add -A
 git commit -am "Android $1 to $2: $3" --no-edit
 git diff HEAD~1 --stat
-repo upload . --no-verify
+repo upload . --no-verify --wip --hashtag=anapic_release_review
 popd
