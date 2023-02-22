@@ -58,11 +58,22 @@ class EnvReverbSwContext final : public EffectContext {
     int getErDensity() const { return mDensity; }
 
     RetCode setErBypass(bool bypass) {
-        // TODO : Add implementation to apply new bypass
         mBypass = bypass;
         return RetCode::SUCCESS;
     }
     bool getErBypass() const { return mBypass; }
+
+    RetCode setErReflectionsDelay(int delay) {
+        mReflectionsDelayMs = delay;
+        return RetCode::SUCCESS;
+    }
+    bool getErReflectionsDelay() const { return mReflectionsDelayMs; }
+
+    RetCode setErReflectionsLevel(int level) {
+        mReflectionsLevelMb = level;
+        return RetCode::SUCCESS;
+    }
+    bool getErReflectionsLevel() const { return mReflectionsLevelMb; }
 
   private:
     int mRoomLevel = -6000;                                        // Default room level
@@ -71,6 +82,8 @@ class EnvReverbSwContext final : public EffectContext {
     int mDecayHfRatio = 500;                                       // Default decay hf ratio
     int mLevel = -6000;                                            // Default level
     int mDelay = 40;                                               // Default delay
+    int mReflectionsLevelMb = 0;
+    int mReflectionsDelayMs = 0;
     int mDiffusion = 1000;                                         // Default diffusion
     int mDensity = 1000;                                           // Default density
     bool mBypass = false;                                          // Default bypass
