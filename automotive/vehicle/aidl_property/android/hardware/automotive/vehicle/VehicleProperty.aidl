@@ -3878,6 +3878,11 @@ enum VehicleProperty {
      * maneuver is detected, ELKA alerts the driver and applies steering corrections to keep the
      * vehicle in its original lane.
      *
+     * In general, EMERGENCY_LANE_KEEP_ASSIST_ENABLED should always return true or false. If the
+     * feature is not available due to some temporary state, such as the vehicle speed being too
+     * low, that information must be conveyed through the ErrorState values in the
+     * EMERGENCY_LANE_KEEP_ASSIST_STATE property.
+     *
      * This property is defined as read_write, but OEMs have the option to implement it as read
      * only.
      *
@@ -3915,6 +3920,11 @@ enum VehicleProperty {
      *
      * When CC is enabled, the ADAS system in the vehicle should be turned on and responding to
      * commands.
+     *
+     * In general, CRUISE_CONTROL_ENABLED should always return true or false. If the feature is not
+     * available due to some temporary state, such as the vehicle speed being too low, that
+     * information must be conveyed through the ErrorState values in the CRUISE_CONTROL_STATE
+     * property.
      *
      * This property is defined as read_write, but OEMs have the option to implement it as read
      * only.
@@ -4055,6 +4065,10 @@ enum VehicleProperty {
      * vehicle should be monitoring the presence of the driver's hands on the steering wheel and
      * send a warning if it detects that the driver's hands are no longer on the steering wheel.
      *
+     * In general, HANDS_ON_DETECTION_ENABLED should always return true or false. If the feature is
+     * not available due to some temporary state, that information must be conveyed through the
+     * ErrorState values in the HANDS_ON_DETECTION_STATE property.
+     *
      * This property is defined as read_write, but OEMs have the option to implement it as read
      * only.
      *
@@ -4117,6 +4131,10 @@ enum VehicleProperty {
      * monitoring. When driver attention monitoring is enabled, a system inside the vehicle should
      * be monitoring the attention level of the driver and should send a warning if it detects that
      * the driver is distracted.
+     *
+     * In general, DRIVER_ATTENTION_MONITORING_ENABLED should always return true or false. If the
+     * feature is not available due to some temporary state, that information must be conveyed
+     * through the ErrorState values in the DRIVER_ATTENTION_MONITORING_STATE property.
      *
      * This property is defined as read_write, but OEMs have the option to implement it as read
      * only.
