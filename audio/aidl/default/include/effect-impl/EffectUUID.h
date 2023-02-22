@@ -273,12 +273,12 @@ static const AudioUuid kVirtualizerProxyUUID = {static_cast<int32_t>(0xd3467faa)
                                                 0x4d34,
                                                 0xacaf,
                                                 {0x00, 0x02, 0xa5, 0xd5, 0xc5, 0x1b}};
-// fa819f3e-588b-11ed-9b6a-0242ac120002
-static const AudioUuid kVisualizerTypeUUID = {static_cast<int32_t>(0xfa819f3e),
-                                              0x588b,
-                                              0x11ed,
-                                              0x9b6a,
-                                              {0x02, 0x42, 0xac, 0x12, 0x00, 0x02}};
+// e46b26a0-dddd-11db-8afd-0002a5d5c51b
+static const AudioUuid kVisualizerTypeUUID = {static_cast<int32_t>(0xe46b26a0),
+                                              0xdddd,
+                                              0x11db,
+                                              0x8afd,
+                                              {0x00, 0x02, 0xa5, 0xd5, 0xc5, 0x1b}};
 // fa81a0f6-588b-11ed-9b6a-0242ac120002
 static const AudioUuid kVisualizerSwImplUUID = {static_cast<int32_t>(0xfa81a0f6),
                                                 0x588b,
