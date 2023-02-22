@@ -1,0 +1,25 @@
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
+cc_test {
+    name: "VtsHalTetheroffloadTargetTest",
+    defaults: [
+        "VtsHalTargetTestDefaults",
+        "use_libaidlvintf_gtest_helper_static",
+    ],
+    srcs: [
+        "VtsHalTetheroffloadTargetTest.cpp",
+    ],
+    shared_libs: [
+        "libbinder_ndk",
+    ],
+    static_libs: [
+        "android.hardware.tetheroffload-V1-ndk",
+        "libgmock_ndk",
+    ],
+    test_suites: [
+        "general-tests",
+        "vts",
+    ],
+}
