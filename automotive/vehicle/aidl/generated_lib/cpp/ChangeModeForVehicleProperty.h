@@ -265,6 +265,7 @@ std::unordered_map<VehicleProperty, VehiclePropertyChangeMode> ChangeModeForVehi
         {VehicleProperty::CRUISE_CONTROL_TYPE, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::CRUISE_CONTROL_STATE, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::CRUISE_CONTROL_COMMAND, VehiclePropertyChangeMode::ON_CHANGE},
+        {VehicleProperty::CRUISE_CONTROL_TARGET_SPEED, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::HANDS_ON_DETECTION_ENABLED, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::HANDS_ON_DETECTION_DRIVER_STATE, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::HANDS_ON_DETECTION_WARNING, VehiclePropertyChangeMode::ON_CHANGE},

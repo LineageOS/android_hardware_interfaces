@@ -3249,6 +3249,21 @@
             ]
         },
         {
+            "property": "VehicleProperty::CRUISE_CONTROL_TARGET_SPEED",
+            "defaultValue": {
+                "floatValues": [
+                    25.0
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": 0,
+                    "minFloatValue": 20.0,
+                    "maxFloatValue": 35.0
+                }
+            ]
+        },
+        {
             "property": "VehicleProperty::HANDS_ON_DETECTION_ENABLED",
             "defaultValue": {
                 "int32Values": [
