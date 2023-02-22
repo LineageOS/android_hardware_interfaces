@@ -39,6 +39,8 @@ union EnvironmentalReverb {
   int roomHfLevelMb;
   int decayTimeMs;
   int decayHfRatioPm;
+  int reflectionsLevelMb;
+  int reflectionsDelayMs;
   int levelMb;
   int delayMs;
   int diffusionPm;
