@@ -182,6 +182,11 @@
             "changeMode": "VehiclePropertyChangeMode::ON_CHANGE"
         },
         {
+            "property": "Constants::VENDOR_PROPERTY_ID",
+            "access": "VehiclePropertyAccess::READ_WRITE",
+            "changeMode": "VehiclePropertyChangeMode::ON_CHANGE"
+        },
+        {
             "property": "VehicleProperty::SUPPORT_CUSTOMIZE_VENDOR_PERMISSION",
             "defaultValue": {
                 "int32Values": [
