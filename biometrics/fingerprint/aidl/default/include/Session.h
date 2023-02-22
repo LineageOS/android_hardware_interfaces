@@ -97,6 +97,10 @@ class Session : public BnSession {
 
     ndk::ScopedAStatus onContextChanged(const common::OperationContext& context) override;
 
+    ndk::ScopedAStatus onPointerCancelWithContext(const PointerContext& context) override;
+
+    ndk::ScopedAStatus setIgnoreDisplayTouches(bool shouldIgnore) override;
+
     bool isClosed();
 
   private:
