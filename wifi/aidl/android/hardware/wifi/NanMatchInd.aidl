@@ -123,7 +123,7 @@ parcelable NanMatchInd {
     NanRangingIndication rangingIndicationType;
     /**
      * Security Context Identifier attribute contains PMKID. Shall be included in NDP setup and
-     * response messages. Security Context Identifie identifies the Security Context. For NAN
+     * response messages. Security Context Identifier identifies the Security Context. For NAN
      * Shared Key Cipher Suite, this field contains the 16 octet PMKID identifying the PMK used for
      * setting up the Secure Data Path.
      */
