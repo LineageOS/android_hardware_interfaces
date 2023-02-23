@@ -1,4 +1,11 @@
 #!/bin/bash
+#
+# Create two CLs for the given HIDL interface to see the diff between the
+# hidl2aidl output and the source at the tip-of-tree.
+# The first CL contains the hidl2aidl output after removing all existing AIDL
+# files.
+# The second CL contains all of the changes on top of the raw hidl2aidl output
+# that can be used for review.
 
 if [[ $# -ne 1 ]]; then
     echo "Usage: $0 INTERFACE_NAME"
@@ -23,5 +30,6 @@ git add -A
 git commit -am "convert $1" --no-edit
 git revert HEAD --no-edit
 git commit --amend --no-edit
-repo upload . --no-verify
+git diff HEAD~1 --stat
+repo upload . --no-verify --wip --hashtag=anapic_release_review
 popd
