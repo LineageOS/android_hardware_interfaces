@@ -3986,6 +3986,25 @@ enum VehicleProperty {
             0x1012 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
 
     /**
+     * Current target speed for Cruise Control (CC).
+     *
+     * OEMs should set the minInt32Value and maxInt32Value values for this property to define the
+     * min and max target speed values. These values must be non-negative.
+     *
+     * The maxFloatValue represents the upper bound of the target speed.
+     * The minFloatValue represents the lower bound of the target speed.
+     *
+     * When this property is not available (for example when CRUISE_CONTROL_ENABLED is false), it
+     * should return StatusCode.NOT_AVAILABLE_DISABLED.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     * @unit VehicleUnit:METER_PER_SEC
+     */
+    CRUISE_CONTROL_TARGET_SPEED =
+            0x1013 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.FLOAT,
+
+    /**
      * Enable or disable hands on detection (HOD).
      *
      * Set true to enable HOD and false to disable HOD. When HOD is enabled, a system inside the
