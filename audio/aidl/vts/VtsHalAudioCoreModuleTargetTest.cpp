@@ -88,6 +88,7 @@ using aidl::android::media::audio::common::AudioPort;
 using aidl::android::media::audio::common::AudioPortConfig;
 using aidl::android::media::audio::common::AudioPortDeviceExt;
 using aidl::android::media::audio::common::AudioPortExt;
+using aidl::android::media::audio::common::AudioPortMixExt;
 using aidl::android::media::audio::common::AudioSource;
 using aidl::android::media::audio::common::AudioUsage;
 using aidl::android::media::audio::common::Boolean;
@@ -1524,6 +1525,8 @@ TEST_P(AudioCoreModule, SetAudioPortConfigSuggestedConfig) {
     AudioPortConfig portConfig;
     AudioPortConfig suggestedConfig;
     portConfig.portId = srcMixPort.value().id;
+    const int32_t kIoHandle = 42;
+    portConfig.ext = AudioPortMixExt{.handle = kIoHandle};
     {
         bool applied = true;
         ASSERT_IS_OK(module->setAudioPortConfig(portConfig, &suggestedConfig, &applied))
@@ -1535,18 +1538,22 @@ TEST_P(AudioCoreModule, SetAudioPortConfigSuggestedConfig) {
     EXPECT_TRUE(suggestedConfig.channelMask.has_value());
     EXPECT_TRUE(suggestedConfig.format.has_value());
     EXPECT_TRUE(suggestedConfig.flags.has_value());
+    ASSERT_EQ(AudioPortExt::Tag::mix, suggestedConfig.ext.getTag());
+    EXPECT_EQ(kIoHandle, suggestedConfig.ext.get<AudioPortExt::Tag::mix>().handle);
     WithAudioPortConfig applied(suggestedConfig);
     ASSERT_NO_FATAL_FAILURE(applied.SetUp(module.get()));
     const AudioPortConfig& appliedConfig = applied.get();
     EXPECT_NE(0, appliedConfig.id);
-    EXPECT_TRUE(appliedConfig.sampleRate.has_value());
+    ASSERT_TRUE(appliedConfig.sampleRate.has_value());
     EXPECT_EQ(suggestedConfig.sampleRate.value(), appliedConfig.sampleRate.value());
-    EXPECT_TRUE(appliedConfig.channelMask.has_value());
+    ASSERT_TRUE(appliedConfig.channelMask.has_value());
     EXPECT_EQ(suggestedConfig.channelMask.value(), appliedConfig.channelMask.value());
-    EXPECT_TRUE(appliedConfig.format.has_value());
+    ASSERT_TRUE(appliedConfig.format.has_value());
     EXPECT_EQ(suggestedConfig.format.value(), appliedConfig.format.value());
-    EXPECT_TRUE(appliedConfig.flags.has_value());
+    ASSERT_TRUE(appliedConfig.flags.has_value());
     EXPECT_EQ(suggestedConfig.flags.value(), appliedConfig.flags.value());
+    ASSERT_EQ(AudioPortExt::Tag::mix, appliedConfig.ext.getTag());
+    EXPECT_EQ(kIoHandle, appliedConfig.ext.get<AudioPortExt::Tag::mix>().handle);
 }
 
 TEST_P(AudioCoreModule, SetAllAttachedDevicePortConfigs) {
