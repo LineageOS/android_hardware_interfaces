@@ -2524,6 +2524,7 @@ void CameraAidlTest::processPreviewStabilizationCaptureRequestInternal(
         request.fmqSettingsSize = 0;
         request.settings.metadata =
                 std::vector(rawMetadata, rawMetadata + get_camera_metadata_size(releasedMetadata));
+        overrideRotateAndCrop(&request.settings);
         request.outputBuffers = std::vector<StreamBuffer>(1);
         StreamBuffer& outputBuffer = request.outputBuffers[0];
         if (useHalBufManager) {

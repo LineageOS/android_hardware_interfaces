@@ -4,6 +4,7 @@ package {
 
 aidl_interface {
     name: "android.hardware.tetheroffload",
+    owner: "google",
     vendor_available: true,
     srcs: ["android/hardware/tetheroffload/*.aidl"],
     stability: "vintf",
@@ -23,5 +24,4 @@ aidl_interface {
             apps_enabled: false,
         },
     },
-    frozen: false,
 }
