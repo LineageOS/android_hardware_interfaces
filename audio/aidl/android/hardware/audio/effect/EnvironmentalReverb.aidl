@@ -59,6 +59,14 @@ union EnvironmentalReverb {
      */
     int decayHfRatioPm;
     /**
+     * Reverb reflections level in millibels.
+     */
+    int reflectionsLevelMb;
+    /**
+     * Reverb reflections delay in milliseconds.
+     */
+    int reflectionsDelayMs;
+    /**
      * Reverb level in millibels.
      */
     int levelMb;
