@@ -161,7 +161,8 @@ class KeyMintAidlTestBase : public ::testing::TestWithParam<string> {
                     const AuthorizationSet& in_params, AuthorizationSet* out_params,
                     std::shared_ptr<IKeyMintOperation>& op);
     ErrorCode Begin(KeyPurpose purpose, const vector<uint8_t>& key_blob,
-                    const AuthorizationSet& in_params, AuthorizationSet* out_params);
+                    const AuthorizationSet& in_params, AuthorizationSet* out_params,
+                    std::optional<HardwareAuthToken> hat = std::nullopt);
     ErrorCode Begin(KeyPurpose purpose, const AuthorizationSet& in_params,
                     AuthorizationSet* out_params);
     ErrorCode Begin(KeyPurpose purpose, const AuthorizationSet& in_params);
@@ -169,7 +170,9 @@ class KeyMintAidlTestBase : public ::testing::TestWithParam<string> {
     ErrorCode UpdateAad(const string& input);
     ErrorCode Update(const string& input, string* output);
 
-    ErrorCode Finish(const string& message, const string& signature, string* output);
+    ErrorCode Finish(const string& message, const string& signature, string* output,
+                     std::optional<HardwareAuthToken> hat = std::nullopt,
+                     std::optional<secureclock::TimeStampToken> time_token = std::nullopt);
     ErrorCode Finish(const string& message, string* output) {
         return Finish(message, {} /* signature */, output);
     }
