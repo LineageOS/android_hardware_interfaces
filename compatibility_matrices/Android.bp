@@ -78,7 +78,7 @@ vintf_compatibility_matrix {
         "compatibility_matrix.8.xml",
     ],
     kernel_configs: [
-        "kernel_config_current_5.10",
         "kernel_config_current_5.15",
+        "kernel_config_current_6.1",
     ],
 }
