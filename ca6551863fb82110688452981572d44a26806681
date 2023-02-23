@@ -16,6 +16,23 @@
       "message": "Daniel: Need a V+1",
       "revId": "ca6551863fb82110688452981572d44a26806681",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8294f9f3_0d59ea14",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 9760
+      },
+      "writtenOn": "2023-02-23T07:11:11Z",
+      "side": 1,
+      "message": "It breaks camcorder (video recording) on OnePlus 7 series devices",
+      "revId": "ca6551863fb82110688452981572d44a26806681",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
