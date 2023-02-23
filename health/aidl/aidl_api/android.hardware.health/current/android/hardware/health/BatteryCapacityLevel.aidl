@@ -34,11 +34,11 @@
 package android.hardware.health;
 @Backing(type="int") @VintfStability
 enum BatteryCapacityLevel {
-  UNSUPPORTED = -1,
-  UNKNOWN = 0,
-  CRITICAL = 1,
-  LOW = 2,
-  NORMAL = 3,
-  HIGH = 4,
-  FULL = 5,
+  UNSUPPORTED = (-1) /* -1 */,
+  UNKNOWN,
+  CRITICAL,
+  LOW,
+  NORMAL,
+  HIGH,
+  FULL,
 }
