@@ -39,4 +39,5 @@ parcelable AacConfiguration {
   android.hardware.bluetooth.audio.ChannelMode channelMode;
   boolean variableBitRateEnabled;
   byte bitsPerSample;
+  boolean adaptiveBitRateSupported;
 }
