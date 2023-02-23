@@ -552,12 +552,13 @@ ErrorCode KeyMintAidlTestBase::Begin(KeyPurpose purpose, const vector<uint8_t>& 
 
 ErrorCode KeyMintAidlTestBase::Begin(KeyPurpose purpose, const vector<uint8_t>& key_blob,
                                      const AuthorizationSet& in_params,
-                                     AuthorizationSet* out_params) {
+                                     AuthorizationSet* out_params,
+                                     std::optional<HardwareAuthToken> hat) {
     SCOPED_TRACE("Begin");
     Status result;
     BeginResult out;
 
-    result = keymint_->begin(purpose, key_blob, in_params.vector_data(), std::nullopt, &out);
+    result = keymint_->begin(purpose, key_blob, in_params.vector_data(), hat, &out);
 
     if (result.isOk()) {
         *out_params = out.params;
@@ -611,8 +612,9 @@ ErrorCode KeyMintAidlTestBase::Update(const string& input, string* output) {
     return GetReturnErrorCode(result);
 }
 
-ErrorCode KeyMintAidlTestBase::Finish(const string& input, const string& signature,
-                                      string* output) {
+ErrorCode KeyMintAidlTestBase::Finish(const string& input, const string& signature, string* output,
+                                      std::optional<HardwareAuthToken> hat,
+                                      std::optional<secureclock::TimeStampToken> time_token) {
     SCOPED_TRACE("Finish");
     Status result;
 
@@ -621,8 +623,8 @@ ErrorCode KeyMintAidlTestBase::Finish(const string& input, const string& signatu
 
     vector<uint8_t> oPut;
     result = op_->finish(vector<uint8_t>(input.begin(), input.end()),
-                         vector<uint8_t>(signature.begin(), signature.end()), {} /* authToken */,
-                         {} /* timestampToken */, {} /* confirmationToken */, &oPut);
+                         vector<uint8_t>(signature.begin(), signature.end()), hat, time_token,
+                         {} /* confirmationToken */, &oPut);
 
     if (result.isOk()) output->append(oPut.begin(), oPut.end());
 
