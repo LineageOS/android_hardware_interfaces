@@ -38,6 +38,7 @@ parcelable LeAudioConfiguration {
   android.hardware.bluetooth.audio.LeAudioConfiguration.StreamMap[] streamMap;
   int peerDelayUs;
   android.hardware.bluetooth.audio.LeAudioCodecConfiguration leAudioCodecConfig;
+  @nullable byte[] vendorSpecificMetadata;
   @VintfStability
   parcelable StreamMap {
     char streamHandle;

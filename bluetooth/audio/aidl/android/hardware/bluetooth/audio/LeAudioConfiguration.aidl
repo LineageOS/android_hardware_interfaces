@@ -44,4 +44,16 @@ parcelable LeAudioConfiguration {
     StreamMap[] streamMap;
     int peerDelayUs;
     LeAudioCodecConfiguration leAudioCodecConfig;
+
+    /*
+     * Bluetooth LTV format for vendor metadata is defined in the
+     * Section 6.12.6.9 Vendor_Specific of Bluetooth Assigned Numbers
+     *
+     * Octet 0 = Length
+     * Octet 1 = Type (Vendor specific - 0xFF)
+     * Octet 2-3 = Company_ID
+     * Company ID values are defined in Bluetooth Assigned Numbers.
+     * Octet 4 onwards = Vendor specific Metadata
+     */
+    @nullable byte[] vendorSpecificMetadata;
 }
