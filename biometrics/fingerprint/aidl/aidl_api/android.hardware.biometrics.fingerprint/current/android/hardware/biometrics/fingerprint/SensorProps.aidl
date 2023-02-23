@@ -42,4 +42,5 @@ parcelable SensorProps {
   boolean supportsDetectInteraction;
   boolean halHandlesDisplayTouches;
   boolean halControlsIllumination;
+  @nullable android.hardware.biometrics.fingerprint.TouchDetectionParameters touchDetectionParameters;
 }
