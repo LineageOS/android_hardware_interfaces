@@ -2348,6 +2348,20 @@ enum VehicleProperty {
     VEHICLE_MAP_SERVICE = 0x0C00 + 0x10000000 + 0x01000000
             + 0x00e00000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:MIXED
     /**
+     * Characterization of inputs used for computing location.
+     *
+     * This property must indicate what (if any) data and sensor inputs are considered by the system
+     * when computing the vehicle's location that is shared with Android through the GNSS HAL.
+     *
+     * The value must return a collection of bit flags. The bit flags are defined in
+     * LocationCharacterization.
+     *
+     * @change_mode VehiclePropertyChangeMode.STATIC
+     * @access VehiclePropertyAccess.READ
+     */
+    LOCATION_CHARACTERIZATION =
+            0x0C10 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
+    /**
      * OBD2 Live Sensor Data
      *
      * Reports a snapshot of the current (live) values of the OBD2 sensors available.
