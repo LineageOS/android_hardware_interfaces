@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,15 +34,30 @@
 package android.hardware.biometrics.common;
 /* @hide */
 @VintfStability
-parcelable OperationContext {
-  int id = 0;
-  android.hardware.biometrics.common.OperationReason reason = android.hardware.biometrics.common.OperationReason.UNKNOWN;
-  /**
-   * @deprecated use displayState instead.
-   */
-  boolean isAod = false;
-  boolean isCrypto = false;
-  android.hardware.biometrics.common.WakeReason wakeReason = android.hardware.biometrics.common.WakeReason.UNKNOWN;
-  android.hardware.biometrics.common.DisplayState displayState = android.hardware.biometrics.common.DisplayState.UNKNOWN;
-  @nullable android.hardware.biometrics.common.AuthenticateReason authenticateReason;
+union AuthenticateReason {
+  android.hardware.biometrics.common.AuthenticateReason.Vendor vendorAuthenticateReason;
+  android.hardware.biometrics.common.AuthenticateReason.Face faceAuthenticateReason;
+  android.hardware.biometrics.common.AuthenticateReason.Fingerprint fingerprintAuthenticateReason;
+  @VintfStability
+  parcelable Vendor {
+    ParcelableHolder extension;
+  }
+  @Backing(type="int") @VintfStability
+  enum Fingerprint {
+    UNKNOWN,
+  }
+  @Backing(type="int") @VintfStability
+  enum Face {
+    UNKNOWN,
+    STARTED_WAKING_UP,
+    PRIMARY_BOUNCER_SHOWN,
+    ASSISTANT_VISIBLE,
+    ALTERNATE_BIOMETRIC_BOUNCER_SHOWN,
+    NOTIFICATION_PANEL_CLICKED,
+    OCCLUDING_APP_REQUESTED,
+    PICK_UP_GESTURE_TRIGGERED,
+    QS_EXPANDED,
+    SWIPE_UP_ON_BOUNCER,
+    UDFPS_POINTER_DOWN,
+  }
 }
