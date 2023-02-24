@@ -874,6 +874,13 @@ TEST_P(GraphicsComposerAidlTest, GetDisplayName) {
 }
 
 TEST_P(GraphicsComposerAidlTest, GetOverlaySupport) {
+    const auto& [versionStatus, version] = mComposerClient->getInterfaceVersion();
+    ASSERT_TRUE(versionStatus.isOk());
+    if (version == 1) {
+        GTEST_SUCCEED() << "Device does not support the new API for overlay support";
+        return;
+    }
+
     const auto& [status, properties] = mComposerClient->getOverlaySupport();
     if (!status.isOk() && status.getExceptionCode() == EX_SERVICE_SPECIFIC &&
         status.getServiceSpecificError() == IComposerClient::EX_UNSUPPORTED) {
