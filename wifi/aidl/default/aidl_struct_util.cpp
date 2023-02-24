@@ -2996,14 +2996,13 @@ bool convertLegacyWifiRadioConfigurationToAidl(
 
 bool convertLegacyRadioCombinationsMatrixToAidl(
         legacy_hal::wifi_radio_combination_matrix* legacy_matrix,
-        WifiRadioCombinationMatrix* aidl_matrix) {
-    if (!aidl_matrix || !legacy_matrix) {
+        std::vector<WifiRadioCombination>* aidl_combinations) {
+    if (!aidl_combinations || !legacy_matrix) {
         return false;
     }
-    *aidl_matrix = {};
+    *aidl_combinations = {};
 
     int num_combinations = legacy_matrix->num_radio_combinations;
-    std::vector<WifiRadioCombination> radio_combinations_vec;
     if (!num_combinations) {
         LOG(ERROR) << "zero radio combinations";
         return false;
@@ -3029,13 +3028,12 @@ bool convertLegacyRadioCombinationsMatrixToAidl(
             radio_configurations_vec.push_back(radioConfiguration);
         }
         radioCombination.radioConfigurations = radio_configurations_vec;
-        radio_combinations_vec.push_back(radioCombination);
+        aidl_combinations->push_back(radioCombination);
         l_radio_combinations_ptr =
                 (wifi_radio_combination*)((u8*)l_radio_combinations_ptr +
                                           sizeof(wifi_radio_combination) +
                                           (sizeof(wifi_radio_configuration) * num_configurations));
     }
-    aidl_matrix->radioCombinations = radio_combinations_vec;
     return true;
 }
 
