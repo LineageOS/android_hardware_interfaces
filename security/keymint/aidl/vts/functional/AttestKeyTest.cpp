@@ -142,10 +142,13 @@ class AttestKeyTest : public KeyMintAidlTestBase {
         return false;
     }
 
-    // Check if chipset has received a waiver allowing it to be launched with
-    // Android S (or later) with Keymaster 4.0 in StrongBox
+    // Check if chipset has received a waiver allowing it to be launched with Android S or T with
+    // Keymaster 4.0 in StrongBox.
     bool is_chipset_allowed_km4_strongbox(void) const {
         std::array<char, PROPERTY_VALUE_MAX> buffer;
+
+        const int32_t first_api_level = property_get_int32("ro.board.first_api_level", 0);
+        if (first_api_level <= 0 || first_api_level > __ANDROID_API_T__) return false;
 
         auto res = property_get("ro.vendor.qti.soc_model", buffer.data(), nullptr);
         if (res <= 0) return false;
