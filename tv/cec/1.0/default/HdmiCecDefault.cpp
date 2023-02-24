@@ -278,6 +278,10 @@ Return<void> HdmiCecDefault::enableAudioReturnChannel(int32_t /*portId*/, bool /
 
 Return<bool> HdmiCecDefault::isConnected(int32_t portId) {
     uint16_t addr;
+    if (portId < 0 || portId >= mHdmiCecPorts.size()) {
+        LOG(ERROR) << "Port id is out of bounds, portId = " << portId;
+        return false;
+    }
     int ret = ioctl(mHdmiCecPorts[portId]->mCecFd, CEC_ADAP_G_PHYS_ADDR, &addr);
     if (ret) {
         LOG(ERROR) << "Is connected failed, Error = " << strerror(errno);

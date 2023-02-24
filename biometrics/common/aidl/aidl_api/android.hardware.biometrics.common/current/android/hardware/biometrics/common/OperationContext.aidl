@@ -37,7 +37,12 @@ package android.hardware.biometrics.common;
 parcelable OperationContext {
   int id = 0;
   android.hardware.biometrics.common.OperationReason reason = android.hardware.biometrics.common.OperationReason.UNKNOWN;
+  /**
+   * @deprecated use displayState instead.
+   */
   boolean isAod = false;
   boolean isCrypto = false;
   android.hardware.biometrics.common.WakeReason wakeReason = android.hardware.biometrics.common.WakeReason.UNKNOWN;
+  android.hardware.biometrics.common.DisplayState displayState = android.hardware.biometrics.common.DisplayState.UNKNOWN;
+  @nullable android.hardware.biometrics.common.AuthenticateReason authenticateReason;
 }

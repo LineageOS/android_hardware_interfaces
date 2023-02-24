@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,21 +14,28 @@
  * limitations under the License.
  */
 
-package android.hardware.bluetooth.audio;
+package android.hardware.biometrics.common;
 
+/**
+ * Display state during an operation.
+ *
+ * @hide
+ */
 @VintfStability
 @Backing(type="int")
-enum CodecType {
+enum DisplayState {
+    /** The display state is unknown. */
     UNKNOWN,
-    SBC,
-    AAC,
-    APTX,
-    APTX_HD,
-    LDAC,
-    LC3,
-    VENDOR,
-    APTX_ADAPTIVE,
-    OPUS,
-    APTX_ADAPTIVE_LE,
-    APTX_ADAPTIVE_LEX,
+
+    /** The display is on and showing the lockscreen (or an occluding app). */
+    LOCKSCREEN,
+
+    /** The display is off or dozing. */
+    NO_UI,
+
+    /** The display is showing a screensaver (dreaming). */
+    SCREENSAVER,
+
+    /** The display is dreaming with always on display. */
+    AOD,
 }

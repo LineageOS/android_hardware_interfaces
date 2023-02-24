@@ -35,9 +35,12 @@ cc_defaults {
         "libbinder_ndk",
         "libcrypto",
         "libbase",
+        "libgatekeeper",
         "packagemanager_aidl-cpp",
     ],
     static_libs: [
+        "android.hardware.gatekeeper@1.0",
+        "android.hardware.gatekeeper-V1-ndk",
         "android.hardware.security.rkp-V3-ndk",
         "android.hardware.security.secureclock-V1-ndk",
         "libcppbor_external",
@@ -59,6 +62,7 @@ cc_test {
     ],
     srcs: [
         "AttestKeyTest.cpp",
+        "AuthTest.cpp",
         "DeviceUniqueAttestationTest.cpp",
         "KeyBlobUpgradeTest.cpp",
         "KeyMintTest.cpp",

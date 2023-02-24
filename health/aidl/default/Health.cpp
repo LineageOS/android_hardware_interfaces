@@ -148,6 +148,11 @@ ndk::ScopedAStatus Health::getBatteryHealthData(BatteryHealthData* out) {
         !res.isOk()) {
         LOG(WARNING) << "Cannot get First_usage_date: " << res.getDescription();
     }
+    if (auto res = GetProperty<int64_t>(&battery_monitor_, ::android::BATTERY_PROP_STATE_OF_HEALTH,
+                                        0, &out->batteryStateOfHealth);
+        !res.isOk()) {
+        LOG(WARNING) << "Cannot get Battery_state_of_health: " << res.getDescription();
+    }
     return ndk::ScopedAStatus::ok();
 }
 
