@@ -20,8 +20,6 @@ package android.hardware.wifi;
  * Byte array representing a Mac Address. Use when we need to
  * pass an array of Mac Addresses to a method, as variable-sized
  * 2D arrays are not supported in AIDL.
- *
- * TODO (b/210705533): Replace this type with a 2D byte array.
  */
 @VintfStability
 parcelable MacAddress {
