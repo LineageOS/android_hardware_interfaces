@@ -23,6 +23,7 @@
 #include <aidl/android/hardware/security/keymint/SecurityLevel.h>
 #include <android/binder_manager.h>
 #include <binder/IServiceManager.h>
+#include <cppbor.h>
 #include <cppbor_parse.h>
 #include <gmock/gmock.h>
 #include <keymaster/cppcose/cppcose.h>
@@ -795,6 +796,128 @@ TEST_P(CertificateRequestV2Test, NonEmptyRequest_testKeyInProdCert) {
     ASSERT_FALSE(status.isOk()) << status.getMessage();
     ASSERT_EQ(status.getServiceSpecificError(),
               BnRemotelyProvisionedComponent::STATUS_TEST_KEY_IN_PRODUCTION_REQUEST);
+}
+
+void parse_root_of_trust(const vector<uint8_t>& attestation_cert,
+                         vector<uint8_t>* verified_boot_key, VerifiedBoot* verified_boot_state,
+                         bool* device_locked, vector<uint8_t>* verified_boot_hash) {
+    X509_Ptr cert(parse_cert_blob(attestation_cert));
+    ASSERT_TRUE(cert.get());
+
+    ASN1_OCTET_STRING* attest_rec = get_attestation_record(cert.get());
+    ASSERT_TRUE(attest_rec);
+
+    auto error = parse_root_of_trust(attest_rec->data, attest_rec->length, verified_boot_key,
+                                     verified_boot_state, device_locked, verified_boot_hash);
+    ASSERT_EQ(error, ErrorCode::OK);
+}
+
+/**
+ * Generate a CSR and verify DeviceInfo against IDs attested by KeyMint.
+ */
+TEST_P(CertificateRequestV2Test, DeviceInfo) {
+    // See if there is a matching IKeyMintDevice for this IRemotelyProvisionedComponent.
+    std::shared_ptr<IKeyMintDevice> keyMint;
+    if (!matching_keymint_device(GetParam(), &keyMint)) {
+        // No matching IKeyMintDevice.
+        GTEST_SKIP() << "Skipping key use test as no matching KeyMint device found";
+        return;
+    }
+    KeyMintHardwareInfo info;
+    ASSERT_TRUE(keyMint->getHardwareInfo(&info).isOk());
+
+    // Get IDs attested by KeyMint.
+    MacedPublicKey macedPubKey;
+    bytevec privateKeyBlob;
+    auto irpcStatus =
+            provisionable_->generateEcdsaP256KeyPair(false, &macedPubKey, &privateKeyBlob);
+    ASSERT_TRUE(irpcStatus.isOk());
+
+    AttestationKey attestKey;
+    attestKey.keyBlob = std::move(privateKeyBlob);
+    attestKey.issuerSubjectName = make_name_from_str("Android Keystore Key");
+
+    // Generate an ECDSA key that is attested by the generated P256 keypair.
+    AuthorizationSet keyDesc = AuthorizationSetBuilder()
+                                       .Authorization(TAG_NO_AUTH_REQUIRED)
+                                       .EcdsaSigningKey(EcCurve::P_256)
+                                       .AttestationChallenge("foo")
+                                       .AttestationApplicationId("bar")
+                                       .Digest(Digest::NONE)
+                                       .SetDefaultValidity();
+    KeyCreationResult creationResult;
+    auto kmStatus = keyMint->generateKey(keyDesc.vector_data(), attestKey, &creationResult);
+    ASSERT_TRUE(kmStatus.isOk());
+
+    vector<KeyCharacteristics> key_characteristics = std::move(creationResult.keyCharacteristics);
+    vector<Certificate> key_cert_chain = std::move(creationResult.certificateChain);
+    // We didn't provision the attestation key.
+    ASSERT_EQ(key_cert_chain.size(), 1);
+
+    // Parse attested patch levels.
+    auto auths = HwEnforcedAuthorizations(key_characteristics);
+
+    auto attestedSystemPatchLevel = auths.GetTagValue(TAG_OS_PATCHLEVEL);
+    auto attestedVendorPatchLevel = auths.GetTagValue(TAG_VENDOR_PATCHLEVEL);
+    auto attestedBootPatchLevel = auths.GetTagValue(TAG_BOOT_PATCHLEVEL);
+
+    ASSERT_TRUE(attestedSystemPatchLevel.has_value());
+    ASSERT_TRUE(attestedVendorPatchLevel.has_value());
+    ASSERT_TRUE(attestedBootPatchLevel.has_value());
+
+    // Parse attested AVB values.
+    vector<uint8_t> key;
+    VerifiedBoot attestedVbState;
+    bool attestedBootloaderState;
+    vector<uint8_t> attestedVbmetaDigest;
+    parse_root_of_trust(key_cert_chain[0].encodedCertificate, &key, &attestedVbState,
+                        &attestedBootloaderState, &attestedVbmetaDigest);
+
+    // Get IDs from DeviceInfo.
+    bytevec csr;
+    irpcStatus =
+            provisionable_->generateCertificateRequestV2({} /* keysToSign */, challenge_, &csr);
+    ASSERT_TRUE(irpcStatus.isOk()) << irpcStatus.getMessage();
+
+    auto result = verifyProductionCsr(cppbor::Array(), csr, provisionable_.get(), challenge_);
+    ASSERT_TRUE(result) << result.message();
+
+    std::unique_ptr<cppbor::Array> csrPayload = std::move(*result);
+    ASSERT_TRUE(csrPayload);
+
+    auto deviceInfo = csrPayload->get(2)->asMap();
+    ASSERT_TRUE(deviceInfo);
+
+    auto vbState = deviceInfo->get("vb_state")->asTstr();
+    auto bootloaderState = deviceInfo->get("bootloader_state")->asTstr();
+    auto vbmetaDigest = deviceInfo->get("vbmeta_digest")->asBstr();
+    auto systemPatchLevel = deviceInfo->get("system_patch_level")->asUint();
+    auto vendorPatchLevel = deviceInfo->get("vendor_patch_level")->asUint();
+    auto bootPatchLevel = deviceInfo->get("boot_patch_level")->asUint();
+    auto securityLevel = deviceInfo->get("security_level")->asTstr();
+
+    ASSERT_TRUE(vbState);
+    ASSERT_TRUE(bootloaderState);
+    ASSERT_TRUE(vbmetaDigest);
+    ASSERT_TRUE(systemPatchLevel);
+    ASSERT_TRUE(vendorPatchLevel);
+    ASSERT_TRUE(bootPatchLevel);
+    ASSERT_TRUE(securityLevel);
+
+    auto kmDeviceName = device_suffix(GetParam());
+
+    // Compare DeviceInfo against IDs attested by KeyMint.
+    ASSERT_TRUE((securityLevel->value() == "tee" && kmDeviceName == "default") ||
+                (securityLevel->value() == "strongbox" && kmDeviceName == "strongbox"));
+    ASSERT_TRUE((vbState->value() == "green" && attestedVbState == VerifiedBoot::VERIFIED) ||
+                (vbState->value() == "yellow" && attestedVbState == VerifiedBoot::SELF_SIGNED) ||
+                (vbState->value() == "orange" && attestedVbState == VerifiedBoot::UNVERIFIED));
+    ASSERT_TRUE((bootloaderState->value() == "locked" && attestedBootloaderState) ||
+                (bootloaderState->value() == "unlocked" && !attestedBootloaderState));
+    ASSERT_EQ(vbmetaDigest->value(), attestedVbmetaDigest);
+    ASSERT_EQ(systemPatchLevel->value(), attestedSystemPatchLevel.value());
+    ASSERT_EQ(vendorPatchLevel->value(), attestedVendorPatchLevel.value());
+    ASSERT_EQ(bootPatchLevel->value(), attestedBootPatchLevel.value());
 }
 
 INSTANTIATE_REM_PROV_AIDL_TEST(CertificateRequestV2Test);
