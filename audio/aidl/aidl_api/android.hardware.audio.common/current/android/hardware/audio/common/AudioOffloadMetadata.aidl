@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,24 +31,12 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.audio.core;
-@VintfStability
-interface IStreamOut {
-  android.hardware.audio.core.IStreamCommon getStreamCommon();
-  void updateMetadata(in android.hardware.audio.common.SourceMetadata sourceMetadata);
-  void updateOffloadMetadata(in android.hardware.audio.common.AudioOffloadMetadata offloadMetadata);
-  float[] getHwVolume();
-  void setHwVolume(in float[] channelVolumes);
-  float getAudioDescriptionMixLevel();
-  void setAudioDescriptionMixLevel(float leveldB);
-  android.media.audio.common.AudioDualMonoMode getDualMonoMode();
-  void setDualMonoMode(android.media.audio.common.AudioDualMonoMode mode);
-  android.media.audio.common.AudioLatencyMode[] getRecommendedLatencyModes();
-  void setLatencyMode(android.media.audio.common.AudioLatencyMode mode);
-  android.media.audio.common.AudioPlaybackRate getPlaybackRateParameters();
-  void setPlaybackRateParameters(in android.media.audio.common.AudioPlaybackRate playbackRate);
-  void selectPresentation(int presentationId, int programId);
-  const int HW_VOLUME_MIN = 0;
-  const int HW_VOLUME_MAX = 1;
-  const int AUDIO_DESCRIPTION_MIX_LEVEL_MAX = 48;
+package android.hardware.audio.common;
+@JavaDerive(equals=true, toString=true) @VintfStability
+parcelable AudioOffloadMetadata {
+  int sampleRate;
+  android.media.audio.common.AudioChannelLayout channelMask;
+  int averageBitRatePerSecond;
+  int delayFrames;
+  int paddingFrames;
 }
