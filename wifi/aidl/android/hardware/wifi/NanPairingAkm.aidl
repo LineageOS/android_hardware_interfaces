@@ -17,6 +17,6 @@
 package android.hardware.wifi;
 
 /**
- * THe AKM used of NAN pairing
+ * The AKM used in the NAN pairing.
  */
 @VintfStability @Backing(type="int") enum NanPairingAkm { SAE = 0, PASN=1 }
