@@ -102,6 +102,24 @@
       "parentUuid": "8294f9f3_0d59ea14",
       "revId": "ca6551863fb82110688452981572d44a26806681",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "283e961b_0f0fa733",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 9760
+      },
+      "writtenOn": "2023-02-26T08:27:12Z",
+      "side": 1,
+      "message": "How to do all this?",
+      "parentUuid": "086fbd6c_29cfe8c4",
+      "revId": "ca6551863fb82110688452981572d44a26806681",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
