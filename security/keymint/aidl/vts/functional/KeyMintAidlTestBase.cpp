@@ -193,7 +193,7 @@ uint32_t KeyMintAidlTestBase::boot_patch_level() {
  * which is mandatory for KeyMint version 2 or first_api_level 33 or greater.
  */
 bool KeyMintAidlTestBase::isDeviceIdAttestationRequired() {
-    return AidlVersion() >= 2 || property_get_int32("ro.vendor.api_level", 0) >= 33;
+    return AidlVersion() >= 2 || property_get_int32("ro.vendor.api_level", 0) >= __ANDROID_API_T__;
 }
 
 /**
@@ -201,7 +201,7 @@ bool KeyMintAidlTestBase::isDeviceIdAttestationRequired() {
  * which is supported for KeyMint version 3 or first_api_level greater than 33.
  */
 bool KeyMintAidlTestBase::isSecondImeiIdAttestationRequired() {
-    return AidlVersion() >= 3 && property_get_int32("ro.vendor.api_level", 0) > 33;
+    return AidlVersion() >= 3 && property_get_int32("ro.vendor.api_level", 0) > __ANDROID_API_T__;
 }
 
 bool KeyMintAidlTestBase::Curve25519Supported() {
@@ -826,7 +826,7 @@ void KeyMintAidlTestBase::CheckEncryptOneByteAtATime(BlockMode block_mode, const
         int vendor_api_level = property_get_int32("ro.vendor.api_level", 0);
         if (SecLevel() == SecurityLevel::STRONGBOX) {
             // This is known to be broken on older vendor implementations.
-            if (vendor_api_level < 33) {
+            if (vendor_api_level < __ANDROID_API_T__) {
                 compare_output = false;
             } else {
                 additional_information = " (b/194134359) ";
@@ -2045,7 +2045,7 @@ void p256_pub_key(const vector<uint8_t>& coseKeyData, EVP_PKEY_Ptr* signingKey) 
 }
 
 void device_id_attestation_vsr_check(const ErrorCode& result) {
-    if (get_vsr_api_level() >= 34) {
+    if (get_vsr_api_level() > __ANDROID_API_T__) {
         ASSERT_FALSE(result == ErrorCode::INVALID_TAG)
                 << "It is a specification violation for INVALID_TAG to be returned due to ID "
                 << "mismatch in a Device ID Attestation call. INVALID_TAG is only intended to "
