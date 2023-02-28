@@ -19,6 +19,7 @@
 
 #include "core-impl/Bluetooth.h"
 
+using aidl::android::hardware::audio::core::VendorParameter;
 using aidl::android::media::audio::common::Boolean;
 using aidl::android::media::audio::common::Float;
 using aidl::android::media::audio::common::Int;
@@ -76,6 +77,31 @@ ndk::ScopedAStatus Bluetooth::setHfpConfig(const HfpConfig& in_config, HfpConfig
     *_aidl_return = mHfpConfig;
     LOG(DEBUG) << __func__ << ": received " << in_config.toString() << ", returning "
                << _aidl_return->toString();
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus BluetoothA2dp::isEnabled(bool* _aidl_return) {
+    *_aidl_return = mEnabled;
+    LOG(DEBUG) << __func__ << ": returning " << *_aidl_return;
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus BluetoothA2dp::setEnabled(bool in_enabled) {
+    mEnabled = in_enabled;
+    LOG(DEBUG) << __func__ << ": " << mEnabled;
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus BluetoothA2dp::supportsOffloadReconfiguration(bool* _aidl_return) {
+    *_aidl_return = true;
+    LOG(DEBUG) << __func__ << ": returning " << *_aidl_return;
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus BluetoothA2dp::reconfigureOffload(
+        const std::vector<::aidl::android::hardware::audio::core::VendorParameter>& in_parameters
+                __unused) {
+    LOG(DEBUG) << __func__ << ": " << ::android::internal::ToString(in_parameters);
     return ndk::ScopedAStatus::ok();
 }
 

@@ -46,11 +46,32 @@ class Module : public BnModule {
         bool forceTransientBurst = false;
         bool forceSynchronousDrain = false;
     };
+    // Helper used for interfaces that require a persistent instance. We hold them via a strong
+    // pointer. The binder token is retained for a call to 'setMinSchedulerPolicy'.
+    template <class C>
+    struct ChildInterface : private std::pair<std::shared_ptr<C>, ndk::SpAIBinder> {
+        ChildInterface() {}
+        ChildInterface& operator=(const std::shared_ptr<C>& c) {
+            return operator=(std::shared_ptr<C>(c));
+        }
+        ChildInterface& operator=(std::shared_ptr<C>&& c) {
+            this->first = std::move(c);
+            this->second = this->first->asBinder();
+            AIBinder_setMinSchedulerPolicy(this->second.get(), SCHED_NORMAL,
+                                           ANDROID_PRIORITY_AUDIO);
+            return *this;
+        }
+        explicit operator bool() const { return !!this->first; }
+        C& operator*() const { return *(this->first); }
+        C* operator->() const { return this->first; }
+        std::shared_ptr<C> getPtr() const { return this->first; }
+    };
 
     ndk::ScopedAStatus setModuleDebug(
             const ::aidl::android::hardware::audio::core::ModuleDebug& in_debug) override;
     ndk::ScopedAStatus getTelephony(std::shared_ptr<ITelephony>* _aidl_return) override;
     ndk::ScopedAStatus getBluetooth(std::shared_ptr<IBluetooth>* _aidl_return) override;
+    ndk::ScopedAStatus getBluetoothA2dp(std::shared_ptr<IBluetoothA2dp>* _aidl_return) override;
     ndk::ScopedAStatus connectExternalDevice(
             const ::aidl::android::media::audio::common::AudioPort& in_templateIdAndAdditionalData,
             ::aidl::android::media::audio::common::AudioPort* _aidl_return) override;
@@ -151,12 +172,9 @@ class Module : public BnModule {
     std::unique_ptr<internal::Configuration> mConfig;
     ModuleDebug mDebug;
     VendorDebug mVendorDebug;
-    // For the interfaces requiring to return the same instance, we need to hold them
-    // via a strong pointer. The binder token is retained for a call to 'setMinSchedulerPolicy'.
-    std::shared_ptr<ITelephony> mTelephony;
-    ndk::SpAIBinder mTelephonyBinder;
-    std::shared_ptr<IBluetooth> mBluetooth;
-    ndk::SpAIBinder mBluetoothBinder;
+    ChildInterface<ITelephony> mTelephony;
+    ChildInterface<IBluetooth> mBluetooth;
+    ChildInterface<IBluetoothA2dp> mBluetoothA2dp;
     // ids of ports created at runtime via 'connectExternalDevice'.
     std::set<int32_t> mConnectedDevicePorts;
     Streams mStreams;
@@ -166,8 +184,7 @@ class Module : public BnModule {
     bool mMasterMute = false;
     float mMasterVolume = 1.0f;
     bool mMicMute = false;
-    std::shared_ptr<sounddose::ISoundDose> mSoundDose;
-    ndk::SpAIBinder mSoundDoseBinder;
+    ChildInterface<sounddose::ISoundDose> mSoundDose;
     std::optional<bool> mIsMmapSupported;
 
   protected:
