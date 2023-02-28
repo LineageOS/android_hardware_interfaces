@@ -189,6 +189,7 @@ enum VehicleProperty {
   GLOVE_BOX_DOOR_POS = (((0x0BF0 + android.hardware.automotive.vehicle.VehiclePropertyGroup.SYSTEM) + android.hardware.automotive.vehicle.VehicleArea.SEAT) + android.hardware.automotive.vehicle.VehiclePropertyType.INT32) /* 356518896 */,
   GLOVE_BOX_LOCKED = (((0x0BF1 + android.hardware.automotive.vehicle.VehiclePropertyGroup.SYSTEM) + android.hardware.automotive.vehicle.VehicleArea.SEAT) + android.hardware.automotive.vehicle.VehiclePropertyType.BOOLEAN) /* 354421745 */,
   VEHICLE_MAP_SERVICE = (((0x0C00 + 0x10000000) + 0x01000000) + 0x00e00000) /* 299895808 */,
+  LOCATION_CHARACTERIZATION = (((0x0C10 + android.hardware.automotive.vehicle.VehiclePropertyGroup.SYSTEM) + android.hardware.automotive.vehicle.VehicleArea.GLOBAL) + android.hardware.automotive.vehicle.VehiclePropertyType.INT32) /* 289410064 */,
   OBD2_LIVE_FRAME = (((0x0D00 + 0x10000000) + 0x01000000) + 0x00e00000) /* 299896064 */,
   OBD2_FREEZE_FRAME = (((0x0D01 + 0x10000000) + 0x01000000) + 0x00e00000) /* 299896065 */,
   OBD2_FREEZE_FRAME_INFO = (((0x0D02 + 0x10000000) + 0x01000000) + 0x00e00000) /* 299896066 */,
