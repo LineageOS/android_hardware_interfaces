@@ -106,7 +106,7 @@ class AttestKeyTest : public KeyMintAidlTestBase {
         // with any other key purpose, but the original VTS tests incorrectly did exactly that.
         // This means that a device that launched prior to Android T (API level 33) may
         // accept or even require KeyPurpose::SIGN too.
-        if (property_get_int32("ro.board.first_api_level", 0) < 33) {
+        if (property_get_int32("ro.board.first_api_level", 0) < __ANDROID_API_T__) {
             AuthorizationSet key_desc_plus_sign = key_desc;
             key_desc_plus_sign.push_back(TAG_PURPOSE, KeyPurpose::SIGN);
 
