@@ -57,6 +57,7 @@ using ::aidl::android::hardware::automotive::vehicle::LaneCenteringAssistCommand
 using ::aidl::android::hardware::automotive::vehicle::LaneCenteringAssistState;
 using ::aidl::android::hardware::automotive::vehicle::LaneDepartureWarningState;
 using ::aidl::android::hardware::automotive::vehicle::LaneKeepAssistState;
+using ::aidl::android::hardware::automotive::vehicle::LocationCharacterization;
 using ::aidl::android::hardware::automotive::vehicle::RawPropValues;
 using ::aidl::android::hardware::automotive::vehicle::VehicleApPowerStateReport;
 using ::aidl::android::hardware::automotive::vehicle::VehicleApPowerStateReq;
@@ -200,6 +201,8 @@ JsonValueParser::JsonValueParser() {
             std::make_unique<ConstantParser<VehiclePropertyAccess>>();
     mConstantParsersByType["VehiclePropertyChangeMode"] =
             std::make_unique<ConstantParser<VehiclePropertyChangeMode>>();
+    mConstantParsersByType["LocationCharacterization"] =
+            std::make_unique<ConstantParser<LocationCharacterization>>();
     mConstantParsersByType["VehicleGear"] = std::make_unique<ConstantParser<VehicleGear>>();
     mConstantParsersByType["VehicleAreaWindow"] =
             std::make_unique<ConstantParser<VehicleAreaWindow>>();
