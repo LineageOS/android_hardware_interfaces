@@ -16,6 +16,7 @@
 
 package android.hardware.audio.core;
 
+import android.hardware.audio.common.AudioOffloadMetadata;
 import android.hardware.audio.common.SourceMetadata;
 import android.hardware.audio.core.IStreamCommon;
 import android.media.audio.common.AudioDualMonoMode;
@@ -47,6 +48,18 @@ interface IStreamOut {
      * @throws EX_ILLEGAL_STATE If the stream is closed.
      */
     void updateMetadata(in SourceMetadata sourceMetadata);
+
+    /**
+     * Update offload metadata for a compressed stream.
+     *
+     * Updates the offload metadata initially provided at the stream creation.
+     *
+     * @param offloadMetadata Updated offload metadata.
+     * @throws EX_ILLEGAL_STATE If the stream is closed.
+     * @throws EX_ILLEGAL_ARGUMENT If the metadata contains invalid values.
+     * @throws EX_UNSUPPORTED_OPERATION If the stream is not for compressed offload.
+     */
+    void updateOffloadMetadata(in AudioOffloadMetadata offloadMetadata);
 
     const int HW_VOLUME_MIN = 0;
     const int HW_VOLUME_MAX = 1;
