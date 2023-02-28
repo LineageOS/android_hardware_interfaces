@@ -163,8 +163,6 @@ class Module : public BnModule {
     // Maps port ids and port config ids to patch ids.
     // Multimap because both ports and configs can be used by multiple patches.
     std::multimap<int32_t, int32_t> mPatches;
-    bool mMasterMute = false;
-    float mMasterVolume = 1.0f;
     bool mMicMute = false;
     std::shared_ptr<sounddose::ISoundDose> mSoundDose;
     ndk::SpAIBinder mSoundDoseBinder;
@@ -180,6 +178,13 @@ class Module : public BnModule {
     virtual ndk::ScopedAStatus checkAudioPatchEndpointsMatch(
             const std::vector<::aidl::android::media::audio::common::AudioPortConfig*>& sources,
             const std::vector<::aidl::android::media::audio::common::AudioPortConfig*>& sinks);
+    virtual void onExternalDeviceConnectionChanged(
+            const ::aidl::android::media::audio::common::AudioPort& audioPort, bool connected);
+    virtual ndk::ScopedAStatus onMasterMuteChanged(bool mute);
+    virtual ndk::ScopedAStatus onMasterVolumeChanged(float volume);
+
+    bool mMasterMute = false;
+    float mMasterVolume = 1.0f;
 };
 
 }  // namespace aidl::android::hardware::audio::core
