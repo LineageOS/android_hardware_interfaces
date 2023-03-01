@@ -753,21 +753,22 @@ TEST_F(AidlStructUtilTest, canConvertLegacyRadioCombinationsMatrixToAidl) {
             sizeof(radio_configurations_array3) / sizeof(radio_configurations_array3[0]),
             radio_configurations_array3);
 
-    WifiRadioCombinationMatrix converted_matrix{};
-    aidl_struct_util::convertLegacyRadioCombinationsMatrixToAidl(legacy_matrix, &converted_matrix);
+    std::vector<WifiRadioCombination> converted_combinations;
+    aidl_struct_util::convertLegacyRadioCombinationsMatrixToAidl(legacy_matrix,
+                                                                 &converted_combinations);
 
     // Verify the conversion
-    EXPECT_EQ(legacy_matrix->num_radio_combinations, converted_matrix.radioCombinations.size());
+    EXPECT_EQ(legacy_matrix->num_radio_combinations, converted_combinations.size());
     verifyRadioCombination(
-            &converted_matrix.radioCombinations[0],
+            &converted_combinations[0],
             sizeof(radio_configurations_array1) / sizeof(radio_configurations_array1[0]),
             radio_configurations_array1);
     verifyRadioCombination(
-            &converted_matrix.radioCombinations[1],
+            &converted_combinations[1],
             sizeof(radio_configurations_array2) / sizeof(radio_configurations_array2[0]),
             radio_configurations_array2);
     verifyRadioCombination(
-            &converted_matrix.radioCombinations[2],
+            &converted_combinations[2],
             sizeof(radio_configurations_array3) / sizeof(radio_configurations_array3[0]),
             radio_configurations_array3);
 }
