@@ -21,6 +21,7 @@ import android.hardware.wifi.NanPairingSecurityConfig;
 
 /**
  * Response to a pairing request from a peer.
+ * See Wi-Fi Aware R4.0 section 7.6.1.2
  */
 @VintfStability
 parcelable NanRespondToPairingIndicationRequest {

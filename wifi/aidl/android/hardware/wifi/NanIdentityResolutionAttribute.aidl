@@ -17,7 +17,8 @@
 package android.hardware.wifi;
 
 /**
- * NIRA for pairing identity resolution
+ * NIRA for pairing identity resolution.
+ * See Wi-Fi Aware R4.0 section 9.5.21.6
  */
 @VintfStability
 parcelable NanIdentityResolutionAttribute {
