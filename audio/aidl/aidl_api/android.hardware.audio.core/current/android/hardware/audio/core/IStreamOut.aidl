@@ -36,6 +36,7 @@ package android.hardware.audio.core;
 interface IStreamOut {
   android.hardware.audio.core.IStreamCommon getStreamCommon();
   void updateMetadata(in android.hardware.audio.common.SourceMetadata sourceMetadata);
+  void updateOffloadMetadata(in android.hardware.audio.common.AudioOffloadMetadata offloadMetadata);
   float[] getHwVolume();
   void setHwVolume(in float[] channelVolumes);
   float getAudioDescriptionMixLevel();

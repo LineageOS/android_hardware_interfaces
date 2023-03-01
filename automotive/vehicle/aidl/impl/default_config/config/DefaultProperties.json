@@ -3130,6 +3130,14 @@
             "property": "VehicleProperty::VEHICLE_MAP_SERVICE"
         },
         {
+            "property": "VehicleProperty::LOCATION_CHARACTERIZATION",
+            "defaultValue": {
+                "int32Values": [
+                    "LocationCharacterization::RAW_GNSS_ONLY"
+                ]
+            }
+        },
+        {
             "property": "VehicleProperty::ELECTRONIC_TOLL_COLLECTION_CARD_TYPE",
             "defaultValue": {
                 "int32Values": [
@@ -3261,6 +3269,22 @@
                     "minFloatValue": 20.0,
                     "maxFloatValue": 35.0
                 }
+            ]
+        },
+        {
+            "property": "VehicleProperty::ADAPTIVE_CRUISE_CONTROL_TARGET_TIME_GAP",
+            "defaultValue": {
+                "int32Values": [
+                    1200
+                ]
+            },
+            "configArray": [
+                1200,
+                1400,
+                1600,
+                1800,
+                2000,
+                2200
             ]
         },
         {
