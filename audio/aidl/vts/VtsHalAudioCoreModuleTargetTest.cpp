@@ -53,6 +53,7 @@
 #include "TestUtils.h"
 
 using namespace android;
+using aidl::android::hardware::audio::common::AudioOffloadMetadata;
 using aidl::android::hardware::audio::common::PlaybackTrackMetadata;
 using aidl::android::hardware::audio::common::RecordTrackMetadata;
 using aidl::android::hardware::audio::common::SinkMetadata;
@@ -401,8 +402,9 @@ void TestSetVendorParameters(Instance* inst, bool* isSupported) {
 // Can be used as a base for any test here, does not depend on the fixture GTest parameters.
 class AudioCoreModuleBase {
   public:
-    // The default buffer size is used mostly for negative tests.
+    // Default buffer sizes are used mostly for negative tests.
     static constexpr int kDefaultBufferSizeFrames = 256;
+    static constexpr int kDefaultLargeBufferSizeFrames = 48000;
 
     void SetUpImpl(const std::string& moduleName) {
         ASSERT_NO_FATAL_FAILURE(ConnectToService(moduleName));
@@ -2696,7 +2698,7 @@ TEST_P(AudioStreamOut, RequireOffloadInfo) {
     aidl::android::hardware::audio::core::IModule::OpenOutputStreamArguments args;
     args.portConfigId = portConfig.getId();
     args.sourceMetadata = GenerateSourceMetadata(portConfig.get());
-    args.bufferSizeFrames = kDefaultBufferSizeFrames;
+    args.bufferSizeFrames = kDefaultLargeBufferSizeFrames;
     aidl::android::hardware::audio::core::IModule::OpenOutputStreamReturn ret;
     EXPECT_STATUS(EX_ILLEGAL_ARGUMENT, module->openOutputStream(args, &ret))
             << "when no offload info is provided for a compressed offload mix port";
@@ -2876,7 +2878,7 @@ TEST_P(AudioStreamOut, PlaybackRate) {
         const auto portConfig = moduleConfig->getSingleConfigForMixPort(false, port);
         ASSERT_TRUE(portConfig.has_value()) << "No profiles specified for output mix port";
         WithStream<IStreamOut> stream(portConfig.value());
-        ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultBufferSizeFrames));
+        ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultLargeBufferSizeFrames));
         bool isSupported = false;
         EXPECT_NO_FATAL_FAILURE(TestAccessors<AudioPlaybackRate>(
                 stream.get(), &IStreamOut::getPlaybackRateParameters,
@@ -2901,13 +2903,40 @@ TEST_P(AudioStreamOut, SelectPresentation) {
         const auto portConfig = moduleConfig->getSingleConfigForMixPort(false, port);
         ASSERT_TRUE(portConfig.has_value()) << "No profiles specified for output mix port";
         WithStream<IStreamOut> stream(portConfig.value());
-        ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultBufferSizeFrames));
+        ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultLargeBufferSizeFrames));
         ndk::ScopedAStatus status;
         EXPECT_STATUS(kStatuses, status = stream.get()->selectPresentation(0, 0));
         if (status.getExceptionCode() != EX_UNSUPPORTED_OPERATION) atLeastOneSupports = true;
     }
     if (!atLeastOneSupports) {
         GTEST_SKIP() << "Presentation selection is not supported";
+    }
+}
+
+TEST_P(AudioStreamOut, UpdateOffloadMetadata) {
+    const auto offloadMixPorts =
+            moduleConfig->getOffloadMixPorts(true /*attachedOnly*/, false /*singlePort*/);
+    if (offloadMixPorts.empty()) {
+        GTEST_SKIP()
+                << "No mix port for compressed offload that could be routed to attached devices";
+    }
+    for (const auto& port : offloadMixPorts) {
+        const auto portConfig = moduleConfig->getSingleConfigForMixPort(false, port);
+        ASSERT_TRUE(portConfig.has_value()) << "No profiles specified for output mix port";
+        WithStream<IStreamOut> stream(portConfig.value());
+        ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultLargeBufferSizeFrames));
+        AudioOffloadMetadata validMetadata{
+                .sampleRate = portConfig.value().sampleRate.value().value,
+                .channelMask = portConfig.value().channelMask.value(),
+                .averageBitRatePerSecond = 256000,
+                .delayFrames = 0,
+                .paddingFrames = 0};
+        EXPECT_IS_OK(stream.get()->updateOffloadMetadata(validMetadata));
+        AudioOffloadMetadata invalidMetadata{.sampleRate = -1,
+                                             .averageBitRatePerSecond = -1,
+                                             .delayFrames = -1,
+                                             .paddingFrames = -1};
+        EXPECT_STATUS(EX_ILLEGAL_ARGUMENT, stream.get()->updateOffloadMetadata(invalidMetadata));
     }
 }
 
