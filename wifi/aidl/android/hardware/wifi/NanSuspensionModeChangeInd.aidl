@@ -22,7 +22,7 @@ package android.hardware.wifi;
 @VintfStability
 parcelable NanSuspensionModeChangeInd {
     /**
-     * Indication whether the device has entered or existed the NAN suspension mode(deep sleep)
+     * Indication whether the device has entered or exited the NAN suspension mode(deep sleep)
      */
     boolean isSuspended;
 }

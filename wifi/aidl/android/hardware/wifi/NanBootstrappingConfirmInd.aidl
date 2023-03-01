@@ -44,7 +44,7 @@ parcelable NanBootstrappingConfirmInd {
     int comeBackDelay;
 
     /**
-     * Cookie received from the comeback response.
+     * Cookie received from peer with |comeBackDelay| for follow up |NanBootstrappingRequest|
      */
     byte[] cookie;
 }

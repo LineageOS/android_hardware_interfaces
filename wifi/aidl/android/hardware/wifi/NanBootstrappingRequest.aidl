@@ -39,7 +39,7 @@ parcelable NanBootstrappingRequest {
     NanBootstrappingMethod requestBootstrappingMethod;
 
     /**
-     * Cookie for the follow up request
+     * Cookie received from previous |NanBootstrappingConfirmInd| for comeback request.
      */
     byte[] cookie;
 }
