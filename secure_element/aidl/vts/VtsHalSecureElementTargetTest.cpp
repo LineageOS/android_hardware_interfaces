@@ -136,18 +136,27 @@ class SecureElementAidl : public ::testing::TestWithParam<std::string> {
             apdu[0] |= (channel_number - 4) | 0x40;
         }
 
-        EXPECT_OK(secure_element_->transmit(apdu, &response));
+        // transmit() will return an empty response with the error
+        // code CHANNEL_NOT_AVAILABLE when the SE cannot be
+        // communicated with.
+        auto status = secure_element_->transmit(apdu, &response);
+        if (!status.isOk()) {
+            return 0x6881;
+        }
+
+        // transmit() will return a response containing at least
+        // the APDU response status otherwise.
         EXPECT_GE(response.size(), 2u);
-        uint16_t status =
+        uint16_t apdu_status =
                 (response[response.size() - 2] << 8) | (response[response.size() - 1] << 0);
 
         // When the command is successful the response
         // must contain 256 bytes of data.
-        if (status == 0x9000) {
+        if (apdu_status == 0x9000) {
             EXPECT_EQ(response.size(), 258);
         }
 
-        return status;
+        return apdu_status;
     }
 
     std::shared_ptr<ISecureElement> secure_element_;
