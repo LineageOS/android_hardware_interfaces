@@ -41,7 +41,7 @@ using aidl::android::hardware::wifi::WifiDebugHostWakeReasonStats;
 using aidl::android::hardware::wifi::WifiDebugRingBufferStatus;
 using aidl::android::hardware::wifi::WifiDebugRingBufferVerboseLevel;
 using aidl::android::hardware::wifi::WifiIfaceMode;
-using aidl::android::hardware::wifi::WifiRadioCombinationMatrix;
+using aidl::android::hardware::wifi::WifiRadioCombination;
 using aidl::android::hardware::wifi::WifiStatusCode;
 using aidl::android::hardware::wifi::WifiUsableChannel;
 
@@ -242,14 +242,14 @@ TEST_P(WifiChipAidlTest, GetUsableChannels) {
 }
 
 /*
- * GetSupportedRadioCombinationsMatrix
+ * GetSupportedRadioCombinations
  */
-TEST_P(WifiChipAidlTest, GetSupportedRadioCombinationsMatrix) {
-    WifiRadioCombinationMatrix combination_matrix = {};
+TEST_P(WifiChipAidlTest, GetSupportedRadioCombinations) {
+    std::vector<WifiRadioCombination> combinations;
     configureChipForConcurrencyType(IfaceConcurrencyType::STA);
-    auto status = wifi_chip_->getSupportedRadioCombinationsMatrix(&combination_matrix);
+    auto status = wifi_chip_->getSupportedRadioCombinations(&combinations);
     if (checkStatusCode(&status, WifiStatusCode::ERROR_NOT_SUPPORTED)) {
-        GTEST_SKIP() << "Skipping this test since getSupportedRadioCombinationsMatrix() "
+        GTEST_SKIP() << "Skipping this test since getSupportedRadioCombinations() "
                         "is not supported by vendor.";
     }
     EXPECT_TRUE(status.isOk());
