@@ -68,7 +68,7 @@ class KeyMintBenchmarkTest {
 
     int getError() { return static_cast<int>(error_); }
 
-    const string& GenerateMessage(int size) {
+    const string GenerateMessage(int size) {
         for (const string& message : message_cache_) {
             if (message.size() == size) {
                 return message;
@@ -76,7 +76,7 @@ class KeyMintBenchmarkTest {
         }
         string message = string(size, 'x');
         message_cache_.push_back(message);
-        return std::move(message);
+        return message;
     }
 
     optional<BlockMode> getBlockMode(string transform) {
