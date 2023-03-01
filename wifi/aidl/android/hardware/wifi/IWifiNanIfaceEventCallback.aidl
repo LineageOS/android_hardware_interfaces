@@ -132,7 +132,7 @@ oneway interface IWifiNanIfaceEventCallback {
     /**
      * Callback providing status on a completed followup message transmit operation.
      *
-     * @param cmdId Command Id corresponding to the original |transmitFollowupRequest| request.
+     * @param id Command ID corresponding to the original |transmitFollowupRequest| request.
      * @param status NanStatus of the operation. Possible status codes are:
      *               |NanStatusCode.SUCCESS|
      *               |NanStatusCode.NO_OTA_ACK|
@@ -151,7 +151,7 @@ oneway interface IWifiNanIfaceEventCallback {
      * Callback invoked in response to a capability request
      * |IWifiNanIface.getCapabilitiesRequest|.
      *
-     * @param cmdId Command Id corresponding to the original request.
+     * @param id Command ID corresponding to the original request.
      * @param status NanStatus of the operation. Possible status codes are:
      *        |NanStatusCode.SUCCESS|
      * @param capabilities Capability data.
@@ -162,7 +162,7 @@ oneway interface IWifiNanIfaceEventCallback {
     /**
      * Callback invoked in response to a config request |IWifiNanIface.configRequest|.
      *
-     * @param cmdId Command Id corresponding to the original request.
+     * @param id Command ID corresponding to the original request.
      * @param status NanStatus of the operation. Possible status codes are:
      *        |NanStatusCode.SUCCESS|
      *        |NanStatusCode.INVALID_ARGS|
@@ -175,7 +175,7 @@ oneway interface IWifiNanIfaceEventCallback {
      * Callback invoked in response to a create data interface request
      * |IWifiNanIface.createDataInterfaceRequest|.
      *
-     * @param cmdId Command Id corresponding to the original request.
+     * @param id Command ID corresponding to the original request.
      * @param status NanStatus of the operation. Possible status codes are:
      *        |NanStatusCode.SUCCESS|
      *        |NanStatusCode.INVALID_ARGS|
@@ -187,7 +187,7 @@ oneway interface IWifiNanIfaceEventCallback {
      * Callback invoked in response to a delete data interface request
      * |IWifiNanIface.deleteDataInterfaceRequest|.
      *
-     * @param cmdId Command Id corresponding to the original request.
+     * @param id Command ID corresponding to the original request.
      * @param status NanStatus of the operation. Possible status codes are:
      *        |NanStatusCode.SUCCESS|
      *        |NanStatusCode.INVALID_ARGS|
@@ -198,7 +198,7 @@ oneway interface IWifiNanIfaceEventCallback {
     /**
      * Callback invoked in response to a disable request |IWifiNanIface.disableRequest|.
      *
-     * @param cmdId Command Id corresponding to the original request.
+     * @param id Command ID corresponding to the original request.
      * @param status NanStatus of the operation. Possible status codes are:
      *        |NanStatusCode.SUCCESS|
      *        |NanStatusCode.PROTOCOL_FAILURE|
@@ -208,7 +208,7 @@ oneway interface IWifiNanIfaceEventCallback {
     /**
      * Callback invoked in response to an enable request |IWifiNanIface.enableRequest|.
      *
-     * @param cmdId Command Id corresponding to the original request.
+     * @param id Command ID corresponding to the original request.
      * @param status NanStatus of the operation. Possible status codes are:
      *        |NanStatusCode.SUCCESS|
      *        |NanStatusCode.ALREADY_ENABLED|
@@ -223,7 +223,7 @@ oneway interface IWifiNanIfaceEventCallback {
      * Callback invoked in response to an initiate data path request
      * |IWifiNanIface.initiateDataPathRequest|.
      *
-     * @param cmdId Command Id corresponding to the original request.
+     * @param id Command ID corresponding to the original request.
      * @param status NanStatus of the operation. Possible status codes are:
      *        |NanStatusCode.SUCCESS|
      *        |NanStatusCode.INVALID_ARGS|
@@ -238,7 +238,7 @@ oneway interface IWifiNanIfaceEventCallback {
      * Callback invoked in response to a respond to data path indication request
      * |IWifiNanIface.respondToDataPathIndicationRequest|.
      *
-     * @param cmdId Command Id corresponding to the original request.
+     * @param id Command ID corresponding to the original request.
      * @param status NanStatus of the operation. Possible status codes are:
      *        |NanStatusCode.SUCCESS|
      *        |NanStatusCode.INVALID_ARGS|
@@ -252,7 +252,7 @@ oneway interface IWifiNanIfaceEventCallback {
      * Callback invoked to notify the status of the start publish request
      * |IWifiNanIface.startPublishRequest|.
      *
-     * @param cmdId Command Id corresponding to the original request.
+     * @param id Command ID corresponding to the original request.
      * @param status NanStatus of the operation. Possible status codes are:
      *        |NanStatusCode.SUCCESS|
      *        |NanStatusCode.INVALID_ARGS|
@@ -267,7 +267,7 @@ oneway interface IWifiNanIfaceEventCallback {
      * Callback invoked to notify the status of the start subscribe request
      * |IWifiNanIface.startSubscribeRequest|.
      *
-     * @param cmdId Command Id corresponding to the original request.
+     * @param id Command ID corresponding to the original request.
      * @param status NanStatus of the operation. Possible status codes are:
      *        |NanStatusCode.SUCCESS|
      *        |NanStatusCode.INVALID_ARGS|
@@ -282,7 +282,7 @@ oneway interface IWifiNanIfaceEventCallback {
      * Callback invoked in response to a stop publish request
      * |IWifiNanIface.stopPublishRequest|.
      *
-     * @param cmdId Command Id corresponding to the original request.
+     * @param id Command ID corresponding to the original request.
      * @param status NanStatus of the operation. Possible status codes are:
      *        |NanStatusCode.SUCCESS|
      *        |NanStatusCode.INVALID_SESSION_ID|
@@ -294,7 +294,7 @@ oneway interface IWifiNanIfaceEventCallback {
      * Callback invoked in response to a stop subscribe request
      * |IWifiNanIface.stopSubscribeRequest|.
      *
-     * @param cmdId Command Id corresponding to the original request.
+     * @param id Command ID corresponding to the original request.
      * @param status NanStatus of the operation. Possible status codes are:
      *        |NanStatusCode.SUCCESS|
      *        |NanStatusCode.INVALID_SESSION_ID|
@@ -306,7 +306,7 @@ oneway interface IWifiNanIfaceEventCallback {
      * Callback invoked in response to a terminate data path request
      * |IWifiNanIface.terminateDataPathRequest|.
      *
-     * @param cmdId Command Id corresponding to the original request.
+     * @param id Command ID corresponding to the original request.
      * @param status NanStatus of the operation. Possible status codes are:
      *        |NanStatusCode.SUCCESS|
      *        |NanStatusCode.INVALID_ARGS|
@@ -320,7 +320,7 @@ oneway interface IWifiNanIfaceEventCallback {
      * Callback invoked in response to a suspension request
      * |IWifiNanIface.suspendRequest|.
      *
-     * @param cmdId Command Id corresponding to the original request.
+     * @param id Command ID corresponding to the original request.
      * @param status NanStatus of the operation. Possible status codes are:
      *        |NanStatusCode.SUCCESS|
      *        |NanStatusCode.INVALID_SESSION_ID|
@@ -333,7 +333,7 @@ oneway interface IWifiNanIfaceEventCallback {
      * Callback invoked in response to a resume request
      * |IWifiNanIface.resumeRequest|.
      *
-     * @param cmdId Command Id corresponding to the original request.
+     * @param id Command ID corresponding to the original request.
      * @param status NanStatus of the operation. Possible status codes are:
      *        |NanStatusCode.SUCCESS|
      *        |NanStatusCode.INVALID_SESSION_ID|
@@ -346,7 +346,7 @@ oneway interface IWifiNanIfaceEventCallback {
      * Callback invoked in response to a transmit followup request
      * |IWifiNanIface.transmitFollowupRequest|.
      *
-     * @param cmdId Command Id corresponding to the original request.
+     * @param id Command ID corresponding to the original request.
      * @param status NanStatus of the operation. Possible status codes are:
      *        |NanStatusCode.SUCCESS|
      *        |NanStatusCode.INVALID_ARGS|
@@ -377,7 +377,7 @@ oneway interface IWifiNanIfaceEventCallback {
      * Callback invoked in response to an initiate NAN pairing request
      * |IWifiNanIface.initiatePairingRequest|.
      *
-     * @param cmdId Command Id corresponding to the original request.
+     * @param id Command ID corresponding to the original request.
      * @param status NanStatus of the operation. Possible status codes are:
      *        |NanStatusCode.SUCCESS|
      *        |NanStatusCode.INVALID_ARGS|
@@ -392,7 +392,7 @@ oneway interface IWifiNanIfaceEventCallback {
      * Callback invoked in response to a respond to NAN pairing indication request
      * |IWifiNanIface.respondToPairingIndicationRequest|.
      *
-     * @param cmdId Command Id corresponding to the original request.
+     * @param id Command ID corresponding to the original request.
      * @param status NanStatus of the operation. Possible status codes are:
      *        |NanStatusCode.SUCCESS|
      *        |NanStatusCode.INVALID_ARGS|
@@ -422,7 +422,7 @@ oneway interface IWifiNanIfaceEventCallback {
      * Callback invoked in response to an initiate NAN pairing bootstrapping request
      * |IWifiNanIface.initiateBootstrappingRequest|.
      *
-     * @param cmdId Command Id corresponding to the original request.
+     * @param id Command ID corresponding to the original request.
      * @param status NanStatus of the operation. Possible status codes are:
      *        |NanStatusCode.SUCCESS|
      *        |NanStatusCode.INVALID_ARGS|
@@ -438,7 +438,7 @@ oneway interface IWifiNanIfaceEventCallback {
      * Callback invoked in response to a respond to pairing bootstrapping indication request
      * |IWifiNanIface.respondToBootstrappingIndicationRequest|.
      *
-     * @param cmdId Command Id corresponding to the original request.
+     * @param id Command ID corresponding to the original request.
      * @param status NanStatus of the operation. Possible status codes are:
      *        |NanStatusCode.SUCCESS|
      *        |NanStatusCode.INVALID_ARGS|

@@ -16,7 +16,6 @@
 
 package android.hardware.wifi;
 
-import android.hardware.wifi.NanBootstrappingMethod;
 import android.hardware.wifi.NanBootstrappingResponseCode;
 import android.hardware.wifi.NanStatus;
 
