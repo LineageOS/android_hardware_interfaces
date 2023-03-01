@@ -24,11 +24,13 @@ package android.hardware.uwb.fira_android;
 @Backing(type="int")
 enum UwbVendorReasonCodes {
     /**
-     * Use values from the vendor specific reason code range: 0x80 – 0xFF defined in Table 16 of
-     * UCI specification.
+     * Use values from the vendor specific reason code range: 0x80 – 0xFF defined in
+     * Table 15 (state change with reason codes) of UCI specification.
      */
 
     /** Fira specific */
     /** The channel requested is not available for AoA */
     REASON_ERROR_INVALID_CHANNEL_WITH_AOA = 0x80,
+    /** UWB has been disabled (eg: country code change leads to UWB unsupported) */
+    REASON_REGULATION_UWB_OFF = 0x81,
 }
