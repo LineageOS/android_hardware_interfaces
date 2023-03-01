@@ -463,6 +463,9 @@ class StreamOut : public StreamCommonImpl<::aidl::android::hardware::audio::comm
         return StreamCommonImpl<::aidl::android::hardware::audio::common::SourceMetadata>::
                 updateMetadata(in_sourceMetadata);
     }
+    ndk::ScopedAStatus updateOffloadMetadata(
+            const ::aidl::android::hardware::audio::common::AudioOffloadMetadata&
+                    in_offloadMetadata) override;
     ndk::ScopedAStatus getHwVolume(std::vector<float>* _aidl_return) override;
     ndk::ScopedAStatus setHwVolume(const std::vector<float>& in_channelVolumes) override;
     ndk::ScopedAStatus getAudioDescriptionMixLevel(float* _aidl_return) override;
@@ -500,6 +503,7 @@ class StreamOut : public StreamCommonImpl<::aidl::android::hardware::audio::comm
                       offloadInfo);
 
     std::optional<::aidl::android::media::audio::common::AudioOffloadInfo> mOffloadInfo;
+    std::optional<::aidl::android::hardware::audio::common::AudioOffloadMetadata> mOffloadMetadata;
 
   public:
     using CreateInstance = std::function<ndk::ScopedAStatus(

@@ -24,6 +24,7 @@
 #include "core-impl/Module.h"
 #include "core-impl/Stream.h"
 
+using aidl::android::hardware::audio::common::AudioOffloadMetadata;
 using aidl::android::hardware::audio::common::SinkMetadata;
 using aidl::android::hardware::audio::common::SourceMetadata;
 using aidl::android::media::audio::common::AudioDevice;
@@ -783,6 +784,40 @@ StreamOut::StreamOut(const SourceMetadata& sourceMetadata, StreamContext&& conte
                                        createWorker),
       mOffloadInfo(offloadInfo) {
     LOG(DEBUG) << __func__;
+}
+
+ndk::ScopedAStatus StreamOut::updateOffloadMetadata(
+        const AudioOffloadMetadata& in_offloadMetadata) {
+    LOG(DEBUG) << __func__;
+    if (isClosed()) {
+        LOG(ERROR) << __func__ << ": stream was closed";
+        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
+    }
+    if (!mOffloadInfo.has_value()) {
+        LOG(ERROR) << __func__ << ": not a compressed offload stream";
+        return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+    }
+    if (in_offloadMetadata.sampleRate < 0) {
+        LOG(ERROR) << __func__ << ": invalid sample rate value: " << in_offloadMetadata.sampleRate;
+        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+    }
+    if (in_offloadMetadata.averageBitRatePerSecond < 0) {
+        LOG(ERROR) << __func__
+                   << ": invalid average BPS value: " << in_offloadMetadata.averageBitRatePerSecond;
+        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+    }
+    if (in_offloadMetadata.delayFrames < 0) {
+        LOG(ERROR) << __func__
+                   << ": invalid delay frames value: " << in_offloadMetadata.delayFrames;
+        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+    }
+    if (in_offloadMetadata.paddingFrames < 0) {
+        LOG(ERROR) << __func__
+                   << ": invalid padding frames value: " << in_offloadMetadata.paddingFrames;
+        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+    }
+    mOffloadMetadata = in_offloadMetadata;
+    return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus StreamOut::getHwVolume(std::vector<float>* _aidl_return) {
