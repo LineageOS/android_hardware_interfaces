@@ -56,7 +56,7 @@ std::optional<AudioOffloadInfo> ModuleConfig::generateOffloadInfoIfNeeded(
         offloadInfo.base.sampleRate = portConfig.sampleRate.value().value;
         offloadInfo.base.channelMask = portConfig.channelMask.value();
         offloadInfo.base.format = portConfig.format.value();
-        offloadInfo.bitRatePerSecond = 256;                                // Arbitrary value.
+        offloadInfo.bitRatePerSecond = 256000;                             // Arbitrary value.
         offloadInfo.durationUs = std::chrono::microseconds(1min).count();  // Arbitrary value.
         offloadInfo.usage = AudioUsage::MEDIA;
         offloadInfo.encapsulationMode = AudioEncapsulationMode::NONE;
