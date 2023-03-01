@@ -20,9 +20,10 @@ import android.hardware.wifi.NanPairingRequestType;
 import android.hardware.wifi.NanPairingSecurityConfig;
 
 /**
- * NAN pairing initiate request
- * Which can be used for setup(the initial pairing request) or
- * verification(re-pairing for paired devices)
+ * NAN pairing initiate request.
+ * Can be used for setup (the initial pairing request) or
+ * verification (re-pairing for paired devices).
+ * See Wi-Fi Aware R4.0 section 7.6.1.1
  */
 @VintfStability
 parcelable NanPairingRequest {
