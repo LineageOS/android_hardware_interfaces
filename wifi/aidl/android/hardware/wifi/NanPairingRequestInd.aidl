@@ -22,7 +22,7 @@ import android.hardware.wifi.NanPairingRequestType;
 /**
  * NAN pairing request indication message structure.
  * Event indication received by an intended Responder when a
- * pairing request initiated by an Initiator.
+ * pairing request is initiated by an Initiator. See Wi-Fi Aware R4.0 section 7.6.1.3
  */
 @VintfStability
 parcelable NanPairingRequestInd {
