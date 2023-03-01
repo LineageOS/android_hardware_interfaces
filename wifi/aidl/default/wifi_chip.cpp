@@ -711,10 +711,10 @@ ndk::ScopedAStatus WifiChip::triggerSubsystemRestart() {
                            &WifiChip::triggerSubsystemRestartInternal);
 }
 
-ndk::ScopedAStatus WifiChip::getSupportedRadioCombinationsMatrix(
-        WifiRadioCombinationMatrix* _aidl_return) {
+ndk::ScopedAStatus WifiChip::getSupportedRadioCombinations(
+        std::vector<WifiRadioCombination>* _aidl_return) {
     return validateAndCall(this, WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
-                           &WifiChip::getSupportedRadioCombinationsMatrixInternal, _aidl_return);
+                           &WifiChip::getSupportedRadioCombinationsInternal, _aidl_return);
 }
 
 ndk::ScopedAStatus WifiChip::getWifiChipCapabilities(WifiChipCapabilities* _aidl_return) {
@@ -1440,26 +1440,26 @@ ndk::ScopedAStatus WifiChip::setAfcChannelAllowanceInternal(
     return createWifiStatus(WifiStatusCode::ERROR_NOT_SUPPORTED);
 }
 
-std::pair<WifiRadioCombinationMatrix, ndk::ScopedAStatus>
-WifiChip::getSupportedRadioCombinationsMatrixInternal() {
+std::pair<std::vector<WifiRadioCombination>, ndk::ScopedAStatus>
+WifiChip::getSupportedRadioCombinationsInternal() {
     legacy_hal::wifi_error legacy_status;
     legacy_hal::wifi_radio_combination_matrix* legacy_matrix;
+    std::vector<WifiRadioCombination> aidl_combinations;
 
     std::tie(legacy_status, legacy_matrix) =
             legacy_hal_.lock()->getSupportedRadioCombinationsMatrix();
     if (legacy_status != legacy_hal::WIFI_SUCCESS) {
         LOG(ERROR) << "Failed to get SupportedRadioCombinations matrix from legacy HAL: "
                    << legacyErrorToString(legacy_status);
-        return {WifiRadioCombinationMatrix{}, createWifiStatusFromLegacyError(legacy_status)};
+        return {aidl_combinations, createWifiStatusFromLegacyError(legacy_status)};
     }
 
-    WifiRadioCombinationMatrix aidl_matrix;
     if (!aidl_struct_util::convertLegacyRadioCombinationsMatrixToAidl(legacy_matrix,
-                                                                      &aidl_matrix)) {
+                                                                      &aidl_combinations)) {
         LOG(ERROR) << "Failed convertLegacyRadioCombinationsMatrixToAidl() ";
-        return {WifiRadioCombinationMatrix(), createWifiStatus(WifiStatusCode::ERROR_INVALID_ARGS)};
+        return {aidl_combinations, createWifiStatus(WifiStatusCode::ERROR_INVALID_ARGS)};
     }
-    return {aidl_matrix, ndk::ScopedAStatus::ok()};
+    return {aidl_combinations, ndk::ScopedAStatus::ok()};
 }
 
 std::pair<WifiChipCapabilities, ndk::ScopedAStatus> WifiChip::getWifiChipCapabilitiesInternal() {
