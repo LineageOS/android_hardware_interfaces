@@ -20,7 +20,7 @@ import android.hardware.tv.hdmi.earc.IEArcCallback;
 import android.hardware.tv.hdmi.earc.IEArcStatus;
 
 /**
- * eARC HAL interface definition
+ * eARC HAL interface definition. This is only relevant to TV Panels that implement eARC TX.
  */
 @VintfStability
 interface IEArc {
