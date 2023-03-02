@@ -123,6 +123,9 @@ interface ISecureElement {
     /**
      * Transmits an APDU command (as per ISO/IEC 7816) to the SE.
      *
+     * @throws ServiceSpecificException with code CHANNEL_NOT_AVAILABLE
+     *  if there was an error in communicating with the secure element.
+     *
      * @param data APDU command to be sent
      * @return response to the command
      */

@@ -619,10 +619,10 @@ enum VehicleProperty {
     /**
      * HVAC Properties
      *
-     * Additional rules for mapping a zoned HVAC property (except
-     * HVAC_MAX_DEFROST_ON) to AreaIDs:
-     *  - Every seat in VehicleAreaSeat that is available in the car, must be
-     *    part of an AreaID in the AreaID array.
+     * Additional rules for mapping non-GLOBAL VehicleArea type HVAC properties
+     * to AreaIDs:
+     *  - Every “area” for a specific VehicleArea type that is affected by the
+     *    property, must be included in an area ID for that property.
      *
      * Example 1: A car has two front seats (ROW_1_LEFT, ROW_1_RIGHT) and three
      *  back seats (ROW_2_LEFT, ROW_2_CENTER, ROW_2_RIGHT). There are two
@@ -650,6 +650,16 @@ enum VehicleProperty {
      *     - ROW_1_LEFT
      *     - ROW_1_RIGHT
      *     - ROW_2_LEFT | ROW_2_CENTER | ROW_2_RIGHT | ROW_3_LEFT | ROW_3_CENTER | ROW_3_RIGHT
+     *
+     * Example 3: A car has two front seats (ROW_1_LEFT, ROW_1_RIGHT) and three
+     *  back seats (ROW_2_LEFT, ROW_2_CENTER, ROW_2_RIGHT). Suppose the car
+     *  supports HVAC_AUTO_ON for just the two front seats.
+     *   - A valid mapping set of AreaIDs for HVAC_AUTO_ON would be:
+     *      - ROW_1_LEFT | ROW_1_RIGHT
+     *   - If HVAC_AUTO_ON had two separate control units for the driver side
+     *     and passenger side, an alternative mapping would be:
+     *      - ROW_1_LEFT
+     *      - ROW_1_RIGHT
      *
      *
      * Fan speed setting
@@ -2348,6 +2358,20 @@ enum VehicleProperty {
     VEHICLE_MAP_SERVICE = 0x0C00 + 0x10000000 + 0x01000000
             + 0x00e00000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:MIXED
     /**
+     * Characterization of inputs used for computing location.
+     *
+     * This property must indicate what (if any) data and sensor inputs are considered by the system
+     * when computing the vehicle's location that is shared with Android through the GNSS HAL.
+     *
+     * The value must return a collection of bit flags. The bit flags are defined in
+     * LocationCharacterization.
+     *
+     * @change_mode VehiclePropertyChangeMode.STATIC
+     * @access VehiclePropertyAccess.READ
+     */
+    LOCATION_CHARACTERIZATION =
+            0x0C10 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
+    /**
      * OBD2 Live Sensor Data
      *
      * Reports a snapshot of the current (live) values of the OBD2 sensors available.
@@ -4013,6 +4037,28 @@ enum VehicleProperty {
      */
     CRUISE_CONTROL_TARGET_SPEED =
             0x1013 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.FLOAT,
+
+    /**
+     * Current target time gap for Adaptive Cruise Control (ACC) or Predictive Cruise Control in
+     * milliseconds.
+     *
+     * This property should specify the target time gap to a leading vehicle. This gap is defined as
+     * the time to travel the distance between the leading vehicle's rear-most point to the ACC
+     * vehicle's front-most point. The actual time gap from a leading vehicle can be above or below
+     * this value.
+     *
+     * The possible values to set for the target time gap should be specified in configArray in
+     * ascending order. All values must be positive. If the property is writable, all values must be
+     * writable.
+     *
+     * Writing to this property when it is not available should return StatusCode.NOT_AVAILABLE.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     * @unit VehicleUnit:MILLI_SECS
+     */
+    ADAPTIVE_CRUISE_CONTROL_TARGET_TIME_GAP =
+            0x1014 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
 
     /**
      * Enable or disable hands on detection (HOD).

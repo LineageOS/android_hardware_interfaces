@@ -31,7 +31,7 @@ import android.hardware.wifi.WifiDebugHostWakeReasonStats;
 import android.hardware.wifi.WifiDebugRingBufferStatus;
 import android.hardware.wifi.WifiDebugRingBufferVerboseLevel;
 import android.hardware.wifi.WifiIfaceMode;
-import android.hardware.wifi.WifiRadioCombinationMatrix;
+import android.hardware.wifi.WifiRadioCombination;
 import android.hardware.wifi.WifiUsableChannel;
 
 /**
@@ -737,8 +737,7 @@ interface IWifiChip {
      * Retrieve the list of all the possible radio combinations supported by this
      * chip.
      *
-     * @return A list of all the possible radio combinations represented by
-     *         |WifiRadioCombinationMatrix|.
+     * @return A list of all the possible radio combinations.
      *         For example, in case of a chip which has two radios, where one radio is
      *         capable of 2.4GHz 2X2 only and another radio which is capable of either
      *         5GHz or 6GHz 2X2, the number of possible radio combinations in this case
@@ -759,7 +758,7 @@ interface IWifiChip {
      *         |WifiStatusCode.FAILURE_UNKNOWN|
      *
      */
-    WifiRadioCombinationMatrix getSupportedRadioCombinationsMatrix();
+    WifiRadioCombination[] getSupportedRadioCombinations();
 
     /**
      * Get capabilities supported by this chip.

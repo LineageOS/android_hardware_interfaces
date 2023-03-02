@@ -1,11 +1,11 @@
 /*
- * Copyright 2021, The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -31,12 +31,16 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.security.dice;
-/* @hide */
+package android.hardware.automotive.vehicle;
 @Backing(type="int") @VintfStability
-enum Mode {
-  NOT_INITIALIZED = 0,
-  NORMAL = 1,
-  DEBUG = 2,
-  RECOVERY = 3,
+enum LocationCharacterization {
+  PRIOR_LOCATIONS = 0x1,
+  GYROSCOPE_FUSION = 0x2,
+  ACCELEROMETER_FUSION = 0x4,
+  COMPASS_FUSION = 0x8,
+  WHEEL_SPEED_FUSION = 0x10,
+  STEERING_ANGLE_FUSION = 0x20,
+  CAR_SPEED_FUSION = 0x40,
+  DEAD_RECKONED = 0x80,
+  RAW_GNSS_ONLY = 0x100,
 }

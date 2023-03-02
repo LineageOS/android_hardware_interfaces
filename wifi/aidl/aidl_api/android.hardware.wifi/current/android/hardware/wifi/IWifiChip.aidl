@@ -58,7 +58,7 @@ interface IWifiChip {
   String[] getP2pIfaceNames();
   @PropagateAllowBlocking android.hardware.wifi.IWifiStaIface getStaIface(in String ifname);
   String[] getStaIfaceNames();
-  android.hardware.wifi.WifiRadioCombinationMatrix getSupportedRadioCombinationsMatrix();
+  android.hardware.wifi.WifiRadioCombination[] getSupportedRadioCombinations();
   android.hardware.wifi.WifiChipCapabilities getWifiChipCapabilities();
   android.hardware.wifi.WifiUsableChannel[] getUsableChannels(in android.hardware.wifi.WifiBand band, in android.hardware.wifi.WifiIfaceMode ifaceModeMask, in android.hardware.wifi.IWifiChip.UsableChannelFilter filterMask);
   void setAfcChannelAllowance(in android.hardware.wifi.AvailableAfcFrequencyInfo[] availableAfcFrequencyInfo);

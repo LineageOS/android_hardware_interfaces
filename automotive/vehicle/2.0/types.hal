@@ -829,10 +829,10 @@ enum VehicleProperty : int32_t {
     /*
      * HVAC Properties
      *
-     * Additional rules for mapping a zoned HVAC property (except
-     * HVAC_MAX_DEFROST_ON) to AreaIDs:
-     *  - Every seat in VehicleAreaSeat that is available in the car, must be
-     *    part of an AreaID in the AreaID array.
+     * Additional rules for mapping non-GLOBAL VehicleArea type HVAC properties
+     * to AreaIDs:
+     *  - Every “area” for a specific VehicleArea type that is affected by the
+     *    property, must be included in an area ID for that property.
      *
      * Example 1: A car has two front seats (ROW_1_LEFT, ROW_1_RIGHT) and three
      *  back seats (ROW_2_LEFT, ROW_2_CENTER, ROW_2_RIGHT). There are two
@@ -860,6 +860,16 @@ enum VehicleProperty : int32_t {
      *     - ROW_1_LEFT
      *     - ROW_1_RIGHT
      *     - ROW_2_LEFT | ROW_2_CENTER | ROW_2_RIGHT | ROW_3_LEFT | ROW_3_CENTER | ROW_3_RIGHT
+     *
+     * Example 3: A car has two front seats (ROW_1_LEFT, ROW_1_RIGHT) and three
+     *  back seats (ROW_2_LEFT, ROW_2_CENTER, ROW_2_RIGHT). Suppose the car
+     *  supports HVAC_AUTO_ON for just the two front seats.
+     *   - A valid mapping set of AreaIDs for HVAC_AUTO_ON would be:
+     *      - ROW_1_LEFT | ROW_1_RIGHT
+     *   - If HVAC_AUTO_ON had two separate control units for the driver side
+     *     and passenger side, an alternative mapping would be:
+     *      - ROW_1_LEFT
+     *      - ROW_1_RIGHT
      */
 
     /**
