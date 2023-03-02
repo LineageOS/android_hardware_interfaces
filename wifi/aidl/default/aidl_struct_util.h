@@ -64,7 +64,7 @@ bool convertAidlVectorOfCoexUnsafeChannelToLegacy(
         std::vector<legacy_hal::wifi_coex_unsafe_channel>* legacy_unsafe_channels);
 bool convertLegacyRadioCombinationsMatrixToAidl(
         legacy_hal::wifi_radio_combination_matrix* legacy_matrix,
-        WifiRadioCombinationMatrix* aidl_matrix);
+        std::vector<WifiRadioCombination>* aidl_combinations);
 WifiBand convertLegacyMacBandToAidlWifiBand(uint32_t band);
 WifiAntennaMode convertLegacyAntennaConfigurationToAidl(uint32_t antenna_cfg);
 bool convertLegacyIfaceCombinationsMatrixToChipMode(

@@ -370,26 +370,29 @@ ndk::ScopedAStatus Module::setModuleDebug(
 }
 
 ndk::ScopedAStatus Module::getTelephony(std::shared_ptr<ITelephony>* _aidl_return) {
-    if (mTelephony == nullptr) {
+    if (!mTelephony) {
         mTelephony = ndk::SharedRefBase::make<Telephony>();
-        mTelephonyBinder = mTelephony->asBinder();
-        AIBinder_setMinSchedulerPolicy(mTelephonyBinder.get(), SCHED_NORMAL,
-                                       ANDROID_PRIORITY_AUDIO);
     }
-    *_aidl_return = mTelephony;
+    *_aidl_return = mTelephony.getPtr();
     LOG(DEBUG) << __func__ << ": returning instance of ITelephony: " << _aidl_return->get();
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus Module::getBluetooth(std::shared_ptr<IBluetooth>* _aidl_return) {
-    if (mBluetooth == nullptr) {
+    if (!mBluetooth) {
         mBluetooth = ndk::SharedRefBase::make<Bluetooth>();
-        mBluetoothBinder = mBluetooth->asBinder();
-        AIBinder_setMinSchedulerPolicy(mBluetoothBinder.get(), SCHED_NORMAL,
-                                       ANDROID_PRIORITY_AUDIO);
     }
-    *_aidl_return = mBluetooth;
+    *_aidl_return = mBluetooth.getPtr();
     LOG(DEBUG) << __func__ << ": returning instance of IBluetooth: " << _aidl_return->get();
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus Module::getBluetoothA2dp(std::shared_ptr<IBluetoothA2dp>* _aidl_return) {
+    if (!mBluetoothA2dp) {
+        mBluetoothA2dp = ndk::SharedRefBase::make<BluetoothA2dp>();
+    }
+    *_aidl_return = mBluetoothA2dp.getPtr();
+    LOG(DEBUG) << __func__ << ": returning instance of IBluetoothA2dp: " << _aidl_return->get();
     return ndk::ScopedAStatus::ok();
 }
 
@@ -1039,13 +1042,10 @@ ndk::ScopedAStatus Module::updateScreenState(bool in_isTurnedOn) {
 }
 
 ndk::ScopedAStatus Module::getSoundDose(std::shared_ptr<ISoundDose>* _aidl_return) {
-    if (mSoundDose == nullptr) {
+    if (!mSoundDose) {
         mSoundDose = ndk::SharedRefBase::make<sounddose::SoundDose>();
-        mSoundDoseBinder = mSoundDose->asBinder();
-        AIBinder_setMinSchedulerPolicy(mSoundDoseBinder.get(), SCHED_NORMAL,
-                                       ANDROID_PRIORITY_AUDIO);
     }
-    *_aidl_return = mSoundDose;
+    *_aidl_return = mSoundDose.getPtr();
     LOG(DEBUG) << __func__ << ": returning instance of ISoundDose: " << _aidl_return->get();
     return ndk::ScopedAStatus::ok();
 }
@@ -1251,14 +1251,14 @@ bool Module::isMmapSupported() {
 }
 
 ndk::ScopedAStatus Module::populateConnectedDevicePort(AudioPort* audioPort __unused) {
-    LOG(DEBUG) << __func__ << ": do nothing and return ok";
+    LOG(VERBOSE) << __func__ << ": do nothing and return ok";
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus Module::checkAudioPatchEndpointsMatch(
         const std::vector<AudioPortConfig*>& sources __unused,
         const std::vector<AudioPortConfig*>& sinks __unused) {
-    LOG(DEBUG) << __func__ << ": do nothing and return ok";
+    LOG(VERBOSE) << __func__ << ": do nothing and return ok";
     return ndk::ScopedAStatus::ok();
 }
 

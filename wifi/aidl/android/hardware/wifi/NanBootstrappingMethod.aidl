@@ -17,7 +17,8 @@
 package android.hardware.wifi;
 
 /**
- * Pairing bootstrapping method flag
+ * Pairing bootstrapping method flag.
+ * See Wi-Fi Aware R4.0 section 9.5.21.7 table 128
  */
 @VintfStability
 @Backing(type="int")
