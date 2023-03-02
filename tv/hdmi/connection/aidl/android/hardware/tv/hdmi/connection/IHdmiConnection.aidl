@@ -55,16 +55,33 @@ interface IHdmiConnection {
      * signaling EDID updates). By default, the HAL will use {@code HDMI_HPD_PHYSICAL} (the physical
      * hotplug signal). When set to {@code HDMI_HPD_STATUS_BIT} the HAL should use the HDP status
      * bit.
+     *
+     * This is only relevant to TV Panel devices that support eARC TX. While eARC TX is connected,
+     * the framework calls this method to set the HPD signal to {@code HDMI_HPD_STATUS_BIT}.
+     *
+     * For all other device types, this method can be stubbed.
+     *
+     * @param signal The HPD signal type to use.
+     * @param portId id of the port on which the HPD signal should be set.
+     *
      * @throws ServiceSpecificException with error code set to
      *         {@code Result::FAILURE_NOT_SUPPORTED} if the signal type is not supported.
      *         {@code Result::FAILURE_INVALID_ARGS} if the signal type is invalid.
      *         {@code Result::FAILURE_UNKNOWN} if the signal type could not be set because of an
      *                                         unknown failure.
      */
-    void setHpdSignal(HpdSignal signal);
+    void setHpdSignal(HpdSignal signal, in int portId);
 
     /**
      * Get the current signal the HAL is using for HPD
+     *
+     * This is only relevant to TV Panel devices that support eARC TX. While eARC TX is connected,
+     * this method returns {@code HDMI_HPD_STATUS_BIT}.
+     *
+     * For all other device types, this method can be stubbed by always returning
+     * {@code HDMI_HPD_PHYSICAL}.
+     *
+     * @param portId id of the port of which the current HPD signal is queried.
      */
-    HpdSignal getHpdSignal();
+    HpdSignal getHpdSignal(in int portId);
 }

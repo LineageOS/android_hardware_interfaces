@@ -69,18 +69,23 @@ ScopedAStatus HdmiConnectionMock::setCallback(
     return ScopedAStatus::ok();
 }
 
-ScopedAStatus HdmiConnectionMock::setHpdSignal(HpdSignal signal) {
-    if (mHdmiThreadRun) {
-        mHpdSignal = signal;
-        return ScopedAStatus::ok();
-    } else {
+ScopedAStatus HdmiConnectionMock::setHpdSignal(HpdSignal signal, int32_t portId) {
+    if (portId > mTotalPorts || portId < 1) {
+        return ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+    }
+    if (!mHdmiThreadRun) {
         return ScopedAStatus::fromServiceSpecificError(
                 static_cast<int32_t>(Result::FAILURE_INVALID_STATE));
     }
+    mHpdSignal.at(portId - 1) = signal;
+    return ScopedAStatus::ok();
 }
 
-ScopedAStatus HdmiConnectionMock::getHpdSignal(HpdSignal* _aidl_return) {
-    *_aidl_return = mHpdSignal;
+ScopedAStatus HdmiConnectionMock::getHpdSignal(int32_t portId, HpdSignal* _aidl_return) {
+    if (portId > mTotalPorts || portId < 1) {
+        return ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+    }
+    *_aidl_return = mHpdSignal.at(portId - 1);
     return ScopedAStatus::ok();
 }
 
@@ -123,7 +128,7 @@ void HdmiConnectionMock::handleHotplugMessage(unsigned char* msgBuf) {
     bool connected = ((msgBuf[3]) & 0xf) > 0;
     int32_t portId = static_cast<uint32_t>(msgBuf[0] & 0xf);
 
-    if (portId > static_cast<int32_t>(mPortInfos.size())) {
+    if (portId > static_cast<int32_t>(mPortInfos.size()) || portId < 1) {
         ALOGD("[halimp_aidl] ignore hot plug message, id %x does not exist", portId);
         return;
     }
@@ -179,6 +184,7 @@ HdmiConnectionMock::HdmiConnectionMock() {
     mCallback = nullptr;
     mPortInfos.resize(mTotalPorts);
     mPortConnectionStatus.resize(mTotalPorts);
+    mHpdSignal.resize(mTotalPorts);
     mPortInfos[0] = {.type = HdmiPortType::OUTPUT,
                      .portId = static_cast<uint32_t>(1),
                      .cecSupported = true,
@@ -186,6 +192,7 @@ HdmiConnectionMock::HdmiConnectionMock() {
                      .eArcSupported = false,
                      .physicalAddress = mPhysicalAddress};
     mPortConnectionStatus[0] = false;
+    mHpdSignal[0] = HpdSignal::HDMI_HPD_PHYSICAL;
     mDeathRecipient = ndk::ScopedAIBinder_DeathRecipient(AIBinder_DeathRecipient_new(serviceDied));
 }
 
