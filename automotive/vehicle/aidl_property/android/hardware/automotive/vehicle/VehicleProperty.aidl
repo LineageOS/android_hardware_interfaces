@@ -2146,6 +2146,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ
+     * @unit VehicleUnit:MILLI_SECS
      */
     WINDSHIELD_WIPERS_PERIOD =
             0x0BC5 + VehiclePropertyGroup.SYSTEM + VehicleArea.WINDOW + VehiclePropertyType.INT32,
