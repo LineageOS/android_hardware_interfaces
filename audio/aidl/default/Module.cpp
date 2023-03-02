@@ -1251,14 +1251,14 @@ bool Module::isMmapSupported() {
 }
 
 ndk::ScopedAStatus Module::populateConnectedDevicePort(AudioPort* audioPort __unused) {
-    LOG(DEBUG) << __func__ << ": do nothing and return ok";
+    LOG(VERBOSE) << __func__ << ": do nothing and return ok";
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus Module::checkAudioPatchEndpointsMatch(
         const std::vector<AudioPortConfig*>& sources __unused,
         const std::vector<AudioPortConfig*>& sinks __unused) {
-    LOG(DEBUG) << __func__ << ": do nothing and return ok";
+    LOG(VERBOSE) << __func__ << ": do nothing and return ok";
     return ndk::ScopedAStatus::ok();
 }
 
