@@ -49,4 +49,5 @@ enum AcquiredInfo {
   IMMOBILE,
   RETRYING_CAPTURE,
   LIFT_TOO_SOON,
+  POWER_PRESS,
 }
