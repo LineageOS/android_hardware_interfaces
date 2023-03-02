@@ -98,7 +98,8 @@ interface IStreamOut {
      * @throws EX_ILLEGAL_ARGUMENT If the number of elements in the provided
      *                             array does not match the channel count, or
      *                             attenuation values are out of range.
-     * @throws EX_ILLEGAL_STATE If the stream is closed.
+     * @throws EX_ILLEGAL_STATE If the stream is closed or there is any error happens
+                                when applying hardware volume.
      * @throws EX_UNSUPPORTED_OPERATION If hardware volume control is not supported.
      */
     void setHwVolume(in float[] channelVolumes);
