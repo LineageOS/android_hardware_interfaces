@@ -79,6 +79,7 @@ interface IWifiNanIface {
      * Asynchronous response is with |IWifiNanIfaceEventCallback.notifyCreateDataInterfaceResponse|.
      *
      * @param cmdId Command Id to use for this invocation.
+     * @param ifaceName The name of the interface, e.g. "aware0".
      * @throws ServiceSpecificException with one of the following values:
      *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
      *         |WifiStatusCode.ERROR_UNKNOWN|
@@ -90,6 +91,7 @@ interface IWifiNanIface {
      * Asynchronous response is with |IWifiNanIfaceEventCallback.notifyDeleteDataInterfaceResponse|.
      *
      * @param cmdId Command Id to use for this invocation.
+     * @param ifaceName The name of the interface, e.g. "aware0".
      * @throws ServiceSpecificException with one of the following values:
      *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
      *         |WifiStatusCode.ERROR_UNKNOWN|
