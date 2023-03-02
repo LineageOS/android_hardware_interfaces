@@ -93,8 +93,8 @@ TEST_P(HdmiConnectionTest, GetPortInfo) {
     for (size_t i = 0; i < ports.size(); ++i) {
         EXPECT_TRUE((ports[i].type == HdmiPortType::OUTPUT) ||
                     (ports[i].type == HdmiPortType::INPUT));
-        if (ports[i].portId == 0) {
-            ALOGW("%s: Port id should start from 1", __func__);
+        if (ports[i].type == HdmiPortType::OUTPUT && ports[i].portId <= 0) {
+            ALOGW("%s: Port id for output ports should start from 1", __func__);
         }
         cecSupportedOnDevice = cecSupportedOnDevice | ports[i].cecSupported;
     }
@@ -111,16 +111,21 @@ TEST_P(HdmiConnectionTest, IsConnected) {
 }
 
 TEST_P(HdmiConnectionTest, HdpSignal) {
+    std::vector<HdmiPortInfo> ports;
+    ASSERT_TRUE(hdmiConnection->getPortInfo(&ports).isOk());
     HpdSignal originalSignal;
     HpdSignal signal = HpdSignal::HDMI_HPD_STATUS_BIT;
-    HpdSignal readSignal;
-    ASSERT_TRUE(hdmiConnection->getHpdSignal(&originalSignal).isOk());
-    ASSERT_TRUE(hdmiConnection->setHpdSignal(signal).isOk());
-    ASSERT_TRUE(hdmiConnection->getHpdSignal(&readSignal).isOk());
-    EXPECT_EQ(readSignal, signal);
-    signal = HpdSignal::HDMI_HPD_PHYSICAL;
-    ASSERT_TRUE(hdmiConnection->setHpdSignal(signal).isOk());
-    ASSERT_TRUE(hdmiConnection->getHpdSignal(&readSignal).isOk());
-    EXPECT_EQ(readSignal, signal);
-    ASSERT_TRUE(hdmiConnection->setHpdSignal(originalSignal).isOk());
+    for (size_t i = 0; i < ports.size(); ++i) {
+        int32_t portId = ports[i].portId;
+        HpdSignal readSignal;
+        ASSERT_TRUE(hdmiConnection->getHpdSignal(portId, &originalSignal).isOk());
+        ASSERT_TRUE(hdmiConnection->setHpdSignal(signal, portId).isOk());
+        ASSERT_TRUE(hdmiConnection->getHpdSignal(portId, &readSignal).isOk());
+        EXPECT_EQ(readSignal, signal);
+        signal = HpdSignal::HDMI_HPD_PHYSICAL;
+        ASSERT_TRUE(hdmiConnection->setHpdSignal(signal, portId).isOk());
+        ASSERT_TRUE(hdmiConnection->getHpdSignal(portId, &readSignal).isOk());
+        EXPECT_EQ(readSignal, signal);
+        ASSERT_TRUE(hdmiConnection->setHpdSignal(originalSignal, portId).isOk());
+    }
 }
