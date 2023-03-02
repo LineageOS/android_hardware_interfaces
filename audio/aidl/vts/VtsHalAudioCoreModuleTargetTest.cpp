@@ -61,6 +61,7 @@ using aidl::android::hardware::audio::common::SourceMetadata;
 using aidl::android::hardware::audio::core::AudioPatch;
 using aidl::android::hardware::audio::core::AudioRoute;
 using aidl::android::hardware::audio::core::IBluetooth;
+using aidl::android::hardware::audio::core::IBluetoothA2dp;
 using aidl::android::hardware::audio::core::IModule;
 using aidl::android::hardware::audio::core::IStreamCommon;
 using aidl::android::hardware::audio::core::IStreamIn;
@@ -2055,6 +2056,59 @@ TEST_P(AudioCoreBluetooth, HfpConfigInvalid) {
                                           &hfpConfig));
 }
 
+class AudioCoreBluetoothA2dp : public AudioCoreModuleBase,
+                               public testing::TestWithParam<std::string> {
+  public:
+    void SetUp() override {
+        ASSERT_NO_FATAL_FAILURE(SetUpImpl(GetParam()));
+        ASSERT_IS_OK(module->getBluetoothA2dp(&bluetooth));
+    }
+
+    void TearDown() override { ASSERT_NO_FATAL_FAILURE(TearDownImpl()); }
+
+    std::shared_ptr<IBluetoothA2dp> bluetooth;
+};
+
+TEST_P(AudioCoreBluetoothA2dp, SameInstance) {
+    if (bluetooth == nullptr) {
+        GTEST_SKIP() << "BluetoothA2dp is not supported";
+    }
+    std::shared_ptr<IBluetoothA2dp> bluetooth2;
+    EXPECT_IS_OK(module->getBluetoothA2dp(&bluetooth2));
+    ASSERT_NE(nullptr, bluetooth2.get());
+    EXPECT_EQ(bluetooth->asBinder(), bluetooth2->asBinder())
+            << "getBluetoothA2dp must return the same interface instance across invocations";
+}
+
+TEST_P(AudioCoreBluetoothA2dp, Enabled) {
+    if (bluetooth == nullptr) {
+        GTEST_SKIP() << "BluetoothA2dp is not supported";
+    }
+    // Since enabling A2DP may require having an actual device connection,
+    // limit testing to setting back the current value.
+    bool enabled;
+    ASSERT_IS_OK(bluetooth->isEnabled(&enabled));
+    EXPECT_IS_OK(bluetooth->setEnabled(enabled))
+            << "setEnabled without actual state change must not fail";
+}
+
+TEST_P(AudioCoreBluetoothA2dp, OffloadReconfiguration) {
+    if (bluetooth == nullptr) {
+        GTEST_SKIP() << "BluetoothA2dp is not supported";
+    }
+    bool isSupported;
+    ASSERT_IS_OK(bluetooth->supportsOffloadReconfiguration(&isSupported));
+    bool isSupported2;
+    ASSERT_IS_OK(bluetooth->supportsOffloadReconfiguration(&isSupported2));
+    EXPECT_EQ(isSupported, isSupported2);
+    if (isSupported) {
+        static const auto kStatuses = {EX_NONE, EX_ILLEGAL_STATE};
+        EXPECT_STATUS(kStatuses, bluetooth->reconfigureOffload({}));
+    } else {
+        EXPECT_STATUS(EX_UNSUPPORTED_OPERATION, bluetooth->reconfigureOffload({}));
+    }
+}
+
 class AudioCoreTelephony : public AudioCoreModuleBase, public testing::TestWithParam<std::string> {
   public:
     void SetUp() override {
@@ -3462,6 +3516,10 @@ INSTANTIATE_TEST_SUITE_P(AudioCoreBluetoothTest, AudioCoreBluetooth,
                          testing::ValuesIn(android::getAidlHalInstanceNames(IModule::descriptor)),
                          android::PrintInstanceNameToString);
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(AudioCoreBluetooth);
+INSTANTIATE_TEST_SUITE_P(AudioCoreBluetoothA2dpTest, AudioCoreBluetoothA2dp,
+                         testing::ValuesIn(android::getAidlHalInstanceNames(IModule::descriptor)),
+                         android::PrintInstanceNameToString);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(AudioCoreBluetoothA2dp);
 INSTANTIATE_TEST_SUITE_P(AudioCoreTelephonyTest, AudioCoreTelephony,
                          testing::ValuesIn(android::getAidlHalInstanceNames(IModule::descriptor)),
                          android::PrintInstanceNameToString);
