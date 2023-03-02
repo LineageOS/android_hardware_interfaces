@@ -16,8 +16,6 @@
 
 package android.hardware.wifi;
 
-import android.hardware.wifi.NanBootstrappingMethod;
-
 /**
  * See Wi-Fi Aware R4.0 section 9.5.21.7
  */
