@@ -37,6 +37,6 @@ interface IHdmiConnection {
   android.hardware.tv.hdmi.connection.HdmiPortInfo[] getPortInfo();
   boolean isConnected(in int portId);
   void setCallback(in android.hardware.tv.hdmi.connection.IHdmiConnectionCallback callback);
-  void setHpdSignal(android.hardware.tv.hdmi.connection.HpdSignal signal);
-  android.hardware.tv.hdmi.connection.HpdSignal getHpdSignal();
+  void setHpdSignal(android.hardware.tv.hdmi.connection.HpdSignal signal, in int portId);
+  android.hardware.tv.hdmi.connection.HpdSignal getHpdSignal(in int portId);
 }
