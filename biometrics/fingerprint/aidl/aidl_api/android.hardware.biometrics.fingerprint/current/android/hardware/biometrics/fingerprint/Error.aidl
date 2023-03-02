@@ -44,4 +44,5 @@ enum Error {
   UNABLE_TO_REMOVE,
   VENDOR,
   BAD_CALIBRATION,
+  POWER_PRESS,
 }
