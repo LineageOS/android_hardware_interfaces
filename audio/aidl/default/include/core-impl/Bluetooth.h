@@ -17,6 +17,7 @@
 #pragma once
 
 #include <aidl/android/hardware/audio/core/BnBluetooth.h>
+#include <aidl/android/hardware/audio/core/BnBluetoothA2dp.h>
 
 namespace aidl::android::hardware::audio::core {
 
@@ -30,6 +31,21 @@ class Bluetooth : public BnBluetooth {
 
     ScoConfig mScoConfig;
     HfpConfig mHfpConfig;
+};
+
+class BluetoothA2dp : public BnBluetoothA2dp {
+  public:
+    BluetoothA2dp() = default;
+
+  private:
+    ndk::ScopedAStatus isEnabled(bool* _aidl_return) override;
+    ndk::ScopedAStatus setEnabled(bool in_enabled) override;
+    ndk::ScopedAStatus supportsOffloadReconfiguration(bool* _aidl_return) override;
+    ndk::ScopedAStatus reconfigureOffload(
+            const std::vector<::aidl::android::hardware::audio::core::VendorParameter>&
+                    in_parameters) override;
+
+    bool mEnabled = false;
 };
 
 }  // namespace aidl::android::hardware::audio::core
