@@ -34,9 +34,9 @@ oneway interface IEArcCallback {
     /**
      * The callback function that must be called by the eARC driver and HAL implementation to
      * notify the Android framework of the audio capabilities reported by the connected device. On
-     * every state change to {@code STATUS_EARC_CONNECTED}, the driver shall read the capabilities
-     * reported by the eARC RX. The onStateChange callback shall always be invoked first and the
-     * onCapabilitiesReported callback shall be invoked second.
+     * every state change to {@code IEArcStatus::EARC_CONNECTED}, the driver shall read the
+     * capabilities reported by the eARC RX. The onStateChange callback shall always be invoked
+     * first and the onCapabilitiesReported callback shall be invoked second.
      * @param rawCapabilities The raw unparsed audio capabilities (Ref "Section 9.5.3.6 - eARC RX
      *         Capabilities Data Structure" in HDMI 2.1 specification).
      * @param portId The port ID for which the audio capabilities are being reported
