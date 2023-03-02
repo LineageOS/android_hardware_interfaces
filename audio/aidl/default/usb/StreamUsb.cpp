@@ -17,6 +17,9 @@
 #define LOG_TAG "AHAL_StreamUsb"
 #include <android-base/logging.h>
 
+#include <Utils.h>
+
+#include "UsbAlsaMixerControl.h"
 #include "UsbAlsaUtils.h"
 #include "core-impl/Module.h"
 #include "core-impl/StreamUsb.h"
@@ -30,8 +33,12 @@ using aidl::android::hardware::audio::common::SourceMetadata;
 using aidl::android::media::audio::common::AudioDevice;
 using aidl::android::media::audio::common::AudioDeviceAddress;
 using aidl::android::media::audio::common::AudioOffloadInfo;
+using aidl::android::media::audio::common::AudioPortExt;
 using aidl::android::media::audio::common::MicrophoneDynamicInfo;
 using aidl::android::media::audio::common::MicrophoneInfo;
+using android::OK;
+using android::status_t;
+using android::hardware::audio::common::getChannelCount;
 
 namespace aidl::android::hardware::audio::core {
 
@@ -239,6 +246,31 @@ StreamOutUsb::StreamOutUsb(const SourceMetadata& sourceMetadata, StreamContext&&
                   // The default worker implementation is used.
                   return new StreamOutWorker(ctx, driver);
               },
-              offloadInfo) {}
+              offloadInfo) {
+    mChannelCount = getChannelCount(mContext.getChannelLayout());
+}
+
+ndk::ScopedAStatus StreamOutUsb::getHwVolume(std::vector<float>* _aidl_return) {
+    *_aidl_return = mHwVolumes;
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus StreamOutUsb::setHwVolume(const std::vector<float>& in_channelVolumes) {
+    for (const auto& device : mConnectedDevices) {
+        if (device.address.getTag() != AudioDeviceAddress::alsa) {
+            LOG(DEBUG) << __func__ << ": skip as the device address is not alsa";
+            continue;
+        }
+        const int card = device.address.get<AudioDeviceAddress::alsa>()[0];
+        if (auto result =
+                    usb::UsbAlsaMixerControl::getInstance().setVolumes(card, in_channelVolumes);
+            !result.isOk()) {
+            LOG(ERROR) << __func__ << ": failed to set volume for device, card=" << card;
+            return result;
+        }
+    }
+    mHwVolumes = in_channelVolumes;
+    return ndk::ScopedAStatus::ok();
+}
 
 }  // namespace aidl::android::hardware::audio::core
