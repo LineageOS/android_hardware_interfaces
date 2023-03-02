@@ -54,12 +54,13 @@ cc_library {
     ],
 }
 
-cc_library_static {
+cc_library {
     name: "libaudioserviceexampleimpl",
     defaults: [
         "aidlaudioservice_defaults",
         "latest_android_media_audio_common_types_ndk_shared",
         "latest_android_hardware_audio_core_ndk_shared",
+        "latest_android_hardware_audio_core_sounddose_ndk_shared",
     ],
     export_include_dirs: ["include"],
     srcs: [
