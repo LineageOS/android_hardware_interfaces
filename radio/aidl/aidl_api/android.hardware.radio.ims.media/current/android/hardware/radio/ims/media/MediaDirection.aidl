@@ -35,8 +35,8 @@ package android.hardware.radio.ims.media;
 @Backing(type="int") @VintfStability
 enum MediaDirection {
   NO_FLOW = 0,
-  SEND_ONLY = 1,
-  RECEIVE_ONLY = 2,
-  SEND_RECEIVE = 3,
-  INACTIVE = 4,
+  RTP_TX = (1 << 0) /* 1 */,
+  RTP_RX = (1 << 1) /* 2 */,
+  RTCP_TX = (1 << 2) /* 4 */,
+  RTCP_RX = (1 << 3) /* 8 */,
 }
