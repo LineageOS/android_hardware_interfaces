@@ -36,5 +36,5 @@ package android.hardware.wifi;
 parcelable WifiUsableChannel {
   int channel;
   android.hardware.wifi.WifiChannelWidthInMhz channelBandwidth;
-  android.hardware.wifi.WifiIfaceMode ifaceModeMask;
+  int ifaceModeMask;
 }

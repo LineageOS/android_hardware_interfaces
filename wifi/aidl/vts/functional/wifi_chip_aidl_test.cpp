@@ -22,6 +22,7 @@
 #include <aidl/Vintf.h>
 #include <aidl/android/hardware/wifi/BnWifi.h>
 #include <aidl/android/hardware/wifi/BnWifiChipEventCallback.h>
+#include <aidl/android/hardware/wifi/WifiIfaceMode.h>
 #include <android/binder_manager.h>
 #include <android/binder_status.h>
 #include <binder/IServiceManager.h>
@@ -232,9 +233,7 @@ TEST_P(WifiChipAidlTest, GetUsableChannels) {
 
     std::vector<WifiUsableChannel> channels;
     configureChipForConcurrencyType(IfaceConcurrencyType::STA);
-    auto status = wifi_chip_->getUsableChannels(
-            band, static_cast<WifiIfaceMode>(ifaceModeMask),
-            static_cast<IWifiChip::UsableChannelFilter>(filterMask), &channels);
+    auto status = wifi_chip_->getUsableChannels(band, ifaceModeMask, filterMask, &channels);
     if (checkStatusCode(&status, WifiStatusCode::ERROR_NOT_SUPPORTED)) {
         GTEST_SKIP() << "getUsableChannels() is not supported by vendor.";
     }
@@ -337,7 +336,7 @@ TEST_P(WifiChipAidlTest, SetCoexUnsafeChannels) {
 
     // Test with an empty vector of CoexUnsafeChannels.
     std::vector<IWifiChip::CoexUnsafeChannel> vec;
-    IWifiChip::CoexRestriction restrictions = static_cast<IWifiChip::CoexRestriction>(0);
+    int restrictions = 0;
     auto status = wifi_chip_->setCoexUnsafeChannels(vec, restrictions);
     if (!status.isOk()) {
         EXPECT_TRUE(checkStatusCode(&status, WifiStatusCode::ERROR_NOT_SUPPORTED));
@@ -352,10 +351,9 @@ TEST_P(WifiChipAidlTest, SetCoexUnsafeChannels) {
     unsafeChannel5Ghz.band = WifiBand::BAND_5GHZ;
     unsafeChannel5Ghz.channel = 36;
     vec.push_back(unsafeChannel5Ghz);
-    restrictions = static_cast<IWifiChip::CoexRestriction>(
-            static_cast<int32_t>(IWifiChip::CoexRestriction::WIFI_AWARE) |
-            static_cast<int32_t>(IWifiChip::CoexRestriction::SOFTAP) |
-            static_cast<int32_t>(IWifiChip::CoexRestriction::WIFI_DIRECT));
+    restrictions = static_cast<int32_t>(IWifiChip::CoexRestriction::WIFI_AWARE) |
+                   static_cast<int32_t>(IWifiChip::CoexRestriction::SOFTAP) |
+                   static_cast<int32_t>(IWifiChip::CoexRestriction::WIFI_DIRECT);
 
     status = wifi_chip_->setCoexUnsafeChannels(vec, restrictions);
     if (!status.isOk()) {

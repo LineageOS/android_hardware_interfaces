@@ -408,8 +408,8 @@ bool convertLegacyWifiUsableChannelToAidl(
     aidl_usable_channel->channel = legacy_usable_channel.freq;
     aidl_usable_channel->channelBandwidth =
             convertLegacyWifiChannelWidthToAidl(legacy_usable_channel.width);
-    aidl_usable_channel->ifaceModeMask = static_cast<WifiIfaceMode>(
-            convertLegacyWifiInterfaceModeToAidl(legacy_usable_channel.iface_mode_mask));
+    aidl_usable_channel->ifaceModeMask =
+            convertLegacyWifiInterfaceModeToAidl(legacy_usable_channel.iface_mode_mask);
 
     return true;
 }
@@ -572,7 +572,7 @@ bool convertAidlGscanParamsToLegacy(const StaBackgroundScanParameters& aidl_scan
         legacy_bucket_spec.report_events = 0;
         using AidlFlag = StaBackgroundScanBucketEventReportSchemeMask;
         for (const auto flag : {AidlFlag::EACH_SCAN, AidlFlag::FULL_RESULTS, AidlFlag::NO_BATCH}) {
-            if (static_cast<int32_t>(aidl_bucket_spec.eventReportScheme) &
+            if (aidl_bucket_spec.eventReportScheme &
                 static_cast<std::underlying_type<AidlFlag>::type>(flag)) {
                 legacy_bucket_spec.report_events |= convertAidlGscanReportEventFlagToLegacy(flag);
             }
@@ -678,7 +678,7 @@ bool convertLegacyCachedGscanResultsToAidl(
                     convertLegacyGscanDataFlagToAidl(flag));
         }
     }
-    aidl_scan_data->flags = static_cast<StaScanDataFlagMask>(flags);
+    aidl_scan_data->flags = flags;
     aidl_scan_data->bucketsScanned = legacy_cached_scan_result.buckets_scanned;
 
     CHECK(legacy_cached_scan_result.num_results >= 0 &&
