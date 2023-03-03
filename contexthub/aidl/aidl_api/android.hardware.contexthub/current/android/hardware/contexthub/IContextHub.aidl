@@ -46,7 +46,7 @@ interface IContextHub {
   void onHostEndpointConnected(in android.hardware.contexthub.HostEndpointInfo hostEndpointInfo);
   void onHostEndpointDisconnected(char hostEndpointId);
   long[] getPreloadedNanoappIds();
-  void onNanSessionStateChanged(in boolean state);
+  void onNanSessionStateChanged(in android.hardware.contexthub.NanSessionStateUpdate update);
   void setTestMode(in boolean enable);
-  const int EX_CONTEXT_HUB_UNSPECIFIED = (-1);
+  const int EX_CONTEXT_HUB_UNSPECIFIED = (-1) /* -1 */;
 }

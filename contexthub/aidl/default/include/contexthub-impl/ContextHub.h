@@ -48,7 +48,7 @@ class ContextHub : public BnContextHub {
     ::ndk::ScopedAStatus onHostEndpointConnected(const HostEndpointInfo& in_info) override;
 
     ::ndk::ScopedAStatus onHostEndpointDisconnected(char16_t in_hostEndpointId) override;
-    ::ndk::ScopedAStatus onNanSessionStateChanged(bool in_state) override;
+    ::ndk::ScopedAStatus onNanSessionStateChanged(const NanSessionStateUpdate& in_update) override;
 
   private:
     static constexpr uint32_t kMockHubId = 0;
