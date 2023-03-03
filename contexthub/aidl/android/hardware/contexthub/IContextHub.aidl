@@ -20,6 +20,7 @@ import android.hardware.contexthub.ContextHubInfo;
 import android.hardware.contexthub.ContextHubMessage;
 import android.hardware.contexthub.HostEndpointInfo;
 import android.hardware.contexthub.IContextHubCallback;
+import android.hardware.contexthub.NanSessionStateUpdate;
 import android.hardware.contexthub.NanoappBinary;
 import android.hardware.contexthub.NanoappInfo;
 import android.hardware.contexthub.Setting;
@@ -212,9 +213,9 @@ interface IContextHub {
      * explicitly invoke handleNanSessionRequest() at a later point in time to attempt to
      * re-enable NAN.
      *
-     * @param state True if the NAN session is currently enabled.
+     * @param update Information about the latest NAN session state.
      */
-    void onNanSessionStateChanged(in boolean state);
+    void onNanSessionStateChanged(in NanSessionStateUpdate update);
 
     /**
      * Puts the context hub in and out of test mode. Test mode is a clean state
