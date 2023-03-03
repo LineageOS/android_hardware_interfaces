@@ -75,6 +75,7 @@ cc_library_static {
         "Telephony.cpp",
         "usb/ModuleUsb.cpp",
         "usb/StreamUsb.cpp",
+        "usb/UsbAlsaMixerControl.cpp",
         "usb/UsbAlsaUtils.cpp",
     ],
     generated_sources: [

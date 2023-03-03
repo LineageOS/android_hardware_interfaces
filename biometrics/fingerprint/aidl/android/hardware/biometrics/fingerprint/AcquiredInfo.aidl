@@ -103,4 +103,10 @@ enum AcquiredInfo {
      * Fingerprint was lifted before the capture completed.
      */
     LIFT_TOO_SOON,
+
+    /**
+     * Indicates a power press event has occurred. This is typically sent by fingerprint
+     * sensors that have the sensor co-located with the power button.
+     */
+    POWER_PRESS,
 }
