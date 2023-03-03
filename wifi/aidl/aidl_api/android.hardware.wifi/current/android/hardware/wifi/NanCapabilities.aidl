@@ -47,7 +47,7 @@ parcelable NanCapabilities {
   int maxAppInfoLen;
   int maxQueuedTransmitFollowupMsgs;
   int maxSubscribeInterfaceAddresses;
-  android.hardware.wifi.NanCipherSuiteType supportedCipherSuites;
+  int supportedCipherSuites;
   boolean instantCommunicationModeSupportFlag;
   boolean supports6g;
   boolean supportsHe;
