@@ -16,8 +16,6 @@
 
 package android.hardware.wifi;
 
-import android.hardware.wifi.NanBootstrappingMethod;
-
 /**
  * The NAN pairing config
  */

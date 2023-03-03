@@ -33,4 +33,6 @@ enum UwbVendorStatusCodes {
     STATUS_ERROR_CCC_SE_BUSY = 0x50,
     /** CCC Lifecycle error */
     STATUS_ERROR_CCC_LIFECYCLE = 0x51,
+    /** UWB Regulation Off */
+    STATUS_REGULATION_UWB_OFF = 0x52,
 }

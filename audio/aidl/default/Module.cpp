@@ -460,6 +460,7 @@ ndk::ScopedAStatus Module::connectExternalDevice(const AudioPort& in_templateIdA
         connectedPort.profiles = connectedProfilesIt->second;
     }
     ports.push_back(connectedPort);
+    onExternalDeviceConnectionChanged(connectedPort, true /*connected*/);
     *_aidl_return = std::move(connectedPort);
 
     std::vector<AudioRoute> newRoutes;
@@ -513,6 +514,7 @@ ndk::ScopedAStatus Module::disconnectExternalDevice(int32_t in_portId) {
                    << configIt->id;
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
     }
+    onExternalDeviceConnectionChanged(*portIt, false /*connected*/);
     ports.erase(portIt);
     mConnectedDevicePorts.erase(in_portId);
     LOG(DEBUG) << __func__ << ": connected device port " << in_portId << " released";
@@ -983,8 +985,17 @@ ndk::ScopedAStatus Module::getMasterMute(bool* _aidl_return) {
 
 ndk::ScopedAStatus Module::setMasterMute(bool in_mute) {
     LOG(DEBUG) << __func__ << ": " << in_mute;
-    mMasterMute = in_mute;
-    return ndk::ScopedAStatus::ok();
+    auto result = mDebug.simulateDeviceConnections ? ndk::ScopedAStatus::ok()
+                                                   : onMasterMuteChanged(in_mute);
+    if (result.isOk()) {
+        mMasterMute = in_mute;
+    } else {
+        LOG(ERROR) << __func__ << ": failed calling onMasterMuteChanged(" << in_mute
+                   << "), error=" << result;
+        // Reset master mute if it failed.
+        onMasterMuteChanged(mMasterMute);
+    }
+    return std::move(result);
 }
 
 ndk::ScopedAStatus Module::getMasterVolume(float* _aidl_return) {
@@ -996,8 +1007,17 @@ ndk::ScopedAStatus Module::getMasterVolume(float* _aidl_return) {
 ndk::ScopedAStatus Module::setMasterVolume(float in_volume) {
     LOG(DEBUG) << __func__ << ": " << in_volume;
     if (in_volume >= 0.0f && in_volume <= 1.0f) {
-        mMasterVolume = in_volume;
-        return ndk::ScopedAStatus::ok();
+        auto result = mDebug.simulateDeviceConnections ? ndk::ScopedAStatus::ok()
+                                                       : onMasterVolumeChanged(in_volume);
+        if (result.isOk()) {
+            mMasterVolume = in_volume;
+        } else {
+            // Reset master volume if it failed.
+            LOG(ERROR) << __func__ << ": failed calling onMasterVolumeChanged(" << in_volume
+                       << "), error=" << result;
+            onMasterVolumeChanged(mMasterVolume);
+        }
+        return std::move(result);
     }
     LOG(ERROR) << __func__ << ": invalid master volume value: " << in_volume;
     return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
@@ -1258,6 +1278,22 @@ ndk::ScopedAStatus Module::populateConnectedDevicePort(AudioPort* audioPort __un
 ndk::ScopedAStatus Module::checkAudioPatchEndpointsMatch(
         const std::vector<AudioPortConfig*>& sources __unused,
         const std::vector<AudioPortConfig*>& sinks __unused) {
+    LOG(VERBOSE) << __func__ << ": do nothing and return ok";
+    return ndk::ScopedAStatus::ok();
+}
+
+void Module::onExternalDeviceConnectionChanged(
+        const ::aidl::android::media::audio::common::AudioPort& audioPort __unused,
+        bool connected __unused) {
+    LOG(DEBUG) << __func__ << ": do nothing and return";
+}
+
+ndk::ScopedAStatus Module::onMasterMuteChanged(bool mute __unused) {
+    LOG(VERBOSE) << __func__ << ": do nothing and return ok";
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus Module::onMasterVolumeChanged(float volume __unused) {
     LOG(VERBOSE) << __func__ << ": do nothing and return ok";
     return ndk::ScopedAStatus::ok();
 }

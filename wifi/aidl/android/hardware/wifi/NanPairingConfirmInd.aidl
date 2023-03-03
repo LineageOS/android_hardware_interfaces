@@ -16,7 +16,6 @@
 
 package android.hardware.wifi;
 
-import android.hardware.wifi.NanDataPathChannelInfo;
 import android.hardware.wifi.NanPairingRequestType;
 import android.hardware.wifi.NanStatus;
 import android.hardware.wifi.NpkSecurityAssociation;
