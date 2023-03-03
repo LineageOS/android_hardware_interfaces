@@ -51,7 +51,7 @@ parcelable NanDiscoveryCommonConfig {
   android.hardware.wifi.NanDataPathSecurityConfig securityConfig;
   boolean rangingRequired;
   int rangingIntervalMs;
-  android.hardware.wifi.NanRangingIndication configRangingIndications;
+  int configRangingIndications;
   char distanceIngressCm;
   char distanceEgressCm;
   boolean enableSessionSuspendability;
