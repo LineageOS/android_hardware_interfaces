@@ -18,6 +18,7 @@ package android.hardware.contexthub;
 
 import android.hardware.contexthub.AsyncEventType;
 import android.hardware.contexthub.ContextHubMessage;
+import android.hardware.contexthub.NanSessionRequest;
 import android.hardware.contexthub.NanoappInfo;
 
 @VintfStability
@@ -85,10 +86,9 @@ interface IContextHubCallback {
      * request times out, onNanSessionStateChanged() will be invoked with the state that the session
      * was previously in.
      *
-     * @param enable Whether the NAN session should be enabled or disabled depending on whether the
-     *        Contexthub needs access to NAN.
+     * @param request Request from the HAL indicating the latest NAN session state it would like.
      */
-    void handleNanSessionRequest(in boolean enable);
+    void handleNanSessionRequest(in NanSessionRequest request);
 
     /**
      * Amount of time, in milliseconds, that a handleNanSessionRequest can be pending before the

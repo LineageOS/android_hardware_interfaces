@@ -42,6 +42,8 @@ using ::android::hardware::contexthub::IContextHubCallbackDefault;
 using ::android::hardware::contexthub::NanoappBinary;
 using ::android::hardware::contexthub::NanoappInfo;
 using ::android::hardware::contexthub::NanoappRpcService;
+using ::android::hardware::contexthub::NanSessionRequest;
+using ::android::hardware::contexthub::NanSessionStateUpdate;
 using ::android::hardware::contexthub::Setting;
 using ::android::hardware::contexthub::vts_utils::kNonExistentAppId;
 using ::android::hardware::contexthub::vts_utils::waitForCallback;
@@ -121,7 +123,9 @@ class EmptyContextHubCallback : public android::hardware::contexthub::BnContextH
         return Status::ok();
     }
 
-    Status handleNanSessionRequest(bool /* enable */) override { return Status::ok(); }
+    Status handleNanSessionRequest(const NanSessionRequest& /* request */) override {
+        return Status::ok();
+    }
 };
 
 TEST_P(ContextHubAidl, TestRegisterCallback) {
@@ -153,7 +157,9 @@ class QueryAppsCallback : public android::hardware::contexthub::BnContextHubCall
         return Status::ok();
     }
 
-    Status handleNanSessionRequest(bool /* enable */) override { return Status::ok(); }
+    Status handleNanSessionRequest(const NanSessionRequest& /* request */) override {
+        return Status::ok();
+    }
 
     std::promise<std::vector<NanoappInfo>> promise;
 };
@@ -218,7 +224,9 @@ class TransactionResultCallback : public android::hardware::contexthub::BnContex
         return Status::ok();
     }
 
-    Status handleNanSessionRequest(bool /* enable */) override { return Status::ok(); }
+    Status handleNanSessionRequest(const NanSessionRequest& /* request */) override {
+        return Status::ok();
+    }
 
     uint32_t expectedTransactionId = 0;
     std::promise<bool> promise;
@@ -382,8 +390,11 @@ TEST_P(ContextHubAidl, TestInvalidHostConnection) {
 }
 
 TEST_P(ContextHubAidl, TestNanSessionStateChange) {
-    ASSERT_TRUE(contextHub->onNanSessionStateChanged(true /*state*/).isOk());
-    ASSERT_TRUE(contextHub->onNanSessionStateChanged(false /*state*/).isOk());
+    NanSessionStateUpdate update;
+    update.state = true;
+    ASSERT_TRUE(contextHub->onNanSessionStateChanged(update).isOk());
+    update.state = false;
+    ASSERT_TRUE(contextHub->onNanSessionStateChanged(update).isOk());
 }
 
 std::string PrintGeneratedTest(const testing::TestParamInfo<ContextHubAidl::ParamType>& info) {
