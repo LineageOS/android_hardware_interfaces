@@ -39,7 +39,7 @@ union AcousticEchoCanceler {
   boolean mobileMode;
   @VintfStability
   union Id {
-    int vendorExtensionTag;
+    android.hardware.audio.effect.VendorExtension vendorExtensionTag;
     android.hardware.audio.effect.AcousticEchoCanceler.Tag commonTag;
   }
 }

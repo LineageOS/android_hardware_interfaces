@@ -40,7 +40,7 @@ union AutomaticGainControlV1 {
   boolean enableLimiter;
   @VintfStability
   union Id {
-    int vendorExtensionTag;
+    android.hardware.audio.effect.VendorExtension vendorExtensionTag;
     android.hardware.audio.effect.AutomaticGainControlV1.Tag commonTag;
   }
 }

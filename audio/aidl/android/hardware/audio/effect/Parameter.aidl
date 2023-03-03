@@ -66,10 +66,10 @@ union Parameter {
     @VintfStability
     union Id {
         /**
-         * Parameter tag defined for vendor effects. Use int here so there is flexibility for vendor
-         * to define different tag.
+         * Parameter tag defined for vendor effects. Use VendorExtension here so it's possible to
+         * pass customized information.
          */
-        int vendorEffectTag;
+        VendorExtension vendorEffectTag;
         /**
          * Parameter tag defined for nested parameters. Can be used to get any parameter defined in
          * nested Union structure.
