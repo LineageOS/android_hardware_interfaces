@@ -516,12 +516,15 @@ void BluetoothHidlTest::sendAndCheckACL(int num_packets, size_t size,
 // Return the number of completed packets reported by the controller.
 int BluetoothHidlTest::wait_for_completed_packets_event(uint16_t handle) {
   int packets_processed = 0;
-  wait_for_event(false);
-  if (event_queue.size() == 0) {
-    ALOGW("%s: WaitForCallback timed out.", __func__);
-    return packets_processed;
-  }
-  while (event_queue.size() > 0) {
+  while (true) {
+    // There should be at least one event.
+    wait_for_event(packets_processed == 0);
+    if (event_queue.empty()) {
+      if (packets_processed == 0) {
+        ALOGW("%s: WaitForCallback timed out.", __func__);
+      }
+      return packets_processed;
+    }
     hidl_vec<uint8_t> event = event_queue.front();
     event_queue.pop();
 
