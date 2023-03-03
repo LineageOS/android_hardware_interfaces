@@ -48,7 +48,7 @@ parcelable NanBootstrappingRequestInd {
     int bootstrappingInstanceId;
 
     /**
-     * Bootstrapping method in the incoming request, one of the |NanBootstrappingMethod|
+     * One of |NanBootstrappingMethod| indicating the bootstrapping method in the incoming request.
      */
     NanBootstrappingMethod requestBootstrappingMethod;
 }
