@@ -35,4 +35,5 @@ package android.hardware.uwb.fira_android;
 @Backing(type="int") @VintfStability
 enum UwbVendorReasonCodes {
   REASON_ERROR_INVALID_CHANNEL_WITH_AOA = 128,
+  REASON_REGULATION_UWB_OFF = 129,
 }
