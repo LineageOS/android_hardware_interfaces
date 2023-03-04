@@ -1787,7 +1787,7 @@ bool convertAidlNanPublishRequestToLegacy(const NanPublishRequest& aidl_request,
                                                         : legacy_hal::NAN_RANGING_DISABLE;
     legacy_request->ranging_cfg.ranging_interval_msec = aidl_request.baseConfigs.rangingIntervalMs;
     legacy_request->ranging_cfg.config_ranging_indications =
-            static_cast<uint32_t>(aidl_request.baseConfigs.configRangingIndications);
+            aidl_request.baseConfigs.configRangingIndications;
     legacy_request->ranging_cfg.distance_ingress_mm =
             aidl_request.baseConfigs.distanceIngressCm * 10;
     legacy_request->ranging_cfg.distance_egress_mm = aidl_request.baseConfigs.distanceEgressCm * 10;
@@ -1919,7 +1919,7 @@ bool convertAidlNanSubscribeRequestToLegacy(const NanSubscribeRequest& aidl_requ
                                                         : legacy_hal::NAN_RANGING_DISABLE;
     legacy_request->ranging_cfg.ranging_interval_msec = aidl_request.baseConfigs.rangingIntervalMs;
     legacy_request->ranging_cfg.config_ranging_indications =
-            static_cast<uint32_t>(aidl_request.baseConfigs.configRangingIndications);
+            aidl_request.baseConfigs.configRangingIndications;
     legacy_request->ranging_cfg.distance_ingress_mm =
             aidl_request.baseConfigs.distanceIngressCm * 10;
     legacy_request->ranging_cfg.distance_egress_mm = aidl_request.baseConfigs.distanceEgressCm * 10;
@@ -2202,8 +2202,7 @@ bool convertLegacyNanCapabilitiesResponseToAidl(const legacy_hal::NanCapabilitie
     aidl_response->maxQueuedTransmitFollowupMsgs =
             legacy_response.max_queued_transmit_followup_msgs;
     aidl_response->maxSubscribeInterfaceAddresses = legacy_response.max_subscribe_address;
-    aidl_response->supportedCipherSuites =
-            static_cast<NanCipherSuiteType>(legacy_response.cipher_suites_supported);
+    aidl_response->supportedCipherSuites = legacy_response.cipher_suites_supported;
     aidl_response->instantCommunicationModeSupportFlag = legacy_response.is_instant_mode_supported;
     aidl_response->supports6g = legacy_response.is_6g_supported;
     aidl_response->supportsHe = legacy_response.is_he_supported;
@@ -2244,8 +2243,7 @@ bool convertLegacyNanMatchIndToAidl(const legacy_hal::NanMatchInd& legacy_ind,
     aidl_ind->peerRequiresRanging =
             legacy_ind.peer_sdea_params.ranging_state == legacy_hal::NAN_RANGING_ENABLE;
     aidl_ind->rangingMeasurementInMm = legacy_ind.range_info.range_measurement_mm;
-    aidl_ind->rangingIndicationType =
-            static_cast<NanRangingIndication>(legacy_ind.range_info.ranging_event_type);
+    aidl_ind->rangingIndicationType = legacy_ind.range_info.ranging_event_type;
     aidl_ind->scid = std::vector<uint8_t>(legacy_ind.scid, legacy_ind.scid + legacy_ind.scid_len);
 
     if (!convertLegacyNiraToAidl(legacy_ind.nira, &aidl_ind->peerNira)) {

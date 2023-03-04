@@ -19,7 +19,6 @@ package android.hardware.wifi;
 import android.hardware.wifi.NanCipherSuiteType;
 import android.hardware.wifi.NanIdentityResolutionAttribute;
 import android.hardware.wifi.NanPairingConfig;
-import android.hardware.wifi.NanRangingIndication;
 
 /**
  * Match indication structure.
@@ -81,8 +80,9 @@ parcelable NanMatchInd {
      */
     byte rssiValue;
     /**
-     * Cipher type for data-paths constructed in the context of this discovery session. Valid if
-     * |peerRequiresSecurityEnabledInNdp| is true.
+     * One of |NanCipherSuiteType| indicating the cipher type for data-paths constructed
+     * in the context of this discovery session.
+     * Valid if |peerRequiresSecurityEnabledInNdp| is true.
      */
     NanCipherSuiteType peerCipherType;
     /**
@@ -117,10 +117,11 @@ parcelable NanMatchInd {
      */
     int rangingMeasurementInMm;
     /**
-     * The ranging event(s) which triggered the ranging. e.g. can indicate that continuous ranging
-     * was requested, or else that an ingress event occurred.
+     * Bitmap of |NanRangingIndication| values indicating the ranging event(s) which triggered the
+     * ranging. e.g. can indicate that continuous ranging was requested, or else that an ingress
+     * event occurred.
      */
-    NanRangingIndication rangingIndicationType;
+    int rangingIndicationType;
     /**
      * Security Context Identifier attribute contains PMKID. Shall be included in NDP setup and
      * response messages. Security Context Identifier identifies the Security Context. For NAN
