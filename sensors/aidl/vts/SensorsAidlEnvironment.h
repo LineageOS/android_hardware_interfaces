@@ -69,8 +69,6 @@ class SensorsAidlEnvironment : public SensorsVtsEnvironmentBase<Event> {
      */
     void readEvents();
 
-    GTEST_DISALLOW_COPY_AND_ASSIGN_(SensorsAidlEnvironment);
-
     /**
      * Pointer to the Sensors HAL Interface that allows the test to call HAL functions.
      */
