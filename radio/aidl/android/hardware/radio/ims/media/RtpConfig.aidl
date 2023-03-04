@@ -18,15 +18,14 @@ package android.hardware.radio.ims.media;
 
 import android.hardware.radio.AccessNetwork;
 import android.hardware.radio.ims.media.AnbrMode;
-import android.hardware.radio.ims.media.MediaDirection;
 import android.hardware.radio.ims.media.RtcpConfig;
 import android.hardware.radio.ims.media.RtpAddress;
 import android.hardware.radio.ims.media.RtpSessionParams;
 
 @VintfStability
 parcelable RtpConfig {
-    /** Media flow direction */
-    MediaDirection direction;
+    /** Media flow direction. The bitfield of MediaDirection(s) */
+    int direction;
     /** Radio Access Network */
     AccessNetwork accessNetwork;
     /** IP address and port number of the other party for RTP media */
