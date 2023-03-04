@@ -21,7 +21,7 @@
 #include <iostream>
 
 #include <android/binder_auto_utils.h>
-#include <gtest/gtest_pred_impl.h>
+#include <gtest/gtest.h>
 
 namespace android::hardware::audio::common::testing {
 
