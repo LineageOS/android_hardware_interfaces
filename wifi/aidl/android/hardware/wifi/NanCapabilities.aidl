@@ -16,8 +16,6 @@
 
 package android.hardware.wifi;
 
-import android.hardware.wifi.NanCipherSuiteType;
-
 /**
  * NDP Capabilities response.
  */
@@ -78,9 +76,9 @@ parcelable NanCapabilities {
      */
     int maxSubscribeInterfaceAddresses;
     /**
-     * The set of supported Cipher suites. The |NanCipherSuiteType| bit fields are used.
+     * Bitmap of |NanCipherSuiteType| values indicating the set of supported cipher suites.
      */
-    NanCipherSuiteType supportedCipherSuites;
+    int supportedCipherSuites;
     /**
      * Flag to indicate if instant communication mode is supported.
      */
