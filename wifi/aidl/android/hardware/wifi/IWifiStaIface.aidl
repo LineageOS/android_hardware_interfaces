@@ -198,7 +198,7 @@ interface IWifiStaIface {
      *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
      *         |WifiStatusCode.ERROR_UNKNOWN|
      */
-    StaIfaceCapabilityMask getCapabilities();
+    int getCapabilities();
 
     /**
      * API to retrieve the fates of inbound packets.

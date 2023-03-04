@@ -208,9 +208,9 @@ void stopWifiService(const char* instance_name) {
 }
 
 int32_t getChipCapabilities(const std::shared_ptr<IWifiChip>& wifi_chip) {
-    IWifiChip::ChipCapabilityMask caps = {};
+    int32_t caps = 0;
     if (wifi_chip->getCapabilities(&caps).isOk()) {
-        return static_cast<int32_t>(caps);
+        return caps;
     }
     return 0;
 }

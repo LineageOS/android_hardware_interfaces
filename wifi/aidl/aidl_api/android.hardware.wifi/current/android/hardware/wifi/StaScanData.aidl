@@ -34,7 +34,7 @@
 package android.hardware.wifi;
 @VintfStability
 parcelable StaScanData {
-  android.hardware.wifi.StaScanDataFlagMask flags;
+  int flags;
   int bucketsScanned;
   android.hardware.wifi.StaScanResult[] results;
 }
