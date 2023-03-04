@@ -49,8 +49,8 @@ parcelable NanPairingSecurityConfig {
      */
     NanPairingAkm akm;
     /**
-     * Cipher type for pairing. Need to be one of the |NanCipherSuiteType.PUBLIC_KEY_PASN_128_MASK|
-     * or |NanCipherSuiteType.PUBLIC_KEY_PASN_256_MASK|
+     * Cipher type for pairing. Must be one of |NanCipherSuiteType.PUBLIC_KEY_PASN_128_MASK|
+     * or |NanCipherSuiteType.PUBLIC_KEY_PASN_256_MASK|.
      */
     NanCipherSuiteType cipherType;
 }
