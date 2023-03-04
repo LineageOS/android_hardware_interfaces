@@ -25,13 +25,13 @@ import android.hardware.common.NativeHandle;
 @VintfStability
 union DestinationBuffer {
     /**
-     * If type == SHARED_MEMORY, the descrambled data must be written
+     * If the buffer is SharedBuffer, the descrambled data must be written
      * to user-space non-secure shared memory.
      */
     SharedBuffer nonsecureMemory;
 
     /**
-     * If type == NATIVE_HANDLE, the descrambled data must be written
+     * If the buffer is presented by NativeHandle, the descrambled data must be written
      * to secure memory referenced by the vendor's buffer allocator.
      */
     NativeHandle secureMemory;
