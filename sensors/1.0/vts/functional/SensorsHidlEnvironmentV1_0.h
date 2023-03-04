@@ -46,8 +46,6 @@ class SensorsHidlEnvironmentV1_0
     bool resetHal() override;
     void startPollingThread() override;
     static void pollingThread(SensorsHidlEnvironmentV1_0* env, std::atomic_bool& stop);
-
-    GTEST_DISALLOW_COPY_AND_ASSIGN_(SensorsHidlEnvironmentV1_0);
 };
 
 #endif  // ANDROID_SENSORS_HIDL_ENVIRONMENT_V1_0_H
