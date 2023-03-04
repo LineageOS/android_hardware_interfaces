@@ -115,6 +115,8 @@ class SensorsVtsEnvironmentBase {
         : mCollectionEnabled(false), mCallback(nullptr) {
         mServiceName = service_name;
     }
+    SensorsVtsEnvironmentBase(const SensorsVtsEnvironmentBase&) = delete;
+    SensorsVtsEnvironmentBase& operator=(const SensorsVtsEnvironmentBase&) = delete;
     virtual ~SensorsVtsEnvironmentBase(){};
 
     void addEvent(const Event& ev) {
@@ -139,8 +141,6 @@ class SensorsVtsEnvironmentBase {
     std::mutex mEventsMutex;
 
     IEventCallback<Event>* mCallback;
-
-    GTEST_DISALLOW_COPY_AND_ASSIGN_(SensorsVtsEnvironmentBase<Event>);
 };
 
 #endif  // ANDROID_SENSORS_VTS_ENVIRONMENT_BASE_H
