@@ -77,6 +77,8 @@ class VtsComposerClient {
 
     ScopedAStatus setActiveConfig(VtsDisplay* vtsDisplay, int32_t config);
 
+    ScopedAStatus setPeakRefreshRateConfig(VtsDisplay* vtsDisplay);
+
     std::pair<ScopedAStatus, int32_t> getDisplayAttribute(int64_t display, int32_t config,
                                                           DisplayAttribute displayAttribute);
 
@@ -183,6 +185,10 @@ class VtsComposerClient {
 
     std::pair<ScopedAStatus, OverlayProperties> getOverlaySupport();
 
+    ndk::ScopedAStatus setRefreshRateChangedCallbackDebugEnabled(int64_t display, bool enabled);
+
+    std::vector<RefreshRateChangedDebugData> takeListOfRefreshRateChangedDebugData();
+
   private:
     ScopedAStatus addDisplayConfig(VtsDisplay* vtsDisplay, int32_t config);
     ScopedAStatus updateDisplayProperties(VtsDisplay* vtsDisplay, int32_t config);
@@ -196,9 +202,6 @@ class VtsComposerClient {
     bool destroyAllLayers();
 
     bool verifyComposerCallbackParams();
-
-    ndk::ScopedAStatus setRefreshRateChangedCallbackDebugEnabled(int64_t /* display */,
-                                                                 bool /* enabled */);
 
     // Keep track of displays and layers. When a test fails/ends,
     // the VtsComposerClient::tearDown should be called from the
@@ -245,15 +248,17 @@ class VtsDisplay {
     };
 
     void addDisplayConfig(int32_t config, DisplayConfig displayConfig) {
-        displayConfigs.insert({config, displayConfig});
+        mDisplayConfigs.insert({config, displayConfig});
     }
 
-    DisplayConfig getDisplayConfig(int32_t config) { return displayConfigs.find(config)->second; }
+    DisplayConfig getDisplayConfig(int32_t config) { return mDisplayConfigs.find(config)->second; }
+
+    std::unordered_map<int32_t, DisplayConfig> getDisplayConfigs() { return mDisplayConfigs; }
 
   private:
     int64_t mDisplayId;
     int32_t mDisplayWidth;
     int32_t mDisplayHeight;
-    std::unordered_map<int32_t, DisplayConfig> displayConfigs;
+    std::unordered_map<int32_t, DisplayConfig> mDisplayConfigs;
 };
 }  // namespace aidl::android::hardware::graphics::composer3::vts

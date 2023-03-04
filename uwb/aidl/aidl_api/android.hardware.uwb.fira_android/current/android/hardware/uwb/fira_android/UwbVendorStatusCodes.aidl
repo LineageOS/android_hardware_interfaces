@@ -36,4 +36,5 @@ package android.hardware.uwb.fira_android;
 enum UwbVendorStatusCodes {
   STATUS_ERROR_CCC_SE_BUSY = 80,
   STATUS_ERROR_CCC_LIFECYCLE = 81,
+  STATUS_REGULATION_UWB_OFF = 82,
 }
