@@ -79,8 +79,6 @@ class SensorsHidlEnvironmentV2_X
      */
     void readEvents();
 
-    GTEST_DISALLOW_COPY_AND_ASSIGN_(SensorsHidlEnvironmentV2_X);
-
     /**
      * Pointer to the Sensors HAL Interface that allows the test to call HAL functions.
      */
