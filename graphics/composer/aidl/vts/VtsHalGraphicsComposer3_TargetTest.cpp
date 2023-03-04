@@ -2320,13 +2320,12 @@ TEST_P(GraphicsComposerAidlCommandTest, SetRefreshRateChangedCallbackDebug_Enabl
                         .isOk());
     std::this_thread::sleep_for(100ms);
 
-    const bool isCallbackReceived = checkIfCallbackRefreshRateChangedDebugEnabledReceived(
-            [&](auto refreshRateChangedDebugData) {
-                return displayId == refreshRateChangedDebugData.display;
-            });
+    const auto displayFilter = [displayId](auto refreshRateChangedDebugData) {
+        return displayId == refreshRateChangedDebugData.display;
+    };
 
     // Check that we immediately got a callback
-    EXPECT_TRUE(isCallbackReceived);
+    EXPECT_TRUE(checkIfCallbackRefreshRateChangedDebugEnabledReceived(displayFilter));
 
     ASSERT_TRUE(mComposerClient
                         ->setRefreshRateChangedCallbackDebugEnabled(displayId,
@@ -2359,16 +2358,15 @@ TEST_P(GraphicsComposerAidlCommandTest,
                                                                     /*enabled*/ true)
                         .isOk());
 
-    const bool isCallbackReceived = checkIfCallbackRefreshRateChangedDebugEnabledReceived(
-            [&](auto refreshRateChangedDebugData) {
-                return displayId == refreshRateChangedDebugData.display;
-            });
+    const auto displayFilter = [displayId](auto refreshRateChangedDebugData) {
+        return displayId == refreshRateChangedDebugData.display;
+    };
 
     int retryCount = 3;
     do {
         // Wait for 1s so that we enter the idle state
         std::this_thread::sleep_for(1s);
-        if (!isCallbackReceived) {
+        if (!checkIfCallbackRefreshRateChangedDebugEnabledReceived(displayFilter)) {
             // DID NOT receive a callback, we are in the idle state.
             break;
         }
@@ -2383,7 +2381,7 @@ TEST_P(GraphicsComposerAidlCommandTest,
     ASSERT_NO_FATAL_FAILURE(
             sendBufferUpdate(createOnScreenLayer(Composition::REFRESH_RATE_INDICATOR)));
     std::this_thread::sleep_for(1s);
-    EXPECT_FALSE(isCallbackReceived)
+    EXPECT_FALSE(checkIfCallbackRefreshRateChangedDebugEnabledReceived(displayFilter))
             << "A callback should not be received for REFRESH_RATE_INDICATOR";
 
     EXPECT_TRUE(mComposerClient
@@ -2431,19 +2429,18 @@ TEST_P(GraphicsComposerAidlCommandTest,
                 sendRefreshFrame(display, &timeline);
             }
 
-            const auto isCallbackReceived = checkIfCallbackRefreshRateChangedDebugEnabledReceived(
-                    [&](auto refreshRateChangedDebugData) {
-                        constexpr int kVsyncThreshold = 1000;
-                        return displayId == refreshRateChangedDebugData.display &&
-                               std::abs(vsyncPeriod2 -
-                                        refreshRateChangedDebugData.vsyncPeriodNanos) <=
-                                       kVsyncThreshold;
-                    });
+            const auto callbackFilter = [displayId,
+                                         vsyncPeriod2](auto refreshRateChangedDebugData) {
+                constexpr int kVsyncThreshold = 1000;
+                return displayId == refreshRateChangedDebugData.display &&
+                       std::abs(vsyncPeriod2 - refreshRateChangedDebugData.vsyncPeriodNanos) <=
+                               kVsyncThreshold;
+            };
 
             int retryCount = 3;
             do {
                 std::this_thread::sleep_for(100ms);
-                if (isCallbackReceived) {
+                if (checkIfCallbackRefreshRateChangedDebugEnabledReceived(callbackFilter)) {
                     GTEST_SUCCEED() << "Received a callback successfully";
                     break;
                 }
