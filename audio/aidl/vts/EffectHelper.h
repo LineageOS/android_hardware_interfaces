@@ -28,6 +28,7 @@
 #include <aidl/android/media/audio/common/AudioChannelLayout.h>
 #include <android/binder_auto_utils.h>
 #include <fmq/AidlMessageQueue.h>
+#include <gtest/gtest.h>
 #include <system/audio_effects/aidl_effects_utils.h>
 
 #include "AudioHalBinderServiceUtil.h"
