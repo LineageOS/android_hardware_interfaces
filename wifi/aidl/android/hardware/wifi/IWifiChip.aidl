@@ -590,7 +590,7 @@ interface IWifiChip {
      *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
      *         |WifiStatusCode.ERROR_UNKNOWN|
      */
-    ChipCapabilityMask getCapabilities();
+    int getCapabilities();
 
     /**
      * API to retrieve the wifi wake up reason stats for debugging.
@@ -808,7 +808,7 @@ interface IWifiChip {
      *         |WifiStatusCode.FAILURE_UNKNOWN|
      */
     WifiUsableChannel[] getUsableChannels(
-            in WifiBand band, in WifiIfaceMode ifaceModeMask, in UsableChannelFilter filterMask);
+            in WifiBand band, in int ifaceModeMask, in int filterMask);
 
     /*
      * Set the max power level the chip is allowed to transmit on for 6Ghz AFC
@@ -982,8 +982,7 @@ interface IWifiChip {
      *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|,
      *         |WifiStatusCode.ERROR_INVALID_ARGS|,
      */
-    void setCoexUnsafeChannels(
-            in CoexUnsafeChannel[] unsafeChannels, in CoexRestriction restrictions);
+    void setCoexUnsafeChannels(in CoexUnsafeChannel[] unsafeChannels, in int restrictions);
 
     /**
      * Set country code for this Wifi chip.
@@ -1110,14 +1109,14 @@ interface IWifiChip {
      * If the channel category is enabled and allowed by the regulatory, the HAL method
      * getUsableChannels() will contain the current STA-connected channel if that channel belongs
      * to that category.
-     * @param channelCategoryEnableFlag bitmask of |ChannelCategoryMask|.
+     * @param channelCategoryEnableFlag Bitmask of |ChannelCategoryMask| values.
      *        For each bit, 1 enables the channel category and 0 disables that channel category.
      * @throws ServiceSpecificException with one of the following values:
      *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|,
      *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
      *         |WifiStatusCode.FAILURE_UNKNOWN|
      */
-    void enableStaChannelForPeerNetwork(in ChannelCategoryMask channelCategoryEnableFlag);
+    void enableStaChannelForPeerNetwork(in int channelCategoryEnableFlag);
 
     /**
      * Multi-Link Operation modes.
