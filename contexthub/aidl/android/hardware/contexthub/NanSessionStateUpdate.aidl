@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,26 +14,15 @@
  * limitations under the License.
  */
 
-package android.hardware.wifi;
-
-import android.hardware.wifi.WifiChannelWidthInMhz;
+package android.hardware.contexthub;
 
 /**
- * Wifi usable channel information.
+ * Contains information provided as a response to a NanSessionRequest.
  */
 @VintfStability
-parcelable WifiUsableChannel {
+parcelable NanSessionStateUpdate {
     /**
-     * Wifi channel freqeuncy in MHz.
+     * True if the NAN session is currently enabled.
      */
-    int channel;
-    /**
-     * Wifi channel bandwidth in MHz.
-     */
-    WifiChannelWidthInMhz channelBandwidth;
-    /**
-     * Iface modes feasible on this channel, represented as a bitmask
-     * of |WifiIfaceMode| values.
-     */
-    int ifaceModeMask;
+    boolean state;
 }

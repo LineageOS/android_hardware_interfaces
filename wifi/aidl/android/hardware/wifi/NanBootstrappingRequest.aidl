@@ -37,7 +37,7 @@ parcelable NanBootstrappingRequest {
     byte[6] peerDiscMacAddr;
 
     /**
-     * Bootstrapping method in the request, one of the |NanBootstrappingMethod|
+     * One of |NanBootstrappingMethod| indicating the bootstrapping method in the request.
      */
     NanBootstrappingMethod requestBootstrappingMethod;
 

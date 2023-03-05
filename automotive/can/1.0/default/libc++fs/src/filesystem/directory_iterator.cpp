@@ -169,8 +169,8 @@ public:
   __dir_stream& operator=(const __dir_stream&) = delete;
 
   __dir_stream(__dir_stream&& other) noexcept : __stream_(other.__stream_),
-                                                __root_(move(other.__root_)),
-                                                __entry_(move(other.__entry_)) {
+                                                __root_(std::move(other.__root_)),
+                                                __entry_(std::move(other.__entry_)) {
     other.__stream_ = nullptr;
   }
 
@@ -252,7 +252,7 @@ directory_iterator& directory_iterator::__increment(error_code* ec) {
 
   error_code m_ec;
   if (!__imp_->advance(m_ec)) {
-    path root = move(__imp_->__root_);
+    path root = std::move(__imp_->__root_);
     __imp_.reset();
     if (m_ec)
       err.report(m_ec, "at root \"%s\"", root);
@@ -286,7 +286,7 @@ recursive_directory_iterator::recursive_directory_iterator(
 
   __imp_ = make_shared<__shared_imp>();
   __imp_->__options_ = opt;
-  __imp_->__stack_.push(move(new_s));
+  __imp_->__stack_.push(std::move(new_s));
 }
 
 void recursive_directory_iterator::__pop(error_code* ec) {
@@ -340,7 +340,7 @@ void recursive_directory_iterator::__advance(error_code* ec) {
   }
 
   if (m_ec) {
-    path root = move(stack.top().__root_);
+    path root = std::move(stack.top().__root_);
     __imp_.reset();
     err.report(m_ec, "at root \"%s\"", root);
   } else {
@@ -374,7 +374,7 @@ bool recursive_directory_iterator::__try_recursion(error_code* ec) {
   if (!skip_rec) {
     __dir_stream new_it(curr_it.__entry_.path(), __imp_->__options_, m_ec);
     if (new_it.good()) {
-      __imp_->__stack_.push(move(new_it));
+      __imp_->__stack_.push(std::move(new_it));
       return true;
     }
   }
@@ -385,7 +385,7 @@ bool recursive_directory_iterator::__try_recursion(error_code* ec) {
       if (ec)
         ec->clear();
     } else {
-      path at_ent = move(curr_it.__entry_.__p_);
+      path at_ent = std::move(curr_it.__entry_.__p_);
       __imp_.reset();
       err.report(m_ec, "attempting recursion into \"%s\"", at_ent);
     }

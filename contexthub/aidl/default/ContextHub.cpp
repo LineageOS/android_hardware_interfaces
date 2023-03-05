@@ -87,7 +87,7 @@ ScopedAStatus ContextHub::getPreloadedNanoappIds(std::vector<int64_t>* out_prelo
     return ndk::ScopedAStatus::ok();
 }
 
-ScopedAStatus ContextHub::onNanSessionStateChanged(bool /*sin_state*/) {
+ScopedAStatus ContextHub::onNanSessionStateChanged(const NanSessionStateUpdate& /*in_update*/) {
     return ndk::ScopedAStatus::ok();
 }
 

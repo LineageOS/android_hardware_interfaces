@@ -82,8 +82,7 @@ ndk::ScopedAStatus WifiStaIface::registerEventCallback(
                            &WifiStaIface::registerEventCallbackInternal, in_callback);
 }
 
-ndk::ScopedAStatus WifiStaIface::getCapabilities(
-        IWifiStaIface::StaIfaceCapabilityMask* _aidl_return) {
+ndk::ScopedAStatus WifiStaIface::getCapabilities(int32_t* _aidl_return) {
     return validateAndCall(this, WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
                            &WifiStaIface::getCapabilitiesInternal, _aidl_return);
 }
@@ -239,24 +238,20 @@ ndk::ScopedAStatus WifiStaIface::registerEventCallbackInternal(
     return ndk::ScopedAStatus::ok();
 }
 
-std::pair<IWifiStaIface::StaIfaceCapabilityMask, ndk::ScopedAStatus>
-WifiStaIface::getCapabilitiesInternal() {
+std::pair<int32_t, ndk::ScopedAStatus> WifiStaIface::getCapabilitiesInternal() {
     legacy_hal::wifi_error legacy_status;
     uint64_t legacy_feature_set;
     std::tie(legacy_status, legacy_feature_set) =
             legacy_hal_.lock()->getSupportedFeatureSet(ifname_);
     if (legacy_status != legacy_hal::WIFI_SUCCESS) {
-        return {IWifiStaIface::StaIfaceCapabilityMask{},
-                createWifiStatusFromLegacyError(legacy_status)};
+        return {0, createWifiStatusFromLegacyError(legacy_status)};
     }
     uint32_t aidl_caps;
     if (!aidl_struct_util::convertLegacyFeaturesToAidlStaCapabilities(legacy_feature_set,
                                                                       &aidl_caps)) {
-        return {IWifiStaIface::StaIfaceCapabilityMask{},
-                createWifiStatus(WifiStatusCode::ERROR_UNKNOWN)};
+        return {0, createWifiStatus(WifiStatusCode::ERROR_UNKNOWN)};
     }
-    return {static_cast<IWifiStaIface::StaIfaceCapabilityMask>(aidl_caps),
-            ndk::ScopedAStatus::ok()};
+    return {aidl_caps, ndk::ScopedAStatus::ok()};
 }
 
 std::pair<StaApfPacketFilterCapabilities, ndk::ScopedAStatus>

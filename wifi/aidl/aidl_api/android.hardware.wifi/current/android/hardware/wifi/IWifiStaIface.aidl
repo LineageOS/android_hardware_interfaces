@@ -41,7 +41,7 @@ interface IWifiStaIface {
   void enableNdOffload(in boolean enable);
   android.hardware.wifi.StaApfPacketFilterCapabilities getApfPacketFilterCapabilities();
   android.hardware.wifi.StaBackgroundScanCapabilities getBackgroundScanCapabilities();
-  android.hardware.wifi.IWifiStaIface.StaIfaceCapabilityMask getCapabilities();
+  int getCapabilities();
   android.hardware.wifi.WifiDebugRxPacketFateReport[] getDebugRxPacketFates();
   android.hardware.wifi.WifiDebugTxPacketFateReport[] getDebugTxPacketFates();
   byte[6] getFactoryMacAddress();

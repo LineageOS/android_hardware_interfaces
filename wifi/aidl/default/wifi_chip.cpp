@@ -455,7 +455,7 @@ ndk::ScopedAStatus WifiChip::registerEventCallback(
                            &WifiChip::registerEventCallbackInternal, event_callback);
 }
 
-ndk::ScopedAStatus WifiChip::getCapabilities(IWifiChip::ChipCapabilityMask* _aidl_return) {
+ndk::ScopedAStatus WifiChip::getCapabilities(int32_t* _aidl_return) {
     return validateAndCall(this, WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
                            &WifiChip::getCapabilitiesInternal, _aidl_return);
 }
@@ -681,7 +681,7 @@ ndk::ScopedAStatus WifiChip::setMultiStaUseCase(IWifiChip::MultiStaUseCase in_us
 
 ndk::ScopedAStatus WifiChip::setCoexUnsafeChannels(
         const std::vector<IWifiChip::CoexUnsafeChannel>& in_unsafeChannels,
-        CoexRestriction in_restrictions) {
+        int32_t in_restrictions) {
     return validateAndCall(this, WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
                            &WifiChip::setCoexUnsafeChannelsInternal, in_unsafeChannels,
                            in_restrictions);
@@ -692,8 +692,8 @@ ndk::ScopedAStatus WifiChip::setCountryCode(const std::array<uint8_t, 2>& in_cod
                            &WifiChip::setCountryCodeInternal, in_code);
 }
 
-ndk::ScopedAStatus WifiChip::getUsableChannels(WifiBand in_band, WifiIfaceMode in_ifaceModeMask,
-                                               UsableChannelFilter in_filterMask,
+ndk::ScopedAStatus WifiChip::getUsableChannels(WifiBand in_band, int32_t in_ifaceModeMask,
+                                               int32_t in_filterMask,
                                                std::vector<WifiUsableChannel>* _aidl_return) {
     return validateAndCall(this, WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
                            &WifiChip::getUsableChannelsInternal, _aidl_return, in_band,
@@ -722,8 +722,7 @@ ndk::ScopedAStatus WifiChip::getWifiChipCapabilities(WifiChipCapabilities* _aidl
                            &WifiChip::getWifiChipCapabilitiesInternal, _aidl_return);
 }
 
-ndk::ScopedAStatus WifiChip::enableStaChannelForPeerNetwork(
-        ChannelCategoryMask in_channelCategoryEnableFlag) {
+ndk::ScopedAStatus WifiChip::enableStaChannelForPeerNetwork(int32_t in_channelCategoryEnableFlag) {
     return validateAndCall(this, WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
                            &WifiChip::enableStaChannelForPeerNetworkInternal,
                            in_channelCategoryEnableFlag);
@@ -787,7 +786,7 @@ ndk::ScopedAStatus WifiChip::registerEventCallbackInternal(
     return ndk::ScopedAStatus::ok();
 }
 
-std::pair<IWifiChip::ChipCapabilityMask, ndk::ScopedAStatus> WifiChip::getCapabilitiesInternal() {
+std::pair<int32_t, ndk::ScopedAStatus> WifiChip::getCapabilitiesInternal() {
     legacy_hal::wifi_error legacy_status;
     uint64_t legacy_feature_set;
     uint32_t legacy_logger_feature_set;
@@ -795,7 +794,7 @@ std::pair<IWifiChip::ChipCapabilityMask, ndk::ScopedAStatus> WifiChip::getCapabi
     std::tie(legacy_status, legacy_feature_set) =
             legacy_hal_.lock()->getSupportedFeatureSet(ifname);
     if (legacy_status != legacy_hal::WIFI_SUCCESS) {
-        return {IWifiChip::ChipCapabilityMask{}, createWifiStatusFromLegacyError(legacy_status)};
+        return {0, createWifiStatusFromLegacyError(legacy_status)};
     }
     std::tie(legacy_status, legacy_logger_feature_set) =
             legacy_hal_.lock()->getLoggerSupportedFeatureSet(ifname);
@@ -806,9 +805,9 @@ std::pair<IWifiChip::ChipCapabilityMask, ndk::ScopedAStatus> WifiChip::getCapabi
     uint32_t aidl_caps;
     if (!aidl_struct_util::convertLegacyFeaturesToAidlChipCapabilities(legacy_feature_set,
                                                                        &aidl_caps)) {
-        return {IWifiChip::ChipCapabilityMask{}, createWifiStatus(WifiStatusCode::ERROR_UNKNOWN)};
+        return {0, createWifiStatus(WifiStatusCode::ERROR_UNKNOWN)};
     }
-    return {static_cast<IWifiChip::ChipCapabilityMask>(aidl_caps), ndk::ScopedAStatus::ok()};
+    return {aidl_caps, ndk::ScopedAStatus::ok()};
 }
 
 std::pair<std::vector<IWifiChip::ChipMode>, ndk::ScopedAStatus>
@@ -1385,13 +1384,12 @@ ndk::ScopedAStatus WifiChip::setMultiStaUseCaseInternal(IWifiChip::MultiStaUseCa
 }
 
 ndk::ScopedAStatus WifiChip::setCoexUnsafeChannelsInternal(
-        std::vector<IWifiChip::CoexUnsafeChannel> unsafe_channels, CoexRestriction restrictions) {
+        std::vector<IWifiChip::CoexUnsafeChannel> unsafe_channels, int32_t aidl_restrictions) {
     std::vector<legacy_hal::wifi_coex_unsafe_channel> legacy_unsafe_channels;
     if (!aidl_struct_util::convertAidlVectorOfCoexUnsafeChannelToLegacy(unsafe_channels,
                                                                         &legacy_unsafe_channels)) {
         return createWifiStatus(WifiStatusCode::ERROR_INVALID_ARGS);
     }
-    uint32_t aidl_restrictions = static_cast<uint32_t>(restrictions);
     uint32_t legacy_restrictions = 0;
     if (aidl_restrictions & static_cast<uint32_t>(CoexRestriction::WIFI_DIRECT)) {
         legacy_restrictions |= legacy_hal::wifi_coex_restriction::WIFI_DIRECT;
@@ -1413,15 +1411,13 @@ ndk::ScopedAStatus WifiChip::setCountryCodeInternal(const std::array<uint8_t, 2>
 }
 
 std::pair<std::vector<WifiUsableChannel>, ndk::ScopedAStatus> WifiChip::getUsableChannelsInternal(
-        WifiBand band, WifiIfaceMode ifaceModeMask, UsableChannelFilter filterMask) {
+        WifiBand band, int32_t ifaceModeMask, int32_t filterMask) {
     legacy_hal::wifi_error legacy_status;
     std::vector<legacy_hal::wifi_usable_channel> legacy_usable_channels;
     std::tie(legacy_status, legacy_usable_channels) = legacy_hal_.lock()->getUsableChannels(
             aidl_struct_util::convertAidlWifiBandToLegacyMacBand(band),
-            aidl_struct_util::convertAidlWifiIfaceModeToLegacy(
-                    static_cast<uint32_t>(ifaceModeMask)),
-            aidl_struct_util::convertAidlUsableChannelFilterToLegacy(
-                    static_cast<uint32_t>(filterMask)));
+            aidl_struct_util::convertAidlWifiIfaceModeToLegacy(ifaceModeMask),
+            aidl_struct_util::convertAidlUsableChannelFilterToLegacy(filterMask));
 
     if (legacy_status != legacy_hal::WIFI_SUCCESS) {
         return {std::vector<WifiUsableChannel>(), createWifiStatusFromLegacyError(legacy_status)};
@@ -1483,10 +1479,9 @@ std::pair<WifiChipCapabilities, ndk::ScopedAStatus> WifiChip::getWifiChipCapabil
 }
 
 ndk::ScopedAStatus WifiChip::enableStaChannelForPeerNetworkInternal(
-        ChannelCategoryMask channelCategoryEnableFlag) {
+        int32_t channelCategoryEnableFlag) {
     auto legacy_status = legacy_hal_.lock()->enableStaChannelForPeerNetwork(
-            aidl_struct_util::convertAidlChannelCategoryToLegacy(
-                    static_cast<uint32_t>(channelCategoryEnableFlag)));
+            aidl_struct_util::convertAidlChannelCategoryToLegacy(channelCategoryEnableFlag));
     return createWifiStatusFromLegacyError(legacy_status);
 }
 

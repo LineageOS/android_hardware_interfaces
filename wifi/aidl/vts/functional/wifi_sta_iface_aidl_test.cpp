@@ -54,9 +54,9 @@ class WifiStaIfaceAidlTest : public testing::TestWithParam<std::string> {
 
   protected:
     bool isCapabilitySupported(IWifiStaIface::StaIfaceCapabilityMask expected) {
-        IWifiStaIface::StaIfaceCapabilityMask caps = {};
+        int32_t caps = 0;
         EXPECT_TRUE(wifi_sta_iface_->getCapabilities(&caps).isOk());
-        return static_cast<uint32_t>(caps) & static_cast<uint32_t>(expected);
+        return caps & static_cast<int32_t>(expected);
     }
 
     ndk::ScopedAStatus createStaIface(std::shared_ptr<IWifiStaIface>* sta_iface) {
@@ -86,9 +86,9 @@ TEST_P(WifiStaIfaceAidlTest, GetFactoryMacAddress) {
  * GetCapabilities
  */
 TEST_P(WifiStaIfaceAidlTest, GetCapabilities) {
-    IWifiStaIface::StaIfaceCapabilityMask caps = {};
+    int32_t caps = 0;
     EXPECT_TRUE(wifi_sta_iface_->getCapabilities(&caps).isOk());
-    EXPECT_NE(static_cast<int32_t>(caps), 0);
+    EXPECT_NE(caps, 0);
 }
 
 /*

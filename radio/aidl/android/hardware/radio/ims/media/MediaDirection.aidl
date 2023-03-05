@@ -16,6 +16,17 @@
 
 package android.hardware.radio.ims.media;
 
+/**
+ * Directions can be combined to meet various media direction
+ * requirements depending on the scenario.
+ *
+ * Examples:
+ *     No Flow      : NO_FLOW - eg. SRVCC.
+ *     RTCP-only    : RTCP_TX | RTCP_RX - eg. Local Hold or Dual Hold.
+ *     Receive-Only : RTP_RX | RTCP_TX | RTCP_RX - eg. Remote Hold.
+ *     Send-Receive : RTP_TX | RTP_RX | RTCP_TX | RTCP_RX - eg. Active call.
+ *     Send-Only    : RTP_TX | RTCP_TX | RTCP_RX - eg. Simplex call, voice mail, etc
+ */
 @VintfStability
 @Backing(type="int")
 enum MediaDirection {
@@ -24,12 +35,16 @@ enum MediaDirection {
      * may release the audio resource. Eg. SRVCC.
      */
     NO_FLOW = 0,
-    /** Device sends outgoing RTP and drops incoming RTP */
-    SEND_ONLY = 1,
-    /** Device receives the downlink RTP and does not transmit any uplink RTP */
-    RECEIVE_ONLY = 2,
-    /** Device sends and receive RTP in both directions */
-    SEND_RECEIVE = 3,
-    /** No RTP flow however RTCP continues to flow. Eg. HOLD */
-    INACTIVE = 4,
+
+    /** Send RTP packets */
+    RTP_TX = 1 << 0,
+
+    /** Receive and processes RTP packets */
+    RTP_RX = 1 << 1,
+
+    /** Send RTCP packets */
+    RTCP_TX = 1 << 2,
+
+    /** Receive RTCP packets */
+    RTCP_RX = 1 << 3,
 }

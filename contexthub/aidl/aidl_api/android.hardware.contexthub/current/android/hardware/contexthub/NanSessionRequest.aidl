@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,12 +31,8 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.radio.ims.media;
-@Backing(type="int") @VintfStability
-enum MediaDirection {
-  NO_FLOW = 0,
-  RTP_TX = (1 << 0) /* 1 */,
-  RTP_RX = (1 << 1) /* 2 */,
-  RTCP_TX = (1 << 2) /* 4 */,
-  RTCP_RX = (1 << 3) /* 8 */,
+package android.hardware.contexthub;
+@VintfStability
+parcelable NanSessionRequest {
+  boolean enable;
 }
