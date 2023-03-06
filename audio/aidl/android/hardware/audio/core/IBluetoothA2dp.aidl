@@ -24,8 +24,8 @@ import android.hardware.audio.core.VendorParameter;
  * the vendor. It needs to be provided only if the device actually supports BT
  * A2DP.
  *
- * This interface is separate from IBluetooth interface which manages SCO & HFP.
- * The HAL module can handle both SCO and A2DP profiles or only one of them.
+ * Each of IBluetooth* interfaces is independent of each other. The HAL module
+ * can provide any combination of them.
  */
 @VintfStability
 interface IBluetoothA2dp {
