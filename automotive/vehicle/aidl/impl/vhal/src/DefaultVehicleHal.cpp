@@ -15,6 +15,7 @@
  */
 
 #define LOG_TAG "DefaultVehicleHal"
+#define ATRACE_TAG ATRACE_TAG_HAL
 
 #include <DefaultVehicleHal.h>
 
@@ -28,6 +29,7 @@
 #include <private/android_filesystem_config.h>
 #include <utils/Log.h>
 #include <utils/SystemClock.h>
+#include <utils/Trace.h>
 
 #include <inttypes.h>
 #include <set>
@@ -350,6 +352,7 @@ Result<void> DefaultVehicleHal::checkProperty(const VehiclePropValue& propValue)
 
 ScopedAStatus DefaultVehicleHal::getValues(const CallbackType& callback,
                                            const GetValueRequests& requests) {
+    ATRACE_CALL();
     if (callback == nullptr) {
         return ScopedAStatus::fromExceptionCode(EX_NULL_POINTER);
     }
@@ -436,6 +439,7 @@ ScopedAStatus DefaultVehicleHal::getValues(const CallbackType& callback,
 
 ScopedAStatus DefaultVehicleHal::setValues(const CallbackType& callback,
                                            const SetValueRequests& requests) {
+    ATRACE_CALL();
     if (callback == nullptr) {
         return ScopedAStatus::fromExceptionCode(EX_NULL_POINTER);
     }
