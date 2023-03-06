@@ -20,19 +20,21 @@
 #define LOG_TAG "AHAL_HapticGeneratorSw"
 #include <android-base/logging.h>
 #include <fmq/AidlMessageQueue.h>
+#include <system/audio_effects/effect_uuid.h>
 
 #include "HapticGeneratorSw.h"
 
 using aidl::android::hardware::audio::effect::Descriptor;
+using aidl::android::hardware::audio::effect::getEffectImplUuidHapticGeneratorSw;
+using aidl::android::hardware::audio::effect::getEffectTypeUuidHapticGenerator;
 using aidl::android::hardware::audio::effect::HapticGeneratorSw;
 using aidl::android::hardware::audio::effect::IEffect;
-using aidl::android::hardware::audio::effect::kHapticGeneratorSwImplUUID;
 using aidl::android::hardware::audio::effect::State;
 using aidl::android::media::audio::common::AudioUuid;
 
 extern "C" binder_exception_t createEffect(const AudioUuid* in_impl_uuid,
                                            std::shared_ptr<IEffect>* instanceSpp) {
-    if (!in_impl_uuid || *in_impl_uuid != kHapticGeneratorSwImplUUID) {
+    if (!in_impl_uuid || *in_impl_uuid != getEffectImplUuidHapticGeneratorSw()) {
         LOG(ERROR) << __func__ << "uuid not supported";
         return EX_ILLEGAL_ARGUMENT;
     }
@@ -47,7 +49,7 @@ extern "C" binder_exception_t createEffect(const AudioUuid* in_impl_uuid,
 }
 
 extern "C" binder_exception_t queryEffect(const AudioUuid* in_impl_uuid, Descriptor* _aidl_return) {
-    if (!in_impl_uuid || *in_impl_uuid != kHapticGeneratorSwImplUUID) {
+    if (!in_impl_uuid || *in_impl_uuid != getEffectImplUuidHapticGeneratorSw()) {
         LOG(ERROR) << __func__ << "uuid not supported";
         return EX_ILLEGAL_ARGUMENT;
     }
@@ -60,8 +62,8 @@ namespace aidl::android::hardware::audio::effect {
 const std::string HapticGeneratorSw::kEffectName = "HapticGeneratorSw";
 /* Effect descriptor */
 const Descriptor HapticGeneratorSw::kDescriptor = {
-        .common = {.id = {.type = kHapticGeneratorTypeUUID,
-                          .uuid = kHapticGeneratorSwImplUUID,
+        .common = {.id = {.type = getEffectTypeUuidHapticGenerator(),
+                          .uuid = getEffectImplUuidHapticGeneratorSw(),
                           .proxy = std::nullopt},
                    .flags = {.type = Flags::Type::INSERT,
                              .insert = Flags::Insert::FIRST,

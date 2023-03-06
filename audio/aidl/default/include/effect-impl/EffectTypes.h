@@ -15,7 +15,6 @@
  */
 
 #pragma once
-#include <ostream>
 #include <string>
 
 #include <aidl/android/hardware/audio/effect/BnEffect.h>
@@ -127,24 +126,5 @@ inline std::ostream& operator<<(std::ostream& out, const RetCode& code) {
  */
 #define MAKE_RANGE(T, Tag, l, r) \
     { .min = T::make<T::Tag>(l), .max = T::make<T::Tag>(r) }
-
-static inline bool stringToUuid(const char* str,
-                                ::aidl::android::media::audio::common::AudioUuid* uuid) {
-    RETURN_VALUE_IF(!uuid || !str, false, "nullPtr");
-
-    uint32_t tmp[10];
-    if (sscanf(str, "%08x-%04x-%04x-%04x-%02x%02x%02x%02x%02x%02x", tmp, tmp + 1, tmp + 2, tmp + 3,
-               tmp + 4, tmp + 5, tmp + 6, tmp + 7, tmp + 8, tmp + 9) < 10) {
-        return false;
-    }
-
-    uuid->timeLow = (uint32_t)tmp[0];
-    uuid->timeMid = (uint16_t)tmp[1];
-    uuid->timeHiAndVersion = (uint16_t)tmp[2];
-    uuid->clockSeq = (uint16_t)tmp[3];
-    uuid->node.insert(uuid->node.end(), {(uint8_t)tmp[4], (uint8_t)tmp[5], (uint8_t)tmp[6],
-                                         (uint8_t)tmp[7], (uint8_t)tmp[8], (uint8_t)tmp[9]});
-    return true;
-}
 
 }  // namespace aidl::android::hardware::audio::effect

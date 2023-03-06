@@ -24,7 +24,6 @@
 #include <android/binder_auto_utils.h>
 
 #include "TestUtils.h"
-#include "effect-impl/EffectUUID.h"
 
 using namespace android;
 
