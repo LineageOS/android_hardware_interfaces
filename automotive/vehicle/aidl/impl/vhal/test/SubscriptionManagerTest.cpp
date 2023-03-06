@@ -231,7 +231,7 @@ TEST_F(SubscriptionManagerTest, testUnsubscribeGlobalContinuous) {
     std::vector<SubscribeOptions> options = {{
             .propId = 0,
             .areaIds = {0},
-            .sampleRate = 10.0,
+            .sampleRate = 100.0,
     }};
 
     auto result = getManager()->subscribe(getCallbackClient(), options, true);
@@ -240,11 +240,13 @@ TEST_F(SubscriptionManagerTest, testUnsubscribeGlobalContinuous) {
     result = getManager()->unsubscribe(getCallbackClient()->asBinder().get());
     ASSERT_TRUE(result.ok()) << "failed to unsubscribe: " << result.error().message();
 
+    // Wait for the last events to come.
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
     clearEvents();
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-    // Theoretically trigger 10 times, but check for at least 9 times to be stable.
     ASSERT_TRUE(getEvents().empty());
 }
 
@@ -268,6 +270,9 @@ TEST_F(SubscriptionManagerTest, testUnsubscribeMultipleAreas) {
     result = getManager()->unsubscribe(getCallbackClient()->asBinder().get(),
                                        std::vector<int32_t>({0}));
     ASSERT_TRUE(result.ok()) << "failed to unsubscribe: " << result.error().message();
+
+    // Wait for the last events to come.
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
     clearEvents();
 
@@ -300,6 +305,9 @@ TEST_F(SubscriptionManagerTest, testUnsubscribeByCallback) {
 
     result = getManager()->unsubscribe(getCallbackClient()->asBinder().get());
     ASSERT_TRUE(result.ok()) << "failed to unsubscribe: " << result.error().message();
+
+    // Wait for the last events to come.
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
     clearEvents();
 

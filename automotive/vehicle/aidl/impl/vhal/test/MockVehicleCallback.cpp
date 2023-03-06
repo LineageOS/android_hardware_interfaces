@@ -16,6 +16,9 @@
 
 #include "MockVehicleCallback.h"
 
+#include <android-base/thread_annotations.h>
+#include <chrono>
+
 namespace android {
 namespace hardware {
 namespace automotive {
@@ -27,6 +30,7 @@ using ::aidl::android::hardware::automotive::vehicle::GetValueResults;
 using ::aidl::android::hardware::automotive::vehicle::SetValueResults;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropErrors;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropValues;
+using ::android::base::ScopedLockAssertion;
 using ::ndk::ScopedAStatus;
 using ::ndk::ScopedFileDescriptor;
 
@@ -46,21 +50,35 @@ static ScopedAStatus storeResults(const T& results, std::list<T>* storedResults)
 }  // namespace
 
 ScopedAStatus MockVehicleCallback::onGetValues(const GetValueResults& results) {
-    std::scoped_lock<std::mutex> lockGuard(mLock);
-    return storeResults(results, &mGetValueResults);
+    ScopedAStatus result;
+    {
+        std::scoped_lock<std::mutex> lockGuard(mLock);
+        result = storeResults(results, &mGetValueResults);
+    }
+    mCond.notify_all();
+    return result;
 }
 
 ScopedAStatus MockVehicleCallback::onSetValues(const SetValueResults& results) {
-    std::scoped_lock<std::mutex> lockGuard(mLock);
-    return storeResults(results, &mSetValueResults);
+    ScopedAStatus result;
+    {
+        std::scoped_lock<std::mutex> lockGuard(mLock);
+        result = storeResults(results, &mSetValueResults);
+    }
+    mCond.notify_all();
+    return result;
 }
 
 ScopedAStatus MockVehicleCallback::onPropertyEvent(const VehiclePropValues& results,
                                                    int32_t sharedMemoryFileCount) {
-    std::scoped_lock<std::mutex> lockGuard(mLock);
-
-    mSharedMemoryFileCount = sharedMemoryFileCount;
-    return storeResults(results, &mOnPropertyEventResults);
+    ScopedAStatus result;
+    {
+        std::scoped_lock<std::mutex> lockGuard(mLock);
+        mSharedMemoryFileCount = sharedMemoryFileCount;
+        result = storeResults(results, &mOnPropertyEventResults);
+    }
+    mCond.notify_all();
+    return result;
 }
 
 ScopedAStatus MockVehicleCallback::onPropertySetError(const VehiclePropErrors&) {
@@ -85,6 +103,22 @@ std::optional<VehiclePropValues> MockVehicleCallback::nextOnPropertyEventResults
 size_t MockVehicleCallback::countOnPropertyEventResults() {
     std::scoped_lock<std::mutex> lockGuard(mLock);
     return mOnPropertyEventResults.size();
+}
+
+bool MockVehicleCallback::waitForSetValueResults(size_t size, size_t timeoutInNano) {
+    std::unique_lock lk(mLock);
+    return mCond.wait_for(lk, std::chrono::nanoseconds(timeoutInNano), [this, size] {
+        ScopedLockAssertion lockAssertion(mLock);
+        return mSetValueResults.size() >= size;
+    });
+}
+
+bool MockVehicleCallback::waitForGetValueResults(size_t size, size_t timeoutInNano) {
+    std::unique_lock lk(mLock);
+    return mCond.wait_for(lk, std::chrono::nanoseconds(timeoutInNano), [this, size] {
+        ScopedLockAssertion lockAssertion(mLock);
+        return mGetValueResults.size() >= size;
+    });
 }
 
 }  // namespace vehicle
