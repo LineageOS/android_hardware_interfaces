@@ -30,9 +30,9 @@ using namespace android;
 
 using aidl::android::hardware::audio::effect::Descriptor;
 using aidl::android::hardware::audio::effect::DynamicsProcessing;
+using aidl::android::hardware::audio::effect::getEffectTypeUuidDynamicsProcessing;
 using aidl::android::hardware::audio::effect::IEffect;
 using aidl::android::hardware::audio::effect::IFactory;
-using aidl::android::hardware::audio::effect::kDynamicsProcessingTypeUUID;
 using aidl::android::hardware::audio::effect::Parameter;
 
 /**
@@ -428,7 +428,7 @@ INSTANTIATE_TEST_SUITE_P(
         DynamicsProcessingTest, DynamicsProcessingTestEngineArchitecture,
         ::testing::Combine(
                 testing::ValuesIn(EffectFactoryHelper::getAllEffectDescriptors(
-                        IFactory::descriptor, kDynamicsProcessingTypeUUID)),
+                        IFactory::descriptor, getEffectTypeUuidDynamicsProcessing())),
                 testing::Values(DynamicsProcessing::ResolutionPreference::FAVOR_TIME_RESOLUTION,
                                 DynamicsProcessing::ResolutionPreference::
                                         FAVOR_FREQUENCY_RESOLUTION),  // variant
@@ -480,7 +480,7 @@ TEST_P(DynamicsProcessingTestInputGain, SetAndGetInputGain) {
 INSTANTIATE_TEST_SUITE_P(
         DynamicsProcessingTest, DynamicsProcessingTestInputGain,
         ::testing::Combine(testing::ValuesIn(EffectFactoryHelper::getAllEffectDescriptors(
-                                   IFactory::descriptor, kDynamicsProcessingTypeUUID)),
+                                   IFactory::descriptor, getEffectTypeUuidDynamicsProcessing())),
                            testing::ValuesIn(DynamicsProcessingTestInputGain::kInputGainTestSet)),
         [](const auto& info) {
             auto descriptor = std::get<INPUT_GAIN_INSTANCE_NAME>(info.param).second;
@@ -567,7 +567,7 @@ TEST_P(DynamicsProcessingTestLimiterConfig, SetAndGetLimiterConfig) {
 INSTANTIATE_TEST_SUITE_P(
         DynamicsProcessingTest, DynamicsProcessingTestLimiterConfig,
         ::testing::Combine(testing::ValuesIn(EffectFactoryHelper::getAllEffectDescriptors(
-                                   IFactory::descriptor, kDynamicsProcessingTypeUUID)),
+                                   IFactory::descriptor, getEffectTypeUuidDynamicsProcessing())),
                            testing::Values(-1, 0, 1, 2),  // channel count
                            testing::Bool(),               // enable
                            testing::Values(3),            // link group
@@ -642,7 +642,7 @@ INSTANTIATE_TEST_SUITE_P(
         DynamicsProcessingTest, DynamicsProcessingTestChannelConfig,
         ::testing::Combine(
                 testing::ValuesIn(EffectFactoryHelper::getAllEffectDescriptors(
-                        IFactory::descriptor, kDynamicsProcessingTypeUUID)),
+                        IFactory::descriptor, getEffectTypeUuidDynamicsProcessing())),
                 testing::ValuesIn(
                         DynamicsProcessingTestHelper::kChannelConfigTestSet),  // channel config
                 testing::Bool()),                                              // Engine inUse
@@ -778,7 +778,7 @@ INSTANTIATE_TEST_SUITE_P(
         DynamicsProcessingTest, DynamicsProcessingTestEqBandConfig,
         ::testing::Combine(
                 testing::ValuesIn(EffectFactoryHelper::getAllEffectDescriptors(
-                        IFactory::descriptor, kDynamicsProcessingTypeUUID)),
+                        IFactory::descriptor, getEffectTypeUuidDynamicsProcessing())),
                 testing::Values(-1, 0, 10),  // channel ID
                 testing::ValuesIn(
                         DynamicsProcessingTestHelper::kChannelConfigTestSet),  // channel enable
@@ -900,7 +900,7 @@ INSTANTIATE_TEST_SUITE_P(
         DynamicsProcessingTest, DynamicsProcessingTestMbcBandConfig,
         ::testing::Combine(
                 testing::ValuesIn(EffectFactoryHelper::getAllEffectDescriptors(
-                        IFactory::descriptor, kDynamicsProcessingTypeUUID)),
+                        IFactory::descriptor, getEffectTypeUuidDynamicsProcessing())),
                 testing::Values(-1, 0, 10),  // channel count
                 testing::ValuesIn(
                         DynamicsProcessingTestHelper::kChannelConfigTestSet),  // channel config

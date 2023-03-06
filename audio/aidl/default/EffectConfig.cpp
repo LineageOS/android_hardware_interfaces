@@ -16,6 +16,7 @@
 
 #define LOG_TAG "AHAL_EffectConfig"
 #include <android-base/logging.h>
+#include <system/audio_effects/effect_uuid.h>
 
 #include "effectFactory-impl/EffectConfig.h"
 
@@ -163,13 +164,51 @@ bool EffectConfig::parseLibraryUuid(const tinyxml2::XMLElement& xml,
         libraryUuid.name = name;
     }
 
-    const char* uuid = xml.Attribute("uuid");
-    RETURN_VALUE_IF(!uuid, false, "noUuidAttribute");
-    RETURN_VALUE_IF(!stringToUuid(uuid, &libraryUuid.uuid), false, "invalidUuidAttribute");
+    const char* uuidStr = xml.Attribute("uuid");
+    RETURN_VALUE_IF(!uuidStr, false, "noUuidAttribute");
+    libraryUuid.uuid = stringToUuid(uuidStr);
+    RETURN_VALUE_IF((libraryUuid.uuid == getEffectUuidZero()), false, "invalidUuidAttribute");
 
     LOG(DEBUG) << __func__ << (isProxy ? " proxy " : libraryUuid.name) << " : "
                << libraryUuid.uuid.toString();
     return true;
+}
+
+bool EffectConfig::findUuid(const std::string& xmlEffectName, AudioUuid* uuid) {
+// Difference from EFFECT_TYPE_LIST_DEF, there could be multiple name mapping to same Effect Type
+#define EFFECT_XML_TYPE_LIST_DEF(V)                        \
+    V("acoustic_echo_canceler", AcousticEchoCanceler)      \
+    V("automatic_gain_control_v1", AutomaticGainControlV1) \
+    V("automatic_gain_control_v2", AutomaticGainControlV2) \
+    V("bassboost", BassBoost)                              \
+    V("downmix", Downmix)                                  \
+    V("dynamics_processing", DynamicsProcessing)           \
+    V("equalizer", Equalizer)                              \
+    V("haptic_generator", HapticGenerator)                 \
+    V("loudness_enhancer", LoudnessEnhancer)               \
+    V("env_reverb", EnvReverb)                             \
+    V("reverb_env_aux", EnvReverb)                         \
+    V("reverb_env_ins", EnvReverb)                         \
+    V("preset_reverb", PresetReverb)                       \
+    V("reverb_pre_aux", PresetReverb)                      \
+    V("reverb_pre_ins", PresetReverb)                      \
+    V("noise_suppression", NoiseSuppression)               \
+    V("spatializer", Spatializer)                          \
+    V("virtualizer", Virtualizer)                          \
+    V("visualizer", Visualizer)                            \
+    V("volume", Volume)
+
+#define GENERATE_MAP_ENTRY_V(s, symbol) {s, &getEffectTypeUuid##symbol},
+
+    typedef const AudioUuid& (*UuidGetter)(void);
+    static const std::map<std::string, UuidGetter> uuidMap{
+            // std::make_pair("s", &getEffectTypeUuidExtension)};
+            {EFFECT_XML_TYPE_LIST_DEF(GENERATE_MAP_ENTRY_V)}};
+    if (auto it = uuidMap.find(xmlEffectName); it != uuidMap.end()) {
+        *uuid = (*it->second)();
+        return true;
+    }
+    return false;
 }
 
 const char* EffectConfig::dump(const tinyxml2::XMLElement& element,

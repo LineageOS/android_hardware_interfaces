@@ -16,11 +16,10 @@
 
 #pragma once
 
-#include <aidl/android/hardware/audio/effect/BnEffect.h>
 #include <vector>
 
+#include <aidl/android/hardware/audio/effect/BnEffect.h>
 #include "effect-impl/EffectImpl.h"
-#include "effect-impl/EffectUUID.h"
 
 namespace aidl::android::hardware::audio::effect {
 

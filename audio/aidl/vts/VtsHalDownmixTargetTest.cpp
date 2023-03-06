@@ -24,10 +24,9 @@ using namespace android;
 
 using aidl::android::hardware::audio::effect::Descriptor;
 using aidl::android::hardware::audio::effect::Downmix;
+using aidl::android::hardware::audio::effect::getEffectTypeUuidDownmix;
 using aidl::android::hardware::audio::effect::IEffect;
 using aidl::android::hardware::audio::effect::IFactory;
-using aidl::android::hardware::audio::effect::kDownmixTypeUUID;
-using aidl::android::hardware::audio::effect::kEffectNullUuid;
 using aidl::android::hardware::audio::effect::Parameter;
 
 /**
@@ -122,7 +121,7 @@ TEST_P(DownmixParamTest, SetAndGetType) {
 INSTANTIATE_TEST_SUITE_P(
         DownmixTest, DownmixParamTest,
         ::testing::Combine(testing::ValuesIn(EffectFactoryHelper::getAllEffectDescriptors(
-                                   IFactory::descriptor, kDownmixTypeUUID)),
+                                   IFactory::descriptor, getEffectTypeUuidDownmix())),
                            testing::ValuesIn(kTypeValues)),
         [](const testing::TestParamInfo<DownmixParamTest::ParamType>& info) {
             auto descriptor = std::get<PARAM_INSTANCE_NAME>(info.param).second;
