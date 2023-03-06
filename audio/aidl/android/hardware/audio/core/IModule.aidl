@@ -22,6 +22,7 @@ import android.hardware.audio.core.AudioPatch;
 import android.hardware.audio.core.AudioRoute;
 import android.hardware.audio.core.IBluetooth;
 import android.hardware.audio.core.IBluetoothA2dp;
+import android.hardware.audio.core.IBluetoothLe;
 import android.hardware.audio.core.IStreamCallback;
 import android.hardware.audio.core.IStreamIn;
 import android.hardware.audio.core.IStreamOut;
@@ -116,6 +117,20 @@ interface IModule {
      * @throws EX_ILLEGAL_STATE If there was an error creating an instance.
      */
     @nullable IBluetoothA2dp getBluetoothA2dp();
+
+    /**
+     * Retrieve the interface to control Bluetooth LE.
+     *
+     * If the HAL module supports LE Profile functionality for Bluetooth, it
+     * must return an instance of the IBluetoothLe interface. The same
+     * instance must be returned during the lifetime of the HAL module. If the
+     * HAL module does not support BT LE, a null must be returned, without
+     * throwing any errors.
+     *
+     * @return An instance of the IBluetoothLe interface implementation.
+     * @throws EX_ILLEGAL_STATE If there was an error creating an instance.
+     */
+    @nullable IBluetoothLe getBluetoothLe();
 
     /**
      * Set a device port of an external device into connected state.
@@ -842,7 +857,7 @@ interface IModule {
     AudioMMapPolicyInfo[] getMmapPolicyInfos(AudioMMapPolicyType mmapPolicyType);
 
     /**
-     * Indicates if this module supports variable latency control for instance
+     * Indicates if this module supports variable latency control, for instance,
      * over Bluetooth A2DP or LE Audio links.
      *
      * If supported, all instances of IStreamOut interface returned by this module must
