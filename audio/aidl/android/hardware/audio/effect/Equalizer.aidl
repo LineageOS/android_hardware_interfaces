@@ -31,14 +31,14 @@ union Equalizer {
      */
     @VintfStability
     union Id {
-        int vendorExtensionTag;
+        VendorExtension vendorExtensionTag;
         Equalizer.Tag commonTag;
     }
 
     /**
      * Vendor Equalizer implementation definition for additional parameters.
      */
-    VendorExtension vendorExtension;
+    VendorExtension vendor;
 
     /**
      * Level setting for each band in millibels.

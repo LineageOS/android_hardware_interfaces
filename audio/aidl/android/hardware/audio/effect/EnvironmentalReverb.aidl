@@ -33,7 +33,7 @@ union EnvironmentalReverb {
      */
     @VintfStability
     union Id {
-        int vendorExtensionTag;
+        VendorExtension vendorExtensionTag;
         EnvironmentalReverb.Tag commonTag;
     }
 

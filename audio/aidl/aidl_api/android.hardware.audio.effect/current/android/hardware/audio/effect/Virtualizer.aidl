@@ -40,7 +40,7 @@ union Virtualizer {
   android.media.audio.common.AudioDeviceDescription device;
   @VintfStability
   union Id {
-    int vendorExtensionTag;
+    android.hardware.audio.effect.VendorExtension vendorExtensionTag;
     android.hardware.audio.effect.Virtualizer.Tag commonTag;
     android.hardware.audio.effect.Virtualizer.SpeakerAnglesPayload speakerAnglesPayload;
   }
