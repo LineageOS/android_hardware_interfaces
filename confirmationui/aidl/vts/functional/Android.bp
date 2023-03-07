@@ -23,7 +23,7 @@ cc_test {
     name: "VtsHalConfirmationUITargetTest",
     defaults: [
         "VtsHalTargetTestDefaults",
-        "keymint_use_latest_hal_aidl_ndk_shared",
+        "keymint_use_latest_hal_aidl_ndk_static",
         "use_libaidlvintf_gtest_helper_static",
     ],
     srcs: [
@@ -31,8 +31,9 @@ cc_test {
     ],
     static_libs: [
         "android.hardware.confirmationui-V1-ndk",
-        "libcn-cbor",
         "android.hardware.confirmationui-support-lib",
+        "android.hardware.security.secureclock-V1-ndk",
+        "libcn-cbor",
     ],
     shared_libs: [
         "libbinder_ndk",
