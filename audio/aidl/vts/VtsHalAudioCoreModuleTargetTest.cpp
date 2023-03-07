@@ -1070,6 +1070,8 @@ class WithStream {
         std::shared_ptr<IStreamCommon> common;
         ndk::ScopedAStatus status = stream->getStreamCommon(&common);
         if (!status.isOk()) return status;
+        status = common->prepareToClose();
+        if (!status.isOk()) return status;
         return common->close();
     }
 
@@ -2302,6 +2304,26 @@ class AudioStream : public AudioCoreModule {
                 << "when closing the stream twice";
     }
 
+    void PrepareToCloseTwice() {
+        const auto portConfig = moduleConfig->getSingleConfigForMixPort(IOTraits<Stream>::is_input);
+        if (!portConfig.has_value()) {
+            GTEST_SKIP() << "No mix port for attached devices";
+        }
+        std::shared_ptr<IStreamCommon> heldStreamCommon;
+        {
+            WithStream<Stream> stream(portConfig.value());
+            ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultBufferSizeFrames));
+            std::shared_ptr<IStreamCommon> streamCommon;
+            ASSERT_IS_OK(stream.get()->getStreamCommon(&streamCommon));
+            heldStreamCommon = streamCommon;
+            EXPECT_IS_OK(streamCommon->prepareToClose());
+            EXPECT_IS_OK(streamCommon->prepareToClose())
+                    << "when calling prepareToClose second time";
+        }
+        EXPECT_STATUS(EX_ILLEGAL_STATE, heldStreamCommon->prepareToClose())
+                << "when calling prepareToClose on a closed stream";
+    }
+
     void OpenAllConfigs() {
         const auto allPortConfigs =
                 moduleConfig->getPortConfigsForMixPorts(IOTraits<Stream>::is_input);
@@ -2597,6 +2619,7 @@ using AudioStreamOut = AudioStream<IStreamOut>;
     }
 
 TEST_IN_AND_OUT_STREAM(CloseTwice);
+TEST_IN_AND_OUT_STREAM(PrepareToCloseTwice);
 TEST_IN_AND_OUT_STREAM(GetStreamCommon);
 TEST_IN_AND_OUT_STREAM(OpenAllConfigs);
 TEST_IN_AND_OUT_STREAM(OpenInvalidBufferSize);
