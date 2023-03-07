@@ -33,14 +33,14 @@ union HapticGenerator {
      */
     @VintfStability
     union Id {
-        int vendorExtensionTag;
+        VendorExtension vendorExtensionTag;
         HapticGenerator.Tag commonTag;
     }
 
     /**
      * Vendor HapticGenerator implementation definition for additional parameters.
      */
-    VendorExtension vendorExtension;
+    VendorExtension vendor;
 
     @VintfStability
     @Backing(type="int")

@@ -35,7 +35,7 @@ union NoiseSuppression {
      */
     @VintfStability
     union Id {
-        int vendorExtensionTag;
+        VendorExtension vendorExtensionTag;
         NoiseSuppression.Tag commonTag;
     }
 

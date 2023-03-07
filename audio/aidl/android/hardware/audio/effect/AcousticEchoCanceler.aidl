@@ -33,7 +33,7 @@ union AcousticEchoCanceler {
      */
     @VintfStability
     union Id {
-        int vendorExtensionTag;
+        VendorExtension vendorExtensionTag;
         AcousticEchoCanceler.Tag commonTag;
     }
 

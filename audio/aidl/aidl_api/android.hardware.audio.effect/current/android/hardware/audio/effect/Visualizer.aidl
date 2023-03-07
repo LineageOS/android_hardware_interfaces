@@ -44,7 +44,7 @@ union Visualizer {
   android.hardware.audio.effect.Visualizer.MeasurementMode measurementMode;
   @VintfStability
   union Id {
-    int vendorExtensionTag;
+    android.hardware.audio.effect.VendorExtension vendorExtensionTag;
     android.hardware.audio.effect.Visualizer.Tag commonTag;
   }
   @VintfStability

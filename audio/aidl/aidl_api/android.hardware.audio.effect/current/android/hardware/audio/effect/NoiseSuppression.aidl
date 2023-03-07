@@ -39,7 +39,7 @@ union NoiseSuppression {
   android.hardware.audio.effect.NoiseSuppression.Type type;
   @VintfStability
   union Id {
-    int vendorExtensionTag;
+    android.hardware.audio.effect.VendorExtension vendorExtensionTag;
     android.hardware.audio.effect.NoiseSuppression.Tag commonTag;
   }
   @Backing(type="int") @VintfStability

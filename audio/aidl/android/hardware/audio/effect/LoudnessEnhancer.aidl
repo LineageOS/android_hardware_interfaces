@@ -32,7 +32,7 @@ union LoudnessEnhancer {
      */
     @VintfStability
     union Id {
-        int vendorExtensionTag;
+        VendorExtension vendorExtensionTag;
         LoudnessEnhancer.Tag commonTag;
     }
 
