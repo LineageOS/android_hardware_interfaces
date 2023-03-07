@@ -24,7 +24,7 @@ package android.hardware.graphics.common;
 @Backing(type="int")
 enum Hdr {
     /**
-     *   Invalid HDR type
+     * Invalid HDR type
      */
     INVALID = 0,
     /**
