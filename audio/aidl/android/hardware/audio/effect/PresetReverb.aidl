@@ -68,7 +68,7 @@ union PresetReverb {
      */
     @VintfStability
     union Id {
-        int vendorExtensionTag;
+        VendorExtension vendorExtensionTag;
         PresetReverb.Tag commonTag;
     }
 
