@@ -88,7 +88,7 @@ ndk::ScopedAStatus ExtensionEffect::setParameterSpecific(const Parameter::Specif
     std::optional<DefaultExtension> defaultExt;
     RETURN_IF(STATUS_OK != vendorEffect.extension.getParcelable(&defaultExt), EX_ILLEGAL_ARGUMENT,
               "getParcelableFailed");
-    RETURN_IF(!defaultExt.has_value(), EX_ILLEGAL_ARGUMENT, "parcelableNulld");
+    RETURN_IF(!defaultExt.has_value(), EX_ILLEGAL_ARGUMENT, "parcelableNull");
     RETURN_IF(mContext->setParams(defaultExt->bytes) != RetCode::SUCCESS, EX_ILLEGAL_ARGUMENT,
               "paramNotSupported");
 
@@ -99,10 +99,15 @@ ndk::ScopedAStatus ExtensionEffect::getParameterSpecific(const Parameter::Id& id
                                                          Parameter::Specific* specific) {
     auto tag = id.getTag();
     RETURN_IF(Parameter::Id::vendorEffectTag != tag, EX_ILLEGAL_ARGUMENT, "wrongIdTag");
-    auto specificId = id.get<Parameter::Id::vendorEffectTag>();
+    auto extensionId = id.get<Parameter::Id::vendorEffectTag>();
+    std::optional<DefaultExtension> defaultIdExt;
+    RETURN_IF(STATUS_OK != extensionId.extension.getParcelable(&defaultIdExt), EX_ILLEGAL_ARGUMENT,
+              "getIdParcelableFailed");
+    RETURN_IF(!defaultIdExt.has_value(), EX_ILLEGAL_ARGUMENT, "parcelableIdNull");
+
     VendorExtension extension;
     DefaultExtension defaultExt;
-    defaultExt.bytes = mContext->getParams(specificId);
+    defaultExt.bytes = mContext->getParams(defaultIdExt->bytes);
     RETURN_IF(STATUS_OK != extension.extension.setParcelable(defaultExt), EX_ILLEGAL_ARGUMENT,
               "setParcelableFailed");
     specific->set<Parameter::Specific::vendorEffect>(extension);

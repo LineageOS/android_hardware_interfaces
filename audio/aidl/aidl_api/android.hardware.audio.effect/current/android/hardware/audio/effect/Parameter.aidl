@@ -42,7 +42,7 @@ union Parameter {
   android.hardware.audio.effect.Parameter.Specific specific;
   @VintfStability
   union Id {
-    int vendorEffectTag;
+    android.hardware.audio.effect.VendorExtension vendorEffectTag;
     android.hardware.audio.effect.AcousticEchoCanceler.Id acousticEchoCancelerTag;
     android.hardware.audio.effect.AutomaticGainControlV1.Id automaticGainControlV1Tag;
     android.hardware.audio.effect.AutomaticGainControlV2.Id automaticGainControlV2Tag;

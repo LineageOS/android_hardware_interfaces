@@ -224,7 +224,7 @@ bool DynamicsProcessingTestHelper::isParamEqual(const DynamicsProcessing::Tag& t
                     dpRef.get<DynamicsProcessing::inputGain>(),
                     dpTest.get<DynamicsProcessing::inputGain>());
         }
-        case DynamicsProcessing::vendorExtension: {
+        case DynamicsProcessing::vendor: {
             return false;
         }
     }

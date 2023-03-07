@@ -31,7 +31,7 @@ union Downmix {
      */
     @VintfStability
     union Id {
-        int vendorExtensionTag;
+        VendorExtension vendorExtensionTag;
         Downmix.Tag commonTag;
     }
 
