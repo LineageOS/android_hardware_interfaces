@@ -44,6 +44,33 @@ interface IStreamCommon {
     void close();
 
     /**
+     * Notify the stream that it is about to be closed.
+     *
+     * This is a notification sent by the client to indicate that it intends to
+     * close the stream "soon" (the actual time period is unspecified). The
+     * purpose of this notification is to allow the stream implementation to
+     * unblock the I/O thread. This is useful for HAL modules that act as
+     * proxies to other subsystems, examples are "bluetooth" and "r_submix"
+     * modules. In such modules the I/O thread might get blocked on a read or
+     * write operation to the external subsystem. Thus, calling 'close' directly
+     * will stall, as it will try to send the 'Command.halReservedExit' on the
+     * I/O thread which is blocked and is not reading commands from the FMQ. The
+     * HAL implementation must initiate unblocking as a result of receiving the
+     * 'prepareToClose' notification.
+     *
+     * This operation must be handled by the HAL module in an "asynchronous"
+     * manner, returning control back as quick as possible.
+     *
+     * Since this operation does not have any effects observable from the client
+     * side, the HAL module must be able to handle multiple calls of this method
+     * without throwing any errors. The only case when this method is allowed
+     * to throw is when the stream has been closed.
+     *
+     * @throws EX_ILLEGAL_STATE If the stream is closed.
+     */
+    void prepareToClose();
+
+    /**
      * Update the HW AV Sync identifier for the stream.
      *
      * The argument to this method must be one of the identifiers previously
