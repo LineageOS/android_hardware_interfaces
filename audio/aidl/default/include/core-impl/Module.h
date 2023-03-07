@@ -164,7 +164,7 @@ class Module : public BnModule {
     bool isMmapSupported();
 
     // This value is used for all AudioPatches.
-    static constexpr int32_t kMinimumStreamBufferSizeFrames = 16;
+    static constexpr int32_t kMinimumStreamBufferSizeFrames = 256;
     // The maximum stream buffer size is 1 GiB = 2 ** 30 bytes;
     static constexpr int32_t kMaximumStreamBufferSizeBytes = 1 << 30;
 
