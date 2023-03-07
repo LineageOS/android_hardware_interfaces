@@ -36,6 +36,8 @@ class DriverStub : public DriverInterface {
 
   private:
     const size_t mFrameSizeBytes;
+    const int mSampleRate;
+    const bool mIsAsynchronous;
     const bool mIsInput;
 };
 
