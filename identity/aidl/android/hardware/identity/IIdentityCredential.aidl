@@ -370,7 +370,8 @@ interface IIdentityCredential {
      *  - issuer: CN shall be set to "Android Identity Credential Key". (fixed value:
      *    same on all certs)
      *
-     *  - validity: should be from current time and one year in the future (365 days).
+     *  - validity: should be from current time and 31536000 seconds in the
+     *    future (approximately 365 days).
      *
      *  - subjectPublicKeyInfo: must contain attested public key.
      *
