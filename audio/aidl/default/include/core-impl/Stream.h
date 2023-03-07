@@ -294,6 +294,7 @@ using StreamOutWorker = StreamWorkerImpl<StreamOutWorkerLogic>;
 struct StreamCommonInterface {
     virtual ~StreamCommonInterface() = default;
     virtual ndk::ScopedAStatus close() = 0;
+    virtual ndk::ScopedAStatus prepareToClose() = 0;
     virtual ndk::ScopedAStatus updateHwAvSyncId(int32_t in_hwAvSyncId) = 0;
     virtual ndk::ScopedAStatus getVendorParameters(const std::vector<std::string>& in_ids,
                                                    std::vector<VendorParameter>* _aidl_return) = 0;
@@ -316,6 +317,11 @@ class StreamCommon : public BnStreamCommon {
     ndk::ScopedAStatus close() override {
         auto delegate = mDelegate.lock();
         return delegate != nullptr ? delegate->close()
+                                   : ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
+    }
+    ndk::ScopedAStatus prepareToClose() override {
+        auto delegate = mDelegate.lock();
+        return delegate != nullptr ? delegate->prepareToClose()
                                    : ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
     }
     ndk::ScopedAStatus updateHwAvSyncId(int32_t in_hwAvSyncId) override {
@@ -359,6 +365,7 @@ template <class Metadata>
 class StreamCommonImpl : public StreamCommonInterface {
   public:
     ndk::ScopedAStatus close() override;
+    ndk::ScopedAStatus prepareToClose() override;
     ndk::ScopedAStatus updateHwAvSyncId(int32_t in_hwAvSyncId) override;
     ndk::ScopedAStatus getVendorParameters(const std::vector<std::string>& in_ids,
                                            std::vector<VendorParameter>* _aidl_return) override;

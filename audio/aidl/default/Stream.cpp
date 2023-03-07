@@ -660,6 +660,16 @@ ndk::ScopedAStatus StreamCommonImpl<Metadata>::close() {
 }
 
 template <class Metadata>
+ndk::ScopedAStatus StreamCommonImpl<Metadata>::prepareToClose() {
+    LOG(DEBUG) << __func__;
+    if (!isClosed()) {
+        return ndk::ScopedAStatus::ok();
+    }
+    LOG(ERROR) << __func__ << ": stream was closed";
+    return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
+}
+
+template <class Metadata>
 void StreamCommonImpl<Metadata>::stopWorker() {
     if (auto commandMQ = mContext.getCommandMQ(); commandMQ != nullptr) {
         LOG(DEBUG) << __func__ << ": asking the worker to exit...";
