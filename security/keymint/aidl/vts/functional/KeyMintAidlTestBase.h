@@ -356,7 +356,7 @@ class KeyMintAidlTestBase : public ::testing::TestWithParam<string> {
     SecurityLevel securityLevel_;
     string name_;
     string author_;
-    long challenge_;
+    int64_t challenge_;
 
   private:
     void CheckEncryptOneByteAtATime(BlockMode block_mode, const int block_size,
