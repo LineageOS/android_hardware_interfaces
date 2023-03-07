@@ -268,6 +268,7 @@ std::unordered_map<VehicleProperty, VehiclePropertyAccess> AccessForVehiclePrope
         {VehicleProperty::CRUISE_CONTROL_COMMAND, VehiclePropertyAccess::WRITE},
         {VehicleProperty::CRUISE_CONTROL_TARGET_SPEED, VehiclePropertyAccess::READ},
         {VehicleProperty::ADAPTIVE_CRUISE_CONTROL_TARGET_TIME_GAP, VehiclePropertyAccess::READ_WRITE},
+        {VehicleProperty::ADAPTIVE_CRUISE_CONTROL_LEAD_VEHICLE_MEASURED_DISTANCE, VehiclePropertyAccess::READ},
         {VehicleProperty::HANDS_ON_DETECTION_ENABLED, VehiclePropertyAccess::READ_WRITE},
         {VehicleProperty::HANDS_ON_DETECTION_DRIVER_STATE, VehiclePropertyAccess::READ},
         {VehicleProperty::HANDS_ON_DETECTION_WARNING, VehiclePropertyAccess::READ},

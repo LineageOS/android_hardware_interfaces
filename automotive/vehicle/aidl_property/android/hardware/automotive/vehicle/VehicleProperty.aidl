@@ -4062,6 +4062,28 @@ enum VehicleProperty {
             0x1014 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
 
     /**
+     * Measured distance from leading vehicle when using Adaptive Cruise Control (ACC) or
+     * Predictive Cruise Control.
+     *
+     * Returns the measured distance in millimeters between the rear-most point of the leading
+     * vehicle and the front-most point of the ACC vehicle.
+     *
+     * The minInt32Value should be 0.
+     * The maxInt32Value should be populated with the maximum range the distance sensor can support.
+     * This value should be non-negative.
+     *
+     * When no lead vehicle is detected (that is, when there is no leading vehicle or the leading
+     * vehicle is too far away for the sensor to detect), this property should return
+     * StatusCode.NOT_AVAILABLE.
+     *
+     * @change_mode VehiclePropertyChangeMode.CONTINUOUS
+     * @access VehiclePropertyAccess.READ
+     * @unit VehicleUnit:MILLIMETER
+     */
+    ADAPTIVE_CRUISE_CONTROL_LEAD_VEHICLE_MEASURED_DISTANCE =
+            0x1015 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
+
+    /**
      * Enable or disable hands on detection (HOD).
      *
      * Set true to enable HOD and false to disable HOD. When HOD is enabled, a system inside the
