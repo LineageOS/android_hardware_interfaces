@@ -48,7 +48,7 @@ union EnvironmentalReverb {
   boolean bypass;
   @VintfStability
   union Id {
-    int vendorExtensionTag;
+    android.hardware.audio.effect.VendorExtension vendorExtensionTag;
     android.hardware.audio.effect.EnvironmentalReverb.Tag commonTag;
   }
 }
