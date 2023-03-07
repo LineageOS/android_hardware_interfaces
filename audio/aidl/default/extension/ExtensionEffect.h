@@ -37,7 +37,7 @@ class ExtensionEffectContext final : public EffectContext {
         mParams = params;
         return RetCode::SUCCESS;
     }
-    std::vector<uint8_t> getParams(int tag __unused) const { return mParams; }
+    std::vector<uint8_t> getParams(std::vector<uint8_t> id __unused) const { return mParams; }
 
   private:
     std::vector<uint8_t> mParams;

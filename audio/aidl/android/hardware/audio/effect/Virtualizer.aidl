@@ -34,7 +34,7 @@ union Virtualizer {
      */
     @VintfStability
     union Id {
-        int vendorExtensionTag;
+        VendorExtension vendorExtensionTag;
         Virtualizer.Tag commonTag;
         SpeakerAnglesPayload speakerAnglesPayload;
     }

@@ -32,14 +32,14 @@ union DynamicsProcessing {
      */
     @VintfStability
     union Id {
-        int vendorExtensionTag;
+        VendorExtension vendorExtensionTag;
         DynamicsProcessing.Tag commonTag;
     }
 
     /**
      * Vendor DynamicsProcessing implementation definition for additional parameters.
      */
-    VendorExtension vendorExtension;
+    VendorExtension vendor;
 
     /**
      * Resolution preference definition.

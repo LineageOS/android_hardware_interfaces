@@ -32,7 +32,7 @@ union BassBoost {
      */
     @VintfStability
     union Id {
-        int vendorExtensionTag;
+        VendorExtension vendorExtensionTag;
         BassBoost.Tag commonTag;
     }
 

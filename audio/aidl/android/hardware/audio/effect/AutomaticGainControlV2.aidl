@@ -36,7 +36,7 @@ union AutomaticGainControlV2 {
      */
     @VintfStability
     union Id {
-        int vendorExtensionTag;
+        VendorExtension vendorExtensionTag;
         AutomaticGainControlV2.Tag commonTag;
     }
 

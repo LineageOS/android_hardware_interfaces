@@ -39,7 +39,7 @@ union Volume {
   boolean mute;
   @VintfStability
   union Id {
-    int vendorExtensionTag;
+    android.hardware.audio.effect.VendorExtension vendorExtensionTag;
     android.hardware.audio.effect.Volume.Tag commonTag;
   }
 }
