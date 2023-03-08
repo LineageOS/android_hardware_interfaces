@@ -186,10 +186,10 @@ TEST_P(ContextHubAidl, TestQueryApps) {
     }
 }
 
-// Calls getPreloadedNanoapps() and verifies there are preloaded nanoapps
-TEST_P(ContextHubAidl, TestGetPreloadedNanoapps) {
+// Calls getPreloadedNanoappsIds() and verifies there are preloaded nanoapps
+TEST_P(ContextHubAidl, TestGetPreloadedNanoappIds) {
     std::vector<int64_t> preloadedNanoappIds;
-    Status status = contextHub->getPreloadedNanoappIds(&preloadedNanoappIds);
+    Status status = contextHub->getPreloadedNanoappIds(getHubId(), &preloadedNanoappIds);
     if (status.exceptionCode() == Status::EX_UNSUPPORTED_OPERATION ||
         status.transactionError() == android::UNKNOWN_TRANSACTION) {
         GTEST_SKIP() << "Not supported -> old API; or not implemented";

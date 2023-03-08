@@ -39,7 +39,7 @@ class ContextHub : public BnContextHub {
     ::ndk::ScopedAStatus onSettingChanged(Setting in_setting, bool in_enabled) override;
     ::ndk::ScopedAStatus queryNanoapps(int32_t in_contextHubId) override;
     ::ndk::ScopedAStatus getPreloadedNanoappIds(
-            std::vector<int64_t>* out_preloadedNanoappIds) override;
+            int32_t in_contextHubId, std::vector<int64_t>* out_preloadedNanoappIds) override;
     ::ndk::ScopedAStatus registerCallback(
             int32_t in_contextHubId, const std::shared_ptr<IContextHubCallback>& in_cb) override;
     ::ndk::ScopedAStatus sendMessageToHub(int32_t in_contextHubId,
