@@ -25,6 +25,9 @@ import android.media.audio.common.Int;
  * and the SCO Link. This interface is optional to implement and provide by the
  * vendor. It needs to be provided only if the device actually supports BT SCO
  * or HFP.
+ *
+ * Each of IBluetooth* interfaces is independent of each other. The HAL module
+ * can provide any combination of them.
  */
 @VintfStability
 interface IBluetooth {

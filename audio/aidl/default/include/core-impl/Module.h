@@ -72,6 +72,7 @@ class Module : public BnModule {
     ndk::ScopedAStatus getTelephony(std::shared_ptr<ITelephony>* _aidl_return) override;
     ndk::ScopedAStatus getBluetooth(std::shared_ptr<IBluetooth>* _aidl_return) override;
     ndk::ScopedAStatus getBluetoothA2dp(std::shared_ptr<IBluetoothA2dp>* _aidl_return) override;
+    ndk::ScopedAStatus getBluetoothLe(std::shared_ptr<IBluetoothLe>* _aidl_return) override;
     ndk::ScopedAStatus connectExternalDevice(
             const ::aidl::android::media::audio::common::AudioPort& in_templateIdAndAdditionalData,
             ::aidl::android::media::audio::common::AudioPort* _aidl_return) override;
@@ -175,6 +176,7 @@ class Module : public BnModule {
     ChildInterface<ITelephony> mTelephony;
     ChildInterface<IBluetooth> mBluetooth;
     ChildInterface<IBluetoothA2dp> mBluetoothA2dp;
+    ChildInterface<IBluetoothLe> mBluetoothLe;
     // ids of ports created at runtime via 'connectExternalDevice'.
     std::set<int32_t> mConnectedDevicePorts;
     Streams mStreams;
