@@ -16,22 +16,26 @@
 
 package android.hardware.graphics.common;
 
-import android.hardware.graphics.common.ParcelableHdr;
+import android.hardware.graphics.common.Hdr;
 
 /**
  * Output parameter for IComposerClient.getHdrConversionCapabilities
- *
- * @param sourceType is the HDR type that can be converted to outputType.
- *
- * @param outputType is the HDR type/ SDR that the source type can be converted to. The value null
- * is used to depict SDR outputType.
- *
- * @param addsLatency is false if no latency added due to HDR conversion from sourceType to
- * outputType, otherwise true.
  */
 @VintfStability
 parcelable HdrConversionCapability {
-    ParcelableHdr sourceType;
-    @nullable ParcelableHdr outputType;
+    /** sourceType is the HDR type that can be converted to outputType */
+    Hdr sourceType;
+
+    /**
+     * outputType is the HDR type/ SDR that the source type can be converted to. The value INVALID
+     * is used to depict SDR outputType.
+     */
+
+    Hdr outputType;
+
+    /**
+     * addsLatency is false if no latency added due to HDR conversion from sourceType to
+     * outputType, otherwise true.
+     */
     boolean addsLatency;
 }
