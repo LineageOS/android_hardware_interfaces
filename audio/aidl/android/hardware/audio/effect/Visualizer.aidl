@@ -33,7 +33,7 @@ union Visualizer {
      */
     @VintfStability
     union Id {
-        int vendorExtensionTag;
+        VendorExtension vendorExtensionTag;
         Visualizer.Tag commonTag;
     }
     Id id;

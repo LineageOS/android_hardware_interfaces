@@ -38,7 +38,7 @@ union LoudnessEnhancer {
   int gainMb;
   @VintfStability
   union Id {
-    int vendorExtensionTag;
+    android.hardware.audio.effect.VendorExtension vendorExtensionTag;
     android.hardware.audio.effect.LoudnessEnhancer.Tag commonTag;
   }
 }

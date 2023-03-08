@@ -260,6 +260,7 @@ public final class AccessForVehicleProperty {
         Map.entry(VehicleProperty.CRUISE_CONTROL_COMMAND, VehiclePropertyAccess.WRITE),
         Map.entry(VehicleProperty.CRUISE_CONTROL_TARGET_SPEED, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.ADAPTIVE_CRUISE_CONTROL_TARGET_TIME_GAP, VehiclePropertyAccess.READ_WRITE),
+        Map.entry(VehicleProperty.ADAPTIVE_CRUISE_CONTROL_LEAD_VEHICLE_MEASURED_DISTANCE, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.HANDS_ON_DETECTION_ENABLED, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.HANDS_ON_DETECTION_DRIVER_STATE, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.HANDS_ON_DETECTION_WARNING, VehiclePropertyAccess.READ),

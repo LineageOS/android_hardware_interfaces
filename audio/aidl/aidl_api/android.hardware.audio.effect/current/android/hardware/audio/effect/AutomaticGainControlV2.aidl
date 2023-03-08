@@ -40,7 +40,7 @@ union AutomaticGainControlV2 {
   int saturationMarginMb;
   @VintfStability
   union Id {
-    int vendorExtensionTag;
+    android.hardware.audio.effect.VendorExtension vendorExtensionTag;
     android.hardware.audio.effect.AutomaticGainControlV2.Tag commonTag;
   }
   @Backing(type="int") @VintfStability

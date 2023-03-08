@@ -15,6 +15,7 @@
  */
 
 #define LOG_TAG "FakeVehicleHardware"
+#define ATRACE_TAG ATRACE_TAG_HAL
 #define FAKE_VEHICLEHARDWARE_DEBUG false  // STOPSHIP if true.
 
 #include "FakeVehicleHardware.h"
@@ -33,6 +34,7 @@
 #include <android-base/strings.h>
 #include <utils/Log.h>
 #include <utils/SystemClock.h>
+#include <utils/Trace.h>
 
 #include <dirent.h>
 #include <inttypes.h>
@@ -1628,11 +1630,15 @@ void FakeVehicleHardware::PendingRequestHandler<FakeVehicleHardware::GetValuesCa
     std::unordered_map<std::shared_ptr<const GetValuesCallback>, std::vector<GetValueResult>>
             callbackToResults;
     for (const auto& rwc : mRequests.flush()) {
+        ATRACE_BEGIN("FakeVehicleHardware:handleGetValueRequest");
         auto result = mHardware->handleGetValueRequest(rwc.request);
+        ATRACE_END();
         callbackToResults[rwc.callback].push_back(std::move(result));
     }
     for (const auto& [callback, results] : callbackToResults) {
+        ATRACE_BEGIN("FakeVehicleHardware:call get value result callback");
         (*callback)(std::move(results));
+        ATRACE_END();
     }
 }
 
@@ -1642,11 +1648,15 @@ void FakeVehicleHardware::PendingRequestHandler<FakeVehicleHardware::SetValuesCa
     std::unordered_map<std::shared_ptr<const SetValuesCallback>, std::vector<SetValueResult>>
             callbackToResults;
     for (const auto& rwc : mRequests.flush()) {
+        ATRACE_BEGIN("FakeVehicleHardware:handleSetValueRequest");
         auto result = mHardware->handleSetValueRequest(rwc.request);
+        ATRACE_END();
         callbackToResults[rwc.callback].push_back(std::move(result));
     }
     for (const auto& [callback, results] : callbackToResults) {
+        ATRACE_BEGIN("FakeVehicleHardware:call set value result callback");
         (*callback)(std::move(results));
+        ATRACE_END();
     }
 }
 
