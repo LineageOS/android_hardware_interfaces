@@ -31,7 +31,7 @@ union Volume {
      */
     @VintfStability
     union Id {
-        int vendorExtensionTag;
+        VendorExtension vendorExtensionTag;
         Volume.Tag commonTag;
     }
 

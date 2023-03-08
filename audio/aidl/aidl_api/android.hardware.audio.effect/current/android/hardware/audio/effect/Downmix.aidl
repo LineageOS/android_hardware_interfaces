@@ -38,7 +38,7 @@ union Downmix {
   android.hardware.audio.effect.Downmix.Type type;
   @VintfStability
   union Id {
-    int vendorExtensionTag;
+    android.hardware.audio.effect.VendorExtension vendorExtensionTag;
     android.hardware.audio.effect.Downmix.Tag commonTag;
   }
   @VintfStability

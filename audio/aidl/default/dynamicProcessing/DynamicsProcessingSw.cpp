@@ -170,7 +170,7 @@ ndk::ScopedAStatus DynamicsProcessingSw::setParameterSpecific(const Parameter::S
                       EX_ILLEGAL_ARGUMENT, "inputGainCfgFailed");
             return ndk::ScopedAStatus::ok();
         }
-        case DynamicsProcessing::vendorExtension: {
+        case DynamicsProcessing::vendor: {
             LOG(ERROR) << __func__ << " unsupported tag: " << toString(tag);
             return ndk::ScopedAStatus::fromExceptionCodeWithMessage(
                     EX_ILLEGAL_ARGUMENT, "DynamicsProcessingTagNotSupported");
@@ -237,7 +237,7 @@ ndk::ScopedAStatus DynamicsProcessingSw::getParameterDynamicsProcessing(
             dpParam.set<DynamicsProcessing::inputGain>(mContext->getInputGainCfgs());
             break;
         }
-        case DynamicsProcessing::vendorExtension: {
+        case DynamicsProcessing::vendor: {
             LOG(ERROR) << __func__ << " unsupported tag: " << toString(tag);
             return ndk::ScopedAStatus::fromExceptionCodeWithMessage(
                     EX_ILLEGAL_ARGUMENT, "DynamicsProcessingTagNotSupported");
