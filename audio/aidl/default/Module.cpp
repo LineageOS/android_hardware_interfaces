@@ -396,6 +396,15 @@ ndk::ScopedAStatus Module::getBluetoothA2dp(std::shared_ptr<IBluetoothA2dp>* _ai
     return ndk::ScopedAStatus::ok();
 }
 
+ndk::ScopedAStatus Module::getBluetoothLe(std::shared_ptr<IBluetoothLe>* _aidl_return) {
+    if (!mBluetoothLe) {
+        mBluetoothLe = ndk::SharedRefBase::make<BluetoothLe>();
+    }
+    *_aidl_return = mBluetoothLe.getPtr();
+    LOG(DEBUG) << __func__ << ": returning instance of IBluetoothLe: " << _aidl_return->get();
+    return ndk::ScopedAStatus::ok();
+}
+
 ndk::ScopedAStatus Module::connectExternalDevice(const AudioPort& in_templateIdAndAdditionalData,
                                                  AudioPort* _aidl_return) {
     const int32_t templateId = in_templateIdAndAdditionalData.id;
