@@ -68,17 +68,10 @@ class WifiNanIfaceHidlTest : public ::testing::TestWithParam<std::string> {
 
     virtual void TearDown() override { stopWifi(GetInstanceName()); }
 
-    /* Used as a mechanism to inform the test about data/event callback */
-    inline void notify() {
-        std::unique_lock<std::mutex> lock(mtx_);
-        count_++;
-        cv_.notify_one();
-    }
 
     enum CallbackType {
-        INVALID = -2,
         ANY_CALLBACK = -1,
-
+        INVALID = 0,
         NOTIFY_CAPABILITIES_RESPONSE = 0,
         NOTIFY_ENABLE_RESPONSE,
         NOTIFY_CONFIG_RESPONSE,
@@ -114,8 +107,14 @@ class WifiNanIfaceHidlTest : public ::testing::TestWithParam<std::string> {
         EVENT_DATA_PATH_CONFIRM_1_6,
     };
 
+    /* Used as a mechanism to inform the test about data/event callback */
+    inline void notify(CallbackType callbackType) {
+        std::unique_lock<std::mutex> lock(mtx_);
+        callbackEventBitMap |= (0x1 << callbackType);
+        cv_.notify_one();
+    }
     /* Test code calls this function to wait for data/event callback */
-    /* Must set callbackType = INVALID before call this function */
+    /* Must set callbackEventBitMap = INVALID before call this function */
     inline std::cv_status wait(CallbackType waitForCallbackType) {
         std::unique_lock<std::mutex> lock(mtx_);
 
@@ -124,15 +123,11 @@ class WifiNanIfaceHidlTest : public ::testing::TestWithParam<std::string> {
 
         std::cv_status status = std::cv_status::no_timeout;
         auto now = std::chrono::system_clock::now();
-        while (count_ == 0) {
+        while (!(callbackEventBitMap & (0x1 << waitForCallbackType))) {
             status = cv_.wait_until(lock, now + std::chrono::seconds(TIMEOUT_PERIOD));
-            if (status == std::cv_status::timeout) return status;
-            if (waitForCallbackType != ANY_CALLBACK && callbackType != INVALID &&
-                callbackType != waitForCallbackType) {
-                count_--;
-            }
+            if (status == std::cv_status::timeout)
+                return status;
         }
-        count_--;
         return status;
     }
 
@@ -148,340 +143,276 @@ class WifiNanIfaceHidlTest : public ::testing::TestWithParam<std::string> {
         Return<void> notifyCapabilitiesResponse(
                 uint16_t id, const WifiNanStatus& status,
                 const ::android::hardware::wifi::V1_0::NanCapabilities& capabilities) override {
-            parent_.callbackType = NOTIFY_CAPABILITIES_RESPONSE;
-
             parent_.id = id;
             parent_.status = status;
             parent_.capabilities = capabilities;
 
-            parent_.notify();
+            parent_.notify(NOTIFY_CAPABILITIES_RESPONSE);
             return Void();
         }
 
         Return<void> notifyCapabilitiesResponse_1_5(
                 uint16_t id, const WifiNanStatus& status,
                 const ::android::hardware::wifi::V1_5::NanCapabilities& capabilities) override {
-            parent_.callbackType = NOTIFY_CAPABILITIES_RESPONSE_1_5;
-
             parent_.id = id;
             parent_.status = status;
             parent_.capabilities_1_5 = capabilities;
 
-            parent_.notify();
+            parent_.notify(NOTIFY_CAPABILITIES_RESPONSE_1_5);
             return Void();
         }
 
         Return<void> notifyEnableResponse(uint16_t id, const WifiNanStatus& status) override {
-            parent_.callbackType = NOTIFY_ENABLE_RESPONSE;
-
             parent_.id = id;
             parent_.status = status;
 
-            parent_.notify();
+            parent_.notify(NOTIFY_ENABLE_RESPONSE);
             return Void();
         }
 
         Return<void> notifyConfigResponse(uint16_t id, const WifiNanStatus& status) override {
-            parent_.callbackType = NOTIFY_CONFIG_RESPONSE;
-
             parent_.id = id;
             parent_.status = status;
 
-            parent_.notify();
+            parent_.notify(NOTIFY_CONFIG_RESPONSE);
             return Void();
         }
 
         Return<void> notifyDisableResponse(uint16_t id, const WifiNanStatus& status) override {
-            parent_.callbackType = NOTIFY_DISABLE_RESPONSE;
-
             parent_.id = id;
             parent_.status = status;
 
-            parent_.notify();
+            parent_.notify(NOTIFY_DISABLE_RESPONSE);
             return Void();
         }
 
         Return<void> notifyStartPublishResponse(uint16_t id, const WifiNanStatus& status,
                                                 uint8_t sessionId) override {
-            parent_.callbackType = NOTIFY_START_PUBLISH_RESPONSE;
-
             parent_.id = id;
             parent_.status = status;
             parent_.sessionId = sessionId;
 
-            parent_.notify();
+            parent_.notify(NOTIFY_START_PUBLISH_RESPONSE);
             return Void();
         }
 
         Return<void> notifyStopPublishResponse(uint16_t id, const WifiNanStatus& status) override {
-            parent_.callbackType = NOTIFY_STOP_PUBLISH_RESPONSE;
-
             parent_.id = id;
             parent_.status = status;
 
-            parent_.notify();
+            parent_.notify(NOTIFY_STOP_PUBLISH_RESPONSE);
             return Void();
         }
 
         Return<void> notifyStartSubscribeResponse(uint16_t id, const WifiNanStatus& status,
                                                   uint8_t sessionId) override {
-            parent_.callbackType = NOTIFY_START_SUBSCRIBE_RESPONSE;
-
             parent_.id = id;
             parent_.status = status;
             parent_.sessionId = sessionId;
 
-            parent_.notify();
+            parent_.notify(NOTIFY_START_SUBSCRIBE_RESPONSE);
             return Void();
         }
 
         Return<void> notifyStopSubscribeResponse(uint16_t id,
                                                  const WifiNanStatus& status) override {
-            parent_.callbackType = NOTIFY_STOP_SUBSCRIBE_RESPONSE;
-
             parent_.id = id;
             parent_.status = status;
 
-            parent_.notify();
+            parent_.notify(NOTIFY_STOP_SUBSCRIBE_RESPONSE);
             return Void();
         }
 
         Return<void> notifyTransmitFollowupResponse(uint16_t id,
                                                     const WifiNanStatus& status) override {
-            parent_.callbackType = NOTIFY_TRANSMIT_FOLLOWUP_RESPONSE;
-
             parent_.id = id;
             parent_.status = status;
 
-            parent_.notify();
+            parent_.notify(NOTIFY_TRANSMIT_FOLLOWUP_RESPONSE);
             return Void();
         }
 
         Return<void> notifyCreateDataInterfaceResponse(uint16_t id,
                                                        const WifiNanStatus& status) override {
-            parent_.callbackType = NOTIFY_CREATE_DATA_INTERFACE_RESPONSE;
-
             parent_.id = id;
             parent_.status = status;
 
-            parent_.notify();
+            parent_.notify(NOTIFY_CREATE_DATA_INTERFACE_RESPONSE);
             return Void();
         }
 
         Return<void> notifyDeleteDataInterfaceResponse(uint16_t id,
                                                        const WifiNanStatus& status) override {
-            parent_.callbackType = NOTIFY_DELETE_DATA_INTERFACE_RESPONSE;
-
             parent_.id = id;
             parent_.status = status;
 
-            parent_.notify();
+            parent_.notify(NOTIFY_DELETE_DATA_INTERFACE_RESPONSE);
             return Void();
         }
 
         Return<void> notifyInitiateDataPathResponse(uint16_t id, const WifiNanStatus& status,
                                                     uint32_t ndpInstanceId) override {
-            parent_.callbackType = NOTIFY_INITIATE_DATA_PATH_RESPONSE;
-
             parent_.id = id;
             parent_.status = status;
             parent_.ndpInstanceId = ndpInstanceId;
 
-            parent_.notify();
+            parent_.notify(NOTIFY_INITIATE_DATA_PATH_RESPONSE);
             return Void();
         }
 
         Return<void> notifyRespondToDataPathIndicationResponse(
                 uint16_t id, const WifiNanStatus& status) override {
-            parent_.callbackType = NOTIFY_RESPOND_TO_DATA_PATH_INDICATION_RESPONSE;
-
             parent_.id = id;
             parent_.status = status;
 
-            parent_.notify();
+            parent_.notify(NOTIFY_RESPOND_TO_DATA_PATH_INDICATION_RESPONSE);
             return Void();
         }
 
         Return<void> notifyTerminateDataPathResponse(uint16_t id,
                                                      const WifiNanStatus& status) override {
-            parent_.callbackType = NOTIFY_TERMINATE_DATA_PATH_RESPONSE;
-
             parent_.id = id;
             parent_.status = status;
 
-            parent_.notify();
+            parent_.notify(NOTIFY_TERMINATE_DATA_PATH_RESPONSE);
             return Void();
         }
 
         Return<void> eventClusterEvent(const NanClusterEventInd& event) override {
-            parent_.callbackType = EVENT_CLUSTER_EVENT;
-
             parent_.nanClusterEventInd = event;
 
-            parent_.notify();
+            parent_.notify(EVENT_CLUSTER_EVENT);
             return Void();
         }
 
         Return<void> eventDisabled(const WifiNanStatus& status) override {
-            parent_.callbackType = EVENT_DISABLED;
-
             parent_.status = status;
 
-            parent_.notify();
+            parent_.notify(EVENT_DISABLED);
             return Void();
         }
 
         Return<void> eventPublishTerminated(uint8_t sessionId,
                                             const WifiNanStatus& status) override {
-            parent_.callbackType = EVENT_PUBLISH_TERMINATED;
-
             parent_.sessionId = sessionId;
             parent_.status = status;
 
-            parent_.notify();
+            parent_.notify(EVENT_PUBLISH_TERMINATED);
             return Void();
         }
 
         Return<void> eventSubscribeTerminated(uint8_t sessionId,
                                               const WifiNanStatus& status) override {
-            parent_.callbackType = EVENT_SUBSCRIBE_TERMINATED;
-
             parent_.sessionId = sessionId;
             parent_.status = status;
 
-            parent_.notify();
+            parent_.notify(EVENT_SUBSCRIBE_TERMINATED);
             return Void();
         }
 
         Return<void> eventMatch(
                 const ::android::hardware::wifi::V1_0::NanMatchInd& event) override {
-            parent_.callbackType = EVENT_MATCH;
-
             parent_.nanMatchInd = event;
 
-            parent_.notify();
+            parent_.notify(EVENT_MATCH);
             return Void();
         }
 
         Return<void> eventMatchExpired(uint8_t discoverySessionId, uint32_t peerId) override {
-            parent_.callbackType = EVENT_MATCH_EXPIRED;
-
             parent_.sessionId = discoverySessionId;
             parent_.peerId = peerId;
 
-            parent_.notify();
+            parent_.notify(EVENT_MATCH_EXPIRED);
             return Void();
         }
 
         Return<void> eventFollowupReceived(const NanFollowupReceivedInd& event) override {
-            parent_.callbackType = EVENT_FOLLOWUP_RECEIVED;
-
             parent_.nanFollowupReceivedInd = event;
 
-            parent_.notify();
+            parent_.notify(EVENT_FOLLOWUP_RECEIVED);
             return Void();
         }
 
         Return<void> eventTransmitFollowup(uint16_t id, const WifiNanStatus& status) override {
-            parent_.callbackType = EVENT_TRANSMIT_FOLLOWUP;
-
             parent_.id = id;
             parent_.status = status;
 
-            parent_.notify();
+            parent_.notify(EVENT_TRANSMIT_FOLLOWUP);
             return Void();
         }
 
         Return<void> eventDataPathRequest(const NanDataPathRequestInd& event) override {
-            parent_.callbackType = EVENT_DATA_PATH_REQUEST;
-
             parent_.nanDataPathRequestInd = event;
 
-            parent_.notify();
+            parent_.notify(EVENT_DATA_PATH_REQUEST);
             return Void();
         }
 
         Return<void> eventDataPathConfirm(
                 const ::android::hardware::wifi::V1_0::NanDataPathConfirmInd& event) override {
-            parent_.callbackType = EVENT_DATA_PATH_CONFIRM;
-
             parent_.nanDataPathConfirmInd = event;
 
-            parent_.notify();
+            parent_.notify(EVENT_DATA_PATH_CONFIRM);
             return Void();
         }
 
         Return<void> eventDataPathTerminated(uint32_t ndpInstanceId) override {
-            parent_.callbackType = EVENT_DATA_PATH_TERMINATED;
-
             parent_.ndpInstanceId = ndpInstanceId;
 
-            parent_.notify();
+            parent_.notify(EVENT_DATA_PATH_TERMINATED);
             return Void();
         }
 
         Return<void> eventDataPathConfirm_1_2(
                 const ::android::hardware::wifi::V1_2::NanDataPathConfirmInd& event) override {
-            parent_.callbackType = EVENT_DATA_PATH_CONFIRM_1_2;
-
             parent_.nanDataPathConfirmInd_1_2 = event;
 
-            parent_.notify();
+            parent_.notify(EVENT_DATA_PATH_CONFIRM_1_2);
             return Void();
         }
 
         Return<void> eventDataPathScheduleUpdate(
                 const ::android::hardware::wifi::V1_2::NanDataPathScheduleUpdateInd& event)
                 override {
-            parent_.callbackType = EVENT_DATA_PATH_SCHEDULE_UPDATE;
-
             parent_.nanDataPathScheduleUpdateInd_1_2 = event;
 
-            parent_.notify();
+            parent_.notify(EVENT_DATA_PATH_SCHEDULE_UPDATE);
             return Void();
         }
 
         Return<void> eventMatch_1_6(
                 const ::android::hardware::wifi::V1_6::NanMatchInd& event) override {
-            parent_.callbackType = EVENT_MATCH_1_6;
-
             parent_.nanMatchInd_1_6 = event;
 
-            parent_.notify();
+            parent_.notify(EVENT_MATCH_1_6);
             return Void();
         }
 
         Return<void> notifyCapabilitiesResponse_1_6(
                 uint16_t id, const WifiNanStatus& status,
                 const ::android::hardware::wifi::V1_6::NanCapabilities& capabilities) override {
-            parent_.callbackType = NOTIFY_CAPABILITIES_RESPONSE_1_6;
-
             parent_.id = id;
             parent_.status = status;
             parent_.capabilities_1_6 = capabilities;
 
-            parent_.notify();
+            parent_.notify(NOTIFY_CAPABILITIES_RESPONSE_1_6);
             return Void();
         }
 
         Return<void> eventDataPathScheduleUpdate_1_6(
                 const ::android::hardware::wifi::V1_6::NanDataPathScheduleUpdateInd& event)
                 override {
-            parent_.callbackType = EVENT_DATA_PATH_SCHEDULE_UPDATE_1_6;
-
             parent_.nanDataPathScheduleUpdateInd_1_6 = event;
 
-            parent_.notify();
+            parent_.notify(EVENT_DATA_PATH_SCHEDULE_UPDATE_1_6);
             return Void();
         }
 
         Return<void> eventDataPathConfirm_1_6(
                 const ::android::hardware::wifi::V1_6::NanDataPathConfirmInd& event) override {
-            parent_.callbackType = EVENT_DATA_PATH_CONFIRM_1_6;
-
             parent_.nanDataPathConfirmInd_1_6 = event;
 
-            parent_.notify();
+            parent_.notify(EVENT_DATA_PATH_CONFIRM_1_6);
             return Void();
         }
     };
@@ -490,7 +421,6 @@ class WifiNanIfaceHidlTest : public ::testing::TestWithParam<std::string> {
     // synchronization objects
     std::mutex mtx_;
     std::condition_variable cv_;
-    int count_ = 0;
 
   protected:
     android::sp<::android::hardware::wifi::V1_6::IWifiNanIface> iwifiNanIface;
@@ -498,7 +428,7 @@ class WifiNanIfaceHidlTest : public ::testing::TestWithParam<std::string> {
     // Data from IWifiNanIfaceEventCallback callbacks: this is the collection of
     // all arguments to all callbacks. They are set by the callback
     // (notifications or events) and can be retrieved by tests.
-    CallbackType callbackType;
+    uint32_t callbackEventBitMap;
     uint16_t id;
     WifiNanStatus status;
     uint8_t sessionId;
@@ -535,7 +465,7 @@ TEST_P(WifiNanIfaceHidlTest, Create) {
  */
 TEST_P(WifiNanIfaceHidlTest, enableRequest_1_6InvalidArgs) {
     uint16_t inputCmdId = 10;
-    callbackType = INVALID;
+    callbackEventBitMap = INVALID;
     ::android::hardware::wifi::V1_4::NanEnableRequest nanEnableRequest = {};
     ::android::hardware::wifi::V1_6::NanConfigRequestSupplemental nanConfigRequestSupp = {};
     const auto& halStatus = HIDL_INVOKE(iwifiNanIface, enableRequest_1_6, inputCmdId,
@@ -545,7 +475,7 @@ TEST_P(WifiNanIfaceHidlTest, enableRequest_1_6InvalidArgs) {
 
         // wait for a callback
         ASSERT_EQ(std::cv_status::no_timeout, wait(NOTIFY_ENABLE_RESPONSE));
-        ASSERT_EQ(NOTIFY_ENABLE_RESPONSE, callbackType);
+        ASSERT_EQ(0x1 << NOTIFY_ENABLE_RESPONSE, callbackEventBitMap & (0x1 << NOTIFY_ENABLE_RESPONSE));
         ASSERT_EQ(id, inputCmdId);
         ASSERT_EQ(status.status, NanStatusType::INVALID_ARGS);
     }
@@ -572,7 +502,7 @@ TEST_P(WifiNanIfaceHidlTest, enableRequest_1_6ShimInvalidArgs) {
  */
 TEST_P(WifiNanIfaceHidlTest, configRequest_1_6InvalidArgs) {
     uint16_t inputCmdId = 10;
-    callbackType = INVALID;
+    callbackEventBitMap = INVALID;
     ::android::hardware::wifi::V1_4::NanConfigRequest nanConfigRequest = {};
     ::android::hardware::wifi::V1_6::NanConfigRequestSupplemental nanConfigRequestSupp = {};
     const auto& halStatus = HIDL_INVOKE(iwifiNanIface, configRequest_1_6, inputCmdId,
@@ -583,7 +513,7 @@ TEST_P(WifiNanIfaceHidlTest, configRequest_1_6InvalidArgs) {
 
         // wait for a callback
         ASSERT_EQ(std::cv_status::no_timeout, wait(NOTIFY_CONFIG_RESPONSE));
-        ASSERT_EQ(NOTIFY_CONFIG_RESPONSE, callbackType);
+        ASSERT_EQ(0x1 << NOTIFY_CONFIG_RESPONSE, callbackEventBitMap & (0x1 << NOTIFY_CONFIG_RESPONSE));
         ASSERT_EQ(id, inputCmdId);
         ASSERT_EQ(status.status, NanStatusType::INVALID_ARGS);
     }
@@ -610,12 +540,12 @@ TEST_P(WifiNanIfaceHidlTest, configRequest_1_6ShimInvalidArgs) {
  */
 TEST_P(WifiNanIfaceHidlTest, notifyCapabilitiesResponse_1_6) {
     uint16_t inputCmdId = 10;
-    callbackType = INVALID;
+    callbackEventBitMap = INVALID;
     const auto& halStatus = HIDL_INVOKE(iwifiNanIface, getCapabilitiesRequest_1_5, inputCmdId).code;
     ASSERT_EQ(WifiStatusCode::SUCCESS, halStatus);
     // wait for a callback
     ASSERT_EQ(std::cv_status::no_timeout, wait(NOTIFY_CAPABILITIES_RESPONSE_1_6));
-    ASSERT_EQ(NOTIFY_CAPABILITIES_RESPONSE_1_6, callbackType);
+    ASSERT_EQ(0x1 << NOTIFY_CAPABILITIES_RESPONSE_1_6, callbackEventBitMap & (0x1 << NOTIFY_CAPABILITIES_RESPONSE_1_6));
     ASSERT_EQ(id, inputCmdId);
     ASSERT_EQ(status.status, NanStatusType::SUCCESS);
 
@@ -711,7 +641,7 @@ TEST_P(WifiNanIfaceHidlTest, startPublishRequest_1_6) {
     nanConfigRequestSupp.V1_5.V1_2.numberOfSpatialStreamsInDiscovery = 0;
     nanConfigRequestSupp.V1_5.V1_2.enableDiscoveryWindowEarlyTermination = false;
 
-    callbackType = INVALID;
+    callbackEventBitMap = INVALID;
 
     const auto& halStatus =
             HIDL_INVOKE(iwifiNanIface, enableRequest_1_6, inputCmdId, req, nanConfigRequestSupp);
@@ -720,7 +650,7 @@ TEST_P(WifiNanIfaceHidlTest, startPublishRequest_1_6) {
 
         // wait for a callback
         ASSERT_EQ(std::cv_status::no_timeout, wait(NOTIFY_ENABLE_RESPONSE));
-        ASSERT_EQ(NOTIFY_ENABLE_RESPONSE, callbackType);
+        ASSERT_EQ(0x1 << NOTIFY_ENABLE_RESPONSE, callbackEventBitMap & (0x1 << NOTIFY_ENABLE_RESPONSE));
         ASSERT_EQ(id, inputCmdId);
         ASSERT_EQ(status.status, NanStatusType::SUCCESS);
     }
@@ -749,7 +679,7 @@ TEST_P(WifiNanIfaceHidlTest, startPublishRequest_1_6) {
 
         // wait for a callback
         ASSERT_EQ(std::cv_status::no_timeout, wait(NOTIFY_START_PUBLISH_RESPONSE));
-        ASSERT_EQ(NOTIFY_START_PUBLISH_RESPONSE, callbackType);
+        ASSERT_EQ(0x1 << NOTIFY_START_PUBLISH_RESPONSE, callbackEventBitMap & (0x1 << NOTIFY_START_PUBLISH_RESPONSE));
         ASSERT_EQ(id, inputCmdId + 1);
         ASSERT_EQ(status.status, NanStatusType::SUCCESS);
     }
@@ -760,7 +690,7 @@ TEST_P(WifiNanIfaceHidlTest, startPublishRequest_1_6) {
  */
 TEST_P(WifiNanIfaceHidlTest, respondToDataPathIndicationRequest_1_6ShimInvalidArgs) {
     uint16_t inputCmdId = 10;
-    callbackType = INVALID;
+    callbackEventBitMap = INVALID;
     ::android::hardware::wifi::V1_6::NanRespondToDataPathIndicationRequest
             nanRespondToDataPathIndicationRequest = {};
     nanRespondToDataPathIndicationRequest.ifaceName = "AwareinterfaceNameTooLong";
@@ -777,7 +707,7 @@ TEST_P(WifiNanIfaceHidlTest, respondToDataPathIndicationRequest_1_6ShimInvalidAr
  */
 TEST_P(WifiNanIfaceHidlTest, initiateDataPathRequest_1_6ShimInvalidArgs) {
     uint16_t inputCmdId = 10;
-    callbackType = INVALID;
+    callbackEventBitMap = INVALID;
     ::android::hardware::wifi::V1_6::NanInitiateDataPathRequest nanInitiateDataPathRequest = {};
     nanInitiateDataPathRequest.ifaceName = "AwareinterfaceNameTooLong";
     const auto& halStatus = HIDL_INVOKE(iwifiNanIface, initiateDataPathRequest_1_6, inputCmdId,
