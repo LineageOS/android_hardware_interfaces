@@ -37,4 +37,5 @@ parcelable TvMessage {
   String subType;
   long groupId;
   int dataLengthBytes;
+  const long NO_GROUP_ID = (-1) /* -1 */;
 }
