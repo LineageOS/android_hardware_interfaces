@@ -200,9 +200,11 @@ interface IContextHub {
      * Provides the list of preloaded nanoapp IDs on the system. The output of this API must
      * not change.
      *
-     * @return The list of preloaded nanoapp IDs
+     * @param contextHubId The identifier of the Context Hub.
+     *
+     * @return The list of preloaded nanoapp IDs.
      */
-    long[] getPreloadedNanoappIds();
+    long[] getPreloadedNanoappIds(in int contextHubId);
 
     /**
      * Invoked when the state of the NAN session requested through handleNanSessionRequest()
