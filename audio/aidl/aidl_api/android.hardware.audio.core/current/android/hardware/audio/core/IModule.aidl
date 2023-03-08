@@ -38,6 +38,7 @@ interface IModule {
   @nullable android.hardware.audio.core.ITelephony getTelephony();
   @nullable android.hardware.audio.core.IBluetooth getBluetooth();
   @nullable android.hardware.audio.core.IBluetoothA2dp getBluetoothA2dp();
+  @nullable android.hardware.audio.core.IBluetoothLe getBluetoothLe();
   android.media.audio.common.AudioPort connectExternalDevice(in android.media.audio.common.AudioPort templateIdAndAdditionalData);
   void disconnectExternalDevice(int portId);
   android.hardware.audio.core.AudioPatch[] getAudioPatches();
