@@ -34,7 +34,7 @@
 package android.hardware.graphics.common;
 @VintfStability
 parcelable HdrConversionCapability {
-  android.hardware.graphics.common.ParcelableHdr sourceType;
-  @nullable android.hardware.graphics.common.ParcelableHdr outputType;
+  android.hardware.graphics.common.Hdr sourceType;
+  android.hardware.graphics.common.Hdr outputType;
   boolean addsLatency;
 }

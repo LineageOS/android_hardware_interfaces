@@ -1405,8 +1405,8 @@ TEST_P(GnssHalTest, TestStopSvStatusAndNmea) {
 
 /*
  * TestGnssMeasurementIntervals_WithoutLocation:
- * 1. start measurement with interval
- * 2. verify that the received measurement intervals have expected mean and stdev
+ * 1. Start measurement at intervals
+ * 2. Verify measurement are received at expected intervals
  */
 TEST_P(GnssHalTest, TestGnssMeasurementIntervals_WithoutLocation) {
     if (aidl_gnss_hal_->getInterfaceVersion() <= 1) {
@@ -1438,8 +1438,9 @@ TEST_P(GnssHalTest, TestGnssMeasurementIntervals_WithoutLocation) {
 
 /*
  * TestGnssMeasurementIntervals_LocationOnBeforeMeasurement:
- * 1. start measurement with interval
- * 2. verify that the received measurement intervals have expected mean and stdev
+ * 1. Start location at 1s.
+ * 2. Start measurement at 2s. Verify measurements are received at 1s.
+ * 3. Stop measurement. Stop location.
  */
 TEST_P(GnssHalTest, TestGnssMeasurementIntervals_LocationOnBeforeMeasurement) {
     if (aidl_gnss_hal_->getInterfaceVersion() <= 1) {
@@ -1474,15 +1475,17 @@ TEST_P(GnssHalTest, TestGnssMeasurementIntervals_LocationOnBeforeMeasurement) {
 }
 
 /*
- * TestGnssMeasurementIntervals:
- * 1. start measurement with interval
- * 2. verify that the received measurement intervals have expected mean and stddev
+ * TestGnssMeasurementIntervals_LocationOnAfterMeasurement:
+ * 1. Start measurement at 2s
+ * 2. Start location at 1s. Verify measurements are received at 1s
+ * 3. Stop location. Verify measurements are received at 2s
+ * 4. Stop measurement
  */
 TEST_P(GnssHalTest, TestGnssMeasurementIntervals_LocationOnAfterMeasurement) {
     if (aidl_gnss_hal_->getInterfaceVersion() <= 1) {
         return;
     }
-
+    const int kFirstMeasTimeoutSec = 10;
     std::vector<int> intervals({2000});
 
     sp<IGnssMeasurementInterface> iGnssMeasurement;
@@ -1497,26 +1500,34 @@ TEST_P(GnssHalTest, TestGnssMeasurementIntervals_LocationOnAfterMeasurement) {
         auto callback = sp<GnssMeasurementCallbackAidl>::make();
         startMeasurementWithInterval(intervalMs, iGnssMeasurement, callback);
 
+        // Start location and verify the measurements are received at 1Hz
         StartAndCheckFirstLocation(locationIntervalMs, /* lowPowerMode= */ false);
         std::vector<int> deltas;
-        collectMeasurementIntervals(callback, /*numEvents=*/10, /*timeoutSeconds=*/10, deltas);
+        collectMeasurementIntervals(callback, /*numEvents=*/10, kFirstMeasTimeoutSec, deltas);
+        assertMeanAndStdev(locationIntervalMs, deltas);
 
+        // Stop location request and verify the measurements are received at 2s intervals
         StopAndClearLocations();
+        callback->gnss_data_cbq_.reset();
+        deltas.clear();
+        collectMeasurementIntervals(callback, /*numEvents=*/5, kFirstMeasTimeoutSec, deltas);
+        assertMeanAndStdev(intervalMs, deltas);
+
         status = iGnssMeasurement->close();
         ASSERT_TRUE(status.isOk());
-
-        assertMeanAndStdev(locationIntervalMs, deltas);
     }
 }
 
 /*
- * TestGnssMeasurementSetCallback:
+ * TestGnssMeasurementIntervals_changeIntervals:
  * This test ensures setCallback() can be called consecutively without close().
  * 1. Start measurement with 20s interval and wait for 1 measurement.
  * 2. Start measurement with 1s interval and wait for 5 measurements.
  *    Verify the measurements were received at 1Hz.
+ * 3. Start measurement with 2s interval and wait for 5 measurements.
+ *    Verify the measurements were received at 2s intervals.
  */
-TEST_P(GnssHalTest, TestGnssMeasurementSetCallback) {
+TEST_P(GnssHalTest, TestGnssMeasurementIntervals_changeIntervals) {
     if (aidl_gnss_hal_->getInterfaceVersion() <= 2) {
         return;
     }
@@ -1526,7 +1537,6 @@ TEST_P(GnssHalTest, TestGnssMeasurementSetCallback) {
     ASSERT_TRUE(status.isOk());
     ASSERT_TRUE(iGnssMeasurement != nullptr);
 
-    ALOGD("TestGnssMeasurementSetCallback");
     auto callback = sp<GnssMeasurementCallbackAidl>::make();
     std::vector<int> deltas;
 
@@ -1537,12 +1547,23 @@ TEST_P(GnssHalTest, TestGnssMeasurementSetCallback) {
 
     // setCallback at 1s interval and wait for 5 measurements
     callback->gnss_data_cbq_.reset();
+    deltas.clear();
     startMeasurementWithInterval(1000, iGnssMeasurement, callback);
     collectMeasurementIntervals(callback, /* numEvents= */ 5, kFirstGnssMeasurementTimeoutSeconds,
                                 deltas);
 
     // verify the measurements were received at 1Hz
     assertMeanAndStdev(1000, deltas);
+
+    // setCallback at 2s interval and wait for 5 measurements
+    callback->gnss_data_cbq_.reset();
+    deltas.clear();
+    startMeasurementWithInterval(2000, iGnssMeasurement, callback);
+    collectMeasurementIntervals(callback, /* numEvents= */ 5, kFirstGnssMeasurementTimeoutSeconds,
+                                deltas);
+
+    // verify the measurements were received at 2s intervals
+    assertMeanAndStdev(2000, deltas);
 
     status = iGnssMeasurement->close();
     ASSERT_TRUE(status.isOk());
