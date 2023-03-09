@@ -315,7 +315,7 @@ interface IRemotelyProvisionedComponent {
      *
      * @param in challenge contains a byte string from the provisioning server which will be
      *        included in the signed data of the CSR structure. Different provisioned backends may
-     *        use different semantic data for this field, but the supported sizes must be between 32
+     *        use different semantic data for this field, but the supported sizes must be between 16
      *        and 64 bytes, inclusive.
      *
      * @return the following CBOR Certificate Signing Request (Csr) serialized into a byte array:
