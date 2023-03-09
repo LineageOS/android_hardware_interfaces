@@ -658,16 +658,16 @@ TEST_F(AidlStructUtilTest, canConvertLegacyLinkLayerStatsToAidl) {
 }
 
 TEST_F(AidlStructUtilTest, CanConvertLegacyFeaturesToAidl) {
-    using AidlChipCaps = IWifiChip::ChipCapabilityMask;
+    using AidlChipCaps = IWifiChip::FeatureSetMask;
 
-    uint32_t aidl_caps;
+    uint32_t aidl_features;
     uint32_t legacy_feature_set = WIFI_FEATURE_D2D_RTT | WIFI_FEATURE_SET_LATENCY_MODE;
 
-    ASSERT_TRUE(aidl_struct_util::convertLegacyFeaturesToAidlChipCapabilities(legacy_feature_set,
-                                                                              &aidl_caps));
+    ASSERT_TRUE(
+            aidl_struct_util::convertLegacyChipFeaturesToAidl(legacy_feature_set, &aidl_features));
 
     EXPECT_EQ((uint32_t)AidlChipCaps::D2D_RTT | (uint32_t)AidlChipCaps::SET_LATENCY_MODE,
-              aidl_caps);
+              aidl_features);
 }
 
 void insertRadioCombination(legacy_hal::wifi_radio_combination* dst_radio_combination_ptr,
