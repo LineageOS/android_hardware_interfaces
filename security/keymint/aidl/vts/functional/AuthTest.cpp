@@ -274,7 +274,7 @@ class AuthTest : public KeyMintAidlTestBase {
     std::shared_ptr<ISecureClock> clock_;
     string password_;
     uint32_t uid_;
-    long sid_;
+    int64_t sid_;
     std::vector<uint8_t> handle_;
 };
 
