@@ -19,6 +19,10 @@ package android.hardware.tv.input;
 @VintfStability
 parcelable TvMessage {
     /**
+     * This value for TvMessage.groupId denotes that the message doesn't belong to any group.
+     */
+    const long NO_GROUP_ID = -1;
+    /**
      * Extended data type, like “ATSC A/336 Watermark”, “ATSC_CC”, etc. This is opaque
      * to the framework.
      */

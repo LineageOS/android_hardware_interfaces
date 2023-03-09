@@ -650,10 +650,10 @@ TEST_P(GraphicsComposerAidlTest, SetHdrConversionStrategy_Force) {
     }
     const auto& [status, conversionCapabilities] = mComposerClient->getHdrConversionCapabilities();
     for (auto conversionCapability : conversionCapabilities) {
-        if (conversionCapability.outputType) {
+        if (conversionCapability.outputType != common::Hdr::INVALID) {
             common::HdrConversionStrategy hdrConversionStrategy;
             hdrConversionStrategy.set<common::HdrConversionStrategy::Tag::forceHdrConversion>(
-                    conversionCapability.outputType->hdr);
+                    conversionCapability.outputType);
             const auto& [statusSet, preferredHdrOutputType] =
                     mComposerClient->setHdrConversionStrategy(hdrConversionStrategy);
             EXPECT_TRUE(statusSet.isOk());
@@ -670,8 +670,8 @@ TEST_P(GraphicsComposerAidlTest, SetHdrConversionStrategy_Auto) {
     const auto& [status, conversionCapabilities] = mComposerClient->getHdrConversionCapabilities();
     std::vector<aidl::android::hardware::graphics::common::Hdr> autoHdrTypes;
     for (auto conversionCapability : conversionCapabilities) {
-        if (conversionCapability.outputType) {
-            autoHdrTypes.push_back(conversionCapability.outputType->hdr);
+        if (conversionCapability.outputType != common::Hdr::INVALID) {
+            autoHdrTypes.push_back(conversionCapability.outputType);
         }
     }
     common::HdrConversionStrategy hdrConversionStrategy;
