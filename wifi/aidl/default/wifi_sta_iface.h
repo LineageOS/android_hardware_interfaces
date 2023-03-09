@@ -62,8 +62,6 @@ class WifiStaIface : public BnWifiStaIface {
     ndk::ScopedAStatus readApfPacketFilterData(std::vector<uint8_t>* _aidl_return) override;
     ndk::ScopedAStatus getBackgroundScanCapabilities(
             StaBackgroundScanCapabilities* _aidl_return) override;
-    ndk::ScopedAStatus getValidFrequenciesForBand(WifiBand in_band,
-                                                  std::vector<int32_t>* _aidl_return) override;
     ndk::ScopedAStatus startBackgroundScan(int32_t in_cmdId,
                                            const StaBackgroundScanParameters& in_params) override;
     ndk::ScopedAStatus stopBackgroundScan(int32_t in_cmdId) override;
@@ -106,8 +104,6 @@ class WifiStaIface : public BnWifiStaIface {
     std::pair<std::vector<uint8_t>, ndk::ScopedAStatus> readApfPacketFilterDataInternal();
     std::pair<StaBackgroundScanCapabilities, ndk::ScopedAStatus>
     getBackgroundScanCapabilitiesInternal();
-    std::pair<std::vector<int32_t>, ndk::ScopedAStatus> getValidFrequenciesForBandInternal(
-            WifiBand band);
     ndk::ScopedAStatus startBackgroundScanInternal(int32_t cmd_id,
                                                    const StaBackgroundScanParameters& params);
     ndk::ScopedAStatus stopBackgroundScanInternal(int32_t cmd_id);
