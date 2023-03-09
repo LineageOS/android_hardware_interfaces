@@ -81,7 +81,7 @@ struct HidlUtils {
 #endif
 
 #if MAJOR_VERSION >= 7
-    static constexpr char sAudioTagSeparator = ';';
+    static constexpr char sAudioTagSeparator = AUDIO_ATTRIBUTES_TAGS_SEPARATOR;
 
     static status_t audioChannelMaskFromHal(audio_channel_mask_t halChannelMask, bool isInput,
                                             AudioChannelMask* channelMask);
