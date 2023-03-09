@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <array>
 #include <initializer_list>
+#include <regex>
 #include <type_traits>
 
 #include <aidl/android/media/audio/common/AudioChannelLayout.h>
@@ -131,6 +132,18 @@ constexpr bool isUsbOutputtDeviceType(::aidl::android::media::audio::common::Aud
 constexpr bool isValidAudioMode(::aidl::android::media::audio::common::AudioMode mode) {
     return std::find(kValidAudioModes.begin(), kValidAudioModes.end(), mode) !=
            kValidAudioModes.end();
+}
+
+static inline bool maybeVendorExtension(const std::string& s) {
+    // Only checks whether the string starts with the "vendor prefix".
+    static const std::string vendorPrefix = "VX_";
+    return s.size() > vendorPrefix.size() && s.substr(0, vendorPrefix.size()) == vendorPrefix;
+}
+
+static inline bool isVendorExtension(const std::string& s) {
+    // Must be the same as defined in {Playback|Record}TrackMetadata.aidl
+    static const std::regex vendorExtension("VX_[A-Z0-9]{3,}_[_A-Z0-9]+");
+    return std::regex_match(s.begin(), s.end(), vendorExtension);
 }
 
 // The helper functions defined below are only applicable to the case when an enum type
