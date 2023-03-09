@@ -44,6 +44,6 @@ bool configureChipToSupportConcurrencyType(const std::shared_ptr<IWifiChip>& wif
                                            IfaceConcurrencyType type, int* configured_mode_id);
 // Used to trigger IWifi.stop() at the end of every test.
 void stopWifiService(const char* instance_name);
-int32_t getChipCapabilities(const std::shared_ptr<IWifiChip>& wifi_chip);
+int32_t getChipFeatureSet(const std::shared_ptr<IWifiChip>& wifi_chip);
 bool checkStatusCode(ndk::ScopedAStatus* status, WifiStatusCode expected_code);
 bool isAidlServiceAvailable(const char* instance_name);

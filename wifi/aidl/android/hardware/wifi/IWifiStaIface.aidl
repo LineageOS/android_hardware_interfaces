@@ -38,7 +38,7 @@ interface IWifiStaIface {
      */
     @VintfStability
     @Backing(type="int")
-    enum StaIfaceCapabilityMask {
+    enum FeatureSetMask {
         /**
          * Support for APF APIs. APF (Android Packet Filter) is a
          * BPF-like packet filtering bytecode executed by the firmware.
@@ -190,15 +190,15 @@ interface IWifiStaIface {
     StaBackgroundScanCapabilities getBackgroundScanCapabilities();
 
     /**
-     * Get the capabilities supported by this STA iface.
+     * Get the features supported by this STA iface.
      *
-     * @return Bitset of |StaIfaceCapabilityMask| values.
+     * @return Bitset of |FeatureSetMask| values.
      * @throws ServiceSpecificException with one of the following values:
      *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
      *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
      *         |WifiStatusCode.ERROR_UNKNOWN|
      */
-    int getCapabilities();
+    int getFeatureSet();
 
     /**
      * API to retrieve the fates of inbound packets.
