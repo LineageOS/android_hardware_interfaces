@@ -32,40 +32,52 @@ void DeviceFileReader::getDataFromDeviceFile(const std::string& command, int mMi
         return;
     }
 
-    int mGnssFd = open(deviceFilePath.c_str(), O_RDWR | O_NONBLOCK);
-
-    if (mGnssFd == -1) {
+    int gnss_fd, epoll_fd;
+    if ((gnss_fd = open(deviceFilePath.c_str(), O_RDWR | O_NONBLOCK)) == -1) {
+        return;
+    }
+    if (write(gnss_fd, command.c_str(), command.size()) <= 0) {
+        close(gnss_fd);
         return;
     }
 
-    int bytes_write = write(mGnssFd, command.c_str(), command.size());
-    if (bytes_write <= 0) {
-        close(mGnssFd);
+    // Create an epoll instance.
+    if ((epoll_fd = epoll_create1(EPOLL_CLOEXEC)) < 0) {
+        close(gnss_fd);
         return;
     }
 
+    // Add file descriptor to epoll instance.
     struct epoll_event ev, events[1];
-    ev.data.fd = mGnssFd;
+    memset(&ev, 0, sizeof(ev));
+    ev.data.fd = gnss_fd;
     ev.events = EPOLLIN;
-    int epoll_fd = epoll_create1(0);
-    epoll_ctl(epoll_fd, EPOLL_CTL_ADD, mGnssFd, &ev);
+    if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, gnss_fd, &ev) == -1) {
+        close(gnss_fd);
+        close(epoll_fd);
+        return;
+    }
+
+    // Wait for device file event.
+    if (epoll_wait(epoll_fd, events, 1, mMinIntervalMs) == -1) {
+        close(gnss_fd);
+        close(epoll_fd);
+        return;
+    }
+
+    // Handle event and write data to string buffer.
     int bytes_read = -1;
     std::string inputStr = "";
-    int epoll_ret = epoll_wait(epoll_fd, events, 1, mMinIntervalMs);
-
-    if (epoll_ret == -1) {
-        close(mGnssFd);
-        return;
-    }
     while (true) {
         memset(inputBuffer, 0, INPUT_BUFFER_SIZE);
-        bytes_read = read(mGnssFd, &inputBuffer, INPUT_BUFFER_SIZE);
+        bytes_read = read(gnss_fd, &inputBuffer, INPUT_BUFFER_SIZE);
         if (bytes_read <= 0) {
             break;
         }
         s_buffer_ += std::string(inputBuffer, bytes_read);
     }
-    close(mGnssFd);
+    close(gnss_fd);
+    close(epoll_fd);
 
     // Trim end of file mark(\n\n\n\n).
     auto pos = s_buffer_.find("\n\n\n\n");
