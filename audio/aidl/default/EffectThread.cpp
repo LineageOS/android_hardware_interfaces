@@ -34,13 +34,14 @@ EffectThread::~EffectThread() {
 };
 
 RetCode EffectThread::createThread(std::shared_ptr<EffectContext> context, const std::string& name,
-                                   const int priority) {
+                                   int priority, int sleepUs /* kSleepTimeUs */) {
     if (mThread.joinable()) {
         LOG(WARNING) << __func__ << " thread already created, no-op";
         return RetCode::SUCCESS;
     }
     mName = name;
     mPriority = priority;
+    mSleepTimeUs = sleepUs;
     {
         std::lock_guard lg(mThreadMutex);
         mThreadContext = std::move(context);
@@ -134,7 +135,7 @@ void EffectThread::process_l() {
         LOG(DEBUG) << __func__ << " done processing, effect consumed " << status.fmqConsumed
                    << " produced " << status.fmqProduced;
     } else {
-        // TODO: maybe add some sleep here to avoid busy waiting
+        usleep(mSleepTimeUs);
     }
 }
 
