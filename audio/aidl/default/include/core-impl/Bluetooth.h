@@ -56,6 +56,10 @@ class BluetoothLe : public BnBluetoothLe {
   private:
     ndk::ScopedAStatus isEnabled(bool* _aidl_return) override;
     ndk::ScopedAStatus setEnabled(bool in_enabled) override;
+    ndk::ScopedAStatus supportsOffloadReconfiguration(bool* _aidl_return) override;
+    ndk::ScopedAStatus reconfigureOffload(
+            const std::vector<::aidl::android::hardware::audio::core::VendorParameter>&
+                    in_parameters) override;
 
     bool mEnabled = false;
 };
