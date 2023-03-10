@@ -26,13 +26,13 @@
 #define LOG_TAG "Utils_Test"
 #include <log/log.h>
 
+using aidl::android::hardware::audio::common::getChannelCount;
+using aidl::android::hardware::audio::common::getFrameSizeInBytes;
+using aidl::android::hardware::audio::common::getPcmSampleSizeInBytes;
 using aidl::android::media::audio::common::AudioChannelLayout;
 using aidl::android::media::audio::common::AudioFormatDescription;
 using aidl::android::media::audio::common::AudioFormatType;
 using aidl::android::media::audio::common::PcmType;
-using android::hardware::audio::common::getChannelCount;
-using android::hardware::audio::common::getFrameSizeInBytes;
-using android::hardware::audio::common::getPcmSampleSizeInBytes;
 
 TEST(UtilsTest, ChannelCountOddCases) {
     using Tag = AudioChannelLayout::Tag;

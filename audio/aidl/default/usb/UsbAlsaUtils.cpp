@@ -24,11 +24,11 @@
 #include "UsbAlsaUtils.h"
 #include "core-impl/utils.h"
 
+using aidl::android::hardware::audio::common::getChannelCount;
 using aidl::android::media::audio::common::AudioChannelLayout;
 using aidl::android::media::audio::common::AudioFormatDescription;
 using aidl::android::media::audio::common::AudioFormatType;
 using aidl::android::media::audio::common::PcmType;
-using android::hardware::audio::common::getChannelCount;
 
 namespace aidl::android::hardware::audio::core::usb {
 

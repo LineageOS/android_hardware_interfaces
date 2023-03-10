@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-#include <cstddef>
-#define LOG_TAG "AHAL_EnvReverbSw"
-#include <Utils.h>
 #include <algorithm>
+#include <cstddef>
 #include <unordered_set>
 
+#define LOG_TAG "AHAL_EnvReverbSw"
 #include <android-base/logging.h>
 #include <fmq/AidlMessageQueue.h>
 

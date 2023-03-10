@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-#include <cstddef>
-#define LOG_TAG "AHAL_DynamicsProcessingSw"
-#include <Utils.h>
 #include <algorithm>
+#include <cstddef>
 #include <set>
 #include <unordered_set>
 
+#define LOG_TAG "AHAL_DynamicsProcessingSw"
 #include <android-base/logging.h>
 #include <fmq/AidlMessageQueue.h>
 
@@ -282,8 +281,8 @@ IEffect::Status DynamicsProcessingSw::effectProcessImpl(float* in, float* out, i
 
 RetCode DynamicsProcessingSwContext::setCommon(const Parameter::Common& common) {
     mCommon = common;
-    mChannelCount =
-            ::android::hardware::audio::common::getChannelCount(common.input.base.channelMask);
+    mChannelCount = ::aidl::android::hardware::audio::common::getChannelCount(
+            common.input.base.channelMask);
     resizeChannels();
     resizeBands();
     LOG(INFO) << __func__ << mCommon.toString();

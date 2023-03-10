@@ -25,6 +25,7 @@
 
 #include "core-impl/Configuration.h"
 
+using aidl::android::hardware::audio::common::makeBitPositionFlagMask;
 using aidl::android::media::audio::common::AudioChannelLayout;
 using aidl::android::media::audio::common::AudioDeviceDescription;
 using aidl::android::media::audio::common::AudioDeviceType;
@@ -42,7 +43,6 @@ using aidl::android::media::audio::common::AudioProfile;
 using aidl::android::media::audio::common::Int;
 using aidl::android::media::audio::common::MicrophoneInfo;
 using aidl::android::media::audio::common::PcmType;
-using android::hardware::audio::common::makeBitPositionFlagMask;
 
 namespace aidl::android::hardware::audio::core::internal {
 
