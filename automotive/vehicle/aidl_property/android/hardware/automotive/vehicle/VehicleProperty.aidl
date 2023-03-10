@@ -1946,7 +1946,8 @@ enum VehicleProperty {
      * Represents property for Seat easy access feature.
      *
      * If true, the seat will automatically adjust to make it easier for the occupant to enter and
-     * exit the vehicle.
+     * exit the vehicle. Each area ID must map to the seat that the user is trying to enter/exit
+     * with the help of the easy access feature.
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
