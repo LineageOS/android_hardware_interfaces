@@ -117,4 +117,17 @@ ndk::ScopedAStatus BluetoothLe::setEnabled(bool in_enabled) {
     return ndk::ScopedAStatus::ok();
 }
 
+ndk::ScopedAStatus BluetoothLe::supportsOffloadReconfiguration(bool* _aidl_return) {
+    *_aidl_return = true;
+    LOG(DEBUG) << __func__ << ": returning " << *_aidl_return;
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus BluetoothLe::reconfigureOffload(
+        const std::vector<::aidl::android::hardware::audio::core::VendorParameter>& in_parameters
+                __unused) {
+    LOG(DEBUG) << __func__ << ": " << ::android::internal::ToString(in_parameters);
+    return ndk::ScopedAStatus::ok();
+}
+
 }  // namespace aidl::android::hardware::audio::core
