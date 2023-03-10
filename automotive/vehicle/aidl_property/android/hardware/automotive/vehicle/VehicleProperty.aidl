@@ -88,7 +88,17 @@ enum VehicleProperty {
     INFO_FUEL_CAPACITY = 0x0104 + 0x10000000 + 0x01000000
             + 0x00600000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:FLOAT
     /**
-     * List of fuels the vehicle may use
+     * List of fuels the vehicle may use.
+     *
+     * FuelType::FUEL_TYPE_ELECTRIC must only be included if the vehicle is plug in rechargeable.
+     * For example:
+     *   An FHEV (Fully Hybrid Electric Vehicle) must not include FuelType::FUEL_TYPE_ELECTRIC in
+     *   INFO_FUEL_TYPE's INT32_VEC value. So INFO_FUEL_TYPE can be populated as such:
+     *     int32Values = { FuelType::FUEL_TYPE_UNLEADED }
+     *   On the other hand, a PHEV (Partially Hybrid Electric Vehicle) is plug in rechargeable, and
+     *   hence should include FuelType::FUEL_TYPE_ELECTRIC in INFO_FUEL_TYPE's INT32_VEC value. So
+     *   INFO_FUEL_TYPE can be populated as such:
+     *     int32Values = { FuelType::FUEL_TYPE_UNLEADED, FuelType::FUEL_TYPE_ELECTRIC }
      *
      * @change_mode VehiclePropertyChangeMode.STATIC
      * @access VehiclePropertyAccess.READ
