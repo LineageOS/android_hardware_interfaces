@@ -805,8 +805,8 @@ ErrMsgOr<bytevec> parseAndValidateAuthenticatedRequestSignedPayload(
         return "Challenge must be a Bstr.";
     }
 
-    if (challenge.size() < 32 || challenge.size() > 64) {
-        return "Challenge size must be between 32 and 64 bytes inclusive. "
+    if (challenge.size() < 16 || challenge.size() > 64) {
+        return "Challenge size must be between 16 and 64 bytes inclusive. "
                "However, challenge is " +
                std::to_string(challenge.size()) + " bytes long.";
     }
