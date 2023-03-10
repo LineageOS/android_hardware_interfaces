@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<issues format="6" by="lint 8.0.0-dev" type="baseline" dependencies="true" variant="all" version="8.0.0-dev">
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 31 (current min is 30): `android.os.Binder#markVintfStability`"
+        errorLine1="      this.markVintfStability();"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="out/.intermediates/hardware/interfaces/wifi/supplicant/aidl/android.hardware.wifi.supplicant-V1-java-source/gen/android/hardware/wifi/supplicant/ISupplicant.java"
+            line="84"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 31 (current min is 30): `android.os.Binder#markVintfStability`"
+        errorLine1="      this.markVintfStability();"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="out/.intermediates/hardware/interfaces/wifi/supplicant/aidl/android.hardware.wifi.supplicant-V1-java-source/gen/android/hardware/wifi/supplicant/ISupplicantCallback.java"
+            line="43"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 31 (current min is 30): `android.os.Binder#markVintfStability`"
+        errorLine1="      this.markVintfStability();"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="out/.intermediates/hardware/interfaces/wifi/supplicant/aidl/android.hardware.wifi.supplicant-V1-java-source/gen/android/hardware/wifi/supplicant/ISupplicantP2pIface.java"
+            line="237"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 31 (current min is 30): `android.os.Binder#markVintfStability`"
+        errorLine1="      this.markVintfStability();"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="out/.intermediates/hardware/interfaces/wifi/supplicant/aidl/android.hardware.wifi.supplicant-V1-java-source/gen/android/hardware/wifi/supplicant/ISupplicantP2pIfaceCallback.java"
+            line="91"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 31 (current min is 30): `android.os.Binder#markVintfStability`"
+        errorLine1="      this.markVintfStability();"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="out/.intermediates/hardware/interfaces/wifi/supplicant/aidl/android.hardware.wifi.supplicant-V1-java-source/gen/android/hardware/wifi/supplicant/ISupplicantP2pNetwork.java"
+            line="76"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 31 (current min is 30): `android.os.Binder#markVintfStability`"
+        errorLine1="      this.markVintfStability();"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="out/.intermediates/hardware/interfaces/wifi/supplicant/aidl/android.hardware.wifi.supplicant-V1-java-source/gen/android/hardware/wifi/supplicant/ISupplicantStaIface.java"
+            line="235"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 31 (current min is 30): `android.os.Binder#markVintfStability`"
+        errorLine1="      this.markVintfStability();"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="out/.intermediates/hardware/interfaces/wifi/supplicant/aidl/android.hardware.wifi.supplicant-V1-java-source/gen/android/hardware/wifi/supplicant/ISupplicantStaIfaceCallback.java"
+            line="124"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 31 (current min is 30): `android.os.Binder#markVintfStability`"
+        errorLine1="      this.markVintfStability();"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="out/.intermediates/hardware/interfaces/wifi/supplicant/aidl/android.hardware.wifi.supplicant-V1-java-source/gen/android/hardware/wifi/supplicant/ISupplicantStaNetwork.java"
+            line="354"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 31 (current min is 30): `android.os.Binder#markVintfStability`"
+        errorLine1="      this.markVintfStability();"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="out/.intermediates/hardware/interfaces/wifi/supplicant/aidl/android.hardware.wifi.supplicant-V1-java-source/gen/android/hardware/wifi/supplicant/ISupplicantStaNetworkCallback.java"
+            line="52"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 31 (current min is 30): `android.os.Binder#markVintfStability`"
+        errorLine1="      this.markVintfStability();"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="out/.intermediates/hardware/interfaces/wifi/supplicant/aidl/android.hardware.wifi.supplicant-V2-java-source/gen/android/hardware/wifi/supplicant/INonStandardCertCallback.java"
+            line="67"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 31 (current min is 30): `android.os.Binder#markVintfStability`"
+        errorLine1="      this.markVintfStability();"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="out/.intermediates/hardware/interfaces/wifi/supplicant/aidl/android.hardware.wifi.supplicant-V2-java-source/gen/android/hardware/wifi/supplicant/ISupplicant.java"
+            line="200"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 31 (current min is 30): `android.os.Binder#markVintfStability`"
+        errorLine1="      this.markVintfStability();"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="out/.intermediates/hardware/interfaces/wifi/supplicant/aidl/android.hardware.wifi.supplicant-V2-java-source/gen/android/hardware/wifi/supplicant/ISupplicantCallback.java"
+            line="60"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 31 (current min is 30): `android.os.Binder#markVintfStability`"
+        errorLine1="      this.markVintfStability();"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="out/.intermediates/hardware/interfaces/wifi/supplicant/aidl/android.hardware.wifi.supplicant-V2-java-source/gen/android/hardware/wifi/supplicant/ISupplicantP2pIface.java"
+            line="928"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 31 (current min is 30): `android.os.Binder#markVintfStability`"
+        errorLine1="      this.markVintfStability();"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="out/.intermediates/hardware/interfaces/wifi/supplicant/aidl/android.hardware.wifi.supplicant-V2-java-source/gen/android/hardware/wifi/supplicant/ISupplicantP2pIfaceCallback.java"
+            line="265"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 31 (current min is 30): `android.os.Binder#markVintfStability`"
+        errorLine1="      this.markVintfStability();"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="out/.intermediates/hardware/interfaces/wifi/supplicant/aidl/android.hardware.wifi.supplicant-V2-java-source/gen/android/hardware/wifi/supplicant/ISupplicantP2pNetwork.java"
+            line="164"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 31 (current min is 30): `android.os.Binder#markVintfStability`"
+        errorLine1="      this.markVintfStability();"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="out/.intermediates/hardware/interfaces/wifi/supplicant/aidl/android.hardware.wifi.supplicant-V2-java-source/gen/android/hardware/wifi/supplicant/ISupplicantStaIface.java"
+            line="939"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 31 (current min is 30): `android.os.Binder#markVintfStability`"
+        errorLine1="      this.markVintfStability();"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="out/.intermediates/hardware/interfaces/wifi/supplicant/aidl/android.hardware.wifi.supplicant-V2-java-source/gen/android/hardware/wifi/supplicant/ISupplicantStaIfaceCallback.java"
+            line="390"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 31 (current min is 30): `android.os.Binder#markVintfStability`"
+        errorLine1="      this.markVintfStability();"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="out/.intermediates/hardware/interfaces/wifi/supplicant/aidl/android.hardware.wifi.supplicant-V2-java-source/gen/android/hardware/wifi/supplicant/ISupplicantStaNetwork.java"
+            line="1239"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 31 (current min is 30): `android.os.Binder#markVintfStability`"
+        errorLine1="      this.markVintfStability();"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="out/.intermediates/hardware/interfaces/wifi/supplicant/aidl/android.hardware.wifi.supplicant-V2-java-source/gen/android/hardware/wifi/supplicant/ISupplicantStaNetworkCallback.java"
+            line="97"
+            column="12"/>
+    </issue>
+
+</issues>
