@@ -16,6 +16,8 @@
 
 package android.hardware.audio.core;
 
+import android.hardware.audio.core.VendorParameter;
+
 /**
  * An instance of IBluetoothLe manages settings for the LE (Low Energy)
  * profiles. This interface is optional to implement by the vendor. It needs to
@@ -48,4 +50,33 @@ interface IBluetoothLe {
      * @throws EX_ILLEGAL_STATE If there was an error performing the operation.
      */
     void setEnabled(boolean enabled);
+
+    /**
+     * Indicates whether the module supports reconfiguration of offloaded codecs.
+     *
+     * Offloaded codec implementations may need to be reconfigured when the
+     * active LE device changes. This method indicates whether the HAL module
+     * supports the reconfiguration event. The result returned from this method
+     * must not change over time.
+     *
+     * @return Whether reconfiguration offload of offloaded codecs is supported.
+     */
+    boolean supportsOffloadReconfiguration();
+
+    /**
+     * Instructs the HAL module to reconfigure offloaded codec.
+     *
+     * Offloaded codec implementations may need to be reconfigured when the
+     * active LE device changes. This method is a notification for the HAL
+     * module to commence reconfiguration.
+     *
+     * Note that 'EX_UNSUPPORTED_OPERATION' must be thrown if and only if
+     * 'supportsOffloadReconfiguration' returns 'false'.
+     *
+     * @param parameter Optional vendor-specific parameters, can be left empty.
+     * @throws EX_ILLEGAL_STATE If there was an error performing the operation,
+     *                          or the operation can not be commenced in the current state.
+     * @throws EX_UNSUPPORTED_OPERATION If the module does not support codec reconfiguration.
+     */
+    void reconfigureOffload(in VendorParameter[] parameters);
 }
