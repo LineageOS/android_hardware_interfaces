@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#include <Utils.h>
-#include <aidl/Vintf.h>
-#include <android/binder_enums.h>
 #include <unordered_set>
 
-#define LOG_TAG "VtsHalNSParamTest"
-
+#include <aidl/Vintf.h>
 #include <aidl/android/hardware/audio/effect/NoiseSuppression.h>
+#define LOG_TAG "VtsHalNSParamTest"
+#include <android-base/logging.h>
+#include <android/binder_enums.h>
+
 #include "EffectHelper.h"
 
 using namespace android;
