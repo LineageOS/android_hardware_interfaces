@@ -23,6 +23,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include <Utils.h>
 #include <aidl/android/hardware/audio/effect/IEffect.h>
 #include <aidl/android/hardware/audio/effect/IFactory.h>
 #include <aidl/android/media/audio/common/AudioChannelLayout.h>
@@ -135,7 +136,7 @@ class EffectHelper {
     static void allocateInputData(const Parameter::Common common, std::unique_ptr<DataMQ>& mq,
                                   std::vector<float>& buffer) {
         ASSERT_NE(mq, nullptr);
-        auto frameSize = android::hardware::audio::common::getFrameSizeInBytes(
+        auto frameSize = ::aidl::android::hardware::audio::common::getFrameSizeInBytes(
                 common.input.base.format, common.input.base.channelMask);
         const size_t floatsToWrite = mq->availableToWrite();
         ASSERT_NE(0UL, floatsToWrite);

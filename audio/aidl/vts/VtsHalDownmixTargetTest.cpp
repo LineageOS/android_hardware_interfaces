@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "VtsHalDownmixTargetTest"
-
-#include <Utils.h>
 #include <aidl/Vintf.h>
+#define LOG_TAG "VtsHalDownmixTargetTest"
+#include <android-base/logging.h>
+
 #include "EffectHelper.h"
 
 using namespace android;
