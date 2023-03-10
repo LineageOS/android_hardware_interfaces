@@ -523,8 +523,24 @@ void verifyAuthKeyCertificate(const vector<uint8_t>& authKeyCertChain) {
     int64_t allowDriftSecs = 10;
     EXPECT_LE(-allowDriftSecs, diffSecs);
     EXPECT_GE(allowDriftSecs, diffSecs);
-    constexpr uint64_t kSecsInOneYear = 365 * 24 * 60 * 60;
-    EXPECT_EQ(notBefore + kSecsInOneYear, notAfter);
+
+    // The AIDL spec used to call for "one year in the future (365
+    // days)" but was updated to say "current time and 31536000
+    // seconds in the future (approximately 365 days)" to clarify that
+    // this was the original intention.
+    //
+    // However a number of implementations interpreted this as a
+    // "literal year" which started causing problems in March 2023
+    // because 2024 is a leap year. Since the extra day doesn't really
+    // matter (the validity period is specified in the MSO anyway and
+    // that's what RPs use), we allow both interpretations.
+    //
+    // For simplicity, we just require that that notAfter is after
+    // 31536000 and which also covers the case if there's a leap-day
+    // and possible leap-seconds.
+    //
+    constexpr uint64_t kSecsIn365Days = 365 * 24 * 60 * 60;
+    EXPECT_LE(notBefore + kSecsIn365Days, notAfter);
 }
 
 vector<RequestNamespace> buildRequestNamespaces(const vector<TestEntryData> entries) {
