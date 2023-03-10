@@ -36,4 +36,6 @@ package android.hardware.audio.core;
 interface IBluetoothLe {
   boolean isEnabled();
   void setEnabled(boolean enabled);
+  boolean supportsOffloadReconfiguration();
+  void reconfigureOffload(in android.hardware.audio.core.VendorParameter[] parameters);
 }
