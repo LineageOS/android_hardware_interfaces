@@ -41,6 +41,9 @@ int main() {
     // android::base::SetMinimumLogSeverity(::android::base::VERBOSE);
     ABinderProcess_setThreadPoolMaxThreadCount(16);
 
+    // Guaranteed log for b/210919187 and logd_integration_test
+    LOG(INFO) << "Init for Audio AIDL HAL";
+
     // Make the default config service
     auto config = ndk::SharedRefBase::make<Config>();
     const std::string configName = std::string() + Config::descriptor + "/default";
