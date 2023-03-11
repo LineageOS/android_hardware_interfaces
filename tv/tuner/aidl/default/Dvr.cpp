@@ -172,7 +172,7 @@ bool Dvr::createDvrMQ() {
         return false;
     }
 
-    mDvrMQ = move(tmpDvrMQ);
+    mDvrMQ = std::move(tmpDvrMQ);
 
     if (EventFlag::createEventFlag(mDvrMQ->getEventFlagWord(), &mDvrEventFlag) != ::android::OK) {
         return false;
