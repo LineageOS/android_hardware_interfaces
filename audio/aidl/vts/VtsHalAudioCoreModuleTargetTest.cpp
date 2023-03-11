@@ -2148,6 +2148,23 @@ TEST_P(AudioCoreBluetoothLe, Enabled) {
             << "setEnabled without actual state change must not fail";
 }
 
+TEST_P(AudioCoreBluetoothLe, OffloadReconfiguration) {
+    if (bluetooth == nullptr) {
+        GTEST_SKIP() << "BluetoothLe is not supported";
+    }
+    bool isSupported;
+    ASSERT_IS_OK(bluetooth->supportsOffloadReconfiguration(&isSupported));
+    bool isSupported2;
+    ASSERT_IS_OK(bluetooth->supportsOffloadReconfiguration(&isSupported2));
+    EXPECT_EQ(isSupported, isSupported2);
+    if (isSupported) {
+        static const auto kStatuses = {EX_NONE, EX_ILLEGAL_STATE};
+        EXPECT_STATUS(kStatuses, bluetooth->reconfigureOffload({}));
+    } else {
+        EXPECT_STATUS(EX_UNSUPPORTED_OPERATION, bluetooth->reconfigureOffload({}));
+    }
+}
+
 class AudioCoreTelephony : public AudioCoreModuleBase, public testing::TestWithParam<std::string> {
   public:
     void SetUp() override {
