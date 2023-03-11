@@ -27,6 +27,7 @@
 using namespace android;
 using namespace std::chrono_literals;
 
+using aidl::android::hardware::audio::common::isBitPositionFlagSet;
 using aidl::android::hardware::audio::core::IModule;
 using aidl::android::media::audio::common::AudioChannelLayout;
 using aidl::android::media::audio::common::AudioDeviceType;
@@ -43,7 +44,6 @@ using aidl::android::media::audio::common::AudioPortExt;
 using aidl::android::media::audio::common::AudioProfile;
 using aidl::android::media::audio::common::AudioUsage;
 using aidl::android::media::audio::common::Int;
-using android::hardware::audio::common::isBitPositionFlagSet;
 
 // static
 std::optional<AudioOffloadInfo> ModuleConfig::generateOffloadInfoIfNeeded(

@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-#include <cstddef>
-#define LOG_TAG "AHAL_EqualizerSw"
-#include <Utils.h>
 #include <algorithm>
-#include <unordered_set>
+#include <cstddef>
 
+#define LOG_TAG "AHAL_EqualizerSw"
 #include <android-base/logging.h>
 #include <fmq/AidlMessageQueue.h>
 

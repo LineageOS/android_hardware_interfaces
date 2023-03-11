@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "VtsHalEnvironmentalReverbTest"
-
-#include <Utils.h>
 #include <aidl/Vintf.h>
-#include <unordered_set>
+#define LOG_TAG "VtsHalEnvironmentalReverbTest"
+#include <android-base/logging.h>
+
 #include "EffectHelper.h"
 
 using namespace android;
