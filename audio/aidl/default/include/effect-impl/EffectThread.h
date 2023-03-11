@@ -35,7 +35,7 @@ class EffectThread {
 
     // called by effect implementation.
     RetCode createThread(std::shared_ptr<EffectContext> context, const std::string& name,
-                         const int priority = ANDROID_PRIORITY_URGENT_AUDIO);
+                         int priority = ANDROID_PRIORITY_URGENT_AUDIO, int sleepUs = kSleepTimeUs);
     RetCode destroyThread();
     RetCode startThread();
     RetCode stopThread();
@@ -72,7 +72,8 @@ class EffectThread {
     virtual void process_l() REQUIRES(mThreadMutex);
 
   private:
-    const int kMaxTaskNameLen = 15;
+    static constexpr int kMaxTaskNameLen = 15;
+    static constexpr int kSleepTimeUs = 2000;  // in micro-second
     std::mutex mThreadMutex;
     std::condition_variable mCv;
     bool mExit GUARDED_BY(mThreadMutex) = false;
@@ -80,6 +81,7 @@ class EffectThread {
     std::shared_ptr<EffectContext> mThreadContext GUARDED_BY(mThreadMutex);
     std::thread mThread;
     int mPriority;
+    int mSleepTimeUs = kSleepTimeUs;  // sleep time in micro-second
     std::string mName;
 
     RetCode handleStartStop(bool stop);
