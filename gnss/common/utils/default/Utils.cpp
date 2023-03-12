@@ -102,7 +102,7 @@ GnssDataV2_0 Utils::getMockMeasurementV2_0() {
             .receivedSvTimeUncertaintyInNs = 15,
             .cN0DbHz = 30.0,
             .pseudorangeRateMps = -484.13739013671875,
-            .pseudorangeRateUncertaintyMps = 1.0379999876022339,
+            .pseudorangeRateUncertaintyMps = 0.1037999987602233,
             .accumulatedDeltaRangeState = (uint32_t)V1_0::IGnssMeasurementCallback::
                     GnssAccumulatedDeltaRangeState::ADR_STATE_UNKNOWN,
             .accumulatedDeltaRangeM = 0.0,
@@ -169,7 +169,7 @@ GnssData Utils::getMockMeasurement(const bool enableCorrVecOutputs, const bool e
             .basebandCN0DbHz = 26.5,
             .agcLevelDb = 2.3,
             .pseudorangeRateMps = -484.13739013671875,
-            .pseudorangeRateUncertaintyMps = 1.0379999876022339,
+            .pseudorangeRateUncertaintyMps = 0.1037999987602233,
             .accumulatedDeltaRangeState = GnssMeasurement::ADR_STATE_VALID,
             .accumulatedDeltaRangeM = 1.52,
             .accumulatedDeltaRangeUncertaintyM = 2.43,
