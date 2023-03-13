@@ -17,10 +17,8 @@
 #include <algorithm>
 #include <cstddef>
 #include <memory>
-#define LOG_TAG "AHAL_BassBoostSw"
-#include <Utils.h>
-#include <unordered_set>
 
+#define LOG_TAG "AHAL_BassBoostSw"
 #include <android-base/logging.h>
 #include <fmq/AidlMessageQueue.h>
 

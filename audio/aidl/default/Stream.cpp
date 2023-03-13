@@ -25,6 +25,8 @@
 #include "core-impl/Stream.h"
 
 using aidl::android::hardware::audio::common::AudioOffloadMetadata;
+using aidl::android::hardware::audio::common::getChannelCount;
+using aidl::android::hardware::audio::common::getFrameSizeInBytes;
 using aidl::android::hardware::audio::common::SinkMetadata;
 using aidl::android::hardware::audio::common::SourceMetadata;
 using aidl::android::media::audio::common::AudioDevice;
@@ -34,8 +36,6 @@ using aidl::android::media::audio::common::AudioOffloadInfo;
 using aidl::android::media::audio::common::AudioPlaybackRate;
 using aidl::android::media::audio::common::MicrophoneDynamicInfo;
 using aidl::android::media::audio::common::MicrophoneInfo;
-using android::hardware::audio::common::getChannelCount;
-using android::hardware::audio::common::getFrameSizeInBytes;
 
 namespace aidl::android::hardware::audio::core {
 

@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-#include <aidl/Vintf.h>
-
-#define LOG_TAG "VtsHalDynamicsProcessingTest"
-
 #include <set>
 #include <string>
-#include <unordered_map>
 #include <unordered_set>
 
+#include <aidl/Vintf.h>
+#define LOG_TAG "VtsHalDynamicsProcessingTest"
+#include <android-base/logging.h>
+
 #include <Utils.h>
+
 #include "EffectHelper.h"
 
 using namespace android;
@@ -45,7 +45,7 @@ class DynamicsProcessingTestHelper : public EffectHelper {
                                  int32_t channelLayOut = AudioChannelLayout::LAYOUT_STEREO) {
         std::tie(mFactory, mDescriptor) = pair;
         mChannelLayout = channelLayOut;
-        mChannelCount = ::android::hardware::audio::common::getChannelCount(
+        mChannelCount = ::aidl::android::hardware::audio::common::getChannelCount(
                 AudioChannelLayout::make<AudioChannelLayout::layoutMask>(mChannelLayout));
     }
 

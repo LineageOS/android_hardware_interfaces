@@ -34,6 +34,9 @@
 #include "core-impl/Telephony.h"
 #include "core-impl/utils.h"
 
+using aidl::android::hardware::audio::common::getFrameSizeInBytes;
+using aidl::android::hardware::audio::common::isBitPositionFlagSet;
+using aidl::android::hardware::audio::common::isValidAudioMode;
 using aidl::android::hardware::audio::common::SinkMetadata;
 using aidl::android::hardware::audio::common::SourceMetadata;
 using aidl::android::hardware::audio::core::sounddose::ISoundDose;
@@ -57,9 +60,6 @@ using aidl::android::media::audio::common::Boolean;
 using aidl::android::media::audio::common::Int;
 using aidl::android::media::audio::common::MicrophoneInfo;
 using aidl::android::media::audio::common::PcmType;
-using android::hardware::audio::common::getFrameSizeInBytes;
-using android::hardware::audio::common::isBitPositionFlagSet;
-using android::hardware::audio::common::isValidAudioMode;
 
 namespace aidl::android::hardware::audio::core {
 
