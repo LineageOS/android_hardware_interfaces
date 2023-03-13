@@ -80,7 +80,7 @@
             "property": "VehicleProperty::INFO_MODEL_YEAR",
             "defaultValue": {
                 "int32Values": [
-                    2020
+                    2023
                 ]
             }
         },
