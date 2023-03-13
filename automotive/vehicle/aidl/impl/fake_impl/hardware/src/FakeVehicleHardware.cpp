@@ -298,16 +298,27 @@ VhalResult<void> FakeVehicleHardware::setApPowerStateReport(const VehiclePropVal
     return {};
 }
 
-bool FakeVehicleHardware::isHvacPropAndHvacNotAvailable(int32_t propId) const {
+bool FakeVehicleHardware::isHvacPropAndHvacNotAvailable(int32_t propId, int32_t areaId) const {
     std::unordered_set<int32_t> powerProps(std::begin(HVAC_POWER_PROPERTIES),
                                            std::end(HVAC_POWER_PROPERTIES));
     if (powerProps.count(propId)) {
-        auto hvacPowerOnResult =
-                mServerSidePropStore->readValue(toInt(VehicleProperty::HVAC_POWER_ON), HVAC_ALL);
-
-        if (hvacPowerOnResult.ok() && hvacPowerOnResult.value()->value.int32Values.size() == 1 &&
-            hvacPowerOnResult.value()->value.int32Values[0] == 0) {
-            return true;
+        auto hvacPowerOnResults =
+                mServerSidePropStore->readValuesForProperty(toInt(VehicleProperty::HVAC_POWER_ON));
+        if (!hvacPowerOnResults.ok()) {
+            ALOGW("failed to get HVAC_POWER_ON 0x%x, error: %s",
+                  toInt(VehicleProperty::HVAC_POWER_ON), getErrorMsg(hvacPowerOnResults).c_str());
+            return false;
+        }
+        auto& hvacPowerOnValues = hvacPowerOnResults.value();
+        for (size_t j = 0; j < hvacPowerOnValues.size(); j++) {
+            auto hvacPowerOnValue = std::move(hvacPowerOnValues[j]);
+            if ((hvacPowerOnValue->areaId & areaId) == areaId) {
+                if (hvacPowerOnValue->value.int32Values.size() == 1 &&
+                    hvacPowerOnValue->value.int32Values[0] == 0) {
+                    return true;
+                }
+                break;
+            }
         }
     }
     return false;
@@ -369,7 +380,7 @@ FakeVehicleHardware::ValueResultType FakeVehicleHardware::maybeGetSpecialValue(
         return getUserHalProp(value);
     }
 
-    if (isHvacPropAndHvacNotAvailable(propId)) {
+    if (isHvacPropAndHvacNotAvailable(propId, value.areaId)) {
         *isSpecialValue = true;
         return StatusError(StatusCode::NOT_AVAILABLE) << "hvac not available";
     }
@@ -419,7 +430,7 @@ FakeVehicleHardware::ValueResultType FakeVehicleHardware::getEchoReverseBytes(
     return std::move(gotValue);
 }
 
-void FakeVehicleHardware::sendHvacPropertiesCurrentValues() {
+void FakeVehicleHardware::sendHvacPropertiesCurrentValues(int32_t areaId) {
     for (size_t i = 0; i < sizeof(HVAC_POWER_PROPERTIES) / sizeof(int32_t); i++) {
         int powerPropId = HVAC_POWER_PROPERTIES[i];
         auto powerPropResults = mServerSidePropStore->readValuesForProperty(powerPropId);
@@ -431,11 +442,13 @@ void FakeVehicleHardware::sendHvacPropertiesCurrentValues() {
         auto& powerPropValues = powerPropResults.value();
         for (size_t j = 0; j < powerPropValues.size(); j++) {
             auto powerPropValue = std::move(powerPropValues[j]);
-            powerPropValue->status = VehiclePropertyStatus::AVAILABLE;
-            powerPropValue->timestamp = elapsedRealtimeNano();
-            // This will trigger a property change event for the current hvac property value.
-            mServerSidePropStore->writeValue(std::move(powerPropValue), /*updateStatus=*/true,
-                                             VehiclePropertyStore::EventMode::ALWAYS);
+            if ((powerPropValue->areaId & areaId) == powerPropValue->areaId) {
+                powerPropValue->status = VehiclePropertyStatus::AVAILABLE;
+                powerPropValue->timestamp = elapsedRealtimeNano();
+                // This will trigger a property change event for the current hvac property value.
+                mServerSidePropStore->writeValue(std::move(powerPropValue), /*updateStatus=*/true,
+                                                 VehiclePropertyStore::EventMode::ALWAYS);
+            }
         }
     }
 }
@@ -455,10 +468,10 @@ VhalResult<void> FakeVehicleHardware::maybeSetSpecialValue(const VehiclePropValu
         value.value.int32Values[0] == 1) {
         // If we are turning HVAC power on, send current hvac property values through on change
         // event.
-        sendHvacPropertiesCurrentValues();
+        sendHvacPropertiesCurrentValues(value.areaId);
     }
 
-    if (isHvacPropAndHvacNotAvailable(propId)) {
+    if (isHvacPropAndHvacNotAvailable(propId, value.areaId)) {
         *isSpecialValue = true;
         return StatusError(StatusCode::NOT_AVAILABLE) << "hvac not available";
     }
