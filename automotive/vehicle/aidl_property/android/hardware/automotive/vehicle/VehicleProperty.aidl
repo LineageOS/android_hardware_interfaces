@@ -43,6 +43,8 @@ import android.hardware.automotive.vehicle.VehiclePropertyType;
 enum VehicleProperty {
     /**
      * Undefined property.
+     *
+     * This property must never be used/supported.
      */
     INVALID = 0x00000000,
     /**
