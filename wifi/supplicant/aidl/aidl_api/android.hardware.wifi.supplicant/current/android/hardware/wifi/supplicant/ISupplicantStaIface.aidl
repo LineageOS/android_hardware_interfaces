@@ -98,6 +98,5 @@ interface ISupplicantStaIface {
   android.hardware.wifi.supplicant.SignalPollResult[] getSignalPollResults();
   android.hardware.wifi.supplicant.QosPolicyScsRequestStatus[] addQosPolicyRequestForScs(in android.hardware.wifi.supplicant.QosPolicyScsData[] qosPolicyData);
   android.hardware.wifi.supplicant.QosPolicyScsRequestStatus[] removeQosPolicyForScs(in byte[] scsPolicyIds);
-  android.hardware.wifi.supplicant.QosPolicyScsRequestStatus[] removeAllQosPoliciesForScs();
   const int MAX_POLICIES_PER_QOS_SCS_REQUEST = 16;
 }
