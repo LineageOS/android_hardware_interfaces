@@ -296,6 +296,30 @@ TEST_P(VtsHalAutomotiveVehicleTargetTest, setNotWritableProp) {
     ASSERT_EQ(setValueResult.error().code(), ErrorCode::ACCESS_DENIED_FROM_VHAL);
 }
 
+// Test get(), set() and getAllPropConfigs() on VehicleProperty::INVALID.
+TEST_P(VtsHalAutomotiveVehicleTargetTest, getSetPropertyIdInvalid) {
+    ALOGD("VtsHalAutomotiveVehicleTargetTest::getSetPropertyIdInvalid");
+
+    int32_t propId = toInt(VehicleProperty::INVALID);
+    auto getValueResult = mVhalClient->getValueSync(*mVhalClient->createHalPropValue(propId));
+    ASSERT_FALSE(getValueResult.ok()) << "Expect get on VehicleProperty::INVALID to fail";
+    ASSERT_EQ(getValueResult.error().code(), ErrorCode::INVALID_ARG);
+
+    auto propToSet = mVhalClient->createHalPropValue(propId);
+    propToSet->setInt32Values({0});
+    auto setValueResult = mVhalClient->setValueSync(*propToSet);
+    ASSERT_FALSE(setValueResult.ok()) << "Expect set on VehicleProperty::INVALID to fail";
+    ASSERT_EQ(setValueResult.error().code(), ErrorCode::INVALID_ARG);
+
+    auto result = mVhalClient->getAllPropConfigs();
+    ASSERT_TRUE(result.ok());
+    for (const auto& cfgPtr : result.value()) {
+        const IHalPropConfig& cfg = *cfgPtr;
+        ASSERT_FALSE(cfg.getPropId() == propId) << "Expect VehicleProperty::INVALID to not be "
+                                                   "included in propConfigs";
+    }
+}
+
 // Test subscribe() and unsubscribe().
 TEST_P(VtsHalAutomotiveVehicleTargetTest, subscribeAndUnsubscribe) {
     ALOGD("VtsHalAutomotiveVehicleTargetTest::subscribeAndUnsubscribe");
