@@ -108,6 +108,15 @@ bool KeyCharacteristicsBasicallyValid(SecurityLevel secLevel,
     return true;
 }
 
+void check_crl_distribution_points_extension_not_present(X509* certificate) {
+    ASN1_OBJECT_Ptr crl_dp_oid(OBJ_txt2obj(kCrlDPOid, 1 /* dotted string format */));
+    ASSERT_TRUE(crl_dp_oid.get());
+
+    int location =
+            X509_get_ext_by_OBJ(certificate, crl_dp_oid.get(), -1 /* search from beginning */);
+    ASSERT_EQ(location, -1);
+}
+
 void check_attestation_version(uint32_t attestation_version, int32_t aidl_version) {
     // Version numbers in attestation extensions should be a multiple of 100.
     EXPECT_EQ(attestation_version % 100, 0);
@@ -1689,6 +1698,10 @@ bool verify_attestation_record(int32_t aidl_version,                   //
     X509_Ptr cert(parse_cert_blob(attestation_cert));
     EXPECT_TRUE(!!cert.get());
     if (!cert.get()) return false;
+
+    // Make sure CRL Distribution Points extension is not present in a certificate
+    // containing attestation record.
+    check_crl_distribution_points_extension_not_present(cert.get());
 
     ASN1_OCTET_STRING* attest_rec = get_attestation_record(cert.get());
     EXPECT_TRUE(!!attest_rec);
