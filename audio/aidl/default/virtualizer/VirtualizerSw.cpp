@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
+#include <algorithm>
 #include <cstddef>
+
 #define LOG_TAG "AHAL_VirtualizerSw"
 #include <Utils.h>
-#include <algorithm>
-#include <unordered_set>
-
 #include <android-base/logging.h>
 #include <fmq/AidlMessageQueue.h>
 
@@ -170,7 +169,7 @@ ndk::ScopedAStatus VirtualizerSw::getParameterVirtualizer(const Virtualizer::Tag
 ndk::ScopedAStatus VirtualizerSw::getSpeakerAngles(const Virtualizer::SpeakerAnglesPayload payload,
                                                    Parameter::Specific* specific) {
     std::vector<Virtualizer::ChannelAngle> angles;
-    const auto chNum = ::android::hardware::audio::common::getChannelCount(payload.layout);
+    const auto chNum = ::aidl::android::hardware::audio::common::getChannelCount(payload.layout);
     if (chNum == 1) {
         angles = {{.channel = (int32_t)AudioChannelLayout::CHANNEL_FRONT_LEFT,
                    .azimuthDegree = 0,

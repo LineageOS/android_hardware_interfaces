@@ -30,6 +30,7 @@ extern "C" {
 #include "alsa_device_profile.h"
 }
 
+using aidl::android::hardware::audio::common::isUsbInputDeviceType;
 using aidl::android::media::audio::common::AudioChannelLayout;
 using aidl::android::media::audio::common::AudioDeviceAddress;
 using aidl::android::media::audio::common::AudioDeviceDescription;
@@ -40,7 +41,6 @@ using aidl::android::media::audio::common::AudioPort;
 using aidl::android::media::audio::common::AudioPortConfig;
 using aidl::android::media::audio::common::AudioPortExt;
 using aidl::android::media::audio::common::AudioProfile;
-using android::hardware::audio::common::isUsbInputDeviceType;
 
 namespace aidl::android::hardware::audio::core {
 

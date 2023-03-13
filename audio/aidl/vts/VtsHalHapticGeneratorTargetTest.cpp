@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "VtsHalHapticGeneratorTargetTest"
-
-#include <Utils.h>
-#include <aidl/Vintf.h>
-#include <android/binder_enums.h>
 #include <map>
 #include <utility>
 #include <vector>
+
+#include <aidl/Vintf.h>
+#define LOG_TAG "VtsHalHapticGeneratorTargetTest"
+#include <android-base/logging.h>
+#include <android/binder_enums.h>
 
 #include "EffectHelper.h"
 

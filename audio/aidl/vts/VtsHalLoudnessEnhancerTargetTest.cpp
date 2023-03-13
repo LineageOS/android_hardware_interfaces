@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-#include <aidl/Vintf.h>
 #include <string>
 
+#include <aidl/Vintf.h>
 #define LOG_TAG "VtsHalLoudnessEnhancerTest"
+#include <android-base/logging.h>
 
-#include <Utils.h>
 #include "EffectHelper.h"
 
 using namespace android;

@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-#include <Utils.h>
-#include <aidl/Vintf.h>
 #include <algorithm>
 #include <string>
 #include <unordered_set>
 
+#include <aidl/Vintf.h>
 #define LOG_TAG "VtsHalAECParamTest"
+#include <android-base/logging.h>
 
 #include "EffectHelper.h"
 #include "effect-impl/EffectTypes.h"
