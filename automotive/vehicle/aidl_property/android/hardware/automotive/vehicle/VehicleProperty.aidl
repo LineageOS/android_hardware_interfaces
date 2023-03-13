@@ -407,6 +407,10 @@ enum VehicleProperty {
      * all energy sources in a vehicle.  For example, a hybrid car's range will
      * be the sum of the ranges based on fuel and battery.
      *
+     * This property may be writable because a navigation app could update the range if it has a
+     * more accurate estimate based on the upcoming route. However, this property can be set to
+     * VehiclePropertyAccess.READ only at the OEM's discretion.
+     *
      * @change_mode VehiclePropertyChangeMode.CONTINUOUS
      * @access VehiclePropertyAccess.READ_WRITE
      * @unit VehicleUnit:METER
