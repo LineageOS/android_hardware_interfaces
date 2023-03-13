@@ -16,10 +16,13 @@
 
 #pragma once
 
-#include <aidl/android/hardware/audio/effect/BnEffect.h>
-#include <fmq/AidlMessageQueue.h>
 #include <cstdlib>
 #include <memory>
+#include <vector>
+
+#include <Utils.h>
+#include <aidl/android/hardware/audio/effect/BnEffect.h>
+#include <fmq/AidlMessageQueue.h>
 
 #include "effect-impl/EffectImpl.h"
 #include "effect-impl/EffectUUID.h"
@@ -30,7 +33,7 @@ class DynamicsProcessingSwContext final : public EffectContext {
   public:
     DynamicsProcessingSwContext(int statusDepth, const Parameter::Common& common)
         : EffectContext(statusDepth, common),
-          mChannelCount(::android::hardware::audio::common::getChannelCount(
+          mChannelCount(::aidl::android::hardware::audio::common::getChannelCount(
                   common.input.base.channelMask)),
           mPreEqChCfgs(mChannelCount, {.channel = kInvalidChannelId}),
           mPostEqChCfgs(mChannelCount, {.channel = kInvalidChannelId}),

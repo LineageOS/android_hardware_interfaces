@@ -30,7 +30,7 @@
 #include <aidl/android/media/audio/common/AudioOutputFlags.h>
 #include <aidl/android/media/audio/common/PcmType.h>
 
-namespace android::hardware::audio::common {
+namespace aidl::android::hardware::audio::common {
 
 // Some values are reserved for use by the system code only.
 // HALs must not accept or emit values outside from the provided list.
@@ -176,4 +176,4 @@ constexpr U makeBitPositionFlagMask(std::initializer_list<E> flags) {
     return result;
 }
 
-}  // namespace android::hardware::audio::common
+}  // namespace aidl::android::hardware::audio::common

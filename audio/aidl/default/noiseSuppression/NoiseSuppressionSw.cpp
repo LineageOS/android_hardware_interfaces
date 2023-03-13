@@ -17,10 +17,8 @@
 #include <algorithm>
 #include <cstddef>
 #include <memory>
-#define LOG_TAG "AHAL_NoiseSuppressionSw"
-#include <Utils.h>
-#include <unordered_set>
 
+#define LOG_TAG "AHAL_NoiseSuppressionSw"
 #include <android-base/logging.h>
 #include <fmq/AidlMessageQueue.h>
 

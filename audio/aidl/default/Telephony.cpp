@@ -22,10 +22,10 @@
 
 #include "core-impl/Telephony.h"
 
+using aidl::android::hardware::audio::common::isValidAudioMode;
 using aidl::android::media::audio::common::AudioMode;
 using aidl::android::media::audio::common::Boolean;
 using aidl::android::media::audio::common::Float;
-using android::hardware::audio::common::isValidAudioMode;
 
 namespace aidl::android::hardware::audio::core {
 
