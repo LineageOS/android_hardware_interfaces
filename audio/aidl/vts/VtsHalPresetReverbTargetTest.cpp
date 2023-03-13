@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "VtsHalPresetReverbTargetTest"
-
-#include <Utils.h>
 #include <aidl/Vintf.h>
+#define LOG_TAG "VtsHalPresetReverbTargetTest"
+#include <android-base/logging.h>
 #include <android/binder_enums.h>
+
 #include "EffectHelper.h"
 
 using namespace android;

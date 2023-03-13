@@ -17,10 +17,9 @@
 #include <algorithm>
 #include <cstddef>
 #include <memory>
-#define LOG_TAG "AHAL_AcousticEchoCancelerSw"
-#include <Utils.h>
 #include <unordered_set>
 
+#define LOG_TAG "AHAL_AcousticEchoCancelerSw"
 #include <android-base/logging.h>
 #include <fmq/AidlMessageQueue.h>
 

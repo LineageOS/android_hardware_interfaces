@@ -54,6 +54,10 @@
 
 using namespace android;
 using aidl::android::hardware::audio::common::AudioOffloadMetadata;
+using aidl::android::hardware::audio::common::getChannelCount;
+using aidl::android::hardware::audio::common::isBitPositionFlagSet;
+using aidl::android::hardware::audio::common::isTelephonyDeviceType;
+using aidl::android::hardware::audio::common::isValidAudioMode;
 using aidl::android::hardware::audio::common::PlaybackTrackMetadata;
 using aidl::android::hardware::audio::common::RecordTrackMetadata;
 using aidl::android::hardware::audio::common::SinkMetadata;
@@ -100,10 +104,6 @@ using aidl::android::media::audio::common::Int;
 using aidl::android::media::audio::common::MicrophoneDynamicInfo;
 using aidl::android::media::audio::common::MicrophoneInfo;
 using aidl::android::media::audio::common::Void;
-using android::hardware::audio::common::getChannelCount;
-using android::hardware::audio::common::isBitPositionFlagSet;
-using android::hardware::audio::common::isTelephonyDeviceType;
-using android::hardware::audio::common::isValidAudioMode;
 using android::hardware::audio::common::StreamLogic;
 using android::hardware::audio::common::StreamWorker;
 using ndk::enum_range;
