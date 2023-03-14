@@ -34,19 +34,39 @@ static const AudioLocation kMonoAudio = AudioLocation::UNKNOWN;
 
 static std::vector<LeAudioCodecCapabilitiesSetting> leAudioCodecCapabilities;
 
-std::vector<LeAudioCodecCapabilitiesSetting>
-BluetoothLeAudioCodecsProvider::GetLeAudioCodecCapabilities() {
-  if (!leAudioCodecCapabilities.empty()) {
-    return leAudioCodecCapabilities;
-  }
+static bool isInvalidFileContent = false;
 
-  const auto le_audio_offload_setting =
+std::optional<setting::LeAudioOffloadSetting>
+BluetoothLeAudioCodecsProvider::ParseFromLeAudioOffloadSettingFile() {
+  if (!leAudioCodecCapabilities.empty() || isInvalidFileContent) {
+    return std::nullopt;
+  }
+  auto le_audio_offload_setting =
       setting::readLeAudioOffloadSetting(kLeAudioCodecCapabilitiesFile);
   if (!le_audio_offload_setting.has_value()) {
     LOG(ERROR) << __func__ << ": Failed to read "
                << kLeAudioCodecCapabilitiesFile;
+  }
+  return le_audio_offload_setting;
+}
+
+std::vector<LeAudioCodecCapabilitiesSetting>
+BluetoothLeAudioCodecsProvider::GetLeAudioCodecCapabilities(
+    const std::optional<setting::LeAudioOffloadSetting>&
+        le_audio_offload_setting) {
+  if (!leAudioCodecCapabilities.empty()) {
+    return leAudioCodecCapabilities;
+  }
+
+  if (!le_audio_offload_setting.has_value()) {
+    LOG(ERROR)
+        << __func__
+        << ": input le_audio_offload_setting content need to be non empty";
     return {};
   }
+
+  ClearLeAudioCodecCapabilities();
+  isInvalidFileContent = true;
 
   std::vector<setting::Scenario> supported_scenarios =
       GetScenarios(le_audio_offload_setting);
@@ -79,7 +99,16 @@ BluetoothLeAudioCodecsProvider::GetLeAudioCodecCapabilities() {
 
   leAudioCodecCapabilities =
       ComposeLeAudioCodecCapabilities(supported_scenarios);
+  isInvalidFileContent = leAudioCodecCapabilities.empty();
+
   return leAudioCodecCapabilities;
+}
+
+void BluetoothLeAudioCodecsProvider::ClearLeAudioCodecCapabilities() {
+  leAudioCodecCapabilities.clear();
+  configuration_map_.clear();
+  codec_configuration_map_.clear();
+  strategy_configuration_map_.clear();
 }
 
 std::vector<setting::Scenario> BluetoothLeAudioCodecsProvider::GetScenarios(

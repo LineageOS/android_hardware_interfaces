@@ -25,8 +25,11 @@
 #define ATRACE_TAG ATRACE_TAG_AUDIO
 #include <HidlUtils.h>
 #include <android/log.h>
+#include <cutils/properties.h>
 #include <media/EffectsFactoryApi.h>
 #include <mediautils/ScopedStatistics.h>
+#include <sys/syscall.h>
+#include <system/audio_effects/effect_spatializer.h>
 #include <util/EffectUtils.h>
 #include <utils/Trace.h>
 
@@ -46,6 +49,160 @@ using ::android::hardware::audio::common::COMMON_TYPES_CPP_VERSION::implementati
 using ::android::hardware::audio::common::COMMON_TYPES_CPP_VERSION::implementation::HidlUtils;
 
 namespace {
+
+/**
+ * Some basic scheduling tools.
+ */
+namespace scheduler {
+
+int getCpu() {
+    return sched_getcpu();
+}
+
+uint64_t getAffinity(pid_t tid) {
+    cpu_set_t set;
+    CPU_ZERO_S(sizeof(set), &set);
+
+    if (sched_getaffinity(tid, sizeof(set), &set)) {
+        ALOGW("%s: for tid:%d returning 0, failed %s", __func__, tid, strerror(errno));
+        return 0;
+    }
+    const int count = CPU_COUNT_S(sizeof(set), &set);
+    uint64_t mask = 0;
+    for (int i = 0; i < CPU_SETSIZE; ++i) {
+        if (CPU_ISSET_S(i, sizeof(set), &set)) {
+            mask |= 1 << i;
+        }
+    }
+    ALOGV("%s: for tid:%d returning cpu count %d mask %llu", __func__, tid, count,
+          (unsigned long long)mask);
+    return mask;
+}
+
+status_t setAffinity(pid_t tid, uint64_t mask) {
+    cpu_set_t set;
+    CPU_ZERO_S(sizeof(set), &set);
+
+    for (uint64_t m = mask; m != 0;) {
+        uint64_t tz = __builtin_ctz(m);
+        CPU_SET_S(tz, sizeof(set), &set);
+        m &= ~(1 << tz);
+    }
+    if (sched_setaffinity(tid, sizeof(set), &set)) {
+        ALOGW("%s: for tid:%d setting cpu mask %llu failed %s", __func__, tid,
+              (unsigned long long)mask, strerror(errno));
+        return -errno;
+    }
+    ALOGV("%s: for tid:%d setting cpu mask %llu", __func__, tid, (unsigned long long)mask);
+    return OK;
+}
+
+__unused status_t setPriority(pid_t tid, int policy, int priority) {
+    struct sched_param param {
+        .sched_priority = priority,
+    };
+    if (sched_setscheduler(tid, policy, &param) != 0) {
+        ALOGW("%s: Cannot set FIFO priority for tid %d to policy %d priority %d  %s", __func__, tid,
+              policy, priority, strerror(errno));
+        return -errno;
+    }
+    ALOGV("%s: Successfully set priority for tid %d to policy %d priority %d", __func__, tid,
+          policy, priority);
+    return NO_ERROR;
+}
+
+status_t setUtilMin(pid_t tid, uint32_t utilMin) {
+    // Currently, there is no wrapper in bionic: b/183240349.
+    struct {
+        uint32_t size;
+        uint32_t sched_policy;
+        uint64_t sched_flags;
+        int32_t sched_nice;
+        uint32_t sched_priority;
+        uint64_t sched_runtime;
+        uint64_t sched_deadline;
+        uint64_t sched_period;
+        uint32_t sched_util_min;
+        uint32_t sched_util_max;
+    } attr{
+            .size = sizeof(attr),
+            .sched_flags = SCHED_FLAG_KEEP_ALL | SCHED_FLAG_UTIL_CLAMP_MIN,
+            .sched_util_min = utilMin,
+    };
+
+    if (syscall(__NR_sched_setattr, tid, &attr, 0 /* flags */)) {
+        ALOGW("%s: Cannot set sched_util_min for pid %d to %u  %s", __func__, tid, utilMin,
+              strerror(errno));
+        return -errno;
+    }
+    ALOGV("%s: Successfully set sched_util_min for pid %d to %u", __func__, tid, utilMin);
+    return NO_ERROR;
+}
+
+/*
+   Attempts to raise the priority and usage of tid for spatialization.
+   Returns OK if everything works.
+*/
+status_t updateSpatializerPriority(pid_t tid) {
+    status_t status = OK;
+
+    const int cpu = getCpu();
+    ALOGV("%s: current CPU:%d", __func__, cpu);
+
+    const auto currentAffinity = getAffinity(tid);
+    ALOGV("%s: current Affinity:%llx", __func__, (unsigned long long)currentAffinity);
+
+    // Set the desired CPU core affinity.
+    // Typically this would be done to move the Spatializer effect off of the little cores.
+    // The mid cores and large cores typically have more FP/NEON units
+    // and will advantageously reduce power and prevent glitches due CPU limitations.
+    //
+    // Since this is SOC dependent, we do not set the core affinity here but
+    // prefer to set the util_clamp_min below.
+    //
+    constexpr uint64_t kDefaultAffinity = 0;
+    const int32_t desiredAffinity =
+            property_get_int32("audio.spatializer.effect.affinity", kDefaultAffinity);
+    if (desiredAffinity != 0 && (desiredAffinity & ~currentAffinity) == 0) {
+        const status_t localStatus = setAffinity(tid, desiredAffinity);
+        status = status ? status : localStatus;
+    }
+
+    // Set the util_clamp_min.
+    // This is beneficial to reduce glitches when starting up, or due to scheduler
+    // thread statistics reset (e.g. core migration), which cause the CPU frequency to drop
+    // to minimum.
+    //
+    // Experimentation has found that moving to a mid core over a little core reduces
+    // power if the mid core (e.g. A76/78) has more (e.g. 2x) FP/NEON units
+    // than the little core (e.g. A55).
+    // A possible value is 300.
+    //
+    constexpr uint32_t kUtilMin = 0;
+    const int32_t utilMin = property_get_int32("audio.spatializer.effect.util_clamp_min", kUtilMin);
+    if (utilMin > 0 && utilMin <= 1024) {
+        const status_t localStatus = setUtilMin(tid, utilMin);
+        status = status ? status : localStatus;
+    }
+
+#if 0
+    // Provided for local vendor testing but not enabled as audioserver does this for us.
+    //
+    // Set priority if specified.
+    constexpr int32_t kRTPriorityMin = 1;
+    constexpr int32_t kRTPriorityMax = 3;
+    const int32_t priorityBoost =
+            property_get_int32("audio.spatializer.priority", kRTPriorityMin);
+    if (priorityBoost >= kRTPriorityMin && priorityBoost <= kRTPriorityMax) {
+        const status_t localStatus = scheduler::setPriority(threadId, SCHED_FIFO, priorityBoost);
+        status = status ? status : localStatus;
+    }
+#endif
+
+    return status;
+}
+
+}  // namespace scheduler
 
 #define SCOPED_STATS()                                                       \
     ::android::mediautils::ScopedStatistics scopedStatistics {               \
@@ -83,6 +240,16 @@ class ProcessThread : public Thread {
 };
 
 bool ProcessThread::threadLoop() {
+    // For a spatializer effect, we perform scheduler adjustments to reduce glitches and power.
+    {
+        effect_descriptor_t halDescriptor{};
+        if ((*mEffect)->get_descriptor(mEffect, &halDescriptor) == NO_ERROR &&
+            memcmp(&halDescriptor.type, FX_IID_SPATIALIZER, sizeof(effect_uuid_t)) == 0) {
+            const status_t status = scheduler::updateSpatializerPriority(gettid());
+            ALOGW_IF(status != OK, "Failed to update Spatializer priority");
+        }
+    }
+
     // This implementation doesn't return control back to the Thread until it decides to stop,
     // as the Thread uses mutexes, and this can lead to priority inversion.
     while (!std::atomic_load_explicit(mStop, std::memory_order_acquire)) {
