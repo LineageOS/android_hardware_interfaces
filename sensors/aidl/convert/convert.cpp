@@ -462,7 +462,6 @@ void convertFromSensorEvent(const sensors_event_t& src, Event* dst) {
             limitedAxesImuUncal.z = src.limited_axes_imu_uncalibrated.z_uncalib;
             limitedAxesImuUncal.xBias = src.limited_axes_imu_uncalibrated.x_bias;
             limitedAxesImuUncal.yBias = src.limited_axes_imu_uncalibrated.y_bias;
-            limitedAxesImuUncal.yBias = src.limited_axes_imu_uncalibrated.y_bias;
             limitedAxesImuUncal.zBias = src.limited_axes_imu_uncalibrated.z_bias;
             limitedAxesImuUncal.xSupported = src.limited_axes_imu_uncalibrated.x_supported;
             limitedAxesImuUncal.ySupported = src.limited_axes_imu_uncalibrated.y_supported;
