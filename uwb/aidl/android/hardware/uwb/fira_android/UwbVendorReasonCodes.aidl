@@ -31,6 +31,8 @@ enum UwbVendorReasonCodes {
     /** Fira specific */
     /** The channel requested is not available for AoA */
     REASON_ERROR_INVALID_CHANNEL_WITH_AOA = 0x80,
+    /** UWB stopped caused by other session conflict */
+    REASON_ERROR_STOPPED_DUE_TO_OTHER_SESSION_CONFLICT = 0x81,
     /** UWB has been disabled (eg: country code change leads to UWB unsupported) */
-    REASON_REGULATION_UWB_OFF = 0x81,
+    REASON_REGULATION_UWB_OFF = 0x82,
 }
