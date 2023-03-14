@@ -595,12 +595,17 @@ TEST_P(RadioHidlTest_v1_5, startNetworkScan) {
     if (cardStatus.base.base.base.cardState == CardState::ABSENT) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_5->rspInfo.error, {RadioError::SIM_ABSENT}));
     } else if (cardStatus.base.base.base.cardState == CardState::PRESENT) {
-        // OPERATION_NOT_ALLOWED should not be allowed; however, some vendors do
-        // not support the required manual GSM search functionality. This is
-        // tracked in b/112206766. Modems have "GSM" rat scan need to
+        // Modems have "GSM" rat scan need to
         // support scanning requests combined with some parameters.
-        ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_5->rspInfo.error,
-                                     {RadioError::NONE, RadioError::OPERATION_NOT_ALLOWED}));
+        if (deviceSupportsFeature(FEATURE_TELEPHONY_GSM)) {
+            ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_5->rspInfo.error,
+                                         {RadioError::NONE, RadioError::OPERATION_NOT_ALLOWED}));
+        } else {
+            ASSERT_TRUE(CheckAnyOfErrors(
+                    radioRsp_v1_5->rspInfo.error,
+                    {RadioError::NONE, RadioError::OPERATION_NOT_ALLOWED,
+                     RadioError::REQUEST_NOT_SUPPORTED, RadioError::INVALID_ARGUMENTS}));
+        }
     }
 
     if (radioRsp_v1_5->rspInfo.error == RadioError::NONE) {
