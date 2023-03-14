@@ -101,67 +101,70 @@ void RecurrentTimer::removeInvalidCallbackLocked() {
     }
 }
 
-std::unique_ptr<RecurrentTimer::CallbackInfo> RecurrentTimer::popNextCallbackLocked() {
+std::shared_ptr<RecurrentTimer::Callback> RecurrentTimer::getNextCallbackLocked(int64_t now) {
     std::pop_heap(mCallbackQueue.begin(), mCallbackQueue.end(), CallbackInfo::cmp);
-    std::unique_ptr<CallbackInfo> info = std::move(mCallbackQueue[mCallbackQueue.size() - 1]);
-    mCallbackQueue.pop_back();
+    auto& callbackInfo = mCallbackQueue[mCallbackQueue.size() - 1];
+    auto nextCallback = callbackInfo->callback;
+    // intervalCount is the number of interval we have to advance until we pass now.
+    size_t intervalCount = (now - callbackInfo->nextTime) / callbackInfo->interval + 1;
+    callbackInfo->nextTime += intervalCount * callbackInfo->interval;
+    std::push_heap(mCallbackQueue.begin(), mCallbackQueue.end(), CallbackInfo::cmp);
+
     // Make sure the first element is always valid.
     removeInvalidCallbackLocked();
-    return info;
+
+    return nextCallback;
 }
 
 void RecurrentTimer::loop() {
-    std::unique_lock<std::mutex> uniqueLock(mLock);
-
+    std::vector<std::shared_ptr<Callback>> callbacksToRun;
     while (true) {
-        // Wait until the timer exits or we have at least one recurrent callback.
-        mCond.wait(uniqueLock, [this] {
-            ScopedLockAssertion lockAssertion(mLock);
-            return mStopRequested || mCallbackQueue.size() != 0;
-        });
-
-        int64_t interval;
         {
+            std::unique_lock<std::mutex> uniqueLock(mLock);
             ScopedLockAssertion lockAssertion(mLock);
+            // Wait until the timer exits or we have at least one recurrent callback.
+            mCond.wait(uniqueLock, [this] {
+                ScopedLockAssertion lockAssertion(mLock);
+                return mStopRequested || mCallbackQueue.size() != 0;
+            });
+
+            int64_t interval;
             if (mStopRequested) {
                 return;
             }
             // The first element is the nearest next event.
             int64_t nextTime = mCallbackQueue[0]->nextTime;
             int64_t now = uptimeNanos();
+
             if (nextTime > now) {
                 interval = nextTime - now;
             } else {
                 interval = 0;
             }
-        }
 
-        // Wait for the next event or the timer exits.
-        if (mCond.wait_for(uniqueLock, std::chrono::nanoseconds(interval), [this] {
-                ScopedLockAssertion lockAssertion(mLock);
-                return mStopRequested;
-            })) {
-            return;
-        }
+            // Wait for the next event or the timer exits.
+            if (mCond.wait_for(uniqueLock, std::chrono::nanoseconds(interval), [this] {
+                    ScopedLockAssertion lockAssertion(mLock);
+                    return mStopRequested;
+                })) {
+                return;
+            }
 
-        {
-            ScopedLockAssertion lockAssertion(mLock);
-            int64_t now = uptimeNanos();
+            now = uptimeNanos();
+            callbacksToRun.clear();
             while (mCallbackQueue.size() > 0) {
                 int64_t nextTime = mCallbackQueue[0]->nextTime;
                 if (nextTime > now) {
                     break;
                 }
 
-                std::unique_ptr<CallbackInfo> info = popNextCallbackLocked();
-                info->nextTime += info->interval;
-
-                auto callback = info->callback;
-                mCallbackQueue.push_back(std::move(info));
-                std::push_heap(mCallbackQueue.begin(), mCallbackQueue.end(), CallbackInfo::cmp);
-
-                (*callback)();
+                callbacksToRun.push_back(getNextCallbackLocked(now));
             }
+        }
+
+        // Do not execute the callback while holding the lock.
+        for (size_t i = 0; i < callbacksToRun.size(); i++) {
+            (*callbacksToRun[i])();
         }
     }
 }

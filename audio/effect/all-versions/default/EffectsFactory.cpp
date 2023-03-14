@@ -32,6 +32,7 @@
 
 #include <UuidUtils.h>
 #include <android/log.h>
+#include <hidl/HidlTransportSupport.h>
 #include <media/EffectsFactoryApi.h>
 #include <system/audio_effects/effect_aec.h>
 #include <system/audio_effects/effect_agc.h>
@@ -44,6 +45,7 @@
 #include <system/audio_effects/effect_presetreverb.h>
 #include <system/audio_effects/effect_virtualizer.h>
 #include <system/audio_effects/effect_visualizer.h>
+#include <system/thread_defs.h>
 #include <util/EffectUtils.h>
 
 namespace android {
@@ -189,6 +191,7 @@ Return<void> EffectsFactory::createEffectImpl(const Uuid& uuid, int32_t session,
         status = (*handle)->get_descriptor(handle, &halDescriptor);
         if (status == OK) {
             effect = dispatchEffectInstanceCreation(halDescriptor, handle);
+            android::hardware::setMinSchedulerPolicy(effect, SCHED_NORMAL, ANDROID_PRIORITY_AUDIO);
             effectId = EffectMap::getInstance().add(handle);
         } else {
             ALOGE("Error querying effect descriptor for %s: %s",

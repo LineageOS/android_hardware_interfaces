@@ -398,8 +398,11 @@ BluetoothAudioCodecs::GetLeAudioOffloadCodecCapabilities(
   }
 
   if (kDefaultOffloadLeAudioCapabilities.empty()) {
+    auto le_audio_offload_setting =
+        BluetoothLeAudioCodecsProvider::ParseFromLeAudioOffloadSettingFile();
     kDefaultOffloadLeAudioCapabilities =
-        BluetoothLeAudioCodecsProvider::GetLeAudioCodecCapabilities();
+        BluetoothLeAudioCodecsProvider::GetLeAudioCodecCapabilities(
+            le_audio_offload_setting);
   }
 
   return kDefaultOffloadLeAudioCapabilities;

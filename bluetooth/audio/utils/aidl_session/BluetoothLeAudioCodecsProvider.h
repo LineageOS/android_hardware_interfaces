@@ -31,8 +31,13 @@ namespace audio {
 
 class BluetoothLeAudioCodecsProvider {
  public:
+  static std::optional<setting::LeAudioOffloadSetting>
+  ParseFromLeAudioOffloadSettingFile();
   static std::vector<LeAudioCodecCapabilitiesSetting>
-  GetLeAudioCodecCapabilities();
+  GetLeAudioCodecCapabilities(
+      const std::optional<setting::LeAudioOffloadSetting>&
+          le_audio_offload_setting);
+  static void ClearLeAudioCodecCapabilities();
 
  private:
   static inline std::unordered_map<std::string, setting::Configuration>
