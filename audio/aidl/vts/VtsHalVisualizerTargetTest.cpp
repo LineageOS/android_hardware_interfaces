@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-#include <aidl/Vintf.h>
-
-#define LOG_TAG "VtsHalVisualizerTest"
-
-#include <Utils.h>
-#include <android/binder_enums.h>
 #include <unordered_set>
+
+#include <aidl/Vintf.h>
+#define LOG_TAG "VtsHalVisualizerTest"
+#include <android-base/logging.h>
+#include <android/binder_enums.h>
 
 #include "EffectHelper.h"
 

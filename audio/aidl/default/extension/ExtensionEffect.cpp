@@ -19,9 +19,8 @@
 #include <memory>
 #include <unordered_set>
 
-#define LOG_TAG "AHAL_ExtensionEffect"
-#include <Utils.h>
 #include <aidl/android/hardware/audio/effect/DefaultExtension.h>
+#define LOG_TAG "AHAL_ExtensionEffect"
 #include <android-base/logging.h>
 #include <fmq/AidlMessageQueue.h>
 

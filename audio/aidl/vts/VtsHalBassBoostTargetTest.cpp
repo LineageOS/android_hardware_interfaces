@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "VtsHalBassBoostTest"
-
-#include <Utils.h>
-#include <aidl/Vintf.h>
 #include <limits.h>
+
+#include <aidl/Vintf.h>
+#define LOG_TAG "VtsHalBassBoostTest"
+#include <android-base/logging.h>
 
 #include "EffectHelper.h"
 

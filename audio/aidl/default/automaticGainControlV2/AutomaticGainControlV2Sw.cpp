@@ -17,10 +17,8 @@
 #include <algorithm>
 #include <cstddef>
 #include <memory>
-#define LOG_TAG "AHAL_AutomaticGainControlV2Sw"
-#include <Utils.h>
-#include <unordered_set>
 
+#define LOG_TAG "AHAL_AutomaticGainControlV2Sw"
 #include <android-base/logging.h>
 #include <fmq/AidlMessageQueue.h>
 

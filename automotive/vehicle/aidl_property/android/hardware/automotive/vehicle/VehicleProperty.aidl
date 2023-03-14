@@ -306,7 +306,10 @@ enum VehicleProperty {
      * configArray is used to indicate the micrometers-per-wheel-tick value and
      * which wheels are supported.  configArray is set as follows:
      *
-     *  configArray[0], bits [0:3] = supported wheels.  Uses enum Wheel.
+     *  configArray[0], bits [0:3] = supported wheels. Uses enum Wheel. For example, if all wheels
+     *    are supported, then configArray[0] = VehicleAreaWheel::LEFT_FRONT
+     *    | VehicleAreaWheel::RIGHT_FRONT | VehicleAreaWheel::LEFT_REAR
+     *    | VehicleAreaWheel::RIGHT_REAR
      *  configArray[1] = micrometers per front left wheel tick
      *  configArray[2] = micrometers per front right wheel tick
      *  configArray[3] = micrometers per rear right wheel tick

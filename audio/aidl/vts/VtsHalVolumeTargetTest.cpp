@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "VtsHalVolumeTest"
-
-#include <Utils.h>
 #include <aidl/Vintf.h>
+#define LOG_TAG "VtsHalVolumeTest"
+#include <android-base/logging.h>
+
 #include "EffectHelper.h"
 
 using namespace android;
