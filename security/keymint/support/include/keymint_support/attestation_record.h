@@ -43,6 +43,8 @@ class AuthorizationSet;
  */
 static const char kAttestionRecordOid[] = "1.3.6.1.4.1.11129.2.1.17";
 
+static const char kCrlDPOid[] = "2.5.29.31";  // Standard CRL Distribution Points extension.
+
 enum class VerifiedBoot : uint8_t {
     VERIFIED = 0,
     SELF_SIGNED = 1,

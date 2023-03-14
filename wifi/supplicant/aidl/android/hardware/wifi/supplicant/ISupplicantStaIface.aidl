@@ -850,20 +850,4 @@ interface ISupplicantStaIface {
      *          being processed. Supplicant will only handle one request at a time.
      */
     QosPolicyScsRequestStatus[] removeQosPolicyForScs(in byte[] scsPolicyIds);
-
-    /**
-     * Request the removal of all QoS policies for SCS configured by the STA.
-     *
-     * @return QosPolicyScsRequestStatus[] synchronously corresponding to all
-     *         the scs policies.
-     * @throws ServiceSpecificException with one of the following values:
-     *         |SupplicantStatusCode.FAILURE_UNKNOWN| if there are no policies to remove.
-     *
-     *         |SupplicantStatusCode.FAILURE_UNSUPPORTED| if the AP does not support
-     *          the feature.
-     *
-     *         |SupplicantStatusCode.FAILURE_ONGOING_REQUEST| if a request is currently
-     *          being processed. Supplicant will only handle one request at a time.
-     */
-    QosPolicyScsRequestStatus[] removeAllQosPoliciesForScs();
 }

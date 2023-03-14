@@ -21,7 +21,6 @@
 #include <string>
 #include <vector>
 
-#include <Utils.h>
 #include <aidl/Gtest.h>
 #include <aidl/Vintf.h>
 #include <aidl/android/hardware/audio/effect/IEffect.h>
