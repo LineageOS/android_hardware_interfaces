@@ -38,6 +38,7 @@ union Parameter {
   android.media.audio.common.AudioDeviceDescription[] deviceDescription;
   android.media.audio.common.AudioMode mode;
   android.media.audio.common.AudioSource source;
+  boolean offload;
   android.hardware.audio.effect.Parameter.VolumeStereo volumeStereo;
   android.hardware.audio.effect.Parameter.Specific specific;
   @VintfStability
