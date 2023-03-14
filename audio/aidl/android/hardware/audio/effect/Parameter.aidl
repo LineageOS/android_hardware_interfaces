@@ -28,6 +28,7 @@ import android.hardware.audio.effect.HapticGenerator;
 import android.hardware.audio.effect.LoudnessEnhancer;
 import android.hardware.audio.effect.NoiseSuppression;
 import android.hardware.audio.effect.PresetReverb;
+import android.hardware.audio.effect.Spatializer;
 import android.hardware.audio.effect.VendorExtension;
 import android.hardware.audio.effect.Virtualizer;
 import android.hardware.audio.effect.Visualizer;
@@ -103,6 +104,11 @@ union Parameter {
          * directly.
          */
         Parameter.Tag commonTag;
+
+        /**
+         * Parameter tag defined for Spatializer parameters.
+         */
+        Spatializer.Id spatializerTag;
     }
 
     /**
@@ -189,6 +195,7 @@ union Parameter {
         Virtualizer virtualizer;
         Visualizer visualizer;
         Volume volume;
+        Spatializer spatializer;
     }
     Specific specific;
 }
