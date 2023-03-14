@@ -549,6 +549,11 @@ TEST_P(SensorsHidlTest, CallInitializeTwice) {
 }
 
 TEST_P(SensorsHidlTest, CleanupConnectionsOnInitialize) {
+    if (getSensorsList().size() == 0) {
+        // No sensors
+        return;
+    }
+
     activateAllSensors(true);
 
     // Verify that events are received
