@@ -3537,50 +3537,6 @@
             ]
         },
         {
-            "property": "VehicleProperty::DRIVER_ATTENTION_MONITORING_ENABLED",
-            "defaultValue": {
-                "int32Values": [
-                    1
-                ]
-            }
-        },
-        {
-            "property": "VehicleProperty::DRIVER_ATTENTION_MONITORING_STATE",
-            "defaultValue": {
-                "int32Values": [
-                    "DriverAttentionMonitoringState::NOT_DISTRACTED"
-                ]
-            },
-            "areas": [
-                {
-                    "areaId": 0,
-                    "supportedEnumValues": [
-                        "ErrorState::NOT_AVAILABLE_DISABLED",
-                        "DriverAttentionMonitoringState::DISTRACTED",
-                        "DriverAttentionMonitoringState::NOT_DISTRACTED"
-                    ]
-                }
-            ]
-        },
-        {
-            "property": "VehicleProperty::DRIVER_ATTENTION_MONITORING_WARNING",
-            "defaultValue": {
-                "int32Values": [
-                    "DriverAttentionMonitoringWarning::NO_WARNING"
-                ]
-            },
-            "areas": [
-                {
-                    "areaId": 0,
-                    "supportedEnumValues": [
-                        "ErrorState::NOT_AVAILABLE_DISABLED",
-                        "DriverAttentionMonitoringWarning::NO_WARNING",
-                        "DriverAttentionMonitoringWarning::WARNING"
-                    ]
-                }
-            ]
-        },
-        {
             "property": "VehicleProperty::INITIAL_USER_INFO"
         },
         {
