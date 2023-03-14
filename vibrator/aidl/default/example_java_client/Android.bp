@@ -10,7 +10,8 @@ package {
 cc_library {
     name: "libexample_vib_getter",
     srcs: ["getter.cpp"],
-    vendor: true,
+    product_available: true,
+    vendor_available: true,
     shared_libs: [
         "liblog",
         "libbinder_ndk",
@@ -22,13 +23,32 @@ cc_library {
 
 android_app {
     name: "ExampleVibratorJavaVendorClient",
-    privileged: true,
     vendor: true,
     static_libs: ["android.hardware.vibrator-V1-java"],
     jni_libs: ["libexample_vib_getter"],
+    use_embedded_native_libs: true,
     jarjar_rules: "jarjar.txt",
     stl: "c++_shared",
     srcs: ["example/vib/MyActivity.java"],
     sdk_version: "system_current",
     visibility: [":__subpackages__"],
+}
+
+android_app {
+    name: "ExampleVibratorJavaProductClient",
+    product_specific: true,
+    static_libs: ["android.hardware.vibrator-V1-java"],
+    jni_libs: ["libexample_vib_getter"],
+    use_embedded_native_libs: true,
+    jarjar_rules: "jarjar.txt",
+    stl: "c++_shared",
+    srcs: ["example/vib/MyActivity.java"],
+    sdk_version: "system_current",
+    visibility: [":__subpackages__"],
+    // If PRODUCT_ENFORCE_PRODUCT_PARTITION_INTERFACE is not true, product apps
+    // may use unstable APIs. jni_uses_platform_apis must set to use the
+    // non-SDK jni libs in this case.
+    // This is not required if PRODUCT_ENFORCE_PRODUCT_PARTITION_INTERFACE is
+    // set to true.
+    jni_uses_platform_apis: true,
 }
