@@ -309,6 +309,7 @@ class KeyMintAidlTestBase : public ::testing::TestWithParam<string> {
     }
     bool IsSecure() const { return securityLevel_ != SecurityLevel::SOFTWARE; }
     SecurityLevel SecLevel() const { return securityLevel_; }
+    bool IsRkpSupportRequired() const;
 
     vector<uint32_t> ValidKeySizes(Algorithm algorithm);
     vector<uint32_t> InvalidKeySizes(Algorithm algorithm);
