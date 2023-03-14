@@ -42,7 +42,6 @@ cc_binary {
         "service.cpp",
     ],
     required: [
-        "RemoteProvisioner",
         "android.hardware.hardware_keystore.xml",
     ],
 }
