@@ -135,16 +135,24 @@ union Parameter {
      * Effect must implement setParameter(deviceDescription) if Flags.deviceIndication set to true.
      */
     AudioDeviceDescription[] deviceDescription;
+
     /**
      * Used by audio framework to set the audio mode to effect engine.
      * Effect must implement setParameter(mode) if Flags.audioModeIndication set to true.
      */
     AudioMode mode;
+
     /**
      * Used by audio framework to set the audio source to effect engine.
      * Effect must implement setParameter(source) if Flags.audioSourceIndication set to true.
      */
     AudioSource source;
+
+    /**
+     * Used by audio framework to indicate whether the playback thread the effect is attached to is
+     * offloaded or not.
+     */
+    boolean offload;
 
     /**
      * The volume gain for left and right channel, left and right equals to same value if it's mono.
