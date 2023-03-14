@@ -290,11 +290,12 @@ bytevec getProdEekChain(int32_t supportedEekCurve) {
     return chain.encode();
 }
 
-ErrMsgOr<std::vector<BccEntryData>> validateBcc(const cppbor::Array* bcc) {
+ErrMsgOr<std::vector<BccEntryData>> validateBcc(const cppbor::Array* bcc,
+                                                hwtrust::DiceChain::Kind kind) {
     auto encodedBcc = bcc->encode();
-    auto chain = hwtrust::DiceChain::verify(encodedBcc);
+    auto chain = hwtrust::DiceChain::Verify(encodedBcc, kind);
     if (!chain.ok()) return chain.error().message();
-    auto keys = chain->cose_public_keys();
+    auto keys = chain->CosePublicKeys();
     if (!keys.ok()) return keys.error().message();
     std::vector<BccEntryData> result;
     for (auto& key : *keys) {
@@ -569,7 +570,7 @@ ErrMsgOr<std::vector<BccEntryData>> verifyProtectedData(
     }
 
     // BCC is [ pubkey, + BccEntry]
-    auto bccContents = validateBcc(bcc->asArray());
+    auto bccContents = validateBcc(bcc->asArray(), hwtrust::DiceChain::Kind::kProtectedData);
     if (!bccContents) {
         return bccContents.message() + "\n" + prettyPrint(bcc.get());
     }
@@ -859,8 +860,8 @@ ErrMsgOr<bytevec> parseAndValidateAuthenticatedRequest(const std::vector<uint8_t
         return "AuthenticatedRequest SignedData must be an Array.";
     }
 
-    // DICE chain is [ pubkey, + DiceChainEntry ]. Its format is the same as BCC from RKP v1-2.
-    auto diceContents = validateBcc(diceCertChain);
+    // DICE chain is [ pubkey, + DiceChainEntry ].
+    auto diceContents = validateBcc(diceCertChain, hwtrust::DiceChain::Kind::kAuthenticatedMessage);
     if (!diceContents) {
         return diceContents.message() + "\n" + prettyPrint(diceCertChain);
     }
