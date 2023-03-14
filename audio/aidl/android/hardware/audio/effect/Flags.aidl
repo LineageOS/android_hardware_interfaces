@@ -112,31 +112,31 @@ parcelable Flags {
     HardwareAccelerator hwAcceleratorMode = HardwareAccelerator.NONE;
 
     /**
-     * Effect instance set this flag to true if it requires update on if the playback thread the
-     * effect attached to is offloaded or not. In this case the framework must call
+     * Effect instance sets this flag to true if it requires updates on whether the playback thread
+     * the effect is attached to is offloaded or not.  In this case the framework must call
      * IEffect.setParameter(Parameter.offload) to notify effect instance when playback thread
      * offload changes.
      */
     boolean offloadIndication;
 
     /**
-     * Effect instance set this flag to true if it requires device change update. In this case the
+     * Effect instance sets this flag to true if it requires device change update. In this case the
      * framework must call IEffect.setParameter(Parameter.device) to notify effect instance when the
      * device changes.
      */
     boolean deviceIndication;
 
     /**
-     * Effect instance set this flag to true if it requires audio mode change update. In this case
+     * Effect instance sets this flag to true if it requires audio mode change update. In this case
      * the framework must call IEffect.setParameter(Parameter.mode) to notify effect instance when
      * the audio mode changes.
      */
     boolean audioModeIndication;
 
     /**
-     * Effect instance set this flag to true if it requires audio source change update. In this case
-     * the framework must call IEffect.setParameter(Parameter.source) to notify effect instance when
-     * the audio source changes.
+     * Effect instance sets this flag to true if it requires audio source change update. In this
+     * case the framework must call IEffect.setParameter(Parameter.source) to notify effect instance
+     * when the audio source changes.
      */
     boolean audioSourceIndication;
 
