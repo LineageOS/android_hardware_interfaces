@@ -51,8 +51,7 @@ parcelable ProgramSelector {
      *  - analogue AM/FM: AMFM_FREQUENCY_KHZ;
      *  - FM RDS: RDS_PI;
      *  - HD Radio: HD_STATION_ID_EXT;
-     *  - DAB/DMB: DAB_SID_EXT (when used, DAB_ENSEMBLE and DAB_FREQUENCY_KHZ
-     *    must present in secondaryIds);
+     *  - DAB/DMB: DAB_SID_EXT;
      *  - Digital Radio Mondiale: DRMO_SERVICE_ID;
      *  - SiriusXM: SXM_SERVICE_ID;
      *  - vendor-specific: VENDOR_START..VENDOR_END.
@@ -63,13 +62,16 @@ parcelable ProgramSelector {
      * Secondary program identifiers.
      *
      * These identifiers are supplementary and can speed up tuning process,
-     * but the primary ID must be sufficient (i.e. RDS PI is enough to select
+     * but the primary ID should be sufficient (i.e. RDS PI is enough to select
      * a station from the list after a full band scan).
      *
      * Two selectors with different secondary IDs, but the same primary ID are
      * considered equal. In particular, secondary IDs array may get updated for
      * an entry on the program list (ie. when a better frequency for a given
      * station is found).
+     *
+     * If DAB_SID_EXT is used as primaryId, using DAB_ENSEMBLE or DAB_FREQUENCY_KHZ
+     * as secondray identifiers can uniquely identify the DAB station.
      */
     ProgramIdentifier[] secondaryIds;
 }
