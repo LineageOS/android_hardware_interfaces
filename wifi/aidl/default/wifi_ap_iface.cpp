@@ -64,12 +64,6 @@ ndk::ScopedAStatus WifiApIface::setCountryCode(const std::array<uint8_t, 2>& in_
                            &WifiApIface::setCountryCodeInternal, in_code);
 }
 
-ndk::ScopedAStatus WifiApIface::getValidFrequenciesForBand(WifiBand in_band,
-                                                           std::vector<int32_t>* _aidl_return) {
-    return validateAndCall(this, WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
-                           &WifiApIface::getValidFrequenciesForBandInternal, _aidl_return, in_band);
-}
-
 ndk::ScopedAStatus WifiApIface::setMacAddress(const std::array<uint8_t, 6>& in_mac) {
     return validateAndCall(this, WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
                            &WifiApIface::setMacAddressInternal, in_mac);
@@ -99,18 +93,6 @@ ndk::ScopedAStatus WifiApIface::setCountryCodeInternal(const std::array<uint8_t,
     legacy_hal::wifi_error legacy_status = legacy_hal_.lock()->setCountryCode(
             instances_.size() > 0 ? instances_[0] : ifname_, code);
     return createWifiStatusFromLegacyError(legacy_status);
-}
-
-std::pair<std::vector<int32_t>, ndk::ScopedAStatus> WifiApIface::getValidFrequenciesForBandInternal(
-        WifiBand band) {
-    static_assert(sizeof(WifiChannelWidthInMhz) == sizeof(int32_t), "Size mismatch");
-    legacy_hal::wifi_error legacy_status;
-    std::vector<uint32_t> valid_frequencies;
-    std::tie(legacy_status, valid_frequencies) = legacy_hal_.lock()->getValidFrequenciesForBand(
-            instances_.size() > 0 ? instances_[0] : ifname_,
-            aidl_struct_util::convertAidlWifiBandToLegacy(band));
-    return {std::vector<int32_t>(valid_frequencies.begin(), valid_frequencies.end()),
-            createWifiStatusFromLegacyError(legacy_status)};
 }
 
 ndk::ScopedAStatus WifiApIface::setMacAddressInternal(const std::array<uint8_t, 6>& mac) {

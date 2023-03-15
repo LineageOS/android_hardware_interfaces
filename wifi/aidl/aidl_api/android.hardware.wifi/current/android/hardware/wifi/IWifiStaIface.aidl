@@ -47,7 +47,6 @@ interface IWifiStaIface {
   byte[6] getFactoryMacAddress();
   android.hardware.wifi.StaLinkLayerStats getLinkLayerStats();
   android.hardware.wifi.StaRoamingCapabilities getRoamingCapabilities();
-  int[] getValidFrequenciesForBand(in android.hardware.wifi.WifiBand band);
   void installApfPacketFilter(in byte[] program);
   byte[] readApfPacketFilterData();
   void registerEventCallback(in android.hardware.wifi.IWifiStaIfaceEventCallback callback);

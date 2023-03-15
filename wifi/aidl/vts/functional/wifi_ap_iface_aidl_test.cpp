@@ -68,19 +68,6 @@ TEST_P(WifiApIfaceAidlTest, SetCountryCode) {
 }
 
 /*
- * GetValidFrequenciesForBand
- * Ensures that we can retrieve valid frequencies for the 2.4 GHz band.
- */
-TEST_P(WifiApIfaceAidlTest, GetValidFrequenciesForBand) {
-    std::shared_ptr<IWifiApIface> wifi_ap_iface = getWifiApIface(getInstanceName());
-    ASSERT_NE(nullptr, wifi_ap_iface.get());
-
-    std::vector<int32_t> freqs;
-    EXPECT_TRUE(wifi_ap_iface->getValidFrequenciesForBand(WifiBand::BAND_24GHZ, &freqs).isOk());
-    EXPECT_NE(freqs.size(), 0);
-}
-
-/*
  * GetFactoryMacAddress
  */
 TEST_P(WifiApIfaceAidlTest, GetFactoryMacAddress) {
