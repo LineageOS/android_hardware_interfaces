@@ -41,68 +41,67 @@ inline std::vector<int32_t> uintToIntVec(const std::vector<uint32_t>& in) {
     return std::vector<int32_t>(in.begin(), in.end());
 }
 
-IWifiChip::ChipCapabilityMask convertLegacyFeatureToAidlChipCapability(uint64_t feature) {
+IWifiChip::FeatureSetMask convertLegacyChipFeatureToAidl(uint64_t feature) {
     switch (feature) {
         case WIFI_FEATURE_SET_TX_POWER_LIMIT:
-            return IWifiChip::ChipCapabilityMask::SET_TX_POWER_LIMIT;
+            return IWifiChip::FeatureSetMask::SET_TX_POWER_LIMIT;
         case WIFI_FEATURE_USE_BODY_HEAD_SAR:
-            return IWifiChip::ChipCapabilityMask::USE_BODY_HEAD_SAR;
+            return IWifiChip::FeatureSetMask::USE_BODY_HEAD_SAR;
         case WIFI_FEATURE_D2D_RTT:
-            return IWifiChip::ChipCapabilityMask::D2D_RTT;
+            return IWifiChip::FeatureSetMask::D2D_RTT;
         case WIFI_FEATURE_D2AP_RTT:
-            return IWifiChip::ChipCapabilityMask::D2AP_RTT;
+            return IWifiChip::FeatureSetMask::D2AP_RTT;
         case WIFI_FEATURE_INFRA_60G:
-            return IWifiChip::ChipCapabilityMask::WIGIG;
+            return IWifiChip::FeatureSetMask::WIGIG;
         case WIFI_FEATURE_SET_LATENCY_MODE:
-            return IWifiChip::ChipCapabilityMask::SET_LATENCY_MODE;
+            return IWifiChip::FeatureSetMask::SET_LATENCY_MODE;
         case WIFI_FEATURE_P2P_RAND_MAC:
-            return IWifiChip::ChipCapabilityMask::P2P_RAND_MAC;
+            return IWifiChip::FeatureSetMask::P2P_RAND_MAC;
         case WIFI_FEATURE_AFC_CHANNEL:
-            return IWifiChip::ChipCapabilityMask::SET_AFC_CHANNEL_ALLOWANCE;
+            return IWifiChip::FeatureSetMask::SET_AFC_CHANNEL_ALLOWANCE;
     };
     CHECK(false) << "Unknown legacy feature: " << feature;
     return {};
 }
 
-IWifiStaIface::StaIfaceCapabilityMask convertLegacyFeatureToAidlStaIfaceCapability(
-        uint64_t feature) {
+IWifiStaIface::FeatureSetMask convertLegacyStaIfaceFeatureToAidl(uint64_t feature) {
     switch (feature) {
         case WIFI_FEATURE_GSCAN:
-            return IWifiStaIface::StaIfaceCapabilityMask::BACKGROUND_SCAN;
+            return IWifiStaIface::FeatureSetMask::BACKGROUND_SCAN;
         case WIFI_FEATURE_LINK_LAYER_STATS:
-            return IWifiStaIface::StaIfaceCapabilityMask::LINK_LAYER_STATS;
+            return IWifiStaIface::FeatureSetMask::LINK_LAYER_STATS;
         case WIFI_FEATURE_RSSI_MONITOR:
-            return IWifiStaIface::StaIfaceCapabilityMask::RSSI_MONITOR;
+            return IWifiStaIface::FeatureSetMask::RSSI_MONITOR;
         case WIFI_FEATURE_CONTROL_ROAMING:
-            return IWifiStaIface::StaIfaceCapabilityMask::CONTROL_ROAMING;
+            return IWifiStaIface::FeatureSetMask::CONTROL_ROAMING;
         case WIFI_FEATURE_IE_WHITELIST:
-            return IWifiStaIface::StaIfaceCapabilityMask::PROBE_IE_ALLOWLIST;
+            return IWifiStaIface::FeatureSetMask::PROBE_IE_ALLOWLIST;
         case WIFI_FEATURE_SCAN_RAND:
-            return IWifiStaIface::StaIfaceCapabilityMask::SCAN_RAND;
+            return IWifiStaIface::FeatureSetMask::SCAN_RAND;
         case WIFI_FEATURE_INFRA_5G:
-            return IWifiStaIface::StaIfaceCapabilityMask::STA_5G;
+            return IWifiStaIface::FeatureSetMask::STA_5G;
         case WIFI_FEATURE_HOTSPOT:
-            return IWifiStaIface::StaIfaceCapabilityMask::HOTSPOT;
+            return IWifiStaIface::FeatureSetMask::HOTSPOT;
         case WIFI_FEATURE_PNO:
-            return IWifiStaIface::StaIfaceCapabilityMask::PNO;
+            return IWifiStaIface::FeatureSetMask::PNO;
         case WIFI_FEATURE_TDLS:
-            return IWifiStaIface::StaIfaceCapabilityMask::TDLS;
+            return IWifiStaIface::FeatureSetMask::TDLS;
         case WIFI_FEATURE_TDLS_OFFCHANNEL:
-            return IWifiStaIface::StaIfaceCapabilityMask::TDLS_OFFCHANNEL;
+            return IWifiStaIface::FeatureSetMask::TDLS_OFFCHANNEL;
         case WIFI_FEATURE_CONFIG_NDO:
-            return IWifiStaIface::StaIfaceCapabilityMask::ND_OFFLOAD;
+            return IWifiStaIface::FeatureSetMask::ND_OFFLOAD;
         case WIFI_FEATURE_MKEEP_ALIVE:
-            return IWifiStaIface::StaIfaceCapabilityMask::KEEP_ALIVE;
+            return IWifiStaIface::FeatureSetMask::KEEP_ALIVE;
     };
     CHECK(false) << "Unknown legacy feature: " << feature;
     return {};
 }
 
-bool convertLegacyFeaturesToAidlChipCapabilities(uint64_t legacy_feature_set, uint32_t* aidl_caps) {
-    if (!aidl_caps) {
+bool convertLegacyChipFeaturesToAidl(uint64_t legacy_feature_set, uint32_t* aidl_feature_set) {
+    if (!aidl_feature_set) {
         return false;
     }
-    *aidl_caps = {};
+    *aidl_feature_set = 0;
     std::vector<uint64_t> features = {WIFI_FEATURE_SET_TX_POWER_LIMIT,
                                       WIFI_FEATURE_USE_BODY_HEAD_SAR,
                                       WIFI_FEATURE_D2D_RTT,
@@ -113,7 +112,7 @@ bool convertLegacyFeaturesToAidlChipCapabilities(uint64_t legacy_feature_set, ui
                                       WIFI_FEATURE_AFC_CHANNEL};
     for (const auto feature : features) {
         if (feature & legacy_feature_set) {
-            *aidl_caps |= static_cast<uint32_t>(convertLegacyFeatureToAidlChipCapability(feature));
+            *aidl_feature_set |= static_cast<uint32_t>(convertLegacyChipFeatureToAidl(feature));
         }
     }
 
@@ -449,24 +448,23 @@ bool convertLegacyWifiMacInfosToAidl(
     return true;
 }
 
-bool convertLegacyFeaturesToAidlStaCapabilities(uint64_t legacy_feature_set, uint32_t* aidl_caps) {
-    if (!aidl_caps) {
+bool convertLegacyStaIfaceFeaturesToAidl(uint64_t legacy_feature_set, uint32_t* aidl_feature_set) {
+    if (!aidl_feature_set) {
         return false;
     }
-    *aidl_caps = {};
+    *aidl_feature_set = 0;
     for (const auto feature :
          {WIFI_FEATURE_GSCAN, WIFI_FEATURE_LINK_LAYER_STATS, WIFI_FEATURE_RSSI_MONITOR,
           WIFI_FEATURE_CONTROL_ROAMING, WIFI_FEATURE_IE_WHITELIST, WIFI_FEATURE_SCAN_RAND,
           WIFI_FEATURE_INFRA_5G, WIFI_FEATURE_HOTSPOT, WIFI_FEATURE_PNO, WIFI_FEATURE_TDLS,
           WIFI_FEATURE_TDLS_OFFCHANNEL, WIFI_FEATURE_CONFIG_NDO, WIFI_FEATURE_MKEEP_ALIVE}) {
         if (feature & legacy_feature_set) {
-            *aidl_caps |=
-                    static_cast<uint32_t>(convertLegacyFeatureToAidlStaIfaceCapability(feature));
+            *aidl_feature_set |= static_cast<uint32_t>(convertLegacyStaIfaceFeatureToAidl(feature));
         }
     }
     // There is no flag for this one in the legacy feature set. Adding it to the
     // set because all the current devices support it.
-    *aidl_caps |= static_cast<uint32_t>(IWifiStaIface::StaIfaceCapabilityMask::APF);
+    *aidl_feature_set |= static_cast<uint32_t>(IWifiStaIface::FeatureSetMask::APF);
     return true;
 }
 
