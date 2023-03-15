@@ -1136,8 +1136,8 @@ TEST_P(NewKeyGenerationTest, RsaWithAttestation) {
  * that has been generated using an associate IRemotelyProvisionedComponent.
  */
 TEST_P(NewKeyGenerationTest, RsaWithRkpAttestation) {
-    if (get_vsr_api_level() < __ANDROID_API_T__ || AidlVersion() < 2) {
-        GTEST_SKIP() << "Only required for VSR 12+ and KeyMint 2+";
+    if (!IsRkpSupportRequired()) {
+        GTEST_SKIP() << "RKP support is not required on this platform";
     }
 
     // There should be an IRemotelyProvisionedComponent instance associated with the KeyMint
@@ -1214,8 +1214,8 @@ TEST_P(NewKeyGenerationTest, RsaWithRkpAttestation) {
  * that has been generated using an associate IRemotelyProvisionedComponent.
  */
 TEST_P(NewKeyGenerationTest, EcdsaWithRkpAttestation) {
-    if (get_vsr_api_level() < __ANDROID_API_T__ || AidlVersion() < 2) {
-        GTEST_SKIP() << "Only required for VSR 12+ and KeyMint 2+";
+    if (!IsRkpSupportRequired()) {
+        GTEST_SKIP() << "RKP support is not required on this platform";
     }
 
     // There should be an IRemotelyProvisionedComponent instance associated with the KeyMint
