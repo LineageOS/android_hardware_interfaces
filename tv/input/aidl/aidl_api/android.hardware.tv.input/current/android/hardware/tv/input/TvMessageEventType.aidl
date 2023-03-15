@@ -36,5 +36,5 @@ package android.hardware.tv.input;
 enum TvMessageEventType {
   WATERMARK = 1,
   CLOSED_CAPTION = 2,
-  OTHER = 3,
+  OTHER = 1000,
 }
