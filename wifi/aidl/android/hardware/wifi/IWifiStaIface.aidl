@@ -288,22 +288,6 @@ interface IWifiStaIface {
     StaRoamingCapabilities getRoamingCapabilities();
 
     /**
-     * Used to query the list of valid frequencies (depending on the country
-     * code set) for the provided band. These channels may be specified in the
-     * |BackgroundScanBucketParameters.frequenciesInMhz| for a background scan
-     * request.
-     *
-     * @param band Band for which the frequency list is being generated.
-     * @return Vector of valid frequencies for the provided band.
-     * @throws ServiceSpecificException with one of the following values:
-     *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
-     *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
-     *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
-     *         |WifiStatusCode.ERROR_UNKNOWN|
-     */
-    int[] getValidFrequenciesForBand(in WifiBand band);
-
-    /**
      * Installs an APF program on this iface, replacing an existing
      * program if present.
      * Must fail if |StaIfaceCapabilityMask.APF| is not set.
