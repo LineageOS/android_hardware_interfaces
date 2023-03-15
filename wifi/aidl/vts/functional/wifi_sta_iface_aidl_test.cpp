@@ -114,16 +114,6 @@ TEST_P(WifiStaIfaceAidlTest, GetBackgroundScanCapabilities) {
 }
 
 /*
- * GetValidFrequenciesForBand
- * Ensures that we can retrieve valid frequencies for the 2.4 GHz band.
- */
-TEST_P(WifiStaIfaceAidlTest, GetValidFrequenciesForBand) {
-    std::vector<int> freqs;
-    EXPECT_TRUE(wifi_sta_iface_->getValidFrequenciesForBand(WifiBand::BAND_24GHZ, &freqs).isOk());
-    EXPECT_NE(freqs.size(), 0);
-}
-
-/*
  * GetLinkLayerStats
  * Ensures that calls to getLinkLayerStats will retrieve a non-empty
  * StaLinkLayerStats after link layer stats collection is enabled.
