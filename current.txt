@@ -936,5 +936,6 @@ b7ce2d87841585551b082fca6d099622e63b7099e0d8013f687ea1a1dc35c4dc android.hardwar
 a2fbd9747fbb9ceb8c1090b5a24138312246502d5af0654a8c2b603a9bf521fc android.hardware.gnss@1.0::IGnssCallback
 889b59e3e7a59afa67bf19882a44f51a2f9e43b6556ec52baa9ec3efd1ef7fbe android.hardware.camera.device@3.2::types
 db37a1c757e2e69b1ec9c75a981a6987bd87a131d92ab6acc00e04d19f374281 android.hardware.automotive.vehicle@2.0::types
+997017f581406fca1675d2f612f7ccd73f0d04eadd54bf6212e6cf5971d0872d android.hardware.automotive.vehicle@2.0::types
 
 # There will be no more HIDL HALs. Use AIDL instead.
