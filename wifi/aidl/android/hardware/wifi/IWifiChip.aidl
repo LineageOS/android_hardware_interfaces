@@ -44,7 +44,7 @@ interface IWifiChip {
      */
     @VintfStability
     @Backing(type="int")
-    enum ChipCapabilityMask {
+    enum FeatureSetMask {
         /**
          * Set/Reset Tx Power limits.
          */
@@ -582,15 +582,15 @@ interface IWifiChip {
     ChipMode[] getAvailableModes();
 
     /**
-     * Get the capabilities supported by this chip.
+     * Get the features supported by this chip.
      *
-     * @return Bitset of |ChipCapabilityMask| values.
+     * @return Bitset of |FeatureSetMask| values.
      * @throws ServiceSpecificException with one of the following values:
      *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|,
      *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
      *         |WifiStatusCode.ERROR_UNKNOWN|
      */
-    int getCapabilities();
+    int getFeatureSet();
 
     /**
      * API to retrieve the wifi wake up reason stats for debugging.

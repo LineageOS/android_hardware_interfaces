@@ -207,10 +207,10 @@ void stopWifiService(const char* instance_name) {
     }
 }
 
-int32_t getChipCapabilities(const std::shared_ptr<IWifiChip>& wifi_chip) {
-    int32_t caps = 0;
-    if (wifi_chip->getCapabilities(&caps).isOk()) {
-        return caps;
+int32_t getChipFeatureSet(const std::shared_ptr<IWifiChip>& wifi_chip) {
+    int32_t features = 0;
+    if (wifi_chip->getFeatureSet(&features).isOk()) {
+        return features;
     }
     return 0;
 }
