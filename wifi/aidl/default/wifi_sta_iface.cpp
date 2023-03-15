@@ -109,13 +109,6 @@ ndk::ScopedAStatus WifiStaIface::getBackgroundScanCapabilities(
                            &WifiStaIface::getBackgroundScanCapabilitiesInternal, _aidl_return);
 }
 
-ndk::ScopedAStatus WifiStaIface::getValidFrequenciesForBand(WifiBand in_band,
-                                                            std::vector<int32_t>* _aidl_return) {
-    return validateAndCall(this, WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
-                           &WifiStaIface::getValidFrequenciesForBandInternal, _aidl_return,
-                           in_band);
-}
-
 ndk::ScopedAStatus WifiStaIface::startBackgroundScan(int32_t in_cmdId,
                                                      const StaBackgroundScanParameters& in_params) {
     return validateAndCall(this, WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
@@ -296,17 +289,6 @@ WifiStaIface::getBackgroundScanCapabilitiesInternal() {
         return {StaBackgroundScanCapabilities{}, createWifiStatus(WifiStatusCode::ERROR_UNKNOWN)};
     }
     return {aidl_caps, ndk::ScopedAStatus::ok()};
-}
-
-std::pair<std::vector<int32_t>, ndk::ScopedAStatus>
-WifiStaIface::getValidFrequenciesForBandInternal(WifiBand band) {
-    static_assert(sizeof(WifiChannelWidthInMhz) == sizeof(int32_t), "Size mismatch");
-    legacy_hal::wifi_error legacy_status;
-    std::vector<uint32_t> valid_frequencies;
-    std::tie(legacy_status, valid_frequencies) = legacy_hal_.lock()->getValidFrequenciesForBand(
-            ifname_, aidl_struct_util::convertAidlWifiBandToLegacy(band));
-    return {std::vector<int32_t>(valid_frequencies.begin(), valid_frequencies.end()),
-            createWifiStatusFromLegacyError(legacy_status)};
 }
 
 ndk::ScopedAStatus WifiStaIface::startBackgroundScanInternal(
