@@ -40,7 +40,7 @@ namespace wifi {
 namespace aidl_struct_util {
 
 // Chip conversion methods.
-bool convertLegacyFeaturesToAidlChipCapabilities(uint64_t legacy_feature_set, uint32_t* aidl_caps);
+bool convertLegacyChipFeaturesToAidl(uint64_t legacy_feature_set, uint32_t* aidl_feature_set);
 bool convertLegacyDebugRingBufferStatusToAidl(
         const legacy_hal::wifi_ring_buffer_status& legacy_status,
         WifiDebugRingBufferStatus* aidl_status);
@@ -74,7 +74,7 @@ bool convertLegacyIfaceCombinationsMatrixToChipMode(
         legacy_hal::wifi_iface_concurrency_matrix& legacy_matrix, IWifiChip::ChipMode* chip_mode);
 
 // STA iface conversion methods.
-bool convertLegacyFeaturesToAidlStaCapabilities(uint64_t legacy_feature_set, uint32_t* aidl_caps);
+bool convertLegacyStaIfaceFeaturesToAidl(uint64_t legacy_feature_set, uint32_t* aidl_feature_set);
 bool convertLegacyApfCapabilitiesToAidl(const legacy_hal::PacketFilterCapabilities& legacy_caps,
                                         StaApfPacketFilterCapabilities* aidl_caps);
 bool convertLegacyGscanCapabilitiesToAidl(const legacy_hal::wifi_gscan_capabilities& legacy_caps,

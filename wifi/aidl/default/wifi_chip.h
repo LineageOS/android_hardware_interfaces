@@ -85,7 +85,7 @@ class WifiChip : public BnWifiChip {
     ndk::ScopedAStatus getId(int32_t* _aidl_return) override;
     ndk::ScopedAStatus registerEventCallback(
             const std::shared_ptr<IWifiChipEventCallback>& in_callback) override;
-    ndk::ScopedAStatus getCapabilities(int32_t* _aidl_return) override;
+    ndk::ScopedAStatus getFeatureSet(int32_t* _aidl_return) override;
     ndk::ScopedAStatus getAvailableModes(std::vector<IWifiChip::ChipMode>* _aidl_return) override;
     ndk::ScopedAStatus configureChip(int32_t in_modeId) override;
     ndk::ScopedAStatus getMode(int32_t* _aidl_return) override;
@@ -162,7 +162,7 @@ class WifiChip : public BnWifiChip {
     std::pair<int32_t, ndk::ScopedAStatus> getIdInternal();
     ndk::ScopedAStatus registerEventCallbackInternal(
             const std::shared_ptr<IWifiChipEventCallback>& event_callback);
-    std::pair<int32_t, ndk::ScopedAStatus> getCapabilitiesInternal();
+    std::pair<int32_t, ndk::ScopedAStatus> getFeatureSetInternal();
     std::pair<std::vector<IWifiChip::ChipMode>, ndk::ScopedAStatus> getAvailableModesInternal();
     ndk::ScopedAStatus configureChipInternal(std::unique_lock<std::recursive_mutex>* lock,
                                              int32_t mode_id);

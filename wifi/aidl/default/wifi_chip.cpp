@@ -455,9 +455,9 @@ ndk::ScopedAStatus WifiChip::registerEventCallback(
                            &WifiChip::registerEventCallbackInternal, event_callback);
 }
 
-ndk::ScopedAStatus WifiChip::getCapabilities(int32_t* _aidl_return) {
+ndk::ScopedAStatus WifiChip::getFeatureSet(int32_t* _aidl_return) {
     return validateAndCall(this, WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
-                           &WifiChip::getCapabilitiesInternal, _aidl_return);
+                           &WifiChip::getFeatureSetInternal, _aidl_return);
 }
 
 ndk::ScopedAStatus WifiChip::getAvailableModes(std::vector<IWifiChip::ChipMode>* _aidl_return) {
@@ -786,7 +786,7 @@ ndk::ScopedAStatus WifiChip::registerEventCallbackInternal(
     return ndk::ScopedAStatus::ok();
 }
 
-std::pair<int32_t, ndk::ScopedAStatus> WifiChip::getCapabilitiesInternal() {
+std::pair<int32_t, ndk::ScopedAStatus> WifiChip::getFeatureSetInternal() {
     legacy_hal::wifi_error legacy_status;
     uint64_t legacy_feature_set;
     uint32_t legacy_logger_feature_set;
@@ -802,12 +802,11 @@ std::pair<int32_t, ndk::ScopedAStatus> WifiChip::getCapabilitiesInternal() {
         // some devices don't support querying logger feature set
         legacy_logger_feature_set = 0;
     }
-    uint32_t aidl_caps;
-    if (!aidl_struct_util::convertLegacyFeaturesToAidlChipCapabilities(legacy_feature_set,
-                                                                       &aidl_caps)) {
+    uint32_t aidl_feature_set;
+    if (!aidl_struct_util::convertLegacyChipFeaturesToAidl(legacy_feature_set, &aidl_feature_set)) {
         return {0, createWifiStatus(WifiStatusCode::ERROR_UNKNOWN)};
     }
-    return {aidl_caps, ndk::ScopedAStatus::ok()};
+    return {aidl_feature_set, ndk::ScopedAStatus::ok()};
 }
 
 std::pair<std::vector<IWifiChip::ChipMode>, ndk::ScopedAStatus>
