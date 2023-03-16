@@ -47,4 +47,5 @@ interface IEvsEnumerator {
   android.hardware.automotive.evs.IEvsDisplay openDisplay(in int id);
   android.hardware.automotive.evs.IEvsUltrasonicsArray openUltrasonicsArray(in String ultrasonicsArrayId);
   void registerStatusCallback(in android.hardware.automotive.evs.IEvsEnumeratorStatusCallback callback);
+  android.hardware.automotive.evs.DisplayState getDisplayStateById(in int id);
 }
