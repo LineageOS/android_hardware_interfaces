@@ -38,7 +38,6 @@ interface IWifiApIface {
   String[] getBridgedInstances();
   byte[6] getFactoryMacAddress();
   void setCountryCode(in byte[2] code);
-  int[] getValidFrequenciesForBand(in android.hardware.wifi.WifiBand band);
   void resetToFactoryMacAddress();
   void setMacAddress(in byte[6] mac);
 }

@@ -34,6 +34,6 @@
 package android.hardware.camera.device;
 @Backing(type="int") @VintfStability
 enum CameraBlobId {
-  JPEG = 255,
-  JPEG_APP_SEGMENTS = 256,
+  JPEG = 0x00FF,
+  JPEG_APP_SEGMENTS = 0x100,
 }

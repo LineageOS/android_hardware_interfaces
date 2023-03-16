@@ -39,4 +39,5 @@ parcelable StreamConfiguration {
   android.hardware.camera.device.CameraMetadata sessionParams;
   int streamConfigCounter;
   boolean multiResolutionInputImage;
+  long logId = 0;
 }
