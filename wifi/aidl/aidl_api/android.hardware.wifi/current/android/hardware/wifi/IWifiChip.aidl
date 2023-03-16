@@ -61,7 +61,7 @@ interface IWifiChip {
   android.hardware.wifi.WifiRadioCombination[] getSupportedRadioCombinations();
   android.hardware.wifi.WifiChipCapabilities getWifiChipCapabilities();
   android.hardware.wifi.WifiUsableChannel[] getUsableChannels(in android.hardware.wifi.WifiBand band, in int ifaceModeMask, in int filterMask);
-  void setAfcChannelAllowance(in android.hardware.wifi.AvailableAfcFrequencyInfo[] availableAfcFrequencyInfo);
+  void setAfcChannelAllowance(in android.hardware.wifi.AfcChannelAllowance afcChannelAllowance);
   void registerEventCallback(in android.hardware.wifi.IWifiChipEventCallback callback);
   void removeApIface(in String ifname);
   void removeIfaceInstanceFromBridgedApIface(in String brIfaceName, in String ifaceInstanceName);
