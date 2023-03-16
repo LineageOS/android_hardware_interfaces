@@ -24,7 +24,7 @@ parcelable PmkSaCacheData {
     /**
      * BSSID of the access point to which the station is associated.
      */
-    byte[/* 6 */] bssid;
+    byte[6] bssid;
     /**
      * PMK expiration time in seconds.
      */
