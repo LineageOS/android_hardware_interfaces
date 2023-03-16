@@ -68,20 +68,6 @@ interface IWifiApIface {
     void setCountryCode(in byte[2] code);
 
     /**
-     * Used to query the list of valid frequencies (depending on country code set)
-     * for the provided band.
-     *
-     * @param band Band for which the frequency list is being generated.
-     * @return Vector of valid frequencies for the provided band.
-     * @throws ServiceSpecificException with one of the following values:
-     *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
-     *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
-     *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
-     *         |WifiStatusCode.ERROR_UNKNOWN|
-     */
-    int[] getValidFrequenciesForBand(in WifiBand band);
-
-    /**
      * Reset all of the AP interfaces' MAC address to the factory MAC address.
      *
      * @throws ServiceSpecificException with one of the following values:

@@ -185,12 +185,12 @@ TEST_P(WifiChipAidlTest, RegisterEventCallback) {
 }
 
 /*
- * GetCapabilities
+ * GetFeatureSet
  */
-TEST_P(WifiChipAidlTest, GetCapabilities) {
+TEST_P(WifiChipAidlTest, GetFeatureSet) {
     configureChipForConcurrencyType(IfaceConcurrencyType::STA);
-    int32_t caps = getChipCapabilities(wifi_chip_);
-    EXPECT_NE(static_cast<int32_t>(caps), 0);
+    int32_t features = getChipFeatureSet(wifi_chip_);
+    EXPECT_NE(features, 0);
 }
 
 /*
@@ -269,9 +269,9 @@ TEST_P(WifiChipAidlTest, SetCountryCode) {
  */
 TEST_P(WifiChipAidlTest, SetLatencyMode_normal) {
     configureChipForConcurrencyType(IfaceConcurrencyType::STA);
-    int32_t caps = getChipCapabilities(wifi_chip_);
+    int32_t features = getChipFeatureSet(wifi_chip_);
     auto status = wifi_chip_->setLatencyMode(IWifiChip::LatencyMode::NORMAL);
-    if (caps & static_cast<int32_t>(IWifiChip::ChipCapabilityMask::SET_LATENCY_MODE)) {
+    if (features & static_cast<int32_t>(IWifiChip::FeatureSetMask::SET_LATENCY_MODE)) {
         EXPECT_TRUE(status.isOk());
     } else {
         EXPECT_TRUE(checkStatusCode(&status, WifiStatusCode::ERROR_NOT_SUPPORTED));
@@ -284,9 +284,9 @@ TEST_P(WifiChipAidlTest, SetLatencyMode_normal) {
  */
 TEST_P(WifiChipAidlTest, SetLatencyMode_low) {
     configureChipForConcurrencyType(IfaceConcurrencyType::STA);
-    int32_t caps = getChipCapabilities(wifi_chip_);
+    int32_t features = getChipFeatureSet(wifi_chip_);
     auto status = wifi_chip_->setLatencyMode(IWifiChip::LatencyMode::LOW);
-    if (caps & static_cast<int32_t>(IWifiChip::ChipCapabilityMask::SET_LATENCY_MODE)) {
+    if (features & static_cast<int32_t>(IWifiChip::FeatureSetMask::SET_LATENCY_MODE)) {
         EXPECT_TRUE(status.isOk());
     } else {
         EXPECT_TRUE(checkStatusCode(&status, WifiStatusCode::ERROR_NOT_SUPPORTED));
@@ -366,12 +366,12 @@ TEST_P(WifiChipAidlTest, SetCoexUnsafeChannels) {
  */
 TEST_P(WifiChipAidlTest, SelectTxPowerScenario_body) {
     configureChipForConcurrencyType(IfaceConcurrencyType::STA);
-    int32_t caps = getChipCapabilities(wifi_chip_);
-    int32_t expected_caps =
-            static_cast<int32_t>(IWifiChip::ChipCapabilityMask::SET_TX_POWER_LIMIT) |
-            static_cast<int32_t>(IWifiChip::ChipCapabilityMask::USE_BODY_HEAD_SAR);
+    int32_t features = getChipFeatureSet(wifi_chip_);
+    int32_t expected_features =
+            static_cast<int32_t>(IWifiChip::FeatureSetMask::SET_TX_POWER_LIMIT) |
+            static_cast<int32_t>(IWifiChip::FeatureSetMask::USE_BODY_HEAD_SAR);
     auto status = wifi_chip_->selectTxPowerScenario(IWifiChip::TxPowerScenario::ON_BODY_CELL_OFF);
-    if (caps & expected_caps) {
+    if (features & expected_features) {
         EXPECT_TRUE(status.isOk());
     } else {
         EXPECT_TRUE(checkStatusCode(&status, WifiStatusCode::ERROR_NOT_SUPPORTED));
@@ -383,9 +383,9 @@ TEST_P(WifiChipAidlTest, SelectTxPowerScenario_body) {
  */
 TEST_P(WifiChipAidlTest, SelectTxPowerScenario_voiceCall) {
     configureChipForConcurrencyType(IfaceConcurrencyType::STA);
-    int32_t caps = getChipCapabilities(wifi_chip_);
+    int32_t features = getChipFeatureSet(wifi_chip_);
     auto status = wifi_chip_->selectTxPowerScenario(IWifiChip::TxPowerScenario::VOICE_CALL);
-    if (caps & static_cast<int32_t>(IWifiChip::ChipCapabilityMask::SET_TX_POWER_LIMIT)) {
+    if (features & static_cast<int32_t>(IWifiChip::FeatureSetMask::SET_TX_POWER_LIMIT)) {
         EXPECT_TRUE(status.isOk());
     } else {
         EXPECT_TRUE(checkStatusCode(&status, WifiStatusCode::ERROR_NOT_SUPPORTED));
@@ -397,9 +397,9 @@ TEST_P(WifiChipAidlTest, SelectTxPowerScenario_voiceCall) {
  */
 TEST_P(WifiChipAidlTest, ResetTxPowerScenario) {
     configureChipForConcurrencyType(IfaceConcurrencyType::STA);
-    int32_t caps = getChipCapabilities(wifi_chip_);
+    int32_t features = getChipFeatureSet(wifi_chip_);
     auto status = wifi_chip_->resetTxPowerScenario();
-    if (caps & static_cast<int32_t>(IWifiChip::ChipCapabilityMask::SET_TX_POWER_LIMIT)) {
+    if (features & static_cast<int32_t>(IWifiChip::FeatureSetMask::SET_TX_POWER_LIMIT)) {
         EXPECT_TRUE(status.isOk());
     } else {
         EXPECT_TRUE(checkStatusCode(&status, WifiStatusCode::ERROR_NOT_SUPPORTED));

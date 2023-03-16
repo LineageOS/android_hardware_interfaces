@@ -54,15 +54,13 @@ class WifiStaIface : public BnWifiStaIface {
     ndk::ScopedAStatus getName(std::string* _aidl_return) override;
     ndk::ScopedAStatus registerEventCallback(
             const std::shared_ptr<IWifiStaIfaceEventCallback>& in_callback) override;
-    ndk::ScopedAStatus getCapabilities(int32_t* _aidl_return) override;
+    ndk::ScopedAStatus getFeatureSet(int32_t* _aidl_return) override;
     ndk::ScopedAStatus getApfPacketFilterCapabilities(
             StaApfPacketFilterCapabilities* _aidl_return) override;
     ndk::ScopedAStatus installApfPacketFilter(const std::vector<uint8_t>& in_program) override;
     ndk::ScopedAStatus readApfPacketFilterData(std::vector<uint8_t>* _aidl_return) override;
     ndk::ScopedAStatus getBackgroundScanCapabilities(
             StaBackgroundScanCapabilities* _aidl_return) override;
-    ndk::ScopedAStatus getValidFrequenciesForBand(WifiBand in_band,
-                                                  std::vector<int32_t>* _aidl_return) override;
     ndk::ScopedAStatus startBackgroundScan(int32_t in_cmdId,
                                            const StaBackgroundScanParameters& in_params) override;
     ndk::ScopedAStatus stopBackgroundScan(int32_t in_cmdId) override;
@@ -98,15 +96,13 @@ class WifiStaIface : public BnWifiStaIface {
     std::pair<std::string, ndk::ScopedAStatus> getNameInternal();
     ndk::ScopedAStatus registerEventCallbackInternal(
             const std::shared_ptr<IWifiStaIfaceEventCallback>& callback);
-    std::pair<int32_t, ndk::ScopedAStatus> getCapabilitiesInternal();
+    std::pair<int32_t, ndk::ScopedAStatus> getFeatureSetInternal();
     std::pair<StaApfPacketFilterCapabilities, ndk::ScopedAStatus>
     getApfPacketFilterCapabilitiesInternal();
     ndk::ScopedAStatus installApfPacketFilterInternal(const std::vector<uint8_t>& program);
     std::pair<std::vector<uint8_t>, ndk::ScopedAStatus> readApfPacketFilterDataInternal();
     std::pair<StaBackgroundScanCapabilities, ndk::ScopedAStatus>
     getBackgroundScanCapabilitiesInternal();
-    std::pair<std::vector<int32_t>, ndk::ScopedAStatus> getValidFrequenciesForBandInternal(
-            WifiBand band);
     ndk::ScopedAStatus startBackgroundScanInternal(int32_t cmd_id,
                                                    const StaBackgroundScanParameters& params);
     ndk::ScopedAStatus stopBackgroundScanInternal(int32_t cmd_id);

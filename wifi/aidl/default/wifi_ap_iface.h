@@ -45,8 +45,6 @@ class WifiApIface : public BnWifiApIface {
     // AIDL methods exposed.
     ndk::ScopedAStatus getName(std::string* _aidl_return) override;
     ndk::ScopedAStatus setCountryCode(const std::array<uint8_t, 2>& in_code) override;
-    ndk::ScopedAStatus getValidFrequenciesForBand(WifiBand in_band,
-                                                  std::vector<int32_t>* _aidl_return) override;
     ndk::ScopedAStatus setMacAddress(const std::array<uint8_t, 6>& in_mac) override;
     ndk::ScopedAStatus getFactoryMacAddress(std::array<uint8_t, 6>* _aidl_return) override;
     ndk::ScopedAStatus resetToFactoryMacAddress() override;
@@ -56,8 +54,6 @@ class WifiApIface : public BnWifiApIface {
     // Corresponding worker functions for the AIDL methods.
     std::pair<std::string, ndk::ScopedAStatus> getNameInternal();
     ndk::ScopedAStatus setCountryCodeInternal(const std::array<uint8_t, 2>& code);
-    std::pair<std::vector<int32_t>, ndk::ScopedAStatus> getValidFrequenciesForBandInternal(
-            WifiBand band);
     ndk::ScopedAStatus setMacAddressInternal(const std::array<uint8_t, 6>& mac);
     std::pair<std::array<uint8_t, 6>, ndk::ScopedAStatus> getFactoryMacAddressInternal(
             const std::string& ifaceName);

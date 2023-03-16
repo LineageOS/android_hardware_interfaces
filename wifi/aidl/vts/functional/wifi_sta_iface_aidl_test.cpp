@@ -53,10 +53,10 @@ class WifiStaIfaceAidlTest : public testing::TestWithParam<std::string> {
     void TearDown() override { stopWifiService(getInstanceName()); }
 
   protected:
-    bool isCapabilitySupported(IWifiStaIface::StaIfaceCapabilityMask expected) {
-        int32_t caps = 0;
-        EXPECT_TRUE(wifi_sta_iface_->getCapabilities(&caps).isOk());
-        return caps & static_cast<int32_t>(expected);
+    bool isFeatureSupported(IWifiStaIface::FeatureSetMask expected) {
+        int32_t features = 0;
+        EXPECT_TRUE(wifi_sta_iface_->getFeatureSet(&features).isOk());
+        return features & static_cast<int32_t>(expected);
     }
 
     ndk::ScopedAStatus createStaIface(std::shared_ptr<IWifiStaIface>* sta_iface) {
@@ -83,19 +83,19 @@ TEST_P(WifiStaIfaceAidlTest, GetFactoryMacAddress) {
 }
 
 /*
- * GetCapabilities
+ * GetFeatureSet
  */
-TEST_P(WifiStaIfaceAidlTest, GetCapabilities) {
-    int32_t caps = 0;
-    EXPECT_TRUE(wifi_sta_iface_->getCapabilities(&caps).isOk());
-    EXPECT_NE(caps, 0);
+TEST_P(WifiStaIfaceAidlTest, GetFeatureSet) {
+    int32_t features = 0;
+    EXPECT_TRUE(wifi_sta_iface_->getFeatureSet(&features).isOk());
+    EXPECT_NE(features, 0);
 }
 
 /*
  * GetApfPacketFilterCapabilities
  */
 TEST_P(WifiStaIfaceAidlTest, GetApfPacketFilterCapabilities) {
-    if (!isCapabilitySupported(IWifiStaIface::StaIfaceCapabilityMask::APF)) {
+    if (!isFeatureSupported(IWifiStaIface::FeatureSetMask::APF)) {
         GTEST_SKIP() << "APF packet filter capabilities are not supported.";
     }
     StaApfPacketFilterCapabilities apf_caps = {};
@@ -106,21 +106,11 @@ TEST_P(WifiStaIfaceAidlTest, GetApfPacketFilterCapabilities) {
  * GetBackgroundScanCapabilities
  */
 TEST_P(WifiStaIfaceAidlTest, GetBackgroundScanCapabilities) {
-    if (!isCapabilitySupported(IWifiStaIface::StaIfaceCapabilityMask::BACKGROUND_SCAN)) {
+    if (!isFeatureSupported(IWifiStaIface::FeatureSetMask::BACKGROUND_SCAN)) {
         GTEST_SKIP() << "Background scan capabilities are not supported.";
     }
     StaBackgroundScanCapabilities caps = {};
     EXPECT_TRUE(wifi_sta_iface_->getBackgroundScanCapabilities(&caps).isOk());
-}
-
-/*
- * GetValidFrequenciesForBand
- * Ensures that we can retrieve valid frequencies for the 2.4 GHz band.
- */
-TEST_P(WifiStaIfaceAidlTest, GetValidFrequenciesForBand) {
-    std::vector<int> freqs;
-    EXPECT_TRUE(wifi_sta_iface_->getValidFrequenciesForBand(WifiBand::BAND_24GHZ, &freqs).isOk());
-    EXPECT_NE(freqs.size(), 0);
 }
 
 /*
@@ -129,7 +119,7 @@ TEST_P(WifiStaIfaceAidlTest, GetValidFrequenciesForBand) {
  * StaLinkLayerStats after link layer stats collection is enabled.
  */
 TEST_P(WifiStaIfaceAidlTest, GetLinkLayerStats) {
-    if (!isCapabilitySupported(IWifiStaIface::StaIfaceCapabilityMask::LINK_LAYER_STATS)) {
+    if (!isFeatureSupported(IWifiStaIface::FeatureSetMask::LINK_LAYER_STATS)) {
         GTEST_SKIP() << "Skipping this test since link layer stats are not supported.";
     }
 
@@ -176,7 +166,7 @@ TEST_P(WifiStaIfaceAidlTest, SetScanMode) {
  * LinkLayerStatsCollection
  */
 TEST_P(WifiStaIfaceAidlTest, LinkLayerStatsCollection) {
-    if (!isCapabilitySupported(IWifiStaIface::StaIfaceCapabilityMask::LINK_LAYER_STATS)) {
+    if (!isFeatureSupported(IWifiStaIface::FeatureSetMask::LINK_LAYER_STATS)) {
         GTEST_SKIP() << "Link layer stats collection is not supported.";
     }
 
@@ -197,7 +187,7 @@ TEST_P(WifiStaIfaceAidlTest, LinkLayerStatsCollection) {
  * if the device is not connected to an AP.
  */
 TEST_P(WifiStaIfaceAidlTest, RSSIMonitoring) {
-    if (!isCapabilitySupported(IWifiStaIface::StaIfaceCapabilityMask::RSSI_MONITOR)) {
+    if (!isFeatureSupported(IWifiStaIface::FeatureSetMask::RSSI_MONITOR)) {
         GTEST_SKIP() << "RSSI monitoring is not supported.";
     }
 
@@ -213,7 +203,7 @@ TEST_P(WifiStaIfaceAidlTest, RSSIMonitoring) {
  * RoamingControl
  */
 TEST_P(WifiStaIfaceAidlTest, RoamingControl) {
-    if (!isCapabilitySupported(IWifiStaIface::StaIfaceCapabilityMask::CONTROL_ROAMING)) {
+    if (!isFeatureSupported(IWifiStaIface::FeatureSetMask::CONTROL_ROAMING)) {
         GTEST_SKIP() << "Roaming control is not supported.";
     }
 
@@ -245,7 +235,7 @@ TEST_P(WifiStaIfaceAidlTest, RoamingControl) {
  * EnableNDOffload
  */
 TEST_P(WifiStaIfaceAidlTest, EnableNDOffload) {
-    if (!isCapabilitySupported(IWifiStaIface::StaIfaceCapabilityMask::ND_OFFLOAD)) {
+    if (!isFeatureSupported(IWifiStaIface::FeatureSetMask::ND_OFFLOAD)) {
         GTEST_SKIP() << "ND offload is not supported.";
     }
     EXPECT_TRUE(wifi_sta_iface_->enableNdOffload(true).isOk());

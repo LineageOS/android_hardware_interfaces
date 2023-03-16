@@ -41,13 +41,12 @@ interface IWifiStaIface {
   void enableNdOffload(in boolean enable);
   android.hardware.wifi.StaApfPacketFilterCapabilities getApfPacketFilterCapabilities();
   android.hardware.wifi.StaBackgroundScanCapabilities getBackgroundScanCapabilities();
-  int getCapabilities();
+  int getFeatureSet();
   android.hardware.wifi.WifiDebugRxPacketFateReport[] getDebugRxPacketFates();
   android.hardware.wifi.WifiDebugTxPacketFateReport[] getDebugTxPacketFates();
   byte[6] getFactoryMacAddress();
   android.hardware.wifi.StaLinkLayerStats getLinkLayerStats();
   android.hardware.wifi.StaRoamingCapabilities getRoamingCapabilities();
-  int[] getValidFrequenciesForBand(in android.hardware.wifi.WifiBand band);
   void installApfPacketFilter(in byte[] program);
   byte[] readApfPacketFilterData();
   void registerEventCallback(in android.hardware.wifi.IWifiStaIfaceEventCallback callback);
@@ -63,7 +62,7 @@ interface IWifiStaIface {
   void stopSendingKeepAlivePackets(in int cmdId);
   void setDtimMultiplier(in int multiplier);
   @Backing(type="int") @VintfStability
-  enum StaIfaceCapabilityMask {
+  enum FeatureSetMask {
     APF = (1 << 0) /* 1 */,
     BACKGROUND_SCAN = (1 << 1) /* 2 */,
     LINK_LAYER_STATS = (1 << 2) /* 4 */,

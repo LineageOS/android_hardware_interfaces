@@ -37,25 +37,10 @@ parcelable Descriptor {
      * UUID for effect types, these definitions are in sync with SDK, see @c AudioEffect.java.
      */
     /**
-     * UUID for environmental reverberation effect type.
+     * UUID for Acoustic Echo Canceler (AEC) type.
      */
-    const String EFFECT_TYPE_UUID_ENV_REVERB = "c2e5d5f0-94bd-4763-9cac-4e234d06839e";
-    /**
-     * UUID for preset reverberation effect type.
-     */
-    const String EFFECT_TYPE_UUID_PRESET_REVERB = "47382d60-ddd8-11db-bf3a-0002a5d5c51b";
-    /**
-     * UUID for equalizer effect type.
-     */
-    const String EFFECT_TYPE_UUID_EQUALIZER = "0bed4300-ddd6-11db-8f34-0002a5d5c51b";
-    /**
-     * UUID for bass boost effect type.
-     */
-    const String EFFECT_TYPE_UUID_BASS_BOOST = "0634f220-ddd4-11db-a0fc-0002a5d5c51b";
-    /**
-     * UUID for virtualizer effect type.
-     */
-    const String EFFECT_TYPE_UUID_VIRTUALIZER = "37cc2c00-dddd-11db-8577-0002a5d5c51b";
+    const String EFFECT_TYPE_UUID_AEC = "7b491460-8d4d-11e0-bd61-0002a5d5c51b";
+
     /**
      * UUID for Automatic Gain Control V1 (AGC1) type.
      */
@@ -65,33 +50,57 @@ parcelable Descriptor {
      */
     const String EFFECT_TYPE_UUID_AGC2 = "ae3c653b-be18-4ab8-8938-418f0a7f06ac";
     /**
-     * UUID for Acoustic Echo Canceler (AEC) type.
+     * UUID for bass boost effect type.
      */
-    const String EFFECT_TYPE_UUID_AEC = "7b491460-8d4d-11e0-bd61-0002a5d5c51b";
+    const String EFFECT_TYPE_UUID_BASS_BOOST = "0634f220-ddd4-11db-a0fc-0002a5d5c51b";
     /**
-     * UUID for Noise Suppressor (NS) type.
+     * UUID for downmix effect type.
      */
-    const String EFFECT_TYPE_UUID_NS = "58b4b260-8e06-11e0-aa8e-0002a5d5c51b";
-    /**
-     * UUID for Loudness Enhancer type.
-     */
-    const String EFFECT_TYPE_UUID_LOUDNESS_ENHANCER = "fe3199be-aed0-413f-87bb-11260eb63cf1";
+    const String EFFECT_TYPE_UUID_DOWNMIX = "381e49cc-a858-4aa2-87f6-e8388e7601b2";
     /**
      * UUID for Dynamics Processing type.
      */
     const String EFFECT_TYPE_UUID_DYNAMICS_PROCESSING = "7261676f-6d75-7369-6364-28e2fd3ac39e";
     /**
+     * UUID for environmental reverberation effect type.
+     */
+    const String EFFECT_TYPE_UUID_ENV_REVERB = "c2e5d5f0-94bd-4763-9cac-4e234d06839e";
+    /**
+     * UUID for equalizer effect type.
+     */
+    const String EFFECT_TYPE_UUID_EQUALIZER = "0bed4300-ddd6-11db-8f34-0002a5d5c51b";
+    /**
      * UUID for Haptic Generator type.
      */
     const String EFFECT_TYPE_UUID_HAPTIC_GENERATOR = "1411e6d6-aecd-4021-a1cf-a6aceb0d71e5";
+    /**
+     * UUID for Loudness Enhancer type.
+     */
+    const String EFFECT_TYPE_UUID_LOUDNESS_ENHANCER = "fe3199be-aed0-413f-87bb-11260eb63cf1";
+    /**
+     * UUID for Noise Suppressor (NS) type.
+     */
+    const String EFFECT_TYPE_UUID_NS = "58b4b260-8e06-11e0-aa8e-0002a5d5c51b";
+    /**
+     * UUID for preset reverberation effect type.
+     */
+    const String EFFECT_TYPE_UUID_PRESET_REVERB = "47382d60-ddd8-11db-bf3a-0002a5d5c51b";
     /**
      * UUID for Spatializer type.
      */
     const String EFFECT_TYPE_UUID_SPATIALIZER = "ccd4cf09-a79d-46c2-9aae-06a1698d6c8f";
     /**
-     * UUID for Volume type. The volume effect is used for automated tests only.
+     * UUID for virtualizer effect type.
      */
-    const String EFFECT_TYPE_UUID_VOLUME = "09e8ede0-ddde-11db-b4f6-0002a5d5c51b";
+    const String EFFECT_TYPE_UUID_VIRTUALIZER = "37cc2c00-dddd-11db-8577-0002a5d5c51b";
+    /**
+     * UUID for visualizer effect type.
+     */
+    const String EFFECT_TYPE_UUID_VISUALIZER = "d069d9e0-8329-11df-9168-0002a5d5c51b";
+    /**
+     * UUID for Volume effect type.
+     */
+    const String EFFECT_TYPE_UUID_VOLUME = "fa81a2b8-588b-11ed-9b6a-0242ac120002";
 
     /**
      * This structure completely identifies an effect implementation.

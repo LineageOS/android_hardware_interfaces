@@ -1292,6 +1292,19 @@ std::pair<ErrorCode, vector<uint8_t>> KeyMintAidlTestBase::UpgradeKey(
 
     return retval;
 }
+
+bool KeyMintAidlTestBase::IsRkpSupportRequired() const {
+    if (get_vsr_api_level() >= __ANDROID_API_T__) {
+        return true;
+    }
+
+    if (get_vsr_api_level() >= __ANDROID_API_S__) {
+        return SecLevel() != SecurityLevel::STRONGBOX;
+    }
+
+    return false;
+}
+
 vector<uint32_t> KeyMintAidlTestBase::ValidKeySizes(Algorithm algorithm) {
     switch (algorithm) {
         case Algorithm::RSA:
