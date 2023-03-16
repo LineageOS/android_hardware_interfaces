@@ -38,6 +38,6 @@
 package android.hardware.camera.metadata;
 @Backing(type="int") @VintfStability
 enum StatisticsSharpnessMapMode {
-  ANDROID_STATISTICS_SHARPNESS_MAP_MODE_OFF = 0,
-  ANDROID_STATISTICS_SHARPNESS_MAP_MODE_ON = 1,
+  ANDROID_STATISTICS_SHARPNESS_MAP_MODE_OFF,
+  ANDROID_STATISTICS_SHARPNESS_MAP_MODE_ON,
 }

@@ -38,6 +38,6 @@
 package android.hardware.camera.metadata;
 @Backing(type="int") @VintfStability
 enum SensorRawBinningFactorUsed {
-  ANDROID_SENSOR_RAW_BINNING_FACTOR_USED_TRUE = 0,
-  ANDROID_SENSOR_RAW_BINNING_FACTOR_USED_FALSE = 1,
+  ANDROID_SENSOR_RAW_BINNING_FACTOR_USED_TRUE,
+  ANDROID_SENSOR_RAW_BINNING_FACTOR_USED_FALSE,
 }
