@@ -46,7 +46,7 @@ parcelable SupplicantStateChangeData {
      * change event. This must be zero'ed if this event is not
      * specific to a particular network.
      */
-    byte[/* 6 */] bssid;
+    byte[6] bssid;
 
     /**
      * Currently used key mgmt mask.
