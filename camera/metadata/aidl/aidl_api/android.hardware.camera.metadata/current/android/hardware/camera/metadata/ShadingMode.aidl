@@ -38,7 +38,7 @@
 package android.hardware.camera.metadata;
 @Backing(type="int") @VintfStability
 enum ShadingMode {
-  ANDROID_SHADING_MODE_OFF = 0,
-  ANDROID_SHADING_MODE_FAST = 1,
-  ANDROID_SHADING_MODE_HIGH_QUALITY = 2,
+  ANDROID_SHADING_MODE_OFF,
+  ANDROID_SHADING_MODE_FAST,
+  ANDROID_SHADING_MODE_HIGH_QUALITY,
 }

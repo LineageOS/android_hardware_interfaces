@@ -38,6 +38,6 @@
 package android.hardware.camera.metadata;
 @Backing(type="int") @VintfStability
 enum TonemapPresetCurve {
-  ANDROID_TONEMAP_PRESET_CURVE_SRGB = 0,
-  ANDROID_TONEMAP_PRESET_CURVE_REC709 = 1,
+  ANDROID_TONEMAP_PRESET_CURVE_SRGB,
+  ANDROID_TONEMAP_PRESET_CURVE_REC709,
 }

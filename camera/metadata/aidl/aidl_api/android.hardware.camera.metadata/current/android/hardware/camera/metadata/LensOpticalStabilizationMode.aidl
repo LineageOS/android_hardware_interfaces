@@ -38,6 +38,6 @@
 package android.hardware.camera.metadata;
 @Backing(type="int") @VintfStability
 enum LensOpticalStabilizationMode {
-  ANDROID_LENS_OPTICAL_STABILIZATION_MODE_OFF = 0,
-  ANDROID_LENS_OPTICAL_STABILIZATION_MODE_ON = 1,
+  ANDROID_LENS_OPTICAL_STABILIZATION_MODE_OFF,
+  ANDROID_LENS_OPTICAL_STABILIZATION_MODE_ON,
 }
