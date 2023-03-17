@@ -2408,7 +2408,12 @@ enum VehicleProperty {
      * when computing the vehicle's location that is shared with Android through the GNSS HAL.
      *
      * The value must return a collection of bit flags. The bit flags are defined in
-     * LocationCharacterization.
+     * LocationCharacterization. The value must also include exactly one of DEAD_RECKONED or
+     * RAW_GNSS_ONLY among its collection of bit flags.
+     *
+     * When this property is not supported, it is assumed that no additional sensor inputs are fused
+     * into the GNSS updates provided through the GNSS HAL. That is unless otherwise specified
+     * through the GNSS HAL interfaces.
      *
      * @change_mode VehiclePropertyChangeMode.STATIC
      * @access VehiclePropertyAccess.READ
