@@ -103,6 +103,7 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.automotive.vehicle</name>
+        <version>1-2</version>
         <interface>
             <name>IVehicle</name>
             <instance>default</instance>
