@@ -889,6 +889,9 @@ enum VehicleProperty {
      * Values must be one of VehicleUnit::CELSIUS or VehicleUnit::FAHRENHEIT
      * Note that internally, all temperatures are represented in floating point Celsius.
      *
+     * If updating HVAC_TEMPERATURE_DISPLAY_UNITS affects the values of other *_DISPLAY_UNITS
+     * properties, then their values must be updated and communicated to the AAOS framework as well.
+     *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
      * @data_enum VehicleUnit
@@ -1050,6 +1053,10 @@ enum VehicleProperty {
      * For example: configArray[0] = METER
      *              configArray[1] = KILOMETER
      *              configArray[2] = MILE
+     *
+     * If updating DISTANCE_DISPLAY_UNITS affects the values of other *_DISPLAY_UNITS properties,
+     * then their values must be updated and communicated to the AAOS framework as well.
+     *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
      * @data_enum VehicleUnit
@@ -1066,6 +1073,10 @@ enum VehicleProperty {
      * Volume units are defined in VehicleUnit.
      * For example: configArray[0] = LITER
      *              configArray[1] = GALLON
+     *
+     * If updating FUEL_VOLUME_DISPLAY_UNITS affects the values of other *_DISPLAY_UNITS properties,
+     * then their values must be updated and communicated to the AAOS framework as well.
+     *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
      * @data_enum VehicleUnit
@@ -1083,6 +1094,10 @@ enum VehicleProperty {
      * For example: configArray[0] = KILOPASCAL
      *              configArray[1] = PSI
      *              configArray[2] = BAR
+     *
+     * If updating TIRE_PRESSURE_DISPLAY_UNITS affects the values of other *_DISPLAY_UNITS
+     * properties, then their values must be updated and communicated to the AAOS framework as well.
+     *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
      * @data_enum VehicleUnit
@@ -1100,6 +1115,10 @@ enum VehicleProperty {
      * For example: configArray[0] = WATT_HOUR
      *              configArray[1] = AMPERE_HOURS
      *              configArray[2] = KILOWATT_HOUR
+     *
+     * If updating EV_BATTERY_DISPLAY_UNITS affects the values of other *_DISPLAY_UNITS properties,
+     * then their values must be updated and communicated to the AAOS framework as well.
+     *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
      * @data_enum VehicleUnit
@@ -1128,6 +1147,10 @@ enum VehicleProperty {
      * For example: configArray[0] = METER_PER_SEC
      *              configArray[1] = MILES_PER_HOUR
      *              configArray[2] = KILOMETERS_PER_HOUR
+     *
+     * If updating VEHICLE_SPEED_DISPLAY_UNITS affects the values of other *_DISPLAY_UNITS
+     * properties, then their values must be updated and communicated to the AAOS framework as well.
+     *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
      */
