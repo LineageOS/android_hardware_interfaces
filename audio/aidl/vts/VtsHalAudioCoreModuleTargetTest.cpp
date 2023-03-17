@@ -3543,26 +3543,27 @@ TEST_P(AudioCoreSoundDose, SameInstance) {
             << "getSoundDose must return the same interface instance across invocations";
 }
 
-TEST_P(AudioCoreSoundDose, GetSetOutputRs2) {
+TEST_P(AudioCoreSoundDose, GetSetOutputRs2UpperBound) {
     if (soundDose == nullptr) {
         GTEST_SKIP() << "SoundDose is not supported";
     }
 
     bool isSupported = false;
-    EXPECT_NO_FATAL_FAILURE(TestAccessors<float>(soundDose.get(), &ISoundDose::getOutputRs2,
-                                                 &ISoundDose::setOutputRs2,
+    EXPECT_NO_FATAL_FAILURE(TestAccessors<float>(soundDose.get(),
+                                                 &ISoundDose::getOutputRs2UpperBound,
+                                                 &ISoundDose::setOutputRs2UpperBound,
                                                  /*validValues=*/{80.f, 90.f, 100.f},
                                                  /*invalidValues=*/{79.f, 101.f}, &isSupported));
-    EXPECT_TRUE(isSupported) << "Getting/Setting RS2 must be supported";
+    EXPECT_TRUE(isSupported) << "Getting/Setting RS2 upper bound must be supported";
 }
 
-TEST_P(AudioCoreSoundDose, CheckDefaultRs2Value) {
+TEST_P(AudioCoreSoundDose, CheckDefaultRs2UpperBound) {
     if (soundDose == nullptr) {
         GTEST_SKIP() << "SoundDose is not supported";
     }
 
     float rs2Value;
-    ASSERT_IS_OK(soundDose->getOutputRs2(&rs2Value));
+    ASSERT_IS_OK(soundDose->getOutputRs2UpperBound(&rs2Value));
     EXPECT_EQ(rs2Value, ISoundDose::DEFAULT_MAX_RS2);
 }
 
