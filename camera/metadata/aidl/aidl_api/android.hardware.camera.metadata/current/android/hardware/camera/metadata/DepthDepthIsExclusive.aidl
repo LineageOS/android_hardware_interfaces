@@ -38,6 +38,6 @@
 package android.hardware.camera.metadata;
 @Backing(type="int") @VintfStability
 enum DepthDepthIsExclusive {
-  ANDROID_DEPTH_DEPTH_IS_EXCLUSIVE_FALSE = 0,
-  ANDROID_DEPTH_DEPTH_IS_EXCLUSIVE_TRUE = 1,
+  ANDROID_DEPTH_DEPTH_IS_EXCLUSIVE_FALSE,
+  ANDROID_DEPTH_DEPTH_IS_EXCLUSIVE_TRUE,
 }

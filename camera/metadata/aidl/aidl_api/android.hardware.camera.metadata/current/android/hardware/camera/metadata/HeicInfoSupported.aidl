@@ -38,6 +38,6 @@
 package android.hardware.camera.metadata;
 @Backing(type="int") @VintfStability
 enum HeicInfoSupported {
-  ANDROID_HEIC_INFO_SUPPORTED_FALSE = 0,
-  ANDROID_HEIC_INFO_SUPPORTED_TRUE = 1,
+  ANDROID_HEIC_INFO_SUPPORTED_FALSE,
+  ANDROID_HEIC_INFO_SUPPORTED_TRUE,
 }

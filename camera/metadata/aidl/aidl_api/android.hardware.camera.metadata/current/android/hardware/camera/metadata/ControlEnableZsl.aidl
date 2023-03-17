@@ -38,6 +38,6 @@
 package android.hardware.camera.metadata;
 @Backing(type="int") @VintfStability
 enum ControlEnableZsl {
-  ANDROID_CONTROL_ENABLE_ZSL_FALSE = 0,
-  ANDROID_CONTROL_ENABLE_ZSL_TRUE = 1,
+  ANDROID_CONTROL_ENABLE_ZSL_FALSE,
+  ANDROID_CONTROL_ENABLE_ZSL_TRUE,
 }

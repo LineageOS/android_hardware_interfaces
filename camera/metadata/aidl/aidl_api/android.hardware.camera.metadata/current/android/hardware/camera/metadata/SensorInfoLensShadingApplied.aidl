@@ -38,6 +38,6 @@
 package android.hardware.camera.metadata;
 @Backing(type="int") @VintfStability
 enum SensorInfoLensShadingApplied {
-  ANDROID_SENSOR_INFO_LENS_SHADING_APPLIED_FALSE = 0,
-  ANDROID_SENSOR_INFO_LENS_SHADING_APPLIED_TRUE = 1,
+  ANDROID_SENSOR_INFO_LENS_SHADING_APPLIED_FALSE,
+  ANDROID_SENSOR_INFO_LENS_SHADING_APPLIED_TRUE,
 }

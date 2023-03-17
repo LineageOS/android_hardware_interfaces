@@ -38,7 +38,7 @@
 package android.hardware.camera.metadata;
 @Backing(type="int") @VintfStability
 enum HotPixelMode {
-  ANDROID_HOT_PIXEL_MODE_OFF = 0,
-  ANDROID_HOT_PIXEL_MODE_FAST = 1,
-  ANDROID_HOT_PIXEL_MODE_HIGH_QUALITY = 2,
+  ANDROID_HOT_PIXEL_MODE_OFF,
+  ANDROID_HOT_PIXEL_MODE_FAST,
+  ANDROID_HOT_PIXEL_MODE_HIGH_QUALITY,
 }

@@ -38,6 +38,6 @@
 package android.hardware.camera.metadata;
 @Backing(type="int") @VintfStability
 enum RequestMetadataMode {
-  ANDROID_REQUEST_METADATA_MODE_NONE = 0,
-  ANDROID_REQUEST_METADATA_MODE_FULL = 1,
+  ANDROID_REQUEST_METADATA_MODE_NONE,
+  ANDROID_REQUEST_METADATA_MODE_FULL,
 }

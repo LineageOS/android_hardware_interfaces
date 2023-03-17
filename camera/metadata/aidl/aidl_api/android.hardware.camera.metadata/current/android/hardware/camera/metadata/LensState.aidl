@@ -38,6 +38,6 @@
 package android.hardware.camera.metadata;
 @Backing(type="int") @VintfStability
 enum LensState {
-  ANDROID_LENS_STATE_STATIONARY = 0,
-  ANDROID_LENS_STATE_MOVING = 1,
+  ANDROID_LENS_STATE_STATIONARY,
+  ANDROID_LENS_STATE_MOVING,
 }
