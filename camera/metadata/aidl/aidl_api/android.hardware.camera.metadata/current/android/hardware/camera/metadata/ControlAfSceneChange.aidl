@@ -38,6 +38,6 @@
 package android.hardware.camera.metadata;
 @Backing(type="int") @VintfStability
 enum ControlAfSceneChange {
-  ANDROID_CONTROL_AF_SCENE_CHANGE_NOT_DETECTED = 0,
-  ANDROID_CONTROL_AF_SCENE_CHANGE_DETECTED = 1,
+  ANDROID_CONTROL_AF_SCENE_CHANGE_NOT_DETECTED,
+  ANDROID_CONTROL_AF_SCENE_CHANGE_DETECTED,
 }

@@ -38,6 +38,6 @@
 package android.hardware.camera.metadata;
 @Backing(type="int") @VintfStability
 enum ControlAeLock {
-  ANDROID_CONTROL_AE_LOCK_OFF = 0,
-  ANDROID_CONTROL_AE_LOCK_ON = 1,
+  ANDROID_CONTROL_AE_LOCK_OFF,
+  ANDROID_CONTROL_AE_LOCK_ON,
 }

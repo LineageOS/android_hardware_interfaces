@@ -38,6 +38,6 @@
 package android.hardware.camera.metadata;
 @Backing(type="int") @VintfStability
 enum RequestType {
-  ANDROID_REQUEST_TYPE_CAPTURE = 0,
-  ANDROID_REQUEST_TYPE_REPROCESS = 1,
+  ANDROID_REQUEST_TYPE_CAPTURE,
+  ANDROID_REQUEST_TYPE_REPROCESS,
 }
