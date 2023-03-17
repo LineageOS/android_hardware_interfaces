@@ -38,6 +38,6 @@
 package android.hardware.camera.metadata;
 @Backing(type="int") @VintfStability
 enum QuirksPartialResult {
-  ANDROID_QUIRKS_PARTIAL_RESULT_FINAL = 0,
-  ANDROID_QUIRKS_PARTIAL_RESULT_PARTIAL = 1,
+  ANDROID_QUIRKS_PARTIAL_RESULT_FINAL,
+  ANDROID_QUIRKS_PARTIAL_RESULT_PARTIAL,
 }

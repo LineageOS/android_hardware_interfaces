@@ -38,6 +38,6 @@
 package android.hardware.camera.metadata;
 @Backing(type="int") @VintfStability
 enum ControlAwbLockAvailable {
-  ANDROID_CONTROL_AWB_LOCK_AVAILABLE_FALSE = 0,
-  ANDROID_CONTROL_AWB_LOCK_AVAILABLE_TRUE = 1,
+  ANDROID_CONTROL_AWB_LOCK_AVAILABLE_FALSE,
+  ANDROID_CONTROL_AWB_LOCK_AVAILABLE_TRUE,
 }

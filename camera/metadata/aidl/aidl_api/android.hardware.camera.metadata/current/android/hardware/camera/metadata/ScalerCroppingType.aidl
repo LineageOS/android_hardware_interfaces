@@ -38,6 +38,6 @@
 package android.hardware.camera.metadata;
 @Backing(type="int") @VintfStability
 enum ScalerCroppingType {
-  ANDROID_SCALER_CROPPING_TYPE_CENTER_ONLY = 0,
-  ANDROID_SCALER_CROPPING_TYPE_FREEFORM = 1,
+  ANDROID_SCALER_CROPPING_TYPE_CENTER_ONLY,
+  ANDROID_SCALER_CROPPING_TYPE_FREEFORM,
 }

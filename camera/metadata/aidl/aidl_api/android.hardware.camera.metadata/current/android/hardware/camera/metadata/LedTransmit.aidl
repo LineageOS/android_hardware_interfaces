@@ -38,6 +38,6 @@
 package android.hardware.camera.metadata;
 @Backing(type="int") @VintfStability
 enum LedTransmit {
-  ANDROID_LED_TRANSMIT_OFF = 0,
-  ANDROID_LED_TRANSMIT_ON = 1,
+  ANDROID_LED_TRANSMIT_OFF,
+  ANDROID_LED_TRANSMIT_ON,
 }

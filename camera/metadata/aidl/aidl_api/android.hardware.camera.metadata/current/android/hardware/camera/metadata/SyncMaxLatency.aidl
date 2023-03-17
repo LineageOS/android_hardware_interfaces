@@ -39,5 +39,5 @@ package android.hardware.camera.metadata;
 @Backing(type="int") @VintfStability
 enum SyncMaxLatency {
   ANDROID_SYNC_MAX_LATENCY_PER_FRAME_CONTROL = 0,
-  ANDROID_SYNC_MAX_LATENCY_UNKNOWN = -1,
+  ANDROID_SYNC_MAX_LATENCY_UNKNOWN = (-1) /* -1 */,
 }
