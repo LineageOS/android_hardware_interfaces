@@ -37,7 +37,7 @@ parcelable SupplicantStateChangeData {
   android.hardware.wifi.supplicant.StaIfaceCallbackState newState;
   int id;
   byte[] ssid;
-  byte[] bssid;
+  byte[6] bssid;
   android.hardware.wifi.supplicant.KeyMgmtMask keyMgmtMask;
   int frequencyMhz;
   boolean filsHlpSent;

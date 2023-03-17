@@ -34,7 +34,7 @@
 package android.hardware.wifi.supplicant;
 @VintfStability
 parcelable PmkSaCacheData {
-  byte[] bssid;
+  byte[6] bssid;
   long expirationTimeInSec;
   byte[] serializedEntry;
 }
