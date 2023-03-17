@@ -25,6 +25,10 @@ package android.hardware.automotive.vehicle;
 @Backing(type="int")
 enum VehiclePropertyType {
     STRING = 0x00100000,
+    /**
+     * Boolean values should be specified through the int32Values in RawPropValues.
+     * int32Value = {0} represents false and int32Value = {1} represents true.
+     */
     BOOLEAN = 0x00200000,
     INT32 = 0x00400000,
     INT32_VEC = 0x00410000,

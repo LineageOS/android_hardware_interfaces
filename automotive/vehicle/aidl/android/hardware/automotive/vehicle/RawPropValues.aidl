@@ -20,8 +20,8 @@ package android.hardware.automotive.vehicle;
 @JavaDerive(equals=true, toString=true)
 parcelable RawPropValues {
     /**
-     * This is used for properties of types VehiclePropertyType#INT
-     * and VehiclePropertyType#INT_VEC
+     * This is used for properties of types VehiclePropertyType#INT32,
+     * VehiclePropertyType#BOOLEAN and VehiclePropertyType#INT32_VEC
      */
     int[] int32Values = {};
 
@@ -31,7 +31,10 @@ parcelable RawPropValues {
      */
     float[] floatValues;
 
-    /** This is used for properties of type VehiclePropertyType#INT64 */
+    /**
+     * This is used for properties of type VehiclePropertyType#INT64 and
+     * VehiclePropertyType#INT64_VEC
+     */
     long[] int64Values;
 
     /** This is used for properties of type VehiclePropertyType#BYTES */
