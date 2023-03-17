@@ -34,8 +34,8 @@
 package android.hardware.audio.core.sounddose;
 @VintfStability
 interface ISoundDose {
-  void setOutputRs2(float rs2ValueDbA);
-  float getOutputRs2();
+  void setOutputRs2UpperBound(float rs2ValueDbA);
+  float getOutputRs2UpperBound();
   void registerSoundDoseCallback(in android.hardware.audio.core.sounddose.ISoundDose.IHalSoundDoseCallback callback);
   const int DEFAULT_MAX_RS2 = 100;
   const int MIN_RS2 = 80;

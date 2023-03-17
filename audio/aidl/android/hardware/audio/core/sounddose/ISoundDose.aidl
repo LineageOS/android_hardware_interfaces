@@ -35,21 +35,21 @@ interface ISoundDose {
     const int MIN_RS2 = 80;
 
     /**
-     * Sets the RS2 value used for momentary exposure warnings. Default value is
+     * Sets the RS2 upper bound used for momentary exposure warnings. Default value is
      * DEFAULT_MAX_RS2 as specified in IEC62368-1 3rd edition.
      *
-     * @param rs2ValueDbA custom RS2 value to use. Must not be higher than DEFAULT_MAX_RS2
+     * @param rs2ValueDbA custom RS2 upper bound to use
      * @throws EX_ILLEGAL_ARGUMENT if rs2ValueDbA is greater than DEFAULT_MAX_RS2 or lower
-     *                             than 80dBA
+     *                             than MIN_RS2
      */
-    void setOutputRs2(float rs2ValueDbA);
+    void setOutputRs2UpperBound(float rs2ValueDbA);
 
     /**
-     * Gets the RS2 value used for momentary exposure warnings.
+     * Gets the RS2 upper bound used for momentary exposure warnings.
      *
-     * @return the RS2 value in dBA
+     * @return the RS2 upper bound in dBA
      */
-    float getOutputRs2();
+    float getOutputRs2UpperBound();
 
     /**
      * Registers the HAL callback for sound dose computation. If sound dose is supported
@@ -68,9 +68,9 @@ interface ISoundDose {
     @VintfStability
     oneway interface IHalSoundDoseCallback {
         /**
-         * Called whenever the current MEL value exceeds the set RS2 value.
+         * Called whenever the current MEL value exceeds the set RS2 upper bound.
          *
-         * @param currentDbA the current MEL value which exceeds the RS2 value
+         * @param currentDbA the current MEL value which exceeds the RS2 upper bound
          * @param audioDevice the audio device where the MEL exposure warning was recorded
          */
         void onMomentaryExposureWarning(float currentDbA, in AudioDevice audioDevice);
@@ -78,14 +78,15 @@ interface ISoundDose {
         @VintfStability
         parcelable MelRecord {
             /**
-             * Array of continuously recorded MEL values >= RS1 (1 per second).
+             * Array of continuously recorded MEL values >= MIN_RS2 (1 per second).
              * First value in the array was recorded at 'timestamp'.
              */
             float[] melValues;
             /**
-             * Corresponds to the time in seconds when the first MEL entry in melValues
-             * was recorded. The timestamp values have to be consistent throughout all
-             * audio ports, equal timestamp values will be aggregated.
+             * Corresponds to the time in seconds, as reported by CLOCK_MONOTONIC, when
+             * the first MEL entry in melValues was recorded. The timestamp values have
+             * to be consistent throughout all audio ports, equal timestamp values will
+             * be aggregated.
              */
             long timestamp;
         }
