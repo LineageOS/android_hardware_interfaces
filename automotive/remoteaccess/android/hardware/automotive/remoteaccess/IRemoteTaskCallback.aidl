@@ -24,6 +24,10 @@ interface IRemoteTaskCallback {
     /**
      * A callback that is called when a remote task is requested.
      *
+     * The data is passed down from the remote server to the remote task client
+     * which is an Android application, and is not interpreted/parsed by the
+     * Android system.
+     *
      * @param clientId An ID to uniquely identify a remote task client.
      * @param data Opaque task data passed to the remote task client.
      */
