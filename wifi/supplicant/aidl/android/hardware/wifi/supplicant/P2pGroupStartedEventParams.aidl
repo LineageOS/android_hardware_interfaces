@@ -45,10 +45,10 @@ parcelable P2pGroupStartedEventParams {
     boolean isPersistent;
 
     /** MAC Address of the owner of this group. */
-    byte[/* 6 */] goDeviceAddress;
+    byte[6] goDeviceAddress;
 
     /** MAC Address of the P2P interface of the owner of this group. */
-    byte[/* 6 */] goInterfaceAddress;
+    byte[6] goInterfaceAddress;
 
     /**
      * Flag to indicate that the P2P Client IP address is allocated via EAPOL exchange.
