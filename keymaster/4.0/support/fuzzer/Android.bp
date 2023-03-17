@@ -39,9 +39,17 @@ cc_defaults {
     ],
     fuzz_config: {
         cc: [
-            "android-media-fuzzing-reports@google.com",
+            "android-hardware-security@google.com",
         ],
-        componentid: 533764,
+        componentid: 1084733,
+        hotlists: [
+            "4593311",
+        ],
+        description: "The fuzzer targets the APIs of libkeymaster4support",
+        vector: "local_no_privileges_required",
+        service_privilege: "privileged",
+        users: "multi_user",
+        fuzzed_code_usage: "shipped",
     },
 }
 
