@@ -38,6 +38,6 @@
 package android.hardware.camera.metadata;
 @Backing(type="int") @VintfStability
 enum SyncFrameNumber {
-  ANDROID_SYNC_FRAME_NUMBER_CONVERGING = -1,
-  ANDROID_SYNC_FRAME_NUMBER_UNKNOWN = -2,
+  ANDROID_SYNC_FRAME_NUMBER_CONVERGING = (-1) /* -1 */,
+  ANDROID_SYNC_FRAME_NUMBER_UNKNOWN = (-2) /* -2 */,
 }

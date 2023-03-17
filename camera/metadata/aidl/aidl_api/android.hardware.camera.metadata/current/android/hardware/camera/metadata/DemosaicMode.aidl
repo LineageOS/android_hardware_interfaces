@@ -38,6 +38,6 @@
 package android.hardware.camera.metadata;
 @Backing(type="int") @VintfStability
 enum DemosaicMode {
-  ANDROID_DEMOSAIC_MODE_FAST = 0,
-  ANDROID_DEMOSAIC_MODE_HIGH_QUALITY = 1,
+  ANDROID_DEMOSAIC_MODE_FAST,
+  ANDROID_DEMOSAIC_MODE_HIGH_QUALITY,
 }

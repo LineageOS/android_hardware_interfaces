@@ -38,7 +38,7 @@
 package android.hardware.camera.metadata;
 @Backing(type="int") @VintfStability
 enum FlashMode {
-  ANDROID_FLASH_MODE_OFF = 0,
-  ANDROID_FLASH_MODE_SINGLE = 1,
-  ANDROID_FLASH_MODE_TORCH = 2,
+  ANDROID_FLASH_MODE_OFF,
+  ANDROID_FLASH_MODE_SINGLE,
+  ANDROID_FLASH_MODE_TORCH,
 }
