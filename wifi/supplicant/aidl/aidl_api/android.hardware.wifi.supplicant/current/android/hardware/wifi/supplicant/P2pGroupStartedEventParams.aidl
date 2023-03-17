@@ -41,8 +41,8 @@ parcelable P2pGroupStartedEventParams {
   byte[] psk;
   String passphrase;
   boolean isPersistent;
-  byte[] goDeviceAddress;
-  byte[] goInterfaceAddress;
+  byte[6] goDeviceAddress;
+  byte[6] goInterfaceAddress;
   boolean isP2pClientEapolIpAddressInfoPresent;
   android.hardware.wifi.supplicant.P2pClientEapolIpAddressInfo p2pClientIpInfo;
 }
