@@ -38,6 +38,6 @@
 package android.hardware.camera.metadata;
 @Backing(type="int") @VintfStability
 enum StatisticsHotPixelMapMode {
-  ANDROID_STATISTICS_HOT_PIXEL_MAP_MODE_OFF = 0,
-  ANDROID_STATISTICS_HOT_PIXEL_MAP_MODE_ON = 1,
+  ANDROID_STATISTICS_HOT_PIXEL_MAP_MODE_OFF,
+  ANDROID_STATISTICS_HOT_PIXEL_MAP_MODE_ON,
 }

@@ -38,6 +38,6 @@
 package android.hardware.camera.metadata;
 @Backing(type="int") @VintfStability
 enum BlackLevelLock {
-  ANDROID_BLACK_LEVEL_LOCK_OFF = 0,
-  ANDROID_BLACK_LEVEL_LOCK_ON = 1,
+  ANDROID_BLACK_LEVEL_LOCK_OFF,
+  ANDROID_BLACK_LEVEL_LOCK_ON,
 }

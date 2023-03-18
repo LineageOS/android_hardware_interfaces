@@ -38,6 +38,6 @@
 package android.hardware.camera.metadata;
 @Backing(type="int") @VintfStability
 enum ControlAutoframingAvailable {
-  ANDROID_CONTROL_AUTOFRAMING_AVAILABLE_FALSE = 0,
-  ANDROID_CONTROL_AUTOFRAMING_AVAILABLE_TRUE = 1,
+  ANDROID_CONTROL_AUTOFRAMING_AVAILABLE_FALSE,
+  ANDROID_CONTROL_AUTOFRAMING_AVAILABLE_TRUE,
 }

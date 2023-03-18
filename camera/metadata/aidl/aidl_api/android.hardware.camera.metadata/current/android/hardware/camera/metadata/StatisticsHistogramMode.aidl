@@ -38,6 +38,6 @@
 package android.hardware.camera.metadata;
 @Backing(type="int") @VintfStability
 enum StatisticsHistogramMode {
-  ANDROID_STATISTICS_HISTOGRAM_MODE_OFF = 0,
-  ANDROID_STATISTICS_HISTOGRAM_MODE_ON = 1,
+  ANDROID_STATISTICS_HISTOGRAM_MODE_OFF,
+  ANDROID_STATISTICS_HISTOGRAM_MODE_ON,
 }

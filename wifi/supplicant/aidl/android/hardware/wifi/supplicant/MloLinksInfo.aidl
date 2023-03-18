@@ -35,5 +35,5 @@ parcelable MloLinksInfo {
     /**
      * AP MLD MAC address.
      */
-    @nullable byte[/* 6 */] apMldMacAddress;
+    @nullable byte[6] apMldMacAddress;
 }
