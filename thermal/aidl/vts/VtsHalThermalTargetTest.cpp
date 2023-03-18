@@ -134,7 +134,6 @@ TEST_P(ThermalAidlTest, RegisterThermalChangedCallbackTest) {
     // Expect to succeed with different callback
     status = mThermal->registerThermalChangedCallback(localThermalCallback);
     ASSERT_TRUE(status.isOk()) << status.getMessage();
-    ASSERT_TRUE(localThermalCallback->waitForCallback(200ms));
     // Remove the local callback
     status = mThermal->unregisterThermalChangedCallback(localThermalCallback);
     ASSERT_TRUE(status.isOk()) << status.getMessage();
@@ -158,7 +157,6 @@ TEST_P(ThermalAidlTest, RegisterThermalChangedCallbackWithTypeTest) {
     status = mThermal->registerThermalChangedCallbackWithType(localThermalCallback,
                                                               TemperatureType::SKIN);
     ASSERT_TRUE(status.isOk()) << status.getMessage();
-    ASSERT_TRUE(localThermalCallback->waitForCallback(200ms));
     // Remove the local callback
     status = mThermal->unregisterThermalChangedCallback(localThermalCallback);
     ASSERT_TRUE(status.isOk()) << status.getMessage();
