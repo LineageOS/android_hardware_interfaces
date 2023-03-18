@@ -22,7 +22,6 @@
 #include <vector>
 
 #include "effect-impl/EffectImpl.h"
-#include "effect-impl/EffectUUID.h"
 
 namespace aidl::android::hardware::audio::effect {
 
