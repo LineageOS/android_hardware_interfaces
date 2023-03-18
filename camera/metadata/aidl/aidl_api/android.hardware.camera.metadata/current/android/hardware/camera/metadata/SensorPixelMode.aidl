@@ -38,6 +38,6 @@
 package android.hardware.camera.metadata;
 @Backing(type="int") @VintfStability
 enum SensorPixelMode {
-  ANDROID_SENSOR_PIXEL_MODE_DEFAULT = 0,
-  ANDROID_SENSOR_PIXEL_MODE_MAXIMUM_RESOLUTION = 1,
+  ANDROID_SENSOR_PIXEL_MODE_DEFAULT,
+  ANDROID_SENSOR_PIXEL_MODE_MAXIMUM_RESOLUTION,
 }

@@ -38,6 +38,6 @@
 package android.hardware.camera.metadata;
 @Backing(type="int") @VintfStability
 enum FlashInfoAvailable {
-  ANDROID_FLASH_INFO_AVAILABLE_FALSE = 0,
-  ANDROID_FLASH_INFO_AVAILABLE_TRUE = 1,
+  ANDROID_FLASH_INFO_AVAILABLE_FALSE,
+  ANDROID_FLASH_INFO_AVAILABLE_TRUE,
 }

@@ -31,10 +31,10 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.automotive.vehicle;
-@Backing(type="int") @VintfStability
-enum DriverAttentionMonitoringWarning {
-  OTHER = 0,
-  NO_WARNING = 1,
-  WARNING = 2,
+package android.hardware.wifi;
+@VintfStability
+parcelable AfcChannelAllowance {
+  android.hardware.wifi.AvailableAfcFrequencyInfo[] availableAfcFrequencyInfos;
+  android.hardware.wifi.AvailableAfcChannelInfo[] availableAfcChannelInfos;
+  long availabilityExpireTimeMs;
 }

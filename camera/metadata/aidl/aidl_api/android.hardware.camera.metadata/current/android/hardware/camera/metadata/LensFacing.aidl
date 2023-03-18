@@ -38,7 +38,7 @@
 package android.hardware.camera.metadata;
 @Backing(type="int") @VintfStability
 enum LensFacing {
-  ANDROID_LENS_FACING_FRONT = 0,
-  ANDROID_LENS_FACING_BACK = 1,
-  ANDROID_LENS_FACING_EXTERNAL = 2,
+  ANDROID_LENS_FACING_FRONT,
+  ANDROID_LENS_FACING_BACK,
+  ANDROID_LENS_FACING_EXTERNAL,
 }

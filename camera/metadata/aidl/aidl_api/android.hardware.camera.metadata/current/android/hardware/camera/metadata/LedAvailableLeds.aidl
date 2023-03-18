@@ -38,5 +38,5 @@
 package android.hardware.camera.metadata;
 @Backing(type="int") @VintfStability
 enum LedAvailableLeds {
-  ANDROID_LED_AVAILABLE_LEDS_TRANSMIT = 0,
+  ANDROID_LED_AVAILABLE_LEDS_TRANSMIT,
 }
