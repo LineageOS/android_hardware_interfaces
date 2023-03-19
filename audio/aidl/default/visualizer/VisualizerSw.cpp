@@ -17,19 +17,21 @@
 #define LOG_TAG "AHAL_VisualizerSw"
 
 #include <android-base/logging.h>
+#include <system/audio_effects/effect_uuid.h>
 
 #include "VisualizerSw.h"
 
 using aidl::android::hardware::audio::effect::Descriptor;
+using aidl::android::hardware::audio::effect::getEffectImplUuidVisualizerSw;
+using aidl::android::hardware::audio::effect::getEffectTypeUuidVisualizer;
 using aidl::android::hardware::audio::effect::IEffect;
-using aidl::android::hardware::audio::effect::kVisualizerSwImplUUID;
 using aidl::android::hardware::audio::effect::State;
 using aidl::android::hardware::audio::effect::VisualizerSw;
 using aidl::android::media::audio::common::AudioUuid;
 
 extern "C" binder_exception_t createEffect(const AudioUuid* in_impl_uuid,
                                            std::shared_ptr<IEffect>* instanceSpp) {
-    if (!in_impl_uuid || *in_impl_uuid != kVisualizerSwImplUUID) {
+    if (!in_impl_uuid || *in_impl_uuid != getEffectImplUuidVisualizerSw()) {
         LOG(ERROR) << __func__ << "uuid not supported";
         return EX_ILLEGAL_ARGUMENT;
     }
@@ -44,7 +46,7 @@ extern "C" binder_exception_t createEffect(const AudioUuid* in_impl_uuid,
 }
 
 extern "C" binder_exception_t queryEffect(const AudioUuid* in_impl_uuid, Descriptor* _aidl_return) {
-    if (!in_impl_uuid || *in_impl_uuid != kVisualizerSwImplUUID) {
+    if (!in_impl_uuid || *in_impl_uuid != getEffectImplUuidVisualizerSw()) {
         LOG(ERROR) << __func__ << "uuid not supported";
         return EX_ILLEGAL_ARGUMENT;
     }
@@ -66,8 +68,8 @@ const Capability VisualizerSw::kCapability = {
         .range = Range::make<Range::visualizer>(VisualizerSw::kRanges)};
 
 const Descriptor VisualizerSw::kDescriptor = {
-        .common = {.id = {.type = kVisualizerTypeUUID,
-                          .uuid = kVisualizerSwImplUUID,
+        .common = {.id = {.type = getEffectTypeUuidVisualizer(),
+                          .uuid = getEffectImplUuidVisualizerSw(),
                           .proxy = std::nullopt},
                    .flags = {.type = Flags::Type::INSERT,
                              .insert = Flags::Insert::FIRST,

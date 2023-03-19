@@ -27,9 +27,9 @@
 using namespace android;
 
 using aidl::android::hardware::audio::effect::Descriptor;
+using aidl::android::hardware::audio::effect::getEffectTypeUuidNoiseSuppression;
 using aidl::android::hardware::audio::effect::IEffect;
 using aidl::android::hardware::audio::effect::IFactory;
-using aidl::android::hardware::audio::effect::kNoiseSuppressionTypeUUID;
 using aidl::android::hardware::audio::effect::NoiseSuppression;
 using aidl::android::hardware::audio::effect::Parameter;
 
@@ -146,7 +146,7 @@ TEST_P(NSParamTest, SetAndGetType) {
 INSTANTIATE_TEST_SUITE_P(
         NSParamTest, NSParamTest,
         ::testing::Combine(testing::ValuesIn(EffectFactoryHelper::getAllEffectDescriptors(
-                                   IFactory::descriptor, kNoiseSuppressionTypeUUID)),
+                                   IFactory::descriptor, getEffectTypeUuidNoiseSuppression())),
                            testing::ValuesIn(NSParamTest::getLevelValues()),
                            testing::ValuesIn(NSParamTest::getTypeValues())),
         [](const testing::TestParamInfo<NSParamTest::ParamType>& info) {

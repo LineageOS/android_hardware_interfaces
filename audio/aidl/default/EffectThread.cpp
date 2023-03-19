@@ -36,7 +36,7 @@ EffectThread::~EffectThread() {
 RetCode EffectThread::createThread(std::shared_ptr<EffectContext> context, const std::string& name,
                                    int priority, int sleepUs /* kSleepTimeUs */) {
     if (mThread.joinable()) {
-        LOG(WARNING) << __func__ << " thread already created, no-op";
+        LOG(WARNING) << "-" << mName << "-" << __func__ << " thread already created, no-op";
         return RetCode::SUCCESS;
     }
     mName = name;
@@ -47,7 +47,7 @@ RetCode EffectThread::createThread(std::shared_ptr<EffectContext> context, const
         mThreadContext = std::move(context);
     }
     mThread = std::thread(&EffectThread::threadLoop, this);
-    LOG(DEBUG) << __func__ << " " << name << " priority " << mPriority << " done";
+    LOG(DEBUG) << "-" << mName << "-" << __func__ << " priority " << mPriority << " done";
     return RetCode::SUCCESS;
 }
 
@@ -66,7 +66,7 @@ RetCode EffectThread::destroyThread() {
         std::lock_guard lg(mThreadMutex);
         mThreadContext.reset();
     }
-    LOG(DEBUG) << __func__ << " done";
+    LOG(DEBUG) << "-" << mName << "-" << __func__ << " done";
     return RetCode::SUCCESS;
 }
 
@@ -80,21 +80,23 @@ RetCode EffectThread::stopThread() {
 
 RetCode EffectThread::handleStartStop(bool stop) {
     if (!mThread.joinable()) {
-        LOG(ERROR) << __func__ << " thread already destroyed";
+        LOG(ERROR) << "-" << mName << "-" << __func__ << ": "
+                   << " thread already destroyed";
         return RetCode::ERROR_THREAD;
     }
 
     {
         std::lock_guard lg(mThreadMutex);
         if (stop == mStop) {
-            LOG(WARNING) << __func__ << " already " << (stop ? "stop" : "start");
+            LOG(WARNING) << "-" << mName << "-" << __func__ << ": "
+                         << " already " << (stop ? "stop" : "start");
             return RetCode::SUCCESS;
         }
         mStop = stop;
     }
 
     mCv.notify_one();
-    LOG(DEBUG) << (stop ? "stop done" : "start done");
+    LOG(DEBUG) << ": " << mName << (stop ? " stop done" : " start done");
     return RetCode::SUCCESS;
 }
 
@@ -124,16 +126,18 @@ void EffectThread::process_l() {
     auto readSamples = inputMQ->availableToRead(), writeSamples = outputMQ->availableToWrite();
     if (readSamples && writeSamples) {
         auto processSamples = std::min(readSamples, writeSamples);
-        LOG(DEBUG) << __func__ << " available to read " << readSamples << " available to write "
-                   << writeSamples << " process " << processSamples;
+        LOG(DEBUG) << "-" << mName << "-" << __func__ << ": "
+                   << " available to read " << readSamples << " available to write " << writeSamples
+                   << " process " << processSamples;
 
         inputMQ->read(buffer, processSamples);
 
         IEffect::Status status = effectProcessImpl(buffer, buffer, processSamples);
         outputMQ->write(buffer, status.fmqProduced);
         statusMQ->writeBlocking(&status, 1);
-        LOG(DEBUG) << __func__ << " done processing, effect consumed " << status.fmqConsumed
-                   << " produced " << status.fmqProduced;
+        LOG(DEBUG) << "-" << mName << "-" << __func__ << ": "
+                   << " done processing, effect consumed " << status.fmqConsumed << " produced "
+                   << status.fmqProduced;
     } else {
         usleep(mSleepTimeUs);
     }
