@@ -17,22 +17,24 @@
 #include <algorithm>
 #include <cstddef>
 #include <memory>
-
 #define LOG_TAG "AHAL_AutomaticGainControlV2Sw"
+
 #include <android-base/logging.h>
 #include <fmq/AidlMessageQueue.h>
+#include <system/audio_effects/effect_uuid.h>
 
 #include "AutomaticGainControlV2Sw.h"
 
 using aidl::android::hardware::audio::effect::AutomaticGainControlV2Sw;
 using aidl::android::hardware::audio::effect::Descriptor;
+using aidl::android::hardware::audio::effect::getEffectImplUuidAutomaticGainControlV2Sw;
+using aidl::android::hardware::audio::effect::getEffectTypeUuidAutomaticGainControlV2;
 using aidl::android::hardware::audio::effect::IEffect;
-using aidl::android::hardware::audio::effect::kAutomaticGainControlV2SwImplUUID;
 using aidl::android::media::audio::common::AudioUuid;
 
 extern "C" binder_exception_t createEffect(const AudioUuid* in_impl_uuid,
                                            std::shared_ptr<IEffect>* instanceSpp) {
-    if (!in_impl_uuid || *in_impl_uuid != kAutomaticGainControlV2SwImplUUID) {
+    if (!in_impl_uuid || *in_impl_uuid != getEffectImplUuidAutomaticGainControlV2Sw()) {
         LOG(ERROR) << __func__ << "uuid not supported";
         return EX_ILLEGAL_ARGUMENT;
     }
@@ -47,7 +49,7 @@ extern "C" binder_exception_t createEffect(const AudioUuid* in_impl_uuid,
 }
 
 extern "C" binder_exception_t queryEffect(const AudioUuid* in_impl_uuid, Descriptor* _aidl_return) {
-    if (!in_impl_uuid || *in_impl_uuid != kAutomaticGainControlV2SwImplUUID) {
+    if (!in_impl_uuid || *in_impl_uuid != getEffectImplUuidAutomaticGainControlV2Sw()) {
         LOG(ERROR) << __func__ << "uuid not supported";
         return EX_ILLEGAL_ARGUMENT;
     }
@@ -67,8 +69,8 @@ const Capability AutomaticGainControlV2Sw::kCapability = {
         .range = AutomaticGainControlV2Sw::kRanges};
 
 const Descriptor AutomaticGainControlV2Sw::kDescriptor = {
-        .common = {.id = {.type = kAutomaticGainControlV2TypeUUID,
-                          .uuid = kAutomaticGainControlV2SwImplUUID,
+        .common = {.id = {.type = getEffectTypeUuidAutomaticGainControlV2(),
+                          .uuid = getEffectImplUuidAutomaticGainControlV2Sw(),
                           .proxy = std::nullopt},
                    .flags = {.type = Flags::Type::INSERT,
                              .insert = Flags::Insert::FIRST,
