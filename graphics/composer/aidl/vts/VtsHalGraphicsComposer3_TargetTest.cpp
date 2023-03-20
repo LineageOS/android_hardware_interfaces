@@ -118,6 +118,12 @@ class GraphicsComposerAidlTest : public ::testing::TestWithParam<std::string> {
                 [&](const Capability& activeCapability) { return activeCapability == capability; });
     }
 
+    int getInterfaceVersion() {
+        const auto& [versionStatus, version] = mComposerClient->getInterfaceVersion();
+        EXPECT_TRUE(versionStatus.isOk());
+        return version;
+    }
+
     const VtsDisplay& getPrimaryDisplay() const { return mDisplays[0]; }
 
     int64_t getPrimaryDisplayId() const { return getPrimaryDisplay().getDisplayId(); }
@@ -874,9 +880,7 @@ TEST_P(GraphicsComposerAidlTest, GetDisplayName) {
 }
 
 TEST_P(GraphicsComposerAidlTest, GetOverlaySupport) {
-    const auto& [versionStatus, version] = mComposerClient->getInterfaceVersion();
-    ASSERT_TRUE(versionStatus.isOk());
-    if (version == 1) {
+    if (getInterfaceVersion() <= 1) {
         GTEST_SUCCEED() << "Device does not support the new API for overlay support";
         return;
     }
@@ -2290,6 +2294,11 @@ TEST_P(GraphicsComposerAidlCommandTest, SetIdleTimerEnabled_Timeout_2) {
 }
 
 TEST_P(GraphicsComposerAidlCommandTest, SetRefreshRateChangedCallbackDebug_Unsupported) {
+    if (getInterfaceVersion() <= 1) {
+        GTEST_SUCCEED() << "Capability::REFRESH_RATE_CHANGED_CALLBACK_DEBUG is "
+                           "not supported on older version of the service";
+        return;
+    }
     if (!hasCapability(Capability::REFRESH_RATE_CHANGED_CALLBACK_DEBUG)) {
         auto status = mComposerClient->setRefreshRateChangedCallbackDebugEnabled(
                 getPrimaryDisplayId(), /*enabled*/ true);
@@ -2306,6 +2315,11 @@ TEST_P(GraphicsComposerAidlCommandTest, SetRefreshRateChangedCallbackDebug_Unsup
 }
 
 TEST_P(GraphicsComposerAidlCommandTest, SetRefreshRateChangedCallbackDebug_Enabled) {
+    if (getInterfaceVersion() <= 1) {
+        GTEST_SUCCEED() << "Capability::REFRESH_RATE_CHANGED_CALLBACK_DEBUG is "
+                           "not supported on older version of the service";
+        return;
+    }
     if (!hasCapability(Capability::REFRESH_RATE_CHANGED_CALLBACK_DEBUG)) {
         GTEST_SUCCEED() << "Capability::REFRESH_RATE_CHANGED_CALLBACK_DEBUG is not supported";
         return;
@@ -2335,6 +2349,11 @@ TEST_P(GraphicsComposerAidlCommandTest, SetRefreshRateChangedCallbackDebug_Enabl
 
 TEST_P(GraphicsComposerAidlCommandTest,
        SetRefreshRateChangedCallbackDebugEnabled_noCallbackWhenIdle) {
+    if (getInterfaceVersion() <= 1) {
+        GTEST_SUCCEED() << "Capability::REFRESH_RATE_CHANGED_CALLBACK_DEBUG is "
+                           "not supported on older version of the service";
+        return;
+    }
     if (!hasCapability(Capability::REFRESH_RATE_CHANGED_CALLBACK_DEBUG)) {
         GTEST_SUCCEED() << "Capability::REFRESH_RATE_CHANGED_CALLBACK_DEBUG is not supported";
         return;
@@ -2392,6 +2411,11 @@ TEST_P(GraphicsComposerAidlCommandTest,
 
 TEST_P(GraphicsComposerAidlCommandTest,
        SetRefreshRateChangedCallbackDebugEnabled_SetActiveConfigWithConstraints) {
+    if (getInterfaceVersion() <= 1) {
+        GTEST_SUCCEED() << "Capability::REFRESH_RATE_CHANGED_CALLBACK_DEBUG is "
+                           "not supported on older version of the service";
+        return;
+    }
     if (!hasCapability(Capability::REFRESH_RATE_CHANGED_CALLBACK_DEBUG)) {
         GTEST_SUCCEED() << "Capability::REFRESH_RATE_CHANGED_CALLBACK_DEBUG is not supported";
         return;
@@ -2514,9 +2538,7 @@ TEST_P(GraphicsComposerAidlCommandTest, MultiThreadedPresent) {
  * Capability::SKIP_VALIDATE has been deprecated and should not be enabled.
  */
 TEST_P(GraphicsComposerAidlCommandTest, SkipValidateDeprecatedTest) {
-    const auto& [versionStatus, version] = mComposerClient->getInterfaceVersion();
-    ASSERT_TRUE(versionStatus.isOk());
-    if (version <= 1) {
+    if (getInterfaceVersion() <= 1) {
         GTEST_SUCCEED() << "HAL at version 1 or lower can contain Capability::SKIP_VALIDATE.";
         return;
     }
