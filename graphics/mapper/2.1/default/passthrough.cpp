@@ -19,14 +19,6 @@
 using android::hardware::graphics::mapper::V2_1::IMapper;
 using android::hardware::graphics::mapper::V2_1::passthrough::GrallocLoader;
 
-// Preload the gralloc module such that GraphicBufferMapper::preloadHal is
-// meaningful
-class GrallocPreloader {
-public:
-    GrallocPreloader() { GrallocLoader::loadModule(); }
-};
-static GrallocPreloader sGrallocPreloader;
-
 extern "C" IMapper* HIDL_FETCH_IMapper(const char* /*name*/) {
     return GrallocLoader::load();
 }
