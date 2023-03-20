@@ -20,19 +20,21 @@
 #define LOG_TAG "AHAL_VolumeSw"
 #include <android-base/logging.h>
 #include <fmq/AidlMessageQueue.h>
+#include <system/audio_effects/effect_uuid.h>
 
 #include "VolumeSw.h"
 
 using aidl::android::hardware::audio::effect::Descriptor;
+using aidl::android::hardware::audio::effect::getEffectImplUuidVolumeSw;
+using aidl::android::hardware::audio::effect::getEffectTypeUuidVolume;
 using aidl::android::hardware::audio::effect::IEffect;
-using aidl::android::hardware::audio::effect::kVolumeSwImplUUID;
 using aidl::android::hardware::audio::effect::State;
 using aidl::android::hardware::audio::effect::VolumeSw;
 using aidl::android::media::audio::common::AudioUuid;
 
 extern "C" binder_exception_t createEffect(const AudioUuid* in_impl_uuid,
                                            std::shared_ptr<IEffect>* instanceSpp) {
-    if (!in_impl_uuid || *in_impl_uuid != kVolumeSwImplUUID) {
+    if (!in_impl_uuid || *in_impl_uuid != getEffectImplUuidVolumeSw()) {
         LOG(ERROR) << __func__ << "uuid not supported";
         return EX_ILLEGAL_ARGUMENT;
     }
@@ -47,7 +49,7 @@ extern "C" binder_exception_t createEffect(const AudioUuid* in_impl_uuid,
 }
 
 extern "C" binder_exception_t queryEffect(const AudioUuid* in_impl_uuid, Descriptor* _aidl_return) {
-    if (!in_impl_uuid || *in_impl_uuid != kVolumeSwImplUUID) {
+    if (!in_impl_uuid || *in_impl_uuid != getEffectImplUuidVolumeSw()) {
         LOG(ERROR) << __func__ << "uuid not supported";
         return EX_ILLEGAL_ARGUMENT;
     }
@@ -64,8 +66,8 @@ const std::vector<Range::VolumeRange> VolumeSw::kRanges = {MAKE_RANGE(Volume, le
 const Capability VolumeSw::kCapability = {.range = Range::make<Range::volume>(VolumeSw::kRanges)};
 
 const Descriptor VolumeSw::kDescriptor = {
-        .common = {.id = {.type = kVolumeTypeUUID,
-                          .uuid = kVolumeSwImplUUID,
+        .common = {.id = {.type = getEffectTypeUuidVolume(),
+                          .uuid = getEffectImplUuidVolumeSw(),
                           .proxy = std::nullopt},
                    .flags = {.type = Flags::Type::INSERT,
                              .insert = Flags::Insert::FIRST,

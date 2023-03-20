@@ -16,13 +16,13 @@
 
 #pragma once
 
-#include <aidl/android/hardware/audio/effect/BnEffect.h>
-#include <fmq/AidlMessageQueue.h>
 #include <cstdlib>
 #include <memory>
 
+#include <aidl/android/hardware/audio/effect/BnEffect.h>
+#include <fmq/AidlMessageQueue.h>
+
 #include "effect-impl/EffectImpl.h"
-#include "effect-impl/EffectUUID.h"
 
 namespace aidl::android::hardware::audio::effect {
 

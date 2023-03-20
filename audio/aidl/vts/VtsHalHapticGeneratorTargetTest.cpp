@@ -28,10 +28,10 @@
 using namespace android;
 
 using aidl::android::hardware::audio::effect::Descriptor;
+using aidl::android::hardware::audio::effect::getEffectTypeUuidHapticGenerator;
 using aidl::android::hardware::audio::effect::HapticGenerator;
 using aidl::android::hardware::audio::effect::IEffect;
 using aidl::android::hardware::audio::effect::IFactory;
-using aidl::android::hardware::audio::effect::kHapticGeneratorTypeUUID;
 using aidl::android::hardware::audio::effect::Parameter;
 
 /**
@@ -179,7 +179,7 @@ TEST_P(HapticGeneratorParamTest, SetAndGetVibratorInformation) {
 INSTANTIATE_TEST_SUITE_P(
         HapticGeneratorValidTest, HapticGeneratorParamTest,
         ::testing::Combine(testing::ValuesIn(EffectFactoryHelper::getAllEffectDescriptors(
-                                   IFactory::descriptor, kHapticGeneratorTypeUUID)),
+                                   IFactory::descriptor, getEffectTypeUuidHapticGenerator())),
                            testing::ValuesIn(kHapticScaleIdValues),
                            testing::ValuesIn(kVibratorScaleValues),
                            testing::ValuesIn(kResonantFrequencyValues),
@@ -209,7 +209,7 @@ INSTANTIATE_TEST_SUITE_P(
 INSTANTIATE_TEST_SUITE_P(
         HapticGeneratorInvalidTest, HapticGeneratorParamTest,
         ::testing::Combine(testing::ValuesIn(EffectFactoryHelper::getAllEffectDescriptors(
-                                   IFactory::descriptor, kHapticGeneratorTypeUUID)),
+                                   IFactory::descriptor, getEffectTypeUuidHapticGenerator())),
                            testing::Values(MIN_ID - 1),
                            testing::Values(HapticGenerator::VibratorScale::NONE),
                            testing::Values(MIN_FLOAT), testing::Values(MIN_FLOAT),
@@ -419,7 +419,7 @@ TEST_P(HapticGeneratorScalesTest, SetMultipleVectorRepeat) {
 INSTANTIATE_TEST_SUITE_P(
         HapticGeneratorScalesTest, HapticGeneratorScalesTest,
         ::testing::Combine(testing::ValuesIn(EffectFactoryHelper::getAllEffectDescriptors(
-                IFactory::descriptor, kHapticGeneratorTypeUUID))),
+                IFactory::descriptor, getEffectTypeUuidHapticGenerator()))),
         [](const testing::TestParamInfo<HapticGeneratorScalesTest::ParamType>& info) {
             auto descriptor = std::get<PARAM_INSTANCE_NAME>(info.param).second;
             std::string name = "Implementor_" + descriptor.common.implementor + "_name_" +
