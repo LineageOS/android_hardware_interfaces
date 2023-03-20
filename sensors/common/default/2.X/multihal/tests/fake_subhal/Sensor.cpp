@@ -76,6 +76,7 @@ void Sensor::batch(int64_t samplingPeriodNs) {
                                   static_cast<int64_t>(mSensorInfo.minDelay) * 1000,
                                   static_cast<int64_t>(mSensorInfo.maxDelay) * 1000);
 
+    std::unique_lock<std::mutex> lock(mRunMutex);
     if (mSamplingPeriodNs != samplingPeriodNs) {
         mSamplingPeriodNs = samplingPeriodNs;
         // Wake up the 'run' thread to check if a new event should be generated now
