@@ -22,19 +22,21 @@
 #define LOG_TAG "AHAL_DynamicsProcessingSw"
 #include <android-base/logging.h>
 #include <fmq/AidlMessageQueue.h>
+#include <system/audio_effects/effect_uuid.h>
 
 #include "DynamicsProcessingSw.h"
 
 using aidl::android::hardware::audio::effect::Descriptor;
 using aidl::android::hardware::audio::effect::DynamicsProcessingSw;
+using aidl::android::hardware::audio::effect::getEffectImplUuidDynamicsProcessingSw;
+using aidl::android::hardware::audio::effect::getEffectTypeUuidDynamicsProcessing;
 using aidl::android::hardware::audio::effect::IEffect;
-using aidl::android::hardware::audio::effect::kDynamicsProcessingSwImplUUID;
 using aidl::android::hardware::audio::effect::State;
 using aidl::android::media::audio::common::AudioUuid;
 
 extern "C" binder_exception_t createEffect(const AudioUuid* in_impl_uuid,
                                            std::shared_ptr<IEffect>* instanceSpp) {
-    if (!in_impl_uuid || *in_impl_uuid != kDynamicsProcessingSwImplUUID) {
+    if (!in_impl_uuid || *in_impl_uuid != getEffectImplUuidDynamicsProcessingSw()) {
         LOG(ERROR) << __func__ << "uuid not supported";
         return EX_ILLEGAL_ARGUMENT;
     }
@@ -49,7 +51,7 @@ extern "C" binder_exception_t createEffect(const AudioUuid* in_impl_uuid,
 }
 
 extern "C" binder_exception_t queryEffect(const AudioUuid* in_impl_uuid, Descriptor* _aidl_return) {
-    if (!in_impl_uuid || *in_impl_uuid != kDynamicsProcessingSwImplUUID) {
+    if (!in_impl_uuid || *in_impl_uuid != getEffectImplUuidDynamicsProcessingSw()) {
         LOG(ERROR) << __func__ << "uuid not supported";
         return EX_ILLEGAL_ARGUMENT;
     }
@@ -88,8 +90,8 @@ const std::vector<Range::DynamicsProcessingRange> DynamicsProcessingSw::kRanges 
 const Capability DynamicsProcessingSw::kCapability = {.range = DynamicsProcessingSw::kRanges};
 
 const Descriptor DynamicsProcessingSw::kDescriptor = {
-        .common = {.id = {.type = kDynamicsProcessingTypeUUID,
-                          .uuid = kDynamicsProcessingSwImplUUID,
+        .common = {.id = {.type = getEffectTypeUuidDynamicsProcessing(),
+                          .uuid = getEffectImplUuidDynamicsProcessingSw(),
                           .proxy = std::nullopt},
                    .flags = {.type = Flags::Type::INSERT,
                              .insert = Flags::Insert::FIRST,

@@ -31,6 +31,7 @@
 #include <fmq/AidlMessageQueue.h>
 #include <gtest/gtest.h>
 #include <system/audio_effects/aidl_effects_utils.h>
+#include <system/audio_effects/effect_uuid.h>
 
 #include "AudioHalBinderServiceUtil.h"
 #include "EffectFactoryHelper.h"

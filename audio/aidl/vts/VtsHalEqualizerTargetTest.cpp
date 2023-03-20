@@ -37,15 +37,14 @@
 #include "AudioHalBinderServiceUtil.h"
 #include "EffectHelper.h"
 #include "TestUtils.h"
-#include "effect-impl/EffectUUID.h"
 
 using namespace android;
 
 using aidl::android::hardware::audio::effect::Descriptor;
 using aidl::android::hardware::audio::effect::Equalizer;
+using aidl::android::hardware::audio::effect::getEffectTypeUuidEqualizer;
 using aidl::android::hardware::audio::effect::IEffect;
 using aidl::android::hardware::audio::effect::IFactory;
-using aidl::android::hardware::audio::effect::kEqualizerTypeUUID;
 using aidl::android::hardware::audio::effect::Parameter;
 
 /**
@@ -195,7 +194,7 @@ INSTANTIATE_TEST_SUITE_P(
         EqualizerTest, EqualizerTest,
         ::testing::Combine(
                 testing::ValuesIn(kDescPair = EffectFactoryHelper::getAllEffectDescriptors(
-                                          IFactory::descriptor, kEqualizerTypeUUID)),
+                                          IFactory::descriptor, getEffectTypeUuidEqualizer())),
                 testing::ValuesIn(EffectHelper::getTestValueSet<Equalizer, int, Range::equalizer,
                                                                 Equalizer::preset>(
                         kDescPair, EffectHelper::expandTestValueBasic<int>)),

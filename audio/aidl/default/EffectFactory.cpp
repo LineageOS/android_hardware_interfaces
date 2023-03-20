@@ -14,20 +14,19 @@
  * limitations under the License.
  */
 
+#include <dlfcn.h>
 #include <iterator>
 #include <memory>
 #include <tuple>
-#include "include/effect-impl/EffectTypes.h"
-#define LOG_TAG "AHAL_EffectFactory"
-#include <dlfcn.h>
 #include <unordered_set>
+#define LOG_TAG "AHAL_EffectFactory"
 
 #include <android-base/logging.h>
 #include <android/binder_ibinder_platform.h>
+#include <system/audio_effects/effect_uuid.h>
 #include <system/thread_defs.h>
 
 #include "effect-impl/EffectTypes.h"
-#include "effect-impl/EffectUUID.h"
 #include "effectFactory-impl/EffectFactory.h"
 
 using aidl::android::media::audio::common::AudioUuid;
@@ -214,8 +213,8 @@ void Factory::createIdentityWithConfig(const EffectConfig::LibraryUuid& configLi
 void Factory::loadEffectLibs() {
     const auto& configEffectsMap = mConfig.getEffectsMap();
     for (const auto& configEffects : configEffectsMap) {
-        if (auto typeUuid = kUuidNameTypeMap.find(configEffects.first /* effect name */);
-            typeUuid != kUuidNameTypeMap.end()) {
+        if (AudioUuid uuid;
+            EffectConfig::findUuid(configEffects.first /* xml effect name */, &uuid)) {
             const auto& configLibs = configEffects.second;
             std::optional<AudioUuid> proxyUuid;
             if (configLibs.proxyLibrary.has_value()) {
@@ -223,7 +222,7 @@ void Factory::loadEffectLibs() {
                 proxyUuid = proxyLib.uuid;
             }
             for (const auto& configLib : configLibs.libraries) {
-                createIdentityWithConfig(configLib, typeUuid->second, proxyUuid);
+                createIdentityWithConfig(configLib, uuid, proxyUuid);
             }
         } else {
             LOG(ERROR) << __func__ << ": can not find type UUID for effect " << configEffects.first

@@ -24,9 +24,9 @@ using namespace android;
 
 using aidl::android::hardware::audio::effect::AutomaticGainControlV1;
 using aidl::android::hardware::audio::effect::Descriptor;
+using aidl::android::hardware::audio::effect::getEffectTypeUuidAutomaticGainControlV1;
 using aidl::android::hardware::audio::effect::IEffect;
 using aidl::android::hardware::audio::effect::IFactory;
-using aidl::android::hardware::audio::effect::kAutomaticGainControlV1TypeUUID;
 using aidl::android::hardware::audio::effect::Parameter;
 
 enum ParamName {
@@ -158,7 +158,8 @@ INSTANTIATE_TEST_SUITE_P(
         AGC1ParamTest, AGC1ParamTest,
         ::testing::Combine(
                 testing::ValuesIn(kDescPair = EffectFactoryHelper::getAllEffectDescriptors(
-                                          IFactory::descriptor, kAutomaticGainControlV1TypeUUID)),
+                                          IFactory::descriptor,
+                                          getEffectTypeUuidAutomaticGainControlV1())),
                 testing::ValuesIn(EffectHelper::getTestValueSet<
                                   AutomaticGainControlV1, int, Range::automaticGainControlV1,
                                   AutomaticGainControlV1::targetPeakLevelDbFs>(
