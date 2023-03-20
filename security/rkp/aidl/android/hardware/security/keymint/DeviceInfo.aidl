@@ -48,9 +48,9 @@ parcelable DeviceInfo {
      *         ? "os_version" : tstr,                         ; Same as
      *                                                        ; android.os.Build.VERSION.release
      *                                                        ; Not optional for TEE.
-     *         "system_patch_level" : uint,                   ; YYYYMM
-     *         "boot_patch_level" : uint,                     ; YYYYMMDD
-     *         "vendor_patch_level" : uint,                   ; YYYYMMDD
+     *         "system_patch_level" : uint,     ; YYYYMM, must match KeyMint OS_PATCHLEVEL
+     *         "boot_patch_level" : uint,       ; YYYYMMDD, must match KeyMint BOOT_PATCHLEVEL
+     *         "vendor_patch_level" : uint,     ; YYYYMMDD, must match KeyMint VENDOR_PATCHLEVEL
      *         "security_level" : "tee" / "strongbox",
      *         "fused": 1 / 0,  ; 1 if secure boot is enforced for the processor that the IRPC
      *                          ; implementation is contained in. 0 otherwise.
@@ -71,9 +71,9 @@ parcelable DeviceInfo {
      *         ? "os_version" : tstr,                         ; Same as
      *                                                        ; android.os.Build.VERSION.release
      *                                                        ; Not optional for TEE.
-     *         "system_patch_level" : uint,                   ; YYYYMM
-     *         "boot_patch_level" : uint,                     ; YYYYMMDD
-     *         "vendor_patch_level" : uint,                   ; YYYYMMDD
+     *         "system_patch_level" : uint,     ; YYYYMM, must match KeyMint OS_PATCHLEVEL
+     *         "boot_patch_level" : uint,       ; YYYYMMDD, must match KeyMint BOOT_PATCHLEVEL
+     *         "vendor_patch_level" : uint,     ; YYYYMMDD, must match KeyMint VENDOR_PATCHLEVEL
      *         "version" : 2,                                 ; The CDDL schema version.
      *         "security_level" : "tee" / "strongbox",
      *         "fused": 1 / 0,  ; 1 if secure boot is enforced for the processor that the IRPC
@@ -93,9 +93,9 @@ parcelable DeviceInfo {
      *         ? "vbmeta_digest": bstr,                       ; Taken from the AVB values
      *         ? "os_version" : tstr,                         ; Same as
      *                                                        ; android.os.Build.VERSION.release
-     *         ? "system_patch_level" : uint,                 ; YYYYMM
-     *         ? "boot_patch_level" : uint,                   ; YYYYMMDD
-     *         ? "vendor_patch_level" : uint,                 ; YYYYMMDD
+     *         ? "system_patch_level" : uint,     ; YYYYMM, must match KeyMint OS_PATCHLEVEL
+     *         ? "boot_patch_level" : uint,       ; YYYYMMDD, must match KeyMint BOOT_PATCHLEVEL
+     *         ? "vendor_patch_level" : uint,     ; YYYYMMDD, must match KeyMint VENDOR_PATCHLEVEL
      *         "version" : 1,                                 ; The CDDL schema version.
      *         "security_level" : "tee" / "strongbox"
      *         "att_id_state": "locked" / "open",  ; Attestation IDs State. If "locked", this
