@@ -25,9 +25,9 @@
 using namespace android;
 
 using aidl::android::hardware::audio::effect::Descriptor;
+using aidl::android::hardware::audio::effect::getEffectTypeUuidLoudnessEnhancer;
 using aidl::android::hardware::audio::effect::IEffect;
 using aidl::android::hardware::audio::effect::IFactory;
-using aidl::android::hardware::audio::effect::kLoudnessEnhancerTypeUUID;
 using aidl::android::hardware::audio::effect::LoudnessEnhancer;
 using aidl::android::hardware::audio::effect::Parameter;
 
@@ -126,7 +126,7 @@ TEST_P(LoudnessEnhancerParamTest, SetAndGetGainMb) {
 INSTANTIATE_TEST_SUITE_P(
         LoudnessEnhancerTest, LoudnessEnhancerParamTest,
         ::testing::Combine(testing::ValuesIn(EffectFactoryHelper::getAllEffectDescriptors(
-                                   IFactory::descriptor, kLoudnessEnhancerTypeUUID)),
+                                   IFactory::descriptor, getEffectTypeUuidLoudnessEnhancer())),
                            testing::ValuesIn(kGainMbValues)),
         [](const testing::TestParamInfo<LoudnessEnhancerParamTest::ParamType>& info) {
             auto descriptor = std::get<PARAM_INSTANCE_NAME>(info.param).second;

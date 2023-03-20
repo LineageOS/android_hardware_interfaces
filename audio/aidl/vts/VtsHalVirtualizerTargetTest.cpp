@@ -23,9 +23,9 @@
 using namespace android;
 
 using aidl::android::hardware::audio::effect::Descriptor;
+using aidl::android::hardware::audio::effect::getEffectTypeUuidVirtualizer;
 using aidl::android::hardware::audio::effect::IEffect;
 using aidl::android::hardware::audio::effect::IFactory;
-using aidl::android::hardware::audio::effect::kVirtualizerTypeUUID;
 using aidl::android::hardware::audio::effect::Parameter;
 using aidl::android::hardware::audio::effect::Virtualizer;
 
@@ -134,7 +134,7 @@ INSTANTIATE_TEST_SUITE_P(
         VirtualizerTest, VirtualizerParamTest,
         ::testing::Combine(
                 testing::ValuesIn(kDescPair = EffectFactoryHelper::getAllEffectDescriptors(
-                                          IFactory::descriptor, kVirtualizerTypeUUID)),
+                                          IFactory::descriptor, getEffectTypeUuidVirtualizer())),
                 testing::ValuesIn(EffectHelper::getTestValueSet<
                                   Virtualizer, int, Range::virtualizer, Virtualizer::strengthPm>(
                         kDescPair, EffectHelper::expandTestValueBasic<int>))),

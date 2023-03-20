@@ -20,19 +20,21 @@
 #define LOG_TAG "AHAL_LoudnessEnhancerSw"
 #include <android-base/logging.h>
 #include <fmq/AidlMessageQueue.h>
+#include <system/audio_effects/effect_uuid.h>
 
 #include "LoudnessEnhancerSw.h"
 
 using aidl::android::hardware::audio::effect::Descriptor;
+using aidl::android::hardware::audio::effect::getEffectImplUuidLoudnessEnhancerSw;
+using aidl::android::hardware::audio::effect::getEffectTypeUuidLoudnessEnhancer;
 using aidl::android::hardware::audio::effect::IEffect;
-using aidl::android::hardware::audio::effect::kLoudnessEnhancerSwImplUUID;
 using aidl::android::hardware::audio::effect::LoudnessEnhancerSw;
 using aidl::android::hardware::audio::effect::State;
 using aidl::android::media::audio::common::AudioUuid;
 
 extern "C" binder_exception_t createEffect(const AudioUuid* in_impl_uuid,
                                            std::shared_ptr<IEffect>* instanceSpp) {
-    if (!in_impl_uuid || *in_impl_uuid != kLoudnessEnhancerSwImplUUID) {
+    if (!in_impl_uuid || *in_impl_uuid != getEffectImplUuidLoudnessEnhancerSw()) {
         LOG(ERROR) << __func__ << "uuid not supported";
         return EX_ILLEGAL_ARGUMENT;
     }
@@ -47,7 +49,7 @@ extern "C" binder_exception_t createEffect(const AudioUuid* in_impl_uuid,
 }
 
 extern "C" binder_exception_t queryEffect(const AudioUuid* in_impl_uuid, Descriptor* _aidl_return) {
-    if (!in_impl_uuid || *in_impl_uuid != kLoudnessEnhancerSwImplUUID) {
+    if (!in_impl_uuid || *in_impl_uuid != getEffectImplUuidLoudnessEnhancerSw()) {
         LOG(ERROR) << __func__ << "uuid not supported";
         return EX_ILLEGAL_ARGUMENT;
     }
@@ -59,8 +61,8 @@ namespace aidl::android::hardware::audio::effect {
 
 const std::string LoudnessEnhancerSw::kEffectName = "LoudnessEnhancerSw";
 const Descriptor LoudnessEnhancerSw::kDescriptor = {
-        .common = {.id = {.type = kLoudnessEnhancerTypeUUID,
-                          .uuid = kLoudnessEnhancerSwImplUUID,
+        .common = {.id = {.type = getEffectTypeUuidLoudnessEnhancer(),
+                          .uuid = getEffectImplUuidLoudnessEnhancerSw(),
                           .proxy = std::nullopt},
                    .flags = {.type = Flags::Type::INSERT,
                              .insert = Flags::Insert::FIRST,

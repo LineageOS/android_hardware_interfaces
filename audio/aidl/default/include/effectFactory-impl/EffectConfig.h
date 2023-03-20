@@ -17,6 +17,7 @@
 #pragma once
 
 #include <functional>
+#include <map>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -61,6 +62,9 @@ class EffectConfig {
     const std::unordered_map<std::string, std::vector<std::string>> getProcessingMap() const {
         return mProcessingMap;
     }
+
+    static bool findUuid(const std::string& xmlEffectName,
+                         ::aidl::android::media::audio::common::AudioUuid* uuid);
 
   private:
     static constexpr const char* kEffectLibPath[] =
