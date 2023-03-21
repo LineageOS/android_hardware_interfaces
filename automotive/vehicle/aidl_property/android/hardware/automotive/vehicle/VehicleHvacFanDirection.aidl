@@ -29,6 +29,9 @@ enum VehicleHvacFanDirection {
      * FACE_AND_FLOOR = FACE | FLOOR
      */
     FACE_AND_FLOOR = 0x3,
+    /**
+     * DEFROST may also be described as the windshield fan direction.
+     */
     DEFROST = 0x4,
     /**
      * DEFROST_AND_FLOOR = DEFROST | FLOOR
