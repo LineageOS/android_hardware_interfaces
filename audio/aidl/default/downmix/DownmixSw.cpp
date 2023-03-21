@@ -20,19 +20,21 @@
 #define LOG_TAG "AHAL_DownmixSw"
 #include <android-base/logging.h>
 #include <fmq/AidlMessageQueue.h>
+#include <system/audio_effects/effect_uuid.h>
 
 #include "DownmixSw.h"
 
 using aidl::android::hardware::audio::effect::Descriptor;
 using aidl::android::hardware::audio::effect::DownmixSw;
+using aidl::android::hardware::audio::effect::getEffectImplUuidDownmixSw;
+using aidl::android::hardware::audio::effect::getEffectTypeUuidDownmix;
 using aidl::android::hardware::audio::effect::IEffect;
-using aidl::android::hardware::audio::effect::kDownmixSwImplUUID;
 using aidl::android::hardware::audio::effect::State;
 using aidl::android::media::audio::common::AudioUuid;
 
 extern "C" binder_exception_t createEffect(const AudioUuid* in_impl_uuid,
                                            std::shared_ptr<IEffect>* instanceSpp) {
-    if (!in_impl_uuid || *in_impl_uuid != kDownmixSwImplUUID) {
+    if (!in_impl_uuid || *in_impl_uuid != getEffectImplUuidDownmixSw()) {
         LOG(ERROR) << __func__ << "uuid not supported";
         return EX_ILLEGAL_ARGUMENT;
     }
@@ -47,7 +49,7 @@ extern "C" binder_exception_t createEffect(const AudioUuid* in_impl_uuid,
 }
 
 extern "C" binder_exception_t queryEffect(const AudioUuid* in_impl_uuid, Descriptor* _aidl_return) {
-    if (!in_impl_uuid || *in_impl_uuid != kDownmixSwImplUUID) {
+    if (!in_impl_uuid || *in_impl_uuid != getEffectImplUuidDownmixSw()) {
         LOG(ERROR) << __func__ << "uuid not supported";
         return EX_ILLEGAL_ARGUMENT;
     }
@@ -59,13 +61,14 @@ namespace aidl::android::hardware::audio::effect {
 
 const std::string DownmixSw::kEffectName = "DownmixSw";
 const Descriptor DownmixSw::kDescriptor = {
-        .common = {
-                .id = {.type = kDownmixTypeUUID, .uuid = kDownmixSwImplUUID, .proxy = std::nullopt},
-                .flags = {.type = Flags::Type::INSERT,
-                          .insert = Flags::Insert::FIRST,
-                          .volume = Flags::Volume::CTRL},
-                .name = kEffectName,
-                .implementor = "The Android Open Source Project"}};
+        .common = {.id = {.type = getEffectTypeUuidDownmix(),
+                          .uuid = getEffectImplUuidDownmixSw(),
+                          .proxy = std::nullopt},
+                   .flags = {.type = Flags::Type::INSERT,
+                             .insert = Flags::Insert::FIRST,
+                             .volume = Flags::Volume::CTRL},
+                   .name = kEffectName,
+                   .implementor = "The Android Open Source Project"}};
 
 ndk::ScopedAStatus DownmixSw::getDescriptor(Descriptor* _aidl_return) {
     LOG(DEBUG) << __func__ << kDescriptor.toString();

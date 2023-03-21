@@ -37,6 +37,7 @@ cc_defaults {
         "general-tests",
         "vts",
     ],
+    srcs: [":effectCommonFile"],
 }
 
 cc_test {
