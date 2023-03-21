@@ -29,9 +29,9 @@ using namespace android;
 
 using aidl::android::hardware::audio::effect::AcousticEchoCanceler;
 using aidl::android::hardware::audio::effect::Descriptor;
+using aidl::android::hardware::audio::effect::getEffectTypeUuidAcousticEchoCanceler;
 using aidl::android::hardware::audio::effect::IEffect;
 using aidl::android::hardware::audio::effect::IFactory;
-using aidl::android::hardware::audio::effect::kAcousticEchoCancelerTypeUUID;
 using aidl::android::hardware::audio::effect::Parameter;
 using aidl::android::hardware::audio::effect::Range;
 
@@ -148,7 +148,8 @@ INSTANTIATE_TEST_SUITE_P(
         AECParamTest, AECParamTest,
         ::testing::Combine(
                 testing::ValuesIn(kDescPair = EffectFactoryHelper::getAllEffectDescriptors(
-                                          IFactory::descriptor, kAcousticEchoCancelerTypeUUID)),
+                                          IFactory::descriptor,
+                                          getEffectTypeUuidAcousticEchoCanceler())),
                 testing::ValuesIn(EffectHelper::getTestValueSet<AcousticEchoCanceler, int,
                                                                 Range::acousticEchoCanceler,
                                                                 AcousticEchoCanceler::echoDelayUs>(

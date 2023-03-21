@@ -21,19 +21,21 @@
 #define LOG_TAG "AHAL_EnvReverbSw"
 #include <android-base/logging.h>
 #include <fmq/AidlMessageQueue.h>
+#include <system/audio_effects/effect_uuid.h>
 
 #include "EnvReverbSw.h"
 
 using aidl::android::hardware::audio::effect::Descriptor;
 using aidl::android::hardware::audio::effect::EnvReverbSw;
+using aidl::android::hardware::audio::effect::getEffectImplUuidEnvReverbSw;
+using aidl::android::hardware::audio::effect::getEffectTypeUuidEnvReverb;
 using aidl::android::hardware::audio::effect::IEffect;
-using aidl::android::hardware::audio::effect::kEnvReverbSwImplUUID;
 using aidl::android::hardware::audio::effect::State;
 using aidl::android::media::audio::common::AudioUuid;
 
 extern "C" binder_exception_t createEffect(const AudioUuid* in_impl_uuid,
                                            std::shared_ptr<IEffect>* instanceSpp) {
-    if (!in_impl_uuid || *in_impl_uuid != kEnvReverbSwImplUUID) {
+    if (!in_impl_uuid || *in_impl_uuid != getEffectImplUuidEnvReverbSw()) {
         LOG(ERROR) << __func__ << "uuid not supported";
         return EX_ILLEGAL_ARGUMENT;
     }
@@ -48,7 +50,7 @@ extern "C" binder_exception_t createEffect(const AudioUuid* in_impl_uuid,
 }
 
 extern "C" binder_exception_t queryEffect(const AudioUuid* in_impl_uuid, Descriptor* _aidl_return) {
-    if (!in_impl_uuid || *in_impl_uuid != kEnvReverbSwImplUUID) {
+    if (!in_impl_uuid || *in_impl_uuid != getEffectImplUuidEnvReverbSw()) {
         LOG(ERROR) << __func__ << "uuid not supported";
         return EX_ILLEGAL_ARGUMENT;
     }
@@ -76,8 +78,8 @@ const Capability EnvReverbSw::kCapability = {
         .range = Range::make<Range::environmentalReverb>(EnvReverbSw::kRanges)};
 
 const Descriptor EnvReverbSw::kDescriptor = {
-        .common = {.id = {.type = kEnvReverbTypeUUID,
-                          .uuid = kEnvReverbSwImplUUID,
+        .common = {.id = {.type = getEffectTypeUuidEnvReverb(),
+                          .uuid = getEffectImplUuidEnvReverbSw(),
                           .proxy = std::nullopt},
                    .flags = {.type = Flags::Type::INSERT,
                              .insert = Flags::Insert::FIRST,
