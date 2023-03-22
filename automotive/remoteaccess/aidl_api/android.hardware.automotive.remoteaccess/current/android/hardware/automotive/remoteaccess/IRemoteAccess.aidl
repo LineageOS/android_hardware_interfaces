@@ -34,8 +34,9 @@
 package android.hardware.automotive.remoteaccess;
 @VintfStability
 interface IRemoteAccess {
-  String getDeviceId();
+  String getVehicleId();
   String getWakeupServiceName();
+  String getProcessorId();
   void setRemoteTaskCallback(android.hardware.automotive.remoteaccess.IRemoteTaskCallback callback);
   void clearRemoteTaskCallback();
   void notifyApStateChange(in android.hardware.automotive.remoteaccess.ApState state);
