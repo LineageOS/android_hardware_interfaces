@@ -56,7 +56,7 @@ class DriverUsb : public DriverInterface {
     std::vector<::aidl::android::media::audio::common::AudioDeviceAddress> mConnectedDevices
             GUARDED_BY(mLock);
     std::vector<std::shared_ptr<alsa_device_proxy>> mAlsaDeviceProxies GUARDED_BY(mLock);
-    bool mIsStandby = false;
+    bool mIsStandby = true;
 };
 
 class StreamInUsb final : public StreamIn {
