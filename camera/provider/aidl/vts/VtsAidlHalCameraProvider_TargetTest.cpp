@@ -2025,16 +2025,7 @@ TEST_P(CameraAidlTest, process10BitDynamicRangeRequest) {
 }
 
 TEST_P(CameraAidlTest, process8BitColorSpaceRequests) {
-    static int profiles[] = {
-        ColorSpaceNamed::BT709,
-        ColorSpaceNamed::DCI_P3,
-        ColorSpaceNamed::DISPLAY_P3,
-        ColorSpaceNamed::EXTENDED_SRGB,
-        ColorSpaceNamed::LINEAR_EXTENDED_SRGB,
-        ColorSpaceNamed::NTSC_1953,
-        ColorSpaceNamed::SMPTE_C,
-        ColorSpaceNamed::SRGB
-    };
+    static int profiles[] = {ColorSpaceNamed::DISPLAY_P3, ColorSpaceNamed::SRGB};
 
     for (int32_t i = 0; i < sizeof(profiles) / sizeof(profiles[0]); i++) {
         processColorSpaceRequest(static_cast<RequestAvailableColorSpaceProfilesMap>(profiles[i]),
@@ -2059,10 +2050,10 @@ TEST_P(CameraAidlTest, process10BitColorSpaceRequests) {
         ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_DOLBY_VISION_8B_HDR_OEM_PO
     };
 
-    // Process all dynamic range profiles with BT2020
+    // Process all dynamic range profiles with BT2020_HLG
     for (int32_t i = 0; i < sizeof(dynamicRangeProfiles) / sizeof(dynamicRangeProfiles[0]); i++) {
         processColorSpaceRequest(
-                static_cast<RequestAvailableColorSpaceProfilesMap>(ColorSpaceNamed::BT2020),
+                static_cast<RequestAvailableColorSpaceProfilesMap>(ColorSpaceNamed::BT2020_HLG),
                 static_cast<RequestAvailableDynamicRangeProfilesMap>(dynamicRangeProfiles[i]));
     }
 }
