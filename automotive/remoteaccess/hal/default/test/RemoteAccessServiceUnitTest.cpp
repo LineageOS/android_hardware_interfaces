@@ -187,8 +187,8 @@ class RemoteAccessServiceUnitTest : public ::testing::Test {
 
     void setRetryWaitInMs(size_t retryWaitInMs) { mService->setRetryWaitInMs(retryWaitInMs); }
 
-    ScopedAStatus getDeviceIdWithClient(IVhalClient& vhalClient, std::string* deviceId) {
-        return mService->getDeviceIdWithClient(vhalClient, deviceId);
+    ScopedAStatus getVehicleIdWithClient(IVhalClient& vhalClient, std::string* vehicleId) {
+        return mService->getVehicleIdWithClient(vhalClient, vehicleId);
     }
 
   private:
@@ -358,13 +358,13 @@ TEST_F(RemoteAccessServiceUnitTest, TestGetRemoteTasksNotReadyAfterReady) {
     std::this_thread::sleep_for(std::chrono::milliseconds(150));
 }
 
-TEST_F(RemoteAccessServiceUnitTest, testGetDeviceId) {
-    std::string deviceId;
+TEST_F(RemoteAccessServiceUnitTest, testGetVehicleId) {
+    std::string vehicleId;
 
     FakeVhalClient vhalClient;
 
-    ASSERT_TRUE(getDeviceIdWithClient(vhalClient, &deviceId).isOk());
-    ASSERT_EQ(deviceId, kTestVin);
+    ASSERT_TRUE(getVehicleIdWithClient(vhalClient, &vehicleId).isOk());
+    ASSERT_EQ(vehicleId, kTestVin);
 }
 
 }  // namespace remoteaccess

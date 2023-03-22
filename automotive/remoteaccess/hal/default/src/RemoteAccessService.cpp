@@ -48,11 +48,12 @@ using ::grpc::StatusCode;
 using ::ndk::ScopedAStatus;
 
 const std::string WAKEUP_SERVICE_NAME = "com.google.vehicle.wakeup";
+const std::string PROCESSOR_ID = "application_processor";
 constexpr char COMMAND_SET_AP_STATE[] = "--set-ap-state";
 constexpr char COMMAND_START_DEBUG_CALLBACK[] = "--start-debug-callback";
 constexpr char COMMAND_STOP_DEBUG_CALLBACK[] = "--stop-debug-callback";
 constexpr char COMMAND_SHOW_TASK[] = "--show-task";
-constexpr char COMMAND_GET_DEVICE_ID[] = "--get-device-id";
+constexpr char COMMAND_GET_VEHICLE_ID[] = "--get-vehicle-id";
 
 std::vector<uint8_t> stringToBytes(const std::string& s) {
     const char* data = s.data();
@@ -176,23 +177,23 @@ void RemoteAccessService::runTaskLoop() {
     }
 }
 
-ScopedAStatus RemoteAccessService::getDeviceId(std::string* deviceId) {
+ScopedAStatus RemoteAccessService::getVehicleId(std::string* vehicleId) {
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     auto vhalClient = IVhalClient::tryCreate();
     if (vhalClient == nullptr) {
         ALOGE("Failed to connect to VHAL");
         return ScopedAStatus::fromServiceSpecificErrorWithMessage(
-                /*errorCode=*/0, "Failed to connect to VHAL to get device ID");
+                /*errorCode=*/0, "Failed to connect to VHAL to get vehicle ID");
     }
-    return getDeviceIdWithClient(*vhalClient.get(), deviceId);
+    return getVehicleIdWithClient(*vhalClient.get(), vehicleId);
 #else
     // Don't use VHAL client in fuzzing since IPC is not allowed.
     return ScopedAStatus::ok();
 #endif
 }
 
-ScopedAStatus RemoteAccessService::getDeviceIdWithClient(IVhalClient& vhalClient,
-                                                         std::string* deviceId) {
+ScopedAStatus RemoteAccessService::getVehicleIdWithClient(IVhalClient& vhalClient,
+                                                          std::string* vehicleId) {
     auto result = vhalClient.getValueSync(
             *vhalClient.createHalPropValue(toInt(VehicleProperty::INFO_VIN)));
     if (!result.ok()) {
@@ -200,7 +201,12 @@ ScopedAStatus RemoteAccessService::getDeviceIdWithClient(IVhalClient& vhalClient
                 /*errorCode=*/0,
                 ("failed to get INFO_VIN from VHAL: " + result.error().message()).c_str());
     }
-    *deviceId = (*result)->getStringValue();
+    *vehicleId = (*result)->getStringValue();
+    return ScopedAStatus::ok();
+}
+
+ScopedAStatus RemoteAccessService::getProcessorId(std::string* processorId) {
+    *processorId = PROCESSOR_ID;
     return ScopedAStatus::ok();
 }
 
@@ -252,8 +258,8 @@ void RemoteAccessService::dumpHelp(int fd) {
              COMMAND_START_DEBUG_CALLBACK +
              " Start a debug callback that will record the received tasks\n" +
              COMMAND_STOP_DEBUG_CALLBACK + " Stop the debug callback\n" + COMMAND_SHOW_TASK +
-             " Show tasks received by debug callback\n" + COMMAND_GET_DEVICE_ID +
-             " Get device id\n")
+             " Show tasks received by debug callback\n" + COMMAND_GET_VEHICLE_ID +
+             " Get vehicle id\n")
                     .c_str());
 }
 
@@ -316,13 +322,13 @@ binder_status_t RemoteAccessService::dump(int fd, const char** args, uint32_t nu
             dprintf(fd, "Debug callback is not currently used, use \"%s\" first.\n",
                     COMMAND_START_DEBUG_CALLBACK);
         }
-    } else if (!strcmp(args[0], COMMAND_GET_DEVICE_ID)) {
-        std::string deviceId;
-        auto status = getDeviceId(&deviceId);
+    } else if (!strcmp(args[0], COMMAND_GET_VEHICLE_ID)) {
+        std::string vehicleId;
+        auto status = getVehicleId(&vehicleId);
         if (!status.isOk()) {
-            dprintErrorStatus(fd, "Failed to get device ID", status);
+            dprintErrorStatus(fd, "Failed to get vehicle ID", status);
         } else {
-            dprintf(fd, "Device Id: %s\n", deviceId.c_str());
+            dprintf(fd, "Vehicle Id: %s\n", vehicleId.c_str());
         }
     } else {
         dumpHelp(fd);
