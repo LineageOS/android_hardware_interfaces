@@ -62,7 +62,9 @@ class RemoteAccessService
 
     ~RemoteAccessService();
 
-    ndk::ScopedAStatus getDeviceId(std::string* deviceId) override;
+    ndk::ScopedAStatus getVehicleId(std::string* vehicleId) override;
+
+    ndk::ScopedAStatus getProcessorId(std::string* processorId) override;
 
     ndk::ScopedAStatus getWakeupServiceName(std::string* wakeupServiceName) override;
 
@@ -103,8 +105,8 @@ class RemoteAccessService
     void runTaskLoop();
     void maybeStartTaskLoop();
     void maybeStopTaskLoop();
-    ndk::ScopedAStatus getDeviceIdWithClient(
-            android::frameworks::automotive::vhal::IVhalClient& client, std::string* deviceId);
+    ndk::ScopedAStatus getVehicleIdWithClient(
+            android::frameworks::automotive::vhal::IVhalClient& client, std::string* vehicleId);
 
     void setRetryWaitInMs(size_t retryWaitInMs) { mRetryWaitInMs = retryWaitInMs; }
     void dumpHelp(int fd);
