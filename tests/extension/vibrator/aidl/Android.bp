@@ -38,5 +38,11 @@ aidl_interface {
             enabled: false,
         },
     },
-    versions: ["1"],
+    frozen: true,
+    versions_with_info: [
+        {
+            version: "1",
+            imports: ["android.hardware.vibrator-V2"],
+        },
+    ],
 }
