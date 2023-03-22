@@ -114,8 +114,8 @@ const AudioFormatDescToPcmFormatMap& getAudioFormatDescriptorToPcmFormatMap() {
     static const AudioFormatDescToPcmFormatMap formatDescToPcmFormatMap = {
             {make_AudioFormatDescription(PcmType::UINT_8_BIT), PCM_FORMAT_S8},
             {make_AudioFormatDescription(PcmType::INT_16_BIT), PCM_FORMAT_S16_LE},
-            {make_AudioFormatDescription(PcmType::INT_24_BIT), PCM_FORMAT_S24_LE},
-            {make_AudioFormatDescription(PcmType::FIXED_Q_8_24), PCM_FORMAT_S24_3LE},
+            {make_AudioFormatDescription(PcmType::FIXED_Q_8_24), PCM_FORMAT_S24_LE},
+            {make_AudioFormatDescription(PcmType::INT_24_BIT), PCM_FORMAT_S24_3LE},
             {make_AudioFormatDescription(PcmType::INT_32_BIT), PCM_FORMAT_S32_LE},
             {make_AudioFormatDescription(PcmType::FLOAT_32_BIT), PCM_FORMAT_FLOAT_LE},
     };

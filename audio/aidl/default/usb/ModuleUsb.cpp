@@ -120,7 +120,11 @@ ndk::ScopedAStatus ModuleUsb::populateConnectedDevicePort(AudioPort* audioPort) 
     const bool isInput = isUsbInputDeviceType(devicePort.device.type.type);
     alsa_device_profile profile;
     profile_init(&profile, isInput ? PCM_IN : PCM_OUT);
+    profile.card = alsaAddress[0];
+    profile.device = alsaAddress[1];
     if (!profile_read_device_info(&profile)) {
+        LOG(ERROR) << __func__ << ": failed to read device info, card=" << profile.card
+                   << ", device=" << profile.device;
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
     }
 
