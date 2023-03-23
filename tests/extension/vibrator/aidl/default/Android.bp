@@ -29,6 +29,6 @@ cc_binary {
         "libbase",
         "libbinder_ndk",
         "android.hardware.vibrator-V2-ndk",
-        "android.hardware.tests.extension.vibrator-V2-ndk",
+        "android.hardware.tests.extension.vibrator-V1-ndk",
     ],
 }

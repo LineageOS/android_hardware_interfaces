@@ -589,10 +589,11 @@ binder_status_t BroadcastRadio::cmdTune(int fd, const char** args, uint32_t numA
     }
     ProgramSelector sel = {};
     if (isDab) {
-        if (numArgs != 5) {
+        if (numArgs != 5 && numArgs != 3) {
             dprintf(fd,
                     "Invalid number of arguments: please provide "
-                    "--tune dab <SID> <ENSEMBLE> <FREQUENCY>\n");
+                    "--tune dab <SID> <ENSEMBLE> <FREQUENCY> or "
+                    "--tune dab <SID>\n");
             return STATUS_BAD_VALUE;
         }
         int sid;
@@ -600,17 +601,21 @@ binder_status_t BroadcastRadio::cmdTune(int fd, const char** args, uint32_t numA
             dprintf(fd, "Non-integer sid provided with tune: %s\n", args[2]);
             return STATUS_BAD_VALUE;
         }
-        int ensemble;
-        if (!utils::parseArgInt(string(args[3]), &ensemble)) {
-            dprintf(fd, "Non-integer ensemble provided with tune: %s\n", args[3]);
-            return STATUS_BAD_VALUE;
+        if (numArgs == 3) {
+            sel = utils::makeSelectorDab(sid);
+        } else {
+            int ensemble;
+            if (!utils::parseArgInt(string(args[3]), &ensemble)) {
+                dprintf(fd, "Non-integer ensemble provided with tune: %s\n", args[3]);
+                return STATUS_BAD_VALUE;
+            }
+            int freq;
+            if (!utils::parseArgInt(string(args[4]), &freq)) {
+                dprintf(fd, "Non-integer frequency provided with tune: %s\n", args[4]);
+                return STATUS_BAD_VALUE;
+            }
+            sel = utils::makeSelectorDab(sid, ensemble, freq);
         }
-        int freq;
-        if (!utils::parseArgInt(string(args[4]), &freq)) {
-            dprintf(fd, "Non-integer frequency provided with tune: %s\n", args[4]);
-            return STATUS_BAD_VALUE;
-        }
-        sel = utils::makeSelectorDab(sid, ensemble, freq);
     } else {
         if (numArgs != 3) {
             dprintf(fd, "Invalid number of arguments: please provide --tune amfm <FREQUENCY>\n");

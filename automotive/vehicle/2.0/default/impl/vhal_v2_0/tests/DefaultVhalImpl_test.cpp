@@ -756,8 +756,9 @@ TEST_F(DefaultVhalImplTest, testDebugGenFakeDataLinear) {
     // Clear existing events.
     mEventQueue.flush();
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
-    // There should be no new events generated.
-    EXPECT_EQ((size_t)0, mEventQueue.flush().size());
+    // Technically there should be no new events generated, however, there might still be one event
+    // in the queue while we are stopping the generator.
+    EXPECT_LE(mEventQueue.flush().size(), 1u);
 }
 
 std::string getTestFilePath(const char* filename) {
