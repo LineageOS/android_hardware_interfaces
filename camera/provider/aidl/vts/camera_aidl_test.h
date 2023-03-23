@@ -145,7 +145,9 @@ class CameraAidlTest : public ::testing::TestWithParam<std::string> {
         ACES,
         ACESCG,
         CIE_XYZ,
-        CIE_LAB
+        CIE_LAB,
+        BT2020_HLG,
+        BT2020_PQ
     };
 
     struct AvailableZSLInputOutput {
