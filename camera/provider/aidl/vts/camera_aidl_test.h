@@ -145,7 +145,9 @@ class CameraAidlTest : public ::testing::TestWithParam<std::string> {
         ACES,
         ACESCG,
         CIE_XYZ,
-        CIE_LAB
+        CIE_LAB,
+        BT2020_HLG,
+        BT2020_PQ
     };
 
     struct AvailableZSLInputOutput {
@@ -417,6 +419,13 @@ class CameraAidlTest : public ::testing::TestWithParam<std::string> {
     bool supportZoomSettingsOverride(const camera_metadata_t* staticMeta);
     bool supportsCroppedRawUseCase(const camera_metadata_t *staticMeta);
     bool isPerFrameControl(const camera_metadata_t* staticMeta);
+
+    void getSupportedSizes(const camera_metadata_t* ch, uint32_t tag, int32_t format,
+                           std::vector<std::tuple<size_t, size_t>>* sizes /*out*/);
+
+    void getSupportedDurations(const camera_metadata_t* ch, uint32_t tag, int32_t format,
+                               const std::vector<std::tuple<size_t, size_t>>& sizes,
+                               std::vector<int64_t>* durations /*out*/);
 
   protected:
     // In-flight queue for tracking completion of capture requests.
