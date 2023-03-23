@@ -84,6 +84,7 @@ cc_test {
 cc_test {
     name: "VtsHalDynamicsProcessingTargetTest",
     defaults: ["VtsHalAudioTargetTestDefaults"],
+    static_libs: ["libaudioaidlranges"],
     srcs: ["VtsHalDynamicsProcessingTest.cpp"],
 }
 
