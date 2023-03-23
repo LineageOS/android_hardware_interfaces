@@ -623,6 +623,7 @@ void WifiNanIface::registerCallbackHandlers() {
 
     // Register for iface state toggle events.
     iface_util::IfaceEventHandlers event_handlers = {};
+#ifndef WIFI_SKIP_STATE_TOGGLE_OFF_ON_FOR_NAN
     event_handlers.on_state_toggle_off_on = [weak_ptr_this](const std::string& /* iface_name */) {
         const auto shared_ptr_this = weak_ptr_this.lock();
         if (!shared_ptr_this.get() || !shared_ptr_this->isValid()) {
@@ -637,6 +638,7 @@ void WifiNanIface::registerCallbackHandlers() {
             }
         }
     };
+#endif
     iface_util_.lock()->registerIfaceEventHandlers(ifname_, event_handlers);
 }
 
