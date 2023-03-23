@@ -117,6 +117,9 @@ interface ISecureElement {
      * closed by this operation.
      * HAL service must send onStateChange() with connected equal to true
      * after resetting and all the re-initialization has been successfully completed.
+     *
+     * @throws ServiceSpecificException on error with the following code:
+     *  - FAILED if the service was unable to reset the secure element.
      */
     void reset();
 
