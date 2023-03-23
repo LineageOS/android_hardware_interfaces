@@ -150,6 +150,10 @@ parcelable ProgramInfo {
 
     /**
      * Program flags.
+     *
+     * It can be a combination of {@link #FLAG_LIVE}, {@link #FLAG_MUTED},
+     * {@link #FLAG_TRAFFIC_PROGRAM}, {@link #FLAG_TRAFFIC_ANNOUNCEMENT},
+     * {@link #FLAG_TUNABLE}, and {@link #FLAG_STEREO}.
      */
     int infoFlags;
 

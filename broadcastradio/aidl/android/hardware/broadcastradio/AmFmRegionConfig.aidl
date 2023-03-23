@@ -73,14 +73,15 @@ parcelable AmFmRegionConfig {
     /**
      * De-emphasis filter supported/configured.
      *
-     * It is a bitset of de-emphasis values (DEEMPHASIS_D50 and DEEMPHASIS_D75).
+     * It can be a combination of de-emphasis values ({@link #DEEMPHASIS_D50} and
+     * {@link #DEEMPHASIS_D75}).
      */
     int fmDeemphasis;
 
     /**
      * RDS/RBDS variant supported/configured.
      *
-     * It is a bitset of RDS values (RDS and RBDS).
+     * It can be a combination of RDS values ({@link #RDS} and {@link #RBDS}).
      */
     int fmRds;
 }
