@@ -4054,7 +4054,10 @@ enum VehicleProperty {
      *
      * For the global area ID (0), the VehicleAreaConfig#supportedEnumValues array must be defined
      * unless all states of CruiseControlState are supported. Any unsupported commands sent through
-     * this property should return StatusCode.INVALID_ARG.
+     * this property must return StatusCode#INVALID_ARG.
+     *
+     * When this property is not available because CC is disabled (i.e. CRUISE_CONTROL_ENABLED is
+     * false), this property must return StatusCode#NOT_AVAILABLE_DISABLED.
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.WRITE
@@ -4072,8 +4075,8 @@ enum VehicleProperty {
      * The maxFloatValue represents the upper bound of the target speed.
      * The minFloatValue represents the lower bound of the target speed.
      *
-     * When this property is not available (for example when CRUISE_CONTROL_ENABLED is false), it
-     * should return StatusCode.NOT_AVAILABLE_DISABLED.
+     * When this property is not available because CC is disabled (i.e. CRUISE_CONTROL_ENABLED is
+     * false), this property must return StatusCode#NOT_AVAILABLE_DISABLED.
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ
@@ -4095,7 +4098,8 @@ enum VehicleProperty {
      * ascending order. All values must be positive. If the property is writable, all values must be
      * writable.
      *
-     * Writing to this property when it is not available should return StatusCode.NOT_AVAILABLE.
+     * When this property is not available because CC is disabled (i.e. CRUISE_CONTROL_ENABLED is
+     * false), this property must return StatusCode#NOT_AVAILABLE_DISABLED.
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
@@ -4118,6 +4122,9 @@ enum VehicleProperty {
      * When no lead vehicle is detected (that is, when there is no leading vehicle or the leading
      * vehicle is too far away for the sensor to detect), this property should return
      * StatusCode.NOT_AVAILABLE.
+     *
+     * When this property is not available because CC is disabled (i.e. CRUISE_CONTROL_ENABLED is
+     * false), this property must return StatusCode#NOT_AVAILABLE_DISABLED.
      *
      * @change_mode VehiclePropertyChangeMode.CONTINUOUS
      * @access VehiclePropertyAccess.READ
