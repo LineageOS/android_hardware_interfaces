@@ -18,7 +18,8 @@ package android.hardware.wifi.supplicant;
 
 /**
  * Callback to allow supplicant to retrieve non-standard certificate types
- * from the client.
+ * from the framework. Certificates can be stored in the framework using
+ * the WifiKeystore#put system API.
  *
  * Must be registered by the client at initialization, so that
  * supplicant can call into the client to retrieve any values.
