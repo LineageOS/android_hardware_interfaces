@@ -3085,6 +3085,10 @@ const char* CameraAidlTest::getColorSpaceProfileString(
             return "CIE_XYZ";
         case ColorSpaceNamed::CIE_LAB:
             return "CIE_LAB";
+        case ColorSpaceNamed::BT2020_HLG:
+            return "BT2020_HLG";
+        case ColorSpaceNamed::BT2020_PQ:
+            return "BT2020_PQ";
         default:
             return "INVALID";
     }
