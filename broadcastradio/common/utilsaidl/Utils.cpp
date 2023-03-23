@@ -136,9 +136,18 @@ bool tunesTo(const ProgramSelector& a, const ProgramSelector& b) {
             return getHdSubchannel(b) == 0 &&
                    haveEqualIds(a, b, IdentifierType::AMFM_FREQUENCY_KHZ);
         case IdentifierType::DAB_SID_EXT:
-            return haveEqualIds(a, b, IdentifierType::DAB_SID_EXT) &&
-                   haveEqualIds(a, b, IdentifierType::DAB_ENSEMBLE) &&
-                   haveEqualIds(a, b, IdentifierType::DAB_FREQUENCY_KHZ);
+            if (!haveEqualIds(a, b, IdentifierType::DAB_SID_EXT)) {
+                return false;
+            }
+            if (hasId(a, IdentifierType::DAB_ENSEMBLE) &&
+                !haveEqualIds(a, b, IdentifierType::DAB_ENSEMBLE)) {
+                return false;
+            }
+            if (hasId(a, IdentifierType::DAB_FREQUENCY_KHZ) &&
+                !haveEqualIds(a, b, IdentifierType::DAB_FREQUENCY_KHZ)) {
+                return false;
+            }
+            return true;
         case IdentifierType::DRMO_SERVICE_ID:
             return haveEqualIds(a, b, IdentifierType::DRMO_SERVICE_ID);
         case IdentifierType::SXM_SERVICE_ID:
@@ -289,25 +298,7 @@ bool isValid(const ProgramSelector& sel) {
          sel.primaryId.type > IdentifierType::VENDOR_END)) {
         return false;
     }
-    if (!isValid(sel.primaryId)) {
-        return false;
-    }
-
-    bool isDab = sel.primaryId.type == IdentifierType::DAB_SID_EXT;
-    bool hasDabEnsemble = false;
-    bool hasDabFrequency = false;
-    for (auto it = sel.secondaryIds.begin(); it != sel.secondaryIds.end(); it++) {
-        if (!isValid(*it)) {
-            return false;
-        }
-        if (isDab && it->type == IdentifierType::DAB_ENSEMBLE) {
-            hasDabEnsemble = true;
-        }
-        if (isDab && it->type == IdentifierType::DAB_FREQUENCY_KHZ) {
-            hasDabFrequency = true;
-        }
-    }
-    return !isDab || (hasDabEnsemble && hasDabFrequency);
+    return isValid(sel.primaryId);
 }
 
 ProgramIdentifier makeIdentifier(IdentifierType type, int64_t value) {
@@ -317,6 +308,12 @@ ProgramIdentifier makeIdentifier(IdentifierType type, int64_t value) {
 ProgramSelector makeSelectorAmfm(int32_t frequency) {
     ProgramSelector sel = {};
     sel.primaryId = makeIdentifier(IdentifierType::AMFM_FREQUENCY_KHZ, frequency);
+    return sel;
+}
+
+ProgramSelector makeSelectorDab(int64_t sidExt) {
+    ProgramSelector sel = {};
+    sel.primaryId = makeIdentifier(IdentifierType::DAB_SID_EXT, sidExt);
     return sel;
 }
 
