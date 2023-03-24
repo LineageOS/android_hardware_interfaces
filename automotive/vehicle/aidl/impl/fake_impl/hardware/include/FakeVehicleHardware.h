@@ -178,6 +178,13 @@ class FakeVehicleHardware : public IVehicleHardware {
     void eventFromVehicleBus(
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value);
 
+    int getHvacTempNumIncrements(int requestedTemp, int minTemp, int maxTemp, int increment);
+    void updateHvacTemperatureValueSuggestionInput(
+            const std::vector<int>& hvacTemperatureSetConfigArray,
+            std::vector<float>* hvacTemperatureValueSuggestionInput);
+    VhalResult<void> setHvacTemperatureValueSuggestion(
+            const aidl::android::hardware::automotive::vehicle::VehiclePropValue&
+                    hvacTemperatureValueSuggestion);
     VhalResult<void> maybeSetSpecialValue(
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value,
             bool* isSpecialValue);
