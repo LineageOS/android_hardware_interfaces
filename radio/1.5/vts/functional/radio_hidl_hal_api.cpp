@@ -565,9 +565,9 @@ TEST_P(RadioHidlTest_v1_5, startNetworkScan) {
     serial = GetRandomSerialNumber();
 
     ::android::hardware::radio::V1_5::RadioAccessSpecifier::Bands band17;
-    band17.eutranBands() = {::android::hardware::radio::V1_5::EutranBands::BAND_17};
+    band17.eutranBands({::android::hardware::radio::V1_5::EutranBands::BAND_17});
     ::android::hardware::radio::V1_5::RadioAccessSpecifier::Bands band20;
-    band20.eutranBands() = {::android::hardware::radio::V1_5::EutranBands::BAND_20};
+    band20.eutranBands({::android::hardware::radio::V1_5::EutranBands::BAND_20});
     ::android::hardware::radio::V1_5::RadioAccessSpecifier specifier17 = {
             .radioAccessNetwork = ::android::hardware::radio::V1_5::RadioAccessNetworks::EUTRAN,
             .bands = band17,
