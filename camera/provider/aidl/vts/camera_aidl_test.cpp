@@ -3085,6 +3085,10 @@ const char* CameraAidlTest::getColorSpaceProfileString(
             return "CIE_XYZ";
         case ColorSpaceNamed::CIE_LAB:
             return "CIE_LAB";
+        case ColorSpaceNamed::BT2020_HLG:
+            return "BT2020_HLG";
+        case ColorSpaceNamed::BT2020_PQ:
+            return "BT2020_PQ";
         default:
             return "INVALID";
     }
@@ -3701,5 +3705,50 @@ void CameraAidlTest::processZoomSettingsOverrideRequests(
         ret = mSession->close();
         mSession = nullptr;
         ASSERT_TRUE(ret.isOk());
+    }
+}
+
+void CameraAidlTest::getSupportedSizes(const camera_metadata_t* ch, uint32_t tag, int32_t format,
+                                       std::vector<std::tuple<size_t, size_t>>* sizes /*out*/) {
+    if (sizes == nullptr) {
+        return;
+    }
+
+    camera_metadata_ro_entry entry;
+    int retcode = find_camera_metadata_ro_entry(ch, tag, &entry);
+    if ((0 == retcode) && (entry.count > 0)) {
+        // Scaler entry contains 4 elements (format, width, height, type)
+        for (size_t i = 0; i < entry.count; i += 4) {
+            if ((entry.data.i32[i] == format) &&
+                (entry.data.i32[i + 3] == ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT)) {
+                sizes->push_back(std::make_tuple(entry.data.i32[i + 1], entry.data.i32[i + 2]));
+            }
+        }
+    }
+}
+
+void CameraAidlTest::getSupportedDurations(const camera_metadata_t* ch, uint32_t tag,
+                                           int32_t format,
+                                           const std::vector<std::tuple<size_t, size_t>>& sizes,
+                                           std::vector<int64_t>* durations /*out*/) {
+    if (durations == nullptr) {
+        return;
+    }
+
+    camera_metadata_ro_entry entry;
+    int retcode = find_camera_metadata_ro_entry(ch, tag, &entry);
+    if ((0 == retcode) && (entry.count > 0)) {
+        // Duration entry contains 4 elements (format, width, height, duration)
+        for (const auto& size : sizes) {
+            int64_t width = std::get<0>(size);
+            int64_t height = std::get<1>(size);
+            for (size_t i = 0; i < entry.count; i += 4) {
+                if ((entry.data.i64[i] == format) && (entry.data.i64[i + 1] == width) &&
+                    (entry.data.i64[i + 2] == height)) {
+                    durations->push_back(entry.data.i64[i + 3]);
+                    break;
+                }
+            }
+        }
     }
 }

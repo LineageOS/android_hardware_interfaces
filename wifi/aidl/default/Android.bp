@@ -26,6 +26,7 @@ soong_config_module_type {
         "hidl_feature_disable_ap", // WIFI_HIDL_FEATURE_DISABLE_AP
         "hidl_feature_disable_ap_mac_randomization", // WIFI_HIDL_FEATURE_DISABLE_AP_MAC_RANDOMIZATION
         "avoid_iface_reset_mac_change", // WIFI_AVOID_IFACE_RESET_MAC_CHANGE
+        "wifi_skip_state_toggle_off_on_for_nan", // WIFI_SKIP_STATE_TOGGLE_OFF_ON_FOR_NAN
     ],
     value_variables: [
         "hal_interface_combinations", // WIFI_HAL_INTERFACE_COMBINATIONS
@@ -52,6 +53,9 @@ wifi_hal_cc_defaults {
         },
         avoid_iface_reset_mac_change: {
             cppflags: ["-DWIFI_AVOID_IFACE_RESET_MAC_CHANGE"],
+        },
+        wifi_skip_state_toggle_off_on_for_nan: {
+            cppflags: ["-DWIFI_SKIP_STATE_TOGGLE_OFF_ON_FOR_NAN"],
         },
         hal_interface_combinations: {
             cppflags: ["-DWIFI_HAL_INTERFACE_COMBINATIONS=%s"],

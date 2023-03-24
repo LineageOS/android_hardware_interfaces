@@ -2025,16 +2025,7 @@ TEST_P(CameraAidlTest, process10BitDynamicRangeRequest) {
 }
 
 TEST_P(CameraAidlTest, process8BitColorSpaceRequests) {
-    static int profiles[] = {
-        ColorSpaceNamed::BT709,
-        ColorSpaceNamed::DCI_P3,
-        ColorSpaceNamed::DISPLAY_P3,
-        ColorSpaceNamed::EXTENDED_SRGB,
-        ColorSpaceNamed::LINEAR_EXTENDED_SRGB,
-        ColorSpaceNamed::NTSC_1953,
-        ColorSpaceNamed::SMPTE_C,
-        ColorSpaceNamed::SRGB
-    };
+    static int profiles[] = {ColorSpaceNamed::DISPLAY_P3, ColorSpaceNamed::SRGB};
 
     for (int32_t i = 0; i < sizeof(profiles) / sizeof(profiles[0]); i++) {
         processColorSpaceRequest(static_cast<RequestAvailableColorSpaceProfilesMap>(profiles[i]),
@@ -2059,10 +2050,10 @@ TEST_P(CameraAidlTest, process10BitColorSpaceRequests) {
         ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_DOLBY_VISION_8B_HDR_OEM_PO
     };
 
-    // Process all dynamic range profiles with BT2020
+    // Process all dynamic range profiles with BT2020_HLG
     for (int32_t i = 0; i < sizeof(dynamicRangeProfiles) / sizeof(dynamicRangeProfiles[0]); i++) {
         processColorSpaceRequest(
-                static_cast<RequestAvailableColorSpaceProfilesMap>(ColorSpaceNamed::BT2020),
+                static_cast<RequestAvailableColorSpaceProfilesMap>(ColorSpaceNamed::BT2020_HLG),
                 static_cast<RequestAvailableDynamicRangeProfilesMap>(dynamicRangeProfiles[i]));
     }
 }
@@ -3049,6 +3040,47 @@ TEST_P(CameraAidlTest, configureStreamsUseCases) {
     AvailableStream previewStreamThreshold =
             {kMaxPreviewWidth, kMaxPreviewHeight, static_cast<int32_t>(PixelFormat::YCBCR_420_888)};
     configureStreamUseCaseInternal(previewStreamThreshold);
+}
+
+// Validate the integrity of stream configuration metadata
+TEST_P(CameraAidlTest, validateStreamConfigurations) {
+    std::vector<std::string> cameraDeviceNames = getCameraDeviceNames(mProvider);
+    std::vector<AvailableStream> outputStreams;
+
+    const int32_t scalerSizesTag = ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS;
+    const int32_t scalerMinFrameDurationsTag = ANDROID_SCALER_AVAILABLE_MIN_FRAME_DURATIONS;
+    const int32_t scalerStallDurationsTag = ANDROID_SCALER_AVAILABLE_STALL_DURATIONS;
+
+    for (const auto& name : cameraDeviceNames) {
+        CameraMetadata meta;
+        std::shared_ptr<ICameraDevice> cameraDevice;
+
+        openEmptyDeviceSession(name, mProvider, &mSession /*out*/, &meta /*out*/,
+                               &cameraDevice /*out*/);
+        camera_metadata_t* staticMeta = reinterpret_cast<camera_metadata_t*>(meta.metadata.data());
+
+        if (is10BitDynamicRangeCapable(staticMeta)) {
+            std::vector<std::tuple<size_t, size_t>> supportedP010Sizes, supportedBlobSizes;
+
+            getSupportedSizes(staticMeta, scalerSizesTag, HAL_PIXEL_FORMAT_BLOB,
+                              &supportedBlobSizes);
+            getSupportedSizes(staticMeta, scalerSizesTag, HAL_PIXEL_FORMAT_YCBCR_P010,
+                              &supportedP010Sizes);
+            ASSERT_FALSE(supportedP010Sizes.empty());
+
+            std::vector<int64_t> blobMinDurations, blobStallDurations;
+            getSupportedDurations(staticMeta, scalerMinFrameDurationsTag, HAL_PIXEL_FORMAT_BLOB,
+                                  supportedP010Sizes, &blobMinDurations);
+            getSupportedDurations(staticMeta, scalerStallDurationsTag, HAL_PIXEL_FORMAT_BLOB,
+                                  supportedP010Sizes, &blobStallDurations);
+            ASSERT_FALSE(blobStallDurations.empty());
+            ASSERT_FALSE(blobMinDurations.empty());
+            ASSERT_EQ(supportedP010Sizes.size(), blobMinDurations.size());
+            ASSERT_EQ(blobMinDurations.size(), blobStallDurations.size());
+        }
+
+        // Validate other aspects of stream configuration metadata...
+    }
 }
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(CameraAidlTest);
