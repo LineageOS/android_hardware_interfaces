@@ -75,6 +75,8 @@ ndk::ScopedAStatus Factory::queryEffects(const std::optional<AudioUuid>& in_type
             RETURN_IF(!libInterface || !libInterface->queryEffectFunc, EX_NULL_POINTER,
                       "dlNullQueryEffectFunc");
             RETURN_IF_BINDER_EXCEPTION(libInterface->queryEffectFunc(&id.uuid, &desc));
+            // update proxy UUID with information from config xml
+            desc.common.id.proxy = id.proxy;
             _aidl_return->emplace_back(std::move(desc));
         }
     }

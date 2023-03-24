@@ -139,7 +139,10 @@ TEST_P(AudioEffectTest, GetDescritorBeforeOpen) {
     Descriptor desc;
     ASSERT_NO_FATAL_FAILURE(create(mFactory, mEffect, mDescriptor));
     ASSERT_NO_FATAL_FAILURE(getDescriptor(mEffect, desc));
-    EXPECT_EQ(mDescriptor.common, desc.common);
+    EXPECT_EQ(mDescriptor.common.id.type, desc.common.id.type);
+    EXPECT_EQ(mDescriptor.common.id.uuid, desc.common.id.uuid);
+    EXPECT_EQ(mDescriptor.common.name, desc.common.name);
+    EXPECT_EQ(mDescriptor.common.implementor, desc.common.implementor);
     // Effect implementation Must fill in implementor and name
     EXPECT_NE("", desc.common.name);
     EXPECT_NE("", desc.common.implementor);
@@ -176,7 +179,11 @@ TEST_P(AudioEffectTest, DescriptorExistAndUnique) {
 
     ASSERT_NO_FATAL_FAILURE(create(mFactory, mEffect, mDescriptor));
     ASSERT_NO_FATAL_FAILURE(getDescriptor(mEffect, desc));
-    EXPECT_EQ(1ul, idSet.count(desc.common.id));
+    int uuidCount = std::count_if(idSet.begin(), idSet.end(), [&](const auto& id) {
+        return id.uuid == desc.common.id.uuid && id.type == desc.common.id.type;
+    });
+
+    EXPECT_EQ(1, uuidCount);
     ASSERT_NO_FATAL_FAILURE(destroy(mFactory, mEffect));
 }
 
