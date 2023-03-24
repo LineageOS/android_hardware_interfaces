@@ -67,6 +67,7 @@ using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyGroup;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyStatus;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropValue;
+using ::aidl::android::hardware::automotive::vehicle::VehicleUnit;
 
 using ::android::base::EqualsIgnoreCase;
 using ::android::base::Error;
@@ -298,6 +299,94 @@ VhalResult<void> FakeVehicleHardware::setApPowerStateReport(const VehiclePropVal
     return {};
 }
 
+int FakeVehicleHardware::getHvacTempNumIncrements(int requestedTemp, int minTemp, int maxTemp,
+                                                  int increment) {
+    requestedTemp = std::max(requestedTemp, minTemp);
+    requestedTemp = std::min(requestedTemp, maxTemp);
+    int numIncrements = (requestedTemp - minTemp) / increment;
+    return numIncrements;
+}
+
+void FakeVehicleHardware::updateHvacTemperatureValueSuggestionInput(
+        const std::vector<int>& hvacTemperatureSetConfigArray,
+        std::vector<float>* hvacTemperatureValueSuggestionInput) {
+    int minTempInCelsius = hvacTemperatureSetConfigArray[0];
+    int maxTempInCelsius = hvacTemperatureSetConfigArray[1];
+    int incrementInCelsius = hvacTemperatureSetConfigArray[2];
+
+    int minTempInFahrenheit = hvacTemperatureSetConfigArray[3];
+    int maxTempInFahrenheit = hvacTemperatureSetConfigArray[4];
+    int incrementInFahrenheit = hvacTemperatureSetConfigArray[5];
+
+    // The HVAC_TEMPERATURE_SET config array values are temperature values that have been multiplied
+    // by 10 and converted to integers. Therefore, requestedTemp must also be multiplied by 10 and
+    // converted to an integer in order for them to be the same units.
+    int requestedTemp = static_cast<int>((*hvacTemperatureValueSuggestionInput)[0] * 10.0f);
+    int numIncrements =
+            (*hvacTemperatureValueSuggestionInput)[1] == toInt(VehicleUnit::CELSIUS)
+                    ? getHvacTempNumIncrements(requestedTemp, minTempInCelsius, maxTempInCelsius,
+                                               incrementInCelsius)
+                    : getHvacTempNumIncrements(requestedTemp, minTempInFahrenheit,
+                                               maxTempInFahrenheit, incrementInFahrenheit);
+
+    int suggestedTempInCelsius = minTempInCelsius + incrementInCelsius * numIncrements;
+    int suggestedTempInFahrenheit = minTempInFahrenheit + incrementInFahrenheit * numIncrements;
+    // HVAC_TEMPERATURE_VALUE_SUGGESTION specifies the temperature values to be in the original
+    // floating point form so we divide by 10 and convert to float.
+    (*hvacTemperatureValueSuggestionInput)[2] = static_cast<float>(suggestedTempInCelsius) / 10.0f;
+    (*hvacTemperatureValueSuggestionInput)[3] =
+            static_cast<float>(suggestedTempInFahrenheit) / 10.0f;
+}
+
+VhalResult<void> FakeVehicleHardware::setHvacTemperatureValueSuggestion(
+        const VehiclePropValue& hvacTemperatureValueSuggestion) {
+    auto hvacTemperatureSetConfigResult =
+            mServerSidePropStore->getConfig(toInt(VehicleProperty::HVAC_TEMPERATURE_SET));
+
+    if (!hvacTemperatureSetConfigResult.ok()) {
+        return StatusError(getErrorCode(hvacTemperatureSetConfigResult)) << StringPrintf(
+                       "Failed to set HVAC_TEMPERATURE_VALUE_SUGGESTION because"
+                       " HVAC_TEMPERATURE_SET could not be retrieved. Error: %s",
+                       getErrorMsg(hvacTemperatureSetConfigResult).c_str());
+    }
+
+    const auto& originalInput = hvacTemperatureValueSuggestion.value.floatValues;
+    if (originalInput.size() != 4) {
+        return StatusError(StatusCode::INVALID_ARG) << StringPrintf(
+                       "Failed to set HVAC_TEMPERATURE_VALUE_SUGGESTION because float"
+                       " array value is not size 4.");
+    }
+
+    bool isTemperatureUnitSpecified = originalInput[1] == toInt(VehicleUnit::CELSIUS) ||
+                                      originalInput[1] == toInt(VehicleUnit::FAHRENHEIT);
+    if (!isTemperatureUnitSpecified) {
+        return StatusError(StatusCode::INVALID_ARG) << StringPrintf(
+                       "Failed to set HVAC_TEMPERATURE_VALUE_SUGGESTION because float"
+                       " value at index 1 is not any of %d or %d, which corresponds to"
+                       " VehicleUnit#CELSIUS and VehicleUnit#FAHRENHEIT respectively.",
+                       toInt(VehicleUnit::CELSIUS), toInt(VehicleUnit::FAHRENHEIT));
+    }
+
+    auto updatedValue = mValuePool->obtain(hvacTemperatureValueSuggestion);
+    const auto& hvacTemperatureSetConfigArray = hvacTemperatureSetConfigResult.value()->configArray;
+    auto& hvacTemperatureValueSuggestionInput = updatedValue->value.floatValues;
+
+    updateHvacTemperatureValueSuggestionInput(hvacTemperatureSetConfigArray,
+                                              &hvacTemperatureValueSuggestionInput);
+
+    updatedValue->timestamp = elapsedRealtimeNano();
+    auto writeResult = mServerSidePropStore->writeValue(std::move(updatedValue),
+                                                        /* updateStatus = */ true,
+                                                        VehiclePropertyStore::EventMode::ALWAYS);
+    if (!writeResult.ok()) {
+        return StatusError(getErrorCode(writeResult))
+               << StringPrintf("failed to write value into property store, error: %s",
+                               getErrorMsg(writeResult).c_str());
+    }
+
+    return {};
+}
+
 bool FakeVehicleHardware::isHvacPropAndHvacNotAvailable(int32_t propId, int32_t areaId) const {
     std::unordered_set<int32_t> powerProps(std::begin(HVAC_POWER_PROPERTIES),
                                            std::end(HVAC_POWER_PROPERTIES));
@@ -491,6 +580,9 @@ VhalResult<void> FakeVehicleHardware::maybeSetSpecialValue(const VehiclePropValu
         case VENDOR_PROPERTY_ID:
             *isSpecialValue = true;
             return StatusError((StatusCode)VENDOR_ERROR_CODE);
+        case toInt(VehicleProperty::HVAC_TEMPERATURE_VALUE_SUGGESTION):
+            *isSpecialValue = true;
+            return setHvacTemperatureValueSuggestion(value);
 
 #ifdef ENABLE_VEHICLE_HAL_TEST_PROPERTIES
         case toInt(VehicleProperty::CLUSTER_REPORT_STATE):
