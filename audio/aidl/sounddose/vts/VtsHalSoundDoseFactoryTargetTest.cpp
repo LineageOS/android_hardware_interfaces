@@ -71,6 +71,7 @@ class SoundDoseFactory : public testing::TestWithParam<std::string> {
     std::shared_ptr<ISoundDoseFactory> soundDoseFactory;
 };
 
+// @VsrTest = VSR-5.5-002.001
 TEST_P(SoundDoseFactory, GetSoundDoseForSameModule) {
     const std::string module = "primary";
 
