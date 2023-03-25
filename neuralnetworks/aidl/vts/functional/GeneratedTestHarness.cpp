@@ -736,8 +736,8 @@ void EvaluatePreparedModel(const std::shared_ptr<IDevice>& device,
                     // If a sync fence is returned, try start another run waiting for the sync
                     // fence.
                     if (testConfig.reusable) {
-                        ret = execution->executeFenced(waitFor, kNoDeadline, kNoDuration,
-                                                       &executionResult);
+                        // Nothing to do because at most one execution may occur on a reusable
+                        // execution object at any given time.
                     } else if (testConfig.useConfig) {
                         ret = preparedModel->executeFencedWithConfig(
                                 request, waitFor,
