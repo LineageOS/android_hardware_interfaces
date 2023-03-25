@@ -22,6 +22,7 @@
 #include "aidl/android/hardware/security/keymint/IRemotelyProvisionedComponent.h"
 
 #include <aidl/android/hardware/security/keymint/RpcHardwareInfo.h>
+#include <android-base/macros.h>
 #include <android-base/properties.h>
 #include <cppbor.h>
 #include <hwtrust/hwtrust.h>
@@ -43,6 +44,7 @@ constexpr uint32_t kBccPayloadSubject = 2;
 constexpr int32_t kBccPayloadSubjPubKey = -4670552;
 constexpr int32_t kBccPayloadKeyUsage = -4670553;
 constexpr int kP256AffinePointSize = 32;
+constexpr uint32_t kNumTeeDeviceInfoEntries = 14;
 
 using EC_KEY_Ptr = bssl::UniquePtr<EC_KEY>;
 using EVP_PKEY_Ptr = bssl::UniquePtr<EVP_PKEY>;
@@ -388,6 +390,11 @@ std::string checkMapEntry(bool isFactory, const cppbor::Map& devInfo, cppbor::Ma
     return entryName + " has an invalid value.\n";
 }
 
+bool isTeeDeviceInfo(const cppbor::Map& devInfo) {
+    return devInfo.get("security_level") && devInfo.get("security_level")->asTstr() &&
+           devInfo.get("security_level")->asTstr()->value() == "tee";
+}
+
 ErrMsgOr<std::unique_ptr<cppbor::Map>> parseAndValidateDeviceInfo(
         const std::vector<uint8_t>& deviceInfoBytes, IRemotelyProvisionedComponent* provisionable,
         bool isFactory) {
@@ -396,6 +403,21 @@ ErrMsgOr<std::unique_ptr<cppbor::Map>> parseAndValidateDeviceInfo(
     const cppbor::Array kValidSecurityLevels = {"tee", "strongbox"};
     const cppbor::Array kValidAttIdStates = {"locked", "open"};
     const cppbor::Array kValidFused = {0, 1};
+    constexpr std::array<std::string_view, kNumTeeDeviceInfoEntries> kDeviceInfoKeys = {
+            "brand",
+            "manufacturer",
+            "product",
+            "model",
+            "device",
+            "vb_state",
+            "bootloader_state",
+            "vbmeta_digest",
+            "os_version",
+            "system_patch_level",
+            "boot_patch_level",
+            "vendor_patch_level",
+            "security_level",
+            "fused"};
 
     struct AttestationIdEntry {
         const char* id;
@@ -439,20 +461,48 @@ ErrMsgOr<std::unique_ptr<cppbor::Map>> parseAndValidateDeviceInfo(
     }
 
     std::string error;
+    std::string tmp;
+    std::set<std::string_view> previousKeys;
     switch (info.versionNumber) {
         case 3:
+            if (isTeeDeviceInfo(*parsed) && parsed->size() != kNumTeeDeviceInfoEntries) {
+                error += fmt::format(
+                        "Err: Incorrect number of device info entries. Expected {} but got"
+                        "{}\n",
+                        kNumTeeDeviceInfoEntries, parsed->size());
+            }
+            // TEE IRPC instances require all entries to be present in DeviceInfo. Non-TEE instances
+            // may omit `os_version`
+            if (!isTeeDeviceInfo(*parsed) && (parsed->size() != kNumTeeDeviceInfoEntries ||
+                                              parsed->size() != kNumTeeDeviceInfoEntries - 1)) {
+                error += fmt::format(
+                        "Err: Incorrect number of device info entries. Expected {} or {} but got"
+                        "{}\n",
+                        kNumTeeDeviceInfoEntries - 1, kNumTeeDeviceInfoEntries, parsed->size());
+            }
+            for (auto& [key, _] : *parsed) {
+                const std::string& keyValue = key->asTstr()->value();
+                if (!previousKeys.insert(keyValue).second) {
+                    error += "Err: Duplicate device info entry: <" + keyValue + ">,\n";
+                }
+                if (std::find(kDeviceInfoKeys.begin(), kDeviceInfoKeys.end(), keyValue) ==
+                    kDeviceInfoKeys.end()) {
+                    error += "Err: Unrecognized key entry: <" + key->asTstr()->value() + ">,\n";
+                }
+            }
+            FALLTHROUGH_INTENDED;
         case 2:
             for (const auto& entry : kAttestationIdEntrySet) {
-                error += checkMapEntry(isFactory && !entry.alwaysValidate, *parsed, cppbor::TSTR,
-                                       entry.id);
+                tmp = checkMapEntry(isFactory && !entry.alwaysValidate, *parsed, cppbor::TSTR,
+                                    entry.id);
             }
-            if (!error.empty()) {
-                return error +
-                       "Attestation IDs are missing or malprovisioned. If this test is being\n"
-                       "run against an early proto or EVT build, this error is probably WAI\n"
-                       "and indicates that Device IDs were not provisioned in the factory. If\n"
-                       "this error is returned on a DVT or later build revision, then\n"
-                       "something is likely wrong with the factory provisioning process.";
+            if (!tmp.empty()) {
+                error += tmp +
+                         "Attestation IDs are missing or malprovisioned. If this test is being\n"
+                         "run against an early proto or EVT build, this error is probably WAI\n"
+                         "and indicates that Device IDs were not provisioned in the factory. If\n"
+                         "this error is returned on a DVT or later build revision, then\n"
+                         "something is likely wrong with the factory provisioning process.";
             }
             // TODO: Refactor the KeyMint code that validates these fields and include it here.
             error += checkMapEntry(isFactory, *parsed, cppbor::TSTR, "vb_state", kValidVbStates);
@@ -465,8 +515,7 @@ ErrMsgOr<std::unique_ptr<cppbor::Map>> parseAndValidateDeviceInfo(
             error += checkMapEntry(isFactory, *parsed, cppbor::UINT, "fused", kValidFused);
             error += checkMapEntry(isFactory, *parsed, cppbor::TSTR, "security_level",
                                    kValidSecurityLevels);
-            if (parsed->get("security_level") && parsed->get("security_level")->asTstr() &&
-                parsed->get("security_level")->asTstr()->value() == "tee") {
+            if (isTeeDeviceInfo(*parsed)) {
                 error += checkMapEntry(isFactory, *parsed, cppbor::TSTR, "os_version");
             }
             break;
