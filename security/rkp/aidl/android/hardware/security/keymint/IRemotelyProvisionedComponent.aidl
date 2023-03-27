@@ -144,9 +144,9 @@ interface IRemotelyProvisionedComponent {
     byte[] generateEcdsaP256KeyPair(in boolean testMode, out MacedPublicKey macedPublicKey);
 
     /**
-     * This method can be removed in version 3 of the HAL. The header is kept around for
-     * backwards compatibility purposes. From v3, this method is allowed to raise a
-     * ServiceSpecificException with an error code of STATUS_REMOVED.
+     * This method has been deprecated since version 3 of the HAL. The header is kept around for
+     * backwards compatibility purposes. From v3, this method must raise a ServiceSpecificException
+     * with an error code of STATUS_REMOVED.
      *
      * For v1 and v2 implementations:
      * generateCertificateRequest creates a certificate request to be sent to the provisioning
