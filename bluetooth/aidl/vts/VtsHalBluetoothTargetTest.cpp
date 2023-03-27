@@ -48,6 +48,27 @@ using aidl::android::hardware::bluetooth::Status;
 using ndk::ScopedAStatus;
 using ndk::SpAIBinder;
 
+using ::bluetooth::hci::CommandBuilder;
+using ::bluetooth::hci::CommandCompleteView;
+using ::bluetooth::hci::CommandView;
+using ::bluetooth::hci::ErrorCode;
+using ::bluetooth::hci::EventView;
+using ::bluetooth::hci::LeReadLocalSupportedFeaturesBuilder;
+using ::bluetooth::hci::LeReadLocalSupportedFeaturesCompleteView;
+using ::bluetooth::hci::LeReadNumberOfSupportedAdvertisingSetsBuilder;
+using ::bluetooth::hci::LeReadNumberOfSupportedAdvertisingSetsCompleteView;
+using ::bluetooth::hci::LeReadResolvingListSizeBuilder;
+using ::bluetooth::hci::LeReadResolvingListSizeCompleteView;
+using ::bluetooth::hci::LLFeaturesBits;
+using ::bluetooth::hci::OpCode;
+using ::bluetooth::hci::OpCodeText;
+using ::bluetooth::hci::PacketView;
+using ::bluetooth::hci::ReadLocalVersionInformationBuilder;
+using ::bluetooth::hci::ReadLocalVersionInformationCompleteView;
+
+static constexpr uint8_t kMinLeAdvSetForBt5 = 16;
+static constexpr uint8_t kMinLeResolvingListForBt5 = 8;
+
 static constexpr size_t kNumHciCommandsBandwidth = 100;
 static constexpr size_t kNumScoPacketsBandwidth = 100;
 static constexpr size_t kNumAclPacketsBandwidth = 100;
@@ -156,8 +177,14 @@ class BluetoothAidlTest : public ::testing::TestWithParam<std::string> {
   void handle_no_ops();
   void discard_qca_debugging();
   void wait_for_event(bool timeout_is_error);
-  void wait_for_command_complete_event(::bluetooth::hci::OpCode opCode);
+  void wait_for_command_complete_event(OpCode opCode,
+                                       std::vector<uint8_t>& complete_event);
+  // Wait until a command complete is received.
+  // Command complete will be consumed after this method
+  void wait_and_validate_command_complete_event(OpCode opCode);
   int wait_for_completed_packets_event(uint16_t handle);
+  void send_and_wait_for_cmd_complete(std::unique_ptr<CommandBuilder> cmd,
+                                      std::vector<uint8_t>& cmd_complete);
 
   // A simple test implementation of BluetoothHciCallbacks.
   class BluetoothHciCallbacks
@@ -180,7 +207,7 @@ class BluetoothAidlTest : public ::testing::TestWithParam<std::string> {
         const std::vector<uint8_t>& event) override {
       parent_.event_cb_count++;
       parent_.event_queue.push(event);
-      ALOGV("Event received (length = %d)", static_cast<int>(event.size()));
+      ALOGI("Event received (length = %d)", static_cast<int>(event.size()));
       return ScopedAStatus::ok();
     };
 
@@ -375,20 +402,25 @@ void BluetoothAidlTest::wait_for_event(bool timeout_is_error = true) {
   }
 }
 
-// Wait until a command complete is received.
 void BluetoothAidlTest::wait_for_command_complete_event(
-    ::bluetooth::hci::OpCode opCode) {
+    OpCode opCode, std::vector<uint8_t>& complete_event) {
   ASSERT_NO_FATAL_FAILURE(wait_for_event());
-  std::vector<uint8_t> event;
   ASSERT_FALSE(event_queue.empty());
-  ASSERT_TRUE(event_queue.pop(event));
+  ASSERT_TRUE(event_queue.pop(complete_event));
   auto complete_view = ::bluetooth::hci::CommandCompleteView::Create(
       ::bluetooth::hci::EventView::Create(::bluetooth::hci::PacketView<true>(
-          std::make_shared<std::vector<uint8_t>>(event))));
+          std::make_shared<std::vector<uint8_t>>(complete_event))));
   ASSERT_TRUE(complete_view.IsValid());
   ASSERT_EQ(complete_view.GetCommandOpCode(), opCode);
   ASSERT_EQ(complete_view.GetPayload()[0],
             static_cast<uint8_t>(::bluetooth::hci::ErrorCode::SUCCESS));
+}
+
+void BluetoothAidlTest::wait_and_validate_command_complete_event(
+    ::bluetooth::hci::OpCode opCode) {
+  std::vector<uint8_t> complete_event;
+  ASSERT_NO_FATAL_FAILURE(
+      wait_for_command_complete_event(opCode, complete_event));
 }
 
 // Send the command to read the controller's buffer sizes.
@@ -430,7 +462,7 @@ void BluetoothAidlTest::setSynchronousFlowControlEnable() {
       ->Serialize(bi);
   hci->sendHciCommand(cmd);
 
-  wait_for_command_complete_event(
+  wait_and_validate_command_complete_event(
       ::bluetooth::hci::OpCode::WRITE_SYNCHRONOUS_FLOW_CONTROL_ENABLE);
 }
 
@@ -620,6 +652,20 @@ void BluetoothAidlTest::enterLoopbackMode() {
   }
 }
 
+void BluetoothAidlTest::send_and_wait_for_cmd_complete(
+    std::unique_ptr<CommandBuilder> cmd, std::vector<uint8_t>& cmd_complete) {
+  std::vector<uint8_t> cmd_bytes = cmd->SerializeToBytes();
+  hci->sendHciCommand(cmd_bytes);
+
+  auto view = CommandView::Create(
+      PacketView<true>(std::make_shared<std::vector<uint8_t>>(cmd_bytes)));
+  ASSERT_TRUE(view.IsValid());
+  ALOGI("Waiting for %s[0x%x]", OpCodeText(view.GetOpCode()).c_str(),
+        static_cast<int>(view.GetOpCode()));
+  ASSERT_NO_FATAL_FAILURE(
+      wait_for_command_complete_event(view.GetOpCode(), cmd_complete));
+}
+
 // Empty test: Initialize()/Close() are called in SetUp()/TearDown().
 TEST_P(BluetoothAidlTest, InitializeAndClose) {}
 
@@ -630,7 +676,7 @@ TEST_P(BluetoothAidlTest, HciReset) {
   ::bluetooth::hci::ResetBuilder::Create()->Serialize(bi);
   hci->sendHciCommand(reset);
 
-  wait_for_command_complete_event(::bluetooth::hci::OpCode::RESET);
+  wait_and_validate_command_complete_event(::bluetooth::hci::OpCode::RESET);
 }
 
 // Read and check the HCI version of the controller.
@@ -807,7 +853,8 @@ TEST_P(BluetoothAidlTest, SetEventMask) {
   uint64_t full_mask = UINT64_MAX;
   ::bluetooth::hci::SetEventMaskBuilder::Create(full_mask)->Serialize(bi);
   hci->sendHciCommand(cmd);
-  wait_for_command_complete_event(::bluetooth::hci::OpCode::SET_EVENT_MASK);
+  wait_and_validate_command_complete_event(
+      ::bluetooth::hci::OpCode::SET_EVENT_MASK);
 }
 
 // Set all bits in the LE event mask
@@ -817,7 +864,8 @@ TEST_P(BluetoothAidlTest, SetLeEventMask) {
   uint64_t full_mask = UINT64_MAX;
   ::bluetooth::hci::LeSetEventMaskBuilder::Create(full_mask)->Serialize(bi);
   hci->sendHciCommand(cmd);
-  wait_for_command_complete_event(::bluetooth::hci::OpCode::LE_SET_EVENT_MASK);
+  wait_and_validate_command_complete_event(
+      ::bluetooth::hci::OpCode::LE_SET_EVENT_MASK);
 }
 
 // Call initialize twice, second one should fail.
@@ -864,6 +912,66 @@ TEST_P(BluetoothAidlTest, CallInitializeTwice) {
   ASSERT_TRUE(hci->initialize(second_cb).isOk());
   auto status = future.wait_for(std::chrono::seconds(1));
   ASSERT_EQ(status, std::future_status::ready);
+}
+
+TEST_P(BluetoothAidlTest, Cdd_C_12_1_Bluetooth5Requirements) {
+  std::vector<uint8_t> version_event;
+  send_and_wait_for_cmd_complete(ReadLocalVersionInformationBuilder::Create(),
+                                 version_event);
+  auto version_view = ReadLocalVersionInformationCompleteView::Create(
+      CommandCompleteView::Create(EventView::Create(PacketView<true>(
+          std::make_shared<std::vector<uint8_t>>(version_event)))));
+  ASSERT_TRUE(version_view.IsValid());
+  ASSERT_EQ(::bluetooth::hci::ErrorCode::SUCCESS, version_view.GetStatus());
+  auto version = version_view.GetLocalVersionInformation();
+  if (version.hci_version_ < ::bluetooth::hci::HciVersion::V_5_0) {
+    // This test does not apply to controllers below 5.0
+    return;
+  };
+  // When HCI version is 5.0, LMP version must also be at least 5.0
+  ASSERT_GE(static_cast<int>(version.lmp_version_),
+            static_cast<int>(version.hci_version_));
+
+  std::vector<uint8_t> le_features_event;
+  send_and_wait_for_cmd_complete(LeReadLocalSupportedFeaturesBuilder::Create(),
+                                 le_features_event);
+  auto le_features_view = LeReadLocalSupportedFeaturesCompleteView::Create(
+      CommandCompleteView::Create(EventView::Create(PacketView<true>(
+          std::make_shared<std::vector<uint8_t>>(le_features_event)))));
+  ASSERT_TRUE(le_features_view.IsValid());
+  ASSERT_EQ(::bluetooth::hci::ErrorCode::SUCCESS, le_features_view.GetStatus());
+  auto le_features = le_features_view.GetLeFeatures();
+  ASSERT_TRUE(le_features & static_cast<uint64_t>(LLFeaturesBits::LL_PRIVACY));
+  ASSERT_TRUE(le_features & static_cast<uint64_t>(LLFeaturesBits::LE_2M_PHY));
+  ASSERT_TRUE(le_features &
+              static_cast<uint64_t>(LLFeaturesBits::LE_CODED_PHY));
+  ASSERT_TRUE(le_features &
+              static_cast<uint64_t>(LLFeaturesBits::LE_EXTENDED_ADVERTISING));
+
+  std::vector<uint8_t> num_adv_set_event;
+  send_and_wait_for_cmd_complete(
+      LeReadNumberOfSupportedAdvertisingSetsBuilder::Create(),
+      num_adv_set_event);
+  auto num_adv_set_view =
+      LeReadNumberOfSupportedAdvertisingSetsCompleteView::Create(
+          CommandCompleteView::Create(EventView::Create(PacketView<true>(
+              std::make_shared<std::vector<uint8_t>>(num_adv_set_event)))));
+  ASSERT_TRUE(num_adv_set_view.IsValid());
+  ASSERT_EQ(::bluetooth::hci::ErrorCode::SUCCESS, num_adv_set_view.GetStatus());
+  auto num_adv_set = num_adv_set_view.GetNumberSupportedAdvertisingSets();
+  ASSERT_GE(num_adv_set, kMinLeAdvSetForBt5);
+
+  std::vector<uint8_t> num_resolving_list_event;
+  send_and_wait_for_cmd_complete(LeReadResolvingListSizeBuilder::Create(),
+                                 num_resolving_list_event);
+  auto num_resolving_list_view = LeReadResolvingListSizeCompleteView::Create(
+      CommandCompleteView::Create(EventView::Create(PacketView<true>(
+          std::make_shared<std::vector<uint8_t>>(num_resolving_list_event)))));
+  ASSERT_TRUE(num_resolving_list_view.IsValid());
+  ASSERT_EQ(::bluetooth::hci::ErrorCode::SUCCESS,
+            num_resolving_list_view.GetStatus());
+  auto num_resolving_list = num_resolving_list_view.GetResolvingListSize();
+  ASSERT_GE(num_resolving_list, kMinLeResolvingListForBt5);
 }
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(BluetoothAidlTest);
