@@ -83,8 +83,13 @@ class MySecureElementCallback : public BnSecureElementCallback {
 
     void expectCallbackHistory(std::vector<bool>&& want) {
         std::unique_lock<std::mutex> l(m);
-        cv.wait_for(l, 2s, [&]() { return history.size() >= want.size(); });
+        cv.wait_for(l, 5s, [&]() { return history.size() >= want.size(); });
         EXPECT_THAT(history, ElementsAreArray(want));
+    }
+
+    void resetCallbackHistory() {
+        std::unique_lock<std::mutex> l(m);
+        history.clear();
     }
 
   private:
@@ -118,7 +123,9 @@ class SecureElementAidl : public ::testing::TestWithParam<std::string> {
     }
 
     void TearDown() override {
+        secure_element_callback_->resetCallbackHistory();
         EXPECT_OK(secure_element_->reset());
+        secure_element_callback_->expectCallbackHistory({false, true});
         secure_element_ = nullptr;
         secure_element_callback_ = nullptr;
     }
