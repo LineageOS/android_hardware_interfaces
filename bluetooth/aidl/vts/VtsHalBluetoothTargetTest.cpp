@@ -24,15 +24,14 @@
 #include <android/binder_manager.h>
 #include <android/binder_process.h>
 #include <binder/IServiceManager.h>
-#include <binder/ProcessState.h>
 
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
 #include <future>
-#include <mutex>
 #include <queue>
 #include <thread>
+#include <utility>
 #include <vector>
 
 // TODO: Remove custom logging defines from PDL packets.
@@ -63,9 +62,9 @@ static constexpr uint16_t kAclHandleQcaDebugMessage = 0xedc;
 
 class ThroughputLogger {
  public:
-  ThroughputLogger(std::string task)
+  explicit ThroughputLogger(std::string task)
       : total_bytes_(0),
-        task_(task),
+        task_(std::move(task)),
         start_time_(std::chrono::steady_clock::now()) {}
 
   ~ThroughputLogger() {
@@ -94,7 +93,7 @@ class ThroughputLogger {
 // The main test class for Bluetooth HAL.
 class BluetoothAidlTest : public ::testing::TestWithParam<std::string> {
  public:
-  virtual void SetUp() override {
+  void SetUp() override {
     // currently test passthrough mode only
     hci = IBluetoothHci::fromBinder(
         SpAIBinder(AServiceManager_waitForService(GetParam().c_str())));
@@ -110,7 +109,7 @@ class BluetoothAidlTest : public ::testing::TestWithParam<std::string> {
     ASSERT_NE(bluetooth_hci_death_recipient, nullptr);
     ASSERT_EQ(STATUS_OK,
               AIBinder_linkToDeath(hci->asBinder().get(),
-                                   bluetooth_hci_death_recipient, 0));
+                                   bluetooth_hci_death_recipient, nullptr));
 
     hci_cb = ndk::SharedRefBase::make<BluetoothHciCallbacks>(*this);
     ASSERT_NE(hci_cb, nullptr);
@@ -131,7 +130,7 @@ class BluetoothAidlTest : public ::testing::TestWithParam<std::string> {
     ASSERT_TRUE(future.get());
   }
 
-  virtual void TearDown() override {
+  void TearDown() override {
     ALOGI("TearDown");
     // Should not be checked in production code
     ASSERT_TRUE(hci->close().isOk());
@@ -166,36 +165,41 @@ class BluetoothAidlTest : public ::testing::TestWithParam<std::string> {
     BluetoothAidlTest& parent_;
 
    public:
-    BluetoothHciCallbacks(BluetoothAidlTest& parent) : parent_(parent){};
+    explicit BluetoothHciCallbacks(BluetoothAidlTest& parent)
+        : parent_(parent){};
 
-    virtual ~BluetoothHciCallbacks() = default;
+    ~BluetoothHciCallbacks() override = default;
 
-    ndk::ScopedAStatus initializationComplete(Status status) {
+    ndk::ScopedAStatus initializationComplete(Status status) override {
       parent_.initialized_promise.set_value(status == Status::SUCCESS);
       ALOGV("%s (status = %d)", __func__, static_cast<int>(status));
       return ScopedAStatus::ok();
     };
 
-    ndk::ScopedAStatus hciEventReceived(const std::vector<uint8_t>& event) {
+    ndk::ScopedAStatus hciEventReceived(
+        const std::vector<uint8_t>& event) override {
       parent_.event_cb_count++;
       parent_.event_queue.push(event);
       ALOGV("Event received (length = %d)", static_cast<int>(event.size()));
       return ScopedAStatus::ok();
     };
 
-    ndk::ScopedAStatus aclDataReceived(const std::vector<uint8_t>& data) {
+    ndk::ScopedAStatus aclDataReceived(
+        const std::vector<uint8_t>& data) override {
       parent_.acl_cb_count++;
       parent_.acl_queue.push(data);
       return ScopedAStatus::ok();
     };
 
-    ndk::ScopedAStatus scoDataReceived(const std::vector<uint8_t>& data) {
+    ndk::ScopedAStatus scoDataReceived(
+        const std::vector<uint8_t>& data) override {
       parent_.sco_cb_count++;
       parent_.sco_queue.push(data);
       return ScopedAStatus::ok();
     };
 
-    ndk::ScopedAStatus isoDataReceived(const std::vector<uint8_t>& data) {
+    ndk::ScopedAStatus isoDataReceived(
+        const std::vector<uint8_t>& data) override {
       parent_.iso_cb_count++;
       parent_.iso_queue.push(data);
       return ScopedAStatus::ok();
@@ -205,7 +209,8 @@ class BluetoothAidlTest : public ::testing::TestWithParam<std::string> {
   template <class T>
   class WaitQueue {
    public:
-    WaitQueue(){};
+    WaitQueue() = default;
+    ;
 
     virtual ~WaitQueue() = default;
 
@@ -289,22 +294,22 @@ class BluetoothAidlTest : public ::testing::TestWithParam<std::string> {
 
   std::shared_ptr<IBluetoothHci> hci;
   std::shared_ptr<BluetoothHciCallbacks> hci_cb;
-  AIBinder_DeathRecipient* bluetooth_hci_death_recipient;
+  AIBinder_DeathRecipient* bluetooth_hci_death_recipient{};
   WaitQueue<std::vector<uint8_t>> event_queue;
   WaitQueue<std::vector<uint8_t>> acl_queue;
   WaitQueue<std::vector<uint8_t>> sco_queue;
   WaitQueue<std::vector<uint8_t>> iso_queue;
 
   std::promise<bool> initialized_promise;
-  int event_cb_count;
-  int sco_cb_count;
-  int acl_cb_count;
-  int iso_cb_count;
+  int event_cb_count{};
+  int sco_cb_count{};
+  int acl_cb_count{};
+  int iso_cb_count{};
 
-  int max_acl_data_packet_length;
-  int max_sco_data_packet_length;
-  int max_acl_data_packets;
-  int max_sco_data_packets;
+  int max_acl_data_packet_length{};
+  int max_sco_data_packet_length{};
+  int max_acl_data_packets{};
+  int max_sco_data_packets{};
 
   std::vector<uint16_t> sco_connection_handles;
   std::vector<uint16_t> acl_connection_handles;
@@ -431,13 +436,13 @@ void BluetoothAidlTest::setSynchronousFlowControlEnable() {
 
 // Send an HCI command (in Loopback mode) and check the response.
 void BluetoothAidlTest::sendAndCheckHci(int num_packets) {
-  ThroughputLogger logger = {__func__};
-  int command_size = 0;
+  ThroughputLogger logger{__func__};
+  size_t command_size = 0;
   char new_name[] = "John Jacob Jingleheimer Schmidt ___________________";
   size_t new_name_length = strlen(new_name);
   for (int n = 0; n < num_packets; n++) {
     // The name to set is new_name
-    std::array<uint8_t, 248> name_array;
+    std::array<uint8_t, 248> name_array{};
     for (size_t i = 0; i < new_name_length; i++) {
       name_array[i] = new_name[i];
     }
@@ -476,7 +481,7 @@ void BluetoothAidlTest::sendAndCheckHci(int num_packets) {
 // Send a SCO data packet (in Loopback mode) and check the response.
 void BluetoothAidlTest::sendAndCheckSco(int num_packets, size_t size,
                                         uint16_t handle) {
-  ThroughputLogger logger = {__func__};
+  ThroughputLogger logger{__func__};
   for (int n = 0; n < num_packets; n++) {
     // Send a SCO packet
     std::vector<uint8_t> sco_packet;
@@ -503,7 +508,7 @@ void BluetoothAidlTest::sendAndCheckSco(int num_packets, size_t size,
 // Send an ACL data packet (in Loopback mode) and check the response.
 void BluetoothAidlTest::sendAndCheckAcl(int num_packets, size_t size,
                                         uint16_t handle) {
-  ThroughputLogger logger = {__func__};
+  ThroughputLogger logger{__func__};
   for (int n = 0; n < num_packets; n++) {
     // Send an ACL packet with counting data
     auto payload = std::make_unique<::bluetooth::packet::RawBuilder>();
@@ -551,7 +556,7 @@ int BluetoothAidlTest::wait_for_completed_packets_event(uint16_t handle) {
       return packets_processed;
     }
     auto completed_packets = event_view.GetCompletedPackets();
-    for (const auto entry : completed_packets) {
+    for (const auto& entry : completed_packets) {
       EXPECT_EQ(handle, entry.connection_handle_);
       packets_processed += entry.host_num_of_completed_packets_;
     }
@@ -820,28 +825,32 @@ TEST_P(BluetoothAidlTest, CallInitializeTwice) {
   class SecondCb
       : public aidl::android::hardware::bluetooth::BnBluetoothHciCallbacks {
    public:
-    ndk::ScopedAStatus initializationComplete(Status status) {
+    ndk::ScopedAStatus initializationComplete(Status status) override {
       EXPECT_EQ(status, Status::ALREADY_INITIALIZED);
       init_promise.set_value();
       return ScopedAStatus::ok();
     };
 
-    ndk::ScopedAStatus hciEventReceived(const std::vector<uint8_t>& /*event*/) {
+    ndk::ScopedAStatus hciEventReceived(
+        const std::vector<uint8_t>& /*event*/) override {
       ADD_FAILURE();
       return ScopedAStatus::ok();
     };
 
-    ndk::ScopedAStatus aclDataReceived(const std::vector<uint8_t>& /*data*/) {
+    ndk::ScopedAStatus aclDataReceived(
+        const std::vector<uint8_t>& /*data*/) override {
       ADD_FAILURE();
       return ScopedAStatus::ok();
     };
 
-    ndk::ScopedAStatus scoDataReceived(const std::vector<uint8_t>& /*data*/) {
+    ndk::ScopedAStatus scoDataReceived(
+        const std::vector<uint8_t>& /*data*/) override {
       ADD_FAILURE();
       return ScopedAStatus::ok();
     };
 
-    ndk::ScopedAStatus isoDataReceived(const std::vector<uint8_t>& /*data*/) {
+    ndk::ScopedAStatus isoDataReceived(
+        const std::vector<uint8_t>& /*data*/) override {
       ADD_FAILURE();
       return ScopedAStatus::ok();
     };
