@@ -26,6 +26,7 @@ package {
 cc_binary {
     name: "android.hardware.automotive.occupant_awareness@1.0-service",
     init_rc: ["android.hardware.automotive.occupant_awareness@1.0-service.rc"],
+    vintf_fragments: ["android.hardware.automotive.occupant_awareness-service.xml"],
     relative_install_path: "hw",
     vendor: true,
     srcs: [
