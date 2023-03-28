@@ -1,5 +1,8 @@
 service vendor.evs-hal-default /vendor/bin/hw/android.hardware.automotive.evs-aidl-default-service
     class early_hal
-    user automotive_evs
-    group automotive_evs
+    priority -20
+    user graphics
+    group automotive_evs camera
+    onrestart restart cardisplayproxyd
+    onrestart restart evsmanagerd
     disabled
