@@ -68,11 +68,26 @@ EvsMockCamera::EvsMockCamera([[maybe_unused]] Sigil sigil, const char* id,
         const size_t len = get_camera_metadata_size(camInfo->characteristics);
         mDescription.metadata.insert(mDescription.metadata.end(), ptr, ptr + len);
     }
+
+    // Initialize parameters.
+    initializeParameters();
 }
 
 EvsMockCamera::~EvsMockCamera() {
     LOG(DEBUG) << __FUNCTION__;
     shutdown();
+}
+
+void EvsMockCamera::initializeParameters() {
+    mParams.emplace(
+            CameraParam::BRIGHTNESS,
+            new CameraParameterDesc(/* min= */ 0, /* max= */ 255, /* step= */ 1, /* value= */ 255));
+    mParams.emplace(
+            CameraParam::CONTRAST,
+            new CameraParameterDesc(/* min= */ 0, /* max= */ 255, /* step= */ 1, /* value= */ 255));
+    mParams.emplace(
+            CameraParam::SHARPNESS,
+            new CameraParameterDesc(/* min= */ 0, /* max= */ 255, /* step= */ 1, /* value= */ 255));
 }
 
 // This gets called if another caller "steals" ownership of the camera
@@ -291,27 +306,105 @@ ScopedAStatus EvsMockCamera::getParameterList(std::vector<CameraParam>* _aidl_re
     return ScopedAStatus::ok();
 }
 
-ScopedAStatus EvsMockCamera::getIntParameterRange([[maybe_unused]] CameraParam id,
-                                                  [[maybe_unused]] ParameterRange* _aidl_return) {
-    return ScopedAStatus::fromServiceSpecificError(static_cast<int>(EvsResult::NOT_SUPPORTED));
+ScopedAStatus EvsMockCamera::getIntParameterRange(CameraParam id, ParameterRange* _aidl_return) {
+    auto it = mParams.find(id);
+    if (it == mParams.end()) {
+        return ScopedAStatus::fromServiceSpecificError(static_cast<int>(EvsResult::NOT_SUPPORTED));
+    }
+
+    _aidl_return->min = it->second->range.min;
+    _aidl_return->max = it->second->range.max;
+    _aidl_return->step = it->second->range.step;
+    return ScopedAStatus::ok();
 }
 
-ScopedAStatus EvsMockCamera::setIntParameter(
-        [[maybe_unused]] CameraParam id, [[maybe_unused]] int32_t value,
-        [[maybe_unused]] std::vector<int32_t>* effectiveValue) {
-    return ScopedAStatus::fromServiceSpecificError(static_cast<int>(EvsResult::NOT_SUPPORTED));
+ScopedAStatus EvsMockCamera::setIntParameter(CameraParam id, int32_t value,
+                                             std::vector<int32_t>* effectiveValue) {
+    auto it = mParams.find(id);
+    if (it == mParams.end()) {
+        return ScopedAStatus::fromServiceSpecificError(static_cast<int>(EvsResult::NOT_SUPPORTED));
+    }
+
+    // Rounding down to the closest value.
+    int32_t candidate = value / it->second->range.step * it->second->range.step;
+    if (candidate < it->second->range.min || candidate > it->second->range.max) {
+        return ScopedAStatus::fromServiceSpecificError(static_cast<int>(EvsResult::INVALID_ARG));
+    }
+
+    it->second->value = candidate;
+    effectiveValue->push_back(candidate);
+    return ScopedAStatus::ok();
 }
 
-ScopedAStatus EvsMockCamera::getIntParameter([[maybe_unused]] CameraParam id,
-                                             [[maybe_unused]] std::vector<int32_t>* value) {
-    return ScopedAStatus::fromServiceSpecificError(static_cast<int>(EvsResult::NOT_SUPPORTED));
+ScopedAStatus EvsMockCamera::getIntParameter(CameraParam id, std::vector<int32_t>* value) {
+    auto it = mParams.find(id);
+    if (it == mParams.end()) {
+        return ScopedAStatus::fromServiceSpecificError(static_cast<int>(EvsResult::NOT_SUPPORTED));
+    }
+
+    value->push_back(it->second->value);
+    return ScopedAStatus::ok();
 }
 
-ScopedAStatus EvsMockCamera::importExternalBuffers(
-        [[maybe_unused]] const std::vector<BufferDesc>& buffers,
-        [[maybe_unused]] int32_t* _aidl_return) {
-    LOG(DEBUG) << "This implementation does not support an external buffer import.";
-    return ScopedAStatus::fromServiceSpecificError(static_cast<int>(EvsResult::NOT_SUPPORTED));
+ScopedAStatus EvsMockCamera::importExternalBuffers(const std::vector<BufferDesc>& buffers,
+                                                   int32_t* _aidl_return) {
+    size_t numBuffersToAdd = buffers.size();
+    if (numBuffersToAdd < 1) {
+        LOG(DEBUG) << "Ignoring a request to import external buffers with an empty list.";
+        return ScopedAStatus::ok();
+    }
+
+    std::lock_guard lock(mAccessLock);
+    if (numBuffersToAdd > (kMaxBuffersInFlight - mFramesAllowed)) {
+        numBuffersToAdd -= (kMaxBuffersInFlight - mFramesAllowed);
+        LOG(WARNING) << "Exceed the limit on the number of buffers. " << numBuffersToAdd
+                     << " buffers will be imported only.";
+    }
+
+    ::android::GraphicBufferMapper& mapper = ::android::GraphicBufferMapper::get();
+    const size_t before = mFramesAllowed;
+    for (size_t i = 0; i < numBuffersToAdd; ++i) {
+        auto& b = buffers[i];
+        const AHardwareBuffer_Desc* pDesc =
+                reinterpret_cast<const AHardwareBuffer_Desc*>(&b.buffer.description);
+
+        buffer_handle_t handleToImport = ::android::dupFromAidl(b.buffer.handle);
+        buffer_handle_t handleToStore = nullptr;
+        if (handleToImport == nullptr) {
+            LOG(WARNING) << "Failed to duplicate a memory handle. Ignoring a buffer " << b.bufferId;
+            continue;
+        }
+
+        ::android::status_t result =
+                mapper.importBuffer(handleToImport, pDesc->width, pDesc->height, pDesc->layers,
+                                    pDesc->format, pDesc->usage, pDesc->stride, &handleToStore);
+        if (result != ::android::NO_ERROR || handleToStore == nullptr) {
+            LOG(WARNING) << "Failed to import a buffer " << b.bufferId;
+            continue;
+        }
+
+        bool stored = false;
+        for (auto&& rec : mBuffers) {
+            if (rec.handle != nullptr) {
+                continue;
+            }
+
+            // Use this existing entry.
+            rec.handle = handleToStore;
+            rec.inUse = false;
+            stored = true;
+            break;
+        }
+
+        if (!stored) {
+            // Add a BufferRecord wrapping this handle to our set of available buffers.
+            mBuffers.push_back(BufferRecord(handleToStore));
+        }
+        ++mFramesAllowed;
+    }
+
+    *_aidl_return = mFramesAllowed - before;
+    return ScopedAStatus::ok();
 }
 
 bool EvsMockCamera::setAvailableFrames_Locked(unsigned bufferCount) {

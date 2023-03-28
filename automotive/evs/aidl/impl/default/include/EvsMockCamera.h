@@ -146,7 +146,21 @@ class EvsMockCamera : public evs::BnEvsCamera {
 
     // For the extended info
     std::unordered_map<uint32_t, std::vector<uint8_t>> mExtInfo;
-    std::unordered_map<CameraParam, int32_t> mParams;
+
+    // For the camera parameters.
+    struct CameraParameterDesc {
+        CameraParameterDesc(int min = 0, int max = 0, int step = 0, int value = 0) {
+            this->range.min = min;
+            this->range.max = max;
+            this->range.step = step;
+            this->value = value;
+        }
+
+        ParameterRange range;
+        int32_t value;
+    };
+    std::unordered_map<CameraParam, std::shared_ptr<CameraParameterDesc>> mParams;
+    void initializeParameters();
 };
 
 }  // namespace aidl::android::hardware::automotive::evs::implementation
