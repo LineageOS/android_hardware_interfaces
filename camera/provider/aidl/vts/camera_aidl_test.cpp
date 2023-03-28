@@ -3337,7 +3337,6 @@ void CameraAidlTest::processColorSpaceRequest(
         RequestAvailableColorSpaceProfilesMap colorSpace,
         RequestAvailableDynamicRangeProfilesMap dynamicRangeProfile) {
     std::vector<std::string> cameraDeviceNames = getCameraDeviceNames(mProvider);
-    int64_t bufferId = 1;
     CameraMetadata settings;
 
     for (const auto& name : cameraDeviceNames) {
@@ -3456,12 +3455,12 @@ void CameraAidlTest::processColorSpaceRequest(
         // Stream as long as needed to fill the Hal inflight queue
         std::vector<CaptureRequest> requests(halStreams[0].maxBuffers);
 
-        for (int32_t frameNumber = 0; frameNumber < requests.size(); frameNumber++) {
+        for (int32_t requestId = 0; requestId < requests.size(); requestId++) {
             std::shared_ptr<InFlightRequest> inflightReq = std::make_shared<InFlightRequest>(
                     static_cast<ssize_t>(halStreams.size()), false, supportsPartialResults,
                     partialResultCount, std::unordered_set<std::string>(), resultQueue);
 
-            CaptureRequest& request = requests[frameNumber];
+            CaptureRequest& request = requests[requestId];
             std::vector<StreamBuffer>& outputBuffers = request.outputBuffers;
             outputBuffers.resize(halStreams.size());
 
@@ -3470,6 +3469,7 @@ void CameraAidlTest::processColorSpaceRequest(
             std::vector<buffer_handle_t> graphicBuffers;
             graphicBuffers.reserve(halStreams.size());
 
+            auto bufferId = requestId + 1;  // Buffer id value 0 is not valid
             for (const auto& halStream : halStreams) {
                 buffer_handle_t buffer_handle;
                 if (useHalBufManager) {
@@ -3485,17 +3485,16 @@ void CameraAidlTest::processColorSpaceRequest(
 
                     inflightReq->mOutstandingBufferIds[halStream.id][bufferId] = buffer_handle;
                     graphicBuffers.push_back(buffer_handle);
-                    outputBuffers[k] = {halStream.id, bufferId,
-                        android::makeToAidl(buffer_handle), BufferStatus::OK, NativeHandle(),
-                        NativeHandle()};
-                    bufferId++;
+                    outputBuffers[k] = {
+                            halStream.id,     bufferId,       android::makeToAidl(buffer_handle),
+                            BufferStatus::OK, NativeHandle(), NativeHandle()};
                 }
                 k++;
             }
 
             request.inputBuffer = {
                     -1, 0, NativeHandle(), BufferStatus::ERROR, NativeHandle(), NativeHandle()};
-            request.frameNumber = frameNumber;
+            request.frameNumber = bufferId;
             request.fmqSettingsSize = 0;
             request.settings = settings;
             request.inputWidth = 0;
@@ -3503,9 +3502,8 @@ void CameraAidlTest::processColorSpaceRequest(
 
             {
                 std::unique_lock<std::mutex> l(mLock);
-                mInflightMap[frameNumber] = inflightReq;
+                mInflightMap[bufferId] = inflightReq;
             }
-
         }
 
         int32_t numRequestProcessed = 0;
@@ -3519,7 +3517,10 @@ void CameraAidlTest::processColorSpaceRequest(
                 std::vector<int32_t> {halStreams[0].id});
         ASSERT_TRUE(returnStatus.isOk());
 
-        for (int32_t frameNumber = 0; frameNumber < requests.size(); frameNumber++) {
+        // We are keeping frame numbers and buffer ids consistent. Buffer id value of 0
+        // is used to indicate a buffer that is not present/available so buffer ids as well
+        // as frame numbers begin with 1.
+        for (int32_t frameNumber = 1; frameNumber <= requests.size(); frameNumber++) {
             const auto& inflightReq = mInflightMap[frameNumber];
             std::unique_lock<std::mutex> l(mLock);
             while (!inflightReq->errorCodeValid &&
