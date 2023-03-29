@@ -408,16 +408,8 @@ class CertificateRequestTest : public CertificateRequestTestBase {
         ASSERT_FALSE(HasFatalFailure());
 
         if (rpcHardwareInfo.versionNumber >= VERSION_WITHOUT_TEST_MODE) {
-            bytevec keysToSignMac;
-            DeviceInfo deviceInfo;
-            ProtectedData protectedData;
-            auto status = provisionable_->generateCertificateRequest(
-                    false, {}, {}, {}, &deviceInfo, &protectedData, &keysToSignMac);
-            if (!status.isOk() && (status.getServiceSpecificError() ==
-                                   BnRemotelyProvisionedComponent::STATUS_REMOVED)) {
-                GTEST_SKIP() << "This test case applies to RKP v3+ only if "
-                             << "generateCertificateRequest() is implemented.";
-            }
+            GTEST_SKIP() << "This test case only applies to RKP v1 and v2. "
+                         << "RKP version discovered: " << rpcHardwareInfo.versionNumber;
         }
     }
 };
@@ -796,6 +788,20 @@ TEST_P(CertificateRequestV2Test, NonEmptyRequest_testKeyInProdCert) {
     ASSERT_FALSE(status.isOk()) << status.getMessage();
     ASSERT_EQ(status.getServiceSpecificError(),
               BnRemotelyProvisionedComponent::STATUS_TEST_KEY_IN_PRODUCTION_REQUEST);
+}
+
+/**
+ * Call generateCertificateRequest(). Make sure it's removed.
+ */
+TEST_P(CertificateRequestV2Test, CertificateRequestV1Removed) {
+    bytevec keysToSignMac;
+    DeviceInfo deviceInfo;
+    ProtectedData protectedData;
+    auto status = provisionable_->generateCertificateRequest(
+            true /* testMode */, {} /* keysToSign */, {} /* EEK chain */, challenge_, &deviceInfo,
+            &protectedData, &keysToSignMac);
+    ASSERT_FALSE(status.isOk()) << status.getMessage();
+    EXPECT_EQ(status.getServiceSpecificError(), BnRemotelyProvisionedComponent::STATUS_REMOVED);
 }
 
 void parse_root_of_trust(const vector<uint8_t>& attestation_cert,
