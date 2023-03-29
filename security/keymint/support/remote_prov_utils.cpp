@@ -619,7 +619,7 @@ ErrMsgOr<std::vector<BccEntryData>> verifyProtectedData(
     }
 
     // BCC is [ pubkey, + BccEntry]
-    auto bccContents = validateBcc(bcc->asArray(), hwtrust::DiceChain::Kind::kProtectedData);
+    auto bccContents = validateBcc(bcc->asArray(), hwtrust::DiceChain::Kind::kVsr13);
     if (!bccContents) {
         return bccContents.message() + "\n" + prettyPrint(bcc.get());
     }
@@ -910,7 +910,7 @@ ErrMsgOr<bytevec> parseAndValidateAuthenticatedRequest(const std::vector<uint8_t
     }
 
     // DICE chain is [ pubkey, + DiceChainEntry ].
-    auto diceContents = validateBcc(diceCertChain, hwtrust::DiceChain::Kind::kAuthenticatedMessage);
+    auto diceContents = validateBcc(diceCertChain, hwtrust::DiceChain::Kind::kVsr14);
     if (!diceContents) {
         return diceContents.message() + "\n" + prettyPrint(diceCertChain);
     }
