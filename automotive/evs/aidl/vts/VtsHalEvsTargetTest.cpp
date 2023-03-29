@@ -2273,6 +2273,10 @@ TEST_P(EvsAidlTest, DisplayStates) {
             DisplayState state;
             EXPECT_FALSE(mEnumerator->getDisplayState(&state).isOk());
         }
+        for (const auto displayIdToQuery : displayIds) {
+            DisplayState state;
+            EXPECT_FALSE(mEnumerator->getDisplayStateById(displayIdToQuery, &state).isOk());
+        }
 
         // Scope to limit the lifetime of the pDisplay pointer, and thus the IEvsDisplay object.
         {
@@ -2284,6 +2288,15 @@ TEST_P(EvsAidlTest, DisplayStates) {
                 DisplayState state;
                 EXPECT_TRUE(mEnumerator->getDisplayState(&state).isOk());
                 EXPECT_EQ(state, DisplayState::NOT_VISIBLE);
+            }
+            for (const auto displayIdToQuery : displayIds) {
+                DisplayState state;
+                if (displayIdToQuery == displayId) {
+                    EXPECT_TRUE(mEnumerator->getDisplayStateById(displayIdToQuery, &state).isOk());
+                    EXPECT_EQ(state, DisplayState::NOT_VISIBLE);
+                } else {
+                    EXPECT_FALSE(mEnumerator->getDisplayStateById(displayIdToQuery, &state).isOk());
+                }
             }
 
             // Activate the display.
@@ -2297,6 +2310,15 @@ TEST_P(EvsAidlTest, DisplayStates) {
                 DisplayState state;
                 EXPECT_TRUE(pDisplay->getDisplayState(&state).isOk());
                 EXPECT_EQ(state, DisplayState::VISIBLE_ON_NEXT_FRAME);
+            }
+            for (const auto displayIdToQuery : displayIds) {
+                DisplayState state;
+                if (displayIdToQuery == displayId) {
+                    EXPECT_TRUE(mEnumerator->getDisplayStateById(displayIdToQuery, &state).isOk());
+                    EXPECT_EQ(state, DisplayState::VISIBLE_ON_NEXT_FRAME);
+                } else {
+                    EXPECT_FALSE(mEnumerator->getDisplayStateById(displayIdToQuery, &state).isOk());
+                }
             }
 
             // Get the output buffer we'd use to display the imagery.
@@ -2319,6 +2341,15 @@ TEST_P(EvsAidlTest, DisplayStates) {
                 EXPECT_TRUE(pDisplay->getDisplayState(&state).isOk());
                 EXPECT_EQ(state, DisplayState::VISIBLE);
             }
+            for (const auto displayIdToQuery : displayIds) {
+                DisplayState state;
+                if (displayIdToQuery == displayId) {
+                    EXPECT_TRUE(mEnumerator->getDisplayStateById(displayIdToQuery, &state).isOk());
+                    EXPECT_EQ(state, DisplayState::VISIBLE);
+                } else {
+                    EXPECT_FALSE(mEnumerator->getDisplayStateById(displayIdToQuery, &state).isOk());
+                }
+            }
 
             // Turn off the display.
             EXPECT_TRUE(pDisplay->setDisplayState(DisplayState::NOT_VISIBLE).isOk());
@@ -2332,6 +2363,15 @@ TEST_P(EvsAidlTest, DisplayStates) {
                 DisplayState state;
                 EXPECT_TRUE(pDisplay->getDisplayState(&state).isOk());
                 EXPECT_EQ(state, DisplayState::NOT_VISIBLE);
+            }
+            for (const auto displayIdToQuery : displayIds) {
+                DisplayState state;
+                if (displayIdToQuery == displayId) {
+                    EXPECT_TRUE(mEnumerator->getDisplayStateById(displayIdToQuery, &state).isOk());
+                    EXPECT_EQ(state, DisplayState::NOT_VISIBLE);
+                } else {
+                    EXPECT_FALSE(mEnumerator->getDisplayStateById(displayIdToQuery, &state).isOk());
+                }
             }
 
             // Close the display.
@@ -2347,6 +2387,10 @@ TEST_P(EvsAidlTest, DisplayStates) {
         {
             DisplayState state;
             EXPECT_FALSE(mEnumerator->getDisplayState(&state).isOk());
+        }
+        for (const auto displayIdToQuery : displayIds) {
+            DisplayState state;
+            EXPECT_FALSE(mEnumerator->getDisplayStateById(displayIdToQuery, &state).isOk());
         }
     }
 }
