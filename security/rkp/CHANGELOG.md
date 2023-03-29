@@ -31,7 +31,7 @@ This document provides an exact description of which changes have occurred in th
 * IRemotelyProvisionedComponent
   * The need for an EEK has been removed. There is no longer an encrypted portion of the CSR.
   * Keys for new CSR format must be generated with test mode set to false, effectively removing test
-    mode in the new CSR flow. Old behavior is kept unchanged for backwards compatibility.
+    mode in the new CSR flow.
   * The schema for the CSR itself has been significantly simplified, please see
     IRemotelyProvisionedComponent.aidl for more details. Notably,
     * the chain of signing, MACing, and encryption operations has been replaced with a single
