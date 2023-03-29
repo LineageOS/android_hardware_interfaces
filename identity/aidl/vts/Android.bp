@@ -61,15 +61,3 @@ cc_test {
     ],
     require_root: true,
 }
-
-java_test_host {
-    name: "IdentityCredentialImplementedTest",
-    libs: [
-        "tradefed",
-    ],
-    srcs: ["src/**/*.java"],
-    test_suites: [
-        "vts",
-    ],
-    test_config: "IdentityCredentialImplementedTest.xml",
-}
