@@ -41,6 +41,20 @@ cc_library {
     ],
 }
 
+cc_library {
+    name: "libaudioaidlranges",
+    host_supported: true,
+    vendor_available: true,
+    static_libs: [
+        "android.hardware.audio.effect-V1-ndk",
+    ],
+    export_include_dirs: ["include"],
+    header_libs: ["libaudioaidl_headers"],
+    srcs: [
+        "EffectRangeSpecific.cpp",
+    ],
+}
+
 cc_test {
     name: "libaudioaidlcommon_test",
     host_supported: true,
