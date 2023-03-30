@@ -357,24 +357,32 @@ ScopedAStatus EvsEnumerator::closeDisplay(const std::shared_ptr<IEvsDisplay>& ob
 
 ScopedAStatus EvsEnumerator::getDisplayState(DisplayState* state) {
     LOG(DEBUG) << __FUNCTION__;
+    return getDisplayStateImpl(std::nullopt, state);
+}
+
+ScopedAStatus EvsEnumerator::getDisplayStateById(int32_t displayId, DisplayState* state) {
+    LOG(DEBUG) << __FUNCTION__;
+    return getDisplayStateImpl(displayId, state);
+}
+
+ScopedAStatus EvsEnumerator::getDisplayStateImpl(std::optional<int32_t> displayId,
+                                                 DisplayState* state) {
     if (!checkPermission()) {
         *state = DisplayState::DEAD;
         return ScopedAStatus::fromServiceSpecificError(
                 static_cast<int>(EvsResult::PERMISSION_DENIED));
     }
 
-    // TODO(b/262779341): For now we can just return the state of the 1st display. Need to update
-    // the API later.
-
     const auto& all_displays = mutableActiveDisplays().getAllDisplays();
 
-    // Do we still have a display object we think should be active?
-    if (all_displays.empty()) {
+    const auto display_search = displayId ? all_displays.find(*displayId) : all_displays.begin();
+
+    if (display_search == all_displays.end()) {
         *state = DisplayState::NOT_OPEN;
         return ScopedAStatus::fromServiceSpecificError(static_cast<int>(EvsResult::OWNERSHIP_LOST));
     }
 
-    std::shared_ptr<IEvsDisplay> pActiveDisplay = all_displays.begin()->second.displayWeak.lock();
+    std::shared_ptr<IEvsDisplay> pActiveDisplay = display_search->second.displayWeak.lock();
     if (pActiveDisplay) {
         return pActiveDisplay->getDisplayState(state);
     } else {
