@@ -38,7 +38,7 @@ cc_binary {
     ],
     srcs: [
         ":libgui_frame_event_aidl",
-        "src/*.cpp"
+        "src/*.cpp",
     ],
     shared_libs: [
         "android.hardware.graphics.bufferqueue@1.0",
@@ -61,7 +61,7 @@ cc_binary {
     ],
     static_libs: [
         "android.frameworks.automotive.display-V1-ndk",
-        "android.hardware.automotive.evs-V1-ndk",
+        "android.hardware.automotive.evs-V2-ndk",
         "android.hardware.common-V2-ndk",
         "libaidlcommonsupport",
         "libcutils",
