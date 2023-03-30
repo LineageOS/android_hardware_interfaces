@@ -13,7 +13,17 @@ cc_test {
         "VtsHalTargetTestDefaults",
         "use_libaidlvintf_gtest_helper_static",
     ],
-    srcs: ["VtsHalBluetoothTargetTest.cpp"],
+    srcs: [
+        "VtsHalBluetoothTargetTest.cpp",
+        ":BluetoothPacketSources",
+        ":BluetoothHciPacketSources",
+    ],
+    generated_headers: [
+        "BluetoothGeneratedPackets_h",
+    ],
+    include_dirs: [
+        "packages/modules/Bluetooth/system/gd",
+    ],
     shared_libs: [
         "libbase",
         "libbinder_ndk",
@@ -44,5 +54,9 @@ cc_test {
     ],
     tidy_flags: [
         "--header-filter=^.*tools\\/rootcanal\\/(model|include|net|desktop)\\/(.(?!\\.pb\\.h))*$",
+    ],
+    tidy_disabled_srcs: [
+        ":BluetoothPacketSources",
+        ":BluetoothHciPacketSources",
     ],
 }
