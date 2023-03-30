@@ -46,6 +46,8 @@ enum UwbVendorSessionAppConfigTlvTypes {
     CCC_PULSESHAPE_COMBO = 0xA5,
     /** 2 byte data */
     CCC_URSK_TTL = 0xA6,
+    /** 4 byte data */
+    CCC_LAST_INDEX_USED = 0xA8,
 
     /**
      * Range 0xE3 - 0xFF is reserved for proprietary use in the FIRA spec.
