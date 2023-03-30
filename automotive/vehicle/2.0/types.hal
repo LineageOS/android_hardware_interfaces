@@ -57,46 +57,25 @@ enum VehiclePropertyType : int32_t {
 };
 
 /**
- * Vehicle Areas
+ * List of different supported area types for vehicle properties.
  * Used to construct property IDs in the VehicleProperty enum.
  *
- * Some properties may be associated with particular vehicle areas. For
- * example, VehicleProperty:DOOR_LOCK property must be associated with
- * particular door, thus this property must be marked with
- * VehicleArea:DOOR flag.
+ * Some properties may be associated with particular areas in the vehicle. For example,
+ * VehicleProperty#DOOR_LOCK property must be associated with a particular door, thus this property
+ * must be of the VehicleArea#DOOR area type.
  *
- * Other properties may not be associated with particular vehicle area.
- * These kinds of properties must have VehicleArea:GLOBAL flag.
+ * Other properties may not be associated with a particular area in the vehicle. These kinds of
+ * properties must be of the VehicleArea#GLOBAL area type.
  *
- * [Definition] Area: An area represents a unique element of an AreaType.
- *   For instance, if AreaType is WINDOW, then an area may be FRONT_WINDSHIELD.
- *
- * [Definition] AreaID: An AreaID is a combination of one or more areas,
- *   and is represented using a bitmask of Area enums. Different AreaTypes may
- *   not be mixed in a single AreaID. For instance, a window area cannot be
- *   combined with a seat area in an AreaID.
- *
- * Rules for mapping a zoned property to AreaIDs:
- *  - A property must be mapped to an array of AreaIDs that are impacted when
- *    the property value changes.
- *  - Each element in the array must represent an AreaID, in which the
- *    property value can only be changed together in all the areas within
- *    the AreaID and never independently. That is, when the property value
- *    changes in one of the areas in an AreaID in the array, then it must
- *    automatically change in all other areas in the AreaID.
- *  - The property value must be independently controllable in any two
- *    different AreaIDs in the array.
- *  - An area must only appear once in the array of AreaIDs. That is, an
- *    area must only be part of a single AreaID in the array.
- *
- * [Definition] Global Property: A property that applies to the entire car
- *   and is not associated with a specific area. For example, FUEL_LEVEL,
- *   HVAC_STEERING_WHEEL_HEAT.
- *
- * Rules for mapping a global property to AreaIDs:
- *  - A global property must not be mapped to AreaIDs.
-*/
+ * Note: This is not the same as areaId used in VehicleAreaConfig. E.g. for a global property, the
+ * property ID is of the VehicleArea#GLOBAL area type, however, the area ID must be 0.
+ */
+// A better name would be VehicleAreaType
 enum VehicleArea : int32_t {
+    /**
+     * A global property is a property that applies to the entire vehicle and is not associated with
+     * a specific area. For example, FUEL_LEVEL, HVAC_STEERING_WHEEL_HEAT are global properties.
+     */
     GLOBAL      = 0x01000000,
     /** WINDOW maps to enum VehicleAreaWindow */
     WINDOW      = 0x03000000,
