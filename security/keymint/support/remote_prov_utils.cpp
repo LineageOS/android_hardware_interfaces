@@ -467,16 +467,16 @@ ErrMsgOr<std::unique_ptr<cppbor::Map>> parseAndValidateDeviceInfo(
         case 3:
             if (isTeeDeviceInfo(*parsed) && parsed->size() != kNumTeeDeviceInfoEntries) {
                 error += fmt::format(
-                        "Err: Incorrect number of device info entries. Expected {} but got"
+                        "Err: Incorrect number of device info entries. Expected {} but got "
                         "{}\n",
                         kNumTeeDeviceInfoEntries, parsed->size());
             }
             // TEE IRPC instances require all entries to be present in DeviceInfo. Non-TEE instances
             // may omit `os_version`
-            if (!isTeeDeviceInfo(*parsed) && (parsed->size() != kNumTeeDeviceInfoEntries ||
+            if (!isTeeDeviceInfo(*parsed) && (parsed->size() != kNumTeeDeviceInfoEntries &&
                                               parsed->size() != kNumTeeDeviceInfoEntries - 1)) {
                 error += fmt::format(
-                        "Err: Incorrect number of device info entries. Expected {} or {} but got"
+                        "Err: Incorrect number of device info entries. Expected {} or {} but got "
                         "{}\n",
                         kNumTeeDeviceInfoEntries - 1, kNumTeeDeviceInfoEntries, parsed->size());
             }
