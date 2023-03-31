@@ -327,7 +327,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="false">
+    <hal format="aidl" optional="true">
         <name>android.hardware.health</name>
         <version>1</version>
         <interface>
@@ -493,7 +493,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="false">
+    <hal format="aidl" optional="true">
         <name>android.hardware.power</name>
         <version>2-3</version>
         <interface>
