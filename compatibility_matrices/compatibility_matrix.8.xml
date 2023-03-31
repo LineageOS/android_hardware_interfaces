@@ -1,5 +1,5 @@
 <compatibility-matrix version="1.0" type="framework" level="8">
-    <hal format="hidl" optional="false">
+    <hal format="hidl" optional="true">
         <name>android.hardware.audio</name>
         <version>6.0</version>
         <version>7.0-1</version>
@@ -274,7 +274,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="false">
+    <hal format="aidl" optional="true">
         <name>android.hardware.health</name>
         <version>1-2</version>
         <interface>
@@ -387,7 +387,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="false">
+    <hal format="aidl" optional="true">
         <name>android.hardware.power</name>
         <version>4</version>
         <interface>
