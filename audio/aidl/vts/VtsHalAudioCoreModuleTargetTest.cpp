@@ -129,7 +129,9 @@ AudioDeviceAddress::Tag suggestDeviceAddressTag(const AudioDeviceDescription& de
     using Tag = AudioDeviceAddress::Tag;
     if (std::string_view connection = description.connection;
         connection == AudioDeviceDescription::CONNECTION_BT_A2DP ||
-        connection == AudioDeviceDescription::CONNECTION_BT_LE ||
+        // Note: BT LE Broadcast uses a "group id".
+        (description.type != AudioDeviceType::OUT_BROADCAST &&
+         connection == AudioDeviceDescription::CONNECTION_BT_LE) ||
         connection == AudioDeviceDescription::CONNECTION_BT_SCO ||
         connection == AudioDeviceDescription::CONNECTION_WIRELESS) {
         return Tag::mac;
