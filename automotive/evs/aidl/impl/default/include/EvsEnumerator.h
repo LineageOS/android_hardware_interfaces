@@ -52,6 +52,7 @@ class EvsEnumerator final : public ::aidl::android::hardware::automotive::evs::B
     ndk::ScopedAStatus closeDisplay(const std::shared_ptr<evs::IEvsDisplay>& obj) override;
     ndk::ScopedAStatus getDisplayIdList(std::vector<uint8_t>* list) override;
     ndk::ScopedAStatus getDisplayState(evs::DisplayState* state) override;
+    ndk::ScopedAStatus getDisplayStateById(int32_t displayId, evs::DisplayState* state) override;
     ndk::ScopedAStatus registerStatusCallback(
             const std::shared_ptr<evs::IEvsEnumeratorStatusCallback>& callback) override;
     ndk::ScopedAStatus openUltrasonicsArray(
@@ -101,6 +102,8 @@ class EvsEnumerator final : public ::aidl::android::hardware::automotive::evs::B
     bool checkPermission();
     void closeCamera_impl(const std::shared_ptr<evs::IEvsCamera>& pCamera,
                           const std::string& cameraId);
+    ndk::ScopedAStatus getDisplayStateImpl(std::optional<int32_t> displayId,
+                                           evs::DisplayState* state);
 
     static bool qualifyCaptureDevice(const char* deviceName);
     static CameraRecord* findCameraById(const std::string& cameraId);
