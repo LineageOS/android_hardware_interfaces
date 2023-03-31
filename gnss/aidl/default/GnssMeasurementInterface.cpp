@@ -20,6 +20,7 @@
 #include <aidl/android/hardware/gnss/BnGnss.h>
 #include <log/log.h>
 #include "DeviceFileReader.h"
+#include "Gnss.h"
 #include "GnssRawMeasurementParser.h"
 #include "GnssReplayUtils.h"
 #include "Utils.h"
@@ -126,6 +127,9 @@ void GnssMeasurementInterface::start(const bool enableCorrVecOutputs,
                 auto measurement =
                         Utils::getMockMeasurement(enableCorrVecOutputs, enableFullTracking);
                 this->reportMeasurement(measurement);
+                if (!mLocationEnabled) {
+                    mGnss->reportSvStatus();
+                }
             }
             intervalMs =
                     (mLocationEnabled) ? std::min(mLocationIntervalMs, mIntervalMs) : mIntervalMs;
@@ -162,6 +166,10 @@ void GnssMeasurementInterface::setLocationInterval(const int intervalMs) {
 
 void GnssMeasurementInterface::setLocationEnabled(const bool enabled) {
     mLocationEnabled = enabled;
+}
+
+void GnssMeasurementInterface::setGnssInterface(const std::shared_ptr<Gnss>& gnss) {
+    mGnss = gnss;
 }
 
 void GnssMeasurementInterface::waitForStoppingThreads() {
