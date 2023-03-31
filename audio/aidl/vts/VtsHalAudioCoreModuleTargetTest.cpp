@@ -129,7 +129,9 @@ AudioDeviceAddress::Tag suggestDeviceAddressTag(const AudioDeviceDescription& de
     using Tag = AudioDeviceAddress::Tag;
     if (std::string_view connection = description.connection;
         connection == AudioDeviceDescription::CONNECTION_BT_A2DP ||
-        connection == AudioDeviceDescription::CONNECTION_BT_LE ||
+        // Note: BT LE Broadcast uses a "group id".
+        (description.type != AudioDeviceType::OUT_BROADCAST &&
+         connection == AudioDeviceDescription::CONNECTION_BT_LE) ||
         connection == AudioDeviceDescription::CONNECTION_BT_SCO ||
         connection == AudioDeviceDescription::CONNECTION_WIRELESS) {
         return Tag::mac;
@@ -1775,6 +1777,42 @@ TEST_P(AudioCoreModule, ExternalDevicePortRoutes) {
         std::sort(routesBefore.begin(), routesBefore.end());
         std::sort(routesAfter.begin(), routesAfter.end());
         EXPECT_EQ(routesBefore, routesAfter);
+    }
+}
+
+// Note: This test relies on simulation of external device connections by the HAL module.
+TEST_P(AudioCoreModule, ExternalDeviceMixPortConfigs) {
+    // After an external device has been connected, all mix ports that can be routed
+    // to the device port for the connected device must have non-empty profiles.
+    ASSERT_NO_FATAL_FAILURE(SetUpModuleConfig());
+    std::vector<AudioPort> externalDevicePorts = moduleConfig->getExternalDevicePorts();
+    if (externalDevicePorts.empty()) {
+        GTEST_SKIP() << "No external devices in the module.";
+    }
+    for (const auto& port : externalDevicePorts) {
+        WithDevicePortConnectedState portConnected(GenerateUniqueDeviceAddress(port));
+        ASSERT_NO_FATAL_FAILURE(portConnected.SetUp(module.get()));
+        std::vector<AudioRoute> routes;
+        ASSERT_IS_OK(module->getAudioRoutesForAudioPort(portConnected.getId(), &routes));
+        std::vector<AudioPort> allPorts;
+        ASSERT_IS_OK(module->getAudioPorts(&allPorts));
+        for (const auto& r : routes) {
+            if (r.sinkPortId == portConnected.getId()) {
+                for (const auto& srcPortId : r.sourcePortIds) {
+                    const auto srcPortIt = findById(allPorts, srcPortId);
+                    ASSERT_NE(allPorts.end(), srcPortIt) << "port ID " << srcPortId;
+                    EXPECT_NE(0UL, srcPortIt->profiles.size())
+                            << " source port " << srcPortIt->toString() << " must have its profiles"
+                            << " populated following external device connection";
+                }
+            } else {
+                const auto sinkPortIt = findById(allPorts, r.sinkPortId);
+                ASSERT_NE(allPorts.end(), sinkPortIt) << "port ID " << r.sinkPortId;
+                EXPECT_NE(0UL, sinkPortIt->profiles.size())
+                        << " source port " << sinkPortIt->toString() << " must have its"
+                        << " profiles populated following external device connection";
+            }
+        }
     }
 }
 
