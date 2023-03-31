@@ -177,8 +177,10 @@ class Module : public BnModule {
     ChildInterface<IBluetooth> mBluetooth;
     ChildInterface<IBluetoothA2dp> mBluetoothA2dp;
     ChildInterface<IBluetoothLe> mBluetoothLe;
-    // ids of ports created at runtime via 'connectExternalDevice'.
-    std::set<int32_t> mConnectedDevicePorts;
+    // ids of device ports created at runtime via 'connectExternalDevice'.
+    // Also stores ids of mix ports with dynamic profiles which got populated from the connected
+    // port.
+    std::map<int32_t, std::vector<int32_t>> mConnectedDevicePorts;
     Streams mStreams;
     // Maps port ids and port config ids to patch ids.
     // Multimap because both ports and configs can be used by multiple patches.
