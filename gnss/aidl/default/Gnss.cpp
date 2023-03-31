@@ -325,6 +325,7 @@ ScopedAStatus Gnss::getExtensionGnssMeasurement(
     ALOGD("getExtensionGnssMeasurement");
     if (mGnssMeasurementInterface == nullptr) {
         mGnssMeasurementInterface = SharedRefBase::make<GnssMeasurementInterface>();
+        mGnssMeasurementInterface->setGnssInterface(static_cast<std::shared_ptr<Gnss>>(this));
     }
     *iGnssMeasurement = mGnssMeasurementInterface;
     return ScopedAStatus::ok();

@@ -1409,6 +1409,7 @@ TEST_P(GnssHalTest, TestStopSvStatusAndNmea) {
  * TestGnssMeasurementIntervals_WithoutLocation:
  * 1. Start measurement at intervals
  * 2. Verify measurement are received at expected intervals
+ * 3. Verify status are reported at expected intervals
  */
 TEST_P(GnssHalTest, TestGnssMeasurementIntervals_WithoutLocation) {
     if (aidl_gnss_hal_->getInterfaceVersion() <= 1) {
@@ -1428,13 +1429,24 @@ TEST_P(GnssHalTest, TestGnssMeasurementIntervals_WithoutLocation) {
         auto callback = sp<GnssMeasurementCallbackAidl>::make();
         startMeasurementWithInterval(intervals[i], iGnssMeasurement, callback);
 
-        std::vector<int> deltas;
-        collectMeasurementIntervals(callback, numEvents[i], /* timeoutSeconds= */ 10, deltas);
+        std::vector<int> measurementDeltas;
+        std::vector<int> svInfoListTimestampsDeltas;
 
+        collectMeasurementIntervals(callback, numEvents[i], /* timeoutSeconds= */ 10,
+                                    measurementDeltas);
+        if (aidl_gnss_hal_->getInterfaceVersion() >= 3) {
+            collectSvInfoListTimestamps(numEvents[i], /* timeoutSeconds= */ 10,
+                                        svInfoListTimestampsDeltas);
+        }
         status = iGnssMeasurement->close();
         ASSERT_TRUE(status.isOk());
 
-        assertMeanAndStdev(intervals[i], deltas);
+        assertMeanAndStdev(intervals[i], measurementDeltas);
+
+        if (aidl_gnss_hal_->getInterfaceVersion() >= 3) {
+            assertMeanAndStdev(intervals[i], svInfoListTimestampsDeltas);
+            EXPECT_TRUE(aidl_gnss_cb_->sv_info_list_cbq_.size() > 0);
+        }
     }
 }
 

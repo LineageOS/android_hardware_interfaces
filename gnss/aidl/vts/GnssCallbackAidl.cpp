@@ -18,6 +18,7 @@
 
 #include "GnssCallbackAidl.h"
 #include <log/log.h>
+#include <utils/SystemClock.h>
 
 using android::binder::Status;
 using android::hardware::gnss::GnssLocation;
@@ -53,6 +54,7 @@ Status GnssCallbackAidl::gnssStatusCb(const GnssStatusValue /* status */) {
 Status GnssCallbackAidl::gnssSvStatusCb(const std::vector<GnssSvInfo>& svInfoList) {
     ALOGI("gnssSvStatusCb. Size = %d", (int)svInfoList.size());
     sv_info_list_cbq_.store(svInfoList);
+    sv_info_list_timestamps_millis_cbq_.store(::android::elapsedRealtime());
     return Status::ok();
 }
 
