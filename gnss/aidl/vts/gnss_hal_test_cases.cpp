@@ -1132,8 +1132,10 @@ TEST_P(GnssHalTest, TestAGnssRilExtension) {
     status = iAGnssRil->setRefLocation(agnssReflocation);
     ASSERT_TRUE(status.isOk());
 
-    status = iAGnssRil->injectNiSuplMessageData(std::vector<uint8_t>(), 0);
-    ASSERT_FALSE(status.isOk());
+    if (aidl_gnss_hal_->getInterfaceVersion() >= 3) {
+        status = iAGnssRil->injectNiSuplMessageData(std::vector<uint8_t>(), 0);
+        ASSERT_FALSE(status.isOk());
+    }
 }
 
 /*
