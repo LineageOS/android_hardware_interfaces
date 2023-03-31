@@ -143,6 +143,21 @@ StreamOut::CreateInstance Module::getStreamOutCreator(Type type) {
     }
 }
 
+std::ostream& operator<<(std::ostream& os, Module::Type t) {
+    switch (t) {
+        case Module::Type::DEFAULT:
+            os << "default";
+            break;
+        case Module::Type::R_SUBMIX:
+            os << "r_submix";
+            break;
+        case Module::Type::USB:
+            os << "usb";
+            break;
+    }
+    return os;
+}
+
 void Module::cleanUpPatch(int32_t patchId) {
     erase_all_values(mPatches, std::set<int32_t>{patchId});
 }
@@ -352,16 +367,17 @@ void Module::updateStreamsConnectedState(const AudioPatch& oldPatch, const Audio
 
 ndk::ScopedAStatus Module::setModuleDebug(
         const ::aidl::android::hardware::audio::core::ModuleDebug& in_debug) {
-    LOG(DEBUG) << __func__ << ": old flags:" << mDebug.toString()
+    LOG(DEBUG) << __func__ << ": " << mType << ": old flags:" << mDebug.toString()
                << ", new flags: " << in_debug.toString();
     if (mDebug.simulateDeviceConnections != in_debug.simulateDeviceConnections &&
         !mConnectedDevicePorts.empty()) {
-        LOG(ERROR) << __func__ << ": attempting to change device connections simulation "
-                   << "while having external devices connected";
+        LOG(ERROR) << __func__ << ": " << mType
+                   << ": attempting to change device connections simulation while having external "
+                   << "devices connected";
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
     }
     if (in_debug.streamTransientStateDelayMs < 0) {
-        LOG(ERROR) << __func__ << ": streamTransientStateDelayMs is negative: "
+        LOG(ERROR) << __func__ << ": " << mType << ": streamTransientStateDelayMs is negative: "
                    << in_debug.streamTransientStateDelayMs;
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
     }
