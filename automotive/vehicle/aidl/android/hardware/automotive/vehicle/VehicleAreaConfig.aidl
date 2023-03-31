@@ -20,7 +20,7 @@ package android.hardware.automotive.vehicle;
 @JavaDerive(equals=true, toString=true)
 parcelable VehicleAreaConfig {
     /**
-     * Area id is ignored for VehiclePropertyGroup:GLOBAL properties.
+     * Area id is always 0 for VehicleArea#GLOBAL properties.
      */
     int areaId;
 
