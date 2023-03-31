@@ -7,7 +7,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="false">
+    <hal format="hidl" optional="true">
         <name>android.hardware.audio</name>
         <version>6.0</version>
         <interface>
@@ -15,7 +15,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="false">
+    <hal format="hidl" optional="true">
         <name>android.hardware.audio.effect</name>
         <version>6.0</version>
         <interface>
@@ -222,7 +222,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="false">
+    <hal format="hidl" optional="true">
         <name>android.hardware.graphics.composer</name>
         <version>2.1-4</version>
         <interface>
@@ -230,7 +230,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="false">
+    <hal format="hidl" optional="true">
         <name>android.hardware.graphics.mapper</name>
         <!-- New, non-Go devices should use 4.0, tested in vts_treble_vintf_vendor_test -->
         <version>2.1</version>
@@ -367,7 +367,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="false">
+    <hal format="aidl" optional="true">
         <name>android.hardware.power</name>
         <interface>
             <name>IPower</name>
