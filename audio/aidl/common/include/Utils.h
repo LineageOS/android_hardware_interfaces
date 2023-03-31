@@ -99,6 +99,12 @@ constexpr size_t getFrameSizeInBytes(
     return 0;
 }
 
+constexpr bool isDefaultAudioFormat(
+        const ::aidl::android::media::audio::common::AudioFormatDescription& desc) {
+    return desc.type == ::aidl::android::media::audio::common::AudioFormatType::DEFAULT &&
+           desc.pcm == ::aidl::android::media::audio::common::PcmType::DEFAULT;
+}
+
 constexpr bool isTelephonyDeviceType(
         ::aidl::android::media::audio::common::AudioDeviceType device) {
     return device == ::aidl::android::media::audio::common::AudioDeviceType::IN_TELEPHONY_RX ||
