@@ -214,9 +214,12 @@ interface IGnssCallback {
     /**
      * Callback for the HAL to pass a vector of GnssSvInfo back to the client.
      *
-     * If GnssMeasurement is registered, the SvStatus report interval is the same as the measurement
-     * interval, i.e., the interval the measurement engine runs at. If GnssMeasurement is not
-     * registered, the SvStatus interval is the same as the location interval.
+     * If only GnssMeasurement is registered, the SvStatus reporting interval must be
+     * the same as the measurement interval, i.e., the interval the measurement
+     * engine runs at. If only location is registered, the SvStatus interval must
+     * be the same as the location interval. If both GnssMeasurement and location
+     * are registered, then the SvStatus interval is the same as the lesser interval
+     * between the two.
      *
      * @param svInfo SV status information from HAL.
      */

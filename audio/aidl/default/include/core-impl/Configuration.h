@@ -33,7 +33,8 @@ struct Configuration {
     std::vector<::aidl::android::media::audio::common::AudioPort> ports;
     std::vector<::aidl::android::media::audio::common::AudioPortConfig> portConfigs;
     std::vector<::aidl::android::media::audio::common::AudioPortConfig> initialConfigs;
-    // Port id -> List of profiles to use when the device port state is set to 'connected'.
+    // Port id -> List of profiles to use when the device port state is set to 'connected'
+    // in connection simulation mode.
     std::map<int32_t, std::vector<::aidl::android::media::audio::common::AudioProfile>>
             connectedProfiles;
     std::vector<AudioRoute> routes;
