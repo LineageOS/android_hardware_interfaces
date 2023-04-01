@@ -478,6 +478,30 @@ void GnssHalTest::collectMeasurementIntervals(const sp<GnssMeasurementCallbackAi
     }
 }
 
+void GnssHalTest::collectSvInfoListTimestamps(const int numMeasurementEvents,
+                                              const int timeoutSeconds,
+                                              std::vector<int>& deltasMs) {
+    aidl_gnss_cb_->sv_info_list_timestamps_millis_cbq_.reset();
+    aidl_gnss_cb_->sv_info_list_cbq_.reset();
+
+    auto status = aidl_gnss_hal_->startSvStatus();
+    EXPECT_TRUE(status.isOk());
+    ASSERT_TRUE(aidl_gnss_cb_->sv_info_list_timestamps_millis_cbq_.size() ==
+                aidl_gnss_cb_->sv_info_list_cbq_.size());
+    long lastElapsedRealtimeMillis = 0;
+    for (int i = 0; i < numMeasurementEvents; i++) {
+        long timeStamp;
+        ASSERT_TRUE(aidl_gnss_cb_->sv_info_list_timestamps_millis_cbq_.retrieve(timeStamp,
+                                                                                timeoutSeconds));
+        if (lastElapsedRealtimeMillis != 0) {
+            deltasMs.push_back(timeStamp - lastElapsedRealtimeMillis);
+        }
+        lastElapsedRealtimeMillis = timeStamp;
+    }
+    status = aidl_gnss_hal_->stopSvStatus();
+    EXPECT_TRUE(status.isOk());
+}
+
 void GnssHalTest::checkGnssDataFields(const sp<GnssMeasurementCallbackAidl>& callback,
                                       const int numMeasurementEvents, const int timeoutSeconds,
                                       const bool isFullTracking) {
