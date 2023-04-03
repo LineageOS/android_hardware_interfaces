@@ -144,6 +144,11 @@ enum UwbVendorCapabilityTlvTypes {
      */
     CCC_SUPPORTED_MAX_RANGING_SESSION_NUMBER = 0xA8,
 
+    /**
+     * Int value to indicate the smallest supported CCC uwb initiation time in ms
+     */
+    CCC_SUPPORTED_MIN_UWB_INITIATION_TIME_MS = 0xA9,
+
     /*********************************************
      * FIRA specific
      ********************************************/
