@@ -2858,8 +2858,8 @@ enum VehicleProperty {
      * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined. All values between
      * minInt32Value and maxInt32Value must be supported.
      *
-     * The maxInt32Value indicates the steering wheel position closest to the driver.
-     * The minInt32Value indicates the steering wheel position furthest to the driver.
+     * The maxInt32Value indicates the steering wheel position furthest from the driver.
+     * The minInt32Value indicates the steering wheel position closest to the driver.
      *
      * Values in between minInt32Value and maxInt32Value indicate a transition state between the
      * closest and furthest positions.
@@ -2880,8 +2880,8 @@ enum VehicleProperty {
      * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined. All values between
      * minInt32Value and maxInt32Value must be supported.
      *
-     * The maxInt32Value indicates the steering wheel moving towards the driver.
-     * The minInt32Value indicates the steering wheel moving away from the driver.
+     * The maxInt32Value indicates the steering wheel moving away from the driver.
+     * The minInt32Value indicates the steering wheel moving towards the driver.
      *
      * Larger integers, either positive or negative, indicate a faster movement speed. Once the
      * steering wheel reaches the positional limit, the value must reset to 0. If
