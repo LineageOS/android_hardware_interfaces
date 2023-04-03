@@ -25,7 +25,7 @@ import android.hardware.common.Ashmem;
  */
 @VintfStability
 parcelable GridStatistics {
-    /** */
+    /** Descriptors of grid statistics in shared memory. */
     GridStatisticDesc[] descriptors;
     /**
      * Shared memory object containing one or more grid statistics.
