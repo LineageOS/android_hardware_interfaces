@@ -207,7 +207,7 @@ class ComposerCommandEngine : protected CommandReaderBase {
 
     bool executeSetClientTarget(uint16_t length) {
         // 4 parameters followed by N rectangles
-        if ((length - 4) % 4 != 0) {
+        if (!length || (length - 4) % 4 != 0) {
             return false;
         }
 
