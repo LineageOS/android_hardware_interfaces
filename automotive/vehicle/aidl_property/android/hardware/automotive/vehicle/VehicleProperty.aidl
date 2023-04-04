@@ -873,7 +873,17 @@ enum VehicleProperty {
     HVAC_DUAL_ON = 0x0509 + 0x10000000 + 0x05000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:BOOLEAN
     /**
-     * On/off automatic mode
+     * On/off automatic climate control.
+     *
+     * If true, automatic climate control is on. If false, automatic climate control is off.
+     *
+     * If the vehicle does not support directly turning off automatic climate control, then OEMs
+     * should add logic in their VHAL implementation so that setting HVAC_AUTO_ON to false would
+     * change the necessary HVAC settings to indirectly turn off HVAC_AUTO_ON. Ideally, this should
+     * not be disruptive to the user, so OEMs should change back to the previous state any settings
+     * that were modified once automatic climate control is off. That way the only outcome should be
+     * that HVAC_AUTO_ON is off. If restoring the HVAC settings to its previous settings is not
+     * possible, then the OEM should choose the least disruptive change and implement that.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
