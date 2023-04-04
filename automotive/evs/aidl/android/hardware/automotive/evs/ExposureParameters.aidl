@@ -42,7 +42,7 @@ parcelable ExposureParameters {
     /** Remainder exposure time in clocks. */
     long fineIntegrationTimeInPixelClocks;
     /**
-     * Logarthm value of coarse integration time multiplier.
+     * Logarithm value of coarse integration time multiplier.
      */
     int coarseIntegrationTimeLShift;
 }
