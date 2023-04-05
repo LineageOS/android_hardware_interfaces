@@ -2003,6 +2003,8 @@ TEST_P(CameraAidlTest, process10BitDynamicRangeRequest) {
                     ASSERT_NE(std::cv_status::timeout, mResultCondition.wait_until(l, timeout));
                 }
 
+                waitForReleaseFence(inflightReq->resultOutputBuffers);
+
                 ASSERT_FALSE(inflightReq->errorCodeValid);
                 ASSERT_NE(inflightReq->resultOutputBuffers.size(), 0u);
                 verify10BitMetadata(mHandleImporter, *inflightReq, profile);
