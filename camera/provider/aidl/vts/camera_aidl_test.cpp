@@ -35,6 +35,7 @@
 #include <grallocusage/GrallocUsageConversion.h>
 #include <hardware/gralloc1.h>
 #include <simple_device_cb.h>
+#include <ui/Fence.h>
 #include <ui/GraphicBufferAllocator.h>
 #include <regex>
 #include <typeinfo>
@@ -138,6 +139,25 @@ void CameraAidlTest::TearDown() {
     if (mSession != nullptr) {
         ndk::ScopedAStatus ret = mSession->close();
         ASSERT_TRUE(ret.isOk());
+    }
+}
+
+void CameraAidlTest::waitForReleaseFence(
+        std::vector<InFlightRequest::StreamBufferAndTimestamp>& resultOutputBuffers) {
+    for (auto& bufferAndTimestamp : resultOutputBuffers) {
+        // wait for the fence timestamp and store it along with the buffer
+        android::sp<android::Fence> releaseFence = nullptr;
+        const native_handle_t* releaseFenceHandle = bufferAndTimestamp.buffer.releaseFence;
+        if (releaseFenceHandle != nullptr && releaseFenceHandle->numFds == 1 &&
+            releaseFenceHandle->data[0] >= 0) {
+            releaseFence = new android::Fence(releaseFenceHandle->data[0]);
+        }
+        if (releaseFence && releaseFence->isValid()) {
+            releaseFence->wait(/*ms*/ 300);
+            nsecs_t releaseTime = releaseFence->getSignalTime();
+            if (bufferAndTimestamp.timeStamp < releaseTime)
+                bufferAndTimestamp.timeStamp = releaseTime;
+        }
     }
 }
 
@@ -2566,6 +2586,7 @@ void CameraAidlTest::processPreviewStabilizationCaptureRequestInternal(
                                std::chrono::seconds(kStreamBufferTimeoutSec);
                 ASSERT_NE(std::cv_status::timeout, mResultCondition.wait_until(l, timeout));
             }
+            waitForReleaseFence(inflightReq->resultOutputBuffers);
 
             ASSERT_FALSE(inflightReq->errorCodeValid);
             ASSERT_NE(inflightReq->resultOutputBuffers.size(), 0u);
