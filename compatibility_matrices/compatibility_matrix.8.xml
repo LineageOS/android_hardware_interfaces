@@ -633,7 +633,7 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.tv.tuner</name>
-        <version>1</version>
+        <version>1-2</version>
         <interface>
             <name>ITuner</name>
             <instance>default</instance>
