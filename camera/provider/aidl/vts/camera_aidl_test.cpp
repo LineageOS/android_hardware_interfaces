@@ -336,7 +336,7 @@ void CameraAidlTest::verifySettingsOverrideCharacteristics(const camera_metadata
     int retcode = find_camera_metadata_ro_entry(metadata,
             ANDROID_CONTROL_AVAILABLE_SETTINGS_OVERRIDES, &entry);
     bool supportSettingsOverride = false;
-    if ((0 == retcode) && (entry.count > 0)) {
+    if (0 == retcode) {
         supportSettingsOverride = true;
         bool hasOff = false;
         for (size_t i = 0; i < entry.count; i++) {
