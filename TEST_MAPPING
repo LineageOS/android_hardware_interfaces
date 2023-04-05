@@ -12,6 +12,11 @@
     {
       "name": "VtsHalTvInputV1_0TargetTest"
     }
+  ],
+  "auto-presubmit": [
+    {
+      "name": "hal_implementation_test"
+    }
   ]
 }
 
