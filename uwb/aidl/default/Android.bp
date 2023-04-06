@@ -7,29 +7,26 @@ package {
     default_applicable_licenses: ["hardware_interfaces_license"],
 }
 
-cc_binary {
+rust_binary {
     name: "android.hardware.uwb-service",
+    crate_name: "uwb_default_hal",
     relative_install_path: "hw",
-    init_rc: ["uwb-service.rc"],
     vintf_fragments: ["uwb-service.xml"],
     vendor: true,
-    cflags: [
-        "-Wall",
-        "-Wextra",
-        "-g",
+    rustlibs: [
+        "android.hardware.uwb-V1-rust",
+        "liblogger",
+        "liblog_rust",
+        "libbinder_rs",
+        "libbinder_tokio_rs",
+        "libtokio",
+        "libnix",
+        "libanyhow",
     ],
-    shared_libs: [
-        "liblog",
-        "libbinder_ndk",
-    ],
-    static_libs: [
-        "libbase",
-        "libutils",
-        "android.hardware.uwb-V1-ndk",
+    proc_macros: [
+        "libasync_trait",
     ],
     srcs: [
-        "service.cpp",
-        "uwb.cpp",
-        "uwb_chip.cpp",
+        "src/service.rs",
     ],
 }
