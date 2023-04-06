@@ -78,6 +78,7 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.automotive.evs</name>
+        <version>1-2</version>
         <interface>
             <name>IEvsEnumerator</name>
             <regex-instance>[a-z]+/[0-9]+</regex-instance>
@@ -622,7 +623,7 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.tv.tuner</name>
-        <version>1</version>
+        <version>1-2</version>
         <interface>
             <name>ITuner</name>
             <instance>default</instance>
