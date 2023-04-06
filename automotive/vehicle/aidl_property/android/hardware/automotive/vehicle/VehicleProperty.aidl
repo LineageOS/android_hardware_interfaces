@@ -484,11 +484,14 @@ enum VehicleProperty {
      *
      * This is the gear selected by the user.
      *
-     * Values in the config data must represent the list of supported gears
-     * for this vehicle.  For example, config data for an automatic transmission
-     * must contain {GEAR_NEUTRAL, GEAR_REVERSE, GEAR_PARK, GEAR_DRIVE,
-     * GEAR_1, GEAR_2,...} and for manual transmission the list must be
+     * Values in the config data must represent the list of supported gears for this vehicle. For
+     * example, config data for an automatic transmission must contain {GEAR_NEUTRAL, GEAR_REVERSE,
+     * GEAR_PARK, GEAR_DRIVE, GEAR_1, GEAR_2,...} and for manual transmission the list must be
      * {GEAR_NEUTRAL, GEAR_REVERSE, GEAR_1, GEAR_2,...}
+     *
+     * In the case of an automatic transmission vehicle that allows the driver to select specific
+     * gears on demand (i.e. "manual mode"), GEAR_SELECTION's value must be set to the specific gear
+     * selected by the driver instead of simply GEAR_DRIVE.
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ
