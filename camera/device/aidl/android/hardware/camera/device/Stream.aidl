@@ -107,9 +107,10 @@ parcelable Stream {
      * supported. The dataspace values are set using the V0 dataspace
      * definitions.
      *
-     * The color space implied by dataSpace should be overridden by colorSpace if
-     * the device supports the REQUEST_AVAILABLE_CAPABILITIES_COLOR_SPACE_PROFILES
-     * capability.
+     * The standard bits of this field will match the requested colorSpace (if set) for
+     * non-BLOB formats. For BLOB formats, if colorSpace is not
+     * ANDROID_REQUEST_AVAILABLE_COLOR_SPACE_PROFILES_MAP_UNSPECIFIED, colorSpace takes
+     * over as the authority for the color space of the stream regardless of dataSpace.
      */
     android.hardware.graphics.common.Dataspace dataSpace;
 
@@ -234,11 +235,11 @@ parcelable Stream {
      * ANDROID_REQUEST_AVAILABLE_COLOR_SPACE_PROFILES_MAP_UNSPECIFIED, and the color space
      * implied by dataSpace should be used instead.
      *
-     * When specified, this field is the ultimate authority over the color space of the stream,
-     * regardless of dataSpace. The purpose of this field is to support specifying wide gamut
-     * color spaces for dataSpace values such as JFIF and HEIF.
+     * When specified, this field and the standard bits of dataSpace will match for non-BLOB
+     * formats. For BLOB formats, the dataSpace will remain unchanged. In this case, this field is
+     * the ultimate authority over the color space of the stream.
      *
-     * Possible values are the ordinals of the ColorSpace.Named enum in the public-facing API.
+     * See ANDROID_REQUEST_AVAILABLE_COLOR_SPACE_PROFILES_MAP for possible values.
      */
     int colorSpace;
 }

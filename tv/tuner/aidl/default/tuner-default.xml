@@ -2,5 +2,6 @@
     <hal format="aidl">
         <name>android.hardware.tv.tuner</name>
         <fqname>ITuner/default</fqname>
+        <version>2</version>
     </hal>
 </manifest>
