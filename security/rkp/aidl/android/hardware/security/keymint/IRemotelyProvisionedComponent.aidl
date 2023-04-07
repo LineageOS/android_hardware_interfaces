@@ -421,7 +421,7 @@ interface IRemotelyProvisionedComponent {
      *     ? -4670547 : bstr,                       ; Configuration Hash
      *     -4670548 : bstr .cbor {                  ; Configuration Descriptor
      *         ? -70002 : tstr,                         ; Component name
-     *         ? -70003 : int,                          ; Firmware version
+     *         ? -70003 : int / tstr,                   ; Component version
      *         ? -70004 : null,                         ; Resettable
      *     },
      *     -4670549 : bstr,                         ; Authority Hash
