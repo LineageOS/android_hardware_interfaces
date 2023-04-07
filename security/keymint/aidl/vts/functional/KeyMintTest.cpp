@@ -3118,9 +3118,6 @@ TEST_P(SigningOperationsTest, RsaPaddingNoneDoesNotAllowOther) {
  * presented.
  */
 TEST_P(SigningOperationsTest, NoUserConfirmation) {
-    if (SecLevel() == SecurityLevel::STRONGBOX) {
-        GTEST_SKIP() << "Test not applicable to StrongBox device";
-    }
     ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
                                                  .RsaSigningKey(1024, 65537)
                                                  .Digest(Digest::NONE)
@@ -7825,10 +7822,6 @@ TEST_P(UsageCountLimitTest, TestLimitUseRsa) {
  * in hardware.
  */
 TEST_P(UsageCountLimitTest, TestSingleUseKeyAndRollbackResistance) {
-    if (SecLevel() == SecurityLevel::STRONGBOX) {
-        GTEST_SKIP() << "Test not applicable to StrongBox device";
-    }
-
     auto error = GenerateKey(AuthorizationSetBuilder()
                                      .RsaSigningKey(2048, 65537)
                                      .Digest(Digest::NONE)
