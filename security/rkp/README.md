@@ -302,7 +302,7 @@ the range \[-70000, -70999\] (these are reserved for future additions here).
 | ----------------- | ------ | ---------- | ----------------------------------|
 | Component name    | -70002 | tstr       | Name of firmware component / boot |
 :                   :        :            : stage                             :
-| Component version | -70003 | int        | Version of firmware component /   |
+| Component version | -70003 | int / tstr | Version of firmware component /   |
 :                   :        :            : boot stage                        :
 | Resettable        | -70004 | null       | If present, key changes on factory|
 :                   :        :            : reset                             :
