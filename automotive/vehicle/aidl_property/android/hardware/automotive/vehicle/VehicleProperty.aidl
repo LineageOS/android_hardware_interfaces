@@ -1586,8 +1586,16 @@ enum VehicleProperty {
     /**
      * Door position
      *
-     * This is an integer in case a door may be set to a particular position.
-     * Max value indicates fully open, min value (0) indicates fully closed.
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined.
+     * All integers between minInt32Value and maxInt32Value must be supported.
+     *
+     * The minInt32Value indicates the door is closed. The minInt32Value must be 0.
+     * The maxInt32Value indicates the door is fully open.
+     *
+     * Values in between minInt32Value and maxInt32Value indicate a transition state between the
+     * closed and fully open positions.
+     *
+     * This property is not in any particular unit but in a specified range of relative positions.
      *
      * Some vehicles (minivans) can open the door electronically. Hence, the
      * ability to write this property.
@@ -1655,7 +1663,19 @@ enum VehicleProperty {
     /**
      * Mirror Z Position
      *
-     * Positive value indicates tilt upwards, negative value is downwards
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined.
+     * All integers between minInt32Value and maxInt32Value must be supported.
+     *
+     * The minInt32Value indicates the mirror is tilted completely downwards. This must be a
+     * non-positive value.
+     * The maxInt32Value indicates the mirror is tilted completely upwards. This must be a
+     * non-negative value.
+     * 0 indicates the mirror is not tilted in either direction.
+     *
+     * Values in between minInt32Value and maxInt32Value indicate a transition state between the
+     * fully downward and fully upwards positions.
+     *
+     * This property is not in any particular unit but in a specified range of relative positions.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -1693,7 +1713,19 @@ enum VehicleProperty {
     /**
      * Mirror Y Position
      *
-     * Positive value indicate tilt right, negative value is left
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined.
+     * All integers between minInt32Value and maxInt32Value must be supported.
+     *
+     * The minInt32Value indicates the mirror is tilted completely to the left. This must be a
+     * non-positive value.
+     * The maxInt32Value indicates the mirror is tilted completely to the right. This must be a
+     * non-negative value.
+     * 0 indicates the mirror is not tilted in either direction.
+     *
+     * Values in between minInt32Value and maxInt32Value indicate a transition state between the
+     * left extreme and right extreme positions.
+     *
+     * This property is not in any particular unit but in a specified range of relative positions.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -1836,8 +1868,17 @@ enum VehicleProperty {
      * Seatbelt height position
      *
      * Adjusts the shoulder belt anchor point.
-     * Max value indicates highest position
-     * Min value indicates lowest position
+     *
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined.
+     * All integers between minInt32Value and maxInt32Value must be supported.
+     *
+     * The minInt32Value indicates the seat belt's shoulder anchor is at its lowest position.
+     * The maxInt32Value indicates the seat belt's shoulder anchor is at its highest position.
+     *
+     * Values in between minInt32Value and maxInt32Value indicate a transition state between the
+     * lowest and highest positions.
+     *
+     * This property is not in any particular unit but in a specified range of relative positions.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -1877,9 +1918,18 @@ enum VehicleProperty {
     /**
      * Seat fore/aft position
      *
-     * Sets the seat position forward (closer to steering wheel) and backwards.
-     * Max value indicates closest to wheel, min value indicates most rearward
-     * position.
+     * Sets the seat position forward and backwards.
+     *
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined.
+     * All integers between minInt32Value and maxInt32Value must be supported.
+     *
+     * The minInt32Value indicates the seat is at its rearward-most linear position.
+     * The maxInt32Value indicates the seat is at its forward-most linear position.
+     *
+     * Values in between minInt32Value and maxInt32Value indicate a transition state between the
+     * closest and farthest positions.
+     *
+     * This property is not in any particular unit but in a specified range of relative positions.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -1919,8 +1969,19 @@ enum VehicleProperty {
      * Seat backrest angle 1 position
      *
      * Backrest angle 1 is the actuator closest to the bottom of the seat.
-     * Max value indicates angling forward towards the steering wheel.
-     * Min value indicates full recline.
+     *
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined.
+     * All integers between minInt32Value and maxInt32Value must be supported.
+     *
+     * The minInt32Value indicates the seat backrest's full recline position w.r.t the
+     * actuator at the bottom of the seat.
+     * The maxInt32Value indicates the seat backrest's most upright/forward position w.r.t the
+     * actuator at the bottom of the seat.
+     *
+     * Values in between minInt32Value and maxInt32Value indicate a transition state between the
+     * full recline and upright/forward positions.
+     *
+     * This property is not in any particular unit but in a specified range of relative positions.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -1960,8 +2021,21 @@ enum VehicleProperty {
      * Seat backrest angle 2 position
      *
      * Backrest angle 2 is the next actuator up from the bottom of the seat.
-     * Max value indicates angling forward towards the steering wheel.
-     * Min value indicates full recline.
+     *
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined. All integers
+     * between minInt32Value and maxInt32Value must be supported.
+     *
+     * The minInt32Value indicates the seat backrest's full recline position w.r.t the next
+     * actuator in the backrest from the one at the bottom of the seat (see
+     * SEAT_BACKREST_ANGLE_1_POS for additional details).
+     * The maxInt32Value indicates the seat backrest's most upright/forward position w.r.t the
+     * next actuator in the backrest from the one at the bottom of the seat(see
+     * SEAT_BACKREST_ANGLE_1_POS for additional details).
+     *
+     * Values in between minInt32Value and maxInt32Value indicate a transition state between the
+     * full recline and upright/forward positions.
+     *
+     * This property is not in any particular unit but in a specified range of relative positions.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -2000,9 +2074,16 @@ enum VehicleProperty {
     /**
      * Seat height position
      *
-     * Sets the seat height.
-     * Max value indicates highest position.
-     * Min value indicates lowest position.
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined.
+     * All integers between minInt32Value and maxInt32Value must be supported.
+     *
+     * The minInt32Value indicates the seat is in its lowest position.
+     * The maxInt32Value indicates the seat is in its highest position.
+     *
+     * Values in between minInt32Value and maxInt32Value indicate a transition state between the
+     * lowest and highest positions.
+     *
+     * This property is not in any particular unit but in a specified range of relative positions.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -2040,8 +2121,20 @@ enum VehicleProperty {
      * Seat depth position
      *
      * Sets the seat depth, distance from back rest to front edge of seat.
-     * Max value indicates longest depth position.
-     * Min value indicates shortest position.
+     *
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined.
+     * All integers between minInt32Value and maxInt32Value must be supported.
+     *
+     * The minInt32Value indicates the seat is in its shallowest position (i.e. the position with
+     * the smallest distance between the front edge of the seat cushion and the rear end of the
+     * seat).
+     * The maxInt32Value indicates the seat is in its deepest position (i.e. the position with the
+     * largest distance between the front edge of the seat cushion and the rear end of the seat).
+     *
+     * Values in between minInt32Value and maxInt32Value indicate a transition state between the
+     * shallowest and deepest positions.
+     *
+     * This property is not in any particular unit but in a specified range of relative positions.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -2079,9 +2172,20 @@ enum VehicleProperty {
     /**
      * Seat tilt position
      *
-     * Sets the seat tilt.
-     * Max value indicates front edge of seat higher than back edge.
-     * Min value indicates front edge of seat lower than back edge.
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined.
+     * All integers between minInt32Value and maxInt32Value must be supported.
+     *
+     * The minInt32Value indicates the seat bottom is angled at its lowest angular position. This
+     * corresponds to the seat's front edge at its lowest possible position relative to the rear
+     * end of the seat.
+     * The maxInt32Value indicates the seat bottom is angled at its highest angular position. This
+     * corresponds to the seat's front edge at its highest possible position relative to the rear
+     * end of the seat.
+     *
+     * Values in between minInt32Value and maxInt32Value indicate a transition state between the
+     * lowest and highest positions.
+     *
+     * This property is not in any particular unit but in a specified range of relative positions.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -2120,9 +2224,18 @@ enum VehicleProperty {
     /**
      * Lumber fore/aft position
      *
-     * Pushes the lumbar support forward and backwards
-     * Max value indicates most forward position.
-     * Min value indicates most rearward position.
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined.
+     * All integers between minInt32Value and maxInt32Value must be supported.
+     *
+     * The minInt32Value indicates the lumbar support is in its rearward most position (i.e. least
+     * supportive position).
+     * The maxInt32Value indicates the lumbar support is in its forward most position (i.e. most
+     * supportive position).
+     *
+     * Values in between minInt32Value and maxInt32Value indicate a transition state between the
+     * forward and rearward positions.
+     *
+     * This property is not in any particular unit but in a specified range of relative positions.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -2162,9 +2275,18 @@ enum VehicleProperty {
     /**
      * Lumbar side support position
      *
-     * Sets the amount of lateral lumbar support.
-     * Max value indicates widest lumbar setting (i.e. least support)
-     * Min value indicates thinnest lumbar setting.
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined.
+     * All integers between minInt32Value and maxInt32Value must be supported.
+     *
+     * The minInt32Value indicates the lumbar side support is in its thinnest position (i.e.
+     * most support).
+     * The maxInt32Value indicates the lumbar side support is in its widest position (i.e.
+     * least support).
+     *
+     * Values in between minInt32Value and maxInt32Value indicate a transition state between the
+     * thinnest and widest positions.
+     *
+     * This property is not in any particular unit but in a specified range of relative positions.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -2227,11 +2349,16 @@ enum VehicleProperty {
      * Sets the headrest height for supported seats. VehiclePropConfig.areaConfigs specifies which
      * seats are supported.
      *
-     * The maxInt32Value and minInt32Value in each VehicleAreaConfig must be defined. All values
-     * between minInt32Value and maxInt32Value must be supported. The maxInt32Value indicates the
-     * tallest setting and the minInt32Value indicates the shortest setting.
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined.
+     * All integers between minInt32Value and maxInt32Value must be supported.
      *
-     * This property is not in any particular unit but in a specified range of steps.
+     * The minInt32Value indicates the headrest is in its lowest position.
+     * The maxInt32Value indicates the headrest is in its highest position.
+     *
+     * Values in between minInt32Value and maxInt32Value indicate a transition state between the
+     * lowest and highest positions.
+     *
+     * This property is not in any particular unit but in a specified range of relative positions.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -2272,9 +2399,16 @@ enum VehicleProperty {
     /**
      * Headrest angle position
      *
-     * Sets the angle of the headrest.
-     * Max value indicates most upright angle.
-     * Min value indicates shallowest headrest angle.
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined.
+     * All integers between minInt32Value and maxInt32Value must be supported.
+     *
+     * The minInt32Value indicates the headrest is in its full recline position.
+     * The maxInt32Value indicates the headrest is in its most upright/forward position.
+     *
+     * Values in between minInt32Value and maxInt32Value indicate a transition state between the
+     * full recline and most upright/forward positions.
+     *
+     * This property is not in any particular unit but in a specified range of relative positions.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -2314,9 +2448,16 @@ enum VehicleProperty {
     /**
      * Headrest fore/aft position
      *
-     * Adjusts the headrest forwards and backwards.
-     * Max value indicates position closest to front of car.
-     * Min value indicates position closest to rear of car.
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined.
+     * All integers between minInt32Value and maxInt32Value must be supported.
+     *
+     * The minInt32Value indicates the headrest is in its rearward-most linear position.
+     * The maxInt32Value indicates the headrest is in its forward-most linear position.
+     *
+     * Values in between minInt32Value and maxInt32Value indicate a transition state between the
+     * forward and rearward positions.
+     *
+     * This property is not in any particular unit but in a specified range of relative positions.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -2438,10 +2579,15 @@ enum VehicleProperty {
      * The maxInt32Value and minInt32Value in each VehicleAreaConfig must be defined. All integers
      * between minInt32Value and maxInt32Value must be supported.
      *
-     * The maxInt32Value indicates the widest cushion side support setting (i.e. least support).
-     * The minInt32Value indicates the thinnest cushion side support setting (i.e most support).
+     * The maxInt32Value indicates the seat cushion side support is in its widest position (i.e.
+     * least support).
+     * The minInt32Value indicates the seat cushion side support is in its thinnest position (i.e.
+     * most support).
      *
-     * This property is not in any particular unit but in a specified range of steps.
+     * Values in between minInt32Value and maxInt32Value indicate a transition state between the
+     * thinnest and widest positions.
+     *
+     * This property is not in any particular unit but in a specified range of relative positions.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -2484,10 +2630,13 @@ enum VehicleProperty {
      * The maxInt32Value and minInt32Value in each VehicleAreaConfig must be defined. All integers
      * between minInt32Value and maxInt32Value must be supported.
      *
-     * The maxInt32Value indicates the highest position.
-     * The minInt32Value indicates the lowest position.
+     * The maxInt32Value indicates the lumbar support's highest position.
+     * The minInt32Value indicates the lumbar support's lowest position.
      *
-     * This property is not in any particular unit but in a specified range of steps.
+     * Values in between minInt32Value and maxInt32Value indicate a transition state between the
+     * lowest and highest positions.
+     *
+     * This property is not in any particular unit but in a specified range of relative positions.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -2526,14 +2675,15 @@ enum VehicleProperty {
      * Represents property that indicates the current walk-in position of the seat.
      *
      * The maxInt32Value and minInt32Value in each VehicleAreaConfig must be defined.
-     * The minInt32Value must be 0.
      * All integers between minInt32Value and maxInt32Value must be supported.
      *
-     * The minInt32Value indicates the normal seat position.
+     * The minInt32Value indicates the normal seat position. The minInt32Value must be 0.
      * The maxInt32Value indicates the seat is in the full walk-in position.
      *
      * Values in between minInt32Value and maxInt32Value indicate a transition state between the
      * normal and walk-in positions.
+     *
+     * This property is not in any particular unit but in a specified range of relative positions.
      *
      * The area ID must match the seat that actually moves when the walk-in feature activates, not
      * the intended seat the passengers will sit in.
@@ -2561,16 +2711,29 @@ enum VehicleProperty {
     /**
      * Window Position
      *
-     * Min = window up / closed
-     * Max = window down / open
+     * The maxInt32Value and minInt32Value in each VehicleAreaConfig must be defined.
+     * All integers between minInt32Value and maxInt32Value must be supported.
      *
-     * For a window that may open out of plane (i.e. vent mode of sunroof) this
-     * parameter will work with negative values as follows:
-     *  Max = sunroof completely open
-     *  0 = sunroof closed.
-     *  Min = sunroof vent completely open
+     * The minInt32Value indicates the window is closed/fully open out of plane. If the window
+     * cannot open out of plane, then minInt32Value is the position of the window when fully closed
+     * and must be 0. If the window can open out of plane, the minInt32Value indicates the window
+     * is fully open in its position out of plane and will be a negative value. See the example
+     * below for a more detailed explanation.
+     * The maxInt32Value indicates the window is fully open.
      *
-     *  Note that in this mode, 0 indicates the window is closed.
+     * Values in between minInt32Value and maxInt32Value indicate a transition state between the
+     * closed/fully open out-of-plane and fully open positions.
+     *
+     * This property is not in any particular unit but in a specified range of relative positions.
+     *
+     * For example, this is how the property should work for a window that can move out of plane:
+     *  For a window that may open out of plane (i.e. vent mode of sunroof) this
+     *  parameter will work with negative values as follows:
+     *    Max = sunroof completely open
+     *    0 = sunroof closed.
+     *    Min = sunroof vent completely open
+     *
+     *    Note that in this mode, 0 indicates the window is closed.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -2583,10 +2746,20 @@ enum VehicleProperty {
     /**
      * Window Move
      *
-     * Max = Open the window as fast as possible
-     * Min = Close the window as fast as possible
-     * Magnitude denotes relative speed.  I.e. +2 is faster than +1 in closing
-     * the window.
+     * The maxInt32Value and minInt32Value in each VehicleAreaConfig must be defined. All integers
+     * between minInt32Value and maxInt32Value must be supported.
+     *
+     * The maxInt32Value indicates the window is opening in plane/closing in the out of plane
+     * direction at the fastest speed.
+     * The minInt32Value indicates the window is closing in plane/opening in the out of plane
+     * direction at the fastest speed.
+     *
+     * Larger absolute values, either positive or negative, indicate a faster movement speed. Once
+     * the window reaches the positional limit, the value must reset to 0. If WINDOW_MOVE's value is
+     * currently 0, then that means there is no movement currently occurring.
+     *
+     * This property is not in any particular unit but in a specified range of relative movement
+     * speeds.
      *
      * For a window that may open out of plane (i.e. vent mode of sunroof) this
      * parameter will work as follows:
@@ -2698,10 +2871,13 @@ enum VehicleProperty {
      * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined. All values between
      * minInt32Value and maxInt32Value must be supported.
      *
-     * The maxInt32Value indicates the steering wheel position closest to the driver.
-     * The minInt32Value indicates the steering wheel position furthest to the driver.
+     * The maxInt32Value indicates the steering wheel position furthest from the driver.
+     * The minInt32Value indicates the steering wheel position closest to the driver.
      *
-     * This property is not in any particular unit but in a specified range of steps.
+     * Values in between minInt32Value and maxInt32Value indicate a transition state between the
+     * closest and furthest positions.
+     *
+     * This property is not in any particular unit but in a specified range of relative positions.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -2717,8 +2893,8 @@ enum VehicleProperty {
      * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined. All values between
      * minInt32Value and maxInt32Value must be supported.
      *
-     * The maxInt32Value indicates the steering wheel moving towards the driver.
-     * The minInt32Value indicates the steering wheel moving away from the driver.
+     * The maxInt32Value indicates the steering wheel moving away from the driver.
+     * The minInt32Value indicates the steering wheel moving towards the driver.
      *
      * Larger integers, either positive or negative, indicate a faster movement speed. Once the
      * steering wheel reaches the positional limit, the value must reset to 0. If
@@ -2745,7 +2921,10 @@ enum VehicleProperty {
      * The maxInt32Value indicates the steering wheel being in the highest position.
      * The minInt32Value indicates the steering wheel being in the lowest position.
      *
-     * This property is not in any particular unit but in a specified range of steps.
+     * Values in between minInt32Value and maxInt32Value indicate a transition state between the
+     * lowest and highest positions.
+     *
+     * This property is not in any particular unit but in a specified range of relative positions.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -2825,14 +3004,15 @@ enum VehicleProperty {
      * Property that represents the current position of the glove box door.
      *
      * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined.
-     * The minInt32Value must be 0.
      * All integers between minInt32Value and maxInt32Value must be supported.
      *
-     * The minInt32Value indicates that the glove box door is closed.
+     * The minInt32Value indicates that the glove box door is closed. The minInt32Value must be 0.
      * The maxInt32Value indicates that the glove box door is in the fully open position.
      *
      * Values in between minInt32Value and maxInt32Value indicate a transition state between the
      * closed and fully open positions.
+     *
+     * This property is not in any particular unit but in a specified range of relative positions.
      *
      * The area ID must match the seat by which the glove box is intended to be used  (e.g. if the
      * front right dashboard has a glove box embedded in it, then the area ID should be
