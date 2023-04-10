@@ -37,6 +37,22 @@
 #include <unordered_set>
 #include <vector>
 
+namespace aidl {
+namespace android {
+namespace hardware {
+namespace automotive {
+namespace vehicle {
+
+void PrintTo(const VehiclePropValue& value, std::ostream* os) {
+    *os << "\n( " << value.toString() << " )\n";
+}
+
+}  // namespace vehicle
+}  // namespace automotive
+}  // namespace hardware
+}  // namespace android
+}  // namespace aidl
+
 namespace android {
 namespace hardware {
 namespace automotive {
@@ -1079,11 +1095,12 @@ TEST_F(FakeVehicleHardwareTest, testSetWaitForVhalAfterCarServiceCrash) {
     ASSERT_EQ(events.size(), 1u);
     // Erase the timestamp for comparison.
     events[0].timestamp = 0;
-    ASSERT_EQ(events[0], (VehiclePropValue{
-                                 .prop = toInt(VehicleProperty::AP_POWER_STATE_REQ),
-                                 .status = VehiclePropertyStatus::AVAILABLE,
-                                 .value.int32Values = {toInt(VehicleApPowerStateReq::ON), 0},
-                         }));
+    auto expectedValue = VehiclePropValue{
+            .prop = toInt(VehicleProperty::AP_POWER_STATE_REQ),
+            .status = VehiclePropertyStatus::AVAILABLE,
+            .value.int32Values = {toInt(VehicleApPowerStateReq::ON), 0},
+    };
+    ASSERT_EQ(events[0], expectedValue);
 }
 
 TEST_F(FakeVehicleHardwareTest, testGetObd2FreezeFrame) {
@@ -1340,19 +1357,20 @@ TEST_F(FakeVehicleHardwareTest, testSwitchUser) {
     events = getChangedProperties();
     ASSERT_EQ(events.size(), static_cast<size_t>(1));
     events[0].timestamp = 0;
-    ASSERT_EQ(events[0], (VehiclePropValue{
-                                 .areaId = 0,
-                                 .prop = toInt(VehicleProperty::SWITCH_USER),
-                                 .value.int32Values =
-                                         {
-                                                 // Request ID
-                                                 666,
-                                                 // VEHICLE_RESPONSE
-                                                 3,
-                                                 // SUCCESS
-                                                 1,
-                                         },
-                         }));
+    auto expectedValue = VehiclePropValue{
+            .areaId = 0,
+            .prop = toInt(VehicleProperty::SWITCH_USER),
+            .value.int32Values =
+                    {
+                            // Request ID
+                            666,
+                            // VEHICLE_RESPONSE
+                            3,
+                            // SUCCESS
+                            1,
+                    },
+    };
+    ASSERT_EQ(events[0], expectedValue);
 }
 
 TEST_F(FakeVehicleHardwareTest, testCreateUser) {
@@ -1396,17 +1414,18 @@ TEST_F(FakeVehicleHardwareTest, testCreateUser) {
     events = getChangedProperties();
     ASSERT_EQ(events.size(), static_cast<size_t>(1));
     events[0].timestamp = 0;
-    ASSERT_EQ(events[0], (VehiclePropValue{
-                                 .areaId = 0,
-                                 .prop = toInt(VehicleProperty::CREATE_USER),
-                                 .value.int32Values =
-                                         {
-                                                 // Request ID
-                                                 666,
-                                                 // SUCCESS
-                                                 1,
-                                         },
-                         }));
+    auto expectedValue = VehiclePropValue{
+            .areaId = 0,
+            .prop = toInt(VehicleProperty::CREATE_USER),
+            .value.int32Values =
+                    {
+                            // Request ID
+                            666,
+                            // SUCCESS
+                            1,
+                    },
+    };
+    ASSERT_EQ(events[0], expectedValue);
 }
 
 TEST_F(FakeVehicleHardwareTest, testInitialUserInfo) {
@@ -1438,11 +1457,12 @@ TEST_F(FakeVehicleHardwareTest, testInitialUserInfo) {
     auto events = getChangedProperties();
     ASSERT_EQ(events.size(), static_cast<size_t>(1));
     events[0].timestamp = 0;
-    EXPECT_EQ(events[0], (VehiclePropValue{
-                                 .areaId = 0,
-                                 .prop = toInt(VehicleProperty::INITIAL_USER_INFO),
-                                 .value.int32Values = {3, 1, 11},
-                         }));
+    auto expectedValue = VehiclePropValue{
+            .areaId = 0,
+            .prop = toInt(VehicleProperty::INITIAL_USER_INFO),
+            .value.int32Values = {3, 1, 11},
+    };
+    EXPECT_EQ(events[0], expectedValue);
 
     // Try to get create_user again, should return default value.
     clearChangedProperties();
@@ -1452,22 +1472,23 @@ TEST_F(FakeVehicleHardwareTest, testInitialUserInfo) {
     events = getChangedProperties();
     ASSERT_EQ(events.size(), static_cast<size_t>(1));
     events[0].timestamp = 0;
-    EXPECT_EQ(events[0], (VehiclePropValue{
-                                 .areaId = 0,
-                                 .prop = toInt(VehicleProperty::INITIAL_USER_INFO),
-                                 .value.int32Values =
-                                         {
-                                                 // Request ID
-                                                 3,
-                                                 // ACTION: DEFAULT
-                                                 0,
-                                                 // User id: 0
-                                                 0,
-                                                 // Flags: 0
-                                                 0,
-                                         },
-                                 .value.stringValue = "||",
-                         }));
+    expectedValue = VehiclePropValue{
+            .areaId = 0,
+            .prop = toInt(VehicleProperty::INITIAL_USER_INFO),
+            .value.int32Values =
+                    {
+                            // Request ID
+                            3,
+                            // ACTION: DEFAULT
+                            0,
+                            // User id: 0
+                            0,
+                            // Flags: 0
+                            0,
+                    },
+            .value.stringValue = "||",
+    };
+    EXPECT_EQ(events[0], expectedValue);
 }
 
 TEST_F(FakeVehicleHardwareTest, testDumpAllProperties) {
@@ -2580,18 +2601,7 @@ TEST_F(FakeVehicleHardwareTest, testSetHvacTemperatureValueSuggestion) {
         EXPECT_EQ(events.size(), static_cast<size_t>(1));
         events[0].timestamp = 0;
 
-        EXPECT_EQ(events[0], (tc.expectedValuesToGet[0]))
-                << "Failed Test: " << tc.name << "\n"
-                << "Received - prop: " << events[0].prop << ", areaId: " << events[0].areaId
-                << ", floatValues: {" << events[0].value.floatValues[0] << ", "
-                << events[0].value.floatValues[1] << ", " << events[0].value.floatValues[2] << ", "
-                << events[0].value.floatValues[3] << "}\n"
-                << "Expected - prop: " << tc.expectedValuesToGet[0].prop
-                << ", areaId: " << tc.expectedValuesToGet[0].areaId << ", floatValues: {"
-                << tc.expectedValuesToGet[0].value.floatValues[0] << ", "
-                << tc.expectedValuesToGet[0].value.floatValues[1] << ", "
-                << tc.expectedValuesToGet[0].value.floatValues[2] << ", "
-                << tc.expectedValuesToGet[0].value.floatValues[3] << "}\n";
+        EXPECT_EQ(events[0], tc.expectedValuesToGet[0]);
         clearChangedProperties();
     }
 }
