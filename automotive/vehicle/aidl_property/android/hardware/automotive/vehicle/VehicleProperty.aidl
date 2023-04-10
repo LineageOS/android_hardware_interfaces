@@ -428,10 +428,10 @@ enum VehicleProperty {
      *
      * Each tires is identified by its areaConfig.areaId config and their
      * minFloatValue/maxFloatValue are used to store OEM recommended pressure
-     * range.
-     * The Min value in the areaConfig data represents the lower bound of
+     * range. The minFloatValue and maxFloatValue in VehicleAreaConfig must be defined.
+     * The minFloatValue in the areaConfig data represents the lower bound of
      * the recommended tire pressure.
-     * The Max value in the areaConfig data represents the upper bound of
+     * The maxFloatValue in the areaConfig data represents the upper bound of
      * the recommended tire pressure.
      * For example:
      * The following areaConfig indicates the recommended tire pressure
@@ -700,6 +700,14 @@ enum VehicleProperty {
      *
      * Fan speed setting
      *
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined.
+     * All integers between minInt32Value and maxInt32Value must be supported.
+     *
+     * The minInt32Value indicates the lowest fan speed.
+     * The maxInt32Value indicates the highest fan speed.
+     *
+     * This property is not in any particular unit but in a specified range of relative speeds.
+     *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
      *
@@ -898,13 +906,15 @@ enum VehicleProperty {
     /**
      * Seat heating/cooling
      *
-     * Negative values indicate cooling.
-     * 0 indicates off.
-     * Positive values indicate heating.
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined.
+     * All integers between minInt32Value and maxInt32Value must be supported.
      *
-     * Some vehicles may have multiple levels of heating and cooling. The
-     * min/max range defines the allowable range and number of steps in each
-     * direction.
+     * The maxInt32Value indicates the maximum seat temperature heating setting.
+     * The minInt32Value must be 0, unless the vehicle supports seat cooling as well. In this case,
+     * minInt32Value indicates the maximum seat temperature cooling setting.
+     *
+     * This property is not in any particular unit, but in a specified range of relative temperature
+     * settings.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -918,8 +928,15 @@ enum VehicleProperty {
      * Side Mirror Heat
      *
      * Increasing values denote higher heating levels for side mirrors.
-     * The Max value in the config data represents the highest heating level.
-     * The Min value in the config data MUST be zero and indicates no heating.
+     *
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined.
+     * All integers between minInt32Value and maxInt32Value must be supported.
+     *
+     * The maxInt32Value in the config data represents the maximum heating level.
+     * The minInt32Value in the config data MUST be zero and indicates no heating.
+     *
+     * This property is not in any particular unit but in a specified range of relative heating
+     * settings.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -932,11 +949,16 @@ enum VehicleProperty {
     /**
      * Steering Wheel Heating/Cooling
      *
-     * Sets the amount of heating/cooling for the steering wheel
-     * config data Min and Max MUST be set appropriately.
-     * Positive value indicates heating.
-     * Negative value indicates cooling.
-     * 0 indicates temperature control is off.
+     * Sets the amount of heating/cooling for the steering wheel.
+     *
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined.
+     * All integers between minInt32Value and maxInt32Value must be supported.
+     *
+     * The maxInt32Value indicates the maximum steering wheel heating setting.
+     * The minInt32Value should be 0, unless the vehicle supports steering wheel cooling as well. In
+     * such a case, the minInt32Value indicates the maximum steering wheel cooling setting.
+     *
+     * This property is not in any particular unit but in a specified range of heating settings.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -1061,8 +1083,14 @@ enum VehicleProperty {
     /**
      * Seat ventilation
      *
-     * 0 indicates off.
-     * Positive values indicates ventilation level.
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined.
+     * All integers between minInt32Value and maxInt32Value must be supported.
+     *
+     * The minInt32Value must be 0.
+     * The maxInt32Value indicates the maximum ventilation setting available for the seat.
+     *
+     * This property is not in any particular unit but in the specified range of ventilation
+     * settings.
      *
      * Used by HVAC apps and Assistant to enable, change, or read state of seat
      * ventilation.  This is different than seating cooling. It can be on at the
@@ -1823,13 +1851,14 @@ enum VehicleProperty {
     /**
      * Seat memory select
      *
-     * This parameter selects the memory preset to use to select the seat
-     * position. The minValue is always 0, and the maxValue determines the
-     * number of seat preset memory slots available (i.e. numSeatPresets - 1).
+     * This parameter selects the memory preset to use to select the seat position. The
+     * maxInt32Value and minInt32Value in VehicleAreaConfig must be defined. All integers between
+     * minInt32Value and maxInt32Value must be supported. The minInt32Value is always 0, and the
+     * maxInt32Value determines the number of seat preset memory slots available (i.e.
+     * numSeatPresets - 1).
      *
-     * For instance, if the driver's seat has 3 memory presets, the maxValue
-     * will be 2. When the user wants to select a preset, the desired preset
-     * number (0, 1, or 2) is set.
+     * For instance, if the driver's seat has 3 memory presets, the maxInt32Value will be 2. When
+     * the user wants to select a preset, the desired preset number (0, 1, or 2) is set.
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.WRITE
@@ -1839,9 +1868,10 @@ enum VehicleProperty {
     /**
      * Seat memory set
      *
-     * This setting allows the user to save the current seat position settings
-     * into the selected preset slot.  The maxValue for each seat position
-     * must match the maxValue for SEAT_MEMORY_SELECT.
+     * This setting allows the user to save the current seat position settings into the selected
+     * preset slot. The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined. The
+     * minInt32Value must be 0, and the maxInt32Value for each seat position must match the
+     * maxInt32Value for SEAT_MEMORY_SELECT.
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.WRITE
@@ -2807,8 +2837,9 @@ enum VehicleProperty {
      * When an intermittent wiper setting is selected, this property value must be set to 0 during
      * the "pause" period of the intermittent wiping.
      *
-     * The maxInt32Value for each area ID must specify the longest wiper period. The minInt32Value
-     * must be set to 0 for each area ID.
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined. The maxInt32Value
+     * for each area ID must specify the longest wiper period. The minInt32Value must be set to 0
+     * for each area ID.
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ
@@ -4775,7 +4806,7 @@ enum VehicleProperty {
     /**
      * Current target speed for Cruise Control (CC).
      *
-     * OEMs should set the minInt32Value and maxInt32Value values for this property to define the
+     * OEMs should set the minFloatValue and maxFloatValue values for this property to define the
      * min and max target speed values. These values must be non-negative.
      *
      * The maxFloatValue represents the upper bound of the target speed.
@@ -4824,6 +4855,7 @@ enum VehicleProperty {
      * Returns the measured distance in millimeters between the rear-most point of the leading
      * vehicle and the front-most point of the ACC vehicle.
      *
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined.
      * The minInt32Value should be 0.
      * The maxInt32Value should be populated with the maximum range the distance sensor can support.
      * This value should be non-negative.
