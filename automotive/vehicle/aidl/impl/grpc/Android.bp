@@ -100,3 +100,27 @@ cc_library_static {
         "-Wno-unused-parameter",
     ],
 }
+
+cc_library_static {
+    name: "android.hardware.automotive.vehicle@default-grpc-server-lib",
+    defaults: ["VehicleHalDefaults"],
+    vendor: true,
+    srcs: [
+        "GRPCVehicleProxyServer.cpp",
+    ],
+    whole_static_libs: [
+        "android.hardware.automotive.vehicle@default-grpc-libgrpc",
+        "VehicleHalProtoMessageConverter",
+    ],
+    header_libs: [
+        "IVehicleHardware",
+    ],
+    shared_libs: [
+        "libgrpc++",
+        "libprotobuf-cpp-full",
+    ],
+    export_include_dirs: ["."],
+    cflags: [
+        "-Wno-unused-parameter",
+    ],
+}
