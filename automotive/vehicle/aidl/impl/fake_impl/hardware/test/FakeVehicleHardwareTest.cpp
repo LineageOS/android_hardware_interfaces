@@ -1183,7 +1183,7 @@ TEST_F(FakeVehicleHardwareTest, testGetHvacPropNotAvailable) {
 
                 if (areaId == powerDependentAreaId) {
                     EXPECT_FALSE(getValueResult.ok());
-                    EXPECT_EQ(getValueResult.error(), StatusCode::NOT_AVAILABLE);
+                    EXPECT_EQ(getValueResult.error(), StatusCode::NOT_AVAILABLE_DISABLED);
                 } else {
                     EXPECT_TRUE(getValueResult.ok());
                 }
@@ -1216,7 +1216,7 @@ TEST_F(FakeVehicleHardwareTest, testSetHvacPropNotAvailable) {
                                                               .value.int32Values = {1}});
 
                 if (areaId == powerDependentAreaId) {
-                    EXPECT_EQ(status, StatusCode::NOT_AVAILABLE);
+                    EXPECT_EQ(status, StatusCode::NOT_AVAILABLE_DISABLED);
                 } else {
                     EXPECT_EQ(status, StatusCode::OK);
                 }
