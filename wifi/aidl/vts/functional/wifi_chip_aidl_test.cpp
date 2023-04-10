@@ -189,8 +189,8 @@ TEST_P(WifiChipAidlTest, RegisterEventCallback) {
  */
 TEST_P(WifiChipAidlTest, GetFeatureSet) {
     configureChipForConcurrencyType(IfaceConcurrencyType::STA);
-    int32_t features = getChipFeatureSet(wifi_chip_);
-    EXPECT_NE(features, 0);
+    int32_t features;
+    EXPECT_TRUE(wifi_chip_->getFeatureSet(&features).isOk());
 }
 
 /*
