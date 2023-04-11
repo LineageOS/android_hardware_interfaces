@@ -428,10 +428,10 @@ enum VehicleProperty {
      *
      * Each tires is identified by its areaConfig.areaId config and their
      * minFloatValue/maxFloatValue are used to store OEM recommended pressure
-     * range.
-     * The Min value in the areaConfig data represents the lower bound of
+     * range. The minFloatValue and maxFloatValue in VehicleAreaConfig must be defined.
+     * The minFloatValue in the areaConfig data represents the lower bound of
      * the recommended tire pressure.
-     * The Max value in the areaConfig data represents the upper bound of
+     * The maxFloatValue in the areaConfig data represents the upper bound of
      * the recommended tire pressure.
      * For example:
      * The following areaConfig indicates the recommended tire pressure
@@ -552,9 +552,8 @@ enum VehicleProperty {
      * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined. All values between
      * minInt32Value and maxInt32Value must be supported. The minInt32Value must be 0.
      *
-     * The maxInt32Value in default area's VehicleAreaConfig indicates the maximum amount of energy
-     * regenerated from braking. The minInt32Value in default area's VehicleAreaConfig indicates no
-     * regenerative braking.
+     * The maxInt32Value indicates the maximum amount of energy regenerated from braking. The
+     * minInt32Value indicates no regenerative braking.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -700,6 +699,14 @@ enum VehicleProperty {
      *
      *
      * Fan speed setting
+     *
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined.
+     * All integers between minInt32Value and maxInt32Value must be supported.
+     *
+     * The minInt32Value indicates the lowest fan speed.
+     * The maxInt32Value indicates the highest fan speed.
+     *
+     * This property is not in any particular unit but in a specified range of relative speeds.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -899,13 +906,15 @@ enum VehicleProperty {
     /**
      * Seat heating/cooling
      *
-     * Negative values indicate cooling.
-     * 0 indicates off.
-     * Positive values indicate heating.
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined.
+     * All integers between minInt32Value and maxInt32Value must be supported.
      *
-     * Some vehicles may have multiple levels of heating and cooling. The
-     * min/max range defines the allowable range and number of steps in each
-     * direction.
+     * The maxInt32Value indicates the maximum seat temperature heating setting.
+     * The minInt32Value must be 0, unless the vehicle supports seat cooling as well. In this case,
+     * minInt32Value indicates the maximum seat temperature cooling setting.
+     *
+     * This property is not in any particular unit, but in a specified range of relative temperature
+     * settings.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -919,8 +928,15 @@ enum VehicleProperty {
      * Side Mirror Heat
      *
      * Increasing values denote higher heating levels for side mirrors.
-     * The Max value in the config data represents the highest heating level.
-     * The Min value in the config data MUST be zero and indicates no heating.
+     *
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined.
+     * All integers between minInt32Value and maxInt32Value must be supported.
+     *
+     * The maxInt32Value in the config data represents the maximum heating level.
+     * The minInt32Value in the config data MUST be zero and indicates no heating.
+     *
+     * This property is not in any particular unit but in a specified range of relative heating
+     * settings.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -933,11 +949,16 @@ enum VehicleProperty {
     /**
      * Steering Wheel Heating/Cooling
      *
-     * Sets the amount of heating/cooling for the steering wheel
-     * config data Min and Max MUST be set appropriately.
-     * Positive value indicates heating.
-     * Negative value indicates cooling.
-     * 0 indicates temperature control is off.
+     * Sets the amount of heating/cooling for the steering wheel.
+     *
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined.
+     * All integers between minInt32Value and maxInt32Value must be supported.
+     *
+     * The maxInt32Value indicates the maximum steering wheel heating setting.
+     * The minInt32Value should be 0, unless the vehicle supports steering wheel cooling as well. In
+     * such a case, the minInt32Value indicates the maximum steering wheel cooling setting.
+     *
+     * This property is not in any particular unit but in a specified range of heating settings.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -1062,8 +1083,14 @@ enum VehicleProperty {
     /**
      * Seat ventilation
      *
-     * 0 indicates off.
-     * Positive values indicates ventilation level.
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined.
+     * All integers between minInt32Value and maxInt32Value must be supported.
+     *
+     * The minInt32Value must be 0.
+     * The maxInt32Value indicates the maximum ventilation setting available for the seat.
+     *
+     * This property is not in any particular unit but in the specified range of ventilation
+     * settings.
      *
      * Used by HVAC apps and Assistant to enable, change, or read state of seat
      * ventilation.  This is different than seating cooling. It can be on at the
@@ -1587,8 +1614,16 @@ enum VehicleProperty {
     /**
      * Door position
      *
-     * This is an integer in case a door may be set to a particular position.
-     * Max value indicates fully open, min value (0) indicates fully closed.
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined.
+     * All integers between minInt32Value and maxInt32Value must be supported.
+     *
+     * The minInt32Value indicates the door is closed. The minInt32Value must be 0.
+     * The maxInt32Value indicates the door is fully open.
+     *
+     * Values in between minInt32Value and maxInt32Value indicate a transition state between the
+     * closed and fully open positions.
+     *
+     * This property is not in any particular unit but in a specified range of relative positions.
      *
      * Some vehicles (minivans) can open the door electronically. Hence, the
      * ability to write this property.
@@ -1603,6 +1638,19 @@ enum VehicleProperty {
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:DOOR,VehiclePropertyType:INT32
     /**
      * Door move
+     *
+     * The maxInt32Value and minInt32Value in each VehicleAreaConfig must be defined. All integers
+     * between minInt32Value and maxInt32Value must be supported.
+     *
+     * The maxInt32Value represents the maximum movement speed of the door while opening.
+     * The minInt32Value represents the maximum movement speed of the door while closing.
+     *
+     * Larger absolute values, either positive or negative, indicate a faster movement speed. Once
+     * the door reaches the positional limit, the value must reset to 0. If DOOR_MOVE's value is
+     * currently 0, then that means there is no movement currently occurring.
+     *
+     * This property is not in any particular unit but in a specified range of relative movement
+     * speeds.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -1643,7 +1691,19 @@ enum VehicleProperty {
     /**
      * Mirror Z Position
      *
-     * Positive value indicates tilt upwards, negative value is downwards
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined.
+     * All integers between minInt32Value and maxInt32Value must be supported.
+     *
+     * The minInt32Value indicates the mirror is tilted completely downwards. This must be a
+     * non-positive value.
+     * The maxInt32Value indicates the mirror is tilted completely upwards. This must be a
+     * non-negative value.
+     * 0 indicates the mirror is not tilted in either direction.
+     *
+     * Values in between minInt32Value and maxInt32Value indicate a transition state between the
+     * fully downward and fully upwards positions.
+     *
+     * This property is not in any particular unit but in a specified range of relative positions.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -1656,7 +1716,19 @@ enum VehicleProperty {
     /**
      * Mirror Z Move
      *
-     * Positive value indicates tilt upwards, negative value is downwards
+     * The maxInt32Value and minInt32Value in each VehicleAreaConfig must be defined. All integers
+     * between minInt32Value and maxInt32Value must be supported.
+     *
+     * The maxInt32Value represents the maximum movement speed of the mirror while tilting upwards.
+     * The minInt32Value represents the maximum movement speed of the mirror while tilting
+     * downwards.
+     *
+     * Larger absolute values, either positive or negative, indicate a faster movement speed. Once
+     * the mirror reaches the positional limit, the value must reset to 0. If MIRROR_Z_MOVE's value
+     * is currently 0, then that means there is no movement currently occurring.
+     *
+     * This property is not in any particular unit but in a specified range of relative movement
+     * speeds.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -1669,7 +1741,19 @@ enum VehicleProperty {
     /**
      * Mirror Y Position
      *
-     * Positive value indicate tilt right, negative value is left
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined.
+     * All integers between minInt32Value and maxInt32Value must be supported.
+     *
+     * The minInt32Value indicates the mirror is tilted completely to the left. This must be a
+     * non-positive value.
+     * The maxInt32Value indicates the mirror is tilted completely to the right. This must be a
+     * non-negative value.
+     * 0 indicates the mirror is not tilted in either direction.
+     *
+     * Values in between minInt32Value and maxInt32Value indicate a transition state between the
+     * left extreme and right extreme positions.
+     *
+     * This property is not in any particular unit but in a specified range of relative positions.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -1682,7 +1766,18 @@ enum VehicleProperty {
     /**
      * Mirror Y Move
      *
-     * Positive value indicate tilt right, negative value is left
+     * The maxInt32Value and minInt32Value in each VehicleAreaConfig must be defined. All integers
+     * between minInt32Value and maxInt32Value must be supported.
+     *
+     * The maxInt32Value represents the maximum movement speed of the mirror while tilting right.
+     * The minInt32Value represents the maximum movement speed of the mirror while tilting left.
+     *
+     * Larger absolute values, either positive or negative, indicate a faster movement speed. Once
+     * the mirror reaches the positional limit, the value must reset to 0. If MIRROR_Y_MOVE's value
+     * is currently 0, then that means there is no movement currently occurring.
+     *
+     * This property is not in any particular unit but in a specified range of relative movement
+     * speeds.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -1756,13 +1851,14 @@ enum VehicleProperty {
     /**
      * Seat memory select
      *
-     * This parameter selects the memory preset to use to select the seat
-     * position. The minValue is always 0, and the maxValue determines the
-     * number of seat preset memory slots available (i.e. numSeatPresets - 1).
+     * This parameter selects the memory preset to use to select the seat position. The
+     * maxInt32Value and minInt32Value in VehicleAreaConfig must be defined. All integers between
+     * minInt32Value and maxInt32Value must be supported. The minInt32Value is always 0, and the
+     * maxInt32Value determines the number of seat preset memory slots available (i.e.
+     * numSeatPresets - 1).
      *
-     * For instance, if the driver's seat has 3 memory presets, the maxValue
-     * will be 2. When the user wants to select a preset, the desired preset
-     * number (0, 1, or 2) is set.
+     * For instance, if the driver's seat has 3 memory presets, the maxInt32Value will be 2. When
+     * the user wants to select a preset, the desired preset number (0, 1, or 2) is set.
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.WRITE
@@ -1772,9 +1868,10 @@ enum VehicleProperty {
     /**
      * Seat memory set
      *
-     * This setting allows the user to save the current seat position settings
-     * into the selected preset slot.  The maxValue for each seat position
-     * must match the maxValue for SEAT_MEMORY_SELECT.
+     * This setting allows the user to save the current seat position settings into the selected
+     * preset slot. The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined. The
+     * minInt32Value must be 0, and the maxInt32Value for each seat position must match the
+     * maxInt32Value for SEAT_MEMORY_SELECT.
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.WRITE
@@ -1801,8 +1898,17 @@ enum VehicleProperty {
      * Seatbelt height position
      *
      * Adjusts the shoulder belt anchor point.
-     * Max value indicates highest position
-     * Min value indicates lowest position
+     *
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined.
+     * All integers between minInt32Value and maxInt32Value must be supported.
+     *
+     * The minInt32Value indicates the seat belt's shoulder anchor is at its lowest position.
+     * The maxInt32Value indicates the seat belt's shoulder anchor is at its highest position.
+     *
+     * Values in between minInt32Value and maxInt32Value indicate a transition state between the
+     * lowest and highest positions.
+     *
+     * This property is not in any particular unit but in a specified range of relative positions.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -1815,6 +1921,22 @@ enum VehicleProperty {
     /**
      * Seatbelt height move
      *
+     * The maxInt32Value and minInt32Value in each VehicleAreaConfig must be defined. All integers
+     * between minInt32Value and maxInt32Value must be supported.
+     *
+     * The maxInt32Value represents the maximum movement speed of the seat belt's shoulder anchor
+     * while moving upwards.
+     * The minInt32Value represents the maximum movement speed of the seat belt's shoulder anchor
+     * while moving downwards.
+     *
+     * Larger absolute values, either positive or negative, indicate a faster movement speed. Once
+     * the seat belt reaches the positional limit, the value must reset to 0. If
+     * SEAT_BELT_HEIGHT_MOVE's value is currently 0, then that means there is no movement currently
+     * occurring.
+     *
+     * This property is not in any particular unit but in a specified range of relative movement
+     * speeds.
+     *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
      *
@@ -1826,9 +1948,18 @@ enum VehicleProperty {
     /**
      * Seat fore/aft position
      *
-     * Sets the seat position forward (closer to steering wheel) and backwards.
-     * Max value indicates closest to wheel, min value indicates most rearward
-     * position.
+     * Sets the seat position forward and backwards.
+     *
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined.
+     * All integers between minInt32Value and maxInt32Value must be supported.
+     *
+     * The minInt32Value indicates the seat is at its rearward-most linear position.
+     * The maxInt32Value indicates the seat is at its forward-most linear position.
+     *
+     * Values in between minInt32Value and maxInt32Value indicate a transition state between the
+     * closest and farthest positions.
+     *
+     * This property is not in any particular unit but in a specified range of relative positions.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -1841,7 +1972,20 @@ enum VehicleProperty {
     /**
      * Seat fore/aft move
      *
-     * Moves the seat position forward and aft.
+     * This property moves the entire seat forward/backward in the direction that it is facing.
+     *
+     * The maxInt32Value and minInt32Value in each VehicleAreaConfig must be defined. All integers
+     * between minInt32Value and maxInt32Value must be supported.
+     *
+     * The maxInt32Value represents the maximum movement speed of the seat while moving forward.
+     * The minInt32Value represents the maximum movement speed of the seat while moving backward.
+     *
+     * Larger absolute values, either positive or negative, indicate a faster movement speed. Once
+     * the seat reaches the positional limit, the value must reset to 0. If SEAT_FORE_AFT_MOVE's
+     * value is currently 0, then that means there is no movement currently occurring.
+     *
+     * This property is not in any particular unit but in a specified range of relative movement
+     * speeds.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -1855,8 +1999,19 @@ enum VehicleProperty {
      * Seat backrest angle 1 position
      *
      * Backrest angle 1 is the actuator closest to the bottom of the seat.
-     * Max value indicates angling forward towards the steering wheel.
-     * Min value indicates full recline.
+     *
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined.
+     * All integers between minInt32Value and maxInt32Value must be supported.
+     *
+     * The minInt32Value indicates the seat backrest's full recline position w.r.t the
+     * actuator at the bottom of the seat.
+     * The maxInt32Value indicates the seat backrest's most upright/forward position w.r.t the
+     * actuator at the bottom of the seat.
+     *
+     * Values in between minInt32Value and maxInt32Value indicate a transition state between the
+     * full recline and upright/forward positions.
+     *
+     * This property is not in any particular unit but in a specified range of relative positions.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -1869,7 +2024,20 @@ enum VehicleProperty {
     /**
      * Seat backrest angle 1 move
      *
-     * Moves the backrest forward or recline.
+     * The maxInt32Value and minInt32Value in each VehicleAreaConfig must be defined. All integers
+     * between minInt32Value and maxInt32Value must be supported.
+     *
+     * The maxInt32Value represents the maximum movement speed of the seat backrest while angling
+     * forward.
+     * The minInt32Value represents the maximum movement speed of the seat backrest while reclining.
+     *
+     * Larger absolute values, either positive or negative, indicate a faster movement speed. Once
+     * the seat backrest reaches the positional limit, the value must reset to 0. If
+     * SEAT_BACKREST_ANGLE_1_MOVE's value is currently 0, then that means there is no movement
+     * currently occurring.
+     *
+     * This property is not in any particular unit but in a specified range of relative movement
+     * speeds.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -1883,8 +2051,21 @@ enum VehicleProperty {
      * Seat backrest angle 2 position
      *
      * Backrest angle 2 is the next actuator up from the bottom of the seat.
-     * Max value indicates angling forward towards the steering wheel.
-     * Min value indicates full recline.
+     *
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined. All integers
+     * between minInt32Value and maxInt32Value must be supported.
+     *
+     * The minInt32Value indicates the seat backrest's full recline position w.r.t the next
+     * actuator in the backrest from the one at the bottom of the seat (see
+     * SEAT_BACKREST_ANGLE_1_POS for additional details).
+     * The maxInt32Value indicates the seat backrest's most upright/forward position w.r.t the
+     * next actuator in the backrest from the one at the bottom of the seat(see
+     * SEAT_BACKREST_ANGLE_1_POS for additional details).
+     *
+     * Values in between minInt32Value and maxInt32Value indicate a transition state between the
+     * full recline and upright/forward positions.
+     *
+     * This property is not in any particular unit but in a specified range of relative positions.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -1897,7 +2078,20 @@ enum VehicleProperty {
     /**
      * Seat backrest angle 2 move
      *
-     * Moves the backrest forward or recline.
+     * The maxInt32Value and minInt32Value in each VehicleAreaConfig must be defined. All integers
+     * between minInt32Value and maxInt32Value must be supported.
+     *
+     * The maxInt32Value represents the maximum movement speed of the seat backrest while angling
+     * forward.
+     * The minInt32Value represents the maximum movement speed of the seat backrest while reclining.
+     *
+     * Larger absolute values, either positive or negative, indicate a faster movement speed. Once
+     * the seat backrest reaches the positional limit, the value must reset to 0. If
+     * SEAT_BACKREST_ANGLE_2_MOVE's value is currently 0, then that means there is no movement
+     * currently occurring.
+     *
+     * This property is not in any particular unit but in a specified range of relative movement
+     * speeds.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -1910,9 +2104,16 @@ enum VehicleProperty {
     /**
      * Seat height position
      *
-     * Sets the seat height.
-     * Max value indicates highest position.
-     * Min value indicates lowest position.
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined.
+     * All integers between minInt32Value and maxInt32Value must be supported.
+     *
+     * The minInt32Value indicates the seat is in its lowest position.
+     * The maxInt32Value indicates the seat is in its highest position.
+     *
+     * Values in between minInt32Value and maxInt32Value indicate a transition state between the
+     * lowest and highest positions.
+     *
+     * This property is not in any particular unit but in a specified range of relative positions.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -1925,7 +2126,18 @@ enum VehicleProperty {
     /**
      * Seat height move
      *
-     * Moves the seat height.
+     * The maxInt32Value and minInt32Value in each VehicleAreaConfig must be defined. All integers
+     * between minInt32Value and maxInt32Value must be supported.
+     *
+     * The maxInt32Value represents the maximum movement speed of the seat while moving upward.
+     * The minInt32Value represents the maximum movement speed of the seat while moving downward.
+     *
+     * Larger absolute values, either positive or negative, indicate a faster movement speed. Once
+     * the seat reaches the positional limit, the value must reset to 0. If SEAT_HEIGHT_MOVE's value
+     * is currently 0, then that means there is no movement currently occurring.
+     *
+     * This property is not in any particular unit but in a specified range of relative movement
+     * speeds.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -1939,8 +2151,20 @@ enum VehicleProperty {
      * Seat depth position
      *
      * Sets the seat depth, distance from back rest to front edge of seat.
-     * Max value indicates longest depth position.
-     * Min value indicates shortest position.
+     *
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined.
+     * All integers between minInt32Value and maxInt32Value must be supported.
+     *
+     * The minInt32Value indicates the seat is in its shallowest position (i.e. the position with
+     * the smallest distance between the front edge of the seat cushion and the rear end of the
+     * seat).
+     * The maxInt32Value indicates the seat is in its deepest position (i.e. the position with the
+     * largest distance between the front edge of the seat cushion and the rear end of the seat).
+     *
+     * Values in between minInt32Value and maxInt32Value indicate a transition state between the
+     * shallowest and deepest positions.
+     *
+     * This property is not in any particular unit but in a specified range of relative positions.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -1953,7 +2177,19 @@ enum VehicleProperty {
     /**
      * Seat depth move
      *
-     * Adjusts the seat depth.
+     * The maxInt32Value and minInt32Value in each VehicleAreaConfig must be defined. All integers
+     * between minInt32Value and maxInt32Value must be supported.
+     *
+     * The maxInt32Value represents the maximum movement speed of the seat while getting deeper
+     * The minInt32Value represents the maximum movement speed of the seat while getting shallower.
+     *
+     * Larger absolute values, either positive or negative, indicate a faster movement speed. Once
+     * the seat backrest reaches the positional limit, the value must reset to 0. If
+     * SEAT_DEPTH_MOVE's value is currently 0, then that means there is no movement currently
+     * occurring.
+     *
+     * This property is not in any particular unit but in a specified range of relative movement
+     * speeds.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -1966,9 +2202,20 @@ enum VehicleProperty {
     /**
      * Seat tilt position
      *
-     * Sets the seat tilt.
-     * Max value indicates front edge of seat higher than back edge.
-     * Min value indicates front edge of seat lower than back edge.
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined.
+     * All integers between minInt32Value and maxInt32Value must be supported.
+     *
+     * The minInt32Value indicates the seat bottom is angled at its lowest angular position. This
+     * corresponds to the seat's front edge at its lowest possible position relative to the rear
+     * end of the seat.
+     * The maxInt32Value indicates the seat bottom is angled at its highest angular position. This
+     * corresponds to the seat's front edge at its highest possible position relative to the rear
+     * end of the seat.
+     *
+     * Values in between minInt32Value and maxInt32Value indicate a transition state between the
+     * lowest and highest positions.
+     *
+     * This property is not in any particular unit but in a specified range of relative positions.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -1981,7 +2228,20 @@ enum VehicleProperty {
     /**
      * Seat tilt move
      *
-     * Tilts the seat.
+     * The maxInt32Value and minInt32Value in each VehicleAreaConfig must be defined. All integers
+     * between minInt32Value and maxInt32Value must be supported.
+     *
+     * The maxInt32Value represents the maximum movement speed of the front edge of the seat while
+     * moving upward.
+     * The minInt32Value represents the maximum movement speed of the front edge of the seat while
+     * moving downward.
+     *
+     * Larger absolute values, either positive or negative, indicate a faster movement speed. Once
+     * the seat bottom reaches the positional limit, the value must reset to 0. If SEAT_TILT_MOVE's
+     * value is currently 0, then that means there is no movement currently occurring.
+     *
+     * This property is not in any particular unit but in a specified range of relative movement
+     * speeds.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -1994,9 +2254,18 @@ enum VehicleProperty {
     /**
      * Lumber fore/aft position
      *
-     * Pushes the lumbar support forward and backwards
-     * Max value indicates most forward position.
-     * Min value indicates most rearward position.
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined.
+     * All integers between minInt32Value and maxInt32Value must be supported.
+     *
+     * The minInt32Value indicates the lumbar support is in its rearward most position (i.e. least
+     * supportive position).
+     * The maxInt32Value indicates the lumbar support is in its forward most position (i.e. most
+     * supportive position).
+     *
+     * Values in between minInt32Value and maxInt32Value indicate a transition state between the
+     * forward and rearward positions.
+     *
+     * This property is not in any particular unit but in a specified range of relative positions.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -2009,7 +2278,21 @@ enum VehicleProperty {
     /**
      * Lumbar fore/aft move
      *
-     * Adjusts the lumbar support.
+     * The maxInt32Value and minInt32Value in each VehicleAreaConfig must be defined. All integers
+     * between minInt32Value and maxInt32Value must be supported.
+     *
+     * The maxInt32Value represents the maximum movement speed of the seat's lumbar support while
+     * moving forward.
+     * The minInt32Value represents the maximum movement speed of the seat's lumbar support while
+     * moving backward.
+     *
+     * Larger absolute values, either positive or negative, indicate a faster movement speed. Once
+     * the seat's lumbar support reaches the positional limit, the value must reset to 0. If
+     * SEAT_LUMBAR_FORE_AFT_MOVE's value is currently 0, then that means there is no movement
+     * currently occurring.
+     *
+     * This property is not in any particular unit but in a specified range of relative movement
+     * speeds.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -2022,9 +2305,18 @@ enum VehicleProperty {
     /**
      * Lumbar side support position
      *
-     * Sets the amount of lateral lumbar support.
-     * Max value indicates widest lumbar setting (i.e. least support)
-     * Min value indicates thinnest lumbar setting.
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined.
+     * All integers between minInt32Value and maxInt32Value must be supported.
+     *
+     * The minInt32Value indicates the lumbar side support is in its thinnest position (i.e.
+     * most support).
+     * The maxInt32Value indicates the lumbar side support is in its widest position (i.e.
+     * least support).
+     *
+     * Values in between minInt32Value and maxInt32Value indicate a transition state between the
+     * thinnest and widest positions.
+     *
+     * This property is not in any particular unit but in a specified range of relative positions.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -2037,7 +2329,21 @@ enum VehicleProperty {
     /**
      * Lumbar side support move
      *
-     * Adjusts the amount of lateral lumbar support.
+     * The maxInt32Value and minInt32Value in each VehicleAreaConfig must be defined. All integers
+     * between minInt32Value and maxInt32Value must be supported.
+     *
+     * The maxInt32Value represents the maximum movement speed of the seat's lumbar side support
+     * while getting wider.
+     * The minInt32Value represents the maximum movement speed of the seat's lumbar side support
+     * while getting thinner.
+     *
+     * Larger absolute values, either positive or negative, indicate a faster movement speed. Once
+     * the seat's lumbar side support reaches the positional limit, the value must reset to 0. If
+     * SEAT_LUMBAR_SIDE_SUPPORT_MOVE's value is currently 0, then that means there is no movement
+     * currently occurring.
+     *
+     * This property is not in any particular unit but in a specified range of relative movement
+     * speeds.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -2073,11 +2379,16 @@ enum VehicleProperty {
      * Sets the headrest height for supported seats. VehiclePropConfig.areaConfigs specifies which
      * seats are supported.
      *
-     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined. All values between
-     * minInt32Value and maxInt32Value must be supported. The maxInt32Value indicates the tallest
-     * setting and the minInt32Value indicates the shortest setting.
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined.
+     * All integers between minInt32Value and maxInt32Value must be supported.
      *
-     * This value is not in any particular unit but in a specified range of steps.
+     * The minInt32Value indicates the headrest is in its lowest position.
+     * The maxInt32Value indicates the headrest is in its highest position.
+     *
+     * Values in between minInt32Value and maxInt32Value indicate a transition state between the
+     * lowest and highest positions.
+     *
+     * This property is not in any particular unit but in a specified range of relative positions.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -2091,7 +2402,21 @@ enum VehicleProperty {
     /**
      * Headrest height move
      *
-     * Moves the headrest up and down.
+     * The maxInt32Value and minInt32Value in each VehicleAreaConfig must be defined. All integers
+     * between minInt32Value and maxInt32Value must be supported.
+     *
+     * The maxInt32Value represents the maximum movement speed of the seat's headrest while moving
+     * up.
+     * The minInt32Value represents the maximum movement speed of the seat's headrest while moving
+     * down.
+     *
+     * Larger absolute values, either positive or negative, indicate a faster movement speed. Once
+     * the seat's headrest reaches the positional limit, the value must reset to 0. If
+     * SEAT_HEADREST_HEIGHT_MOVE's value is currently 0, then that means there is no movement
+     * currently occurring.
+     *
+     * This property is not in any particular unit but in a specified range of relative movement
+     * speeds.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -2104,9 +2429,16 @@ enum VehicleProperty {
     /**
      * Headrest angle position
      *
-     * Sets the angle of the headrest.
-     * Max value indicates most upright angle.
-     * Min value indicates shallowest headrest angle.
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined.
+     * All integers between minInt32Value and maxInt32Value must be supported.
+     *
+     * The minInt32Value indicates the headrest is in its full recline position.
+     * The maxInt32Value indicates the headrest is in its most upright/forward position.
+     *
+     * Values in between minInt32Value and maxInt32Value indicate a transition state between the
+     * full recline and most upright/forward positions.
+     *
+     * This property is not in any particular unit but in a specified range of relative positions.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -2119,7 +2451,21 @@ enum VehicleProperty {
     /**
      * Headrest angle move
      *
-     * Adjusts the angle of the headrest
+     * The maxInt32Value and minInt32Value in each VehicleAreaConfig must be defined. All integers
+     * between minInt32Value and maxInt32Value must be supported.
+     *
+     * The maxInt32Value represents the maximum movement speed of the seat's headrest while moving
+     * into an upright/forward position.
+     * The minInt32Value represents the maximum movement speed of the seat's headrest while moving
+     * into a shallow position.
+     *
+     * Larger absolute values, either positive or negative, indicate a faster movement speed. Once
+     * the seat's headrest reaches the positional limit, the value must reset to 0. If
+     * SEAT_HEADREST_ANGLE_MOVE's value is currently 0, then that means there is no movement
+     * currently occurring.
+     *
+     * This property is not in any particular unit but in a specified range of relative movement
+     * speeds.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -2132,9 +2478,16 @@ enum VehicleProperty {
     /**
      * Headrest fore/aft position
      *
-     * Adjusts the headrest forwards and backwards.
-     * Max value indicates position closest to front of car.
-     * Min value indicates position closest to rear of car.
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined.
+     * All integers between minInt32Value and maxInt32Value must be supported.
+     *
+     * The minInt32Value indicates the headrest is in its rearward-most linear position.
+     * The maxInt32Value indicates the headrest is in its forward-most linear position.
+     *
+     * Values in between minInt32Value and maxInt32Value indicate a transition state between the
+     * forward and rearward positions.
+     *
+     * This property is not in any particular unit but in a specified range of relative positions.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -2146,6 +2499,22 @@ enum VehicleProperty {
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
     /**
      * Headrest fore/aft move
+     *
+     * The maxInt32Value and minInt32Value in each VehicleAreaConfig must be defined. All integers
+     * between minInt32Value and maxInt32Value must be supported.
+     *
+     * The maxInt32Value represents the maximum movement speed of the seat's headrest while moving
+     * forward.
+     * The minInt32Value represents the maximum movement speed of the seat's headrest while moving
+     * backward.
+     *
+     * Larger absolute values, either positive or negative, indicate a faster movement speed. Once
+     * the seat's headrest reaches the positional limit, the value must reset to 0. If
+     * SEAT_HEADREST_FORE_AFT_MOVE's value is currently 0, then that means there is no movement
+     * currently occurring.
+     *
+     * This property is not in any particular unit but in a specified range of relative movement
+     * speeds.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -2237,13 +2606,18 @@ enum VehicleProperty {
     /**
      * Represents property for seat’s hipside (bottom cushion’s side) support position.
      *
-     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined. All integers
-     * between minInt32Value and maxInt32Value are supported.
+     * The maxInt32Value and minInt32Value in each VehicleAreaConfig must be defined. All integers
+     * between minInt32Value and maxInt32Value must be supported.
      *
-     * maxInt32Value indicates the widest cushion side support setting (i.e. least support).
-     * minInt32Value indicates the thinnest cushion side support setting (i.e most support).
+     * The maxInt32Value indicates the seat cushion side support is in its widest position (i.e.
+     * least support).
+     * The minInt32Value indicates the seat cushion side support is in its thinnest position (i.e.
+     * most support).
      *
-     * This value is not in any particular unit but in a specified range of steps.
+     * Values in between minInt32Value and maxInt32Value indicate a transition state between the
+     * thinnest and widest positions.
+     *
+     * This property is not in any particular unit but in a specified range of relative positions.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -2256,16 +2630,21 @@ enum VehicleProperty {
     /**
      * Represents property for movement direction and speed of seat cushion side support.
      *
-     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined. All integers
+     * The maxInt32Value and minInt32Value in each VehicleAreaConfig must be defined. All integers
      * between minInt32Value and maxInt32Value must be supported.
      *
-     * maxInt32Value in default area's VehicleAreaConfig represents the maximum movement speed of
-     * the seat cushion side support in the growing wider direction (i.e. less support).
-     * minInt32Value in default area's VehicleAreaConfig represents the maximum movement speed of
-     * the seat cushion side support in the growing thinner direction (i.e. more support).
+     * The maxInt32Value represents the maximum movement speed of the seat cushion side support when
+     * growing wider (i.e. support is decreasing).
+     * The minInt32Value represents the maximum movement speed of the seat cushion side support when
+     * growing thinner (i.e. support is increasing).
      *
      * Larger absolute values, either positive or negative, indicate a faster movement speed. Once
-     * the seat cushion side support reaches the positional limit, the value resets to 0.
+     * the seat cushion side support reaches the positional limit, the value must reset to 0. If
+     * SEAT_CUSHION_SIDE_SUPPORT_MOVE's value is currently 0, then that means there is no movement
+     * currently occurring.
+     *
+     * This property is not in any particular unit but in a specified range of relative movement
+     * speeds.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -2278,13 +2657,16 @@ enum VehicleProperty {
     /**
      * Represents property for seat’s lumbar support vertical position.
      *
-     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined. All integers
-     * between minInt32Value and maxInt32Value are supported.
+     * The maxInt32Value and minInt32Value in each VehicleAreaConfig must be defined. All integers
+     * between minInt32Value and maxInt32Value must be supported.
      *
-     * maxInt32Value indicates the highest position.
-     * minInt32Value indicates the lowest position.
+     * The maxInt32Value indicates the lumbar support's highest position.
+     * The minInt32Value indicates the lumbar support's lowest position.
      *
-     * This value is not in any particular unit but in a specified range of steps.
+     * Values in between minInt32Value and maxInt32Value indicate a transition state between the
+     * lowest and highest positions.
+     *
+     * This property is not in any particular unit but in a specified range of relative positions.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -2297,18 +2679,19 @@ enum VehicleProperty {
     /**
      * Represents property for vertical movement direction and speed of seat lumbar support.
      *
-     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined. All integers
+     * The maxInt32Value and minInt32Value in each VehicleAreaConfig must be defined. All integers
      * between minInt32Value and maxInt32Value must be supported.
      *
-     * maxInt32Value in default area's VehicleAreaConfig indicates the lumbar support is moving at
-     * the fastest upward speed.
-     * minInt32Value in default area's VehicleAreaConfig indicates the lumbar support is moving at
-     * the fastest downward speed.
+     * The maxInt32Value indicates the lumbar support is moving at the fastest upward speed.
+     * The minInt32Value indicates the lumbar support is moving at the fastest downward speed.
      *
      * Larger absolute values, either positive or negative, indicate a faster movement speed. Once
-     * the seat cushion side support reaches the positional limit, the value resets to 0.
+     * the seat cushion side support reaches the positional limit, the value must reset to 0. If
+     * SEAT_LUMBAR_VERTICAL_MOVE's value is currently 0, then that means there is no movement
+     * currently occurring.
      *
-     * This value is not in any particular unit but in a specified range of steps.
+     * This property is not in any particular unit but in a specified range of relative movement
+     * speeds.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -2321,15 +2704,16 @@ enum VehicleProperty {
     /**
      * Represents property that indicates the current walk-in position of the seat.
      *
-     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined.
-     * The minInt32Value must be 0.
+     * The maxInt32Value and minInt32Value in each VehicleAreaConfig must be defined.
      * All integers between minInt32Value and maxInt32Value must be supported.
      *
-     * minInt32Value indicates the normal seat position.
-     * maxInt32Value indicates the seat is in the full walk-in position.
+     * The minInt32Value indicates the normal seat position. The minInt32Value must be 0.
+     * The maxInt32Value indicates the seat is in the full walk-in position.
      *
      * Values in between minInt32Value and maxInt32Value indicate a transition state between the
      * normal and walk-in positions.
+     *
+     * This property is not in any particular unit but in a specified range of relative positions.
      *
      * The area ID must match the seat that actually moves when the walk-in feature activates, not
      * the intended seat the passengers will sit in.
@@ -2357,16 +2741,29 @@ enum VehicleProperty {
     /**
      * Window Position
      *
-     * Min = window up / closed
-     * Max = window down / open
+     * The maxInt32Value and minInt32Value in each VehicleAreaConfig must be defined.
+     * All integers between minInt32Value and maxInt32Value must be supported.
      *
-     * For a window that may open out of plane (i.e. vent mode of sunroof) this
-     * parameter will work with negative values as follows:
-     *  Max = sunroof completely open
-     *  0 = sunroof closed.
-     *  Min = sunroof vent completely open
+     * The minInt32Value indicates the window is closed/fully open out of plane. If the window
+     * cannot open out of plane, then minInt32Value is the position of the window when fully closed
+     * and must be 0. If the window can open out of plane, the minInt32Value indicates the window
+     * is fully open in its position out of plane and will be a negative value. See the example
+     * below for a more detailed explanation.
+     * The maxInt32Value indicates the window is fully open.
      *
-     *  Note that in this mode, 0 indicates the window is closed.
+     * Values in between minInt32Value and maxInt32Value indicate a transition state between the
+     * closed/fully open out-of-plane and fully open positions.
+     *
+     * This property is not in any particular unit but in a specified range of relative positions.
+     *
+     * For example, this is how the property should work for a window that can move out of plane:
+     *  For a window that may open out of plane (i.e. vent mode of sunroof) this
+     *  parameter will work with negative values as follows:
+     *    Max = sunroof completely open
+     *    0 = sunroof closed.
+     *    Min = sunroof vent completely open
+     *
+     *    Note that in this mode, 0 indicates the window is closed.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -2379,10 +2776,20 @@ enum VehicleProperty {
     /**
      * Window Move
      *
-     * Max = Open the window as fast as possible
-     * Min = Close the window as fast as possible
-     * Magnitude denotes relative speed.  I.e. +2 is faster than +1 in closing
-     * the window.
+     * The maxInt32Value and minInt32Value in each VehicleAreaConfig must be defined. All integers
+     * between minInt32Value and maxInt32Value must be supported.
+     *
+     * The maxInt32Value indicates the window is opening in plane/closing in the out of plane
+     * direction at the fastest speed.
+     * The minInt32Value indicates the window is closing in plane/opening in the out of plane
+     * direction at the fastest speed.
+     *
+     * Larger absolute values, either positive or negative, indicate a faster movement speed. Once
+     * the window reaches the positional limit, the value must reset to 0. If WINDOW_MOVE's value is
+     * currently 0, then that means there is no movement currently occurring.
+     *
+     * This property is not in any particular unit but in a specified range of relative movement
+     * speeds.
      *
      * For a window that may open out of plane (i.e. vent mode of sunroof) this
      * parameter will work as follows:
@@ -2430,8 +2837,9 @@ enum VehicleProperty {
      * When an intermittent wiper setting is selected, this property value must be set to 0 during
      * the "pause" period of the intermittent wiping.
      *
-     * The maxInt32Value for each area ID must specify the longest wiper period. The minInt32Value
-     * must be set to 0 for each area ID.
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined. The maxInt32Value
+     * for each area ID must specify the longest wiper period. The minInt32Value must be set to 0
+     * for each area ID.
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ
@@ -2494,11 +2902,13 @@ enum VehicleProperty {
      * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined. All values between
      * minInt32Value and maxInt32Value must be supported.
      *
-     * The maxInt32Value in default area's VehicleAreaConfig indicates the steering wheel position
-     * closest to the driver. The minInt32Value in default area's VehicleAreaConfig indicates the
-     * steering wheel position furthest to the driver.
+     * The maxInt32Value indicates the steering wheel position furthest from the driver.
+     * The minInt32Value indicates the steering wheel position closest to the driver.
      *
-     * This value is not in any particular unit but in a specified range of steps.
+     * Values in between minInt32Value and maxInt32Value indicate a transition state between the
+     * closest and furthest positions.
+     *
+     * This property is not in any particular unit but in a specified range of relative positions.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -2514,13 +2924,16 @@ enum VehicleProperty {
      * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined. All values between
      * minInt32Value and maxInt32Value must be supported.
      *
-     * The maxInt32Value in default area's VehicleAreaConfig indicates the steering wheel moving
-     * towards the driver. The minInt32Value in default area's VehicleAreaConfig indicates the
-     * steering wheel moving away from the driver. Larger integers, either positive or negative,
-     * indicate a faster movement speed. Once the steering wheel reaches the positional limit, the
-     * value resets to 0.
+     * The maxInt32Value indicates the steering wheel moving away from the driver.
+     * The minInt32Value indicates the steering wheel moving towards the driver.
      *
-     * This value is not in any particular unit but in a specified range of steps.
+     * Larger integers, either positive or negative, indicate a faster movement speed. Once the
+     * steering wheel reaches the positional limit, the value must reset to 0. If
+     * STEERING_WHEEL_DEPTH_MOVE's value is currently 0, then that means there is no movement
+     * currently occurring.
+     *
+     * This property is not in any particular unit but in a specified range of relative movement
+     * speeds.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -2536,11 +2949,13 @@ enum VehicleProperty {
      * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined. All values between
      * minInt32Value and maxInt32Value must be supported.
      *
-     * The maxInt32Value in default area's VehicleAreaConfig indicates the steering wheel being in
-     * the highest position. The minInt32Value in default area's VehicleAreaConfig indicates the
-     * steering wheel being in the lowest position.
+     * The maxInt32Value indicates the steering wheel being in the highest position.
+     * The minInt32Value indicates the steering wheel being in the lowest position.
      *
-     * This value is not in any particular unit but in a specified range of steps.
+     * Values in between minInt32Value and maxInt32Value indicate a transition state between the
+     * lowest and highest positions.
+     *
+     * This property is not in any particular unit but in a specified range of relative positions.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -2556,12 +2971,16 @@ enum VehicleProperty {
      * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined. All values between
      * minInt32Value and maxInt32Value must be supported.
      *
-     * The maxInt32Value in default area's VehicleAreaConfig indicates the steering wheel moving
-     * upwards. The minInt32Value in default area's VehicleAreaConfig indicates the steering wheel
-     * moving downwards. Larger integers, either positive or negative, indicate a faster movement
-     * speed. Once the steering wheel reaches the positional limit, the value resets to 0.
+     * The maxInt32Value indicates the steering wheel moving upwards.
+     * The minInt32Value indicates the steering wheel moving downwards.
      *
-     * This value is not in any particular unit but in a specified range of steps.
+     * Larger integers, either positive or negative, indicate a faster movement speed. Once the
+     * steering wheel reaches the positional limit, the value must reset to 0. If
+     * STEERING_WHEEL_HEIGHT_MOVE's value is currently 0, then that means there is no movement
+     * currently occurring.
+     *
+     * This property is not in any particular unit but in a specified range of relative movement
+     * speeds.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -2616,14 +3035,15 @@ enum VehicleProperty {
      * Property that represents the current position of the glove box door.
      *
      * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined.
-     * The minInt32Value must be 0.
      * All integers between minInt32Value and maxInt32Value must be supported.
      *
-     * minInt32Value indicates that the glove box door is closed.
-     * maxInt32Value indicates that the glove box door is in the fully open position.
+     * The minInt32Value indicates that the glove box door is closed. The minInt32Value must be 0.
+     * The maxInt32Value indicates that the glove box door is in the fully open position.
      *
      * Values in between minInt32Value and maxInt32Value indicate a transition state between the
      * closed and fully open positions.
+     *
+     * This property is not in any particular unit but in a specified range of relative positions.
      *
      * The area ID must match the seat by which the glove box is intended to be used  (e.g. if the
      * front right dashboard has a glove box embedded in it, then the area ID should be
@@ -4386,7 +4806,7 @@ enum VehicleProperty {
     /**
      * Current target speed for Cruise Control (CC).
      *
-     * OEMs should set the minInt32Value and maxInt32Value values for this property to define the
+     * OEMs should set the minFloatValue and maxFloatValue values for this property to define the
      * min and max target speed values. These values must be non-negative.
      *
      * The maxFloatValue represents the upper bound of the target speed.
@@ -4435,6 +4855,7 @@ enum VehicleProperty {
      * Returns the measured distance in millimeters between the rear-most point of the leading
      * vehicle and the front-most point of the ACC vehicle.
      *
+     * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined.
      * The minInt32Value should be 0.
      * The maxInt32Value should be populated with the maximum range the distance sensor can support.
      * This value should be non-negative.
