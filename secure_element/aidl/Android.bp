@@ -21,6 +21,14 @@ aidl_interface {
             sdk_version: "system_current",
         },
     },
+    versions_with_info: [
+        {
+            version: "1",
+            imports: [],
+        },
+    ],
+    frozen: true,
+
 }
 
 cc_test {
