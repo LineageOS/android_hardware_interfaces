@@ -42,7 +42,7 @@ aidl_interface {
         "android/hardware/audio/common/SinkMetadata.aidl",
         "android/hardware/audio/common/SourceMetadata.aidl",
     ],
-    frozen: false,
+    frozen: true,
     imports: [
         "android.media.audio.common.types-V2",
     ],
@@ -71,6 +71,11 @@ aidl_interface {
             version: "1",
             imports: ["android.media.audio.common.types-V2"],
         },
+        {
+            version: "2",
+            imports: ["android.media.audio.common.types-V2"],
+        },
+
         // IMPORTANT: Update latest_android_hardware_audio_common every time you
         // add the latest frozen version to versions_with_info
     ],
@@ -147,9 +152,22 @@ aidl_interface {
         },
     },
     versions_with_info: [
+        {
+            version: "1",
+            imports: [
+                "android.hardware.common-V2",
+                "android.hardware.common.fmq-V1",
+                "android.hardware.audio.common-V2",
+                "android.hardware.audio.core.sounddose-V1",
+                "android.hardware.audio.effect-V1",
+                "android.media.audio.common.types-V2",
+            ],
+        },
+
         // IMPORTANT: Update latest_android_hardware_audio_core every time you
         // add the latest frozen version to versions_with_info
     ],
+    frozen: true,
 }
 
 // Note: This should always be one version ahead of the last frozen version
@@ -194,9 +212,15 @@ aidl_interface {
         },
     },
     versions_with_info: [
+        {
+            version: "1",
+            imports: ["android.media.audio.common.types-V2"],
+        },
+
         // IMPORTANT: Update latest_android_hardware_audio_core_sounddose every time you
         // add the latest frozen version to versions_with_info
     ],
+    frozen: true,
 }
 
 // Note: This should always be one version ahead of the last frozen version
@@ -268,6 +292,19 @@ aidl_interface {
             sdk_version: "module_current",
         },
     },
+    versions_with_info: [
+        {
+            version: "1",
+            imports: [
+                "android.hardware.common-V2",
+                "android.hardware.common.fmq-V1",
+                "android.hardware.audio.common-V2",
+                "android.media.audio.common.types-V2",
+            ],
+        },
+    ],
+    frozen: true,
+
 }
 
 latest_android_hardware_audio_effect = "android.hardware.audio.effect-V1"
