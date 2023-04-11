@@ -25,4 +25,16 @@ aidl_interface {
             enabled: false,
         },
     },
+    versions_with_info: [
+        {
+            version: "1",
+            imports: [
+                "android.hardware.common-V2",
+                "android.media.audio.common.types-V1",
+                "android.hardware.common.fmq-V1",
+            ],
+        },
+    ],
+    frozen: true,
+
 }
