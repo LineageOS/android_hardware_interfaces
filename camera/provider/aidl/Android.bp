@@ -17,7 +17,7 @@ aidl_interface {
         "android.hardware.camera.device-V2",
         "android.hardware.camera.common-V1",
     ],
-    frozen: false,
+    frozen: true,
     stability: "vintf",
     backend: {
         java: {
@@ -35,6 +35,14 @@ aidl_interface {
                 "android.hardware.camera.common-V1",
             ],
         },
+        {
+            version: "2",
+            imports: [
+                "android.hardware.camera.device-V2",
+                "android.hardware.camera.common-V1",
+            ],
+        },
+
     ],
 
 }

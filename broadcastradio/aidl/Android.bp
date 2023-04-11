@@ -37,4 +37,12 @@ aidl_interface {
             min_sdk_version: "Tiramisu",
         },
     },
+    versions_with_info: [
+        {
+            version: "1",
+            imports: [],
+        },
+    ],
+    frozen: true,
+
 }
