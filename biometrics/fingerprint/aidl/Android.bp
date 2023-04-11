@@ -41,5 +41,14 @@ aidl_interface {
                 "android.hardware.keymaster-V3",
             ],
         },
+        {
+            version: "3",
+            imports: [
+                "android.hardware.biometrics.common-V3",
+                "android.hardware.keymaster-V4",
+            ],
+        },
+
     ],
+    frozen: true,
 }

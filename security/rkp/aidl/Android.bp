@@ -37,5 +37,11 @@ aidl_interface {
         {
             version: "2",
         },
+        {
+            version: "3",
+            imports: [],
+        },
+
     ],
+    frozen: true,
 }
