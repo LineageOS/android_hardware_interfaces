@@ -53,6 +53,16 @@ class GrpcVehicleProxyServer : public proto::VehicleServer::Service {
                              const proto::VehiclePropValueRequests* requests,
                              proto::GetValueResults* results) override;
 
+    ::grpc::Status UpdateSampleRate(::grpc::ServerContext* context,
+                                    const proto::UpdateSampleRateRequest* request,
+                                    proto::VehicleHalCallStatus* status) override;
+
+    ::grpc::Status CheckHealth(::grpc::ServerContext* context, const ::google::protobuf::Empty*,
+                               proto::VehicleHalCallStatus* status) override;
+
+    ::grpc::Status Dump(::grpc::ServerContext* context, const proto::DumpOptions* options,
+                        proto::DumpResult* result) override;
+
     ::grpc::Status StartPropertyValuesStream(
             ::grpc::ServerContext* context, const ::google::protobuf::Empty* request,
             ::grpc::ServerWriter<proto::VehiclePropValues>* stream) override;

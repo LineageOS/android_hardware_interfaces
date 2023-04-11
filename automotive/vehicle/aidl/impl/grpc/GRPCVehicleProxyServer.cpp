@@ -155,6 +155,33 @@ GrpcVehicleProxyServer::GrpcVehicleProxyServer(std::string serverAddr,
     return ::grpc::Status::OK;
 }
 
+::grpc::Status GrpcVehicleProxyServer::UpdateSampleRate(
+        ::grpc::ServerContext* context, const proto::UpdateSampleRateRequest* request,
+        proto::VehicleHalCallStatus* status) {
+    const auto status_code = mHardware->updateSampleRate(request->prop(), request->area_id(),
+                                                         request->sample_rate());
+    status->set_status_code(static_cast<proto::StatusCode>(status_code));
+    return ::grpc::Status::OK;
+}
+
+::grpc::Status GrpcVehicleProxyServer::CheckHealth(::grpc::ServerContext* context,
+                                                   const ::google::protobuf::Empty*,
+                                                   proto::VehicleHalCallStatus* status) {
+    status->set_status_code(static_cast<proto::StatusCode>(mHardware->checkHealth()));
+    return ::grpc::Status::OK;
+}
+
+::grpc::Status GrpcVehicleProxyServer::Dump(::grpc::ServerContext* context,
+                                            const proto::DumpOptions* options,
+                                            proto::DumpResult* result) {
+    std::vector<std::string> dumpOptionStrings(options->options().begin(),
+                                               options->options().end());
+    auto dumpResult = mHardware->dump(dumpOptionStrings);
+    result->set_caller_should_dump_state(dumpResult.callerShouldDumpState);
+    result->set_buffer(dumpResult.buffer);
+    return ::grpc::Status::OK;
+}
+
 ::grpc::Status GrpcVehicleProxyServer::StartPropertyValuesStream(
         ::grpc::ServerContext* context, const ::google::protobuf::Empty* request,
         ::grpc::ServerWriter<proto::VehiclePropValues>* stream) {
