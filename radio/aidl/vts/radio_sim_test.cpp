@@ -765,6 +765,14 @@ TEST_P(RadioSimTest, iccCloseLogicalChannel) {
  * Test IRadioSim.iccCloseLogicalChannelWithSessionInfo() for the response returned.
  */
 TEST_P(RadioSimTest, iccCloseLogicalChannelWithSessionInfo) {
+    int32_t aidl_version;
+    ndk::ScopedAStatus aidl_status = radio_sim->getInterfaceVersion(&aidl_version);
+    ASSERT_OK(aidl_status);
+    if (aidl_version < 2) {
+        ALOGI("Skipped the test since"
+              " iccCloseLogicalChannelWithSessionInfo is not supported on version < 2");
+        GTEST_SKIP();
+    }
     LOG(DEBUG) << "iccCloseLogicalChannelWithSessionInfo";
     serial = GetRandomSerialNumber();
     SessionInfo info;
