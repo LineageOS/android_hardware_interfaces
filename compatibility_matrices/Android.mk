@@ -103,6 +103,7 @@ my_system_matrix_deps := \
     framework_compatibility_matrix.6.xml \
     framework_compatibility_matrix.7.xml \
     framework_compatibility_matrix.8.xml \
+    framework_compatibility_matrix.9.xml \
     framework_compatibility_matrix.device.xml \
 
 my_framework_matrix_deps += \
