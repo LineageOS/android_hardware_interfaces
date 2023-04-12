@@ -85,6 +85,14 @@
         </interface>
     </hal>
     <hal format="aidl" optional="true">
+        <name>android.hardware.macsec</name>
+        <version>1</version>
+        <interface>
+            <name>IMacsecPskPlugin</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="aidl" optional="true">
         <name>android.hardware.automotive.occupant_awareness</name>
         <version>1</version>
         <interface>
