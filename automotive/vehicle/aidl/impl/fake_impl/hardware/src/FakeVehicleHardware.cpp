@@ -52,6 +52,7 @@ namespace fake {
 
 namespace {
 
+using ::aidl::android::hardware::automotive::vehicle::ErrorState;
 using ::aidl::android::hardware::automotive::vehicle::GetValueRequest;
 using ::aidl::android::hardware::automotive::vehicle::GetValueResult;
 using ::aidl::android::hardware::automotive::vehicle::RawPropValues;
@@ -107,6 +108,74 @@ const std::unordered_set<std::string> SET_PROP_OPTIONS = {
         // Timestamp in int64.
         "-t"};
 
+// ADAS _ENABLED property to list of ADAS state properties using ErrorState enum.
+const std::unordered_map<int32_t, std::vector<int32_t>> mAdasEnabledPropToAdasPropWithErrorState = {
+        // AEB
+        {
+                toInt(VehicleProperty::AUTOMATIC_EMERGENCY_BRAKING_ENABLED),
+                {
+                        toInt(VehicleProperty::AUTOMATIC_EMERGENCY_BRAKING_STATE),
+                },
+        },
+        // FCW
+        {
+                toInt(VehicleProperty::FORWARD_COLLISION_WARNING_ENABLED),
+                {
+                        toInt(VehicleProperty::FORWARD_COLLISION_WARNING_STATE),
+                },
+        },
+        // BSW
+        {
+                toInt(VehicleProperty::BLIND_SPOT_WARNING_ENABLED),
+                {
+                        toInt(VehicleProperty::BLIND_SPOT_WARNING_STATE),
+                },
+        },
+        // LDW
+        {
+                toInt(VehicleProperty::LANE_DEPARTURE_WARNING_ENABLED),
+                {
+                        toInt(VehicleProperty::LANE_DEPARTURE_WARNING_STATE),
+                },
+        },
+        // LKA
+        {
+                toInt(VehicleProperty::LANE_KEEP_ASSIST_ENABLED),
+                {
+                        toInt(VehicleProperty::LANE_KEEP_ASSIST_STATE),
+                },
+        },
+        // LCA
+        {
+                toInt(VehicleProperty::LANE_CENTERING_ASSIST_ENABLED),
+                {
+                        toInt(VehicleProperty::LANE_CENTERING_ASSIST_STATE),
+                },
+        },
+        // ELKA
+        {
+                toInt(VehicleProperty::EMERGENCY_LANE_KEEP_ASSIST_ENABLED),
+                {
+                        toInt(VehicleProperty::EMERGENCY_LANE_KEEP_ASSIST_STATE),
+                },
+        },
+        // CC
+        {
+                toInt(VehicleProperty::CRUISE_CONTROL_ENABLED),
+                {
+                        toInt(VehicleProperty::CRUISE_CONTROL_TYPE),
+                        toInt(VehicleProperty::CRUISE_CONTROL_STATE),
+                },
+        },
+        // HOD
+        {
+                toInt(VehicleProperty::HANDS_ON_DETECTION_ENABLED),
+                {
+                        toInt(VehicleProperty::HANDS_ON_DETECTION_DRIVER_STATE),
+                        toInt(VehicleProperty::HANDS_ON_DETECTION_WARNING),
+                },
+        },
+};
 }  // namespace
 
 void FakeVehicleHardware::storePropInitialValue(const ConfigDeclaration& config) {
@@ -235,6 +304,18 @@ VehiclePropValuePool::RecyclableType FakeVehicleHardware::createApPowerStateReq(
     req->value.int32Values[0] = toInt(state);
     // Param = 0.
     req->value.int32Values[1] = 0;
+    return req;
+}
+
+VehiclePropValuePool::RecyclableType FakeVehicleHardware::createAdasStateReq(int32_t propertyId,
+                                                                             int32_t areaId,
+                                                                             int32_t state) {
+    auto req = mValuePool->obtain(VehiclePropertyType::INT32);
+    req->prop = propertyId;
+    req->areaId = areaId;
+    req->timestamp = elapsedRealtimeNano();
+    req->status = VehiclePropertyStatus::AVAILABLE;
+    req->value.int32Values[0] = state;
     return req;
 }
 
@@ -413,6 +494,41 @@ bool FakeVehicleHardware::isHvacPropAndHvacNotAvailable(int32_t propId, int32_t 
     return false;
 }
 
+VhalResult<void> FakeVehicleHardware::isAdasPropertyAvailable(int32_t adasStatePropertyId) const {
+    auto adasStateResult = mServerSidePropStore->readValue(adasStatePropertyId);
+    if (!adasStateResult.ok()) {
+        ALOGW("Failed to get ADAS ENABLED property 0x%x, error: %s", adasStatePropertyId,
+              getErrorMsg(adasStateResult).c_str());
+        return {};
+    }
+
+    if (adasStateResult.value()->value.int32Values.size() == 1 &&
+        adasStateResult.value()->value.int32Values[0] < 0) {
+        auto errorState = adasStateResult.value()->value.int32Values[0];
+        switch (errorState) {
+            case toInt(ErrorState::NOT_AVAILABLE_DISABLED):
+                return StatusError(StatusCode::NOT_AVAILABLE_DISABLED)
+                       << "ADAS feature is disabled.";
+            case toInt(ErrorState::NOT_AVAILABLE_SPEED_LOW):
+                return StatusError(StatusCode::NOT_AVAILABLE_SPEED_LOW)
+                       << "ADAS feature is disabled because the vehicle speed is too low.";
+            case toInt(ErrorState::NOT_AVAILABLE_SPEED_HIGH):
+                return StatusError(StatusCode::NOT_AVAILABLE_SPEED_HIGH)
+                       << "ADAS feature is disabled because the vehicle speed is too high.";
+            case toInt(ErrorState::NOT_AVAILABLE_POOR_VISIBILITY):
+                return StatusError(StatusCode::NOT_AVAILABLE_POOR_VISIBILITY)
+                       << "ADAS feature is disabled because the visibility is too poor.";
+            case toInt(ErrorState::NOT_AVAILABLE_SAFETY):
+                return StatusError(StatusCode::NOT_AVAILABLE_SAFETY)
+                       << "ADAS feature is disabled because of safety reasons.";
+            default:
+                return StatusError(StatusCode::NOT_AVAILABLE) << "ADAS feature is not available.";
+        }
+    }
+
+    return {};
+}
+
 VhalResult<void> FakeVehicleHardware::setUserHalProp(const VehiclePropValue& value) {
     auto result = mFakeUserHal->onSetProperty(value);
     if (!result.ok()) {
@@ -495,6 +611,19 @@ FakeVehicleHardware::ValueResultType FakeVehicleHardware::maybeGetSpecialValue(
         case VENDOR_PROPERTY_ID:
             *isSpecialValue = true;
             return StatusError((StatusCode)VENDOR_ERROR_CODE);
+        case toInt(VehicleProperty::CRUISE_CONTROL_TARGET_SPEED):
+            [[fallthrough]];
+        case toInt(VehicleProperty::ADAPTIVE_CRUISE_CONTROL_TARGET_TIME_GAP):
+            [[fallthrough]];
+        case toInt(VehicleProperty::ADAPTIVE_CRUISE_CONTROL_LEAD_VEHICLE_MEASURED_DISTANCE): {
+            auto isAdasPropertyAvailableResult =
+                    isAdasPropertyAvailable(toInt(VehicleProperty::CRUISE_CONTROL_STATE));
+            if (!isAdasPropertyAvailableResult.ok()) {
+                *isSpecialValue = true;
+                return isAdasPropertyAvailableResult.error();
+            }
+            return nullptr;
+        }
         default:
             // Do nothing.
             break;
@@ -542,6 +671,25 @@ void FakeVehicleHardware::sendHvacPropertiesCurrentValues(int32_t areaId) {
     }
 }
 
+void FakeVehicleHardware::sendAdasPropertiesState(int32_t propertyId, int32_t state) {
+    auto& adasDependentPropIds = mAdasEnabledPropToAdasPropWithErrorState.find(propertyId)->second;
+    for (auto dependentPropId : adasDependentPropIds) {
+        auto dependentPropConfigResult = mServerSidePropStore->getConfig(dependentPropId);
+        if (!dependentPropConfigResult.ok()) {
+            ALOGW("Failed to get config for ADAS property 0x%x, error: %s", dependentPropId,
+                  getErrorMsg(dependentPropConfigResult).c_str());
+            continue;
+        }
+        auto& dependentPropConfig = dependentPropConfigResult.value();
+        for (auto& areaConfig : dependentPropConfig->areaConfigs) {
+            auto propValue = createAdasStateReq(dependentPropId, areaConfig.areaId, state);
+            // This will trigger a property change event for the current ADAS property value.
+            mServerSidePropStore->writeValue(std::move(propValue), /*updateStatus=*/true,
+                                             VehiclePropertyStore::EventMode::ALWAYS);
+        }
+    }
+}
+
 VhalResult<void> FakeVehicleHardware::maybeSetSpecialValue(const VehiclePropValue& value,
                                                            bool* isSpecialValue) {
     *isSpecialValue = false;
@@ -565,6 +713,16 @@ VhalResult<void> FakeVehicleHardware::maybeSetSpecialValue(const VehiclePropValu
         return StatusError(StatusCode::NOT_AVAILABLE_DISABLED) << "hvac not available";
     }
 
+    if (mAdasEnabledPropToAdasPropWithErrorState.count(propId) &&
+        value.value.int32Values.size() == 1) {
+        if (value.value.int32Values[0] == 1) {
+            // Set default state to 1 when ADAS feature is enabled.
+            sendAdasPropertiesState(propId, /* state = */ 1);
+        } else {
+            sendAdasPropertiesState(propId, toInt(ErrorState::NOT_AVAILABLE_DISABLED));
+        }
+    }
+
     switch (propId) {
         case toInt(VehicleProperty::AP_POWER_STATE_REPORT):
             *isSpecialValue = true;
@@ -583,6 +741,24 @@ VhalResult<void> FakeVehicleHardware::maybeSetSpecialValue(const VehiclePropValu
         case toInt(VehicleProperty::HVAC_TEMPERATURE_VALUE_SUGGESTION):
             *isSpecialValue = true;
             return setHvacTemperatureValueSuggestion(value);
+        case toInt(VehicleProperty::LANE_CENTERING_ASSIST_COMMAND): {
+            auto isAdasPropertyAvailableResult =
+                    isAdasPropertyAvailable(toInt(VehicleProperty::LANE_CENTERING_ASSIST_STATE));
+            if (!isAdasPropertyAvailableResult.ok()) {
+                *isSpecialValue = true;
+            }
+            return isAdasPropertyAvailableResult;
+        }
+        case toInt(VehicleProperty::CRUISE_CONTROL_COMMAND):
+            [[fallthrough]];
+        case toInt(VehicleProperty::ADAPTIVE_CRUISE_CONTROL_TARGET_TIME_GAP): {
+            auto isAdasPropertyAvailableResult =
+                    isAdasPropertyAvailable(toInt(VehicleProperty::CRUISE_CONTROL_STATE));
+            if (!isAdasPropertyAvailableResult.ok()) {
+                *isSpecialValue = true;
+            }
+            return isAdasPropertyAvailableResult;
+        }
 
 #ifdef ENABLE_VEHICLE_HAL_TEST_PROPERTIES
         case toInt(VehicleProperty::CLUSTER_REPORT_STATE):
