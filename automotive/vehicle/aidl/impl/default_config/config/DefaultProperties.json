@@ -3705,7 +3705,19 @@
             },
             "areas": [
                 {
-                    "areaId": "Constants::MIRROR_DRIVER_LEFT_RIGHT",
+                    "areaId": "VehicleAreaMirror::DRIVER_LEFT",
+                    "supportedEnumValues": [
+                        "ErrorState::NOT_AVAILABLE_SAFETY",
+                        "ErrorState::NOT_AVAILABLE_POOR_VISIBILITY",
+                        "ErrorState::NOT_AVAILABLE_SPEED_HIGH",
+                        "ErrorState::NOT_AVAILABLE_SPEED_LOW",
+                        "ErrorState::NOT_AVAILABLE_DISABLED",
+                        "BlindSpotWarningState::NO_WARNING",
+                        "BlindSpotWarningState::WARNING"
+                    ]
+                },
+                {
+                    "areaId": "VehicleAreaMirror::DRIVER_RIGHT",
                     "supportedEnumValues": [
                         "ErrorState::NOT_AVAILABLE_SAFETY",
                         "ErrorState::NOT_AVAILABLE_POOR_VISIBILITY",
