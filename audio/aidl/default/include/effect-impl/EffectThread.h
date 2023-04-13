@@ -16,10 +16,12 @@
 
 #pragma once
 #include <atomic>
+#include <memory>
 #include <string>
 #include <thread>
 
 #include <android-base/thread_annotations.h>
+#include <fmq/EventFlag.h>
 #include <system/thread_defs.h>
 
 #include "effect-impl/EffectContext.h"
@@ -35,7 +37,7 @@ class EffectThread {
 
     // called by effect implementation.
     RetCode createThread(std::shared_ptr<EffectContext> context, const std::string& name,
-                         int priority = ANDROID_PRIORITY_URGENT_AUDIO, int sleepUs = kSleepTimeUs);
+                         int priority = ANDROID_PRIORITY_URGENT_AUDIO);
     RetCode destroyThread();
     RetCode startThread();
     RetCode stopThread();
@@ -73,17 +75,23 @@ class EffectThread {
 
   private:
     static constexpr int kMaxTaskNameLen = 15;
-    static constexpr int kSleepTimeUs = 2000;  // in micro-second
+
     std::mutex mThreadMutex;
     std::condition_variable mCv;
-    bool mExit GUARDED_BY(mThreadMutex) = false;
     bool mStop GUARDED_BY(mThreadMutex) = true;
+    bool mExit GUARDED_BY(mThreadMutex) = false;
     std::shared_ptr<EffectContext> mThreadContext GUARDED_BY(mThreadMutex);
+
+    struct EventFlagDeleter {
+        void operator()(::android::hardware::EventFlag* flag) const {
+            if (flag) {
+                ::android::hardware::EventFlag::deleteEventFlag(&flag);
+            }
+        }
+    };
+    std::unique_ptr<::android::hardware::EventFlag, EventFlagDeleter> mEfGroup;
     std::thread mThread;
     int mPriority;
-    int mSleepTimeUs = kSleepTimeUs;  // sleep time in micro-second
     std::string mName;
-
-    RetCode handleStartStop(bool stop);
 };
 }  // namespace aidl::android::hardware::audio::effect
