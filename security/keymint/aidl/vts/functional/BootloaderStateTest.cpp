@@ -79,8 +79,6 @@ TEST_P(BootloaderStateTest, IsUnlocked) {
     ASSERT_FALSE(attestedBootloaderState) << "This test runs as root. Bootloader must be unlocked.";
 }
 
-INSTANTIATE_TEST_SUITE_P(PerInstance, BootloaderStateTest,
-                         testing::ValuesIn(getAidlHalInstanceNames(IKeyMintDevice::descriptor)),
-                         ::android::PrintInstanceNameToString);
+INSTANTIATE_KEYMINT_AIDL_TEST(BootloaderStateTest);
 
 }  // namespace aidl::android::hardware::security::keymint::test
