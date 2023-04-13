@@ -54,6 +54,7 @@ class EffectContext {
         size_t inBufferSizeInFloat = input.frameCount * mInputFrameSize / sizeof(float);
         size_t outBufferSizeInFloat = output.frameCount * mOutputFrameSize / sizeof(float);
 
+        // only status FMQ use the EventFlag
         mStatusMQ = std::make_shared<StatusMQ>(statusDepth, true /*configureEventFlagWord*/);
         mInputMQ = std::make_shared<DataMQ>(inBufferSizeInFloat);
         mOutputMQ = std::make_shared<DataMQ>(outBufferSizeInFloat);
@@ -127,7 +128,7 @@ class EffectContext {
         return RetCode::SUCCESS;
     }
     virtual Parameter::Common getCommon() {
-        LOG(INFO) << __func__ << mCommon.toString();
+        LOG(DEBUG) << __func__ << mCommon.toString();
         return mCommon;
     }
 
