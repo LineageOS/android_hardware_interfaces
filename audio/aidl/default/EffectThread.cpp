@@ -14,13 +14,18 @@
  * limitations under the License.
  */
 
+#include <cstddef>
 #include <memory>
+
 #define LOG_TAG "AHAL_EffectThread"
 #include <android-base/logging.h>
 #include <pthread.h>
 #include <sys/resource.h>
 
 #include "effect-impl/EffectThread.h"
+#include "effect-impl/EffectTypes.h"
+
+using ::android::hardware::EventFlag;
 
 namespace aidl::android::hardware::audio::effect {
 
@@ -31,23 +36,35 @@ EffectThread::EffectThread() {
 EffectThread::~EffectThread() {
     destroyThread();
     LOG(DEBUG) << __func__ << " done";
-};
+}
 
 RetCode EffectThread::createThread(std::shared_ptr<EffectContext> context, const std::string& name,
-                                   int priority, int sleepUs /* kSleepTimeUs */) {
+                                   int priority) {
     if (mThread.joinable()) {
-        LOG(WARNING) << "-" << mName << "-" << __func__ << " thread already created, no-op";
+        LOG(WARNING) << mName << __func__ << " thread already created, no-op";
         return RetCode::SUCCESS;
     }
     mName = name;
     mPriority = priority;
-    mSleepTimeUs = sleepUs;
     {
         std::lock_guard lg(mThreadMutex);
         mThreadContext = std::move(context);
+        auto statusMQ = mThreadContext->getStatusFmq();
+        EventFlag* efGroup = nullptr;
+        ::android::status_t status =
+                EventFlag::createEventFlag(statusMQ->getEventFlagWord(), &efGroup);
+        if (status != ::android::OK || !efGroup) {
+            LOG(ERROR) << mName << __func__ << " create EventFlagGroup failed " << status
+                       << " efGroup " << efGroup;
+            return RetCode::ERROR_THREAD;
+        }
+        mEfGroup.reset(efGroup);
+        // kickoff and wait for commands (CommandId::START/STOP) or IEffect.close from client
+        mEfGroup->wake(kEventFlagNotEmpty);
     }
+
     mThread = std::thread(&EffectThread::threadLoop, this);
-    LOG(DEBUG) << "-" << mName << "-" << __func__ << " priority " << mPriority << " done";
+    LOG(DEBUG) << mName << __func__ << " priority " << mPriority << " done";
     return RetCode::SUCCESS;
 }
 
@@ -66,37 +83,31 @@ RetCode EffectThread::destroyThread() {
         std::lock_guard lg(mThreadMutex);
         mThreadContext.reset();
     }
-    LOG(DEBUG) << "-" << mName << "-" << __func__ << " done";
+    LOG(DEBUG) << mName << __func__;
     return RetCode::SUCCESS;
 }
 
 RetCode EffectThread::startThread() {
-    return handleStartStop(false /* stop */);
+    {
+        std::lock_guard lg(mThreadMutex);
+        mStop = false;
+        mCv.notify_one();
+    }
+
+    mEfGroup->wake(kEventFlagNotEmpty);
+    LOG(DEBUG) << mName << __func__;
+    return RetCode::SUCCESS;
 }
 
 RetCode EffectThread::stopThread() {
-    return handleStartStop(true /* stop */);
-}
-
-RetCode EffectThread::handleStartStop(bool stop) {
-    if (!mThread.joinable()) {
-        LOG(ERROR) << "-" << mName << "-" << __func__ << ": "
-                   << " thread already destroyed";
-        return RetCode::ERROR_THREAD;
-    }
-
     {
         std::lock_guard lg(mThreadMutex);
-        if (stop == mStop) {
-            LOG(WARNING) << "-" << mName << "-" << __func__ << ": "
-                         << " already " << (stop ? "stop" : "start");
-            return RetCode::SUCCESS;
-        }
-        mStop = stop;
+        mStop = true;
+        mCv.notify_one();
     }
 
-    mCv.notify_one();
-    LOG(DEBUG) << ": " << mName << (stop ? " stop done" : " start done");
+    mEfGroup->wake(kEventFlagNotEmpty);
+    LOG(DEBUG) << mName << __func__;
     return RetCode::SUCCESS;
 }
 
@@ -104,42 +115,42 @@ void EffectThread::threadLoop() {
     pthread_setname_np(pthread_self(), mName.substr(0, kMaxTaskNameLen - 1).c_str());
     setpriority(PRIO_PROCESS, 0, mPriority);
     while (true) {
-        std::unique_lock l(mThreadMutex);
-        ::android::base::ScopedLockAssertion lock_assertion(mThreadMutex);
-        mCv.wait(l, [&]() REQUIRES(mThreadMutex) { return mExit || !mStop; });
-        if (mExit) {
-            LOG(WARNING) << __func__ << " EXIT!";
-            return;
+        /**
+         * wait for the EventFlag without lock, it's ok because the mEfGroup pointer will not change
+         * in the life cycle of workerThread (threadLoop).
+         */
+        uint32_t efState = 0;
+        mEfGroup->wait(kEventFlagNotEmpty, &efState);
+
+        {
+            std::unique_lock l(mThreadMutex);
+            ::android::base::ScopedLockAssertion lock_assertion(mThreadMutex);
+            mCv.wait(l, [&]() REQUIRES(mThreadMutex) { return mExit || !mStop; });
+            if (mExit) {
+                LOG(INFO) << __func__ << " EXIT!";
+                return;
+            }
+            process_l();
         }
-        process_l();
     }
 }
 
 void EffectThread::process_l() {
     RETURN_VALUE_IF(!mThreadContext, void(), "nullContext");
-    std::shared_ptr<EffectContext::StatusMQ> statusMQ = mThreadContext->getStatusFmq();
-    std::shared_ptr<EffectContext::DataMQ> inputMQ = mThreadContext->getInputDataFmq();
-    std::shared_ptr<EffectContext::DataMQ> outputMQ = mThreadContext->getOutputDataFmq();
+
+    auto statusMQ = mThreadContext->getStatusFmq();
+    auto inputMQ = mThreadContext->getInputDataFmq();
+    auto outputMQ = mThreadContext->getOutputDataFmq();
     auto buffer = mThreadContext->getWorkBuffer();
 
-    // Only this worker will read from input data MQ and write to output data MQ.
-    auto readSamples = inputMQ->availableToRead(), writeSamples = outputMQ->availableToWrite();
-    if (readSamples && writeSamples) {
-        auto processSamples = std::min(readSamples, writeSamples);
-        LOG(DEBUG) << "-" << mName << "-" << __func__ << ": "
-                   << " available to read " << readSamples << " available to write " << writeSamples
-                   << " process " << processSamples;
-
+    auto processSamples = inputMQ->availableToRead();
+    if (processSamples) {
         inputMQ->read(buffer, processSamples);
-
         IEffect::Status status = effectProcessImpl(buffer, buffer, processSamples);
         outputMQ->write(buffer, status.fmqProduced);
         statusMQ->writeBlocking(&status, 1);
-        LOG(DEBUG) << "-" << mName << "-" << __func__ << ": "
-                   << " done processing, effect consumed " << status.fmqConsumed << " produced "
-                   << status.fmqProduced;
-    } else {
-        usleep(mSleepTimeUs);
+        LOG(DEBUG) << mName << __func__ << ": done processing, effect consumed "
+                   << status.fmqConsumed << " produced " << status.fmqProduced;
     }
 }
 
