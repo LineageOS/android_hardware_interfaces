@@ -41,6 +41,7 @@ using namespace android;
 using aidl::android::hardware::audio::effect::CommandId;
 using aidl::android::hardware::audio::effect::Descriptor;
 using aidl::android::hardware::audio::effect::IEffect;
+using aidl::android::hardware::audio::effect::kEventFlagNotEmpty;
 using aidl::android::hardware::audio::effect::Parameter;
 using aidl::android::hardware::audio::effect::Range;
 using aidl::android::hardware::audio::effect::State;
@@ -50,6 +51,7 @@ using aidl::android::media::audio::common::AudioFormatDescription;
 using aidl::android::media::audio::common::AudioFormatType;
 using aidl::android::media::audio::common::AudioUuid;
 using aidl::android::media::audio::common::PcmType;
+using ::android::hardware::EventFlag;
 
 const AudioFormatDescription kDefaultFormatDescription = {
         .type = AudioFormatType::PCM, .pcm = PcmType::FLOAT_32_BIT, .encoding = ""};
@@ -145,12 +147,20 @@ class EffectHelper {
         buffer.resize(floatsToWrite);
         std::fill(buffer.begin(), buffer.end(), 0x5a);
     }
-    static void writeToFmq(std::unique_ptr<DataMQ>& mq, const std::vector<float>& buffer) {
-        const size_t available = mq->availableToWrite();
+    static void writeToFmq(std::unique_ptr<StatusMQ>& statusMq, std::unique_ptr<DataMQ>& dataMq,
+                           const std::vector<float>& buffer) {
+        const size_t available = dataMq->availableToWrite();
         ASSERT_NE(0Ul, available);
         auto bufferFloats = buffer.size();
         auto floatsToWrite = std::min(available, bufferFloats);
-        ASSERT_TRUE(mq->write(buffer.data(), floatsToWrite));
+        ASSERT_TRUE(dataMq->write(buffer.data(), floatsToWrite));
+
+        EventFlag* efGroup;
+        ASSERT_EQ(::android::OK,
+                  EventFlag::createEventFlag(statusMq->getEventFlagWord(), &efGroup));
+        ASSERT_NE(nullptr, efGroup);
+        efGroup->wake(kEventFlagNotEmpty);
+        ASSERT_EQ(::android::OK, EventFlag::deleteEventFlag(&efGroup));
     }
     static void readFromFmq(std::unique_ptr<StatusMQ>& statusMq, size_t statusNum,
                             std::unique_ptr<DataMQ>& dataMq, size_t expectFloats,
