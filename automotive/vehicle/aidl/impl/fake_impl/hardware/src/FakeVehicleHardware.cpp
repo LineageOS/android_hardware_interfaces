@@ -471,7 +471,7 @@ FakeVehicleHardware::ValueResultType FakeVehicleHardware::maybeGetSpecialValue(
 
     if (isHvacPropAndHvacNotAvailable(propId, value.areaId)) {
         *isSpecialValue = true;
-        return StatusError(StatusCode::NOT_AVAILABLE) << "hvac not available";
+        return StatusError(StatusCode::NOT_AVAILABLE_DISABLED) << "hvac not available";
     }
 
     switch (propId) {
@@ -562,7 +562,7 @@ VhalResult<void> FakeVehicleHardware::maybeSetSpecialValue(const VehiclePropValu
 
     if (isHvacPropAndHvacNotAvailable(propId, value.areaId)) {
         *isSpecialValue = true;
-        return StatusError(StatusCode::NOT_AVAILABLE) << "hvac not available";
+        return StatusError(StatusCode::NOT_AVAILABLE_DISABLED) << "hvac not available";
     }
 
     switch (propId) {
