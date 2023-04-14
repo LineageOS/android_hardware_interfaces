@@ -83,6 +83,7 @@ using ::testing::ContainerEq;
 using ::testing::ContainsRegex;
 using ::testing::Eq;
 using ::testing::HasSubstr;
+using ::testing::IsSubsetOf;
 using ::testing::WhenSortedBy;
 
 using std::chrono::milliseconds;
@@ -1066,7 +1067,7 @@ TEST_P(FakeVehicleHardwareSpecialValuesTest, testSetSpecialProperties) {
     // Some of the updated properties might be the same as default config, thus not causing
     // a property change event. So the changed properties should be a subset of all the updated
     // properties.
-    ASSERT_THAT(getChangedProperties(), WhenSortedBy(mPropValueCmp, Eq(gotValues)));
+    ASSERT_THAT(getChangedProperties(), IsSubsetOf(gotValues));
 }
 
 INSTANTIATE_TEST_SUITE_P(
