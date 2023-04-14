@@ -176,7 +176,10 @@ void BluetoothHci::reset() {
   mFdWatcher.WatchFdForNonBlockingReads(mFd,
                                         [this](int) { mH4->OnDataReady(); });
 
-  send(PacketType::COMMAND, reset);
+  ndk::ScopedAStatus result = send(PacketType::COMMAND, reset);
+  if (!result.isOk()) {
+    ALOGE("Error sending reset command");
+  }
   auto status = resetFuture.wait_for(std::chrono::seconds(1));
   mFdWatcher.StopWatchingFileDescriptors();
   if (status == std::future_status::ready) {
@@ -303,30 +306,35 @@ ndk::ScopedAStatus BluetoothHci::close() {
 
 ndk::ScopedAStatus BluetoothHci::sendHciCommand(
     const std::vector<uint8_t>& packet) {
-  send(PacketType::COMMAND, packet);
-  return ndk::ScopedAStatus::ok();
+  return send(PacketType::COMMAND, packet);
 }
 
 ndk::ScopedAStatus BluetoothHci::sendAclData(
     const std::vector<uint8_t>& packet) {
-  send(PacketType::ACL_DATA, packet);
-  return ndk::ScopedAStatus::ok();
+  return send(PacketType::ACL_DATA, packet);
 }
 
 ndk::ScopedAStatus BluetoothHci::sendScoData(
     const std::vector<uint8_t>& packet) {
-  send(PacketType::SCO_DATA, packet);
-  return ndk::ScopedAStatus::ok();
+  return send(PacketType::SCO_DATA, packet);
 }
 
 ndk::ScopedAStatus BluetoothHci::sendIsoData(
     const std::vector<uint8_t>& packet) {
-  send(PacketType::ISO_DATA, packet);
-  return ndk::ScopedAStatus::ok();
+  return send(PacketType::ISO_DATA, packet);
 }
 
-void BluetoothHci::send(PacketType type, const std::vector<uint8_t>& v) {
+ndk::ScopedAStatus BluetoothHci::send(PacketType type,
+    const std::vector<uint8_t>& v) {
+  if (mH4 == nullptr) {
+    return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
+  }
+  if (v.empty()) {
+    ALOGE("Packet is empty, no data was found to be sent");
+    return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+  }
   mH4->Send(type, v);
+  return ndk::ScopedAStatus::ok();
 }
 
 }  // namespace aidl::android::hardware::bluetooth::impl
