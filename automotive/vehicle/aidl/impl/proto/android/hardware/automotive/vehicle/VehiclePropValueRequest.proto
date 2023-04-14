@@ -26,6 +26,17 @@ message VehiclePropValueRequest {
     VehiclePropValue value = 2;
 };
 
+message UpdateSampleRateRequest {
+    /* Property identifier */
+    int32 prop = 1;
+
+    /* Area type(s) for non-global property it must be one of the value from
+     * VehicleArea* enums or 0 for global properties. */
+    int32 area_id = 2;
+
+    float sample_rate = 3;
+};
+
 message SetValueResult {
     int64 request_id = 1;
     StatusCode status = 2;

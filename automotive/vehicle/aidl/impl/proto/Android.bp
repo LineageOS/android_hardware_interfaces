@@ -40,6 +40,7 @@ genrule {
         ":VehicleHalProtoFiles",
     ],
     out: [
+        "android/hardware/automotive/vehicle/DumpOptions.pb.h",
         "android/hardware/automotive/vehicle/DumpResult.pb.h",
         "android/hardware/automotive/vehicle/StatusCode.pb.h",
         "android/hardware/automotive/vehicle/VehicleAreaConfig.pb.h",
@@ -63,6 +64,7 @@ genrule {
         ":VehicleHalProtoFiles",
     ],
     out: [
+        "android/hardware/automotive/vehicle/DumpOptions.pb.cc",
         "android/hardware/automotive/vehicle/DumpResult.pb.cc",
         "android/hardware/automotive/vehicle/StatusCode.pb.cc",
         "android/hardware/automotive/vehicle/VehicleAreaConfig.pb.cc",
