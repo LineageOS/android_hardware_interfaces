@@ -132,7 +132,7 @@ ndk::ScopedAStatus ModuleUsb::populateConnectedDevicePort(AudioPort* audioPort) 
     std::vector<int> sampleRates = populateSampleRatesFromProfile(&profile);
 
     for (size_t i = 0; i < std::min(MAX_PROFILE_FORMATS, AUDIO_PORT_MAX_AUDIO_PROFILES) &&
-                       profile.formats[i] != 0;
+                       profile.formats[i] != PCM_FORMAT_INVALID;
          ++i) {
         auto audioFormatDescription =
                 usb::legacy2aidl_pcm_format_AudioFormatDescription(profile.formats[i]);
