@@ -18,19 +18,13 @@ syntax = "proto3";
 
 package android.hardware.automotive.vehicle.proto;
 
+import "android/hardware/automotive/vehicle/DumpOptions.proto";
+import "android/hardware/automotive/vehicle/DumpResult.proto";
 import "android/hardware/automotive/vehicle/StatusCode.proto";
 import "android/hardware/automotive/vehicle/VehiclePropConfig.proto";
 import "android/hardware/automotive/vehicle/VehiclePropValue.proto";
 import "android/hardware/automotive/vehicle/VehiclePropValueRequest.proto";
 import "google/protobuf/empty.proto";
-
-message VehicleHalCallStatus {
-    StatusCode status_code = 1;
-}
-
-message VehiclePropValues {
-    repeated VehiclePropValue values = 1;
-}
 
 service VehicleServer {
     rpc GetAllPropertyConfig(google.protobuf.Empty) returns (stream VehiclePropConfig) {}
@@ -38,6 +32,12 @@ service VehicleServer {
     rpc SetValues(VehiclePropValueRequests) returns (SetValueResults) {}
 
     rpc GetValues(VehiclePropValueRequests) returns (GetValueResults) {}
+
+    rpc UpdateSampleRate(UpdateSampleRateRequest) returns (VehicleHalCallStatus) {}
+
+    rpc CheckHealth(google.protobuf.Empty) returns (VehicleHalCallStatus) {}
+
+    rpc Dump(DumpOptions) returns (DumpResult) {}
 
     rpc StartPropertyValuesStream(google.protobuf.Empty) returns (stream VehiclePropValues) {}
 }
