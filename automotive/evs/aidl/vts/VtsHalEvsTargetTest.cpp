@@ -2291,11 +2291,12 @@ TEST_P(EvsAidlTest, DisplayStates) {
             }
             for (const auto displayIdToQuery : displayIds) {
                 DisplayState state;
-                if (displayIdToQuery == displayId) {
-                    EXPECT_TRUE(mEnumerator->getDisplayStateById(displayIdToQuery, &state).isOk());
+                bool get_state_ok =
+                        mEnumerator->getDisplayStateById(displayIdToQuery, &state).isOk();
+                if (displayIdToQuery != displayId) {
+                    EXPECT_FALSE(get_state_ok);
+                } else if (get_state_ok) {
                     EXPECT_EQ(state, DisplayState::NOT_VISIBLE);
-                } else {
-                    EXPECT_FALSE(mEnumerator->getDisplayStateById(displayIdToQuery, &state).isOk());
                 }
             }
 
@@ -2313,11 +2314,12 @@ TEST_P(EvsAidlTest, DisplayStates) {
             }
             for (const auto displayIdToQuery : displayIds) {
                 DisplayState state;
-                if (displayIdToQuery == displayId) {
-                    EXPECT_TRUE(mEnumerator->getDisplayStateById(displayIdToQuery, &state).isOk());
+                bool get_state_ok =
+                        mEnumerator->getDisplayStateById(displayIdToQuery, &state).isOk();
+                if (displayIdToQuery != displayId) {
+                    EXPECT_FALSE(get_state_ok);
+                } else if (get_state_ok) {
                     EXPECT_EQ(state, DisplayState::VISIBLE_ON_NEXT_FRAME);
-                } else {
-                    EXPECT_FALSE(mEnumerator->getDisplayStateById(displayIdToQuery, &state).isOk());
                 }
             }
 
@@ -2343,11 +2345,12 @@ TEST_P(EvsAidlTest, DisplayStates) {
             }
             for (const auto displayIdToQuery : displayIds) {
                 DisplayState state;
-                if (displayIdToQuery == displayId) {
-                    EXPECT_TRUE(mEnumerator->getDisplayStateById(displayIdToQuery, &state).isOk());
+                bool get_state_ok =
+                        mEnumerator->getDisplayStateById(displayIdToQuery, &state).isOk();
+                if (displayIdToQuery != displayId) {
+                    EXPECT_FALSE(get_state_ok);
+                } else if (get_state_ok) {
                     EXPECT_EQ(state, DisplayState::VISIBLE);
-                } else {
-                    EXPECT_FALSE(mEnumerator->getDisplayStateById(displayIdToQuery, &state).isOk());
                 }
             }
 
@@ -2366,11 +2369,12 @@ TEST_P(EvsAidlTest, DisplayStates) {
             }
             for (const auto displayIdToQuery : displayIds) {
                 DisplayState state;
-                if (displayIdToQuery == displayId) {
-                    EXPECT_TRUE(mEnumerator->getDisplayStateById(displayIdToQuery, &state).isOk());
+                bool get_state_ok =
+                        mEnumerator->getDisplayStateById(displayIdToQuery, &state).isOk();
+                if (displayIdToQuery != displayId) {
+                    EXPECT_FALSE(get_state_ok);
+                } else if (get_state_ok) {
                     EXPECT_EQ(state, DisplayState::NOT_VISIBLE);
-                } else {
-                    EXPECT_FALSE(mEnumerator->getDisplayStateById(displayIdToQuery, &state).isOk());
                 }
             }
 
