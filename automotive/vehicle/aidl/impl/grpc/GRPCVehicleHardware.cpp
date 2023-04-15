@@ -152,21 +152,49 @@ void GRPCVehicleHardware::registerOnPropertySetErrorEvent(
     mOnSetErr = std::move(callback);
 }
 
-DumpResult GRPCVehicleHardware::dump(const std::vector<std::string>& /* options */) {
-    // TODO(chenhaosjtuacm): To be implemented.
-    return {};
+DumpResult GRPCVehicleHardware::dump(const std::vector<std::string>& options) {
+    ::grpc::ClientContext context;
+    proto::DumpOptions protoDumpOptions;
+    proto::DumpResult protoDumpResult;
+    for (const auto& option : options) {
+        protoDumpOptions.add_options(option);
+    }
+    auto grpc_status = mGrpcStub->Dump(&context, protoDumpOptions, &protoDumpResult);
+    if (!grpc_status.ok()) {
+        LOG(ERROR) << __func__ << ": GRPC Dump Failed: " << grpc_status.error_message();
+        return {};
+    }
+    return {
+            .callerShouldDumpState = protoDumpResult.caller_should_dump_state(),
+            .buffer = protoDumpResult.buffer(),
+    };
 }
 
 aidlvhal::StatusCode GRPCVehicleHardware::checkHealth() {
-    // TODO(chenhaosjtuacm): To be implemented.
-    return aidlvhal::StatusCode::OK;
+    ::grpc::ClientContext context;
+    proto::VehicleHalCallStatus protoStatus;
+    auto grpc_status = mGrpcStub->CheckHealth(&context, ::google::protobuf::Empty(), &protoStatus);
+    if (!grpc_status.ok()) {
+        LOG(ERROR) << __func__ << ": GRPC CheckHealth Failed: " << grpc_status.error_message();
+        return aidlvhal::StatusCode::INTERNAL_ERROR;
+    }
+    return static_cast<aidlvhal::StatusCode>(protoStatus.status_code());
 }
 
-aidlvhal::StatusCode GRPCVehicleHardware::updateSampleRate(int32_t /* propId */,
-                                                           int32_t /* areaId */,
-                                                           float /* sampleRate */) {
-    // TODO(chenhaosjtuacm): To be implemented.
-    return aidlvhal::StatusCode::OK;
+aidlvhal::StatusCode GRPCVehicleHardware::updateSampleRate(int32_t propId, int32_t areaId,
+                                                           float sampleRate) {
+    ::grpc::ClientContext context;
+    proto::UpdateSampleRateRequest request;
+    proto::VehicleHalCallStatus protoStatus;
+    request.set_prop(propId);
+    request.set_area_id(areaId);
+    request.set_sample_rate(sampleRate);
+    auto grpc_status = mGrpcStub->UpdateSampleRate(&context, request, &protoStatus);
+    if (!grpc_status.ok()) {
+        LOG(ERROR) << __func__ << ": GRPC UpdateSampleRate Failed: " << grpc_status.error_message();
+        return aidlvhal::StatusCode::INTERNAL_ERROR;
+    }
+    return static_cast<aidlvhal::StatusCode>(protoStatus.status_code());
 }
 
 bool GRPCVehicleHardware::waitForConnected(std::chrono::milliseconds waitTime) {

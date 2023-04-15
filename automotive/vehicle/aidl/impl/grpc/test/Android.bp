@@ -44,3 +44,31 @@ cc_test {
     ],
     test_suites: ["device-tests"],
 }
+
+cc_test {
+    name: "GRPCVehicleProxyServerUnitTest",
+    vendor: true,
+    srcs: ["GRPCVehicleProxyServerUnitTest.cpp"],
+    header_libs: [
+        "IVehicleHardware",
+    ],
+    static_libs: [
+        "android.hardware.automotive.vehicle@default-grpc-hardware-lib",
+        "android.hardware.automotive.vehicle@default-grpc-server-lib",
+        "libgtest",
+        "libgmock",
+    ],
+    shared_libs: [
+        "libgrpc++",
+        "libprotobuf-cpp-full",
+    ],
+    // libgrpc++.so is installed as root, require root to access it.
+    require_root: true,
+    defaults: [
+        "VehicleHalDefaults",
+    ],
+    cflags: [
+        "-Wno-unused-parameter",
+    ],
+    test_suites: ["device-tests"],
+}
