@@ -96,6 +96,7 @@ TEST_P(WifiStaIfaceAidlTest, GetFeatureSet) {
  * Ensures the APF packet filter is fully supported as required in VSR 14:
  * https://docs.partner.android.com/gms/policies/vsr/vsr-14
  */
+// @VsrTest = 5.3.12
 TEST_P(WifiStaIfaceAidlTest, CheckApfIsSupported) {
     // It is not required to check the vendor API level is at least U here
     // because the Wi-Fi AIDL interface is launched with Android U(VSR-14).
