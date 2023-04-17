@@ -16,6 +16,7 @@
 
 #include "wifi.h"
 
+#include <android-base/file.h>
 #include <android-base/logging.h>
 
 #include "aidl_return_util.h"
@@ -91,6 +92,7 @@ binder_status_t Wifi::dump(int fd, const char** args, uint32_t numArgs) {
         if (!chip.get()) continue;
         chip->dump(fd, args, numArgs);
     }
+    ::android::base::WriteStringToFd("\n", fd);
     return STATUS_OK;
 }
 
