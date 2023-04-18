@@ -428,8 +428,8 @@ bool DeviceCb::processCaptureResultLocked(
                                            bufferId,
                                            outputBuffer,
                                            buffer.status,
-                                           ::android::makeFromAidl(buffer.acquireFence),
-                                           ::android::makeFromAidl(buffer.releaseFence)};
+                                           ::android::dupFromAidl(buffer.acquireFence),
+                                           ::android::dupFromAidl(buffer.releaseFence)};
         streamBufferAndTimestamp.timeStamp = systemTime();
         request->resultOutputBuffers.push_back(streamBufferAndTimestamp);
     }
