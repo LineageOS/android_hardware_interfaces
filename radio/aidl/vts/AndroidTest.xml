@@ -16,6 +16,7 @@
 <configuration description="Runs VtsHalRadioTargetTest.">
     <option name="test-suite-tag" value="apct" />
     <option name="test-suite-tag" value="apct-native" />
+    <option name="config-descriptor:metadata" key="token" value="SIM_CARD" />
 
     <target_preparer class="com.android.tradefed.targetprep.MultiSimPreparer" />
     <target_preparer class="com.android.tradefed.targetprep.RootTargetPreparer">
