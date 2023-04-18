@@ -16,6 +16,7 @@
 <configuration description="Runs VtsHalRadioV1_1TargetTest.">
     <option name="test-suite-tag" value="apct" />
     <option name="test-suite-tag" value="apct-native" />
+    <option name="config-descriptor:metadata" key="token" value="SIM_CARD" />
 
     <!-- TODO: b/154638140, b/152655658: bad interactions -->
     <target_preparer class="com.android.tradefed.targetprep.RootTargetPreparer" />
