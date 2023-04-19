@@ -552,6 +552,20 @@ class CameraAidlTest : public ::testing::TestWithParam<std::string> {
               hasInputBuffer(hasInput),
               collectedResult(1, 10),
               expectedPhysicalResults(extraPhysicalResult) {}
+
+        ~InFlightRequest() {
+            for (auto& buffer : resultOutputBuffers) {
+                native_handle_t* acquireFenceHandle = const_cast<native_handle_t*>(
+                        buffer.buffer.acquireFence);
+                native_handle_close(acquireFenceHandle);
+                native_handle_delete(acquireFenceHandle);
+
+                native_handle_t* releaseFenceHandle = const_cast<native_handle_t*>(
+                        buffer.buffer.releaseFence);
+                native_handle_close(releaseFenceHandle);
+                native_handle_delete(releaseFenceHandle);
+            }
+        }
     };
 
     static bool matchDeviceName(const std::string& deviceName, const std::string& providerType,

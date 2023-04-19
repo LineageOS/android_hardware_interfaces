@@ -150,7 +150,7 @@ void CameraAidlTest::waitForReleaseFence(
         const native_handle_t* releaseFenceHandle = bufferAndTimestamp.buffer.releaseFence;
         if (releaseFenceHandle != nullptr && releaseFenceHandle->numFds == 1 &&
             releaseFenceHandle->data[0] >= 0) {
-            releaseFence = new android::Fence(releaseFenceHandle->data[0]);
+            releaseFence = new android::Fence(dup(releaseFenceHandle->data[0]));
         }
         if (releaseFence && releaseFence->isValid()) {
             releaseFence->wait(/*ms*/ 300);
