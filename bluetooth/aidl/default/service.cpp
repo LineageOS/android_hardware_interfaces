@@ -30,7 +30,7 @@ using ::android::hardware::joinRpcThreadpool;
 
 int main(int /* argc */, char** /* argv */) {
   ALOGI("Bluetooth HAL starting");
-  if (!ABinderProcess_setThreadPoolMaxThreadCount(1)) {
+  if (!ABinderProcess_setThreadPoolMaxThreadCount(0)) {
     ALOGI("failed to set thread pool max thread count");
     return 1;
   }
