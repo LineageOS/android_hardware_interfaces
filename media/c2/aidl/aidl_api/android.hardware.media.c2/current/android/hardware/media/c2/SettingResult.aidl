@@ -39,15 +39,15 @@ parcelable SettingResult {
   android.hardware.media.c2.ParamFieldValues[] conflicts;
   @Backing(type="int") @VintfStability
   enum Failure {
-    BAD_TYPE = 0,
-    BAD_PORT = 1,
-    BAD_INDEX = 2,
-    READ_ONLY = 3,
-    MISMATCH = 4,
-    BAD_VALUE = 5,
-    CONFLICT = 6,
-    UNSUPPORTED = 7,
-    INFO_BAD_VALUE = 8,
-    INFO_CONFLICT = 9,
+    BAD_TYPE,
+    BAD_PORT,
+    BAD_INDEX,
+    READ_ONLY,
+    MISMATCH,
+    BAD_VALUE,
+    CONFLICT,
+    UNSUPPORTED,
+    INFO_BAD_VALUE,
+    INFO_CONFLICT,
   }
 }

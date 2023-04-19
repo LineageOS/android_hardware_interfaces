@@ -43,16 +43,16 @@ parcelable FieldDescriptor {
   @Backing(type="int") @VintfStability
   enum Type {
     NO_INIT = 0,
-    INT32 = 1,
-    UINT32 = 2,
-    CNTR32 = 3,
-    INT64 = 4,
-    UINT64 = 5,
-    CNTR64 = 6,
-    FLOAT = 7,
-    STRING = 256,
-    BLOB = 257,
-    STRUCT = 131072,
+    INT32,
+    UINT32,
+    CNTR32,
+    INT64,
+    UINT64,
+    CNTR64,
+    FLOAT,
+    STRING = 0x100,
+    BLOB,
+    STRUCT = 0x20000,
   }
   @VintfStability
   parcelable NamedValue {
