@@ -103,10 +103,6 @@ bool ShouldCheckMissingHalsInFcm(const std::string& package) {
             "android.hardware.thermal@1.0",
             "android.hardware.thermal@1.1",
             "android.hardware.wifi.offload@1.0",
-
-            // Under hardware/interfaces/staging, still in development
-            // AIDL
-            "android.hardware.media.c2",
     };
 
     auto package_has_prefix = [&](const std::string& prefix) {
