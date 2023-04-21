@@ -66,8 +66,9 @@ class BluetoothHci : public BnBluetoothHci {
   ::android::hardware::bluetooth::async::AsyncFdWatcher mFdWatcher;
 
   int getFdFromDevPath();
-  void send(::android::hardware::bluetooth::hci::PacketType type,
-            const std::vector<uint8_t>& packet);
+  [[nodiscard]] ndk::ScopedAStatus send(
+      ::android::hardware::bluetooth::hci::PacketType type,
+      const std::vector<uint8_t>& packet);
   std::unique_ptr<NetBluetoothMgmt> management_{};
 
   // Send a reset command and discard all packets until a reset is received.
