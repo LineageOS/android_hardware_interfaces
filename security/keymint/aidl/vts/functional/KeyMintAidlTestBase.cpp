@@ -71,6 +71,11 @@ const uint32_t kInvalidPatchlevel = 99998877;
 // additional overhead, for the digest algorithmIdentifier required by PKCS#1.
 const size_t kPkcs1UndigestedSignaturePaddingOverhead = 11;
 
+size_t count_tag_invalid_entries(const std::vector<KeyParameter>& authorizations) {
+    return std::count_if(authorizations.begin(), authorizations.end(),
+                         [](const KeyParameter& e) -> bool { return e.tag == Tag::INVALID; });
+}
+
 typedef KeyMintAidlTestBase::KeyData KeyData;
 // Predicate for testing basic characteristics validity in generation or import.
 bool KeyCharacteristicsBasicallyValid(SecurityLevel secLevel,
@@ -83,6 +88,8 @@ bool KeyCharacteristicsBasicallyValid(SecurityLevel secLevel,
             GTEST_LOG_(ERROR) << "empty authorizations for " << entry.securityLevel;
             return false;
         }
+
+        EXPECT_EQ(count_tag_invalid_entries(entry.authorizations), 0);
 
         // Just ignore the SecurityLevel::KEYSTORE as the KM won't do any enforcement on this.
         if (entry.securityLevel == SecurityLevel::KEYSTORE) continue;
