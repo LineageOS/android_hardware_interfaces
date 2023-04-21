@@ -31,7 +31,6 @@
 #include <vector>
 
 #include "async_fd_watcher.h"
-#include "log/log.h"
 
 using android::hardware::bluetooth::async::AsyncFdWatcher;
 using namespace android::hardware::bluetooth::hci;
@@ -49,6 +48,7 @@ static char sco_data[100] =
 static char event_data[100] = "The edges of a surface are lines.";
 static char iso_data[100] =
     "A plane angle is the inclination to one another of two lines in a ...";
+static char short_payload[10] = "12345";
 
 // 5 seconds.  Just don't hang.
 static constexpr size_t kTimeoutMs = 5000;
@@ -225,6 +225,49 @@ class H4ProtocolTest : public ::testing::Test {
     CallDataReady();
   }
 
+  void WriteAndExpectManyAclDataPacketsDifferentOffsetsShort() {
+    std::promise<void> last_packet_promise;
+    size_t kNumPackets = 30;
+    // h4 type[1] + handle[2] + size[2]
+    char preamble[5] = {static_cast<uint8_t>(PacketType::ACL_DATA), 19, 92, 0,
+                        0};
+    int length = strlen(short_payload);
+    preamble[3] = length & 0xFF;
+    preamble[4] = 0;
+
+    EXPECT_CALL(acl_cb_, Call(PacketMatches(preamble + 1, kAclHeaderSize,
+                                            short_payload)))
+        .Times(kNumPackets);
+    ExpectInboundEvent(event_data, &last_packet_promise);
+
+    char all_packets[kNumPackets * 10];
+    size_t total_bytes = 0;
+
+    for (size_t packet = 0; packet < kNumPackets; packet++) {
+      for (size_t i = 0; i < sizeof(preamble); i++) {
+        all_packets[total_bytes++] = preamble[i];
+      }
+      for (size_t i = 0; i < length; i++) {
+        all_packets[total_bytes++] = short_payload[i];
+      }
+    }
+
+    size_t written_bytes = 0;
+    size_t partial_size = 1;
+    while (written_bytes < total_bytes) {
+      size_t to_write = std::min(partial_size, total_bytes - written_bytes);
+      TEMP_FAILURE_RETRY(
+          write(chip_uart_fd_, all_packets + written_bytes, to_write));
+      written_bytes += to_write;
+      CallDataReady();
+      partial_size++;
+      partial_size = partial_size % 5 + 1;
+    }
+    WriteInboundEvent(event_data);
+    CallDataReady();
+    WaitForTimeout(&last_packet_promise);
+  }
+
   testing::MockFunction<void(const std::vector<uint8_t>&)> cmd_cb_;
   testing::MockFunction<void(const std::vector<uint8_t>&)> event_cb_;
   testing::MockFunction<void(const std::vector<uint8_t>&)> acl_cb_;
@@ -274,6 +317,10 @@ TEST_F(H4ProtocolTest, TestReads) {
 
 TEST_F(H4ProtocolTest, TestMultiplePackets) {
   WriteAndExpectManyInboundAclDataPackets(sco_data);
+}
+
+TEST_F(H4ProtocolTest, TestMultipleWritesPacketsShortWrites) {
+  WriteAndExpectManyAclDataPacketsDifferentOffsetsShort();
 }
 
 TEST_F(H4ProtocolTest, TestDisconnect) {
@@ -332,10 +379,8 @@ class H4ProtocolAsyncTest : public H4ProtocolTest {
 
   void TearDown() override { fd_watcher_.StopWatchingFileDescriptors(); }
 
-  void CallDataReady() override {
-    // The Async test can't call data ready.
-    FAIL();
-  }
+  // Calling CallDataReady() has no effect in the AsyncTest
+  void CallDataReady() override {}
 
   void SendAndReadUartOutbound(PacketType type, char* data) {
     ALOGD("%s sending", __func__);
@@ -432,6 +477,10 @@ TEST_F(H4ProtocolAsyncTest, TestReads) {
 
 TEST_F(H4ProtocolAsyncTest, TestMultiplePackets) {
   WriteAndExpectManyInboundAclDataPackets(sco_data);
+}
+
+TEST_F(H4ProtocolAsyncTest, TestMultipleWritesPacketsShortWrites) {
+  WriteAndExpectManyAclDataPacketsDifferentOffsetsShort();
 }
 
 TEST_F(H4ProtocolAsyncTest, TestDisconnect) {
