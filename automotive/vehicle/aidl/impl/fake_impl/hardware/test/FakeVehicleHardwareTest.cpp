@@ -60,6 +60,7 @@ namespace vehicle {
 namespace fake {
 namespace {
 
+using ::aidl::android::hardware::automotive::vehicle::ErrorState;
 using ::aidl::android::hardware::automotive::vehicle::GetValueRequest;
 using ::aidl::android::hardware::automotive::vehicle::GetValueResult;
 using ::aidl::android::hardware::automotive::vehicle::RawPropValues;
@@ -68,6 +69,7 @@ using ::aidl::android::hardware::automotive::vehicle::SetValueResult;
 using ::aidl::android::hardware::automotive::vehicle::StatusCode;
 using ::aidl::android::hardware::automotive::vehicle::VehicleApPowerStateReport;
 using ::aidl::android::hardware::automotive::vehicle::VehicleApPowerStateReq;
+using ::aidl::android::hardware::automotive::vehicle::VehicleAreaMirror;
 using ::aidl::android::hardware::automotive::vehicle::VehicleHwKeyInputAction;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropConfig;
 using ::aidl::android::hardware::automotive::vehicle::VehicleProperty;
@@ -1035,6 +1037,488 @@ std::vector<SetSpecialValueTestCase> setSpecialValueTestCases() {
                                     },
                             },
             },
+            SetSpecialValueTestCase{
+                    .name = "set_automatic_emergency_braking_enabled_false",
+                    .valuesToSet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::
+                                                            AUTOMATIC_EMERGENCY_BRAKING_ENABLED),
+                                            .value.int32Values = {0},
+                                    },
+                            },
+                    .expectedValuesToGet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::
+                                                            AUTOMATIC_EMERGENCY_BRAKING_ENABLED),
+                                            .value.int32Values = {0},
+                                    },
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::
+                                                            AUTOMATIC_EMERGENCY_BRAKING_STATE),
+                                            .value.int32Values = {toInt(
+                                                    ErrorState::NOT_AVAILABLE_DISABLED)},
+                                    },
+                            },
+            },
+            SetSpecialValueTestCase{
+                    .name = "set_automatic_emergency_braking_enabled_true",
+                    .valuesToSet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::
+                                                            AUTOMATIC_EMERGENCY_BRAKING_ENABLED),
+                                            .value.int32Values = {1},
+                                    },
+                            },
+                    .expectedValuesToGet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::
+                                                            AUTOMATIC_EMERGENCY_BRAKING_ENABLED),
+                                            .value.int32Values = {1},
+                                    },
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::
+                                                            AUTOMATIC_EMERGENCY_BRAKING_STATE),
+                                            .value.int32Values = {1},
+                                    },
+                            },
+            },
+            SetSpecialValueTestCase{
+                    .name = "set_forward_collision_warning_enabled_false",
+                    .valuesToSet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::
+                                                            FORWARD_COLLISION_WARNING_ENABLED),
+                                            .value.int32Values = {0},
+                                    },
+                            },
+                    .expectedValuesToGet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::
+                                                            FORWARD_COLLISION_WARNING_ENABLED),
+                                            .value.int32Values = {0},
+                                    },
+                                    VehiclePropValue{
+                                            .prop = toInt(VehicleProperty::
+                                                                  FORWARD_COLLISION_WARNING_STATE),
+                                            .value.int32Values = {toInt(
+                                                    ErrorState::NOT_AVAILABLE_DISABLED)},
+                                    },
+                            },
+            },
+            SetSpecialValueTestCase{
+                    .name = "set_forward_collision_warning_enabled_true",
+                    .valuesToSet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::
+                                                            FORWARD_COLLISION_WARNING_ENABLED),
+                                            .value.int32Values = {1},
+                                    },
+                            },
+                    .expectedValuesToGet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::
+                                                            FORWARD_COLLISION_WARNING_ENABLED),
+                                            .value.int32Values = {1},
+                                    },
+                                    VehiclePropValue{
+                                            .prop = toInt(VehicleProperty::
+                                                                  FORWARD_COLLISION_WARNING_STATE),
+                                            .value.int32Values = {1},
+                                    },
+                            },
+            },
+            SetSpecialValueTestCase{
+                    .name = "set_blind_spot_warning_enabled_false",
+                    .valuesToSet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::BLIND_SPOT_WARNING_ENABLED),
+                                            .value.int32Values = {0},
+                                    },
+                            },
+                    .expectedValuesToGet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::BLIND_SPOT_WARNING_ENABLED),
+                                            .value.int32Values = {0},
+                                    },
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::BLIND_SPOT_WARNING_STATE),
+                                            .areaId = toInt(VehicleAreaMirror::DRIVER_LEFT),
+                                            .value.int32Values = {toInt(
+                                                    ErrorState::NOT_AVAILABLE_DISABLED)},
+                                    },
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::BLIND_SPOT_WARNING_STATE),
+                                            .areaId = toInt(VehicleAreaMirror::DRIVER_RIGHT),
+                                            .value.int32Values = {toInt(
+                                                    ErrorState::NOT_AVAILABLE_DISABLED)},
+                                    },
+                            },
+            },
+            SetSpecialValueTestCase{
+                    .name = "set_blind_spot_warning_enabled_true",
+                    .valuesToSet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::BLIND_SPOT_WARNING_ENABLED),
+                                            .value.int32Values = {1},
+                                    },
+                            },
+                    .expectedValuesToGet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::BLIND_SPOT_WARNING_ENABLED),
+                                            .value.int32Values = {1},
+                                    },
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::BLIND_SPOT_WARNING_STATE),
+                                            .areaId = toInt(VehicleAreaMirror::DRIVER_LEFT),
+                                            .value.int32Values = {1},
+                                    },
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::BLIND_SPOT_WARNING_STATE),
+                                            .areaId = toInt(VehicleAreaMirror::DRIVER_RIGHT),
+                                            .value.int32Values = {1},
+                                    },
+                            },
+            },
+            SetSpecialValueTestCase{
+                    .name = "set_lane_departure_warning_enabled_false",
+                    .valuesToSet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(VehicleProperty::
+                                                                  LANE_DEPARTURE_WARNING_ENABLED),
+                                            .value.int32Values = {0},
+                                    },
+                            },
+                    .expectedValuesToGet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(VehicleProperty::
+                                                                  LANE_DEPARTURE_WARNING_ENABLED),
+                                            .value.int32Values = {0},
+                                    },
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::LANE_DEPARTURE_WARNING_STATE),
+                                            .value.int32Values = {toInt(
+                                                    ErrorState::NOT_AVAILABLE_DISABLED)},
+                                    },
+                            },
+            },
+            SetSpecialValueTestCase{
+                    .name = "set_lane_departure_warning_enabled_true",
+                    .valuesToSet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(VehicleProperty::
+                                                                  LANE_DEPARTURE_WARNING_ENABLED),
+                                            .value.int32Values = {1},
+                                    },
+                            },
+                    .expectedValuesToGet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(VehicleProperty::
+                                                                  LANE_DEPARTURE_WARNING_ENABLED),
+                                            .value.int32Values = {1},
+                                    },
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::LANE_DEPARTURE_WARNING_STATE),
+                                            .value.int32Values = {1},
+                                    },
+                            },
+            },
+            SetSpecialValueTestCase{
+                    .name = "set_lane_keep_assist_enabled_false",
+                    .valuesToSet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::LANE_KEEP_ASSIST_ENABLED),
+                                            .value.int32Values = {0},
+                                    },
+                            },
+                    .expectedValuesToGet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::LANE_KEEP_ASSIST_ENABLED),
+                                            .value.int32Values = {0},
+                                    },
+                                    VehiclePropValue{
+                                            .prop = toInt(VehicleProperty::LANE_KEEP_ASSIST_STATE),
+                                            .value.int32Values = {toInt(
+                                                    ErrorState::NOT_AVAILABLE_DISABLED)},
+                                    },
+                            },
+            },
+            SetSpecialValueTestCase{
+                    .name = "set_lane_keep_assist_enabled_true",
+                    .valuesToSet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::LANE_KEEP_ASSIST_ENABLED),
+                                            .value.int32Values = {1},
+                                    },
+                            },
+                    .expectedValuesToGet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::LANE_KEEP_ASSIST_ENABLED),
+                                            .value.int32Values = {1},
+                                    },
+                                    VehiclePropValue{
+                                            .prop = toInt(VehicleProperty::LANE_KEEP_ASSIST_STATE),
+                                            .value.int32Values = {1},
+                                    },
+                            },
+            },
+            SetSpecialValueTestCase{
+                    .name = "set_lane_centering_assist_enabled_false",
+                    .valuesToSet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::LANE_CENTERING_ASSIST_ENABLED),
+                                            .value.int32Values = {0},
+                                    },
+                            },
+                    .expectedValuesToGet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::LANE_CENTERING_ASSIST_ENABLED),
+                                            .value.int32Values = {0},
+                                    },
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::LANE_CENTERING_ASSIST_STATE),
+                                            .value.int32Values = {toInt(
+                                                    ErrorState::NOT_AVAILABLE_DISABLED)},
+                                    },
+                            },
+            },
+            SetSpecialValueTestCase{
+                    .name = "set_lane_centering_assist_enabled_true",
+                    .valuesToSet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::LANE_CENTERING_ASSIST_ENABLED),
+                                            .value.int32Values = {1},
+                                    },
+                            },
+                    .expectedValuesToGet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::LANE_CENTERING_ASSIST_ENABLED),
+                                            .value.int32Values = {1},
+                                    },
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::LANE_CENTERING_ASSIST_STATE),
+                                            .value.int32Values = {1},
+                                    },
+                            },
+            },
+            SetSpecialValueTestCase{
+                    .name = "set_emergency_lane_keep_assist_enabled_false",
+                    .valuesToSet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::
+                                                            EMERGENCY_LANE_KEEP_ASSIST_ENABLED),
+                                            .value.int32Values = {0},
+                                    },
+                            },
+                    .expectedValuesToGet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::
+                                                            EMERGENCY_LANE_KEEP_ASSIST_ENABLED),
+                                            .value.int32Values = {0},
+                                    },
+                                    VehiclePropValue{
+                                            .prop = toInt(VehicleProperty::
+                                                                  EMERGENCY_LANE_KEEP_ASSIST_STATE),
+                                            .value.int32Values = {toInt(
+                                                    ErrorState::NOT_AVAILABLE_DISABLED)},
+                                    },
+                            },
+            },
+            SetSpecialValueTestCase{
+                    .name = "set_emergency_lane_keep_assist_enabled_true",
+                    .valuesToSet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::
+                                                            EMERGENCY_LANE_KEEP_ASSIST_ENABLED),
+                                            .value.int32Values = {1},
+                                    },
+                            },
+                    .expectedValuesToGet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::
+                                                            EMERGENCY_LANE_KEEP_ASSIST_ENABLED),
+                                            .value.int32Values = {1},
+                                    },
+                                    VehiclePropValue{
+                                            .prop = toInt(VehicleProperty::
+                                                                  EMERGENCY_LANE_KEEP_ASSIST_STATE),
+                                            .value.int32Values = {1},
+                                    },
+                            },
+            },
+            SetSpecialValueTestCase{
+                    .name = "set_cruise_control_enabled_false",
+                    .valuesToSet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(VehicleProperty::CRUISE_CONTROL_ENABLED),
+                                            .value.int32Values = {0},
+                                    },
+                            },
+                    .expectedValuesToGet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(VehicleProperty::CRUISE_CONTROL_ENABLED),
+                                            .value.int32Values = {0},
+                                    },
+                                    VehiclePropValue{
+                                            .prop = toInt(VehicleProperty::CRUISE_CONTROL_TYPE),
+                                            .value.int32Values = {toInt(
+                                                    ErrorState::NOT_AVAILABLE_DISABLED)},
+                                    },
+                                    VehiclePropValue{
+                                            .prop = toInt(VehicleProperty::CRUISE_CONTROL_STATE),
+                                            .value.int32Values = {toInt(
+                                                    ErrorState::NOT_AVAILABLE_DISABLED)},
+                                    },
+                            },
+            },
+            SetSpecialValueTestCase{
+                    .name = "set_cruise_control_enabled_true",
+                    .valuesToSet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(VehicleProperty::CRUISE_CONTROL_ENABLED),
+                                            .value.int32Values = {1},
+                                    },
+                            },
+                    .expectedValuesToGet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(VehicleProperty::CRUISE_CONTROL_ENABLED),
+                                            .value.int32Values = {1},
+                                    },
+                                    VehiclePropValue{
+                                            .prop = toInt(VehicleProperty::CRUISE_CONTROL_TYPE),
+                                            .value.int32Values = {1},
+                                    },
+                                    VehiclePropValue{
+                                            .prop = toInt(VehicleProperty::CRUISE_CONTROL_STATE),
+                                            .value.int32Values = {1},
+                                    },
+                            },
+            },
+            SetSpecialValueTestCase{
+                    .name = "set_hands_on_detection_enabled_false",
+                    .valuesToSet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::HANDS_ON_DETECTION_ENABLED),
+                                            .value.int32Values = {0},
+                                    },
+                            },
+                    .expectedValuesToGet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::HANDS_ON_DETECTION_ENABLED),
+                                            .value.int32Values = {0},
+                                    },
+                                    VehiclePropValue{
+                                            .prop = toInt(VehicleProperty::
+                                                                  HANDS_ON_DETECTION_DRIVER_STATE),
+                                            .value.int32Values = {toInt(
+                                                    ErrorState::NOT_AVAILABLE_DISABLED)},
+                                    },
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::HANDS_ON_DETECTION_WARNING),
+                                            .value.int32Values = {toInt(
+                                                    ErrorState::NOT_AVAILABLE_DISABLED)},
+                                    },
+                            },
+            },
+            SetSpecialValueTestCase{
+                    .name = "set_hands_on_detection_enabled_true",
+                    .valuesToSet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::HANDS_ON_DETECTION_ENABLED),
+                                            .value.int32Values = {1},
+                                    },
+                            },
+                    .expectedValuesToGet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::HANDS_ON_DETECTION_ENABLED),
+                                            .value.int32Values = {1},
+                                    },
+                                    VehiclePropValue{
+                                            .prop = toInt(VehicleProperty::
+                                                                  HANDS_ON_DETECTION_DRIVER_STATE),
+                                            .value.int32Values = {1},
+                                    },
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::HANDS_ON_DETECTION_WARNING),
+                                            .value.int32Values = {1},
+                                    },
+                            },
+            },
     };
 }
 
@@ -1052,7 +1536,7 @@ TEST_P(FakeVehicleHardwareSpecialValuesTest, testSetSpecialProperties) {
     std::vector<VehiclePropValue> gotValues;
 
     for (const auto& value : tc.expectedValuesToGet) {
-        auto result = getValue(VehiclePropValue{.prop = value.prop});
+        auto result = getValue(VehiclePropValue{.prop = value.prop, .areaId = value.areaId});
 
         ASSERT_TRUE(result.ok()) << "failed to get property " << value.prop
                                  << " status:" << getStatus(result);
@@ -1260,6 +1744,157 @@ TEST_F(FakeVehicleHardwareTest, testHvacPowerOnSendCurrentHvacPropValues) {
             EXPECT_EQ(event.areaId, areaId);
             EXPECT_THAT(event.prop, AnyOfArray(changedPropIds));
         }
+    }
+}
+
+TEST_F(FakeVehicleHardwareTest, testGetAdasPropNotAvailable) {
+    std::unordered_map<int32_t, std::vector<int32_t>> adasEnabledPropToDependentProps = {
+            {
+                    toInt(VehicleProperty::CRUISE_CONTROL_ENABLED),
+                    {
+                            toInt(VehicleProperty::CRUISE_CONTROL_TARGET_SPEED),
+                            toInt(VehicleProperty::ADAPTIVE_CRUISE_CONTROL_TARGET_TIME_GAP),
+                            toInt(VehicleProperty::
+                                          ADAPTIVE_CRUISE_CONTROL_LEAD_VEHICLE_MEASURED_DISTANCE),
+                    },
+            },
+    };
+    for (auto& enabledToDependents : adasEnabledPropToDependentProps) {
+        int32_t adasEnabledPropertyId = enabledToDependents.first;
+        StatusCode status =
+                setValue(VehiclePropValue{.prop = adasEnabledPropertyId, .value.int32Values = {0}});
+        EXPECT_EQ(status, StatusCode::OK);
+
+        auto& dependentProps = enabledToDependents.second;
+        for (auto dependentProp : dependentProps) {
+            auto getValueResult = getValue(VehiclePropValue{.prop = dependentProp});
+            EXPECT_FALSE(getValueResult.ok());
+            EXPECT_EQ(getValueResult.error(), StatusCode::NOT_AVAILABLE_DISABLED);
+        }
+    }
+}
+
+TEST_F(FakeVehicleHardwareTest, testSetAdasPropNotAvailable) {
+    std::unordered_map<int32_t, std::vector<int32_t>> adasEnabledPropToDependentProps = {
+            {
+                    toInt(VehicleProperty::LANE_CENTERING_ASSIST_ENABLED),
+                    {
+                            toInt(VehicleProperty::LANE_CENTERING_ASSIST_COMMAND),
+                    },
+            },
+            {
+                    toInt(VehicleProperty::CRUISE_CONTROL_ENABLED),
+                    {
+                            toInt(VehicleProperty::CRUISE_CONTROL_COMMAND),
+                            toInt(VehicleProperty::ADAPTIVE_CRUISE_CONTROL_TARGET_TIME_GAP),
+                    },
+            },
+    };
+    for (auto& enabledToDependents : adasEnabledPropToDependentProps) {
+        int32_t adasEnabledPropertyId = enabledToDependents.first;
+        StatusCode status =
+                setValue(VehiclePropValue{.prop = adasEnabledPropertyId, .value.int32Values = {0}});
+        EXPECT_EQ(status, StatusCode::OK);
+
+        auto& dependentProps = enabledToDependents.second;
+        for (auto dependentProp : dependentProps) {
+            StatusCode status = setValue(VehiclePropValue{.prop = dependentProp});
+            EXPECT_EQ(status, StatusCode::NOT_AVAILABLE_DISABLED);
+        }
+    }
+}
+
+TEST_F(FakeVehicleHardwareTest, testSendAdasPropertiesState) {
+    std::unordered_map<int32_t, std::vector<int32_t>> adasEnabledPropToAdasPropWithErrorState = {
+            // AEB
+            {
+                    toInt(VehicleProperty::AUTOMATIC_EMERGENCY_BRAKING_ENABLED),
+                    {
+                            toInt(VehicleProperty::AUTOMATIC_EMERGENCY_BRAKING_STATE),
+                    },
+            },
+            // FCW
+            {
+                    toInt(VehicleProperty::FORWARD_COLLISION_WARNING_ENABLED),
+                    {
+                            toInt(VehicleProperty::FORWARD_COLLISION_WARNING_STATE),
+                    },
+            },
+            // BSW
+            {
+                    toInt(VehicleProperty::BLIND_SPOT_WARNING_ENABLED),
+                    {
+                            toInt(VehicleProperty::BLIND_SPOT_WARNING_STATE),
+                    },
+            },
+            // LDW
+            {
+                    toInt(VehicleProperty::LANE_DEPARTURE_WARNING_ENABLED),
+                    {
+                            toInt(VehicleProperty::LANE_DEPARTURE_WARNING_STATE),
+                    },
+            },
+            // LKA
+            {
+                    toInt(VehicleProperty::LANE_KEEP_ASSIST_ENABLED),
+                    {
+                            toInt(VehicleProperty::LANE_KEEP_ASSIST_STATE),
+                    },
+            },
+            // LCA
+            {
+                    toInt(VehicleProperty::LANE_CENTERING_ASSIST_ENABLED),
+                    {
+                            toInt(VehicleProperty::LANE_CENTERING_ASSIST_STATE),
+                    },
+            },
+            // ELKA
+            {
+                    toInt(VehicleProperty::EMERGENCY_LANE_KEEP_ASSIST_ENABLED),
+                    {
+                            toInt(VehicleProperty::EMERGENCY_LANE_KEEP_ASSIST_STATE),
+                    },
+            },
+            // CC
+            {
+                    toInt(VehicleProperty::CRUISE_CONTROL_ENABLED),
+                    {
+                            toInt(VehicleProperty::CRUISE_CONTROL_TYPE),
+                            toInt(VehicleProperty::CRUISE_CONTROL_STATE),
+                    },
+            },
+            // HOD
+            {
+                    toInt(VehicleProperty::HANDS_ON_DETECTION_ENABLED),
+                    {
+                            toInt(VehicleProperty::HANDS_ON_DETECTION_DRIVER_STATE),
+                            toInt(VehicleProperty::HANDS_ON_DETECTION_WARNING),
+                    },
+            },
+    };
+    for (auto& enabledToErrorStateProps : adasEnabledPropToAdasPropWithErrorState) {
+        int32_t adasEnabledPropertyId = enabledToErrorStateProps.first;
+        StatusCode status =
+                setValue(VehiclePropValue{.prop = adasEnabledPropertyId, .value.int32Values = {0}});
+        EXPECT_EQ(status, StatusCode::OK);
+
+        clearChangedProperties();
+        status =
+                setValue(VehiclePropValue{.prop = adasEnabledPropertyId, .value.int32Values = {1}});
+        EXPECT_EQ(status, StatusCode::OK);
+
+        // If we enable the ADAS feature, we expect to receive one property event for every ADAS
+        // state property plus one event for enabling the feature.
+        std::unordered_set<int32_t> expectedChangedPropIds(enabledToErrorStateProps.second.begin(),
+                                                           enabledToErrorStateProps.second.end());
+        expectedChangedPropIds.insert(adasEnabledPropertyId);
+
+        std::unordered_set<int32_t> changedPropIds;
+        auto events = getChangedProperties();
+        for (const auto& event : events) {
+            changedPropIds.insert(event.prop);
+        }
+        EXPECT_EQ(changedPropIds, expectedChangedPropIds);
     }
 }
 
