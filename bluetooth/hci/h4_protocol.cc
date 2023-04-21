@@ -105,15 +105,12 @@ void H4Protocol::SendDataToPacketizer(uint8_t* buffer, size_t length) {
       buffer_offset += 1;
     } else {
       bool packet_ready = hci_packetizer_.OnDataReady(
-          hci_packet_type_, input_buffer, buffer_offset);
+          hci_packet_type_, input_buffer, &buffer_offset);
       if (packet_ready) {
-        // Call packet callback and move offset.
-        buffer_offset += OnPacketReady(hci_packetizer_.GetPacket());
+        // Call packet callback.
+        OnPacketReady(hci_packetizer_.GetPacket());
         // Get ready for the next type byte.
         hci_packet_type_ = PacketType::UNKNOWN;
-      } else {
-        // The data was consumed, but there wasn't a packet.
-        buffer_offset = input_buffer.size();
       }
     }
   }
