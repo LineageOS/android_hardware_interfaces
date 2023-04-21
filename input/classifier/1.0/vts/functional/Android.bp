@@ -25,6 +25,7 @@ package {
 
 cc_test {
     name: "VtsHalInputClassifierV1_0TargetTest",
+    cpp_std: "c++20",
     defaults: ["VtsHalTargetTestDefaults"],
     srcs: [
         ":inputconstants_aidl",
