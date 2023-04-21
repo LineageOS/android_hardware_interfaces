@@ -195,6 +195,8 @@ class FakeVehicleHardware : public IVehicleHardware {
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value);
     VehiclePropValuePool::RecyclableType createApPowerStateReq(
             aidl::android::hardware::automotive::vehicle::VehicleApPowerStateReq state);
+    VehiclePropValuePool::RecyclableType createAdasStateReq(int32_t propertyId, int32_t areaId,
+                                                            int32_t state);
     VhalResult<void> setUserHalProp(
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value);
     ValueResultType getUserHalProp(
@@ -202,6 +204,7 @@ class FakeVehicleHardware : public IVehicleHardware {
     ValueResultType getEchoReverseBytes(
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value) const;
     bool isHvacPropAndHvacNotAvailable(int32_t propId, int32_t areaId) const;
+    VhalResult<void> isAdasPropertyAvailable(int32_t adasStatePropertyId) const;
 
     std::unordered_map<int32_t, ConfigDeclaration> loadConfigDeclarations();
 
@@ -244,6 +247,7 @@ class FakeVehicleHardware : public IVehicleHardware {
 
     std::string genFakeDataCommand(const std::vector<std::string>& options);
     void sendHvacPropertiesCurrentValues(int32_t areaId);
+    void sendAdasPropertiesState(int32_t propertyId, int32_t state);
 
     static aidl::android::hardware::automotive::vehicle::VehiclePropValue createHwInputKeyProp(
             aidl::android::hardware::automotive::vehicle::VehicleHwKeyInputAction action,
