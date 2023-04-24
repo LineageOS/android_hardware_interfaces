@@ -1,4 +1,3 @@
-<!-- WARNING: This file is unused in the Android 14 branch. -->
 <compatibility-matrix version="1.0" type="framework" level="9">
     <hal format="hidl" optional="true">
         <name>android.hardware.audio</name>
