@@ -207,9 +207,8 @@ class GraphicsCompositionTestBase : public ::testing::Test {
     }
 
     void execute() {
-        const auto& commands = mWriter->getPendingCommands();
+        auto commands = mWriter->takePendingCommands();
         if (commands.empty()) {
-            mWriter->reset();
             return;
         }
 
@@ -217,7 +216,6 @@ class GraphicsCompositionTestBase : public ::testing::Test {
         ASSERT_TRUE(status.isOk()) << "executeCommands failed " << status.getDescription();
 
         mReader.parse(std::move(results));
-        mWriter->reset();
     }
 
     bool getHasReadbackBuffer() {
