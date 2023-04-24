@@ -19,11 +19,13 @@
 
 #include <android-base/logging.h>
 
+#include <mutex>
 #include <set>
 #include <unordered_map>
 
 namespace {
 std::unordered_map<void* /* callback */, void* /* handler */> callback_handler_map_;
+std::mutex callback_handler_lock_;
 }
 
 namespace aidl {
@@ -43,6 +45,7 @@ class AidlCallbackHandler {
     ~AidlCallbackHandler() { invalidate(); }
 
     bool addCallback(const std::shared_ptr<CallbackType>& cb) {
+        std::unique_lock<std::mutex> lk(callback_handler_lock_);
         void* cbPtr = reinterpret_cast<void*>(cb->asBinder().get());
         const auto& cbPosition = findCbInSet(cbPtr);
         if (cbPosition != cb_set_.end()) {
@@ -58,12 +61,18 @@ class AidlCallbackHandler {
 
         callback_handler_map_[cbPtr] = reinterpret_cast<void*>(this);
         cb_set_.insert(cb);
+        // unique_lock unlocked here
         return true;
     }
 
-    const std::set<std::shared_ptr<CallbackType>>& getCallbacks() { return cb_set_; }
+    const std::set<std::shared_ptr<CallbackType>>& getCallbacks() {
+        std::unique_lock<std::mutex> lk(callback_handler_lock_);
+        // unique_lock unlocked here
+        return cb_set_;
+    }
 
     void invalidate() {
+        std::unique_lock<std::mutex> lk(callback_handler_lock_);
         for (auto cb : cb_set_) {
             void* cookie = reinterpret_cast<void*>(cb->asBinder().get());
             if (AIBinder_unlinkToDeath(cb->asBinder().get(), death_handler_, cookie) != STATUS_OK) {
@@ -74,12 +83,14 @@ class AidlCallbackHandler {
             }
         }
         cb_set_.clear();
+        // unique_lock unlocked here
     }
 
     // Entry point for the death handling logic. AIBinder_DeathRecipient
     // can only call a static function, so use the cookie to find the
     // proper handler and route the request there.
     static void onCallbackDeath(void* cookie) {
+        std::unique_lock<std::mutex> lk(callback_handler_lock_);
         auto cbQuery = callback_handler_map_.find(cookie);
         if (cbQuery == callback_handler_map_.end()) {
             LOG(ERROR) << "Invalid death cookie received";
@@ -92,6 +103,7 @@ class AidlCallbackHandler {
             return;
         }
         cbHandler->handleCallbackDeath(cbQuery->first);
+        // unique_lock unlocked here
     }
 
   private:
