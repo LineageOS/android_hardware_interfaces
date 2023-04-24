@@ -1171,15 +1171,13 @@ class GraphicsComposerAidlCommandTest : public GraphicsComposerAidlTest {
     void execute() {
         std::vector<CommandResultPayload> payloads;
         for (auto& [_, writer] : mWriters) {
-            const auto& commands = writer.getPendingCommands();
+            auto commands = writer.takePendingCommands();
             if (commands.empty()) {
-                writer.reset();
                 continue;
             }
 
             auto [status, results] = mComposerClient->executeCommands(commands);
             ASSERT_TRUE(status.isOk()) << "executeCommands failed " << status.getDescription();
-            writer.reset();
 
             payloads.reserve(payloads.size() + results.size());
             payloads.insert(payloads.end(), std::make_move_iterator(results.begin()),
