@@ -2164,6 +2164,7 @@
             "property": "VehicleProperty::HVAC_FAN_DIRECTION_AVAILABLE",
             "defaultValue": {
                 "int32Values": [
+                    "Constants::FAN_DIRECTION_UNKNOWN",
                     "Constants::FAN_DIRECTION_FACE",
                     "Constants::FAN_DIRECTION_FLOOR",
                     "Constants::FAN_DIRECTION_FACE_FLOOR",
