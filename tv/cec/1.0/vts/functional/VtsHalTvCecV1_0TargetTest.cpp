@@ -127,7 +127,15 @@ TEST_P(HdmiCecTest, PhysicalAddress) {
 
 TEST_P(HdmiCecTest, SendMessage) {
     CecMessage message;
-    message.initiator = CecLogicalAddress::PLAYBACK_1;
+    if (hasDeviceType(CecDeviceType::TV))
+    {
+        hdmiCec->clearLogicalAddress();
+        Return<Result> result = hdmiCec->addLogicalAddress(CecLogicalAddress::TV);
+        EXPECT_EQ(result, Result::SUCCESS);
+        message.initiator = CecLogicalAddress::TV;
+    }
+    else
+        message.initiator = CecLogicalAddress::PLAYBACK_1;
     message.destination = CecLogicalAddress::BROADCAST;
     message.body.resize(1);
     message.body[0] = 131;
