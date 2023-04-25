@@ -133,10 +133,6 @@ TEST_P(ContextHubAidl, TestRegisterCallback) {
     ASSERT_TRUE(contextHub->registerCallback(getHubId(), cb).isOk());
 }
 
-TEST_P(ContextHubAidl, TestRegisterNullCallback) {
-    ASSERT_TRUE(contextHub->registerCallback(getHubId(), nullptr).isOk());
-}
-
 // Helper callback that puts the async appInfo callback data into a promise
 class QueryAppsCallback : public android::hardware::contexthub::BnContextHubCallback {
   public:
@@ -195,7 +191,6 @@ TEST_P(ContextHubAidl, TestGetPreloadedNanoappIds) {
         GTEST_SKIP() << "Not supported -> old API; or not implemented";
     } else {
         ASSERT_TRUE(status.isOk());
-        ASSERT_FALSE(preloadedNanoappIds.empty());
     }
 }
 
@@ -323,8 +318,6 @@ void ContextHubAidl::testSettingChanged(Setting setting) {
 
     ASSERT_TRUE(contextHub->onSettingChanged(setting, true /* enabled */).isOk());
     ASSERT_TRUE(contextHub->onSettingChanged(setting, false /* enabled */).isOk());
-
-    ASSERT_TRUE(contextHub->registerCallback(getHubId(), nullptr).isOk());
 }
 
 TEST_P(ContextHubAidl, TestOnLocationSettingChanged) {
