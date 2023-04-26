@@ -64,9 +64,9 @@ void stopSupplicantService() {
 
 void initializeService() {
     if (SupplicantAidlTestUtils::useAidlService()) {
-        SupplicantAidlTestUtils::stopSupplicantService();
+        SupplicantAidlTestUtils::initializeService();
     } else {
-        SupplicantLegacyTestUtils::stopSupplicantService();
+        SupplicantLegacyTestUtils::initializeService();
     }
 }
 
