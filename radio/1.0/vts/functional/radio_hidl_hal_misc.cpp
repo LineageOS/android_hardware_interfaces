@@ -654,6 +654,8 @@ TEST_P(RadioHidlTest, nvResetConfig) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp->rspInfo.error,
                                      {RadioError::NONE, RadioError::REQUEST_NOT_SUPPORTED}));
     }
+    // wait until modem reset finishes
+    sleep(10);
     LOG(DEBUG) << "nvResetConfig finished";
 }
 

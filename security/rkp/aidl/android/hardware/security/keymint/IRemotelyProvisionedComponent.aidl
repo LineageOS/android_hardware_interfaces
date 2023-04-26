@@ -134,6 +134,10 @@ interface IRemotelyProvisionedComponent {
      *        are marked (see the definition of PublicKey in the MacedPublicKey structure) to
      *        prevent them from being confused with production keys.
      *
+     *        This parameter has been deprecated since version 3 of the HAL and will always be
+     *        false. From v3, if this parameter is true, the method must raise a
+     *        ServiceSpecificException with an error of code of STATUS_REMOVED.
+     *
      * @param out MacedPublicKey macedPublicKey contains the public key of the generated key pair,
      *        MACed so that generateCertificateRequest can easily verify, without the
      *        privateKeyHandle, that the contained public key is for remote certification.
