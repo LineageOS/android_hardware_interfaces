@@ -66,12 +66,20 @@ void RadioNetworkTest::stopNetworkScan() {
 }
 
 /*
- * Test IRadioNetwork.setAllowedNetworkTypesBitmap for the response returned.
+ * Test IRadioNetwork.setAllowedNetworkTypesBitmap and IRadioNetwork.getAllowedNetworkTypesBitmap
+ * for the response returned.
  */
-TEST_P(RadioNetworkTest, setAllowedNetworkTypesBitmap) {
+TEST_P(RadioNetworkTest, setGetAllowedNetworkTypesBitmap) {
     serial = GetRandomSerialNumber();
-    int32_t allowedNetworkTypesBitmap = static_cast<int32_t>(RadioAccessFamily::LTE);
 
+    // save current value
+    radio_network->getAllowedNetworkTypesBitmap(serial);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    int32_t currentAllowedNetworkTypesBitmap = radioRsp_network->networkTypeBitmapResponse;
+
+    // set new value
+    int32_t allowedNetworkTypesBitmap = static_cast<int32_t>(RadioAccessFamily::LTE);
+    serial = GetRandomSerialNumber();
     radio_network->setAllowedNetworkTypesBitmap(serial, allowedNetworkTypesBitmap);
 
     EXPECT_EQ(std::cv_status::no_timeout, wait());
@@ -83,20 +91,6 @@ TEST_P(RadioNetworkTest, setAllowedNetworkTypesBitmap) {
              RadioError::MODE_NOT_SUPPORTED, RadioError::INTERNAL_ERR, RadioError::MODEM_ERR,
              RadioError::INVALID_ARGUMENTS, RadioError::REQUEST_NOT_SUPPORTED,
              RadioError::NO_RESOURCES}));
-}
-
-/*
- * Test IRadioNetwork.getAllowedNetworkTypesBitmap for the response returned.
- */
-TEST_P(RadioNetworkTest, getAllowedNetworkTypesBitmap) {
-    serial = GetRandomSerialNumber();
-    int32_t allowedNetworkTypesBitmap = static_cast<int32_t>(RadioAccessFamily::LTE);
-
-    radio_network->setAllowedNetworkTypesBitmap(serial, allowedNetworkTypesBitmap);
-
-    EXPECT_EQ(std::cv_status::no_timeout, wait());
-    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_network->rspInfo.type);
-    EXPECT_EQ(serial, radioRsp_network->rspInfo.serial);
 
     if (radioRsp_network->rspInfo.error == RadioError::NONE) {
         sleep(3);  // wait for modem
@@ -112,7 +106,16 @@ TEST_P(RadioNetworkTest, getAllowedNetworkTypesBitmap) {
                  RadioError::OPERATION_NOT_ALLOWED, RadioError::MODE_NOT_SUPPORTED,
                  RadioError::INVALID_ARGUMENTS, RadioError::MODEM_ERR,
                  RadioError::REQUEST_NOT_SUPPORTED, RadioError::NO_RESOURCES}));
+        if (radioRsp_network->rspInfo.error == RadioError::NONE) {
+            // verify we get the value we set
+            ASSERT_EQ(radioRsp_network->networkTypeBitmapResponse, allowedNetworkTypesBitmap);
+        }
     }
+
+    // reset value to previous
+    serial = GetRandomSerialNumber();
+    radio_network->setAllowedNetworkTypesBitmap(serial, currentAllowedNetworkTypesBitmap);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
 }
 
 /*
@@ -947,7 +950,7 @@ TEST_P(RadioNetworkTest, startNetworkScan_InvalidInterval1) {
     RadioAccessSpecifier specifier850 = {
             .accessNetwork = AccessNetwork::GERAN, .bands = band850, .channels = {128, 129}};
 
-    NetworkScanRequest request = {.type = NetworkScanRequest::SCAN_TYPE_ONE_SHOT,
+    NetworkScanRequest request = {.type = NetworkScanRequest::SCAN_TYPE_PERIODIC,
                                   .interval = 4,
                                   .specifiers = {specifierP900, specifier850},
                                   .maxSearchTime = 60,
@@ -988,7 +991,7 @@ TEST_P(RadioNetworkTest, startNetworkScan_InvalidInterval2) {
     RadioAccessSpecifier specifier850 = {
             .accessNetwork = AccessNetwork::GERAN, .bands = band850, .channels = {128, 129}};
 
-    NetworkScanRequest request = {.type = NetworkScanRequest::SCAN_TYPE_ONE_SHOT,
+    NetworkScanRequest request = {.type = NetworkScanRequest::SCAN_TYPE_PERIODIC,
                                   .interval = 301,
                                   .specifiers = {specifierP900, specifier850},
                                   .maxSearchTime = 60,
@@ -1521,7 +1524,7 @@ TEST_P(RadioNetworkTest, getDataRegistrationState) {
     }
 
     // 32 bit system might return invalid mcc and mnc string "\xff\xff..."
-    if (checkMccMnc && mcc.size() < 4 && mnc.size() < 4) {
+    if (checkMccMnc && mcc.size() == 3 && (mnc.size() == 2 || mnc.size() == 3)) {
         int mcc_int = stoi(mcc);
         int mnc_int = stoi(mnc);
         EXPECT_TRUE(mcc_int >= 0 && mcc_int <= 999);
