@@ -290,6 +290,8 @@ TEST_P(RadioModemTest, nvResetConfig) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_modem->rspInfo.error,
                                      {RadioError::NONE, RadioError::REQUEST_NOT_SUPPORTED}));
     }
+    // wait until modem reset finishes
+    sleep(10);
     LOG(DEBUG) << "nvResetConfig finished";
 }
 
