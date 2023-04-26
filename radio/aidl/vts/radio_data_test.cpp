@@ -531,8 +531,7 @@ TEST_P(RadioDataTest, startKeepalive) {
 
         ASSERT_TRUE(CheckAnyOfErrors(
                 radioRsp_data->rspInfo.error,
-                {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::INVALID_ARGUMENTS,
-                 RadioError::REQUEST_NOT_SUPPORTED}));
+                {RadioError::INVALID_ARGUMENTS, RadioError::REQUEST_NOT_SUPPORTED}));
     }
 }
 
@@ -549,8 +548,7 @@ TEST_P(RadioDataTest, stopKeepalive) {
 
     ASSERT_TRUE(
             CheckAnyOfErrors(radioRsp_data->rspInfo.error,
-                             {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE,
-                              RadioError::INVALID_ARGUMENTS, RadioError::REQUEST_NOT_SUPPORTED}));
+                             {RadioError::INVALID_ARGUMENTS, RadioError::REQUEST_NOT_SUPPORTED}));
 }
 
 /*
