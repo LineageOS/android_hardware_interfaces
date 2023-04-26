@@ -85,7 +85,7 @@ bool isSsSsEnabled() {
     // Do not use checkSubstringInCommandOutput("getprop persist.radio.multisim.config", "")
     // until b/148904287 is fixed. We need exact matching instead of partial matching. (i.e.
     // by definition the empty string "" is a substring of any string).
-    return !isDsDsEnabled() && !isTsTsEnabled();
+    return !isDsDsEnabled() && !isTsTsEnabled() && !isDsDaEnabled();
 }
 
 bool isDsDsEnabled() {
@@ -125,8 +125,8 @@ bool isServiceValidForDeviceConfiguration(std::string& serviceName) {
             ALOGI("%s instance is not valid for SSSS device.", serviceName.c_str());
             return false;
         }
-    } else if (isDsDsEnabled()) {
-        // Device is configured as DSDS.
+    } else if (isDsDsEnabled() || isDsDaEnabled()) {
+        // Device is configured as DSDS or DSDA.
         if (!stringEndsWith(serviceName, RADIO_SERVICE_SLOT1_NAME) &&
             !stringEndsWith(serviceName, RADIO_SERVICE_SLOT2_NAME)) {
             ALOGI("%s instance is not valid for DSDS device.", serviceName.c_str());
