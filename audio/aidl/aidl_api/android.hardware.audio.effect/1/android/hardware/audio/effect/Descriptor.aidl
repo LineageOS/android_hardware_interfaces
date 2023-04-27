@@ -50,8 +50,8 @@ parcelable Descriptor {
   const String EFFECT_TYPE_UUID_PRESET_REVERB = "47382d60-ddd8-11db-bf3a-0002a5d5c51b";
   const String EFFECT_TYPE_UUID_SPATIALIZER = "ccd4cf09-a79d-46c2-9aae-06a1698d6c8f";
   const String EFFECT_TYPE_UUID_VIRTUALIZER = "37cc2c00-dddd-11db-8577-0002a5d5c51b";
-  const String EFFECT_TYPE_UUID_VISUALIZER = "d069d9e0-8329-11df-9168-0002a5d5c51b";
-  const String EFFECT_TYPE_UUID_VOLUME = "fa81a2b8-588b-11ed-9b6a-0242ac120002";
+  const String EFFECT_TYPE_UUID_VISUALIZER = "e46b26a0-dddd-11db-8afd-0002a5d5c51b";
+  const String EFFECT_TYPE_UUID_VOLUME = "09e8ede0-ddde-11db-b4f6-0002a5d5c51b";
   @VintfStability
   parcelable Identity {
     android.media.audio.common.AudioUuid type;
