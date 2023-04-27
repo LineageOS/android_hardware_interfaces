@@ -699,6 +699,7 @@ class CertificateRequestV2Test : public CertificateRequestTestBase {
  * Generate an empty certificate request with all possible length of challenge, and decrypt and
  * verify the structure and content.
  */
+// @VsrTest = 3.10-015
 TEST_P(CertificateRequestV2Test, EmptyRequest) {
     bytevec csr;
 
@@ -718,6 +719,7 @@ TEST_P(CertificateRequestV2Test, EmptyRequest) {
  * Generate a non-empty certificate request with all possible length of challenge.  Decrypt, parse
  * and validate the contents.
  */
+// @VsrTest = 3.10-015
 TEST_P(CertificateRequestV2Test, NonEmptyRequest) {
     generateKeys(false /* testMode */, 1 /* numKeys */);
 
@@ -750,6 +752,7 @@ TEST_P(CertificateRequestV2Test, EmptyRequestWithInvalidChallengeFail) {
  * Generate a non-empty certificate request.  Make sure contents are reproducible but allow for the
  * signature to be different since algorithms including ECDSA P-256 can include a random value.
  */
+// @VsrTest = 3.10-015
 TEST_P(CertificateRequestV2Test, NonEmptyRequestReproducible) {
     generateKeys(false /* testMode */, 1 /* numKeys */);
 
@@ -773,6 +776,7 @@ TEST_P(CertificateRequestV2Test, NonEmptyRequestReproducible) {
 /**
  * Generate a non-empty certificate request with multiple keys.
  */
+// @VsrTest = 3.10-015
 TEST_P(CertificateRequestV2Test, NonEmptyRequestMultipleKeys) {
     generateKeys(false /* testMode */, rpcHardwareInfo.supportedNumKeysInCsr /* numKeys */);
 
@@ -846,6 +850,7 @@ void parse_root_of_trust(const vector<uint8_t>& attestation_cert,
 /**
  * Generate a CSR and verify DeviceInfo against IDs attested by KeyMint.
  */
+// @VsrTest = 3.10-015
 TEST_P(CertificateRequestV2Test, DeviceInfo) {
     // See if there is a matching IKeyMintDevice for this IRemotelyProvisionedComponent.
     std::shared_ptr<IKeyMintDevice> keyMint;
