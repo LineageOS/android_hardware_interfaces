@@ -335,7 +335,7 @@ TEST_P(RadioHidlTest_v1_4, startNetworkScan_InvalidInterval1) {
     serial = GetRandomSerialNumber();
 
     ::android::hardware::radio::V1_2::NetworkScanRequest request = {
-            .type = ScanType::ONE_SHOT,
+            .type = ScanType::PERIODIC,
             .interval = 4,
             .specifiers = {::GERAN_SPECIFIER_P900, ::GERAN_SPECIFIER_850},
             .maxSearchTime = 60,
@@ -368,7 +368,7 @@ TEST_P(RadioHidlTest_v1_4, startNetworkScan_InvalidInterval2) {
     serial = GetRandomSerialNumber();
 
     ::android::hardware::radio::V1_2::NetworkScanRequest request = {
-            .type = ScanType::ONE_SHOT,
+            .type = ScanType::PERIODIC,
             .interval = 301,
             .specifiers = {::GERAN_SPECIFIER_P900, ::GERAN_SPECIFIER_850},
             .maxSearchTime = 60,
