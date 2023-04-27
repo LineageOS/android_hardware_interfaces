@@ -96,11 +96,11 @@ parcelable Descriptor {
     /**
      * UUID for visualizer effect type.
      */
-    const String EFFECT_TYPE_UUID_VISUALIZER = "d069d9e0-8329-11df-9168-0002a5d5c51b";
+    const String EFFECT_TYPE_UUID_VISUALIZER = "e46b26a0-dddd-11db-8afd-0002a5d5c51b";
     /**
      * UUID for Volume effect type.
      */
-    const String EFFECT_TYPE_UUID_VOLUME = "fa81a2b8-588b-11ed-9b6a-0242ac120002";
+    const String EFFECT_TYPE_UUID_VOLUME = "09e8ede0-ddde-11db-b4f6-0002a5d5c51b";
 
     /**
      * This structure completely identifies an effect implementation.
