@@ -2042,6 +2042,27 @@ vector<uint8_t> make_name_from_str(const string& name) {
     return retval;
 }
 
+void assert_mgf_digests_present_in_key_characteristics(
+        const vector<KeyCharacteristics>& key_characteristics,
+        std::vector<android::hardware::security::keymint::Digest>& expected_mgf_digests) {
+    AuthorizationSet auths;
+    for (auto& entry : key_characteristics) {
+        auths.push_back(AuthorizationSet(entry.authorizations));
+    }
+    for (auto digest : expected_mgf_digests) {
+        ASSERT_TRUE(auths.Contains(TAG_RSA_OAEP_MGF_DIGEST, digest));
+    }
+}
+
+bool is_mgf_digest_present(const vector<KeyCharacteristics>& key_characteristics,
+                           android::hardware::security::keymint::Digest expected_mgf_digest) {
+    AuthorizationSet auths;
+    for (auto& entry : key_characteristics) {
+        auths.push_back(AuthorizationSet(entry.authorizations));
+    }
+    return auths.Contains(TAG_RSA_OAEP_MGF_DIGEST, expected_mgf_digest);
+}
+
 namespace {
 
 void check_cose_key(const vector<uint8_t>& data, bool testMode) {
