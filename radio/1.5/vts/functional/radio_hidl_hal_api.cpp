@@ -661,7 +661,7 @@ TEST_P(RadioHidlTest_v1_5, startNetworkScan_InvalidInterval1) {
             .channels = {128, 129}};
 
     ::android::hardware::radio::V1_5::NetworkScanRequest request = {
-            .type = ScanType::ONE_SHOT,
+            .type = ScanType::PERIODIC,
             .interval = 4,
             .specifiers = {specifierP900, specifier850},
             .maxSearchTime = 60,
@@ -705,7 +705,7 @@ TEST_P(RadioHidlTest_v1_5, startNetworkScan_InvalidInterval2) {
             .channels = {128, 129}};
 
     ::android::hardware::radio::V1_5::NetworkScanRequest request = {
-            .type = ScanType::ONE_SHOT,
+            .type = ScanType::PERIODIC,
             .interval = 301,
             .specifiers = {specifierP900, specifier850},
             .maxSearchTime = 60,
