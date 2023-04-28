@@ -120,7 +120,7 @@ TEST_P(RadioHidlTest_v1_2, startNetworkScan_InvalidInterval1) {
     serial = GetRandomSerialNumber();
 
     ::android::hardware::radio::V1_2::NetworkScanRequest request = {
-            .type = ScanType::ONE_SHOT,
+            .type = ScanType::PERIODIC,
             .interval = 4,
             .specifiers = {::GERAN_SPECIFIER_P900, ::GERAN_SPECIFIER_850},
             .maxSearchTime = 60,
@@ -155,7 +155,7 @@ TEST_P(RadioHidlTest_v1_2, startNetworkScan_InvalidInterval2) {
     serial = GetRandomSerialNumber();
 
     ::android::hardware::radio::V1_2::NetworkScanRequest request = {
-            .type = ScanType::ONE_SHOT,
+            .type = ScanType::PERIODIC,
             .interval = 301,
             .specifiers = {::GERAN_SPECIFIER_P900, ::GERAN_SPECIFIER_850},
             .maxSearchTime = 60,
@@ -821,11 +821,20 @@ TEST_P(RadioHidlTest_v1_2, getDataRegistrationState) {
                   cellIdentities.cellIdentityTdscdma.size());
 
     // 32 bit system might return invalid mcc and mnc hidl string "\xff\xff..."
-    if (checkMccMnc && hidl_mcc.size() < 4 && hidl_mnc.size() < 4) {
-        int mcc = stoi(hidl_mcc);
-        int mnc = stoi(hidl_mnc);
-        EXPECT_TRUE(mcc >= 0 && mcc <= 999);
-        EXPECT_TRUE(mnc >= 0 && mnc <= 999);
+    if (checkMccMnc) {
+        int mccSize = hidl_mcc.size();
+        EXPECT_TRUE(mccSize == 0 || mccSize == 3);
+        if (mccSize > 0) {
+            int mcc = stoi(hidl_mcc);
+            EXPECT_TRUE(mcc >= 0 && mcc <= 999);
+        }
+
+        int mncSize = hidl_mnc.size();
+        EXPECT_TRUE(mncSize == 0 || mncSize == 2 || mncSize == 3);
+        if (mncSize > 0) {
+            int mnc = stoi(hidl_mnc);
+            EXPECT_TRUE(mnc >= 0 && mnc <= 999);
+        }
     }
 }
 

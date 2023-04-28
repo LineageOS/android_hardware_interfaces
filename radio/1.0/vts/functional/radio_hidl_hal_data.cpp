@@ -87,12 +87,19 @@ TEST_P(RadioHidlTest, getDataRegistrationState) {
                                                  cellIdentities.cellIdentityTdscdma.size());
 
         if (checkMccMnc) {
-            // 32 bit system gets result: "\xff\xff\xff..." from RIL, which is not testable. Only
-            // test for 64 bit here. TODO: remove this limit after b/113181277 being fixed.
-            if (hidl_mcc.size() < 4 && hidl_mnc.size() < 4) {
+            // 32 bit system gets result: "\xff\xff\xff..." from RIL, which is not testable.
+            // Only test for 64 bit here. TODO: remove this limit after b/113181277 being fixed.
+            int mccSize = hidl_mcc.size();
+            EXPECT_TRUE(mccSize == 0 || mccSize == 3);
+            if (mccSize > 0) {
                 int mcc = stoi(hidl_mcc);
-                int mnc = stoi(hidl_mnc);
                 EXPECT_TRUE(mcc >= 0 && mcc <= 999);
+            }
+
+            int mncSize = hidl_mnc.size();
+            EXPECT_TRUE(mncSize == 0 || mncSize == 2 || mncSize == 3);
+            if (mncSize > 0) {
+                int mnc = stoi(hidl_mnc);
                 EXPECT_TRUE(mnc >= 0 && mnc <= 999);
             }
         }
