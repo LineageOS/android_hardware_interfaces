@@ -1524,11 +1524,20 @@ TEST_P(RadioNetworkTest, getDataRegistrationState) {
     }
 
     // 32 bit system might return invalid mcc and mnc string "\xff\xff..."
-    if (checkMccMnc && mcc.size() == 3 && (mnc.size() == 2 || mnc.size() == 3)) {
-        int mcc_int = stoi(mcc);
-        int mnc_int = stoi(mnc);
-        EXPECT_TRUE(mcc_int >= 0 && mcc_int <= 999);
-        EXPECT_TRUE(mnc_int >= 0 && mnc_int <= 999);
+    if (checkMccMnc) {
+        int mccSize = mcc.size();
+        EXPECT_TRUE(mccSize == 0 || mccSize == 3);
+        if (mccSize > 0) {
+            int mcc_int = stoi(mcc);
+            EXPECT_TRUE(mcc_int >= 0 && mcc_int <= 999);
+        }
+
+        int mncSize = mnc.size();
+        EXPECT_TRUE(mncSize == 0 || mncSize == 2 || mncSize == 3);
+        if (mncSize > 0) {
+            int mnc_int = stoi(mnc);
+            EXPECT_TRUE(mnc_int >= 0 && mnc_int <= 999);
+        }
     }
 
     // Check for access technology specific info
