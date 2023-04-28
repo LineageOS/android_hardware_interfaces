@@ -117,11 +117,9 @@ int BluetoothHci::getFdFromDevPath() {
           strerror(errno));
     return fd;
   }
-  if (int ret = SetTerminalRaw(mFd) < 0) {
-    ALOGE("Could not make %s a raw terminal %d(%s)", mDevPath.c_str(), ret,
+  if (int ret = SetTerminalRaw(fd) < 0) {
+    ALOGI("Could not make %s a raw terminal %d(%s)", mDevPath.c_str(), ret,
           strerror(errno));
-    ::close(fd);
-    return -1;
   }
   return fd;
 }
