@@ -134,6 +134,10 @@ interface IRemotelyProvisionedComponent {
      *        are marked (see the definition of PublicKey in the MacedPublicKey structure) to
      *        prevent them from being confused with production keys.
      *
+     *        This parameter has been deprecated since version 3 of the HAL and will always be
+     *        false. From v3, if this parameter is true, the method must raise a
+     *        ServiceSpecificException with an error of code of STATUS_REMOVED.
+     *
      * @param out MacedPublicKey macedPublicKey contains the public key of the generated key pair,
      *        MACed so that generateCertificateRequest can easily verify, without the
      *        privateKeyHandle, that the contained public key is for remote certification.
@@ -315,7 +319,7 @@ interface IRemotelyProvisionedComponent {
      *
      * @param in challenge contains a byte string from the provisioning server which will be
      *        included in the signed data of the CSR structure. Different provisioned backends may
-     *        use different semantic data for this field, but the supported sizes must be between 16
+     *        use different semantic data for this field, but the supported sizes must be between 0
      *        and 64 bytes, inclusive.
      *
      * @return the following CBOR Certificate Signing Request (Csr) serialized into a byte array:
@@ -344,7 +348,7 @@ interface IRemotelyProvisionedComponent {
      *     UdsCerts,
      *     DiceCertChain,
      *     SignedData<[
-     *         challenge: bstr .size (16..64), ; Provided by the method parameters
+     *         challenge: bstr .size (0..64), ; Provided by the method parameters
      *         bstr .cbor T,
      *     ]>,
      * ]

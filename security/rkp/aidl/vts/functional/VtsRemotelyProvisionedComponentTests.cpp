@@ -47,7 +47,14 @@ using ::std::vector;
 namespace {
 
 constexpr int32_t VERSION_WITH_UNIQUE_ID_SUPPORT = 2;
+
+constexpr int32_t VERSION_WITHOUT_EEK = 3;
 constexpr int32_t VERSION_WITHOUT_TEST_MODE = 3;
+constexpr int32_t VERSION_WITH_CERTIFICATE_REQUEST_V2 = 3;
+constexpr int32_t VERSION_WITH_SUPPORTED_NUM_KEYS_IN_CSR = 3;
+
+constexpr uint8_t MIN_CHALLENGE_SIZE = 0;
+constexpr uint8_t MAX_CHALLENGE_SIZE = 64;
 
 #define INSTANTIATE_REM_PROV_AIDL_TEST(name)                                         \
     GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(name);                             \
@@ -223,21 +230,13 @@ TEST_P(GetHardwareInfoTests, supportsValidCurve) {
     RpcHardwareInfo hwInfo;
     ASSERT_TRUE(provisionable_->getHardwareInfo(&hwInfo).isOk());
 
-    const std::set<int> validCurves = {RpcHardwareInfo::CURVE_P256, RpcHardwareInfo::CURVE_25519};
-    // First check for the implementations that supports only IRPC V3+.
-    if (rpcHardwareInfo.versionNumber >= VERSION_WITHOUT_TEST_MODE) {
-        bytevec keysToSignMac;
-        DeviceInfo deviceInfo;
-        ProtectedData protectedData;
-        auto status = provisionable_->generateCertificateRequest(false, {}, {}, {}, &deviceInfo,
-                                                                 &protectedData, &keysToSignMac);
-        if (!status.isOk() &&
-            (status.getServiceSpecificError() == BnRemotelyProvisionedComponent::STATUS_REMOVED)) {
-            ASSERT_EQ(hwInfo.supportedEekCurve, RpcHardwareInfo::CURVE_NONE)
-                    << "Invalid curve: " << hwInfo.supportedEekCurve;
-            return;
-        }
+    if (rpcHardwareInfo.versionNumber >= VERSION_WITHOUT_EEK) {
+        ASSERT_EQ(hwInfo.supportedEekCurve, RpcHardwareInfo::CURVE_NONE)
+                << "Invalid curve: " << hwInfo.supportedEekCurve;
+        return;
     }
+
+    const std::set<int> validCurves = {RpcHardwareInfo::CURVE_P256, RpcHardwareInfo::CURVE_25519};
     ASSERT_EQ(validCurves.count(hwInfo.supportedEekCurve), 1)
             << "Invalid curve: " << hwInfo.supportedEekCurve;
 }
@@ -261,7 +260,7 @@ TEST_P(GetHardwareInfoTests, uniqueId) {
  * Verify implementation supports at least MIN_SUPPORTED_NUM_KEYS_IN_CSR keys in a CSR.
  */
 TEST_P(GetHardwareInfoTests, supportedNumKeysInCsr) {
-    if (rpcHardwareInfo.versionNumber < VERSION_WITHOUT_TEST_MODE) {
+    if (rpcHardwareInfo.versionNumber < VERSION_WITH_SUPPORTED_NUM_KEYS_IN_CSR) {
         return;
     }
 
@@ -362,6 +361,13 @@ TEST_P(GenerateKeyTests, generateEcdsaP256Key_testMode) {
     bytevec privateKeyBlob;
     bool testMode = true;
     auto status = provisionable_->generateEcdsaP256KeyPair(testMode, &macedPubKey, &privateKeyBlob);
+
+    if (rpcHardwareInfo.versionNumber >= VERSION_WITHOUT_TEST_MODE) {
+        ASSERT_FALSE(status.isOk());
+        EXPECT_EQ(status.getServiceSpecificError(), BnRemotelyProvisionedComponent::STATUS_REMOVED);
+        return;
+    }
+
     ASSERT_TRUE(status.isOk());
     check_maced_pubkey(macedPubKey, testMode, nullptr);
 }
@@ -407,7 +413,7 @@ class CertificateRequestTest : public CertificateRequestTestBase {
         CertificateRequestTestBase::SetUp();
         ASSERT_FALSE(HasFatalFailure());
 
-        if (rpcHardwareInfo.versionNumber >= VERSION_WITHOUT_TEST_MODE) {
+        if (rpcHardwareInfo.versionNumber >= VERSION_WITH_CERTIFICATE_REQUEST_V2) {
             GTEST_SKIP() << "This test case only applies to RKP v1 and v2. "
                          << "RKP version discovered: " << rpcHardwareInfo.versionNumber;
         }
@@ -685,7 +691,7 @@ class CertificateRequestV2Test : public CertificateRequestTestBase {
         CertificateRequestTestBase::SetUp();
         ASSERT_FALSE(HasFatalFailure());
 
-        if (rpcHardwareInfo.versionNumber < VERSION_WITHOUT_TEST_MODE) {
+        if (rpcHardwareInfo.versionNumber < VERSION_WITH_CERTIFICATE_REQUEST_V2) {
             GTEST_SKIP() << "This test case only applies to RKP v3 and above. "
                          << "RKP version discovered: " << rpcHardwareInfo.versionNumber;
         }
@@ -693,32 +699,54 @@ class CertificateRequestV2Test : public CertificateRequestTestBase {
 };
 
 /**
- * Generate an empty certificate request, and decrypt and verify the structure and content.
+ * Generate an empty certificate request with all possible length of challenge, and decrypt and
+ * verify the structure and content.
  */
 TEST_P(CertificateRequestV2Test, EmptyRequest) {
     bytevec csr;
 
-    auto status =
-            provisionable_->generateCertificateRequestV2({} /* keysToSign */, challenge_, &csr);
-    ASSERT_TRUE(status.isOk()) << status.getMessage();
+    for (auto size = MIN_CHALLENGE_SIZE; size <= MAX_CHALLENGE_SIZE; size++) {
+        SCOPED_TRACE(testing::Message() << "challenge[" << size << "]");
+        auto challenge = randomBytes(size);
+        auto status =
+                provisionable_->generateCertificateRequestV2({} /* keysToSign */, challenge, &csr);
+        ASSERT_TRUE(status.isOk()) << status.getMessage();
 
-    auto result = verifyProductionCsr(cppbor::Array(), csr, provisionable_.get(), challenge_);
-    ASSERT_TRUE(result) << result.message();
+        auto result = verifyProductionCsr(cppbor::Array(), csr, provisionable_.get(), challenge);
+        ASSERT_TRUE(result) << result.message();
+    }
 }
 
 /**
- * Generate a non-empty certificate request.  Decrypt, parse and validate the contents.
+ * Generate a non-empty certificate request with all possible length of challenge.  Decrypt, parse
+ * and validate the contents.
  */
 TEST_P(CertificateRequestV2Test, NonEmptyRequest) {
     generateKeys(false /* testMode */, 1 /* numKeys */);
 
     bytevec csr;
 
-    auto status = provisionable_->generateCertificateRequestV2(keysToSign_, challenge_, &csr);
-    ASSERT_TRUE(status.isOk()) << status.getMessage();
+    for (auto size = MIN_CHALLENGE_SIZE; size <= MAX_CHALLENGE_SIZE; size++) {
+        SCOPED_TRACE(testing::Message() << "challenge[" << size << "]");
+        auto challenge = randomBytes(size);
+        auto status = provisionable_->generateCertificateRequestV2(keysToSign_, challenge, &csr);
+        ASSERT_TRUE(status.isOk()) << status.getMessage();
 
-    auto result = verifyProductionCsr(cborKeysToSign_, csr, provisionable_.get(), challenge_);
-    ASSERT_TRUE(result) << result.message();
+        auto result = verifyProductionCsr(cborKeysToSign_, csr, provisionable_.get(), challenge);
+        ASSERT_TRUE(result) << result.message();
+    }
+}
+
+/**
+ * Generate an empty certificate request with invalid size of challenge
+ */
+TEST_P(CertificateRequestV2Test, EmptyRequestWithInvalidChallengeFail) {
+    bytevec csr;
+
+    auto status = provisionable_->generateCertificateRequestV2(
+            /* keysToSign */ {}, randomBytes(MAX_CHALLENGE_SIZE + 1), &csr);
+    EXPECT_FALSE(status.isOk()) << status.getMessage();
+    EXPECT_EQ(status.getServiceSpecificError(), BnRemotelyProvisionedComponent::STATUS_FAILED);
 }
 
 /**
@@ -777,23 +805,23 @@ TEST_P(CertificateRequestV2Test, NonEmptyRequestCorruptMac) {
 }
 
 /**
- * Generate a non-empty certificate request in prod mode, with test keys.  Must fail with
- * STATUS_TEST_KEY_IN_PRODUCTION_REQUEST.
+ * Call generateCertificateRequest(). Make sure it's removed.
  */
-TEST_P(CertificateRequestV2Test, NonEmptyRequest_testKeyInProdCert) {
-    generateKeys(true /* testMode */, 1 /* numKeys */);
-
-    bytevec csr;
-    auto status = provisionable_->generateCertificateRequestV2(keysToSign_, challenge_, &csr);
+TEST_P(CertificateRequestV2Test, CertificateRequestV1Removed_prodMode) {
+    bytevec keysToSignMac;
+    DeviceInfo deviceInfo;
+    ProtectedData protectedData;
+    auto status = provisionable_->generateCertificateRequest(
+            false /* testMode */, {} /* keysToSign */, {} /* EEK chain */, challenge_, &deviceInfo,
+            &protectedData, &keysToSignMac);
     ASSERT_FALSE(status.isOk()) << status.getMessage();
-    ASSERT_EQ(status.getServiceSpecificError(),
-              BnRemotelyProvisionedComponent::STATUS_TEST_KEY_IN_PRODUCTION_REQUEST);
+    EXPECT_EQ(status.getServiceSpecificError(), BnRemotelyProvisionedComponent::STATUS_REMOVED);
 }
 
 /**
- * Call generateCertificateRequest(). Make sure it's removed.
+ * Call generateCertificateRequest() in test mode. Make sure it's removed.
  */
-TEST_P(CertificateRequestV2Test, CertificateRequestV1Removed) {
+TEST_P(CertificateRequestV2Test, CertificateRequestV1Removed_testMode) {
     bytevec keysToSignMac;
     DeviceInfo deviceInfo;
     ProtectedData protectedData;

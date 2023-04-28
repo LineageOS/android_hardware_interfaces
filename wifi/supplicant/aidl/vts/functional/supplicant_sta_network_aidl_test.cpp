@@ -654,6 +654,11 @@ TEST_P(SupplicantStaNetworkAidlTest, SetEapEncryptedImsiIdentity) {
  * SetStrictConservativePeerMode
  */
 TEST_P(SupplicantStaNetworkAidlTest, SetStrictConversativePeerMode) {
+    int32_t version = 0;
+    sta_network_->getInterfaceVersion(&version);
+    if (version < 2) {
+        GTEST_SKIP() << "Skipping test since it is not supported on this interface version";
+    }
     EXPECT_TRUE(sta_network_->setStrictConservativePeerMode(true).isOk());
     EXPECT_TRUE(sta_network_->setStrictConservativePeerMode(false).isOk());
 }
