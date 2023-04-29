@@ -19,9 +19,9 @@
 #include <set>
 #include <string>
 
+#include <AudioPolicyConfig.h>
 #include <DeviceDescriptor.h>
 #include <HwModule.h>
-#include <Serializer.h>
 #include <gtest/gtest.h>
 #include <system/audio_config.h>
 
@@ -30,47 +30,35 @@
 using ::android::sp;
 using ::android::status_t;
 
-struct PolicyConfigData {
-    android::HwModuleCollection hwModules;
-    android::DeviceVector availableOutputDevices;
-    android::DeviceVector availableInputDevices;
-    sp<android::DeviceDescriptor> defaultOutputDevice;
-};
-
-class PolicyConfig : private PolicyConfigData, public android::AudioPolicyConfig {
+class PolicyConfig {
   public:
-    explicit PolicyConfig(const std::string& configFileName)
-        : android::AudioPolicyConfig(hwModules, availableOutputDevices, availableInputDevices,
-                                     defaultOutputDevice),
-          mConfigFileName{configFileName} {
-        for (const auto& location : android::audio_get_configuration_paths()) {
-            std::string path = location + '/' + mConfigFileName;
-            if (access(path.c_str(), F_OK) == 0) {
-                mFilePath = path;
-                break;
-            }
-        }
-        init();
-    }
     PolicyConfig(const std::string& configPath, const std::string& configFileName)
-        : android::AudioPolicyConfig(hwModules, availableOutputDevices, availableInputDevices,
-                                     defaultOutputDevice),
-          mConfigFileName{configFileName},
-          mFilePath{configPath + "/" + mConfigFileName} {
-        init();
+        : mInitialFilePath(configPath.empty() ? configFileName
+                                              : configPath + "/" + configFileName) {
+        auto result = android::AudioPolicyConfig::loadFromCustomXmlConfigForVtsTests(
+                configPath, configFileName);
+        if (result.ok()) {
+            mStatus = ::android::OK;
+            mConfig = result.value();
+            init();
+        } else {
+            mStatus = result.error();
+        }
     }
     status_t getStatus() const { return mStatus; }
     std::string getError() const {
-        if (mFilePath.empty()) {
-            return std::string{"Could not find "} + mConfigFileName +
+        if (mConfig == nullptr) {
+            return std::string{"Could not find "} + mInitialFilePath +
                    " file in: " + testing::PrintToString(android::audio_get_configuration_paths());
         } else {
-            return "Invalid config file: " + mFilePath;
+            return "Invalid config file: " + mConfig->getSource();
         }
     }
-    const std::string& getFilePath() const { return mFilePath; }
+    const std::string& getFilePath() const {
+        return mConfig != nullptr ? mConfig->getSource() : mInitialFilePath;
+    }
     sp<const android::HwModule> getModuleFromName(const std::string& name) const {
-        return getHwModules().getModuleFromName(name.c_str());
+        return mConfig->getHwModules().getModuleFromName(name.c_str());
     }
     sp<const android::HwModule> getPrimaryModule() const { return mPrimaryModule; }
     const std::set<std::string>& getModulesWithDevicesNames() const {
@@ -86,6 +74,8 @@ class PolicyConfig : private PolicyConfigData, public android::AudioPolicyConfig
         return findAttachedDevice(getAttachedDevices(moduleName),
                                   getSourceDevicesForMixPort(moduleName, mixPortName));
     }
+    const android::DeviceVector& getInputDevices() const { return mConfig->getInputDevices(); }
+    const android::DeviceVector& getOutputDevices() const { return mConfig->getOutputDevices(); }
     bool haveInputProfilesInModule(const std::string& name) const {
         auto module = getModuleFromName(name);
         return module && !module->getInputProfiles().empty();
@@ -93,29 +83,24 @@ class PolicyConfig : private PolicyConfigData, public android::AudioPolicyConfig
 
   private:
     void init() {
-        mStatus = android::deserializeAudioPolicyFileForVts(mFilePath.c_str(), this);
-        if (mStatus == android::OK) {
-            mPrimaryModule = getModuleFromName(DeviceManager::kPrimaryDevice);
-            // Available devices are not 'attached' to modules at this moment.
-            // Need to go over available devices and find their module.
-            for (const auto& device : availableOutputDevices) {
-                for (const auto& module : hwModules) {
-                    if (module->getDeclaredDevices().indexOf(device) >= 0) {
-                        mModulesWithDevicesNames.insert(module->getName());
-                        mAttachedDevicesPerModule[module->getName()].push_back(
-                                device->getTagName());
-                        break;
-                    }
+        mPrimaryModule = getModuleFromName(DeviceManager::kPrimaryDevice);
+        // Available devices are not 'attached' to modules at this moment.
+        // Need to go over available devices and find their module.
+        for (const auto& device : mConfig->getOutputDevices()) {
+            for (const auto& module : mConfig->getHwModules()) {
+                if (module->getDeclaredDevices().indexOf(device) >= 0) {
+                    mModulesWithDevicesNames.insert(module->getName());
+                    mAttachedDevicesPerModule[module->getName()].push_back(device->getTagName());
+                    break;
                 }
             }
-            for (const auto& device : availableInputDevices) {
-                for (const auto& module : hwModules) {
-                    if (module->getDeclaredDevices().indexOf(device) >= 0) {
-                        mModulesWithDevicesNames.insert(module->getName());
-                        mAttachedDevicesPerModule[module->getName()].push_back(
-                                device->getTagName());
-                        break;
-                    }
+        }
+        for (const auto& device : mConfig->getInputDevices()) {
+            for (const auto& module : mConfig->getHwModules()) {
+                if (module->getDeclaredDevices().indexOf(device) >= 0) {
+                    mModulesWithDevicesNames.insert(module->getName());
+                    mAttachedDevicesPerModule[module->getName()].push_back(device->getTagName());
+                    break;
                 }
             }
         }
@@ -166,10 +151,10 @@ class PolicyConfig : private PolicyConfigData, public android::AudioPolicyConfig
         return result;
     }
 
-    const std::string mConfigFileName;
+    const std::string mInitialFilePath;
     status_t mStatus = android::NO_INIT;
-    std::string mFilePath;
-    sp<const android::HwModule> mPrimaryModule = nullptr;
+    sp<android::AudioPolicyConfig> mConfig;
+    sp<const android::HwModule> mPrimaryModule;
     std::set<std::string> mModulesWithDevicesNames;
     std::map<std::string, std::vector<std::string>> mAttachedDevicesPerModule;
 };
