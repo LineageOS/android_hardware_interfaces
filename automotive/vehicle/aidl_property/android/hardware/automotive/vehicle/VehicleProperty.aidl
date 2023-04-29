@@ -4629,9 +4629,7 @@ enum VehicleProperty {
     /**
      * Lane Centering Assist (LCA) commands.
      *
-     * Commands to activate and suspend LCA. They are only valid when LANE_CENTERING_ASSIST_ENABLED
-     * = true. Otherwise, these commands must return StatusCode#NOT_AVAILABLE or
-     * StatusCode#NOT_AVAILABLE_DISABLED.
+     * Commands to activate and suspend LCA.
      *
      * When the command ACTIVATE from LaneCenteringAssistCommmand is sent,
      * LANE_CENTERING_ASSIST_STATE must be set to LaneCenteringAssistState#ACTIVATION_REQUESTED.
@@ -4642,6 +4640,14 @@ enum VehicleProperty {
      *
      * For the global area ID (0), the VehicleAreaConfig#supportedEnumValues must be defined unless
      * all enum values of LaneCenteringAssistCommand are supported.
+     *
+     * When this property is not available because LCA is disabled (i.e.
+     * LANE_CENTERING_ASSIST_ENABLED is false), this property must return
+     * StatusCode#NOT_AVAILABLE_DISABLED. If LANE_CENTERING_ASSIST_STATE is implemented and the
+     * state is set to an ErrorState value, then this property must return a StatusCode that aligns
+     * with the ErrorState value. For example, if LANE_CENTERING_ASSIST_STATE is set to
+     * ErrorState#NOT_AVAILABLE_SPEED_LOW, then this property must return
+     * StatusCode#NOT_AVAILABLE_SPEED_LOW.
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.WRITE
@@ -4794,7 +4800,11 @@ enum VehicleProperty {
      * this property must return StatusCode#INVALID_ARG.
      *
      * When this property is not available because CC is disabled (i.e. CRUISE_CONTROL_ENABLED is
-     * false), this property must return StatusCode#NOT_AVAILABLE_DISABLED.
+     * false), this property must return StatusCode#NOT_AVAILABLE_DISABLED. If CRUISE_CONTROL_STATE
+     * is implemented and the state is set to an ErrorState value, then this property must return a
+     * StatusCode that aligns with the ErrorState value. For example, if CRUISE_CONTROL_STATE is set
+     * to ErrorState#NOT_AVAILABLE_SPEED_LOW, then this property must return
+     * StatusCode#NOT_AVAILABLE_SPEED_LOW.
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.WRITE
@@ -4813,7 +4823,11 @@ enum VehicleProperty {
      * The minFloatValue represents the lower bound of the target speed.
      *
      * When this property is not available because CC is disabled (i.e. CRUISE_CONTROL_ENABLED is
-     * false), this property must return StatusCode#NOT_AVAILABLE_DISABLED.
+     * false), this property must return StatusCode#NOT_AVAILABLE_DISABLED. If CRUISE_CONTROL_STATE
+     * is implemented and the state is set to an ErrorState value, then this property must return a
+     * StatusCode that aligns with the ErrorState value. For example, if CRUISE_CONTROL_STATE is set
+     * to ErrorState#NOT_AVAILABLE_SPEED_LOW, then this property must return
+     * StatusCode#NOT_AVAILABLE_SPEED_LOW.
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ
@@ -4836,7 +4850,11 @@ enum VehicleProperty {
      * writable.
      *
      * When this property is not available because CC is disabled (i.e. CRUISE_CONTROL_ENABLED is
-     * false), this property must return StatusCode#NOT_AVAILABLE_DISABLED.
+     * false), this property must return StatusCode#NOT_AVAILABLE_DISABLED. If CRUISE_CONTROL_STATE
+     * is implemented and the state is set to an ErrorState value, then this property must return a
+     * StatusCode that aligns with the ErrorState value. For example, if CRUISE_CONTROL_STATE is set
+     * to ErrorState#NOT_AVAILABLE_SPEED_LOW, then this property must return
+     * StatusCode#NOT_AVAILABLE_SPEED_LOW.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -4865,7 +4883,11 @@ enum VehicleProperty {
      * StatusCode.NOT_AVAILABLE.
      *
      * When this property is not available because CC is disabled (i.e. CRUISE_CONTROL_ENABLED is
-     * false), this property must return StatusCode#NOT_AVAILABLE_DISABLED.
+     * false), this property must return StatusCode#NOT_AVAILABLE_DISABLED. If CRUISE_CONTROL_STATE
+     * is implemented and the state is set to an ErrorState value, then this property must return a
+     * StatusCode that aligns with the ErrorState value. For example, if CRUISE_CONTROL_STATE is set
+     * to ErrorState#NOT_AVAILABLE_SPEED_LOW, then this property must return
+     * StatusCode#NOT_AVAILABLE_SPEED_LOW.
      *
      * @change_mode VehiclePropertyChangeMode.CONTINUOUS
      * @access VehiclePropertyAccess.READ
