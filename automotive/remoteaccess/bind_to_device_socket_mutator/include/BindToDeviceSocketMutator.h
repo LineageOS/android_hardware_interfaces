@@ -16,20 +16,11 @@
 
 #pragma once
 
-#include <grpc++/grpc++.h>
-#include <src/core/lib/iomgr/socket_mutator.h>
-#include <string>
+#include <grpc/grpc.h>
+#include <string_view>
 
 namespace android::hardware::automotive::remoteaccess {
 
-class BindToDeviceSocketMutator final : public grpc_socket_mutator {
-  public:
-    BindToDeviceSocketMutator(const std::string_view& interface_name);
-
-    bool mutateFd(int fd);
-
-  private:
-    std::string mIfname;
-};
+grpc_socket_mutator* MakeBindToDeviceSocketMutator(std::string_view interface_name);
 
 }  // namespace android::hardware::automotive::remoteaccess
