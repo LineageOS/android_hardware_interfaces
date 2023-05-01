@@ -31,7 +31,6 @@ extern "C" {
 #include "alsa_device_profile.h"
 }
 
-using aidl::android::hardware::audio::common::isUsbInputDeviceType;
 using aidl::android::hardware::audio::common::SinkMetadata;
 using aidl::android::hardware::audio::common::SourceMetadata;
 using aidl::android::media::audio::common::AudioChannelLayout;
@@ -40,6 +39,7 @@ using aidl::android::media::audio::common::AudioDeviceDescription;
 using aidl::android::media::audio::common::AudioDeviceType;
 using aidl::android::media::audio::common::AudioFormatDescription;
 using aidl::android::media::audio::common::AudioFormatType;
+using aidl::android::media::audio::common::AudioIoFlags;
 using aidl::android::media::audio::common::AudioOffloadInfo;
 using aidl::android::media::audio::common::AudioPort;
 using aidl::android::media::audio::common::AudioPortConfig;
@@ -141,7 +141,7 @@ ndk::ScopedAStatus ModuleUsb::populateConnectedDevicePort(AudioPort* audioPort) 
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
     }
 
-    const bool isInput = isUsbInputDeviceType(devicePort.device.type.type);
+    const bool isInput = audioPort->flags.getTag() == AudioIoFlags::input;
     alsa_device_profile profile;
     profile_init(&profile, isInput ? PCM_IN : PCM_OUT);
     profile.card = alsaAddress[0];

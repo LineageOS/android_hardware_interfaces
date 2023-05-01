@@ -127,30 +127,6 @@ constexpr bool isTelephonyDeviceType(
            device == ::aidl::android::media::audio::common::AudioDeviceType::OUT_TELEPHONY_TX;
 }
 
-constexpr bool isUsbInputDeviceType(::aidl::android::media::audio::common::AudioDeviceType type) {
-    switch (type) {
-        case ::aidl::android::media::audio::common::AudioDeviceType::IN_DOCK:
-        case ::aidl::android::media::audio::common::AudioDeviceType::IN_ACCESSORY:
-        case ::aidl::android::media::audio::common::AudioDeviceType::IN_DEVICE:
-        case ::aidl::android::media::audio::common::AudioDeviceType::IN_HEADSET:
-            return true;
-        default:
-            return false;
-    }
-}
-
-constexpr bool isUsbOutputtDeviceType(::aidl::android::media::audio::common::AudioDeviceType type) {
-    switch (type) {
-        case ::aidl::android::media::audio::common::AudioDeviceType::OUT_DOCK:
-        case ::aidl::android::media::audio::common::AudioDeviceType::OUT_ACCESSORY:
-        case ::aidl::android::media::audio::common::AudioDeviceType::OUT_DEVICE:
-        case ::aidl::android::media::audio::common::AudioDeviceType::OUT_HEADSET:
-            return true;
-        default:
-            return false;
-    }
-}
-
 constexpr bool isValidAudioMode(::aidl::android::media::audio::common::AudioMode mode) {
     return std::find(kValidAudioModes.begin(), kValidAudioModes.end(), mode) !=
            kValidAudioModes.end();
