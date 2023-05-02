@@ -54,26 +54,25 @@ bool IvnAndroidDeviceService::init() {
         return false;
     }
     Json::CharReaderBuilder builder;
-    Json::Value root;
     std::string errs;
-    if (!Json::parseFromStream(builder, configStream, &root, &errs)) {
+    if (!Json::parseFromStream(builder, configStream, &mConfigRootNode, &errs)) {
         LOG(ERROR) << "Failed to parse config JSON stream, error: " << errs;
         return false;
     }
-    if (!root.isObject()) {
+    if (!mConfigRootNode.isObject()) {
         LOG(ERROR) << "Root must be an object";
         return false;
     }
-    if (!root.isMember("MyDeviceId")) {
+    if (!mConfigRootNode.isMember("MyDeviceId")) {
         LOG(ERROR) << "Must contain 'MyDeviceId' field";
         return false;
     }
-    mMyDeviceId = root["MyDeviceId"].asInt();
-    if (!root.isMember("Devices") || !root["Devices"].isArray()) {
+    mMyDeviceId = mConfigRootNode["MyDeviceId"].asInt();
+    if (!mConfigRootNode.isMember("Devices") || !mConfigRootNode["Devices"].isArray()) {
         LOG(ERROR) << "Must contain 'Devices' field as array";
         return false;
     }
-    Json::Value& devices = root["Devices"];
+    Json::Value& devices = mConfigRootNode["Devices"];
     for (unsigned int i = 0; i < devices.size(); i++) {
         Json::Value& device = devices[i];
         int deviceId = device["DeviceId"].asInt();
@@ -188,6 +187,13 @@ ScopedAStatus IvnAndroidDeviceService::getEndpointInfoForDevice(int androidDevic
     }
     *endpointInfo = mDeviceInfoById[androidDeviceId].endpointInfo;
     return ScopedAStatus::ok();
+}
+
+binder_status_t IvnAndroidDeviceService::dump(int fd, [[maybe_unused]] const char** args,
+                                              [[maybe_unused]] uint32_t numArgs) {
+    dprintf(fd, "IVN Android Device debug interface, Config: \n%s\n",
+            mConfigRootNode.toStyledString().c_str());
+    return STATUS_OK;
 }
 
 }  // namespace ivn

@@ -88,16 +88,14 @@ const std::vector<Range::EqualizerRange> EqualizerSw::kRanges = {
         MAKE_RANGE(Equalizer, centerFreqMh, std::vector<int>({1}), std::vector<int>({0}))};
 
 const Capability EqualizerSw::kEqCap = {.range = EqualizerSw::kRanges};
-const Descriptor EqualizerSw::kDesc = {
-        .common = {.id = {.type = getEffectTypeUuidEqualizer(),
-                          .uuid = getEffectImplUuidEqualizerSw(),
-                          .proxy = getEffectImplUuidEqualizerProxy()},
-                   .flags = {.type = Flags::Type::INSERT,
-                             .insert = Flags::Insert::FIRST,
-                             .volume = Flags::Volume::CTRL},
-                   .name = EqualizerSw::kEffectName,
-                   .implementor = "The Android Open Source Project"},
-        .capability = EqualizerSw::kEqCap};
+const Descriptor EqualizerSw::kDesc = {.common = {.id = {.type = getEffectTypeUuidEqualizer(),
+                                                         .uuid = getEffectImplUuidEqualizerSw()},
+                                                  .flags = {.type = Flags::Type::INSERT,
+                                                            .insert = Flags::Insert::FIRST,
+                                                            .volume = Flags::Volume::CTRL},
+                                                  .name = EqualizerSw::kEffectName,
+                                                  .implementor = "The Android Open Source Project"},
+                                       .capability = EqualizerSw::kEqCap};
 
 ndk::ScopedAStatus EqualizerSw::getDescriptor(Descriptor* _aidl_return) {
     LOG(DEBUG) << __func__ << kDesc.toString();
