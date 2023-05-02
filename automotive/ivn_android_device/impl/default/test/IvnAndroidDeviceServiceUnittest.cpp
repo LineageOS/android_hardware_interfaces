@@ -16,6 +16,7 @@
 
 #include "IvnAndroidDeviceService.h"
 
+#include <aidl/android/hardware/automotive/ivn/EndpointInfo.h>
 #include <aidl/android/hardware/automotive/ivn/OccupantType.h>
 #include <aidl/android/hardware/automotive/ivn/OccupantZoneInfo.h>
 #include <android-base/file.h>
@@ -26,6 +27,8 @@ namespace hardware {
 namespace automotive {
 namespace ivn {
 
+using ::aidl::android::hardware::automotive::ivn::ConnectProtocol;
+using ::aidl::android::hardware::automotive::ivn::EndpointInfo;
 using ::aidl::android::hardware::automotive::ivn::OccupantType;
 using ::aidl::android::hardware::automotive::ivn::OccupantZoneInfo;
 using ::ndk::ScopedAStatus;
@@ -92,6 +95,7 @@ TEST_F(IvnAndroidDeviceServiceUnitTest, TestGetOccupantZonesForDevice) {
 
     ScopedAStatus status =
             mService->getOccupantZonesForDevice(/*androidDeviceId=*/0, &occupantZones);
+
     ASSERT_TRUE(status.isOk());
     EXPECT_EQ(occupantZones.size(), 2);
     if (occupantZones.size() == 2) {
@@ -102,6 +106,41 @@ TEST_F(IvnAndroidDeviceServiceUnitTest, TestGetOccupantZonesForDevice) {
         EXPECT_EQ(occupantZones[1].occupantType, OccupantType::FRONT_PASSENGER);
         EXPECT_EQ(occupantZones[1].seat, 4);
     }
+}
+
+TEST_F(IvnAndroidDeviceServiceUnitTest, TestGetMyEndpointInfo) {
+    EndpointInfo endpointInfo;
+
+    ScopedAStatus status = mService->getMyEndpointInfo(&endpointInfo);
+
+    ASSERT_TRUE(status.isOk());
+    EXPECT_EQ(endpointInfo.connectProtocol, ConnectProtocol::TCP_IP);
+    EXPECT_EQ(endpointInfo.ipAddress, "10.10.10.1");
+    EXPECT_EQ(endpointInfo.portNumber, 1234);
+    EXPECT_EQ(endpointInfo.hardwareId.brandName, "MyBrand");
+    EXPECT_EQ(endpointInfo.hardwareId.deviceName, "MyDevice");
+    EXPECT_EQ(endpointInfo.hardwareId.productName, "MyProduct");
+    EXPECT_EQ(endpointInfo.hardwareId.manufacturerName, "MyCompany");
+    EXPECT_EQ(endpointInfo.hardwareId.modelName, "MyModel");
+    EXPECT_EQ(endpointInfo.hardwareId.serialNumber, "Serial1234");
+}
+
+TEST_F(IvnAndroidDeviceServiceUnitTest, TestGetEndpointInfoForDevice) {
+    EndpointInfo endpointInfo;
+
+    ScopedAStatus status = mService->getEndpointInfoForDevice(/*androidDeviceId=*/0, &endpointInfo);
+
+    ASSERT_TRUE(status.isOk());
+    EXPECT_EQ(endpointInfo.connectProtocol, ConnectProtocol::TCP_IP);
+    EXPECT_EQ(endpointInfo.ipAddress, "10.10.10.1");
+    EXPECT_EQ(endpointInfo.portNumber, 1234);
+
+    status = mService->getEndpointInfoForDevice(/*androidDeviceId=*/1, &endpointInfo);
+
+    ASSERT_TRUE(status.isOk());
+    EXPECT_EQ(endpointInfo.connectProtocol, ConnectProtocol::TCP_IP);
+    EXPECT_EQ(endpointInfo.ipAddress, "10.10.10.2");
+    EXPECT_EQ(endpointInfo.portNumber, 2345);
 }
 
 }  // namespace ivn
