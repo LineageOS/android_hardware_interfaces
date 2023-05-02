@@ -18,40 +18,50 @@
 
 #include <android-base/logging.h>
 #include <errno.h>
+#include <src/core/lib/iomgr/socket_mutator.h>
 #include <sys/socket.h>
 
-namespace android::hardware::automotive::remoteaccess {
+#include <memory>
 
-bool BindToDeviceSocketMutator::mutateFd(int fd) {
-    int ret = setsockopt(fd, SOL_SOCKET, SO_BINDTODEVICE, mIfname.c_str(), mIfname.size());
+namespace android::hardware::automotive::remoteaccess {
+namespace {
+
+struct BindToDeviceMutator : grpc_socket_mutator {
+    std::string ifname;
+};
+
+bool MutateFd(int fd, grpc_socket_mutator* mutator) {
+    auto* bdm = static_cast<BindToDeviceMutator*>(mutator);
+    int ret = setsockopt(fd, SOL_SOCKET, SO_BINDTODEVICE, bdm->ifname.c_str(), bdm->ifname.size());
     if (ret != 0) {
-        PLOG(ERROR) << "Can't bind socket to interface " << mIfname;
+        PLOG(ERROR) << "Can't bind socket to interface " << bdm->ifname;
         return false;
     }
     return true;
 }
 
-bool bind_to_device_mutator_mutate_fd(int fd, grpc_socket_mutator* mutator) {
-    BindToDeviceSocketMutator* bsm = (BindToDeviceSocketMutator*)mutator;
-    return bsm->mutateFd(fd);
-}
-
-int bind_to_device_mutator_compare(grpc_socket_mutator* a, grpc_socket_mutator* b) {
+int Compare(grpc_socket_mutator* a, grpc_socket_mutator* b) {
     return ((a) < (b) ? -1 : ((a) > (b) ? 1 : 0));
 }
 
-void bind_to_device_mutator_destroy(grpc_socket_mutator* mutator) {
-    BindToDeviceSocketMutator* bsm = (BindToDeviceSocketMutator*)mutator;
-    delete bsm;
+void Destroy(grpc_socket_mutator* mutator) {
+    auto* bdm = static_cast<BindToDeviceMutator*>(mutator);
+    delete bdm;
 }
 
-grpc_socket_mutator_vtable bind_to_device_mutator_vtable = {bind_to_device_mutator_mutate_fd,
-                                                            bind_to_device_mutator_compare,
-                                                            bind_to_device_mutator_destroy};
+constexpr grpc_socket_mutator_vtable kMutatorVtable = {
+        .mutate_fd = MutateFd,
+        .compare = Compare,
+        .destroy = Destroy,
+};
 
-BindToDeviceSocketMutator::BindToDeviceSocketMutator(const std::string_view& interface_name) {
-    mIfname = interface_name;
-    grpc_socket_mutator_init(this, &bind_to_device_mutator_vtable);
+}  // namespace
+
+grpc_socket_mutator* MakeBindToDeviceSocketMutator(std::string_view interface_name) {
+    auto* bdm = new BindToDeviceMutator;
+    grpc_socket_mutator_init(bdm, &kMutatorVtable);
+    bdm->ifname = interface_name;
+    return bdm;
 }
 
 }  // namespace android::hardware::automotive::remoteaccess
