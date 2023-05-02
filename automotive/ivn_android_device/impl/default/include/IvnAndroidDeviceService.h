@@ -20,6 +20,7 @@
 #include <aidl/android/hardware/automotive/ivn/EndpointInfo.h>
 #include <aidl/android/hardware/automotive/ivn/OccupantZoneInfo.h>
 #include <android/binder_auto_utils.h>
+#include <json/json.h>
 #include <vector>
 
 #include <unordered_map>
@@ -60,7 +61,10 @@ class IvnAndroidDeviceService
             int androidDeviceId,
             aidl::android::hardware::automotive::ivn::EndpointInfo* endpointInfo) override;
 
+    binder_status_t dump(int fd, const char** args, uint32_t numArgs) override;
+
   private:
+    Json::Value mConfigRootNode;
     int mMyDeviceId;
     std::unordered_map<int, DeviceInfo> mDeviceInfoById;
     std::string_view mConfigPath;
