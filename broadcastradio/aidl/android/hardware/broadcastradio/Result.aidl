@@ -39,7 +39,7 @@ enum Result {
     INVALID_ARGUMENTS,
 
     /**
-     * Error used when the service is of invalid state (i.e. callback
+     * Error used when the service is on invalid state (i.e. callback
      * is not registered for IBroadcastRadio).
      */
     INVALID_STATE,
@@ -50,13 +50,13 @@ enum Result {
     NOT_SUPPORTED,
 
     /**
-     * Error used when a tune, seek, step or operation is not completed
-     * within {@link IBroadcastRadio#LIST_COMPLETE_TIMEOUT_MS}.
+     * Error used when a tune, seek, or step operation is not completed
+     * within {@link IBroadcastRadio#TUNER_TIMEOUT_MS}.
      */
     TIMEOUT,
 
     /**
-     * Error used when a tune, seek, step or operation is canceled before
+     * Error used when a tune, seek, or step operation is canceled before
      * being processed.
      */
     CANCELED,
