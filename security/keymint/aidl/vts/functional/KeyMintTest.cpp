@@ -3119,7 +3119,7 @@ TEST_P(SigningOperationsTest, RsaPaddingNoneDoesNotAllowOther) {
  */
 TEST_P(SigningOperationsTest, NoUserConfirmation) {
     ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
-                                                 .RsaSigningKey(1024, 65537)
+                                                 .RsaSigningKey(2048, 65537)
                                                  .Digest(Digest::NONE)
                                                  .Padding(PaddingMode::NONE)
                                                  .Authorization(TAG_NO_AUTH_REQUIRED)
