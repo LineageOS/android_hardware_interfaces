@@ -68,8 +68,7 @@ const std::vector<Range::BassBoostRange> BassBoostSw::kRanges = {
 const Capability BassBoostSw::kCapability = {.range = {BassBoostSw::kRanges}};
 const Descriptor BassBoostSw::kDescriptor = {
         .common = {.id = {.type = getEffectTypeUuidBassBoost(),
-                          .uuid = getEffectImplUuidBassBoostSw(),
-                          .proxy = getEffectImplUuidBassBoostProxy()},
+                          .uuid = getEffectImplUuidBassBoostSw()},
                    .flags = {.type = Flags::Type::INSERT,
                              .insert = Flags::Insert::FIRST,
                              .volume = Flags::Volume::CTRL},

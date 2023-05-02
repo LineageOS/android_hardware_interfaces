@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <optional>
 
 #define LOG_TAG "AHAL_VirtualizerSw"
 #include <Utils.h>
@@ -76,8 +77,7 @@ const Capability VirtualizerSw::kCapability = {
 
 const Descriptor VirtualizerSw::kDescriptor = {
         .common = {.id = {.type = getEffectTypeUuidVirtualizer(),
-                          .uuid = getEffectImplUuidVirtualizerSw(),
-                          .proxy = getEffectImplUuidVirtualizerProxy()},
+                          .uuid = getEffectImplUuidVirtualizerSw()},
                    .flags = {.type = Flags::Type::INSERT,
                              .insert = Flags::Insert::FIRST,
                              .volume = Flags::Volume::CTRL},
