@@ -37,7 +37,7 @@ cc_defaults {
 cc_library {
     name: "BindToDeviceSocketMutatorLib",
     vendor_available: true,
-    srcs: ["src/*"],
+    srcs: ["src/BindToDeviceSocketMutator.cpp"],
     export_include_dirs: ["include"],
     defaults: ["BindToDeviceSocketMutatorDefaults"],
 }
