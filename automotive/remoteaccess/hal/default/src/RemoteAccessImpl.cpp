@@ -40,7 +40,7 @@ int main(int /* argc */, char* /* argv */[]) {
 
 #ifdef GRPC_SERVICE_IFNAME
     grpcargs.SetSocketMutator(
-            new android::hardware::automotive::remoteaccess::BindToDeviceSocketMutator(
+            android::hardware::automotive::remoteaccess::MakeBindToDeviceSocketMutator(
                     GRPC_SERVICE_IFNAME));
     LOG(DEBUG) << "GRPC_SERVICE_IFNAME specified as: " << GRPC_SERVICE_IFNAME;
     LOG(INFO) << "Waiting for interface: " << GRPC_SERVICE_IFNAME;
