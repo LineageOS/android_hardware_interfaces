@@ -183,7 +183,7 @@ class RadioVoiceIndication : public BnRadioVoiceIndication {
 };
 
 // The main test class for Radio AIDL Voice.
-class RadioVoiceTest : public ::testing::TestWithParam<std::string>, public RadioServiceTest {
+class RadioVoiceTest : public RadioServiceTest {
   protected:
     /* Clear Potential Established Calls */
     virtual ndk::ScopedAStatus clearPotentialEstablishedCalls();
@@ -192,7 +192,7 @@ class RadioVoiceTest : public ::testing::TestWithParam<std::string>, public Radi
     std::shared_ptr<RadioNetworkIndication> radioInd_network;
 
   public:
-    virtual void SetUp() override;
+    void SetUp() override;
 
     /* radio voice service handle */
     std::shared_ptr<IRadioVoice> radio_voice;

@@ -25,7 +25,6 @@
 #include <aidl/android/hardware/radio/sim/CardStatus.h>
 #include <aidl/android/hardware/radio/sim/IRadioSim.h>
 #include <utils/Log.h>
-#include <vector>
 
 using namespace aidl::android::hardware::radio;
 using aidl::android::hardware::radio::config::SimSlotStatus;
@@ -133,14 +132,15 @@ bool isServiceValidForDeviceConfiguration(std::string& serviceName);
 /**
  * RadioServiceTest base class
  */
-class RadioServiceTest {
+class RadioServiceTest : public ::testing::TestWithParam<std::string> {
   protected:
-    std::mutex mtx_;
-    std::condition_variable cv_;
     std::shared_ptr<config::IRadioConfig> radio_config;
     std::shared_ptr<sim::IRadioSim> radio_sim;
 
   public:
+    void SetUp() override;
+    void TearDown() override;
+
     /* Used as a mechanism to inform the test about data/event callback */
     void notify(int receivedSerial);
 
@@ -155,4 +155,8 @@ class RadioServiceTest {
 
     /* Update SIM slot status */
     void updateSimSlotStatus(int physicalSlotId);
+
+  private:
+    std::mutex mtx_;
+    std::condition_variable cv_;
 };

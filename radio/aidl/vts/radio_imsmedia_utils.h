@@ -79,13 +79,13 @@ class ImsMediaSessionListener : public BnImsMediaSessionListener {
 };
 
 /* The main test class for Radio AIDL ImsMedia. */
-class RadioImsMediaTest : public ::testing::TestWithParam<std::string>, public RadioServiceTest {
+class RadioImsMediaTest : public RadioServiceTest {
   protected:
     virtual void verifyError(RtpError inError);
     virtual ndk::ScopedAStatus triggerOpenSession(int32_t sessionId);
 
   public:
-    virtual void SetUp() override;
+    void SetUp() override;
 
     /* radio imsmedia service handle */
     std::shared_ptr<IImsMedia> radio_imsmedia;
