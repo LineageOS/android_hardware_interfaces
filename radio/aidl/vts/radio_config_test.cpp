@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include <android-base/logging.h>
 #include <android/binder_manager.h>
 
 #include "radio_config_utils.h"
@@ -22,6 +21,7 @@
 #define ASSERT_OK(ret) ASSERT_TRUE(ret.isOk())
 
 void RadioConfigTest::SetUp() {
+    RadioServiceTest::SetUp();
     std::string serviceName = GetParam();
 
     radio_config = IRadioConfig::fromBinder(
@@ -30,8 +30,6 @@ void RadioConfigTest::SetUp() {
 
     radioRsp_config = ndk::SharedRefBase::make<RadioConfigResponse>(*this);
     ASSERT_NE(nullptr, radioRsp_config.get());
-
-    count_ = 0;
 
     radioInd_config = ndk::SharedRefBase::make<RadioConfigIndication>(*this);
     ASSERT_NE(nullptr, radioInd_config.get());

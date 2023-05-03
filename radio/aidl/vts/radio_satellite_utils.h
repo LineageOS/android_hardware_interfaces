@@ -113,9 +113,9 @@ class RadioSatelliteIndication : public BnRadioSatelliteIndication {
 };
 
 // The main test class for AIDL Satellite.
-class RadioSatelliteTest : public ::testing::TestWithParam<std::string>, public RadioServiceTest {
+class RadioSatelliteTest : public RadioServiceTest {
   public:
-    virtual void SetUp() override;
+    void SetUp() override;
 
     /* Radio Satellite service handle */
     std::shared_ptr<IRadioSatellite> satellite;

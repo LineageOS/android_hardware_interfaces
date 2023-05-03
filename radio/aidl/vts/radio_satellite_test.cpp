@@ -15,7 +15,6 @@
  */
 
 #include <aidl/android/hardware/radio/config/IRadioConfig.h>
-#include <android-base/logging.h>
 #include <android/binder_manager.h>
 
 #include "radio_satellite_utils.h"
@@ -23,10 +22,16 @@
 #define ASSERT_OK(ret) ASSERT_TRUE(((ret).isOk()))
 
 void RadioSatelliteTest::SetUp() {
+    RadioServiceTest::SetUp();
     std::string serviceName = GetParam();
 
     if (!isServiceValidForDeviceConfiguration(serviceName)) {
         ALOGI("Skipped the radio satellite tests due to device configuration.");
+        GTEST_SKIP();
+    }
+
+    if (!deviceSupportsFeature(FEATURE_TELEPHONY_SATELLITE)) {
+        ALOGI("Skipping test because satellite is not supported in device.");
         GTEST_SKIP();
     }
 
@@ -36,8 +41,6 @@ void RadioSatelliteTest::SetUp() {
 
     rsp_satellite = ndk::SharedRefBase::make<RadioSatelliteResponse>(*this);
     ASSERT_NE(nullptr, rsp_satellite.get());
-
-    count_ = 0;
 
     ind_satellite = ndk::SharedRefBase::make<RadioSatelliteIndication>(*this);
     ASSERT_NE(nullptr, ind_satellite.get());
@@ -54,13 +57,6 @@ void RadioSatelliteTest::SetUp() {
  * Test IRadioSatellite.getCapabilities() for the response returned.
  */
 TEST_P(RadioSatelliteTest, getCapabilities) {
-    if (!deviceSupportsFeature(FEATURE_TELEPHONY_SATELLITE)) {
-        ALOGI("Skipping getCapabilities because satellite is not supported in device");
-        return;
-    } else {
-        ALOGI("Running getCapabilities because satellite is supported in device");
-    }
-
     serial = GetRandomSerialNumber();
     ndk::ScopedAStatus res = satellite->getCapabilities(serial);
     ASSERT_OK(res);
@@ -84,13 +80,6 @@ TEST_P(RadioSatelliteTest, getCapabilities) {
  * Test IRadioSatellite.setPower() for the response returned.
  */
 TEST_P(RadioSatelliteTest, setPower) {
-    if (!deviceSupportsFeature(FEATURE_TELEPHONY_SATELLITE)) {
-        ALOGI("Skipping setPower because satellite is not supported in device");
-        return;
-    } else {
-        ALOGI("Running setPower because satellite is supported in device");
-    }
-
     serial = GetRandomSerialNumber();
     ndk::ScopedAStatus res = satellite->setPower(serial, true);
     ASSERT_OK(res);
@@ -114,13 +103,6 @@ TEST_P(RadioSatelliteTest, setPower) {
  * Test IRadioSatellite.getPowerSate() for the response returned.
  */
 TEST_P(RadioSatelliteTest, getPowerSate) {
-    if (!deviceSupportsFeature(FEATURE_TELEPHONY_SATELLITE)) {
-        ALOGI("Skipping getPowerSate because satellite is not supported in device");
-        return;
-    } else {
-        ALOGI("Running getPowerSate because satellite is supported in device");
-    }
-
     serial = GetRandomSerialNumber();
     ndk::ScopedAStatus res = satellite->getPowerState(serial);
     ASSERT_OK(res);
@@ -128,7 +110,7 @@ TEST_P(RadioSatelliteTest, getPowerSate) {
     EXPECT_EQ(RadioResponseType::SOLICITED, rsp_satellite->rspInfo.type);
     EXPECT_EQ(serial, rsp_satellite->rspInfo.serial);
 
-    ALOGI("getPowerSate, rspInfo.error = %s\n", toString(rsp_satellite->rspInfo.error).c_str());
+    ALOGI("getPowerState, rspInfo.error = %s\n", toString(rsp_satellite->rspInfo.error).c_str());
 
     ASSERT_TRUE(CheckAnyOfErrors(
             rsp_satellite->rspInfo.error,
@@ -144,13 +126,6 @@ TEST_P(RadioSatelliteTest, getPowerSate) {
  * Test IRadioSatellite.provisionService() for the response returned.
  */
 TEST_P(RadioSatelliteTest, provisionService) {
-    if (!deviceSupportsFeature(FEATURE_TELEPHONY_SATELLITE)) {
-        ALOGI("Skipping provisionService because satellite is not supported in device");
-        return;
-    } else {
-        ALOGI("Running provisionService because satellite is supported in device");
-    }
-
     serial = GetRandomSerialNumber();
     std::string imei = "imei";
     std::string msisdn = "msisdn";
@@ -204,13 +179,6 @@ TEST_P(RadioSatelliteTest, provisionService) {
  * Test IRadioSatellite.addAllowedSatelliteContacts() for the response returned.
  */
 TEST_P(RadioSatelliteTest, addAllowedSatelliteContacts) {
-    if (!deviceSupportsFeature(FEATURE_TELEPHONY_SATELLITE)) {
-        ALOGI("Skipping addAllowedSatelliteContacts because satellite is not supported in device");
-        return;
-    } else {
-        ALOGI("Running addAllowedSatelliteContacts because satellite is supported in device");
-    }
-
     serial = GetRandomSerialNumber();
     const std::vector<std::string> contacts = {"contact 1", "contact 2"};
     ndk::ScopedAStatus res = satellite->addAllowedSatelliteContacts(serial, contacts);
@@ -236,13 +204,6 @@ TEST_P(RadioSatelliteTest, addAllowedSatelliteContacts) {
                                   RadioError::MODEM_ERR,
                                   RadioError::NETWORK_ERR,
                                   RadioError::NETWORK_NOT_READY,
-                                  RadioError::NETWORK_REJECT,
-                                  RadioError::NETWORK_TIMEOUT,
-                                  RadioError::NO_MEMORY,
-                                  RadioError::NO_NETWORK_FOUND,
-                                  RadioError::NO_RESOURCES,
-                                  RadioError::NO_SATELLITE_SIGNAL,
-                                  RadioError::NO_SUBSCRIPTION,
                                   RadioError::NOT_SUFFICIENT_ACCOUNT_BALANCE,
                                   RadioError::OPERATION_NOT_ALLOWED,
                                   RadioError::RADIO_NOT_AVAILABLE,
@@ -260,14 +221,6 @@ TEST_P(RadioSatelliteTest, addAllowedSatelliteContacts) {
  * Test IRadioSatellite.removeAllowedSatelliteContacts() for the response returned.
  */
 TEST_P(RadioSatelliteTest, removeAllowedSatelliteContacts) {
-    if (!deviceSupportsFeature(FEATURE_TELEPHONY_SATELLITE)) {
-        ALOGI("Skipping removeAllowedSatelliteContacts because satellite is not supported in "
-              "device");
-        return;
-    } else {
-        ALOGI("Running removeAllowedSatelliteContacts because satellite is supported in device");
-    }
-
     serial = GetRandomSerialNumber();
     const std::vector<std::string> contacts = {"contact 1", "contact 2"};
     ndk::ScopedAStatus res = satellite->removeAllowedSatelliteContacts(serial, contacts);
@@ -317,13 +270,6 @@ TEST_P(RadioSatelliteTest, removeAllowedSatelliteContacts) {
  * Test IRadioSatellite.sendMessages() for the response returned.
  */
 TEST_P(RadioSatelliteTest, sendMessages) {
-    if (!deviceSupportsFeature(FEATURE_TELEPHONY_SATELLITE)) {
-        ALOGI("Skipping sendMessages because satellite is not supported in device");
-        return;
-    } else {
-        ALOGI("Running sendMessages because satellite is supported in device");
-    }
-
     serial = GetRandomSerialNumber();
     const std::vector<std::string> messages = {"message 1", "message 2"};
     std::string destination = "0123456789";
@@ -380,13 +326,6 @@ TEST_P(RadioSatelliteTest, sendMessages) {
  * Test IRadioSatellite.getPendingMessages() for the response returned.
  */
 TEST_P(RadioSatelliteTest, getPendingMessages) {
-    if (!deviceSupportsFeature(FEATURE_TELEPHONY_SATELLITE)) {
-        ALOGI("Skipping getPendingMessages because satellite is not supported in device");
-        return;
-    } else {
-        ALOGI("Running getPendingMessages because satellite is supported in device");
-    }
-
     serial = GetRandomSerialNumber();
     ndk::ScopedAStatus res = satellite->getPendingMessages(serial);
     ASSERT_OK(res);
@@ -440,13 +379,6 @@ TEST_P(RadioSatelliteTest, getPendingMessages) {
  * Test IRadioSatellite.getSatelliteMode() for the response returned.
  */
 TEST_P(RadioSatelliteTest, getSatelliteMode) {
-    if (!deviceSupportsFeature(FEATURE_TELEPHONY_SATELLITE)) {
-        ALOGI("Skipping getSatelliteMode because satellite is not supported in device");
-        return;
-    } else {
-        ALOGI("Running getSatelliteMode because satellite is supported in device");
-    }
-
     serial = GetRandomSerialNumber();
     ndk::ScopedAStatus res = satellite->getSatelliteMode(serial);
     ASSERT_OK(res);
@@ -470,13 +402,6 @@ TEST_P(RadioSatelliteTest, getSatelliteMode) {
  * Test IRadioSatellite.setIndicationFilter() for the response returned.
  */
 TEST_P(RadioSatelliteTest, setIndicationFilter) {
-    if (!deviceSupportsFeature(FEATURE_TELEPHONY_SATELLITE)) {
-        ALOGI("Skipping setIndicationFilter because satellite is not supported in device");
-        return;
-    } else {
-        ALOGI("Running setIndicationFilter because satellite is supported in device");
-    }
-
     serial = GetRandomSerialNumber();
     ndk::ScopedAStatus res = satellite->setIndicationFilter(serial, 0);
     ASSERT_OK(res);
@@ -501,14 +426,6 @@ TEST_P(RadioSatelliteTest, setIndicationFilter) {
  * Test IRadioSatellite.startSendingSatellitePointingInfo() for the response returned.
  */
 TEST_P(RadioSatelliteTest, startSendingSatellitePointingInfo) {
-    if (!deviceSupportsFeature(FEATURE_TELEPHONY_SATELLITE)) {
-        ALOGI("Skipping startSendingSatellitePointingInfo because satellite is not supported in "
-              "device");
-        return;
-    } else {
-        ALOGI("Running startSendingSatellitePointingInfo because satellite is supported in device");
-    }
-
     serial = GetRandomSerialNumber();
     ndk::ScopedAStatus res = satellite->startSendingSatellitePointingInfo(serial);
     ASSERT_OK(res);
@@ -533,14 +450,6 @@ TEST_P(RadioSatelliteTest, startSendingSatellitePointingInfo) {
  * Test IRadioSatellite.stopSatelliteLocationUpdate() for the response returned.
  */
 TEST_P(RadioSatelliteTest, stopSatelliteLocationUpdate) {
-    if (!deviceSupportsFeature(FEATURE_TELEPHONY_SATELLITE)) {
-        ALOGI("Skipping stopSendingSatellitePointingInfo because satellite is not supported in "
-              "device");
-        return;
-    } else {
-        ALOGI("Running stopSendingSatellitePointingInfo because satellite is supported in device");
-    }
-
     serial = GetRandomSerialNumber();
     ndk::ScopedAStatus res = satellite->stopSendingSatellitePointingInfo(serial);
     ASSERT_OK(res);
@@ -565,14 +474,6 @@ TEST_P(RadioSatelliteTest, stopSatelliteLocationUpdate) {
  * Test IRadioSatellite.getMaxCharactersPerTextMessage() for the response returned.
  */
 TEST_P(RadioSatelliteTest, getMaxCharactersPerTextMessage) {
-    if (!deviceSupportsFeature(FEATURE_TELEPHONY_SATELLITE)) {
-        ALOGI("Skipping getMaxCharactersPerTextMessage because satellite is not supported in "
-              "device");
-        return;
-    } else {
-        ALOGI("Running getMaxCharactersPerTextMessage because satellite is supported in device");
-    }
-
     serial = GetRandomSerialNumber();
     ndk::ScopedAStatus res = satellite->getMaxCharactersPerTextMessage(serial);
     ASSERT_OK(res);
@@ -597,14 +498,6 @@ TEST_P(RadioSatelliteTest, getMaxCharactersPerTextMessage) {
  * Test IRadioSatellite.getTimeForNextSatelliteVisibility() for the response returned.
  */
 TEST_P(RadioSatelliteTest, getTimeForNextSatelliteVisibility) {
-    if (!deviceSupportsFeature(FEATURE_TELEPHONY_SATELLITE)) {
-        ALOGI("Skipping getTimeForNextSatelliteVisibility because satellite is not supported in "
-              "device");
-        return;
-    } else {
-        ALOGI("Running getTimeForNextSatelliteVisibility because satellite is supported in device");
-    }
-
     serial = GetRandomSerialNumber();
     ndk::ScopedAStatus res = satellite->getTimeForNextSatelliteVisibility(serial);
     ASSERT_OK(res);

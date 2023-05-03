@@ -100,13 +100,13 @@ class RadioDataIndication : public BnRadioDataIndication {
 };
 
 // The main test class for Radio AIDL Data.
-class RadioDataTest : public ::testing::TestWithParam<std::string>, public RadioServiceTest {
+class RadioDataTest : public RadioServiceTest {
   protected:
     /* Get current data call list */
     ndk::ScopedAStatus getDataCallList();
 
   public:
-    virtual void SetUp() override;
+    void SetUp() override;
 
     /* radio data service handle */
     std::shared_ptr<IRadioData> radio_data;
