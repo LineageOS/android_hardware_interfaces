@@ -54,6 +54,9 @@ using ::std::vector;
 
 constexpr uint64_t kOpHandleSentinel = 0xFFFFFFFFFFFFFFFF;
 
+const string FEATURE_KEYSTORE_APP_ATTEST_KEY = "android.hardware.keystore.app_attest_key";
+const string FEATURE_STRONGBOX_KEYSTORE = "android.hardware.strongbox_keystore";
+
 class KeyMintAidlTestBase : public ::testing::TestWithParam<string> {
   public:
     struct KeyData {
@@ -346,6 +349,17 @@ class KeyMintAidlTestBase : public ::testing::TestWithParam<string> {
     ErrorCode UseHmacKey(const vector<uint8_t>& hmacKeyBlob);
     ErrorCode UseRsaKey(const vector<uint8_t>& rsaKeyBlob);
     ErrorCode UseEcdsaKey(const vector<uint8_t>& ecdsaKeyBlob);
+
+    ErrorCode GenerateAttestKey(const AuthorizationSet& key_desc,
+                                const optional<AttestationKey>& attest_key,
+                                vector<uint8_t>* key_blob,
+                                vector<KeyCharacteristics>* key_characteristics,
+                                vector<Certificate>* cert_chain);
+
+    bool is_attest_key_feature_disabled(void) const;
+    bool is_strongbox_enabled(void) const;
+    bool is_chipset_allowed_km4_strongbox(void) const;
+    void skipAttestKeyTest(void) const;
 
   protected:
     std::shared_ptr<IKeyMintDevice> keymint_;
