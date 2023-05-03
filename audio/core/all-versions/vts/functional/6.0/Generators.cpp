@@ -16,6 +16,8 @@
 
 #include <android-base/macros.h>
 
+#include <IOProfile.h>
+
 #include "6.0/Generators.h"
 #include "ConfigHelper.h"
 #include "PolicyConfig.h"
