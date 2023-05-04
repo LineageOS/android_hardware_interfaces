@@ -3081,7 +3081,11 @@ TEST_P(CameraAidlTest, validateStreamConfigurations) {
             ASSERT_EQ(blobMinDurations.size(), blobStallDurations.size());
         }
 
-        // Validate other aspects of stream configuration metadata...
+        // TODO (b/280887191): Validate other aspects of stream configuration metadata...
+
+        ndk::ScopedAStatus ret = mSession->close();
+        mSession = nullptr;
+        ASSERT_TRUE(ret.isOk());
     }
 }
 
