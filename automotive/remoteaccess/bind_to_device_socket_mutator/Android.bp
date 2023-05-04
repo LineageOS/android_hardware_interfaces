@@ -40,4 +40,5 @@ cc_library {
     srcs: ["src/BindToDeviceSocketMutator.cpp"],
     export_include_dirs: ["include"],
     defaults: ["BindToDeviceSocketMutatorDefaults"],
+    header_libs: ["libgrpc++_internal_headers"],
 }
