@@ -195,7 +195,7 @@ static constexpr char kConfigFileName[] = "audio_policy_configuration.xml";
 // Cached policy config after parsing for faster test startup
 const PolicyConfig& getCachedPolicyConfig() {
     static std::unique_ptr<PolicyConfig> policyConfig = [] {
-        auto config = std::make_unique<PolicyConfig>(kConfigFileName);
+        auto config = std::make_unique<PolicyConfig>("", kConfigFileName);
         return config;
     }();
     return *policyConfig;
