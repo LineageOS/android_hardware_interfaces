@@ -75,6 +75,12 @@ class WifiRttControllerAidlTest : public testing::TestWithParam<std::string> {
         return rtt_controller;
     }
 
+    RttCapabilities getCapabilities() {
+        RttCapabilities caps = {};
+        EXPECT_TRUE(wifi_rtt_controller_->getCapabilities(&caps).isOk());
+        return caps;
+    }
+
     std::shared_ptr<IWifiRttController> wifi_rtt_controller_;
 
   private:
@@ -117,6 +123,11 @@ TEST_P(WifiRttControllerAidlTest, GetCapabilities) {
  * GetResponderInfo
  */
 TEST_P(WifiRttControllerAidlTest, GetResponderInfo) {
+    RttCapabilities caps = getCapabilities();
+    if (!caps.responderSupported) {
+        GTEST_SKIP() << "Skipping because responder is not supported";
+    }
+
     RttResponder responder = {};
     EXPECT_TRUE(wifi_rtt_controller_->getResponderInfo(&responder).isOk());
 }
@@ -125,6 +136,11 @@ TEST_P(WifiRttControllerAidlTest, GetResponderInfo) {
  * EnableResponder
  */
 TEST_P(WifiRttControllerAidlTest, EnableResponder) {
+    RttCapabilities caps = getCapabilities();
+    if (!caps.responderSupported) {
+        GTEST_SKIP() << "Skipping because responder is not supported";
+    }
+
     int cmdId = 55;
     WifiChannelInfo channelInfo;
     channelInfo.width = WifiChannelWidthInMhz::WIDTH_80;
@@ -142,8 +158,7 @@ TEST_P(WifiRttControllerAidlTest, EnableResponder) {
  * Tests the two sided ranging - 802.11mc FTM protocol.
  */
 TEST_P(WifiRttControllerAidlTest, Request2SidedRangeMeasurement) {
-    RttCapabilities caps = {};
-    EXPECT_TRUE(wifi_rtt_controller_->getCapabilities(&caps).isOk());
+    RttCapabilities caps = getCapabilities();
     if (!caps.rttFtmSupported) {
         GTEST_SKIP() << "Skipping two sided RTT since driver/fw does not support";
     }
@@ -179,8 +194,7 @@ TEST_P(WifiRttControllerAidlTest, Request2SidedRangeMeasurement) {
  * RangeRequest
  */
 TEST_P(WifiRttControllerAidlTest, RangeRequest) {
-    RttCapabilities caps = {};
-    EXPECT_TRUE(wifi_rtt_controller_->getCapabilities(&caps).isOk());
+    RttCapabilities caps = getCapabilities();
     if (!caps.rttOneSidedSupported) {
         GTEST_SKIP() << "Skipping one sided RTT since driver/fw does not support";
     }
