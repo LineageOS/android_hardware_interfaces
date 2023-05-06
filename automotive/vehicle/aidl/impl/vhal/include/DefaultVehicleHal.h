@@ -164,6 +164,7 @@ class DefaultVehicleHal final : public aidl::android::hardware::automotive::vehi
     static constexpr int64_t TIMEOUT_IN_NANO = 30'000'000'000;
     // heart beat event interval: 3s
     static constexpr int64_t HEART_BEAT_INTERVAL_IN_NANO = 3'000'000'000;
+    bool mShouldRefreshPropertyConfigs;
     std::unique_ptr<IVehicleHardware> mVehicleHardware;
 
     // mConfigsByPropId and mConfigFile are only modified during initialization, so no need to
@@ -212,7 +213,6 @@ class DefaultVehicleHal final : public aidl::android::hardware::automotive::vehi
     android::base::Result<std::vector<int64_t>> checkDuplicateRequests(
             const std::vector<aidl::android::hardware::automotive::vehicle::SetValueRequest>&
                     requests);
-
     VhalResult<void> checkSubscribeOptions(
             const std::vector<aidl::android::hardware::automotive::vehicle::SubscribeOptions>&
                     options);
@@ -235,6 +235,8 @@ class DefaultVehicleHal final : public aidl::android::hardware::automotive::vehi
     bool monitorBinderLifeCycleLocked(const AIBinder* clientId) REQUIRES(mLock);
 
     bool checkDumpPermission();
+
+    bool getAllPropConfigsFromHardware();
 
     // The looping handler function to process all onBinderDied or onBinderUnlinked events in
     // mBinderEvents.
