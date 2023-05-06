@@ -159,6 +159,7 @@ class FakeVehicleHardware : public IVehicleHardware {
     const std::string mDefaultConfigDir;
     const std::string mOverrideConfigDir;
     const bool mForceOverride;
+    bool mAddExtraTestVendorConfigs;
 
     // Only used during initialization.
     JsonConfigLoader mLoader;
@@ -248,6 +249,8 @@ class FakeVehicleHardware : public IVehicleHardware {
     std::string genFakeDataCommand(const std::vector<std::string>& options);
     void sendHvacPropertiesCurrentValues(int32_t areaId);
     void sendAdasPropertiesState(int32_t propertyId, int32_t state);
+    void generateVendorConfigs(
+            std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropConfig>&) const;
 
     static aidl::android::hardware::automotive::vehicle::VehiclePropValue createHwInputKeyProp(
             aidl::android::hardware::automotive::vehicle::VehicleHwKeyInputAction action,

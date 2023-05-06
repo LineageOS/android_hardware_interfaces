@@ -128,21 +128,8 @@ size_t DefaultVehicleHal::SubscriptionClients::countClients() {
 DefaultVehicleHal::DefaultVehicleHal(std::unique_ptr<IVehicleHardware> vehicleHardware)
     : mVehicleHardware(std::move(vehicleHardware)),
       mPendingRequestPool(std::make_shared<PendingRequestPool>(TIMEOUT_IN_NANO)) {
-    auto configs = mVehicleHardware->getAllPropertyConfigs();
-    for (auto& config : configs) {
-        mConfigsByPropId[config.prop] = config;
-    }
-    VehiclePropConfigs vehiclePropConfigs;
-    vehiclePropConfigs.payloads = std::move(configs);
-    auto result = LargeParcelableBase::parcelableToStableLargeParcelable(vehiclePropConfigs);
-    if (!result.ok()) {
-        ALOGE("failed to convert configs to shared memory file, error: %s, code: %d",
-              result.error().message().c_str(), static_cast<int>(result.error().code()));
+    if (!getAllPropConfigsFromHardware()) {
         return;
-    }
-
-    if (result.value() != nullptr) {
-        mConfigFile = std::move(result.value());
     }
 
     mSubscriptionClients = std::make_shared<SubscriptionClients>(mPendingRequestPool);
@@ -302,6 +289,27 @@ DefaultVehicleHal::getOrCreateClient<SubscriptionClient>(
 
 void DefaultVehicleHal::setTimeout(int64_t timeoutInNano) {
     mPendingRequestPool = std::make_unique<PendingRequestPool>(timeoutInNano);
+}
+
+bool DefaultVehicleHal::getAllPropConfigsFromHardware() {
+    auto configs = mVehicleHardware->getAllPropertyConfigs();
+    for (auto& config : configs) {
+        mConfigsByPropId[config.prop] = config;
+    }
+    VehiclePropConfigs vehiclePropConfigs;
+    vehiclePropConfigs.payloads = std::move(configs);
+    auto result = LargeParcelableBase::parcelableToStableLargeParcelable(vehiclePropConfigs);
+    if (!result.ok()) {
+        ALOGE("failed to convert configs to shared memory file, error: %s, code: %d",
+              result.error().message().c_str(), static_cast<int>(result.error().code()));
+        mConfigFile = nullptr;
+        return false;
+    }
+
+    if (result.value() != nullptr) {
+        mConfigFile = std::move(result.value());
+    }
+    return true;
 }
 
 ScopedAStatus DefaultVehicleHal::getAllPropConfigs(VehiclePropConfigs* output) {
@@ -798,6 +806,9 @@ binder_status_t DefaultVehicleHal::dump(int fd, const char** args, uint32_t numA
         options.clear();
     }
     DumpResult result = mVehicleHardware->dump(options);
+    if (result.refreshPropertyConfigs) {
+        getAllPropConfigsFromHardware();
+    }
     dprintf(fd, "%s", (result.buffer + "\n").c_str());
     if (!result.callerShouldDumpState) {
         return STATUS_OK;
