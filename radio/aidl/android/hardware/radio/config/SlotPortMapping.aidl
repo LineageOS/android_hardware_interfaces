@@ -16,6 +16,7 @@
 
 package android.hardware.radio.config;
 
+/** @hide */
 @VintfStability
 @JavaDerive(toString=true)
 parcelable SlotPortMapping {

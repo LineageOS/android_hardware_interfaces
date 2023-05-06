@@ -34,6 +34,7 @@ import android.hardware.radio.data.TrafficDescriptor;
  * duration of a method call. If clients provide colliding serials (including passing the same
  * serial to different methods), multiple responses (one for each method call) must still be served.
  * setResponseFunctions must work with IRadioDataResponse and IRadioDataIndication.
+ * @hide
  */
 @VintfStability
 oneway interface IRadioData {

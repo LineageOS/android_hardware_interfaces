@@ -27,6 +27,7 @@ import android.hardware.radio.satellite.SatelliteFeature;
  * serial: which corresponds to serial no. of request. Serial numbers must only be memorized for the
  * duration of a method call. If clients provide colliding serials (including passing the same
  * serial to different methods), multiple responses (one for each method call) must still be served.
+ * @hide
  */
 @VintfStability
 oneway interface IRadioSatellite {

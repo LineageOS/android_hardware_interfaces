@@ -21,6 +21,7 @@ import android.hardware.radio.data.TrafficDescriptor;
 
 /**
  * This struct represents a single URSP rule as defined in 3GPP TS 24.526.
+ * @hide
  */
 @VintfStability
 @JavaDerive(toString=true)

@@ -16,6 +16,7 @@
 
 package android.hardware.radio.voice;
 
+/** @hide */
 @VintfStability
 @JavaDerive(toString=true)
 parcelable SsInfoData {

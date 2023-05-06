@@ -20,6 +20,7 @@ package android.hardware.radio.data;
  * Defines range of ports. start and end are the first and last port numbers (inclusive) in the
  * range. Both start and end are in PORT_RANGE_MIN to PORT_RANGE_MAX range. A single port shall
  * be represented by the same start and end value.
+ * @hide
  */
 @VintfStability
 @JavaDerive(toString=true)

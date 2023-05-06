@@ -32,6 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.satellite;
+/* @hide */
 @VintfStability
 interface IRadioSatelliteResponse {
   oneway void acknowledgeRequest(in int serial);

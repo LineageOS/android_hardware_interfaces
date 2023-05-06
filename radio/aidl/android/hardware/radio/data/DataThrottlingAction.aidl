@@ -16,6 +16,7 @@
 
 package android.hardware.radio.data;
 
+/** @hide */
 @VintfStability
 @Backing(type="byte")
 @JavaDerive(toString=true)

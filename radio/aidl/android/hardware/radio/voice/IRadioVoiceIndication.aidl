@@ -28,6 +28,7 @@ import android.hardware.radio.voice.UssdModeType;
 
 /**
  * Interface declaring unsolicited radio indications for voice APIs.
+ * @hide
  */
 @VintfStability
 oneway interface IRadioVoiceIndication {

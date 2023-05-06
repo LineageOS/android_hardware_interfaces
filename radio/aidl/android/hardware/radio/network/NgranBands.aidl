@@ -18,6 +18,7 @@ package android.hardware.radio.network;
 
 /**
  * NGRAN bands up to V16.5.0
+ * @hide
  */
 @VintfStability
 @Backing(type="int")

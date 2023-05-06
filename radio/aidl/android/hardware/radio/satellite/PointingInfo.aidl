@@ -16,6 +16,7 @@
 
 package android.hardware.radio.satellite;
 
+/** @hide */
 @VintfStability
 @JavaDerive(toString=true)
 parcelable PointingInfo {

@@ -16,25 +16,28 @@
 
 package android.hardware.radio.ims.media;
 
-/** RTP Control Protocol Extended Reports (RTCP XR) Blocks, See RFC 3611 section 4 */
-
+/**
+ * RTP Control Protocol Extended Reports (RTCP XR) Blocks, See RFC 3611 section 4
+ * @hide
+ */
 @VintfStability
 @Backing(type="int")
+@JavaDerive(toString=true)
 enum RtcpXrReportBlockType {
     /** Disable RTCP XR */
     RTCPXR_NONE = 0,
     /** Loss RLE Report Block */
-    RTCPXR_LOSS_RLE_REPORT_BLOCK                  = 1 << 0,
+    RTCPXR_LOSS_RLE_REPORT_BLOCK = 1 << 0,
     /** Duplicate RLE Report Block */
-    RTCPXR_DUPLICATE_RLE_REPORT_BLOCK             = 1 << 1,
+    RTCPXR_DUPLICATE_RLE_REPORT_BLOCK = 1 << 1,
     /** Packet Receipt Times Report Block */
-    RTCPXR_PACKET_RECEIPT_TIMES_REPORT_BLOCK      = 1 << 2,
+    RTCPXR_PACKET_RECEIPT_TIMES_REPORT_BLOCK = 1 << 2,
     /** Receiver Reference Time Report Block */
-    RTCPXR_RECEIVER_REFERENCE_TIME_REPORT_BLOCK   = 1 << 3,
+    RTCPXR_RECEIVER_REFERENCE_TIME_REPORT_BLOCK = 1 << 3,
     /** DLRR Report Block */
-    RTCPXR_DLRR_REPORT_BLOCK                      = 1 << 4,
+    RTCPXR_DLRR_REPORT_BLOCK = 1 << 4,
     /** Statistics Summary Report Block */
-    RTCPXR_STATISTICS_SUMMARY_REPORT_BLOCK        = 1 << 5,
+    RTCPXR_STATISTICS_SUMMARY_REPORT_BLOCK = 1 << 5,
     /** VoIP Metrics Report Block */
-    RTCPXR_VOIP_METRICS_REPORT_BLOCK              = 1 << 6,
+    RTCPXR_VOIP_METRICS_REPORT_BLOCK = 1 << 6,
 }

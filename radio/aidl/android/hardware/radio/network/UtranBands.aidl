@@ -18,6 +18,7 @@ package android.hardware.radio.network;
 
 /**
  * UTRAN bands up to V15.0.0
+ * @hide
  */
 @VintfStability
 @Backing(type="int")

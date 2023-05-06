@@ -21,10 +21,10 @@ import android.hardware.radio.ims.ConnectionFailureInfo;
 
 /**
  * Interface declaring response functions to solicited radio requests for ims APIs.
+ * @hide
  */
 @VintfStability
 oneway interface IRadioImsResponse {
-
     /**
      * @param info Response info struct containing response type, serial no. and error
      *
@@ -73,8 +73,8 @@ oneway interface IRadioImsResponse {
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:NO_RESOURCES
      */
-    void startImsTrafficResponse(in RadioResponseInfo info,
-            in @nullable ConnectionFailureInfo failureInfo);
+    void startImsTrafficResponse(
+            in RadioResponseInfo info, in @nullable ConnectionFailureInfo failureInfo);
 
     /**
      * @param info Response info struct containing response type, serial no. and error

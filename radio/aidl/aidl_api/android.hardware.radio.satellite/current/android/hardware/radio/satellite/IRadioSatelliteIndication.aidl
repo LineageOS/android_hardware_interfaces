@@ -32,6 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.satellite;
+/* @hide */
 @VintfStability
 interface IRadioSatelliteIndication {
   oneway void onMessagesTransferComplete(in android.hardware.radio.RadioIndicationType type, in boolean complete);

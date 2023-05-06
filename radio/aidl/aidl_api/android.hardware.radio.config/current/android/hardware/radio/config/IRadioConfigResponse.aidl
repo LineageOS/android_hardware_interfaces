@@ -32,6 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.config;
+/* @hide */
 @VintfStability
 interface IRadioConfigResponse {
   oneway void getHalDeviceCapabilitiesResponse(in android.hardware.radio.RadioResponseInfo info, in boolean modemReducedFeatureSet1);

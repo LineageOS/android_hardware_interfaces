@@ -18,10 +18,10 @@ package android.hardware.radio.ims;
 
 import android.hardware.radio.AccessNetwork;
 
+/** @hide */
 @VintfStability
 @JavaDerive(toString=true)
 parcelable ImsCall {
-
     @Backing(type="int")
     enum CallType {
         NORMAL,

@@ -32,6 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.data;
+/* @hide */
 @JavaDerive(toString=true) @VintfStability
 parcelable RouteSelectionDescriptor {
   byte precedence;
@@ -39,7 +40,7 @@ parcelable RouteSelectionDescriptor {
   byte sscMode;
   android.hardware.radio.data.SliceInfo[] sliceInfo;
   String[] dnn;
-  const byte SSC_MODE_UNKNOWN = (-1);
+  const byte SSC_MODE_UNKNOWN = (-1) /* -1 */;
   const byte SSC_MODE_1 = 1;
   const byte SSC_MODE_2 = 2;
   const byte SSC_MODE_3 = 3;

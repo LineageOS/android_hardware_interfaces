@@ -19,7 +19,9 @@ package android.hardware.radio.ims.media;
 import android.hardware.radio.ims.media.CodecParams;
 import android.hardware.radio.ims.media.DtmfParams;
 
+/** @hide */
 @VintfStability
+@JavaDerive(toString=true)
 parcelable RtpSessionParams {
     /**
      * ptime: Recommended length of time in milliseconds represented by the media

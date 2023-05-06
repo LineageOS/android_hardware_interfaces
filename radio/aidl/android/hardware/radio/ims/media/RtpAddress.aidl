@@ -16,7 +16,9 @@
 
 package android.hardware.radio.ims.media;
 
+/** @hide */
 @VintfStability
+@JavaDerive(toString=true)
 parcelable RtpAddress {
     /** Point to point IP address */
     String ipAddress;

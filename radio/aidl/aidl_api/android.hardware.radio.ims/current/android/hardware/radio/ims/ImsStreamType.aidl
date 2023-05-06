@@ -32,7 +32,8 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.ims;
-@Backing(type="int") @VintfStability
+/* @hide */
+@Backing(type="int") @JavaDerive(toString=true) @VintfStability
 enum ImsStreamType {
   AUDIO = 1,
   VIDEO = 2,

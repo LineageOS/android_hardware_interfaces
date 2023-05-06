@@ -33,6 +33,7 @@ import android.hardware.radio.network.UsageSetting;
 
 /**
  * Interface declaring response functions to solicited radio requests for network APIs.
+ * @hide
  */
 @VintfStability
 oneway interface IRadioNetworkResponse {

@@ -28,6 +28,7 @@ import android.hardware.radio.config.IRadioConfigIndication;
 import android.hardware.radio.config.IRadioConfigResponse;
 import android.hardware.radio.config.SlotPortMapping;
 
+/** @hide */
 @VintfStability
 oneway interface IRadioConfig {
     /**

@@ -23,6 +23,7 @@ import android.hardware.radio.data.SlicingConfig;
 
 /**
  * Interface declaring response functions to solicited radio requests for data APIs.
+ * @hide
  */
 @VintfStability
 oneway interface IRadioDataResponse {

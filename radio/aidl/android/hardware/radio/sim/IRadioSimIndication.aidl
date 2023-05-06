@@ -24,6 +24,7 @@ import android.hardware.radio.sim.SimRefreshResult;
 
 /**
  * Interface declaring unsolicited radio indications for SIM APIs.
+ * @hide
  */
 @VintfStability
 oneway interface IRadioSimIndication {

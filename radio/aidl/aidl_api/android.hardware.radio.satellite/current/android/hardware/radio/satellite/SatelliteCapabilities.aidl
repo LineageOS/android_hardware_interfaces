@@ -32,6 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.satellite;
+/* @hide */
 @JavaDerive(toString=true) @VintfStability
 parcelable SatelliteCapabilities {
   android.hardware.radio.satellite.NTRadioTechnology[] supportedRadioTechnologies;

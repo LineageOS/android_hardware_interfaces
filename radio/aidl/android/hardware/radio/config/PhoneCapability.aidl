@@ -20,6 +20,7 @@ package android.hardware.radio.config;
  * Phone capability which describes the data connection capability of modem.
  * It's used to evaluate possible phone config change, for example from single
  * SIM device to multi-SIM device.
+ * @hide
  */
 @VintfStability
 @JavaDerive(toString=true)

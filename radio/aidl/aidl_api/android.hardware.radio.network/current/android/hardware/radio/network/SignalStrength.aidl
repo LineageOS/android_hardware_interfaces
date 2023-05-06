@@ -32,6 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.network;
+/* @hide */
 @JavaDerive(toString=true) @VintfStability
 parcelable SignalStrength {
   android.hardware.radio.network.GsmSignalStrength gsm;

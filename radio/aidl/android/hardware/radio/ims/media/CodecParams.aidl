@@ -19,7 +19,9 @@ package android.hardware.radio.ims.media;
 import android.hardware.radio.ims.media.CodecSpecificParams;
 import android.hardware.radio.ims.media.CodecType;
 
+/** @hide */
 @VintfStability
+@JavaDerive(toString=true)
 parcelable CodecParams {
     /** Negotiated codec type */
     CodecType codecType;

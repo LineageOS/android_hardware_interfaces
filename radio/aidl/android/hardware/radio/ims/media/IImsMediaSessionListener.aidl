@@ -24,6 +24,7 @@ import android.hardware.radio.ims.media.RtpHeaderExtension;
 
 /**
  * Interface declaring listener functions for unsolicited IMS media notifications per session.
+ * @hide
  */
 @VintfStability
 oneway interface IImsMediaSessionListener {

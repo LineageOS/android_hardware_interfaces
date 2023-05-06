@@ -18,6 +18,7 @@ package android.hardware.radio.voice;
 
 import android.hardware.radio.voice.CdmaNumberInfoRecord;
 
+/** @hide */
 @VintfStability
 @JavaDerive(toString=true)
 parcelable CdmaRedirectingNumberInfoRecord {

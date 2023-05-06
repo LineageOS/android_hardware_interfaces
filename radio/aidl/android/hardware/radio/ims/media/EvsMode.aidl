@@ -16,9 +16,13 @@
 
 package android.hardware.radio.ims.media;
 
-/** EVS codec mode to represent the bit rate. See 3ggp Spec 26.952 Table 5.1 */
+/**
+ * EVS codec mode to represent the bit rate. See 3ggp Spec 26.952 Table 5.1
+ * @hide
+ */
 @VintfStability
 @Backing(type="int")
+@JavaDerive(toString=true)
 enum EvsMode {
     /** 6.6 kbps for EVS AMR-WB IO */
     EVS_MODE_0 = 1 << 0,

@@ -32,6 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.satellite;
+/* @hide */
 @Backing(type="int") @JavaDerive(toString=true) @VintfStability
 enum NTRadioTechnology {
   NB_IOT_NTN = 0,

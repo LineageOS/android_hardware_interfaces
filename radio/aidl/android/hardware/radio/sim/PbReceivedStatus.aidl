@@ -18,6 +18,7 @@ package android.hardware.radio.sim;
 
 /**
  * Enum representing the status of the received PB indication.
+ * @hide
  */
 @VintfStability
 @Backing(type="byte")

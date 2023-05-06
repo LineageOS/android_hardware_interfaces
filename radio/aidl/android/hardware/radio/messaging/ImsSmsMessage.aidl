@@ -20,6 +20,7 @@ import android.hardware.radio.RadioTechnologyFamily;
 import android.hardware.radio.messaging.CdmaSmsMessage;
 import android.hardware.radio.messaging.GsmSmsMessage;
 
+/** @hide */
 @VintfStability
 @JavaDerive(toString=true)
 parcelable ImsSmsMessage {

@@ -27,6 +27,7 @@ import android.hardware.radio.sim.SimLockMultiSimPolicy;
 
 /**
  * Interface declaring response functions to solicited radio requests for SIM APIs.
+ * @hide
  */
 @VintfStability
 oneway interface IRadioSimResponse {

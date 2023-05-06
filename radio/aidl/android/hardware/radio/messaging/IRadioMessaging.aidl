@@ -35,6 +35,7 @@ import android.hardware.radio.messaging.SmsWriteArgs;
  * duration of a method call. If clients provide colliding serials (including passing the same
  * serial to different methods), multiple responses (one for each method call) must still be served.
  * setResponseFunctions must work with IRadioMessagingResponse and IRadioMessagingIndication.
+ * @hide
  */
 @VintfStability
 oneway interface IRadioMessaging {

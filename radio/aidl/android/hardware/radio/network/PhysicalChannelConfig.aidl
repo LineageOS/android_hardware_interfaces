@@ -20,6 +20,7 @@ import android.hardware.radio.RadioTechnology;
 import android.hardware.radio.network.CellConnectionStatus;
 import android.hardware.radio.network.PhysicalChannelConfigBand;
 
+/** @hide */
 @VintfStability
 @JavaDerive(toString=true)
 parcelable PhysicalChannelConfig {

@@ -19,11 +19,12 @@ package android.hardware.radio.modem;
 import android.hardware.radio.RadioResponseInfo;
 import android.hardware.radio.modem.ActivityStatsInfo;
 import android.hardware.radio.modem.HardwareConfig;
-import android.hardware.radio.modem.RadioCapability;
 import android.hardware.radio.modem.ImeiInfo;
+import android.hardware.radio.modem.RadioCapability;
 
 /**
  * Interface declaring response functions to solicited radio requests for modem APIs.
+ * @hide
  */
 @VintfStability
 oneway interface IRadioModemResponse {

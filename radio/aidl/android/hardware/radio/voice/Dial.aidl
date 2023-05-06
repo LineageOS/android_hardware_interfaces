@@ -18,6 +18,7 @@ package android.hardware.radio.voice;
 
 import android.hardware.radio.voice.UusInfo;
 
+/** @hide */
 @VintfStability
 @JavaDerive(toString=true)
 parcelable Dial {

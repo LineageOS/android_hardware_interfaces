@@ -18,7 +18,10 @@ package android.hardware.radio.modem;
 
 import android.hardware.radio.modem.NvItem;
 
-/** @deprecated NV APIs are deprecated starting from Android U. */
+/**
+ * @deprecated NV APIs are deprecated starting from Android U.
+ * @hide
+ */
 @VintfStability
 @JavaDerive(toString=true)
 parcelable NvWriteItem {

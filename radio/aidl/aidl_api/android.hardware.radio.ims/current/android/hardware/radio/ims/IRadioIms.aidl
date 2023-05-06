@@ -32,6 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.ims;
+/* @hide */
 @VintfStability
 interface IRadioIms {
   oneway void setSrvccCallInfo(int serial, in android.hardware.radio.ims.SrvccCall[] srvccCalls);

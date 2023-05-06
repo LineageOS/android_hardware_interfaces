@@ -20,6 +20,7 @@ import android.hardware.radio.data.ApnAuthType;
 import android.hardware.radio.data.PdpProtocolType;
 import android.hardware.radio.data.TrafficDescriptor;
 
+/** @hide */
 @VintfStability
 @JavaDerive(toString=true)
 parcelable DataProfileInfo {

@@ -16,7 +16,9 @@
 
 package android.hardware.radio.ims.media;
 
+/** @hide */
 @VintfStability
+@JavaDerive(toString=true)
 parcelable MediaQualityThreshold {
     /** Array including threshold values in milliseconds for monitoring RTP inactivity */
     int[] rtpInactivityTimerMillis;

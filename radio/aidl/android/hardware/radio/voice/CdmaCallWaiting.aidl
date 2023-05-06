@@ -18,6 +18,7 @@ package android.hardware.radio.voice;
 
 import android.hardware.radio.voice.CdmaSignalInfoRecord;
 
+/** @hide */
 @VintfStability
 @JavaDerive(toString=true)
 parcelable CdmaCallWaiting {

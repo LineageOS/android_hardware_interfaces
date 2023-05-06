@@ -32,30 +32,31 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio;
+/* @hide */
 @Backing(type="int") @JavaDerive(toString=true) @VintfStability
 enum RadioAccessFamily {
-  UNKNOWN = (1 << android.hardware.radio.RadioTechnology.UNKNOWN),
-  GPRS = (1 << android.hardware.radio.RadioTechnology.GPRS),
-  EDGE = (1 << android.hardware.radio.RadioTechnology.EDGE),
-  UMTS = (1 << android.hardware.radio.RadioTechnology.UMTS),
-  IS95A = (1 << android.hardware.radio.RadioTechnology.IS95A),
-  IS95B = (1 << android.hardware.radio.RadioTechnology.IS95B),
-  ONE_X_RTT = (1 << android.hardware.radio.RadioTechnology.ONE_X_RTT),
-  EVDO_0 = (1 << android.hardware.radio.RadioTechnology.EVDO_0),
-  EVDO_A = (1 << android.hardware.radio.RadioTechnology.EVDO_A),
-  HSDPA = (1 << android.hardware.radio.RadioTechnology.HSDPA),
-  HSUPA = (1 << android.hardware.radio.RadioTechnology.HSUPA),
-  HSPA = (1 << android.hardware.radio.RadioTechnology.HSPA),
-  EVDO_B = (1 << android.hardware.radio.RadioTechnology.EVDO_B),
-  EHRPD = (1 << android.hardware.radio.RadioTechnology.EHRPD),
-  LTE = (1 << android.hardware.radio.RadioTechnology.LTE),
-  HSPAP = (1 << android.hardware.radio.RadioTechnology.HSPAP),
-  GSM = (1 << android.hardware.radio.RadioTechnology.GSM),
-  TD_SCDMA = (1 << android.hardware.radio.RadioTechnology.TD_SCDMA),
-  IWLAN = (1 << android.hardware.radio.RadioTechnology.IWLAN),
+  UNKNOWN = (1 << android.hardware.radio.RadioTechnology.UNKNOWN) /* 1 */,
+  GPRS = (1 << android.hardware.radio.RadioTechnology.GPRS) /* 2 */,
+  EDGE = (1 << android.hardware.radio.RadioTechnology.EDGE) /* 4 */,
+  UMTS = (1 << android.hardware.radio.RadioTechnology.UMTS) /* 8 */,
+  IS95A = (1 << android.hardware.radio.RadioTechnology.IS95A) /* 16 */,
+  IS95B = (1 << android.hardware.radio.RadioTechnology.IS95B) /* 32 */,
+  ONE_X_RTT = (1 << android.hardware.radio.RadioTechnology.ONE_X_RTT) /* 64 */,
+  EVDO_0 = (1 << android.hardware.radio.RadioTechnology.EVDO_0) /* 128 */,
+  EVDO_A = (1 << android.hardware.radio.RadioTechnology.EVDO_A) /* 256 */,
+  HSDPA = (1 << android.hardware.radio.RadioTechnology.HSDPA) /* 512 */,
+  HSUPA = (1 << android.hardware.radio.RadioTechnology.HSUPA) /* 1024 */,
+  HSPA = (1 << android.hardware.radio.RadioTechnology.HSPA) /* 2048 */,
+  EVDO_B = (1 << android.hardware.radio.RadioTechnology.EVDO_B) /* 4096 */,
+  EHRPD = (1 << android.hardware.radio.RadioTechnology.EHRPD) /* 8192 */,
+  LTE = (1 << android.hardware.radio.RadioTechnology.LTE) /* 16384 */,
+  HSPAP = (1 << android.hardware.radio.RadioTechnology.HSPAP) /* 32768 */,
+  GSM = (1 << android.hardware.radio.RadioTechnology.GSM) /* 65536 */,
+  TD_SCDMA = (1 << android.hardware.radio.RadioTechnology.TD_SCDMA) /* 131072 */,
+  IWLAN = (1 << android.hardware.radio.RadioTechnology.IWLAN) /* 262144 */,
   /**
    * @deprecated use LTE instead.
    */
-  LTE_CA = (1 << android.hardware.radio.RadioTechnology.LTE_CA),
-  NR = (1 << android.hardware.radio.RadioTechnology.NR),
+  LTE_CA = (1 << android.hardware.radio.RadioTechnology.LTE_CA) /* 524288 */,
+  NR = (1 << android.hardware.radio.RadioTechnology.NR) /* 1048576 */,
 }

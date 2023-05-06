@@ -18,6 +18,7 @@ package android.hardware.radio.data;
 
 /**
  * This struct represents a S-NSSAI as defined in 3GPP TS 24.501.
+ * @hide
  */
 @VintfStability
 @JavaDerive(toString=true)

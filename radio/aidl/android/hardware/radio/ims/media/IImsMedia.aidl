@@ -23,10 +23,10 @@ import android.hardware.radio.ims.media.RtpError;
 
 /**
  * This interface is used by IMS media framework to talk to RTP stack located in another processor.
+ * @hide
  */
 @VintfStability
 oneway interface IImsMedia {
-
     /**
      * Set the listener functions for receiving notifications from the RTP stack.
      *

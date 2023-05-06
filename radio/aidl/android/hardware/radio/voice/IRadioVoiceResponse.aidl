@@ -25,6 +25,7 @@ import android.hardware.radio.voice.TtyMode;
 
 /**
  * Interface declaring response functions to solicited radio requests for voice APIs.
+ * @hide
  */
 @VintfStability
 oneway interface IRadioVoiceResponse {

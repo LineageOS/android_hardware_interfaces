@@ -23,6 +23,7 @@ import android.hardware.radio.modem.RadioState;
 
 /**
  * Interface declaring unsolicited radio indications for modem APIs.
+ * @hide
  */
 @VintfStability
 oneway interface IRadioModemIndication {

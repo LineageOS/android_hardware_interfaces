@@ -21,6 +21,7 @@ import android.hardware.radio.config.SimSlotStatus;
 
 /**
  * Interface declaring response functions to solicited radio config requests.
+ * @hide
  */
 @VintfStability
 oneway interface IRadioConfigResponse {
