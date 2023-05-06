@@ -35,6 +35,8 @@ struct DumpResult {
     bool callerShouldDumpState;
     // The dumped information for the caller to print.
     std::string buffer;
+    // To pass if DefaultVehicleHal should refresh the property configs
+    bool refreshPropertyConfigs = false;
 };
 
 // A structure to represent a set value error event reported from vehicle.
