@@ -64,6 +64,7 @@ using ::aidl::android::hardware::automotive::vehicle::VehicleApPowerStateReq;
 using ::aidl::android::hardware::automotive::vehicle::VehicleHwKeyInputAction;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropConfig;
 using ::aidl::android::hardware::automotive::vehicle::VehicleProperty;
+using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyAccess;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyGroup;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyStatus;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType;
@@ -79,6 +80,11 @@ using ::android::base::ScopedLockAssertion;
 using ::android::base::StartsWith;
 using ::android::base::StringPrintf;
 
+// In order to test large number of vehicle property configs, we might generate additional fake
+// property config start from this ID. Note these fake properties are for getAllPropertyConfigs
+// testing only.
+constexpr int32_t STARTING_VENDOR_CODE_PROPERTIES_FOR_TEST = 0x5000;
+constexpr int32_t NUMBER_OF_TEST_VENDOR_CODES = 0x3000;
 // The directory for default property configuration file.
 // For config file format, see impl/default_config/config/README.md.
 constexpr char DEFAULT_CONFIG_DIR[] = "/vendor/etc/automotive/vhalconfig/";
@@ -291,7 +297,11 @@ void FakeVehicleHardware::init() {
 }
 
 std::vector<VehiclePropConfig> FakeVehicleHardware::getAllPropertyConfigs() const {
-    return mServerSidePropStore->getAllConfigs();
+    std::vector<VehiclePropConfig> allConfigs = mServerSidePropStore->getAllConfigs();
+    if (mAddExtraTestVendorConfigs) {
+        generateVendorConfigs(/* outAllConfigs= */ allConfigs);
+    }
+    return allConfigs;
 }
 
 VehiclePropValuePool::RecyclableType FakeVehicleHardware::createApPowerStateReq(
@@ -953,6 +963,12 @@ DumpResult FakeVehicleHardware::dump(const std::vector<std::string>& options) {
         result.buffer = mFakeUserHal->dump();
     } else if (EqualsIgnoreCase(option, "--genfakedata")) {
         result.buffer = genFakeDataCommand(options);
+    } else if (EqualsIgnoreCase(option, "--genTestVendorConfigs")) {
+        mAddExtraTestVendorConfigs = true;
+        result.refreshPropertyConfigs = true;
+    } else if (EqualsIgnoreCase(option, "--restoreVendorConfigs")) {
+        mAddExtraTestVendorConfigs = false;
+        result.refreshPropertyConfigs = true;
     } else {
         result.buffer = StringPrintf("Invalid option: %s\n", option.c_str());
     }
@@ -1003,6 +1019,13 @@ provided, it would iterate indefinitely.
   [pressure(float)] [size(float)]
   Generate a motion input event. --pointer option can be specified multiple times.
 
+--genTestVendorConfigs: Generates fake VehiclePropConfig ranging from 0x5000 to 0x8000 all with
+  vendor property group, global vehicle area, and int32 vehicle property type. This is mainly used
+  for testing
+
+--restoreVendorConfigs: Restores to to the default state if genTestVendorConfigs was used.
+  Otherwise this will do nothing.
+
 )";
 }
 
@@ -1010,6 +1033,19 @@ std::string FakeVehicleHardware::parseErrMsg(std::string fieldName, std::string 
                                              std::string type) {
     return StringPrintf("failed to parse %s as %s: \"%s\"\n%s", fieldName.c_str(), type.c_str(),
                         value.c_str(), genFakeDataHelp().c_str());
+}
+
+void FakeVehicleHardware::generateVendorConfigs(
+        std::vector<VehiclePropConfig>& outAllConfigs) const {
+    for (int i = STARTING_VENDOR_CODE_PROPERTIES_FOR_TEST;
+         i < STARTING_VENDOR_CODE_PROPERTIES_FOR_TEST + NUMBER_OF_TEST_VENDOR_CODES; i++) {
+        VehiclePropConfig config;
+        config.prop = i | toInt(propertyutils_impl::VehiclePropertyGroup::VENDOR) |
+                      toInt(propertyutils_impl::VehicleArea::GLOBAL) |
+                      toInt(propertyutils_impl::VehiclePropertyType::INT32);
+        config.access = VehiclePropertyAccess::READ_WRITE;
+        outAllConfigs.push_back(config);
+    }
 }
 
 std::string FakeVehicleHardware::genFakeDataCommand(const std::vector<std::string>& options) {
