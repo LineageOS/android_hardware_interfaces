@@ -30,13 +30,17 @@ cc_test {
         "keymaster_hidl_hal_test.cpp",
     ],
     srcs: [
+        "BootloaderStateTest.cpp",
         "HmacKeySharingTest.cpp",
         "VerificationTokenTest.cpp",
         "keymaster_hidl_hal_test.cpp",
     ],
     static_libs: [
         "android.hardware.keymaster@4.0",
+        "libavb_user",
+        "libavb",
         "libcrypto_static",
+        "libfs_mgr",
         "libkeymaster4support",
         "libkeymaster4vtstest",
     ],
@@ -64,6 +68,7 @@ cc_test_library {
     ],
     static_libs: [
         "android.hardware.keymaster@4.0",
+        "libcrypto_static",
         "libkeymaster4support",
     ],
 }
