@@ -42,6 +42,8 @@ enum class SessionState {
     RESETTING_LOCKOUT,
 };
 
+void onClientDeath(void* cookie);
+
 class Session : public BnSession {
   public:
     Session(int sensorId, int userId, std::shared_ptr<ISessionCallback> cb,
@@ -101,6 +103,8 @@ class Session : public BnSession {
 
     ndk::ScopedAStatus setIgnoreDisplayTouches(bool shouldIgnore) override;
 
+    binder_status_t linkToDeath(AIBinder* binder);
+
     bool isClosed();
 
   private:
@@ -139,6 +143,9 @@ class Session : public BnSession {
     // modified from both the main and the worker threads.
     std::atomic<SessionState> mScheduledState;
     std::atomic<SessionState> mCurrentState;
+
+    // Binder death handler.
+    AIBinder_DeathRecipient* mDeathRecipient;
 };
 
 }  // namespace aidl::android::hardware::biometrics::fingerprint
