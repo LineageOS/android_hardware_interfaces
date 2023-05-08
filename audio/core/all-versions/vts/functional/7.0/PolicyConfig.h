@@ -41,15 +41,10 @@ using Module = Modules::Module;
 
 class PolicyConfig {
   public:
-    explicit PolicyConfig(const std::string& configFileName)
-        : mConfigFileName{configFileName},
-          mFilePath{findExistingConfigurationFile(mConfigFileName)},
-          mConfig{xsd::read(mFilePath.c_str())} {
-        init();
-    }
     PolicyConfig(const std::string& configPath, const std::string& configFileName)
         : mConfigFileName{configFileName},
-          mFilePath{configPath + "/" + mConfigFileName},
+          mFilePath{configPath.empty() ? findExistingConfigurationFile(mConfigFileName)
+                                       : configPath + "/" + mConfigFileName},
           mConfig{xsd::read(mFilePath.c_str())} {
         init();
     }
