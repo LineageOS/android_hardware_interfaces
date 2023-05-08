@@ -25,6 +25,14 @@
 
 namespace aidl::android::hardware::biometrics::fingerprint {
 
+void onClientDeath(void* cookie) {
+    LOG(INFO) << "FingerprintService has died";
+    Session* session = static_cast<Session*>(cookie);
+    if (session && !session->isClosed()) {
+        session->close();
+    }
+}
+
 Session::Session(int sensorId, int userId, std::shared_ptr<ISessionCallback> cb,
                  FakeFingerprintEngine* engine, WorkerThread* worker)
     : mSensorId(sensorId),
@@ -39,6 +47,12 @@ Session::Session(int sensorId, int userId, std::shared_ptr<ISessionCallback> cb,
     CHECK(mEngine);
     CHECK(mWorker);
     CHECK(mCb);
+
+    mDeathRecipient = AIBinder_DeathRecipient_new(onClientDeath);
+}
+
+binder_status_t Session::linkToDeath(AIBinder* binder) {
+    return AIBinder_linkToDeath(binder, mDeathRecipient, this);
 }
 
 void Session::scheduleStateOrCrash(SessionState state) {
@@ -228,6 +242,7 @@ ndk::ScopedAStatus Session::close() {
     // Crashing.";
     mCurrentState = SessionState::CLOSED;
     mCb->onSessionClosed();
+    AIBinder_DeathRecipient_delete(mDeathRecipient);
     return ndk::ScopedAStatus::ok();
 }
 

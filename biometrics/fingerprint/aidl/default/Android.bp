@@ -110,6 +110,32 @@ cc_test {
     require_root: true,
 }
 
+cc_test {
+    name: "android.hardware.biometrics.fingerprint.SessionTest",
+    local_include_dirs: ["include"],
+    srcs: [
+        "tests/SessionTest.cpp",
+        "Session.cpp",
+        "FakeFingerprintEngine.cpp",
+        "FakeLockoutTracker.cpp",
+    ],
+    shared_libs: [
+        "libbase",
+        "libbinder_ndk",
+        "android.hardware.biometrics.common.thread",
+    ],
+    static_libs: [
+        "libandroid.hardware.biometrics.fingerprint.VirtualProps",
+        "android.hardware.biometrics.fingerprint-V3-ndk",
+        "android.hardware.biometrics.common-V3-ndk",
+        "android.hardware.keymaster-V4-ndk",
+        "android.hardware.biometrics.common.util",
+    ],
+    vendor: true,
+    test_suites: ["general-tests"],
+    require_root: true,
+}
+
 sysprop_library {
     name: "android.hardware.biometrics.fingerprint.VirtualProps",
     srcs: ["fingerprint.sysprop"],
