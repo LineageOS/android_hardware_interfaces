@@ -26,6 +26,7 @@
 #include <cutils/properties.h>
 #include <tinyxml2.h>
 
+#include <aidl/android/hardware/audio/effect/Processing.h>
 #include "effect-impl/EffectTypes.h"
 
 namespace aidl::android::hardware::audio::effect {
@@ -39,11 +40,6 @@ class EffectConfig {
   public:
     explicit EffectConfig(const std::string& file);
 
-    // <library>
-    struct Library {
-        std::string name;
-        std::string path;
-    };
     struct LibraryUuid {
         std::string name;  // library name
         ::aidl::android::media::audio::common::AudioUuid uuid;
@@ -59,12 +55,12 @@ class EffectConfig {
     const std::unordered_map<std::string, struct EffectLibraries> getEffectsMap() const {
         return mEffectsMap;
     }
-    const std::unordered_map<std::string, std::vector<std::string>> getProcessingMap() const {
-        return mProcessingMap;
-    }
 
     static bool findUuid(const std::string& xmlEffectName,
                          ::aidl::android::media::audio::common::AudioUuid* uuid);
+
+    using ProcessingLibrariesMap = std::map<Processing::Type, std::vector<struct EffectLibraries>>;
+    const ProcessingLibrariesMap& getProcessingMap() const;
 
   private:
     static constexpr const char* kEffectLibPath[] =
@@ -79,8 +75,11 @@ class EffectConfig {
     std::unordered_map<std::string, std::string> mLibraryMap;
     /* Parsed Effects result */
     std::unordered_map<std::string, struct EffectLibraries> mEffectsMap;
-    /* Parsed pre/post processing result */
-    std::unordered_map<std::string, std::vector<std::string>> mProcessingMap;
+    /**
+     * For parsed pre/post processing result: {key: AudioStreamType/AudioSource, value:
+     * EffectLibraries}
+     */
+    ProcessingLibrariesMap mProcessingMap;
 
     /** @return all `node`s children that are elements and match the tag if provided. */
     std::vector<std::reference_wrapper<const tinyxml2::XMLElement>> getChildren(
@@ -94,7 +93,7 @@ class EffectConfig {
      */
     bool parseEffect(const tinyxml2::XMLElement& xml);
 
-    bool parseStream(const tinyxml2::XMLElement& xml);
+    bool parseProcessing(Processing::Type::Tag typeTag, const tinyxml2::XMLElement& xml);
 
     // Function to parse effect.library name and effect.uuid from xml
     bool parseLibraryUuid(const tinyxml2::XMLElement& xml, struct LibraryUuid& libraryUuid,
@@ -104,6 +103,9 @@ class EffectConfig {
                      tinyxml2::XMLPrinter&& printer = {}) const;
 
     bool resolveLibrary(const std::string& path, std::string* resolvedPath);
+
+    std::optional<Processing::Type> stringToProcessingType(Processing::Type::Tag typeTag,
+                                                           const std::string& type);
 };
 
 }  // namespace aidl::android::hardware::audio::effect
