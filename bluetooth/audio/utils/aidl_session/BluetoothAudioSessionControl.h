@@ -95,6 +95,25 @@ class BluetoothAudioSessionControl {
   }
 
   /***
+   * The control API for the bluetooth_audio module to get current
+   * LE audio connection map
+   ***/
+  static const AudioConfiguration GetLeAudioConnectionMap(
+      const SessionType& session_type) {
+    std::shared_ptr<BluetoothAudioSession> session_ptr =
+        BluetoothAudioSessionInstance::GetSessionInstance(session_type);
+    if ((session_type ==
+             SessionType::LE_AUDIO_HARDWARE_OFFLOAD_ENCODING_DATAPATH ||
+         session_type ==
+             SessionType::LE_AUDIO_HARDWARE_OFFLOAD_DECODING_DATAPATH) &&
+        session_ptr != nullptr) {
+      return session_ptr->GetLeAudioConnectionMap();
+    }
+
+    return AudioConfiguration(LeAudioConfiguration{});
+  }
+
+  /***
    * Those control APIs for the bluetooth_audio module to start / suspend /
   stop
    * stream, to check position, and to update metadata.
