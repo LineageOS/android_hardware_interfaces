@@ -23,6 +23,7 @@ import android.hardware.radio.messaging.SendSmsResult;
 
 /**
  * Interface declaring response functions to solicited radio requests for messaging APIs.
+ * @hide
  */
 @VintfStability
 oneway interface IRadioMessagingResponse {

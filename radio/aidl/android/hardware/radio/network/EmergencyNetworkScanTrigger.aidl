@@ -18,9 +18,10 @@ package android.hardware.radio.network;
 import android.hardware.radio.AccessNetwork;
 import android.hardware.radio.network.EmergencyScanType;
 
+/** @hide */
 @VintfStability
 @JavaDerive(toString=true)
-parcelable EmergencyNetworkScanTrigger{
+parcelable EmergencyNetworkScanTrigger {
     /**
      * Access network to be prioritized during emergency scan. The 1st entry has the highest
      * priority.

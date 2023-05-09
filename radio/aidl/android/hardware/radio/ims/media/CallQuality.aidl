@@ -16,7 +16,9 @@
 
 package android.hardware.radio.ims.media;
 
+/** @hide */
 @VintfStability
+@JavaDerive(toString=true)
 parcelable CallQuality {
     /**
      * downlink CallQualityLevel for a given ongoing call

@@ -21,6 +21,7 @@ import android.hardware.radio.ims.media.RtpError;
 
 /**
  * Interface declaring listener functions for unsolicited IMS media notifications.
+ * @hide
  */
 @VintfStability
 oneway interface IImsMediaListener {

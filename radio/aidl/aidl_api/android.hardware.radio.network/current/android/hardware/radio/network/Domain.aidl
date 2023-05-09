@@ -32,8 +32,9 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.network;
+/* @hide */
 @Backing(type="int") @JavaDerive(toString=true) @VintfStability
 enum Domain {
-  CS = (1 << 0),
-  PS = (1 << 1),
+  CS = (1 << 0) /* 1 */,
+  PS = (1 << 1) /* 2 */,
 }

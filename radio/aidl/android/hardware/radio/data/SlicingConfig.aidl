@@ -21,6 +21,7 @@ import android.hardware.radio.data.UrspRule;
 
 /**
  * This struct represents the current slicing configuration.
+ * @hide
  */
 @VintfStability
 @JavaDerive(toString=true)

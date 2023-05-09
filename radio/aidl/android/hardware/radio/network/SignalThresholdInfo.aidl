@@ -20,6 +20,7 @@ import android.hardware.radio.AccessNetwork;
 
 /**
  * Contains the threshold values of each signal measurement type.
+ * @hide
  */
 @VintfStability
 @JavaDerive(toString=true)

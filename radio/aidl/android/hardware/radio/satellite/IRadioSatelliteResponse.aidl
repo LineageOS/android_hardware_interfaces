@@ -23,6 +23,7 @@ import android.hardware.radio.satellite.SatelliteMode;
 
 /**
  * Interface declaring response functions to solicited radio requests for satellite APIs.
+ * @hide
  */
 @VintfStability
 oneway interface IRadioSatelliteResponse {

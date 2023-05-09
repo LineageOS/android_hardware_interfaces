@@ -32,6 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.voice;
+/* @hide */
 @JavaDerive(toString=true) @VintfStability
 parcelable StkCcUnsolSsResult {
   int serviceType;
@@ -72,13 +73,13 @@ parcelable StkCcUnsolSsResult {
   const int TELESERVICE_TYPE_SMS_SERVICES = 4;
   const int TELESERVICE_TYPE_ALL_TELESERVICES_EXCEPT_SMS = 5;
   const int SUPP_SERVICE_CLASS_NONE = 0;
-  const int SUPP_SERVICE_CLASS_VOICE = (1 << 0);
-  const int SUPP_SERVICE_CLASS_DATA = (1 << 1);
-  const int SUPP_SERVICE_CLASS_FAX = (1 << 2);
-  const int SUPP_SERVICE_CLASS_SMS = (1 << 3);
-  const int SUPP_SERVICE_CLASS_DATA_SYNC = (1 << 4);
-  const int SUPP_SERVICE_CLASS_DATA_ASYNC = (1 << 5);
-  const int SUPP_SERVICE_CLASS_PACKET = (1 << 6);
-  const int SUPP_SERVICE_CLASS_PAD = (1 << 7);
-  const int SUPP_SERVICE_CLASS_MAX = (1 << 7);
+  const int SUPP_SERVICE_CLASS_VOICE = (1 << 0) /* 1 */;
+  const int SUPP_SERVICE_CLASS_DATA = (1 << 1) /* 2 */;
+  const int SUPP_SERVICE_CLASS_FAX = (1 << 2) /* 4 */;
+  const int SUPP_SERVICE_CLASS_SMS = (1 << 3) /* 8 */;
+  const int SUPP_SERVICE_CLASS_DATA_SYNC = (1 << 4) /* 16 */;
+  const int SUPP_SERVICE_CLASS_DATA_ASYNC = (1 << 5) /* 32 */;
+  const int SUPP_SERVICE_CLASS_PACKET = (1 << 6) /* 64 */;
+  const int SUPP_SERVICE_CLASS_PAD = (1 << 7) /* 128 */;
+  const int SUPP_SERVICE_CLASS_MAX = (1 << 7) /* 128 */;
 }

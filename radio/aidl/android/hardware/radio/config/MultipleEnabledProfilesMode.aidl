@@ -20,6 +20,7 @@ package android.hardware.radio.config;
  * Multiple Enabled Profiles(MEP) mode is the jointly supported MEP mode. As per section 3.4.1.1 of
  * GSMA spec SGP.22 v3.0,there are 3 supported MEP modes: MEP-A1, MEP-A2 and MEP-B.
  * If there is no jointly supported MEP mode, supported MEP mode is set to NONE.
+ * @hide
  */
 @VintfStability
 @Backing(type="int")

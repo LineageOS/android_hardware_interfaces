@@ -32,6 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.ims.media;
+/* @hide */
 @VintfStability
 interface IImsMediaSessionListener {
   oneway void onModifySessionResponse(in android.hardware.radio.ims.media.RtpConfig config, android.hardware.radio.ims.media.RtpError error);

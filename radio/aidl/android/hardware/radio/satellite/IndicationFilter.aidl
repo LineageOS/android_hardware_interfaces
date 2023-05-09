@@ -16,6 +16,7 @@
 
 package android.hardware.radio.satellite;
 
+/** @hide */
 @VintfStability
 @Backing(type="int")
 @JavaDerive(toString=true)

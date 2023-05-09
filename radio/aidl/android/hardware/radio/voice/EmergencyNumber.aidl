@@ -37,6 +37,7 @@ package android.hardware.radio.voice;
  *            3gpp 23.167, Section 6 - Functional description;
  *            3gpp 24.503, Section 5.1.6.8.1 - General;
  *            RFC 5031
+ * @hide
  */
 @VintfStability
 @JavaDerive(toString=true)

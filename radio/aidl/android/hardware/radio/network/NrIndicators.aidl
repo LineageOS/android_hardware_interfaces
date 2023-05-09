@@ -18,6 +18,7 @@ package android.hardware.radio.network;
 
 /**
  * The parameters of NR 5G Non-Standalone.
+ * @hide
  */
 @VintfStability
 @JavaDerive(toString=true)

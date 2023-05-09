@@ -23,6 +23,7 @@ import android.hardware.radio.network.CellInfoNr;
 import android.hardware.radio.network.CellInfoTdscdma;
 import android.hardware.radio.network.CellInfoWcdma;
 
+/** @hide */
 @VintfStability
 @JavaDerive(toString=true)
 union CellInfoRatSpecificInfo {

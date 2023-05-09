@@ -21,16 +21,17 @@ import android.hardware.radio.RadioTechnology;
 import android.hardware.radio.network.BarringInfo;
 import android.hardware.radio.network.CellIdentity;
 import android.hardware.radio.network.CellInfo;
+import android.hardware.radio.network.EmergencyRegResult;
 import android.hardware.radio.network.LinkCapacityEstimate;
 import android.hardware.radio.network.NetworkScanResult;
 import android.hardware.radio.network.PhoneRestrictedState;
 import android.hardware.radio.network.PhysicalChannelConfig;
 import android.hardware.radio.network.SignalStrength;
 import android.hardware.radio.network.SuppSvcNotification;
-import android.hardware.radio.network.EmergencyRegResult;
 
 /**
  * Interface declaring unsolicited radio indications for network APIs.
+ * @hide
  */
 @VintfStability
 oneway interface IRadioNetworkIndication {

@@ -19,7 +19,9 @@ package android.hardware.radio.ims.media;
 import android.hardware.radio.ims.media.AmrParams;
 import android.hardware.radio.ims.media.EvsParams;
 
+/** @hide */
 @VintfStability
+@JavaDerive(toString=true)
 union CodecSpecificParams {
     AmrParams amr;
     EvsParams evs;

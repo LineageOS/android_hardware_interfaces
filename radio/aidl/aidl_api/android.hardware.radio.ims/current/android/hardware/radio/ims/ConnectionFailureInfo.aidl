@@ -32,6 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.ims;
+/* @hide */
 @JavaDerive(toString=true) @VintfStability
 parcelable ConnectionFailureInfo {
   android.hardware.radio.ims.ConnectionFailureInfo.ConnectionFailureReason failureReason;

@@ -18,6 +18,7 @@ package android.hardware.radio.voice;
 
 import android.hardware.radio.voice.CallForwardInfo;
 
+/** @hide */
 @VintfStability
 @JavaDerive(toString=true)
 parcelable CfData {

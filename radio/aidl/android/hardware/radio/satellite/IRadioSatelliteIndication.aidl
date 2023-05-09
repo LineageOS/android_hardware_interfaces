@@ -24,6 +24,7 @@ import android.hardware.radio.satellite.SatelliteMode;
 
 /**
  * Interface declaring unsolicited radio indications for satellite APIs.
+ * @hide
  */
 @VintfStability
 oneway interface IRadioSatelliteIndication {

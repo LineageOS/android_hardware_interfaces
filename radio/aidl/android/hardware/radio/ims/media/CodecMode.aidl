@@ -19,6 +19,7 @@ package android.hardware.radio.ims.media;
 import android.hardware.radio.ims.media.AmrMode;
 import android.hardware.radio.ims.media.EvsMode;
 
+/** @hide */
 @VintfStability
 @JavaDerive(toString=true)
 union CodecMode {

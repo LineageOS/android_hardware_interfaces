@@ -19,6 +19,7 @@ import android.hardware.radio.AccessNetwork;
 import android.hardware.radio.network.Domain;
 import android.hardware.radio.network.RegState;
 
+/** @hide */
 @VintfStability
 @JavaDerive(toString=true)
 parcelable EmergencyRegResult {

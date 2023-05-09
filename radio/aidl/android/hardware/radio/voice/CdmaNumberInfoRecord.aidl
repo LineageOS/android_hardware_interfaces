@@ -20,6 +20,7 @@ package android.hardware.radio.voice;
  * Called Party Number Info Rec as defined in C.S0005 section 3.7.5.2
  * Calling Party Number Info Rec as defined in C.S0005 section 3.7.5.3
  * Connected Number Info Rec as defined in C.S0005 section 3.7.5.4
+ * @hide
  */
 @VintfStability
 @JavaDerive(toString=true)

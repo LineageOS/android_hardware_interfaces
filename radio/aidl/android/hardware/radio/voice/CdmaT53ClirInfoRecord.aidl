@@ -18,6 +18,7 @@ package android.hardware.radio.voice;
 
 /**
  * T53 CLIR Information Record
+ * @hide
  */
 @VintfStability
 @JavaDerive(toString=true)

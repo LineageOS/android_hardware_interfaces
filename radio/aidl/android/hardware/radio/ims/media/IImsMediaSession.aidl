@@ -24,6 +24,7 @@ import android.hardware.radio.ims.media.RtpHeaderExtension;
 
 /**
  * Session specific interface used by IMS media framework to talk to the vendor RTP stack.
+ * @hide
  */
 @VintfStability
 oneway interface IImsMediaSession {

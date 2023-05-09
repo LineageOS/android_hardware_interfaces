@@ -19,6 +19,7 @@ package android.hardware.radio.messaging;
 import android.hardware.radio.messaging.CdmaSmsAddress;
 import android.hardware.radio.messaging.CdmaSmsSubaddress;
 
+/** @hide */
 @VintfStability
 @JavaDerive(toString=true)
 parcelable CdmaSmsMessage {

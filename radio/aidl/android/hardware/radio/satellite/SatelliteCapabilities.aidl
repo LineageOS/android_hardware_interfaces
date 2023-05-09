@@ -19,6 +19,7 @@ package android.hardware.radio.satellite;
 import android.hardware.radio.satellite.NTRadioTechnology;
 import android.hardware.radio.satellite.SatelliteFeature;
 
+/** @hide */
 @VintfStability
 @JavaDerive(toString=true)
 parcelable SatelliteCapabilities {

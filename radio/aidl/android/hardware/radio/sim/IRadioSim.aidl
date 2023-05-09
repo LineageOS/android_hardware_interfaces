@@ -37,6 +37,7 @@ import android.hardware.radio.sim.SimLockMultiSimPolicy;
  * duration of a method call. If clients provide colliding serials (including passing the same
  * serial to different methods), multiple responses (one for each method call) must still be served.
  * setResponseFunctions must work with IRadioSimResponse and IRadioSimIndication.
+ * @hide
  */
 @VintfStability
 oneway interface IRadioSim {

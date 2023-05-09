@@ -16,8 +16,10 @@
 
 package android.hardware.radio.ims.media;
 
+/** @hide */
 @VintfStability
 @Backing(type="int")
+@JavaDerive(toString=true)
 enum CodecType {
     /** Adaptive Multi-Rate */
     AMR = 1 << 0,

@@ -32,6 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.modem;
+/* @hide */
 @Backing(type="int") @JavaDerive(toString=true) @VintfStability
 enum DeviceStateType {
   POWER_SAVE_MODE,

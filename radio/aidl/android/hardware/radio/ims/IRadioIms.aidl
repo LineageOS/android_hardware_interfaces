@@ -34,6 +34,7 @@ import android.hardware.radio.ims.SrvccCall;
  * duration of a method call. If clients provide colliding serials (including passing the same
  * serial to different methods), multiple responses (one for each method call) must still be served.
  * setResponseFunctions must work with IRadioImsResponse and IRadioImsIndication.
+ * @hide
  */
 @VintfStability
 oneway interface IRadioIms {
@@ -90,9 +91,8 @@ oneway interface IRadioIms {
      *
      * Response function is IRadioImsResponse.startImsTrafficResponse()
      */
-    void startImsTraffic(int serial, int token,
-            ImsTrafficType imsTrafficType, AccessNetwork accessNetworkType,
-            ImsCall.Direction trafficDirection);
+    void startImsTraffic(int serial, int token, ImsTrafficType imsTrafficType,
+            AccessNetwork accessNetworkType, ImsCall.Direction trafficDirection);
 
     /**
      * Indicates IMS traffic has been stopped.
@@ -123,8 +123,8 @@ oneway interface IRadioIms {
      * @param radioImsResponse Object containing response functions
      * @param radioImsIndication Object containing radio indications
      */
-    void setResponseFunctions(in IRadioImsResponse radioImsResponse,
-            in IRadioImsIndication radioImsIndication);
+    void setResponseFunctions(
+            in IRadioImsResponse radioImsResponse, in IRadioImsIndication radioImsIndication);
 
     /**
      * Access Network Bitrate Recommendation Query (ANBRQ), see 3GPP TS 26.114.
@@ -138,7 +138,8 @@ oneway interface IRadioIms {
      *
      * Response function is IRadioImsResponse.sendAnbrQueryResponse()
      */
-    void sendAnbrQuery(int serial, ImsStreamType mediaType, ImsStreamDirection direction, int bitsPerSecond);
+    void sendAnbrQuery(
+            int serial, ImsStreamType mediaType, ImsStreamDirection direction, int bitsPerSecond);
 
     /**
      * Provides a list of IMS call information to radio.

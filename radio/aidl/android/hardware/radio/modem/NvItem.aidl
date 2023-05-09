@@ -16,7 +16,10 @@
 
 package android.hardware.radio.modem;
 
-/** @deprecated NV APIs are deprecated starting from Android U. */
+/**
+ * @deprecated NV APIs are deprecated starting from Android U.
+ * @hide
+ */
 @VintfStability
 @Backing(type="int")
 @JavaDerive(toString=true)
