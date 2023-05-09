@@ -18,12 +18,16 @@
 
 #include <VehicleUtils.h>
 #include <aidl/android/hardware/automotive/vehicle/VehicleProperty.h>
+#include <android-base/parseint.h>
 #include <android-base/stringprintf.h>
 #include <android/binder_status.h>
 #include <grpc++/grpc++.h>
 #include <private/android_filesystem_config.h>
+#include <sys/stat.h>
 #include <utils/Log.h>
 #include <chrono>
+#include <fstream>
+#include <iostream>
 #include <thread>
 
 namespace android {
@@ -37,6 +41,7 @@ using ::aidl::android::hardware::automotive::remoteaccess::ApState;
 using ::aidl::android::hardware::automotive::remoteaccess::IRemoteTaskCallback;
 using ::aidl::android::hardware::automotive::vehicle::VehicleProperty;
 using ::android::base::Error;
+using ::android::base::ParseInt;
 using ::android::base::Result;
 using ::android::base::ScopedLockAssertion;
 using ::android::base::StringAppendF;
@@ -57,7 +62,11 @@ constexpr char COMMAND_STOP_DEBUG_CALLBACK[] = "--stop-debug-callback";
 constexpr char COMMAND_SHOW_TASK[] = "--show-task";
 constexpr char COMMAND_GET_VEHICLE_ID[] = "--get-vehicle-id";
 constexpr char COMMAND_INJECT_TASK[] = "--inject-task";
+constexpr char COMMAND_INJECT_TASK_NEXT_REBOOT[] = "--inject-task-next-reboot";
 constexpr char COMMAND_STATUS[] = "--status";
+
+constexpr char DEBUG_TASK_FOLDER[] = "/data/local/tests";
+constexpr char DEBUG_TASK_FILE[] = "/data/local/tests/debugTask";
 
 std::vector<uint8_t> stringToBytes(std::string_view s) {
     const char* data = s.data();
@@ -92,10 +101,43 @@ std::string boolToString(bool x) {
 }  // namespace
 
 RemoteAccessService::RemoteAccessService(WakeupClient::StubInterface* grpcStub)
-    : mGrpcStub(grpcStub){};
+    : mGrpcStub(grpcStub) {
+    std::ifstream debugTaskFile;
+    debugTaskFile.open(DEBUG_TASK_FILE, std::ios::in);
+    if (!debugTaskFile.is_open()) {
+        ALOGD("No debug task available");
+        return;
+    }
+
+    char buffer[1024] = {};
+    debugTaskFile.getline(buffer, sizeof(buffer));
+    std::string clientId = std::string(buffer);
+    debugTaskFile.getline(buffer, sizeof(buffer));
+    std::string taskData = std::string(buffer);
+    int latencyInSec;
+    debugTaskFile >> latencyInSec;
+    debugTaskFile.close();
+
+    ALOGD("Task for client: %s, data: [%s], latency: %d\n", clientId.c_str(), taskData.c_str(),
+          latencyInSec);
+
+    mInjectDebugTaskThread = std::thread([this, clientId, taskData, latencyInSec] {
+        std::this_thread::sleep_for(std::chrono::seconds(latencyInSec));
+        if (auto result = deliverRemoteTaskThroughCallback(clientId, taskData); !result.ok()) {
+            ALOGE("Failed to inject debug task, clientID: %s, taskData: %s, error: %s",
+                  clientId.c_str(), taskData.c_str(), result.error().message().c_str());
+            return;
+        }
+        ALOGD("Task for client: %s, data: [%s] successfully injected\n", clientId.c_str(),
+              taskData.c_str());
+    });
+}
 
 RemoteAccessService::~RemoteAccessService() {
     maybeStopTaskLoop();
+    if (mInjectDebugTaskThread.joinable()) {
+        mInjectDebugTaskThread.join();
+    }
 }
 
 void RemoteAccessService::maybeStartTaskLoop() {
@@ -286,9 +328,12 @@ void RemoteAccessService::dumpHelp(int fd) {
             "%s: Show tasks received by debug callback\n"
             "%s: Get vehicle id\n"
             "%s [client_id] [task_data]: Inject a task\n"
+            "%s [client_id] [task_data] [latencyInSec]: "
+            "Inject a task on next reboot after latencyInSec seconds\n"
             "%s: Show status\n",
             COMMAND_SET_AP_STATE, COMMAND_START_DEBUG_CALLBACK, COMMAND_STOP_DEBUG_CALLBACK,
-            COMMAND_SHOW_TASK, COMMAND_GET_VEHICLE_ID, COMMAND_INJECT_TASK, COMMAND_STATUS);
+            COMMAND_SHOW_TASK, COMMAND_GET_VEHICLE_ID, COMMAND_INJECT_TASK,
+            COMMAND_INJECT_TASK_NEXT_REBOOT, COMMAND_STATUS);
 }
 
 binder_status_t RemoteAccessService::dump(int fd, const char** args, uint32_t numArgs) {
@@ -365,6 +410,12 @@ binder_status_t RemoteAccessService::dump(int fd, const char** args, uint32_t nu
             return STATUS_OK;
         }
         debugInjectTask(fd, args[1], args[2]);
+    } else if (!strcmp(args[0], COMMAND_INJECT_TASK_NEXT_REBOOT)) {
+        if (numArgs < 4) {
+            dumpHelp(fd);
+            return STATUS_OK;
+        }
+        debugInjectTaskNextReboot(fd, args[1], args[2], args[3]);
     } else if (!strcmp(args[0], COMMAND_STATUS)) {
         printCurrentStatus(fd);
     } else {
@@ -389,11 +440,39 @@ void RemoteAccessService::debugInjectTask(int fd, std::string_view clientId,
                                           std::string_view taskData) {
     std::string clientIdCopy = std::string(clientId);
     if (auto result = deliverRemoteTaskThroughCallback(clientIdCopy, taskData); !result.ok()) {
-        dprintf(fd, "Failed to inject task: %s", result.error().message().c_str());
+        dprintf(fd, "Failed to inject task: %s\n", result.error().message().c_str());
         return;
     }
     dprintf(fd, "Task for client: %s, data: [%s] successfully injected\n", clientId.data(),
             taskData.data());
+}
+
+void RemoteAccessService::debugInjectTaskNextReboot(int fd, std::string_view clientId,
+                                                    std::string_view taskData,
+                                                    const char* latencyInSecStr) {
+    int latencyInSec;
+    if (!ParseInt(latencyInSecStr, &latencyInSec)) {
+        dprintf(fd, "The input latency in second is not a valid integer");
+        return;
+    }
+    std::ofstream debugTaskFile;
+    debugTaskFile.open(DEBUG_TASK_FILE, std::ios::out);
+    if (!debugTaskFile.is_open()) {
+        dprintf(fd,
+                "Failed to open debug task file, please run the command: "
+                "'adb shell touch %s' first\n",
+                DEBUG_TASK_FILE);
+        return;
+    }
+    if (taskData.find("\n") != std::string::npos) {
+        dprintf(fd, "Task data must not contain newline\n");
+        return;
+    }
+    debugTaskFile << clientId << "\n" << taskData << "\n" << latencyInSec;
+    debugTaskFile.close();
+    dprintf(fd,
+            "Task with clientId: %s, task data: %s, latency: %d sec scheduled for next reboot\n",
+            clientId.data(), taskData.data(), latencyInSec);
 }
 
 std::string RemoteAccessService::clientIdToTaskCountToStringLocked() {
