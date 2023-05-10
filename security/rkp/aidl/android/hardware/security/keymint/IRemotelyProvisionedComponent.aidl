@@ -427,6 +427,7 @@ interface IRemotelyProvisionedComponent {
      *         ? -70002 : tstr,                         ; Component name
      *         ? -70003 : int / tstr,                   ; Component version
      *         ? -70004 : null,                         ; Resettable
+     *         ? -70005 : uint,                         ; Security version
      *     },
      *     -4670549 : bstr,                         ; Authority Hash
      *     ? -4670550 : bstr,                       ; Authority Descriptor
