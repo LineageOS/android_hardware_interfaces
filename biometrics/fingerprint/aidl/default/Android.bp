@@ -11,8 +11,8 @@ cc_binary {
     name: "android.hardware.biometrics.fingerprint-service.example",
     vendor: true,
     relative_install_path: "hw",
-    init_rc: ["fingerprint-example.rc"],
-    vintf_fragments: ["fingerprint-example.xml"],
+    init_rc: [":fingerprint-example.rc"],
+    vintf_fragments: [":fingerprint-example.xml"],
     local_include_dirs: ["include"],
     srcs: [
         "FakeLockoutTracker.cpp",
@@ -141,4 +141,14 @@ sysprop_library {
     srcs: ["fingerprint.sysprop"],
     property_owner: "Vendor",
     vendor: true,
+}
+
+filegroup {
+    name: "fingerprint-example.rc",
+    srcs: ["fingerprint-example.rc"],
+}
+
+filegroup {
+    name: "fingerprint-example.xml",
+    srcs: ["fingerprint-example.xml"],
 }
