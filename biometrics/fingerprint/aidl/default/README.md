@@ -14,6 +14,12 @@ following to your device's `.mk` file to include it:
 PRODUCT_PACKAGES_DEBUG += android.hardware.biometrics.fingerprint-service.example
 ```
 
+or add the following to include it as an apex:
+
+```
+PRODUCT_PACKAGES_DEBUG += com.android.hardware.biometrics.fingerprint.virtual
+```
+
 The virtual HAL will be ignored if a real HAL is also installed on the target
 device. Set the `biometric_virtual_enabled` settings and reboot the device to
 switch to the virtual HAL. Unset it and reboot again to switch back.
