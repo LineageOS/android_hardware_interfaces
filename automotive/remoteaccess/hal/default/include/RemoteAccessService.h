@@ -105,6 +105,8 @@ class RemoteAccessService
     size_t mRetryWaitInMs = 10'000;
     std::shared_ptr<DebugRemoteTaskCallback> mDebugCallback;
 
+    std::thread mInjectDebugTaskThread;
+
     void runTaskLoop();
     void maybeStartTaskLoop();
     void maybeStopTaskLoop();
@@ -116,6 +118,8 @@ class RemoteAccessService
     void printCurrentStatus(int fd);
     std::string clientIdToTaskCountToStringLocked() REQUIRES(mLock);
     void debugInjectTask(int fd, std::string_view clientId, std::string_view taskData);
+    void debugInjectTaskNextReboot(int fd, std::string_view clientId, std::string_view taskData,
+                                   const char* latencyInSecStr);
     void updateGrpcConnected(bool connected);
     android::base::Result<void> deliverRemoteTaskThroughCallback(const std::string& clientId,
                                                                  std::string_view taskData);

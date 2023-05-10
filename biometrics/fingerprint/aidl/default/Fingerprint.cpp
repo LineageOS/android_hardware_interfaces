@@ -103,6 +103,8 @@ ndk::ScopedAStatus Fingerprint::createSession(int32_t sensorId, int32_t userId,
     mSession = SharedRefBase::make<Session>(sensorId, userId, cb, mEngine.get(), &mWorker);
     *out = mSession;
 
+    mSession->linkToDeath(cb->asBinder().get());
+
     LOG(INFO) << "createSession: sensorId:" << sensorId << " userId:" << userId;
     return ndk::ScopedAStatus::ok();
 }
