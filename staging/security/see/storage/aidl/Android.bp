@@ -1,0 +1,26 @@
+package {
+    default_applicable_licenses: ["hardware_interfaces_license"],
+}
+
+aidl_interface {
+    name: "android.hardware.security.see.storage",
+    unstable: true,
+    host_supported: true,
+    srcs: [
+        "android/hardware/security/see/storage/*.aidl",
+    ],
+    backend: {
+        java: {
+            enabled: false,
+        },
+        cpp: {
+            enabled: true,
+        },
+        ndk: {
+            enabled: true,
+        },
+        rust: {
+            enabled: true,
+        },
+    },
+}
