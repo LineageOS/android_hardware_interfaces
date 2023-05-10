@@ -4384,12 +4384,6 @@ enum VehicleProperty {
     /***********************************************************************************************
      * Start of ADAS Properties
      *
-     * Android is not a safety critical system and is provided as is without any timing guarantees,
-     * representations or warranties. OEMs implementing these properties, and clients using these
-     * properties should ensure they complete any necessary safety reviews, in accordance with
-     * industry standards, to ensure the use of these APIs do not negatively impact driver safety.
-     * Use of any Google APIs will be at the OEM's sole risk.
-     *
      * Allocate IDs in range of 0x1000 (inclusive) to 0x1100 (exclusive) for ADAS properties
      **********************************************************************************************/
 
