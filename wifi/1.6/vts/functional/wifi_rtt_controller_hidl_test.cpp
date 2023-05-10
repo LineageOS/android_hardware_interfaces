@@ -78,6 +78,13 @@ class WifiRttControllerHidlTest : public ::testing::TestWithParam<std::string> {
 
     virtual void TearDown() override { stopWifi(GetInstanceName()); }
 
+    RttCapabilities getRttCapabilities() {
+        std::pair<WifiStatus, RttCapabilities> status_and_caps;
+        status_and_caps = HIDL_INVOKE(wifi_rtt_controller_, getCapabilities_1_6);
+        EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_caps.first.code);
+        return status_and_caps.second;
+    }
+
     // A simple test implementation of WifiRttControllerEventCallback.
     class WifiRttControllerEventCallback
         : public ::testing::VtsHalHidlTargetCallbackBase<WifiRttControllerHidlTest>,
@@ -151,12 +158,9 @@ TEST_P(WifiRttControllerHidlTest, RegisterEventCallback_1_6) {
  * This test case tests the two sided ranging - 802.11mc FTM protocol.
  */
 TEST_P(WifiRttControllerHidlTest, Request2SidedRangeMeasurement) {
-    std::pair<WifiStatus, RttCapabilities> status_and_caps;
-
     // Get the Capabilities
-    status_and_caps = HIDL_INVOKE(wifi_rtt_controller_, getCapabilities_1_6);
-    EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_caps.first.code);
-    if (!status_and_caps.second.rttFtmSupported) {
+    RttCapabilities capabilities = getRttCapabilities();
+    if (!capabilities.rttFtmSupported) {
         GTEST_SKIP() << "Skipping two sided RTT since driver/fw doesn't support";
     }
     std::vector<RttConfig> configs;
@@ -196,19 +200,16 @@ TEST_P(WifiRttControllerHidlTest, Request2SidedRangeMeasurement) {
  * rangeRequest_1_6
  */
 TEST_P(WifiRttControllerHidlTest, RangeRequest_1_6) {
-    std::pair<WifiStatus, RttCapabilities> status_and_caps;
-
     // Get the Capabilities
-    status_and_caps = HIDL_INVOKE(wifi_rtt_controller_, getCapabilities_1_6);
-    EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_caps.first.code);
-    if (!status_and_caps.second.rttOneSidedSupported) {
+    RttCapabilities capabilities = getRttCapabilities();
+    if (!capabilities.rttOneSidedSupported) {
         GTEST_SKIP() << "Skipping one sided RTT since driver/fw doesn't support";
     }
     // Get the highest support preamble
     int preamble = 1;
-    status_and_caps.second.preambleSupport >>= 1;
-    while (status_and_caps.second.preambleSupport != 0) {
-        status_and_caps.second.preambleSupport >>= 1;
+    capabilities.preambleSupport >>= 1;
+    while (capabilities.preambleSupport != 0) {
+        capabilities.preambleSupport >>= 1;
         preamble <<= 1;
     }
     std::vector<RttConfig> configs;
@@ -259,9 +260,14 @@ TEST_P(WifiRttControllerHidlTest, GetCapabilities_1_6) {
  * getResponderInfo_1_6
  */
 TEST_P(WifiRttControllerHidlTest, GetResponderInfo_1_6) {
-    std::pair<WifiStatus, RttResponder> status_and_info;
+    // Get the capabilities
+    RttCapabilities capabilities = getRttCapabilities();
+    if (!capabilities.responderSupported) {
+        GTEST_SKIP() << "Skipping because responder is not supported";
+    }
 
     // Invoke the call
+    std::pair<WifiStatus, RttResponder> status_and_info;
     status_and_info = HIDL_INVOKE(wifi_rtt_controller_, getResponderInfo_1_6);
     EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_info.first.code);
 }
@@ -270,6 +276,12 @@ TEST_P(WifiRttControllerHidlTest, GetResponderInfo_1_6) {
  * enableResponder_1_6
  */
 TEST_P(WifiRttControllerHidlTest, EnableResponder_1_6) {
+    // Get the capabilities
+    RttCapabilities capabilities = getRttCapabilities();
+    if (!capabilities.responderSupported) {
+        GTEST_SKIP() << "Skipping because responder is not supported";
+    }
+
     std::pair<WifiStatus, RttResponder> status_and_info;
     int cmdId = 55;
     WifiChannelInfo channelInfo;
