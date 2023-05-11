@@ -229,9 +229,9 @@ class RadioNetworkIndication : public BnRadioNetworkIndication {
 };
 
 // The main test class for Radio AIDL Network.
-class RadioNetworkTest : public ::testing::TestWithParam<std::string>, public RadioServiceTest {
+class RadioNetworkTest : public RadioServiceTest {
   public:
-    virtual void SetUp() override;
+    void SetUp() override;
 
     /* radio network service handle */
     std::shared_ptr<IRadioNetwork> radio_network;
