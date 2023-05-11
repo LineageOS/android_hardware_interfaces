@@ -914,7 +914,7 @@ TEST_P(BluetoothAidlTest, CallInitializeTwice) {
   ASSERT_EQ(status, std::future_status::ready);
 }
 
-TEST_P(BluetoothAidlTest, Cdd_C_12_1_Bluetooth5Requirements) {
+TEST_P(BluetoothAidlTest, Vsr_Bluetooth5Requirements) {
   std::vector<uint8_t> version_event;
   send_and_wait_for_cmd_complete(ReadLocalVersionInformationBuilder::Create(),
                                  version_event);
