@@ -132,9 +132,9 @@ class RadioMessagingIndication : public BnRadioMessagingIndication {
 };
 
 // The main test class for Radio AIDL Messaging.
-class RadioMessagingTest : public ::testing::TestWithParam<std::string>, public RadioServiceTest {
+class RadioMessagingTest : public RadioServiceTest {
   public:
-    virtual void SetUp() override;
+    void SetUp() override;
 
     /* radio messaging service handle */
     std::shared_ptr<IRadioMessaging> radio_messaging;
