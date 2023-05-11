@@ -15,7 +15,6 @@
  */
 
 #include <aidl/android/hardware/radio/config/IRadioConfig.h>
-#include <android-base/logging.h>
 #include <android/binder_manager.h>
 
 #include "radio_ims_utils.h"
@@ -23,6 +22,7 @@
 #define ASSERT_OK(ret) ASSERT_TRUE(ret.isOk())
 
 void RadioImsTest::SetUp() {
+    RadioServiceTest::SetUp();
     std::string serviceName = GetParam();
 
     if (!isServiceValidForDeviceConfiguration(serviceName)) {
@@ -36,8 +36,6 @@ void RadioImsTest::SetUp() {
 
     radioRsp_ims = ndk::SharedRefBase::make<RadioImsResponse>(*this);
     ASSERT_NE(nullptr, radioRsp_ims.get());
-
-    count_ = 0;
 
     radioInd_ims = ndk::SharedRefBase::make<RadioImsIndication>(*this);
     ASSERT_NE(nullptr, radioInd_ims.get());
