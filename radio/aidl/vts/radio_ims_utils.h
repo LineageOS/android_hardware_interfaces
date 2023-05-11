@@ -76,12 +76,12 @@ class RadioImsIndication : public BnRadioImsIndication {
 };
 
 // The main test class for Radio AIDL Ims.
-class RadioImsTest : public ::testing::TestWithParam<std::string>, public RadioServiceTest {
+class RadioImsTest : public RadioServiceTest {
   protected:
     virtual void verifyError(RadioError resp);
 
   public:
-    virtual void SetUp() override;
+    void SetUp() override;
 
     /* radio ims service handle */
     std::shared_ptr<IRadioIms> radio_ims;
