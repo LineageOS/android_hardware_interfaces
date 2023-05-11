@@ -243,7 +243,10 @@ interface IWifiNanIface {
     void terminateDataPathRequest(in char cmdId, in int ndpInstanceId);
 
     /**
-     * Start the suspension of a discovery service.
+     * Start the suspension of a discovery service. During the suspend state, the Wi-Fi Aware
+     * device must not transmit or receive frames for this session including any active NDPs. If
+     * all discovery sessions are suspended then the Wi-Fi Aware device must not transmit or
+     * receive any Wi-Fi Aware frames.
      * Asynchronous response is with |IWifiNanIfaceEventCallback.notifySuspendResponse|.
      *
      * @param cmdId Command Id to use for this invocation.
@@ -256,7 +259,10 @@ interface IWifiNanIface {
     void suspendRequest(in char cmdId, in byte sessionId);
 
     /**
-     * Stop the suspension of a discovery service.
+     * Stop the suspension of a discovery service. Resume cancels an ongoing suspend for this Wi-Fi
+     * Aware discovery session and automatically resumes the session and any associated NDPs to the
+     * state before they were suspended. The Wi-Fi Aware resume operation should be faster than
+     * recreating the corresponding discovery session and NDPs with the same benefit of power.
      * Asynchronous response is with |IWifiNanIfaceEventCallback.notifyResumeResponse|.
      *
      * @param cmdId Command Id to use for this invocation.
