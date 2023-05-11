@@ -74,9 +74,10 @@ class RadioConfigIndication : public BnRadioConfigIndication {
 };
 
 // The main test class for Radio AIDL Config.
-class RadioConfigTest : public ::testing::TestWithParam<std::string>, public RadioServiceTest {
+class RadioConfigTest : public RadioServiceTest {
   public:
-    virtual void SetUp() override;
+    void SetUp() override;
+
     ndk::ScopedAStatus updateSimCardStatus();
     /* Override updateSimSlotStatus in RadioServiceTest to not call setResponseFunctions */
     void updateSimSlotStatus();

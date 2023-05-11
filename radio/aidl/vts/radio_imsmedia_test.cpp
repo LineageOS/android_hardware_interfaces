@@ -15,7 +15,6 @@
  */
 
 #include <aidl/android/hardware/radio/ims/media/MediaDirection.h>
-#include <android-base/logging.h>
 #include <android/binder_auto_utils.h>
 #include <android/binder_manager.h>
 #include <sys/socket.h>
@@ -25,9 +24,8 @@
 #define ASSERT_OK(ret) ASSERT_TRUE(ret.isOk())
 
 void RadioImsMediaTest::SetUp() {
+    RadioServiceTest::SetUp();
     std::string serviceName = GetParam();
-
-    ALOGD("Enter RadioImsMediaTest.");
 
     radio_imsmedia = IImsMedia::fromBinder(
             ndk::SpAIBinder(AServiceManager_waitForService(GetParam().c_str())));
@@ -38,7 +36,6 @@ void RadioImsMediaTest::SetUp() {
 
     radio_imsmediasessionlistener = ndk::SharedRefBase::make<ImsMediaSessionListener>(*this);
     ASSERT_NE(nullptr, radio_imsmediasessionlistener.get());
-    count_ = 0;
 }
 
 TEST_P(RadioImsMediaTest, MOCallSuccess) {
