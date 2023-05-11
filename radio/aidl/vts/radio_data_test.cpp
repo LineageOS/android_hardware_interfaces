@@ -17,7 +17,6 @@
 #include <aidl/android/hardware/radio/RadioAccessFamily.h>
 #include <aidl/android/hardware/radio/config/IRadioConfig.h>
 #include <aidl/android/hardware/radio/data/ApnTypes.h>
-#include <android-base/logging.h>
 #include <android/binder_manager.h>
 
 #include "radio_data_utils.h"
@@ -25,6 +24,7 @@
 #define ASSERT_OK(ret) ASSERT_TRUE(ret.isOk())
 
 void RadioDataTest::SetUp() {
+    RadioServiceTest::SetUp();
     std::string serviceName = GetParam();
 
     if (!isServiceValidForDeviceConfiguration(serviceName)) {
@@ -38,8 +38,6 @@ void RadioDataTest::SetUp() {
 
     radioRsp_data = ndk::SharedRefBase::make<RadioDataResponse>(*this);
     ASSERT_NE(nullptr, radioRsp_data.get());
-
-    count_ = 0;
 
     radioInd_data = ndk::SharedRefBase::make<RadioDataIndication>(*this);
     ASSERT_NE(nullptr, radioInd_data.get());
@@ -555,7 +553,6 @@ TEST_P(RadioDataTest, stopKeepalive) {
  * Test IRadioData.getDataCallList() for the response returned.
  */
 TEST_P(RadioDataTest, getDataCallList) {
-    LOG(DEBUG) << "getDataCallList";
     serial = GetRandomSerialNumber();
 
     radio_data->getDataCallList(serial);
@@ -569,14 +566,12 @@ TEST_P(RadioDataTest, getDataCallList) {
                 radioRsp_data->rspInfo.error,
                 {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::SIM_ABSENT}));
     }
-    LOG(DEBUG) << "getDataCallList finished";
 }
 
 /*
  * Test IRadioData.setDataAllowed() for the response returned.
  */
 TEST_P(RadioDataTest, setDataAllowed) {
-    LOG(DEBUG) << "setDataAllowed";
     serial = GetRandomSerialNumber();
     bool allow = true;
 
@@ -589,5 +584,4 @@ TEST_P(RadioDataTest, setDataAllowed) {
     if (cardStatus.cardState == CardStatus::STATE_ABSENT) {
         EXPECT_EQ(RadioError::NONE, radioRsp_data->rspInfo.error);
     }
-    LOG(DEBUG) << "setDataAllowed finished";
 }
