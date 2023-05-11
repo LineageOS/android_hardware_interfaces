@@ -125,7 +125,8 @@ TEST_P(IdentityCredentialTests, verifyAttestationSuccessWithRemoteProvisioning) 
 
     MacedPublicKey macedPublicKey;
     std::vector<uint8_t> attestationKey;
-    result = rpc->generateEcdsaP256KeyPair(/*testMode=*/true, &macedPublicKey, &attestationKey);
+    // Start by RPC version 3, we don't support testMode=true. So just verify testMode=false here.
+    result = rpc->generateEcdsaP256KeyPair(/*testMode=*/false, &macedPublicKey, &attestationKey);
     ASSERT_TRUE(result.isOk()) << result.exceptionCode() << "; " << result.exceptionMessage();
 
     optional<vector<vector<uint8_t>>> remotelyProvisionedCertChain =
@@ -176,7 +177,8 @@ TEST_P(IdentityCredentialTests, verifyRemotelyProvisionedKeyMayOnlyBeSetOnce) {
 
     MacedPublicKey macedPublicKey;
     std::vector<uint8_t> attestationKey;
-    result = rpc->generateEcdsaP256KeyPair(/*testMode=*/true, &macedPublicKey, &attestationKey);
+    // Start by RPC version 3, we don't support testMode=true. So just verify testMode=false here.
+    result = rpc->generateEcdsaP256KeyPair(/*testMode=*/false, &macedPublicKey, &attestationKey);
     ASSERT_TRUE(result.isOk()) << result.exceptionCode() << "; " << result.exceptionMessage();
 
     optional<vector<vector<uint8_t>>> remotelyProvisionedCertChain =
