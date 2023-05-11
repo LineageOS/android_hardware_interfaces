@@ -112,9 +112,9 @@ class RadioModemIndication : public BnRadioModemIndication {
 };
 
 // The main test class for Radio AIDL Modem.
-class RadioModemTest : public ::testing::TestWithParam<std::string>, public RadioServiceTest {
+class RadioModemTest : public RadioServiceTest {
   public:
-    virtual void SetUp() override;
+    void SetUp() override;
 
     /* radio modem service handle */
     std::shared_ptr<IRadioModem> radio_modem;

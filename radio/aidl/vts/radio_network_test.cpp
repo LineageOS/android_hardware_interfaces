@@ -17,7 +17,6 @@
 #include <aidl/android/hardware/radio/RadioAccessFamily.h>
 #include <aidl/android/hardware/radio/config/IRadioConfig.h>
 #include <aidl/android/hardware/radio/network/IndicationFilter.h>
-#include <android-base/logging.h>
 #include <android/binder_manager.h>
 
 #include "radio_network_utils.h"
@@ -25,6 +24,7 @@
 #define ASSERT_OK(ret) ASSERT_TRUE(ret.isOk())
 
 void RadioNetworkTest::SetUp() {
+    RadioServiceTest::SetUp();
     std::string serviceName = GetParam();
 
     if (!isServiceValidForDeviceConfiguration(serviceName)) {
@@ -38,8 +38,6 @@ void RadioNetworkTest::SetUp() {
 
     radioRsp_network = ndk::SharedRefBase::make<RadioNetworkResponse>(*this);
     ASSERT_NE(nullptr, radioRsp_network.get());
-
-    count_ = 0;
 
     radioInd_network = ndk::SharedRefBase::make<RadioNetworkIndication>(*this);
     ASSERT_NE(nullptr, radioInd_network.get());
@@ -1665,7 +1663,6 @@ TEST_P(RadioNetworkTest, getImsRegistrationState) {
  * Test IRadioNetwork.getOperator() for the response returned.
  */
 TEST_P(RadioNetworkTest, getOperator) {
-    LOG(DEBUG) << "getOperator";
     serial = GetRandomSerialNumber();
 
     radio_network->getOperator(serial);
@@ -1676,14 +1673,12 @@ TEST_P(RadioNetworkTest, getOperator) {
     if (cardStatus.cardState == CardStatus::STATE_ABSENT) {
         EXPECT_EQ(RadioError::NONE, radioRsp_network->rspInfo.error);
     }
-    LOG(DEBUG) << "getOperator finished";
 }
 
 /*
  * Test IRadioNetwork.getNetworkSelectionMode() for the response returned.
  */
 TEST_P(RadioNetworkTest, getNetworkSelectionMode) {
-    LOG(DEBUG) << "getNetworkSelectionMode";
     serial = GetRandomSerialNumber();
 
     radio_network->getNetworkSelectionMode(serial);
@@ -1694,14 +1689,12 @@ TEST_P(RadioNetworkTest, getNetworkSelectionMode) {
     if (cardStatus.cardState == CardStatus::STATE_ABSENT) {
         EXPECT_EQ(RadioError::NONE, radioRsp_network->rspInfo.error);
     }
-    LOG(DEBUG) << "getNetworkSelectionMode finished";
 }
 
 /*
  * Test IRadioNetwork.setNetworkSelectionModeAutomatic() for the response returned.
  */
 TEST_P(RadioNetworkTest, setNetworkSelectionModeAutomatic) {
-    LOG(DEBUG) << "setNetworkSelectionModeAutomatic";
     serial = GetRandomSerialNumber();
 
     radio_network->setNetworkSelectionModeAutomatic(serial);
@@ -1715,14 +1708,12 @@ TEST_P(RadioNetworkTest, setNetworkSelectionModeAutomatic) {
                                       RadioError::OPERATION_NOT_ALLOWED},
                                      CHECK_GENERAL_ERROR));
     }
-    LOG(DEBUG) << "setNetworkSelectionModeAutomatic finished";
 }
 
 /*
  * Test IRadioNetwork.getAvailableNetworks() for the response returned.
  */
 TEST_P(RadioNetworkTest, getAvailableNetworks) {
-    LOG(DEBUG) << "getAvailableNetworks";
     serial = GetRandomSerialNumber();
 
     radio_network->getAvailableNetworks(serial);
@@ -1738,14 +1729,12 @@ TEST_P(RadioNetworkTest, getAvailableNetworks) {
                  RadioError::MODEM_ERR, RadioError::OPERATION_NOT_ALLOWED},
                 CHECK_GENERAL_ERROR));
     }
-    LOG(DEBUG) << "getAvailableNetworks finished";
 }
 
 /*
  * Test IRadioNetwork.setBandMode() for the response returned.
  */
 TEST_P(RadioNetworkTest, setBandMode) {
-    LOG(DEBUG) << "setBandMode";
     serial = GetRandomSerialNumber();
 
     radio_network->setBandMode(serial, RadioBandMode::BAND_MODE_USA);
@@ -1757,14 +1746,12 @@ TEST_P(RadioNetworkTest, setBandMode) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error, {RadioError::NONE},
                                      CHECK_GENERAL_ERROR));
     }
-    LOG(DEBUG) << "setBandMode finished";
 }
 
 /*
  * Test IRadioNetwork.setLocationUpdates() for the response returned.
  */
 TEST_P(RadioNetworkTest, setLocationUpdates) {
-    LOG(DEBUG) << "setLocationUpdates";
     serial = GetRandomSerialNumber();
 
     radio_network->setLocationUpdates(serial, true);
@@ -1776,14 +1763,12 @@ TEST_P(RadioNetworkTest, setLocationUpdates) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error,
                                      {RadioError::NONE, RadioError::SIM_ABSENT}));
     }
-    LOG(DEBUG) << "setLocationUpdates finished";
 }
 
 /*
  * Test IRadioNetwork.setCdmaRoamingPreference() for the response returned.
  */
 TEST_P(RadioNetworkTest, setCdmaRoamingPreference) {
-    LOG(DEBUG) << "setCdmaRoamingPreference";
     serial = GetRandomSerialNumber();
 
     radio_network->setCdmaRoamingPreference(serial, CdmaRoamingType::HOME_NETWORK);
@@ -1796,14 +1781,12 @@ TEST_P(RadioNetworkTest, setCdmaRoamingPreference) {
                 radioRsp_network->rspInfo.error,
                 {RadioError::NONE, RadioError::SIM_ABSENT, RadioError::REQUEST_NOT_SUPPORTED}));
     }
-    LOG(DEBUG) << "setCdmaRoamingPreference finished";
 }
 
 /*
  * Test IRadioNetwork.getCdmaRoamingPreference() for the response returned.
  */
 TEST_P(RadioNetworkTest, getCdmaRoamingPreference) {
-    LOG(DEBUG) << "getCdmaRoamingPreference";
     serial = GetRandomSerialNumber();
 
     radio_network->getCdmaRoamingPreference(serial);
@@ -1817,14 +1800,12 @@ TEST_P(RadioNetworkTest, getCdmaRoamingPreference) {
                                  {RadioError::NONE, RadioError::SIM_ABSENT, RadioError::MODEM_ERR},
                                  CHECK_GENERAL_ERROR));
     }
-    LOG(DEBUG) << "getCdmaRoamingPreference finished";
 }
 
 /*
  * Test IRadioNetwork.getVoiceRadioTechnology() for the response returned.
  */
 TEST_P(RadioNetworkTest, getVoiceRadioTechnology) {
-    LOG(DEBUG) << "getVoiceRadioTechnology";
     serial = GetRandomSerialNumber();
 
     radio_network->getVoiceRadioTechnology(serial);
@@ -1835,14 +1816,12 @@ TEST_P(RadioNetworkTest, getVoiceRadioTechnology) {
     if (cardStatus.cardState == CardStatus::STATE_ABSENT) {
         EXPECT_EQ(RadioError::NONE, radioRsp_network->rspInfo.error);
     }
-    LOG(DEBUG) << "getVoiceRadioTechnology finished";
 }
 
 /*
  * Test IRadioNetwork.setCellInfoListRate() for the response returned.
  */
 TEST_P(RadioNetworkTest, setCellInfoListRate) {
-    LOG(DEBUG) << "setCellInfoListRate";
     serial = GetRandomSerialNumber();
 
     radio_network->setCellInfoListRate(serial, 10);
@@ -1854,14 +1833,12 @@ TEST_P(RadioNetworkTest, setCellInfoListRate) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error,
                                      {RadioError::NONE, RadioError::REQUEST_NOT_SUPPORTED}));
     }
-    LOG(DEBUG) << "setCellInfoListRate finished";
 }
 
 /*
  * Test IRadioNetwork.supplyNetworkDepersonalization() for the response returned.
  */
 TEST_P(RadioNetworkTest, supplyNetworkDepersonalization) {
-    LOG(DEBUG) << "supplyNetworkDepersonalization";
     serial = GetRandomSerialNumber();
 
     radio_network->supplyNetworkDepersonalization(serial, std::string("test"));
@@ -1876,7 +1853,6 @@ TEST_P(RadioNetworkTest, supplyNetworkDepersonalization) {
                  RadioError::INVALID_SIM_STATE, RadioError::MODEM_ERR, RadioError::NO_MEMORY,
                  RadioError::PASSWORD_INCORRECT, RadioError::SIM_ABSENT, RadioError::SYSTEM_ERR}));
     }
-    LOG(DEBUG) << "supplyNetworkDepersonalization finished";
 }
 
 /*
@@ -1891,7 +1867,6 @@ TEST_P(RadioNetworkTest, setEmergencyMode) {
         GTEST_SKIP();
     }
 
-    LOG(DEBUG) << "setEmergencyMode";
     serial = GetRandomSerialNumber();
 
     radio_network->setEmergencyMode(serial, EmergencyMode::EMERGENCY_WWAN);
@@ -1907,8 +1882,6 @@ TEST_P(RadioNetworkTest, setEmergencyMode) {
     // exit emergency mode for other tests
     serial = GetRandomSerialNumber();
     radio_network->exitEmergencyMode(serial);
-
-    LOG(DEBUG) << "setEmergencyMode finished";
 }
 
 /*
@@ -1924,7 +1897,6 @@ TEST_P(RadioNetworkTest, triggerEmergencyNetworkScan) {
         GTEST_SKIP();
     }
 
-    LOG(DEBUG) << "triggerEmergencyNetworkScan";
     serial = GetRandomSerialNumber();
 
     EmergencyNetworkScanTrigger scanRequest;
@@ -1940,7 +1912,6 @@ TEST_P(RadioNetworkTest, triggerEmergencyNetworkScan) {
             radioRsp_network->rspInfo.error,
             {RadioError::NONE, RadioError::REQUEST_NOT_SUPPORTED, RadioError::RADIO_NOT_AVAILABLE,
              RadioError::MODEM_ERR, RadioError::INVALID_ARGUMENTS}));
-    LOG(DEBUG) << "triggerEmergencyNetworkScan finished";
 }
 
 /*
@@ -1955,7 +1926,6 @@ TEST_P(RadioNetworkTest, cancelEmergencyNetworkScan) {
         GTEST_SKIP();
     }
 
-    LOG(DEBUG) << "cancelEmergencyNetworkScan";
     serial = GetRandomSerialNumber();
 
     radio_network->cancelEmergencyNetworkScan(serial, true);
@@ -1963,11 +1933,9 @@ TEST_P(RadioNetworkTest, cancelEmergencyNetworkScan) {
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_network->rspInfo.type);
     EXPECT_EQ(serial, radioRsp_network->rspInfo.serial);
 
-    ASSERT_TRUE(CheckAnyOfErrors(
-            radioRsp_network->rspInfo.error,
-            {RadioError::NONE, RadioError::REQUEST_NOT_SUPPORTED, RadioError::RADIO_NOT_AVAILABLE,
-             RadioError::MODEM_ERR}));
-    LOG(DEBUG) << "cancelEmergencyNetworkScan finished";
+    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error,
+                                 {RadioError::NONE, RadioError::REQUEST_NOT_SUPPORTED,
+                                  RadioError::RADIO_NOT_AVAILABLE, RadioError::MODEM_ERR}));
 }
 
 /*
@@ -1982,7 +1950,6 @@ TEST_P(RadioNetworkTest, exitEmergencyMode) {
         GTEST_SKIP();
     }
 
-    LOG(DEBUG) << "exitEmergencyMode";
     serial = GetRandomSerialNumber();
 
     radio_network->exitEmergencyMode(serial);
@@ -1990,11 +1957,9 @@ TEST_P(RadioNetworkTest, exitEmergencyMode) {
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_network->rspInfo.type);
     EXPECT_EQ(serial, radioRsp_network->rspInfo.serial);
 
-    ASSERT_TRUE(CheckAnyOfErrors(
-            radioRsp_network->rspInfo.error,
-            {RadioError::NONE, RadioError::REQUEST_NOT_SUPPORTED, RadioError::RADIO_NOT_AVAILABLE,
-             RadioError::MODEM_ERR}));
-    LOG(DEBUG) << "exitEmergencyMode finished";
+    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error,
+                                 {RadioError::NONE, RadioError::REQUEST_NOT_SUPPORTED,
+                                  RadioError::RADIO_NOT_AVAILABLE, RadioError::MODEM_ERR}));
 }
 
 /*
@@ -2073,7 +2038,6 @@ TEST_P(RadioNetworkTest, setNullCipherAndIntegrityEnabled) {
         GTEST_SKIP();
     }
 
-    LOG(DEBUG) << "setNullCipherAndIntegrityEnabled";
     serial = GetRandomSerialNumber();
 
     radio_network->setNullCipherAndIntegrityEnabled(serial, false);
@@ -2084,7 +2048,6 @@ TEST_P(RadioNetworkTest, setNullCipherAndIntegrityEnabled) {
     ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error,
                                  {RadioError::NONE, RadioError::REQUEST_NOT_SUPPORTED,
                                   RadioError::RADIO_NOT_AVAILABLE, RadioError::MODEM_ERR}));
-    LOG(DEBUG) << "setNullCipherAndIntegrityEnabled finished";
 }
 
 /**
@@ -2100,7 +2063,6 @@ TEST_P(RadioNetworkTest, isNullCipherAndIntegrityEnabled) {
         GTEST_SKIP();
     }
 
-    LOG(DEBUG) << "isNullCipherAndIntegrityEnabled";
     serial = GetRandomSerialNumber();
 
     ndk::ScopedAStatus res = radio_network->isNullCipherAndIntegrityEnabled(serial);
@@ -2113,5 +2075,4 @@ TEST_P(RadioNetworkTest, isNullCipherAndIntegrityEnabled) {
     ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error,
                                  {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE,
                                   RadioError::MODEM_ERR, RadioError::REQUEST_NOT_SUPPORTED}));
-    LOG(DEBUG) << "isNullCipherAndIntegrityEnabled finished";
 }
