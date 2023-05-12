@@ -267,6 +267,7 @@ TEST_P(EffectFactoryTest, EffectInvalidAfterRestart) {
 TEST_P(EffectFactoryTest, QueryProcess) {
     std::vector<Processing> processing;
     EXPECT_IS_OK(mEffectFactory->queryProcessing(std::nullopt, &processing));
+    std::set<Processing> processingSet(processing.begin(), processing.end());
 
     Processing::Type streamType =
             Processing::Type::make<Processing::Type::streamType>(AudioStreamType::SYSTEM);
@@ -279,7 +280,14 @@ TEST_P(EffectFactoryTest, QueryProcess) {
     EXPECT_IS_OK(mEffectFactory->queryProcessing(source, &processingFilteredBySource));
 
     EXPECT_TRUE(processing.size() >= processingFilteredByStream.size());
+    EXPECT_TRUE(std::all_of(
+            processingFilteredByStream.begin(), processingFilteredByStream.end(),
+            [&](const auto& proc) { return processingSet.find(proc) != processingSet.end(); }));
+
     EXPECT_TRUE(processing.size() >= processingFilteredBySource.size());
+    EXPECT_TRUE(std::all_of(
+            processingFilteredBySource.begin(), processingFilteredBySource.end(),
+            [&](const auto& proc) { return processingSet.find(proc) != processingSet.end(); }));
 }
 
 INSTANTIATE_TEST_SUITE_P(EffectFactoryTest, EffectFactoryTest,
