@@ -15,8 +15,10 @@
  */
 
 #include <dlfcn.h>
+#include <algorithm>
 #include <iterator>
 #include <memory>
+#include <optional>
 #include <tuple>
 #include <unordered_set>
 #define LOG_TAG "AHAL_EffectFactory"
@@ -52,6 +54,22 @@ Factory::~Factory() {
     }
 }
 
+ndk::ScopedAStatus Factory::getDescriptorWithUuid(const AudioUuid& uuid, Descriptor* desc) {
+    RETURN_IF(!desc, EX_NULL_POINTER, "nullDescriptor");
+
+    if (mEffectLibMap.count(uuid)) {
+        auto& entry = mEffectLibMap[uuid];
+        getDlSyms(entry);
+        auto& libInterface = std::get<kMapEntryInterfaceIndex>(entry);
+        RETURN_IF(!libInterface || !libInterface->queryEffectFunc, EX_NULL_POINTER,
+                  "dlNullQueryEffectFunc");
+        RETURN_IF_BINDER_EXCEPTION(libInterface->queryEffectFunc(&uuid, desc));
+        return ndk::ScopedAStatus::ok();
+    }
+
+    return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+}
+
 ndk::ScopedAStatus Factory::queryEffects(const std::optional<AudioUuid>& in_type_uuid,
                                          const std::optional<AudioUuid>& in_impl_uuid,
                                          const std::optional<AudioUuid>& in_proxy_uuid,
@@ -69,12 +87,7 @@ ndk::ScopedAStatus Factory::queryEffects(const std::optional<AudioUuid>& in_type
     for (const auto& id : idList) {
         if (mEffectLibMap.count(id.uuid)) {
             Descriptor desc;
-            auto& entry = mEffectLibMap[id.uuid];
-            getDlSyms(entry);
-            auto& libInterface = std::get<kMapEntryInterfaceIndex>(entry);
-            RETURN_IF(!libInterface || !libInterface->queryEffectFunc, EX_NULL_POINTER,
-                      "dlNullQueryEffectFunc");
-            RETURN_IF_BINDER_EXCEPTION(libInterface->queryEffectFunc(&id.uuid, &desc));
+            RETURN_IF_ASTATUS_NOT_OK(getDescriptorWithUuid(id.uuid, &desc), "getDescriptorFailed");
             // update proxy UUID with information from config xml
             desc.common.id.proxy = id.proxy;
             _aidl_return->emplace_back(std::move(desc));
@@ -85,12 +98,26 @@ ndk::ScopedAStatus Factory::queryEffects(const std::optional<AudioUuid>& in_type
 
 ndk::ScopedAStatus Factory::queryProcessing(const std::optional<Processing::Type>& in_type,
                                             std::vector<Processing>* _aidl_return) {
-    // TODO: implement this with audio_effect.xml.
-    if (in_type.has_value()) {
-        // return all matching process filter
-        LOG(DEBUG) << __func__ << " process type: " << in_type.value().toString();
+    const auto& processings = mConfig.getProcessingMap();
+    // Processing stream type
+    for (const auto& procIter : processings) {
+        if (!in_type.has_value() || in_type.value() == procIter.first) {
+            Processing process = {.type = procIter.first /* Processing::Type */};
+            for (const auto& libs : procIter.second /* std::vector<struct EffectLibraries> */) {
+                for (const auto& lib : libs.libraries /* std::vector<struct LibraryUuid> */) {
+                    Descriptor desc;
+                    if (libs.proxyLibrary.has_value()) {
+                        desc.common.id.proxy = libs.proxyLibrary.value().uuid;
+                    }
+                    RETURN_IF_ASTATUS_NOT_OK(getDescriptorWithUuid(lib.uuid, &desc),
+                                             "getDescriptorFailed");
+                    process.ids.emplace_back(desc);
+                }
+            }
+            _aidl_return->emplace_back(process);
+        }
     }
-    LOG(DEBUG) << __func__ << " return " << _aidl_return->size();
+
     return ndk::ScopedAStatus::ok();
 }
 
