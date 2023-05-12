@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
+#include <VtsCoreUtil.h>
 #include <aidl/Gtest.h>
 #include <aidl/Vintf.h>
 #include <aidl/android/hardware/bluetooth/BnBluetoothHciCallbacks.h>
 #include <aidl/android/hardware/bluetooth/IBluetoothHci.h>
 #include <aidl/android/hardware/bluetooth/IBluetoothHciCallbacks.h>
 #include <aidl/android/hardware/bluetooth/Status.h>
+#include <android-base/properties.h>
 #include <android/binder_auto_utils.h>
 #include <android/binder_manager.h>
 #include <android/binder_process.h>
@@ -67,6 +69,7 @@ using ::bluetooth::hci::ReadLocalVersionInformationBuilder;
 using ::bluetooth::hci::ReadLocalVersionInformationCompleteView;
 
 static constexpr uint8_t kMinLeAdvSetForBt5 = 16;
+static constexpr uint8_t kMinLeAdvSetForBt5FoTv = 10;
 static constexpr uint8_t kMinLeResolvingListForBt5 = 8;
 
 static constexpr size_t kNumHciCommandsBandwidth = 100;
@@ -80,6 +83,40 @@ static constexpr std::chrono::milliseconds kInterfaceCloseDelayMs(200);
 
 // To discard Qualcomm ACL debugging
 static constexpr uint16_t kAclHandleQcaDebugMessage = 0xedc;
+
+static int get_vsr_api_level() {
+  int vendor_api_level =
+      ::android::base::GetIntProperty("ro.vendor.api_level", -1);
+  if (vendor_api_level != -1) {
+    return vendor_api_level;
+  }
+
+  // Android S and older devices do not define ro.vendor.api_level
+  vendor_api_level = ::android::base::GetIntProperty("ro.board.api_level", -1);
+  if (vendor_api_level == -1) {
+    vendor_api_level =
+        ::android::base::GetIntProperty("ro.board.first_api_level", -1);
+  }
+
+  int product_api_level =
+      ::android::base::GetIntProperty("ro.product.first_api_level", -1);
+  if (product_api_level == -1) {
+    product_api_level =
+        ::android::base::GetIntProperty("ro.build.version.sdk", -1);
+    EXPECT_NE(product_api_level, -1) << "Could not find ro.build.version.sdk";
+  }
+
+  // VSR API level is the minimum of vendor_api_level and product_api_level.
+  if (vendor_api_level == -1 || vendor_api_level > product_api_level) {
+    return product_api_level;
+  }
+  return vendor_api_level;
+}
+
+static bool isTv() {
+  return testing::deviceSupportsFeature("android.software.leanback") ||
+         testing::deviceSupportsFeature("android.hardware.type.television");
+}
 
 class ThroughputLogger {
  public:
@@ -959,7 +996,12 @@ TEST_P(BluetoothAidlTest, Cdd_C_12_1_Bluetooth5Requirements) {
   ASSERT_TRUE(num_adv_set_view.IsValid());
   ASSERT_EQ(::bluetooth::hci::ErrorCode::SUCCESS, num_adv_set_view.GetStatus());
   auto num_adv_set = num_adv_set_view.GetNumberSupportedAdvertisingSets();
-  ASSERT_GE(num_adv_set, kMinLeAdvSetForBt5);
+
+  if (isTv() && get_vsr_api_level() == __ANDROID_API_U__) {
+    ASSERT_GE(num_adv_set, kMinLeAdvSetForBt5FoTv);
+  } else {
+    ASSERT_GE(num_adv_set, kMinLeAdvSetForBt5);
+  }
 
   std::vector<uint8_t> num_resolving_list_event;
   send_and_wait_for_cmd_complete(LeReadResolvingListSizeBuilder::Create(),
