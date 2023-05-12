@@ -34,20 +34,13 @@ using ::std::vector;
 
 // Since this test needs to talk to KeyMint HAL, it can only run as root. Thus,
 // bootloader can not be locked.
-class BootloaderStateTest : public testing::TestWithParam<std::string> {
-  public:
-    virtual void SetUp() override {
-        ::ndk::SpAIBinder binder(AServiceManager_waitForService(GetParam().c_str()));
-        keyMint_ = IKeyMintDevice::fromBinder(binder);
-        ASSERT_TRUE(keyMint_) << "Failed to get KM device";
-    }
-
-    std::shared_ptr<IKeyMintDevice> keyMint_;
-};
+class BootloaderStateTest : public KeyMintAidlTestBase {};
 
 // Check that attested bootloader state is set to unlocked.
 TEST_P(BootloaderStateTest, IsUnlocked) {
     // Generate a key with attestation.
+    vector<uint8_t> key_blob;
+    vector<KeyCharacteristics> key_characteristics;
     AuthorizationSet keyDesc = AuthorizationSetBuilder()
                                        .Authorization(TAG_NO_AUTH_REQUIRED)
                                        .EcdsaSigningKey(EcCurve::P_256)
@@ -55,15 +48,23 @@ TEST_P(BootloaderStateTest, IsUnlocked) {
                                        .AttestationApplicationId("bar")
                                        .Digest(Digest::NONE)
                                        .SetDefaultValidity();
-    KeyCreationResult creationResult;
-    auto kmStatus = keyMint_->generateKey(keyDesc.vector_data(), std::nullopt, &creationResult);
-    ASSERT_TRUE(kmStatus.isOk());
-
-    vector<Certificate> key_cert_chain = std::move(creationResult.certificateChain);
+    auto result = GenerateKey(keyDesc, &key_blob, &key_characteristics);
+    // If factory provisioned attestation key is not supported by Strongbox,
+    // then create a key with self-signed attestation and use it as the
+    // attestation key instead.
+    if (SecLevel() == SecurityLevel::STRONGBOX &&
+        result == ErrorCode::ATTESTATION_KEYS_NOT_PROVISIONED) {
+        result = GenerateKeyWithSelfSignedAttestKey(
+                AuthorizationSetBuilder()
+                        .EcdsaKey(EcCurve::P_256)
+                        .AttestKey()
+                        .SetDefaultValidity(), /* attest key params */
+                keyDesc, &key_blob, &key_characteristics);
+    }
+    ASSERT_EQ(ErrorCode::OK, result);
 
     // Parse attested AVB values.
-    const auto& attestation_cert = key_cert_chain[0].encodedCertificate;
-    X509_Ptr cert(parse_cert_blob(attestation_cert));
+    X509_Ptr cert(parse_cert_blob(cert_chain_[0].encodedCertificate));
     ASSERT_TRUE(cert.get());
 
     ASN1_OCTET_STRING* attest_rec = get_attestation_record(cert.get());
