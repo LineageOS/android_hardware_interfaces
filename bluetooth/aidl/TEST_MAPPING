@@ -5,7 +5,7 @@
       "options": [
         {
           // TODO(b/275847929)
-          "exclude-filter": "VtsHalBluetoothTargetTest.PerInstance/BluetoothAidlTest#Cdd_C_12_1_Bluetooth5Requirements/0_android_hardware_bluetooth_IBluetoothHci_default"
+          "exclude-filter": "VtsHalBluetoothTargetTest.PerInstance/BluetoothAidlTest#Vsr_Bluetooth5Requirements/0_android_hardware_bluetooth_IBluetoothHci_default"
         }
       ]
     }
@@ -16,7 +16,7 @@
       "options": [
         {
           // TODO(b/275847929)
-          "exclude-filter": "VtsHalBluetoothTargetTest.PerInstance/BluetoothAidlTest#Cdd_C_12_1_Bluetooth5Requirements/0_android_hardware_bluetooth_IBluetoothHci_default"
+          "exclude-filter": "VtsHalBluetoothTargetTest.PerInstance/BluetoothAidlTest#Vsr_Bluetooth5Requirements/0_android_hardware_bluetooth_IBluetoothHci_default"
         }
       ]
     }
