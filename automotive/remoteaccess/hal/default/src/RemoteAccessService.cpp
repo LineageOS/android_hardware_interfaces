@@ -65,8 +65,7 @@ constexpr char COMMAND_INJECT_TASK[] = "--inject-task";
 constexpr char COMMAND_INJECT_TASK_NEXT_REBOOT[] = "--inject-task-next-reboot";
 constexpr char COMMAND_STATUS[] = "--status";
 
-constexpr char DEBUG_TASK_FOLDER[] = "/data/local/tests";
-constexpr char DEBUG_TASK_FILE[] = "/data/local/tests/debugTask";
+constexpr char DEBUG_TASK_FILE[] = "/data/vendor/remoteaccess/debugTask";
 
 std::vector<uint8_t> stringToBytes(std::string_view s) {
     const char* data = s.data();
