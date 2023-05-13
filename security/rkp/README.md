@@ -303,9 +303,10 @@ component that is being described by the certificate:
 *   debug ports, fuses or other debug facilities are disabled
 *   device booted software from the normal primary source e.g. internal flash
 
-If any of these conditions are not met then it is recommended to explicitly
-acknowledge this fact by using the `debug` mode. The mode should never be `not
-configured`.
+The mode should never be `not configured`.
+
+Every certificate in the DICE chain will need to be have the `normal` mode in
+order to be provisioned with production certificates by RKP.
 
 #### Configuration descriptor
 
