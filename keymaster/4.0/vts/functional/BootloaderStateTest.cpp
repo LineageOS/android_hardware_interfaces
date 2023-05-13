@@ -14,77 +14,66 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "keymint_1_bootloader_test"
-
 #include <memory>
 #include <optional>
 #include <string>
 #include <vector>
 
 #include <android-base/properties.h>
-#include <android/binder_manager.h>
 #include <fstab/fstab.h>
 #include <libavb/libavb.h>
 #include <libavb_user/avb_ops_user.h>
-#include <remote_prov/remote_prov_utils.h>
 
-#include "KeyMintAidlTestBase.h"
+#include "KeymasterHidlTest.h"
 
-namespace aidl::android::hardware::security::keymint::test {
+namespace android::hardware::keymaster::V4_0::test {
 
-using ::android::getAidlHalInstanceNames;
 using ::std::string;
 using ::std::vector;
 
-// Since this test needs to talk to KeyMint HAL, it can only run as root. Thus,
+// Since this test needs to talk to Keymaster HAL, it can only run as root. Thus,
 // bootloader can not be locked.
-class BootloaderStateTest : public KeyMintAidlTestBase {
+class BootloaderStateTest : public KeymasterHidlTest {
   public:
     virtual void SetUp() override {
-        KeyMintAidlTestBase::SetUp();
+        KeymasterHidlTest::SetUp();
 
-        // Generate a key with attestation.
-        vector<uint8_t> key_blob;
-        vector<KeyCharacteristics> key_characteristics;
-        AuthorizationSet keyDesc = AuthorizationSetBuilder()
-                                           .Authorization(TAG_NO_AUTH_REQUIRED)
-                                           .EcdsaSigningKey(EcCurve::P_256)
-                                           .AttestationChallenge("foo")
-                                           .AttestationApplicationId("bar")
-                                           .Digest(Digest::NONE)
-                                           .SetDefaultValidity();
-        auto result = GenerateKey(keyDesc, &key_blob, &key_characteristics);
-        // If factory provisioned attestation key is not supported by Strongbox,
-        // then create a key with self-signed attestation and use it as the
-        // attestation key instead.
-        if (SecLevel() == SecurityLevel::STRONGBOX &&
-            result == ErrorCode::ATTESTATION_KEYS_NOT_PROVISIONED) {
-            result = GenerateKeyWithSelfSignedAttestKey(
-                    AuthorizationSetBuilder()
-                            .EcdsaKey(EcCurve::P_256)
-                            .AttestKey()
-                            .SetDefaultValidity(), /* attest key params */
-                    keyDesc, &key_blob, &key_characteristics);
-        }
-        ASSERT_EQ(ErrorCode::OK, result);
+        // Generate a key.
+        auto ec = GenerateKey(AuthorizationSetBuilder()
+                                      .Authorization(TAG_NO_AUTH_REQUIRED)
+                                      .EcdsaSigningKey(EcCurve::P_256)
+                                      .Digest(Digest::SHA_2_256));
+        ASSERT_EQ(ec, ErrorCode::OK) << "Failed to generate key.";
 
-        // Parse attested AVB values.
-        X509_Ptr cert(parse_cert_blob(cert_chain_[0].encodedCertificate));
-        ASSERT_TRUE(cert.get());
+        // Generate attestation.
+        hidl_vec<hidl_vec<uint8_t>> cert_chain;
+        ec = AttestKey(AuthorizationSetBuilder()
+                               .Authorization(TAG_ATTESTATION_CHALLENGE, HidlBuf("challenge"))
+                               .Authorization(TAG_ATTESTATION_APPLICATION_ID, HidlBuf("foo")),
+                       &cert_chain);
+        ASSERT_EQ(ec, ErrorCode::OK) << "Failed to generate attestation.";
+
+        X509_Ptr cert(parse_cert_blob(cert_chain[0]));
+        ASSERT_TRUE(cert.get()) << "Failed to parse certificate blob.";
 
         ASN1_OCTET_STRING* attest_rec = get_attestation_record(cert.get());
-        ASSERT_TRUE(attest_rec);
+        ASSERT_TRUE(attest_rec) << "Failed to get attestation record.";
 
-        auto error = parse_root_of_trust(attest_rec->data, attest_rec->length, &attestedVbKey_,
-                                         &attestedVbState_, &attestedBootloaderState_,
-                                         &attestedVbmetaDigest_);
-        ASSERT_EQ(error, ErrorCode::OK);
+        // Parse root of trust.
+        HidlBuf verified_boot_key;
+        keymaster_verified_boot_t verified_boot_state;
+        bool device_locked;
+        HidlBuf verified_boot_hash;
+        auto result =
+                parse_root_of_trust(attest_rec->data, attest_rec->length, &verified_boot_key,
+                                    &verified_boot_state, &device_locked, &verified_boot_hash);
+        ASSERT_EQ(result, ErrorCode::OK) << "Failed to parse root of trust.";
     }
 
-    vector<uint8_t> attestedVbKey_;
-    VerifiedBoot attestedVbState_;
+    hidl_vec<uint8_t> attestedVbKey_;
+    keymaster_verified_boot_t attestedVbState_;
     bool attestedBootloaderState_;
-    vector<uint8_t> attestedVbmetaDigest_;
+    hidl_vec<uint8_t> attestedVbmetaDigest_;
 };
 
 // Check that attested bootloader state is set to unlocked.
@@ -96,7 +85,7 @@ TEST_P(BootloaderStateTest, BootloaderIsUnlocked) {
 // Check that verified boot state is set to "unverified", i.e. "orange".
 TEST_P(BootloaderStateTest, VbStateIsUnverified) {
     // Unlocked bootloader implies that verified boot state must be "unverified".
-    ASSERT_EQ(attestedVbState_, VerifiedBoot::UNVERIFIED)
+    ASSERT_EQ(attestedVbState_, KM_VERIFIED_BOOT_UNVERIFIED)
             << "Verified boot state must be \"UNVERIFIED\" aka \"orange\".";
 
     // AVB spec stipulates that bootloader must set "androidboot.verifiedbootstate" parameter
@@ -152,6 +141,6 @@ TEST_P(BootloaderStateTest, VbmetaDigest) {
             << "Attested digest does not match computed digest.";
 }
 
-INSTANTIATE_KEYMINT_AIDL_TEST(BootloaderStateTest);
+INSTANTIATE_KEYMASTER_HIDL_TEST(BootloaderStateTest);
 
-}  // namespace aidl::android::hardware::security::keymint::test
+}  // namespace android::hardware::keymaster::V4_0::test
