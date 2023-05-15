@@ -8718,6 +8718,19 @@ int main(int argc, char** argv) {
                         std::string(argv[i + 1]);
                 ++i;
             }
+            if (std::string(argv[i]) == "--expect_upgrade") {
+                if (i + 1 >= argc) {
+                    std::cerr << "Missing argument for --expect_upgrade\n";
+                    return 1;
+                }
+                std::string arg = argv[i + 1];
+                aidl::android::hardware::security::keymint::test::KeyMintAidlTestBase::
+                        expect_upgrade =
+                                arg == "yes"
+                                        ? true
+                                        : (arg == "no" ? false : std::optional<bool>(std::nullopt));
+                ++i;
+            }
         }
     }
     return RUN_ALL_TESTS();
