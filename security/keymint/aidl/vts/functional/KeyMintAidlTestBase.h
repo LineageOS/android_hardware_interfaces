@@ -70,6 +70,8 @@ class KeyMintAidlTestBase : public ::testing::TestWithParam<string> {
     // Directory to store/retrieve keyblobs, using subdirectories named for the
     // KeyMint instance in question (e.g. "./default/", "./strongbox/").
     static std::string keyblob_dir;
+    // To specify if users expect an upgrade on the keyBlobs.
+    static std::optional<bool> expect_upgrade;
 
     void SetUp() override;
     void TearDown() override {
