@@ -174,6 +174,7 @@ string x509NameToStr(X509_NAME* name) {
 bool KeyMintAidlTestBase::arm_deleteAllKeys = false;
 bool KeyMintAidlTestBase::dump_Attestations = false;
 std::string KeyMintAidlTestBase::keyblob_dir;
+std::optional<bool> KeyMintAidlTestBase::expect_upgrade = std::nullopt;
 
 uint32_t KeyMintAidlTestBase::boot_patch_level(
         const vector<KeyCharacteristics>& key_characteristics) {
