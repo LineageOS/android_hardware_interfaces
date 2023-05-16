@@ -23,14 +23,22 @@ parcelable TvMessage {
      */
     const long NO_GROUP_ID = -1;
     /**
-     * Extended data type, like “ATSC A/336 Watermark”, “ATSC_CC”, etc. This is opaque
-     * to the framework.
+     * Extended data type, like “ATSC A/336 Watermark”, “ATSC_CC”, etc. This type is opaque to the
+     * framework except when the subtype is "device_id". If the subtype is "device_id", the ID of
+     * device that sent the message should be contained in {@link #groupId}.
+     *
+     * The first message in a list of messages contained in
+     * {@link android.hardware.tv.input.TvMessageEvent} should always have the subtype "device_id",
+     * otherwise the event is discarded.
      */
     String subType;
     /**
      * This group id is used to optionally identify messages that belong together, such as
      * headers and bodies of the same event. For messages that do not have a group, this value
      * should be -1.
+     *
+     * If {@link #subType} is "device_id", this value should contain the ID of the device that sent
+     * this message.
      *
      * As -1 is a reserved value, -1 should not be used as a valid groupId.
      */
