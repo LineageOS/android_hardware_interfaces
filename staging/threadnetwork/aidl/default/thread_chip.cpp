@@ -170,7 +170,7 @@ ndk::ScopedAStatus ThreadChip::sendSpinelFrame(const std::vector<uint8_t>& in_fr
 }
 
 ndk::ScopedAStatus ThreadChip::reset() {
-    mInterface.OnRcpReset();
+    mInterface.HardwareReset();
     ALOGI("reset()");
     return ndk::ScopedAStatus::ok();
 }
