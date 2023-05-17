@@ -102,7 +102,8 @@ constexpr size_t getFrameSizeInBytes(
 constexpr bool isDefaultAudioFormat(
         const ::aidl::android::media::audio::common::AudioFormatDescription& desc) {
     return desc.type == ::aidl::android::media::audio::common::AudioFormatType::DEFAULT &&
-           desc.pcm == ::aidl::android::media::audio::common::PcmType::DEFAULT;
+           desc.pcm == ::aidl::android::media::audio::common::PcmType::DEFAULT &&
+           desc.encoding.empty();
 }
 
 constexpr bool isTelephonyDeviceType(
