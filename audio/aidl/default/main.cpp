@@ -64,6 +64,7 @@ int main() {
     auto modules = {createModule(Module::Type::DEFAULT, "default"),
                     createModule(Module::Type::R_SUBMIX, "r_submix"),
                     createModule(Module::Type::USB, "usb")};
+    (void)modules;
 
     ABinderProcess_joinThreadPool();
     return EXIT_FAILURE;  // should not reach
