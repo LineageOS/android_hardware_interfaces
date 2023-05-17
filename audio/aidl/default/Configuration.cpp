@@ -81,6 +81,8 @@ static AudioPortExt createDeviceExt(AudioDeviceType devType, int32_t flags,
         deviceExt.device.address = "bottom";
     } else if (devType == AudioDeviceType::IN_MICROPHONE_BACK && connection.empty()) {
         deviceExt.device.address = "back";
+    } else if (devType == AudioDeviceType::IN_SUBMIX || devType == AudioDeviceType::OUT_SUBMIX) {
+        deviceExt.device.address = "0";
     }
     deviceExt.device.type.connection = std::move(connection);
     deviceExt.flags = flags;
@@ -365,8 +367,10 @@ std::unique_ptr<Configuration> getRSubmixConfiguration() {
 
         // Device ports
 
-        AudioPort rsubmixOutDevice = createPort(c.nextPortId++, "Remote Submix Out", 0, false,
-                                                createDeviceExt(AudioDeviceType::OUT_SUBMIX, 0));
+        AudioPort rsubmixOutDevice =
+                createPort(c.nextPortId++, "Remote Submix Out", 0, false,
+                           createDeviceExt(AudioDeviceType::OUT_SUBMIX, 0,
+                                           AudioDeviceDescription::CONNECTION_VIRTUAL));
         rsubmixOutDevice.profiles.push_back(
                 createProfile(PcmType::INT_24_BIT, {AudioChannelLayout::LAYOUT_STEREO}, {48000}));
         c.ports.push_back(rsubmixOutDevice);

@@ -47,10 +47,14 @@ ndk::ScopedAStatus Config::getEngineConfig(AudioHalEngineConfig* _aidl_return) {
                 LOG(WARNING) << __func__ << mAudioPolicyConverter.getError();
             }
         }
+        // Logging full contents of the config is an overkill, just provide statistics.
+        LOG(DEBUG) << "getEngineConfig: number of strategies parsed: "
+                   << engConfig.productStrategies.size()
+                   << ", default strategy: " << engConfig.defaultProductStrategyId
+                   << ", number of volume groups parsed: " << engConfig.volumeGroups.size();
         return engConfig;
     }();
     *_aidl_return = returnEngCfg;
-    LOG(DEBUG) << __func__ << ": returning " << _aidl_return->toString();
     return ndk::ScopedAStatus::ok();
 }
 }  // namespace aidl::android::hardware::audio::core
