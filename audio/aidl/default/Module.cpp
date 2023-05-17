@@ -187,7 +187,7 @@ ndk::ScopedAStatus Module::createStreamContext(
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
     }
     LOG(DEBUG) << __func__ << ": frame size " << frameSize << " bytes";
-    if (frameSize > kMaximumStreamBufferSizeBytes / in_bufferSizeFrames) {
+    if (frameSize > static_cast<size_t>(kMaximumStreamBufferSizeBytes / in_bufferSizeFrames)) {
         LOG(ERROR) << __func__ << ": buffer size " << in_bufferSizeFrames
                    << " frames is too large, maximum size is "
                    << kMaximumStreamBufferSizeBytes / frameSize;
@@ -281,7 +281,7 @@ ndk::ScopedAStatus Module::findPortIdForNewStream(int32_t in_portConfigId, Audio
                    << " does not correspond to a mix port";
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
     }
-    const int32_t maxOpenStreamCount = portIt->ext.get<AudioPortExt::Tag::mix>().maxOpenStreamCount;
+    const size_t maxOpenStreamCount = portIt->ext.get<AudioPortExt::Tag::mix>().maxOpenStreamCount;
     if (maxOpenStreamCount != 0 && mStreams.count(portId) >= maxOpenStreamCount) {
         LOG(ERROR) << __func__ << ": port id " << portId
                    << " has already reached maximum allowed opened stream count: "
