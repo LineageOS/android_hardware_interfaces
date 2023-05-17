@@ -92,6 +92,12 @@ cc_library {
         "audio_policy_configuration_aidl_default",
         "audio_policy_engine_configuration_aidl_default",
     ],
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-Wthread-safety",
+    ],
 }
 
 cc_binary {
