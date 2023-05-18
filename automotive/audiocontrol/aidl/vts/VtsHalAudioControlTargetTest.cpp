@@ -53,17 +53,25 @@ using namespace android::audio::policy::configuration::V7_0;
 namespace audiohalcommon = android::hardware::audio::common;
 namespace audiomediacommon = android::media::audio::common;
 
+namespace {
+constexpr int32_t kAidlVersionThree = 3;
+}
+
 class AudioControlAidl : public testing::TestWithParam<std::string> {
   public:
     virtual void SetUp() override {
         audioControl = android::waitForDeclaredService<IAudioControl>(String16(GetParam().c_str()));
         ASSERT_NE(audioControl, nullptr);
+        aidlVersion = audioControl->getInterfaceVersion();
     }
 
     void TearDown() override { audioControl = nullptr; }
 
+    bool isAidlVersionAtleast(int version) const { return aidlVersion >= version; }
+
     sp<IAudioControl> audioControl;
     int32_t capabilities;
+    int32_t aidlVersion;
 };
 
 TEST_P(AudioControlAidl, OnSetFadeTowardsFront) {
@@ -250,6 +258,11 @@ struct ModuleChangeCallbackMock : BnModuleChangeCallback {
 
 TEST_P(AudioControlAidl, RegisterModuleChangeCallbackTwiceThrowsException) {
     ALOGI("Register Module change callback test");
+    if (!isAidlVersionAtleast(kAidlVersionThree)) {
+        GTEST_SKIP() << "Device does not support the new APIs for module change callback";
+        return;
+    }
+
     // make sure no stale callbacks.
     audioControl->clearModuleChangeCallback();
 
@@ -269,6 +282,11 @@ TEST_P(AudioControlAidl, RegisterModuleChangeCallbackTwiceThrowsException) {
 
 TEST_P(AudioControlAidl, RegisterModuleChangeNullCallbackThrowsException) {
     ALOGI("Register Module change callback with nullptr test");
+    if (!isAidlVersionAtleast(kAidlVersionThree)) {
+        GTEST_SKIP() << "Device does not support the new APIs for module change callback";
+        return;
+    }
+
     auto status = audioControl->setModuleChangeCallback(nullptr);
     EXPECT_THAT(status.exceptionCode(),
                 AnyOf(Eq(Status::EX_ILLEGAL_ARGUMENT), Eq(Status::EX_UNSUPPORTED_OPERATION)));
