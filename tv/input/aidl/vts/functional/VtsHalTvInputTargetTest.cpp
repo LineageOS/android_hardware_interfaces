@@ -259,8 +259,11 @@ TEST_P(TvInputAidlTest, OpenAnOpenedStreamsTest) {
         return;
     }
     int32_t device_id = stream_config_.keyAt(indices[0]);
-    int32_t stream_id = stream_config_.valueAt(indices[0])[0].streamId;
-
+    vector<TvStreamConfig> streamConfigs = stream_config_.valueAt(indices[0]);
+    if (streamConfigs.empty()) {
+        return;
+    }
+    int32_t stream_id = streamConfigs[0].streamId;
     NativeHandle handle;
 
     ALOGD("OpenAnOpenedStreamsTest: open stream, device_id=%d, stream_id=%d", device_id, stream_id);
@@ -291,12 +294,53 @@ TEST_P(TvInputAidlTest, CloseStreamBeforeOpenTest) {
         return;
     }
     int32_t device_id = stream_config_.keyAt(indices[0]);
-    int32_t stream_id = stream_config_.valueAt(indices[0])[0].streamId;
+    vector<TvStreamConfig> streamConfigs = stream_config_.valueAt(indices[0]);
+    if (streamConfigs.empty()) {
+        return;
+    }
+    int32_t stream_id = streamConfigs[0].streamId;
 
     ALOGD("CloseStreamBeforeOpenTest: close stream, device_id=%d, stream_id=%d", device_id,
           stream_id);
     ASSERT_TRUE(tv_input_->closeStream(device_id, stream_id).getServiceSpecificError() ==
                 ITvInput::STATUS_INVALID_STATE);
+}
+
+TEST_P(TvInputAidlTest, SetTvMessageEnabledTest) {
+    unique_lock<mutex> lock(mutex_);
+
+    updateAllStreamConfigurations();
+    vector<size_t> indices = getConfigIndices();
+    if (indices.empty()) {
+        return;
+    }
+    int32_t device_id = stream_config_.keyAt(indices[0]);
+    vector<TvStreamConfig> streamConfigs = stream_config_.valueAt(indices[0]);
+    if (streamConfigs.empty()) {
+        return;
+    }
+    int32_t stream_id = streamConfigs[0].streamId;
+    ALOGD("SetTvMessageEnabledTest: device_id=%d, stream_id=%d", device_id, stream_id);
+    tv_input_->setTvMessageEnabled(device_id, stream_id, TvMessageEventType::WATERMARK, true);
+}
+
+TEST_P(TvInputAidlTest, GetTvMessageQueueTest) {
+    unique_lock<mutex> lock(mutex_);
+
+    updateAllStreamConfigurations();
+    vector<size_t> indices = getConfigIndices();
+    if (indices.empty()) {
+        return;
+    }
+    int32_t device_id = stream_config_.keyAt(indices[0]);
+    vector<TvStreamConfig> streamConfigs = stream_config_.valueAt(indices[0]);
+    if (streamConfigs.empty()) {
+        return;
+    }
+    int32_t stream_id = streamConfigs[0].streamId;
+    ALOGD("GetTvMessageQueueTest: device_id=%d, stream_id=%d", device_id, stream_id);
+    MQDescriptor<int8_t, SynchronizedReadWrite> queue;
+    tv_input_->getTvMessageQueueDesc(&queue, device_id, stream_id);
 }
 
 INSTANTIATE_TEST_SUITE_P(PerInstance, TvInputAidlTest,

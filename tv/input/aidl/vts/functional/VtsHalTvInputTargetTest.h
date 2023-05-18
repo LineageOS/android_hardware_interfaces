@@ -37,6 +37,7 @@ using namespace aidl::android::hardware::tv::input;
 using namespace std;
 using ::aidl::android::hardware::common::NativeHandle;
 using ::aidl::android::hardware::common::fmq::MQDescriptor;
+using ::aidl::android::hardware::common::fmq::SynchronizedReadWrite;
 using ::android::AidlMessageQueue;
 
 #define WAIT_FOR_EVENT_TIMEOUT 5
