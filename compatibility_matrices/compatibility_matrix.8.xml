@@ -345,6 +345,7 @@
             <name>IRemotelyProvisionedComponent</name>
             <instance>default</instance>
             <instance>strongbox</instance>
+            <instance>widevine</instance>
         </interface>
     </hal>
     <hal format="aidl" optional="true">
