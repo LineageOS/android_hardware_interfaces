@@ -24,6 +24,7 @@
 #include <android/binder_status.h>
 #include <binder/IServiceManager.h>
 #include <binder/ProcessState.h>
+#include <cutils/properties.h>
 
 #include "wifi_aidl_test_utils.h"
 
@@ -98,16 +99,23 @@ TEST_P(WifiStaIfaceAidlTest, GetFeatureSet) {
  */
 // @VsrTest = 5.3.12
 TEST_P(WifiStaIfaceAidlTest, CheckApfIsSupported) {
-    // It is not required to check the vendor API level is at least U here
-    // because the Wi-Fi AIDL interface is launched with Android U(VSR-14).
-    // TODO: Add wavier list to the chipsets that doesn't support APF.
-    EXPECT_TRUE(isFeatureSupported(IWifiStaIface::FeatureSetMask::APF));
-    StaApfPacketFilterCapabilities apf_caps = {};
-    EXPECT_TRUE(wifi_sta_iface_->getApfPacketFilterCapabilities(&apf_caps).isOk());
-    // The APF version must be 4 and the usable memory must be at least
-    // 1024 bytes.
-    EXPECT_EQ(apf_caps.version, 4);
-    EXPECT_GE(apf_caps.maxLength, 1024);
+    int vendor_api_level = property_get_int32("ro.vendor.api_level", 0);
+    // Before VSR 14, APF support is optional.
+    if (vendor_api_level < __ANDROID_API_U__) {
+        if (!isFeatureSupported(IWifiStaIface::FeatureSetMask::APF)) {
+            GTEST_SKIP() << "APF packet filter capabilities are not supported.";
+        }
+        StaApfPacketFilterCapabilities apf_caps = {};
+        EXPECT_TRUE(wifi_sta_iface_->getApfPacketFilterCapabilities(&apf_caps).isOk());
+    } else {
+        EXPECT_TRUE(isFeatureSupported(IWifiStaIface::FeatureSetMask::APF));
+        StaApfPacketFilterCapabilities apf_caps = {};
+        EXPECT_TRUE(wifi_sta_iface_->getApfPacketFilterCapabilities(&apf_caps).isOk());
+        // The APF version must be 4 and the usable memory must be at least
+        // 1024 bytes.
+        EXPECT_EQ(apf_caps.version, 4);
+        EXPECT_GE(apf_caps.maxLength, 1024);
+    }
 }
 
 /*
