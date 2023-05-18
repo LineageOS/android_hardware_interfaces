@@ -62,6 +62,8 @@ namespace vehicle {
 namespace fake {
 namespace {
 
+using ::aidl::android::hardware::automotive::vehicle::CruiseControlCommand;
+using ::aidl::android::hardware::automotive::vehicle::CruiseControlType;
 using ::aidl::android::hardware::automotive::vehicle::ErrorState;
 using ::aidl::android::hardware::automotive::vehicle::GetValueRequest;
 using ::aidl::android::hardware::automotive::vehicle::GetValueResult;
@@ -1454,7 +1456,7 @@ std::vector<SetSpecialValueTestCase> setSpecialValueTestCases() {
                                     },
                                     VehiclePropValue{
                                             .prop = toInt(VehicleProperty::CRUISE_CONTROL_TYPE),
-                                            .value.int32Values = {1},
+                                            .value.int32Values = {2},
                                     },
                                     VehiclePropValue{
                                             .prop = toInt(VehicleProperty::CRUISE_CONTROL_STATE),
@@ -1831,6 +1833,47 @@ TEST_F(FakeVehicleHardwareTest, testSetAdasPropNotAvailable) {
             StatusCode status = setValue(VehiclePropValue{.prop = dependentProp});
             EXPECT_EQ(status, StatusCode::NOT_AVAILABLE_DISABLED);
         }
+    }
+}
+
+TEST_F(FakeVehicleHardwareTest, testGetAccPropertiesOnStandardCc) {
+    std::vector<int32_t> ccTypeDependentProperties = {
+            toInt(VehicleProperty::ADAPTIVE_CRUISE_CONTROL_TARGET_TIME_GAP),
+            toInt(VehicleProperty::ADAPTIVE_CRUISE_CONTROL_LEAD_VEHICLE_MEASURED_DISTANCE),
+    };
+
+    StatusCode status =
+            setValue(VehiclePropValue{.prop = toInt(VehicleProperty::CRUISE_CONTROL_TYPE),
+                                      .value.int32Values = {toInt(CruiseControlType::STANDARD)}});
+    EXPECT_EQ(status, StatusCode::OK);
+
+    for (int32_t dependentProp : ccTypeDependentProperties) {
+        auto getValueResult = getValue(VehiclePropValue{.prop = dependentProp});
+        EXPECT_FALSE(getValueResult.ok());
+        EXPECT_EQ(getValueResult.error(), StatusCode::NOT_AVAILABLE_DISABLED);
+    }
+}
+
+TEST_F(FakeVehicleHardwareTest, testSetAccPropertiesOnStandardCc) {
+    std::vector<VehiclePropValue> testVehiclePropValues = {
+            VehiclePropValue{
+                    .prop = toInt(VehicleProperty::ADAPTIVE_CRUISE_CONTROL_TARGET_TIME_GAP),
+                    .value.int32Values = {3}},
+            VehiclePropValue{
+                    .prop = toInt(VehicleProperty::CRUISE_CONTROL_COMMAND),
+                    .value.int32Values = {toInt(CruiseControlCommand::INCREASE_TARGET_TIME_GAP)}},
+            VehiclePropValue{
+                    .prop = toInt(VehicleProperty::CRUISE_CONTROL_COMMAND),
+                    .value.int32Values = {toInt(CruiseControlCommand::DECREASE_TARGET_TIME_GAP)}}};
+
+    StatusCode status =
+            setValue(VehiclePropValue{.prop = toInt(VehicleProperty::CRUISE_CONTROL_TYPE),
+                                      .value.int32Values = {toInt(CruiseControlType::STANDARD)}});
+    EXPECT_EQ(status, StatusCode::OK);
+
+    for (auto value : testVehiclePropValues) {
+        status = setValue(value);
+        EXPECT_EQ(status, StatusCode::NOT_AVAILABLE_DISABLED);
     }
 }
 

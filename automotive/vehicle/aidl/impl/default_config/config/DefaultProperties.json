@@ -3387,7 +3387,7 @@
             "property": "VehicleProperty::CRUISE_CONTROL_TYPE",
             "defaultValue": {
                 "int32Values": [
-                    "CruiseControlType::STANDARD"
+                    "CruiseControlType::ADAPTIVE"
                 ]
             },
             "areas": [
