@@ -57,7 +57,6 @@ class TvInput : public BnTvInput {
     ::ndk::ScopedAStatus openStream(int32_t in_deviceId, int32_t in_streamId,
                                     NativeHandle* _aidl_return) override;
     ::ndk::ScopedAStatus closeStream(int32_t in_deviceId, int32_t in_streamId) override;
-
     void init();
 
   private:
