@@ -20,7 +20,6 @@
 #include <android/hardware/bluetooth/a2dp/1.0/IBluetoothAudioHost.h>
 #include <android/hardware/bluetooth/a2dp/1.0/IBluetoothAudioOffload.h>
 #include <gtest/gtest.h>
-#include <hardware/bluetooth.h>
 #include <hidl/GtestPrinter.h>
 #include <hidl/MQDescriptor.h>
 #include <hidl/ServiceManagement.h>
