@@ -39,6 +39,11 @@ interface ITvInputCallback {
      * the device that sent the message should be contained in
      * {@link android.hardware.tv.input.TvMessage#groupId}
      *
+     * Invoking this callback for the first time immediately triggers
+     * {@link android.hardware.tv.input.ITvInput#getTvMessageQueueDesc}. It is
+     * expected for the queue to be ready with
+     * the relevant messages for the event before this callback is called.
+     *
      * @param event Event passed to the client.
      */
     void notifyTvMessageEvent(in TvMessageEvent event);
