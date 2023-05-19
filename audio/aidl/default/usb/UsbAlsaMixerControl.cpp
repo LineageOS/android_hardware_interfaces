@@ -99,16 +99,6 @@ int volumeFloatToInteger(float fValue, int maxValue, int minValue) {
     return minValue + std::ceil((maxValue - minValue) * fValue);
 }
 
-float volumeIntegerToFloat(int iValue, int maxValue, int minValue) {
-    if (iValue > maxValue) {
-        return 1.0f;
-    }
-    if (iValue < minValue) {
-        return 0.0f;
-    }
-    return static_cast<float>(iValue - minValue) / (maxValue - minValue);
-}
-
 }  // namespace
 
 ndk::ScopedAStatus AlsaMixer::setMasterMute(bool muted) {
@@ -146,11 +136,14 @@ ndk::ScopedAStatus AlsaMixer::setVolumes(std::vector<float> volumes) {
         return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
     }
     const int numValues = it->second->getNumValues();
+    if (numValues < 0) {
+        LOG(FATAL) << __func__ << ": negative number of values: " << numValues;
+    }
     const int maxValue = it->second->getMaxValue();
     const int minValue = it->second->getMinValue();
     std::vector<int> values;
     size_t i = 0;
-    for (; i < numValues && i < values.size(); ++i) {
+    for (; i < static_cast<size_t>(numValues) && i < values.size(); ++i) {
         values.emplace_back(volumeFloatToInteger(volumes[i], maxValue, minValue));
     }
     if (int err = it->second->setArray(values.data(), values.size()); err != 0) {
