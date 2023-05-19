@@ -20,7 +20,6 @@
 #include <android/hardware/bluetooth/1.0/IBluetoothHci.h>
 #include <android/hardware/bluetooth/1.0/IBluetoothHciCallbacks.h>
 #include <android/hardware/bluetooth/1.0/types.h>
-#include <hardware/bluetooth.h>
 #include <utils/Log.h>
 
 #include <VtsHalHidlTargetCallbackBase.h>
