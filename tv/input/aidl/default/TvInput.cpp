@@ -68,7 +68,13 @@ void TvInput::init() {
 ::ndk::ScopedAStatus TvInput::setTvMessageEnabled(int32_t deviceId, int32_t streamId,
                                                   TvMessageEventType in_type, bool enabled) {
     ALOGV("%s", __FUNCTION__);
-    // TODO: Implement this
+
+    if (mStreamConfigs.count(deviceId) == 0) {
+        ALOGW("Device with id %d isn't available", deviceId);
+        return ::ndk::ScopedAStatus::fromServiceSpecificError(STATUS_INVALID_ARGUMENTS);
+    }
+
+    mTvMessageEventEnabled[deviceId][streamId][in_type] = enabled;
     return ::ndk::ScopedAStatus::ok();
 }
 
@@ -76,7 +82,10 @@ void TvInput::init() {
         MQDescriptor<int8_t, SynchronizedReadWrite>* out_queue, int32_t in_deviceId,
         int32_t in_streamId) {
     ALOGV("%s", __FUNCTION__);
-    // TODO: Implement this
+    if (mStreamConfigs.count(in_deviceId) == 0) {
+        ALOGW("Device with id %d isn't available", in_deviceId);
+        return ::ndk::ScopedAStatus::fromServiceSpecificError(STATUS_INVALID_ARGUMENTS);
+    }
     return ::ndk::ScopedAStatus::ok();
 }
 

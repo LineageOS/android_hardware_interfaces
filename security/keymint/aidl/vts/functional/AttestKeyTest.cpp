@@ -80,7 +80,13 @@ string get_imei(int slot) {
         return "";
     }
 
-    return ::android::base::Trim(out[0]);
+    string imei = ::android::base::Trim(out[0]);
+    if (imei.compare("null") == 0) {
+        LOG(ERROR) << "Error in getting IMEI from Telephony service: value is null. Cmd: " << cmd;
+        return "";
+    }
+
+    return imei;
 }
 
 }  // namespace
@@ -972,7 +978,7 @@ TEST_P(AttestKeyTest, SecondIMEIAttestationIDSuccess) {
 
     // Skip the test if there is no second IMEI exists.
     string second_imei = get_imei(1);
-    if (second_imei.empty() || second_imei.compare("null") == 0) {
+    if (second_imei.empty()) {
         GTEST_SKIP() << "Test not applicable as there is no second IMEI";
     }
 
@@ -1050,13 +1056,13 @@ TEST_P(AttestKeyTest, MultipleIMEIAttestationIDSuccess) {
 
     // Skip the test if there is no first IMEI exists.
     string imei = get_imei(0);
-    if (imei.empty() || imei.compare("null") == 0) {
+    if (imei.empty()) {
         GTEST_SKIP() << "Test not applicable as there is no first IMEI";
     }
 
     // Skip the test if there is no second IMEI exists.
     string second_imei = get_imei(1);
-    if (second_imei.empty() || second_imei.compare("null") == 0) {
+    if (second_imei.empty()) {
         GTEST_SKIP() << "Test not applicable as there is no second IMEI";
     }
 

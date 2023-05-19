@@ -22,6 +22,7 @@
 #include <aidl/android/hardware/tv/input/TvMessageEventType.h>
 #include <fmq/AidlMessageQueue.h>
 #include <map>
+#include <unordered_map>
 #include "TvInputDeviceInfoWrapper.h"
 #include "TvStreamConfigWrapper.h"
 
@@ -38,6 +39,9 @@ namespace hardware {
 namespace tv {
 namespace input {
 
+using TvMessageEnabledMap = std::unordered_map<
+        int32_t, std::unordered_map<int32_t, std::unordered_map<TvMessageEventType, bool>>>;
+
 class TvInput : public BnTvInput {
   public:
     TvInput();
@@ -53,7 +57,6 @@ class TvInput : public BnTvInput {
     ::ndk::ScopedAStatus openStream(int32_t in_deviceId, int32_t in_streamId,
                                     NativeHandle* _aidl_return) override;
     ::ndk::ScopedAStatus closeStream(int32_t in_deviceId, int32_t in_streamId) override;
-
     void init();
 
   private:
@@ -62,6 +65,7 @@ class TvInput : public BnTvInput {
     shared_ptr<ITvInputCallback> mCallback;
     map<int32_t, shared_ptr<TvInputDeviceInfoWrapper>> mDeviceInfos;
     map<int32_t, map<int32_t, shared_ptr<TvStreamConfigWrapper>>> mStreamConfigs;
+    TvMessageEnabledMap mTvMessageEventEnabled;
 };
 
 }  // namespace input
