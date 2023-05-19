@@ -677,7 +677,7 @@ TEST_P(GraphicsMapperHidlTest, FreeBufferNegative) {
 
     const native_handle_t* clonedBufferHandle;
     ASSERT_NO_FATAL_FAILURE(clonedBufferHandle = mGralloc->allocate(mDummyDescriptorInfo, false));
-    error = mGralloc->getMapper()->freeBuffer(invalidHandle);
+    error = mGralloc->getMapper()->freeBuffer(const_cast<native_handle_t*>(clonedBufferHandle));
     EXPECT_EQ(Error::BAD_BUFFER, error)
             << "freeBuffer with un-imported handle did not fail with BAD_BUFFER";
 
