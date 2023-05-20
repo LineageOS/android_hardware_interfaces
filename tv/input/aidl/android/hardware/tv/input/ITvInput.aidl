@@ -98,6 +98,11 @@ interface ITvInput {
      * detected from the stream based on whether or not they are enabled by
      * {@link #setTvMessageEnabled(int, int, TvMessageEventType, boolean)}.
      *
+     * This queue is expected to already contain the message data before calling
+     * {@link android.hardware.tv.input.ITvInputCallback#notifyTvMessageEvent}.
+     * The HAL implementation is expected to have already created the queue
+     * before the notification callback is called for the first time.
+     *
      * @param deviceId The ID of the device that contains the stream to get the queue for.
      * @param streamId THe ID of the stream to get the queue for.
      * @return The descriptor of the TV message queue.
