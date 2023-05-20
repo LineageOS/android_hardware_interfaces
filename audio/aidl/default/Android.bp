@@ -65,6 +65,7 @@ cc_library {
     ],
     export_include_dirs: ["include"],
     srcs: [
+        "AidlConversionXsdc.cpp",
         "AudioPolicyConfigXmlConverter.cpp",
         "Bluetooth.cpp",
         "Config.cpp",
@@ -92,6 +93,21 @@ cc_library {
         "audio_policy_configuration_aidl_default",
         "audio_policy_engine_configuration_aidl_default",
     ],
+    shared_libs: [
+        "libaudio_aidl_conversion_common_ndk",
+        "libmedia_helper",
+        "libstagefright_foundation",
+    ],
+    export_shared_lib_headers: [
+        "libaudio_aidl_conversion_common_ndk",
+    ],
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-Wthread-safety",
+        "-DBACKEND_NDK",
+    ],
 }
 
 cc_binary {
@@ -108,7 +124,19 @@ cc_binary {
     static_libs: [
         "libaudioserviceexampleimpl",
     ],
+    shared_libs: [
+        "libaudio_aidl_conversion_common_ndk",
+        "libmedia_helper",
+        "libstagefright_foundation",
+    ],
     srcs: ["main.cpp"],
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-Wthread-safety",
+        "-DBACKEND_NDK",
+    ],
 }
 
 cc_defaults {

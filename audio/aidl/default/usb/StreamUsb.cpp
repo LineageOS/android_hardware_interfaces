@@ -106,10 +106,13 @@ DriverUsb::DriverUsb(const StreamContext& context, bool isInput)
 
 ::android::status_t DriverUsb::transfer(void* buffer, size_t frameCount, size_t* actualFrameCount,
                                         int32_t* latencyMs) {
-    if (!mConfig.has_value() || mConnectedDevices.empty()) {
-        LOG(ERROR) << __func__ << ": failed, has config: " << mConfig.has_value()
-                   << ", has connected devices: " << mConnectedDevices.empty();
-        return ::android::NO_INIT;
+    {
+        std::lock_guard guard(mLock);
+        if (!mConfig.has_value() || mConnectedDevices.empty()) {
+            LOG(ERROR) << __func__ << ": failed, has config: " << mConfig.has_value()
+                       << ", has connected devices: " << mConnectedDevices.empty();
+            return ::android::NO_INIT;
+        }
     }
     if (mIsStandby) {
         if (::android::status_t status = exitStandby(); status != ::android::OK) {
