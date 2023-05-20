@@ -155,20 +155,19 @@ class StreamContext {
 struct DriverInterface {
     using CreateInstance = std::function<DriverInterface*(const StreamContext&)>;
     virtual ~DriverInterface() = default;
-    // This function is called once, on the main thread, before starting the worker thread.
-    virtual ::android::status_t init() = 0;
-    // This function is called from Binder pool thread. It must be done in a thread-safe manner
-    // if this method and other methods in this interface share data.
-    virtual ::android::status_t setConnectedDevices(
-            const std::vector<::aidl::android::media::audio::common::AudioDevice>&
-                    connectedDevices) = 0;
-    // All the functions below are called on the worker thread.
+    // All the methods below are called on the worker thread.
+    virtual ::android::status_t init() = 0;  // This function is only called once.
     virtual ::android::status_t drain(StreamDescriptor::DrainMode mode) = 0;
     virtual ::android::status_t flush() = 0;
     virtual ::android::status_t pause() = 0;
     virtual ::android::status_t transfer(void* buffer, size_t frameCount, size_t* actualFrameCount,
                                          int32_t* latencyMs) = 0;
     virtual ::android::status_t standby() = 0;
+    // The method below is called from a thread of the Binder pool. Access to data shared with other
+    // methods of this interface must be done in a thread-safe manner.
+    virtual ::android::status_t setConnectedDevices(
+            const std::vector<::aidl::android::media::audio::common::AudioDevice>&
+                    connectedDevices) = 0;
 };
 
 class StreamWorkerCommonLogic : public ::android::hardware::audio::common::StreamLogic {
