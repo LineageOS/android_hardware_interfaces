@@ -24,15 +24,16 @@ class DriverStub : public DriverInterface {
   public:
     DriverStub(const StreamContext& context, bool isInput);
     ::android::status_t init() override;
-    ::android::status_t setConnectedDevices(
-            const std::vector<::aidl::android::media::audio::common::AudioDevice>& connectedDevices)
-            override;
     ::android::status_t drain(StreamDescriptor::DrainMode) override;
     ::android::status_t flush() override;
     ::android::status_t pause() override;
     ::android::status_t transfer(void* buffer, size_t frameCount, size_t* actualFrameCount,
                                  int32_t* latencyMs) override;
     ::android::status_t standby() override;
+    // Note: called on a different thread.
+    ::android::status_t setConnectedDevices(
+            const std::vector<::aidl::android::media::audio::common::AudioDevice>& connectedDevices)
+            override;
 
   private:
     const size_t mFrameSizeBytes;
