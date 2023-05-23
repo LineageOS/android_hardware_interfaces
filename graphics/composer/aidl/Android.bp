@@ -31,7 +31,7 @@ aidl_interface {
         enabled: true,
         support_system_process: true,
     },
-    frozen: true,
+    frozen: false,
     vndk_use_version: "1",
     srcs: [
         "android/hardware/graphics/composer3/*.aidl",

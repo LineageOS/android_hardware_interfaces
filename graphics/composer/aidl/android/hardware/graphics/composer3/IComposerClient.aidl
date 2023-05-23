@@ -28,6 +28,7 @@ import android.hardware.graphics.composer3.ContentType;
 import android.hardware.graphics.composer3.DisplayAttribute;
 import android.hardware.graphics.composer3.DisplayCapability;
 import android.hardware.graphics.composer3.DisplayCommand;
+import android.hardware.graphics.composer3.DisplayConfiguration;
 import android.hardware.graphics.composer3.DisplayConnectionType;
 import android.hardware.graphics.composer3.DisplayContentSample;
 import android.hardware.graphics.composer3.DisplayContentSamplingAttributes;
@@ -263,15 +264,12 @@ interface IComposerClient {
     DisplayCapability[] getDisplayCapabilities(long display);
 
     /**
-     * Returns handles for all of the valid display configurations on this
-     * display.
-     * This should never return INVALID_CONFIGURATION as a valid value.
+     * @deprecated use getDisplayConfigurations instead.
+     * For legacy support getDisplayConfigs should return at least one valid config.
+     * All the configs returned from the getDisplayConfigs should also be returned
+     * from getDisplayConfigurations.
      *
-     * @param display is the display to query.
-     *
-     * @return is an array of configuration handles.
-     *
-     * @exception EX_BAD_DISPLAY when an invalid display handle was passed in.
+     * @see getDisplayConfigurations
      */
     int[] getDisplayConfigs(long display);
 
@@ -864,4 +862,15 @@ interface IComposerClient {
      *        false when refresh rate callback is disabled.
      */
     void setRefreshRateChangedCallbackDebugEnabled(long display, boolean enabled);
+
+    /**
+     * Returns all of the valid display configurations.
+     * getDisplayConfigurations is the superset of getDisplayConfigs and
+     * getDisplayConfigs should return at least one config.
+     *
+     * @param display is the display for which the configurations are requested.
+     *
+     * @see getDisplayConfigs
+     */
+    DisplayConfiguration[] getDisplayConfigurations(long display);
 }
