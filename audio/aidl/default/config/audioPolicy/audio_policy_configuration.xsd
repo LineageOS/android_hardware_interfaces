@@ -535,12 +535,17 @@
             <xs:enumeration value="AUDIO_CHANNEL_OUT_STEREO_HAPTIC_AB"/>
             <xs:enumeration value="AUDIO_CHANNEL_IN_MONO"/>
             <xs:enumeration value="AUDIO_CHANNEL_IN_STEREO"/>
+            <xs:enumeration value="AUDIO_CHANNEL_IN_2POINT1"/>
             <xs:enumeration value="AUDIO_CHANNEL_IN_FRONT_BACK"/>
+            <xs:enumeration value="AUDIO_CHANNEL_IN_TRI"/>
+            <xs:enumeration value="AUDIO_CHANNEL_IN_3POINT1"/>
             <xs:enumeration value="AUDIO_CHANNEL_IN_6"/>
             <xs:enumeration value="AUDIO_CHANNEL_IN_2POINT0POINT2"/>
             <xs:enumeration value="AUDIO_CHANNEL_IN_2POINT1POINT2"/>
             <xs:enumeration value="AUDIO_CHANNEL_IN_3POINT0POINT2"/>
             <xs:enumeration value="AUDIO_CHANNEL_IN_3POINT1POINT2"/>
+            <xs:enumeration value="AUDIO_CHANNEL_IN_QUAD"/>
+            <xs:enumeration value="AUDIO_CHANNEL_IN_PENTA"/>
             <xs:enumeration value="AUDIO_CHANNEL_IN_5POINT1"/>
             <xs:enumeration value="AUDIO_CHANNEL_IN_VOICE_UPLINK_MONO"/>
             <xs:enumeration value="AUDIO_CHANNEL_IN_VOICE_DNLINK_MONO"/>
