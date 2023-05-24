@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2d762f70_aa7a470d",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 32245
+      },
+      "writtenOn": "2023-05-24T11:19:09Z",
+      "side": 1,
+      "message": "adding radio.config@1.0 entry to device FCM doesn\u0027t help at all",
+      "revId": "49457c9bec90dfc660efd4956acb872375882ffb",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
