@@ -34,6 +34,24 @@
       "parentUuid": "2d762f70_aa7a470d",
       "revId": "49457c9bec90dfc660efd4956acb872375882ffb",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1e7f9b52_3f991806",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 32245
+      },
+      "writtenOn": "2023-05-24T12:07:47Z",
+      "side": 1,
+      "message": "\u003e Have you checked if just by bumping IRadioConfig to 1.1 it still works?\n\nvery unstable, for example, modem crashes, sometimes can even lead the whole device to restart\n\n\u003e case of prebuilt vendor RIL daemon like qcrild: Could a newer version, kanged from another device, work on your device\n\nalready using the newest qcrild stack, and the same thing still happens",
+      "parentUuid": "d759f8b7_92e98e63",
+      "revId": "49457c9bec90dfc660efd4956acb872375882ffb",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
