@@ -60,13 +60,9 @@ class BootloaderStateTest : public KeymasterHidlTest {
         ASSERT_TRUE(attest_rec) << "Failed to get attestation record.";
 
         // Parse root of trust.
-        HidlBuf verified_boot_key;
-        keymaster_verified_boot_t verified_boot_state;
-        bool device_locked;
-        HidlBuf verified_boot_hash;
-        auto result =
-                parse_root_of_trust(attest_rec->data, attest_rec->length, &verified_boot_key,
-                                    &verified_boot_state, &device_locked, &verified_boot_hash);
+        auto result = parse_root_of_trust(attest_rec->data, attest_rec->length, &attestedVbKey_,
+                                          &attestedVbState_, &attestedBootloaderState_,
+                                          &attestedVbmetaDigest_);
         ASSERT_EQ(result, ErrorCode::OK) << "Failed to parse root of trust.";
     }
 
