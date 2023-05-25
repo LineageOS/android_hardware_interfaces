@@ -73,7 +73,7 @@ optional<vector<vector<uint8_t>>> createFakeRemotelyProvisionedCertificateChain(
     ndkMacedPublicKey.macedKey = macedPublicKey.macedKey;
 
     vector<uint8_t> publicKeyBits;
-    check_maced_pubkey(ndkMacedPublicKey, /*testMode=*/true, &publicKeyBits);
+    check_maced_pubkey(ndkMacedPublicKey, /*testMode=*/false, &publicKeyBits);
 
     ::aidl::android::hardware::security::keymint::EVP_PKEY_Ptr publicKey;
     p256_pub_key(publicKeyBits, &publicKey);
