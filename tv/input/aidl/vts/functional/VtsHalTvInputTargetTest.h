@@ -17,6 +17,7 @@
 #pragma once
 
 #include <android/binder_manager.h>
+#include <fcntl.h>
 
 #include <aidl/Gtest.h>
 #include <aidl/Vintf.h>
@@ -83,6 +84,9 @@ class TvInputAidlTest : public testing::TestWithParam<string> {
      * Otherwise, returns the smallest missing non-negative integer.
      */
     int32_t getNumNotIn(vector<int32_t>& nums);
+
+    /* Checks if a native handle contains valid file descriptor(s). */
+    bool isValidHandle(NativeHandle& handle);
 
   protected:
     shared_ptr<ITvInput> tv_input_;
