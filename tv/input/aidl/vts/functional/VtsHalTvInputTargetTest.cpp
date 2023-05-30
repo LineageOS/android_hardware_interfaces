@@ -134,6 +134,19 @@ int32_t TvInputAidlTest::getNumNotIn(vector<int32_t>& nums) {
     return result;
 }
 
+bool TvInputAidlTest::isValidHandle(NativeHandle& handle) {
+    if (handle.fds.empty()) {
+        return false;
+    }
+    for (size_t i = 0; i < handle.fds.size(); i++) {
+        int fd = handle.fds[i].get();
+        if (fcntl(fd, F_GETFL) < 0) {
+            return false;
+        }
+    }
+    return true;
+}
+
 /*
  * GetStreamConfigTest:
  * Calls updateStreamConfigurations() for each existing device
@@ -168,6 +181,8 @@ TEST_P(TvInputAidlTest, OpenAndCloseStreamTest) {
             ALOGD("OpenAndCloseStreamTest: open stream, device_id=%d, stream_id=%d", device_id,
                   stream_id);
             ASSERT_TRUE(tv_input_->openStream(device_id, stream_id, &handle).isOk());
+            ASSERT_TRUE(isValidHandle(handle));
+
             ALOGD("OpenAndCloseStreamTest: close stream, device_id=%d, stream_id=%d", device_id,
                   stream_id);
             ASSERT_TRUE(tv_input_->closeStream(device_id, stream_id).isOk());
@@ -268,6 +283,7 @@ TEST_P(TvInputAidlTest, OpenAnOpenedStreamsTest) {
 
     ALOGD("OpenAnOpenedStreamsTest: open stream, device_id=%d, stream_id=%d", device_id, stream_id);
     ASSERT_TRUE(tv_input_->openStream(device_id, stream_id, &handle).isOk());
+    ASSERT_TRUE(isValidHandle(handle));
 
     ALOGD("OpenAnOpenedStreamsTest: open stream, device_id=%d, stream_id=%d", device_id, stream_id);
     ASSERT_TRUE(tv_input_->openStream(device_id, stream_id, &handle).getServiceSpecificError() ==
