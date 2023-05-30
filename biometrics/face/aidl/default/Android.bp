@@ -7,11 +7,21 @@ package {
     default_applicable_licenses: ["hardware_interfaces_license"],
 }
 
+filegroup {
+    name: "face-default.rc",
+    srcs: ["face-default.rc"],
+}
+
+filegroup {
+    name: "face-default.xml",
+    srcs: ["face-default.xml"],
+}
+
 cc_binary {
     name: "android.hardware.biometrics.face-service.example",
     relative_install_path: "hw",
-    init_rc: ["face-default.rc"],
-    vintf_fragments: ["face-default.xml"],
+    init_rc: [":face-default.rc"],
+    vintf_fragments: [":face-default.xml"],
     vendor: true,
     shared_libs: [
         "libbase",
