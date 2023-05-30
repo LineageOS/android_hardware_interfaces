@@ -1371,6 +1371,28 @@ TEST_P(GraphicsMapperStableCTests, GetUsage) {
     EXPECT_EQ(buffer->info().usage, *value);
 }
 
+TEST_P(GraphicsMapperStableCTests, GetUsage64) {
+    BufferDescriptorInfo info{
+            .name = {"VTS_TEMP"},
+            .width = 64,
+            .height = 64,
+            .layerCount = 1,
+            .format = PixelFormat::RGBA_8888,
+            .usage = BufferUsage::FRONT_BUFFER | BufferUsage::GPU_RENDER_TARGET |
+                     BufferUsage::COMPOSER_OVERLAY | BufferUsage::GPU_TEXTURE,
+            .reservedSize = 0,
+    };
+    if (!isSupported(info)) {
+        GTEST_SKIP();
+    }
+    auto buffer = allocate(info);
+    auto bufferHandle = buffer->import();
+    auto value = getStandardMetadata<StandardMetadataType::USAGE>(*bufferHandle);
+    ASSERT_TRUE(value.has_value());
+    using T = std::underlying_type_t<BufferUsage>;
+    EXPECT_EQ(static_cast<T>(buffer->info().usage), static_cast<T>(*value));
+}
+
 TEST_P(GraphicsMapperStableCTests, GetAllocationSize) {
     auto buffer = allocateGeneric();
     auto bufferHandle = buffer->import();
