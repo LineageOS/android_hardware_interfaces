@@ -93,4 +93,5 @@ xsd_config {
     srcs: ["le_audio_codec_capabilities/le_audio_codec_capabilities.xsd"],
     package_name: "aidl.android.hardware.bluetooth.audio.setting",
     api_dir: "le_audio_codec_capabilities/schema",
+    root_elements: ["leAudioOffloadSetting"],
 }
