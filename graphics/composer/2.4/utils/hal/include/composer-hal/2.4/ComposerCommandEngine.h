@@ -90,6 +90,9 @@ class ComposerCommandEngine : public V2_3::hal::ComposerCommandEngine {
         }
 
         const uint32_t keySize = read();
+        if (!isReadSizeValid(keySize)) {
+            return false;
+        }
         std::string key;
         key.resize(keySize);
         readBlob(keySize, key.data());
@@ -97,6 +100,9 @@ class ComposerCommandEngine : public V2_3::hal::ComposerCommandEngine {
         const bool mandatory = read();
 
         const uint32_t valueSize = read();
+        if (!isReadSizeValid(valueSize)) {
+            return false;
+        }
         std::vector<uint8_t> value(valueSize);
         readBlob(valueSize, value.data());
 
