@@ -16,8 +16,6 @@
 
 #include "TestWakeupClientServiceImpl.h"
 
-#include "ApPowerControl.h"
-
 #include <android-base/stringprintf.h>
 #include <inttypes.h>
 #include <utils/Looper.h>
@@ -44,12 +42,10 @@ constexpr int64_t KTaskTimeoutInMs = 20'000;
 
 }  // namespace
 
-GetRemoteTasksResponse FakeTaskGenerator::generateTask() {
-    int clientId = mCurrentClientId++;
+GetRemoteTasksResponse FakeTaskGenerator::generateTask(const std::string& clientId) {
     GetRemoteTasksResponse response;
-    response.set_data(std::string(reinterpret_cast<const char*>(DATA), sizeof(DATA)));
-    std::string clientIdStr = StringPrintf("%d", clientId);
-    response.set_clientid(clientIdStr);
+    response.set_data(reinterpret_cast<const char*>(DATA), sizeof(DATA));
+    response.set_clientid(clientId);
     return response;
 }
 
@@ -165,38 +161,68 @@ void TaskQueue::handleTaskTimeout() {
     }
 }
 
-TestWakeupClientServiceImpl::TestWakeupClientServiceImpl() {
-    mThread = std::thread([this] { fakeTaskGenerateLoop(); });
-}
+TestWakeupClientServiceImpl::TestWakeupClientServiceImpl() {}
 
 TestWakeupClientServiceImpl::~TestWakeupClientServiceImpl() {
+    { std::lock_guard<std::mutex> lockGuard(mLock); }
+    mTaskQueue.stopWait();
+    stopGeneratingFakeTask();
+}
+
+void TestWakeupClientServiceImpl::injectTask(const std::string& taskData,
+                                             const std::string& clientId) {
+    GetRemoteTasksResponse response;
+    response.set_data(taskData);
+    response.set_clientid(clientId);
+    injectTaskResponse(response);
+}
+
+void TestWakeupClientServiceImpl::injectTaskResponse(const GetRemoteTasksResponse& response) {
+    printf("Received a new task\n");
+    mTaskQueue.add(response);
+    if (mWakeupRequired) {
+        wakeupApplicationProcessor();
+    }
+}
+
+void TestWakeupClientServiceImpl::startGeneratingFakeTask(const std::string& clientId) {
+    std::lock_guard<std::mutex> lockGuard(mLock);
+    if (mGeneratingFakeTask) {
+        printf("Fake task is already being generated\n");
+        return;
+    }
+    mGeneratingFakeTask = true;
+    mThread = std::thread([this, clientId] { fakeTaskGenerateLoop(clientId); });
+    printf("Started generating fake tasks\n");
+}
+
+void TestWakeupClientServiceImpl::stopGeneratingFakeTask() {
     {
         std::lock_guard<std::mutex> lockGuard(mLock);
-        mServerStopped = true;
-        mServerStoppedCv.notify_all();
+        if (!mGeneratingFakeTask) {
+            printf("Fake task is not being generated, do nothing\n");
+            return;
+        }
+        mTaskLoopStoppedCv.notify_all();
+        mGeneratingFakeTask = false;
     }
-    mTaskQueue.stopWait();
     if (mThread.joinable()) {
         mThread.join();
     }
+    printf("Stopped generating fake tasks\n");
 }
 
-void TestWakeupClientServiceImpl::fakeTaskGenerateLoop() {
+void TestWakeupClientServiceImpl::fakeTaskGenerateLoop(const std::string& clientId) {
     // In actual implementation, this should communicate with the remote server and receives tasks
     // from it. Here we simulate receiving one remote task every {kTaskIntervalInMs}ms.
     while (true) {
-        mTaskQueue.add(mFakeTaskGenerator.generateTask());
-        printf("Received a new task\n");
-        if (mWakeupRequired) {
-            wakeupApplicationProcessor();
-        }
-
+        injectTaskResponse(mFakeTaskGenerator.generateTask(clientId));
         printf("Sleeping for %d seconds until next task\n", kTaskIntervalInMs);
 
         std::unique_lock lk(mLock);
-        if (mServerStoppedCv.wait_for(lk, std::chrono::milliseconds(kTaskIntervalInMs), [this] {
+        if (mTaskLoopStoppedCv.wait_for(lk, std::chrono::milliseconds(kTaskIntervalInMs), [this] {
                 ScopedLockAssertion lockAssertion(mLock);
-                return mServerStopped;
+                return !mGeneratingFakeTask;
             })) {
             // If the stopped flag is set, we are quitting, exit the loop.
             return;
@@ -208,6 +234,7 @@ Status TestWakeupClientServiceImpl::GetRemoteTasks(ServerContext* context,
                                                    const GetRemoteTasksRequest* request,
                                                    ServerWriter<GetRemoteTasksResponse>* writer) {
     printf("GetRemoteTasks called\n");
+    mRemoteTaskConnectionAlive = true;
     while (true) {
         mTaskQueue.waitForTask();
 
@@ -226,16 +253,19 @@ Status TestWakeupClientServiceImpl::GetRemoteTasks(ServerContext* context,
                 // The task failed to be sent, add it back to the queue. The order might change, but
                 // it is okay.
                 mTaskQueue.add(response);
+                mRemoteTaskConnectionAlive = false;
                 return Status::CANCELLED;
             }
         }
     }
+    mRemoteTaskConnectionAlive = false;
     return Status::OK;
 }
 
 Status TestWakeupClientServiceImpl::NotifyWakeupRequired(ServerContext* context,
                                                          const NotifyWakeupRequiredRequest* request,
                                                          NotifyWakeupRequiredResponse* response) {
+    printf("NotifyWakeupRequired called\n");
     if (request->iswakeuprequired() && !mWakeupRequired && !mTaskQueue.isEmpty()) {
         // If wakeup is now required and previously not required, this means we have finished
         // shutting down the device. If there are still pending tasks, try waking up AP again
@@ -243,11 +273,20 @@ Status TestWakeupClientServiceImpl::NotifyWakeupRequired(ServerContext* context,
         wakeupApplicationProcessor();
     }
     mWakeupRequired = request->iswakeuprequired();
+    if (mWakeupRequired) {
+        // We won't know the connection is down unless we try to send a task over. If wakeup is
+        // required, the connection is very likely already down.
+        mRemoteTaskConnectionAlive = false;
+    }
     return Status::OK;
 }
 
-void TestWakeupClientServiceImpl::wakeupApplicationProcessor() {
-    wakeupAp();
+bool TestWakeupClientServiceImpl::isWakeupRequired() {
+    return mWakeupRequired;
+}
+
+bool TestWakeupClientServiceImpl::isRemoteTaskConnectionAlive() {
+    return mRemoteTaskConnectionAlive;
 }
 
 }  // namespace remoteaccess

@@ -34,11 +34,9 @@ namespace remoteaccess {
 // implementation, the task should come from remote task server. This class is thread-safe.
 class FakeTaskGenerator final {
   public:
-    GetRemoteTasksResponse generateTask();
+    GetRemoteTasksResponse generateTask(const std::string& clientId);
 
   private:
-    // Simulates the client ID for each task.
-    std::atomic<int> mCurrentClientId = 0;
     constexpr static uint8_t DATA[] = {0xde, 0xad, 0xbe, 0xef};
 };
 
@@ -99,7 +97,7 @@ class TaskQueue final {
     void waitForTaskWithLock(std::unique_lock<std::mutex>& lock);
 };
 
-class TestWakeupClientServiceImpl final : public WakeupClient::Service {
+class TestWakeupClientServiceImpl : public WakeupClient::Service {
   public:
     TestWakeupClientServiceImpl();
 
@@ -112,25 +110,57 @@ class TestWakeupClientServiceImpl final : public WakeupClient::Service {
                                       const NotifyWakeupRequiredRequest* request,
                                       NotifyWakeupRequiredResponse* response) override;
 
+    /**
+     * Starts generating fake tasks for the specific client repeatedly.
+     *
+     * The fake task will have {0xDE 0xAD 0xBE 0xEF} as payload. A new fake task will be sent
+     * to the client every 5s.
+     */
+    void startGeneratingFakeTask(const std::string& clientId);
+    /**
+     * stops generating fake tasks.
+     */
+    void stopGeneratingFakeTask();
+    /**
+     * Returns whether we need to wakeup the target device to send remote tasks.
+     */
+    bool isWakeupRequired();
+    /**
+     * Returns whether we have an active connection with the target device.
+     */
+    bool isRemoteTaskConnectionAlive();
+    /**
+     * Injects a fake task with taskData to be sent to the specific client.
+     */
+    void injectTask(const std::string& taskData, const std::string& clientId);
+    /**
+     * Wakes up the target device.
+     *
+     * This must be implemented by child class and contains device specific logic. E.g. this might
+     * be sending QEMU commands for the emulator device.
+     */
+    virtual void wakeupApplicationProcessor() = 0;
+
   private:
     // This is a thread for communicating with remote wakeup server (via network) and receive tasks
     // from it.
     std::thread mThread;
     // A variable to notify server is stopping.
-    std::condition_variable mServerStoppedCv;
+    std::condition_variable mTaskLoopStoppedCv;
     // Whether wakeup AP is required for executing tasks.
     std::atomic<bool> mWakeupRequired = true;
+    // Whether we currently have an active long-live connection to deliver remote tasks.
+    std::atomic<bool> mRemoteTaskConnectionAlive = false;
     std::mutex mLock;
-    bool mServerStopped GUARDED_BY(mLock);
+    bool mGeneratingFakeTask GUARDED_BY(mLock);
 
     // Thread-safe. For test impl only.
     FakeTaskGenerator mFakeTaskGenerator;
     // Thread-sfae.
     TaskQueue mTaskQueue;
 
-    void fakeTaskGenerateLoop();
-
-    void wakeupApplicationProcessor();
+    void fakeTaskGenerateLoop(const std::string& clientId);
+    void injectTaskResponse(const GetRemoteTasksResponse& response);
 };
 
 }  // namespace remoteaccess

@@ -53,7 +53,7 @@ cc_binary {
     vintf_fragments: ["remoteaccess-default-service.xml"],
     init_rc: ["remoteaccess-default-service.rc"],
     cflags: [
-        "-DGRPC_SERVICE_ADDRESS=\"localhost:50051\"",
+        "-DGRPC_SERVICE_ADDRESS=\"10.0.2.2:50051\"",
     ],
 }
 
