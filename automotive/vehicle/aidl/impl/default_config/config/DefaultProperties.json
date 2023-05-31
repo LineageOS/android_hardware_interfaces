@@ -3629,6 +3629,17 @@
             }
         },
         {
+            "property": "VehicleProperty::SHUTDOWN_REQUEST"
+        },
+        {
+            "property": "VehicleProperty::VEHICLE_IN_USE",
+            "defaultValue": {
+                "int32Values": [
+                    1
+                ]
+            }
+        },
+        {
             "property": "VehicleProperty::AUTOMATIC_EMERGENCY_BRAKING_ENABLED",
             "defaultValue": {
                 "int32Values": [

@@ -21,6 +21,8 @@
 #include <PropertyUtils.h>
 #include <TestPropertyUtils.h>
 
+#include <aidl/android/hardware/automotive/vehicle/VehicleApPowerStateShutdownParam.h>
+
 #include <android-base/expected.h>
 #include <android-base/file.h>
 #include <android-base/stringprintf.h>
@@ -69,6 +71,7 @@ using ::aidl::android::hardware::automotive::vehicle::SetValueResult;
 using ::aidl::android::hardware::automotive::vehicle::StatusCode;
 using ::aidl::android::hardware::automotive::vehicle::VehicleApPowerStateReport;
 using ::aidl::android::hardware::automotive::vehicle::VehicleApPowerStateReq;
+using ::aidl::android::hardware::automotive::vehicle::VehicleApPowerStateShutdownParam;
 using ::aidl::android::hardware::automotive::vehicle::VehicleAreaMirror;
 using ::aidl::android::hardware::automotive::vehicle::VehicleHwKeyInputAction;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropConfig;
@@ -1516,6 +1519,33 @@ std::vector<SetSpecialValueTestCase> setSpecialValueTestCases() {
                                             .prop = toInt(
                                                     VehicleProperty::HANDS_ON_DETECTION_WARNING),
                                             .value.int32Values = {1},
+                                    },
+                            },
+            },
+            SetSpecialValueTestCase{
+                    .name = "set_shutdown_request",
+                    .valuesToSet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(VehicleProperty::SHUTDOWN_REQUEST),
+                                            .value.int32Values =
+                                                    {
+                                                            toInt(VehicleApPowerStateShutdownParam::
+                                                                          SHUTDOWN_ONLY),
+                                                    },
+                                    },
+                            },
+                    .expectedValuesToGet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(VehicleProperty::AP_POWER_STATE_REQ),
+                                            .value.int32Values =
+                                                    {
+                                                            toInt(VehicleApPowerStateReq::
+                                                                          SHUTDOWN_PREPARE),
+                                                            toInt(VehicleApPowerStateShutdownParam::
+                                                                          SHUTDOWN_ONLY),
+                                                    },
                                     },
                             },
             },

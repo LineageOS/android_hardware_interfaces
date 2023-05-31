@@ -337,6 +337,25 @@ VehiclePropValuePool::RecyclableType FakeVehicleHardware::createAdasStateReq(int
     return req;
 }
 
+VhalResult<void> FakeVehicleHardware::setApPowerStateReqShutdown(const VehiclePropValue& value) {
+    if (value.value.int32Values.size() != 1) {
+        return StatusError(StatusCode::INVALID_ARG)
+               << "Failed to set SHUTDOWN_REQUEST, expect 1 int value: "
+               << "VehicleApPowerStateShutdownParam";
+    }
+    int powerStateShutdownParam = value.value.int32Values[0];
+    auto prop = createApPowerStateReq(VehicleApPowerStateReq::SHUTDOWN_PREPARE);
+    prop->value.int32Values[1] = powerStateShutdownParam;
+    if (auto writeResult = mServerSidePropStore->writeValue(
+                std::move(prop), /*updateStatus=*/true, VehiclePropertyStore::EventMode::ALWAYS);
+        !writeResult.ok()) {
+        return StatusError(getErrorCode(writeResult))
+               << "failed to write AP_POWER_STATE_REQ into property store, error: "
+               << getErrorMsg(writeResult);
+    }
+    return {};
+}
+
 VhalResult<void> FakeVehicleHardware::setApPowerStateReport(const VehiclePropValue& value) {
     auto updatedValue = mValuePool->obtain(value);
     updatedValue->timestamp = elapsedRealtimeNano();
@@ -762,6 +781,12 @@ VhalResult<void> FakeVehicleHardware::maybeSetSpecialValue(const VehiclePropValu
         case toInt(VehicleProperty::AP_POWER_STATE_REPORT):
             *isSpecialValue = true;
             return setApPowerStateReport(value);
+        case toInt(VehicleProperty::SHUTDOWN_REQUEST):
+            // If we receive SHUTDOWN_REQUEST, we should send this to an external component which
+            // should shutdown Android system via sending an AP_POWER_STATE_REQ event. Here we have
+            // no external components to notify, so we just send the event.
+            *isSpecialValue = true;
+            return setApPowerStateReqShutdown(value);
         case toInt(VehicleProperty::VEHICLE_MAP_SERVICE):
             // Placeholder for future implementation of VMS property in the default hal. For
             // now, just returns OK; otherwise, hal clients crash with property not supported.
