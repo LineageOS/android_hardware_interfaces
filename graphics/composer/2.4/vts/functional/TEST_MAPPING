@@ -1,0 +1,13 @@
+{
+  "presubmit": [
+    {
+      "name": "VtsHalGraphicsComposerV2_4TargetTest"
+    }
+  ],
+  "kernel-presubmit": [
+    {
+      "name": "VtsHalGraphicsComposerV2_4TargetTest"
+    }
+  ]
+}
+
