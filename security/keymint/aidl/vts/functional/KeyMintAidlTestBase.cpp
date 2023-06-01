@@ -1606,7 +1606,8 @@ bool KeyMintAidlTestBase::is_chipset_allowed_km4_strongbox(void) const {
     auto res = property_get("ro.vendor.qti.soc_model", buffer.data(), nullptr);
     if (res <= 0) return false;
 
-    const string allowed_soc_models[] = {"SM8450", "SM8475", "SM8550", "SXR2230P"};
+    const string allowed_soc_models[] = {"SM8450", "SM8475", "SM8550", "SXR2230P",
+                                         "SM4450", "SM7450", "SM6450"};
 
     for (const string model : allowed_soc_models) {
         if (model.compare(buffer.data()) == 0) {
