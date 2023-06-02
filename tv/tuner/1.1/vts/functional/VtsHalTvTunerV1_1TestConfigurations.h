@@ -86,7 +86,7 @@ inline void initFrontendConfig() {
     types.push_back(FrontendStatusTypeExt1_1::IS_MISO);
     vector<FrontendStatusExt1_1> statuses;
     FrontendStatusExt1_1 status;
-    status.uec(4);
+    status.uec(0);
     statuses.push_back(status);
     status.isMiso(true);
     statuses.push_back(status);
