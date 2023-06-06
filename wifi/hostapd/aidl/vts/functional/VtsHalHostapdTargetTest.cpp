@@ -30,6 +30,7 @@
 #include <hostapd_hidl_test_utils.h>
 #include <wifi_hidl_test_utils.h>
 #include <wifi_hidl_test_utils_1_5.h>
+#include <wifi_hidl_test_utils_1_6.h>
 
 #include "wifi_aidl_test_utils.h"
 
@@ -143,7 +144,7 @@ class HostapdAidl : public testing::TestWithParam<std::string> {
     std::string setupApIfaceAndGetNameHidl(bool isBridged) {
         android::sp<::android::hardware::wifi::V1_0::IWifiApIface> wifi_ap_iface;
         if (isBridged) {
-            wifi_ap_iface = getBridgedWifiApIface_1_5(wifiHidlInstanceName);
+            wifi_ap_iface = getBridgedWifiApIface_1_6(wifiHidlInstanceName);
         } else {
             wifi_ap_iface = getWifiApIface_1_5(wifiHidlInstanceName);
         }

@@ -23,6 +23,28 @@ package {
     default_applicable_licenses: ["hardware_interfaces_license"],
 }
 
+cc_library_static {
+    name: "VtsHalWifiV1_6TargetTestUtil",
+    defaults: ["VtsHalTargetTestDefaults"],
+    srcs: [
+        "wifi_hidl_test_utils_1_6.cpp",
+    ],
+    export_include_dirs: [
+        ".",
+    ],
+    shared_libs: [
+        "libnativehelper",
+    ],
+    static_libs: [
+        "VtsHalWifiV1_0TargetTestUtil",
+        "android.hardware.wifi@1.0",
+        "android.hardware.wifi@1.3",
+        "android.hardware.wifi@1.5",
+        "android.hardware.wifi@1.6",
+        "libwifi-system-iface",
+    ],
+}
+
 cc_test {
     name: "VtsHalWifiV1_6TargetTest",
     defaults: ["VtsHalTargetTestDefaults"],
