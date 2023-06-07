@@ -68,6 +68,16 @@ cc_test {
         "libgralloctypes",
         "libaidlcommonsupport",
     ],
+
+    require_root: true,
+    test_options: {
+        test_runner_options: [
+            {
+                name: "native-test-timeout",
+                value: "1800000",
+            },
+        ],
+    },
     test_suites: [
         "general-tests",
         "vts",
