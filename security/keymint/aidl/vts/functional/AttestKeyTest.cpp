@@ -120,6 +120,7 @@ TEST_P(AttestKeyTest, AllRsaSizes) {
                                             .SetDefaultValidity(),
                                     {} /* attestation signing key */, &attest_key.keyBlob,
                                     &attest_key_characteristics, &attest_key_cert_chain));
+        KeyBlobDeleter attest_deleter(keymint_, attest_key.keyBlob);
 
         ASSERT_GT(attest_key_cert_chain.size(), 0);
         EXPECT_EQ(attest_key_cert_chain.size(), 1);
@@ -141,8 +142,7 @@ TEST_P(AttestKeyTest, AllRsaSizes) {
                                       .SetDefaultValidity(),
                               attest_key, &attested_key_blob, &attested_key_characteristics,
                               &attested_key_cert_chain));
-
-        CheckedDeleteKey(&attested_key_blob);
+        KeyBlobDeleter attested_deleter(keymint_, attested_key_blob);
 
         AuthorizationSet hw_enforced = HwEnforcedAuthorizations(attested_key_characteristics);
         AuthorizationSet sw_enforced = SwEnforcedAuthorizations(attested_key_characteristics);
@@ -174,8 +174,7 @@ TEST_P(AttestKeyTest, AllRsaSizes) {
                                       .SetDefaultValidity(),
                               attest_key, &attested_key_blob, &attested_key_characteristics,
                               &attested_key_cert_chain));
-
-        CheckedDeleteKey(&attested_key_blob);
+        KeyBlobDeleter attested_deleter2(keymint_, attested_key_blob);
 
         hw_enforced = HwEnforcedAuthorizations(attested_key_characteristics);
         sw_enforced = SwEnforcedAuthorizations(attested_key_characteristics);
@@ -207,15 +206,13 @@ TEST_P(AttestKeyTest, AllRsaSizes) {
                                       .SetDefaultValidity(),
                               attest_key, &attested_key_blob, &attested_key_characteristics,
                               &attested_key_cert_chain));
+        KeyBlobDeleter attested_deleter3(keymint_, attested_key_blob);
 
         // The returned key characteristics will include CREATION_DATETIME (checked below)
         // in SecurityLevel::KEYSTORE; this will be stripped out in the CheckCharacteristics()
         // call below, to match what getKeyCharacteristics() returns (which doesn't include
         // any SecurityLevel::KEYSTORE characteristics).
         CheckCharacteristics(attested_key_blob, attested_key_characteristics);
-
-        CheckedDeleteKey(&attested_key_blob);
-        CheckedDeleteKey(&attest_key.keyBlob);
 
         hw_enforced = HwEnforcedAuthorizations(attested_key_characteristics);
         sw_enforced = SwEnforcedAuthorizations(attested_key_characteristics);
@@ -308,6 +305,7 @@ TEST_P(AttestKeyTest, RsaAttestedAttestKeys) {
         if (result == ErrorCode::ATTESTATION_KEYS_NOT_PROVISIONED) return;
     }
     ASSERT_EQ(ErrorCode::OK, result);
+    KeyBlobDeleter attest_deleter(keymint_, attest_key.keyBlob);
 
     EXPECT_GT(attest_key_cert_chain.size(), 1);
     verify_subject_and_serial(attest_key_cert_chain[0], serial_int, subject, false);
@@ -344,9 +342,7 @@ TEST_P(AttestKeyTest, RsaAttestedAttestKeys) {
                                   .SetDefaultValidity(),
                           attest_key, &attested_key_blob, &attested_key_characteristics,
                           &attested_key_cert_chain));
-
-    CheckedDeleteKey(&attested_key_blob);
-    CheckedDeleteKey(&attest_key.keyBlob);
+    KeyBlobDeleter attested_deleter(keymint_, attested_key_blob);
 
     AuthorizationSet hw_enforced2 = HwEnforcedAuthorizations(attested_key_characteristics);
     AuthorizationSet sw_enforced2 = SwEnforcedAuthorizations(attested_key_characteristics);
@@ -376,6 +372,7 @@ TEST_P(AttestKeyTest, RsaAttestKeyChaining) {
     const int chain_size = 6;
     vector<vector<uint8_t>> key_blob_list(chain_size);
     vector<vector<Certificate>> cert_chain_list(chain_size);
+    vector<KeyBlobDeleter> deleters;
 
     for (int i = 0; i < chain_size; i++) {
         string sub = "attest key chaining ";
@@ -412,6 +409,7 @@ TEST_P(AttestKeyTest, RsaAttestKeyChaining) {
             if (result == ErrorCode::ATTESTATION_KEYS_NOT_PROVISIONED) return;
         }
         ASSERT_EQ(ErrorCode::OK, result);
+        deleters.push_back(KeyBlobDeleter(keymint_, key_blob_list[i]));
 
         AuthorizationSet hw_enforced = HwEnforcedAuthorizations(attested_key_characteristics);
         AuthorizationSet sw_enforced = SwEnforcedAuthorizations(attested_key_characteristics);
@@ -437,10 +435,6 @@ TEST_P(AttestKeyTest, RsaAttestKeyChaining) {
         EXPECT_GT(cert_chain_list[i].size(), i + 1);
         verify_subject_and_serial(cert_chain_list[i][0], serial_int, subject, false);
     }
-
-    for (int i = 0; i < chain_size; i++) {
-        CheckedDeleteKey(&key_blob_list[i]);
-    }
 }
 
 /*
@@ -453,6 +447,7 @@ TEST_P(AttestKeyTest, EcAttestKeyChaining) {
     const int chain_size = 6;
     vector<vector<uint8_t>> key_blob_list(chain_size);
     vector<vector<Certificate>> cert_chain_list(chain_size);
+    vector<KeyBlobDeleter> deleters;
 
     for (int i = 0; i < chain_size; i++) {
         string sub = "Ec attest key chaining ";
@@ -489,6 +484,7 @@ TEST_P(AttestKeyTest, EcAttestKeyChaining) {
             if (result == ErrorCode::ATTESTATION_KEYS_NOT_PROVISIONED) return;
         }
         ASSERT_EQ(ErrorCode::OK, result);
+        deleters.push_back(KeyBlobDeleter(keymint_, key_blob_list[i]));
 
         AuthorizationSet hw_enforced = HwEnforcedAuthorizations(attested_key_characteristics);
         AuthorizationSet sw_enforced = SwEnforcedAuthorizations(attested_key_characteristics);
@@ -513,10 +509,6 @@ TEST_P(AttestKeyTest, EcAttestKeyChaining) {
         EXPECT_TRUE(ChainSignaturesAreValid(cert_chain_list[i]));
         EXPECT_GT(cert_chain_list[i].size(), i + 1);
         verify_subject_and_serial(cert_chain_list[i][0], serial_int, subject, false);
-    }
-
-    for (int i = 0; i < chain_size; i++) {
-        CheckedDeleteKey(&key_blob_list[i]);
     }
 }
 
@@ -557,6 +549,7 @@ TEST_P(AttestKeyTest, AlternateAttestKeyChaining) {
     const int chain_size = 6;
     vector<vector<uint8_t>> key_blob_list(chain_size);
     vector<vector<Certificate>> cert_chain_list(chain_size);
+    vector<KeyBlobDeleter> deleters;
 
     for (int i = 0; i < chain_size; i++) {
         string sub = "Alt attest key chaining ";
@@ -607,6 +600,7 @@ TEST_P(AttestKeyTest, AlternateAttestKeyChaining) {
             if (result == ErrorCode::ATTESTATION_KEYS_NOT_PROVISIONED) return;
         }
         ASSERT_EQ(ErrorCode::OK, result);
+        deleters.push_back(KeyBlobDeleter(keymint_, key_blob_list[i]));
 
         AuthorizationSet hw_enforced = HwEnforcedAuthorizations(attested_key_characteristics);
         AuthorizationSet sw_enforced = SwEnforcedAuthorizations(attested_key_characteristics);
@@ -632,10 +626,6 @@ TEST_P(AttestKeyTest, AlternateAttestKeyChaining) {
         EXPECT_GT(cert_chain_list[i].size(), i + 1);
         verify_subject_and_serial(cert_chain_list[i][0], serial_int, subject, false);
     }
-
-    for (int i = 0; i < chain_size; i++) {
-        CheckedDeleteKey(&key_blob_list[i]);
-    }
 }
 
 TEST_P(AttestKeyTest, MissingChallenge) {
@@ -653,6 +643,7 @@ TEST_P(AttestKeyTest, MissingChallenge) {
                                             .SetDefaultValidity(),
                                     {} /* attestation signing key */, &attest_key.keyBlob,
                                     &attest_key_characteristics, &attest_key_cert_chain));
+        KeyBlobDeleter attest_deleter(keymint_, attest_key.keyBlob);
 
         EXPECT_EQ(attest_key_cert_chain.size(), 1);
         EXPECT_TRUE(IsSelfSigned(attest_key_cert_chain)) << "Failed on size " << size;
@@ -681,8 +672,6 @@ TEST_P(AttestKeyTest, MissingChallenge) {
                                       .SetDefaultValidity(),
                               attest_key, &attested_key_blob, &attested_key_characteristics,
                               &attested_key_cert_chain));
-
-        CheckedDeleteKey(&attest_key.keyBlob);
     }
 }
 
@@ -700,6 +689,7 @@ TEST_P(AttestKeyTest, AllEcCurves) {
                         AuthorizationSetBuilder().EcdsaKey(curve).AttestKey().SetDefaultValidity(),
                         {} /* attestation signing key */, &attest_key.keyBlob,
                         &attest_key_characteristics, &attest_key_cert_chain));
+        KeyBlobDeleter attest_deleter(keymint_, attest_key.keyBlob);
 
         ASSERT_GT(attest_key_cert_chain.size(), 0);
         EXPECT_EQ(attest_key_cert_chain.size(), 1);
@@ -721,9 +711,9 @@ TEST_P(AttestKeyTest, AllEcCurves) {
                                       .SetDefaultValidity(),
                               attest_key, &attested_key_blob, &attested_key_characteristics,
                               &attested_key_cert_chain));
+        KeyBlobDeleter attested_deleter(keymint_, attested_key_blob);
 
         ASSERT_GT(attested_key_cert_chain.size(), 0);
-        CheckedDeleteKey(&attested_key_blob);
 
         AuthorizationSet hw_enforced = HwEnforcedAuthorizations(attested_key_characteristics);
         AuthorizationSet sw_enforced = SwEnforcedAuthorizations(attested_key_characteristics);
@@ -752,10 +742,9 @@ TEST_P(AttestKeyTest, AllEcCurves) {
                                       .SetDefaultValidity(),
                               attest_key, &attested_key_blob, &attested_key_characteristics,
                               &attested_key_cert_chain));
+        KeyBlobDeleter attested_deleter2(keymint_, attested_key_blob);
 
         ASSERT_GT(attested_key_cert_chain.size(), 0);
-        CheckedDeleteKey(&attested_key_blob);
-        CheckedDeleteKey(&attest_key.keyBlob);
 
         hw_enforced = HwEnforcedAuthorizations(attested_key_characteristics);
         sw_enforced = SwEnforcedAuthorizations(attested_key_characteristics);
@@ -825,6 +814,7 @@ TEST_P(AttestKeyTest, EcdsaAttestationID) {
                                         .SetDefaultValidity(),
                                 {} /* attestation signing key */, &attest_key.keyBlob,
                                 &attest_key_characteristics, &attest_key_cert_chain));
+    KeyBlobDeleter attest_deleter(keymint_, attest_key.keyBlob);
     attest_key.issuerSubjectName = make_name_from_str("Android Keystore Key");
     ASSERT_GT(attest_key_cert_chain.size(), 0);
     EXPECT_EQ(attest_key_cert_chain.size(), 1);
@@ -891,8 +881,7 @@ TEST_P(AttestKeyTest, EcdsaAttestationID) {
         }
 
         ASSERT_EQ(result, ErrorCode::OK);
-
-        CheckedDeleteKey(&attested_key_blob);
+        KeyBlobDeleter attested_deleter(keymint_, attested_key_blob);
 
         AuthorizationSet hw_enforced = HwEnforcedAuthorizations(attested_key_characteristics);
         AuthorizationSet sw_enforced = SwEnforcedAuthorizations(attested_key_characteristics);
@@ -906,7 +895,6 @@ TEST_P(AttestKeyTest, EcdsaAttestationID) {
                                               hw_enforced, SecLevel(),
                                               attested_key_cert_chain[0].encodedCertificate));
     }
-    CheckedDeleteKey(&attest_key.keyBlob);
 }
 
 TEST_P(AttestKeyTest, EcdsaAttestationMismatchID) {
@@ -921,6 +909,7 @@ TEST_P(AttestKeyTest, EcdsaAttestationMismatchID) {
                                         .SetDefaultValidity(),
                                 {} /* attestation signing key */, &attest_key.keyBlob,
                                 &attest_key_characteristics, &attest_key_cert_chain));
+    KeyBlobDeleter attest_deleter(keymint_, attest_key.keyBlob);
     attest_key.issuerSubjectName = make_name_from_str("Android Keystore Key");
     ASSERT_GT(attest_key_cert_chain.size(), 0);
     EXPECT_EQ(attest_key_cert_chain.size(), 1);
@@ -966,7 +955,6 @@ TEST_P(AttestKeyTest, EcdsaAttestationMismatchID) {
                 << "result = " << result;
         device_id_attestation_vsr_check(result);
     }
-    CheckedDeleteKey(&attest_key.keyBlob);
 }
 
 TEST_P(AttestKeyTest, SecondIMEIAttestationIDSuccess) {
@@ -997,6 +985,7 @@ TEST_P(AttestKeyTest, SecondIMEIAttestationIDSuccess) {
                                         .SetDefaultValidity(),
                                 {} /* attestation signing key */, &attest_key.keyBlob,
                                 &attest_key_characteristics, &attest_key_cert_chain));
+    KeyBlobDeleter attest_deleter(keymint_, attest_key.keyBlob);
     attest_key.issuerSubjectName = make_name_from_str("Android Keystore Key");
     EXPECT_EQ(attest_key_cert_chain.size(), 1);
     EXPECT_TRUE(IsSelfSigned(attest_key_cert_chain));
@@ -1025,10 +1014,9 @@ TEST_P(AttestKeyTest, SecondIMEIAttestationIDSuccess) {
     }
 
     ASSERT_EQ(result, ErrorCode::OK);
+    KeyBlobDeleter attested_deleter(keymint_, attested_key_blob);
 
     device_id_attestation_vsr_check(result);
-
-    CheckedDeleteKey(&attested_key_blob);
 
     AuthorizationSet hw_enforced = HwEnforcedAuthorizations(attested_key_characteristics);
     AuthorizationSet sw_enforced = SwEnforcedAuthorizations(attested_key_characteristics);
@@ -1043,8 +1031,6 @@ TEST_P(AttestKeyTest, SecondIMEIAttestationIDSuccess) {
     EXPECT_TRUE(verify_attestation_record(AidlVersion(), "challenge", "foo", sw_enforced,
                                           hw_enforced, SecLevel(),
                                           attested_key_cert_chain[0].encodedCertificate));
-
-    CheckedDeleteKey(&attest_key.keyBlob);
 }
 
 TEST_P(AttestKeyTest, MultipleIMEIAttestationIDSuccess) {
@@ -1081,6 +1067,7 @@ TEST_P(AttestKeyTest, MultipleIMEIAttestationIDSuccess) {
                                         .SetDefaultValidity(),
                                 {} /* attestation signing key */, &attest_key.keyBlob,
                                 &attest_key_characteristics, &attest_key_cert_chain));
+    KeyBlobDeleter attest_deleter(keymint_, attest_key.keyBlob);
     attest_key.issuerSubjectName = make_name_from_str("Android Keystore Key");
     EXPECT_EQ(attest_key_cert_chain.size(), 1);
     EXPECT_TRUE(IsSelfSigned(attest_key_cert_chain));
@@ -1106,10 +1093,9 @@ TEST_P(AttestKeyTest, MultipleIMEIAttestationIDSuccess) {
     }
 
     ASSERT_EQ(result, ErrorCode::OK);
+    KeyBlobDeleter attested_deleter(keymint_, attested_key_blob);
 
     device_id_attestation_vsr_check(result);
-
-    CheckedDeleteKey(&attested_key_blob);
 
     AuthorizationSet hw_enforced = HwEnforcedAuthorizations(attested_key_characteristics);
     AuthorizationSet sw_enforced = SwEnforcedAuthorizations(attested_key_characteristics);
@@ -1127,8 +1113,6 @@ TEST_P(AttestKeyTest, MultipleIMEIAttestationIDSuccess) {
     EXPECT_TRUE(verify_attestation_record(AidlVersion(), "challenge", "foo", sw_enforced,
                                           hw_enforced, SecLevel(),
                                           attested_key_cert_chain[0].encodedCertificate));
-
-    CheckedDeleteKey(&attest_key.keyBlob);
 }
 
 INSTANTIATE_KEYMINT_AIDL_TEST(AttestKeyTest);
