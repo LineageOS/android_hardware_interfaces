@@ -357,6 +357,15 @@
         </interface>
     </hal>
     <hal format="aidl" optional="true">
+        <name>android.hardware.media.c2</name>
+        <version>1</version>
+        <interface>
+            <name>IComponentStore</name>
+            <regex-instance>default[0-9]*</regex-instance>
+            <regex-instance>vendor[0-9]*_software</regex-instance>
+        </interface>
+    </hal>
+    <hal format="aidl" optional="true">
         <name>android.hardware.memtrack</name>
         <version>1</version>
         <interface>
