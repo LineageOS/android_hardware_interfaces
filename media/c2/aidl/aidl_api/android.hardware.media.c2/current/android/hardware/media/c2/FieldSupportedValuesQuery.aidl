@@ -39,6 +39,6 @@ parcelable FieldSupportedValuesQuery {
   @Backing(type="int") @VintfStability
   enum Type {
     POSSIBLE = 0,
-    CURRENT = 1,
+    CURRENT,
   }
 }

@@ -52,15 +52,15 @@ interface IComponentStore {
     @Backing(type="int") @VintfStability
     enum Kind {
       OTHER = 0,
-      DECODER = 1,
-      ENCODER = 2,
+      DECODER,
+      ENCODER,
     }
     @Backing(type="int") @VintfStability
     enum Domain {
       OTHER = 0,
-      VIDEO = 1,
-      AUDIO = 2,
-      IMAGE = 3,
+      VIDEO,
+      AUDIO,
+      IMAGE,
     }
   }
 }

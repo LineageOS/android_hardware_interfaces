@@ -39,9 +39,9 @@ parcelable FrameData {
   android.hardware.media.c2.Buffer[] buffers;
   android.hardware.media.c2.Params configUpdate;
   android.hardware.media.c2.InfoBuffer[] infoBuffers;
-  const int DROP_FRAME = 1;
-  const int END_OF_STREAM = 2;
-  const int DISCARD_FRAME = 4;
-  const int FLAG_INCOMPLETE = 8;
-  const int CODEC_CONFIG = -2147483648;
+  const int DROP_FRAME = (1 << 0) /* 1 */;
+  const int END_OF_STREAM = (1 << 1) /* 2 */;
+  const int DISCARD_FRAME = (1 << 2) /* 4 */;
+  const int FLAG_INCOMPLETE = (1 << 3) /* 8 */;
+  const int CODEC_CONFIG = (1 << 31) /* -2147483648 */;
 }
