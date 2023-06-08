@@ -38,11 +38,11 @@ parcelable ParamDescriptor {
   int attrib;
   String name;
   int[] dependencies;
-  const int ATTRIBUTE_REQUIRED = 1;
-  const int ATTRIBUTE_PERSISTENT = 2;
-  const int ATTRIBUTE_STRICT = 4;
-  const int ATTRIBUTE_READ_ONLY = 8;
-  const int ATTRIBUTE_HIDDEN = 16;
-  const int ATTRIBUTE_INTERNAL = 32;
-  const int ATTRIBUTE_CONST = 64;
+  const int ATTRIBUTE_REQUIRED = (1 << 0) /* 1 */;
+  const int ATTRIBUTE_PERSISTENT = (1 << 1) /* 2 */;
+  const int ATTRIBUTE_STRICT = (1 << 2) /* 4 */;
+  const int ATTRIBUTE_READ_ONLY = (1 << 3) /* 8 */;
+  const int ATTRIBUTE_HIDDEN = (1 << 4) /* 16 */;
+  const int ATTRIBUTE_INTERNAL = (1 << 5) /* 32 */;
+  const int ATTRIBUTE_CONST = (1 << 6) /* 64 */;
 }
