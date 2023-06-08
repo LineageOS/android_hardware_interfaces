@@ -176,6 +176,17 @@ bool KeyMintAidlTestBase::dump_Attestations = false;
 std::string KeyMintAidlTestBase::keyblob_dir;
 std::optional<bool> KeyMintAidlTestBase::expect_upgrade = std::nullopt;
 
+KeyBlobDeleter::~KeyBlobDeleter() {
+    if (key_blob_.empty()) {
+        return;
+    }
+    Status result = keymint_->deleteKey(key_blob_);
+    key_blob_.clear();
+    EXPECT_TRUE(result.isOk()) << result.getServiceSpecificError() << "\n";
+    ErrorCode rc = GetReturnErrorCode(result);
+    EXPECT_TRUE(rc == ErrorCode::OK || rc == ErrorCode::UNIMPLEMENTED) << result << "\n";
+}
+
 uint32_t KeyMintAidlTestBase::boot_patch_level(
         const vector<KeyCharacteristics>& key_characteristics) {
     // The boot patchlevel is not available as a property, but should be present
@@ -227,16 +238,6 @@ bool KeyMintAidlTestBase::Curve25519Supported() {
         ADD_FAILURE() << "Failed to determine interface version";
     }
     return version >= 2;
-}
-
-ErrorCode KeyMintAidlTestBase::GetReturnErrorCode(const Status& result) {
-    if (result.isOk()) return ErrorCode::OK;
-
-    if (result.getExceptionCode() == EX_SERVICE_SPECIFIC) {
-        return static_cast<ErrorCode>(result.getServiceSpecificError());
-    }
-
-    return ErrorCode::UNKNOWN_ERROR;
 }
 
 void KeyMintAidlTestBase::InitializeKeyMint(std::shared_ptr<IKeyMintDevice> keyMint) {
@@ -513,13 +514,9 @@ ErrorCode KeyMintAidlTestBase::DestroyAttestationIds() {
     return GetReturnErrorCode(result);
 }
 
-void KeyMintAidlTestBase::CheckedDeleteKey(vector<uint8_t>* key_blob, bool keep_key_blob) {
-    ErrorCode result = DeleteKey(key_blob, keep_key_blob);
-    EXPECT_TRUE(result == ErrorCode::OK || result == ErrorCode::UNIMPLEMENTED) << result << endl;
-}
-
 void KeyMintAidlTestBase::CheckedDeleteKey() {
-    CheckedDeleteKey(&key_blob_);
+    ErrorCode result = DeleteKey(&key_blob_, /* keep_key_blob = */ false);
+    EXPECT_TRUE(result == ErrorCode::OK || result == ErrorCode::UNIMPLEMENTED) << result << endl;
 }
 
 ErrorCode KeyMintAidlTestBase::Begin(KeyPurpose purpose, const vector<uint8_t>& key_blob,
@@ -1984,6 +1981,16 @@ AssertionResult ChainSignaturesAreValid(const vector<Certificate>& chain,
 
     if (KeyMintAidlTestBase::dump_Attestations) std::cout << cert_data.str();
     return AssertionSuccess();
+}
+
+ErrorCode GetReturnErrorCode(const Status& result) {
+    if (result.isOk()) return ErrorCode::OK;
+
+    if (result.getExceptionCode() == EX_SERVICE_SPECIFIC) {
+        return static_cast<ErrorCode>(result.getServiceSpecificError());
+    }
+
+    return ErrorCode::UNKNOWN_ERROR;
 }
 
 X509_Ptr parse_cert_blob(const vector<uint8_t>& blob) {

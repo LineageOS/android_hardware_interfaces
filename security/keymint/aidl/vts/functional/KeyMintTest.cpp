@@ -693,6 +693,7 @@ TEST_P(NewKeyGenerationTest, Aes) {
                     builder.Authorization(TAG_MIN_MAC_LENGTH, 128);
                 }
                 ASSERT_EQ(ErrorCode::OK, GenerateKey(builder, &key_blob, &key_characteristics));
+                KeyBlobDeleter deleter(keymint_, key_blob);
 
                 EXPECT_GT(key_blob.size(), 0U);
                 CheckSymmetricParams(key_characteristics);
@@ -703,8 +704,6 @@ TEST_P(NewKeyGenerationTest, Aes) {
                 EXPECT_TRUE(crypto_params.Contains(TAG_ALGORITHM, Algorithm::AES));
                 EXPECT_TRUE(crypto_params.Contains(TAG_KEY_SIZE, key_size))
                         << "Key size " << key_size << "missing";
-
-                CheckedDeleteKey(&key_blob);
             }
         }
     }
@@ -877,6 +876,7 @@ TEST_P(NewKeyGenerationTest, TripleDes) {
                                                              .Authorization(TAG_NO_AUTH_REQUIRED)
                                                              .SetDefaultValidity(),
                                                      &key_blob, &key_characteristics));
+                KeyBlobDeleter deleter(keymint_, key_blob);
 
                 EXPECT_GT(key_blob.size(), 0U);
                 CheckSymmetricParams(key_characteristics);
@@ -887,8 +887,6 @@ TEST_P(NewKeyGenerationTest, TripleDes) {
                 EXPECT_TRUE(crypto_params.Contains(TAG_ALGORITHM, Algorithm::TRIPLE_DES));
                 EXPECT_TRUE(crypto_params.Contains(TAG_KEY_SIZE, key_size))
                         << "Key size " << key_size << "missing";
-
-                CheckedDeleteKey(&key_blob);
             }
         }
     }
@@ -924,6 +922,7 @@ TEST_P(NewKeyGenerationTest, TripleDesWithAttestation) {
                                                              .AttestationApplicationId(app_id)
                                                              .SetDefaultValidity(),
                                                      &key_blob, &key_characteristics));
+                KeyBlobDeleter deleter(keymint_, key_blob);
 
                 EXPECT_GT(key_blob.size(), 0U);
                 CheckSymmetricParams(key_characteristics);
@@ -934,8 +933,6 @@ TEST_P(NewKeyGenerationTest, TripleDesWithAttestation) {
                 EXPECT_TRUE(crypto_params.Contains(TAG_ALGORITHM, Algorithm::TRIPLE_DES));
                 EXPECT_TRUE(crypto_params.Contains(TAG_KEY_SIZE, key_size))
                         << "Key size " << key_size << "missing";
-
-                CheckedDeleteKey(&key_blob);
             }
         }
     }
@@ -1003,6 +1000,7 @@ TEST_P(NewKeyGenerationTest, Rsa) {
                                                      .Padding(PaddingMode::NONE)
                                                      .SetDefaultValidity(),
                                              &key_blob, &key_characteristics));
+        KeyBlobDeleter deleter(keymint_, key_blob);
 
         ASSERT_GT(key_blob.size(), 0U);
         CheckBaseParams(key_characteristics);
@@ -1014,8 +1012,6 @@ TEST_P(NewKeyGenerationTest, Rsa) {
         EXPECT_TRUE(crypto_params.Contains(TAG_KEY_SIZE, key_size))
                 << "Key size " << key_size << "missing";
         EXPECT_TRUE(crypto_params.Contains(TAG_RSA_PUBLIC_EXPONENT, 65537U));
-
-        CheckedDeleteKey(&key_blob);
     }
 }
 
@@ -1139,6 +1135,7 @@ TEST_P(NewKeyGenerationTest, RsaWithAttestation) {
             }
         }
         ASSERT_EQ(ErrorCode::OK, result);
+        KeyBlobDeleter deleter(keymint_, key_blob);
         ASSERT_GT(key_blob.size(), 0U);
         CheckBaseParams(key_characteristics);
         CheckCharacteristics(key_blob, key_characteristics);
@@ -1159,8 +1156,6 @@ TEST_P(NewKeyGenerationTest, RsaWithAttestation) {
         EXPECT_TRUE(verify_attestation_record(AidlVersion(), challenge, app_id,  //
                                               sw_enforced, hw_enforced, SecLevel(),
                                               cert_chain_[0].encodedCertificate));
-
-        CheckedDeleteKey(&key_blob);
     }
 }
 
@@ -1214,6 +1209,7 @@ TEST_P(NewKeyGenerationTest, RsaWithRkpAttestation) {
                                       .Authorization(TAG_NO_AUTH_REQUIRED)
                                       .SetDefaultValidity(),
                               attestation_key, &key_blob, &key_characteristics, &cert_chain_));
+        KeyBlobDeleter deleter(keymint_, key_blob);
 
         ASSERT_GT(key_blob.size(), 0U);
         CheckBaseParams(key_characteristics);
@@ -1240,8 +1236,6 @@ TEST_P(NewKeyGenerationTest, RsaWithRkpAttestation) {
         ASSERT_TRUE(X509_verify(key_cert.get(), signing_pubkey.get()))
                 << "Verification of attested certificate failed "
                 << "OpenSSL error string: " << ERR_error_string(ERR_get_error(), NULL);
-
-        CheckedDeleteKey(&key_blob);
     }
 }
 
@@ -1294,6 +1288,7 @@ TEST_P(NewKeyGenerationTest, EcdsaWithRkpAttestation) {
                                       .Authorization(TAG_NO_AUTH_REQUIRED)
                                       .SetDefaultValidity(),
                               attestation_key, &key_blob, &key_characteristics, &cert_chain_));
+        KeyBlobDeleter deleter(keymint_, key_blob);
 
         ASSERT_GT(key_blob.size(), 0U);
         CheckBaseParams(key_characteristics);
@@ -1318,8 +1313,6 @@ TEST_P(NewKeyGenerationTest, EcdsaWithRkpAttestation) {
         ASSERT_TRUE(X509_verify(key_cert.get(), signing_pubkey.get()))
                 << "Verification of attested certificate failed "
                 << "OpenSSL error string: " << ERR_error_string(ERR_get_error(), NULL);
-
-        CheckedDeleteKey(&key_blob);
     }
 }
 
@@ -1365,6 +1358,7 @@ TEST_P(NewKeyGenerationTest, RsaEncryptionWithAttestation) {
         }
     }
     ASSERT_EQ(ErrorCode::OK, result);
+    KeyBlobDeleter deleter(keymint_, key_blob);
 
     ASSERT_GT(key_blob.size(), 0U);
     AuthorizationSet auths;
@@ -1405,8 +1399,6 @@ TEST_P(NewKeyGenerationTest, RsaEncryptionWithAttestation) {
     EXPECT_TRUE(verify_attestation_record(AidlVersion(), challenge, app_id,  //
                                           sw_enforced, hw_enforced, SecLevel(),
                                           cert_chain_[0].encodedCertificate));
-
-    CheckedDeleteKey(&key_blob);
 }
 
 /*
@@ -1437,6 +1429,7 @@ TEST_P(NewKeyGenerationTest, RsaWithSelfSign) {
                                       .Authorization(TAG_CERTIFICATE_SUBJECT, subject_der)
                                       .SetDefaultValidity(),
                               &key_blob, &key_characteristics));
+        KeyBlobDeleter deleter(keymint_, key_blob);
 
         ASSERT_GT(key_blob.size(), 0U);
         CheckBaseParams(key_characteristics);
@@ -1452,8 +1445,6 @@ TEST_P(NewKeyGenerationTest, RsaWithSelfSign) {
         ASSERT_EQ(cert_chain_.size(), 1);
         verify_subject_and_serial(cert_chain_[0], serial_int, subject, false);
         EXPECT_TRUE(ChainSignaturesAreValid(cert_chain_));
-
-        CheckedDeleteKey(&key_blob);
     }
 }
 
@@ -1518,6 +1509,7 @@ TEST_P(NewKeyGenerationTest, RsaWithAttestationAppIdIgnored) {
                                   .Authorization(TAG_CERTIFICATE_SUBJECT, subject_der)
                                   .SetDefaultValidity(),
                           &key_blob, &key_characteristics));
+    KeyBlobDeleter deleter(keymint_, key_blob);
 
     ASSERT_GT(key_blob.size(), 0U);
     CheckBaseParams(key_characteristics);
@@ -1534,8 +1526,6 @@ TEST_P(NewKeyGenerationTest, RsaWithAttestationAppIdIgnored) {
     verify_subject_and_serial(cert_chain_[0], serial_int, subject, false);
     EXPECT_TRUE(ChainSignaturesAreValid(cert_chain_));
     ASSERT_EQ(cert_chain_.size(), 1);
-
-    CheckedDeleteKey(&key_blob);
 }
 
 /*
@@ -1556,6 +1546,7 @@ TEST_P(NewKeyGenerationTest, LimitedUsageRsa) {
                                                      .Authorization(TAG_USAGE_COUNT_LIMIT, 1)
                                                      .SetDefaultValidity(),
                                              &key_blob, &key_characteristics));
+        KeyBlobDeleter deleter(keymint_, key_blob);
 
         ASSERT_GT(key_blob.size(), 0U);
         CheckBaseParams(key_characteristics);
@@ -1575,8 +1566,6 @@ TEST_P(NewKeyGenerationTest, LimitedUsageRsa) {
         }
         EXPECT_TRUE(auths.Contains(TAG_USAGE_COUNT_LIMIT, 1U))
                 << "key usage count limit " << 1U << " missing";
-
-        CheckedDeleteKey(&key_blob);
     }
 }
 
@@ -1625,6 +1614,7 @@ TEST_P(NewKeyGenerationTest, LimitedUsageRsaWithAttestation) {
             }
         }
         ASSERT_EQ(ErrorCode::OK, result);
+        KeyBlobDeleter deleter(keymint_, key_blob);
 
         ASSERT_GT(key_blob.size(), 0U);
         CheckBaseParams(key_characteristics);
@@ -1655,8 +1645,6 @@ TEST_P(NewKeyGenerationTest, LimitedUsageRsaWithAttestation) {
         EXPECT_TRUE(verify_attestation_record(AidlVersion(), challenge, app_id,  //
                                               sw_enforced, hw_enforced, SecLevel(),
                                               cert_chain_[0].encodedCertificate));
-
-        CheckedDeleteKey(&key_blob);
     }
 }
 
@@ -1726,6 +1714,7 @@ TEST_P(NewKeyGenerationTest, Ecdsa) {
                                                      .Digest(Digest::NONE)
                                                      .SetDefaultValidity(),
                                              &key_blob, &key_characteristics));
+        KeyBlobDeleter deleter(keymint_, key_blob);
         ASSERT_GT(key_blob.size(), 0U);
         CheckBaseParams(key_characteristics);
         CheckCharacteristics(key_blob, key_characteristics);
@@ -1734,8 +1723,6 @@ TEST_P(NewKeyGenerationTest, Ecdsa) {
 
         EXPECT_TRUE(crypto_params.Contains(TAG_ALGORITHM, Algorithm::EC));
         EXPECT_TRUE(crypto_params.Contains(TAG_EC_CURVE, curve)) << "Curve " << curve << "missing";
-
-        CheckedDeleteKey(&key_blob);
     }
 }
 
@@ -1759,6 +1746,8 @@ TEST_P(NewKeyGenerationTest, EcdsaCurve25519) {
                                            .SetDefaultValidity(),
                                    &key_blob, &key_characteristics);
     ASSERT_EQ(result, ErrorCode::OK);
+    KeyBlobDeleter deleter(keymint_, key_blob);
+
     ASSERT_GT(key_blob.size(), 0U);
 
     EXPECT_TRUE(ChainSignaturesAreValid(cert_chain_));
@@ -1771,8 +1760,6 @@ TEST_P(NewKeyGenerationTest, EcdsaCurve25519) {
 
     EXPECT_TRUE(crypto_params.Contains(TAG_ALGORITHM, Algorithm::EC));
     EXPECT_TRUE(crypto_params.Contains(TAG_EC_CURVE, curve)) << "Curve " << curve << "missing";
-
-    CheckedDeleteKey(&key_blob);
 }
 
 /*
@@ -1879,6 +1866,7 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestation) {
             }
         }
         ASSERT_EQ(ErrorCode::OK, result);
+        KeyBlobDeleter deleter(keymint_, key_blob);
         ASSERT_GT(key_blob.size(), 0U);
         CheckBaseParams(key_characteristics);
         CheckCharacteristics(key_blob, key_characteristics);
@@ -1897,8 +1885,6 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestation) {
         EXPECT_TRUE(verify_attestation_record(AidlVersion(), challenge, app_id,  //
                                               sw_enforced, hw_enforced, SecLevel(),
                                               cert_chain_[0].encodedCertificate));
-
-        CheckedDeleteKey(&key_blob);
     }
 }
 
@@ -1936,6 +1922,7 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestationCurve25519) {
                                            .SetDefaultValidity(),
                                    &key_blob, &key_characteristics);
     ASSERT_EQ(ErrorCode::OK, result);
+    KeyBlobDeleter deleter(keymint_, key_blob);
     ASSERT_GT(key_blob.size(), 0U);
     CheckBaseParams(key_characteristics);
     CheckCharacteristics(key_blob, key_characteristics);
@@ -1954,8 +1941,6 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestationCurve25519) {
     EXPECT_TRUE(verify_attestation_record(AidlVersion(), challenge, app_id,  //
                                           sw_enforced, hw_enforced, SecLevel(),
                                           cert_chain_[0].encodedCertificate));
-
-    CheckedDeleteKey(&key_blob);
 }
 
 /*
@@ -2024,6 +2009,7 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestationTags) {
             }
         }
         ASSERT_EQ(result, ErrorCode::OK);
+        KeyBlobDeleter deleter(keymint_, key_blob);
         ASSERT_GT(key_blob.size(), 0U);
 
         EXPECT_TRUE(ChainSignaturesAreValid(cert_chain_));
@@ -2043,8 +2029,6 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestationTags) {
         EXPECT_TRUE(verify_attestation_record(AidlVersion(), challenge, app_id, sw_enforced,
                                               hw_enforced, SecLevel(),
                                               cert_chain_[0].encodedCertificate));
-
-        CheckedDeleteKey(&key_blob);
     }
 
     // Collection of invalid attestation ID tags.
@@ -2170,6 +2154,7 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestationIdTags) {
             continue;
         }
         ASSERT_EQ(result, ErrorCode::OK);
+        KeyBlobDeleter deleter(keymint_, key_blob);
         ASSERT_GT(key_blob.size(), 0U);
 
         EXPECT_TRUE(ChainSignaturesAreValid(cert_chain_));
@@ -2189,8 +2174,6 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestationIdTags) {
         EXPECT_TRUE(verify_attestation_record(AidlVersion(), challenge, app_id, sw_enforced,
                                               hw_enforced, SecLevel(),
                                               cert_chain_[0].encodedCertificate));
-
-        CheckedDeleteKey(&key_blob);
     }
 }
 
@@ -2345,6 +2328,7 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestationTagNoApplicationId) {
         }
     }
     ASSERT_EQ(result, ErrorCode::OK);
+    KeyBlobDeleter deleter(keymint_, key_blob);
     ASSERT_GT(key_blob.size(), 0U);
 
     EXPECT_TRUE(ChainSignaturesAreValid(cert_chain_));
@@ -2364,8 +2348,6 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestationTagNoApplicationId) {
     ASSERT_EQ(std::search(cert_chain_[0].encodedCertificate.begin(),
                           cert_chain_[0].encodedCertificate.end(), needle.begin(), needle.end()),
               cert_chain_[0].encodedCertificate.end());
-
-    CheckedDeleteKey(&key_blob);
 }
 
 /*
@@ -2393,6 +2375,7 @@ TEST_P(NewKeyGenerationTest, EcdsaSelfSignAttestation) {
                                       .Authorization(TAG_CERTIFICATE_SUBJECT, subject_der)
                                       .SetDefaultValidity(),
                               &key_blob, &key_characteristics));
+        KeyBlobDeleter deleter(keymint_, key_blob);
         ASSERT_GT(key_blob.size(), 0U);
         CheckBaseParams(key_characteristics);
         CheckCharacteristics(key_blob, key_characteristics);
@@ -2408,8 +2391,6 @@ TEST_P(NewKeyGenerationTest, EcdsaSelfSignAttestation) {
 
         AuthorizationSet hw_enforced = HwEnforcedAuthorizations(key_characteristics);
         AuthorizationSet sw_enforced = SwEnforcedAuthorizations(key_characteristics);
-
-        CheckedDeleteKey(&key_blob);
     }
 }
 
@@ -2463,6 +2444,7 @@ TEST_P(NewKeyGenerationTest, EcdsaIgnoreAppId) {
                                                      .AttestationApplicationId(app_id)
                                                      .SetDefaultValidity(),
                                              &key_blob, &key_characteristics));
+        KeyBlobDeleter deleter(keymint_, key_blob);
 
         ASSERT_GT(key_blob.size(), 0U);
         CheckBaseParams(key_characteristics);
@@ -2478,8 +2460,6 @@ TEST_P(NewKeyGenerationTest, EcdsaIgnoreAppId) {
 
         AuthorizationSet hw_enforced = HwEnforcedAuthorizations(key_characteristics);
         AuthorizationSet sw_enforced = SwEnforcedAuthorizations(key_characteristics);
-
-        CheckedDeleteKey(&key_blob);
     }
 }
 
@@ -2521,6 +2501,7 @@ TEST_P(NewKeyGenerationTest, AttestationApplicationIDLengthProperlyEncoded) {
             }
         }
         ASSERT_EQ(ErrorCode::OK, result);
+        KeyBlobDeleter deleter(keymint_, key_blob);
         ASSERT_GT(key_blob.size(), 0U);
         CheckBaseParams(key_characteristics);
         CheckCharacteristics(key_blob, key_characteristics);
@@ -2538,8 +2519,6 @@ TEST_P(NewKeyGenerationTest, AttestationApplicationIDLengthProperlyEncoded) {
         EXPECT_TRUE(verify_attestation_record(AidlVersion(), challenge, app_id,  //
                                               sw_enforced, hw_enforced, SecLevel(),
                                               cert_chain_[0].encodedCertificate));
-
-        CheckedDeleteKey(&key_blob);
     }
 }
 
@@ -2560,6 +2539,7 @@ TEST_P(NewKeyGenerationTest, LimitedUsageEcdsa) {
                                                      .Authorization(TAG_USAGE_COUNT_LIMIT, 1)
                                                      .SetDefaultValidity(),
                                              &key_blob, &key_characteristics));
+        KeyBlobDeleter deleter(keymint_, key_blob);
 
         ASSERT_GT(key_blob.size(), 0U);
         CheckBaseParams(key_characteristics);
@@ -2577,8 +2557,6 @@ TEST_P(NewKeyGenerationTest, LimitedUsageEcdsa) {
         }
         EXPECT_TRUE(auths.Contains(TAG_USAGE_COUNT_LIMIT, 1U))
                 << "key usage count limit " << 1U << " missing";
-
-        CheckedDeleteKey(&key_blob);
     }
 }
 
@@ -2710,6 +2688,7 @@ TEST_P(NewKeyGenerationTest, Hmac) {
                           AuthorizationSetBuilder().HmacKey(key_size).Digest(digest).Authorization(
                                   TAG_MIN_MAC_LENGTH, 128),
                           &key_blob, &key_characteristics));
+        KeyBlobDeleter deleter(keymint_, key_blob);
 
         ASSERT_GT(key_blob.size(), 0U);
         CheckBaseParams(key_characteristics);
@@ -2719,8 +2698,6 @@ TEST_P(NewKeyGenerationTest, Hmac) {
         EXPECT_TRUE(crypto_params.Contains(TAG_ALGORITHM, Algorithm::HMAC));
         EXPECT_TRUE(crypto_params.Contains(TAG_KEY_SIZE, key_size))
                 << "Key size " << key_size << "missing";
-
-        CheckedDeleteKey(&key_blob);
     }
 }
 
@@ -2746,6 +2723,7 @@ TEST_P(NewKeyGenerationTest, HmacNoAttestation) {
                                                      .AttestationApplicationId(app_id)
                                                      .Authorization(TAG_MIN_MAC_LENGTH, 128),
                                              &key_blob, &key_characteristics));
+        KeyBlobDeleter deleter(keymint_, key_blob);
 
         ASSERT_GT(key_blob.size(), 0U);
         ASSERT_EQ(cert_chain_.size(), 0);
@@ -2756,8 +2734,6 @@ TEST_P(NewKeyGenerationTest, HmacNoAttestation) {
         EXPECT_TRUE(crypto_params.Contains(TAG_ALGORITHM, Algorithm::HMAC));
         EXPECT_TRUE(crypto_params.Contains(TAG_KEY_SIZE, key_size))
                 << "Key size " << key_size << "missing";
-
-        CheckedDeleteKey(&key_blob);
     }
 }
 
@@ -2779,6 +2755,7 @@ TEST_P(NewKeyGenerationTest, LimitedUsageHmac) {
                                                      .Authorization(TAG_MIN_MAC_LENGTH, 128)
                                                      .Authorization(TAG_USAGE_COUNT_LIMIT, 1),
                                              &key_blob, &key_characteristics));
+        KeyBlobDeleter deleter(keymint_, key_blob);
 
         ASSERT_GT(key_blob.size(), 0U);
         CheckBaseParams(key_characteristics);
@@ -2796,8 +2773,6 @@ TEST_P(NewKeyGenerationTest, LimitedUsageHmac) {
         }
         EXPECT_TRUE(auths.Contains(TAG_USAGE_COUNT_LIMIT, 1U))
                 << "key usage count limit " << 1U << " missing";
-
-        CheckedDeleteKey(&key_blob);
     }
 }
 
@@ -3891,6 +3866,7 @@ TEST_P(VerificationOperationsTest, HmacSigningKeyCannotVerify) {
                                 .Digest(Digest::SHA_2_256)
                                 .Authorization(TAG_MIN_MAC_LENGTH, 160),
                         KeyFormat::RAW, key_material, &signing_key, &signing_key_chars));
+    KeyBlobDeleter sign_deleter(keymint_, signing_key);
     EXPECT_EQ(ErrorCode::OK,
               ImportKey(AuthorizationSetBuilder()
                                 .Authorization(TAG_NO_AUTH_REQUIRED)
@@ -3899,6 +3875,7 @@ TEST_P(VerificationOperationsTest, HmacSigningKeyCannotVerify) {
                                 .Digest(Digest::SHA_2_256)
                                 .Authorization(TAG_MIN_MAC_LENGTH, 160),
                         KeyFormat::RAW, key_material, &verification_key, &verification_key_chars));
+    KeyBlobDeleter verify_deleter(keymint_, verification_key);
 
     string message = "This is a message.";
     string signature = SignMessage(
@@ -3914,9 +3891,6 @@ TEST_P(VerificationOperationsTest, HmacSigningKeyCannotVerify) {
     // Verification key should work.
     VerifyMessage(verification_key, message, signature,
                   AuthorizationSetBuilder().Digest(Digest::SHA_2_256));
-
-    CheckedDeleteKey(&signing_key);
-    CheckedDeleteKey(&verification_key);
 }
 
 /*
@@ -3937,6 +3911,7 @@ TEST_P(VerificationOperationsTest, HmacVerificationFailsForCorruptSignature) {
                                 .Digest(Digest::SHA_2_256)
                                 .Authorization(TAG_MIN_MAC_LENGTH, 160),
                         KeyFormat::RAW, key_material, &signing_key, &signing_key_chars));
+    KeyBlobDeleter sign_deleter(keymint_, signing_key);
     EXPECT_EQ(ErrorCode::OK,
               ImportKey(AuthorizationSetBuilder()
                                 .Authorization(TAG_NO_AUTH_REQUIRED)
@@ -3945,6 +3920,7 @@ TEST_P(VerificationOperationsTest, HmacVerificationFailsForCorruptSignature) {
                                 .Digest(Digest::SHA_2_256)
                                 .Authorization(TAG_MIN_MAC_LENGTH, 160),
                         KeyFormat::RAW, key_material, &verification_key, &verification_key_chars));
+    KeyBlobDeleter verify_deleter(keymint_, verification_key);
 
     string message = "This is a message.";
     string signature = SignMessage(
@@ -3966,9 +3942,6 @@ TEST_P(VerificationOperationsTest, HmacVerificationFailsForCorruptSignature) {
 
     signature[0] += 1;  // Corrupt a signature
     EXPECT_EQ(ErrorCode::VERIFICATION_FAILED, Finish(message, signature, &output));
-
-    CheckedDeleteKey(&signing_key);
-    CheckedDeleteKey(&verification_key);
 }
 
 INSTANTIATE_KEYMINT_AIDL_TEST(VerificationOperationsTest);
@@ -8497,16 +8470,16 @@ TEST_P(EarlyBootKeyTest, CreateEarlyBootKeys) {
     // Early boot keys can be created after early boot.
     auto [aesKeyData, hmacKeyData, rsaKeyData, ecdsaKeyData] =
             CreateTestKeys(TAG_EARLY_BOOT_ONLY, ErrorCode::OK);
+    KeyBlobDeleter aes_deleter(keymint_, aesKeyData.blob);
+    KeyBlobDeleter hmac_deleter(keymint_, hmacKeyData.blob);
+    KeyBlobDeleter rsa_deleter(keymint_, rsaKeyData.blob);
+    KeyBlobDeleter ecdsa_deleter(keymint_, ecdsaKeyData.blob);
 
     for (const auto& keyData : {aesKeyData, hmacKeyData, rsaKeyData, ecdsaKeyData}) {
         ASSERT_GT(keyData.blob.size(), 0U);
         AuthorizationSet crypto_params = SecLevelAuthorizations(keyData.characteristics);
         EXPECT_TRUE(crypto_params.Contains(TAG_EARLY_BOOT_ONLY)) << crypto_params;
     }
-    CheckedDeleteKey(&aesKeyData.blob);
-    CheckedDeleteKey(&hmacKeyData.blob);
-    CheckedDeleteKey(&rsaKeyData.blob);
-    CheckedDeleteKey(&ecdsaKeyData.blob);
 }
 
 /*
@@ -8520,6 +8493,10 @@ TEST_P(EarlyBootKeyTest, CreateAttestedEarlyBootKey) {
                 builder->AttestationChallenge("challenge");
                 builder->AttestationApplicationId("app_id");
             });
+    KeyBlobDeleter aes_deleter(keymint_, aesKeyData.blob);
+    KeyBlobDeleter hmac_deleter(keymint_, hmacKeyData.blob);
+    KeyBlobDeleter rsa_deleter(keymint_, rsaKeyData.blob);
+    KeyBlobDeleter ecdsa_deleter(keymint_, ecdsaKeyData.blob);
 
     for (const auto& keyData : {aesKeyData, hmacKeyData, rsaKeyData, ecdsaKeyData}) {
         // Strongbox may not support factory attestation. Key creation might fail with
@@ -8530,14 +8507,6 @@ TEST_P(EarlyBootKeyTest, CreateAttestedEarlyBootKey) {
         ASSERT_GT(keyData.blob.size(), 0U);
         AuthorizationSet crypto_params = SecLevelAuthorizations(keyData.characteristics);
         EXPECT_TRUE(crypto_params.Contains(TAG_EARLY_BOOT_ONLY)) << crypto_params;
-    }
-    CheckedDeleteKey(&aesKeyData.blob);
-    CheckedDeleteKey(&hmacKeyData.blob);
-    if (rsaKeyData.blob.size() != 0U) {
-        CheckedDeleteKey(&rsaKeyData.blob);
-    }
-    if (ecdsaKeyData.blob.size() != 0U) {
-        CheckedDeleteKey(&ecdsaKeyData.blob);
     }
 }
 
@@ -8583,6 +8552,11 @@ TEST_P(EarlyBootKeyTest, ImportEarlyBootKeyFailure) {
 TEST_P(EarlyBootKeyTest, DISABLED_FullTest) {
     auto [aesKeyData, hmacKeyData, rsaKeyData, ecdsaKeyData] =
             CreateTestKeys(TAG_EARLY_BOOT_ONLY, ErrorCode::OK);
+    KeyBlobDeleter aes_deleter(keymint_, aesKeyData.blob);
+    KeyBlobDeleter hmac_deleter(keymint_, hmacKeyData.blob);
+    KeyBlobDeleter rsa_deleter(keymint_, rsaKeyData.blob);
+    KeyBlobDeleter ecdsa_deleter(keymint_, ecdsaKeyData.blob);
+
     // TAG_EARLY_BOOT_ONLY should be in hw-enforced.
     EXPECT_TRUE(HwEnforcedAuthorizations(aesKeyData.characteristics).Contains(TAG_EARLY_BOOT_ONLY));
     EXPECT_TRUE(
@@ -8607,19 +8581,13 @@ TEST_P(EarlyBootKeyTest, DISABLED_FullTest) {
     EXPECT_EQ(ErrorCode::EARLY_BOOT_ENDED, UseRsaKey(rsaKeyData.blob));
     EXPECT_EQ(ErrorCode::EARLY_BOOT_ENDED, UseEcdsaKey(ecdsaKeyData.blob));
 
-    CheckedDeleteKey(&aesKeyData.blob);
-    CheckedDeleteKey(&hmacKeyData.blob);
-    CheckedDeleteKey(&rsaKeyData.blob);
-    CheckedDeleteKey(&ecdsaKeyData.blob);
-
     // Should not be able to create new keys
-    std::tie(aesKeyData, hmacKeyData, rsaKeyData, ecdsaKeyData) =
+    auto [aesKeyData2, hmacKeyData2, rsaKeyData2, ecdsaKeyData2] =
             CreateTestKeys(TAG_EARLY_BOOT_ONLY, ErrorCode::EARLY_BOOT_ENDED);
-
-    CheckedDeleteKey(&aesKeyData.blob);
-    CheckedDeleteKey(&hmacKeyData.blob);
-    CheckedDeleteKey(&rsaKeyData.blob);
-    CheckedDeleteKey(&ecdsaKeyData.blob);
+    KeyBlobDeleter aes_deleter2(keymint_, aesKeyData2.blob);
+    KeyBlobDeleter hmac_deleter2(keymint_, hmacKeyData2.blob);
+    KeyBlobDeleter rsa_deleter2(keymint_, rsaKeyData2.blob);
+    KeyBlobDeleter ecdsa_deleter2(keymint_, ecdsaKeyData2.blob);
 }
 
 INSTANTIATE_KEYMINT_AIDL_TEST(EarlyBootKeyTest);
@@ -8637,6 +8605,10 @@ using UnlockedDeviceRequiredTest = KeyMintAidlTestBase;
 TEST_P(UnlockedDeviceRequiredTest, DISABLED_KeysBecomeUnusable) {
     auto [aesKeyData, hmacKeyData, rsaKeyData, ecdsaKeyData] =
             CreateTestKeys(TAG_UNLOCKED_DEVICE_REQUIRED, ErrorCode::OK);
+    KeyBlobDeleter aes_deleter(keymint_, aesKeyData.blob);
+    KeyBlobDeleter hmac_deleter(keymint_, hmacKeyData.blob);
+    KeyBlobDeleter rsa_deleter(keymint_, rsaKeyData.blob);
+    KeyBlobDeleter ecdsa_deleter(keymint_, ecdsaKeyData.blob);
 
     EXPECT_EQ(ErrorCode::OK, UseAesKey(aesKeyData.blob));
     EXPECT_EQ(ErrorCode::OK, UseHmacKey(hmacKeyData.blob));
@@ -8650,11 +8622,6 @@ TEST_P(UnlockedDeviceRequiredTest, DISABLED_KeysBecomeUnusable) {
     EXPECT_EQ(ErrorCode::DEVICE_LOCKED, UseHmacKey(hmacKeyData.blob));
     EXPECT_EQ(ErrorCode::DEVICE_LOCKED, UseRsaKey(rsaKeyData.blob));
     EXPECT_EQ(ErrorCode::DEVICE_LOCKED, UseEcdsaKey(ecdsaKeyData.blob));
-
-    CheckedDeleteKey(&aesKeyData.blob);
-    CheckedDeleteKey(&hmacKeyData.blob);
-    CheckedDeleteKey(&rsaKeyData.blob);
-    CheckedDeleteKey(&ecdsaKeyData.blob);
 }
 
 INSTANTIATE_KEYMINT_AIDL_TEST(UnlockedDeviceRequiredTest);
