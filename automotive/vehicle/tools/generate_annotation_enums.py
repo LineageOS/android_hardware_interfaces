@@ -23,29 +23,33 @@
    Usage:
    $ python generate_annotation_enums.py
 """
+import argparse
+import filecmp
 import os
 import re
 import sys
+import tempfile
 
-PROP_AIDL_FILE_PATH = ("hardware/interfaces/automotive/vehicle/aidl_property/android/hardware/" +
-    "automotive/vehicle/VehicleProperty.aidl")
-CHANGE_MODE_CPP_FILE_PATH = ("hardware/interfaces/automotive/vehicle/aidl/generated_lib/cpp/" +
-    "ChangeModeForVehicleProperty.h")
-ACCESS_CPP_FILE_PATH = ("hardware/interfaces/automotive/vehicle/aidl/generated_lib/cpp/" +
-    "AccessForVehicleProperty.h")
-CHANGE_MODE_JAVA_FILE_PATH = ("hardware/interfaces/automotive/vehicle/aidl/generated_lib/java/" +
-    "ChangeModeForVehicleProperty.java")
-ACCESS_JAVA_FILE_PATH = ("hardware/interfaces/automotive/vehicle/aidl/generated_lib/java/" +
-    "AccessForVehicleProperty.java")
+PROP_AIDL_FILE_PATH = ('hardware/interfaces/automotive/vehicle/aidl_property/android/hardware/' +
+    'automotive/vehicle/VehicleProperty.aidl')
+CHANGE_MODE_CPP_FILE_PATH = ('hardware/interfaces/automotive/vehicle/aidl/generated_lib/cpp/' +
+    'ChangeModeForVehicleProperty.h')
+ACCESS_CPP_FILE_PATH = ('hardware/interfaces/automotive/vehicle/aidl/generated_lib/cpp/' +
+    'AccessForVehicleProperty.h')
+CHANGE_MODE_JAVA_FILE_PATH = ('hardware/interfaces/automotive/vehicle/aidl/generated_lib/java/' +
+    'ChangeModeForVehicleProperty.java')
+ACCESS_JAVA_FILE_PATH = ('hardware/interfaces/automotive/vehicle/aidl/generated_lib/java/' +
+    'AccessForVehicleProperty.java')
+SCRIPT_PATH = 'hardware/interfaces/automotive/vehicle/tools/generate_annotation_enums.py'
 
-TAB = "    "
-RE_ENUM_START = re.compile("\s*enum VehicleProperty \{")
-RE_ENUM_END = re.compile("\s*\}\;")
-RE_COMMENT_BEGIN = re.compile("\s*\/\*\*?")
-RE_COMMENT_END = re.compile("\s*\*\/")
-RE_CHANGE_MODE = re.compile("\s*\* @change_mode (\S+)\s*")
-RE_ACCESS = re.compile("\s*\* @access (\S+)\s*")
-RE_VALUE = re.compile("\s*(\w+)\s*=(.*)")
+TAB = '    '
+RE_ENUM_START = re.compile('\s*enum VehicleProperty \{')
+RE_ENUM_END = re.compile('\s*\}\;')
+RE_COMMENT_BEGIN = re.compile('\s*\/\*\*?')
+RE_COMMENT_END = re.compile('\s*\*\/')
+RE_CHANGE_MODE = re.compile('\s*\* @change_mode (\S+)\s*')
+RE_ACCESS = re.compile('\s*\* @access (\S+)\s*')
+RE_VALUE = re.compile('\s*(\w+)\s*=(.*)')
 
 LICENSE = """/*
  * Copyright (C) 2022 The Android Open Source Project
@@ -195,23 +199,23 @@ class Converter:
                     match = RE_VALUE.match(line)
                     if match:
                         prop_name = match.group(1)
-                        if prop_name == "INVALID":
+                        if prop_name == 'INVALID':
                             continue
                         if not annotation:
-                            print("No @" + self.name + " annotation for property: " + prop_name)
-                            sys.exit(1)
+                            raise Exception(
+                                    'No @' + self.name + ' annotation for property: ' + prop_name)
                         if id != 0:
-                            content += "\n"
+                            content += '\n'
                         if cpp:
-                            annotation = annotation.replace(".", "::")
-                            content += (TAB + TAB + "{VehicleProperty::" + prop_name + ", " +
-                                        annotation + "},")
+                            annotation = annotation.replace('.', '::')
+                            content += (TAB + TAB + '{VehicleProperty::' + prop_name + ', ' +
+                                        annotation + '},')
                         else:
-                            content += (TAB + TAB + "Map.entry(VehicleProperty." + prop_name + ", " +
-                                        annotation + "),")
+                            content += (TAB + TAB + 'Map.entry(VehicleProperty.' + prop_name + ', ' +
+                                        annotation + '),')
                         id += 1
 
-        # Remove the additional "," at the end for the Java file.
+        # Remove the additional ',' at the end for the Java file.
         if not cpp:
             content = content[:-1]
 
@@ -221,25 +225,88 @@ class Converter:
             f.write(content)
 
 
+def createTempFile():
+    f = tempfile.NamedTemporaryFile(delete=False);
+    f.close();
+    return f.name
+
+
 def main():
-    android_top = os.environ['ANDROID_BUILD_TOP']
+    parser = argparse.ArgumentParser(
+            description='Generate Java and C++ enums based on annotations in VehicleProperty.aidl')
+    parser.add_argument('--android_build_top', required=False, help='Path to ANDROID_BUILD_TOP')
+    parser.add_argument('--preupload_files', nargs='+', required=False, help='modified files')
+    parser.add_argument('--check_only', required=False, action='store_true',
+            help='only check whether the generated files need update')
+    args = parser.parse_args();
+    android_top = None
+    output_folder = None
+    if args.android_build_top:
+        android_top = args.android_build_top
+        vehiclePropertyUpdated = False
+        for preuload_file in args.preupload_files:
+            if preuload_file.endswith('VehicleProperty.aidl'):
+                vehiclePropertyUpdated = True
+                break
+        if not vehiclePropertyUpdated:
+            return
+    else:
+        android_top = os.environ['ANDROID_BUILD_TOP']
     if not android_top:
-        print("ANDROID_BUILD_TOP is not in envorinmental variable, please run source and lunch " +
-            "at the android root")
+        print('ANDROID_BUILD_TOP is not in envorinmental variable, please run source and lunch ' +
+            'at the android root')
 
     aidl_file = os.path.join(android_top, PROP_AIDL_FILE_PATH)
-    change_mode_cpp_output = os.path.join(android_top, CHANGE_MODE_CPP_FILE_PATH);
-    access_cpp_output = os.path.join(android_top, ACCESS_CPP_FILE_PATH);
-    change_mode_java_output = os.path.join(android_top, CHANGE_MODE_JAVA_FILE_PATH);
-    access_java_output = os.path.join(android_top, ACCESS_JAVA_FILE_PATH);
 
-    c = Converter("change_mode", RE_CHANGE_MODE);
-    c.convert(aidl_file, change_mode_cpp_output, CHANGE_MODE_CPP_HEADER, CHANGE_MODE_CPP_FOOTER, True)
-    c.convert(aidl_file, change_mode_java_output, CHANGE_MODE_JAVA_HEADER, CHANGE_MODE_JAVA_FOOTER, False)
-    c = Converter("access", RE_ACCESS)
-    c.convert(aidl_file, access_cpp_output, ACCESS_CPP_HEADER, ACCESS_CPP_FOOTER, True)
-    c.convert(aidl_file, access_java_output, ACCESS_JAVA_HEADER, ACCESS_JAVA_FOOTER, False)
+    change_mode_cpp_file = os.path.join(android_top, CHANGE_MODE_CPP_FILE_PATH);
+    access_cpp_file = os.path.join(android_top, ACCESS_CPP_FILE_PATH);
+    change_mode_java_file = os.path.join(android_top, CHANGE_MODE_JAVA_FILE_PATH);
+    access_java_file = os.path.join(android_top, ACCESS_JAVA_FILE_PATH);
+    temp_files = []
+
+    if not args.check_only:
+        change_mode_cpp_output = change_mode_cpp_file
+        access_cpp_output = access_cpp_file
+        change_mode_java_output = change_mode_java_file
+        access_java_output = access_java_file
+    else:
+        change_mode_cpp_output = createTempFile()
+        temp_files.append(change_mode_cpp_output)
+        access_cpp_output = createTempFile()
+        temp_files.append(access_cpp_output)
+        change_mode_java_output = createTempFile()
+        temp_files.append(change_mode_java_output)
+        access_java_output = createTempFile()
+        temp_files.append(access_java_output)
+
+    try:
+        c = Converter('change_mode', RE_CHANGE_MODE);
+        c.convert(aidl_file, change_mode_cpp_output, CHANGE_MODE_CPP_HEADER, CHANGE_MODE_CPP_FOOTER,
+                True)
+        c.convert(aidl_file, change_mode_java_output, CHANGE_MODE_JAVA_HEADER,
+                CHANGE_MODE_JAVA_FOOTER, False)
+        c = Converter('access', RE_ACCESS)
+        c.convert(aidl_file, access_cpp_output, ACCESS_CPP_HEADER, ACCESS_CPP_FOOTER, True)
+        c.convert(aidl_file, access_java_output, ACCESS_JAVA_HEADER, ACCESS_JAVA_FOOTER, False)
+
+        if not args.check_only:
+            return
+
+        if ((not filecmp.cmp(change_mode_cpp_output, change_mode_cpp_file)) or
+                (not filecmp.cmp(change_mode_java_output, change_mode_java_file)) or
+                (not filecmp.cmp(access_cpp_output, access_cpp_file)) or
+                (not filecmp.cmp(access_java_output, access_java_file))):
+            print('The generated enum files for VehicleProperty.aidl requires update, ')
+            print('Run \npython ' + android_top + '/' + SCRIPT_PATH)
+            sys.exit(1)
+    except Exception as e:
+        print('Error parsing VehicleProperty.aidl')
+        print(e)
+        sys.exit(1)
+    finally:
+        for file in temp_files:
+            os.remove(file)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
