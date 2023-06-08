@@ -560,7 +560,7 @@ TEST_P(KeyBlobUpgradeTest, UseKeyBlobsBeforeOrAfter) {
                                               .SetDefaultValidity(),
                                       attest_key, &attested_key_blob, &attested_key_characteristics,
                                       &attested_key_cert_chain));
-                CheckedDeleteKey(&attested_key_blob);
+                KeyBlobDeleter(keymint_, attested_key_blob);
             } else {
                 FAIL() << "Unexpected name: " << name;
             }
