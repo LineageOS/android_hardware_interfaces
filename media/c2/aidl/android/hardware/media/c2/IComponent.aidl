@@ -17,12 +17,10 @@
 package android.hardware.media.c2;
 
 import android.hardware.common.NativeHandle;
-import android.view.Surface;
-
 import android.hardware.media.c2.IComponentInterface;
 import android.hardware.media.c2.IConfigurable;
+import android.hardware.media.c2.IGraphicBufferAllocator;
 import android.hardware.media.c2.WorkBundle;
-import android.hardware.media.c2.SurfaceSyncObj;
 
 /**
  * Interface for an AIDL Codec2 component.
@@ -234,23 +232,15 @@ interface IComponent {
     void reset();
 
     /**
-     * Starts using a surface for output with a synchronization object
+     * Specify an allocator for decoder output buffer from HAL.
      *
-     * This method must not block.
-     *
-     * @param blockPoolId Id of the `C2BlockPool` to be associated with the
-     *     output surface.
-     * @param surface Output surface.
-     * @param syncObject synchronization object for buffer allocation between
-     *     Framework and Component.
-     * @throws ServiceSpecificException with one of the following values:
-     *   - `Status::CANNOT_DO` - The component does not support an output surface.
-     *   - `Status::REFUSED`   - The output surface cannot be accessed.
-     *   - `Status::TIMED_OUT` - The operation cannot be finished in a timely manner.
+     * The method will be used once during the life-cycle of a codec instance.
+     * @param allocator Decoder output buffer allocator from the client
+     * @throws ServiceSpecificException with one of the following values
+     *   - `Status::CANNOT_DO` - The component does not support allocating from the client.
      *   - `Status::CORRUPTED` - Some unknown error occurred.
      */
-    void setOutputSurface(in long blockPoolId, in Surface surface,
-        in SurfaceSyncObj syncObject);
+    void setDecoderOutputAllocator(in IGraphicBufferAllocator allocator);
 
     /**
      * Starts the component.

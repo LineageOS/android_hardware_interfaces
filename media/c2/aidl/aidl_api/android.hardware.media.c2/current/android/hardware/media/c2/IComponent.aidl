@@ -43,7 +43,7 @@ interface IComponent {
   void queue(in android.hardware.media.c2.WorkBundle workBundle);
   void release();
   void reset();
-  void setOutputSurface(in long blockPoolId, in android.view.Surface surface, in android.hardware.media.c2.SurfaceSyncObj syncObject);
+  void setDecoderOutputAllocator(in android.hardware.media.c2.IGraphicBufferAllocator allocator);
   void start();
   void stop();
   parcelable BlockPool {
