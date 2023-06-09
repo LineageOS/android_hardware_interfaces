@@ -15,7 +15,7 @@ aidl_interface {
     double_loadable: true,
     srcs: ["android/hardware/media/c2/*.aidl"],
     include_dirs: [
-        "frameworks/native/aidl/gui",
+        "frameworks/base/core/java",
     ],
     imports: [
         "android.hardware.common-V2",
