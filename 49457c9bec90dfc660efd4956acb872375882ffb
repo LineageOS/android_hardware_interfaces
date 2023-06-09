@@ -52,6 +52,23 @@
       "parentUuid": "d759f8b7_92e98e63",
       "revId": "49457c9bec90dfc660efd4956acb872375882ffb",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9001243c_385c498c",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 32245
+      },
+      "writtenOn": "2023-06-09T17:57:02Z",
+      "side": 1,
+      "message": "necessary, and no other workaround is found, for legacy devices",
+      "revId": "49457c9bec90dfc660efd4956acb872375882ffb",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
