@@ -1,0 +1,13 @@
+{
+  "presubmit": [
+    {
+      "name": "VtsHalKeymasterV3_0TargetTest"
+    },
+    {
+      "name": "VtsHalKeymasterV4_0TargetTest"
+    },
+    {
+      "name": "VtsHalKeymasterV4_1TargetTest"
+    }
+  ]
+}
