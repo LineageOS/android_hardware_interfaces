@@ -104,7 +104,7 @@ interface IGnss {
      *
      * The framework calls this method to instruct the GPS engine to prepare for serving requests
      * from the framework. The GNSS HAL implementation must respond to all GNSS requests from the
-     * framework upon successful return from this method until cleanup() method is called to
+     * framework upon successful return from this method until close() method is called to
      * close this interface.
      *
      * @param callback Callback interface for IGnss.

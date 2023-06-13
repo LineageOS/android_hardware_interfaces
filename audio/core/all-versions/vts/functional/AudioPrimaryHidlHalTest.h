@@ -1014,9 +1014,8 @@ class StreamWriter : public StreamWorker<StreamWriter> {
         if (mDataPosition == 0) mOnDataStart();
         const size_t dataSize = std::min(mData.size() - mDataPosition, mDataMQ->availableToWrite());
         bool success = mDataMQ->write(mData.data() + mDataPosition, dataSize);
+        bool wrapped = false;
         ALOGE_IF(!success, "data message queue write failed");
-        mDataPosition += dataSize;
-        if (mDataPosition >= mData.size()) mDataPosition = 0;
         mEfGroup->wake(static_cast<uint32_t>(MessageQueueFlagBits::NOT_EMPTY));
 
         uint32_t efState = 0;
@@ -1034,6 +1033,11 @@ class StreamWriter : public StreamWorker<StreamWriter> {
                 ALOGE("bad write status: %d", writeStatus.retval);
                 success = false;
             }
+            mDataPosition += writeStatus.reply.written;
+            if (mDataPosition >= mData.size()) {
+                mDataPosition = 0;
+                wrapped = true;
+            }
         }
         if (ret == -EAGAIN || ret == -EINTR) {
             // Spurious wakeup. This normally retries no more than once.
@@ -1042,7 +1046,7 @@ class StreamWriter : public StreamWorker<StreamWriter> {
             ALOGE("bad wait status: %d", ret);
             success = false;
         }
-        if (success && mDataPosition == 0) {
+        if (wrapped) {
             success = mOnDataWrap();
         }
         return success;
@@ -1270,6 +1274,8 @@ class InputStreamTest
         if (!xsd::isTelephonyDevice(address.deviceType)) {
             metadata.source = toString(xsd::AudioSource::AUDIO_SOURCE_UNPROCESSED);
             metadata.channelMask = getConfig().base.channelMask;
+        } else {
+            address.deviceType = toString(xsd::AudioDevice::AUDIO_DEVICE_IN_DEFAULT);
         }
 #if MAJOR_VERSION == 7 && MINOR_VERSION >= 1
         auto flagsIt = std::find(flags.begin(), flags.end(),
@@ -1690,26 +1696,6 @@ TEST_P(InputStreamTest, GetInputFramesLost) {
     ASSERT_IS_OK(ret);
     uint32_t framesLost{ret};
     ASSERT_EQ(0U, framesLost);
-}
-
-TEST_P(InputStreamTest, getCapturePosition) {
-    doc::test(
-        "The capture position of a non prepared stream should not be "
-        "retrievable or 0");
-    uint64_t frames;
-    uint64_t time;
-    ASSERT_OK(stream->getCapturePosition(returnIn(res, frames, time)));
-    // Although 'getCapturePosition' is mandatory in V7, legacy implementations
-    // may return -ENOSYS (which is translated to NOT_SUPPORTED) in cases when
-    // the capture position can't be retrieved, e.g. when the stream isn't
-    // running. Because of this, we don't fail when getting NOT_SUPPORTED
-    // in this test. Behavior of 'getCapturePosition' for running streams is
-    // tested in 'PcmOnlyConfigInputStreamTest' for V7.
-    ASSERT_RESULT(okOrInvalidStateOrNotSupported, res);
-    if (res == Result::OK) {
-        ASSERT_EQ(0U, frames);
-        ASSERT_LE(0U, time);
-    }
 }
 
 //////////////////////////////////////////////////////////////////////////////

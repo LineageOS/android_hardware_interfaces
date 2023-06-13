@@ -64,6 +64,7 @@ class GnssHalTest : public android::hardware::gnss::common::GnssHalTestTemplate<
 
     virtual void SetUp() override;
     virtual void SetUpGnssCallback() override;
+    virtual void TearDown() override;
 
     void CheckLocation(const android::hardware::gnss::GnssLocation& location,
                        const bool check_speed);

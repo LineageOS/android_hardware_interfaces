@@ -111,11 +111,7 @@ std::vector<const native_handle_t*> Gralloc::allocate(const BufferDescriptor& de
         }
 
         if (error != Error::NONE) {
-            if (base::GetIntProperty("ro.vendor.build.version.sdk", 0, 0, INT_MAX) < 33) {
-                GTEST_SKIP() << "Old vendor grallocs may not support P010";
-            } else {
-                GTEST_FAIL() << "failed to allocate buffers";
-            }
+            GTEST_FAIL() << "failed to allocate buffers";
         }
         ASSERT_EQ(count, buffers.size()) << "invalid buffer array";
 

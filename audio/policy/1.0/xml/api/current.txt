@@ -217,6 +217,10 @@ package audio.policy.V1_0 {
     enum_constant public static final audio.policy.V1_0.UsageEnumType AUDIO_USAGE_GAME;
     enum_constant public static final audio.policy.V1_0.UsageEnumType AUDIO_USAGE_MEDIA;
     enum_constant public static final audio.policy.V1_0.UsageEnumType AUDIO_USAGE_NOTIFICATION;
+    enum_constant public static final audio.policy.V1_0.UsageEnumType AUDIO_USAGE_NOTIFICATION_COMMUNICATION_DELAYED;
+    enum_constant public static final audio.policy.V1_0.UsageEnumType AUDIO_USAGE_NOTIFICATION_COMMUNICATION_INSTANT;
+    enum_constant public static final audio.policy.V1_0.UsageEnumType AUDIO_USAGE_NOTIFICATION_COMMUNICATION_REQUEST;
+    enum_constant public static final audio.policy.V1_0.UsageEnumType AUDIO_USAGE_NOTIFICATION_EVENT;
     enum_constant public static final audio.policy.V1_0.UsageEnumType AUDIO_USAGE_NOTIFICATION_TELEPHONY_RINGTONE;
     enum_constant public static final audio.policy.V1_0.UsageEnumType AUDIO_USAGE_UNKNOWN;
     enum_constant public static final audio.policy.V1_0.UsageEnumType AUDIO_USAGE_VIRTUAL_SOURCE;

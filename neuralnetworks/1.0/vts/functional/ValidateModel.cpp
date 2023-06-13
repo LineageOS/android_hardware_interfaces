@@ -232,26 +232,24 @@ size_t sizeForBinder(const Model& model) {
 //     currently 1Mb, which is shared by all transactions in progress
 //     for the process."
 //
-// Will our representation fit under this limit?  There are two complications:
+// Will our representation fit under this limit?  There are three complications:
 // - Our representation size is just approximate (see sizeForBinder()).
-// - This object may not be the only occupant of the Binder transaction buffer.
+// - This object may not be the only occupant of the Binder transaction buffer
+//   (although our VTS test suite should not be putting multiple objects in the
+//   buffer at once).
+// - IBinder.MAX_IPC_SIZE recommends limiting a transaction to 64 * 1024 bytes.
 // So we'll be very conservative: We want the representation size to be no
-// larger than half the transaction buffer size.
+// larger than half the recommended limit.
 //
 // If our representation grows large enough that it still fits within
 // the transaction buffer but combined with other transactions may
 // exceed the buffer size, then we may see intermittent HAL transport
 // errors.
 static bool exceedsBinderSizeLimit(size_t representationSize) {
-    // Instead of using this fixed buffer size, we might instead be able to use
-    // ProcessState::self()->getMmapSize(). However, this has a potential
-    // problem: The binder/mmap size of the current process does not necessarily
-    // indicate the binder/mmap size of the service (i.e., the other process).
-    // The only way it would be a good indication is if both the current process
-    // and the service use the default size.
-    static const size_t kHalfBufferSize = 1024 * 1024 / 2;
+    // There is no C++ API to retrieve the value of the Java variable IBinder.MAX_IPC_SIZE.
+    static const size_t kHalfMaxIPCSize = 64 * 1024 / 2;
 
-    return representationSize > kHalfBufferSize;
+    return representationSize > kHalfMaxIPCSize;
 }
 
 ///////////////////////// VALIDATE EXECUTION ORDER ////////////////////////////

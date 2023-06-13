@@ -98,6 +98,7 @@ static void assertTypeMatchStringType(SensorType type, const std::string& string
         CHECK_TYPE_STRING_FOR_SENSOR_TYPE(TILT_DETECTOR);
         CHECK_TYPE_STRING_FOR_SENSOR_TYPE(WAKE_GESTURE);
         CHECK_TYPE_STRING_FOR_SENSOR_TYPE(WRIST_TILT_GESTURE);
+        CHECK_TYPE_STRING_FOR_SENSOR_TYPE(HINGE_ANGLE);
         default:
             FAIL() << "Type " << static_cast<int>(type)
                    << " in android defined range is not checked, "

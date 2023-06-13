@@ -526,6 +526,11 @@ TEST_P(GnssHalTest, TestGnssPowerIndication) {
 
     EXPECT_EQ(gnssPowerIndicationCallback->capabilities_cbq_.calledCount(), 1);
 
+    if (gnssPowerIndicationCallback->last_capabilities_ == 0) {
+        // Skipping the test since GnssPowerIndication is not supported.
+        return;
+    }
+
     // Request and verify a GnssPowerStats is received
     gnssPowerIndicationCallback->gnss_power_stats_cbq_.reset();
     iGnssPowerIndication->requestGnssPowerStats();

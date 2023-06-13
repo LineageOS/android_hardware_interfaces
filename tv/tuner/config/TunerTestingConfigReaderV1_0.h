@@ -65,6 +65,7 @@ using android::hardware::tv::tuner::V1_0::LnbTone;
 using android::hardware::tv::tuner::V1_0::LnbVoltage;
 using android::hardware::tv::tuner::V1_0::PlaybackSettings;
 using android::hardware::tv::tuner::V1_0::RecordSettings;
+using android::hardware::tv::tuner::V1_0::FrontendAtscSettings;
 
 const string emptyHardwareId = "";
 
@@ -241,6 +242,7 @@ struct TunerTestingConfigReader1_0 {
                         break;
                     case FrontendTypeEnum::ATSC:
                         type = FrontendType::ATSC;
+                        frontendMap[id].settings.atsc(readAtscFrontendSettings(feConfig));
                         break;
                     case FrontendTypeEnum::ATSC3:
                         type = FrontendType::ATSC3;
@@ -625,6 +627,13 @@ struct TunerTestingConfigReader1_0 {
         dvbsSettings.inputStreamId = static_cast<uint32_t>(
                 feConfig.getFirstDvbsFrontendSettings_optional()->getInputStreamId());
         return dvbsSettings;
+    }
+
+    static FrontendAtscSettings readAtscFrontendSettings(Frontend feConfig) {
+        FrontendAtscSettings atscSettings{
+            .frequency = (uint32_t)feConfig.getFrequency(),
+        };
+        return atscSettings;
     }
 
     static bool readFilterTypeAndSettings(Filter filterConfig, DemuxFilterType& type,

@@ -143,9 +143,21 @@ TEST_P(RadioDataTest, setupDataCall_osAppId) {
 
     TrafficDescriptor trafficDescriptor;
     OsAppId osAppId;
-    std::string osAppIdString("osAppId");
-    std::vector<unsigned char> osAppIdVec(osAppIdString.begin(), osAppIdString.end());
-    osAppId.osAppId = osAppIdVec;
+    // hardcode osAppId for ENTERPRISE
+    osAppId.osAppId = {static_cast<unsigned char>(-105), static_cast<unsigned char>(-92),
+                       static_cast<unsigned char>(-104), static_cast<unsigned char>(-29),
+                       static_cast<unsigned char>(-4),   static_cast<unsigned char>(-110),
+                       static_cast<unsigned char>(92),   static_cast<unsigned char>(-108),
+                       static_cast<unsigned char>(-119), static_cast<unsigned char>(-122),
+                       static_cast<unsigned char>(3),    static_cast<unsigned char>(51),
+                       static_cast<unsigned char>(-48),  static_cast<unsigned char>(110),
+                       static_cast<unsigned char>(78),   static_cast<unsigned char>(71),
+                       static_cast<unsigned char>(10),   static_cast<unsigned char>(69),
+                       static_cast<unsigned char>(78),   static_cast<unsigned char>(84),
+                       static_cast<unsigned char>(69),   static_cast<unsigned char>(82),
+                       static_cast<unsigned char>(80),   static_cast<unsigned char>(82),
+                       static_cast<unsigned char>(73),   static_cast<unsigned char>(83),
+                       static_cast<unsigned char>(69)};
     trafficDescriptor.osAppId = osAppId;
 
     DataProfileInfo dataProfileInfo;

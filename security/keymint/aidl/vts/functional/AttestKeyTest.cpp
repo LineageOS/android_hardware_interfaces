@@ -35,7 +35,17 @@ bool IsSelfSigned(const vector<Certificate>& chain) {
 }  // namespace
 
 class AttestKeyTest : public KeyMintAidlTestBase {
+  public:
+    void SetUp() override {
+        check_skip_test();
+        KeyMintAidlTestBase::SetUp();
+    }
+
   protected:
+    const string FEATURE_KEYSTORE_APP_ATTEST_KEY = "android.hardware.keystore.app_attest_key";
+
+    const string FEATURE_STRONGBOX_KEYSTORE = "android.hardware.strongbox_keystore";
+
     ErrorCode GenerateAttestKey(const AuthorizationSet& key_desc,
                                 const optional<AttestationKey>& attest_key,
                                 vector<uint8_t>* key_blob,
@@ -59,6 +69,59 @@ class AttestKeyTest : public KeyMintAidlTestBase {
             // just ATTEST_KEY.
         }
         return GenerateKey(key_desc, attest_key, key_blob, key_characteristics, cert_chain);
+    }
+
+    // Check if ATTEST_KEY feature is disabled
+    bool is_attest_key_feature_disabled(void) const {
+        if (!check_feature(FEATURE_KEYSTORE_APP_ATTEST_KEY)) {
+            GTEST_LOG_(INFO) << "Feature " + FEATURE_KEYSTORE_APP_ATTEST_KEY + " is disabled";
+            return true;
+        }
+
+        return false;
+    }
+
+    // Check if StrongBox KeyStore is enabled
+    bool is_strongbox_enabled(void) const {
+        if (check_feature(FEATURE_STRONGBOX_KEYSTORE)) {
+            GTEST_LOG_(INFO) << "Feature " + FEATURE_STRONGBOX_KEYSTORE + " is enabled";
+            return true;
+        }
+
+        return false;
+    }
+
+    // Check if chipset has received a waiver allowing it to be launched with
+    // Android S (or later) with Keymaster 4.0 in StrongBox
+    bool is_chipset_allowed_km4_strongbox(void) const {
+        std::array<char, PROPERTY_VALUE_MAX> buffer;
+
+        auto res = property_get("ro.vendor.qti.soc_model", buffer.data(), nullptr);
+        if (res <= 0) return false;
+
+        const string allowed_soc_models[] = {"SM8450", "SM8475", "SM8550", "SXR2230P"};
+
+        for (const string model : allowed_soc_models) {
+            if (model.compare(buffer.data()) == 0) {
+                GTEST_LOG_(INFO) << "QTI SOC Model " + model + " is allowed SB KM 4.0";
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    // Skip the test if all the following conditions hold:
+    // 1. ATTEST_KEY feature is disabled
+    // 2. STRONGBOX is enabled
+    // 3. The device is running one of the chipsets that have received a waiver
+    //     allowing it to be launched with Android S (or later) with Keymaster 4.0
+    //     in StrongBox
+    void check_skip_test(void) const {
+        if (is_attest_key_feature_disabled() && is_strongbox_enabled() &&
+            is_chipset_allowed_km4_strongbox()) {
+            GTEST_SKIP() << "Test is not applicable";
+        }
     }
 };
 

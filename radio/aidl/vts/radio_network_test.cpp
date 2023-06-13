@@ -829,20 +829,20 @@ TEST_P(RadioNetworkTest, setSystemSelectionChannels) {
 TEST_P(RadioNetworkTest, startNetworkScan) {
     serial = GetRandomSerialNumber();
 
-    RadioAccessSpecifierBands bandP900 =
-            RadioAccessSpecifierBands::make<RadioAccessSpecifierBands::geranBands>(
-                    {GeranBands::BAND_P900});
-    RadioAccessSpecifierBands band850 =
-            RadioAccessSpecifierBands::make<RadioAccessSpecifierBands::geranBands>(
-                    {GeranBands::BAND_850});
-    RadioAccessSpecifier specifierP900 = {
-            .accessNetwork = AccessNetwork::GERAN, .bands = bandP900, .channels = {1, 2}};
-    RadioAccessSpecifier specifier850 = {
-            .accessNetwork = AccessNetwork::GERAN, .bands = band850, .channels = {128, 129}};
+    RadioAccessSpecifierBands band17 =
+            RadioAccessSpecifierBands::make<RadioAccessSpecifierBands::eutranBands>(
+                    {EutranBands::BAND_17});
+    RadioAccessSpecifierBands band20 =
+            RadioAccessSpecifierBands::make<RadioAccessSpecifierBands::eutranBands>(
+                    {EutranBands::BAND_20});
+    RadioAccessSpecifier specifier17 = {
+            .accessNetwork = AccessNetwork::EUTRAN, .bands = band17, .channels = {1, 2}};
+    RadioAccessSpecifier specifier20 = {
+            .accessNetwork = AccessNetwork::EUTRAN, .bands = band20, .channels = {128, 129}};
 
     NetworkScanRequest request = {.type = NetworkScanRequest::SCAN_TYPE_ONE_SHOT,
                                   .interval = 60,
-                                  .specifiers = {specifierP900, specifier850},
+                                  .specifiers = {specifier17, specifier20},
                                   .maxSearchTime = 60,
                                   .incrementalResults = false,
                                   .incrementalResultsPeriodicity = 1};
@@ -858,12 +858,17 @@ TEST_P(RadioNetworkTest, startNetworkScan) {
     if (cardStatus.cardState == CardStatus::STATE_ABSENT) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error, {RadioError::SIM_ABSENT}));
     } else if (cardStatus.cardState == CardStatus::STATE_PRESENT) {
-        // OPERATION_NOT_ALLOWED should not be allowed; however, some vendors do
-        // not support the required manual GSM search functionality. This is
-        // tracked in b/112206766. Modems have "GSM" rat scan need to
-        // support scanning requests combined with some parameters.
-        ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error,
-                                     {RadioError::NONE, RadioError::OPERATION_NOT_ALLOWED}));
+        if (deviceSupportsFeature(FEATURE_TELEPHONY_GSM)) {
+            // Modems support 3GPP RAT family need to
+            // support scanning requests combined with some parameters.
+            ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error,
+                                         {RadioError::NONE, RadioError::OPERATION_NOT_ALLOWED}));
+        } else {
+            ASSERT_TRUE(CheckAnyOfErrors(
+                    radioRsp_network->rspInfo.error,
+                    {RadioError::NONE, RadioError::OPERATION_NOT_ALLOWED, RadioError::NONE,
+                     RadioError::INVALID_ARGUMENTS, RadioError::REQUEST_NOT_SUPPORTED}));
+        }
     }
 
     if (radioRsp_network->rspInfo.error == RadioError::NONE) {

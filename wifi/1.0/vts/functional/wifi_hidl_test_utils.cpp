@@ -66,7 +66,7 @@ bool findAnyModeSupportingIfaceType(
 bool configureChipToSupportIfaceTypeInternal(const sp<IWifiChip>& wifi_chip,
                                              IfaceType type,
                                              ChipModeId* configured_mode_id) {
-    if (!configured_mode_id) {
+    if (!configured_mode_id || !wifi_chip.get()) {
         return false;
     }
     const auto& status_and_modes = HIDL_INVOKE(wifi_chip, getAvailableModes);

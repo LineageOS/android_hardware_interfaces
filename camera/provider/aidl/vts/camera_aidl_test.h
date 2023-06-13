@@ -488,6 +488,9 @@ class CameraAidlTest : public ::testing::TestWithParam<std::string> {
             aidl::android::hardware::camera::metadata::RequestAvailableDynamicRangeProfilesMap
                     profile);
 
+    static void waitForReleaseFence(
+            std::vector<InFlightRequest::StreamBufferAndTimestamp>& resultOutputBuffers);
+
     // Map from frame number to the in-flight request state
     typedef std::unordered_map<uint32_t, std::shared_ptr<InFlightRequest>> InFlightMap;
 

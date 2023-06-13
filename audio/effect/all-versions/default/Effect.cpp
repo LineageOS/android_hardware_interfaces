@@ -240,16 +240,6 @@ class ProcessThread : public Thread {
 };
 
 bool ProcessThread::threadLoop() {
-    // For a spatializer effect, we perform scheduler adjustments to reduce glitches and power.
-    {
-        effect_descriptor_t halDescriptor{};
-        if ((*mEffect)->get_descriptor(mEffect, &halDescriptor) == NO_ERROR &&
-            memcmp(&halDescriptor.type, FX_IID_SPATIALIZER, sizeof(effect_uuid_t)) == 0) {
-            const status_t status = scheduler::updateSpatializerPriority(gettid());
-            ALOGW_IF(status != OK, "Failed to update Spatializer priority");
-        }
-    }
-
     // This implementation doesn't return control back to the Thread until it decides to stop,
     // as the Thread uses mutexes, and this can lead to priority inversion.
     while (!std::atomic_load_explicit(mStop, std::memory_order_acquire)) {
@@ -568,6 +558,15 @@ Return<void> Effect::prepareForProcessing(prepareForProcessing_cb _hidl_cb) {
         ALOGW("failed to start effect processing thread: %s", strerror(-status));
         _hidl_cb(Result::INVALID_ARGUMENTS, MQDescriptorSync<Result>());
         return Void();
+    }
+
+    // For a spatializer effect, we perform scheduler adjustments to reduce glitches and power.
+    // We do it here instead of the ProcessThread::threadLoop to ensure that mHandle is valid.
+    if (effect_descriptor_t halDescriptor{};
+        (*mHandle)->get_descriptor(mHandle, &halDescriptor) == NO_ERROR &&
+        memcmp(&halDescriptor.type, FX_IID_SPATIALIZER, sizeof(effect_uuid_t)) == 0) {
+        const status_t status = scheduler::updateSpatializerPriority(mProcessThread->getTid());
+        ALOGW_IF(status != OK, "Failed to update Spatializer priority");
     }
 
     mStatusMQ = std::move(tempStatusMQ);

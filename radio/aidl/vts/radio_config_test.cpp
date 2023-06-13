@@ -176,7 +176,7 @@ TEST_P(RadioConfigTest, setSimSlotsMapping) {
         slotPortMapping.physicalSlotId = -1;
         slotPortMapping.portId = -1;
         std::vector<SlotPortMapping> slotPortMappingList = {slotPortMapping};
-        if (isDsDsEnabled()) {
+        if (isDsDsEnabled() || isDsDaEnabled()) {
             slotPortMappingList.push_back(slotPortMapping);
         } else if (isTsTsEnabled()) {
             slotPortMappingList.push_back(slotPortMapping);
@@ -252,7 +252,7 @@ TEST_P(RadioConfigTest, checkPortInfoExistsAndPortActive) {
         }
         if (isSsSsEnabled()) {
             EXPECT_EQ(1, simCount);
-        } else if (isDsDsEnabled()) {
+        } else if (isDsDsEnabled() || isDsDaEnabled()) {
             EXPECT_EQ(2, simCount);
         } else if (isTsTsEnabled()) {
             EXPECT_EQ(3, simCount);

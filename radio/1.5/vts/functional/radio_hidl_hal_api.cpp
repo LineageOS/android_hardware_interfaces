@@ -564,23 +564,23 @@ TEST_P(RadioHidlTest_v1_5, setSystemSelectionChannels_1_5) {
 TEST_P(RadioHidlTest_v1_5, startNetworkScan) {
     serial = GetRandomSerialNumber();
 
-    ::android::hardware::radio::V1_5::RadioAccessSpecifier::Bands bandP900;
-    bandP900.geranBands() = {GeranBands::BAND_P900};
-    ::android::hardware::radio::V1_5::RadioAccessSpecifier::Bands band850;
-    band850.geranBands() = {GeranBands::BAND_850};
-    ::android::hardware::radio::V1_5::RadioAccessSpecifier specifierP900 = {
-            .radioAccessNetwork = ::android::hardware::radio::V1_5::RadioAccessNetworks::GERAN,
-            .bands = bandP900,
+    ::android::hardware::radio::V1_5::RadioAccessSpecifier::Bands band17;
+    band17.eutranBands({::android::hardware::radio::V1_5::EutranBands::BAND_17});
+    ::android::hardware::radio::V1_5::RadioAccessSpecifier::Bands band20;
+    band20.eutranBands({::android::hardware::radio::V1_5::EutranBands::BAND_20});
+    ::android::hardware::radio::V1_5::RadioAccessSpecifier specifier17 = {
+            .radioAccessNetwork = ::android::hardware::radio::V1_5::RadioAccessNetworks::EUTRAN,
+            .bands = band17,
             .channels = {1, 2}};
-    ::android::hardware::radio::V1_5::RadioAccessSpecifier specifier850 = {
-            .radioAccessNetwork = ::android::hardware::radio::V1_5::RadioAccessNetworks::GERAN,
-            .bands = band850,
+    ::android::hardware::radio::V1_5::RadioAccessSpecifier specifier20 = {
+            .radioAccessNetwork = ::android::hardware::radio::V1_5::RadioAccessNetworks::EUTRAN,
+            .bands = band20,
             .channels = {128, 129}};
 
     ::android::hardware::radio::V1_5::NetworkScanRequest request = {
             .type = ScanType::ONE_SHOT,
             .interval = 60,
-            .specifiers = {specifierP900, specifier850},
+            .specifiers = {specifier17, specifier20},
             .maxSearchTime = 60,
             .incrementalResults = false,
             .incrementalResultsPeriodicity = 1};
@@ -595,12 +595,17 @@ TEST_P(RadioHidlTest_v1_5, startNetworkScan) {
     if (cardStatus.base.base.base.cardState == CardState::ABSENT) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_5->rspInfo.error, {RadioError::SIM_ABSENT}));
     } else if (cardStatus.base.base.base.cardState == CardState::PRESENT) {
-        // OPERATION_NOT_ALLOWED should not be allowed; however, some vendors do
-        // not support the required manual GSM search functionality. This is
-        // tracked in b/112206766. Modems have "GSM" rat scan need to
+        // Modems support 3GPP RAT family need to
         // support scanning requests combined with some parameters.
-        ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_5->rspInfo.error,
-                                     {RadioError::NONE, RadioError::OPERATION_NOT_ALLOWED}));
+        if (deviceSupportsFeature(FEATURE_TELEPHONY_GSM)) {
+            ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_5->rspInfo.error,
+                                         {RadioError::NONE, RadioError::OPERATION_NOT_ALLOWED}));
+        } else {
+            ASSERT_TRUE(CheckAnyOfErrors(
+                    radioRsp_v1_5->rspInfo.error,
+                    {RadioError::NONE, RadioError::OPERATION_NOT_ALLOWED,
+                     RadioError::REQUEST_NOT_SUPPORTED, RadioError::INVALID_ARGUMENTS}));
+        }
     }
 
     if (radioRsp_v1_5->rspInfo.error == RadioError::NONE) {

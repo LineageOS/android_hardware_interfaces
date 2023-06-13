@@ -16,6 +16,7 @@
 
 #define LOG_TAG "android.hardware.camera.device@3.2-convert-impl"
 #include <log/log.h>
+#include <system/camera_metadata.h>
 
 #include "include/convert.h"
 
@@ -43,6 +44,13 @@ bool convertFromHidl(const CameraMetadata &src, const camera_metadata_t** dst) {
         ALOGE("%s: input CameraMetadata is corrupt!", __FUNCTION__);
         return false;
     }
+
+    if (validate_camera_metadata_structure((camera_metadata_t*)data, /*expected_size=*/NULL) !=
+        OK) {
+        ALOGE("%s: Failed to validate the metadata structure", __FUNCTION__);
+        return false;
+    }
+
     *dst = (camera_metadata_t*) data;
     return true;
 }
