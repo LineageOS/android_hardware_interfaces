@@ -848,10 +848,7 @@ INSTANTIATE_TEST_SUITE_P(
                 EffectFactoryHelper::getAllEffectDescriptors(IFactory::descriptor))),
         [](const testing::TestParamInfo<AudioEffectTest::ParamType>& info) {
             auto descriptor = std::get<PARAM_INSTANCE_NAME>(info.param).second;
-            std::string name = "Implementor_" + descriptor.common.implementor + "_name_" +
-                               descriptor.common.name + "_TYPE_" +
-                               descriptor.common.id.type.toString() + "_UUID_" +
-                               descriptor.common.id.uuid.toString();
+            std::string name = getPrefix(descriptor);
             std::replace_if(
                     name.begin(), name.end(), [](const char c) { return !std::isalnum(c); }, '_');
             return name;
