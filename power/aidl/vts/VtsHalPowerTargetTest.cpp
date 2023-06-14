@@ -255,11 +255,10 @@ TEST_P(PowerAidl, setThreads) {
     }
     ASSERT_TRUE(status.isOk());
 
-    if (mApiLevel < kCompatibilityMatrix8ApiLevel) {
+    status = session->setThreads(kEmptyTids);
+    if (mApiLevel < kCompatibilityMatrix8ApiLevel && isUnknownOrUnsupported(status)) {
         GTEST_SKIP() << "DEVICE not launching with Android 14 and beyond.";
     }
-
-    status = session->setThreads(kEmptyTids);
     ASSERT_FALSE(status.isOk());
     ASSERT_EQ(EX_ILLEGAL_ARGUMENT, status.getExceptionCode());
 
