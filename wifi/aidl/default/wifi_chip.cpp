@@ -366,7 +366,8 @@ WifiChip::WifiChip(int32_t chip_id, bool is_primary,
                    const std::weak_ptr<mode_controller::WifiModeController> mode_controller,
                    const std::shared_ptr<iface_util::WifiIfaceUtil> iface_util,
                    const std::weak_ptr<feature_flags::WifiFeatureFlags> feature_flags,
-                   const std::function<void(const std::string&)>& handler)
+                   const std::function<void(const std::string&)>& handler,
+                   bool using_dynamic_iface_combination)
     : chip_id_(chip_id),
       legacy_hal_(legacy_hal),
       mode_controller_(mode_controller),
@@ -375,9 +376,9 @@ WifiChip::WifiChip(int32_t chip_id, bool is_primary,
       current_mode_id_(feature_flags::chip_mode_ids::kInvalid),
       modes_(feature_flags.lock()->getChipModes(is_primary)),
       debug_ring_buffer_cb_registered_(false),
+      using_dynamic_iface_combination_(using_dynamic_iface_combination),
       subsystemCallbackHandler_(handler) {
     setActiveWlanIfaceNameProperty(kNoActiveWlanIfaceNamePropertyValue);
-    using_dynamic_iface_combination_ = false;
 }
 
 void WifiChip::retrieveDynamicIfaceCombination() {
@@ -413,9 +414,11 @@ std::shared_ptr<WifiChip> WifiChip::create(
         const std::weak_ptr<mode_controller::WifiModeController> mode_controller,
         const std::shared_ptr<iface_util::WifiIfaceUtil> iface_util,
         const std::weak_ptr<feature_flags::WifiFeatureFlags> feature_flags,
-        const std::function<void(const std::string&)>& handler) {
+        const std::function<void(const std::string&)>& handler,
+        bool using_dynamic_iface_combination) {
     std::shared_ptr<WifiChip> ptr = ndk::SharedRefBase::make<WifiChip>(
-            chip_id, is_primary, legacy_hal, mode_controller, iface_util, feature_flags, handler);
+            chip_id, is_primary, legacy_hal, mode_controller, iface_util, feature_flags, handler,
+            using_dynamic_iface_combination);
     std::weak_ptr<WifiChip> weak_ptr_this(ptr);
     ptr->setWeakPtr(weak_ptr_this);
     return ptr;
