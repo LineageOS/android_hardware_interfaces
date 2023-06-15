@@ -15,7 +15,6 @@
  */
 
 #include "mainloop.hpp"
-#include "thread_chip.hpp"
 
 namespace aidl {
 namespace android {
@@ -24,7 +23,7 @@ namespace threadnetwork {
 
 class Service : public ot::Posix::Mainloop::Source {
   public:
-    Service(char* urls[], int numUrls);
+    Service(void);
 
     void Update(otSysMainloopContext& context) override;
     void Process(const otSysMainloopContext& context) override;
@@ -32,7 +31,6 @@ class Service : public ot::Posix::Mainloop::Source {
 
   private:
     int mBinderFd;
-    std::vector<std::shared_ptr<ThreadChip>> mThreadChips;
 };
 }  // namespace threadnetwork
 }  // namespace hardware

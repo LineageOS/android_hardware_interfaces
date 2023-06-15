@@ -15,9 +15,10 @@
  * limitations under the License.
  */
 
-#include "utils.hpp"
-
+#include <openthread/instance.h>
 #include <openthread/logging.h>
+#include <openthread/platform/alarm-milli.h>
+#include <utils/Log.h>
 
 void otLogCritPlat(const char* format, ...) {
     va_list args;
@@ -33,4 +34,8 @@ void otLogWarnPlat(const char* format, ...) {
     va_start(args, format);
     __android_log_vprint(ANDROID_LOG_WARN, LOG_TAG, format, args);
     va_end(args);
+}
+
+OT_TOOL_WEAK void otPlatAlarmMilliFired(otInstance* aInstance) {
+    OT_UNUSED_VARIABLE(aInstance);
 }
