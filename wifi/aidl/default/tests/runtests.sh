@@ -20,7 +20,8 @@ if [ -z $ANDROID_BUILD_TOP ]; then
 fi
 set -e
 
-$ANDROID_BUILD_TOP/build/soong/soong_ui.bash --make-mode android.hardware.wifi-service-tests
 adb root
+adb wait-for-device
+$ANDROID_BUILD_TOP/build/soong/soong_ui.bash --make-mode android.hardware.wifi-service-tests
 adb sync data
 adb shell /data/nativetest64/vendor/android.hardware.wifi-service-tests/android.hardware.wifi-service-tests
