@@ -386,6 +386,7 @@ vector<uint8_t> make_name_from_str(const string& name);
 void check_maced_pubkey(const MacedPublicKey& macedPubKey, bool testMode,
                         vector<uint8_t>* payload_value);
 void p256_pub_key(const vector<uint8_t>& coseKeyData, EVP_PKEY_Ptr* signingKey);
+void device_id_attestation_check_acceptable_error(Tag tag, const ErrorCode& result);
 bool check_feature(const std::string& name);
 
 AuthorizationSet HwEnforcedAuthorizations(const vector<KeyCharacteristics>& key_characteristics);
