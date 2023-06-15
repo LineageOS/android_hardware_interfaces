@@ -1,0 +1,73 @@
+// Copyright (C) 2023 The Android Open Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
+apex_key {
+    name: "com.android.hardware.biometrics.fingerprint.virtual.key",
+    public_key: "com.android.hardware.biometrics.fingerprint.virtual.avbpubkey",
+    private_key: "com.android.hardware.biometrics.fingerprint.virtual.pem",
+}
+
+android_app_certificate {
+    name: "com.android.hardware.biometrics.fingerprint.virtual.certificate",
+    certificate: "com.android.hardware.biometrics.fingerprint.virtual",
+}
+
+apex {
+    name: "com.android.hardware.biometrics.fingerprint.virtual",
+    manifest: "manifest.json",
+    file_contexts: "file_contexts",
+    key: "com.android.hardware.biometrics.fingerprint.virtual.key",
+    certificate: ":com.android.hardware.biometrics.fingerprint.virtual.certificate",
+    updatable: false,
+    use_vndk_as_stable: true,
+    vendor: true,
+
+    binaries: [
+        "android.hardware.biometrics.fingerprint-service.example",
+    ],
+    prebuilts: [
+        // init_rc
+        "fingerprint-example-apex.rc",
+        // vintf_fragment
+        "fingerprint-example-apex.xml",
+    ],
+
+    overrides: [
+        "android.hardware.biometrics.fingerprint-service.example",
+    ],
+}
+
+genrule {
+    name: "gen-fingerprint-example-apex.rc",
+    srcs: [":fingerprint-example.rc"],
+    out: ["fingerprint-example-apex.rc"],
+    cmd: "sed -e 's@/vendor/bin/@/apex/com.android.hardware.biometrics.fingerprint.virtual/bin/@' $(in) > $(out)",
+}
+
+prebuilt_etc {
+    name: "fingerprint-example-apex.rc",
+    src: ":gen-fingerprint-example-apex.rc",
+    installable: false,
+}
+
+prebuilt_etc {
+    name: "fingerprint-example-apex.xml",
+    src: ":fingerprint-example.xml",
+    sub_dir: "vintf",
+    installable: false,
+}
