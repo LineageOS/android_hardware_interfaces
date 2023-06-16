@@ -53,7 +53,8 @@ class WifiChip : public BnWifiChip {
              const std::weak_ptr<mode_controller::WifiModeController> mode_controller,
              const std::shared_ptr<iface_util::WifiIfaceUtil> iface_util,
              const std::weak_ptr<feature_flags::WifiFeatureFlags> feature_flags,
-             const std::function<void(const std::string&)>& subsystemCallbackHandler);
+             const std::function<void(const std::string&)>& subsystemCallbackHandler,
+             bool using_dynamic_iface_combination);
 
     // Factory method - use instead of default constructor.
     static std::shared_ptr<WifiChip> create(
@@ -62,7 +63,8 @@ class WifiChip : public BnWifiChip {
             const std::weak_ptr<mode_controller::WifiModeController> mode_controller,
             const std::shared_ptr<iface_util::WifiIfaceUtil> iface_util,
             const std::weak_ptr<feature_flags::WifiFeatureFlags> feature_flags,
-            const std::function<void(const std::string&)>& subsystemCallbackHandler);
+            const std::function<void(const std::string&)>& subsystemCallbackHandler,
+            bool using_dynamic_iface_combination);
 
     // AIDL does not provide a built-in mechanism to let the server invalidate
     // an AIDL interface object after creation. If any client process holds onto
