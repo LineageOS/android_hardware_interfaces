@@ -135,7 +135,7 @@ ndk::ScopedAStatus Wifi::startInternal() {
             chips_.push_back(
                     WifiChip::create(chipId, chipId == kPrimaryChipId, hal, mode_controller_,
                                      std::make_shared<iface_util::WifiIfaceUtil>(iface_tool_, hal),
-                                     feature_flags_, on_subsystem_restart_callback));
+                                     feature_flags_, on_subsystem_restart_callback, false));
             chipId++;
         }
         run_state_ = RunState::STARTED;
