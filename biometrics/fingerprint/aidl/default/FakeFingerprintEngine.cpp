@@ -263,11 +263,6 @@ void FakeFingerprintEngine::enumerateEnrollmentsImpl(ISessionCallback* cb) {
     BEGIN_OP(0);
 
     std::vector<int32_t> ids;
-    // There are some enrollment sync issue with framework, which results in
-    //  a single template removal during the very firt sync command after reboot.
-    //  This is a workaround for now. TODO(b/243129174)
-    ids.push_back(-1);
-
     for (auto& enrollment : FingerprintHalProperties::enrollments()) {
         auto id = enrollment.value_or(0);
         if (id > 0) {
