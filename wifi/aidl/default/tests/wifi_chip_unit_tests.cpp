@@ -282,7 +282,7 @@ class WifiChipTest : public Test {
   public:
     void SetUp() override {
         chip_ = WifiChip::create(chip_id_, true, legacy_hal_, mode_controller_, iface_util_,
-                                 feature_flags_, subsystemRestartHandler);
+                                 feature_flags_, subsystemRestartHandler, true);
 
         EXPECT_CALL(*mode_controller_, changeFirmwareMode(testing::_))
                 .WillRepeatedly(testing::Return(true));
