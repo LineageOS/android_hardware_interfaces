@@ -385,9 +385,15 @@ TEST_P(ContextHubAidl, TestInvalidHostConnection) {
 TEST_P(ContextHubAidl, TestNanSessionStateChange) {
     NanSessionStateUpdate update;
     update.state = true;
-    ASSERT_TRUE(contextHub->onNanSessionStateChanged(update).isOk());
-    update.state = false;
-    ASSERT_TRUE(contextHub->onNanSessionStateChanged(update).isOk());
+    Status status = contextHub->onNanSessionStateChanged(update);
+    if (status.exceptionCode() == Status::EX_UNSUPPORTED_OPERATION ||
+        status.transactionError() == android::UNKNOWN_TRANSACTION) {
+        GTEST_SKIP() << "Not supported -> old API; or not implemented";
+    } else {
+        ASSERT_TRUE(status.isOk());
+        update.state = false;
+        ASSERT_TRUE(contextHub->onNanSessionStateChanged(update).isOk());
+    }
 }
 
 std::string PrintGeneratedTest(const testing::TestParamInfo<ContextHubAidl::ParamType>& info) {
