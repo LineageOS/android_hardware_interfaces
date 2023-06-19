@@ -2282,8 +2282,8 @@ enum CameraMetadataTag {
      *
      * <p>Whether this camera device can support identical set of stream combinations
      * involving HEIC image format, compared to the
-     * <a href="https://developer.android.com/reference/android/hardware/camera2/CameraDevice.html#createCaptureSession">table of combinations</a>
-     * involving JPEG image format required for the device's hardware level and capabilities.</p>
+     * <a href="https://developer.android.com/reference/android/hardware/camera2/CameraDevice.html#legacy-level-guaranteed-configurations">table of combinations</a> involving JPEG image format required for the device's hardware
+     * level and capabilities.</p>
      */
     ANDROID_HEIC_INFO_SUPPORTED = CameraMetadataSectionStart.ANDROID_HEIC_INFO_START,
     /**
