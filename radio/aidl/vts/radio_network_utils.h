@@ -169,6 +169,8 @@ class RadioNetworkResponse : public BnRadioNetworkResponse {
             const RadioResponseInfo& info, bool isEnabled) override;
 
     virtual ndk::ScopedAStatus setN1ModeEnabledResponse(const RadioResponseInfo& info) override;
+
+    virtual ndk::ScopedAStatus setSatellitePlmnResponse(const RadioResponseInfo& info) override;
 };
 
 /* Callback class for radio network indication */

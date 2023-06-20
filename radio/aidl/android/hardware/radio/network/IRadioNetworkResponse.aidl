@@ -668,4 +668,21 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:INVALID_STATE
      */
     void setN1ModeEnabledResponse(in RadioResponseInfo info);
+
+    /**
+     * Response of setSatellitePlmn.
+     * This is an optional API.
+     *
+     * @param info Response info struct containing response type, serial no. and error.
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:INVALID_ARGUMENTS
+     *   RadioError:INVALID_MODEM_STATE
+     *   RadioError:MODEM_ERR
+     *   RadioError:NO_RESOURCES
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     */
+    void setSatellitePlmnResponse(in RadioResponseInfo info);
 }

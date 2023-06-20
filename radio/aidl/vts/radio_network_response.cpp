@@ -320,3 +320,9 @@ ndk::ScopedAStatus RadioNetworkResponse::setN1ModeEnabledResponse(const RadioRes
     parent_network.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
+
+ndk::ScopedAStatus RadioNetworkResponse::setSatellitePlmnResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_network.notify(info.serial);
+    return ndk::ScopedAStatus::ok();
+}

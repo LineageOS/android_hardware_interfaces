@@ -82,4 +82,5 @@ interface IRadioNetwork {
   oneway void isNullCipherAndIntegrityEnabled(in int serial);
   oneway void isN1ModeEnabled(in int serial);
   oneway void setN1ModeEnabled(in int serial, boolean enable);
+  oneway void setSatellitePlmn(in int serial, in List<String> plmnList);
 }
