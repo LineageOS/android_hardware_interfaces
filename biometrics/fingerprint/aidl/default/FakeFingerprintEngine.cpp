@@ -31,6 +31,9 @@ using ::android::base::ParseInt;
 
 namespace aidl::android::hardware::biometrics::fingerprint {
 
+FakeFingerprintEngine::FakeFingerprintEngine()
+    : mRandom(std::mt19937::default_seed), mWorkMode(WorkMode::kIdle) {}
+
 void FakeFingerprintEngine::generateChallengeImpl(ISessionCallback* cb) {
     BEGIN_OP(0);
     std::uniform_int_distribution<int64_t> dist;
@@ -48,6 +51,64 @@ void FakeFingerprintEngine::revokeChallengeImpl(ISessionCallback* cb, int64_t ch
 void FakeFingerprintEngine::enrollImpl(ISessionCallback* cb,
                                        const keymaster::HardwareAuthToken& hat,
                                        const std::future<void>& cancel) {
+    BEGIN_OP(0);
+    updateContext(WorkMode::kEnroll, cb, const_cast<std::future<void>&>(cancel), 0, hat);
+}
+
+void FakeFingerprintEngine::authenticateImpl(ISessionCallback* cb, int64_t operationId,
+                                             const std::future<void>& cancel) {
+    BEGIN_OP(0);
+    updateContext(WorkMode::kAuthenticate, cb, const_cast<std::future<void>&>(cancel), operationId,
+                  keymaster::HardwareAuthToken());
+}
+
+void FakeFingerprintEngine::detectInteractionImpl(ISessionCallback* cb,
+                                                  const std::future<void>& cancel) {
+    BEGIN_OP(0);
+
+    auto detectInteractionSupported =
+            FingerprintHalProperties::detect_interaction().value_or(false);
+    if (!detectInteractionSupported) {
+        LOG(ERROR) << "Detect interaction is not supported";
+        cb->onError(Error::UNABLE_TO_PROCESS, 0 /* vendorError */);
+        return;
+    }
+
+    updateContext(WorkMode::kDetectInteract, cb, const_cast<std::future<void>&>(cancel), 0,
+                  keymaster::HardwareAuthToken());
+}
+
+void FakeFingerprintEngine::updateContext(WorkMode mode, ISessionCallback* cb,
+                                          std::future<void>& cancel, int64_t operationId,
+                                          const keymaster::HardwareAuthToken& hat) {
+    mCancel = std::move(cancel);
+    mWorkMode = mode;
+    mCb = cb;
+    mOperationId = operationId;
+    mHat = hat;
+}
+
+void FakeFingerprintEngine::fingerDownAction() {
+    LOG(INFO) << __func__;
+    switch (mWorkMode) {
+        case WorkMode::kAuthenticate:
+            onAuthenticateFingerDown(mCb, mOperationId, mCancel);
+            break;
+        case WorkMode::kEnroll:
+            onEnrollFingerDown(mCb, mHat, mCancel);
+            break;
+        case WorkMode::kDetectInteract:
+            onDetectInteractFingerDown(mCb, mCancel);
+            break;
+        default:
+            LOG(WARNING) << "unexpected mode: on fingerDownAction(), " << (int)mWorkMode;
+            break;
+    }
+}
+
+void FakeFingerprintEngine::onEnrollFingerDown(ISessionCallback* cb,
+                                               const keymaster::HardwareAuthToken& hat,
+                                               const std::future<void>& cancel) {
     BEGIN_OP(getLatency(FingerprintHalProperties::operation_enroll_latency()));
 
     // Do proper HAT verification in the real implementation.
@@ -116,8 +177,9 @@ void FakeFingerprintEngine::enrollImpl(ISessionCallback* cb,
     }
 }
 
-void FakeFingerprintEngine::authenticateImpl(ISessionCallback* cb, int64_t /* operationId */,
-                                             const std::future<void>& cancel) {
+void FakeFingerprintEngine::onAuthenticateFingerDown(ISessionCallback* cb,
+                                                     int64_t /* operationId */,
+                                                     const std::future<void>& cancel) {
     BEGIN_OP(getLatency(FingerprintHalProperties::operation_authenticate_latency()));
 
     int64_t now = Util::getSystemNanoTime();
@@ -197,20 +259,12 @@ void FakeFingerprintEngine::authenticateImpl(ISessionCallback* cb, int64_t /* op
     }
 }
 
-void FakeFingerprintEngine::detectInteractionImpl(ISessionCallback* cb,
-                                                  const std::future<void>& cancel) {
+void FakeFingerprintEngine::onDetectInteractFingerDown(ISessionCallback* cb,
+                                                       const std::future<void>& cancel) {
     BEGIN_OP(getLatency(FingerprintHalProperties::operation_detect_interaction_latency()));
 
     int64_t duration =
             FingerprintHalProperties::operation_detect_interaction_duration().value_or(10);
-
-    auto detectInteractionSupported =
-            FingerprintHalProperties::detect_interaction().value_or(false);
-    if (!detectInteractionSupported) {
-        LOG(ERROR) << "Detect interaction is not supported";
-        cb->onError(Error::UNABLE_TO_PROCESS, 0 /* vendorError */);
-        return;
-    }
 
     auto acquired = FingerprintHalProperties::operation_detect_interaction_acquired().value_or("1");
     auto acquiredInfos = parseIntSequence(acquired);
@@ -334,6 +388,7 @@ ndk::ScopedAStatus FakeFingerprintEngine::onPointerDownImpl(int32_t /*pointerId*
                                                             int32_t /*y*/, float /*minor*/,
                                                             float /*major*/) {
     BEGIN_OP(0);
+    fingerDownAction();
     return ndk::ScopedAStatus::ok();
 }
 
@@ -364,7 +419,8 @@ bool FakeFingerprintEngine::getSensorLocationConfig(SensorLocation& out) {
         if (dim.size() >= 4) {
             d = dim[3];
         }
-        if (isValidStr) out = {0, x, y, r, d};
+        if (isValidStr)
+            out = {.sensorLocationX = x, .sensorLocationY = y, .sensorRadius = r, .display = d};
 
         return isValidStr;
     }
@@ -380,8 +436,7 @@ SensorLocation FakeFingerprintEngine::getSensorLocation() {
 }
 
 SensorLocation FakeFingerprintEngine::defaultSensorLocation() {
-    return {0 /* displayId (not used) */, 0 /* sensorLocationX */, 0 /* sensorLocationY */,
-            0 /* sensorRadius */, "" /* display */};
+    return SensorLocation();
 }
 
 std::vector<int32_t> FakeFingerprintEngine::parseIntSequence(const std::string& str,
