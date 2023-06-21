@@ -30,9 +30,10 @@ extern "C" {
 
 namespace aidl::android::hardware::audio::core {
 
-class DriverUsb : public DriverInterface {
+class StreamUsb : public StreamCommonImpl {
   public:
-    DriverUsb(const StreamContext& context, bool isInput);
+    StreamUsb(const Metadata& metadata, StreamContext&& context);
+    // Methods of 'DriverInterface'.
     ::android::status_t init() override;
     ::android::status_t drain(StreamDescriptor::DrainMode) override;
     ::android::status_t flush() override;
@@ -40,27 +41,25 @@ class DriverUsb : public DriverInterface {
     ::android::status_t transfer(void* buffer, size_t frameCount, size_t* actualFrameCount,
                                  int32_t* latencyMs) override;
     ::android::status_t standby() override;
-    // Note: called on a different thread.
-    ::android::status_t setConnectedDevices(
-            const std::vector<::aidl::android::media::audio::common::AudioDevice>& connectedDevices)
-            override;
+    void shutdown() override;
+
+    // Overridden methods of 'StreamCommonImpl', called on a Binder thread.
+    const ConnectedDevices& getConnectedDevices() const override;
+    ndk::ScopedAStatus setConnectedDevices(const ConnectedDevices& devices) override;
 
   private:
     ::android::status_t exitStandby();
 
-    std::mutex mLock;
+    mutable std::mutex mLock;
 
     const size_t mFrameSizeBytes;
     std::optional<struct pcm_config> mConfig;
     const bool mIsInput;
-    // Cached device addresses for connected devices.
-    std::vector<::aidl::android::media::audio::common::AudioDeviceAddress> mConnectedDevices
-            GUARDED_BY(mLock);
     std::vector<std::shared_ptr<alsa_device_proxy>> mAlsaDeviceProxies GUARDED_BY(mLock);
     bool mIsStandby = true;
 };
 
-class StreamInUsb final : public StreamIn {
+class StreamInUsb final : public StreamUsb, public StreamIn {
     ndk::ScopedAStatus getActiveMicrophones(
             std::vector<::aidl::android::media::audio::common::MicrophoneDynamicInfo>* _aidl_return)
             override;
@@ -80,7 +79,7 @@ class StreamInUsb final : public StreamIn {
             const std::vector<::aidl::android::media::audio::common::MicrophoneInfo>& microphones);
 };
 
-class StreamOutUsb final : public StreamOut {
+class StreamOutUsb final : public StreamUsb, public StreamOut {
   public:
     static ndk::ScopedAStatus createInstance(
             const ::aidl::android::hardware::audio::common::SourceMetadata& sourceMetadata,
