@@ -31,12 +31,12 @@ using namespace ::android::fingerprint::virt;
 namespace aidl::android::hardware::biometrics::fingerprint {
 
 FakeFingerprintEngineUdfps::FakeFingerprintEngineUdfps()
-    : FakeFingerprintEngine(), mWorkMode(WorkMode::kIdle), mPointerDownTime(0), mUiReadyTime(0) {}
+    : FakeFingerprintEngine(), mPointerDownTime(0), mUiReadyTime(0) {}
 
 SensorLocation FakeFingerprintEngineUdfps::defaultSensorLocation() {
-    return {0 /* displayId (not used) */, defaultSensorLocationX /* sensorLocationX */,
-            defaultSensorLocationY /* sensorLocationY */, defaultSensorRadius /* sensorRadius */,
-            "" /* display */};
+    return SensorLocation{.sensorLocationX = defaultSensorLocationX,
+                          .sensorLocationY = defaultSensorLocationY,
+                          .sensorRadius = defaultSensorRadius};
 }
 
 ndk::ScopedAStatus FakeFingerprintEngineUdfps::onPointerDownImpl(int32_t /*pointerId*/,
@@ -70,68 +70,17 @@ ndk::ScopedAStatus FakeFingerprintEngineUdfps::onUiReadyImpl() {
 }
 
 void FakeFingerprintEngineUdfps::fingerDownAction() {
-    switch (mWorkMode) {
-        case WorkMode::kAuthenticate:
-            onAuthenticateFingerDown();
-            break;
-        case WorkMode::kEnroll:
-            onEnrollFingerDown();
-            break;
-        case WorkMode::kDetectInteract:
-            onDetectInteractFingerDown();
-            break;
-        default:
-            LOG(WARNING) << "unexpected call: onUiReady()";
-            break;
-    }
-
+    FakeFingerprintEngine::fingerDownAction();
     mUiReadyTime = 0;
     mPointerDownTime = 0;
-}
-
-void FakeFingerprintEngineUdfps::onAuthenticateFingerDown() {
-    FakeFingerprintEngine::authenticateImpl(mCb, mOperationId, mCancelVec[0]);
-}
-
-void FakeFingerprintEngineUdfps::onEnrollFingerDown() {
-    // Any use case to emulate display touch for each capture during enrollment?
-    FakeFingerprintEngine::enrollImpl(mCb, mHat, mCancelVec[0]);
-}
-
-void FakeFingerprintEngineUdfps::onDetectInteractFingerDown() {
-    FakeFingerprintEngine::detectInteractionImpl(mCb, mCancelVec[0]);
-}
-
-void FakeFingerprintEngineUdfps::enrollImpl(ISessionCallback* cb,
-                                            const keymaster::HardwareAuthToken& hat,
-                                            const std::future<void>& cancel) {
-    updateContext(WorkMode::kEnroll, cb, const_cast<std::future<void>&>(cancel), 0, hat);
-}
-
-void FakeFingerprintEngineUdfps::authenticateImpl(ISessionCallback* cb, int64_t operationId,
-                                                  const std::future<void>& cancel) {
-    updateContext(WorkMode::kAuthenticate, cb, const_cast<std::future<void>&>(cancel), operationId,
-                  keymaster::HardwareAuthToken());
-}
-
-void FakeFingerprintEngineUdfps::detectInteractionImpl(ISessionCallback* cb,
-                                                       const std::future<void>& cancel) {
-    updateContext(WorkMode::kDetectInteract, cb, const_cast<std::future<void>&>(cancel), 0,
-                  keymaster::HardwareAuthToken());
 }
 
 void FakeFingerprintEngineUdfps::updateContext(WorkMode mode, ISessionCallback* cb,
                                                std::future<void>& cancel, int64_t operationId,
                                                const keymaster::HardwareAuthToken& hat) {
+    FakeFingerprintEngine::updateContext(mode, cb, cancel, operationId, hat);
     mPointerDownTime = 0;
     mUiReadyTime = 0;
-    mCancelVec.clear();
-
-    mCancelVec.push_back(std::move(cancel));
-    mWorkMode = mode;
-    mCb = cb;
-    mOperationId = operationId;
-    mHat = hat;
 }
 
 }  // namespace aidl::android::hardware::biometrics::fingerprint
