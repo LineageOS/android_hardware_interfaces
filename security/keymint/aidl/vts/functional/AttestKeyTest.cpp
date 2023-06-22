@@ -950,10 +950,7 @@ TEST_P(AttestKeyTest, EcdsaAttestationMismatchID) {
         vector<Certificate> attested_key_cert_chain;
         auto result = GenerateKey(builder, attest_key, &attested_key_blob,
                                   &attested_key_characteristics, &attested_key_cert_chain);
-
-        ASSERT_TRUE(result == ErrorCode::CANNOT_ATTEST_IDS || result == ErrorCode::INVALID_TAG)
-                << "result = " << result;
-        device_id_attestation_vsr_check(result);
+        device_id_attestation_check_acceptable_error(invalid_tag.tag, result);
     }
 }
 
@@ -1015,8 +1012,6 @@ TEST_P(AttestKeyTest, SecondIMEIAttestationIDSuccess) {
 
     ASSERT_EQ(result, ErrorCode::OK);
     KeyBlobDeleter attested_deleter(keymint_, attested_key_blob);
-
-    device_id_attestation_vsr_check(result);
 
     AuthorizationSet hw_enforced = HwEnforcedAuthorizations(attested_key_characteristics);
     AuthorizationSet sw_enforced = SwEnforcedAuthorizations(attested_key_characteristics);
@@ -1094,8 +1089,6 @@ TEST_P(AttestKeyTest, MultipleIMEIAttestationIDSuccess) {
 
     ASSERT_EQ(result, ErrorCode::OK);
     KeyBlobDeleter attested_deleter(keymint_, attested_key_blob);
-
-    device_id_attestation_vsr_check(result);
 
     AuthorizationSet hw_enforced = HwEnforcedAuthorizations(attested_key_characteristics);
     AuthorizationSet sw_enforced = SwEnforcedAuthorizations(attested_key_characteristics);
