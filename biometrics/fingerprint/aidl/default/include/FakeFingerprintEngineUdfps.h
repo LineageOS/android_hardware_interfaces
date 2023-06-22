@@ -42,39 +42,20 @@ class FakeFingerprintEngineUdfps : public FakeFingerprintEngine {
 
     SensorLocation defaultSensorLocation() override;
 
-    void enrollImpl(ISessionCallback* cb, const keymaster::HardwareAuthToken& hat,
-                    const std::future<void>& cancel);
-    void authenticateImpl(ISessionCallback* cb, int64_t operationId,
-                          const std::future<void>& cancel);
-    void detectInteractionImpl(ISessionCallback* cb, const std::future<void>& cancel);
-
-    enum class WorkMode : int8_t { kIdle = 0, kAuthenticate, kEnroll, kDetectInteract };
-
-    WorkMode getWorkMode() { return mWorkMode; }
+    void updateContext(WorkMode mode, ISessionCallback* cb, std::future<void>& cancel,
+                       int64_t operationId, const keymaster::HardwareAuthToken& hat);
+    void fingerDownAction();
 
     std::string toString() const {
         std::ostringstream os;
         os << FakeFingerprintEngine::toString();
         os << "----- FakeFingerprintEngineUdfps -----" << std::endl;
-        os << "mWorkMode:" << (int)mWorkMode;
         os << ", mUiReadyTime:" << mUiReadyTime;
         os << ", mPointerDownTime:" << mPointerDownTime << std::endl;
         return os.str();
     }
 
   private:
-    void onAuthenticateFingerDown();
-    void onEnrollFingerDown();
-    void onDetectInteractFingerDown();
-    void fingerDownAction();
-    void updateContext(WorkMode mode, ISessionCallback* cb, std::future<void>& cancel,
-                       int64_t operationId, const keymaster::HardwareAuthToken& hat);
-
-    WorkMode mWorkMode;
-    ISessionCallback* mCb;
-    keymaster::HardwareAuthToken mHat;
-    std::vector<std::future<void>> mCancelVec;
-    int64_t mOperationId;
     int64_t mPointerDownTime;
     int64_t mUiReadyTime;
 };
