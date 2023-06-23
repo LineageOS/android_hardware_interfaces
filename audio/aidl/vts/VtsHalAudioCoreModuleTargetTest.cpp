@@ -2763,6 +2763,7 @@ TEST_P(AudioStreamIn, ActiveMicrophones) {
             ASSERT_NO_FATAL_FAILURE(patch.SetUp(module.get()));
             std::vector<MicrophoneDynamicInfo> activeMics;
             EXPECT_IS_OK(stream.get()->getActiveMicrophones(&activeMics));
+            EXPECT_FALSE(activeMics.empty());
             for (const auto& mic : activeMics) {
                 EXPECT_NE(micInfos.end(),
                           std::find_if(micInfos.begin(), micInfos.end(),
