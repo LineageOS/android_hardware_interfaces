@@ -46,6 +46,7 @@ using aidl::android::hardware::audio::effect::IEffect;
 using aidl::android::hardware::audio::effect::IFactory;
 using aidl::android::hardware::audio::effect::Parameter;
 using aidl::android::hardware::audio::effect::State;
+using aidl::android::hardware::audio::effect::Flags;
 using aidl::android::media::audio::common::AudioDeviceDescription;
 using aidl::android::media::audio::common::AudioDeviceType;
 using aidl::android::media::audio::common::AudioMode;
@@ -83,6 +84,14 @@ class AudioEffectTest : public testing::TestWithParam<EffectTestParam>, public E
         EXPECT_IS_OK(mEffect->getParameter(id, &get));
         EXPECT_EQ(set, get) << set.toString() << "\n vs \n" << get.toString();
     }
+};
+
+class AudioEffectDataPathTest : public AudioEffectTest {
+    public:
+        void SetUp() override {
+            AudioEffectTest::SetUp();
+            SKIP_TEST_IF_DATA_UNSUPPORTED(mDescriptor.common.flags);
+        }
 };
 
 TEST_P(AudioEffectTest, SetupAndTearDown) {
@@ -577,7 +586,8 @@ TEST_P(AudioEffectTest, SetAndGetParameterVolume) {
 
 /// Data processing test
 // Send data to effects and expect it to be consumed by checking statusMQ.
-TEST_P(AudioEffectTest, ConsumeDataInProcessingState) {
+// Effects exposing bypass flags or operating in offload mode will be skipped.
+TEST_P(AudioEffectDataPathTest, ConsumeDataInProcessingState) {
     ASSERT_NO_FATAL_FAILURE(create(mFactory, mEffect, mDescriptor));
 
     Parameter::Common common = EffectHelper::createParamCommon(
@@ -610,7 +620,8 @@ TEST_P(AudioEffectTest, ConsumeDataInProcessingState) {
 }
 
 // Send data to effects and expect it to be consumed after effect restart.
-TEST_P(AudioEffectTest, ConsumeDataAfterRestart) {
+// Effects exposing bypass flags or operating in offload mode will be skipped.
+TEST_P(AudioEffectDataPathTest, ConsumeDataAfterRestart) {
     ASSERT_NO_FATAL_FAILURE(create(mFactory, mEffect, mDescriptor));
 
     Parameter::Common common = EffectHelper::createParamCommon(
@@ -649,7 +660,8 @@ TEST_P(AudioEffectTest, ConsumeDataAfterRestart) {
 }
 
 // Send data to IDLE effects and expect it to be consumed after effect start.
-TEST_P(AudioEffectTest, SendDataAtIdleAndConsumeDataInProcessing) {
+// Effects exposing bypass flags or operating in offload mode will be skipped.
+TEST_P(AudioEffectDataPathTest, SendDataAtIdleAndConsumeDataInProcessing) {
     ASSERT_NO_FATAL_FAILURE(create(mFactory, mEffect, mDescriptor));
 
     Parameter::Common common = EffectHelper::createParamCommon(
@@ -682,7 +694,8 @@ TEST_P(AudioEffectTest, SendDataAtIdleAndConsumeDataInProcessing) {
 }
 
 // Send data multiple times.
-TEST_P(AudioEffectTest, ProcessDataMultipleTimes) {
+// Effects exposing bypass flags or operating in offload mode will be skipped.
+TEST_P(AudioEffectDataPathTest, ProcessDataMultipleTimes) {
     ASSERT_NO_FATAL_FAILURE(create(mFactory, mEffect, mDescriptor));
 
     Parameter::Common common = EffectHelper::createParamCommon(
@@ -721,7 +734,8 @@ TEST_P(AudioEffectTest, ProcessDataMultipleTimes) {
 }
 
 // Send data to processing state effects, stop, and restart.
-TEST_P(AudioEffectTest, ConsumeDataAndRestart) {
+// Effects exposing bypass flags or operating in offload mode will be skipped.
+TEST_P(AudioEffectDataPathTest, ConsumeDataAndRestart) {
     ASSERT_NO_FATAL_FAILURE(create(mFactory, mEffect, mDescriptor));
 
     Parameter::Common common = EffectHelper::createParamCommon(
@@ -762,7 +776,8 @@ TEST_P(AudioEffectTest, ConsumeDataAndRestart) {
 }
 
 // Send data to closed effects and expect it not be consumed.
-TEST_P(AudioEffectTest, NotConsumeDataByClosedEffect) {
+// Effects exposing bypass flags or operating in offload mode will be skipped.
+TEST_P(AudioEffectDataPathTest, NotConsumeDataByClosedEffect) {
     ASSERT_NO_FATAL_FAILURE(create(mFactory, mEffect, mDescriptor));
 
     Parameter::Common common = EffectHelper::createParamCommon(
@@ -788,7 +803,8 @@ TEST_P(AudioEffectTest, NotConsumeDataByClosedEffect) {
 }
 
 // Send data to multiple effects.
-TEST_P(AudioEffectTest, ConsumeDataMultipleEffects) {
+// Effects exposing bypass flags or operating in offload mode will be skipped.
+TEST_P(AudioEffectDataPathTest, ConsumeDataMultipleEffects) {
     std::shared_ptr<IEffect> effect1, effect2;
     ASSERT_NO_FATAL_FAILURE(create(mFactory, effect1, mDescriptor));
     ASSERT_NO_FATAL_FAILURE(create(mFactory, effect2, mDescriptor));
@@ -854,6 +870,20 @@ INSTANTIATE_TEST_SUITE_P(
             return name;
         });
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(AudioEffectTest);
+
+INSTANTIATE_TEST_SUITE_P(
+        SingleEffectInstanceTest, AudioEffectDataPathTest,
+        ::testing::Combine(testing::ValuesIn(
+                EffectFactoryHelper::getAllEffectDescriptors(IFactory::descriptor))),
+        [](const testing::TestParamInfo<AudioEffectDataPathTest::ParamType>& info) {
+            auto descriptor = std::get<PARAM_INSTANCE_NAME>(info.param).second;
+            std::string name = getPrefix(descriptor);
+            std::replace_if(
+                    name.begin(), name.end(), [](const char c) { return !std::isalnum(c); }, '_');
+            return name;
+        });
+
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(AudioEffectDataPathTest);
 
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
