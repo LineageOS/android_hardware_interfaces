@@ -30,16 +30,15 @@
 #include <android/binder_auto_utils.h>
 #include <fmq/AidlMessageQueue.h>
 #include <gtest/gtest.h>
+#include <system/audio_aidl_utils.h>
 #include <system/audio_effects/aidl_effects_utils.h>
 #include <system/audio_effects/effect_uuid.h>
-#include <system/audio_aidl_utils.h>
 
 #include "AudioHalBinderServiceUtil.h"
 #include "EffectFactoryHelper.h"
 #include "TestUtils.h"
 
 using namespace android;
-using ::android::audio::utils::toString;
 using aidl::android::hardware::audio::effect::CommandId;
 using aidl::android::hardware::audio::effect::Descriptor;
 using aidl::android::hardware::audio::effect::IEffect;
@@ -53,6 +52,7 @@ using aidl::android::media::audio::common::AudioFormatDescription;
 using aidl::android::media::audio::common::AudioFormatType;
 using aidl::android::media::audio::common::AudioUuid;
 using aidl::android::media::audio::common::PcmType;
+using ::android::audio::utils::toString;
 using ::android::hardware::EventFlag;
 
 const AudioFormatDescription kDefaultFormatDescription = {
@@ -65,10 +65,9 @@ typedef ::android::AidlMessageQueue<float,
                                     ::aidl::android::hardware::common::fmq::SynchronizedReadWrite>
         DataMQ;
 
-static inline std::string getPrefix(Descriptor &descriptor) {
+static inline std::string getPrefix(Descriptor& descriptor) {
     std::string prefix = "Implementor_" + descriptor.common.implementor + "_name_" +
-                               descriptor.common.name + "_UUID_" +
-                               toString(descriptor.common.id.uuid);
+                         descriptor.common.name + "_UUID_" + toString(descriptor.common.id.uuid);
     return prefix;
 }
 
