@@ -29,6 +29,21 @@
 #include <aidl/android/media/audio/common/AudioMode.h>
 #include <aidl/android/media/audio/common/AudioOutputFlags.h>
 #include <aidl/android/media/audio/common/PcmType.h>
+#include <android/binder_auto_utils.h>
+
+namespace ndk {
+
+// This enables use of 'error/expected_utils' for ScopedAStatus.
+
+inline bool errorIsOk(const ScopedAStatus& s) {
+    return s.isOk();
+}
+
+inline std::string errorToString(const ScopedAStatus& s) {
+    return s.getDescription();
+}
+
+}  // namespace ndk
 
 namespace aidl::android::hardware::audio::common {
 
