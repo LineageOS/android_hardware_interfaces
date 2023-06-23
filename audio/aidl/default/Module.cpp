@@ -18,12 +18,12 @@
 #include <set>
 
 #define LOG_TAG "AHAL_Module"
-#include <android-base/logging.h>
-#include <android/binder_ibinder_platform.h>
-
 #include <Utils.h>
 #include <aidl/android/media/audio/common/AudioInputFlags.h>
 #include <aidl/android/media/audio/common/AudioOutputFlags.h>
+#include <android-base/logging.h>
+#include <android/binder_ibinder_platform.h>
+#include <error/expected_utils.h>
 
 #include "core-impl/Bluetooth.h"
 #include "core-impl/Module.h"
@@ -470,10 +470,7 @@ ndk::ScopedAStatus Module::connectExternalDevice(const AudioPort& in_templateIdA
     }
 
     if (!mDebug.simulateDeviceConnections) {
-        if (ndk::ScopedAStatus status = populateConnectedDevicePort(&connectedPort);
-            !status.isOk()) {
-            return status;
-        }
+        RETURN_STATUS_IF_ERROR(populateConnectedDevicePort(&connectedPort));
     } else {
         auto& connectedProfiles = getConfig().connectedProfiles;
         if (auto connectedProfilesIt = connectedProfiles.find(templateId);
@@ -648,27 +645,19 @@ ndk::ScopedAStatus Module::openInputStream(const OpenInputStreamArguments& in_ar
     LOG(DEBUG) << __func__ << ": port config id " << in_args.portConfigId << ", buffer size "
                << in_args.bufferSizeFrames << " frames";
     AudioPort* port = nullptr;
-    if (auto status = findPortIdForNewStream(in_args.portConfigId, &port); !status.isOk()) {
-        return status;
-    }
+    RETURN_STATUS_IF_ERROR(findPortIdForNewStream(in_args.portConfigId, &port));
     if (port->flags.getTag() != AudioIoFlags::Tag::input) {
         LOG(ERROR) << __func__ << ": port config id " << in_args.portConfigId
                    << " does not correspond to an input mix port";
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
     }
     StreamContext context;
-    if (auto status = createStreamContext(in_args.portConfigId, in_args.bufferSizeFrames, nullptr,
-                                          nullptr, &context);
-        !status.isOk()) {
-        return status;
-    }
+    RETURN_STATUS_IF_ERROR(createStreamContext(in_args.portConfigId, in_args.bufferSizeFrames,
+                                               nullptr, nullptr, &context));
     context.fillDescriptor(&_aidl_return->desc);
     std::shared_ptr<StreamIn> stream;
-    ndk::ScopedAStatus status = getStreamInCreator(mType)(in_args.sinkMetadata, std::move(context),
-                                                          mConfig->microphones, &stream);
-    if (!status.isOk()) {
-        return status;
-    }
+    RETURN_STATUS_IF_ERROR(getStreamInCreator(mType)(in_args.sinkMetadata, std::move(context),
+                                                     mConfig->microphones, &stream));
     StreamWrapper streamWrapper(stream);
     AIBinder_setMinSchedulerPolicy(streamWrapper.getBinder().get(), SCHED_NORMAL,
                                    ANDROID_PRIORITY_AUDIO);
@@ -687,9 +676,7 @@ ndk::ScopedAStatus Module::openOutputStream(const OpenOutputStreamArguments& in_
                << (in_args.offloadInfo.has_value()) << ", buffer size " << in_args.bufferSizeFrames
                << " frames";
     AudioPort* port = nullptr;
-    if (auto status = findPortIdForNewStream(in_args.portConfigId, &port); !status.isOk()) {
-        return status;
-    }
+    RETURN_STATUS_IF_ERROR(findPortIdForNewStream(in_args.portConfigId, &port));
     if (port->flags.getTag() != AudioIoFlags::Tag::output) {
         LOG(ERROR) << __func__ << ": port config id " << in_args.portConfigId
                    << " does not correspond to an output mix port";
@@ -710,19 +697,13 @@ ndk::ScopedAStatus Module::openOutputStream(const OpenOutputStreamArguments& in_
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
     }
     StreamContext context;
-    if (auto status = createStreamContext(in_args.portConfigId, in_args.bufferSizeFrames,
-                                          isNonBlocking ? in_args.callback : nullptr,
-                                          in_args.eventCallback, &context);
-        !status.isOk()) {
-        return status;
-    }
+    RETURN_STATUS_IF_ERROR(createStreamContext(in_args.portConfigId, in_args.bufferSizeFrames,
+                                               isNonBlocking ? in_args.callback : nullptr,
+                                               in_args.eventCallback, &context));
     context.fillDescriptor(&_aidl_return->desc);
     std::shared_ptr<StreamOut> stream;
-    ndk::ScopedAStatus status = getStreamOutCreator(mType)(
-            in_args.sourceMetadata, std::move(context), in_args.offloadInfo, &stream);
-    if (!status.isOk()) {
-        return status;
-    }
+    RETURN_STATUS_IF_ERROR(getStreamOutCreator(mType)(in_args.sourceMetadata, std::move(context),
+                                                      in_args.offloadInfo, &stream));
     StreamWrapper streamWrapper(stream);
     AIBinder_setMinSchedulerPolicy(streamWrapper.getBinder().get(), SCHED_NORMAL,
                                    ANDROID_PRIORITY_AUDIO);
@@ -797,10 +778,7 @@ ndk::ScopedAStatus Module::setAudioPatch(const AudioPatch& in_requested, AudioPa
             return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
         }
     }
-
-    if (auto status = checkAudioPatchEndpointsMatch(sources, sinks); !status.isOk()) {
-        return status;
-    }
+    RETURN_STATUS_IF_ERROR(checkAudioPatchEndpointsMatch(sources, sinks));
 
     auto& patches = getConfig().patches;
     auto existing = patches.end();
