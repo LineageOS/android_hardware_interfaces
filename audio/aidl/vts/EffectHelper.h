@@ -32,12 +32,14 @@
 #include <gtest/gtest.h>
 #include <system/audio_effects/aidl_effects_utils.h>
 #include <system/audio_effects/effect_uuid.h>
+#include <system/audio_aidl_utils.h>
 
 #include "AudioHalBinderServiceUtil.h"
 #include "EffectFactoryHelper.h"
 #include "TestUtils.h"
 
 using namespace android;
+using ::android::audio::utils::toString;
 using aidl::android::hardware::audio::effect::CommandId;
 using aidl::android::hardware::audio::effect::Descriptor;
 using aidl::android::hardware::audio::effect::IEffect;
@@ -63,6 +65,13 @@ typedef ::android::AidlMessageQueue<float,
                                     ::aidl::android::hardware::common::fmq::SynchronizedReadWrite>
         DataMQ;
 
+static inline std::string getPrefix(Descriptor &descriptor) {
+    std::string prefix = "Implementor_" + descriptor.common.implementor + "_name_" +
+                               descriptor.common.name + "_UUID_" +
+                               toString(descriptor.common.id.uuid);
+    return prefix;
+}
+
 class EffectHelper {
   public:
     static void create(std::shared_ptr<IFactory> factory, std::shared_ptr<IEffect>& effect,
@@ -71,7 +80,7 @@ class EffectHelper {
         auto& id = desc.common.id;
         ASSERT_STATUS(status, factory->createEffect(id.uuid, &effect));
         if (status == EX_NONE) {
-            ASSERT_NE(effect, nullptr) << id.uuid.toString();
+            ASSERT_NE(effect, nullptr) << toString(id.uuid);
         }
     }
 
