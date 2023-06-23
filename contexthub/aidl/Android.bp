@@ -34,6 +34,9 @@ aidl_interface {
         ndk: {
             apps_enabled: false,
         },
+        rust: {
+            enabled: true,
+        },
     },
     versions_with_info: [
         {
