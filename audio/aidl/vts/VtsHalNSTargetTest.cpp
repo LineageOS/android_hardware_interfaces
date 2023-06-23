@@ -155,9 +155,7 @@ INSTANTIATE_TEST_SUITE_P(
                     std::get<PARAM_LEVEL>(info.param));
             std::string type = aidl::android::hardware::audio::effect::toString(
                     std::get<PARAM_TYPE>(info.param));
-            std::string name = "Implementor_" + descriptor.common.implementor + "_name_" +
-                               descriptor.common.name + "_UUID_" +
-                               descriptor.common.id.uuid.toString() + "_level_" + level + "_type_" +
+            std::string name = getPrefix(descriptor) + "_level_" + level + "_type_" +
                                type;
             std::replace_if(
                     name.begin(), name.end(), [](const char c) { return !std::isalnum(c); }, '_');

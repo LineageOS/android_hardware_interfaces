@@ -209,9 +209,7 @@ INSTANTIATE_TEST_SUITE_P(
             auto descriptor = std::get<PARAM_INSTANCE_NAME>(info.param).second;
             std::string bandLevel =
                     ::android::internal::ToString(std::get<PARAM_BAND_LEVEL>(info.param));
-            std::string name = "Implementor_" + descriptor.common.implementor + "_name_" +
-                               descriptor.common.name + "_UUID_" +
-                               descriptor.common.id.uuid.toString() + "_preset_" +
+            std::string name = getPrefix(descriptor) + "_preset_" +
                                std::to_string(std::get<PARAM_PRESET>(info.param)) + "_bandLevel_" +
                                bandLevel;
             std::replace_if(
