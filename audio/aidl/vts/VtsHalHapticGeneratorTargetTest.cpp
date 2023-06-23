@@ -195,10 +195,10 @@ INSTANTIATE_TEST_SUITE_P(
                     std::to_string(std::get<PARAM_VIBRATION_INFORMATION_Q_FACTOR>(info.param));
             std::string maxAmplitude =
                     std::to_string(std::get<PARAM_VIBRATION_INFORMATION_MAX_AMPLITUDE>(info.param));
-            std::string name = getPrefix(descriptor) + "_hapticScaleId" +
-                               hapticScaleID + "_hapticScaleVibScale" + hapticScaleVibScale +
-                               "_resonantFrequency" + resonantFrequency + "_qFactor" + qFactor +
-                               "_maxAmplitude" + maxAmplitude;
+            std::string name = getPrefix(descriptor) + "_hapticScaleId" + hapticScaleID +
+                               "_hapticScaleVibScale" + hapticScaleVibScale + "_resonantFrequency" +
+                               resonantFrequency + "_qFactor" + qFactor + "_maxAmplitude" +
+                               maxAmplitude;
             std::replace_if(
                     name.begin(), name.end(), [](const char c) { return !std::isalnum(c); }, '_');
             return name;
