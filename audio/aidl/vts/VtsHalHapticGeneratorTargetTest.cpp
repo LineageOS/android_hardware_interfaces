@@ -195,9 +195,7 @@ INSTANTIATE_TEST_SUITE_P(
                     std::to_string(std::get<PARAM_VIBRATION_INFORMATION_Q_FACTOR>(info.param));
             std::string maxAmplitude =
                     std::to_string(std::get<PARAM_VIBRATION_INFORMATION_MAX_AMPLITUDE>(info.param));
-            std::string name = "Implementor_" + descriptor.common.implementor + "_name_" +
-                               descriptor.common.name + "_UUID_" +
-                               descriptor.common.id.uuid.toString() + "_hapticScaleId" +
+            std::string name = getPrefix(descriptor) + "_hapticScaleId" +
                                hapticScaleID + "_hapticScaleVibScale" + hapticScaleVibScale +
                                "_resonantFrequency" + resonantFrequency + "_qFactor" + qFactor +
                                "_maxAmplitude" + maxAmplitude;
