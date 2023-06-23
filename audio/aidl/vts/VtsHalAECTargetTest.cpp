@@ -162,8 +162,8 @@ INSTANTIATE_TEST_SUITE_P(
             auto descriptor = std::get<PARAM_INSTANCE_NAME>(info.param).second;
             std::string echoDelay = std::to_string(std::get<PARAM_ECHO_DELAY>(info.param));
             std::string mobileMode = std::get<PARAM_MOBILE_MODE>(info.param) ? "true" : "false";
-            std::string name = getPrefix(descriptor) + "_EchoDelay_" + echoDelay +
-                               "_MobileMode_" + mobileMode;
+            std::string name =
+                    getPrefix(descriptor) + "_EchoDelay_" + echoDelay + "_MobileMode_" + mobileMode;
             std::replace_if(
                     name.begin(), name.end(), [](const char c) { return !std::isalnum(c); }, '_');
             return name;
