@@ -105,6 +105,9 @@ class SubscriptionManager final {
                        std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropError>>
     getSubscribedClientsForErrorEvents(const std::vector<SetValueErrorEvent>& errorEvents);
 
+    // Returns the number of subscribed clients.
+    size_t countClients();
+
     // Checks whether the sample rate is valid.
     static bool checkSampleRateHz(float sampleRateHz);
 
