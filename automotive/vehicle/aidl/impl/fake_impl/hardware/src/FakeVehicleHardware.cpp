@@ -1833,6 +1833,7 @@ void FakeVehicleHardware::registerOnPropertyChangeEvent(
 
 void FakeVehicleHardware::registerOnPropertySetErrorEvent(
         std::unique_ptr<const PropertySetErrorCallback> callback) {
+    // In FakeVehicleHardware, we will never use mOnPropertySetErrorCallback.
     if (mOnPropertySetErrorCallback != nullptr) {
         ALOGE("registerOnPropertySetErrorEvent must only be called once");
         return;

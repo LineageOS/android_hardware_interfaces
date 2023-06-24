@@ -99,6 +99,12 @@ class SubscriptionManager final {
             const std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropValue>&
                     updatedValues);
 
+    // For a list of set property error events, returns a map that maps clients subscribing to the
+    // properties to a list of errors for each client.
+    std::unordered_map<CallbackType,
+                       std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropError>>
+    getSubscribedClientsForErrorEvents(const std::vector<SetValueErrorEvent>& errorEvents);
+
     // Checks whether the sample rate is valid.
     static bool checkSampleRateHz(float sampleRateHz);
 
