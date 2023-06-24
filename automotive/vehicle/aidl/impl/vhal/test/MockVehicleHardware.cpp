@@ -131,8 +131,9 @@ void MockVehicleHardware::registerOnPropertyChangeEvent(
 }
 
 void MockVehicleHardware::registerOnPropertySetErrorEvent(
-        std::unique_ptr<const PropertySetErrorCallback>) {
-    // TODO(b/200737967): mock this.
+        std::unique_ptr<const PropertySetErrorCallback> callback) {
+    std::scoped_lock<std::mutex> lockGuard(mLock);
+    mPropertySetErrorCallback = std::move(callback);
 }
 
 void MockVehicleHardware::setPropertyConfigs(const std::vector<VehiclePropConfig>& configs) {
@@ -253,6 +254,12 @@ template StatusCode MockVehicleHardware::handleRequestsLocked<SetValueRequest, S
         const std::vector<SetValueRequest>& requests,
         std::list<std::vector<SetValueRequest>>* storedRequests,
         std::list<std::vector<SetValueResult>>* storedResponses) const;
+
+void MockVehicleHardware::sendOnPropertySetErrorEvent(
+        const std::vector<SetValueErrorEvent>& errorEvents) {
+    std::scoped_lock<std::mutex> lockGuard(mLock);
+    (*mPropertySetErrorCallback)(errorEvents);
+}
 
 }  // namespace vehicle
 }  // namespace automotive
