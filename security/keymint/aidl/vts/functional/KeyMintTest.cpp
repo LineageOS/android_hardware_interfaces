@@ -5287,6 +5287,20 @@ TEST_P(EncryptionOperationsTest, RsaOaepWithMGFDigestSuccess) {
                                                  .Digest(Digest::SHA_2_256)
                                                  .SetDefaultValidity()));
 
+    std::vector<Digest> mgf1DigestsInAuths;
+    mgf1DigestsInAuths.reserve(digests.size());
+    const auto& hw_auths = SecLevelAuthorizations(key_characteristics_);
+    std::for_each(hw_auths.begin(), hw_auths.end(), [&](auto& param) {
+        if (param.tag == Tag::RSA_OAEP_MGF_DIGEST) {
+            KeyParameterValue value = param.value;
+            mgf1DigestsInAuths.push_back(param.value.template get<KeyParameterValue::digest>());
+        }
+    });
+
+    std::sort(digests.begin(), digests.end());
+    std::sort(mgf1DigestsInAuths.begin(), mgf1DigestsInAuths.end());
+    EXPECT_EQ(digests, mgf1DigestsInAuths);
+
     string message = "Hello";
 
     for (auto digest : digests) {
