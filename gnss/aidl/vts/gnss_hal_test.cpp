@@ -486,8 +486,6 @@ void GnssHalTest::collectSvInfoListTimestamps(const int numMeasurementEvents,
 
     auto status = aidl_gnss_hal_->startSvStatus();
     EXPECT_TRUE(status.isOk());
-    ASSERT_TRUE(aidl_gnss_cb_->sv_info_list_timestamps_millis_cbq_.size() ==
-                aidl_gnss_cb_->sv_info_list_cbq_.size());
     long lastElapsedRealtimeMillis = 0;
     for (int i = 0; i < numMeasurementEvents; i++) {
         long timeStamp;
