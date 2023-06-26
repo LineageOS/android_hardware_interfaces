@@ -194,6 +194,8 @@ class FakeVehicleHardware : public IVehicleHardware {
             bool* isSpecialValue) const;
     VhalResult<void> setApPowerStateReport(
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value);
+    VhalResult<void> setApPowerStateReqShutdown(
+            const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value);
     VehiclePropValuePool::RecyclableType createApPowerStateReq(
             aidl::android::hardware::automotive::vehicle::VehicleApPowerStateReq state);
     VehiclePropValuePool::RecyclableType createAdasStateReq(int32_t propertyId, int32_t areaId,
