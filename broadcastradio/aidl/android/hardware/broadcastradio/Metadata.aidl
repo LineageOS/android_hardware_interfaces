@@ -70,9 +70,9 @@ union Metadata {
     /**
      * Station name.
      *
-     * This is a generic field to cover any radio technology.
+     * <p>This is a generic field to cover any radio technology.
      *
-     * If the PROGRAM_NAME has the same content as DAB_*_NAME or RDS_PS,
+     * <p>Note: If the program name has the same content as dab*Name or ({@link Metadata#rdsPs},
      * it may not be present, to preserve space - framework must repopulate
      * it on the client side.
      */
@@ -86,10 +86,10 @@ union Metadata {
     /**
      * DAB ensemble name abbreviated (string).
      *
-     * The string must be up to 8 characters long.
+     * <p>Note: The string must be up to 8 characters long.
      *
-     * If the short variant is present, the long (DAB_ENSEMBLE_NAME) one must be
-     * present as well.
+     * <p>Note: If the short variant is present, the long ({@link Metadata#dabEnsembleName})
+     * one must be present as well.
      */
     String dabEnsembleNameShort;
 
@@ -99,7 +99,9 @@ union Metadata {
     String dabServiceName;
 
     /**
-     * DAB service name abbreviated (see DAB_ENSEMBLE_NAME_SHORT) (string)
+     * DAB service name abbreviated (string)
+     *
+     * <p>Note: The string must be up to 8 characters long.
      */
     String dabServiceNameShort;
 
@@ -109,7 +111,9 @@ union Metadata {
     String dabComponentName;
 
     /**
-     * DAB component name abbreviated (see DAB_ENSEMBLE_NAME_SHORT) (string)
+     * DAB component name abbreviated (string)
+     *
+     * <p>Note: The string must be up to 8 characters long.
      */
     String dabComponentNameShort;
 }
