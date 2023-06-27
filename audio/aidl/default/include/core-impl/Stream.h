@@ -395,11 +395,11 @@ class StreamCommonImpl : public StreamCommonInterface {
                                 : ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
     }
     bool isClosed() const { return mWorker->isClosed(); }
-    void setIsConnected(
+    ndk::ScopedAStatus setConnectedDevices(
             const std::vector<::aidl::android::media::audio::common::AudioDevice>& devices) {
         mWorker->setIsConnected(!devices.empty());
         mConnectedDevices = devices;
-        mDriver->setConnectedDevices(devices);
+        return ndk::ScopedAStatus::fromStatus(mDriver->setConnectedDevices(devices));
     }
     ndk::ScopedAStatus updateMetadata(const Metadata& metadata);
 
@@ -547,12 +547,13 @@ class StreamWrapper {
                 },
                 mStream);
     }
-    void setStreamIsConnected(
+    ndk::ScopedAStatus setConnectedDevices(
             const std::vector<::aidl::android::media::audio::common::AudioDevice>& devices) {
-        std::visit(
+        return std::visit(
                 [&](auto&& ws) {
                     auto s = ws.lock();
-                    if (s) s->setIsConnected(devices);
+                    if (s) return s->setConnectedDevices(devices);
+                    return ndk::ScopedAStatus::ok();
                 },
                 mStream);
     }
@@ -576,12 +577,13 @@ class Streams {
         mStreams.insert(std::pair{portConfigId, sw});
         mStreams.insert(std::pair{portId, std::move(sw)});
     }
-    void setStreamIsConnected(
+    ndk::ScopedAStatus setStreamConnectedDevices(
             int32_t portConfigId,
             const std::vector<::aidl::android::media::audio::common::AudioDevice>& devices) {
         if (auto it = mStreams.find(portConfigId); it != mStreams.end()) {
-            it->second.setStreamIsConnected(devices);
+            return it->second.setConnectedDevices(devices);
         }
+        return ndk::ScopedAStatus::ok();
     }
 
   private:
