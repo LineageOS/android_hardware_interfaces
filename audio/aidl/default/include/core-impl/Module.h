@@ -33,11 +33,9 @@ class Module : public BnModule {
     static constexpr int32_t kLatencyMs = 10;
     enum Type : int { DEFAULT, R_SUBMIX, USB };
 
-    explicit Module(Type type) : mType(type) {}
-
     static std::shared_ptr<Module> createInstance(Type type);
-    static StreamIn::CreateInstance getStreamInCreator(Type type);
-    static StreamOut::CreateInstance getStreamOutCreator(Type type);
+
+    explicit Module(Type type) : mType(type) {}
 
   protected:
     // The vendor extension done via inheritance can override interface methods and augment
@@ -182,6 +180,17 @@ class Module : public BnModule {
   protected:
     // The following virtual functions are intended for vendor extension via inheritance.
 
+    virtual ndk::ScopedAStatus createInputStream(
+            const ::aidl::android::hardware::audio::common::SinkMetadata& sinkMetadata,
+            StreamContext&& context,
+            const std::vector<::aidl::android::media::audio::common::MicrophoneInfo>& microphones,
+            std::shared_ptr<StreamIn>* result);
+    virtual ndk::ScopedAStatus createOutputStream(
+            const ::aidl::android::hardware::audio::common::SourceMetadata& sourceMetadata,
+            StreamContext&& context,
+            const std::optional<::aidl::android::media::audio::common::AudioOffloadInfo>&
+                    offloadInfo,
+            std::shared_ptr<StreamOut>* result);
     // If the module is unable to populate the connected device port correctly, the returned error
     // code must correspond to the errors of `IModule.connectedExternalDevice` method.
     virtual ndk::ScopedAStatus populateConnectedDevicePort(
