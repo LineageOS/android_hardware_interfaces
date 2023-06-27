@@ -42,13 +42,6 @@ class StreamStub : public StreamCommonImpl {
 
 class StreamInStub final : public StreamStub, public StreamIn {
   public:
-    static ndk::ScopedAStatus createInstance(
-            const ::aidl::android::hardware::audio::common::SinkMetadata& sinkMetadata,
-            StreamContext&& context,
-            const std::vector<::aidl::android::media::audio::common::MicrophoneInfo>& microphones,
-            std::shared_ptr<StreamIn>* result);
-
-  private:
     friend class ndk::SharedRefBase;
     StreamInStub(
             const ::aidl::android::hardware::audio::common::SinkMetadata& sinkMetadata,
@@ -58,14 +51,6 @@ class StreamInStub final : public StreamStub, public StreamIn {
 
 class StreamOutStub final : public StreamStub, public StreamOut {
   public:
-    static ndk::ScopedAStatus createInstance(
-            const ::aidl::android::hardware::audio::common::SourceMetadata& sourceMetadata,
-            StreamContext&& context,
-            const std::optional<::aidl::android::media::audio::common::AudioOffloadInfo>&
-                    offloadInfo,
-            std::shared_ptr<StreamOut>* result);
-
-  private:
     friend class ndk::SharedRefBase;
     StreamOutStub(const ::aidl::android::hardware::audio::common::SourceMetadata& sourceMetadata,
                   StreamContext&& context,
