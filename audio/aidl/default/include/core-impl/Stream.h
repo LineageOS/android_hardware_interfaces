@@ -25,6 +25,7 @@
 #include <variant>
 
 #include <StreamWorker.h>
+#include <Utils.h>
 #include <aidl/android/hardware/audio/common/SinkMetadata.h>
 #include <aidl/android/hardware/audio/common/SourceMetadata.h>
 #include <aidl/android/hardware/audio/core/BnStreamCommon.h>
@@ -37,6 +38,7 @@
 #include <aidl/android/media/audio/common/AudioIoFlags.h>
 #include <aidl/android/media/audio/common/AudioOffloadInfo.h>
 #include <aidl/android/media/audio/common/MicrophoneInfo.h>
+#include <error/expected_utils.h>
 #include <fmq/AidlMessageQueue.h>
 #include <system/thread_defs.h>
 #include <utils/Errors.h>
@@ -482,13 +484,6 @@ class StreamIn : virtual public StreamCommonInterface, public BnStreamIn {
             const std::vector<::aidl::android::media::audio::common::MicrophoneInfo>& microphones);
 
     const std::map<::aidl::android::media::audio::common::AudioDevice, std::string> mMicrophones;
-
-  public:
-    using CreateInstance = std::function<ndk::ScopedAStatus(
-            const ::aidl::android::hardware::audio::common::SinkMetadata& sinkMetadata,
-            StreamContext&& context,
-            const std::vector<::aidl::android::media::audio::common::MicrophoneInfo>& microphones,
-            std::shared_ptr<StreamIn>* result)>;
 };
 
 class StreamOut : virtual public StreamCommonInterface, public BnStreamOut {
@@ -531,15 +526,19 @@ class StreamOut : virtual public StreamCommonInterface, public BnStreamOut {
 
     std::optional<::aidl::android::media::audio::common::AudioOffloadInfo> mOffloadInfo;
     std::optional<::aidl::android::hardware::audio::common::AudioOffloadMetadata> mOffloadMetadata;
-
-  public:
-    using CreateInstance = std::function<ndk::ScopedAStatus(
-            const ::aidl::android::hardware::audio::common::SourceMetadata& sourceMetadata,
-            StreamContext&& context,
-            const std::optional<::aidl::android::media::audio::common::AudioOffloadInfo>&
-                    offloadInfo,
-            std::shared_ptr<StreamOut>* result)>;
 };
+
+// The recommended way to create a stream instance.
+// 'StreamImpl' is the concrete stream implementation, 'StreamInOrOut' is either 'StreamIn' or
+// 'StreamOut', the rest are the arguments forwarded to the constructor of 'StreamImpl'.
+template <class StreamImpl, class StreamInOrOut, class... Args>
+ndk::ScopedAStatus createStreamInstance(std::shared_ptr<StreamInOrOut>* result, Args&&... args) {
+    std::shared_ptr<StreamInOrOut> stream =
+            ::ndk::SharedRefBase::make<StreamImpl>(std::forward<Args>(args)...);
+    RETURN_STATUS_IF_ERROR(stream->initInstance(stream));
+    *result = std::move(stream);
+    return ndk::ScopedAStatus::ok();
+}
 
 class StreamWrapper {
   public:

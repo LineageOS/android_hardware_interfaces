@@ -60,41 +60,28 @@ class StreamUsb : public StreamCommonImpl {
 };
 
 class StreamInUsb final : public StreamUsb, public StreamIn {
-    ndk::ScopedAStatus getActiveMicrophones(
-            std::vector<::aidl::android::media::audio::common::MicrophoneDynamicInfo>* _aidl_return)
-            override;
-
   public:
-    static ndk::ScopedAStatus createInstance(
-            const ::aidl::android::hardware::audio::common::SinkMetadata& sinkMetadata,
-            StreamContext&& context,
-            const std::vector<::aidl::android::media::audio::common::MicrophoneInfo>& microphones,
-            std::shared_ptr<StreamIn>* result);
-
-  private:
     friend class ndk::SharedRefBase;
     StreamInUsb(
             const ::aidl::android::hardware::audio::common::SinkMetadata& sinkMetadata,
             StreamContext&& context,
             const std::vector<::aidl::android::media::audio::common::MicrophoneInfo>& microphones);
+
+  private:
+    ndk::ScopedAStatus getActiveMicrophones(
+            std::vector<::aidl::android::media::audio::common::MicrophoneDynamicInfo>* _aidl_return)
+            override;
 };
 
 class StreamOutUsb final : public StreamUsb, public StreamOut {
   public:
-    static ndk::ScopedAStatus createInstance(
-            const ::aidl::android::hardware::audio::common::SourceMetadata& sourceMetadata,
-            StreamContext&& context,
-            const std::optional<::aidl::android::media::audio::common::AudioOffloadInfo>&
-                    offloadInfo,
-            std::shared_ptr<StreamOut>* result);
-
-  private:
     friend class ndk::SharedRefBase;
     StreamOutUsb(const ::aidl::android::hardware::audio::common::SourceMetadata& sourceMetadata,
                  StreamContext&& context,
                  const std::optional<::aidl::android::media::audio::common::AudioOffloadInfo>&
                          offloadInfo);
 
+  private:
     ndk::ScopedAStatus getHwVolume(std::vector<float>* _aidl_return) override;
     ndk::ScopedAStatus setHwVolume(const std::vector<float>& in_channelVolumes) override;
 

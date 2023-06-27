@@ -87,37 +87,9 @@ StreamStub::StreamStub(const Metadata& metadata, StreamContext&& context)
 
 void StreamStub::shutdown() {}
 
-// static
-ndk::ScopedAStatus StreamInStub::createInstance(const SinkMetadata& sinkMetadata,
-                                                StreamContext&& context,
-                                                const std::vector<MicrophoneInfo>& microphones,
-                                                std::shared_ptr<StreamIn>* result) {
-    std::shared_ptr<StreamIn> stream =
-            ndk::SharedRefBase::make<StreamInStub>(sinkMetadata, std::move(context), microphones);
-    if (auto status = stream->initInstance(stream); !status.isOk()) {
-        return status;
-    }
-    *result = std::move(stream);
-    return ndk::ScopedAStatus::ok();
-}
-
 StreamInStub::StreamInStub(const SinkMetadata& sinkMetadata, StreamContext&& context,
                            const std::vector<MicrophoneInfo>& microphones)
     : StreamStub(sinkMetadata, std::move(context)), StreamIn(microphones) {}
-
-// static
-ndk::ScopedAStatus StreamOutStub::createInstance(const SourceMetadata& sourceMetadata,
-                                                 StreamContext&& context,
-                                                 const std::optional<AudioOffloadInfo>& offloadInfo,
-                                                 std::shared_ptr<StreamOut>* result) {
-    std::shared_ptr<StreamOut> stream = ndk::SharedRefBase::make<StreamOutStub>(
-            sourceMetadata, std::move(context), offloadInfo);
-    if (auto status = stream->initInstance(stream); !status.isOk()) {
-        return status;
-    }
-    *result = std::move(stream);
-    return ndk::ScopedAStatus::ok();
-}
 
 StreamOutStub::StreamOutStub(const SourceMetadata& sourceMetadata, StreamContext&& context,
                              const std::optional<AudioOffloadInfo>& offloadInfo)

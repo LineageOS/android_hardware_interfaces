@@ -30,7 +30,6 @@
 #include "core-impl/ModuleUsb.h"
 #include "core-impl/SoundDose.h"
 #include "core-impl/StreamStub.h"
-#include "core-impl/StreamUsb.h"
 #include "core-impl/Telephony.h"
 #include "core-impl/utils.h"
 
@@ -116,30 +115,6 @@ std::shared_ptr<Module> Module::createInstance(Type type) {
         case Type::R_SUBMIX:
         default:
             return ndk::SharedRefBase::make<Module>(type);
-    }
-}
-
-// static
-StreamIn::CreateInstance Module::getStreamInCreator(Type type) {
-    switch (type) {
-        case Type::USB:
-            return StreamInUsb::createInstance;
-        case Type::DEFAULT:
-        case Type::R_SUBMIX:
-        default:
-            return StreamInStub::createInstance;
-    }
-}
-
-// static
-StreamOut::CreateInstance Module::getStreamOutCreator(Type type) {
-    switch (type) {
-        case Type::USB:
-            return StreamOutUsb::createInstance;
-        case Type::DEFAULT:
-        case Type::R_SUBMIX:
-        default:
-            return StreamOutStub::createInstance;
     }
 }
 
@@ -687,8 +662,8 @@ ndk::ScopedAStatus Module::openInputStream(const OpenInputStreamArguments& in_ar
                                                nullptr, nullptr, &context));
     context.fillDescriptor(&_aidl_return->desc);
     std::shared_ptr<StreamIn> stream;
-    RETURN_STATUS_IF_ERROR(getStreamInCreator(mType)(in_args.sinkMetadata, std::move(context),
-                                                     mConfig->microphones, &stream));
+    RETURN_STATUS_IF_ERROR(createInputStream(in_args.sinkMetadata, std::move(context),
+                                             mConfig->microphones, &stream));
     StreamWrapper streamWrapper(stream);
     if (auto patchIt = mPatches.find(in_args.portConfigId); patchIt != mPatches.end()) {
         RETURN_STATUS_IF_ERROR(
@@ -733,8 +708,8 @@ ndk::ScopedAStatus Module::openOutputStream(const OpenOutputStreamArguments& in_
                                                in_args.eventCallback, &context));
     context.fillDescriptor(&_aidl_return->desc);
     std::shared_ptr<StreamOut> stream;
-    RETURN_STATUS_IF_ERROR(getStreamOutCreator(mType)(in_args.sourceMetadata, std::move(context),
-                                                      in_args.offloadInfo, &stream));
+    RETURN_STATUS_IF_ERROR(createOutputStream(in_args.sourceMetadata, std::move(context),
+                                              in_args.offloadInfo, &stream));
     StreamWrapper streamWrapper(stream);
     if (auto patchIt = mPatches.find(in_args.portConfigId); patchIt != mPatches.end()) {
         RETURN_STATUS_IF_ERROR(
@@ -1344,6 +1319,22 @@ bool Module::isMmapSupported() {
                 }) != mmapPolicyInfos.end();
     }
     return mIsMmapSupported.value();
+}
+
+ndk::ScopedAStatus Module::createInputStream(const SinkMetadata& sinkMetadata,
+                                             StreamContext&& context,
+                                             const std::vector<MicrophoneInfo>& microphones,
+                                             std::shared_ptr<StreamIn>* result) {
+    return createStreamInstance<StreamInStub>(result, sinkMetadata, std::move(context),
+                                              microphones);
+}
+
+ndk::ScopedAStatus Module::createOutputStream(const SourceMetadata& sourceMetadata,
+                                              StreamContext&& context,
+                                              const std::optional<AudioOffloadInfo>& offloadInfo,
+                                              std::shared_ptr<StreamOut>* result) {
+    return createStreamInstance<StreamOutStub>(result, sourceMetadata, std::move(context),
+                                               offloadInfo);
 }
 
 ndk::ScopedAStatus Module::populateConnectedDevicePort(AudioPort* audioPort __unused) {
