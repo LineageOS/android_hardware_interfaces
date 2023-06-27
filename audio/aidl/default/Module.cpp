@@ -207,7 +207,8 @@ ndk::ScopedAStatus Module::createStreamContext(
                 std::make_unique<StreamContext::CommandMQ>(1, true /*configureEventFlagWord*/),
                 std::make_unique<StreamContext::ReplyMQ>(1, true /*configureEventFlagWord*/),
                 portConfigIt->format.value(), portConfigIt->channelMask.value(),
-                portConfigIt->sampleRate.value().value,
+                portConfigIt->sampleRate.value().value, flags,
+                portConfigIt->ext.get<AudioPortExt::mix>().handle,
                 std::make_unique<StreamContext::DataMQ>(frameSize * in_bufferSizeFrames),
                 asyncCallback, outEventCallback, params);
         if (temp.isValid()) {

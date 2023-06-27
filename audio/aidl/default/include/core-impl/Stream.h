@@ -34,6 +34,7 @@
 #include <aidl/android/hardware/audio/core/IStreamOutEventCallback.h>
 #include <aidl/android/hardware/audio/core/StreamDescriptor.h>
 #include <aidl/android/media/audio/common/AudioDevice.h>
+#include <aidl/android/media/audio/common/AudioIoFlags.h>
 #include <aidl/android/media/audio/common/AudioOffloadInfo.h>
 #include <aidl/android/media/audio/common/MicrophoneInfo.h>
 #include <fmq/AidlMessageQueue.h>
@@ -77,7 +78,8 @@ class StreamContext {
     StreamContext(std::unique_ptr<CommandMQ> commandMQ, std::unique_ptr<ReplyMQ> replyMQ,
                   const ::aidl::android::media::audio::common::AudioFormatDescription& format,
                   const ::aidl::android::media::audio::common::AudioChannelLayout& channelLayout,
-                  int sampleRate, std::unique_ptr<DataMQ> dataMQ,
+                  int sampleRate, const ::aidl::android::media::audio::common::AudioIoFlags& flags,
+                  int32_t mixPortHandle, std::unique_ptr<DataMQ> dataMQ,
                   std::shared_ptr<IStreamCallback> asyncCallback,
                   std::shared_ptr<IStreamOutEventCallback> outEventCallback,
                   DebugParameters debugParameters)
@@ -87,6 +89,8 @@ class StreamContext {
           mFormat(format),
           mChannelLayout(channelLayout),
           mSampleRate(sampleRate),
+          mFlags(flags),
+          mMixPortHandle(mixPortHandle),
           mDataMQ(std::move(dataMQ)),
           mAsyncCallback(asyncCallback),
           mOutEventCallback(outEventCallback),
@@ -98,6 +102,8 @@ class StreamContext {
           mFormat(other.mFormat),
           mChannelLayout(other.mChannelLayout),
           mSampleRate(other.mSampleRate),
+          mFlags(std::move(other.mFlags)),
+          mMixPortHandle(other.mMixPortHandle),
           mDataMQ(std::move(other.mDataMQ)),
           mAsyncCallback(std::move(other.mAsyncCallback)),
           mOutEventCallback(std::move(other.mOutEventCallback)),
@@ -109,6 +115,8 @@ class StreamContext {
         mFormat = std::move(other.mFormat);
         mChannelLayout = std::move(other.mChannelLayout);
         mSampleRate = other.mSampleRate;
+        mFlags = std::move(other.mFlags);
+        mMixPortHandle = other.mMixPortHandle;
         mDataMQ = std::move(other.mDataMQ);
         mAsyncCallback = std::move(other.mAsyncCallback);
         mOutEventCallback = std::move(other.mOutEventCallback);
@@ -126,10 +134,12 @@ class StreamContext {
     ::aidl::android::media::audio::common::AudioFormatDescription getFormat() const {
         return mFormat;
     }
+    ::aidl::android::media::audio::common::AudioIoFlags getFlags() const { return mFlags; }
     bool getForceTransientBurst() const { return mDebugParameters.forceTransientBurst; }
     bool getForceSynchronousDrain() const { return mDebugParameters.forceSynchronousDrain; }
     size_t getFrameSize() const;
     int getInternalCommandCookie() const { return mInternalCommandCookie; }
+    int32_t getMixPortHandle() const { return mMixPortHandle; }
     std::shared_ptr<IStreamOutEventCallback> getOutEventCallback() const {
         return mOutEventCallback;
     }
@@ -146,6 +156,8 @@ class StreamContext {
     ::aidl::android::media::audio::common::AudioFormatDescription mFormat;
     ::aidl::android::media::audio::common::AudioChannelLayout mChannelLayout;
     int mSampleRate;
+    ::aidl::android::media::audio::common::AudioIoFlags mFlags;
+    int32_t mMixPortHandle;
     std::unique_ptr<DataMQ> mDataMQ;
     std::shared_ptr<IStreamCallback> mAsyncCallback;
     std::shared_ptr<IStreamOutEventCallback> mOutEventCallback;  // Only used by output streams
