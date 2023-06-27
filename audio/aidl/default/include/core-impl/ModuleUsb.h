@@ -32,6 +32,17 @@ class ModuleUsb : public Module {
     ndk::ScopedAStatus setMicMute(bool in_mute) override;
 
     // Module interfaces
+    ndk::ScopedAStatus createInputStream(
+            const ::aidl::android::hardware::audio::common::SinkMetadata& sinkMetadata,
+            StreamContext&& context,
+            const std::vector<::aidl::android::media::audio::common::MicrophoneInfo>& microphones,
+            std::shared_ptr<StreamIn>* result) override;
+    ndk::ScopedAStatus createOutputStream(
+            const ::aidl::android::hardware::audio::common::SourceMetadata& sourceMetadata,
+            StreamContext&& context,
+            const std::optional<::aidl::android::media::audio::common::AudioOffloadInfo>&
+                    offloadInfo,
+            std::shared_ptr<StreamOut>* result) override;
     ndk::ScopedAStatus populateConnectedDevicePort(
             ::aidl::android::media::audio::common::AudioPort* audioPort) override;
     ndk::ScopedAStatus checkAudioPatchEndpointsMatch(

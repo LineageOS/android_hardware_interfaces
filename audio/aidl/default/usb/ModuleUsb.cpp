@@ -25,11 +25,14 @@
 #include "UsbAlsaMixerControl.h"
 #include "UsbAlsaUtils.h"
 #include "core-impl/ModuleUsb.h"
+#include "core-impl/StreamUsb.h"
 
 extern "C" {
 #include "alsa_device_profile.h"
 }
 
+using aidl::android::hardware::audio::common::SinkMetadata;
+using aidl::android::hardware::audio::common::SourceMetadata;
 using aidl::android::media::audio::common::AudioChannelLayout;
 using aidl::android::media::audio::common::AudioDeviceAddress;
 using aidl::android::media::audio::common::AudioDeviceDescription;
@@ -37,10 +40,12 @@ using aidl::android::media::audio::common::AudioDeviceType;
 using aidl::android::media::audio::common::AudioFormatDescription;
 using aidl::android::media::audio::common::AudioFormatType;
 using aidl::android::media::audio::common::AudioIoFlags;
+using aidl::android::media::audio::common::AudioOffloadInfo;
 using aidl::android::media::audio::common::AudioPort;
 using aidl::android::media::audio::common::AudioPortConfig;
 using aidl::android::media::audio::common::AudioPortExt;
 using aidl::android::media::audio::common::AudioProfile;
+using aidl::android::media::audio::common::MicrophoneInfo;
 
 namespace aidl::android::hardware::audio::core {
 
@@ -95,6 +100,25 @@ ndk::ScopedAStatus ModuleUsb::getMicMute(bool* _aidl_return __unused) {
 ndk::ScopedAStatus ModuleUsb::setMicMute(bool in_mute __unused) {
     LOG(DEBUG) << __func__ << ": is not supported";
     return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+}
+
+ndk::ScopedAStatus ModuleUsb::createInputStream(const SinkMetadata& sinkMetadata,
+                                                StreamContext&& context,
+                                                const std::vector<MicrophoneInfo>& microphones,
+                                                std::shared_ptr<StreamIn>* result) {
+    return createStreamInstance<StreamInUsb>(result, sinkMetadata, std::move(context), microphones);
+}
+
+ndk::ScopedAStatus ModuleUsb::createOutputStream(const SourceMetadata& sourceMetadata,
+                                                 StreamContext&& context,
+                                                 const std::optional<AudioOffloadInfo>& offloadInfo,
+                                                 std::shared_ptr<StreamOut>* result) {
+    if (offloadInfo.has_value()) {
+        LOG(ERROR) << __func__ << ": offload is not supported";
+        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+    }
+    return createStreamInstance<StreamOutUsb>(result, sourceMetadata, std::move(context),
+                                              offloadInfo);
 }
 
 ndk::ScopedAStatus ModuleUsb::populateConnectedDevicePort(AudioPort* audioPort) {
