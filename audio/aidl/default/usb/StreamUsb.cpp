@@ -72,7 +72,7 @@ DriverUsb::DriverUsb(const StreamContext& context, bool isInput)
     if (mIsInput && connectedDevices.size() > 1) {
         LOG(ERROR) << __func__ << ": wrong device size(" << connectedDevices.size()
                    << ") for input stream";
-        return ::android::BAD_VALUE;
+        return ::android::INVALID_OPERATION;
     }
     for (const auto& connectedDevice : connectedDevices) {
         if (connectedDevice.address.getTag() != AudioDeviceAddress::alsa) {
