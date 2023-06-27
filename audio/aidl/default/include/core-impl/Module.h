@@ -219,7 +219,8 @@ class Module : public BnModule {
     template <typename C>
     std::set<int32_t> portIdsFromPortConfigIds(C portConfigIds);
     void registerPatch(const AudioPatch& patch);
-    void updateStreamsConnectedState(const AudioPatch& oldPatch, const AudioPatch& newPatch);
+    ndk::ScopedAStatus updateStreamsConnectedState(const AudioPatch& oldPatch,
+                                                   const AudioPatch& newPatch);
 };
 
 }  // namespace aidl::android::hardware::audio::core
