@@ -18,6 +18,7 @@
 #include <android-base/logging.h>
 
 #include <Utils.h>
+#include <error/expected_utils.h>
 
 #include "UsbAlsaMixerControl.h"
 #include "UsbAlsaUtils.h"
@@ -42,10 +43,12 @@ using android::status_t;
 
 namespace aidl::android::hardware::audio::core {
 
-DriverUsb::DriverUsb(const StreamContext& context, bool isInput)
-    : mFrameSizeBytes(context.getFrameSize()), mIsInput(isInput) {
+StreamUsb::StreamUsb(const Metadata& metadata, StreamContext&& context)
+    : StreamCommonImpl(metadata, std::move(context)),
+      mFrameSizeBytes(context.getFrameSize()),
+      mIsInput(isInput(metadata)) {
     struct pcm_config config;
-    config.channels = usb::getChannelCountFromChannelMask(context.getChannelLayout(), isInput);
+    config.channels = usb::getChannelCountFromChannelMask(context.getChannelLayout(), mIsInput);
     if (config.channels == 0) {
         LOG(ERROR) << __func__ << ": invalid channel=" << context.getChannelLayout().toString();
         return;
@@ -63,48 +66,50 @@ DriverUsb::DriverUsb(const StreamContext& context, bool isInput)
     mConfig = config;
 }
 
-::android::status_t DriverUsb::init() {
+::android::status_t StreamUsb::init() {
     return mConfig.has_value() ? ::android::OK : ::android::NO_INIT;
 }
 
-::android::status_t DriverUsb::setConnectedDevices(
+const StreamCommonInterface::ConnectedDevices& StreamUsb::getConnectedDevices() const {
+    std::lock_guard guard(mLock);
+    return mConnectedDevices;
+}
+
+ndk::ScopedAStatus StreamUsb::setConnectedDevices(
         const std::vector<AudioDevice>& connectedDevices) {
     if (mIsInput && connectedDevices.size() > 1) {
         LOG(ERROR) << __func__ << ": wrong device size(" << connectedDevices.size()
                    << ") for input stream";
-        return ::android::INVALID_OPERATION;
+        return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
     }
     for (const auto& connectedDevice : connectedDevices) {
         if (connectedDevice.address.getTag() != AudioDeviceAddress::alsa) {
             LOG(ERROR) << __func__ << ": bad device address" << connectedDevice.address.toString();
-            return ::android::BAD_VALUE;
+            return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
         }
     }
     std::lock_guard guard(mLock);
     mAlsaDeviceProxies.clear();
-    mConnectedDevices.clear();
-    for (const auto& connectedDevice : connectedDevices) {
-        mConnectedDevices.push_back(connectedDevice.address);
-    }
-    return ::android::OK;
+    RETURN_STATUS_IF_ERROR(StreamCommonImpl::setConnectedDevices(connectedDevices));
+    return ndk::ScopedAStatus::ok();
 }
 
-::android::status_t DriverUsb::drain(StreamDescriptor::DrainMode) {
+::android::status_t StreamUsb::drain(StreamDescriptor::DrainMode) {
     usleep(1000);
     return ::android::OK;
 }
 
-::android::status_t DriverUsb::flush() {
+::android::status_t StreamUsb::flush() {
     usleep(1000);
     return ::android::OK;
 }
 
-::android::status_t DriverUsb::pause() {
+::android::status_t StreamUsb::pause() {
     usleep(1000);
     return ::android::OK;
 }
 
-::android::status_t DriverUsb::transfer(void* buffer, size_t frameCount, size_t* actualFrameCount,
+::android::status_t StreamUsb::transfer(void* buffer, size_t frameCount, size_t* actualFrameCount,
                                         int32_t* latencyMs) {
     {
         std::lock_guard guard(mLock);
@@ -139,7 +144,7 @@ DriverUsb::DriverUsb(const StreamContext& context, bool isInput)
     return ::android::OK;
 }
 
-::android::status_t DriverUsb::standby() {
+::android::status_t StreamUsb::standby() {
     if (!mIsStandby) {
         std::lock_guard guard(mLock);
         mAlsaDeviceProxies.clear();
@@ -148,11 +153,15 @@ DriverUsb::DriverUsb(const StreamContext& context, bool isInput)
     return ::android::OK;
 }
 
-::android::status_t DriverUsb::exitStandby() {
+void StreamUsb::shutdown() {}
+
+::android::status_t StreamUsb::exitStandby() {
     std::vector<AudioDeviceAddress> connectedDevices;
     {
         std::lock_guard guard(mLock);
-        connectedDevices = mConnectedDevices;
+        std::transform(mConnectedDevices.begin(), mConnectedDevices.end(),
+                       std::back_inserter(connectedDevices),
+                       [](const auto& device) { return device.address; });
     }
     std::vector<std::shared_ptr<alsa_device_proxy>> alsaDeviceProxies;
     for (const auto& device : connectedDevices) {
@@ -203,7 +212,7 @@ ndk::ScopedAStatus StreamInUsb::createInstance(const SinkMetadata& sinkMetadata,
                                                std::shared_ptr<StreamIn>* result) {
     std::shared_ptr<StreamIn> stream =
             ndk::SharedRefBase::make<StreamInUsb>(sinkMetadata, std::move(context), microphones);
-    if (auto status = initInstance(stream); !status.isOk()) {
+    if (auto status = stream->initInstance(stream); !status.isOk()) {
         return status;
     }
     *result = std::move(stream);
@@ -212,16 +221,7 @@ ndk::ScopedAStatus StreamInUsb::createInstance(const SinkMetadata& sinkMetadata,
 
 StreamInUsb::StreamInUsb(const SinkMetadata& sinkMetadata, StreamContext&& context,
                          const std::vector<MicrophoneInfo>& microphones)
-    : StreamIn(
-              sinkMetadata, std::move(context),
-              [](const StreamContext& ctx) -> DriverInterface* {
-                  return new DriverUsb(ctx, true /*isInput*/);
-              },
-              [](const StreamContext& ctx, DriverInterface* driver) -> StreamWorkerInterface* {
-                  // The default worker implementation is used.
-                  return new StreamInWorker(ctx, driver);
-              },
-              microphones) {}
+    : StreamUsb(sinkMetadata, std::move(context)), StreamIn(microphones) {}
 
 ndk::ScopedAStatus StreamInUsb::getActiveMicrophones(
         std::vector<MicrophoneDynamicInfo>* _aidl_return __unused) {
@@ -240,7 +240,7 @@ ndk::ScopedAStatus StreamOutUsb::createInstance(const SourceMetadata& sourceMeta
     }
     std::shared_ptr<StreamOut> stream =
             ndk::SharedRefBase::make<StreamOutUsb>(sourceMetadata, std::move(context), offloadInfo);
-    if (auto status = initInstance(stream); !status.isOk()) {
+    if (auto status = stream->initInstance(stream); !status.isOk()) {
         return status;
     }
     *result = std::move(stream);
@@ -249,17 +249,8 @@ ndk::ScopedAStatus StreamOutUsb::createInstance(const SourceMetadata& sourceMeta
 
 StreamOutUsb::StreamOutUsb(const SourceMetadata& sourceMetadata, StreamContext&& context,
                            const std::optional<AudioOffloadInfo>& offloadInfo)
-    : StreamOut(
-              sourceMetadata, std::move(context),
-              [](const StreamContext& ctx) -> DriverInterface* {
-                  return new DriverUsb(ctx, false /*isInput*/);
-              },
-              [](const StreamContext& ctx, DriverInterface* driver) -> StreamWorkerInterface* {
-                  // The default worker implementation is used.
-                  return new StreamOutWorker(ctx, driver);
-              },
-              offloadInfo) {
-    mChannelCount = getChannelCount(mContext.getChannelLayout());
+    : StreamUsb(sourceMetadata, std::move(context)), StreamOut(offloadInfo) {
+    mChannelCount = getChannelCount(getContext().getChannelLayout());
 }
 
 ndk::ScopedAStatus StreamOutUsb::getHwVolume(std::vector<float>* _aidl_return) {
@@ -268,7 +259,7 @@ ndk::ScopedAStatus StreamOutUsb::getHwVolume(std::vector<float>* _aidl_return) {
 }
 
 ndk::ScopedAStatus StreamOutUsb::setHwVolume(const std::vector<float>& in_channelVolumes) {
-    for (const auto& device : mConnectedDevices) {
+    for (const auto& device : getConnectedDevices()) {
         if (device.address.getTag() != AudioDeviceAddress::alsa) {
             LOG(DEBUG) << __func__ << ": skip as the device address is not alsa";
             continue;
