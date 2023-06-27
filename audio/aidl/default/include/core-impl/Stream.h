@@ -180,9 +180,10 @@ struct DriverInterface {
     virtual ::android::status_t drain(StreamDescriptor::DrainMode mode) = 0;
     virtual ::android::status_t flush() = 0;
     virtual ::android::status_t pause() = 0;
+    virtual ::android::status_t standby() = 0;
+    virtual ::android::status_t start() = 0;
     virtual ::android::status_t transfer(void* buffer, size_t frameCount, size_t* actualFrameCount,
                                          int32_t* latencyMs) = 0;
-    virtual ::android::status_t standby() = 0;
     virtual void shutdown() = 0;  // This function is only called once.
 };
 
