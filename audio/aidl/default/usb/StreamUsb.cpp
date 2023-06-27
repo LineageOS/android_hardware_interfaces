@@ -205,20 +205,6 @@ void StreamUsb::shutdown() {}
     return ::android::OK;
 }
 
-// static
-ndk::ScopedAStatus StreamInUsb::createInstance(const SinkMetadata& sinkMetadata,
-                                               StreamContext&& context,
-                                               const std::vector<MicrophoneInfo>& microphones,
-                                               std::shared_ptr<StreamIn>* result) {
-    std::shared_ptr<StreamIn> stream =
-            ndk::SharedRefBase::make<StreamInUsb>(sinkMetadata, std::move(context), microphones);
-    if (auto status = stream->initInstance(stream); !status.isOk()) {
-        return status;
-    }
-    *result = std::move(stream);
-    return ndk::ScopedAStatus::ok();
-}
-
 StreamInUsb::StreamInUsb(const SinkMetadata& sinkMetadata, StreamContext&& context,
                          const std::vector<MicrophoneInfo>& microphones)
     : StreamUsb(sinkMetadata, std::move(context)), StreamIn(microphones) {}
@@ -227,24 +213,6 @@ ndk::ScopedAStatus StreamInUsb::getActiveMicrophones(
         std::vector<MicrophoneDynamicInfo>* _aidl_return __unused) {
     LOG(DEBUG) << __func__ << ": not supported";
     return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
-}
-
-// static
-ndk::ScopedAStatus StreamOutUsb::createInstance(const SourceMetadata& sourceMetadata,
-                                                StreamContext&& context,
-                                                const std::optional<AudioOffloadInfo>& offloadInfo,
-                                                std::shared_ptr<StreamOut>* result) {
-    if (offloadInfo.has_value()) {
-        LOG(ERROR) << __func__ << ": offload is not supported";
-        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
-    }
-    std::shared_ptr<StreamOut> stream =
-            ndk::SharedRefBase::make<StreamOutUsb>(sourceMetadata, std::move(context), offloadInfo);
-    if (auto status = stream->initInstance(stream); !status.isOk()) {
-        return status;
-    }
-    *result = std::move(stream);
-    return ndk::ScopedAStatus::ok();
 }
 
 StreamOutUsb::StreamOutUsb(const SourceMetadata& sourceMetadata, StreamContext&& context,
