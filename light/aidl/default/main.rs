@@ -35,7 +35,7 @@ fn main() {
 
     binder::ProcessState::set_thread_pool_max_thread_count(0);
 
-    let lights_service = LightsService;
+    let lights_service = LightsService::default();
     let lights_service_binder = BnLights::new_binder(lights_service, BinderFeatures::default());
 
     let service_name = format!("{}/default", LightsService::get_descriptor());
