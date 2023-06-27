@@ -175,8 +175,8 @@ void ModuleUsb::onExternalDeviceConnectionChanged(
         return;
     }
     const int card = address.get<AudioDeviceAddress::alsa>()[0];
-    usb::UsbAlsaMixerControl::getInstance().setDeviceConnectionState(card, mMasterMute,
-                                                                     mMasterVolume, connected);
+    usb::UsbAlsaMixerControl::getInstance().setDeviceConnectionState(card, getMasterMute(),
+                                                                     getMasterVolume(), connected);
 }
 
 ndk::ScopedAStatus ModuleUsb::onMasterMuteChanged(bool mute) {
