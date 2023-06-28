@@ -20,9 +20,10 @@
 
 namespace aidl::android::hardware::audio::core {
 
-class DriverStub : public DriverInterface {
+class StreamStub : public StreamCommonImpl {
   public:
-    DriverStub(const StreamContext& context, bool isInput);
+    StreamStub(const Metadata& metadata, StreamContext&& context);
+    // Methods of 'DriverInterface'.
     ::android::status_t init() override;
     ::android::status_t drain(StreamDescriptor::DrainMode) override;
     ::android::status_t flush() override;
@@ -30,10 +31,7 @@ class DriverStub : public DriverInterface {
     ::android::status_t transfer(void* buffer, size_t frameCount, size_t* actualFrameCount,
                                  int32_t* latencyMs) override;
     ::android::status_t standby() override;
-    // Note: called on a different thread.
-    ::android::status_t setConnectedDevices(
-            const std::vector<::aidl::android::media::audio::common::AudioDevice>& connectedDevices)
-            override;
+    void shutdown() override;
 
   private:
     const size_t mFrameSizeBytes;
@@ -42,15 +40,8 @@ class DriverStub : public DriverInterface {
     const bool mIsInput;
 };
 
-class StreamInStub final : public StreamIn {
+class StreamInStub final : public StreamStub, public StreamIn {
   public:
-    static ndk::ScopedAStatus createInstance(
-            const ::aidl::android::hardware::audio::common::SinkMetadata& sinkMetadata,
-            StreamContext&& context,
-            const std::vector<::aidl::android::media::audio::common::MicrophoneInfo>& microphones,
-            std::shared_ptr<StreamIn>* result);
-
-  private:
     friend class ndk::SharedRefBase;
     StreamInStub(
             const ::aidl::android::hardware::audio::common::SinkMetadata& sinkMetadata,
@@ -58,16 +49,8 @@ class StreamInStub final : public StreamIn {
             const std::vector<::aidl::android::media::audio::common::MicrophoneInfo>& microphones);
 };
 
-class StreamOutStub final : public StreamOut {
+class StreamOutStub final : public StreamStub, public StreamOut {
   public:
-    static ndk::ScopedAStatus createInstance(
-            const ::aidl::android::hardware::audio::common::SourceMetadata& sourceMetadata,
-            StreamContext&& context,
-            const std::optional<::aidl::android::media::audio::common::AudioOffloadInfo>&
-                    offloadInfo,
-            std::shared_ptr<StreamOut>* result);
-
-  private:
     friend class ndk::SharedRefBase;
     StreamOutStub(const ::aidl::android::hardware::audio::common::SourceMetadata& sourceMetadata,
                   StreamContext&& context,

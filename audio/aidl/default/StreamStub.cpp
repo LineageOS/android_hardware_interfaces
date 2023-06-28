@@ -31,33 +31,34 @@ using aidl::android::media::audio::common::MicrophoneInfo;
 
 namespace aidl::android::hardware::audio::core {
 
-DriverStub::DriverStub(const StreamContext& context, bool isInput)
-    : mFrameSizeBytes(context.getFrameSize()),
+StreamStub::StreamStub(const Metadata& metadata, StreamContext&& context)
+    : StreamCommonImpl(metadata, std::move(context)),
+      mFrameSizeBytes(context.getFrameSize()),
       mSampleRate(context.getSampleRate()),
       mIsAsynchronous(!!context.getAsyncCallback()),
-      mIsInput(isInput) {}
+      mIsInput(isInput(metadata)) {}
 
-::android::status_t DriverStub::init() {
+::android::status_t StreamStub::init() {
     usleep(500);
     return ::android::OK;
 }
 
-::android::status_t DriverStub::drain(StreamDescriptor::DrainMode) {
+::android::status_t StreamStub::drain(StreamDescriptor::DrainMode) {
     usleep(500);
     return ::android::OK;
 }
 
-::android::status_t DriverStub::flush() {
+::android::status_t StreamStub::flush() {
     usleep(500);
     return ::android::OK;
 }
 
-::android::status_t DriverStub::pause() {
+::android::status_t StreamStub::pause() {
     usleep(500);
     return ::android::OK;
 }
 
-::android::status_t DriverStub::transfer(void* buffer, size_t frameCount, size_t* actualFrameCount,
+::android::status_t StreamStub::transfer(void* buffer, size_t frameCount, size_t* actualFrameCount,
                                          int32_t* latencyMs) {
     static constexpr float kMicrosPerSecond = MICROS_PER_SECOND;
     static constexpr float kScaleFactor = .8f;
@@ -79,69 +80,19 @@ DriverStub::DriverStub(const StreamContext& context, bool isInput)
     return ::android::OK;
 }
 
-::android::status_t DriverStub::standby() {
+::android::status_t StreamStub::standby() {
     usleep(500);
     return ::android::OK;
 }
 
-::android::status_t DriverStub::setConnectedDevices(
-        const std::vector<AudioDevice>& connectedDevices __unused) {
-    usleep(500);
-    return ::android::OK;
-}
-
-// static
-ndk::ScopedAStatus StreamInStub::createInstance(const SinkMetadata& sinkMetadata,
-                                                StreamContext&& context,
-                                                const std::vector<MicrophoneInfo>& microphones,
-                                                std::shared_ptr<StreamIn>* result) {
-    std::shared_ptr<StreamIn> stream =
-            ndk::SharedRefBase::make<StreamInStub>(sinkMetadata, std::move(context), microphones);
-    if (auto status = initInstance(stream); !status.isOk()) {
-        return status;
-    }
-    *result = std::move(stream);
-    return ndk::ScopedAStatus::ok();
-}
+void StreamStub::shutdown() {}
 
 StreamInStub::StreamInStub(const SinkMetadata& sinkMetadata, StreamContext&& context,
                            const std::vector<MicrophoneInfo>& microphones)
-    : StreamIn(
-              sinkMetadata, std::move(context),
-              [](const StreamContext& ctx) -> DriverInterface* {
-                  return new DriverStub(ctx, true /*isInput*/);
-              },
-              [](const StreamContext& ctx, DriverInterface* driver) -> StreamWorkerInterface* {
-                  // The default worker implementation is used.
-                  return new StreamInWorker(ctx, driver);
-              },
-              microphones) {}
-
-// static
-ndk::ScopedAStatus StreamOutStub::createInstance(const SourceMetadata& sourceMetadata,
-                                                 StreamContext&& context,
-                                                 const std::optional<AudioOffloadInfo>& offloadInfo,
-                                                 std::shared_ptr<StreamOut>* result) {
-    std::shared_ptr<StreamOut> stream = ndk::SharedRefBase::make<StreamOutStub>(
-            sourceMetadata, std::move(context), offloadInfo);
-    if (auto status = initInstance(stream); !status.isOk()) {
-        return status;
-    }
-    *result = std::move(stream);
-    return ndk::ScopedAStatus::ok();
-}
+    : StreamStub(sinkMetadata, std::move(context)), StreamIn(microphones) {}
 
 StreamOutStub::StreamOutStub(const SourceMetadata& sourceMetadata, StreamContext&& context,
                              const std::optional<AudioOffloadInfo>& offloadInfo)
-    : StreamOut(
-              sourceMetadata, std::move(context),
-              [](const StreamContext& ctx) -> DriverInterface* {
-                  return new DriverStub(ctx, false /*isInput*/);
-              },
-              [](const StreamContext& ctx, DriverInterface* driver) -> StreamWorkerInterface* {
-                  // The default worker implementation is used.
-                  return new StreamOutWorker(ctx, driver);
-              },
-              offloadInfo) {}
+    : StreamStub(sourceMetadata, std::move(context)), StreamOut(offloadInfo) {}
 
 }  // namespace aidl::android::hardware::audio::core
