@@ -34,6 +34,7 @@ using android::hardware::power::IPower;
 using android::hardware::power::IPowerHintSession;
 using android::hardware::power::Mode;
 using android::hardware::power::SessionHint;
+using android::hardware::power::SessionMode;
 using android::hardware::power::WorkDuration;
 
 const std::vector<Boost> kBoosts{ndk::enum_range<Boost>().begin(), ndk::enum_range<Boost>().end()};
@@ -42,6 +43,9 @@ const std::vector<Mode> kModes{ndk::enum_range<Mode>().begin(), ndk::enum_range<
 
 const std::vector<SessionHint> kSessionHints{ndk::enum_range<SessionHint>().begin(),
                                              ndk::enum_range<SessionHint>().end()};
+
+const std::vector<SessionMode> kSessionModes{ndk::enum_range<SessionMode>().begin(),
+                                             ndk::enum_range<SessionMode>().end()};
 
 const std::vector<Boost> kInvalidBoosts = {
         static_cast<Boost>(static_cast<int32_t>(kBoosts.front()) - 1),
@@ -56,6 +60,11 @@ const std::vector<Mode> kInvalidModes = {
 const std::vector<SessionHint> kInvalidSessionHints = {
         static_cast<SessionHint>(static_cast<int32_t>(kSessionHints.front()) - 1),
         static_cast<SessionHint>(static_cast<int32_t>(kSessionHints.back()) + 1),
+};
+
+const std::vector<SessionMode> kInvalidSessionModes = {
+        static_cast<SessionMode>(static_cast<int32_t>(kSessionModes.front()) - 1),
+        static_cast<SessionMode>(static_cast<int32_t>(kSessionModes.back()) + 1),
 };
 
 class DurationWrapper : public WorkDuration {
@@ -226,6 +235,21 @@ TEST_P(HintSessionAidl, setThreads) {
     ASSERT_EQ(EX_ILLEGAL_ARGUMENT, status.getExceptionCode());
 
     ASSERT_TRUE(mSession->setThreads(kSelfTids).isOk());
+}
+
+TEST_P(HintSessionAidl, setSessionMode) {
+    if (mServiceVersion < 5) {
+        GTEST_SKIP() << "DEVICE not launching with Power V5 and beyond.";
+    }
+
+    for (const auto& sessionMode : kSessionModes) {
+        ASSERT_TRUE(mSession->setMode(sessionMode, true).isOk());
+        ASSERT_TRUE(mSession->setMode(sessionMode, false).isOk());
+    }
+    for (const auto& sessionMode : kInvalidSessionModes) {
+        ASSERT_TRUE(mSession->setMode(sessionMode, true).isOk());
+        ASSERT_TRUE(mSession->setMode(sessionMode, false).isOk());
+    }
 }
 
 // FIXED_PERFORMANCE mode is required for all devices which ship on Android 11

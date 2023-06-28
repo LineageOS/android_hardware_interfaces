@@ -18,6 +18,7 @@
 
 #include <aidl/android/hardware/power/BnPowerHintSession.h>
 #include <aidl/android/hardware/power/SessionHint.h>
+#include <aidl/android/hardware/power/SessionMode.h>
 #include <aidl/android/hardware/power/WorkDuration.h>
 
 namespace aidl::android::hardware::power::impl::example {
@@ -33,6 +34,7 @@ class PowerHintSession : public BnPowerHintSession {
     ndk::ScopedAStatus close() override;
     ndk::ScopedAStatus sendHint(SessionHint hint) override;
     ndk::ScopedAStatus setThreads(const std::vector<int32_t>& threadIds) override;
+    ndk::ScopedAStatus setMode(SessionMode mode, bool enabled) override;
 };
 
 }  // namespace aidl::android::hardware::power::impl::example
