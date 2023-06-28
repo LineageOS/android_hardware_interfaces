@@ -91,6 +91,14 @@ interface IContextHubCallback {
     void handleNanSessionRequest(in NanSessionRequest request);
 
     /**
+     * This callback is passed to the HAL implementation to allow the HAL to request a UUID that
+     * uniquely identifies an IContextHubCallback.
+     *
+     * @return a byte array representating the UUID
+     */
+    byte[16] getUuid();
+
+    /**
      * Amount of time, in milliseconds, that a handleNanSessionRequest can be pending before the
      * Contexthub service must respond.
      */

@@ -48,6 +48,10 @@ using ::android::hardware::contexthub::Setting;
 using ::android::hardware::contexthub::vts_utils::kNonExistentAppId;
 using ::android::hardware::contexthub::vts_utils::waitForCallback;
 
+// 6612b522-b717-41c8-b48d-c0b1cc64e142
+const std::array<uint8_t, 16> kUuid = {0x66, 0x12, 0xb5, 0x22, 0xb7, 0x17, 0x41, 0xc8,
+                                       0xb4, 0x8d, 0xc0, 0xb1, 0xcc, 0x64, 0xe1, 0x42};
+
 class ContextHubAidl : public testing::TestWithParam<std::tuple<std::string, int32_t>> {
   public:
     virtual void SetUp() override {
@@ -126,6 +130,11 @@ class EmptyContextHubCallback : public android::hardware::contexthub::BnContextH
     Status handleNanSessionRequest(const NanSessionRequest& /* request */) override {
         return Status::ok();
     }
+
+    Status getUuid(std::array<uint8_t, 16>* out_uuid) override {
+        *out_uuid = kUuid;
+        return Status::ok();
+    }
 };
 
 TEST_P(ContextHubAidl, TestRegisterCallback) {
@@ -154,6 +163,11 @@ class QueryAppsCallback : public android::hardware::contexthub::BnContextHubCall
     }
 
     Status handleNanSessionRequest(const NanSessionRequest& /* request */) override {
+        return Status::ok();
+    }
+
+    Status getUuid(std::array<uint8_t, 16>* out_uuid) override {
+        *out_uuid = kUuid;
         return Status::ok();
     }
 
@@ -220,6 +234,11 @@ class TransactionResultCallback : public android::hardware::contexthub::BnContex
     }
 
     Status handleNanSessionRequest(const NanSessionRequest& /* request */) override {
+        return Status::ok();
+    }
+
+    Status getUuid(std::array<uint8_t, 16>* out_uuid) override {
+        *out_uuid = kUuid;
         return Status::ok();
     }
 
