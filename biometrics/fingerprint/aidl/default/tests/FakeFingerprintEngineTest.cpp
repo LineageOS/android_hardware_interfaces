@@ -375,9 +375,7 @@ TEST_F(FakeFingerprintEngineTest, InteractionDetectAcquired) {
 TEST_F(FakeFingerprintEngineTest, EnumerateEnrolled) {
     FingerprintHalProperties::enrollments({2, 4, 8});
     mEngine.enumerateEnrollmentsImpl(mCallback.get());
-    ASSERT_EQ(
-            4,
-            mCallback->mLastEnrollmentEnumerated.size());  // Due to workaround. TODO (b/243129174)
+    ASSERT_EQ(3, mCallback->mLastEnrollmentEnumerated.size());
     for (auto id : FingerprintHalProperties::enrollments()) {
         ASSERT_TRUE(std::find(mCallback->mLastEnrollmentEnumerated.begin(),
                               mCallback->mLastEnrollmentEnumerated.end(),

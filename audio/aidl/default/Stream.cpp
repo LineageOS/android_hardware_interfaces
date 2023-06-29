@@ -152,6 +152,7 @@ StreamInWorkerLogic::Status StreamInWorkerLogic::cycle() {
         case Tag::halReservedExit:
             if (const int32_t cookie = command.get<Tag::halReservedExit>();
                 cookie == mInternalCommandCookie) {
+                mDriver->shutdown();
                 setClosed();
                 // This is an internal command, no need to reply.
                 return Status::EXIT;
@@ -364,6 +365,7 @@ StreamOutWorkerLogic::Status StreamOutWorkerLogic::cycle() {
         case Tag::halReservedExit:
             if (const int32_t cookie = command.get<Tag::halReservedExit>();
                 cookie == mInternalCommandCookie) {
+                mDriver->shutdown();
                 setClosed();
                 // This is an internal command, no need to reply.
                 return Status::EXIT;
@@ -567,8 +569,7 @@ bool StreamOutWorkerLogic::write(size_t clientSize, StreamDescriptor::Reply* rep
     return !fatal;
 }
 
-template <class Metadata>
-StreamCommonImpl<Metadata>::~StreamCommonImpl() {
+StreamCommonImpl::~StreamCommonImpl() {
     if (!isClosed()) {
         LOG(ERROR) << __func__ << ": stream was not closed prior to destruction, resource leak";
         stopWorker();
@@ -576,19 +577,16 @@ StreamCommonImpl<Metadata>::~StreamCommonImpl() {
     }
 }
 
-template <class Metadata>
-void StreamCommonImpl<Metadata>::createStreamCommon(
+ndk::ScopedAStatus StreamCommonImpl::initInstance(
         const std::shared_ptr<StreamCommonInterface>& delegate) {
-    if (mCommon != nullptr) {
-        LOG(FATAL) << __func__ << ": attempting to create the common interface twice";
-    }
-    mCommon = ndk::SharedRefBase::make<StreamCommon>(delegate);
+    mCommon = ndk::SharedRefBase::make<StreamCommonDelegator>(delegate);
     mCommonBinder = mCommon->asBinder();
     AIBinder_setMinSchedulerPolicy(mCommonBinder.get(), SCHED_NORMAL, ANDROID_PRIORITY_AUDIO);
+    return mWorker->start() ? ndk::ScopedAStatus::ok()
+                            : ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
 }
 
-template <class Metadata>
-ndk::ScopedAStatus StreamCommonImpl<Metadata>::getStreamCommon(
+ndk::ScopedAStatus StreamCommonImpl::getStreamCommonCommon(
         std::shared_ptr<IStreamCommon>* _aidl_return) {
     if (mCommon == nullptr) {
         LOG(FATAL) << __func__ << ": the common interface was not created";
@@ -598,30 +596,26 @@ ndk::ScopedAStatus StreamCommonImpl<Metadata>::getStreamCommon(
     return ndk::ScopedAStatus::ok();
 }
 
-template <class Metadata>
-ndk::ScopedAStatus StreamCommonImpl<Metadata>::updateHwAvSyncId(int32_t in_hwAvSyncId) {
+ndk::ScopedAStatus StreamCommonImpl::updateHwAvSyncId(int32_t in_hwAvSyncId) {
     LOG(DEBUG) << __func__ << ": id " << in_hwAvSyncId;
     return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
 }
 
-template <class Metadata>
-ndk::ScopedAStatus StreamCommonImpl<Metadata>::getVendorParameters(
+ndk::ScopedAStatus StreamCommonImpl::getVendorParameters(
         const std::vector<std::string>& in_ids, std::vector<VendorParameter>* _aidl_return) {
     LOG(DEBUG) << __func__ << ": id count: " << in_ids.size();
     (void)_aidl_return;
     return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
 }
 
-template <class Metadata>
-ndk::ScopedAStatus StreamCommonImpl<Metadata>::setVendorParameters(
+ndk::ScopedAStatus StreamCommonImpl::setVendorParameters(
         const std::vector<VendorParameter>& in_parameters, bool in_async) {
     LOG(DEBUG) << __func__ << ": parameters count " << in_parameters.size()
                << ", async: " << in_async;
     return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
 }
 
-template <class Metadata>
-ndk::ScopedAStatus StreamCommonImpl<Metadata>::addEffect(
+ndk::ScopedAStatus StreamCommonImpl::addEffect(
         const std::shared_ptr<::aidl::android::hardware::audio::effect::IEffect>& in_effect) {
     if (in_effect == nullptr) {
         LOG(DEBUG) << __func__ << ": null effect";
@@ -631,8 +625,7 @@ ndk::ScopedAStatus StreamCommonImpl<Metadata>::addEffect(
     return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
 }
 
-template <class Metadata>
-ndk::ScopedAStatus StreamCommonImpl<Metadata>::removeEffect(
+ndk::ScopedAStatus StreamCommonImpl::removeEffect(
         const std::shared_ptr<::aidl::android::hardware::audio::effect::IEffect>& in_effect) {
     if (in_effect == nullptr) {
         LOG(DEBUG) << __func__ << ": null effect";
@@ -642,8 +635,7 @@ ndk::ScopedAStatus StreamCommonImpl<Metadata>::removeEffect(
     return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
 }
 
-template <class Metadata>
-ndk::ScopedAStatus StreamCommonImpl<Metadata>::close() {
+ndk::ScopedAStatus StreamCommonImpl::close() {
     LOG(DEBUG) << __func__;
     if (!isClosed()) {
         stopWorker();
@@ -659,8 +651,7 @@ ndk::ScopedAStatus StreamCommonImpl<Metadata>::close() {
     }
 }
 
-template <class Metadata>
-ndk::ScopedAStatus StreamCommonImpl<Metadata>::prepareToClose() {
+ndk::ScopedAStatus StreamCommonImpl::prepareToClose() {
     LOG(DEBUG) << __func__;
     if (!isClosed()) {
         return ndk::ScopedAStatus::ok();
@@ -669,8 +660,7 @@ ndk::ScopedAStatus StreamCommonImpl<Metadata>::prepareToClose() {
     return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
 }
 
-template <class Metadata>
-void StreamCommonImpl<Metadata>::stopWorker() {
+void StreamCommonImpl::stopWorker() {
     if (auto commandMQ = mContext.getCommandMQ(); commandMQ != nullptr) {
         LOG(DEBUG) << __func__ << ": asking the worker to exit...";
         auto cmd = StreamDescriptor::Command::make<StreamDescriptor::Command::Tag::halReservedExit>(
@@ -686,10 +676,12 @@ void StreamCommonImpl<Metadata>::stopWorker() {
     }
 }
 
-template <class Metadata>
-ndk::ScopedAStatus StreamCommonImpl<Metadata>::updateMetadata(const Metadata& metadata) {
+ndk::ScopedAStatus StreamCommonImpl::updateMetadataCommon(const Metadata& metadata) {
     LOG(DEBUG) << __func__;
     if (!isClosed()) {
+        if (metadata.index() != mMetadata.index()) {
+            LOG(FATAL) << __func__ << ": changing metadata variant is not allowed";
+        }
         mMetadata = metadata;
         return ndk::ScopedAStatus::ok();
     }
@@ -697,12 +689,10 @@ ndk::ScopedAStatus StreamCommonImpl<Metadata>::updateMetadata(const Metadata& me
     return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
 }
 
-// static
-ndk::ScopedAStatus StreamIn::initInstance(const std::shared_ptr<StreamIn>& stream) {
-    if (auto status = stream->init(); !status.isOk()) {
-        return status;
-    }
-    stream->createStreamCommon(stream);
+ndk::ScopedAStatus StreamCommonImpl::setConnectedDevices(
+        const std::vector<::aidl::android::media::audio::common::AudioDevice>& devices) {
+    mWorker->setIsConnected(!devices.empty());
+    mConnectedDevices = devices;
     return ndk::ScopedAStatus::ok();
 }
 
@@ -716,12 +706,8 @@ static std::map<AudioDevice, std::string> transformMicrophones(
 }
 }  // namespace
 
-StreamIn::StreamIn(const SinkMetadata& sinkMetadata, StreamContext&& context,
-                   const DriverInterface::CreateInstance& createDriver,
-                   const StreamWorkerInterface::CreateInstance& createWorker,
-                   const std::vector<MicrophoneInfo>& microphones)
-    : StreamCommonImpl<SinkMetadata>(sinkMetadata, std::move(context), createDriver, createWorker),
-      mMicrophones(transformMicrophones(microphones)) {
+StreamIn::StreamIn(const std::vector<MicrophoneInfo>& microphones)
+    : mMicrophones(transformMicrophones(microphones)) {
     LOG(DEBUG) << __func__;
 }
 
@@ -729,9 +715,9 @@ ndk::ScopedAStatus StreamIn::getActiveMicrophones(
         std::vector<MicrophoneDynamicInfo>* _aidl_return) {
     std::vector<MicrophoneDynamicInfo> result;
     std::vector<MicrophoneDynamicInfo::ChannelMapping> channelMapping{
-            getChannelCount(mContext.getChannelLayout()),
+            getChannelCount(getContext().getChannelLayout()),
             MicrophoneDynamicInfo::ChannelMapping::DIRECT};
-    for (auto it = mConnectedDevices.begin(); it != mConnectedDevices.end(); ++it) {
+    for (auto it = getConnectedDevices().begin(); it != getConnectedDevices().end(); ++it) {
         if (auto micIt = mMicrophones.find(*it); micIt != mMicrophones.end()) {
             MicrophoneDynamicInfo dynMic;
             dynMic.id = micIt->second;
@@ -777,22 +763,8 @@ ndk::ScopedAStatus StreamIn::setHwGain(const std::vector<float>& in_channelGains
     return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
 }
 
-// static
-ndk::ScopedAStatus StreamOut::initInstance(const std::shared_ptr<StreamOut>& stream) {
-    if (auto status = stream->init(); !status.isOk()) {
-        return status;
-    }
-    stream->createStreamCommon(stream);
-    return ndk::ScopedAStatus::ok();
-}
-
-StreamOut::StreamOut(const SourceMetadata& sourceMetadata, StreamContext&& context,
-                     const DriverInterface::CreateInstance& createDriver,
-                     const StreamWorkerInterface::CreateInstance& createWorker,
-                     const std::optional<AudioOffloadInfo>& offloadInfo)
-    : StreamCommonImpl<SourceMetadata>(sourceMetadata, std::move(context), createDriver,
-                                       createWorker),
-      mOffloadInfo(offloadInfo) {
+StreamOut::StreamOut(const std::optional<AudioOffloadInfo>& offloadInfo)
+    : mOffloadInfo(offloadInfo) {
     LOG(DEBUG) << __func__;
 }
 
