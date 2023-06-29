@@ -82,7 +82,7 @@ string get_imei(int slot) {
 
     string imei = ::android::base::Trim(out[0]);
     if (imei.compare("null") == 0) {
-        LOG(ERROR) << "Error in getting IMEI from Telephony service: value is null. Cmd: " << cmd;
+        LOG(WARNING) << "Failed to get IMEI from Telephony service: value is null. Cmd: " << cmd;
         return "";
     }
 
