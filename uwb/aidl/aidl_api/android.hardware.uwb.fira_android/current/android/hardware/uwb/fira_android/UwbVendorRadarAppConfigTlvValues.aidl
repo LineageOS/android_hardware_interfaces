@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * You may not use this file except in compliance with the License.
@@ -32,12 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.uwb.fira_android;
-@Backing(type="byte") @VintfStability
-enum UwbVendorGidAndroidOids {
-  ANDROID_GET_POWER_STATS = 0x0,
-  ANDROID_SET_COUNTRY_CODE = 0x1,
-  ANDROID_RANGE_DIAGNOSTICS = 0x2,
-  RADAR_SET_APP_CONFIG = 0x11,
-  RADAR_GET_APP_CONFIG = 0x12,
-  RADAR_DATA_NTF = 0x13,
+@Backing(type="int") @VintfStability
+enum UwbVendorRadarAppConfigTlvValues {
+  RADAR_DATA_TYPE_RADAR_SWEEP_SAMPLES = 0x0,
 }

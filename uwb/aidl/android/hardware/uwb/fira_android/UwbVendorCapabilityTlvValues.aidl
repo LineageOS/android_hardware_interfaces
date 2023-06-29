@@ -51,4 +51,10 @@ enum UwbVendorCapabilityTlvValues {
 
     CCC_CHANNEL_5 = 1,
     CCC_CHANNEL_9 = 1 << 1,
+
+    /*********************************************
+     * RADAR specific
+     ********************************************/
+    RADAR_NOT_SUPPORTED = 0,
+    RADAR_SWEEP_SAMPLES_SUPPORTED = 1,
 }
