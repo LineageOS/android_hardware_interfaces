@@ -224,6 +224,7 @@ ndk::ScopedAStatus BluetoothHci::initialize(
     ALOGI("Unable to open Linux interface, trying default path.");
     mFd = getFdFromDevPath();
     if (mFd < 0) {
+      mState = HalState::READY;
       cb->initializationComplete(Status::UNABLE_TO_OPEN_INTERFACE);
       return ndk::ScopedAStatus::ok();
     }
@@ -281,6 +282,7 @@ ndk::ScopedAStatus BluetoothHci::close() {
   {
     std::lock_guard<std::mutex> guard(mStateMutex);
     if (mState != HalState::ONE_CLIENT) {
+      ASSERT(mState != HalState::INITIALIZING);
       ALOGI("Already closed");
       return ndk::ScopedAStatus::ok();
     }
