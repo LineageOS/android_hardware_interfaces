@@ -113,6 +113,7 @@ class FakeFingerprintEngine {
     bool parseEnrollmentCaptureSingle(const std::string& str,
                                       std::vector<std::vector<int32_t>>& res);
     int32_t getRandomInRange(int32_t bound1, int32_t bound2);
+    bool checkSensorLockout(ISessionCallback*);
 
     FakeLockoutTracker mLockoutTracker;
 };

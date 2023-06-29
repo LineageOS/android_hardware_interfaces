@@ -195,16 +195,7 @@ void FakeFingerprintEngine::onAuthenticateFingerDown(ISessionCallback* cb,
     }
 
     // got lockout?
-    FakeLockoutTracker::LockoutMode lockoutMode = mLockoutTracker.getMode();
-    if (lockoutMode == FakeLockoutTracker::LockoutMode::kPermanent) {
-        LOG(ERROR) << "Fail: lockout permanent";
-        cb->onLockoutPermanent();
-        return;
-    } else if (lockoutMode == FakeLockoutTracker::LockoutMode::kTimed) {
-        int64_t timeLeft = mLockoutTracker.getLockoutTimeLeft();
-        LOG(ERROR) << "Fail: lockout timed " << timeLeft;
-        cb->onLockoutTimed(timeLeft);
-    }
+    if (checkSensorLockout(cb)) return;
 
     int i = 0;
     do {
@@ -256,6 +247,7 @@ void FakeFingerprintEngine::onAuthenticateFingerDown(ISessionCallback* cb,
         LOG(ERROR) << "Fail: fingerprint not enrolled";
         cb->onAuthenticationFailed();
         mLockoutTracker.addFailedAttempt();
+        checkSensorLockout(cb);
     }
 }
 
@@ -563,4 +555,18 @@ int32_t FakeFingerprintEngine::getRandomInRange(int32_t bound1, int32_t bound2) 
     return dist(mRandom);
 }
 
+bool FakeFingerprintEngine::checkSensorLockout(ISessionCallback* cb) {
+    FakeLockoutTracker::LockoutMode lockoutMode = mLockoutTracker.getMode();
+    if (lockoutMode == FakeLockoutTracker::LockoutMode::kPermanent) {
+        LOG(ERROR) << "Fail: lockout permanent";
+        cb->onLockoutPermanent();
+        return true;
+    } else if (lockoutMode == FakeLockoutTracker::LockoutMode::kTimed) {
+        int64_t timeLeft = mLockoutTracker.getLockoutTimeLeft();
+        LOG(ERROR) << "Fail: lockout timed " << timeLeft;
+        cb->onLockoutTimed(timeLeft);
+        return true;
+    }
+    return false;
+}
 }  // namespace aidl::android::hardware::biometrics::fingerprint
