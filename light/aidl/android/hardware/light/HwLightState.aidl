@@ -25,7 +25,7 @@ import android.hardware.light.FlashMode;
  * Not all lights must support all parameters. If you
  * can do something backward-compatible, do it.
  */
-@VintfStability
+@RustDerive(Clone=true, Copy=true) @VintfStability
 parcelable HwLightState {
     /**
      * The color of the LED in ARGB.
