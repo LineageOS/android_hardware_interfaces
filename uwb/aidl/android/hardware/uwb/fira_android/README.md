@@ -10,6 +10,3 @@ These include:
 All other interactions sent/received over the HAL interface is expected to
 comply with the UCI specification that can be found [here](
 https://groups.firaconsortium.org/wg/Technical/document/folder/127).
-
-TODO([b/196004116](b/196004116)): Link to the published specification.
-
