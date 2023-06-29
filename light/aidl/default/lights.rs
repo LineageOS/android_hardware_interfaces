@@ -15,6 +15,9 @@
  */
 //! This module implements the ILights AIDL interface.
 
+use std::collections::HashMap;
+use std::sync::Mutex;
+
 use log::info;
 
 use android_hardware_light::aidl::android::hardware::light::{
@@ -23,33 +26,55 @@ use android_hardware_light::aidl::android::hardware::light::{
 
 use binder::{ExceptionCode, Interface, Status};
 
+struct Light {
+    hw_light: HwLight,
+    state: HwLightState,
+}
+
+const NUM_DEFAULT_LIGHTS: i32 = 3;
+
 /// Defined so we can implement the ILights AIDL interface.
-pub struct LightsService;
+pub struct LightsService {
+    lights: Mutex<HashMap<i32, Light>>,
+}
 
 impl Interface for LightsService {}
 
-const NUM_DEFAULT_LIGHTS: i32 = 3;
+impl LightsService {
+    fn new(hw_lights: impl IntoIterator<Item = HwLight>) -> Self {
+        let mut lights_map = HashMap::new();
+
+        for hw_light in hw_lights {
+            lights_map.insert(hw_light.id, Light { hw_light, state: Default::default() });
+        }
+
+        Self { lights: Mutex::new(lights_map) }
+    }
+}
+
+impl Default for LightsService {
+    fn default() -> Self {
+        let id_mapping_closure =
+            |light_id| HwLight { id: light_id, ordinal: light_id, r#type: LightType::BACKLIGHT };
+
+        Self::new((1..=NUM_DEFAULT_LIGHTS).map(id_mapping_closure))
+    }
+}
 
 impl ILights for LightsService {
     fn setLightState(&self, id: i32, state: &HwLightState) -> binder::Result<()> {
         info!("Lights setting state for id={} to color {:x}", id, state.color);
-        if id <= 0 || id > NUM_DEFAULT_LIGHTS {
-            return Err(Status::new_exception(ExceptionCode::UNSUPPORTED_OPERATION, None));
-        }
 
-        Ok(())
+        if let Some(light) = self.lights.lock().unwrap().get_mut(&id) {
+            light.state = *state;
+            Ok(())
+        } else {
+            Err(Status::new_exception(ExceptionCode::UNSUPPORTED_OPERATION, None))
+        }
     }
 
     fn getLights(&self) -> binder::Result<Vec<HwLight>> {
-        let mut lights: Vec<HwLight> = Vec::with_capacity(NUM_DEFAULT_LIGHTS.try_into().unwrap());
-
-        for i in 1..=NUM_DEFAULT_LIGHTS {
-            let light = HwLight { id: i, ordinal: i, r#type: LightType::BACKLIGHT };
-
-            lights.push(light);
-        }
-
         info!("Lights reporting supported lights");
-        Ok(lights)
+        Ok(self.lights.lock().unwrap().values().map(|light| light.hw_light).collect())
     }
 }
