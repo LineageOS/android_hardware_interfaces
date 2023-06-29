@@ -67,9 +67,13 @@ int64_t FakeLockoutTracker::getLockoutTimeLeft() {
     int64_t res = 0;
 
     if (mLockoutTimedStart > 0) {
+        int32_t lockoutTimedDuration =
+                FingerprintHalProperties::lockout_timed_duration().value_or(10 * 100);
         auto now = Util::getSystemNanoTime();
-        auto left = now - mLockoutTimedStart;
-        res = (left > 0) ? (left / 1000000LL) : 0;
+        auto elapsed = (now - mLockoutTimedStart) / 1000000LL;
+        res = lockoutTimedDuration - elapsed;
+        LOG(INFO) << "xxxxxx: elapsed=" << elapsed << " now = " << now
+                  << " mLockoutTimedStart=" << mLockoutTimedStart << " res=" << res;
     }
 
     return res;
