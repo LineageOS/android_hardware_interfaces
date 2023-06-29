@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * You may not use this file except in compliance with the License.
@@ -17,17 +17,13 @@
 package android.hardware.uwb.fira_android;
 
 /**
- * Android specific session type set in UCI command:
- * GID: 0001b (UWB Session config Group)
- * OID: 000000b (SESSION_INIT_CMD)
- *
- * Note: Refer to Table 13 of the UCI specification for the other
- * session types.
+ * Android specific radar app config values set/expected in UCI command:
+ * GID: 1100b (Android specific Group)
+ * OID: 010001b (RADAR_SET_APP_CONFIG_CMD)
+ * OID: 010010b (RADAR_GET_APP_CONFIG_CMD)
  */
 @VintfStability
 @Backing(type="int")
-enum UwbVendorSessionInitSessionType {
-    /** Added in vendor version 0. */
-    CCC = 0xA0,
-    RADAR = 0xA1,
+enum UwbVendorRadarAppConfigTlvValues {
+    RADAR_DATA_TYPE_RADAR_SWEEP_SAMPLES = 0x0,
 }
