@@ -18,6 +18,7 @@
 #include <string>
 #define LOG_TAG "AHAL_EffectConfig"
 #include <android-base/logging.h>
+#include <system/audio_aidl_utils.h>
 #include <system/audio_effects/audio_effects_conf.h>
 #include <system/audio_effects/effect_uuid.h>
 
@@ -162,7 +163,7 @@ bool EffectConfig::parseLibraryUuid(const tinyxml2::XMLElement& xml,
     RETURN_VALUE_IF((libraryUuid.uuid == getEffectUuidZero()), false, "invalidUuidAttribute");
 
     LOG(DEBUG) << __func__ << (isProxy ? " proxy " : libraryUuid.name) << " : "
-               << libraryUuid.uuid.toString();
+               << ::android::audio::utils::toString(libraryUuid.uuid);
     return true;
 }
 
@@ -250,6 +251,7 @@ bool EffectConfig::findUuid(const std::string& xmlEffectName, AudioUuid* uuid) {
     V("downmix", Downmix)                                  \
     V("dynamics_processing", DynamicsProcessing)           \
     V("equalizer", Equalizer)                              \
+    V("extensioneffect", Extension)                        \
     V("haptic_generator", HapticGenerator)                 \
     V("loudness_enhancer", LoudnessEnhancer)               \
     V("env_reverb", EnvReverb)                             \
