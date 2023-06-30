@@ -1371,4 +1371,13 @@ ndk::ScopedAStatus Module::onMasterVolumeChanged(float volume __unused) {
     return ndk::ScopedAStatus::ok();
 }
 
+Module::BtProfileHandles Module::getBtProfileManagerHandles() {
+    return std::make_tuple(std::weak_ptr<IBluetooth>(), std::weak_ptr<IBluetoothA2dp>(),
+                           std::weak_ptr<IBluetoothLe>());
+}
+
+ndk::ScopedAStatus Module::bluetoothParametersUpdated() {
+    return mStreams.bluetoothParametersUpdated();
+}
+
 }  // namespace aidl::android::hardware::audio::core
