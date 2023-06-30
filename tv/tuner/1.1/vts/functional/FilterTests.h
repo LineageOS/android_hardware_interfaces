@@ -159,6 +159,7 @@ class FilterTests {
     AssertionResult configAvFilterStreamType(AvStreamType type, uint64_t filterId);
     AssertionResult configIpFilterCid(uint32_t ipCid, uint64_t filterId);
     AssertionResult configureMonitorEvent(uint64_t filterId, uint32_t monitorEventTypes);
+    AssertionResult testMonitorEvent(uint64_t filterId, uint32_t monitorEventTypes);
     AssertionResult getFilterMQDescriptor(uint64_t filterId, bool getMqDesc);
     AssertionResult startFilter(uint64_t filterId);
     AssertionResult stopFilter(uint64_t filterId);
