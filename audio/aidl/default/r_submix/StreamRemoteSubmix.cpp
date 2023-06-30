@@ -55,7 +55,7 @@ std::map<int32_t, std::shared_ptr<SubmixRoute>> StreamRemoteSubmix::sSubmixRoute
         mCurrentRoute = std::make_shared<SubmixRoute>();
         if (::android::OK != mCurrentRoute->createPipe(mStreamConfig)) {
             LOG(ERROR) << __func__ << ": create pipe failed";
-            return mStatus;
+            return ::android::NO_INIT;
         }
         {
             std::lock_guard guard(sSubmixRoutesLock);
@@ -64,12 +64,12 @@ std::map<int32_t, std::shared_ptr<SubmixRoute>> StreamRemoteSubmix::sSubmixRoute
     } else {
         if (!mCurrentRoute->isStreamConfigValid(mIsInput, mStreamConfig)) {
             LOG(ERROR) << __func__ << ": invalid stream config";
-            return mStatus;
+            return ::android::NO_INIT;
         }
         sp<MonoPipe> sink = mCurrentRoute->getSink();
         if (sink == nullptr) {
             LOG(ERROR) << __func__ << ": nullptr sink when opening stream";
-            return mStatus;
+            return ::android::NO_INIT;
         }
         // If the sink has been shutdown or pipe recreation is forced, delete the pipe and
         // recreate it.
@@ -77,14 +77,13 @@ std::map<int32_t, std::shared_ptr<SubmixRoute>> StreamRemoteSubmix::sSubmixRoute
             LOG(DEBUG) << __func__ << ": Non-nullptr shut down sink when opening stream";
             if (::android::OK != mCurrentRoute->resetPipe()) {
                 LOG(ERROR) << __func__ << ": reset pipe failed";
-                return mStatus;
+                return ::android::NO_INIT;
             }
         }
     }
 
     mCurrentRoute->openStream(mIsInput);
-    mStatus = ::android::OK;
-    return mStatus;
+    return ::android::OK;
 }
 
 ::android::status_t StreamRemoteSubmix::drain(StreamDescriptor::DrainMode) {
@@ -99,6 +98,16 @@ std::map<int32_t, std::shared_ptr<SubmixRoute>> StreamRemoteSubmix::sSubmixRoute
 
 ::android::status_t StreamRemoteSubmix::pause() {
     usleep(1000);
+    return ::android::OK;
+}
+
+::android::status_t StreamRemoteSubmix::standby() {
+    mCurrentRoute->standby(mIsInput);
+    return ::android::OK;
+}
+
+::android::status_t StreamRemoteSubmix::start() {
+    mCurrentRoute->exitStandby(mIsInput);
     return ::android::OK;
 }
 
@@ -138,17 +147,12 @@ void StreamRemoteSubmix::shutdown() {
 
         std::lock_guard guard(sSubmixRoutesLock);
         sSubmixRoutes.erase(mPortId);
-        mStatus = ::android::NO_INIT;
     }
+    mCurrentRoute.reset();
 }
 
 ::android::status_t StreamRemoteSubmix::transfer(void* buffer, size_t frameCount,
                                                  size_t* actualFrameCount, int32_t* latencyMs) {
-    if (mStatus != ::android::OK) {
-        LOG(ERROR) << __func__ << ": failed, not configured";
-        return ::android::NO_INIT;
-    }
-
     *latencyMs = (getStreamPipeSizeInFrames() * MILLIS_PER_SECOND) / mStreamConfig.sampleRate;
     LOG(VERBOSE) << __func__ << ": Latency " << *latencyMs << "ms";
 
@@ -171,7 +175,6 @@ void StreamRemoteSubmix::shutdown() {
         return ::android::UNEXPECTED_NULL;
     }
 
-    mCurrentRoute->exitStandby(mIsInput);
     return (mIsInput ? inRead(buffer, frameCount, actualFrameCount)
                      : outWrite(buffer, frameCount, actualFrameCount));
 }
@@ -326,11 +329,6 @@ size_t StreamRemoteSubmix::getStreamPipeSizeInFrames() {
     if (projectedVsObservedOffsetUs > 0) {
         usleep(projectedVsObservedOffsetUs);
     }
-    return ::android::OK;
-}
-
-::android::status_t StreamRemoteSubmix::standby() {
-    mCurrentRoute->standby(mIsInput);
     return ::android::OK;
 }
 

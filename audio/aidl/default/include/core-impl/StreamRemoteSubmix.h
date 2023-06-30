@@ -35,9 +35,10 @@ class StreamRemoteSubmix : public StreamCommonImpl {
     ::android::status_t drain(StreamDescriptor::DrainMode) override;
     ::android::status_t flush() override;
     ::android::status_t pause() override;
+    ::android::status_t standby() override;
+    ::android::status_t start() override;
     ::android::status_t transfer(void* buffer, size_t frameCount, size_t* actualFrameCount,
                                  int32_t* latencyMs) override;
-    ::android::status_t standby() override;
     void shutdown() override;
 
     // Overridden methods of 'StreamCommonImpl', called on a Binder thread.
@@ -53,7 +54,6 @@ class StreamRemoteSubmix : public StreamCommonImpl {
     const bool mIsInput;
     AudioConfig mStreamConfig;
     std::shared_ptr<SubmixRoute> mCurrentRoute = nullptr;
-    ::android::status_t mStatus = ::android::NO_INIT;
 
     // Mutex lock to protect vector of submix routes, each of these submix routes have their mutex
     // locks and none of the mutex locks should be taken together.
