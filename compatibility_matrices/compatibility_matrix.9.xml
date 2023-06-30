@@ -248,7 +248,7 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.graphics.composer3</name>
-        <version>2</version>
+        <version>3</version>
         <interface>
             <name>IComposer</name>
             <instance>default</instance>

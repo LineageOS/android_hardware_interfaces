@@ -53,13 +53,13 @@ cc_defaults {
 cc_defaults {
     name: "android.hardware.graphics.composer3-ndk_static",
     static_libs: [
-        "android.hardware.graphics.composer3-V2-ndk",
+        "android.hardware.graphics.composer3-V3-ndk",
     ],
 }
 
 cc_defaults {
     name: "android.hardware.graphics.composer3-ndk_shared",
     shared_libs: [
-        "android.hardware.graphics.composer3-V2-ndk",
+        "android.hardware.graphics.composer3-V3-ndk",
     ],
 }
