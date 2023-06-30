@@ -27,6 +27,7 @@
 
 #include "core-impl/Bluetooth.h"
 #include "core-impl/Module.h"
+#include "core-impl/ModuleRemoteSubmix.h"
 #include "core-impl/ModuleUsb.h"
 #include "core-impl/SoundDose.h"
 #include "core-impl/StreamStub.h"
@@ -111,8 +112,9 @@ std::shared_ptr<Module> Module::createInstance(Type type) {
     switch (type) {
         case Module::Type::USB:
             return ndk::SharedRefBase::make<ModuleUsb>(type);
-        case Type::DEFAULT:
         case Type::R_SUBMIX:
+            return ndk::SharedRefBase::make<ModuleRemoteSubmix>(type);
+        case Type::DEFAULT:
         default:
             return ndk::SharedRefBase::make<Module>(type);
     }
@@ -181,8 +183,8 @@ ndk::ScopedAStatus Module::createStreamContext(
         StreamContext temp(
                 std::make_unique<StreamContext::CommandMQ>(1, true /*configureEventFlagWord*/),
                 std::make_unique<StreamContext::ReplyMQ>(1, true /*configureEventFlagWord*/),
-                portConfigIt->format.value(), portConfigIt->channelMask.value(),
-                portConfigIt->sampleRate.value().value, flags,
+                portConfigIt->portId, portConfigIt->format.value(),
+                portConfigIt->channelMask.value(), portConfigIt->sampleRate.value().value, flags,
                 portConfigIt->ext.get<AudioPortExt::mix>().handle,
                 std::make_unique<StreamContext::DataMQ>(frameSize * in_bufferSizeFrames),
                 asyncCallback, outEventCallback, params);
@@ -488,6 +490,17 @@ ndk::ScopedAStatus Module::connectExternalDevice(const AudioPort& in_templateIdA
         LOG(ERROR) << "Profiles of a connected port still empty after connecting external device "
                    << connectedPort.toString();
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
+    }
+
+    for (auto profile : connectedPort.profiles) {
+        if (profile.channelMasks.empty()) {
+            LOG(ERROR) << __func__ << ": the profile " << profile.name << " has no channel masks";
+            return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
+        }
+        if (profile.sampleRates.empty()) {
+            LOG(ERROR) << __func__ << ": the profile " << profile.name << " has no sample rates";
+            return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
+        }
     }
 
     connectedPort.id = ++getConfig().nextPortId;
