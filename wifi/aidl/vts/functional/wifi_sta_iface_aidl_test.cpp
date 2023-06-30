@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <cctype>
 #include <vector>
 
 #include <VtsCoreUtil.h>
@@ -68,6 +69,50 @@ class WifiStaIfaceAidlTest : public testing::TestWithParam<std::string> {
 
     std::shared_ptr<IWifiStaIface> wifi_sta_iface_;
 
+    // Checks if the MdnsOffloadManagerService is installed.
+    bool isMdnsOffloadServicePresent() {
+        int status =
+                // --query-flags MATCH_SYSTEM_ONLY(1048576) will only return matched service
+                // installed on system or system_ext partition. The MdnsOffloadManagerService should
+                // be installed on system_ext partition.
+                // NOLINTNEXTLINE(cert-env33-c)
+                system("pm query-services --query-flags 1048576"
+                       " com.android.tv.mdnsoffloadmanager/"
+                       "com.android.tv.mdnsoffloadmanager.MdnsOffloadManagerService"
+                       " | egrep -q mdnsoffloadmanager");
+        return status == 0;
+    }
+
+    // Detected panel TV device by using ro.oem.key1 property.
+    // https://docs.partner.android.com/tv/build/platform/props-vars/ro-oem-key1
+    bool isPanelTvDevice() {
+        const std::string oem_key1 = getPropertyString("ro.oem.key1");
+        if (oem_key1.size() < 9) {
+            return false;
+        }
+        if (oem_key1.substr(0, 3) != "ATV") {
+            return false;
+        }
+        const std::string psz_string = oem_key1.substr(6, 3);
+        // If PSZ string contains non digit, then it is not a panel TV device.
+        for (char ch : psz_string) {
+            if (!isdigit(ch)) {
+                return false;
+            }
+        }
+        // If PSZ is "000", then it is not a panel TV device.
+        if (psz_string == "000") {
+            return false;
+        }
+        return true;
+    }
+
+    std::string getPropertyString(const char* property_name) {
+        char property_string_raw_bytes[PROPERTY_VALUE_MAX] = {};
+        int len = property_get(property_name, property_string_raw_bytes, "");
+        return std::string(property_string_raw_bytes, len);
+    }
+
   private:
     const char* getInstanceName() { return GetParam().c_str(); }
 };
@@ -99,6 +144,11 @@ TEST_P(WifiStaIfaceAidlTest, GetFeatureSet) {
  */
 // @VsrTest = 5.3.12
 TEST_P(WifiStaIfaceAidlTest, CheckApfIsSupported) {
+    // Flat panel TV devices that support MDNS offload do not have to implement APF if the WiFi
+    // chipset does not have sufficient RAM to do so.
+    if (isPanelTvDevice() && isMdnsOffloadServicePresent()) {
+        GTEST_SKIP() << "Panel TV supports mDNS offload. It is not required to support APF";
+    }
     int vendor_api_level = property_get_int32("ro.vendor.api_level", 0);
     // Before VSR 14, APF support is optional.
     if (vendor_api_level < __ANDROID_API_U__) {
