@@ -685,4 +685,12 @@
             <regex-instance>.*</regex-instance>
         </interface>
     </hal>
+    <hal format="aidl" optional="true">
+        <name>android.hardware.threadnetwork</name>
+        <version>1</version>
+        <interface>
+            <name>IThreadChip</name>
+            <regex-instance>chip[0-9]+</regex-instance>
+        </interface>
+    </hal>
 </compatibility-matrix>
