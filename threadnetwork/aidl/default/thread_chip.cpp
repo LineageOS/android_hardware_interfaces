@@ -19,26 +19,19 @@
 #include <android-base/logging.h>
 #include <android/binder_manager.h>
 #include <android/binder_process.h>
-
-#include "utils.hpp"
+#include <utils/Log.h>
 
 namespace aidl {
 namespace android {
 namespace hardware {
 namespace threadnetwork {
 
-ThreadChip::ThreadChip(uint8_t id, char* url)
+ThreadChip::ThreadChip(char* url)
     : mUrl(),
       mInterface(handleReceivedFrame, this, mRxFrameBuffer),
       mRxFrameBuffer(),
       mCallback(nullptr) {
-    const std::string name(std::string() + IThreadChip::descriptor + "/chip" + std::to_string(id));
-    binder_status_t status;
-
-    ALOGI("ServiceName: %s, Url: %s", name.c_str(), url);
     CHECK_EQ(mUrl.Init(url), 0);
-    status = AServiceManager_addService(asBinder().get(), name.c_str());
-    CHECK_EQ(status, STATUS_OK);
 }
 
 void ThreadChip::clientDeathCallback(void* context) {
@@ -85,17 +78,13 @@ ndk::ScopedAStatus ThreadChip::open(const std::shared_ptr<IThreadChipCallback>& 
     status = ndk::ScopedAStatus::ok();
 
 exit:
-    if (!status.isOk())
-    {
-        if (mBinderDeathRecipient != nullptr)
-        {
-           AIBinder_DeathRecipient_delete(mBinderDeathRecipient);
-           mBinderDeathRecipient = nullptr;
+    if (!status.isOk()) {
+        if (mBinderDeathRecipient != nullptr) {
+            AIBinder_DeathRecipient_delete(mBinderDeathRecipient);
+            mBinderDeathRecipient = nullptr;
         }
         ALOGW("Open failed, error: %s", status.getDescription().c_str());
-    }
-    else
-    {
+    } else {
         ALOGI("open()");
     }
 
@@ -137,8 +126,7 @@ ndk::ScopedAStatus ThreadChip::sendSpinelFrame(const std::vector<uint8_t>& in_fr
     }
 
 exit:
-    if (!status.isOk())
-    {
+    if (!status.isOk()) {
         ALOGW("Send spinel frame failed, error: %s", status.getDescription().c_str());
     }
 
@@ -146,25 +134,20 @@ exit:
 }
 
 ndk::ScopedAStatus ThreadChip::reset() {
-    mInterface.OnRcpReset();
+    mInterface.HardwareReset();
     ALOGI("reset()");
     return ndk::ScopedAStatus::ok();
 }
 
 void ThreadChip::Update(otSysMainloopContext& context) {
     if (mCallback != nullptr) {
-        mInterface.UpdateFdSet(context.mReadFdSet, context.mWriteFdSet, context.mMaxFd,
-                               context.mTimeout);
+        mInterface.UpdateFdSet(&context);
     }
 }
 
 void ThreadChip::Process(const otSysMainloopContext& context) {
-    struct RadioProcessContext radioContext;
-
     if (mCallback != nullptr) {
-        radioContext.mReadFdSet = &context.mReadFdSet;
-        radioContext.mWriteFdSet = &context.mWriteFdSet;
-        mInterface.Process(radioContext);
+        mInterface.Process(&context);
     }
 }
 

@@ -18,25 +18,14 @@
 #include <android-base/logging.h>
 #include <android/binder_manager.h>
 #include <android/binder_process.h>
-
-#include "thread_chip.hpp"
-#include "utils.hpp"
+#include <utils/Log.h>
 
 namespace aidl {
 namespace android {
 namespace hardware {
 namespace threadnetwork {
 
-Service::Service(char* urls[], int numUrls) : mBinderFd(-1) {
-    CHECK_NE(urls, nullptr);
-    CHECK_GT(numUrls, 0);
-
-    for (int i = 0; i < numUrls; i++) {
-        auto threadChip = ndk::SharedRefBase::make<ThreadChip>(i, urls[i]);
-        CHECK_NE(threadChip, nullptr);
-        mThreadChips.push_back(std::move(threadChip));
-    }
-
+Service::Service(void) : mBinderFd(-1) {
     binder_status_t status = ABinderProcess_setupPolling(&mBinderFd);
     CHECK_EQ(status, ::STATUS_OK);
     CHECK_GE(mBinderFd, 0);
