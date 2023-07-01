@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include <limits>
+
 #define LOG_TAG "AHAL_StreamUsb"
 #include <android-base/logging.h>
 
@@ -45,25 +47,30 @@ namespace aidl::android::hardware::audio::core {
 
 StreamUsb::StreamUsb(const Metadata& metadata, StreamContext&& context)
     : StreamCommonImpl(metadata, std::move(context)),
-      mFrameSizeBytes(context.getFrameSize()),
-      mIsInput(isInput(metadata)) {
+      mFrameSizeBytes(getContext().getFrameSize()),
+      mIsInput(isInput(metadata)),
+      mConfig(maybePopulateConfig(getContext(), mIsInput)) {}
+
+// static
+std::optional<struct pcm_config> StreamUsb::maybePopulateConfig(const StreamContext& context,
+                                                                bool isInput) {
     struct pcm_config config;
-    config.channels = usb::getChannelCountFromChannelMask(context.getChannelLayout(), mIsInput);
+    config.channels = usb::getChannelCountFromChannelMask(context.getChannelLayout(), isInput);
     if (config.channels == 0) {
         LOG(ERROR) << __func__ << ": invalid channel=" << context.getChannelLayout().toString();
-        return;
+        return std::nullopt;
     }
     config.format = usb::aidl2legacy_AudioFormatDescription_pcm_format(context.getFormat());
     if (config.format == PCM_FORMAT_INVALID) {
         LOG(ERROR) << __func__ << ": invalid format=" << context.getFormat().toString();
-        return;
+        return std::nullopt;
     }
     config.rate = context.getSampleRate();
     if (config.rate == 0) {
         LOG(ERROR) << __func__ << ": invalid sample rate=" << config.rate;
-        return;
+        return std::nullopt;
     }
-    mConfig = config;
+    return config;
 }
 
 ::android::status_t StreamUsb::init() {
@@ -89,8 +96,8 @@ ndk::ScopedAStatus StreamUsb::setConnectedDevices(
         }
     }
     std::lock_guard guard(mLock);
-    mAlsaDeviceProxies.clear();
     RETURN_STATUS_IF_ERROR(StreamCommonImpl::setConnectedDevices(connectedDevices));
+    mConnectedDevicesUpdated.store(true, std::memory_order_release);
     return ndk::ScopedAStatus::ok();
 }
 
@@ -111,59 +118,53 @@ ndk::ScopedAStatus StreamUsb::setConnectedDevices(
 
 ::android::status_t StreamUsb::transfer(void* buffer, size_t frameCount, size_t* actualFrameCount,
                                         int32_t* latencyMs) {
-    {
-        std::lock_guard guard(mLock);
-        if (!mConfig.has_value() || mConnectedDevices.empty()) {
-            LOG(ERROR) << __func__ << ": failed, has config: " << mConfig.has_value()
-                       << ", has connected devices: " << mConnectedDevices.empty();
-            return ::android::NO_INIT;
-        }
-    }
-    if (mIsStandby) {
-        if (::android::status_t status = exitStandby(); status != ::android::OK) {
-            LOG(ERROR) << __func__ << ": failed to exit standby, status=" << status;
-            return status;
-        }
-    }
-    std::vector<std::shared_ptr<alsa_device_proxy>> alsaDeviceProxies;
-    {
-        std::lock_guard guard(mLock);
-        alsaDeviceProxies = mAlsaDeviceProxies;
+    if (mConnectedDevicesUpdated.load(std::memory_order_acquire)) {
+        // 'setConnectedDevices' has been called. I/O will be restarted.
+        *actualFrameCount = 0;
+        *latencyMs = StreamDescriptor::LATENCY_UNKNOWN;
+        return ::android::OK;
     }
     const size_t bytesToTransfer = frameCount * mFrameSizeBytes;
+    unsigned maxLatency = 0;
     if (mIsInput) {
+        if (mAlsaDeviceProxies.empty()) {
+            LOG(FATAL) << __func__ << ": no input devices";
+            return ::android::NO_INIT;
+        }
         // For input case, only support single device.
-        proxy_read(alsaDeviceProxies[0].get(), buffer, bytesToTransfer);
+        proxy_read(mAlsaDeviceProxies[0].get(), buffer, bytesToTransfer);
+        maxLatency = proxy_get_latency(mAlsaDeviceProxies[0].get());
     } else {
-        for (auto& proxy : alsaDeviceProxies) {
+        for (auto& proxy : mAlsaDeviceProxies) {
             proxy_write(proxy.get(), buffer, bytesToTransfer);
+            maxLatency = std::max(maxLatency, proxy_get_latency(proxy.get()));
         }
     }
     *actualFrameCount = frameCount;
-    *latencyMs = Module::kLatencyMs;
+    maxLatency = std::min(maxLatency, static_cast<unsigned>(std::numeric_limits<int32_t>::max()));
+    *latencyMs = maxLatency;
     return ::android::OK;
 }
 
 ::android::status_t StreamUsb::standby() {
-    if (!mIsStandby) {
-        std::lock_guard guard(mLock);
-        mAlsaDeviceProxies.clear();
-        mIsStandby = true;
-    }
+    mAlsaDeviceProxies.clear();
     return ::android::OK;
 }
 
-void StreamUsb::shutdown() {}
+void StreamUsb::shutdown() {
+    mAlsaDeviceProxies.clear();
+}
 
-::android::status_t StreamUsb::exitStandby() {
+::android::status_t StreamUsb::start() {
     std::vector<AudioDeviceAddress> connectedDevices;
     {
         std::lock_guard guard(mLock);
         std::transform(mConnectedDevices.begin(), mConnectedDevices.end(),
                        std::back_inserter(connectedDevices),
                        [](const auto& device) { return device.address; });
+        mConnectedDevicesUpdated.store(false, std::memory_order_release);
     }
-    std::vector<std::shared_ptr<alsa_device_proxy>> alsaDeviceProxies;
+    decltype(mAlsaDeviceProxies) alsaDeviceProxies;
     for (const auto& device : connectedDevices) {
         alsa_device_profile profile;
         profile_init(&profile, mIsInput ? PCM_IN : PCM_OUT);
@@ -175,16 +176,16 @@ void StreamUsb::shutdown() {}
             return ::android::UNKNOWN_ERROR;
         }
 
-        auto proxy = std::shared_ptr<alsa_device_proxy>(new alsa_device_proxy(),
-                                                        [](alsa_device_proxy* proxy) {
-                                                            proxy_close(proxy);
-                                                            free(proxy);
-                                                        });
+        AlsaDeviceProxy proxy(new alsa_device_proxy, [](alsa_device_proxy* proxy) {
+            proxy_close(proxy);
+            free(proxy);
+        });
         // Always ask for alsa configure as required since the configuration should be supported
         // by the connected device. That is guaranteed by `setAudioPortConfig` and
         // `setAudioPatch`.
-        if (int err =
-                    proxy_prepare(proxy.get(), &profile, &mConfig.value(), true /*is_bit_perfect*/);
+        if (int err = proxy_prepare(proxy.get(), &profile,
+                                    const_cast<struct pcm_config*>(&mConfig.value()),
+                                    true /*is_bit_perfect*/);
             err != 0) {
             LOG(ERROR) << __func__ << ": fail to prepare for device address=" << device.toString()
                        << " error=" << err;
@@ -197,11 +198,7 @@ void StreamUsb::shutdown() {}
         }
         alsaDeviceProxies.push_back(std::move(proxy));
     }
-    {
-        std::lock_guard guard(mLock);
-        mAlsaDeviceProxies = alsaDeviceProxies;
-    }
-    mIsStandby = false;
+    mAlsaDeviceProxies = std::move(alsaDeviceProxies);
     return ::android::OK;
 }
 
