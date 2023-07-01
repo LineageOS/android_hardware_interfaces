@@ -14,14 +14,37 @@
  * limitations under the License.
  */
 
+#include <aidl/android/hardware/threadnetwork/IThreadChip.h>
 #include <android-base/logging.h>
+#include <android/binder_manager.h>
+#include <android/binder_process.h>
+#include <utils/Log.h>
 
 #include "service.hpp"
-#include "utils.hpp"
+#include "thread_chip.hpp"
+
+using aidl::android::hardware::threadnetwork::IThreadChip;
+using aidl::android::hardware::threadnetwork::ThreadChip;
 
 int main(int argc, char* argv[]) {
     CHECK_GT(argc, 1);
-    aidl::android::hardware::threadnetwork::Service service(&argv[1], argc - 1);
+    std::vector<std::shared_ptr<ThreadChip>> threadChips;
+    aidl::android::hardware::threadnetwork::Service service;
+
+    for (int id = 0; id < argc - 1; id++) {
+        binder_status_t status;
+        const std::string serviceName(std::string() + IThreadChip::descriptor + "/chip" +
+                                      std::to_string(id));
+        auto threadChip = ndk::SharedRefBase::make<ThreadChip>(argv[id + 1]);
+
+        CHECK_NE(threadChip, nullptr);
+
+        status = AServiceManager_addService(threadChip->asBinder().get(), serviceName.c_str());
+        CHECK_EQ(status, STATUS_OK);
+
+        ALOGI("ServiceName: %s, Url: %s", serviceName.c_str(), argv[id + 1]);
+        threadChips.push_back(std::move(threadChip));
+    }
 
     ALOGI("Thread Network HAL is running");
 
