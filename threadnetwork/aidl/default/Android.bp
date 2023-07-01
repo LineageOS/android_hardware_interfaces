@@ -24,10 +24,6 @@ cc_defaults {
         "libutils",
     ],
 
-    cppflags: [
-        "-Wno-non-virtual-dtor",
-    ],
-
     static_libs: [
         "openthread-common",
         "openthread-hdlc",
@@ -48,9 +44,43 @@ cc_binary {
     name: "android.hardware.threadnetwork-service.sim",
     defaults: ["threadnetwork_service_default"],
     init_rc: ["android.hardware.threadnetwork-service.sim.rc"],
+    required: ["ot-rcp"],
 }
 
 cc_binary {
     name: "android.hardware.threadnetwork-service",
     defaults: ["threadnetwork_service_default"],
+}
+
+cc_fuzz {
+    name: "android.hardware.threadnetwork-service.fuzzer",
+
+    defaults:["service_fuzzer_defaults"],
+    shared_libs: [
+        "libbinder_ndk",
+    ],
+
+    static_libs: [
+        "android.hardware.threadnetwork-V1-ndk",
+        "libbase",
+        "liblog",
+        "openthread-common",
+        "openthread-hdlc",
+        "openthread-platform",
+        "openthread-posix",
+        "openthread-url",
+    ],
+
+    srcs: [
+        "thread_chip.cpp",
+        "utils.cpp",
+        "fuzzer.cpp",
+    ],
+
+    required: ["ot-rcp"],
+    fuzz_config: {
+        cc: [
+            "zhanglongxia@google.com",
+        ],
+    },
 }
