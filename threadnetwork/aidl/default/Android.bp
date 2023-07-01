@@ -1,0 +1,86 @@
+//
+//  Copyright (c) 2022 Google LLC.
+//  All rights reserved.
+//
+//  This document is the property of Google LLC, Inc. It is
+//  considered proprietary and confidential information.
+//
+//  This document may not be reproduced or transmitted in any form,
+//  in whole or in part, without the express written permission of
+//  Google LLC.
+
+cc_defaults {
+    name: "threadnetwork_service_default",
+    vintf_fragments: ["threadnetwork-default.xml"],
+    vendor: true,
+    relative_install_path: "hw",
+
+    shared_libs: [
+        "android.hardware.threadnetwork-V1-ndk",
+        "libbase",
+        "libbinder_ndk",
+        "libcutils",
+        "liblog",
+        "libutils",
+    ],
+
+    static_libs: [
+        "openthread-common",
+        "openthread-hdlc",
+        "openthread-platform",
+        "openthread-posix",
+        "openthread-url",
+    ],
+
+    srcs: [
+        "main.cpp",
+        "service.cpp",
+        "thread_chip.cpp",
+        "utils.cpp",
+    ],
+}
+
+cc_binary {
+    name: "android.hardware.threadnetwork-service.sim",
+    defaults: ["threadnetwork_service_default"],
+    init_rc: ["android.hardware.threadnetwork-service.sim.rc"],
+    required: ["ot-rcp"],
+}
+
+cc_binary {
+    name: "android.hardware.threadnetwork-service",
+    defaults: ["threadnetwork_service_default"],
+}
+
+cc_fuzz {
+    name: "android.hardware.threadnetwork-service.fuzzer",
+
+    defaults:["service_fuzzer_defaults"],
+    shared_libs: [
+        "libbinder_ndk",
+    ],
+
+    static_libs: [
+        "android.hardware.threadnetwork-V1-ndk",
+        "libbase",
+        "liblog",
+        "openthread-common",
+        "openthread-hdlc",
+        "openthread-platform",
+        "openthread-posix",
+        "openthread-url",
+    ],
+
+    srcs: [
+        "thread_chip.cpp",
+        "utils.cpp",
+        "fuzzer.cpp",
+    ],
+
+    required: ["ot-rcp"],
+    fuzz_config: {
+        cc: [
+            "zhanglongxia@google.com",
+        ],
+    },
+}
