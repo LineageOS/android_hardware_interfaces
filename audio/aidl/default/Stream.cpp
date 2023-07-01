@@ -166,10 +166,15 @@ StreamInWorkerLogic::Status StreamInWorkerLogic::cycle() {
         case Tag::start:
             if (mState == StreamDescriptor::State::STANDBY ||
                 mState == StreamDescriptor::State::DRAINING) {
-                populateReply(&reply, mIsConnected);
-                mState = mState == StreamDescriptor::State::STANDBY
-                                 ? StreamDescriptor::State::IDLE
-                                 : StreamDescriptor::State::ACTIVE;
+                if (::android::status_t status = mDriver->start(); status == ::android::OK) {
+                    populateReply(&reply, mIsConnected);
+                    mState = mState == StreamDescriptor::State::STANDBY
+                                     ? StreamDescriptor::State::IDLE
+                                     : StreamDescriptor::State::ACTIVE;
+                } else {
+                    LOG(ERROR) << __func__ << ": start failed: " << status;
+                    mState = StreamDescriptor::State::ERROR;
+                }
             } else {
                 populateReplyWrongState(&reply, command);
             }
@@ -377,26 +382,36 @@ StreamOutWorkerLogic::Status StreamOutWorkerLogic::cycle() {
             populateReply(&reply, mIsConnected);
             break;
         case Tag::start: {
-            bool commandAccepted = true;
+            std::optional<StreamDescriptor::State> nextState;
             switch (mState) {
                 case StreamDescriptor::State::STANDBY:
-                    mState = StreamDescriptor::State::IDLE;
+                    nextState = StreamDescriptor::State::IDLE;
                     break;
                 case StreamDescriptor::State::PAUSED:
-                    mState = StreamDescriptor::State::ACTIVE;
+                    nextState = StreamDescriptor::State::ACTIVE;
                     break;
                 case StreamDescriptor::State::DRAIN_PAUSED:
-                    switchToTransientState(StreamDescriptor::State::DRAINING);
+                    nextState = StreamDescriptor::State::DRAINING;
                     break;
                 case StreamDescriptor::State::TRANSFER_PAUSED:
-                    switchToTransientState(StreamDescriptor::State::TRANSFERRING);
+                    nextState = StreamDescriptor::State::TRANSFERRING;
                     break;
                 default:
                     populateReplyWrongState(&reply, command);
-                    commandAccepted = false;
             }
-            if (commandAccepted) {
-                populateReply(&reply, mIsConnected);
+            if (nextState.has_value()) {
+                if (::android::status_t status = mDriver->start(); status == ::android::OK) {
+                    populateReply(&reply, mIsConnected);
+                    if (*nextState == StreamDescriptor::State::IDLE ||
+                        *nextState == StreamDescriptor::State::ACTIVE) {
+                        mState = *nextState;
+                    } else {
+                        switchToTransientState(*nextState);
+                    }
+                } else {
+                    LOG(ERROR) << __func__ << ": start failed: " << status;
+                    mState = StreamDescriptor::State::ERROR;
+                }
             }
         } break;
         case Tag::burst:
