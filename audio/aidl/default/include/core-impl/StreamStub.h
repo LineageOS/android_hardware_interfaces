@@ -28,9 +28,10 @@ class StreamStub : public StreamCommonImpl {
     ::android::status_t drain(StreamDescriptor::DrainMode) override;
     ::android::status_t flush() override;
     ::android::status_t pause() override;
+    ::android::status_t standby() override;
+    ::android::status_t start() override;
     ::android::status_t transfer(void* buffer, size_t frameCount, size_t* actualFrameCount,
                                  int32_t* latencyMs) override;
-    ::android::status_t standby() override;
     void shutdown() override;
 
   private:
@@ -38,6 +39,8 @@ class StreamStub : public StreamCommonImpl {
     const int mSampleRate;
     const bool mIsAsynchronous;
     const bool mIsInput;
+    bool mIsInitialized = false;  // Used for validating the state machine logic.
+    bool mIsStandby = true;       // Used for validating the state machine logic.
 };
 
 class StreamInStub final : public StreamStub, public StreamIn {
