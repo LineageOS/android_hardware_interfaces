@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,19 @@
  * limitations under the License.
  */
 
-#pragma once
+#include <fuzzbinder/libbinder_ndk_driver.h>
+#include <fuzzer/FuzzedDataProvider.h>
+#include "thread_chip.hpp"
 
-#define LOG_TAG "threadnetwork_hal"
-#include <utils/Log.h>
+using aidl::android::hardware::threadnetwork::ThreadChip;
+using android::fuzzService;
+
+extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
+    char url[] = "spinel+hdlc+forkpty:///vendor/bin/ot-rcp?forkpty-arg=2";
+    auto service = ndk::SharedRefBase::make<ThreadChip>(url);
+
+    fuzzService(service->asBinder().get(), FuzzedDataProvider(data, size));
+
+    return 0;
+}
+
