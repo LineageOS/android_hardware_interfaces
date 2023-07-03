@@ -29,6 +29,7 @@ cc_defaults {
         "openthread-hdlc",
         "openthread-platform",
         "openthread-posix",
+        "openthread-spi",
         "openthread-url",
     ],
 
@@ -68,6 +69,7 @@ cc_fuzz {
         "openthread-hdlc",
         "openthread-platform",
         "openthread-posix",
+        "openthread-spi",
         "openthread-url",
     ],
 
