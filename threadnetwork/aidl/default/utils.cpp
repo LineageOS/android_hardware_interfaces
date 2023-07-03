@@ -36,6 +36,45 @@ void otLogWarnPlat(const char* format, ...) {
     va_end(args);
 }
 
+void otLogNotePlat(const char* format, ...) {
+    va_list args;
+
+    va_start(args, format);
+    __android_log_vprint(ANDROID_LOG_INFO, LOG_TAG, format, args);
+    va_end(args);
+}
+
+void otLogInfoPlat(const char* format, ...) {
+    va_list args;
+
+    va_start(args, format);
+    __android_log_vprint(ANDROID_LOG_INFO, LOG_TAG, format, args);
+    va_end(args);
+}
+
+void otLogDebgPlat(const char* format, ...) {
+    va_list args;
+
+    va_start(args, format);
+    __android_log_vprint(ANDROID_LOG_DEBUG, LOG_TAG, format, args);
+    va_end(args);
+}
+
+void otDumpDebgPlat(const char* aText, const void* aData, uint16_t aDataLength) {
+    constexpr uint16_t kBufSize = 512;
+    char buf[kBufSize];
+
+    if ((aText != nullptr) && (aData != nullptr)) {
+        const uint8_t* data = reinterpret_cast<const uint8_t*>(aData);
+
+        for (uint16_t i = 0; (i < aDataLength) && (i < (kBufSize - 1) / 3); i++) {
+            snprintf(buf + (i * 3), (kBufSize - 1) - (i * 3), "%02x ", data[i]);
+        }
+
+        __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, "%s: %s", aText, buf);
+    }
+}
+
 OT_TOOL_WEAK void otPlatAlarmMilliFired(otInstance* aInstance) {
     OT_UNUSED_VARIABLE(aInstance);
 }
