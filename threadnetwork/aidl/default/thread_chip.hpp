@@ -19,7 +19,6 @@
 #include <aidl/android/hardware/threadnetwork/BnThreadChip.h>
 #include <aidl/android/hardware/threadnetwork/IThreadChipCallback.h>
 
-#include "hdlc_interface.hpp"
 #include "lib/spinel/spinel_interface.hpp"
 #include "mainloop.hpp"
 
@@ -45,12 +44,12 @@ class ThreadChip : public BnThreadChip, ot::Posix::Mainloop::Source {
   private:
     static void clientDeathCallback(void* context);
     void clientDeathCallback(void);
-    static void handleReceivedFrame(void* context);
+    static void handleReceivedFrameJump(void* context);
     void handleReceivedFrame(void);
     ndk::ScopedAStatus errorStatus(int32_t error, const char* message);
 
     ot::Url::Url mUrl;
-    ot::Posix::HdlcInterface mInterface;
+    std::shared_ptr<ot::Spinel::SpinelInterface> mSpinelInterface;
     ot::Spinel::SpinelInterface::RxFrameBuffer mRxFrameBuffer;
     std::shared_ptr<IThreadChipCallback> mCallback;
     AIBinder_DeathRecipient* mBinderDeathRecipient;
