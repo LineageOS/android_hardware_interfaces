@@ -48,7 +48,6 @@ class BluetoothHci : public IBluetoothHci {
   void sendDataToController(const uint8_t type, const hidl_vec<uint8_t>& data);
   ::android::sp<BluetoothDeathRecipient> death_recipient_;
   std::function<void(sp<BluetoothDeathRecipient>&)> unlink_cb_;
-  int bt_enabled;
 };
 
 extern "C" IBluetoothHci* HIDL_FETCH_IBluetoothHci(const char* name);

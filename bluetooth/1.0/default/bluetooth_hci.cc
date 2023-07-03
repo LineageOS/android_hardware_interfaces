@@ -33,8 +33,7 @@ static const uint8_t HCI_DATA_TYPE_SCO = 3;
 
 class BluetoothDeathRecipient : public hidl_death_recipient {
  public:
-  BluetoothDeathRecipient(const sp<IBluetoothHci> hci)
-    : mHci(hci), has_died_(false) {}
+  BluetoothDeathRecipient(const sp<IBluetoothHci> hci) : mHci(hci) {}
 
   virtual void serviceDied(
       uint64_t /*cookie*/,
@@ -52,7 +51,7 @@ class BluetoothDeathRecipient : public hidl_death_recipient {
 };
 
 BluetoothHci::BluetoothHci()
-    : death_recipient_(new BluetoothDeathRecipient(this)) {bt_enabled = 0;}
+    : death_recipient_(new BluetoothDeathRecipient(this)) {}
 
 Return<void> BluetoothHci::initialize(
     const ::android::sp<IBluetoothHciCallbacks>& cb) {
@@ -62,19 +61,8 @@ Return<void> BluetoothHci::initialize(
     return Void();
   }
 
-  if (bt_enabled == 1) {
-    ALOGE("initialize was called!");
-    return Void();
-  }
-  bt_enabled = 1;
   death_recipient_->setHasDied(false);
   cb->linkToDeath(death_recipient_, 0);
-  unlink_cb_ = [cb](sp<BluetoothDeathRecipient>& death_recipient) {
-    if (death_recipient->getHasDied())
-      ALOGI("Skipping unlink call, service died.");
-    else
-      cb->unlinkToDeath(death_recipient);
-  };
 
   bool rc = VendorInterface::Initialize(
       [cb](bool status) {
@@ -124,12 +112,6 @@ Return<void> BluetoothHci::initialize(
 
 Return<void> BluetoothHci::close() {
   ALOGI("BluetoothHci::close()");
-
-  if (bt_enabled != 1) {
-    ALOGE("should initialize first!");
-    return Void();
-  }
-  bt_enabled = 0;
   unlink_cb_(death_recipient_);
   VendorInterface::Shutdown();
   return Void();
@@ -152,11 +134,6 @@ Return<void> BluetoothHci::sendScoData(const hidl_vec<uint8_t>& data) {
 
 void BluetoothHci::sendDataToController(const uint8_t type,
                                         const hidl_vec<uint8_t>& data) {
-  if (bt_enabled != 1) {
-    ALOGE("should initialize first!");
-    return;
-  }
-
   VendorInterface::get()->Send(type, data.data(), data.size());
 }
 
