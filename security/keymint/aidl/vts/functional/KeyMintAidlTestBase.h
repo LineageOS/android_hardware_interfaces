@@ -370,6 +370,7 @@ class KeyMintAidlTestBase : public ::testing::TestWithParam<string> {
     bool is_attest_key_feature_disabled(void) const;
     bool is_strongbox_enabled(void) const;
     bool is_chipset_allowed_km4_strongbox(void) const;
+    bool shouldSkipAttestKeyTest(void) const;
     void skipAttestKeyTest(void) const;
 
   protected:
