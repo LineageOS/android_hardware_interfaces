@@ -25,6 +25,7 @@
 
 #include <android-base/logging.h>
 #include <android/binder_ibinder_platform.h>
+#include <system/audio_aidl_utils.h>
 #include <system/audio_effects/effect_uuid.h>
 #include <system/thread_defs.h>
 
@@ -47,7 +48,7 @@ Factory::~Factory() {
         for (const auto& it : mEffectMap) {
             if (auto spEffect = it.first.lock()) {
                 LOG(ERROR) << __func__ << " erase remaining instance UUID "
-                           << it.second.first.toString();
+                           << ::android::audio::utils::toString(it.second.first);
                 destroyEffectImpl(spEffect);
             }
         }
@@ -123,7 +124,7 @@ ndk::ScopedAStatus Factory::queryProcessing(const std::optional<Processing::Type
 
 ndk::ScopedAStatus Factory::createEffect(const AudioUuid& in_impl_uuid,
                                          std::shared_ptr<IEffect>* _aidl_return) {
-    LOG(DEBUG) << __func__ << ": UUID " << in_impl_uuid.toString();
+    LOG(DEBUG) << __func__ << ": UUID " << ::android::audio::utils::toString(in_impl_uuid);
     if (mEffectLibMap.count(in_impl_uuid)) {
         auto& entry = mEffectLibMap[in_impl_uuid];
         getDlSyms(entry);
@@ -163,7 +164,8 @@ ndk::ScopedAStatus Factory::destroyEffectImpl(const std::shared_ptr<IEffect>& in
                       "dlNulldestroyEffectFunc");
             RETURN_IF_BINDER_EXCEPTION(interface->destroyEffectFunc(in_handle));
         } else {
-            LOG(ERROR) << __func__ << ": UUID " << uuid.toString() << " does not exist in libMap!";
+            LOG(ERROR) << __func__ << ": UUID " << ::android::audio::utils::toString(uuid)
+                       << " does not exist in libMap!";
             return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
         }
         mEffectMap.erase(effectIt);
@@ -207,8 +209,8 @@ bool Factory::openEffectLibrary(const AudioUuid& impl, const std::string& path) 
         return false;
     }
 
-    LOG(INFO) << __func__ << " dlopen lib:" << path << "\nimpl:" << impl.toString()
-              << "\nhandle:" << libHandle;
+    LOG(INFO) << __func__ << " dlopen lib:" << path
+              << "\nimpl:" << ::android::audio::utils::toString(impl) << "\nhandle:" << libHandle;
     auto interface = new effect_dl_interface_s{nullptr, nullptr, nullptr};
     mEffectLibMap.insert(
             {impl,
@@ -228,8 +230,10 @@ void Factory::createIdentityWithConfig(const EffectConfig::LibraryUuid& configLi
         id.uuid = configLib.uuid;
         id.proxy = proxyUuid;
         LOG(DEBUG) << __func__ << " loading lib " << path->second << ": typeUuid "
-                   << id.type.toString() << "\nimplUuid " << id.uuid.toString() << " proxyUuid "
-                   << (proxyUuid.has_value() ? proxyUuid->toString() : "null");
+                   << ::android::audio::utils::toString(id.type) << "\nimplUuid "
+                   << ::android::audio::utils::toString(id.uuid) << " proxyUuid "
+                   << (proxyUuid.has_value() ? ::android::audio::utils::toString(proxyUuid.value())
+                                             : "null");
         if (openEffectLibrary(id.uuid, path->second)) {
             mIdentitySet.insert(std::move(id));
         }
