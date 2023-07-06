@@ -122,7 +122,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true" updatable-via-apex="true">
+    <hal format="aidl" optional="true">
         <name>android.hardware.biometrics.fingerprint</name>
         <version>3</version>
         <interface>
