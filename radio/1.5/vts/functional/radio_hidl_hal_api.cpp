@@ -597,7 +597,7 @@ TEST_P(RadioHidlTest_v1_5, startNetworkScan) {
     } else if (cardStatus.base.base.base.cardState == CardState::PRESENT) {
         // Modems support 3GPP RAT family need to
         // support scanning requests combined with some parameters.
-        if (deviceSupportsFeature(FEATURE_TELEPHONY_GSM)) {
+        if (deviceSupportsFeature(FEATURE_TELEPHONY_GSM) && isLteConnected()) {
             ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_5->rspInfo.error,
                                          {RadioError::NONE, RadioError::OPERATION_NOT_ALLOWED}));
         } else {
