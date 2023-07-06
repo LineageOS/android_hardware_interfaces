@@ -952,9 +952,7 @@ TEST_P(AttestKeyTest, EcdsaAttestationMismatchID) {
         vector<Certificate> attested_key_cert_chain;
         auto result = GenerateKey(builder, attest_key, &attested_key_blob,
                                   &attested_key_characteristics, &attested_key_cert_chain);
-
-        ASSERT_TRUE(result == ErrorCode::CANNOT_ATTEST_IDS || result == ErrorCode::INVALID_TAG)
-                << "result = " << result;
+        device_id_attestation_check_acceptable_error(invalid_tag.tag, result);
     }
     CheckedDeleteKey(&attest_key.keyBlob);
 }
