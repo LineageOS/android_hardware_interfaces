@@ -1924,6 +1924,24 @@ void p256_pub_key(const vector<uint8_t>& coseKeyData, EVP_PKEY_Ptr* signingKey) 
     *signingKey = std::move(pubKey);
 }
 
+// Check the error code from an attempt to perform device ID attestation with an invalid value.
+void device_id_attestation_check_acceptable_error(Tag tag, const ErrorCode& result) {
+    if (result == ErrorCode::CANNOT_ATTEST_IDS) {
+        // Standard/default error code for ID mismatch.
+    } else if (result == ErrorCode::INVALID_TAG) {
+        // Depending on the situation, other error codes may be acceptable.  First, allow older
+        // implementations to use INVALID_TAG.
+    } else if (result == ErrorCode::ATTESTATION_IDS_NOT_PROVISIONED) {
+        // If the device is not a phone, it will not have IMEI/MEID values available.  Allow
+        // ATTESTATION_IDS_NOT_PROVISIONED in this case.
+        ASSERT_TRUE((tag == TAG_ATTESTATION_ID_IMEI || tag == TAG_ATTESTATION_ID_MEID))
+                << "incorrect error code on attestation ID mismatch";
+    } else {
+        ADD_FAILURE() << "Error code " << result
+                      << " returned on attestation ID mismatch, should be CANNOT_ATTEST_IDS";
+    }
+}
+
 // Check whether the given named feature is available.
 bool check_feature(const std::string& name) {
     ::android::sp<::android::IServiceManager> sm(::android::defaultServiceManager());
