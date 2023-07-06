@@ -29,6 +29,7 @@
 #include <hostapd_hidl_test_utils.h>
 #include <wifi_hidl_test_utils.h>
 #include <wifi_hidl_test_utils_1_5.h>
+#include <wifi_hidl_test_utils_1_6.h>
 
 using aidl::android::hardware::wifi::hostapd::BandMask;
 using aidl::android::hardware::wifi::hostapd::BnHostapdCallback;
@@ -101,7 +102,7 @@ class HostapdAidl : public testing::TestWithParam<std::string> {
     std::string setupApIfaceAndGetName(bool isBridged) {
         android::sp<::android::hardware::wifi::V1_0::IWifiApIface> wifi_ap_iface;
         if (isBridged) {
-            wifi_ap_iface = getBridgedWifiApIface_1_5(wifiInstanceName);
+            wifi_ap_iface = getBridgedWifiApIface_1_6(wifiInstanceName);
         } else {
             wifi_ap_iface = getWifiApIface_1_5(wifiInstanceName);
         }
