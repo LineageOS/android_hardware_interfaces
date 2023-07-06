@@ -349,7 +349,7 @@ TEST_P(DeviceUniqueAttestationTest, EcdsaDeviceUniqueAttestationMismatchID) {
         builder.push_back(invalid_tag);
         auto result = GenerateKey(builder, &key_blob, &key_characteristics);
 
-        ASSERT_TRUE(result == ErrorCode::CANNOT_ATTEST_IDS || result == ErrorCode::INVALID_TAG);
+        device_id_attestation_check_acceptable_error(invalid_tag.tag, result);
     }
 }
 
