@@ -38,9 +38,10 @@ class AudioPolicyConfigXmlConverter {
     const ::aidl::android::media::audio::common::AudioHalEngineConfig& getAidlEngineConfig();
     const SurroundSoundConfig& getSurroundSoundConfig();
 
-  private:
+    // Public for testing purposes.
     static const SurroundSoundConfig& getDefaultSurroundSoundConfig();
 
+  private:
     const std::optional<::android::audio::policy::configuration::AudioPolicyConfiguration>&
     getXsdcConfig() const {
         return mConverter.getXsdcConfig();
