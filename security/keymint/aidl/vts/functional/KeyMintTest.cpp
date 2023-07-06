@@ -2070,7 +2070,8 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestationTags) {
                         builder, &key_blob, &key_characteristics);
             }
         }
-        ASSERT_EQ(error, ErrorCode::CANNOT_ATTEST_IDS);
+
+        device_id_attestation_check_acceptable_error(tag.tag, error);
     }
 }
 
