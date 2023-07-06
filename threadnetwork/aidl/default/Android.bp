@@ -77,7 +77,6 @@ cc_fuzz {
         "fuzzer.cpp",
     ],
 
-    required: ["ot-rcp"],
     fuzz_config: {
         cc: [
             "zhanglongxia@google.com",

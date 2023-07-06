@@ -22,7 +22,7 @@ using aidl::android::hardware::threadnetwork::ThreadChip;
 using android::fuzzService;
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
-    char url[] = "spinel+hdlc+forkpty:///vendor/bin/ot-rcp?forkpty-arg=2";
+    char url[] = "spinel+hdlc+null:///dev/null";
     auto service = ndk::SharedRefBase::make<ThreadChip>(url);
 
     fuzzService(service->asBinder().get(), FuzzedDataProvider(data, size));
