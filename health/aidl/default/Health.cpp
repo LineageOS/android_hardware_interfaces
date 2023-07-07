@@ -272,7 +272,11 @@ ndk::ScopedAStatus Health::registerCallback(const std::shared_ptr<IHealthInfoCal
 
     {
         std::lock_guard<decltype(callbacks_lock_)> lock(callbacks_lock_);
-        callbacks_.emplace_back(LinkedCallback::Make(ref<Health>(), callback));
+        auto linked_callback_result = LinkedCallback::Make(ref<Health>(), callback);
+        if (!linked_callback_result.ok()) {
+            return ndk::ScopedAStatus::fromStatus(-linked_callback_result.error().code());
+        }
+        callbacks_.emplace_back(std::move(*linked_callback_result));
         // unlock
     }
 
