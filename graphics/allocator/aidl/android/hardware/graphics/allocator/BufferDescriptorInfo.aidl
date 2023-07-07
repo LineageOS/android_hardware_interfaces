@@ -23,7 +23,14 @@ import android.hardware.graphics.common.PixelFormat;
 @VintfStability
 parcelable BufferDescriptorInfo {
     /**
-     * The name of the buffer in ASCII. Useful for debugging/tracing.
+     * The name of the buffer in null-terminated ASCII. Useful for debugging/tracing.
+     *
+     * NOTE: While a well behaved client will ensure it passes a null-terminated string
+     *       within the 128-byte limit, the IAllocator service implementation should be
+     *       be defensive against malformed input. As such, it is recommended that
+     *       IAllocator implementations proactively do `name[127] = 0` upon receiving
+     *       an allocation request to enusre that the string is definitely
+     *       null-terminated regardless of what the client sent.
      */
     byte[128] name;
 
