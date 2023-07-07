@@ -24,7 +24,7 @@
 
 namespace aidl::android::hardware::health {
 
-std::unique_ptr<LinkedCallback> LinkedCallback::Make(
+::android::base::Result<std::unique_ptr<LinkedCallback>> LinkedCallback::Make(
         std::shared_ptr<Health> service, std::shared_ptr<IHealthInfoCallback> callback) {
     std::unique_ptr<LinkedCallback> ret(new LinkedCallback());
     binder_status_t linkRet =
@@ -32,7 +32,7 @@ std::unique_ptr<LinkedCallback> LinkedCallback::Make(
                                  reinterpret_cast<void*>(ret.get()));
     if (linkRet != ::STATUS_OK) {
         LOG(WARNING) << __func__ << "Cannot link to death: " << linkRet;
-        return nullptr;
+        return ::android::base::Error(-linkRet);
     }
     ret->service_ = service;
     ret->callback_ = std::move(callback);
