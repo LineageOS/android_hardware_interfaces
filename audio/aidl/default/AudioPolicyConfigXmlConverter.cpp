@@ -137,7 +137,7 @@ const SurroundSoundConfig& AudioPolicyConfigXmlConverter::getDefaultSurroundSoun
                     SIMPLE_FORMAT(MEDIA_MIMETYPE_AUDIO_DTS),
                     SIMPLE_FORMAT(MEDIA_MIMETYPE_AUDIO_DTS_HD),
                     SIMPLE_FORMAT(MEDIA_MIMETYPE_AUDIO_DTS_HD_MA),
-                    SIMPLE_FORMAT(MEDIA_MIMETYPE_AUDIO_DTS_UHD),
+                    SIMPLE_FORMAT(MEDIA_MIMETYPE_AUDIO_DTS_UHD_P1),
                     SIMPLE_FORMAT(MEDIA_MIMETYPE_AUDIO_DTS_UHD_P2),
                     SIMPLE_FORMAT(MEDIA_MIMETYPE_AUDIO_DOLBY_TRUEHD),
                     SIMPLE_FORMAT(MEDIA_MIMETYPE_AUDIO_EAC3_JOC),
