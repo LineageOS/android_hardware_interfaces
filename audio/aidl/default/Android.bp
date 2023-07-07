@@ -144,6 +144,50 @@ cc_binary {
     ],
 }
 
+cc_test {
+    name: "audio_policy_config_xml_converter_tests",
+    vendor_available: true,
+    defaults: [
+        "latest_android_media_audio_common_types_ndk_static",
+        "latest_android_hardware_audio_core_ndk_static",
+    ],
+    shared_libs: [
+        "libaudio_aidl_conversion_common_ndk",
+        "libaudioaidlcommon",
+        "libaudioutils",
+        "libbase",
+        "libbinder_ndk",
+        "libcutils",
+        "libmedia_helper",
+        "libstagefright_foundation",
+        "libutils",
+        "libxml2",
+    ],
+    header_libs: [
+        "libaudio_system_headers",
+        "libaudioaidl_headers",
+        "libxsdc-utils",
+    ],
+    generated_sources: [
+        "audio_policy_configuration_aidl_default",
+    ],
+    generated_headers: [
+        "audio_policy_configuration_aidl_default",
+    ],
+    srcs: [
+        "AudioPolicyConfigXmlConverter.cpp",
+        "tests/AudioPolicyConfigXmlConverterTest.cpp",
+    ],
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-Wthread-safety",
+        "-DBACKEND_NDK",
+    ],
+    test_suites: ["general-tests"],
+}
+
 cc_defaults {
     name: "aidlaudioeffectservice_defaults",
     defaults: [
