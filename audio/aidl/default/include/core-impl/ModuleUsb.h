@@ -16,13 +16,13 @@
 
 #pragma once
 
-#include "core-impl/Module.h"
+#include "core-impl/ModuleAlsa.h"
 
 namespace aidl::android::hardware::audio::core {
 
-class ModuleUsb : public Module {
+class ModuleUsb final : public ModuleAlsa {
   public:
-    explicit ModuleUsb(Module::Type type) : Module(type) {}
+    explicit ModuleUsb(Module::Type type) : ModuleAlsa(type) {}
 
   private:
     // IModule interfaces
