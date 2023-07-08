@@ -250,36 +250,6 @@ void GetSetValuesClient<ResultType, ResultsType>::sendResultsSeparately(
 template class GetSetValuesClient<GetValueResult, GetValueResults>;
 template class GetSetValuesClient<SetValueResult, SetValueResults>;
 
-SubscriptionClient::SubscriptionClient(std::shared_ptr<PendingRequestPool> requestPool,
-                                       std::shared_ptr<IVehicleCallback> callback)
-    : ConnectedClient(requestPool, callback) {
-    mTimeoutCallback = std::make_shared<const PendingRequestPool::TimeoutCallbackFunc>(
-            [](std::unordered_set<int64_t> timeoutIds) {
-                for (int64_t id : timeoutIds) {
-                    ALOGW("subscribe: requests with IDs: %" PRId64
-                          " has timed-out, not client informed, "
-                          "possibly one of recurrent requests for this subscription failed",
-                          id);
-                }
-            });
-    auto requestPoolCopy = mRequestPool;
-    const void* clientId = reinterpret_cast<const void*>(this);
-    mResultCallback = std::make_shared<const IVehicleHardware::GetValuesCallback>(
-            [clientId, callback, requestPoolCopy](std::vector<GetValueResult> results) {
-                onGetValueResults(clientId, callback, requestPoolCopy, results);
-            });
-}
-
-std::shared_ptr<const std::function<void(std::vector<GetValueResult>)>>
-SubscriptionClient::getResultCallback() {
-    return mResultCallback;
-}
-
-std::shared_ptr<const PendingRequestPool::TimeoutCallbackFunc>
-SubscriptionClient::getTimeoutCallback() {
-    return mTimeoutCallback;
-}
-
 void SubscriptionClient::sendUpdatedValues(std::shared_ptr<IVehicleCallback> callback,
                                            std::vector<VehiclePropValue>&& updatedValues) {
     if (updatedValues.empty()) {
@@ -334,43 +304,6 @@ void SubscriptionClient::sendPropertySetErrors(std::shared_ptr<IVehicleCallback>
               callback->asBinder().get(), callbackStatus.getMessage(),
               callbackStatus.getExceptionCode(), callbackStatus.getServiceSpecificError());
     }
-}
-
-void SubscriptionClient::onGetValueResults(const void* clientId,
-                                           std::shared_ptr<IVehicleCallback> callback,
-                                           std::shared_ptr<PendingRequestPool> requestPool,
-                                           std::vector<GetValueResult> results) {
-    std::unordered_set<int64_t> requestIds;
-    for (const auto& result : results) {
-        requestIds.insert(result.requestId);
-    }
-
-    auto finishedRequests = requestPool->tryFinishRequests(clientId, requestIds);
-    std::vector<VehiclePropValue> propValues;
-    for (auto& result : results) {
-        int64_t requestId = result.requestId;
-        if (finishedRequests.find(requestId) == finishedRequests.end()) {
-            ALOGE("subscribe[%" PRId64
-                  "]: no pending request for the result from hardware, "
-                  "possibly already time-out",
-                  requestId);
-            continue;
-        }
-        if (result.status != StatusCode::OK) {
-            ALOGE("subscribe[%" PRId64
-                  "]: hardware returns non-ok status for getValues, status: "
-                  "%d",
-                  requestId, toInt(result.status));
-            continue;
-        }
-        if (!result.prop.has_value()) {
-            ALOGE("subscribe[%" PRId64 "]: no prop value in getValues result", requestId);
-            continue;
-        }
-        propValues.push_back(std::move(result.prop.value()));
-    }
-
-    sendUpdatedValues(callback, std::move(propValues));
 }
 
 }  // namespace vehicle

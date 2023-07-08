@@ -92,39 +92,6 @@ float getDefaultSampleRateHz(float sampleRateHz, float minSampleRateHz, float ma
 
 }  // namespace
 
-std::shared_ptr<SubscriptionClient> DefaultVehicleHal::SubscriptionClients::maybeAddClient(
-        const CallbackType& callback) {
-    std::scoped_lock<std::mutex> lockGuard(mLock);
-    return getOrCreateClient(&mClients, callback, mPendingRequestPool);
-}
-
-std::shared_ptr<SubscriptionClient> DefaultVehicleHal::SubscriptionClients::getClient(
-        const CallbackType& callback) {
-    std::scoped_lock<std::mutex> lockGuard(mLock);
-    const AIBinder* clientId = callback->asBinder().get();
-    if (mClients.find(clientId) == mClients.end()) {
-        return nullptr;
-    }
-    return mClients[clientId];
-}
-
-int64_t DefaultVehicleHal::SubscribeIdByClient::getId(const CallbackType& callback) {
-    std::scoped_lock<std::mutex> lockGuard(mLock);
-    // This would be initialized to 0 if callback does not exist in the map.
-    int64_t subscribeId = (mIds[callback->asBinder().get()])++;
-    return subscribeId;
-}
-
-void DefaultVehicleHal::SubscriptionClients::removeClient(const AIBinder* clientId) {
-    std::scoped_lock<std::mutex> lockGuard(mLock);
-    mClients.erase(clientId);
-}
-
-size_t DefaultVehicleHal::SubscriptionClients::countClients() {
-    std::scoped_lock<std::mutex> lockGuard(mLock);
-    return mClients.size();
-}
-
 DefaultVehicleHal::DefaultVehicleHal(std::unique_ptr<IVehicleHardware> vehicleHardware)
     : mVehicleHardware(std::move(vehicleHardware)),
       mPendingRequestPool(std::make_shared<PendingRequestPool>(TIMEOUT_IN_NANO)) {
@@ -132,9 +99,6 @@ DefaultVehicleHal::DefaultVehicleHal(std::unique_ptr<IVehicleHardware> vehicleHa
         return;
     }
 
-    mSubscriptionClients = std::make_shared<SubscriptionClients>(mPendingRequestPool);
-
-    auto subscribeIdByClient = std::make_shared<SubscribeIdByClient>();
     IVehicleHardware* vehicleHardwarePtr = mVehicleHardware.get();
     mSubscriptionManager = std::make_shared<SubscriptionManager>(vehicleHardwarePtr);
 
@@ -262,7 +226,6 @@ void DefaultVehicleHal::onBinderDiedWithContext(const AIBinder* clientId) {
     ALOGD("binder died, client ID: %p", clientId);
     mSetValuesClients.erase(clientId);
     mGetValuesClients.erase(clientId);
-    mSubscriptionClients->removeClient(clientId);
     mSubscriptionManager->unsubscribe(clientId);
 }
 
@@ -300,10 +263,6 @@ DefaultVehicleHal::getOrCreateClient<DefaultVehicleHal::GetValuesClient>(
 template std::shared_ptr<DefaultVehicleHal::SetValuesClient>
 DefaultVehicleHal::getOrCreateClient<DefaultVehicleHal::SetValuesClient>(
         std::unordered_map<const AIBinder*, std::shared_ptr<SetValuesClient>>* clients,
-        const CallbackType& callback, std::shared_ptr<PendingRequestPool> pendingRequestPool);
-template std::shared_ptr<SubscriptionClient>
-DefaultVehicleHal::getOrCreateClient<SubscriptionClient>(
-        std::unordered_map<const AIBinder*, std::shared_ptr<SubscriptionClient>>* clients,
         const CallbackType& callback, std::shared_ptr<PendingRequestPool> pendingRequestPool);
 
 void DefaultVehicleHal::setTimeout(int64_t timeoutInNano) {
@@ -708,9 +667,6 @@ ScopedAStatus DefaultVehicleHal::subscribe(const CallbackType& callback,
                                                                "client died");
         }
 
-        // Create a new SubscriptionClient if there isn't an existing one.
-        mSubscriptionClients->maybeAddClient(callback);
-
         if (!onChangeSubscriptions.empty()) {
             auto result = mSubscriptionManager->subscribe(callback, onChangeSubscriptions,
                                                           /*isContinuousProperty=*/false);
@@ -842,10 +798,13 @@ binder_status_t DefaultVehicleHal::dump(int fd, const char** args, uint32_t numA
         dprintf(fd, "Containing %zu property configs\n", mConfigsByPropId.size());
         dprintf(fd, "Currently have %zu getValues clients\n", mGetValuesClients.size());
         dprintf(fd, "Currently have %zu setValues clients\n", mSetValuesClients.size());
-        dprintf(fd, "Currently have %zu subscription clients\n",
-                mSubscriptionClients->countClients());
+        dprintf(fd, "Currently have %zu subscribe clients\n", countSubscribeClients());
     }
     return STATUS_OK;
+}
+
+size_t DefaultVehicleHal::countSubscribeClients() {
+    return mSubscriptionManager->countClients();
 }
 
 }  // namespace vehicle

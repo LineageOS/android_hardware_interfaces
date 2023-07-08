@@ -350,7 +350,7 @@ class DefaultVehicleHalTest : public testing::Test {
     size_t countClients() {
         std::scoped_lock<std::mutex> lockGuard(mVhal->mLock);
         return mVhal->mGetValuesClients.size() + mVhal->mSetValuesClients.size() +
-               mVhal->mSubscriptionClients->countClients();
+               mVhal->countSubscribeClients();
     }
 
     std::shared_ptr<PendingRequestPool> getPool() { return mVhal->mPendingRequestPool; }

@@ -301,6 +301,11 @@ bool SubscriptionManager::isEmpty() {
     return mSubscribedPropsByClient.empty() && mClientsByPropIdArea.empty();
 }
 
+size_t SubscriptionManager::countClients() {
+    std::scoped_lock<std::mutex> lockGuard(mLock);
+    return mSubscribedPropsByClient.size();
+}
+
 }  // namespace vehicle
 }  // namespace automotive
 }  // namespace hardware
