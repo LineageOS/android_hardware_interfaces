@@ -86,7 +86,7 @@ std::optional<VehiclePropValue> LinearFakeValueGenerator::nextEvent() {
     if (mGenCfg.lastEventTimestamp == 0) {
         mGenCfg.lastEventTimestamp = elapsedRealtimeNano();
     } else {
-        long nextEventTime = mGenCfg.lastEventTimestamp + mGenCfg.interval;
+        int64_t nextEventTime = mGenCfg.lastEventTimestamp + mGenCfg.interval;
         // Prevent overflow.
         assert(nextEventTime > mGenCfg.lastEventTimestamp);
         mGenCfg.lastEventTimestamp = nextEventTime;
