@@ -696,8 +696,9 @@ enum VehicleProperty {
      *     and passenger side, an alternative mapping would be:
      *      - ROW_1_LEFT
      *      - ROW_1_RIGHT
-     *
-     *
+     */
+
+    /**
      * Fan speed setting
      *
      * The maxInt32Value and minInt32Value in VehicleAreaConfig must be defined.
