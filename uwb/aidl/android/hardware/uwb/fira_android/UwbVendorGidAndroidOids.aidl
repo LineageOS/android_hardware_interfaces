@@ -46,6 +46,4 @@ enum UwbVendorGidAndroidOids {
     RADAR_SET_APP_CONFIG = 0x11,
     // Used to get application configurations for radar session.
     RADAR_GET_APP_CONFIG = 0x12,
-    // Used to report radar data for certain radar data types.
-    RADAR_DATA_NTF = 0x13,
 }
