@@ -189,11 +189,12 @@ class Converter:
                     continue
                 if RE_COMMENT_BEGIN.match(line):
                     in_comment = True
+                    annotation = None
                 if RE_COMMENT_END.match(line):
                     in_comment = False
                 if in_comment:
                     match = self.annotation_re.match(line)
-                    if match:
+                    if match and not annotation:
                         annotation = match.group(1)
                 else:
                     match = RE_VALUE.match(line)
