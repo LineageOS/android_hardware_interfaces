@@ -91,7 +91,7 @@ TEST_P(ThreadNetworkAidl, Reset) {
             ndk::SharedRefBase::make<ThreadChipCallback>([](auto /* data */) {});
 
     EXPECT_TRUE(thread_chip->open(callback).isOk());
-    EXPECT_TRUE(thread_chip->reset().isOk());
+    EXPECT_TRUE(thread_chip->hardwareReset().isOk());
 }
 
 TEST_P(ThreadNetworkAidl, SendSpinelFrame) {
