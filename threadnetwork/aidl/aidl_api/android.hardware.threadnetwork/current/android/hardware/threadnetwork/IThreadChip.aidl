@@ -36,10 +36,9 @@ package android.hardware.threadnetwork;
 interface IThreadChip {
   void open(in android.hardware.threadnetwork.IThreadChipCallback callback);
   void close();
-  void reset();
+  void hardwareReset();
   void sendSpinelFrame(in byte[] frame);
   const int ERROR_FAILED = 1;
-  const int ERROR_INVALID_ARGS = 2;
-  const int ERROR_NO_BUFS = 3;
-  const int ERROR_BUSY = 4;
+  const int ERROR_NO_BUFS = 2;
+  const int ERROR_BUSY = 3;
 }
