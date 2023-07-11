@@ -30,19 +30,14 @@ interface IThreadChip {
     const int ERROR_FAILED = 1;
 
     /**
-     * The invalid arguments.
-     */
-    const int ERROR_INVALID_ARGS = 2;
-
-    /**
      * Insufficient buffers available to send frames.
      */
-    const int ERROR_NO_BUFS = 3;
+    const int ERROR_NO_BUFS = 2;
 
     /**
      * Service is busy and could not service the operation.
      */
-    const int ERROR_BUSY = 4;
+    const int ERROR_BUSY = 3;
 
     /**
      * This method initializes the Thread HAL instance. If open completes
@@ -51,9 +46,10 @@ interface IThreadChip {
      *
      * @param callback  A IThreadChipCallback callback instance.
      *
+     * @throws EX_ILLEGAL_ARGUMENT  if the callback handle is invalid (for example, it is null).
+     *
      * @throws ServiceSpecificException with one of the following values:
      *     - ERROR_FAILED        The interface cannot be opened due to an internal error.
-     *     - ERROR_INVALID_ARGS  The callback handle is invalid (for example, it is null).
      *     - ERROR_BUSY          This interface is in use.
      */
     void open(in IThreadChipCallback callback);
@@ -64,11 +60,14 @@ interface IThreadChip {
     void close();
 
     /**
-     * This method resets the Thread HAL internal state. The callback registered by
-     * `open()` won’t be reset and the resource allocated by `open()` won’t be free.
+     * This method hardware resets the Thread radio chip via the physical reset pin.
+     * The callback registered by `open()` won’t be reset and the resource allocated
+     * by `open()` won’t be free.
+     *
+     * @throws EX_UNSUPPORTED_OPERATION  if the Thread radio chip doesn't support the hardware reset.
      *
      */
-    void reset();
+    void hardwareReset();
 
     /**
      * This method sends a spinel frame to the Thread HAL.
