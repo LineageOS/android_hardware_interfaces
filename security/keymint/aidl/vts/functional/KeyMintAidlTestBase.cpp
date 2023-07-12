@@ -2153,13 +2153,27 @@ void p256_pub_key(const vector<uint8_t>& coseKeyData, EVP_PKEY_Ptr* signingKey) 
     *signingKey = std::move(pubKey);
 }
 
-void device_id_attestation_vsr_check(const ErrorCode& result) {
-    if (get_vsr_api_level() > __ANDROID_API_T__) {
-        ASSERT_FALSE(result == ErrorCode::INVALID_TAG)
+// Check the error code from an attempt to perform device ID attestation with an invalid value.
+void device_id_attestation_check_acceptable_error(Tag tag, const ErrorCode& result) {
+    if (result == ErrorCode::CANNOT_ATTEST_IDS) {
+        // Standard/default error code for ID mismatch.
+    } else if (result == ErrorCode::INVALID_TAG) {
+        // Depending on the situation, other error codes may be acceptable.  First, allow older
+        // implementations to use INVALID_TAG.
+        ASSERT_FALSE(get_vsr_api_level() > __ANDROID_API_T__)
                 << "It is a specification violation for INVALID_TAG to be returned due to ID "
                 << "mismatch in a Device ID Attestation call. INVALID_TAG is only intended to "
                 << "be used for a case where updateAad() is called after update(). As of "
                 << "VSR-14, this is now enforced as an error.";
+    } else if (result == ErrorCode::ATTESTATION_IDS_NOT_PROVISIONED) {
+        // If the device is not a phone, it will not have IMEI/MEID values available.  Allow
+        // ATTESTATION_IDS_NOT_PROVISIONED in this case.
+        ASSERT_TRUE((tag == TAG_ATTESTATION_ID_IMEI || tag == TAG_ATTESTATION_ID_MEID ||
+                     tag == TAG_ATTESTATION_ID_SECOND_IMEI))
+                << "incorrect error code on attestation ID mismatch";
+    } else {
+        ADD_FAILURE() << "Error code " << result
+                      << " returned on attestation ID mismatch, should be CANNOT_ATTEST_IDS";
     }
 }
 
