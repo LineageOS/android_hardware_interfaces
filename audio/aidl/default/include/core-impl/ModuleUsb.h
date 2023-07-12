@@ -22,7 +22,7 @@ namespace aidl::android::hardware::audio::core {
 
 class ModuleUsb final : public ModuleAlsa {
   public:
-    explicit ModuleUsb(Module::Type type) : ModuleAlsa(type) {}
+    ModuleUsb() : ModuleAlsa(Type::USB) {}
 
   private:
     // IModule interfaces
