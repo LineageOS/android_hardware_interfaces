@@ -834,7 +834,7 @@ void KeyMintAidlTestBase::CheckEncryptOneByteAtATime(BlockMode block_mode, const
         int vendor_api_level = property_get_int32("ro.vendor.api_level", 0);
         if (SecLevel() == SecurityLevel::STRONGBOX) {
             // This is known to be broken on older vendor implementations.
-            if (vendor_api_level < __ANDROID_API_T__) {
+            if (vendor_api_level <= __ANDROID_API_U__) {
                 compare_output = false;
             } else {
                 additional_information = " (b/194134359) ";
