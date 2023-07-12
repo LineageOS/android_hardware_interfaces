@@ -20,6 +20,7 @@
 #include <utils/Log.h>
 #include <unordered_set>
 
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <hidl/GtestPrinter.h>
 #include <hidl/ServiceManagement.h>
@@ -203,16 +204,30 @@ TEST_P(VehicleHalHidlTest, setProp) {
         if (cfg.access == VehiclePropertyAccess::READ_WRITE && isBooleanGlobalProp(cfg.prop) &&
             !hvacProps.count(cfg.prop)) {
             invokeGet(cfg.prop, 0);
+
+            if (mActualStatusCode == StatusCode::NOT_AVAILABLE ||
+                mActualValue.status == VehiclePropertyStatus::UNAVAILABLE) {
+                ALOGD("Property %i isn't available", cfg.prop);
+                continue;
+            }
             int setValue = mActualValue.value.int32Values[0] == 1 ? 0 : 1;
             VehiclePropValue propToSet = mActualValue;
             propToSet.value.int32Values[0] = setValue;
-            ASSERT_EQ(StatusCode::OK, mVehicle->set(propToSet))
-                    << "Invalid status code for setting property: " << cfg.prop;
+
+            StatusCode setResult = mVehicle->set(propToSet);
+            ASSERT_THAT(setResult, testing::AnyOf(StatusCode::OK, StatusCode::NOT_AVAILABLE))
+                << "Invalid status code for setting unavailable property: " << cfg.prop;
+
             // check set success
             invokeGet(cfg.prop, 0);
             ASSERT_EQ(StatusCode::OK, mActualStatusCode);
-            ASSERT_EQ(setValue, mActualValue.value.int32Values[0])
-                    << "Failed to set value for property: " << cfg.prop;
+
+            // If the property isn't available, it doesn't make sense to check
+            // the returned value.
+            if (mActualValue.status == VehiclePropertyStatus::AVAILABLE) {
+                ASSERT_EQ(setValue, mActualValue.value.int32Values[0])
+                        << "Failed to set value for property: " << cfg.prop;
+            }
         }
     }
 }

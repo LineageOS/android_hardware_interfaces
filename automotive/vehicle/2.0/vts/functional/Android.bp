@@ -22,6 +22,7 @@ cc_test {
     ],
     static_libs: [
         "android.hardware.automotive.vehicle@2.0",
+        "libgmock",
     ],
     test_suites: [
         "vts",
