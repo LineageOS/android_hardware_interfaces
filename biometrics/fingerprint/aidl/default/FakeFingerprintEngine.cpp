@@ -89,24 +89,29 @@ void FakeFingerprintEngine::updateContext(WorkMode mode, ISessionCallback* cb,
 }
 
 void FakeFingerprintEngine::fingerDownAction() {
+    bool isTerminal = false;
     LOG(INFO) << __func__;
     switch (mWorkMode) {
         case WorkMode::kAuthenticate:
-            onAuthenticateFingerDown(mCb, mOperationId, mCancel);
+            isTerminal = onAuthenticateFingerDown(mCb, mOperationId, mCancel);
             break;
         case WorkMode::kEnroll:
-            onEnrollFingerDown(mCb, mHat, mCancel);
+            isTerminal = onEnrollFingerDown(mCb, mHat, mCancel);
             break;
         case WorkMode::kDetectInteract:
-            onDetectInteractFingerDown(mCb, mCancel);
+            isTerminal = onDetectInteractFingerDown(mCb, mCancel);
             break;
         default:
             LOG(WARNING) << "unexpected mode: on fingerDownAction(), " << (int)mWorkMode;
             break;
     }
+
+    if (isTerminal) {
+        mWorkMode = WorkMode::kIdle;
+    }
 }
 
-void FakeFingerprintEngine::onEnrollFingerDown(ISessionCallback* cb,
+bool FakeFingerprintEngine::onEnrollFingerDown(ISessionCallback* cb,
                                                const keymaster::HardwareAuthToken& hat,
                                                const std::future<void>& cancel) {
     BEGIN_OP(getLatency(FingerprintHalProperties::operation_enroll_latency()));
@@ -115,7 +120,7 @@ void FakeFingerprintEngine::onEnrollFingerDown(ISessionCallback* cb,
     if (hat.mac.empty()) {
         LOG(ERROR) << "Fail: hat";
         cb->onError(Error::UNABLE_TO_PROCESS, 0 /* vendorError */);
-        return;
+        return true;
     }
 
     // Force error-out
@@ -124,7 +129,7 @@ void FakeFingerprintEngine::onEnrollFingerDown(ISessionCallback* cb,
         LOG(ERROR) << "Fail: operation_enroll_error";
         auto ec = convertError(err);
         cb->onError(ec.first, ec.second);
-        return;
+        return true;
     }
 
     // Format is "<id>:<progress_ms-[acquiredInfo..]>,...:<result>
@@ -133,7 +138,7 @@ void FakeFingerprintEngine::onEnrollFingerDown(ISessionCallback* cb,
     if (parts.size() != 3) {
         LOG(ERROR) << "Fail: invalid next_enrollment:" << nextEnroll;
         cb->onError(Error::VENDOR, 0 /* vendorError */);
-        return;
+        return true;
     }
     auto enrollmentId = std::stoi(parts[0]);
     auto progress = parseEnrollmentCapture(parts[1]);
@@ -149,7 +154,7 @@ void FakeFingerprintEngine::onEnrollFingerDown(ISessionCallback* cb,
             if (shouldCancel(cancel)) {
                 LOG(ERROR) << "Fail: cancel";
                 cb->onError(Error::CANCELED, 0 /* vendorCode */);
-                return;
+                return true;
             }
             auto ac = convertAcquiredInfo(acquired[j]);
             cb->onAcquired(ac.first, ac.second);
@@ -175,9 +180,11 @@ void FakeFingerprintEngine::onEnrollFingerDown(ISessionCallback* cb,
             cb->onEnrollmentProgress(enrollmentId, left);
         }
     }
+
+    return true;
 }
 
-void FakeFingerprintEngine::onAuthenticateFingerDown(ISessionCallback* cb,
+bool FakeFingerprintEngine::onAuthenticateFingerDown(ISessionCallback* cb,
                                                      int64_t /* operationId */,
                                                      const std::future<void>& cancel) {
     BEGIN_OP(getLatency(FingerprintHalProperties::operation_authenticate_latency()));
@@ -191,11 +198,13 @@ void FakeFingerprintEngine::onAuthenticateFingerDown(ISessionCallback* cb,
     if (N == 0) {
         LOG(ERROR) << "Fail to parse authentiate acquired info: " + acquired;
         cb->onError(Error::UNABLE_TO_PROCESS, 0 /* vendorError */);
-        return;
+        return true;
     }
 
     // got lockout?
-    if (checkSensorLockout(cb)) return;
+    if (checkSensorLockout(cb)) {
+        return FakeLockoutTracker::LockoutMode::kPermanent == mLockoutTracker.getMode();
+    }
 
     int i = 0;
     do {
@@ -203,7 +212,7 @@ void FakeFingerprintEngine::onAuthenticateFingerDown(ISessionCallback* cb,
             LOG(ERROR) << "Fail: operation_authenticate_fails";
             mLockoutTracker.addFailedAttempt();
             cb->onAuthenticationFailed();
-            return;
+            return false;
         }
 
         auto err = FingerprintHalProperties::operation_authenticate_error().value_or(0);
@@ -211,20 +220,21 @@ void FakeFingerprintEngine::onAuthenticateFingerDown(ISessionCallback* cb,
             LOG(ERROR) << "Fail: operation_authenticate_error";
             auto ec = convertError(err);
             cb->onError(ec.first, ec.second);
-            return;
+            return true; /* simply terminating current operation for any user inserted error,
+                            revisit if tests need*/
         }
 
         if (FingerprintHalProperties::lockout().value_or(false)) {
             LOG(ERROR) << "Fail: lockout";
             cb->onLockoutPermanent();
             cb->onError(Error::HW_UNAVAILABLE, 0 /* vendorError */);
-            return;
+            return true;
         }
 
         if (shouldCancel(cancel)) {
             LOG(ERROR) << "Fail: cancel";
             cb->onError(Error::CANCELED, 0 /* vendorCode */);
-            return;
+            return true;
         }
 
         if (i < N) {
@@ -242,16 +252,17 @@ void FakeFingerprintEngine::onAuthenticateFingerDown(ISessionCallback* cb,
     if (id > 0 && isEnrolled) {
         cb->onAuthenticationSucceeded(id, {} /* hat */);
         mLockoutTracker.reset();
-        return;
+        return true;
     } else {
         LOG(ERROR) << "Fail: fingerprint not enrolled";
         cb->onAuthenticationFailed();
         mLockoutTracker.addFailedAttempt();
         checkSensorLockout(cb);
+        return true;
     }
 }
 
-void FakeFingerprintEngine::onDetectInteractFingerDown(ISessionCallback* cb,
+bool FakeFingerprintEngine::onDetectInteractFingerDown(ISessionCallback* cb,
                                                        const std::future<void>& cancel) {
     BEGIN_OP(getLatency(FingerprintHalProperties::operation_detect_interaction_latency()));
 
@@ -266,7 +277,7 @@ void FakeFingerprintEngine::onDetectInteractFingerDown(ISessionCallback* cb,
     if (N == 0) {
         LOG(ERROR) << "Fail to parse detect interaction acquired info: " + acquired;
         cb->onError(Error::UNABLE_TO_PROCESS, 0 /* vendorError */);
-        return;
+        return true;
     }
 
     int i = 0;
@@ -276,13 +287,13 @@ void FakeFingerprintEngine::onDetectInteractFingerDown(ISessionCallback* cb,
             LOG(ERROR) << "Fail: operation_detect_interaction_error";
             auto ec = convertError(err);
             cb->onError(ec.first, ec.second);
-            return;
+            return true;
         }
 
         if (shouldCancel(cancel)) {
             LOG(ERROR) << "Fail: cancel";
             cb->onError(Error::CANCELED, 0 /* vendorCode */);
-            return;
+            return true;
         }
 
         if (i < N) {
@@ -299,10 +310,12 @@ void FakeFingerprintEngine::onDetectInteractFingerDown(ISessionCallback* cb,
     if (id <= 0 || !isEnrolled) {
         LOG(ERROR) << "Fail: not enrolled";
         cb->onError(Error::UNABLE_TO_PROCESS, 0 /* vendorError */);
-        return;
+        return true;
     }
 
     cb->onInteractionDetected();
+
+    return true;
 }
 
 void FakeFingerprintEngine::enumerateEnrollmentsImpl(ISessionCallback* cb) {
