@@ -51,7 +51,7 @@ class AECParamTest : public ::testing::TestWithParam<AECParamTestParam>, public 
         ASSERT_NE(nullptr, mFactory);
         ASSERT_NO_FATAL_FAILURE(create(mFactory, mEffect, mDescriptor));
 
-        Parameter::Specific specific = getDefaultParamSpecific();
+        auto specific = getDefaultParamSpecific();
         Parameter::Common common = EffectHelper::createParamCommon(
                 0 /* session */, 1 /* ioHandle */, 44100 /* iSampleRate */, 44100 /* oSampleRate */,
                 kInputFrameCount /* iFrameCount */, kOutputFrameCount /* oFrameCount */);
@@ -65,8 +65,13 @@ class AECParamTest : public ::testing::TestWithParam<AECParamTestParam>, public 
         ASSERT_NO_FATAL_FAILURE(destroy(mFactory, mEffect));
     }
 
-    Parameter::Specific getDefaultParamSpecific() {
-        AcousticEchoCanceler aec = AcousticEchoCanceler::make<AcousticEchoCanceler::echoDelayUs>(0);
+    std::optional<Parameter::Specific> getDefaultParamSpecific() {
+        auto aec = AcousticEchoCanceler::make<AcousticEchoCanceler::echoDelayUs>(0);
+        if (!isParameterValid<AcousticEchoCanceler, Range::acousticEchoCanceler>(aec,
+                                                                                 mDescriptor)) {
+            return std::nullopt;
+        }
+
         Parameter::Specific specific =
                 Parameter::Specific::make<Parameter::Specific::acousticEchoCanceler>(aec);
         return specific;
