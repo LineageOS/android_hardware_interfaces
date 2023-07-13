@@ -217,7 +217,8 @@ std::optional<DeviceProfile> getDeviceProfile(
     }
     return DeviceProfile{.card = alsaAddress[0],
                          .device = alsaAddress[1],
-                         .direction = isInput ? PCM_IN : PCM_OUT};
+                         .direction = isInput ? PCM_IN : PCM_OUT,
+                         .isExternal = !audioDevice.type.connection.empty()};
 }
 
 std::optional<DeviceProfile> getDeviceProfile(
@@ -267,6 +268,57 @@ DeviceProxy makeDeviceProxy() {
             delete proxy;
         }
     });
+}
+
+DeviceProxy openProxyForAttachedDevice(const DeviceProfile& deviceProfile,
+                                       struct pcm_config* pcmConfig, size_t bufferFrameCount) {
+    if (deviceProfile.isExternal) {
+        LOG(FATAL) << __func__ << ": called for an external device, address=" << deviceProfile;
+    }
+    alsa_device_profile profile;
+    profile_init(&profile, deviceProfile.direction);
+    profile.card = deviceProfile.card;
+    profile.device = deviceProfile.device;
+    if (!profile_fill_builtin_device_info(&profile, pcmConfig, bufferFrameCount)) {
+        LOG(FATAL) << __func__ << ": failed to init for built-in device, address=" << deviceProfile;
+    }
+    auto proxy = makeDeviceProxy();
+    if (int err = proxy_prepare_from_default_config(proxy.get(), &profile); err != 0) {
+        LOG(FATAL) << __func__ << ": fail to prepare for device address=" << deviceProfile
+                   << " error=" << err;
+        return nullptr;
+    }
+    if (int err = proxy_open(proxy.get()); err != 0) {
+        LOG(ERROR) << __func__ << ": failed to open device, address=" << deviceProfile
+                   << " error=" << err;
+        return nullptr;
+    }
+    return proxy;
+}
+
+DeviceProxy openProxyForExternalDevice(const DeviceProfile& deviceProfile,
+                                       struct pcm_config* pcmConfig, bool requireExactMatch) {
+    if (!deviceProfile.isExternal) {
+        LOG(FATAL) << __func__ << ": called for an attached device, address=" << deviceProfile;
+    }
+    auto profile = readAlsaDeviceInfo(deviceProfile);
+    if (!profile.has_value()) {
+        LOG(ERROR) << __func__ << ": unable to read device info, device address=" << deviceProfile;
+        return nullptr;
+    }
+    auto proxy = makeDeviceProxy();
+    if (int err = proxy_prepare(proxy.get(), &profile.value(), pcmConfig, requireExactMatch);
+        err != 0) {
+        LOG(ERROR) << __func__ << ": fail to prepare for device address=" << deviceProfile
+                   << " error=" << err;
+        return nullptr;
+    }
+    if (int err = proxy_open(proxy.get()); err != 0) {
+        LOG(ERROR) << __func__ << ": failed to open device, address=" << deviceProfile
+                   << " error=" << err;
+        return nullptr;
+    }
+    return proxy;
 }
 
 std::optional<alsa_device_profile> readAlsaDeviceInfo(const DeviceProfile& deviceProfile) {

@@ -30,9 +30,6 @@ class StreamUsb : public StreamAlsa {
   public:
     StreamUsb(const Metadata& metadata, StreamContext&& context);
     // Methods of 'DriverInterface'.
-    ::android::status_t drain(StreamDescriptor::DrainMode) override;
-    ::android::status_t flush() override;
-    ::android::status_t pause() override;
     ::android::status_t transfer(void* buffer, size_t frameCount, size_t* actualFrameCount,
                                  int32_t* latencyMs) override;
 
