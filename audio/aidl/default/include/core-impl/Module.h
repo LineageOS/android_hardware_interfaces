@@ -182,6 +182,7 @@ class Module : public BnModule {
             const ::aidl::android::media::audio::common::AudioPort& audioPort, bool connected);
     virtual ndk::ScopedAStatus onMasterMuteChanged(bool mute);
     virtual ndk::ScopedAStatus onMasterVolumeChanged(float volume);
+    virtual std::unique_ptr<internal::Configuration> initializeConfig();
 
     // Utility and helper functions accessible to subclasses.
     void cleanUpPatch(int32_t patchId);
@@ -202,6 +203,7 @@ class Module : public BnModule {
     bool getMicMute() const { return mMicMute; }
     const Patches& getPatches() const { return mPatches; }
     const Streams& getStreams() const { return mStreams; }
+    Type getType() const { return mType; }
     bool isMmapSupported();
     template <typename C>
     std::set<int32_t> portIdsFromPortConfigIds(C portConfigIds);
