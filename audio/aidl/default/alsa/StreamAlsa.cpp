@@ -20,6 +20,7 @@
 #include <android-base/logging.h>
 
 #include <Utils.h>
+#include <audio_utils/clock.h>
 #include <error/expected_utils.h>
 
 #include "core-impl/StreamAlsa.h"
@@ -93,6 +94,37 @@ StreamAlsa::StreamAlsa(const Metadata& metadata, StreamContext&& context)
     *actualFrameCount = frameCount;
     maxLatency = std::min(maxLatency, static_cast<unsigned>(std::numeric_limits<int32_t>::max()));
     *latencyMs = maxLatency;
+    return ::android::OK;
+}
+
+::android::status_t StreamAlsa::getPosition(StreamDescriptor::Position* position) {
+    if (mAlsaDeviceProxies.empty()) {
+        LOG(FATAL) << __func__ << ": no input devices";
+        return ::android::NO_INIT;
+    }
+    if (mIsInput) {
+        if (int ret = proxy_get_capture_position(mAlsaDeviceProxies[0].get(), &position->frames,
+                                                 &position->timeNs);
+            ret != 0) {
+            LOG(WARNING) << __func__ << ": failed to retrieve capture position: " << ret;
+            return ::android::INVALID_OPERATION;
+        }
+    } else {
+        uint64_t hwFrames;
+        struct timespec timestamp;
+        if (int ret = proxy_get_presentation_position(mAlsaDeviceProxies[0].get(), &hwFrames,
+                                                      &timestamp);
+            ret == 0) {
+            if (hwFrames > std::numeric_limits<int64_t>::max()) {
+                hwFrames -= std::numeric_limits<int64_t>::max();
+            }
+            position->frames = static_cast<int64_t>(hwFrames);
+            position->timeNs = audio_utils_ns_from_timespec(&timestamp);
+        } else {
+            LOG(WARNING) << __func__ << ": failed to retrieve presentation position: " << ret;
+            return ::android::INVALID_OPERATION;
+        }
+    }
     return ::android::OK;
 }
 

@@ -110,10 +110,12 @@ void StreamWorkerCommonLogic::populateReply(StreamDescriptor::Reply* reply,
     if (isConnected) {
         reply->observable.frames = mFrameCount;
         reply->observable.timeNs = ::android::elapsedRealtimeNano();
-    } else {
-        reply->observable.frames = StreamDescriptor::Position::UNKNOWN;
-        reply->observable.timeNs = StreamDescriptor::Position::UNKNOWN;
+        if (auto status = mDriver->getPosition(&reply->observable); status == ::android::OK) {
+            return;
+        }
     }
+    reply->observable.frames = StreamDescriptor::Position::UNKNOWN;
+    reply->observable.timeNs = StreamDescriptor::Position::UNKNOWN;
 }
 
 void StreamWorkerCommonLogic::populateReplyWrongState(
