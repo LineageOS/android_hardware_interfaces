@@ -184,6 +184,12 @@ struct DriverInterface {
     virtual ::android::status_t start() = 0;
     virtual ::android::status_t transfer(void* buffer, size_t frameCount, size_t* actualFrameCount,
                                          int32_t* latencyMs) = 0;
+    // No need to implement 'getPosition' unless the driver can provide more precise
+    // data than just total frame count. For example, the driver may correctly account
+    // for any intermediate buffers.
+    virtual ::android::status_t getPosition(StreamDescriptor::Position* /*position*/) {
+        return ::android::OK;
+    }
     virtual void shutdown() = 0;  // This function is only called once.
 };
 

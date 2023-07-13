@@ -16,12 +16,14 @@
 
 #pragma once
 
+#include <iostream>
 #include <map>
 #include <memory>
 #include <set>
 
 #include <aidl/android/hardware/audio/core/BnModule.h>
 
+#include "core-impl/ChildInterface.h"
 #include "core-impl/Configuration.h"
 #include "core-impl/Stream.h"
 
@@ -31,7 +33,7 @@ class Module : public BnModule {
   public:
     // This value is used for all AudioPatches and reported by all streams.
     static constexpr int32_t kLatencyMs = 10;
-    enum Type : int { DEFAULT, R_SUBMIX, USB };
+    enum Type : int { DEFAULT, R_SUBMIX, STUB, USB };
 
     static std::shared_ptr<Module> createInstance(Type type);
 
@@ -132,26 +134,6 @@ class Module : public BnModule {
         bool forceTransientBurst = false;
         bool forceSynchronousDrain = false;
     };
-    // Helper used for interfaces that require a persistent instance. We hold them via a strong
-    // pointer. The binder token is retained for a call to 'setMinSchedulerPolicy'.
-    template <class C>
-    struct ChildInterface : private std::pair<std::shared_ptr<C>, ndk::SpAIBinder> {
-        ChildInterface() {}
-        ChildInterface& operator=(const std::shared_ptr<C>& c) {
-            return operator=(std::shared_ptr<C>(c));
-        }
-        ChildInterface& operator=(std::shared_ptr<C>&& c) {
-            this->first = std::move(c);
-            this->second = this->first->asBinder();
-            AIBinder_setMinSchedulerPolicy(this->second.get(), SCHED_NORMAL,
-                                           ANDROID_PRIORITY_AUDIO);
-            return *this;
-        }
-        explicit operator bool() const { return !!this->first; }
-        C& operator*() const { return *(this->first); }
-        C* operator->() const { return this->first; }
-        std::shared_ptr<C> getPtr() const { return this->first; }
-    };
     // ids of device ports created at runtime via 'connectExternalDevice'.
     // Also stores a list of ids of mix ports with dynamic profiles that were populated from
     // the connected port. This list can be empty, thus an int->int multimap can't be used.
@@ -164,10 +146,6 @@ class Module : public BnModule {
     std::unique_ptr<internal::Configuration> mConfig;
     ModuleDebug mDebug;
     VendorDebug mVendorDebug;
-    ChildInterface<ITelephony> mTelephony;
-    ChildInterface<IBluetooth> mBluetooth;
-    ChildInterface<IBluetoothA2dp> mBluetoothA2dp;
-    ChildInterface<IBluetoothLe> mBluetoothLe;
     ConnectedDevicePorts mConnectedDevicePorts;
     Streams mStreams;
     Patches mPatches;
@@ -184,13 +162,13 @@ class Module : public BnModule {
             const ::aidl::android::hardware::audio::common::SinkMetadata& sinkMetadata,
             StreamContext&& context,
             const std::vector<::aidl::android::media::audio::common::MicrophoneInfo>& microphones,
-            std::shared_ptr<StreamIn>* result);
+            std::shared_ptr<StreamIn>* result) = 0;
     virtual ndk::ScopedAStatus createOutputStream(
             const ::aidl::android::hardware::audio::common::SourceMetadata& sourceMetadata,
             StreamContext&& context,
             const std::optional<::aidl::android::media::audio::common::AudioOffloadInfo>&
                     offloadInfo,
-            std::shared_ptr<StreamOut>* result);
+            std::shared_ptr<StreamOut>* result) = 0;
     // If the module is unable to populate the connected device port correctly, the returned error
     // code must correspond to the errors of `IModule.connectedExternalDevice` method.
     virtual ndk::ScopedAStatus populateConnectedDevicePort(
@@ -231,5 +209,7 @@ class Module : public BnModule {
     ndk::ScopedAStatus updateStreamsConnectedState(const AudioPatch& oldPatch,
                                                    const AudioPatch& newPatch);
 };
+
+std::ostream& operator<<(std::ostream& os, Module::Type t);
 
 }  // namespace aidl::android::hardware::audio::core
