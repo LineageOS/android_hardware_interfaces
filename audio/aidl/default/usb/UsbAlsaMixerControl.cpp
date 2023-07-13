@@ -33,12 +33,10 @@ void UsbAlsaMixerControl::setDeviceConnectionState(int card, bool masterMuted, f
                                                    bool connected) {
     LOG(DEBUG) << __func__ << ": card=" << card << ", connected=" << connected;
     if (connected) {
-        struct mixer* mixer = mixer_open(card);
-        if (mixer == nullptr) {
-            PLOG(ERROR) << __func__ << ": failed to open mixer for card=" << card;
+        auto alsaMixer = std::make_shared<alsa::Mixer>(card);
+        if (!alsaMixer->isValid()) {
             return;
         }
-        auto alsaMixer = std::make_shared<alsa::Mixer>(mixer);
         alsaMixer->setMasterMute(masterMuted);
         alsaMixer->setMasterVolume(masterVolume);
         const std::lock_guard guard(mLock);
