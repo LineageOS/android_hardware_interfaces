@@ -47,11 +47,17 @@ void StreamContext::fillDescriptor(StreamDescriptor* desc) {
         desc->reply = mReplyMQ->dupeDesc();
     }
     if (mDataMQ) {
-        const size_t frameSize = getFrameSize();
-        desc->frameSizeBytes = frameSize;
-        desc->bufferSizeFrames = mDataMQ->getQuantumCount() * mDataMQ->getQuantumSize() / frameSize;
+        desc->frameSizeBytes = getFrameSize();
+        desc->bufferSizeFrames = getBufferSizeInFrames();
         desc->audio.set<StreamDescriptor::AudioBuffer::Tag::fmq>(mDataMQ->dupeDesc());
     }
+}
+
+size_t StreamContext::getBufferSizeInFrames() const {
+    if (mDataMQ) {
+        return mDataMQ->getQuantumCount() * mDataMQ->getQuantumSize() / getFrameSize();
+    }
+    return 0;
 }
 
 size_t StreamContext::getFrameSize() const {

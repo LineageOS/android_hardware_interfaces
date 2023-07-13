@@ -27,14 +27,30 @@
 
 namespace aidl::android::hardware::audio::core {
 
-StreamAlsa::StreamAlsa(const Metadata& metadata, StreamContext&& context)
+StreamAlsa::StreamAlsa(const Metadata& metadata, StreamContext&& context, int readWriteRetries)
     : StreamCommonImpl(metadata, std::move(context)),
       mFrameSizeBytes(getContext().getFrameSize()),
       mIsInput(isInput(metadata)),
-      mConfig(alsa::getPcmConfig(getContext(), mIsInput)) {}
+      mConfig(alsa::getPcmConfig(getContext(), mIsInput)),
+      mReadWriteRetries(readWriteRetries) {}
 
 ::android::status_t StreamAlsa::init() {
     return mConfig.has_value() ? ::android::OK : ::android::NO_INIT;
+}
+
+::android::status_t StreamAlsa::drain(StreamDescriptor::DrainMode) {
+    usleep(1000);
+    return ::android::OK;
+}
+
+::android::status_t StreamAlsa::flush() {
+    usleep(1000);
+    return ::android::OK;
+}
+
+::android::status_t StreamAlsa::pause() {
+    usleep(1000);
+    return ::android::OK;
 }
 
 ::android::status_t StreamAlsa::standby() {
@@ -45,27 +61,21 @@ StreamAlsa::StreamAlsa(const Metadata& metadata, StreamContext&& context)
 ::android::status_t StreamAlsa::start() {
     decltype(mAlsaDeviceProxies) alsaDeviceProxies;
     for (const auto& device : getDeviceProfiles()) {
-        auto profile = alsa::readAlsaDeviceInfo(device);
-        if (!profile.has_value()) {
-            LOG(ERROR) << __func__ << ": unable to read device info, device address=" << device;
-            return ::android::UNKNOWN_ERROR;
+        alsa::DeviceProxy proxy;
+        if (device.isExternal) {
+            // Always ask alsa configure as required since the configuration should be supported
+            // by the connected device. That is guaranteed by `setAudioPortConfig` and
+            // `setAudioPatch`.
+            proxy = alsa::openProxyForExternalDevice(
+                    device, const_cast<struct pcm_config*>(&mConfig.value()),
+                    true /*require_exact_match*/);
+        } else {
+            proxy = alsa::openProxyForAttachedDevice(
+                    device, const_cast<struct pcm_config*>(&mConfig.value()),
+                    getContext().getBufferSizeInFrames());
         }
-
-        auto proxy = alsa::makeDeviceProxy();
-        // Always ask for alsa configure as required since the configuration should be supported
-        // by the connected device. That is guaranteed by `setAudioPortConfig` and `setAudioPatch`.
-        if (int err = proxy_prepare(proxy.get(), &profile.value(),
-                                    const_cast<struct pcm_config*>(&mConfig.value()),
-                                    true /*require_exact_match*/);
-            err != 0) {
-            LOG(ERROR) << __func__ << ": fail to prepare for device address=" << device
-                       << " error=" << err;
-            return ::android::UNKNOWN_ERROR;
-        }
-        if (int err = proxy_open(proxy.get()); err != 0) {
-            LOG(ERROR) << __func__ << ": failed to open device, address=" << device
-                       << " error=" << err;
-            return ::android::UNKNOWN_ERROR;
+        if (!proxy) {
+            return ::android::NO_INIT;
         }
         alsaDeviceProxies.push_back(std::move(proxy));
     }
@@ -83,11 +93,12 @@ StreamAlsa::StreamAlsa(const Metadata& metadata, StreamContext&& context)
             return ::android::NO_INIT;
         }
         // For input case, only support single device.
-        proxy_read(mAlsaDeviceProxies[0].get(), buffer, bytesToTransfer);
+        proxy_read_with_retries(mAlsaDeviceProxies[0].get(), buffer, bytesToTransfer,
+                                mReadWriteRetries);
         maxLatency = proxy_get_latency(mAlsaDeviceProxies[0].get());
     } else {
         for (auto& proxy : mAlsaDeviceProxies) {
-            proxy_write(proxy.get(), buffer, bytesToTransfer);
+            proxy_write_with_retries(proxy.get(), buffer, bytesToTransfer, mReadWriteRetries);
             maxLatency = std::max(maxLatency, proxy_get_latency(proxy.get()));
         }
     }

@@ -132,6 +132,7 @@ class StreamContext {
 
     void fillDescriptor(StreamDescriptor* desc);
     std::shared_ptr<IStreamCallback> getAsyncCallback() const { return mAsyncCallback; }
+    size_t getBufferSizeInFrames() const;
     ::aidl::android::media::audio::common::AudioChannelLayout getChannelLayout() const {
         return mChannelLayout;
     }

@@ -36,7 +36,7 @@ using aidl::android::media::audio::common::MicrophoneInfo;
 namespace aidl::android::hardware::audio::core {
 
 StreamUsb::StreamUsb(const Metadata& metadata, StreamContext&& context)
-    : StreamAlsa(metadata, std::move(context)) {}
+    : StreamAlsa(metadata, std::move(context), 1 /*readWriteRetries*/) {}
 
 ndk::ScopedAStatus StreamUsb::setConnectedDevices(
         const std::vector<AudioDevice>& connectedDevices) {
@@ -60,21 +60,6 @@ ndk::ScopedAStatus StreamUsb::setConnectedDevices(
     mConnectedDeviceProfiles = std::move(connectedDeviceProfiles);
     mConnectedDevicesUpdated.store(true, std::memory_order_release);
     return ndk::ScopedAStatus::ok();
-}
-
-::android::status_t StreamUsb::drain(StreamDescriptor::DrainMode) {
-    usleep(1000);
-    return ::android::OK;
-}
-
-::android::status_t StreamUsb::flush() {
-    usleep(1000);
-    return ::android::OK;
-}
-
-::android::status_t StreamUsb::pause() {
-    usleep(1000);
-    return ::android::OK;
 }
 
 ::android::status_t StreamUsb::transfer(void* buffer, size_t frameCount, size_t* actualFrameCount,

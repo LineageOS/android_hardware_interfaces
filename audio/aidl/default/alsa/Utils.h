@@ -40,6 +40,7 @@ struct DeviceProfile {
     int card;
     int device;
     int direction; /* PCM_OUT or PCM_IN */
+    bool isExternal;
 };
 std::ostream& operator<<(std::ostream& os, const DeviceProfile& device);
 using DeviceProxyDeleter = std::function<void(alsa_device_proxy*)>;
@@ -60,6 +61,10 @@ std::optional<DeviceProfile> getDeviceProfile(
 std::optional<struct pcm_config> getPcmConfig(const StreamContext& context, bool isInput);
 std::vector<int> getSampleRatesFromProfile(const alsa_device_profile* profile);
 DeviceProxy makeDeviceProxy();
+DeviceProxy openProxyForAttachedDevice(const DeviceProfile& deviceProfile,
+                                       struct pcm_config* pcmConfig, size_t bufferFrameCount);
+DeviceProxy openProxyForExternalDevice(const DeviceProfile& deviceProfile,
+                                       struct pcm_config* pcmConfig, bool requireExactMatch);
 std::optional<alsa_device_profile> readAlsaDeviceInfo(const DeviceProfile& deviceProfile);
 
 ::aidl::android::media::audio::common::AudioFormatDescription
