@@ -179,6 +179,27 @@ void StreamRemoteSubmix::shutdown() {
                      : outWrite(buffer, frameCount, actualFrameCount));
 }
 
+::android::status_t StreamRemoteSubmix::getPosition(StreamDescriptor::Position* position) {
+    sp<MonoPipeReader> source = mCurrentRoute->getSource();
+    if (source == nullptr) {
+        return ::android::NO_INIT;
+    }
+    const ssize_t framesInPipe = source->availableToRead();
+    if (framesInPipe < 0) {
+        return ::android::INVALID_OPERATION;
+    }
+    if (mIsInput) {
+        position->frames += framesInPipe;
+    } else {
+        if (position->frames > framesInPipe) {
+            position->frames -= framesInPipe;
+        } else {
+            position->frames = 0;
+        }
+    }
+    return ::android::OK;
+}
+
 // Calculate the maximum size of the pipe buffer in frames for the specified stream.
 size_t StreamRemoteSubmix::getStreamPipeSizeInFrames() {
     auto pipeConfig = mCurrentRoute->mPipeConfig;
