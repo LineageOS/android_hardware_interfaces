@@ -1617,17 +1617,39 @@ bool KeyMintAidlTestBase::is_chipset_allowed_km4_strongbox(void) const {
     return false;
 }
 
-// Skip the test if all the following conditions hold:
-// 1. ATTEST_KEY feature is disabled
-// 2. STRONGBOX is enabled
-// 3. The device is running one of the chipsets that have received a waiver
-//     allowing it to be launched with Android S (or later) with Keymaster 4.0
+// Indicate whether a test that involves use of the ATTEST_KEY feature should be
+// skipped.
+//
+// In general, every KeyMint implementation should support ATTEST_KEY;
+// however, there is a waiver for some specific devices that ship with a
+// combination of Keymaster/StrongBox and KeyMint/TEE.  On these devices, the
+// ATTEST_KEY feature is disabled in the KeyMint/TEE implementation so that
+// the device has consistent ATTEST_KEY behavior (ie. UNIMPLEMENTED) across both
+// HAL implementations.
+//
+// This means that a test involving ATTEST_KEY test should be skipped if all of
+// the following conditions hold:
+// 1. The device is running one of the chipsets that have received a waiver
+//     allowing it to be launched with Android S or T with Keymaster 4.0
 //     in StrongBox
-void KeyMintAidlTestBase::skipAttestKeyTest(void) const {
+// 2. The device has a STRONGBOX implementation present.
+// 3. ATTEST_KEY feature is advertised as disabled.
+//
+// Note that in this scenario, ATTEST_KEY tests should be skipped for both
+// the StrongBox implementation (which is Keymaster, therefore not tested here)
+// and for the TEE implementation (which is adjusted to return UNIMPLEMENTED
+// specifically for this waiver).
+bool KeyMintAidlTestBase::shouldSkipAttestKeyTest(void) const {
     // Check the chipset first as that doesn't require a round-trip to Package Manager.
-    if (is_chipset_allowed_km4_strongbox() && is_strongbox_enabled() &&
-        is_attest_key_feature_disabled()) {
-        GTEST_SKIP() << "Test is not applicable";
+    return (is_chipset_allowed_km4_strongbox() && is_strongbox_enabled() &&
+            is_attest_key_feature_disabled());
+}
+
+// Skip a test that involves use of the ATTEST_KEY feature in specific configurations
+// where ATTEST_KEY is not supported (for either StrongBox or TEE).
+void KeyMintAidlTestBase::skipAttestKeyTest(void) const {
+    if (shouldSkipAttestKeyTest()) {
+        GTEST_SKIP() << "Test using ATTEST_KEY is not applicable on waivered device";
     }
 }
 
