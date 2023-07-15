@@ -40,14 +40,15 @@ class EffectConfig {
   public:
     explicit EffectConfig(const std::string& file);
 
-    struct LibraryUuid {
+    struct Library {
         std::string name;  // library name
-        ::aidl::android::media::audio::common::AudioUuid uuid;
+        ::aidl::android::media::audio::common::AudioUuid uuid;  // implementation UUID
+        std::optional<::aidl::android::media::audio::common::AudioUuid> type;  // optional type UUID
     };
     // <effects>
     struct EffectLibraries {
-        std::optional<struct LibraryUuid> proxyLibrary;
-        std::vector<struct LibraryUuid> libraries;
+        std::optional<struct Library> proxyLibrary;
+        std::vector<struct Library> libraries;
     };
 
     int getSkippedElements() const { return mSkippedElements; }
@@ -56,7 +57,7 @@ class EffectConfig {
         return mEffectsMap;
     }
 
-    static bool findUuid(const std::string& xmlEffectName,
+    static bool findUuid(const std::pair<std::string, struct EffectLibraries>& effectElem,
                          ::aidl::android::media::audio::common::AudioUuid* uuid);
 
     using ProcessingLibrariesMap = std::map<Processing::Type, std::vector<struct EffectLibraries>>;
@@ -96,8 +97,8 @@ class EffectConfig {
     bool parseProcessing(Processing::Type::Tag typeTag, const tinyxml2::XMLElement& xml);
 
     // Function to parse effect.library name and effect.uuid from xml
-    bool parseLibraryUuid(const tinyxml2::XMLElement& xml, struct LibraryUuid& libraryUuid,
-                          bool isProxy = false);
+    bool parseLibrary(const tinyxml2::XMLElement& xml, struct Library& library,
+                      bool isProxy = false);
 
     const char* dump(const tinyxml2::XMLElement& element,
                      tinyxml2::XMLPrinter&& printer = {}) const;
