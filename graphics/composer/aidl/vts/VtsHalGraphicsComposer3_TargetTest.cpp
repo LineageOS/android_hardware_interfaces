@@ -1208,6 +1208,110 @@ TEST_P(GraphicsComposerAidlV2Test, GetOverlaySupport) {
     }
 }
 
+class GraphicsComposerAidlV3Test : public GraphicsComposerAidlTest {
+  protected:
+    void SetUp() override {
+        GraphicsComposerAidlTest::SetUp();
+        if (getInterfaceVersion() <= 2) {
+            GTEST_SKIP() << "Device interface version is expected to be >= 3";
+        }
+    }
+};
+
+TEST_P(GraphicsComposerAidlV3Test, GetDisplayConfigurations) {
+    for (const auto& display : mDisplays) {
+        const auto& [status, displayConfigurations] =
+                mComposerClient->getDisplayConfigurations(display.getDisplayId());
+        EXPECT_TRUE(status.isOk());
+        EXPECT_FALSE(displayConfigurations.empty());
+
+        for (const auto& displayConfig : displayConfigurations) {
+            EXPECT_NE(-1, displayConfig.width);
+            EXPECT_NE(-1, displayConfig.height);
+            EXPECT_NE(-1, displayConfig.vsyncPeriod);
+            EXPECT_NE(-1, displayConfig.configGroup);
+            if (displayConfig.dpi) {
+                EXPECT_NE(-1, displayConfig.dpi->x);
+                EXPECT_NE(-1, displayConfig.dpi->y);
+            }
+        }
+    }
+}
+
+TEST_P(GraphicsComposerAidlV3Test, GetDisplayConfigsIsSubsetOfGetDisplayConfigurations) {
+    for (const auto& display : mDisplays) {
+        const auto& [status, displayConfigurations] =
+                mComposerClient->getDisplayConfigurations(display.getDisplayId());
+        EXPECT_TRUE(status.isOk());
+
+        const auto& [legacyConfigStatus, legacyConfigs] =
+                mComposerClient->getDisplayConfigs(display.getDisplayId());
+        EXPECT_TRUE(legacyConfigStatus.isOk());
+        EXPECT_FALSE(legacyConfigs.empty());
+        EXPECT_TRUE(legacyConfigs.size() <= displayConfigurations.size());
+
+        for (const auto legacyConfigId : legacyConfigs) {
+            const auto& legacyWidth = mComposerClient->getDisplayAttribute(
+                    display.getDisplayId(), legacyConfigId, DisplayAttribute::WIDTH);
+            const auto& legacyHeight = mComposerClient->getDisplayAttribute(
+                    display.getDisplayId(), legacyConfigId, DisplayAttribute::HEIGHT);
+            const auto& legacyVsyncPeriod = mComposerClient->getDisplayAttribute(
+                    display.getDisplayId(), legacyConfigId, DisplayAttribute::VSYNC_PERIOD);
+            const auto& legacyConfigGroup = mComposerClient->getDisplayAttribute(
+                    display.getDisplayId(), legacyConfigId, DisplayAttribute::CONFIG_GROUP);
+            const auto& legacyDpiX = mComposerClient->getDisplayAttribute(
+                    display.getDisplayId(), legacyConfigId, DisplayAttribute::DPI_X);
+            const auto& legacyDpiY = mComposerClient->getDisplayAttribute(
+                    display.getDisplayId(), legacyConfigId, DisplayAttribute::DPI_Y);
+
+            EXPECT_TRUE(legacyWidth.first.isOk() && legacyHeight.first.isOk() &&
+                        legacyVsyncPeriod.first.isOk() && legacyConfigGroup.first.isOk());
+
+            EXPECT_TRUE(std::any_of(
+                    displayConfigurations.begin(), displayConfigurations.end(),
+                    [&](const auto& displayConfiguration) {
+                        const bool requiredAttributesPredicate =
+                                displayConfiguration.configId == legacyConfigId &&
+                                displayConfiguration.width == legacyWidth.second &&
+                                displayConfiguration.height == legacyHeight.second &&
+                                displayConfiguration.vsyncPeriod == legacyVsyncPeriod.second &&
+                                displayConfiguration.configGroup == legacyConfigGroup.second;
+
+                        if (!requiredAttributesPredicate) {
+                            // Required attributes did not match
+                            return false;
+                        }
+
+                        // Check optional attributes
+                        const auto& [legacyDpiXStatus, legacyDpiXValue] = legacyDpiX;
+                        const auto& [legacyDpiYStatus, legacyDpiYValue] = legacyDpiY;
+                        if (displayConfiguration.dpi) {
+                            if (!legacyDpiXStatus.isOk() || !legacyDpiYStatus.isOk()) {
+                                // getDisplayAttribute failed for optional attributes
+                                return false;
+                            }
+
+                            // DPI values in DisplayConfigurations are not scaled (* 1000.f)
+                            // the way they are in the legacy DisplayConfigs.
+                            constexpr float kEpsilon = 0.001f;
+                            return std::abs(displayConfiguration.dpi->x -
+                                            legacyDpiXValue / 1000.f) < kEpsilon &&
+                                   std::abs(displayConfiguration.dpi->y -
+                                            legacyDpiYValue / 1000.f) < kEpsilon;
+                        } else {
+                            return !legacyDpiXStatus.isOk() && !legacyDpiYStatus.isOk() &&
+                                   EX_SERVICE_SPECIFIC == legacyDpiXStatus.getExceptionCode() &&
+                                   EX_SERVICE_SPECIFIC == legacyDpiYStatus.getExceptionCode() &&
+                                   IComposerClient::EX_UNSUPPORTED ==
+                                           legacyDpiXStatus.getServiceSpecificError() &&
+                                   IComposerClient::EX_UNSUPPORTED ==
+                                           legacyDpiYStatus.getServiceSpecificError();
+                        }
+                    }));
+        }
+    }
+}
+
 // Tests for Command.
 class GraphicsComposerAidlCommandTest : public GraphicsComposerAidlTest {
   protected:
@@ -2639,6 +2743,11 @@ INSTANTIATE_TEST_SUITE_P(
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(GraphicsComposerAidlV2Test);
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, GraphicsComposerAidlV2Test,
+        testing::ValuesIn(::android::getAidlHalInstanceNames(IComposer::descriptor)),
+        ::android::PrintInstanceNameToString);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(GraphicsComposerAidlV3Test);
+INSTANTIATE_TEST_SUITE_P(
+        PerInstance, GraphicsComposerAidlV3Test,
         testing::ValuesIn(::android::getAidlHalInstanceNames(IComposer::descriptor)),
         ::android::PrintInstanceNameToString);
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(GraphicsComposerAidlCommandV2Test);

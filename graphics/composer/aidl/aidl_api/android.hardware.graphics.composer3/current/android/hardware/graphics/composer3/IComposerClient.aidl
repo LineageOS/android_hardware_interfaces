@@ -44,6 +44,9 @@ interface IComposerClient {
   float[] getDataspaceSaturationMatrix(android.hardware.graphics.common.Dataspace dataspace);
   int getDisplayAttribute(long display, int config, android.hardware.graphics.composer3.DisplayAttribute attribute);
   android.hardware.graphics.composer3.DisplayCapability[] getDisplayCapabilities(long display);
+  /**
+   * @deprecated use getDisplayConfigurations instead. For legacy support getDisplayConfigs should return at least one valid config. All the configs returned from the getDisplayConfigs should also be returned from getDisplayConfigurations.
+   */
   int[] getDisplayConfigs(long display);
   android.hardware.graphics.composer3.DisplayConnectionType getDisplayConnectionType(long display);
   android.hardware.graphics.composer3.DisplayIdentification getDisplayIdentificationData(long display);
@@ -79,6 +82,7 @@ interface IComposerClient {
   android.hardware.graphics.common.HdrConversionCapability[] getHdrConversionCapabilities();
   android.hardware.graphics.common.Hdr setHdrConversionStrategy(in android.hardware.graphics.common.HdrConversionStrategy conversionStrategy);
   void setRefreshRateChangedCallbackDebugEnabled(long display, boolean enabled);
+  android.hardware.graphics.composer3.DisplayConfiguration[] getDisplayConfigurations(long display);
   const int EX_BAD_CONFIG = 1;
   const int EX_BAD_DISPLAY = 2;
   const int EX_BAD_LAYER = 3;
