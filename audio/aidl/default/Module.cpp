@@ -286,22 +286,28 @@ std::set<int32_t> Module::portIdsFromPortConfigIds(C portConfigIds) {
     return result;
 }
 
+std::unique_ptr<internal::Configuration> Module::initializeConfig() {
+    std::unique_ptr<internal::Configuration> config;
+    switch (getType()) {
+        case Type::DEFAULT:
+            config = std::move(internal::getPrimaryConfiguration());
+            break;
+        case Type::R_SUBMIX:
+            config = std::move(internal::getRSubmixConfiguration());
+            break;
+        case Type::STUB:
+            config = std::move(internal::getStubConfiguration());
+            break;
+        case Type::USB:
+            config = std::move(internal::getUsbConfiguration());
+            break;
+    }
+    return config;
+}
+
 internal::Configuration& Module::getConfig() {
     if (!mConfig) {
-        switch (mType) {
-            case Type::DEFAULT:
-                mConfig = std::move(internal::getPrimaryConfiguration());
-                break;
-            case Type::R_SUBMIX:
-                mConfig = std::move(internal::getRSubmixConfiguration());
-                break;
-            case Type::STUB:
-                mConfig = std::move(internal::getStubConfiguration());
-                break;
-            case Type::USB:
-                mConfig = std::move(internal::getUsbConfiguration());
-                break;
-        }
+        mConfig = std::move(initializeConfig());
     }
     return *mConfig;
 }
