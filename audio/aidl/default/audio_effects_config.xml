@@ -50,7 +50,8 @@
     </libraries>
 
     <!-- list of effects to load.
-         Each "effect" element must contain a "name", "library" and a "uuid" attribute.
+         Each "effect" element must contain a "name", "library" and a "uuid" attribute, an optional
+         "type" attribute can be used to add any customized effect type.
          The value of the "library" attribute must correspond to the name of one library element in
          the "libraries" element.
          The "name" attribute used to specific effect type, and should be mapping to a key of
@@ -62,8 +63,8 @@
          result of IFactory.queryEffects() to decide which effect implementation should be part of
          proxy and which not.
 
-         Only "name", "library", and "uuid" attributes in "effects" element are meaningful and
-         parsed out by EffectConfig class, all other attributes are ignored.
+         Only "name", "library", "uuid", and "type" attributes in "effects" element are meaningful
+          and parsed out by EffectConfig class, all other attributes are ignored.
          Only "name" and "uuid" attributes in "effectProxy" element are meaningful and parsed out
          by EffectConfig class, all other attributes are ignored.
     -->
@@ -94,7 +95,7 @@
             <libsw library="equalizersw" uuid="0bed4300-847d-11df-bb17-0002a5d5c51b"/>
             <libsw library="bundle" uuid="ce772f20-847d-11df-bb17-0002a5d5c51b"/>
         </effectProxy>
-        <effect name="extensioneffect" library="extensioneffect" uuid="fa81dd00-588b-11ed-9b6a-0242ac120002"/>
+        <effect name="extension_effect" library="extensioneffect" uuid="fa81dd00-588b-11ed-9b6a-0242ac120002" type="fa81de0e-588b-11ed-9b6a-0242ac120002"/>
         <effect name="acoustic_echo_canceler" library="aecsw" uuid="bb392ec0-8d4d-11e0-a896-0002a5d5c51b"/>
         <effect name="noise_suppression" library="nssw" uuid="c06c8400-8e06-11e0-9cb6-0002a5d5c51b"/>
     </effects>
