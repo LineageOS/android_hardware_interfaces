@@ -45,8 +45,8 @@ class EffectWorker : public EffectThread {
         auto readSamples = inputMQ->availableToRead(), writeSamples = outputMQ->availableToWrite();
         if (readSamples && writeSamples) {
             auto processSamples = std::min(readSamples, writeSamples);
-            LOG(DEBUG) << __func__ << " available to read " << readSamples << " available to write "
-                       << writeSamples << " process " << processSamples;
+            LOG(VERBOSE) << __func__ << " available to read " << readSamples
+                         << " available to write " << writeSamples << " process " << processSamples;
 
             auto buffer = mContext->getWorkBuffer();
             inputMQ->read(buffer, processSamples);
@@ -54,8 +54,8 @@ class EffectWorker : public EffectThread {
             IEffect::Status status = effectProcessImpl(buffer, buffer, processSamples);
             outputMQ->write(buffer, status.fmqProduced);
             statusMQ->writeBlocking(&status, 1);
-            LOG(DEBUG) << __func__ << " done processing, effect consumed " << status.fmqConsumed
-                       << " produced " << status.fmqProduced;
+            LOG(VERBOSE) << __func__ << " done processing, effect consumed " << status.fmqConsumed
+                         << " produced " << status.fmqProduced;
         } else {
             // TODO: maybe add some sleep here to avoid busy waiting
         }
