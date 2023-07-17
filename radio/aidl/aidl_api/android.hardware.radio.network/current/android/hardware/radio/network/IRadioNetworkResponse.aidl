@@ -81,4 +81,5 @@ interface IRadioNetworkResponse {
   oneway void isNullCipherAndIntegrityEnabledResponse(in android.hardware.radio.RadioResponseInfo info, in boolean isEnabled);
   oneway void isN1ModeEnabledResponse(in android.hardware.radio.RadioResponseInfo info, boolean isEnabled);
   oneway void setN1ModeEnabledResponse(in android.hardware.radio.RadioResponseInfo info);
+  oneway void setSatellitePlmnResponse(in android.hardware.radio.RadioResponseInfo info);
 }

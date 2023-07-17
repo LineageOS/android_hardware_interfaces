@@ -2076,3 +2076,37 @@ TEST_P(RadioNetworkTest, isNullCipherAndIntegrityEnabled) {
                                  {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE,
                                   RadioError::MODEM_ERR, RadioError::REQUEST_NOT_SUPPORTED}));
 }
+
+/**
+ * Test IRadioNetwork.setSatellitePlmn() for the response returned.
+ */
+TEST_P(RadioNetworkTest, setSatellitePlmn) {
+    int32_t aidl_version;
+    std::vector<std::string> plmnList = {"00101", "00102", "00103"};
+    ndk::ScopedAStatus aidl_status = radio_network->getInterfaceVersion(&aidl_version);
+    ASSERT_OK(aidl_status);
+    if (aidl_version < 3) {
+        ALOGI("Skipped the test since setSatellitePlmn is not supported on version < 3.");
+        GTEST_SKIP();
+    }
+
+    serial = GetRandomSerialNumber();
+
+    ndk::ScopedAStatus res = radio_network->setSatellitePlmn(serial, plmnList);
+    ASSERT_OK(res);
+
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_network->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_network->rspInfo.serial);
+
+    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error,
+                                 {
+                                         RadioError::NONE,
+                                         RadioError::INVALID_ARGUMENTS,
+                                         RadioError::INVALID_MODEM_STATE,
+                                         RadioError::MODEM_ERR,
+                                         RadioError::NO_RESOURCES,
+                                         RadioError::RADIO_NOT_AVAILABLE,
+                                         RadioError::REQUEST_NOT_SUPPORTED,
+                                 }));
+}

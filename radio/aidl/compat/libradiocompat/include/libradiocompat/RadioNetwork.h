@@ -108,6 +108,9 @@ class RadioNetwork : public RadioCompatBase,
     ::ndk::ScopedAStatus setNullCipherAndIntegrityEnabled(int32_t serial, bool enabled) override;
     ::ndk::ScopedAStatus isNullCipherAndIntegrityEnabled(int32_t serial) override;
 
+    ::ndk::ScopedAStatus setSatellitePlmn(int32_t serial,
+                                          const std::vector<std::string>& plmnList) override;
+
   protected:
     std::shared_ptr<::aidl::android::hardware::radio::network::IRadioNetworkResponse> respond();
 
