@@ -132,6 +132,8 @@ class FakeFingerprintEngineTest : public ::testing::Test {
         FingerprintHalProperties::operation_enroll_latency({});
         FingerprintHalProperties::operation_authenticate_latency({});
         FingerprintHalProperties::operation_detect_interaction_latency({});
+        FingerprintHalProperties::operation_authenticate_fails(false);
+        FingerprintHalProperties::operation_detect_interaction_latency({});
     }
 
     FakeFingerprintEngine mEngine;
@@ -185,6 +187,7 @@ TEST_F(FakeFingerprintEngineTest, Enroll) {
     ASSERT_EQ(4, FingerprintHalProperties::enrollments()[0].value());
     ASSERT_EQ(4, mCallback->mLastEnrolled);
     ASSERT_EQ(1, mCallback->mLastAcquiredInfo);
+    ASSERT_EQ(mEngine.getWorkMode(), FakeFingerprintEngine::WorkMode::kIdle);
 }
 
 TEST_F(FakeFingerprintEngineTest, EnrollCancel) {
@@ -239,6 +242,7 @@ TEST_F(FakeFingerprintEngineTest, Authenticate) {
     ASSERT_FALSE(mCallback->mAuthenticateFailed);
     ASSERT_EQ(2, mCallback->mLastAuthenticated);
     ASSERT_EQ(1, mCallback->mLastAcquiredInfo);
+    ASSERT_EQ(mEngine.getWorkMode(), FakeFingerprintEngine::WorkMode::kIdle);
 }
 
 TEST_F(FakeFingerprintEngineTest, AuthenticateCancel) {
@@ -293,6 +297,14 @@ TEST_F(FakeFingerprintEngineTest, AuthenticateError9) {
     ASSERT_EQ(mCallback->mErrorVendorCode, 9);
 }
 
+TEST_F(FakeFingerprintEngineTest, AuthenticateFails) {
+    FingerprintHalProperties::operation_authenticate_fails(true);
+    mEngine.authenticateImpl(mCallback.get(), 0, mCancel.get_future());
+    mEngine.fingerDownAction();
+    ASSERT_TRUE(mCallback->mAuthenticateFailed);
+    ASSERT_EQ(mEngine.getWorkMode(), FakeFingerprintEngine::WorkMode::kAuthenticate);
+}
+
 TEST_F(FakeFingerprintEngineTest, AuthenticateAcquired) {
     FingerprintHalProperties::lockout(false);
     FingerprintHalProperties::enrollments({1, 2});
@@ -318,6 +330,7 @@ TEST_F(FakeFingerprintEngineTest, InteractionDetect) {
     mEngine.fingerDownAction();
     ASSERT_EQ(1, mCallback->mInteractionDetectedCount);
     ASSERT_EQ(1, mCallback->mLastAcquiredInfo);
+    ASSERT_EQ(mEngine.getWorkMode(), FakeFingerprintEngine::WorkMode::kIdle);
 }
 
 TEST_F(FakeFingerprintEngineTest, InteractionDetectCancel) {
@@ -483,7 +496,6 @@ TEST_F(FakeFingerprintEngineTest, randomLatency) {
                 FingerprintHalProperties::operation_detect_interaction_latency()));
     }
     ASSERT_TRUE(latencySet.size() > 95);
-    FingerprintHalProperties::operation_detect_interaction_latency({});
 }
 
 }  // namespace aidl::android::hardware::biometrics::fingerprint
