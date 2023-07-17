@@ -94,10 +94,10 @@ class FakeFingerprintEngine {
     virtual void updateContext(WorkMode mode, ISessionCallback* cb, std::future<void>& cancel,
                                int64_t operationId, const keymaster::HardwareAuthToken& hat);
 
-    void onEnrollFingerDown(ISessionCallback* cb, const keymaster::HardwareAuthToken& hat,
+    bool onEnrollFingerDown(ISessionCallback* cb, const keymaster::HardwareAuthToken& hat,
                             const std::future<void>& cancel);
-    void onAuthenticateFingerDown(ISessionCallback* cb, int64_t, const std::future<void>& cancel);
-    void onDetectInteractFingerDown(ISessionCallback* cb, const std::future<void>& cancel);
+    bool onAuthenticateFingerDown(ISessionCallback* cb, int64_t, const std::future<void>& cancel);
+    bool onDetectInteractFingerDown(ISessionCallback* cb, const std::future<void>& cancel);
 
     WorkMode mWorkMode;
     ISessionCallback* mCb;
