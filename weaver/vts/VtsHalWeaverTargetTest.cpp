@@ -166,64 +166,56 @@ class WeaverTest : public ::testing::TestWithParam<std::tuple<std::string, std::
     void SetUp() override;
     void TearDown() override {}
 
-    std::unique_ptr<WeaverAdapter> weaver;
+    std::unique_ptr<WeaverAdapter> weaver_;
+    WeaverConfig config_;
 };
 
 void WeaverTest::SetUp() {
     std::string api, instance_name;
     std::tie(api, instance_name) = GetParam();
     if (api == "hidl") {
-        weaver.reset(new WeaverHidlAdapter(instance_name));
+        weaver_.reset(new WeaverHidlAdapter(instance_name));
     } else if (api == "aidl") {
-        weaver.reset(new WeaverAidlAdapter(instance_name));
+        weaver_.reset(new WeaverAidlAdapter(instance_name));
     } else {
         FAIL() << "Bad test parameterization";
     }
-    ASSERT_TRUE(weaver->isReady());
+    ASSERT_TRUE(weaver_->isReady());
+
+    auto ret = weaver_->getConfig(&config_);
+    ASSERT_TRUE(ret.isOk());
+    ASSERT_GT(config_.slots, 0);
+    GTEST_LOG_(INFO) << "WeaverConfig: slots=" << config_.slots << ", keySize=" << config_.keySize
+                     << ", valueSize=" << config_.valueSize;
 }
 
 /*
  * Checks config values are suitably large
  */
 TEST_P(WeaverTest, GetConfig) {
-    WeaverConfig config;
-
-    auto ret = weaver->getConfig(&config);
-
-    ASSERT_TRUE(ret.isOk());
-
-    EXPECT_GE(config.slots, 16u);
-    EXPECT_GE(config.keySize, 16u);
-    EXPECT_GE(config.valueSize, 16u);
+    EXPECT_GE(config_.slots, 16u);
+    EXPECT_GE(config_.keySize, 16u);
+    EXPECT_GE(config_.valueSize, 16u);
 }
 
 /*
  * Gets the config twice and checks they are the same
  */
 TEST_P(WeaverTest, GettingConfigMultipleTimesGivesSameResult) {
-    WeaverConfig config1;
     WeaverConfig config2;
 
-    auto ret = weaver->getConfig(&config1);
+    auto ret = weaver_->getConfig(&config2);
     ASSERT_TRUE(ret.isOk());
 
-    ret = weaver->getConfig(&config2);
-    ASSERT_TRUE(ret.isOk());
-
-    EXPECT_EQ(config1, config2);
+    EXPECT_EQ(config_, config2);
 }
 
 /*
  * Gets the number of slots from the config and writes a key and value to the last one
  */
 TEST_P(WeaverTest, WriteToLastSlot) {
-    WeaverConfig config;
-    const auto configRet = weaver->getConfig(&config);
-
-    ASSERT_TRUE(configRet.isOk());
-
-    const uint32_t lastSlot = config.slots - 1;
-    const auto writeRet = weaver->write(lastSlot, KEY, VALUE);
+    const uint32_t lastSlot = config_.slots - 1;
+    const auto writeRet = weaver_->write(lastSlot, KEY, VALUE);
     ASSERT_TRUE(writeRet.isOk());
 }
 
@@ -233,23 +225,15 @@ TEST_P(WeaverTest, WriteToLastSlot) {
  */
 TEST_P(WeaverTest, WriteFollowedByReadGivesTheSameValue) {
     constexpr uint32_t slotId = 0;
-    const auto ret = weaver->write(slotId, KEY, VALUE);
+    const auto ret = weaver_->write(slotId, KEY, VALUE);
     ASSERT_TRUE(ret.isOk());
 
     WeaverReadResponse response;
-    std::vector<uint8_t> readValue;
-    uint32_t timeout;
-    WeaverReadStatus status;
-    const auto readRet = weaver->read(slotId, KEY, &response);
-
-    readValue = response.value;
-    timeout = response.timeout;
-    status = response.status;
-
+    const auto readRet = weaver_->read(slotId, KEY, &response);
     ASSERT_TRUE(readRet.isOk());
-    EXPECT_EQ(readValue, VALUE);
-    EXPECT_EQ(timeout, 0u);
-    EXPECT_EQ(status, WeaverReadStatus::OK);
+    EXPECT_EQ(response.value, VALUE);
+    EXPECT_EQ(response.timeout, 0u);
+    EXPECT_EQ(response.status, WeaverReadStatus::OK);
 }
 
 /*
@@ -259,26 +243,18 @@ TEST_P(WeaverTest, WriteFollowedByReadGivesTheSameValue) {
  */
 TEST_P(WeaverTest, OverwritingSlotUpdatesTheValue) {
     constexpr uint32_t slotId = 0;
-    const auto initialWriteRet = weaver->write(slotId, WRONG_KEY, VALUE);
+    const auto initialWriteRet = weaver_->write(slotId, WRONG_KEY, VALUE);
     ASSERT_TRUE(initialWriteRet.isOk());
 
-    const auto overwriteRet = weaver->write(slotId, KEY, OTHER_VALUE);
+    const auto overwriteRet = weaver_->write(slotId, KEY, OTHER_VALUE);
     ASSERT_TRUE(overwriteRet.isOk());
 
     WeaverReadResponse response;
-    std::vector<uint8_t> readValue;
-    uint32_t timeout;
-    WeaverReadStatus status;
-    const auto readRet = weaver->read(slotId, KEY, &response);
-
-    readValue = response.value;
-    timeout = response.timeout;
-    status = response.status;
-
+    const auto readRet = weaver_->read(slotId, KEY, &response);
     ASSERT_TRUE(readRet.isOk());
-    EXPECT_EQ(readValue, OTHER_VALUE);
-    EXPECT_EQ(timeout, 0u);
-    EXPECT_EQ(status, WeaverReadStatus::OK);
+    EXPECT_EQ(response.value, OTHER_VALUE);
+    EXPECT_EQ(response.timeout, 0u);
+    EXPECT_EQ(response.status, WeaverReadStatus::OK);
 }
 
 /*
@@ -287,37 +263,26 @@ TEST_P(WeaverTest, OverwritingSlotUpdatesTheValue) {
  */
 TEST_P(WeaverTest, WriteFollowedByReadWithWrongKeyDoesNotGiveTheValue) {
     constexpr uint32_t slotId = 0;
-    const auto ret = weaver->write(slotId, KEY, VALUE);
-    ASSERT_TRUE(ret.isOk());
+    const auto writeRet = weaver_->write(slotId, KEY, VALUE);
+    ASSERT_TRUE(writeRet.isOk());
 
     WeaverReadResponse response;
-    std::vector<uint8_t> readValue;
-    WeaverReadStatus status;
-    const auto readRet =
-        weaver->read(slotId, WRONG_KEY, &response);
-
-    readValue = response.value;
-    status = response.status;
-
+    const auto readRet = weaver_->read(slotId, WRONG_KEY, &response);
     ASSERT_TRUE(readRet.isOk());
-    EXPECT_TRUE(readValue.empty());
-    EXPECT_EQ(status, WeaverReadStatus::INCORRECT_KEY);
+    EXPECT_TRUE(response.value.empty());
+    EXPECT_EQ(response.status, WeaverReadStatus::INCORRECT_KEY);
 }
 
 /*
  * Writing to an invalid slot fails
  */
 TEST_P(WeaverTest, WritingToInvalidSlotFails) {
-    WeaverConfig config;
-    const auto configRet = weaver->getConfig(&config);
-    ASSERT_TRUE(configRet.isOk());
-
-    if (config.slots == std::numeric_limits<uint32_t>::max()) {
+    if (config_.slots == std::numeric_limits<uint32_t>::max()) {
         // If there are no invalid slots then pass
         return;
     }
 
-    const auto writeRet = weaver->write(config.slots, KEY, VALUE);
+    const auto writeRet = weaver_->write(config_.slots, KEY, VALUE);
     ASSERT_FALSE(writeRet.isOk());
 }
 
@@ -325,44 +290,27 @@ TEST_P(WeaverTest, WritingToInvalidSlotFails) {
  * Reading from an invalid slot fails rather than incorrect key
  */
 TEST_P(WeaverTest, ReadingFromInvalidSlotFails) {
-    WeaverConfig config;
-    const auto configRet = weaver->getConfig(&config);
-    ASSERT_TRUE(configRet.isOk());
-
-    if (config.slots == std::numeric_limits<uint32_t>::max()) {
+    if (config_.slots == std::numeric_limits<uint32_t>::max()) {
         // If there are no invalid slots then pass
         return;
     }
 
     WeaverReadResponse response;
-    std::vector<uint8_t> readValue;
-    uint32_t timeout;
-    WeaverReadStatus status;
-    const auto readRet =
-        weaver->read(config.slots, KEY, &response);
-
-    readValue = response.value;
-    timeout = response.timeout;
-    status = response.status;
-
+    const auto readRet = weaver_->read(config_.slots, KEY, &response);
     ASSERT_TRUE(readRet.isOk());
-    EXPECT_TRUE(readValue.empty());
-    EXPECT_EQ(timeout, 0u);
-    EXPECT_EQ(status, WeaverReadStatus::FAILED);
+    EXPECT_TRUE(response.value.empty());
+    EXPECT_EQ(response.timeout, 0u);
+    EXPECT_EQ(response.status, WeaverReadStatus::FAILED);
 }
 
 /*
  * Writing a key that is too large fails
  */
 TEST_P(WeaverTest, WriteWithTooLargeKeyFails) {
-    WeaverConfig config;
-    const auto configRet = weaver->getConfig(&config);
-    ASSERT_TRUE(configRet.isOk());
-
-    std::vector<uint8_t> bigKey(config.keySize + 1);
+    std::vector<uint8_t> bigKey(config_.keySize + 1);
 
     constexpr uint32_t slotId = 0;
-    const auto writeRet = weaver->write(slotId, bigKey, VALUE);
+    const auto writeRet = weaver_->write(slotId, bigKey, VALUE);
     ASSERT_FALSE(writeRet.isOk());
 }
 
@@ -370,43 +318,26 @@ TEST_P(WeaverTest, WriteWithTooLargeKeyFails) {
  * Writing a value that is too large fails
  */
 TEST_P(WeaverTest, WriteWithTooLargeValueFails) {
-    WeaverConfig config;
-    const auto configRet = weaver->getConfig(&config);
-    ASSERT_TRUE(configRet.isOk());
-
-    std::vector<uint8_t> bigValue(config.valueSize + 1);
+    std::vector<uint8_t> bigValue(config_.valueSize + 1);
 
     constexpr uint32_t slotId = 0;
-    const auto writeRet = weaver->write(slotId, KEY, bigValue);
+    const auto writeRet = weaver_->write(slotId, KEY, bigValue);
     ASSERT_FALSE(writeRet.isOk());
 }
 
 /*
- * Reading with a key that is loo large fails
+ * Reading with a key that is too large fails
  */
 TEST_P(WeaverTest, ReadWithTooLargeKeyFails) {
-    WeaverConfig config;
-    const auto configRet = weaver->getConfig(&config);
-    ASSERT_TRUE(configRet.isOk());
-
-    std::vector<uint8_t> bigKey(config.keySize + 1);
+    std::vector<uint8_t> bigKey(config_.keySize + 1);
 
     constexpr uint32_t slotId = 0;
     WeaverReadResponse response;
-    std::vector<uint8_t> readValue;
-    uint32_t timeout;
-    WeaverReadStatus status;
-    const auto readRet =
-        weaver->read(slotId, bigKey, &response);
-
-    readValue = response.value;
-    timeout = response.timeout;
-    status = response.status;
-
+    const auto readRet = weaver_->read(slotId, bigKey, &response);
     ASSERT_TRUE(readRet.isOk());
-    EXPECT_TRUE(readValue.empty());
-    EXPECT_EQ(timeout, 0u);
-    EXPECT_EQ(status, WeaverReadStatus::FAILED);
+    EXPECT_TRUE(response.value.empty());
+    EXPECT_EQ(response.timeout, 0u);
+    EXPECT_EQ(response.status, WeaverReadStatus::FAILED);
 }
 
 // Instantiate the test for each HIDL Weaver service.
