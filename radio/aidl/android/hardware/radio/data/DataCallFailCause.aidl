@@ -1306,8 +1306,4 @@ enum DataCallFailCause {
      * If connection failed for all matching URSP rules.
      */
     ALL_MATCHING_RULES_FAILED = 0x8CE,
-    /**
-     * Data call is not allowed as device is connected to satellite.
-     */
-    SATELLITE_ENABLED = 0x8CF,
 }
