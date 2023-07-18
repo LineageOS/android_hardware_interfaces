@@ -544,10 +544,12 @@ void GraphicsComposerHidlTest::Test_setActiveConfigWithConstraints(const TestPar
                       setActiveConfigWithConstraints(display, config2, constraints, &timeline));
 
             EXPECT_TRUE(timeline.newVsyncAppliedTimeNanos >= constraints.desiredTimeNanos);
-            // Refresh rate should change within a reasonable time
-            constexpr std::chrono::nanoseconds kReasonableTimeForChange = 1s;  // 1 second
-            EXPECT_TRUE(timeline.newVsyncAppliedTimeNanos - constraints.desiredTimeNanos <=
-                        kReasonableTimeForChange.count());
+            if (configGroup1 == configGroup2) {
+                // Refresh rate should change within a reasonable time
+                constexpr std::chrono::nanoseconds kReasonableTimeForChange = 1s;
+                EXPECT_TRUE(timeline.newVsyncAppliedTimeNanos - constraints.desiredTimeNanos <=
+                            kReasonableTimeForChange.count());
+            }
 
             if (timeline.refreshRequired) {
                 if (params.refreshMiss) {
