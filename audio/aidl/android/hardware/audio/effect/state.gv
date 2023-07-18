@@ -25,12 +25,12 @@ digraph effect_state_machine {
 
     I -> INIT[label = "IFactory.createEffect" labelfontcolor = "navy"];
     INIT -> F[label = "IFactory.destroyEffect"];
-    INIT -> IDLE[label = "open()" labelfontcolor = "lime"];
-    IDLE -> PROCESSING[label = "command(START"];
-    PROCESSING -> IDLE[label = "command(STOP)\ncommand(RESET)"];
-    IDLE -> INIT[label = "close()"];
+    INIT -> IDLE[label = "IEffect.open()" labelfontcolor = "lime"];
+    IDLE -> PROCESSING[label = "IEffect.command(START"];
+    PROCESSING -> IDLE[label = "IEffect.command(STOP)\nIEffect.command(RESET)"];
+    IDLE -> INIT[label = "IEffect.close()"];
 
-    INIT -> INIT[label = "getState\ngetDescriptor"];
-    IDLE -> IDLE[label = "getXXX\nsetParameter\ncommand(RESET)"];
-    PROCESSING -> PROCESSING[label = "getXXX\nsetParameter"];
+    INIT -> INIT[label = "IEffect.getState\nIEffect.getDescriptor"];
+    IDLE -> IDLE[label = "IEffect.getParameter\nIEffect.setParameter\nIEffect.getDescriptor\nIEffect.command(RESET)"];
+    PROCESSING -> PROCESSING[label = "IEffect.getParameter\nIEffect.setParameter\nIEffect.getDescriptor"];
 }
