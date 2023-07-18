@@ -89,6 +89,29 @@ string get_imei(int slot) {
     return imei;
 }
 
+// Use `ro.product.<property>_for_attestation` property for attestation if it is present else
+// fallback to use `ro.product.vendor.<property>` if it is present else fallback to
+// `ro.product.<property>`. Similar logic can be seen in Java method `getVendorDeviceIdProperty`
+// in frameworks/base/core/java/android/os/Build.java.
+template <Tag tag>
+void add_attestation_id(AuthorizationSetBuilder* attestation_id_tags,
+                        TypedTag<TagType::BYTES, tag> tag_type, const char* prop) {
+    ::android::String8 prop_name =
+            ::android::String8::format("ro.product.%s_for_attestation", prop);
+    std::string prop_value = ::android::base::GetProperty(prop_name.string(), /* default= */ "");
+    if (!prop_value.empty()) {
+        add_tag_from_prop(attestation_id_tags, tag_type, prop_name.string());
+    } else {
+        prop_name = ::android::String8::format("ro.product.vendor.%s", prop);
+        prop_value = ::android::base::GetProperty(prop_name.string(), /* default= */ "");
+        if (!prop_value.empty()) {
+            add_tag_from_prop(attestation_id_tags, tag_type, prop_name.string());
+        } else {
+            prop_name = ::android::String8::format("ro.product.%s", prop);
+            add_tag_from_prop(attestation_id_tags, tag_type, prop_name.string());
+        }
+    }
+}
 }  // namespace
 
 class AttestKeyTest : public KeyMintAidlTestBase {
@@ -798,11 +821,6 @@ TEST_P(AttestKeyTest, AttestWithNonAttestKey) {
 }
 
 TEST_P(AttestKeyTest, EcdsaAttestationID) {
-    if (is_gsi_image()) {
-        // GSI sets up a standard set of device identifiers that may not match
-        // the device identifiers held by the device.
-        GTEST_SKIP() << "Test not applicable under GSI";
-    }
     // Create attestation key.
     AttestationKey attest_key;
     vector<KeyCharacteristics> attest_key_characteristics;
@@ -822,39 +840,12 @@ TEST_P(AttestKeyTest, EcdsaAttestationID) {
 
     // Collection of valid attestation ID tags.
     auto attestation_id_tags = AuthorizationSetBuilder();
-    // Use ro.product.brand_for_attestation property for attestation if it is present else fallback
-    // to ro.product.brand
-    std::string prop_value =
-            ::android::base::GetProperty("ro.product.brand_for_attestation", /* default= */ "");
-    if (!prop_value.empty()) {
-        add_tag_from_prop(&attestation_id_tags, TAG_ATTESTATION_ID_BRAND,
-                          "ro.product.brand_for_attestation");
-    } else {
-        add_tag_from_prop(&attestation_id_tags, TAG_ATTESTATION_ID_BRAND, "ro.product.brand");
-    }
-    add_tag_from_prop(&attestation_id_tags, TAG_ATTESTATION_ID_DEVICE, "ro.product.device");
-    // Use ro.product.name_for_attestation property for attestation if it is present else fallback
-    // to ro.product.name
-    prop_value = ::android::base::GetProperty("ro.product.name_for_attestation", /* default= */ "");
-    if (!prop_value.empty()) {
-        add_tag_from_prop(&attestation_id_tags, TAG_ATTESTATION_ID_PRODUCT,
-                          "ro.product.name_for_attestation");
-    } else {
-        add_tag_from_prop(&attestation_id_tags, TAG_ATTESTATION_ID_PRODUCT, "ro.product.name");
-    }
+    add_attestation_id(&attestation_id_tags, TAG_ATTESTATION_ID_BRAND, "brand");
+    add_attestation_id(&attestation_id_tags, TAG_ATTESTATION_ID_DEVICE, "device");
+    add_attestation_id(&attestation_id_tags, TAG_ATTESTATION_ID_PRODUCT, "name");
+    add_attestation_id(&attestation_id_tags, TAG_ATTESTATION_ID_MANUFACTURER, "manufacturer");
+    add_attestation_id(&attestation_id_tags, TAG_ATTESTATION_ID_MODEL, "model");
     add_tag_from_prop(&attestation_id_tags, TAG_ATTESTATION_ID_SERIAL, "ro.serialno");
-    add_tag_from_prop(&attestation_id_tags, TAG_ATTESTATION_ID_MANUFACTURER,
-                      "ro.product.manufacturer");
-    // Use ro.product.model_for_attestation property for attestation if it is present else fallback
-    // to ro.product.model
-    prop_value =
-            ::android::base::GetProperty("ro.product.model_for_attestation", /* default= */ "");
-    if (!prop_value.empty()) {
-        add_tag_from_prop(&attestation_id_tags, TAG_ATTESTATION_ID_MODEL,
-                          "ro.product.model_for_attestation");
-    } else {
-        add_tag_from_prop(&attestation_id_tags, TAG_ATTESTATION_ID_MODEL, "ro.product.model");
-    }
 
     string imei = get_imei(0);
     if (!imei.empty()) {
@@ -955,12 +946,6 @@ TEST_P(AttestKeyTest, EcdsaAttestationMismatchID) {
 }
 
 TEST_P(AttestKeyTest, SecondIMEIAttestationIDSuccess) {
-    if (is_gsi_image()) {
-        // GSI sets up a standard set of device identifiers that may not match
-        // the device identifiers held by the device.
-        GTEST_SKIP() << "Test not applicable under GSI";
-    }
-
     // Skip the test if there is no second IMEI exists.
     string second_imei = get_imei(1);
     if (second_imei.empty()) {
@@ -1029,12 +1014,6 @@ TEST_P(AttestKeyTest, SecondIMEIAttestationIDSuccess) {
 }
 
 TEST_P(AttestKeyTest, MultipleIMEIAttestationIDSuccess) {
-    if (is_gsi_image()) {
-        // GSI sets up a standard set of device identifiers that may not match
-        // the device identifiers held by the device.
-        GTEST_SKIP() << "Test not applicable under GSI";
-    }
-
     // Skip the test if there is no first IMEI exists.
     string imei = get_imei(0);
     if (imei.empty()) {
