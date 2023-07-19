@@ -82,7 +82,8 @@ interface IComposerClient {
   android.hardware.graphics.common.HdrConversionCapability[] getHdrConversionCapabilities();
   android.hardware.graphics.common.Hdr setHdrConversionStrategy(in android.hardware.graphics.common.HdrConversionStrategy conversionStrategy);
   void setRefreshRateChangedCallbackDebugEnabled(long display, boolean enabled);
-  android.hardware.graphics.composer3.DisplayConfiguration[] getDisplayConfigurations(long display);
+  android.hardware.graphics.composer3.DisplayConfiguration[] getDisplayConfigurations(long display, int maxFrameIntervalNs);
+  oneway void notifyExpectedPresent(long display, in android.hardware.graphics.composer3.ClockMonotonicTimestamp expectedPresentTime, int frameIntervalNs);
   const int EX_BAD_CONFIG = 1;
   const int EX_BAD_DISPLAY = 2;
   const int EX_BAD_LAYER = 3;

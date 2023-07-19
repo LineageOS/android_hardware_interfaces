@@ -33,16 +33,16 @@
 
 package android.hardware.graphics.composer3;
 @VintfStability
-parcelable DisplayConfiguration {
-  int configId;
-  int width;
-  int height;
-  @nullable android.hardware.graphics.composer3.DisplayConfiguration.Dpi dpi;
-  int configGroup;
-  int vsyncPeriod;
-  @nullable android.hardware.graphics.composer3.VrrConfig vrrConfig;
-  parcelable Dpi {
-    float x;
-    float y;
+parcelable VrrConfig {
+  int minFrameIntervalNs;
+  @nullable android.hardware.graphics.composer3.VrrConfig.FrameIntervalPowerHint[] frameIntervalPowerHints;
+  @nullable android.hardware.graphics.composer3.VrrConfig.NotifyExpectedPresentConfig notifyExpectedPresentConfig;
+  parcelable FrameIntervalPowerHint {
+    int frameIntervalNs;
+    int averageRefreshPeriodNs;
+  }
+  parcelable NotifyExpectedPresentConfig {
+    int notifyExpectedPresentHeadsUpNs;
+    int notifyExpectedPresentTimeoutNs;
   }
 }

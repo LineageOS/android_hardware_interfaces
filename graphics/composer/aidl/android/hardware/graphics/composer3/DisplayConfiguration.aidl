@@ -15,6 +15,7 @@
  */
 
 package android.hardware.graphics.composer3;
+import android.hardware.graphics.composer3.VrrConfig;
 
 @VintfStability
 parcelable DisplayConfiguration {
@@ -60,4 +61,10 @@ parcelable DisplayConfiguration {
      * must be signaled on a vsync boundary.
      */
     int vsyncPeriod;
+
+    /**
+     * Represents the specific configurations for VRR (Variable Refresh Rate) display modes.
+     * Non-VRR modes should set this to null.
+     */
+    @nullable VrrConfig vrrConfig;
 }
