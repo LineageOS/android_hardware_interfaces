@@ -257,9 +257,6 @@
     <!-- Either the native or the HIDL mapper HAL must exist on the device -->
     <hal format="hidl" optional="true">
         <name>android.hardware.graphics.mapper</name>
-        <!-- New, non-Go devices should use 4.0, tested in vts_treble_vintf_vendor_test -->
-        <version>2.1</version>
-        <version>3.0</version>
         <version>4.0</version>
         <interface>
             <name>IMapper</name>
