@@ -603,18 +603,16 @@ StreamCommonImpl::~StreamCommonImpl() {
 ndk::ScopedAStatus StreamCommonImpl::initInstance(
         const std::shared_ptr<StreamCommonInterface>& delegate) {
     mCommon = ndk::SharedRefBase::make<StreamCommonDelegator>(delegate);
-    mCommonBinder = mCommon->asBinder();
-    AIBinder_setMinSchedulerPolicy(mCommonBinder.get(), SCHED_NORMAL, ANDROID_PRIORITY_AUDIO);
     return mWorker->start() ? ndk::ScopedAStatus::ok()
                             : ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
 }
 
 ndk::ScopedAStatus StreamCommonImpl::getStreamCommonCommon(
         std::shared_ptr<IStreamCommon>* _aidl_return) {
-    if (mCommon == nullptr) {
+    if (!mCommon) {
         LOG(FATAL) << __func__ << ": the common interface was not created";
     }
-    *_aidl_return = mCommon;
+    *_aidl_return = mCommon.getPtr();
     LOG(DEBUG) << __func__ << ": returning " << _aidl_return->get()->asBinder().get();
     return ndk::ScopedAStatus::ok();
 }

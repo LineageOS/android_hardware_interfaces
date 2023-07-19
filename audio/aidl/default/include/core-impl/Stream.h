@@ -43,6 +43,7 @@
 #include <system/thread_defs.h>
 #include <utils/Errors.h>
 
+#include "core-impl/ChildInterface.h"
 #include "core-impl/utils.h"
 
 namespace aidl::android::hardware::audio::core {
@@ -466,8 +467,7 @@ class StreamCommonImpl : virtual public StreamCommonInterface, virtual public Dr
     Metadata mMetadata;
     StreamContext mContext;
     std::unique_ptr<StreamWorkerInterface> mWorker;
-    std::shared_ptr<StreamCommonDelegator> mCommon;
-    ndk::SpAIBinder mCommonBinder;
+    ChildInterface<StreamCommonDelegator> mCommon;
     ConnectedDevices mConnectedDevices;
 };
 
