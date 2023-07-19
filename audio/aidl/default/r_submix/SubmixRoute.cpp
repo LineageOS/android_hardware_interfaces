@@ -27,7 +27,7 @@ using aidl::android::hardware::audio::common::getChannelCount;
 namespace aidl::android::hardware::audio::core::r_submix {
 
 // Verify a submix input or output stream can be opened.
-bool SubmixRoute::isStreamConfigValid(bool isInput, const AudioConfig streamConfig) {
+bool SubmixRoute::isStreamConfigValid(bool isInput, const AudioConfig& streamConfig) {
     // If the stream is already open, don't open it again.
     // ENABLE_LEGACY_INPUT_OPEN is default behaviour
     if (!isInput && isStreamOutOpen()) {
@@ -43,7 +43,7 @@ bool SubmixRoute::isStreamConfigValid(bool isInput, const AudioConfig streamConf
 
 // Compare this stream config with existing pipe config, returning false if they do *not*
 // match, true otherwise.
-bool SubmixRoute::isStreamConfigCompatible(const AudioConfig streamConfig) {
+bool SubmixRoute::isStreamConfigCompatible(const AudioConfig& streamConfig) {
     if (streamConfig.channelLayout != mPipeConfig.channelLayout) {
         LOG(ERROR) << __func__ << ": channel count mismatch, stream channels = "
                    << streamConfig.channelLayout.toString()
@@ -126,7 +126,7 @@ void SubmixRoute::closeStream(bool isInput) {
 
 // If SubmixRoute doesn't exist for a port, create a pipe for the submix audio device of size
 // buffer_size_frames and store config of the submix audio device.
-::android::status_t SubmixRoute::createPipe(const AudioConfig streamConfig) {
+::android::status_t SubmixRoute::createPipe(const AudioConfig& streamConfig) {
     const int channelCount = getChannelCount(streamConfig.channelLayout);
     const audio_format_t audioFormat = VALUE_OR_RETURN_STATUS(
             aidl2legacy_AudioFormatDescription_audio_format_t(streamConfig.format));
@@ -201,9 +201,9 @@ void SubmixRoute::standby(bool isInput) {
 
     if (isInput) {
         mStreamInStandby = true;
-    } else {
+    } else if (!mStreamOutStandby) {
         mStreamOutStandby = true;
-        mStreamOutStandbyTransition = !mStreamOutStandbyTransition;
+        mStreamOutStandbyTransition = true;
     }
 }
 
