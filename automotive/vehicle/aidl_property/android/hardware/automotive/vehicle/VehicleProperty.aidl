@@ -421,6 +421,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.CONTINUOUS
      * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
      * @unit VehicleUnit:METER
      */
     RANGE_REMAINING = 0x0308 + 0x10000000 + 0x01000000
@@ -4475,6 +4476,9 @@ enum VehicleProperty {
      * VEHICLE_IN_USE is false. While the remote task is executing, the user enters the vehicle and
      * powers on the vehicle. VEHICLE_IN_USE is set to true. After a driving session, user powers
      * off the vehicle, VEHICLE_IN_USE is set to false.
+     *
+     * <p>This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
+     * implement it as VehiclePropertyAccess.READ only.
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
