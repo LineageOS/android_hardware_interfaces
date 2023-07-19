@@ -1234,6 +1234,43 @@ TEST_P(GraphicsComposerAidlV3Test, GetDisplayConfigurations) {
                 EXPECT_NE(-1, displayConfig.dpi->x);
                 EXPECT_NE(-1, displayConfig.dpi->y);
             }
+            if (displayConfig.vrrConfig) {
+                const auto& vrrConfig = *displayConfig.vrrConfig;
+                EXPECT_GE(vrrConfig.minFrameIntervalNs, displayConfig.vsyncPeriod);
+
+                const auto verifyFrameIntervalIsDivisorOfVsync = [&](int32_t frameIntervalNs) {
+                    constexpr auto kThreshold = 0.05f;  // 5%
+                    const auto ratio =
+                            static_cast<float>(frameIntervalNs) / displayConfig.vsyncPeriod;
+                    return ratio - std::round(ratio) <= kThreshold;
+                };
+
+                EXPECT_TRUE(verifyFrameIntervalIsDivisorOfVsync(vrrConfig.minFrameIntervalNs));
+
+                if (vrrConfig.frameIntervalPowerHints) {
+                    const auto& frameIntervalPowerHints = *vrrConfig.frameIntervalPowerHints;
+                    EXPECT_FALSE(frameIntervalPowerHints.empty());
+
+                    const auto minFrameInterval = *min_element(frameIntervalPowerHints.cbegin(),
+                                                               frameIntervalPowerHints.cend());
+                    EXPECT_LE(minFrameInterval->frameIntervalNs,
+                              VtsComposerClient::kMaxFrameIntervalNs);
+
+                    EXPECT_TRUE(std::all_of(frameIntervalPowerHints.cbegin(),
+                                            frameIntervalPowerHints.cend(),
+                                            [&](const auto& frameIntervalPowerHint) {
+                                                return verifyFrameIntervalIsDivisorOfVsync(
+                                                        frameIntervalPowerHint->frameIntervalNs);
+                                            }));
+                }
+
+                if (vrrConfig.notifyExpectedPresentConfig) {
+                    const auto& notifyExpectedPresentConfig =
+                            *vrrConfig.notifyExpectedPresentConfig;
+                    EXPECT_GT(0, notifyExpectedPresentConfig.notifyExpectedPresentHeadsUpNs);
+                    EXPECT_GE(0, notifyExpectedPresentConfig.notifyExpectedPresentTimeoutNs);
+                }
+            }
         }
     }
 }
@@ -1309,6 +1346,17 @@ TEST_P(GraphicsComposerAidlV3Test, GetDisplayConfigsIsSubsetOfGetDisplayConfigur
                         }
                     }));
         }
+    }
+}
+
+// TODO(b/291792736) Add detailed VTS test cases for NotifyExpectedPresent
+TEST_P(GraphicsComposerAidlV3Test, NotifyExpectedPresent) {
+    for (const auto& display : mDisplays) {
+        EXPECT_TRUE(mComposerClient
+                            ->notifyExpectedPresent(display.getDisplayId(),
+                                                    ClockMonotonicTimestamp{0},
+                                                    std::chrono::nanoseconds{8ms}.count())
+                            .isOk());
     }
 }
 

@@ -145,6 +145,10 @@ class VtsComposerClient {
     std::pair<ScopedAStatus, std::vector<DisplayConfiguration>> getDisplayConfigurations(
             int64_t display);
 
+    ScopedAStatus notifyExpectedPresent(int64_t display,
+                                        ClockMonotonicTimestamp expectedPresentTime,
+                                        int frameIntervalNs);
+
     std::pair<ScopedAStatus, int32_t> getDisplayVsyncPeriod(int64_t display);
 
     ScopedAStatus setAutoLowLatencyMode(int64_t display, bool isEnabled);
@@ -191,6 +195,8 @@ class VtsComposerClient {
     ndk::ScopedAStatus setRefreshRateChangedCallbackDebugEnabled(int64_t display, bool enabled);
 
     std::vector<RefreshRateChangedDebugData> takeListOfRefreshRateChangedDebugData();
+
+    static constexpr int32_t kMaxFrameIntervalNs = 50000000;  // 20fps
 
   private:
     void addDisplayConfigs(VtsDisplay*, const std::vector<DisplayConfiguration>&);

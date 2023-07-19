@@ -312,7 +312,14 @@ std::pair<ScopedAStatus, std::vector<int32_t>> VtsComposerClient::getDisplayConf
 std::pair<ScopedAStatus, std::vector<DisplayConfiguration>>
 VtsComposerClient::getDisplayConfigurations(int64_t display) {
     std::vector<DisplayConfiguration> outConfigs;
-    return {mComposerClient->getDisplayConfigurations(display, &outConfigs), outConfigs};
+    return {mComposerClient->getDisplayConfigurations(display, kMaxFrameIntervalNs, &outConfigs),
+            outConfigs};
+}
+
+ScopedAStatus VtsComposerClient::notifyExpectedPresent(int64_t display,
+                                                       ClockMonotonicTimestamp expectedPresentTime,
+                                                       int frameIntervalNs) {
+    return mComposerClient->notifyExpectedPresent(display, expectedPresentTime, frameIntervalNs);
 }
 
 std::pair<ScopedAStatus, int32_t> VtsComposerClient::getDisplayVsyncPeriod(int64_t display) {
