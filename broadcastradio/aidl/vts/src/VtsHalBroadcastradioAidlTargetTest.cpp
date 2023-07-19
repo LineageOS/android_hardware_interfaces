@@ -997,13 +997,12 @@ TEST_P(BroadcastRadioHalTest, SetConfigFlags) {
     LOG(DEBUG) << "SetConfigFlags Test";
 
     auto get = [&](ConfigFlag flag) -> bool {
-        bool* gotValue = nullptr;
+        bool gotValue;
 
-        auto halResult = mModule->isConfigFlagSet(flag, gotValue);
+        auto halResult = mModule->isConfigFlagSet(flag, &gotValue);
 
-        EXPECT_FALSE(gotValue == nullptr);
         EXPECT_TRUE(halResult.isOk());
-        return *gotValue;
+        return gotValue;
     };
 
     auto notSupportedError = resultToInt(Result::NOT_SUPPORTED);
