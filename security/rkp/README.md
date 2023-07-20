@@ -52,7 +52,7 @@ binding between the device and the backend. To briefly describe them:
 * Degenerate DICE (Phase 1): A TEE root of trust key pair is used to sign
   certificate requests; a single self-signed certificate signifies this phase.
 * DICE (Phase 2): A hardware root of trust key pair is only accessible to ROM
-  code; the boot process follows the [Android Profile for
+  or ROM extension code; the boot process follows the [Android Profile for
   DICE](#android-profile-for-dice).
 * SoC vendor certified DICE (Phase 3): This is identical to Phase 2, except the
   SoC vendor also does the UDS\_pub extraction or certification in their
