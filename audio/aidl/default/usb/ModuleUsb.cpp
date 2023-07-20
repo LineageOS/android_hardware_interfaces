@@ -68,22 +68,22 @@ ndk::ScopedAStatus ModuleUsb::setMicMute(bool in_mute __unused) {
     return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
 }
 
-ndk::ScopedAStatus ModuleUsb::createInputStream(const SinkMetadata& sinkMetadata,
-                                                StreamContext&& context,
+ndk::ScopedAStatus ModuleUsb::createInputStream(StreamContext&& context,
+                                                const SinkMetadata& sinkMetadata,
                                                 const std::vector<MicrophoneInfo>& microphones,
                                                 std::shared_ptr<StreamIn>* result) {
-    return createStreamInstance<StreamInUsb>(result, sinkMetadata, std::move(context), microphones);
+    return createStreamInstance<StreamInUsb>(result, std::move(context), sinkMetadata, microphones);
 }
 
-ndk::ScopedAStatus ModuleUsb::createOutputStream(const SourceMetadata& sourceMetadata,
-                                                 StreamContext&& context,
+ndk::ScopedAStatus ModuleUsb::createOutputStream(StreamContext&& context,
+                                                 const SourceMetadata& sourceMetadata,
                                                  const std::optional<AudioOffloadInfo>& offloadInfo,
                                                  std::shared_ptr<StreamOut>* result) {
     if (offloadInfo.has_value()) {
         LOG(ERROR) << __func__ << ": offload is not supported";
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
     }
-    return createStreamInstance<StreamOutUsb>(result, sourceMetadata, std::move(context),
+    return createStreamInstance<StreamOutUsb>(result, std::move(context), sourceMetadata,
                                               offloadInfo);
 }
 
