@@ -421,20 +421,26 @@ ScopedAStatus BroadcastRadio::stopProgramListUpdates() {
     return ScopedAStatus::ok();
 }
 
-ScopedAStatus BroadcastRadio::isConfigFlagSet(ConfigFlag flag, [[maybe_unused]] bool* returnIsSet) {
+ScopedAStatus BroadcastRadio::isConfigFlagSet(ConfigFlag flag, bool* returnIsSet) {
     LOG(DEBUG) << __func__ << ": flag = " << toString(flag);
 
-    LOG(INFO) << __func__ << ": getting ConfigFlag is not supported";
-    return ScopedAStatus::fromServiceSpecificErrorWithMessage(
-            resultToInt(Result::NOT_SUPPORTED), "getting ConfigFlag is not supported");
+    int flagBit = static_cast<int>(flag);
+    lock_guard<mutex> lk(mMutex);
+    *returnIsSet = ((mConfigFlagValues >> flagBit) & 1) == 1;
+    return ScopedAStatus::ok();
 }
 
 ScopedAStatus BroadcastRadio::setConfigFlag(ConfigFlag flag, bool value) {
     LOG(DEBUG) << __func__ << ": flag = " << toString(flag) << ", value = " << value;
 
-    LOG(INFO) << __func__ << ": setting ConfigFlag is not supported";
-    return ScopedAStatus::fromServiceSpecificErrorWithMessage(
-            resultToInt(Result::NOT_SUPPORTED), "setting ConfigFlag is not supported");
+    int flagBitMask = 1 << (static_cast<int>(flag));
+    lock_guard<mutex> lk(mMutex);
+    if (value) {
+        mConfigFlagValues |= flagBitMask;
+    } else {
+        mConfigFlagValues &= ~flagBitMask;
+    }
+    return ScopedAStatus::ok();
 }
 
 ScopedAStatus BroadcastRadio::setParameters(

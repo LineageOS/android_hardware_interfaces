@@ -75,6 +75,9 @@ class BroadcastRadio final : public BnBroadcastRadio {
     ProgramSelector mCurrentProgram GUARDED_BY(mMutex) = {};
     std::shared_ptr<ITunerCallback> mCallback GUARDED_BY(mMutex);
 
+    // Bitmap for all ConfigFlag values
+    int mConfigFlagValues GUARDED_BY(mMutex) = 0;
+
     std::optional<AmFmBandRange> getAmFmRangeLocked() const;
     void cancelLocked();
     ProgramInfo tuneInternalLocked(const ProgramSelector& sel);
