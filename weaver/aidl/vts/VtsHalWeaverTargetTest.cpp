@@ -25,6 +25,7 @@
 using ::aidl::android::hardware::weaver::IWeaver;
 using ::aidl::android::hardware::weaver::WeaverConfig;
 using ::aidl::android::hardware::weaver::WeaverReadResponse;
+using ::aidl::android::hardware::weaver::WeaverReadStatus;
 
 using ::ndk::SpAIBinder;
 
@@ -102,14 +103,17 @@ TEST_P(WeaverAidlTest, WriteFollowedByReadGivesTheSameValue) {
     WeaverReadResponse response;
     std::vector<uint8_t> readValue;
     uint32_t timeout;
+    WeaverReadStatus status;
     const auto readRet = weaver->read(slotId, KEY, &response);
 
     readValue = response.value;
     timeout = response.timeout;
+    status = response.status;
 
     ASSERT_TRUE(readRet.isOk());
     EXPECT_EQ(readValue, VALUE);
     EXPECT_EQ(timeout, 0u);
+    EXPECT_EQ(status, WeaverReadStatus::OK);
 }
 
 /*
@@ -128,14 +132,17 @@ TEST_P(WeaverAidlTest, OverwritingSlotUpdatesTheValue) {
     WeaverReadResponse response;
     std::vector<uint8_t> readValue;
     uint32_t timeout;
+    WeaverReadStatus status;
     const auto readRet = weaver->read(slotId, KEY, &response);
 
     readValue = response.value;
     timeout = response.timeout;
+    status = response.status;
 
     ASSERT_TRUE(readRet.isOk());
     EXPECT_EQ(readValue, OTHER_VALUE);
     EXPECT_EQ(timeout, 0u);
+    EXPECT_EQ(status, WeaverReadStatus::OK);
 }
 
 /*
@@ -149,15 +156,16 @@ TEST_P(WeaverAidlTest, WriteFollowedByReadWithWrongKeyDoesNotGiveTheValue) {
 
     WeaverReadResponse response;
     std::vector<uint8_t> readValue;
+    WeaverReadStatus status;
     const auto readRet =
         weaver->read(slotId, WRONG_KEY, &response);
 
     readValue = response.value;
+    status = response.status;
 
-    ASSERT_FALSE(readRet.isOk());
-    ASSERT_EQ(EX_SERVICE_SPECIFIC, readRet.getExceptionCode());
-    ASSERT_EQ(IWeaver::STATUS_INCORRECT_KEY, readRet.getServiceSpecificError());
+    ASSERT_TRUE(readRet.isOk());
     EXPECT_TRUE(readValue.empty());
+    EXPECT_EQ(status, WeaverReadStatus::INCORRECT_KEY);
 }
 
 /*
@@ -193,17 +201,18 @@ TEST_P(WeaverAidlTest, ReadingFromInvalidSlotFails) {
     WeaverReadResponse response;
     std::vector<uint8_t> readValue;
     uint32_t timeout;
+    WeaverReadStatus status;
     const auto readRet =
         weaver->read(config.slots, KEY, &response);
 
     readValue = response.value;
     timeout = response.timeout;
+    status = response.status;
 
-    ASSERT_FALSE(readRet.isOk());
-    ASSERT_EQ(EX_SERVICE_SPECIFIC, readRet.getExceptionCode());
-    ASSERT_EQ(IWeaver::STATUS_FAILED, readRet.getServiceSpecificError());
+    ASSERT_TRUE(readRet.isOk());
     EXPECT_TRUE(readValue.empty());
     EXPECT_EQ(timeout, 0u);
+    EXPECT_EQ(status, WeaverReadStatus::FAILED);
 }
 
 /*
@@ -250,17 +259,18 @@ TEST_P(WeaverAidlTest, ReadWithTooLargeKeyFails) {
     WeaverReadResponse response;
     std::vector<uint8_t> readValue;
     uint32_t timeout;
+    WeaverReadStatus status;
     const auto readRet =
         weaver->read(slotId, bigKey, &response);
 
     readValue = response.value;
     timeout = response.timeout;
+    status = response.status;
 
-    ASSERT_FALSE(readRet.isOk());
-    ASSERT_EQ(EX_SERVICE_SPECIFIC, readRet.getExceptionCode());
-    ASSERT_EQ(IWeaver::STATUS_FAILED, readRet.getServiceSpecificError());
+    ASSERT_TRUE(readRet.isOk());
     EXPECT_TRUE(readValue.empty());
     EXPECT_EQ(timeout, 0u);
+    EXPECT_EQ(status, WeaverReadStatus::FAILED);
 }
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(WeaverAidlTest);

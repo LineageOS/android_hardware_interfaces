@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +16,11 @@
 
 package android.hardware.weaver;
 
-import android.hardware.weaver.WeaverReadStatus;
-
 @VintfStability
-parcelable WeaverReadResponse {
-    /**
-     * The time to wait, in milliseconds, before making the next request,
-     * must be greater than or equal to zero and less than INT_MAX.
-     */
-    long timeout;
-    /**
-     * The value read from the slot or empty if the value was not read.
-     */
-    byte[] value;
-    /**
-     * Status from WeaverReadStatus
-     */
-    WeaverReadStatus status = WeaverReadStatus.FAILED;
+@Backing(type="int")
+enum WeaverReadStatus {
+    OK,
+    FAILED,
+    INCORRECT_KEY,
+    THROTTLE,
 }
-
