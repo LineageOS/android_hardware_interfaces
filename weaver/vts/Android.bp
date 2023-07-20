@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2017 The Android Open Source Project
+// Copyright (C) 2020 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,9 +24,22 @@ package {
 }
 
 cc_test {
-    name: "VtsHalWeaverV1_0TargetTest",
-    defaults: ["VtsHalTargetTestDefaults"],
-    srcs: ["VtsHalWeaverV1_0TargetTest.cpp"],
-    static_libs: ["android.hardware.weaver@1.0"],
-    test_suites: ["general-tests", "vts"],
+    name: "VtsHalWeaverTargetTest",
+    defaults: [
+        "VtsHalTargetTestDefaults",
+        "use_libaidlvintf_gtest_helper_static",
+    ],
+    srcs: ["VtsHalWeaverTargetTest.cpp"],
+    shared_libs: [
+        "libbinder_ndk",
+        "libbase",
+    ],
+    static_libs: [
+        "android.hardware.weaver-V2-ndk",
+        "android.hardware.weaver@1.0",
+    ],
+    test_suites: [
+        "general-tests",
+        "vts",
+    ],
 }
