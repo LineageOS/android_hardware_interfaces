@@ -30,13 +30,13 @@ class ModuleStub final : public Module {
     ndk::ScopedAStatus getBluetoothLe(std::shared_ptr<IBluetoothLe>* _aidl_return) override;
 
     ndk::ScopedAStatus createInputStream(
-            const ::aidl::android::hardware::audio::common::SinkMetadata& sinkMetadata,
             StreamContext&& context,
+            const ::aidl::android::hardware::audio::common::SinkMetadata& sinkMetadata,
             const std::vector<::aidl::android::media::audio::common::MicrophoneInfo>& microphones,
             std::shared_ptr<StreamIn>* result) override;
     ndk::ScopedAStatus createOutputStream(
-            const ::aidl::android::hardware::audio::common::SourceMetadata& sourceMetadata,
             StreamContext&& context,
+            const ::aidl::android::hardware::audio::common::SourceMetadata& sourceMetadata,
             const std::optional<::aidl::android::media::audio::common::AudioOffloadInfo>&
                     offloadInfo,
             std::shared_ptr<StreamOut>* result) override;

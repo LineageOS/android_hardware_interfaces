@@ -29,7 +29,7 @@ using aidl::android::hardware::audio::core::r_submix::SubmixRoute;
 
 class StreamRemoteSubmix : public StreamCommonImpl {
   public:
-    StreamRemoteSubmix(const Metadata& metadata, StreamContext&& context);
+    StreamRemoteSubmix(const StreamContext& context, const Metadata& metadata);
 
     ::android::status_t init() override;
     ::android::status_t drain(StreamDescriptor::DrainMode) override;
@@ -72,28 +72,32 @@ class StreamRemoteSubmix : public StreamCommonImpl {
     static constexpr int kReadAttemptSleepUs = 5000;
 };
 
-class StreamInRemoteSubmix final : public StreamRemoteSubmix, public StreamIn {
+class StreamInRemoteSubmix final : public StreamIn, public StreamRemoteSubmix {
   public:
     friend class ndk::SharedRefBase;
     StreamInRemoteSubmix(
-            const ::aidl::android::hardware::audio::common::SinkMetadata& sinkMetadata,
             StreamContext&& context,
+            const ::aidl::android::hardware::audio::common::SinkMetadata& sinkMetadata,
             const std::vector<::aidl::android::media::audio::common::MicrophoneInfo>& microphones);
 
   private:
+    void onClose() override { defaultOnClose(); }
     ndk::ScopedAStatus getActiveMicrophones(
             std::vector<::aidl::android::media::audio::common::MicrophoneDynamicInfo>* _aidl_return)
             override;
 };
 
-class StreamOutRemoteSubmix final : public StreamRemoteSubmix, public StreamOut {
+class StreamOutRemoteSubmix final : public StreamOut, public StreamRemoteSubmix {
   public:
     friend class ndk::SharedRefBase;
     StreamOutRemoteSubmix(
-            const ::aidl::android::hardware::audio::common::SourceMetadata& sourceMetadata,
             StreamContext&& context,
+            const ::aidl::android::hardware::audio::common::SourceMetadata& sourceMetadata,
             const std::optional<::aidl::android::media::audio::common::AudioOffloadInfo>&
                     offloadInfo);
+
+  private:
+    void onClose() override { defaultOnClose(); }
 };
 
 }  // namespace aidl::android::hardware::audio::core

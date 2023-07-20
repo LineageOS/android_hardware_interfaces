@@ -35,8 +35,8 @@ using aidl::android::media::audio::common::MicrophoneInfo;
 
 namespace aidl::android::hardware::audio::core {
 
-StreamUsb::StreamUsb(const Metadata& metadata, StreamContext&& context)
-    : StreamAlsa(metadata, std::move(context), 1 /*readWriteRetries*/) {}
+StreamUsb::StreamUsb(const StreamContext& context, const Metadata& metadata)
+    : StreamAlsa(context, metadata, 1 /*readWriteRetries*/) {}
 
 ndk::ScopedAStatus StreamUsb::setConnectedDevices(
         const std::vector<AudioDevice>& connectedDevices) {
@@ -55,7 +55,7 @@ ndk::ScopedAStatus StreamUsb::setConnectedDevices(
         }
         connectedDeviceProfiles.push_back(*profile);
     }
-    RETURN_STATUS_IF_ERROR(StreamCommonImpl::setConnectedDevices(connectedDevices));
+    RETURN_STATUS_IF_ERROR(setConnectedDevices(connectedDevices));
     std::lock_guard guard(mLock);
     mConnectedDeviceProfiles = std::move(connectedDeviceProfiles);
     mConnectedDevicesUpdated.store(true, std::memory_order_release);
@@ -83,9 +83,9 @@ std::vector<alsa::DeviceProfile> StreamUsb::getDeviceProfiles() {
     return connectedDevices;
 }
 
-StreamInUsb::StreamInUsb(const SinkMetadata& sinkMetadata, StreamContext&& context,
+StreamInUsb::StreamInUsb(StreamContext&& context, const SinkMetadata& sinkMetadata,
                          const std::vector<MicrophoneInfo>& microphones)
-    : StreamUsb(sinkMetadata, std::move(context)), StreamIn(microphones) {}
+    : StreamIn(std::move(context), microphones), StreamUsb(StreamIn::mContext, sinkMetadata) {}
 
 ndk::ScopedAStatus StreamInUsb::getActiveMicrophones(
         std::vector<MicrophoneDynamicInfo>* _aidl_return __unused) {
@@ -93,10 +93,10 @@ ndk::ScopedAStatus StreamInUsb::getActiveMicrophones(
     return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
 }
 
-StreamOutUsb::StreamOutUsb(const SourceMetadata& sourceMetadata, StreamContext&& context,
+StreamOutUsb::StreamOutUsb(StreamContext&& context, const SourceMetadata& sourceMetadata,
                            const std::optional<AudioOffloadInfo>& offloadInfo)
-    : StreamUsb(sourceMetadata, std::move(context)),
-      StreamOut(offloadInfo),
+    : StreamOut(std::move(context), offloadInfo),
+      StreamUsb(StreamOut::mContext, sourceMetadata),
       mChannelCount(getChannelCount(getContext().getChannelLayout())) {}
 
 ndk::ScopedAStatus StreamOutUsb::getHwVolume(std::vector<float>* _aidl_return) {
