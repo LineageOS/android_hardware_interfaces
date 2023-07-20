@@ -28,7 +28,7 @@ namespace aidl::android::hardware::audio::core {
 
 class StreamUsb : public StreamAlsa {
   public:
-    StreamUsb(const Metadata& metadata, StreamContext&& context);
+    StreamUsb(const StreamContext& context, const Metadata& metadata);
     // Methods of 'DriverInterface'.
     ::android::status_t transfer(void* buffer, size_t frameCount, size_t* actualFrameCount,
                                  int32_t* latencyMs) override;
@@ -44,29 +44,31 @@ class StreamUsb : public StreamAlsa {
     std::atomic<bool> mConnectedDevicesUpdated = false;
 };
 
-class StreamInUsb final : public StreamUsb, public StreamIn {
+class StreamInUsb final : public StreamIn, public StreamUsb {
   public:
     friend class ndk::SharedRefBase;
     StreamInUsb(
-            const ::aidl::android::hardware::audio::common::SinkMetadata& sinkMetadata,
             StreamContext&& context,
+            const ::aidl::android::hardware::audio::common::SinkMetadata& sinkMetadata,
             const std::vector<::aidl::android::media::audio::common::MicrophoneInfo>& microphones);
 
   private:
+    void onClose() override { defaultOnClose(); }
     ndk::ScopedAStatus getActiveMicrophones(
             std::vector<::aidl::android::media::audio::common::MicrophoneDynamicInfo>* _aidl_return)
             override;
 };
 
-class StreamOutUsb final : public StreamUsb, public StreamOut {
+class StreamOutUsb final : public StreamOut, public StreamUsb {
   public:
     friend class ndk::SharedRefBase;
-    StreamOutUsb(const ::aidl::android::hardware::audio::common::SourceMetadata& sourceMetadata,
-                 StreamContext&& context,
+    StreamOutUsb(StreamContext&& context,
+                 const ::aidl::android::hardware::audio::common::SourceMetadata& sourceMetadata,
                  const std::optional<::aidl::android::media::audio::common::AudioOffloadInfo>&
                          offloadInfo);
 
   private:
+    void onClose() override { defaultOnClose(); }
     ndk::ScopedAStatus getHwVolume(std::vector<float>* _aidl_return) override;
     ndk::ScopedAStatus setHwVolume(const std::vector<float>& in_channelVolumes) override;
 

@@ -663,7 +663,7 @@ ndk::ScopedAStatus StreamCommonImpl::close() {
         LOG(DEBUG) << __func__ << ": joining the worker thread...";
         mWorker->stop();
         LOG(DEBUG) << __func__ << ": worker thread joined";
-        mContext.reset();
+        onClose();
         mWorker->setClosed();
         return ndk::ScopedAStatus::ok();
     } else {
@@ -727,9 +727,13 @@ static std::map<AudioDevice, std::string> transformMicrophones(
 }
 }  // namespace
 
-StreamIn::StreamIn(const std::vector<MicrophoneInfo>& microphones)
-    : mMicrophones(transformMicrophones(microphones)) {
+StreamIn::StreamIn(StreamContext&& context, const std::vector<MicrophoneInfo>& microphones)
+    : mContext(std::move(context)), mMicrophones(transformMicrophones(microphones)) {
     LOG(DEBUG) << __func__;
+}
+
+void StreamIn::defaultOnClose() {
+    mContext.reset();
 }
 
 ndk::ScopedAStatus StreamIn::getActiveMicrophones(
@@ -784,9 +788,13 @@ ndk::ScopedAStatus StreamIn::setHwGain(const std::vector<float>& in_channelGains
     return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
 }
 
-StreamOut::StreamOut(const std::optional<AudioOffloadInfo>& offloadInfo)
-    : mOffloadInfo(offloadInfo) {
+StreamOut::StreamOut(StreamContext&& context, const std::optional<AudioOffloadInfo>& offloadInfo)
+    : mContext(std::move(context)), mOffloadInfo(offloadInfo) {
     LOG(DEBUG) << __func__;
+}
+
+void StreamOut::defaultOnClose() {
+    mContext.reset();
 }
 
 ndk::ScopedAStatus StreamOut::updateOffloadMetadata(
