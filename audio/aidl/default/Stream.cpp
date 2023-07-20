@@ -47,11 +47,17 @@ void StreamContext::fillDescriptor(StreamDescriptor* desc) {
         desc->reply = mReplyMQ->dupeDesc();
     }
     if (mDataMQ) {
-        const size_t frameSize = getFrameSize();
-        desc->frameSizeBytes = frameSize;
-        desc->bufferSizeFrames = mDataMQ->getQuantumCount() * mDataMQ->getQuantumSize() / frameSize;
+        desc->frameSizeBytes = getFrameSize();
+        desc->bufferSizeFrames = getBufferSizeInFrames();
         desc->audio.set<StreamDescriptor::AudioBuffer::Tag::fmq>(mDataMQ->dupeDesc());
     }
+}
+
+size_t StreamContext::getBufferSizeInFrames() const {
+    if (mDataMQ) {
+        return mDataMQ->getQuantumCount() * mDataMQ->getQuantumSize() / getFrameSize();
+    }
+    return 0;
 }
 
 size_t StreamContext::getFrameSize() const {
@@ -597,18 +603,16 @@ StreamCommonImpl::~StreamCommonImpl() {
 ndk::ScopedAStatus StreamCommonImpl::initInstance(
         const std::shared_ptr<StreamCommonInterface>& delegate) {
     mCommon = ndk::SharedRefBase::make<StreamCommonDelegator>(delegate);
-    mCommonBinder = mCommon->asBinder();
-    AIBinder_setMinSchedulerPolicy(mCommonBinder.get(), SCHED_NORMAL, ANDROID_PRIORITY_AUDIO);
     return mWorker->start() ? ndk::ScopedAStatus::ok()
                             : ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
 }
 
 ndk::ScopedAStatus StreamCommonImpl::getStreamCommonCommon(
         std::shared_ptr<IStreamCommon>* _aidl_return) {
-    if (mCommon == nullptr) {
+    if (!mCommon) {
         LOG(FATAL) << __func__ << ": the common interface was not created";
     }
-    *_aidl_return = mCommon;
+    *_aidl_return = mCommon.getPtr();
     LOG(DEBUG) << __func__ << ": returning " << _aidl_return->get()->asBinder().get();
     return ndk::ScopedAStatus::ok();
 }
@@ -659,7 +663,7 @@ ndk::ScopedAStatus StreamCommonImpl::close() {
         LOG(DEBUG) << __func__ << ": joining the worker thread...";
         mWorker->stop();
         LOG(DEBUG) << __func__ << ": worker thread joined";
-        mContext.reset();
+        onClose();
         mWorker->setClosed();
         return ndk::ScopedAStatus::ok();
     } else {
@@ -723,9 +727,13 @@ static std::map<AudioDevice, std::string> transformMicrophones(
 }
 }  // namespace
 
-StreamIn::StreamIn(const std::vector<MicrophoneInfo>& microphones)
-    : mMicrophones(transformMicrophones(microphones)) {
+StreamIn::StreamIn(StreamContext&& context, const std::vector<MicrophoneInfo>& microphones)
+    : mContext(std::move(context)), mMicrophones(transformMicrophones(microphones)) {
     LOG(DEBUG) << __func__;
+}
+
+void StreamIn::defaultOnClose() {
+    mContext.reset();
 }
 
 ndk::ScopedAStatus StreamIn::getActiveMicrophones(
@@ -780,9 +788,13 @@ ndk::ScopedAStatus StreamIn::setHwGain(const std::vector<float>& in_channelGains
     return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
 }
 
-StreamOut::StreamOut(const std::optional<AudioOffloadInfo>& offloadInfo)
-    : mOffloadInfo(offloadInfo) {
+StreamOut::StreamOut(StreamContext&& context, const std::optional<AudioOffloadInfo>& offloadInfo)
+    : mContext(std::move(context)), mOffloadInfo(offloadInfo) {
     LOG(DEBUG) << __func__;
+}
+
+void StreamOut::defaultOnClose() {
+    mContext.reset();
 }
 
 ndk::ScopedAStatus StreamOut::updateOffloadMetadata(

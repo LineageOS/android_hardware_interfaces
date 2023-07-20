@@ -31,8 +31,8 @@ using aidl::android::media::audio::common::MicrophoneInfo;
 
 namespace aidl::android::hardware::audio::core {
 
-StreamStub::StreamStub(const Metadata& metadata, StreamContext&& context)
-    : StreamCommonImpl(metadata, std::move(context)),
+StreamStub::StreamStub(const StreamContext& context, const Metadata& metadata)
+    : StreamCommonImpl(context, metadata),
       mFrameSizeBytes(getContext().getFrameSize()),
       mSampleRate(getContext().getSampleRate()),
       mIsAsynchronous(!!getContext().getAsyncCallback()),
@@ -118,12 +118,12 @@ void StreamStub::shutdown() {
     mIsInitialized = false;
 }
 
-StreamInStub::StreamInStub(const SinkMetadata& sinkMetadata, StreamContext&& context,
+StreamInStub::StreamInStub(StreamContext&& context, const SinkMetadata& sinkMetadata,
                            const std::vector<MicrophoneInfo>& microphones)
-    : StreamStub(sinkMetadata, std::move(context)), StreamIn(microphones) {}
+    : StreamIn(std::move(context), microphones), StreamStub(StreamIn::mContext, sinkMetadata) {}
 
-StreamOutStub::StreamOutStub(const SourceMetadata& sourceMetadata, StreamContext&& context,
+StreamOutStub::StreamOutStub(StreamContext&& context, const SourceMetadata& sourceMetadata,
                              const std::optional<AudioOffloadInfo>& offloadInfo)
-    : StreamStub(sourceMetadata, std::move(context)), StreamOut(offloadInfo) {}
+    : StreamOut(std::move(context), offloadInfo), StreamStub(StreamOut::mContext, sourceMetadata) {}
 
 }  // namespace aidl::android::hardware::audio::core

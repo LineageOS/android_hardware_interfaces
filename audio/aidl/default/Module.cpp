@@ -675,7 +675,7 @@ ndk::ScopedAStatus Module::openInputStream(const OpenInputStreamArguments& in_ar
                                                nullptr, nullptr, &context));
     context.fillDescriptor(&_aidl_return->desc);
     std::shared_ptr<StreamIn> stream;
-    RETURN_STATUS_IF_ERROR(createInputStream(in_args.sinkMetadata, std::move(context),
+    RETURN_STATUS_IF_ERROR(createInputStream(std::move(context), in_args.sinkMetadata,
                                              mConfig->microphones, &stream));
     StreamWrapper streamWrapper(stream);
     if (auto patchIt = mPatches.find(in_args.portConfigId); patchIt != mPatches.end()) {
@@ -721,7 +721,7 @@ ndk::ScopedAStatus Module::openOutputStream(const OpenOutputStreamArguments& in_
                                                in_args.eventCallback, &context));
     context.fillDescriptor(&_aidl_return->desc);
     std::shared_ptr<StreamOut> stream;
-    RETURN_STATUS_IF_ERROR(createOutputStream(in_args.sourceMetadata, std::move(context),
+    RETURN_STATUS_IF_ERROR(createOutputStream(std::move(context), in_args.sourceMetadata,
                                               in_args.offloadInfo, &stream));
     StreamWrapper streamWrapper(stream);
     if (auto patchIt = mPatches.find(in_args.portConfigId); patchIt != mPatches.end()) {
