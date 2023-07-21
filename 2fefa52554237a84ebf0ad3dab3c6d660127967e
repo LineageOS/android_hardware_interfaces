@@ -33,6 +33,24 @@
       "message": "I\u0027d still love to know what\u0027s being sent :)",
       "revId": "2fefa52554237a84ebf0ad3dab3c6d660127967e",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "90e52c40_0241bf94",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 27741
+      },
+      "writtenOn": "2023-07-21T17:10:41Z",
+      "side": 1,
+      "message": "Spoke to the author of the change (Billy) and it does seem to be 0-type packets being sent, which as Aaron pointed out you by definition cannot add.",
+      "parentUuid": "9cd8195a_51565986",
+      "revId": "2fefa52554237a84ebf0ad3dab3c6d660127967e",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
