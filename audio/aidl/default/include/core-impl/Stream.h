@@ -43,6 +43,7 @@
 #include <system/thread_defs.h>
 #include <utils/Errors.h>
 
+#include "core-impl/ChildInterface.h"
 #include "core-impl/utils.h"
 
 namespace aidl::android::hardware::audio::core {
@@ -132,6 +133,7 @@ class StreamContext {
 
     void fillDescriptor(StreamDescriptor* desc);
     std::shared_ptr<IStreamCallback> getAsyncCallback() const { return mAsyncCallback; }
+    size_t getBufferSizeInFrames() const;
     ::aidl::android::media::audio::common::AudioChannelLayout getChannelLayout() const {
         return mChannelLayout;
     }
@@ -409,16 +411,17 @@ class StreamCommonDelegator : public BnStreamCommon {
 };
 
 // The implementation of DriverInterface must be provided by each concrete stream implementation.
+// Note that StreamCommonImpl does not own the context. This is to support swapping on the fly
+// implementations of the stream while keeping the same IStreamIn/Out instance. It's that instance
+// who must be owner of the context.
 class StreamCommonImpl : virtual public StreamCommonInterface, virtual public DriverInterface {
   public:
-    StreamCommonImpl(const Metadata& metadata, StreamContext&& context,
+    StreamCommonImpl(const StreamContext& context, const Metadata& metadata,
                      const StreamWorkerInterface::CreateInstance& createWorker)
-        : mMetadata(metadata),
-          mContext(std::move(context)),
-          mWorker(createWorker(mContext, this)) {}
-    StreamCommonImpl(const Metadata& metadata, StreamContext&& context)
+        : mContext(context), mMetadata(metadata), mWorker(createWorker(mContext, this)) {}
+    StreamCommonImpl(const StreamContext& context, const Metadata& metadata)
         : StreamCommonImpl(
-                  metadata, std::move(context),
+                  context, metadata,
                   isInput(metadata) ? getDefaultInWorkerCreator() : getDefaultOutWorkerCreator()) {}
     ~StreamCommonImpl();
 
@@ -460,13 +463,13 @@ class StreamCommonImpl : virtual public StreamCommonInterface, virtual public Dr
         };
     }
 
+    virtual void onClose() = 0;
     void stopWorker();
 
+    const StreamContext& mContext;
     Metadata mMetadata;
-    StreamContext mContext;
     std::unique_ptr<StreamWorkerInterface> mWorker;
-    std::shared_ptr<StreamCommonDelegator> mCommon;
-    ndk::SpAIBinder mCommonBinder;
+    ChildInterface<StreamCommonDelegator> mCommon;
     ConnectedDevices mConnectedDevices;
 };
 
@@ -474,6 +477,8 @@ class StreamCommonImpl : virtual public StreamCommonInterface, virtual public Dr
 // concrete input/output stream implementations.
 class StreamIn : virtual public StreamCommonInterface, public BnStreamIn {
   protected:
+    void defaultOnClose();
+
     ndk::ScopedAStatus getStreamCommon(std::shared_ptr<IStreamCommon>* _aidl_return) override {
         return getStreamCommonCommon(_aidl_return);
     }
@@ -493,14 +498,17 @@ class StreamIn : virtual public StreamCommonInterface, public BnStreamIn {
 
     friend class ndk::SharedRefBase;
 
-    explicit StreamIn(
-            const std::vector<::aidl::android::media::audio::common::MicrophoneInfo>& microphones);
+    StreamIn(StreamContext&& context,
+             const std::vector<::aidl::android::media::audio::common::MicrophoneInfo>& microphones);
 
+    StreamContext mContext;
     const std::map<::aidl::android::media::audio::common::AudioDevice, std::string> mMicrophones;
 };
 
 class StreamOut : virtual public StreamCommonInterface, public BnStreamOut {
   protected:
+    void defaultOnClose();
+
     ndk::ScopedAStatus getStreamCommon(std::shared_ptr<IStreamCommon>* _aidl_return) override {
         return getStreamCommonCommon(_aidl_return);
     }
@@ -534,10 +542,12 @@ class StreamOut : virtual public StreamCommonInterface, public BnStreamOut {
 
     friend class ndk::SharedRefBase;
 
-    explicit StreamOut(const std::optional<::aidl::android::media::audio::common::AudioOffloadInfo>&
-                               offloadInfo);
+    StreamOut(StreamContext&& context,
+              const std::optional<::aidl::android::media::audio::common::AudioOffloadInfo>&
+                      offloadInfo);
 
-    std::optional<::aidl::android::media::audio::common::AudioOffloadInfo> mOffloadInfo;
+    StreamContext mContext;
+    const std::optional<::aidl::android::media::audio::common::AudioOffloadInfo> mOffloadInfo;
     std::optional<::aidl::android::hardware::audio::common::AudioOffloadMetadata> mOffloadMetadata;
 };
 

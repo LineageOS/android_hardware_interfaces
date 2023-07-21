@@ -22,7 +22,7 @@ namespace aidl::android::hardware::audio::core {
 
 class StreamStub : public StreamCommonImpl {
   public:
-    StreamStub(const Metadata& metadata, StreamContext&& context);
+    StreamStub(const StreamContext& context, const Metadata& metadata);
     // Methods of 'DriverInterface'.
     ::android::status_t init() override;
     ::android::status_t drain(StreamDescriptor::DrainMode) override;
@@ -43,22 +43,28 @@ class StreamStub : public StreamCommonImpl {
     bool mIsStandby = true;       // Used for validating the state machine logic.
 };
 
-class StreamInStub final : public StreamStub, public StreamIn {
+class StreamInStub final : public StreamIn, public StreamStub {
   public:
     friend class ndk::SharedRefBase;
     StreamInStub(
-            const ::aidl::android::hardware::audio::common::SinkMetadata& sinkMetadata,
             StreamContext&& context,
+            const ::aidl::android::hardware::audio::common::SinkMetadata& sinkMetadata,
             const std::vector<::aidl::android::media::audio::common::MicrophoneInfo>& microphones);
+
+  private:
+    void onClose() override { defaultOnClose(); }
 };
 
-class StreamOutStub final : public StreamStub, public StreamOut {
+class StreamOutStub final : public StreamOut, public StreamStub {
   public:
     friend class ndk::SharedRefBase;
-    StreamOutStub(const ::aidl::android::hardware::audio::common::SourceMetadata& sourceMetadata,
-                  StreamContext&& context,
+    StreamOutStub(StreamContext&& context,
+                  const ::aidl::android::hardware::audio::common::SourceMetadata& sourceMetadata,
                   const std::optional<::aidl::android::media::audio::common::AudioOffloadInfo>&
                           offloadInfo);
+
+  private:
+    void onClose() override { defaultOnClose(); }
 };
 
 }  // namespace aidl::android::hardware::audio::core
