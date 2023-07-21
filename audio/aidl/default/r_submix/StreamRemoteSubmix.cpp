@@ -29,8 +29,8 @@ using aidl::android::media::audio::common::MicrophoneInfo;
 
 namespace aidl::android::hardware::audio::core {
 
-StreamRemoteSubmix::StreamRemoteSubmix(const Metadata& metadata, StreamContext&& context)
-    : StreamCommonImpl(metadata, std::move(context)),
+StreamRemoteSubmix::StreamRemoteSubmix(const StreamContext& context, const Metadata& metadata)
+    : StreamCommonImpl(context, metadata),
       mPortId(context.getPortId()),
       mIsInput(isInput(metadata)) {
     mStreamConfig.frameSize = context.getFrameSize();
@@ -353,10 +353,11 @@ size_t StreamRemoteSubmix::getStreamPipeSizeInFrames() {
     return ::android::OK;
 }
 
-StreamInRemoteSubmix::StreamInRemoteSubmix(const SinkMetadata& sinkMetadata,
-                                           StreamContext&& context,
+StreamInRemoteSubmix::StreamInRemoteSubmix(StreamContext&& context,
+                                           const SinkMetadata& sinkMetadata,
                                            const std::vector<MicrophoneInfo>& microphones)
-    : StreamRemoteSubmix(sinkMetadata, std::move(context)), StreamIn(microphones) {}
+    : StreamIn(std::move(context), microphones),
+      StreamRemoteSubmix(StreamIn::mContext, sinkMetadata) {}
 
 ndk::ScopedAStatus StreamInRemoteSubmix::getActiveMicrophones(
         std::vector<MicrophoneDynamicInfo>* _aidl_return) {
@@ -365,9 +366,10 @@ ndk::ScopedAStatus StreamInRemoteSubmix::getActiveMicrophones(
     return ndk::ScopedAStatus::ok();
 }
 
-StreamOutRemoteSubmix::StreamOutRemoteSubmix(const SourceMetadata& sourceMetadata,
-                                             StreamContext&& context,
+StreamOutRemoteSubmix::StreamOutRemoteSubmix(StreamContext&& context,
+                                             const SourceMetadata& sourceMetadata,
                                              const std::optional<AudioOffloadInfo>& offloadInfo)
-    : StreamRemoteSubmix(sourceMetadata, std::move(context)), StreamOut(offloadInfo) {}
+    : StreamOut(std::move(context), offloadInfo),
+      StreamRemoteSubmix(StreamOut::mContext, sourceMetadata) {}
 
 }  // namespace aidl::android::hardware::audio::core
