@@ -38,7 +38,8 @@ ndk::ScopedAStatus ModuleStub::getBluetooth(std::shared_ptr<IBluetooth>* _aidl_r
         mBluetooth = ndk::SharedRefBase::make<Bluetooth>();
     }
     *_aidl_return = mBluetooth.getPtr();
-    LOG(DEBUG) << __func__ << ": returning instance of IBluetooth: " << _aidl_return->get();
+    LOG(DEBUG) << __func__
+               << ": returning instance of IBluetooth: " << _aidl_return->get()->asBinder().get();
     return ndk::ScopedAStatus::ok();
 }
 
@@ -47,7 +48,8 @@ ndk::ScopedAStatus ModuleStub::getBluetoothA2dp(std::shared_ptr<IBluetoothA2dp>*
         mBluetoothA2dp = ndk::SharedRefBase::make<BluetoothA2dp>();
     }
     *_aidl_return = mBluetoothA2dp.getPtr();
-    LOG(DEBUG) << __func__ << ": returning instance of IBluetoothA2dp: " << _aidl_return->get();
+    LOG(DEBUG) << __func__ << ": returning instance of IBluetoothA2dp: "
+               << _aidl_return->get()->asBinder().get();
     return ndk::ScopedAStatus::ok();
 }
 
@@ -56,22 +58,23 @@ ndk::ScopedAStatus ModuleStub::getBluetoothLe(std::shared_ptr<IBluetoothLe>* _ai
         mBluetoothLe = ndk::SharedRefBase::make<BluetoothLe>();
     }
     *_aidl_return = mBluetoothLe.getPtr();
-    LOG(DEBUG) << __func__ << ": returning instance of IBluetoothLe: " << _aidl_return->get();
+    LOG(DEBUG) << __func__
+               << ": returning instance of IBluetoothLe: " << _aidl_return->get()->asBinder().get();
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus ModuleStub::createInputStream(const SinkMetadata& sinkMetadata,
-                                                 StreamContext&& context,
+ndk::ScopedAStatus ModuleStub::createInputStream(StreamContext&& context,
+                                                 const SinkMetadata& sinkMetadata,
                                                  const std::vector<MicrophoneInfo>& microphones,
                                                  std::shared_ptr<StreamIn>* result) {
-    return createStreamInstance<StreamInStub>(result, sinkMetadata, std::move(context),
+    return createStreamInstance<StreamInStub>(result, std::move(context), sinkMetadata,
                                               microphones);
 }
 
 ndk::ScopedAStatus ModuleStub::createOutputStream(
-        const SourceMetadata& sourceMetadata, StreamContext&& context,
+        StreamContext&& context, const SourceMetadata& sourceMetadata,
         const std::optional<AudioOffloadInfo>& offloadInfo, std::shared_ptr<StreamOut>* result) {
-    return createStreamInstance<StreamOutStub>(result, sourceMetadata, std::move(context),
+    return createStreamInstance<StreamOutStub>(result, std::move(context), sourceMetadata,
                                                offloadInfo);
 }
 

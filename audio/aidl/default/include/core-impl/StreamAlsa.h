@@ -31,9 +31,12 @@ namespace aidl::android::hardware::audio::core {
 // provide necessary overrides for all interface methods omitted here.
 class StreamAlsa : public StreamCommonImpl {
   public:
-    StreamAlsa(const Metadata& metadata, StreamContext&& context);
+    StreamAlsa(const StreamContext& context, const Metadata& metadata, int readWriteRetries);
     // Methods of 'DriverInterface'.
     ::android::status_t init() override;
+    ::android::status_t drain(StreamDescriptor::DrainMode) override;
+    ::android::status_t flush() override;
+    ::android::status_t pause() override;
     ::android::status_t standby() override;
     ::android::status_t start() override;
     ::android::status_t transfer(void* buffer, size_t frameCount, size_t* actualFrameCount,
@@ -48,6 +51,7 @@ class StreamAlsa : public StreamCommonImpl {
     const size_t mFrameSizeBytes;
     const bool mIsInput;
     const std::optional<struct pcm_config> mConfig;
+    const int mReadWriteRetries;
     // All fields below are only used on the worker thread.
     std::vector<alsa::DeviceProxy> mAlsaDeviceProxies;
 };
