@@ -269,6 +269,7 @@ TEST_F(FakeFingerprintEngineTest, AuthenticateNotEnrolled) {
     mEngine.authenticateImpl(mCallback.get(), 0, mCancel.get_future());
     mEngine.fingerDownAction();
     ASSERT_TRUE(mCallback->mAuthenticateFailed);
+    ASSERT_EQ(mEngine.getWorkMode(), FakeFingerprintEngine::WorkMode::kAuthenticate);
 }
 
 TEST_F(FakeFingerprintEngineTest, AuthenticateLockout) {
