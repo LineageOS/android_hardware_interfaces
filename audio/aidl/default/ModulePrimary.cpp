@@ -38,22 +38,23 @@ ndk::ScopedAStatus ModulePrimary::getTelephony(std::shared_ptr<ITelephony>* _aid
         mTelephony = ndk::SharedRefBase::make<Telephony>();
     }
     *_aidl_return = mTelephony.getPtr();
-    LOG(DEBUG) << __func__ << ": returning instance of ITelephony: " << _aidl_return->get();
+    LOG(DEBUG) << __func__
+               << ": returning instance of ITelephony: " << _aidl_return->get()->asBinder().get();
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus ModulePrimary::createInputStream(const SinkMetadata& sinkMetadata,
-                                                    StreamContext&& context,
+ndk::ScopedAStatus ModulePrimary::createInputStream(StreamContext&& context,
+                                                    const SinkMetadata& sinkMetadata,
                                                     const std::vector<MicrophoneInfo>& microphones,
                                                     std::shared_ptr<StreamIn>* result) {
-    return createStreamInstance<StreamInStub>(result, sinkMetadata, std::move(context),
+    return createStreamInstance<StreamInStub>(result, std::move(context), sinkMetadata,
                                               microphones);
 }
 
 ndk::ScopedAStatus ModulePrimary::createOutputStream(
-        const SourceMetadata& sourceMetadata, StreamContext&& context,
+        StreamContext&& context, const SourceMetadata& sourceMetadata,
         const std::optional<AudioOffloadInfo>& offloadInfo, std::shared_ptr<StreamOut>* result) {
-    return createStreamInstance<StreamOutStub>(result, sourceMetadata, std::move(context),
+    return createStreamInstance<StreamOutStub>(result, std::move(context), sourceMetadata,
                                                offloadInfo);
 }
 
