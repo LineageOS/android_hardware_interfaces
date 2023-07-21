@@ -51,6 +51,24 @@
       "parentUuid": "9cd8195a_51565986",
       "revId": "2fefa52554237a84ebf0ad3dab3c6d660127967e",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3dd3b7ef_5b3f9911",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 11883
+      },
+      "writtenOn": "2023-07-21T17:41:40Z",
+      "side": 1,
+      "message": "if that\u0027s still required, add extra cases/if for HCI_PACKET_TYPE_UNKNOWN and print an error ( like you\u0027re doing now ) and still preserve the fatal cases for other types",
+      "parentUuid": "90e52c40_0241bf94",
+      "revId": "2fefa52554237a84ebf0ad3dab3c6d660127967e",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
