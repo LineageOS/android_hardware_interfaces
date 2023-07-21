@@ -258,7 +258,7 @@ bool FakeFingerprintEngine::onAuthenticateFingerDown(ISessionCallback* cb,
         cb->onAuthenticationFailed();
         mLockoutTracker.addFailedAttempt();
         checkSensorLockout(cb);
-        return true;
+        return false;
     }
 }
 
