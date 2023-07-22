@@ -31,7 +31,7 @@ using aidl::android::media::audio::common::MicrophoneInfo;
 
 namespace aidl::android::hardware::audio::core {
 
-StreamStub::StreamStub(const StreamContext& context, const Metadata& metadata)
+StreamStub::StreamStub(StreamContext* context, const Metadata& metadata)
     : StreamCommonImpl(context, metadata),
       mFrameSizeBytes(getContext().getFrameSize()),
       mSampleRate(getContext().getSampleRate()),
@@ -120,10 +120,11 @@ void StreamStub::shutdown() {
 
 StreamInStub::StreamInStub(StreamContext&& context, const SinkMetadata& sinkMetadata,
                            const std::vector<MicrophoneInfo>& microphones)
-    : StreamIn(std::move(context), microphones), StreamStub(StreamIn::mContext, sinkMetadata) {}
+    : StreamIn(std::move(context), microphones), StreamStub(&(StreamIn::mContext), sinkMetadata) {}
 
 StreamOutStub::StreamOutStub(StreamContext&& context, const SourceMetadata& sourceMetadata,
                              const std::optional<AudioOffloadInfo>& offloadInfo)
-    : StreamOut(std::move(context), offloadInfo), StreamStub(StreamOut::mContext, sourceMetadata) {}
+    : StreamOut(std::move(context), offloadInfo),
+      StreamStub(&(StreamOut::mContext), sourceMetadata) {}
 
 }  // namespace aidl::android::hardware::audio::core

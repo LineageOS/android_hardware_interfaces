@@ -29,7 +29,7 @@ using aidl::android::hardware::audio::core::r_submix::SubmixRoute;
 
 class StreamRemoteSubmix : public StreamCommonImpl {
   public:
-    StreamRemoteSubmix(const StreamContext& context, const Metadata& metadata);
+    StreamRemoteSubmix(StreamContext* context, const Metadata& metadata);
 
     ::android::status_t init() override;
     ::android::status_t drain(StreamDescriptor::DrainMode) override;
