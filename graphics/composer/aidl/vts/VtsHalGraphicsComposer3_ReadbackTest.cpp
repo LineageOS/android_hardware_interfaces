@@ -129,33 +129,20 @@ class GraphicsCompositionTestBase : public ::testing::Test {
         return {false, graphicBuffer};
     }
 
-    uint64_t getStableDisplayId(int64_t display) {
-        const auto& [status, identification] =
-                mComposerClient->getDisplayIdentificationData(display);
-        EXPECT_TRUE(status.isOk());
-
-        if (const auto info = ::android::parseDisplayIdentificationData(
-                    static_cast<uint8_t>(identification.port), identification.data)) {
-            return info->id.value;
-        }
-
-        return ::android::PhysicalDisplayId::fromPort(static_cast<uint8_t>(identification.port))
-                .value;
-    }
-
     // Gets the per-display XML config
     std::unique_ptr<tinyxml2::XMLDocument> getDisplayConfigXml(int64_t display) {
-        std::stringstream pathBuilder;
-        pathBuilder << "/vendor/etc/displayconfig/display_id_" << getStableDisplayId(display)
-                    << ".xml";
-        const std::string path = pathBuilder.str();
-        auto document = std::make_unique<tinyxml2::XMLDocument>();
-        const tinyxml2::XMLError error = document->LoadFile(path.c_str());
-        if (error == tinyxml2::XML_SUCCESS) {
+
+        if (auto document = getDisplayConfigXmlByStableId(getStableDisplayId(display));
+                document != nullptr) {
             return document;
-        } else {
-            return nullptr;
         }
+
+        // Fallback to looking up a per-port config if no config exists for the full ID
+        if (auto document = getDisplayConfigXmlByPort(getPort(display)); document != nullptr) {
+            return document;
+        }
+
+        return nullptr;
     }
 
     // Gets the max display brightness for this display.
@@ -255,6 +242,53 @@ class GraphicsCompositionTestBase : public ::testing::Test {
                 mTestColorModes.push_back(mode);
             }
         }
+    }
+
+    uint8_t getPort(int64_t display) {
+        const auto& [status, identification] =
+                mComposerClient->getDisplayIdentificationData(display);
+        EXPECT_TRUE(status.isOk());
+        return static_cast<uint8_t>(identification.port);
+    }
+
+    uint64_t getStableDisplayId(int64_t display) {
+        const auto& [status, identification] =
+                mComposerClient->getDisplayIdentificationData(display);
+        EXPECT_TRUE(status.isOk());
+
+        if (const auto info = ::android::parseDisplayIdentificationData(
+                    static_cast<uint8_t>(identification.port), identification.data)) {
+            return info->id.value;
+        }
+
+        return ::android::PhysicalDisplayId::fromPort(static_cast<uint8_t>(identification.port))
+                .value;
+    }
+
+    std::unique_ptr<tinyxml2::XMLDocument> loadXml(const std::string& path) {
+        auto document = std::make_unique<tinyxml2::XMLDocument>();
+        const tinyxml2::XMLError error = document->LoadFile(path.c_str());
+        if (error != tinyxml2::XML_SUCCESS) {
+            ALOGD("%s: Failed to load config file: %s", __func__, path.c_str());
+            return nullptr;
+        }
+
+        ALOGD("%s: Successfully loaded config file: %s", __func__, path.c_str());
+        return document;
+    }
+
+    std::unique_ptr<tinyxml2::XMLDocument> getDisplayConfigXmlByPort(uint8_t port) {
+        std::stringstream pathBuilder;
+        pathBuilder << "/vendor/etc/displayconfig/display_port_" << static_cast<uint32_t>(port)
+                    << ".xml";
+        return loadXml(pathBuilder.str());
+    }
+
+    std::unique_ptr<tinyxml2::XMLDocument> getDisplayConfigXmlByStableId(uint64_t stableId) {
+        std::stringstream pathBuilder;
+        pathBuilder << "/vendor/etc/displayconfig/display_id_" << stableId
+                    << ".xml";
+       return loadXml(pathBuilder.str());
     }
 };
 
