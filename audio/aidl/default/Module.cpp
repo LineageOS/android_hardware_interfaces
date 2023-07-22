@@ -1129,7 +1129,7 @@ ndk::ScopedAStatus Module::getSoundDose(std::shared_ptr<ISoundDose>* _aidl_retur
     if (!mSoundDose) {
         mSoundDose = ndk::SharedRefBase::make<sounddose::SoundDose>();
     }
-    *_aidl_return = mSoundDose.getPtr();
+    *_aidl_return = mSoundDose.getInstance();
     LOG(DEBUG) << __func__ << ": returning instance of ISoundDose: " << _aidl_return->get();
     return ndk::ScopedAStatus::ok();
 }

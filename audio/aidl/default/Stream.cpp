@@ -612,7 +612,7 @@ ndk::ScopedAStatus StreamCommonImpl::getStreamCommonCommon(
     if (!mCommon) {
         LOG(FATAL) << __func__ << ": the common interface was not created";
     }
-    *_aidl_return = mCommon.getPtr();
+    *_aidl_return = mCommon.getInstance();
     LOG(DEBUG) << __func__ << ": returning " << _aidl_return->get()->asBinder().get();
     return ndk::ScopedAStatus::ok();
 }
