@@ -35,14 +35,20 @@ struct ChildInterface : private std::pair<std::shared_ptr<C>, ndk::SpAIBinder> {
     }
     ChildInterface& operator=(std::shared_ptr<C>&& c) {
         this->first = std::move(c);
-        this->second = this->first->asBinder();
-        AIBinder_setMinSchedulerPolicy(this->second.get(), SCHED_NORMAL, ANDROID_PRIORITY_AUDIO);
         return *this;
     }
     explicit operator bool() const { return !!this->first; }
     C& operator*() const { return *(this->first); }
     C* operator->() const { return this->first; }
-    std::shared_ptr<C> getPtr() const { return this->first; }
+    // Use 'getInstance' when returning the interface instance.
+    std::shared_ptr<C> getInstance() {
+        if (this->second.get() == nullptr) {
+            this->second = this->first->asBinder();
+            AIBinder_setMinSchedulerPolicy(this->second.get(), SCHED_NORMAL,
+                                           ANDROID_PRIORITY_AUDIO);
+        }
+        return this->first;
+    }
 };
 
 }  // namespace aidl::android::hardware::audio::core
