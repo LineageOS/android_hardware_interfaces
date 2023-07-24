@@ -48,7 +48,9 @@ class StreamAlsa : public StreamCommonImpl {
     // Called from 'start' to initialize 'mAlsaDeviceProxies', the vector must be non-empty.
     virtual std::vector<alsa::DeviceProfile> getDeviceProfiles() = 0;
 
+    const size_t mBufferSizeFrames;
     const size_t mFrameSizeBytes;
+    const int mSampleRate;
     const bool mIsInput;
     const std::optional<struct pcm_config> mConfig;
     const int mReadWriteRetries;
