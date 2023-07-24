@@ -511,6 +511,17 @@ class StreamIn : virtual public StreamCommonInterface, public BnStreamIn {
     const std::map<::aidl::android::media::audio::common::AudioDevice, std::string> mMicrophones;
 };
 
+class StreamInHwGainHelper {
+  protected:
+    explicit StreamInHwGainHelper(const StreamContext* context);
+
+    ndk::ScopedAStatus getHwGainImpl(std::vector<float>* _aidl_return);
+    ndk::ScopedAStatus setHwGainImpl(const std::vector<float>& in_channelGains);
+
+    const size_t mChannelCount;
+    std::vector<float> mHwGains;
+};
+
 class StreamOut : virtual public StreamCommonInterface, public BnStreamOut {
   protected:
     void defaultOnClose();
@@ -555,6 +566,17 @@ class StreamOut : virtual public StreamCommonInterface, public BnStreamOut {
     StreamContext mContextInstance;
     const std::optional<::aidl::android::media::audio::common::AudioOffloadInfo> mOffloadInfo;
     std::optional<::aidl::android::hardware::audio::common::AudioOffloadMetadata> mOffloadMetadata;
+};
+
+class StreamOutHwVolumeHelper {
+  protected:
+    explicit StreamOutHwVolumeHelper(const StreamContext* context);
+
+    ndk::ScopedAStatus getHwVolumeImpl(std::vector<float>* _aidl_return);
+    ndk::ScopedAStatus setHwVolumeImpl(const std::vector<float>& in_channelVolumes);
+
+    const size_t mChannelCount;
+    std::vector<float> mHwVolumes;
 };
 
 // The recommended way to create a stream instance.

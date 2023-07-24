@@ -238,8 +238,8 @@ StreamInWorkerLogic::Status StreamInWorkerLogic::cycle() {
             break;
         case Tag::standby:
             if (mState == StreamDescriptor::State::IDLE) {
+                populateReply(&reply, mIsConnected);
                 if (::android::status_t status = mDriver->standby(); status == ::android::OK) {
-                    populateReply(&reply, mIsConnected);
                     mState = StreamDescriptor::State::STANDBY;
                 } else {
                     LOG(ERROR) << __func__ << ": standby failed: " << status;
@@ -492,8 +492,8 @@ StreamOutWorkerLogic::Status StreamOutWorkerLogic::cycle() {
             break;
         case Tag::standby:
             if (mState == StreamDescriptor::State::IDLE) {
+                populateReply(&reply, mIsConnected);
                 if (::android::status_t status = mDriver->standby(); status == ::android::OK) {
-                    populateReply(&reply, mIsConnected);
                     mState = StreamDescriptor::State::STANDBY;
                 } else {
                     LOG(ERROR) << __func__ << ": standby failed: " << status;
@@ -799,6 +799,32 @@ ndk::ScopedAStatus StreamIn::setHwGain(const std::vector<float>& in_channelGains
     return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
 }
 
+StreamInHwGainHelper::StreamInHwGainHelper(const StreamContext* context)
+    : mChannelCount(getChannelCount(context->getChannelLayout())) {}
+
+ndk::ScopedAStatus StreamInHwGainHelper::getHwGainImpl(std::vector<float>* _aidl_return) {
+    *_aidl_return = mHwGains;
+    LOG(DEBUG) << __func__ << ": returning " << ::android::internal::ToString(*_aidl_return);
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus StreamInHwGainHelper::setHwGainImpl(const std::vector<float>& in_channelGains) {
+    LOG(DEBUG) << __func__ << ": gains " << ::android::internal::ToString(in_channelGains);
+    if (in_channelGains.size() != mChannelCount) {
+        LOG(ERROR) << __func__
+                   << ": channel count does not match stream channel count: " << mChannelCount;
+        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+    }
+    for (float gain : in_channelGains) {
+        if (gain < StreamIn::HW_GAIN_MIN || gain > StreamIn::HW_GAIN_MAX) {
+            LOG(ERROR) << __func__ << ": gain value out of range: " << gain;
+            return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+        }
+    }
+    mHwGains = in_channelGains;
+    return ndk::ScopedAStatus::ok();
+}
+
 StreamOut::StreamOut(StreamContext&& context, const std::optional<AudioOffloadInfo>& offloadInfo)
     : mContextInstance(std::move(context)), mOffloadInfo(offloadInfo) {
     LOG(DEBUG) << __func__;
@@ -902,6 +928,33 @@ ndk::ScopedAStatus StreamOut::selectPresentation(int32_t in_presentationId, int3
     LOG(DEBUG) << __func__ << ": presentationId " << in_presentationId << ", programId "
                << in_programId;
     return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+}
+
+StreamOutHwVolumeHelper::StreamOutHwVolumeHelper(const StreamContext* context)
+    : mChannelCount(getChannelCount(context->getChannelLayout())) {}
+
+ndk::ScopedAStatus StreamOutHwVolumeHelper::getHwVolumeImpl(std::vector<float>* _aidl_return) {
+    *_aidl_return = mHwVolumes;
+    LOG(DEBUG) << __func__ << ": returning " << ::android::internal::ToString(*_aidl_return);
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus StreamOutHwVolumeHelper::setHwVolumeImpl(
+        const std::vector<float>& in_channelVolumes) {
+    LOG(DEBUG) << __func__ << ": volumes " << ::android::internal::ToString(in_channelVolumes);
+    if (in_channelVolumes.size() != mChannelCount) {
+        LOG(ERROR) << __func__
+                   << ": channel count does not match stream channel count: " << mChannelCount;
+        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+    }
+    for (float volume : in_channelVolumes) {
+        if (volume < StreamOut::HW_VOLUME_MIN || volume > StreamOut::HW_VOLUME_MAX) {
+            LOG(ERROR) << __func__ << ": volume value out of range: " << volume;
+            return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+        }
+    }
+    mHwVolumes = in_channelVolumes;
+    return ndk::ScopedAStatus::ok();
 }
 
 }  // namespace aidl::android::hardware::audio::core

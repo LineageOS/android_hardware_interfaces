@@ -33,6 +33,7 @@ namespace aidl::android::hardware::audio::core {
 
 StreamStub::StreamStub(StreamContext* context, const Metadata& metadata)
     : StreamCommonImpl(context, metadata),
+      mBufferSizeFrames(getContext().getBufferSizeInFrames()),
       mFrameSizeBytes(getContext().getFrameSize()),
       mSampleRate(getContext().getSampleRate()),
       mIsAsynchronous(!!getContext().getAsyncCallback()),
@@ -40,7 +41,6 @@ StreamStub::StreamStub(StreamContext* context, const Metadata& metadata)
 
 ::android::status_t StreamStub::init() {
     mIsInitialized = true;
-    usleep(500);
     return ::android::OK;
 }
 
@@ -48,7 +48,16 @@ StreamStub::StreamStub(StreamContext* context, const Metadata& metadata)
     if (!mIsInitialized) {
         LOG(FATAL) << __func__ << ": must not happen for an uninitialized driver";
     }
-    usleep(500);
+    if (!mIsInput) {
+        if (!mIsAsynchronous) {
+            static constexpr float kMicrosPerSecond = MICROS_PER_SECOND;
+            const size_t delayUs = static_cast<size_t>(
+                    std::roundf(mBufferSizeFrames * kMicrosPerSecond / mSampleRate));
+            usleep(delayUs);
+        } else {
+            usleep(500);
+        }
+    }
     return ::android::OK;
 }
 
@@ -56,7 +65,6 @@ StreamStub::StreamStub(StreamContext* context, const Metadata& metadata)
     if (!mIsInitialized) {
         LOG(FATAL) << __func__ << ": must not happen for an uninitialized driver";
     }
-    usleep(500);
     return ::android::OK;
 }
 
@@ -64,7 +72,6 @@ StreamStub::StreamStub(StreamContext* context, const Metadata& metadata)
     if (!mIsInitialized) {
         LOG(FATAL) << __func__ << ": must not happen for an uninitialized driver";
     }
-    usleep(500);
     return ::android::OK;
 }
 
