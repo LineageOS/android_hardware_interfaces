@@ -23,8 +23,30 @@ parcelable WorkDuration {
      * sample was measured.
      */
     long timeStampNanos;
+
     /**
-     * Work duration in nanoseconds.
+     * Total work duration in nanoseconds.
      */
     long durationNanos;
+
+    /**
+     * Timestamp in nanoseconds based on CLOCK_MONOTONIC when the work starts.
+     * The work period start timestamp could be zero if the call is from
+     * the legacy SDK/NDK reportActualWorkDuration API.
+     */
+    long workPeriodStartTimestampNanos;
+
+    /**
+     * CPU work duration in nanoseconds.
+     * The CPU work duration could be the same as the total work duration if
+     * the call is from the legacy SDK/NDK reportActualWorkDuration API.
+     */
+    long cpuDurationNanos;
+
+    /**
+     * GPU work duration in nanoseconds.
+     * The GPU work duration could be zero if the call is from the legacy
+     * SDK/NDK reportActualWorkDuration API.
+     */
+    long gpuDurationNanos;
 }
