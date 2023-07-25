@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <functional>
 #include <string>
 #include <vector>
 
