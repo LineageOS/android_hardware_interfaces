@@ -19,7 +19,6 @@
 
 namespace aidl::android::hardware::graphics::composer3::vts {
 
-using ::android::hardware::graphics::mapper::V2_1::IMapper;
 using ::android::renderengine::DisplaySettings;
 using ::android::renderengine::LayerSettings;
 using ::android::renderengine::RenderEngineCreationArgs;

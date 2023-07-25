@@ -20,7 +20,6 @@
 #include <android-base/unique_fd.h>
 #include <android/hardware/graphics/composer3/ComposerClientReader.h>
 #include <android/hardware/graphics/composer3/ComposerClientWriter.h>
-#include <mapper-vts/2.1/MapperVts.h>
 #include <renderengine/RenderEngine.h>
 #include <ui/GraphicBuffer.h>
 #include <memory>
@@ -32,7 +31,6 @@ namespace aidl::android::hardware::graphics::composer3::vts {
 using ::android::renderengine::LayerSettings;
 using common::Dataspace;
 using common::PixelFormat;
-using IMapper2_1 = ::android::hardware::graphics::mapper::V2_1::IMapper;
 
 static const Color BLACK = {0.0f, 0.0f, 0.0f, 1.0f};
 static const Color RED = {1.0f, 0.0f, 0.0f, 1.0f};

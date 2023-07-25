@@ -15,7 +15,6 @@
  */
 #pragma once
 
-#include <mapper-vts/2.1/MapperVts.h>
 #include <math/half.h>
 #include <math/vec3.h>
 #include <renderengine/ExternalTexture.h>
@@ -29,7 +28,6 @@
 
 namespace aidl::android::hardware::graphics::composer3::vts {
 
-using ::android::hardware::graphics::mapper::V2_1::IMapper;
 using ::android::renderengine::DisplaySettings;
 using ::android::renderengine::ExternalTexture;
 using ::android::renderengine::RenderEngineCreationArgs;
