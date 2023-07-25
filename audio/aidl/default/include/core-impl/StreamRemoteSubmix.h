@@ -81,7 +81,7 @@ class StreamInRemoteSubmix final : public StreamIn, public StreamRemoteSubmix {
             const std::vector<::aidl::android::media::audio::common::MicrophoneInfo>& microphones);
 
   private:
-    void onClose() override { defaultOnClose(); }
+    void onClose(StreamDescriptor::State) override { defaultOnClose(); }
     ndk::ScopedAStatus getActiveMicrophones(
             std::vector<::aidl::android::media::audio::common::MicrophoneDynamicInfo>* _aidl_return)
             override;
@@ -97,7 +97,7 @@ class StreamOutRemoteSubmix final : public StreamOut, public StreamRemoteSubmix 
                     offloadInfo);
 
   private:
-    void onClose() override { defaultOnClose(); }
+    void onClose(StreamDescriptor::State) override { defaultOnClose(); }
 };
 
 }  // namespace aidl::android::hardware::audio::core
