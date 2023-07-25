@@ -17,6 +17,9 @@
 #include <aidl/Vintf.h>
 
 #include <aidl/android/hardware/weaver/IWeaver.h>
+#include <android-base/file.h>
+#include <android-base/parseint.h>
+#include <android-base/strings.h>
 #include <android/binder_manager.h>
 #include <android/binder_process.h>
 #include <android/hardware/weaver/1.0/IWeaver.h>
@@ -36,6 +39,7 @@ using HidlWeaverReadStatus = ::android::hardware::weaver::V1_0::WeaverReadStatus
 using HidlWeaverReadResponse = ::android::hardware::weaver::V1_0::WeaverReadResponse;
 using HidlWeaverStatus = ::android::hardware::weaver::V1_0::WeaverStatus;
 
+const std::string kSlotMapFile = "/metadata/password_slots/slot_map";
 const std::vector<uint8_t> KEY{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
 const std::vector<uint8_t> WRONG_KEY{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 const std::vector<uint8_t> VALUE{16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1};
@@ -165,9 +169,12 @@ class WeaverTest : public ::testing::TestWithParam<std::tuple<std::string, std::
   protected:
     void SetUp() override;
     void TearDown() override {}
+    void FindFreeSlots();
 
     std::unique_ptr<WeaverAdapter> weaver_;
     WeaverConfig config_;
+    uint32_t first_free_slot_;
+    uint32_t last_free_slot_;
 };
 
 void WeaverTest::SetUp() {
@@ -187,6 +194,56 @@ void WeaverTest::SetUp() {
     ASSERT_GT(config_.slots, 0);
     GTEST_LOG_(INFO) << "WeaverConfig: slots=" << config_.slots << ", keySize=" << config_.keySize
                      << ", valueSize=" << config_.valueSize;
+
+    FindFreeSlots();
+    GTEST_LOG_(INFO) << "First free slot is " << first_free_slot_ << ", last free slot is "
+                     << last_free_slot_;
+}
+
+void WeaverTest::FindFreeSlots() {
+    // Determine which Weaver slots are in use by the system. These slots can't be used by the test.
+    std::set<uint32_t> used_slots;
+    if (access(kSlotMapFile.c_str(), F_OK) == 0) {
+        std::string contents;
+        ASSERT_TRUE(android::base::ReadFileToString(kSlotMapFile, &contents))
+                << "Failed to read " << kSlotMapFile;
+        for (const auto& line : android::base::Split(contents, "\n")) {
+            auto trimmed_line = android::base::Trim(line);
+            if (trimmed_line[0] == '#' || trimmed_line[0] == '\0') continue;
+            auto slot_and_user = android::base::Split(trimmed_line, "=");
+            uint32_t slot;
+            ASSERT_TRUE(slot_and_user.size() == 2 &&
+                        android::base::ParseUint(slot_and_user[0], &slot))
+                    << "Error parsing " << kSlotMapFile << " at \"" << line << "\"";
+            GTEST_LOG_(INFO) << "Slot " << slot << " is in use by " << slot_and_user[1];
+            ASSERT_LT(slot, config_.slots);
+            used_slots.insert(slot);
+        }
+    }
+    // Starting in Android 14, the system will always use at least one Weaver slot if Weaver is
+    // supported at all.  Make sure we saw at least one.
+    // TODO: uncomment after Android 14 is merged into AOSP
+    // ASSERT_FALSE(used_slots.empty())
+    //<< "Could not determine which Weaver slots are in use by the system";
+
+    // Find the first free slot.
+    int found = 0;
+    for (uint32_t i = 0; i < config_.slots; i++) {
+        if (used_slots.find(i) == used_slots.end()) {
+            first_free_slot_ = i;
+            found++;
+            break;
+        }
+    }
+    // Find the last free slot.
+    for (uint32_t i = config_.slots; i > 0; i--) {
+        if (used_slots.find(i - 1) == used_slots.end()) {
+            last_free_slot_ = i - 1;
+            found++;
+            break;
+        }
+    }
+    ASSERT_EQ(found, 2) << "All Weaver slots are already in use by the system";
 }
 
 /*
@@ -211,11 +268,10 @@ TEST_P(WeaverTest, GettingConfigMultipleTimesGivesSameResult) {
 }
 
 /*
- * Gets the number of slots from the config and writes a key and value to the last one
+ * Writes a key and value to the last free slot
  */
 TEST_P(WeaverTest, WriteToLastSlot) {
-    const uint32_t lastSlot = config_.slots - 1;
-    const auto writeRet = weaver_->write(lastSlot, KEY, VALUE);
+    const auto writeRet = weaver_->write(last_free_slot_, KEY, VALUE);
     ASSERT_TRUE(writeRet.isOk());
 }
 
@@ -224,7 +280,7 @@ TEST_P(WeaverTest, WriteToLastSlot) {
  * Reads the slot with the same key and receives the value that was previously written
  */
 TEST_P(WeaverTest, WriteFollowedByReadGivesTheSameValue) {
-    constexpr uint32_t slotId = 0;
+    const uint32_t slotId = first_free_slot_;
     const auto ret = weaver_->write(slotId, KEY, VALUE);
     ASSERT_TRUE(ret.isOk());
 
@@ -242,7 +298,7 @@ TEST_P(WeaverTest, WriteFollowedByReadGivesTheSameValue) {
  * Reads the slot with the new key and receives the new value
  */
 TEST_P(WeaverTest, OverwritingSlotUpdatesTheValue) {
-    constexpr uint32_t slotId = 0;
+    const uint32_t slotId = first_free_slot_;
     const auto initialWriteRet = weaver_->write(slotId, WRONG_KEY, VALUE);
     ASSERT_TRUE(initialWriteRet.isOk());
 
@@ -262,7 +318,7 @@ TEST_P(WeaverTest, OverwritingSlotUpdatesTheValue) {
  * Reads the slot with a different key so does not receive the value
  */
 TEST_P(WeaverTest, WriteFollowedByReadWithWrongKeyDoesNotGiveTheValue) {
-    constexpr uint32_t slotId = 0;
+    const uint32_t slotId = first_free_slot_;
     const auto writeRet = weaver_->write(slotId, KEY, VALUE);
     ASSERT_TRUE(writeRet.isOk());
 
@@ -309,8 +365,7 @@ TEST_P(WeaverTest, ReadingFromInvalidSlotFails) {
 TEST_P(WeaverTest, WriteWithTooLargeKeyFails) {
     std::vector<uint8_t> bigKey(config_.keySize + 1);
 
-    constexpr uint32_t slotId = 0;
-    const auto writeRet = weaver_->write(slotId, bigKey, VALUE);
+    const auto writeRet = weaver_->write(first_free_slot_, bigKey, VALUE);
     ASSERT_FALSE(writeRet.isOk());
 }
 
@@ -320,8 +375,7 @@ TEST_P(WeaverTest, WriteWithTooLargeKeyFails) {
 TEST_P(WeaverTest, WriteWithTooLargeValueFails) {
     std::vector<uint8_t> bigValue(config_.valueSize + 1);
 
-    constexpr uint32_t slotId = 0;
-    const auto writeRet = weaver_->write(slotId, KEY, bigValue);
+    const auto writeRet = weaver_->write(first_free_slot_, KEY, bigValue);
     ASSERT_FALSE(writeRet.isOk());
 }
 
@@ -331,9 +385,8 @@ TEST_P(WeaverTest, WriteWithTooLargeValueFails) {
 TEST_P(WeaverTest, ReadWithTooLargeKeyFails) {
     std::vector<uint8_t> bigKey(config_.keySize + 1);
 
-    constexpr uint32_t slotId = 0;
     WeaverReadResponse response;
-    const auto readRet = weaver_->read(slotId, bigKey, &response);
+    const auto readRet = weaver_->read(first_free_slot_, bigKey, &response);
     ASSERT_TRUE(readRet.isOk());
     EXPECT_TRUE(response.value.empty());
     EXPECT_EQ(response.timeout, 0u);
