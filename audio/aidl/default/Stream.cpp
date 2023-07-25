@@ -670,8 +670,7 @@ ndk::ScopedAStatus StreamCommonImpl::close() {
         LOG(DEBUG) << __func__ << ": joining the worker thread...";
         mWorker->stop();
         LOG(DEBUG) << __func__ << ": worker thread joined";
-        onClose();
-        mWorker->setClosed();
+        onClose(mWorker->setClosed());
         return ndk::ScopedAStatus::ok();
     } else {
         LOG(ERROR) << __func__ << ": stream was already closed";

@@ -66,7 +66,8 @@ class StreamContext {
             DataMQ;
 
     // Ensure that this value is not used by any of StreamDescriptor.State enums
-    static constexpr int32_t STATE_CLOSED = -1;
+    static constexpr StreamDescriptor::State STATE_CLOSED =
+            static_cast<StreamDescriptor::State>(-1);
 
     struct DebugParameters {
         // An extra delay for transient states, in ms.
@@ -205,10 +206,14 @@ struct DriverInterface {
 
 class StreamWorkerCommonLogic : public ::android::hardware::audio::common::StreamLogic {
   public:
-    bool isClosed() const {
-        return static_cast<int32_t>(mState.load()) == StreamContext::STATE_CLOSED;
+    bool isClosed() const { return mState == StreamContext::STATE_CLOSED; }
+    StreamDescriptor::State setClosed() {
+        auto prevState = mState.exchange(StreamContext::STATE_CLOSED);
+        if (prevState != StreamContext::STATE_CLOSED) {
+            mStatePriorToClosing = prevState;
+        }
+        return mStatePriorToClosing;
     }
-    void setClosed() { mState = static_cast<StreamDescriptor::State>(StreamContext::STATE_CLOSED); }
     void setIsConnected(bool connected) { mIsConnected = connected; }
 
   protected:
@@ -231,6 +236,9 @@ class StreamWorkerCommonLogic : public ::android::hardware::audio::common::Strea
     // which happens on the worker thread only.
     StreamContext* const mContext;
     DriverInterface* const mDriver;
+    // This is the state the stream was in before being closed. It is retrieved by the main
+    // thread after joining the worker thread.
+    StreamDescriptor::State mStatePriorToClosing = StreamDescriptor::State::STANDBY;
     // Atomic fields are used both by the main and worker threads.
     std::atomic<bool> mIsConnected = false;
     static_assert(std::atomic<StreamDescriptor::State>::is_always_lock_free);
@@ -252,7 +260,7 @@ struct StreamWorkerInterface {
     virtual ~StreamWorkerInterface() = default;
     virtual bool isClosed() const = 0;
     virtual void setIsConnected(bool isConnected) = 0;
-    virtual void setClosed() = 0;
+    virtual StreamDescriptor::State setClosed() = 0;
     virtual bool start() = 0;
     virtual void stop() = 0;
 };
@@ -267,7 +275,7 @@ class StreamWorkerImpl : public StreamWorkerInterface,
         : WorkerImpl(context, driver) {}
     bool isClosed() const override { return WorkerImpl::isClosed(); }
     void setIsConnected(bool isConnected) override { WorkerImpl::setIsConnected(isConnected); }
-    void setClosed() override { WorkerImpl::setClosed(); }
+    StreamDescriptor::State setClosed() override { return WorkerImpl::setClosed(); }
     bool start() override {
         return WorkerImpl::start(WorkerImpl::kThreadName, ANDROID_PRIORITY_AUDIO);
     }
@@ -459,7 +467,7 @@ class StreamCommonImpl : virtual public StreamCommonInterface, virtual public Dr
         };
     }
 
-    virtual void onClose() = 0;
+    virtual void onClose(StreamDescriptor::State statePriorToClosing) = 0;
     void stopWorker();
 
     const StreamContext& mContext;
