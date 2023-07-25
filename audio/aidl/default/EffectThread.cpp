@@ -149,8 +149,8 @@ void EffectThread::process_l() {
         IEffect::Status status = effectProcessImpl(buffer, buffer, processSamples);
         outputMQ->write(buffer, status.fmqProduced);
         statusMQ->writeBlocking(&status, 1);
-        LOG(DEBUG) << mName << __func__ << ": done processing, effect consumed "
-                   << status.fmqConsumed << " produced " << status.fmqProduced;
+        LOG(VERBOSE) << mName << __func__ << ": done processing, effect consumed "
+                     << status.fmqConsumed << " produced " << status.fmqProduced;
     }
 }
 
