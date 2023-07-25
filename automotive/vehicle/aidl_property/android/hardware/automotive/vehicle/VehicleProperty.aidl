@@ -169,7 +169,7 @@ enum VehicleProperty {
      *  int32Values[4] = wheel base
      *  int32Values[5] = track width front
      *  int32Values[6] = track width rear
-     *  int32Values[7] = curb to curb turning radius
+     *  int32Values[7] = curb to curb turning diameter
      *
      * @change_mode VehiclePropertyChangeMode.STATIC
      * @access VehiclePropertyAccess.READ
