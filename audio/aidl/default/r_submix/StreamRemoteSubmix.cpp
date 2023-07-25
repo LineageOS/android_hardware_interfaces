@@ -29,14 +29,14 @@ using aidl::android::media::audio::common::MicrophoneInfo;
 
 namespace aidl::android::hardware::audio::core {
 
-StreamRemoteSubmix::StreamRemoteSubmix(const StreamContext& context, const Metadata& metadata)
+StreamRemoteSubmix::StreamRemoteSubmix(StreamContext* context, const Metadata& metadata)
     : StreamCommonImpl(context, metadata),
-      mPortId(context.getPortId()),
+      mPortId(context->getPortId()),
       mIsInput(isInput(metadata)) {
-    mStreamConfig.frameSize = context.getFrameSize();
-    mStreamConfig.format = context.getFormat();
-    mStreamConfig.channelLayout = context.getChannelLayout();
-    mStreamConfig.sampleRate = context.getSampleRate();
+    mStreamConfig.frameSize = context->getFrameSize();
+    mStreamConfig.format = context->getFormat();
+    mStreamConfig.channelLayout = context->getChannelLayout();
+    mStreamConfig.sampleRate = context->getSampleRate();
 }
 
 std::mutex StreamRemoteSubmix::sSubmixRoutesLock;
@@ -357,7 +357,7 @@ StreamInRemoteSubmix::StreamInRemoteSubmix(StreamContext&& context,
                                            const SinkMetadata& sinkMetadata,
                                            const std::vector<MicrophoneInfo>& microphones)
     : StreamIn(std::move(context), microphones),
-      StreamRemoteSubmix(StreamIn::mContext, sinkMetadata) {}
+      StreamRemoteSubmix(&(StreamIn::mContext), sinkMetadata) {}
 
 ndk::ScopedAStatus StreamInRemoteSubmix::getActiveMicrophones(
         std::vector<MicrophoneDynamicInfo>* _aidl_return) {
@@ -370,6 +370,6 @@ StreamOutRemoteSubmix::StreamOutRemoteSubmix(StreamContext&& context,
                                              const SourceMetadata& sourceMetadata,
                                              const std::optional<AudioOffloadInfo>& offloadInfo)
     : StreamOut(std::move(context), offloadInfo),
-      StreamRemoteSubmix(StreamOut::mContext, sourceMetadata) {}
+      StreamRemoteSubmix(&(StreamOut::mContext), sourceMetadata) {}
 
 }  // namespace aidl::android::hardware::audio::core
