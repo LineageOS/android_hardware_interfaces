@@ -393,6 +393,8 @@ TEST_P(WeaverTest, ReadWithTooLargeKeyFails) {
     EXPECT_EQ(response.status, WeaverReadStatus::FAILED);
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(WeaverTest);
+
 // Instantiate the test for each HIDL Weaver service.
 INSTANTIATE_TEST_SUITE_P(
         PerHidlInstance, WeaverTest,
