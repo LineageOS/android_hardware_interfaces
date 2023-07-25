@@ -37,7 +37,7 @@ ndk::ScopedAStatus ModulePrimary::getTelephony(std::shared_ptr<ITelephony>* _aid
     if (!mTelephony) {
         mTelephony = ndk::SharedRefBase::make<Telephony>();
     }
-    *_aidl_return = mTelephony.getPtr();
+    *_aidl_return = mTelephony.getInstance();
     LOG(DEBUG) << __func__
                << ": returning instance of ITelephony: " << _aidl_return->get()->asBinder().get();
     return ndk::ScopedAStatus::ok();
