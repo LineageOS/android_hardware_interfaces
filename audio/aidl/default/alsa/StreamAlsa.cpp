@@ -27,7 +27,7 @@
 
 namespace aidl::android::hardware::audio::core {
 
-StreamAlsa::StreamAlsa(const StreamContext& context, const Metadata& metadata, int readWriteRetries)
+StreamAlsa::StreamAlsa(StreamContext* context, const Metadata& metadata, int readWriteRetries)
     : StreamCommonImpl(context, metadata),
       mFrameSizeBytes(getContext().getFrameSize()),
       mIsInput(isInput(metadata)),
