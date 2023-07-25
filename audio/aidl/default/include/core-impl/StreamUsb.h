@@ -53,7 +53,7 @@ class StreamInUsb final : public StreamIn, public StreamUsb {
             const std::vector<::aidl::android::media::audio::common::MicrophoneInfo>& microphones);
 
   private:
-    void onClose() override { defaultOnClose(); }
+    void onClose(StreamDescriptor::State) override { defaultOnClose(); }
     ndk::ScopedAStatus getActiveMicrophones(
             std::vector<::aidl::android::media::audio::common::MicrophoneDynamicInfo>* _aidl_return)
             override;
@@ -68,7 +68,7 @@ class StreamOutUsb final : public StreamOut, public StreamUsb {
                          offloadInfo);
 
   private:
-    void onClose() override { defaultOnClose(); }
+    void onClose(StreamDescriptor::State) override { defaultOnClose(); }
     ndk::ScopedAStatus getHwVolume(std::vector<float>* _aidl_return) override;
     ndk::ScopedAStatus setHwVolume(const std::vector<float>& in_channelVolumes) override;
 
