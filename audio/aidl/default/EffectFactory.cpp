@@ -105,7 +105,7 @@ ndk::ScopedAStatus Factory::queryProcessing(const std::optional<Processing::Type
         if (!in_type.has_value() || in_type.value() == procIter.first) {
             Processing process = {.type = procIter.first /* Processing::Type */};
             for (const auto& libs : procIter.second /* std::vector<struct EffectLibraries> */) {
-                for (const auto& lib : libs.libraries /* std::vector<struct LibraryUuid> */) {
+                for (const auto& lib : libs.libraries /* std::vector<struct Library> */) {
                     Descriptor desc;
                     if (libs.proxyLibrary.has_value()) {
                         desc.common.id.proxy = libs.proxyLibrary.value().uuid;
@@ -219,7 +219,7 @@ bool Factory::openEffectLibrary(const AudioUuid& impl, const std::string& path) 
     return true;
 }
 
-void Factory::createIdentityWithConfig(const EffectConfig::LibraryUuid& configLib,
+void Factory::createIdentityWithConfig(const EffectConfig::Library& configLib,
                                        const AudioUuid& typeUuid,
                                        const std::optional<AudioUuid> proxyUuid) {
     static const auto& libMap = mConfig.getLibraryMap();
@@ -246,8 +246,7 @@ void Factory::createIdentityWithConfig(const EffectConfig::LibraryUuid& configLi
 void Factory::loadEffectLibs() {
     const auto& configEffectsMap = mConfig.getEffectsMap();
     for (const auto& configEffects : configEffectsMap) {
-        if (AudioUuid uuid;
-            EffectConfig::findUuid(configEffects.first /* xml effect name */, &uuid)) {
+        if (AudioUuid type; EffectConfig::findUuid(configEffects /* xml effect */, &type)) {
             const auto& configLibs = configEffects.second;
             std::optional<AudioUuid> proxyUuid;
             if (configLibs.proxyLibrary.has_value()) {
@@ -255,7 +254,7 @@ void Factory::loadEffectLibs() {
                 proxyUuid = proxyLib.uuid;
             }
             for (const auto& configLib : configLibs.libraries) {
-                createIdentityWithConfig(configLib, uuid, proxyUuid);
+                createIdentityWithConfig(configLib, type, proxyUuid);
             }
         } else {
             LOG(ERROR) << __func__ << ": can not find type UUID for effect " << configEffects.first
