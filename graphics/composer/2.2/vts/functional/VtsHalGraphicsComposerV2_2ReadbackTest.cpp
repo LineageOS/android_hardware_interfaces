@@ -45,7 +45,6 @@ using common::V1_1::Dataspace;
 using common::V1_1::PixelFormat;
 using V2_1::Config;
 using V2_1::Display;
-using V2_1::vts::NativeHandleWrapper;
 using V2_1::vts::TestCommandReader;
 
 class GraphicsCompositionTestBase : public ::testing::Test {

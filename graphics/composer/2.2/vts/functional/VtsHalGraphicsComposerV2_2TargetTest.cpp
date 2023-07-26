@@ -39,7 +39,6 @@ using common::V1_1::ColorMode;
 using common::V1_1::Dataspace;
 using common::V1_1::PixelFormat;
 using common::V1_1::RenderIntent;
-using V2_1::vts::NativeHandleWrapper;
 
 class GraphicsComposerHidlTest : public ::testing::TestWithParam<std::string> {
   protected:

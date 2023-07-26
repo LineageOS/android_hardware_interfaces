@@ -40,7 +40,6 @@ using common::V1_1::PixelFormat;
 using renderengine::LayerSettings;
 using V2_1::Display;
 using V2_1::Layer;
-using V2_1::vts::AccessRegion;
 using V2_1::vts::TestCommandReader;
 
 static const IComposerClient::Color BLACK = {0, 0, 0, 0xff};
