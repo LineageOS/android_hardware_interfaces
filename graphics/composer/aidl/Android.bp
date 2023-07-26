@@ -54,6 +54,9 @@ aidl_interface {
                 enabled: true,
             },
         },
+        rust: {
+            enabled: true,
+        },
     },
     versions_with_info: [
         {
