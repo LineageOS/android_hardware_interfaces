@@ -48,7 +48,6 @@ using common::V1_2::ColorMode;
 using common::V1_2::Dataspace;
 using common::V1_2::PixelFormat;
 using V2_1::Layer;
-using V2_1::vts::NativeHandleWrapper;
 using V2_2::Transform;
 
 using ContentType = IComposerClient::ContentType;

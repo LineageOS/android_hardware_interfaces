@@ -26,7 +26,6 @@ package {
 cc_library_static {
     name: "android.hardware.graphics.composer@2.2-vts",
     defaults: [
-        "android.hardware.graphics.allocator-ndk_static",
         "android.hardware.graphics.composer3-ndk_static",
         "hidl_defaults",
         "librenderengine_deps",
@@ -42,7 +41,6 @@ cc_library_static {
     static_libs: [
         "android.hardware.graphics.composer@2.1-vts",
         "android.hardware.graphics.composer@2.2",
-        "android.hardware.graphics.mapper@2.1-vts",
         "libarect",
         "libgtest",
         "libmath",
@@ -50,15 +48,10 @@ cc_library_static {
         "librenderengine",
         "libshaders",
         "libtonemap",
-        "android.hardware.graphics.mapper@3.0",
-        "android.hardware.graphics.mapper@3.0-vts",
-        "android.hardware.graphics.mapper@4.0",
-        "android.hardware.graphics.mapper@4.0-vts",
     ],
     export_static_lib_headers: [
         "android.hardware.graphics.composer@2.1-vts",
         "android.hardware.graphics.composer@2.2",
-        "android.hardware.graphics.mapper@2.1-vts",
     ],
     header_libs: [
         "android.hardware.graphics.composer@2.2-command-buffer",

@@ -25,9 +25,6 @@
 #include <android/hardware/graphics/composer/2.1/IComposer.h>
 #include <composer-command-buffer/2.1/ComposerCommandBuffer.h>
 #include <composer-vts/2.1/TestCommandReader.h>
-#include <mapper-vts/2.0/MapperVts.h>
-#include <mapper-vts/3.0/MapperVts.h>
-#include <mapper-vts/4.0/MapperVts.h>
 #include <utils/StrongPointer.h>
 
 #include "gtest/gtest.h"
@@ -43,13 +40,6 @@ using android::hardware::graphics::common::V1_0::ColorMode;
 using android::hardware::graphics::common::V1_0::Dataspace;
 using android::hardware::graphics::common::V1_0::Hdr;
 using android::hardware::graphics::common::V1_0::PixelFormat;
-using IMapper2 = android::hardware::graphics::mapper::V2_0::IMapper;
-using IMapper3 = android::hardware::graphics::mapper::V3_0::IMapper;
-using IMapper4 = android::hardware::graphics::mapper::V4_0::IMapper;
-using Gralloc2 = android::hardware::graphics::mapper::V2_0::vts::Gralloc;
-using Gralloc3 = android::hardware::graphics::mapper::V3_0::vts::Gralloc;
-using Gralloc4 = android::hardware::graphics::mapper::V4_0::vts::Gralloc;
-using IAllocator = aidl::android::hardware::graphics::allocator::IAllocator;
 
 class ComposerClient;
 
@@ -127,52 +117,6 @@ class ComposerClient {
 
    private:
     const sp<IComposerClient> mClient;
-};
-
-class AccessRegion {
-  public:
-    int32_t left;
-    int32_t top;
-    int32_t width;
-    int32_t height;
-};
-
-class Gralloc;
-
-// RAII wrapper around native_handle_t*
-class NativeHandleWrapper {
-  public:
-    NativeHandleWrapper(Gralloc& gralloc, const native_handle_t* handle)
-        : mGralloc(gralloc), mHandle(handle) {}
-
-    ~NativeHandleWrapper();
-
-    const native_handle_t* get() { return mHandle; }
-
-  private:
-    Gralloc& mGralloc;
-    const native_handle_t* mHandle;
-};
-
-class Gralloc {
-  public:
-    explicit Gralloc();
-
-    const NativeHandleWrapper allocate(uint32_t width, uint32_t height, uint32_t layerCount,
-                                       PixelFormat format, uint64_t usage, bool import = true,
-                                       uint32_t* outStride = nullptr);
-
-    void* lock(const native_handle_t* bufferHandle, uint64_t cpuUsage,
-               const AccessRegion& accessRegionRect, int acquireFence);
-
-    int unlock(const native_handle_t* bufferHandle);
-
-    void freeBuffer(const native_handle_t* bufferHandle);
-
-  protected:
-    std::shared_ptr<Gralloc2> mGralloc2 = nullptr;
-    std::shared_ptr<Gralloc3> mGralloc3 = nullptr;
-    std::shared_ptr<Gralloc4> mGralloc4 = nullptr;
 };
 
 }  // namespace vts
