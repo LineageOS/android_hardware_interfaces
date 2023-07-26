@@ -24,6 +24,7 @@
 #include <vector>
 
 #include <aidl/android/hardware/audio/effect/BnFactory.h>
+#include <android-base/thread_annotations.h>
 #include "EffectConfig.h"
 
 namespace aidl::android::hardware::audio::effect {
@@ -82,9 +83,11 @@ class Factory : public BnFactory {
   private:
     const EffectConfig mConfig;
     ~Factory();
+
+    std::mutex mMutex;
     // Set of effect descriptors supported by the devices.
-    std::set<Descriptor> mDescSet;
-    std::set<Descriptor::Identity> mIdentitySet;
+    std::set<Descriptor> mDescSet GUARDED_BY(mMutex);
+    std::set<Descriptor::Identity> mIdentitySet GUARDED_BY(mMutex);
 
     static constexpr int kMapEntryHandleIndex = 0;
     static constexpr int kMapEntryInterfaceIndex = 1;
@@ -94,26 +97,29 @@ class Factory : public BnFactory {
                        std::string /* library name */>
             DlEntry;
 
-    std::map<aidl::android::media::audio::common::AudioUuid /* implUUID */, DlEntry> mEffectLibMap;
+    std::map<aidl::android::media::audio::common::AudioUuid /* implUUID */, DlEntry> mEffectLibMap
+            GUARDED_BY(mMutex);
 
     typedef std::pair<aidl::android::media::audio::common::AudioUuid, ndk::SpAIBinder> EffectEntry;
-    std::map<std::weak_ptr<IEffect>, EffectEntry, std::owner_less<>> mEffectMap;
+    std::map<std::weak_ptr<IEffect>, EffectEntry, std::owner_less<>> mEffectMap GUARDED_BY(mMutex);
 
-    ndk::ScopedAStatus destroyEffectImpl(const std::shared_ptr<IEffect>& in_handle);
-    void cleanupEffectMap();
+    ndk::ScopedAStatus destroyEffectImpl_l(const std::shared_ptr<IEffect>& in_handle)
+            REQUIRES(mMutex);
+    void cleanupEffectMap_l() REQUIRES(mMutex);
     bool openEffectLibrary(const ::aidl::android::media::audio::common::AudioUuid& impl,
                            const std::string& path);
     void createIdentityWithConfig(
-            const EffectConfig::LibraryUuid& configLib,
+            const EffectConfig::Library& configLib,
             const ::aidl::android::media::audio::common::AudioUuid& typeUuidStr,
             const std::optional<::aidl::android::media::audio::common::AudioUuid> proxyUuid);
 
-    ndk::ScopedAStatus getDescriptorWithUuid(
-            const aidl::android::media::audio::common::AudioUuid& uuid, Descriptor* desc);
+    ndk::ScopedAStatus getDescriptorWithUuid_l(
+            const aidl::android::media::audio::common::AudioUuid& uuid, Descriptor* desc)
+            REQUIRES(mMutex);
 
     void loadEffectLibs();
     /* Get effect_dl_interface_s from library handle */
-    void getDlSyms(DlEntry& entry);
+    void getDlSyms_l(DlEntry& entry) REQUIRES(mMutex);
 };
 
 }  // namespace aidl::android::hardware::audio::effect
