@@ -20,7 +20,6 @@
 #include <renderengine/ExternalTexture.h>
 #include <renderengine/RenderEngine.h>
 #include <ui/GraphicBuffer.h>
-#include <ui/GraphicBufferAllocator.h>
 #include <ui/PixelFormat.h>
 #include <ui/Rect.h>
 #include <ui/Region.h>

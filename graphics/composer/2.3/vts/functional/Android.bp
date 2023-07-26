@@ -27,7 +27,6 @@ cc_test {
     name: "VtsHalGraphicsComposerV2_3TargetTest",
     defaults: [
         "VtsHalTargetTestDefaults",
-        "android.hardware.graphics.allocator-ndk_static",
     ],
     tidy_timeout_srcs: ["VtsHalGraphicsComposerV2_3TargetTest.cpp"],
     srcs: ["VtsHalGraphicsComposerV2_3TargetTest.cpp"],
