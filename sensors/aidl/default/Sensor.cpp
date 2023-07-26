@@ -343,7 +343,7 @@ GyroSensor::GyroSensor(int32_t sensorHandle, ISensorsEventCallback* callback) : 
     mSensorInfo.fifoReservedEventCount = 0;
     mSensorInfo.fifoMaxEventCount = 0;
     mSensorInfo.requiredPermission = "";
-    mSensorInfo.flags = 0;
+    mSensorInfo.flags = static_cast<uint32_t>(SensorInfo::SENSOR_FLAG_BITS_DATA_INJECTION);
 };
 
 void GyroSensor::readEventPayload(EventPayload& payload) {
