@@ -806,9 +806,15 @@ TEST_P(SensorsHidlTest, NoStaleEvents) {
             continue;
         }
 
+        // Skip sensors with no events
+        const std::vector<EventType> events = callback.getEvents(sensor.sensorHandle);
+        if (events.empty()) {
+            continue;
+        }
+
         // Ensure that the first event received is not stale by ensuring that its timestamp is
         // sufficiently different from the previous event
-        const EventType newEvent = callback.getEvents(sensor.sensorHandle).front();
+        const EventType newEvent = events.front();
         milliseconds delta = duration_cast<milliseconds>(
                 nanoseconds(newEvent.timestamp - lastEventTimestampMap[sensor.sensorHandle]));
         milliseconds sensorMinDelay = duration_cast<milliseconds>(microseconds(sensor.minDelay));

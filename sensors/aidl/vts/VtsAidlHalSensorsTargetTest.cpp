@@ -921,9 +921,15 @@ TEST_P(SensorsAidlTest, NoStaleEvents) {
             continue;
         }
 
+        // Skip sensors with no events
+        const std::vector<Event> events = callback.getEvents(sensor.sensorHandle);
+        if (events.empty()) {
+            continue;
+        }
+
         // Ensure that the first event received is not stale by ensuring that its timestamp is
         // sufficiently different from the previous event
-        const Event newEvent = callback.getEvents(sensor.sensorHandle).front();
+        const Event newEvent = events.front();
         std::chrono::milliseconds delta =
                 duration_cast<std::chrono::milliseconds>(std::chrono::nanoseconds(
                         newEvent.timestamp - lastEventTimestampMap[sensor.sensorHandle]));
