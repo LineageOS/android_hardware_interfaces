@@ -90,9 +90,10 @@ DiceCertChain = [
 DiceChainEntryPayload = {                    ; CWT [RFC8392]
     1 : tstr,                                ; Issuer
     2 : tstr,                                ; Subject
+    -4670554 : "android.15",                 ; Profile Name
     -4670552 : bstr .cbor PubKeyEd25519 /
             bstr .cbor PubKeyECDSA256 /
-            bstr .cbor PubKeyECDSA384,    ; Subject Public Key
+            bstr .cbor PubKeyECDSA384,       ; Subject Public Key
     -4670553 : bstr                          ; Key Usage
 
     ; NOTE: All of the following fields may be omitted for a "Degenerate DICE Chain", as
