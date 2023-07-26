@@ -24,7 +24,6 @@ namespace composer {
 namespace V2_2 {
 namespace vts {
 
-using mapper::V2_1::IMapper;
 using renderengine::DisplaySettings;
 using renderengine::LayerSettings;
 using renderengine::RenderEngineCreationArgs;

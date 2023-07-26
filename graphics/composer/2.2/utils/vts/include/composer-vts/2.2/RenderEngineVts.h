@@ -34,10 +34,8 @@ namespace composer {
 namespace V2_2 {
 namespace vts {
 
-using mapper::V2_1::IMapper;
 using renderengine::DisplaySettings;
 using renderengine::RenderEngineCreationArgs;
-using vts::Gralloc;
 
 class TestRenderEngine {
   public:

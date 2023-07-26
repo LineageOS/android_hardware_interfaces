@@ -22,7 +22,6 @@
 #include <composer-vts/2.1/GraphicsComposerCallback.h>
 #include <composer-vts/2.1/TestCommandReader.h>
 #include <composer-vts/2.2/ComposerVts.h>
-#include <mapper-vts/2.1/MapperVts.h>
 #include <renderengine/RenderEngine.h>
 
 #include <memory>
@@ -38,8 +37,6 @@ using android::hardware::hidl_handle;
 using common::V1_1::BufferUsage;
 using common::V1_1::Dataspace;
 using common::V1_1::PixelFormat;
-using IMapper2_1 = mapper::V2_1::IMapper;
-using Gralloc2_1 = mapper::V2_1::vts::Gralloc;
 using renderengine::LayerSettings;
 using V2_1::Display;
 using V2_1::Layer;
@@ -113,9 +110,8 @@ class TestColorLayer : public TestLayer {
 class TestBufferLayer : public TestLayer {
   public:
     TestBufferLayer(
-            const std::shared_ptr<ComposerClient>& client, const std::shared_ptr<Gralloc>& gralloc,
-            TestRenderEngine& renderEngine, Display display, int32_t width, int32_t height,
-            PixelFormat format,
+            const std::shared_ptr<ComposerClient>& client, TestRenderEngine& renderEngine,
+            Display display, int32_t width, int32_t height, PixelFormat format,
             IComposerClient::Composition composition = IComposerClient::Composition::DEVICE);
 
     void write(const std::shared_ptr<CommandWriterBase>& writer) override;
@@ -135,15 +131,11 @@ class TestBufferLayer : public TestLayer {
     uint32_t mLayerCount;
     PixelFormat mFormat;
     uint64_t mUsage;
-    AccessRegion mAccessRegion;
-    uint32_t mStride;
 
   protected:
     IComposerClient::Composition mComposition;
-    std::shared_ptr<Gralloc> mGralloc;
     TestRenderEngine& mRenderEngine;
-    int32_t mFillFence;
-    std::unique_ptr<Gralloc::NativeHandleWrapper> mBufferHandle;
+    sp<GraphicBuffer> mBuffer;
 };
 
 class ReadbackHelper {
@@ -179,9 +171,8 @@ class ReadbackHelper {
 
 class ReadbackBuffer {
   public:
-    ReadbackBuffer(Display display, const std::shared_ptr<ComposerClient>& client,
-                   const std::shared_ptr<Gralloc>& gralloc, uint32_t width, uint32_t height,
-                   PixelFormat pixelFormat, Dataspace dataspace);
+    ReadbackBuffer(Display display, const std::shared_ptr<ComposerClient>& client, uint32_t width,
+                   uint32_t height, PixelFormat pixelFormat, Dataspace dataspace);
 
     void setReadbackBuffer();
 
@@ -193,13 +184,10 @@ class ReadbackBuffer {
     uint32_t mLayerCount;
     PixelFormat mFormat;
     uint64_t mUsage;
-    AccessRegion mAccessRegion;
-    uint32_t mStride;
-    std::unique_ptr<Gralloc::NativeHandleWrapper> mBufferHandle = nullptr;
+    sp<GraphicBuffer> mBuffer;
     PixelFormat mPixelFormat;
     Dataspace mDataspace;
     Display mDisplay;
-    std::shared_ptr<Gralloc> mGralloc;
     std::shared_ptr<ComposerClient> mComposerClient;
 };
 
