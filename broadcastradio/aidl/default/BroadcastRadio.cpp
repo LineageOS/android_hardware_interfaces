@@ -115,7 +115,8 @@ BroadcastRadio::BroadcastRadio(const VirtualRadio& virtualRadio)
 }
 
 BroadcastRadio::~BroadcastRadio() {
-    mThread.reset();
+    mTuningThread.reset();
+    mProgramListThread.reset();
 }
 
 ScopedAStatus BroadcastRadio::getAmFmRegionConfig(bool full, AmFmRegionConfig* returnConfigs) {
@@ -239,7 +240,7 @@ ScopedAStatus BroadcastRadio::tune(const ProgramSelector& program) {
         callback->onCurrentProgramInfoChanged(programInfo);
     };
     auto cancelTask = [program, callback]() { callback->onTuneFailed(Result::CANCELED, program); };
-    mThread->schedule(task, cancelTask, kTuneDelayTimeMs);
+    mTuningThread->schedule(task, cancelTask, kTuneDelayTimeMs);
 
     return ScopedAStatus::ok();
 }
@@ -267,7 +268,7 @@ ScopedAStatus BroadcastRadio::seek(bool directionUp, bool skipSubChannel) {
 
             callback->onTuneFailed(Result::TIMEOUT, {});
         };
-        mThread->schedule(task, cancelTask, kSeekDelayTimeMs);
+        mTuningThread->schedule(task, cancelTask, kSeekDelayTimeMs);
 
         return ScopedAStatus::ok();
     }
@@ -300,7 +301,7 @@ ScopedAStatus BroadcastRadio::seek(bool directionUp, bool skipSubChannel) {
         }
         callback->onCurrentProgramInfoChanged(programInfo);
     };
-    mThread->schedule(task, cancelTask, kSeekDelayTimeMs);
+    mTuningThread->schedule(task, cancelTask, kSeekDelayTimeMs);
 
     return ScopedAStatus::ok();
 }
@@ -355,15 +356,15 @@ ScopedAStatus BroadcastRadio::step(bool directionUp) {
         callback->onCurrentProgramInfoChanged(programInfo);
     };
     auto cancelTask = [callback]() { callback->onTuneFailed(Result::CANCELED, {}); };
-    mThread->schedule(task, cancelTask, kStepDelayTimeMs);
+    mTuningThread->schedule(task, cancelTask, kStepDelayTimeMs);
 
     return ScopedAStatus::ok();
 }
 
 void BroadcastRadio::cancelLocked() {
-    LOG(DEBUG) << __func__ << ": cancelling current operations...";
+    LOG(DEBUG) << __func__ << ": cancelling current tuning operations...";
 
-    mThread->cancelAll();
+    mTuningThread->cancelAll();
     if (mCurrentProgram.primaryId.type != IdentifierType::INVALID) {
         mIsTuneCompleted = true;
     }
@@ -388,6 +389,8 @@ ScopedAStatus BroadcastRadio::startProgramListUpdates(const ProgramFilter& filte
 
     lock_guard<mutex> lk(mMutex);
 
+    cancelProgramListUpdateLocked();
+
     const auto& list = mVirtualRadio.getProgramList();
     vector<VirtualProgram> filteredList;
     std::copy_if(list.begin(), list.end(), std::back_inserter(filteredList), filterCb);
@@ -410,14 +413,20 @@ ScopedAStatus BroadcastRadio::startProgramListUpdates(const ProgramFilter& filte
 
         callback->onProgramListUpdated(chunk);
     };
-    mThread->schedule(task, kListDelayTimeS);
+    mProgramListThread->schedule(task, kListDelayTimeS);
 
     return ScopedAStatus::ok();
 }
 
+void BroadcastRadio::cancelProgramListUpdateLocked() {
+    LOG(DEBUG) << __func__ << ": cancelling current program list update operations...";
+    mProgramListThread->cancelAll();
+}
+
 ScopedAStatus BroadcastRadio::stopProgramListUpdates() {
     LOG(DEBUG) << __func__ << ": requested program list updates to stop...";
-    // TODO(b/243681584) Implement stop program list updates method
+    lock_guard<mutex> lk(mMutex);
+    cancelProgramListUpdateLocked();
     return ScopedAStatus::ok();
 }
 
