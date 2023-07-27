@@ -18,7 +18,6 @@
 #include <android-base/logging.h>
 #include <android/hardware/vr/1.0/IVr.h>
 #include <gtest/gtest.h>
-#include <hardware/vr.h>
 #include <hidl/GtestPrinter.h>
 #include <hidl/ServiceManagement.h>
 #include <log/log.h>
