@@ -30,6 +30,7 @@
 
     <test class="com.android.tradefed.testtype.GTest" >
         <option name="native-test-device-path" value="/data/local/tmp" />
+        <option name="native-test-timeout" value="300000" /> <!-- 5 min -->
         <option name="module-name" value="VtsHalRadioV1_4TargetTest" />
     </test>
 </configuration>
