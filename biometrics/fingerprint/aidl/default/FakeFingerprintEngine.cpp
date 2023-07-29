@@ -52,6 +52,14 @@ void FakeFingerprintEngine::enrollImpl(ISessionCallback* cb,
                                        const keymaster::HardwareAuthToken& hat,
                                        const std::future<void>& cancel) {
     BEGIN_OP(0);
+
+    // Do proper HAT verification in the real implementation.
+    if (hat.mac.empty()) {
+        LOG(ERROR) << "Fail: hat";
+        cb->onError(Error::UNABLE_TO_PROCESS, 0 /* vendorError */);
+        return;
+    }
+
     updateContext(WorkMode::kEnroll, cb, const_cast<std::future<void>&>(cancel), 0, hat);
 }
 
@@ -112,16 +120,9 @@ void FakeFingerprintEngine::fingerDownAction() {
 }
 
 bool FakeFingerprintEngine::onEnrollFingerDown(ISessionCallback* cb,
-                                               const keymaster::HardwareAuthToken& hat,
+                                               const keymaster::HardwareAuthToken&,
                                                const std::future<void>& cancel) {
     BEGIN_OP(getLatency(FingerprintHalProperties::operation_enroll_latency()));
-
-    // Do proper HAT verification in the real implementation.
-    if (hat.mac.empty()) {
-        LOG(ERROR) << "Fail: hat";
-        cb->onError(Error::UNABLE_TO_PROCESS, 0 /* vendorError */);
-        return true;
-    }
 
     // Force error-out
     auto err = FingerprintHalProperties::operation_enroll_error().value_or(0);
