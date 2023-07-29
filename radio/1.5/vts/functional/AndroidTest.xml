@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2019 The Android Open Source Project
+<!-- Copyright (C) 2023 The Android Open Source Project
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<configuration description="Runs VtsHalRadioV1_2TargetTest.">
+<configuration description="Runs VtsHalRadioV1_5TargetTest.">
     <option name="test-suite-tag" value="apct" />
     <option name="test-suite-tag" value="apct-native" />
     <option name="config-descriptor:metadata" key="token" value="SIM_CARD" />
@@ -25,12 +25,12 @@
 
     <target_preparer class="com.android.tradefed.targetprep.PushFilePreparer">
         <option name="cleanup" value="true" />
-        <option name="push" value="VtsHalRadioV1_2TargetTest->/data/local/tmp/VtsHalRadioV1_2TargetTest" />
+        <option name="push" value="VtsHalRadioV1_5TargetTest->/data/local/tmp/VtsHalRadioV1_5TargetTest" />
     </target_preparer>
 
     <test class="com.android.tradefed.testtype.GTest" >
         <option name="native-test-device-path" value="/data/local/tmp" />
         <option name="native-test-timeout" value="300000" /> <!-- 5 min -->
-        <option name="module-name" value="VtsHalRadioV1_2TargetTest" />
+        <option name="module-name" value="VtsHalRadioV1_5TargetTest" />
     </test>
 </configuration>
