@@ -62,6 +62,9 @@ class MockVehicleCallback final
     nextSetValueResults();
     std::optional<aidl::android::hardware::automotive::vehicle::VehiclePropValues>
     nextOnPropertyEventResults();
+    size_t countOnPropertySetErrorResults();
+    std::optional<aidl::android::hardware::automotive::vehicle::VehiclePropErrors>
+    nextOnPropertySetErrorResults();
     size_t countOnPropertyEventResults();
 
   private:
@@ -73,6 +76,8 @@ class MockVehicleCallback final
     std::list<aidl::android::hardware::automotive::vehicle::VehiclePropValues>
             mOnPropertyEventResults GUARDED_BY(mLock);
     int32_t mSharedMemoryFileCount GUARDED_BY(mLock);
+    std::list<aidl::android::hardware::automotive::vehicle::VehiclePropErrors>
+            mOnPropertySetErrorResults GUARDED_BY(mLock);
 };
 
 }  // namespace vehicle
