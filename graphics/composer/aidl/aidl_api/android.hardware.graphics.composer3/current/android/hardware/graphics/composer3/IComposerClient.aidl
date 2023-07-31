@@ -42,6 +42,9 @@ interface IComposerClient {
   int getActiveConfig(long display);
   android.hardware.graphics.composer3.ColorMode[] getColorModes(long display);
   float[] getDataspaceSaturationMatrix(android.hardware.graphics.common.Dataspace dataspace);
+  /**
+   * @deprecated use getDisplayConfigurations instead. Returns a display attribute value for a particular display configuration. For legacy support getDisplayAttribute should return valid values for any requested DisplayAttribute, and for all of the configs obtained either through getDisplayConfigs or getDisplayConfigurations.
+   */
   int getDisplayAttribute(long display, int config, android.hardware.graphics.composer3.DisplayAttribute attribute);
   android.hardware.graphics.composer3.DisplayCapability[] getDisplayCapabilities(long display);
   /**

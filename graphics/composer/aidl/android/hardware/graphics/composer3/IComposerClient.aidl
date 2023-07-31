@@ -236,8 +236,17 @@ interface IComposerClient {
     float[] getDataspaceSaturationMatrix(android.hardware.graphics.common.Dataspace dataspace);
 
     /**
+     * @deprecated use getDisplayConfigurations instead.
+     *
      * Returns a display attribute value for a particular display
      * configuration.
+     *
+     * For legacy support getDisplayAttribute should return valid values for any requested
+     * DisplayAttribute, and for all of the configs obtained either through getDisplayConfigs
+     * or getDisplayConfigurations.
+     *
+     * @see getDisplayConfigurations
+     * @see getDisplayConfigs
      *
      * @param display is the display to query.
      * @param config is the display configuration for which to return
