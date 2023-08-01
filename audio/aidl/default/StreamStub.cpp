@@ -33,33 +33,67 @@ namespace aidl::android::hardware::audio::core {
 
 StreamStub::StreamStub(const Metadata& metadata, StreamContext&& context)
     : StreamCommonImpl(metadata, std::move(context)),
-      mFrameSizeBytes(context.getFrameSize()),
-      mSampleRate(context.getSampleRate()),
-      mIsAsynchronous(!!context.getAsyncCallback()),
+      mFrameSizeBytes(getContext().getFrameSize()),
+      mSampleRate(getContext().getSampleRate()),
+      mIsAsynchronous(!!getContext().getAsyncCallback()),
       mIsInput(isInput(metadata)) {}
 
 ::android::status_t StreamStub::init() {
+    mIsInitialized = true;
     usleep(500);
     return ::android::OK;
 }
 
 ::android::status_t StreamStub::drain(StreamDescriptor::DrainMode) {
+    if (!mIsInitialized) {
+        LOG(FATAL) << __func__ << ": must not happen for an uninitialized driver";
+    }
     usleep(500);
     return ::android::OK;
 }
 
 ::android::status_t StreamStub::flush() {
+    if (!mIsInitialized) {
+        LOG(FATAL) << __func__ << ": must not happen for an uninitialized driver";
+    }
     usleep(500);
     return ::android::OK;
 }
 
 ::android::status_t StreamStub::pause() {
+    if (!mIsInitialized) {
+        LOG(FATAL) << __func__ << ": must not happen for an uninitialized driver";
+    }
     usleep(500);
+    return ::android::OK;
+}
+
+::android::status_t StreamStub::standby() {
+    if (!mIsInitialized) {
+        LOG(FATAL) << __func__ << ": must not happen for an uninitialized driver";
+    }
+    usleep(500);
+    mIsStandby = true;
+    return ::android::OK;
+}
+
+::android::status_t StreamStub::start() {
+    if (!mIsInitialized) {
+        LOG(FATAL) << __func__ << ": must not happen for an uninitialized driver";
+    }
+    usleep(500);
+    mIsStandby = false;
     return ::android::OK;
 }
 
 ::android::status_t StreamStub::transfer(void* buffer, size_t frameCount, size_t* actualFrameCount,
                                          int32_t* latencyMs) {
+    if (!mIsInitialized) {
+        LOG(FATAL) << __func__ << ": must not happen for an uninitialized driver";
+    }
+    if (mIsStandby) {
+        LOG(FATAL) << __func__ << ": must not happen while in standby";
+    }
     static constexpr float kMicrosPerSecond = MICROS_PER_SECOND;
     static constexpr float kScaleFactor = .8f;
     if (mIsAsynchronous) {
@@ -80,12 +114,9 @@ StreamStub::StreamStub(const Metadata& metadata, StreamContext&& context)
     return ::android::OK;
 }
 
-::android::status_t StreamStub::standby() {
-    usleep(500);
-    return ::android::OK;
+void StreamStub::shutdown() {
+    mIsInitialized = false;
 }
-
-void StreamStub::shutdown() {}
 
 StreamInStub::StreamInStub(const SinkMetadata& sinkMetadata, StreamContext&& context,
                            const std::vector<MicrophoneInfo>& microphones)
