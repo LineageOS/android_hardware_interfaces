@@ -20,16 +20,16 @@
 #include <vector>
 
 #include "core-impl/Stream.h"
+#include "core-impl/StreamSwitcher.h"
 #include "r_submix/SubmixRoute.h"
 
 namespace aidl::android::hardware::audio::core {
 
-using aidl::android::hardware::audio::core::r_submix::AudioConfig;
-using aidl::android::hardware::audio::core::r_submix::SubmixRoute;
-
 class StreamRemoteSubmix : public StreamCommonImpl {
   public:
-    StreamRemoteSubmix(StreamContext* context, const Metadata& metadata);
+    StreamRemoteSubmix(
+            StreamContext* context, const Metadata& metadata,
+            const ::aidl::android::media::audio::common::AudioDeviceAddress& deviceAddress);
 
     ::android::status_t init() override;
     ::android::status_t drain(StreamDescriptor::DrainMode) override;
@@ -51,16 +51,17 @@ class StreamRemoteSubmix : public StreamCommonImpl {
     ::android::status_t outWrite(void* buffer, size_t frameCount, size_t* actualFrameCount);
     ::android::status_t inRead(void* buffer, size_t frameCount, size_t* actualFrameCount);
 
-    const int mPortId;
+    const ::aidl::android::media::audio::common::AudioDeviceAddress mDeviceAddress;
     const bool mIsInput;
-    AudioConfig mStreamConfig;
-    std::shared_ptr<SubmixRoute> mCurrentRoute = nullptr;
+    r_submix::AudioConfig mStreamConfig;
+    std::shared_ptr<r_submix::SubmixRoute> mCurrentRoute = nullptr;
 
     // Mutex lock to protect vector of submix routes, each of these submix routes have their mutex
     // locks and none of the mutex locks should be taken together.
     static std::mutex sSubmixRoutesLock;
-    static std::map<int32_t, std::shared_ptr<SubmixRoute>> sSubmixRoutes
-            GUARDED_BY(sSubmixRoutesLock);
+    static std::map<::aidl::android::media::audio::common::AudioDeviceAddress,
+                    std::shared_ptr<r_submix::SubmixRoute>>
+            sSubmixRoutes GUARDED_BY(sSubmixRoutesLock);
 
     // limit for number of read error log entries to avoid spamming the logs
     static constexpr int kMaxReadErrorLogs = 5;
@@ -72,7 +73,7 @@ class StreamRemoteSubmix : public StreamCommonImpl {
     static constexpr int kReadAttemptSleepUs = 5000;
 };
 
-class StreamInRemoteSubmix final : public StreamIn, public StreamRemoteSubmix {
+class StreamInRemoteSubmix final : public StreamIn, public StreamSwitcher {
   public:
     friend class ndk::SharedRefBase;
     StreamInRemoteSubmix(
@@ -81,13 +82,19 @@ class StreamInRemoteSubmix final : public StreamIn, public StreamRemoteSubmix {
             const std::vector<::aidl::android::media::audio::common::MicrophoneInfo>& microphones);
 
   private:
+    DeviceSwitchBehavior switchCurrentStream(
+            const std::vector<::aidl::android::media::audio::common::AudioDevice>& devices)
+            override;
+    std::unique_ptr<StreamCommonInterfaceEx> createNewStream(
+            const std::vector<::aidl::android::media::audio::common::AudioDevice>& devices,
+            StreamContext* context, const Metadata& metadata) override;
     void onClose(StreamDescriptor::State) override { defaultOnClose(); }
     ndk::ScopedAStatus getActiveMicrophones(
             std::vector<::aidl::android::media::audio::common::MicrophoneDynamicInfo>* _aidl_return)
             override;
 };
 
-class StreamOutRemoteSubmix final : public StreamOut, public StreamRemoteSubmix {
+class StreamOutRemoteSubmix final : public StreamOut, public StreamSwitcher {
   public:
     friend class ndk::SharedRefBase;
     StreamOutRemoteSubmix(
@@ -97,6 +104,12 @@ class StreamOutRemoteSubmix final : public StreamOut, public StreamRemoteSubmix 
                     offloadInfo);
 
   private:
+    DeviceSwitchBehavior switchCurrentStream(
+            const std::vector<::aidl::android::media::audio::common::AudioDevice>& devices)
+            override;
+    std::unique_ptr<StreamCommonInterfaceEx> createNewStream(
+            const std::vector<::aidl::android::media::audio::common::AudioDevice>& devices,
+            StreamContext* context, const Metadata& metadata) override;
     void onClose(StreamDescriptor::State) override { defaultOnClose(); }
 };
 
