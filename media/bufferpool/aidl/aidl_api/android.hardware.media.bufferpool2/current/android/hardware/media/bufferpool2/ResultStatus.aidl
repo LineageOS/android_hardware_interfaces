@@ -34,7 +34,6 @@
 package android.hardware.media.bufferpool2;
 @VintfStability
 parcelable ResultStatus {
-  int resultStatus;
   const int OK = 0;
   const int NO_MEMORY = 1;
   const int ALREADY_EXISTS = 2;
