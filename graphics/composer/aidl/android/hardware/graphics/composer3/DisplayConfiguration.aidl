@@ -30,7 +30,7 @@ parcelable DisplayConfiguration {
     int height;
 
     /**
-     * Dots per thousand inches.
+     * Dots per inch.
      * If the DPI for a configuration is unavailable or is
      * considered unreliable, the device may set null instead.
      */
