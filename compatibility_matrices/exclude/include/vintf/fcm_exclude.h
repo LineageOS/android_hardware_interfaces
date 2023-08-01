@@ -24,8 +24,8 @@ namespace android::vintf::details {
 // Determine whether VINTF checks |package| is missing from FCMs.
 // |package| can be a HIDL package and version like
 // "android.hardware.foo@1.0", or an AIDL package name like
-// "android.hardware.foo".
+// "android.hardware.foo@1".
 bool ShouldCheckMissingHidlHalsInFcm(const std::string& packageAndVersion);
-bool ShouldCheckMissingAidlHalsInFcm(const std::string& package);
+bool ShouldCheckMissingAidlHalsInFcm(const std::string& packageAndVersion);
 
 }  // namespace android::vintf::details
