@@ -149,10 +149,7 @@ INSTANTIATE_TEST_SUITE_P(
             auto descriptor = std::get<PARAM_INSTANCE_NAME>(info.param).second;
             std::string level = std::to_string(std::get<PARAM_LEVEL>(info.param));
             std::string mute = std::to_string(std::get<PARAM_MUTE>(info.param));
-            std::string name = "Implementor_" + descriptor.common.implementor + "_name_" +
-                               descriptor.common.name + "_UUID_" +
-                               descriptor.common.id.uuid.toString() + "_level" + level + "_mute" +
-                               mute;
+            std::string name = getPrefix(descriptor) + "_level" + level + "_mute" + mute;
             std::replace_if(
                     name.begin(), name.end(), [](const char c) { return !std::isalnum(c); }, '_');
             return name;
