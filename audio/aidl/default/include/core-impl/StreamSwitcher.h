@@ -86,7 +86,8 @@ class StreamCommonInterfaceEx : virtual public StreamCommonInterface {
 template <typename T>
 class InnerStreamWrapper : public T, public StreamCommonInterfaceEx {
   public:
-    InnerStreamWrapper(StreamContext* context, const Metadata& metadata) : T(context, metadata) {}
+    template <typename... Args>
+    InnerStreamWrapper(Args&&... args) : T(std::forward<Args>(args)...) {}
     StreamDescriptor::State getStatePriorToClosing() const override { return mStatePriorToClosing; }
 
   private:
