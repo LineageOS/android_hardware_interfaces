@@ -120,6 +120,8 @@ bool ShouldCheckMissingAidlHalsInFcm(const std::string& packageAndVersion) {
             "android.hardware.camera.common@",
             "android.hardware.common@",
             "android.hardware.common.fmq@",
+            "android.hardware.gnss.measurement_corrections@",
+            "android.hardware.gnss.visibility_control@",
             "android.hardware.graphics.common@",
             "android.hardware.input.common@",
             "android.hardware.keymaster@",
