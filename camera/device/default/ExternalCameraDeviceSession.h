@@ -240,9 +240,9 @@ class ExternalCameraDeviceSession : public BnCameraDeviceSession, public OutputT
     // To init/close different version of output thread
     void initOutputThread();
     void closeOutputThread();
-    void closeOutputThreadImpl();
+    void closeBufferRequestThread();
 
-    void close(bool callerIsDtor);
+    void closeImpl();
     Status initStatus() const;
     status_t initDefaultRequests();
 
