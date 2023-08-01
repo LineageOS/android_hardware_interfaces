@@ -31,7 +31,9 @@ using aidl::android::media::audio::common::AudioDevice;
 namespace aidl::android::hardware::audio::core {
 
 StreamSwitcher::StreamSwitcher(StreamContext* context, const Metadata& metadata)
-    : mMetadata(metadata), mStream(new InnerStreamWrapper<StreamStub>(context, mMetadata)) {}
+    : mContext(context),
+      mMetadata(metadata),
+      mStream(new InnerStreamWrapper<StreamStub>(context, mMetadata)) {}
 
 ndk::ScopedAStatus StreamSwitcher::closeCurrentStream(bool validateStreamState) {
     if (!mStream) return ndk::ScopedAStatus::ok();
@@ -100,6 +102,10 @@ ndk::ScopedAStatus StreamSwitcher::setVendorParameters(
 }
 
 ndk::ScopedAStatus StreamSwitcher::addEffect(const std::shared_ptr<IEffect>& in_effect) {
+    if (in_effect == nullptr) {
+        LOG(DEBUG) << __func__ << ": null effect";
+        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+    }
     if (mStream == nullptr) {
         LOG(ERROR) << __func__ << ": stream was closed";
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
@@ -112,6 +118,10 @@ ndk::ScopedAStatus StreamSwitcher::addEffect(const std::shared_ptr<IEffect>& in_
 }
 
 ndk::ScopedAStatus StreamSwitcher::removeEffect(const std::shared_ptr<IEffect>& in_effect) {
+    if (in_effect == nullptr) {
+        LOG(DEBUG) << __func__ << ": null effect";
+        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+    }
     if (mStream == nullptr) {
         LOG(ERROR) << __func__ << ": stream was closed";
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
