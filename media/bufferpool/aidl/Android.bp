@@ -40,6 +40,11 @@ aidl_interface {
         },
         ndk: {
             enabled: true,
+            apex_available: [
+                "//apex_available:platform",
+                "com.android.media.swcodec",
+            ],
+            min_sdk_version: "29",
         },
     },
 }
