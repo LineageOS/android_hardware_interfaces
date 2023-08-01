@@ -1,0 +1,50 @@
+package {
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "frameworks_av_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-Apache-2.0
+    default_applicable_licenses: ["hardware_interfaces_license"],
+}
+
+cc_library {
+    name: "libstagefright_aidl_bufferpool2",
+    vendor_available: true,
+    min_sdk_version: "29",
+    apex_available: [
+        "//apex_available:platform",
+        "com.android.media.swcodec",
+        "test_com.android.media.swcodec",
+    ],
+    srcs: [
+        "Accessor.cpp",
+        "BufferPool.cpp",
+        "BufferPoolClient.cpp",
+        "BufferStatus.cpp",
+        "ClientManager.cpp",
+        "Connection.cpp",
+        "Observer.cpp",
+    ],
+    export_include_dirs: [
+        "include",
+    ],
+    shared_libs: [
+        "libbinder_ndk",
+        "libcutils",
+        "libfmq",
+        "liblog",
+        "libutils",
+        "android.hardware.media.bufferpool2-V1-ndk",
+    ],
+    static_libs: [
+        "libaidlcommonsupport",
+    ],
+    export_shared_lib_headers: [
+        "libfmq",
+        "android.hardware.media.bufferpool2-V1-ndk",
+    ],
+    double_loadable: true,
+    cflags: [
+        "-DBUFFERPOOL_CLONE_HANDLES",
+    ],
+}

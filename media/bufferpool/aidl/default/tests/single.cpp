@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,24 +20,19 @@
 
 #include <android-base/logging.h>
 #include <binder/ProcessState.h>
-#include <bufferpool/ClientManager.h>
-#include <hidl/HidlSupport.h>
-#include <hidl/HidlTransportSupport.h>
-#include <hidl/LegacySupport.h>
-#include <hidl/Status.h>
+#include <bufferpool2/ClientManager.h>
 #include <unistd.h>
 #include <iostream>
 #include <memory>
 #include <vector>
 #include "allocator.h"
 
-using android::hardware::hidl_handle;
-using android::hardware::media::bufferpool::V2_0::ResultStatus;
-using android::hardware::media::bufferpool::V2_0::implementation::BufferId;
-using android::hardware::media::bufferpool::V2_0::implementation::ClientManager;
-using android::hardware::media::bufferpool::V2_0::implementation::ConnectionId;
-using android::hardware::media::bufferpool::V2_0::implementation::TransactionId;
-using android::hardware::media::bufferpool::BufferPoolData;
+using aidl::android::hardware::media::bufferpool2::implementation::BufferId;
+using aidl::android::hardware::media::bufferpool2::implementation::BufferPoolStatus;
+using aidl::android::hardware::media::bufferpool2::implementation::ClientManager;
+using aidl::android::hardware::media::bufferpool2::implementation::ConnectionId;
+using aidl::android::hardware::media::bufferpool2::implementation::TransactionId;
+using aidl::android::hardware::media::bufferpool2::BufferPoolData;
 
 namespace {
 
@@ -51,7 +46,7 @@ constexpr static int kNumRecycleTest = 3;
 class BufferpoolSingleTest : public ::testing::Test {
  public:
   virtual void SetUp() override {
-    ResultStatus status;
+    BufferPoolStatus status;
     mConnectionValid = false;
 
     mManager = ClientManager::getInstance();
@@ -65,8 +60,9 @@ class BufferpoolSingleTest : public ::testing::Test {
 
     mConnectionValid = true;
 
-    status = mManager->registerSender(mManager, mConnectionId, &mReceiverId);
-    ASSERT_TRUE(status == ResultStatus::ALREADY_EXISTS &&
+    bool isNew = true;
+    status = mManager->registerSender(mManager, mConnectionId, &mReceiverId, &isNew);
+    ASSERT_TRUE(status == ResultStatus::OK && isNew == false &&
                 mReceiverId == mConnectionId);
   }
 
@@ -81,7 +77,7 @@ class BufferpoolSingleTest : public ::testing::Test {
     RecordProperty("description", description);
   }
 
-  android::sp<ClientManager> mManager;
+  std::shared_ptr<ClientManager> mManager;
   std::shared_ptr<BufferPoolAllocator> mAllocator;
   bool mConnectionValid;
   ConnectionId mConnectionId;
@@ -93,7 +89,7 @@ class BufferpoolSingleTest : public ::testing::Test {
 // Check whether each buffer allocation is done successfully with
 // unique buffer id.
 TEST_F(BufferpoolSingleTest, AllocateBuffer) {
-  ResultStatus status;
+  BufferPoolStatus status;
   std::vector<uint8_t> vecParams;
   getTestAllocatorParams(&vecParams);
 
@@ -118,7 +114,7 @@ TEST_F(BufferpoolSingleTest, AllocateBuffer) {
 // Buffer recycle test.
 // Check whether de-allocated buffers are recycled.
 TEST_F(BufferpoolSingleTest, RecycleBuffer) {
-  ResultStatus status;
+  BufferPoolStatus status;
   std::vector<uint8_t> vecParams;
   getTestAllocatorParams(&vecParams);
 
@@ -143,7 +139,7 @@ TEST_F(BufferpoolSingleTest, RecycleBuffer) {
 // Buffer transfer test.
 // Check whether buffer is transferred to another client successfully.
 TEST_F(BufferpoolSingleTest, TransferBuffer) {
-  ResultStatus status;
+  BufferPoolStatus status;
   std::vector<uint8_t> vecParams;
   getTestAllocatorParams(&vecParams);
   std::shared_ptr<BufferPoolData> sbuffer, rbuffer;
@@ -151,14 +147,14 @@ TEST_F(BufferpoolSingleTest, TransferBuffer) {
   native_handle_t *recvHandle = nullptr;
 
   TransactionId transactionId;
-  int64_t postUs;
+  int64_t postMs;
 
   status = mManager->allocate(mConnectionId, vecParams, &allocHandle, &sbuffer);
   ASSERT_TRUE(status == ResultStatus::OK);
   ASSERT_TRUE(TestBufferPoolAllocator::Fill(allocHandle, 0x77));
-  status = mManager->postSend(mReceiverId, sbuffer, &transactionId, &postUs);
+  status = mManager->postSend(mReceiverId, sbuffer, &transactionId, &postMs);
   ASSERT_TRUE(status == ResultStatus::OK);
-  status = mManager->receive(mReceiverId, transactionId, sbuffer->mId, postUs,
+  status = mManager->receive(mReceiverId, transactionId, sbuffer->mId, postMs,
                              &recvHandle, &rbuffer);
   EXPECT_TRUE(status == ResultStatus::OK);
   ASSERT_TRUE(TestBufferPoolAllocator::Verify(recvHandle, 0x77));

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,73 +14,65 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_HARDWARE_MEDIA_BUFFERPOOL_V2_0_ACCESSOR_H
-#define ANDROID_HARDWARE_MEDIA_BUFFERPOOL_V2_0_ACCESSOR_H
+#pragma once
 
-#include <android/hardware/media/bufferpool/2.0/IAccessor.h>
-#include <android/hardware/media/bufferpool/2.0/IObserver.h>
-#include <bufferpool/BufferPoolTypes.h>
-#include <hidl/MQDescriptor.h>
-#include <hidl/Status.h>
-#include "BufferStatus.h"
+#include <aidl/android/hardware/media/bufferpool2/BnAccessor.h>
+#include <aidl/android/hardware/media/bufferpool2/IObserver.h>
+#include <bufferpool2/BufferPoolTypes.h>
 
+#include <memory>
+#include <map>
 #include <set>
+#include <condition_variable>
 
-namespace android {
-namespace hardware {
-namespace media {
-namespace bufferpool {
-namespace V2_0 {
-namespace implementation {
+#include "BufferPool.h"
 
-using ::android::hardware::hidl_array;
-using ::android::hardware::hidl_memory;
-using ::android::hardware::hidl_string;
-using ::android::hardware::hidl_vec;
-using ::android::hardware::Return;
-using ::android::hardware::Void;
-using ::android::sp;
+namespace aidl::android::hardware::media::bufferpool2::implementation {
 
-struct Accessor;
 struct Connection;
+using ::aidl::android::hardware::media::bufferpool2::IObserver;
+using ::aidl::android::hardware::media::bufferpool2::IAccessor;
 
 /**
  * Receives death notifications from remote connections.
  * On death notifications, the connections are closed and used resources
  * are released.
  */
-struct ConnectionDeathRecipient : public hardware::hidl_death_recipient {
+struct ConnectionDeathRecipient {
+    ConnectionDeathRecipient();
     /**
      * Registers a newly connected connection from remote processes.
      */
-    void add(int64_t connectionId, const sp<Accessor> &accessor);
+    void add(int64_t connectionId, const std::shared_ptr<Accessor> &accessor);
 
     /**
      * Removes a connection.
      */
     void remove(int64_t connectionId);
 
-    void addCookieToConnection(uint64_t cookie, int64_t connectionId);
+    void addCookieToConnection(void *cookie, int64_t connectionId);
 
-    virtual void serviceDied(
-            uint64_t /* cookie */,
-            const wp<::android::hidl::base::V1_0::IBase>& /* who */
-            ) override;
+    void onDead(void *cookie);
+
+    AIBinder_DeathRecipient *getRecipient();
 
 private:
+    ::ndk::ScopedAIBinder_DeathRecipient mDeathRecipient;
+
     std::mutex mLock;
-    std::map<uint64_t, std::set<int64_t>>  mCookieToConnections;
-    std::map<int64_t, uint64_t> mConnectionToCookie;
-    std::map<int64_t, const wp<Accessor>> mAccessors;
+    std::map<void *, std::set<int64_t>>  mCookieToConnections;
+    std::map<int64_t, void *> mConnectionToCookie;
+    std::map<int64_t, const std::weak_ptr<Accessor>> mAccessors;
 };
 
 /**
  * A buffer pool accessor which enables a buffer pool to communicate with buffer
  * pool clients. 1:1 correspondense holds between a buffer pool and an accessor.
  */
-struct Accessor : public IAccessor {
-    // Methods from ::android::hardware::media::bufferpool::V2_0::IAccessor follow.
-    Return<void> connect(const sp<::android::hardware::media::bufferpool::V2_0::IObserver>& observer, connect_cb _hidl_cb) override;
+struct Accessor : public BnAccessor {
+    // Methods from ::aidl::android::hardware::media::bufferpool2::IAccessor.
+    ::ndk::ScopedAStatus connect(const std::shared_ptr<IObserver>& in_observer,
+                                 IAccessor::ConnectionInfo* _aidl_return) override;
 
     /**
      * Creates a buffer pool accessor which uses the specified allocator.
@@ -96,7 +88,7 @@ struct Accessor : public IAccessor {
     bool isValid();
 
     /** Invalidates all buffers which are owned by bufferpool */
-    ResultStatus flush();
+    BufferPoolStatus flush();
 
     /** Allocates a buffer from a buffer pool.
      *
@@ -109,7 +101,7 @@ struct Accessor : public IAccessor {
      *         NO_MEMORY when there is no memory.
      *         CRITICAL_ERROR otherwise.
      */
-    ResultStatus allocate(
+    BufferPoolStatus allocate(
             ConnectionId connectionId,
             const std::vector<uint8_t>& params,
             BufferId *bufferId,
@@ -127,7 +119,7 @@ struct Accessor : public IAccessor {
      *         NO_MEMORY when there is no memory.
      *         CRITICAL_ERROR otherwise.
      */
-    ResultStatus fetch(
+    BufferPoolStatus fetch(
             ConnectionId connectionId,
             TransactionId transactionId,
             BufferId bufferId,
@@ -153,13 +145,13 @@ struct Accessor : public IAccessor {
      *         NO_MEMORY when there is no memory.
      *         CRITICAL_ERROR otherwise.
      */
-    ResultStatus connect(
-            const sp<IObserver>& observer,
+    BufferPoolStatus connect(
+            const std::shared_ptr<IObserver>& observer,
             bool local,
-            sp<Connection> *connection, ConnectionId *pConnectionId,
+            std::shared_ptr<Connection> *connection, ConnectionId *pConnectionId,
             uint32_t *pMsgId,
-            const StatusDescriptor** statusDescPtr,
-            const InvalidationDescriptor** invDescPtr);
+            StatusDescriptor* statusDescPtr,
+            InvalidationDescriptor* invDescPtr);
 
     /**
      * Closes the specified connection to the client.
@@ -169,10 +161,10 @@ struct Accessor : public IAccessor {
      * @return OK when the connection is closed.
      *         CRITICAL_ERROR otherwise.
      */
-    ResultStatus close(ConnectionId connectionId);
+    BufferPoolStatus close(ConnectionId connectionId);
 
     /**
-     * Processes pending buffer status messages and perfoms periodic cache
+     * Processes pending buffer status messages and performs periodic cache
      * cleaning.
      *
      * @param clearCache    if clearCache is true, it frees all buffers waiting
@@ -181,24 +173,66 @@ struct Accessor : public IAccessor {
     void cleanUp(bool clearCache);
 
     /**
-     * Gets a hidl_death_recipient for remote connection death.
+     * ACK on buffer invalidation messages
      */
-    static sp<ConnectionDeathRecipient> getConnectionDeathRecipient();
+    void handleInvalidateAck();
+
+    /**
+     * Gets a death_recipient for remote connection death.
+     */
+    static std::shared_ptr<ConnectionDeathRecipient> getConnectionDeathRecipient();
 
     static void createInvalidator();
 
     static void createEvictor();
 
 private:
-    class Impl;
-    std::shared_ptr<Impl> mImpl;
+    // ConnectionId = pid : (timestamp_created + seqId)
+    // in order to guarantee uniqueness for each connection
+    static uint32_t sSeqId;
+
+    const std::shared_ptr<BufferPoolAllocator> mAllocator;
+    nsecs_t mScheduleEvictTs;
+    BufferPool mBufferPool;
+
+    struct  AccessorInvalidator {
+        std::map<uint32_t, const std::weak_ptr<Accessor>> mAccessors;
+        std::mutex mMutex;
+        std::condition_variable mCv;
+        bool mReady;
+
+        AccessorInvalidator();
+        void addAccessor(uint32_t accessorId, const std::weak_ptr<Accessor> &accessor);
+        void delAccessor(uint32_t accessorId);
+    };
+
+    static std::unique_ptr<AccessorInvalidator> sInvalidator;
+
+    static void invalidatorThread(
+        std::map<uint32_t, const std::weak_ptr<Accessor>> &accessors,
+        std::mutex &mutex,
+        std::condition_variable &cv,
+        bool &ready);
+
+    struct AccessorEvictor {
+        std::map<const std::weak_ptr<Accessor>, nsecs_t, std::owner_less<>> mAccessors;
+        std::mutex mMutex;
+        std::condition_variable mCv;
+
+        AccessorEvictor();
+        void addAccessor(const std::weak_ptr<Accessor> &accessor, nsecs_t ts);
+    };
+
+    static std::unique_ptr<AccessorEvictor> sEvictor;
+
+    static void evictorThread(
+        std::map<const std::weak_ptr<Accessor>, nsecs_t, std::owner_less<>> &accessors,
+        std::mutex &mutex,
+        std::condition_variable &cv);
+
+    void scheduleEvictIfNeeded();
+
+    friend struct BufferPool;
 };
 
-}  // namespace implementation
-}  // namespace V2_0
-}  // namespace bufferpool
-}  // namespace media
-}  // namespace hardware
-}  // namespace android
-
-#endif  // ANDROID_HARDWARE_MEDIA_BUFFERPOOL_V2_0_ACCESSOR_H
+}  // namespace aidl::android::hardware::media::bufferpool2::implementation

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,39 +14,28 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_HARDWARE_MEDIA_BUFFERPOOL_V2_0_CONNECTION_H
-#define ANDROID_HARDWARE_MEDIA_BUFFERPOOL_V2_0_CONNECTION_H
+#pragma once
 
-#include <android/hardware/media/bufferpool/2.0/IConnection.h>
-#include <bufferpool/BufferPoolTypes.h>
-#include <hidl/MQDescriptor.h>
-#include <hidl/Status.h>
-#include "Accessor.h"
+#include <memory>
 
-namespace android {
-namespace hardware {
-namespace media {
-namespace bufferpool {
-namespace V2_0 {
-namespace implementation {
+#include <aidl/android/hardware/media/bufferpool2/BnConnection.h>
+#include <bufferpool2/BufferPoolTypes.h>
 
-using ::android::hardware::hidl_array;
-using ::android::hardware::hidl_memory;
-using ::android::hardware::hidl_string;
-using ::android::hardware::hidl_vec;
-using ::android::hardware::media::bufferpool::V2_0::implementation::Accessor;
-using ::android::hardware::Return;
-using ::android::hardware::Void;
-using ::android::sp;
+namespace aidl::android::hardware::media::bufferpool2::implementation {
 
-struct Connection : public IConnection {
-    // Methods from ::android::hardware::media::bufferpool::V2_0::IConnection follow.
-    Return<void> fetch(uint64_t transactionId, uint32_t bufferId, fetch_cb _hidl_cb) override;
+struct Accessor;
+
+struct Connection : public BnConnection {
+    // Methods from ::aidl::android::hardware::media::bufferpool2::IConnection.
+    ::ndk::ScopedAStatus fetch(const std::vector<::aidl::android::hardware::media::bufferpool2::IConnection::FetchInfo>& in_fetchInfos, std::vector<::aidl::android::hardware::media::bufferpool2::IConnection::FetchResult>* _aidl_return) override;
+
+    // Methods from ::aidl::android::hardware::media::bufferpool2::IConnection.
+    ::ndk::ScopedAStatus sync() override;
 
     /**
      * Invalidates all buffers which are active and/or are ready to be recycled.
      */
-    ResultStatus flush();
+    BufferPoolStatus flush();
 
     /**
      * Allocates a buffer using the specified parameters. Recycles a buffer if
@@ -61,7 +50,7 @@ struct Connection : public IConnection {
      *         NO_MEMORY when there is no memory.
      *         CRITICAL_ERROR otherwise.
      */
-    ResultStatus allocate(const std::vector<uint8_t> &params,
+    BufferPoolStatus allocate(const std::vector<uint8_t> &params,
                           BufferId *bufferId, const native_handle_t **handle);
 
     /**
@@ -86,7 +75,7 @@ struct Connection : public IConnection {
      * @param accessor      the specified buffer pool.
      * @param connectionId  Id.
      */
-    void initialize(const sp<Accessor> &accessor, ConnectionId connectionId);
+    void initialize(const std::shared_ptr<Accessor> &accessor, ConnectionId connectionId);
 
     enum : uint32_t {
         SYNC_BUFFERID = UINT32_MAX,
@@ -94,15 +83,14 @@ struct Connection : public IConnection {
 
 private:
     bool mInitialized;
-    sp<Accessor> mAccessor;
+    std::shared_ptr<Accessor> mAccessor;
     ConnectionId mConnectionId;
+
+    bool fetch(
+        uint64_t transactionId,
+        uint32_t bufferId,
+        std::vector<::aidl::android::hardware::media::bufferpool2::IConnection::FetchResult>
+                *result);
 };
 
-}  // namespace implementation
-}  // namespace V2_0
-}  // namespace bufferpool
-}  // namespace media
-}  // namespace hardware
-}  // namespace android
-
-#endif  // ANDROID_HARDWARE_MEDIA_BUFFERPOOL_V2_0_CONNECTION_H
+}  // namespace aidl::android::hardware::media::bufferpool2::implementation
