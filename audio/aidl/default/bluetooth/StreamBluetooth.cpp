@@ -53,13 +53,16 @@ size_t getFrameCount(uint64_t durationUs, uint32_t sampleRate) {
 }
 
 // pcm configuration params are not really used by the module
-StreamBluetooth::StreamBluetooth(StreamContext* context, const Metadata& metadata)
+StreamBluetooth::StreamBluetooth(StreamContext* context, const Metadata& metadata,
+                                 Module::BtProfileHandles&& btHandles)
     : StreamCommonImpl(context, metadata),
       mSampleRate(getContext().getSampleRate()),
       mChannelLayout(getContext().getChannelLayout()),
       mFormat(getContext().getFormat()),
       mFrameSizeBytes(getContext().getFrameSize()),
-      mIsInput(isInput(metadata)) {
+      mIsInput(isInput(metadata)),
+      mBluetoothA2dp(std::move(std::get<Module::BtInterface::BTA2DP>(btHandles))),
+      mBluetoothLe(std::move(std::get<Module::BtInterface::BTLE>(btHandles))) {
     mPreferredDataIntervalUs =
             mIsInput ? kBluetoothDefaultInputBufferMs : kBluetoothDefaultOutputBufferMs;
     mPreferredFrameCount = getFrameCount(mPreferredDataIntervalUs, mSampleRate);
@@ -278,10 +281,46 @@ ndk::ScopedAStatus StreamBluetooth::updateMetadataCommon(const Metadata& metadat
                 : ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
 }
 
+ndk::ScopedAStatus StreamBluetooth::bluetoothParametersUpdated() {
+    if (mIsInput) {
+        LOG(WARNING) << __func__ << ": not handled";
+        return ndk::ScopedAStatus::ok();
+    }
+    auto applyParam = [](const std::shared_ptr<BluetoothAudioPortAidl>& proxy,
+                         bool isEnabled) -> bool {
+        if (!isEnabled) {
+            if (proxy->suspend()) return proxy->setState(BluetoothStreamState::DISABLED);
+            return false;
+        }
+        return proxy->standby();
+    };
+    bool hasA2dpParam, enableA2dp;
+    auto btA2dp = mBluetoothA2dp.lock();
+    hasA2dpParam = btA2dp != nullptr && btA2dp->isEnabled(&enableA2dp).isOk();
+    bool hasLeParam, enableLe;
+    auto btLe = mBluetoothLe.lock();
+    hasLeParam = btLe != nullptr && btLe->isEnabled(&enableLe).isOk();
+    std::unique_lock lock(mLock);
+    ::android::base::ScopedLockAssertion lock_assertion(mLock);
+    if (!mIsInitialized) {
+        LOG(WARNING) << __func__ << ": init not done";
+        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
+    }
+    for (auto proxy : mBtDeviceProxies) {
+        if ((hasA2dpParam && proxy->isA2dp() && !applyParam(proxy, enableA2dp)) ||
+            (hasLeParam && proxy->isLeAudio() && !applyParam(proxy, enableLe))) {
+            LOG(DEBUG) << __func__ << ": applyParam failed";
+            return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+        }
+    }
+    return ndk::ScopedAStatus::ok();
+}
+
 StreamInBluetooth::StreamInBluetooth(StreamContext&& context, const SinkMetadata& sinkMetadata,
-                                     const std::vector<MicrophoneInfo>& microphones)
+                                     const std::vector<MicrophoneInfo>& microphones,
+                                     Module::BtProfileHandles&& btProfileHandles)
     : StreamIn(std::move(context), microphones),
-      StreamBluetooth(&(StreamIn::mContext), sinkMetadata) {}
+      StreamBluetooth(&(StreamIn::mContext), sinkMetadata, std::move(btProfileHandles)) {}
 
 ndk::ScopedAStatus StreamInBluetooth::getActiveMicrophones(
         std::vector<MicrophoneDynamicInfo>* _aidl_return __unused) {
@@ -291,8 +330,9 @@ ndk::ScopedAStatus StreamInBluetooth::getActiveMicrophones(
 
 StreamOutBluetooth::StreamOutBluetooth(StreamContext&& context,
                                        const SourceMetadata& sourceMetadata,
-                                       const std::optional<AudioOffloadInfo>& offloadInfo)
+                                       const std::optional<AudioOffloadInfo>& offloadInfo,
+                                       Module::BtProfileHandles&& btProfileHandles)
     : StreamOut(std::move(context), offloadInfo),
-      StreamBluetooth(&(StreamOut::mContext), sourceMetadata) {}
+      StreamBluetooth(&(StreamOut::mContext), sourceMetadata, std::move(btProfileHandles)) {}
 
 }  // namespace aidl::android::hardware::audio::core
