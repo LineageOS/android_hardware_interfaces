@@ -233,8 +233,28 @@ ndk::ScopedAStatus StreamSwitcher::setConnectedDevices(const std::vector<AudioDe
                              << status.getDescription();
             }
         }
+        if (mBluetoothParametersUpdated) {
+            if (auto status = mStream->bluetoothParametersUpdated(); !status.isOk()) {
+                LOG(WARNING) << __func__
+                             << ": error while updating BT parameters for a new stream: "
+                             << status.getDescription();
+            }
+        }
+        mBluetoothParametersUpdated = false;
     }
     return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus StreamSwitcher::bluetoothParametersUpdated() {
+    if (mStream == nullptr) {
+        LOG(ERROR) << __func__ << ": stream was closed";
+        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
+    }
+    if (mIsStubStream) {
+        mBluetoothParametersUpdated = true;
+        return ndk::ScopedAStatus::ok();
+    }
+    return mStream->bluetoothParametersUpdated();
 }
 
 }  // namespace aidl::android::hardware::audio::core

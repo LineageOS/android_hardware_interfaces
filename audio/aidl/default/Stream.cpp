@@ -723,6 +723,11 @@ ndk::ScopedAStatus StreamCommonImpl::setConnectedDevices(
     return ndk::ScopedAStatus::ok();
 }
 
+ndk::ScopedAStatus StreamCommonImpl::bluetoothParametersUpdated() {
+    LOG(DEBUG) << __func__;
+    return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+}
+
 namespace {
 static std::map<AudioDevice, std::string> transformMicrophones(
         const std::vector<MicrophoneInfo>& microphones) {
