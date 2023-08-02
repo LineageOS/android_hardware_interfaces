@@ -28,6 +28,34 @@ using aidl::android::hardware::audio::common::SourceMetadata;
 using aidl::android::media::audio::common::AudioOffloadInfo;
 using aidl::android::media::audio::common::MicrophoneInfo;
 
+ndk::ScopedAStatus ModuleBluetooth::getBluetoothA2dp(
+        std::shared_ptr<IBluetoothA2dp>* _aidl_return) {
+    if (!mBluetoothA2dp) {
+        auto handle = ndk::SharedRefBase::make<BluetoothA2dp>();
+        handle->registerHandler(std::bind(&ModuleBluetooth::bluetoothParametersUpdated, this));
+        mBluetoothA2dp = handle;
+    }
+    *_aidl_return = mBluetoothA2dp.getInstance();
+    LOG(DEBUG) << __func__ << ": returning instance of IBluetoothA2dp: " << _aidl_return->get();
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus ModuleBluetooth::getBluetoothLe(std::shared_ptr<IBluetoothLe>* _aidl_return) {
+    if (!mBluetoothLe) {
+        auto handle = ndk::SharedRefBase::make<BluetoothLe>();
+        handle->registerHandler(std::bind(&ModuleBluetooth::bluetoothParametersUpdated, this));
+        mBluetoothLe = handle;
+    }
+    *_aidl_return = mBluetoothLe.getInstance();
+    LOG(DEBUG) << __func__ << ": returning instance of IBluetoothLe: " << _aidl_return->get();
+    return ndk::ScopedAStatus::ok();
+}
+
+Module::BtProfileHandles ModuleBluetooth::getBtProfileManagerHandles() {
+    return std::make_tuple(std::weak_ptr<IBluetooth>(), mBluetoothA2dp.getInstance(),
+                           mBluetoothLe.getInstance());
+}
+
 ndk::ScopedAStatus ModuleBluetooth::getMicMute(bool* _aidl_return __unused) {
     LOG(DEBUG) << __func__ << ": is not supported";
     return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
@@ -42,14 +70,14 @@ ndk::ScopedAStatus ModuleBluetooth::createInputStream(
         StreamContext&& context, const SinkMetadata& sinkMetadata,
         const std::vector<MicrophoneInfo>& microphones, std::shared_ptr<StreamIn>* result) {
     return createStreamInstance<StreamInBluetooth>(result, std::move(context), sinkMetadata,
-                                                   microphones);
+                                                   microphones, getBtProfileManagerHandles());
 }
 
 ndk::ScopedAStatus ModuleBluetooth::createOutputStream(
         StreamContext&& context, const SourceMetadata& sourceMetadata,
         const std::optional<AudioOffloadInfo>& offloadInfo, std::shared_ptr<StreamOut>* result) {
     return createStreamInstance<StreamOutBluetooth>(result, std::move(context), sourceMetadata,
-                                                    offloadInfo);
+                                                    offloadInfo, getBtProfileManagerHandles());
 }
 
 ndk::ScopedAStatus ModuleBluetooth::onMasterMuteChanged(bool) {
