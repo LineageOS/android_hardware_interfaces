@@ -26,6 +26,7 @@
 #include <error/expected_utils.h>
 
 #include "core-impl/Module.h"
+#include "core-impl/ModuleBluetooth.h"
 #include "core-impl/ModulePrimary.h"
 #include "core-impl/ModuleRemoteSubmix.h"
 #include "core-impl/ModuleStub.h"
@@ -117,6 +118,8 @@ std::shared_ptr<Module> Module::createInstance(Type type) {
             return ndk::SharedRefBase::make<ModuleStub>();
         case Type::USB:
             return ndk::SharedRefBase::make<ModuleUsb>();
+        case Type::BLUETOOTH:
+            return ndk::SharedRefBase::make<ModuleBluetooth>();
     }
 }
 
@@ -133,6 +136,9 @@ std::ostream& operator<<(std::ostream& os, Module::Type t) {
             break;
         case Module::Type::USB:
             os << "usb";
+            break;
+        case Module::Type::BLUETOOTH:
+            os << "bluetooth";
             break;
     }
     return os;
@@ -300,6 +306,9 @@ std::unique_ptr<internal::Configuration> Module::initializeConfig() {
             break;
         case Type::USB:
             config = std::move(internal::getUsbConfiguration());
+            break;
+        case Type::BLUETOOTH:
+            config = std::move(internal::getBluetoothConfiguration());
             break;
     }
     return config;
