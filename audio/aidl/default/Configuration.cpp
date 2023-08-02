@@ -561,4 +561,86 @@ std::unique_ptr<Configuration> getStubConfiguration() {
     return std::make_unique<Configuration>(configuration);
 }
 
+// Bluetooth configuration:
+//
+// Device ports:
+//  * "BT A2DP Out", OUT_DEVICE, CONNECTION_BT_A2DP
+//    - profile PCM 16-bit; STEREO; 44100, 48000, 88200, 96000
+//  * "BT A2DP Headphones", OUT_HEADSET, CONNECTION_BT_A2DP
+//    - profile PCM 16-bit; STEREO; 44100, 48000, 88200, 96000
+//  * "BT A2DP Speaker", OUT_SPEAKER, CONNECTION_BT_A2DP
+//    - profile PCM 16-bit; STEREO; 44100, 48000, 88200, 96000
+//  * "BT Hearing Aid Out", OUT_HEARING_AID, CONNECTION_WIRELESS
+//    - no profiles specified
+//
+// Mix ports:
+//  * "a2dp output", 1 max open, 1 max active stream
+//    - no profiles specified
+//  * "hearing aid output", 1 max open, 1 max active stream
+//    - profile PCM 16-bit; STEREO; 16000, 24000
+//
+// Routes:
+//  "a2dp output" -> "BT A2DP Out"
+//  "a2dp output" -> "BT A2DP Headphones"
+//  "a2dp output" -> "BT A2DP Speaker"
+//  "hearing aid output" -> "BT Hearing Aid Out"
+//
+std::unique_ptr<Configuration> getBluetoothConfiguration() {
+    static const Configuration configuration = []() {
+        const std::vector<AudioProfile> standardPcmAudioProfiles = {
+                createProfile(PcmType::INT_16_BIT, {AudioChannelLayout::LAYOUT_STEREO},
+                              {44100, 48000, 88200, 96000})};
+        Configuration c;
+
+        // Device ports
+        AudioPort btOutDevice =
+                createPort(c.nextPortId++, "BT A2DP Out", 0, false,
+                           createDeviceExt(AudioDeviceType::OUT_DEVICE, 0,
+                                           AudioDeviceDescription::CONNECTION_BT_A2DP));
+        c.ports.push_back(btOutDevice);
+        c.connectedProfiles[btOutDevice.id] = standardPcmAudioProfiles;
+
+        AudioPort btOutHeadphone =
+                createPort(c.nextPortId++, "BT A2DP Headphones", 0, false,
+                           createDeviceExt(AudioDeviceType::OUT_HEADSET, 0,
+                                           AudioDeviceDescription::CONNECTION_BT_A2DP));
+        c.ports.push_back(btOutHeadphone);
+        c.connectedProfiles[btOutHeadphone.id] = standardPcmAudioProfiles;
+
+        AudioPort btOutSpeaker =
+                createPort(c.nextPortId++, "BT A2DP Speaker", 0, false,
+                           createDeviceExt(AudioDeviceType::OUT_SPEAKER, 0,
+                                           AudioDeviceDescription::CONNECTION_BT_A2DP));
+        c.ports.push_back(btOutSpeaker);
+        c.connectedProfiles[btOutSpeaker.id] = standardPcmAudioProfiles;
+
+        AudioPort btOutHearingAid =
+                createPort(c.nextPortId++, "BT Hearing Aid Out", 0, false,
+                           createDeviceExt(AudioDeviceType::OUT_HEARING_AID, 0,
+                                           AudioDeviceDescription::CONNECTION_WIRELESS));
+        c.ports.push_back(btOutHearingAid);
+        c.connectedProfiles[btOutHearingAid.id] = std::vector<AudioProfile>(
+                {createProfile(PcmType::INT_16_BIT, {AudioChannelLayout::LAYOUT_STEREO}, {16000})});
+
+        // Mix ports
+        AudioPort btInMix =
+                createPort(c.nextPortId++, "a2dp output", 0, true, createPortMixExt(1, 1));
+        c.ports.push_back(btInMix);
+
+        AudioPort btHeadsetInMix =
+                createPort(c.nextPortId++, "hearing aid output", 0, true, createPortMixExt(1, 1));
+        btHeadsetInMix.profiles.push_back(createProfile(
+                PcmType::INT_16_BIT, {AudioChannelLayout::LAYOUT_STEREO}, {16000, 24000}));
+        c.ports.push_back(btHeadsetInMix);
+
+        c.routes.push_back(createRoute({btInMix}, btOutDevice));
+        c.routes.push_back(createRoute({btInMix}, btOutHeadphone));
+        c.routes.push_back(createRoute({btInMix}, btOutSpeaker));
+        c.routes.push_back(createRoute({btHeadsetInMix}, btOutHearingAid));
+
+        return c;
+    }();
+    return std::make_unique<Configuration>(configuration);
+}
+
 }  // namespace aidl::android::hardware::audio::core::internal
