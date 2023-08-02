@@ -20,7 +20,7 @@
 
 namespace aidl::android::hardware::audio::core {
 
-// 'StreamSwitcher' is implementation of 'StreamCommonInterface' which allows
+// 'StreamSwitcher' is an implementation of 'StreamCommonInterface' which allows
 // dynamically switching the underlying stream implementation based on currently
 // connected devices. This is achieved by replacing inheritance from
 // 'StreamCommonImpl' with owning an instance of it. StreamSwitcher must be

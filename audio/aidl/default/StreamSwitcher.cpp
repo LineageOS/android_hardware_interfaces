@@ -126,11 +126,10 @@ ndk::ScopedAStatus StreamSwitcher::removeEffect(const std::shared_ptr<IEffect>& 
         LOG(ERROR) << __func__ << ": stream was closed";
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
     }
-    for (auto it = mEffects.begin(); it != mEffects.end();) {
+    for (auto it = mEffects.begin(); it != mEffects.end(); ++it) {
         if ((*it)->asBinder() == in_effect->asBinder()) {
-            it = mEffects.erase(it);
-        } else {
-            ++it;
+            mEffects.erase(it);
+            break;
         }
     }
     return !mIsStubStream ? mStream->removeEffect(in_effect) : ndk::ScopedAStatus::ok();
@@ -201,6 +200,10 @@ ndk::ScopedAStatus StreamSwitcher::setConnectedDevices(const std::vector<AudioDe
         }
         // The delegate is null because StreamSwitcher handles IStreamCommon methods by itself.
         if (ndk::ScopedAStatus status = mStream->initInstance(nullptr); !status.isOk()) {
+            if (mIsStubStream) {
+                LOG(FATAL) << __func__
+                           << ": failed to initialize stub stream: " << status.getDescription();
+            }
             // Need to close the current failed stream, and report an error.
             // Since we can't operate without a stream implementation, put a stub in.
             RETURN_STATUS_IF_ERROR(closeCurrentStream(false /*validateStreamState*/));
