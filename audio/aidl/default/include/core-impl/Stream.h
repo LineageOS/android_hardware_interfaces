@@ -354,6 +354,7 @@ struct StreamCommonInterface {
     virtual const ConnectedDevices& getConnectedDevices() const = 0;
     virtual ndk::ScopedAStatus setConnectedDevices(
             const std::vector<::aidl::android::media::audio::common::AudioDevice>& devices) = 0;
+    virtual ndk::ScopedAStatus bluetoothParametersUpdated() = 0;
 };
 
 // This is equivalent to automatically generated 'IStreamCommonDelegator' but uses
@@ -454,6 +455,7 @@ class StreamCommonImpl : virtual public StreamCommonInterface, virtual public Dr
     ndk::ScopedAStatus setConnectedDevices(
             const std::vector<::aidl::android::media::audio::common::AudioDevice>& devices)
             override;
+    ndk::ScopedAStatus bluetoothParametersUpdated() override;
 
   protected:
     static StreamWorkerInterface::CreateInstance getDefaultInWorkerCreator() {
@@ -584,6 +586,11 @@ class StreamWrapper {
         if (s) return s->setConnectedDevices(devices);
         return ndk::ScopedAStatus::ok();
     }
+    ndk::ScopedAStatus bluetoothParametersUpdated() {
+        auto s = mStream.lock();
+        if (s) return s->bluetoothParametersUpdated();
+        return ndk::ScopedAStatus::ok();
+    }
 
   private:
     std::weak_ptr<StreamCommonInterface> mStream;
@@ -611,6 +618,14 @@ class Streams {
             return it->second.setConnectedDevices(devices);
         }
         return ndk::ScopedAStatus::ok();
+    }
+    ndk::ScopedAStatus bluetoothParametersUpdated() {
+        bool isOk = true;
+        for (auto& it : mStreams) {
+            if (!it.second.bluetoothParametersUpdated().isOk()) isOk = false;
+        }
+        return isOk ? ndk::ScopedAStatus::ok()
+                    : ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
     }
 
   private:
