@@ -359,6 +359,10 @@
             <xs:enumeration value="AUDIO_USAGE_VIRTUAL_SOURCE"/>
             <xs:enumeration value="AUDIO_USAGE_ASSISTANT"/>
             <xs:enumeration value="AUDIO_USAGE_CALL_ASSISTANT"/>
+            <xs:enumeration value="AUDIO_USAGE_EMERGENCY" />
+            <xs:enumeration value="AUDIO_USAGE_SAFETY" />
+            <xs:enumeration value="AUDIO_USAGE_VEHICLE_STATUS" />
+            <xs:enumeration value="AUDIO_USAGE_ANNOUNCEMENT" />
         </xs:restriction>
     </xs:simpleType>
 
