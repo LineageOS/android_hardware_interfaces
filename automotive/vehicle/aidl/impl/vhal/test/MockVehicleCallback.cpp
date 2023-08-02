@@ -63,8 +63,9 @@ ScopedAStatus MockVehicleCallback::onPropertyEvent(const VehiclePropValues& resu
     return storeResults(results, &mOnPropertyEventResults);
 }
 
-ScopedAStatus MockVehicleCallback::onPropertySetError(const VehiclePropErrors&) {
-    return ScopedAStatus::ok();
+ScopedAStatus MockVehicleCallback::onPropertySetError(const VehiclePropErrors& results) {
+    std::scoped_lock<std::mutex> lockGuard(mLock);
+    return storeResults(results, &mOnPropertySetErrorResults);
 }
 
 std::optional<GetValueResults> MockVehicleCallback::nextGetValueResults() {
@@ -85,6 +86,16 @@ std::optional<VehiclePropValues> MockVehicleCallback::nextOnPropertyEventResults
 size_t MockVehicleCallback::countOnPropertyEventResults() {
     std::scoped_lock<std::mutex> lockGuard(mLock);
     return mOnPropertyEventResults.size();
+}
+
+std::optional<VehiclePropErrors> MockVehicleCallback::nextOnPropertySetErrorResults() {
+    std::scoped_lock<std::mutex> lockGuard(mLock);
+    return pop(mOnPropertySetErrorResults);
+}
+
+size_t MockVehicleCallback::countOnPropertySetErrorResults() {
+    std::scoped_lock<std::mutex> lockGuard(mLock);
+    return mOnPropertySetErrorResults.size();
 }
 
 }  // namespace vehicle
