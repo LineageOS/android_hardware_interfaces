@@ -209,11 +209,13 @@ package android.audio.policy.engine.configuration {
   public enum UsageEnumType {
     method @NonNull public String getRawName();
     enum_constant public static final android.audio.policy.engine.configuration.UsageEnumType AUDIO_USAGE_ALARM;
+    enum_constant public static final android.audio.policy.engine.configuration.UsageEnumType AUDIO_USAGE_ANNOUNCEMENT;
     enum_constant public static final android.audio.policy.engine.configuration.UsageEnumType AUDIO_USAGE_ASSISTANCE_ACCESSIBILITY;
     enum_constant public static final android.audio.policy.engine.configuration.UsageEnumType AUDIO_USAGE_ASSISTANCE_NAVIGATION_GUIDANCE;
     enum_constant public static final android.audio.policy.engine.configuration.UsageEnumType AUDIO_USAGE_ASSISTANCE_SONIFICATION;
     enum_constant public static final android.audio.policy.engine.configuration.UsageEnumType AUDIO_USAGE_ASSISTANT;
     enum_constant public static final android.audio.policy.engine.configuration.UsageEnumType AUDIO_USAGE_CALL_ASSISTANT;
+    enum_constant public static final android.audio.policy.engine.configuration.UsageEnumType AUDIO_USAGE_EMERGENCY;
     enum_constant public static final android.audio.policy.engine.configuration.UsageEnumType AUDIO_USAGE_GAME;
     enum_constant public static final android.audio.policy.engine.configuration.UsageEnumType AUDIO_USAGE_MEDIA;
     enum_constant public static final android.audio.policy.engine.configuration.UsageEnumType AUDIO_USAGE_NOTIFICATION;
@@ -222,7 +224,9 @@ package android.audio.policy.engine.configuration {
     enum_constant public static final android.audio.policy.engine.configuration.UsageEnumType AUDIO_USAGE_NOTIFICATION_COMMUNICATION_REQUEST;
     enum_constant public static final android.audio.policy.engine.configuration.UsageEnumType AUDIO_USAGE_NOTIFICATION_EVENT;
     enum_constant public static final android.audio.policy.engine.configuration.UsageEnumType AUDIO_USAGE_NOTIFICATION_TELEPHONY_RINGTONE;
+    enum_constant public static final android.audio.policy.engine.configuration.UsageEnumType AUDIO_USAGE_SAFETY;
     enum_constant public static final android.audio.policy.engine.configuration.UsageEnumType AUDIO_USAGE_UNKNOWN;
+    enum_constant public static final android.audio.policy.engine.configuration.UsageEnumType AUDIO_USAGE_VEHICLE_STATUS;
     enum_constant public static final android.audio.policy.engine.configuration.UsageEnumType AUDIO_USAGE_VIRTUAL_SOURCE;
     enum_constant public static final android.audio.policy.engine.configuration.UsageEnumType AUDIO_USAGE_VOICE_COMMUNICATION;
     enum_constant public static final android.audio.policy.engine.configuration.UsageEnumType AUDIO_USAGE_VOICE_COMMUNICATION_SIGNALLING;
