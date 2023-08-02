@@ -65,7 +65,8 @@ int main() {
         return std::make_pair(module, moduleBinder);
     };
     auto modules = {createModule(Module::Type::DEFAULT), createModule(Module::Type::R_SUBMIX),
-                    createModule(Module::Type::USB), createModule(Module::Type::STUB)};
+                    createModule(Module::Type::USB), createModule(Module::Type::STUB),
+                    createModule(Module::Type::BLUETOOTH)};
     (void)modules;
 
     ABinderProcess_joinThreadPool();
