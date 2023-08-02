@@ -574,6 +574,14 @@
         </interface>
     </hal>
     <hal format="aidl" optional="true">
+        <name>android.hardware.threadnetwork</name>
+        <version>1</version>
+        <interface>
+            <name>IThreadChip</name>
+            <instance>chip0</instance>
+        </interface>
+    </hal>
+    <hal format="aidl" optional="true">
         <name>android.hardware.tv.hdmi.cec</name>
         <version>1</version>
         <interface>
