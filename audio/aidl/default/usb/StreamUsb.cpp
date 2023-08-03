@@ -85,7 +85,7 @@ std::vector<alsa::DeviceProfile> StreamUsb::getDeviceProfiles() {
 
 StreamInUsb::StreamInUsb(StreamContext&& context, const SinkMetadata& sinkMetadata,
                          const std::vector<MicrophoneInfo>& microphones)
-    : StreamIn(std::move(context), microphones), StreamUsb(&(StreamIn::mContext), sinkMetadata) {}
+    : StreamIn(std::move(context), microphones), StreamUsb(&mContextInstance, sinkMetadata) {}
 
 ndk::ScopedAStatus StreamInUsb::getActiveMicrophones(
         std::vector<MicrophoneDynamicInfo>* _aidl_return __unused) {
@@ -96,7 +96,7 @@ ndk::ScopedAStatus StreamInUsb::getActiveMicrophones(
 StreamOutUsb::StreamOutUsb(StreamContext&& context, const SourceMetadata& sourceMetadata,
                            const std::optional<AudioOffloadInfo>& offloadInfo)
     : StreamOut(std::move(context), offloadInfo),
-      StreamUsb(&(StreamOut::mContext), sourceMetadata),
+      StreamUsb(&mContextInstance, sourceMetadata),
       mChannelCount(getChannelCount(getContext().getChannelLayout())) {}
 
 ndk::ScopedAStatus StreamOutUsb::getHwVolume(std::vector<float>* _aidl_return) {
