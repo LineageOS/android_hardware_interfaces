@@ -16,13 +16,22 @@
 
 #pragma once
 
-#include "core-impl/Stream.h"
+#include <optional>
+#include <vector>
+
+#include "Stream.h"
+#include "alsa/Utils.h"
 
 namespace aidl::android::hardware::audio::core {
 
-class StreamStub : public StreamCommonImpl {
+// This class is intended to be used as a base class for implementations
+// that use TinyAlsa.
+// This class does not define a complete stream implementation,
+// and should never be used on its own. Derived classes are expected to
+// provide necessary overrides for all interface methods omitted here.
+class StreamAlsa : public StreamCommonImpl {
   public:
-    StreamStub(StreamContext* context, const Metadata& metadata);
+    StreamAlsa(StreamContext* context, const Metadata& metadata, int readWriteRetries);
     // Methods of 'DriverInterface'.
     ::android::status_t init() override;
     ::android::status_t drain(StreamDescriptor::DrainMode) override;
@@ -32,39 +41,19 @@ class StreamStub : public StreamCommonImpl {
     ::android::status_t start() override;
     ::android::status_t transfer(void* buffer, size_t frameCount, size_t* actualFrameCount,
                                  int32_t* latencyMs) override;
+    ::android::status_t getPosition(StreamDescriptor::Position* position) override;
     void shutdown() override;
 
-  private:
+  protected:
+    // Called from 'start' to initialize 'mAlsaDeviceProxies', the vector must be non-empty.
+    virtual std::vector<alsa::DeviceProfile> getDeviceProfiles() = 0;
+
     const size_t mFrameSizeBytes;
-    const int mSampleRate;
-    const bool mIsAsynchronous;
     const bool mIsInput;
-    bool mIsInitialized = false;  // Used for validating the state machine logic.
-    bool mIsStandby = true;       // Used for validating the state machine logic.
-};
-
-class StreamInStub final : public StreamIn, public StreamStub {
-  public:
-    friend class ndk::SharedRefBase;
-    StreamInStub(
-            StreamContext&& context,
-            const ::aidl::android::hardware::audio::common::SinkMetadata& sinkMetadata,
-            const std::vector<::aidl::android::media::audio::common::MicrophoneInfo>& microphones);
-
-  private:
-    void onClose(StreamDescriptor::State) override { defaultOnClose(); }
-};
-
-class StreamOutStub final : public StreamOut, public StreamStub {
-  public:
-    friend class ndk::SharedRefBase;
-    StreamOutStub(StreamContext&& context,
-                  const ::aidl::android::hardware::audio::common::SourceMetadata& sourceMetadata,
-                  const std::optional<::aidl::android::media::audio::common::AudioOffloadInfo>&
-                          offloadInfo);
-
-  private:
-    void onClose(StreamDescriptor::State) override { defaultOnClose(); }
+    const std::optional<struct pcm_config> mConfig;
+    const int mReadWriteRetries;
+    // All fields below are only used on the worker thread.
+    std::vector<alsa::DeviceProxy> mAlsaDeviceProxies;
 };
 
 }  // namespace aidl::android::hardware::audio::core

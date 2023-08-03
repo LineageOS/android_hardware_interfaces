@@ -93,9 +93,9 @@ class SubmixRoute {
         return mSource;
     }
 
-    bool isStreamConfigValid(bool isInput, const AudioConfig streamConfig);
+    bool isStreamConfigValid(bool isInput, const AudioConfig& streamConfig);
     void closeStream(bool isInput);
-    ::android::status_t createPipe(const AudioConfig streamConfig);
+    ::android::status_t createPipe(const AudioConfig& streamConfig);
     void exitStandby(bool isInput);
     bool hasAtleastOneStreamOpen();
     int notifyReadError();
@@ -107,7 +107,7 @@ class SubmixRoute {
     long updateReadCounterFrames(size_t frameCount);
 
   private:
-    bool isStreamConfigCompatible(const AudioConfig streamConfig);
+    bool isStreamConfigCompatible(const AudioConfig& streamConfig);
 
     std::mutex mLock;
 

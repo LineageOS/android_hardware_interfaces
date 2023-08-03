@@ -43,6 +43,7 @@
 #include <system/thread_defs.h>
 #include <utils/Errors.h>
 
+#include "core-impl/ChildInterface.h"
 #include "core-impl/utils.h"
 
 namespace aidl::android::hardware::audio::core {
@@ -65,7 +66,8 @@ class StreamContext {
             DataMQ;
 
     // Ensure that this value is not used by any of StreamDescriptor.State enums
-    static constexpr int32_t STATE_CLOSED = -1;
+    static constexpr StreamDescriptor::State STATE_CLOSED =
+            static_cast<StreamDescriptor::State>(-1);
 
     struct DebugParameters {
         // An extra delay for transient states, in ms.
@@ -112,7 +114,8 @@ class StreamContext {
           mDataMQ(std::move(other.mDataMQ)),
           mAsyncCallback(std::move(other.mAsyncCallback)),
           mOutEventCallback(std::move(other.mOutEventCallback)),
-          mDebugParameters(std::move(other.mDebugParameters)) {}
+          mDebugParameters(std::move(other.mDebugParameters)),
+          mFrameCount(other.mFrameCount) {}
     StreamContext& operator=(StreamContext&& other) {
         mCommandMQ = std::move(other.mCommandMQ);
         mInternalCommandCookie = other.mInternalCommandCookie;
@@ -127,11 +130,13 @@ class StreamContext {
         mAsyncCallback = std::move(other.mAsyncCallback);
         mOutEventCallback = std::move(other.mOutEventCallback);
         mDebugParameters = std::move(other.mDebugParameters);
+        mFrameCount = other.mFrameCount;
         return *this;
     }
 
     void fillDescriptor(StreamDescriptor* desc);
     std::shared_ptr<IStreamCallback> getAsyncCallback() const { return mAsyncCallback; }
+    size_t getBufferSizeInFrames() const;
     ::aidl::android::media::audio::common::AudioChannelLayout getChannelLayout() const {
         return mChannelLayout;
     }
@@ -154,7 +159,12 @@ class StreamContext {
     int getTransientStateDelayMs() const { return mDebugParameters.transientStateDelayMs; }
     int getSampleRate() const { return mSampleRate; }
     bool isValid() const;
+    // 'reset' is called on a Binder thread when closing the stream. Does not use
+    // locking because it only cleans MQ pointers which were also set on the Binder thread.
     void reset();
+    // 'advanceFrameCount' and 'getFrameCount' are only called on the worker thread.
+    long advanceFrameCount(size_t increase) { return mFrameCount += increase; }
+    long getFrameCount() const { return mFrameCount; }
 
   private:
     std::unique_ptr<CommandMQ> mCommandMQ;
@@ -170,6 +180,7 @@ class StreamContext {
     std::shared_ptr<IStreamCallback> mAsyncCallback;
     std::shared_ptr<IStreamOutEventCallback> mOutEventCallback;  // Only used by output streams
     DebugParameters mDebugParameters;
+    long mFrameCount = 0;
 };
 
 // This interface provides operations of the stream which are executed on the worker thread.
@@ -184,31 +195,34 @@ struct DriverInterface {
     virtual ::android::status_t start() = 0;
     virtual ::android::status_t transfer(void* buffer, size_t frameCount, size_t* actualFrameCount,
                                          int32_t* latencyMs) = 0;
+    // No need to implement 'getPosition' unless the driver can provide more precise
+    // data than just total frame count. For example, the driver may correctly account
+    // for any intermediate buffers.
+    virtual ::android::status_t getPosition(StreamDescriptor::Position* /*position*/) {
+        return ::android::OK;
+    }
     virtual void shutdown() = 0;  // This function is only called once.
 };
 
 class StreamWorkerCommonLogic : public ::android::hardware::audio::common::StreamLogic {
   public:
-    bool isClosed() const {
-        return static_cast<int32_t>(mState.load()) == StreamContext::STATE_CLOSED;
+    bool isClosed() const { return mState == StreamContext::STATE_CLOSED; }
+    StreamDescriptor::State setClosed() {
+        auto prevState = mState.exchange(StreamContext::STATE_CLOSED);
+        if (prevState != StreamContext::STATE_CLOSED) {
+            mStatePriorToClosing = prevState;
+        }
+        return mStatePriorToClosing;
     }
-    void setClosed() { mState = static_cast<StreamDescriptor::State>(StreamContext::STATE_CLOSED); }
     void setIsConnected(bool connected) { mIsConnected = connected; }
 
   protected:
     using DataBufferElement = int8_t;
 
-    StreamWorkerCommonLogic(const StreamContext& context, DriverInterface* driver)
-        : mDriver(driver),
-          mInternalCommandCookie(context.getInternalCommandCookie()),
-          mFrameSize(context.getFrameSize()),
-          mCommandMQ(context.getCommandMQ()),
-          mReplyMQ(context.getReplyMQ()),
-          mDataMQ(context.getDataMQ()),
-          mAsyncCallback(context.getAsyncCallback()),
-          mTransientStateDelayMs(context.getTransientStateDelayMs()),
-          mForceTransientBurst(context.getForceTransientBurst()),
-          mForceSynchronousDrain(context.getForceSynchronousDrain()) {}
+    StreamWorkerCommonLogic(StreamContext* context, DriverInterface* driver)
+        : mContext(context),
+          mDriver(driver),
+          mTransientStateDelayMs(context->getTransientStateDelayMs()) {}
     std::string init() override;
     void populateReply(StreamDescriptor::Reply* reply, bool isConnected) const;
     void populateReplyWrongState(StreamDescriptor::Reply* reply,
@@ -218,38 +232,35 @@ class StreamWorkerCommonLogic : public ::android::hardware::audio::common::Strea
         mTransientStateStart = std::chrono::steady_clock::now();
     }
 
+    // The context is only used for reading, except for updating the frame count,
+    // which happens on the worker thread only.
+    StreamContext* const mContext;
     DriverInterface* const mDriver;
+    // This is the state the stream was in before being closed. It is retrieved by the main
+    // thread after joining the worker thread.
+    StreamDescriptor::State mStatePriorToClosing = StreamDescriptor::State::STANDBY;
     // Atomic fields are used both by the main and worker threads.
     std::atomic<bool> mIsConnected = false;
     static_assert(std::atomic<StreamDescriptor::State>::is_always_lock_free);
     std::atomic<StreamDescriptor::State> mState = StreamDescriptor::State::STANDBY;
-    // All fields are used on the worker thread only.
-    const int mInternalCommandCookie;
-    const size_t mFrameSize;
-    StreamContext::CommandMQ* const mCommandMQ;
-    StreamContext::ReplyMQ* const mReplyMQ;
-    StreamContext::DataMQ* const mDataMQ;
-    std::shared_ptr<IStreamCallback> mAsyncCallback;
+    // All fields below are used on the worker thread only.
     const std::chrono::duration<int, std::milli> mTransientStateDelayMs;
     std::chrono::time_point<std::chrono::steady_clock> mTransientStateStart;
-    const bool mForceTransientBurst;
-    const bool mForceSynchronousDrain;
     // We use an array and the "size" field instead of a vector to be able to detect
     // memory allocation issues.
     std::unique_ptr<DataBufferElement[]> mDataBuffer;
     size_t mDataBufferSize;
-    long mFrameCount = 0;
 };
 
 // This interface is used to decouple stream implementations from a concrete StreamWorker
 // implementation.
 struct StreamWorkerInterface {
-    using CreateInstance = std::function<StreamWorkerInterface*(const StreamContext& context,
-                                                                DriverInterface* driver)>;
+    using CreateInstance =
+            std::function<StreamWorkerInterface*(StreamContext* context, DriverInterface* driver)>;
     virtual ~StreamWorkerInterface() = default;
     virtual bool isClosed() const = 0;
     virtual void setIsConnected(bool isConnected) = 0;
-    virtual void setClosed() = 0;
+    virtual StreamDescriptor::State setClosed() = 0;
     virtual bool start() = 0;
     virtual void stop() = 0;
 };
@@ -260,11 +271,11 @@ class StreamWorkerImpl : public StreamWorkerInterface,
     using WorkerImpl = ::android::hardware::audio::common::StreamWorker<WorkerLogic>;
 
   public:
-    StreamWorkerImpl(const StreamContext& context, DriverInterface* driver)
+    StreamWorkerImpl(StreamContext* context, DriverInterface* driver)
         : WorkerImpl(context, driver) {}
     bool isClosed() const override { return WorkerImpl::isClosed(); }
     void setIsConnected(bool isConnected) override { WorkerImpl::setIsConnected(isConnected); }
-    void setClosed() override { WorkerImpl::setClosed(); }
+    StreamDescriptor::State setClosed() override { return WorkerImpl::setClosed(); }
     bool start() override {
         return WorkerImpl::start(WorkerImpl::kThreadName, ANDROID_PRIORITY_AUDIO);
     }
@@ -274,7 +285,7 @@ class StreamWorkerImpl : public StreamWorkerInterface,
 class StreamInWorkerLogic : public StreamWorkerCommonLogic {
   public:
     static const std::string kThreadName;
-    StreamInWorkerLogic(const StreamContext& context, DriverInterface* driver)
+    StreamInWorkerLogic(StreamContext* context, DriverInterface* driver)
         : StreamWorkerCommonLogic(context, driver) {}
 
   protected:
@@ -288,8 +299,9 @@ using StreamInWorker = StreamWorkerImpl<StreamInWorkerLogic>;
 class StreamOutWorkerLogic : public StreamWorkerCommonLogic {
   public:
     static const std::string kThreadName;
-    StreamOutWorkerLogic(const StreamContext& context, DriverInterface* driver)
-        : StreamWorkerCommonLogic(context, driver), mEventCallback(context.getOutEventCallback()) {}
+    StreamOutWorkerLogic(StreamContext* context, DriverInterface* driver)
+        : StreamWorkerCommonLogic(context, driver),
+          mEventCallback(context->getOutEventCallback()) {}
 
   protected:
     Status cycle() override;
@@ -403,16 +415,17 @@ class StreamCommonDelegator : public BnStreamCommon {
 };
 
 // The implementation of DriverInterface must be provided by each concrete stream implementation.
+// Note that StreamCommonImpl does not own the context. This is to support swapping on the fly
+// implementations of the stream while keeping the same IStreamIn/Out instance. It's that instance
+// who must be owner of the context.
 class StreamCommonImpl : virtual public StreamCommonInterface, virtual public DriverInterface {
   public:
-    StreamCommonImpl(const Metadata& metadata, StreamContext&& context,
+    StreamCommonImpl(StreamContext* context, const Metadata& metadata,
                      const StreamWorkerInterface::CreateInstance& createWorker)
-        : mMetadata(metadata),
-          mContext(std::move(context)),
-          mWorker(createWorker(mContext, this)) {}
-    StreamCommonImpl(const Metadata& metadata, StreamContext&& context)
+        : mContext(*context), mMetadata(metadata), mWorker(createWorker(context, this)) {}
+    StreamCommonImpl(StreamContext* context, const Metadata& metadata)
         : StreamCommonImpl(
-                  metadata, std::move(context),
+                  context, metadata,
                   isInput(metadata) ? getDefaultInWorkerCreator() : getDefaultOutWorkerCreator()) {}
     ~StreamCommonImpl();
 
@@ -444,23 +457,23 @@ class StreamCommonImpl : virtual public StreamCommonInterface, virtual public Dr
 
   protected:
     static StreamWorkerInterface::CreateInstance getDefaultInWorkerCreator() {
-        return [](const StreamContext& ctx, DriverInterface* driver) -> StreamWorkerInterface* {
+        return [](StreamContext* ctx, DriverInterface* driver) -> StreamWorkerInterface* {
             return new StreamInWorker(ctx, driver);
         };
     }
     static StreamWorkerInterface::CreateInstance getDefaultOutWorkerCreator() {
-        return [](const StreamContext& ctx, DriverInterface* driver) -> StreamWorkerInterface* {
+        return [](StreamContext* ctx, DriverInterface* driver) -> StreamWorkerInterface* {
             return new StreamOutWorker(ctx, driver);
         };
     }
 
+    virtual void onClose(StreamDescriptor::State statePriorToClosing) = 0;
     void stopWorker();
 
+    const StreamContext& mContext;
     Metadata mMetadata;
-    StreamContext mContext;
     std::unique_ptr<StreamWorkerInterface> mWorker;
-    std::shared_ptr<StreamCommonDelegator> mCommon;
-    ndk::SpAIBinder mCommonBinder;
+    ChildInterface<StreamCommonDelegator> mCommon;
     ConnectedDevices mConnectedDevices;
 };
 
@@ -468,6 +481,8 @@ class StreamCommonImpl : virtual public StreamCommonInterface, virtual public Dr
 // concrete input/output stream implementations.
 class StreamIn : virtual public StreamCommonInterface, public BnStreamIn {
   protected:
+    void defaultOnClose();
+
     ndk::ScopedAStatus getStreamCommon(std::shared_ptr<IStreamCommon>* _aidl_return) override {
         return getStreamCommonCommon(_aidl_return);
     }
@@ -487,14 +502,17 @@ class StreamIn : virtual public StreamCommonInterface, public BnStreamIn {
 
     friend class ndk::SharedRefBase;
 
-    explicit StreamIn(
-            const std::vector<::aidl::android::media::audio::common::MicrophoneInfo>& microphones);
+    StreamIn(StreamContext&& context,
+             const std::vector<::aidl::android::media::audio::common::MicrophoneInfo>& microphones);
 
+    StreamContext mContext;
     const std::map<::aidl::android::media::audio::common::AudioDevice, std::string> mMicrophones;
 };
 
 class StreamOut : virtual public StreamCommonInterface, public BnStreamOut {
   protected:
+    void defaultOnClose();
+
     ndk::ScopedAStatus getStreamCommon(std::shared_ptr<IStreamCommon>* _aidl_return) override {
         return getStreamCommonCommon(_aidl_return);
     }
@@ -528,10 +546,12 @@ class StreamOut : virtual public StreamCommonInterface, public BnStreamOut {
 
     friend class ndk::SharedRefBase;
 
-    explicit StreamOut(const std::optional<::aidl::android::media::audio::common::AudioOffloadInfo>&
-                               offloadInfo);
+    StreamOut(StreamContext&& context,
+              const std::optional<::aidl::android::media::audio::common::AudioOffloadInfo>&
+                      offloadInfo);
 
-    std::optional<::aidl::android::media::audio::common::AudioOffloadInfo> mOffloadInfo;
+    StreamContext mContext;
+    const std::optional<::aidl::android::media::audio::common::AudioOffloadInfo> mOffloadInfo;
     std::optional<::aidl::android::hardware::audio::common::AudioOffloadMetadata> mOffloadMetadata;
 };
 

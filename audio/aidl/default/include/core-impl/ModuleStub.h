@@ -16,22 +16,19 @@
 
 #pragma once
 
-#include "core-impl/ModuleAlsa.h"
+#include "core-impl/Module.h"
 
 namespace aidl::android::hardware::audio::core {
 
-class ModuleUsb final : public ModuleAlsa {
+class ModuleStub final : public Module {
   public:
-    ModuleUsb() : ModuleAlsa(Type::USB) {}
+    ModuleStub() : Module(Type::STUB) {}
 
-  private:
-    // IModule interfaces
-    ndk::ScopedAStatus getTelephony(std::shared_ptr<ITelephony>* _aidl_return) override;
+  protected:
     ndk::ScopedAStatus getBluetooth(std::shared_ptr<IBluetooth>* _aidl_return) override;
-    ndk::ScopedAStatus getMicMute(bool* _aidl_return) override;
-    ndk::ScopedAStatus setMicMute(bool in_mute) override;
+    ndk::ScopedAStatus getBluetoothA2dp(std::shared_ptr<IBluetoothA2dp>* _aidl_return) override;
+    ndk::ScopedAStatus getBluetoothLe(std::shared_ptr<IBluetoothLe>* _aidl_return) override;
 
-    // Module interfaces
     ndk::ScopedAStatus createInputStream(
             StreamContext&& context,
             const ::aidl::android::hardware::audio::common::SinkMetadata& sinkMetadata,
@@ -43,17 +40,11 @@ class ModuleUsb final : public ModuleAlsa {
             const std::optional<::aidl::android::media::audio::common::AudioOffloadInfo>&
                     offloadInfo,
             std::shared_ptr<StreamOut>* result) override;
-    ndk::ScopedAStatus populateConnectedDevicePort(
-            ::aidl::android::media::audio::common::AudioPort* audioPort) override;
-    ndk::ScopedAStatus checkAudioPatchEndpointsMatch(
-            const std::vector<::aidl::android::media::audio::common::AudioPortConfig*>& sources,
-            const std::vector<::aidl::android::media::audio::common::AudioPortConfig*>& sinks)
-            override;
-    void onExternalDeviceConnectionChanged(
-            const ::aidl::android::media::audio::common::AudioPort& audioPort,
-            bool connected) override;
-    ndk::ScopedAStatus onMasterMuteChanged(bool mute) override;
-    ndk::ScopedAStatus onMasterVolumeChanged(float volume) override;
+
+  private:
+    ChildInterface<IBluetooth> mBluetooth;
+    ChildInterface<IBluetoothA2dp> mBluetoothA2dp;
+    ChildInterface<IBluetoothLe> mBluetoothLe;
 };
 
 }  // namespace aidl::android::hardware::audio::core
