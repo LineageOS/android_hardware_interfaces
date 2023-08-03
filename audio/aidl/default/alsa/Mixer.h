@@ -72,7 +72,7 @@ class Mixer {
     std::mutex mMixerAccess;
     // The mixer object is owned by ALSA and will be released when the mixer is closed.
     struct mixer* const mMixer;
-    // `mMixerControls` will only be initialized in constructor. After that, it wil only be
+    // `mMixerControls` will only be initialized in constructor. After that, it will only be
     // read but not be modified. Each mixer_ctl object is owned by ALSA, it's life span is
     // the same as of the mixer itself.
     const Controls mMixerControls;
