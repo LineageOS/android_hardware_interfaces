@@ -108,7 +108,7 @@ StreamAlsa::StreamAlsa(StreamContext* context, const Metadata& metadata, int rea
     return ::android::OK;
 }
 
-::android::status_t StreamAlsa::getPosition(StreamDescriptor::Position* position) {
+::android::status_t StreamAlsa::refinePosition(StreamDescriptor::Position* position) {
     if (mAlsaDeviceProxies.empty()) {
         LOG(FATAL) << __func__ << ": no input devices";
         return ::android::NO_INIT;
