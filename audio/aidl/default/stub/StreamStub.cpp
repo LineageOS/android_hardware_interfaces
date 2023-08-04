@@ -120,11 +120,10 @@ void StreamStub::shutdown() {
 
 StreamInStub::StreamInStub(StreamContext&& context, const SinkMetadata& sinkMetadata,
                            const std::vector<MicrophoneInfo>& microphones)
-    : StreamIn(std::move(context), microphones), StreamStub(&(StreamIn::mContext), sinkMetadata) {}
+    : StreamIn(std::move(context), microphones), StreamStub(&mContextInstance, sinkMetadata) {}
 
 StreamOutStub::StreamOutStub(StreamContext&& context, const SourceMetadata& sourceMetadata,
                              const std::optional<AudioOffloadInfo>& offloadInfo)
-    : StreamOut(std::move(context), offloadInfo),
-      StreamStub(&(StreamOut::mContext), sourceMetadata) {}
+    : StreamOut(std::move(context), offloadInfo), StreamStub(&mContextInstance, sourceMetadata) {}
 
 }  // namespace aidl::android::hardware::audio::core
