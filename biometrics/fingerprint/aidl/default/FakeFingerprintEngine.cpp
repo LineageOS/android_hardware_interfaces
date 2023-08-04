@@ -385,6 +385,11 @@ void FakeFingerprintEngine::resetLockoutImpl(ISessionCallback* cb,
         cb->onError(Error::UNABLE_TO_PROCESS, 0 /* vendorError */);
         return;
     }
+    clearLockout(cb);
+    isLockoutTimerAborted = true;
+}
+
+void FakeFingerprintEngine::clearLockout(ISessionCallback* cb) {
     FingerprintHalProperties::lockout(false);
     cb->onLockoutCleared();
     mLockoutTracker.reset();
@@ -574,13 +579,34 @@ bool FakeFingerprintEngine::checkSensorLockout(ISessionCallback* cb) {
     if (lockoutMode == FakeLockoutTracker::LockoutMode::kPermanent) {
         LOG(ERROR) << "Fail: lockout permanent";
         cb->onLockoutPermanent();
+        isLockoutTimerAborted = true;
         return true;
     } else if (lockoutMode == FakeLockoutTracker::LockoutMode::kTimed) {
         int64_t timeLeft = mLockoutTracker.getLockoutTimeLeft();
         LOG(ERROR) << "Fail: lockout timed " << timeLeft;
         cb->onLockoutTimed(timeLeft);
+        if (isLockoutTimerSupported && !isLockoutTimerStarted) startLockoutTimer(timeLeft, cb);
         return true;
     }
     return false;
+}
+
+void FakeFingerprintEngine::startLockoutTimer(int64_t timeout, ISessionCallback* cb) {
+    BEGIN_OP(0);
+    std::function<void(ISessionCallback*)> action =
+            std::bind(&FakeFingerprintEngine::lockoutTimerExpired, this, std::placeholders::_1);
+    std::thread([timeout, action, cb]() {
+        std::this_thread::sleep_for(std::chrono::milliseconds(timeout));
+        action(cb);
+    }).detach();
+
+    isLockoutTimerStarted = true;
+}
+void FakeFingerprintEngine::lockoutTimerExpired(ISessionCallback* cb) {
+    if (!isLockoutTimerAborted) {
+        clearLockout(cb);
+    }
+    isLockoutTimerStarted = false;
+    isLockoutTimerAborted = false;
 }
 }  // namespace aidl::android::hardware::biometrics::fingerprint
