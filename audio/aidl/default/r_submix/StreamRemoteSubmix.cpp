@@ -184,7 +184,7 @@ void StreamRemoteSubmix::shutdown() {
                      : outWrite(buffer, frameCount, actualFrameCount));
 }
 
-::android::status_t StreamRemoteSubmix::getPosition(StreamDescriptor::Position* position) {
+::android::status_t StreamRemoteSubmix::refinePosition(StreamDescriptor::Position* position) {
     sp<MonoPipeReader> source = mCurrentRoute->getSource();
     if (source == nullptr) {
         return ::android::NO_INIT;
@@ -363,8 +363,7 @@ size_t StreamRemoteSubmix::getStreamPipeSizeInFrames() {
 StreamInRemoteSubmix::StreamInRemoteSubmix(StreamContext&& context,
                                            const SinkMetadata& sinkMetadata,
                                            const std::vector<MicrophoneInfo>& microphones)
-    : StreamIn(std::move(context), microphones),
-      StreamSwitcher(&(StreamIn::mContext), sinkMetadata) {}
+    : StreamIn(std::move(context), microphones), StreamSwitcher(&mContextInstance, sinkMetadata) {}
 
 ndk::ScopedAStatus StreamInRemoteSubmix::getActiveMicrophones(
         std::vector<MicrophoneDynamicInfo>* _aidl_return) {
@@ -405,7 +404,7 @@ StreamOutRemoteSubmix::StreamOutRemoteSubmix(StreamContext&& context,
                                              const SourceMetadata& sourceMetadata,
                                              const std::optional<AudioOffloadInfo>& offloadInfo)
     : StreamOut(std::move(context), offloadInfo),
-      StreamSwitcher(&(StreamOut::mContext), sourceMetadata) {}
+      StreamSwitcher(&mContextInstance, sourceMetadata) {}
 
 StreamSwitcher::DeviceSwitchBehavior StreamOutRemoteSubmix::switchCurrentStream(
         const std::vector<::aidl::android::media::audio::common::AudioDevice>& devices) {

@@ -320,7 +320,7 @@ StreamInBluetooth::StreamInBluetooth(StreamContext&& context, const SinkMetadata
                                      const std::vector<MicrophoneInfo>& microphones,
                                      Module::BtProfileHandles&& btProfileHandles)
     : StreamIn(std::move(context), microphones),
-      StreamBluetooth(&(StreamIn::mContext), sinkMetadata, std::move(btProfileHandles)) {}
+      StreamBluetooth(&mContextInstance, sinkMetadata, std::move(btProfileHandles)) {}
 
 ndk::ScopedAStatus StreamInBluetooth::getActiveMicrophones(
         std::vector<MicrophoneDynamicInfo>* _aidl_return __unused) {
@@ -333,6 +333,6 @@ StreamOutBluetooth::StreamOutBluetooth(StreamContext&& context,
                                        const std::optional<AudioOffloadInfo>& offloadInfo,
                                        Module::BtProfileHandles&& btProfileHandles)
     : StreamOut(std::move(context), offloadInfo),
-      StreamBluetooth(&(StreamOut::mContext), sourceMetadata, std::move(btProfileHandles)) {}
+      StreamBluetooth(&mContextInstance, sourceMetadata, std::move(btProfileHandles)) {}
 
 }  // namespace aidl::android::hardware::audio::core
