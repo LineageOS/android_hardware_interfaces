@@ -117,7 +117,7 @@ void StreamWorkerCommonLogic::populateReply(StreamDescriptor::Reply* reply,
     if (isConnected) {
         reply->observable.frames = mContext->getFrameCount();
         reply->observable.timeNs = ::android::elapsedRealtimeNano();
-        if (auto status = mDriver->getPosition(&reply->observable); status == ::android::OK) {
+        if (auto status = mDriver->refinePosition(&reply->observable); status == ::android::OK) {
             return;
         }
     }
@@ -739,12 +739,12 @@ static std::map<AudioDevice, std::string> transformMicrophones(
 }  // namespace
 
 StreamIn::StreamIn(StreamContext&& context, const std::vector<MicrophoneInfo>& microphones)
-    : mContext(std::move(context)), mMicrophones(transformMicrophones(microphones)) {
+    : mContextInstance(std::move(context)), mMicrophones(transformMicrophones(microphones)) {
     LOG(DEBUG) << __func__;
 }
 
 void StreamIn::defaultOnClose() {
-    mContext.reset();
+    mContextInstance.reset();
 }
 
 ndk::ScopedAStatus StreamIn::getActiveMicrophones(
@@ -800,12 +800,12 @@ ndk::ScopedAStatus StreamIn::setHwGain(const std::vector<float>& in_channelGains
 }
 
 StreamOut::StreamOut(StreamContext&& context, const std::optional<AudioOffloadInfo>& offloadInfo)
-    : mContext(std::move(context)), mOffloadInfo(offloadInfo) {
+    : mContextInstance(std::move(context)), mOffloadInfo(offloadInfo) {
     LOG(DEBUG) << __func__;
 }
 
 void StreamOut::defaultOnClose() {
-    mContext.reset();
+    mContextInstance.reset();
 }
 
 ndk::ScopedAStatus StreamOut::updateOffloadMetadata(
