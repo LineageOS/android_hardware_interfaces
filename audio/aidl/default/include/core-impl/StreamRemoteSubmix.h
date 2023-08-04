@@ -39,7 +39,7 @@ class StreamRemoteSubmix : public StreamCommonImpl {
     ::android::status_t start() override;
     ::android::status_t transfer(void* buffer, size_t frameCount, size_t* actualFrameCount,
                                  int32_t* latencyMs) override;
-    ::android::status_t getPosition(StreamDescriptor::Position* position) override;
+    ::android::status_t refinePosition(StreamDescriptor::Position* position) override;
     void shutdown() override;
 
     // Overridden methods of 'StreamCommonImpl', called on a Binder thread.
