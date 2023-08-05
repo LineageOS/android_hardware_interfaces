@@ -280,14 +280,18 @@ size_t StreamRemoteSubmix::getStreamPipeSizeInFrames() {
                                                size_t* actualFrameCount) {
     // about to read from audio source
     sp<MonoPipeReader> source = mCurrentRoute->getSource();
-    if (source == nullptr) {
-        int readErrorCount = mCurrentRoute->notifyReadError();
-        if (readErrorCount < kMaxReadErrorLogs) {
-            LOG(ERROR)
-                    << __func__
-                    << ": no audio pipe yet we're trying to read! (not all errors will be logged)";
+    if (source == nullptr || source->availableToRead() == 0) {
+        if (source == nullptr) {
+            int readErrorCount = mCurrentRoute->notifyReadError();
+            if (readErrorCount < kMaxReadErrorLogs) {
+                LOG(ERROR) << __func__
+                           << ": no audio pipe yet we're trying to read! (not all errors will be "
+                              "logged)";
+            } else {
+                LOG(ERROR) << __func__ << ": Read errors " << readErrorCount;
+            }
         } else {
-            LOG(ERROR) << __func__ << ": Read errors " << readErrorCount;
+            LOG(INFO) << __func__ << ": no data to read yet, providing empty data";
         }
         const size_t delayUs = static_cast<size_t>(
                 std::roundf(frameCount * MICROS_PER_SECOND / mStreamConfig.sampleRate));
@@ -344,11 +348,9 @@ size_t StreamRemoteSubmix::getStreamPipeSizeInFrames() {
     // recording (including this call): it's converted to usec and compared to how long we've been
     // recording for, which gives us how long we must wait to sync the projected recording time, and
     // the observed recording time.
-    static constexpr float kScaleFactor = .8f;
-    const size_t projectedVsObservedOffsetUs =
-            kScaleFactor * (static_cast<size_t>(std::roundf((readCounterFrames * MICROS_PER_SECOND /
-                                                             mStreamConfig.sampleRate) -
-                                                            recordDurationUs.count())));
+    const size_t projectedVsObservedOffsetUs = static_cast<size_t>(
+            std::roundf((readCounterFrames * MICROS_PER_SECOND / mStreamConfig.sampleRate) -
+                        recordDurationUs.count()));
 
     LOG(VERBOSE) << __func__ << ": record duration " << recordDurationUs.count()
                  << " microseconds, will wait: " << projectedVsObservedOffsetUs << " microseconds";

@@ -20,7 +20,7 @@
 
 namespace aidl::android::hardware::audio::core {
 
-// 'StreamSwitcher' is implementation of 'StreamCommonInterface' which allows
+// 'StreamSwitcher' is an implementation of 'StreamCommonInterface' which allows
 // dynamically switching the underlying stream implementation based on currently
 // connected devices. This is achieved by replacing inheritance from
 // 'StreamCommonImpl' with owning an instance of it. StreamSwitcher must be
@@ -129,6 +129,7 @@ class StreamSwitcher : virtual public StreamCommonInterface {
     ndk::ScopedAStatus setConnectedDevices(
             const std::vector<::aidl::android::media::audio::common::AudioDevice>& devices)
             override;
+    ndk::ScopedAStatus bluetoothParametersUpdated() override;
 
   protected:
     // Since switching a stream requires closing down the current stream, StreamSwitcher
@@ -187,6 +188,7 @@ class StreamSwitcher : virtual public StreamCommonInterface {
     std::optional<int32_t> mHwAvSyncId;
     std::vector<VndParam> mMissedParameters;
     std::vector<std::shared_ptr<::aidl::android::hardware::audio::effect::IEffect>> mEffects;
+    bool mBluetoothParametersUpdated = false;
 };
 
 }  // namespace aidl::android::hardware::audio::core
