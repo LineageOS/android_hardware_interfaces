@@ -503,6 +503,16 @@ void BluetoothAudioSession::ReportControlStatus(bool start_resp,
 void BluetoothAudioSession::ReportLowLatencyModeAllowedChanged(bool allowed) {
   std::lock_guard<std::recursive_mutex> guard(mutex_);
   low_latency_allowed_ = allowed;
+  // TODO(b/294498919): Remove this after there is API to update latency mode
+  // after audio session started. If low_latency_allowed_ is true, the session
+  // can support LOW_LATENCY and FREE LatencyMode.
+  if (low_latency_allowed_) {
+    if (std::find(latency_modes_.begin(), latency_modes_.end(),
+                  LatencyMode::LOW_LATENCY) == latency_modes_.end()) {
+      LOG(INFO) << __func__ << " - insert LOW_LATENCY LatencyMode";
+      latency_modes_.push_back(LatencyMode::LOW_LATENCY);
+    }
+  }
   if (observers_.empty()) {
     LOG(WARNING) << __func__ << " - SessionType=" << toString(session_type_)
                  << " has NO port state observer";
