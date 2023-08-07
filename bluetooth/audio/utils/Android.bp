@@ -78,7 +78,7 @@ cc_test {
     shared_libs: [
         "libbase",
         "libbinder_ndk",
-        "android.hardware.bluetooth.audio-V3-ndk",
+        "android.hardware.bluetooth.audio-V4-ndk",
         "libxml2",
     ],
     test_suites: [
