@@ -3,6 +3,7 @@ service vendor.cas-default-lazy /vendor/bin/hw/android.hardware.cas-service.exam
     class hal
     user media
     group mediadrm drmrpc
+    capabilities SYS_NICE
     ioprio rt 4
     task_profiles ProcessCapacityHigh
     oneshot

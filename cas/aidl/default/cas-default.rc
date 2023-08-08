@@ -3,5 +3,6 @@ service vendor.cas-default /vendor/bin/hw/android.hardware.cas-service.example
     class hal
     user media
     group mediadrm drmrpc
+    capabilities SYS_NICE
     ioprio rt 4
     task_profiles ProcessCapacityHigh
