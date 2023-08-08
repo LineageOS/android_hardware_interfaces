@@ -106,7 +106,7 @@ TEST_P(RadioNetworkTest, setGetAllowedNetworkTypesBitmap) {
                  RadioError::REQUEST_NOT_SUPPORTED, RadioError::NO_RESOURCES}));
         if (radioRsp_network->rspInfo.error == RadioError::NONE) {
             // verify we get the value we set
-            ASSERT_EQ(radioRsp_network->networkTypeBitmapResponse, allowedNetworkTypesBitmap);
+            EXPECT_EQ(radioRsp_network->networkTypeBitmapResponse, allowedNetworkTypesBitmap);
         }
     }
 
