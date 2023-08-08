@@ -27,12 +27,16 @@
 using aidl::android::hardware::audio::common::AudioOffloadMetadata;
 using aidl::android::hardware::audio::common::getChannelCount;
 using aidl::android::hardware::audio::common::getFrameSizeInBytes;
+using aidl::android::hardware::audio::common::isBitPositionFlagSet;
 using aidl::android::hardware::audio::common::SinkMetadata;
 using aidl::android::hardware::audio::common::SourceMetadata;
 using aidl::android::media::audio::common::AudioDevice;
 using aidl::android::media::audio::common::AudioDualMonoMode;
+using aidl::android::media::audio::common::AudioInputFlags;
+using aidl::android::media::audio::common::AudioIoFlags;
 using aidl::android::media::audio::common::AudioLatencyMode;
 using aidl::android::media::audio::common::AudioOffloadInfo;
+using aidl::android::media::audio::common::AudioOutputFlags;
 using aidl::android::media::audio::common::AudioPlaybackRate;
 using aidl::android::media::audio::common::MicrophoneDynamicInfo;
 using aidl::android::media::audio::common::MicrophoneInfo;
@@ -610,8 +614,30 @@ StreamCommonImpl::~StreamCommonImpl() {
 ndk::ScopedAStatus StreamCommonImpl::initInstance(
         const std::shared_ptr<StreamCommonInterface>& delegate) {
     mCommon = ndk::SharedRefBase::make<StreamCommonDelegator>(delegate);
-    return mWorker->start() ? ndk::ScopedAStatus::ok()
-                            : ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
+    if (!mWorker->start()) {
+        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
+    }
+    if (auto flags = getContext().getFlags();
+        (flags.getTag() == AudioIoFlags::Tag::input &&
+         isBitPositionFlagSet(flags.template get<AudioIoFlags::Tag::input>(),
+                              AudioInputFlags::FAST)) ||
+        (flags.getTag() == AudioIoFlags::Tag::output &&
+         isBitPositionFlagSet(flags.template get<AudioIoFlags::Tag::output>(),
+                              AudioOutputFlags::FAST))) {
+        // FAST workers should be run with a SCHED_FIFO scheduler, however the host process
+        // might be lacking the capability to request it, thus a failure to set is not an error.
+        pid_t workerTid = mWorker->getTid();
+        if (workerTid > 0) {
+            struct sched_param param;
+            param.sched_priority = 3;  // Must match SchedulingPolicyService.PRIORITY_MAX (Java).
+            if (sched_setscheduler(workerTid, SCHED_FIFO | SCHED_RESET_ON_FORK, &param) != 0) {
+                PLOG(WARNING) << __func__ << ": failed to set FIFO scheduler for a fast thread";
+            }
+        } else {
+            LOG(WARNING) << __func__ << ": invalid worker tid: " << workerTid;
+        }
+    }
+    return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus StreamCommonImpl::getStreamCommonCommon(
