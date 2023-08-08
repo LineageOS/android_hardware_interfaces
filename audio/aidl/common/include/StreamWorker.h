@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <sys/types.h>
+
 #include <atomic>
 #include <condition_variable>
 #include <mutex>
@@ -52,6 +54,10 @@ class ThreadController {
         std::lock_guard<std::mutex> lock(mWorkerLock);
         return mError;
     }
+    pid_t getTid() {
+        std::lock_guard<std::mutex> lock(mWorkerLock);
+        return mTid;
+    }
     void stop();
     // Direct use of 'join' assumes that the StreamLogic is not intended
     // to run forever, and is guaranteed to exit by itself. This normally
@@ -78,6 +84,7 @@ class ThreadController {
     std::condition_variable mWorkerCv;
     WorkerState mWorkerState GUARDED_BY(mWorkerLock) = WorkerState::INITIAL;
     std::string mError GUARDED_BY(mWorkerLock);
+    pid_t mTid GUARDED_BY(mWorkerLock) = -1;
     // The atomic lock-free variable is used to prevent priority inversions
     // that can occur when a high priority worker tries to acquire the lock
     // which has been taken by a lower priority control thread which in its turn
@@ -143,6 +150,7 @@ class StreamWorker : public LogicImpl {
     void resume() { mThread.resume(); }
     bool hasError() { return mThread.hasError(); }
     std::string getError() { return mThread.getError(); }
+    pid_t getTid() { return mThread.getTid(); }
     void stop() { mThread.stop(); }
     void join() { mThread.join(); }
     bool waitForAtLeastOneCycle() { return mThread.waitForAtLeastOneCycle(); }
