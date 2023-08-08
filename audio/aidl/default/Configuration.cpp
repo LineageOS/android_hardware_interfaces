@@ -450,14 +450,17 @@ std::unique_ptr<Configuration> getUsbConfiguration() {
 // Mix ports:
 //  * "test output", 1 max open, 1 max active stream
 //    - profile PCM 24-bit; MONO, STEREO; 8000, 11025, 16000, 32000, 44100, 48000
-//  * "compressed offload", DIRECT|COMPRESS_OFFLOAD|NON_BLOCKING, 1 max open, 1 max active stream
+//  * "test fast output", 1 max open, 1 max active stream
+//    - profile PCM 24-bit; STEREO; 44100, 48000
+//  * "test compressed offload", DIRECT|COMPRESS_OFFLOAD|NON_BLOCKING, 1 max open, 1 max active
+//  stream
 //    - profile MP3; MONO, STEREO; 44100, 48000
 //  * "test input", 2 max open, 2 max active streams
 //    - profile PCM 24-bit; MONO, STEREO, FRONT_BACK;
 //        8000, 11025, 16000, 22050, 32000, 44100, 48000
 //
 // Routes:
-//  "test output", "compressed offload" -> "Test Out"
+//  "test output", "test fast output", "test compressed offload" -> "Test Out"
 //  "Test In" -> "test input"
 //
 // Initial port configs:
@@ -496,8 +499,15 @@ std::unique_ptr<Configuration> getStubConfiguration() {
                               {8000, 11025, 16000, 32000, 44100, 48000}));
         c.ports.push_back(testOutMix);
 
+        AudioPort testFastOutMix = createPort(c.nextPortId++, "test fast output",
+                                              makeBitPositionFlagMask({AudioOutputFlags::FAST}),
+                                              false, createPortMixExt(1, 1));
+        testFastOutMix.profiles.push_back(createProfile(
+                PcmType::INT_24_BIT, {AudioChannelLayout::LAYOUT_STEREO}, {44100, 48000}));
+        c.ports.push_back(testFastOutMix);
+
         AudioPort compressedOffloadOutMix =
-                createPort(c.nextPortId++, "compressed offload",
+                createPort(c.nextPortId++, "test compressed offload",
                            makeBitPositionFlagMask({AudioOutputFlags::DIRECT,
                                                     AudioOutputFlags::COMPRESS_OFFLOAD,
                                                     AudioOutputFlags::NON_BLOCKING}),
@@ -522,7 +532,8 @@ std::unique_ptr<Configuration> getStubConfiguration() {
                               {8000, 11025, 16000, 22050, 32000, 44100, 48000}));
         c.ports.push_back(testInMIx);
 
-        c.routes.push_back(createRoute({testOutMix, compressedOffloadOutMix}, testOutDevice));
+        c.routes.push_back(
+                createRoute({testOutMix, testFastOutMix, compressedOffloadOutMix}, testOutDevice));
         c.routes.push_back(createRoute({testInDevice}, testInMIx));
 
         c.portConfigs.insert(c.portConfigs.end(), c.initialConfigs.begin(), c.initialConfigs.end());
