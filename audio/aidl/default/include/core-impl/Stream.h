@@ -262,6 +262,7 @@ struct StreamWorkerInterface {
     virtual void setIsConnected(bool isConnected) = 0;
     virtual StreamDescriptor::State setClosed() = 0;
     virtual bool start() = 0;
+    virtual pid_t getTid() = 0;
     virtual void stop() = 0;
 };
 
@@ -277,8 +278,10 @@ class StreamWorkerImpl : public StreamWorkerInterface,
     void setIsConnected(bool isConnected) override { WorkerImpl::setIsConnected(isConnected); }
     StreamDescriptor::State setClosed() override { return WorkerImpl::setClosed(); }
     bool start() override {
-        return WorkerImpl::start(WorkerImpl::kThreadName, ANDROID_PRIORITY_AUDIO);
+        // This is an "audio service thread," must have elevated priority.
+        return WorkerImpl::start(WorkerImpl::kThreadName, ANDROID_PRIORITY_URGENT_AUDIO);
     }
+    pid_t getTid() override { return WorkerImpl::getTid(); }
     void stop() override { return WorkerImpl::stop(); }
 };
 
