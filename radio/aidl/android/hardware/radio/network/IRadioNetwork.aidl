@@ -556,18 +556,4 @@ oneway interface IRadioNetwork {
      * Response function is IRadioNetworkResponse.setN1ModeEnabledResponse()
      */
     void setN1ModeEnabled(in int serial, boolean enable);
-
-    /**
-     * Set the non-terrestrial PLMN with lower priority than terrestrial networks.
-     * MCC/MNC broadcast by the non-terrestrial networks may not be included in OPLMNwACT file on
-     * SIM profile. Acquisition of satellite based system is lower priority to terrestrial
-     * networks. UE shall make all attempts to acquire terrestrial service prior to camping on
-     * satellite LTE service.
-     *
-     * @param serial Serial number of request.
-     * @param plmnList The list of roaming PLMN used for connecting to satellite networks.
-     *
-     * Response function is IRadioNetworkResponse.setSatellitePlmnResponse()
-     */
-    void setSatellitePlmn(in int serial, in List<String> plmnList);
 }
