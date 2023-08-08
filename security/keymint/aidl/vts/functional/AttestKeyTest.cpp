@@ -919,7 +919,9 @@ TEST_P(AttestKeyTest, EcdsaAttestationMismatchID) {
                     .Authorization(TAG_ATTESTATION_ID_MODEL, "malicious-model");
 
     if (isSecondImeiIdAttestationRequired()) {
-        attestation_id_tags.Authorization(TAG_ATTESTATION_ID_SECOND_IMEI, "invalid-second-imei");
+        // Note: the invalid value here is < 16 bytes long to avoid triggering any implementation
+        // checks on valid IMEI lengths.
+        attestation_id_tags.Authorization(TAG_ATTESTATION_ID_SECOND_IMEI, "invalid-imei2");
     }
     vector<uint8_t> key_blob;
     vector<KeyCharacteristics> key_characteristics;
