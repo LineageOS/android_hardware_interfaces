@@ -2223,11 +2223,14 @@ TEST_P(GraphicsMapperHidlTest, SetBadMetadata) {
     // Keep optional metadata types below and populate the encoded metadata vec
     // with some arbitrary different metadata because the common gralloc4::decode*()
     // functions do not distinguish between an empty vec and bad value.
-    ASSERT_EQ(NO_ERROR, gralloc4::encodeDataspace(Dataspace::SRGB_LINEAR, &vec));
-    ASSERT_EQ(Error::UNSUPPORTED,
-              mGralloc->set(bufferHandle, gralloc4::MetadataType_Smpte2086, vec));
-    ASSERT_EQ(Error::UNSUPPORTED,
-              mGralloc->set(bufferHandle, gralloc4::MetadataType_Cta861_3, vec));
+    if (base::GetIntProperty("ro.vendor.api_level", __ANDROID_API_FUTURE__) >= __ANDROID_API_T__) {
+        // Some old grallocs shipped with broken validation.
+        ASSERT_EQ(NO_ERROR, gralloc4::encodeDataspace(Dataspace::SRGB_LINEAR, &vec));
+        ASSERT_EQ(Error::UNSUPPORTED,
+                  mGralloc->set(bufferHandle, gralloc4::MetadataType_Smpte2086, vec));
+        ASSERT_EQ(Error::UNSUPPORTED,
+                  mGralloc->set(bufferHandle, gralloc4::MetadataType_Cta861_3, vec));
+    }
 }
 
 /**
