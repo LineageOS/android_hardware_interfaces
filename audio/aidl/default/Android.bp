@@ -85,6 +85,8 @@ cc_library {
         "bluetooth/DevicePortProxy.cpp",
         "bluetooth/ModuleBluetooth.cpp",
         "bluetooth/StreamBluetooth.cpp",
+        "primary/PrimaryMixer.cpp",
+        "primary/StreamPrimary.cpp",
         "r_submix/ModuleRemoteSubmix.cpp",
         "r_submix/RemoteSubmixUtils.cpp",
         "r_submix/SubmixRoute.cpp",
