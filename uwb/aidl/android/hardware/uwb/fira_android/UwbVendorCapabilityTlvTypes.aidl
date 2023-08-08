@@ -149,6 +149,11 @@ enum UwbVendorCapabilityTlvTypes {
      */
     CCC_SUPPORTED_MIN_UWB_INITIATION_TIME_MS = 0xA9,
 
+    /**
+     * Byte array of channels supported by the device, ordered by priority from highest to lowest.
+     */
+    CCC_PRIORITIZED_CHANNEL_LIST = 0xAA,
+
     /*********************************************
      * RADAR specific
      ********************************************/
