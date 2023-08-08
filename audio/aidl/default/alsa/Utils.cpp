@@ -262,12 +262,14 @@ std::vector<int> getSampleRatesFromProfile(const alsa_device_profile* profile) {
 }
 
 DeviceProxy makeDeviceProxy() {
-    return DeviceProxy(new alsa_device_proxy, [](alsa_device_proxy* proxy) {
+    DeviceProxy proxy(new alsa_device_proxy, [](alsa_device_proxy* proxy) {
         if (proxy != nullptr) {
             proxy_close(proxy);
             delete proxy;
         }
     });
+    memset(proxy.get(), 0, sizeof(alsa_device_proxy));
+    return proxy;
 }
 
 DeviceProxy openProxyForAttachedDevice(const DeviceProfile& deviceProfile,
@@ -332,6 +334,12 @@ std::optional<alsa_device_profile> readAlsaDeviceInfo(const DeviceProfile& devic
         return std::nullopt;
     }
     return profile;
+}
+
+void resetTransferredFrames(DeviceProxy& proxy, uint64_t frames) {
+    if (proxy != nullptr) {
+        proxy->transferred = frames;
+    }
 }
 
 AudioFormatDescription c2aidl_pcm_format_AudioFormatDescription(enum pcm_format legacy) {

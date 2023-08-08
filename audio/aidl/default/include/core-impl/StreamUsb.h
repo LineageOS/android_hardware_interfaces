@@ -59,7 +59,7 @@ class StreamInUsb final : public StreamIn, public StreamUsb {
             override;
 };
 
-class StreamOutUsb final : public StreamOut, public StreamUsb {
+class StreamOutUsb final : public StreamOut, public StreamUsb, public StreamOutHwVolumeHelper {
   public:
     friend class ndk::SharedRefBase;
     StreamOutUsb(StreamContext&& context,
@@ -71,9 +71,6 @@ class StreamOutUsb final : public StreamOut, public StreamUsb {
     void onClose(StreamDescriptor::State) override { defaultOnClose(); }
     ndk::ScopedAStatus getHwVolume(std::vector<float>* _aidl_return) override;
     ndk::ScopedAStatus setHwVolume(const std::vector<float>& in_channelVolumes) override;
-
-    const int mChannelCount;
-    std::vector<float> mHwVolumes;
 };
 
 }  // namespace aidl::android::hardware::audio::core
