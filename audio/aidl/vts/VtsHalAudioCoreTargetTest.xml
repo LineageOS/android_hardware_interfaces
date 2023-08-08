@@ -25,6 +25,11 @@
         <option name="teardown-command" value="setprop vts.native_server.on 0"/>
     </target_preparer>
 
+    <target_preparer class="com.android.tradefed.targetprep.PushFilePreparer">
+        <option name="cleanup" value="true" />
+        <option name="push" value="VtsHalAudioCoreTargetTest->/data/local/tmp/VtsHalAudioCoreTargetTest" />
+    </target_preparer>
+
     <test class="com.android.tradefed.testtype.GTest" >
         <option name="native-test-device-path" value="/data/local/tmp" />
         <option name="module-name" value="VtsHalAudioCoreTargetTest" />
