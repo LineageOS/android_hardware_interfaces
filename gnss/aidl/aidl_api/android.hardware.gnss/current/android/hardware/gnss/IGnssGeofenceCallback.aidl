@@ -41,15 +41,15 @@ interface IGnssGeofenceCallback {
   void gnssGeofenceRemoveCb(in int geofenceId, in int status);
   void gnssGeofencePauseCb(in int geofenceId, in int status);
   void gnssGeofenceResumeCb(in int geofenceId, in int status);
-  const int ENTERED = 1;
-  const int EXITED = 2;
-  const int UNCERTAIN = 4;
-  const int UNAVAILABLE = 1;
-  const int AVAILABLE = 2;
+  const int ENTERED = (1 << 0) /* 1 */;
+  const int EXITED = (1 << 1) /* 2 */;
+  const int UNCERTAIN = (1 << 2) /* 4 */;
+  const int UNAVAILABLE = (1 << 0) /* 1 */;
+  const int AVAILABLE = (1 << 1) /* 2 */;
   const int OPERATION_SUCCESS = 0;
-  const int ERROR_TOO_MANY_GEOFENCES = -100;
-  const int ERROR_ID_EXISTS = -101;
-  const int ERROR_ID_UNKNOWN = -102;
-  const int ERROR_INVALID_TRANSITION = -103;
-  const int ERROR_GENERIC = -149;
+  const int ERROR_TOO_MANY_GEOFENCES = (-100) /* -100 */;
+  const int ERROR_ID_EXISTS = (-101) /* -101 */;
+  const int ERROR_ID_UNKNOWN = (-102) /* -102 */;
+  const int ERROR_INVALID_TRANSITION = (-103) /* -103 */;
+  const int ERROR_GENERIC = (-149) /* -149 */;
 }

@@ -41,7 +41,7 @@ interface IGnssBatching {
   void flush();
   void stop();
   void cleanup();
-  const int WAKEUP_ON_FIFO_FULL = 1;
+  const int WAKEUP_ON_FIFO_FULL = 0x01;
   @VintfStability
   parcelable Options {
     long periodNanos;

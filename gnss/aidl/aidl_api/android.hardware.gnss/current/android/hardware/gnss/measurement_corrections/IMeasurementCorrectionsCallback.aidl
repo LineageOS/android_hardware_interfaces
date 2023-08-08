@@ -36,7 +36,7 @@ package android.hardware.gnss.measurement_corrections;
 @VintfStability
 interface IMeasurementCorrectionsCallback {
   void setCapabilitiesCb(in int capabilities);
-  const int CAPABILITY_LOS_SATS = 1;
-  const int CAPABILITY_EXCESS_PATH_LENGTH = 2;
-  const int CAPABILITY_REFLECTING_PLANE = 4;
+  const int CAPABILITY_LOS_SATS = (1 << 0) /* 1 */;
+  const int CAPABILITY_EXCESS_PATH_LENGTH = (1 << 1) /* 2 */;
+  const int CAPABILITY_REFLECTING_PLANE = (1 << 2) /* 4 */;
 }
