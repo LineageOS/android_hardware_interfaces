@@ -3189,10 +3189,17 @@ class StreamLogicDefaultDriver : public StreamLogicDriver {
     std::string mUnexpectedTransition;
 };
 
-enum { NAMED_CMD_NAME, NAMED_CMD_DELAY_MS, NAMED_CMD_STREAM_TYPE, NAMED_CMD_CMDS };
+enum {
+    NAMED_CMD_NAME,
+    NAMED_CMD_DELAY_MS,
+    NAMED_CMD_STREAM_TYPE,
+    NAMED_CMD_CMDS,
+    NAMED_CMD_VALIDATE_POS_INCREASE
+};
 enum class StreamTypeFilter { ANY, SYNC, ASYNC };
 using NamedCommandSequence =
-        std::tuple<std::string, int, StreamTypeFilter, std::shared_ptr<StateSequence>>;
+        std::tuple<std::string, int /*cmdDelayMs*/, StreamTypeFilter,
+                   std::shared_ptr<StateSequence>, bool /*validatePositionIncrease*/>;
 enum { PARAM_MODULE_NAME, PARAM_CMD_SEQ, PARAM_SETUP_SEQ };
 using StreamIoTestParameters =
         std::tuple<std::string /*moduleName*/, NamedCommandSequence, bool /*useSetupSequence2*/>;
@@ -3236,10 +3243,14 @@ class AudioStreamIo : public AudioCoreModuleBase,
             ASSERT_NO_FATAL_FAILURE(delayTransientStates.SetUp(module.get()));
             const auto& commandsAndStates =
                     std::get<NAMED_CMD_CMDS>(std::get<PARAM_CMD_SEQ>(GetParam()));
+            const bool validatePositionIncrease =
+                    std::get<NAMED_CMD_VALIDATE_POS_INCREASE>(std::get<PARAM_CMD_SEQ>(GetParam()));
             if (!std::get<PARAM_SETUP_SEQ>(GetParam())) {
-                ASSERT_NO_FATAL_FAILURE(RunStreamIoCommandsImplSeq1(portConfig, commandsAndStates));
+                ASSERT_NO_FATAL_FAILURE(RunStreamIoCommandsImplSeq1(portConfig, commandsAndStates,
+                                                                    validatePositionIncrease));
             } else {
-                ASSERT_NO_FATAL_FAILURE(RunStreamIoCommandsImplSeq2(portConfig, commandsAndStates));
+                ASSERT_NO_FATAL_FAILURE(RunStreamIoCommandsImplSeq2(portConfig, commandsAndStates,
+                                                                    validatePositionIncrease));
             }
             if (isNonBlocking) {
                 // Also try running the same sequence with "aosp.forceTransientBurst" set.
@@ -3250,11 +3261,11 @@ class AudioStreamIo : public AudioCoreModuleBase,
                 if (forceTransientBurst.SetUpNoChecks(module.get(), true /*failureExpected*/)
                             .isOk()) {
                     if (!std::get<PARAM_SETUP_SEQ>(GetParam())) {
-                        ASSERT_NO_FATAL_FAILURE(
-                                RunStreamIoCommandsImplSeq1(portConfig, commandsAndStates));
+                        ASSERT_NO_FATAL_FAILURE(RunStreamIoCommandsImplSeq1(
+                                portConfig, commandsAndStates, validatePositionIncrease));
                     } else {
-                        ASSERT_NO_FATAL_FAILURE(
-                                RunStreamIoCommandsImplSeq2(portConfig, commandsAndStates));
+                        ASSERT_NO_FATAL_FAILURE(RunStreamIoCommandsImplSeq2(
+                                portConfig, commandsAndStates, validatePositionIncrease));
                     }
                 }
             } else if (!IOTraits<Stream>::is_input) {
@@ -3267,11 +3278,11 @@ class AudioStreamIo : public AudioCoreModuleBase,
                 if (forceSynchronousDrain.SetUpNoChecks(module.get(), true /*failureExpected*/)
                             .isOk()) {
                     if (!std::get<PARAM_SETUP_SEQ>(GetParam())) {
-                        ASSERT_NO_FATAL_FAILURE(
-                                RunStreamIoCommandsImplSeq1(portConfig, commandsAndStates));
+                        ASSERT_NO_FATAL_FAILURE(RunStreamIoCommandsImplSeq1(
+                                portConfig, commandsAndStates, validatePositionIncrease));
                     } else {
-                        ASSERT_NO_FATAL_FAILURE(
-                                RunStreamIoCommandsImplSeq2(portConfig, commandsAndStates));
+                        ASSERT_NO_FATAL_FAILURE(RunStreamIoCommandsImplSeq2(
+                                portConfig, commandsAndStates, validatePositionIncrease));
                     }
                 }
             }
@@ -3285,11 +3296,13 @@ class AudioStreamIo : public AudioCoreModuleBase,
 
     // Set up a patch first, then open a stream.
     void RunStreamIoCommandsImplSeq1(const AudioPortConfig& portConfig,
-                                     std::shared_ptr<StateSequence> commandsAndStates) {
+                                     std::shared_ptr<StateSequence> commandsAndStates,
+                                     bool validatePositionIncrease) {
         auto devicePorts = moduleConfig->getAttachedDevicesPortsForMixPort(
                 IOTraits<Stream>::is_input, portConfig);
         ASSERT_FALSE(devicePorts.empty());
         auto devicePortConfig = moduleConfig->getSingleConfigForDevicePort(devicePorts[0]);
+        SCOPED_TRACE(devicePortConfig.toString());
         WithAudioPatch patch(IOTraits<Stream>::is_input, portConfig, devicePortConfig);
         ASSERT_NO_FATAL_FAILURE(patch.SetUp(module.get()));
 
@@ -3307,14 +3320,17 @@ class AudioStreamIo : public AudioCoreModuleBase,
         EXPECT_FALSE(worker.hasError()) << worker.getError();
         EXPECT_EQ("", driver.getUnexpectedStateTransition());
         if (ValidateObservablePosition(devicePortConfig)) {
-            EXPECT_TRUE(driver.hasObservablePositionIncrease());
+            if (validatePositionIncrease) {
+                EXPECT_TRUE(driver.hasObservablePositionIncrease());
+            }
             EXPECT_FALSE(driver.hasRetrogradeObservablePosition());
         }
     }
 
     // Open a stream, then set up a patch for it.
     void RunStreamIoCommandsImplSeq2(const AudioPortConfig& portConfig,
-                                     std::shared_ptr<StateSequence> commandsAndStates) {
+                                     std::shared_ptr<StateSequence> commandsAndStates,
+                                     bool validatePositionIncrease) {
         WithStream<Stream> stream(portConfig);
         ASSERT_NO_FATAL_FAILURE(stream.SetUp(module.get(), kDefaultBufferSizeFrames));
         StreamLogicDefaultDriver driver(commandsAndStates,
@@ -3326,6 +3342,7 @@ class AudioStreamIo : public AudioCoreModuleBase,
                 IOTraits<Stream>::is_input, portConfig);
         ASSERT_FALSE(devicePorts.empty());
         auto devicePortConfig = moduleConfig->getSingleConfigForDevicePort(devicePorts[0]);
+        SCOPED_TRACE(devicePortConfig.toString());
         WithAudioPatch patch(IOTraits<Stream>::is_input, stream.getPortConfig(), devicePortConfig);
         ASSERT_NO_FATAL_FAILURE(patch.SetUp(module.get()));
 
@@ -3336,7 +3353,9 @@ class AudioStreamIo : public AudioCoreModuleBase,
         EXPECT_FALSE(worker.hasError()) << worker.getError();
         EXPECT_EQ("", driver.getUnexpectedStateTransition());
         if (ValidateObservablePosition(devicePortConfig)) {
-            EXPECT_TRUE(driver.hasObservablePositionIncrease());
+            if (validatePositionIncrease) {
+                EXPECT_TRUE(driver.hasObservablePositionIncrease());
+            }
             EXPECT_FALSE(driver.hasRetrogradeObservablePosition());
         }
     }
@@ -3673,22 +3692,28 @@ std::shared_ptr<StateSequence> makeBurstCommands(bool isSync) {
     using State = StreamDescriptor::State;
     auto d = std::make_unique<StateDag>();
     StateDag::Node last = d->makeFinalNode(State::ACTIVE);
-    StateDag::Node active = d->makeNode(State::ACTIVE, kBurstCommand, last);
+    // Use a couple of bursts to ensure that the driver starts reporting the position.
+    StateDag::Node active2 = d->makeNode(State::ACTIVE, kBurstCommand, last);
+    StateDag::Node active = d->makeNode(State::ACTIVE, kBurstCommand, active2);
     StateDag::Node idle = d->makeNode(State::IDLE, kBurstCommand, active);
     if (!isSync) {
         // Allow optional routing via the TRANSFERRING state on bursts.
-        active.children().push_back(d->makeNode(State::TRANSFERRING, kTransferReadyEvent, last));
+        active2.children().push_back(d->makeNode(State::TRANSFERRING, kTransferReadyEvent, last));
+        active.children().push_back(d->makeNode(State::TRANSFERRING, kTransferReadyEvent, active2));
         idle.children().push_back(d->makeNode(State::TRANSFERRING, kTransferReadyEvent, active));
     }
     d->makeNode(State::STANDBY, kStartCommand, idle);
     return std::make_shared<StateSequenceFollower>(std::move(d));
 }
 static const NamedCommandSequence kReadSeq =
-        std::make_tuple(std::string("Read"), 0, StreamTypeFilter::ANY, makeBurstCommands(true));
+        std::make_tuple(std::string("Read"), 0, StreamTypeFilter::ANY, makeBurstCommands(true),
+                        true /*validatePositionIncrease*/);
 static const NamedCommandSequence kWriteSyncSeq =
-        std::make_tuple(std::string("Write"), 0, StreamTypeFilter::SYNC, makeBurstCommands(true));
+        std::make_tuple(std::string("Write"), 0, StreamTypeFilter::SYNC, makeBurstCommands(true),
+                        true /*validatePositionIncrease*/);
 static const NamedCommandSequence kWriteAsyncSeq =
-        std::make_tuple(std::string("Write"), 0, StreamTypeFilter::ASYNC, makeBurstCommands(false));
+        std::make_tuple(std::string("Write"), 0, StreamTypeFilter::ASYNC, makeBurstCommands(false),
+                        true /*validatePositionIncrease*/);
 
 std::shared_ptr<StateSequence> makeAsyncDrainCommands(bool isInput) {
     using State = StreamDescriptor::State;
@@ -3716,11 +3741,12 @@ std::shared_ptr<StateSequence> makeAsyncDrainCommands(bool isInput) {
     }
     return std::make_shared<StateSequenceFollower>(std::move(d));
 }
-static const NamedCommandSequence kWriteDrainAsyncSeq =
-        std::make_tuple(std::string("WriteDrain"), kStreamTransientStateTransitionDelayMs,
-                        StreamTypeFilter::ASYNC, makeAsyncDrainCommands(false));
-static const NamedCommandSequence kDrainInSeq = std::make_tuple(
-        std::string("Drain"), 0, StreamTypeFilter::ANY, makeAsyncDrainCommands(true));
+static const NamedCommandSequence kWriteDrainAsyncSeq = std::make_tuple(
+        std::string("WriteDrain"), kStreamTransientStateTransitionDelayMs, StreamTypeFilter::ASYNC,
+        makeAsyncDrainCommands(false), false /*validatePositionIncrease*/);
+static const NamedCommandSequence kDrainInSeq =
+        std::make_tuple(std::string("Drain"), 0, StreamTypeFilter::ANY,
+                        makeAsyncDrainCommands(true), false /*validatePositionIncrease*/);
 
 std::shared_ptr<StateSequence> makeDrainOutCommands(bool isSync) {
     using State = StreamDescriptor::State;
@@ -3740,10 +3766,12 @@ std::shared_ptr<StateSequence> makeDrainOutCommands(bool isSync) {
     d->makeNode(State::STANDBY, kStartCommand, idle);
     return std::make_shared<StateSequenceFollower>(std::move(d));
 }
-static const NamedCommandSequence kDrainOutSyncSeq = std::make_tuple(
-        std::string("Drain"), 0, StreamTypeFilter::SYNC, makeDrainOutCommands(true));
-static const NamedCommandSequence kDrainOutAsyncSeq = std::make_tuple(
-        std::string("Drain"), 0, StreamTypeFilter::ASYNC, makeDrainOutCommands(false));
+static const NamedCommandSequence kDrainOutSyncSeq =
+        std::make_tuple(std::string("Drain"), 0, StreamTypeFilter::SYNC, makeDrainOutCommands(true),
+                        false /*validatePositionIncrease*/);
+static const NamedCommandSequence kDrainOutAsyncSeq =
+        std::make_tuple(std::string("Drain"), 0, StreamTypeFilter::ASYNC,
+                        makeDrainOutCommands(false), false /*validatePositionIncrease*/);
 
 std::shared_ptr<StateSequence> makeDrainPauseOutCommands(bool isSync) {
     using State = StreamDescriptor::State;
@@ -3764,12 +3792,12 @@ std::shared_ptr<StateSequence> makeDrainPauseOutCommands(bool isSync) {
     d->makeNode(State::STANDBY, kStartCommand, idle);
     return std::make_shared<StateSequenceFollower>(std::move(d));
 }
-static const NamedCommandSequence kDrainPauseOutSyncSeq =
-        std::make_tuple(std::string("DrainPause"), kStreamTransientStateTransitionDelayMs,
-                        StreamTypeFilter::SYNC, makeDrainPauseOutCommands(true));
-static const NamedCommandSequence kDrainPauseOutAsyncSeq =
-        std::make_tuple(std::string("DrainPause"), kStreamTransientStateTransitionDelayMs,
-                        StreamTypeFilter::ASYNC, makeDrainPauseOutCommands(false));
+static const NamedCommandSequence kDrainPauseOutSyncSeq = std::make_tuple(
+        std::string("DrainPause"), kStreamTransientStateTransitionDelayMs, StreamTypeFilter::SYNC,
+        makeDrainPauseOutCommands(true), false /*validatePositionIncrease*/);
+static const NamedCommandSequence kDrainPauseOutAsyncSeq = std::make_tuple(
+        std::string("DrainPause"), kStreamTransientStateTransitionDelayMs, StreamTypeFilter::ASYNC,
+        makeDrainPauseOutCommands(false), false /*validatePositionIncrease*/);
 
 // This sequence also verifies that the capture / presentation position is not reset on standby.
 std::shared_ptr<StateSequence> makeStandbyCommands(bool isInput, bool isSync) {
@@ -3810,13 +3838,15 @@ std::shared_ptr<StateSequence> makeStandbyCommands(bool isInput, bool isSync) {
     }
     return std::make_shared<StateSequenceFollower>(std::move(d));
 }
-static const NamedCommandSequence kStandbyInSeq = std::make_tuple(
-        std::string("Standby"), 0, StreamTypeFilter::ANY, makeStandbyCommands(true, false));
-static const NamedCommandSequence kStandbyOutSyncSeq = std::make_tuple(
-        std::string("Standby"), 0, StreamTypeFilter::SYNC, makeStandbyCommands(false, true));
-static const NamedCommandSequence kStandbyOutAsyncSeq =
-        std::make_tuple(std::string("Standby"), kStreamTransientStateTransitionDelayMs,
-                        StreamTypeFilter::ASYNC, makeStandbyCommands(false, false));
+static const NamedCommandSequence kStandbyInSeq =
+        std::make_tuple(std::string("Standby"), 0, StreamTypeFilter::ANY,
+                        makeStandbyCommands(true, false), false /*validatePositionIncrease*/);
+static const NamedCommandSequence kStandbyOutSyncSeq =
+        std::make_tuple(std::string("Standby"), 0, StreamTypeFilter::SYNC,
+                        makeStandbyCommands(false, true), false /*validatePositionIncrease*/);
+static const NamedCommandSequence kStandbyOutAsyncSeq = std::make_tuple(
+        std::string("Standby"), kStreamTransientStateTransitionDelayMs, StreamTypeFilter::ASYNC,
+        makeStandbyCommands(false, false), false /*validatePositionIncrease*/);
 
 std::shared_ptr<StateSequence> makePauseCommands(bool isInput, bool isSync) {
     using State = StreamDescriptor::State;
@@ -3851,13 +3881,15 @@ std::shared_ptr<StateSequence> makePauseCommands(bool isInput, bool isSync) {
     }
     return std::make_shared<StateSequenceFollower>(std::move(d));
 }
-static const NamedCommandSequence kPauseInSeq = std::make_tuple(
-        std::string("Pause"), 0, StreamTypeFilter::ANY, makePauseCommands(true, false));
-static const NamedCommandSequence kPauseOutSyncSeq = std::make_tuple(
-        std::string("Pause"), 0, StreamTypeFilter::SYNC, makePauseCommands(false, true));
-static const NamedCommandSequence kPauseOutAsyncSeq =
-        std::make_tuple(std::string("Pause"), kStreamTransientStateTransitionDelayMs,
-                        StreamTypeFilter::ASYNC, makePauseCommands(false, false));
+static const NamedCommandSequence kPauseInSeq =
+        std::make_tuple(std::string("Pause"), 0, StreamTypeFilter::ANY,
+                        makePauseCommands(true, false), false /*validatePositionIncrease*/);
+static const NamedCommandSequence kPauseOutSyncSeq =
+        std::make_tuple(std::string("Pause"), 0, StreamTypeFilter::SYNC,
+                        makePauseCommands(false, true), false /*validatePositionIncrease*/);
+static const NamedCommandSequence kPauseOutAsyncSeq = std::make_tuple(
+        std::string("Pause"), kStreamTransientStateTransitionDelayMs, StreamTypeFilter::ASYNC,
+        makePauseCommands(false, false), false /*validatePositionIncrease*/);
 
 std::shared_ptr<StateSequence> makeFlushCommands(bool isInput, bool isSync) {
     using State = StreamDescriptor::State;
@@ -3884,13 +3916,15 @@ std::shared_ptr<StateSequence> makeFlushCommands(bool isInput, bool isSync) {
     }
     return std::make_shared<StateSequenceFollower>(std::move(d));
 }
-static const NamedCommandSequence kFlushInSeq = std::make_tuple(
-        std::string("Flush"), 0, StreamTypeFilter::ANY, makeFlushCommands(true, false));
-static const NamedCommandSequence kFlushOutSyncSeq = std::make_tuple(
-        std::string("Flush"), 0, StreamTypeFilter::SYNC, makeFlushCommands(false, true));
-static const NamedCommandSequence kFlushOutAsyncSeq =
-        std::make_tuple(std::string("Flush"), kStreamTransientStateTransitionDelayMs,
-                        StreamTypeFilter::ASYNC, makeFlushCommands(false, false));
+static const NamedCommandSequence kFlushInSeq =
+        std::make_tuple(std::string("Flush"), 0, StreamTypeFilter::ANY,
+                        makeFlushCommands(true, false), false /*validatePositionIncrease*/);
+static const NamedCommandSequence kFlushOutSyncSeq =
+        std::make_tuple(std::string("Flush"), 0, StreamTypeFilter::SYNC,
+                        makeFlushCommands(false, true), false /*validatePositionIncrease*/);
+static const NamedCommandSequence kFlushOutAsyncSeq = std::make_tuple(
+        std::string("Flush"), kStreamTransientStateTransitionDelayMs, StreamTypeFilter::ASYNC,
+        makeFlushCommands(false, false), false /*validatePositionIncrease*/);
 
 std::shared_ptr<StateSequence> makeDrainPauseFlushOutCommands(bool isSync) {
     using State = StreamDescriptor::State;
@@ -3911,10 +3945,12 @@ std::shared_ptr<StateSequence> makeDrainPauseFlushOutCommands(bool isSync) {
 }
 static const NamedCommandSequence kDrainPauseFlushOutSyncSeq =
         std::make_tuple(std::string("DrainPauseFlush"), kStreamTransientStateTransitionDelayMs,
-                        StreamTypeFilter::SYNC, makeDrainPauseFlushOutCommands(true));
+                        StreamTypeFilter::SYNC, makeDrainPauseFlushOutCommands(true),
+                        false /*validatePositionIncrease*/);
 static const NamedCommandSequence kDrainPauseFlushOutAsyncSeq =
         std::make_tuple(std::string("DrainPauseFlush"), kStreamTransientStateTransitionDelayMs,
-                        StreamTypeFilter::ASYNC, makeDrainPauseFlushOutCommands(false));
+                        StreamTypeFilter::ASYNC, makeDrainPauseFlushOutCommands(false),
+                        false /*validatePositionIncrease*/);
 
 // Note, this isn't the "official" enum printer, it is only used to make the test name suffix.
 std::string PrintStreamFilterToString(StreamTypeFilter filter) {

@@ -66,6 +66,7 @@ DeviceProxy openProxyForAttachedDevice(const DeviceProfile& deviceProfile,
 DeviceProxy openProxyForExternalDevice(const DeviceProfile& deviceProfile,
                                        struct pcm_config* pcmConfig, bool requireExactMatch);
 std::optional<alsa_device_profile> readAlsaDeviceInfo(const DeviceProfile& deviceProfile);
+void resetTransferredFrames(DeviceProxy& proxy, uint64_t frames);
 
 ::aidl::android::media::audio::common::AudioFormatDescription
 c2aidl_pcm_format_AudioFormatDescription(enum pcm_format legacy);
