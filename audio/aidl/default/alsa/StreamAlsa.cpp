@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <cmath>
 #include <limits>
 
 #define LOG_TAG "AHAL_StreamAlsa"
@@ -29,7 +30,9 @@ namespace aidl::android::hardware::audio::core {
 
 StreamAlsa::StreamAlsa(StreamContext* context, const Metadata& metadata, int readWriteRetries)
     : StreamCommonImpl(context, metadata),
+      mBufferSizeFrames(getContext().getBufferSizeInFrames()),
       mFrameSizeBytes(getContext().getFrameSize()),
+      mSampleRate(getContext().getSampleRate()),
       mIsInput(isInput(metadata)),
       mConfig(alsa::getPcmConfig(getContext(), mIsInput)),
       mReadWriteRetries(readWriteRetries) {}
@@ -39,17 +42,20 @@ StreamAlsa::StreamAlsa(StreamContext* context, const Metadata& metadata, int rea
 }
 
 ::android::status_t StreamAlsa::drain(StreamDescriptor::DrainMode) {
-    usleep(1000);
+    if (!mIsInput) {
+        static constexpr float kMicrosPerSecond = MICROS_PER_SECOND;
+        const size_t delayUs = static_cast<size_t>(
+                std::roundf(mBufferSizeFrames * kMicrosPerSecond / mSampleRate));
+        usleep(delayUs);
+    }
     return ::android::OK;
 }
 
 ::android::status_t StreamAlsa::flush() {
-    usleep(1000);
     return ::android::OK;
 }
 
 ::android::status_t StreamAlsa::pause() {
-    usleep(1000);
     return ::android::OK;
 }
 
@@ -59,6 +65,10 @@ StreamAlsa::StreamAlsa(StreamContext* context, const Metadata& metadata, int rea
 }
 
 ::android::status_t StreamAlsa::start() {
+    if (!mAlsaDeviceProxies.empty()) {
+        // This is a resume after a pause.
+        return ::android::OK;
+    }
     decltype(mAlsaDeviceProxies) alsaDeviceProxies;
     for (const auto& device : getDeviceProfiles()) {
         alsa::DeviceProxy proxy;
@@ -71,8 +81,7 @@ StreamAlsa::StreamAlsa(StreamContext* context, const Metadata& metadata, int rea
                     true /*require_exact_match*/);
         } else {
             proxy = alsa::openProxyForAttachedDevice(
-                    device, const_cast<struct pcm_config*>(&mConfig.value()),
-                    getContext().getBufferSizeInFrames());
+                    device, const_cast<struct pcm_config*>(&mConfig.value()), mBufferSizeFrames);
         }
         if (!proxy) {
             return ::android::NO_INIT;
@@ -85,13 +94,13 @@ StreamAlsa::StreamAlsa(StreamContext* context, const Metadata& metadata, int rea
 
 ::android::status_t StreamAlsa::transfer(void* buffer, size_t frameCount, size_t* actualFrameCount,
                                          int32_t* latencyMs) {
+    if (mAlsaDeviceProxies.empty()) {
+        LOG(FATAL) << __func__ << ": no opened devices";
+        return ::android::NO_INIT;
+    }
     const size_t bytesToTransfer = frameCount * mFrameSizeBytes;
     unsigned maxLatency = 0;
     if (mIsInput) {
-        if (mAlsaDeviceProxies.empty()) {
-            LOG(FATAL) << __func__ << ": no input devices";
-            return ::android::NO_INIT;
-        }
         // For input case, only support single device.
         proxy_read_with_retries(mAlsaDeviceProxies[0].get(), buffer, bytesToTransfer,
                                 mReadWriteRetries);
@@ -110,9 +119,12 @@ StreamAlsa::StreamAlsa(StreamContext* context, const Metadata& metadata, int rea
 
 ::android::status_t StreamAlsa::refinePosition(StreamDescriptor::Position* position) {
     if (mAlsaDeviceProxies.empty()) {
-        LOG(FATAL) << __func__ << ": no input devices";
+        LOG(FATAL) << __func__ << ": no opened devices";
         return ::android::NO_INIT;
     }
+    // Since the proxy can only count transferred frames since its creation,
+    // we override its counter value with ours and let it to correct for buffered frames.
+    alsa::resetTransferredFrames(mAlsaDeviceProxies[0], position->frames);
     if (mIsInput) {
         if (int ret = proxy_get_capture_position(mAlsaDeviceProxies[0].get(), &position->frames,
                                                  &position->timeNs);
