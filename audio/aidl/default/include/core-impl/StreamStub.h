@@ -35,6 +35,7 @@ class StreamStub : public StreamCommonImpl {
     void shutdown() override;
 
   private:
+    const size_t mBufferSizeFrames;
     const size_t mFrameSizeBytes;
     const int mSampleRate;
     const bool mIsAsynchronous;

@@ -18,14 +18,11 @@
 
 #define LOG_TAG "AHAL_StreamUsb"
 #include <android-base/logging.h>
-
-#include <Utils.h>
 #include <error/expected_utils.h>
 
 #include "UsbAlsaMixerControl.h"
 #include "core-impl/StreamUsb.h"
 
-using aidl::android::hardware::audio::common::getChannelCount;
 using aidl::android::hardware::audio::common::SinkMetadata;
 using aidl::android::hardware::audio::common::SourceMetadata;
 using aidl::android::media::audio::common::AudioDevice;
@@ -85,7 +82,7 @@ std::vector<alsa::DeviceProfile> StreamUsb::getDeviceProfiles() {
 
 StreamInUsb::StreamInUsb(StreamContext&& context, const SinkMetadata& sinkMetadata,
                          const std::vector<MicrophoneInfo>& microphones)
-    : StreamIn(std::move(context), microphones), StreamUsb(&(StreamIn::mContext), sinkMetadata) {}
+    : StreamIn(std::move(context), microphones), StreamUsb(&mContextInstance, sinkMetadata) {}
 
 ndk::ScopedAStatus StreamInUsb::getActiveMicrophones(
         std::vector<MicrophoneDynamicInfo>* _aidl_return __unused) {
@@ -96,15 +93,16 @@ ndk::ScopedAStatus StreamInUsb::getActiveMicrophones(
 StreamOutUsb::StreamOutUsb(StreamContext&& context, const SourceMetadata& sourceMetadata,
                            const std::optional<AudioOffloadInfo>& offloadInfo)
     : StreamOut(std::move(context), offloadInfo),
-      StreamUsb(&(StreamOut::mContext), sourceMetadata),
-      mChannelCount(getChannelCount(getContext().getChannelLayout())) {}
+      StreamUsb(&mContextInstance, sourceMetadata),
+      StreamOutHwVolumeHelper(&mContextInstance) {}
 
 ndk::ScopedAStatus StreamOutUsb::getHwVolume(std::vector<float>* _aidl_return) {
-    *_aidl_return = mHwVolumes;
-    return ndk::ScopedAStatus::ok();
+    return getHwVolumeImpl(_aidl_return);
 }
 
 ndk::ScopedAStatus StreamOutUsb::setHwVolume(const std::vector<float>& in_channelVolumes) {
+    auto currentVolumes = mHwVolumes;
+    RETURN_STATUS_IF_ERROR(setHwVolumeImpl(in_channelVolumes));
     // Avoid using mConnectedDeviceProfiles because it requires a lock.
     for (const auto& device : getConnectedDevices()) {
         if (auto deviceProfile = alsa::getDeviceProfile(device, mIsInput);
@@ -114,11 +112,11 @@ ndk::ScopedAStatus StreamOutUsb::setHwVolume(const std::vector<float>& in_channe
                 !result.isOk()) {
                 LOG(ERROR) << __func__
                            << ": failed to set volume for device address=" << *deviceProfile;
+                mHwVolumes = currentVolumes;
                 return result;
             }
         }
     }
-    mHwVolumes = in_channelVolumes;
     return ndk::ScopedAStatus::ok();
 }
 

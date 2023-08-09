@@ -41,14 +41,16 @@ class StreamAlsa : public StreamCommonImpl {
     ::android::status_t start() override;
     ::android::status_t transfer(void* buffer, size_t frameCount, size_t* actualFrameCount,
                                  int32_t* latencyMs) override;
-    ::android::status_t getPosition(StreamDescriptor::Position* position) override;
+    ::android::status_t refinePosition(StreamDescriptor::Position* position) override;
     void shutdown() override;
 
   protected:
     // Called from 'start' to initialize 'mAlsaDeviceProxies', the vector must be non-empty.
     virtual std::vector<alsa::DeviceProfile> getDeviceProfiles() = 0;
 
+    const size_t mBufferSizeFrames;
     const size_t mFrameSizeBytes;
+    const int mSampleRate;
     const bool mIsInput;
     const std::optional<struct pcm_config> mConfig;
     const int mReadWriteRetries;
