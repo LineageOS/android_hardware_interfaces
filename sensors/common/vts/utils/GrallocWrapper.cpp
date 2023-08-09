@@ -124,7 +124,8 @@ class GrallocHalWrapper : public IGrallocHalWrapper {
 
   private:
     static constexpr uint64_t kBufferUsage =
-            static_cast<uint64_t>(BufferUsage::SENSOR_DIRECT_DATA | BufferUsage::CPU_READ_OFTEN);
+            static_cast<uint64_t>(BufferUsage::SENSOR_DIRECT_DATA | BufferUsage::CPU_READ_OFTEN |
+                                  BufferUsage::CPU_WRITE_RARELY);
     AllocatorWrapperT<AllocatorT> mAllocator;
     sp<MapperT> mMapper;
 
