@@ -33,6 +33,7 @@ namespace aidl::android::hardware::audio::core {
 
 StreamStub::StreamStub(StreamContext* context, const Metadata& metadata)
     : StreamCommonImpl(context, metadata),
+      mBufferSizeFrames(getContext().getBufferSizeInFrames()),
       mFrameSizeBytes(getContext().getFrameSize()),
       mSampleRate(getContext().getSampleRate()),
       mIsAsynchronous(!!getContext().getAsyncCallback()),
@@ -40,7 +41,6 @@ StreamStub::StreamStub(StreamContext* context, const Metadata& metadata)
 
 ::android::status_t StreamStub::init() {
     mIsInitialized = true;
-    usleep(500);
     return ::android::OK;
 }
 
@@ -48,7 +48,16 @@ StreamStub::StreamStub(StreamContext* context, const Metadata& metadata)
     if (!mIsInitialized) {
         LOG(FATAL) << __func__ << ": must not happen for an uninitialized driver";
     }
-    usleep(500);
+    if (!mIsInput) {
+        if (!mIsAsynchronous) {
+            static constexpr float kMicrosPerSecond = MICROS_PER_SECOND;
+            const size_t delayUs = static_cast<size_t>(
+                    std::roundf(mBufferSizeFrames * kMicrosPerSecond / mSampleRate));
+            usleep(delayUs);
+        } else {
+            usleep(500);
+        }
+    }
     return ::android::OK;
 }
 
@@ -56,7 +65,6 @@ StreamStub::StreamStub(StreamContext* context, const Metadata& metadata)
     if (!mIsInitialized) {
         LOG(FATAL) << __func__ << ": must not happen for an uninitialized driver";
     }
-    usleep(500);
     return ::android::OK;
 }
 
@@ -64,7 +72,6 @@ StreamStub::StreamStub(StreamContext* context, const Metadata& metadata)
     if (!mIsInitialized) {
         LOG(FATAL) << __func__ << ": must not happen for an uninitialized driver";
     }
-    usleep(500);
     return ::android::OK;
 }
 
@@ -120,11 +127,10 @@ void StreamStub::shutdown() {
 
 StreamInStub::StreamInStub(StreamContext&& context, const SinkMetadata& sinkMetadata,
                            const std::vector<MicrophoneInfo>& microphones)
-    : StreamIn(std::move(context), microphones), StreamStub(&(StreamIn::mContext), sinkMetadata) {}
+    : StreamIn(std::move(context), microphones), StreamStub(&mContextInstance, sinkMetadata) {}
 
 StreamOutStub::StreamOutStub(StreamContext&& context, const SourceMetadata& sourceMetadata,
                              const std::optional<AudioOffloadInfo>& offloadInfo)
-    : StreamOut(std::move(context), offloadInfo),
-      StreamStub(&(StreamOut::mContext), sourceMetadata) {}
+    : StreamOut(std::move(context), offloadInfo), StreamStub(&mContextInstance, sourceMetadata) {}
 
 }  // namespace aidl::android::hardware::audio::core
