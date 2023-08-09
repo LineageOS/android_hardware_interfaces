@@ -104,7 +104,7 @@ bool ShouldCheckMissingHidlHalsInFcm(const std::string& packageAndVersion) {
 }
 
 // The predicate to VintfObject::checkMissingHalsInMatrices.
-bool ShouldCheckMissingAidlHalsInFcm(const std::string& package) {
+bool ShouldCheckMissingAidlHalsInFcm(const std::string& packageAndVersion) {
     static std::vector<std::string> included_prefixes{
             // Other AOSP HALs (e.g. android.frameworks.*) are not added because only framework
             // matrix is checked.
@@ -112,36 +112,43 @@ bool ShouldCheckMissingAidlHalsInFcm(const std::string& package) {
     };
 
     static std::vector<std::string> excluded_prefixes{
+            // Packages without top level interfaces (including types-only packages) are exempted.
+            "android.hardware.audio.common@",
+            "android.hardware.biometrics.common@",
+            "android.hardware.camera.metadata@",
+            "android.hardware.camera.device@",
+            "android.hardware.camera.common@",
+            "android.hardware.common@",
+            "android.hardware.common.fmq@",
+            "android.hardware.gnss.measurement_corrections@",
+            "android.hardware.gnss.visibility_control@",
+            "android.hardware.graphics.common@",
+            "android.hardware.input.common@",
+            "android.hardware.keymaster@",
+            "android.hardware.media.bufferpool2@",
+            "android.hardware.radio@",
+            "android.hardware.uwb.fira_android@",
+
             // Test packages are exempted.
             "android.hardware.tests.",
+
+            // Fastboot HAL is only used by recovery. Recovery is owned by OEM. Framework
+            // does not depend on this HAL, hence it is not declared in any manifests or matrices.
+            "android.hardware.fastboot@",
     };
 
     static std::vector<std::string> excluded_exact{
             // Packages without top level interfaces (including types-only packages) are exempted.
 
             // AIDL
-            "android.hardware.audio.common",
-            "android.hardware.audio.core.sounddose",
-            "android.hardware.biometrics.common",
-            "android.hardware.camera.metadata",
-            "android.hardware.camera.device",
-            "android.hardware.camera.common",
-            "android.hardware.common",
-            "android.hardware.common.fmq",
-            "android.hardware.graphics.common",
-            "android.hardware.input.common",
-            "android.hardware.keymaster",
-            "android.hardware.media.bufferpool2",
-            "android.hardware.radio",
-            "android.hardware.uwb.fira_android",
+            "android.hardware.audio.core.sounddose@1",
 
-            // Fastboot HAL is only used by recovery. Recovery is owned by OEM. Framework
-            // does not depend on this HAL, hence it is not declared in any manifests or matrices.
-            "android.hardware.fastboot",
+            // Deprecated HALs.
+            "android.hardware.bluetooth.audio@1",
     };
 
     auto package_has_prefix = [&](const std::string& prefix) {
-        return android::base::StartsWith(package, prefix);
+        return android::base::StartsWith(packageAndVersion, prefix);
     };
 
     // Only check packageAndVersions that are in the include list and not in the exclude list.
@@ -149,7 +156,8 @@ bool ShouldCheckMissingAidlHalsInFcm(const std::string& package) {
         return false;
     }
 
-    if (std::find(excluded_exact.begin(), excluded_exact.end(), package) != excluded_exact.end()) {
+    if (std::find(excluded_exact.begin(), excluded_exact.end(), packageAndVersion) !=
+        excluded_exact.end()) {
         return false;
     }
 
