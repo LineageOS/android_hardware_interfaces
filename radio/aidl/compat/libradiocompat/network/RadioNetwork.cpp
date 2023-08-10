@@ -372,12 +372,4 @@ ScopedAStatus RadioNetwork::setN1ModeEnabled(int32_t serial, bool /*enable*/) {
     respond()->setN1ModeEnabledResponse(notSupported(serial));
     return ok();
 }
-
-ScopedAStatus RadioNetwork::setSatellitePlmn(int32_t serial,
-                                             const std::vector<std::string>& /*plmnList*/) {
-    LOG_CALL << serial;
-    LOG(ERROR) << " setSatellitePlmn is unsupported by HIDL HALs";
-    respond()->setSatellitePlmnResponse(notSupported(serial));
-    return ok();
-}
 }  // namespace android::hardware::radio::compat
