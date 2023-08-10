@@ -114,8 +114,20 @@ class FakeFingerprintEngine {
                                       std::vector<std::vector<int32_t>>& res);
     int32_t getRandomInRange(int32_t bound1, int32_t bound2);
     bool checkSensorLockout(ISessionCallback*);
+    void clearLockout(ISessionCallback* cb);
 
     FakeLockoutTracker mLockoutTracker;
+
+  protected:
+    // lockout timer
+    void lockoutTimerExpired(ISessionCallback* cb);
+    bool isLockoutTimerSupported;
+    bool isLockoutTimerStarted;
+    bool isLockoutTimerAborted;
+
+  public:
+    void startLockoutTimer(int64_t timeout, ISessionCallback* cb);
+    bool getLockoutTimerStarted() { return isLockoutTimerStarted; }
 };
 
 }  // namespace aidl::android::hardware::biometrics::fingerprint
