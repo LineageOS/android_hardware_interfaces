@@ -55,6 +55,19 @@ namespace aidl::android::hardware::bluetooth::impl {
 
 void OnDeath(void* cookie);
 
+std::optional<std::string> GetSystemProperty(const std::string& property) {
+  std::array<char, PROPERTY_VALUE_MAX> value_array{0};
+  auto value_len = property_get(property.c_str(), value_array.data(), nullptr);
+  if (value_len <= 0) {
+    return std::nullopt;
+  }
+  return std::string(value_array.data(), value_len);
+}
+
+bool starts_with(const std::string& str, const std::string& prefix) {
+  return str.compare(0, prefix.length(), prefix) == 0;
+}
+
 class BluetoothDeathRecipient {
  public:
   BluetoothDeathRecipient(BluetoothHci* hci) : mHci(hci) {}
@@ -232,8 +245,19 @@ ndk::ScopedAStatus BluetoothHci::initialize(
 
   mDeathRecipient->LinkToDeath(mCb);
 
-  // TODO: This should not be necessary when the device implements rfkill.
-  reset();
+  // TODO: HCI Reset on emulators since the bluetooth controller
+  // cannot be powered on/off during the HAL setup; and the stack
+  // might received spurious packets/events during boottime.
+  // Proper solution would be to use bt-virtio or vsock to better
+  // control the link to rootcanal and the controller lifetime.
+  const std::string kBoardProperty = "ro.product.board";
+  const std::string kCuttlefishBoard = "cutf";
+  auto board_name = GetSystemProperty(kBoardProperty);
+  if (board_name.has_value() && (
+        starts_with(board_name.value(), "cutf") ||
+        starts_with(board_name.value(), "goldfish"))) {
+    reset();
+  }
 
   mH4 = std::make_shared<H4Protocol>(
       mFd,
