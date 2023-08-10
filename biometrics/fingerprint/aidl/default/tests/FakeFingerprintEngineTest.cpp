@@ -93,9 +93,13 @@ class TestSessionCallback : public BnSessionCallback {
         return ndk::ScopedAStatus::ok();
     };
     ndk::ScopedAStatus onLockoutTimed(int64_t /* timeout */) override {
+        mLockoutTimed = true;
         return ndk::ScopedAStatus::ok();
     }
-    ndk::ScopedAStatus onLockoutCleared() override { return ndk::ScopedAStatus::ok(); }
+    ndk::ScopedAStatus onLockoutCleared() override {
+        mLockoutCleared = true;
+        return ndk::ScopedAStatus::ok();
+    }
     ndk::ScopedAStatus onSessionClosed() override { return ndk::ScopedAStatus::ok(); }
 
     Error mError = Error::UNKNOWN;
@@ -110,6 +114,8 @@ class TestSessionCallback : public BnSessionCallback {
     bool mAuthenticateFailed = false;
     bool mAuthenticatorIdInvalidated = false;
     bool mLockoutPermanent = false;
+    bool mLockoutTimed = false;
+    bool mLockoutCleared = false;
     int mInteractionDetectedCount = 0;
     int32_t mLastAcquiredInfo = -1;
     int32_t mLastAcquiredVendorCode = -1;
@@ -499,6 +505,13 @@ TEST_F(FakeFingerprintEngineTest, randomLatency) {
     ASSERT_TRUE(latencySet.size() > 95);
 }
 
+TEST_F(FakeFingerprintEngineTest, lockoutTimer) {
+    mEngine.startLockoutTimer(200, mCallback.get());
+    ASSERT_TRUE(mEngine.getLockoutTimerStarted());
+    std::this_thread::sleep_for(std::chrono::milliseconds(210));
+    ASSERT_FALSE(mEngine.getLockoutTimerStarted());
+    ASSERT_TRUE(mCallback->mLockoutCleared);
+}
 }  // namespace aidl::android::hardware::biometrics::fingerprint
 
 int main(int argc, char** argv) {

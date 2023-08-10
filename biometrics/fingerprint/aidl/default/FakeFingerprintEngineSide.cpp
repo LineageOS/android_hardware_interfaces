@@ -27,6 +27,10 @@ using namespace ::android::fingerprint::virt;
 
 namespace aidl::android::hardware::biometrics::fingerprint {
 
+FakeFingerprintEngineSide::FakeFingerprintEngineSide() : FakeFingerprintEngine() {
+    isLockoutTimerSupported = true;
+}
+
 SensorLocation FakeFingerprintEngineSide::defaultSensorLocation() {
     return SensorLocation{.sensorLocationX = defaultSensorLocationX,
                           .sensorLocationY = defaultSensorLocationY,
