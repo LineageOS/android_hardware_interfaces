@@ -231,22 +231,6 @@
         </interface>
     </hal>
     <hal format="aidl" optional="true">
-        <name>android.hardware.gnss.visibility_control</name>
-        <version>1</version>
-        <interface>
-            <name>IGnssVisibilityControl</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
-    <hal format="aidl" optional="true">
-        <name>android.hardware.gnss.measurement_corrections</name>
-        <version>1</version>
-        <interface>
-            <name>IMeasurementCorrectionsInterface</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
-    <hal format="aidl" optional="true">
         <name>android.hardware.graphics.allocator</name>
         <version>1-2</version>
         <interface>
