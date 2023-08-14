@@ -34,10 +34,10 @@
 package android.hardware.power;
 @Backing(type="int") @VintfStability
 enum Boost {
-  INTERACTION = 0,
-  DISPLAY_UPDATE_IMMINENT = 1,
-  ML_ACC = 2,
-  AUDIO_LAUNCH = 3,
-  CAMERA_LAUNCH = 4,
-  CAMERA_SHOT = 5,
+  INTERACTION,
+  DISPLAY_UPDATE_IMMINENT,
+  ML_ACC,
+  AUDIO_LAUNCH,
+  CAMERA_LAUNCH,
+  CAMERA_SHOT,
 }

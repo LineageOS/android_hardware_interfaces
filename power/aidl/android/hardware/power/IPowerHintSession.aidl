@@ -17,6 +17,7 @@
 package android.hardware.power;
 
 import android.hardware.power.SessionHint;
+import android.hardware.power.SessionMode;
 import android.hardware.power.WorkDuration;
 
 @VintfStability
@@ -81,4 +82,13 @@ interface IPowerHintSession {
      *    must be thrown.
      */
     void setThreads(in int[] threadIds);
+
+    /**
+     * Called to enable or disable special modes for the hint session, which may
+     * adjust the power or performance of the session.
+     *
+     * @param type The mode being set
+     * @param enabled True to enable the mode, false to disable it
+     */
+    oneway void setMode(SessionMode type, boolean enabled);
 }

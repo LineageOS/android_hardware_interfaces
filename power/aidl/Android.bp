@@ -55,6 +55,44 @@ aidl_interface {
         },
 
     ],
-    frozen: true,
+    frozen: false,
 
+}
+
+cc_defaults {
+    name: "android.hardware.power-ndk_shared",
+    shared_libs: [
+        "android.hardware.power-V5-ndk",
+    ],
+}
+
+cc_defaults {
+    name: "android.hardware.power-ndk_export_shared",
+    shared_libs: [
+        "android.hardware.power-V5-ndk",
+    ],
+    export_shared_lib_headers: [
+        "android.hardware.power-V5-ndk",
+    ],
+}
+
+cc_defaults {
+    name: "android.hardware.power-ndk_static",
+    static_libs: [
+        "android.hardware.power-V5-ndk",
+    ],
+}
+
+java_defaults {
+    name: "android.hardware.power-java_shared",
+    libs: [
+        "android.hardware.power-V5-java",
+    ],
+}
+
+java_defaults {
+    name: "android.hardware.power-java_static",
+    static_libs: [
+        "android.hardware.power-V5-java",
+    ],
 }
