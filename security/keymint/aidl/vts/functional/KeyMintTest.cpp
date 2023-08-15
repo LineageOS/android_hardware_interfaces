@@ -8755,6 +8755,7 @@ INSTANTIATE_KEYMINT_AIDL_TEST(UnlockedDeviceRequiredTest);
 
 using VsrRequirementTest = KeyMintAidlTestBase;
 
+// @VsrTest = VSR-3.10-008
 TEST_P(VsrRequirementTest, Vsr13Test) {
     int vsr_api_level = get_vsr_api_level();
     if (vsr_api_level < __ANDROID_API_T__) {
@@ -8763,6 +8764,7 @@ TEST_P(VsrRequirementTest, Vsr13Test) {
     EXPECT_GE(AidlVersion(), 2) << "VSR 13+ requires KeyMint version 2";
 }
 
+// @VsrTest = VSR-3.10-013.001
 TEST_P(VsrRequirementTest, Vsr14Test) {
     int vsr_api_level = get_vsr_api_level();
     if (vsr_api_level < __ANDROID_API_U__) {
