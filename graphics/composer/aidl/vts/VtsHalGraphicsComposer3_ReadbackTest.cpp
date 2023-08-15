@@ -70,7 +70,6 @@ class GraphicsCompositionTestBase : public ::testing::Test {
                         ::android::renderengine::RenderEngineCreationArgs::Builder()
                                 .setPixelFormat(static_cast<int>(common::PixelFormat::RGBA_8888))
                                 .setImageCacheSize(TestRenderEngine::sMaxFrameBufferAcquireBuffers)
-                                .setUseColorManagerment(true)
                                 .setEnableProtectedContext(false)
                                 .setPrecacheToneMapperShaderOnly(false)
                                 .setContextPriority(::android::renderengine::RenderEngine::

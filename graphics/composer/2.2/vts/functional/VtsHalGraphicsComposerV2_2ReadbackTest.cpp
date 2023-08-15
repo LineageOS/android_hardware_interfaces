@@ -82,13 +82,13 @@ class GraphicsCompositionTestBase : public ::testing::Test {
         ASSERT_NO_FATAL_FAILURE(
                 mTestRenderEngine = std::unique_ptr<TestRenderEngine>(new TestRenderEngine(
                         renderengine::RenderEngineCreationArgs::Builder()
-                            .setPixelFormat(static_cast<int>(ui::PixelFormat::RGBA_8888))
-                            .setImageCacheSize(TestRenderEngine::sMaxFrameBufferAcquireBuffers)
-                            .setUseColorManagerment(true)
-                            .setEnableProtectedContext(false)
-                            .setPrecacheToneMapperShaderOnly(false)
-                            .setContextPriority(renderengine::RenderEngine::ContextPriority::HIGH)
-                            .build())));
+                                .setPixelFormat(static_cast<int>(ui::PixelFormat::RGBA_8888))
+                                .setImageCacheSize(TestRenderEngine::sMaxFrameBufferAcquireBuffers)
+                                .setEnableProtectedContext(false)
+                                .setPrecacheToneMapperShaderOnly(false)
+                                .setContextPriority(
+                                        renderengine::RenderEngine::ContextPriority::HIGH)
+                                .build())));
 
         renderengine::DisplaySettings clientCompositionDisplay;
         clientCompositionDisplay.physicalDisplay = Rect(mDisplayWidth, mDisplayHeight);
