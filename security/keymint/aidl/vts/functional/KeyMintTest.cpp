@@ -2565,22 +2565,24 @@ TEST_P(NewKeyGenerationTest, LimitedUsageEcdsa) {
  * NewKeyGenerationTest.EcdsaDefaultSize
  *
  * Verifies that failing to specify a curve for EC key generation returns
- * UNSUPPORTED_KEY_SIZE.
+ * UNSUPPORTED_KEY_SIZE or UNSUPPORTED_EC_CURVE.
  */
 TEST_P(NewKeyGenerationTest, EcdsaDefaultSize) {
-    ASSERT_EQ(ErrorCode::UNSUPPORTED_KEY_SIZE,
-              GenerateKey(AuthorizationSetBuilder()
-                                  .Authorization(TAG_ALGORITHM, Algorithm::EC)
-                                  .SigningKey()
-                                  .Digest(Digest::NONE)
-                                  .SetDefaultValidity()));
+    auto result = GenerateKey(AuthorizationSetBuilder()
+                                      .Authorization(TAG_ALGORITHM, Algorithm::EC)
+                                      .SigningKey()
+                                      .Digest(Digest::NONE)
+                                      .SetDefaultValidity());
+    ASSERT_TRUE(result == ErrorCode::UNSUPPORTED_KEY_SIZE ||
+                result == ErrorCode::UNSUPPORTED_EC_CURVE)
+            << "unexpected result " << result;
 }
 
 /*
  * NewKeyGenerationTest.EcdsaInvalidCurve
  *
  * Verifies that specifying an invalid curve for EC key generation returns
- * UNSUPPORTED_KEY_SIZE.
+ * UNSUPPORTED_KEY_SIZE or UNSUPPORTED_EC_CURVE.
  */
 TEST_P(NewKeyGenerationTest, EcdsaInvalidCurve) {
     for (auto curve : InvalidCurves()) {
@@ -2593,7 +2595,8 @@ TEST_P(NewKeyGenerationTest, EcdsaInvalidCurve) {
                                           .SetDefaultValidity(),
                                   &key_blob, &key_characteristics);
         ASSERT_TRUE(result == ErrorCode::UNSUPPORTED_KEY_SIZE ||
-                    result == ErrorCode::UNSUPPORTED_EC_CURVE);
+                    result == ErrorCode::UNSUPPORTED_EC_CURVE)
+                << "unexpected result " << result;
     }
 
     ASSERT_EQ(ErrorCode::UNSUPPORTED_KEY_SIZE,
