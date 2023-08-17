@@ -38,8 +38,11 @@ cc_defaults {
     ],
     static_libs: [
         "android.hardware.security.secureclock-V1-ndk",
+        "libavb_user",
+        "libavb",
         "libcppbor_external",
         "libcppcose_rkp",
+        "libfs_mgr",
         "libjsoncpp",
         "libkeymint",
         "libkeymint_remote_prov_support",
@@ -57,6 +60,7 @@ cc_test {
     ],
     srcs: [
         "AttestKeyTest.cpp",
+        "BootloaderStateTest.cpp",
         "DeviceUniqueAttestationTest.cpp",
         "KeyMintTest.cpp",
         "SecureElementProvisioningTest.cpp",
