@@ -51,7 +51,7 @@ Result ParametersUtil::getParam(const char* name, bool* value) {
     Result retval = getParam(name, &halValue);
     *value = false;
     if (retval == Result::OK) {
-        if (halValue.empty()) {
+        if (halValue.length() == 0) {
             return Result::NOT_SUPPORTED;
         }
         *value = !(halValue == AudioParameter::valueOff);
