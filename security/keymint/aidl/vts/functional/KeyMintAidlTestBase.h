@@ -382,6 +382,7 @@ bool verify_attestation_record(int aidl_version,                       //
 
 string bin2hex(const vector<uint8_t>& data);
 X509_Ptr parse_cert_blob(const vector<uint8_t>& blob);
+ASN1_OCTET_STRING* get_attestation_record(X509* certificate);
 vector<uint8_t> make_name_from_str(const string& name);
 void check_maced_pubkey(const MacedPublicKey& macedPubKey, bool testMode,
                         vector<uint8_t>* payload_value);
