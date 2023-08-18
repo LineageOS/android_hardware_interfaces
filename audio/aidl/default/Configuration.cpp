@@ -230,14 +230,14 @@ std::unique_ptr<Configuration> getPrimaryConfiguration() {
 
         AudioPort primaryOutMix = createPort(c.nextPortId++, "primary output",
                                              makeBitPositionFlagMask(AudioOutputFlags::PRIMARY),
-                                             false, createPortMixExt(1, 1));
+                                             false, createPortMixExt(0, 0));
         primaryOutMix.profiles.insert(primaryOutMix.profiles.begin(),
                                       standardPcmAudioProfiles.begin(),
                                       standardPcmAudioProfiles.end());
         c.ports.push_back(primaryOutMix);
 
         AudioPort primaryInMix =
-                createPort(c.nextPortId++, "primary input", 0, true, createPortMixExt(1, 1));
+                createPort(c.nextPortId++, "primary input", 0, true, createPortMixExt(0, 0));
         primaryInMix.profiles.push_back(
                 createProfile(PcmType::INT_16_BIT,
                               {AudioChannelLayout::LAYOUT_MONO, AudioChannelLayout::LAYOUT_STEREO},
