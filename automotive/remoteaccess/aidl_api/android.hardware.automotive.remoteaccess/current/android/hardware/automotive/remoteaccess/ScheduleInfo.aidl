@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,18 +32,12 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.automotive.remoteaccess;
-@VintfStability
-interface IRemoteAccess {
-  String getVehicleId();
-  String getWakeupServiceName();
-  String getProcessorId();
-  void setRemoteTaskCallback(android.hardware.automotive.remoteaccess.IRemoteTaskCallback callback);
-  void clearRemoteTaskCallback();
-  void notifyApStateChange(in android.hardware.automotive.remoteaccess.ApState state);
-  boolean isTaskScheduleSupported();
-  void scheduleTask(in android.hardware.automotive.remoteaccess.ScheduleInfo scheduleInfo);
-  void unscheduleTask(String clientId, String scheduleId);
-  void unscheduleAllTasks(String clientId);
-  boolean isTaskScheduled(String clientId, String scheduleId);
-  List<android.hardware.automotive.remoteaccess.ScheduleInfo> getAllScheduledTasks(String clientId);
+@JavaDerive(equals=true, toString=true) @VintfStability
+parcelable ScheduleInfo {
+  String clientId;
+  String scheduleId;
+  byte[] taskData;
+  int count;
+  long startTimeInEpochSeconds;
+  long periodicInSeconds;
 }
