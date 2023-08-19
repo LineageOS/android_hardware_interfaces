@@ -1627,14 +1627,17 @@ TEST_P(AudioCoreModule, TryConnectMissingDevice) {
     if (ports.empty()) {
         GTEST_SKIP() << "No external devices in the module.";
     }
-    AudioPort ignored;
     WithDebugFlags doNotSimulateConnections = WithDebugFlags::createNested(*debug);
     doNotSimulateConnections.flags().simulateDeviceConnections = false;
     ASSERT_NO_FATAL_FAILURE(doNotSimulateConnections.SetUp(module.get()));
     for (const auto& port : ports) {
-        AudioPort portWithData = GenerateUniqueDeviceAddress(port);
-        EXPECT_STATUS(EX_ILLEGAL_STATE, module->connectExternalDevice(portWithData, &ignored))
-                << "static port " << portWithData.toString();
+        AudioPort portWithData = GenerateUniqueDeviceAddress(port), connectedPort;
+        ScopedAStatus status = module->connectExternalDevice(portWithData, &connectedPort);
+        EXPECT_STATUS(EX_ILLEGAL_STATE, status) << "static port " << portWithData.toString();
+        if (status.isOk()) {
+            EXPECT_IS_OK(module->disconnectExternalDevice(connectedPort.id))
+                    << "when disconnecting device port ID " << connectedPort.id;
+        }
     }
 }
 
