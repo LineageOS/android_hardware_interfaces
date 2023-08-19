@@ -30,6 +30,7 @@ using namespace std::chrono_literals;
 using aidl::android::hardware::audio::common::isBitPositionFlagSet;
 using aidl::android::hardware::audio::core::IModule;
 using aidl::android::media::audio::common::AudioChannelLayout;
+using aidl::android::media::audio::common::AudioDeviceDescription;
 using aidl::android::media::audio::common::AudioDeviceType;
 using aidl::android::media::audio::common::AudioEncapsulationMode;
 using aidl::android::media::audio::common::AudioFormatDescription;
@@ -96,7 +97,10 @@ ModuleConfig::ModuleConfig(IModule* module) {
             } else {
                 mAttachedSinkDevicePorts.insert(port.id);
             }
-        } else if (port.profiles.empty()) {
+        } else if (devicePort.device.type.connection != AudioDeviceDescription::CONNECTION_VIRTUAL
+                   // The "virtual" connection is used for remote submix which is a dynamic
+                   // device but it can be connected and used w/o external hardware.
+                   && port.profiles.empty()) {
             mExternalDevicePorts.insert(port.id);
         }
     }
