@@ -253,7 +253,22 @@ ScopedAStatus EvsEnumerator::openCamera(const std::string& id, const Stream& cfg
     if (!sConfigManager) {
         pActiveCamera = EvsMockCamera::Create(id.data());
     } else {
-        pActiveCamera = EvsMockCamera::Create(id.data(), sConfigManager->getCameraInfo(id), &cfg);
+        auto& cameraInfo = sConfigManager->getCameraInfo(id);
+        switch (cameraInfo->deviceType) {
+            using DeviceType = ConfigManager::CameraInfo::DeviceType;
+
+            // Default to MOCK for backward compatibility.
+            case DeviceType::NONE:
+            case DeviceType::MOCK:
+                pActiveCamera = EvsMockCamera::Create(id.data(), cameraInfo, &cfg);
+                break;
+
+            default:
+                LOG(ERROR) << __func__ << ": camera device type "
+                           << static_cast<std::int32_t>(cameraInfo->deviceType)
+                           << " is not supported.";
+                break;
+        }
     }
 
     pRecord->activeInstance = pActiveCamera;
