@@ -24,6 +24,8 @@
 #include "VehicleServer.grpc.pb.h"
 #include "VehicleServer.pb.h"
 
+#include <grpc++/grpc++.h>
+
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
