@@ -24,6 +24,7 @@ package {
 aidl_interface {
     name: "android.hardware.bluetooth.audio",
     vendor_available: true,
+    host_supported: true,
     srcs: ["android/hardware/bluetooth/audio/*.aidl"],
     stability: "vintf",
     imports: [
