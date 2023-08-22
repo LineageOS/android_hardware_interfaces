@@ -11,6 +11,7 @@ rust_binary {
     name: "android.hardware.uwb-service",
     crate_name: "uwb_default_hal",
     relative_install_path: "hw",
+    init_rc: ["uwb-service.rc"],
     vintf_fragments: ["uwb-service.xml"],
     vendor: true,
     rustlibs: [
