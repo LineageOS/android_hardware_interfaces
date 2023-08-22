@@ -17,6 +17,7 @@
 #include "EvsEnumerator.h"
 
 #include "ConfigManager.h"
+#include "EvsCameraBase.h"
 #include "EvsGlDisplay.h"
 #include "EvsMockCamera.h"
 
@@ -243,7 +244,7 @@ ScopedAStatus EvsEnumerator::openCamera(const std::string& id, const Stream& cfg
     }
 
     // Has this camera already been instantiated by another caller?
-    std::shared_ptr<EvsMockCamera> pActiveCamera = pRecord->activeInstance.lock();
+    std::shared_ptr<EvsCameraBase> pActiveCamera = pRecord->activeInstance.lock();
     if (pActiveCamera) {
         LOG(WARNING) << "Killing previous camera because of new caller";
         closeCamera(pActiveCamera);
@@ -273,7 +274,7 @@ ScopedAStatus EvsEnumerator::openCamera(const std::string& id, const Stream& cfg
 
     pRecord->activeInstance = pActiveCamera;
     if (!pActiveCamera) {
-        LOG(ERROR) << "Failed to create new EvsMockCamera object for " << id;
+        LOG(ERROR) << "Failed to create new EVS camera object for " << id;
         return ScopedAStatus::fromServiceSpecificError(
                 static_cast<int>(EvsResult::UNDERLYING_SERVICE_ERROR));
     }
@@ -460,7 +461,7 @@ void EvsEnumerator::closeCamera_impl(const std::shared_ptr<IEvsCamera>& pCamera,
     if (!pRecord) {
         LOG(ERROR) << "Asked to close a camera whose name isn't recognized";
     } else {
-        std::shared_ptr<EvsMockCamera> pActiveCamera = pRecord->activeInstance.lock();
+        std::shared_ptr<EvsCameraBase> pActiveCamera = pRecord->activeInstance.lock();
         if (!pActiveCamera) {
             LOG(WARNING) << "Somehow a camera is being destroyed "
                          << "when the enumerator didn't know one existed";
