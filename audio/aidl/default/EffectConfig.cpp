@@ -196,16 +196,16 @@ std::optional<Processing::Type> EffectConfig::stringToProcessingType(Processing:
     // see list of audio sources in audio_source_t:
     // system/media/audio/include/system/audio_effects/audio_effects_conf.h
     static const std::map<const std::string, AudioSource> sAudioSourceTable = {
-            {MIC_SRC_TAG, AudioSource::VOICE_CALL},
-            {VOICE_UL_SRC_TAG, AudioSource::VOICE_CALL},
-            {VOICE_DL_SRC_TAG, AudioSource::VOICE_CALL},
+            {MIC_SRC_TAG, AudioSource::MIC},
+            {VOICE_UL_SRC_TAG, AudioSource::VOICE_UPLINK},
+            {VOICE_DL_SRC_TAG, AudioSource::VOICE_DOWNLINK},
             {VOICE_CALL_SRC_TAG, AudioSource::VOICE_CALL},
-            {CAMCORDER_SRC_TAG, AudioSource::VOICE_CALL},
-            {VOICE_REC_SRC_TAG, AudioSource::VOICE_CALL},
-            {VOICE_COMM_SRC_TAG, AudioSource::VOICE_CALL},
-            {REMOTE_SUBMIX_SRC_TAG, AudioSource::VOICE_CALL},
-            {UNPROCESSED_SRC_TAG, AudioSource::VOICE_CALL},
-            {VOICE_PERFORMANCE_SRC_TAG, AudioSource::VOICE_CALL}};
+            {CAMCORDER_SRC_TAG, AudioSource::CAMCORDER},
+            {VOICE_REC_SRC_TAG, AudioSource::VOICE_RECOGNITION},
+            {VOICE_COMM_SRC_TAG, AudioSource::VOICE_COMMUNICATION},
+            {REMOTE_SUBMIX_SRC_TAG, AudioSource::REMOTE_SUBMIX},
+            {UNPROCESSED_SRC_TAG, AudioSource::UNPROCESSED},
+            {VOICE_PERFORMANCE_SRC_TAG, AudioSource::VOICE_PERFORMANCE}};
 
     if (typeTag == Processing::Type::streamType) {
         auto typeIter = sAudioStreamTypeTable.find(type);
