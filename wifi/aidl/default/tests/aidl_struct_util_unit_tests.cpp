@@ -123,6 +123,9 @@ TEST_F(AidlStructUtilTest, canConvertLegacyLinkLayerMlStatsToAidl) {
     // Add two radio stats
     legacy_ml_stats.radios.push_back(legacy_hal::LinkLayerRadioStats{});
     legacy_ml_stats.radios.push_back(legacy_hal::LinkLayerRadioStats{});
+    wifi_link_state states[sizeof(wifi_link_state)] = {wifi_link_state::WIFI_LINK_STATE_UNKNOWN,
+                                                       wifi_link_state::WIFI_LINK_STATE_NOT_IN_USE,
+                                                       wifi_link_state::WIFI_LINK_STATE_IN_USE};
     // Add two links.
     legacy_ml_stats.links.push_back(legacy_hal::LinkStats{});
     legacy_ml_stats.links.push_back(legacy_hal::LinkStats{});
@@ -133,6 +136,7 @@ TEST_F(AidlStructUtilTest, canConvertLegacyLinkLayerMlStatsToAidl) {
         link.stat.beacon_rx = rand();
         // MLO link id: 0 - 15
         link.stat.link_id = rand() % 16;
+        link.stat.state = states[rand() % sizeof(states)];
         // Maximum number of radios is limited to 3 for testing.
         link.stat.radio = rand() % 4;
         link.stat.frequency = rand();
@@ -241,6 +245,18 @@ TEST_F(AidlStructUtilTest, canConvertLegacyLinkLayerMlStatsToAidl) {
     int l = 0;
     for (legacy_hal::LinkStats& link : legacy_ml_stats.links) {
         EXPECT_EQ(link.stat.link_id, (uint8_t)converted.iface.links[l].linkId);
+        StaLinkLayerLinkStats::StaLinkState expectedState;
+        switch (link.stat.state) {
+            case wifi_link_state::WIFI_LINK_STATE_NOT_IN_USE:
+                expectedState = StaLinkLayerLinkStats::StaLinkState::NOT_IN_USE;
+                break;
+            case wifi_link_state::WIFI_LINK_STATE_IN_USE:
+                expectedState = StaLinkLayerLinkStats::StaLinkState::IN_USE;
+                break;
+            default:
+                expectedState = StaLinkLayerLinkStats::StaLinkState::UNKNOWN;
+        }
+        EXPECT_EQ(expectedState, converted.iface.links[l].state);
         EXPECT_EQ(link.stat.radio, converted.iface.links[l].radioId);
         EXPECT_EQ(link.stat.frequency, (uint32_t)converted.iface.links[l].frequencyMhz);
         EXPECT_EQ(link.stat.beacon_rx, (uint32_t)converted.iface.links[l].beaconRx);
