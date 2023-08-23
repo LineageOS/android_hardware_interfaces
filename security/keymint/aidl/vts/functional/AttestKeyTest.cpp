@@ -98,17 +98,17 @@ void add_attestation_id(AuthorizationSetBuilder* attestation_id_tags,
                         TypedTag<TagType::BYTES, tag> tag_type, const char* prop) {
     ::android::String8 prop_name =
             ::android::String8::format("ro.product.%s_for_attestation", prop);
-    std::string prop_value = ::android::base::GetProperty(prop_name.string(), /* default= */ "");
+    std::string prop_value = ::android::base::GetProperty(prop_name.c_str(), /* default= */ "");
     if (!prop_value.empty()) {
-        add_tag_from_prop(attestation_id_tags, tag_type, prop_name.string());
+        add_tag_from_prop(attestation_id_tags, tag_type, prop_name.c_str());
     } else {
         prop_name = ::android::String8::format("ro.product.vendor.%s", prop);
-        prop_value = ::android::base::GetProperty(prop_name.string(), /* default= */ "");
+        prop_value = ::android::base::GetProperty(prop_name.c_str(), /* default= */ "");
         if (!prop_value.empty()) {
-            add_tag_from_prop(attestation_id_tags, tag_type, prop_name.string());
+            add_tag_from_prop(attestation_id_tags, tag_type, prop_name.c_str());
         } else {
             prop_name = ::android::String8::format("ro.product.%s", prop);
-            add_tag_from_prop(attestation_id_tags, tag_type, prop_name.string());
+            add_tag_from_prop(attestation_id_tags, tag_type, prop_name.c_str());
         }
     }
 }
