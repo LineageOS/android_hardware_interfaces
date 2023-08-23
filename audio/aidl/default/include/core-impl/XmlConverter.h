@@ -53,10 +53,16 @@ class XmlConverter {
                                      const ::android::status_t& status) {
         std::string errorMessage;
         if (status != ::android::OK) {
-            if (!isReadableConfigFile) {
-                errorMessage = "Could not read requested config file:" + configFilePath;
+            if (configFilePath.empty()) {
+                errorMessage = "No audio configuration files found";
+            } else if (!isReadableConfigFile) {
+                errorMessage = std::string("Could not read requested XML config file: \"")
+                                       .append(configFilePath)
+                                       .append("\"");
             } else {
-                errorMessage = "Invalid config file: " + configFilePath;
+                errorMessage = std::string("Invalid XML config file: \"")
+                                       .append(configFilePath)
+                                       .append("\"");
             }
         }
         return errorMessage;
