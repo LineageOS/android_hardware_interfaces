@@ -21,6 +21,7 @@ cc_library_static {
 
     shared_libs: [
         "android.hardware.cas-V1-ndk",
+        "libbase",
         "libbinder_ndk",
         "liblog",
         "libutils",
@@ -48,6 +49,7 @@ cc_defaults {
     ],
     shared_libs: [
         "android.hardware.cas-V1-ndk",
+        "libbase",
         "libbinder_ndk",
         "liblog",
         "libutils",

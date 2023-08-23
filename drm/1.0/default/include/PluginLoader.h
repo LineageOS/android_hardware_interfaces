@@ -18,6 +18,8 @@
 #define PLUGIN_LOADER_H_
 
 #include "SharedLibrary.h"
+
+#include <android-base/strings.h>
 #include <utils/Log.h>
 #include <utils/String8.h>
 #include <utils/Vector.h>
@@ -46,7 +48,7 @@ class PluginLoader {
             struct dirent* pEntry;
             while ((pEntry = readdir(pDir))) {
                 String8 file(pEntry->d_name);
-                if (file.getPathExtension() == ".so") {
+                if (base::EndsWith(file.c_str(), ".so")) {
                     String8 path = pluginDir + "/" + pEntry->d_name;
                     T *plugin = loadOne(path, entry);
                     if (plugin) {
