@@ -1,5 +1,6 @@
 aidl_interface {
     name: "android.hardware.threadnetwork",
+    owner: "google",
     vendor_available: true,
     srcs: [
         "android/hardware/threadnetwork/*.aidl",
