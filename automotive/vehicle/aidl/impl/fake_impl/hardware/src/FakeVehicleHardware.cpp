@@ -1015,9 +1015,11 @@ DumpResult FakeVehicleHardware::dump(const std::vector<std::string>& options) {
     } else if (EqualsIgnoreCase(option, "--genTestVendorConfigs")) {
         mAddExtraTestVendorConfigs = true;
         result.refreshPropertyConfigs = true;
+        result.buffer = "successfully generated vendor configs";
     } else if (EqualsIgnoreCase(option, "--restoreVendorConfigs")) {
         mAddExtraTestVendorConfigs = false;
         result.refreshPropertyConfigs = true;
+        result.buffer = "successfully restored vendor configs";
     } else {
         result.buffer = StringPrintf("Invalid option: %s\n", option.c_str());
     }
