@@ -348,9 +348,9 @@ size_t StreamRemoteSubmix::getStreamPipeSizeInFrames() {
     // recording (including this call): it's converted to usec and compared to how long we've been
     // recording for, which gives us how long we must wait to sync the projected recording time, and
     // the observed recording time.
-    const size_t projectedVsObservedOffsetUs = static_cast<size_t>(
+    const int projectedVsObservedOffsetUs =
             std::roundf((readCounterFrames * MICROS_PER_SECOND / mStreamConfig.sampleRate) -
-                        recordDurationUs.count()));
+                        recordDurationUs.count());
 
     LOG(VERBOSE) << __func__ << ": record duration " << recordDurationUs.count()
                  << " microseconds, will wait: " << projectedVsObservedOffsetUs << " microseconds";
