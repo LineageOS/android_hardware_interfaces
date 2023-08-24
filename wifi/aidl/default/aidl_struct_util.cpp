@@ -887,6 +887,15 @@ bool convertLegacyLinkLayerRadioStatsToAidl(
     return true;
 }
 
+StaLinkLayerLinkStats::StaLinkState convertLegacyMlLinkStateToAidl(wifi_link_state state) {
+    if (state == wifi_link_state::WIFI_LINK_STATE_NOT_IN_USE) {
+        return StaLinkLayerLinkStats::StaLinkState::NOT_IN_USE;
+    } else if (state == wifi_link_state::WIFI_LINK_STATE_IN_USE) {
+        return StaLinkLayerLinkStats::StaLinkState::IN_USE;
+    }
+    return StaLinkLayerLinkStats::StaLinkState::UNKNOWN;
+}
+
 bool convertLegacyLinkLayerMlStatsToAidl(const legacy_hal::LinkLayerMlStats& legacy_ml_stats,
                                          StaLinkLayerStats* aidl_stats) {
     if (!aidl_stats) {
@@ -898,6 +907,7 @@ bool convertLegacyLinkLayerMlStatsToAidl(const legacy_hal::LinkLayerMlStats& leg
     for (const auto& link : legacy_ml_stats.links) {
         StaLinkLayerLinkStats linkStats = {};
         linkStats.linkId = link.stat.link_id;
+        linkStats.state = convertLegacyMlLinkStateToAidl(link.stat.state);
         linkStats.radioId = link.stat.radio;
         linkStats.frequencyMhz = link.stat.frequency;
         linkStats.beaconRx = link.stat.beacon_rx;
