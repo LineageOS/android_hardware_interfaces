@@ -1,0 +1,4 @@
+service vendor.remoteaccess-default /vendor/bin/hw/android.hardware.automotive.remoteaccess@V1-default-service
+    class hal
+    user vehicle_network
+    group system inet
