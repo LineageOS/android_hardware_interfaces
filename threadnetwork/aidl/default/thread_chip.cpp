@@ -59,10 +59,6 @@ ThreadChip::ThreadChip(char* url) : mUrl(), mRxFrameBuffer(), mCallback(nullptr)
     AIBinder_DeathRecipient_setOnUnlinked(mDeathRecipient.get(), ThreadChip::onBinderUnlinkedJump);
 }
 
-ThreadChip::~ThreadChip() {
-    AIBinder_DeathRecipient_delete(mDeathRecipient.get());
-}
-
 void ThreadChip::onBinderDiedJump(void* context) {
     reinterpret_cast<ThreadChip*>(context)->onBinderDied();
 }
