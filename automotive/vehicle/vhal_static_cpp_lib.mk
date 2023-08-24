@@ -17,4 +17,4 @@
 
 LOCAL_STATIC_LIBRARIES += \
     android.hardware.automotive.vehicle-V2-ndk \
-    android.hardware.automotive.vehicle.property-V2-ndk
+    android.hardware.automotive.vehicle.property-V3-ndk
