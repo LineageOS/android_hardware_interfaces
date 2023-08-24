@@ -39,9 +39,9 @@ class PluginLoader {
          */
         String8 pluginDir(dir);
 
-        DIR* pDir = opendir(pluginDir.string());
+        DIR* pDir = opendir(pluginDir.c_str());
         if (pDir == NULL) {
-            ALOGE("Failed to find plugin directory %s", pluginDir.string());
+            ALOGE("Failed to find plugin directory %s", pluginDir.c_str());
         } else {
             struct dirent* pEntry;
             while ((pEntry = readdir(pDir))) {
