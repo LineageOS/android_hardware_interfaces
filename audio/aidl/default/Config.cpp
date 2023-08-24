@@ -27,12 +27,11 @@ using aidl::android::media::audio::common::AudioHalEngineConfig;
 
 namespace aidl::android::hardware::audio::core {
 ndk::ScopedAStatus Config::getSurroundSoundConfig(SurroundSoundConfig* _aidl_return) {
+    static const auto& func = __func__;
     static const SurroundSoundConfig surroundSoundConfig = [this]() {
-        SurroundSoundConfig surroundCfg;
-        if (mAudioPolicyConverter.getStatus() == ::android::OK) {
-            surroundCfg = mAudioPolicyConverter.getSurroundSoundConfig();
-        } else {
-            LOG(WARNING) << __func__ << mAudioPolicyConverter.getError();
+        SurroundSoundConfig surroundCfg = mAudioPolicyConverter.getSurroundSoundConfig();
+        if (mAudioPolicyConverter.getStatus() != ::android::OK) {
+            LOG(WARNING) << func << ": " << mAudioPolicyConverter.getError();
         }
         return surroundCfg;
     }();
@@ -42,21 +41,22 @@ ndk::ScopedAStatus Config::getSurroundSoundConfig(SurroundSoundConfig* _aidl_ret
 }
 
 ndk::ScopedAStatus Config::getEngineConfig(AudioHalEngineConfig* _aidl_return) {
+    static const auto& func = __func__;
     static const AudioHalEngineConfig returnEngCfg = [this]() {
         AudioHalEngineConfig engConfig;
         if (mEngConfigConverter.getStatus() == ::android::OK) {
             engConfig = mEngConfigConverter.getAidlEngineConfig();
         } else {
-            LOG(INFO) << __func__ << mEngConfigConverter.getError();
+            LOG(INFO) << func << ": " << mEngConfigConverter.getError();
             if (mAudioPolicyConverter.getStatus() == ::android::OK) {
                 engConfig = mAudioPolicyConverter.getAidlEngineConfig();
             } else {
-                LOG(WARNING) << __func__ << mAudioPolicyConverter.getError();
+                LOG(WARNING) << func << ": " << mAudioPolicyConverter.getError();
             }
         }
         // Logging full contents of the config is an overkill, just provide statistics.
-        LOG(DEBUG) << "getEngineConfig: number of strategies parsed: "
-                   << engConfig.productStrategies.size()
+        LOG(DEBUG) << func
+                   << ": number of strategies parsed: " << engConfig.productStrategies.size()
                    << ", default strategy: " << engConfig.defaultProductStrategyId
                    << ", number of volume groups parsed: " << engConfig.volumeGroups.size();
         return engConfig;
