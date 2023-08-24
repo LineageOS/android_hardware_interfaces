@@ -9,22 +9,21 @@
 //  in whole or in part, without the express written permission of
 //  Google LLC.
 
-cc_defaults {
-    name: "threadnetwork_service_default",
-    vintf_fragments: ["threadnetwork-default.xml"],
+cc_binary {
+    name: "android.hardware.threadnetwork-service",
     vendor: true,
     relative_install_path: "hw",
 
     shared_libs: [
-        "android.hardware.threadnetwork-V1-ndk",
-        "libbase",
         "libbinder_ndk",
-        "libcutils",
         "liblog",
-        "libutils",
     ],
 
     static_libs: [
+        "android.hardware.threadnetwork-V1-ndk",
+        "libbase",
+        "libcutils",
+        "libutils",
         "openthread-common",
         "openthread-hdlc",
         "openthread-platform",
@@ -32,6 +31,8 @@ cc_defaults {
         "openthread-spi",
         "openthread-url",
     ],
+
+    stl: "c++_static",
 
     srcs: [
         "main.cpp",
@@ -41,22 +42,10 @@ cc_defaults {
     ],
 }
 
-cc_binary {
-    name: "android.hardware.threadnetwork-service.sim",
-    defaults: ["threadnetwork_service_default"],
-    init_rc: ["android.hardware.threadnetwork-service.sim.rc"],
-    required: ["ot-rcp"],
-}
-
-cc_binary {
-    name: "android.hardware.threadnetwork-service",
-    defaults: ["threadnetwork_service_default"],
-}
-
 cc_fuzz {
     name: "android.hardware.threadnetwork-service.fuzzer",
 
-    defaults:["service_fuzzer_defaults"],
+    defaults: ["service_fuzzer_defaults"],
     shared_libs: [
         "libbinder_ndk",
     ],
@@ -84,4 +73,37 @@ cc_fuzz {
             "zhanglongxia@google.com",
         ],
     },
+}
+
+prebuilt_etc {
+    name: "threadnetwork-default.xml",
+    src: "threadnetwork-default.xml",
+    sub_dir: "vintf",
+    installable: false,
+}
+
+prebuilt_etc {
+    name: "threadnetwork-service-sim.rc",
+    src: "threadnetwork-service-sim.rc",
+    installable: false,
+}
+
+apex {
+    name: "com.android.hardware.threadnetwork",
+    manifest: "manifest.json",
+    file_contexts: "file_contexts",
+    key: "com.android.hardware.key",
+    certificate: ":com.android.hardware.certificate",
+    updatable: false,
+    vendor: true,
+
+    binaries: [
+        "android.hardware.threadnetwork-service",
+        "ot-rcp",
+    ],
+    prebuilts: [
+        "threadnetwork-default.xml", // vintf_fragment
+        "threadnetwork-service-sim.rc", // init_rc
+        "android.hardware.thread_network.prebuilt.xml", // permission
+    ],
 }
