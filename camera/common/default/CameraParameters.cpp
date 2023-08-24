@@ -204,7 +204,7 @@ String8 CameraParameters::flatten() const {
 }
 
 void CameraParameters::unflatten(const String8& params) {
-    const char* a = params.string();
+    const char* a = params.c_str();
     const char* b;
 
     mMap.clear();
@@ -263,7 +263,7 @@ void CameraParameters::setFloat(const char* key, float value) {
 const char* CameraParameters::get(const char* key) const {
     String8 v = mMap.valueFor(String8(key));
     if (v.length() == 0) return 0;
-    return v.string();
+    return v.c_str();
 }
 
 int CameraParameters::getInt(const char* key) const {
@@ -429,7 +429,7 @@ void CameraParameters::dump() const {
         String8 k, v;
         k = mMap.keyAt(i);
         v = mMap.valueAt(i);
-        ALOGD("%s: %s\n", k.string(), v.string());
+        ALOGD("%s: %s\n", k.c_str(), v.c_str());
     }
 }
 
@@ -443,10 +443,10 @@ status_t CameraParameters::dump(int fd, const Vector<String16>& /*args*/) const 
         String8 k, v;
         k = mMap.keyAt(i);
         v = mMap.valueAt(i);
-        snprintf(buffer, 255, "\t%s: %s\n", k.string(), v.string());
+        snprintf(buffer, 255, "\t%s: %s\n", k.c_str(), v.c_str());
         result.append(buffer);
     }
-    write(fd, result.string(), result.size());
+    write(fd, result.c_str(), result.size());
     return NO_ERROR;
 }
 
