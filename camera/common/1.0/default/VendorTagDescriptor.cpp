@@ -100,7 +100,7 @@ const char* VendorTagDescriptor::getSectionName(uint32_t tag) const {
     if (index < 0) {
         return VENDOR_SECTION_NAME_ERR;
     }
-    return mSections[mTagToSectionMap.valueAt(index)].string();
+    return mSections[mTagToSectionMap.valueAt(index)].c_str();
 }
 
 ssize_t VendorTagDescriptor::getSectionIndex(uint32_t tag) const {
@@ -112,7 +112,7 @@ const char* VendorTagDescriptor::getTagName(uint32_t tag) const {
     if (index < 0) {
         return VENDOR_TAG_NAME_ERR;
     }
-    return mTagToNameMap.valueAt(index).string();
+    return mTagToNameMap.valueAt(index).c_str();
 }
 
 int VendorTagDescriptor::getTagType(uint32_t tag) const {
@@ -130,13 +130,13 @@ const SortedVector<String8>* VendorTagDescriptor::getAllSectionNames() const {
 status_t VendorTagDescriptor::lookupTag(const String8& name, const String8& section, /*out*/uint32_t* tag) const {
     ssize_t index = mReverseMapping.indexOfKey(section);
     if (index < 0) {
-        ALOGE("%s: Section '%s' does not exist.", __FUNCTION__, section.string());
+        ALOGE("%s: Section '%s' does not exist.", __FUNCTION__, section.c_str());
         return BAD_VALUE;
     }
 
     ssize_t nameIndex = mReverseMapping[index]->indexOfKey(name);
     if (nameIndex < 0) {
-        ALOGE("%s: Tag name '%s' does not exist.", __FUNCTION__, name.string());
+        ALOGE("%s: Tag name '%s' does not exist.", __FUNCTION__, name.c_str());
         return BAD_VALUE;
     }
 
@@ -170,8 +170,8 @@ void VendorTagDescriptor::dump(int fd, int verbosity, int indentation) const {
         int type = mTagToTypeMap.at(tag);
         const char* typeName = (type >= 0 && type < NUM_TYPES) ?
                 camera_metadata_type_names[type] : "UNKNOWN";
-        dprintf(fd, "%*s0x%x (%s) with type %d (%s) defined in section %s\n", indentation + 2,
-            "", tag, name.string(), type, typeName, sectionName.string());
+        dprintf(fd, "%*s0x%x (%s) with type %d (%s) defined in section %s\n", indentation + 2, "",
+                tag, name.c_str(), type, typeName, sectionName.c_str());
     }
 
 }
