@@ -583,7 +583,7 @@ bool HidlToAidlMiddleware_2_0::GetPresentationPosition(
     *total_bytes_readed = presentation_position.transmittedOctets;
   if (data_position)
     *data_position = {
-        .tv_sec = static_cast<__kernel_old_time_t>(
+        .tv_sec = static_cast<long>(
             presentation_position.transmittedOctetsTimestamp.tvSec),
         .tv_nsec = static_cast<long>(
             presentation_position.transmittedOctetsTimestamp.tvNSec)};
