@@ -24,6 +24,9 @@ package {
 cc_defaults {
     name: "android.hardware.automotive.evs-aidl-default-service-default",
     defaults: ["EvsHalDefaults"],
+    header_libs: [
+        "libstagefright_headers",
+    ],
     shared_libs: [
         "android.hardware.graphics.bufferqueue@1.0",
         "android.hardware.graphics.bufferqueue@2.0",
@@ -35,6 +38,7 @@ cc_defaults {
         "libcamera_metadata",
         "libhardware_legacy",
         "libhidlbase",
+        "libmediandk",
         "libnativewindow",
         "libtinyxml2",
         "libui",
