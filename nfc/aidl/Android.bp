@@ -34,6 +34,9 @@ aidl_interface {
             sdk_version: "module_current",
             enabled: false,
         },
+        rust: {
+            enabled: true,
+        },
     },
     versions_with_info: [
         {
