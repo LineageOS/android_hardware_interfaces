@@ -787,7 +787,7 @@
             <regex-instance>.*</regex-instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl" optional="true" updatable-via-apex="true">
         <name>android.hardware.threadnetwork</name>
         <version>1</version>
         <interface>
