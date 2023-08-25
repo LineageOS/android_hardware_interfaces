@@ -17,6 +17,7 @@
 #define LOG_TAG "AGnssRilAidl"
 
 #include "AGnssRil.h"
+#include <aidl/android/hardware/gnss/BnGnss.h>
 #include <inttypes.h>
 #include <log/log.h>
 
@@ -53,6 +54,17 @@ ndk::ScopedAStatus AGnssRil::updateNetworkState(const NetworkAttributes& attribu
           attributes.networkHandle, attributes.isConnected, attributes.capabilities,
           attributes.apn.c_str());
     return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus AGnssRil::injectNiSuplMessageData(const std::vector<uint8_t>& msgData,
+                                                     int slotIndex) {
+    ALOGD("AGnssRil::injectNiSuplMessageData: msgData:%d bytes slotIndex:%d",
+          static_cast<int>(msgData.size()), slotIndex);
+    if (msgData.size() > 0) {
+        return ndk::ScopedAStatus::ok();
+    } else {
+        return ndk::ScopedAStatus::fromServiceSpecificError(IGnss::ERROR_INVALID_ARGUMENT);
+    }
 }
 
 }  // namespace aidl::android::hardware::gnss

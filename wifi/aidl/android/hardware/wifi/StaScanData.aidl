@@ -16,7 +16,6 @@
 
 package android.hardware.wifi;
 
-import android.hardware.wifi.StaScanDataFlagMask;
 import android.hardware.wifi.StaScanResult;
 
 /**
@@ -26,9 +25,9 @@ import android.hardware.wifi.StaScanResult;
 @VintfStability
 parcelable StaScanData {
     /**
-     * Bitset containing |ScanDataFlagMask| values.
+     * Bitset of |ScanDataFlagMask| values.
      */
-    StaScanDataFlagMask flags;
+    int flags;
     /**
      * Bitset where each bit indicates if the bucket with that index (starting at
      * 0) was scanned.

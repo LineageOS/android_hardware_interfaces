@@ -47,13 +47,19 @@ cc_test {
     ],
     vendor: true,
     defaults: ["VehicleHalDefaults"],
-    shared_libs: ["libprotobuf-cpp-full"],
+    shared_libs: [
+        "libprotobuf-cpp-full",
+        "libjsoncpp",
+    ],
     static_libs: [
+        "VehicleHalJsonConfigLoaderEnableTestProperties",
         "VehicleHalProtoMessageConverter",
         "VehicleHalProtos",
         "VehicleHalUtils",
         "libgtest",
     ],
-    header_libs: ["VehicleHalDefaultConfig"],
+    data: [
+        ":VehicleHalDefaultProperties_JSON",
+    ],
     test_suites: ["device-tests"],
 }

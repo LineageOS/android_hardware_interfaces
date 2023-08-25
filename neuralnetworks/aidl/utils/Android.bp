@@ -25,7 +25,10 @@ package {
 
 cc_defaults {
     name: "neuralnetworks_utils_hal_aidl_defaults",
-    defaults: ["neuralnetworks_utils_defaults"],
+    defaults: [
+        "android.hardware.graphics.common-ndk_static",
+        "neuralnetworks_utils_defaults",
+    ],
     srcs: [
         // AIDL utils that a driver may depend on.
         "src/BufferTracker.cpp",
@@ -38,7 +41,6 @@ cc_defaults {
     export_include_dirs: ["include"],
     cflags: ["-Wthread-safety"],
     static_libs: [
-        "android.hardware.graphics.common-V4-ndk",
         "libaidlcommonsupport",
         "libarect",
         "neuralnetworks_types",
@@ -90,9 +92,9 @@ cc_library_static {
 // AIDL features can include this cc_defaults to avoid managing dependency versions explicitly.
 cc_defaults {
     name: "neuralnetworks_use_latest_utils_hal_aidl",
+    defaults: ["android.hardware.graphics.common-ndk_static"],
     static_libs: [
         "android.hardware.common-V2-ndk",
-        "android.hardware.graphics.common-V4-ndk",
         "android.hardware.neuralnetworks-V4-ndk",
         "neuralnetworks_utils_hal_aidl",
     ],

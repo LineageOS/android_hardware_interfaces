@@ -26,8 +26,8 @@ import android.hardware.tv.tuner.FrontendIsdbtPartialReceptionFlag;
 import android.hardware.tv.tuner.FrontendModulation;
 import android.hardware.tv.tuner.FrontendModulationStatus;
 import android.hardware.tv.tuner.FrontendRollOff;
-import android.hardware.tv.tuner.FrontendSpectralInversion;
 import android.hardware.tv.tuner.FrontendScanAtsc3PlpInfo;
+import android.hardware.tv.tuner.FrontendSpectralInversion;
 import android.hardware.tv.tuner.FrontendStatusAtsc3PlpInfo;
 import android.hardware.tv.tuner.FrontendTransmissionMode;
 import android.hardware.tv.tuner.LnbVoltage;
@@ -247,4 +247,29 @@ union FrontendStatus {
      * and not tuned PLPs for currently watching service.
      */
     FrontendScanAtsc3PlpInfo[] allPlpInfo;
+
+    /**
+     * IPTV Content URL
+     */
+    String iptvContentUrl = "";
+
+    /**
+     * Packets Received (IPTV - UDP/RTP).
+     */
+    long iptvPacketsReceived;
+
+    /**
+     * Packets Lost (IPTV - RTP).
+     */
+    long iptvPacketsLost;
+
+    /**
+     * Worst jitter (milliseconds).
+     */
+    int iptvWorstJitterMs;
+
+    /**
+     * Average jitter (milliseconds).
+     */
+    int iptvAverageJitterMs;
 }

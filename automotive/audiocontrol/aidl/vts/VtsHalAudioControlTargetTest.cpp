@@ -21,6 +21,7 @@
 
 #include <android/hardware/automotive/audiocontrol/BnAudioGainCallback.h>
 #include <android/hardware/automotive/audiocontrol/BnFocusListener.h>
+#include <android/hardware/automotive/audiocontrol/BnModuleChangeCallback.h>
 #include <android/hardware/automotive/audiocontrol/IAudioControl.h>
 #include <android/log.h>
 #include <binder/IServiceManager.h>
@@ -34,10 +35,14 @@ using android::hardware::automotive::audiocontrol::AudioFocusChange;
 using android::hardware::automotive::audiocontrol::AudioGainConfigInfo;
 using android::hardware::automotive::audiocontrol::BnAudioGainCallback;
 using android::hardware::automotive::audiocontrol::BnFocusListener;
+using android::hardware::automotive::audiocontrol::BnModuleChangeCallback;
 using android::hardware::automotive::audiocontrol::DuckingInfo;
 using android::hardware::automotive::audiocontrol::IAudioControl;
+using android::hardware::automotive::audiocontrol::IModuleChangeCallback;
 using android::hardware::automotive::audiocontrol::MutingInfo;
 using android::hardware::automotive::audiocontrol::Reasons;
+using ::testing::AnyOf;
+using ::testing::Eq;
 
 #include "android_audio_policy_configuration_V7_0.h"
 
@@ -48,15 +53,25 @@ using namespace android::audio::policy::configuration::V7_0;
 namespace audiohalcommon = android::hardware::audio::common;
 namespace audiomediacommon = android::media::audio::common;
 
+namespace {
+constexpr int32_t kAidlVersionThree = 3;
+}
+
 class AudioControlAidl : public testing::TestWithParam<std::string> {
   public:
     virtual void SetUp() override {
         audioControl = android::waitForDeclaredService<IAudioControl>(String16(GetParam().c_str()));
         ASSERT_NE(audioControl, nullptr);
+        aidlVersion = audioControl->getInterfaceVersion();
     }
+
+    void TearDown() override { audioControl = nullptr; }
+
+    bool isAidlVersionAtleast(int version) const { return aidlVersion >= version; }
 
     sp<IAudioControl> audioControl;
     int32_t capabilities;
+    int32_t aidlVersion;
 };
 
 TEST_P(AudioControlAidl, OnSetFadeTowardsFront) {
@@ -224,6 +239,57 @@ TEST_P(AudioControlAidl, AudioGainCallbackRegistration) {
 
     sp<AudioGainCallbackMock> gainCallback2 = new AudioGainCallbackMock();
     ASSERT_TRUE(audioControl->registerGainCallback(gainCallback2).isOk());
+}
+
+/*
+ * Test Module change Callback registration.
+ *
+ * Verifies that:
+ * - setModuleChangeCallback succeeds
+ * - setting a double callback fails with exception
+ * - clearModuleChangeCallback succeeds
+ * - setting with nullptr callback fails with exception
+ * - closing handle does not crash
+ */
+struct ModuleChangeCallbackMock : BnModuleChangeCallback {
+    MOCK_METHOD(Status, onAudioPortsChanged,
+                (const std::vector<android::media::audio::common::AudioPort>& audioPorts));
+};
+
+TEST_P(AudioControlAidl, RegisterModuleChangeCallbackTwiceThrowsException) {
+    ALOGI("Register Module change callback test");
+    if (!isAidlVersionAtleast(kAidlVersionThree)) {
+        GTEST_SKIP() << "Device does not support the new APIs for module change callback";
+        return;
+    }
+
+    // make sure no stale callbacks.
+    audioControl->clearModuleChangeCallback();
+
+    sp<ModuleChangeCallbackMock> moduleChangeCallback = new ModuleChangeCallbackMock();
+    auto status = audioControl->setModuleChangeCallback(moduleChangeCallback);
+    EXPECT_THAT(status.exceptionCode(),
+                AnyOf(Eq(Status::EX_NONE), Eq(Status::EX_UNSUPPORTED_OPERATION)));
+    if (!status.isOk()) return;
+
+    sp<ModuleChangeCallbackMock> moduleChangeCallback2 = new ModuleChangeCallbackMock();
+    // no need to check for unsupported feature
+    EXPECT_EQ(Status::EX_ILLEGAL_STATE,
+              audioControl->setModuleChangeCallback(moduleChangeCallback2).exceptionCode());
+    ASSERT_TRUE(audioControl->clearModuleChangeCallback().isOk());
+    ASSERT_TRUE(audioControl->setModuleChangeCallback(moduleChangeCallback2).isOk());
+}
+
+TEST_P(AudioControlAidl, RegisterModuleChangeNullCallbackThrowsException) {
+    ALOGI("Register Module change callback with nullptr test");
+    if (!isAidlVersionAtleast(kAidlVersionThree)) {
+        GTEST_SKIP() << "Device does not support the new APIs for module change callback";
+        return;
+    }
+
+    auto status = audioControl->setModuleChangeCallback(nullptr);
+    EXPECT_THAT(status.exceptionCode(),
+                AnyOf(Eq(Status::EX_ILLEGAL_ARGUMENT), Eq(Status::EX_UNSUPPORTED_OPERATION)));
 }
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(AudioControlAidl);

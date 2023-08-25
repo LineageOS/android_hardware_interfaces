@@ -279,8 +279,10 @@ package android.audio.policy.configuration {
     method @NonNull public String getRawName();
     enum_constant public static final android.audio.policy.configuration.AudioInOutFlag AUDIO_INPUT_FLAG_DIRECT;
     enum_constant public static final android.audio.policy.configuration.AudioInOutFlag AUDIO_INPUT_FLAG_FAST;
+    enum_constant public static final android.audio.policy.configuration.AudioInOutFlag AUDIO_INPUT_FLAG_HOTWORD_TAP;
     enum_constant public static final android.audio.policy.configuration.AudioInOutFlag AUDIO_INPUT_FLAG_HW_AV_SYNC;
     enum_constant public static final android.audio.policy.configuration.AudioInOutFlag AUDIO_INPUT_FLAG_HW_HOTWORD;
+    enum_constant public static final android.audio.policy.configuration.AudioInOutFlag AUDIO_INPUT_FLAG_HW_LOOKBACK;
     enum_constant public static final android.audio.policy.configuration.AudioInOutFlag AUDIO_INPUT_FLAG_MMAP_NOIRQ;
     enum_constant public static final android.audio.policy.configuration.AudioInOutFlag AUDIO_INPUT_FLAG_RAW;
     enum_constant public static final android.audio.policy.configuration.AudioInOutFlag AUDIO_INPUT_FLAG_SYNC;

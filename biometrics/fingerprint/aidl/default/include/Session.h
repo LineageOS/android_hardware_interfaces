@@ -20,7 +20,7 @@
 #include <aidl/android/hardware/biometrics/fingerprint/ISessionCallback.h>
 
 #include "FakeFingerprintEngine.h"
-#include "WorkerThread.h"
+#include "thread/WorkerThread.h"
 
 namespace aidl::android::hardware::biometrics::fingerprint {
 
@@ -41,6 +41,8 @@ enum class SessionState {
     INVALIDATING_AUTHENTICATOR_ID,
     RESETTING_LOCKOUT,
 };
+
+void onClientDeath(void* cookie);
 
 class Session : public BnSession {
   public:
@@ -97,6 +99,12 @@ class Session : public BnSession {
 
     ndk::ScopedAStatus onContextChanged(const common::OperationContext& context) override;
 
+    ndk::ScopedAStatus onPointerCancelWithContext(const PointerContext& context) override;
+
+    ndk::ScopedAStatus setIgnoreDisplayTouches(bool shouldIgnore) override;
+
+    binder_status_t linkToDeath(AIBinder* binder);
+
     bool isClosed();
 
   private:
@@ -135,6 +143,9 @@ class Session : public BnSession {
     // modified from both the main and the worker threads.
     std::atomic<SessionState> mScheduledState;
     std::atomic<SessionState> mCurrentState;
+
+    // Binder death handler.
+    AIBinder_DeathRecipient* mDeathRecipient;
 };
 
 }  // namespace aidl::android::hardware::biometrics::fingerprint

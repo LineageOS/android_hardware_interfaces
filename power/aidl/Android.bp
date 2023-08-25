@@ -49,7 +49,12 @@ aidl_interface {
             version: "3",
             imports: [],
         },
+        {
+            version: "4",
+            imports: [],
+        },
 
     ],
+    frozen: true,
 
 }

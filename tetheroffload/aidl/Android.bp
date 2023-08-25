@@ -23,5 +23,12 @@ aidl_interface {
             apps_enabled: false,
         },
     },
-    frozen: false,
+    versions_with_info: [
+        {
+            version: "1",
+            imports: [],
+        },
+    ],
+    frozen: true,
+
 }

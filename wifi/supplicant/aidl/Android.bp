@@ -36,6 +36,11 @@ aidl_interface {
                 "com.android.wifi",
             ],
             min_sdk_version: "30",
+            lint: {
+                // Disable linter to avoid error about fixed size arrays.
+                // Interface will only be accessed on devices >= T.
+                enabled: false,
+            },
         },
         ndk: {
             gen_trace: true,
@@ -46,6 +51,12 @@ aidl_interface {
             version: "1",
             imports: [],
         },
+        {
+            version: "2",
+            imports: [],
+        },
+
     ],
+    frozen: true,
 
 }

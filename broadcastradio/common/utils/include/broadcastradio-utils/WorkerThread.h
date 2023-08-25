@@ -28,12 +28,15 @@ class WorkerThread {
     virtual ~WorkerThread();
 
     void schedule(std::function<void()> task, std::chrono::milliseconds delay);
+    void schedule(std::function<void()> task, std::function<void()> cancelTask,
+                  std::chrono::milliseconds delay);
     void cancelAll();
 
    private:
     struct Task {
         std::chrono::time_point<std::chrono::steady_clock> when;
         std::function<void()> what;
+        std::function<void()> onCanceled;
     };
     friend bool operator<(const Task& lhs, const Task& rhs);
 

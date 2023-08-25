@@ -34,6 +34,7 @@ void arrayToStream(std::stringstream& ss, const Buffer<nlattr> attr) {
 
 typedef std::map<uint64_t, std::string> FlagsMap;
 AttributeDefinition::ToStream flagsToStream(FlagsMap flags);
+void flagsToStream(std::stringstream& ss, const FlagsMap& flags, uint64_t value);
 
 void hwaddrToStream(std::stringstream& ss, const Buffer<nlattr> attr);
 

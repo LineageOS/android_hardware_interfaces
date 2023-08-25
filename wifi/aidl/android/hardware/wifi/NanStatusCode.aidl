@@ -71,4 +71,24 @@ enum NanStatusCode {
      * Unsupported concurrency of NAN and another feature - NAN disabled.
      */
     UNSUPPORTED_CONCURRENCY_NAN_DISABLED = 12,
+    /**
+     * If the pairing id is invalid
+     */
+    INVALID_PAIRING_ID = 13,
+    /**
+     * If the bootstrapping id is invalid
+     */
+    INVALID_BOOTSTRAPPING_ID = 14,
+    /*
+     * If same request is received again
+     */
+    REDUNDANT_REQUEST = 15,
+    /*
+     * If current request is not supported
+     */
+    NOT_SUPPORTED = 16,
+    /*
+     * If no Wifi Aware connection is active
+     */
+    NO_CONNECTION = 17
 }

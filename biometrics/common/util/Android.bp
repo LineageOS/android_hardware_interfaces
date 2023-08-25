@@ -1,0 +1,18 @@
+cc_library {
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "hardware_interfaces_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-Apache-2.0
+    name: "android.hardware.biometrics.common.util",
+    export_include_dirs: ["include"],
+    vendor: true,
+    srcs: [
+        "CancellationSignal.cpp",
+    ],
+    shared_libs: [
+        "libbase",
+        "libbinder_ndk",
+        "android.hardware.biometrics.common-V3-ndk",
+    ],
+}

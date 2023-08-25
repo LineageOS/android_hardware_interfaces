@@ -19,6 +19,7 @@
 #include <aidl/Vintf.h>
 #include <aidl/android/hardware/wifi/supplicant/BnSupplicant.h>
 #include <aidl/android/hardware/wifi/supplicant/BnSupplicantStaNetworkCallback.h>
+#include <aidl/android/hardware/wifi/supplicant/TlsVersion.h>
 #include <android/binder_manager.h>
 #include <android/binder_status.h>
 #include <binder/IServiceManager.h>
@@ -51,6 +52,7 @@ using aidl::android::hardware::wifi::supplicant::OcspType;
 using aidl::android::hardware::wifi::supplicant::PairwiseCipherMask;
 using aidl::android::hardware::wifi::supplicant::ProtoMask;
 using aidl::android::hardware::wifi::supplicant::SaeH2eMode;
+using aidl::android::hardware::wifi::supplicant::TlsVersion;
 using aidl::android::hardware::wifi::supplicant::TransitionDisableIndication;
 using aidl::android::hardware::wifi::supplicant::WpaDriverCapabilitiesMask;
 using android::ProcessState;
@@ -98,6 +100,7 @@ class SupplicantStaNetworkCallback : public BnSupplicantStaNetworkCallback {
             const std::vector<uint8_t>& /* certBlob */) override {
         return ndk::ScopedAStatus::ok();
     }
+    ::ndk::ScopedAStatus onPermanentIdReqDenied() override { return ndk::ScopedAStatus::ok(); }
 };
 
 class SupplicantStaNetworkAidlTest
@@ -648,6 +651,19 @@ TEST_P(SupplicantStaNetworkAidlTest, SetEapEncryptedImsiIdentity) {
 }
 
 /*
+ * SetStrictConservativePeerMode
+ */
+TEST_P(SupplicantStaNetworkAidlTest, SetStrictConversativePeerMode) {
+    int32_t version = 0;
+    sta_network_->getInterfaceVersion(&version);
+    if (version < 2) {
+        GTEST_SKIP() << "Skipping test since it is not supported on this interface version";
+    }
+    EXPECT_TRUE(sta_network_->setStrictConservativePeerMode(true).isOk());
+    EXPECT_TRUE(sta_network_->setStrictConservativePeerMode(false).isOk());
+}
+
+/*
  * SendNetworkEapIdentityResponse
  */
 TEST_P(SupplicantStaNetworkAidlTest, SendNetworkEapIdentityResponse) {
@@ -789,6 +805,21 @@ TEST_P(SupplicantStaNetworkAidlTest, GetWpsNfcConfigurationToken) {
 TEST_P(SupplicantStaNetworkAidlTest, SetRoamingConsortiumSelection) {
     const std::vector<uint8_t> testSelection = std::vector<uint8_t>({0x11, 0x21, 0x33, 0x44});
     EXPECT_TRUE(sta_network_->setRoamingConsortiumSelection(testSelection).isOk());
+}
+
+/*
+ * SetMinimumTlsVersionEapPhase1Param
+ */
+TEST_P(SupplicantStaNetworkAidlTest, SetMinimumTlsVersionEapPhase1Param) {
+    WpaDriverCapabilitiesMask caps;
+    EXPECT_TRUE(sta_iface_->getWpaDriverCapabilities(&caps).isOk());
+    const bool tlsV13Supported = !!(static_cast<uint32_t>(caps) &
+                                    static_cast<uint32_t>(WpaDriverCapabilitiesMask::TLS_V1_3));
+    LOG(INFO) << "TLS_V1_3 Supported: " << tlsV13Supported;
+
+    // Operation will succeed if TLS_V1_3 is supported, or fail otherwise.
+    EXPECT_EQ(sta_network_->setMinimumTlsVersionEapPhase1Param(TlsVersion::TLS_V1_3).isOk(),
+              tlsV13Supported);
 }
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(SupplicantStaNetworkAidlTest);

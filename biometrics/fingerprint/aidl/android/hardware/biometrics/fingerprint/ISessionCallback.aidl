@@ -19,7 +19,9 @@ package android.hardware.biometrics.fingerprint;
 import android.hardware.biometrics.fingerprint.AcquiredInfo;
 import android.hardware.biometrics.fingerprint.Error;
 import android.hardware.keymaster.HardwareAuthToken;
-
+/**
+ * @hide
+ */
 @VintfStability
 interface ISessionCallback {
     /**

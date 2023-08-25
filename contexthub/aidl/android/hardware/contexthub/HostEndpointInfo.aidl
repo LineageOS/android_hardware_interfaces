@@ -44,5 +44,8 @@ parcelable HostEndpointInfo {
 
         /** This endpoint is an Android app. */
         APP = 2,
+
+        /** This endpoint is from an Android native program. */
+        NATIVE = 3,
     }
 }

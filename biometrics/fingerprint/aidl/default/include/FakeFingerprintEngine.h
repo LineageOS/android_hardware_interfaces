@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,73 +16,83 @@
 
 #pragma once
 
-#include <android-base/logging.h>
+#define LOG_TAG "FingerprintVirtualHal"
+
+#include <aidl/android/hardware/biometrics/common/SensorStrength.h>
+#include <aidl/android/hardware/biometrics/fingerprint/ISessionCallback.h>
+#include <android/binder_to_string.h>
+#include <string>
+
 #include <random>
+
+#include <aidl/android/hardware/biometrics/fingerprint/SensorLocation.h>
+#include <future>
+#include <vector>
+
+#include "FakeLockoutTracker.h"
+
+using namespace ::aidl::android::hardware::biometrics::common;
 
 namespace aidl::android::hardware::biometrics::fingerprint {
 
+// A fake engine that is backed by system properties instead of hardware.
 class FakeFingerprintEngine {
   public:
     FakeFingerprintEngine() : mRandom(std::mt19937::default_seed) {}
+    virtual ~FakeFingerprintEngine() {}
 
-    void generateChallengeImpl(ISessionCallback* cb) {
-        LOG(INFO) << "generateChallengeImpl";
-        std::uniform_int_distribution<int64_t> dist;
-        auto challenge = dist(mRandom);
-        cb->onChallengeGenerated(challenge);
-    }
+    void generateChallengeImpl(ISessionCallback* cb);
+    void revokeChallengeImpl(ISessionCallback* cb, int64_t challenge);
+    virtual void enrollImpl(ISessionCallback* cb, const keymaster::HardwareAuthToken& hat,
+                            const std::future<void>& cancel);
+    virtual void authenticateImpl(ISessionCallback* cb, int64_t operationId,
+                                  const std::future<void>& cancel);
+    virtual void detectInteractionImpl(ISessionCallback* cb, const std::future<void>& cancel);
+    void enumerateEnrollmentsImpl(ISessionCallback* cb);
+    void removeEnrollmentsImpl(ISessionCallback* cb, const std::vector<int32_t>& enrollmentIds);
+    void getAuthenticatorIdImpl(ISessionCallback* cb);
+    void invalidateAuthenticatorIdImpl(ISessionCallback* cb);
+    void resetLockoutImpl(ISessionCallback* cb, const keymaster::HardwareAuthToken& /*hat*/);
+    bool getSensorLocationConfig(SensorLocation& out);
 
-    void revokeChallengeImpl(ISessionCallback* cb, int64_t challenge) {
-        LOG(INFO) << "revokeChallengeImpl";
-        cb->onChallengeRevoked(challenge);
-    }
+    virtual ndk::ScopedAStatus onPointerDownImpl(int32_t pointerId, int32_t x, int32_t y,
+                                                 float minor, float major);
 
-    void enrollImpl(ISessionCallback* cb, const keymaster::HardwareAuthToken& hat) {
-        LOG(INFO) << "enrollImpl";
-        // Do proper HAT verification in the real implementation.
-        if (hat.mac.empty()) {
-            cb->onError(Error::UNABLE_TO_PROCESS, 0 /* vendorError */);
-            return;
-        }
-        cb->onEnrollmentProgress(0 /* enrollmentId */, 0 /* remaining */);
-    }
+    virtual ndk::ScopedAStatus onPointerUpImpl(int32_t pointerId);
 
-    void authenticateImpl(ISessionCallback* cb, int64_t /* operationId */) {
-        LOG(INFO) << "authenticateImpl";
-        cb->onAuthenticationSucceeded(0 /* enrollmentId */, {} /* hat */);
-    }
+    virtual ndk::ScopedAStatus onUiReadyImpl();
 
-    void detectInteractionImpl(ISessionCallback* cb) {
-        LOG(INFO) << "detectInteractionImpl";
-        cb->onInteractionDetected();
-    }
+    virtual SensorLocation getSensorLocation();
 
-    void enumerateEnrollmentsImpl(ISessionCallback* cb) {
-        LOG(INFO) << "enumerateEnrollmentsImpl";
-        cb->onEnrollmentsEnumerated({} /* enrollmentIds */);
-    }
+    virtual SensorLocation defaultSensorLocation();
 
-    void removeEnrollmentsImpl(ISessionCallback* cb, const std::vector<int32_t>& enrollmentIds) {
-        LOG(INFO) << "removeEnrollmentsImpl";
-        cb->onEnrollmentsRemoved(enrollmentIds);
-    }
+    std::vector<int32_t> parseIntSequence(const std::string& str, const std::string& sep = ",");
 
-    void getAuthenticatorIdImpl(ISessionCallback* cb) {
-        LOG(INFO) << "getAuthenticatorIdImpl";
-        cb->onAuthenticatorIdRetrieved(0 /* authenticatorId */);
-    }
+    std::vector<std::vector<int32_t>> parseEnrollmentCapture(const std::string& str);
 
-    void invalidateAuthenticatorIdImpl(ISessionCallback* cb) {
-        LOG(INFO) << "invalidateAuthenticatorIdImpl";
-        cb->onAuthenticatorIdInvalidated(0 /* newAuthenticatorId */);
-    }
-
-    void resetLockoutImpl(ISessionCallback* cb, const keymaster::HardwareAuthToken& /*hat*/) {
-        LOG(INFO) << "resetLockoutImpl";
-        cb->onLockoutCleared();
-    }
+    int32_t getLatency(const std::vector<std::optional<std::int32_t>>& latencyVec);
 
     std::mt19937 mRandom;
+
+    virtual std::string toString() const {
+        std::ostringstream os;
+        os << "----- FakeFingerprintEngine:: -----" << std::endl;
+        os << "acquiredVendorInfoBase:" << FINGERPRINT_ACQUIRED_VENDOR_BASE;
+        os << ", errorVendorBase:" << FINGERPRINT_ERROR_VENDOR_BASE << std::endl;
+        os << mLockoutTracker.toString();
+        return os.str();
+    }
+
+  private:
+    static constexpr int32_t FINGERPRINT_ACQUIRED_VENDOR_BASE = 1000;
+    static constexpr int32_t FINGERPRINT_ERROR_VENDOR_BASE = 1000;
+    std::pair<AcquiredInfo, int32_t> convertAcquiredInfo(int32_t code);
+    std::pair<Error, int32_t> convertError(int32_t code);
+    bool parseEnrollmentCaptureSingle(const std::string& str,
+                                      std::vector<std::vector<int32_t>>& res);
+    int32_t getRandomInRange(int32_t bound1, int32_t bound2);
+
+    FakeLockoutTracker mLockoutTracker;
 };
 
 }  // namespace aidl::android::hardware::biometrics::fingerprint

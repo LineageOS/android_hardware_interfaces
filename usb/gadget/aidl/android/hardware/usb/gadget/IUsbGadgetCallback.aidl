@@ -16,7 +16,6 @@
 
 package android.hardware.usb.gadget;
 
-import android.hardware.usb.gadget.GadgetFunction;
 import android.hardware.usb.gadget.Status;
 import android.hardware.usb.gadget.UsbSpeed;
 
@@ -60,4 +59,12 @@ oneway interface IUsbGadgetCallback {
      * @param transactionId ID to be used when invoking the callback.
      */
     void getUsbSpeedCb(in UsbSpeed speed, long transactionId);
+
+    /**
+     * Callback function used to propagate the result of requesting
+     * resetUsbGadget.
+     * @param status SUCCESS if current request succeeded. FAILURE otherwise.
+     * @param transactionId current transactionId sent during reset request.
+     */
+    void resetCb(in Status status, long transactionId);
 }

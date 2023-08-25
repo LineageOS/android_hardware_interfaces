@@ -190,6 +190,14 @@ interface IVehicle {
      * what the sampleRate specified in {@code options}, the timestamp for
      * the timestamp is updated 10 times/s.
      *
+     * If a property is unavailable for reading because it depends on some power
+     * state which is off, property change event may not be generated until the
+     * property becomes available. For ON_CHANGE property, if the property
+     * changes from NOT_AVAILABLE to OKAY for reading some or all area(s), for
+     * each area that becomes available for reading, one property change event
+     * must be generated. The event must contain the current value for the area
+     * and must have {@code AVAILABLE} status.
+     *
      * @param callback The subscription callbacks.
      *    {@link IVehicleCallback#onPropertyEvent} would be called when a new
      *    property event arrives.

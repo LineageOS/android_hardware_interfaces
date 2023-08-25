@@ -22,8 +22,7 @@ int main() {
     ABinderProcess_setThreadPoolMaxThreadCount(0);
     std::shared_ptr<UsbGadget> usbgadget = ndk::SharedRefBase::make<UsbGadget>();
     const std::string instance = std::string() + UsbGadget::descriptor + "/default";
-    binder_status_t status =
-            AServiceManager_addService(usbgadget->asBinder().get(), instance.c_str());
+    binder_status_t status = AServiceManager_addService(usbgadget->asBinder().get(), instance.c_str());
     CHECK(status == STATUS_OK);
     ABinderProcess_joinThreadPool();
     return -1;

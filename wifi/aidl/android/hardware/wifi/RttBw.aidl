@@ -22,6 +22,7 @@ package android.hardware.wifi;
 @VintfStability
 @Backing(type="int")
 enum RttBw {
+    BW_UNSPECIFIED = 0x0,
     BW_5MHZ = 0x01,
     BW_10MHZ = 0x02,
     BW_20MHZ = 0x04,

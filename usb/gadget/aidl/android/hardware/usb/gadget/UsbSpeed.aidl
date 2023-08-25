@@ -22,29 +22,55 @@ enum UsbSpeed {
     /**
      * UNKNOWN - Not Connected or Unsupported Speed
      */
-    UNKNOWN = 0,
+    UNKNOWN = -1,
+
     /**
      * USB Low Speed
      */
-    LOWSPEED = 1,
+    LOWSPEED = 0,
+
     /**
      * USB Full Speed
      */
-    FULLSPEED = 2,
+    FULLSPEED = 1,
+
     /**
      * USB High Speed
      */
-    HIGHSPEED = 3,
+    HIGHSPEED = 2,
+
     /**
      * USB Super Speed
      */
-    SUPERSPEED = 4,
+    SUPERSPEED = 3,
+
     /**
      * USB Super Speed 10Gbps
      */
-    SUPERSPEED_10Gb = 5,
+    SUPERSPEED_10Gb = 4,
+
     /**
      * USB Super Speed 20Gbps
      */
-    SUPERSPEED_20Gb = 6,
+    SUPERSPEED_20Gb = 5,
+
+    /**
+     * USB4 Gen2 x 1 (10Gbps)
+     */
+    USB4_GEN2_10Gb = 6,
+
+    /**
+     * USB4 Gen2 x 2 (20Gbps)
+     */
+    USB4_GEN2_20Gb = 7,
+
+    /**
+     * USB4 Gen3 x 1 (20Gbps)
+     */
+    USB4_GEN3_20Gb = 8,
+
+    /**
+     * USB4 Gen3 x 2 (40Gbps)
+     */
+    USB4_GEN3_40Gb = 9,
 }

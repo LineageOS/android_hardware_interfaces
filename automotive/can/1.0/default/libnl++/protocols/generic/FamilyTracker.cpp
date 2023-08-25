@@ -30,6 +30,7 @@ bool FamilyTracker::track(const Buffer<nlmsghdr>& buffer) {
     const auto familyName = msg.attributes.get<std::string>(CTRL_ATTR_FAMILY_NAME);
     const auto familyId = msg.attributes.get<uint16_t>(CTRL_ATTR_FAMILY_ID);
 
+    // TODO(224845900): NETLINK_GENERIC == 16, and (erroneously?) sets off this warning
     if (familyId < GENL_START_ALLOC) {
         LOG(WARNING) << "Invalid family ID: " << familyId;
         return true;

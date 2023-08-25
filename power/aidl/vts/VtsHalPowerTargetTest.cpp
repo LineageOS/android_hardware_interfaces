@@ -34,11 +34,15 @@ using android::hardware::power::Boost;
 using android::hardware::power::IPower;
 using android::hardware::power::IPowerHintSession;
 using android::hardware::power::Mode;
+using android::hardware::power::SessionHint;
 using android::hardware::power::WorkDuration;
 
 const std::vector<Boost> kBoosts{ndk::enum_range<Boost>().begin(), ndk::enum_range<Boost>().end()};
 
 const std::vector<Mode> kModes{ndk::enum_range<Mode>().begin(), ndk::enum_range<Mode>().end()};
+
+const std::vector<SessionHint> kSessionHints{ndk::enum_range<SessionHint>().begin(),
+                                             ndk::enum_range<SessionHint>().end()};
 
 const std::vector<Boost> kInvalidBoosts = {
         static_cast<Boost>(static_cast<int32_t>(kBoosts.front()) - 1),
@@ -48,6 +52,11 @@ const std::vector<Boost> kInvalidBoosts = {
 const std::vector<Mode> kInvalidModes = {
         static_cast<Mode>(static_cast<int32_t>(kModes.front()) - 1),
         static_cast<Mode>(static_cast<int32_t>(kModes.back()) + 1),
+};
+
+const std::vector<SessionHint> kInvalidSessionHints = {
+        static_cast<SessionHint>(static_cast<int32_t>(kSessionHints.front()) - 1),
+        static_cast<SessionHint>(static_cast<int32_t>(kSessionHints.back()) + 1),
 };
 
 class DurationWrapper : public WorkDuration {
@@ -90,6 +99,10 @@ const uint64_t kCompatibilityMatrix5ApiLevel = 30;
 // DEVICEs launching with Android 13 MUST meet the requirements for the
 // target-level=7 compatibility_matrix file.
 const uint64_t kCompatibilityMatrix7ApiLevel = 33;
+
+// DEVICEs launching with Android 14 MUST meet the requirements for the
+// target-level=8 compatibility_matrix file.
+const uint64_t kCompatibilityMatrix8ApiLevel = 34;
 
 inline bool isUnknownOrUnsupported(const ndk::ScopedAStatus& status) {
     return status.getStatus() == STATUS_UNKNOWN_TRANSACTION ||
@@ -218,6 +231,41 @@ TEST_P(PowerAidl, updateAndReportDurations) {
     ASSERT_TRUE(session->reportActualWorkDuration(kDurations).isOk());
 }
 
+TEST_P(PowerAidl, sendSessionHint) {
+    std::shared_ptr<IPowerHintSession> session;
+    auto status = power->createHintSession(getpid(), getuid(), kSelfTids, 16666666L, &session);
+    if (!status.isOk()) {
+        EXPECT_TRUE(isUnknownOrUnsupported(status));
+        return;
+    }
+    for (const auto& sessionHint : kSessionHints) {
+        ASSERT_TRUE(session->sendHint(sessionHint).isOk());
+    }
+    for (const auto& sessionHint : kInvalidSessionHints) {
+        ASSERT_TRUE(session->sendHint(sessionHint).isOk());
+    }
+}
+
+TEST_P(PowerAidl, setThreads) {
+    std::shared_ptr<IPowerHintSession> session;
+    auto status = power->createHintSession(getpid(), getuid(), kSelfTids, 16666666L, &session);
+    if (mApiLevel < kCompatibilityMatrix7ApiLevel && !status.isOk()) {
+        EXPECT_TRUE(isUnknownOrUnsupported(status));
+        GTEST_SKIP() << "DEVICE not launching with Android 13 and beyond.";
+    }
+    ASSERT_TRUE(status.isOk());
+
+    status = session->setThreads(kEmptyTids);
+    if (mApiLevel < kCompatibilityMatrix8ApiLevel && isUnknownOrUnsupported(status)) {
+        GTEST_SKIP() << "DEVICE not launching with Android 14 and beyond.";
+    }
+    ASSERT_FALSE(status.isOk());
+    ASSERT_EQ(EX_ILLEGAL_ARGUMENT, status.getExceptionCode());
+
+    status = session->setThreads(kSelfTids);
+    ASSERT_TRUE(status.isOk());
+}
+
 // FIXED_PERFORMANCE mode is required for all devices which ship on Android 11
 // or later
 TEST_P(PowerAidl, hasFixedPerformance) {
@@ -236,6 +284,7 @@ INSTANTIATE_TEST_SUITE_P(Power, PowerAidl,
                          ::android::PrintInstanceNameToString);
 
 }  // namespace
+}  // namespace aidl::android::hardware::power
 
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
@@ -243,5 +292,3 @@ int main(int argc, char** argv) {
     ABinderProcess_startThreadPool();
     return RUN_ALL_TESTS();
 }
-
-}  // namespace aidl::android::hardware::power

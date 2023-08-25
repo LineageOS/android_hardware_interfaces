@@ -63,5 +63,7 @@ enum CameraMetadataSectionStart {
     ANDROID_HEIC_INFO_START = CameraMetadataSection.ANDROID_HEIC_INFO << 16,
     ANDROID_AUTOMOTIVE_START = CameraMetadataSection.ANDROID_AUTOMOTIVE << 16,
     ANDROID_AUTOMOTIVE_LENS_START = CameraMetadataSection.ANDROID_AUTOMOTIVE_LENS << 16,
+    ANDROID_EXTENSION_START = CameraMetadataSection.ANDROID_EXTENSION << 16,
+    ANDROID_JPEGR_START = CameraMetadataSection.ANDROID_JPEGR << 16,
     VENDOR_SECTION_START = CameraMetadataSection.VENDOR_SECTION << 16,
 }

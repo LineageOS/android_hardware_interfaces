@@ -25,13 +25,17 @@ class GnssCallbackAidl : public android::hardware::gnss::BnGnssCallback {
   public:
     GnssCallbackAidl()
         : capabilities_cbq_("capabilities"),
+          signal_type_capabilities_cbq_("signal_type_capabilities"),
           info_cbq_("system_info"),
           location_cbq_("location"),
           sv_info_list_cbq_("sv_info"),
+          sv_info_list_timestamps_millis_cbq_("sv_info_timestamps"),
           nmea_cbq_("nmea"){};
     ~GnssCallbackAidl(){};
 
     android::binder::Status gnssSetCapabilitiesCb(const int capabilities) override;
+    android::binder::Status gnssSetSignalTypeCapabilitiesCb(
+            const std::vector<android::hardware::gnss::GnssSignalType>& signalTypes) override;
     android::binder::Status gnssStatusCb(const GnssStatusValue status) override;
     android::binder::Status gnssSvStatusCb(const std::vector<GnssSvInfo>& svInfoList) override;
     android::binder::Status gnssLocationCb(
@@ -45,10 +49,14 @@ class GnssCallbackAidl : public android::hardware::gnss::BnGnssCallback {
                                                   const bool isUserEmergency) override;
 
     int last_capabilities_;
+    std::vector<android::hardware::gnss::GnssSignalType> last_signal_type_capabilities;
     android::hardware::gnss::IGnssCallback::GnssSystemInfo last_info_;
     android::hardware::gnss::GnssLocation last_location_;
 
     android::hardware::gnss::common::GnssCallbackEventQueue<int> capabilities_cbq_;
+    android::hardware::gnss::common::GnssCallbackEventQueue<
+            std::vector<android::hardware::gnss::GnssSignalType>>
+            signal_type_capabilities_cbq_;
     android::hardware::gnss::common::GnssCallbackEventQueue<
             android::hardware::gnss::IGnssCallback::GnssSystemInfo>
             info_cbq_;
@@ -57,6 +65,8 @@ class GnssCallbackAidl : public android::hardware::gnss::BnGnssCallback {
     android::hardware::gnss::common::GnssCallbackEventQueue<
             std::vector<android::hardware::gnss::IGnssCallback::GnssSvInfo>>
             sv_info_list_cbq_;
+    android::hardware::gnss::common::GnssCallbackEventQueue<long>
+            sv_info_list_timestamps_millis_cbq_;
     android::hardware::gnss::common::GnssCallbackEventQueue<std::pair<int64_t, std::string>>
             nmea_cbq_;
 };

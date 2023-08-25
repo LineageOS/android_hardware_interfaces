@@ -21,6 +21,22 @@ import android.hardware.radio.sim.Carrier;
 @VintfStability
 @JavaDerive(toString=true)
 parcelable CarrierRestrictions {
+    @VintfStability
+    @Backing(type="int")
+    /** This enum defines the carrier restriction status values */
+    enum CarrierRestrictionStatus {
+       /**
+        * Carrier restriction status value is unknown, used in cases where modem is dependent on
+        * external module to know about the lock status and the module hasn’t yet provided the lock
+        * status. For example, when the lock status is maintained on a cloud server and device has
+        * just booted after out of box and not yet connected to the internet.
+        */
+        UNKNOWN = 0,
+        /** There is no carrier restriction on the device */
+        NOT_RESTRICTED = 1,
+        /** The device is restricted to a carrier */
+        RESTRICTED = 2,
+    }
     /**
      * Allowed carriers
      */
@@ -40,4 +56,6 @@ parcelable CarrierRestrictions {
      * and not in the allowed list.
      */
     boolean allowedCarriersPrioritized;
+    /** Current restriction status as defined in CarrierRestrictionStatus enum */
+    CarrierRestrictionStatus status;
 }

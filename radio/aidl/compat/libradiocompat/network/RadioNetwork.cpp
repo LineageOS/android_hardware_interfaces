@@ -261,6 +261,11 @@ ScopedAStatus RadioNetwork::setSignalStrengthReportingCriteria(
     if (infos.size() > 1) {
         LOG(WARNING) << "Multi-element reporting criteria are not supported with HIDL HAL";
     }
+    if (infos[0].signalMeasurement == aidl::SignalThresholdInfo::SIGNAL_MEASUREMENT_TYPE_ECNO) {
+        LOG(WARNING) << "SIGNAL_MEASUREMENT_TYPE_ECNO are not supported with HIDL HAL";
+        respond()->setSignalStrengthReportingCriteriaResponse(notSupported(serial));
+        return ok();
+    }
     mHal1_5->setSignalStrengthReportingCriteria_1_5(serial, toHidl(infos[0]),
                                                     V1_5::AccessNetwork(infos[0].ran));
     return ok();
@@ -311,4 +316,60 @@ ScopedAStatus RadioNetwork::getUsageSetting(int32_t serial) {
     return ok();
 }
 
+ScopedAStatus RadioNetwork::setEmergencyMode(int32_t serial, aidl::EmergencyMode) {
+    LOG_CALL << serial;
+    LOG(ERROR) << " setEmergencyMode is unsupported by HIDL HALs";
+    respond()->setEmergencyModeResponse(notSupported(serial), {});
+    return ok();
+}
+
+ScopedAStatus RadioNetwork::triggerEmergencyNetworkScan(int32_t serial,
+        const aidl::EmergencyNetworkScanTrigger&) {
+    LOG_CALL << serial;
+    LOG(ERROR) << " triggerEmergencyNetworkScan is unsupported by HIDL HALs";
+    respond()->triggerEmergencyNetworkScanResponse(notSupported(serial));
+    return ok();
+}
+
+ScopedAStatus RadioNetwork::cancelEmergencyNetworkScan(int32_t serial, bool) {
+    LOG_CALL << serial;
+    LOG(ERROR) << " cancelEmergencyNetworkScan is unsupported by HIDL HALs";
+    respond()->cancelEmergencyNetworkScanResponse(notSupported(serial));
+    return ok();
+}
+
+ScopedAStatus RadioNetwork::exitEmergencyMode(int32_t serial) {
+    LOG_CALL << serial;
+    LOG(ERROR) << " exitEmergencyMode is unsupported by HIDL HALs";
+    respond()->exitEmergencyModeResponse(notSupported(serial));
+    return ok();
+}
+
+ScopedAStatus RadioNetwork::setNullCipherAndIntegrityEnabled(int32_t serial, bool) {
+    LOG_CALL << serial;
+    LOG(ERROR) << " setNullCipherAndIntegrityEnabled is unsupported by HIDL HALs";
+    respond()->setNullCipherAndIntegrityEnabledResponse(notSupported(serial));
+    return ok();
+}
+
+ScopedAStatus RadioNetwork::isNullCipherAndIntegrityEnabled(int32_t serial) {
+    LOG_CALL << serial;
+    LOG(ERROR) << " isNullCipherAndIntegrityEnabled is unsupported by HIDL HALs";
+    respond()->isNullCipherAndIntegrityEnabledResponse(notSupported(serial), true);
+    return ok();
+}
+
+ScopedAStatus RadioNetwork::isN1ModeEnabled(int32_t serial) {
+    LOG_CALL << serial;
+    LOG(ERROR) << " isN1ModeEnabled is unsupported by HIDL HALs";
+    respond()->isN1ModeEnabledResponse(notSupported(serial), false);
+    return ok();
+}
+
+ScopedAStatus RadioNetwork::setN1ModeEnabled(int32_t serial, bool /*enable*/) {
+    LOG_CALL << serial;
+    LOG(ERROR) << " setN1ModeEnabled is unsupported by HIDL HALs";
+    respond()->setN1ModeEnabledResponse(notSupported(serial));
+    return ok();
+}
 }  // namespace android::hardware::radio::compat

@@ -19,8 +19,8 @@
 #include <algorithm>
 #include <limits>
 #include <memory>
+#include <optional>
 #include <unordered_map>
-#include <unordered_set>
 #include <vector>
 
 #include <inttypes.h>
@@ -41,7 +41,14 @@ namespace aidl::android::hardware::graphics::composer3 {
 
 class ComposerClientReader {
   public:
+    explicit ComposerClientReader(std::optional<int64_t> display = {}) : mDisplay(display) {}
+
     ~ComposerClientReader() { resetData(); }
+
+    ComposerClientReader(ComposerClientReader&&) = default;
+
+    ComposerClientReader(const ComposerClientReader&) = delete;
+    ComposerClientReader& operator=(const ComposerClientReader&) = delete;
 
     // Parse and execute commands from the command queue.  The commands are
     // actually return values from the server and will be saved in ReturnData.
@@ -85,6 +92,7 @@ class ComposerClientReader {
 
     void hasChanges(int64_t display, uint32_t* outNumChangedCompositionTypes,
                     uint32_t* outNumLayerRequestMasks) const {
+        LOG_ALWAYS_FATAL_IF(mDisplay && display != *mDisplay);
         auto found = mReturnData.find(display);
         if (found == mReturnData.end()) {
             *outNumChangedCompositionTypes = 0;
@@ -100,6 +108,7 @@ class ComposerClientReader {
 
     // Get and clear saved changed composition types.
     std::vector<ChangedCompositionLayer> takeChangedCompositionTypes(int64_t display) {
+        LOG_ALWAYS_FATAL_IF(mDisplay && display != *mDisplay);
         auto found = mReturnData.find(display);
         if (found == mReturnData.end()) {
             return {};
@@ -111,6 +120,7 @@ class ComposerClientReader {
 
     // Get and clear saved display requests.
     DisplayRequest takeDisplayRequests(int64_t display) {
+        LOG_ALWAYS_FATAL_IF(mDisplay && display != *mDisplay);
         auto found = mReturnData.find(display);
         if (found == mReturnData.end()) {
             return {};
@@ -122,6 +132,7 @@ class ComposerClientReader {
 
     // Get and clear saved release fences.
     std::vector<ReleaseFences::Layer> takeReleaseFences(int64_t display) {
+        LOG_ALWAYS_FATAL_IF(mDisplay && display != *mDisplay);
         auto found = mReturnData.find(display);
         if (found == mReturnData.end()) {
             return {};
@@ -133,6 +144,7 @@ class ComposerClientReader {
 
     // Get and clear saved present fence.
     ndk::ScopedFileDescriptor takePresentFence(int64_t display) {
+        LOG_ALWAYS_FATAL_IF(mDisplay && display != *mDisplay);
         auto found = mReturnData.find(display);
         if (found == mReturnData.end()) {
             return {};
@@ -144,6 +156,7 @@ class ComposerClientReader {
 
     // Get what stage succeeded during PresentOrValidate: Present or Validate
     std::optional<PresentOrValidate::Result> takePresentOrValidateStage(int64_t display) {
+        LOG_ALWAYS_FATAL_IF(mDisplay && display != *mDisplay);
         auto found = mReturnData.find(display);
         if (found == mReturnData.end()) {
             return std::nullopt;
@@ -154,6 +167,7 @@ class ComposerClientReader {
 
     // Get the client target properties requested by hardware composer.
     ClientTargetPropertyWithBrightness takeClientTargetProperty(int64_t display) {
+        LOG_ALWAYS_FATAL_IF(mDisplay && display != *mDisplay);
         auto found = mReturnData.find(display);
 
         // If not found, return the default values.
@@ -177,32 +191,38 @@ class ComposerClientReader {
     void parseSetError(CommandError&& error) { mErrors.emplace_back(error); }
 
     void parseSetChangedCompositionTypes(ChangedCompositionTypes&& changedCompositionTypes) {
+        LOG_ALWAYS_FATAL_IF(mDisplay && changedCompositionTypes.display != *mDisplay);
         auto& data = mReturnData[changedCompositionTypes.display];
         data.changedLayers = std::move(changedCompositionTypes.layers);
     }
 
     void parseSetDisplayRequests(DisplayRequest&& displayRequest) {
+        LOG_ALWAYS_FATAL_IF(mDisplay && displayRequest.display != *mDisplay);
         auto& data = mReturnData[displayRequest.display];
         data.displayRequests = std::move(displayRequest);
     }
 
     void parseSetPresentFence(PresentFence&& presentFence) {
+        LOG_ALWAYS_FATAL_IF(mDisplay && presentFence.display != *mDisplay);
         auto& data = mReturnData[presentFence.display];
         data.presentFence = std::move(presentFence.fence);
     }
 
     void parseSetReleaseFences(ReleaseFences&& releaseFences) {
+        LOG_ALWAYS_FATAL_IF(mDisplay && releaseFences.display != *mDisplay);
         auto& data = mReturnData[releaseFences.display];
         data.releasedLayers = std::move(releaseFences.layers);
     }
 
     void parseSetPresentOrValidateDisplayResult(const PresentOrValidate&& presentOrValidate) {
+        LOG_ALWAYS_FATAL_IF(mDisplay && presentOrValidate.display != *mDisplay);
         auto& data = mReturnData[presentOrValidate.display];
         data.presentOrValidateState = std::move(presentOrValidate.result);
     }
 
     void parseSetClientTargetProperty(
             const ClientTargetPropertyWithBrightness&& clientTargetProperty) {
+        LOG_ALWAYS_FATAL_IF(mDisplay && clientTargetProperty.display != *mDisplay);
         auto& data = mReturnData[clientTargetProperty.display];
         data.clientTargetProperty = std::move(clientTargetProperty);
     }
@@ -222,6 +242,7 @@ class ComposerClientReader {
 
     std::vector<CommandError> mErrors;
     std::unordered_map<int64_t, ReturnData> mReturnData;
+    const std::optional<int64_t> mDisplay;
 };
 
 }  // namespace aidl::android::hardware::graphics::composer3

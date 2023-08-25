@@ -70,6 +70,7 @@ class Dvr : public BnDvr {
     ::ndk::ScopedAStatus stop() override;
     ::ndk::ScopedAStatus flush() override;
     ::ndk::ScopedAStatus close() override;
+    ::ndk::ScopedAStatus setStatusCheckIntervalHint(int64_t in_milliseconds) override;
 
     binder_status_t dump(int fd, const char** args, uint32_t numArgs) override;
 

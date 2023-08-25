@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<issues format="6" by="lint 8.0.0-dev" type="baseline" dependencies="true" variant="all" version="8.0.0-dev">
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 31 (current min is 30): `android.os.Binder#markVintfStability`"
+        errorLine1="      this.markVintfStability();"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="out/.intermediates/hardware/interfaces/wifi/hostapd/aidl/android.hardware.wifi.hostapd-V1-java-source/gen/android/hardware/wifi/hostapd/IHostapd.java"
+            line="55"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 31 (current min is 30): `android.os.Binder#markVintfStability`"
+        errorLine1="      this.markVintfStability();"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="out/.intermediates/hardware/interfaces/wifi/hostapd/aidl/android.hardware.wifi.hostapd-V1-java-source/gen/android/hardware/wifi/hostapd/IHostapdCallback.java"
+            line="46"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 31 (current min is 30): `android.os.Binder#markVintfStability`"
+        errorLine1="      this.markVintfStability();"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="out/.intermediates/hardware/interfaces/wifi/hostapd/aidl/android.hardware.wifi.hostapd-V2-java-source/gen/android/hardware/wifi/hostapd/IHostapd.java"
+            line="117"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 31 (current min is 30): `android.os.Binder#markVintfStability`"
+        errorLine1="      this.markVintfStability();"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="out/.intermediates/hardware/interfaces/wifi/hostapd/aidl/android.hardware.wifi.hostapd-V2-java-source/gen/android/hardware/wifi/hostapd/IHostapdCallback.java"
+            line="62"
+            column="12"/>
+    </issue>
+
+</issues>

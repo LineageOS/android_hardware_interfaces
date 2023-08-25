@@ -234,4 +234,29 @@ enum FrontendStatusType {
      * and not tuned PLPs for currently watching service.
      */
     ATSC3_ALL_PLP_INFO,
+
+    /**
+     * IPTV Content URL.
+     */
+    IPTV_CONTENT_URL,
+
+    /**
+     * Number of packets lost.
+     */
+    IPTV_PACKETS_LOST,
+
+    /**
+     * Number of packets received.
+     */
+    IPTV_PACKETS_RECEIVED,
+
+    /**
+     * Worst jitter (milliseconds).
+     */
+    IPTV_WORST_JITTER_MS,
+
+    /**
+     * Average jitter (milliseconds).
+     */
+    IPTV_AVERAGE_JITTER_MS,
 }

@@ -105,6 +105,15 @@ void GnssHalTest::SetUpGnssCallback() {
         EXPECT_TRUE(aidl_gnss_cb_->info_cbq_.retrieve(aidl_gnss_cb_->last_info_, TIMEOUT_SEC));
         EXPECT_EQ(aidl_gnss_cb_->info_cbq_.calledCount(), 1);
     }
+
+    /*
+     * SignalTypeCapabilities callback should trigger.
+     */
+    if (aidl_gnss_hal_->getInterfaceVersion() >= 3) {
+        EXPECT_TRUE(aidl_gnss_cb_->signal_type_capabilities_cbq_.retrieve(
+                aidl_gnss_cb_->last_signal_type_capabilities, TIMEOUT_SEC));
+        EXPECT_EQ(aidl_gnss_cb_->signal_type_capabilities_cbq_.calledCount(), 1);
+    }
 }
 
 void GnssHalTest::TearDown() {
@@ -466,6 +475,52 @@ void GnssHalTest::collectMeasurementIntervals(const sp<GnssMeasurementCallbackAi
             deltasMs.push_back(currentElapsedRealtimeMillis - lastElapsedRealtimeMillis);
         }
         lastElapsedRealtimeMillis = currentElapsedRealtimeMillis;
+    }
+}
+
+void GnssHalTest::collectSvInfoListTimestamps(const int numMeasurementEvents,
+                                              const int timeoutSeconds,
+                                              std::vector<int>& deltasMs) {
+    aidl_gnss_cb_->sv_info_list_timestamps_millis_cbq_.reset();
+    aidl_gnss_cb_->sv_info_list_cbq_.reset();
+
+    auto status = aidl_gnss_hal_->startSvStatus();
+    EXPECT_TRUE(status.isOk());
+    ASSERT_TRUE(aidl_gnss_cb_->sv_info_list_timestamps_millis_cbq_.size() ==
+                aidl_gnss_cb_->sv_info_list_cbq_.size());
+    long lastElapsedRealtimeMillis = 0;
+    for (int i = 0; i < numMeasurementEvents; i++) {
+        long timeStamp;
+        ASSERT_TRUE(aidl_gnss_cb_->sv_info_list_timestamps_millis_cbq_.retrieve(timeStamp,
+                                                                                timeoutSeconds));
+        if (lastElapsedRealtimeMillis != 0) {
+            deltasMs.push_back(timeStamp - lastElapsedRealtimeMillis);
+        }
+        lastElapsedRealtimeMillis = timeStamp;
+    }
+    status = aidl_gnss_hal_->stopSvStatus();
+    EXPECT_TRUE(status.isOk());
+}
+
+void GnssHalTest::checkGnssDataFields(const sp<GnssMeasurementCallbackAidl>& callback,
+                                      const int numMeasurementEvents, const int timeoutSeconds,
+                                      const bool isFullTracking) {
+    for (int i = 0; i < numMeasurementEvents; i++) {
+        GnssData lastGnssData;
+        ASSERT_TRUE(callback->gnss_data_cbq_.retrieve(lastGnssData, timeoutSeconds));
+        EXPECT_EQ(callback->gnss_data_cbq_.calledCount(), i + 1);
+        ASSERT_TRUE(lastGnssData.measurements.size() > 0);
+
+        // Validity check GnssData fields
+        checkGnssMeasurementClockFields(lastGnssData);
+        if (aidl_gnss_hal_->getInterfaceVersion() >= 3) {
+            if (isFullTracking) {
+                EXPECT_EQ(lastGnssData.isFullTracking, isFullTracking);
+            }
+        }
+        for (const auto& measurement : lastGnssData.measurements) {
+            checkGnssMeasurementFields(measurement, lastGnssData);
+        }
     }
 }
 

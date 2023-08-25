@@ -19,6 +19,7 @@
 #include <aidl/android/hardware/radio/modem/BnRadioModemIndication.h>
 #include <aidl/android/hardware/radio/modem/BnRadioModemResponse.h>
 #include <aidl/android/hardware/radio/modem/IRadioModem.h>
+#include <aidl/android/hardware/radio/modem/ImeiInfo.h>
 
 #include "radio_aidl_hal_utils.h"
 
@@ -51,6 +52,9 @@ class RadioModemResponse : public BnRadioModemResponse {
                                                          const std::string& imeisv,
                                                          const std::string& esn,
                                                          const std::string& meid) override;
+
+    virtual ndk::ScopedAStatus getImeiResponse(const RadioResponseInfo& info,
+            const std::optional<ImeiInfo>& config) override;
 
     virtual ndk::ScopedAStatus getHardwareConfigResponse(
             const RadioResponseInfo& info, const std::vector<HardwareConfig>& config) override;
@@ -108,9 +112,9 @@ class RadioModemIndication : public BnRadioModemIndication {
 };
 
 // The main test class for Radio AIDL Modem.
-class RadioModemTest : public ::testing::TestWithParam<std::string>, public RadioServiceTest {
+class RadioModemTest : public RadioServiceTest {
   public:
-    virtual void SetUp() override;
+    void SetUp() override;
 
     /* radio modem service handle */
     std::shared_ptr<IRadioModem> radio_modem;

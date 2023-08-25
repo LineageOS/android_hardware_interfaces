@@ -164,4 +164,14 @@ interface IAGnssRil {
      *
      */
     void updateNetworkState(in NetworkAttributes attributes);
+
+    /**
+     * Injects an SMS/WAP initiated SUPL message.
+     *
+     * @param msgData ASN.1 encoded SUPL INIT message. This is defined in
+     * UserPlane Location Protocol (Version 2.0.4).
+     * @param slotIndex Specifies the slot index (See
+     *         android.telephony.SubscriptionManager#getSlotIndex()) of the SUPL connection.
+     */
+    void injectNiSuplMessageData(in byte[] msgData, in int slotIndex);
 }

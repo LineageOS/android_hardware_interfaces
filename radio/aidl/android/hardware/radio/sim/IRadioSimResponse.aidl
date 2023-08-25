@@ -65,7 +65,6 @@ oneway interface IRadioSimResponse {
      *   RadioError:CANCELLED
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:INVALID_SIM_STATE
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:SIM_PUK2
      */
     void changeIccPin2ForAppResponse(in RadioResponseInfo info, in int remainingRetries);
@@ -84,7 +83,6 @@ oneway interface IRadioSimResponse {
      *   RadioError:CANCELLED
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:INVALID_SIM_STATE
-     *   RadioError:REQUEST_NOT_SUPPORTED
      */
     void changeIccPinForAppResponse(in RadioResponseInfo info, in int remainingRetries);
 
@@ -108,7 +106,6 @@ oneway interface IRadioSimResponse {
      * Valid errors returned:
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:REQUEST_NOT_SUPPORTED
      */
     void getAllowedCarriersResponse(in RadioResponseInfo info, in CarrierRestrictions carriers,
             in SimLockMultiSimPolicy multiSimPolicy);
@@ -133,7 +130,6 @@ oneway interface IRadioSimResponse {
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:MODEM_ERR
      *   RadioError:NOT_PROVISIONED
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      *   RadioError:SIM_ABSENT
@@ -153,7 +149,6 @@ oneway interface IRadioSimResponse {
      *   RadioError:NO_MEMORY
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:SIM_ABSENT
      */
     void getCdmaSubscriptionSourceResponse(
@@ -176,7 +171,6 @@ oneway interface IRadioSimResponse {
      *   RadioError:INTERNAL_ERR
      *   RadioError:SYSTEM_ERR
      *   RadioError:FDN_CHECK_FAILURE
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
@@ -191,7 +185,6 @@ oneway interface IRadioSimResponse {
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INTERNAL_ERR
      *   RadioError:NO_RESOURCES
-     *   RadioError:REQUEST_NOT_SUPPORTED
      */
     void getIccCardStatusResponse(in RadioResponseInfo info, in CardStatus cardStatus);
 
@@ -208,7 +201,6 @@ oneway interface IRadioSimResponse {
      *   RadioError:CANCELLED
      *   RadioError:INVALID_SIM_STATE
      *   RadioError:SIM_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
      */
     void getImsiForAppResponse(in RadioResponseInfo info, in String imsi);
 
@@ -219,13 +211,10 @@ oneway interface IRadioSimResponse {
      * Valid errors returned:
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:INVALID_SIM_STATE
      *   RadioError:MODEM_ERR
      *   RadioError:INTERNAL_ERR
-     * REQUEST_NOT_SUPPORTED may only be returned on devices that don't support this API,
-     * indicated by the HAL capability CAPABILITY_SIM_PHONEBOOK_IN_MODEM.
      */
     void getSimPhonebookCapacityResponse(in RadioResponseInfo info, in PhonebookCapacity capacity);
 
@@ -235,13 +224,10 @@ oneway interface IRadioSimResponse {
      * Valid errors returned:
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:INVALID_SIM_STATE
      *   RadioError:MODEM_ERR
      *   RadioError:INTERNAL_ERR
-     * REQUEST_NOT_SUPPORTED may only be returned on devices that don't support this API,
-     * indicated by the HAL capability CAPABILITY_SIM_PHONEBOOK_IN_MODEM.
      */
     void getSimPhonebookRecordsResponse(in RadioResponseInfo info);
 
@@ -255,7 +241,8 @@ oneway interface IRadioSimResponse {
      *   RadioError:NO_MEMORY
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
-     *   RadioError:REQUEST_NOT_SUPPORTED
+     *
+     * @deprecated use iccCloseLogicalChannelWithSessionInfoResponse instead.
      */
     void iccCloseLogicalChannelResponse(in RadioResponseInfo info);
 
@@ -274,7 +261,6 @@ oneway interface IRadioSimResponse {
      *   RadioError:CANCELLED
      *   RadioError:INVALID_SIM_STATE
      *   RadioError:SIM_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
      */
     void iccIoForAppResponse(in RadioResponseInfo info, in IccIoResult iccIo);
 
@@ -296,7 +282,6 @@ oneway interface IRadioSimResponse {
      *   RadioError:SIM_ERR
      *   RadioError:INVALID_SIM_STATE
      *   RadioError:MISSING_RESOURCE
-     *   RadioError:REQUEST_NOT_SUPPORTED
      */
     void iccOpenLogicalChannelResponse(
             in RadioResponseInfo info, in int channelId, in byte[] selectResponse);
@@ -312,7 +297,6 @@ oneway interface IRadioSimResponse {
      *   RadioError:NO_MEMORY
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
-     *   RadioError:REQUEST_NOT_SUPPORTED
      */
     void iccTransmitApduBasicChannelResponse(in RadioResponseInfo info, in IccIoResult result);
 
@@ -327,7 +311,6 @@ oneway interface IRadioSimResponse {
      *   RadioError:NO_MEMORY
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
-     *   RadioError:REQUEST_NOT_SUPPORTED
      */
     void iccTransmitApduLogicalChannelResponse(in RadioResponseInfo info, in IccIoResult result);
 
@@ -341,7 +324,6 @@ oneway interface IRadioSimResponse {
      *   RadioError:NO_MEMORY
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
-     *   RadioError:REQUEST_NOT_SUPPORTED
      */
     void reportStkServiceIsRunningResponse(in RadioResponseInfo info);
 
@@ -359,7 +341,6 @@ oneway interface IRadioSimResponse {
      *   RadioError:INVALID_MODEM_STATE
      *   RadioError:SIM_ERR
      *   RadioError:INVALID_ARGUMENTS
-     *   RadioError:REQUEST_NOT_SUPPORTED
      */
     void requestIccSimAuthenticationResponse(in RadioResponseInfo info, in IccIoResult result);
 
@@ -379,7 +360,6 @@ oneway interface IRadioSimResponse {
      *   RadioError:CANCELLED
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:MODEM_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:SIM_ABSENT
      */
     void sendEnvelopeResponse(in RadioResponseInfo info, in String commandResponse);
@@ -397,7 +377,6 @@ oneway interface IRadioSimResponse {
      *   RadioError:NO_MEMORY
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:SIM_ABSENT
      */
     void sendEnvelopeWithStatusResponse(in RadioResponseInfo info, in IccIoResult iccIo);
@@ -415,7 +394,6 @@ oneway interface IRadioSimResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      *   RadioError:INVALID_MODEM_STATE
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:SIM_ABSENT
      */
     void sendTerminalResponseToSimResponse(in RadioResponseInfo info);
@@ -427,7 +405,6 @@ oneway interface IRadioSimResponse {
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INVALID_ARGUMENTS
-     *   RadioError:REQUEST_NOT_SUPPORTED
      */
     void setAllowedCarriersResponse(in RadioResponseInfo info);
 
@@ -435,12 +412,11 @@ oneway interface IRadioSimResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
-     *   RadioError:RIL_E_SUCCESS
-     *   RadioError:RIL_E_RADIO_NOT_AVAILABLE
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:SIM_ABSENT
-     *   RadioError:RIL_E_REQUEST_NOT_SUPPORTED
      *   RadioError:INVALID_ARGUMENTS
-     *   RadioError:MODEM_INTERNAL_FAILURE
+     *   RadioError:INTERNAL_FAILURE
      */
     void setCarrierInfoForImsiEncryptionResponse(in RadioResponseInfo info);
 
@@ -456,7 +432,6 @@ oneway interface IRadioSimResponse {
      *   RadioError:NO_MEMORY
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
-     *   RadioError:REQUEST_NOT_SUPPORTED
      */
     void setCdmaSubscriptionSourceResponse(in RadioResponseInfo info);
 
@@ -477,7 +452,6 @@ oneway interface IRadioSimResponse {
      *   RadioError:SYSTEM_ERR
      *   RadioError:INVALID_STATE
      *   RadioError:FDN_CHECK_FAILURE
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:INVALID_MODEM_STATE
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
@@ -507,7 +481,6 @@ oneway interface IRadioSimResponse {
      *   RadioError:SYSTEM_ERR
      *   RadioError:MODEM_ERR
      *   RadioError:INVALID_ARGUMENTS
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
@@ -527,7 +500,6 @@ oneway interface IRadioSimResponse {
      *   RadioError:CANCELLED
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:INVALID_SIM_STATE
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:SIM_PUK2
      */
     void supplyIccPin2ForAppResponse(in RadioResponseInfo info, in int remainingRetries);
@@ -546,7 +518,6 @@ oneway interface IRadioSimResponse {
      *   RadioError:CANCELLED
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:INVALID_SIM_STATE
-     *   RadioError:REQUEST_NOT_SUPPORTED
      */
     void supplyIccPinForAppResponse(in RadioResponseInfo info, in int remainingRetries);
 
@@ -564,7 +535,6 @@ oneway interface IRadioSimResponse {
      *   RadioError:CANCELLED
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:INVALID_SIM_STATE
-     *   RadioError:REQUEST_NOT_SUPPORTED
      */
     void supplyIccPuk2ForAppResponse(in RadioResponseInfo info, in int remainingRetries);
 
@@ -582,7 +552,6 @@ oneway interface IRadioSimResponse {
      *   RadioError:CANCELLED
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:INVALID_SIM_STATE
-     *   RadioError:REQUEST_NOT_SUPPORTED
      */
     void supplyIccPukForAppResponse(in RadioResponseInfo info, in int remainingRetries);
 
@@ -603,7 +572,6 @@ oneway interface IRadioSimResponse {
      *   RadioError:MODEM_ERR
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:NO_RESOURCES
-     *   RadioError:REQUEST_NOT_SUPPORTED
      */
     void supplySimDepersonalizationResponse(
             in RadioResponseInfo info, in PersoSubstate persoType, in int remainingRetries);
@@ -616,7 +584,6 @@ oneway interface IRadioSimResponse {
      * Valid errors returned:
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:INVALID_SIM_STATE
      *   RadioError:MODEM_ERR
@@ -624,8 +591,19 @@ oneway interface IRadioSimResponse {
      *   RadioError:SIM_ERR
      *   RadioError:NO_SUCH_ENTRY
      *   RadioError:NO_RESOURCES
-     * REQUEST_NOT_SUPPORTED may only be returned on devices that don't support this API,
-     * indicated by the HAL capability CAPABILITY_SIM_PHONEBOOK_IN_MODEM.
      */
     void updateSimPhonebookRecordsResponse(in RadioResponseInfo info, in int updatedRecordIndex);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:NO_MEMORY
+     *   RadioError:NO_RESOURCES
+     *   RadioError:CANCELLED
+     */
+    void iccCloseLogicalChannelWithSessionInfoResponse(in RadioResponseInfo info);
 }

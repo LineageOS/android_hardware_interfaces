@@ -54,8 +54,8 @@ class GeneratorHub {
     void registerGenerator(int32_t generatorId, std::unique_ptr<FakeValueGenerator> generator);
 
     // Unregister a generator with the generatorId. If no registered generator is found, this
-    // function does nothing.
-    void unregisterGenerator(int32_t generatorId);
+    // function does nothing. Returns true if the generator is unregistered.
+    bool unregisterGenerator(int32_t generatorId);
 
   private:
     struct VhalEvent {

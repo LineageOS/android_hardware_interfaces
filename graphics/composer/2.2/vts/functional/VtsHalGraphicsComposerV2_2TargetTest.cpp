@@ -66,16 +66,16 @@ class GraphicsComposerHidlTest : public ::testing::TestWithParam<std::string> {
         mComposerCallback->setVsyncAllowed(false);
 
         mComposerClient->getRaw()->getReadbackBufferAttributes(
-            mPrimaryDisplay,
-            [&](const auto& tmpError, const auto& tmpPixelFormat, const auto& tmpDataspace) {
-                mHasReadbackBuffer = tmpError == Error::NONE;
-                if (mHasReadbackBuffer) {
-                    mReadbackPixelFormat = tmpPixelFormat;
-                    mReadbackDataspace = tmpDataspace;
-                    ASSERT_LT(static_cast<PixelFormat>(0), mReadbackPixelFormat);
-                    ASSERT_NE(Dataspace::UNKNOWN, mReadbackDataspace);
-                }
-            });
+                mPrimaryDisplay,
+                [&](const auto& tmpError, const auto& tmpPixelFormat, const auto& tmpDataspace) {
+                    mHasReadbackBuffer = tmpError == Error::NONE;
+                    if (mHasReadbackBuffer) {
+                        mReadbackPixelFormat = tmpPixelFormat;
+                        mReadbackDataspace = tmpDataspace;
+                        ASSERT_LT(static_cast<PixelFormat>(0), mReadbackPixelFormat);
+                        ASSERT_NE(Dataspace::UNKNOWN, mReadbackDataspace);
+                    }
+                });
 
         mInvalidDisplayId = GetInvalidDisplayId();
     }

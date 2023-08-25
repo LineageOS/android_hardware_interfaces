@@ -38,7 +38,7 @@ parcelable Cdma2000RegistrationInfo {
   int roamingIndicator;
   int systemIsInPrl;
   int defaultRoamingIndicator;
-  const int PRL_INDICATOR_NOT_REGISTERED = -1;
+  const int PRL_INDICATOR_NOT_REGISTERED = (-1);
   const int PRL_INDICATOR_NOT_IN_PRL = 0;
   const int PRL_INDICATOR_IN_PRL = 1;
 }

@@ -22,22 +22,27 @@ cc_defaults {
     name: "remote-access-hal-defaults",
     vendor: true,
     relative_install_path: "hw",
-    srcs: ["src/RemoteAccessImpl.cpp"],
+    srcs: [
+        "src/RemoteAccessImpl.cpp",
+    ],
     whole_static_libs: [
         "RemoteAccessService",
     ],
+    static_libs: [
+        "BindToDeviceSocketMutatorLib",
+    ],
     shared_libs: [
-        "libbase",
         "libbinder_ndk",
-        "liblog",
         "libutils",
-        "libgrpc++",
         "libprotobuf-cpp-full",
     ],
     defaults: [
         "vhalclient_defaults",
+        "BindToDeviceSocketMutatorDefaults",
     ],
     cflags: [
+        // This is already included in BindToDeviceSocketMutatorDefaults but
+        // might be overridden by vhalclient_defaults.
         "-Wno-unused-parameter",
     ],
 }
@@ -59,6 +64,7 @@ cc_binary {
     init_rc: ["remoteaccess-tcu-test-service.rc"],
     cflags: [
         "-DGRPC_SERVICE_ADDRESS=\"10.10.10.1:50051\"",
+        "-DGRPC_SERVICE_IFNAME=\"eth1\"",
     ],
 }
 

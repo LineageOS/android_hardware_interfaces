@@ -22,6 +22,21 @@ import android.hardware.radio.network.NrIndicators;
 @VintfStability
 @JavaDerive(toString=true)
 parcelable EutranRegistrationInfo {
+    enum AttachResultType {
+        /** Default value. */
+        NONE,
+        /** LTE is attached with eps only. */
+        EPS_ONLY,
+        /** LTE combined EPS and IMSI attach. */
+        COMBINED,
+    }
+
+    /** LTE combined attach with CSFB not preferred */
+    const int EXTRA_CSFB_NOT_PREFERRED = 1 << 0;
+
+    /** LTE combined attach for SMS only */
+    const int EXTRA_SMS_ONLY = 1 << 1;
+
     /**
      * Network capabilities for voice over PS services. This info is valid only on LTE network and
      * must be present when device is camped on LTE. VopsInfo must be empty when device is camped
@@ -33,4 +48,13 @@ parcelable EutranRegistrationInfo {
      * be empty.
      */
     NrIndicators nrIndicators;
+
+    /**
+     * The type of network attachment. This info is valid only on LTE network and must be present
+     * when device has attached to the network.
+     */
+    AttachResultType lteAttachResultType;
+
+    /** Values are bitwise ORs of EXTRA_* constants */
+    int extraInfo;
 }

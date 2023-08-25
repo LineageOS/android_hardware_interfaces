@@ -60,7 +60,7 @@ bool add(std::string dev, std::string type) {
 
     {
         auto linkinfo = req.addNested(IFLA_LINKINFO);
-        req.add(IFLA_INFO_KIND, type);
+        req.addBuffer(IFLA_INFO_KIND, type);
     }
 
     nl::Socket sock(NETLINK_ROUTE);
@@ -100,23 +100,36 @@ std::optional<bool> isUp(std::string ifname) {
     return ifr.ifr_flags & IFF_UP;
 }
 
+static bool hasIpv4(std::string ifname) {
+    auto ifr = ifreqs::fromName(ifname);
+    switch (const auto status = ifreqs::trySend(SIOCGIFADDR, ifr)) {
+        case 0:
+            return true;
+        case EADDRNOTAVAIL:
+        case ENODEV:
+            return false;
+        default:
+            PLOG(WARNING) << "Failed checking IPv4 address";
+            return false;
+    }
+}
+
 struct WaitState {
     bool present;
     bool up;
+    bool hasIpv4Addr;
 
     bool satisfied(WaitCondition cnd) const {
         switch (cnd) {
             case WaitCondition::PRESENT:
-                if (present) return true;
-                break;
+                return present;
             case WaitCondition::PRESENT_AND_UP:
-                if (present && up) return true;
-                break;
+                return present && up;
+            case WaitCondition::PRESENT_AND_IPV4:
+                return present && up && hasIpv4Addr;
             case WaitCondition::DOWN_OR_GONE:
-                if (!present || !up) return true;
-                break;
+                return !present || !up;
         }
-        return false;
     }
 };
 
@@ -126,8 +139,19 @@ static std::string toString(WaitCondition cnd) {
             return "become present";
         case WaitCondition::PRESENT_AND_UP:
             return "come up";
+        case WaitCondition::PRESENT_AND_IPV4:
+            return "get IPv4 address";
         case WaitCondition::DOWN_OR_GONE:
             return "go down";
+    }
+}
+
+static std::string toString(Quantifier quant) {
+    switch (quant) {
+        case Quantifier::ALL_OF:
+            return "all of";
+        case Quantifier::ANY_OF:
+            return "any of";
     }
 }
 
@@ -139,50 +163,73 @@ static std::string toString(const std::set<std::string>& ifnames) {
     return str;
 }
 
-void waitFor(std::set<std::string> ifnames, WaitCondition cnd, bool allOf) {
-    nl::Socket sock(NETLINK_ROUTE, 0, RTMGRP_LINK);
+std::optional<std::string> waitFor(std::set<std::string> ifnames, WaitCondition cnd,
+                                   Quantifier quant) {
+    nl::Socket sock(NETLINK_ROUTE, 0, RTMGRP_LINK | RTMGRP_IPV4_IFADDR);
 
     using StatesMap = std::map<std::string, WaitState>;
     StatesMap states = {};
     for (const auto ifname : ifnames) {
         const auto present = exists(ifname);
         const auto up = present && isUp(ifname).value_or(false);
-        states[ifname] = {present, up};
+        const auto hasIpv4Addr = present && hasIpv4(ifname);
+        states[ifname] = {present, up, hasIpv4Addr};
     }
 
     const auto mapConditionChecker = [cnd](const StatesMap::iterator::value_type& it) {
         return it.second.satisfied(cnd);
     };
-    const auto isFullySatisfied = [&states, allOf, mapConditionChecker]() {
-        if (allOf) {
-            return std::all_of(states.begin(), states.end(), mapConditionChecker);
-        } else {
-            return std::any_of(states.begin(), states.end(), mapConditionChecker);
+    const auto isFullySatisfied = [&states, quant,
+                                   mapConditionChecker]() -> std::optional<std::string> {
+        if (quant == Quantifier::ALL_OF) {
+            if (!std::all_of(states.begin(), states.end(), mapConditionChecker)) return {};
+            return states.begin()->first;
+        } else {  // Quantifier::ANY_OF
+            const auto it = std::find_if(states.begin(), states.end(), mapConditionChecker);
+            if (it == states.end()) return {};
+            return it->first;
         }
     };
 
-    if (isFullySatisfied()) return;
+    if (const auto iface = isFullySatisfied()) return iface;
 
-    LOG(DEBUG) << "Waiting for " << (allOf ? "" : "any of ") << toString(ifnames) << " to "
+    LOG(DEBUG) << "Waiting for " << toString(quant) << " " << toString(ifnames) << " to "
                << toString(cnd);
     for (const auto rawMsg : sock) {
-        const auto msg = nl::Message<ifinfomsg>::parse(rawMsg, {RTM_NEWLINK, RTM_DELLINK});
-        if (!msg.has_value()) continue;
+        if (const auto msg = nl::Message<ifinfomsg>::parse(rawMsg, {RTM_NEWLINK, RTM_DELLINK});
+            msg.has_value()) {
+            // Interface added / removed
+            const auto ifname = msg->attributes.get<std::string>(IFLA_IFNAME);
+            if (ifnames.count(ifname) == 0) continue;
 
-        const auto ifname = msg->attributes.get<std::string>(IFLA_IFNAME);
-        if (ifnames.count(ifname) == 0) continue;
+            auto& state = states[ifname];
+            state.present = (msg->header.nlmsg_type != RTM_DELLINK);
+            state.up = state.present && (msg->data.ifi_flags & IFF_UP) != 0;
+            if (!state.present) state.hasIpv4Addr = false;
 
-        const bool present = (msg->header.nlmsg_type != RTM_DELLINK);
-        const bool up = present && (msg->data.ifi_flags & IFF_UP) != 0;
-        states[ifname] = {present, up};
+        } else if (const auto msg =
+                           nl::Message<ifaddrmsg>::parse(rawMsg, {RTM_NEWADDR, RTM_DELADDR});
+                   msg.has_value()) {
+            // Address added / removed
+            const auto ifname = msg->attributes.get<std::string>(IFLA_IFNAME);
+            if (ifnames.count(ifname) == 0) continue;
 
-        if (isFullySatisfied()) {
-            LOG(DEBUG) << "Finished waiting for " << (allOf ? "" : "some of ") << toString(ifnames)
+            if (msg->header.nlmsg_type == RTM_NEWADDR) {
+                states[ifname].hasIpv4Addr = true;
+            } else {
+                // instead of tracking which one got deleted, let's just ask
+                states[ifname].hasIpv4Addr = hasIpv4(ifname);
+            }
+        }
+
+        if (const auto iface = isFullySatisfied()) {
+            LOG(DEBUG) << "Finished waiting for " << toString(quant) << " " << toString(ifnames)
                        << " to " << toString(cnd);
-            return;
+            return iface;
         }
     }
     LOG(FATAL) << "Can't read Netlink socket";
+    return {};
 }
 
 }  // namespace android::netdevice

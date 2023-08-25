@@ -178,6 +178,8 @@ interface ISession {
      *   2) A face is rejected, and ISessionCallback#onAuthenticationFailed is invoked.
      *   3) Any non-recoverable error occurs (such as lockout). See the full list of
      *      authentication-specific errors in the Error enum.
+     *   4) ISessionCallback#onLockoutPermanent is invoked.
+     *   5) ISessionCallback#onLockoutTimed is invoked.
      *
      * Note that upon successful authentication, the lockout counter for this (sensorId, userId)
      * pair must be cleared.

@@ -25,6 +25,8 @@
 #include <utils/Mutex.h>
 #include <map>
 
+#define INVALID_LNB_ID -1
+
 using android::Condition;
 using android::Mutex;
 

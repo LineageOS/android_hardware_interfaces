@@ -24,9 +24,14 @@ aidl_interface {
     stability: "vintf",
     backend: {
         java: {
+            // There is no Java FMQ library, but we support the AIDL type
+            // to allow subsets of interfaces that include it to be used in Java
+            enabled: true,
             sdk_version: "module_current",
         },
         cpp: {
+            // FMQ will not be supported in the cpp backend because the parcelables
+            // are not stable enough for use in shared memory
             enabled: false,
         },
         ndk: {
@@ -36,6 +41,10 @@ aidl_interface {
                 "com.android.media.swcodec",
             ],
             min_sdk_version: "29",
+        },
+        rust: {
+            // FMQ is not supported in the rust backend
+            enabled: false,
         },
     },
     frozen: true,

@@ -16,7 +16,6 @@
 
 package android.hardware.wifi;
 
-import android.hardware.wifi.StaBackgroundScanBucketEventReportSchemeMask;
 import android.hardware.wifi.WifiBand;
 
 /**
@@ -50,7 +49,7 @@ parcelable StaBackgroundScanBucketParameters {
      * Bitset of |StaBackgroundScanBucketEventReportSchemeMask| values controlling
      * when events for this bucket must be reported.
      */
-    StaBackgroundScanBucketEventReportSchemeMask eventReportScheme;
+    int eventReportScheme;
     /**
      * For exponential back off. If |exponentialMaxPeriodInMs| is non-zero or
      * different than period, then this bucket is an exponential backoff bucket

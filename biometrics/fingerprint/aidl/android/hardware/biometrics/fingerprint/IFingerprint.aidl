@@ -19,7 +19,9 @@ package android.hardware.biometrics.fingerprint;
 import android.hardware.biometrics.fingerprint.ISession;
 import android.hardware.biometrics.fingerprint.ISessionCallback;
 import android.hardware.biometrics.fingerprint.SensorProps;
-
+/**
+ * @hide
+ */
 @VintfStability
 interface IFingerprint {
     /**

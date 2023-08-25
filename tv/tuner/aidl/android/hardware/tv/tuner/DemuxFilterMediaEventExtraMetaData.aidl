@@ -17,6 +17,7 @@
 package android.hardware.tv.tuner;
 
 import android.hardware.tv.tuner.AudioExtraMetaData;
+import android.hardware.tv.tuner.AudioPresentation;
 
 /**
  * Extra Meta Data for DemuxFilterMediaEvent.
@@ -30,4 +31,9 @@ union DemuxFilterMediaEventExtraMetaData {
     boolean noinit;
 
     AudioExtraMetaData audio;
+
+    /**
+     * Audio presentations available for user selection.
+     */
+    AudioPresentation[] audioPresentations = {};
 }

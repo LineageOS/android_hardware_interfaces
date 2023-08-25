@@ -23,6 +23,7 @@ import android.hardware.tv.tuner.FrontendDtmbCapabilities;
 import android.hardware.tv.tuner.FrontendDvbcCapabilities;
 import android.hardware.tv.tuner.FrontendDvbsCapabilities;
 import android.hardware.tv.tuner.FrontendDvbtCapabilities;
+import android.hardware.tv.tuner.FrontendIptvCapabilities;
 import android.hardware.tv.tuner.FrontendIsdbs3Capabilities;
 import android.hardware.tv.tuner.FrontendIsdbsCapabilities;
 import android.hardware.tv.tuner.FrontendIsdbtCapabilities;
@@ -51,4 +52,6 @@ union FrontendCapabilities {
     FrontendIsdbs3Capabilities isdbs3Caps;
 
     FrontendIsdbtCapabilities isdbtCaps;
+
+    @nullable FrontendIptvCapabilities iptvCaps;
 }

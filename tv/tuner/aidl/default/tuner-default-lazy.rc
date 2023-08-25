@@ -1,0 +1,9 @@
+service vendor.tuner-default-lazy /vendor/bin/hw/android.hardware.tv.tuner-service.example-lazy
+    class hal
+    user media
+    group mediadrm drmrpc
+    ioprio rt 4
+    task_profiles ProcessCapacityHigh
+    interface aidl android.hardware.tv.tuner.ITuner/default
+    oneshot
+    disabled

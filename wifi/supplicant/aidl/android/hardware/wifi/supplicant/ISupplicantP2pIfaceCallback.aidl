@@ -17,6 +17,7 @@
 package android.hardware.wifi.supplicant;
 
 import android.hardware.wifi.supplicant.P2pGroupCapabilityMask;
+import android.hardware.wifi.supplicant.P2pGroupStartedEventParams;
 import android.hardware.wifi.supplicant.P2pProvDiscStatusCode;
 import android.hardware.wifi.supplicant.P2pStatusCode;
 import android.hardware.wifi.supplicant.WpsConfigMethods;
@@ -243,4 +244,11 @@ oneway interface ISupplicantP2pIfaceCallback {
             in byte[] primaryDeviceType, in String deviceName, in WpsConfigMethods configMethods,
             in byte deviceCapabilities, in P2pGroupCapabilityMask groupCapabilities,
             in byte[] wfdDeviceInfo, in byte[] wfdR2DeviceInfo, in byte[] vendorElemBytes);
+
+    /**
+     * Used to indicate the start of a P2P group, with some parameters describing the group.
+     *
+     * @param groupStartedEventParams Parameters describing the P2P group.
+     */
+    void onGroupStartedWithParams(in P2pGroupStartedEventParams groupStartedEventParams);
 }

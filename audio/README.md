@@ -2,10 +2,29 @@
 
 Directory structure of the audio HAL related code.
 
-Run `common/all-versions/copyHAL.sh` to create a new version of the audio HAL
-based on an existing one.
+## Directory Structure for AIDL audio HAL
 
-## Directory Structure
+The AIDL version is located inside `aidl` directory. The tree below explains
+the role of each subdirectory:
+
+* `aidl_api` — snapshots of the API created each Android release. Every
+  release, the current version of the API becomes "frozen" and gets assigned
+  the next version number. If the API needs further modifications, they are
+  made on the "current" version. After making modifications, run
+  `m <package name>-update-api` to update the snapshot of the "current"
+  version.
+* `android/hardware/audio/common` — data structures and interfaces shared
+  between various HALs: BT HAL, core and effects audio HALs.
+* `android/hardware/audio/core` — data structures and interfaces of the
+  core audio HAL.
+* `default` — the default, reference implementation of the audio HAL service.
+* `vts` — VTS tests for the AIDL HAL.
+
+## Directory Structure for HIDL audio HAL
+
+Run `common/all-versions/copyHAL.sh` to create a new version of the HIDL audio
+HAL based on an existing one. Note that this isn't possible since Android T
+release. Android U and above uses AIDL audio HAL.
 
 * `2.0` — version 2.0 of the core HIDL API. Note that `.hal` files
   can not be moved into the `core` directory because that would change

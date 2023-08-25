@@ -163,7 +163,7 @@ class MessageDescriptor {
 
   protected:
     MessageDescriptor(const std::string& name, const MessageDetailsMap&& messageDetails,
-                      const AttributeMap&& attrTypes, size_t contentsSize);
+                      const AttributeMap& attrTypes, size_t contentsSize);
 
   private:
     const std::string mName;
@@ -183,7 +183,7 @@ class MessageDefinition : public MessageDescriptor {
     MessageDefinition(  //
             const std::string& name,
             const std::initializer_list<MessageDescriptor::MessageDetailsMap::value_type> msgDet,
-            const std::initializer_list<AttributeMap::value_type> attrTypes = {})
+            const AttributeMap& attrTypes = {})
         : MessageDescriptor(name, msgDet, attrTypes, sizeof(T)) {}
 
     void dataToStream(std::stringstream& ss, const Buffer<nlmsghdr> hdr) const override {

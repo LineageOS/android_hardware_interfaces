@@ -18,6 +18,7 @@ package android.hardware.wifi;
 
 import android.hardware.wifi.MacAddress;
 import android.hardware.wifi.NanDiscoveryCommonConfig;
+import android.hardware.wifi.NanPairingConfig;
 import android.hardware.wifi.NanSrfType;
 import android.hardware.wifi.NanSubscribeType;
 
@@ -67,4 +68,12 @@ parcelable NanSubscribeRequest {
      * NAN Spec: Service Descriptor Attribute (SDA) / Service Response Filter / Address Set
      */
     MacAddress[] intfAddr;
+    /**
+     * Security config used for the pairing
+     */
+    NanPairingConfig pairingConfig;
+    /**
+     * The Identity key for pairing, will generate NIRA for verification by the peer
+     */
+    byte[16] identityKey;
 }
