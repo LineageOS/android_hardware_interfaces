@@ -414,7 +414,7 @@ interface IRemotelyProvisionedComponent {
      *     1 : tstr,                                ; Issuer
      *     2 : tstr,                                ; Subject
      *     -4670552 : bstr .cbor PubKeyEd25519 /
-     *                bstr .cbor PubKeyECDSA256,
+     *                bstr .cbor PubKeyECDSA256 /
      *                bstr .cbor PubKeyECDSA384,    ; Subject Public Key
      *     -4670553 : bstr                          ; Key Usage
      *
