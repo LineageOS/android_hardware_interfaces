@@ -1,3 +1,0 @@
-service vendor.threadnetwork_hal /vendor/bin/hw/android.hardware.threadnetwork-service.sim spinel+hdlc+forkpty:///vendor/bin/ot-rcp?forkpty-arg=1
-    class hal
-    user thread_network
