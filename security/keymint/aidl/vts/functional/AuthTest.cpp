@@ -545,7 +545,7 @@ TEST_P(AuthTest, AuthPerOperation) {
     ASSERT_GT(dodgy_hat->mac.size(), 0);
     dodgy_hat->mac[0] ^= 0x01;
     EXPECT_EQ(ErrorCode::KEY_USER_NOT_AUTHENTICATED,
-              Finish(message, {} /* signature */, &ciphertext, hat.value()));
+              Finish(message, {} /* signature */, &ciphertext, dodgy_hat.value()));
 }
 
 // Test use of a key that requires an auth token for each action on the operation, with
