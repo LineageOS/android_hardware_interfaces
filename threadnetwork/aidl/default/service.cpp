@@ -20,38 +20,24 @@
 #include <android/binder_process.h>
 #include <utils/Log.h>
 
-#include "thread_chip.hpp"
-
 namespace aidl {
 namespace android {
 namespace hardware {
 namespace threadnetwork {
 
-Service::Service(char* urls[], int numUrls) : mBinderFd(-1) {
-    int fd;
-
-    CHECK_NE(urls, nullptr);
-    CHECK_GT(numUrls, 0);
-
-    for (int i = 0; i < numUrls; i++) {
-        auto threadChip = ndk::SharedRefBase::make<ThreadChip>(i, urls[i]);
-        CHECK_NE(threadChip, nullptr);
-        mThreadChips.push_back(std::move(threadChip));
-    }
-
-    binder_status_t status = ABinderProcess_setupPolling(&fd);
+Service::Service(void) : mBinderFd(-1) {
+    binder_status_t status = ABinderProcess_setupPolling(&mBinderFd);
     CHECK_EQ(status, ::STATUS_OK);
-    CHECK_GE(fd, 0);
-    mBinderFd.reset(fd);
+    CHECK_GE(mBinderFd, 0);
 }
 
 void Service::Update(otSysMainloopContext& context) {
-    FD_SET(mBinderFd.get(), &context.mReadFdSet);
-    context.mMaxFd = std::max(context.mMaxFd, mBinderFd.get());
+    FD_SET(mBinderFd, &context.mReadFdSet);
+    context.mMaxFd = std::max(context.mMaxFd, mBinderFd);
 }
 
 void Service::Process(const otSysMainloopContext& context) {
-    if (FD_ISSET(mBinderFd.get(), &context.mReadFdSet)) {
+    if (FD_ISSET(mBinderFd, &context.mReadFdSet)) {
         ABinderProcess_handlePolledCommands();
     }
 }

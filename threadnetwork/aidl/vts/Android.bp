@@ -14,15 +14,6 @@
 // limitations under the License.
 //
 
-package {
-    // See: http://go/android-license-faq
-    // A large-scale-change added 'default_applicable_licenses' to import
-    // all of the 'license_kinds' from "hardware_interfaces_license"
-    // to get the below license kinds:
-    //   SPDX-license-identifier-Apache-2.0
-    default_applicable_licenses: ["hardware_interfaces_license"],
-}
-
 cc_test {
     name: "VtsHalThreadNetworkTargetTest",
     defaults: [
@@ -38,7 +29,7 @@ cc_test {
         "libbinder_ndk",
     ],
     static_libs: [
-        "android.hardware.threadnetwork-ndk",
+        "android.hardware.threadnetwork-V1-ndk",
     ],
     test_suites: [
         "general-tests",

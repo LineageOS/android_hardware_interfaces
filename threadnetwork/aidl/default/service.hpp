@@ -14,10 +14,7 @@
  * limitations under the License.
  */
 
-#include <android-base/unique_fd.h>
-
 #include "mainloop.hpp"
-#include "thread_chip.hpp"
 
 namespace aidl {
 namespace android {
@@ -26,15 +23,14 @@ namespace threadnetwork {
 
 class Service : public ot::Posix::Mainloop::Source {
   public:
-    Service(char* urls[], int numUrls);
+    Service(void);
 
     void Update(otSysMainloopContext& context) override;
     void Process(const otSysMainloopContext& context) override;
     void startLoop(void);
 
   private:
-    ::android::base::unique_fd mBinderFd;
-    std::vector<std::shared_ptr<ThreadChip>> mThreadChips;
+    int mBinderFd;
 };
 }  // namespace threadnetwork
 }  // namespace hardware

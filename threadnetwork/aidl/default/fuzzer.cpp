@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,19 @@
  * limitations under the License.
  */
 
-#include <android-base/logging.h>
-#include <utils/Log.h>
+#include <fuzzbinder/libbinder_ndk_driver.h>
+#include <fuzzer/FuzzedDataProvider.h>
+#include "thread_chip.hpp"
 
-#include "service.hpp"
+using aidl::android::hardware::threadnetwork::ThreadChip;
+using android::fuzzService;
 
-int main(int argc, char* argv[]) {
-    CHECK_GT(argc, 1);
-    aidl::android::hardware::threadnetwork::Service service(&argv[1], argc - 1);
+extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
+    char url[] = "spinel+hdlc+null:///dev/null";
+    auto service = ndk::SharedRefBase::make<ThreadChip>(url);
 
-    ALOGI("Thread Network HAL is running");
+    fuzzService(service->asBinder().get(), FuzzedDataProvider(data, size));
 
-    service.startLoop();
-    return EXIT_FAILURE;  // should not reach
+    return 0;
 }
+

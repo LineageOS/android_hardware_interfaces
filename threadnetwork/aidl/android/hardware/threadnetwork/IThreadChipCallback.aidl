@@ -16,6 +16,7 @@
 
 package android.hardware.threadnetwork;
 
+@VintfStability
 interface IThreadChipCallback {
     /**
      * This method is called when a spinel frame is received. Thread network

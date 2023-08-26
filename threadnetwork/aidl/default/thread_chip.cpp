@@ -23,56 +23,65 @@
 #include <android/binder_process.h>
 #include <utils/Log.h>
 
+#include "hdlc_interface.hpp"
+#include "spi_interface.hpp"
+
 namespace aidl {
 namespace android {
 namespace hardware {
 namespace threadnetwork {
 
-static ndk::ScopedAStatus errorStatus(int32_t error, const char* message) {
-    return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(error, message));
-}
+ThreadChip::ThreadChip(char* url) : mUrl(), mRxFrameBuffer(), mCallback(nullptr) {
+    static const char kHdlcProtocol[] = "spinel+hdlc";
+    static const char kSpiProtocol[] = "spinel+spi";
+    const char* protocol;
 
-ThreadChip::ThreadChip(uint8_t id, char* url)
-    : mUrl(),
-      mInterface(handleReceivedFrame, this, mRxFrameBuffer),
-      mRxFrameBuffer(),
-      mCallback(nullptr) {
-    const std::string name(std::string() + IThreadChip::descriptor + "/chip" + std::to_string(id));
-    binder_status_t status;
-
-    ALOGI("ServiceName: %s, Url: %s", name.c_str(), url);
     CHECK_EQ(mUrl.Init(url), 0);
-    status = AServiceManager_addService(asBinder().get(), name.c_str());
-    CHECK_EQ(status, STATUS_OK);
+
+    protocol = mUrl.GetProtocol();
+    CHECK_NE(protocol, nullptr);
+
+    if (memcmp(protocol, kSpiProtocol, strlen(kSpiProtocol)) == 0) {
+        mSpinelInterface = std::make_shared<ot::Posix::SpiInterface>(handleReceivedFrameJump, this,
+                                                                     mRxFrameBuffer);
+    } else if (memcmp(protocol, kHdlcProtocol, strlen(kHdlcProtocol)) == 0) {
+        mSpinelInterface = std::make_shared<ot::Posix::HdlcInterface>(handleReceivedFrameJump, this,
+                                                                      mRxFrameBuffer);
+    } else {
+        ALOGE("The protocol \"%s\" is not supported", protocol);
+        exit(EXIT_FAILURE);
+    }
+
+    CHECK_NE(mSpinelInterface, nullptr);
 
     mDeathRecipient = ndk::ScopedAIBinder_DeathRecipient(
-            AIBinder_DeathRecipient_new(ThreadChip::onBinderDied));
-    AIBinder_DeathRecipient_setOnUnlinked(mDeathRecipient.get(), ThreadChip::onBinderUnlinked);
+            AIBinder_DeathRecipient_new(ThreadChip::onBinderDiedJump));
+    AIBinder_DeathRecipient_setOnUnlinked(mDeathRecipient.get(), ThreadChip::onBinderUnlinkedJump);
 }
 
 ThreadChip::~ThreadChip() {
     AIBinder_DeathRecipient_delete(mDeathRecipient.get());
 }
 
-void ThreadChip::onBinderDied(void* context) {
+void ThreadChip::onBinderDiedJump(void* context) {
     reinterpret_cast<ThreadChip*>(context)->onBinderDied();
 }
 
 void ThreadChip::onBinderDied(void) {
-    ALOGW("Thread Network HAL client is dead.");
+    ALOGW("Thread Network HAL client is dead");
 }
 
-void ThreadChip::onBinderUnlinked(void* context) {
+void ThreadChip::onBinderUnlinkedJump(void* context) {
     reinterpret_cast<ThreadChip*>(context)->onBinderUnlinked();
 }
 
 void ThreadChip::onBinderUnlinked(void) {
-    ALOGW("ThreadChip binder is unlinked.");
+    ALOGW("ThreadChip binder is unlinked");
     deinitChip();
 }
 
-void ThreadChip::handleReceivedFrame(void* context) {
-    reinterpret_cast<ThreadChip*>(context)->handleReceivedFrame();
+void ThreadChip::handleReceivedFrameJump(void* context) {
+    static_cast<ThreadChip*>(context)->handleReceivedFrame();
 }
 
 void ThreadChip::handleReceivedFrame(void) {
@@ -89,9 +98,9 @@ ndk::ScopedAStatus ThreadChip::open(const std::shared_ptr<IThreadChipCallback>& 
 
     if (status.isOk()) {
         AIBinder_linkToDeath(in_callback->asBinder().get(), mDeathRecipient.get(), this);
-        ALOGI("Open IThreadChip successfully.");
+        ALOGI("Open IThreadChip successfully");
     } else {
-        ALOGW("Open IThreadChip failed, error: %s", status.getDescription().c_str());
+        ALOGW("Failed to open IThreadChip: %s", status.getDescription().c_str());
     }
 
     return status;
@@ -101,7 +110,7 @@ ndk::ScopedAStatus ThreadChip::initChip(const std::shared_ptr<IThreadChipCallbac
     if (in_callback == nullptr) {
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
     } else if (mCallback == nullptr) {
-        if (mInterface.Init(mUrl) != OT_ERROR_NONE) {
+        if (mSpinelInterface->Init(mUrl) != OT_ERROR_NONE) {
             return errorStatus(ERROR_FAILED, "Failed to initialize the interface");
         }
 
@@ -109,7 +118,7 @@ ndk::ScopedAStatus ThreadChip::initChip(const std::shared_ptr<IThreadChipCallbac
         ot::Posix::Mainloop::Manager::Get().Add(*this);
         return ndk::ScopedAStatus::ok();
     } else {
-        return errorStatus(ERROR_BUSY, "Interface is already opened");
+        return errorStatus(ERROR_BUSY, "Interface has been opened");
     }
 }
 
@@ -125,7 +134,7 @@ ndk::ScopedAStatus ThreadChip::close() {
 
         ALOGI("Close IThreadChip successfully");
     } else {
-        ALOGW("Close IThreadChip failed, error: %s", status.getDescription().c_str());
+        ALOGW("Failed to close IThreadChip: %s", status.getDescription().c_str());
     }
 
     return status;
@@ -133,7 +142,7 @@ ndk::ScopedAStatus ThreadChip::close() {
 
 ndk::ScopedAStatus ThreadChip::deinitChip() {
     if (mCallback != nullptr) {
-        mInterface.Deinit();
+        mSpinelInterface->Deinit();
         ot::Posix::Mainloop::Manager::Get().Remove(*this);
         mCallback = nullptr;
         return ndk::ScopedAStatus::ok();
@@ -149,8 +158,8 @@ ndk::ScopedAStatus ThreadChip::sendSpinelFrame(const std::vector<uint8_t>& in_fr
     if (mCallback == nullptr) {
         status = errorStatus(ERROR_FAILED, "The interface is not open");
     } else {
-        error = mInterface.SendFrame(reinterpret_cast<const uint8_t*>(in_frame.data()),
-                                     in_frame.size());
+        error = mSpinelInterface->SendFrame(reinterpret_cast<const uint8_t*>(in_frame.data()),
+                                            in_frame.size());
         if (error == OT_ERROR_NONE) {
             status = ndk::ScopedAStatus::ok();
         } else if (error == OT_ERROR_NO_BUFS) {
@@ -169,27 +178,29 @@ ndk::ScopedAStatus ThreadChip::sendSpinelFrame(const std::vector<uint8_t>& in_fr
     return status;
 }
 
-ndk::ScopedAStatus ThreadChip::reset() {
-    mInterface.OnRcpReset();
+ndk::ScopedAStatus ThreadChip::hardwareReset() {
+    if (mSpinelInterface->HardwareReset() == OT_ERROR_NOT_IMPLEMENTED) {
+        return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+    }
+
     ALOGI("reset()");
     return ndk::ScopedAStatus::ok();
 }
 
 void ThreadChip::Update(otSysMainloopContext& context) {
     if (mCallback != nullptr) {
-        mInterface.UpdateFdSet(context.mReadFdSet, context.mWriteFdSet, context.mMaxFd,
-                               context.mTimeout);
+        mSpinelInterface->UpdateFdSet(&context);
     }
 }
 
 void ThreadChip::Process(const otSysMainloopContext& context) {
-    struct RadioProcessContext radioContext;
-
     if (mCallback != nullptr) {
-        radioContext.mReadFdSet = &context.mReadFdSet;
-        radioContext.mWriteFdSet = &context.mWriteFdSet;
-        mInterface.Process(radioContext);
+        mSpinelInterface->Process(&context);
     }
+}
+
+ndk::ScopedAStatus ThreadChip::errorStatus(int32_t error, const char* message) {
+    return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(error, message));
 }
 }  // namespace threadnetwork
 }  // namespace hardware

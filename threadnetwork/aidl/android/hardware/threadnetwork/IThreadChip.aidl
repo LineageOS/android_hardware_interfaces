@@ -22,6 +22,7 @@ import android.hardware.threadnetwork.IThreadChipCallback;
  * Controls a Thread radio chip on the device.
  */
 
+@VintfStability
 interface IThreadChip {
     /**
      * The operation failed for the internal error.
@@ -43,10 +44,10 @@ interface IThreadChip {
      * successfully, then the Thread HAL instance is ready to accept spinel
      * messages through sendSpinelFrame() API.
      *
-     * @param callback  A IThreadChipCallback callback instance. If multiple
-     *                  callbacks are passed in, the open() will return ERROR_BUSY.
+     * @param callback  A IThreadChipCallback callback instance.
      *
      * @throws EX_ILLEGAL_ARGUMENT  if the callback handle is invalid (for example, it is null).
+     *
      * @throws ServiceSpecificException with one of the following values:
      *     - ERROR_FAILED        The interface cannot be opened due to an internal error.
      *     - ERROR_BUSY          This interface is in use.
@@ -55,18 +56,18 @@ interface IThreadChip {
 
     /**
      * Close the Thread HAL instance. Must free all resources.
-     *
-     * @throws EX_ILLEGAL_STATE  if the Thread HAL instance is not opened.
-     *
      */
     void close();
 
     /**
-     * This method resets the Thread HAL internal state. The callback registered by
-     * `open()` won’t be reset and the resource allocated by `open()` won’t be free.
+     * This method hardware resets the Thread radio chip via the physical reset pin.
+     * The callback registered by `open()` won’t be reset and the resource allocated
+     * by `open()` won’t be free.
+     *
+     * @throws EX_UNSUPPORTED_OPERATION  if the Thread radio chip doesn't support the hardware reset.
      *
      */
-    void reset();
+    void hardwareReset();
 
     /**
      * This method sends a spinel frame to the Thread HAL.

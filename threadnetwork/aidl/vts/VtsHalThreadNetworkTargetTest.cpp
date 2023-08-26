@@ -76,7 +76,6 @@ TEST_P(ThreadNetworkAidl, Open) {
             ndk::SharedRefBase::make<ThreadChipCallback>([](auto /* data */) {});
 
     EXPECT_TRUE(thread_chip->open(callback).isOk());
-    EXPECT_EQ(thread_chip->open(callback).getServiceSpecificError(), IThreadChip::ERROR_BUSY);
 }
 
 TEST_P(ThreadNetworkAidl, Close) {
@@ -85,7 +84,6 @@ TEST_P(ThreadNetworkAidl, Close) {
 
     EXPECT_TRUE(thread_chip->open(callback).isOk());
     EXPECT_TRUE(thread_chip->close().isOk());
-    EXPECT_EQ(thread_chip->close().getExceptionCode(), EX_ILLEGAL_STATE);
 }
 
 TEST_P(ThreadNetworkAidl, Reset) {
@@ -93,7 +91,7 @@ TEST_P(ThreadNetworkAidl, Reset) {
             ndk::SharedRefBase::make<ThreadChipCallback>([](auto /* data */) {});
 
     EXPECT_TRUE(thread_chip->open(callback).isOk());
-    EXPECT_TRUE(thread_chip->reset().isOk());
+    EXPECT_TRUE(thread_chip->hardwareReset().isOk());
 }
 
 TEST_P(ThreadNetworkAidl, SendSpinelFrame) {
