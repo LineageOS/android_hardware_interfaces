@@ -42,15 +42,22 @@
 
 #define TIMEOUT_PERIOD 10
 
+using ::aidl::android::hardware::usb::AltModeData;
 using ::aidl::android::hardware::usb::BnUsbCallback;
+using ::aidl::android::hardware::usb::ComplianceWarning;
+using ::aidl::android::hardware::usb::DisplayPortAltModePinAssignment;
+using ::aidl::android::hardware::usb::DisplayPortAltModeStatus;
 using ::aidl::android::hardware::usb::IUsb;
 using ::aidl::android::hardware::usb::IUsbCallback;
+using ::aidl::android::hardware::usb::LinkTrainingStatus;
+using ::aidl::android::hardware::usb::PlugOrientation;
 using ::aidl::android::hardware::usb::PortDataRole;
 using ::aidl::android::hardware::usb::PortMode;
 using ::aidl::android::hardware::usb::PortPowerRole;
 using ::aidl::android::hardware::usb::PortRole;
 using ::aidl::android::hardware::usb::PortStatus;
 using ::aidl::android::hardware::usb::Status;
+using ::aidl::android::hardware::usb::UsbDataStatus;
 
 using ::ndk::ScopedAStatus;
 using ::ndk::SpAIBinder;
@@ -247,6 +254,9 @@ class UsbAidlTest : public testing::TestWithParam<std::string> {
   std::mutex usb_mtx;
   std::condition_variable usb_cv;
   int usb_count = 0;
+
+  // Stores usb version
+  int32_t usb_version;
 };
 
 /*
@@ -277,6 +287,42 @@ TEST_P(UsbAidlTest, queryPortStatus) {
   EXPECT_EQ(2, usb_last_cookie);
   EXPECT_EQ(transactionId, last_transactionId);
   ALOGI("UsbAidlTest queryPortStatus end: %s", usb_last_port_status.portName.c_str());
+}
+
+/*
+ * Query port status to Check to see whether only one of DISABLED_DOCK,
+ * DISABLED_DOCK_DEVICE_MODE, DISABLED_DOCK_HOST_MODE is set at the most.
+ * The callback parameters are checked to see if the transaction id
+ * matches.
+ */
+TEST_P(UsbAidlTest, DisabledDataStatusCheck) {
+  int disabledCount = 0;
+
+  ALOGI("UsbAidlTest DataStatusCheck  start");
+  auto retVersion = usb->getInterfaceVersion(&usb_version);
+  ASSERT_TRUE(retVersion.isOk()) << retVersion;
+  if (usb_version < 2) {
+    ALOGI("UsbAidlTest skipping DataStatusCheck on older interface versions");
+    GTEST_SKIP();
+  }
+  int64_t transactionId = rand() % 10000;
+  const auto& ret = usb->queryPortStatus(transactionId);
+  ASSERT_TRUE(ret.isOk());
+  EXPECT_EQ(std::cv_status::no_timeout, wait());
+  EXPECT_EQ(2, usb_last_cookie);
+  EXPECT_EQ(transactionId, last_transactionId);
+  ALOGI("UsbAidlTest DataStatusCheck portName: %s", usb_last_port_status.portName.c_str());
+  if (usb_last_port_status.usbDataStatus.size() > 1) {
+    for (UsbDataStatus dataStatus : usb_last_port_status.usbDataStatus) {
+      if (dataStatus == UsbDataStatus::DISABLED_DOCK ||
+          dataStatus == UsbDataStatus::DISABLED_DOCK_DEVICE_MODE ||
+          dataStatus == UsbDataStatus::DISABLED_DOCK_HOST_MODE) {
+        disabledCount++;
+      }
+    }
+  }
+  EXPECT_GE(1, disabledCount);
+  ALOGI("UsbAidlTest DataStatusCheck end");
 }
 
 /*
@@ -558,6 +604,135 @@ TEST_P(UsbAidlTest, DISABLED_resetUsbPort) {
     EXPECT_EQ(transactionId, last_transactionId);
   }
   ALOGI("UsbAidlTest resetUsbPort end");
+}
+
+/*
+ * Test charger compliance warning
+ * The test asserts that complianceWarnings is
+ * empty when the feature is not supported. i.e.
+ * supportsComplianceWarning is false.
+ */
+TEST_P(UsbAidlTest, nonCompliantChargerStatus) {
+  ALOGI("UsbAidlTest nonCompliantChargerStatus start");
+  auto retVersion = usb->getInterfaceVersion(&usb_version);
+  ASSERT_TRUE(retVersion.isOk()) << retVersion;
+  if (usb_version < 2) {
+    ALOGI("UsbAidlTest skipping nonCompliantChargerStatus on older interface versions");
+    GTEST_SKIP();
+  }
+  int64_t transactionId = rand() % 10000;
+  const auto& ret = usb->queryPortStatus(transactionId);
+  ASSERT_TRUE(ret.isOk());
+  EXPECT_EQ(std::cv_status::no_timeout, wait());
+  EXPECT_EQ(2, usb_last_cookie);
+  EXPECT_EQ(transactionId, last_transactionId);
+
+  if (!usb_last_port_status.supportsComplianceWarnings) {
+    EXPECT_TRUE(usb_last_port_status.complianceWarnings.empty());
+  }
+
+  ALOGI("UsbAidlTest nonCompliantChargerStatus end");
+}
+
+/*
+ * Test charger compliance warning values
+ * The test asserts that complianceWarning values
+ * are valid.
+ */
+TEST_P(UsbAidlTest, nonCompliantChargerValues) {
+  ALOGI("UsbAidlTest nonCompliantChargerValues start");
+  auto retVersion = usb->getInterfaceVersion(&usb_version);
+  ASSERT_TRUE(retVersion.isOk()) << retVersion;
+  if (usb_version < 2) {
+    ALOGI("UsbAidlTest skipping nonCompliantChargerValues on older interface versions");
+    GTEST_SKIP();
+  }
+  int64_t transactionId = rand() % 10000;
+  const auto& ret = usb->queryPortStatus(transactionId);
+  ASSERT_TRUE(ret.isOk());
+  EXPECT_EQ(std::cv_status::no_timeout, wait());
+  EXPECT_EQ(2, usb_last_cookie);
+  EXPECT_EQ(transactionId, last_transactionId);
+
+  // Current compliance values range from [1, 4]
+  if (usb_last_port_status.supportsComplianceWarnings) {
+    for (auto warning : usb_last_port_status.complianceWarnings) {
+      EXPECT_TRUE((int)warning >= (int)ComplianceWarning::OTHER);
+      EXPECT_TRUE((int)warning <= (int)ComplianceWarning::MISSING_RP);
+    }
+  }
+
+  ALOGI("UsbAidlTest nonCompliantChargerValues end");
+}
+
+/*
+ * Test PlugOrientation Values are within range in PortStatus
+ */
+TEST_P(UsbAidlTest, plugOrientationValues) {
+  ALOGI("UsbAidlTest plugOrientationValues start");
+  auto retVersion = usb->getInterfaceVersion(&usb_version);
+  ASSERT_TRUE(retVersion.isOk()) << retVersion;
+  if (usb_version < 2) {
+    ALOGI("UsbAidlTest skipping plugOrientationValues on older interface versions");
+    GTEST_SKIP();
+  }
+  int64_t transactionId = rand() % 10000;
+  const auto& ret = usb->queryPortStatus(transactionId);
+  ASSERT_TRUE(ret.isOk());
+  EXPECT_EQ(std::cv_status::no_timeout, wait());
+  EXPECT_EQ(2, usb_last_cookie);
+  EXPECT_EQ(transactionId, last_transactionId);
+
+  EXPECT_TRUE((int)usb_last_port_status.plugOrientation >= (int)PlugOrientation::UNKNOWN);
+  EXPECT_TRUE((int)usb_last_port_status.plugOrientation <= (int)PlugOrientation::PLUGGED_FLIPPED);
+}
+
+/*
+ * Test DisplayPortAltMode Values when DisplayPort Alt Mode
+ * is active.
+ */
+TEST_P(UsbAidlTest, dpAltModeValues) {
+  ALOGI("UsbAidlTest dpAltModeValues start");
+  auto retVersion = usb->getInterfaceVersion(&usb_version);
+  ASSERT_TRUE(retVersion.isOk()) << retVersion;
+  if (usb_version < 2) {
+    ALOGI("UsbAidlTest skipping dpAltModeValues on older interface versions");
+    GTEST_SKIP();
+  }
+  int64_t transactionId = rand() % 10000;
+  const auto& ret = usb->queryPortStatus(transactionId);
+  ASSERT_TRUE(ret.isOk());
+  EXPECT_EQ(std::cv_status::no_timeout, wait());
+  EXPECT_EQ(2, usb_last_cookie);
+  EXPECT_EQ(transactionId, last_transactionId);
+
+  // Discover DisplayPort Alt Mode
+  for (AltModeData altMode : usb_last_port_status.supportedAltModes) {
+    if (altMode.getTag() == AltModeData::displayPortAltModeData) {
+      AltModeData::DisplayPortAltModeData displayPortAltModeData =
+              altMode.get<AltModeData::displayPortAltModeData>();
+      EXPECT_TRUE((int)displayPortAltModeData.partnerSinkStatus >=
+                  (int)DisplayPortAltModeStatus::UNKNOWN);
+      EXPECT_TRUE((int)displayPortAltModeData.partnerSinkStatus <=
+                  (int)DisplayPortAltModeStatus::ENABLED);
+
+      EXPECT_TRUE((int)displayPortAltModeData.cableStatus >=
+                  (int)DisplayPortAltModeStatus::UNKNOWN);
+      EXPECT_TRUE((int)displayPortAltModeData.cableStatus <=
+                  (int)DisplayPortAltModeStatus::ENABLED);
+
+      EXPECT_TRUE((int)displayPortAltModeData.pinAssignment >=
+                  (int)DisplayPortAltModePinAssignment::NONE);
+      EXPECT_TRUE((int)displayPortAltModeData.pinAssignment <=
+                  (int)DisplayPortAltModePinAssignment::F);
+
+      EXPECT_TRUE((int)displayPortAltModeData.linkTrainingStatus >=
+                  (int)LinkTrainingStatus::UNKNOWN);
+      EXPECT_TRUE((int)displayPortAltModeData.pinAssignment <= (int)LinkTrainingStatus::FAILURE);
+    }
+  }
+
+  ALOGI("UsbAidlTest dpAltModeValues end");
 }
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(UsbAidlTest);

@@ -18,45 +18,60 @@
 
 #include "RemoteAccessService.h"
 
+#include "BindToDeviceSocketMutator.h"
+
+#include <android-base/logging.h>
 #include <android/binder_manager.h>
 #include <android/binder_process.h>
 #include <grpcpp/create_channel.h>
+#include <libnetdevice/libnetdevice.h>
 #include <stdlib.h>
-#include <utils/Log.h>
 
 constexpr char SERVICE_NAME[] = "android.hardware.automotive.remoteaccess.IRemoteAccess/default";
 
 int main(int /* argc */, char* /* argv */[]) {
-    ALOGI("Registering RemoteAccessService as service...");
+    LOG(INFO) << "Registering RemoteAccessService as service...";
 
 #ifndef GRPC_SERVICE_ADDRESS
-    ALOGE("GRPC_SERVICE_ADDRESS is not defined, exiting");
+    LOG(ERROR) << "GRPC_SERVICE_ADDRESS is not defined, exiting";
     exit(1);
 #endif
-    auto channel = grpc::CreateChannel(GRPC_SERVICE_ADDRESS, grpc::InsecureChannelCredentials());
+    grpc::ChannelArguments grpcargs = {};
+
+#ifdef GRPC_SERVICE_IFNAME
+    grpcargs.SetSocketMutator(
+            android::hardware::automotive::remoteaccess::MakeBindToDeviceSocketMutator(
+                    GRPC_SERVICE_IFNAME));
+    LOG(DEBUG) << "GRPC_SERVICE_IFNAME specified as: " << GRPC_SERVICE_IFNAME;
+    LOG(INFO) << "Waiting for interface: " << GRPC_SERVICE_IFNAME;
+    android::netdevice::waitFor({GRPC_SERVICE_IFNAME},
+                                android::netdevice::WaitCondition::PRESENT_AND_UP);
+    LOG(INFO) << "Waiting for interface: " << GRPC_SERVICE_IFNAME << " done";
+#endif
+    auto channel = grpc::CreateCustomChannel(GRPC_SERVICE_ADDRESS,
+                                             grpc::InsecureChannelCredentials(), grpcargs);
     auto clientStub = android::hardware::automotive::remoteaccess::WakeupClient::NewStub(channel);
     auto service = ndk::SharedRefBase::make<
             android::hardware::automotive::remoteaccess::RemoteAccessService>(clientStub.get());
 
     binder_exception_t err = AServiceManager_addService(service->asBinder().get(), SERVICE_NAME);
     if (err != EX_NONE) {
-        ALOGE("failed to register android.hardware.automotive.remote.IRemoteAccess service, "
-              "exception: %d",
-              err);
+        LOG(ERROR) << "failed to register android.hardware.automotive.remote.IRemoteAccess service"
+                   << ", exception: " << err;
         exit(1);
     }
 
     if (!ABinderProcess_setThreadPoolMaxThreadCount(1)) {
-        ALOGE("%s", "failed to set thread pool max thread count");
+        LOG(ERROR) << "failed to set thread pool max thread count";
         exit(1);
     }
     ABinderProcess_startThreadPool();
 
-    ALOGI("RemoteAccess service Ready");
+    LOG(INFO) << "RemoteAccess service Ready";
 
     ABinderProcess_joinThreadPool();
 
-    ALOGW("Should not reach here");
+    LOG(ERROR) << "Should not reach here";
 
     return 0;
 }

@@ -23,7 +23,7 @@ aidl_interface {
             sdk_version: "module_current",
         },
         ndk: {
-            min_sdk_version: "current",
+            min_sdk_version: "UpsideDownCake",
         },
     },
     double_loadable: true,

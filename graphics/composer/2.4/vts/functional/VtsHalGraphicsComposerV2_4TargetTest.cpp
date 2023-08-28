@@ -737,6 +737,39 @@ TEST_P(GraphicsComposerHidlTest, getLayerGenericMetadataKeys) {
     }
 }
 
+/*
+ * Test that no two display configs are exactly the same.
+ */
+TEST_P(GraphicsComposerHidlTest, GetDisplayConfigNoRepetitions) {
+    for (const auto& display : mDisplays) {
+        std::vector<Config> configs = mComposerClient->getDisplayConfigs(display.get());
+        for (int i = 0; i < configs.size(); i++) {
+            for (int j = i + 1; j < configs.size(); j++) {
+                const int32_t width1 = mComposerClient->getDisplayAttribute_2_4(
+                        display.get(), configs[i], IComposerClient::Attribute::WIDTH);
+                const int32_t height1 = mComposerClient->getDisplayAttribute_2_4(
+                        display.get(), configs[i], IComposerClient::Attribute::HEIGHT);
+                const int32_t vsyncPeriod1 = mComposerClient->getDisplayAttribute_2_4(
+                        display.get(), configs[i], IComposerClient::Attribute::VSYNC_PERIOD);
+                const int32_t group1 = mComposerClient->getDisplayAttribute_2_4(
+                        display.get(), configs[i], IComposerClient::Attribute::CONFIG_GROUP);
+
+                const int32_t width2 = mComposerClient->getDisplayAttribute_2_4(
+                        display.get(), configs[j], IComposerClient::Attribute::WIDTH);
+                const int32_t height2 = mComposerClient->getDisplayAttribute_2_4(
+                        display.get(), configs[j], IComposerClient::Attribute::HEIGHT);
+                const int32_t vsyncPeriod2 = mComposerClient->getDisplayAttribute_2_4(
+                        display.get(), configs[j], IComposerClient::Attribute::VSYNC_PERIOD);
+                const int32_t group2 = mComposerClient->getDisplayAttribute_2_4(
+                        display.get(), configs[j], IComposerClient::Attribute::CONFIG_GROUP);
+
+                ASSERT_FALSE(width1 == width2 && height1 == height2 &&
+                             vsyncPeriod1 == vsyncPeriod2 && group1 == group2);
+            }
+        }
+    }
+}
+
 }  // namespace
 }  // namespace vts
 }  // namespace V2_4

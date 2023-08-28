@@ -84,13 +84,13 @@ class Gnss : public BnGnss {
                                     IMeasurementCorrectionsInterface>* iMeasurementCorrections)
             override;
 
+    void reportSvStatus() const;
     std::shared_ptr<GnssConfiguration> mGnssConfiguration;
     std::shared_ptr<GnssPowerIndication> mGnssPowerIndication;
     std::shared_ptr<GnssMeasurementInterface> mGnssMeasurementInterface;
 
   private:
     void reportLocation(const GnssLocation&) const;
-    void reportSvStatus() const;
     void reportSvStatus(const std::vector<IGnssCallback::GnssSvInfo>& svInfoList) const;
     std::vector<IGnssCallback::GnssSvInfo> filterBlocklistedSatellites(
             std::vector<IGnssCallback::GnssSvInfo> gnssSvInfoList) const;

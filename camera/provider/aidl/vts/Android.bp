@@ -27,6 +27,7 @@ cc_test {
     name: "VtsAidlHalCameraProvider_TargetTest",
     defaults: [
         "VtsHalTargetTestDefaults",
+        "android.hardware.graphics.common-ndk_static",
         "use_libaidlvintf_gtest_helper_static",
     ],
     srcs: [
@@ -58,10 +59,9 @@ cc_test {
     static_libs: [
         "android.hardware.camera.common@1.0-helper",
         "android.hardware.camera.common-V1-ndk",
-        "android.hardware.camera.device-V1-ndk",
-        "android.hardware.camera.metadata-V1-ndk",
-        "android.hardware.camera.provider-V1-ndk",
-        "android.hardware.graphics.common-V4-ndk",
+        "android.hardware.camera.device-V2-ndk",
+        "android.hardware.camera.metadata-V2-ndk",
+        "android.hardware.camera.provider-V2-ndk",
         "android.hidl.allocator@1.0",
         "libgrallocusage",
         "libhidlmemory",

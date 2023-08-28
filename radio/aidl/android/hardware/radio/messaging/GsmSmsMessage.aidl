@@ -27,6 +27,7 @@ parcelable GsmSmsMessage {
     /**
      * SMS in PDU format as an ASCII hex string less the SMSC address.
      * TP-Layer-Length is be "strlen(pdu)/2
+     * TP - MessageRef field of pdu must not be modified by modem
      */
     String pdu;
 }

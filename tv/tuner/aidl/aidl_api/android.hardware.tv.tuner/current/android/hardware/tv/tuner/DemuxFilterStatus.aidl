@@ -39,4 +39,5 @@ enum DemuxFilterStatus {
   LOW_WATER = 2,
   HIGH_WATER = 4,
   OVERFLOW = 8,
+  NO_DATA = 16,
 }

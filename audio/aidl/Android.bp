@@ -292,7 +292,6 @@ aidl_interface {
             sdk_version: "module_current",
         },
     },
-    frozen: true,
     versions_with_info: [
         {
             version: "1",
@@ -304,6 +303,7 @@ aidl_interface {
             ],
         },
     ],
+    frozen: true,
 
 }
 

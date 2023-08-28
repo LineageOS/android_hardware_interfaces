@@ -1,5 +1,0 @@
-service vendor.fingerprint-default /vendor/bin/hw/android.hardware.biometrics.fingerprint-service.example
-    class hal
-    user nobody
-    group nobody
-

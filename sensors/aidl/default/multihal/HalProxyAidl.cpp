@@ -17,6 +17,7 @@
 #include "HalProxyAidl.h"
 #include <aidlcommonsupport/NativeHandle.h>
 #include <fmq/AidlMessageQueue.h>
+#include <hidl/HidlSupport.h>
 #include <hidl/Status.h>
 #include "ConvertUtils.h"
 #include "EventMessageQueueWrapperAidl.h"
@@ -28,6 +29,8 @@ using ::aidl::android::hardware::common::fmq::MQDescriptor;
 using ::aidl::android::hardware::common::fmq::SynchronizedReadWrite;
 using ::aidl::android::hardware::sensors::ISensors;
 using ::aidl::android::hardware::sensors::ISensorsCallback;
+using ::android::hardware::hidl_string;
+using ::android::hardware::hidl_vec;
 using ::android::hardware::sensors::V2_1::implementation::convertToOldEvent;
 using ::ndk::ScopedAStatus;
 
@@ -225,13 +228,18 @@ ScopedAStatus HalProxyAidl::unregisterDirectChannel(int32_t in_channelHandle) {
   return resultToAStatus(HalProxy::unregisterDirectChannel(in_channelHandle));
 }
 
-binder_status_t HalProxyAidl::dump(int fd, const char ** /* args */,
-                                   uint32_t /* numArgs */) {
+binder_status_t HalProxyAidl::dump(int fd, const char ** args,
+                                   uint32_t numArgs) {
   native_handle_t *nativeHandle =
       native_handle_create(1 /* numFds */, 0 /* numInts */);
   nativeHandle->data[0] = fd;
 
-  HalProxy::debug(nativeHandle, {} /* args */);
+  hidl_vec<hidl_string> hidl_args;
+  hidl_args.resize(numArgs);
+  for (size_t i = 0; i < numArgs; ++i) {
+    hidl_args[i] = args[i];
+  }
+  HalProxy::debug(nativeHandle, hidl_args);
 
   native_handle_delete(nativeHandle);
   return STATUS_OK;

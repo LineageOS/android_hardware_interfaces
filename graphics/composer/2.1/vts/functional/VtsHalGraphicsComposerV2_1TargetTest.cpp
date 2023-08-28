@@ -666,11 +666,13 @@ class GraphicsComposerHidlCommandTest : public GraphicsComposerHidlTest {
         ASSERT_NO_FATAL_FAILURE(GraphicsComposerHidlTest::TearDown());
     }
 
-    NativeHandleWrapper allocate() {
+    NativeHandleWrapper allocate() { return allocate(mDisplayWidth, mDisplayHeight); }
+
+    NativeHandleWrapper allocate(uint32_t width, uint32_t height) {
         uint64_t usage =
                 static_cast<uint64_t>(BufferUsage::CPU_WRITE_OFTEN | BufferUsage::CPU_READ_OFTEN |
                                       BufferUsage::COMPOSER_OVERLAY);
-        return mGralloc->allocate(mDisplayWidth, mDisplayHeight, 1, PixelFormat::RGBA_8888, usage);
+        return mGralloc->allocate(width, height, 1, PixelFormat::RGBA_8888, usage);
     }
 
     void execute() { mComposerClient->execute(mReader.get(), mWriter.get()); }
@@ -881,6 +883,106 @@ TEST_P(GraphicsComposerHidlCommandTest, SET_LAYER_BUFFER) {
     mWriter->selectLayer(layer);
     mWriter->setLayerBuffer(0, handle.get(), -1);
     execute();
+}
+
+/**
+ * Test IComposerClient::Command::SET_LAYER_BUFFER with the behavior used for clearing buffer slots.
+ */
+TEST_P(GraphicsComposerHidlCommandTest, SET_LAYER_BUFFER_multipleTimes) {
+    // A placeholder buffer used to clear buffer slots
+    auto clearSlotBuffer = allocate(1u, 1u);
+
+    //
+    // Set the layer buffer to the first buffer
+    //
+    auto handle1 = allocate();
+    ASSERT_NE(nullptr, handle1.get());
+    IComposerClient::Rect displayFrame{0, 0, mDisplayWidth, mDisplayHeight};
+    Layer layer;
+    ASSERT_NO_FATAL_FAILURE(
+            layer = mComposerClient->createLayer(mPrimaryDisplay, kBufferSlotCount));
+    mWriter->selectDisplay(mPrimaryDisplay);
+    mWriter->selectLayer(layer);
+    mWriter->setLayerCompositionType(IComposerClient::Composition::DEVICE);
+    mWriter->setLayerDisplayFrame(displayFrame);
+    mWriter->setLayerBuffer(0, handle1.get(), -1);
+    mWriter->setLayerDataspace(Dataspace::UNKNOWN);
+    mWriter->validateDisplay();
+    execute();
+    if (mReader->mCompositionChanges.size() != 0) {
+        GTEST_SUCCEED() << "Composition change requested, skipping test";
+        return;
+    }
+    ASSERT_EQ(0, mReader->mErrors.size());
+    mWriter->selectDisplay(mPrimaryDisplay);
+    mWriter->presentDisplay();
+    execute();
+    ASSERT_EQ(0, mReader->mErrors.size());
+
+    //
+    // Set the layer buffer to the second buffer
+    //
+    auto handle2 = allocate();
+    ASSERT_NE(nullptr, handle2.get());
+    mWriter->selectDisplay(mPrimaryDisplay);
+    mWriter->selectLayer(layer);
+    mWriter->setLayerCompositionType(IComposerClient::Composition::DEVICE);
+    mWriter->setLayerDisplayFrame(displayFrame);
+    mWriter->setLayerBuffer(1, handle2.get(), -1);
+    mWriter->setLayerDataspace(Dataspace::UNKNOWN);
+    mWriter->validateDisplay();
+    execute();
+    if (mReader->mCompositionChanges.size() != 0) {
+        GTEST_SUCCEED() << "Composition change requested, skipping test";
+        return;
+    }
+    ASSERT_EQ(0, mReader->mErrors.size());
+    mWriter->selectDisplay(mPrimaryDisplay);
+    mWriter->presentDisplay();
+    execute();
+    ASSERT_EQ(0, mReader->mErrors.size());
+
+    //
+    // Set the layer buffer to the third buffer
+    //
+    auto handle3 = allocate();
+    ASSERT_NE(nullptr, handle3.get());
+    mWriter->selectDisplay(mPrimaryDisplay);
+    mWriter->selectLayer(layer);
+    mWriter->setLayerCompositionType(IComposerClient::Composition::DEVICE);
+    mWriter->setLayerDisplayFrame(displayFrame);
+    mWriter->setLayerBuffer(2, handle3.get(), -1);
+    mWriter->setLayerDataspace(Dataspace::UNKNOWN);
+    mWriter->validateDisplay();
+    execute();
+    if (mReader->mCompositionChanges.size() != 0) {
+        GTEST_SUCCEED() << "Composition change requested, skipping test";
+        return;
+    }
+    ASSERT_EQ(0, mReader->mErrors.size());
+    mWriter->selectDisplay(mPrimaryDisplay);
+    mWriter->presentDisplay();
+    execute();
+    ASSERT_EQ(0, mReader->mErrors.size());
+
+    // Ensure we can clear multiple buffer slots and then restore the active buffer at the end
+    mWriter->selectDisplay(mPrimaryDisplay);
+    mWriter->selectLayer(layer);
+    mWriter->setLayerBuffer(0, clearSlotBuffer.get(), -1);
+    mWriter->selectDisplay(mPrimaryDisplay);
+    mWriter->selectLayer(layer);
+    mWriter->setLayerBuffer(1, clearSlotBuffer.get(), -1);
+    mWriter->selectDisplay(mPrimaryDisplay);
+    mWriter->selectLayer(layer);
+    mWriter->setLayerBuffer(2, nullptr, -1);
+    mWriter->validateDisplay();
+    execute();
+    ASSERT_EQ(0, mReader->mErrors.size());
+
+    mWriter->selectDisplay(mPrimaryDisplay);
+    mWriter->presentDisplay();
+    execute();
+    ASSERT_EQ(0, mReader->mErrors.size());
 }
 
 /**

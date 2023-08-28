@@ -46,4 +46,9 @@ enum DemuxFilterStatus {
      * discarded.
      */
     OVERFLOW = 1 << 3,
+
+    /**
+     * Indicating there is no data coming to the filter.
+     */
+    NO_DATA = 1 << 4,
 }

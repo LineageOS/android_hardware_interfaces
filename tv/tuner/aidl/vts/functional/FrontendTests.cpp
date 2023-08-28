@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include <aidl/android/hardware/tv/tuner/Result.h>
-
 #include "FrontendTests.h"
+
+#include <aidl/android/hardware/tv/tuner/Result.h>
 
 ndk::ScopedAStatus FrontendCallback::onEvent(FrontendEventType frontendEventType) {
     android::Mutex::Autolock autoLock(mMsgLock);
@@ -323,7 +323,10 @@ void FrontendTests::verifyFrontendStatus(vector<FrontendStatusType> statusTypes,
         FrontendStatusType type = statusTypes[i];
         switch (type) {
             case FrontendStatusType::MODULATIONS: {
-                // TODO: verify modulations
+                ASSERT_TRUE(std::equal(
+                        realStatuses[i].get<FrontendStatus::Tag::modulations>().begin(),
+                        realStatuses[i].get<FrontendStatus::Tag::modulations>().end(),
+                        expectStatuses[i].get<FrontendStatus::Tag::modulations>().begin()));
                 break;
             }
             case FrontendStatusType::BERS: {
@@ -340,11 +343,13 @@ void FrontendTests::verifyFrontendStatus(vector<FrontendStatusType> statusTypes,
                 break;
             }
             case FrontendStatusType::GUARD_INTERVAL: {
-                // TODO: verify interval
+                ASSERT_TRUE(realStatuses[i].get<FrontendStatus::Tag::interval>() ==
+                            expectStatuses[i].get<FrontendStatus::Tag::interval>());
                 break;
             }
             case FrontendStatusType::TRANSMISSION_MODE: {
-                // TODO: verify tranmission mode
+                ASSERT_TRUE(realStatuses[i].get<FrontendStatus::Tag::transmissionMode>() ==
+                            expectStatuses[i].get<FrontendStatus::Tag::transmissionMode>());
                 break;
             }
             case FrontendStatusType::UEC: {
@@ -379,7 +384,8 @@ void FrontendTests::verifyFrontendStatus(vector<FrontendStatusType> statusTypes,
                 break;
             }
             case FrontendStatusType::ROLL_OFF: {
-                // TODO: verify roll off
+                ASSERT_TRUE(realStatuses[i].get<FrontendStatus::Tag::rollOff>() ==
+                            expectStatuses[i].get<FrontendStatus::Tag::rollOff>());
                 break;
             }
             case FrontendStatusType::IS_MISO: {
@@ -426,6 +432,31 @@ void FrontendTests::verifyFrontendStatus(vector<FrontendStatusType> statusTypes,
                         realStatuses[i].get<FrontendStatus::Tag::allPlpInfo>().begin(),
                         realStatuses[i].get<FrontendStatus::Tag::allPlpInfo>().end(),
                         expectStatuses[i].get<FrontendStatus::Tag::allPlpInfo>().begin()));
+                break;
+            }
+            case FrontendStatusType::IPTV_CONTENT_URL: {
+                ASSERT_TRUE(realStatuses[i].get<FrontendStatus::Tag::iptvContentUrl>() ==
+                            expectStatuses[i].get<FrontendStatus::Tag::iptvContentUrl>());
+                break;
+            }
+            case FrontendStatusType::IPTV_PACKETS_LOST: {
+                ASSERT_TRUE(realStatuses[i].get<FrontendStatus::Tag::iptvPacketsLost>() ==
+                            expectStatuses[i].get<FrontendStatus::Tag::iptvPacketsLost>());
+                break;
+            }
+            case FrontendStatusType::IPTV_PACKETS_RECEIVED: {
+                ASSERT_TRUE(realStatuses[i].get<FrontendStatus::Tag::iptvPacketsReceived>() ==
+                            expectStatuses[i].get<FrontendStatus::Tag::iptvPacketsReceived>());
+                break;
+            }
+            case FrontendStatusType::IPTV_WORST_JITTER_MS: {
+                ASSERT_TRUE(realStatuses[i].get<FrontendStatus::Tag::iptvWorstJitterMs>() ==
+                            expectStatuses[i].get<FrontendStatus::Tag::iptvWorstJitterMs>());
+                break;
+            }
+            case FrontendStatusType::IPTV_AVERAGE_JITTER_MS: {
+                ASSERT_TRUE(realStatuses[i].get<FrontendStatus::Tag::iptvAverageJitterMs>() ==
+                            expectStatuses[i].get<FrontendStatus::Tag::iptvAverageJitterMs>());
                 break;
             }
             default: {
@@ -599,9 +630,10 @@ void FrontendTests::statusReadinessTest(FrontendConfig frontendConf) {
     ASSERT_TRUE(tuneFrontend(frontendConf, false /*testWithDemux*/));
 
     // TODO: find a better way to push all frontend status types
-    for (int32_t i = 0; i < static_cast<int32_t>(FrontendStatusType::ATSC3_ALL_PLP_INFO); i++) {
+    for (int32_t i = 0; i <= static_cast<int32_t>(FrontendStatusType::ATSC3_ALL_PLP_INFO); i++) {
         allTypes.push_back(static_cast<FrontendStatusType>(i));
     }
+
     ndk::ScopedAStatus status = mFrontend->getFrontendStatusReadiness(allTypes, &readiness);
     ASSERT_TRUE(status.isOk());
     ASSERT_TRUE(readiness.size() == allTypes.size());

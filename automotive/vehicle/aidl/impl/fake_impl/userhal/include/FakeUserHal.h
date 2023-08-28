@@ -64,7 +64,7 @@ class FakeUserHal final {
     std::string showDumpHelp() const;
 
     // Dump its contents.
-    std::string dump(std::string indent) const;
+    std::string dump() const;
 
   private:
     const std::shared_ptr<VehiclePropValuePool> mValuePool;

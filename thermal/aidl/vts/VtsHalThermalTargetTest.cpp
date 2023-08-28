@@ -95,20 +95,15 @@ class ThermalAidlTest : public testing::TestWithParam<std::string> {
 
         mThermalCallback = ndk::SharedRefBase::make<ThermalCallback>();
         ASSERT_NE(mThermalCallback, nullptr);
-        auto status = mThermal->registerThermalChangedCallback(mThermalCallback);
-        ASSERT_TRUE(status.isOk());
-        // Expect to fail if register again
-        status = mThermal->registerThermalChangedCallback(mThermalCallback);
-        ASSERT_FALSE(status.isOk());
-        ASSERT_EQ(EX_ILLEGAL_ARGUMENT, status.getExceptionCode());
+        ::ndk::ScopedAStatus status = mThermal->registerThermalChangedCallback(mThermalCallback);
+        ASSERT_TRUE(status.isOk()) << status.getMessage();
     }
 
     void TearDown() override {
-        auto status = mThermal->unregisterThermalChangedCallback(mThermalCallback);
-        ASSERT_TRUE(status.isOk());
+        ::ndk::ScopedAStatus status = mThermal->unregisterThermalChangedCallback(mThermalCallback);
+        ASSERT_TRUE(status.isOk()) << status.getMessage();
         // Expect to fail if unregister again
         status = mThermal->unregisterThermalChangedCallback(mThermalCallback);
-        ASSERT_FALSE(status.isOk());
         ASSERT_EQ(EX_ILLEGAL_ARGUMENT, status.getExceptionCode());
     }
 
@@ -121,9 +116,140 @@ class ThermalAidlTest : public testing::TestWithParam<std::string> {
 // This just calls into and back from our local ThermalChangedCallback impl.
 TEST_P(ThermalAidlTest, NotifyThrottlingTest) {
     std::shared_ptr<ThermalCallback> thermalCallback = ndk::SharedRefBase::make<ThermalCallback>();
-    auto ret = thermalCallback->notifyThrottling(kThrottleTemp);
-    ASSERT_TRUE(ret.isOk());
+    ::ndk::ScopedAStatus status = thermalCallback->notifyThrottling(kThrottleTemp);
+    ASSERT_TRUE(status.isOk()) << status.getMessage();
     ASSERT_TRUE(thermalCallback->waitForCallback(200ms));
+}
+
+// Test Thermal->registerThermalChangedCallback.
+TEST_P(ThermalAidlTest, RegisterThermalChangedCallbackTest) {
+    // Expect to fail with same callback
+    ::ndk::ScopedAStatus status = mThermal->registerThermalChangedCallback(mThermalCallback);
+    ASSERT_EQ(EX_ILLEGAL_ARGUMENT, status.getExceptionCode());
+    // Expect to fail with null callback
+    status = mThermal->registerThermalChangedCallback(nullptr);
+    ASSERT_EQ(EX_ILLEGAL_ARGUMENT, status.getExceptionCode());
+    std::shared_ptr<ThermalCallback> localThermalCallback =
+            ndk::SharedRefBase::make<ThermalCallback>();
+    // Expect to succeed with different callback
+    status = mThermal->registerThermalChangedCallback(localThermalCallback);
+    ASSERT_TRUE(status.isOk()) << status.getMessage();
+    // Remove the local callback
+    status = mThermal->unregisterThermalChangedCallback(localThermalCallback);
+    ASSERT_TRUE(status.isOk()) << status.getMessage();
+    // Expect to fail with null callback
+    status = mThermal->unregisterThermalChangedCallback(nullptr);
+    ASSERT_EQ(EX_ILLEGAL_ARGUMENT, status.getExceptionCode());
+}
+
+// Test Thermal->registerThermalChangedCallbackWithType.
+TEST_P(ThermalAidlTest, RegisterThermalChangedCallbackWithTypeTest) {
+    // Expect to fail with same callback
+    ::ndk::ScopedAStatus status = mThermal->registerThermalChangedCallbackWithType(
+            mThermalCallback, TemperatureType::SKIN);
+    ASSERT_EQ(EX_ILLEGAL_ARGUMENT, status.getExceptionCode());
+    // Expect to fail with null callback
+    status = mThermal->registerThermalChangedCallbackWithType(nullptr, TemperatureType::SKIN);
+    ASSERT_EQ(EX_ILLEGAL_ARGUMENT, status.getExceptionCode());
+    std::shared_ptr<ThermalCallback> localThermalCallback =
+            ndk::SharedRefBase::make<ThermalCallback>();
+    // Expect to succeed with different callback
+    status = mThermal->registerThermalChangedCallbackWithType(localThermalCallback,
+                                                              TemperatureType::SKIN);
+    ASSERT_TRUE(status.isOk()) << status.getMessage();
+    // Remove the local callback
+    status = mThermal->unregisterThermalChangedCallback(localThermalCallback);
+    ASSERT_TRUE(status.isOk()) << status.getMessage();
+    // Expect to fail with null callback
+    status = mThermal->unregisterThermalChangedCallback(nullptr);
+    ASSERT_EQ(EX_ILLEGAL_ARGUMENT, status.getExceptionCode());
+}
+
+// Test Thermal->getCurrentTemperatures().
+TEST_P(ThermalAidlTest, TemperatureTest) {
+    std::vector<Temperature> ret;
+    ::ndk::ScopedAStatus status = mThermal->getTemperatures(&ret);
+    if (status.isOk()) {
+        for (auto& i : ret) {
+            EXPECT_LT(0u, i.name.size());
+            LOG(INFO) << i.name + " " + toString(i.type) << "\n";
+        }
+    } else {
+        ASSERT_EQ(EX_ILLEGAL_STATE, status.getExceptionCode());
+    }
+
+    auto types = ::ndk::enum_range<TemperatureType>();
+    for (const auto& type : types) {
+        status = mThermal->getTemperaturesWithType(type, &ret);
+
+        if (status.isOk()) {
+            for (auto& i : ret) {
+                EXPECT_EQ(type, i.type) << "Expect type " + toString(type) + " but got " +
+                                                   toString(i.type) + " for " + i.name;
+                EXPECT_LT(0u, i.name.size());
+            }
+        } else {
+            ASSERT_EQ(EX_ILLEGAL_STATE, status.getExceptionCode());
+        }
+    }
+}
+
+// Test Thermal->getTemperatureThresholds().
+TEST_P(ThermalAidlTest, TemperatureThresholdTest) {
+    std::vector<TemperatureThreshold> ret;
+    ::ndk::ScopedAStatus status = mThermal->getTemperatureThresholds(&ret);
+    if (status.isOk()) {
+        for (auto& i : ret) {
+            EXPECT_LT(0u, i.name.size());
+            LOG(INFO) << i.name + " " + toString(i.type) << "\n";
+        }
+    } else {
+        ASSERT_EQ(EX_ILLEGAL_STATE, status.getExceptionCode());
+    }
+
+    auto types = ::ndk::enum_range<TemperatureType>();
+    for (const auto& type : types) {
+        status = mThermal->getTemperatureThresholdsWithType(type, &ret);
+
+        if (status.isOk()) {
+            for (auto& i : ret) {
+                EXPECT_EQ(type, i.type) << "Expect type " + toString(type) + " but got " +
+                                                   toString(i.type) + " for " + i.name;
+                EXPECT_LT(0u, i.name.size());
+            }
+        } else {
+            ASSERT_EQ(EX_ILLEGAL_STATE, status.getExceptionCode());
+        }
+    }
+}
+
+// Test Thermal->getCoolingDevices().
+TEST_P(ThermalAidlTest, CoolingDeviceTest) {
+    std::vector<CoolingDevice> ret;
+    ::ndk::ScopedAStatus status = mThermal->getCoolingDevices(&ret);
+    if (status.isOk()) {
+        for (auto& i : ret) {
+            EXPECT_LT(0u, i.name.size());
+            LOG(INFO) << i.name + " " + toString(i.type) << "\n";
+        }
+    } else {
+        ASSERT_EQ(EX_ILLEGAL_STATE, status.getExceptionCode());
+    }
+
+    auto types = ::ndk::enum_range<CoolingType>();
+    for (const auto& type : types) {
+        status = mThermal->getCoolingDevicesWithType(type, &ret);
+        if (status.isOk()) {
+            ASSERT_TRUE(status.isOk());
+            for (auto& i : ret) {
+                EXPECT_EQ(type, i.type) << "Expect type " + toString(type) + " but got " +
+                                                   toString(i.type) + " for " + i.name;
+                EXPECT_LT(0u, i.name.size());
+            }
+        } else {
+            ASSERT_EQ(EX_ILLEGAL_STATE, status.getExceptionCode());
+        }
+    }
 }
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(ThermalAidlTest);
@@ -133,6 +259,7 @@ INSTANTIATE_TEST_SUITE_P(
         ::android::PrintInstanceNameToString);
 
 }  // namespace
+}  // namespace aidl::android::hardware::thermal
 
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
@@ -140,5 +267,3 @@ int main(int argc, char** argv) {
     ABinderProcess_startThreadPool();
     return RUN_ALL_TESTS();
 }
-
-}  // namespace aidl::android::hardware::thermal

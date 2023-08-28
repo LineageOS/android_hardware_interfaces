@@ -69,7 +69,7 @@ TEST(RecurrentTimerTest, multipleIntervals) {
     std::this_thread::sleep_for(milliseconds(100));
     // This test is unstable, so set the tolerance to 50.
     ASSERT_EQ_WITH_TOLERANCE(100, counter1ms.load(), 50);
-    ASSERT_EQ_WITH_TOLERANCE(20, counter5ms.load(), 5);
+    ASSERT_EQ_WITH_TOLERANCE(20, counter5ms.load(), 10);
 }
 
 }  // anonymous namespace

@@ -16,6 +16,7 @@
 
 package android.hardware.wifi;
 
+import android.hardware.wifi.RttBw;
 import android.hardware.wifi.RttStatus;
 import android.hardware.wifi.RttType;
 import android.hardware.wifi.WifiInformationElement;
@@ -132,4 +133,15 @@ parcelable RttResult {
      * For 11mc only.
      */
     WifiInformationElement lcr;
+    /**
+     * RTT channel frequency in MHz
+     * If frequency is unknown, this will be set to 0.
+     */
+    int channelFreqMHz;
+    /**
+     * RTT packet bandwidth.
+     * This value is an average bandwidth of the bandwidths of measurement
+     * frames. Cap the average close to a specific valid RttBw.
+     */
+    RttBw packetBw;
 }

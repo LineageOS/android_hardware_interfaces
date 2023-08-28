@@ -35,6 +35,7 @@
 #include <string>
 #include <thread>
 #include <unordered_map>
+#include <unordered_set>
 #include "GraphicsComposerCallback.h"
 
 using aidl::android::hardware::graphics::common::Dataspace;
@@ -60,6 +61,8 @@ class VtsComposerClient {
 
     bool tearDown();
 
+    std::pair<ScopedAStatus, int32_t> getInterfaceVersion();
+
     std::pair<ScopedAStatus, VirtualDisplay> createVirtualDisplay(int32_t width, int32_t height,
                                                                   PixelFormat pixelFormat,
                                                                   int32_t bufferSlotCount);
@@ -73,6 +76,8 @@ class VtsComposerClient {
     std::pair<ScopedAStatus, int32_t> getActiveConfig(int64_t display);
 
     ScopedAStatus setActiveConfig(VtsDisplay* vtsDisplay, int32_t config);
+
+    ScopedAStatus setPeakRefreshRateConfig(VtsDisplay* vtsDisplay);
 
     std::pair<ScopedAStatus, int32_t> getDisplayAttribute(int64_t display, int32_t config,
                                                           DisplayAttribute displayAttribute);
@@ -160,6 +165,12 @@ class VtsComposerClient {
 
     std::pair<ScopedAStatus, int32_t> getPreferredBootDisplayConfig(int64_t display);
 
+    std::pair<ScopedAStatus, std::vector<common::HdrConversionCapability>>
+    getHdrConversionCapabilities();
+
+    std::pair<ScopedAStatus, common::Hdr> setHdrConversionStrategy(
+            const common::HdrConversionStrategy& conversionStrategy);
+
     std::pair<ScopedAStatus, common::Transform> getDisplayPhysicalOrientation(int64_t display);
 
     ScopedAStatus setIdleTimerEnabled(int64_t display, int32_t timeoutMs);
@@ -171,6 +182,12 @@ class VtsComposerClient {
     int64_t getInvalidDisplayId();
 
     std::pair<ScopedAStatus, std::vector<VtsDisplay>> getDisplays();
+
+    std::pair<ScopedAStatus, OverlayProperties> getOverlaySupport();
+
+    ndk::ScopedAStatus setRefreshRateChangedCallbackDebugEnabled(int64_t display, bool enabled);
+
+    std::vector<RefreshRateChangedDebugData> takeListOfRefreshRateChangedDebugData();
 
   private:
     ScopedAStatus addDisplayConfig(VtsDisplay* vtsDisplay, int32_t config);
@@ -231,15 +248,17 @@ class VtsDisplay {
     };
 
     void addDisplayConfig(int32_t config, DisplayConfig displayConfig) {
-        displayConfigs.insert({config, displayConfig});
+        mDisplayConfigs.insert({config, displayConfig});
     }
 
-    DisplayConfig getDisplayConfig(int32_t config) { return displayConfigs.find(config)->second; }
+    DisplayConfig getDisplayConfig(int32_t config) { return mDisplayConfigs.find(config)->second; }
+
+    std::unordered_map<int32_t, DisplayConfig> getDisplayConfigs() { return mDisplayConfigs; }
 
   private:
     int64_t mDisplayId;
     int32_t mDisplayWidth;
     int32_t mDisplayHeight;
-    std::unordered_map<int32_t, DisplayConfig> displayConfigs;
+    std::unordered_map<int32_t, DisplayConfig> mDisplayConfigs;
 };
 }  // namespace aidl::android::hardware::graphics::composer3::vts

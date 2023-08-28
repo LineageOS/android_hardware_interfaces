@@ -3593,6 +3593,7 @@ ndk::ScopedAStatus AudioCoreSoundDose::NoOpHalSoundDoseCallback::onNewMelValues(
     return ndk::ScopedAStatus::ok();
 }
 
+// @VsrTest = VSR-5.5-002.001
 TEST_P(AudioCoreSoundDose, SameInstance) {
     if (soundDose == nullptr) {
         GTEST_SKIP() << "SoundDose is not supported";
@@ -3604,6 +3605,7 @@ TEST_P(AudioCoreSoundDose, SameInstance) {
             << "getSoundDose must return the same interface instance across invocations";
 }
 
+// @VsrTest = VSR-5.5-002.001
 TEST_P(AudioCoreSoundDose, GetSetOutputRs2UpperBound) {
     if (soundDose == nullptr) {
         GTEST_SKIP() << "SoundDose is not supported";
@@ -3618,6 +3620,7 @@ TEST_P(AudioCoreSoundDose, GetSetOutputRs2UpperBound) {
     EXPECT_TRUE(isSupported) << "Getting/Setting RS2 upper bound must be supported";
 }
 
+// @VsrTest = VSR-5.5-002.001
 TEST_P(AudioCoreSoundDose, CheckDefaultRs2UpperBound) {
     if (soundDose == nullptr) {
         GTEST_SKIP() << "SoundDose is not supported";
@@ -3628,6 +3631,7 @@ TEST_P(AudioCoreSoundDose, CheckDefaultRs2UpperBound) {
     EXPECT_EQ(rs2Value, ISoundDose::DEFAULT_MAX_RS2);
 }
 
+// @VsrTest = VSR-5.5-002.001
 TEST_P(AudioCoreSoundDose, RegisterSoundDoseCallbackTwiceThrowsException) {
     if (soundDose == nullptr) {
         GTEST_SKIP() << "SoundDose is not supported";
@@ -3638,6 +3642,7 @@ TEST_P(AudioCoreSoundDose, RegisterSoundDoseCallbackTwiceThrowsException) {
             << "Registering sound dose callback twice should throw EX_ILLEGAL_STATE";
 }
 
+// @VsrTest = VSR-5.5-002.001
 TEST_P(AudioCoreSoundDose, RegisterSoundDoseNullCallbackThrowsException) {
     if (soundDose == nullptr) {
         GTEST_SKIP() << "SoundDose is not supported";

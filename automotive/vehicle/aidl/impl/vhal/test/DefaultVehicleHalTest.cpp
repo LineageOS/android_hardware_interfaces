@@ -62,7 +62,6 @@ using ::aidl::android::hardware::automotive::vehicle::SubscribeOptions;
 using ::aidl::android::hardware::automotive::vehicle::VehicleAreaWindow;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropConfig;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropConfigs;
-using ::aidl::android::hardware::automotive::vehicle::VehiclePropError;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropErrors;
 using ::aidl::android::hardware::automotive::vehicle::VehicleProperty;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyAccess;
@@ -325,9 +324,9 @@ class DefaultVehicleHalTest : public testing::Test {
         mCallbackClient = IVehicleCallback::fromBinder(mBinder);
 
         // Set the linkToDeath to a fake implementation that always returns OK.
-        auto binderImpl = std::make_unique<TestBinderImpl>();
-        mBinderImpl = binderImpl.get();
-        mVhal->setBinderImpl(std::move(binderImpl));
+        auto handler = std::make_unique<TestBinderLifecycleHandler>();
+        mBinderLifecycleHandler = handler.get();
+        mVhal->setBinderLifecycleHandler(std::move(handler));
     }
 
     void TearDown() override {
@@ -371,7 +370,7 @@ class DefaultVehicleHalTest : public testing::Test {
 
     bool hasNoSubscriptions() { return mVhal->mSubscriptionManager->isEmpty(); }
 
-    void setBinderAlive(bool isAlive) { mBinderImpl->setAlive(isAlive); };
+    void setBinderAlive(bool isAlive) { mBinderLifecycleHandler->setAlive(isAlive); };
 
     static Result<void> getValuesTestCases(size_t size, GetValueRequests& requests,
                                            std::vector<GetValueResult>& expectedResults,
@@ -445,7 +444,7 @@ class DefaultVehicleHalTest : public testing::Test {
     }
 
   private:
-    class TestBinderImpl final : public DefaultVehicleHal::IBinder {
+    class TestBinderLifecycleHandler final : public DefaultVehicleHal::BinderLifecycleInterface {
       public:
         binder_status_t linkToDeath(AIBinder*, AIBinder_DeathRecipient*, void*) override {
             if (mIsAlive) {
@@ -469,7 +468,7 @@ class DefaultVehicleHalTest : public testing::Test {
     std::shared_ptr<MockVehicleCallback> mCallback;
     std::shared_ptr<IVehicleCallback> mCallbackClient;
     SpAIBinder mBinder;
-    TestBinderImpl* mBinderImpl;
+    TestBinderLifecycleHandler* mBinderLifecycleHandler;
 };
 
 TEST_F(DefaultVehicleHalTest, testGetAllPropConfigsSmall) {
@@ -672,8 +671,8 @@ TEST_F(DefaultVehicleHalTest, testGetValuesNoReadPermission) {
 }
 
 TEST_F(DefaultVehicleHalTest, testGetValuesFinishBeforeTimeout) {
-    // timeout: 0.1s
-    int64_t timeout = 100000000;
+    // timeout: 1s
+    int64_t timeout = 1000000000;
     setTimeout(timeout);
 
     GetValueRequests requests;
@@ -682,17 +681,15 @@ TEST_F(DefaultVehicleHalTest, testGetValuesFinishBeforeTimeout) {
 
     ASSERT_TRUE(getValuesTestCases(10, requests, expectedResults, expectedHardwareRequests).ok());
 
-    // The response would be returned after 0.05s.
-    getHardware()->setSleepTime(timeout / 2);
+    // The response would be returned after 0.01s.
+    getHardware()->setSleepTime(timeout / 100);
     getHardware()->addGetValueResponses(expectedResults);
 
     auto status = getClient()->getValues(getCallbackClient(), requests);
 
     ASSERT_TRUE(status.isOk()) << "getValues failed: " << status.getMessage();
 
-    // Wait for the response.
-    std::this_thread::sleep_for(std::chrono::nanoseconds(timeout));
-
+    ASSERT_TRUE(getCallback()->waitForGetValueResults(1, timeout)) << "no results in callback";
     auto maybeGetValueResults = getCallback()->nextGetValueResults();
     ASSERT_TRUE(maybeGetValueResults.has_value()) << "no results in callback";
     EXPECT_EQ(maybeGetValueResults.value().payloads, expectedResults) << "results mismatch";
@@ -700,8 +697,8 @@ TEST_F(DefaultVehicleHalTest, testGetValuesFinishBeforeTimeout) {
 }
 
 TEST_F(DefaultVehicleHalTest, testGetValuesFinishAfterTimeout) {
-    // timeout: 0.1s
-    int64_t timeout = 100000000;
+    // timeout: 0.01s
+    int64_t timeout = 10000000;
     setTimeout(timeout);
 
     GetValueRequests requests;
@@ -710,16 +707,13 @@ TEST_F(DefaultVehicleHalTest, testGetValuesFinishAfterTimeout) {
 
     ASSERT_TRUE(getValuesTestCases(10, requests, expectedResults, expectedHardwareRequests).ok());
 
-    // The response would be returned after 0.2s.
-    getHardware()->setSleepTime(timeout * 2);
+    // The response would be returned after 0.1s.
+    getHardware()->setSleepTime(timeout * 10);
     getHardware()->addGetValueResponses(expectedResults);
 
     auto status = getClient()->getValues(getCallbackClient(), requests);
 
     ASSERT_TRUE(status.isOk()) << "getValues failed: " << status.getMessage();
-
-    // Wait for the response.
-    std::this_thread::sleep_for(std::chrono::nanoseconds(timeout * 5));
 
     for (size_t i = 0; i < expectedResults.size(); i++) {
         expectedResults[i] = {
@@ -729,6 +723,8 @@ TEST_F(DefaultVehicleHalTest, testGetValuesFinishAfterTimeout) {
         };
     }
 
+    ASSERT_TRUE(getCallback()->waitForGetValueResults(1, timeout * 100))
+            << "no results in callback";
     auto maybeGetValueResults = getCallback()->nextGetValueResults();
     ASSERT_TRUE(maybeGetValueResults.has_value()) << "no results in callback";
     ASSERT_THAT(maybeGetValueResults.value().payloads, UnorderedElementsAreArray(expectedResults))
@@ -961,8 +957,8 @@ TEST_P(SetValuesInvalidRequestTest, testSetValuesInvalidRequest) {
 }
 
 TEST_F(DefaultVehicleHalTest, testSetValuesFinishBeforeTimeout) {
-    // timeout: 0.1s
-    int64_t timeout = 100000000;
+    // timeout: 1s
+    int64_t timeout = 1000000000;
     setTimeout(timeout);
 
     SetValueRequests requests;
@@ -971,17 +967,15 @@ TEST_F(DefaultVehicleHalTest, testSetValuesFinishBeforeTimeout) {
 
     ASSERT_TRUE(setValuesTestCases(10, requests, expectedResults, expectedHardwareRequests).ok());
 
-    // The response would be returned after 0.05s.
-    getHardware()->setSleepTime(timeout / 2);
+    // The response would be returned after 0.01s.
+    getHardware()->setSleepTime(timeout / 100);
     getHardware()->addSetValueResponses(expectedResults);
 
     auto status = getClient()->setValues(getCallbackClient(), requests);
 
     ASSERT_TRUE(status.isOk()) << "setValues failed: " << status.getMessage();
 
-    // Wait for the response.
-    std::this_thread::sleep_for(std::chrono::nanoseconds(timeout));
-
+    ASSERT_TRUE(getCallback()->waitForSetValueResults(1, timeout)) << "no set value results";
     auto maybeSetValueResults = getCallback()->nextSetValueResults();
     ASSERT_TRUE(maybeSetValueResults.has_value()) << "no results in callback";
     EXPECT_EQ(maybeSetValueResults.value().payloads, expectedResults) << "results mismatch";
@@ -989,8 +983,8 @@ TEST_F(DefaultVehicleHalTest, testSetValuesFinishBeforeTimeout) {
 }
 
 TEST_F(DefaultVehicleHalTest, testSetValuesFinishAfterTimeout) {
-    // timeout: 0.1s
-    int64_t timeout = 100000000;
+    // timeout: 0.01s
+    int64_t timeout = 10000000;
     setTimeout(timeout);
 
     SetValueRequests requests;
@@ -999,16 +993,13 @@ TEST_F(DefaultVehicleHalTest, testSetValuesFinishAfterTimeout) {
 
     ASSERT_TRUE(setValuesTestCases(10, requests, expectedResults, expectedHardwareRequests).ok());
 
-    // The response would be returned after 0.2s.
-    getHardware()->setSleepTime(timeout * 2);
+    // The response would be returned after 0.1s.
+    getHardware()->setSleepTime(timeout * 10);
     getHardware()->addSetValueResponses(expectedResults);
 
     auto status = getClient()->setValues(getCallbackClient(), requests);
 
     ASSERT_TRUE(status.isOk()) << "setValues failed: " << status.getMessage();
-
-    // Wait for the response.
-    std::this_thread::sleep_for(std::chrono::nanoseconds(timeout * 5));
 
     for (size_t i = 0; i < expectedResults.size(); i++) {
         expectedResults[i] = {
@@ -1017,6 +1008,7 @@ TEST_F(DefaultVehicleHalTest, testSetValuesFinishAfterTimeout) {
         };
     }
 
+    ASSERT_TRUE(getCallback()->waitForSetValueResults(1, timeout * 100)) << "no set value results";
     auto maybeSetValueResults = getCallback()->nextSetValueResults();
     ASSERT_TRUE(maybeSetValueResults.has_value()) << "no results in callback";
     ASSERT_THAT(maybeSetValueResults.value().payloads, UnorderedElementsAreArray(expectedResults))
@@ -1457,7 +1449,7 @@ TEST_F(DefaultVehicleHalTest, testUnsubscribeContinuous) {
     std::vector<SubscribeOptions> options = {
             {
                     .propId = GLOBAL_CONTINUOUS_PROP,
-                    .sampleRate = 20.0,
+                    .sampleRate = 100.0,
             },
     };
 
@@ -1470,16 +1462,20 @@ TEST_F(DefaultVehicleHalTest, testUnsubscribeContinuous) {
 
     ASSERT_TRUE(status.isOk()) << "unsubscribe failed: " << status.getMessage();
 
+    // Wait for the last events to come.
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
     // Clear existing events.
     while (getCallback()->nextOnPropertyEventResults().has_value()) {
         // Do nothing.
     }
 
-    // Wait for a while, make sure no new events are generated.
+    // Wait for a while, make sure no new events are generated. If still subscribed, this should
+    // generate around 10 events.
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-    ASSERT_FALSE(getCallback()->nextOnPropertyEventResults().has_value())
-            << "No property event should be generated after unsubscription";
+    ASSERT_EQ(getCallback()->countOnPropertyEventResults(), 0u)
+            << "Property event generation must stop after unsubscription";
 }
 
 class SubscribeInvalidOptionsTest
@@ -1655,63 +1651,6 @@ TEST_F(DefaultVehicleHalTest, testDumpCallerShouldNotDump) {
 
     ASSERT_THAT(msg, ContainsRegex(buffer));
     ASSERT_EQ(msg.find("Vehicle HAL State: "), std::string::npos);
-}
-
-TEST_F(DefaultVehicleHalTest, testOnPropertySetErrorEvent) {
-    std::vector<SubscribeOptions> options = {
-            {
-                    .propId = GLOBAL_ON_CHANGE_PROP,
-                    .areaIds = {0},
-            },
-            {
-                    .propId = GLOBAL_CONTINUOUS_PROP,
-                    .areaIds = {0},
-                    .sampleRate = 1,
-            },
-    };
-    auto status = getClient()->subscribe(getCallbackClient(), options, 0);
-    ASSERT_TRUE(status.isOk()) << "subscribe failed: " << status.getMessage();
-    std::vector<SetValueErrorEvent> errorEvents = {
-            {
-                    .propId = GLOBAL_ON_CHANGE_PROP,
-                    .areaId = 0,
-                    .errorCode = StatusCode::INTERNAL_ERROR,
-            },
-            {
-                    .propId = GLOBAL_ON_CHANGE_PROP,
-                    .areaId = 0,
-                    .errorCode = StatusCode::ACCESS_DENIED,
-            },
-            {
-                    .propId = GLOBAL_CONTINUOUS_PROP,
-                    .areaId = 0,
-                    .errorCode = StatusCode::INVALID_ARG,
-            },
-    };
-    std::vector<VehiclePropError> expectedResults = {
-            {
-                    .propId = GLOBAL_ON_CHANGE_PROP,
-                    .areaId = 0,
-                    .errorCode = StatusCode::INTERNAL_ERROR,
-            },
-            {
-                    .propId = GLOBAL_ON_CHANGE_PROP,
-                    .areaId = 0,
-                    .errorCode = StatusCode::ACCESS_DENIED,
-            },
-            {
-                    .propId = GLOBAL_CONTINUOUS_PROP,
-                    .areaId = 0,
-                    .errorCode = StatusCode::INVALID_ARG,
-            },
-    };
-    getHardware()->sendOnPropertySetErrorEvent(errorEvents);
-
-    ASSERT_EQ(getCallback()->countOnPropertySetErrorResults(), 1u);
-    auto maybeVehiclePropErrors = getCallback()->nextOnPropertySetErrorResults();
-    ASSERT_TRUE(maybeVehiclePropErrors.has_value());
-    const auto& vehiclePropErrors = maybeVehiclePropErrors.value();
-    ASSERT_THAT(vehiclePropErrors.payloads, UnorderedElementsAreArray(expectedResults));
 }
 
 }  // namespace vehicle

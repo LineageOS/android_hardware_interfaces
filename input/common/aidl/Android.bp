@@ -12,7 +12,6 @@ aidl_interface {
     host_supported: true,
     vendor_available: true,
     srcs: ["android/hardware/input/common/*.aidl"],
-    frozen: true,
     stability: "vintf",
     backend: {
         cpp: {

@@ -66,3 +66,25 @@ cc_library {
         "libbinder_ndk",
     ],
 }
+
+cc_fuzz {
+    name: "android.hardware.automotive.vehicle@V1-default-service_fuzzer",
+    vendor: true,
+    defaults: [
+        "FakeVehicleHardwareDefaults",
+        "VehicleHalDefaults",
+        "android-automotive-large-parcelable-defaults",
+        "service_fuzzer_defaults",
+    ],
+    static_libs: [
+        "DefaultVehicleHal",
+        "FakeVehicleHardware",
+        "VehicleHalUtils",
+    ],
+    srcs: ["src/fuzzer.cpp"],
+    fuzz_config: {
+        cc: [
+            "keithmok@google.com",
+        ],
+    },
+}

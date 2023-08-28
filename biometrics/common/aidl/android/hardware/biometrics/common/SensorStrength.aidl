@@ -15,7 +15,9 @@
  */
 
 package android.hardware.biometrics.common;
-
+/**
+ * @hide
+ */
 @VintfStability
 @Backing(type="byte")
 enum SensorStrength {

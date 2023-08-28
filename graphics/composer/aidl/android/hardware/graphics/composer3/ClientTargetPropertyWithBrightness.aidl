@@ -23,7 +23,6 @@ import android.hardware.graphics.composer3.DimmingStage;
 parcelable ClientTargetPropertyWithBrightness {
     /**
      * The display which this commands refers to.
-     * @see IComposer.createDisplay
      */
     long display;
 

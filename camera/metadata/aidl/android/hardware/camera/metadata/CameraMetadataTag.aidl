@@ -450,6 +450,46 @@ enum CameraMetadataTag {
      */
     ANDROID_CONTROL_AVAILABLE_HIGH_SPEED_VIDEO_CONFIGURATIONS_MAXIMUM_RESOLUTION,
     /**
+     * android.control.settingsOverride [dynamic, enum, public]
+     *
+     * <p>The desired CaptureRequest settings override with which certain keys are
+     * applied earlier so that they can take effect sooner.</p>
+     */
+    ANDROID_CONTROL_SETTINGS_OVERRIDE = 65588,
+    /**
+     * android.control.availableSettingsOverrides [static, int32[], public]
+     *
+     * <p>List of available settings overrides supported by the camera device that can
+     * be used to speed up certain controls.</p>
+     */
+    ANDROID_CONTROL_AVAILABLE_SETTINGS_OVERRIDES,
+    /**
+     * android.control.settingsOverridingFrameNumber [dynamic, int32, system]
+     *
+     * <p>The frame number of the newer request overriding this capture.</p>
+     */
+    ANDROID_CONTROL_SETTINGS_OVERRIDING_FRAME_NUMBER,
+    /**
+     * android.control.autoframing [dynamic, enum, public]
+     *
+     * <p>Automatic crop, pan and zoom to keep objects in the center of the frame.</p>
+     */
+    ANDROID_CONTROL_AUTOFRAMING,
+    /**
+     * android.control.autoframingAvailable [static, enum, public]
+     *
+     * <p>Whether the camera device supports ANDROID_CONTROL_AUTOFRAMING.</p>
+     *
+     * @see ANDROID_CONTROL_AUTOFRAMING
+     */
+    ANDROID_CONTROL_AUTOFRAMING_AVAILABLE,
+    /**
+     * android.control.autoframingState [dynamic, enum, public]
+     *
+     * <p>Current state of auto-framing.</p>
+     */
+    ANDROID_CONTROL_AUTOFRAMING_STATE,
+    /**
      * android.demosaic.mode [controls, enum, system]
      *
      * <p>Controls the quality of the demosaicing
@@ -1030,6 +1070,12 @@ enum CameraMetadataTag {
      */
     ANDROID_REQUEST_RECOMMENDED_TEN_BIT_DYNAMIC_RANGE_PROFILE,
     /**
+     * android.request.availableColorSpaceProfilesMap [static, enum[], ndk_public]
+     *
+     * <p>A list of all possible color space profiles supported by a camera device.</p>
+     */
+    ANDROID_REQUEST_AVAILABLE_COLOR_SPACE_PROFILES_MAP,
+    /**
      * android.scaler.cropRegion [dynamic, int32[], public]
      *
      * <p>The desired region of the sensor to read out for this capture.</p>
@@ -1237,6 +1283,13 @@ enum CameraMetadataTag {
      * <p>The stream use cases supported by this camera device.</p>
      */
     ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES = 851994,
+    /**
+     * android.scaler.rawCropRegion [dynamic, int32[], public]
+     *
+     * <p>The region of the sensor that corresponds to the RAW read out for this
+     * capture when the stream use case of a RAW stream is set to CROPPED_RAW.</p>
+     */
+    ANDROID_SCALER_RAW_CROP_REGION,
     /**
      * android.sensor.exposureTime [dynamic, int64, public]
      *
@@ -2229,8 +2282,8 @@ enum CameraMetadataTag {
      *
      * <p>Whether this camera device can support identical set of stream combinations
      * involving HEIC image format, compared to the
-     * <a href="https://developer.android.com/reference/android/hardware/camera2/CameraDevice.html#createCaptureSession">table of combinations</a>
-     * involving JPEG image format required for the device's hardware level and capabilities.</p>
+     * <a href="https://developer.android.com/reference/android/hardware/camera2/CameraDevice.html#legacy-level-guaranteed-configurations">table of combinations</a> involving JPEG image format required for the device's hardware
+     * level and capabilities.</p>
      */
     ANDROID_HEIC_INFO_SUPPORTED = CameraMetadataSectionStart.ANDROID_HEIC_INFO_START,
     /**
@@ -2252,4 +2305,56 @@ enum CameraMetadataTag {
      * passenger seats.</p>
      */
     ANDROID_AUTOMOTIVE_LENS_FACING = CameraMetadataSectionStart.ANDROID_AUTOMOTIVE_LENS_START,
+    /**
+     * android.jpegr.availableJpegRStreamConfigurations [static, enum[], ndk_public]
+     *
+     * <p>The available Jpeg/R stream
+     * configurations that this camera device supports
+     * (i.e. format, width, height, output/input stream).</p>
+     */
+    ANDROID_JPEGR_AVAILABLE_JPEG_R_STREAM_CONFIGURATIONS = CameraMetadataSectionStart.ANDROID_JPEGR_START,
+    /**
+     * android.jpegr.availableJpegRMinFrameDurations [static, int64[], ndk_public]
+     *
+     * <p>This lists the minimum frame duration for each
+     * format/size combination for Jpeg/R output formats.</p>
+     */
+    ANDROID_JPEGR_AVAILABLE_JPEG_R_MIN_FRAME_DURATIONS,
+    /**
+     * android.jpegr.availableJpegRStallDurations [static, int64[], ndk_public]
+     *
+     * <p>This lists the maximum stall duration for each
+     * output format/size combination for Jpeg/R streams.</p>
+     */
+    ANDROID_JPEGR_AVAILABLE_JPEG_R_STALL_DURATIONS,
+    /**
+     * android.jpegr.availableJpegRStreamConfigurationsMaximumResolution [static, enum[], ndk_public]
+     *
+     * <p>The available Jpeg/R stream
+     * configurations that this camera device supports
+     * (i.e. format, width, height, output/input stream).</p>
+     */
+    ANDROID_JPEGR_AVAILABLE_JPEG_R_STREAM_CONFIGURATIONS_MAXIMUM_RESOLUTION,
+    /**
+     * android.jpegr.availableJpegRMinFrameDurationsMaximumResolution [static, int64[], ndk_public]
+     *
+     * <p>This lists the minimum frame duration for each
+     * format/size combination for Jpeg/R output formats for CaptureRequests where
+     * ANDROID_SENSOR_PIXEL_MODE is set to
+     * <a href="https://developer.android.com/reference/android/hardware/camera2/CameraMetadata.html#SENSOR_PIXEL_MODE_MAXIMUM_RESOLUTION">CameraMetadata#SENSOR_PIXEL_MODE_MAXIMUM_RESOLUTION</a>.</p>
+     *
+     * @see ANDROID_SENSOR_PIXEL_MODE
+     */
+    ANDROID_JPEGR_AVAILABLE_JPEG_R_MIN_FRAME_DURATIONS_MAXIMUM_RESOLUTION,
+    /**
+     * android.jpegr.availableJpegRStallDurationsMaximumResolution [static, int64[], ndk_public]
+     *
+     * <p>This lists the maximum stall duration for each
+     * output format/size combination for Jpeg/R streams for CaptureRequests where
+     * ANDROID_SENSOR_PIXEL_MODE is set to
+     * <a href="https://developer.android.com/reference/android/hardware/camera2/CameraMetadata.html#SENSOR_PIXEL_MODE_MAXIMUM_RESOLUTION">CameraMetadata#SENSOR_PIXEL_MODE_MAXIMUM_RESOLUTION</a>.</p>
+     *
+     * @see ANDROID_SENSOR_PIXEL_MODE
+     */
+    ANDROID_JPEGR_AVAILABLE_JPEG_R_STALL_DURATIONS_MAXIMUM_RESOLUTION,
 }

@@ -19,7 +19,11 @@ package android.hardware.biometrics.fingerprint;
 import android.hardware.biometrics.common.CommonProps;
 import android.hardware.biometrics.fingerprint.FingerprintSensorType;
 import android.hardware.biometrics.fingerprint.SensorLocation;
+import android.hardware.biometrics.fingerprint.TouchDetectionParameters;
 
+/**
+ * @hide
+ */
 @VintfStability
 parcelable SensorProps {
     /**
@@ -70,4 +74,9 @@ parcelable SensorProps {
      * This value must be ignored for sensors that aren't optical UDFPS.
      */
     boolean halControlsIllumination;
+
+    /**
+     * Parameters used for fingerprint touch detection.
+     */
+    @nullable TouchDetectionParameters touchDetectionParameters;
 }

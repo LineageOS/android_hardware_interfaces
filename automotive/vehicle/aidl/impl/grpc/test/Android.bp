@@ -1,0 +1,74 @@
+// Copyright (C) 2023 The Android Open Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
+cc_test {
+    name: "GRPCVehicleHardwareUnitTest",
+    vendor: true,
+    srcs: ["GRPCVehicleHardwareUnitTest.cpp"],
+    whole_static_libs: [
+        "android.hardware.automotive.vehicle@default-grpc-hardware-lib",
+    ],
+    header_libs: [
+        "IVehicleHardware",
+    ],
+    static_libs: [
+        "libgtest",
+        "libgmock",
+    ],
+    shared_libs: [
+        "libgrpc++",
+        "libprotobuf-cpp-full",
+    ],
+    // libgrpc++.so is installed as root, require root to access it.
+    require_root: true,
+    defaults: [
+        "VehicleHalDefaults",
+    ],
+    cflags: [
+        "-Wno-unused-parameter",
+    ],
+    test_suites: ["device-tests"],
+}
+
+cc_test {
+    name: "GRPCVehicleProxyServerUnitTest",
+    vendor: true,
+    srcs: ["GRPCVehicleProxyServerUnitTest.cpp"],
+    header_libs: [
+        "IVehicleHardware",
+    ],
+    static_libs: [
+        "android.hardware.automotive.vehicle@default-grpc-hardware-lib",
+        "android.hardware.automotive.vehicle@default-grpc-server-lib",
+        "libgtest",
+        "libgmock",
+    ],
+    shared_libs: [
+        "libgrpc++",
+        "libprotobuf-cpp-full",
+    ],
+    // libgrpc++.so is installed as root, require root to access it.
+    require_root: true,
+    defaults: [
+        "VehicleHalDefaults",
+    ],
+    cflags: [
+        "-Wno-unused-parameter",
+    ],
+    test_suites: ["device-tests"],
+}

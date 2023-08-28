@@ -26,12 +26,19 @@
 using ::aidl::android::hardware::tv::tuner::Tuner;
 
 int main() {
-    ABinderProcess_setThreadPoolMaxThreadCount(8);
+    ABinderProcess_setThreadPoolMaxThreadCount(16);
     std::shared_ptr<Tuner> tuner = ndk::SharedRefBase::make<Tuner>();
     tuner->init();
 
+    binder_status_t status;
     const std::string instance = std::string() + Tuner::descriptor + "/default";
-    binder_status_t status = AServiceManager_addService(tuner->asBinder().get(), instance.c_str());
+#ifdef LAZY_HAL
+    ALOGD("Start as a lazy HAL");
+    status = AServiceManager_registerLazyService(tuner->asBinder().get(), instance.c_str());
+#else
+    ALOGD("Start as a normal HAL");
+    status = AServiceManager_addService(tuner->asBinder().get(), instance.c_str());
+#endif
     CHECK(status == STATUS_OK);
 
     ABinderProcess_joinThreadPool();

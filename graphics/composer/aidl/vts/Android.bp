@@ -28,8 +28,9 @@ cc_test {
     defaults: [
         "VtsHalTargetTestDefaults",
         "use_libaidlvintf_gtest_helper_static",
-        // Needed for librenderengine
-        "skia_deps",
+        "librenderengine_deps",
+        "android.hardware.graphics.common-ndk_static",
+        "android.hardware.graphics.composer3-ndk_static",
     ],
     srcs: [
         "VtsHalGraphicsComposer3_TargetTest.cpp",
@@ -67,8 +68,6 @@ cc_test {
         "android.hardware.graphics.composer3-command-buffer",
     ],
     static_libs: [
-        "android.hardware.graphics.composer3-V1-ndk",
-        "android.hardware.graphics.common-V4-ndk",
         "android.hardware.graphics.common@1.2",
         "android.hardware.common-V2-ndk",
         "android.hardware.common.fmq-V1-ndk",

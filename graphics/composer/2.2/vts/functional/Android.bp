@@ -29,8 +29,7 @@ cc_test {
         "VtsHalTargetTestDefaults",
         "android.hardware.graphics.allocator-ndk_static",
         "android.hardware.graphics.composer3-ndk_static",
-        // Needed for librenderengine
-        "skia_deps",
+        "librenderengine_deps",
     ],
     tidy_timeout_srcs: [
         "VtsHalGraphicsComposerV2_2ReadbackTest.cpp",
@@ -69,7 +68,6 @@ cc_test {
         "android.hardware.graphics.composer@2.1-vts",
         "android.hardware.graphics.composer@2.2",
         "android.hardware.graphics.composer@2.2-vts",
-        "android.hardware.graphics.composer3-V1-ndk",
         "android.hardware.graphics.mapper@2.0-vts",
         "android.hardware.graphics.mapper@2.1-vts",
         "android.hardware.graphics.mapper@3.0-vts",

@@ -53,7 +53,7 @@ class Tuner;
 
 class Demux : public BnDemux {
   public:
-    Demux(int32_t demuxId, std::shared_ptr<Tuner> tuner);
+    Demux(int32_t demuxId, uint32_t filterTypes);
     ~Demux();
 
     ::ndk::ScopedAStatus setFrontendDataSource(int32_t in_frontendId) override;
@@ -97,6 +97,12 @@ class Demux : public BnDemux {
     void sendFrontendInputToRecord(vector<int8_t> data);
     void sendFrontendInputToRecord(vector<int8_t> data, uint16_t pid, uint64_t pts);
     bool startRecordFilterDispatcher();
+
+    void getDemuxInfo(DemuxInfo* demuxInfo);
+    int32_t getDemuxId();
+    bool isInUse();
+    void setInUse(bool inUse);
+    void setTunerService(std::shared_ptr<Tuner> tuner);
 
   private:
     // Tuner service
@@ -183,6 +189,9 @@ class Demux : public BnDemux {
     vector<uint8_t> mPesOutput;
 
     const bool DEBUG_DEMUX = false;
+
+    int32_t mFilterTypes;
+    bool mInUse = false;
 };
 
 }  // namespace tuner

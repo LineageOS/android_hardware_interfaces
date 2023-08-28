@@ -16,10 +16,15 @@
 
 package android.hardware.biometrics.fingerprint;
 
+import android.hardware.biometrics.fingerprint.SensorShape;
+
+/**
+ * @hide
+ */
 @VintfStability
 parcelable SensorLocation {
     /**
-     * Deprecated use the display field instead. This field was never used.
+     * @deprecated use the display field instead. This field was never used.
      */
     int displayId;
 
@@ -57,4 +62,10 @@ parcelable SensorLocation {
      *      for each display from which the sensor is accessible from.
      */
     String display = "";
+
+    /**
+     * The shape of the sensor if applicable. Most useful for the sensor of type
+     * SensorType::UNDER_DISPLAY_*.
+     */
+    SensorShape sensorShape = SensorShape.CIRCLE;
 }

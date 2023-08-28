@@ -42,6 +42,7 @@ using ::android::frameworks::automotive::vhal::IHalPropValue;
 using ::android::frameworks::automotive::vhal::ISubscriptionCallback;
 using ::android::frameworks::automotive::vhal::ISubscriptionClient;
 using ::android::frameworks::automotive::vhal::IVhalClient;
+using ::android::frameworks::automotive::vhal::VhalClientResult;
 
 using ::aidl::android::hardware::automotive::remoteaccess::ApState;
 using ::aidl::android::hardware::automotive::remoteaccess::BnRemoteTaskCallback;
@@ -91,9 +92,6 @@ class MockGrpcClientStub : public WakeupClient::StubInterface {
 
 class FakeVhalClient final : public android::frameworks::automotive::vhal::IVhalClient {
   public:
-    template <class T>
-    using VhalClientResult = android::hardware::automotive::vehicle::VhalResult<T>;
-
     inline bool isAidlVhal() { return true; }
 
     VhalClientResult<std::unique_ptr<IHalPropValue>> getValueSync(
@@ -189,8 +187,8 @@ class RemoteAccessServiceUnitTest : public ::testing::Test {
 
     void setRetryWaitInMs(size_t retryWaitInMs) { mService->setRetryWaitInMs(retryWaitInMs); }
 
-    ScopedAStatus getDeviceIdWithClient(IVhalClient& vhalClient, std::string* deviceId) {
-        return mService->getDeviceIdWithClient(vhalClient, deviceId);
+    ScopedAStatus getVehicleIdWithClient(IVhalClient& vhalClient, std::string* vehicleId) {
+        return mService->getVehicleIdWithClient(vhalClient, vehicleId);
     }
 
   private:
@@ -360,13 +358,13 @@ TEST_F(RemoteAccessServiceUnitTest, TestGetRemoteTasksNotReadyAfterReady) {
     std::this_thread::sleep_for(std::chrono::milliseconds(150));
 }
 
-TEST_F(RemoteAccessServiceUnitTest, testGetDeviceId) {
-    std::string deviceId;
+TEST_F(RemoteAccessServiceUnitTest, testGetVehicleId) {
+    std::string vehicleId;
 
     FakeVhalClient vhalClient;
 
-    ASSERT_TRUE(getDeviceIdWithClient(vhalClient, &deviceId).isOk());
-    ASSERT_EQ(deviceId, kTestVin);
+    ASSERT_TRUE(getVehicleIdWithClient(vhalClient, &vehicleId).isOk());
+    ASSERT_EQ(vehicleId, kTestVin);
 }
 
 }  // namespace remoteaccess

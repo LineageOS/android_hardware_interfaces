@@ -29,6 +29,11 @@ void GraphicsComposerCallback::setVsyncAllowed(bool allowed) {
     mVsyncAllowed = allowed;
 }
 
+void GraphicsComposerCallback::setRefreshRateChangedDebugDataEnabledCallbackAllowed(bool allowed) {
+    std::scoped_lock lock(mMutex);
+    mRefreshRateChangedDebugDataEnabledCallbackAllowed = allowed;
+}
+
 std::vector<int64_t> GraphicsComposerCallback::getDisplays() const {
     std::scoped_lock lock(mMutex);
     return mDisplays;
@@ -79,6 +84,21 @@ GraphicsComposerCallback::takeLastVsyncPeriodChangeTimeline() {
     return ret;
 }
 
+std::vector<RefreshRateChangedDebugData>
+GraphicsComposerCallback::takeListOfRefreshRateChangedDebugData() {
+    std::scoped_lock lock(mMutex);
+
+    std::vector<RefreshRateChangedDebugData> ret;
+    ret.swap(mRefreshRateChangedDebugData);
+
+    return ret;
+}
+
+int32_t GraphicsComposerCallback::getInvalidRefreshRateDebugEnabledCallbackCount() const {
+    std::scoped_lock lock(mMutex);
+    return mInvalidRefreshRateDebugEnabledCallbackCount;
+}
+
 ::ndk::ScopedAStatus GraphicsComposerCallback::onHotplug(int64_t in_display, bool in_connected) {
     std::scoped_lock lock(mMutex);
 
@@ -121,6 +141,19 @@ GraphicsComposerCallback::takeLastVsyncPeriodChangeTimeline() {
 
     ALOGV("%ld, %d", static_cast<long>(in_timestamp), in_vsyncPeriodNanos);
 
+    return ::ndk::ScopedAStatus::ok();
+}
+
+::ndk::ScopedAStatus GraphicsComposerCallback::onRefreshRateChangedDebug(
+        const RefreshRateChangedDebugData& data) {
+    std::scoped_lock lock(mMutex);
+
+    const auto it = std::find(mDisplays.begin(), mDisplays.end(), data.display);
+    if (mRefreshRateChangedDebugDataEnabledCallbackAllowed && it != mDisplays.end()) {
+        mRefreshRateChangedDebugData.push_back(data);
+    } else {
+        mInvalidRefreshRateDebugEnabledCallbackCount++;
+    }
     return ::ndk::ScopedAStatus::ok();
 }
 

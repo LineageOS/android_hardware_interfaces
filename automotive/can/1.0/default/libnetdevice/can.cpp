@@ -80,7 +80,7 @@ bool setBitrate(std::string ifname, uint32_t bitrate) {
 
     {
         auto linkinfo = req.addNested(IFLA_LINKINFO);
-        req.add(IFLA_INFO_KIND, "can");
+        req.addBuffer(IFLA_INFO_KIND, "can");
         {
             auto infodata = req.addNested(IFLA_INFO_DATA);
             /* For CAN FD, it would require to add IFLA_CAN_DATA_BITTIMING

@@ -16,16 +16,16 @@
 
 #pragma once
 
+#include <android-base/file.h>
+#include <android-base/properties.h>
+#include <android-base/unique_fd.h>
+#include <android-base/parseint.h>
+#include <android-base/strings.h>
 #include <aidl/android/hardware/usb/gadget/BnUsbGadget.h>
 #include <aidl/android/hardware/usb/gadget/BnUsbGadgetCallback.h>
 #include <aidl/android/hardware/usb/gadget/GadgetFunction.h>
 #include <aidl/android/hardware/usb/gadget/IUsbGadget.h>
 #include <aidl/android/hardware/usb/gadget/IUsbGadgetCallback.h>
-#include <android-base/file.h>
-#include <android-base/parseint.h>
-#include <android-base/properties.h>
-#include <android-base/strings.h>
-#include <android-base/unique_fd.h>
 #include <sched.h>
 #include <sys/epoll.h>
 #include <sys/eventfd.h>
@@ -43,16 +43,16 @@ namespace usb {
 namespace gadget {
 
 using ::aidl::android::hardware::usb::gadget::GadgetFunction;
-using ::aidl::android::hardware::usb::gadget::IUsbGadget;
 using ::aidl::android::hardware::usb::gadget::IUsbGadgetCallback;
+using ::aidl::android::hardware::usb::gadget::IUsbGadget;
 using ::aidl::android::hardware::usb::gadget::Status;
 using ::aidl::android::hardware::usb::gadget::UsbSpeed;
 using ::android::base::GetProperty;
-using ::android::base::ParseUint;
-using ::android::base::ReadFileToString;
 using ::android::base::SetProperty;
-using ::android::base::Trim;
+using ::android::base::ParseUint;
 using ::android::base::unique_fd;
+using ::android::base::ReadFileToString;
+using ::android::base::Trim;
 using ::android::base::WriteStringToFile;
 using ::ndk::ScopedAStatus;
 using ::std::shared_ptr;
@@ -65,19 +65,19 @@ constexpr char kSmpAffinityList[] = "/smp_affinity_list";
 #ifndef UDC_PATH
 #define UDC_PATH "/sys/class/udc/11110000.dwc3/"
 #endif
-// static MonitorFfs monitorFfs(kGadgetName);
+//static MonitorFfs monitorFfs(kGadgetName);
 
 #define SPEED_PATH UDC_PATH "current_speed"
 
 #define BIG_CORE "6"
 #define MEDIUM_CORE "4"
 
-#define POWER_SUPPLY_PATH "/sys/class/power_supply/usb/"
-#define USB_PORT0_PATH "/sys/class/typec/port0/"
+#define POWER_SUPPLY_PATH	"/sys/class/power_supply/usb/"
+#define USB_PORT0_PATH		"/sys/class/typec/port0/"
 
-#define CURRENT_MAX_PATH POWER_SUPPLY_PATH "current_max"
-#define CURRENT_USB_TYPE_PATH POWER_SUPPLY_PATH "usb_type"
-#define CURRENT_USB_POWER_OPERATION_MODE_PATH USB_PORT0_PATH "power_operation_mode"
+#define CURRENT_MAX_PATH			POWER_SUPPLY_PATH	"current_max"
+#define CURRENT_USB_TYPE_PATH			POWER_SUPPLY_PATH	"usb_type"
+#define CURRENT_USB_POWER_OPERATION_MODE_PATH	USB_PORT0_PATH		"power_operation_mode"
 
 struct UsbGadget : public BnUsbGadget {
     UsbGadget();
@@ -90,26 +90,27 @@ struct UsbGadget : public BnUsbGadget {
     UsbSpeed mUsbSpeed;
 
     ScopedAStatus setCurrentUsbFunctions(int64_t functions,
-                                         const shared_ptr<IUsbGadgetCallback>& callback,
-                                         int64_t timeoutMs, int64_t in_transactionId) override;
+            const shared_ptr<IUsbGadgetCallback> &callback,
+            int64_t timeoutMs, int64_t in_transactionId) override;
 
-    ScopedAStatus getCurrentUsbFunctions(const shared_ptr<IUsbGadgetCallback>& callback,
-                                         int64_t in_transactionId) override;
+    ScopedAStatus getCurrentUsbFunctions(const shared_ptr<IUsbGadgetCallback> &callback,
+	    int64_t in_transactionId) override;
 
-    ScopedAStatus reset() override;
+    ScopedAStatus reset(const shared_ptr<IUsbGadgetCallback> &callback,
+            int64_t in_transactionId) override;
 
-    ScopedAStatus getUsbSpeed(const shared_ptr<IUsbGadgetCallback>& callback,
-                              int64_t in_transactionId) override;
+    ScopedAStatus getUsbSpeed(const shared_ptr<IUsbGadgetCallback> &callback,
+	    int64_t in_transactionId) override;
 
   private:
     Status tearDownGadget();
     Status getUsbGadgetIrqPath();
-    Status setupFunctions(long functions, const shared_ptr<IUsbGadgetCallback>& callback,
-                          uint64_t timeout, int64_t in_transactionId);
+    Status setupFunctions(long functions, const shared_ptr<IUsbGadgetCallback> &callback,
+            uint64_t timeout, int64_t in_transactionId);
 };
 
 }  // namespace gadget
 }  // namespace usb
 }  // namespace hardware
 }  // namespace android
-}  // namespace aidl
+}  // aidl

@@ -36,14 +36,14 @@ constexpr float ONE_SECOND_IN_NANO = 1'000'000'000.;
 using ::aidl::android::hardware::automotive::vehicle::IVehicleCallback;
 using ::aidl::android::hardware::automotive::vehicle::StatusCode;
 using ::aidl::android::hardware::automotive::vehicle::SubscribeOptions;
-using ::aidl::android::hardware::automotive::vehicle::VehiclePropError;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropValue;
 using ::android::base::Error;
 using ::android::base::Result;
 using ::android::base::StringPrintf;
 using ::ndk::ScopedAStatus;
 
-SubscriptionManager::SubscriptionManager(IVehicleHardware* hardware) : mVehicleHardware(hardware) {}
+SubscriptionManager::SubscriptionManager(IVehicleHardware* vehicleHardware)
+    : mVehicleHardware(vehicleHardware) {}
 
 SubscriptionManager::~SubscriptionManager() {
     std::scoped_lock<std::mutex> lockGuard(mLock);
@@ -52,94 +52,82 @@ SubscriptionManager::~SubscriptionManager() {
     mSubscribedPropsByClient.clear();
 }
 
-bool SubscriptionManager::checkSampleRate(float sampleRate) {
-    return getInterval(sampleRate).ok();
+bool SubscriptionManager::checkSampleRateHz(float sampleRateHz) {
+    return getIntervalNanos(sampleRateHz).ok();
 }
 
-Result<int64_t> SubscriptionManager::getInterval(float sampleRate) {
-    int64_t interval = 0;
-    if (sampleRate <= 0) {
+Result<int64_t> SubscriptionManager::getIntervalNanos(float sampleRateHz) {
+    int64_t intervalNanos = 0;
+    if (sampleRateHz <= 0) {
         return Error() << "invalid sample rate, must be a positive number";
     }
-    if (sampleRate <= (ONE_SECOND_IN_NANO / static_cast<float>(INT64_MAX))) {
-        return Error() << "invalid sample rate: " << sampleRate << ", too small";
+    if (sampleRateHz <= (ONE_SECOND_IN_NANO / static_cast<float>(INT64_MAX))) {
+        return Error() << "invalid sample rate: " << sampleRateHz << ", too small";
     }
-    interval = static_cast<int64_t>(ONE_SECOND_IN_NANO / sampleRate);
-    return interval;
+    intervalNanos = static_cast<int64_t>(ONE_SECOND_IN_NANO / sampleRateHz);
+    return intervalNanos;
 }
 
-void ContSubConfigs::refreshMaxSampleRate() {
-    float maxSampleRate = 0.;
+void ContSubConfigs::refreshMaxSampleRateHz() {
+    float maxSampleRateHz = 0.;
     // This is not called frequently so a brute-focre is okay. More efficient way exists but this
     // is simpler.
-    for (const auto& [_, sampleRate] : mSampleRates) {
-        if (sampleRate > maxSampleRate) {
-            maxSampleRate = sampleRate;
+    for (const auto& [_, sampleRateHz] : mSampleRateHzByClient) {
+        if (sampleRateHz > maxSampleRateHz) {
+            maxSampleRateHz = sampleRateHz;
         }
     }
-    mMaxSampleRate = maxSampleRate;
+    mMaxSampleRateHz = maxSampleRateHz;
 }
 
-void ContSubConfigs::addClient(const ClientIdType& clientId, float sampleRate) {
-    mSampleRates[clientId] = sampleRate;
-    refreshMaxSampleRate();
+void ContSubConfigs::addClient(const ClientIdType& clientId, float sampleRateHz) {
+    mSampleRateHzByClient[clientId] = sampleRateHz;
+    refreshMaxSampleRateHz();
 }
 
 void ContSubConfigs::removeClient(const ClientIdType& clientId) {
-    mSampleRates.erase(clientId);
-    refreshMaxSampleRate();
+    mSampleRateHzByClient.erase(clientId);
+    refreshMaxSampleRateHz();
 }
 
-float ContSubConfigs::getMaxSampleRate() {
-    return mMaxSampleRate;
+float ContSubConfigs::getMaxSampleRateHz() const {
+    return mMaxSampleRateHz;
 }
 
-VhalResult<void> SubscriptionManager::updateSampleRateLocked(const ClientIdType& clientId,
-                                                             const PropIdAreaId& propIdAreaId,
-                                                             float sampleRate) {
+VhalResult<void> SubscriptionManager::addContinuousSubscriberLocked(
+        const ClientIdType& clientId, const PropIdAreaId& propIdAreaId, float sampleRateHz) {
     // Make a copy so that we don't modify 'mContSubConfigsByPropIdArea' on failure cases.
-    ContSubConfigs infoCopy = mContSubConfigsByPropIdArea[propIdAreaId];
-    infoCopy.addClient(clientId, sampleRate);
-    if (infoCopy.getMaxSampleRate() ==
-        mContSubConfigsByPropIdArea[propIdAreaId].getMaxSampleRate()) {
-        mContSubConfigsByPropIdArea[propIdAreaId] = infoCopy;
+    ContSubConfigs newConfig = mContSubConfigsByPropIdArea[propIdAreaId];
+    newConfig.addClient(clientId, sampleRateHz);
+    return updateContSubConfigs(propIdAreaId, newConfig);
+}
+
+VhalResult<void> SubscriptionManager::removeContinuousSubscriberLocked(
+        const ClientIdType& clientId, const PropIdAreaId& propIdAreaId) {
+    // Make a copy so that we don't modify 'mContSubConfigsByPropIdArea' on failure cases.
+    ContSubConfigs newConfig = mContSubConfigsByPropIdArea[propIdAreaId];
+    newConfig.removeClient(clientId);
+    return updateContSubConfigs(propIdAreaId, newConfig);
+}
+
+VhalResult<void> SubscriptionManager::updateContSubConfigs(const PropIdAreaId& propIdAreaId,
+                                                           const ContSubConfigs& newConfig) {
+    if (newConfig.getMaxSampleRateHz() ==
+        mContSubConfigsByPropIdArea[propIdAreaId].getMaxSampleRateHz()) {
+        mContSubConfigsByPropIdArea[propIdAreaId] = newConfig;
         return {};
     }
-    float newRate = infoCopy.getMaxSampleRate();
+    float newRateHz = newConfig.getMaxSampleRateHz();
     int32_t propId = propIdAreaId.propId;
     int32_t areaId = propIdAreaId.areaId;
-    if (auto status = mVehicleHardware->updateSampleRate(propId, areaId, newRate);
+    if (auto status = mVehicleHardware->updateSampleRate(propId, areaId, newRateHz);
         status != StatusCode::OK) {
         return StatusError(status) << StringPrintf("failed to update sample rate for prop: %" PRId32
                                                    ", area"
-                                                   ": %" PRId32 ", sample rate: %f",
-                                                   propId, areaId, newRate);
+                                                   ": %" PRId32 ", sample rate: %f HZ",
+                                                   propId, areaId, newRateHz);
     }
-    mContSubConfigsByPropIdArea[propIdAreaId] = infoCopy;
-    return {};
-}
-
-VhalResult<void> SubscriptionManager::removeSampleRateLocked(const ClientIdType& clientId,
-                                                             const PropIdAreaId& propIdAreaId) {
-    // Make a copy so that we don't modify 'mContSubConfigsByPropIdArea' on failure cases.
-    ContSubConfigs infoCopy = mContSubConfigsByPropIdArea[propIdAreaId];
-    infoCopy.removeClient(clientId);
-    if (infoCopy.getMaxSampleRate() ==
-        mContSubConfigsByPropIdArea[propIdAreaId].getMaxSampleRate()) {
-        mContSubConfigsByPropIdArea[propIdAreaId] = infoCopy;
-        return {};
-    }
-    float newRate = infoCopy.getMaxSampleRate();
-    int32_t propId = propIdAreaId.propId;
-    int32_t areaId = propIdAreaId.areaId;
-    if (auto status = mVehicleHardware->updateSampleRate(propId, areaId, newRate);
-        status != StatusCode::OK) {
-        return StatusError(status) << StringPrintf("failed to update sample rate for prop: %" PRId32
-                                                   ", area"
-                                                   ": %" PRId32 ", sample rate: %f",
-                                                   propId, areaId, newRate);
-    }
-    mContSubConfigsByPropIdArea[propIdAreaId] = infoCopy;
+    mContSubConfigsByPropIdArea[propIdAreaId] = newConfig;
     return {};
 }
 
@@ -148,14 +136,12 @@ VhalResult<void> SubscriptionManager::subscribe(const std::shared_ptr<IVehicleCa
                                                 bool isContinuousProperty) {
     std::scoped_lock<std::mutex> lockGuard(mLock);
 
-    std::vector<int64_t> intervals;
     for (const auto& option : options) {
-        float sampleRate = option.sampleRate;
+        float sampleRateHz = option.sampleRate;
 
         if (isContinuousProperty) {
-            auto intervalResult = getInterval(sampleRate);
-            if (!intervalResult.ok()) {
-                return StatusError(StatusCode::INVALID_ARG) << intervalResult.error().message();
+            if (auto result = getIntervalNanos(sampleRateHz); !result.ok()) {
+                return StatusError(StatusCode::INVALID_ARG) << result.error().message();
             }
         }
 
@@ -177,7 +163,8 @@ VhalResult<void> SubscriptionManager::subscribe(const std::shared_ptr<IVehicleCa
                     .areaId = areaId,
             };
             if (isContinuousProperty) {
-                if (auto result = updateSampleRateLocked(clientId, propIdAreaId, option.sampleRate);
+                if (auto result = addContinuousSubscriberLocked(clientId, propIdAreaId,
+                                                                option.sampleRate);
                     !result.ok()) {
                     return result;
                 }
@@ -215,7 +202,7 @@ VhalResult<void> SubscriptionManager::unsubscribe(SubscriptionManager::ClientIdT
     while (it != propIdAreaIds.end()) {
         int32_t propId = it->propId;
         if (std::find(propIds.begin(), propIds.end(), propId) != propIds.end()) {
-            if (auto result = removeSampleRateLocked(clientId, *it); !result.ok()) {
+            if (auto result = removeContinuousSubscriberLocked(clientId, *it); !result.ok()) {
                 return result;
             }
 
@@ -245,7 +232,7 @@ VhalResult<void> SubscriptionManager::unsubscribe(SubscriptionManager::ClientIdT
 
     auto& subscriptions = mSubscribedPropsByClient[clientId];
     for (auto const& propIdAreaId : subscriptions) {
-        if (auto result = removeSampleRateLocked(clientId, propIdAreaId); !result.ok()) {
+        if (auto result = removeContinuousSubscriberLocked(clientId, propIdAreaId); !result.ok()) {
             return result;
         }
 
@@ -277,32 +264,6 @@ SubscriptionManager::getSubscribedClients(const std::vector<VehiclePropValue>& u
 
         for (const auto& [_, client] : mClientsByPropIdArea[propIdAreaId]) {
             clients[client].push_back(&value);
-        }
-    }
-    return clients;
-}
-
-std::unordered_map<std::shared_ptr<IVehicleCallback>, std::vector<VehiclePropError>>
-SubscriptionManager::getSubscribedClientsForErrorEvents(
-        const std::vector<SetValueErrorEvent>& errorEvents) {
-    std::scoped_lock<std::mutex> lockGuard(mLock);
-    std::unordered_map<std::shared_ptr<IVehicleCallback>, std::vector<VehiclePropError>> clients;
-
-    for (const auto& errorEvent : errorEvents) {
-        PropIdAreaId propIdAreaId{
-                .propId = errorEvent.propId,
-                .areaId = errorEvent.areaId,
-        };
-        if (mClientsByPropIdArea.find(propIdAreaId) == mClientsByPropIdArea.end()) {
-            continue;
-        }
-
-        for (const auto& [_, client] : mClientsByPropIdArea[propIdAreaId]) {
-            clients[client].push_back({
-                    .propId = errorEvent.propId,
-                    .areaId = errorEvent.areaId,
-                    .errorCode = errorEvent.errorCode,
-            });
         }
     }
     return clients;

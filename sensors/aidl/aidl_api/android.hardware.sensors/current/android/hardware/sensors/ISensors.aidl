@@ -58,6 +58,8 @@ interface ISensors {
   const int DIRECT_REPORT_SENSOR_EVENT_OFFSET_SIZE_DATA = 24;
   const int DIRECT_REPORT_SENSOR_EVENT_OFFSET_SIZE_RESERVED = 88;
   const int DIRECT_REPORT_SENSOR_EVENT_TOTAL_LENGTH = 104;
+  const int RUNTIME_SENSORS_HANDLE_BASE = 1593835520;
+  const int RUNTIME_SENSORS_HANDLE_END = 1610612735;
   @Backing(type="int") @VintfStability
   enum RateLevel {
     STOP = 0,

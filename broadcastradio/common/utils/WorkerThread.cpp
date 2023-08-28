@@ -18,20 +18,23 @@
 
 namespace android {
 
-using std::chrono::milliseconds;
-using std::chrono::steady_clock;
 using std::function;
 using std::lock_guard;
 using std::mutex;
-using std::priority_queue;
-using std::this_thread::sleep_for;
 using std::unique_lock;
+using std::chrono::milliseconds;
+using std::chrono::steady_clock;
+using std::this_thread::sleep_for;
 
 bool operator<(const WorkerThread::Task& lhs, const WorkerThread::Task& rhs) {
     return lhs.when > rhs.when;
 }
 
-WorkerThread::WorkerThread() : mIsTerminating(false), mThread(&WorkerThread::threadLoop, this) {}
+WorkerThread::WorkerThread() : mIsTerminating(false) {
+    // putting mThread in constructor instead of initializer list
+    // to ensure all class members are init before mThread starts
+    mThread = std::thread(&WorkerThread::threadLoop, this);
+}
 
 WorkerThread::~WorkerThread() {
     {
@@ -43,16 +46,26 @@ WorkerThread::~WorkerThread() {
 }
 
 void WorkerThread::schedule(function<void()> task, milliseconds delay) {
+    auto cancelTask = []() {};
+    schedule(std::move(task), cancelTask, delay);
+}
+
+void WorkerThread::schedule(function<void()> task, function<void()> cancelTask,
+                            milliseconds delay) {
     auto when = steady_clock::now() + delay;
 
     lock_guard<mutex> lk(mMut);
-    mTasks.push(Task({when, task}));
+    mTasks.push(Task({when, std::move(task), std::move(cancelTask)}));
     mCond.notify_one();
 }
 
 void WorkerThread::cancelAll() {
     lock_guard<mutex> lk(mMut);
-    priority_queue<Task>().swap(mTasks);  // empty queue
+    while (!mTasks.empty()) {
+        auto task = mTasks.top();
+        task.onCanceled();
+        mTasks.pop();
+    }
 }
 
 void WorkerThread::threadLoop() {

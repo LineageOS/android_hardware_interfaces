@@ -911,9 +911,13 @@ enum DataCallFailCause {
      */
     PDP_MODIFY_COLLISION = 0x875,
     /**
-     * Maximum size of the L2 message was exceeded.
+     * @deprecated use MAXIMUM_SIZE_OF_L2_MESSAGE_EXCEEDED instead.
      */
     MAXINUM_SIZE_OF_L2_MESSAGE_EXCEEDED = 0x876,
+    /**
+     * Maximum size of the L2 message was exceeded.
+     */
+    MAXIMUM_SIZE_OF_L2_MESSAGE_EXCEEDED = 0x876,
     /**
      * Non-access stratum (NAS) request was rejected by the network.
      */

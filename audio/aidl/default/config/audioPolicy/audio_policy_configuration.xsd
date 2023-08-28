@@ -191,6 +191,8 @@
             <xs:enumeration value="AUDIO_INPUT_FLAG_HW_AV_SYNC" />
             <xs:enumeration value="AUDIO_INPUT_FLAG_DIRECT" />
             <xs:enumeration value="AUDIO_INPUT_FLAG_ULTRASOUND" />
+            <xs:enumeration value="AUDIO_INPUT_FLAG_HOTWORD_TAP" />
+            <xs:enumeration value="AUDIO_INPUT_FLAG_HW_LOOKBACK" />
         </xs:restriction>
     </xs:simpleType>
     <xs:simpleType name="audioInOutFlags">

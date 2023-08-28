@@ -22,13 +22,13 @@ cc_test {
     name: "FakeVehicleHardwareTest",
     vendor: true,
     srcs: ["*.cpp"],
-    cflags: ["-DENABLE_VENDOR_CLUSTER_PROPERTY_FOR_TESTING"],
+    cflags: ["-DENABLE_VEHICLE_HAL_TEST_PROPERTIES"],
     header_libs: [
         "IVehicleHardware",
-        "VehicleHalDefaultConfig",
         "VehicleHalTestUtilHeaders",
     ],
     static_libs: [
+        "VehicleHalJsonConfigLoaderEnableTestProperties",
         "VehicleHalUtils",
         "FakeVehicleHardware",
         "FakeVehicleHalValueGenerators",
@@ -41,7 +41,11 @@ cc_test {
         "libjsoncpp",
     ],
     data: [
+        ":VehicleHalDefaultProperties_JSON",
+        ":VehicleHalTestProperties_JSON",
+        ":VehicleHalVendorClusterTestProperties_JSON",
         ":FakeVehicleHardwareTestOverrideJson",
+        ":FakeVehicleHardwareTestPropJson",
     ],
     defaults: ["VehicleHalDefaults"],
     test_suites: ["device-tests"],
@@ -50,4 +54,9 @@ cc_test {
 filegroup {
     name: "FakeVehicleHardwareTestOverrideJson",
     srcs: ["override/*"],
+}
+
+filegroup {
+    name: "FakeVehicleHardwareTestPropJson",
+    srcs: ["fakedata/prop.json"],
 }

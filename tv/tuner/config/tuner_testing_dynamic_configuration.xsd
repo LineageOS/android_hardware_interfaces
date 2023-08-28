@@ -77,8 +77,41 @@
     <xs:complexType name="dvbsFrontendSettings">
         <xs:attribute name="inputStreamId" type="xs:nonNegativeInteger" use="required"/>
         <xs:attribute name="symbolRate" type="xs:nonNegativeInteger" use="required"/>
-        <xs:attribute name="scanType" type="dvbsScanType" use="optional"/>
-        <xs:attribute name="isDiseqcRxMessage" type="xs:boolean" use="optional"/>
+        <xs:attribute name="scanType" type="dvbsScanType" use="required"/>
+        <xs:attribute name="isDiseqcRxMessage" type="xs:boolean" use="required"/>
+        <xs:attribute name="inversion" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="modulation" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="pilot" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="standard" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="vcmMode" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="rolloff" type="xs:nonNegativeInteger" use="required"/>
+    </xs:complexType>
+    <xs:complexType name="atscFrontendSettings">
+        <xs:attribute name="inversion" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="modulation" type="xs:nonNegativeInteger" use="required"/>
+    </xs:complexType>
+    <xs:complexType name="isdbsFrontendSettings">
+        <xs:attribute name="streamId" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="symbolRate" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="streamIdType" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="modulation" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="coderate" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="rolloff" type="xs:nonNegativeInteger" use="required"/>
+    </xs:complexType>
+    <xs:complexType name="isdbtFrontendSettings">
+        <xs:attribute name="serviceAreaId" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="inversion" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="bandwidth" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="mode" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="guardInterval" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="partialReceptionFlag" type="xs:nonNegativeInteger" use="required"/>
+        <xs:element name="FrontendIsdbtLayerSettings" type="FrontendIsdbtLayerSettings"/>
+    </xs:complexType>
+    <xs:complexType name="FrontendIsdbtLayerSettings">
+        <xs:attribute name="modulation" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="coderate" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="timeInterleave" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="numOfSegment" type="xs:nonNegativeInteger" use="required"/>
     </xs:complexType>
 
     <xs:complexType name="frontend">
@@ -109,16 +142,16 @@
         </xs:annotation>
         <xs:choice minOccurs="0" maxOccurs="1">
             <!-- TODO: b/182519645 finish all the frontend settings structures. -->
-            <!--xs:element name="analog" type="analogSettings"/>
-            <xs:element name="atsc" type="atscSettings"/>
-            <xs:element name="atsc3" type="atsc3Settings"/>
+            <!--xs:element name="analog" type="analogSettings"/-->
+            <xs:element name="atscFrontendSettings" type="atscFrontendSettings"/>
+            <!--xs:element name="atsc3" type="atsc3Settings"/>
             <xs:element name="dvbc" type="dvbcSettings"/-->
             <xs:element name="dvbsFrontendSettings" type="dvbsFrontendSettings"/>
             <xs:element name="dvbtFrontendSettings" type="dvbtFrontendSettings"/>
-            <!--xs:element name="isdbs" type="isdbsSettings"/>
-            <xs:element name="isdbs3" type="isdbs3Settings"/>
-            <xs:element name="isdbt" type="isdbtSettings"/>
-            <xs:element name="dtmb" type="dtmbSettings"/-->
+            <xs:element name="isdbsFrontendSettings" type="isdbsFrontendSettings"/>
+            <!--xs:element name="isdbs3" type="isdbs3Settings"/-->
+            <xs:element name="isdbtFrontendSettings" type="isdbtFrontendSettings"/>
+            <!--xs:element name="dtmb" type="dtmbSettings"/-->
         </xs:choice>
         <xs:attribute name="id" type="frontendId" use="required"/>
         <xs:attribute name="type" type="frontendTypeEnum" use="required"/>
@@ -617,7 +650,7 @@
                     <xs:attribute name="pcrFilterConnection" type="filterId" use="optional"/>
                     <xs:attribute name="sectionFilterConnection" type="filterId" use="optional"/>
                     <xs:attribute name="ipFilterConnection" type="filterId" use="optional"/>
-                    <!-- TODO: b/182519645 allow the users to insert extra filters -->
+                    <xs:element name="optionalFilters" type="filterConnections" minOccurs="0" maxOccurs="1"/>
                     <!-- DVR is only required when the frontend is using the software input -->
                     <xs:attribute name="dvrSoftwareFeConnection" type="dvrId" use="optional"/>
                 </xs:complexType>
@@ -638,7 +671,7 @@
                     <xs:attribute name="descramblerConnection" type="descramblerId" use="required"/>
                     <xs:attribute name="audioFilterConnection" type="filterId" use="required"/>
                     <xs:attribute name="videoFilterConnection" type="filterId" use="required"/>
-                    <!-- TODO: b/182519645 allow the users to insert extra filters -->
+                    <xs:element name="optionalFilters" type="filterConnections" minOccurs="0" maxOccurs="1"/>
                     <!-- This DVR is only required when the frontend is using the software input -->
                     <xs:attribute name="dvrSoftwareFeConnection" type="dvrId" use="optional"/>
                     <!-- This Dvr is only required when there's no frontend(sw or hw) connection -->
@@ -651,7 +684,7 @@
                     <xs:attribute name="audioFilterConnection" type="filterId" use="required"/>
                     <xs:attribute name="videoFilterConnection" type="filterId" use="required"/>
                     <xs:attribute name="sectionFilterConnection" type="filterId" use="optional"/>
-                    <!-- TODO: b/182519645 allow the users to insert extra filters -->
+                    <xs:element name="optionalFilters" type="filterConnections" minOccurs="0" maxOccurs="1"/>
                 </xs:complexType>
             </xs:element>
             <xs:element name="dvrRecord" minOccurs="0" maxOccurs="1">
@@ -675,7 +708,7 @@
                     <xs:attribute name="videoFilterConnection" type="filterId" use="required"/>
                     <xs:attribute name="lnbConnection" type="lnbId" use="required"/>
                     <xs:attribute name="diseqcMsgSender" type="diseqcMsgSender" use="optional"/>
-                    <!-- TODO: b/182519645 allow the users to insert extra filters -->
+                    <xs:element name="optionalFilters" type="filterConnections" minOccurs="0" maxOccurs="1"/>
                 </xs:complexType>
             </xs:element>
             <xs:element name="lnbRecord" minOccurs="0" maxOccurs="1">
@@ -685,11 +718,22 @@
                     <xs:attribute name="dvrRecordConnection" type="dvrId" use="required"/>
                     <xs:attribute name="lnbConnection" type="lnbId" use="required"/>
                     <xs:attribute name="diseqcMsgSender" type="diseqcMsgSender" use="optional"/>
+                    <xs:element name="optionalFilters" type="filterConnections" minOccurs="0" maxOccurs="1"/>
                 </xs:complexType>
             </xs:element>
             <xs:element name="timeFilter" minOccurs="0" maxOccurs="1">
                 <xs:complexType>
                     <xs:attribute name="timeFilterConnection" type="timeFilterId" use="required"/>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="lnbDescrambling" minOccurs="0" maxOccurs="1">
+                <xs:complexType>
+                    <xs:attribute name="frontendConnection" type="frontendId" use="required"/>
+                    <xs:attribute name="audioFilterConnection" type="filterId" use="required"/>
+                    <xs:attribute name="videoFilterConnection" type="filterId" use="required"/>
+                    <xs:attribute name="lnbConnection" type="lnbId" use="required"/>
+                    <xs:attribute name="descramblerConnection" type="descramblerId" use="required"/>
+                    <xs:attribute name="diseqcMsgSender" type="diseqcMsgSender" use="optional"/>
                 </xs:complexType>
             </xs:element>
         </xs:sequence>
@@ -729,4 +773,7 @@
             <xs:field xpath="@id"/>
         </xs:key>
     </xs:element>
+    <xs:complexType name="optionalFilter">
+        <xs:attribute name="filterId" type="filterId" use="required"/>
+    </xs:complexType>
 </xs:schema>

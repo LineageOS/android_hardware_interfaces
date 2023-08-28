@@ -16,10 +16,14 @@
 
 package android.hardware.biometrics.common;
 
+import android.hardware.biometrics.common.AuthenticateReason;
+import android.hardware.biometrics.common.DisplayState;
 import android.hardware.biometrics.common.OperationReason;
+import android.hardware.biometrics.common.WakeReason;
 
 /**
  * Additional context associated with an operation.
+ * @hide
  */
 @VintfStability
 parcelable OperationContext {
@@ -41,9 +45,30 @@ parcelable OperationContext {
      */
     OperationReason reason = OperationReason.UNKNOWN;
 
-    /* Flag indicating that the display is in AOD mode. */
+    /** @deprecated use displayState instead. */
     boolean isAod = false;
 
     /** Flag indicating that crypto was requested. */
     boolean isCrypto = false;
+
+    /**
+     * An associated wake reason for this operation or WakeReason.UNKNOWN if this
+     * operation was not associated with a device wake up event.
+     *
+     * This should be interpreted as a hint to enable optimizations or tracing. The
+     * framework may choose to use WakeReason.UNKNOWN at any time based on the device's
+     * policy.
+     */
+    WakeReason wakeReason = WakeReason.UNKNOWN;
+
+    /** The current display state. */
+    DisplayState displayState = DisplayState.UNKNOWN;
+
+    /**
+     * An associated reason for an authenticate operation.
+     *
+     * This should be interpreted as a hint to enable optimizations or tracing. The
+     * framework may choose to omit the reason at any time based on the device's policy.
+     */
+    @nullable AuthenticateReason authenticateReason;
 }

@@ -108,6 +108,7 @@ class BroadcastRadioHalTest : public ::testing::TestWithParam<std::string> {
     bool openSession();
     bool getAmFmRegionConfig(bool full, AmFmRegionConfig* config);
     std::optional<utils::ProgramInfoSet> getProgramList();
+    std::optional<utils::ProgramInfoSet> getProgramList(const ProgramFilter& filter);
 
     sp<IBroadcastRadio> mModule;
     Properties mProperties;
@@ -239,9 +240,15 @@ bool BroadcastRadioHalTest::getAmFmRegionConfig(bool full, AmFmRegionConfig* con
 }
 
 std::optional<utils::ProgramInfoSet> BroadcastRadioHalTest::getProgramList() {
+    ProgramFilter emptyFilter = {};
+    return getProgramList(emptyFilter);
+}
+
+std::optional<utils::ProgramInfoSet> BroadcastRadioHalTest::getProgramList(
+        const ProgramFilter& filter) {
     EXPECT_TIMEOUT_CALL(*mCallback, onProgramListReady).Times(AnyNumber());
 
-    auto startResult = mSession->startProgramListUpdates({});
+    auto startResult = mSession->startProgramListUpdates(filter);
     if (startResult == Result::NOT_SUPPORTED) {
         printSkipped("Program list not supported");
         return std::nullopt;
@@ -810,17 +817,95 @@ TEST_P(BroadcastRadioHalTest, SetConfigFlags) {
 }
 
 /**
- * Test getting program list.
+ * Test getting program list using empty program filter.
  *
  * Verifies that:
  * - startProgramListUpdates either succeeds or returns NOT_SUPPORTED;
  * - the complete list is fetched within timeout::programListScan;
  * - stopProgramListUpdates does not crash.
  */
-TEST_P(BroadcastRadioHalTest, GetProgramList) {
+TEST_P(BroadcastRadioHalTest, GetProgramListFromEmptyFilter) {
     ASSERT_TRUE(openSession());
 
     getProgramList();
+}
+
+/**
+ * Test getting program list using AMFM frequency program filter.
+ *
+ * Verifies that:
+ * - startProgramListUpdates either succeeds or returns NOT_SUPPORTED;
+ * - the complete list is fetched within timeout::programListScan;
+ * - stopProgramListUpdates does not crash;
+ * - result for startProgramListUpdates using a filter with AMFM_FREQUENCY value of the first AMFM
+ *   program matches the expected result.
+ */
+TEST_P(BroadcastRadioHalTest, GetProgramListFromAmFmFilter) {
+    ASSERT_TRUE(openSession());
+
+    auto completeList = getProgramList();
+    if (!completeList) return;
+
+    ProgramFilter amfmFilter = {};
+    int expectedResultSize = 0;
+    uint64_t expectedFreq = 0;
+    for (auto&& program : *completeList) {
+        auto amfmIds = utils::getAllIds(program.selector, IdentifierType::AMFM_FREQUENCY);
+        EXPECT_LE(amfmIds.size(), 1u);
+        if (amfmIds.size() == 0) continue;
+
+        if (expectedResultSize == 0) {
+            expectedFreq = amfmIds[0];
+            amfmFilter.identifiers = {
+                    make_identifier(IdentifierType::AMFM_FREQUENCY, expectedFreq)};
+            expectedResultSize = 1;
+        } else if (amfmIds[0] == expectedFreq) {
+            expectedResultSize++;
+        }
+    }
+
+    if (expectedResultSize == 0) return;
+    auto amfmList = getProgramList(amfmFilter);
+    ASSERT_EQ(expectedResultSize, amfmList->size()) << "amfm filter result size is wrong";
+}
+
+/**
+ * Test getting program list using DAB ensemble program filter.
+ *
+ * Verifies that:
+ * - startProgramListUpdates either succeeds or returns NOT_SUPPORTED;
+ * - the complete list is fetched within timeout::programListScan;
+ * - stopProgramListUpdates does not crash;
+ * - result for startProgramListUpdates using a filter with DAB_ENSEMBLE value of the first DAB
+ *   program matches the expected result.
+ */
+TEST_P(BroadcastRadioHalTest, GetProgramListFromDabFilter) {
+    ASSERT_TRUE(openSession());
+
+    auto completeList = getProgramList();
+    if (!completeList) return;
+
+    ProgramFilter dabFilter = {};
+    int expectedResultSize = 0;
+    uint64_t expectedEnsemble = 0;
+    for (auto&& program : *completeList) {
+        auto dabEnsembles = utils::getAllIds(program.selector, IdentifierType::DAB_ENSEMBLE);
+        EXPECT_LE(dabEnsembles.size(), 1u);
+        if (dabEnsembles.size() == 0) continue;
+
+        if (expectedResultSize == 0) {
+            expectedEnsemble = dabEnsembles[0];
+            dabFilter.identifiers = {
+                    make_identifier(IdentifierType::DAB_ENSEMBLE, expectedEnsemble)};
+            expectedResultSize = 1;
+        } else if (dabEnsembles[0] == expectedEnsemble) {
+            expectedResultSize++;
+        }
+    }
+
+    if (expectedResultSize == 0) return;
+    auto dabList = getProgramList(dabFilter);
+    ASSERT_EQ(expectedResultSize, dabList->size()) << "dab filter result size is wrong";
 }
 
 /**

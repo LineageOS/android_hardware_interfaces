@@ -54,7 +54,6 @@ oneway interface IRadioConfigResponse {
      * Valid errors returned:
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:REQUEST_NOT_SUPPORTED
      */
     void getNumOfLiveModemsResponse(
             in android.hardware.radio.RadioResponseInfo info, in byte numOfLiveModems);
@@ -93,7 +92,6 @@ oneway interface IRadioConfigResponse {
      * Valid errors returned:
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:INVALID_ARGUMENTS
      */
     void setNumOfLiveModemsResponse(in android.hardware.radio.RadioResponseInfo info);

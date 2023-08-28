@@ -2,3 +2,4 @@ service vendor.remoteaccess-default /vendor/bin/hw/android.hardware.automotive.r
     class hal
     user vehicle_network
     group system inet
+    capabilities NET_RAW

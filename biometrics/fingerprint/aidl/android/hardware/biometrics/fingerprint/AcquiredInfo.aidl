@@ -15,7 +15,9 @@
  */
 
 package android.hardware.biometrics.fingerprint;
-
+/**
+ * @hide
+ */
 @VintfStability
 @Backing(type="byte")
 enum AcquiredInfo {
@@ -96,4 +98,15 @@ enum AcquiredInfo {
      * However, RETRYING_CAPTURE must not be sent after ACQUIRED_GOOD is sent.
      */
     RETRYING_CAPTURE,
+
+    /**
+     * Fingerprint was lifted before the capture completed.
+     */
+    LIFT_TOO_SOON,
+
+    /**
+     * Indicates a power press event has occurred. This is typically sent by fingerprint
+     * sensors that have the sensor co-located with the power button.
+     */
+    POWER_PRESS,
 }

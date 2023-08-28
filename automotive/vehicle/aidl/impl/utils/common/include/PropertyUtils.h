@@ -28,6 +28,7 @@ namespace vehicle {
 namespace propertyutils_impl {
 
 // These names are not part of the API since we only expose ints.
+using ::aidl::android::hardware::automotive::vehicle::EvStoppingMode;
 using ::aidl::android::hardware::automotive::vehicle::PortLocationType;
 using ::aidl::android::hardware::automotive::vehicle::VehicleArea;
 using ::aidl::android::hardware::automotive::vehicle::VehicleAreaDoor;
@@ -96,7 +97,13 @@ constexpr int FUEL_DOOR_REAR_LEFT = toInt(propertyutils_impl::PortLocationType::
 constexpr int CHARGE_PORT_FRONT_LEFT = toInt(propertyutils_impl::PortLocationType::FRONT_LEFT);
 constexpr int CHARGE_PORT_REAR_LEFT = toInt(propertyutils_impl::PortLocationType::REAR_LEFT);
 constexpr int LIGHT_STATE_ON = toInt(propertyutils_impl::VehicleLightState::ON);
+constexpr int LIGHT_STATE_OFF = toInt(propertyutils_impl::VehicleLightState::OFF);
+constexpr int LIGHT_SWITCH_OFF = toInt(propertyutils_impl::VehicleLightSwitch::OFF);
+constexpr int LIGHT_SWITCH_ON = toInt(propertyutils_impl::VehicleLightSwitch::ON);
 constexpr int LIGHT_SWITCH_AUTO = toInt(propertyutils_impl::VehicleLightSwitch::AUTOMATIC);
+constexpr int EV_STOPPING_MODE_CREEP = toInt(propertyutils_impl::EvStoppingMode::CREEP);
+constexpr int EV_STOPPING_MODE_ROLL = toInt(propertyutils_impl::EvStoppingMode::ROLL);
+constexpr int EV_STOPPING_MODE_HOLD = toInt(propertyutils_impl::EvStoppingMode::HOLD);
 constexpr int WHEEL_FRONT_LEFT = toInt(propertyutils_impl::VehicleAreaWheel::LEFT_FRONT);
 constexpr int WHEEL_FRONT_RIGHT = toInt(propertyutils_impl::VehicleAreaWheel::RIGHT_FRONT);
 constexpr int WHEEL_REAR_LEFT = toInt(propertyutils_impl::VehicleAreaWheel::LEFT_REAR);

@@ -15,6 +15,7 @@
  */
 
 #define LOG_TAG "DefaultVehicleHal"
+#define ATRACE_TAG ATRACE_TAG_HAL
 
 #include <DefaultVehicleHal.h>
 
@@ -28,6 +29,7 @@
 #include <private/android_filesystem_config.h>
 #include <utils/Log.h>
 #include <utils/SystemClock.h>
+#include <utils/Trace.h>
 
 #include <inttypes.h>
 #include <set>
@@ -78,14 +80,14 @@ std::string toString(const std::unordered_set<int64_t>& values) {
     return str;
 }
 
-float getDefaultSampleRate(float sampleRate, float minSampleRate, float maxSampleRate) {
-    if (sampleRate < minSampleRate) {
-        return minSampleRate;
+float getDefaultSampleRateHz(float sampleRateHz, float minSampleRateHz, float maxSampleRateHz) {
+    if (sampleRateHz < minSampleRateHz) {
+        return minSampleRateHz;
     }
-    if (sampleRate > maxSampleRate) {
-        return maxSampleRate;
+    if (sampleRateHz > maxSampleRateHz) {
+        return maxSampleRateHz;
     }
-    return sampleRate;
+    return sampleRateHz;
 }
 
 }  // namespace
@@ -123,32 +125,18 @@ size_t DefaultVehicleHal::SubscriptionClients::countClients() {
     return mClients.size();
 }
 
-DefaultVehicleHal::DefaultVehicleHal(std::unique_ptr<IVehicleHardware> hardware)
-    : mVehicleHardware(std::move(hardware)),
+DefaultVehicleHal::DefaultVehicleHal(std::unique_ptr<IVehicleHardware> vehicleHardware)
+    : mVehicleHardware(std::move(vehicleHardware)),
       mPendingRequestPool(std::make_shared<PendingRequestPool>(TIMEOUT_IN_NANO)) {
-    auto configs = mVehicleHardware->getAllPropertyConfigs();
-    for (auto& config : configs) {
-        mConfigsByPropId[config.prop] = config;
-    }
-    VehiclePropConfigs vehiclePropConfigs;
-    vehiclePropConfigs.payloads = std::move(configs);
-    auto result = LargeParcelableBase::parcelableToStableLargeParcelable(vehiclePropConfigs);
-    if (!result.ok()) {
-        ALOGE("failed to convert configs to shared memory file, error: %s, code: %d",
-              result.error().message().c_str(), static_cast<int>(result.error().code()));
+    if (!getAllPropConfigsFromHardware()) {
         return;
     }
 
-    if (result.value() != nullptr) {
-        mConfigFile = std::move(result.value());
-    }
-
-    mSubscriptionClients = std::make_shared<SubscriptionClients>(mPendingRequestPool);
     mSubscriptionClients = std::make_shared<SubscriptionClients>(mPendingRequestPool);
 
     auto subscribeIdByClient = std::make_shared<SubscribeIdByClient>();
-    IVehicleHardware* hardwarePtr = mVehicleHardware.get();
-    mSubscriptionManager = std::make_shared<SubscriptionManager>(hardwarePtr);
+    IVehicleHardware* vehicleHardwarePtr = mVehicleHardware.get();
+    mSubscriptionManager = std::make_shared<SubscriptionManager>(vehicleHardwarePtr);
 
     std::weak_ptr<SubscriptionManager> subscriptionManagerCopy = mSubscriptionManager;
     mVehicleHardware->registerOnPropertyChangeEvent(
@@ -156,20 +144,15 @@ DefaultVehicleHal::DefaultVehicleHal(std::unique_ptr<IVehicleHardware> hardware)
                     [subscriptionManagerCopy](std::vector<VehiclePropValue> updatedValues) {
                         onPropertyChangeEvent(subscriptionManagerCopy, updatedValues);
                     }));
-    mVehicleHardware->registerOnPropertySetErrorEvent(
-            std::make_unique<IVehicleHardware::PropertySetErrorCallback>(
-                    [subscriptionManagerCopy](std::vector<SetValueErrorEvent> errorEvents) {
-                        onPropertySetErrorEvent(subscriptionManagerCopy, errorEvents);
-                    }));
 
     // Register heartbeat event.
-    mRecurrentAction =
-            std::make_shared<std::function<void()>>([hardwarePtr, subscriptionManagerCopy]() {
-                checkHealth(hardwarePtr, subscriptionManagerCopy);
+    mRecurrentAction = std::make_shared<std::function<void()>>(
+            [vehicleHardwarePtr, subscriptionManagerCopy]() {
+                checkHealth(vehicleHardwarePtr, subscriptionManagerCopy);
             });
     mRecurrentTimer.registerTimerCallback(HEART_BEAT_INTERVAL_IN_NANO, mRecurrentAction);
 
-    mBinderImpl = std::make_unique<AIBinderImpl>();
+    mBinderLifecycleHandler = std::make_unique<BinderLifecycleHandler>();
     mOnBinderDiedUnlinkedHandlerThread = std::thread([this] { onBinderDiedUnlinkedHandler(); });
     mDeathRecipient = ScopedAIBinder_DeathRecipient(
             AIBinder_DeathRecipient_new(&DefaultVehicleHal::onBinderDied));
@@ -194,7 +177,7 @@ DefaultVehicleHal::~DefaultVehicleHal() {
 }
 
 void DefaultVehicleHal::onPropertyChangeEvent(
-        const std::weak_ptr<SubscriptionManager>& subscriptionManager,
+        std::weak_ptr<SubscriptionManager> subscriptionManager,
         const std::vector<VehiclePropValue>& updatedValues) {
     auto manager = subscriptionManager.lock();
     if (manager == nullptr) {
@@ -208,20 +191,6 @@ void DefaultVehicleHal::onPropertyChangeEvent(
             values.push_back(*valuePtr);
         }
         SubscriptionClient::sendUpdatedValues(callback, std::move(values));
-    }
-}
-
-void DefaultVehicleHal::onPropertySetErrorEvent(
-        const std::weak_ptr<SubscriptionManager>& subscriptionManager,
-        const std::vector<SetValueErrorEvent>& errorEvents) {
-    auto manager = subscriptionManager.lock();
-    if (manager == nullptr) {
-        ALOGW("the SubscriptionManager is destroyed, DefaultVehicleHal is ending");
-        return;
-    }
-    auto vehiclePropErrorsByClient = manager->getSubscribedClientsForErrorEvents(errorEvents);
-    for (auto& [callback, vehiclePropErrors] : vehiclePropErrorsByClient) {
-        SubscriptionClient::sendPropertySetErrors(callback, std::move(vehiclePropErrors));
     }
 }
 
@@ -239,7 +208,7 @@ std::shared_ptr<T> DefaultVehicleHal::getOrCreateClient(
 bool DefaultVehicleHal::monitorBinderLifeCycleLocked(const AIBinder* clientId) {
     OnBinderDiedContext* contextPtr = nullptr;
     if (mOnBinderDiedContexts.find(clientId) != mOnBinderDiedContexts.end()) {
-        return mBinderImpl->isAlive(clientId);
+        return mBinderLifecycleHandler->isAlive(clientId);
     } else {
         std::unique_ptr<OnBinderDiedContext> context = std::make_unique<OnBinderDiedContext>(
                 OnBinderDiedContext{.vhal = this, .clientId = clientId});
@@ -251,7 +220,7 @@ bool DefaultVehicleHal::monitorBinderLifeCycleLocked(const AIBinder* clientId) {
     }
 
     // If this function fails, onBinderUnlinked would be called to remove the added context.
-    binder_status_t status = mBinderImpl->linkToDeath(
+    binder_status_t status = mBinderLifecycleHandler->linkToDeath(
             const_cast<AIBinder*>(clientId), mDeathRecipient.get(), static_cast<void*>(contextPtr));
     if (status == STATUS_OK) {
         return true;
@@ -265,7 +234,8 @@ void DefaultVehicleHal::onBinderDied(void* cookie) {
     OnBinderDiedContext* context = reinterpret_cast<OnBinderDiedContext*>(cookie);
     // To be handled in mOnBinderDiedUnlinkedHandlerThread. We cannot handle the event in the same
     // thread because we might be holding the mLock the handler requires.
-    context->vhal->mBinderEvents.push(BinderDiedUnlinkedEvent{true, context->clientId});
+    context->vhal->mBinderEvents.push(
+            BinderDiedUnlinkedEvent{/*forOnBinderDied=*/true, context->clientId});
 }
 
 void DefaultVehicleHal::onBinderDiedWithContext(const AIBinder* clientId) {
@@ -281,7 +251,8 @@ void DefaultVehicleHal::onBinderUnlinked(void* cookie) {
     OnBinderDiedContext* context = reinterpret_cast<OnBinderDiedContext*>(cookie);
     // To be handled in mOnBinderDiedUnlinkedHandlerThread. We cannot handle the event in the same
     // thread because we might be holding the mLock the handler requires.
-    context->vhal->mBinderEvents.push(BinderDiedUnlinkedEvent{false, context->clientId});
+    context->vhal->mBinderEvents.push(
+            BinderDiedUnlinkedEvent{/*forOnBinderDied=*/false, context->clientId});
 }
 
 void DefaultVehicleHal::onBinderUnlinkedWithContext(const AIBinder* clientId) {
@@ -294,7 +265,7 @@ void DefaultVehicleHal::onBinderUnlinkedWithContext(const AIBinder* clientId) {
 void DefaultVehicleHal::onBinderDiedUnlinkedHandler() {
     while (mBinderEvents.waitForItems()) {
         for (BinderDiedUnlinkedEvent& event : mBinderEvents.flush()) {
-            if (event.onBinderDied) {
+            if (event.forOnBinderDied) {
                 onBinderDiedWithContext(event.clientId);
             } else {
                 onBinderUnlinkedWithContext(event.clientId);
@@ -318,6 +289,27 @@ DefaultVehicleHal::getOrCreateClient<SubscriptionClient>(
 
 void DefaultVehicleHal::setTimeout(int64_t timeoutInNano) {
     mPendingRequestPool = std::make_unique<PendingRequestPool>(timeoutInNano);
+}
+
+bool DefaultVehicleHal::getAllPropConfigsFromHardware() {
+    auto configs = mVehicleHardware->getAllPropertyConfigs();
+    for (auto& config : configs) {
+        mConfigsByPropId[config.prop] = config;
+    }
+    VehiclePropConfigs vehiclePropConfigs;
+    vehiclePropConfigs.payloads = std::move(configs);
+    auto result = LargeParcelableBase::parcelableToStableLargeParcelable(vehiclePropConfigs);
+    if (!result.ok()) {
+        ALOGE("failed to convert configs to shared memory file, error: %s, code: %d",
+              result.error().message().c_str(), static_cast<int>(result.error().code()));
+        mConfigFile = nullptr;
+        return false;
+    }
+
+    if (result.value() != nullptr) {
+        mConfigFile = std::move(result.value());
+    }
+    return true;
 }
 
 ScopedAStatus DefaultVehicleHal::getAllPropConfigs(VehiclePropConfigs* output) {
@@ -368,6 +360,10 @@ Result<void> DefaultVehicleHal::checkProperty(const VehiclePropValue& propValue)
 
 ScopedAStatus DefaultVehicleHal::getValues(const CallbackType& callback,
                                            const GetValueRequests& requests) {
+    ATRACE_CALL();
+    if (callback == nullptr) {
+        return ScopedAStatus::fromExceptionCode(EX_NULL_POINTER);
+    }
     expected<LargeParcelableBase::BorrowedOwnedObject<GetValueRequests>, ScopedAStatus>
             deserializedResults = fromStableLargeParcelable(requests);
     if (!deserializedResults.ok()) {
@@ -451,6 +447,10 @@ ScopedAStatus DefaultVehicleHal::getValues(const CallbackType& callback,
 
 ScopedAStatus DefaultVehicleHal::setValues(const CallbackType& callback,
                                            const SetValueRequests& requests) {
+    ATRACE_CALL();
+    if (callback == nullptr) {
+        return ScopedAStatus::fromExceptionCode(EX_NULL_POINTER);
+    }
     expected<LargeParcelableBase::BorrowedOwnedObject<SetValueRequests>, ScopedAStatus>
             deserializedResults = fromStableLargeParcelable(requests);
     if (!deserializedResults.ok()) {
@@ -608,18 +608,20 @@ VhalResult<void> DefaultVehicleHal::checkSubscribeOptions(
         }
 
         if (config.changeMode == VehiclePropertyChangeMode::CONTINUOUS) {
-            float sampleRate = option.sampleRate;
-            float minSampleRate = config.minSampleRate;
-            float maxSampleRate = config.maxSampleRate;
-            if (sampleRate < minSampleRate || sampleRate > maxSampleRate) {
-                float defaultRate = getDefaultSampleRate(sampleRate, minSampleRate, maxSampleRate);
-                ALOGW("sample rate: %f out of range, must be within %f and %f, set to %f",
-                      sampleRate, minSampleRate, maxSampleRate, defaultRate);
-                sampleRate = defaultRate;
+            float sampleRateHz = option.sampleRate;
+            float minSampleRateHz = config.minSampleRate;
+            float maxSampleRateHz = config.maxSampleRate;
+            float defaultRateHz =
+                    getDefaultSampleRateHz(sampleRateHz, minSampleRateHz, maxSampleRateHz);
+            if (sampleRateHz != defaultRateHz) {
+                ALOGW("sample rate: %f HZ out of range, must be within %f HZ and %f HZ , set to %f "
+                      "HZ",
+                      sampleRateHz, minSampleRateHz, maxSampleRateHz, defaultRateHz);
+                sampleRateHz = defaultRateHz;
             }
-            if (!SubscriptionManager::checkSampleRate(sampleRate)) {
+            if (!SubscriptionManager::checkSampleRateHz(sampleRateHz)) {
                 return StatusError(StatusCode::INVALID_ARG)
-                       << "invalid sample rate: " << sampleRate;
+                       << "invalid sample rate: " << sampleRateHz << " HZ";
             }
         }
 
@@ -644,11 +646,13 @@ ScopedAStatus DefaultVehicleHal::subscribe(const CallbackType& callback,
                                            const std::vector<SubscribeOptions>& options,
                                            [[maybe_unused]] int32_t maxSharedMemoryFileCount) {
     // TODO(b/205189110): Use shared memory file count.
+    if (callback == nullptr) {
+        return ScopedAStatus::fromExceptionCode(EX_NULL_POINTER);
+    }
     if (auto result = checkSubscribeOptions(options); !result.ok()) {
         ALOGE("subscribe: invalid subscribe options: %s", getErrorMsg(result).c_str());
         return toScopedAStatus(result);
     }
-
     std::vector<SubscribeOptions> onChangeSubscriptions;
     std::vector<SubscribeOptions> continuousSubscriptions;
     for (const auto& option : options) {
@@ -669,7 +673,7 @@ ScopedAStatus DefaultVehicleHal::subscribe(const CallbackType& callback,
         }
 
         if (config.changeMode == VehiclePropertyChangeMode::CONTINUOUS) {
-            optionCopy.sampleRate = getDefaultSampleRate(
+            optionCopy.sampleRate = getDefaultSampleRateHz(
                     optionCopy.sampleRate, config.minSampleRate, config.maxSampleRate);
             continuousSubscriptions.push_back(std::move(optionCopy));
         } else {
@@ -688,19 +692,15 @@ ScopedAStatus DefaultVehicleHal::subscribe(const CallbackType& callback,
         // Create a new SubscriptionClient if there isn't an existing one.
         mSubscriptionClients->maybeAddClient(callback);
 
+        // Since we have already check the sample rates, the following functions must succeed.
         if (!onChangeSubscriptions.empty()) {
-            auto result = mSubscriptionManager->subscribe(callback, onChangeSubscriptions,
-                                                          /*isContinuousProperty=*/false);
-            if (!result.ok()) {
-                return toScopedAStatus(result);
-            }
+            return toScopedAStatus(mSubscriptionManager->subscribe(callback, onChangeSubscriptions,
+                                                                   /*isContinuousProperty=*/false));
         }
         if (!continuousSubscriptions.empty()) {
-            auto result = mSubscriptionManager->subscribe(callback, continuousSubscriptions,
-                                                          /*isContinuousProperty=*/true);
-            if (!result.ok()) {
-                return toScopedAStatus(result);
-            }
+            return toScopedAStatus(mSubscriptionManager->subscribe(callback,
+                                                                   continuousSubscriptions,
+                                                                   /*isContinuousProperty=*/true));
         }
     }
     return ScopedAStatus::ok();
@@ -708,6 +708,9 @@ ScopedAStatus DefaultVehicleHal::subscribe(const CallbackType& callback,
 
 ScopedAStatus DefaultVehicleHal::unsubscribe(const CallbackType& callback,
                                              const std::vector<int32_t>& propIds) {
+    if (callback == nullptr) {
+        return ScopedAStatus::fromExceptionCode(EX_NULL_POINTER);
+    }
     return toScopedAStatus(mSubscriptionManager->unsubscribe(callback->asBinder().get(), propIds));
 }
 
@@ -752,9 +755,9 @@ VhalResult<void> DefaultVehicleHal::checkReadPermission(const VehiclePropValue& 
     return {};
 }
 
-void DefaultVehicleHal::checkHealth(IVehicleHardware* hardware,
+void DefaultVehicleHal::checkHealth(IVehicleHardware* vehicleHardware,
                                     std::weak_ptr<SubscriptionManager> subscriptionManager) {
-    StatusCode status = hardware->checkHealth();
+    StatusCode status = vehicleHardware->checkHealth();
     if (status != StatusCode::OK) {
         ALOGE("VHAL check health returns non-okay status");
         return;
@@ -769,18 +772,18 @@ void DefaultVehicleHal::checkHealth(IVehicleHardware* hardware,
     return;
 }
 
-binder_status_t DefaultVehicleHal::AIBinderImpl::linkToDeath(AIBinder* binder,
-                                                             AIBinder_DeathRecipient* recipient,
-                                                             void* cookie) {
+binder_status_t DefaultVehicleHal::BinderLifecycleHandler::linkToDeath(
+        AIBinder* binder, AIBinder_DeathRecipient* recipient, void* cookie) {
     return AIBinder_linkToDeath(binder, recipient, cookie);
 }
 
-bool DefaultVehicleHal::AIBinderImpl::isAlive(const AIBinder* binder) {
+bool DefaultVehicleHal::BinderLifecycleHandler::isAlive(const AIBinder* binder) {
     return AIBinder_isAlive(binder);
 }
 
-void DefaultVehicleHal::setBinderImpl(std::unique_ptr<IBinder> impl) {
-    mBinderImpl = std::move(impl);
+void DefaultVehicleHal::setBinderLifecycleHandler(
+        std::unique_ptr<BinderLifecycleInterface> handler) {
+    mBinderLifecycleHandler = std::move(handler);
 }
 
 bool DefaultVehicleHal::checkDumpPermission() {
@@ -798,10 +801,16 @@ binder_status_t DefaultVehicleHal::dump(int fd, const char** args, uint32_t numA
     for (uint32_t i = 0; i < numArgs; i++) {
         options.push_back(args[i]);
     }
+    if (options.size() == 1 && options[0] == "-a") {
+        // Ignore "-a" option. Bugreport will call with this option.
+        options.clear();
+    }
     DumpResult result = mVehicleHardware->dump(options);
+    if (result.refreshPropertyConfigs) {
+        getAllPropConfigsFromHardware();
+    }
     dprintf(fd, "%s", (result.buffer + "\n").c_str());
     if (!result.callerShouldDumpState) {
-        dprintf(fd, "Skip dumping Vehicle HAL State.\n");
         return STATUS_OK;
     }
     dprintf(fd, "Vehicle HAL State: \n");

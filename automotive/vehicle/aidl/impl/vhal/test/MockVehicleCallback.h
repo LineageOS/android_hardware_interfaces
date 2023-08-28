@@ -22,6 +22,7 @@
 #include <aidl/android/hardware/automotive/vehicle/BnVehicleCallback.h>
 #include <android-base/thread_annotations.h>
 
+#include <condition_variable>
 #include <list>
 #include <mutex>
 #include <optional>
@@ -62,13 +63,13 @@ class MockVehicleCallback final
     nextSetValueResults();
     std::optional<aidl::android::hardware::automotive::vehicle::VehiclePropValues>
     nextOnPropertyEventResults();
-    size_t countOnPropertySetErrorResults();
-    std::optional<aidl::android::hardware::automotive::vehicle::VehiclePropErrors>
-    nextOnPropertySetErrorResults();
     size_t countOnPropertyEventResults();
+    bool waitForSetValueResults(size_t size, size_t timeoutInNano);
+    bool waitForGetValueResults(size_t size, size_t timeoutInNano);
 
   private:
     std::mutex mLock;
+    std::condition_variable mCond;
     std::list<aidl::android::hardware::automotive::vehicle::GetValueResults> mGetValueResults
             GUARDED_BY(mLock);
     std::list<aidl::android::hardware::automotive::vehicle::SetValueResults> mSetValueResults
@@ -76,8 +77,6 @@ class MockVehicleCallback final
     std::list<aidl::android::hardware::automotive::vehicle::VehiclePropValues>
             mOnPropertyEventResults GUARDED_BY(mLock);
     int32_t mSharedMemoryFileCount GUARDED_BY(mLock);
-    std::list<aidl::android::hardware::automotive::vehicle::VehiclePropErrors>
-            mOnPropertySetErrorResults GUARDED_BY(mLock);
 };
 
 }  // namespace vehicle

@@ -561,9 +561,14 @@ TEST_P(SensorsAidlTest, SensorListValid) {
             EXPECT_NO_FATAL_FAILURE(assertTypeMatchStringType(info.type, info.typeAsString));
         }
 
-        // Test if all sensor has name and vendor
+        // Test if all sensors have name and vendor
         EXPECT_FALSE(info.name.empty());
         EXPECT_FALSE(info.vendor.empty());
+
+        // Make sure that the sensor handle is not within the reserved range for runtime
+        // sensors.
+        EXPECT_FALSE(ISensors::RUNTIME_SENSORS_HANDLE_BASE <= info.sensorHandle &&
+                     info.sensorHandle <= ISensors::RUNTIME_SENSORS_HANDLE_END);
 
         // Make sure that sensors of the same type have a unique name.
         std::vector<std::string>& v = sensorTypeNameMap[static_cast<int32_t>(info.type)];

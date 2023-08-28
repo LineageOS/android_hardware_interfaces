@@ -323,3 +323,41 @@ void DvrTests::closeDvrRecord() {
     ASSERT_TRUE(mDvrRecord);
     ASSERT_TRUE(mDvrRecord->close().isOk());
 }
+
+AssertionResult DvrTests::setPlaybackStatusCheckIntervalHint(int64_t milliseconds) {
+    ndk::ScopedAStatus status;
+    EXPECT_TRUE(mDemux) << "Test with openDemux first.";
+    EXPECT_TRUE(mDvrPlayback) << "Test with openDvr first.";
+
+    status = mDvrPlayback->setStatusCheckIntervalHint(milliseconds);
+
+    if (getDvrPlaybackInterfaceVersion() < 2) {
+        return AssertionResult(status.getStatus() == STATUS_UNKNOWN_TRANSACTION);
+    }
+    return AssertionResult(status.isOk());
+}
+
+AssertionResult DvrTests::setRecordStatusCheckIntervalHint(int64_t milliseconds) {
+    ndk::ScopedAStatus status;
+    EXPECT_TRUE(mDemux) << "Test with openDemux first.";
+    EXPECT_TRUE(mDvrRecord) << "Test with openDvr first.";
+
+    status = mDvrRecord->setStatusCheckIntervalHint(milliseconds);
+
+    if (getDvrRecordInterfaceVersion() < 2) {
+        return AssertionResult(status.getStatus() == STATUS_UNKNOWN_TRANSACTION);
+    }
+    return AssertionResult(status.isOk());
+}
+
+int32_t DvrTests::getDvrPlaybackInterfaceVersion() {
+    int32_t version;
+    mDvrPlayback->getInterfaceVersion(&version);
+    return version;
+}
+
+int32_t DvrTests::getDvrRecordInterfaceVersion() {
+    int32_t version;
+    mDvrRecord->getInterfaceVersion(&version);
+    return version;
+}

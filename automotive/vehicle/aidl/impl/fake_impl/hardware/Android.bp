@@ -24,6 +24,7 @@ cc_library {
     srcs: ["src/*.cpp"],
     local_include_dirs: ["include"],
     export_include_dirs: ["include"],
+    cflags: ["-DENABLE_VEHICLE_HAL_TEST_PROPERTIES"],
     defaults: [
         "VehicleHalDefaults",
         "FakeVehicleHardwareDefaults",
@@ -32,17 +33,22 @@ cc_library {
 
 cc_defaults {
     name: "FakeVehicleHardwareDefaults",
-    cflags: ["-DENABLE_VENDOR_CLUSTER_PROPERTY_FOR_TESTING"],
     header_libs: [
         "IVehicleHardware",
-        "VehicleHalDefaultConfig",
+        "VehicleHalTestUtilHeaders",
     ],
     export_header_lib_headers: ["IVehicleHardware"],
     static_libs: [
+        "VehicleHalJsonConfigLoaderEnableTestProperties",
         "VehicleHalUtils",
         "FakeVehicleHalValueGenerators",
         "FakeObd2Frame",
         "FakeUserHal",
+    ],
+    required: [
+        "Prebuilt_VehicleHalDefaultProperties_JSON",
+        "Prebuilt_VehicleHalTestProperties_JSON",
+        "Prebuilt_VehicleHalVendorClusterTestProperties_JSON",
     ],
     shared_libs: [
         "libjsoncpp",

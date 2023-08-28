@@ -46,4 +46,58 @@ void ifla_cacheinfoToStream(std::stringstream& ss, const Buffer<nlattr> attr) {
        << data.retrans_time << '}';
 }
 
+// clang-format off
+std::string familyToString(sa_family_t family) {
+    switch (family) {
+        case AF_UNSPEC: return "UNSPEC";
+        case AF_UNIX: return "UNIX";
+        case AF_INET: return "INET";
+        case AF_AX25: return "AX25";
+        case AF_IPX: return "IPX";
+        case AF_APPLETALK: return "APPLETALK";
+        case AF_NETROM: return "NETROM";
+        case AF_BRIDGE: return "BRIDGE";
+        case AF_ATMPVC: return "ATMPVC";
+        case AF_X25: return "X25";
+        case AF_INET6: return "INET6";
+        case AF_ROSE: return "ROSE";
+        case AF_DECnet: return "DECnet";
+        case AF_NETBEUI: return "NETBEUI";
+        case AF_SECURITY: return "SECURITY";
+        case AF_KEY: return "KEY";
+        case AF_NETLINK: return "NETLINK";
+        case AF_PACKET: return "PACKET";
+        case AF_ASH: return "ASH";
+        case AF_ECONET: return "ECONET";
+        case AF_ATMSVC: return "ATMSVC";
+        case AF_RDS: return "RDS";
+        case AF_SNA: return "SNA";
+        case AF_IRDA: return "IRDA";
+        case AF_PPPOX: return "PPPOX";
+        case AF_WANPIPE: return "WANPIPE";
+        case AF_LLC: return "LLC";
+        case 27 /*AF_IB*/: return "IB";
+        case 28 /*AF_MPLS*/: return "MPLS";
+        case AF_CAN: return "CAN";
+        case AF_TIPC: return "TIPC";
+        case AF_BLUETOOTH: return "BLUETOOTH";
+        case AF_IUCV: return "IUCV";
+        case AF_RXRPC: return "RXRPC";
+        case AF_ISDN: return "ISDN";
+        case AF_PHONET: return "PHONET";
+        case AF_IEEE802154: return "IEEE802154";
+        case AF_CAIF: return "CAIF";
+        case AF_ALG: return "ALG";
+        case AF_NFC: return "NFC";
+        case AF_VSOCK: return "VSOCK";
+        case AF_KCM: return "KCM";
+        case AF_QIPCRTR: return "QIPCRTR";
+        case 43 /*AF_SMC*/: return "SMC";
+        case 44 /*AF_XDP*/: return "XDP";
+        default:
+            return std::to_string(family);
+    }
+}
+// clang-format on
+
 }  // namespace android::nl::protocols::route

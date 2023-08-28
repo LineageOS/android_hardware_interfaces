@@ -1,0 +1,4 @@
+LIBIMAPPER { # introduced=UpsideDownCake
+  global:
+    AIMapper_loadIMapper;
+}

@@ -62,9 +62,36 @@ using namespace std;
 using namespace aidl::android::hardware::tv::tuner;
 using namespace android::media::tuner::testing::configuration::V1_0;
 
+static bool hasHwFe = false;
+static bool hasSwFe = false;
+static bool configFileRead = false;
+static bool configuredLive = false;
+static bool configuredScan = false;
+static bool configuredRecord = false;
+static bool configuredLnbLive = false;
+static bool configuredPlayback = false;
+static bool configuredLnbRecord = false;
+static bool configuredTimeFilter = false;
+static bool configuredDescrambling = false;
+static bool configuredLnbDescrambling = false;
+
 const string emptyHardwareId = "";
 
 static string mConfigFilePath;
+
+static vector<string> playbackDvrIds;
+static vector<string> ipFilterIds;
+static vector<string> recordDvrIds;
+static vector<string> pcrFilterIds;
+static vector<string> timeFilterIds;
+static vector<string> audioFilterIds;
+static vector<string> videoFilterIds;
+static vector<string> recordFilterIds;
+static vector<string> sectionFilterIds;
+static vector<string> frontendIds;
+static vector<string> lnbIds;
+static vector<string> diseqcMsgs;
+static vector<string> descramblerIds;
 
 #define PROVISION_STR                                      \
     "{                                                   " \
@@ -137,6 +164,7 @@ struct LiveBroadcastHardwareConnections {
     string ipFilterId;
     string pcrFilterId;
     /* list string of extra filters; */
+    vector<string> extraFilters;
 };
 
 struct ScanHardwareConnections {
@@ -146,12 +174,13 @@ struct ScanHardwareConnections {
 
 struct DvrPlaybackHardwareConnections {
     bool support;
+    bool hasExtraFilters = false;
     string frontendId;
     string dvrId;
     string audioFilterId;
     string videoFilterId;
     string sectionFilterId;
-    /* list string of extra filters; */
+    vector<string> extraFilters;
 };
 
 struct DvrRecordHardwareConnections {
@@ -173,7 +202,7 @@ struct DescramblingHardwareConnections {
     string videoFilterId;
     string descramblerId;
     string dvrSourceId;
-    /* list string of extra filters; */
+    vector<string> extraFilters;
 };
 
 struct LnbLiveHardwareConnections {
@@ -183,7 +212,7 @@ struct LnbLiveHardwareConnections {
     string videoFilterId;
     string lnbId;
     vector<string> diseqcMsgs;
-    /* list string of extra filters; */
+    vector<string> extraFilters;
 };
 
 struct LnbRecordHardwareConnections {
@@ -193,12 +222,22 @@ struct LnbRecordHardwareConnections {
     string recordFilterId;
     string lnbId;
     vector<string> diseqcMsgs;
-    /* list string of extra filters; */
+    vector<string> extraFilters;
 };
 
 struct TimeFilterHardwareConnections {
     bool support;
     string timeFilterId;
+};
+
+struct LnbDescramblingHardwareConnections {
+    bool support;
+    string frontendId;
+    string audioFilterId;
+    string videoFilterId;
+    string lnbId;
+    string descramblerId;
+    vector<string> diseqcMsgs;
 };
 
 struct TunerTestingConfigAidlReader1_0 {
@@ -248,6 +287,7 @@ struct TunerTestingConfigAidlReader1_0 {
             auto frontends = *hardwareConfig.getFirstFrontends();
             for (auto feConfig : frontends.getFrontend()) {
                 string id = feConfig.getId();
+                frontendIds.push_back(id);
                 if (id.compare(string("FE_DEFAULT")) == 0) {
                     // overrid default
                     frontendMap.erase(string("FE_DEFAULT"));
@@ -263,6 +303,9 @@ struct TunerTestingConfigAidlReader1_0 {
                         break;
                     case FrontendTypeEnum::ATSC:
                         type = FrontendType::ATSC;
+                        frontendMap[id].settings.set<
+                            FrontendSettings::Tag::atsc>(
+                                readAtscFrontendSettings(feConfig));
                         break;
                     case FrontendTypeEnum::ATSC3:
                         type = FrontendType::ATSC3;
@@ -283,12 +326,16 @@ struct TunerTestingConfigAidlReader1_0 {
                     }
                     case FrontendTypeEnum::ISDBS:
                         type = FrontendType::ISDBS;
+                        frontendMap[id].settings.set<FrontendSettings::Tag::isdbs>(
+                                readIsdbsFrontendSettings(feConfig));
                         break;
                     case FrontendTypeEnum::ISDBS3:
                         type = FrontendType::ISDBS3;
                         break;
                     case FrontendTypeEnum::ISDBT:
                         type = FrontendType::ISDBT;
+                        frontendMap[id].settings.set<FrontendSettings::Tag::isdbt>(
+                                readIsdbtFrontendSettings(feConfig));
                         break;
                     case FrontendTypeEnum::DTMB:
                         type = FrontendType::DTMB;
@@ -302,6 +349,11 @@ struct TunerTestingConfigAidlReader1_0 {
                 }
                 frontendMap[id].type = type;
                 frontendMap[id].isSoftwareFe = feConfig.getIsSoftwareFrontend();
+                if (frontendMap[id].isSoftwareFe) {
+                    hasSwFe = true;
+                } else {
+                    hasHwFe = true;
+                }
                 // TODO: b/182519645 complete the tune status config
                 frontendMap[id].tuneStatusTypes = types;
                 frontendMap[id].expectTuneStatuses = statuses;
@@ -376,11 +428,13 @@ struct TunerTestingConfigAidlReader1_0 {
                 DvrType type;
                 switch (dvrConfig.getType()) {
                     case DvrTypeEnum::PLAYBACK:
+                        playbackDvrIds.push_back(id);
                         type = DvrType::PLAYBACK;
                         dvrMap[id].settings.set<DvrSettings::Tag::playback>(
                                 readPlaybackSettings(dvrConfig));
                         break;
                     case DvrTypeEnum::RECORD:
+                        recordDvrIds.push_back(id);
                         type = DvrType::RECORD;
                         dvrMap[id].settings.set<DvrSettings::Tag::record>(
                                 readRecordSettings(dvrConfig));
@@ -404,6 +458,7 @@ struct TunerTestingConfigAidlReader1_0 {
             auto lnbs = *hardwareConfig.getFirstLnbs();
             for (auto lnbConfig : lnbs.getLnb()) {
                 string id = lnbConfig.getId();
+                lnbIds.push_back(id);
                 if (lnbConfig.hasName()) {
                     lnbMap[id].name = lnbConfig.getName();
                 } else {
@@ -422,6 +477,7 @@ struct TunerTestingConfigAidlReader1_0 {
             auto descramblers = *hardwareConfig.getFirstDescramblers();
             for (auto descramblerConfig : descramblers.getDescrambler()) {
                 string id = descramblerConfig.getId();
+                descramblerIds.push_back(id);
                 descramblerMap[id].casSystemId =
                         static_cast<int32_t>(descramblerConfig.getCasSystemId());
                 if (descramblerConfig.hasProvisionStr()) {
@@ -447,6 +503,7 @@ struct TunerTestingConfigAidlReader1_0 {
             auto msgs = *hardwareConfig.getFirstDiseqcMessages();
             for (auto msgConfig : msgs.getDiseqcMessage()) {
                 string name = msgConfig.getMsgName();
+                diseqcMsgs.push_back(name);
                 for (uint8_t atom : msgConfig.getMsgBody()) {
                     diseqcMsgMap[name].push_back(atom);
                 }
@@ -460,6 +517,7 @@ struct TunerTestingConfigAidlReader1_0 {
             auto timeFilters = *hardwareConfig.getFirstTimeFilters();
             for (auto timeFilterConfig : timeFilters.getTimeFilter()) {
                 string id = timeFilterConfig.getId();
+                timeFilterIds.push_back(id);
                 timeFilterMap[id].timeStamp = static_cast<int64_t>(timeFilterConfig.getTimeStamp());
             }
         }
@@ -469,6 +527,7 @@ struct TunerTestingConfigAidlReader1_0 {
         auto dataFlow = getDataFlowConfiguration();
         if (dataFlow.hasClearLiveBroadcast()) {
             live.hasFrontendConnection = true;
+            configuredLive = true;
         } else {
             live.hasFrontendConnection = false;
             return;
@@ -496,12 +555,17 @@ struct TunerTestingConfigAidlReader1_0 {
         } else {
             live.ipFilterId = emptyHardwareId;
         }
+        if (liveConfig.hasOptionalFilters()) {
+            auto optionalFilters = liveConfig.getOptionalFilters();
+            live.extraFilters = optionalFilters;
+        }
     }
 
     static void connectScan(ScanHardwareConnections& scan) {
         auto dataFlow = getDataFlowConfiguration();
         if (dataFlow.hasScan()) {
             scan.hasFrontendConnection = true;
+            configuredScan = true;
         } else {
             scan.hasFrontendConnection = false;
             return;
@@ -514,6 +578,7 @@ struct TunerTestingConfigAidlReader1_0 {
         auto dataFlow = getDataFlowConfiguration();
         if (dataFlow.hasDvrPlayback()) {
             playback.support = true;
+            configuredPlayback = true;
         } else {
             playback.support = false;
             return;
@@ -527,12 +592,17 @@ struct TunerTestingConfigAidlReader1_0 {
         } else {
             playback.sectionFilterId = emptyHardwareId;
         }
+        if (playbackConfig.hasOptionalFilters()) {
+            auto optionalFilters = playbackConfig.getOptionalFilters();
+            playback.extraFilters = optionalFilters;
+        }
     }
 
     static void connectDvrRecord(DvrRecordHardwareConnections& record) {
         auto dataFlow = getDataFlowConfiguration();
         if (dataFlow.hasDvrRecord()) {
             record.support = true;
+            configuredRecord = true;
         } else {
             record.support = false;
             return;
@@ -557,6 +627,7 @@ struct TunerTestingConfigAidlReader1_0 {
         auto dataFlow = getDataFlowConfiguration();
         if (dataFlow.hasDescrambling()) {
             descrambling.support = true;
+            configuredDescrambling = true;
         } else {
             descrambling.support = false;
             return;
@@ -576,12 +647,17 @@ struct TunerTestingConfigAidlReader1_0 {
             descrambling.hasFrontendConnection = false;
             descrambling.dvrSourceId = descConfig.getDvrSourceConnection();
         }
+        if (descConfig.hasOptionalFilters()) {
+            auto optionalFilters = descConfig.getOptionalFilters();
+            descrambling.extraFilters = optionalFilters;
+        }
     }
 
     static void connectLnbLive(LnbLiveHardwareConnections& lnbLive) {
         auto dataFlow = getDataFlowConfiguration();
         if (dataFlow.hasLnbLive()) {
             lnbLive.support = true;
+            configuredLnbLive = true;
         } else {
             lnbLive.support = false;
             return;
@@ -596,12 +672,17 @@ struct TunerTestingConfigAidlReader1_0 {
                 lnbLive.diseqcMsgs.push_back(msgName);
             }
         }
+        if (lnbLiveConfig.hasOptionalFilters()) {
+            auto optionalFilters = lnbLiveConfig.getOptionalFilters();
+            lnbLive.extraFilters = optionalFilters;
+        }
     }
 
     static void connectLnbRecord(LnbRecordHardwareConnections& lnbRecord) {
         auto dataFlow = getDataFlowConfiguration();
         if (dataFlow.hasLnbRecord()) {
             lnbRecord.support = true;
+            configuredLnbRecord = true;
         } else {
             lnbRecord.support = false;
             return;
@@ -616,18 +697,45 @@ struct TunerTestingConfigAidlReader1_0 {
                 lnbRecord.diseqcMsgs.push_back(msgName);
             }
         }
+        if (lnbRecordConfig.hasOptionalFilters()) {
+            auto optionalFilters = lnbRecordConfig.getOptionalFilters();
+            lnbRecord.extraFilters = optionalFilters;
+        }
     }
 
     static void connectTimeFilter(TimeFilterHardwareConnections& timeFilter) {
         auto dataFlow = getDataFlowConfiguration();
         if (dataFlow.hasTimeFilter()) {
             timeFilter.support = true;
+            configuredTimeFilter = true;
         } else {
             timeFilter.support = false;
             return;
         }
         auto timeFilterConfig = *dataFlow.getFirstTimeFilter();
         timeFilter.timeFilterId = timeFilterConfig.getTimeFilterConnection();
+    }
+
+    static void connectLnbDescrambling(LnbDescramblingHardwareConnections& lnbDescrambling) {
+        auto dataFlow = getDataFlowConfiguration();
+        if (dataFlow.hasLnbDescrambling()) {
+            lnbDescrambling.support = true;
+            configuredLnbDescrambling = true;
+        } else {
+            lnbDescrambling.support = false;
+            return;
+        }
+        auto lnbDescramblingConfig = *dataFlow.getFirstLnbDescrambling();
+        lnbDescrambling.frontendId = lnbDescramblingConfig.getFrontendConnection();
+        lnbDescrambling.audioFilterId = lnbDescramblingConfig.getAudioFilterConnection();
+        lnbDescrambling.videoFilterId = lnbDescramblingConfig.getVideoFilterConnection();
+        lnbDescrambling.lnbId = lnbDescramblingConfig.getLnbConnection();
+        lnbDescrambling.descramblerId = lnbDescramblingConfig.getDescramblerConnection();
+        if (lnbDescramblingConfig.hasDiseqcMsgSender()) {
+            for (auto& msgName : lnbDescramblingConfig.getDiseqcMsgSender()) {
+                lnbDescrambling.diseqcMsgs.push_back(msgName);
+            }
+        }
     }
 
   private:
@@ -677,24 +785,114 @@ struct TunerTestingConfigAidlReader1_0 {
             ALOGW("[ConfigReader] no more dvbs settings");
             return dvbsSettings;
         }
-        dvbsSettings.symbolRate = static_cast<int32_t>(
-                feConfig.getFirstDvbsFrontendSettings_optional()->getSymbolRate());
-        dvbsSettings.inputStreamId = static_cast<int32_t>(
-                feConfig.getFirstDvbsFrontendSettings_optional()->getInputStreamId());
         auto dvbs = feConfig.getFirstDvbsFrontendSettings_optional();
-        if (dvbs->hasScanType()) {
-            dvbsSettings.scanType = static_cast<FrontendDvbsScanType>(dvbs->getScanType());
-        }
-        if (dvbs->hasIsDiseqcRxMessage()) {
-            dvbsSettings.isDiseqcRxMessage = dvbs->getIsDiseqcRxMessage();
-        }
+        dvbsSettings.symbolRate = static_cast<int32_t>(dvbs->getSymbolRate());
+        dvbsSettings.inputStreamId = static_cast<int32_t>(dvbs->getInputStreamId());
+        dvbsSettings.scanType = static_cast<FrontendDvbsScanType>(dvbs->getScanType());
+        dvbsSettings.isDiseqcRxMessage = dvbs->getIsDiseqcRxMessage();
+        dvbsSettings.inversion = static_cast<FrontendSpectralInversion>(dvbs->getInversion());
+        dvbsSettings.modulation = static_cast<FrontendDvbsModulation>(dvbs->getModulation());
+        dvbsSettings.rolloff = static_cast<FrontendDvbsRolloff>(dvbs->getRolloff());
+        dvbsSettings.pilot = static_cast<FrontendDvbsPilot>(dvbs->getPilot());
+        dvbsSettings.standard = static_cast<FrontendDvbsStandard>(dvbs->getStandard());
+        dvbsSettings.vcmMode = static_cast<FrontendDvbsVcmMode>(dvbs->getVcmMode());
         return dvbsSettings;
+    }
+
+    static FrontendAtscSettings readAtscFrontendSettings(Frontend& feConfig) {
+        ALOGW("[ConfigReader] fe type is atsc");
+        FrontendAtscSettings atscSettings{
+                .frequency = (int64_t)feConfig.getFrequency(),
+        };
+        if (feConfig.hasEndFrequency()) {
+            atscSettings.endFrequency = (int64_t)feConfig.getEndFrequency();
+        }
+        if (!feConfig.hasAtscFrontendSettings_optional()) {
+            ALOGW("[ConfigReader] no more atsc settings");
+            return atscSettings;
+        }
+        auto atsc = feConfig.getFirstAtscFrontendSettings_optional();
+        atscSettings.inversion = static_cast<FrontendSpectralInversion>(atsc->getInversion());
+        atscSettings.modulation = static_cast<FrontendAtscModulation>(atsc->getModulation());
+        return atscSettings;
+    }
+
+    static FrontendIsdbsSettings readIsdbsFrontendSettings(Frontend& feConfig) {
+        ALOGW("[ConfigReader] fe type is isdbs");
+        FrontendIsdbsSettings isdbsSettings{.frequency = (int64_t)feConfig.getFrequency()};
+        if (feConfig.hasEndFrequency()) {
+            isdbsSettings.endFrequency = (int64_t)feConfig.getEndFrequency();
+        }
+        if (!feConfig.hasIsdbsFrontendSettings_optional()) {
+            ALOGW("[ConfigReader] no more isdbs settings");
+            return isdbsSettings;
+        }
+        auto isdbs = feConfig.getFirstIsdbsFrontendSettings_optional();
+        isdbsSettings.streamId = (int32_t)isdbs->getStreamId();
+        isdbsSettings.symbolRate = (int32_t)isdbs->getSymbolRate();
+        isdbsSettings.modulation = static_cast<FrontendIsdbsModulation>(isdbs->getModulation());
+        isdbsSettings.coderate = static_cast<FrontendIsdbsCoderate>(isdbs->getCoderate());
+        isdbsSettings.rolloff = static_cast<FrontendIsdbsRolloff>(isdbs->getRolloff());
+        isdbsSettings.streamIdType =
+                static_cast<FrontendIsdbsStreamIdType>(isdbs->getStreamIdType());
+        return isdbsSettings;
+    }
+
+    static FrontendIsdbtSettings readIsdbtFrontendSettings(Frontend& feConfig) {
+        ALOGW("[ConfigReader] fe type is isdbt");
+        FrontendIsdbtSettings isdbtSettings{
+                .frequency = (int64_t)feConfig.getFrequency(),
+        };
+        if (feConfig.hasEndFrequency()) {
+            isdbtSettings.endFrequency = (int64_t)feConfig.getEndFrequency();
+        }
+        if (!feConfig.hasIsdbtFrontendSettings_optional()) {
+            ALOGW("[ConfigReader] no more isdbt settings");
+            return isdbtSettings;
+        }
+        auto isdbt = feConfig.getFirstIsdbtFrontendSettings_optional();
+        isdbtSettings.inversion = static_cast<FrontendSpectralInversion>(isdbt->getInversion());
+        isdbtSettings.bandwidth = static_cast<FrontendIsdbtBandwidth>(isdbt->getBandwidth());
+        isdbtSettings.mode = static_cast<FrontendIsdbtMode>(isdbt->getMode());
+        isdbtSettings.guardInterval =
+                static_cast<FrontendIsdbtGuardInterval>(isdbt->getGuardInterval());
+        isdbtSettings.serviceAreaId = (int32_t)isdbt->getServiceAreaId();
+        isdbtSettings.partialReceptionFlag =
+                static_cast<FrontendIsdbtPartialReceptionFlag>(isdbt->getPartialReceptionFlag());
+        if (!isdbt->hasFrontendIsdbtLayerSettings()) {
+            ALOGW("[ConfigReader] no isdbt layer settings");
+            return isdbtSettings;
+        }
+        auto layerSettings = isdbt->getFirstFrontendIsdbtLayerSettings();
+        ::aidl::android::hardware::tv::tuner::FrontendIsdbtLayerSettings mLayerSettings;
+        mLayerSettings.modulation =
+                static_cast<FrontendIsdbtModulation>(layerSettings->getModulation());
+        mLayerSettings.coderate = static_cast<FrontendIsdbtCoderate>(layerSettings->getCoderate());
+        mLayerSettings.timeInterleave =
+                static_cast<FrontendIsdbtTimeInterleaveMode>(layerSettings->getTimeInterleave());
+        mLayerSettings.numOfSegment = (int32_t)layerSettings->getNumOfSegment();
+        isdbtSettings.layerSettings.push_back(mLayerSettings);
+        return isdbtSettings;
     }
 
     static bool readFilterTypeAndSettings(Filter filterConfig, DemuxFilterType& type,
                                           DemuxFilterSettings& settings) {
         auto mainType = filterConfig.getMainType();
         auto subType = filterConfig.getSubType();
+
+        if (subType == FilterSubTypeEnum::AUDIO) {
+            audioFilterIds.push_back(filterConfig.getId());
+        } else if (subType == FilterSubTypeEnum::VIDEO) {
+            videoFilterIds.push_back(filterConfig.getId());
+        } else if (subType == FilterSubTypeEnum::RECORD) {
+            recordFilterIds.push_back(filterConfig.getId());
+        } else if (subType == FilterSubTypeEnum::SECTION) {
+            sectionFilterIds.push_back(filterConfig.getId());
+        } else if (subType == FilterSubTypeEnum::PCR) {
+            pcrFilterIds.push_back(filterConfig.getId());
+        } else if (subType == FilterSubTypeEnum::IP) {
+            ipFilterIds.push_back(filterConfig.getId());
+        }
 
         switch (mainType) {
             case FilterMainTypeEnum::TS: {

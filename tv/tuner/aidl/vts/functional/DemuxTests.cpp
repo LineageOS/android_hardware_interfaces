@@ -16,12 +16,26 @@
 
 #include "DemuxTests.h"
 
+AssertionResult DemuxTests::getDemuxIds(std::vector<int32_t>& demuxIds) {
+    ndk::ScopedAStatus status;
+    status = mService->getDemuxIds(&demuxIds);
+    return AssertionResult(status.isOk());
+}
+
 AssertionResult DemuxTests::openDemux(std::shared_ptr<IDemux>& demux, int32_t& demuxId) {
     std::vector<int32_t> id;
     auto status = mService->openDemux(&id, &mDemux);
     if (status.isOk()) {
         demux = mDemux;
         demuxId = id[0];
+    }
+    return AssertionResult(status.isOk());
+}
+
+AssertionResult DemuxTests::openDemuxById(int32_t demuxId, std::shared_ptr<IDemux>& demux) {
+    auto status = mService->openDemuxById(demuxId, &mDemux);
+    if (status.isOk()) {
+        demux = mDemux;
     }
     return AssertionResult(status.isOk());
 }
@@ -33,11 +47,12 @@ AssertionResult DemuxTests::setDemuxFrontendDataSource(int32_t frontendId) {
 }
 
 AssertionResult DemuxTests::getDemuxCaps(DemuxCapabilities& demuxCaps) {
-    if (!mDemux) {
-        ALOGW("[vts] Test with openDemux first.");
-        return failure();
-    }
     auto status = mService->getDemuxCaps(&demuxCaps);
+    return AssertionResult(status.isOk());
+}
+
+AssertionResult DemuxTests::getDemuxInfo(int32_t demuxId, DemuxInfo& demuxInfo) {
+    auto status = mService->getDemuxInfo(demuxId, &demuxInfo);
     return AssertionResult(status.isOk());
 }
 

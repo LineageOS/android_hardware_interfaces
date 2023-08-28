@@ -7,10 +7,9 @@ package {
     default_applicable_licenses: ["hardware_interfaces_license"],
 }
 
-cc_binary {
-    name: "android.hardware.tv.tuner-service.example",
+cc_defaults {
+    name: "tuner_hal_example_defaults",
     relative_install_path: "hw",
-    init_rc: ["tuner-default.rc"],
     vintf_fragments: ["tuner-default.xml"],
     vendor: true,
     compile_multilib: "first",
@@ -30,7 +29,7 @@ cc_binary {
     ],
     shared_libs: [
         "android.hardware.common.fmq-V1-ndk",
-        "android.hardware.tv.tuner-V1-ndk",
+        "android.hardware.tv.tuner-V2-ndk",
         "libbase",
         "libbinder_ndk",
         "libcutils",
@@ -42,5 +41,20 @@ cc_binary {
     ],
     header_libs: [
         "media_plugin_headers",
+    ],
+}
+
+cc_binary {
+    name: "android.hardware.tv.tuner-service.example",
+    defaults: ["tuner_hal_example_defaults"],
+    init_rc: ["tuner-default.rc"],
+}
+
+cc_binary {
+    name: "android.hardware.tv.tuner-service.example-lazy",
+    defaults: ["tuner_hal_example_defaults"],
+    init_rc: ["tuner-default-lazy.rc"],
+    cflags: [
+        "-DLAZY_HAL",
     ],
 }

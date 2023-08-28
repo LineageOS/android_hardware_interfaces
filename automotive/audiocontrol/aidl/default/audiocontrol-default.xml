@@ -1,7 +1,7 @@
 <manifest version="2.0" type="device">
     <hal format="aidl">
-        <version>2</version>
         <name>android.hardware.automotive.audiocontrol</name>
+        <version>3</version>
         <fqname>IAudioControl/default</fqname>
     </hal>
 </manifest>

@@ -15,7 +15,7 @@
  */
 
 #include <libradiocompat/RadioModem.h>
-
+#include "commonStructs.h"
 #include "debug.h"
 #include "structs.h"
 
@@ -46,6 +46,13 @@ ScopedAStatus RadioModem::getBasebandVersion(int32_t serial) {
 ScopedAStatus RadioModem::getDeviceIdentity(int32_t serial) {
     LOG_CALL << serial;
     mHal1_5->getDeviceIdentity(serial);
+    return ok();
+}
+
+ScopedAStatus RadioModem::getImei(int32_t serial) {
+    LOG_CALL << serial;
+    LOG(ERROR) << " getImei is unsupported by HIDL HALs";
+    respond()->getImeiResponse(notSupported(serial), {});
     return ok();
 }
 

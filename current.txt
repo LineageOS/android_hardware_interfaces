@@ -932,5 +932,11 @@ b7ce2d87841585551b082fca6d099622e63b7099e0d8013f687ea1a1dc35c4dc android.hardwar
 # ABI preserving changes to HALs during Android U
 2aa559cda86c358c6429114ef6bc72c1b43281e98f9eb6b4df5e7073c8d05767 android.hardware.automotive.vehicle@2.0::types
 42abd285a4293dadb8c89bc63b90cae2872fbffe90c4517aa3ea4965e8aecff7 android.hardware.graphics.common@1.2::types
+4f1a02d21a22104c734f71cdbba19b6f7e93d4ee107ff79f0dbdd171a8430e0e android.hardware.automotive.vehicle@2.0::types
+a2fbd9747fbb9ceb8c1090b5a24138312246502d5af0654a8c2b603a9bf521fc android.hardware.gnss@1.0::IGnssCallback
+889b59e3e7a59afa67bf19882a44f51a2f9e43b6556ec52baa9ec3efd1ef7fbe android.hardware.camera.device@3.2::types
+db37a1c757e2e69b1ec9c75a981a6987bd87a131d92ab6acc00e04d19f374281 android.hardware.automotive.vehicle@2.0::types
+997017f581406fca1675d2f612f7ccd73f0d04eadd54bf6212e6cf5971d0872d android.hardware.automotive.vehicle@2.0::types
+06983ffe6d75e90a22503a6d9fd14417f983a36bb060a80ad5915240d69b8a40 android.hardware.automotive.vehicle@2.0::types
 
 # There will be no more HIDL HALs. Use AIDL instead.

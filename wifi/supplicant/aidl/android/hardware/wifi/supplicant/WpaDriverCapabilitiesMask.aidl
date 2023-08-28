@@ -42,4 +42,12 @@ enum WpaDriverCapabilitiesMask {
      * Trust On First Use
      */
     TRUST_ON_FIRST_USE = 1 << 4,
+    /**
+     * TLS minimum version
+     */
+    SET_TLS_MINIMUM_VERSION = 1 << 5,
+    /**
+     * TLS V1.3
+     */
+    TLS_V1_3 = 1 << 6,
 }

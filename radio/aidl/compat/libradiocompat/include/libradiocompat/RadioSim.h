@@ -40,7 +40,8 @@ class RadioSim : public RadioCompatBase, public aidl::android::hardware::radio::
     ::ndk::ScopedAStatus getImsiForApp(int32_t serial, const std::string& aid) override;
     ::ndk::ScopedAStatus getSimPhonebookCapacity(int32_t serial) override;
     ::ndk::ScopedAStatus getSimPhonebookRecords(int32_t serial) override;
-    ::ndk::ScopedAStatus iccCloseLogicalChannel(int32_t serial, int32_t channelId) override;
+    ::ndk::ScopedAStatus iccCloseLogicalChannelWithSessionInfo(int32_t serial,
+            const ::aidl::android::hardware::radio::sim::SessionInfo& recordInfo) override;
     ::ndk::ScopedAStatus iccIoForApp(
             int32_t serial, const ::aidl::android::hardware::radio::sim::IccIo& iccIo) override;
     ::ndk::ScopedAStatus iccOpenLogicalChannel(int32_t serial, const std::string& aid,
@@ -102,6 +103,7 @@ class RadioSim : public RadioCompatBase, public aidl::android::hardware::radio::
 
   protected:
     std::shared_ptr<::aidl::android::hardware::radio::sim::IRadioSimResponse> respond();
+    ::ndk::ScopedAStatus iccCloseLogicalChannel(int32_t serial, int32_t channelId) override;
 
   public:
     using RadioCompatBase::RadioCompatBase;
