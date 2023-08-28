@@ -446,7 +446,7 @@
             <regex-instance>.*</regex-instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl" optional="true" updatable-via-apex="true">
         <name>android.hardware.neuralnetworks</name>
         <version>1-4</version>
         <interface>
