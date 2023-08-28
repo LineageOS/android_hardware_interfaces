@@ -189,6 +189,7 @@ class FakeVehicleHardware : public IVehicleHardware {
     VhalResult<void> maybeSetSpecialValue(
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value,
             bool* isSpecialValue);
+    VhalResult<bool> isCruiseControlTypeStandard() const;
     ValueResultType maybeGetSpecialValue(
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value,
             bool* isSpecialValue) const;
