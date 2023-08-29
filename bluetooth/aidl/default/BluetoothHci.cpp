@@ -29,11 +29,6 @@
 
 #include "log/log.h"
 
-// TODO: Remove custom logging defines from PDL packets.
-#undef LOG_INFO
-#undef LOG_DEBUG
-#include "hci/hci_packets.h"
-
 namespace {
 int SetTerminalRaw(int fd) {
   termios terminal_settings;
@@ -140,9 +135,7 @@ int BluetoothHci::getFdFromDevPath() {
 void BluetoothHci::reset() {
   // Send a reset command and wait until the command complete comes back.
 
-  std::vector<uint8_t> reset;
-  ::bluetooth::packet::BitInserter bi{reset};
-  ::bluetooth::hci::ResetBuilder::Create()->Serialize(bi);
+  std::vector<uint8_t> reset = {0x03, 0x0c, 0x00};
 
   auto resetPromise = std::make_shared<std::promise<void>>();
   auto resetFuture = resetPromise->get_future();
@@ -162,13 +155,15 @@ void BluetoothHci::reset() {
               static_cast<int>(raw_sco.size()));
       },
       [resetPromise](const std::vector<uint8_t>& raw_event) {
-        bool valid = ::bluetooth::hci::ResetCompleteView::Create(
-                         ::bluetooth::hci::CommandCompleteView::Create(
-                             ::bluetooth::hci::EventView::Create(
-                                 ::bluetooth::hci::PacketView<true>(
-                                     std::make_shared<std::vector<uint8_t>>(
-                                         raw_event)))))
-                         .IsValid();
+        std::vector<uint8_t> reset_complete = {0x0e, 0x04, 0x01,
+                                               0x03, 0x0c, 0x00};
+        bool valid = raw_event.size() == 6 &&
+                     raw_event[0] == reset_complete[0] &&
+                     raw_event[1] == reset_complete[1] &&
+                     // Don't compare the number of packets field.
+                     raw_event[3] == reset_complete[3] &&
+                     raw_event[4] == reset_complete[4] &&
+                     raw_event[5] == reset_complete[5];
         if (valid) {
           resetPromise->set_value();
         } else {
@@ -306,7 +301,8 @@ ndk::ScopedAStatus BluetoothHci::close() {
   {
     std::lock_guard<std::mutex> guard(mStateMutex);
     if (mState != HalState::ONE_CLIENT) {
-      ASSERT(mState != HalState::INITIALIZING);
+      LOG_ALWAYS_FATAL_IF(mState == HalState::INITIALIZING,
+                          "mState is INITIALIZING");
       ALOGI("Already closed");
       return ndk::ScopedAStatus::ok();
     }
