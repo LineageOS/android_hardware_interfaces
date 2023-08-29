@@ -1,17 +1,17 @@
 {
     "properties": [
         {
-            "property": "Constants::VENDOR_CLUSTER_SWITCH_UI",
+            "property": "TestVendorProperty::VENDOR_CLUSTER_SWITCH_UI",
             "access": "VehiclePropertyAccess::WRITE",
             "changeMode": "VehiclePropertyChangeMode::ON_CHANGE"
         },
         {
-            "property": "Constants::VENDOR_CLUSTER_DISPLAY_STATE",
+            "property": "TestVendorProperty::VENDOR_CLUSTER_DISPLAY_STATE",
             "access": "VehiclePropertyAccess::WRITE",
             "changeMode": "VehiclePropertyChangeMode::ON_CHANGE"
         },
         {
-            "property": "Constants::VENDOR_CLUSTER_REPORT_STATE",
+            "property": "TestVendorProperty::VENDOR_CLUSTER_REPORT_STATE",
             "defaultValue": {
                 "int32Values": [
                     0,
@@ -44,7 +44,7 @@
                     "Value means 0 /* Off */, -1, -1, -1, -1 /* Bounds */, -1, -1, -1, -1 /* Insets */, 0 /* ClusterHome */, -1 /* ClusterNone */"
         },
         {
-            "property": "Constants::VENDOR_CLUSTER_REQUEST_DISPLAY",
+            "property": "TestVendorProperty::VENDOR_CLUSTER_REQUEST_DISPLAY",
             "defaultValue": {
                 "int32Values": [
                     0
@@ -55,7 +55,7 @@
             "comment": "0 means ClusterHome"
         },
         {
-            "property": "Constants::VENDOR_CLUSTER_NAVIGATION_STATE",
+            "property": "TestVendorProperty::VENDOR_CLUSTER_NAVIGATION_STATE",
             "access": "VehiclePropertyAccess::READ",
             "changeMode": "VehiclePropertyChangeMode::ON_CHANGE"
         }

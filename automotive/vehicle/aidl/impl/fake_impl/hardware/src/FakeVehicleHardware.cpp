@@ -24,7 +24,6 @@
 #include <JsonFakeValueGenerator.h>
 #include <LinearFakeValueGenerator.h>
 #include <PropertyUtils.h>
-#include <TestPropertyUtils.h>
 #include <VehicleHalTypes.h>
 #include <VehicleUtils.h>
 
@@ -32,6 +31,7 @@
 #include <android-base/parsedouble.h>
 #include <android-base/properties.h>
 #include <android-base/strings.h>
+#include <android/hardware/automotive/vehicle/TestVendorProperty.h>
 #include <utils/Log.h>
 #include <utils/SystemClock.h>
 #include <utils/Trace.h>
@@ -63,6 +63,7 @@ using ::aidl::android::hardware::automotive::vehicle::SetValueResult;
 using ::aidl::android::hardware::automotive::vehicle::StatusCode;
 using ::aidl::android::hardware::automotive::vehicle::VehicleApPowerStateReport;
 using ::aidl::android::hardware::automotive::vehicle::VehicleApPowerStateReq;
+using ::aidl::android::hardware::automotive::vehicle::VehicleArea;
 using ::aidl::android::hardware::automotive::vehicle::VehicleHwKeyInputAction;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropConfig;
 using ::aidl::android::hardware::automotive::vehicle::VehicleProperty;
@@ -87,14 +88,12 @@ using ::android::base::StringPrintf;
 //  getPropertiesAsync, and setPropertiesAsync.
 // 0x21403000
 constexpr int32_t STARTING_VENDOR_CODE_PROPERTIES_FOR_TEST =
-        0x3000 | toInt(testpropertyutils_impl::VehiclePropertyGroup::VENDOR) |
-        toInt(testpropertyutils_impl::VehicleArea::GLOBAL) |
-        toInt(testpropertyutils_impl::VehiclePropertyType::INT32);
+        0x3000 | toInt(VehiclePropertyGroup::VENDOR) | toInt(VehicleArea::GLOBAL) |
+        toInt(VehiclePropertyType::INT32);
 // 0x21405000
 constexpr int32_t ENDING_VENDOR_CODE_PROPERTIES_FOR_TEST =
-        0x5000 | toInt(testpropertyutils_impl::VehiclePropertyGroup::VENDOR) |
-        toInt(testpropertyutils_impl::VehicleArea::GLOBAL) |
-        toInt(testpropertyutils_impl::VehiclePropertyType::INT32);
+        0x5000 | toInt(VehiclePropertyGroup::VENDOR) | toInt(VehicleArea::GLOBAL) |
+        toInt(VehiclePropertyType::INT32);
 // The directory for default property configuration file.
 // For config file format, see impl/default_config/config/README.md.
 constexpr char DEFAULT_CONFIG_DIR[] = "/vendor/etc/automotive/vhalconfig/";
@@ -105,7 +104,7 @@ constexpr char OVERRIDE_CONFIG_DIR[] = "/vendor/etc/automotive/vhaloverride/";
 // overwrite the default configs.
 constexpr char OVERRIDE_PROPERTY[] = "persist.vendor.vhal_init_value_override";
 constexpr char POWER_STATE_REQ_CONFIG_PROPERTY[] = "ro.vendor.fake_vhal.ap_power_state_req.config";
-// The value to be returned if VENDOR_PROPERTY_ID is set as the property
+// The value to be returned if VENDOR_PROPERTY_FOR_ERROR_CODE_TESTING is set as the property
 constexpr int VENDOR_ERROR_CODE = 0x00ab0005;
 // A list of supported options for "--set" command.
 const std::unordered_set<std::string> SET_PROP_OPTIONS = {
@@ -668,10 +667,10 @@ FakeVehicleHardware::ValueResultType FakeVehicleHardware::maybeGetSpecialValue(
                 result.value()->timestamp = elapsedRealtimeNano();
             }
             return result;
-        case ECHO_REVERSE_BYTES:
+        case toInt(TestVendorProperty::ECHO_REVERSE_BYTES):
             *isSpecialValue = true;
             return getEchoReverseBytes(value);
-        case VENDOR_PROPERTY_ID:
+        case toInt(TestVendorProperty::VENDOR_PROPERTY_FOR_ERROR_CODE_TESTING):
             *isSpecialValue = true;
             return StatusError((StatusCode)VENDOR_ERROR_CODE);
         case toInt(VehicleProperty::CRUISE_CONTROL_TARGET_SPEED):
@@ -835,7 +834,7 @@ VhalResult<void> FakeVehicleHardware::maybeSetSpecialValue(const VehiclePropValu
         case OBD2_FREEZE_FRAME_CLEAR:
             *isSpecialValue = true;
             return mFakeObd2Frame->clearObd2FreezeFrames(value);
-        case VENDOR_PROPERTY_ID:
+        case toInt(TestVendorProperty::VENDOR_PROPERTY_FOR_ERROR_CODE_TESTING):
             *isSpecialValue = true;
             return StatusError((StatusCode)VENDOR_ERROR_CODE);
         case toInt(VehicleProperty::HVAC_TEMPERATURE_VALUE_SUGGESTION):
@@ -900,9 +899,9 @@ VhalResult<void> FakeVehicleHardware::maybeSetSpecialValue(const VehiclePropValu
             [[fallthrough]];
         case toInt(VehicleProperty::CLUSTER_NAVIGATION_STATE):
             [[fallthrough]];
-        case VENDOR_CLUSTER_SWITCH_UI:
+        case toInt(TestVendorProperty::VENDOR_CLUSTER_SWITCH_UI):
             [[fallthrough]];
-        case VENDOR_CLUSTER_DISPLAY_STATE:
+        case toInt(TestVendorProperty::VENDOR_CLUSTER_DISPLAY_STATE):
             *isSpecialValue = true;
             updatedValue = mValuePool->obtain(getPropType(value.prop));
             updatedValue->prop = value.prop & ~toInt(VehiclePropertyGroup::MASK);

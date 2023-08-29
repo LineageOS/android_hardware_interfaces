@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,13 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-cc_library_headers {
-    name: "VehicleHalTestUtilHeaders",
-    vendor: true,
-    header_libs: ["VehicleHalUtilHeaders"],
-    export_include_dirs: ["include"],
+filegroup {
+    name: "VhalTestVendorProperties",
+    srcs: [
+        "**/*.aidl",
+    ],
+    visibility: [
+        "//hardware/interfaces/automotive/vehicle/aidl:__subpackages__",
+        "//packages/services/Car:__subpackages__",
+    ],
 }

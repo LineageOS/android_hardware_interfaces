@@ -21,11 +21,14 @@ package {
 cc_test {
     name: "FakeVehicleHardwareTest",
     vendor: true,
-    srcs: ["*.cpp"],
+    srcs: [
+        "*.cpp",
+        ":VhalTestVendorProperties",
+    ],
     cflags: ["-DENABLE_VEHICLE_HAL_TEST_PROPERTIES"],
     header_libs: [
         "IVehicleHardware",
-        "VehicleHalTestUtilHeaders",
+        "libbinder_headers",
     ],
     static_libs: [
         "VehicleHalJsonConfigLoaderEnableTestProperties",
@@ -47,7 +50,9 @@ cc_test {
         ":FakeVehicleHardwareTestOverrideJson",
         ":FakeVehicleHardwareTestPropJson",
     ],
-    defaults: ["VehicleHalDefaults"],
+    defaults: [
+        "VehicleHalDefaults",
+    ],
     test_suites: ["device-tests"],
 }
 

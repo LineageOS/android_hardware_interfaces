@@ -57,6 +57,6 @@ delete and lookup.
 
 Defines many useful utility functions.
 
-## test
+## test_vendor_properties
 
-Defines utility libraries for test only.
+Contains vendor properties used for testing purpose in reference VHAL.
