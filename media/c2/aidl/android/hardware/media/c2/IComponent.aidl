@@ -43,6 +43,18 @@ interface IComponent {
         long blockPoolId;
         IConfigurable configurable;
     }
+
+    /**
+     * Allocator for C2BlockPool.
+     *
+     * C2BlockPool will use a C2Allocator which is specified by an id.
+     * or C2AIDL allocator interface directly.
+     */
+    union BlockPoolAllocator {
+        int allocatorId;
+        IGraphicBufferAllocator igba;
+    }
+
     /**
      * Configures a component for a tunneled playback mode.
      *
@@ -86,7 +98,8 @@ interface IComponent {
      * destroyBlockPool(), reset() or release(). reset() and release() must
      * destroy all `C2BlockPool` objects that have been created.
      *
-     * @param allocatorId Id of a `C2Allocator`.
+     * @param allocator AIDL allocator interface or C2Allocator specifier
+     *     for C2BlockPool
      * @param out configurable Configuration interface for the created pool. This
      *     must not be null.
      * @return Created block pool information. This could be used to config/query and
@@ -97,7 +110,7 @@ interface IComponent {
      *   - `Status::TIMED_OUT` - The operation cannot be finished in a timely manner.
      *   - `Status::CORRUPTED` - Some unknown error occurred.
      */
-    BlockPool createBlockPool(in int allocatorId);
+    BlockPool createBlockPool(in BlockPoolAllocator allocator);
 
     /**
      * Destroys a local block pool previously created by createBlockPool().
@@ -230,17 +243,6 @@ interface IComponent {
      *   - `Status::CORRUPTED` - Some unknown error occurred.
      */
     void reset();
-
-    /**
-     * Specify an allocator for decoder output buffer from HAL.
-     *
-     * The method will be used once during the life-cycle of a codec instance.
-     * @param allocator Decoder output buffer allocator from the client
-     * @throws ServiceSpecificException with one of the following values
-     *   - `Status::CANNOT_DO` - The component does not support allocating from the client.
-     *   - `Status::CORRUPTED` - Some unknown error occurred.
-     */
-    void setDecoderOutputAllocator(in IGraphicBufferAllocator allocator);
 
     /**
      * Starts the component.
