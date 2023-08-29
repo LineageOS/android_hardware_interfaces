@@ -27,6 +27,7 @@
 #include <aidl/android/hardware/automotive/evs/IEvsCamera.h>
 #include <aidl/android/hardware/automotive/evs/IEvsEnumeratorStatusCallback.h>
 #include <aidl/android/hardware/automotive/evs/Stream.h>
+#include <android-base/thread_annotations.h>
 #include <utils/Thread.h>
 
 #include <atomic>

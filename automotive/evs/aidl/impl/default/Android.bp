@@ -60,11 +60,14 @@ cc_binary {
         "libyuv",
     ],
     static_libs: [
-        "android.frameworks.automotive.display-V1-ndk",
+        "android.frameworks.automotive.display-V2-ndk",
         "android.hardware.automotive.evs-V2-ndk",
         "android.hardware.common-V2-ndk",
         "libaidlcommonsupport",
         "libcutils",
+    ],
+    header_libs: [
+        "libgui_aidl_headers",
     ],
     local_include_dirs: ["include"],
     include_dirs: ["frameworks/native/include/"],
