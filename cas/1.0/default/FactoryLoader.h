@@ -98,10 +98,10 @@ bool FactoryLoader<T>::findFactoryForScheme(
     String8 dirPath("/vendor/lib/mediacas");
 #endif
 
-    DIR* pDir = opendir(dirPath.string());
+    DIR* pDir = opendir(dirPath.c_str());
 
     if (pDir == NULL) {
-        ALOGE("Failed to open plugin directory %s", dirPath.string());
+        ALOGE("Failed to open plugin directory %s", dirPath.c_str());
         return false;
     }
 
@@ -138,10 +138,10 @@ bool FactoryLoader<T>::enumeratePlugins(
     String8 dirPath("/vendor/lib/mediacas");
 #endif
 
-    DIR* pDir = opendir(dirPath.string());
+    DIR* pDir = opendir(dirPath.c_str());
 
     if (pDir == NULL) {
-        ALOGE("Failed to open plugin directory %s", dirPath.string());
+        ALOGE("Failed to open plugin directory %s", dirPath.c_str());
         return false;
     }
 
