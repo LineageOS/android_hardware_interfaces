@@ -54,7 +54,7 @@ DescramblerImpl::~DescramblerImpl() {
 }
 
 ScopedAStatus DescramblerImpl::setMediaCasSession(const vector<uint8_t>& in_sessionId) {
-    ALOGV("%s: sessionId=%s", __FUNCTION__, sessionIdToString(in_sessionId).string());
+    ALOGV("%s: sessionId=%s", __FUNCTION__, sessionIdToString(in_sessionId).c_str());
 
     shared_ptr<DescramblerPlugin> holder = atomic_load(&mPluginHolder);
     if (holder.get() == nullptr) {

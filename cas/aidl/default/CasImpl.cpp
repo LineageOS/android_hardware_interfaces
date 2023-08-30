@@ -158,7 +158,7 @@ ScopedAStatus CasImpl::openSession(SessionIntent intent, ScramblingMode mode,
 
 ScopedAStatus CasImpl::setSessionPrivateData(const vector<uint8_t>& sessionId,
                                              const vector<uint8_t>& pvtData) {
-    ALOGV("%s: sessionId=%s", __FUNCTION__, sessionIdToString(sessionId).string());
+    ALOGV("%s: sessionId=%s", __FUNCTION__, sessionIdToString(sessionId).c_str());
     shared_ptr<CasPlugin> holder = atomic_load(&mPluginHolder);
     if (holder.get() == nullptr) {
         return toStatus(INVALID_OPERATION);
@@ -167,7 +167,7 @@ ScopedAStatus CasImpl::setSessionPrivateData(const vector<uint8_t>& sessionId,
 }
 
 ScopedAStatus CasImpl::closeSession(const vector<uint8_t>& sessionId) {
-    ALOGV("%s: sessionId=%s", __FUNCTION__, sessionIdToString(sessionId).string());
+    ALOGV("%s: sessionId=%s", __FUNCTION__, sessionIdToString(sessionId).c_str());
     shared_ptr<CasPlugin> holder = atomic_load(&mPluginHolder);
     if (holder.get() == nullptr) {
         return toStatus(INVALID_OPERATION);
@@ -176,7 +176,7 @@ ScopedAStatus CasImpl::closeSession(const vector<uint8_t>& sessionId) {
 }
 
 ScopedAStatus CasImpl::processEcm(const vector<uint8_t>& sessionId, const vector<uint8_t>& ecm) {
-    ALOGV("%s: sessionId=%s", __FUNCTION__, sessionIdToString(sessionId).string());
+    ALOGV("%s: sessionId=%s", __FUNCTION__, sessionIdToString(sessionId).c_str());
     shared_ptr<CasPlugin> holder = atomic_load(&mPluginHolder);
     if (holder.get() == nullptr) {
         return toStatus(INVALID_OPERATION);
