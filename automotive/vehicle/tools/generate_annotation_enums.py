@@ -328,7 +328,7 @@ def main():
     parser = argparse.ArgumentParser(
             description='Generate Java and C++ enums based on annotations in VehicleProperty.aidl')
     parser.add_argument('--android_build_top', required=False, help='Path to ANDROID_BUILD_TOP')
-    parser.add_argument('--preupload_files', nargs='+', required=False, help='modified files')
+    parser.add_argument('--preupload_files', nargs='*', required=False, help='modified files')
     parser.add_argument('--check_only', required=False, action='store_true',
             help='only check whether the generated files need update')
     parser.add_argument('--output_csv', required=False,
