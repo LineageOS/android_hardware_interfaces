@@ -62,8 +62,7 @@ DescramblerImpl::~DescramblerImpl() {
 }
 
 Return<Status> DescramblerImpl::setMediaCasSession(const HidlCasSessionId& sessionId) {
-    ALOGV("%s: sessionId=%s", __FUNCTION__,
-            sessionIdToString(sessionId).string());
+    ALOGV("%s: sessionId=%s", __FUNCTION__, sessionIdToString(sessionId).c_str());
 
     std::shared_ptr<DescramblerPlugin> holder = std::atomic_load(&mPluginHolder);
     if (holder.get() == nullptr) {
