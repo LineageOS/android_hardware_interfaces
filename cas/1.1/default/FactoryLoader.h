@@ -17,6 +17,7 @@
 #ifndef ANDROID_HARDWARE_CAS_V1_1_FACTORY_LOADER_H_
 #define ANDROID_HARDWARE_CAS_V1_1_FACTORY_LOADER_H_
 
+#include <android-base/strings.h>
 #include <dirent.h>
 #include <dlfcn.h>
 #include <media/cas/CasAPI.h>
@@ -100,7 +101,7 @@ bool FactoryLoader<T>::findFactoryForScheme(int32_t CA_system_id, sp<SharedLibra
     struct dirent* pEntry;
     while ((pEntry = readdir(pDir))) {
         String8 pluginPath = dirPath + "/" + pEntry->d_name;
-        if (pluginPath.getPathExtension() == ".so") {
+        if (base::EndsWith(pluginPath.c_str(), ".so")) {
             if (loadFactoryForSchemeFromPath(pluginPath, CA_system_id, library, factory)) {
                 mCASystemIdToLibraryPathMap.add(CA_system_id, pluginPath);
                 closedir(pDir);
@@ -139,7 +140,7 @@ bool FactoryLoader<T>::enumeratePlugins(vector<HidlCasPluginDescriptor>* results
     struct dirent* pEntry;
     while ((pEntry = readdir(pDir))) {
         String8 pluginPath = dirPath + "/" + pEntry->d_name;
-        if (pluginPath.getPathExtension() == ".so") {
+        if (base::EndsWith(pluginPath.c_str(), ".so")) {
             queryPluginsFromPath(pluginPath, results);
         }
     }
