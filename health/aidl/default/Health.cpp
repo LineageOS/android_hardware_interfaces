@@ -235,15 +235,6 @@ std::optional<bool> Health::ShouldKeepScreenOn() {
     return healthd_config_->screen_on(&props);
 }
 
-namespace {
-bool IsDeadObjectLogged(const ndk::ScopedAStatus& ret) {
-    if (ret.isOk()) return false;
-    if (ret.getStatus() == ::STATUS_DEAD_OBJECT) return true;
-    LOG(ERROR) << "Cannot call healthInfoChanged on callback: " << ret.getDescription();
-    return false;
-}
-}  // namespace
-
 //
 // Subclass helpers / overrides
 //
@@ -287,8 +278,10 @@ ndk::ScopedAStatus Health::registerCallback(const std::shared_ptr<IHealthInfoCal
         return ndk::ScopedAStatus::ok();
     }
 
-    if (auto res = callback->healthInfoChanged(health_info); IsDeadObjectLogged(res)) {
-        (void)unregisterCallback(callback);
+    auto res = callback->healthInfoChanged(health_info);
+    if (!res.isOk()) {
+        LOG(DEBUG) << "Cannot call healthInfoChanged:" << res.getDescription()
+                   << ". Do nothing here if callback is dead as it will be cleaned up later.";
     }
     return ndk::ScopedAStatus::ok();
 }
@@ -335,13 +328,13 @@ ndk::ScopedAStatus Health::update() {
 void Health::OnHealthInfoChanged(const HealthInfo& health_info) {
     // Notify all callbacks
     std::unique_lock<decltype(callbacks_lock_)> lock(callbacks_lock_);
-    // is_dead notifies a callback and return true if it is dead.
-    auto is_dead = [&](const auto& linked) {
+    for (const auto& linked : callbacks_) {
         auto res = linked->callback()->healthInfoChanged(health_info);
-        return IsDeadObjectLogged(res);
-    };
-    auto it = std::remove_if(callbacks_.begin(), callbacks_.end(), is_dead);
-    callbacks_.erase(it, callbacks_.end());  // calls unlinkToDeath on deleted callbacks.
+        if (!res.isOk()) {
+            LOG(DEBUG) << "Cannot call healthInfoChanged:" << res.getDescription()
+                       << ". Do nothing here if callback is dead as it will be cleaned up later.";
+        }
+    }
     lock.unlock();
 
     // Let HalHealthLoop::OnHealthInfoChanged() adjusts uevent / wakealarm periods
