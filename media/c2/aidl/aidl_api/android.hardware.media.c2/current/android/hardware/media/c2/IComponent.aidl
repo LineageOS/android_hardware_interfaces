@@ -35,7 +35,7 @@ package android.hardware.media.c2;
 @VintfStability
 interface IComponent {
   android.hardware.common.NativeHandle configureVideoTunnel(in int avSyncHwId);
-  android.hardware.media.c2.IComponent.BlockPool createBlockPool(in int allocatorId);
+  android.hardware.media.c2.IComponent.BlockPool createBlockPool(in android.hardware.media.c2.IComponent.BlockPoolAllocator allocator);
   void destroyBlockPool(in long blockPoolId);
   void drain(in boolean withEos);
   android.hardware.media.c2.WorkBundle flush();
@@ -43,11 +43,14 @@ interface IComponent {
   void queue(in android.hardware.media.c2.WorkBundle workBundle);
   void release();
   void reset();
-  void setDecoderOutputAllocator(in android.hardware.media.c2.IGraphicBufferAllocator allocator);
   void start();
   void stop();
   parcelable BlockPool {
     long blockPoolId;
     android.hardware.media.c2.IConfigurable configurable;
+  }
+  union BlockPoolAllocator {
+    int allocatorId;
+    android.hardware.media.c2.IGraphicBufferAllocator igba;
   }
 }
