@@ -90,10 +90,10 @@ bool FactoryLoader<T>::findFactoryForScheme(int32_t CA_system_id, sp<SharedLibra
 #else
     String8 dirPath("/vendor/lib/mediacas");
 #endif
-    DIR* pDir = opendir(dirPath.string());
+    DIR* pDir = opendir(dirPath.c_str());
 
     if (pDir == NULL) {
-        ALOGE("Failed to open plugin directory %s", dirPath.string());
+        ALOGE("Failed to open plugin directory %s", dirPath.c_str());
         return false;
     }
 
@@ -127,10 +127,10 @@ bool FactoryLoader<T>::enumeratePlugins(vector<HidlCasPluginDescriptor>* results
 #else
     String8 dirPath("/vendor/lib/mediacas");
 #endif
-    DIR* pDir = opendir(dirPath.string());
+    DIR* pDir = opendir(dirPath.c_str());
 
     if (pDir == NULL) {
-        ALOGE("Failed to open plugin directory %s", dirPath.string());
+        ALOGE("Failed to open plugin directory %s", dirPath.c_str());
         return false;
     }
 
