@@ -40,8 +40,8 @@ interface IAGnssRil {
   void setSetId(in android.hardware.gnss.IAGnssRil.SetIdType type, in @utf8InCpp String setid);
   void updateNetworkState(in android.hardware.gnss.IAGnssRil.NetworkAttributes attributes);
   void injectNiSuplMessageData(in byte[] msgData, in int slotIndex);
-  const int NETWORK_CAPABILITY_NOT_METERED = 1;
-  const int NETWORK_CAPABILITY_NOT_ROAMING = 2;
+  const int NETWORK_CAPABILITY_NOT_METERED = 0x01;
+  const int NETWORK_CAPABILITY_NOT_ROAMING = 0x02;
   @Backing(type="int") @VintfStability
   enum AGnssRefLocationType {
     GSM_CELLID = 1,
