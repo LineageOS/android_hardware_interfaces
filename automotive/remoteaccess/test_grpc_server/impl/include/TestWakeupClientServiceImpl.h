@@ -117,22 +117,27 @@ class TestWakeupClientServiceImpl : public WakeupClient::Service {
      * to the client every 5s.
      */
     void startGeneratingFakeTask(const std::string& clientId);
+
     /**
      * stops generating fake tasks.
      */
     void stopGeneratingFakeTask();
+
     /**
      * Returns whether we need to wakeup the target device to send remote tasks.
      */
     bool isWakeupRequired();
+
     /**
      * Returns whether we have an active connection with the target device.
      */
     bool isRemoteTaskConnectionAlive();
+
     /**
      * Injects a fake task with taskData to be sent to the specific client.
      */
     void injectTask(const std::string& taskData, const std::string& clientId);
+
     /**
      * Wakes up the target device.
      *
