@@ -895,9 +895,9 @@ interface IComposerClient {
      *
      * The framework will call this function based on the parameters specified in
      * DisplayConfiguration.VrrConfig:
-     * - notifyExpectedPresentTimeoutNs specifies the idle time from the previous present command
+     * - timeoutNs specifies the idle time from the previous present command
      * where the framework must send the early hint for the next frame.
-     * - notifyExpectedPresentHeadsUpNs specifies minimal time that framework must send
+     * - headsUpNs specifies minimal time that framework must send
      * the early hint before the next frame.
      *
      * The framework can omit calling this API when the next present command matches
