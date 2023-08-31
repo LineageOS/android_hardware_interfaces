@@ -134,11 +134,6 @@ enum Mode {
     DISPLAY_INACTIVE,
 
     /**
-     * Below hints are currently not sent in Android framework but OEM might choose to
-     * implement for power/perf optimizations.
-     */
-
-    /**
      * This mode indicates that low latency audio is active.
      */
     AUDIO_STREAMING_LOW_LATENCY,
@@ -172,4 +167,10 @@ enum Mode {
      * This mode indicates that the user is waiting for loading in a game.
      */
     GAME_LOADING,
+
+    /**
+     * This mode indicates that the display layout is changing due to rotation
+     * or switching between inner and outer panels.
+     */
+    DISPLAY_CHANGE,
 }
