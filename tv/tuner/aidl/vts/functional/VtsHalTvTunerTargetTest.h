@@ -338,16 +338,31 @@ class TunerDescramblerAidlTest : public testing::TestWithParam<std::string> {
         } else {
             mService = nullptr;
         }
-        mCasService = IMediaCasService::getService();
         ASSERT_NE(mService, nullptr);
-        ASSERT_NE(mCasService, nullptr);
+
+        // Get IMediaCasService. Try getting AIDL service first, if AIDL does not exist, try HIDL.
+        if (AServiceManager_isDeclared(MEDIA_CAS_AIDL_SERVICE_NAME.c_str())) {
+            ::ndk::SpAIBinder binder(
+                    AServiceManager_waitForService(MEDIA_CAS_AIDL_SERVICE_NAME.c_str()));
+            mCasServiceAidl = IMediaCasServiceAidl::fromBinder(binder);
+        } else {
+            mCasServiceAidl = nullptr;
+        }
+        if (mCasServiceAidl == nullptr) {
+            mCasServiceHidl = IMediaCasServiceHidl::getService();
+        }
+        ASSERT_TRUE(mCasServiceAidl != nullptr || mCasServiceHidl != nullptr);
         ASSERT_TRUE(initConfiguration());
 
         mFrontendTests.setService(mService);
         mDemuxTests.setService(mService);
         mDvrTests.setService(mService);
         mDescramblerTests.setService(mService);
-        mDescramblerTests.setCasService(mCasService);
+        if (mCasServiceAidl != nullptr) {
+            mDescramblerTests.setCasServiceAidl(mCasServiceAidl);
+        } else {
+            mDescramblerTests.setCasServiceHidl(mCasServiceHidl);
+        }
     }
 
   protected:
@@ -360,7 +375,8 @@ class TunerDescramblerAidlTest : public testing::TestWithParam<std::string> {
     AssertionResult filterDataOutputTest();
 
     std::shared_ptr<ITuner> mService;
-    android::sp<IMediaCasService> mCasService;
+    sp<IMediaCasServiceHidl> mCasServiceHidl;
+    std::shared_ptr<IMediaCasServiceAidl> mCasServiceAidl;
     FrontendTests mFrontendTests;
     DemuxTests mDemuxTests;
     FilterTests mFilterTests;
