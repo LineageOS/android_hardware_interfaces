@@ -33,5 +33,9 @@ void startHostapdAndWaitForHidlService(
 
 bool is_1_1(const android::sp<android::hardware::wifi::hostapd::V1_0::IHostapd>&
                 hostapd);
+// Used to initialize/deinitialize the driver and firmware at the
+// beginning and end of each test.
+void initializeDriverAndFirmware(const std::string& wifi_instance_name);
+void deInitializeDriverAndFirmware(const std::string& wifi_instance_name);
 
 #endif /* HOSTAPD_HIDL_TEST_UTILS_H */
