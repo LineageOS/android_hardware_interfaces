@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <iomanip>
 #include <iterator>
 #include <memory>
 #include <set>
@@ -420,6 +421,36 @@ std::string checkMapEntry(bool isFactory, const cppbor::Map& devInfo, cppbor::Ma
     return entryName + " has an invalid value.\n";
 }
 
+std::string checkMapPatchLevelEntry(bool isFactory, const cppbor::Map& devInfo,
+                                    const std::string& entryName) {
+    std::string error = checkMapEntry(isFactory, devInfo, cppbor::UINT, entryName);
+    if (!error.empty()) {
+        return error;
+    }
+
+    if (isFactory) {
+        return "";
+    }
+
+    const std::unique_ptr<cppbor::Item>& val = devInfo.get(entryName);
+    std::string dateString = std::to_string(val->asUint()->unsignedValue());
+    if (dateString.size() == 6) {
+        dateString += "01";
+    }
+    if (dateString.size() != 8) {
+        return entryName + " should in the format YYYYMMDD or YYYYMM\n";
+    }
+
+    std::tm t;
+    std::istringstream ss(dateString);
+    ss >> std::get_time(&t, "%Y%m%d");
+    if (!ss) {
+        return entryName + " should in the format YYYYMMDD or YYYYMM\n";
+    }
+
+    return "";
+}
+
 bool isTeeDeviceInfo(const cppbor::Map& devInfo) {
     return devInfo.get("security_level") && devInfo.get("security_level")->asTstr() &&
            devInfo.get("security_level")->asTstr()->value() == "tee";
@@ -520,6 +551,10 @@ ErrMsgOr<std::unique_ptr<cppbor::Map>> parseAndValidateDeviceInfo(
                     error += "Err: Unrecognized key entry: <" + key->asTstr()->value() + ">,\n";
                 }
             }
+            // Checks that only apply to v3.
+            error += checkMapPatchLevelEntry(isFactory, *parsed, "system_patch_level");
+            error += checkMapPatchLevelEntry(isFactory, *parsed, "boot_patch_level");
+            error += checkMapPatchLevelEntry(isFactory, *parsed, "vendor_patch_level");
             FALLTHROUGH_INTENDED;
         case 2:
             for (const auto& entry : kAttestationIdEntrySet) {
