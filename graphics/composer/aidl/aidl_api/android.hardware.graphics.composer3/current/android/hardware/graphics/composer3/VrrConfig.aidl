@@ -42,7 +42,7 @@ parcelable VrrConfig {
     int averageRefreshPeriodNs;
   }
   parcelable NotifyExpectedPresentConfig {
-    int headsUpNs;
-    int timeoutNs;
+    int notifyExpectedPresentHeadsUpNs;
+    int notifyExpectedPresentTimeoutNs;
   }
 }
