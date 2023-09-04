@@ -19,6 +19,7 @@
 #include "SharedLibrary.h"
 #include <dlfcn.h>
 #include <utils/Log.h>
+#include <vndksupport/linker.h>
 
 namespace aidl {
 namespace android {
@@ -26,12 +27,12 @@ namespace hardware {
 namespace cas {
 
 SharedLibrary::SharedLibrary(const String8& path) {
-    mLibHandle = dlopen(path.c_str(), RTLD_NOW);
+    mLibHandle = android_load_sphal_library(path.c_str(), RTLD_NOW);
 }
 
 SharedLibrary::~SharedLibrary() {
     if (mLibHandle != NULL) {
-        dlclose(mLibHandle);
+        android_unload_sphal_library(mLibHandle);
         mLibHandle = NULL;
     }
 }
