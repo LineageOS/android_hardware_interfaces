@@ -120,7 +120,7 @@ void CameraAidlTest::SetUp() {
     ABinderProcess_startThreadPool();
 
     SpAIBinder cameraProviderBinder =
-            SpAIBinder(AServiceManager_getService(serviceDescriptor.c_str()));
+            SpAIBinder(AServiceManager_waitForService(serviceDescriptor.c_str()));
     ASSERT_NE(cameraProviderBinder.get(), nullptr);
 
     std::shared_ptr<ICameraProvider> cameraProvider =
