@@ -4148,6 +4148,42 @@ TEST_P(ImportKeyTest, EcdsaSuccess) {
 }
 
 /*
+ * ImportKeyTest.EcdsaSuccessCurveNotSpecified
+ *
+ * Verifies that importing and using an ECDSA P-256 key pair works correctly
+ * when the EC_CURVE is not explicitly specified.
+ */
+TEST_P(ImportKeyTest, EcdsaSuccessCurveNotSpecified) {
+    if (AidlVersion() < 4) {
+        /*
+         * The KeyMint spec before V4 was not clear as to whether EC_CURVE was optional on import of
+         * EC keys. However, this was not checked at the time so we can only be strict about
+         * checking this for implementations of KeyMint version 4 and above.
+         */
+        GTEST_SKIP() << "Skipping EC_CURVE on import only strict since KeyMint v4";
+    }
+
+    ASSERT_EQ(ErrorCode::OK, ImportKey(AuthorizationSetBuilder()
+                                               .Authorization(TAG_NO_AUTH_REQUIRED)
+                                               .Authorization(TAG_ALGORITHM, Algorithm::EC)
+                                               .SigningKey()
+                                               .Digest(Digest::SHA_2_256)
+                                               .SetDefaultValidity(),
+                                       KeyFormat::PKCS8, ec_256_key));
+
+    CheckCryptoParam(TAG_ALGORITHM, Algorithm::EC);
+    CheckCryptoParam(TAG_DIGEST, Digest::SHA_2_256);
+    CheckCryptoParam(TAG_EC_CURVE, EcCurve::P_256);
+
+    CheckOrigin();
+
+    string message(32, 'a');
+    auto params = AuthorizationSetBuilder().Digest(Digest::SHA_2_256);
+    string signature = SignMessage(message, params);
+    LocalVerifyMessage(message, signature, params);
+}
+
+/*
  * ImportKeyTest.EcdsaP256RFC5915Success
  *
  * Verifies that importing and using an ECDSA P-256 key pair encoded using RFC5915 works
