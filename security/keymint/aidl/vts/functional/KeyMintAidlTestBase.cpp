@@ -1295,15 +1295,12 @@ std::pair<ErrorCode, vector<uint8_t>> KeyMintAidlTestBase::UpgradeKey(
 }
 
 bool KeyMintAidlTestBase::IsRkpSupportRequired() const {
-    if (get_vsr_api_level() >= __ANDROID_API_T__) {
-        return true;
-    }
-
-    if (get_vsr_api_level() >= __ANDROID_API_S__) {
-        return SecLevel() != SecurityLevel::STRONGBOX;
-    }
-
-    return false;
+    // This is technically not a match to the requirements for S chipsets,
+    // however when S shipped there was a bug in the test that skipped the
+    // tests if KeyMint 2 was not on the system. So we allowed many chipests
+    // to ship without RKP support. In T we hardened the requirements around
+    // support for RKP, so relax the test to match.
+    return get_vsr_api_level() >= __ANDROID_API_T__;
 }
 
 vector<uint32_t> KeyMintAidlTestBase::ValidKeySizes(Algorithm algorithm) {
