@@ -1,0 +1,8 @@
+service vendor.face-example /vendor/bin/hw/android.hardware.biometrics.face-service.example
+    class hal
+    user nobody
+    group nobody
+    interface aidl android.hardware.biometrics.face.IFace/virtual
+    oneshot
+    disabled
+

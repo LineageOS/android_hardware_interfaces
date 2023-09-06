@@ -18,6 +18,9 @@
 
 #include "Session.h"
 
+#undef LOG_TAG
+#define LOG_TAG "FaceVirtualHalSession"
+
 namespace aidl::android::hardware::biometrics::face {
 
 constexpr size_t MAX_WORKER_QUEUE_SIZE = 5;
