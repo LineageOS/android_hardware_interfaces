@@ -37,8 +37,8 @@ parcelable AmFmRegionConfig {
   android.hardware.broadcastradio.AmFmBandRange[] ranges;
   int fmDeemphasis;
   int fmRds;
-  const int DEEMPHASIS_D50 = (1 << 0);
-  const int DEEMPHASIS_D75 = (1 << 1);
-  const int RDS = (1 << 0);
-  const int RBDS = (1 << 1);
+  const int DEEMPHASIS_D50 = (1 << 0) /* 1 */;
+  const int DEEMPHASIS_D75 = (1 << 1) /* 2 */;
+  const int RDS = (1 << 0) /* 1 */;
+  const int RBDS = (1 << 1) /* 2 */;
 }

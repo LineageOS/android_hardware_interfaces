@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,23 +32,14 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.broadcastradio;
-@JavaDerive(equals=true, toString=true) @VintfStability
-parcelable ProgramInfo {
-  android.hardware.broadcastradio.ProgramSelector selector;
-  android.hardware.broadcastradio.ProgramIdentifier logicallyTunedTo;
-  android.hardware.broadcastradio.ProgramIdentifier physicallyTunedTo;
-  @nullable android.hardware.broadcastradio.ProgramIdentifier[] relatedContent;
-  int infoFlags;
-  int signalQuality;
-  android.hardware.broadcastradio.Metadata[] metadata;
-  android.hardware.broadcastradio.VendorKeyValue[] vendorInfo;
-  const int FLAG_LIVE = (1 << 0) /* 1 */;
-  const int FLAG_MUTED = (1 << 1) /* 2 */;
-  const int FLAG_TRAFFIC_PROGRAM = (1 << 2) /* 4 */;
-  const int FLAG_TRAFFIC_ANNOUNCEMENT = (1 << 3) /* 8 */;
-  const int FLAG_TUNABLE = (1 << 4) /* 16 */;
-  const int FLAG_STEREO = (1 << 5) /* 32 */;
-  const int FLAG_SIGNAL_ACQUISITION = (1 << 6) /* 64 */;
-  const int FLAG_HD_SIS_ACQUISITION = (1 << 7) /* 128 */;
-  const int FLAG_HD_AUDIO_ACQUISITION = (1 << 8) /* 256 */;
+@Backing(type="int") @JavaDerive(equals=true, toString=true) @VintfStability
+enum HdSubChannel {
+  HD1 = 0,
+  HD2 = 1,
+  HD3 = 2,
+  HD4 = 3,
+  HD5 = 4,
+  HD6 = 5,
+  HD7 = 6,
+  HD8 = 7,
 }
