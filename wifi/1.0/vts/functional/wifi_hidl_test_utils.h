@@ -49,6 +49,10 @@ bool configureChipToSupportIfaceType(
     const android::sp<android::hardware::wifi::V1_0::IWifiChip>& wifi_chip,
     android::hardware::wifi::V1_0::IfaceType type,
     android::hardware::wifi::V1_0::ChipModeId* configured_mode_id);
+// Check whether wifi chip supports given interface type mode
+bool doesChipSupportIfaceType(
+        const android::sp<android::hardware::wifi::V1_0::IWifiChip>& wifi_chip,
+        android::hardware::wifi::V1_0::IfaceType type);
 // Used to trigger IWifi.stop() at the end of every test.
 void stopWifi(const std::string& instance_name);
 uint32_t getChipCapabilitiesLatest(
