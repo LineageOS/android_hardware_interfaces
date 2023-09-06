@@ -1828,7 +1828,7 @@ TEST_P(GraphicsComposerAidlCommandTest, SetClientTarget) {
 
     auto& writer = getWriter(getPrimaryDisplayId());
     writer.setClientTarget(getPrimaryDisplayId(), /*slot*/ 0, nullptr, /*acquireFence*/ -1,
-                           Dataspace::UNKNOWN, std::vector<Rect>());
+                           Dataspace::UNKNOWN, std::vector<Rect>(), 1.0f);
 
     execute();
 }

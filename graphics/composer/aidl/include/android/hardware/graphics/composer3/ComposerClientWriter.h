@@ -83,11 +83,13 @@ class ComposerClientWriter final {
     }
 
     void setClientTarget(int64_t display, uint32_t slot, const native_handle_t* target,
-                         int acquireFence, Dataspace dataspace, const std::vector<Rect>& damage) {
+                         int acquireFence, Dataspace dataspace, const std::vector<Rect>& damage,
+                         float hdrSdrRatio) {
         ClientTarget clientTargetCommand;
         clientTargetCommand.buffer = getBufferCommand(slot, target, acquireFence);
         clientTargetCommand.dataspace = dataspace;
         clientTargetCommand.damage.assign(damage.begin(), damage.end());
+        clientTargetCommand.hdrSdrRatio = hdrSdrRatio;
         getDisplayCommand(display).clientTarget.emplace(std::move(clientTargetCommand));
     }
 

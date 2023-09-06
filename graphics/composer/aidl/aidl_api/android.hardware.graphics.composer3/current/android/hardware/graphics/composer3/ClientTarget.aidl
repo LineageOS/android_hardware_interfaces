@@ -37,4 +37,5 @@ parcelable ClientTarget {
   android.hardware.graphics.composer3.Buffer buffer;
   android.hardware.graphics.common.Dataspace dataspace;
   android.hardware.graphics.common.Rect[] damage;
+  float hdrSdrRatio = 1.0f;
 }
