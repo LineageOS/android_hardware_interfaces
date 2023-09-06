@@ -19,6 +19,7 @@
 #include <aidl/android/frameworks/automotive/display/DisplayDesc.h>
 #include <aidl/android/hardware/graphics/common/HardwareBufferDescription.h>
 #include <aidlcommonsupport/NativeHandle.h>
+#include <gui/view/Surface.h>
 #include <ui/DisplayMode.h>
 #include <ui/DisplayState.h>
 #include <ui/GraphicBuffer.h>
@@ -183,20 +184,6 @@ GLuint buildShaderProgram(const char* vtxSrc, const char* pxlSrc) {
     return program;
 }
 
-::android::sp<HGraphicBufferProducer> convertNativeHandleToHGBP(const NativeHandle& aidlHandle) {
-    native_handle_t* handle = ::android::dupFromAidl(aidlHandle);
-    if (handle->numFds != 0 || handle->numInts < std::ceil(sizeof(size_t) / sizeof(int))) {
-        LOG(ERROR) << "Invalid native handle";
-        return nullptr;
-    }
-    ::android::hardware::hidl_vec<uint8_t> halToken;
-    halToken.setToExternal(reinterpret_cast<uint8_t*>(const_cast<int*>(&(handle->data[1]))),
-                           handle->data[0]);
-    ::android::sp<HGraphicBufferProducer> hgbp =
-            HGraphicBufferProducer::castFrom(::android::retrieveHalInterface(halToken));
-    return std::move(hgbp);
-}
-
 }  // namespace
 
 namespace aidl::android::hardware::automotive::evs::implementation {
@@ -226,30 +213,19 @@ bool GlWrapper::initialize(const std::shared_ptr<ICarDisplayProxy>& pWindowProxy
     }
     LOG(INFO) << "Display resolution is " << mWidth << "x" << mHeight;
 
-    NativeHandle aidlHandle;
-    status = pWindowProxy->getHGraphicBufferProducer(displayId, &aidlHandle);
+    aidl::android::view::Surface shimSurface;
+    status = pWindowProxy->getSurface(displayId, &shimSurface);
     if (!status.isOk()) {
-        LOG(ERROR) << "Failed to get IGraphicBufferProducer from ICarDisplayProxy.";
+        LOG(ERROR) << "Failed to obtain the surface.";
         return false;
     }
 
-    mGfxBufferProducer = convertNativeHandleToHGBP(aidlHandle);
-    if (!mGfxBufferProducer) {
-        LOG(ERROR) << "Failed to convert a NativeHandle to HGBP.";
-        return false;
-    }
-
-    mSurfaceHolder = getSurfaceFromHGBP(mGfxBufferProducer);
-    if (mSurfaceHolder == nullptr) {
-        LOG(ERROR) << "Failed to get a Surface from HGBP.";
-        return false;
-    }
-
-    mWindow = getNativeWindow(mSurfaceHolder.get());
+    mWindow = shimSurface.get();
     if (mWindow == nullptr) {
         LOG(ERROR) << "Failed to get a native window from Surface.";
         return false;
     }
+    ANativeWindow_acquire(mWindow);
 
     // Set up our OpenGL ES context associated with the default display
     mDisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY);
@@ -350,7 +326,12 @@ void GlWrapper::shutdown() {
     mDisplay = EGL_NO_DISPLAY;
 
     // Release the window
-    mSurfaceHolder = nullptr;
+    if (mWindow == nullptr) {
+        return;
+    }
+
+    ANativeWindow_release(mWindow);
+    mWindow = nullptr;
 }
 
 void GlWrapper::showWindow(const std::shared_ptr<ICarDisplayProxy>& pWindowProxy, uint64_t id) {

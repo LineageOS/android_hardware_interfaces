@@ -25,7 +25,7 @@
 #include <aidl/android/frameworks/automotive/display/ICarDisplayProxy.h>
 #include <aidl/android/hardware/automotive/evs/BufferDesc.h>
 #include <android-base/logging.h>
-#include <bufferqueueconverter/BufferQueueConverter.h>
+#include <cutils/native_handle.h>
 
 namespace aidl::android::hardware::automotive::evs::implementation {
 
@@ -33,7 +33,6 @@ namespace automotivedisplay = ::aidl::android::frameworks::automotive::display;
 
 class GlWrapper {
   public:
-    GlWrapper() : mSurfaceHolder(::android::SurfaceHolderUniquePtr(nullptr, nullptr)) {}
     bool initialize(const std::shared_ptr<automotivedisplay::ICarDisplayProxy>& svc,
                     uint64_t displayId);
     void shutdown();
@@ -53,9 +52,6 @@ class GlWrapper {
     unsigned getHeight() { return mHeight; };
 
   private:
-    ::android::sp<::android::hardware::graphics::bufferqueue::V2_0::IGraphicBufferProducer>
-            mGfxBufferProducer;
-
     EGLDisplay mDisplay;
     EGLSurface mSurface;
     EGLContext mContext;
@@ -71,9 +67,6 @@ class GlWrapper {
     // Opaque handle for a native hardware buffer defined in
     // frameworks/native/opengl/include/EGL/eglplatform.h
     ANativeWindow* mWindow;
-
-    // Pointer to a Surface wrapper.
-    ::android::SurfaceHolderUniquePtr mSurfaceHolder;
 };
 
 }  // namespace aidl::android::hardware::automotive::evs::implementation
