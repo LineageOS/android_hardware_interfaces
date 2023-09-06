@@ -31,7 +31,6 @@ namespace utils {
 namespace {
 
 using ::android::base::EqualsIgnoreCase;
-using ::std::string;
 using ::std::vector;
 
 const int64_t kValueForNotFoundIdentifier = 0;
@@ -207,7 +206,7 @@ bool isValid(const ProgramIdentifier& id) {
     uint64_t val = static_cast<uint64_t>(id.value);
     bool valid = true;
 
-    auto expect = [&valid](bool condition, const string& message) {
+    auto expect = [&valid](bool condition, const std::string& message) {
         if (!condition) {
             valid = false;
             LOG(ERROR) << "identifier not valid, expected " << message;
@@ -278,9 +277,9 @@ bool isValid(const ProgramIdentifier& id) {
         case IdentifierType::SXM_CHANNEL:
             expect(val < 1000u, "SXM channel < 1000");
             break;
-        case IdentifierType::VENDOR_START:
-        case IdentifierType::VENDOR_END:
-            // skip
+        default:
+            expect(id.type >= IdentifierType::VENDOR_START && id.type <= IdentifierType::VENDOR_END,
+                   "Undefined identifier type");
             break;
     }
 
@@ -452,10 +451,10 @@ std::optional<std::string> getMetadataString(const ProgramInfo& info, const Meta
     return metadataString;
 }
 
-ProgramIdentifier makeHdRadioStationName(const string& name) {
+ProgramIdentifier makeHdRadioStationName(const std::string& name) {
     constexpr size_t maxlen = 8;
 
-    string shortName;
+    std::string shortName;
     shortName.reserve(maxlen);
 
     const auto& loc = std::locale::classic();
@@ -484,7 +483,7 @@ IdentifierType getType(int typeAsInt) {
     return static_cast<IdentifierType>(typeAsInt);
 }
 
-bool parseArgInt(const string& s, int* out) {
+bool parseArgInt(const std::string& s, int* out) {
     return ::android::base::ParseInt(s, out);
 }
 
@@ -492,7 +491,7 @@ bool parseArgLong(const std::string& s, long* out) {
     return ::android::base::ParseInt(s, out);
 }
 
-bool parseArgBool(const string& s, bool* out) {
+bool parseArgBool(const std::string& s, bool* out) {
     if (EqualsIgnoreCase(s, "true")) {
         *out = true;
     } else if (EqualsIgnoreCase(s, "false")) {
@@ -503,7 +502,7 @@ bool parseArgBool(const string& s, bool* out) {
     return true;
 }
 
-bool parseArgDirection(const string& s, bool* out) {
+bool parseArgDirection(const std::string& s, bool* out) {
     if (EqualsIgnoreCase(s, "up")) {
         *out = true;
     } else if (EqualsIgnoreCase(s, "down")) {
@@ -514,8 +513,8 @@ bool parseArgDirection(const string& s, bool* out) {
     return true;
 }
 
-bool parseArgIdentifierTypeArray(const string& s, vector<IdentifierType>* out) {
-    for (const string& val : ::android::base::Split(s, ",")) {
+bool parseArgIdentifierTypeArray(const std::string& s, vector<IdentifierType>* out) {
+    for (const std::string& val : ::android::base::Split(s, ",")) {
         int outInt;
         if (!parseArgInt(val, &outInt)) {
             return false;
@@ -526,8 +525,8 @@ bool parseArgIdentifierTypeArray(const string& s, vector<IdentifierType>* out) {
 }
 
 bool parseProgramIdentifierList(const std::string& s, vector<ProgramIdentifier>* out) {
-    for (const string& idStr : ::android::base::Split(s, ",")) {
-        const vector<string> idStrPair = ::android::base::Split(idStr, ":");
+    for (const std::string& idStr : ::android::base::Split(s, ",")) {
+        const vector<std::string> idStrPair = ::android::base::Split(idStr, ":");
         if (idStrPair.size() != 2) {
             return false;
         }
