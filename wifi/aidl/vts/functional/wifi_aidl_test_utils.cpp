@@ -197,6 +197,9 @@ std::shared_ptr<IWifiApIface> getBridgedWifiApIface(const char* instance_name) {
 
 bool configureChipToSupportConcurrencyType(const std::shared_ptr<IWifiChip>& wifi_chip,
                                            IfaceConcurrencyType type, int* configured_mode_id) {
+    if (!wifi_chip.get()) {
+        return false;
+    }
     return configureChipToSupportConcurrencyTypeInternal(wifi_chip, type, configured_mode_id);
 }
 
@@ -208,6 +211,9 @@ void stopWifiService(const char* instance_name) {
 }
 
 int32_t getChipFeatureSet(const std::shared_ptr<IWifiChip>& wifi_chip) {
+    if (!wifi_chip.get()) {
+        return 0;
+    }
     int32_t features = 0;
     if (wifi_chip->getFeatureSet(&features).isOk()) {
         return features;
