@@ -136,6 +136,7 @@ struct ChipConcurrencyCombination
 #define AP IfaceConcurrencyType::AP
 #define AP_BRIDGED IfaceConcurrencyType::AP_BRIDGED
 #define P2P IfaceConcurrencyType::P2P
+#undef NAN  // undefine NAN from math.h
 #define NAN IfaceConcurrencyType::NAN
 static const std::vector<V1_6::IWifiChip::ChipMode> kChipModesPrimary{
         {kMainModeId, ChipConcurrencyCombination::make_vec({WIFI_HAL_INTERFACE_COMBINATIONS})},
