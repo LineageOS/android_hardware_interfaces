@@ -32,7 +32,10 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.graphics.common;
-/* @hide */
+/**
+ * @hide
+ * @deprecated : Use instead android.hardware.HardwareBuffer in frameworks/base
+ */
 @VintfStability
 parcelable HardwareBuffer {
   android.hardware.graphics.common.HardwareBufferDescription description;
