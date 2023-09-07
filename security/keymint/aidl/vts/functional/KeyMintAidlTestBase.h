@@ -454,6 +454,29 @@ ErrorCode GetReturnErrorCode(const Status& result);
                              ::android::PrintInstanceNameToString);                  \
     GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(name);
 
+// Use `ro.product.<property>_for_attestation` property for attestation if it is present else
+// fallback to use `ro.product.vendor.<property>` if it is present else fallback to
+// `ro.product.<property>`. Similar logic can be seen in Java method `getVendorDeviceIdProperty`
+// in frameworks/base/core/java/android/os/Build.java.
+template <Tag tag>
+void add_attestation_id(AuthorizationSetBuilder* attestation_id_tags,
+                        TypedTag<TagType::BYTES, tag> tag_type, const char* prop) {
+    ::android::String8 prop_name =
+            ::android::String8::format("ro.product.%s_for_attestation", prop);
+    std::string prop_value = ::android::base::GetProperty(prop_name.c_str(), /* default= */ "");
+    if (!prop_value.empty()) {
+        add_tag_from_prop(attestation_id_tags, tag_type, prop_name.c_str());
+    } else {
+        prop_name = ::android::String8::format("ro.product.vendor.%s", prop);
+        prop_value = ::android::base::GetProperty(prop_name.c_str(), /* default= */ "");
+        if (!prop_value.empty()) {
+            add_tag_from_prop(attestation_id_tags, tag_type, prop_name.c_str());
+        } else {
+            prop_name = ::android::String8::format("ro.product.%s", prop);
+            add_tag_from_prop(attestation_id_tags, tag_type, prop_name.c_str());
+        }
+    }
+}
 }  // namespace test
 
 }  // namespace aidl::android::hardware::security::keymint
