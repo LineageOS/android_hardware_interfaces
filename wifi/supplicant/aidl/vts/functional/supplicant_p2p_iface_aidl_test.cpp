@@ -524,16 +524,12 @@ TEST_P(SupplicantP2pIfaceAidlTest, Flush) {
  * Connect
  */
 TEST_P(SupplicantP2pIfaceAidlTest, Connect) {
-    /*
-     * Auto-join is not enabled before R. After enabling auto-join,
-     * this should always succeed.
-     */
-    std::string pin;
-    EXPECT_TRUE(p2p_iface_
-                    ->connect(kTestMacAddr, WpsProvisionMethod::PBC,
-                              kTestConnectPin, false, false,
-                              kTestConnectGoIntent, &pin)
-                    .isOk());
+  std::string pin;
+  EXPECT_TRUE(p2p_iface_
+                  ->connect(kTestMacAddr, WpsProvisionMethod::PBC,
+                            kTestConnectPin, true, false, kTestConnectGoIntent,
+                            &pin)
+                  .isOk());
 }
 
 /*
@@ -543,7 +539,7 @@ TEST_P(SupplicantP2pIfaceAidlTest, CancelConnect) {
     std::string pin;
     EXPECT_TRUE(p2p_iface_
                     ->connect(kTestMacAddr, WpsProvisionMethod::PBC,
-                              kTestConnectPin, false, false,
+                              kTestConnectPin, true, false,
                               kTestConnectGoIntent, &pin)
                     .isOk());
     EXPECT_TRUE(p2p_iface_->cancelConnect().isOk());
