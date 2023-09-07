@@ -454,14 +454,13 @@ ndk::ScopedAStatus Module::connectExternalDevice(const AudioPort& in_templateIdA
             LOG(ERROR) << __func__ << ": port id " << templateId << " is not a device port";
             return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
         }
-        if (!templateIt->profiles.empty()) {
-            LOG(ERROR) << __func__ << ": port id " << templateId
-                       << " does not have dynamic profiles";
-            return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
-        }
         auto& templateDevicePort = templateIt->ext.get<AudioPortExt::Tag::device>();
         if (templateDevicePort.device.type.connection.empty()) {
             LOG(ERROR) << __func__ << ": port id " << templateId << " is permanently attached";
+            return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+        }
+        if (mConnectedDevicePorts.find(templateId) != mConnectedDevicePorts.end()) {
+            LOG(ERROR) << __func__ << ": port id " << templateId << " is a connected device port";
             return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
         }
         // Postpone id allocation until we ensure that there are no client errors.
@@ -486,19 +485,23 @@ ndk::ScopedAStatus Module::connectExternalDevice(const AudioPort& in_templateIdA
         }
     }
 
-    if (!mDebug.simulateDeviceConnections) {
-        RETURN_STATUS_IF_ERROR(populateConnectedDevicePort(&connectedPort));
-    } else {
-        auto& connectedProfiles = getConfig().connectedProfiles;
-        if (auto connectedProfilesIt = connectedProfiles.find(templateId);
-            connectedProfilesIt != connectedProfiles.end()) {
-            connectedPort.profiles = connectedProfilesIt->second;
-        }
-    }
     if (connectedPort.profiles.empty()) {
-        LOG(ERROR) << "Profiles of a connected port still empty after connecting external device "
-                   << connectedPort.toString();
-        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
+        if (!mDebug.simulateDeviceConnections) {
+            RETURN_STATUS_IF_ERROR(populateConnectedDevicePort(&connectedPort));
+        } else {
+            auto& connectedProfiles = getConfig().connectedProfiles;
+            if (auto connectedProfilesIt = connectedProfiles.find(templateId);
+                connectedProfilesIt != connectedProfiles.end()) {
+                connectedPort.profiles = connectedProfilesIt->second;
+            }
+        }
+        if (connectedPort.profiles.empty()) {
+            LOG(ERROR) << __func__
+                       << ": profiles of a connected port still empty after connecting external "
+                          "device "
+                       << connectedPort.toString();
+            return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
+        }
     }
 
     for (auto profile : connectedPort.profiles) {
