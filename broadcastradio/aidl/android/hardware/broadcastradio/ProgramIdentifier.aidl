@@ -30,8 +30,10 @@ parcelable ProgramIdentifier {
     IdentifierType type = IdentifierType.INVALID;
 
     /**
-     * The uint64_t value field holds the value in format described in comments
-     * for IdentifierType enum.
+     * The value field holds the value in format described in comments for IdentifierType enum.
+     *
+     * The value should be 64-bit unsigned integer, but is represented as 64-bit signed integer
+     * in AIDL.
      */
     long value;
 }
