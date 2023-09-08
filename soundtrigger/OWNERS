@@ -1,0 +1,8 @@
+# Bug component: 48436
+
+include platform/frameworks/base:/media/aidl/android/media/soundtrigger_middleware/OWNERS
+include platform/frameworks/base:/services/core/java/com/android/server/soundtrigger_middleware/OWNERS
+
+elaurent@google.com
+mdooley@google.com
+mnaganov@google.com
