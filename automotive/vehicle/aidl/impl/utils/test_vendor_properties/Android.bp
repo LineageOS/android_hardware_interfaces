@@ -26,5 +26,6 @@ filegroup {
     visibility: [
         "//hardware/interfaces/automotive/vehicle/aidl:__subpackages__",
         "//packages/services/Car:__subpackages__",
+        "//cts/tests/tests/car_permission_tests",
     ],
 }
