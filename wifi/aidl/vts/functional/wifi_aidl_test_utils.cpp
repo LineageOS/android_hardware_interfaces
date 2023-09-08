@@ -200,6 +200,20 @@ bool configureChipToSupportConcurrencyType(const std::shared_ptr<IWifiChip>& wif
     return configureChipToSupportConcurrencyTypeInternal(wifi_chip, type, configured_mode_id);
 }
 
+bool doesChipSupportConcurrencyType(const std::shared_ptr<IWifiChip>& wifi_chip,
+                                    IfaceConcurrencyType type) {
+    if (!wifi_chip.get()) {
+        return false;
+    }
+    std::vector<IWifiChip::ChipMode> chip_modes;
+    auto status = wifi_chip->getAvailableModes(&chip_modes);
+    if (!status.isOk()) {
+        return false;
+    }
+    int mode_id;
+    return findAnyModeSupportingConcurrencyType(type, chip_modes, &mode_id);
+}
+
 void stopWifiService(const char* instance_name) {
     std::shared_ptr<IWifi> wifi = getWifi(instance_name);
     if (wifi != nullptr) {
