@@ -208,7 +208,7 @@ INSTANTIATE_TEST_SUITE_P(
         HapticGeneratorInvalidTest, HapticGeneratorParamTest,
         ::testing::Combine(testing::ValuesIn(EffectFactoryHelper::getAllEffectDescriptors(
                                    IFactory::descriptor, getEffectTypeUuidHapticGenerator())),
-                           testing::Values(MIN_ID - 1),
+                           testing::Values(MIN_ID),
                            testing::Values(HapticGenerator::VibratorScale::NONE),
                            testing::Values(MIN_FLOAT), testing::Values(MIN_FLOAT),
                            testing::Values(MIN_FLOAT)),
