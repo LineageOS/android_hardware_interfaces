@@ -137,9 +137,9 @@ bool isValid(const ProgramIdentifier& id);
 bool isValid(const ProgramSelector& sel);
 
 ProgramIdentifier makeIdentifier(IdentifierType type, int64_t value);
-ProgramSelector makeSelectorAmfm(int32_t frequency);
-ProgramSelector makeSelectorDab(int64_t sidExt);
-ProgramSelector makeSelectorDab(int64_t sidExt, int32_t ensemble, int64_t freq);
+ProgramSelector makeSelectorAmfm(uint32_t frequency);
+ProgramSelector makeSelectorDab(uint64_t sidExt);
+ProgramSelector makeSelectorDab(uint64_t sidExt, uint32_t ensemble, uint64_t freq);
 
 bool satisfies(const ProgramFilter& filter, const ProgramSelector& sel);
 
