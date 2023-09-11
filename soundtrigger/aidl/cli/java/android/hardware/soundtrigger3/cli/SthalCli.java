@@ -289,6 +289,8 @@ public class SthalCli {
             Properties properties = new Properties();
             properties.implementor = "Android";
             properties.description = "Mock STHAL";
+            properties.uuid = "a5af2d2a-4cc4-4b69-a22f-c9d5b6d492c3";
+            properties.supportedModelArch = "Mock arch";
             properties.maxSoundModels = 2;
             properties.maxKeyPhrases = 1;
             properties.recognitionModes =
