@@ -16,6 +16,8 @@
 
 #pragma once
 
+#define LOG_TAG "FaceVirtualHal"
+
 #include <aidl/android/hardware/biometrics/common/SensorStrength.h>
 #include <aidl/android/hardware/biometrics/face/BnSession.h>
 #include <aidl/android/hardware/biometrics/face/FaceSensorType.h>

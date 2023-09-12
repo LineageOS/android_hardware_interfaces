@@ -17,24 +17,23 @@ package {
 }
 
 apex_key {
-    name: "com.android.hardware.biometrics.face.key",
-    public_key: "com.android.hardware.biometrics.face.avbpubkey",
-    private_key: "com.android.hardware.biometrics.face.pem",
+    name: "com.android.hardware.biometrics.face.virtual.key",
+    public_key: "com.android.hardware.biometrics.face.virtual.avbpubkey",
+    private_key: "com.android.hardware.biometrics.face.virtual.pem",
 }
 
 android_app_certificate {
-    name: "com.android.hardware.biometrics.face.certificate",
-    certificate: "com.android.hardware.biometrics.face",
+    name: "com.android.hardware.biometrics.face.virtual.certificate",
+    certificate: "com.android.hardware.biometrics.face.virtual",
 }
 
 apex {
-    name: "com.android.hardware.biometrics.face",
+    name: "com.android.hardware.biometrics.face.virtual",
     manifest: "manifest.json",
     file_contexts: "file_contexts",
-    key: "com.android.hardware.biometrics.face.key",
-    certificate: ":com.android.hardware.biometrics.face.certificate",
+    key: "com.android.hardware.biometrics.face.virtual.key",
+    certificate: ":com.android.hardware.biometrics.face.virtual.certificate",
     updatable: false,
-
     vendor: true,
     use_vndk_as_stable: true,
 
@@ -44,11 +43,9 @@ apex {
     ],
     prebuilts: [
         // init_rc
-        "face-default-apex.rc",
+        "face-example-apex.rc",
         // vintf_fragment
-        "face-default-apex.xml",
-        // permission
-        "android.hardware.biometrics.face.prebuilt.xml",
+        "face-example-apex.xml",
     ],
 
     overrides: [
@@ -57,23 +54,21 @@ apex {
 }
 
 prebuilt_etc {
-    name: "face-default-apex.rc",
-    src: ":gen-face-default-apex.rc",
-    vendor: true,
+    name: "face-example-apex.rc",
+    src: ":gen-face-example-apex.rc",
     installable: false,
 }
 
 genrule {
-    name: "gen-face-default-apex.rc",
-    srcs: [":face-default.rc"],
-    out: ["face-default-apex.rc"],
-    cmd: "sed -e 's@/vendor/bin/@/apex/com.android.hardware.biometrics.face/bin/@' $(in) > $(out)",
+    name: "gen-face-example-apex.rc",
+    srcs: [":face-example.rc"],
+    out: ["face-example-apex.rc"],
+    cmd: "sed -e 's@/vendor/bin/@/apex/com.android.hardware.biometrics.face.virtual/bin/@' $(in) > $(out)",
 }
 
 prebuilt_etc {
-    name: "face-default-apex.xml",
-    src: ":face-default.xml",
+    name: "face-example-apex.xml",
+    src: ":face-example.xml",
     sub_dir: "vintf",
-    vendor: true,
     installable: false,
 }

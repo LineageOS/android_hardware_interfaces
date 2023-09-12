@@ -8,20 +8,20 @@ package {
 }
 
 filegroup {
-    name: "face-default.rc",
-    srcs: ["face-default.rc"],
+    name: "face-example.rc",
+    srcs: ["face-example.rc"],
 }
 
 filegroup {
-    name: "face-default.xml",
-    srcs: ["face-default.xml"],
+    name: "face-example.xml",
+    srcs: ["face-example.xml"],
 }
 
 cc_binary {
     name: "android.hardware.biometrics.face-service.example",
     relative_install_path: "hw",
-    init_rc: [":face-default.rc"],
-    vintf_fragments: [":face-default.xml"],
+    init_rc: [":face-example.rc"],
+    vintf_fragments: [":face-example.xml"],
     vendor: true,
     shared_libs: [
         "libbase",
