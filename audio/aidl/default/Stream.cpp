@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include <pthread.h>
+
 #define LOG_TAG "AHAL_Stream"
 #include <android-base/logging.h>
 #include <android/binder_ibinder_platform.h>
@@ -94,6 +96,14 @@ void StreamContext::reset() {
     mDataMQ.reset();
 }
 
+pid_t StreamWorkerCommonLogic::getTid() const {
+#if defined(__ANDROID__)
+    return pthread_gettid_np(pthread_self());
+#else
+    return 0;
+#endif
+}
+
 std::string StreamWorkerCommonLogic::init() {
     if (mContext->getCommandMQ() == nullptr) return "Command MQ is null";
     if (mContext->getReplyMQ() == nullptr) return "Reply MQ is null";
@@ -164,7 +174,7 @@ StreamInWorkerLogic::Status StreamInWorkerLogic::cycle() {
     switch (command.getTag()) {
         case Tag::halReservedExit:
             if (const int32_t cookie = command.get<Tag::halReservedExit>();
-                cookie == mContext->getInternalCommandCookie()) {
+                cookie == (mContext->getInternalCommandCookie() ^ getTid())) {
                 mDriver->shutdown();
                 setClosed();
                 // This is an internal command, no need to reply.
@@ -384,7 +394,7 @@ StreamOutWorkerLogic::Status StreamOutWorkerLogic::cycle() {
     switch (command.getTag()) {
         case Tag::halReservedExit:
             if (const int32_t cookie = command.get<Tag::halReservedExit>();
-                cookie == mContext->getInternalCommandCookie()) {
+                cookie == (mContext->getInternalCommandCookie() ^ getTid())) {
                 mDriver->shutdown();
                 setClosed();
                 // This is an internal command, no need to reply.
@@ -717,7 +727,7 @@ void StreamCommonImpl::stopWorker() {
     if (auto commandMQ = mContext.getCommandMQ(); commandMQ != nullptr) {
         LOG(DEBUG) << __func__ << ": asking the worker to exit...";
         auto cmd = StreamDescriptor::Command::make<StreamDescriptor::Command::Tag::halReservedExit>(
-                mContext.getInternalCommandCookie());
+                mContext.getInternalCommandCookie() ^ mWorker->getTid());
         // Note: never call 'pause' and 'resume' methods of StreamWorker
         // in the HAL implementation. These methods are to be used by
         // the client side only. Preventing the worker loop from running
