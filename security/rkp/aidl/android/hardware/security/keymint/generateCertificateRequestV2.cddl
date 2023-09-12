@@ -6,7 +6,7 @@ Csr = AuthenticatedRequest<CsrPayload>
 CsrPayload = [                      ; CBOR Array defining the payload for Csr
     version: 3,                     ; The CsrPayload CDDL Schema version.
     CertificateType,                ; The type of certificate being requested.
-    DeviceInfo,                     ; Defined in DeviceInfo.aidl
+    DeviceInfo,                     ; Defined in the relevant DeviceInfoV*.cddl file.
     KeysToSign,                     ; Provided by the method parameters
 ]
 
@@ -18,7 +18,7 @@ CsrPayload = [                      ; CBOR Array defining the payload for Csr
 ;  - "keymint"
 CertificateType = tstr
 
-KeysToSign = [ * PublicKey ]   ; Please see MacedPublicKey.aidl for the PublicKey definition.
+KeysToSign = [ * PublicKey ]   ; Please see PublicKey.cddl for the PublicKey definition.
 
 AuthenticatedRequest<T> = [
     version: 1,              ; The AuthenticatedRequest CDDL Schema version.
@@ -30,7 +30,7 @@ AuthenticatedRequest<T> = [
     ]>,
 ]
 
-; COSE_Sign1 (untagged)
+; COSE_Sign1 (untagged) [RFC9052 s4.2]
 SignedData<Data> = [
     protected: bstr .cbor { 1 : AlgorithmEdDSA / AlgorithmES256 / AlgorithmES384 },
     unprotected: {},
@@ -39,7 +39,7 @@ SignedData<Data> = [
                         ; ECDSA(CDI_Leaf_Priv, SignedDataSigStruct<Data>)
 ]
 
-; Sig_structure for SignedData
+; Sig_structure for SignedData [ RFC9052 s4.4]
 SignedDataSigStruct<Data> = [
     context: "Signature1",
     protected: bstr .cbor { 1 : AlgorithmEdDSA / AlgorithmES256 / AlgorithmES384 },
@@ -113,7 +113,7 @@ DiceChainEntryPayload = {                    ; CWT [RFC8392]
 
 ; Each entry in the DICE chain is a DiceChainEntryPayload signed by the key from the previous
 ; entry in the DICE chain array.
-DiceChainEntry = [                            ; COSE_Sign1 (untagged)
+DiceChainEntry = [                            ; COSE_Sign1 (untagged), [RFC9052 s4.2]
     protected : bstr .cbor { 1 : AlgorithmEdDSA / AlgorithmES256 / AlgorithmES384 },
     unprotected: {},
     payload: bstr .cbor DiceChainEntryPayload,
@@ -135,14 +135,14 @@ DiceChainEntryInput = [
 ; NOTE: Integer encoding is different for Ed25519 and P256 keys:
 ;       - Ed25519 is LE: https://www.rfc-editor.org/rfc/rfc8032#section-3.1
 ;       - P256 is BE: https://www.secg.org/sec1-v2.pdf#page=19 (section 2.3.7)
-PubKeyEd25519 = {                ; COSE_Key
+PubKeyEd25519 = {                ; COSE_Key [RFC9052 s7]
     1 : 1,                       ; Key type : octet key pair
     3 : AlgorithmEdDSA,          ; Algorithm : EdDSA
     -1 : 6,                      ; Curve : Ed25519
     -2 : bstr                    ; X coordinate, little-endian
 }
 
-PubKeyECDSA256 = {               ; COSE_Key
+PubKeyECDSA256 = {               ; COSE_Key [RFC9052 s7]
     1 : 2,                       ; Key type : EC2
     3 : AlgorithmES256,          ; Algorithm : ECDSA w/ SHA-256
     -1 : 1,                      ; Curve: P256
@@ -150,14 +150,17 @@ PubKeyECDSA256 = {               ; COSE_Key
     -3 : bstr                    ; Y coordinate, big-endian
 }
 
-PubKeyECDSA384 = {               ; COSE_Key
+PubKeyECDSA384 = {               ; COSE_Key [RFC9052 s7]
     1 : 2,                       ; Key type : EC2
     3 : AlgorithmES384,          ; Algorithm : ECDSA w/ SHA-384
     -1 : 2,                      ; Curve: P384
-    -2 : bstr,                   ; X coordinate
-    -3 : bstr                    ; Y coordinate
+    -2 : bstr,                   ; X coordinate, big-endian
+    -3 : bstr                    ; Y coordinate, big-endian
 }
 
-AlgorithmES256 = -7
-AlgorithmES384 = -35
-AlgorithmEdDSA = -8
+AlgorithmES256 = -7              ; [RFC9053 s2.1]
+AlgorithmES384 = -35             ; [RFC9053 s2.1]
+AlgorithmEdDSA = -8              ; [RFC9053 s2.2]
+
+; INCLUDE PublicKey.cddl for: PublicKey
+; INCLUDE DeviceInfoV3.cddl for: DeviceInfo

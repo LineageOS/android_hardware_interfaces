@@ -1,0 +1,21 @@
+; Version 2, introduced in Android 13:
+DeviceInfo = {
+    "brand" : tstr,
+    "manufacturer" : tstr,
+    "product" : tstr,
+    "model" : tstr,
+    "device" : tstr,
+    "vb_state" : "green" / "yellow" / "orange",    ; Taken from the AVB values
+    "bootloader_state" : "locked" / "unlocked",    ; Taken from the AVB values
+    "vbmeta_digest": bstr,                         ; Taken from the AVB values
+    ? "os_version" : tstr,                         ; Same as
+                                                   ; android.os.Build.VERSION.release
+                                                   ; Not optional for TEE.
+    "system_patch_level" : uint,     ; YYYYMM, must match KeyMint OS_PATCHLEVEL
+    "boot_patch_level" : uint,       ; YYYYMMDD, must match KeyMint BOOT_PATCHLEVEL
+    "vendor_patch_level" : uint,     ; YYYYMMDD, must match KeyMint VENDOR_PATCHLEVEL
+    "version" : 2,                                 ; The CDDL schema version.
+    "security_level" : "tee" / "strongbox",
+    "fused": 1 / 0,  ; 1 if secure boot is enforced for the processor that the IRPC
+                     ; implementation is contained in. 0 otherwise.
+}
