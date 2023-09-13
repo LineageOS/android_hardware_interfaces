@@ -117,7 +117,7 @@ void convertToHealthInfo(const struct android::BatteryProperties *p,
     info.batteryCycleCount      = p->batteryCycleCount;
     info.batteryFullCharge      = p->batteryFullCharge;
     info.batteryChargeCounter   = p->batteryChargeCounter;
-    info.batteryTechnology      = p->batteryTechnology;
+    info.batteryTechnology      = p->batteryTechnology.c_str();
 }
 
 void convertFromHealthInfo(const HealthInfo& info,
