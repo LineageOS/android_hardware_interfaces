@@ -75,7 +75,7 @@ Return<bool> DescramblerImpl::requiresSecureDecoderComponent(const hidl_string& 
         return false;
     }
 
-    return holder->requiresSecureDecoderComponent(String8(mime.c_str()));
+    return holder->requiresSecureDecoderComponent(mime.c_str());
 }
 
 static inline bool validateRangeForSize(uint64_t offset, uint64_t length, uint64_t size) {
