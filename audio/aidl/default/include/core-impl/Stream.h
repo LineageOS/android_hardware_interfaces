@@ -223,6 +223,7 @@ class StreamWorkerCommonLogic : public ::android::hardware::audio::common::Strea
         : mContext(context),
           mDriver(driver),
           mTransientStateDelayMs(context->getTransientStateDelayMs()) {}
+    pid_t getTid() const;
     std::string init() override;
     void populateReply(StreamDescriptor::Reply* reply, bool isConnected) const;
     void populateReplyWrongState(StreamDescriptor::Reply* reply,
