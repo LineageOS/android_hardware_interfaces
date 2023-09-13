@@ -79,7 +79,7 @@ Return<bool> DescramblerImpl::requiresSecureDecoderComponent(
         return false;
     }
 
-    return holder->requiresSecureDecoderComponent(String8(mime.c_str()));
+    return holder->requiresSecureDecoderComponent(mime.c_str());
 }
 
 static inline bool validateRangeForSize(
