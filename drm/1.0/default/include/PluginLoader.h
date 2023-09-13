@@ -50,7 +50,7 @@ class PluginLoader {
                 String8 file(pEntry->d_name);
                 if (base::EndsWith(file.c_str(), ".so")) {
                     String8 path = pluginDir + "/" + pEntry->d_name;
-                    T *plugin = loadOne(path, entry);
+                    T* plugin = loadOne(path.c_str(), entry);
                     if (plugin) {
                         factories.push(plugin);
                     }
