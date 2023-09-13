@@ -83,8 +83,8 @@ prebuilt_etc {
 }
 
 prebuilt_etc {
-    name: "threadnetwork-service-sim.rc",
-    src: "threadnetwork-service-sim.rc",
+    name: "threadnetwork-service.rc",
+    src: "threadnetwork-service.rc",
     installable: false,
 }
 
@@ -101,9 +101,10 @@ apex {
         "android.hardware.threadnetwork-service",
         "ot-rcp",
     ],
+
     prebuilts: [
         "threadnetwork-default.xml", // vintf_fragment
-        "threadnetwork-service-sim.rc", // init_rc
+        "threadnetwork-service.rc", // init_rc
         "android.hardware.thread_network.prebuilt.xml", // permission
     ],
 }
