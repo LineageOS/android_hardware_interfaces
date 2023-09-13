@@ -52,7 +52,7 @@ ndk::ScopedAStatus StreamUsb::setConnectedDevices(
         }
         connectedDeviceProfiles.push_back(*profile);
     }
-    RETURN_STATUS_IF_ERROR(setConnectedDevices(connectedDevices));
+    RETURN_STATUS_IF_ERROR(StreamCommonImpl::setConnectedDevices(connectedDevices));
     std::lock_guard guard(mLock);
     mConnectedDeviceProfiles = std::move(connectedDeviceProfiles);
     mConnectedDevicesUpdated.store(true, std::memory_order_release);
