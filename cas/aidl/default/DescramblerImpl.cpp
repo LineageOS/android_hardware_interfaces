@@ -71,7 +71,7 @@ ScopedAStatus DescramblerImpl::requiresSecureDecoderComponent(const string& in_m
         *_aidl_return = false;
     }
 
-    *_aidl_return = holder->requiresSecureDecoderComponent(String8(in_mime.c_str()));
+    *_aidl_return = holder->requiresSecureDecoderComponent(in_mime.c_str());
     return ScopedAStatus::ok();
 }
 
