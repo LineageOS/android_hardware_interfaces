@@ -1,4 +1,4 @@
-service vendor.cas-default /vendor/bin/hw/android.hardware.cas-service.example
+service vendor.cas-default /apex/com.android.hardware.cas/bin/hw/android.hardware.cas-service.example
     interface aidl android.hardware.cas.IMediaCasService/default
     class hal
     user media
