@@ -240,6 +240,8 @@ FakeVehicleHardware::FakeVehicleHardware(std::string defaultConfigDir,
                                          std::string overrideConfigDir, bool forceOverride)
     : mValuePool(std::make_unique<VehiclePropValuePool>()),
       mServerSidePropStore(new VehiclePropertyStore(mValuePool)),
+      mDefaultConfigDir(defaultConfigDir),
+      mOverrideConfigDir(overrideConfigDir),
       mFakeObd2Frame(new obd2frame::FakeObd2Frame(mServerSidePropStore)),
       mFakeUserHal(new FakeUserHal(mValuePool)),
       mRecurrentTimer(new RecurrentTimer()),
@@ -247,8 +249,6 @@ FakeVehicleHardware::FakeVehicleHardware(std::string defaultConfigDir,
               [this](const VehiclePropValue& value) { eventFromVehicleBus(value); })),
       mPendingGetValueRequests(this),
       mPendingSetValueRequests(this),
-      mDefaultConfigDir(defaultConfigDir),
-      mOverrideConfigDir(overrideConfigDir),
       mForceOverride(forceOverride) {
     init();
 }
@@ -259,11 +259,15 @@ FakeVehicleHardware::~FakeVehicleHardware() {
     mGeneratorHub.reset();
 }
 
+bool FakeVehicleHardware::UseOverrideConfigDir() {
+    return mForceOverride ||
+           android::base::GetBoolProperty(OVERRIDE_PROPERTY, /*default_value=*/false);
+}
+
 std::unordered_map<int32_t, ConfigDeclaration> FakeVehicleHardware::loadConfigDeclarations() {
     std::unordered_map<int32_t, ConfigDeclaration> configsByPropId;
     loadPropConfigsFromDir(mDefaultConfigDir, &configsByPropId);
-    if (mForceOverride ||
-        android::base::GetBoolProperty(OVERRIDE_PROPERTY, /*default_value=*/false)) {
+    if (UseOverrideConfigDir()) {
         loadPropConfigsFromDir(mOverrideConfigDir, &configsByPropId);
     }
     return configsByPropId;
