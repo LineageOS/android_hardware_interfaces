@@ -142,7 +142,7 @@ class Module : public BnModule {
     // ids of device ports created at runtime via 'connectExternalDevice'.
     // Also stores a list of ids of mix ports with dynamic profiles that were populated from
     // the connected port. This list can be empty, thus an int->int multimap can't be used.
-    using ConnectedDevicePorts = std::map<int32_t, std::vector<int32_t>>;
+    using ConnectedDevicePorts = std::map<int32_t, std::set<int32_t>>;
     // Maps port ids and port config ids to patch ids.
     // Multimap because both ports and configs can be used by multiple patches.
     using Patches = std::multimap<int32_t, int32_t>;

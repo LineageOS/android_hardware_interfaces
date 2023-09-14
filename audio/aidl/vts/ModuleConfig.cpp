@@ -21,6 +21,7 @@
 #include <aidl/android/media/audio/common/AudioInputFlags.h>
 #include <aidl/android/media/audio/common/AudioIoFlags.h>
 #include <aidl/android/media/audio/common/AudioOutputFlags.h>
+#include <error/expected_utils.h>
 
 #include "ModuleConfig.h"
 
@@ -499,18 +500,13 @@ std::vector<AudioPortConfig> ModuleConfig::generateAudioDevicePortConfigs(
     return result;
 }
 
-const ndk::ScopedAStatus& ModuleConfig::onExternalDeviceConnected(IModule* module,
-                                                                  const AudioPort& port) {
-    // Update ports and routes
-    mStatus = module->getAudioPorts(&mPorts);
-    if (!mStatus.isOk()) return mStatus;
-    mStatus = module->getAudioRoutes(&mRoutes);
-    if (!mStatus.isOk()) return mStatus;
+ndk::ScopedAStatus ModuleConfig::onExternalDeviceConnected(IModule* module, const AudioPort& port) {
+    RETURN_STATUS_IF_ERROR(module->getAudioPorts(&mPorts));
+    RETURN_STATUS_IF_ERROR(module->getAudioRoutes(&mRoutes));
 
     // Validate port is present in module
     if (std::find(mPorts.begin(), mPorts.end(), port) == mPorts.end()) {
-        mStatus = ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
-        return mStatus;
+        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
     }
 
     if (port.flags.getTag() == aidl::android::media::audio::common::AudioIoFlags::Tag::input) {
@@ -518,23 +514,20 @@ const ndk::ScopedAStatus& ModuleConfig::onExternalDeviceConnected(IModule* modul
     } else {
         mConnectedExternalSinkDevicePorts.insert(port.id);
     }
-    return mStatus;
+    return ndk::ScopedAStatus::ok();
 }
 
-const ndk::ScopedAStatus& ModuleConfig::onExternalDeviceDisconnected(IModule* module,
-                                                                     const AudioPort& port) {
-    // Update ports and routes
-    mStatus = module->getAudioPorts(&mPorts);
-    if (!mStatus.isOk()) return mStatus;
-    mStatus = module->getAudioRoutes(&mRoutes);
-    if (!mStatus.isOk()) return mStatus;
+ndk::ScopedAStatus ModuleConfig::onExternalDeviceDisconnected(IModule* module,
+                                                              const AudioPort& port) {
+    RETURN_STATUS_IF_ERROR(module->getAudioPorts(&mPorts));
+    RETURN_STATUS_IF_ERROR(module->getAudioRoutes(&mRoutes));
 
     if (port.flags.getTag() == aidl::android::media::audio::common::AudioIoFlags::Tag::input) {
         mConnectedExternalSourceDevicePorts.erase(port.id);
     } else {
         mConnectedExternalSinkDevicePorts.erase(port.id);
     }
-    return mStatus;
+    return ndk::ScopedAStatus::ok();
 }
 
 bool ModuleConfig::isMmapSupported() const {

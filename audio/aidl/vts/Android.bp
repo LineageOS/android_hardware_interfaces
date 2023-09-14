@@ -26,7 +26,10 @@ cc_defaults {
         "libaudioaidlcommon",
         "libaidlcommonsupport",
     ],
-    header_libs: ["libaudioaidl_headers"],
+    header_libs: [
+        "libaudioaidl_headers",
+        "libexpectedutils_headers",
+    ],
     cflags: [
         "-Wall",
         "-Wextra",

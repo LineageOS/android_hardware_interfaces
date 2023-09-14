@@ -46,6 +46,7 @@
 #include <aidl/android/media/audio/common/AudioOutputFlags.h>
 #include <android-base/chrono_utils.h>
 #include <android/binder_enums.h>
+#include <error/expected_utils.h>
 #include <fmq/AidlMessageQueue.h>
 
 #include "AudioHalBinderServiceUtil.h"
@@ -412,9 +413,21 @@ class AudioCoreModuleBase {
 
     void SetUpImpl(const std::string& moduleName) {
         ASSERT_NO_FATAL_FAILURE(ConnectToService(moduleName));
+        ASSERT_IS_OK(module->getAudioPorts(&initialPorts));
+        ASSERT_IS_OK(module->getAudioRoutes(&initialRoutes));
     }
 
-    void TearDownImpl() { debug.reset(); }
+    void TearDownImpl() {
+        debug.reset();
+        std::vector<AudioPort> finalPorts;
+        ASSERT_IS_OK(module->getAudioPorts(&finalPorts));
+        EXPECT_NO_FATAL_FAILURE(VerifyVectorsAreEqual<AudioPort>(initialPorts, finalPorts))
+                << "The list of audio ports was not restored to the initial state";
+        std::vector<AudioRoute> finalRoutes;
+        ASSERT_IS_OK(module->getAudioRoutes(&finalRoutes));
+        EXPECT_NO_FATAL_FAILURE(VerifyVectorsAreEqual<AudioRoute>(initialRoutes, finalRoutes))
+                << "The list of audio routes was not restored to the initial state";
+    }
 
     void ConnectToService(const std::string& moduleName) {
         ASSERT_EQ(module, nullptr);
@@ -502,17 +515,24 @@ class AudioCoreModuleBase {
         }
     }
 
+    // Warning: modifies the vectors!
+    template <typename T>
+    void VerifyVectorsAreEqual(std::vector<T>& v1, std::vector<T>& v2) {
+        ASSERT_EQ(v1.size(), v2.size());
+        std::sort(v1.begin(), v1.end());
+        std::sort(v2.begin(), v2.end());
+        if (v1 != v2) {
+            FAIL() << "Vectors are not equal: v1 = " << ::android::internal::ToString(v1)
+                   << ", v2 = " << ::android::internal::ToString(v2);
+        }
+    }
+
     std::shared_ptr<IModule> module;
     std::unique_ptr<ModuleConfig> moduleConfig;
     AudioHalBinderServiceUtil binderUtil;
     std::unique_ptr<WithDebugFlags> debug;
-};
-
-class AudioCoreModule : public AudioCoreModuleBase, public testing::TestWithParam<std::string> {
-  public:
-    void SetUp() override { ASSERT_NO_FATAL_FAILURE(SetUpImpl(GetParam())); }
-
-    void TearDown() override { ASSERT_NO_FATAL_FAILURE(TearDownImpl()); }
+    std::vector<AudioPort> initialPorts;
+    std::vector<AudioRoute> initialRoutes;
 };
 
 class WithDevicePortConnectedState {
@@ -530,16 +550,19 @@ class WithDevicePortConnectedState {
                     << "when external device disconnected";
         }
     }
+    ScopedAStatus SetUpNoChecks(IModule* module, ModuleConfig* moduleConfig) {
+        RETURN_STATUS_IF_ERROR(module->connectExternalDevice(mIdAndData, &mConnectedPort));
+        RETURN_STATUS_IF_ERROR(moduleConfig->onExternalDeviceConnected(module, mConnectedPort));
+        mModule = module;
+        mModuleConfig = moduleConfig;
+        return ScopedAStatus::ok();
+    }
     void SetUp(IModule* module, ModuleConfig* moduleConfig) {
-        ASSERT_IS_OK(module->connectExternalDevice(mIdAndData, &mConnectedPort))
+        ASSERT_NE(moduleConfig, nullptr);
+        ASSERT_IS_OK(SetUpNoChecks(module, moduleConfig))
                 << "when connecting device port ID & data " << mIdAndData.toString();
         ASSERT_NE(mIdAndData.id, getId())
                 << "ID of the connected port must not be the same as the ID of the template port";
-        ASSERT_NE(moduleConfig, nullptr);
-        ASSERT_IS_OK(moduleConfig->onExternalDeviceConnected(module, mConnectedPort))
-                << "when external device connected";
-        mModule = module;
-        mModuleConfig = moduleConfig;
     }
     int32_t getId() const { return mConnectedPort.id; }
     const AudioPort& get() { return mConnectedPort; }
@@ -549,6 +572,13 @@ class WithDevicePortConnectedState {
     IModule* mModule = nullptr;
     ModuleConfig* mModuleConfig = nullptr;
     AudioPort mConnectedPort;
+};
+
+class AudioCoreModule : public AudioCoreModuleBase, public testing::TestWithParam<std::string> {
+  public:
+    void SetUp() override { ASSERT_NO_FATAL_FAILURE(SetUpImpl(GetParam())); }
+
+    void TearDown() override { ASSERT_NO_FATAL_FAILURE(TearDownImpl()); }
 };
 
 class StreamContext {
@@ -1258,11 +1288,8 @@ TEST_P(AudioCoreModule, GetAudioPortsIsStable) {
     ASSERT_IS_OK(module->getAudioPorts(&ports1));
     std::vector<AudioPort> ports2;
     ASSERT_IS_OK(module->getAudioPorts(&ports2));
-    ASSERT_EQ(ports1.size(), ports2.size())
-            << "Sizes of audio port arrays do not match across consequent calls to getAudioPorts";
-    std::sort(ports1.begin(), ports1.end());
-    std::sort(ports2.begin(), ports2.end());
-    EXPECT_EQ(ports1, ports2);
+    EXPECT_NO_FATAL_FAILURE(VerifyVectorsAreEqual<AudioPort>(ports1, ports2))
+            << "Audio port arrays do not match across consequent calls to getAudioPorts";
 }
 
 TEST_P(AudioCoreModule, GetAudioRoutesIsStable) {
@@ -1270,11 +1297,8 @@ TEST_P(AudioCoreModule, GetAudioRoutesIsStable) {
     ASSERT_IS_OK(module->getAudioRoutes(&routes1));
     std::vector<AudioRoute> routes2;
     ASSERT_IS_OK(module->getAudioRoutes(&routes2));
-    ASSERT_EQ(routes1.size(), routes2.size())
-            << "Sizes of audio route arrays do not match across consequent calls to getAudioRoutes";
-    std::sort(routes1.begin(), routes1.end());
-    std::sort(routes2.begin(), routes2.end());
-    EXPECT_EQ(routes1, routes2);
+    EXPECT_NO_FATAL_FAILURE(VerifyVectorsAreEqual<AudioRoute>(routes1, routes2))
+            << " Audio route arrays do not match across consequent calls to getAudioRoutes";
 }
 
 TEST_P(AudioCoreModule, GetAudioRoutesAreValid) {
@@ -1792,39 +1816,151 @@ TEST_P(AudioCoreModule, ExternalDevicePortRoutes) {
     }
 }
 
+class RoutedPortsProfilesSnapshot {
+  public:
+    explicit RoutedPortsProfilesSnapshot(int32_t portId) : mPortId(portId) {}
+    void Capture(IModule* module) {
+        std::vector<AudioRoute> routes;
+        ASSERT_IS_OK(module->getAudioRoutesForAudioPort(mPortId, &routes));
+        std::vector<AudioPort> allPorts;
+        ASSERT_IS_OK(module->getAudioPorts(&allPorts));
+        ASSERT_NO_FATAL_FAILURE(GetAllRoutedPorts(routes, allPorts));
+        ASSERT_NO_FATAL_FAILURE(GetProfileSizes());
+    }
+    void VerifyNoProfilesChanges(const RoutedPortsProfilesSnapshot& before) {
+        for (const auto& p : before.mRoutedPorts) {
+            auto beforeIt = before.mPortProfileSizes.find(p.id);
+            ASSERT_NE(beforeIt, before.mPortProfileSizes.end())
+                    << "port ID " << p.id << " not found in the initial profile sizes";
+            EXPECT_EQ(beforeIt->second, mPortProfileSizes[p.id])
+                    << " port " << p.toString() << " has an unexpected profile size change"
+                    << " following an external device connection and disconnection";
+        }
+    }
+    void VerifyProfilesNonEmpty() {
+        for (const auto& p : mRoutedPorts) {
+            EXPECT_NE(0UL, mPortProfileSizes[p.id])
+                    << " port " << p.toString() << " must have had its profiles"
+                    << " populated while having a connected external device";
+        }
+    }
+
+    const std::vector<AudioPort>& getRoutedPorts() const { return mRoutedPorts; }
+
+  private:
+    void GetAllRoutedPorts(const std::vector<AudioRoute>& routes,
+                           std::vector<AudioPort>& allPorts) {
+        for (const auto& r : routes) {
+            if (r.sinkPortId == mPortId) {
+                for (const auto& srcPortId : r.sourcePortIds) {
+                    const auto srcPortIt = findById(allPorts, srcPortId);
+                    ASSERT_NE(allPorts.end(), srcPortIt) << "port ID " << srcPortId;
+                    mRoutedPorts.push_back(*srcPortIt);
+                }
+            } else {
+                const auto sinkPortIt = findById(allPorts, r.sinkPortId);
+                ASSERT_NE(allPorts.end(), sinkPortIt) << "port ID " << r.sinkPortId;
+                mRoutedPorts.push_back(*sinkPortIt);
+            }
+        }
+    }
+    void GetProfileSizes() {
+        std::transform(
+                mRoutedPorts.begin(), mRoutedPorts.end(),
+                std::inserter(mPortProfileSizes, mPortProfileSizes.end()),
+                [](const auto& port) { return std::make_pair(port.id, port.profiles.size()); });
+    }
+
+    const int32_t mPortId;
+    std::vector<AudioPort> mRoutedPorts;
+    std::map<int32_t, size_t> mPortProfileSizes;
+};
+
 // Note: This test relies on simulation of external device connections by the HAL module.
 TEST_P(AudioCoreModule, ExternalDeviceMixPortConfigs) {
     // After an external device has been connected, all mix ports that can be routed
     // to the device port for the connected device must have non-empty profiles.
+    // Since the test connects and disconnects a single device each time, the size
+    // of profiles for all mix ports routed to the device port under test must get back
+    // to the original count once the external device is disconnected.
     ASSERT_NO_FATAL_FAILURE(SetUpModuleConfig());
     std::vector<AudioPort> externalDevicePorts = moduleConfig->getExternalDevicePorts();
     if (externalDevicePorts.empty()) {
         GTEST_SKIP() << "No external devices in the module.";
     }
     for (const auto& port : externalDevicePorts) {
-        WithDevicePortConnectedState portConnected(GenerateUniqueDeviceAddress(port));
-        ASSERT_NO_FATAL_FAILURE(portConnected.SetUp(module.get(), moduleConfig.get()));
-        std::vector<AudioRoute> routes;
-        ASSERT_IS_OK(module->getAudioRoutesForAudioPort(portConnected.getId(), &routes));
-        std::vector<AudioPort> allPorts;
-        ASSERT_IS_OK(module->getAudioPorts(&allPorts));
-        for (const auto& r : routes) {
-            if (r.sinkPortId == portConnected.getId()) {
-                for (const auto& srcPortId : r.sourcePortIds) {
-                    const auto srcPortIt = findById(allPorts, srcPortId);
-                    ASSERT_NE(allPorts.end(), srcPortIt) << "port ID " << srcPortId;
-                    EXPECT_NE(0UL, srcPortIt->profiles.size())
-                            << " source port " << srcPortIt->toString() << " must have its profiles"
-                            << " populated following external device connection";
-                }
-            } else {
-                const auto sinkPortIt = findById(allPorts, r.sinkPortId);
-                ASSERT_NE(allPorts.end(), sinkPortIt) << "port ID " << r.sinkPortId;
-                EXPECT_NE(0UL, sinkPortIt->profiles.size())
-                        << " source port " << sinkPortIt->toString() << " must have its"
-                        << " profiles populated following external device connection";
+        SCOPED_TRACE(port.toString());
+        RoutedPortsProfilesSnapshot before(port.id);
+        ASSERT_NO_FATAL_FAILURE(before.Capture(module.get()));
+        if (before.getRoutedPorts().empty()) continue;
+        {
+            WithDevicePortConnectedState portConnected(GenerateUniqueDeviceAddress(port));
+            ASSERT_NO_FATAL_FAILURE(portConnected.SetUp(module.get(), moduleConfig.get()));
+            RoutedPortsProfilesSnapshot connected(portConnected.getId());
+            ASSERT_NO_FATAL_FAILURE(connected.Capture(module.get()));
+            EXPECT_NO_FATAL_FAILURE(connected.VerifyProfilesNonEmpty());
+        }
+        RoutedPortsProfilesSnapshot after(port.id);
+        ASSERT_NO_FATAL_FAILURE(after.Capture(module.get()));
+        EXPECT_NO_FATAL_FAILURE(after.VerifyNoProfilesChanges(before));
+    }
+}
+
+// Note: This test relies on simulation of external device connections by the HAL module.
+TEST_P(AudioCoreModule, TwoExternalDevicesMixPortConfigsNested) {
+    // Ensure that in the case when two external devices are connected to the same
+    // device port, disconnecting one of them does not erase the profiles of routed mix ports.
+    // In this scenario, the connections are "nested."
+    ASSERT_NO_FATAL_FAILURE(SetUpModuleConfig());
+    std::vector<AudioPort> externalDevicePorts = moduleConfig->getExternalDevicePorts();
+    if (externalDevicePorts.empty()) {
+        GTEST_SKIP() << "No external devices in the module.";
+    }
+    for (const auto& port : externalDevicePorts) {
+        SCOPED_TRACE(port.toString());
+        WithDevicePortConnectedState portConnected1(GenerateUniqueDeviceAddress(port));
+        ASSERT_NO_FATAL_FAILURE(portConnected1.SetUp(module.get(), moduleConfig.get()));
+        {
+            // Connect and disconnect another device, if possible. It might not be possible
+            // for point-to-point connections, like analog or SPDIF.
+            WithDevicePortConnectedState portConnected2(GenerateUniqueDeviceAddress(port));
+            if (auto status = portConnected2.SetUpNoChecks(module.get(), moduleConfig.get());
+                !status.isOk()) {
+                continue;
             }
         }
+        RoutedPortsProfilesSnapshot connected(portConnected1.getId());
+        ASSERT_NO_FATAL_FAILURE(connected.Capture(module.get()));
+        EXPECT_NO_FATAL_FAILURE(connected.VerifyProfilesNonEmpty());
+    }
+}
+
+// Note: This test relies on simulation of external device connections by the HAL module.
+TEST_P(AudioCoreModule, TwoExternalDevicesMixPortConfigsInterleaved) {
+    // Ensure that in the case when two external devices are connected to the same
+    // device port, disconnecting one of them does not erase the profiles of routed mix ports.
+    // In this scenario, the connections are "interleaved."
+    ASSERT_NO_FATAL_FAILURE(SetUpModuleConfig());
+    std::vector<AudioPort> externalDevicePorts = moduleConfig->getExternalDevicePorts();
+    if (externalDevicePorts.empty()) {
+        GTEST_SKIP() << "No external devices in the module.";
+    }
+    for (const auto& port : externalDevicePorts) {
+        SCOPED_TRACE(port.toString());
+        auto portConnected1 =
+                std::make_unique<WithDevicePortConnectedState>(GenerateUniqueDeviceAddress(port));
+        ASSERT_NO_FATAL_FAILURE(portConnected1->SetUp(module.get(), moduleConfig.get()));
+        WithDevicePortConnectedState portConnected2(GenerateUniqueDeviceAddress(port));
+        // Connect another device, if possible. It might not be possible for point-to-point
+        // connections, like analog or SPDIF.
+        if (auto status = portConnected2.SetUpNoChecks(module.get(), moduleConfig.get());
+            !status.isOk()) {
+            continue;
+        }
+        portConnected1.reset();
+        RoutedPortsProfilesSnapshot connected(portConnected2.getId());
+        ASSERT_NO_FATAL_FAILURE(connected.Capture(module.get()));
+        EXPECT_NO_FATAL_FAILURE(connected.VerifyProfilesNonEmpty());
     }
 }
 

@@ -157,10 +157,10 @@ class ModuleConfig {
         return *config.begin();
     }
 
-    const ndk::ScopedAStatus& onExternalDeviceConnected(
+    ndk::ScopedAStatus onExternalDeviceConnected(
             aidl::android::hardware::audio::core::IModule* module,
             const aidl::android::media::audio::common::AudioPort& port);
-    const ndk::ScopedAStatus& onExternalDeviceDisconnected(
+    ndk::ScopedAStatus onExternalDeviceDisconnected(
             aidl::android::hardware::audio::core::IModule* module,
             const aidl::android::media::audio::common::AudioPort& port);
 
