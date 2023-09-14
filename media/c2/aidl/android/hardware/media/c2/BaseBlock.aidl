@@ -16,6 +16,7 @@
 
 package android.hardware.media.c2;
 
+import android.hardware.HardwareBuffer;
 import android.hardware.common.NativeHandle;
 
 /**
@@ -31,6 +32,10 @@ union BaseBlock {
      * #nativeBlock is the opaque representation of a buffer.
      */
     NativeHandle nativeBlock;
+    /**
+     * #hwbBlock is the opaque representation of a GraphicBuffer
+     */
+    HardwareBuffer hwbBlock;
     /**
      * #pooledBlock is a reference to a buffer handled by a BufferPool.
      */
