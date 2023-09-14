@@ -517,7 +517,7 @@ ndk::ScopedAStatus Module::connectExternalDevice(const AudioPort& in_templateIdA
 
     connectedPort.id = ++getConfig().nextPortId;
     auto [connectedPortsIt, _] =
-            mConnectedDevicePorts.insert(std::pair(connectedPort.id, std::vector<int32_t>()));
+            mConnectedDevicePorts.insert(std::pair(connectedPort.id, std::set<int32_t>()));
     LOG(DEBUG) << __func__ << ": template port " << templateId << " external device connected, "
                << "connected port ID " << connectedPort.id;
     ports.push_back(connectedPort);
@@ -550,9 +550,21 @@ ndk::ScopedAStatus Module::connectExternalDevice(const AudioPort& in_templateIdA
     // of all profiles from all routable dynamic device ports would be more involved.
     for (const auto mixPortId : routablePortIds) {
         auto portsIt = findById<AudioPort>(ports, mixPortId);
-        if (portsIt != ports.end() && portsIt->profiles.empty()) {
-            portsIt->profiles = connectedPort.profiles;
-            connectedPortsIt->second.push_back(portsIt->id);
+        if (portsIt != ports.end()) {
+            if (portsIt->profiles.empty()) {
+                portsIt->profiles = connectedPort.profiles;
+                connectedPortsIt->second.insert(portsIt->id);
+            } else {
+                // Check if profiles are non empty because they were populated by
+                // a previous connection. Otherwise, it means that they are not empty because
+                // the mix port has static profiles.
+                for (const auto cp : mConnectedDevicePorts) {
+                    if (cp.second.count(portsIt->id) > 0) {
+                        connectedPortsIt->second.insert(portsIt->id);
+                        break;
+                    }
+                }
+            }
         }
     }
     *_aidl_return = std::move(connectedPort);
@@ -607,13 +619,20 @@ ndk::ScopedAStatus Module::disconnectExternalDevice(int32_t in_portId) {
         }
     }
 
-    for (const auto mixPortId : connectedPortsIt->second) {
+    // Clear profiles for mix ports that are not connected to any other ports.
+    std::set<int32_t> mixPortsToClear = std::move(connectedPortsIt->second);
+    mConnectedDevicePorts.erase(connectedPortsIt);
+    for (const auto& connectedPort : mConnectedDevicePorts) {
+        for (int32_t mixPortId : connectedPort.second) {
+            mixPortsToClear.erase(mixPortId);
+        }
+    }
+    for (int32_t mixPortId : mixPortsToClear) {
         auto mixPortIt = findById<AudioPort>(ports, mixPortId);
         if (mixPortIt != ports.end()) {
             mixPortIt->profiles = {};
         }
     }
-    mConnectedDevicePorts.erase(connectedPortsIt);
 
     return ndk::ScopedAStatus::ok();
 }
