@@ -58,7 +58,9 @@ interface IWeaver {
      * Throttling must be used to limit the frequency of failed read attempts.
      * The value is only returned when throttling is not active, even if the
      * correct key is provided. If called when throttling is active, the time
-     * until the next attempt can be made is returned.
+     * until the next attempt can be made is returned. Throttling must be
+     * applied on a per-slot basis so that a successful read from one slot does
+     * not reset the throttling state of any other slot.
      *
      * Service status return:
      *
