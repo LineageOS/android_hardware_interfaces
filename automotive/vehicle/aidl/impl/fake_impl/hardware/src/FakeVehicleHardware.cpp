@@ -39,7 +39,6 @@
 #include <dirent.h>
 #include <inttypes.h>
 #include <sys/types.h>
-#include <fstream>
 #include <regex>
 #include <unordered_set>
 #include <vector>
@@ -206,9 +205,10 @@ void FakeVehicleHardware::storePropInitialValue(const ConfigDeclaration& config)
 
         // Create a separate instance for each individual zone
         VehiclePropValue prop = {
+                .timestamp = elapsedRealtimeNano(),
                 .areaId = curArea,
                 .prop = propId,
-                .timestamp = elapsedRealtimeNano(),
+                .value = {},
         };
 
         if (config.initialAreaValues.empty()) {
@@ -1035,7 +1035,7 @@ FakeVehicleHardware::ValueResultType FakeVehicleHardware::getValue(
                    << StringPrintf("failed to get special value: %d, error: %s", value.prop,
                                    getErrorMsg(result).c_str());
         } else {
-            return std::move(result);
+            return result;
         }
     }
 
@@ -1050,7 +1050,7 @@ FakeVehicleHardware::ValueResultType FakeVehicleHardware::getValue(
         }
     }
 
-    return std::move(readResult);
+    return readResult;
 }
 
 DumpResult FakeVehicleHardware::dump(const std::vector<std::string>& options) {
@@ -1427,9 +1427,9 @@ std::string FakeVehicleHardware::genFakeDataCommand(const std::vector<std::strin
 VehiclePropValue FakeVehicleHardware::createHwInputKeyProp(VehicleHwKeyInputAction action,
                                                            int32_t keyCode, int32_t targetDisplay) {
     VehiclePropValue value = {
-            .prop = toInt(VehicleProperty::HW_KEY_INPUT),
-            .areaId = 0,
             .timestamp = elapsedRealtimeNano(),
+            .areaId = 0,
+            .prop = toInt(VehicleProperty::HW_KEY_INPUT),
             .status = VehiclePropertyStatus::AVAILABLE,
             .value.int32Values = {toInt(action), keyCode, targetDisplay},
     };
@@ -1439,9 +1439,9 @@ VehiclePropValue FakeVehicleHardware::createHwInputKeyProp(VehicleHwKeyInputActi
 VehiclePropValue FakeVehicleHardware::createHwKeyInputV2Prop(int32_t area, int32_t targetDisplay,
                                                              int32_t keyCode, int32_t action,
                                                              int32_t repeatCount) {
-    VehiclePropValue value = {.prop = toInt(VehicleProperty::HW_KEY_INPUT_V2),
+    VehiclePropValue value = {.timestamp = elapsedRealtimeNano(),
                               .areaId = area,
-                              .timestamp = elapsedRealtimeNano(),
+                              .prop = toInt(VehicleProperty::HW_KEY_INPUT_V2),
                               .status = VehiclePropertyStatus::AVAILABLE,
                               .value.int32Values = {targetDisplay, keyCode, action, repeatCount},
                               .value.int64Values = {elapsedRealtimeNano()}};
@@ -1479,9 +1479,9 @@ VehiclePropValue FakeVehicleHardware::createHwMotionInputProp(
         floatValues.push_back(size[i]);
     }
 
-    VehiclePropValue value = {.prop = toInt(VehicleProperty::HW_MOTION_INPUT),
+    VehiclePropValue value = {.timestamp = elapsedRealtimeNano(),
                               .areaId = area,
-                              .timestamp = elapsedRealtimeNano(),
+                              .prop = toInt(VehicleProperty::HW_MOTION_INPUT),
                               .status = VehiclePropertyStatus::AVAILABLE,
                               .value.int32Values = intValues,
                               .value.floatValues = floatValues,
@@ -1550,8 +1550,9 @@ std::string FakeVehicleHardware::dumpOnePropertyByConfig(int rowNumber,
 
 std::string FakeVehicleHardware::dumpOnePropertyById(int32_t propId, int32_t areaId) {
     VehiclePropValue value = {
-            .prop = propId,
             .areaId = areaId,
+            .prop = propId,
+            .value = {},
     };
     bool isSpecialValue = false;
     auto result = maybeGetSpecialValue(value, &isSpecialValue);
@@ -1622,12 +1623,12 @@ std::vector<std::string> FakeVehicleHardware::getOptionValues(
     while (*index < options.size()) {
         std::string option = options[*index];
         if (SET_PROP_OPTIONS.find(option) != SET_PROP_OPTIONS.end()) {
-            return std::move(values);
+            return values;
         }
         values.push_back(option);
         (*index)++;
     }
-    return std::move(values);
+    return values;
 }
 
 Result<VehiclePropValue> FakeVehicleHardware::parsePropOptions(
@@ -1936,8 +1937,9 @@ StatusCode FakeVehicleHardware::updateSampleRate(int32_t propId, int32_t areaId,
         // Refresh the property value. In real implementation, this should poll the latest value
         // from vehicle bus. Here, we are just refreshing the existing value with a new timestamp.
         auto result = getValue(VehiclePropValue{
-                .prop = propId,
                 .areaId = areaId,
+                .prop = propId,
+                .value = {},
         });
         if (!result.ok()) {
             // Failed to read current value, skip refreshing.
