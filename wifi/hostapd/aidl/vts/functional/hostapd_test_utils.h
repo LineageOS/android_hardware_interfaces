@@ -63,7 +63,7 @@ void waitForSupplicantState(bool enable) {
     LOG(ERROR) << "Unable to " << (enable ? "start" : "stop") << " supplicant";
 }
 
-void toggleWifiFramework(bool enable) {
+void toggleWifiFrameworkAndScan(bool enable) {
     if (enable) {
         std::system("svc wifi enable");
         std::system("cmd wifi set-scan-always-available enabled");
@@ -89,7 +89,7 @@ std::shared_ptr<IHostapd> getHostapd(const std::string& hostapd_instance_name) {
  *       any other clients to the HALs during testing.
  */
 void disableHalsAndFramework() {
-    toggleWifiFramework(false);
+    toggleWifiFrameworkAndScan(false);
     stopHostapd();
     stopVendorHal();
 
@@ -110,7 +110,7 @@ void stopHostapdAndVendorHal() {
 }
 
 void startWifiFramework() {
-    toggleWifiFramework(true);
+    toggleWifiFrameworkAndScan(true);
 }
 
 std::string setupApIfaceAndGetName(bool isBridged) {
