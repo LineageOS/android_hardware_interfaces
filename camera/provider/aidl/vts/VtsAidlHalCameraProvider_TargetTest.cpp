@@ -242,6 +242,7 @@ TEST_P(CameraAidlTest, getCameraCharacteristics) {
         verifyCameraCharacteristics(chars);
         verifyMonochromeCharacteristics(chars);
         verifyRecommendedConfigs(chars);
+        verifyHighSpeedRecordingCharacteristics(name, chars);
         verifyLogicalOrUltraHighResCameraMetadata(name, device, chars, cameraDeviceNames);
 
         ASSERT_TRUE(ret.isOk());
