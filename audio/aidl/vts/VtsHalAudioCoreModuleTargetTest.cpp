@@ -145,28 +145,36 @@ AudioDeviceAddress::Tag suggestDeviceAddressTag(const AudioDeviceDescription& de
 }
 
 AudioPort GenerateUniqueDeviceAddress(const AudioPort& port) {
+    // Point-to-point connections do not use addresses.
+    static const std::set<std::string> kPointToPointConnections = {
+            AudioDeviceDescription::CONNECTION_ANALOG, AudioDeviceDescription::CONNECTION_HDMI,
+            AudioDeviceDescription::CONNECTION_HDMI_ARC,
+            AudioDeviceDescription::CONNECTION_HDMI_EARC, AudioDeviceDescription::CONNECTION_SPDIF};
     static int nextId = 0;
     using Tag = AudioDeviceAddress::Tag;
+    const auto& deviceDescription = port.ext.get<AudioPortExt::Tag::device>().device.type;
     AudioDeviceAddress address;
-    switch (suggestDeviceAddressTag(port.ext.get<AudioPortExt::Tag::device>().device.type)) {
-        case Tag::id:
-            address = AudioDeviceAddress::make<Tag::id>(std::to_string(++nextId));
-            break;
-        case Tag::mac:
-            address = AudioDeviceAddress::make<Tag::mac>(
-                    std::vector<uint8_t>{1, 2, 3, 4, 5, static_cast<uint8_t>(++nextId & 0xff)});
-            break;
-        case Tag::ipv4:
-            address = AudioDeviceAddress::make<Tag::ipv4>(
-                    std::vector<uint8_t>{192, 168, 0, static_cast<uint8_t>(++nextId & 0xff)});
-            break;
-        case Tag::ipv6:
-            address = AudioDeviceAddress::make<Tag::ipv6>(std::vector<int32_t>{
-                    0xfc00, 0x0123, 0x4567, 0x89ab, 0xcdef, 0, 0, ++nextId & 0xffff});
-            break;
-        case Tag::alsa:
-            address = AudioDeviceAddress::make<Tag::alsa>(std::vector<int32_t>{1, ++nextId});
-            break;
+    if (kPointToPointConnections.count(deviceDescription.connection) == 0) {
+        switch (suggestDeviceAddressTag(deviceDescription)) {
+            case Tag::id:
+                address = AudioDeviceAddress::make<Tag::id>(std::to_string(++nextId));
+                break;
+            case Tag::mac:
+                address = AudioDeviceAddress::make<Tag::mac>(
+                        std::vector<uint8_t>{1, 2, 3, 4, 5, static_cast<uint8_t>(++nextId & 0xff)});
+                break;
+            case Tag::ipv4:
+                address = AudioDeviceAddress::make<Tag::ipv4>(
+                        std::vector<uint8_t>{192, 168, 0, static_cast<uint8_t>(++nextId & 0xff)});
+                break;
+            case Tag::ipv6:
+                address = AudioDeviceAddress::make<Tag::ipv6>(std::vector<int32_t>{
+                        0xfc00, 0x0123, 0x4567, 0x89ab, 0xcdef, 0, 0, ++nextId & 0xffff});
+                break;
+            case Tag::alsa:
+                address = AudioDeviceAddress::make<Tag::alsa>(std::vector<int32_t>{1, ++nextId});
+                break;
+        }
     }
     AudioPort result = port;
     result.ext.get<AudioPortExt::Tag::device>().device.address = std::move(address);
