@@ -504,6 +504,11 @@ TEST_P(AudioEffectTest, SetAndGetParameterAfterReset) {
 
 // Set and get AudioDeviceDescription in Parameter
 TEST_P(AudioEffectTest, SetAndGetParameterDeviceDescription) {
+    if (!mDescriptor.common.flags.deviceIndication) {
+        GTEST_SKIP() << "Skipping test as effect does not support deviceIndication"
+                     << mDescriptor.common.flags.toString();
+    }
+
     ASSERT_NO_FATAL_FAILURE(create(mFactory, mEffect, mDescriptor));
     ASSERT_NO_FATAL_FAILURE(open(mEffect));
 
@@ -527,6 +532,11 @@ TEST_P(AudioEffectTest, SetAndGetParameterDeviceDescription) {
 
 // Set and get AudioMode in Parameter
 TEST_P(AudioEffectTest, SetAndGetParameterAudioMode) {
+    if (!mDescriptor.common.flags.audioModeIndication) {
+        GTEST_SKIP() << "Skipping test as effect does not support audioModeIndication"
+                     << mDescriptor.common.flags.toString();
+    }
+
     ASSERT_NO_FATAL_FAILURE(create(mFactory, mEffect, mDescriptor));
     ASSERT_NO_FATAL_FAILURE(open(mEffect));
 
@@ -547,6 +557,11 @@ TEST_P(AudioEffectTest, SetAndGetParameterAudioMode) {
 
 // Set and get AudioSource in Parameter
 TEST_P(AudioEffectTest, SetAndGetParameterAudioSource) {
+    if (!mDescriptor.common.flags.audioSourceIndication) {
+        GTEST_SKIP() << "Skipping test as effect does not support audioSourceIndication"
+                     << mDescriptor.common.flags.toString();
+    }
+
     ASSERT_NO_FATAL_FAILURE(create(mFactory, mEffect, mDescriptor));
     ASSERT_NO_FATAL_FAILURE(open(mEffect));
 
@@ -567,6 +582,11 @@ TEST_P(AudioEffectTest, SetAndGetParameterAudioSource) {
 
 // Set and get VolumeStereo in Parameter
 TEST_P(AudioEffectTest, SetAndGetParameterVolume) {
+    if (mDescriptor.common.flags.volume == Flags::Volume::NONE) {
+        GTEST_SKIP() << "Skipping test as effect does not support volume"
+                     << mDescriptor.common.flags.toString();
+    }
+
     ASSERT_NO_FATAL_FAILURE(create(mFactory, mEffect, mDescriptor));
     ASSERT_NO_FATAL_FAILURE(open(mEffect));
 
