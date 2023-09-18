@@ -461,6 +461,10 @@ std::unique_ptr<Configuration> getUsbConfiguration() {
 //    - no profiles specified
 //  * "Test In", IN_AFE_PROXY
 //    - no profiles specified
+//  * "Wired Headset", OUT_HEADSET
+//    - profile PCM 24-bit; STEREO; 48000
+//  * "Wired Headset Mic", IN_HEADSET
+//    - profile PCM 24-bit; MONO; 48000
 //
 // Mix ports:
 //  * "test output", 1 max open, 1 max active stream
@@ -476,7 +480,8 @@ std::unique_ptr<Configuration> getUsbConfiguration() {
 //
 // Routes:
 //  "test output", "test fast output", "test compressed offload" -> "Test Out"
-//  "Test In" -> "test input"
+//  "test output" -> "Wired Headset"
+//  "Test In", "Wired Headset Mic" -> "test input"
 //
 // Initial port configs:
 //  * "Test Out" device port: PCM 24-bit; STEREO; 48000
@@ -496,6 +501,14 @@ std::unique_ptr<Configuration> getStubConfiguration() {
                                  AudioChannelLayout::LAYOUT_STEREO, 48000, 0, false,
                                  createDeviceExt(AudioDeviceType::OUT_AFE_PROXY, 0)));
 
+        AudioPort headsetOutDevice =
+                createPort(c.nextPortId++, "Wired Headset", 0, false,
+                           createDeviceExt(AudioDeviceType::OUT_HEADSET, 0,
+                                           AudioDeviceDescription::CONNECTION_ANALOG));
+        headsetOutDevice.profiles.push_back(
+                createProfile(PcmType::INT_24_BIT, {AudioChannelLayout::LAYOUT_STEREO}, {48000}));
+        c.ports.push_back(headsetOutDevice);
+
         AudioPort testInDevice = createPort(c.nextPortId++, "Test In", 0, true,
                                             createDeviceExt(AudioDeviceType::IN_AFE_PROXY, 0));
         c.ports.push_back(testInDevice);
@@ -503,6 +516,14 @@ std::unique_ptr<Configuration> getStubConfiguration() {
                 createPortConfig(testInDevice.id, testInDevice.id, PcmType::INT_24_BIT,
                                  AudioChannelLayout::LAYOUT_MONO, 48000, 0, true,
                                  createDeviceExt(AudioDeviceType::IN_AFE_PROXY, 0)));
+
+        AudioPort headsetInDevice =
+                createPort(c.nextPortId++, "Wired Headset Mic", 0, true,
+                           createDeviceExt(AudioDeviceType::IN_HEADSET, 0,
+                                           AudioDeviceDescription::CONNECTION_ANALOG));
+        headsetInDevice.profiles.push_back(
+                createProfile(PcmType::INT_24_BIT, {AudioChannelLayout::LAYOUT_MONO}, {48000}));
+        c.ports.push_back(headsetInDevice);
 
         // Mix ports
 
@@ -549,7 +570,8 @@ std::unique_ptr<Configuration> getStubConfiguration() {
 
         c.routes.push_back(
                 createRoute({testOutMix, testFastOutMix, compressedOffloadOutMix}, testOutDevice));
-        c.routes.push_back(createRoute({testInDevice}, testInMIx));
+        c.routes.push_back(createRoute({testOutMix}, headsetOutDevice));
+        c.routes.push_back(createRoute({testInDevice, headsetInDevice}, testInMIx));
 
         c.portConfigs.insert(c.portConfigs.end(), c.initialConfigs.begin(), c.initialConfigs.end());
 
