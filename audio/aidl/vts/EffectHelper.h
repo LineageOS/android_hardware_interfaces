@@ -250,11 +250,11 @@ class EffectHelper {
                    maxLimit = std::numeric_limits<S>::max();
         if (s.size()) {
             const auto min = *s.begin(), max = *s.rbegin();
-            s.insert(min + (max - min) / 2);
-            if (min != minLimit) {
+            s.insert((min & max) + ((min ^ max) >> 1));
+            if (min > minLimit + 1) {
                 s.insert(min - 1);
             }
-            if (max != maxLimit) {
+            if (max < maxLimit - 1) {
                 s.insert(max + 1);
             }
         }
