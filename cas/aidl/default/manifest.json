@@ -1,0 +1,9 @@
+{
+    "name": "com.android.hardware.cas",
+    "version": 1,
+    // For CAS HAL to open plugins from /vendor/lib, "vendor" namespace should be imported.
+    // ":sphal" is an alias for the "vendor" namespace in Vendor APEX.
+    "requireNativeLibs": [
+        ":sphal"
+    ]
+}
