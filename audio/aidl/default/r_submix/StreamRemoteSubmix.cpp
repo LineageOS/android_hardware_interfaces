@@ -179,7 +179,7 @@ void StreamRemoteSubmix::shutdown() {
         LOG(ERROR) << __func__ << ": transfer without a pipe!";
         return ::android::UNEXPECTED_NULL;
     }
-
+    mCurrentRoute->exitStandby(mIsInput);
     return (mIsInput ? inRead(buffer, frameCount, actualFrameCount)
                      : outWrite(buffer, frameCount, actualFrameCount));
 }
@@ -190,17 +190,14 @@ void StreamRemoteSubmix::shutdown() {
         return ::android::NO_INIT;
     }
     const ssize_t framesInPipe = source->availableToRead();
-    if (framesInPipe < 0) {
-        return ::android::INVALID_OPERATION;
+    if (framesInPipe <= 0) {
+        // No need to update the position frames
+        return ::android::OK;
     }
     if (mIsInput) {
         position->frames += framesInPipe;
-    } else {
-        if (position->frames > framesInPipe) {
-            position->frames -= framesInPipe;
-        } else {
-            position->frames = 0;
-        }
+    } else if (position->frames >= framesInPipe) {
+        position->frames -= framesInPipe;
     }
     return ::android::OK;
 }
@@ -280,18 +277,14 @@ size_t StreamRemoteSubmix::getStreamPipeSizeInFrames() {
                                                size_t* actualFrameCount) {
     // about to read from audio source
     sp<MonoPipeReader> source = mCurrentRoute->getSource();
-    if (source == nullptr || source->availableToRead() == 0) {
-        if (source == nullptr) {
-            int readErrorCount = mCurrentRoute->notifyReadError();
-            if (readErrorCount < kMaxReadErrorLogs) {
-                LOG(ERROR) << __func__
-                           << ": no audio pipe yet we're trying to read! (not all errors will be "
-                              "logged)";
-            } else {
-                LOG(ERROR) << __func__ << ": Read errors " << readErrorCount;
-            }
+    if (source == nullptr) {
+        int readErrorCount = mCurrentRoute->notifyReadError();
+        if (readErrorCount < kMaxReadErrorLogs) {
+            LOG(ERROR) << __func__
+                       << ": no audio pipe yet we're trying to read! (not all errors will be "
+                          "logged)";
         } else {
-            LOG(INFO) << __func__ << ": no data to read yet, providing empty data";
+            LOG(ERROR) << __func__ << ": Read errors " << readErrorCount;
         }
         const size_t delayUs = static_cast<size_t>(
                 std::roundf(frameCount * MICROS_PER_SECOND / mStreamConfig.sampleRate));
@@ -306,9 +299,10 @@ size_t StreamRemoteSubmix::getStreamPipeSizeInFrames() {
     const size_t delayUs = static_cast<size_t>(std::roundf(kReadAttemptSleepUs));
     char* buff = (char*)buffer;
     size_t remainingFrames = frameCount;
+    int availableToRead = source->availableToRead();
 
-    while ((remainingFrames > 0) && (attempts < kMaxReadFailureAttempts)) {
-        LOG(VERBOSE) << __func__ << ": frames available to read " << source->availableToRead();
+    while ((remainingFrames > 0) && (availableToRead > 0) && (attempts < kMaxReadFailureAttempts)) {
+        LOG(VERBOSE) << __func__ << ": frames available to read " << availableToRead;
 
         ssize_t framesRead = source->read(buff, remainingFrames);
 
@@ -317,6 +311,7 @@ size_t StreamRemoteSubmix::getStreamPipeSizeInFrames() {
         if (framesRead > 0) {
             remainingFrames -= framesRead;
             buff += framesRead * mStreamConfig.frameSize;
+            availableToRead -= framesRead;
             LOG(VERBOSE) << __func__ << ": (attempts = " << attempts << ") got " << framesRead
                          << " frames, remaining=" << remainingFrames;
         } else {
