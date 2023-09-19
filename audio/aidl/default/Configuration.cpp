@@ -285,6 +285,20 @@ std::unique_ptr<Configuration> getPrimaryConfiguration() {
     return std::make_unique<Configuration>(configuration);
 }
 
+// Note: When transitioning to loading of XML configs, either keep the configuration
+// of the remote submix sources from this static configuration, or update the XML
+// config to match it. There are two reasons for that:
+//   1. The canonical r_submix configuration only lists 'STEREO' and '48000',
+//      however the framework attempts to open streams for other sample rates
+//      as well. The legacy r_submix implementation allowed that, but libaudiohal@aidl
+//      will not find a mix port to use. Because of that, list all channel
+//      masks and sample rates that the legacy implementation allowed.
+//   2. The legacy implementation had a hard limit on the number of routes (10),
+//      and this is checked indirectly by AudioPlaybackCaptureTest#testPlaybackCaptureDoS
+//      CTS test. Instead of hardcoding the number of routes, we can use
+//      "maxOpen/ActiveStreamCount" to enforce a similar limit. However, the canonical
+//      XML file lacks this specification.
+//
 // Remote Submix configuration:
 //
 // Device ports:
@@ -294,16 +308,10 @@ std::unique_ptr<Configuration> getPrimaryConfiguration() {
 //    - no profiles specified
 //
 // Mix ports:
-//  * "r_submix output", unlimited max open, unlimited max active stream
+//  * "r_submix output", maximum 20 opened streams, maximum 10 active streams
 //    - profile PCM 16-bit; MONO, STEREO; 8000, 11025, 16000, 32000, 44100, 48000
-//    - profile PCM 24-bit; MONO, STEREO; 8000, 11025, 16000, 32000, 44100, 48000
-//    - profile PCM 32-bit; MONO, STEREO; 8000, 11025, 16000, 32000, 44100, 48000
-//    - profile PCM 32-bit float; MONO, STEREO; 8000, 11025, 16000, 32000, 44100, 48000
-//  * "r_submix input", unlimited max open, unlimited max active stream
+//  * "r_submix input", maximum 20 opened streams, maximum 10 active streams
 //    - profile PCM 16-bit; MONO, STEREO; 8000, 11025, 16000, 32000, 44100, 48000
-//    - profile PCM 24-bit; MONO, STEREO; 8000, 11025, 16000, 32000, 44100, 48000
-//    - profile PCM 32-bit; MONO, STEREO; 8000, 11025, 16000, 32000, 44100, 48000
-//    - profile PCM 32-bit float; MONO, STEREO; 8000, 11025, 16000, 32000, 44100, 48000
 //
 // Routes:
 //  "r_submix output" -> "Remote Submix Out"
@@ -313,15 +321,6 @@ std::unique_ptr<Configuration> getRSubmixConfiguration() {
     static const Configuration configuration = []() {
         Configuration c;
         const std::vector<AudioProfile> standardPcmAudioProfiles{
-                createProfile(PcmType::FLOAT_32_BIT,
-                              {AudioChannelLayout::LAYOUT_MONO, AudioChannelLayout::LAYOUT_STEREO},
-                              {8000, 11025, 16000, 32000, 44100, 48000}),
-                createProfile(PcmType::INT_32_BIT,
-                              {AudioChannelLayout::LAYOUT_MONO, AudioChannelLayout::LAYOUT_STEREO},
-                              {8000, 11025, 16000, 32000, 44100, 48000}),
-                createProfile(PcmType::INT_24_BIT,
-                              {AudioChannelLayout::LAYOUT_MONO, AudioChannelLayout::LAYOUT_STEREO},
-                              {8000, 11025, 16000, 32000, 44100, 48000}),
                 createProfile(PcmType::INT_16_BIT,
                               {AudioChannelLayout::LAYOUT_MONO, AudioChannelLayout::LAYOUT_STEREO},
                               {8000, 11025, 16000, 32000, 44100, 48000})};
@@ -332,25 +331,25 @@ std::unique_ptr<Configuration> getRSubmixConfiguration() {
                 createPort(c.nextPortId++, "Remote Submix Out", 0, false,
                            createDeviceExt(AudioDeviceType::OUT_SUBMIX, 0,
                                            AudioDeviceDescription::CONNECTION_VIRTUAL));
+        rsubmixOutDevice.profiles = standardPcmAudioProfiles;
         c.ports.push_back(rsubmixOutDevice);
-        c.connectedProfiles[rsubmixOutDevice.id] = standardPcmAudioProfiles;
 
         AudioPort rsubmixInDevice =
                 createPort(c.nextPortId++, "Remote Submix In", 0, true,
                            createDeviceExt(AudioDeviceType::IN_SUBMIX, 0,
                                            AudioDeviceDescription::CONNECTION_VIRTUAL));
+        rsubmixInDevice.profiles = standardPcmAudioProfiles;
         c.ports.push_back(rsubmixInDevice);
-        c.connectedProfiles[rsubmixInDevice.id] = standardPcmAudioProfiles;
 
         // Mix ports
 
         AudioPort rsubmixOutMix =
-                createPort(c.nextPortId++, "r_submix output", 0, false, createPortMixExt(0, 0));
+                createPort(c.nextPortId++, "r_submix output", 0, false, createPortMixExt(20, 10));
         rsubmixOutMix.profiles = standardPcmAudioProfiles;
         c.ports.push_back(rsubmixOutMix);
 
         AudioPort rsubmixInMix =
-                createPort(c.nextPortId++, "r_submix input", 0, true, createPortMixExt(0, 0));
+                createPort(c.nextPortId++, "r_submix input", 0, true, createPortMixExt(20, 10));
         rsubmixInMix.profiles = standardPcmAudioProfiles;
         c.ports.push_back(rsubmixInMix);
 
