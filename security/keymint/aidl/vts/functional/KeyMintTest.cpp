@@ -2630,16 +2630,16 @@ TEST_P(NewKeyGenerationTest, EcdsaInvalidCurve) {
 /*
  * NewKeyGenerationTest.EcdsaMissingCurve
  *
- * Verifies that EC key generation fails if EC_CURVE not specified after KeyMint V2.
+ * Verifies that EC key generation fails if EC_CURVE not specified after KeyMint V3.
  */
 TEST_P(NewKeyGenerationTest, EcdsaMissingCurve) {
-    if (AidlVersion() < 2) {
+    if (AidlVersion() < 3) {
         /*
          * The KeyMint V1 spec required that EC_CURVE be specified for EC keys.
          * However, this was not checked at the time so we can only be strict about checking this
-         * for implementations of KeyMint version 2 and above.
+         * for implementations of KeyMint version 3 and above.
          */
-        GTEST_SKIP() << "Requiring EC_CURVE only strict since KeyMint v2";
+        GTEST_SKIP() << "Requiring EC_CURVE only strict since KeyMint v3";
     }
     /* If EC_CURVE not provided, generateKey
      * must return ErrorCode::UNSUPPORTED_KEY_SIZE or ErrorCode::UNSUPPORTED_EC_CURVE.
