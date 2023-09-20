@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c0aa9386_d7712583",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 18586
+      },
+      "writtenOn": "2023-09-20T09:54:31Z",
+      "side": 1,
+      "message": "Please let me know incase you have better ideas for the conditional variable.",
+      "revId": "d6b66ac5fbbf2e85f747a0162f9da22e07d31804",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
