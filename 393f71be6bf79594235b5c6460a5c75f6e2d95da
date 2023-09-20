@@ -16,6 +16,24 @@
       "message": "What do you mean with \"from reserved location\"? Shouldn\u0027t it be camera_hal_overrides_format?",
       "revId": "393f71be6bf79594235b5c6460a5c75f6e2d95da",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "92be6eeb_429f01ec",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 10067
+      },
+      "writtenOn": "2023-09-20T15:48:44Z",
+      "side": 1,
+      "message": "should be \"from reserved fields\".",
+      "parentUuid": "dcae5714_e8c34d73",
+      "revId": "393f71be6bf79594235b5c6460a5c75f6e2d95da",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
