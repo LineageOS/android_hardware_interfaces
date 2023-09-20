@@ -102,6 +102,7 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.automotive.remoteaccess</name>
+        <version>1-2</version>
         <interface>
             <name>IRemoteAccess</name>
             <instance>default</instance>
