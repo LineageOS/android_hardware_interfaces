@@ -324,6 +324,11 @@ the range \[-70000, -70999\] (these are reserved for future additions here).
 :                   :        :            : boot stage                        :
 | Resettable        | -70004 | null       | If present, key changes on factory|
 :                   :        :            : reset                             :
+| Security version  | -70005 | uint       | Machine-comparable, monotonically |
+:                   :        :            : increasing version of the firmware:
+:                   :        :            : component / boot stage where a    :
+:                   :        :            : greater value indicates a newer   :
+:                   :        :            : version                           :
 ```
 
 Please see
