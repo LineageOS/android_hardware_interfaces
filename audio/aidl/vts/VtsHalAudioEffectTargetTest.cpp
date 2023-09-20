@@ -42,11 +42,11 @@ using ndk::ScopedAStatus;
 
 using aidl::android::hardware::audio::effect::CommandId;
 using aidl::android::hardware::audio::effect::Descriptor;
+using aidl::android::hardware::audio::effect::Flags;
 using aidl::android::hardware::audio::effect::IEffect;
 using aidl::android::hardware::audio::effect::IFactory;
 using aidl::android::hardware::audio::effect::Parameter;
 using aidl::android::hardware::audio::effect::State;
-using aidl::android::hardware::audio::effect::Flags;
 using aidl::android::media::audio::common::AudioDeviceDescription;
 using aidl::android::media::audio::common::AudioDeviceType;
 using aidl::android::media::audio::common::AudioMode;
@@ -87,11 +87,11 @@ class AudioEffectTest : public testing::TestWithParam<EffectTestParam>, public E
 };
 
 class AudioEffectDataPathTest : public AudioEffectTest {
-    public:
-        void SetUp() override {
-            AudioEffectTest::SetUp();
-            SKIP_TEST_IF_DATA_UNSUPPORTED(mDescriptor.common.flags);
-        }
+  public:
+    void SetUp() override {
+        AudioEffectTest::SetUp();
+        SKIP_TEST_IF_DATA_UNSUPPORTED(mDescriptor.common.flags);
+    }
 };
 
 TEST_P(AudioEffectTest, SetupAndTearDown) {
