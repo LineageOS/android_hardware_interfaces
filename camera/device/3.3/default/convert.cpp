@@ -48,6 +48,7 @@ void convertToHidl(const Camera3Stream* src, HalStream* dst) {
                 __FUNCTION__, src->stream_type);
     }
 
+#ifdef TARGET_CAMERA_OVERRIDE_FORMAT_FROM_RESERVED
     HalStream* halStream = NULL;
     if (src->reserved[0] != NULL) {
         halStream = (HalStream*)(src->reserved[0]);
@@ -63,6 +64,7 @@ void convertToHidl(const Camera3Stream* src, HalStream* dst) {
             dst->v3_2.consumerUsage = (BufferUsageFlags)halStream->v3_2.consumerUsage;
         }
     }
+#endif
 }
 
 void convertToHidl(const camera3_stream_configuration_t& src, HalStreamConfiguration* dst) {
