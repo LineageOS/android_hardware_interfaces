@@ -16,6 +16,40 @@
       "message": "Please let me know incase you have better ideas for the conditional variable.",
       "revId": "d6b66ac5fbbf2e85f747a0162f9da22e07d31804",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "15d69ec0_9b8f48be",
+        "filename": "camera/device/3.2/default/convert.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 103,
+      "author": {
+        "id": 10067
+      },
+      "writtenOn": "2023-09-20T09:56:13Z",
+      "side": 1,
+      "message": "move 1 line down.",
+      "revId": "d6b66ac5fbbf2e85f747a0162f9da22e07d31804",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ec495d08_241371c3",
+        "filename": "camera/device/3.3/default/convert.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 50,
+      "author": {
+        "id": 10067
+      },
+      "writtenOn": "2023-09-20T09:56:13Z",
+      "side": 1,
+      "message": "same.",
+      "revId": "d6b66ac5fbbf2e85f747a0162f9da22e07d31804",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
