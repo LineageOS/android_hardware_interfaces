@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "dcae5714_e8c34d73",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 13648
+      },
+      "writtenOn": "2023-09-20T15:47:56Z",
+      "side": 1,
+      "message": "What do you mean with \"from reserved location\"? Shouldn\u0027t it be camera_hal_overrides_format?",
+      "revId": "393f71be6bf79594235b5c6460a5c75f6e2d95da",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
