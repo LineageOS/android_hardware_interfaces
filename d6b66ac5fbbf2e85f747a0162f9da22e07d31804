@@ -18,6 +18,24 @@
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "8e02aa9a_2b98f938",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 13648
+      },
+      "writtenOn": "2023-09-20T11:12:51Z",
+      "side": 1,
+      "message": "I\u0027d prefer to keep the original commit intact, and add a follow-up commit to make it conditional. Just like we did here: https://github.com/LineageOS/android_frameworks_native/commit/f97f250a02390e01b6e9514e02a1f940a7b21729.",
+      "parentUuid": "c0aa9386_d7712583",
+      "revId": "d6b66ac5fbbf2e85f747a0162f9da22e07d31804",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "15d69ec0_9b8f48be",
