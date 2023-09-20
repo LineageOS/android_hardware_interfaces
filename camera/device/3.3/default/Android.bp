@@ -12,6 +12,10 @@ cc_library_shared {
     name: "camera.device@3.3-impl",
     defaults: ["hidl_defaults"],
     proprietary: true,
+    cflags: select(soong_config_variable("camera", "override_format_from_reserved"), {
+        "true": ["-DTARGET_CAMERA_OVERRIDE_FORMAT_FROM_RESERVED"],
+        default: [],
+    }),
     srcs: [
         "CameraDevice.cpp",
         "CameraDeviceSession.cpp",
