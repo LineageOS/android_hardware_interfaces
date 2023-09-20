@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2021, The Android Open Source Project
+ * Copyright (c) 2023, The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,18 +31,12 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.graphics.composer3;
-@VintfStability
-interface IComposerCallback {
-  /**
-   * @deprecated : Use instead onHotplugEvent
-   */
-  void onHotplug(long display, boolean connected);
-  oneway void onRefresh(long display);
-  oneway void onSeamlessPossible(long display);
-  oneway void onVsync(long display, long timestamp, int vsyncPeriodNanos);
-  oneway void onVsyncPeriodTimingChanged(long display, in android.hardware.graphics.composer3.VsyncPeriodChangeTimeline updatedTimeline);
-  oneway void onVsyncIdle(long display);
-  oneway void onRefreshRateChangedDebug(in android.hardware.graphics.composer3.RefreshRateChangedDebugData data);
-  oneway void onHotplugEvent(long display, android.hardware.graphics.common.DisplayHotplugEvent event);
+package android.hardware.graphics.common;
+@Backing(type="int") @VintfStability
+enum DisplayHotplugEvent {
+  CONNECTED = 0,
+  DISCONNECTED = 1,
+  ERROR_UNKNOWN = (-1) /* -1 */,
+  ERROR_INCOMPATIBLE_CABLE = (-2) /* -2 */,
+  ERROR_TOO_MANY_DISPLAYS = (-3) /* -3 */,
 }
