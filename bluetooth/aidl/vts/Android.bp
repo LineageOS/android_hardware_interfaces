@@ -16,10 +16,6 @@ cc_test {
     srcs: [
         "VtsHalBluetoothTargetTest.cpp",
         ":BluetoothPacketSources",
-        ":BluetoothHciPacketSources",
-    ],
-    generated_headers: [
-        "BluetoothGeneratedPackets_h",
     ],
     include_dirs: [
         "packages/modules/Bluetooth/system/gd",
@@ -31,7 +27,7 @@ cc_test {
     ],
     static_libs: [
         "android.hardware.bluetooth-V1-ndk",
-        "libbluetooth-types",
+        "libbluetooth_hci_pdl",
     ],
     test_config: "VtsHalBluetoothTargetTest.xml",
     test_suites: [
@@ -57,6 +53,5 @@ cc_test {
     ],
     tidy_disabled_srcs: [
         ":BluetoothPacketSources",
-        ":BluetoothHciPacketSources",
     ],
 }

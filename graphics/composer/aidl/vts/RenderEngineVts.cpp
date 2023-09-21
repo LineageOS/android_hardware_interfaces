@@ -66,7 +66,7 @@ void TestRenderEngine::drawLayers() {
             mGraphicBuffer, *mRenderEngine,
             ::android::renderengine::impl::ExternalTexture::Usage::WRITEABLE);
     auto result = mRenderEngine
-                          ->drawLayers(mDisplaySettings, compositionLayers, texture, true,
+                          ->drawLayers(mDisplaySettings, compositionLayers, texture,
                                        std::move(bufferFence))
                           .get();
     if (result.ok()) {

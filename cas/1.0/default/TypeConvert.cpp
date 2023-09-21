@@ -82,7 +82,7 @@ String8 sessionIdToString(const CasSessionId &sessionId) {
     for (size_t i = 0; i < sessionId.size(); i++) {
         result.appendFormat("%02x ", sessionId[i]);
     }
-    if (result.isEmpty()) {
+    if (result.empty()) {
         result.append("(null)");
     }
     return result;

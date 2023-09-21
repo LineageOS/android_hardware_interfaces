@@ -26,8 +26,6 @@ class ModuleRemoteSubmix : public Module {
 
   private:
     // IModule interfaces
-    ndk::ScopedAStatus getTelephony(std::shared_ptr<ITelephony>* _aidl_return) override;
-    ndk::ScopedAStatus getBluetooth(std::shared_ptr<IBluetooth>* _aidl_return) override;
     ndk::ScopedAStatus getMicMute(bool* _aidl_return) override;
     ndk::ScopedAStatus setMicMute(bool in_mute) override;
 
@@ -49,9 +47,6 @@ class ModuleRemoteSubmix : public Module {
             const std::vector<::aidl::android::media::audio::common::AudioPortConfig*>& sources,
             const std::vector<::aidl::android::media::audio::common::AudioPortConfig*>& sinks)
             override;
-    void onExternalDeviceConnectionChanged(
-            const ::aidl::android::media::audio::common::AudioPort& audioPort,
-            bool connected) override;
     ndk::ScopedAStatus onMasterMuteChanged(bool mute) override;
     ndk::ScopedAStatus onMasterVolumeChanged(float volume) override;
 };

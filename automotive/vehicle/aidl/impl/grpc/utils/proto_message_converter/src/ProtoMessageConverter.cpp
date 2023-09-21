@@ -73,6 +73,11 @@ void aidlToProto(const aidl_vehicle::VehiclePropConfig& in, proto::VehiclePropCo
         protoACfg->set_max_float_value(areaConfig.maxFloatValue);
         protoACfg->set_min_int32_value(areaConfig.minInt32Value);
         protoACfg->set_max_int32_value(areaConfig.maxInt32Value);
+        if (areaConfig.supportedEnumValues.has_value()) {
+            for (auto& supportedEnumValue : areaConfig.supportedEnumValues.value()) {
+                protoACfg->add_supported_enum_values(supportedEnumValue);
+            }
+        }
     }
 }
 
@@ -87,7 +92,7 @@ void protoToAidl(const proto::VehiclePropConfig& in, aidl_vehicle::VehiclePropCo
     COPY_PROTOBUF_VEC_TO_VHAL_TYPE(in, config_array, out, configArray);
 
     auto cast_to_acfg = [](const proto::VehicleAreaConfig& protoAcfg) {
-        return aidl_vehicle::VehicleAreaConfig{
+        auto vehicleAreaConfig = aidl_vehicle::VehicleAreaConfig{
                 .areaId = protoAcfg.area_id(),
                 .minInt32Value = protoAcfg.min_int32_value(),
                 .maxInt32Value = protoAcfg.max_int32_value(),
@@ -96,6 +101,9 @@ void protoToAidl(const proto::VehiclePropConfig& in, aidl_vehicle::VehiclePropCo
                 .minFloatValue = protoAcfg.min_float_value(),
                 .maxFloatValue = protoAcfg.max_float_value(),
         };
+        COPY_PROTOBUF_VEC_TO_VHAL_TYPE(protoAcfg, supported_enum_values, (&vehicleAreaConfig),
+                                       supportedEnumValues.value());
+        return vehicleAreaConfig;
     };
     CAST_COPY_PROTOBUF_VEC_TO_VHAL_TYPE(in, area_configs, out, areaConfigs, cast_to_acfg);
 }

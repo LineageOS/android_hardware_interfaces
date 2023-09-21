@@ -32,79 +32,9 @@ parcelable DeviceInfo {
      * non-canonical to group similar entries semantically.
      *
      * The DeviceInfo has changed across versions 1, 2, and 3 of the HAL. All versions of the
-     * DeviceInfo CDDL are described as follows. Please refer to the CDDL structure version
-     * that corresponds to the HAL version you are working with:
+     * DeviceInfo CDDL are described in the DeviceInfoV*.cddl files. Please refer to the CDDL
+     * structure version that corresponds to the HAL version you are working with.
      *
-     * Version 3, introduced in Android 14:
-     *     DeviceInfo = {
-     *         "brand" : tstr,
-     *         "manufacturer" : tstr,
-     *         "product" : tstr,
-     *         "model" : tstr,
-     *         "device" : tstr,
-     *         "vb_state" : "green" / "yellow" / "orange",    ; Taken from the AVB values
-     *         "bootloader_state" : "locked" / "unlocked",    ; Taken from the AVB values
-     *         "vbmeta_digest": bstr,                         ; Taken from the AVB values
-     *         ? "os_version" : tstr,                         ; Same as
-     *                                                        ; android.os.Build.VERSION.release
-     *                                                        ; Not optional for TEE.
-     *         "system_patch_level" : uint,     ; YYYYMM, must match KeyMint OS_PATCHLEVEL
-     *         "boot_patch_level" : uint,       ; YYYYMMDD, must match KeyMint BOOT_PATCHLEVEL
-     *         "vendor_patch_level" : uint,     ; YYYYMMDD, must match KeyMint VENDOR_PATCHLEVEL
-     *         "security_level" : "tee" / "strongbox",
-     *         "fused": 1 / 0,  ; 1 if secure boot is enforced for the processor that the IRPC
-     *                          ; implementation is contained in. 0 otherwise.
-     *     }
-     *
-     * ---------------------------------------------------------------------------------------------
-     *
-     * Version 2, introduced in Android 13:
-     *     DeviceInfo = {
-     *         "brand" : tstr,
-     *         "manufacturer" : tstr,
-     *         "product" : tstr,
-     *         "model" : tstr,
-     *         "device" : tstr,
-     *         "vb_state" : "green" / "yellow" / "orange",    ; Taken from the AVB values
-     *         "bootloader_state" : "locked" / "unlocked",    ; Taken from the AVB values
-     *         "vbmeta_digest": bstr,                         ; Taken from the AVB values
-     *         ? "os_version" : tstr,                         ; Same as
-     *                                                        ; android.os.Build.VERSION.release
-     *                                                        ; Not optional for TEE.
-     *         "system_patch_level" : uint,     ; YYYYMM, must match KeyMint OS_PATCHLEVEL
-     *         "boot_patch_level" : uint,       ; YYYYMMDD, must match KeyMint BOOT_PATCHLEVEL
-     *         "vendor_patch_level" : uint,     ; YYYYMMDD, must match KeyMint VENDOR_PATCHLEVEL
-     *         "version" : 2,                                 ; The CDDL schema version.
-     *         "security_level" : "tee" / "strongbox",
-     *         "fused": 1 / 0,  ; 1 if secure boot is enforced for the processor that the IRPC
-     *                          ; implementation is contained in. 0 otherwise.
-     *
-     * ---------------------------------------------------------------------------------------------
-     *
-     * Version 1, introduced in Android 12:
-     *     DeviceInfo = {
-     *         ? "brand" : tstr,
-     *         ? "manufacturer" : tstr,
-     *         ? "product" : tstr,
-     *         ? "model" : tstr,
-     *         ? "board" : tstr,
-     *         ? "vb_state" : "green" / "yellow" / "orange",  ; Taken from the AVB values
-     *         ? "bootloader_state" : "locked" / "unlocked",  ; Taken from the AVB values
-     *         ? "vbmeta_digest": bstr,                       ; Taken from the AVB values
-     *         ? "os_version" : tstr,                         ; Same as
-     *                                                        ; android.os.Build.VERSION.release
-     *         ? "system_patch_level" : uint,     ; YYYYMM, must match KeyMint OS_PATCHLEVEL
-     *         ? "boot_patch_level" : uint,       ; YYYYMMDD, must match KeyMint BOOT_PATCHLEVEL
-     *         ? "vendor_patch_level" : uint,     ; YYYYMMDD, must match KeyMint VENDOR_PATCHLEVEL
-     *         "version" : 1,                                 ; The CDDL schema version.
-     *         "security_level" : "tee" / "strongbox"
-     *         "att_id_state": "locked" / "open",  ; Attestation IDs State. If "locked", this
-     *                                             ; indicates a device's attestable IDs are
-     *                                             ; factory-locked and immutable. If "open",
-     *                                             ; this indicates the device is still in a
-     *                                             ; provisionable state and the attestable IDs
-     *                                             ; are not yet frozen.
-     *     }
      */
     byte[] deviceInfo;
 }

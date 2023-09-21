@@ -40,6 +40,7 @@ Sensor::Sensor(ISensorsEventCallback* callback)
     : mIsEnabled(false),
       mSamplingPeriodNs(0),
       mLastSampleTimeNs(0),
+      mStopThread(false),
       mCallback(callback),
       mMode(OperationMode::NORMAL) {
     mRunThread = std::thread(startThread, this);

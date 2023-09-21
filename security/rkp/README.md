@@ -42,7 +42,9 @@ Note that in the full elaboration of this plan, UDS\_pub is not the key used to
 sign certificate requests. Instead, UDS\_pub is just the first public key in a
 chain of public keys that end the KeyMint public key. All keys in the chain are
 transitively derived from the UDS and joined in a certificate chain following
-the specification of the [Android Profile for DICE](#android-profile-for-dice).
+the specification of the [Android Profile for DICE](android-profile-for-dice).
+
+[android-profile-for-dice]: https://pigweed.googlesource.com/open-dice/+/refs/heads/main/docs/android.md
 
 ### Phases
 
@@ -53,7 +55,7 @@ binding between the device and the backend. To briefly describe them:
   certificate requests; a single self-signed certificate signifies this phase.
 * DICE (Phase 2): A hardware root of trust key pair is only accessible to ROM
   or ROM extension code; the boot process follows the [Android Profile for
-  DICE](#android-profile-for-dice).
+  DICE](android-profile-for-dice).
 * SoC vendor certified DICE (Phase 3): This is identical to Phase 2, except the
   SoC vendor also does the UDS\_pub extraction or certification in their
   facilities, along with the OEM doing it in the factory. This tightens up the
@@ -162,67 +164,6 @@ The actors in the above diagram are:
     particular secure aread component).
 *   **KeyMint** is the secure area component that manages cryptographic keys and
     performs attestations (or perhaps some other secure area component).
-
-### Android Profile for DICE
-
-The Android Profile for DICE is based on the [Open Profile for
-DICE](https://pigweed.googlesource.com/open-dice/+/refs/heads/main/docs/specification.md),
-with additional constraints for details that the Open Profile for DICE leaves
-intentionally underspecified. This section describes the differences from the
-Open Profile for DICE.
-
-#### Algorithms
-
-The choice of algorithm must remain consistent with a given certificate e.g. if
-SHA-256 is used for the code hash then the authority hash, config hash, etc.
-must also use SHA-256.
-
-* UDS and CDI key pairs:
-  * Ed25519 / P-256 / P-384
-* Hash algorithms (digests can be encoded with their natural size and do not
-  need to be the 64-bytes specified by the Open Profile for DICE):
-  * SHA-256 / SHA-384 / SHA-512
-* HKDF with a supported message digest for all key derivation
-
-#### Mode
-
-A certificate must only set the mode to `normal` when all of the following
-conditions are met when loading and verifying the software component that is
-being described by the certificate:
-
-* verified boot with anti-rollback protection is enabled
-* only the verified boot authorities for production images are enabled
-* debug ports, fuses, or other debug facilities are disabled
-* device booted software from the normal primary source e.g. internal flash
-
-The mode should never be `not configured`.
-
-Every certificate in the DICE chain will need to be have the `normal` mode in
-order to be provisioned with production certificates by RKP.
-
-#### Configuration descriptor
-
-The configuration descriptor is a CBOR map with the following optional fields.
-If no fields are relevant, an empty map should be encoded. The key value range
-\[-70000, -70999\] is reserved for the Android Profile for DICE.
-Implementation-specific fields may be added using key values outside of the
-reserved range.
-
-```
-| Name              | Key    | Value type | Meaning                           |
-| ----------------- | ------ | ---------- | ----------------------------------|
-| Component name    | -70002 | tstr       | Name of firmware component / boot |
-:                   :        :            : stage                             :
-| Component version | -70003 | int / tstr | Version of firmware component /   |
-:                   :        :            : boot stage                        :
-| Resettable        | -70004 | null       | If present, key changes on factory|
-:                   :        :            : reset                             :
-| Security version  | -70005 | uint       | Machine-comparable, monotonically |
-:                   :        :            : increasing version of the firmware:
-:                   :        :            : component / boot stage where a    :
-:                   :        :            : greater value indicates a newer   :
-:                   :        :            : version                           :
-```
 
 ### HAL
 

@@ -971,7 +971,9 @@ enum Tag {
      * Tag::CERTIFICATE_NOT_BEFORE the beginning of the validity of the certificate in UNIX epoch
      * time in milliseconds.  This value is used when generating attestation or self signed
      * certificates.  ErrorCode::MISSING_NOT_BEFORE must be returned if this tag is not provided if
-     * this tag is not provided to generateKey or importKey.
+     * this tag is not provided to generateKey or importKey.  For importWrappedKey, there is no way
+     * to specify the value of this tag for the wrapped key, so a value of 0 must be used for
+     * certificate generation.
      */
     CERTIFICATE_NOT_BEFORE = TagType.DATE | 1008,
 
@@ -979,7 +981,8 @@ enum Tag {
      * Tag::CERTIFICATE_NOT_AFTER the end of the validity of the certificate in UNIX epoch time in
      * milliseconds.  This value is used when generating attestation or self signed certificates.
      * ErrorCode::MISSING_NOT_AFTER must be returned if this tag is not provided to generateKey or
-     * importKey.
+     * importKey.  For importWrappedKey, there is no way to specify the value of this tag for the
+     * wrapped key, so a value of 253402300799000 is used for certificate generation.
      */
     CERTIFICATE_NOT_AFTER = TagType.DATE | 1009,
 

@@ -350,14 +350,14 @@ TEST_P(AuthTest, TimeoutAuthentication) {
 
     // Wait for long enough that the hardware auth token expires.
     sleep(timeout_secs + 1);
-    if (!timestamp_token_required_) {
-        // KeyMint implementation has its own clock, and can immediately detect timeout.
-        EXPECT_EQ(ErrorCode::KEY_USER_NOT_AUTHENTICATED,
-                  Begin(KeyPurpose::ENCRYPT, keyblob, params, &out_params, hat));
-    } else {
-        // KeyMint implementation has no clock, so only detects timeout via timestamp token provided
-        // on update()/finish().
-        ASSERT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, keyblob, params, &out_params, hat));
+
+    auto begin_result = Begin(KeyPurpose::ENCRYPT, keyblob, params, &out_params, hat);
+    if (begin_result == ErrorCode::OK) {
+        // If begin() succeeds despite the out-of-date HAT, that must mean that the KeyMint
+        // device doesn't have its own clock.  In that case, it only detects timeout via a
+        // timestamp token provided on update()/finish()
+        ASSERT_TRUE(timestamp_token_required_);
+
         secureclock::TimeStampToken time_token;
         EXPECT_EQ(ErrorCode::OK,
                   GetReturnErrorCode(clock_->generateTimeStamp(challenge_, &time_token)));
@@ -365,6 +365,9 @@ TEST_P(AuthTest, TimeoutAuthentication) {
         string output;
         EXPECT_EQ(ErrorCode::KEY_USER_NOT_AUTHENTICATED,
                   Finish(message, {} /* signature */, &output, hat, time_token));
+    } else {
+        // The KeyMint implementation may have its own clock that can immediately detect timeout.
+        ASSERT_EQ(ErrorCode::KEY_USER_NOT_AUTHENTICATED, begin_result);
     }
 }
 
@@ -545,7 +548,7 @@ TEST_P(AuthTest, AuthPerOperation) {
     ASSERT_GT(dodgy_hat->mac.size(), 0);
     dodgy_hat->mac[0] ^= 0x01;
     EXPECT_EQ(ErrorCode::KEY_USER_NOT_AUTHENTICATED,
-              Finish(message, {} /* signature */, &ciphertext, hat.value()));
+              Finish(message, {} /* signature */, &ciphertext, dodgy_hat.value()));
 }
 
 // Test use of a key that requires an auth token for each action on the operation, with

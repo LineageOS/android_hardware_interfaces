@@ -21,7 +21,7 @@
 #include <PropertyUtils.h>
 
 #ifdef ENABLE_VEHICLE_HAL_TEST_PROPERTIES
-#include <TestPropertyUtils.h>
+#include <android/hardware/automotive/vehicle/TestVendorProperty.h>
 #endif  // ENABLE_VEHICLE_HAL_TEST_PROPERTIES
 
 #include <android-base/strings.h>
@@ -91,10 +91,6 @@ const std::unordered_map<std::string, int> CONSTANTS_BY_NAME = {
         {"HVAC_ALL", HVAC_ALL},
         {"HVAC_LEFT", HVAC_LEFT},
         {"HVAC_RIGHT", HVAC_RIGHT},
-        {"VENDOR_EXTENSION_INT_PROPERTY", VENDOR_EXTENSION_INT_PROPERTY},
-        {"VENDOR_EXTENSION_BOOLEAN_PROPERTY", VENDOR_EXTENSION_BOOLEAN_PROPERTY},
-        {"VENDOR_EXTENSION_STRING_PROPERTY", VENDOR_EXTENSION_STRING_PROPERTY},
-        {"VENDOR_EXTENSION_FLOAT_PROPERTY", VENDOR_EXTENSION_FLOAT_PROPERTY},
         {"WINDOW_1_LEFT", WINDOW_1_LEFT},
         {"WINDOW_1_RIGHT", WINDOW_1_RIGHT},
         {"WINDOW_2_LEFT", WINDOW_2_LEFT},
@@ -133,24 +129,9 @@ const std::unordered_map<std::string, int> CONSTANTS_BY_NAME = {
         {"EV_STOPPING_MODE_HOLD", EV_STOPPING_MODE_HOLD},
         {"MIRROR_DRIVER_LEFT_RIGHT",
          toInt(VehicleAreaMirror::DRIVER_LEFT) | toInt(VehicleAreaMirror::DRIVER_RIGHT)},
-#ifdef ENABLE_VEHICLE_HAL_TEST_PROPERTIES
-        // Following are test properties:
-        {"ECHO_REVERSE_BYTES", ECHO_REVERSE_BYTES},
-        {"VENDOR_PROPERTY_ID", VENDOR_PROPERTY_ID},
-        {"kMixedTypePropertyForTest", kMixedTypePropertyForTest},
-        {"VENDOR_CLUSTER_NAVIGATION_STATE", VENDOR_CLUSTER_NAVIGATION_STATE},
-        {"VENDOR_CLUSTER_REQUEST_DISPLAY", VENDOR_CLUSTER_REQUEST_DISPLAY},
-        {"VENDOR_CLUSTER_SWITCH_UI", VENDOR_CLUSTER_SWITCH_UI},
-        {"VENDOR_CLUSTER_DISPLAY_STATE", VENDOR_CLUSTER_DISPLAY_STATE},
-        {"VENDOR_CLUSTER_REPORT_STATE", VENDOR_CLUSTER_REPORT_STATE},
-        {"PLACEHOLDER_PROPERTY_INT", PLACEHOLDER_PROPERTY_INT},
-        {"PLACEHOLDER_PROPERTY_FLOAT", PLACEHOLDER_PROPERTY_FLOAT},
-        {"PLACEHOLDER_PROPERTY_BOOLEAN", PLACEHOLDER_PROPERTY_BOOLEAN},
-        {"PLACEHOLDER_PROPERTY_STRING", PLACEHOLDER_PROPERTY_STRING}
-#endif  // ENABLE_VEHICLE_HAL_TEST_PROPERTIES
 };
 
-// A class to parse constant values for type T.
+// A class to parse constant values for type T where T is defined as an enum in NDK AIDL backend.
 template <class T>
 class ConstantParser final : public ConstantParserInterface {
   public:
@@ -180,6 +161,33 @@ class ConstantParser final : public ConstantParserInterface {
   private:
     std::unordered_map<std::string, int> mValueByName;
 };
+
+#ifdef ENABLE_VEHICLE_HAL_TEST_PROPERTIES
+// A class to parse constant values for type T where T is defined as an enum in CPP AIDL backend.
+template <class T>
+class CppConstantParser final : public ConstantParserInterface {
+  public:
+    CppConstantParser() {
+        for (const T& v : android::enum_range<T>()) {
+            std::string name = android::hardware::automotive::vehicle::toString(v);
+            mValueByName[name] = toInt(v);
+        }
+    }
+
+    ~CppConstantParser() = default;
+
+    Result<int> parseValue(const std::string& name) const override {
+        auto it = mValueByName.find(name);
+        if (it == mValueByName.end()) {
+            return Error() << "Constant name: " << name << " is not defined";
+        }
+        return it->second;
+    }
+
+  private:
+    std::unordered_map<std::string, int> mValueByName;
+};
+#endif
 
 // A class to parse constant values defined in CONSTANTS_BY_NAME map.
 class LocalVariableParser final : public ConstantParserInterface {
@@ -260,6 +268,10 @@ JsonValueParser::JsonValueParser() {
     mConstantParsersByType["LaneCenteringAssistState"] =
             std::make_unique<ConstantParser<LaneCenteringAssistState>>();
     mConstantParsersByType["Constants"] = std::make_unique<LocalVariableParser>();
+#ifdef ENABLE_VEHICLE_HAL_TEST_PROPERTIES
+    mConstantParsersByType["TestVendorProperty"] =
+            std::make_unique<CppConstantParser<TestVendorProperty>>();
+#endif  // ENABLE_VEHICLE_HAL_TEST_PROPERTIES
 }
 
 template <>

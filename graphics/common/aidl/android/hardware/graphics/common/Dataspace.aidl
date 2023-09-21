@@ -23,11 +23,26 @@ enum Dataspace {
     /**
      * Default-assumption data space, when not explicitly specified.
      *
-     * It is safest to assume the buffer is an image with sRGB primaries and
-     * encoding ranges, but the consumer and/or the producer of the data may
-     * simply be using defaults. No automatic gamma transform should be
-     * expected, except for a possible display gamma transform when drawn to a
-     * screen.
+     * IAllocator implementations must not assume a particular dataspace interpretation when
+     * allocating a buffer. That is, the dataspace stored on a buffer's metadata must
+     * explicitly be UNKNOWN at the time of allocation. All other vendor implementations (for
+     * example, IComposer) are suggested to assume that the buffer is an image that conforms
+     * to the recommendations outlined by STANDARD_UNSPECIFIED, TRANSFER_UNSPECIFIED, and
+     * RANGE_UNSPECIFIED in order to avoid obviously-broken behavior.
+     *
+     * This means:
+     * - RGB buffers may be assumed to follow sRGB (IEC 61966-2.1)
+     * - YCbCr buffers smaller than 720p may be assumed to follow BT. 601-7
+     * - YCbCr buffers at least 720p may be assumed to follow BT. 709-6
+     * - Y buffers are full range with an undefined transfer and primaries
+     * - All other buffer formats may be treated in an implementation-defined manner
+     *
+     * It is the framework's - and application's - responsibility to communicate
+     * an accurate dataspace for any buffers throughout the system to guarantee
+     * well-defined behavior. For the framework, this means translating UNKNOWN
+     * dataspaces to a chosen default, and setting gralloc metadata on the buffer
+     * accordingly. For the application, this means signaling a defined dataspace
+     * to any framework apis.
      */
     UNKNOWN = 0x0,
 

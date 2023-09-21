@@ -439,7 +439,7 @@ bool LegacyCameraProviderImpl_2_4::setUpVendorTags() {
     }
     mVendorTagSections.resize(numSections);
     for (size_t s = 0; s < numSections; s++) {
-        mVendorTagSections[s].sectionName = (*sectionNames)[s].string();
+        mVendorTagSections[s].sectionName = (*sectionNames)[s].c_str();
         mVendorTagSections[s].tags = tagsBySection[s];
     }
     return true;

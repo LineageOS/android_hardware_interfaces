@@ -50,7 +50,7 @@ cc_binary {
         "android.hardware.gnss.measurement_corrections@1.1",
         "android.hardware.gnss.measurement_corrections@1.0",
         "android.hardware.gnss.visibility_control@1.0",
-        "android.hardware.gnss-V3-ndk",
+        "android.hardware.gnss-V4-ndk",
     ],
     srcs: [
         "AGnssRil.cpp",

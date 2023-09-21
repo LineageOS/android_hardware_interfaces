@@ -98,7 +98,7 @@ String8 sessionIdToString(const std::vector<uint8_t>& sessionId) {
     for (auto it = sessionId.begin(); it != sessionId.end(); it++) {
         result.appendFormat("%02x ", *it);
     }
-    if (result.isEmpty()) {
+    if (result.empty()) {
         result.append("(null)");
     }
     return result;

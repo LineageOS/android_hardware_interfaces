@@ -35,5 +35,6 @@ package android.hardware.media.c2;
 @VintfStability
 union BaseBlock {
   android.hardware.common.NativeHandle nativeBlock;
+  android.hardware.HardwareBuffer hwbBlock;
   android.hardware.media.bufferpool2.BufferStatusMessage pooledBlock;
 }

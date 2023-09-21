@@ -1,0 +1,15 @@
+MacedPublicKey = [                     ; COSE_Mac0 [RFC9052 s6.2]
+    protected: bstr .cbor { 1 : 5},    ; Algorithm : HMAC-256
+    unprotected: { },
+    payload : bstr .cbor PublicKey,
+    tag : bstr ; HMAC-256(K_mac, MAC_structure)
+]
+
+MAC_structure = [                      ; [RFC9052 s6.3]
+    context : "MAC0",
+    protected : bstr .cbor { 1 : 5 },
+    external_aad : bstr .size 0,
+    payload : bstr .cbor PublicKey
+]
+
+; INCLUDE PublicKey.cddl for: PublicKey

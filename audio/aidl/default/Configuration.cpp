@@ -81,8 +81,6 @@ static AudioPortExt createDeviceExt(AudioDeviceType devType, int32_t flags,
         deviceExt.device.address = "bottom";
     } else if (devType == AudioDeviceType::IN_MICROPHONE_BACK && connection.empty()) {
         deviceExt.device.address = "back";
-    } else if (devType == AudioDeviceType::IN_SUBMIX || devType == AudioDeviceType::OUT_SUBMIX) {
-        deviceExt.device.address = "0";
     }
     deviceExt.device.type.connection = std::move(connection);
     deviceExt.flags = flags;
@@ -232,14 +230,14 @@ std::unique_ptr<Configuration> getPrimaryConfiguration() {
 
         AudioPort primaryOutMix = createPort(c.nextPortId++, "primary output",
                                              makeBitPositionFlagMask(AudioOutputFlags::PRIMARY),
-                                             false, createPortMixExt(1, 1));
+                                             false, createPortMixExt(0, 0));
         primaryOutMix.profiles.insert(primaryOutMix.profiles.begin(),
                                       standardPcmAudioProfiles.begin(),
                                       standardPcmAudioProfiles.end());
         c.ports.push_back(primaryOutMix);
 
         AudioPort primaryInMix =
-                createPort(c.nextPortId++, "primary input", 0, true, createPortMixExt(1, 1));
+                createPort(c.nextPortId++, "primary input", 0, true, createPortMixExt(0, 0));
         primaryInMix.profiles.push_back(
                 createProfile(PcmType::INT_16_BIT,
                               {AudioChannelLayout::LAYOUT_MONO, AudioChannelLayout::LAYOUT_STEREO},
@@ -287,19 +285,33 @@ std::unique_ptr<Configuration> getPrimaryConfiguration() {
     return std::make_unique<Configuration>(configuration);
 }
 
+// Note: When transitioning to loading of XML configs, either keep the configuration
+// of the remote submix sources from this static configuration, or update the XML
+// config to match it. There are two reasons for that:
+//   1. The canonical r_submix configuration only lists 'STEREO' and '48000',
+//      however the framework attempts to open streams for other sample rates
+//      as well. The legacy r_submix implementation allowed that, but libaudiohal@aidl
+//      will not find a mix port to use. Because of that, list all channel
+//      masks and sample rates that the legacy implementation allowed.
+//   2. The legacy implementation had a hard limit on the number of routes (10),
+//      and this is checked indirectly by AudioPlaybackCaptureTest#testPlaybackCaptureDoS
+//      CTS test. Instead of hardcoding the number of routes, we can use
+//      "maxOpen/ActiveStreamCount" to enforce a similar limit. However, the canonical
+//      XML file lacks this specification.
+//
 // Remote Submix configuration:
 //
 // Device ports:
 //  * "Remote Submix Out", OUT_SUBMIX
-//    - profile PCM 16-bit; STEREO; 48000
+//    - no profiles specified
 //  * "Remote Submix In", IN_SUBMIX
-//    - profile PCM 16-bit; STEREO; 48000
+//    - no profiles specified
 //
 // Mix ports:
-//  * "r_submix output", 1 max open, 1 max active stream
-//    - profile PCM 16-bit; STEREO; 48000
-//  * "r_submix input", 1 max open, 1 max active stream
-//    - profile PCM 16-bit; STEREO; 48000
+//  * "r_submix output", maximum 20 opened streams, maximum 10 active streams
+//    - profile PCM 16-bit; MONO, STEREO; 8000, 11025, 16000, 32000, 44100, 48000
+//  * "r_submix input", maximum 20 opened streams, maximum 10 active streams
+//    - profile PCM 16-bit; MONO, STEREO; 8000, 11025, 16000, 32000, 44100, 48000
 //
 // Routes:
 //  "r_submix output" -> "Remote Submix Out"
@@ -308,6 +320,10 @@ std::unique_ptr<Configuration> getPrimaryConfiguration() {
 std::unique_ptr<Configuration> getRSubmixConfiguration() {
     static const Configuration configuration = []() {
         Configuration c;
+        const std::vector<AudioProfile> standardPcmAudioProfiles{
+                createProfile(PcmType::INT_16_BIT,
+                              {AudioChannelLayout::LAYOUT_MONO, AudioChannelLayout::LAYOUT_STEREO},
+                              {8000, 11025, 16000, 32000, 44100, 48000})};
 
         // Device ports
 
@@ -315,28 +331,26 @@ std::unique_ptr<Configuration> getRSubmixConfiguration() {
                 createPort(c.nextPortId++, "Remote Submix Out", 0, false,
                            createDeviceExt(AudioDeviceType::OUT_SUBMIX, 0,
                                            AudioDeviceDescription::CONNECTION_VIRTUAL));
-        rsubmixOutDevice.profiles.push_back(
-                createProfile(PcmType::INT_16_BIT, {AudioChannelLayout::LAYOUT_STEREO}, {48000}));
+        rsubmixOutDevice.profiles = standardPcmAudioProfiles;
         c.ports.push_back(rsubmixOutDevice);
 
-        AudioPort rsubmixInDevice = createPort(c.nextPortId++, "Remote Submix In", 0, true,
-                                               createDeviceExt(AudioDeviceType::IN_SUBMIX, 0));
-        rsubmixInDevice.profiles.push_back(
-                createProfile(PcmType::INT_16_BIT, {AudioChannelLayout::LAYOUT_STEREO}, {48000}));
+        AudioPort rsubmixInDevice =
+                createPort(c.nextPortId++, "Remote Submix In", 0, true,
+                           createDeviceExt(AudioDeviceType::IN_SUBMIX, 0,
+                                           AudioDeviceDescription::CONNECTION_VIRTUAL));
+        rsubmixInDevice.profiles = standardPcmAudioProfiles;
         c.ports.push_back(rsubmixInDevice);
 
         // Mix ports
 
         AudioPort rsubmixOutMix =
-                createPort(c.nextPortId++, "r_submix output", 0, false, createPortMixExt(1, 1));
-        rsubmixOutMix.profiles.push_back(
-                createProfile(PcmType::INT_16_BIT, {AudioChannelLayout::LAYOUT_STEREO}, {48000}));
+                createPort(c.nextPortId++, "r_submix output", 0, false, createPortMixExt(20, 10));
+        rsubmixOutMix.profiles = standardPcmAudioProfiles;
         c.ports.push_back(rsubmixOutMix);
 
         AudioPort rsubmixInMix =
-                createPort(c.nextPortId++, "r_submix input", 0, true, createPortMixExt(1, 1));
-        rsubmixInMix.profiles.push_back(
-                createProfile(PcmType::INT_16_BIT, {AudioChannelLayout::LAYOUT_STEREO}, {48000}));
+                createPort(c.nextPortId++, "r_submix input", 0, true, createPortMixExt(20, 10));
+        rsubmixInMix.profiles = standardPcmAudioProfiles;
         c.ports.push_back(rsubmixInMix);
 
         c.routes.push_back(createRoute({rsubmixOutMix}, rsubmixOutDevice));
@@ -446,6 +460,10 @@ std::unique_ptr<Configuration> getUsbConfiguration() {
 //    - no profiles specified
 //  * "Test In", IN_AFE_PROXY
 //    - no profiles specified
+//  * "Wired Headset", OUT_HEADSET
+//    - profile PCM 24-bit; STEREO; 48000
+//  * "Wired Headset Mic", IN_HEADSET
+//    - profile PCM 24-bit; MONO; 48000
 //
 // Mix ports:
 //  * "test output", 1 max open, 1 max active stream
@@ -461,7 +479,8 @@ std::unique_ptr<Configuration> getUsbConfiguration() {
 //
 // Routes:
 //  "test output", "test fast output", "test compressed offload" -> "Test Out"
-//  "Test In" -> "test input"
+//  "test output" -> "Wired Headset"
+//  "Test In", "Wired Headset Mic" -> "test input"
 //
 // Initial port configs:
 //  * "Test Out" device port: PCM 24-bit; STEREO; 48000
@@ -481,6 +500,14 @@ std::unique_ptr<Configuration> getStubConfiguration() {
                                  AudioChannelLayout::LAYOUT_STEREO, 48000, 0, false,
                                  createDeviceExt(AudioDeviceType::OUT_AFE_PROXY, 0)));
 
+        AudioPort headsetOutDevice =
+                createPort(c.nextPortId++, "Wired Headset", 0, false,
+                           createDeviceExt(AudioDeviceType::OUT_HEADSET, 0,
+                                           AudioDeviceDescription::CONNECTION_ANALOG));
+        headsetOutDevice.profiles.push_back(
+                createProfile(PcmType::INT_24_BIT, {AudioChannelLayout::LAYOUT_STEREO}, {48000}));
+        c.ports.push_back(headsetOutDevice);
+
         AudioPort testInDevice = createPort(c.nextPortId++, "Test In", 0, true,
                                             createDeviceExt(AudioDeviceType::IN_AFE_PROXY, 0));
         c.ports.push_back(testInDevice);
@@ -488,6 +515,14 @@ std::unique_ptr<Configuration> getStubConfiguration() {
                 createPortConfig(testInDevice.id, testInDevice.id, PcmType::INT_24_BIT,
                                  AudioChannelLayout::LAYOUT_MONO, 48000, 0, true,
                                  createDeviceExt(AudioDeviceType::IN_AFE_PROXY, 0)));
+
+        AudioPort headsetInDevice =
+                createPort(c.nextPortId++, "Wired Headset Mic", 0, true,
+                           createDeviceExt(AudioDeviceType::IN_HEADSET, 0,
+                                           AudioDeviceDescription::CONNECTION_ANALOG));
+        headsetInDevice.profiles.push_back(
+                createProfile(PcmType::INT_24_BIT, {AudioChannelLayout::LAYOUT_MONO}, {48000}));
+        c.ports.push_back(headsetInDevice);
 
         // Mix ports
 
@@ -534,7 +569,8 @@ std::unique_ptr<Configuration> getStubConfiguration() {
 
         c.routes.push_back(
                 createRoute({testOutMix, testFastOutMix, compressedOffloadOutMix}, testOutDevice));
-        c.routes.push_back(createRoute({testInDevice}, testInMIx));
+        c.routes.push_back(createRoute({testOutMix}, headsetOutDevice));
+        c.routes.push_back(createRoute({testInDevice, headsetInDevice}, testInMIx));
 
         c.portConfigs.insert(c.portConfigs.end(), c.initialConfigs.begin(), c.initialConfigs.end());
 

@@ -1,4 +1,4 @@
-service vendor.vehicle-hal-default /vendor/bin/hw/android.hardware.automotive.vehicle@V1-default-service
+service vendor.vehicle-hal-default /vendor/bin/hw/android.hardware.automotive.vehicle@V3-default-service
     class early_hal
     user vehicle_network
     group system inet

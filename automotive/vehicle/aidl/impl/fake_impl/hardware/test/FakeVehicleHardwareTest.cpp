@@ -19,9 +19,9 @@
 #include <FakeObd2Frame.h>
 #include <FakeUserHal.h>
 #include <PropertyUtils.h>
-#include <TestPropertyUtils.h>
 
 #include <aidl/android/hardware/automotive/vehicle/VehicleApPowerStateShutdownParam.h>
+#include <android/hardware/automotive/vehicle/TestVendorProperty.h>
 
 #include <android-base/expected.h>
 #include <android-base/file.h>
@@ -62,6 +62,8 @@ namespace vehicle {
 namespace fake {
 namespace {
 
+using ::aidl::android::hardware::automotive::vehicle::CruiseControlCommand;
+using ::aidl::android::hardware::automotive::vehicle::CruiseControlType;
 using ::aidl::android::hardware::automotive::vehicle::ErrorState;
 using ::aidl::android::hardware::automotive::vehicle::GetValueRequest;
 using ::aidl::android::hardware::automotive::vehicle::GetValueResult;
@@ -427,13 +429,13 @@ TEST_F(FakeVehicleHardwareTest, testGetDefaultValues) {
             continue;
         }
 
-        if (propId == ECHO_REVERSE_BYTES) {
+        if (propId == toInt(TestVendorProperty::ECHO_REVERSE_BYTES)) {
             // Ignore ECHO_REVERSE_BYTES, it has special logic.
             continue;
         }
 
-        if (propId == VENDOR_PROPERTY_ID) {
-            // Ignore VENDOR_PROPERTY_ID, it has special logic.
+        if (propId == toInt(TestVendorProperty::VENDOR_PROPERTY_FOR_ERROR_CODE_TESTING)) {
+            // Ignore VENDOR_PROPERTY_FOR_ERROR_CODE_TESTING, it has special logic.
             continue;
         }
 
@@ -966,7 +968,8 @@ std::vector<SetSpecialValueTestCase> setSpecialValueTestCases() {
                     .expectedValuesToGet =
                             {
                                     VehiclePropValue{
-                                            .prop = VENDOR_CLUSTER_REPORT_STATE,
+                                            .prop = toInt(TestVendorProperty::
+                                                                  VENDOR_CLUSTER_REPORT_STATE),
                                             .value.int32Values = {1},
                                     },
                             },
@@ -983,7 +986,8 @@ std::vector<SetSpecialValueTestCase> setSpecialValueTestCases() {
                     .expectedValuesToGet =
                             {
                                     VehiclePropValue{
-                                            .prop = VENDOR_CLUSTER_REQUEST_DISPLAY,
+                                            .prop = toInt(TestVendorProperty::
+                                                                  VENDOR_CLUSTER_REQUEST_DISPLAY),
                                             .value.int32Values = {1},
                                     },
                             },
@@ -1001,7 +1005,8 @@ std::vector<SetSpecialValueTestCase> setSpecialValueTestCases() {
                     .expectedValuesToGet =
                             {
                                     VehiclePropValue{
-                                            .prop = VENDOR_CLUSTER_NAVIGATION_STATE,
+                                            .prop = toInt(TestVendorProperty::
+                                                                  VENDOR_CLUSTER_NAVIGATION_STATE),
                                             .value.byteValues = {0x1},
                                     },
                             },
@@ -1011,7 +1016,8 @@ std::vector<SetSpecialValueTestCase> setSpecialValueTestCases() {
                     .valuesToSet =
                             {
                                     VehiclePropValue{
-                                            .prop = VENDOR_CLUSTER_SWITCH_UI,
+                                            .prop = toInt(
+                                                    TestVendorProperty::VENDOR_CLUSTER_SWITCH_UI),
                                             .value.int32Values = {1},
                                     },
                             },
@@ -1028,7 +1034,8 @@ std::vector<SetSpecialValueTestCase> setSpecialValueTestCases() {
                     .valuesToSet =
                             {
                                     VehiclePropValue{
-                                            .prop = VENDOR_CLUSTER_DISPLAY_STATE,
+                                            .prop = toInt(TestVendorProperty::
+                                                                  VENDOR_CLUSTER_DISPLAY_STATE),
                                             .value.int32Values = {1, 2},
                                     },
                             },
@@ -1454,7 +1461,7 @@ std::vector<SetSpecialValueTestCase> setSpecialValueTestCases() {
                                     },
                                     VehiclePropValue{
                                             .prop = toInt(VehicleProperty::CRUISE_CONTROL_TYPE),
-                                            .value.int32Values = {1},
+                                            .value.int32Values = {2},
                                     },
                                     VehiclePropValue{
                                             .prop = toInt(VehicleProperty::CRUISE_CONTROL_STATE),
@@ -1831,6 +1838,47 @@ TEST_F(FakeVehicleHardwareTest, testSetAdasPropNotAvailable) {
             StatusCode status = setValue(VehiclePropValue{.prop = dependentProp});
             EXPECT_EQ(status, StatusCode::NOT_AVAILABLE_DISABLED);
         }
+    }
+}
+
+TEST_F(FakeVehicleHardwareTest, testGetAccPropertiesOnStandardCc) {
+    std::vector<int32_t> ccTypeDependentProperties = {
+            toInt(VehicleProperty::ADAPTIVE_CRUISE_CONTROL_TARGET_TIME_GAP),
+            toInt(VehicleProperty::ADAPTIVE_CRUISE_CONTROL_LEAD_VEHICLE_MEASURED_DISTANCE),
+    };
+
+    StatusCode status =
+            setValue(VehiclePropValue{.prop = toInt(VehicleProperty::CRUISE_CONTROL_TYPE),
+                                      .value.int32Values = {toInt(CruiseControlType::STANDARD)}});
+    EXPECT_EQ(status, StatusCode::OK);
+
+    for (int32_t dependentProp : ccTypeDependentProperties) {
+        auto getValueResult = getValue(VehiclePropValue{.prop = dependentProp});
+        EXPECT_FALSE(getValueResult.ok());
+        EXPECT_EQ(getValueResult.error(), StatusCode::NOT_AVAILABLE_DISABLED);
+    }
+}
+
+TEST_F(FakeVehicleHardwareTest, testSetAccPropertiesOnStandardCc) {
+    std::vector<VehiclePropValue> testVehiclePropValues = {
+            VehiclePropValue{
+                    .prop = toInt(VehicleProperty::ADAPTIVE_CRUISE_CONTROL_TARGET_TIME_GAP),
+                    .value.int32Values = {3}},
+            VehiclePropValue{
+                    .prop = toInt(VehicleProperty::CRUISE_CONTROL_COMMAND),
+                    .value.int32Values = {toInt(CruiseControlCommand::INCREASE_TARGET_TIME_GAP)}},
+            VehiclePropValue{
+                    .prop = toInt(VehicleProperty::CRUISE_CONTROL_COMMAND),
+                    .value.int32Values = {toInt(CruiseControlCommand::DECREASE_TARGET_TIME_GAP)}}};
+
+    StatusCode status =
+            setValue(VehiclePropValue{.prop = toInt(VehicleProperty::CRUISE_CONTROL_TYPE),
+                                      .value.int32Values = {toInt(CruiseControlType::STANDARD)}});
+    EXPECT_EQ(status, StatusCode::OK);
+
+    for (auto value : testVehiclePropValues) {
+        status = setValue(value);
+        EXPECT_EQ(status, StatusCode::NOT_AVAILABLE_DISABLED);
     }
 }
 
@@ -2885,7 +2933,7 @@ TEST_F(FakeVehicleHardwareTest, testDebugGenFakeDataMotionInput) {
 
 TEST_F(FakeVehicleHardwareTest, testGetEchoReverseBytes) {
     ASSERT_EQ(setValue(VehiclePropValue{
-                      .prop = ECHO_REVERSE_BYTES,
+                      .prop = toInt(TestVendorProperty::ECHO_REVERSE_BYTES),
                       .value =
                               {
                                       .byteValues = {0x01, 0x02, 0x03, 0x04},
@@ -2894,7 +2942,7 @@ TEST_F(FakeVehicleHardwareTest, testGetEchoReverseBytes) {
               StatusCode::OK);
 
     auto result = getValue(VehiclePropValue{
-            .prop = ECHO_REVERSE_BYTES,
+            .prop = toInt(TestVendorProperty::ECHO_REVERSE_BYTES),
     });
 
     ASSERT_TRUE(result.ok()) << "failed to get ECHO_REVERSE_BYTES value: " << getStatus(result);

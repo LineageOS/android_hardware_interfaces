@@ -14,9 +14,12 @@ aidl_interface {
         ndk: {
             apex_available: [
                 "//apex_available:platform",
+                "com.android.tethering",
+                // Keep the threadnetwork apex to make it buildable on udc-mainline-prod.
+                // TODO: remove it after moving ot-daemon into tethering.
                 "com.android.threadnetwork",
             ],
-            min_sdk_version: "33",
+            min_sdk_version: "30",
         },
     },
 }

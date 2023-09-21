@@ -62,8 +62,7 @@ DescramblerImpl::~DescramblerImpl() {
 }
 
 Return<Status> DescramblerImpl::setMediaCasSession(const HidlCasSessionId& sessionId) {
-    ALOGV("%s: sessionId=%s", __FUNCTION__,
-            sessionIdToString(sessionId).string());
+    ALOGV("%s: sessionId=%s", __FUNCTION__, sessionIdToString(sessionId).c_str());
 
     std::shared_ptr<DescramblerPlugin> holder = std::atomic_load(&mPluginHolder);
     if (holder.get() == nullptr) {
@@ -80,7 +79,7 @@ Return<bool> DescramblerImpl::requiresSecureDecoderComponent(
         return false;
     }
 
-    return holder->requiresSecureDecoderComponent(String8(mime.c_str()));
+    return holder->requiresSecureDecoderComponent(mime.c_str());
 }
 
 static inline bool validateRangeForSize(

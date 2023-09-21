@@ -46,9 +46,9 @@ parcelable SatellitePvt {
   long timeOfEphemerisSeconds;
   int issueOfDataEphemeris;
   android.hardware.gnss.SatellitePvt.SatelliteEphemerisSource ephemerisSource = android.hardware.gnss.SatellitePvt.SatelliteEphemerisSource.OTHER;
-  const int HAS_POSITION_VELOCITY_CLOCK_INFO = 1;
-  const int HAS_IONO = 2;
-  const int HAS_TROPO = 4;
+  const int HAS_POSITION_VELOCITY_CLOCK_INFO = (1 << 0) /* 1 */;
+  const int HAS_IONO = (1 << 1) /* 2 */;
+  const int HAS_TROPO = (1 << 2) /* 4 */;
   @Backing(type="int") @VintfStability
   enum SatelliteEphemerisSource {
     DEMODULATED = 0,

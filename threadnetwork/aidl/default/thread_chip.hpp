@@ -34,7 +34,7 @@ namespace threadnetwork {
 class ThreadChip : public BnThreadChip, ot::Posix::Mainloop::Source {
   public:
     ThreadChip(char* url);
-    ~ThreadChip();
+    ~ThreadChip() {}
 
     ndk::ScopedAStatus open(const std::shared_ptr<IThreadChipCallback>& in_callback) override;
     ndk::ScopedAStatus close() override;

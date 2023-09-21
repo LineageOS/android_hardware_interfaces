@@ -1,0 +1,4 @@
+(/.*)?                                                      u:object_r:vendor_file:s0
+/etc(/.*)?                                                  u:object_r:vendor_configs_file:s0
+/bin/hw/android\.hardware\.threadnetwork-service            u:object_r:hal_threadnetwork_default_exec:s0
+/bin/ot-rcp                                                 u:object_r:ot_rcp_exec:s0

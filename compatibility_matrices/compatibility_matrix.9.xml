@@ -52,7 +52,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl" optional="true" updatable-via-apex="true">
          <name>android.hardware.authsecret</name>
          <version>1</version>
          <interface>
@@ -94,7 +94,7 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.automotive.vehicle</name>
-        <version>1-2</version>
+        <version>1-3</version>
         <interface>
             <name>IVehicle</name>
             <instance>default</instance>
@@ -102,6 +102,7 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.automotive.remoteaccess</name>
+        <version>1-2</version>
         <interface>
             <name>IRemoteAccess</name>
             <instance>default</instance>
@@ -120,6 +121,7 @@
         <interface>
             <name>IFace</name>
             <instance>default</instance>
+            <instance>virtual</instance>
         </interface>
     </hal>
     <hal format="aidl" optional="true" updatable-via-apex="true">
@@ -216,7 +218,7 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.gnss</name>
-        <version>2-3</version>
+        <version>2-4</version>
         <interface>
             <name>IGnss</name>
             <instance>default</instance>
@@ -364,7 +366,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl" optional="true" updatable-via-apex="true">
         <name>android.hardware.neuralnetworks</name>
         <version>1-4</version>
         <interface>
@@ -372,7 +374,7 @@
             <regex-instance>.*</regex-instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl" optional="true" updatable-via-apex="true">
         <name>android.hardware.nfc</name>
         <interface>
             <name>INfc</name>
@@ -567,12 +569,12 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl" optional="true" updatable-via-apex="true">
         <name>android.hardware.threadnetwork</name>
         <version>1</version>
         <interface>
             <name>IThreadChip</name>
-            <instance>chip0</instance>
+            <regex-instance>chip[0-9]+</regex-instance>
         </interface>
     </hal>
     <hal format="aidl" optional="true">
@@ -662,7 +664,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl" optional="true" updatable-via-apex="true">
         <name>android.hardware.uwb</name>
         <version>1</version>
         <interface>
@@ -692,14 +694,6 @@
         <version>5.0</version>
         <interface>
             <regex-instance>.*</regex-instance>
-        </interface>
-    </hal>
-    <hal format="aidl" optional="true">
-        <name>android.hardware.threadnetwork</name>
-        <version>1</version>
-        <interface>
-            <name>IThreadChip</name>
-            <regex-instance>chip[0-9]+</regex-instance>
         </interface>
     </hal>
 </compatibility-matrix>

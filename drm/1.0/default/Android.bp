@@ -134,6 +134,7 @@ cc_library_shared {
     shared_libs: [
         "android.hardware.drm@1.0",
         "android.hidl.memory@1.0",
+        "libbase",
         "libcutils",
         "libhidlbase",
         "libhidlmemory",

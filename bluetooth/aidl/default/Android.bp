@@ -30,14 +30,7 @@ cc_library_static {
     defaults: ["android.hardware.bluetooth-service-build-defaults"],
     srcs: [
         "BluetoothHci.cpp",
-        ":BluetoothPacketSources",
         "net_bluetooth_mgmt.cpp",
-    ],
-    generated_headers: [
-        "BluetoothGeneratedPackets_h",
-    ],
-    include_dirs: [
-        "packages/modules/Bluetooth/system/gd",
     ],
 }
 

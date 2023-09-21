@@ -42,6 +42,9 @@ std::shared_ptr<IWifiApIface> getBridgedWifiApIface(std::shared_ptr<IWifiChip> w
 // Configure the chip in a mode to support the creation of the provided iface type.
 bool configureChipToSupportConcurrencyType(const std::shared_ptr<IWifiChip>& wifi_chip,
                                            IfaceConcurrencyType type, int* configured_mode_id);
+// Check whether the chip supports the creation of the provided iface type.
+bool doesChipSupportConcurrencyType(const std::shared_ptr<IWifiChip>& wifi_chip,
+                                    IfaceConcurrencyType type);
 // Used to trigger IWifi.stop() at the end of every test.
 void stopWifiService(const char* instance_name);
 int32_t getChipFeatureSet(const std::shared_ptr<IWifiChip>& wifi_chip);

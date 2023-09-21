@@ -17,8 +17,8 @@
 #pragma once
 
 #include "ConfigManager.h"
+#include "EvsCameraBase.h"
 
-#include <aidl/android/hardware/automotive/evs/BnEvsCamera.h>
 #include <aidl/android/hardware/automotive/evs/BufferDesc.h>
 #include <aidl/android/hardware/automotive/evs/CameraDesc.h>
 #include <aidl/android/hardware/automotive/evs/CameraParam.h>
@@ -36,14 +36,7 @@
 
 namespace aidl::android::hardware::automotive::evs::implementation {
 
-class EvsMockCamera : public evs::BnEvsCamera {
-    // This prevents constructors from direct access while it allows this class to
-    // be instantiated via ndk::SharedRefBase::make<>.
-  private:
-    struct Sigil {
-        explicit Sigil() = default;
-    };
-
+class EvsMockCamera : public EvsCameraBase {
   public:
     // Methods from ::android::hardware::automotive::evs::IEvsCamera follow.
     ndk::ScopedAStatus doneWithFrame(const std::vector<evs::BufferDesc>& buffers) override;
@@ -81,7 +74,9 @@ class EvsMockCamera : public evs::BnEvsCamera {
     EvsMockCamera& operator=(const EvsMockCamera&) = delete;
 
     virtual ~EvsMockCamera() override;
-    void shutdown();
+
+    // Methods from EvsCameraBase follow.
+    void shutdown() override;
 
     const evs::CameraDesc& getDesc() { return mDescription; }
 

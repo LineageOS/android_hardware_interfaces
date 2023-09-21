@@ -46,11 +46,11 @@ parcelable GnssClock {
   double driftUncertaintyNsps;
   int hwClockDiscontinuityCount;
   android.hardware.gnss.GnssSignalType referenceSignalTypeForIsb;
-  const int HAS_LEAP_SECOND = 1;
-  const int HAS_TIME_UNCERTAINTY = 2;
-  const int HAS_FULL_BIAS = 4;
-  const int HAS_BIAS = 8;
-  const int HAS_BIAS_UNCERTAINTY = 16;
-  const int HAS_DRIFT = 32;
-  const int HAS_DRIFT_UNCERTAINTY = 64;
+  const int HAS_LEAP_SECOND = (1 << 0) /* 1 */;
+  const int HAS_TIME_UNCERTAINTY = (1 << 1) /* 2 */;
+  const int HAS_FULL_BIAS = (1 << 2) /* 4 */;
+  const int HAS_BIAS = (1 << 3) /* 8 */;
+  const int HAS_BIAS_UNCERTAINTY = (1 << 4) /* 16 */;
+  const int HAS_DRIFT = (1 << 5) /* 32 */;
+  const int HAS_DRIFT_UNCERTAINTY = (1 << 6) /* 64 */;
 }

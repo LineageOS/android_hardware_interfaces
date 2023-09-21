@@ -103,8 +103,7 @@ Return<void> CasImpl::openSession(openSession_cb _hidl_cb) {
 
 Return<Status> CasImpl::setSessionPrivateData(
         const HidlCasSessionId &sessionId, const HidlCasData& pvtData) {
-    ALOGV("%s: sessionId=%s", __FUNCTION__,
-            sessionIdToString(sessionId).string());
+    ALOGV("%s: sessionId=%s", __FUNCTION__, sessionIdToString(sessionId).c_str());
     std::shared_ptr<CasPlugin> holder = std::atomic_load(&mPluginHolder);
     if (holder.get() == nullptr) {
         return toStatus(INVALID_OPERATION);
@@ -113,8 +112,7 @@ Return<Status> CasImpl::setSessionPrivateData(
 }
 
 Return<Status> CasImpl::closeSession(const HidlCasSessionId &sessionId) {
-    ALOGV("%s: sessionId=%s", __FUNCTION__,
-            sessionIdToString(sessionId).string());
+    ALOGV("%s: sessionId=%s", __FUNCTION__, sessionIdToString(sessionId).c_str());
     std::shared_ptr<CasPlugin> holder = std::atomic_load(&mPluginHolder);
     if (holder.get() == nullptr) {
         return toStatus(INVALID_OPERATION);
@@ -124,8 +122,7 @@ Return<Status> CasImpl::closeSession(const HidlCasSessionId &sessionId) {
 
 Return<Status> CasImpl::processEcm(
         const HidlCasSessionId &sessionId, const HidlCasData& ecm) {
-    ALOGV("%s: sessionId=%s", __FUNCTION__,
-            sessionIdToString(sessionId).string());
+    ALOGV("%s: sessionId=%s", __FUNCTION__, sessionIdToString(sessionId).c_str());
     std::shared_ptr<CasPlugin> holder = std::atomic_load(&mPluginHolder);
     if (holder.get() == nullptr) {
         return toStatus(INVALID_OPERATION);

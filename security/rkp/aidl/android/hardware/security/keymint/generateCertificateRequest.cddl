@@ -1,0 +1,93 @@
+; CDDL for the deprecated version 1 generateCertificateRequest method
+; in IRemotelyProvisionedComponent.aidl
+
+EekChain = [ + SignedSignatureKey, SignedEek ]
+
+SignedSignatureKey = [              ; COSE_Sign1 [RFC9052 s4.2]
+    protected: bstr .cbor {
+        1 : AlgorithmEdDSA / AlgorithmES256,  ; Algorithm
+    },
+    unprotected: {},
+    payload: bstr .cbor SignatureKeyEd25519 /
+                bstr .cbor SignatureKeyP256,
+    signature: bstr ; PureEd25519(.cbor SignatureKeySignatureInput) /
+                    ; ECDSA(.cbor SignatureKeySignatureInput)
+]
+
+SignatureKeyEd25519 = {             ; COSE_Key [RFC9052 s7]
+        1 : 1,                         ; Key type : Octet Key Pair
+        3 : AlgorithmEdDSA,            ; Algorithm
+        -1 : 6,                        ; Curve : Ed25519
+        -2 : bstr                      ; Ed25519 public key
+}
+
+SignatureKeyP256 = {                ; COSE_Key [RC9052 s7]
+        1 : 2,                         ; Key type : EC2
+        3 : AlgorithmES256,            ; Algorithm
+        -1 : 1,                        ; Curve: P256
+        -2 : bstr,                     ; X coordinate
+        -3 : bstr                      ; Y coordinate
+}
+
+SignatureKeySignatureInput = [
+    context: "Signature1",
+    body_protected: bstr .cbor { 1 : AlgorithmEdDSA / AlgorithmES256 },
+    external_aad: bstr .size 0,
+    payload: bstr .cbor SignatureKeyEd25519 /
+                bstr .cbor SignatureKeyP256
+]
+
+SignedEek = [                       ; COSE_Sign1 [RFC9052 s4.2]
+    protected: bstr .cbor { 1 : AlgorithmEdDSA / AlgorithmES256 },
+    unprotected: {},
+    payload: bstr .cbor EekX25519 / EekP256,
+    signature: bstr ; PureEd25519(.cbor EekSignatureInput) /
+                    ; ECDSA(.cbor EekSignatureInput)
+]
+
+EekX25519 = {            ; COSE_Key [RFC9052 s7]
+    1 : 1,               ; Key type : Octet Key Pair
+    2 : bstr             ; KID : EEK ID
+    3 : -25,             ; Algorithm : ECDH-ES + HKDF-256
+    -1 : 4,              ; Curve : X25519
+    -2 : bstr            ; X25519 public key, little-endian
+}
+
+EekP256 = {              ; COSE_Key [RFC9052 s7]
+    1 : 2,               ; Key type : EC2
+    2 : bstr             ; KID : EEK ID
+    3 : -25,             ; Algorithm : ECDH-ES + HKDF-256
+    -1 : 1,              ; Curve : P256
+    -2 : bstr            ; Sender X coordinate
+    -3 : bstr            ; Sender Y coordinate
+}
+
+EekSignatureInput = [
+    context: "Signature1",
+    body_protected: bstr .cbor { 1 : AlgorithmEdDSA / AlgorithmES256 },
+    external_aad: bstr .size 0,
+    payload: bstr .cbor EekX25519 / EekP256
+]
+
+AlgorithmES256 = -7      ; [RFC8152 s8.1]
+AlgorithmEdDSA = -8      ; [RFC8152 s8.2]
+
+MacedKeys = [                            ; COSE_Mac0 [RFC9052 s6.2]
+    protected : bstr .cbor {
+        1 : 5,                           ; Algorithm : HMAC-256
+    },
+    unprotected : {},
+    ; Payload is PublicKeys from keysToSign argument, in provided order.
+    payload: bstr .cbor [ * PublicKey ],
+    tag: bstr
+]
+
+KeysToMacStructure = [                   ; [RFC9052 s6.3]
+    context : "MAC0",
+    protected : bstr .cbor { 1 : 5 },    ; Algorithm : HMAC-256
+    external_aad : bstr .size 0,
+    ; Payload is PublicKeys from keysToSign argument, in provided order.
+    payload : bstr .cbor [ * PublicKey ]
+]
+
+; INCLUDE PublicKey.cddl for: PublicKey

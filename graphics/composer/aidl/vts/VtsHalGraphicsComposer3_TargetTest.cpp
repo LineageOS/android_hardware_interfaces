@@ -1231,12 +1231,19 @@ TEST_P(GraphicsComposerAidlV3Test, GetDisplayConfigurations) {
             EXPECT_NE(-1, displayConfig.vsyncPeriod);
             EXPECT_NE(-1, displayConfig.configGroup);
             if (displayConfig.dpi) {
-                EXPECT_NE(-1, displayConfig.dpi->x);
-                EXPECT_NE(-1, displayConfig.dpi->y);
+                EXPECT_NE(-1.f, displayConfig.dpi->x);
+                EXPECT_NE(-1.f, displayConfig.dpi->y);
             }
             if (displayConfig.vrrConfig) {
                 const auto& vrrConfig = *displayConfig.vrrConfig;
                 EXPECT_GE(vrrConfig.minFrameIntervalNs, displayConfig.vsyncPeriod);
+
+                EXPECT_EQ(1, std::count_if(
+                                     displayConfigurations.cbegin(), displayConfigurations.cend(),
+                                     [displayConfig](const auto& config) {
+                                         return config.configGroup == displayConfig.configGroup;
+                                     }))
+                        << "There should be only one VRR mode in one ConfigGroup";
 
                 const auto verifyFrameIntervalIsDivisorOfVsync = [&](int32_t frameIntervalNs) {
                     constexpr auto kThreshold = 0.05f;  // 5%

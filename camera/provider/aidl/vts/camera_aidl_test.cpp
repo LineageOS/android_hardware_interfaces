@@ -120,7 +120,7 @@ void CameraAidlTest::SetUp() {
     ABinderProcess_startThreadPool();
 
     SpAIBinder cameraProviderBinder =
-            SpAIBinder(AServiceManager_getService(serviceDescriptor.c_str()));
+            SpAIBinder(AServiceManager_waitForService(serviceDescriptor.c_str()));
     ASSERT_NE(cameraProviderBinder.get(), nullptr);
 
     std::shared_ptr<ICameraProvider> cameraProvider =
@@ -829,6 +829,90 @@ void CameraAidlTest::verifyExtendedSceneModeCharacteristics(const camera_metadat
     }
     ASSERT_TRUE(hasDisabledMode);
     ASSERT_TRUE(hasBokehStillCaptureMode || hasBokehContinuousMode || hasVendorMode);
+}
+
+void CameraAidlTest::verifyHighSpeedRecordingCharacteristics(const std::string& cameraName,
+                                                             const CameraMetadata& chars) {
+    const camera_metadata_t* metadata =
+            reinterpret_cast<const camera_metadata_t*>(chars.metadata.data());
+
+    // Check capabilities
+    bool hasHighSpeedRecordingCapability = false;
+    bool hasUltraHighResolutionCapability = false;
+    camera_metadata_ro_entry entry;
+    int rc =
+            find_camera_metadata_ro_entry(metadata, ANDROID_REQUEST_AVAILABLE_CAPABILITIES, &entry);
+    if ((0 == rc) && (entry.count > 0)) {
+        hasHighSpeedRecordingCapability =
+                std::find(entry.data.u8, entry.data.u8 + entry.count,
+                          ANDROID_REQUEST_AVAILABLE_CAPABILITIES_CONSTRAINED_HIGH_SPEED_VIDEO) !=
+                entry.data.u8 + entry.count;
+
+        hasUltraHighResolutionCapability =
+                std::find(entry.data.u8, entry.data.u8 + entry.count,
+                          ANDROID_REQUEST_AVAILABLE_CAPABILITIES_ULTRA_HIGH_RESOLUTION_SENSOR) !=
+                entry.data.u8 + entry.count;
+    }
+
+    // Check high speed video configurations
+    camera_metadata_ro_entry highSpeedEntry;
+    rc = find_camera_metadata_ro_entry(
+            metadata, ANDROID_CONTROL_AVAILABLE_HIGH_SPEED_VIDEO_CONFIGURATIONS, &highSpeedEntry);
+    bool hasHighSpeedEntry = (0 == rc && highSpeedEntry.count > 0);
+
+    camera_metadata_ro_entry highSpeedMaxResEntry;
+    rc = find_camera_metadata_ro_entry(
+            metadata, ANDROID_CONTROL_AVAILABLE_HIGH_SPEED_VIDEO_CONFIGURATIONS_MAXIMUM_RESOLUTION,
+            &highSpeedMaxResEntry);
+    bool hasHighSpeedMaxResEntry = (0 == rc && highSpeedMaxResEntry.count > 0);
+
+    // High speed recording configuration entry must be available based on capabilities
+    bool noHighSpeedRecording =
+            !hasHighSpeedRecordingCapability && !hasHighSpeedEntry && !hasHighSpeedMaxResEntry;
+    if (noHighSpeedRecording) {
+        return;
+    }
+    bool hasHighSpeedRecording = hasHighSpeedRecordingCapability && hasHighSpeedEntry &&
+                                 ((hasHighSpeedMaxResEntry && hasUltraHighResolutionCapability) ||
+                                  !hasHighSpeedMaxResEntry);
+    ASSERT_TRUE(hasHighSpeedRecording);
+
+    std::string version, cameraId;
+    ASSERT_TRUE(matchDeviceName(cameraName, mProviderType, &version, &cameraId));
+    bool needBatchSizeCheck = (version != CAMERA_DEVICE_API_VERSION_1);
+
+    // Check each entry item
+    ASSERT_TRUE(highSpeedEntry.count > 0 && highSpeedEntry.count % 5 == 0);
+    for (auto i = 4; i < highSpeedEntry.count; i += 5) {
+        int32_t fps_min = highSpeedEntry.data.i32[i - 2];
+        int32_t fps_max = highSpeedEntry.data.i32[i - 1];
+        int32_t batch_size_max = highSpeedEntry.data.i32[i];
+        int32_t allowedMaxBatchSize = fps_max / 30;
+
+        ASSERT_GE(fps_max, 120);
+        ASSERT_TRUE(fps_min % 30 == 0 && fps_max % 30 == 0);
+        if (needBatchSizeCheck) {
+            ASSERT_LE(batch_size_max, 32);
+            ASSERT_TRUE(allowedMaxBatchSize % batch_size_max == 0);
+        }
+    }
+
+    if (hasHighSpeedMaxResEntry) {
+        ASSERT_TRUE(highSpeedMaxResEntry.count > 0 && highSpeedMaxResEntry.count % 5 == 0);
+        for (auto i = 4; i < highSpeedMaxResEntry.count; i += 5) {
+            int32_t fps_min = highSpeedMaxResEntry.data.i32[i - 2];
+            int32_t fps_max = highSpeedMaxResEntry.data.i32[i - 1];
+            int32_t batch_size_max = highSpeedMaxResEntry.data.i32[i];
+            int32_t allowedMaxBatchSize = fps_max / 30;
+
+            ASSERT_GE(fps_max, 120);
+            ASSERT_TRUE(fps_min % 30 == 0 && fps_max % 30 == 0);
+            if (needBatchSizeCheck) {
+                ASSERT_LE(batch_size_max, 32);
+                ASSERT_TRUE(allowedMaxBatchSize % batch_size_max == 0);
+            }
+        }
+    }
 }
 
 Status CameraAidlTest::getAvailableOutputStreams(const camera_metadata_t* staticMeta,

@@ -19,18 +19,52 @@ package {
 cc_binary {
     name: "android.hardware.tetheroffload-service.example",
     relative_install_path: "hw",
-    init_rc: ["tetheroffload-example.rc"],
-    vintf_fragments: ["tetheroffload-example.xml"],
     vendor: true,
-    shared_libs: [
+
+    stl: "c++_static",
+    static_libs: [
         "android.hardware.tetheroffload-V1-ndk",
         "libbase",
+    ],
+    shared_libs: [
         "libbinder_ndk",
-        "libcutils",
-        "libutils",
+        "liblog",
     ],
     srcs: [
         "main.cpp",
         "Offload.cpp",
+    ],
+
+    installable: false, // installed in APEX
+}
+
+prebuilt_etc {
+    name: "tetheroffload-example.rc",
+    src: "tetheroffload-example.rc",
+    installable: false,
+}
+
+prebuilt_etc {
+    name: "tetheroffload-example.xml",
+    src: "tetheroffload-example.xml",
+    sub_dir: "vintf",
+    installable: false,
+}
+
+apex {
+    name: "com.android.hardware.tetheroffload",
+    manifest: "apex_manifest.json",
+    file_contexts: "apex_file_contexts",
+    key: "com.android.hardware.key",
+    certificate: ":com.android.hardware.certificate",
+    updatable: false,
+    vendor: true,
+
+    binaries: [
+        "android.hardware.tetheroffload-service.example",
+    ],
+    prebuilts: [
+        "tetheroffload-example.rc",
+        "tetheroffload-example.xml",
     ],
 }

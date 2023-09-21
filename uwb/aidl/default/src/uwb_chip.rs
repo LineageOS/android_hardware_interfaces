@@ -6,8 +6,8 @@ use android_hardware_uwb::binder;
 use async_trait::async_trait;
 use binder::{Result, Strong};
 
-use tokio::fs::{self, File};
-use tokio::io::AsyncReadExt;
+use tokio::fs::{File, OpenOptions};
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::sync::Mutex;
 
 use std::os::fd::AsRawFd;
@@ -22,6 +22,7 @@ enum State {
         callbacks: Strong<dyn IUwbClientCallback>,
         #[allow(dead_code)]
         tasks: tokio::task::JoinSet<()>,
+        serial: File,
     },
 }
 
@@ -64,7 +65,11 @@ impl IUwbChipAsyncServer for UwbChip {
     async fn open(&self, callbacks: &Strong<dyn IUwbClientCallback>) -> Result<()> {
         log::debug!("open: {:?}", &self.path);
 
-        let mut serial = File::open(&self.path)
+        let serial = OpenOptions::new()
+            .read(true)
+            .write(true)
+            .create(false)
+            .open(&self.path)
             .await
             .and_then(makeraw)
             .map_err(|_| binder::StatusCode::UNKNOWN_ERROR)?;
@@ -75,13 +80,17 @@ impl IUwbChipAsyncServer for UwbChip {
             let client_callbacks = callbacks.clone();
 
             let mut tasks = tokio::task::JoinSet::new();
+            let mut reader = serial
+                .try_clone()
+                .await
+                .map_err(|_| binder::StatusCode::UNKNOWN_ERROR)?;
 
             tasks.spawn(async move {
                 loop {
                     const UWB_HEADER_SIZE: usize = 4;
 
                     let mut buffer = vec![0; UWB_HEADER_SIZE];
-                    serial
+                    reader
                         .read_exact(&mut buffer[0..UWB_HEADER_SIZE])
                         .await
                         .unwrap();
@@ -89,7 +98,7 @@ impl IUwbChipAsyncServer for UwbChip {
                     let length = buffer[3] as usize + UWB_HEADER_SIZE;
 
                     buffer.resize(length, 0);
-                    serial
+                    reader
                         .read_exact(&mut buffer[UWB_HEADER_SIZE..length])
                         .await
                         .unwrap();
@@ -103,6 +112,7 @@ impl IUwbChipAsyncServer for UwbChip {
             *state = State::Opened {
                 callbacks: callbacks.clone(),
                 tasks,
+                serial,
             };
 
             Ok(())
@@ -149,10 +159,11 @@ impl IUwbChipAsyncServer for UwbChip {
     async fn sendUciMessage(&self, data: &[u8]) -> Result<i32> {
         log::debug!("sendUciMessage");
 
-        if let State::Opened { .. } = &mut *self.state.lock().await {
-            fs::write(&self.path, data)
+        if let State::Opened { ref mut serial, .. } = &mut *self.state.lock().await {
+            serial
+                .write(data)
                 .await
-                .map(|_| data.len() as i32)
+                .map(|written| written as i32)
                 .map_err(|_| binder::StatusCode::UNKNOWN_ERROR.into())
         } else {
             Err(binder::ExceptionCode::ILLEGAL_STATE.into())
