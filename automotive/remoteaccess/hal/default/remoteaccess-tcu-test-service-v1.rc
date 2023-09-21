@@ -1,0 +1,5 @@
+service vendor.remoteaccess-default /vendor/bin/hw/android.hardware.automotive.remoteaccess@V1-tcu-test-service
+    class hal
+    user vehicle_network
+    group system inet
+    capabilities NET_RAW
