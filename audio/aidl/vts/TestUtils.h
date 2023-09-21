@@ -77,3 +77,10 @@ inline ::testing::AssertionResult assertResult(const char* exp_expr, const char*
 #define EXPECT_STATUS(expected, ret)                                                       \
     EXPECT_PRED_FORMAT2(::android::hardware::audio::common::testing::detail::assertResult, \
                         expected, ret)
+
+#define SKIP_TEST_IF_DATA_UNSUPPORTED(flags)                                                     \
+    ({                                                                                           \
+        if ((flags).hwAcceleratorMode == Flags::HardwareAccelerator::TUNNEL || (flags).bypass) { \
+            GTEST_SKIP() << "Skip data path for offload";                                        \
+        }                                                                                        \
+    })
