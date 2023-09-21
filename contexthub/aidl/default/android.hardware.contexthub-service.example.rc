@@ -1,0 +1,4 @@
+service vendor.contexthub-default /apex/com.android.hardware.contexthub/bin/hw/android.hardware.contexthub-service.example
+    class hal
+    user context_hub
+    group context_hub
