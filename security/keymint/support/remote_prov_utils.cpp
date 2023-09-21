@@ -962,6 +962,20 @@ ErrMsgOr<bytevec> parseAndValidateAuthenticatedRequestSignedPayload(
     return signedRequest->value();
 }
 
+ErrMsgOr<hwtrust::DiceChain::Kind> getDiceChainKind() {
+    int vendor_api_level = ::android::base::GetIntProperty("ro.vendor.api_level", -1);
+    switch (vendor_api_level) {
+        case __ANDROID_API_T__:
+            return hwtrust::DiceChain::Kind::kVsr13;
+        case __ANDROID_API_U__:
+            return hwtrust::DiceChain::Kind::kVsr14;
+        case __ANDROID_API_V__:
+            return hwtrust::DiceChain::Kind::kVsr15;
+        default:
+            return "Unsupported vendor API level: " + std::to_string(vendor_api_level);
+    }
+}
+
 ErrMsgOr<bytevec> parseAndValidateAuthenticatedRequest(const std::vector<uint8_t>& request,
                                                        const std::vector<uint8_t>& challenge) {
     auto [parsedRequest, _, csrErrMsg] = cppbor::parse(request);
@@ -996,7 +1010,12 @@ ErrMsgOr<bytevec> parseAndValidateAuthenticatedRequest(const std::vector<uint8_t
     }
 
     // DICE chain is [ pubkey, + DiceChainEntry ].
-    auto diceContents = validateBcc(diceCertChain, hwtrust::DiceChain::Kind::kVsr14);
+    auto diceChainKind = getDiceChainKind();
+    if (!diceChainKind) {
+        return diceChainKind.message();
+    }
+
+    auto diceContents = validateBcc(diceCertChain, *diceChainKind);
     if (!diceContents) {
         return diceContents.message() + "\n" + prettyPrint(diceCertChain);
     }
