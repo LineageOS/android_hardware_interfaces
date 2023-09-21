@@ -293,11 +293,13 @@ TEST_P(SecureElementAidl, transmit) {
     std::vector<uint8_t> response;
     LogicalChannelResponse logical_channel_response;
 
+    /* Temporaly disable this check to clarify Basic Channel behavior (b/300502872)
     // Note: no channel is opened for this test
     // transmit() will return an empty response with the error
     // code CHANNEL_NOT_AVAILABLE when the SE cannot be
     // communicated with.
     EXPECT_ERR(secure_element_->transmit(kDataApdu, &response));
+    */
 
     EXPECT_OK(secure_element_->openLogicalChannel(kSelectableAid, 0x00, &logical_channel_response));
     EXPECT_GE(logical_channel_response.selectResponse.size(), 2u);
