@@ -137,7 +137,7 @@ TEST_P(HmacKeySharingTest, ComputeSharedHmac) {
     auto nonces = copyNonces(params);
     EXPECT_EQ(allKeymasters().size(), nonces.size());
     std::sort(nonces.begin(), nonces.end());
-    std::unique(nonces.begin(), nonces.end());
+    nonces.erase(std::unique(nonces.begin(), nonces.end()), nonces.end());
     EXPECT_EQ(allKeymasters().size(), nonces.size());
 
     auto responses = computeSharedHmac(allKeymasters(), params);
