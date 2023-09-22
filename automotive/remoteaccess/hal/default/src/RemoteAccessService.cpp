@@ -39,6 +39,7 @@ namespace {
 
 using ::aidl::android::hardware::automotive::remoteaccess::ApState;
 using ::aidl::android::hardware::automotive::remoteaccess::IRemoteTaskCallback;
+using ::aidl::android::hardware::automotive::remoteaccess::ScheduleInfo;
 using ::aidl::android::hardware::automotive::vehicle::VehicleProperty;
 using ::android::base::Error;
 using ::android::base::ParseInt;
@@ -310,6 +311,41 @@ ScopedAStatus RemoteAccessService::notifyApStateChange(const ApState& newState) 
     } else {
         maybeStopTaskLoop();
     }
+    return ScopedAStatus::ok();
+}
+
+ScopedAStatus RemoteAccessService::isTaskScheduleSupported([[maybe_unused]] bool* out) {
+    // TODO(b/297271235): implement this.
+    return ScopedAStatus::ok();
+}
+
+ScopedAStatus RemoteAccessService::scheduleTask([[maybe_unused]] const ScheduleInfo& scheduleInfo) {
+    // TODO(b/297271235): implement this.
+    return ScopedAStatus::ok();
+}
+
+ScopedAStatus RemoteAccessService::unscheduleTask([[maybe_unused]] const std::string& clientId,
+                                                  [[maybe_unused]] const std::string& scheduleId) {
+    // TODO(b/297271235): implement this.
+    return ScopedAStatus::ok();
+}
+
+ScopedAStatus RemoteAccessService::unscheduleAllTasks(
+        [[maybe_unused]] const std::string& clientId) {
+    // TODO(b/297271235): implement this.
+    return ScopedAStatus::ok();
+}
+
+ScopedAStatus RemoteAccessService::isTaskScheduled([[maybe_unused]] const std::string& clientId,
+                                                   [[maybe_unused]] const std::string& scheduleId,
+                                                   [[maybe_unused]] bool* out) {
+    // TODO(b/297271235): implement this.
+    return ScopedAStatus::ok();
+}
+
+ScopedAStatus RemoteAccessService::getAllScheduledTasks(const std::string& clientId,
+                                                        std::vector<ScheduleInfo>* out) {
+    // TODO(b/297271235): implement this.
     return ScopedAStatus::ok();
 }
 
