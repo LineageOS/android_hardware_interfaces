@@ -77,8 +77,6 @@ class EvsCameraForTest : public EvsCamera {
                 (const std::string& in_deviceId,
                  ::aidl::android::hardware::automotive::evs::CameraDesc* _aidl_return),
                 (override));
-    MOCK_METHOD(::ndk::ScopedAStatus, pauseVideoStream, (), (override));
-    MOCK_METHOD(::ndk::ScopedAStatus, resumeVideoStream, (), (override));
     MOCK_METHOD(::ndk::ScopedAStatus, setExtendedInfo,
                 (int32_t in_opaqueIdentifier, const std::vector<uint8_t>& in_opaqueValue),
                 (override));
@@ -87,12 +85,13 @@ class EvsCameraForTest : public EvsCamera {
                  std::vector<int32_t>* _aidl_return),
                 (override));
     MOCK_METHOD(::ndk::ScopedAStatus, setPrimaryClient, (), (override));
-    MOCK_METHOD(::ndk::ScopedAStatus, startVideoStream,
-                (const std::shared_ptr<
-                        ::aidl::android::hardware::automotive::evs::IEvsCameraStream>& in_receiver),
-                (override));
-    MOCK_METHOD(::ndk::ScopedAStatus, stopVideoStream, (), (override));
     MOCK_METHOD(::ndk::ScopedAStatus, unsetPrimaryClient, (), (override));
+    MOCK_METHOD(bool, startVideoStreamImpl_locked,
+                (const std::shared_ptr<evs::IEvsCameraStream>& receiver, ndk::ScopedAStatus& status,
+                 std::unique_lock<std::mutex>& lck),
+                (override));
+    MOCK_METHOD(bool, stopVideoStreamImpl_locked,
+                (ndk::ScopedAStatus & status, std::unique_lock<std::mutex>& lck), (override));
 };
 
 TEST(EvsCameraBufferTest, ChangeBufferPoolSize) {
@@ -118,7 +117,7 @@ TEST(EvsCameraBufferTest, ChangeBufferPoolSize) {
     evsCam->checkBufferOrder();
 }
 
-TEST(EvsCameraForTest, UseAndReturn) {
+TEST(EvsCameraBufferTest, UseAndReturn) {
     constexpr std::size_t kNumOfHandles = 20;
     auto evsCam = ndk::SharedRefBase::make<EvsCameraForTest>();
 

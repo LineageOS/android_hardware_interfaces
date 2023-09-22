@@ -32,6 +32,9 @@ namespace aidl::android::hardware::automotive::evs::implementation {
 // Safeguards against unreasonable resource consumption and provides a testable limit
 constexpr std::size_t kMaxBuffersInFlight = 100;
 
+// Minimum number of buffers to run a video stream
+constexpr int kMinimumBuffersInFlight = 1;
+
 EvsCamera::~EvsCamera() {
     shutdown();
 }
@@ -108,6 +111,113 @@ void EvsCamera::freeOneFrame(const buffer_handle_t handle) {
     alloc.free(handle);
 }
 
+bool EvsCamera::preVideoStreamStart_locked(const std::shared_ptr<evs::IEvsCameraStream>& receiver,
+                                           ndk::ScopedAStatus& status,
+                                           std::unique_lock<std::mutex>& /* lck */) {
+    if (!receiver) {
+        LOG(ERROR) << __func__ << ": Null receiver.";
+        status = ndk::ScopedAStatus::fromServiceSpecificError(
+                static_cast<int>(EvsResult::INVALID_ARG));
+        return false;
+    }
+
+    // If we've been displaced by another owner of the camera, then we can't do anything else
+    if (mStreamState == StreamState::DEAD) {
+        LOG(ERROR) << __func__ << ": Ignoring when camera has been lost.";
+        status = ndk::ScopedAStatus::fromServiceSpecificError(
+                static_cast<int>(EvsResult::OWNERSHIP_LOST));
+        return false;
+    }
+
+    if (mStreamState != StreamState::STOPPED) {
+        LOG(ERROR) << __func__ << ": Ignoring when a stream is already running.";
+        status = ndk::ScopedAStatus::fromServiceSpecificError(
+                static_cast<int>(EvsResult::STREAM_ALREADY_RUNNING));
+        return false;
+    }
+
+    // If the client never indicated otherwise, configure ourselves for a single streaming buffer
+    if (mAvailableFrames < kMinimumBuffersInFlight &&
+        !setAvailableFrames_unsafe(kMinimumBuffersInFlight)) {
+        LOG(ERROR) << __func__ << "Failed to because we could not get a graphics buffer.";
+        status = ndk::ScopedAStatus::fromServiceSpecificError(
+                static_cast<int>(EvsResult::BUFFER_NOT_AVAILABLE));
+        return false;
+    }
+    mStreamState = StreamState::RUNNING;
+    return true;
+}
+
+bool EvsCamera::postVideoStreamStart_locked(
+        const std::shared_ptr<evs::IEvsCameraStream>& /* receiver */,
+        ndk::ScopedAStatus& /* status */, std::unique_lock<std::mutex>& /* lck */) {
+    return true;
+}
+
+bool EvsCamera::preVideoStreamStop_locked(ndk::ScopedAStatus& status,
+                                          std::unique_lock<std::mutex>& /* lck */) {
+    if (mStreamState != StreamState::RUNNING) {
+        // Terminate the stop process because a stream is not running.
+        status = ndk::ScopedAStatus::ok();
+        return false;
+    }
+    mStreamState = StreamState::STOPPING;
+    return true;
+}
+
+bool EvsCamera::postVideoStreamStop_locked(ndk::ScopedAStatus& /* status */,
+                                           std::unique_lock<std::mutex>& /* lck */) {
+    mStreamState = StreamState::STOPPED;
+    return true;
+}
+
+ndk::ScopedAStatus EvsCamera::startVideoStream(
+        const std::shared_ptr<evs::IEvsCameraStream>& receiver) {
+    bool needShutdown = false;
+    auto status = ndk::ScopedAStatus::ok();
+    {
+        std::unique_lock lck(mMutex);
+        if (!preVideoStreamStart_locked(receiver, status, lck)) {
+            return status;
+        }
+
+        if ((!startVideoStreamImpl_locked(receiver, status, lck) ||
+             !postVideoStreamStart_locked(receiver, status, lck)) &&
+            !status.isOk()) {
+            needShutdown = true;
+        }
+    }
+    if (needShutdown) {
+        shutdown();
+    }
+    return status;
+}
+
+ndk::ScopedAStatus EvsCamera::stopVideoStream() {
+    bool needShutdown = false;
+    auto status = ndk::ScopedAStatus::ok();
+    {
+        std::unique_lock lck(mMutex);
+        if ((!preVideoStreamStop_locked(status, lck) || !stopVideoStreamImpl_locked(status, lck) ||
+             !postVideoStreamStop_locked(status, lck)) &&
+            !status.isOk()) {
+            needShutdown = true;
+        }
+    }
+    if (needShutdown) {
+        shutdown();
+    }
+    return status;
+}
+
+ndk::ScopedAStatus EvsCamera::pauseVideoStream() {
+    return ndk::ScopedAStatus::fromServiceSpecificError(static_cast<int>(EvsResult::NOT_SUPPORTED));
+}
+
+ndk::ScopedAStatus EvsCamera::resumeVideoStream() {
+    return ndk::ScopedAStatus::fromServiceSpecificError(static_cast<int>(EvsResult::NOT_SUPPORTED));
+}
+
 bool EvsCamera::setAvailableFrames_unsafe(const std::size_t bufferCount) {
     if (bufferCount < 1) {
         LOG(ERROR) << "Ignoring request to set buffer count to zero.";
@@ -159,8 +269,10 @@ bool EvsCamera::setAvailableFrames_unsafe(const std::size_t bufferCount) {
 }
 
 void EvsCamera::shutdown() {
+    stopVideoStream();
     std::lock_guard lck(mMutex);
     closeAllBuffers_unsafe();
+    mStreamState = StreamState::DEAD;
 }
 
 void EvsCamera::closeAllBuffers_unsafe() {

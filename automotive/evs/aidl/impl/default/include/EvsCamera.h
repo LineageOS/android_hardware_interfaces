@@ -18,6 +18,7 @@
 
 #include "EvsCameraBase.h"
 
+#include <aidl/android/hardware/automotive/evs/IEvsCameraStream.h>
 #include <cutils/native_handle.h>
 
 #include <cstddef>
@@ -45,10 +46,40 @@ class EvsCamera : public EvsCameraBase {
 
     ndk::ScopedAStatus setMaxFramesInFlight(int32_t bufferCount) override;
 
+    ndk::ScopedAStatus startVideoStream(
+            const std::shared_ptr<evs::IEvsCameraStream>& receiver) override;
+
+    ndk::ScopedAStatus stopVideoStream() override;
+
+    ndk::ScopedAStatus pauseVideoStream() override;
+
+    ndk::ScopedAStatus resumeVideoStream() override;
+
   protected:
     virtual ::android::status_t allocateOneFrame(buffer_handle_t* handle) = 0;
 
     virtual void freeOneFrame(const buffer_handle_t handle);
+
+    virtual bool preVideoStreamStart_locked(const std::shared_ptr<evs::IEvsCameraStream>& receiver,
+                                            ndk::ScopedAStatus& status,
+                                            std::unique_lock<std::mutex>& lck);
+
+    virtual bool startVideoStreamImpl_locked(const std::shared_ptr<evs::IEvsCameraStream>& receiver,
+                                             ndk::ScopedAStatus& status,
+                                             std::unique_lock<std::mutex>& lck) = 0;
+
+    virtual bool postVideoStreamStart_locked(const std::shared_ptr<evs::IEvsCameraStream>& receiver,
+                                             ndk::ScopedAStatus& status,
+                                             std::unique_lock<std::mutex>& lck);
+
+    virtual bool preVideoStreamStop_locked(ndk::ScopedAStatus& status,
+                                           std::unique_lock<std::mutex>& lck);
+
+    virtual bool stopVideoStreamImpl_locked(ndk::ScopedAStatus& status,
+                                            std::unique_lock<std::mutex>& lck) = 0;
+
+    virtual bool postVideoStreamStop_locked(ndk::ScopedAStatus& status,
+                                            std::unique_lock<std::mutex>& lck);
 
     void shutdown() override;
 
@@ -80,6 +111,15 @@ class EvsCamera : public EvsCameraBase {
         buffer_handle_t handle{nullptr};
         bool inUse{false};
     };
+
+    enum class StreamState {
+        STOPPED = 0,
+        RUNNING = 1,
+        STOPPING = 2,
+        DEAD = 3,
+    };
+
+    StreamState mStreamState{StreamState::STOPPED};
 
     std::mutex mMutex;
 

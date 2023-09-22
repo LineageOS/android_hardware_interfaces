@@ -105,4 +105,21 @@ cc_test {
         "android.hardware.automotive.evs-aidl-default-service-lib",
         "libgmock",
     ],
+    test_suites: [
+        "general-tests",
+    ],
+}
+
+cc_test {
+    name: "android.hardware.automotive.evs-aidl-default-service_cam_state_test",
+    defaults: ["android.hardware.automotive.evs-aidl-default-service-default"],
+    vendor: true,
+    srcs: ["tests/EvsCameraStateTest.cpp"],
+    static_libs: [
+        "android.hardware.automotive.evs-aidl-default-service-lib",
+        "libgmock",
+    ],
+    test_suites: [
+        "general-tests",
+    ],
 }
