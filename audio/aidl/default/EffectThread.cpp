@@ -48,6 +48,8 @@ RetCode EffectThread::createThread(std::shared_ptr<EffectContext> context, const
     mPriority = priority;
     {
         std::lock_guard lg(mThreadMutex);
+        mStop = true;
+        mExit = false;
         mThreadContext = std::move(context);
         auto statusMQ = mThreadContext->getStatusFmq();
         EventFlag* efGroup = nullptr;
