@@ -56,4 +56,29 @@ enum ComplianceWarning {
      * Type-C Cable and Connector Specification.
      */
     MISSING_RP = 4,
+    /**
+     * Used to indicate the charging setups on the USB ports are unable to
+     * deliver negotiated power.
+     */
+    INPUT_POWER_LIMITED = 5,
+    /**
+     * Used to indicate the cable/connector on the USB ports are missing
+     * the required wires on the data pins to make data transfer.
+     */
+    MISSING_DATA_LINES = 6,
+    /**
+     * Used to indicate enumeration failures on the USB ports, potentially due to
+     * signal integrity issues or other causes.
+     */
+    ENUMERATION_FAIL = 7,
+    /**
+     * Used to indicate unexpected data disconnection on the USB ports,
+     * potentially due to signal integrity issues or other causes.
+     */
+    FLAKY_CONNECTION = 8,
+    /**
+     * Used to indicate unreliable or slow data transfer on the USB ports,
+     * potentially due to signal integrity issues or other causes.
+     */
+    UNRELIABLE_IO = 9,
 }
