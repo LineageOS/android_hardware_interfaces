@@ -164,7 +164,7 @@ TEST_F(SharedSecretAidlTest, ComputeSharedSecret) {
     auto nonces = copyNonces(params);
     EXPECT_EQ(sharedSecrets.size(), nonces.size());
     std::sort(nonces.begin(), nonces.end());
-    std::unique(nonces.begin(), nonces.end());
+    nonces.erase(std::unique(nonces.begin(), nonces.end()), nonces.end());
     EXPECT_EQ(sharedSecrets.size(), nonces.size());
 
     auto responses = computeAllSharedSecrets(params);
