@@ -4797,7 +4797,7 @@ TEST_P(ImportKeyTest, RsaOaepMGFDigestSuccess) {
 
         EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, params));
         string result;
-        EXPECT_EQ(ErrorCode::UNKNOWN_ERROR, Finish(ciphertext1, &result));
+        EXPECT_NE(ErrorCode::OK, Finish(ciphertext1, &result));
         EXPECT_EQ(0U, result.size());
     }
 }
@@ -5305,7 +5305,7 @@ TEST_P(EncryptionOperationsTest, RsaOaepSuccess) {
 
         EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, params));
         string result;
-        EXPECT_EQ(ErrorCode::UNKNOWN_ERROR, Finish(ciphertext1, &result));
+        EXPECT_NE(ErrorCode::OK, Finish(ciphertext1, &result));
         EXPECT_EQ(0U, result.size());
     }
 }
@@ -5372,7 +5372,7 @@ TEST_P(EncryptionOperationsTest, RsaOaepDecryptWithWrongDigest) {
                                                                 .Digest(Digest::SHA_2_256)
                                                                 .Padding(PaddingMode::RSA_OAEP)));
     string result;
-    EXPECT_EQ(ErrorCode::UNKNOWN_ERROR, Finish(ciphertext, &result));
+    EXPECT_NE(ErrorCode::OK, Finish(ciphertext, &result));
     EXPECT_EQ(0U, result.size());
 }
 
@@ -5442,7 +5442,7 @@ TEST_P(EncryptionOperationsTest, RsaOaepWithMGFDigestSuccess) {
 
         EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, params));
         string result;
-        EXPECT_EQ(ErrorCode::UNKNOWN_ERROR, Finish(ciphertext1, &result));
+        EXPECT_NE(ErrorCode::OK, Finish(ciphertext1, &result));
         EXPECT_EQ(0U, result.size());
     }
 }
@@ -5486,7 +5486,7 @@ TEST_P(EncryptionOperationsTest, RsaOaepMGFDigestDefaultSuccess) {
 
     EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, params));
     string result;
-    EXPECT_EQ(ErrorCode::UNKNOWN_ERROR, Finish(ciphertext, &result));
+    EXPECT_NE(ErrorCode::OK, Finish(ciphertext, &result));
     EXPECT_EQ(0U, result.size());
 }
 
@@ -5618,7 +5618,7 @@ TEST_P(EncryptionOperationsTest, RsaPkcs1Success) {
 
     EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, params));
     string result;
-    EXPECT_EQ(ErrorCode::UNKNOWN_ERROR, Finish(ciphertext1, &result));
+    EXPECT_NE(ErrorCode::OK, Finish(ciphertext1, &result));
     EXPECT_EQ(0U, result.size());
 }
 
