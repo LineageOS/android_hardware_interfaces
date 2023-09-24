@@ -253,7 +253,7 @@ class FakeVehicleHardware : public IVehicleHardware {
             const aidl::android::hardware::automotive::vehicle::SetValueRequest& request);
 
     std::string genFakeDataCommand(const std::vector<std::string>& options);
-    void sendHvacPropertiesCurrentValues(int32_t areaId);
+    void sendHvacPropertiesCurrentValues(int32_t areaId, int32_t hvacPowerOnVal);
     void sendAdasPropertiesState(int32_t propertyId, int32_t state);
     void generateVendorConfigs(
             std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropConfig>&) const;
