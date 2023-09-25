@@ -36,6 +36,7 @@
 #include <memory>
 #include <mutex>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 namespace android {
@@ -160,6 +161,9 @@ class FakeVehicleHardware : public IVehicleHardware {
     mutable PendingRequestHandler<SetValuesCallback,
                                   aidl::android::hardware::automotive::vehicle::SetValueRequest>
             mPendingSetValueRequests;
+
+    // Set of HVAC properties dependent on HVAC_POWER_ON
+    std::unordered_set<int32_t> hvacPowerDependentProps;
 
     const bool mForceOverride;
     bool mAddExtraTestVendorConfigs;

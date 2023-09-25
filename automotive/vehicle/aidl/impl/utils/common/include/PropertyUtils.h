@@ -98,11 +98,6 @@ constexpr int HVAC_LEFT = SEAT_1_LEFT | SEAT_2_LEFT | SEAT_2_CENTER;
 constexpr int HVAC_RIGHT = SEAT_1_RIGHT | SEAT_2_RIGHT;
 constexpr int HVAC_ALL = HVAC_LEFT | HVAC_RIGHT;
 
-const int32_t HVAC_POWER_PROPERTIES[] = {
-        toInt(propertyutils_impl::VehicleProperty::HVAC_FAN_SPEED),
-        toInt(propertyutils_impl::VehicleProperty::HVAC_FAN_DIRECTION),
-};
-
 }  // namespace vehicle
 }  // namespace automotive
 }  // namespace hardware
