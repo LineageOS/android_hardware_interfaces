@@ -100,3 +100,24 @@ bool is_1_1(const sp<IHostapd>& hostapd) {
         ::android::hardware::wifi::hostapd::V1_1::IHostapd::castFrom(hostapd);
     return hostapd_1_1.get() != nullptr;
 }
+
+void toggleWifiFramework(bool enable) {
+    std::string cmd = "/system/bin/cmd wifi set-wifi-enabled ";
+    cmd += enable ? "enabled" : "disabled";
+    testing::checkSubstringInCommandOutput(cmd.c_str(), "X");
+}
+
+void toggleWifiScanAlwaysAvailable(bool enable) {
+    std::string cmd = "/system/bin/cmd wifi set-scan-always-available ";
+    cmd += enable ? "enabled" : "disabled";
+    testing::checkSubstringInCommandOutput(cmd.c_str(), "X");
+}
+
+bool isWifiFrameworkEnabled() {
+    return testing::checkSubstringInCommandOutput("/system/bin/cmd wifi status", "Wifi is enabled");
+}
+
+bool isWifiScanAlwaysAvailable() {
+    return testing::checkSubstringInCommandOutput("/system/bin/cmd wifi status",
+                                                  "Wifi scanning is always available");
+}
