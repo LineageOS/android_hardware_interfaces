@@ -83,7 +83,7 @@ StreamAlsa::StreamAlsa(StreamContext* context, const Metadata& metadata, int rea
             proxy = alsa::openProxyForAttachedDevice(
                     device, const_cast<struct pcm_config*>(&mConfig.value()), mBufferSizeFrames);
         }
-        if (!proxy) {
+        if (proxy.get() == nullptr) {
             return ::android::NO_INIT;
         }
         alsaDeviceProxies.push_back(std::move(proxy));

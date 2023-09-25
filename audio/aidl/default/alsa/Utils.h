@@ -43,8 +43,21 @@ struct DeviceProfile {
     bool isExternal;
 };
 std::ostream& operator<<(std::ostream& os, const DeviceProfile& device);
-using DeviceProxyDeleter = std::function<void(alsa_device_proxy*)>;
-using DeviceProxy = std::unique_ptr<alsa_device_proxy, DeviceProxyDeleter>;
+
+class DeviceProxy {
+  public:
+    DeviceProxy();  // Constructs a "null" proxy.
+    explicit DeviceProxy(const DeviceProfile& deviceProfile);
+    alsa_device_profile* getProfile() { return mProfile.get(); }
+    alsa_device_proxy* get() { return mProxy.get(); }
+
+  private:
+    static void alsaProxyDeleter(alsa_device_proxy* proxy);
+    using AlsaProxy = std::unique_ptr<alsa_device_proxy, decltype(alsaProxyDeleter)*>;
+
+    std::unique_ptr<alsa_device_profile> mProfile;
+    AlsaProxy mProxy;
+};
 
 ::aidl::android::media::audio::common::AudioChannelLayout getChannelLayoutMaskFromChannelCount(
         unsigned int channelCount, int isInput);
@@ -60,12 +73,11 @@ std::optional<DeviceProfile> getDeviceProfile(
         const ::aidl::android::media::audio::common::AudioPort& audioPort);
 std::optional<struct pcm_config> getPcmConfig(const StreamContext& context, bool isInput);
 std::vector<int> getSampleRatesFromProfile(const alsa_device_profile* profile);
-DeviceProxy makeDeviceProxy();
 DeviceProxy openProxyForAttachedDevice(const DeviceProfile& deviceProfile,
                                        struct pcm_config* pcmConfig, size_t bufferFrameCount);
 DeviceProxy openProxyForExternalDevice(const DeviceProfile& deviceProfile,
                                        struct pcm_config* pcmConfig, bool requireExactMatch);
-std::optional<alsa_device_profile> readAlsaDeviceInfo(const DeviceProfile& deviceProfile);
+DeviceProxy readAlsaDeviceInfo(const DeviceProfile& deviceProfile);
 void resetTransferredFrames(DeviceProxy& proxy, uint64_t frames);
 
 ::aidl::android::media::audio::common::AudioFormatDescription
