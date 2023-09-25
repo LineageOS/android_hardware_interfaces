@@ -161,10 +161,13 @@ void VehicleHalManagerFuzzer::invokeDebug() {
     hidl_string debugOption = mFuzzedDataProvider->PickValueInArray(
             {"--help", "--list", "--get", "--set", "", "invalid"});
     hidl_handle fd = {};
-    fd.setTo(native_handle_create(/*numFds=*/1, /*numInts=*/0), /*shouldOwn=*/true);
+
+    native_handle_t* rawHandle = native_handle_create(/*numFds=*/1, /*numInts=*/0);
+    fd.setTo(native_handle_clone(rawHandle), /*shouldOwn=*/true);
 
     mManager->debug(fd, {});
     mManager->debug(fd, {debugOption});
+    native_handle_delete(rawHandle);
 }
 
 void VehicleHalManagerFuzzer::invokePropConfigs() {
