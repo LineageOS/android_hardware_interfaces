@@ -245,7 +245,7 @@ TEST_F(FakeFaceEngineTest, AuthenticateFailedForUnEnrolled) {
     FaceHalProperties::enrollments({3});
     FaceHalProperties::enrollment_hit(100);
     mEngine.authenticateImpl(mCallback.get(), 0 /* operationId*/, mCancel.get_future());
-    ASSERT_EQ(Error::UNABLE_TO_PROCESS, mCallback->mError);
+    ASSERT_EQ(Error::TIMEOUT, mCallback->mError);
     ASSERT_TRUE(mCallback->mAuthenticateFailed);
 }
 

@@ -142,7 +142,7 @@ bool FakeFingerprintEngine::onEnrollFingerDown(ISessionCallback* cb,
         return true;
     }
     auto enrollmentId = std::stoi(parts[0]);
-    auto progress = parseEnrollmentCapture(parts[1]);
+    auto progress = Util::parseEnrollmentCapture(parts[1]);
     for (size_t i = 0; i < progress.size(); i += 2) {
         auto left = (progress.size() - i) / 2 - 1;
         auto duration = progress[i][0];
@@ -193,7 +193,7 @@ bool FakeFingerprintEngine::onAuthenticateFingerDown(ISessionCallback* cb,
     int64_t now = Util::getSystemNanoTime();
     int64_t duration = FingerprintHalProperties::operation_authenticate_duration().value_or(10);
     auto acquired = FingerprintHalProperties::operation_authenticate_acquired().value_or("1");
-    auto acquiredInfos = parseIntSequence(acquired);
+    auto acquiredInfos = Util::parseIntSequence(acquired);
     int N = acquiredInfos.size();
 
     if (N == 0) {
@@ -271,7 +271,7 @@ bool FakeFingerprintEngine::onDetectInteractFingerDown(ISessionCallback* cb,
             FingerprintHalProperties::operation_detect_interaction_duration().value_or(10);
 
     auto acquired = FingerprintHalProperties::operation_detect_interaction_acquired().value_or("1");
-    auto acquiredInfos = parseIntSequence(acquired);
+    auto acquiredInfos = Util::parseIntSequence(acquired);
     int N = acquiredInfos.size();
     int64_t now = Util::getSystemNanoTime();
 
@@ -448,76 +448,6 @@ SensorLocation FakeFingerprintEngine::getSensorLocation() {
 
 SensorLocation FakeFingerprintEngine::defaultSensorLocation() {
     return SensorLocation();
-}
-
-std::vector<int32_t> FakeFingerprintEngine::parseIntSequence(const std::string& str,
-                                                             const std::string& sep) {
-    std::vector<std::string> seqs = Util::split(str, sep);
-    std::vector<int32_t> res;
-
-    for (const auto& seq : seqs) {
-        int32_t val;
-        if (ParseInt(seq, &val)) {
-            res.push_back(val);
-        } else {
-            LOG(WARNING) << "Invalid int sequence:" + str;
-            res.clear();
-            break;
-        }
-    }
-
-    return res;
-}
-
-bool FakeFingerprintEngine::parseEnrollmentCaptureSingle(const std::string& str,
-                                                         std::vector<std::vector<int32_t>>& res) {
-    std::vector<int32_t> defaultAcquiredInfo = {(int32_t)AcquiredInfo::GOOD};
-    bool aborted = true;
-
-    do {
-        std::smatch sms;
-        // Parses strings like "1000-[5,1]" or "500"
-        std::regex ex("((\\d+)(-\\[([\\d|,]+)\\])?)");
-        if (!regex_match(str.cbegin(), str.cend(), sms, ex)) break;
-        int32_t duration;
-        if (!ParseInt(sms.str(2), &duration)) break;
-        res.push_back({duration});
-        if (!sms.str(4).empty()) {
-            auto acqv = parseIntSequence(sms.str(4));
-            if (acqv.empty()) break;
-            res.push_back(acqv);
-        } else
-            res.push_back(defaultAcquiredInfo);
-        aborted = false;
-    } while (0);
-
-    return !aborted;
-}
-
-std::vector<std::vector<int32_t>> FakeFingerprintEngine::parseEnrollmentCapture(
-        const std::string& str) {
-    std::vector<std::vector<int32_t>> res;
-
-    std::string s(str);
-    s.erase(std::remove_if(s.begin(), s.end(), ::isspace), s.end());
-    bool aborted = false;
-    std::smatch sms;
-    // Parses strings like "1000-[5,1],500,800-[6,5,1]"
-    //                      ---------- --- -----------
-    //  into parts:             A       B       C
-    while (regex_search(s, sms, std::regex("^(,)?(\\d+(-\\[[\\d|,]+\\])?)"))) {
-        if (!parseEnrollmentCaptureSingle(sms.str(2), res)) {
-            aborted = true;
-            break;
-        }
-        s = sms.suffix();
-    }
-    if (aborted || s.length() != 0) {
-        res.clear();
-        LOG(ERROR) << "Failed to parse enrollment captures:" + str;
-    }
-
-    return res;
 }
 
 std::pair<AcquiredInfo, int32_t> FakeFingerprintEngine::convertAcquiredInfo(int32_t code) {

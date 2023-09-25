@@ -136,56 +136,127 @@ void FakeFaceEngine::authenticateImpl(ISessionCallback* cb, int64_t /*operationI
                                       const std::future<void>& cancel) {
     BEGIN_OP(FaceHalProperties::operation_authenticate_latency().value_or(0));
 
-    // Signal to the framework that we have begun authenticating.
-    AuthenticationFrame frame;
-    frame.data.acquiredInfo = AcquiredInfo::START;
-    frame.data.vendorCode = 0;
-    cb->onAuthenticationFrame(frame);
-
-    // Also signal that we have opened the camera.
-    frame = {};
-    frame.data.acquiredInfo = AcquiredInfo::FIRST_FRAME_RECEIVED;
-    frame.data.vendorCode = 0;
-    cb->onAuthenticationFrame(frame);
-
-    auto now = Util::getSystemNanoTime();
-    int64_t duration = FaceHalProperties::operation_authenticate_duration().value_or(0);
-    if (duration > 0) {
-        do {
-            SLEEP_MS(5);
-        } while (!Util::hasElapsed(now, duration));
-    }
-
-    if (FaceHalProperties::operation_authenticate_fails().value_or(false)) {
-        LOG(ERROR) << "Fail: operation_authenticate_fails";
-        cb->onError(Error::VENDOR, 0 /* vendorError */);
-        return;
-    }
-
-    if (FaceHalProperties::lockout().value_or(false)) {
-        LOG(ERROR) << "Fail: lockout";
-        cb->onLockoutPermanent();
-        cb->onError(Error::HW_UNAVAILABLE, 0 /* vendorError */);
-        return;
-    }
-
-    if (shouldCancel(cancel)) {
-        LOG(ERROR) << "Fail: cancel";
-        cb->onError(Error::CANCELED, 0 /* vendorCode */);
-        return;
-    }
-
     auto id = FaceHalProperties::enrollment_hit().value_or(0);
     auto enrolls = FaceHalProperties::enrollments();
     auto isEnrolled = std::find(enrolls.begin(), enrolls.end(), id) != enrolls.end();
-    if (id < 0 || !isEnrolled) {
-        LOG(ERROR) << (isEnrolled ? "invalid enrollment hit" : "Fail: not enrolled");
-        cb->onAuthenticationFailed();
+
+    auto vec2str = [](std::vector<AcquiredInfo> va) {
+        std::stringstream ss;
+        bool isFirst = true;
+        for (auto ac : va) {
+            if (!isFirst) ss << ",";
+            ss << std::to_string((int8_t)ac);
+            isFirst = false;
+        }
+        return ss.str();
+    };
+
+    // default behavior mimic face sensor in U
+    int64_t defaultAuthDuration = 500;
+    std::string defaultAcquiredInfo =
+            vec2str({AcquiredInfo::START, AcquiredInfo::FIRST_FRAME_RECEIVED});
+    if (!isEnrolled) {
+        std::vector<AcquiredInfo> v;
+        for (int i = 0; i < 56; i++) v.push_back(AcquiredInfo::NOT_DETECTED);
+        defaultAcquiredInfo += "," + vec2str(v);
+        defaultAuthDuration = 2100;
+    } else {
+        defaultAcquiredInfo += "," + vec2str({AcquiredInfo::TOO_BRIGHT, AcquiredInfo::TOO_BRIGHT,
+                                              AcquiredInfo::TOO_BRIGHT, AcquiredInfo::TOO_BRIGHT,
+                                              AcquiredInfo::GOOD, AcquiredInfo::GOOD});
+    }
+
+    int64_t now = Util::getSystemNanoTime();
+    int64_t duration =
+            FaceHalProperties::operation_authenticate_duration().value_or(defaultAuthDuration);
+    auto acquired =
+            FaceHalProperties::operation_authenticate_acquired().value_or(defaultAcquiredInfo);
+    auto acquiredInfos = Util::parseIntSequence(acquired);
+    int N = acquiredInfos.size();
+
+    if (N == 0) {
+        LOG(ERROR) << "Fail to parse authentiate acquired info: " + acquired;
         cb->onError(Error::UNABLE_TO_PROCESS, 0 /* vendorError */);
         return;
     }
 
-    cb->onAuthenticationSucceeded(id, {} /* hat */);
+    int i = 0;
+    do {
+        if (FaceHalProperties::lockout().value_or(false)) {
+            LOG(ERROR) << "Fail: lockout";
+            cb->onLockoutPermanent();
+            cb->onError(Error::HW_UNAVAILABLE, 0 /* vendorError */);
+            return;
+        }
+
+        if (FaceHalProperties::operation_authenticate_fails().value_or(false)) {
+            LOG(ERROR) << "Fail: operation_authenticate_fails";
+            cb->onAuthenticationFailed();
+            return;
+        }
+
+        auto err = FaceHalProperties::operation_authenticate_error().value_or(0);
+        if (err != 0) {
+            LOG(ERROR) << "Fail: operation_authenticate_error";
+            auto ec = convertError(err);
+            cb->onError(ec.first, ec.second);
+            return; /* simply terminating current operation for any user inserted error,
+                            revisit if tests need*/
+        }
+
+        if (shouldCancel(cancel)) {
+            LOG(ERROR) << "Fail: cancel";
+            cb->onError(Error::CANCELED, 0 /* vendorCode */);
+            return;
+        }
+
+        if (i < N) {
+            auto ac = convertAcquiredInfo(acquiredInfos[i]);
+            AuthenticationFrame frame;
+            frame.data.acquiredInfo = ac.first;
+            frame.data.vendorCode = ac.second;
+            cb->onAuthenticationFrame(frame);
+            LOG(INFO) << "AcquiredInfo:" << i << ": (" << (int)ac.first << "," << (int)ac.second
+                      << ")";
+            i++;
+        }
+
+        SLEEP_MS(duration / N);
+    } while (!Util::hasElapsed(now, duration));
+
+    if (id > 0 && isEnrolled) {
+        cb->onAuthenticationSucceeded(id, {} /* hat */);
+        return;
+    } else {
+        LOG(ERROR) << "Fail: face not enrolled";
+        cb->onAuthenticationFailed();
+        cb->onError(Error::TIMEOUT, 0 /* vendorError*/);
+        return;
+    }
+}
+
+std::pair<AcquiredInfo, int32_t> FakeFaceEngine::convertAcquiredInfo(int32_t code) {
+    std::pair<AcquiredInfo, int32_t> res;
+    if (code > FACE_ACQUIRED_VENDOR_BASE) {
+        res.first = AcquiredInfo::VENDOR;
+        res.second = code - FACE_ACQUIRED_VENDOR_BASE;
+    } else {
+        res.first = (AcquiredInfo)code;
+        res.second = 0;
+    }
+    return res;
+}
+
+std::pair<Error, int32_t> FakeFaceEngine::convertError(int32_t code) {
+    std::pair<Error, int32_t> res;
+    if (code > FACE_ERROR_VENDOR_BASE) {
+        res.first = Error::VENDOR;
+        res.second = code - FACE_ERROR_VENDOR_BASE;
+    } else {
+        res.first = (Error)code;
+        res.second = 0;
+    }
+    return res;
 }
 
 void FakeFaceEngine::detectInteractionImpl(ISessionCallback* cb, const std::future<void>& cancel) {

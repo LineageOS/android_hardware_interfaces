@@ -23,6 +23,9 @@
 #include <thread>
 #include <vector>
 
+#include <android-base/parseint.h>
+using ::android::base::ParseInt;
+
 namespace aidl::android::hardware::biometrics {
 
 #define SLEEP_MS(x) \
@@ -63,6 +66,87 @@ class Util {
                 std::sregex_token_iterator(str.begin(), str.end(), regex, -1),
                 std::sregex_token_iterator());
         return parts;
+    }
+
+    // Returns a vector of integers for the string separated by comma,
+    // Empty vector is returned if there is any parsing error
+    static std::vector<int32_t> parseIntSequence(const std::string& str,
+                                                 const std::string& sep = ",") {
+        std::vector<std::string> seqs = Util::split(str, sep);
+        std::vector<int32_t> res;
+
+        for (const auto& seq : seqs) {
+            int32_t val;
+            if (ParseInt(seq, &val)) {
+                res.push_back(val);
+            } else {
+                LOG(WARNING) << "Invalid int sequence:" + str + " seq:" + seq;
+                res.clear();
+                break;
+            }
+        }
+
+        return res;
+    }
+
+    // Parses a single enrollment stage string in the format of
+    //     enroll_stage_spec: <duration>[-acquiredInfos]
+    //                                      duration: integerInMs
+    //                                      acquiredInfos: [info1,info2,...]
+    //
+    // Returns false if there is parsing error
+    //
+    static bool parseEnrollmentCaptureSingle(const std::string& str,
+                                             std::vector<std::vector<int32_t>>& res) {
+        std::vector<int32_t> defaultAcquiredInfo = {1};
+        bool aborted = true;
+
+        do {
+            std::smatch sms;
+            // Parses strings like "1000-[5,1]" or "500"
+            std::regex ex("((\\d+)(-\\[([\\d|,]+)\\])?)");
+            if (!regex_match(str.cbegin(), str.cend(), sms, ex)) break;
+            int32_t duration;
+            if (!ParseInt(sms.str(2), &duration)) break;
+            res.push_back({duration});
+            if (!sms.str(4).empty()) {
+                auto acqv = parseIntSequence(sms.str(4));
+                if (acqv.empty()) break;
+                res.push_back(acqv);
+            } else
+                res.push_back(defaultAcquiredInfo);
+            aborted = false;
+        } while (0);
+
+        return !aborted;
+    }
+
+    // Parses enrollment string consisting of one or more stages in the formst of
+    //  <enroll_stage_spec>[,enroll_stage_spec,...]
+    // Empty vector is returned in case of parsing error
+    static std::vector<std::vector<int32_t>> parseEnrollmentCapture(const std::string& str) {
+        std::vector<std::vector<int32_t>> res;
+
+        std::string s(str);
+        s.erase(std::remove_if(s.begin(), s.end(), ::isspace), s.end());
+        bool aborted = false;
+        std::smatch sms;
+        // Parses strings like "1000-[5,1],500,800-[6,5,1]"
+        //                               -------------- ----- ---------------
+        //  into parts:                       A       B       C
+        while (regex_search(s, sms, std::regex("^(,)?(\\d+(-\\[[\\d|,]+\\])?)"))) {
+            if (!parseEnrollmentCaptureSingle(sms.str(2), res)) {
+                aborted = true;
+                break;
+            }
+            s = sms.suffix();
+        }
+        if (aborted || s.length() != 0) {
+            res.clear();
+            LOG(ERROR) << "Failed to parse enrollment captures:" + str;
+        }
+
+        return res;
     }
 };
 
