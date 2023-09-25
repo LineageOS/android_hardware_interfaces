@@ -85,7 +85,7 @@ class EvsCamera : public EvsCameraBase {
 
     void closeAllBuffers_unsafe();
 
-    // Returns (ID, handle) if succeeds. (static_cast<size_t>(-1), nullptr) otherwise.
+    // Returns (ID, handle) if succeeds. (kInvalidBufferID, nullptr) otherwise.
     [[nodiscard]] std::pair<std::size_t, buffer_handle_t> useBuffer_unsafe();
 
     void returnBuffer_unsafe(const std::size_t id);
@@ -133,6 +133,12 @@ class EvsCamera : public EvsCameraBase {
 
     std::size_t mAvailableFrames{0};
     std::size_t mFramesInUse{0};
+
+    // We use all 1's as a reserved invalid buffer ID.
+    static constexpr std::size_t kInvalidBufferID = ~static_cast<std::size_t>(0);
+
+  public:
+    static bool IsBufferIDValid(const std::size_t bufferId) { return ~bufferId; }
 };
 
 }  // namespace aidl::android::hardware::automotive::evs::implementation

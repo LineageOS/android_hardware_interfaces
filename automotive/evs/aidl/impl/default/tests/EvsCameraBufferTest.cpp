@@ -134,6 +134,7 @@ TEST(EvsCameraBufferTest, UseAndReturn) {
         for (std::size_t i = 0; i < kNumOfHandles; ++i) {
             const auto [id, handle] = evsCam->useBuffer_unsafe();
             const std::size_t handleInt = reinterpret_cast<std::size_t>(handle);
+            EXPECT_TRUE(EvsCamera::IsBufferIDValid(id));
             EXPECT_NE(handle, nullptr);
             EXPECT_LT(id, kNumOfHandles);
 
@@ -160,6 +161,7 @@ TEST(EvsCameraBufferTest, UseAndReturn) {
         for (std::size_t i = 0; i < kNumOfHandles; ++i) {
             const auto [id, handle] = evsCam->useBuffer_unsafe();
             const std::size_t handleInt = reinterpret_cast<std::size_t>(handle);
+            EXPECT_TRUE(EvsCamera::IsBufferIDValid(id));
             EXPECT_NE(handle, nullptr);
             EXPECT_LT(id, kNumOfHandles);
 
@@ -189,6 +191,7 @@ TEST(EvsCameraBufferTest, UseAndReturn) {
         for (std::size_t i = 0; i < kNumOfHandles; ++i) {
             const auto [id, handle] = evsCam->useBuffer_unsafe();
             const std::size_t handleInt = reinterpret_cast<std::size_t>(handle);
+            EXPECT_TRUE(EvsCamera::IsBufferIDValid(id));
             EXPECT_NE(handle, nullptr);
             EXPECT_LT(id, kNumOfHandles);
 
