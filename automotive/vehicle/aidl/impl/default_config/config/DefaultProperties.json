@@ -1899,8 +1899,16 @@
                 }
             ],
             "configArray": [
+                "VehicleProperty::HVAC_ACTUAL_FAN_SPEED_RPM",
+                "VehicleProperty::HVAC_AC_ON",
+                "VehicleProperty::HVAC_AUTO_ON",
+                "VehicleProperty::HVAC_AUTO_RECIRC_ON",
+                "VehicleProperty::HVAC_FAN_DIRECTION",
                 "VehicleProperty::HVAC_FAN_SPEED",
-                "VehicleProperty::HVAC_FAN_DIRECTION"
+                "VehicleProperty::HVAC_MAX_AC_ON",
+                "VehicleProperty::HVAC_RECIRC_ON",
+                "VehicleProperty::HVAC_TEMPERATURE_CURRENT",
+                "VehicleProperty::HVAC_TEMPERATURE_SET"
             ]
         },
         {
