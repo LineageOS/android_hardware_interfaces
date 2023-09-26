@@ -292,7 +292,7 @@ void EvsCamera::closeAllBuffers_unsafe() {
 std::pair<std::size_t, buffer_handle_t> EvsCamera::useBuffer_unsafe() {
     if (mFramesInUse >= mAvailableFrames) {
         DCHECK_EQ(mFramesInUse, mAvailableFrames);
-        return {static_cast<std::size_t>(-1), nullptr};
+        return {kInvalidBufferID, nullptr};
     }
     const std::size_t pos = mFramesInUse++;
     auto& buffer = mBuffers[pos];

@@ -17,9 +17,9 @@
 #include "EvsEnumerator.h"
 
 #include "ConfigManager.h"
+#include "EvsAllCameras.h"
 #include "EvsCameraBase.h"
 #include "EvsGlDisplay.h"
-#include "EvsMockCamera.h"
 
 #include <aidl/android/hardware/automotive/evs/EvsResult.h>
 #include <aidl/android/hardware/graphics/common/BufferUsage.h>
@@ -262,6 +262,10 @@ ScopedAStatus EvsEnumerator::openCamera(const std::string& id, const Stream& cfg
             case DeviceType::NONE:
             case DeviceType::MOCK:
                 pActiveCamera = EvsMockCamera::Create(id.data(), cameraInfo, &cfg);
+                break;
+
+            case DeviceType::VIDEO:
+                pActiveCamera = EvsVideoEmulatedCamera::Create(id.data(), cameraInfo, &cfg);
                 break;
 
             default:
