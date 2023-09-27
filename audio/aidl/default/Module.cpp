@@ -1277,6 +1277,12 @@ ndk::ScopedAStatus Module::getMmapPolicyInfos(AudioMMapPolicyType mmapPolicyType
             mmapSources.insert(port.id);
         }
     }
+    if (mmapSources.empty() && mmapSinks.empty()) {
+        AudioMMapPolicyInfo never;
+        never.mmapPolicy = AudioMMapPolicy::NEVER;
+        _aidl_return->push_back(never);
+        return ndk::ScopedAStatus::ok();
+    }
     for (const auto& route : getConfig().routes) {
         if (mmapSinks.count(route.sinkPortId) != 0) {
             // The sink is a mix port, add the sources if they are device ports.

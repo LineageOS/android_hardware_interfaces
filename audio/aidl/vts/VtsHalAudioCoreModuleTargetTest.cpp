@@ -87,6 +87,7 @@ using aidl::android::media::audio::common::AudioDualMonoMode;
 using aidl::android::media::audio::common::AudioFormatType;
 using aidl::android::media::audio::common::AudioIoFlags;
 using aidl::android::media::audio::common::AudioLatencyMode;
+using aidl::android::media::audio::common::AudioMMapPolicy;
 using aidl::android::media::audio::common::AudioMMapPolicyInfo;
 using aidl::android::media::audio::common::AudioMMapPolicyType;
 using aidl::android::media::audio::common::AudioMode;
@@ -2133,7 +2134,13 @@ TEST_P(AudioCoreModule, GetMmapPolicyInfos) {
         std::vector<AudioMMapPolicyInfo> policyInfos;
         EXPECT_IS_OK(module->getMmapPolicyInfos(mmapPolicyType, &policyInfos))
                 << toString(mmapPolicyType);
-        EXPECT_EQ(isMmapSupported, !policyInfos.empty());
+        const bool isMMapSupportedByPolicyInfos =
+                std::find_if(policyInfos.begin(), policyInfos.end(), [](const auto& info) {
+                    return info.mmapPolicy == AudioMMapPolicy::AUTO ||
+                           info.mmapPolicy == AudioMMapPolicy::ALWAYS;
+                }) != policyInfos.end();
+        EXPECT_EQ(isMmapSupported, isMMapSupportedByPolicyInfos)
+                << ::android::internal::ToString(policyInfos);
     }
 }
 
