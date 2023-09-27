@@ -28,6 +28,10 @@ parcelable VehiclePropConfig {
 
     /**
      * Defines if the property is read or write or both.
+     *
+     * If populating VehicleAreaConfig.access fields for this property, this field should not be
+     * populated. If the OEM decides to populate this field, none of the VehicleAreaConfig.access
+     * fields should be populated.
      */
     VehiclePropertyAccess access = VehiclePropertyAccess.NONE;
 
