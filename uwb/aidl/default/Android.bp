@@ -20,6 +20,7 @@ rust_binary {
         "libbinder_rs",
         "libbinder_tokio_rs",
         "libtokio",
+        "libtokio_util",
         "libnix",
         "libanyhow",
     ],
