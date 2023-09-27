@@ -48,6 +48,13 @@ class HostapdHidlTest
     virtual void SetUp() override {
         wifi_instance_name_ = std::get<0>(GetParam());
         hostapd_instance_name_ = std::get<1>(GetParam());
+
+        // Disable Wi-Fi framework to avoid interference
+        isWifiEnabled_ = isWifiFrameworkEnabled();
+        isScanAlwaysEnabled_ = isWifiScanAlwaysAvailable();
+        toggleWifiFramework(false);
+        toggleWifiScanAlwaysAvailable(false);
+
         stopSupplicantIfNeeded(wifi_instance_name_);
         startHostapdAndWaitForHidlService(wifi_instance_name_,
                                           hostapd_instance_name_);
@@ -58,14 +65,21 @@ class HostapdHidlTest
     virtual void TearDown() override {
         HIDL_INVOKE_VOID_WITHOUT_ARGUMENTS(hostapd_, terminate);
         stopHostapd(wifi_instance_name_);
+
+        // Restore Wi-Fi framework state
+        toggleWifiFramework(isWifiEnabled_);
+        toggleWifiScanAlwaysAvailable(isScanAlwaysEnabled_);
     }
 
    protected:
-    std::string getPrimaryWlanIfaceName() {
+     bool isWifiEnabled_ = false;
+     bool isScanAlwaysEnabled_ = false;
+
+     std::string getPrimaryWlanIfaceName() {
         std::array<char, PROPERTY_VALUE_MAX> buffer;
         property_get("wifi.interface", buffer.data(), "wlan0");
         return buffer.data();
-    }
+     }
 
     IHostapd::IfaceParams getIfaceParamsWithAcs() {
         IHostapd::IfaceParams iface_params;
