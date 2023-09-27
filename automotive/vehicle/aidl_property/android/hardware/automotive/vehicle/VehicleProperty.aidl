@@ -4487,6 +4487,20 @@ enum VehicleProperty {
     VEHICLE_IN_USE =
             0x0F4A + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
 
+    /**
+     * Sends the heartbeat signal to ClusterOS.
+     *
+     * int64[0]: epochTimeNs
+     * int64[1]: the visibility of ClusterUI, 0 - invisible, 1 - visible
+     * bytes: the app specific metadata, this can be empty when ClusterHomeService use the heartbeat
+     *     to deliver the change of the visibility.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.WRITE
+     */
+    CLUSTER_HEARTBEAT =
+            0x0F4B + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.MIXED,
+
     /***********************************************************************************************
      * Start of ADAS Properties
      *

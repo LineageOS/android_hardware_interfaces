@@ -865,6 +865,12 @@ TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyLaneCenteringAssistStateConfig) 
                    VehicleArea::GLOBAL, VehiclePropertyType::INT32);
 }
 
+TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyClusterHeartbeatConfig) {
+    verifyProperty(VehicleProperty::CLUSTER_HEARTBEAT, VehiclePropertyAccess::WRITE,
+                   VehiclePropertyChangeMode::ON_CHANGE, VehiclePropertyGroup::SYSTEM,
+                   VehicleArea::GLOBAL, VehiclePropertyType::MIXED);
+}
+
 std::vector<ServiceDescriptor> getDescriptors() {
     std::vector<ServiceDescriptor> descriptors;
     for (std::string name : getAidlHalInstanceNames(IVehicle::descriptor)) {
