@@ -157,3 +157,22 @@ prop {
     access: ReadWrite
     api_name: "operation_authenticate_duration"
 }
+
+# insert error for authenticate operations
+prop {
+    prop_name: "vendor.face.virtual.operation_authenticate_error"
+    type: Integer
+    scope: Internal
+    access: ReadWrite
+    api_name: "operation_authenticate_error"
+}
+
+# acquired info during authentication in format of sequence
+prop {
+    prop_name: "vendor.face.virtual.operation_authenticate_acquired"
+    type: String
+    scope: Internal
+    access: ReadWrite
+    api_name: "operation_authenticate_acquired"
+}
+

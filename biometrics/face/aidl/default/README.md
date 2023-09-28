@@ -18,6 +18,7 @@ On pixel devicse (non-CF), by default (after manufacture reset), Face VHAL is no
 Face VHAL enabling is gated by the following two AND conditions:
 1. The Face VHAL feature flag (as part of Trunk-development strategy) must be tured until the flags life-cycle ends.
 2. The Face VHAL must be enabled via sysprop
+See adb commands below
 
 ##Getting Stared
 
@@ -47,8 +48,7 @@ authentication failure, set the hit id to a different value.
 $ adb shell setprop vendor.face.virtual.operation_authenticate_duration 800
 $ adb shell setprop vendor.face.virtual.enrollment_hit 1
 ```
-Note: At the initial phase of the Face VHAL development, Face-on-camera simulation is not supported, hence
-the authentication immediately occurrs  as soon as the authentication request arriving at VHAL.
+Refer to face.sysprop for full supported features of authentication, such as error and acquiredInfo insertion
 
 
 ## Enrollment via Setup
