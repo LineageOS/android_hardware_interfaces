@@ -75,31 +75,22 @@ interface IGraphicBufferAllocator {
     boolean deallocate(in long id);
 
     /**
-     * Fds for waitable object events.
-     *
-     * Fds are created by eventfd() with semaphore mode.
-     * For allocEvent, An integer counter regarding dequeuable buffer count is maintained
-     * by client using read()/write() to the fd. The fd can be checked whether it is
-     * readable via poll(). When in readable status, the specified counter is positive
-     * so allocate/dequeue can happen.
-     *
-     * For statusEvent, the client can notify further allocation is not feasible.
-     * e.g.) life-cycle of the underlying allocator is ended.
-     *
-     * C2Fence object should be implemented based on this Fds. Thus, C2Fence can return
-     * either by allocation being ready or allocation being infeasible by the client status
-     * change.
-     */
-    parcelable WaitableFds {
-        ParcelFileDescriptor allocEvent;
-        ParcelFileDescriptor statusEvent;
-    }
-
-    /**
-     * Gets waiable file descriptors.
+     * Gets a waitable file descriptor.
      *
      * Use this method once and cache it in order not to create unnecessary duplicated fds.
-     * The returned array will have two fds.
+     *
+     * Two file descriptors are created by pipe2(), and the reading end will be returned
+     * and shared by this method. Whenever a dequeuable buffer is ready a byte will be
+     * written to the writing end. Whenever a buffer is allocated(or dequeued) a byte will
+     * be read from the reading end.
+     *
+     * The returned file descriptor(the reading end) can be polled whether the read is ready
+     * via ::poll(). If no more allocate() can be fulfilled(by status change or etc.), the
+     * writing end will be closed. In the case, POLLHUP event can be retrieved via ::poll().
+     *
+     * C2Fence object should be implemented based on this Fd. Thus, C2Fence can return
+     * either by allocation being ready or allocation being infeasible by the client status
+     * change.
      *
      * If many waitable objects based on the same fd are competing, all watiable objects will be
      * notified. After being notified, they should invoke allocate(). At least one of them can
@@ -110,5 +101,5 @@ interface IGraphicBufferAllocator {
      * @return an fd array which will be wrapped to C2Fence and will be waited for
      *     until allocating is unblocked.
      */
-    WaitableFds getWaitableFds();
+    ParcelFileDescriptor getWaitableFd();
 }
