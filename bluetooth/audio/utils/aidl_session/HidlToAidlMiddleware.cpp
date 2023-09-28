@@ -467,6 +467,8 @@ inline AudioConfig_2_1 to_hidl_audio_config_2_1(
       hidl_audio_config.codecConfig(to_hidl_codec_config_2_0(
           audio_config.get<AudioConfiguration::a2dpConfig>()));
       break;
+    case AudioConfiguration::a2dp:
+      break;
     case AudioConfiguration::leAudioConfig:
       hidl_audio_config.leAudioCodecConfig(to_hidl_leaudio_config_2_1(
           audio_config.get<AudioConfiguration::leAudioConfig>()));

@@ -164,6 +164,42 @@ ndk::ScopedAStatus BluetoothAudioProvider::setLowLatencyModeAllowed(
   return ndk::ScopedAStatus::ok();
 }
 
+ndk::ScopedAStatus BluetoothAudioProvider::parseA2dpConfiguration(
+    const CodecId& codec_id, const std::vector<uint8_t>& configuration,
+    CodecParameters* codec_parameters, A2dpStatus* _aidl_return) {
+  if (stack_iface_ == nullptr) {
+    LOG(INFO) << __func__ << " - SessionType=" << toString(session_type_)
+              << " has NO session";
+    return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+  }
+
+  *_aidl_return = A2dpStatus::OK;
+
+  (void)codec_id;
+  (void)configuration;
+  (void)codec_parameters;
+
+  return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus BluetoothAudioProvider::getA2dpConfiguration(
+    const std::vector<A2dpRemoteCapabilities>& remote_a2dp_capabilities,
+    const A2dpConfigurationHint& hint,
+    std::optional<audio::A2dpConfiguration>* _aidl_return) {
+  if (stack_iface_ == nullptr) {
+    LOG(INFO) << __func__ << " - SessionType=" << toString(session_type_)
+              << " has NO session";
+    return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+  }
+
+  *_aidl_return = std::nullopt;
+
+  (void)remote_a2dp_capabilities;
+  (void)hint;
+
+  return ndk::ScopedAStatus::ok();
+}
+
 }  // namespace audio
 }  // namespace bluetooth
 }  // namespace hardware
