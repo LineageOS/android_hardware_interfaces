@@ -4179,58 +4179,32 @@ template <typename Stream>
 class WithRemoteSubmix {
   public:
     WithRemoteSubmix() = default;
-    WithRemoteSubmix(AudioDeviceAddress address) : mAddress(address) {}
+    explicit WithRemoteSubmix(AudioDeviceAddress address) : mAddress(address) {}
     WithRemoteSubmix(const WithRemoteSubmix&) = delete;
     WithRemoteSubmix& operator=(const WithRemoteSubmix&) = delete;
-    std::optional<AudioPort> getAudioPort() {
+    static std::optional<AudioPort> getRemoteSubmixAudioPort(
+            ModuleConfig* moduleConfig,
+            const std::optional<AudioDeviceAddress>& address = std::nullopt) {
         AudioDeviceType deviceType = IOTraits<Stream>::is_input ? AudioDeviceType::IN_SUBMIX
                                                                 : AudioDeviceType::OUT_SUBMIX;
-        auto ports = mModuleConfig->getAudioPortsForDeviceTypes(
+        auto ports = moduleConfig->getAudioPortsForDeviceTypes(
                 std::vector<AudioDeviceType>{deviceType},
                 AudioDeviceDescription::CONNECTION_VIRTUAL);
-        if (!ports.empty()) return ports.front();
-        return {};
-    }
-    /* Connect remote submix external device */
-    void SetUpPortConnection() {
-        auto port = getAudioPort();
-        ASSERT_TRUE(port.has_value()) << "Device AudioPort for remote submix not found";
-        if (mAddress.has_value()) {
-            port.value().ext.template get<AudioPortExt::Tag::device>().device.address =
-                    mAddress.value();
+        if (ports.empty()) return {};
+        AudioPort port = ports.front();
+        if (address) {
+            port.ext.template get<AudioPortExt::Tag::device>().device.address = address.value();
         } else {
-            port = GenerateUniqueDeviceAddress(port.value());
+            port = GenerateUniqueDeviceAddress(port);
         }
-        mConnectedPort = std::make_unique<WithDevicePortConnectedState>(port.value());
-        ASSERT_NO_FATAL_FAILURE(mConnectedPort->SetUp(mModule, mModuleConfig));
+        return port;
     }
-    AudioDeviceAddress getAudioDeviceAddress() {
-        if (!mAddress.has_value()) {
-            mAddress = mConnectedPort->get()
-                               .ext.template get<AudioPortExt::Tag::device>()
-                               .device.address;
-        }
-        return mAddress.value();
-    }
-    /* Get mix port config for stream and setup patch for it. */
-    void SetupPatch() {
-        const auto portConfig =
-                mModuleConfig->getSingleConfigForMixPort(IOTraits<Stream>::is_input);
-        if (!portConfig.has_value()) {
-            LOG(DEBUG) << __func__ << ": portConfig not found";
-            mSkipTest = true;
-            return;
-        }
-        auto devicePortConfig = mModuleConfig->getSingleConfigForDevicePort(mConnectedPort->get());
-        mPatch = std::make_unique<WithAudioPatch>(IOTraits<Stream>::is_input, portConfig.value(),
-                                                  devicePortConfig);
-        ASSERT_NO_FATAL_FAILURE(mPatch->SetUp(mModule));
-    }
-    void SetUp(IModule* module, ModuleConfig* moduleConfig) {
+    std::optional<AudioDeviceAddress> getAudioDeviceAddress() const { return mAddress; }
+    void SetUp(IModule* module, ModuleConfig* moduleConfig, const AudioPort& connectedPort) {
         mModule = module;
         mModuleConfig = moduleConfig;
-        ASSERT_NO_FATAL_FAILURE(SetUpPortConnection());
-        ASSERT_NO_FATAL_FAILURE(SetupPatch());
+
+        ASSERT_NO_FATAL_FAILURE(SetupPatch(connectedPort));
         if (!mSkipTest) {
             // open stream
             mStream = std::make_unique<WithStream<Stream>>(
@@ -4238,6 +4212,11 @@ class WithRemoteSubmix {
             ASSERT_NO_FATAL_FAILURE(
                     mStream->SetUp(mModule, AudioCoreModuleBase::kDefaultBufferSizeFrames));
         }
+        mAddress = connectedPort.ext.template get<AudioPortExt::Tag::device>().device.address;
+    }
+    void SetUp(IModule* module, ModuleConfig* moduleConfig) {
+        ASSERT_NO_FATAL_FAILURE(SetUpPortConnection(module, moduleConfig));
+        SetUp(module, moduleConfig, mConnectedPort->get());
     }
     void sendBurstCommands() {
         const StreamContext* context = mStream->getContext();
@@ -4255,9 +4234,31 @@ class WithRemoteSubmix {
         }
         EXPECT_FALSE(driver.hasRetrogradeObservablePosition());
     }
-    bool skipTest() { return mSkipTest; }
+    bool skipTest() const { return mSkipTest; }
 
   private:
+    /* Connect remote submix external device */
+    void SetUpPortConnection(IModule* module, ModuleConfig* moduleConfig) {
+        auto port = getRemoteSubmixAudioPort(moduleConfig, mAddress);
+        ASSERT_TRUE(port.has_value()) << "Device AudioPort for remote submix not found";
+        mConnectedPort = std::make_unique<WithDevicePortConnectedState>(port.value());
+        ASSERT_NO_FATAL_FAILURE(mConnectedPort->SetUp(module, moduleConfig));
+    }
+    /* Get mix port config for stream and setup patch for it. */
+    void SetupPatch(const AudioPort& connectedPort) {
+        const auto portConfig =
+                mModuleConfig->getSingleConfigForMixPort(IOTraits<Stream>::is_input);
+        if (!portConfig.has_value()) {
+            LOG(DEBUG) << __func__ << ": portConfig not found";
+            mSkipTest = true;
+            return;
+        }
+        auto devicePortConfig = mModuleConfig->getSingleConfigForDevicePort(connectedPort);
+        mPatch = std::make_unique<WithAudioPatch>(IOTraits<Stream>::is_input, portConfig.value(),
+                                                  devicePortConfig);
+        ASSERT_NO_FATAL_FAILURE(mPatch->SetUp(mModule));
+    }
+
     bool mSkipTest = false;
     IModule* mModule = nullptr;
     ModuleConfig* mModuleConfig = nullptr;
@@ -4295,9 +4296,11 @@ TEST_P(AudioModuleRemoteSubmix, OutputDoesNotBlockWhenInputStuck) {
     if (streamOut.skipTest()) {
         GTEST_SKIP() << "No mix port for attached devices";
     }
+    auto address = streamOut.getAudioDeviceAddress();
+    ASSERT_TRUE(address.has_value());
 
     // open input stream
-    WithRemoteSubmix<IStreamIn> streamIn(streamOut.getAudioDeviceAddress());
+    WithRemoteSubmix<IStreamIn> streamIn(address.value());
     ASSERT_NO_FATAL_FAILURE(streamIn.SetUp(module.get(), moduleConfig.get()));
     if (streamIn.skipTest()) {
         GTEST_SKIP() << "No mix port for attached devices";
@@ -4314,9 +4317,11 @@ TEST_P(AudioModuleRemoteSubmix, OutputAndInput) {
     if (streamOut.skipTest()) {
         GTEST_SKIP() << "No mix port for attached devices";
     }
+    auto address = streamOut.getAudioDeviceAddress();
+    ASSERT_TRUE(address.has_value());
 
     // open input stream
-    WithRemoteSubmix<IStreamIn> streamIn(streamOut.getAudioDeviceAddress());
+    WithRemoteSubmix<IStreamIn> streamIn(address.value());
     ASSERT_NO_FATAL_FAILURE(streamIn.SetUp(module.get(), moduleConfig.get()));
     if (streamIn.skipTest()) {
         GTEST_SKIP() << "No mix port for attached devices";
@@ -4326,6 +4331,43 @@ TEST_P(AudioModuleRemoteSubmix, OutputAndInput) {
     ASSERT_NO_FATAL_FAILURE(streamOut.sendBurstCommands());
     // read from input stream
     ASSERT_NO_FATAL_FAILURE(streamIn.sendBurstCommands());
+}
+
+TEST_P(AudioModuleRemoteSubmix, OpenInputMultipleTimes) {
+    // open output stream
+    WithRemoteSubmix<IStreamOut> streamOut;
+    ASSERT_NO_FATAL_FAILURE(streamOut.SetUp(module.get(), moduleConfig.get()));
+    if (streamOut.skipTest()) {
+        GTEST_SKIP() << "No mix port for attached devices";
+    }
+    auto address = streamOut.getAudioDeviceAddress();
+    ASSERT_TRUE(address.has_value());
+
+    // connect remote submix input device port
+    auto port = WithRemoteSubmix<IStreamIn>::getRemoteSubmixAudioPort(moduleConfig.get(),
+                                                                      address.value());
+    ASSERT_TRUE(port.has_value()) << "Device AudioPort for remote submix not found";
+    WithDevicePortConnectedState connectedInputPort(port.value());
+    ASSERT_NO_FATAL_FAILURE(connectedInputPort.SetUp(module.get(), moduleConfig.get()));
+
+    // open input streams
+    const int streamInCount = 3;
+    std::vector<std::unique_ptr<WithRemoteSubmix<IStreamIn>>> streamIns(streamInCount);
+    for (int i = 0; i < streamInCount; i++) {
+        streamIns[i] = std::make_unique<WithRemoteSubmix<IStreamIn>>();
+        ASSERT_NO_FATAL_FAILURE(
+                streamIns[i]->SetUp(module.get(), moduleConfig.get(), connectedInputPort.get()));
+        if (streamIns[i]->skipTest()) {
+            GTEST_SKIP() << "No mix port for attached devices";
+        }
+    }
+    // write something to output stream
+    ASSERT_NO_FATAL_FAILURE(streamOut.sendBurstCommands());
+
+    // read from input streams
+    for (int i = 0; i < streamInCount; i++) {
+        ASSERT_NO_FATAL_FAILURE(streamIns[i]->sendBurstCommands());
+    }
 }
 
 INSTANTIATE_TEST_SUITE_P(AudioModuleRemoteSubmixTest, AudioModuleRemoteSubmix,
