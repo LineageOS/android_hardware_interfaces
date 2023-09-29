@@ -515,7 +515,7 @@ ndk::ScopedAStatus Module::connectExternalDevice(const AudioPort& in_templateIdA
         }
     }
 
-    connectedPort.id = ++getConfig().nextPortId;
+    connectedPort.id = getConfig().nextPortId++;
     auto [connectedPortsIt, _] =
             mConnectedDevicePorts.insert(std::pair(connectedPort.id, std::set<int32_t>()));
     LOG(DEBUG) << __func__ << ": template port " << templateId << " external device connected, "
@@ -865,6 +865,7 @@ ndk::ScopedAStatus Module::setAudioPatch(const AudioPatch& in_requested, AudioPa
         patches.push_back(*_aidl_return);
     } else {
         oldPatch = *existing;
+        *existing = *_aidl_return;
     }
     patchesBackup = mPatches;
     registerPatch(*_aidl_return);
