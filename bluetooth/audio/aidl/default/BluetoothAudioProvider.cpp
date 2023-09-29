@@ -21,6 +21,8 @@
 #include <BluetoothAudioSessionReport.h>
 #include <android-base/logging.h>
 
+#include "A2dpOffloadCodecFactory.h"
+
 namespace aidl {
 namespace android {
 namespace hardware {
@@ -165,39 +167,24 @@ ndk::ScopedAStatus BluetoothAudioProvider::setLowLatencyModeAllowed(
 }
 
 ndk::ScopedAStatus BluetoothAudioProvider::parseA2dpConfiguration(
-    const CodecId& codec_id, const std::vector<uint8_t>& configuration,
-    CodecParameters* codec_parameters, A2dpStatus* _aidl_return) {
-  if (stack_iface_ == nullptr) {
-    LOG(INFO) << __func__ << " - SessionType=" << toString(session_type_)
-              << " has NO session";
-    return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
-  }
-
-  *_aidl_return = A2dpStatus::OK;
-
-  (void)codec_id;
-  (void)configuration;
-  (void)codec_parameters;
-
-  return ndk::ScopedAStatus::ok();
+    [[maybe_unused]] const CodecId& codec_id,
+    [[maybe_unused]] const std::vector<uint8_t>& configuration,
+    [[maybe_unused]] CodecParameters* codec_parameters,
+    [[maybe_unused]] A2dpStatus* _aidl_return) {
+  LOG(INFO) << __func__ << " - SessionType=" << toString(session_type_)
+            << " is illegal";
+  return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
 }
 
 ndk::ScopedAStatus BluetoothAudioProvider::getA2dpConfiguration(
-    const std::vector<A2dpRemoteCapabilities>& remote_a2dp_capabilities,
-    const A2dpConfigurationHint& hint,
-    std::optional<audio::A2dpConfiguration>* _aidl_return) {
-  if (stack_iface_ == nullptr) {
-    LOG(INFO) << __func__ << " - SessionType=" << toString(session_type_)
-              << " has NO session";
-    return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
-  }
+    [[maybe_unused]] const std::vector<A2dpRemoteCapabilities>&
+        remote_a2dp_capabilities,
+    [[maybe_unused]] const A2dpConfigurationHint& hint,
+    [[maybe_unused]] std::optional<audio::A2dpConfiguration>* _aidl_return) {
+  LOG(INFO) << __func__ << " - SessionType=" << toString(session_type_)
+            << " is illegal";
 
-  *_aidl_return = std::nullopt;
-
-  (void)remote_a2dp_capabilities;
-  (void)hint;
-
-  return ndk::ScopedAStatus::ok();
+  return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
 }
 
 }  // namespace audio
