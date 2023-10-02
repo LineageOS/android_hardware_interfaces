@@ -24,9 +24,6 @@
 #include <aidl/android/hardware/camera/device/BufferRequest.h>
 #include <aidl/android/hardware/camera/device/Stream.h>
 #include <android-base/unique_fd.h>
-#include <android/hardware/graphics/mapper/2.0/IMapper.h>
-#include <android/hardware/graphics/mapper/3.0/IMapper.h>
-#include <android/hardware/graphics/mapper/4.0/IMapper.h>
 #include <fmq/AidlMessageQueue.h>
 #include <utils/Thread.h>
 #include <deque>
@@ -58,7 +55,6 @@ using ::android::base::unique_fd;
 using ::android::hardware::camera::common::helper::SimpleThread;
 using ::android::hardware::camera::external::common::ExternalCameraConfig;
 using ::android::hardware::camera::external::common::SizeHasher;
-using ::android::hardware::graphics::mapper::V2_0::YCbCrLayout;
 using ::ndk::ScopedAStatus;
 
 class ExternalCameraDeviceSession : public BnCameraDeviceSession, public OutputThreadInterface {
