@@ -237,7 +237,7 @@ std::unique_ptr<Configuration> getPrimaryConfiguration() {
         c.ports.push_back(primaryOutMix);
 
         AudioPort primaryInMix =
-                createPort(c.nextPortId++, "primary input", 0, true, createPortMixExt(0, 0));
+                createPort(c.nextPortId++, "primary input", 0, true, createPortMixExt(0, 1));
         primaryInMix.profiles.push_back(
                 createProfile(PcmType::INT_16_BIT,
                               {AudioChannelLayout::LAYOUT_MONO, AudioChannelLayout::LAYOUT_STEREO},
@@ -252,14 +252,14 @@ std::unique_ptr<Configuration> getPrimaryConfiguration() {
         c.ports.push_back(telephonyTxOutMix);
 
         AudioPort telephonyRxInMix =
-                createPort(c.nextPortId++, "telephony_rx", 0, true, createPortMixExt(1, 1));
+                createPort(c.nextPortId++, "telephony_rx", 0, true, createPortMixExt(0, 1));
         telephonyRxInMix.profiles.insert(telephonyRxInMix.profiles.begin(),
                                          standardPcmAudioProfiles.begin(),
                                          standardPcmAudioProfiles.end());
         c.ports.push_back(telephonyRxInMix);
 
         AudioPort fmTunerInMix =
-                createPort(c.nextPortId++, "fm_tuner", 0, true, createPortMixExt(1, 1));
+                createPort(c.nextPortId++, "fm_tuner", 0, true, createPortMixExt(0, 1));
         fmTunerInMix.profiles.insert(fmTunerInMix.profiles.begin(),
                                      standardPcmAudioProfiles.begin(),
                                      standardPcmAudioProfiles.end());
@@ -441,7 +441,7 @@ std::unique_ptr<Configuration> getUsbConfiguration() {
         c.ports.push_back(usbDeviceOutMix);
 
         AudioPort usbDeviceInMix =
-                createPort(c.nextPortId++, "usb_device input", 0, true, createPortMixExt(1, 1));
+                createPort(c.nextPortId++, "usb_device input", 0, true, createPortMixExt(0, 1));
         c.ports.push_back(usbDeviceInMix);
 
         c.routes.push_back(createRoute({usbDeviceOutMix}, usbOutDevice));
