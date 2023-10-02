@@ -340,21 +340,43 @@ void Module::registerPatch(const AudioPatch& patch) {
 
 ndk::ScopedAStatus Module::updateStreamsConnectedState(const AudioPatch& oldPatch,
                                                        const AudioPatch& newPatch) {
-    // Streams from the old patch need to be disconnected, streams from the new
-    // patch need to be connected. If the stream belongs to both patches, no need
-    // to update it.
+    // Notify streams about the new set of devices they are connected to.
     auto maybeFailure = ndk::ScopedAStatus::ok();
-    std::set<int32_t> idsToDisconnect, idsToConnect, idsToDisconnectOnFailure;
-    idsToDisconnect.insert(oldPatch.sourcePortConfigIds.begin(),
-                           oldPatch.sourcePortConfigIds.end());
-    idsToDisconnect.insert(oldPatch.sinkPortConfigIds.begin(), oldPatch.sinkPortConfigIds.end());
-    idsToConnect.insert(newPatch.sourcePortConfigIds.begin(), newPatch.sourcePortConfigIds.end());
-    idsToConnect.insert(newPatch.sinkPortConfigIds.begin(), newPatch.sinkPortConfigIds.end());
-    std::for_each(idsToDisconnect.begin(), idsToDisconnect.end(), [&](const auto& portConfigId) {
-        if (idsToConnect.count(portConfigId) == 0 && mStreams.count(portConfigId) != 0) {
-            if (auto status = mStreams.setStreamConnectedDevices(portConfigId, {}); status.isOk()) {
+    using Connections =
+            std::map<int32_t /*mixPortConfigId*/, std::set<int32_t /*devicePortConfigId*/>>;
+    Connections oldConnections, newConnections;
+    auto fillConnectionsHelper = [&](Connections& connections,
+                                     const std::vector<int32_t>& mixPortCfgIds,
+                                     const std::vector<int32_t>& devicePortCfgIds) {
+        for (int32_t mixPortCfgId : mixPortCfgIds) {
+            connections[mixPortCfgId].insert(devicePortCfgIds.begin(), devicePortCfgIds.end());
+        }
+    };
+    auto fillConnections = [&](Connections& connections, const AudioPatch& patch) {
+        if (std::find_if(patch.sourcePortConfigIds.begin(), patch.sourcePortConfigIds.end(),
+                         [&](int32_t portConfigId) { return mStreams.count(portConfigId) > 0; }) !=
+            patch.sourcePortConfigIds.end()) {
+            // Sources are mix ports.
+            fillConnectionsHelper(connections, patch.sourcePortConfigIds, patch.sinkPortConfigIds);
+        } else if (std::find_if(patch.sinkPortConfigIds.begin(), patch.sinkPortConfigIds.end(),
+                                [&](int32_t portConfigId) {
+                                    return mStreams.count(portConfigId) > 0;
+                                }) != patch.sinkPortConfigIds.end()) {
+            // Sources are device ports.
+            fillConnectionsHelper(connections, patch.sinkPortConfigIds, patch.sourcePortConfigIds);
+        }  // Otherwise, there are no streams to notify.
+    };
+    fillConnections(oldConnections, oldPatch);
+    fillConnections(newConnections, newPatch);
+
+    std::for_each(oldConnections.begin(), oldConnections.end(), [&](const auto& connectionPair) {
+        const int32_t mixPortConfigId = connectionPair.first;
+        if (auto it = newConnections.find(mixPortConfigId);
+            it == newConnections.end() || it->second != connectionPair.second) {
+            if (auto status = mStreams.setStreamConnectedDevices(mixPortConfigId, {});
+                status.isOk()) {
                 LOG(DEBUG) << "updateStreamsConnectedState: The stream on port config id "
-                           << portConfigId << " has been disconnected";
+                           << mixPortConfigId << " has been disconnected";
             } else {
                 // Disconnection is tricky to roll back, just register a failure.
                 maybeFailure = std::move(status);
@@ -362,23 +384,26 @@ ndk::ScopedAStatus Module::updateStreamsConnectedState(const AudioPatch& oldPatc
         }
     });
     if (!maybeFailure.isOk()) return maybeFailure;
-    std::for_each(idsToConnect.begin(), idsToConnect.end(), [&](const auto& portConfigId) {
-        if (idsToDisconnect.count(portConfigId) == 0 && mStreams.count(portConfigId) != 0) {
-            const auto connectedDevices = findConnectedDevices(portConfigId);
+    std::set<int32_t> idsToDisconnectOnFailure;
+    std::for_each(newConnections.begin(), newConnections.end(), [&](const auto& connectionPair) {
+        const int32_t mixPortConfigId = connectionPair.first;
+        if (auto it = oldConnections.find(mixPortConfigId);
+            it == oldConnections.end() || it->second != connectionPair.second) {
+            const auto connectedDevices = findConnectedDevices(mixPortConfigId);
             if (connectedDevices.empty()) {
                 // This is important as workers use the vector size to derive the connection status.
                 LOG(FATAL) << "updateStreamsConnectedState: No connected devices found for port "
                               "config id "
-                           << portConfigId;
+                           << mixPortConfigId;
             }
-            if (auto status = mStreams.setStreamConnectedDevices(portConfigId, connectedDevices);
+            if (auto status = mStreams.setStreamConnectedDevices(mixPortConfigId, connectedDevices);
                 status.isOk()) {
                 LOG(DEBUG) << "updateStreamsConnectedState: The stream on port config id "
-                           << portConfigId << " has been connected to: "
+                           << mixPortConfigId << " has been connected to: "
                            << ::android::internal::ToString(connectedDevices);
             } else {
                 maybeFailure = std::move(status);
-                idsToDisconnectOnFailure.insert(portConfigId);
+                idsToDisconnectOnFailure.insert(mixPortConfigId);
             }
         }
     });
@@ -515,7 +540,7 @@ ndk::ScopedAStatus Module::connectExternalDevice(const AudioPort& in_templateIdA
         }
     }
 
-    connectedPort.id = ++getConfig().nextPortId;
+    connectedPort.id = getConfig().nextPortId++;
     auto [connectedPortsIt, _] =
             mConnectedDevicePorts.insert(std::pair(connectedPort.id, std::set<int32_t>()));
     LOG(DEBUG) << __func__ << ": template port " << templateId << " external device connected, "
@@ -865,6 +890,7 @@ ndk::ScopedAStatus Module::setAudioPatch(const AudioPatch& in_requested, AudioPa
         patches.push_back(*_aidl_return);
     } else {
         oldPatch = *existing;
+        *existing = *_aidl_return;
     }
     patchesBackup = mPatches;
     registerPatch(*_aidl_return);

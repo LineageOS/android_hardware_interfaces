@@ -1238,11 +1238,25 @@ class WithAudioPatch {
                    const AudioPortConfig& portConfig2)
         : mSrcPortConfig(sinkIsCfg1 ? portConfig2 : portConfig1),
           mSinkPortConfig(sinkIsCfg1 ? portConfig1 : portConfig2) {}
+    WithAudioPatch(const WithAudioPatch& patch, const AudioPortConfig& srcPortConfig,
+                   const AudioPortConfig& sinkPortConfig)
+        : mInitialPatch(patch.mPatch),
+          mSrcPortConfig(srcPortConfig),
+          mSinkPortConfig(sinkPortConfig),
+          mModule(patch.mModule),
+          mPatch(patch.mPatch) {}
     WithAudioPatch(const WithAudioPatch&) = delete;
     WithAudioPatch& operator=(const WithAudioPatch&) = delete;
     ~WithAudioPatch() {
         if (mModule != nullptr && mPatch.id != 0) {
-            EXPECT_IS_OK(mModule->resetAudioPatch(mPatch.id)) << "patch id " << getId();
+            if (mInitialPatch.has_value()) {
+                AudioPatch ignored;
+                // This releases our port configs so that they can be reset.
+                EXPECT_IS_OK(mModule->setAudioPatch(*mInitialPatch, &ignored))
+                        << "patch id " << mInitialPatch->id;
+            } else {
+                EXPECT_IS_OK(mModule->resetAudioPatch(mPatch.id)) << "patch id " << getId();
+            }
         }
     }
     void SetUpPortConfigs(IModule* module) {
@@ -1264,6 +1278,16 @@ class WithAudioPatch {
             EXPECT_GT(latencyMs, 0) << "patch id " << getId();
         }
     }
+    void VerifyAgainstAllPatches(IModule* module) {
+        std::vector<AudioPatch> allPatches;
+        ASSERT_IS_OK(module->getAudioPatches(&allPatches));
+        const auto& patchIt = findById(allPatches, getId());
+        ASSERT_NE(patchIt, allPatches.end()) << "patch id " << getId();
+        if (get() != *patchIt) {
+            FAIL() << "Stored patch: " << get().toString() << " is not the same as returned "
+                   << "by the HAL module: " << patchIt->toString();
+        }
+    }
     int32_t getId() const { return mPatch.id; }
     const AudioPatch& get() const { return mPatch; }
     const AudioPortConfig& getSinkPortConfig() const { return mSinkPortConfig.get(); }
@@ -1273,6 +1297,7 @@ class WithAudioPatch {
     }
 
   private:
+    std::optional<AudioPatch> mInitialPatch;
     WithAudioPortConfig mSrcPortConfig;
     WithAudioPortConfig mSinkPortConfig;
     IModule* mModule = nullptr;
@@ -3637,9 +3662,12 @@ class AudioModulePatch : public AudioCoreModule {
                     patches.push_back(
                             std::make_unique<WithAudioPatch>(srcSink.first, srcSink.second));
                     EXPECT_NO_FATAL_FAILURE(patches[patches.size() - 1]->SetUp(module.get()));
+                    EXPECT_NO_FATAL_FAILURE(
+                            patches[patches.size() - 1]->VerifyAgainstAllPatches(module.get()));
                 } else {
                     WithAudioPatch patch(srcSink.first, srcSink.second);
                     EXPECT_NO_FATAL_FAILURE(patch.SetUp(module.get()));
+                    EXPECT_NO_FATAL_FAILURE(patch.VerifyAgainstAllPatches(module.get()));
                 }
             }
         }
@@ -3657,6 +3685,29 @@ class AudioModulePatch : public AudioCoreModule {
                 AudioPatch ignored;
                 EXPECT_NO_FATAL_FAILURE(module->setAudioPatch(patch.get(), &ignored));
             }
+        }
+    }
+
+    void UpdatePatchPorts(bool isInput) {
+        auto srcSinkGroups = moduleConfig->getRoutableSrcSinkGroups(isInput);
+        if (srcSinkGroups.empty()) {
+            GTEST_SKIP() << "No routes to any attached " << direction(isInput, false) << " devices";
+        }
+        bool hasAtLeastOnePair = false;
+        for (const auto& srcSinkGroup : srcSinkGroups) {
+            const auto& srcSinks = srcSinkGroup.second;
+            if (srcSinks.size() < 2) continue;
+            hasAtLeastOnePair = true;
+            const auto& pair1 = srcSinks[0];
+            const auto& pair2 = srcSinks[1];
+            WithAudioPatch patch(pair1.first, pair1.second);
+            ASSERT_NO_FATAL_FAILURE(patch.SetUp(module.get()));
+            WithAudioPatch update(patch, pair2.first, pair2.second);
+            EXPECT_NO_FATAL_FAILURE(update.SetUp(module.get()));
+            EXPECT_NO_FATAL_FAILURE(update.VerifyAgainstAllPatches(module.get()));
+        }
+        if (!hasAtLeastOnePair) {
+            GTEST_SKIP() << "No routes with multiple sources";
         }
     }
 
@@ -3699,6 +3750,7 @@ TEST_PATCH_BOTH_DIRECTIONS(SetNonRoutablePatch);
 TEST_PATCH_BOTH_DIRECTIONS(SetPatch);
 TEST_PATCH_BOTH_DIRECTIONS(UpdateInvalidPatchId);
 TEST_PATCH_BOTH_DIRECTIONS(UpdatePatch);
+TEST_PATCH_BOTH_DIRECTIONS(UpdatePatchPorts);
 
 TEST_P(AudioModulePatch, ResetInvalidPatchId) {
     std::set<int32_t> patchIds;
