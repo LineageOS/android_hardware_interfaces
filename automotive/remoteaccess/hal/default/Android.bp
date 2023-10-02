@@ -47,17 +47,6 @@ cc_defaults {
     ],
 }
 
-// TODO(b/295393732): remove this once we finish the migration from V1 to V2.
-cc_binary {
-    name: "android.hardware.automotive.remoteaccess@V1-default-service",
-    defaults: ["remote-access-hal-defaults"],
-    vintf_fragments: ["remoteaccess-default-service-v1.xml"],
-    init_rc: ["remoteaccess-default-service-v1.rc"],
-    cflags: [
-        "-DGRPC_SERVICE_ADDRESS=\"10.0.2.2:50051\"",
-    ],
-}
-
 cc_binary {
     name: "android.hardware.automotive.remoteaccess@V2-default-service",
     defaults: ["remote-access-hal-defaults"],
@@ -65,18 +54,6 @@ cc_binary {
     init_rc: ["remoteaccess-default-service.rc"],
     cflags: [
         "-DGRPC_SERVICE_ADDRESS=\"10.0.2.2:50051\"",
-    ],
-}
-
-// TODO(b/295393732): remove this once we finish the migration from V1 to V2.
-cc_binary {
-    name: "android.hardware.automotive.remoteaccess@V1-tcu-test-service",
-    defaults: ["remote-access-hal-defaults"],
-    vintf_fragments: ["remoteaccess-default-service-v1.xml"],
-    init_rc: ["remoteaccess-tcu-test-service-v1.rc"],
-    cflags: [
-        "-DGRPC_SERVICE_ADDRESS=\"10.10.10.1:50051\"",
-        "-DGRPC_SERVICE_IFNAME=\"eth1\"",
     ],
 }
 
