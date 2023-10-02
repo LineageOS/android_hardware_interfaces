@@ -17,10 +17,14 @@
 #ifndef CAMERA_COMMON_1_0_HANDLEIMPORTED_H
 #define CAMERA_COMMON_1_0_HANDLEIMPORTED_H
 
+#include <android/hardware/graphics/mapper/2.0/IMapper.h>
+#include <android/hardware/graphics/mapper/3.0/IMapper.h>
+#include <android/hardware/graphics/mapper/4.0/IMapper.h>
 #include <cutils/native_handle.h>
-#include <system/graphics.h>
-#include <ui/Rect.h>
 #include <utils/Mutex.h>
+
+using android::hardware::graphics::mapper::V2_0::IMapper;
+using android::hardware::graphics::mapper::V2_0::YCbCrLayout;
 
 namespace android {
 namespace hardware {
@@ -45,11 +49,11 @@ class HandleImporter {
     void* lock(buffer_handle_t& buf, uint64_t cpuUsage, size_t size);
 
     // Locks 2-D buffer. Assumes caller has waited for acquire fences.
-    void* lock(buffer_handle_t& buf, uint64_t cpuUsage, const android::Rect& accessRegion);
+    void* lock(buffer_handle_t& buf, uint64_t cpuUsage, const IMapper::Rect& accessRegion);
 
     // Assumes caller has waited for acquire fences.
-    android_ycbcr lockYCbCr(buffer_handle_t& buf, uint64_t cpuUsage,
-                            const android::Rect& accessRegion);
+    YCbCrLayout lockYCbCr(buffer_handle_t& buf, uint64_t cpuUsage,
+                          const IMapper::Rect& accessRegion);
 
     // Query the stride of the first plane in bytes.
     status_t getMonoPlanarStrideBytes(buffer_handle_t& buf, uint32_t* stride /*out*/);
@@ -65,11 +69,19 @@ class HandleImporter {
     void initializeLocked();
     void cleanup();
 
-    bool importBufferInternal(buffer_handle_t& handle);
-    int unlockInternal(buffer_handle_t& buf);
+    template <class M, class E>
+    bool importBufferInternal(const sp<M> mapper, buffer_handle_t& handle);
+    template <class M, class E>
+    YCbCrLayout lockYCbCrInternal(const sp<M> mapper, buffer_handle_t& buf, uint64_t cpuUsage,
+                                  const IMapper::Rect& accessRegion);
+    template <class M, class E>
+    int unlockInternal(const sp<M> mapper, buffer_handle_t& buf);
 
     Mutex mLock;
     bool mInitialized;
+    sp<IMapper> mMapperV2;
+    sp<graphics::mapper::V3_0::IMapper> mMapperV3;
+    sp<graphics::mapper::V4_0::IMapper> mMapperV4;
 };
 
 }  // namespace helper
