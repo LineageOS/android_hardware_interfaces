@@ -256,6 +256,15 @@ UnicastCapability BluetoothLeAudioCodecsProvider::GetUnicastCapability(
         strategy_configuration_iter->second.getConnectedDevice(),
         strategy_configuration_iter->second.getChannelCount(),
         ComposeLc3Capability(codec_configuration_iter->second));
+  } else if (codec_type == CodecType::APTX_ADAPTIVE_LE ||
+             codec_type == CodecType::APTX_ADAPTIVE_LEX) {
+    return ComposeUnicastCapability(
+        codec_type,
+        GetAudioLocation(
+            strategy_configuration_iter->second.getAudioLocation()),
+        strategy_configuration_iter->second.getConnectedDevice(),
+        strategy_configuration_iter->second.getChannelCount(),
+        ComposeAptxAdaptiveLeCapability(codec_configuration_iter->second));
   }
   return {.codecType = CodecType::UNKNOWN};
 }
@@ -330,6 +339,14 @@ Lc3Capabilities BluetoothLeAudioCodecsProvider::ComposeLc3Capability(
           .octetsPerFrame = {codec_configuration.getOctetsPerCodecFrame()}};
 }
 
+AptxAdaptiveLeCapabilities
+BluetoothLeAudioCodecsProvider::ComposeAptxAdaptiveLeCapability(
+    const setting::CodecConfiguration& codec_configuration) {
+  return {.samplingFrequencyHz = {codec_configuration.getSamplingFrequency()},
+          .frameDurationUs = {codec_configuration.getFrameDurationUs()},
+          .octetsPerFrame = {codec_configuration.getOctetsPerCodecFrame()}};
+}
+
 AudioLocation BluetoothLeAudioCodecsProvider::GetAudioLocation(
     const setting::AudioLocation& audio_location) {
   switch (audio_location) {
@@ -347,6 +364,10 @@ CodecType BluetoothLeAudioCodecsProvider::GetCodecType(
   switch (codec_type) {
     case setting::CodecType::LC3:
       return CodecType::LC3;
+    case setting::CodecType::APTX_ADAPTIVE_LE:
+      return CodecType::APTX_ADAPTIVE_LE;
+    case setting::CodecType::APTX_ADAPTIVE_LEX:
+      return CodecType::APTX_ADAPTIVE_LEX;
     default:
       return CodecType::UNKNOWN;
   }
