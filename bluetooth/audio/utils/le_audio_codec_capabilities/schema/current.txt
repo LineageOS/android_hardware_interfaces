@@ -32,6 +32,8 @@ package aidl.android.hardware.bluetooth.audio.setting {
 
   public enum CodecType {
     method public String getRawName();
+    enum_constant public static final aidl.android.hardware.bluetooth.audio.setting.CodecType APTX_ADAPTIVE_LE;
+    enum_constant public static final aidl.android.hardware.bluetooth.audio.setting.CodecType APTX_ADAPTIVE_LEX;
     enum_constant public static final aidl.android.hardware.bluetooth.audio.setting.CodecType LC3;
   }
 
