@@ -85,13 +85,13 @@ cc_test {
             data: [":libvtswidevine-arm-prebuilts"],
         },
         arm64: {
-            data: [":libvtswidevine-arm64-prebuilts"],
+            data: [":libvtswidevine-arm64-prebuilts",":libvtswidevine-arm-prebuilts"],
         },
         x86: {
             data: [":libvtswidevine-x86-prebuilts"],
         },
         x86_64: {
-            data: [":libvtswidevine-x86_64-prebuilts"],
+            data: [":libvtswidevine-x86_64-prebuilts",":libvtswidevine-x86-prebuilts"],
         },
     },
     test_suites: [
