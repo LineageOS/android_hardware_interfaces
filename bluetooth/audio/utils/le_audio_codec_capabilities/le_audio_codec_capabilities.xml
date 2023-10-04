@@ -31,6 +31,10 @@
     <scenario encode="OneChanMono_16_2" decode="invalid"/>
     <scenario encode="TwoChanStereo_16_2" decode="invalid"/>
     <scenario encode="OneChanStereo_16_2" decode="invalid"/>
+    <scenario encode="APEX_ADAPTIVE_LE_TwoChanStereo_48" decode="invalid"/>
+    <scenario encode="APEX_ADAPTIVE_LE_TwoChanStereo_96" decode="invalid"/>
+    <scenario encode="APEX_ADAPTIVE_LEX_TwoChanStereo_48" decode="invalid"/>
+    <scenario encode="APEX_ADAPTIVE_LEX_TwoChanStereo_96" decode="invalid"/>
     <!-- encode and decode -->
     <scenario encode="OneChanStereo_16_1" decode="OneChanStereo_16_1"/>
     <scenario encode="OneChanStereo_16_1" decode="OneChanMono_16_1"/>
@@ -51,10 +55,18 @@
     <configuration name="TwoChanStereo_16_2" codecConfiguration="LC3_16k_2" strategyConfiguration="STEREO_TWO_CISES_PER_DEVICE"/>
     <configuration name="OneChanStereo_16_2" codecConfiguration="LC3_16k_2" strategyConfiguration="STEREO_ONE_CIS_PER_DEVICE"/>
     <configuration name="BcastStereo_16_2" codecConfiguration="LC3_16k_2" strategyConfiguration="BROADCAST_STEREO"/>
+    <configuration name="APEX_ADAPTIVE_LE_TwoChanStereo_48" codecConfiguration="APTX_ADAPTIVE_LE_48k" strategyConfiguration="STEREO_TWO_CISES_PER_DEVICE"/>
+    <configuration name="APEX_ADAPTIVE_LE_TwoChanStereo_96" codecConfiguration="APTX_ADAPTIVE_LE_96k" strategyConfiguration="STEREO_TWO_CISES_PER_DEVICE"/>
+    <configuration name="APEX_ADAPTIVE_LEX_TwoChanStereo_48" codecConfiguration="APTX_ADAPTIVE_LEX_48k" strategyConfiguration="STEREO_TWO_CISES_PER_DEVICE"/>
+    <configuration name="APEX_ADAPTIVE_LEX_TwoChanStereo_96" codecConfiguration="APTX_ADAPTIVE_LEX_96k" strategyConfiguration="STEREO_TWO_CISES_PER_DEVICE"/>
   </configurationList>
   <codecConfigurationList>
     <codecConfiguration name="LC3_16k_1" codec="LC3" samplingFrequency="16000" frameDurationUs="7500" octetsPerCodecFrame="30"/>
     <codecConfiguration name="LC3_16k_2" codec="LC3" samplingFrequency="16000" frameDurationUs="10000" octetsPerCodecFrame="40"/>
+    <codecConfiguration name="APTX_ADAPTIVE_LE_48k" codec="APTX_ADAPTIVE_LE" samplingFrequency="48000" frameDurationUs="10000" octetsPerCodecFrame="816"/>
+    <codecConfiguration name="APTX_ADAPTIVE_LE_96k" codec="APTX_ADAPTIVE_LE" samplingFrequency="96000" frameDurationUs="10000" octetsPerCodecFrame="816"/>
+    <codecConfiguration name="APTX_ADAPTIVE_LEX_48k" codec="APTX_ADAPTIVE_LEX" samplingFrequency="48000" frameDurationUs="10000" octetsPerCodecFrame="816"/>
+    <codecConfiguration name="APTX_ADAPTIVE_LEX_96k" codec="APTX_ADAPTIVE_LEX" samplingFrequency="96000" frameDurationUs="10000" octetsPerCodecFrame="816"/>
   </codecConfigurationList>
   <strategyConfigurationList>
     <strategyConfiguration name="STEREO_ONE_CIS_PER_DEVICE" audioLocation="STEREO" connectedDevice="2" channelCount="1"/>
