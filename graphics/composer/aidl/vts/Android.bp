@@ -54,7 +54,6 @@ cc_test {
         "libgui",
         "libhidlbase",
         "libprocessgroup",
-        "libtinyxml2",
         "libvndksupport",
     ],
     header_libs: [

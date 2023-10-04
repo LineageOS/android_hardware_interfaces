@@ -3621,6 +3621,21 @@
             "property": "VehicleProperty::CLUSTER_NAVIGATION_STATE"
         },
         {
+            "property": "VehicleProperty::CLUSTER_HEARTBEAT",
+            "configArray": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                2,
+                0,
+                0,
+                16
+            ],
+            "comment": "configArray specifies it consists of int64[2] and byte[16]."
+        },
+        {
             "property": "VehicleProperty::GENERAL_SAFETY_REGULATION_COMPLIANCE_REQUIREMENT",
             "defaultValue": {
                 "int32Values": [
