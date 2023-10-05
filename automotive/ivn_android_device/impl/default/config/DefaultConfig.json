@@ -1,0 +1,61 @@
+{
+    "MyDeviceId": 0,
+    "Devices": [
+        {
+            "DeviceId": 0,
+            "OccupantZones": [
+                {
+                    "ZoneId": 0,
+                    "OccupantType": "DRIVER",
+                    "Seat": 1,
+                    "Comments": "Occupant zone for driver and FRONT_LEFT seat"
+                },
+                {
+                    "ZoneId": 1,
+                    "OccupantType": "FRONT_PASSENGER",
+                    "Seat": 4,
+                    "Comments": "Occupant zone for FRONT_RIGHT passenger"
+                }
+            ],
+            "EndpointInfo": {
+                "IpAddress": "10.10.10.1",
+                "PortNumber": 1234,
+                "BrandName": "MyBrand",
+                "DeviceName": "MyDevice",
+                "ProductName": "MyProduct",
+                "ManufacturerName": "MyCompany",
+                "ModelName": "MyModel",
+                "SerialNumber": "Serial1234"
+            },
+            "Comments": "Device for front row"
+        },
+        {
+            "DeviceId": 1,
+            "OccupantZones": [
+                {
+                    "ZoneId": 2,
+                    "OccupantType": "REAR_PASSENGER",
+                    "Seat": 16
+                },
+                {
+                    "ZoneId": 3,
+                    "OccupantType": "REAR_PASSENGER",
+                    "Seat": 64
+                }
+            ],
+            "EndpointInfo": {
+                "IpAddress": "10.10.10.2",
+                "PortNumber": 2345,
+                "BrandName": "MyBrand",
+                "DeviceName": "MyDevice",
+                "ProductName": "MyProduct",
+                "ManufacturerName": "MyCompany",
+                "ModelName": "MyModel",
+                "SerialNumber": "Serial2345"
+            },
+            "Comments": "Device for back row"
+        }
+    ],
+    "Comment":
+            "This simulates a vehicle with two Android devices, one for front row, one for back row"
+}

@@ -71,4 +71,11 @@ parcelable NrSignalStrength {
      * Range [0, 15], 0xFF means invalid/unreported.
      */
     byte[] csiCqiReport;
+    /**
+     * Timing advance in micro seconds for a one way trip from cell to device. Approximate distance
+     * is calculated using 300m/us * timingAdvance. Range: 0 to 1282 inclusive.
+     * INT_MAX: 0x7FFFFFFF denotes invalid/unreported value.
+     * Reference: 3GPP 36.213 section 4.2.3
+     */
+    int timingAdvance = 0x7FFFFFFF;
 }

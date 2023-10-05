@@ -18,6 +18,7 @@ package android.hardware.gnss;
 
 import android.hardware.gnss.GnssConstellationType;
 import android.hardware.gnss.GnssLocation;
+import android.hardware.gnss.GnssSignalType;
 import android.hardware.gnss.IGnssConfiguration;
 import android.hardware.gnss.IGnssPsds;
 
@@ -48,7 +49,13 @@ interface IGnssCallback {
     /** Capability bit mask indicating that GNSS supports single-shot fixes */
     const int CAPABILITY_SINGLE_SHOT = 1 << 3;
 
-    /** Capability bit mask indicating that GNSS supports on demand time injection */
+    /**
+     * Capability bit indicating that the platform should periodically inject
+     * time to GNSS in addition to on-demand and occasional time updates.
+     *
+     * <p>Note:<em>The naming of "on demand" should be "periodic" instead.  This
+     * is the result of a historic implementation bug, b/73893222.</em>
+     */
     const int CAPABILITY_ON_DEMAND_TIME = 1 << 4;
 
     /** Capability bit mask indicating that GNSS supports Geofencing  */
@@ -80,6 +87,9 @@ interface IGnssCallback {
 
     /** Capability bit mask indicating that GNSS supports measurement corrections for driving */
     const int CAPABILITY_MEASUREMENT_CORRECTIONS_FOR_DRIVING = 1 << 14;
+
+    /** Capability bit mask indicating that GNSS supports accumulated delta range */
+    const int CAPABILITY_ACCUMULATED_DELTA_RANGE = 1 << 15;
 
     /**
      * Callback to inform framework of the GNSS HAL implementation's capabilities.
@@ -204,9 +214,12 @@ interface IGnssCallback {
     /**
      * Callback for the HAL to pass a vector of GnssSvInfo back to the client.
      *
-     * If GnssMeasurement is registered, the SvStatus report interval is the same as the measurement
-     * interval, i.e., the interval the measurement engine runs at. If GnssMeasurement is not
-     * registered, the SvStatus interval is the same as the location interval.
+     * If only GnssMeasurement is registered, the SvStatus reporting interval must be
+     * the same as the measurement interval, i.e., the interval the measurement
+     * engine runs at. If only location is registered, the SvStatus interval must
+     * be the same as the location interval. If both GnssMeasurement and location
+     * are registered, then the SvStatus interval is the same as the lesser interval
+     * between the two.
      *
      * @param svInfo SV status information from HAL.
      */
@@ -308,4 +321,18 @@ interface IGnssCallback {
      *        during-call to E911, or up to 5 minutes after end-of-call or text to E911).
      */
     void gnssRequestLocationCb(in boolean independentFromGnss, in boolean isUserEmergency);
+
+    /**
+     * Callback to inform the framework of the list of GnssSignalTypes the GNSS HAL implementation
+     * supports.
+     *
+     * These capabilities are static at runtime, i.e., they represent the signal types the
+     * GNSS implementation supports without considering the temporary disabled signal types such as
+     * the blocklisted satellites/constellations or the constellations disabled by regional
+     * restrictions.
+     *
+     * @param gnssSignalTypes a list of GnssSignalTypes specifying the constellations, carrier
+     *     frequencies, and the code types the GNSS HAL implementation supports.
+     */
+    void gnssSetSignalTypeCapabilitiesCb(in GnssSignalType[] gnssSignalTypes);
 }

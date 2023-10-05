@@ -23,6 +23,7 @@ import android.hardware.radio.network.BarringInfo;
 import android.hardware.radio.network.CdmaRoamingType;
 import android.hardware.radio.network.CellIdentity;
 import android.hardware.radio.network.CellInfo;
+import android.hardware.radio.network.EmergencyRegResult;
 import android.hardware.radio.network.OperatorInfo;
 import android.hardware.radio.network.RadioAccessSpecifier;
 import android.hardware.radio.network.RadioBandMode;
@@ -56,7 +57,6 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:INTERNAL_ERR
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:MODEM_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      */
     void getAllowedNetworkTypesBitmapResponse(in RadioResponseInfo info, in int networkTypeBitmap);
@@ -73,7 +73,6 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:INTERNAL_ERR
      *   RadioError:SYSTEM_ERR
      *   RadioError:MODEM_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
@@ -92,7 +91,6 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:INTERNAL_ERR
      *   RadioError:NO_MEMORY
      *   RadioError:MODEM_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:CANCELLED
      *   RadioError:NO_RESOURCES
      *   RadioError:INTERNAL_ERR
@@ -125,7 +123,6 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:INTERNAL_ERR
      *   RadioError:SYSTEM_ERR
      *   RadioError:MODEM_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      *   RadioError:SIM_ABSENT
@@ -169,7 +166,8 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      *   RadioError:INVALID_MODEM_STATE
-     *   RadioError:REQUEST_NOT_SUPPORTED
+     *
+     * @deprecated Deprecated starting from Android U.
      */
     void getImsRegistrationStateResponse(
             in RadioResponseInfo info, in boolean isRegistered, in RadioTechnologyFamily ratFamily);
@@ -186,7 +184,6 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:SYSTEM_ERR
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:MODEM_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
@@ -204,7 +201,6 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:NO_MEMORY
      *   RadioError:INTERNAL_ERR
      *   RadioError:SYSTEM_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
@@ -246,7 +242,6 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:NO_MEMORY
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
-     *   RadioError:REQUEST_NOT_SUPPORTED
      */
     void getVoiceRadioTechnologyResponse(in RadioResponseInfo info, in RadioTechnology rat);
 
@@ -271,7 +266,6 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INTERNAL_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
      */
     void isNrDualConnectivityEnabledResponse(in RadioResponseInfo info, in boolean isEnabled);
 
@@ -286,7 +280,6 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:INTERNAL_ERR
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:MODEM_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      */
     void setAllowedNetworkTypesBitmapResponse(in RadioResponseInfo info);
@@ -303,7 +296,6 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:SYSTEM_ERR
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:MODEM_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
@@ -324,7 +316,6 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:INTERNAL_ERR
      *   RadioError:SYSTEM_ERR
      *   RadioError:FDN_CHECK_FAILURE
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
@@ -341,7 +332,6 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:SYSTEM_ERR
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:MODEM_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:OPERATION_NOT_ALLOWED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
@@ -361,7 +351,6 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
-     *   RadioError:REQUEST_NOT_SUPPORTED
      */
     void setCellInfoListRateResponse(in RadioResponseInfo info);
 
@@ -399,7 +388,6 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:SYSTEM_ERR
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:MODEM_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      *   RadioError:SIM_ABSENT
@@ -419,7 +407,6 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:SYSTEM_ERR
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:MODEM_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      *
@@ -442,7 +429,6 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:SYSTEM_ERR
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:MODEM_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      *
@@ -458,7 +444,6 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INTERNAL_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:INVALID_STATE
      */
     void setNrDualConnectivityStateResponse(in RadioResponseInfo info);
@@ -485,7 +470,6 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:SYSTEM_ERR
      *   RadioError:MODEM_ERR
      *   RadioError:INTERNAL_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      *   RadioError:SIM_ABSENT
@@ -542,7 +526,6 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:SIM_ABSENT
      */
     void supplyNetworkDepersonalizationResponse(in RadioResponseInfo info, in int remainingRetries);
@@ -572,4 +555,116 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:SIM_ABSENT
      */
     oneway void getUsageSettingResponse(in RadioResponseInfo info, in UsageSetting usageSetting);
+
+    /**
+     * Response of setEmergencyMode.
+     * This is an optional API.
+     *
+     * @param info Response info struct containing response type, serial no. and error.
+     * @param regState the current registration state of the modem.
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:MODEM_ERR
+     *   RadioError:INVALID_ARGUMENTS
+     */
+    void setEmergencyModeResponse(in RadioResponseInfo info, in EmergencyRegResult regState);
+
+    /**
+     * Response of triggerEmergencyNetworkScan.
+     * This is an optional API.
+     *
+     * @param info Response info struct containing response type, serial no. and error.
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:MODEM_ERR
+     *   RadioError:INVALID_ARGUMENTS
+     */
+    void triggerEmergencyNetworkScanResponse(in RadioResponseInfo info);
+
+    /**
+     * Response of exitEmergencyMode.
+     * This is an optional API.
+     *
+     * @param info Response info struct containing response type, serial no. and error.
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:MODEM_ERR
+     */
+    void exitEmergencyModeResponse(in RadioResponseInfo info);
+
+    /**
+     * Response of cancelEmergencyNetworkScan.
+     * This is an optional API.
+     *
+     * @param info Response info struct containing response type, serial no. and error.
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:MODEM_ERR
+     */
+    void cancelEmergencyNetworkScanResponse(in RadioResponseInfo info);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:MODEM_ERR
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     */
+    void setNullCipherAndIntegrityEnabledResponse(in RadioResponseInfo info);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     * @param enabled the last known state of null ciphering and integrity algorithms
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:MODEM_ERR
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     */
+    void isNullCipherAndIntegrityEnabledResponse(in RadioResponseInfo info, in boolean isEnabled);
+
+    /**
+     * Response of isN1ModeEnabled.
+     * This is an optional API.
+     *
+     * @param info Response info struct containing response type, serial no. and error.
+     * @param isEnabled Indicates whether N1 mode is enabled or not.
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     */
+    void isN1ModeEnabledResponse(in RadioResponseInfo info, boolean isEnabled);
+
+    /**
+     * Response of setN1ModeEnabled.
+     * This is an optional API.
+     *
+     * @param info Response info struct containing response type, serial no. and error.
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:INVALID_STATE
+     */
+    void setN1ModeEnabledResponse(in RadioResponseInfo info);
 }

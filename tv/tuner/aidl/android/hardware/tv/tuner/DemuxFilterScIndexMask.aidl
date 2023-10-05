@@ -39,4 +39,9 @@ union DemuxFilterScIndexMask {
      * Indexes defined by DemuxScHevcIndex.
      */
     int scHevc;
+
+    /**
+     * Indexes defined by DemuxScVvcIndex.
+     */
+    int scVvc;
 }

@@ -32,7 +32,7 @@ cc_test {
         "libbinder_ndk",
     ],
     static_libs: [
-        "android.hardware.power-V3-ndk",
+        "android.hardware.power-V4-ndk",
     ],
     test_suites: [
         "general-tests",

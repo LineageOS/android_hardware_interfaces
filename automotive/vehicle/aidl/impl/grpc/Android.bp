@@ -1,0 +1,126 @@
+// Copyright (C) 2023 The Android Open Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
+genrule {
+    name: "VehicleServerProtoStub_h@default-grpc",
+    tools: [
+        "aprotoc",
+        "protoc-gen-grpc-cpp-plugin",
+    ],
+    cmd: "$(location aprotoc) -I$$(dirname $(in)) -Ihardware/interfaces/automotive/vehicle/aidl/impl/proto -Iexternal/protobuf/src --plugin=protoc-gen-grpc=$(location protoc-gen-grpc-cpp-plugin) $(in) --grpc_out=$(genDir) --cpp_out=$(genDir)",
+    srcs: [
+        "proto/VehicleServer.proto",
+    ],
+    out: [
+        "VehicleServer.pb.h",
+        "VehicleServer.grpc.pb.h",
+    ],
+    visibility: ["//visibility:private"],
+}
+
+genrule {
+    name: "VehicleServerProtoStub_cc@default-grpc",
+    tools: [
+        "aprotoc",
+        "protoc-gen-grpc-cpp-plugin",
+    ],
+    cmd: "$(location aprotoc) -I$$(dirname $(in)) -Ihardware/interfaces/automotive/vehicle/aidl/impl/proto -Iexternal/protobuf/src --plugin=protoc-gen-grpc=$(location protoc-gen-grpc-cpp-plugin) $(in) --grpc_out=$(genDir) --cpp_out=$(genDir)",
+    srcs: [
+        "proto/VehicleServer.proto",
+    ],
+    out: [
+        "VehicleServer.pb.cc",
+        "VehicleServer.grpc.pb.cc",
+    ],
+    visibility: ["//visibility:private"],
+}
+
+cc_library_static {
+    name: "android.hardware.automotive.vehicle@default-grpc-libgrpc",
+    vendor: true,
+    host_supported: true,
+    include_dirs: [
+        "external/protobuf/src",
+    ],
+    generated_headers: [
+        "VehicleServerProtoStub_h@default-grpc",
+    ],
+    export_generated_headers: [
+        "VehicleServerProtoStub_h@default-grpc",
+    ],
+    generated_sources: [
+        "VehicleServerProtoStub_cc@default-grpc",
+    ],
+    whole_static_libs: [
+        "VehicleHalProtos",
+    ],
+    shared_libs: [
+        "libgrpc++",
+    ],
+    cflags: [
+        "-Wno-unused-parameter",
+    ],
+}
+
+cc_library_static {
+    name: "android.hardware.automotive.vehicle@default-grpc-hardware-lib",
+    defaults: ["VehicleHalDefaults"],
+    vendor: true,
+    srcs: [
+        "GRPCVehicleHardware.cpp",
+    ],
+    whole_static_libs: [
+        "android.hardware.automotive.vehicle@default-grpc-libgrpc",
+        "VehicleHalProtoMessageConverter",
+    ],
+    header_libs: [
+        "IVehicleHardware",
+    ],
+    shared_libs: [
+        "libgrpc++",
+        "libprotobuf-cpp-full",
+    ],
+    export_include_dirs: ["."],
+    cflags: [
+        "-Wno-unused-parameter",
+    ],
+}
+
+cc_library_static {
+    name: "android.hardware.automotive.vehicle@default-grpc-server-lib",
+    defaults: ["VehicleHalDefaults"],
+    vendor: true,
+    srcs: [
+        "GRPCVehicleProxyServer.cpp",
+    ],
+    whole_static_libs: [
+        "android.hardware.automotive.vehicle@default-grpc-libgrpc",
+        "VehicleHalProtoMessageConverter",
+    ],
+    header_libs: [
+        "IVehicleHardware",
+    ],
+    shared_libs: [
+        "libgrpc++",
+        "libprotobuf-cpp-full",
+    ],
+    export_include_dirs: ["."],
+    cflags: [
+        "-Wno-unused-parameter",
+    ],
+}

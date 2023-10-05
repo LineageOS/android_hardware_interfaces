@@ -231,7 +231,7 @@ TEST_F(SubscriptionManagerTest, testUnsubscribeGlobalContinuous) {
     std::vector<SubscribeOptions> options = {{
             .propId = 0,
             .areaIds = {0},
-            .sampleRate = 10.0,
+            .sampleRate = 100.0,
     }};
 
     auto result = getManager()->subscribe(getCallbackClient(), options, true);
@@ -240,11 +240,13 @@ TEST_F(SubscriptionManagerTest, testUnsubscribeGlobalContinuous) {
     result = getManager()->unsubscribe(getCallbackClient()->asBinder().get());
     ASSERT_TRUE(result.ok()) << "failed to unsubscribe: " << result.error().message();
 
+    // Wait for the last events to come.
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
     clearEvents();
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-    // Theoretically trigger 10 times, but check for at least 9 times to be stable.
     ASSERT_TRUE(getEvents().empty());
 }
 
@@ -268,6 +270,9 @@ TEST_F(SubscriptionManagerTest, testUnsubscribeMultipleAreas) {
     result = getManager()->unsubscribe(getCallbackClient()->asBinder().get(),
                                        std::vector<int32_t>({0}));
     ASSERT_TRUE(result.ok()) << "failed to unsubscribe: " << result.error().message();
+
+    // Wait for the last events to come.
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
     clearEvents();
 
@@ -300,6 +305,9 @@ TEST_F(SubscriptionManagerTest, testUnsubscribeByCallback) {
 
     result = getManager()->unsubscribe(getCallbackClient()->asBinder().get());
     ASSERT_TRUE(result.ok()) << "failed to unsubscribe: " << result.error().message();
+
+    // Wait for the last events to come.
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
     clearEvents();
 
@@ -477,16 +485,16 @@ TEST_F(SubscriptionManagerTest, testUnsubscribeOnchange) {
     ASSERT_THAT(clients[getCallbackClient()], ElementsAre(&updatedValues[1]));
 }
 
-TEST_F(SubscriptionManagerTest, testCheckSampleRateValid) {
-    ASSERT_TRUE(SubscriptionManager::checkSampleRate(1.0));
+TEST_F(SubscriptionManagerTest, testCheckSampleRateHzValid) {
+    ASSERT_TRUE(SubscriptionManager::checkSampleRateHz(1.0));
 }
 
-TEST_F(SubscriptionManagerTest, testCheckSampleRateInvalidTooSmall) {
-    ASSERT_FALSE(SubscriptionManager::checkSampleRate(FLT_MIN));
+TEST_F(SubscriptionManagerTest, testCheckSampleRateHzInvalidTooSmall) {
+    ASSERT_FALSE(SubscriptionManager::checkSampleRateHz(FLT_MIN));
 }
 
-TEST_F(SubscriptionManagerTest, testCheckSampleRateInvalidZero) {
-    ASSERT_FALSE(SubscriptionManager::checkSampleRate(0));
+TEST_F(SubscriptionManagerTest, testCheckSampleRateHzInvalidZero) {
+    ASSERT_FALSE(SubscriptionManager::checkSampleRateHz(0));
 }
 
 }  // namespace vehicle

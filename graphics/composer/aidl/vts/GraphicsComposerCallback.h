@@ -26,6 +26,8 @@ class GraphicsComposerCallback : public BnComposerCallback {
   public:
     void setVsyncAllowed(bool allowed);
 
+    void setRefreshRateChangedDebugDataEnabledCallbackAllowed(bool allowed);
+
     std::vector<int64_t> getDisplays() const;
 
     int32_t getInvalidHotplugCount() const;
@@ -44,6 +46,10 @@ class GraphicsComposerCallback : public BnComposerCallback {
 
     std::optional<VsyncPeriodChangeTimeline> takeLastVsyncPeriodChangeTimeline();
 
+    std::vector<RefreshRateChangedDebugData> takeListOfRefreshRateChangedDebugData();
+
+    int32_t getInvalidRefreshRateDebugEnabledCallbackCount() const;
+
   private:
     virtual ::ndk::ScopedAStatus onHotplug(int64_t in_display, bool in_connected) override;
     virtual ::ndk::ScopedAStatus onRefresh(int64_t in_display) override;
@@ -55,14 +61,20 @@ class GraphicsComposerCallback : public BnComposerCallback {
             const ::aidl::android::hardware::graphics::composer3::VsyncPeriodChangeTimeline&
                     in_updatedTimeline) override;
     virtual ::ndk::ScopedAStatus onVsyncIdle(int64_t in_display) override;
+    virtual ::ndk::ScopedAStatus onRefreshRateChangedDebug(
+            const RefreshRateChangedDebugData&) override;
 
     mutable std::mutex mMutex;
     // the set of all currently connected displays
     std::vector<int64_t> mDisplays GUARDED_BY(mMutex);
     // true only when vsync is enabled
     bool mVsyncAllowed GUARDED_BY(mMutex) = true;
+    // true only when RefreshRateChangedCallbackDebugEnabled is set to true.
+    bool mRefreshRateChangedDebugDataEnabledCallbackAllowed GUARDED_BY(mMutex) = false;
 
     std::optional<VsyncPeriodChangeTimeline> mTimeline GUARDED_BY(mMutex);
+
+    std::vector<RefreshRateChangedDebugData> mRefreshRateChangedDebugData GUARDED_BY(mMutex);
 
     int32_t mVsyncIdleCount GUARDED_BY(mMutex) = 0;
     int64_t mVsyncIdleTime GUARDED_BY(mMutex) = 0;
@@ -73,6 +85,7 @@ class GraphicsComposerCallback : public BnComposerCallback {
     int32_t mInvalidVsyncCount GUARDED_BY(mMutex) = 0;
     int32_t mInvalidVsyncPeriodChangeCount GUARDED_BY(mMutex) = 0;
     int32_t mInvalidSeamlessPossibleCount GUARDED_BY(mMutex) = 0;
+    int32_t mInvalidRefreshRateDebugEnabledCallbackCount GUARDED_BY(mMutex) = 0;
 };
 
 }  // namespace aidl::android::hardware::graphics::composer3::vts

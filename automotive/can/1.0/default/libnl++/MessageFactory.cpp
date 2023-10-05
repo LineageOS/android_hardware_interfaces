@@ -27,8 +27,8 @@ static nlattr* tail(nlmsghdr* msg) {
 
 nlattr* MessageFactoryBase::add(nlmsghdr* msg, size_t maxLen, nlattrtype_t type, const void* data,
                                 size_t dataLen) {
-    const auto totalAttrLen = impl::space<nlattr>(dataLen);
-    const auto newLen = impl::align(msg->nlmsg_len) + totalAttrLen;
+    const auto totalAttrLen = impl::length<nlattr>(dataLen);
+    const auto newLen = impl::align(msg->nlmsg_len) + impl::align(totalAttrLen);
     if (newLen > maxLen) {
         LOG(ERROR) << "Can't add attribute of size " << dataLen  //
                    << " - exceeded maxLen: " << newLen << " > " << maxLen;

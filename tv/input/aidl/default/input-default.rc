@@ -1,0 +1,5 @@
+service vendor.input-default /vendor/bin/hw/android.hardware.tv.input-service.example
+    interface aidl android.hardware.tv.input.ITvInput/default
+    class hal
+    user system
+    group system

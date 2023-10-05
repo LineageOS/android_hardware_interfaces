@@ -18,6 +18,8 @@ package android.hardware.radio.network;
 
 import android.hardware.radio.AccessNetwork;
 import android.hardware.radio.network.CdmaRoamingType;
+import android.hardware.radio.network.EmergencyMode;
+import android.hardware.radio.network.EmergencyNetworkScanTrigger;
 import android.hardware.radio.network.IRadioNetworkIndication;
 import android.hardware.radio.network.IRadioNetworkResponse;
 import android.hardware.radio.network.IndicationFilter;
@@ -110,6 +112,8 @@ oneway interface IRadioNetwork {
      * @param serial Serial number of request.
      *
      * Response function is IRadioNetworkResponse.getImsRegistrationStateResponse()
+     *
+     * @deprecated Deprecated starting from Android U.
      */
     void getImsRegistrationState(in int serial);
 
@@ -437,4 +441,118 @@ oneway interface IRadioNetwork {
      * @param serial Serial number of request.
      */
     oneway void getUsageSetting(in int serial);
+
+    /**
+     * Set the Emergency Mode
+     *
+     * @param serial Serial number of the request.
+     * @param emcModeType Defines the radio emergency mode type/radio network required/
+     * type of service to be scanned.
+     *
+     * Response function is IRadioEmergencyResponse.setEmergencyModeResponse()
+     */
+    void setEmergencyMode(int serial, in EmergencyMode emcModeType);
+
+    /**
+     * Triggers an Emergency network scan.
+     *
+     * @param serial Serial number of the request.
+     * @param request Contains the preferred networks and type of service to be scanned.
+     *                See {@link EmergencyNetworkScanTrigger}.
+     *
+     * Response function is IRadioEmergencyResponse.triggerEmergencyNetworkScanResponse()
+     */
+    void triggerEmergencyNetworkScan(int serial, in EmergencyNetworkScanTrigger request);
+
+    /**
+     * Cancels ongoing Emergency network scan
+     *
+     * @param serial Serial number of the request.
+     * @param resetScan Indicates how the next {@link #triggerEmergencyNetworkScan} should work.
+     *        If {@code true}, then the modem shall start the new scan from the beginning,
+     *        otherwise the modem shall resume from the last search.
+     *
+     * Response function is IRadioEmergencyResponse.cancelEmergencyNetworkScan()
+     */
+    void cancelEmergencyNetworkScan(int serial, boolean resetScan);
+
+    /**
+     * Exits ongoing Emergency Mode
+     *
+     * @param serial Serial number of the request.
+     *
+     * Response function is IRadioEmergencyResponse.exitEmergencyModeResponse()
+     */
+    void exitEmergencyMode(in int serial);
+
+    /**
+     * Set if null encryption and integrity modes are enabled. If the value of enabled is false
+     * the modem must not allow any network communications with null ciphering (for both signalling
+     * and user data) or null integrity (for signalling) modes for 3G and above, even if the
+     * network only uses null algorithms. This setting must be respected even if
+     * "cipheringDisabled" (as defined in TS 38.331) is in use by the network.
+     *
+     * For 2G, which does not use integrity protection, the modem must only disallow any network
+     * communications with null ciphering.
+     *
+     * In the case when enabled is false, integrity protection for user data is optional, but
+     * ciphering for user data is required.
+     *
+     * In case of an emergency call, the modem must bypass this setting.
+     *
+     * Null ciphering and integrity modes include (but are not limited to):
+     * 2G: A5/0 and GEA0
+     * 3G: UEA0 and UIA0
+     * 4G: EEA0 and EIA0
+     * 5G: NEA0 and NIA0
+     *
+     *
+     * @param serial Serial number of the request.
+     * @param enabled To allow null encryption/integrity, set to true.
+     *                Otherwise, false.
+     *
+     * Response callback is IRadioResponse.setNullCipherAndIntegrityEnabledResponse()
+     */
+    void setNullCipherAndIntegrityEnabled(in int serial, in boolean enabled);
+
+    /**
+     * Get whether null encryption and integrity modes are enabled.
+     *
+     * Null ciphering and integrity modes include, (but are not limited to):
+     * 2G: A5/0, GAE0 (no integrity algorithm supported)
+     * 3G: UEA0 and UIA0
+     * 4G: EEA0 and EIA
+     * 5G: NEA0 and NIA0
+     *
+     * @param serial Serial number of the request.
+     *
+     * Response callback is IRadioNetworkResponse.isNullCipherAndIntegrityEnabledResponse()
+     */
+    void isNullCipherAndIntegrityEnabled(in int serial);
+
+    /**
+     * Checks whether N1 mode (access to 5G core network) is enabled or not.
+     *
+     * @param serial Serial number of request.
+     *
+     * Response function is IRadioNetworkResponse.isN1ModeEnabledResponse()
+     */
+    void isN1ModeEnabled(in int serial);
+
+    /**
+     * Enables or disables N1 mode (access to 5G core network) in accordance with
+     * 3GPP TS 24.501 4.9.
+     *
+     * Note: The default value of N1 mode shall be based on the modem's internal configuration
+     * as per device or carrier. This API may be invoked on demand first to disable N1 mode and
+     * later to re-enable for certain use case. This setting shall not be persisted by modem.
+     * This setting shall not interfere with the allowed network type bitmap set using
+     * {@link IRadioNetwork#setAllowedNetworkTypesBitmap()} API.
+     *
+     * @param serial Serial number of request.
+     * @param enable {@code true} to enable N1 mode, {@code false} to disable N1 mode.
+     *
+     * Response function is IRadioNetworkResponse.setN1ModeEnabledResponse()
+     */
+    void setN1ModeEnabled(in int serial, boolean enable);
 }

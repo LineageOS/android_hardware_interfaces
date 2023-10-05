@@ -35,7 +35,6 @@ using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType;
 
 }  // namespace testpropertyutils_impl
 
-#ifdef ENABLE_VENDOR_CLUSTER_PROPERTY_FOR_TESTING
 // Converts the system property to the vendor property.
 // WARNING: This is only for the end-to-end testing, Should NOT include in the user build.
 inline constexpr int32_t toVendor(
@@ -55,7 +54,6 @@ constexpr int32_t VENDOR_CLUSTER_REQUEST_DISPLAY =
         toVendor(testpropertyutils_impl::VehicleProperty::CLUSTER_REQUEST_DISPLAY);
 constexpr int32_t VENDOR_CLUSTER_NAVIGATION_STATE =
         toVendor(testpropertyutils_impl::VehicleProperty::CLUSTER_NAVIGATION_STATE);
-#endif  // ENABLE_VENDOR_CLUSTER_PROPERTY_FOR_TESTING
 
 // These properties are placeholder properties for developers to test new features without
 // implementing a real property.
@@ -85,6 +83,13 @@ constexpr int32_t ECHO_REVERSE_BYTES = 0x2a12 |
                                        toInt(testpropertyutils_impl::VehiclePropertyGroup::VENDOR) |
                                        toInt(testpropertyutils_impl::VehicleArea::GLOBAL) |
                                        toInt(testpropertyutils_impl::VehiclePropertyType::BYTES);
+
+// This property is used for testing vendor error codes end to end.
+// 0x21402a13
+constexpr int32_t VENDOR_PROPERTY_ID = 0x2a13 |
+                                       toInt(testpropertyutils_impl::VehiclePropertyGroup::VENDOR) |
+                                       toInt(testpropertyutils_impl::VehicleArea::GLOBAL) |
+                                       toInt(testpropertyutils_impl::VehiclePropertyType::INT32);
 
 // This property is used for test purpose. End to end tests use this property to test set and get
 // method for MIXED type properties.

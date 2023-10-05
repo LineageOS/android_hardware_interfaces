@@ -19,6 +19,7 @@
 #include <aidl/android/hardware/contexthub/BnContextHub.h>
 
 #include <unordered_set>
+#include <vector>
 
 namespace aidl {
 namespace android {
@@ -37,13 +38,17 @@ class ContextHub : public BnContextHub {
                                        int32_t in_transactionId) override;
     ::ndk::ScopedAStatus onSettingChanged(Setting in_setting, bool in_enabled) override;
     ::ndk::ScopedAStatus queryNanoapps(int32_t in_contextHubId) override;
+    ::ndk::ScopedAStatus getPreloadedNanoappIds(
+            int32_t in_contextHubId, std::vector<int64_t>* out_preloadedNanoappIds) override;
     ::ndk::ScopedAStatus registerCallback(
             int32_t in_contextHubId, const std::shared_ptr<IContextHubCallback>& in_cb) override;
     ::ndk::ScopedAStatus sendMessageToHub(int32_t in_contextHubId,
                                           const ContextHubMessage& in_message) override;
+    ::ndk::ScopedAStatus setTestMode(bool enable) override;
     ::ndk::ScopedAStatus onHostEndpointConnected(const HostEndpointInfo& in_info) override;
 
     ::ndk::ScopedAStatus onHostEndpointDisconnected(char16_t in_hostEndpointId) override;
+    ::ndk::ScopedAStatus onNanSessionStateChanged(const NanSessionStateUpdate& in_update) override;
 
   private:
     static constexpr uint32_t kMockHubId = 0;

@@ -17,12 +17,14 @@
 #include "Face.h"
 #include "Session.h"
 
+#include "FakeFaceEngine.h"
+
 namespace aidl::android::hardware::biometrics::face {
 
 const int kSensorId = 4;
-const common::SensorStrength kSensorStrength = common::SensorStrength::STRONG;
+const common::SensorStrength kSensorStrength = FakeFaceEngine::GetSensorStrength();
 const int kMaxEnrollmentsPerUser = 5;
-const FaceSensorType kSensorType = FaceSensorType::RGB;
+const FaceSensorType kSensorType = FakeFaceEngine::GetSensorType();
 const bool kHalControlsPreview = true;
 const std::string kHwComponentId = "faceSensor";
 const std::string kHardwareVersion = "vendor/model/revision";
@@ -69,7 +71,7 @@ ndk::ScopedAStatus Face::getSensorProps(std::vector<SensorProps>* return_val) {
 ndk::ScopedAStatus Face::createSession(int32_t /*sensorId*/, int32_t /*userId*/,
                                        const std::shared_ptr<ISessionCallback>& cb,
                                        std::shared_ptr<ISession>* return_val) {
-    *return_val = SharedRefBase::make<Session>(cb);
+    *return_val = SharedRefBase::make<Session>(std::make_unique<FakeFaceEngine>(), cb);
     return ndk::ScopedAStatus::ok();
 }
 

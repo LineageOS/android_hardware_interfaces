@@ -20,7 +20,9 @@ import android.hardware.contexthub.ContextHubInfo;
 import android.hardware.contexthub.ContextHubMessage;
 import android.hardware.contexthub.HostEndpointInfo;
 import android.hardware.contexthub.IContextHubCallback;
+import android.hardware.contexthub.NanSessionStateUpdate;
 import android.hardware.contexthub.NanoappBinary;
+import android.hardware.contexthub.NanoappInfo;
 import android.hardware.contexthub.Setting;
 
 @VintfStability
@@ -193,6 +195,45 @@ interface IContextHub {
      *                       parameter should be ignored (no-op).
      */
     void onHostEndpointDisconnected(char hostEndpointId);
+
+    /**
+     * Provides the list of preloaded nanoapp IDs on the system. The output of this API must
+     * not change.
+     *
+     * @param contextHubId The identifier of the Context Hub.
+     *
+     * @return The list of preloaded nanoapp IDs.
+     */
+    long[] getPreloadedNanoappIds(in int contextHubId);
+
+    /**
+     * Invoked when the state of the NAN session requested through handleNanSessionRequest()
+     * changes. This function may be invoked without a corresponding handleNanSessionRequest to
+     * indicate if a NAN session was terminated without a request due to resource limitations.
+     *
+     * If the state becomes disabled without an explicit request from the HAL, the HAL MUST
+     * explicitly invoke handleNanSessionRequest() at a later point in time to attempt to
+     * re-enable NAN.
+     *
+     * @param update Information about the latest NAN session state.
+     */
+    void onNanSessionStateChanged(in NanSessionStateUpdate update);
+
+    /**
+     * Puts the context hub in and out of test mode. Test mode is a clean state
+     * where tests can be executed in the same environment. If enable is true,
+     * this will enable test mode by unloading all nanoapps. If enable is false,
+     * this will disable test mode and reverse the actions of enabling test mode
+     * by loading all preloaded nanoapps. This puts CHRE in a normal state.
+     *
+     * This should only be used for a test environment, either through a
+     * @TestApi or development tools. This should not be used in a production
+     * environment.
+     *
+     * @param enable If true, put the context hub in test mode. If false, disable
+     *               test mode.
+     */
+    void setTestMode(in boolean enable);
 
     /**
      * Error codes that are used as service specific errors with the AIDL return

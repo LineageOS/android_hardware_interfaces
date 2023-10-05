@@ -33,12 +33,12 @@ static std::map<int, std::shared_ptr<NetlinkProtocol>> toMap(
     return map;
 }
 
-static auto all = toMap({
-        std::make_unique<generic::Generic>(),
-        std::make_unique<route::Route>(),
-});
-
 std::optional<std::reference_wrapper<NetlinkProtocol>> get(int protocol) {
+    static auto all = toMap({
+            std::make_unique<generic::Generic>(),
+            std::make_unique<route::Route>(),
+    });
+
     if (all.count(protocol) == 0) return std::nullopt;
     return *all.find(protocol)->second.get();
 }

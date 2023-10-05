@@ -14,22 +14,16 @@
  * limitations under the License.
  */
 
-#ifndef SUPPLICANT_TEST_UTILS_H
-#define SUPPLICANT_TEST_UTILS_H
+#pragma once
 
-#include <VtsCoreUtil.h>
-#include <android-base/logging.h>
-#include <android/hardware/wifi/1.0/IWifi.h>
-#include <hidl/ServiceManagement.h>
-#include <supplicant_hidl_test_utils.h>
-#include <wifi_system/supplicant_manager.h>
+#include "supplicant_aidl_test_utils.h"
+#include "supplicant_legacy_test_utils.h"
 
 using aidl::android::hardware::wifi::supplicant::IfaceInfo;
 using aidl::android::hardware::wifi::supplicant::ISupplicant;
 using aidl::android::hardware::wifi::supplicant::ISupplicantP2pIface;
 using aidl::android::hardware::wifi::supplicant::ISupplicantStaIface;
 using aidl::android::hardware::wifi::supplicant::KeyMgmtMask;
-using android::wifi_system::SupplicantManager;
 
 std::string getStaIfaceName() {
     std::array<char, PROPERTY_VALUE_MAX> buffer;
@@ -43,16 +37,7 @@ std::string getP2pIfaceName() {
     return std::string(buffer.data());
 }
 
-std::string getWifiInstanceName() {
-    const std::vector<std::string> instances =
-        android::hardware::getAllHalInstanceNames(
-            ::android::hardware::wifi::V1_0::IWifi::descriptor);
-    EXPECT_NE(0, instances.size());
-    return instances.size() != 0 ? instances[0] : "";
-}
-
-bool keyMgmtSupported(std::shared_ptr<ISupplicantStaIface> iface,
-                      KeyMgmtMask expected) {
+bool keyMgmtSupported(std::shared_ptr<ISupplicantStaIface> iface, KeyMgmtMask expected) {
     KeyMgmtMask caps;
     if (!iface->getKeyMgmtCapabilities(&caps).isOk()) {
         return false;
@@ -67,22 +52,22 @@ bool isFilsSupported(std::shared_ptr<ISupplicantStaIface> iface) {
     return keyMgmtSupported(iface, filsMask);
 }
 
-void startSupplicant() {
-    initializeDriverAndFirmware(getWifiInstanceName());
-    SupplicantManager supplicant_manager;
-    ASSERT_TRUE(supplicant_manager.StartSupplicant());
-    ASSERT_TRUE(supplicant_manager.IsSupplicantRunning());
+void stopSupplicantService() {
+    // Select method based on whether the HIDL or AIDL
+    // Vendor HAL is available.
+    if (SupplicantAidlTestUtils::useAidlService()) {
+        SupplicantAidlTestUtils::stopSupplicantService();
+    } else {
+        SupplicantLegacyTestUtils::stopSupplicantService();
+    }
 }
 
-// Wrapper around the implementation in supplicant_hidl_test_util.
-void stopSupplicantService() { stopSupplicant(getWifiInstanceName()); }
-
 void initializeService() {
-    ASSERT_TRUE(stopWifiFramework(getWifiInstanceName()));
-    std::system("/system/bin/start");
-    ASSERT_TRUE(waitForFrameworkReady());
-    stopSupplicantService();
-    startSupplicant();
+    if (SupplicantAidlTestUtils::useAidlService()) {
+        SupplicantAidlTestUtils::initializeService();
+    } else {
+        SupplicantLegacyTestUtils::initializeService();
+    }
 }
 
 void addStaIface(const std::shared_ptr<ISupplicant> supplicant) {
@@ -106,5 +91,3 @@ std::shared_ptr<ISupplicant> getSupplicant(const char* supplicant_name) {
     }
     return supplicant;
 }
-
-#endif  // SUPPLICANT_TEST_UTILS_H

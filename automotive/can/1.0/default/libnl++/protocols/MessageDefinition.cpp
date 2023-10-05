@@ -34,7 +34,7 @@ const AttributeDefinition AttributeMap::operator[](nlattrtype_t nla_type) const 
 
 MessageDescriptor::MessageDescriptor(const std::string& name,
                                      const MessageDetailsMap&& messageDetails,
-                                     const AttributeMap&& attrTypes, size_t contentsSize)
+                                     const AttributeMap& attrTypes, size_t contentsSize)
     : mName(name),
       mContentsSize(contentsSize),
       mMessageDetails(messageDetails),

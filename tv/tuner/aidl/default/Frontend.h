@@ -34,7 +34,7 @@ class Tuner;
 
 class Frontend : public BnFrontend {
   public:
-    Frontend(FrontendType type, int32_t id, std::shared_ptr<Tuner> tuner);
+    Frontend(FrontendType type, int32_t id);
 
     ::ndk::ScopedAStatus setCallback(
             const std::shared_ptr<IFrontendCallback>& in_callback) override;
@@ -62,6 +62,7 @@ class Frontend : public BnFrontend {
     string getSourceFile();
     bool isLocked();
     void getFrontendInfo(FrontendInfo* _aidl_return);
+    void setTunerService(std::shared_ptr<Tuner> tuner);
 
   private:
     virtual ~Frontend();

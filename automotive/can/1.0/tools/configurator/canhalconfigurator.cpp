@@ -70,6 +70,9 @@ static bool processPbCfg(const config::CanBusConfig& pb_cfg) {
 static bool configuratorStart(const std::string& filepath) {
     base::SetDefaultTag("CanConfigurator");
 
+    LOG(WARNING) << "The HIDL version of CAN HAL has been deprecated, if this tool fails with "
+                 << "SIGABRT, you may need canhalconfigurator-aidl instead.";
+
     auto pb_cfg = config::parseConfigFile(filepath);
     if (!pb_cfg.has_value()) {
         return false;

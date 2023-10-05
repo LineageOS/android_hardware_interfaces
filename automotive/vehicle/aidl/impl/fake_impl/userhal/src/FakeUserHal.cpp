@@ -328,6 +328,9 @@ FakeUserHal::ValueResultType FakeUserHal::sendUserHalResponse(
                    << "invalid action on lshal response: " << response->toString();
     }
 
+    // Update area ID to 0 since this is a global property (and the area ID was only set to emulate
+    // the request id behavior).
+    response->areaId = 0;
     ALOGD("updating property to: %s", response->toString().c_str());
     return response;
 }
@@ -336,33 +339,31 @@ std::string FakeUserHal::showDumpHelp() const {
     return fmt::format("{}: dumps state used for user management\n", kUserHalDumpOption);
 }
 
-std::string FakeUserHal::dump(std::string indent) const {
+std::string FakeUserHal::dump() const {
     std::scoped_lock<std::mutex> lockGuard(mLock);
 
     std::string info;
     if (mInitialUserResponseFromCmd != nullptr) {
-        info += fmt::format("{}InitialUserInfo response: {}\n", indent,
+        info += fmt::format("InitialUserInfo response: {}\n",
                             mInitialUserResponseFromCmd->toString());
     } else {
-        info += fmt::format("{}No InitialUserInfo response\n", indent);
+        info += "No InitialUserInfo response\n";
     }
     if (mSwitchUserResponseFromCmd != nullptr) {
-        info += fmt::format("{}SwitchUser response: {}\n", indent,
-                            mSwitchUserResponseFromCmd->toString());
+        info += fmt::format("SwitchUser response: {}\n", mSwitchUserResponseFromCmd->toString());
     } else {
-        info += fmt::format("{}No SwitchUser response\n", indent);
+        info += "No SwitchUser response\n";
     }
     if (mCreateUserResponseFromCmd != nullptr) {
-        info += fmt::format("{}CreateUser response: {}\n", indent,
-                            mCreateUserResponseFromCmd->toString());
+        info += fmt::format("CreateUser response: {}\n", mCreateUserResponseFromCmd->toString());
     } else {
-        info += fmt::format("{}No CreateUser response\n", indent);
+        info += "No CreateUser response\n";
     }
     if (mSetUserIdentificationAssociationResponseFromCmd != nullptr) {
-        info += fmt::format("{}SetUserIdentificationAssociation response: {}\n", indent,
+        info += fmt::format("SetUserIdentificationAssociation response: {}\n",
                             mSetUserIdentificationAssociationResponseFromCmd->toString());
     } else {
-        info += fmt::format("{}No SetUserIdentificationAssociation response\n", indent);
+        info += "No SetUserIdentificationAssociation response\n";
     }
     return info;
 }

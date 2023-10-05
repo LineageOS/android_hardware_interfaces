@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <android-base/logging.h>
+
 #include <android/binder_manager.h>
 
 #include "radio_sap_utils.h"
@@ -22,9 +22,13 @@
 #define TIMEOUT_PERIOD 40
 
 void SapTest::SetUp() {
+    ALOGD("BEGIN %s#%s", ::testing::UnitTest::GetInstance()->current_test_info()->test_suite_name(),
+          ::testing::UnitTest::GetInstance()->current_test_info()->name());
+    count = 0;
+    serial = -1;
     std::string serviceName = GetParam();
     if (!isServiceValidForDeviceConfiguration(serviceName)) {
-        LOG(DEBUG) << "Skipped the test due to device configuration.";
+        ALOGI("Skipped the test due to device configuration.");
         GTEST_SKIP();
     }
     sap = ISap::fromBinder(ndk::SpAIBinder(AServiceManager_waitForService(serviceName.c_str())));
@@ -33,13 +37,16 @@ void SapTest::SetUp() {
     sapCb = ndk::SharedRefBase::make<SapCallback>(*this);
     ASSERT_NE(sapCb.get(), nullptr);
 
-    count = 0;
-
     ndk::ScopedAStatus res = sap->setCallback(sapCb);
     ASSERT_OK(res) << res;
 }
 
-void SapTest::TearDown() {}
+void SapTest::TearDown() {
+    count_ = 0;
+    serial = -1;
+    ALOGD("END %s#%s", ::testing::UnitTest::GetInstance()->current_test_info()->test_suite_name(),
+          ::testing::UnitTest::GetInstance()->current_test_info()->name());
+}
 
 ::testing::AssertionResult SapTest::CheckAnyOfErrors(SapResultCode err,
                                                      std::vector<SapResultCode> errors) {
@@ -52,9 +59,9 @@ void SapTest::TearDown() {}
 }
 
 void SapTest::notify(int receivedSerial) {
-    std::unique_lock<std::mutex> lock(mtx);
-    count++;
+    std::lock_guard<std::mutex> lock(mtx);
     if (serial == receivedSerial) {
+        count++;
         cv.notify_one();
     }
 }
@@ -78,7 +85,6 @@ std::cv_status SapTest::wait() {
  * Test ISap.connectReq() for the response returned.
  */
 TEST_P(SapTest, connectReq) {
-    LOG(DEBUG) << "connectReq";
     serial = GetRandomSerialNumber();
     int32_t maxMsgSize = 100;
 
@@ -97,7 +103,6 @@ TEST_P(SapTest, connectReq) {
  * Test ISap.disconnectReq() for the response returned
  */
 TEST_P(SapTest, disconnectReq) {
-    LOG(DEBUG) << "disconnectReq";
     serial = GetRandomSerialNumber();
 
     ndk::ScopedAStatus res = sap->disconnectReq(serial);
@@ -105,14 +110,12 @@ TEST_P(SapTest, disconnectReq) {
 
     EXPECT_EQ(std::cv_status::no_timeout, wait());
     EXPECT_EQ(sapCb->sapResponseSerial, serial);
-    LOG(DEBUG) << "disconnectReq finished";
 }
 
 /*
  * Test ISap.apduReq() for the response returned.
  */
 TEST_P(SapTest, apduReq) {
-    LOG(DEBUG) << "apduReq";
     serial = GetRandomSerialNumber();
     SapApduType sapApduType = SapApduType::APDU;
     std::vector<uint8_t> command = {};
@@ -128,14 +131,12 @@ TEST_P(SapTest, apduReq) {
             {SapResultCode::GENERIC_FAILURE, SapResultCode::CARD_ALREADY_POWERED_OFF,
              SapResultCode::CARD_NOT_ACCESSSIBLE, SapResultCode::CARD_REMOVED,
              SapResultCode::SUCCESS}));
-    LOG(DEBUG) << "apduReq finished";
 }
 
 /*
  * Test ISap.transferAtrReq() for the response returned.
  */
 TEST_P(SapTest, transferAtrReq) {
-    LOG(DEBUG) << "transferAtrReq";
     serial = GetRandomSerialNumber();
 
     ndk::ScopedAStatus res = sap->transferAtrReq(serial);
@@ -148,14 +149,12 @@ TEST_P(SapTest, transferAtrReq) {
                                  {SapResultCode::GENERIC_FAILURE, SapResultCode::DATA_NOT_AVAILABLE,
                                   SapResultCode::CARD_ALREADY_POWERED_OFF,
                                   SapResultCode::CARD_REMOVED, SapResultCode::SUCCESS}));
-    LOG(DEBUG) << "transferAtrReq finished";
 }
 
 /*
  * Test ISap.powerReq() for the response returned.
  */
 TEST_P(SapTest, powerReq) {
-    LOG(DEBUG) << "powerReq";
     serial = GetRandomSerialNumber();
     bool state = true;
 
@@ -170,14 +169,12 @@ TEST_P(SapTest, powerReq) {
                              {SapResultCode::GENERIC_FAILURE, SapResultCode::CARD_NOT_ACCESSSIBLE,
                               SapResultCode::CARD_ALREADY_POWERED_OFF, SapResultCode::CARD_REMOVED,
                               SapResultCode::CARD_ALREADY_POWERED_ON, SapResultCode::SUCCESS}));
-    LOG(DEBUG) << "powerReq finished";
 }
 
 /*
  * Test ISap.resetSimReq() for the response returned.
  */
 TEST_P(SapTest, resetSimReq) {
-    LOG(DEBUG) << "resetSimReq";
     serial = GetRandomSerialNumber();
 
     ndk::ScopedAStatus res = sap->resetSimReq(serial);
@@ -191,14 +188,12 @@ TEST_P(SapTest, resetSimReq) {
                              {SapResultCode::GENERIC_FAILURE, SapResultCode::CARD_NOT_ACCESSSIBLE,
                               SapResultCode::CARD_ALREADY_POWERED_OFF, SapResultCode::CARD_REMOVED,
                               SapResultCode::SUCCESS}));
-    LOG(DEBUG) << "resetSimReq finished";
 }
 
 /*
  * Test ISap.transferCardReaderStatusReq() for the response returned.
  */
 TEST_P(SapTest, transferCardReaderStatusReq) {
-    LOG(DEBUG) << "transferCardReaderStatusReq";
     serial = GetRandomSerialNumber();
 
     ndk::ScopedAStatus res = sap->transferCardReaderStatusReq(serial);
@@ -210,14 +205,12 @@ TEST_P(SapTest, transferCardReaderStatusReq) {
     ASSERT_TRUE(CheckAnyOfErrors(sapCb->sapResultCode,
                                  {SapResultCode::GENERIC_FAILURE, SapResultCode::DATA_NOT_AVAILABLE,
                                   SapResultCode::SUCCESS}));
-    LOG(DEBUG) << "transferCardReaderStatusReq finished";
 }
 
 /*
  * Test ISap.setTransferProtocolReq() for the response returned.
  */
 TEST_P(SapTest, setTransferProtocolReq) {
-    LOG(DEBUG) << "setTransferProtocolReq";
     serial = GetRandomSerialNumber();
     SapTransferProtocol sapTransferProtocol = SapTransferProtocol::T0;
 
@@ -229,5 +222,4 @@ TEST_P(SapTest, setTransferProtocolReq) {
 
     ASSERT_TRUE(CheckAnyOfErrors(sapCb->sapResultCode,
                                  {SapResultCode::NOT_SUPPORTED, SapResultCode::SUCCESS}));
-    LOG(DEBUG) << "setTransferProtocolReq finished";
 }

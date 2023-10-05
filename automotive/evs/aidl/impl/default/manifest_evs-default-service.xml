@@ -1,0 +1,7 @@
+<manifest version="1.0" type="device">
+    <hal format="aidl">
+        <name>android.hardware.automotive.evs</name>
+        <fqname>IEvsEnumerator/hw/0</fqname>
+        <version>1</version>
+    </hal>
+</manifest>

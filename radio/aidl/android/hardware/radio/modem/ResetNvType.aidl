@@ -16,6 +16,7 @@
 
 package android.hardware.radio.modem;
 
+/** Note: This will be deprecated along with nvResetConfig in Android U. */
 @VintfStability
 @Backing(type="int")
 @JavaDerive(toString=true)

@@ -34,8 +34,8 @@ hidl_vec<hidl_string> getControlServices() {
     auto manager = hidl::manager::V1_2::IServiceManager::getService();
     hidl_vec<hidl_string> services;
     manager->listManifestByInterface(ICanController::descriptor, hidl_utils::fill(&services));
-    CHECK(services.size() > 0) << "No ICanController services registered (missing privileges?)"
-                               << std::endl;
+    CHECK(services.size() > 0) << "No ICanController services registered (missing privileges?). "
+                               << "are you using the AIDL CanController?" << std::endl;
     return services;
 }
 

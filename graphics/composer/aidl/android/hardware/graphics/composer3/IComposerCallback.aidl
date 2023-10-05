@@ -16,6 +16,7 @@
 
 package android.hardware.graphics.composer3;
 
+import android.hardware.graphics.composer3.RefreshRateChangedDebugData;
 import android.hardware.graphics.composer3.VsyncPeriodChangeTimeline;
 
 @VintfStability
@@ -96,4 +97,25 @@ interface IComposerCallback {
      * @param display is the display whose vsync cadence changed due to panel idle mode.
      */
     oneway void onVsyncIdle(long display);
+
+    /**
+     * Notifies the client the vsyncPeriod of the display changed.
+     * Whether or not to call this callback is managed by
+     * IComposerClient.setRefreshRateChangedCallbackDebugEnabled
+     *
+     * Immediate callback is required after the setRefreshRateChangedCallbackDebugEnabled
+     * called.
+     * When the panel refresh rate changes, as a result of a setActiveConfig or
+     * setActiveConfigWithConstraints, this callback should be called with the new panel
+     * refresh rate. In addition, when the panel refresh rate is changed by other means,
+     * such as idleness or DOZE power state, this callback should be called as well.
+     *
+     * This callback is used for debug purposes, and not for scheduling frames,
+     * therefore synchronization is not required.
+     *
+     * @see IComposerClient.setRefreshRateChangedCallbackDebugEnabled
+     *
+     * @param data is the data for the callback when refresh rate changed.
+     */
+    oneway void onRefreshRateChangedDebug(in RefreshRateChangedDebugData data);
 }

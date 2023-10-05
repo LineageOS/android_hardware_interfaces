@@ -82,7 +82,7 @@ class ComposerCommandEngine : public V2_2::hal::ComposerCommandEngine {
 
         std::vector<IComposerClient::PerFrameMetadataBlob> metadata;
 
-        for (size_t i = 0; i < numBlobs; i++) {
+        for (size_t i = 0; i < numBlobs && length >= 2; i++) {
             IComposerClient::PerFrameMetadataKey key =
                 static_cast<IComposerClient::PerFrameMetadataKey>(readSigned());
             uint32_t blobSize = read();

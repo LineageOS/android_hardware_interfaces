@@ -62,7 +62,7 @@ parcelable StreamConfiguration {
      */
     CameraMetadata sessionParams;
 
-   /**
+    /**
      * An incrementing counter used for HAL to keep track of the stream
      * configuration and the paired oneway signalStreamFlush call. When the
      * counter in signalStreamFlush call is less than the counter here, that
@@ -83,4 +83,13 @@ parcelable StreamConfiguration {
      * any one of the supported multi-resolution input stream sizes.
      */
     boolean multiResolutionInputImage;
+
+    /**
+     * Logging identifier to join HAL logs to logs collected by cameraservice. This field has no
+     * functional purpose.
+     *
+     * See documentation of 'mLogId' in frameworks/av/camera/include/camera/CameraSessionStats.h
+     * for specifics of this identifier and how it can be used to join with cameraservice logs.
+     */
+    long logId = 0;
 }

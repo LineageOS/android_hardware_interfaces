@@ -17,7 +17,7 @@ aidl_interface {
         "android.hardware.security.secureclock-V1",
     ],
     stability: "vintf",
-    frozen: false,
+    frozen: true,
     backend: {
         java: {
             platform_apis: true,
@@ -40,6 +40,10 @@ aidl_interface {
         },
         {
             version: "2",
+            imports: ["android.hardware.security.secureclock-V1"],
+        },
+        {
+            version: "3",
             imports: ["android.hardware.security.secureclock-V1"],
         },
 

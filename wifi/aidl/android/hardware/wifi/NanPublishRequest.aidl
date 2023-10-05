@@ -17,6 +17,7 @@
 package android.hardware.wifi;
 
 import android.hardware.wifi.NanDiscoveryCommonConfig;
+import android.hardware.wifi.NanPairingConfig;
 import android.hardware.wifi.NanPublishType;
 import android.hardware.wifi.NanTxType;
 
@@ -46,4 +47,12 @@ parcelable NanPublishRequest {
      * the device must automatically accept the data-path request and complete the negotiation.
      */
     boolean autoAcceptDataPathRequests;
+    /**
+     * The config for NAN pairing
+     */
+    NanPairingConfig pairingConfig;
+    /**
+     * The Identity key for pairing, will generate NIRA for verification by the peer
+     */
+    byte[16] identityKey;
 }

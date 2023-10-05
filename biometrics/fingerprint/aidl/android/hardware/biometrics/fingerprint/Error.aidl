@@ -15,7 +15,9 @@
  */
 
 package android.hardware.biometrics.fingerprint;
-
+/**
+ * @hide
+ */
 @VintfStability
 @Backing(type="byte")
 enum Error {
@@ -68,4 +70,10 @@ enum Error {
      * There's a problem with the sensor's calibration.
      */
     BAD_CALIBRATION,
+
+    /**
+     * Indicates a power press event has occurred. This is typically sent by fingerprint
+     * sensors that have the sensor co-located with the power button.
+     */
+    POWER_PRESS,
 }

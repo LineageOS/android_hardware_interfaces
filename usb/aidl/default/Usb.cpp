@@ -123,6 +123,15 @@ Status queryMoistureDetectionStatus(std::vector<PortStatus> *currentPortStatus) 
     return Status::SUCCESS;
 }
 
+Status queryNonCompliantChargerStatus(std::vector<PortStatus> *currentPortStatus) {
+    string reasons, path;
+
+    for (int i = 0; i < currentPortStatus->size(); i++) {
+        (*currentPortStatus)[i].supportsComplianceWarnings = false;
+    }
+    return Status::SUCCESS;
+}
+
 string appendRoleNodeHelper(const string &portName, PortRole::Tag tag) {
     string node(kTypecPath + portName);
 
@@ -508,11 +517,11 @@ Status getPortStatusHelper(std::vector<PortStatus> *currentPortStatus) {
             (*currentPortStatus)[i].usbDataStatus.push_back(UsbDataStatus::ENABLED);
 
             ALOGI("%d:%s connected:%d canChangeMode:%d canChagedata:%d canChangePower:%d "
-                "usbDataEnabled:%d",
-                i, port.first.c_str(), port.second,
-                (*currentPortStatus)[i].canChangeMode,
-                (*currentPortStatus)[i].canChangeDataRole,
-                (*currentPortStatus)[i].canChangePowerRole, 0);
+                  "usbDataEnabled:%d plugOrientation:%d",
+                  i, port.first.c_str(), port.second, (*currentPortStatus)[i].canChangeMode,
+                  (*currentPortStatus)[i].canChangeDataRole,
+                  (*currentPortStatus)[i].canChangePowerRole, 0,
+                  (*currentPortStatus)[i].plugOrientation);
         }
 
         return Status::SUCCESS;
@@ -527,6 +536,7 @@ void queryVersionHelper(android::hardware::usb::Usb *usb,
     pthread_mutex_lock(&usb->mLock);
     status = getPortStatusHelper(currentPortStatus);
     queryMoistureDetectionStatus(currentPortStatus);
+    queryNonCompliantChargerStatus(currentPortStatus);
     if (usb->mCallback != NULL) {
         ScopedAStatus ret = usb->mCallback->notifyPortStatusChange(*currentPortStatus,
             status);

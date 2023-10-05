@@ -44,7 +44,7 @@ ScopedAStatus HdmiConnectionMock::getPortInfo(std::vector<HdmiPortInfo>* _aidl_r
 ScopedAStatus HdmiConnectionMock::isConnected(int32_t portId, bool* _aidl_return) {
     // Maintain port connection status and update on hotplug event
     if (portId <= mTotalPorts && portId >= 1) {
-        *_aidl_return = mPortConnectionStatus[portId];
+        *_aidl_return = mPortConnectionStatus.at(portId - 1);
     } else {
         *_aidl_return = false;
     }
@@ -135,10 +135,10 @@ void HdmiConnectionMock::handleHotplugMessage(unsigned char* msgBuf) {
 
     ALOGD("[halimp_aidl] hot plug port id %x, is connected %x", (msgBuf[0] & 0xf),
           (msgBuf[3] & 0xf));
-    mPortConnectionStatus[portId] = connected;
-    if (mPortInfos[portId].type == HdmiPortType::OUTPUT) {
+    mPortConnectionStatus.at(portId - 1) = connected;
+    if (mPortInfos.at(portId - 1).type == HdmiPortType::OUTPUT) {
         mPhysicalAddress = (connected ? 0xffff : ((msgBuf[1] << 8) | (msgBuf[2])));
-        mPortInfos[portId].physicalAddress = mPhysicalAddress;
+        mPortInfos.at(portId - 1).physicalAddress = mPhysicalAddress;
         ALOGD("[halimp_aidl] hot plug physical address %x", mPhysicalAddress);
     }
 

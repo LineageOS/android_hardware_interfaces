@@ -20,6 +20,7 @@
 #include <gtest/gtest.h>
 
 #include <atomic>
+#include <functional>
 #include <memory>
 #include <mutex>
 #include <thread>
@@ -61,9 +62,16 @@ class SensorsVtsEnvironmentBase {
     }
 
     // set sensor event collection status
-    void setCollection(bool enable) {
+    void setCollection(bool enable, const std::optional<std::function<bool(const Event&)>>& filter =
+                                            std::nullopt) {
         std::lock_guard<std::mutex> lock(mEventsMutex);
         mCollectionEnabled = enable;
+
+        if (enable && filter.has_value()) {
+            mEventFilter = *filter;
+        } else {
+            mEventFilter.reset();
+        }
     }
 
     void registerCallback(IEventCallback<Event>* callback) {
@@ -76,8 +84,10 @@ class SensorsVtsEnvironmentBase {
         mCallback = nullptr;
     }
 
-    std::vector<Event> collectEvents(useconds_t timeLimitUs, size_t nEventLimit,
-                                     bool clearBeforeStart = true, bool changeCollection = true) {
+    std::vector<Event> collectEvents(
+            useconds_t timeLimitUs, size_t nEventLimit, bool clearBeforeStart = true,
+            bool changeCollection = true,
+            const std::optional<std::function<bool(const Event&)>>& filter = std::nullopt) {
         std::vector<Event> events;
         constexpr useconds_t SLEEP_GRANULARITY = 100 * 1000;  // granularity 100 ms
 
@@ -85,7 +95,7 @@ class SensorsVtsEnvironmentBase {
               clearBeforeStart);
 
         if (changeCollection) {
-            setCollection(true);
+            setCollection(true, filter);
         }
         if (clearBeforeStart) {
             catEvents(nullptr);
@@ -121,7 +131,7 @@ class SensorsVtsEnvironmentBase {
 
     void addEvent(const Event& ev) {
         std::lock_guard<std::mutex> lock(mEventsMutex);
-        if (mCollectionEnabled) {
+        if (mCollectionEnabled && (!mEventFilter.has_value() || (*mEventFilter)(ev))) {
             mEvents.push_back(ev);
         }
 
@@ -138,6 +148,7 @@ class SensorsVtsEnvironmentBase {
     std::atomic_bool mStopThread;
     std::thread mPollThread;
     std::vector<Event> mEvents;
+    std::optional<std::function<bool(const Event&)>> mEventFilter;
     std::mutex mEventsMutex;
 
     IEventCallback<Event>* mCallback;

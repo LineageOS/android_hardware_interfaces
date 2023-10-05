@@ -26,10 +26,8 @@
 
 #pragma once
 
+#include <stdint.h>
 #include <sys/cdefs.h>
-#include <cinttypes>
-#include <cstddef>
-#include <type_traits>
 
 #include <android/rect.h>
 #include <cutils/native_handle.h>

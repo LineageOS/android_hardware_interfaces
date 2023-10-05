@@ -20,7 +20,7 @@ package {
 
 cc_test {
     name: "VehicleHalAidlHidlCompatibilityTest",
-    srcs: ["*.cpp"],
+    srcs: ["AidlHidlCompatibilityTest.cpp"],
     shared_libs: [
         "libbinder_ndk",
         "libhidlbase",
@@ -34,4 +34,27 @@ cc_test {
     defaults: ["VehicleHalDefaults"],
     test_suites: ["device-tests"],
     vendor: true,
+}
+
+cc_test {
+    name: "VehiclePropertyAnnotationCppTest",
+    srcs: ["VehiclePropertyAnnotationCppTest.cpp"],
+    header_libs: ["IVehicleGeneratedHeaders"],
+    defaults: ["VehicleHalInterfaceDefaults"],
+    test_suites: ["general-tests"],
+}
+
+android_test {
+    name: "VehiclePropertyAnnotationJavaTest",
+    srcs: [
+        "VehiclePropertyAnnotationJavaTest.java",
+        ":IVehicleGeneratedJavaFiles",
+    ],
+    static_libs: [
+        "android.hardware.automotive.vehicle-V2-java",
+        "android.hardware.automotive.vehicle.property-V2-java",
+        "androidx.test.runner",
+        "truth-prebuilt",
+    ],
+    test_suites: ["general-tests"],
 }

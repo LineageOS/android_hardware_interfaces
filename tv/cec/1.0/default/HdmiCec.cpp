@@ -307,6 +307,9 @@ Return<void> HdmiCec::getPhysicalAddress(getPhysicalAddress_cb _hidl_cb) {
 }
 
 Return<SendMessageResult> HdmiCec::sendMessage(const CecMessage& message) {
+    if (message.body.size() > CEC_MESSAGE_BODY_MAX_LENGTH) {
+        return SendMessageResult::FAIL;
+    }
     cec_message_t legacyMessage {
         .initiator = static_cast<cec_logical_address_t>(message.initiator),
         .destination = static_cast<cec_logical_address_t>(message.destination),

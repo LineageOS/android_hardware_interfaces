@@ -1,0 +1,63 @@
+{
+    "properties": [
+        {
+            "property": "Constants::VENDOR_CLUSTER_SWITCH_UI",
+            "access": "VehiclePropertyAccess::WRITE",
+            "changeMode": "VehiclePropertyChangeMode::ON_CHANGE"
+        },
+        {
+            "property": "Constants::VENDOR_CLUSTER_DISPLAY_STATE",
+            "access": "VehiclePropertyAccess::WRITE",
+            "changeMode": "VehiclePropertyChangeMode::ON_CHANGE"
+        },
+        {
+            "property": "Constants::VENDOR_CLUSTER_REPORT_STATE",
+            "defaultValue": {
+                "int32Values": [
+                    0,
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    0,
+                    -1
+                ]
+            },
+            "configArray": [
+                0,
+                0,
+                0,
+                11,
+                0,
+                0,
+                0,
+                0,
+                16
+            ],
+            "access": "VehiclePropertyAccess::READ",
+            "changeMode": "VehiclePropertyChangeMode::ON_CHANGE",
+            "comment":
+                    "Value means 0 /* Off */, -1, -1, -1, -1 /* Bounds */, -1, -1, -1, -1 /* Insets */, 0 /* ClusterHome */, -1 /* ClusterNone */"
+        },
+        {
+            "property": "Constants::VENDOR_CLUSTER_REQUEST_DISPLAY",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            },
+            "access": "VehiclePropertyAccess::READ",
+            "changeMode": "VehiclePropertyChangeMode::ON_CHANGE",
+            "comment": "0 means ClusterHome"
+        },
+        {
+            "property": "Constants::VENDOR_CLUSTER_NAVIGATION_STATE",
+            "access": "VehiclePropertyAccess::READ",
+            "changeMode": "VehiclePropertyChangeMode::ON_CHANGE"
+        }
+    ]
+}

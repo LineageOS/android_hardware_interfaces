@@ -87,6 +87,9 @@ class RadioSimResponse : public BnRadioSimResponse {
     virtual ndk::ScopedAStatus iccCloseLogicalChannelResponse(
             const RadioResponseInfo& info) override;
 
+    virtual ndk::ScopedAStatus iccCloseLogicalChannelWithSessionInfoResponse(
+            const RadioResponseInfo& info) override;
+
     virtual ndk::ScopedAStatus iccIoForAppResponse(const RadioResponseInfo& info,
                                                    const IccIoResult& iccIo) override;
 
@@ -191,9 +194,9 @@ class RadioSimIndication : public BnRadioSimIndication {
 };
 
 // The main test class for Radio AIDL SIM.
-class RadioSimTest : public ::testing::TestWithParam<std::string>, public RadioServiceTest {
+class RadioSimTest : public RadioServiceTest {
   public:
-    virtual void SetUp() override;
+    void SetUp() override;
 
     /* Override updateSimCardStatus in RadioServiceTest to not call setResponseFunctions */
     void updateSimCardStatus();

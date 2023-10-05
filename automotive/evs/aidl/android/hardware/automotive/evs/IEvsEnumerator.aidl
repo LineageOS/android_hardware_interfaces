@@ -78,12 +78,12 @@ interface IEvsEnumerator {
     byte[] getDisplayIdList();
 
     /**
-     * This call requests the current state of the display
+     * This call requests the current state of the primary display
      *
      * If there is no open display, this returns DisplayState::NOT_OPEN. otherwise, it returns
-     * the actual state of the active display.  This call is replicated on the IEvsEnumerator
-     * interface in order to allow secondary clients to monitor the state of the EVS display
-     * without acquiring exclusive ownership of the display.
+     * the actual state of the active primary display.  This call is replicated on the
+     * IEvsEnumerator interface in order to allow secondary clients to monitor the state of the EVS
+     * display without acquiring exclusive ownership of the display.
      *
      * @return Current DisplayState of this Display.
      * @throws EvsResult::OWNERSHIP_LOST if current display is inactive
@@ -163,4 +163,19 @@ interface IEvsEnumerator {
      * @param in callback IEvsEnumeratorStatusCallback implementation
      */
     void registerStatusCallback(in IEvsEnumeratorStatusCallback callback);
+
+    /**
+     * This call requests the current state of the display
+     *
+     * If the requested display is not active, this returns DisplayState::NOT_OPEN. otherwise, it
+     * returns the actual state of the active display.  This call is replicated on the
+     * IEvsEnumerator interface in order to allow secondary clients to monitor the state of the EVS
+     * display without acquiring exclusive ownership of the display.
+     *
+     * @param in id ID of the requested display.
+     * @return Current DisplayState of this Display.
+     * @throws EvsResult::OWNERSHIP_LOST if current display is inactive
+     *        EvsResult::PERMISSION_DENIED if the process is not permitted to do this operation.
+     */
+    DisplayState getDisplayStateById(in int id);
 }

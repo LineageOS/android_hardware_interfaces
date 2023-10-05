@@ -44,7 +44,6 @@ oneway interface IRadioDataResponse {
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INTERNAL_ERR
      *   RadioError:NO_RESOURCES- Indicates that no pdu session ids are available
-     *   RadioError:REQUEST_NOT_SUPPORTED
      */
     void allocatePduSessionIdResponse(in RadioResponseInfo info, in int id);
 
@@ -57,7 +56,6 @@ oneway interface IRadioDataResponse {
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INTERNAL_ERR
      *   RadioError:NO_RESOURCES
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:INVALID_CALL_ID
      */
     void cancelHandoverResponse(in RadioResponseInfo info);
@@ -66,7 +64,6 @@ oneway interface IRadioDataResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
-     *   RadioError:REQUEST_NOT_SUPPORTED may be returned when HAL 1.2 or higher is supported.
      *   RadioError:NONE indicates success. Any other error will remove the network from the list.
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INVALID_CALL_ID
@@ -112,7 +109,6 @@ oneway interface IRadioDataResponse {
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INTERNAL_ERR
      *   RadioError:NO_RESOURCES
-     *   RadioError:REQUEST_NOT_SUPPORTED
      */
     void releasePduSessionIdResponse(in RadioResponseInfo info);
 
@@ -131,7 +127,6 @@ oneway interface IRadioDataResponse {
      *   RadioError:INVALID_MODEM_STATE
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
-     *   RadioError:REQUEST_NOT_SUPPORTED
      */
     void setDataAllowedResponse(in RadioResponseInfo info);
 
@@ -146,7 +141,6 @@ oneway interface IRadioDataResponse {
      *   RadioError:NO_MEMORY
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:SIM_ABSENT
      */
     void setDataProfileResponse(in RadioResponseInfo info);
@@ -159,7 +153,6 @@ oneway interface IRadioDataResponse {
      *  RadioError:RADIO_NOT_AVAILABLE
      *  RadioError:MODEM_ERR
      *  RadioError:INVALID_ARGUMENTS
-     *  RadioError:REQUEST_NOT_SUPPORTED
      */
     void setDataThrottlingResponse(in RadioResponseInfo info);
 
@@ -176,7 +169,6 @@ oneway interface IRadioDataResponse {
      *   RadioError:MODEM_ERR
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:NOT_PROVISIONED
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
@@ -208,7 +200,6 @@ oneway interface IRadioDataResponse {
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INTERNAL_ERR
      *   RadioError:NO_RESOURCES
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:INVALID_CALL_ID
      */
     void startHandoverResponse(in RadioResponseInfo info);

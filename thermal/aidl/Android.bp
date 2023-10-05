@@ -36,4 +36,12 @@ aidl_interface {
             platform_apis: true,
         },
     },
+    versions_with_info: [
+        {
+            version: "1",
+            imports: [],
+        },
+    ],
+    frozen: true,
+
 }

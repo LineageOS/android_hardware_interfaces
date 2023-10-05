@@ -60,7 +60,8 @@ ScopedAStatus Gnss::setCallback(const std::shared_ptr<IGnssCallback>& callback) 
                   IGnssCallback::CAPABILITY_SATELLITE_BLOCKLIST |
                   IGnssCallback::CAPABILITY_SATELLITE_PVT |
                   IGnssCallback::CAPABILITY_CORRELATION_VECTOR |
-                  IGnssCallback::CAPABILITY_ANTENNA_INFO);
+                  IGnssCallback::CAPABILITY_ANTENNA_INFO |
+                  IGnssCallback::CAPABILITY_ACCUMULATED_DELTA_RANGE);
     auto status = sGnssCallback->gnssSetCapabilitiesCb(capabilities);
     if (!status.isOk()) {
         ALOGE("%s: Unable to invoke callback.gnssSetCapabilitiesCb", __func__);
@@ -68,13 +69,27 @@ ScopedAStatus Gnss::setCallback(const std::shared_ptr<IGnssCallback>& callback) 
 
     IGnssCallback::GnssSystemInfo systemInfo = {
             .yearOfHw = 2022,
-            .name = "Google, Cuttlefish, AIDL v2",
+            .name = "Google, Cuttlefish, AIDL v3",
     };
     status = sGnssCallback->gnssSetSystemInfoCb(systemInfo);
     if (!status.isOk()) {
         ALOGE("%s: Unable to invoke callback.gnssSetSystemInfoCb", __func__);
     }
-
+    GnssSignalType signalType1 = {
+            .constellation = GnssConstellationType::GPS,
+            .carrierFrequencyHz = 1.57542e+09,
+            .codeType = GnssSignalType::CODE_TYPE_C,
+    };
+    GnssSignalType signalType2 = {
+            .constellation = GnssConstellationType::GLONASS,
+            .carrierFrequencyHz = 1.5980625e+09,
+            .codeType = GnssSignalType::CODE_TYPE_C,
+    };
+    status = sGnssCallback->gnssSetSignalTypeCapabilitiesCb(
+            std::vector<GnssSignalType>({signalType1, signalType2}));
+    if (!status.isOk()) {
+        ALOGE("%s: Unable to invoke callback.gnssSetSignalTypeCapabilitiesCb", __func__);
+    }
     return ScopedAStatus::ok();
 }
 
@@ -310,6 +325,7 @@ ScopedAStatus Gnss::getExtensionGnssMeasurement(
     ALOGD("getExtensionGnssMeasurement");
     if (mGnssMeasurementInterface == nullptr) {
         mGnssMeasurementInterface = SharedRefBase::make<GnssMeasurementInterface>();
+        mGnssMeasurementInterface->setGnssInterface(static_cast<std::shared_ptr<Gnss>>(this));
     }
     *iGnssMeasurement = mGnssMeasurementInterface;
     return ScopedAStatus::ok();

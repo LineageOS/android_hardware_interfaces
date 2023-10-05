@@ -206,6 +206,39 @@ class SupplicantStaIfaceCallback : public BnSupplicantStaIfaceCallback {
                                       QosPolicyData /* qosPolicyData */>&) override {
         return ndk::ScopedAStatus::ok();
     }
+    ::ndk::ScopedAStatus onSupplicantStateChanged(
+            const ::aidl::android::hardware::wifi::supplicant::
+                    SupplicantStateChangeData& /* stateChangeData */) override {
+        return ndk::ScopedAStatus::ok();
+    }
+    ::ndk::ScopedAStatus onMloLinksInfoChanged(
+            ::aidl::android::hardware::wifi::supplicant::ISupplicantStaIfaceCallback::
+                    MloLinkInfoChangeReason /* reason */) override {
+        return ndk::ScopedAStatus::ok();
+    }
+    ::ndk::ScopedAStatus onDppConfigReceived(
+            const ::aidl::android::hardware::wifi::supplicant::
+                    DppConfigurationData& /* configData */) override {
+        return ndk::ScopedAStatus::ok();
+    }
+    ::ndk::ScopedAStatus onDppConnectionStatusResultSent(
+            ::aidl::android::hardware::wifi::supplicant::DppStatusErrorCode /* code */) override {
+        return ndk::ScopedAStatus::ok();
+    }
+    ::ndk::ScopedAStatus onBssFrequencyChanged(int32_t /* frequencyMhz */) override {
+        return ndk::ScopedAStatus::ok();
+    }
+    ::ndk::ScopedAStatus onQosPolicyResponseForScs(
+            const std::vector<::aidl::android::hardware::wifi::supplicant::
+                                      QosPolicyScsResponseStatus>& /* qosPolicyScsResponseStatus */)
+            override {
+        return ndk::ScopedAStatus::ok();
+    }
+    ::ndk::ScopedAStatus onPmkSaCacheAdded(
+            const ::aidl::android::hardware::wifi::supplicant::PmkSaCacheData& /* pmkSaData */)
+            override {
+        return ndk::ScopedAStatus::ok();
+    }
 };
 
 class SupplicantStaIfaceAidlTest : public testing::TestWithParam<std::string> {

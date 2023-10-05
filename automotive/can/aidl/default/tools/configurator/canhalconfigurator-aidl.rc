@@ -1,0 +1,3 @@
+service canhalconfigurator /system_ext/bin/canhalconfigurator-aidl
+  class core
+  oneshot

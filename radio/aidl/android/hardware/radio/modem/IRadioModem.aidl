@@ -67,6 +67,7 @@ oneway interface IRadioModem {
      * @param serial Serial number of request.
      *
      * Response function is IRadioModemResponse.getDeviceIdentityResponse()
+     * @deprecated use getImei(int serial)
      */
     void getDeviceIdentity(in int serial);
 
@@ -117,6 +118,8 @@ oneway interface IRadioModem {
      * @param itemId NvItem
      *
      * Response function is IRadioModemResponse.nvReadItemResponse()
+     *
+     * @deprecated NV APIs are deprecated starting from Android U.
      */
     void nvReadItem(in int serial, in NvItem itemId);
 
@@ -128,6 +131,8 @@ oneway interface IRadioModem {
      * @param resetType ResetNvType
      *
      * Response function is IRadioModemResponse.nvResetConfigResponse()
+     *
+     * Note: This will be deprecated in favor of a rebootModem API in Android U.
      */
     void nvResetConfig(in int serial, in ResetNvType resetType);
 
@@ -139,6 +144,8 @@ oneway interface IRadioModem {
      * @param prl PRL as a byte array
      *
      * Response function is IRadioModemResponse.nvWriteCdmaPrlResponse()
+     *
+     * @deprecated NV APIs are deprecated starting from Android U.
      */
     void nvWriteCdmaPrl(in int serial, in byte[] prl);
 
@@ -150,6 +157,8 @@ oneway interface IRadioModem {
      * @param item NvWriteItem
      *
      * Response function is IRadioModemResponse.nvWriteItemResponse()
+     *
+     * @deprecated NV APIs are deprecated starting from Android U.
      */
     void nvWriteItem(in int serial, in NvWriteItem item);
 
@@ -227,4 +236,13 @@ oneway interface IRadioModem {
      */
     void setResponseFunctions(in IRadioModemResponse radioModemResponse,
             in IRadioModemIndication radioModemIndication);
+
+    /**
+     * Request the IMEI associated with the radio.
+     *
+     * @param serial : Serial number of request.
+     *
+     * Response function is IRadioModemResponse.getImeiResponse()
+     */
+     void getImei(in int serial);
 }

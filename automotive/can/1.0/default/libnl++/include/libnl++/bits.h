@@ -36,11 +36,19 @@ constexpr size_t align(size_t len) {
 }
 
 /**
+ * Equivalent to NLMSG_LENGTH(len).
+ */
+template <typename H>
+constexpr size_t length(size_t len) {
+    return align(sizeof(H)) + len;
+}
+
+/**
  * Equivalent to NLMSG_SPACE(len).
  */
 template <typename H>
 constexpr size_t space(size_t len) {
-    return align(align(sizeof(H)) + len);
+    return align(length<H>(len));
 }
 
 /**

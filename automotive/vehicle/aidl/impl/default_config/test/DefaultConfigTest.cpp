@@ -14,27 +14,75 @@
  * limitations under the License.
  */
 
-#include <DefaultConfig.h>
+#include <JsonConfigLoader.h>
 #include <VehicleUtils.h>
+#include <android-base/file.h>
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <fstream>
+#include <unordered_map>
 
 namespace android {
 namespace hardware {
 namespace automotive {
 namespace vehicle {
-namespace defaultconfig {
 
 namespace test {
 
-TEST(DefaultConfigTest, loadDefaultConfigs) {
-    for (ConfigDeclaration config : getDefaultConfigs()) {
-        ASSERT_NE(0, config.config.prop);
-    }
+using ::android::base::Error;
+using ::android::base::Result;
+using ::testing::UnorderedElementsAreArray;
+
+constexpr char kDefaultPropertiesConfigFile[] = "DefaultProperties.json";
+
+#ifdef ENABLE_VEHICLE_HAL_TEST_PROPERTIES
+constexpr char kTestPropertiesConfigFile[] = "TestProperties.json";
+constexpr char kVendorClusterTestPropertiesConfigFile[] = "VendorClusterTestProperties.json";
+#endif  // ENABLE_VEHICLE_HAL_TEST_PROPERTIES
+
+std::string getTestFilePath(const char* filename) {
+    static std::string baseDir = android::base::GetExecutableDirectory();
+    return baseDir + "/" + filename;
 }
+
+Result<std::unordered_map<int32_t, ConfigDeclaration>> loadConfig(JsonConfigLoader& loader,
+                                                                  const char* path) {
+    std::string configPath = getTestFilePath(path);
+    std::ifstream ifs(configPath.c_str());
+    if (!ifs) {
+        return Error() << "couldn't open %s for parsing." << configPath;
+    }
+
+    return loader.loadPropConfig(ifs);
+}
+
+TEST(DefaultConfigTest, TestloadDefaultProperties) {
+    JsonConfigLoader loader;
+    auto result = loadConfig(loader, kDefaultPropertiesConfigFile);
+
+    ASSERT_TRUE(result.ok()) << result.error().message();
+}
+
+#ifdef ENABLE_VEHICLE_HAL_TEST_PROPERTIES
+
+TEST(DefaultConfigTest, TestloadTestProperties) {
+    JsonConfigLoader loader;
+    auto result = loadConfig(loader, kTestPropertiesConfigFile);
+
+    ASSERT_TRUE(result.ok()) << result.error().message();
+}
+
+TEST(DefaultConfigTest, TestloadVendorClusterTestProperties) {
+    JsonConfigLoader loader;
+    auto result = loadConfig(loader, kVendorClusterTestPropertiesConfigFile);
+
+    ASSERT_TRUE(result.ok()) << result.error().message();
+}
+
+#endif  // ENABLE_VEHICLE_HAL_TEST_PROPERTIES
 
 }  // namespace test
 
-}  // namespace defaultconfig
 }  // namespace vehicle
 }  // namespace automotive
 }  // namespace hardware

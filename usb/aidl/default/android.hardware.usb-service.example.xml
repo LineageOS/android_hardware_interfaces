@@ -1,7 +1,7 @@
 <manifest version="1.0" type="device">
     <hal format="aidl">
         <name>android.hardware.usb</name>
-        <version>1</version>
+        <version>2</version>
         <interface>
             <name>IUsb</name>
             <instance>default</instance>

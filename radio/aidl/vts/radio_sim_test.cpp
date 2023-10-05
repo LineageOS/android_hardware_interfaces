@@ -16,7 +16,6 @@
 
 #include <aidl/android/hardware/radio/RadioConst.h>
 #include <aidl/android/hardware/radio/config/IRadioConfig.h>
-#include <android-base/logging.h>
 #include <android/binder_manager.h>
 
 #include "radio_sim_utils.h"
@@ -24,6 +23,7 @@
 #define ASSERT_OK(ret) ASSERT_TRUE(ret.isOk())
 
 void RadioSimTest::SetUp() {
+    RadioServiceTest::SetUp();
     std::string serviceName = GetParam();
 
     if (!isServiceValidForDeviceConfiguration(serviceName)) {
@@ -37,8 +37,6 @@ void RadioSimTest::SetUp() {
 
     radioRsp_sim = ndk::SharedRefBase::make<RadioSimResponse>(*this);
     ASSERT_NE(nullptr, radioRsp_sim.get());
-
-    count_ = 0;
 
     radioInd_sim = ndk::SharedRefBase::make<RadioSimIndication>(*this);
     ASSERT_NE(nullptr, radioInd_sim.get());
@@ -481,19 +479,16 @@ TEST_P(RadioSimTest, setAllowedCarriers) {
  * Test IRadioSim.getIccCardStatus() for the response returned.
  */
 TEST_P(RadioSimTest, getIccCardStatus) {
-    LOG(DEBUG) << "getIccCardStatus";
     EXPECT_LE(cardStatus.applications.size(), RadioConst::CARD_MAX_APPS);
     EXPECT_LT(cardStatus.gsmUmtsSubscriptionAppIndex, RadioConst::CARD_MAX_APPS);
     EXPECT_LT(cardStatus.cdmaSubscriptionAppIndex, RadioConst::CARD_MAX_APPS);
     EXPECT_LT(cardStatus.imsSubscriptionAppIndex, RadioConst::CARD_MAX_APPS);
-    LOG(DEBUG) << "getIccCardStatus finished";
 }
 
 /*
  * Test IRadioSim.supplyIccPinForApp() for the response returned
  */
 TEST_P(RadioSimTest, supplyIccPinForApp) {
-    LOG(DEBUG) << "supplyIccPinForApp";
     serial = GetRandomSerialNumber();
 
     // Pass wrong password and check PASSWORD_INCORRECT returned for 3GPP and
@@ -513,14 +508,12 @@ TEST_P(RadioSimTest, supplyIccPinForApp) {
                     {RadioError::PASSWORD_INCORRECT, RadioError::REQUEST_NOT_SUPPORTED}));
         }
     }
-    LOG(DEBUG) << "supplyIccPinForApp finished";
 }
 
 /*
  * Test IRadioSim.supplyIccPukForApp() for the response returned.
  */
 TEST_P(RadioSimTest, supplyIccPukForApp) {
-    LOG(DEBUG) << "supplyIccPukForApp";
     serial = GetRandomSerialNumber();
 
     // Pass wrong password and check PASSWORD_INCORRECT returned for 3GPP and
@@ -540,14 +533,12 @@ TEST_P(RadioSimTest, supplyIccPukForApp) {
                     {RadioError::PASSWORD_INCORRECT, RadioError::INVALID_SIM_STATE}));
         }
     }
-    LOG(DEBUG) << "supplyIccPukForApp finished";
 }
 
 /*
  * Test IRadioSim.supplyIccPin2ForApp() for the response returned.
  */
 TEST_P(RadioSimTest, supplyIccPin2ForApp) {
-    LOG(DEBUG) << "supplyIccPin2ForApp";
     serial = GetRandomSerialNumber();
 
     // Pass wrong password and check PASSWORD_INCORRECT returned for 3GPP and
@@ -568,14 +559,12 @@ TEST_P(RadioSimTest, supplyIccPin2ForApp) {
                                       RadioError::REQUEST_NOT_SUPPORTED, RadioError::SIM_PUK2}));
         }
     }
-    LOG(DEBUG) << "supplyIccPin2ForApp finished";
 }
 
 /*
  * Test IRadioSim.supplyIccPuk2ForApp() for the response returned.
  */
 TEST_P(RadioSimTest, supplyIccPuk2ForApp) {
-    LOG(DEBUG) << "supplyIccPuk2ForApp";
     serial = GetRandomSerialNumber();
 
     // Pass wrong password and check PASSWORD_INCORRECT returned for 3GPP and
@@ -595,14 +584,12 @@ TEST_P(RadioSimTest, supplyIccPuk2ForApp) {
                     {RadioError::PASSWORD_INCORRECT, RadioError::INVALID_SIM_STATE}));
         }
     }
-    LOG(DEBUG) << "supplyIccPuk2ForApp finished";
 }
 
 /*
  * Test IRadioSim.changeIccPinForApp() for the response returned.
  */
 TEST_P(RadioSimTest, changeIccPinForApp) {
-    LOG(DEBUG) << "changeIccPinForApp";
     serial = GetRandomSerialNumber();
 
     // Pass wrong password and check PASSWORD_INCORRECT returned for 3GPP and
@@ -622,14 +609,12 @@ TEST_P(RadioSimTest, changeIccPinForApp) {
                     {RadioError::PASSWORD_INCORRECT, RadioError::REQUEST_NOT_SUPPORTED}));
         }
     }
-    LOG(DEBUG) << "changeIccPinForApp finished";
 }
 
 /*
  * Test IRadioSim.changeIccPin2ForApp() for the response returned.
  */
 TEST_P(RadioSimTest, changeIccPin2ForApp) {
-    LOG(DEBUG) << "changeIccPin2ForApp";
     serial = GetRandomSerialNumber();
 
     // Pass wrong password and check PASSWORD_INCORRECT returned for 3GPP and
@@ -650,14 +635,12 @@ TEST_P(RadioSimTest, changeIccPin2ForApp) {
                                       RadioError::REQUEST_NOT_SUPPORTED, RadioError::SIM_PUK2}));
         }
     }
-    LOG(DEBUG) << "changeIccPin2ForApp finished";
 }
 
 /*
  * Test IRadioSim.getImsiForApp() for the response returned.
  */
 TEST_P(RadioSimTest, getImsiForApp) {
-    LOG(DEBUG) << "getImsiForApp";
     serial = GetRandomSerialNumber();
 
     // Check success returned while getting imsi for 3GPP and 3GPP2 apps only
@@ -681,14 +664,12 @@ TEST_P(RadioSimTest, getImsiForApp) {
             }
         }
     }
-    LOG(DEBUG) << "getImsiForApp finished";
 }
 
 /*
  * Test IRadioSim.iccIoForApp() for the response returned.
  */
 TEST_P(RadioSimTest, iccIoForApp) {
-    LOG(DEBUG) << "iccIoForApp";
     serial = GetRandomSerialNumber();
 
     for (int i = 0; i < (int)cardStatus.applications.size(); i++) {
@@ -708,14 +689,12 @@ TEST_P(RadioSimTest, iccIoForApp) {
         EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_sim->rspInfo.type);
         EXPECT_EQ(serial, radioRsp_sim->rspInfo.serial);
     }
-    LOG(DEBUG) << "iccIoForApp finished";
 }
 
 /*
  * Test IRadioSim.iccTransmitApduBasicChannel() for the response returned.
  */
 TEST_P(RadioSimTest, iccTransmitApduBasicChannel) {
-    LOG(DEBUG) << "iccTransmitApduBasicChannel";
     serial = GetRandomSerialNumber();
     SimApdu msg;
     memset(&msg, 0, sizeof(msg));
@@ -725,14 +704,12 @@ TEST_P(RadioSimTest, iccTransmitApduBasicChannel) {
     EXPECT_EQ(std::cv_status::no_timeout, wait());
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_sim->rspInfo.type);
     EXPECT_EQ(serial, radioRsp_sim->rspInfo.serial);
-    LOG(DEBUG) << "iccTransmitApduBasicChannel finished";
 }
 
 /*
  * Test IRadioSim.iccOpenLogicalChannel() for the response returned.
  */
 TEST_P(RadioSimTest, iccOpenLogicalChannel) {
-    LOG(DEBUG) << "iccOpenLogicalChannel";
     serial = GetRandomSerialNumber();
     int p2 = 0x04;
     // Specified in ISO 7816-4 clause 7.1.1 0x04 means that FCP template is requested.
@@ -742,14 +719,12 @@ TEST_P(RadioSimTest, iccOpenLogicalChannel) {
         EXPECT_EQ(serial, radioRsp_sim->rspInfo.serial);
         EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_sim->rspInfo.type);
     }
-    LOG(DEBUG) << "iccOpenLogicalChannel finished";
 }
 
 /*
  * Test IRadioSim.iccCloseLogicalChannel() for the response returned.
  */
 TEST_P(RadioSimTest, iccCloseLogicalChannel) {
-    LOG(DEBUG) << "iccCloseLogicalChannel";
     serial = GetRandomSerialNumber();
     // Try closing invalid channel and check INVALID_ARGUMENTS returned as error
     radio_sim->iccCloseLogicalChannel(serial, 0);
@@ -758,14 +733,39 @@ TEST_P(RadioSimTest, iccCloseLogicalChannel) {
     EXPECT_EQ(serial, radioRsp_sim->rspInfo.serial);
 
     EXPECT_EQ(RadioError::INVALID_ARGUMENTS, radioRsp_sim->rspInfo.error);
-    LOG(DEBUG) << "iccCloseLogicalChannel finished";
+}
+
+/*
+ * Test IRadioSim.iccCloseLogicalChannelWithSessionInfo() for the response returned.
+ */
+TEST_P(RadioSimTest, iccCloseLogicalChannelWithSessionInfo) {
+    int32_t aidl_version;
+    ndk::ScopedAStatus aidl_status = radio_sim->getInterfaceVersion(&aidl_version);
+    ASSERT_OK(aidl_status);
+    if (aidl_version < 2) {
+        ALOGI("Skipped the test since"
+              " iccCloseLogicalChannelWithSessionInfo is not supported on version < 2");
+        GTEST_SKIP();
+    }
+    serial = GetRandomSerialNumber();
+    SessionInfo info;
+    memset(&info, 0, sizeof(info));
+    info.sessionId = 0;
+    info.isEs10 = false;
+
+    // Try closing invalid channel and check INVALID_ARGUMENTS returned as error
+    radio_sim->iccCloseLogicalChannelWithSessionInfo(serial, info);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_sim->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_sim->rspInfo.serial);
+
+    EXPECT_EQ(RadioError::INVALID_ARGUMENTS, radioRsp_sim->rspInfo.error);
 }
 
 /*
  * Test IRadioSim.iccTransmitApduLogicalChannel() for the response returned.
  */
 TEST_P(RadioSimTest, iccTransmitApduLogicalChannel) {
-    LOG(DEBUG) << "iccTransmitApduLogicalChannel";
     serial = GetRandomSerialNumber();
     SimApdu msg;
     memset(&msg, 0, sizeof(msg));
@@ -775,14 +775,12 @@ TEST_P(RadioSimTest, iccTransmitApduLogicalChannel) {
     EXPECT_EQ(std::cv_status::no_timeout, wait());
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_sim->rspInfo.type);
     EXPECT_EQ(serial, radioRsp_sim->rspInfo.serial);
-    LOG(DEBUG) << "iccTransmitApduLogicalChannel finished";
 }
 
 /*
  * Test IRadioSim.requestIccSimAuthentication() for the response returned.
  */
 TEST_P(RadioSimTest, requestIccSimAuthentication) {
-    LOG(DEBUG) << "requestIccSimAuthentication";
     serial = GetRandomSerialNumber();
 
     // Pass wrong challenge string and check RadioError::INVALID_ARGUMENTS
@@ -797,7 +795,6 @@ TEST_P(RadioSimTest, requestIccSimAuthentication) {
                 radioRsp_sim->rspInfo.error,
                 {RadioError::INVALID_ARGUMENTS, RadioError::REQUEST_NOT_SUPPORTED}));
     }
-    LOG(DEBUG) << "requestIccSimAuthentication finished";
 }
 
 /*
@@ -851,7 +848,6 @@ TEST_P(RadioSimTest, setFacilityLockForApp) {
  * Test IRadioSim.getCdmaSubscription() for the response returned.
  */
 TEST_P(RadioSimTest, getCdmaSubscription) {
-    LOG(DEBUG) << "getCdmaSubscription";
     serial = GetRandomSerialNumber();
 
     radio_sim->getCdmaSubscription(serial);
@@ -864,14 +860,12 @@ TEST_P(RadioSimTest, getCdmaSubscription) {
                 radioRsp_sim->rspInfo.error,
                 {RadioError::NONE, RadioError::REQUEST_NOT_SUPPORTED, RadioError::SIM_ABSENT}));
     }
-    LOG(DEBUG) << "getCdmaSubscription finished";
 }
 
 /*
  * Test IRadioSim.getCdmaSubscriptionSource() for the response returned.
  */
 TEST_P(RadioSimTest, getCdmaSubscriptionSource) {
-    LOG(DEBUG) << "getCdmaSubscriptionSource";
     serial = GetRandomSerialNumber();
 
     radio_sim->getCdmaSubscriptionSource(serial);
@@ -884,14 +878,12 @@ TEST_P(RadioSimTest, getCdmaSubscriptionSource) {
                 radioRsp_sim->rspInfo.error,
                 {RadioError::NONE, RadioError::REQUEST_NOT_SUPPORTED, RadioError::SIM_ABSENT}));
     }
-    LOG(DEBUG) << "getCdmaSubscriptionSource finished";
 }
 
 /*
  * Test IRadioSim.setCdmaSubscriptionSource() for the response returned.
  */
 TEST_P(RadioSimTest, setCdmaSubscriptionSource) {
-    LOG(DEBUG) << "setCdmaSubscriptionSource";
     serial = GetRandomSerialNumber();
 
     radio_sim->setCdmaSubscriptionSource(serial, CdmaSubscriptionSource::RUIM_SIM);
@@ -905,14 +897,12 @@ TEST_P(RadioSimTest, setCdmaSubscriptionSource) {
                 {RadioError::NONE, RadioError::SIM_ABSENT, RadioError::SUBSCRIPTION_NOT_AVAILABLE},
                 CHECK_GENERAL_ERROR));
     }
-    LOG(DEBUG) << "setCdmaSubscriptionSource finished";
 }
 
 /*
  * Test IRadioSim.setUiccSubscription() for the response returned.
  */
 TEST_P(RadioSimTest, setUiccSubscription) {
-    LOG(DEBUG) << "setUiccSubscription";
     serial = GetRandomSerialNumber();
     SelectUiccSub item;
     memset(&item, 0, sizeof(item));
@@ -929,14 +919,12 @@ TEST_P(RadioSimTest, setUiccSubscription) {
                                   RadioError::MODEM_ERR, RadioError::SUBSCRIPTION_NOT_SUPPORTED},
                                  CHECK_GENERAL_ERROR));
     }
-    LOG(DEBUG) << "setUiccSubscription finished";
 }
 
 /*
  * Test IRadioSim.sendEnvelope() for the response returned.
  */
 TEST_P(RadioSimTest, sendEnvelope) {
-    LOG(DEBUG) << "sendEnvelope";
     serial = GetRandomSerialNumber();
 
     // Test with sending empty string
@@ -954,14 +942,12 @@ TEST_P(RadioSimTest, sendEnvelope) {
                                       RadioError::MODEM_ERR, RadioError::SIM_ABSENT},
                                      CHECK_GENERAL_ERROR));
     }
-    LOG(DEBUG) << "sendEnvelope finished";
 }
 
 /*
  * Test IRadioSim.sendTerminalResponseToSim() for the response returned.
  */
 TEST_P(RadioSimTest, sendTerminalResponseToSim) {
-    LOG(DEBUG) << "sendTerminalResponseToSim";
     serial = GetRandomSerialNumber();
 
     // Test with sending empty string
@@ -979,14 +965,12 @@ TEST_P(RadioSimTest, sendTerminalResponseToSim) {
                 {RadioError::NONE, RadioError::INVALID_ARGUMENTS, RadioError::SIM_ABSENT},
                 CHECK_GENERAL_ERROR));
     }
-    LOG(DEBUG) << "sendTerminalResponseToSim finished";
 }
 
 /*
  * Test IRadioSim.reportStkServiceIsRunning() for the response returned.
  */
 TEST_P(RadioSimTest, reportStkServiceIsRunning) {
-    LOG(DEBUG) << "reportStkServiceIsRunning";
     serial = GetRandomSerialNumber();
 
     radio_sim->reportStkServiceIsRunning(serial);
@@ -999,7 +983,6 @@ TEST_P(RadioSimTest, reportStkServiceIsRunning) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_sim->rspInfo.error, {RadioError::NONE},
                                      CHECK_GENERAL_ERROR));
     }
-    LOG(DEBUG) << "reportStkServiceIsRunning finished";
 }
 
 /*
@@ -1007,7 +990,6 @@ TEST_P(RadioSimTest, reportStkServiceIsRunning) {
  * string.
  */
 TEST_P(RadioSimTest, sendEnvelopeWithStatus) {
-    LOG(DEBUG) << "sendEnvelopeWithStatus";
     serial = GetRandomSerialNumber();
 
     // Test with sending empty string
@@ -1025,5 +1007,4 @@ TEST_P(RadioSimTest, sendEnvelopeWithStatus) {
                 {RadioError::INVALID_ARGUMENTS, RadioError::MODEM_ERR, RadioError::SIM_ABSENT},
                 CHECK_GENERAL_ERROR));
     }
-    LOG(DEBUG) << "sendEnvelopeWithStatus finished";
 }

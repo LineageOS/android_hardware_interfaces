@@ -87,6 +87,10 @@ class CommandWriterBase : public V2_2::CommandWriterBase {
             return;
         }
 
+        if (metadata.size() == 0) {
+            return;
+        }
+
         // space for numElements
         commandLength += 1;
 

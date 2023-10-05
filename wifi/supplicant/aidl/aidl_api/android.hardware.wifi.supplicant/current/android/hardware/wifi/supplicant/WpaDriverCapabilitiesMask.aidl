@@ -39,4 +39,6 @@ enum WpaDriverCapabilitiesMask {
   SAE_PK = 4,
   WFD_R2 = 8,
   TRUST_ON_FIRST_USE = 16,
+  SET_TLS_MINIMUM_VERSION = 32,
+  TLS_V1_3 = 64,
 }

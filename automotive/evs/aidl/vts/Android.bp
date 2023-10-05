@@ -30,6 +30,7 @@ cc_test {
     ],
     defaults: [
         "VtsHalTargetTestDefaults",
+        "android.hardware.graphics.common-ndk_static",
         "use_libaidlvintf_gtest_helper_static",
     ],
     shared_libs: [
@@ -40,9 +41,8 @@ cc_test {
     ],
     static_libs: [
         "android.hardware.automotive.evs@common-default-lib",
-        "android.hardware.automotive.evs-V1-ndk",
+        "android.hardware.automotive.evs-V2-ndk",
         "android.hardware.common-V2-ndk",
-        "android.hardware.graphics.common-V4-ndk",
         "libaidlcommonsupport",
     ],
     test_suites: [

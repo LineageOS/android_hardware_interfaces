@@ -1,0 +1,209 @@
+{
+    "properties": [
+        {
+            "property": "Constants::kMixedTypePropertyForTest",
+            "defaultValue": {
+                "floatValues": [
+                    4.5
+                ],
+                "int32Values": [
+                    1,
+                    2,
+                    3
+                ],
+                "stringValue": "MIXED property"
+            },
+            "configArray": [
+                1,
+                1,
+                0,
+                2,
+                0,
+                0,
+                1,
+                0,
+                0
+            ],
+            "access": "VehiclePropertyAccess::READ_WRITE",
+            "changeMode": "VehiclePropertyChangeMode::ON_CHANGE"
+        },
+        {
+            "property": "Constants::VENDOR_EXTENSION_BOOLEAN_PROPERTY",
+            "areas": [
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            1
+                        ]
+                    },
+                    "areaId": "Constants::DOOR_1_LEFT"
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            1
+                        ]
+                    },
+                    "areaId": "Constants::DOOR_1_RIGHT"
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            0
+                        ]
+                    },
+                    "areaId": "Constants::DOOR_2_LEFT"
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            0
+                        ]
+                    },
+                    "areaId": "Constants::DOOR_2_RIGHT"
+                }
+            ],
+            "access": "VehiclePropertyAccess::READ_WRITE",
+            "changeMode": "VehiclePropertyChangeMode::ON_CHANGE"
+        },
+        {
+            "property": "Constants::VENDOR_EXTENSION_FLOAT_PROPERTY",
+            "areas": [
+                {
+                    "defaultValue": {
+                        "floatValues": [
+                            1.0
+                        ]
+                    },
+                    "areaId": "Constants::HVAC_LEFT",
+                    "minFloatValue": -10.0,
+                    "maxFloatValue": 10.0
+                },
+                {
+                    "defaultValue": {
+                        "floatValues": [
+                            2.0
+                        ]
+                    },
+                    "areaId": "Constants::HVAC_RIGHT",
+                    "minFloatValue": -10.0,
+                    "maxFloatValue": 10.0
+                }
+            ],
+            "access": "VehiclePropertyAccess::READ_WRITE",
+            "changeMode": "VehiclePropertyChangeMode::ON_CHANGE"
+        },
+        {
+            "property": "Constants::VENDOR_EXTENSION_INT_PROPERTY",
+            "areas": [
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            1
+                        ]
+                    },
+                    "areaId": "VehicleAreaWindow::FRONT_WINDSHIELD",
+                    "minInt32Value": -100,
+                    "maxInt32Value": 100
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            0
+                        ]
+                    },
+                    "areaId": "VehicleAreaWindow::REAR_WINDSHIELD",
+                    "minInt32Value": -100,
+                    "maxInt32Value": 100
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            -1
+                        ]
+                    },
+                    "areaId": "VehicleAreaWindow::ROOF_TOP_1",
+                    "minInt32Value": -100,
+                    "maxInt32Value": 100
+                }
+            ],
+            "access": "VehiclePropertyAccess::READ_WRITE",
+            "changeMode": "VehiclePropertyChangeMode::ON_CHANGE"
+        },
+        {
+            "property": "Constants::VENDOR_EXTENSION_STRING_PROPERTY",
+            "defaultValue": {
+                "stringValue": "Vendor String Property"
+            },
+            "access": "VehiclePropertyAccess::READ_WRITE",
+            "changeMode": "VehiclePropertyChangeMode::ON_CHANGE"
+        },
+        {
+            "property": "Constants::PLACEHOLDER_PROPERTY_INT",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            },
+            "access": "VehiclePropertyAccess::READ_WRITE",
+            "changeMode": "VehiclePropertyChangeMode::ON_CHANGE"
+        },
+        {
+            "property": "Constants::PLACEHOLDER_PROPERTY_FLOAT",
+            "defaultValue": {
+                "floatValues": [
+                    0.0
+                ]
+            },
+            "access": "VehiclePropertyAccess::READ_WRITE",
+            "changeMode": "VehiclePropertyChangeMode::ON_CHANGE"
+        },
+        {
+            "property": "Constants::PLACEHOLDER_PROPERTY_BOOLEAN",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            },
+            "access": "VehiclePropertyAccess::READ_WRITE",
+            "changeMode": "VehiclePropertyChangeMode::ON_CHANGE"
+        },
+        {
+            "property": "Constants::PLACEHOLDER_PROPERTY_STRING",
+            "defaultValue": {
+                "stringValue": "Test"
+            },
+            "access": "VehiclePropertyAccess::READ_WRITE",
+            "changeMode": "VehiclePropertyChangeMode::ON_CHANGE"
+        },
+        {
+            "property": "Constants::ECHO_REVERSE_BYTES",
+            "access": "VehiclePropertyAccess::READ_WRITE",
+            "changeMode": "VehiclePropertyChangeMode::ON_CHANGE"
+        },
+        {
+            "property": "Constants::VENDOR_PROPERTY_ID",
+            "access": "VehiclePropertyAccess::READ_WRITE",
+            "changeMode": "VehiclePropertyChangeMode::ON_CHANGE"
+        },
+        {
+            "property": "VehicleProperty::SUPPORT_CUSTOMIZE_VENDOR_PERMISSION",
+            "defaultValue": {
+                "int32Values": [
+                    1
+                ]
+            },
+            "configArray": [
+                "Constants::kMixedTypePropertyForTest",
+                "VehicleVendorPermission::PERMISSION_GET_VENDOR_CATEGORY_INFO",
+                "VehicleVendorPermission::PERMISSION_SET_VENDOR_CATEGORY_INFO",
+                "Constants::VENDOR_EXTENSION_INT_PROPERTY",
+                "VehicleVendorPermission::PERMISSION_GET_VENDOR_CATEGORY_SEAT",
+                "VehicleVendorPermission::PERMISSION_NOT_ACCESSIBLE",
+                "Constants::VENDOR_EXTENSION_FLOAT_PROPERTY",
+                "VehicleVendorPermission::PERMISSION_DEFAULT",
+                "VehicleVendorPermission::PERMISSION_DEFAULT"
+            ]
+        }
+    ]
+}

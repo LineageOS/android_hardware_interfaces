@@ -154,6 +154,14 @@ Dvr::~Dvr() {
     return ::ndk::ScopedAStatus::ok();
 }
 
+::ndk::ScopedAStatus Dvr::setStatusCheckIntervalHint(int64_t /* in_milliseconds */) {
+    ALOGV("%s", __FUNCTION__);
+
+    // There is no active polling in this default implementation,
+    // so directly return ok here.
+    return ::ndk::ScopedAStatus::ok();
+}
+
 bool Dvr::createDvrMQ() {
     ALOGV("%s", __FUNCTION__);
 
@@ -427,7 +435,7 @@ bool Dvr::startFilterDispatcher(bool isVirtualFrontend, bool isRecording) {
     map<int64_t, std::shared_ptr<IFilter>>::iterator it;
     // Handle the output data per filter type
     for (it = mFilters.begin(); it != mFilters.end(); it++) {
-        if (mDemux->startFilterHandler(it->first).isOk()) {
+        if (!mDemux->startFilterHandler(it->first).isOk()) {
             return false;
         }
     }

@@ -26,6 +26,7 @@ class RadioModem : public RadioCompatBase,
     ::ndk::ScopedAStatus enableModem(int32_t serial, bool on) override;
     ::ndk::ScopedAStatus getBasebandVersion(int32_t serial) override;
     ::ndk::ScopedAStatus getDeviceIdentity(int32_t serial) override;
+    ::ndk::ScopedAStatus getImei(int32_t serial) override;
     ::ndk::ScopedAStatus getHardwareConfig(int32_t serial) override;
     ::ndk::ScopedAStatus getModemActivityInfo(int32_t serial) override;
     ::ndk::ScopedAStatus getModemStackStatus(int32_t serial) override;

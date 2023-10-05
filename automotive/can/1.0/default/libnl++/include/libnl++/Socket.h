@@ -55,6 +55,12 @@ class Socket {
     Socket(int protocol, unsigned pid = 0, uint32_t groups = 0);
 
     /**
+     * Attempt to clear POLLERR by recv-ing.
+     * TODO(224850481): determine if this is necessary, or if the socket is locked up anyway.
+     */
+    void clearPollErr();
+
+    /**
      * Send Netlink message with incremented sequence number to the Kernel.
      *
      * \param msg Message to send. Its sequence number will be updated.

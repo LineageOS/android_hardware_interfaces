@@ -17,7 +17,6 @@
 package android.hardware.wifi;
 
 import android.hardware.wifi.WifiChannelWidthInMhz;
-import android.hardware.wifi.WifiIfaceMode;
 
 /**
  * Wifi usable channel information.
@@ -33,7 +32,8 @@ parcelable WifiUsableChannel {
      */
     WifiChannelWidthInMhz channelBandwidth;
     /**
-     * Iface modes feasible on this channel.
+     * Iface modes feasible on this channel, represented as a bitmask
+     * of |WifiIfaceMode| values.
      */
-    WifiIfaceMode ifaceModeMask;
+    int ifaceModeMask;
 }

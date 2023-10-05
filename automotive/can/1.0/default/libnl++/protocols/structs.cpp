@@ -22,24 +22,27 @@ namespace android::nl::protocols {
 
 AttributeDefinition::ToStream flagsToStream(FlagsMap flags) {
     return [flags](std::stringstream& ss, const Buffer<nlattr> attr) {
-        auto val = attr.data<uint64_t>().copyFirst();
+        auto value = attr.data<uint64_t>().copyFirst();
+        flagsToStream(ss, flags, value);
+    };
+}
 
-        bool first = true;
-        for (const auto& [flag, name] : flags) {
-            if ((val & flag) != flag) continue;
-            val &= ~flag;
-
-            if (!first) ss << '|';
-            first = false;
-
-            ss << name;
-        }
-
-        if (val == 0) return;
+void flagsToStream(std::stringstream& ss, const FlagsMap& flags, uint64_t val) {
+    bool first = true;
+    for (const auto& [flag, name] : flags) {
+        if ((val & flag) != flag) continue;
+        val &= ~flag;
 
         if (!first) ss << '|';
-        ss << std::hex << val << std::dec;
-    };
+        first = false;
+
+        ss << name;
+    }
+
+    if (val == 0) return;
+
+    if (!first) ss << '|';
+    ss << std::hex << val << std::dec;
 }
 
 void hwaddrToStream(std::stringstream& ss, const Buffer<nlattr> attr) {

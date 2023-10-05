@@ -16,10 +16,16 @@
 
 #include "Route.h"
 
+#include "Addr.h"
 #include "Link.h"
 
 namespace android::nl::protocols::route {
 
-Route::Route() : NetlinkProtocol(NETLINK_ROUTE, "ROUTE", {std::make_shared<Link>()}) {}
+// clang-format off
+Route::Route() : NetlinkProtocol(NETLINK_ROUTE, "ROUTE", {
+    std::make_shared<Addr>(),
+    std::make_shared<Link>(),
+}) {}
+// clang-format on
 
 }  // namespace android::nl::protocols::route

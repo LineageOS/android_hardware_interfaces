@@ -43,7 +43,15 @@ aidl_interface {
                 "android.media.audio.common.types-V2",
             ],
         },
+        {
+            version: "3",
+            imports: [
+                "android.hardware.audio.common-V1",
+                "android.media.audio.common.types-V2",
+            ],
+        },
 
     ],
+    frozen: true,
 
 }
