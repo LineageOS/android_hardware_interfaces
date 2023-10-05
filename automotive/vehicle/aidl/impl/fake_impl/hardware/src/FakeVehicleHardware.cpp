@@ -200,6 +200,11 @@ void FakeVehicleHardware::storePropInitialValue(const ConfigDeclaration& config)
     bool globalProp = isGlobalProp(propId);
     size_t numAreas = globalProp ? 1 : vehiclePropConfig.areaConfigs.size();
 
+    if (propId == toInt(VehicleProperty::HVAC_POWER_ON)) {
+        const auto& configArray = vehiclePropConfig.configArray;
+        hvacPowerDependentProps.insert(configArray.begin(), configArray.end());
+    }
+
     for (size_t i = 0; i < numAreas; i++) {
         int32_t curArea = globalProp ? 0 : vehiclePropConfig.areaConfigs[i].areaId;
 
@@ -511,9 +516,7 @@ VhalResult<void> FakeVehicleHardware::setHvacTemperatureValueSuggestion(
 }
 
 bool FakeVehicleHardware::isHvacPropAndHvacNotAvailable(int32_t propId, int32_t areaId) const {
-    std::unordered_set<int32_t> powerProps(std::begin(HVAC_POWER_PROPERTIES),
-                                           std::end(HVAC_POWER_PROPERTIES));
-    if (powerProps.count(propId)) {
+    if (hvacPowerDependentProps.count(propId)) {
         auto hvacPowerOnResults =
                 mServerSidePropStore->readValuesForProperty(toInt(VehicleProperty::HVAC_POWER_ON));
         if (!hvacPowerOnResults.ok()) {
@@ -731,9 +734,8 @@ FakeVehicleHardware::ValueResultType FakeVehicleHardware::getEchoReverseBytes(
     return std::move(gotValue);
 }
 
-void FakeVehicleHardware::sendHvacPropertiesCurrentValues(int32_t areaId) {
-    for (size_t i = 0; i < sizeof(HVAC_POWER_PROPERTIES) / sizeof(int32_t); i++) {
-        int powerPropId = HVAC_POWER_PROPERTIES[i];
+void FakeVehicleHardware::sendHvacPropertiesCurrentValues(int32_t areaId, int32_t hvacPowerOnVal) {
+    for (auto& powerPropId : hvacPowerDependentProps) {
         auto powerPropResults = mServerSidePropStore->readValuesForProperty(powerPropId);
         if (!powerPropResults.ok()) {
             ALOGW("failed to get power prop 0x%x, error: %s", powerPropId,
@@ -744,7 +746,8 @@ void FakeVehicleHardware::sendHvacPropertiesCurrentValues(int32_t areaId) {
         for (size_t j = 0; j < powerPropValues.size(); j++) {
             auto powerPropValue = std::move(powerPropValues[j]);
             if ((powerPropValue->areaId & areaId) == powerPropValue->areaId) {
-                powerPropValue->status = VehiclePropertyStatus::AVAILABLE;
+                powerPropValue->status = hvacPowerOnVal ? VehiclePropertyStatus::AVAILABLE
+                                                        : VehiclePropertyStatus::UNAVAILABLE;
                 powerPropValue->timestamp = elapsedRealtimeNano();
                 // This will trigger a property change event for the current hvac property value.
                 mServerSidePropStore->writeValue(std::move(powerPropValue), /*updateStatus=*/true,
@@ -796,13 +799,6 @@ VhalResult<void> FakeVehicleHardware::maybeSetSpecialValue(const VehiclePropValu
         return setUserHalProp(value);
     }
 
-    if (propId == toInt(VehicleProperty::HVAC_POWER_ON) && value.value.int32Values.size() == 1 &&
-        value.value.int32Values[0] == 1) {
-        // If we are turning HVAC power on, send current hvac property values through on change
-        // event.
-        sendHvacPropertiesCurrentValues(value.areaId);
-    }
-
     if (isHvacPropAndHvacNotAvailable(propId, value.areaId)) {
         *isSpecialValue = true;
         return StatusError(StatusCode::NOT_AVAILABLE_DISABLED) << "hvac not available";
@@ -841,6 +837,16 @@ VhalResult<void> FakeVehicleHardware::maybeSetSpecialValue(const VehiclePropValu
         case toInt(TestVendorProperty::VENDOR_PROPERTY_FOR_ERROR_CODE_TESTING):
             *isSpecialValue = true;
             return StatusError((StatusCode)VENDOR_ERROR_CODE);
+        case toInt(VehicleProperty::HVAC_POWER_ON):
+            if (value.value.int32Values.size() != 1) {
+                *isSpecialValue = true;
+                return StatusError(StatusCode::INVALID_ARG)
+                       << "HVAC_POWER_ON requires only one int32 value";
+            }
+            // When changing HVAC power state, send current hvac property values
+            // through on change event.
+            sendHvacPropertiesCurrentValues(value.areaId, value.value.int32Values[0]);
+            return {};
         case toInt(VehicleProperty::HVAC_TEMPERATURE_VALUE_SUGGESTION):
             *isSpecialValue = true;
             return setHvacTemperatureValueSuggestion(value);

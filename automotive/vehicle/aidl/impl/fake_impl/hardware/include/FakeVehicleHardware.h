@@ -36,6 +36,7 @@
 #include <memory>
 #include <mutex>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 namespace android {
@@ -161,6 +162,9 @@ class FakeVehicleHardware : public IVehicleHardware {
                                   aidl::android::hardware::automotive::vehicle::SetValueRequest>
             mPendingSetValueRequests;
 
+    // Set of HVAC properties dependent on HVAC_POWER_ON
+    std::unordered_set<int32_t> hvacPowerDependentProps;
+
     const bool mForceOverride;
     bool mAddExtraTestVendorConfigs;
 
@@ -253,7 +257,7 @@ class FakeVehicleHardware : public IVehicleHardware {
             const aidl::android::hardware::automotive::vehicle::SetValueRequest& request);
 
     std::string genFakeDataCommand(const std::vector<std::string>& options);
-    void sendHvacPropertiesCurrentValues(int32_t areaId);
+    void sendHvacPropertiesCurrentValues(int32_t areaId, int32_t hvacPowerOnVal);
     void sendAdasPropertiesState(int32_t propertyId, int32_t state);
     void generateVendorConfigs(
             std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropConfig>&) const;
