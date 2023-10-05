@@ -41,3 +41,8 @@ ndk::ScopedAStatus RadioModemIndication::radioStateChanged(RadioIndicationType /
 ndk::ScopedAStatus RadioModemIndication::rilConnected(RadioIndicationType /*type*/) {
     return ndk::ScopedAStatus::ok();
 }
+
+ndk::ScopedAStatus RadioModemIndication::onImeiMappingChanged(RadioIndicationType /*type*/,
+     const ::aidl::android::hardware::radio::modem::ImeiInfo& /*imeiInfo*/) {
+    return ndk::ScopedAStatus::ok();
+}

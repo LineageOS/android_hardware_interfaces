@@ -40,4 +40,5 @@ interface IRadioModemIndication {
   oneway void radioCapabilityIndication(in android.hardware.radio.RadioIndicationType type, in android.hardware.radio.modem.RadioCapability rc);
   oneway void radioStateChanged(in android.hardware.radio.RadioIndicationType type, in android.hardware.radio.modem.RadioState radioState);
   oneway void rilConnected(in android.hardware.radio.RadioIndicationType type);
+  oneway void onImeiMappingChanged(in android.hardware.radio.RadioIndicationType type, in android.hardware.radio.modem.ImeiInfo imeiInfo);
 }

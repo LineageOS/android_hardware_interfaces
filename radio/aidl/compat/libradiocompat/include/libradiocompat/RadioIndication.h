@@ -26,6 +26,7 @@
 #include <aidl/android/hardware/radio/sim/IRadioSimIndication.h>
 #include <aidl/android/hardware/radio/voice/IRadioVoiceIndication.h>
 #include <android/hardware/radio/1.6/IRadioIndication.h>
+#include <aidl/android/hardware/radio/modem/ImeiInfo.h>
 
 namespace android::hardware::radio::compat {
 
@@ -208,7 +209,8 @@ class RadioIndication : public V1_6::IRadioIndication {
     Return<void> simPhonebookRecordsReceived(
             V1_0::RadioIndicationType type, V1_6::PbReceivedStatus status,
             const hidl_vec<V1_6::PhonebookRecordInfo>& records) override;
-
+    Return<void> onImeiMappingChanged(V1_0::RadioIndicationType type,
+                                      ::aidl::android::hardware::radio::modem::ImeiInfo config);
   public:
     RadioIndication(std::shared_ptr<DriverContext> context);
 
