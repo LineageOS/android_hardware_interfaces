@@ -18,7 +18,7 @@
 
    Need ANDROID_BUILD_TOP environmental variable to be set. This script will update
    ChangeModeForVehicleProperty.h and AccessForVehicleProperty.h under generated_lib/cpp and
-   ChangeModeForVehicleProperty.java and AccessForVehicleProperty.java under generated_lib/java.
+   ChangeModeForVehicleProperty.java, AccessForVehicleProperty.java, EnumForVehicleProperty.java under generated_lib/java.
 
    Usage:
    $ python generate_annotation_enums.py
@@ -40,6 +40,8 @@ CHANGE_MODE_JAVA_FILE_PATH = ('hardware/interfaces/automotive/vehicle/aidl/gener
     'ChangeModeForVehicleProperty.java')
 ACCESS_JAVA_FILE_PATH = ('hardware/interfaces/automotive/vehicle/aidl/generated_lib/java/' +
     'AccessForVehicleProperty.java')
+ENUM_JAVA_FILE_PATH = ('hardware/interfaces/automotive/vehicle/aidl/generated_lib/java/' +
+                         'EnumForVehicleProperty.java')
 SCRIPT_PATH = 'hardware/interfaces/automotive/vehicle/tools/generate_annotation_enums.py'
 
 TAB = '    '
@@ -54,7 +56,7 @@ RE_UNIT = re.compile('\s*\* @unit (\S+)\s+')
 RE_VALUE = re.compile('\s*(\w+)\s*=(.*)')
 
 LICENSE = """/*
- * Copyright (C) 2022 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -167,6 +169,22 @@ ACCESS_JAVA_FOOTER = """
 }
 """
 
+ENUM_JAVA_HEADER = """package android.hardware.automotive.vehicle;
+
+import java.util.List;
+import java.util.Map;
+
+public final class EnumForVehicleProperty {
+
+    public static final Map<Integer, List<Class<?>>> values = Map.ofEntries(
+"""
+
+ENUM_JAVA_FOOTER = """
+    );
+
+}
+"""
+
 
 class PropertyConfig:
     """Represents one VHAL property definition in VehicleProperty.aidl."""
@@ -272,6 +290,11 @@ class FileParser:
                     annotation = "VehiclePropertyAccess::" + config.access_modes[0]
                 else:
                     annotation = "VehiclePropertyAccess." + config.access_modes[0]
+            elif field == 'enum_types':
+                if len(config.enum_types) < 1:
+                    continue;
+                if not cpp:
+                    annotation = "List.of(" + ', '.join([class_name + ".class" for class_name in config.enum_types]) + ")"
             else:
                 raise Exception('Unknown field: ' + field)
             if counter != 0:
@@ -348,7 +371,7 @@ def main():
     else:
         android_top = os.environ['ANDROID_BUILD_TOP']
     if not android_top:
-        print('ANDROID_BUILD_TOP is not in envorinmental variable, please run source and lunch ' +
+        print('ANDROID_BUILD_TOP is not in environmental variable, please run source and lunch ' +
             'at the android root')
 
     aidl_file = os.path.join(android_top, PROP_AIDL_FILE_PATH)
@@ -363,6 +386,7 @@ def main():
     access_cpp_file = os.path.join(android_top, ACCESS_CPP_FILE_PATH);
     change_mode_java_file = os.path.join(android_top, CHANGE_MODE_JAVA_FILE_PATH);
     access_java_file = os.path.join(android_top, ACCESS_JAVA_FILE_PATH);
+    enum_java_file = os.path.join(android_top, ENUM_JAVA_FILE_PATH);
     temp_files = []
 
     if not args.check_only:
@@ -370,6 +394,7 @@ def main():
         access_cpp_output = access_cpp_file
         change_mode_java_output = change_mode_java_file
         access_java_output = access_java_file
+        enum_java_output = enum_java_file
     else:
         change_mode_cpp_output = createTempFile()
         temp_files.append(change_mode_cpp_output)
@@ -379,6 +404,8 @@ def main():
         temp_files.append(change_mode_java_output)
         access_java_output = createTempFile()
         temp_files.append(access_java_output)
+        enum_java_output = createTempFile()
+        temp_files.append(enum_java_output)
 
     try:
         f.convert(change_mode_cpp_output, CHANGE_MODE_CPP_HEADER, CHANGE_MODE_CPP_FOOTER,
@@ -387,6 +414,7 @@ def main():
                 CHANGE_MODE_JAVA_FOOTER, False, 'change_mode')
         f.convert(access_cpp_output, ACCESS_CPP_HEADER, ACCESS_CPP_FOOTER, True, 'access_mode')
         f.convert(access_java_output, ACCESS_JAVA_HEADER, ACCESS_JAVA_FOOTER, False, 'access_mode')
+        f.convert(enum_java_output, ENUM_JAVA_HEADER, ENUM_JAVA_FOOTER, False, 'enum_types')
 
         if not args.check_only:
             return
@@ -394,7 +422,8 @@ def main():
         if ((not filecmp.cmp(change_mode_cpp_output, change_mode_cpp_file)) or
                 (not filecmp.cmp(change_mode_java_output, change_mode_java_file)) or
                 (not filecmp.cmp(access_cpp_output, access_cpp_file)) or
-                (not filecmp.cmp(access_java_output, access_java_file))):
+                (not filecmp.cmp(access_java_output, access_java_file)) or
+                (not filecmp.cmp(enum_java_output, enum_java_file))):
             print('The generated enum files for VehicleProperty.aidl requires update, ')
             print('Run \npython ' + android_top + '/' + SCRIPT_PATH)
             sys.exit(1)
