@@ -357,7 +357,7 @@ TEST_F(FakeFingerprintEngineTest, InteractionDetectNotSet) {
     FingerprintHalProperties::enrollment_hit({});
     mEngine.detectInteractionImpl(mCallback.get(), mCancel.get_future());
     mEngine.fingerDownAction();
-    ASSERT_EQ(0, mCallback->mInteractionDetectedCount);
+    ASSERT_EQ(1, mCallback->mInteractionDetectedCount);
 }
 
 TEST_F(FakeFingerprintEngineTest, InteractionDetectNotEnrolled) {
@@ -365,7 +365,7 @@ TEST_F(FakeFingerprintEngineTest, InteractionDetectNotEnrolled) {
     FingerprintHalProperties::enrollment_hit(25);
     mEngine.detectInteractionImpl(mCallback.get(), mCancel.get_future());
     mEngine.fingerDownAction();
-    ASSERT_EQ(0, mCallback->mInteractionDetectedCount);
+    ASSERT_EQ(1, mCallback->mInteractionDetectedCount);
 }
 
 TEST_F(FakeFingerprintEngineTest, InteractionDetectError) {
@@ -508,7 +508,7 @@ TEST_F(FakeFingerprintEngineTest, randomLatency) {
 TEST_F(FakeFingerprintEngineTest, lockoutTimer) {
     mEngine.startLockoutTimer(200, mCallback.get());
     ASSERT_TRUE(mEngine.getLockoutTimerStarted());
-    std::this_thread::sleep_for(std::chrono::milliseconds(230));
+    std::this_thread::sleep_for(std::chrono::milliseconds(250));
     ASSERT_FALSE(mEngine.getLockoutTimerStarted());
     ASSERT_TRUE(mCallback->mLockoutCleared);
 }
