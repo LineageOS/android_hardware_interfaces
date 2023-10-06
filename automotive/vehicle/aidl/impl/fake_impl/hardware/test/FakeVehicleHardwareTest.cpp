@@ -35,6 +35,7 @@
 #include <inttypes.h>
 #include <chrono>
 #include <condition_variable>
+#include <memory>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -78,7 +79,9 @@ using ::aidl::android::hardware::automotive::vehicle::VehicleAreaMirror;
 using ::aidl::android::hardware::automotive::vehicle::VehicleHwKeyInputAction;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropConfig;
 using ::aidl::android::hardware::automotive::vehicle::VehicleProperty;
+using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyAccess;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyStatus;
+using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropValue;
 using ::aidl::android::hardware::automotive::vehicle::VehicleUnit;
 using ::android::base::expected;
@@ -107,6 +110,10 @@ class FakeVehicleHardwareTestHelper {
 
     std::unordered_map<int32_t, ConfigDeclaration> loadConfigDeclarations() {
         return mHardware->loadConfigDeclarations();
+    }
+
+    std::unordered_set<int32_t> getHvacPowerDependentProps() {
+        return mHardware->hvacPowerDependentProps;
     }
 
   private:
@@ -389,6 +396,25 @@ class FakeVehicleHardwareTest : public ::testing::Test {
                    ((a.prop == b.prop) && (a.value == b.value) && (a.areaId < b.areaId));
         }
     } mPropValueCmp;
+
+    std::unique_ptr<VehiclePropConfig> getVehiclePropConfig(int32_t propertyId) {
+        auto configs = mHardware->getAllPropertyConfigs();
+        for (auto& config : configs) {
+            if (config.prop == propertyId) {
+                auto ptr = std::make_unique<VehiclePropConfig>();
+                ptr->prop = config.prop;
+                ptr->access = config.access;
+                ptr->changeMode = config.changeMode;
+                ptr->areaConfigs = config.areaConfigs;
+                ptr->configArray = config.configArray;
+                ptr->configString = config.configString;
+                ptr->minSampleRate = config.minSampleRate;
+                ptr->maxSampleRate = config.maxSampleRate;
+                return ptr;
+            }
+        }
+        return std::unique_ptr<VehiclePropConfig>(nullptr);
+    }
 
   private:
     std::unique_ptr<FakeVehicleHardware> mHardware;
@@ -1687,23 +1713,35 @@ TEST_F(FakeVehicleHardwareTest, testSetVehicleMapService) {
 }
 
 TEST_F(FakeVehicleHardwareTest, testGetHvacPropNotAvailable) {
-    int seatAreaIds[5] = {SEAT_1_LEFT, SEAT_1_RIGHT, SEAT_2_LEFT, SEAT_2_CENTER, SEAT_2_RIGHT};
-    for (int areaId : seatAreaIds) {
+    FakeVehicleHardwareTestHelper helper(getHardware());
+    auto hvacPowerOnConfig = std::move(getVehiclePropConfig(toInt(VehicleProperty::HVAC_POWER_ON)));
+    EXPECT_NE(hvacPowerOnConfig, nullptr);
+    for (auto& hvacPowerOnAreaConfig : hvacPowerOnConfig->areaConfigs) {
+        int hvacPowerAreaId = hvacPowerOnAreaConfig.areaId;
+        // Turn off HVAC_POWER_ON for only 1 area ID
         StatusCode status = setValue(VehiclePropValue{.prop = toInt(VehicleProperty::HVAC_POWER_ON),
-                                                      .areaId = areaId,
+                                                      .areaId = hvacPowerAreaId,
                                                       .value.int32Values = {0}});
+        EXPECT_EQ(status, StatusCode::OK);
 
-        ASSERT_EQ(status, StatusCode::OK);
-
-        for (size_t i = 0; i < sizeof(HVAC_POWER_PROPERTIES) / sizeof(int32_t); i++) {
-            int powerPropId = HVAC_POWER_PROPERTIES[i];
-            for (int powerDependentAreaId : seatAreaIds) {
+        for (auto& powerPropId : helper.getHvacPowerDependentProps()) {
+            auto powerPropConfig = std::move(getVehiclePropConfig(powerPropId));
+            EXPECT_NE(powerPropConfig, nullptr);
+            if (powerPropConfig->access == VehiclePropertyAccess::WRITE) {
+                continue;
+            }
+            // Try getting a value at each area ID supported by the power dependent property
+            for (auto& powerPropAreaConfig : powerPropConfig->areaConfigs) {
+                int powerDependentAreaId = powerPropAreaConfig.areaId;
                 auto getValueResult = getValue(VehiclePropValue{
                         .prop = powerPropId,
                         .areaId = powerDependentAreaId,
                 });
 
-                if (areaId == powerDependentAreaId) {
+                // If the current area ID is contained within the HVAC_POWER_ON area ID
+                // turned off, then getValue should fail and a StatusCode error should be
+                // returned. Otherwise, a value should be returned.
+                if ((hvacPowerAreaId & powerDependentAreaId) == powerDependentAreaId) {
                     EXPECT_FALSE(getValueResult.ok());
                     EXPECT_EQ(getValueResult.error(), StatusCode::NOT_AVAILABLE_DISABLED);
                 } else {
@@ -1716,28 +1754,45 @@ TEST_F(FakeVehicleHardwareTest, testGetHvacPropNotAvailable) {
         // on this value from any power dependent property values other than those with the same
         // areaId.
         setValue(VehiclePropValue{.prop = toInt(VehicleProperty::HVAC_POWER_ON),
-                                  .areaId = areaId,
+                                  .areaId = hvacPowerAreaId,
                                   .value.int32Values = {1}});
     }
 }
 
 TEST_F(FakeVehicleHardwareTest, testSetHvacPropNotAvailable) {
-    int seatAreaIds[5] = {SEAT_1_LEFT, SEAT_1_RIGHT, SEAT_2_LEFT, SEAT_2_CENTER, SEAT_2_RIGHT};
-    for (int areaId : seatAreaIds) {
+    FakeVehicleHardwareTestHelper helper(getHardware());
+    auto hvacPowerOnConfig = std::move(getVehiclePropConfig(toInt(VehicleProperty::HVAC_POWER_ON)));
+    EXPECT_NE(hvacPowerOnConfig, nullptr);
+    for (auto& hvacPowerOnAreaConfig : hvacPowerOnConfig->areaConfigs) {
+        int hvacPowerAreaId = hvacPowerOnAreaConfig.areaId;
+        // Turn off HVAC_POWER_ON for only 1 area ID
         StatusCode status = setValue(VehiclePropValue{.prop = toInt(VehicleProperty::HVAC_POWER_ON),
-                                                      .areaId = areaId,
+                                                      .areaId = hvacPowerAreaId,
                                                       .value.int32Values = {0}});
+        EXPECT_EQ(status, StatusCode::OK);
 
-        ASSERT_EQ(status, StatusCode::OK);
+        for (auto& powerPropId : helper.getHvacPowerDependentProps()) {
+            auto powerPropConfig = std::move(getVehiclePropConfig(powerPropId));
+            EXPECT_NE(powerPropConfig, nullptr);
+            if (powerPropConfig->access == VehiclePropertyAccess::READ) {
+                continue;
+            }
+            auto propType = getPropType(powerPropId);
+            // Try setting a value at each area ID supported by the power dependent property
+            for (auto& powerPropAreaConfig : powerPropConfig->areaConfigs) {
+                int powerDependentAreaId = powerPropAreaConfig.areaId;
+                auto val = VehiclePropValue{.prop = powerPropId, .areaId = powerDependentAreaId};
+                if (propType == VehiclePropertyType::FLOAT) {
+                    val.value.floatValues.emplace_back(20);
+                } else {
+                    val.value.int32Values.emplace_back(1);
+                }
+                status = setValue(val);
 
-        for (size_t i = 0; i < sizeof(HVAC_POWER_PROPERTIES) / sizeof(int32_t); i++) {
-            int powerPropId = HVAC_POWER_PROPERTIES[i];
-            for (int powerDependentAreaId : seatAreaIds) {
-                StatusCode status = setValue(VehiclePropValue{.prop = powerPropId,
-                                                              .areaId = powerDependentAreaId,
-                                                              .value.int32Values = {1}});
-
-                if (areaId == powerDependentAreaId) {
+                // If the current area ID is contained within the HVAC_POWER_ON area ID
+                // turned off, then setValue should fail and a StatusCode error should be
+                // returned. Otherwise, an ok StatusCode should be returned.
+                if ((hvacPowerAreaId & powerDependentAreaId) == powerDependentAreaId) {
                     EXPECT_EQ(status, StatusCode::NOT_AVAILABLE_DISABLED);
                 } else {
                     EXPECT_EQ(status, StatusCode::OK);
@@ -1749,38 +1804,48 @@ TEST_F(FakeVehicleHardwareTest, testSetHvacPropNotAvailable) {
         // on this value from any power dependent property values other than those with the same
         // areaId.
         setValue(VehiclePropValue{.prop = toInt(VehicleProperty::HVAC_POWER_ON),
-                                  .areaId = areaId,
+                                  .areaId = hvacPowerAreaId,
                                   .value.int32Values = {1}});
     }
 }
 
 TEST_F(FakeVehicleHardwareTest, testHvacPowerOnSendCurrentHvacPropValues) {
-    int seatAreaIds[5] = {SEAT_1_LEFT, SEAT_1_RIGHT, SEAT_2_LEFT, SEAT_2_CENTER, SEAT_2_RIGHT};
-    for (int areaId : seatAreaIds) {
+    FakeVehicleHardwareTestHelper helper(getHardware());
+    auto hvacPowerOnConfig = std::move(getVehiclePropConfig(toInt(VehicleProperty::HVAC_POWER_ON)));
+    EXPECT_NE(hvacPowerOnConfig, nullptr);
+    for (auto& hvacPowerOnAreaConfig : hvacPowerOnConfig->areaConfigs) {
+        int hvacPowerAreaId = hvacPowerOnAreaConfig.areaId;
         StatusCode status = setValue(VehiclePropValue{.prop = toInt(VehicleProperty::HVAC_POWER_ON),
-                                                      .areaId = areaId,
+                                                      .areaId = hvacPowerAreaId,
                                                       .value.int32Values = {0}});
-
-        ASSERT_EQ(status, StatusCode::OK);
-
-        clearChangedProperties();
-        setValue(VehiclePropValue{.prop = toInt(VehicleProperty::HVAC_POWER_ON),
-                                  .areaId = areaId,
-                                  .value.int32Values = {1}});
-
+        EXPECT_EQ(status, StatusCode::OK);
         auto events = getChangedProperties();
-        // If we turn HVAC power on, we expect to receive one property event for every HVAC prop
-        // areas plus one event for HVAC_POWER_ON.
-        std::vector<int32_t> changedPropIds;
-        for (size_t i = 0; i < sizeof(HVAC_POWER_PROPERTIES) / sizeof(int32_t); i++) {
-            changedPropIds.push_back(HVAC_POWER_PROPERTIES[i]);
-        }
-        changedPropIds.push_back(toInt(VehicleProperty::HVAC_POWER_ON));
-
         for (const auto& event : events) {
-            EXPECT_EQ(event.areaId, areaId);
-            EXPECT_THAT(event.prop, AnyOfArray(changedPropIds));
+            // Ignore HVAC_POWER_ON event
+            if (event.prop == toInt(VehicleProperty::HVAC_POWER_ON)) {
+                continue;
+            }
+            EXPECT_THAT(event.prop, AnyOfArray(helper.getHvacPowerDependentProps()));
+            EXPECT_EQ((hvacPowerAreaId & event.areaId), hvacPowerAreaId);
+            EXPECT_EQ(event.status, VehiclePropertyStatus::UNAVAILABLE);
         }
+        clearChangedProperties();
+
+        status = setValue(VehiclePropValue{.prop = toInt(VehicleProperty::HVAC_POWER_ON),
+                                           .areaId = hvacPowerAreaId,
+                                           .value.int32Values = {1}});
+        EXPECT_EQ(status, StatusCode::OK);
+        events = getChangedProperties();
+        for (const auto& event : events) {
+            // Ignore HVAC_POWER_ON event
+            if (event.prop == toInt(VehicleProperty::HVAC_POWER_ON)) {
+                continue;
+            }
+            EXPECT_THAT(event.prop, AnyOfArray(helper.getHvacPowerDependentProps()));
+            EXPECT_EQ((hvacPowerAreaId & event.areaId), hvacPowerAreaId);
+            EXPECT_EQ(event.status, VehiclePropertyStatus::AVAILABLE);
+        }
+        clearChangedProperties();
     }
 }
 
@@ -3016,13 +3081,8 @@ TEST_F(FakeVehicleHardwareTest, testSetHvacTemperatureValueSuggestion) {
 
     // Config array values from HVAC_TEMPERATURE_SET in DefaultProperties.json
     auto configs = getHardware()->getAllPropertyConfigs();
-    VehiclePropConfig* hvacTemperatureSetConfig = nullptr;
-    for (auto& config : configs) {
-        if (config.prop == toInt(VehicleProperty::HVAC_TEMPERATURE_SET)) {
-            hvacTemperatureSetConfig = &config;
-            break;
-        }
-    }
+    auto hvacTemperatureSetConfig =
+            std::move(getVehiclePropConfig(toInt(VehicleProperty::HVAC_TEMPERATURE_SET)));
     EXPECT_NE(hvacTemperatureSetConfig, nullptr);
 
     auto& hvacTemperatureSetConfigArray = hvacTemperatureSetConfig->configArray;
