@@ -39,3 +39,7 @@ enum StatusCode {
     /* Something unexpected has happened in Vehicle HAL */
     INTERNAL_ERROR = 5;
 };
+
+message VehicleHalCallStatus {
+    StatusCode status_code = 1;
+}

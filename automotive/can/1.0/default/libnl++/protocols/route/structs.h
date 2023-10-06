@@ -19,6 +19,7 @@
 #include <libnl++/Buffer.h>
 
 #include <linux/rtnetlink.h>
+#include <sys/socket.h>
 
 #include <sstream>
 
@@ -29,6 +30,8 @@ void mapToStream(std::stringstream& ss, const Buffer<nlattr> attr);
 
 // ifla_cacheinfo
 void ifla_cacheinfoToStream(std::stringstream& ss, const Buffer<nlattr> attr);
+
+std::string familyToString(sa_family_t family);
 
 // rtnl_link_stats or rtnl_link_stats64
 template <typename T>

@@ -63,4 +63,8 @@ enum SupplicantStatusCode {
      */
     FAILURE_NETWORK_UNKNOWN,
     FAILURE_UNSUPPORTED,
+    /**
+     * A different request is currently being processed.
+     */
+    FAILURE_ONGOING_REQUEST,
 }

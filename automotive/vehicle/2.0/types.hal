@@ -57,46 +57,25 @@ enum VehiclePropertyType : int32_t {
 };
 
 /**
- * Vehicle Areas
+ * List of different supported area types for vehicle properties.
  * Used to construct property IDs in the VehicleProperty enum.
  *
- * Some properties may be associated with particular vehicle areas. For
- * example, VehicleProperty:DOOR_LOCK property must be associated with
- * particular door, thus this property must be marked with
- * VehicleArea:DOOR flag.
+ * Some properties may be associated with particular areas in the vehicle. For example,
+ * VehicleProperty#DOOR_LOCK property must be associated with a particular door, thus this property
+ * must be of the VehicleArea#DOOR area type.
  *
- * Other properties may not be associated with particular vehicle area.
- * These kinds of properties must have VehicleArea:GLOBAL flag.
+ * Other properties may not be associated with a particular area in the vehicle. These kinds of
+ * properties must be of the VehicleArea#GLOBAL area type.
  *
- * [Definition] Area: An area represents a unique element of an AreaType.
- *   For instance, if AreaType is WINDOW, then an area may be FRONT_WINDSHIELD.
- *
- * [Definition] AreaID: An AreaID is a combination of one or more areas,
- *   and is represented using a bitmask of Area enums. Different AreaTypes may
- *   not be mixed in a single AreaID. For instance, a window area cannot be
- *   combined with a seat area in an AreaID.
- *
- * Rules for mapping a zoned property to AreaIDs:
- *  - A property must be mapped to an array of AreaIDs that are impacted when
- *    the property value changes.
- *  - Each element in the array must represent an AreaID, in which the
- *    property value can only be changed together in all the areas within
- *    the AreaID and never independently. That is, when the property value
- *    changes in one of the areas in an AreaID in the array, then it must
- *    automatically change in all other areas in the AreaID.
- *  - The property value must be independently controllable in any two
- *    different AreaIDs in the array.
- *  - An area must only appear once in the array of AreaIDs. That is, an
- *    area must only be part of a single AreaID in the array.
- *
- * [Definition] Global Property: A property that applies to the entire car
- *   and is not associated with a specific area. For example, FUEL_LEVEL,
- *   HVAC_STEERING_WHEEL_HEAT.
- *
- * Rules for mapping a global property to AreaIDs:
- *  - A global property must not be mapped to AreaIDs.
-*/
+ * Note: This is not the same as areaId used in VehicleAreaConfig. E.g. for a global property, the
+ * property ID is of the VehicleArea#GLOBAL area type, however, the area ID must be 0.
+ */
+// A better name would be VehicleAreaType
 enum VehicleArea : int32_t {
+    /**
+     * A global property is a property that applies to the entire vehicle and is not associated with
+     * a specific area. For example, FUEL_LEVEL, HVAC_STEERING_WHEEL_HEAT are global properties.
+     */
     GLOBAL      = 0x01000000,
     /** WINDOW maps to enum VehicleAreaWindow */
     WINDOW      = 0x03000000,
@@ -829,10 +808,10 @@ enum VehicleProperty : int32_t {
     /*
      * HVAC Properties
      *
-     * Additional rules for mapping a zoned HVAC property (except
-     * HVAC_MAX_DEFROST_ON) to AreaIDs:
-     *  - Every seat in VehicleAreaSeat that is available in the car, must be
-     *    part of an AreaID in the AreaID array.
+     * Additional rules for mapping non-GLOBAL VehicleArea type HVAC properties
+     * to AreaIDs:
+     *  - Every “area” for a specific VehicleArea type that is affected by the
+     *    property, must be included in an area ID for that property.
      *
      * Example 1: A car has two front seats (ROW_1_LEFT, ROW_1_RIGHT) and three
      *  back seats (ROW_2_LEFT, ROW_2_CENTER, ROW_2_RIGHT). There are two
@@ -860,6 +839,16 @@ enum VehicleProperty : int32_t {
      *     - ROW_1_LEFT
      *     - ROW_1_RIGHT
      *     - ROW_2_LEFT | ROW_2_CENTER | ROW_2_RIGHT | ROW_3_LEFT | ROW_3_CENTER | ROW_3_RIGHT
+     *
+     * Example 3: A car has two front seats (ROW_1_LEFT, ROW_1_RIGHT) and three
+     *  back seats (ROW_2_LEFT, ROW_2_CENTER, ROW_2_RIGHT). Suppose the car
+     *  supports HVAC_AUTO_ON for just the two front seats.
+     *   - A valid mapping set of AreaIDs for HVAC_AUTO_ON would be:
+     *      - ROW_1_LEFT | ROW_1_RIGHT
+     *   - If HVAC_AUTO_ON had two separate control units for the driver side
+     *     and passenger side, an alternative mapping would be:
+     *      - ROW_1_LEFT
+     *      - ROW_1_RIGHT
      */
 
     /**
@@ -1800,11 +1789,11 @@ enum VehicleProperty : int32_t {
      *
      * This parameter selects the memory preset to use to select the seat
      * position. The minValue is always 0, and the maxValue determines the
-     * number of seat positions available.
+     * number of seat positions available (i.e. numSeatPositions - 1).
      *
      * For instance, if the driver's seat has 3 memory presets, the maxValue
-     * will be 3. When the user wants to select a preset, the desired preset
-     * number (1, 2, or 3) is set.
+     * will be 2. When the user wants to select a preset, the desired preset
+     * number (0, 1, or 2) is set.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:WRITE
@@ -2117,6 +2106,12 @@ enum VehicleProperty : int32_t {
         | VehicleArea:SEAT),
 
     /**
+     * DO NOT USE
+     *
+     * This property is defined as type VehicleArea:GLOBAL, which means all seats use the same
+     * value. Use SEAT_HEADREST_HEIGHT_POS_V2 instead which fixes this issue by being defined as
+     * type VehicleArea:SEAT.
+     *
      * Headrest height position
      *
      * Sets the headrest height.

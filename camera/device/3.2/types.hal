@@ -346,15 +346,18 @@ struct HalStream {
      * An override pixel format for the buffers in this stream.
      *
      * The HAL must respect the requested format in Stream unless it is
-     * IMPLEMENTATION_DEFINED, in which case the override format here must be
-     * used by the client instead, for this stream. This allows cross-platform
-     * HALs to use a standard format since IMPLEMENTATION_DEFINED formats often
-     * require device-specific information. In all other cases, the
+     * IMPLEMENTATION_DEFINED output, in which case the override format
+     * here must be used by the client instead, for this stream. This allows
+     * cross-platform HALs to use a standard format since IMPLEMENTATION_DEFINED
+     * formats often require device-specific information. In all other cases, the
      * overrideFormat must match the requested format.
      *
      * When HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED is used, then the platform
      * gralloc module must select a format based on the usage flags provided by
      * the camera device and the other endpoint of the stream.
+     *
+     * For private reprocessing, the HAL must not override the input stream's
+     * IMPLEMENTATION_DEFINED format.
      */
     android.hardware.graphics.common@1.0::PixelFormat overrideFormat;
 

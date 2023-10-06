@@ -58,6 +58,12 @@ bool VtsComposerClient::tearDown() {
     return verifyComposerCallbackParams() && destroyAllLayers();
 }
 
+std::pair<ScopedAStatus, int32_t> VtsComposerClient::getInterfaceVersion() {
+    int32_t version = 1;
+    auto status = mComposerClient->getInterfaceVersion(&version);
+    return {std::move(status), version};
+}
+
 std::pair<ScopedAStatus, VirtualDisplay> VtsComposerClient::createVirtualDisplay(
         int32_t width, int32_t height, PixelFormat pixelFormat, int32_t bufferSlotCount) {
     VirtualDisplay outVirtualDisplay;
@@ -111,6 +117,24 @@ ScopedAStatus VtsComposerClient::setActiveConfig(VtsDisplay* vtsDisplay, int32_t
         return status;
     }
     return updateDisplayProperties(vtsDisplay, config);
+}
+
+ScopedAStatus VtsComposerClient::setPeakRefreshRateConfig(VtsDisplay* vtsDisplay) {
+    const auto displayId = vtsDisplay->getDisplayId();
+    auto [activeStatus, activeConfig] = getActiveConfig(displayId);
+    EXPECT_TRUE(activeStatus.isOk());
+    auto peakDisplayConfig = vtsDisplay->getDisplayConfig(activeConfig);
+    auto peakConfig = activeConfig;
+
+    const auto displayConfigs = vtsDisplay->getDisplayConfigs();
+    for (const auto [config, displayConfig] : displayConfigs) {
+        if (displayConfig.configGroup == peakDisplayConfig.configGroup &&
+            displayConfig.vsyncPeriod < peakDisplayConfig.vsyncPeriod) {
+            peakDisplayConfig = displayConfig;
+            peakConfig = config;
+        }
+    }
+    return setActiveConfig(vtsDisplay, peakConfig);
 }
 
 std::pair<ScopedAStatus, int32_t> VtsComposerClient::getDisplayAttribute(
@@ -331,11 +355,30 @@ std::pair<ScopedAStatus, int32_t> VtsComposerClient::getPreferredBootDisplayConf
     return {mComposerClient->getPreferredBootDisplayConfig(display, &outConfig), outConfig};
 }
 
+std::pair<ScopedAStatus, std::vector<common::HdrConversionCapability>>
+VtsComposerClient::getHdrConversionCapabilities() {
+    std::vector<common::HdrConversionCapability> hdrConversionCapability;
+    return {mComposerClient->getHdrConversionCapabilities(&hdrConversionCapability),
+            hdrConversionCapability};
+}
+
+std::pair<ScopedAStatus, common::Hdr> VtsComposerClient::setHdrConversionStrategy(
+        const common::HdrConversionStrategy& conversionStrategy) {
+    common::Hdr preferredHdrOutputType;
+    return {mComposerClient->setHdrConversionStrategy(conversionStrategy, &preferredHdrOutputType),
+            preferredHdrOutputType};
+}
+
 std::pair<ScopedAStatus, common::Transform> VtsComposerClient::getDisplayPhysicalOrientation(
         int64_t display) {
     common::Transform outDisplayOrientation;
     return {mComposerClient->getDisplayPhysicalOrientation(display, &outDisplayOrientation),
             outDisplayOrientation};
+}
+
+std::pair<ScopedAStatus, composer3::OverlayProperties> VtsComposerClient::getOverlaySupport() {
+    OverlayProperties properties;
+    return {mComposerClient->getOverlaySupport(&properties), properties};
 }
 
 ScopedAStatus VtsComposerClient::setIdleTimerEnabled(int64_t display, int32_t timeoutMs) {
@@ -348,6 +391,17 @@ int32_t VtsComposerClient::getVsyncIdleCount() {
 
 int64_t VtsComposerClient::getVsyncIdleTime() {
     return mComposerCallback->getVsyncIdleTime();
+}
+
+ndk::ScopedAStatus VtsComposerClient::setRefreshRateChangedCallbackDebugEnabled(int64_t display,
+                                                                                bool enabled) {
+    mComposerCallback->setRefreshRateChangedDebugDataEnabledCallbackAllowed(enabled);
+    return mComposerClient->setRefreshRateChangedCallbackDebugEnabled(display, enabled);
+}
+
+std::vector<RefreshRateChangedDebugData>
+VtsComposerClient::takeListOfRefreshRateChangedDebugData() {
+    return mComposerCallback->takeListOfRefreshRateChangedDebugData();
 }
 
 int64_t VtsComposerClient::getInvalidDisplayId() {
@@ -512,6 +566,10 @@ bool VtsComposerClient::verifyComposerCallbackParams() {
         }
         if (mComposerCallback->getInvalidSeamlessPossibleCount() != 0) {
             ALOGE("Invalid seamless possible count");
+            isValid = false;
+        }
+        if (mComposerCallback->getInvalidRefreshRateDebugEnabledCallbackCount() != 0) {
+            ALOGE("Invalid refresh rate debug enabled callback count");
             isValid = false;
         }
     }

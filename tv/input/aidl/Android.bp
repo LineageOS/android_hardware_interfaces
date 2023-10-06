@@ -1,0 +1,40 @@
+package {
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "hardware_interfaces_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-Apache-2.0
+    default_applicable_licenses: ["hardware_interfaces_license"],
+}
+
+aidl_interface {
+    name: "android.hardware.tv.input",
+    vendor_available: true,
+    srcs: ["android/hardware/tv/input/*.aidl"],
+    imports: [
+        "android.hardware.common-V2",
+        "android.media.audio.common.types-V1",
+        "android.hardware.common.fmq-V1",
+    ],
+    stability: "vintf",
+    backend: {
+        java: {
+            sdk_version: "module_current",
+        },
+        cpp: {
+            enabled: false,
+        },
+    },
+    versions_with_info: [
+        {
+            version: "1",
+            imports: [
+                "android.hardware.common-V2",
+                "android.media.audio.common.types-V1",
+                "android.hardware.common.fmq-V1",
+            ],
+        },
+    ],
+    frozen: true,
+
+}

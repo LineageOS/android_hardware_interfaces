@@ -123,10 +123,10 @@ class DefaultVehicleHal final : public aidl::android::hardware::automotive::vehi
         std::shared_ptr<PendingRequestPool> mPendingRequestPool;
     };
 
-    // A wrapper for binder operations to enable stubbing for test.
-    class IBinder {
+    // A wrapper for binder lifecycle operations to enable stubbing for test.
+    class BinderLifecycleInterface {
       public:
-        virtual ~IBinder() = default;
+        virtual ~BinderLifecycleInterface() = default;
 
         virtual binder_status_t linkToDeath(AIBinder* binder, AIBinder_DeathRecipient* recipient,
                                             void* cookie) = 0;
@@ -134,8 +134,8 @@ class DefaultVehicleHal final : public aidl::android::hardware::automotive::vehi
         virtual bool isAlive(const AIBinder* binder) = 0;
     };
 
-    // A real implementation for IBinder.
-    class AIBinderImpl final : public IBinder {
+    // A real implementation for BinderLifecycleInterface.
+    class BinderLifecycleHandler final : public BinderLifecycleInterface {
       public:
         binder_status_t linkToDeath(AIBinder* binder, AIBinder_DeathRecipient* recipient,
                                     void* cookie) override;
@@ -154,7 +154,7 @@ class DefaultVehicleHal final : public aidl::android::hardware::automotive::vehi
     // BinderDiedUnlinkedEvent represents either an onBinderDied or an onBinderUnlinked event.
     struct BinderDiedUnlinkedEvent {
         // true for onBinderDied, false for onBinderUnlinked.
-        bool onBinderDied;
+        bool forOnBinderDied;
         const AIBinder* clientId;
     };
 
@@ -164,6 +164,7 @@ class DefaultVehicleHal final : public aidl::android::hardware::automotive::vehi
     static constexpr int64_t TIMEOUT_IN_NANO = 30'000'000'000;
     // heart beat event interval: 3s
     static constexpr int64_t HEART_BEAT_INTERVAL_IN_NANO = 3'000'000'000;
+    bool mShouldRefreshPropertyConfigs;
     std::unique_ptr<IVehicleHardware> mVehicleHardware;
 
     // mConfigsByPropId and mConfigFile are only modified during initialization, so no need to
@@ -186,8 +187,8 @@ class DefaultVehicleHal final : public aidl::android::hardware::automotive::vehi
             GUARDED_BY(mLock);
     // SubscriptionClients is thread-safe.
     std::shared_ptr<SubscriptionClients> mSubscriptionClients;
-    // mBinderImpl is only going to be changed in test.
-    std::unique_ptr<IBinder> mBinderImpl;
+    // mBinderLifecycleHandler is only going to be changed in test.
+    std::unique_ptr<BinderLifecycleInterface> mBinderLifecycleHandler;
 
     // Only initialized once.
     std::shared_ptr<std::function<void()>> mRecurrentAction;
@@ -212,7 +213,6 @@ class DefaultVehicleHal final : public aidl::android::hardware::automotive::vehi
     android::base::Result<std::vector<int64_t>> checkDuplicateRequests(
             const std::vector<aidl::android::hardware::automotive::vehicle::SetValueRequest>&
                     requests);
-
     VhalResult<void> checkSubscribeOptions(
             const std::vector<aidl::android::hardware::automotive::vehicle::SubscribeOptions>&
                     options);
@@ -236,6 +236,8 @@ class DefaultVehicleHal final : public aidl::android::hardware::automotive::vehi
 
     bool checkDumpPermission();
 
+    bool getAllPropConfigsFromHardware();
+
     // The looping handler function to process all onBinderDied or onBinderUnlinked events in
     // mBinderEvents.
     void onBinderDiedUnlinkedHandler();
@@ -247,13 +249,9 @@ class DefaultVehicleHal final : public aidl::android::hardware::automotive::vehi
             const CallbackType& callback, std::shared_ptr<PendingRequestPool> pendingRequestPool);
 
     static void onPropertyChangeEvent(
-            const std::weak_ptr<SubscriptionManager>& subscriptionManager,
+            std::weak_ptr<SubscriptionManager> subscriptionManager,
             const std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropValue>&
                     updatedValues);
-
-    static void onPropertySetErrorEvent(
-            const std::weak_ptr<SubscriptionManager>& subscriptionManager,
-            const std::vector<SetValueErrorEvent>& errorEvents);
 
     static void checkHealth(IVehicleHardware* hardware,
                             std::weak_ptr<SubscriptionManager> subscriptionManager);
@@ -267,7 +265,7 @@ class DefaultVehicleHal final : public aidl::android::hardware::automotive::vehi
     void setTimeout(int64_t timeoutInNano);
 
     // Test-only
-    void setBinderImpl(std::unique_ptr<IBinder> impl);
+    void setBinderLifecycleHandler(std::unique_ptr<BinderLifecycleInterface> impl);
 };
 
 }  // namespace vehicle

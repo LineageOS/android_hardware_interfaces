@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <aidl/android/hardware/wifi/IWifi.h>
 #include <android/hardware/wifi/1.0/IWifi.h>
 #include <android/hardware/wifi/hostapd/1.3/IHostapd.h>
 
@@ -30,6 +31,8 @@
 #include <wifi_hidl_test_utils.h>
 #include <wifi_hidl_test_utils_1_5.h>
 #include <wifi_hidl_test_utils_1_6.h>
+
+#include "wifi_aidl_test_utils.h"
 
 using aidl::android::hardware::wifi::hostapd::BandMask;
 using aidl::android::hardware::wifi::hostapd::BnHostapdCallback;
@@ -55,6 +58,8 @@ const int kIfaceInvalidChannel = 567;
 const std::vector<uint8_t> kTestZeroMacAddr(6, 0x0);
 const Ieee80211ReasonCode kTestDisconnectReasonCode =
     Ieee80211ReasonCode::WLAN_REASON_UNSPECIFIED;
+const std::string kWifiAidlInstanceNameStr = std::string() + IWifi::descriptor + "/default";
+const char* kWifiAidlInstanceName = kWifiAidlInstanceNameStr.c_str();
 
 inline BandMask operator|(BandMask a, BandMask b) {
     return static_cast<BandMask>(static_cast<int32_t>(a) |
@@ -78,33 +83,70 @@ class HostapdAidl : public testing::TestWithParam<std::string> {
         isBridgedSupport = testing::checkSubstringInCommandOutput(
             "/system/bin/cmd wifi get-softap-supported-features",
             "wifi_softap_bridged_ap_supported");
-        const std::vector<std::string> instances = android::hardware::getAllHalInstanceNames(
-                ::android::hardware::wifi::V1_0::IWifi::descriptor);
-        EXPECT_NE(0, instances.size());
-        wifiInstanceName = instances[0];
+        if (!isAidlServiceAvailable(kWifiAidlInstanceName)) {
+            const std::vector<std::string> instances = android::hardware::getAllHalInstanceNames(
+                    ::android::hardware::wifi::V1_0::IWifi::descriptor);
+            EXPECT_NE(0, instances.size());
+            wifiHidlInstanceName = instances[0];
+        }
     }
 
     virtual void TearDown() override {
-        if (getWifi(wifiInstanceName) != nullptr) {
-            stopWifi(wifiInstanceName);
-        }
+        stopVendorHal();
         hostapd->terminate();
         //  Wait 3 seconds to allow terminate to complete
         sleep(3);
     }
 
     std::shared_ptr<IHostapd> hostapd;
-    std::string wifiInstanceName;
+    std::string wifiHidlInstanceName;
     bool isAcsSupport;
     bool isWpa3SaeSupport;
     bool isBridgedSupport;
 
+    void stopVendorHal() {
+        if (isAidlServiceAvailable(kWifiAidlInstanceName)) {
+            // HIDL and AIDL versions of getWifi() take different arguments
+            // i.e. const char* vs string
+            if (getWifi(kWifiAidlInstanceName) != nullptr) {
+                stopWifiService(kWifiAidlInstanceName);
+            }
+        } else {
+            if (getWifi(wifiHidlInstanceName) != nullptr) {
+                stopWifi(wifiHidlInstanceName);
+            }
+        }
+    }
+
     std::string setupApIfaceAndGetName(bool isBridged) {
+        if (isAidlServiceAvailable(kWifiAidlInstanceName)) {
+            return setupApIfaceAndGetNameAidl(isBridged);
+        } else {
+            return setupApIfaceAndGetNameHidl(isBridged);
+        }
+    }
+
+    std::string setupApIfaceAndGetNameAidl(bool isBridged) {
+        std::shared_ptr<IWifiApIface> wifi_ap_iface;
+        if (isBridged) {
+            wifi_ap_iface = getBridgedWifiApIface(kWifiAidlInstanceName);
+        } else {
+            wifi_ap_iface = getWifiApIface(kWifiAidlInstanceName);
+        }
+        EXPECT_NE(nullptr, wifi_ap_iface.get());
+
+        std::string ap_iface_name;
+        auto status = wifi_ap_iface->getName(&ap_iface_name);
+        EXPECT_TRUE(status.isOk());
+        return ap_iface_name;
+    }
+
+    std::string setupApIfaceAndGetNameHidl(bool isBridged) {
         android::sp<::android::hardware::wifi::V1_0::IWifiApIface> wifi_ap_iface;
         if (isBridged) {
-            wifi_ap_iface = getBridgedWifiApIface_1_6(wifiInstanceName);
+            wifi_ap_iface = getBridgedWifiApIface_1_6(wifiHidlInstanceName);
         } else {
-            wifi_ap_iface = getWifiApIface_1_5(wifiInstanceName);
+            wifi_ap_iface = getWifiApIface_1_5(wifiHidlInstanceName);
         }
         EXPECT_NE(nullptr, wifi_ap_iface.get());
 

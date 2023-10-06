@@ -15,7 +15,6 @@
  */
 
 #include <aidl/android/hardware/radio/config/IRadioConfig.h>
-#include <android-base/logging.h>
 #include <android/binder_manager.h>
 
 #include "radio_modem_utils.h"
@@ -23,6 +22,7 @@
 #define ASSERT_OK(ret) ASSERT_TRUE(ret.isOk())
 
 void RadioModemTest::SetUp() {
+    RadioServiceTest::SetUp();
     std::string serviceName = GetParam();
 
     if (!isServiceValidForDeviceConfiguration(serviceName)) {
@@ -36,8 +36,6 @@ void RadioModemTest::SetUp() {
 
     radioRsp_modem = ndk::SharedRefBase::make<RadioModemResponse>(*this);
     ASSERT_NE(nullptr, radioRsp_modem.get());
-
-    count_ = 0;
 
     radioInd_modem = ndk::SharedRefBase::make<RadioModemIndication>(*this);
     ASSERT_NE(nullptr, radioInd_modem.get());
@@ -154,7 +152,6 @@ TEST_P(RadioModemTest, getModemStackStatus) {
  * Test IRadioModem.getBasebandVersion() for the response returned.
  */
 TEST_P(RadioModemTest, getBasebandVersion) {
-    LOG(DEBUG) << "getBasebandVersion";
     serial = GetRandomSerialNumber();
 
     radio_modem->getBasebandVersion(serial);
@@ -165,14 +162,12 @@ TEST_P(RadioModemTest, getBasebandVersion) {
     if (cardStatus.cardState == CardStatus::STATE_ABSENT) {
         EXPECT_EQ(RadioError::NONE, radioRsp_modem->rspInfo.error);
     }
-    LOG(DEBUG) << "getBasebandVersion finished";
 }
 
 /*
  * Test IRadioModem.getDeviceIdentity() for the response returned.
  */
 TEST_P(RadioModemTest, getDeviceIdentity) {
-    LOG(DEBUG) << "getDeviceIdentity";
     serial = GetRandomSerialNumber();
 
     radio_modem->getDeviceIdentity(serial);
@@ -184,14 +179,36 @@ TEST_P(RadioModemTest, getDeviceIdentity) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_modem->rspInfo.error,
                                      {RadioError::NONE, RadioError::EMPTY_RECORD}));
     }
-    LOG(DEBUG) << "getDeviceIdentity finished";
+}
+
+/*
+ * Test IRadioModem.getImei() for the response returned.
+ */
+TEST_P(RadioModemTest, getImei) {
+    int32_t aidl_version;
+    ndk::ScopedAStatus aidl_status = radio_modem->getInterfaceVersion(&aidl_version);
+    ASSERT_OK(aidl_status);
+    if (aidl_version < 2) {
+        ALOGI("Skipped the test since getImei is not supported on version < 2");
+        GTEST_SKIP();
+    }
+    serial = GetRandomSerialNumber();
+
+    radio_modem->getImei(serial);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_modem->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_modem->rspInfo.serial);
+
+    if (cardStatus.cardState == CardStatus::STATE_ABSENT) {
+        ASSERT_TRUE(CheckAnyOfErrors(radioRsp_modem->rspInfo.error,
+                                     {RadioError::NONE, RadioError::EMPTY_RECORD}));
+    }
 }
 
 /*
  * Test IRadioModem.nvReadItem() for the response returned.
  */
 TEST_P(RadioModemTest, nvReadItem) {
-    LOG(DEBUG) << "nvReadItem";
     serial = GetRandomSerialNumber();
 
     radio_modem->nvReadItem(serial, NvItem::LTE_BAND_ENABLE_25);
@@ -203,14 +220,12 @@ TEST_P(RadioModemTest, nvReadItem) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_modem->rspInfo.error, {RadioError::NONE},
                                      CHECK_GENERAL_ERROR));
     }
-    LOG(DEBUG) << "nvReadItem finished";
 }
 
 /*
  * Test IRadioModem.nvWriteItem() for the response returned.
  */
 TEST_P(RadioModemTest, nvWriteItem) {
-    LOG(DEBUG) << "nvWriteItem";
     serial = GetRandomSerialNumber();
     NvWriteItem item;
     memset(&item, 0, sizeof(item));
@@ -225,14 +240,12 @@ TEST_P(RadioModemTest, nvWriteItem) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_modem->rspInfo.error, {RadioError::NONE},
                                      CHECK_GENERAL_ERROR));
     }
-    LOG(DEBUG) << "nvWriteItem finished";
 }
 
 /*
  * Test IRadioModem.nvWriteCdmaPrl() for the response returned.
  */
 TEST_P(RadioModemTest, nvWriteCdmaPrl) {
-    LOG(DEBUG) << "nvWriteCdmaPrl";
     serial = GetRandomSerialNumber();
     std::vector<uint8_t> prl = {1, 2, 3, 4, 5};
 
@@ -245,14 +258,12 @@ TEST_P(RadioModemTest, nvWriteCdmaPrl) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_modem->rspInfo.error, {RadioError::NONE},
                                      CHECK_GENERAL_ERROR));
     }
-    LOG(DEBUG) << "nvWriteCdmaPrl finished";
 }
 
 /*
  * Test IRadioModem.nvResetConfig() for the response returned.
  */
 TEST_P(RadioModemTest, nvResetConfig) {
-    LOG(DEBUG) << "nvResetConfig";
     serial = GetRandomSerialNumber();
 
     radio_modem->nvResetConfig(serial, ResetNvType::FACTORY_RESET);
@@ -266,14 +277,12 @@ TEST_P(RadioModemTest, nvResetConfig) {
     }
     // wait until modem reset finishes
     sleep(10);
-    LOG(DEBUG) << "nvResetConfig finished";
 }
 
 /*
  * Test IRadioModem.getHardwareConfig() for the response returned.
  */
 TEST_P(RadioModemTest, getHardwareConfig) {
-    LOG(DEBUG) << "getHardwareConfig";
     serial = GetRandomSerialNumber();
 
     radio_modem->getHardwareConfig(serial);
@@ -285,7 +294,6 @@ TEST_P(RadioModemTest, getHardwareConfig) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_modem->rspInfo.error, {RadioError::NONE},
                                      CHECK_GENERAL_ERROR));
     }
-    LOG(DEBUG) << "getHardwareConfig finished";
 }
 
 /*
@@ -311,7 +319,6 @@ TEST_P(RadioModemTest, DISABLED_requestShutdown) {
  * Test IRadioModem.getRadioCapability() for the response returned.
  */
 TEST_P(RadioModemTest, getRadioCapability) {
-    LOG(DEBUG) << "getRadioCapability";
     serial = GetRandomSerialNumber();
 
     radio_modem->getRadioCapability(serial);
@@ -322,14 +329,12 @@ TEST_P(RadioModemTest, getRadioCapability) {
     if (cardStatus.cardState == CardStatus::STATE_ABSENT) {
         EXPECT_EQ(RadioError::NONE, radioRsp_modem->rspInfo.error);
     }
-    LOG(DEBUG) << "getRadioCapability finished";
 }
 
 /*
  * Test IRadioModem.setRadioCapability() for the response returned.
  */
 TEST_P(RadioModemTest, setRadioCapability) {
-    LOG(DEBUG) << "setRadioCapability";
     serial = GetRandomSerialNumber();
     RadioCapability rc;
     memset(&rc, 0, sizeof(rc));
@@ -345,14 +350,12 @@ TEST_P(RadioModemTest, setRadioCapability) {
                                      {RadioError::INVALID_ARGUMENTS, RadioError::INVALID_STATE},
                                      CHECK_GENERAL_ERROR));
     }
-    LOG(DEBUG) << "setRadioCapability finished";
 }
 
 /*
  * Test IRadioModem.getModemActivityInfo() for the response returned.
  */
 TEST_P(RadioModemTest, getModemActivityInfo) {
-    LOG(DEBUG) << "getModemActivityInfo";
     serial = GetRandomSerialNumber();
 
     radio_modem->getModemActivityInfo(serial);
@@ -364,14 +367,12 @@ TEST_P(RadioModemTest, getModemActivityInfo) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_modem->rspInfo.error,
                                      {RadioError::NONE, RadioError::REQUEST_NOT_SUPPORTED}));
     }
-    LOG(DEBUG) << "getModemActivityInfo finished";
 }
 
 /*
  * Test IRadioModem.sendDeviceState() for the response returned.
  */
 TEST_P(RadioModemTest, sendDeviceState) {
-    LOG(DEBUG) << "sendDeviceState";
     serial = GetRandomSerialNumber();
 
     radio_modem->sendDeviceState(serial, DeviceStateType::POWER_SAVE_MODE, true);
@@ -385,5 +386,4 @@ TEST_P(RadioModemTest, sendDeviceState) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_modem->rspInfo.error,
                                      {RadioError::NONE, RadioError::REQUEST_NOT_SUPPORTED}));
     }
-    LOG(DEBUG) << "sendDeviceState finished";
 }

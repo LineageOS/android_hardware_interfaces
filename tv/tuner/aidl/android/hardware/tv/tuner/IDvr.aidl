@@ -18,7 +18,6 @@ package android.hardware.tv.tuner;
 
 import android.hardware.common.fmq.MQDescriptor;
 import android.hardware.common.fmq.SynchronizedReadWrite;
-
 import android.hardware.tv.tuner.DvrSettings;
 import android.hardware.tv.tuner.IFilter;
 
@@ -101,4 +100,12 @@ interface IDvr {
      * instance any more and all methods should return a failure.
      */
     void close();
+
+    /**
+     * Set status check time interval.
+     *
+     * This time interval hint will be used by the Dvr to decide how often
+     * to evaluate data.
+     */
+    void setStatusCheckIntervalHint(in long milliseconds);
 }

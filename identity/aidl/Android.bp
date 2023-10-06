@@ -18,7 +18,7 @@ aidl_interface {
         "android.hardware.security.rkp-V3",
     ],
     stability: "vintf",
-    frozen: false,
+    frozen: true,
     backend: {
         java: {
             platform_apis: true,
@@ -51,6 +51,13 @@ aidl_interface {
         },
         {
             version: "4",
+            imports: [
+                "android.hardware.keymaster-V3",
+                "android.hardware.security.rkp-V3",
+            ],
+        },
+        {
+            version: "5",
             imports: [
                 "android.hardware.keymaster-V3",
                 "android.hardware.security.rkp-V3",

@@ -28,19 +28,19 @@ import android.hardware.automotive.remoteaccess.IRemoteTaskCallback;
 @VintfStability
 interface IRemoteAccess {
     /**
-     * Gets a unique device ID that could be recognized by wake up server.
+     * Gets a unique vehicle ID that could be recognized by wake up server.
      *
-     * This device ID is provisioned during car production and is registered
+     * <p>This vehicle ID is provisioned during car production and is registered
      * with the wake up server.
      *
-     * @return a unique device ID.
+     * @return a unique vehicle ID.
      */
-    String getDeviceId();
+    String getVehicleId();
 
     /**
      * Gets the name for the remote wakeup server.
      *
-     * This name will be provided to remote task server during registration
+     * <p>This name will be provided to remote task server during registration
      * and used by remote task server to find the remote wakeup server to
      * use for waking up the device. This name must be pre-negotiated between
      * the remote wakeup server/client and the remote task server/client and
@@ -49,6 +49,17 @@ interface IRemoteAccess {
      * "com.google.vehicle.wakeup".
      */
     String getWakeupServiceName();
+
+    /**
+     * Gets a unique processor ID that could be recognized by wake up client.
+     *
+     * <p>This processor ID is used to identify each processor in the vehicle.
+     * The wake up client which handles many processors determines which
+     * processor to wake up from the processor ID.
+     *
+     * <p> The processor ID must be unique in the vehicle.
+     */
+    String getProcessorId();
 
     /**
      * Sets a callback to be called when a remote task is requested.

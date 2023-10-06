@@ -58,4 +58,9 @@ parcelable NanRespondToDataPathIndicationRequest {
      * NAN Spec: Appendix: Mapping pass-phrase to PMK for NCS-SK Cipher Suites
      */
     byte[] serviceNameOutOfBand;
+    /**
+     * ID of an active publish or subscribe discovery session.
+     * NAN Spec: Service Descriptor Attribute (SDA) / Instance ID
+     */
+    byte discoverySessionId;
 }

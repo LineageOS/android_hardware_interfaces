@@ -31,7 +31,8 @@ parcelable NanDataPathSecurityConfig {
      */
     NanDataPathSecurityType securityType;
     /**
-     * Cipher type for data-paths. If |securityType| is |NanDataPathSecurityType.OPEN| then must
+     * One of |NanCipherSuiteType| indicating the cipher type for data-paths.
+     * If |securityType| is |NanDataPathSecurityType.OPEN|, then this must
      * be set to |NanCipherSuiteType.NONE|. Otherwise a non-|NanCipherSuiteType.NONE| cipher suite
      * must be specified.
      */

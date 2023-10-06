@@ -35,6 +35,8 @@ struct DumpResult {
     bool callerShouldDumpState;
     // The dumped information for the caller to print.
     std::string buffer;
+    // To pass if DefaultVehicleHal should refresh the property configs
+    bool refreshPropertyConfigs = false;
 };
 
 // A structure to represent a set value error event reported from vehicle.
@@ -116,11 +118,12 @@ class IVehicleHardware {
     virtual aidl::android::hardware::automotive::vehicle::StatusCode checkHealth() = 0;
 
     // Register a callback that would be called when there is a property change event from vehicle.
+    // Must only be called once during initialization.
     virtual void registerOnPropertyChangeEvent(
             std::unique_ptr<const PropertyChangeCallback> callback) = 0;
 
     // Register a callback that would be called when there is a property set error event from
-    // vehicle.
+    // vehicle. Must only be called once during initialization.
     virtual void registerOnPropertySetErrorEvent(
             std::unique_ptr<const PropertySetErrorCallback> callback) = 0;
 };

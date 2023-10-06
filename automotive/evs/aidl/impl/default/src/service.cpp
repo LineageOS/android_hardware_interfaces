@@ -14,38 +14,75 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "EvsService"
-
-#include <DefaultEvsEnumerator.h>
+#include "EvsEnumerator.h"
+#include "EvsGlDisplay.h"
 
 #include <android/binder_manager.h>
 #include <android/binder_process.h>
 #include <utils/Log.h>
 
-using ::aidl::android::hardware::automotive::evs::implementation::DefaultEvsEnumerator;
+#include <unistd.h>
 
-int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
-    std::shared_ptr<DefaultEvsEnumerator> vhal = ndk::SharedRefBase::make<DefaultEvsEnumerator>();
+#include <atomic>
+#include <cstdlib>
+#include <string_view>
 
-    ALOGI("Registering as service...");
-    binder_exception_t err =
-            AServiceManager_addService(vhal->asBinder().get(), "android.hardware.automotive.evs");
+namespace {
+
+using ::aidl::android::frameworks::automotive::display::ICarDisplayProxy;
+using ::aidl::android::hardware::automotive::evs::implementation::EvsEnumerator;
+
+constexpr std::string_view kDisplayServiceInstanceName = "/default";
+constexpr std::string_view kHwInstanceName = "/hw/0";
+constexpr int kNumBinderThreads = 1;
+
+}  // namespace
+
+int main() {
+    LOG(INFO) << "EVS Hardware Enumerator service is starting";
+
+    const std::string displayServiceInstanceName =
+            std::string(ICarDisplayProxy::descriptor) + std::string(kDisplayServiceInstanceName);
+    if (!AServiceManager_isDeclared(displayServiceInstanceName.data())) {
+        // TODO: We may just want to disable EVS display.
+        LOG(ERROR) << displayServiceInstanceName << " is required.";
+        return EXIT_FAILURE;
+    }
+
+    std::shared_ptr<ICarDisplayProxy> displayService = ICarDisplayProxy::fromBinder(
+            ::ndk::SpAIBinder(AServiceManager_waitForService(displayServiceInstanceName.data())));
+    if (!displayService) {
+        LOG(ERROR) << "Cannot use " << displayServiceInstanceName << ".  Exiting.";
+        return EXIT_FAILURE;
+    }
+
+    // Register our service -- if somebody is already registered by our name,
+    // they will be killed (their thread pool will throw an exception).
+    std::shared_ptr<EvsEnumerator> service =
+            ndk::SharedRefBase::make<EvsEnumerator>(displayService);
+    if (!service) {
+        LOG(ERROR) << "Failed to instantiate the service";
+        return EXIT_FAILURE;
+    }
+
+    const std::string instanceName =
+            std::string(EvsEnumerator::descriptor) + std::string(kHwInstanceName);
+    auto err = AServiceManager_addService(service->asBinder().get(), instanceName.data());
     if (err != EX_NONE) {
-        ALOGE("failed to register android.hardware.automotive.evs service, exception: %d", err);
-        return 1;
+        LOG(ERROR) << "Failed to register " << instanceName << ", exception = " << err;
+        return EXIT_FAILURE;
     }
 
-    if (!ABinderProcess_setThreadPoolMaxThreadCount(1)) {
-        ALOGE("%s", "failed to set thread pool max thread count");
-        return 1;
+    if (!ABinderProcess_setThreadPoolMaxThreadCount(kNumBinderThreads)) {
+        LOG(ERROR) << "Failed to set thread pool";
+        return EXIT_FAILURE;
     }
+
     ABinderProcess_startThreadPool();
-
-    ALOGI("Evs Service Ready");
+    LOG(INFO) << "EVS Hardware Enumerator is ready";
 
     ABinderProcess_joinThreadPool();
-
-    ALOGI("Evs Service Exiting");
-
-    return 0;
+    // In normal operation, we don't expect the thread pool to exit
+    LOG(INFO) << "EVS Hardware Enumerator is shutting down";
+    return EXIT_SUCCESS;
 }

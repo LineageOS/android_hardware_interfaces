@@ -15,7 +15,6 @@
  */
 
 #include <aidl/android/hardware/radio/config/IRadioConfig.h>
-#include <android-base/logging.h>
 #include <android/binder_manager.h>
 
 #include "radio_messaging_utils.h"
@@ -23,6 +22,7 @@
 #define ASSERT_OK(ret) ASSERT_TRUE(ret.isOk())
 
 void RadioMessagingTest::SetUp() {
+    RadioServiceTest::SetUp();
     std::string serviceName = GetParam();
 
     if (!isServiceValidForDeviceConfiguration(serviceName)) {
@@ -36,8 +36,6 @@ void RadioMessagingTest::SetUp() {
 
     radioRsp_messaging = ndk::SharedRefBase::make<RadioMessagingResponse>(*this);
     ASSERT_NE(nullptr, radioRsp_messaging.get());
-
-    count_ = 0;
 
     radioInd_messaging = ndk::SharedRefBase::make<RadioMessagingIndication>(*this);
     ASSERT_NE(nullptr, radioInd_messaging.get());
@@ -61,7 +59,6 @@ void RadioMessagingTest::SetUp() {
  * Test IRadioMessaging.sendSms() for the response returned.
  */
 TEST_P(RadioMessagingTest, sendSms) {
-    LOG(DEBUG) << "sendSms";
     serial = GetRandomSerialNumber();
     GsmSmsMessage msg;
     msg.smscPdu = "";
@@ -80,14 +77,12 @@ TEST_P(RadioMessagingTest, sendSms) {
                 CHECK_GENERAL_ERROR));
         EXPECT_EQ(0, radioRsp_messaging->sendSmsResult.errorCode);
     }
-    LOG(DEBUG) << "sendSms finished";
 }
 
 /*
  * Test IRadioMessaging.sendSmsExpectMore() for the response returned.
  */
 TEST_P(RadioMessagingTest, sendSmsExpectMore) {
-    LOG(DEBUG) << "sendSmsExpectMore";
     serial = GetRandomSerialNumber();
     GsmSmsMessage msg;
     msg.smscPdu = "";
@@ -105,14 +100,12 @@ TEST_P(RadioMessagingTest, sendSmsExpectMore) {
                 {RadioError::INVALID_ARGUMENTS, RadioError::INVALID_STATE, RadioError::SIM_ABSENT},
                 CHECK_GENERAL_ERROR));
     }
-    LOG(DEBUG) << "sendSmsExpectMore finished";
 }
 
 /*
  * Test IRadioMessaging.sendCdmaSms() for the response returned.
  */
 TEST_P(RadioMessagingTest, sendCdmaSms) {
-    LOG(DEBUG) << "sendCdmaSms";
     serial = GetRandomSerialNumber();
 
     // Create a CdmaSmsAddress
@@ -151,7 +144,6 @@ TEST_P(RadioMessagingTest, sendCdmaSms) {
                 {RadioError::INVALID_ARGUMENTS, RadioError::INVALID_STATE, RadioError::SIM_ABSENT},
                 CHECK_GENERAL_ERROR));
     }
-    LOG(DEBUG) << "sendCdmaSms finished";
 }
 
 /*
@@ -202,7 +194,6 @@ TEST_P(RadioMessagingTest, sendCdmaSmsExpectMore) {
  * Test IRadioMessaging.setGsmBroadcastConfig() for the response returned.
  */
 TEST_P(RadioMessagingTest, setGsmBroadcastConfig) {
-    LOG(DEBUG) << "setGsmBroadcastConfig";
     serial = GetRandomSerialNumber();
 
     // Create GsmBroadcastSmsConfigInfo #1
@@ -260,14 +251,12 @@ TEST_P(RadioMessagingTest, setGsmBroadcastConfig) {
                                       RadioError::INVALID_MODEM_STATE, RadioError::INVALID_STATE},
                                      CHECK_GENERAL_ERROR));
     }
-    LOG(DEBUG) << "setGsmBroadcastConfig finished";
 }
 
 /*
  * Test IRadioMessaging.getGsmBroadcastConfig() for the response returned.
  */
 TEST_P(RadioMessagingTest, getGsmBroadcastConfig) {
-    LOG(DEBUG) << "getGsmBroadcastConfig";
     serial = GetRandomSerialNumber();
 
     radio_messaging->getGsmBroadcastConfig(serial);
@@ -282,14 +271,12 @@ TEST_P(RadioMessagingTest, getGsmBroadcastConfig) {
                 {RadioError::NONE, RadioError::INVALID_MODEM_STATE, RadioError::INVALID_STATE},
                 CHECK_GENERAL_ERROR));
     }
-    LOG(DEBUG) << "getGsmBroadcastConfig finished";
 }
 
 /*
  * Test IRadioMessaging.setCdmaBroadcastConfig() for the response returned.
  */
 TEST_P(RadioMessagingTest, setCdmaBroadcastConfig) {
-    LOG(DEBUG) << "setCdmaBroadcastConfig";
     serial = GetRandomSerialNumber();
 
     CdmaBroadcastSmsConfigInfo cbSmsConfig;
@@ -310,14 +297,12 @@ TEST_P(RadioMessagingTest, setCdmaBroadcastConfig) {
                                      {RadioError::NONE, RadioError::INVALID_MODEM_STATE},
                                      CHECK_GENERAL_ERROR));
     }
-    LOG(DEBUG) << "setCdmaBroadcastConfig finished";
 }
 
 /*
  * Test IRadioMessaging.getCdmaBroadcastConfig() for the response returned.
  */
 TEST_P(RadioMessagingTest, getCdmaBroadcastConfig) {
-    LOG(DEBUG) << "getCdmaBroadcastConfig";
     serial = GetRandomSerialNumber();
 
     radio_messaging->getCdmaBroadcastConfig(serial);
@@ -330,14 +315,12 @@ TEST_P(RadioMessagingTest, getCdmaBroadcastConfig) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_messaging->rspInfo.error, {RadioError::NONE},
                                      CHECK_GENERAL_ERROR));
     }
-    LOG(DEBUG) << "getCdmaBroadcastConfig finished";
 }
 
 /*
  * Test IRadioMessaging.setCdmaBroadcastActivation() for the response returned.
  */
 TEST_P(RadioMessagingTest, setCdmaBroadcastActivation) {
-    LOG(DEBUG) << "setCdmaBroadcastActivation";
     serial = GetRandomSerialNumber();
     bool activate = false;
 
@@ -352,14 +335,12 @@ TEST_P(RadioMessagingTest, setCdmaBroadcastActivation) {
                                      {RadioError::NONE, RadioError::INVALID_ARGUMENTS},
                                      CHECK_GENERAL_ERROR));
     }
-    LOG(DEBUG) << "setCdmaBroadcastActivation finished";
 }
 
 /*
  * Test IRadioMessaging.setGsmBroadcastActivation() for the response returned.
  */
 TEST_P(RadioMessagingTest, setGsmBroadcastActivation) {
-    LOG(DEBUG) << "setGsmBroadcastActivation";
     serial = GetRandomSerialNumber();
     bool activate = false;
 
@@ -376,14 +357,12 @@ TEST_P(RadioMessagingTest, setGsmBroadcastActivation) {
                  RadioError::INVALID_STATE, RadioError::OPERATION_NOT_ALLOWED},
                 CHECK_GENERAL_ERROR));
     }
-    LOG(DEBUG) << "setGsmBroadcastActivation finished";
 }
 
 /*
  * Test IRadioMessaging.acknowledgeLastIncomingGsmSms() for the response returned.
  */
 TEST_P(RadioMessagingTest, acknowledgeLastIncomingGsmSms) {
-    LOG(DEBUG) << "acknowledgeLastIncomingGsmSms";
     serial = GetRandomSerialNumber();
     bool success = true;
 
@@ -399,14 +378,12 @@ TEST_P(RadioMessagingTest, acknowledgeLastIncomingGsmSms) {
                                      {RadioError::INVALID_ARGUMENTS, RadioError::INVALID_STATE},
                                      CHECK_GENERAL_ERROR));
     }
-    LOG(DEBUG) << "acknowledgeLastIncomingGsmSms finished";
 }
 
 /*
  * Test IRadioMessaging.acknowledgeIncomingGsmSmsWithPdu() for the response returned.
  */
 TEST_P(RadioMessagingTest, acknowledgeIncomingGsmSmsWithPdu) {
-    LOG(DEBUG) << "acknowledgeIncomingGsmSmsWithPdu";
     serial = GetRandomSerialNumber();
     bool success = true;
     std::string ackPdu = "";
@@ -422,14 +399,12 @@ TEST_P(RadioMessagingTest, acknowledgeIncomingGsmSmsWithPdu) {
                                      {RadioError::INVALID_ARGUMENTS, RadioError::NO_SMS_TO_ACK},
                                      CHECK_GENERAL_ERROR));
     }
-    LOG(DEBUG) << "acknowledgeIncomingGsmSmsWithPdu finished";
 }
 
 /*
  * Test IRadioMessaging.acknowledgeLastIncomingCdmaSms() for the response returned.
  */
 TEST_P(RadioMessagingTest, acknowledgeLastIncomingCdmaSms) {
-    LOG(DEBUG) << "acknowledgeLastIncomingCdmaSms";
     serial = GetRandomSerialNumber();
 
     // Create a CdmaSmsAck
@@ -448,14 +423,12 @@ TEST_P(RadioMessagingTest, acknowledgeLastIncomingCdmaSms) {
                                      {RadioError::INVALID_ARGUMENTS, RadioError::NO_SMS_TO_ACK},
                                      CHECK_GENERAL_ERROR));
     }
-    LOG(DEBUG) << "acknowledgeLastIncomingCdmaSms finished";
 }
 
 /*
  * Test IRadioMessaging.sendImsSms() for the response returned.
  */
 TEST_P(RadioMessagingTest, sendImsSms) {
-    LOG(DEBUG) << "sendImsSms";
     serial = GetRandomSerialNumber();
 
     // Create a CdmaSmsAddress
@@ -482,7 +455,7 @@ TEST_P(RadioMessagingTest, sendImsSms) {
     cdmaSmsMessage.bearerData =
             (std::vector<uint8_t>){15, 0, 3, 32, 3, 16, 1, 8, 16, 53, 76, 68, 6, 51, 106, 0};
 
-    // Creata an ImsSmsMessage
+    // Create an ImsSmsMessage
     ImsSmsMessage msg;
     msg.tech = RadioTechnologyFamily::THREE_GPP2;
     msg.retry = false;
@@ -500,14 +473,12 @@ TEST_P(RadioMessagingTest, sendImsSms) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_messaging->rspInfo.error,
                                      {RadioError::INVALID_ARGUMENTS}, CHECK_GENERAL_ERROR));
     }
-    LOG(DEBUG) << "sendImsSms finished";
 }
 
 /*
  * Test IRadioMessaging.getSmscAddress() for the response returned.
  */
 TEST_P(RadioMessagingTest, getSmscAddress) {
-    LOG(DEBUG) << "getSmscAddress";
     serial = GetRandomSerialNumber();
 
     radio_messaging->getSmscAddress(serial);
@@ -522,14 +493,12 @@ TEST_P(RadioMessagingTest, getSmscAddress) {
                                       RadioError::SIM_ABSENT},
                                      CHECK_GENERAL_ERROR));
     }
-    LOG(DEBUG) << "getSmscAddress finished";
 }
 
 /*
  * Test IRadioMessaging.setSmscAddress() for the response returned.
  */
 TEST_P(RadioMessagingTest, setSmscAddress) {
-    LOG(DEBUG) << "setSmscAddress";
     serial = GetRandomSerialNumber();
     std::string address = std::string("smscAddress");
 
@@ -545,14 +514,12 @@ TEST_P(RadioMessagingTest, setSmscAddress) {
                                       RadioError::SIM_ABSENT},
                                      CHECK_GENERAL_ERROR));
     }
-    LOG(DEBUG) << "setSmscAddress finished";
 }
 
 /*
  * Test IRadioMessaging.writeSmsToSim() for the response returned.
  */
 TEST_P(RadioMessagingTest, writeSmsToSim) {
-    LOG(DEBUG) << "writeSmsToSim";
     serial = GetRandomSerialNumber();
     SmsWriteArgs smsWriteArgs;
     smsWriteArgs.status = SmsWriteArgs::STATUS_REC_UNREAD;
@@ -573,14 +540,12 @@ TEST_P(RadioMessagingTest, writeSmsToSim) {
                  RadioError::NETWORK_NOT_READY, RadioError::NO_RESOURCES, RadioError::SIM_ABSENT},
                 CHECK_GENERAL_ERROR));
     }
-    LOG(DEBUG) << "writeSmsToSim finished";
 }
 
 /*
  * Test IRadioMessaging.deleteSmsOnSim() for the response returned.
  */
 TEST_P(RadioMessagingTest, deleteSmsOnSim) {
-    LOG(DEBUG) << "deleteSmsOnSim";
     serial = GetRandomSerialNumber();
     int index = 1;
 
@@ -598,14 +563,12 @@ TEST_P(RadioMessagingTest, deleteSmsOnSim) {
                  RadioError::SIM_ABSENT},
                 CHECK_GENERAL_ERROR));
     }
-    LOG(DEBUG) << "deleteSmsOnSim finished";
 }
 
 /*
  * Test IRadioMessaging.writeSmsToRuim() for the response returned.
  */
 TEST_P(RadioMessagingTest, writeSmsToRuim) {
-    LOG(DEBUG) << "writeSmsToRuim";
     serial = GetRandomSerialNumber();
 
     // Create a CdmaSmsAddress
@@ -651,14 +614,12 @@ TEST_P(RadioMessagingTest, writeSmsToRuim) {
                  RadioError::NO_SUCH_ENTRY, RadioError::SIM_ABSENT},
                 CHECK_GENERAL_ERROR));
     }
-    LOG(DEBUG) << "writeSmsToRuim finished";
 }
 
 /*
  * Test IRadioMessaging.deleteSmsOnRuim() for the response returned.
  */
 TEST_P(RadioMessagingTest, deleteSmsOnRuim) {
-    LOG(DEBUG) << "deleteSmsOnRuim";
     serial = GetRandomSerialNumber();
     int index = 1;
 
@@ -704,14 +665,12 @@ TEST_P(RadioMessagingTest, deleteSmsOnRuim) {
                  RadioError::MODEM_ERR, RadioError::NO_SUCH_ENTRY, RadioError::SIM_ABSENT},
                 CHECK_GENERAL_ERROR));
     }
-    LOG(DEBUG) << "deleteSmsOnRuim finished";
 }
 
 /*
  * Test IRadioMessaging.reportSmsMemoryStatus() for the response returned.
  */
 TEST_P(RadioMessagingTest, reportSmsMemoryStatus) {
-    LOG(DEBUG) << "reportSmsMemoryStatus";
     serial = GetRandomSerialNumber();
     bool available = true;
 
@@ -727,5 +686,4 @@ TEST_P(RadioMessagingTest, reportSmsMemoryStatus) {
                                       RadioError::MODEM_ERR, RadioError::SIM_ABSENT},
                                      CHECK_GENERAL_ERROR));
     }
-    LOG(DEBUG) << "reportSmsMemoryStatus finished";
 }

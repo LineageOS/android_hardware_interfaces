@@ -99,4 +99,15 @@ parcelable GnssData {
      * weak to be acquired, the AGC value must still be reported.
      */
     GnssAgc[] gnssAgcs = {};
+
+    /**
+     * True indicates that the GNSS chipset switches off duty cycling. In such mode, no clock
+     * discontinuities are expected and, when supported, carrier phase should be continuous in good
+     * signal conditions. All non-blocklisted, healthy constellations, satellites and frequency
+     * bands that are meaningful to positioning accuracy must be tracked and reported in this mode.
+     *
+     * False indicates that the GNSS chipset optimizes power via duty cycling, constellations and
+     * frequency limits, etc.
+     */
+    boolean isFullTracking;
 }

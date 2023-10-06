@@ -39,20 +39,27 @@ constexpr int64_t CHECK_TIME_IN_NANO = 1'000'000'000;
 
 }  // namespace
 
-PendingRequestPool::PendingRequestPool(int64_t timeoutInNano)
-    : mTimeoutInNano(timeoutInNano), mThread([this] {
-          // [this] must be alive within this thread because destructor would wait for this thread
-          // to exit.
-          int64_t sleepTime = std::min(mTimeoutInNano, static_cast<int64_t>(CHECK_TIME_IN_NANO));
-          std::unique_lock<std::mutex> lk(mCvLock);
-          while (!mCv.wait_for(lk, std::chrono::nanoseconds(sleepTime),
-                               [this] { return mThreadStop.load(); })) {
-              checkTimeout();
-          }
-      }) {}
+PendingRequestPool::PendingRequestPool(int64_t timeoutInNano) : mTimeoutInNano(timeoutInNano) {
+    mThread = std::thread([this] {
+        // [this] must be alive within this thread because destructor would wait for this thread
+        // to exit.
+        int64_t sleepTime = std::min(mTimeoutInNano, static_cast<int64_t>(CHECK_TIME_IN_NANO));
+        std::unique_lock<std::mutex> lk(mCvLock);
+        while (!mCv.wait_for(lk, std::chrono::nanoseconds(sleepTime),
+                             [this] { return mThreadStop; })) {
+            checkTimeout();
+        }
+    });
+}
 
 PendingRequestPool::~PendingRequestPool() {
-    mThreadStop = true;
+    {
+        // Even if the shared variable is atomic, it must be modified under the
+        // mutex in order to correctly publish the modification to the waiting
+        // thread.
+        std::unique_lock<std::mutex> lk(mCvLock);
+        mThreadStop = true;
+    }
     mCv.notify_all();
     if (mThread.joinable()) {
         mThread.join();

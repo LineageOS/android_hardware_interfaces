@@ -329,7 +329,8 @@ Filter::~Filter() {
     // All the filter event callbacks in start are for testing purpose.
     switch (mType.mainType) {
         case DemuxFilterMainType::TS:
-            createMediaEvent(events);
+            createMediaEvent(events, false);
+            createMediaEvent(events, true);
             createTsRecordEvent(events);
             createTemiEvent(events);
             break;
@@ -432,12 +433,12 @@ Filter::~Filter() {
 
     if (mSharedAvMemHandle != nullptr) {
         *out_avMemory = ::android::dupToAidl(mSharedAvMemHandle);
-        *_aidl_return = BUFFER_SIZE_16M;
+        *_aidl_return = BUFFER_SIZE;
         mUsingSharedAvMem = true;
         return ::ndk::ScopedAStatus::ok();
     }
 
-    int av_fd = createAvIonFd(BUFFER_SIZE_16M);
+    int av_fd = createAvIonFd(BUFFER_SIZE);
     if (av_fd < 0) {
         return ::ndk::ScopedAStatus::fromServiceSpecificError(
                 static_cast<int32_t>(Result::OUT_OF_MEMORY));
@@ -454,7 +455,7 @@ Filter::~Filter() {
     mUsingSharedAvMem = true;
 
     *out_avMemory = ::android::dupToAidl(mSharedAvMemHandle);
-    *_aidl_return = BUFFER_SIZE_16M;
+    *_aidl_return = BUFFER_SIZE;
     return ::ndk::ScopedAStatus::ok();
 }
 
@@ -691,6 +692,8 @@ DemuxFilterStatus Filter::checkFilterStatusChange(uint32_t availableToWrite,
         return DemuxFilterStatus::OVERFLOW;
     } else if (availableToRead > highThreshold) {
         return DemuxFilterStatus::HIGH_WATER;
+    } else if (availableToRead == 0) {
+        return DemuxFilterStatus::NO_DATA;
     } else if (availableToRead < lowThreshold) {
         return DemuxFilterStatus::LOW_WATER;
     }
@@ -793,7 +796,8 @@ void Filter::updateRecordOutput(vector<int8_t>& data) {
             }
             if (prefix == 0x000001) {
                 // TODO handle mulptiple Pes filters
-                mPesSizeLeft = (mFilterOutput[i + 8] << 8) | mFilterOutput[i + 9];
+                mPesSizeLeft = (static_cast<uint8_t>(mFilterOutput[i + 8]) << 8) |
+                               static_cast<uint8_t>(mFilterOutput[i + 9]);
                 mPesSizeLeft += 6;
                 if (DEBUG_FILTER) {
                     ALOGD("[Filter] pes data length %d", mPesSizeLeft);
@@ -803,7 +807,7 @@ void Filter::updateRecordOutput(vector<int8_t>& data) {
             }
         }
 
-        int endPoint = min(184, mPesSizeLeft);
+        uint32_t endPoint = min(184u, mPesSizeLeft);
         // append data and check size
         vector<int8_t>::const_iterator first = mFilterOutput.begin() + i + 4;
         vector<int8_t>::const_iterator last = mFilterOutput.begin() + i + 4 + endPoint;
@@ -852,11 +856,17 @@ void Filter::updateRecordOutput(vector<int8_t>& data) {
     return ::ndk::ScopedAStatus::ok();
 }
 
+// Read PES (Packetized Elementary Stream) Packets from TransportStreams
+// as defined in ISO/IEC 13818-1 Section 2.4.3.6. Create MediaEvents
+// containing only their data without TS or PES headers.
 ::ndk::ScopedAStatus Filter::startMediaFilterHandler() {
     if (mFilterOutput.empty()) {
         return ::ndk::ScopedAStatus::ok();
     }
 
+    // mPts being set before our MediaFilterHandler begins indicates that all
+    // metadata has already been handled. We can therefore create an event
+    // with the existing data. This method is used when processing ES files.
     ::ndk::ScopedAStatus result;
     if (mPts) {
         result = createMediaFilterEventWithIon(mFilterOutput);
@@ -867,16 +877,38 @@ void Filter::updateRecordOutput(vector<int8_t>& data) {
     }
 
     for (int i = 0; i < mFilterOutput.size(); i += 188) {
+        // Every packet has a 4 Byte TS Header preceding it
+        uint32_t headerSize = 4;
+
         if (mPesSizeLeft == 0) {
-            uint32_t prefix = (mFilterOutput[i + 4] << 16) | (mFilterOutput[i + 5] << 8) |
-                              mFilterOutput[i + 6];
+            // Packet Start Code Prefix is defined as the first 3 bytes of
+            // the PES Header and should always have the value 0x000001
+            uint32_t prefix = (static_cast<uint8_t>(mFilterOutput[i + 4]) << 16) |
+                              (static_cast<uint8_t>(mFilterOutput[i + 5]) << 8) |
+                              static_cast<uint8_t>(mFilterOutput[i + 6]);
             if (DEBUG_FILTER) {
                 ALOGD("[Filter] prefix %d", prefix);
             }
             if (prefix == 0x000001) {
-                // TODO handle mulptiple Pes filters
-                mPesSizeLeft = (mFilterOutput[i + 8] << 8) | mFilterOutput[i + 9];
-                mPesSizeLeft += 6;
+                // TODO handle multiple Pes filters
+                // Location of PES fields from ISO/IEC 13818-1 Section 2.4.3.6
+                mPesSizeLeft = (static_cast<uint8_t>(mFilterOutput[i + 8]) << 8) |
+                               static_cast<uint8_t>(mFilterOutput[i + 9]);
+                bool hasPts = static_cast<uint8_t>(mFilterOutput[i + 11]) & 0x80;
+                uint8_t optionalFieldsLength = static_cast<uint8_t>(mFilterOutput[i + 12]);
+                headerSize += 9 + optionalFieldsLength;
+
+                if (hasPts) {
+                    // Pts is a 33-bit field which is stored across 5 bytes, with
+                    // bits in between as reserved fields which must be ignored
+                    mPts = 0;
+                    mPts |= (static_cast<uint8_t>(mFilterOutput[i + 13]) & 0x0e) << 29;
+                    mPts |= (static_cast<uint8_t>(mFilterOutput[i + 14]) & 0xff) << 22;
+                    mPts |= (static_cast<uint8_t>(mFilterOutput[i + 15]) & 0xfe) << 14;
+                    mPts |= (static_cast<uint8_t>(mFilterOutput[i + 16]) & 0xff) << 7;
+                    mPts |= (static_cast<uint8_t>(mFilterOutput[i + 17]) & 0xfe) >> 1;
+                }
+
                 if (DEBUG_FILTER) {
                     ALOGD("[Filter] pes data length %d", mPesSizeLeft);
                 }
@@ -885,10 +917,10 @@ void Filter::updateRecordOutput(vector<int8_t>& data) {
             }
         }
 
-        int endPoint = min(184, mPesSizeLeft);
+        uint32_t endPoint = min(188u - headerSize, mPesSizeLeft);
         // append data and check size
-        vector<int8_t>::const_iterator first = mFilterOutput.begin() + i + 4;
-        vector<int8_t>::const_iterator last = mFilterOutput.begin() + i + 4 + endPoint;
+        vector<int8_t>::const_iterator first = mFilterOutput.begin() + i + headerSize;
+        vector<int8_t>::const_iterator last = mFilterOutput.begin() + i + headerSize + endPoint;
         mPesOutput.insert(mPesOutput.end(), first, last);
         // size does not match then continue
         mPesSizeLeft -= endPoint;
@@ -900,7 +932,8 @@ void Filter::updateRecordOutput(vector<int8_t>& data) {
         }
 
         result = createMediaFilterEventWithIon(mPesOutput);
-        if (result.isOk()) {
+        if (!result.isOk()) {
+            mFilterOutput.clear();
             return result;
         }
     }
@@ -961,24 +994,65 @@ void Filter::updateRecordOutput(vector<int8_t>& data) {
     return ::ndk::ScopedAStatus::ok();
 }
 
+// Read PSI (Program Specific Information) Sections from TransportStreams
+// as defined in ISO/IEC 13818-1 Section 2.4.4
 bool Filter::writeSectionsAndCreateEvent(vector<int8_t>& data) {
     // TODO check how many sections has been read
     ALOGD("[Filter] section handler");
-    if (!writeDataToFilterMQ(data)) {
-        return false;
-    }
-    DemuxFilterSectionEvent secEvent;
-    secEvent = {
-            // temp dump meta data
-            .tableId = 0,
-            .version = 1,
-            .sectionNum = 1,
-            .dataLength = static_cast<int32_t>(data.size()),
-    };
 
-    {
-        std::lock_guard<std::mutex> lock(mFilterEventsLock);
-        mFilterEvents.push_back(DemuxFilterEvent::make<DemuxFilterEvent::Tag::section>(secEvent));
+    // Transport Stream Packets are 188 bytes long, as defined in the
+    // Introduction of ISO/IEC 13818-1
+    for (int i = 0; i < data.size(); i += 188) {
+        if (mSectionSizeLeft == 0) {
+            // Location for sectionSize as defined by Section 2.4.4
+            // Note that the first 4 bytes skipped are the TsHeader
+            mSectionSizeLeft = ((static_cast<uint8_t>(data[i + 5]) & 0x0f) << 8) |
+                               static_cast<uint8_t>(data[i + 6]);
+            mSectionSizeLeft += 3;
+            if (DEBUG_FILTER) {
+                ALOGD("[Filter] section data length %d", mSectionSizeLeft);
+            }
+        }
+
+        // 184 bytes per packet is derived by subtracting the 4 byte length of
+        // the TsHeader from its 188 byte packet size
+        uint32_t endPoint = min(184u, mSectionSizeLeft);
+        // append data and check size
+        vector<int8_t>::const_iterator first = data.begin() + i + 4;
+        vector<int8_t>::const_iterator last = data.begin() + i + 4 + endPoint;
+        mSectionOutput.insert(mSectionOutput.end(), first, last);
+        // size does not match then continue
+        mSectionSizeLeft -= endPoint;
+        if (DEBUG_FILTER) {
+            ALOGD("[Filter] section data left %d", mSectionSizeLeft);
+        }
+        if (mSectionSizeLeft > 0) {
+            continue;
+        }
+
+        if (!writeDataToFilterMQ(mSectionOutput)) {
+            mSectionOutput.clear();
+            return false;
+        }
+
+        DemuxFilterSectionEvent secEvent;
+        secEvent = {
+                // temp dump meta data
+                .tableId = 0,
+                .version = 1,
+                .sectionNum = 1,
+                .dataLength = static_cast<int32_t>(mSectionOutput.size()),
+        };
+        if (DEBUG_FILTER) {
+            ALOGD("[Filter] assembled section data length %" PRIu64, secEvent.dataLength);
+        }
+
+        {
+            std::lock_guard<std::mutex> lock(mFilterEventsLock);
+            mFilterEvents.push_back(
+                    DemuxFilterEvent::make<DemuxFilterEvent::Tag::section>(secEvent));
+        }
+        mSectionOutput.clear();
     }
 
     return true;
@@ -1148,15 +1222,7 @@ bool Filter::sameFile(int fd1, int fd2) {
     return (stat1.st_dev == stat2.st_dev) && (stat1.st_ino == stat2.st_ino);
 }
 
-void Filter::createMediaEvent(vector<DemuxFilterEvent>& events) {
-    AudioExtraMetaData audio;
-    audio.adFade = 1;
-    audio.adPan = 2;
-    audio.versionTextTag = 3;
-    audio.adGainCenter = 4;
-    audio.adGainFront = 5;
-    audio.adGainSurround = 6;
-
+void Filter::createMediaEvent(vector<DemuxFilterEvent>& events, bool isAudioPresentation) {
     DemuxFilterMediaEvent mediaEvent;
     mediaEvent.streamId = 1;
     mediaEvent.isPtsPresent = true;
@@ -1166,9 +1232,45 @@ void Filter::createMediaEvent(vector<DemuxFilterEvent>& events) {
     mediaEvent.isSecureMemory = true;
     mediaEvent.mpuSequenceNumber = 6;
     mediaEvent.isPesPrivateData = true;
-    mediaEvent.extraMetaData.set<DemuxFilterMediaEventExtraMetaData::Tag::audio>(audio);
 
-    int av_fd = createAvIonFd(BUFFER_SIZE_16M);
+    if (isAudioPresentation) {
+        AudioPresentation audioPresentation0{
+                .preselection.preselectionId = 0,
+                .preselection.labels = {{"en", "Commentator"}, {"es", "Comentarista"}},
+                .preselection.language = "en",
+                .preselection.renderingIndication =
+                        AudioPreselectionRenderingIndicationType::THREE_DIMENSIONAL,
+                .preselection.hasAudioDescription = false,
+                .preselection.hasSpokenSubtitles = false,
+                .preselection.hasDialogueEnhancement = true,
+                .ac4ShortProgramId = 42};
+        AudioPresentation audioPresentation1{
+                .preselection.preselectionId = 1,
+                .preselection.labels = {{"en", "Crowd"}, {"es", "Multitud"}},
+                .preselection.language = "en",
+                .preselection.renderingIndication =
+                        AudioPreselectionRenderingIndicationType::THREE_DIMENSIONAL,
+                .preselection.hasAudioDescription = false,
+                .preselection.hasSpokenSubtitles = false,
+                .preselection.hasDialogueEnhancement = false,
+                .ac4ShortProgramId = 42};
+        vector<AudioPresentation> audioPresentations;
+        audioPresentations.push_back(audioPresentation0);
+        audioPresentations.push_back(audioPresentation1);
+        mediaEvent.extraMetaData.set<DemuxFilterMediaEventExtraMetaData::Tag::audioPresentations>(
+                audioPresentations);
+    } else {
+        AudioExtraMetaData audio;
+        audio.adFade = 1;
+        audio.adPan = 2;
+        audio.versionTextTag = 3;
+        audio.adGainCenter = 4;
+        audio.adGainFront = 5;
+        audio.adGainSurround = 6;
+        mediaEvent.extraMetaData.set<DemuxFilterMediaEventExtraMetaData::Tag::audio>(audio);
+    }
+
+    int av_fd = createAvIonFd(BUFFER_SIZE);
     if (av_fd == -1) {
         return;
     }

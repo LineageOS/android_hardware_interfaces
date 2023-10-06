@@ -16,6 +16,8 @@
 
 package android.hardware.wifi;
 
+import android.hardware.wifi.NanBootstrappingConfirmInd;
+import android.hardware.wifi.NanBootstrappingRequestInd;
 import android.hardware.wifi.NanCapabilities;
 import android.hardware.wifi.NanClusterEventInd;
 import android.hardware.wifi.NanDataPathConfirmInd;
@@ -23,8 +25,10 @@ import android.hardware.wifi.NanDataPathRequestInd;
 import android.hardware.wifi.NanDataPathScheduleUpdateInd;
 import android.hardware.wifi.NanFollowupReceivedInd;
 import android.hardware.wifi.NanMatchInd;
+import android.hardware.wifi.NanPairingConfirmInd;
+import android.hardware.wifi.NanPairingRequestInd;
 import android.hardware.wifi.NanStatus;
-
+import android.hardware.wifi.NanSuspensionModeChangeInd;
 /**
  * NAN Response and Asynchronous Event Callbacks.
  *
@@ -128,7 +132,7 @@ oneway interface IWifiNanIfaceEventCallback {
     /**
      * Callback providing status on a completed followup message transmit operation.
      *
-     * @param cmdId Command Id corresponding to the original |transmitFollowupRequest| request.
+     * @param id Command ID corresponding to the original |transmitFollowupRequest| request.
      * @param status NanStatus of the operation. Possible status codes are:
      *               |NanStatusCode.SUCCESS|
      *               |NanStatusCode.NO_OTA_ACK|
@@ -137,10 +141,17 @@ oneway interface IWifiNanIfaceEventCallback {
     void eventTransmitFollowup(in char id, in NanStatus status);
 
     /**
+     * Callback indicating that device suspension mode status change
+     *
+     * @param event NanSuspensionModeChangeInd containing event details.
+     */
+    void eventSuspensionModeChanged(in NanSuspensionModeChangeInd event);
+
+    /**
      * Callback invoked in response to a capability request
      * |IWifiNanIface.getCapabilitiesRequest|.
      *
-     * @param cmdId Command Id corresponding to the original request.
+     * @param id Command ID corresponding to the original request.
      * @param status NanStatus of the operation. Possible status codes are:
      *        |NanStatusCode.SUCCESS|
      * @param capabilities Capability data.
@@ -151,7 +162,7 @@ oneway interface IWifiNanIfaceEventCallback {
     /**
      * Callback invoked in response to a config request |IWifiNanIface.configRequest|.
      *
-     * @param cmdId Command Id corresponding to the original request.
+     * @param id Command ID corresponding to the original request.
      * @param status NanStatus of the operation. Possible status codes are:
      *        |NanStatusCode.SUCCESS|
      *        |NanStatusCode.INVALID_ARGS|
@@ -164,7 +175,7 @@ oneway interface IWifiNanIfaceEventCallback {
      * Callback invoked in response to a create data interface request
      * |IWifiNanIface.createDataInterfaceRequest|.
      *
-     * @param cmdId Command Id corresponding to the original request.
+     * @param id Command ID corresponding to the original request.
      * @param status NanStatus of the operation. Possible status codes are:
      *        |NanStatusCode.SUCCESS|
      *        |NanStatusCode.INVALID_ARGS|
@@ -176,7 +187,7 @@ oneway interface IWifiNanIfaceEventCallback {
      * Callback invoked in response to a delete data interface request
      * |IWifiNanIface.deleteDataInterfaceRequest|.
      *
-     * @param cmdId Command Id corresponding to the original request.
+     * @param id Command ID corresponding to the original request.
      * @param status NanStatus of the operation. Possible status codes are:
      *        |NanStatusCode.SUCCESS|
      *        |NanStatusCode.INVALID_ARGS|
@@ -187,7 +198,7 @@ oneway interface IWifiNanIfaceEventCallback {
     /**
      * Callback invoked in response to a disable request |IWifiNanIface.disableRequest|.
      *
-     * @param cmdId Command Id corresponding to the original request.
+     * @param id Command ID corresponding to the original request.
      * @param status NanStatus of the operation. Possible status codes are:
      *        |NanStatusCode.SUCCESS|
      *        |NanStatusCode.PROTOCOL_FAILURE|
@@ -197,7 +208,7 @@ oneway interface IWifiNanIfaceEventCallback {
     /**
      * Callback invoked in response to an enable request |IWifiNanIface.enableRequest|.
      *
-     * @param cmdId Command Id corresponding to the original request.
+     * @param id Command ID corresponding to the original request.
      * @param status NanStatus of the operation. Possible status codes are:
      *        |NanStatusCode.SUCCESS|
      *        |NanStatusCode.ALREADY_ENABLED|
@@ -212,7 +223,7 @@ oneway interface IWifiNanIfaceEventCallback {
      * Callback invoked in response to an initiate data path request
      * |IWifiNanIface.initiateDataPathRequest|.
      *
-     * @param cmdId Command Id corresponding to the original request.
+     * @param id Command ID corresponding to the original request.
      * @param status NanStatus of the operation. Possible status codes are:
      *        |NanStatusCode.SUCCESS|
      *        |NanStatusCode.INVALID_ARGS|
@@ -227,7 +238,7 @@ oneway interface IWifiNanIfaceEventCallback {
      * Callback invoked in response to a respond to data path indication request
      * |IWifiNanIface.respondToDataPathIndicationRequest|.
      *
-     * @param cmdId Command Id corresponding to the original request.
+     * @param id Command ID corresponding to the original request.
      * @param status NanStatus of the operation. Possible status codes are:
      *        |NanStatusCode.SUCCESS|
      *        |NanStatusCode.INVALID_ARGS|
@@ -241,7 +252,7 @@ oneway interface IWifiNanIfaceEventCallback {
      * Callback invoked to notify the status of the start publish request
      * |IWifiNanIface.startPublishRequest|.
      *
-     * @param cmdId Command Id corresponding to the original request.
+     * @param id Command ID corresponding to the original request.
      * @param status NanStatus of the operation. Possible status codes are:
      *        |NanStatusCode.SUCCESS|
      *        |NanStatusCode.INVALID_ARGS|
@@ -256,7 +267,7 @@ oneway interface IWifiNanIfaceEventCallback {
      * Callback invoked to notify the status of the start subscribe request
      * |IWifiNanIface.startSubscribeRequest|.
      *
-     * @param cmdId Command Id corresponding to the original request.
+     * @param id Command ID corresponding to the original request.
      * @param status NanStatus of the operation. Possible status codes are:
      *        |NanStatusCode.SUCCESS|
      *        |NanStatusCode.INVALID_ARGS|
@@ -271,7 +282,7 @@ oneway interface IWifiNanIfaceEventCallback {
      * Callback invoked in response to a stop publish request
      * |IWifiNanIface.stopPublishRequest|.
      *
-     * @param cmdId Command Id corresponding to the original request.
+     * @param id Command ID corresponding to the original request.
      * @param status NanStatus of the operation. Possible status codes are:
      *        |NanStatusCode.SUCCESS|
      *        |NanStatusCode.INVALID_SESSION_ID|
@@ -283,7 +294,7 @@ oneway interface IWifiNanIfaceEventCallback {
      * Callback invoked in response to a stop subscribe request
      * |IWifiNanIface.stopSubscribeRequest|.
      *
-     * @param cmdId Command Id corresponding to the original request.
+     * @param id Command ID corresponding to the original request.
      * @param status NanStatus of the operation. Possible status codes are:
      *        |NanStatusCode.SUCCESS|
      *        |NanStatusCode.INVALID_SESSION_ID|
@@ -295,7 +306,7 @@ oneway interface IWifiNanIfaceEventCallback {
      * Callback invoked in response to a terminate data path request
      * |IWifiNanIface.terminateDataPathRequest|.
      *
-     * @param cmdId Command Id corresponding to the original request.
+     * @param id Command ID corresponding to the original request.
      * @param status NanStatus of the operation. Possible status codes are:
      *        |NanStatusCode.SUCCESS|
      *        |NanStatusCode.INVALID_ARGS|
@@ -306,10 +317,36 @@ oneway interface IWifiNanIfaceEventCallback {
     void notifyTerminateDataPathResponse(in char id, in NanStatus status);
 
     /**
+     * Callback invoked in response to a suspension request
+     * |IWifiNanIface.suspendRequest|.
+     *
+     * @param id Command ID corresponding to the original request.
+     * @param status NanStatus of the operation. Possible status codes are:
+     *        |NanStatusCode.SUCCESS|
+     *        |NanStatusCode.INVALID_SESSION_ID|
+     *        |NanStatusCode.INVALID_STATE|
+     *        |NanStatusCode.INTERNAL_FAILURE|
+     */
+    void notifySuspendResponse(in char id, in NanStatus status);
+
+    /**
+     * Callback invoked in response to a resume request
+     * |IWifiNanIface.resumeRequest|.
+     *
+     * @param id Command ID corresponding to the original request.
+     * @param status NanStatus of the operation. Possible status codes are:
+     *        |NanStatusCode.SUCCESS|
+     *        |NanStatusCode.INVALID_SESSION_ID|
+     *        |NanStatusCode.INVALID_STATE|
+     *        |NanStatusCode.INTERNAL_FAILURE|
+     */
+    void notifyResumeResponse(in char id, in NanStatus status);
+
+    /**
      * Callback invoked in response to a transmit followup request
      * |IWifiNanIface.transmitFollowupRequest|.
      *
-     * @param cmdId Command Id corresponding to the original request.
+     * @param id Command ID corresponding to the original request.
      * @param status NanStatus of the operation. Possible status codes are:
      *        |NanStatusCode.SUCCESS|
      *        |NanStatusCode.INVALID_ARGS|
@@ -319,4 +356,109 @@ oneway interface IWifiNanIfaceEventCallback {
      *        |NanStatusCode.FOLLOWUP_TX_QUEUE_FULL|
      */
     void notifyTransmitFollowupResponse(in char id, in NanStatus status);
+
+    /**
+     * Callback indicating that a NAN pairing setup/verification has been requested by
+     * an Initiator peer (received by the intended Responder).
+     *
+     * @param event NanPairingRequestInd containing event details.
+     */
+    void eventPairingRequest(in NanPairingRequestInd event);
+
+    /**
+     * Callback indicating that a NAN pairing setup/verification has been completed.
+     * Received by both Initiator and Responder.
+     *
+     * @param event NanPairingConfirmInd containing event details.
+     */
+    void eventPairingConfirm(in NanPairingConfirmInd event);
+
+    /**
+     * Callback invoked in response to an initiate NAN pairing request
+     * |IWifiNanIface.initiatePairingRequest|.
+     *
+     * @param id Command ID corresponding to the original request.
+     * @param status NanStatus of the operation. Possible status codes are:
+     *        |NanStatusCode.SUCCESS|
+     *        |NanStatusCode.INVALID_ARGS|
+     *        |NanStatusCode.INTERNAL_FAILURE|
+     *        |NanStatusCode.PROTOCOL_FAILURE|
+     *        |NanStatusCode.INVALID_PEER_ID|
+     * @param pairingInstanceId ID of the new pairing being negotiated (on successful status).
+     */
+    void notifyInitiatePairingResponse(in char id, in NanStatus status, in int pairingInstanceId);
+
+    /**
+     * Callback invoked in response to a respond to NAN pairing indication request
+     * |IWifiNanIface.respondToPairingIndicationRequest|.
+     *
+     * @param id Command ID corresponding to the original request.
+     * @param status NanStatus of the operation. Possible status codes are:
+     *        |NanStatusCode.SUCCESS|
+     *        |NanStatusCode.INVALID_ARGS|
+     *        |NanStatusCode.INTERNAL_FAILURE|
+     *        |NanStatusCode.PROTOCOL_FAILURE|
+     *        |NanStatusCode.INVALID_NDP_ID|
+     */
+    void notifyRespondToPairingIndicationResponse(in char id, in NanStatus status);
+
+    /**
+     * Callback indicating that a NAN bootstrapping setup has been requested by
+     * an Initiator peer (received by the intended Responder).
+     *
+     * @param event NanBootstrappingRequestInd containing event details.
+     */
+    void eventBootstrappingRequest(in NanBootstrappingRequestInd event);
+
+    /**
+     * Callback indicating that a NAN bootstrapping setuphas been completed.
+     * Received by Initiator.
+     *
+     * @param event NanBootstrappingConfirmInd containing event details.
+     */
+    void eventBootstrappingConfirm(in NanBootstrappingConfirmInd event);
+
+    /**
+     * Callback invoked in response to an initiate NAN pairing bootstrapping request
+     * |IWifiNanIface.initiateBootstrappingRequest|.
+     *
+     * @param id Command ID corresponding to the original request.
+     * @param status NanStatus of the operation. Possible status codes are:
+     *        |NanStatusCode.SUCCESS|
+     *        |NanStatusCode.INVALID_ARGS|
+     *        |NanStatusCode.INTERNAL_FAILURE|
+     *        |NanStatusCode.PROTOCOL_FAILURE|
+     *        |NanStatusCode.INVALID_PEER_ID|
+     * @param bootstrappingInstanceId ID of the new pairing being negotiated (on successful status).
+     */
+    void notifyInitiateBootstrappingResponse(
+            in char id, in NanStatus status, in int bootstrappingInstanceId);
+
+    /**
+     * Callback invoked in response to a respond to pairing bootstrapping indication request
+     * |IWifiNanIface.respondToBootstrappingIndicationRequest|.
+     *
+     * @param id Command ID corresponding to the original request.
+     * @param status NanStatus of the operation. Possible status codes are:
+     *        |NanStatusCode.SUCCESS|
+     *        |NanStatusCode.INVALID_ARGS|
+     *        |NanStatusCode.INTERNAL_FAILURE|
+     *        |NanStatusCode.PROTOCOL_FAILURE|
+     *        |NanStatusCode.INVALID_NDP_ID|
+     */
+    void notifyRespondToBootstrappingIndicationResponse(in char id, in NanStatus status);
+
+    /**
+     * Callback invoked in response to a terminate pairing request
+     * |IWifiNanIface.terminatePairingRequest|.
+     *
+     * @param id Command Id corresponding to the original request.
+     * @param status NanStatus of the operation. Possible status codes are:
+     *        |NanStatusCode.SUCCESS|
+     *        |NanStatusCode.INVALID_ARGS|
+     *        |NanStatusCode.INTERNAL_FAILURE|
+     *        |NanStatusCode.PROTOCOL_FAILURE|
+     *        |NanStatusCode.INVALID_PAIRING_ID|
+     */
+    void notifyTerminatePairingResponse(in char id, in NanStatus status);
 }

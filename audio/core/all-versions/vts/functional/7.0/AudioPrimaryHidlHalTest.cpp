@@ -715,11 +715,9 @@ class PcmOnlyConfigInputStreamTest : public InputStreamTest {
     }
 
     void releasePatchIfNeeded() {
-        if (getDevice()) {
-            if (areAudioPatchesSupported() && mHasPatch) {
-                EXPECT_OK(getDevice()->releaseAudioPatch(mPatchHandle));
-                mHasPatch = false;
-            }
+        if (getDevice() && areAudioPatchesSupported() && mHasPatch) {
+            EXPECT_OK(getDevice()->releaseAudioPatch(mPatchHandle));
+            mHasPatch = false;
         }
     }
 

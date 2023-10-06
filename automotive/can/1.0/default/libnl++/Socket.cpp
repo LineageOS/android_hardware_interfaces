@@ -47,6 +47,17 @@ Socket::Socket(int protocol, unsigned pid, uint32_t groups) : mProtocol(protocol
     }
 }
 
+void Socket::clearPollErr() {
+    sockaddr_nl sa = {};
+    socklen_t saLen = sizeof(sa);
+    const auto bytesReceived = recvfrom(mFd.get(), mReceiveBuffer.data(), mReceiveBuffer.size(), 0,
+                                        reinterpret_cast<sockaddr*>(&sa), &saLen);
+    if (errno != EINVAL) {
+        PLOG(WARNING) << "clearPollError() caught unexpected error: ";
+    }
+    CHECK_LE(bytesReceived, 0) << "clearPollError() didn't find an error!";
+}
+
 bool Socket::send(const Buffer<nlmsghdr>& msg, const sockaddr_nl& sa) {
     if constexpr (kSuperVerbose) {
         LOG(VERBOSE) << (mFailed ? "(not) " : "") << "sending to " << sa.nl_pid << ": "
@@ -110,6 +121,13 @@ std::pair<std::optional<Buffer<nlmsghdr>>, sockaddr_nl> Socket::receiveFrom(size
     if constexpr (kSuperVerbose) {
         LOG(VERBOSE) << "received from " << sa.nl_pid << ": " << toString(msg, mProtocol);
     }
+    long headerByteTotal = 0;
+    for (const auto hdr : msg) {
+        headerByteTotal += hdr->nlmsg_len;
+    }
+    if (bytesReceived != headerByteTotal) {
+        LOG(ERROR) << "received " << bytesReceived << " bytes, header claims " << headerByteTotal;
+    }
     return {msg, sa};
 }
 
@@ -159,6 +177,7 @@ std::optional<unsigned> Socket::getPid() {
 }
 
 pollfd Socket::preparePoll(short events) {
+    CHECK(mFd.get() > 0) << "Netlink socket fd is invalid!";
     return {mFd.get(), events, 0};
 }
 

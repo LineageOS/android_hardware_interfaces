@@ -98,14 +98,19 @@ parcelable Stream {
      *
      * For most formats, dataSpace defines the color space of the image data.
      * In addition, for some formats, dataSpace indicates whether image- or
-     * depth-based data is requested. See
-     * android.hardware.graphics.common@1.0::types for details of formats and
-     * valid dataSpace values for each format.
+     * depth-based data is requested. For others, it merely describes an encoding
+     * scheme. See android.hardware.graphics.common@1.0::types for details of formats
+     * and valid dataSpace values for each format.
      *
      * The HAL must use this dataSpace to configure the stream to the correct
      * colorspace, or to select between color and depth outputs if
      * supported. The dataspace values are set using the V0 dataspace
      * definitions.
+     *
+     * The standard bits of this field will match the requested colorSpace (if set) for
+     * non-BLOB formats. For BLOB formats, if colorSpace is not
+     * ANDROID_REQUEST_AVAILABLE_COLOR_SPACE_PROFILES_MAP_UNSPECIFIED, colorSpace takes
+     * over as the authority for the color space of the stream regardless of dataSpace.
      */
     android.hardware.graphics.common.Dataspace dataSpace;
 
@@ -222,4 +227,19 @@ parcelable Stream {
      * DEFAULT.
      */
     android.hardware.camera.metadata.ScalerAvailableStreamUseCases useCase;
+
+    /**
+     * The color space of the stream.
+     *
+     * A client may not specify a color space. In this case, the value will be
+     * ANDROID_REQUEST_AVAILABLE_COLOR_SPACE_PROFILES_MAP_UNSPECIFIED, and the color space
+     * implied by dataSpace should be used instead.
+     *
+     * When specified, this field and the standard bits of dataSpace will match for non-BLOB
+     * formats. For BLOB formats, the dataSpace will remain unchanged. In this case, this field is
+     * the ultimate authority over the color space of the stream.
+     *
+     * See ANDROID_REQUEST_AVAILABLE_COLOR_SPACE_PROFILES_MAP for possible values.
+     */
+    int colorSpace;
 }

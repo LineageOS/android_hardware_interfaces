@@ -1,0 +1,4 @@
+service vendor.ivn-default /vendor/bin/hw/android.hardware.automotive.ivn@V1-default-service
+    class hal
+    user vehicle_network
+    group system inet

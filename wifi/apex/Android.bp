@@ -15,7 +15,7 @@ android_app_certificate {
 
 genrule {
     name: "gen-android.hardware.wifi.rc",
-    srcs: [":default-android.hardware.wifi@1.0-service.rc"],
+    srcs: [":default-android.hardware.wifi-service.rc"],
     out: ["com.android.hardware.wifi-service.rc"],
     cmd: "sed -e 's@/vendor/bin/@/apex/com.android.hardware.wifi/bin/@' $(in) > $(out)",
 }
@@ -28,7 +28,7 @@ prebuilt_etc {
 
 prebuilt_etc {
     name: "com.android.hardware.wifi.xml",
-    src: ":default-android.hardware.wifi@1.0-service.xml",
+    src: ":default-android.hardware.wifi-service.xml",
     installable: false,
     sub_dir: "vintf",
 }
@@ -43,13 +43,13 @@ apex {
     updatable: false,
     soc_specific: true,
     binaries: [
-        "android.hardware.wifi@1.0-service",
+        "android.hardware.wifi-service",
     ],
     prebuilts: [
         "com.android.hardware.wifi.rc",
         "com.android.hardware.wifi.xml",
     ],
     overrides: [
-        "android.hardware.wifi@1.0-service",
+        "android.hardware.wifi-service",
     ],
 }

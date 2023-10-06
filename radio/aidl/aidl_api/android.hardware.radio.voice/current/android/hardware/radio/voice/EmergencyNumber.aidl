@@ -40,8 +40,8 @@ parcelable EmergencyNumber {
   int categories;
   String[] urns;
   int sources;
-  const int SOURCE_NETWORK_SIGNALING = 1;
-  const int SOURCE_SIM = 2;
-  const int SOURCE_MODEM_CONFIG = 4;
-  const int SOURCE_DEFAULT = 8;
+  const int SOURCE_NETWORK_SIGNALING = (1 << 0);
+  const int SOURCE_SIM = (1 << 1);
+  const int SOURCE_MODEM_CONFIG = (1 << 2);
+  const int SOURCE_DEFAULT = (1 << 3);
 }

@@ -20,12 +20,20 @@ aidl_interface {
         java: {
             enabled: false,
         },
+        rust: {
+            enabled: true,
+        },
     },
     versions_with_info: [
         {
             version: "1",
             imports: [],
         },
+        {
+            version: "2",
+            imports: [],
+        },
+
     ],
 
 }

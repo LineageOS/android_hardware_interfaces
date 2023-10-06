@@ -36,9 +36,9 @@ interface IGnssMeasurementInterface {
          * If true, GNSS chipset must switch off duty cycling. In such mode no clock discontinuities
          * are expected and, when supported, carrier phase should be continuous in good signal
          * conditions. All non-blocklisted, healthy constellations, satellites and frequency bands
-         * that the chipset supports must be reported in this mode. The GNSS chipset is allowed to
-         * consume more power in this mode. If false, API must optimize power via duty cycling,
-         * constellations and frequency limits, etc.
+         * that are meaningful to positioning accuracy must be tracked and reported in this mode.
+         * The GNSS chipset is allowed to consume more power in this mode. If false, API must
+         * optimize power via duty cycling, constellations and frequency limits, etc.
          */
         boolean enableFullTracking;
 
@@ -78,6 +78,9 @@ interface IGnssMeasurementInterface {
      * output rate of 1Hz (occasional intra-measurement time offsets in the range from 0-2000msec
      * can be tolerated.)
      *
+     * If setCallback() is invoked without a previous close(), the HAL must use the new callback
+     * and parameters to provide updates.
+     *
      * @param callback Handle to GnssMeasurement callback interface.
      * @param enableFullTracking If true, GNSS chipset must switch off duty cycling. In such mode
      *     no clock discontinuities are expected and, when supported, carrier phase should be
@@ -103,6 +106,9 @@ interface IGnssMeasurementInterface {
 
     /**
      * Initializes the interface and registers the callback routines with the HAL.
+     *
+     * If setCallbackWithOptions() is invoked without a previous close(), the HAL must use the new
+     * callback and options to provide updates.
      *
      * @param options See Options definition.
      */

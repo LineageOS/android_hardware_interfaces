@@ -1,0 +1,159 @@
+# face.sysprop
+# module becomes static class (Java) / namespace (C++) for serving API
+module: "android.face.virt.FaceHalProperties"
+owner: Vendor
+
+# type of face sensor
+prop {
+    prop_name: "persist.vendor.face.virtual.type"
+    type: String
+    scope: Public
+    access: ReadWrite
+    enum_values: "IR|RGB"
+    api_name: "type"
+}
+
+# the strength of the sensor
+prop {
+    prop_name: "persist.vendor.face.virtual.strength"
+    type: String
+    scope: Public
+    access: ReadWrite
+    enum_values: "convenience|weak|strong"
+    api_name: "strength"
+}
+
+# ids of current enrollments
+prop {
+    prop_name: "persist.vendor.face.virtual.enrollments"
+    type: IntegerList
+    scope: Public
+    access: ReadWrite
+    api_name: "enrollments"
+}
+
+# List of features
+prop {
+    prop_name: "persist.vendor.face.virtual.features"
+    type: IntegerList
+    scope: Public
+    access: ReadWrite
+    api_name: "features"
+}
+
+# authenticate and detectInteraction will succeed with this
+# enrollment id, when present, otherwise they will error
+prop {
+    prop_name: "vendor.face.virtual.enrollment_hit"
+    type: Integer
+    scope: Public
+    access: ReadWrite
+    api_name: "enrollment_hit"
+}
+
+# The initial latency for enrollment
+prop {
+    prop_name: "vendor.face.virtual.operation_start_enroll_latency"
+    type: Integer
+    scope: Public
+    access: ReadWrite
+    api_name: "operation_start_enroll_latency"
+}
+
+# the next enrollment in the format:
+# "<id>,<bucket_id>:<delay>:<succeeds>,<bucket_id>..."
+# for example: "0:1,0:100:1,1:200:1" indicating that bucket 0 took
+# 50 milliseconds, bucket 1 took 100 milliseconds, bucket 2 took 200 milliseconds.
+# Note that it is up to the configuration to determine how many buckets are required
+# to complete an enrollment
+prop {
+    prop_name: "vendor.face.virtual.next_enrollment"
+    type: String
+    scope: Public
+    access: ReadWrite
+    api_name: "next_enrollment"
+}
+
+# value for getAuthenticatorId or 0
+prop {
+    prop_name: "vendor.face.virtual.authenticator_id"
+    type: Long
+    scope: Public
+    access: ReadWrite
+    api_name: "authenticator_id"
+}
+
+# value for generateChallenge
+prop {
+    prop_name: "vendor.face.virtual.challenge"
+    type: Long
+    scope: Public
+    access: ReadWrite
+    api_name: "challenge"
+}
+
+# if locked out
+prop {
+    prop_name: "vendor.face.virtual.lockout"
+    type: Boolean
+    scope: Public
+    access: ReadWrite
+    api_name: "lockout"
+}
+
+# force all authenticate operations to fail
+prop {
+    prop_name: "vendor.face.virtual.operation_authenticate_fails"
+    type: Boolean
+    scope: Public
+    access: ReadWrite
+    api_name: "operation_authenticate_fails"
+}
+
+# force all detectInteraction operations to fail
+prop {
+    prop_name: "vendor.face.virtual.operation_detect_interaction_fails"
+    type: Boolean
+    scope: Public
+    access: ReadWrite
+    api_name: "operation_detect_interaction_fails"
+}
+
+# force all enroll operations to fail
+prop {
+    prop_name: "vendor.face.virtual.operation_enroll_fails"
+    type: Boolean
+    scope: Public
+    access: ReadWrite
+    api_name: "operation_enroll_fails"
+}
+
+# add a latency to authentication operations
+# Note that this latency is the initial authentication latency that occurs before
+# the HAL will send AcquiredInfo::START and AcquiredInfo::FIRST_FRAME_RECEIVED
+prop {
+    prop_name: "vendor.face.virtual.operation_authenticate_latency"
+    type: Integer
+    scope: Public
+    access: ReadWrite
+    api_name: "operation_authenticate_latency"
+}
+
+# add a latency to detectInteraction operations
+prop {
+    prop_name: "vendor.face.virtual.operation_detect_interaction_latency"
+    type: Integer
+    scope: Public
+    access: ReadWrite
+    api_name: "operation_detect_interaction_latency"
+}
+
+# millisecond duration for authenticate operations
+# (waits for changes to enrollment_hit)
+prop {
+    prop_name: "vendor.face.virtual.operation_authenticate_duration"
+    type: Integer
+    scope: Public
+    access: ReadWrite
+    api_name: "operation_authenticate_duration"
+}

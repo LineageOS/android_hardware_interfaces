@@ -86,4 +86,14 @@ enum Composition {
      * to either DEVICE or CLIENT.
      */
     DISPLAY_DECORATION = 6,
+
+    /**
+     * This composition type is similar to DEVICE, with a single difference,
+     * that indicates to HWC that this layer update is not considered an activity
+     * of any sort. For example, If HWC maintains a timer for activity to switch
+     * the display mode from a power save mode, it should not reset that timer.
+     *
+     * Upon validateDisplay, the device may request a change from this type to CLIENT.
+     */
+    REFRESH_RATE_INDICATOR = 7,
 }

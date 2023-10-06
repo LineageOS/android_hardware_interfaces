@@ -52,3 +52,7 @@ message VehiclePropValue {
     /* This is used for properties of type VehiclePropertyType#STRING */
     string string_value = 9;
 };
+
+message VehiclePropValues {
+    repeated VehiclePropValue values = 1;
+}

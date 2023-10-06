@@ -21,7 +21,6 @@
 #include <android-base/result.h>
 #include <android-base/thread_annotations.h>
 
-#include <atomic>
 #include <list>
 #include <mutex>
 #include <thread>
@@ -85,7 +84,7 @@ class PendingRequestPool final {
     std::unordered_map<const void*, std::list<PendingRequest>> mPendingRequestsByClient
             GUARDED_BY(mLock);
     std::thread mThread;
-    std::atomic<bool> mThreadStop = false;
+    bool mThreadStop = false;
     std::condition_variable mCv;
     std::mutex mCvLock;
 

@@ -54,7 +54,7 @@ ScopedAStatus EArcMock::isEArcEnabled(bool* _aidl_return) {
 ScopedAStatus EArcMock::getState(int32_t portId, IEArcStatus* _aidl_return) {
     // Maintain port connection status and update on hotplug event
     if (portId <= mTotalPorts && portId >= 1) {
-        *_aidl_return = mPortStatus[portId];
+        *_aidl_return = mPortStatus.at(portId - 1);
     } else {
         return ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
     }
@@ -65,7 +65,7 @@ ScopedAStatus EArcMock::getState(int32_t portId, IEArcStatus* _aidl_return) {
 ScopedAStatus EArcMock::getLastReportedAudioCapabilities(int32_t portId,
                                                          std::vector<uint8_t>* _aidl_return) {
     if (portId <= mTotalPorts && portId >= 1) {
-        *_aidl_return = mCapabilities[portId];
+        *_aidl_return = mCapabilities.at(portId - 1);
     } else {
         return ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
     }

@@ -18,15 +18,31 @@
 
 #include "GnssCallbackAidl.h"
 #include <log/log.h>
+#include <utils/SystemClock.h>
 
 using android::binder::Status;
 using android::hardware::gnss::GnssLocation;
 using GnssSvInfo = android::hardware::gnss::IGnssCallback::GnssSvInfo;
 using GnssSystemInfo = android::hardware::gnss::IGnssCallback::GnssSystemInfo;
+using GnssSignalType = android::hardware::gnss::GnssSignalType;
 
 Status GnssCallbackAidl::gnssSetCapabilitiesCb(const int capabilities) {
     ALOGI("Capabilities received %#08x", capabilities);
     capabilities_cbq_.store(capabilities);
+    return Status::ok();
+}
+
+Status GnssCallbackAidl::gnssSetSignalTypeCapabilitiesCb(
+        const std::vector<GnssSignalType>& signalTypes) {
+    ALOGI("SignalTypeCapabilities received");
+    std::ostringstream ss;
+    for (auto& signalType : signalTypes) {
+        ss << "[constellation=" << (int)signalType.constellation
+           << ", carrierFrequencyHz=" << signalType.carrierFrequencyHz
+           << ", codeType=" << signalType.codeType << "], ";
+    }
+    ALOGI("%s", ss.str().c_str());
+    signal_type_capabilities_cbq_.store(signalTypes);
     return Status::ok();
 }
 
@@ -38,6 +54,7 @@ Status GnssCallbackAidl::gnssStatusCb(const GnssStatusValue /* status */) {
 Status GnssCallbackAidl::gnssSvStatusCb(const std::vector<GnssSvInfo>& svInfoList) {
     ALOGI("gnssSvStatusCb. Size = %d", (int)svInfoList.size());
     sv_info_list_cbq_.store(svInfoList);
+    sv_info_list_timestamps_millis_cbq_.store(::android::elapsedRealtime());
     return Status::ok();
 }
 

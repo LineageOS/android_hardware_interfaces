@@ -124,6 +124,14 @@ ScopedAStatus RadioSim::iccCloseLogicalChannel(int32_t serial, int32_t channelId
     return ok();
 }
 
+ScopedAStatus RadioSim::iccCloseLogicalChannelWithSessionInfo(int32_t serial,
+                                                        const aidl::SessionInfo& /*SessionInfo*/) {
+    LOG_CALL << serial;
+    LOG(ERROR) << " iccCloseLogicalChannelWithSessionInfo is unsupported by HIDL HALs";
+    respond()->iccCloseLogicalChannelWithSessionInfoResponse(notSupported(serial));
+    return ok();
+}
+
 ScopedAStatus RadioSim::iccIoForApp(int32_t serial, const aidl::IccIo& iccIo) {
     LOG_CALL << serial;
     mHal1_5->iccIOForApp(serial, toHidl(iccIo));
@@ -289,5 +297,4 @@ ScopedAStatus RadioSim::updateSimPhonebookRecords(int32_t serial,
     }
     return ok();
 }
-
 }  // namespace android::hardware::radio::compat

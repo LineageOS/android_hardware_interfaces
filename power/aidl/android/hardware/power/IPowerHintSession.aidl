@@ -16,10 +16,11 @@
 
 package android.hardware.power;
 
+import android.hardware.power.SessionHint;
 import android.hardware.power.WorkDuration;
 
 @VintfStability
-oneway interface IPowerHintSession {
+interface IPowerHintSession {
     /**
      * Updates the desired duration of a previously-created thread group.
      *
@@ -28,7 +29,7 @@ oneway interface IPowerHintSession {
      *
      * @param targetDurationNanos the new desired duration in nanoseconds
      */
-    void updateTargetWorkDuration(long targetDurationNanos);
+    oneway void updateTargetWorkDuration(long targetDurationNanos);
 
     /**
      * Reports the actual duration of a thread group.
@@ -40,20 +41,44 @@ oneway interface IPowerHintSession {
      * @param actualDurationMicros how long the thread group took to complete its
      *        last task in nanoseconds
      */
-    void reportActualWorkDuration(in WorkDuration[] durations);
+    oneway void reportActualWorkDuration(in WorkDuration[] durations);
 
     /**
      * Pause the session when the application is not allowed to send hint in framework.
      */
-    void pause();
+    oneway void pause();
 
     /**
      * Resume the session when the application is allowed to send hint in framework.
      */
-    void resume();
+    oneway void resume();
 
     /**
      * Close the session to release resources.
      */
-    void close();
+    oneway void close();
+
+    /**
+     * Gives information to the PowerHintSession about upcoming or unexpected
+     * changes in load to supplement the normal updateTarget/reportActual cycle.
+     *
+     * @param hint The hint to provide to the PowerHintSession
+     */
+    oneway void sendHint(SessionHint hint);
+
+    /**
+     * Sets a list of threads to the power hint session. This operation will replace
+     * the current list of threads with the given list of threads. If there's already
+     * boost for the replaced threads, a reset must be performed for the replaced
+     * threads. Note that this is not an oneway method.
+     *
+     * @param threadIds The list of threads to be associated
+     * with this session.
+     *
+     * @throws ScopedAStatus Status of the operation. If status code is not
+     *    STATUS_OK, getMessage() must be populated with the human-readable
+     *    error message. If the list of thread ids is empty, EX_ILLEGAL_ARGUMENT
+     *    must be thrown.
+     */
+    void setThreads(in int[] threadIds);
 }

@@ -150,25 +150,18 @@ extern "C" bool android_nlinterceptor_createSocket(
     return true;
 }
 
-extern "C" void android_nlinterceptor_closeSocket(
-    const android_nlinterceptor_InterceptedSocket* sock) {
-    if (!sock) {
-        LOG(ERROR) << "Can't close socket identified by a null pointer!";
-        return;
-    }
-    closeSocket({sock->nlFamily, sock->portId});
+extern "C" void android_nlinterceptor_closeSocket(android_nlinterceptor_InterceptedSocket sock) {
+    closeSocket({sock.nlFamily, sock.portId});
 }
 
-extern "C" bool android_nlinterceptor_subscribe(
-    const android_nlinterceptor_InterceptedSocket* sock, uint32_t group) {
-    if (!sock) return false;
-    return subscribe({sock->nlFamily, sock->portId}, group);
+extern "C" bool android_nlinterceptor_subscribe(android_nlinterceptor_InterceptedSocket sock,
+                                                uint32_t group) {
+    return subscribe({sock.nlFamily, sock.portId}, group);
 }
 
-extern "C" bool android_nlinterceptor_unsubscribe(
-    const android_nlinterceptor_InterceptedSocket* sock, uint32_t group) {
-    if (!sock) return false;
-    return unsubscribe({sock->nlFamily, sock->portId}, group);
+extern "C" bool android_nlinterceptor_unsubscribe(android_nlinterceptor_InterceptedSocket sock,
+                                                  uint32_t group) {
+    return unsubscribe({sock.nlFamily, sock.portId}, group);
 }
 
 }  // namespace android::nlinterceptor

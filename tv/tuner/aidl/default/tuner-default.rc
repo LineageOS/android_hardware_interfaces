@@ -3,5 +3,6 @@ service vendor.tuner-default /vendor/bin/hw/android.hardware.tv.tuner-service.ex
     user media
     group mediadrm drmrpc
     ioprio rt 4
-    writepid /dev/cpuset/foreground/tasks
+    task_profiles ProcessCapacityHigh
     onrestart restart media.tuner
+    interface aidl android.hardware.tv.tuner.ITuner/default

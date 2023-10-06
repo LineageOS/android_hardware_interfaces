@@ -22,15 +22,20 @@ import android.hardware.wifi.supplicant.AuxiliarySupplicantEventCode;
 import android.hardware.wifi.supplicant.BssTmData;
 import android.hardware.wifi.supplicant.BssidChangeReason;
 import android.hardware.wifi.supplicant.DppAkm;
+import android.hardware.wifi.supplicant.DppConfigurationData;
 import android.hardware.wifi.supplicant.DppConnectionKeys;
 import android.hardware.wifi.supplicant.DppEventType;
 import android.hardware.wifi.supplicant.DppFailureCode;
 import android.hardware.wifi.supplicant.DppProgressCode;
+import android.hardware.wifi.supplicant.DppStatusErrorCode;
 import android.hardware.wifi.supplicant.Hs20AnqpData;
 import android.hardware.wifi.supplicant.OsuMethod;
+import android.hardware.wifi.supplicant.PmkSaCacheData;
 import android.hardware.wifi.supplicant.QosPolicyData;
+import android.hardware.wifi.supplicant.QosPolicyScsResponseStatus;
 import android.hardware.wifi.supplicant.StaIfaceCallbackState;
 import android.hardware.wifi.supplicant.StaIfaceReasonCode;
+import android.hardware.wifi.supplicant.SupplicantStateChangeData;
 import android.hardware.wifi.supplicant.WpsConfigError;
 import android.hardware.wifi.supplicant.WpsErrorIndication;
 
@@ -143,6 +148,9 @@ oneway interface ISupplicantStaIfaceCallback {
      * Indicates DPP configuration received success event in Enrolee mode.
      * This is also triggered when Configurator generates credentials for itself
      * using generateSelfDppConfiguration() API
+     * <p>
+     * @deprecated This callback is deprecated from AIDL v2, newer HAL should call
+     * onDppConfigReceived.
      */
     void onDppSuccessConfigReceived(in byte[] ssid, in String password, in byte[] psk,
             in DppAkm securityAkm, in DppConnectionKeys dppConnectionKeys);
@@ -241,6 +249,8 @@ oneway interface ISupplicantStaIfaceCallback {
     /**
      * Indicates pairwise master key (PMK) cache added event.
      *
+     * @deprecated use onPmkSaCacheAdded() instead.
+     *
      * @param expirationTimeInSec expiration time in seconds
      * @param serializedEntry is serialized PMK cache entry, the content is
      *              opaque for the framework and depends on the native implementation.
@@ -252,6 +262,9 @@ oneway interface ISupplicantStaIfaceCallback {
      * event is triggered by a particular network, the |SupplicantNetworkId|,
      * |ssid|, |bssid| parameters must indicate the parameters of the network/AP
      * which caused this state transition.
+     * <p>
+     * @deprecated This callback is deprecated from AIDL v2, newer HAL should call
+     * onSupplicantStateChanged()
      *
      * @param newState New State of the interface. This must be one of the |State|
      *        values above.
@@ -303,4 +316,91 @@ oneway interface ISupplicantStaIfaceCallback {
      * @param qosPolicyData QoS policies info requested by the AP.
      */
     void onQosPolicyRequest(in int qosPolicyRequestId, in QosPolicyData[] qosPolicyData);
+
+    /**
+     * Reason codes to be used with the callback |ISupplicantStaIfaceCallback.onMloLinksInfoChanged|
+     */
+    @VintfStability
+    @Backing(type="int")
+    enum MloLinkInfoChangeReason {
+        /**
+         * TID-to-link mapping has changed. Updated mappings will be set in
+         * |MloLinksInfo.MloLink[].tids_downlink_map| and
+         * |MloLinksInfo.MloLink[].tids_uplink_map| for each of the links.
+         *
+         * STA MLD will operate in default mode if a TID-to-link mapping is not
+         * indicated by the callback. In default mode, all TIDs are mapped to
+         * all setup links in downlink and uplink directions.
+         */
+        TID_TO_LINK_MAP = 0,
+        /**
+         * Multi-link reconfiguration - AP removal as described in
+         * IEEE 802.11be spec, section 35.3.6. This is a mandatory feature for
+         * station.
+         *
+         * Removed link will not be present in |ISupplicantStaIface.getConnectionMloLinksInfo|.
+         */
+        MULTI_LINK_RECONFIG_AP_REMOVAL = 1,
+    }
+
+    /**
+     * Used to indicate that Multi Link status has changed due to the provided
+     * reason. Upadted MLO link status can be fetched using
+     * |ISupplicantStaIface.getConnectionMloLinksInfo|
+     *
+     * |MloLink.linkId| and |MloLink.staLinkMacAddress| are not expected
+     * to change.
+     *
+     * @param reason Reason as given in MloLinkInfoChangeReason.
+     */
+    void onMloLinksInfoChanged(in MloLinkInfoChangeReason reason);
+
+    /**
+     * Indicates DPP configuration received success event in Enrollee mode.
+     * This is also triggered when Configurator generates credentials for itself
+     * using generateSelfDppConfiguration() API
+     */
+    void onDppConfigReceived(in DppConfigurationData configData);
+
+    /**
+     * Indicates that DPP connection status result frame is sent.
+     */
+    void onDppConnectionStatusResultSent(in DppStatusErrorCode code);
+
+    /**
+     * Used to indicate that the operating frequency has changed for this BSS.
+     * This event is triggered when STA switches the channel due to channel
+     * switch announcement from the connected access point.
+     *
+     * @param frequencyMhz New operating frequency in MHz.
+     */
+    void onBssFrequencyChanged(in int frequencyMhz);
+
+    /**
+     * Used to indicate a state change event on this particular iface.
+     *
+     * @param stateChangeData Supplicant state change related information.
+     */
+    void onSupplicantStateChanged(in SupplicantStateChangeData stateChangeData);
+
+    /**
+     * Indicates an SCS response from the AP.
+     *
+     * If the AP does not send a response within the timeout period (1 sec),
+     * supplicant will call this API with the TIMEOUT status for each policy.
+     *
+     * The AP can trigger an unsolicited scs response to indicate the removal of
+     * previously requested policies.
+     *
+     * @param qosPolicyScsResponseStatus[] status for each SCS id.
+     */
+    void onQosPolicyResponseForScs(in QosPolicyScsResponseStatus[] qosPolicyScsResponseStatus);
+
+    /**
+     * Indicates pairwise master key (PMK) cache added event.
+     *
+     * @param pmkSaData PMKSA cache entry added details.
+     *
+     */
+    void onPmkSaCacheAdded(in PmkSaCacheData pmkSaData);
 }

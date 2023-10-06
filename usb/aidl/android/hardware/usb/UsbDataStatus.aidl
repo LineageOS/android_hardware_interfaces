@@ -35,7 +35,8 @@ enum UsbDataStatus {
      */
     DISABLED_CONTAMINANT = 3,
     /**
-     * USB data is disabled due to dock.
+     * DISABLED_DOCK implies both DISABLED_DOCK_HOST_MODE
+     * and DISABLED_DOCK_DEVICE_MODE.
      */
     DISABLED_DOCK = 4,
     /**
@@ -45,5 +46,13 @@ enum UsbDataStatus {
     /**
      * USB data disabled for debug.
      */
-    DISABLED_DEBUG = 6
+    DISABLED_DEBUG = 6,
+    /**
+     * USB Host mode is disabled due to a docking event.
+     */
+    DISABLED_DOCK_HOST_MODE = 7,
+    /**
+     * USB device mode disabled due to a docking event.
+     */
+    DISABLED_DOCK_DEVICE_MODE = 8,
 }

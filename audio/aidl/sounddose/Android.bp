@@ -44,9 +44,15 @@ aidl_interface {
         },
     },
     versions_with_info: [
+        {
+            version: "1",
+            imports: ["android.hardware.audio.core.sounddose-V1"],
+        },
+
         // IMPORTANT: Update latest_android_hardware_audio_sounddose every time you
         // add the latest frozen version to versions_with_info
     ],
+    frozen: true,
 }
 
 // Note: This should always be one version ahead of the last frozen version

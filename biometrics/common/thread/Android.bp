@@ -1,0 +1,26 @@
+cc_library {
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "hardware_interfaces_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-Apache-2.0
+    name: "android.hardware.biometrics.common.thread",
+    export_include_dirs: ["include"],
+    vendor: true,
+    srcs: [
+        "WorkerThread.cpp",
+    ],
+}
+
+cc_test_host {
+    name: "android.hardware.biometrics.common.WorkerThreadTest",
+    local_include_dirs: ["include"],
+    srcs: [
+        "tests/WorkerThreadTest.cpp",
+        "WorkerThread.cpp",
+    ],
+    shared_libs: [
+        "libcutils",
+    ],
+    test_suites: ["general-tests"],
+}

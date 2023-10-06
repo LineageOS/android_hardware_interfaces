@@ -34,7 +34,6 @@ parcelable DisplayRequest {
 
     /**
      * The display which this commands refers to.
-     * @see IComposer.createDisplay
      */
     long display;
 

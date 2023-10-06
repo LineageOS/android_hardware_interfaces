@@ -18,6 +18,7 @@ package android.hardware.contexthub;
 
 import android.hardware.contexthub.AsyncEventType;
 import android.hardware.contexthub.ContextHubMessage;
+import android.hardware.contexthub.NanSessionRequest;
 import android.hardware.contexthub.NanoappInfo;
 
 @VintfStability
@@ -74,4 +75,24 @@ interface IContextHubCallback {
      *
      */
     void handleTransactionResult(in int transactionId, in boolean success);
+
+    /**
+     * This callback is passed by the Contexthub service to the HAL implementation to allow the HAL
+     * to request a WiFi NAN session is created to allow the Contexthub to be able to utilize NAN
+     * functionality.
+     *
+     * onNanSessionStateChanged() will be invoked asynchronously after the NAN session request has
+     * been completed. This must be done within CONTEXTHUB_NAN_TRANSACTION_TIMEOUT_MS. If the
+     * request times out, onNanSessionStateChanged() will be invoked with the state that the session
+     * was previously in.
+     *
+     * @param request Request from the HAL indicating the latest NAN session state it would like.
+     */
+    void handleNanSessionRequest(in NanSessionRequest request);
+
+    /**
+     * Amount of time, in milliseconds, that a handleNanSessionRequest can be pending before the
+     * Contexthub service must respond.
+     */
+    const int CONTEXTHUB_NAN_TRANSACTION_TIMEOUT_MS = 10000;
 }

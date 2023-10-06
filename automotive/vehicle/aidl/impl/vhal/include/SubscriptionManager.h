@@ -41,15 +41,15 @@ class ContSubConfigs final {
   public:
     using ClientIdType = const AIBinder*;
 
-    void addClient(const ClientIdType& clientId, float sampleRate);
+    void addClient(const ClientIdType& clientId, float sampleRateHz);
     void removeClient(const ClientIdType& clientId);
-    float getMaxSampleRate();
+    float getMaxSampleRateHz() const;
 
   private:
-    float mMaxSampleRate = 0.;
-    std::unordered_map<ClientIdType, float> mSampleRates;
+    float mMaxSampleRateHz = 0.;
+    std::unordered_map<ClientIdType, float> mSampleRateHzByClient;
 
-    void refreshMaxSampleRate();
+    void refreshMaxSampleRateHz();
 };
 
 // A thread-safe subscription manager that manages all VHAL subscriptions.
@@ -59,7 +59,7 @@ class SubscriptionManager final {
     using CallbackType =
             std::shared_ptr<aidl::android::hardware::automotive::vehicle::IVehicleCallback>;
 
-    explicit SubscriptionManager(IVehicleHardware* hardware);
+    explicit SubscriptionManager(IVehicleHardware* vehicleHardware);
     ~SubscriptionManager();
 
     // Subscribes to properties according to {@code SubscribeOptions}. Note that all option must
@@ -99,18 +99,8 @@ class SubscriptionManager final {
             const std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropValue>&
                     updatedValues);
 
-    // Gets the sample rate for the continuous property. Returns {@code std::nullopt} if the
-    // property has not been subscribed before or is not a continuous property.
-    std::optional<float> getSampleRate(const ClientIdType& clientId, int32_t propId,
-                                       int32_t areaId);
-    // For a list of set property error events, returns a map that maps clients subscribing to the
-    // properties to a list of errors for each client.
-    std::unordered_map<CallbackType,
-                       std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropError>>
-    getSubscribedClientsForErrorEvents(const std::vector<SetValueErrorEvent>& errorEvents);
-
     // Checks whether the sample rate is valid.
-    static bool checkSampleRate(float sampleRate);
+    static bool checkSampleRateHz(float sampleRateHz);
 
   private:
     // Friend class for testing.
@@ -127,17 +117,21 @@ class SubscriptionManager final {
     std::unordered_map<PropIdAreaId, ContSubConfigs, PropIdAreaIdHash> mContSubConfigsByPropIdArea
             GUARDED_BY(mLock);
 
-    VhalResult<void> updateSampleRateLocked(const ClientIdType& clientId,
-                                            const PropIdAreaId& propIdAreaId, float sampleRate)
+    VhalResult<void> addContinuousSubscriberLocked(const ClientIdType& clientId,
+                                                   const PropIdAreaId& propIdAreaId,
+                                                   float sampleRateHz) REQUIRES(mLock);
+    VhalResult<void> removeContinuousSubscriberLocked(const ClientIdType& clientId,
+                                                      const PropIdAreaId& propIdAreaId)
             REQUIRES(mLock);
-    VhalResult<void> removeSampleRateLocked(const ClientIdType& clientId,
-                                            const PropIdAreaId& propIdAreaId) REQUIRES(mLock);
+
+    VhalResult<void> updateContSubConfigs(const PropIdAreaId& PropIdAreaId,
+                                          const ContSubConfigs& newConfig) REQUIRES(mLock);
 
     // Checks whether the manager is empty. For testing purpose.
     bool isEmpty();
 
     // Get the interval in nanoseconds accroding to sample rate.
-    static android::base::Result<int64_t> getInterval(float sampleRate);
+    static android::base::Result<int64_t> getIntervalNanos(float sampleRateHz);
 };
 
 }  // namespace vehicle

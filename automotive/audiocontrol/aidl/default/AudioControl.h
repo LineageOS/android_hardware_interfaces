@@ -21,10 +21,19 @@
 #include <aidl/android/hardware/automotive/audiocontrol/BnAudioControl.h>
 #include <aidl/android/hardware/automotive/audiocontrol/DuckingInfo.h>
 #include <aidl/android/hardware/automotive/audiocontrol/IAudioGainCallback.h>
+#include <aidl/android/hardware/automotive/audiocontrol/IModuleChangeCallback.h>
 #include <aidl/android/hardware/automotive/audiocontrol/MutingInfo.h>
 #include <aidl/android/hardware/automotive/audiocontrol/Reasons.h>
 
 #include <aidl/android/hardware/audio/common/PlaybackTrackMetadata.h>
+
+#include <aidl/android/media/audio/common/AudioChannelLayout.h>
+#include <aidl/android/media/audio/common/AudioDeviceType.h>
+#include <aidl/android/media/audio/common/AudioFormatDescription.h>
+#include <aidl/android/media/audio/common/AudioFormatType.h>
+#include <aidl/android/media/audio/common/AudioGainMode.h>
+#include <aidl/android/media/audio/common/AudioIoFlags.h>
+#include <aidl/android/media/audio/common/AudioOutputFlags.h>
 
 namespace aidl::android::hardware::automotive::audiocontrol {
 
@@ -51,6 +60,9 @@ class AudioControl : public BnAudioControl {
             const std::vector<AudioGainConfigInfo>& in_gains) override;
     ndk::ScopedAStatus registerGainCallback(
             const std::shared_ptr<IAudioGainCallback>& in_callback) override;
+    ndk::ScopedAStatus setModuleChangeCallback(
+            const std::shared_ptr<IModuleChangeCallback>& in_callback) override;
+    ndk::ScopedAStatus clearModuleChangeCallback() override;
 
     binder_status_t dump(int fd, const char** args, uint32_t numArgs) override;
 
@@ -67,15 +79,23 @@ class AudioControl : public BnAudioControl {
      */
     std::shared_ptr<IAudioGainCallback> mAudioGainCallback = nullptr;
 
+    std::shared_ptr<IModuleChangeCallback> mModuleChangeCallback = nullptr;
+
     binder_status_t cmdHelp(int fd) const;
     binder_status_t cmdRequestFocus(int fd, const char** args, uint32_t numArgs);
     binder_status_t cmdAbandonFocus(int fd, const char** args, uint32_t numArgs);
     binder_status_t cmdRequestFocusWithMetaData(int fd, const char** args, uint32_t numArgs);
     binder_status_t cmdAbandonFocusWithMetaData(int fd, const char** args, uint32_t numArgs);
     binder_status_t cmdOnAudioDeviceGainsChanged(int fd, const char** args, uint32_t numArgs);
+    binder_status_t cmdOnAudioPortsChanged(int fd, const char** args, uint32_t numArgs);
 
     binder_status_t parseMetaData(int fd, const std::string& metadataLiteral,
                                   audiohalcommon::PlaybackTrackMetadata& trackMetadata);
+    binder_status_t parseAudioGains(
+            int fd, const std::string& stringGain,
+            std::vector<::aidl::android::media::audio::common::AudioGain>& gains);
+    binder_status_t parseSampleRates(int fd, const std::string& sampleRates,
+                                     std::vector<int32_t>& vecSampleRates);
 
     binder_status_t dumpsys(int fd);
 };

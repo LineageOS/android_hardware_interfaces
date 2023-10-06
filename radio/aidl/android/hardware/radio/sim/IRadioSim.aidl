@@ -26,6 +26,7 @@ import android.hardware.radio.sim.ImsiEncryptionInfo;
 import android.hardware.radio.sim.PersoSubstate;
 import android.hardware.radio.sim.PhonebookRecordInfo;
 import android.hardware.radio.sim.SelectUiccSub;
+import android.hardware.radio.sim.SessionInfo;
 import android.hardware.radio.sim.SimApdu;
 import android.hardware.radio.sim.SimLockMultiSimPolicy;
 
@@ -184,6 +185,8 @@ oneway interface IRadioSim {
      * @param channelId session id of the logical channel (+CCHC).
      *
      * Response function is IRadioSimResponse.iccCloseLogicalChannelResponse()
+     *
+     * @deprecated use iccCloseLogicalChannelWithSessionInfo instead.
      */
     void iccCloseLogicalChannel(in int serial, in int channelId);
 
@@ -494,4 +497,19 @@ oneway interface IRadioSim {
      * Response function is IRadioSimResponse.updateSimPhonebookRecordsResponse()
      */
     void updateSimPhonebookRecords(in int serial, in PhonebookRecordInfo recordInfo);
+
+    /**
+     * Close a previously opened logical channel. This command reflects TS 27.007
+     * "close logical channel" operation (+CCHC).
+     *
+     * Per spec SGP.22 V3.0, ES10 commands needs to be sent over command port of MEP-A. In order
+     * to close proper logical channel, should pass information about whether the logical channel
+     * was opened for sending ES10 commands or not.
+     *
+     * @param serial Serial number of request.
+     * @param sessionInfo Details of the opened logical channel info like sessionId and isEs10.
+     *
+     * Response function is IRadioSimResponse.iccCloseLogicalChannelWithSessionInfoResponse()
+     */
+    void iccCloseLogicalChannelWithSessionInfo(in int serial, in SessionInfo sessionInfo);
 }

@@ -1,0 +1,38 @@
+package {
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "hardware_interfaces_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-Apache-2.0
+    default_applicable_licenses: ["hardware_interfaces_license"],
+}
+
+cc_test {
+    name: "VtsHalTvInputTargetTest",
+    defaults: [
+        "VtsHalTargetTestDefaults",
+        "use_libaidlvintf_gtest_helper_static",
+    ],
+    cflags: [
+        "-Werror",
+        "-Wno-unused-parameter",
+    ],
+    srcs: ["VtsHalTvInputTargetTest.cpp"],
+    static_libs: [
+        "android.media.audio.common.types-V1-ndk",
+        "android.hardware.common-V2-ndk",
+        "libaidlcommonsupport",
+    ],
+    test_suites: [
+        "general-tests",
+        "vts",
+    ],
+    shared_libs: [
+        "libbinder_ndk",
+        "libvndksupport",
+        "libfmq",
+        "android.hardware.common.fmq-V1-ndk",
+        "android.hardware.tv.input-V1-ndk",
+    ],
+    require_root: true,
+}

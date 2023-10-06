@@ -39,8 +39,11 @@ aidl_interface {
             ],
             min_sdk_version: "29",
         },
+        rust: {
+            enabled: true,
+        },
     },
-    frozen: false,
+    frozen: true,
     versions_with_info: [
         {
             version: "1",
@@ -60,5 +63,10 @@ aidl_interface {
                 "android.hardware.common-V2",
             ],
         },
+        {
+            version: "4",
+            imports: ["android.hardware.common-V2"],
+        },
+
     ],
 }

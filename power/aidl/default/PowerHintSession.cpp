@@ -47,4 +47,16 @@ ScopedAStatus PowerHintSession::close() {
     return ScopedAStatus::ok();
 }
 
+ScopedAStatus PowerHintSession::sendHint(SessionHint /* hint */) {
+    return ScopedAStatus::ok();
+}
+
+ScopedAStatus PowerHintSession::setThreads(const std::vector<int32_t>& threadIds) {
+    if (threadIds.size() == 0) {
+        LOG(ERROR) << "Error: threadIds.size() shouldn't be " << threadIds.size();
+        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+    }
+    return ScopedAStatus::ok();
+}
+
 }  // namespace aidl::android::hardware::power::impl::example

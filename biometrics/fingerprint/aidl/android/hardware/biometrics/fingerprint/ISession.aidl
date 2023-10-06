@@ -45,6 +45,7 @@ import android.hardware.keymaster.HardwareAuthToken;
  * ISession only supports execution of one non-interrupting operation at a time, regardless of
  * whether it's cancellable. The framework must wait for a callback indicating the end of the
  * current non-interrupting operation before a new non-interrupting operation can be started.
+ * @hide
  */
 @VintfStability
 interface ISession {
@@ -419,6 +420,8 @@ interface ISession {
      * @param y The distance in pixels from the top edge of the display.
      * @param minor See android.view.MotionEvent#getTouchMinor
      * @param major See android.view.MotionEvent#getTouchMajor
+     *
+     * @deprecated use onPointerDownWithContext instead.
      */
     void onPointerDown(in int pointerId, in int x, in int y, in float minor, in float major);
 
@@ -433,6 +436,8 @@ interface ISession {
      * ISession#enroll, ISession#detectInteraction.
      *
      * @param pointerId See android.view.MotionEvent#getPointerId
+     *
+     * @deprecated use onPointerUpWithContext instead.
      */
     void onPointerUp(in int pointerId);
 
@@ -468,15 +473,77 @@ interface ISession {
     /** See ISession#detectInteraction() */
     ICancellationSignal detectInteractionWithContext(in OperationContext context);
 
-    /** See ISession#onPointerDown(int, int, int, float, float) */
+    /**
+     * onPointerDownWithContext:
+     *
+     * This operation only applies to sensors that are configured as
+     * FingerprintSensorType::UNDER_DISPLAY_*. If invoked erroneously by the framework for sensors
+     * of other types, the HAL must treat this as a no-op and return immediately.
+     *
+     * Notifies the HAL that a finger entered the sensor area. This operation can be invoked
+     * regardless of the current state of the HAL.
+     *
+     * Note that for sensors which require illumination, for example
+     * FingerprintSensorType::UNDER_DISPLAY_OPTICAL, this is a good time to start illuminating.
+     *
+     * @param context See PointerContext
+     */
     void onPointerDownWithContext(in PointerContext context);
 
-    /** See ISession#onPointerUp(int) */
+    /**
+     * onPointerUpWithContext:
+     *
+     * This operation only applies to sensors that are configured as
+     * FingerprintSensorType::UNDER_DISPLAY_*. If invoked for sensors of other types, the HAL must
+     * treat this as a no-op and return immediately.
+     *
+     * Notifies the HAL that a finger left the sensor area. This operation can be invoked regardless
+     * of the current state of the HAL.
+     *
+     * @param context See PointerContext
+     */
     void onPointerUpWithContext(in PointerContext context);
 
     /**
+     * onContextChanged:
+     *
      * This may be called while an authenticate, detect interaction, or enrollment operation is
      * running when the context changes.
      */
     void onContextChanged(in OperationContext context);
+
+    /**
+     * onPointerCancelWithContext:
+     *
+     * This operation only applies to sensors that are configured as
+     * FingerprintSensorType::UNDER_DISPLAY_*. If invoked for sensors of other types, the HAL must
+     * treat this as a no-op and return immediately.
+     *
+     * Notifies the HAL that if there were fingers within the sensor area, they are no longer being
+     * tracked. The fingers may or may not still be on the sensor. This operation can be invoked
+     * regardless of the current state of the HAL.
+     *
+     * @param context See PointerContext
+     */
+    void onPointerCancelWithContext(in PointerContext context);
+
+    /**
+     * setIgnoreDisplayTouches:
+     *
+     * This operation only applies to sensors that have SensorProps#halHandlesDisplayTouches
+     * set to true. For all other sensors this is a no-op.
+     *
+     * Instructs the HAL whether to ignore display touches. This can be useful to avoid unintended
+     * fingerprint captures during certain UI interactions. For example, when entering a lockscreen
+     * PIN, some of the touches might overlap with the fingerprint sensor. Those touches should be
+     * ignored to avoid unintended authentication attempts.
+     *
+     * This flag must default to false when the HAL starts.
+     *
+     * The framework is responsible for both setting the flag to true and resetting it to false
+     * whenever it's appropriate.
+     *
+     * @param shouldIgnore whether the display touches should be ignored.
+     */
+    void setIgnoreDisplayTouches(in boolean shouldIgnore);
 }

@@ -119,6 +119,8 @@ interface ISessionCallback {
      * lockout, and authentication can be restarted after a period of time. See
      * ISession#resetLockout.
      *
+     * This ends the authentication lifecycle.
+     *
      * @param sensorId Sensor for which the user is locked out.
      * @param userId User for which the sensor is locked out.
      * @param durationMillis Remaining duration of the lockout.
@@ -130,6 +132,8 @@ interface ISessionCallback {
      *
      * Authentication is disabled until the user unlocks with their device credential
      * (PIN/Pattern/Password). See ISession#resetLockout.
+     *
+     * This ends the authentication lifecycle.
      *
      * @param sensorId Sensor for which the user is locked out.
      * @param userId User for which the sensor is locked out.

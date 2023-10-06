@@ -45,6 +45,7 @@ interface IGnssCallback {
   void gnssSetSystemInfoCb(in android.hardware.gnss.IGnssCallback.GnssSystemInfo info);
   void gnssRequestTimeCb();
   void gnssRequestLocationCb(in boolean independentFromGnss, in boolean isUserEmergency);
+  void gnssSetSignalTypeCapabilitiesCb(in android.hardware.gnss.GnssSignalType[] gnssSignalTypes);
   const int CAPABILITY_SCHEDULING = 1;
   const int CAPABILITY_MSB = 2;
   const int CAPABILITY_MSA = 4;
@@ -60,6 +61,7 @@ interface IGnssCallback {
   const int CAPABILITY_CORRELATION_VECTOR = 4096;
   const int CAPABILITY_SATELLITE_PVT = 8192;
   const int CAPABILITY_MEASUREMENT_CORRECTIONS_FOR_DRIVING = 16384;
+  const int CAPABILITY_ACCUMULATED_DELTA_RANGE = 32768;
   @Backing(type="int") @VintfStability
   enum GnssStatusValue {
     NONE = 0,

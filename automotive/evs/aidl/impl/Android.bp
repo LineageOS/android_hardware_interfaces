@@ -20,10 +20,10 @@ package {
 
 cc_defaults {
     name: "EvsHalDefaults",
+    defaults: ["android.hardware.graphics.common-ndk_static"],
     static_libs: [
-        "android.hardware.automotive.evs-V1-ndk",
+        "android.hardware.automotive.evs-V2-ndk",
         "android.hardware.common-V2-ndk",
-        "android.hardware.graphics.common-V4-ndk",
     ],
     shared_libs: [
         "libbase",

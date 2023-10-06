@@ -28,4 +28,12 @@ parcelable MloLinksInfo {
      * List of MLO links
      */
     MloLink[] links;
+    /**
+     * The MLO link-id for the access point. It is the link-id used for association.
+     */
+    int apMloLinkId;
+    /**
+     * AP MLD MAC address.
+     */
+    @nullable byte[6] apMldMacAddress;
 }

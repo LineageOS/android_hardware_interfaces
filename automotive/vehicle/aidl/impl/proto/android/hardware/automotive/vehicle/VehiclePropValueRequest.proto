@@ -18,9 +18,44 @@ syntax = "proto3";
 
 package android.hardware.automotive.vehicle.proto;
 
+import "android/hardware/automotive/vehicle/StatusCode.proto";
 import "android/hardware/automotive/vehicle/VehiclePropValue.proto";
 
 message VehiclePropValueRequest {
-    int32 request_id = 1;
+    int64 request_id = 1;
     VehiclePropValue value = 2;
+};
+
+message UpdateSampleRateRequest {
+    /* Property identifier */
+    int32 prop = 1;
+
+    /* Area type(s) for non-global property it must be one of the value from
+     * VehicleArea* enums or 0 for global properties. */
+    int32 area_id = 2;
+
+    float sample_rate = 3;
+};
+
+message SetValueResult {
+    int64 request_id = 1;
+    StatusCode status = 2;
+};
+
+message GetValueResult {
+    int64 request_id = 1;
+    StatusCode status = 2;
+    VehiclePropValue value = 3;
+};
+
+message VehiclePropValueRequests {
+    repeated VehiclePropValueRequest requests = 1;
+};
+
+message SetValueResults {
+    repeated SetValueResult results = 1;
+};
+
+message GetValueResults {
+    repeated GetValueResult results = 1;
 };

@@ -39,7 +39,7 @@ parcelable RouteSelectionDescriptor {
   byte sscMode;
   android.hardware.radio.data.SliceInfo[] sliceInfo;
   String[] dnn;
-  const byte SSC_MODE_UNKNOWN = -1;
+  const byte SSC_MODE_UNKNOWN = (-1);
   const byte SSC_MODE_1 = 1;
   const byte SSC_MODE_2 = 2;
   const byte SSC_MODE_3 = 3;

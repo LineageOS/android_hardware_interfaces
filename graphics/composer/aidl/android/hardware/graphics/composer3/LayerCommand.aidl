@@ -258,4 +258,11 @@ parcelable LayerCommand {
      * the screen.
      */
     @nullable Rect[] blockingRegion;
+
+    /**
+     * Specifies which buffer slots should be cleared of buffer references
+     * because these buffers will no longer be used and the memory should
+     * be freed.
+     */
+    @nullable int[] bufferSlotsToClear;
 }
