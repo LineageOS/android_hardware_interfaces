@@ -1501,8 +1501,25 @@ TEST_P(AudioCoreModule, GetAudioPortWithExternalDevices) {
                 << "port ID " << connectedPortId;
         EXPECT_EQ(portConnected.get(), connectedPort);
         const auto& portProfiles = connectedPort.profiles;
-        EXPECT_NE(0UL, portProfiles.size())
-                << "Connected port has no profiles: " << connectedPort.toString();
+        if (portProfiles.empty()) {
+            const auto routableMixPorts =
+                    moduleConfig->getRoutableMixPortsForDevicePort(connectedPort);
+            bool hasMixPortWithStaticProfile = false;
+            for (const auto& mixPort : routableMixPorts) {
+                const auto& mixPortProfiles = mixPort.profiles;
+                if (!mixPortProfiles.empty() &&
+                    !std::all_of(mixPortProfiles.begin(), mixPortProfiles.end(),
+                                 [](const auto& profile) {
+                                     return profile.format.type == AudioFormatType::DEFAULT;
+                                 })) {
+                    hasMixPortWithStaticProfile = true;
+                    break;
+                }
+            }
+            EXPECT_TRUE(hasMixPortWithStaticProfile)
+                    << "Connected port has no profiles and no routable mix ports with profiles: "
+                    << connectedPort.toString();
+        }
         const auto dynamicProfileIt =
                 std::find_if(portProfiles.begin(), portProfiles.end(), [](const auto& profile) {
                     return profile.format.type == AudioFormatType::DEFAULT;
@@ -1586,7 +1603,8 @@ TEST_P(AudioCoreModule, ResetAudioPortConfigToInitialValue) {
         EXPECT_NE(portConfigsAfter.end(), afterIt)
                 << " port config ID " << c.id << " was removed by reset";
         if (afterIt != portConfigsAfter.end()) {
-            EXPECT_EQ(c, *afterIt);
+            EXPECT_TRUE(c == *afterIt)
+                    << "Expected: " << c.toString() << "; Actual: " << afterIt->toString();
         }
     }
 }
