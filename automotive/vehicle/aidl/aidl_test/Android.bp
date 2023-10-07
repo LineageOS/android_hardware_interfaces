@@ -54,7 +54,7 @@ android_test {
         "android.hardware.automotive.vehicle-V2-java",
         "android.hardware.automotive.vehicle.property-V3-java",
         "androidx.test.runner",
-        "truth-prebuilt",
+        "truth",
     ],
     test_suites: ["general-tests"],
 }
