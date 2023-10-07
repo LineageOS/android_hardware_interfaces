@@ -15,6 +15,7 @@ rust_binary {
     prefer_rlib: true,
     rustlibs: [
         "android.hardware.uwb-V1-rust",
+        "liblibc",
         "liblogger",
         "liblog_rust",
         "libbinder_rs",

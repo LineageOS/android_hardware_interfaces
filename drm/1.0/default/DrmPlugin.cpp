@@ -133,8 +133,8 @@ namespace implementation {
         Vector<KeyValue> infoMapVec;
         for (size_t i = 0; i < legacyInfoMap.size(); i++) {
             KeyValue keyValuePair;
-            keyValuePair.key = String8(legacyInfoMap.keyAt(i));
-            keyValuePair.value = String8(legacyInfoMap.valueAt(i));
+            keyValuePair.key = legacyInfoMap.keyAt(i);
+            keyValuePair.value = legacyInfoMap.valueAt(i);
             infoMapVec.push_back(keyValuePair);
         }
         _hidl_cb(toStatus(status), toHidlVec(infoMapVec));

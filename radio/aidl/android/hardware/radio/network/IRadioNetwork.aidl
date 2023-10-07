@@ -32,6 +32,7 @@ import android.hardware.radio.network.UsageSetting;
 
 /**
  * This interface is used by telephony and telecom to talk to cellular radio for network APIs.
+ * All functions apply to both terrestrial and extraterrestrial (satellite) based cellular networks.
  * All the functions have minimum one parameter:
  * serial: which corresponds to serial no. of request. Serial numbers must only be memorized for the
  * duration of a method call. If clients provide colliding serials (including passing the same

@@ -11,7 +11,7 @@ package {
 
 aidl_interface {
     name: "android.hardware.media.c2",
-    min_sdk_version: "31",
+    min_sdk_version: "30",
     vendor_available: true,
     double_loadable: true,
     srcs: ["android/hardware/media/c2/*.aidl"],

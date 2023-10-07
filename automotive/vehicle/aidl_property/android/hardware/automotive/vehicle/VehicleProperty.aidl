@@ -4751,11 +4751,11 @@ enum VehicleProperty {
      *
      * Commands to activate and suspend LCA.
      *
-     * When the command ACTIVATE from LaneCenteringAssistCommmand is sent,
+     * When the command ACTIVATE from LaneCenteringAssistCommand is sent,
      * LANE_CENTERING_ASSIST_STATE must be set to LaneCenteringAssistState#ACTIVATION_REQUESTED.
      * When the ACTIVATE command succeeds, LANE_CENTERING_ASSIST_STATE must be set to
      * LaneCenteringAssistState#ACTIVATED. When the command DEACTIVATE from
-     * LaneCenteringAssistCommmand succeeds, LANE_CENTERING_ASSIST_STATE must be set to
+     * LaneCenteringAssistCommand succeeds, LANE_CENTERING_ASSIST_STATE must be set to
      * LaneCenteringAssistState#ENABLED.
      *
      * For the global area ID (0), the VehicleAreaConfig#supportedEnumValues must be defined unless
@@ -4771,7 +4771,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.WRITE
-     * @data_enum LaneCenteringAssistCommmand
+     * @data_enum LaneCenteringAssistCommand
      */
     LANE_CENTERING_ASSIST_COMMAND =
             0x100B + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
