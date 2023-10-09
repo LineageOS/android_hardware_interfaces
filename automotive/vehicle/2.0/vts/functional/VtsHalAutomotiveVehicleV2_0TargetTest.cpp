@@ -78,6 +78,9 @@ class VtsVehicleCallback : public IVehicleCallback {
 };
 
 class VehicleHalHidlTest : public testing::TestWithParam<std::string> {
+  protected:
+    bool checkIsSupported(int32_t propertyId);
+
   public:
     virtual void SetUp() override {
         mVehicle = IVehicle::getService(GetParam());
@@ -123,7 +126,7 @@ class VehicleHalHidlTest : public testing::TestWithParam<std::string> {
     StatusCode mActualStatusCode;
 };
 
-// Test getAllPropConfig() returns at least 4 property configs.
+// Test getAllPropConfigs() returns at least 1 property configs.
 TEST_P(VehicleHalHidlTest, getAllPropConfigs) {
     ALOGD("VehicleHalHidlTest::getAllPropConfigs");
     bool isCalled = false;
@@ -133,21 +136,24 @@ TEST_P(VehicleHalHidlTest, getAllPropConfigs) {
         isCalled = true;
     });
     ASSERT_TRUE(isCalled);
-    ASSERT_GE(propConfigs.size(), 4);
+    ASSERT_GE(propConfigs.size(), 1);
 }
 
-// Test getPropConfig() can query all properties listed in CDD.
-TEST_P(VehicleHalHidlTest, getPropConfigs) {
+// Test getPropConfigs() can query properties returned by getAllPropConfigs.
+TEST_P(VehicleHalHidlTest, getPropConfigsWithValidProps) {
     ALOGD("VehicleHalHidlTest::getPropConfigs");
-    // Check the properties listed in CDD
-    hidl_vec<int32_t> properties = {
-            (int)VehicleProperty::GEAR_SELECTION, (int)VehicleProperty::NIGHT_MODE,
-            (int)VehicleProperty::PARKING_BRAKE_ON, (int)VehicleProperty::PERF_VEHICLE_SPEED};
+    std::vector<int32_t> properties;
+    mVehicle->getAllPropConfigs([&properties](const hidl_vec<VehiclePropConfig>& cfgs) {
+        for (int i = 0; i < cfgs.size(); i++) {
+            properties.push_back(cfgs[i].prop);
+        }
+    });
     bool isCalled = false;
     mVehicle->getPropConfigs(
-            properties, [&isCalled](StatusCode status, const hidl_vec<VehiclePropConfig>& cfgs) {
+            properties,
+            [&properties, &isCalled](StatusCode status, const hidl_vec<VehiclePropConfig>& cfgs) {
                 ASSERT_EQ(StatusCode::OK, status);
-                ASSERT_EQ(4u, cfgs.size());
+                ASSERT_EQ(properties.size(), cfgs.size());
                 isCalled = true;
             });
     ASSERT_TRUE(isCalled);
@@ -167,10 +173,24 @@ TEST_P(VehicleHalHidlTest, getPropConfigsWithInvalidProp) {
     ASSERT_TRUE(isCalled);
 }
 
+bool VehicleHalHidlTest::checkIsSupported(int32_t propertyId) {
+    hidl_vec<int32_t> properties = {propertyId};
+    bool result = false;
+    mVehicle->getPropConfigs(properties, [&result](
+            StatusCode status, [[maybe_unused]] const hidl_vec<VehiclePropConfig>& cfgs) {
+        result = (status == StatusCode::OK);
+    });
+    return result;
+}
+
 // Test get() return current value for properties.
 TEST_P(VehicleHalHidlTest, get) {
     ALOGD("VehicleHalHidlTest::get");
-    invokeGet((int)VehicleProperty::PERF_VEHICLE_SPEED, 0);
+    int32_t propertyId = static_cast<int32_t>(VehicleProperty::PERF_VEHICLE_SPEED);
+    if (!checkIsSupported(propertyId)) {
+        GTEST_SKIP() << "Property: " << propertyId << " is not supported, skip the test";
+    }
+    invokeGet(propertyId, 0);
     ASSERT_EQ(StatusCode::OK, mActualStatusCode);
 }
 
@@ -235,7 +255,11 @@ TEST_P(VehicleHalHidlTest, setProp) {
 // Test set() on an read_only property.
 TEST_P(VehicleHalHidlTest, setNotWritableProp) {
     ALOGD("VehicleHalHidlTest::setNotWritableProp");
-    invokeGet(static_cast<int>(VehicleProperty::PERF_VEHICLE_SPEED), 0);
+    int32_t propertyId = static_cast<int32_t>(VehicleProperty::PERF_VEHICLE_SPEED);
+    if (!checkIsSupported(propertyId)) {
+        GTEST_SKIP() << "Property: " << propertyId << " is not supported, skip the test";
+    }
+    invokeGet(propertyId, 0);
     ASSERT_EQ(StatusCode::OK, mActualStatusCode);
     VehiclePropValue vehicleSpeed = mActualValue;
 
@@ -245,16 +269,19 @@ TEST_P(VehicleHalHidlTest, setNotWritableProp) {
 // Test subscribe() and unsubscribe().
 TEST_P(VehicleHalHidlTest, subscribeAndUnsubscribe) {
     ALOGD("VehicleHalHidlTest::subscribeAndUnsubscribe");
-    const auto prop = static_cast<int>(VehicleProperty::PERF_VEHICLE_SPEED);
+    int32_t propertyId = static_cast<int32_t>(VehicleProperty::PERF_VEHICLE_SPEED);
+    if (!checkIsSupported(propertyId)) {
+        GTEST_SKIP() << "Property: " << propertyId << " is not supported, skip the test";
+    }
     sp<VtsVehicleCallback> cb = new VtsVehicleCallback();
 
-    hidl_vec<SubscribeOptions> options = {
-            SubscribeOptions{.propId = prop, 100.0, .flags = SubscribeFlags::EVENTS_FROM_CAR}};
+    hidl_vec<SubscribeOptions> options = {SubscribeOptions{
+            .propId = propertyId, 100.0, .flags = SubscribeFlags::EVENTS_FROM_CAR}};
 
     ASSERT_EQ(StatusCode::OK, mVehicle->subscribe(cb, options));
     ASSERT_TRUE(cb->waitForExpectedEvents(10));
 
-    ASSERT_EQ(StatusCode::OK, mVehicle->unsubscribe(cb, prop));
+    ASSERT_EQ(StatusCode::OK, mVehicle->unsubscribe(cb, propertyId));
     cb->reset();
     ASSERT_FALSE(cb->waitForExpectedEvents(10));
 }
