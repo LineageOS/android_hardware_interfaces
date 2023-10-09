@@ -32,7 +32,9 @@ using ::android::base::ParseInt;
 namespace aidl::android::hardware::biometrics::fingerprint {
 
 FakeFingerprintEngine::FakeFingerprintEngine()
-    : mRandom(std::mt19937::default_seed), mWorkMode(WorkMode::kIdle) {}
+    : mRandom(std::mt19937::default_seed),
+      mWorkMode(WorkMode::kIdle),
+      isLockoutTimerSupported(true) {}
 
 void FakeFingerprintEngine::generateChallengeImpl(ISessionCallback* cb) {
     BEGIN_OP(0);
@@ -305,15 +307,6 @@ bool FakeFingerprintEngine::onDetectInteractFingerDown(ISessionCallback* cb,
         SLEEP_MS(duration / N);
     } while (!Util::hasElapsed(now, duration));
 
-    auto id = FingerprintHalProperties::enrollment_hit().value_or(0);
-    auto enrolls = FingerprintHalProperties::enrollments();
-    auto isEnrolled = std::find(enrolls.begin(), enrolls.end(), id) != enrolls.end();
-    if (id <= 0 || !isEnrolled) {
-        LOG(ERROR) << "Fail: not enrolled";
-        cb->onError(Error::UNABLE_TO_PROCESS, 0 /* vendorError */);
-        return true;
-    }
-
     cb->onInteractionDetected();
 
     return true;
@@ -386,7 +379,7 @@ void FakeFingerprintEngine::resetLockoutImpl(ISessionCallback* cb,
         return;
     }
     clearLockout(cb);
-    isLockoutTimerAborted = true;
+    if (isLockoutTimerStarted) isLockoutTimerAborted = true;
 }
 
 void FakeFingerprintEngine::clearLockout(ISessionCallback* cb) {
@@ -533,6 +526,7 @@ void FakeFingerprintEngine::startLockoutTimer(int64_t timeout, ISessionCallback*
     isLockoutTimerStarted = true;
 }
 void FakeFingerprintEngine::lockoutTimerExpired(ISessionCallback* cb) {
+    BEGIN_OP(0);
     if (!isLockoutTimerAborted) {
         clearLockout(cb);
     }
