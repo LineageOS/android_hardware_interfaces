@@ -142,6 +142,7 @@ bool ShouldCheckMissingAidlHalsInFcm(const std::string& packageAndVersion) {
 
             // AIDL
             "android.hardware.audio.core.sounddose@1",
+            "android.hardware.audio.core.sounddose@2",
 
             // Deprecated HALs.
             "android.hardware.bluetooth.audio@1",
