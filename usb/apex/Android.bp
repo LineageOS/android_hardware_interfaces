@@ -16,26 +16,15 @@ package {
     default_applicable_licenses: ["hardware_interfaces_license"],
 }
 
-apex_key {
-    name: "com.android.hardware.usb.key",
-    public_key: "com.android.hardware.usb.avbpubkey",
-    private_key: "com.android.hardware.usb.pem",
-}
-
-android_app_certificate {
-    name: "com.android.hardware.usb.certificate",
-    certificate: "com.android.hardware.usb",
-}
-
 apex {
     name: "com.android.hardware.usb",
     manifest: "manifest.json",
     file_contexts: "file_contexts",
-    key: "com.android.hardware.usb.key",
-    certificate: ":com.android.hardware.usb.certificate",
+    key: "com.android.hardware.key",
+    certificate: ":com.android.hardware.certificate",
     updatable: false,
-    soc_specific: true,
-    use_vndk_as_stable: true,
+    vendor: true,
+
     binaries: ["android.hardware.usb-service.example"],
     prebuilts: [
         "com.android.hardware.usb.rc", // init .rc
@@ -50,7 +39,7 @@ genrule {
     name: "com.android.hardware.usb.rc-gen",
     srcs: [":android.hardware.usb-service.example.rc"],
     out: ["com.android.hardware.usb.rc"],
-    cmd: "sed -E 's/\\/vendor/\\/apex\\/com.android.hardware.usb/' $(in) > $(out)",
+    cmd: "sed -E 's@/vendor/bin@/apex/com.android.hardware.usb/bin@' $(in) > $(out)",
 }
 
 prebuilt_etc {
