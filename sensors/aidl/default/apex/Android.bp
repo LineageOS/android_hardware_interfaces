@@ -2,17 +2,6 @@ package {
     default_applicable_licenses: ["hardware_interfaces_license"],
 }
 
-apex_key {
-    name: "com.android.hardware.sensors.key",
-    public_key: "com.android.hardware.sensors.avbpubkey",
-    private_key: "com.android.hardware.sensors.pem",
-}
-
-android_app_certificate {
-    name: "com.android.hardware.sensors.certificate",
-    certificate: "com.android.hardware.sensors",
-}
-
 genrule {
     name: "com.android.hardware.sensors.rc-gen",
     srcs: [":sensors-default.rc"],
@@ -31,16 +20,16 @@ prebuilt_etc {
 apex {
     name: "com.android.hardware.sensors",
     manifest: "apex_manifest.json",
-    key: "com.android.hardware.sensors.key",
-    certificate: ":com.android.hardware.sensors.certificate",
+    key: "com.android.hardware.key",
+    certificate: ":com.android.hardware.certificate",
     file_contexts: "file_contexts",
-    use_vndk_as_stable: true,
     updatable: false,
-    // Install the apex in /vendor/apex
-    soc_specific: true,
+    vendor: true,
+
     binaries: ["android.hardware.sensors-service.example"],
     prebuilts: [
-        "com.android.hardware.sensors.rc",
+        "com.android.hardware.sensors.rc", // init rc
+        "sensors-default.xml", // vintf fragment
         "android.hardware.sensor.ambient_temperature.prebuilt.xml",
         "android.hardware.sensor.barometer.prebuilt.xml",
         "android.hardware.sensor.gyroscope.prebuilt.xml",
@@ -49,5 +38,4 @@ apex {
         "android.hardware.sensor.proximity.prebuilt.xml",
         "android.hardware.sensor.relative_humidity.prebuilt.xml",
     ],
-    vintf_fragments: [":sensors-default.xml"],
 }
