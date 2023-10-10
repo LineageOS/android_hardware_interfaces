@@ -559,6 +559,13 @@ enum Dataspace {
     ADOBE_RGB = 11 << 16 | 4 << 22 | 1 << 27, // STANDARD_ADOBE_RGB | TRANSFER_GAMMA2_2 | RANGE_FULL
 
     /**
+     * Adobe RGB LINEAR
+     *
+     * Use full range, linear transfer and Adobe RGB primaries
+     */
+    ADOBE_RGB_LINEAR = 11 << 16 | 1 << 22 | 1 << 27, // STANDARD_ADOBE_RGB | TRANSFER_LINEAR | RANGE_FULL
+
+    /**
      * ITU-R Recommendation 2020 (BT.2020)
      *
      * Ultra High-definition television
@@ -584,6 +591,15 @@ enum Dataspace {
      * Use full range, SMPTE 2084 (PQ) transfer and BT2020 standard
      */
     BT2020_PQ = 6 << 16 | 7 << 22 | 1 << 27, // STANDARD_BT2020 | TRANSFER_ST2084 | RANGE_FULL
+
+    /**
+     * ITU-R Recommendation 2020 (BT.2020)
+     *
+     * Ultra High-definition television
+     *
+     * Use extended range, linear transfer and BT2020 standard
+     */
+    BT2020_LINEAR_EXTENDED = 6 << 16 | 1 << 22 | 3 << 27, // STANDARD_BT2020 | TRANSFER_LINEAR | RANGE_EXTENDED
 
     /**
      * Data spaces for non-color formats

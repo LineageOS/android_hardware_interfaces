@@ -18,7 +18,7 @@ aidl_interface {
     srcs: ["android/hardware/graphics/allocator/*.aidl"],
     imports: [
         "android.hardware.common-V2",
-        "android.hardware.graphics.common-V4",
+        "android.hardware.graphics.common-V5",
     ],
     stability: "vintf",
     backend: {
@@ -49,7 +49,7 @@ aidl_interface {
             version: "2",
             imports: [
                 "android.hardware.common-V2",
-                "android.hardware.graphics.common-V4",
+                "android.hardware.graphics.common-V5",
             ],
         },
 
