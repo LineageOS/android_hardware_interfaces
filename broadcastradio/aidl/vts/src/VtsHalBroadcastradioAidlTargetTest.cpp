@@ -32,11 +32,11 @@
 #include <aidl/Gtest.h>
 #include <aidl/Vintf.h>
 #include <broadcastradio-utils-aidl/Utils.h>
-#include <broadcastradio-vts-utils/mock-timeout.h>
 #include <cutils/bitops.h>
 #include <gmock/gmock.h>
 
 #include <chrono>
+#include <condition_variable>
 #include <optional>
 #include <regex>
 
@@ -60,11 +60,6 @@ using ::testing::Invoke;
 using ::testing::SaveArg;
 
 namespace bcutils = ::aidl::android::hardware::broadcastradio::utils;
-
-inline constexpr std::chrono::seconds kTuneTimeoutSec =
-        std::chrono::seconds(IBroadcastRadio::TUNER_TIMEOUT_MS * 1000);
-inline constexpr std::chrono::seconds kProgramListScanTimeoutSec =
-        std::chrono::seconds(IBroadcastRadio::LIST_COMPLETE_TIMEOUT_MS * 1000);
 
 const ConfigFlag kConfigFlagValues[] = {
         ConfigFlag::FORCE_MONO,
@@ -108,20 +103,68 @@ bool supportsFM(const AmFmRegionConfig& config) {
 
 }  // namespace
 
-class TunerCallbackMock : public BnTunerCallback {
+class CallbackFlag final {
   public:
-    TunerCallbackMock();
+    CallbackFlag(int timeoutMs) { mTimeoutMs = timeoutMs; }
+    /**
+     * Notify that the callback is called.
+     */
+    void notify() {
+        std::unique_lock<std::mutex> lock(mMutex);
+        mCalled = true;
+        lock.unlock();
+        mCv.notify_all();
+    };
+
+    /**
+     * Wait for the timeout passed into the constructor.
+     */
+    bool wait() {
+        std::unique_lock<std::mutex> lock(mMutex);
+        return mCv.wait_for(lock, std::chrono::milliseconds(mTimeoutMs),
+                            [this] { return mCalled; });
+    };
+
+    /**
+     * Reset the callback to not called.
+     */
+    void reset() {
+        std::unique_lock<std::mutex> lock(mMutex);
+        mCalled = false;
+    }
+
+  private:
+    std::mutex mMutex;
+    bool mCalled GUARDED_BY(mMutex) = false;
+    std::condition_variable mCv;
+    int mTimeoutMs;
+};
+
+class TunerCallbackImpl final : public BnTunerCallback {
+  public:
+    TunerCallbackImpl();
     ScopedAStatus onTuneFailed(Result result, const ProgramSelector& selector) override;
-    MOCK_TIMEOUT_METHOD1(onCurrentProgramInfoChangedMock, ScopedAStatus(const ProgramInfo&));
     ScopedAStatus onCurrentProgramInfoChanged(const ProgramInfo& info) override;
     ScopedAStatus onProgramListUpdated(const ProgramListChunk& chunk) override;
-    MOCK_METHOD1(onAntennaStateChange, ScopedAStatus(bool connected));
-    MOCK_METHOD1(onParametersUpdated, ScopedAStatus(const vector<VendorKeyValue>& parameters));
-    MOCK_METHOD2(onConfigFlagUpdated, ScopedAStatus(ConfigFlag in_flag, bool in_value));
-    MOCK_TIMEOUT_METHOD0(onProgramListReady, void());
+    ScopedAStatus onParametersUpdated(const vector<VendorKeyValue>& parameters) override;
+    ScopedAStatus onAntennaStateChange(bool connected) override;
+    ScopedAStatus onConfigFlagUpdated(ConfigFlag in_flag, bool in_value) override;
 
+    bool waitOnCurrentProgramInfoChangedCallback();
+    bool waitProgramReady();
+    void reset();
+
+    bool getAntennaConnectionState();
+    ProgramInfo getCurrentProgramInfo();
+    bcutils::ProgramInfoSet getProgramList();
+
+  private:
     std::mutex mLock;
+    bool mAntennaConnectionState GUARDED_BY(mLock);
+    ProgramInfo mCurrentProgramInfo GUARDED_BY(mLock);
     bcutils::ProgramInfoSet mProgramList GUARDED_BY(mLock);
+    CallbackFlag mOnCurrentProgramInfoChangedFlag = CallbackFlag(IBroadcastRadio::TUNER_TIMEOUT_MS);
+    CallbackFlag mOnProgramListReadyFlag = CallbackFlag(IBroadcastRadio::LIST_COMPLETE_TIMEOUT_MS);
 };
 
 struct AnnouncementListenerMock : public BnAnnouncementListener {
@@ -139,7 +182,7 @@ class BroadcastRadioHalTest : public testing::TestWithParam<string> {
 
     std::shared_ptr<IBroadcastRadio> mModule;
     Properties mProperties;
-    std::shared_ptr<TunerCallbackMock> mCallback = SharedRefBase::make<TunerCallbackMock>();
+    std::shared_ptr<TunerCallbackImpl> mCallback;
 };
 
 MATCHER_P(InfoHasId, id, string(negation ? "does not contain" : "contains") + " " + id.toString()) {
@@ -147,20 +190,18 @@ MATCHER_P(InfoHasId, id, string(negation ? "does not contain" : "contains") + " 
     return ids.end() != find(ids.begin(), ids.end(), id.value);
 }
 
-TunerCallbackMock::TunerCallbackMock() {
-    EXPECT_TIMEOUT_CALL(*this, onCurrentProgramInfoChangedMock, _).Times(AnyNumber());
-
-    // we expect the antenna is connected through the whole test
-    EXPECT_CALL(*this, onAntennaStateChange(false)).Times(0);
+TunerCallbackImpl::TunerCallbackImpl() {
+    mAntennaConnectionState = true;
 }
 
-ScopedAStatus TunerCallbackMock::onTuneFailed(Result result, const ProgramSelector& selector) {
+ScopedAStatus TunerCallbackImpl::onTuneFailed(Result result, const ProgramSelector& selector) {
     LOG(DEBUG) << "Tune failed for selector" << selector.toString();
     EXPECT_TRUE(result == Result::CANCELED);
     return ndk::ScopedAStatus::ok();
 }
 
-ScopedAStatus TunerCallbackMock::onCurrentProgramInfoChanged(const ProgramInfo& info) {
+ScopedAStatus TunerCallbackImpl::onCurrentProgramInfoChanged(const ProgramInfo& info) {
+    LOG(DEBUG) << "onCurrentProgramInfoChanged called";
     for (const auto& id : info.selector) {
         EXPECT_NE(id.type, IdentifierType::INVALID);
     }
@@ -196,19 +237,73 @@ ScopedAStatus TunerCallbackMock::onCurrentProgramInfoChanged(const ProgramInfo& 
         }
     }
 
-    return onCurrentProgramInfoChangedMock(info);
+    {
+        std::lock_guard<std::mutex> lk(mLock);
+        mCurrentProgramInfo = info;
+    }
+
+    mOnCurrentProgramInfoChangedFlag.notify();
+    return ndk::ScopedAStatus::ok();
 }
 
-ScopedAStatus TunerCallbackMock::onProgramListUpdated(const ProgramListChunk& chunk) {
-    std::lock_guard<std::mutex> lk(mLock);
-
-    updateProgramList(chunk, &mProgramList);
+ScopedAStatus TunerCallbackImpl::onProgramListUpdated(const ProgramListChunk& chunk) {
+    LOG(DEBUG) << "onProgramListUpdated called";
+    {
+        std::lock_guard<std::mutex> lk(mLock);
+        updateProgramList(chunk, &mProgramList);
+    }
 
     if (chunk.complete) {
-        onProgramListReady();
+        mOnProgramListReadyFlag.notify();
     }
 
     return ndk::ScopedAStatus::ok();
+}
+
+ScopedAStatus TunerCallbackImpl::onParametersUpdated(
+        [[maybe_unused]] const vector<VendorKeyValue>& parameters) {
+    return ndk::ScopedAStatus::ok();
+}
+
+ScopedAStatus TunerCallbackImpl::onAntennaStateChange(bool connected) {
+    if (!connected) {
+        std::lock_guard<std::mutex> lk(mLock);
+        mAntennaConnectionState = false;
+    }
+    return ndk::ScopedAStatus::ok();
+}
+
+ScopedAStatus TunerCallbackImpl::onConfigFlagUpdated([[maybe_unused]] ConfigFlag in_flag,
+                                                     [[maybe_unused]] bool in_value) {
+    return ndk::ScopedAStatus::ok();
+}
+
+bool TunerCallbackImpl::waitOnCurrentProgramInfoChangedCallback() {
+    return mOnCurrentProgramInfoChangedFlag.wait();
+}
+
+bool TunerCallbackImpl::waitProgramReady() {
+    return mOnProgramListReadyFlag.wait();
+}
+
+void TunerCallbackImpl::reset() {
+    mOnCurrentProgramInfoChangedFlag.reset();
+    mOnProgramListReadyFlag.reset();
+}
+
+bool TunerCallbackImpl::getAntennaConnectionState() {
+    std::lock_guard<std::mutex> lk(mLock);
+    return mAntennaConnectionState;
+}
+
+ProgramInfo TunerCallbackImpl::getCurrentProgramInfo() {
+    std::lock_guard<std::mutex> lk(mLock);
+    return mCurrentProgramInfo;
+}
+
+bcutils::ProgramInfoSet TunerCallbackImpl::getProgramList() {
+    std::lock_guard<std::mutex> lk(mLock);
+    return mProgramList;
 }
 
 void BroadcastRadioHalTest::SetUp() {
@@ -228,6 +323,8 @@ void BroadcastRadioHalTest::SetUp() {
     EXPECT_FALSE(mProperties.product.empty());
     EXPECT_GT(mProperties.supportedIdentifierTypes.size(), 0u);
 
+    mCallback = SharedRefBase::make<TunerCallbackImpl>();
+
     // set callback
     EXPECT_TRUE(mModule->setTunerCallback(mCallback).isOk());
 }
@@ -235,6 +332,11 @@ void BroadcastRadioHalTest::SetUp() {
 void BroadcastRadioHalTest::TearDown() {
     if (mModule) {
         ASSERT_TRUE(mModule->unsetTunerCallback().isOk());
+    }
+    if (mCallback) {
+        // we expect the antenna is connected through the whole test
+        EXPECT_TRUE(mCallback->getAntennaConnectionState());
+        mCallback = nullptr;
     }
 }
 
@@ -256,7 +358,7 @@ std::optional<bcutils::ProgramInfoSet> BroadcastRadioHalTest::getProgramList() {
 
 std::optional<bcutils::ProgramInfoSet> BroadcastRadioHalTest::getProgramList(
         const ProgramFilter& filter) {
-    EXPECT_TIMEOUT_CALL(*mCallback, onProgramListReady).Times(AnyNumber());
+    mCallback->reset();
 
     auto startResult = mModule->startProgramListUpdates(filter);
 
@@ -268,13 +370,13 @@ std::optional<bcutils::ProgramInfoSet> BroadcastRadioHalTest::getProgramList(
     if (!startResult.isOk()) {
         return std::nullopt;
     }
-    EXPECT_TIMEOUT_CALL_WAIT(*mCallback, onProgramListReady, kProgramListScanTimeoutSec);
+    EXPECT_TRUE(mCallback->waitProgramReady());
 
     auto stopResult = mModule->stopProgramListUpdates();
 
     EXPECT_TRUE(stopResult.isOk());
 
-    return mCallback->mProgramList;
+    return mCallback->getProgramList();
 }
 
 /**
@@ -456,7 +558,7 @@ TEST_P(BroadcastRadioHalTest, TuneFailsWithoutTunerCallback) {
  *  - if it is supported, the test is ignored;
  */
 TEST_P(BroadcastRadioHalTest, TuneFailsWithNotSupported) {
-    LOG(DEBUG) << "TuneFailsWithInvalid Test";
+    LOG(DEBUG) << "TuneFailsWithNotSupported Test";
 
     vector<ProgramIdentifier> supportTestId = {
             makeIdentifier(IdentifierType::AMFM_FREQUENCY_KHZ, 0),           // invalid
@@ -477,9 +579,9 @@ TEST_P(BroadcastRadioHalTest, TuneFailsWithNotSupported) {
     for (const auto& id : supportTestId) {
         ProgramSelector sel{id, {}};
 
-        auto result = mModule->tune(sel);
-
         if (!bcutils::isSupported(mProperties, sel)) {
+            auto result = mModule->tune(sel);
+
             EXPECT_EQ(result.getServiceSpecificError(), notSupportedError);
         }
     }
@@ -508,9 +610,9 @@ TEST_P(BroadcastRadioHalTest, TuneFailsWithInvalid) {
     for (const auto& id : invalidId) {
         ProgramSelector sel{id, {}};
 
-        auto result = mModule->tune(sel);
-
         if (bcutils::isSupported(mProperties, sel)) {
+            auto result = mModule->tune(sel);
+
             EXPECT_EQ(result.getServiceSpecificError(), invalidArgumentsError);
         }
     }
@@ -549,13 +651,7 @@ TEST_P(BroadcastRadioHalTest, FmTune) {
     int64_t freq = 90900;  // 90.9 FM
     ProgramSelector sel = makeSelectorAmfm(freq);
     // try tuning
-    ProgramInfo infoCb = {};
-    EXPECT_TIMEOUT_CALL(*mCallback, onCurrentProgramInfoChangedMock,
-                        InfoHasId(makeIdentifier(IdentifierType::AMFM_FREQUENCY_KHZ, freq)))
-            .Times(AnyNumber())
-            .WillOnce(DoAll(SaveArg<0>(&infoCb), testing::Return(ByMove(ndk::ScopedAStatus::ok()))))
-            .WillRepeatedly(testing::InvokeWithoutArgs([] { return ndk::ScopedAStatus::ok(); }));
-
+    mCallback->reset();
     auto result = mModule->tune(sel);
 
     // expect a failure if it's not supported
@@ -566,7 +662,8 @@ TEST_P(BroadcastRadioHalTest, FmTune) {
 
     // expect a callback if it succeeds
     EXPECT_TRUE(result.isOk());
-    EXPECT_TIMEOUT_CALL_WAIT(*mCallback, onCurrentProgramInfoChangedMock, kTuneTimeoutSec);
+    EXPECT_TRUE(mCallback->waitOnCurrentProgramInfoChangedCallback());
+    ProgramInfo infoCb = mCallback->getCurrentProgramInfo();
 
     LOG(DEBUG) << "Current program info: " << infoCb.toString();
 
@@ -638,12 +735,6 @@ TEST_P(BroadcastRadioHalTest, DabTune) {
     }
 
     // try tuning
-    ProgramInfo infoCb = {};
-    EXPECT_TIMEOUT_CALL(*mCallback, onCurrentProgramInfoChangedMock,
-                        InfoHasId(makeIdentifier(IdentifierType::DAB_FREQUENCY_KHZ, freq)))
-            .Times(AnyNumber())
-            .WillOnce(
-                    DoAll(SaveArg<0>(&infoCb), testing::Return(ByMove(ndk::ScopedAStatus::ok()))));
 
     auto result = mModule->tune(sel);
 
@@ -655,7 +746,9 @@ TEST_P(BroadcastRadioHalTest, DabTune) {
 
     // expect a callback if it succeeds
     EXPECT_TRUE(result.isOk());
-    EXPECT_TIMEOUT_CALL_WAIT(*mCallback, onCurrentProgramInfoChangedMock, kTuneTimeoutSec);
+    EXPECT_TRUE(mCallback->waitOnCurrentProgramInfoChangedCallback());
+    ProgramInfo infoCb = mCallback->getCurrentProgramInfo();
+
     LOG(DEBUG) << "Current program info: " << infoCb.toString();
 
     // it should tune exactly to what was requested
@@ -669,13 +762,13 @@ TEST_P(BroadcastRadioHalTest, DabTune) {
  *
  * Verifies that:
  *  - the method succeeds;
- *  - the program info is changed within kTuneTimeoutSec;
+ *  - the program info is changed within kTuneTimeoutMs;
  *  - works both directions and with or without skipping sub-channel.
  */
 TEST_P(BroadcastRadioHalTest, Seek) {
     LOG(DEBUG) << "Seek Test";
 
-    EXPECT_TIMEOUT_CALL(*mCallback, onCurrentProgramInfoChangedMock, _).Times(AnyNumber());
+    mCallback->reset();
 
     auto result = mModule->seek(/* in_directionUp= */ true, /* in_skipSubChannel= */ true);
 
@@ -685,14 +778,14 @@ TEST_P(BroadcastRadioHalTest, Seek) {
     }
 
     EXPECT_TRUE(result.isOk());
-    EXPECT_TIMEOUT_CALL_WAIT(*mCallback, onCurrentProgramInfoChangedMock, kTuneTimeoutSec);
+    EXPECT_TRUE(mCallback->waitOnCurrentProgramInfoChangedCallback());
 
-    EXPECT_TIMEOUT_CALL(*mCallback, onCurrentProgramInfoChangedMock, _).Times(AnyNumber());
+    mCallback->reset();
 
     result = mModule->seek(/* in_directionUp= */ false, /* in_skipSubChannel= */ false);
 
     EXPECT_TRUE(result.isOk());
-    EXPECT_TIMEOUT_CALL_WAIT(*mCallback, onCurrentProgramInfoChangedMock, kTuneTimeoutSec);
+    EXPECT_TRUE(mCallback->waitOnCurrentProgramInfoChangedCallback());
 }
 
 /**
@@ -720,13 +813,13 @@ TEST_P(BroadcastRadioHalTest, SeekFailsWithoutTunerCallback) {
  *
  * Verifies that:
  *  - the method succeeds or returns NOT_SUPPORTED;
- *  - the program info is changed within kTuneTimeoutSec if the method succeeded;
+ *  - the program info is changed within kTuneTimeoutMs if the method succeeded;
  *  - works both directions.
  */
 TEST_P(BroadcastRadioHalTest, Step) {
     LOG(DEBUG) << "Step Test";
 
-    EXPECT_TIMEOUT_CALL(*mCallback, onCurrentProgramInfoChangedMock, _).Times(AnyNumber());
+    mCallback->reset();
 
     auto result = mModule->step(/* in_directionUp= */ true);
 
@@ -735,14 +828,14 @@ TEST_P(BroadcastRadioHalTest, Step) {
         return;
     }
     EXPECT_TRUE(result.isOk());
-    EXPECT_TIMEOUT_CALL_WAIT(*mCallback, onCurrentProgramInfoChangedMock, kTuneTimeoutSec);
+    EXPECT_TRUE(mCallback->waitOnCurrentProgramInfoChangedCallback());
 
-    EXPECT_TIMEOUT_CALL(*mCallback, onCurrentProgramInfoChangedMock, _).Times(AnyNumber());
+    mCallback->reset();
 
     result = mModule->step(/* in_directionUp= */ false);
 
     EXPECT_TRUE(result.isOk());
-    EXPECT_TIMEOUT_CALL_WAIT(*mCallback, onCurrentProgramInfoChangedMock, kTuneTimeoutSec);
+    EXPECT_TRUE(mCallback->waitOnCurrentProgramInfoChangedCallback());
 }
 
 /**
@@ -904,13 +997,12 @@ TEST_P(BroadcastRadioHalTest, SetConfigFlags) {
     LOG(DEBUG) << "SetConfigFlags Test";
 
     auto get = [&](ConfigFlag flag) -> bool {
-        bool* gotValue = nullptr;
+        bool gotValue;
 
-        auto halResult = mModule->isConfigFlagSet(flag, gotValue);
+        auto halResult = mModule->isConfigFlagSet(flag, &gotValue);
 
-        EXPECT_FALSE(gotValue == nullptr);
         EXPECT_TRUE(halResult.isOk());
-        return *gotValue;
+        return gotValue;
     };
 
     auto notSupportedError = resultToInt(Result::NOT_SUPPORTED);
@@ -955,7 +1047,7 @@ TEST_P(BroadcastRadioHalTest, SetConfigFlags) {
  *
  * Verifies that:
  * - startProgramListUpdates either succeeds or returns NOT_SUPPORTED;
- * - the complete list is fetched within kProgramListScanTimeoutSec;
+ * - the complete list is fetched within kProgramListScanTimeoutMs;
  * - stopProgramListUpdates does not crash.
  */
 TEST_P(BroadcastRadioHalTest, GetProgramListFromEmptyFilter) {
@@ -969,7 +1061,7 @@ TEST_P(BroadcastRadioHalTest, GetProgramListFromEmptyFilter) {
  *
  * Verifies that:
  * - startProgramListUpdates either succeeds or returns NOT_SUPPORTED;
- * - the complete list is fetched within kProgramListScanTimeoutSec;
+ * - the complete list is fetched within kProgramListScanTimeoutMs;
  * - stopProgramListUpdates does not crash;
  * - result for startProgramListUpdates using a filter with AMFM_FREQUENCY_KHZ value of the first
  *   AMFM program matches the expected result.
@@ -1017,7 +1109,7 @@ TEST_P(BroadcastRadioHalTest, GetProgramListFromAmFmFilter) {
  *
  * Verifies that:
  * - startProgramListUpdates either succeeds or returns NOT_SUPPORTED;
- * - the complete list is fetched within kProgramListScanTimeoutSec;
+ * - the complete list is fetched within kProgramListScanTimeoutMs;
  * - stopProgramListUpdates does not crash;
  * - result for startProgramListUpdates using a filter with DAB_ENSEMBLE value of the first DAB
  *   program matches the expected result.

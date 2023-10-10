@@ -31,12 +31,6 @@
 #include "RenderEngineVts.h"
 #include "VtsComposerClient.h"
 
-// tinyxml2 does implicit conversions >:(
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wconversion"
-#include <tinyxml2.h>
-#pragma clang diagnostic pop
-
 namespace aidl::android::hardware::graphics::composer3::vts {
 namespace {
 
@@ -127,76 +121,6 @@ class GraphicsCompositionTestBase : public ::testing::Test {
             return {true, graphicBuffer};
         }
         return {false, graphicBuffer};
-    }
-
-    uint64_t getStableDisplayId(int64_t display) {
-        const auto& [status, identification] =
-                mComposerClient->getDisplayIdentificationData(display);
-        EXPECT_TRUE(status.isOk());
-
-        if (const auto info = ::android::parseDisplayIdentificationData(
-                    static_cast<uint8_t>(identification.port), identification.data)) {
-            return info->id.value;
-        }
-
-        return ::android::PhysicalDisplayId::fromPort(static_cast<uint8_t>(identification.port))
-                .value;
-    }
-
-    // Gets the per-display XML config
-    std::unique_ptr<tinyxml2::XMLDocument> getDisplayConfigXml(int64_t display) {
-        std::stringstream pathBuilder;
-        pathBuilder << "/vendor/etc/displayconfig/display_id_" << getStableDisplayId(display)
-                    << ".xml";
-        const std::string path = pathBuilder.str();
-        auto document = std::make_unique<tinyxml2::XMLDocument>();
-        const tinyxml2::XMLError error = document->LoadFile(path.c_str());
-        if (error == tinyxml2::XML_SUCCESS) {
-            return document;
-        } else {
-            return nullptr;
-        }
-    }
-
-    // Gets the max display brightness for this display.
-    // If the display config xml does not exist, then assume that the display is not well-configured
-    // enough to provide a display brightness, so return nullopt.
-    std::optional<float> getMaxDisplayBrightnessNits(int64_t display) {
-        const auto document = getDisplayConfigXml(display);
-        if (!document) {
-            // Assume the device doesn't support display brightness
-            return std::nullopt;
-        }
-
-        const auto root = document->RootElement();
-        if (!root) {
-            // If there's somehow no root element, then this isn't a valid config
-            return std::nullopt;
-        }
-
-        const auto screenBrightnessMap = root->FirstChildElement("screenBrightnessMap");
-        if (!screenBrightnessMap) {
-            // A valid display config must have a screen brightness map
-            return std::nullopt;
-        }
-
-        auto point = screenBrightnessMap->FirstChildElement("point");
-        float maxNits = -1.f;
-        while (point != nullptr) {
-            const auto nits = point->FirstChildElement("nits");
-            if (nits) {
-                maxNits = std::max(maxNits, nits->FloatText(-1.f));
-            }
-            point = point->NextSiblingElement("point");
-        }
-
-        if (maxNits < 0.f) {
-            // If we got here, then there were no point elements containing a nit value, so this
-            // config isn't valid
-            return std::nullopt;
-        }
-
-        return maxNits;
     }
 
     void writeLayers(const std::vector<std::shared_ptr<TestLayer>>& layers) {
@@ -957,32 +881,6 @@ TEST_P(GraphicsCompositionTest, SetLayerZOrder) {
 }
 
 TEST_P(GraphicsCompositionTest, SetLayerBrightnessDims) {
-    const auto& [status, capabilities] =
-            mComposerClient->getDisplayCapabilities(getPrimaryDisplayId());
-    ASSERT_TRUE(status.isOk());
-
-    const bool brightnessSupport = std::find(capabilities.begin(), capabilities.end(),
-                                             DisplayCapability::BRIGHTNESS) != capabilities.end();
-
-    if (!brightnessSupport) {
-        GTEST_SUCCEED() << "Cannot verify dimming behavior without brightness support";
-        return;
-    }
-
-    const std::optional<float> maxBrightnessNitsOptional =
-            getMaxDisplayBrightnessNits(getPrimaryDisplayId());
-
-    ASSERT_TRUE(maxBrightnessNitsOptional.has_value());
-
-    const float maxBrightnessNits = *maxBrightnessNitsOptional;
-
-    // Preconditions to successfully run are knowing the max brightness and successfully applying
-    // the max brightness
-    ASSERT_GT(maxBrightnessNits, 0.f);
-    mWriter->setDisplayBrightness(getPrimaryDisplayId(), /*brightness*/ 1.f, maxBrightnessNits);
-    execute();
-    ASSERT_TRUE(mReader.takeErrors().empty());
-
     for (ColorMode mode : mTestColorModes) {
         EXPECT_TRUE(mComposerClient
                             ->setColorMode(getPrimaryDisplayId(), mode, RenderIntent::COLORIMETRIC)
@@ -999,11 +897,14 @@ TEST_P(GraphicsCompositionTest, SetLayerBrightnessDims) {
         const common::Rect redRect = {0, 0, getDisplayWidth(), getDisplayHeight() / 2};
         const common::Rect dimmerRedRect = {0, getDisplayHeight() / 2, getDisplayWidth(),
                                             getDisplayHeight()};
+
+        static constexpr float kMaxBrightnessNits = 300.f;
+
         const auto redLayer =
                 std::make_shared<TestColorLayer>(mComposerClient, getPrimaryDisplayId());
         redLayer->setColor(RED);
         redLayer->setDisplayFrame(redRect);
-        redLayer->setWhitePointNits(maxBrightnessNits);
+        redLayer->setWhitePointNits(kMaxBrightnessNits);
         redLayer->setBrightness(1.f);
 
         const auto dimmerRedLayer =
@@ -1013,7 +914,7 @@ TEST_P(GraphicsCompositionTest, SetLayerBrightnessDims) {
         // Intentionally use a small dimming ratio as some implementations may be more likely to
         // kick into GPU composition to apply dithering when the dimming ratio is high.
         static constexpr float kDimmingRatio = 0.9f;
-        dimmerRedLayer->setWhitePointNits(maxBrightnessNits * kDimmingRatio);
+        dimmerRedLayer->setWhitePointNits(kMaxBrightnessNits * kDimmingRatio);
         dimmerRedLayer->setBrightness(kDimmingRatio);
 
         const std::vector<std::shared_ptr<TestLayer>> layers = {redLayer, dimmerRedLayer};
