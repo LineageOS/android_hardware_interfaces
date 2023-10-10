@@ -35,6 +35,7 @@ void TestLayer::write(ComposerClientWriter& writer) {
     writer.setLayerPlaneAlpha(mDisplay, mLayer, mAlpha);
     writer.setLayerBlendMode(mDisplay, mLayer, mBlendMode);
     writer.setLayerBrightness(mDisplay, mLayer, mBrightness);
+    writer.setLayerDataspace(mDisplay, mLayer, mDataspace);
 }
 
 std::string ReadbackHelper::getColorModeString(ColorMode mode) {
@@ -99,6 +100,7 @@ LayerSettings TestLayer::toRenderEngineLayerSettings() {
 
     layerSettings.geometry.positionTransform = scale * translation;
     layerSettings.whitePointNits = mWhitePointNits;
+    layerSettings.sourceDataspace = static_cast<::android::ui::Dataspace>(mDataspace);
 
     return layerSettings;
 }
@@ -189,6 +191,23 @@ void ReadbackHelper::compareColorBuffers(const std::vector<Color>& expectedColor
     }
 }
 
+void ReadbackHelper::compareColorBuffers(void* expectedBuffer, void* actualBuffer,
+                                         const uint32_t stride, const uint32_t width,
+                                         const uint32_t height, common::PixelFormat pixelFormat) {
+    const int32_t bytesPerPixel = ReadbackHelper::GetBytesPerPixel(pixelFormat);
+    ASSERT_NE(-1, bytesPerPixel);
+    for (int row = 0; row < height; row++) {
+        for (int col = 0; col < width; col++) {
+            int offset = (row * static_cast<int32_t>(stride) + col) * bytesPerPixel;
+            uint8_t* expectedColor = (uint8_t*)expectedBuffer + offset;
+            uint8_t* actualColor = (uint8_t*)actualBuffer + offset;
+            ASSERT_EQ(expectedColor[0], actualColor[0]);
+            ASSERT_EQ(expectedColor[1], actualColor[1]);
+            ASSERT_EQ(expectedColor[2], actualColor[2]);
+        }
+    }
+}
+
 ReadbackBuffer::ReadbackBuffer(int64_t display, const std::shared_ptr<VtsComposerClient>& client,
                                int32_t width, int32_t height, common::PixelFormat pixelFormat,
                                common::Dataspace dataspace)
@@ -246,6 +265,15 @@ void ReadbackBuffer::checkReadbackBuffer(const std::vector<Color>& expectedColor
                                         mPixelFormat);
     status = mGraphicBuffer->unlock();
     EXPECT_EQ(::android::OK, status);
+}
+
+::android::sp<::android::GraphicBuffer> ReadbackBuffer::getBuffer() {
+    const auto& [fenceStatus, bufferFence] = mComposerClient->getReadbackBufferFence(mDisplay);
+    EXPECT_TRUE(fenceStatus.isOk());
+    if (bufferFence.get() != -1) {
+        sync_wait(bufferFence.get(), -1);
+    }
+    return mGraphicBuffer;
 }
 
 void TestColorLayer::write(ComposerClientWriter& writer) {
@@ -342,10 +370,6 @@ void TestBufferLayer::setBuffer(std::vector<Color> colors) {
     return ::android::sp<::android::GraphicBuffer>::make(
             mWidth, mHeight, static_cast<::android::PixelFormat>(mPixelFormat), mLayerCount, mUsage,
             "TestBufferLayer");
-}
-
-void TestBufferLayer::setDataspace(common::Dataspace dataspace, ComposerClientWriter& writer) {
-    writer.setLayerDataspace(mDisplay, mLayer, dataspace);
 }
 
 void TestBufferLayer::setToClientComposition(ComposerClientWriter& writer) {
