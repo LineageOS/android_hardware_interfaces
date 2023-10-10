@@ -38,7 +38,7 @@ aidl_interface {
         },
         rust: {
             enabled: true,
-        }
+        },
     },
     frozen: true,
     versions: [
