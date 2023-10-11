@@ -202,6 +202,7 @@ class Module : public BnModule {
     std::set<int32_t> findConnectedPortConfigIds(int32_t portConfigId);
     ndk::ScopedAStatus findPortIdForNewStream(
             int32_t in_portConfigId, ::aidl::android::media::audio::common::AudioPort** port);
+    std::vector<AudioRoute*> getAudioRoutesForAudioPortImpl(int32_t portId);
     virtual BtProfileHandles getBtProfileManagerHandles();
     internal::Configuration& getConfig();
     const ConnectedDevicePorts& getConnectedDevicePorts() const { return mConnectedDevicePorts; }
@@ -209,6 +210,8 @@ class Module : public BnModule {
     bool getMasterVolume() const { return mMasterVolume; }
     bool getMicMute() const { return mMicMute; }
     const Patches& getPatches() const { return mPatches; }
+    std::set<int32_t> getRoutableAudioPortIds(int32_t portId,
+                                              std::vector<AudioRoute*>* routes = nullptr);
     const Streams& getStreams() const { return mStreams; }
     Type getType() const { return mType; }
     bool isMmapSupported();
