@@ -45,6 +45,7 @@ class TestRenderEngine {
     };
     void drawLayers();
     void checkColorBuffer(const std::vector<Color>& expectedColors);
+    void checkColorBuffer(const ::android::sp<::android::GraphicBuffer>& buffer);
 
     ::android::renderengine::RenderEngine& getInternalRenderEngine() { return *mRenderEngine; }
 
