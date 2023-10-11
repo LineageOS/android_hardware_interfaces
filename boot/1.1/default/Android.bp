@@ -20,6 +20,7 @@ cc_library_shared {
     srcs: ["BootControl.cpp"],
 
     shared_libs: [
+        "libbase",
         "liblog",
         "libhidlbase",
         "libhardware",
