@@ -48,23 +48,12 @@ prebuilt_etc {
     installable: false,
 }
 
-apex_key {
-    name: "com.android.hardware.uwb.key",
-    public_key: "com.android.hardware.uwb.avbpubkey",
-    private_key: "com.android.hardware.uwb.pem",
-}
-
-android_app_certificate {
-    name: "com.android.hardware.uwb.certificate",
-    certificate: "com.android.hardware.uwb",
-}
-
 apex {
     name: "com.android.hardware.uwb",
     manifest: "manifest.json",
     file_contexts: "file_contexts",
-    key: "com.android.hardware.uwb.key",
-    certificate: ":com.android.hardware.uwb.certificate",
+    key: "com.android.hardware.key",
+    certificate: ":com.android.hardware.certificate",
     updatable: false,
     vendor: true,
 
