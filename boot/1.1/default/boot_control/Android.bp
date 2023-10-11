@@ -35,14 +35,13 @@ cc_defaults {
     ],
 
     shared_libs: [
-        "android.hardware.boot@1.1",
-        "libbase",
         "liblog",
     ],
     static_libs: [
         "libbootloader_message",
         "libfstab",
     ],
+
 }
 
 cc_library_static {
@@ -52,7 +51,13 @@ cc_library_static {
     recovery_available: true,
     vendor_available: true,
 
-    srcs: ["libboot_control.cpp"],
+    srcs: [
+        "libboot_control.cpp",
+    ],
+    static_libs: [
+        "android.hardware.boot@1.1",
+        "libbase",
+    ],
 }
 
 cc_library_shared {
@@ -67,6 +72,8 @@ cc_library_shared {
         "libboot_control",
     ],
     shared_libs: [
+        "android.hardware.boot@1.1",
+        "libbase",
         "libhardware",
     ],
 }
