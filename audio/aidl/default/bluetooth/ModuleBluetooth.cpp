@@ -18,15 +18,23 @@
 
 #include <android-base/logging.h>
 
+#include "BluetoothAudioSessionControl.h"
 #include "core-impl/ModuleBluetooth.h"
 #include "core-impl/StreamBluetooth.h"
 
 namespace aidl::android::hardware::audio::core {
 
-using aidl::android::hardware::audio::common::SinkMetadata;
-using aidl::android::hardware::audio::common::SourceMetadata;
-using aidl::android::media::audio::common::AudioOffloadInfo;
-using aidl::android::media::audio::common::MicrophoneInfo;
+using ::aidl::android::hardware::audio::common::SinkMetadata;
+using ::aidl::android::hardware::audio::common::SourceMetadata;
+using ::aidl::android::hardware::bluetooth::audio::BluetoothAudioSession;
+using ::aidl::android::media::audio::common::AudioDeviceDescription;
+using ::aidl::android::media::audio::common::AudioDeviceType;
+using ::aidl::android::media::audio::common::AudioOffloadInfo;
+using ::aidl::android::media::audio::common::AudioPort;
+using ::aidl::android::media::audio::common::AudioPortExt;
+using ::aidl::android::media::audio::common::MicrophoneInfo;
+using ::android::bluetooth::audio::aidl::BluetoothAudioPortAidl;
+using ::android::bluetooth::audio::aidl::BluetoothAudioPortAidlOut;
 
 ndk::ScopedAStatus ModuleBluetooth::getBluetoothA2dp(
         std::shared_ptr<IBluetoothA2dp>* _aidl_return) {
@@ -78,6 +86,49 @@ ndk::ScopedAStatus ModuleBluetooth::createOutputStream(
         const std::optional<AudioOffloadInfo>& offloadInfo, std::shared_ptr<StreamOut>* result) {
     return createStreamInstance<StreamOutBluetooth>(result, std::move(context), sourceMetadata,
                                                     offloadInfo, getBtProfileManagerHandles());
+}
+
+ndk::ScopedAStatus ModuleBluetooth::populateConnectedDevicePort(AudioPort* audioPort) {
+    if (audioPort->ext.getTag() != AudioPortExt::device) {
+        LOG(ERROR) << __func__ << ": not a device port: " << audioPort->toString();
+        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+    }
+    const auto& devicePort = audioPort->ext.get<AudioPortExt::device>();
+    const auto& description = devicePort.device.type;
+    // Since the configuration of the BT module is static, there is nothing to populate here.
+    // However, this method must return an error when the device can not be connected,
+    // this is determined by the status of BT profiles.
+    if (description.connection == AudioDeviceDescription::CONNECTION_BT_A2DP) {
+        bool isA2dpEnabled = false;
+        if (!!mBluetoothA2dp) {
+            RETURN_STATUS_IF_ERROR(mBluetoothA2dp.getInstance()->isEnabled(&isA2dpEnabled));
+        }
+        return isA2dpEnabled ? ndk::ScopedAStatus::ok()
+                             : ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
+    } else if (description.connection == AudioDeviceDescription::CONNECTION_BT_LE) {
+        bool isLeEnabled = false;
+        if (!!mBluetoothLe) {
+            RETURN_STATUS_IF_ERROR(mBluetoothLe.getInstance()->isEnabled(&isLeEnabled));
+        }
+        return isLeEnabled ? ndk::ScopedAStatus::ok()
+                           : ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
+    } else if (description.connection == AudioDeviceDescription::CONNECTION_WIRELESS &&
+               description.type == AudioDeviceType::OUT_HEARING_AID) {
+        // Hearing aids can use a number of profiles, thus the only way to check
+        // connectivity is to try to talk to the BT HAL.
+        if (!BluetoothAudioSession::IsAidlAvailable()) {
+            return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
+        }
+        std::shared_ptr<BluetoothAudioPortAidl> proxy = std::shared_ptr<BluetoothAudioPortAidl>(
+                std::make_shared<BluetoothAudioPortAidlOut>());
+        if (proxy->registerPort(description)) {
+            proxy->unregisterPort();
+            return ndk::ScopedAStatus::ok();
+        }
+        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
+    }
+    LOG(ERROR) << __func__ << ": unsupported device type: " << audioPort->toString();
+    return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
 }
 
 ndk::ScopedAStatus ModuleBluetooth::onMasterMuteChanged(bool) {
