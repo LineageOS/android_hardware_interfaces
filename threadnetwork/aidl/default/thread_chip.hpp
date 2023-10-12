@@ -20,6 +20,7 @@
 #include <aidl/android/hardware/threadnetwork/IThreadChipCallback.h>
 
 #include "lib/spinel/spinel_interface.hpp"
+#include "lib/url/url.hpp"
 #include "mainloop.hpp"
 
 #include <android/binder_auto_utils.h>
