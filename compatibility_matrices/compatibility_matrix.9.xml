@@ -238,6 +238,15 @@
             <instance>default</instance>
         </interface>
     </hal>
+    <!-- Either the native or the HIDL mapper HAL must exist on the device -->
+    <hal format="hidl" optional="true">
+        <name>android.hardware.graphics.mapper</name>
+        <version>4.0</version>
+        <interface>
+            <name>IMapper</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.health</name>
         <version>1-2</version>
@@ -677,7 +686,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <!-- The native mapper HAL must exist on the device -->
+    <!-- Either the native or the HIDL mapper HAL must exist on the device -->
     <hal format="native" optional="true">
         <name>mapper</name>
         <version>5.0</version>
