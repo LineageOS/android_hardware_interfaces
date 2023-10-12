@@ -46,10 +46,19 @@ cc_library {
         "SoundDose.cpp",
     ],
     shared_libs: [
+        "libaudio_aidl_conversion_common_ndk",
+        "libaudioutils",
         "libbase",
         "libbinder_ndk",
         "libcutils",
         "libutils",
+    ],
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-Wthread-safety",
+        "-DBACKEND_NDK",
     ],
     visibility: [
         "//hardware/interfaces/audio/aidl/sounddose/default",
@@ -111,8 +120,12 @@ cc_library {
     shared_libs: [
         "android.hardware.bluetooth.audio-V3-ndk",
         "libaudio_aidl_conversion_common_ndk",
+        "libaudioutils",
+        "libaudioutils_nonvndk",
         "libbluetooth_audio_session_aidl",
+        "liblog",
         "libmedia_helper",
+        "libmediautils_vendor",
         "libstagefright_foundation",
     ],
     export_shared_lib_headers: [
@@ -143,8 +156,10 @@ cc_binary {
     ],
     shared_libs: [
         "android.hardware.bluetooth.audio-V3-ndk",
+        "libaudioutils_nonvndk",
         "libaudio_aidl_conversion_common_ndk",
         "libbluetooth_audio_session_aidl",
+        "liblog",
         "libmedia_helper",
         "libstagefright_foundation",
     ],

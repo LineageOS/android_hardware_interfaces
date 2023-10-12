@@ -37,7 +37,9 @@ using android::base::GetBoolProperty;
 namespace aidl::android::hardware::audio::core {
 
 StreamPrimary::StreamPrimary(StreamContext* context, const Metadata& metadata)
-    : StreamAlsa(context, metadata, 3 /*readWriteRetries*/), mIsInput(isInput(metadata)) {}
+    : StreamAlsa(context, metadata, 3 /*readWriteRetries*/), mIsInput(isInput(metadata)) {
+    context->startStreamDataProcessor();
+}
 
 std::vector<alsa::DeviceProfile> StreamPrimary::getDeviceProfiles() {
     static const std::vector<alsa::DeviceProfile> kBuiltInSource{
@@ -181,6 +183,17 @@ ndk::ScopedAStatus StreamOutPrimary::setHwVolume(const std::vector<float>& in_ch
         return status;
     }
     return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus StreamOutPrimary::setConnectedDevices(
+        const std::vector<::aidl::android::media::audio::common::AudioDevice>& devices) {
+    if (!devices.empty()) {
+        auto streamDataProcessor = mContextInstance.getStreamDataProcessor().lock();
+        if (streamDataProcessor != nullptr) {
+            streamDataProcessor->setAudioDevice(devices[0]);
+        }
+    }
+    return StreamSwitcher::setConnectedDevices(devices);
 }
 
 }  // namespace aidl::android::hardware::audio::core

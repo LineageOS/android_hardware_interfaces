@@ -213,6 +213,11 @@ ndk::ScopedAStatus Module::createStreamContext(
         StreamContext::DebugParameters params{mDebug.streamTransientStateDelayMs,
                                               mVendorDebug.forceTransientBurst,
                                               mVendorDebug.forceSynchronousDrain};
+        std::shared_ptr<ISoundDose> soundDose;
+        if (!getSoundDose(&soundDose).isOk()) {
+            LOG(ERROR) << __func__ << ": could not create sound dose instance";
+            return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
+        }
         StreamContext temp(
                 std::make_unique<StreamContext::CommandMQ>(1, true /*configureEventFlagWord*/),
                 std::make_unique<StreamContext::ReplyMQ>(1, true /*configureEventFlagWord*/),
@@ -220,7 +225,7 @@ ndk::ScopedAStatus Module::createStreamContext(
                 portConfigIt->channelMask.value(), portConfigIt->sampleRate.value().value, flags,
                 portConfigIt->ext.get<AudioPortExt::mix>().handle,
                 std::make_unique<StreamContext::DataMQ>(frameSize * in_bufferSizeFrames),
-                asyncCallback, outEventCallback, params);
+                asyncCallback, outEventCallback, mSoundDose.getInstance(), params);
         if (temp.isValid()) {
             *out_context = std::move(temp);
         } else {
