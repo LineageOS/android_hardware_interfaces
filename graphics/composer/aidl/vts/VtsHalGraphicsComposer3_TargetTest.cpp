@@ -1860,10 +1860,6 @@ TEST_P(GraphicsComposerAidlCommandTest, PresentDisplay) {
  * surface damage have been set
  */
 TEST_P(GraphicsComposerAidlCommandTest, PresentDisplayNoLayerStateChanges) {
-    if (!hasCapability(Capability::SKIP_VALIDATE)) {
-        GTEST_SUCCEED() << "Device does not have skip validate capability, skipping";
-        return;
-    }
     EXPECT_TRUE(mComposerClient->setPowerMode(getPrimaryDisplayId(), PowerMode::ON).isOk());
 
     const auto& [renderIntentsStatus, renderIntents] =
@@ -2571,8 +2567,11 @@ class GraphicsComposerAidlCommandV2Test : public GraphicsComposerAidlCommandTest
  * Capability::SKIP_VALIDATE has been deprecated and should not be enabled.
  */
 TEST_P(GraphicsComposerAidlCommandV2Test, SkipValidateDeprecatedTest) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
     ASSERT_FALSE(hasCapability(Capability::SKIP_VALIDATE))
             << "Found Capability::SKIP_VALIDATE capability.";
+#pragma clang diagnostic pop
 }
 
 TEST_P(GraphicsComposerAidlCommandV2Test, SetLayerBufferSlotsToClear) {
