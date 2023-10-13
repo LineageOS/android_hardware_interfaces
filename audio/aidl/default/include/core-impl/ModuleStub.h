@@ -22,7 +22,7 @@ namespace aidl::android::hardware::audio::core {
 
 class ModuleStub final : public Module {
   public:
-    ModuleStub() : Module(Type::STUB) {}
+    ModuleStub(std::unique_ptr<Configuration>&& config) : Module(Type::STUB, std::move(config)) {}
 
   protected:
     ndk::ScopedAStatus getBluetooth(std::shared_ptr<IBluetooth>* _aidl_return) override;
