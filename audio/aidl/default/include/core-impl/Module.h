@@ -19,30 +19,48 @@
 #include <iostream>
 #include <map>
 #include <memory>
+#include <optional>
 #include <set>
 
 #include <aidl/android/hardware/audio/core/BnModule.h>
 
 #include "core-impl/ChildInterface.h"
-#include "core-impl/Configuration.h"
 #include "core-impl/Stream.h"
 
 namespace aidl::android::hardware::audio::core {
 
 class Module : public BnModule {
   public:
-    // This value is used for all AudioPatches and reported by all streams.
-    static constexpr int32_t kLatencyMs = 10;
+    struct Configuration {
+        std::vector<::aidl::android::media::audio::common::AudioPort> ports;
+        std::vector<::aidl::android::media::audio::common::AudioPortConfig> portConfigs;
+        std::vector<::aidl::android::media::audio::common::AudioPortConfig> initialConfigs;
+        // Port id -> List of profiles to use when the device port state is set to 'connected'
+        // in connection simulation mode.
+        std::map<int32_t, std::vector<::aidl::android::media::audio::common::AudioProfile>>
+                connectedProfiles;
+        std::vector<AudioRoute> routes;
+        std::vector<AudioPatch> patches;
+        int32_t nextPortId = 1;
+        int32_t nextPatchId = 1;
+    };
     enum Type : int { DEFAULT, R_SUBMIX, STUB, USB, BLUETOOTH };
     enum BtInterface : int { BTCONF, BTA2DP, BTLE };
-
-    static std::shared_ptr<Module> createInstance(Type type);
-
-    explicit Module(Type type) : mType(type) {}
-
     typedef std::tuple<std::weak_ptr<IBluetooth>, std::weak_ptr<IBluetoothA2dp>,
                        std::weak_ptr<IBluetoothLe>>
             BtProfileHandles;
+
+    // This value is used by default for all AudioPatches and reported by all streams.
+    static constexpr int32_t kLatencyMs = 10;
+
+    static std::shared_ptr<Module> createInstance(Type type) {
+        return createInstance(type, std::make_unique<Configuration>());
+    }
+    static std::shared_ptr<Module> createInstance(Type type,
+                                                  std::unique_ptr<Configuration>&& config);
+    static std::optional<Type> typeFromString(const std::string& type);
+
+    Module(Type type, std::unique_ptr<Configuration>&& config);
 
   protected:
     // The vendor extension done via inheritance can override interface methods and augment
@@ -148,7 +166,7 @@ class Module : public BnModule {
     using Patches = std::multimap<int32_t, int32_t>;
 
     const Type mType;
-    std::unique_ptr<internal::Configuration> mConfig;
+    std::unique_ptr<Configuration> mConfig;
     ModuleDebug mDebug;
     VendorDebug mVendorDebug;
     ConnectedDevicePorts mConnectedDevicePorts;
@@ -187,7 +205,8 @@ class Module : public BnModule {
             const ::aidl::android::media::audio::common::AudioPort& audioPort, bool connected);
     virtual ndk::ScopedAStatus onMasterMuteChanged(bool mute);
     virtual ndk::ScopedAStatus onMasterVolumeChanged(float volume);
-    virtual std::unique_ptr<internal::Configuration> initializeConfig();
+    virtual std::vector<::aidl::android::media::audio::common::MicrophoneInfo> getMicrophoneInfos();
+    virtual std::unique_ptr<Configuration> initializeConfig();
 
     // Utility and helper functions accessible to subclasses.
     ndk::ScopedAStatus bluetoothParametersUpdated();
@@ -204,7 +223,7 @@ class Module : public BnModule {
             int32_t in_portConfigId, ::aidl::android::media::audio::common::AudioPort** port);
     std::vector<AudioRoute*> getAudioRoutesForAudioPortImpl(int32_t portId);
     virtual BtProfileHandles getBtProfileManagerHandles();
-    internal::Configuration& getConfig();
+    Configuration& getConfig();
     const ConnectedDevicePorts& getConnectedDevicePorts() const { return mConnectedDevicePorts; }
     bool getMasterMute() const { return mMasterMute; }
     bool getMasterVolume() const { return mMasterVolume; }
@@ -215,6 +234,7 @@ class Module : public BnModule {
     const Streams& getStreams() const { return mStreams; }
     Type getType() const { return mType; }
     bool isMmapSupported();
+    void populateConnectedProfiles();
     template <typename C>
     std::set<int32_t> portIdsFromPortConfigIds(C portConfigIds);
     void registerPatch(const AudioPatch& patch);

@@ -41,8 +41,8 @@ using aidl::android::media::audio::common::AudioPortExt;
 using aidl::android::media::audio::common::AudioPortMixExt;
 using aidl::android::media::audio::common::AudioProfile;
 using aidl::android::media::audio::common::Int;
-using aidl::android::media::audio::common::MicrophoneInfo;
 using aidl::android::media::audio::common::PcmType;
+using Configuration = aidl::android::hardware::audio::core::Module::Configuration;
 
 namespace aidl::android::hardware::audio::core::internal {
 
@@ -133,6 +133,22 @@ static AudioRoute createRoute(const std::vector<AudioPort>& sources, const Audio
     std::transform(sources.begin(), sources.end(), std::back_inserter(route.sourcePortIds),
                    [](const auto& port) { return port.id; });
     return route;
+}
+
+std::vector<AudioProfile> getStandard16And24BitPcmAudioProfiles() {
+    auto createStdPcmAudioProfile = [](const PcmType& pcmType) {
+        return AudioProfile{
+                .format = AudioFormatDescription{.type = AudioFormatType::PCM, .pcm = pcmType},
+                .channelMasks = {AudioChannelLayout::make<AudioChannelLayout::layoutMask>(
+                                         AudioChannelLayout::LAYOUT_MONO),
+                                 AudioChannelLayout::make<AudioChannelLayout::layoutMask>(
+                                         AudioChannelLayout::LAYOUT_STEREO)},
+                .sampleRates = {8000, 11025, 16000, 32000, 44100, 48000}};
+    };
+    return {
+            createStdPcmAudioProfile(PcmType::INT_16_BIT),
+            createStdPcmAudioProfile(PcmType::INT_24_BIT),
+    };
 }
 
 // Primary (default) configuration:
@@ -272,13 +288,6 @@ std::unique_ptr<Configuration> getPrimaryConfiguration() {
         c.routes.push_back(createRoute({fmTunerInDevice}, fmTunerInMix));
 
         c.portConfigs.insert(c.portConfigs.end(), c.initialConfigs.begin(), c.initialConfigs.end());
-
-        MicrophoneInfo mic;
-        mic.id = "mic";
-        mic.device = micInDevice.ext.get<AudioPortExt::Tag::device>().device;
-        mic.group = 0;
-        mic.indexInTheGroup = 0;
-        c.microphones = std::vector<MicrophoneInfo>{mic};
 
         return c;
     }();
@@ -675,6 +684,21 @@ std::unique_ptr<Configuration> getBluetoothConfiguration() {
         return c;
     }();
     return std::make_unique<Configuration>(configuration);
+}
+
+std::unique_ptr<Module::Configuration> getConfiguration(Module::Type moduleType) {
+    switch (moduleType) {
+        case Module::Type::DEFAULT:
+            return getPrimaryConfiguration();
+        case Module::Type::R_SUBMIX:
+            return getRSubmixConfiguration();
+        case Module::Type::STUB:
+            return getStubConfiguration();
+        case Module::Type::USB:
+            return getUsbConfiguration();
+        case Module::Type::BLUETOOTH:
+            return getBluetoothConfiguration();
+    }
 }
 
 }  // namespace aidl::android::hardware::audio::core::internal
