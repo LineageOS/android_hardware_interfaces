@@ -185,6 +185,11 @@ std::ostream& operator<<(std::ostream& os, Module::Type t) {
     return os;
 }
 
+Module::Module(Type type, std::unique_ptr<Configuration>&& config)
+    : mType(type), mConfig(std::move(config)) {
+    populateConnectedProfiles();
+}
+
 void Module::cleanUpPatch(int32_t patchId) {
     erase_all_values(mPatches, std::set<int32_t>{patchId});
 }
@@ -318,6 +323,22 @@ ndk::ScopedAStatus Module::findPortIdForNewStream(int32_t in_portConfigId, Audio
     }
     *port = &(*portIt);
     return ndk::ScopedAStatus::ok();
+}
+
+void Module::populateConnectedProfiles() {
+    Configuration& config = getConfig();
+    for (const AudioPort& port : config.ports) {
+        if (port.ext.getTag() == AudioPortExt::device) {
+            if (auto devicePort = port.ext.get<AudioPortExt::device>();
+                !devicePort.device.type.connection.empty() && port.profiles.empty()) {
+                if (auto connIt = config.connectedProfiles.find(port.id);
+                    connIt == config.connectedProfiles.end()) {
+                    config.connectedProfiles.emplace(
+                            port.id, internal::getStandard16And24BitPcmAudioProfiles());
+                }
+            }
+        }
+    }
 }
 
 template <typename C>
