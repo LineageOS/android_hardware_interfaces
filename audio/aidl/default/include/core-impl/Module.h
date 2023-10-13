@@ -32,7 +32,6 @@ namespace aidl::android::hardware::audio::core {
 class Module : public BnModule {
   public:
     struct Configuration {
-        std::vector<::aidl::android::media::audio::common::MicrophoneInfo> microphones;
         std::vector<::aidl::android::media::audio::common::AudioPort> ports;
         std::vector<::aidl::android::media::audio::common::AudioPortConfig> portConfigs;
         std::vector<::aidl::android::media::audio::common::AudioPortConfig> initialConfigs;
@@ -207,6 +206,7 @@ class Module : public BnModule {
             const ::aidl::android::media::audio::common::AudioPort& audioPort, bool connected);
     virtual ndk::ScopedAStatus onMasterMuteChanged(bool mute);
     virtual ndk::ScopedAStatus onMasterVolumeChanged(float volume);
+    virtual std::vector<::aidl::android::media::audio::common::MicrophoneInfo> getMicrophoneInfos();
     virtual std::unique_ptr<Configuration> initializeConfig();
 
     // Utility and helper functions accessible to subclasses.
