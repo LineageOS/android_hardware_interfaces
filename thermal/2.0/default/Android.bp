@@ -22,23 +22,13 @@ package {
     default_applicable_licenses: ["hardware_interfaces_license"],
 }
 
-filegroup {
-    name: "android.hardware.thermal@2.0-service.xml",
-    srcs: ["android.hardware.thermal@2.0-service.xml"],
-}
-
-filegroup {
-    name: "android.hardware.thermal@2.0-service.rc",
-    srcs: ["android.hardware.thermal@2.0-service.rc"],
-}
-
 cc_binary {
     name: "android.hardware.thermal@2.0-service.mock",
     defaults: ["hidl_defaults"],
     relative_install_path: "hw",
     vendor: true,
-    init_rc: [":android.hardware.thermal@2.0-service.rc"],
-    vintf_fragments: [":android.hardware.thermal@2.0-service.xml"],
+    init_rc: ["android.hardware.thermal@2.0-service.rc"],
+    vintf_fragments: ["android.hardware.thermal@2.0-service.xml"],
     srcs: [
         "Thermal.cpp",
         "service.cpp",
