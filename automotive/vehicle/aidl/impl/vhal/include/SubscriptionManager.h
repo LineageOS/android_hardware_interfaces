@@ -92,11 +92,10 @@ class SubscriptionManager final {
     // For a list of updated properties, returns a map that maps clients subscribing to
     // the updated properties to a list of updated values. This would only return on-change property
     // clients that should be informed for the given updated values.
-    std::unordered_map<
-            CallbackType,
-            std::vector<const aidl::android::hardware::automotive::vehicle::VehiclePropValue*>>
+    std::unordered_map<CallbackType,
+                       std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropValue>>
     getSubscribedClients(
-            const std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropValue>&
+            std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropValue>&&
                     updatedValues);
 
     // For a list of set property error events, returns a map that maps clients subscribing to the
