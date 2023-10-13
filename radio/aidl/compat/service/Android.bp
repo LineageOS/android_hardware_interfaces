@@ -46,7 +46,6 @@ cc_binary {
         "android.hardware.radio.modem-V3-ndk",
         "android.hardware.radio.network-V3-ndk",
         "android.hardware.radio.sap-V1-ndk",
-        "android.hardware.radio.satellite-V1-ndk",
         "android.hardware.radio.sim-V3-ndk",
         "android.hardware.radio.voice-V3-ndk",
         "android.hardware.radio@1.0",
