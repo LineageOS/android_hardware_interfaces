@@ -95,7 +95,7 @@ class KeyMintAidlTestBase : public ::testing::TestWithParam<string> {
 
     void InitializeKeyMint(std::shared_ptr<IKeyMintDevice> keyMint);
     IKeyMintDevice& keyMint() { return *keymint_; }
-    int32_t AidlVersion();
+    int32_t AidlVersion() const;
     uint32_t os_version() { return os_version_; }
     uint32_t os_patch_level() { return os_patch_level_; }
     uint32_t vendor_patch_level() { return vendor_patch_level_; }
@@ -373,6 +373,15 @@ class KeyMintAidlTestBase : public ::testing::TestWithParam<string> {
     bool shouldSkipAttestKeyTest(void) const;
     void skipAttestKeyTest(void) const;
 
+    void assert_mgf_digests_present_or_not_in_key_characteristics(
+            const vector<KeyCharacteristics>& key_characteristics,
+            std::vector<android::hardware::security::keymint::Digest>& expected_mgf_digests,
+            bool is_mgf_digest_expected) const;
+
+    void assert_mgf_digests_present_or_not_in_key_characteristics(
+            std::vector<android::hardware::security::keymint::Digest>& expected_mgf_digests,
+            bool is_mgf_digest_expected) const;
+
   protected:
     std::shared_ptr<IKeyMintDevice> keymint_;
     uint32_t os_version_;
@@ -430,11 +439,6 @@ string bin2hex(const vector<uint8_t>& data);
 X509_Ptr parse_cert_blob(const vector<uint8_t>& blob);
 ASN1_OCTET_STRING* get_attestation_record(X509* certificate);
 vector<uint8_t> make_name_from_str(const string& name);
-void assert_mgf_digests_present_in_key_characteristics(
-        const vector<KeyCharacteristics>& key_characteristics,
-        std::vector<android::hardware::security::keymint::Digest>& expected_mgf_digests);
-bool is_mgf_digest_present(const vector<KeyCharacteristics>& key_characteristics,
-                           android::hardware::security::keymint::Digest expected_mgf_digest);
 void check_maced_pubkey(const MacedPublicKey& macedPubKey, bool testMode,
                         vector<uint8_t>* payload_value);
 void p256_pub_key(const vector<uint8_t>& coseKeyData, EVP_PKEY_Ptr* signingKey);
