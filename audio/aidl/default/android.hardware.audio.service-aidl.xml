@@ -12,16 +12,6 @@
   <hal format="aidl">
     <name>android.hardware.audio.core</name>
     <version>1</version>
-    <fqname>IModule/stub</fqname>
-  </hal>
-  <hal format="aidl">
-    <name>android.hardware.audio.core</name>
-    <version>1</version>
-    <fqname>IModule/usb</fqname>
-  </hal>
-  <hal format="aidl">
-    <name>android.hardware.audio.core</name>
-    <version>1</version>
     <fqname>IModule/bluetooth</fqname>
   </hal>
   <hal format="aidl">
@@ -29,4 +19,16 @@
     <version>1</version>
     <fqname>IConfig/default</fqname>
   </hal>
+  <!-- Uncomment when these modules present in the configuration
+  <hal format="aidl">
+    <name>android.hardware.audio.core</name>
+    <version>1</version>
+    <fqname>IModule/stub</fqname>
+  </hal>
+  <hal format="aidl">
+    <name>android.hardware.audio.core</name>
+    <version>1</version>
+    <fqname>IModule/usb</fqname>
+  </hal>
+  -->
 </manifest>
