@@ -184,9 +184,15 @@ void AudioPolicyConfigXmlConverter::init() {
             // 'primary' in the XML schema used by HIDL is equivalent to 'default' module.
             const std::string name =
                     xsdcModule.getName() != "primary" ? xsdcModule.getName() : "default";
-            mModuleConfigurations->emplace_back(
-                    name, VALUE_OR_FATAL(convertModuleConfigToAidl(xsdcModule)));
+            if (name != "r_submix") {
+                mModuleConfigurations->emplace_back(
+                        name, VALUE_OR_FATAL(convertModuleConfigToAidl(xsdcModule)));
+            } else {
+                // See the note on the 'getRSubmixConfiguration' function.
+                mModuleConfigurations->emplace_back(name, nullptr);
+            }
         }
     }
 }
+
 }  // namespace aidl::android::hardware::audio::core::internal
