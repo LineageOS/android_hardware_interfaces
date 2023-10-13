@@ -79,7 +79,8 @@ size_t count_tag_invalid_entries(const std::vector<KeyParameter>& authorizations
 typedef KeyMintAidlTestBase::KeyData KeyData;
 // Predicate for testing basic characteristics validity in generation or import.
 bool KeyCharacteristicsBasicallyValid(SecurityLevel secLevel,
-                                      const vector<KeyCharacteristics>& key_characteristics) {
+                                      const vector<KeyCharacteristics>& key_characteristics,
+                                      int32_t aidl_version) {
     if (key_characteristics.empty()) return false;
 
     std::unordered_set<SecurityLevel> levels_seen;
@@ -89,7 +90,12 @@ bool KeyCharacteristicsBasicallyValid(SecurityLevel secLevel,
             return false;
         }
 
-        EXPECT_EQ(count_tag_invalid_entries(entry.authorizations), 0);
+        // There was no test to assert that INVALID tag should not present in authorization list
+        // before Keymint V3, so there are some Keymint implementations where asserting for INVALID
+        // tag fails(b/297306437), hence skipping for Keymint < 3.
+        if (aidl_version >= 3) {
+            EXPECT_EQ(count_tag_invalid_entries(entry.authorizations), 0);
+        }
 
         // Just ignore the SecurityLevel::KEYSTORE as the KM won't do any enforcement on this.
         if (entry.securityLevel == SecurityLevel::KEYSTORE) continue;
@@ -264,7 +270,7 @@ void KeyMintAidlTestBase::InitializeKeyMint(std::shared_ptr<IKeyMintDevice> keyM
     vendor_patch_level_ = getVendorPatchlevel();
 }
 
-int32_t KeyMintAidlTestBase::AidlVersion() {
+int32_t KeyMintAidlTestBase::AidlVersion() const {
     int32_t version = 0;
     auto status = keymint_->getInterfaceVersion(&version);
     if (!status.isOk()) {
@@ -294,8 +300,8 @@ ErrorCode KeyMintAidlTestBase::GenerateKey(const AuthorizationSet& key_desc,
     KeyCreationResult creationResult;
     Status result = keymint_->generateKey(key_desc.vector_data(), attest_key, &creationResult);
     if (result.isOk()) {
-        EXPECT_PRED2(KeyCharacteristicsBasicallyValid, SecLevel(),
-                     creationResult.keyCharacteristics);
+        EXPECT_PRED3(KeyCharacteristicsBasicallyValid, SecLevel(),
+                     creationResult.keyCharacteristics, AidlVersion());
         EXPECT_GT(creationResult.keyBlob.size(), 0);
         *key_blob = std::move(creationResult.keyBlob);
         *key_characteristics = std::move(creationResult.keyCharacteristics);
@@ -367,8 +373,8 @@ ErrorCode KeyMintAidlTestBase::ImportKey(const AuthorizationSet& key_desc, KeyFo
                                  {} /* attestationSigningKeyBlob */, &creationResult);
 
     if (result.isOk()) {
-        EXPECT_PRED2(KeyCharacteristicsBasicallyValid, SecLevel(),
-                     creationResult.keyCharacteristics);
+        EXPECT_PRED3(KeyCharacteristicsBasicallyValid, SecLevel(),
+                     creationResult.keyCharacteristics, AidlVersion());
         EXPECT_GT(creationResult.keyBlob.size(), 0);
 
         *key_blob = std::move(creationResult.keyBlob);
@@ -411,8 +417,8 @@ ErrorCode KeyMintAidlTestBase::ImportWrappedKey(string wrapped_key, string wrapp
             unwrapping_params.vector_data(), password_sid, biometric_sid, &creationResult);
 
     if (result.isOk()) {
-        EXPECT_PRED2(KeyCharacteristicsBasicallyValid, SecLevel(),
-                     creationResult.keyCharacteristics);
+        EXPECT_PRED3(KeyCharacteristicsBasicallyValid, SecLevel(),
+                     creationResult.keyCharacteristics, AidlVersion());
         EXPECT_GT(creationResult.keyBlob.size(), 0);
 
         key_blob_ = std::move(creationResult.keyBlob);
@@ -2068,25 +2074,34 @@ vector<uint8_t> make_name_from_str(const string& name) {
     return retval;
 }
 
-void assert_mgf_digests_present_in_key_characteristics(
+void KeyMintAidlTestBase::assert_mgf_digests_present_or_not_in_key_characteristics(
+        std::vector<android::hardware::security::keymint::Digest>& expected_mgf_digests,
+        bool is_mgf_digest_expected) const {
+    assert_mgf_digests_present_or_not_in_key_characteristics(
+            key_characteristics_, expected_mgf_digests, is_mgf_digest_expected);
+}
+
+void KeyMintAidlTestBase::assert_mgf_digests_present_or_not_in_key_characteristics(
         const vector<KeyCharacteristics>& key_characteristics,
-        std::vector<android::hardware::security::keymint::Digest>& expected_mgf_digests) {
+        std::vector<android::hardware::security::keymint::Digest>& expected_mgf_digests,
+        bool is_mgf_digest_expected) const {
+    // There was no test to assert that MGF1 digest was present in generated/imported key
+    // characteristics before Keymint V3, so there are some Keymint implementations where
+    // asserting for MGF1 digest fails(b/297306437), hence skipping for Keymint < 3.
+    if (AidlVersion() < 3) {
+        return;
+    }
     AuthorizationSet auths;
     for (auto& entry : key_characteristics) {
         auths.push_back(AuthorizationSet(entry.authorizations));
     }
     for (auto digest : expected_mgf_digests) {
-        ASSERT_TRUE(auths.Contains(TAG_RSA_OAEP_MGF_DIGEST, digest));
+        if (is_mgf_digest_expected) {
+            ASSERT_TRUE(auths.Contains(TAG_RSA_OAEP_MGF_DIGEST, digest));
+        } else {
+            ASSERT_FALSE(auths.Contains(TAG_RSA_OAEP_MGF_DIGEST, digest));
+        }
     }
-}
-
-bool is_mgf_digest_present(const vector<KeyCharacteristics>& key_characteristics,
-                           android::hardware::security::keymint::Digest expected_mgf_digest) {
-    AuthorizationSet auths;
-    for (auto& entry : key_characteristics) {
-        auths.push_back(AuthorizationSet(entry.authorizations));
-    }
-    return auths.Contains(TAG_RSA_OAEP_MGF_DIGEST, expected_mgf_digest);
 }
 
 namespace {

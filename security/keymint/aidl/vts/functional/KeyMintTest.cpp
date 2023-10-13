@@ -4743,6 +4743,12 @@ TEST_P(ImportKeyTest, GetKeyCharacteristics) {
  * should have the correct characteristics.
  */
 TEST_P(ImportKeyTest, RsaOaepMGFDigestSuccess) {
+    // There was no test to assert that MGF1 digest was present in generated/imported key
+    // characteristics before Keymint V3, so there are some Keymint implementations where
+    // this test case fails(b/297306437), hence this test is skipped for Keymint < 3.
+    if (AidlVersion() < 3) {
+        GTEST_SKIP() << "Test not applicable to Keymint < V3";
+    }
     auto mgf_digests = ValidDigests(false /* withNone */, true /* withMD5 */);
     size_t key_size = 2048;
 
@@ -4763,7 +4769,7 @@ TEST_P(ImportKeyTest, RsaOaepMGFDigestSuccess) {
     CheckOrigin();
 
     // Make sure explicitly specified mgf-digests exist in key characteristics.
-    assert_mgf_digests_present_in_key_characteristics(key_characteristics_, mgf_digests);
+    assert_mgf_digests_present_or_not_in_key_characteristics(mgf_digests, true);
 
     string message = "Hello";
 
@@ -4827,8 +4833,9 @@ TEST_P(ImportKeyTest, RsaOaepMGFDigestDefaultSuccess) {
     CheckCryptoParam(TAG_PADDING, PaddingMode::RSA_OAEP);
     CheckOrigin();
 
+    vector defaultDigest = {Digest::SHA1};
     // Make sure default mgf-digest (SHA1) is not included in Key characteristics.
-    ASSERT_FALSE(is_mgf_digest_present(key_characteristics_, Digest::SHA1));
+    assert_mgf_digests_present_or_not_in_key_characteristics(defaultDigest, false);
 }
 
 INSTANTIATE_KEYMINT_AIDL_TEST(ImportKeyTest);
@@ -5256,7 +5263,7 @@ TEST_P(EncryptionOperationsTest, RsaNoPaddingShortMessage) {
  */
 TEST_P(EncryptionOperationsTest, RsaOaepSuccess) {
     auto digests = ValidDigests(false /* withNone */, true /* withMD5 */);
-    auto mgf_digest = Digest::SHA1;
+    auto mgf_digest = vector{Digest::SHA1};
 
     size_t key_size = 2048;  // Need largish key for SHA-512 test.
     ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
@@ -5264,11 +5271,11 @@ TEST_P(EncryptionOperationsTest, RsaOaepSuccess) {
                                                  .RsaEncryptionKey(key_size, 65537)
                                                  .Padding(PaddingMode::RSA_OAEP)
                                                  .Digest(digests)
-                                                 .Authorization(TAG_RSA_OAEP_MGF_DIGEST, mgf_digest)
+                                                 .OaepMGFDigest(mgf_digest)
                                                  .SetDefaultValidity()));
 
     // Make sure explicitly specified mgf-digest exist in key characteristics.
-    ASSERT_TRUE(is_mgf_digest_present(key_characteristics_, mgf_digest));
+    assert_mgf_digests_present_or_not_in_key_characteristics(mgf_digest, true);
 
     string message = "Hello";
 
@@ -5393,21 +5400,21 @@ TEST_P(EncryptionOperationsTest, RsaOaepWithMGFDigestSuccess) {
                                                  .Padding(PaddingMode::RSA_OAEP)
                                                  .Digest(Digest::SHA_2_256)
                                                  .SetDefaultValidity()));
+    if (AidlVersion() >= 3) {
+        std::vector<Digest> mgf1DigestsInAuths;
+        mgf1DigestsInAuths.reserve(digests.size());
+        const auto& hw_auths = SecLevelAuthorizations(key_characteristics_);
+        std::for_each(hw_auths.begin(), hw_auths.end(), [&](auto& param) {
+            if (param.tag == Tag::RSA_OAEP_MGF_DIGEST) {
+                KeyParameterValue value = param.value;
+                mgf1DigestsInAuths.push_back(param.value.template get<KeyParameterValue::digest>());
+            }
+        });
 
-    std::vector<Digest> mgf1DigestsInAuths;
-    mgf1DigestsInAuths.reserve(digests.size());
-    const auto& hw_auths = SecLevelAuthorizations(key_characteristics_);
-    std::for_each(hw_auths.begin(), hw_auths.end(), [&](auto& param) {
-        if (param.tag == Tag::RSA_OAEP_MGF_DIGEST) {
-            KeyParameterValue value = param.value;
-            mgf1DigestsInAuths.push_back(param.value.template get<KeyParameterValue::digest>());
-        }
-    });
-
-    std::sort(digests.begin(), digests.end());
-    std::sort(mgf1DigestsInAuths.begin(), mgf1DigestsInAuths.end());
-    EXPECT_EQ(digests, mgf1DigestsInAuths);
-
+        std::sort(digests.begin(), digests.end());
+        std::sort(mgf1DigestsInAuths.begin(), mgf1DigestsInAuths.end());
+        EXPECT_EQ(digests, mgf1DigestsInAuths);
+    }
     string message = "Hello";
 
     for (auto digest : digests) {
@@ -5462,8 +5469,9 @@ TEST_P(EncryptionOperationsTest, RsaOaepMGFDigestDefaultSuccess) {
                                                  .Digest(Digest::SHA_2_256)
                                                  .SetDefaultValidity()));
 
+    vector defaultDigest = vector{Digest::SHA1};
     // Make sure default mgf-digest (SHA1) is not included in Key characteristics.
-    ASSERT_FALSE(is_mgf_digest_present(key_characteristics_, Digest::SHA1));
+    assert_mgf_digests_present_or_not_in_key_characteristics(defaultDigest, false);
 
     // Do local RSA encryption using the default MGF digest of SHA-1.
     string message = "Hello";
@@ -5499,19 +5507,20 @@ TEST_P(EncryptionOperationsTest, RsaOaepMGFDigestDefaultSuccess) {
  */
 TEST_P(EncryptionOperationsTest, RsaOaepMGFDigestDefaultFail) {
     size_t key_size = 2048;
-    auto mgf_digest = Digest::SHA_2_256;
+    auto mgf_digest = vector{Digest::SHA_2_256};
     ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
                                                  .Authorization(TAG_NO_AUTH_REQUIRED)
-                                                 .Authorization(TAG_RSA_OAEP_MGF_DIGEST, mgf_digest)
+                                                 .OaepMGFDigest(mgf_digest)
                                                  .RsaEncryptionKey(key_size, 65537)
                                                  .Padding(PaddingMode::RSA_OAEP)
                                                  .Digest(Digest::SHA_2_256)
                                                  .SetDefaultValidity()));
 
     // Make sure explicitly specified mgf-digest exist in key characteristics.
-    ASSERT_TRUE(is_mgf_digest_present(key_characteristics_, mgf_digest));
+    assert_mgf_digests_present_or_not_in_key_characteristics(mgf_digest, true);
+    vector defaultDigest = vector{Digest::SHA1};
     // Make sure default mgf-digest is not included in key characteristics.
-    ASSERT_FALSE(is_mgf_digest_present(key_characteristics_, Digest::SHA1));
+    assert_mgf_digests_present_or_not_in_key_characteristics(defaultDigest, false);
 
     // Do local RSA encryption using the default MGF digest of SHA-1.
     string message = "Hello";
@@ -5535,16 +5544,17 @@ TEST_P(EncryptionOperationsTest, RsaOaepMGFDigestDefaultFail) {
  * with incompatible MGF digest.
  */
 TEST_P(EncryptionOperationsTest, RsaOaepWithMGFIncompatibleDigest) {
-    auto mgf_digest = Digest::SHA_2_256;
+    auto mgf_digest = vector{Digest::SHA_2_256};
     ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
-                                                 .Authorization(TAG_RSA_OAEP_MGF_DIGEST, mgf_digest)
+                                                 .OaepMGFDigest(mgf_digest)
                                                  .Authorization(TAG_NO_AUTH_REQUIRED)
                                                  .RsaEncryptionKey(2048, 65537)
                                                  .Padding(PaddingMode::RSA_OAEP)
                                                  .Digest(Digest::SHA_2_256)
                                                  .SetDefaultValidity()));
+
     // Make sure explicitly specified mgf-digest exist in key characteristics.
-    ASSERT_TRUE(is_mgf_digest_present(key_characteristics_, mgf_digest));
+    assert_mgf_digests_present_or_not_in_key_characteristics(mgf_digest, true);
 
     string message = "Hello World!";
 
@@ -5562,16 +5572,17 @@ TEST_P(EncryptionOperationsTest, RsaOaepWithMGFIncompatibleDigest) {
  * with unsupported MGF digest.
  */
 TEST_P(EncryptionOperationsTest, RsaOaepWithMGFUnsupportedDigest) {
-    auto mgf_digest = Digest::SHA_2_256;
+    auto mgf_digest = vector{Digest::SHA_2_256};
     ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
-                                                 .Authorization(TAG_RSA_OAEP_MGF_DIGEST, mgf_digest)
+                                                 .OaepMGFDigest(mgf_digest)
                                                  .Authorization(TAG_NO_AUTH_REQUIRED)
                                                  .RsaEncryptionKey(2048, 65537)
                                                  .Padding(PaddingMode::RSA_OAEP)
                                                  .Digest(Digest::SHA_2_256)
                                                  .SetDefaultValidity()));
+
     // Make sure explicitly specified mgf-digest exist in key characteristics.
-    ASSERT_TRUE(is_mgf_digest_present(key_characteristics_, mgf_digest));
+    assert_mgf_digests_present_or_not_in_key_characteristics(mgf_digest, true);
 
     string message = "Hello World!";
 
