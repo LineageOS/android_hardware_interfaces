@@ -56,6 +56,17 @@ using android::hardware::tv::tuner::V1_0::FrontendDvbtPlpMode;
 using android::hardware::tv::tuner::V1_0::FrontendDvbtSettings;
 using android::hardware::tv::tuner::V1_0::FrontendDvbtStandard;
 using android::hardware::tv::tuner::V1_0::FrontendDvbtTransmissionMode;
+using android::hardware::tv::tuner::V1_0::FrontendIsdbsCoderate;
+using android::hardware::tv::tuner::V1_0::FrontendIsdbsModulation;
+using android::hardware::tv::tuner::V1_0::FrontendIsdbsRolloff;
+using android::hardware::tv::tuner::V1_0::FrontendIsdbsSettings;
+using android::hardware::tv::tuner::V1_0::FrontendIsdbsStreamIdType;
+using android::hardware::tv::tuner::V1_0::FrontendIsdbtBandwidth;
+using android::hardware::tv::tuner::V1_0::FrontendIsdbtCoderate;
+using android::hardware::tv::tuner::V1_0::FrontendIsdbtGuardInterval;
+using android::hardware::tv::tuner::V1_0::FrontendIsdbtMode;
+using android::hardware::tv::tuner::V1_0::FrontendIsdbtModulation;
+using android::hardware::tv::tuner::V1_0::FrontendIsdbtSettings;
 using android::hardware::tv::tuner::V1_0::FrontendSettings;
 using android::hardware::tv::tuner::V1_0::FrontendStatus;
 using android::hardware::tv::tuner::V1_0::FrontendStatusType;
@@ -261,12 +272,14 @@ struct TunerTestingConfigReader1_0 {
                     }
                     case FrontendTypeEnum::ISDBS:
                         type = FrontendType::ISDBS;
+                        frontendMap[id].settings.isdbs(readIsdbsFrontendSettings(feConfig));
                         break;
                     case FrontendTypeEnum::ISDBS3:
                         type = FrontendType::ISDBS3;
                         break;
                     case FrontendTypeEnum::ISDBT:
                         type = FrontendType::ISDBT;
+                        frontendMap[id].settings.isdbt(readIsdbtFrontendSettings(feConfig));
                         break;
                     case FrontendTypeEnum::DTMB:
                         // dtmb will be handled in readFrontendConfig1_1;
@@ -580,6 +593,46 @@ struct TunerTestingConfigReader1_0 {
     }
 
   private:
+    static FrontendIsdbtSettings readIsdbtFrontendSettings(Frontend feConfig) {
+        ALOGW("[ConfigReader] fe type is isdbt");
+        FrontendIsdbtSettings isdbtSettings{
+                .frequency = (uint32_t)feConfig.getFrequency(),
+        };
+        if (!feConfig.hasIsdbtFrontendSettings_optional()) {
+            ALOGW("[ConfigReader] no more isdbt settings");
+            return isdbtSettings;
+        }
+        auto isdbt = feConfig.getFirstIsdbtFrontendSettings_optional();
+        isdbtSettings.modulation = static_cast<FrontendIsdbtModulation>(isdbt->getModulation());
+        isdbtSettings.bandwidth = static_cast<FrontendIsdbtBandwidth>(isdbt->getBandwidth());
+        isdbtSettings.mode = static_cast<FrontendIsdbtMode>(isdbt->getMode());
+        isdbtSettings.coderate = static_cast<FrontendIsdbtCoderate>(isdbt->getCoderate());
+        isdbtSettings.guardInterval =
+                static_cast<FrontendIsdbtGuardInterval>(isdbt->getGuardInterval());
+        isdbtSettings.serviceAreaId = static_cast<uint32_t>(isdbt->getServiceAreaId());
+        return isdbtSettings;
+    }
+
+    static FrontendIsdbsSettings readIsdbsFrontendSettings(Frontend feConfig) {
+        ALOGW("[ConfigReader] fe type is isdbs");
+        FrontendIsdbsSettings isdbsSettings{
+                .frequency = (uint32_t)feConfig.getFrequency(),
+        };
+        if (!feConfig.hasIsdbsFrontendSettings_optional()) {
+            ALOGW("[ConfigReader] no more isdbs settings");
+            return isdbsSettings;
+        }
+        auto isdbs = feConfig.getFirstIsdbsFrontendSettings_optional();
+        isdbsSettings.streamId = static_cast<uint16_t>(isdbs->getStreamId());
+        isdbsSettings.streamIdType =
+                static_cast<FrontendIsdbsStreamIdType>(isdbs->getStreamIdType());
+        isdbsSettings.modulation = static_cast<FrontendIsdbsModulation>(isdbs->getModulation());
+        isdbsSettings.coderate = static_cast<FrontendIsdbsCoderate>(isdbs->getCoderate());
+        isdbsSettings.symbolRate = static_cast<uint32_t>(isdbs->getSymbolRate());
+        isdbsSettings.rolloff = static_cast<FrontendIsdbsRolloff>(isdbs->getRolloff());
+        return isdbsSettings;
+    }
+
     static FrontendDvbtSettings readDvbtFrontendSettings(Frontend feConfig) {
         ALOGW("[ConfigReader] fe type is dvbt");
         FrontendDvbtSettings dvbtSettings{

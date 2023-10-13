@@ -80,6 +80,22 @@
         <xs:attribute name="scanType" type="dvbsScanType" use="optional"/>
         <xs:attribute name="isDiseqcRxMessage" type="xs:boolean" use="optional"/>
     </xs:complexType>
+    <xs:complexType name="isdbsFrontendSettings">
+        <xs:attribute name="streamId" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="symbolRate" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="streamIdType" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="modulation" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="coderate" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="rolloff" type="xs:nonNegativeInteger" use="required"/>
+    </xs:complexType>
+    <xs:complexType name="isdbtFrontendSettings">
+        <xs:attribute name="serviceAreaId" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="modulation" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="bandwidth" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="mode" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="coderate" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="guardInterval" type="xs:nonNegativeInteger" use="required"/>
+    </xs:complexType>
 
     <xs:complexType name="frontend">
         <xs:annotation>
@@ -113,10 +129,10 @@
             <xs:element name="dvbc" type="dvbcSettings"/-->
             <xs:element name="dvbsFrontendSettings" type="dvbsFrontendSettings"/>
             <xs:element name="dvbtFrontendSettings" type="dvbtFrontendSettings"/>
-            <!--xs:element name="isdbs" type="isdbsSettings"/>
-            <xs:element name="isdbs3" type="isdbs3Settings"/>
-            <xs:element name="isdbt" type="isdbtSettings"/>
-            <xs:element name="dtmb" type="dtmbSettings"/-->
+            <xs:element name="isdbsFrontendSettings" type="isdbsFrontendSettings"/>
+            <!--xs:element name="isdbs3" type="isdbs3Settings"/-->
+            <xs:element name="isdbtFrontendSettings" type="isdbtFrontendSettings"/>
+            <!--xs:element name="dtmb" type="dtmbSettings"/-->
         </xs:choice>
         <xs:attribute name="id" type="frontendId" use="required"/>
         <xs:attribute name="type" type="frontendTypeEnum" use="required"/>
