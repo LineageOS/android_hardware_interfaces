@@ -101,15 +101,17 @@ DiceChainEntryPayload = {                    ; CWT [RFC8392]
     -4670545 : bstr,                         ; Code Hash
     ? -4670546 : bstr,                       ; Code Descriptor
     -4670547 : bstr,                         ; Configuration Hash
-    -4670548 : bstr .cbor {                  ; Configuration Descriptor
-        ? -70002 : tstr,                         ; Component name
-        ? -70003 : int / tstr,                   ; Component version
-        ? -70004 : null,                         ; Resettable
-        ? -70005 : uint,                         ; Security version
-    },
+    -4670548 : bstr .cbor ConfigurationDescriptor,
     -4670549 : bstr,                         ; Authority Hash
     ? -4670550 : bstr,                       ; Authority Descriptor
     -4670551 : bstr,                         ; Mode
+}
+
+ConfigurationDescriptor = {                  ; Configuration Descriptor
+    ? -70002 : tstr,                         ; Component name
+    ? -70003 : int / tstr,                   ; Component version
+    ? -70004 : null,                         ; Resettable
+    ? -70005 : uint,                         ; Security version
 }
 
 ; Each entry in the DICE chain is a DiceChainEntryPayload signed by the key from the previous
