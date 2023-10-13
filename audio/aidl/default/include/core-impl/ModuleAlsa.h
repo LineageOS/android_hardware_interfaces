@@ -27,8 +27,7 @@ namespace aidl::android::hardware::audio::core {
 // provide necessary overrides for all interface methods omitted here.
 class ModuleAlsa : public Module {
   public:
-    ModuleAlsa(Type type, std::unique_ptr<Configuration>&& config)
-        : Module(type, std::move(config)) {}
+    explicit ModuleAlsa(Module::Type type) : Module(type) {}
 
   protected:
     // Extension methods of 'Module'.
