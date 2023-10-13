@@ -103,6 +103,9 @@ class ModuleConfig {
     std::optional<aidl::android::media::audio::common::AudioPort>
     getSourceMixPortForConnectedDevice() const;
 
+    std::vector<aidl::android::media::audio::common::AudioPort> getRoutableMixPortsForDevicePort(
+            const aidl::android::media::audio::common::AudioPort& port) const;
+
     std::optional<SrcSinkPair> getNonRoutableSrcSinkPair(bool isInput) const;
     std::optional<SrcSinkPair> getRoutableSrcSinkPair(bool isInput) const;
     std::vector<SrcSinkGroup> getRoutableSrcSinkGroups(bool isInput) const;

@@ -281,6 +281,22 @@ std::optional<AudioPort> ModuleConfig::getSourceMixPortForConnectedDevice() cons
     return {};
 }
 
+std::vector<AudioPort> ModuleConfig::getRoutableMixPortsForDevicePort(const AudioPort& port) const {
+    std::set<int32_t> portIds;
+    for (const auto& route : mRoutes) {
+        if (port.id == route.sinkPortId) {
+            portIds.insert(route.sourcePortIds.begin(), route.sourcePortIds.end());
+        } else if (auto it = std::find(route.sourcePortIds.begin(), route.sourcePortIds.end(),
+                                       port.id);
+                   it != route.sourcePortIds.end()) {
+            portIds.insert(route.sinkPortId);
+        }
+    }
+    const bool isInput = port.flags.getTag() == AudioIoFlags::input;
+    return findMixPorts(isInput, false /*connectedOnly*/, false /*singlePort*/,
+                        [&portIds](const AudioPort& p) { return portIds.count(p.id) > 0; });
+}
+
 std::optional<ModuleConfig::SrcSinkPair> ModuleConfig::getNonRoutableSrcSinkPair(
         bool isInput) const {
     const auto mixPorts = getMixPorts(isInput, false /*connectedOnly*/);

@@ -116,7 +116,7 @@ class VtsVehicleCallback final : public ISubscriptionCallback {
 
 class VtsHalAutomotiveVehicleTargetTest : public testing::TestWithParam<ServiceDescriptor> {
   protected:
-    void checkIsSupported(int32_t propertyId);
+    bool checkIsSupported(int32_t propertyId);
 
   public:
     void verifyProperty(VehicleProperty propId, VehiclePropertyAccess access,
@@ -207,7 +207,9 @@ TEST_P(VtsHalAutomotiveVehicleTargetTest, get) {
     ALOGD("VtsHalAutomotiveVehicleTargetTest::get");
 
     int32_t propId = toInt(VehicleProperty::PERF_VEHICLE_SPEED);
-    checkIsSupported(propId);
+    if (!checkIsSupported(propId)) {
+        GTEST_SKIP() << "Property: " << propId << " is not supported, skip the test";
+    }
     auto result = mVhalClient->getValueSync(*mVhalClient->createHalPropValue(propId));
 
     ASSERT_TRUE(result.ok()) << StringPrintf("Failed to get value for property: %" PRId32
@@ -293,7 +295,9 @@ TEST_P(VtsHalAutomotiveVehicleTargetTest, setNotWritableProp) {
     ALOGD("VtsHalAutomotiveVehicleTargetTest::setNotWritableProp");
 
     int32_t propId = toInt(VehicleProperty::PERF_VEHICLE_SPEED);
-    checkIsSupported(propId);
+    if (!checkIsSupported(propId)) {
+        GTEST_SKIP() << "Property: " << propId << " is not supported, skip the test";
+    }
 
     auto getValueResult = mVhalClient->getValueSync(*mVhalClient->createHalPropValue(propId));
     ASSERT_TRUE(getValueResult.ok())
@@ -335,7 +339,9 @@ TEST_P(VtsHalAutomotiveVehicleTargetTest, subscribeAndUnsubscribe) {
     ALOGD("VtsHalAutomotiveVehicleTargetTest::subscribeAndUnsubscribe");
 
     int32_t propId = toInt(VehicleProperty::PERF_VEHICLE_SPEED);
-    checkIsSupported(propId);
+    if (!checkIsSupported(propId)) {
+        GTEST_SKIP() << "Property: " << propId << " is not supported, skip the test";
+    }
 
     auto propConfigsResult = mVhalClient->getPropConfigs({propId});
 
@@ -425,7 +431,9 @@ TEST_P(VtsHalAutomotiveVehicleTargetTest, testGetValuesTimestampAIDL) {
     }
 
     int32_t propId = toInt(VehicleProperty::PARKING_BRAKE_ON);
-    checkIsSupported(propId);
+    if (!checkIsSupported(propId)) {
+        GTEST_SKIP() << "Property: " << propId << " is not supported, skip the test";
+    }
     auto prop = mVhalClient->createHalPropValue(propId);
 
     auto result = mVhalClient->getValueSync(*prop);
@@ -883,13 +891,9 @@ TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyClusterHeartbeatConfig) {
                    VehicleArea::GLOBAL, VehiclePropertyType::MIXED);
 }
 
-void VtsHalAutomotiveVehicleTargetTest::checkIsSupported(int32_t propertyId) {
+bool VtsHalAutomotiveVehicleTargetTest::checkIsSupported(int32_t propertyId) {
     auto result = mVhalClient->getPropConfigs({propertyId});
-    ASSERT_TRUE(result.ok()) << "Failed to get required property config, error: "
-                             << result.error().message();
-    if (result.value().size() == 0) {
-        GTEST_SKIP() << "Property: " << propertyId << " is not supported, skip the test";
-    }
+    return result.ok();
 }
 
 std::vector<ServiceDescriptor> getDescriptors() {
