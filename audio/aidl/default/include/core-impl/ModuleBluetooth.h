@@ -23,8 +23,7 @@ namespace aidl::android::hardware::audio::core {
 
 class ModuleBluetooth final : public Module {
   public:
-    ModuleBluetooth(std::unique_ptr<Configuration>&& config)
-        : Module(Type::BLUETOOTH, std::move(config)) {}
+    ModuleBluetooth() : Module(Type::BLUETOOTH) {}
 
   private:
     BtProfileHandles getBtProfileManagerHandles() override;
