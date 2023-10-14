@@ -135,22 +135,6 @@ static AudioRoute createRoute(const std::vector<AudioPort>& sources, const Audio
     return route;
 }
 
-std::vector<AudioProfile> getStandard16And24BitPcmAudioProfiles() {
-    auto createStdPcmAudioProfile = [](const PcmType& pcmType) {
-        return AudioProfile{
-                .format = AudioFormatDescription{.type = AudioFormatType::PCM, .pcm = pcmType},
-                .channelMasks = {AudioChannelLayout::make<AudioChannelLayout::layoutMask>(
-                                         AudioChannelLayout::LAYOUT_MONO),
-                                 AudioChannelLayout::make<AudioChannelLayout::layoutMask>(
-                                         AudioChannelLayout::LAYOUT_STEREO)},
-                .sampleRates = {8000, 11025, 16000, 32000, 44100, 48000}};
-    };
-    return {
-            createStdPcmAudioProfile(PcmType::INT_16_BIT),
-            createStdPcmAudioProfile(PcmType::INT_24_BIT),
-    };
-}
-
 // Primary (default) configuration:
 //
 // Device ports:
