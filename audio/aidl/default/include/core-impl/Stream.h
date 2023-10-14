@@ -44,6 +44,7 @@
 #include <utils/Errors.h>
 
 #include "core-impl/ChildInterface.h"
+#include "core-impl/SoundDose.h"
 #include "core-impl/utils.h"
 
 namespace aidl::android::hardware::audio::core {
@@ -87,6 +88,7 @@ class StreamContext {
                   int32_t mixPortHandle, std::unique_ptr<DataMQ> dataMQ,
                   std::shared_ptr<IStreamCallback> asyncCallback,
                   std::shared_ptr<IStreamOutEventCallback> outEventCallback,
+                  std::weak_ptr<sounddose::StreamDataProcessorInterface> streamDataProcessor,
                   DebugParameters debugParameters)
         : mCommandMQ(std::move(commandMQ)),
           mInternalCommandCookie(std::rand()),
@@ -100,6 +102,7 @@ class StreamContext {
           mDataMQ(std::move(dataMQ)),
           mAsyncCallback(asyncCallback),
           mOutEventCallback(outEventCallback),
+          mStreamDataProcessor(streamDataProcessor),
           mDebugParameters(debugParameters) {}
     StreamContext(StreamContext&& other)
         : mCommandMQ(std::move(other.mCommandMQ)),
@@ -114,6 +117,7 @@ class StreamContext {
           mDataMQ(std::move(other.mDataMQ)),
           mAsyncCallback(std::move(other.mAsyncCallback)),
           mOutEventCallback(std::move(other.mOutEventCallback)),
+          mStreamDataProcessor(std::move(other.mStreamDataProcessor)),
           mDebugParameters(std::move(other.mDebugParameters)),
           mFrameCount(other.mFrameCount) {}
     StreamContext& operator=(StreamContext&& other) {
@@ -129,6 +133,7 @@ class StreamContext {
         mDataMQ = std::move(other.mDataMQ);
         mAsyncCallback = std::move(other.mAsyncCallback);
         mOutEventCallback = std::move(other.mOutEventCallback);
+        mStreamDataProcessor = std::move(other.mStreamDataProcessor);
         mDebugParameters = std::move(other.mDebugParameters);
         mFrameCount = other.mFrameCount;
         return *this;
@@ -154,6 +159,10 @@ class StreamContext {
     std::shared_ptr<IStreamOutEventCallback> getOutEventCallback() const {
         return mOutEventCallback;
     }
+    std::weak_ptr<sounddose::StreamDataProcessorInterface> getStreamDataProcessor() const {
+        return mStreamDataProcessor;
+    }
+    void startStreamDataProcessor();
     int getPortId() const { return mPortId; }
     ReplyMQ* getReplyMQ() const { return mReplyMQ.get(); }
     int getTransientStateDelayMs() const { return mDebugParameters.transientStateDelayMs; }
@@ -179,6 +188,7 @@ class StreamContext {
     std::unique_ptr<DataMQ> mDataMQ;
     std::shared_ptr<IStreamCallback> mAsyncCallback;
     std::shared_ptr<IStreamOutEventCallback> mOutEventCallback;  // Only used by output streams
+    std::weak_ptr<sounddose::StreamDataProcessorInterface> mStreamDataProcessor;
     DebugParameters mDebugParameters;
     long mFrameCount = 0;
 };

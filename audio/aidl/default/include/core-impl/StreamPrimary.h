@@ -79,6 +79,10 @@ class StreamOutPrimary final : public StreamOut,
 
     ndk::ScopedAStatus getHwVolume(std::vector<float>* _aidl_return) override;
     ndk::ScopedAStatus setHwVolume(const std::vector<float>& in_channelVolumes) override;
+
+    ndk::ScopedAStatus setConnectedDevices(
+            const std::vector<::aidl::android::media::audio::common::AudioDevice>& devices)
+            override;
 };
 
 }  // namespace aidl::android::hardware::audio::core
