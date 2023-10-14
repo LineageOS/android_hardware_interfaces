@@ -60,7 +60,8 @@ class Module : public BnModule {
                                                   std::unique_ptr<Configuration>&& config);
     static std::optional<Type> typeFromString(const std::string& type);
 
-    Module(Type type, std::unique_ptr<Configuration>&& config);
+    Module(Type type, std::unique_ptr<Configuration>&& config)
+        : mType(type), mConfig(std::move(config)) {}
 
   protected:
     // The vendor extension done via inheritance can override interface methods and augment
@@ -234,7 +235,6 @@ class Module : public BnModule {
     const Streams& getStreams() const { return mStreams; }
     Type getType() const { return mType; }
     bool isMmapSupported();
-    void populateConnectedProfiles();
     template <typename C>
     std::set<int32_t> portIdsFromPortConfigIds(C portConfigIds);
     void registerPatch(const AudioPatch& patch);
