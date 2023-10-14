@@ -41,6 +41,7 @@ using aidl::android::media::audio::common::AudioPortExt;
 using aidl::android::media::audio::common::AudioPortMixExt;
 using aidl::android::media::audio::common::AudioProfile;
 using aidl::android::media::audio::common::Int;
+using aidl::android::media::audio::common::MicrophoneInfo;
 using aidl::android::media::audio::common::PcmType;
 using Configuration = aidl::android::hardware::audio::core::Module::Configuration;
 
@@ -272,6 +273,13 @@ std::unique_ptr<Configuration> getPrimaryConfiguration() {
         c.routes.push_back(createRoute({fmTunerInDevice}, fmTunerInMix));
 
         c.portConfigs.insert(c.portConfigs.end(), c.initialConfigs.begin(), c.initialConfigs.end());
+
+        MicrophoneInfo mic;
+        mic.id = "mic";
+        mic.device = micInDevice.ext.get<AudioPortExt::Tag::device>().device;
+        mic.group = 0;
+        mic.indexInTheGroup = 0;
+        c.microphones = std::vector<MicrophoneInfo>{mic};
 
         return c;
     }();
