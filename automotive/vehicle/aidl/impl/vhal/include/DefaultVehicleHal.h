@@ -191,6 +191,10 @@ class DefaultVehicleHal final : public aidl::android::hardware::automotive::vehi
             const std::vector<aidl::android::hardware::automotive::vehicle::SubscribeOptions>&
                     options);
 
+    VhalResult<void> checkPermissionHelper(
+            const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value,
+            aidl::android::hardware::automotive::vehicle::VehiclePropertyAccess accessToTest) const;
+
     VhalResult<void> checkReadPermission(
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value) const;
 
