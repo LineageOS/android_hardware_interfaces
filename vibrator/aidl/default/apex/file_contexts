@@ -1,3 +1,4 @@
-(/.*)? 							u:object_r:vendor_file:s0
-/bin/hw/android\.hardware\.vibrator-service\.example	u:object_r:hal_vibrator_default_exec:s0
+(/.*)?                                                  u:object_r:vendor_file:s0
+/etc(/.*)?                                              u:object_r:vendor_configs_file:s0
+/bin/hw/android\.hardware\.vibrator-service\.example    u:object_r:hal_vibrator_default_exec:s0
 
