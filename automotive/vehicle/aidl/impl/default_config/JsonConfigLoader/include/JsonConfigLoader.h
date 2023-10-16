@@ -130,12 +130,9 @@ class JsonConfigParser {
                                      std::vector<T>* outPtr, std::vector<std::string>* errors);
     // Parses a JSON field to VehiclePropertyAccess or VehiclePropertyChangeMode.
     template <class T>
-    void parseAccessChangeMode(
-            const Json::Value& parentJsonNode, const std::string& fieldName, int propId,
-            const std::string& propStr,
-            const std::unordered_map<aidl::android::hardware::automotive::vehicle::VehicleProperty,
-                                     T>& defaultMap,
-            T* outPtr, std::vector<std::string>* errors);
+    void parseAccessChangeMode(const Json::Value& parentJsonNode, const std::string& fieldName,
+                               const std::string& propStr, const T* defaultAccessChangeModePtr,
+                               T* outPtr, std::vector<std::string>* errors);
 
     // Parses a JSON field to RawPropValues.
     //
@@ -145,8 +142,10 @@ class JsonConfigParser {
                          std::vector<std::string>* errors);
 
     // Prase a JSON field as an array of area configs.
-    void parseAreas(const Json::Value& parentJsonNode, const std::string& fieldName,
-                    ConfigDeclaration* outPtr, std::vector<std::string>* errors);
+    void parseAreas(
+            const Json::Value& parentJsonNode, const std::string& fieldName,
+            ConfigDeclaration* outPtr, std::vector<std::string>* errors,
+            aidl::android::hardware::automotive::vehicle::VehiclePropertyAccess defaultAccess);
 };
 
 }  // namespace jsonconfigloader_impl
