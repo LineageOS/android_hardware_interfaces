@@ -32,9 +32,11 @@ cc_library_static {
     },
 }
 
-filegroup {
+prebuilt_etc {
     name: "android.hardware.vibrator.xml",
-    srcs: ["android.hardware.vibrator.xml"],
+    src: "android.hardware.vibrator.xml",
+    sub_dir: "vintf",
+    installable: false,
 }
 
 cc_binary {
