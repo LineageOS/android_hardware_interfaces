@@ -66,6 +66,7 @@ class TvInput : public BnTvInput {
     map<int32_t, shared_ptr<TvInputDeviceInfoWrapper>> mDeviceInfos;
     map<int32_t, map<int32_t, shared_ptr<TvStreamConfigWrapper>>> mStreamConfigs;
     TvMessageEnabledMap mTvMessageEventEnabled;
+    shared_ptr<AidlMessageQueue<int8_t, SynchronizedReadWrite>> mQueue;
 };
 
 }  // namespace input
