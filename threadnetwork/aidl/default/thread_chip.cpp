@@ -32,23 +32,19 @@ namespace hardware {
 namespace threadnetwork {
 
 ThreadChip::ThreadChip(char* url) : mUrl(), mRxFrameBuffer(), mCallback(nullptr) {
-    static const char kHdlcProtocol[] = "spinel+hdlc";
-    static const char kSpiProtocol[] = "spinel+spi";
-    const char* protocol;
+    const char* interfaceName;
 
     CHECK_EQ(mUrl.Init(url), 0);
 
-    protocol = mUrl.GetProtocol();
-    CHECK_NE(protocol, nullptr);
+    interfaceName = mUrl.GetProtocol();
+    CHECK_NE(interfaceName, nullptr);
 
-    if (memcmp(protocol, kSpiProtocol, strlen(kSpiProtocol)) == 0) {
-        mSpinelInterface = std::make_shared<ot::Posix::SpiInterface>(handleReceivedFrameJump, this,
-                                                                     mRxFrameBuffer);
-    } else if (memcmp(protocol, kHdlcProtocol, strlen(kHdlcProtocol)) == 0) {
-        mSpinelInterface = std::make_shared<ot::Posix::HdlcInterface>(handleReceivedFrameJump, this,
-                                                                      mRxFrameBuffer);
+    if (ot::Posix::SpiInterface::IsInterfaceNameMatch(interfaceName)) {
+        mSpinelInterface = std::make_shared<ot::Posix::SpiInterface>(mUrl);
+    } else if (ot::Posix::HdlcInterface::IsInterfaceNameMatch(interfaceName)) {
+        mSpinelInterface = std::make_shared<ot::Posix::HdlcInterface>(mUrl);
     } else {
-        ALOGE("The protocol \"%s\" is not supported", protocol);
+        ALOGE("The interface \"%s\" is not supported", interfaceName);
         exit(EXIT_FAILURE);
     }
 
@@ -106,7 +102,8 @@ ndk::ScopedAStatus ThreadChip::initChip(const std::shared_ptr<IThreadChipCallbac
     if (in_callback == nullptr) {
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
     } else if (mCallback == nullptr) {
-        if (mSpinelInterface->Init(mUrl) != OT_ERROR_NONE) {
+        if (mSpinelInterface->Init(handleReceivedFrameJump, this, mRxFrameBuffer) !=
+            OT_ERROR_NONE) {
             return errorStatus(ERROR_FAILED, "Failed to initialize the interface");
         }
 

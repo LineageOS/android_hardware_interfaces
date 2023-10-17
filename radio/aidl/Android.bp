@@ -318,19 +318,3 @@ aidl_interface {
         },
     ],
 }
-
-aidl_interface {
-    name: "android.hardware.radio.satellite",
-    vendor_available: true,
-    srcs: ["android/hardware/radio/satellite/*.aidl"],
-    stability: "vintf",
-    imports: ["android.hardware.radio-V3"],
-    backend: {
-        cpp: {
-            enabled: false,
-        },
-        java: {
-            sdk_version: "module_current",
-        },
-    },
-}
