@@ -28,7 +28,7 @@ class FakeFingerprintEngineSide : public FakeFingerprintEngine {
     static constexpr int32_t defaultSensorLocationY = 600;
     static constexpr int32_t defaultSensorRadius = 150;
 
-    FakeFingerprintEngineSide() : FakeFingerprintEngine() {}
+    FakeFingerprintEngineSide();
     ~FakeFingerprintEngineSide() {}
 
     virtual SensorLocation defaultSensorLocation() override;

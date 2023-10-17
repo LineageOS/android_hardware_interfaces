@@ -27,6 +27,7 @@ cc_library_static {
     visibility: [
         "//hardware/interfaces/automotive/vehicle:__subpackages__",
         "//device/generic/car/emulator:__subpackages__",
+        "//system/software_defined_vehicle/core_services:__subpackages__",
     ],
     vendor: true,
     host_supported: true,

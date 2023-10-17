@@ -214,7 +214,8 @@ TEST_P(RadioDataTest, setupDataCall_osAppId) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_data->rspInfo.error,
                                      {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE,
                                       RadioError::OP_NOT_ALLOWED_BEFORE_REG_TO_NW}));
-        if (radioRsp_data->setupDataCallResult.trafficDescriptors.size() <= 0) {
+        if (radioRsp_data->setupDataCallResult.trafficDescriptors.size() <= 0 ||
+            !radioRsp_data->setupDataCallResult.trafficDescriptors[0].osAppId.has_value()) {
             return;
         }
         EXPECT_EQ(trafficDescriptor.osAppId.value().osAppId,

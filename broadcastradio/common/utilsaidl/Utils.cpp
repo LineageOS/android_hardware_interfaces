@@ -204,7 +204,7 @@ bool isSupported(const Properties& prop, const ProgramSelector& sel) {
 }
 
 bool isValid(const ProgramIdentifier& id) {
-    int64_t val = id.value;
+    uint64_t val = static_cast<uint64_t>(id.value);
     bool valid = true;
 
     auto expect = [&valid](bool condition, const string& message) {
@@ -231,11 +231,11 @@ bool isValid(const ProgramIdentifier& id) {
             expect(val <= 0xFFFFu, "16bit id");
             break;
         case IdentifierType::HD_STATION_ID_EXT: {
-            int64_t stationId = val & 0xFFFFFFFF;  // 32bit
+            uint64_t stationId = val & 0xFFFFFFFF;  // 32bit
             val >>= 32;
-            int64_t subchannel = val & 0xF;  // 4bit
+            uint64_t subchannel = val & 0xF;  // 4bit
             val >>= 4;
-            int64_t freq = val & 0x3FFFF;  // 18bit
+            uint64_t freq = val & 0x3FFFF;  // 18bit
             expect(stationId != 0u, "HD station id != 0");
             expect(subchannel < 8u, "HD subch < 8");
             expect(freq > 100u, "f > 100kHz");
@@ -252,9 +252,9 @@ bool isValid(const ProgramIdentifier& id) {
             break;
         }
         case IdentifierType::DAB_SID_EXT: {
-            int64_t sid = val & 0xFFFFFFFF;  // 32bit
+            uint64_t sid = val & 0xFFFFFFFF;  // 32bit
             val >>= 32;
-            int64_t ecc = val & 0xFF;  // 8bit
+            uint64_t ecc = val & 0xFF;  // 8bit
             expect(sid != 0u, "DAB SId != 0");
             expect(ecc >= 0xA0u && ecc <= 0xF6u, "Invalid ECC, see ETSI TS 101 756 V2.1.1");
             break;
@@ -305,19 +305,19 @@ ProgramIdentifier makeIdentifier(IdentifierType type, int64_t value) {
     return {type, value};
 }
 
-ProgramSelector makeSelectorAmfm(int32_t frequency) {
+ProgramSelector makeSelectorAmfm(uint32_t frequency) {
     ProgramSelector sel = {};
     sel.primaryId = makeIdentifier(IdentifierType::AMFM_FREQUENCY_KHZ, frequency);
     return sel;
 }
 
-ProgramSelector makeSelectorDab(int64_t sidExt) {
+ProgramSelector makeSelectorDab(uint64_t sidExt) {
     ProgramSelector sel = {};
     sel.primaryId = makeIdentifier(IdentifierType::DAB_SID_EXT, sidExt);
     return sel;
 }
 
-ProgramSelector makeSelectorDab(int64_t sidExt, int32_t ensemble, int64_t freq) {
+ProgramSelector makeSelectorDab(uint64_t sidExt, uint32_t ensemble, uint64_t freq) {
     ProgramSelector sel = {};
     sel.primaryId = makeIdentifier(IdentifierType::DAB_SID_EXT, sidExt);
     vector<ProgramIdentifier> secondaryIds = {

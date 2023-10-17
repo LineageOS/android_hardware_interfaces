@@ -38,7 +38,7 @@ namespace aidl::android::hardware::biometrics::fingerprint {
 // A fake engine that is backed by system properties instead of hardware.
 class FakeFingerprintEngine {
   public:
-    FakeFingerprintEngine() : mRandom(std::mt19937::default_seed) {}
+    FakeFingerprintEngine();
     virtual ~FakeFingerprintEngine() {}
 
     void generateChallengeImpl(ISessionCallback* cb);
@@ -66,6 +66,8 @@ class FakeFingerprintEngine {
 
     virtual SensorLocation defaultSensorLocation();
 
+    virtual void fingerDownAction();
+
     std::vector<int32_t> parseIntSequence(const std::string& str, const std::string& sep = ",");
 
     std::vector<std::vector<int32_t>> parseEnrollmentCapture(const std::string& str);
@@ -74,14 +76,34 @@ class FakeFingerprintEngine {
 
     std::mt19937 mRandom;
 
+    enum class WorkMode : int8_t { kIdle = 0, kAuthenticate, kEnroll, kDetectInteract };
+
+    WorkMode getWorkMode() { return mWorkMode; }
+
     virtual std::string toString() const {
         std::ostringstream os;
         os << "----- FakeFingerprintEngine:: -----" << std::endl;
+        os << "mWorkMode:" << (int)mWorkMode;
         os << "acquiredVendorInfoBase:" << FINGERPRINT_ACQUIRED_VENDOR_BASE;
         os << ", errorVendorBase:" << FINGERPRINT_ERROR_VENDOR_BASE << std::endl;
         os << mLockoutTracker.toString();
         return os.str();
     }
+
+  protected:
+    virtual void updateContext(WorkMode mode, ISessionCallback* cb, std::future<void>& cancel,
+                               int64_t operationId, const keymaster::HardwareAuthToken& hat);
+
+    bool onEnrollFingerDown(ISessionCallback* cb, const keymaster::HardwareAuthToken& hat,
+                            const std::future<void>& cancel);
+    bool onAuthenticateFingerDown(ISessionCallback* cb, int64_t, const std::future<void>& cancel);
+    bool onDetectInteractFingerDown(ISessionCallback* cb, const std::future<void>& cancel);
+
+    WorkMode mWorkMode;
+    ISessionCallback* mCb;
+    keymaster::HardwareAuthToken mHat;
+    std::future<void> mCancel;
+    int64_t mOperationId;
 
   private:
     static constexpr int32_t FINGERPRINT_ACQUIRED_VENDOR_BASE = 1000;
@@ -91,8 +113,21 @@ class FakeFingerprintEngine {
     bool parseEnrollmentCaptureSingle(const std::string& str,
                                       std::vector<std::vector<int32_t>>& res);
     int32_t getRandomInRange(int32_t bound1, int32_t bound2);
+    bool checkSensorLockout(ISessionCallback*);
+    void clearLockout(ISessionCallback* cb);
 
     FakeLockoutTracker mLockoutTracker;
+
+  protected:
+    // lockout timer
+    void lockoutTimerExpired(ISessionCallback* cb);
+    bool isLockoutTimerSupported;
+    bool isLockoutTimerStarted;
+    bool isLockoutTimerAborted;
+
+  public:
+    void startLockoutTimer(int64_t timeout, ISessionCallback* cb);
+    bool getLockoutTimerStarted() { return isLockoutTimerStarted; }
 };
 
 }  // namespace aidl::android::hardware::biometrics::fingerprint
