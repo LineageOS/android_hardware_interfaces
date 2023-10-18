@@ -202,15 +202,17 @@ ndk::ScopedAStatus Module::createStreamContext(
         LOG(ERROR) << __func__ << ": non-positive buffer size " << in_bufferSizeFrames;
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
     }
-    if (in_bufferSizeFrames < kMinimumStreamBufferSizeFrames) {
-        LOG(ERROR) << __func__ << ": insufficient buffer size " << in_bufferSizeFrames
-                   << ", must be at least " << kMinimumStreamBufferSizeFrames;
-        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
-    }
     auto& configs = getConfig().portConfigs;
     auto portConfigIt = findById<AudioPortConfig>(configs, in_portConfigId);
     // Since this is a private method, it is assumed that
     // validity of the portConfigId has already been checked.
+    const int32_t minimumStreamBufferSizeFrames = calculateBufferSizeFrames(
+            getNominalLatencyMs(*portConfigIt), portConfigIt->sampleRate.value().value);
+    if (in_bufferSizeFrames < minimumStreamBufferSizeFrames) {
+        LOG(ERROR) << __func__ << ": insufficient buffer size " << in_bufferSizeFrames
+                   << ", must be at least " << minimumStreamBufferSizeFrames;
+        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+    }
     const size_t frameSize =
             getFrameSizeInBytes(portConfigIt->format.value(), portConfigIt->channelMask.value());
     if (frameSize == 0) {
@@ -238,8 +240,8 @@ ndk::ScopedAStatus Module::createStreamContext(
         StreamContext temp(
                 std::make_unique<StreamContext::CommandMQ>(1, true /*configureEventFlagWord*/),
                 std::make_unique<StreamContext::ReplyMQ>(1, true /*configureEventFlagWord*/),
-                portConfigIt->portId, portConfigIt->format.value(),
-                portConfigIt->channelMask.value(), portConfigIt->sampleRate.value().value, flags,
+                portConfigIt->format.value(), portConfigIt->channelMask.value(),
+                portConfigIt->sampleRate.value().value, flags, getNominalLatencyMs(*portConfigIt),
                 portConfigIt->ext.get<AudioPortExt::mix>().handle,
                 std::make_unique<StreamContext::DataMQ>(frameSize * in_bufferSizeFrames),
                 asyncCallback, outEventCallback,
@@ -357,6 +359,12 @@ std::set<int32_t> Module::portIdsFromPortConfigIds(C portConfigIds) {
 
 std::unique_ptr<Module::Configuration> Module::initializeConfig() {
     return internal::getConfiguration(getType());
+}
+
+int32_t Module::getNominalLatencyMs(const AudioPortConfig&) {
+    // Arbitrary value. Implementations must override this method to provide their actual latency.
+    static constexpr int32_t kLatencyMs = 5;
+    return kLatencyMs;
 }
 
 std::vector<AudioRoute*> Module::getAudioRoutesForAudioPortImpl(int32_t portId) {
@@ -965,11 +973,21 @@ ndk::ScopedAStatus Module::setAudioPatch(const AudioPatch& in_requested, AudioPa
             return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
         }
     }
+    // Find the highest sample rate among mix port configs.
+    std::map<int32_t, AudioPortConfig*> sampleRates;
+    std::vector<AudioPortConfig*>& mixPortConfigs =
+            sources[0]->ext.getTag() == AudioPortExt::mix ? sources : sinks;
+    for (auto mix : mixPortConfigs) {
+        sampleRates.emplace(mix->sampleRate.value().value, mix);
+    }
     *_aidl_return = in_requested;
-    _aidl_return->minimumStreamBufferSizeFrames = kMinimumStreamBufferSizeFrames;
+    auto maxSampleRateIt = std::max_element(sampleRates.begin(), sampleRates.end());
+    const int32_t latencyMs = getNominalLatencyMs(*(maxSampleRateIt->second));
+    _aidl_return->minimumStreamBufferSizeFrames =
+            calculateBufferSizeFrames(latencyMs, maxSampleRateIt->first);
     _aidl_return->latenciesMs.clear();
     _aidl_return->latenciesMs.insert(_aidl_return->latenciesMs.end(),
-                                     _aidl_return->sinkPortConfigIds.size(), kLatencyMs);
+                                     _aidl_return->sinkPortConfigIds.size(), latencyMs);
     AudioPatch oldPatch{};
     if (existing == patches.end()) {
         _aidl_return->id = getConfig().nextPatchId++;

@@ -50,9 +50,6 @@ class Module : public BnModule {
                        std::weak_ptr<IBluetoothLe>>
             BtProfileHandles;
 
-    // This value is used by default for all AudioPatches and reported by all streams.
-    static constexpr int32_t kLatencyMs = 10;
-
     static std::shared_ptr<Module> createInstance(Type type) {
         return createInstance(type, std::make_unique<Configuration>());
     }
@@ -145,8 +142,6 @@ class Module : public BnModule {
     ndk::ScopedAStatus getAAudioMixerBurstCount(int32_t* _aidl_return) override;
     ndk::ScopedAStatus getAAudioHardwareBurstMinUsec(int32_t* _aidl_return) override;
 
-    // This value is used for all AudioPatches.
-    static constexpr int32_t kMinimumStreamBufferSizeFrames = 256;
     // The maximum stream buffer size is 1 GiB = 2 ** 30 bytes;
     static constexpr int32_t kMaximumStreamBufferSizeBytes = 1 << 30;
 
@@ -207,8 +202,17 @@ class Module : public BnModule {
     virtual ndk::ScopedAStatus onMasterVolumeChanged(float volume);
     virtual std::vector<::aidl::android::media::audio::common::MicrophoneInfo> getMicrophoneInfos();
     virtual std::unique_ptr<Configuration> initializeConfig();
+    virtual int32_t getNominalLatencyMs(
+            const ::aidl::android::media::audio::common::AudioPortConfig& portConfig);
 
     // Utility and helper functions accessible to subclasses.
+    static int32_t calculateBufferSizeFrames(int32_t latencyMs, int32_t sampleRateHz) {
+        const int32_t rawSizeFrames = (latencyMs * sampleRateHz) / 1000;
+        int32_t powerOf2 = 1;
+        while (powerOf2 < rawSizeFrames) powerOf2 <<= 1;
+        return powerOf2;
+    }
+
     ndk::ScopedAStatus bluetoothParametersUpdated();
     void cleanUpPatch(int32_t patchId);
     ndk::ScopedAStatus createStreamContext(
