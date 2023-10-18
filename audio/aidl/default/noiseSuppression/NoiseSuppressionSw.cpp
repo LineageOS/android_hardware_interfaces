@@ -65,7 +65,7 @@ const Descriptor NoiseSuppressionSw::kDescriptor = {
         .common = {.id = {.type = getEffectTypeUuidNoiseSuppression(),
                           .uuid = getEffectImplUuidNoiseSuppressionSw(),
                           .proxy = std::nullopt},
-                   .flags = {.type = Flags::Type::INSERT,
+                   .flags = {.type = Flags::Type::PRE_PROC,
                              .insert = Flags::Insert::FIRST,
                              .volume = Flags::Volume::CTRL},
                    .name = NoiseSuppressionSw::kEffectName,
