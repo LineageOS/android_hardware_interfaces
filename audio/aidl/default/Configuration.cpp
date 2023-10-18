@@ -43,6 +43,7 @@ using aidl::android::media::audio::common::AudioProfile;
 using aidl::android::media::audio::common::Int;
 using aidl::android::media::audio::common::MicrophoneInfo;
 using aidl::android::media::audio::common::PcmType;
+using Configuration = aidl::android::hardware::audio::core::Module::Configuration;
 
 namespace aidl::android::hardware::audio::core::internal {
 
@@ -675,6 +676,21 @@ std::unique_ptr<Configuration> getBluetoothConfiguration() {
         return c;
     }();
     return std::make_unique<Configuration>(configuration);
+}
+
+std::unique_ptr<Module::Configuration> getConfiguration(Module::Type moduleType) {
+    switch (moduleType) {
+        case Module::Type::DEFAULT:
+            return getPrimaryConfiguration();
+        case Module::Type::R_SUBMIX:
+            return getRSubmixConfiguration();
+        case Module::Type::STUB:
+            return getStubConfiguration();
+        case Module::Type::USB:
+            return getUsbConfiguration();
+        case Module::Type::BLUETOOTH:
+            return getBluetoothConfiguration();
+    }
 }
 
 }  // namespace aidl::android::hardware::audio::core::internal
