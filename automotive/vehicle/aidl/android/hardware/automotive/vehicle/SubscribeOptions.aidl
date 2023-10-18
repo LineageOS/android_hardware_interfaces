@@ -39,4 +39,14 @@ parcelable SubscribeOptions {
      * This value indicates how many updates per second client wants to receive.
      */
     float sampleRate;
+
+    /**
+     * Requested resolution of property updates.
+     *
+     * This value indicates the resolution at which continuous property updates should be sent to
+     * the platform. For example, if resolution is 0.01, the subscribed property value should be
+     * rounded to two decimal places. If the incoming resolution value is not an integer multiple of
+     * 10, VHAL should return a StatusCode::INVALID_ARG.
+     */
+    float resolution = 0.0f;
 }

@@ -37,4 +37,5 @@ parcelable SubscribeOptions {
   int propId;
   int[] areaIds;
   float sampleRate;
+  float resolution = 0.0f;
 }
