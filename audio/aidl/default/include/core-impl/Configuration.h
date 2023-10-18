@@ -23,5 +23,7 @@
 namespace aidl::android::hardware::audio::core::internal {
 
 std::unique_ptr<Module::Configuration> getConfiguration(Module::Type moduleType);
+std::vector<aidl::android::media::audio::common::AudioProfile>
+getStandard16And24BitPcmAudioProfiles();
 
 }  // namespace aidl::android::hardware::audio::core::internal
