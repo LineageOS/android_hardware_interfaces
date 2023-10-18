@@ -26,11 +26,16 @@ namespace aidl::android::hardware::audio::core {
 static const std::string kEngineConfigFileName = "audio_policy_engine_configuration.xml";
 
 class Config : public BnConfig {
+  public:
+    explicit Config(internal::AudioPolicyConfigXmlConverter& apConverter)
+        : mAudioPolicyConverter(apConverter) {}
+
+  private:
     ndk::ScopedAStatus getSurroundSoundConfig(SurroundSoundConfig* _aidl_return) override;
     ndk::ScopedAStatus getEngineConfig(
             aidl::android::media::audio::common::AudioHalEngineConfig* _aidl_return) override;
-    internal::AudioPolicyConfigXmlConverter mAudioPolicyConverter{
-            ::android::audio_get_audio_policy_config_file()};
+
+    internal::AudioPolicyConfigXmlConverter& mAudioPolicyConverter;
     internal::EngineConfigXmlConverter mEngConfigConverter{
             ::android::audio_find_readable_configuration_file(kEngineConfigFileName.c_str())};
 };

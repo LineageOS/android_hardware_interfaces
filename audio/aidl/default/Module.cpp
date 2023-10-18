@@ -25,6 +25,7 @@
 #include <android/binder_ibinder_platform.h>
 #include <error/expected_utils.h>
 
+#include "core-impl/Configuration.h"
 #include "core-impl/Module.h"
 #include "core-impl/ModuleBluetooth.h"
 #include "core-impl/ModulePrimary.h"
@@ -132,19 +133,34 @@ bool findAudioProfile(const AudioPort& port, const AudioFormatDescription& forma
 }  // namespace
 
 // static
-std::shared_ptr<Module> Module::createInstance(Type type) {
+std::shared_ptr<Module> Module::createInstance(Type type, std::unique_ptr<Configuration>&& config) {
     switch (type) {
         case Type::DEFAULT:
-            return ndk::SharedRefBase::make<ModulePrimary>();
+            return ndk::SharedRefBase::make<ModulePrimary>(std::move(config));
         case Type::R_SUBMIX:
-            return ndk::SharedRefBase::make<ModuleRemoteSubmix>();
+            return ndk::SharedRefBase::make<ModuleRemoteSubmix>(std::move(config));
         case Type::STUB:
-            return ndk::SharedRefBase::make<ModuleStub>();
+            return ndk::SharedRefBase::make<ModuleStub>(std::move(config));
         case Type::USB:
-            return ndk::SharedRefBase::make<ModuleUsb>();
+            return ndk::SharedRefBase::make<ModuleUsb>(std::move(config));
         case Type::BLUETOOTH:
-            return ndk::SharedRefBase::make<ModuleBluetooth>();
+            return ndk::SharedRefBase::make<ModuleBluetooth>(std::move(config));
     }
+}
+
+// static
+std::optional<Module::Type> Module::typeFromString(const std::string& type) {
+    if (type == "default")
+        return Module::Type::DEFAULT;
+    else if (type == "r_submix")
+        return Module::Type::R_SUBMIX;
+    else if (type == "stub")
+        return Module::Type::STUB;
+    else if (type == "usb")
+        return Module::Type::USB;
+    else if (type == "bluetooth")
+        return Module::Type::BLUETOOTH;
+    return {};
 }
 
 std::ostream& operator<<(std::ostream& os, Module::Type t) {
@@ -321,26 +337,8 @@ std::set<int32_t> Module::portIdsFromPortConfigIds(C portConfigIds) {
     return result;
 }
 
-std::unique_ptr<internal::Configuration> Module::initializeConfig() {
-    std::unique_ptr<internal::Configuration> config;
-    switch (getType()) {
-        case Type::DEFAULT:
-            config = std::move(internal::getPrimaryConfiguration());
-            break;
-        case Type::R_SUBMIX:
-            config = std::move(internal::getRSubmixConfiguration());
-            break;
-        case Type::STUB:
-            config = std::move(internal::getStubConfiguration());
-            break;
-        case Type::USB:
-            config = std::move(internal::getUsbConfiguration());
-            break;
-        case Type::BLUETOOTH:
-            config = std::move(internal::getBluetoothConfiguration());
-            break;
-    }
-    return config;
+std::unique_ptr<Module::Configuration> Module::initializeConfig() {
+    return internal::getConfiguration(getType());
 }
 
 std::vector<AudioRoute*> Module::getAudioRoutesForAudioPortImpl(int32_t portId) {
@@ -355,7 +353,7 @@ std::vector<AudioRoute*> Module::getAudioRoutesForAudioPortImpl(int32_t portId) 
     return result;
 }
 
-internal::Configuration& Module::getConfig() {
+Module::Configuration& Module::getConfig() {
     if (!mConfig) {
         mConfig = std::move(initializeConfig());
     }
@@ -802,7 +800,7 @@ ndk::ScopedAStatus Module::openInputStream(const OpenInputStreamArguments& in_ar
     context.fillDescriptor(&_aidl_return->desc);
     std::shared_ptr<StreamIn> stream;
     RETURN_STATUS_IF_ERROR(createInputStream(std::move(context), in_args.sinkMetadata,
-                                             mConfig->microphones, &stream));
+                                             getConfig().microphones, &stream));
     StreamWrapper streamWrapper(stream);
     if (auto patchIt = mPatches.find(in_args.portConfigId); patchIt != mPatches.end()) {
         RETURN_STATUS_IF_ERROR(
