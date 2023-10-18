@@ -43,6 +43,7 @@ using aidl::android::hardware::audio::common::SourceMetadata;
 using aidl::android::hardware::audio::core::sounddose::ISoundDose;
 using aidl::android::media::audio::common::AudioChannelLayout;
 using aidl::android::media::audio::common::AudioDevice;
+using aidl::android::media::audio::common::AudioDeviceType;
 using aidl::android::media::audio::common::AudioFormatDescription;
 using aidl::android::media::audio::common::AudioFormatType;
 using aidl::android::media::audio::common::AudioInputFlags;
@@ -800,7 +801,7 @@ ndk::ScopedAStatus Module::openInputStream(const OpenInputStreamArguments& in_ar
     context.fillDescriptor(&_aidl_return->desc);
     std::shared_ptr<StreamIn> stream;
     RETURN_STATUS_IF_ERROR(createInputStream(std::move(context), in_args.sinkMetadata,
-                                             getConfig().microphones, &stream));
+                                             getMicrophoneInfos(), &stream));
     StreamWrapper streamWrapper(stream);
     if (auto patchIt = mPatches.find(in_args.portConfigId); patchIt != mPatches.end()) {
         RETURN_STATUS_IF_ERROR(
@@ -1234,7 +1235,7 @@ ndk::ScopedAStatus Module::setMicMute(bool in_mute) {
 }
 
 ndk::ScopedAStatus Module::getMicrophones(std::vector<MicrophoneInfo>* _aidl_return) {
-    *_aidl_return = getConfig().microphones;
+    *_aidl_return = getMicrophoneInfos();
     LOG(DEBUG) << __func__ << ": returning " << ::android::internal::ToString(*_aidl_return);
     return ndk::ScopedAStatus::ok();
 }
@@ -1511,6 +1512,29 @@ ndk::ScopedAStatus Module::onMasterMuteChanged(bool mute __unused) {
 ndk::ScopedAStatus Module::onMasterVolumeChanged(float volume __unused) {
     LOG(VERBOSE) << __func__ << ": do nothing and return ok";
     return ndk::ScopedAStatus::ok();
+}
+
+std::vector<MicrophoneInfo> Module::getMicrophoneInfos() {
+    std::vector<MicrophoneInfo> result;
+    Configuration& config = getConfig();
+    for (const AudioPort& port : config.ports) {
+        if (port.ext.getTag() == AudioPortExt::Tag::device) {
+            const AudioDeviceType deviceType =
+                    port.ext.get<AudioPortExt::Tag::device>().device.type.type;
+            if (deviceType == AudioDeviceType::IN_MICROPHONE ||
+                deviceType == AudioDeviceType::IN_MICROPHONE_BACK) {
+                // Placeholder values. Vendor implementations must populate MicrophoneInfo
+                // accordingly based on their physical microphone parameters.
+                result.push_back(MicrophoneInfo{
+                        .id = port.name,
+                        .device = port.ext.get<AudioPortExt::Tag::device>().device,
+                        .group = 0,
+                        .indexInTheGroup = 0,
+                });
+            }
+        }
+    }
+    return result;
 }
 
 Module::BtProfileHandles Module::getBtProfileManagerHandles() {
