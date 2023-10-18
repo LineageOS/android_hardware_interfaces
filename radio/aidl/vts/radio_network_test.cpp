@@ -1931,9 +1931,9 @@ TEST_P(RadioNetworkTest, setNullCipherAndIntegrityEnabled) {
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_network->rspInfo.type);
     EXPECT_EQ(serial, radioRsp_network->rspInfo.serial);
 
-    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error,
-                                 {RadioError::NONE, RadioError::REQUEST_NOT_SUPPORTED,
-                                  RadioError::RADIO_NOT_AVAILABLE, RadioError::MODEM_ERR}));
+    ASSERT_TRUE(CheckAnyOfErrors(
+            radioRsp_network->rspInfo.error,
+            {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::MODEM_ERR}));
 }
 
 /**
@@ -1958,7 +1958,7 @@ TEST_P(RadioNetworkTest, isNullCipherAndIntegrityEnabled) {
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_network->rspInfo.type);
     EXPECT_EQ(serial, radioRsp_network->rspInfo.serial);
 
-    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error,
-                                 {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE,
-                                  RadioError::MODEM_ERR, RadioError::REQUEST_NOT_SUPPORTED}));
+    ASSERT_TRUE(CheckAnyOfErrors(
+            radioRsp_network->rspInfo.error,
+            {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::MODEM_ERR}));
 }
