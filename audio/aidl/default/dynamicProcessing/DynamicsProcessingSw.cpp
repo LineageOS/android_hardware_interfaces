@@ -93,7 +93,7 @@ const Descriptor DynamicsProcessingSw::kDescriptor = {
         .common = {.id = {.type = getEffectTypeUuidDynamicsProcessing(),
                           .uuid = getEffectImplUuidDynamicsProcessingSw(),
                           .proxy = std::nullopt},
-                   .flags = {.type = Flags::Type::INSERT,
+                   .flags = {.type = Flags::Type::POST_PROC,
                              .insert = Flags::Insert::FIRST,
                              .volume = Flags::Volume::CTRL},
                    .name = DynamicsProcessingSw::kEffectName,
