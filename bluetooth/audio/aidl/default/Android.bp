@@ -11,6 +11,9 @@ cc_library_shared {
     name: "android.hardware.bluetooth.audio-impl",
     vendor: true,
     vintf_fragments: ["bluetooth_audio.xml"],
+    defaults: [
+        "latest_android_hardware_bluetooth_audio_ndk_shared",
+    ],
     srcs: [
         "BluetoothAudioProvider.cpp",
         "BluetoothAudioProviderFactory.cpp",
@@ -29,7 +32,6 @@ cc_library_shared {
         "libcutils",
         "libfmq",
         "liblog",
-        "android.hardware.bluetooth.audio-V3-ndk",
         "libbluetooth_audio_session_aidl",
     ],
 }

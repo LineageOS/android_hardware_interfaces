@@ -19,7 +19,7 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.audio.core</name>
-        <version>1</version>
+        <version>1-2</version>
         <interface>
             <name>IModule</name>
             <instance>default</instance>
@@ -38,7 +38,7 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.audio.effect</name>
-        <version>1</version>
+        <version>1-2</version>
         <interface>
             <name>IFactory</name>
             <instance>default</instance>
@@ -46,7 +46,7 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.audio.sounddose</name>
-        <version>1</version>
+        <version>1-2</version>
         <interface>
             <name>ISoundDoseFactory</name>
             <instance>default</instance>
@@ -62,7 +62,7 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.automotive.audiocontrol</name>
-        <version>2-3</version>
+        <version>2-4</version>
         <interface>
             <name>IAudioControl</name>
             <instance>default</instance>
@@ -142,7 +142,7 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.bluetooth.audio</name>
-        <version>3</version>
+        <version>3-4</version>
         <interface>
             <name>IBluetoothAudioProviderFactory</name>
             <instance>default</instance>
@@ -537,7 +537,7 @@
     </hal>
     <hal format="aidl" optional="true">
          <name>android.hardware.soundtrigger3</name>
-         <version>1</version>
+         <version>1-2</version>
          <interface>
              <name>ISoundTriggerHw</name>
              <instance>default</instance>
