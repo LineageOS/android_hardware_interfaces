@@ -249,9 +249,13 @@ class DefaultVehicleHal final : public aidl::android::hardware::automotive::vehi
             const CallbackType& callback, std::shared_ptr<PendingRequestPool> pendingRequestPool);
 
     static void onPropertyChangeEvent(
-            std::weak_ptr<SubscriptionManager> subscriptionManager,
+            const std::weak_ptr<SubscriptionManager>& subscriptionManager,
             const std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropValue>&
                     updatedValues);
+
+    static void onPropertySetErrorEvent(
+            const std::weak_ptr<SubscriptionManager>& subscriptionManager,
+            const std::vector<SetValueErrorEvent>& errorEvents);
 
     static void checkHealth(IVehicleHardware* hardware,
                             std::weak_ptr<SubscriptionManager> subscriptionManager);

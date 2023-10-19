@@ -57,7 +57,7 @@ class LinearFakeValueGenerator : public FakeValueGenerator {
         float dispersion;    //  Defines minimum and maximum value based on initial value.
         float increment;     //  Value that we will be added to currentValue with each timer tick.
         int64_t interval;
-        long lastEventTimestamp;
+        int64_t lastEventTimestamp;
     };
 
     GeneratorCfg mGenCfg;

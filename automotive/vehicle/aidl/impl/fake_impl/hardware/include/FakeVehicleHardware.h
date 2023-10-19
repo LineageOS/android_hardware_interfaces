@@ -99,11 +99,16 @@ class FakeVehicleHardware : public IVehicleHardware {
     const std::shared_ptr<VehiclePropValuePool> mValuePool;
     const std::shared_ptr<VehiclePropertyStore> mServerSidePropStore;
 
+    const std::string mDefaultConfigDir;
+    const std::string mOverrideConfigDir;
+
     ValueResultType getValue(
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value) const;
 
     VhalResult<void> setValue(
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value);
+
+    bool UseOverrideConfigDir();
 
   private:
     // Expose private methods to unit test.
@@ -156,8 +161,6 @@ class FakeVehicleHardware : public IVehicleHardware {
                                   aidl::android::hardware::automotive::vehicle::SetValueRequest>
             mPendingSetValueRequests;
 
-    const std::string mDefaultConfigDir;
-    const std::string mOverrideConfigDir;
     const bool mForceOverride;
     bool mAddExtraTestVendorConfigs;
 

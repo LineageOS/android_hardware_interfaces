@@ -38,6 +38,8 @@ using ::aidl::android::hardware::automotive::vehicle::IVehicleCallback;
 using ::aidl::android::hardware::automotive::vehicle::SetValueResult;
 using ::aidl::android::hardware::automotive::vehicle::SetValueResults;
 using ::aidl::android::hardware::automotive::vehicle::StatusCode;
+using ::aidl::android::hardware::automotive::vehicle::VehiclePropError;
+using ::aidl::android::hardware::automotive::vehicle::VehiclePropErrors;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropValue;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropValues;
 using ::android::base::Result;
@@ -300,7 +302,34 @@ void SubscriptionClient::sendUpdatedValues(std::shared_ptr<IVehicleCallback> cal
     if (ScopedAStatus callbackStatus =
                 callback->onPropertyEvent(vehiclePropValues, sharedMemoryFileCount);
         !callbackStatus.isOk()) {
-        ALOGE("subscribe: failed to call UpdateValues callback, client ID: %p, error: %s, "
+        ALOGE("subscribe: failed to call onPropertyEvent callback, client ID: %p, error: %s, "
+              "exception: %d, service specific error: %d",
+              callback->asBinder().get(), callbackStatus.getMessage(),
+              callbackStatus.getExceptionCode(), callbackStatus.getServiceSpecificError());
+    }
+}
+
+void SubscriptionClient::sendPropertySetErrors(std::shared_ptr<IVehicleCallback> callback,
+                                               std::vector<VehiclePropError>&& vehiclePropErrors) {
+    if (vehiclePropErrors.empty()) {
+        return;
+    }
+
+    VehiclePropErrors vehiclePropErrorsLargeParcelable;
+    ScopedAStatus status = vectorToStableLargeParcelable(std::move(vehiclePropErrors),
+                                                         &vehiclePropErrorsLargeParcelable);
+    if (!status.isOk()) {
+        int statusCode = status.getServiceSpecificError();
+        ALOGE("subscribe: failed to marshal result into large parcelable, error: "
+              "%s, code: %d",
+              status.getMessage(), statusCode);
+        return;
+    }
+
+    if (ScopedAStatus callbackStatus =
+                callback->onPropertySetError(vehiclePropErrorsLargeParcelable);
+        !callbackStatus.isOk()) {
+        ALOGE("subscribe: failed to call onPropertySetError callback, client ID: %p, error: %s, "
               "exception: %d, service specific error: %d",
               callback->asBinder().get(), callbackStatus.getMessage(),
               callbackStatus.getExceptionCode(), callbackStatus.getServiceSpecificError());

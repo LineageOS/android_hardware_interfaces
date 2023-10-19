@@ -62,6 +62,7 @@ using ::aidl::android::hardware::automotive::vehicle::SubscribeOptions;
 using ::aidl::android::hardware::automotive::vehicle::VehicleAreaWindow;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropConfig;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropConfigs;
+using ::aidl::android::hardware::automotive::vehicle::VehiclePropError;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropErrors;
 using ::aidl::android::hardware::automotive::vehicle::VehicleProperty;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyAccess;
@@ -1651,6 +1652,63 @@ TEST_F(DefaultVehicleHalTest, testDumpCallerShouldNotDump) {
 
     ASSERT_THAT(msg, ContainsRegex(buffer));
     ASSERT_EQ(msg.find("Vehicle HAL State: "), std::string::npos);
+}
+
+TEST_F(DefaultVehicleHalTest, testOnPropertySetErrorEvent) {
+    std::vector<SubscribeOptions> options = {
+            {
+                    .propId = GLOBAL_ON_CHANGE_PROP,
+                    .areaIds = {0},
+            },
+            {
+                    .propId = GLOBAL_CONTINUOUS_PROP,
+                    .areaIds = {0},
+                    .sampleRate = 1,
+            },
+    };
+    auto status = getClient()->subscribe(getCallbackClient(), options, 0);
+    ASSERT_TRUE(status.isOk()) << "subscribe failed: " << status.getMessage();
+    std::vector<SetValueErrorEvent> errorEvents = {
+            {
+                    .propId = GLOBAL_ON_CHANGE_PROP,
+                    .areaId = 0,
+                    .errorCode = StatusCode::INTERNAL_ERROR,
+            },
+            {
+                    .propId = GLOBAL_ON_CHANGE_PROP,
+                    .areaId = 0,
+                    .errorCode = StatusCode::ACCESS_DENIED,
+            },
+            {
+                    .propId = GLOBAL_CONTINUOUS_PROP,
+                    .areaId = 0,
+                    .errorCode = StatusCode::INVALID_ARG,
+            },
+    };
+    std::vector<VehiclePropError> expectedResults = {
+            {
+                    .propId = GLOBAL_ON_CHANGE_PROP,
+                    .areaId = 0,
+                    .errorCode = StatusCode::INTERNAL_ERROR,
+            },
+            {
+                    .propId = GLOBAL_ON_CHANGE_PROP,
+                    .areaId = 0,
+                    .errorCode = StatusCode::ACCESS_DENIED,
+            },
+            {
+                    .propId = GLOBAL_CONTINUOUS_PROP,
+                    .areaId = 0,
+                    .errorCode = StatusCode::INVALID_ARG,
+            },
+    };
+    getHardware()->sendOnPropertySetErrorEvent(errorEvents);
+
+    ASSERT_EQ(getCallback()->countOnPropertySetErrorResults(), 1u);
+    auto maybeVehiclePropErrors = getCallback()->nextOnPropertySetErrorResults();
+    ASSERT_TRUE(maybeVehiclePropErrors.has_value());
+    const auto& vehiclePropErrors = maybeVehiclePropErrors.value();
+    ASSERT_THAT(vehiclePropErrors.payloads, UnorderedElementsAreArray(expectedResults));
 }
 
 }  // namespace vehicle

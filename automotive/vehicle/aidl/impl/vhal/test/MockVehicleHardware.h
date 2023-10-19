@@ -85,6 +85,7 @@ class MockVehicleHardware final : public IVehicleHardware {
                    aidl::android::hardware::automotive::vehicle::StatusCode status);
     void setSleepTime(int64_t timeInNano);
     void setDumpResult(DumpResult result);
+    void sendOnPropertySetErrorEvent(const std::vector<SetValueErrorEvent>& errorEvents);
 
   private:
     mutable std::mutex mLock;
@@ -104,6 +105,7 @@ class MockVehicleHardware final : public IVehicleHardware {
             mStatusByFunctions GUARDED_BY(mLock);
     int64_t mSleepTime GUARDED_BY(mLock) = 0;
     std::unique_ptr<const PropertyChangeCallback> mPropertyChangeCallback GUARDED_BY(mLock);
+    std::unique_ptr<const PropertySetErrorCallback> mPropertySetErrorCallback GUARDED_BY(mLock);
     std::function<aidl::android::hardware::automotive::vehicle::StatusCode(
             std::shared_ptr<const GetValuesCallback>,
             const std::vector<aidl::android::hardware::automotive::vehicle::GetValueRequest>&)>
