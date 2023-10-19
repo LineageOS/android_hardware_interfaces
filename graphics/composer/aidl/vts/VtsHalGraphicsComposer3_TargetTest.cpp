@@ -34,6 +34,7 @@
 #include <ui/PixelFormat.h>
 #include <algorithm>
 #include <iterator>
+#include <mutex>
 #include <numeric>
 #include <string>
 #include <thread>
@@ -1381,19 +1382,15 @@ class GraphicsComposerAidlCommandTest : public GraphicsComposerAidlTest {
     void execute() {
         std::vector<CommandResultPayload> payloads;
         for (auto& [_, writer] : mWriters) {
-            auto commands = writer.takePendingCommands();
-            if (commands.empty()) {
-                continue;
-            }
-
-            auto [status, results] = mComposerClient->executeCommands(commands);
-            ASSERT_TRUE(status.isOk()) << "executeCommands failed " << status.getDescription();
-
-            payloads.reserve(payloads.size() + results.size());
-            payloads.insert(payloads.end(), std::make_move_iterator(results.begin()),
-                            std::make_move_iterator(results.end()));
+            executeInternal(writer, payloads);
         }
         mReader.parse(std::move(payloads));
+    }
+
+    void execute(ComposerClientWriter& writer, ComposerClientReader& reader) {
+        std::vector<CommandResultPayload> payloads;
+        executeInternal(writer, payloads);
+        reader.parse(std::move(payloads));
     }
 
     static inline auto toTimePoint(nsecs_t time) {
@@ -1720,6 +1717,7 @@ class GraphicsComposerAidlCommandTest : public GraphicsComposerAidlTest {
     // clang-format on
 
     ComposerClientWriter& getWriter(int64_t display) {
+        std::lock_guard guard{mWritersMutex};
         auto [it, _] = mWriters.try_emplace(display, display);
         return it->second;
     }
@@ -1727,7 +1725,27 @@ class GraphicsComposerAidlCommandTest : public GraphicsComposerAidlTest {
     ComposerClientReader mReader;
 
   private:
-    std::unordered_map<int64_t, ComposerClientWriter> mWriters;
+    void executeInternal(ComposerClientWriter& writer,
+                         std::vector<CommandResultPayload>& payloads) {
+        auto commands = writer.takePendingCommands();
+        if (commands.empty()) {
+            return;
+        }
+
+        auto [status, results] = mComposerClient->executeCommands(commands);
+        ASSERT_TRUE(status.isOk()) << "executeCommands failed " << status.getDescription();
+
+        payloads.reserve(payloads.size() + results.size());
+        payloads.insert(payloads.end(), std::make_move_iterator(results.begin()),
+                        std::make_move_iterator(results.end()));
+    }
+
+    // Guards access to the map itself. Callers must ensure not to attempt to
+    // - modify the same writer from multiple threads
+    // - insert a new writer into the map during concurrent access, which would invalidate
+    //   references from other threads
+    std::mutex mWritersMutex;
+    std::unordered_map<int64_t, ComposerClientWriter> mWriters GUARDED_BY(mWritersMutex);
 };
 
 TEST_P(GraphicsComposerAidlCommandTest, SetColorTransform) {
@@ -2781,6 +2799,106 @@ TEST_P(GraphicsComposerAidlCommandV2Test,
                 mComposerClient
                         ->setRefreshRateChangedCallbackDebugEnabled(displayId, /*enabled*/ false)
                         .isOk());
+    }
+}
+
+TEST_P(GraphicsComposerAidlCommandTest, MultiThreadedPresent) {
+    std::vector<VtsDisplay*> displays;
+    for (auto& display : mDisplays) {
+        if (hasDisplayCapability(display.getDisplayId(),
+                                 DisplayCapability::MULTI_THREADED_PRESENT)) {
+            displays.push_back(&display);
+        }
+    }
+
+    const size_t numDisplays = displays.size();
+    if (numDisplays <= 1u) {
+        GTEST_SKIP();
+    }
+
+    // When multi-threaded, use a reader per display. As with mWriters, this mutex
+    // guards access to the map.
+    std::mutex readersMutex;
+    std::unordered_map<int64_t, ComposerClientReader> readers;
+    std::vector<std::thread> threads;
+    threads.reserve(numDisplays);
+
+    // Each display will have a layer to present. This maps from the display to
+    // the layer, so we can properly destroy each layer at the end.
+    std::unordered_map<int64_t, int64_t> layers;
+
+    for (auto* const display : displays) {
+        const int64_t displayId = display->getDisplayId();
+
+        // Ensure that all writers and readers have been added to their respective
+        // maps initially, so that the following loop never modifies the maps. The
+        // maps are accessed from different threads, and if the maps were modified,
+        // this would invalidate their iterators, and therefore references to the
+        // writers and readers.
+        auto& writer = getWriter(displayId);
+        {
+            std::lock_guard guard{readersMutex};
+            readers.try_emplace(displayId, displayId);
+        }
+
+        EXPECT_TRUE(mComposerClient->setPowerMode(displayId, PowerMode::ON).isOk());
+
+        const auto& [status, layer] = mComposerClient->createLayer(displayId, kBufferSlotCount);
+        const auto buffer = allocate(::android::PIXEL_FORMAT_RGBA_8888);
+        ASSERT_NE(nullptr, buffer);
+        ASSERT_EQ(::android::OK, buffer->initCheck());
+        ASSERT_NE(nullptr, buffer->handle);
+
+        configureLayer(*display, layer, Composition::DEVICE, display->getFrameRect(),
+                       display->getCrop());
+        writer.setLayerBuffer(displayId, layer, /*slot*/ 0, buffer->handle,
+                              /*acquireFence*/ -1);
+        writer.setLayerDataspace(displayId, layer, common::Dataspace::UNKNOWN);
+        layers.try_emplace(displayId, layer);
+    }
+
+    for (auto* const display : displays) {
+        const int64_t displayId = display->getDisplayId();
+        auto& writer = getWriter(displayId);
+        std::unique_lock lock{readersMutex};
+        auto& reader = readers.at(displayId);
+        lock.unlock();
+
+        writer.validateDisplay(displayId, ComposerClientWriter::kNoTimestamp);
+        execute(writer, reader);
+
+        threads.emplace_back([this, displayId, &readers, &readersMutex]() {
+            auto& writer = getWriter(displayId);
+            std::unique_lock lock{readersMutex};
+            ComposerClientReader& reader = readers.at(displayId);
+            lock.unlock();
+
+            writer.presentDisplay(displayId);
+            execute(writer, reader);
+            ASSERT_TRUE(reader.takeErrors().empty());
+
+            auto presentFence = reader.takePresentFence(displayId);
+            // take ownership
+            const int fenceOwner = presentFence.get();
+            *presentFence.getR() = -1;
+            EXPECT_NE(-1, fenceOwner);
+            const auto presentFence2 = sp<::android::Fence>::make(fenceOwner);
+            presentFence2->waitForever(LOG_TAG);
+        });
+    }
+
+    for (auto& thread : threads) {
+        thread.join();
+    }
+
+    for (auto& [displayId, layer] : layers) {
+        EXPECT_TRUE(mComposerClient->destroyLayer(displayId, layer).isOk());
+    }
+
+    std::lock_guard guard{readersMutex};
+    for (auto& [displayId, reader] : readers) {
+        ASSERT_TRUE(reader.takeErrors().empty());
+        ASSERT_TRUE(reader.takeChangedCompositionTypes(displayId).empty());
     }
 }
 

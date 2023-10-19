@@ -601,7 +601,7 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.tv.input</name>
-        <version>1</version>
+        <version>1-2</version>
         <interface>
             <name>ITvInput</name>
             <instance>default</instance>
