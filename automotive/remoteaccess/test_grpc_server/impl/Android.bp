@@ -61,3 +61,27 @@ cc_binary_host {
         "-DHOST",
     ],
 }
+
+cc_test_host {
+    name: "TestWakeupClientServerHostUnitTest",
+    srcs: [
+        "test/*.cpp",
+        "src/TestWakeupClientServiceImpl.cpp",
+    ],
+    local_include_dirs: ["include"],
+    shared_libs: [
+        "libbase",
+        "libutils",
+        "libgrpc++",
+        "libprotobuf-cpp-full",
+    ],
+    static_libs: [
+        "libgtest",
+    ],
+    whole_static_libs: [
+        "wakeup_client_protos",
+    ],
+    cflags: [
+        "-Wno-unused-parameter",
+    ],
+}
