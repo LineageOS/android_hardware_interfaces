@@ -41,5 +41,12 @@ aidl_interface {
                 "libnativewindow",
             ],
         },
+        rust: {
+            min_sdk_version: "31",
+            enabled: true,
+            additional_rustlibs: [
+                "libnativewindow_rs",
+            ],
+        },
     },
 }
