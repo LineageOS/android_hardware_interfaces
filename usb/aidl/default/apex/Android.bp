@@ -30,8 +30,8 @@ apex {
         "com.android.hardware.usb.rc", // init .rc
         "android.hardware.usb.accessory.prebuilt.xml",
         "android.hardware.usb.host.prebuilt.xml",
+        "android.hardware.usb-service.example.xml",
     ],
-    vintf_fragments: [":android.hardware.usb-service.example.xml"],
 }
 
 // Replace the binary path from /vendor/bin to /apex/{name}/bin in the init .rc file
