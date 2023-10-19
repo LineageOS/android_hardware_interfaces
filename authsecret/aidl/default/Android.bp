@@ -55,23 +55,12 @@ prebuilt_etc {
     installable: false,
 }
 
-apex_key {
-    name: "com.android.hardware.authsecret.key",
-    public_key: "com.android.hardware.authsecret.avbpubkey",
-    private_key: "com.android.hardware.authsecret.pem",
-}
-
-android_app_certificate {
-    name: "com.android.hardware.authsecret.certificate",
-    certificate: "com.android.hardware.authsecret",
-}
-
 apex {
     name: "com.android.hardware.authsecret",
     manifest: "manifest.json",
     file_contexts: "file_contexts",
-    key: "com.android.hardware.authsecret.key",
-    certificate: ":com.android.hardware.authsecret.certificate",
+    key: "com.android.hardware.key",
+    certificate: ":com.android.hardware.certificate",
     updatable: false,
     vendor: true,
 
