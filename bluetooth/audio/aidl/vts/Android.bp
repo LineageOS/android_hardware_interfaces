@@ -28,6 +28,7 @@ cc_test {
         "libcutils",
         "libfmq",
     ],
+    test_config: "VtsHalBluetoothAudioTargetTest.xml",
     test_suites: [
         "general-tests",
         "vts",
