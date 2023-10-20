@@ -18,6 +18,12 @@ syntax = "proto3";
 
 package android.hardware.automotive.remoteaccess;
 
+enum ErrorCode {
+    OK = 0;
+    UNSPECIFIED = 1;
+    INVALID_ARG = 2;
+}
+
 /**
  * Service provided by a wakeup client running on TCU.
  */
@@ -50,6 +56,50 @@ service WakeupClient {
      * to wake up AP.
      */
     rpc NotifyWakeupRequired(NotifyWakeupRequiredRequest) returns (NotifyWakeupRequiredResponse) {}
+
+    /**
+     * Schedules a task to be executed later even when the vehicle is off.
+     *
+     * <p>This sends a scheduled task message to a device external to Android so that the device
+     * can wake up Android and deliver the task through {@link IRemoteTaskCallback}.
+     *
+     * <p>Note that the scheduled task execution is on a best-effort basis. Multiple situations
+     * might cause the task not to execute successfully:
+     *
+     * <ul>
+     * <li>The vehicle is low on battery and the other device decides not to wake up Android.
+     * <li>User turns off vehicle while the task is executing.
+     * <li>The task logic itself fails.
+     *
+     * <p>Must return a response with error code: {@code INVALID_ARG} if a pending schedule with the
+     * same {@code scheduleId} for this client exists.
+     */
+    rpc ScheduleTask(ScheduleTaskRequest) returns (ScheduleTaskResponse) {}
+
+    /**
+     * Unschedules a scheduled task.
+     *
+     * <p>Does nothing if a pending schedule with {@code clientId} and {@code scheduleId} does not
+     * exist.
+     */
+    rpc UnscheduleTask(UnscheduleTaskRequest) returns (UnscheduleTaskResponse) {}
+
+    /**
+     * Unschedules all scheduled tasks for the client.
+     */
+    rpc UnscheduleAllTasks(UnscheduleAllTasksRequest) returns (UnscheduleAllTasksResponse) {}
+
+    /**
+     * Returns whether the specified task is scheduled.
+     */
+    rpc IsTaskScheduled(IsTaskScheduledRequest) returns (IsTaskScheduledResponse) {}
+
+    /**
+     * Gets all pending scheduled tasks for the client.
+     *
+     * <p>The finished scheduled tasks will not be included.
+     */
+    rpc GetAllScheduledTasks(GetAllScheduledTasksRequest) returns (GetAllScheduledTasksResponse) {}
 }
 
 message GetRemoteTasksRequest {}
@@ -64,3 +114,50 @@ message NotifyWakeupRequiredRequest {
 }
 
 message NotifyWakeupRequiredResponse {}
+
+message ScheduleTaskRequest {
+    GrpcScheduleInfo scheduleInfo = 1;
+}
+
+message ScheduleTaskResponse {
+    ErrorCode errorCode = 1;
+}
+
+message GrpcScheduleInfo {
+    string clientId = 1;
+    string scheduleId = 2;
+    bytes data = 3;
+    int32 count = 4;
+    int64 startTimeInEpochSeconds = 5;
+    int64 periodicInSeconds = 6;
+}
+
+message UnscheduleTaskRequest {
+    string clientId = 1;
+    string scheduleId = 2;
+}
+
+message UnscheduleTaskResponse {}
+
+message UnscheduleAllTasksRequest {
+    string clientId = 1;
+}
+
+message UnscheduleAllTasksResponse {}
+
+message IsTaskScheduledRequest {
+    string clientId = 1;
+    string scheduleId = 2;
+}
+
+message IsTaskScheduledResponse {
+    bool isTaskScheduled = 1;
+}
+
+message GetAllScheduledTasksRequest {
+    string clientId = 1;
+}
+
+message GetAllScheduledTasksResponse {
+    repeated GrpcScheduleInfo allScheduledTasks = 1;
+}

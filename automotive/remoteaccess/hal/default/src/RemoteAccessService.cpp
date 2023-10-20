@@ -314,38 +314,106 @@ ScopedAStatus RemoteAccessService::notifyApStateChange(const ApState& newState) 
     return ScopedAStatus::ok();
 }
 
-ScopedAStatus RemoteAccessService::isTaskScheduleSupported([[maybe_unused]] bool* out) {
-    // TODO(b/297271235): implement this.
+ScopedAStatus RemoteAccessService::isTaskScheduleSupported(bool* out) {
+    *out = true;
     return ScopedAStatus::ok();
 }
 
-ScopedAStatus RemoteAccessService::scheduleTask([[maybe_unused]] const ScheduleInfo& scheduleInfo) {
-    // TODO(b/297271235): implement this.
+ScopedAStatus RemoteAccessService::scheduleTask(const ScheduleInfo& scheduleInfo) {
+    ClientContext context;
+    ScheduleTaskRequest request = {};
+    ScheduleTaskResponse response = {};
+    request.mutable_scheduleinfo()->set_clientid(scheduleInfo.clientId);
+    request.mutable_scheduleinfo()->set_scheduleid(scheduleInfo.scheduleId);
+    request.mutable_scheduleinfo()->set_data(scheduleInfo.taskData.data(),
+                                             scheduleInfo.taskData.size());
+    request.mutable_scheduleinfo()->set_count(scheduleInfo.count);
+    request.mutable_scheduleinfo()->set_starttimeinepochseconds(
+            scheduleInfo.startTimeInEpochSeconds);
+    request.mutable_scheduleinfo()->set_periodicinseconds(scheduleInfo.periodicInSeconds);
+    Status status = mGrpcStub->ScheduleTask(&context, request, &response);
+    if (!status.ok()) {
+        return rpcStatusToScopedAStatus(status, "Failed to call ScheduleTask");
+    }
+    int errorCode = response.errorcode();
+    switch (errorCode) {
+        case ErrorCode::OK:
+            return ScopedAStatus::ok();
+        case ErrorCode::INVALID_ARG:
+            return ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+        default:
+            // Should not happen.
+            return ScopedAStatus::fromServiceSpecificErrorWithMessage(
+                    -1, ("Got unknown error code: " + ErrorCode_Name(errorCode) +
+                         " from remote access HAL")
+                                .c_str());
+    }
+}
+
+ScopedAStatus RemoteAccessService::unscheduleTask(const std::string& clientId,
+                                                  const std::string& scheduleId) {
+    ClientContext context;
+    UnscheduleTaskRequest request = {};
+    UnscheduleTaskResponse response = {};
+    request.set_clientid(clientId);
+    request.set_scheduleid(scheduleId);
+    Status status = mGrpcStub->UnscheduleTask(&context, request, &response);
+    if (!status.ok()) {
+        return rpcStatusToScopedAStatus(status, "Failed to call UnscheduleTask");
+    }
     return ScopedAStatus::ok();
 }
 
-ScopedAStatus RemoteAccessService::unscheduleTask([[maybe_unused]] const std::string& clientId,
-                                                  [[maybe_unused]] const std::string& scheduleId) {
-    // TODO(b/297271235): implement this.
+ScopedAStatus RemoteAccessService::unscheduleAllTasks(const std::string& clientId) {
+    ClientContext context;
+    UnscheduleAllTasksRequest request = {};
+    UnscheduleAllTasksResponse response = {};
+    request.set_clientid(clientId);
+    Status status = mGrpcStub->UnscheduleAllTasks(&context, request, &response);
+    if (!status.ok()) {
+        return rpcStatusToScopedAStatus(status, "Failed to call UnscheduleAllTasks");
+    }
     return ScopedAStatus::ok();
 }
 
-ScopedAStatus RemoteAccessService::unscheduleAllTasks(
-        [[maybe_unused]] const std::string& clientId) {
-    // TODO(b/297271235): implement this.
-    return ScopedAStatus::ok();
-}
-
-ScopedAStatus RemoteAccessService::isTaskScheduled([[maybe_unused]] const std::string& clientId,
-                                                   [[maybe_unused]] const std::string& scheduleId,
-                                                   [[maybe_unused]] bool* out) {
-    // TODO(b/297271235): implement this.
+ScopedAStatus RemoteAccessService::isTaskScheduled(const std::string& clientId,
+                                                   const std::string& scheduleId, bool* out) {
+    ClientContext context;
+    IsTaskScheduledRequest request = {};
+    IsTaskScheduledResponse response = {};
+    request.set_clientid(clientId);
+    request.set_scheduleid(scheduleId);
+    Status status = mGrpcStub->IsTaskScheduled(&context, request, &response);
+    if (!status.ok()) {
+        return rpcStatusToScopedAStatus(status, "Failed to call isTaskScheduled");
+    }
+    *out = response.istaskscheduled();
     return ScopedAStatus::ok();
 }
 
 ScopedAStatus RemoteAccessService::getAllScheduledTasks(const std::string& clientId,
                                                         std::vector<ScheduleInfo>* out) {
-    // TODO(b/297271235): implement this.
+    ClientContext context;
+    GetAllScheduledTasksRequest request = {};
+    GetAllScheduledTasksResponse response = {};
+    request.set_clientid(clientId);
+    Status status = mGrpcStub->GetAllScheduledTasks(&context, request, &response);
+    if (!status.ok()) {
+        return rpcStatusToScopedAStatus(status, "Failed to call isTaskScheduled");
+    }
+    out->clear();
+    for (int i = 0; i < response.allscheduledtasks_size(); i++) {
+        const GrpcScheduleInfo& rpcScheduleInfo = response.allscheduledtasks(i);
+        ScheduleInfo scheduleInfo = {
+                .clientId = rpcScheduleInfo.clientid(),
+                .scheduleId = rpcScheduleInfo.scheduleid(),
+                .taskData = stringToBytes(rpcScheduleInfo.data()),
+                .count = rpcScheduleInfo.count(),
+                .startTimeInEpochSeconds = rpcScheduleInfo.starttimeinepochseconds(),
+                .periodicInSeconds = rpcScheduleInfo.periodicinseconds(),
+        };
+        out->push_back(std::move(scheduleInfo));
+    }
     return ScopedAStatus::ok();
 }
 

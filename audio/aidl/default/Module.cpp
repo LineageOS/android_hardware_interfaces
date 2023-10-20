@@ -25,6 +25,7 @@
 #include <android/binder_ibinder_platform.h>
 #include <error/expected_utils.h>
 
+#include "core-impl/Configuration.h"
 #include "core-impl/Module.h"
 #include "core-impl/ModuleBluetooth.h"
 #include "core-impl/ModulePrimary.h"
@@ -42,6 +43,7 @@ using aidl::android::hardware::audio::common::SourceMetadata;
 using aidl::android::hardware::audio::core::sounddose::ISoundDose;
 using aidl::android::media::audio::common::AudioChannelLayout;
 using aidl::android::media::audio::common::AudioDevice;
+using aidl::android::media::audio::common::AudioDeviceType;
 using aidl::android::media::audio::common::AudioFormatDescription;
 using aidl::android::media::audio::common::AudioFormatType;
 using aidl::android::media::audio::common::AudioInputFlags;
@@ -132,19 +134,34 @@ bool findAudioProfile(const AudioPort& port, const AudioFormatDescription& forma
 }  // namespace
 
 // static
-std::shared_ptr<Module> Module::createInstance(Type type) {
+std::shared_ptr<Module> Module::createInstance(Type type, std::unique_ptr<Configuration>&& config) {
     switch (type) {
         case Type::DEFAULT:
-            return ndk::SharedRefBase::make<ModulePrimary>();
+            return ndk::SharedRefBase::make<ModulePrimary>(std::move(config));
         case Type::R_SUBMIX:
-            return ndk::SharedRefBase::make<ModuleRemoteSubmix>();
+            return ndk::SharedRefBase::make<ModuleRemoteSubmix>(std::move(config));
         case Type::STUB:
-            return ndk::SharedRefBase::make<ModuleStub>();
+            return ndk::SharedRefBase::make<ModuleStub>(std::move(config));
         case Type::USB:
-            return ndk::SharedRefBase::make<ModuleUsb>();
+            return ndk::SharedRefBase::make<ModuleUsb>(std::move(config));
         case Type::BLUETOOTH:
-            return ndk::SharedRefBase::make<ModuleBluetooth>();
+            return ndk::SharedRefBase::make<ModuleBluetooth>(std::move(config));
     }
+}
+
+// static
+std::optional<Module::Type> Module::typeFromString(const std::string& type) {
+    if (type == "default")
+        return Module::Type::DEFAULT;
+    else if (type == "r_submix")
+        return Module::Type::R_SUBMIX;
+    else if (type == "stub")
+        return Module::Type::STUB;
+    else if (type == "usb")
+        return Module::Type::USB;
+    else if (type == "bluetooth")
+        return Module::Type::BLUETOOTH;
+    return {};
 }
 
 std::ostream& operator<<(std::ostream& os, Module::Type t) {
@@ -166,6 +183,11 @@ std::ostream& operator<<(std::ostream& os, Module::Type t) {
             break;
     }
     return os;
+}
+
+Module::Module(Type type, std::unique_ptr<Configuration>&& config)
+    : mType(type), mConfig(std::move(config)) {
+    populateConnectedProfiles();
 }
 
 void Module::cleanUpPatch(int32_t patchId) {
@@ -308,6 +330,22 @@ ndk::ScopedAStatus Module::findPortIdForNewStream(int32_t in_portConfigId, Audio
     return ndk::ScopedAStatus::ok();
 }
 
+void Module::populateConnectedProfiles() {
+    Configuration& config = getConfig();
+    for (const AudioPort& port : config.ports) {
+        if (port.ext.getTag() == AudioPortExt::device) {
+            if (auto devicePort = port.ext.get<AudioPortExt::device>();
+                !devicePort.device.type.connection.empty() && port.profiles.empty()) {
+                if (auto connIt = config.connectedProfiles.find(port.id);
+                    connIt == config.connectedProfiles.end()) {
+                    config.connectedProfiles.emplace(
+                            port.id, internal::getStandard16And24BitPcmAudioProfiles());
+                }
+            }
+        }
+    }
+}
+
 template <typename C>
 std::set<int32_t> Module::portIdsFromPortConfigIds(C portConfigIds) {
     std::set<int32_t> result;
@@ -321,26 +359,8 @@ std::set<int32_t> Module::portIdsFromPortConfigIds(C portConfigIds) {
     return result;
 }
 
-std::unique_ptr<internal::Configuration> Module::initializeConfig() {
-    std::unique_ptr<internal::Configuration> config;
-    switch (getType()) {
-        case Type::DEFAULT:
-            config = std::move(internal::getPrimaryConfiguration());
-            break;
-        case Type::R_SUBMIX:
-            config = std::move(internal::getRSubmixConfiguration());
-            break;
-        case Type::STUB:
-            config = std::move(internal::getStubConfiguration());
-            break;
-        case Type::USB:
-            config = std::move(internal::getUsbConfiguration());
-            break;
-        case Type::BLUETOOTH:
-            config = std::move(internal::getBluetoothConfiguration());
-            break;
-    }
-    return config;
+std::unique_ptr<Module::Configuration> Module::initializeConfig() {
+    return internal::getConfiguration(getType());
 }
 
 std::vector<AudioRoute*> Module::getAudioRoutesForAudioPortImpl(int32_t portId) {
@@ -355,7 +375,7 @@ std::vector<AudioRoute*> Module::getAudioRoutesForAudioPortImpl(int32_t portId) 
     return result;
 }
 
-internal::Configuration& Module::getConfig() {
+Module::Configuration& Module::getConfig() {
     if (!mConfig) {
         mConfig = std::move(initializeConfig());
     }
@@ -802,7 +822,7 @@ ndk::ScopedAStatus Module::openInputStream(const OpenInputStreamArguments& in_ar
     context.fillDescriptor(&_aidl_return->desc);
     std::shared_ptr<StreamIn> stream;
     RETURN_STATUS_IF_ERROR(createInputStream(std::move(context), in_args.sinkMetadata,
-                                             mConfig->microphones, &stream));
+                                             getMicrophoneInfos(), &stream));
     StreamWrapper streamWrapper(stream);
     if (auto patchIt = mPatches.find(in_args.portConfigId); patchIt != mPatches.end()) {
         RETURN_STATUS_IF_ERROR(
@@ -1236,7 +1256,7 @@ ndk::ScopedAStatus Module::setMicMute(bool in_mute) {
 }
 
 ndk::ScopedAStatus Module::getMicrophones(std::vector<MicrophoneInfo>* _aidl_return) {
-    *_aidl_return = getConfig().microphones;
+    *_aidl_return = getMicrophoneInfos();
     LOG(DEBUG) << __func__ << ": returning " << ::android::internal::ToString(*_aidl_return);
     return ndk::ScopedAStatus::ok();
 }
@@ -1513,6 +1533,29 @@ ndk::ScopedAStatus Module::onMasterMuteChanged(bool mute __unused) {
 ndk::ScopedAStatus Module::onMasterVolumeChanged(float volume __unused) {
     LOG(VERBOSE) << __func__ << ": do nothing and return ok";
     return ndk::ScopedAStatus::ok();
+}
+
+std::vector<MicrophoneInfo> Module::getMicrophoneInfos() {
+    std::vector<MicrophoneInfo> result;
+    Configuration& config = getConfig();
+    for (const AudioPort& port : config.ports) {
+        if (port.ext.getTag() == AudioPortExt::Tag::device) {
+            const AudioDeviceType deviceType =
+                    port.ext.get<AudioPortExt::Tag::device>().device.type.type;
+            if (deviceType == AudioDeviceType::IN_MICROPHONE ||
+                deviceType == AudioDeviceType::IN_MICROPHONE_BACK) {
+                // Placeholder values. Vendor implementations must populate MicrophoneInfo
+                // accordingly based on their physical microphone parameters.
+                result.push_back(MicrophoneInfo{
+                        .id = port.name,
+                        .device = port.ext.get<AudioPortExt::Tag::device>().device,
+                        .group = 0,
+                        .indexInTheGroup = 0,
+                });
+            }
+        }
+    }
+    return result;
 }
 
 Module::BtProfileHandles Module::getBtProfileManagerHandles() {

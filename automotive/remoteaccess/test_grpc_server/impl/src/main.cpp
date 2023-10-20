@@ -101,11 +101,15 @@ bool powerOn() {
 #endif
 }
 
-const char* getSetPropCommand(int propId) {
-    int size = snprintf(nullptr, 0, COMMAND_SET_VHAL_PROP, propId, 1);
+const char* getSetPropCommand(int propId, int value) {
+    int size = snprintf(nullptr, 0, COMMAND_SET_VHAL_PROP, propId, value);
     char* command = new char[size + 1];
-    snprintf(command, size + 1, COMMAND_SET_VHAL_PROP, propId, 1);
+    snprintf(command, size + 1, COMMAND_SET_VHAL_PROP, propId, value);
     return command;
+}
+
+const char* getSetPropCommand(int propId) {
+    return getSetPropCommand(propId, /*value=*/1);
 }
 
 void powerOffEmu() {
@@ -136,7 +140,7 @@ void setVehicleInUse(bool vehicleInUse) {
     if (vehicleInUse) {
         value = 1;
     }
-    const char* command = getSetPropCommand(VEHICLE_IN_USE);
+    const char* command = getSetPropCommand(VEHICLE_IN_USE, value);
     runCommand(command);
     delete[] command;
 #else
