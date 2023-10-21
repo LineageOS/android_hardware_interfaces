@@ -44,4 +44,5 @@ message VehicleAreaConfig {
      */
     repeated int64 supported_enum_values = 8;
     int32 access = 9;
+    bool support_variable_update_rate = 10;
 };

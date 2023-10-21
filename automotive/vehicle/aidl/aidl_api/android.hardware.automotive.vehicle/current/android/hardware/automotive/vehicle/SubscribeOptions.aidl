@@ -38,4 +38,5 @@ parcelable SubscribeOptions {
   int[] areaIds;
   float sampleRate;
   float resolution = 0.0f;
+  boolean enableVariableUpdateRate;
 }
