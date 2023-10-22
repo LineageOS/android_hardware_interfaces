@@ -28,6 +28,7 @@ vintf_compatibility_matrix {
         "compatibility_matrix.4.xml",
     ],
     kernel_configs: [
+        "kernel_config_q_4.9",
         "kernel_config_q_4.14",
         "kernel_config_q_4.19",
     ],
