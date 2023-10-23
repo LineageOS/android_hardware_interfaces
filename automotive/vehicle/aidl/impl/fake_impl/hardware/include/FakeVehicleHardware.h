@@ -269,9 +269,9 @@ class FakeVehicleHardware : public IVehicleHardware {
             std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropConfig>&) const;
 
     aidl::android::hardware::automotive::vehicle::StatusCode subscribePropIdAreaIdLocked(
-            int32_t propId, int32_t areaId, float sampleRateHz,
-            aidl::android::hardware::automotive::vehicle::VehiclePropertyChangeMode changeMode)
-            REQUIRES(mLock);
+            int32_t propId, int32_t areaId, float sampleRateHz, bool enableVariableUpdateRate,
+            const aidl::android::hardware::automotive::vehicle::VehiclePropConfig&
+                    vehiclePropConfig) REQUIRES(mLock);
 
     static aidl::android::hardware::automotive::vehicle::VehiclePropValue createHwInputKeyProp(
             aidl::android::hardware::automotive::vehicle::VehicleHwKeyInputAction action,
@@ -286,6 +286,10 @@ class FakeVehicleHardware : public IVehicleHardware {
 
     static std::string genFakeDataHelp();
     static std::string parseErrMsg(std::string fieldName, std::string value, std::string type);
+    static bool isVariableUpdateRateSupported(
+            const aidl::android::hardware::automotive::vehicle::VehiclePropConfig&
+                    vehiclePropConfig,
+            int32_t areaId);
 };
 
 }  // namespace fake

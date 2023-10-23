@@ -1941,7 +1941,8 @@ StatusCode FakeVehicleHardware::subscribe(SubscribeOptions options) {
     std::scoped_lock<std::mutex> lockGuard(mLock);
     for (int areaId : options.areaIds) {
         if (StatusCode status = subscribePropIdAreaIdLocked(propId, areaId, options.sampleRate,
-                                                            configResult.value()->changeMode);
+                                                            options.enableVariableUpdateRate,
+                                                            *configResult.value());
             status != StatusCode::OK) {
             return status;
         }
@@ -1949,14 +1950,29 @@ StatusCode FakeVehicleHardware::subscribe(SubscribeOptions options) {
     return StatusCode::OK;
 }
 
-StatusCode FakeVehicleHardware::subscribePropIdAreaIdLocked(int32_t propId, int32_t areaId,
-                                                            float sampleRateHz,
-                                                            VehiclePropertyChangeMode changeMode) {
+bool FakeVehicleHardware::isVariableUpdateRateSupported(const VehiclePropConfig& vehiclePropConfig,
+                                                        int32_t areaId) {
+    for (size_t i = 0; i < vehiclePropConfig.areaConfigs.size(); i++) {
+        const auto& areaConfig = vehiclePropConfig.areaConfigs[i];
+        if (areaConfig.areaId != areaId) {
+            continue;
+        }
+        if (areaConfig.supportVariableUpdateRate) {
+            return true;
+        }
+        break;
+    }
+    return false;
+}
+
+StatusCode FakeVehicleHardware::subscribePropIdAreaIdLocked(
+        int32_t propId, int32_t areaId, float sampleRateHz, bool enableVariableUpdateRate,
+        const VehiclePropConfig& vehiclePropConfig) {
     PropIdAreaId propIdAreaId{
             .propId = propId,
             .areaId = areaId,
     };
-    switch (changeMode) {
+    switch (vehiclePropConfig.changeMode) {
         case VehiclePropertyChangeMode::STATIC:
             ALOGW("subscribe to a static property, do nothing.");
             return StatusCode::OK;
@@ -1972,7 +1988,16 @@ StatusCode FakeVehicleHardware::subscribePropIdAreaIdLocked(int32_t propId, int3
                 mRecurrentTimer->unregisterTimerCallback(mRecurrentActions[propIdAreaId]);
             }
             int64_t intervalInNanos = static_cast<int64_t>(1'000'000'000. / sampleRateHz);
-            auto action = std::make_shared<RecurrentTimer::Callback>([this, propId, areaId] {
+
+            // For continuous properties, we must generate a new onPropertyChange event
+            // periodically according to the sample rate.
+            auto eventMode = VehiclePropertyStore::EventMode::ALWAYS;
+            if (isVariableUpdateRateSupported(vehiclePropConfig, areaId) &&
+                enableVariableUpdateRate) {
+                eventMode = VehiclePropertyStore::EventMode::ON_VALUE_CHANGE;
+            }
+            auto action = std::make_shared<RecurrentTimer::Callback>([this, propId, areaId,
+                                                                      eventMode] {
                 // Refresh the property value. In real implementation, this should poll the latest
                 // value from vehicle bus. Here, we are just refreshing the existing value with a
                 // new timestamp.
@@ -1986,10 +2011,9 @@ StatusCode FakeVehicleHardware::subscribePropIdAreaIdLocked(int32_t propId, int3
                     return;
                 }
                 result.value()->timestamp = elapsedRealtimeNano();
-                // For continuous properties, we must generate a new onPropertyChange event
-                // periodically according to the sample rate.
+
                 mServerSidePropStore->writeValue(std::move(result.value()), /*updateStatus=*/true,
-                                                 VehiclePropertyStore::EventMode::ALWAYS);
+                                                 eventMode);
             });
             mRecurrentTimer->registerTimerCallback(intervalInNanos, action);
             mRecurrentActions[propIdAreaId] = action;

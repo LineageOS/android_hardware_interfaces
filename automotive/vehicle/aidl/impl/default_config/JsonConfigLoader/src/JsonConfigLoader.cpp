@@ -275,6 +275,16 @@ JsonValueParser::JsonValueParser() {
 }
 
 template <>
+Result<bool> JsonValueParser::convertValueToType<bool>(const std::string& fieldName,
+                                                       const Json::Value& value) {
+    if (!value.isBool()) {
+        return Error() << "The value: " << value << " for field: " << fieldName
+                       << " is not in correct type, expect bool";
+    }
+    return value.asBool();
+}
+
+template <>
 Result<int32_t> JsonValueParser::convertValueToType<int32_t>(const std::string& fieldName,
                                                              const Json::Value& value) {
     if (!value.isInt()) {
@@ -531,6 +541,12 @@ void JsonConfigParser::parseAreas(const Json::Value& parentJsonNode, const std::
         tryParseJsonValueToVariable(jsonAreaConfig, "maxFloatValue", /*optional=*/true,
                                     &areaConfig.maxFloatValue, errors);
 
+        // By default we support variable update rate for all properties except it is explicitly
+        // disabled.
+        areaConfig.supportVariableUpdateRate = true;
+        tryParseJsonValueToVariable(jsonAreaConfig, "supportVariableUpdateRate", /*optional=*/true,
+                                    &areaConfig.supportVariableUpdateRate, errors);
+
         std::vector<int64_t> supportedEnumValues;
         tryParseJsonArrayToVariable(jsonAreaConfig, "supportedEnumValues", /*optional=*/true,
                                     &supportedEnumValues, errors);
@@ -584,6 +600,16 @@ std::optional<ConfigDeclaration> JsonConfigParser::parseEachProperty(
 
     if (errors->size() != initialErrorCount) {
         return std::nullopt;
+    }
+
+    // If there is no area config, by default we allow variable update rate, so we have to add
+    // a global area config.
+    if (configDecl.config.areaConfigs.size() == 0) {
+        VehicleAreaConfig areaConfig = {
+                .areaId = 0,
+                .supportVariableUpdateRate = true,
+        };
+        configDecl.config.areaConfigs.push_back(std::move(areaConfig));
     }
     return configDecl;
 }

@@ -95,6 +95,7 @@ using ::testing::ContainsRegex;
 using ::testing::Eq;
 using ::testing::HasSubstr;
 using ::testing::IsSubsetOf;
+using ::testing::UnorderedElementsAre;
 using ::testing::WhenSortedBy;
 
 using std::chrono::milliseconds;
@@ -452,6 +453,29 @@ TEST_F(FakeVehicleHardwareTest, testGetAllPropertyConfigs) {
 
     FakeVehicleHardwareTestHelper helper(getHardware());
     ASSERT_EQ(configs.size(), helper.loadConfigDeclarations().size());
+}
+
+TEST_F(FakeVehicleHardwareTest, testGetAllPropertyConfigs_defaultSupportVUR) {
+    std::vector<VehiclePropConfig> configs = getHardware()->getAllPropertyConfigs();
+
+    for (const auto& config : configs) {
+        bool expectedSupportVUR = true;
+        if (config.prop == toInt(VehicleProperty::VHAL_HEARTBEAT) ||
+            config.prop == toInt(VehicleProperty::CLUSTER_HEARTBEAT)) {
+            expectedSupportVUR = false;
+        }
+        EXPECT_GE(config.areaConfigs.size(), 1u)
+                << "expect at least one area config, including global area config, propId: "
+                << config.prop;
+        if (config.areaConfigs.size() == 0) {
+            continue;
+        }
+        for (const auto& areaConfig : config.areaConfigs) {
+            EXPECT_EQ(areaConfig.supportVariableUpdateRate, expectedSupportVUR)
+                    << "unexpected supportVariableUpdateRate for propId: " << config.prop
+                    << ", areaId: " << areaConfig.areaId;
+        }
+    }
 }
 
 TEST_F(FakeVehicleHardwareTest, testGetDefaultValues) {
@@ -3115,6 +3139,47 @@ TEST_F(FakeVehicleHardwareTest, testSubscribeUnsubscribe_continuous) {
         ASSERT_EQ(value.prop, propSteering);
         ASSERT_EQ(value.areaId, areaId);
     }
+}
+
+TEST_F(FakeVehicleHardwareTest, testSubscribe_enableVUR) {
+    int32_t propSpeed = toInt(VehicleProperty::PERF_VEHICLE_SPEED);
+    int32_t areaId = 0;
+    SubscribeOptions options;
+    options.propId = propSpeed;
+    options.areaIds = {areaId};
+    options.enableVariableUpdateRate = true;
+    options.sampleRate = 5;
+    int64_t timestamp = elapsedRealtimeNano();
+
+    auto status = getHardware()->subscribe(options);
+    ASSERT_EQ(status, StatusCode::OK) << "failed to subscribe";
+
+    status = setValue({
+            .prop = propSpeed,
+            .areaId = 0,
+            .value.floatValues = {1.1f},
+    });
+    ASSERT_EQ(status, StatusCode::OK) << "failed to set speed";
+
+    status = setValue({
+            .prop = propSpeed,
+            .areaId = 0,
+            .value.floatValues = {1.2f},
+    });
+    ASSERT_EQ(status, StatusCode::OK) << "failed to set speed";
+
+    ASSERT_TRUE(waitForChangedProperties(propSpeed, areaId, /*count=*/2, milliseconds(100)))
+            << "not enough events generated for speed";
+    auto updatedValues = getChangedProperties();
+    std::unordered_set<float> gotValues;
+    for (auto& value : updatedValues) {
+        EXPECT_GE(value.timestamp, timestamp) << "timestamp must be updated";
+        EXPECT_EQ(value.prop, propSpeed) << "propId must be correct";
+        EXPECT_EQ(value.areaId, areaId) << "areaId must be correct";
+        gotValues.insert(value.value.floatValues[0]);
+    }
+    EXPECT_THAT(gotValues, UnorderedElementsAre(1.1f, 1.2f))
+            << "must only receive property event for changed value";
 }
 
 TEST_F(FakeVehicleHardwareTest, testSubscribeUnusubscribe_onChange) {
