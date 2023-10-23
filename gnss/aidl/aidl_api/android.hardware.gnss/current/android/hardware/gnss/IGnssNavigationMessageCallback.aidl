@@ -63,7 +63,12 @@ interface IGnssNavigationMessageCallback {
       BDS_CNAV2 = 0x0504,
       GAL_I = 0x0601,
       GAL_F = 0x0602,
+      /**
+       * @deprecated Use IRN_L5 instead.
+       */
       IRN_L5CA = 0x0701,
+      IRN_L5 = 0x0702,
+      IRN_L1 = 0x0703,
     }
   }
 }
