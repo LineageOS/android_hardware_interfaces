@@ -27,12 +27,10 @@ aidl_interface {
     host_supported: true,
     srcs: ["android/hardware/bluetooth/audio/*.aidl"],
     stability: "vintf",
-    defaults: [
-        "latest_android_hardware_audio_common_import_interface",
-    ],
     imports: [
         "android.hardware.common-V2",
         "android.hardware.common.fmq-V1",
+        "android.hardware.audio.common-V2",
     ],
     backend: {
         cpp: {
@@ -77,23 +75,6 @@ aidl_interface {
         },
 
     ],
-    frozen: false,
+    frozen: true,
 
-}
-
-// Note: This should always be one version ahead of the last frozen version
-latest_android_hardware_bluetooth_audio = "android.hardware.bluetooth.audio-V4"
-
-cc_defaults {
-    name: "latest_android_hardware_bluetooth_audio_ndk_shared",
-    shared_libs: [
-        latest_android_hardware_bluetooth_audio + "-ndk",
-    ],
-}
-
-cc_defaults {
-    name: "latest_android_hardware_bluetooth_audio_ndk_static",
-    static_libs: [
-        latest_android_hardware_bluetooth_audio + "-ndk",
-    ],
 }
