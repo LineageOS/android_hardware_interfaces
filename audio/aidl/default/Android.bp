@@ -78,7 +78,6 @@ cc_library {
         "latest_android_media_audio_common_types_ndk_shared",
         "latest_android_hardware_audio_core_ndk_shared",
         "latest_android_hardware_audio_core_sounddose_ndk_shared",
-        "latest_android_hardware_bluetooth_audio_ndk_shared",
     ],
     export_include_dirs: ["include"],
     srcs: [
@@ -126,6 +125,7 @@ cc_library {
         "audio_policy_engine_configuration_aidl_default",
     ],
     shared_libs: [
+        "android.hardware.bluetooth.audio-V3-ndk",
         "libaudio_aidl_conversion_common_ndk",
         "libaudioutils",
         "libaudioutils_nonvndk",
@@ -154,15 +154,15 @@ cc_binary {
     vintf_fragments: ["android.hardware.audio.service-aidl.xml"],
     defaults: [
         "aidlaudioservice_defaults",
+        "latest_android_media_audio_common_types_ndk_shared",
         "latest_android_hardware_audio_core_sounddose_ndk_shared",
         "latest_android_hardware_audio_core_ndk_shared",
-        "latest_android_hardware_bluetooth_audio_ndk_shared",
-        "latest_android_media_audio_common_types_ndk_shared",
     ],
     static_libs: [
         "libaudioserviceexampleimpl",
     ],
     shared_libs: [
+        "android.hardware.bluetooth.audio-V3-ndk",
         "libaudioutils_nonvndk",
         "libaudio_aidl_conversion_common_ndk",
         "libbluetooth_audio_session_aidl",
