@@ -695,6 +695,8 @@ ScopedAStatus DefaultVehicleHal::subscribe(const CallbackType& callback,
         if (config.changeMode == VehiclePropertyChangeMode::CONTINUOUS) {
             optionCopy.sampleRate = getDefaultSampleRateHz(
                     optionCopy.sampleRate, config.minSampleRate, config.maxSampleRate);
+            // TODO: set this to false if VUR is not supported for the [propId, areaId].
+            optionCopy.enableVariableUpdateRate = false;
             continuousSubscriptions.push_back(std::move(optionCopy));
         } else {
             onChangeSubscriptions.push_back(std::move(optionCopy));
