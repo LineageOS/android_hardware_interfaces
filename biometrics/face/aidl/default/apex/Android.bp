@@ -16,27 +16,14 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-apex_key {
-    name: "com.android.hardware.biometrics.face.key",
-    public_key: "com.android.hardware.biometrics.face.avbpubkey",
-    private_key: "com.android.hardware.biometrics.face.pem",
-}
-
-android_app_certificate {
-    name: "com.android.hardware.biometrics.face.certificate",
-    certificate: "com.android.hardware.biometrics.face",
-}
-
 apex {
     name: "com.android.hardware.biometrics.face",
     manifest: "manifest.json",
     file_contexts: "file_contexts",
-    key: "com.android.hardware.biometrics.face.key",
-    certificate: ":com.android.hardware.biometrics.face.certificate",
+    key: "com.android.hardware.key",
+    certificate: ":com.android.hardware.certificate",
     updatable: false,
-
     vendor: true,
-    use_vndk_as_stable: true,
 
     binaries: [
         // hal
