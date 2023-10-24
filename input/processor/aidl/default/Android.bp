@@ -28,27 +28,54 @@ cc_library_static {
     ],
 }
 
-filegroup {
+prebuilt_etc {
     name: "android.hardware.input.processor.xml",
-    srcs: ["android.hardware.input.processor.xml"],
+    src: "android.hardware.input.processor.xml",
+    sub_dir: "vintf",
+    installable: false,
+}
+
+prebuilt_etc {
+    name: "inputprocessor-default.rc",
+    src: "inputprocessor-default.rc",
+    installable: false,
 }
 
 cc_binary {
     name: "android.hardware.input.processor-service.example",
     relative_install_path: "hw",
-    init_rc: ["inputprocessor-default.rc"],
-    vintf_fragments: [":android.hardware.input.processor.xml"],
     vendor: true,
+    installable: false, // installed in APEX
+
+    stl: "c++_static",
     shared_libs: [
-        "libbase",
         "libbinder_ndk",
         "liblog",
-        "libutils",
-        "android.hardware.input.common-V1-ndk",
-        "android.hardware.input.processor-V1-ndk",
     ],
     static_libs: [
+        "android.hardware.input.common-V1-ndk",
+        "android.hardware.input.processor-V1-ndk",
+        "libbase",
         "libinputprocessorexampleimpl",
+        "libutils",
     ],
     srcs: ["main.cpp"],
+}
+
+apex {
+    name: "com.android.hardware.input.processor",
+    file_contexts: "apex_file_contexts",
+    manifest: "apex_manifest.json",
+    key: "com.android.hardware.key",
+    certificate: ":com.android.hardware.certificate",
+    updatable: false,
+    vendor: true,
+
+    binaries: [
+        "android.hardware.input.processor-service.example",
+    ],
+    prebuilts: [
+        "android.hardware.input.processor.xml",
+        "inputprocessor-default.rc",
+    ],
 }
