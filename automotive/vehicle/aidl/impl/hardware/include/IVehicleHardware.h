@@ -118,7 +118,7 @@ class IVehicleHardware {
     virtual aidl::android::hardware::automotive::vehicle::StatusCode checkHealth() = 0;
 
     // Register a callback that would be called when there is a property change event from vehicle.
-    // Must only be called once during initialization.
+    // This function must only be called once during initialization.
     virtual void registerOnPropertyChangeEvent(
             std::unique_ptr<const PropertyChangeCallback> callback) = 0;
 
@@ -126,6 +126,25 @@ class IVehicleHardware {
     // vehicle. Must only be called once during initialization.
     virtual void registerOnPropertySetErrorEvent(
             std::unique_ptr<const PropertySetErrorCallback> callback) = 0;
+
+    // Gets the batching window used by DefaultVehicleHal for property change events.
+    //
+    // In DefaultVehicleHal, all the property change events generated within the batching window
+    // will be delivered through one callback to the VHAL client. This affects the maximum supported
+    // subscription rate. For example, if this returns 10ms, then only one callback for property
+    // change events will be called per 10ms, meaining that the max subscription rate for all
+    // continuous properties would be 100hz.
+    //
+    // A higher batching window means less callbacks to the VHAL client, causing a better
+    // performance. However, it also means a longer average latency for every property change
+    // events.
+    //
+    // 0 means no batching should be enabled in DefaultVehicleHal. In this case, batching can
+    // be optionally implemented in IVehicleHardware layer.
+    virtual std::chrono::nanoseconds getPropertyOnChangeEventBatchingWindow() {
+        // By default batching is disabled.
+        return std::chrono::nanoseconds(0);
+    }
 };
 
 }  // namespace vehicle

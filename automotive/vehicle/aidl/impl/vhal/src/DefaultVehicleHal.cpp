@@ -32,6 +32,7 @@
 #include <utils/Trace.h>
 
 #include <inttypes.h>
+#include <chrono>
 #include <set>
 #include <unordered_set>
 
@@ -101,12 +102,32 @@ DefaultVehicleHal::DefaultVehicleHal(std::unique_ptr<IVehicleHardware> vehicleHa
 
     IVehicleHardware* vehicleHardwarePtr = mVehicleHardware.get();
     mSubscriptionManager = std::make_shared<SubscriptionManager>(vehicleHardwarePtr);
+    mEventBatchingWindow = mVehicleHardware->getPropertyOnChangeEventBatchingWindow();
+    if (mEventBatchingWindow != std::chrono::nanoseconds(0)) {
+        mBatchedEventQueue = std::make_shared<ConcurrentQueue<VehiclePropValue>>();
+        mPropertyChangeEventsBatchingConsumer =
+                std::make_shared<BatchingConsumer<VehiclePropValue>>();
+        mPropertyChangeEventsBatchingConsumer->run(
+                mBatchedEventQueue.get(), mEventBatchingWindow,
+                [this](std::vector<VehiclePropValue> batchedEvents) {
+                    handleBatchedPropertyEvents(std::move(batchedEvents));
+                });
+    }
 
+    std::weak_ptr<ConcurrentQueue<VehiclePropValue>> batchedEventQueueCopy = mBatchedEventQueue;
+    std::chrono::nanoseconds eventBatchingWindow = mEventBatchingWindow;
     std::weak_ptr<SubscriptionManager> subscriptionManagerCopy = mSubscriptionManager;
     mVehicleHardware->registerOnPropertyChangeEvent(
             std::make_unique<IVehicleHardware::PropertyChangeCallback>(
-                    [subscriptionManagerCopy](std::vector<VehiclePropValue> updatedValues) {
-                        onPropertyChangeEvent(subscriptionManagerCopy, updatedValues);
+                    [subscriptionManagerCopy, batchedEventQueueCopy,
+                     eventBatchingWindow](std::vector<VehiclePropValue> updatedValues) {
+                        if (eventBatchingWindow != std::chrono::nanoseconds(0)) {
+                            batchPropertyChangeEvent(batchedEventQueueCopy,
+                                                     std::move(updatedValues));
+                        } else {
+                            onPropertyChangeEvent(subscriptionManagerCopy,
+                                                  std::move(updatedValues));
+                        }
                     }));
     mVehicleHardware->registerOnPropertySetErrorEvent(
             std::make_unique<IVehicleHardware::PropertySetErrorCallback>(
@@ -139,26 +160,47 @@ DefaultVehicleHal::~DefaultVehicleHal() {
     // mRecurrentAction uses pointer to mVehicleHardware, so it has to be unregistered before
     // mVehicleHardware.
     mRecurrentTimer.unregisterTimerCallback(mRecurrentAction);
+
+    if (mBatchedEventQueue) {
+        // mPropertyChangeEventsBatchingConsumer uses mSubscriptionManager and mBatchedEventQueue.
+        mBatchedEventQueue->deactivate();
+        mPropertyChangeEventsBatchingConsumer->requestStop();
+        mPropertyChangeEventsBatchingConsumer->waitStopped();
+        mPropertyChangeEventsBatchingConsumer.reset();
+        mBatchedEventQueue.reset();
+    }
+
     // mSubscriptionManager uses pointer to mVehicleHardware, so it has to be destroyed before
     // mVehicleHardware.
     mSubscriptionManager.reset();
     mVehicleHardware.reset();
 }
 
+void DefaultVehicleHal::batchPropertyChangeEvent(
+        const std::weak_ptr<ConcurrentQueue<VehiclePropValue>>& batchedEventQueue,
+        std::vector<VehiclePropValue>&& updatedValues) {
+    auto batchedEventQueueStrong = batchedEventQueue.lock();
+    if (batchedEventQueueStrong == nullptr) {
+        ALOGW("the batched property events queue is destroyed, DefaultVehicleHal is ending");
+        return;
+    }
+    batchedEventQueueStrong->push(std::move(updatedValues));
+}
+
+void DefaultVehicleHal::handleBatchedPropertyEvents(std::vector<VehiclePropValue>&& batchedEvents) {
+    onPropertyChangeEvent(mSubscriptionManager, std::move(batchedEvents));
+}
+
 void DefaultVehicleHal::onPropertyChangeEvent(
         const std::weak_ptr<SubscriptionManager>& subscriptionManager,
-        const std::vector<VehiclePropValue>& updatedValues) {
+        std::vector<VehiclePropValue>&& updatedValues) {
     auto manager = subscriptionManager.lock();
     if (manager == nullptr) {
         ALOGW("the SubscriptionManager is destroyed, DefaultVehicleHal is ending");
         return;
     }
-    auto updatedValuesByClients = manager->getSubscribedClients(updatedValues);
-    for (const auto& [callback, valuePtrs] : updatedValuesByClients) {
-        std::vector<VehiclePropValue> values;
-        for (const VehiclePropValue* valuePtr : valuePtrs) {
-            values.push_back(*valuePtr);
-        }
+    auto updatedValuesByClients = manager->getSubscribedClients(std::move(updatedValues));
+    for (auto& [callback, values] : updatedValuesByClients) {
         SubscriptionClient::sendUpdatedValues(callback, std::move(values));
     }
 }
@@ -742,12 +784,12 @@ void DefaultVehicleHal::checkHealth(IVehicleHardware* vehicleHardware,
         return;
     }
     std::vector<VehiclePropValue> values = {{
-            .prop = toInt(VehicleProperty::VHAL_HEARTBEAT),
             .areaId = 0,
+            .prop = toInt(VehicleProperty::VHAL_HEARTBEAT),
             .status = VehiclePropertyStatus::AVAILABLE,
             .value.int64Values = {uptimeMillis()},
     }};
-    onPropertyChangeEvent(subscriptionManager, values);
+    onPropertyChangeEvent(subscriptionManager, std::move(values));
     return;
 }
 

@@ -48,7 +48,7 @@ using ::aidl::android::hardware::automotive::vehicle::VehiclePropValues;
 using ::ndk::ScopedAStatus;
 using ::ndk::SpAIBinder;
 using ::testing::ElementsAre;
-using ::testing::WhenSorted;
+using ::testing::UnorderedElementsAre;
 
 class PropertyCallback final : public BnVehicleCallback {
   public:
@@ -389,11 +389,11 @@ TEST_F(SubscriptionManagerTest, testSubscribeOnchange) {
                     .areaId = 1,
             },
     };
-    auto clients = getManager()->getSubscribedClients(updatedValues);
+    auto clients = getManager()->getSubscribedClients(std::vector<VehiclePropValue>(updatedValues));
 
     ASSERT_THAT(clients[client1],
-                WhenSorted(ElementsAre(&updatedValues[0], &updatedValues[1], &updatedValues[2])));
-    ASSERT_THAT(clients[client2], ElementsAre(&updatedValues[0]));
+                UnorderedElementsAre(updatedValues[0], updatedValues[1], updatedValues[2]));
+    ASSERT_THAT(clients[client2], ElementsAre(updatedValues[0]));
 }
 
 TEST_F(SubscriptionManagerTest, testSubscribeInvalidOption) {
@@ -480,9 +480,9 @@ TEST_F(SubscriptionManagerTest, testUnsubscribeOnchange) {
                     .areaId = 0,
             },
     };
-    auto clients = getManager()->getSubscribedClients(updatedValues);
+    auto clients = getManager()->getSubscribedClients(std::vector<VehiclePropValue>(updatedValues));
 
-    ASSERT_THAT(clients[getCallbackClient()], ElementsAre(&updatedValues[1]));
+    ASSERT_THAT(clients[getCallbackClient()], ElementsAre(updatedValues[1]));
 }
 
 TEST_F(SubscriptionManagerTest, testCheckSampleRateHzValid) {

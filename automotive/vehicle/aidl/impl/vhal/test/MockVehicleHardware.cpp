@@ -186,6 +186,16 @@ void MockVehicleHardware::setSleepTime(int64_t timeInNano) {
     mSleepTime = timeInNano;
 }
 
+void MockVehicleHardware::setPropertyOnChangeEventBatchingWindow(std::chrono::nanoseconds window) {
+    std::scoped_lock<std::mutex> lockGuard(mLock);
+    mEventBatchingWindow = window;
+}
+
+std::chrono::nanoseconds MockVehicleHardware::getPropertyOnChangeEventBatchingWindow() {
+    std::scoped_lock<std::mutex> lockGuard(mLock);
+    return mEventBatchingWindow;
+}
+
 template <class ResultType>
 StatusCode MockVehicleHardware::returnResponse(
         std::shared_ptr<const std::function<void(std::vector<ResultType>)>> callback,

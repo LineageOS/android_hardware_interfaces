@@ -144,6 +144,15 @@ class DefaultVehicleHal final : public aidl::android::hardware::automotive::vehi
     std::shared_ptr<PendingRequestPool> mPendingRequestPool;
     // SubscriptionManager is thread-safe.
     std::shared_ptr<SubscriptionManager> mSubscriptionManager;
+    // ConcurrentQueue is thread-safe.
+    std::shared_ptr<ConcurrentQueue<aidl::android::hardware::automotive::vehicle::VehiclePropValue>>
+            mBatchedEventQueue;
+    // BatchingConsumer is thread-safe.
+    std::shared_ptr<
+            BatchingConsumer<aidl::android::hardware::automotive::vehicle::VehiclePropValue>>
+            mPropertyChangeEventsBatchingConsumer;
+    // Only set once during initialization.
+    std::chrono::nanoseconds mEventBatchingWindow;
 
     std::mutex mLock;
     std::unordered_map<const AIBinder*, std::unique_ptr<OnBinderDiedContext>> mOnBinderDiedContexts
@@ -209,6 +218,19 @@ class DefaultVehicleHal final : public aidl::android::hardware::automotive::vehi
 
     size_t countSubscribeClients();
 
+    // Handles the property change events in batch.
+    void handleBatchedPropertyEvents(
+            std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropValue>&&
+                    batchedEvents);
+
+    // Puts the property change events into a queue so that they can handled in batch.
+    static void batchPropertyChangeEvent(
+            const std::weak_ptr<ConcurrentQueue<
+                    aidl::android::hardware::automotive::vehicle::VehiclePropValue>>&
+                    batchedEventQueue,
+            std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropValue>&&
+                    updatedValues);
+
     // Gets or creates a {@code T} object for the client to or from {@code clients}.
     template <class T>
     static std::shared_ptr<T> getOrCreateClient(
@@ -217,7 +239,7 @@ class DefaultVehicleHal final : public aidl::android::hardware::automotive::vehi
 
     static void onPropertyChangeEvent(
             const std::weak_ptr<SubscriptionManager>& subscriptionManager,
-            const std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropValue>&
+            std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropValue>&&
                     updatedValues);
 
     static void onPropertySetErrorEvent(
