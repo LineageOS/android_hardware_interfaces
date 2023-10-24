@@ -32,13 +32,8 @@
 #define P2P_MGMT_DEVICE_PREFIX "p2p-dev-"
 
 namespace {
-using aidl::android::hardware::wifi::IfaceType;
-using aidl::android::hardware::wifi::IWifiChip;
-using CoexRestriction = aidl::android::hardware::wifi::IWifiChip::CoexRestriction;
-using ChannelCategoryMask = aidl::android::hardware::wifi::IWifiChip::ChannelCategoryMask;
 using android::base::unique_fd;
 
-constexpr char kCpioMagic[] = "070701";
 constexpr size_t kMaxBufferSizeBytes = 1024 * 1024 * 3;
 constexpr uint32_t kMaxRingBufferFileAgeSeconds = 60 * 60 * 10;
 constexpr uint32_t kMaxRingBufferFileNum = 20;
@@ -213,135 +208,6 @@ bool removeOldFilesInternal() {
         }
     }
     return success;
-}
-
-// Helper function for |cpioArchiveFilesInDir|
-bool cpioWriteHeader(int out_fd, struct stat& st, const char* file_name, size_t file_name_len) {
-    const int buf_size = 32 * 1024;
-    std::array<char, buf_size> read_buf;
-    ssize_t llen = snprintf(
-            read_buf.data(), buf_size, "%s%08X%08X%08X%08X%08X%08X%08X%08X%08X%08X%08X%08X%08X",
-            kCpioMagic, static_cast<int>(st.st_ino), st.st_mode, st.st_uid, st.st_gid,
-            static_cast<int>(st.st_nlink), static_cast<int>(st.st_mtime),
-            static_cast<int>(st.st_size), major(st.st_dev), minor(st.st_dev), major(st.st_rdev),
-            minor(st.st_rdev), static_cast<uint32_t>(file_name_len), 0);
-    if (write(out_fd, read_buf.data(), llen < buf_size ? llen : buf_size - 1) == -1) {
-        PLOG(ERROR) << "Error writing cpio header to file " << file_name;
-        return false;
-    }
-    if (write(out_fd, file_name, file_name_len) == -1) {
-        PLOG(ERROR) << "Error writing filename to file " << file_name;
-        return false;
-    }
-
-    // NUL Pad header up to 4 multiple bytes.
-    llen = (llen + file_name_len) % 4;
-    if (llen != 0) {
-        const uint32_t zero = 0;
-        if (write(out_fd, &zero, 4 - llen) == -1) {
-            PLOG(ERROR) << "Error padding 0s to file " << file_name;
-            return false;
-        }
-    }
-    return true;
-}
-
-// Helper function for |cpioArchiveFilesInDir|
-size_t cpioWriteFileContent(int fd_read, int out_fd, struct stat& st) {
-    // writing content of file
-    std::array<char, 32 * 1024> read_buf;
-    ssize_t llen = st.st_size;
-    size_t n_error = 0;
-    while (llen > 0) {
-        ssize_t bytes_read = read(fd_read, read_buf.data(), read_buf.size());
-        if (bytes_read == -1) {
-            PLOG(ERROR) << "Error reading file";
-            return ++n_error;
-        }
-        llen -= bytes_read;
-        if (write(out_fd, read_buf.data(), bytes_read) == -1) {
-            PLOG(ERROR) << "Error writing data to file";
-            return ++n_error;
-        }
-        if (bytes_read == 0) {  // this should never happen, but just in case
-                                // to unstuck from while loop
-            PLOG(ERROR) << "Unexpected read result";
-            n_error++;
-            break;
-        }
-    }
-    llen = st.st_size % 4;
-    if (llen != 0) {
-        const uint32_t zero = 0;
-        if (write(out_fd, &zero, 4 - llen) == -1) {
-            PLOG(ERROR) << "Error padding 0s to file";
-            return ++n_error;
-        }
-    }
-    return n_error;
-}
-
-// Helper function for |cpioArchiveFilesInDir|
-bool cpioWriteFileTrailer(int out_fd) {
-    const int buf_size = 4096;
-    std::array<char, buf_size> read_buf;
-    read_buf.fill(0);
-    ssize_t llen = snprintf(read_buf.data(), 4096, "070701%040X%056X%08XTRAILER!!!", 1, 0x0b, 0);
-    if (write(out_fd, read_buf.data(), (llen < buf_size ? llen : buf_size - 1) + 4) == -1) {
-        PLOG(ERROR) << "Error writing trailing bytes";
-        return false;
-    }
-    return true;
-}
-
-// Archives all files in |input_dir| and writes result into |out_fd|
-// Logic obtained from //external/toybox/toys/posix/cpio.c "Output cpio archive"
-// portion
-size_t cpioArchiveFilesInDir(int out_fd, const char* input_dir) {
-    struct dirent* dp;
-    size_t n_error = 0;
-    std::unique_ptr<DIR, decltype(&closedir)> dir_dump(opendir(input_dir), closedir);
-    if (!dir_dump) {
-        PLOG(ERROR) << "Failed to open directory";
-        return ++n_error;
-    }
-    while ((dp = readdir(dir_dump.get()))) {
-        if (dp->d_type != DT_REG) {
-            continue;
-        }
-        std::string cur_file_name(dp->d_name);
-        struct stat st;
-        const std::string cur_file_path = kTombstoneFolderPath + cur_file_name;
-        if (stat(cur_file_path.c_str(), &st) == -1) {
-            PLOG(ERROR) << "Failed to get file stat for " << cur_file_path;
-            n_error++;
-            continue;
-        }
-        const int fd_read = open(cur_file_path.c_str(), O_RDONLY);
-        if (fd_read == -1) {
-            PLOG(ERROR) << "Failed to open file " << cur_file_path;
-            n_error++;
-            continue;
-        }
-        std::string file_name_with_last_modified_time =
-                cur_file_name + "-" + std::to_string(st.st_mtime);
-        // string.size() does not include the null terminator. The cpio FreeBSD
-        // file header expects the null character to be included in the length.
-        const size_t file_name_len = file_name_with_last_modified_time.size() + 1;
-        unique_fd file_auto_closer(fd_read);
-        if (!cpioWriteHeader(out_fd, st, file_name_with_last_modified_time.c_str(),
-                             file_name_len)) {
-            return ++n_error;
-        }
-        size_t write_error = cpioWriteFileContent(fd_read, out_fd, st);
-        if (write_error) {
-            return n_error + write_error;
-        }
-    }
-    if (!cpioWriteFileTrailer(out_fd)) {
-        return ++n_error;
-    }
-    return n_error;
 }
 
 // Helper function to create a non-const char*.
@@ -651,7 +517,7 @@ ndk::ScopedAStatus WifiChip::setLatencyMode(IWifiChip::LatencyMode in_mode) {
                            &WifiChip::setLatencyModeInternal, in_mode);
 }
 
-binder_status_t WifiChip::dump(int fd, const char**, uint32_t) {
+binder_status_t WifiChip::dump(int fd __unused, const char**, uint32_t) {
     {
         std::unique_lock<std::mutex> lk(lock_t);
         for (const auto& item : ringbuffer_map_) {
@@ -664,11 +530,6 @@ binder_status_t WifiChip::dump(int fd, const char**, uint32_t) {
     if (!writeRingbufferFilesInternal()) {
         LOG(ERROR) << "Error writing files to flash";
     }
-    uint32_t n_error = cpioArchiveFilesInDir(fd, kTombstoneFolderPath);
-    if (n_error != 0) {
-        LOG(ERROR) << n_error << " errors occurred in cpio function";
-    }
-    fsync(fd);
     return STATUS_OK;
 }
 
