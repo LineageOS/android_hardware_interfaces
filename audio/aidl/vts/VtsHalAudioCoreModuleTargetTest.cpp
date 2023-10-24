@@ -1112,6 +1112,7 @@ class DefaultStreamCallback : public ::aidl::android::hardware::audio::core::BnS
 template <typename T>
 struct IOTraits {
     static constexpr bool is_input = std::is_same_v<T, IStreamIn>;
+    static constexpr const char* directionStr = is_input ? "input" : "output";
     using Worker = std::conditional_t<is_input, StreamReader, StreamWriter>;
 };
 
@@ -4289,22 +4290,41 @@ class WithRemoteSubmix {
         ASSERT_NO_FATAL_FAILURE(SetUpPortConnection(module, moduleConfig));
         SetUp(module, moduleConfig, mConnectedPort->get());
     }
-    void sendBurstCommands() {
-        const StreamContext* context = mStream->getContext();
-        StreamLogicDefaultDriver driver(makeBurstCommands(true), context->getFrameSizeBytes());
-        typename IOTraits<Stream>::Worker worker(*context, &driver, mStream->getEventReceiver());
 
-        LOG(DEBUG) << __func__ << ": starting worker...";
-        ASSERT_TRUE(worker.start());
-        LOG(DEBUG) << __func__ << ": joining worker...";
-        worker.join();
-        EXPECT_FALSE(worker.hasError()) << worker.getError();
-        EXPECT_EQ("", driver.getUnexpectedStateTransition());
-        if (IOTraits<Stream>::is_input) {
-            EXPECT_TRUE(driver.hasObservablePositionIncrease());
-        }
-        EXPECT_FALSE(driver.hasRetrogradeObservablePosition());
+    void sendBurstCommandsStartWorker() {
+        const StreamContext* context = mStream->getContext();
+        mWorkerDriver = std::make_unique<StreamLogicDefaultDriver>(makeBurstCommands(true),
+                                                                   context->getFrameSizeBytes());
+        mWorker = std::make_unique<typename IOTraits<Stream>::Worker>(*context, mWorkerDriver.get(),
+                                                                      mStream->getEventReceiver());
+
+        LOG(DEBUG) << __func__ << ": starting " << IOTraits<Stream>::directionStr << " worker...";
+        ASSERT_TRUE(mWorker->start());
     }
+
+    void sendBurstCommandsJoinWorker() {
+        // Must call 'prepareToClose' before attempting to join because the stream may be
+        // stuck due to absence of activity from the other side of the remote submix pipe.
+        std::shared_ptr<IStreamCommon> common;
+        ASSERT_IS_OK(mStream->get()->getStreamCommon(&common));
+        ASSERT_IS_OK(common->prepareToClose());
+        LOG(DEBUG) << __func__ << ": joining " << IOTraits<Stream>::directionStr << " worker...";
+        mWorker->join();
+        EXPECT_FALSE(mWorker->hasError()) << mWorker->getError();
+        EXPECT_EQ("", mWorkerDriver->getUnexpectedStateTransition());
+        if (IOTraits<Stream>::is_input) {
+            EXPECT_TRUE(mWorkerDriver->hasObservablePositionIncrease());
+        }
+        EXPECT_FALSE(mWorkerDriver->hasRetrogradeObservablePosition());
+        mWorker.reset();
+        mWorkerDriver.reset();
+    }
+
+    void sendBurstCommands() {
+        ASSERT_NO_FATAL_FAILURE(sendBurstCommandsStartWorker());
+        ASSERT_NO_FATAL_FAILURE(sendBurstCommandsJoinWorker());
+    }
+
     bool skipTest() const { return mSkipTest; }
 
   private:
@@ -4337,6 +4357,8 @@ class WithRemoteSubmix {
     std::unique_ptr<WithDevicePortConnectedState> mConnectedPort;
     std::unique_ptr<WithAudioPatch> mPatch;
     std::unique_ptr<WithStream<Stream>> mStream;
+    std::unique_ptr<StreamLogicDefaultDriver> mWorkerDriver;
+    std::unique_ptr<typename IOTraits<Stream>::Worker> mWorker;
 };
 
 class AudioModuleRemoteSubmix : public AudioCoreModule {
@@ -4350,18 +4372,15 @@ class AudioModuleRemoteSubmix : public AudioCoreModule {
 };
 
 TEST_P(AudioModuleRemoteSubmix, OutputDoesNotBlockWhenNoInput) {
-    // open output stream
     WithRemoteSubmix<IStreamOut> streamOut;
     ASSERT_NO_FATAL_FAILURE(streamOut.SetUp(module.get(), moduleConfig.get()));
     if (streamOut.skipTest()) {
         GTEST_SKIP() << "No mix port for attached devices";
     }
-    // write something to stream
     ASSERT_NO_FATAL_FAILURE(streamOut.sendBurstCommands());
 }
 
 TEST_P(AudioModuleRemoteSubmix, OutputDoesNotBlockWhenInputStuck) {
-    // open output stream
     WithRemoteSubmix<IStreamOut> streamOut;
     ASSERT_NO_FATAL_FAILURE(streamOut.SetUp(module.get(), moduleConfig.get()));
     if (streamOut.skipTest()) {
@@ -4370,19 +4389,16 @@ TEST_P(AudioModuleRemoteSubmix, OutputDoesNotBlockWhenInputStuck) {
     auto address = streamOut.getAudioDeviceAddress();
     ASSERT_TRUE(address.has_value());
 
-    // open input stream
     WithRemoteSubmix<IStreamIn> streamIn(address.value());
     ASSERT_NO_FATAL_FAILURE(streamIn.SetUp(module.get(), moduleConfig.get()));
     if (streamIn.skipTest()) {
         GTEST_SKIP() << "No mix port for attached devices";
     }
 
-    // write something to stream
     ASSERT_NO_FATAL_FAILURE(streamOut.sendBurstCommands());
 }
 
 TEST_P(AudioModuleRemoteSubmix, OutputAndInput) {
-    // open output stream
     WithRemoteSubmix<IStreamOut> streamOut;
     ASSERT_NO_FATAL_FAILURE(streamOut.SetUp(module.get(), moduleConfig.get()));
     if (streamOut.skipTest()) {
@@ -4391,21 +4407,20 @@ TEST_P(AudioModuleRemoteSubmix, OutputAndInput) {
     auto address = streamOut.getAudioDeviceAddress();
     ASSERT_TRUE(address.has_value());
 
-    // open input stream
     WithRemoteSubmix<IStreamIn> streamIn(address.value());
     ASSERT_NO_FATAL_FAILURE(streamIn.SetUp(module.get(), moduleConfig.get()));
     if (streamIn.skipTest()) {
         GTEST_SKIP() << "No mix port for attached devices";
     }
 
-    // write something to stream
-    ASSERT_NO_FATAL_FAILURE(streamOut.sendBurstCommands());
-    // read from input stream
+    // Start writing into the output stream.
+    ASSERT_NO_FATAL_FAILURE(streamOut.sendBurstCommandsStartWorker());
+    // Simultaneously, read from the input stream.
     ASSERT_NO_FATAL_FAILURE(streamIn.sendBurstCommands());
+    ASSERT_NO_FATAL_FAILURE(streamOut.sendBurstCommandsJoinWorker());
 }
 
 TEST_P(AudioModuleRemoteSubmix, OpenInputMultipleTimes) {
-    // open output stream
     WithRemoteSubmix<IStreamOut> streamOut;
     ASSERT_NO_FATAL_FAILURE(streamOut.SetUp(module.get(), moduleConfig.get()));
     if (streamOut.skipTest()) {
@@ -4414,14 +4429,13 @@ TEST_P(AudioModuleRemoteSubmix, OpenInputMultipleTimes) {
     auto address = streamOut.getAudioDeviceAddress();
     ASSERT_TRUE(address.has_value());
 
-    // connect remote submix input device port
+    // Connect remote submix input device port.
     auto port = WithRemoteSubmix<IStreamIn>::getRemoteSubmixAudioPort(moduleConfig.get(),
                                                                       address.value());
     ASSERT_TRUE(port.has_value()) << "Device AudioPort for remote submix not found";
     WithDevicePortConnectedState connectedInputPort(port.value());
     ASSERT_NO_FATAL_FAILURE(connectedInputPort.SetUp(module.get(), moduleConfig.get()));
 
-    // open input streams
     const int streamInCount = 3;
     std::vector<std::unique_ptr<WithRemoteSubmix<IStreamIn>>> streamIns(streamInCount);
     for (int i = 0; i < streamInCount; i++) {
@@ -4432,13 +4446,16 @@ TEST_P(AudioModuleRemoteSubmix, OpenInputMultipleTimes) {
             GTEST_SKIP() << "No mix port for attached devices";
         }
     }
-    // write something to output stream
-    ASSERT_NO_FATAL_FAILURE(streamOut.sendBurstCommands());
-
-    // read from input streams
+    // Start writing into the output stream.
+    ASSERT_NO_FATAL_FAILURE(streamOut.sendBurstCommandsStartWorker());
+    // Simultaneously, read from input streams.
     for (int i = 0; i < streamInCount; i++) {
-        ASSERT_NO_FATAL_FAILURE(streamIns[i]->sendBurstCommands());
+        ASSERT_NO_FATAL_FAILURE(streamIns[i]->sendBurstCommandsStartWorker());
     }
+    for (int i = 0; i < streamInCount; i++) {
+        ASSERT_NO_FATAL_FAILURE(streamIns[i]->sendBurstCommandsJoinWorker());
+    }
+    ASSERT_NO_FATAL_FAILURE(streamOut.sendBurstCommandsJoinWorker());
 }
 
 INSTANTIATE_TEST_SUITE_P(AudioModuleRemoteSubmixTest, AudioModuleRemoteSubmix,

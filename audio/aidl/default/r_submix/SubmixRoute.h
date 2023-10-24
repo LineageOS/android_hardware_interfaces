@@ -14,16 +14,19 @@
  * limitations under the License.
  */
 
+#pragma once
+
+#include <chrono>
 #include <mutex>
 
+#include <android-base/thread_annotations.h>
 #include <audio_utils/clock.h>
 
 #include <media/nbaio/MonoPipe.h>
 #include <media/nbaio/MonoPipeReader.h>
 
 #include <aidl/android/media/audio/common/AudioChannelLayout.h>
-
-#include "core-impl/Stream.h"
+#include <aidl/android/media/audio/common/AudioFormatDescription.h>
 
 using aidl::android::media::audio::common::AudioChannelLayout;
 using aidl::android::media::audio::common::AudioFormatDescription;
