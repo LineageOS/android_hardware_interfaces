@@ -62,7 +62,7 @@ cc_binary {
 
 cc_library {
     name: "DefaultBroadcastRadioHal",
-    vendor: true,
+    vendor_available: true,
     export_include_dirs: ["."],
     defaults: [
         "BroadcastRadioHalDefaults",
@@ -76,7 +76,8 @@ cc_library {
 
 cc_fuzz {
     name: "android.hardware.broadcastradio-service.default_fuzzer",
-    vendor: true,
+    // TODO(b/307611931): avoid fuzzing on vendor until hermiticity issue is fixed
+    // vendor: true,
     defaults: [
         "BroadcastRadioHalDefaults",
         "service_fuzzer_defaults",
