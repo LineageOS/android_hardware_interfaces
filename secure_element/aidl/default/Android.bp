@@ -11,14 +11,50 @@ cc_binary {
     name: "android.hardware.secure_element-service.example",
     relative_install_path: "hw",
     vendor: true,
-    init_rc: ["secure_element.rc"],
-    vintf_fragments: ["secure_element.xml"],
+    installable: false, // installed in APEX
+
+    stl: "c++_static",
     shared_libs: [
-        "libbase",
         "libbinder_ndk",
+        "liblog",
+    ],
+    static_libs: [
         "android.hardware.secure_element-V1-ndk",
+        "libbase",
     ],
     srcs: [
         "main.cpp",
+    ],
+}
+
+prebuilt_etc {
+    name: "secure_element.rc",
+    src: "secure_element.rc",
+    installable: false,
+}
+
+prebuilt_etc {
+    name: "secure_element.xml",
+    src: "secure_element.xml",
+    sub_dir: "vintf",
+    installable: false,
+}
+
+apex {
+    name: "com.android.hardware.secure_element",
+    manifest: "apex_manifest.json",
+    file_contexts: "apex_file_contexts",
+    key: "com.android.hardware.key",
+    certificate: ":com.android.hardware.certificate",
+    vendor: true,
+    updatable: false,
+
+    binaries: [
+        "android.hardware.secure_element-service.example",
+    ],
+    prebuilts: [
+        "secure_element.rc",
+        "secure_element.xml",
+        "android.hardware.se.omapi.ese.prebuilt.xml", // <feature>
     ],
 }
