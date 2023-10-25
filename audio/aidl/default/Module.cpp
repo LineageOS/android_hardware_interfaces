@@ -18,7 +18,6 @@
 #include <set>
 
 #define LOG_TAG "AHAL_Module"
-#include <Utils.h>
 #include <aidl/android/media/audio/common/AudioInputFlags.h>
 #include <aidl/android/media/audio/common/AudioOutputFlags.h>
 #include <android-base/logging.h>
@@ -35,6 +34,7 @@
 #include "core-impl/SoundDose.h"
 #include "core-impl/utils.h"
 
+using aidl::android::hardware::audio::common::frameCountFromDurationMs;
 using aidl::android::hardware::audio::common::getFrameSizeInBytes;
 using aidl::android::hardware::audio::common::isBitPositionFlagSet;
 using aidl::android::hardware::audio::common::isValidAudioMode;
@@ -617,32 +617,30 @@ ndk::ScopedAStatus Module::connectExternalDevice(const AudioPort& in_templateIdA
 
     std::vector<AudioRoute*> routesToMixPorts = getAudioRoutesForAudioPortImpl(templateId);
     std::set<int32_t> routableMixPortIds = getRoutableAudioPortIds(templateId, &routesToMixPorts);
-    if (hasDynamicProfilesOnly(connectedPort.profiles)) {
-        if (!mDebug.simulateDeviceConnections) {
-            RETURN_STATUS_IF_ERROR(populateConnectedDevicePort(&connectedPort));
-        } else {
-            auto& connectedProfiles = getConfig().connectedProfiles;
-            if (auto connectedProfilesIt = connectedProfiles.find(templateId);
-                connectedProfilesIt != connectedProfiles.end()) {
-                connectedPort.profiles = connectedProfilesIt->second;
-            }
+    if (!mDebug.simulateDeviceConnections) {
+        // Even if the device port has static profiles, the HAL module might need to update
+        // them, or abort the connection process.
+        RETURN_STATUS_IF_ERROR(populateConnectedDevicePort(&connectedPort));
+    } else if (hasDynamicProfilesOnly(connectedPort.profiles)) {
+        auto& connectedProfiles = getConfig().connectedProfiles;
+        if (auto connectedProfilesIt = connectedProfiles.find(templateId);
+            connectedProfilesIt != connectedProfiles.end()) {
+            connectedPort.profiles = connectedProfilesIt->second;
         }
-        if (hasDynamicProfilesOnly(connectedPort.profiles)) {
-            // Possible case 2. Check if all routable mix ports have static profiles.
-            if (auto dynamicMixPortIt = std::find_if(ports.begin(), ports.end(),
-                                                     [&routableMixPortIds](const auto& p) {
-                                                         return routableMixPortIds.count(p.id) >
-                                                                        0 &&
-                                                                hasDynamicProfilesOnly(p.profiles);
-                                                     });
-                dynamicMixPortIt != ports.end()) {
-                LOG(ERROR) << __func__
-                           << ": connected port only has dynamic profiles after connecting "
-                           << "external device " << connectedPort.toString() << ", and there exist "
-                           << "a routable mix port with dynamic profiles: "
-                           << dynamicMixPortIt->toString();
-                return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
-            }
+    }
+    if (hasDynamicProfilesOnly(connectedPort.profiles)) {
+        // Possible case 2. Check if all routable mix ports have static profiles.
+        if (auto dynamicMixPortIt = std::find_if(ports.begin(), ports.end(),
+                                                 [&routableMixPortIds](const auto& p) {
+                                                     return routableMixPortIds.count(p.id) > 0 &&
+                                                            hasDynamicProfilesOnly(p.profiles);
+                                                 });
+            dynamicMixPortIt != ports.end()) {
+            LOG(ERROR) << __func__ << ": connected port only has dynamic profiles after connecting "
+                       << "external device " << connectedPort.toString() << ", and there exist "
+                       << "a routable mix port with dynamic profiles: "
+                       << dynamicMixPortIt->toString();
+            return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
         }
     }
 
@@ -1229,7 +1227,7 @@ ndk::ScopedAStatus Module::setMasterMute(bool in_mute) {
         // Reset master mute if it failed.
         onMasterMuteChanged(mMasterMute);
     }
-    return std::move(result);
+    return result;
 }
 
 ndk::ScopedAStatus Module::getMasterVolume(float* _aidl_return) {
@@ -1251,7 +1249,7 @@ ndk::ScopedAStatus Module::setMasterVolume(float in_volume) {
                        << "), error=" << result;
             onMasterVolumeChanged(mMasterVolume);
         }
-        return std::move(result);
+        return result;
     }
     LOG(ERROR) << __func__ << ": invalid master volume value: " << in_volume;
     return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
@@ -1570,11 +1568,6 @@ std::vector<MicrophoneInfo> Module::getMicrophoneInfos() {
         }
     }
     return result;
-}
-
-Module::BtProfileHandles Module::getBtProfileManagerHandles() {
-    return std::make_tuple(std::weak_ptr<IBluetooth>(), std::weak_ptr<IBluetoothA2dp>(),
-                           std::weak_ptr<IBluetoothLe>());
 }
 
 ndk::ScopedAStatus Module::bluetoothParametersUpdated() {

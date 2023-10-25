@@ -22,6 +22,7 @@
 #include <optional>
 #include <set>
 
+#include <Utils.h>
 #include <aidl/android/hardware/audio/core/BnModule.h>
 
 #include "core-impl/ChildInterface.h"
@@ -45,10 +46,6 @@ class Module : public BnModule {
         int32_t nextPatchId = 1;
     };
     enum Type : int { DEFAULT, R_SUBMIX, STUB, USB, BLUETOOTH };
-    enum BtInterface : int { BTCONF, BTA2DP, BTLE };
-    typedef std::tuple<std::weak_ptr<IBluetooth>, std::weak_ptr<IBluetoothA2dp>,
-                       std::weak_ptr<IBluetoothLe>>
-            BtProfileHandles;
 
     static std::shared_ptr<Module> createInstance(Type type) {
         return createInstance(type, std::make_unique<Configuration>());
@@ -207,7 +204,9 @@ class Module : public BnModule {
 
     // Utility and helper functions accessible to subclasses.
     static int32_t calculateBufferSizeFrames(int32_t latencyMs, int32_t sampleRateHz) {
-        const int32_t rawSizeFrames = (latencyMs * sampleRateHz) / 1000;
+        const int32_t rawSizeFrames =
+                aidl::android::hardware::audio::common::frameCountFromDurationMs(latencyMs,
+                                                                                 sampleRateHz);
         int32_t powerOf2 = 1;
         while (powerOf2 < rawSizeFrames) powerOf2 <<= 1;
         return powerOf2;
@@ -226,7 +225,6 @@ class Module : public BnModule {
     ndk::ScopedAStatus findPortIdForNewStream(
             int32_t in_portConfigId, ::aidl::android::media::audio::common::AudioPort** port);
     std::vector<AudioRoute*> getAudioRoutesForAudioPortImpl(int32_t portId);
-    virtual BtProfileHandles getBtProfileManagerHandles();
     Configuration& getConfig();
     const ConnectedDevicePorts& getConnectedDevicePorts() const { return mConnectedDevicePorts; }
     bool getMasterMute() const { return mMasterMute; }
