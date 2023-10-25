@@ -24,6 +24,7 @@
 #include <android-base/thread_annotations.h>
 
 #include <atomic>
+#include <chrono>
 #include <condition_variable>
 #include <list>
 #include <memory>
@@ -60,6 +61,7 @@ class MockVehicleHardware final : public IVehicleHardware {
     void registerOnPropertySetErrorEvent(std::unique_ptr<const PropertySetErrorCallback>) override;
     aidl::android::hardware::automotive::vehicle::StatusCode updateSampleRate(
             int32_t propId, int32_t areaId, float sampleRate) override;
+    std::chrono::nanoseconds getPropertyOnChangeEventBatchingWindow() override;
 
     // Test functions.
     void setPropertyConfigs(
@@ -86,6 +88,7 @@ class MockVehicleHardware final : public IVehicleHardware {
     void setSleepTime(int64_t timeInNano);
     void setDumpResult(DumpResult result);
     void sendOnPropertySetErrorEvent(const std::vector<SetValueErrorEvent>& errorEvents);
+    void setPropertyOnChangeEventBatchingWindow(std::chrono::nanoseconds window);
 
   private:
     mutable std::mutex mLock;
@@ -110,6 +113,7 @@ class MockVehicleHardware final : public IVehicleHardware {
             std::shared_ptr<const GetValuesCallback>,
             const std::vector<aidl::android::hardware::automotive::vehicle::GetValueRequest>&)>
             mGetValueResponder GUARDED_BY(mLock);
+    std::chrono::nanoseconds mEventBatchingWindow GUARDED_BY(mLock) = std::chrono::nanoseconds(0);
 
     template <class ResultType>
     aidl::android::hardware::automotive::vehicle::StatusCode returnResponse(

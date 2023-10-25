@@ -52,7 +52,7 @@ struct GnssMeasurementInterface : public BnGnssMeasurementInterface {
     std::atomic<long> mLocationIntervalMs;
     std::atomic<bool> mIsActive;
     std::atomic<bool> mLocationEnabled;
-    std::thread mThread;
+    std::vector<std::thread> mThreads;
     std::vector<std::future<void>> mFutures;
     ::android::hardware::gnss::common::ThreadBlocker mThreadBlocker;
 

@@ -42,4 +42,5 @@ parcelable VehicleAreaConfig {
   float minFloatValue;
   float maxFloatValue;
   @nullable long[] supportedEnumValues;
+  android.hardware.automotive.vehicle.VehiclePropertyAccess access = android.hardware.automotive.vehicle.VehiclePropertyAccess.NONE;
 }

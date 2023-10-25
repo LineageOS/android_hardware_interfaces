@@ -211,8 +211,9 @@ std::vector<SubscribeInvalidOptionsTestCase> getSubscribeInvalidOptionsTestCases
 
 class DefaultVehicleHalTest : public testing::Test {
   public:
-    void SetUp() override {
-        auto hardware = std::make_unique<MockVehicleHardware>();
+    void SetUp() override { init(std::make_unique<MockVehicleHardware>()); }
+
+    void init(std::unique_ptr<MockVehicleHardware> hardware) {
         std::vector<VehiclePropConfig> testConfigs;
         for (size_t i = 0; i < 10000; i++) {
             testConfigs.push_back(VehiclePropConfig{
@@ -1709,6 +1710,93 @@ TEST_F(DefaultVehicleHalTest, testOnPropertySetErrorEvent) {
     ASSERT_TRUE(maybeVehiclePropErrors.has_value());
     const auto& vehiclePropErrors = maybeVehiclePropErrors.value();
     ASSERT_THAT(vehiclePropErrors.payloads, UnorderedElementsAreArray(expectedResults));
+}
+
+TEST_F(DefaultVehicleHalTest, testBatchOnPropertyChangeEvents) {
+    auto hardware = std::make_unique<MockVehicleHardware>();
+    hardware->setPropertyOnChangeEventBatchingWindow(std::chrono::milliseconds(10));
+    init(std::move(hardware));
+
+    std::vector<SubscribeOptions> options = {
+            {
+                    .propId = GLOBAL_ON_CHANGE_PROP,
+            },
+            {
+                    .propId = AREA_ON_CHANGE_PROP,
+                    // No areaIds means subscribing to all area IDs.
+                    .areaIds = {},
+            },
+    };
+
+    getClient()->subscribe(getCallbackClient(), options, 0);
+    VehiclePropValue testValue1 = {
+            .prop = GLOBAL_ON_CHANGE_PROP,
+            .value.int32Values = {0},
+    };
+    SetValueRequest request1 = {
+            .requestId = 1,
+            .value = testValue1,
+    };
+    SetValueResult result1 = {
+            .requestId = 1,
+            .status = StatusCode::OK,
+    };
+    VehiclePropValue testValue2 = {
+            .prop = AREA_ON_CHANGE_PROP,
+            .areaId = toInt(VehicleAreaWindow::ROW_1_LEFT),
+            .value.int32Values = {1},
+    };
+    SetValueRequest request2 = {
+            .requestId = 2,
+            .value = testValue2,
+    };
+    SetValueResult result2 = {
+            .requestId = 2,
+            .status = StatusCode::OK,
+    };
+    VehiclePropValue testValue3 = {
+            .prop = AREA_ON_CHANGE_PROP,
+            .areaId = toInt(VehicleAreaWindow::ROW_1_RIGHT),
+            .value.int32Values = {1},
+    };
+    SetValueRequest request3 = {
+            .requestId = 3,
+            .value = testValue3,
+    };
+    SetValueResult result3 = {
+            .requestId = 3,
+            .status = StatusCode::OK,
+    };
+    // Prepare the responses
+    for (int i = 0; i < 2; i++) {
+        getHardware()->addSetValueResponses({result1});
+        getHardware()->addSetValueResponses({result2, result3});
+    }
+
+    // Try to cause two batches, each with three on property change events.
+    // Set GLOBAL_ON_CHANGE_PROP causing one event.
+    // Set AREA_ON_CHANGE_PROP with two areas causing two events.
+    for (int i = 0; i < 2; i++) {
+        auto status = getClient()->setValues(getCallbackClient(),
+                                             SetValueRequests{.payloads = {request1}});
+        ASSERT_TRUE(status.isOk()) << "setValues failed: " << status.getMessage();
+
+        status = getClient()->setValues(getCallbackClient(),
+                                        SetValueRequests{.payloads = {request2, request3}});
+        ASSERT_TRUE(status.isOk()) << "setValues failed: " << status.getMessage();
+
+        ASSERT_TRUE(getCallback()->waitForOnPropertyEventResults(/*size=*/1,
+                                                                 /*timeoutInNano=*/1'000'000'000))
+                << "not received enough property change events before timeout";
+
+        auto maybeResults = getCallback()->nextOnPropertyEventResults();
+        ASSERT_TRUE(maybeResults.has_value()) << "no results in callback";
+        ASSERT_THAT(maybeResults.value().payloads,
+                    UnorderedElementsAre(testValue1, testValue2, testValue3))
+                << "results mismatch, expect 3 batched on change events";
+        ASSERT_FALSE(getCallback()->nextOnPropertyEventResults().has_value())
+                << "more results than expected";
+    }
 }
 
 }  // namespace vehicle

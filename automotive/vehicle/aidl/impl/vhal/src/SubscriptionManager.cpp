@@ -248,13 +248,12 @@ VhalResult<void> SubscriptionManager::unsubscribe(SubscriptionManager::ClientIdT
     return {};
 }
 
-std::unordered_map<std::shared_ptr<IVehicleCallback>, std::vector<const VehiclePropValue*>>
-SubscriptionManager::getSubscribedClients(const std::vector<VehiclePropValue>& updatedValues) {
+std::unordered_map<std::shared_ptr<IVehicleCallback>, std::vector<VehiclePropValue>>
+SubscriptionManager::getSubscribedClients(std::vector<VehiclePropValue>&& updatedValues) {
     std::scoped_lock<std::mutex> lockGuard(mLock);
-    std::unordered_map<std::shared_ptr<IVehicleCallback>, std::vector<const VehiclePropValue*>>
-            clients;
+    std::unordered_map<std::shared_ptr<IVehicleCallback>, std::vector<VehiclePropValue>> clients;
 
-    for (const auto& value : updatedValues) {
+    for (auto& value : updatedValues) {
         PropIdAreaId propIdAreaId{
                 .propId = value.prop,
                 .areaId = value.areaId,
@@ -264,7 +263,7 @@ SubscriptionManager::getSubscribedClients(const std::vector<VehiclePropValue>& u
         }
 
         for (const auto& [_, client] : mClientsByPropIdArea[propIdAreaId]) {
-            clients[client].push_back(&value);
+            clients[client].push_back(value);
         }
     }
     return clients;
