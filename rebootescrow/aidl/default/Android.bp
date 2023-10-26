@@ -42,10 +42,10 @@ cc_library_static {
 
 cc_binary {
     name: "android.hardware.rebootescrow-service.default",
-    init_rc: ["rebootescrow-default.rc"],
     relative_install_path: "hw",
-    vintf_fragments: ["rebootescrow-default.xml"],
     vendor: true,
+    installable: false, // installed in APEX
+
     srcs: [
         "service.cpp",
     ],
@@ -53,12 +53,14 @@ cc_binary {
         "-Wall",
         "-Werror",
     ],
+    stl: "c++_static",
     shared_libs: [
-        "libbase",
         "libbinder_ndk",
-        "android.hardware.rebootescrow-V1-ndk",
+        "liblog",
     ],
     static_libs: [
+        "android.hardware.rebootescrow-V1-ndk",
+        "libbase",
         "libhadamardutils",
         "librebootescrowdefaultimpl",
     ],
@@ -96,4 +98,36 @@ cc_test {
         "libbase",
     ],
     test_suites: ["device-tests"],
+}
+
+prebuilt_etc {
+    name: "rebootescrow-default.rc",
+    src: "rebootescrow-default.rc",
+    installable: false,
+}
+
+prebuilt_etc {
+    name: "rebootescrow-default.xml",
+    src: "rebootescrow-default.xml",
+    sub_dir: "vintf",
+    installable: false,
+}
+
+apex {
+    name: "com.android.hardware.rebootescrow",
+    manifest: "apex_manifest.json",
+    file_contexts: "apex_file_contexts",
+    key: "com.android.hardware.key",
+    certificate: ":com.android.hardware.certificate",
+    vendor: true,
+    updatable: false,
+
+    binaries: [
+        "android.hardware.rebootescrow-service.default",
+    ],
+    prebuilts: [
+        "rebootescrow-default.rc",
+        "rebootescrow-default.xml",
+        "android.hardware.reboot_escrow.prebuilt.xml", // <feature>
+    ],
 }
