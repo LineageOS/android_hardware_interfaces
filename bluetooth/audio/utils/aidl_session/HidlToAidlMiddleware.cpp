@@ -475,6 +475,8 @@ inline AudioConfig_2_1 to_hidl_audio_config_2_1(
       hidl_audio_config.leAudioCodecConfig(to_hidl_leaudio_broadcast_config_2_1(
           audio_config.get<AudioConfiguration::leAudioBroadcastConfig>()));
       break;
+    default:
+      LOG(FATAL) << __func__ << ": unexpected AudioConfiguration";
   }
   return hidl_audio_config;
 }
