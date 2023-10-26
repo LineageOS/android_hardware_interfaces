@@ -76,18 +76,10 @@ class WifiNanIfaceAidlTest : public testing::TestWithParam<std::string> {
 
     void TearDown() override { stopWifiService(getInstanceName()); }
 
-    // Used as a mechanism to inform the test about data/event callbacks.
-    inline void notify() {
-        std::unique_lock<std::mutex> lock(mtx_);
-        count_++;
-        cv_.notify_one();
-    }
-
     enum CallbackType {
-        INVALID = -2,
-        ANY_CALLBACK = -1,
+        INVALID = 0,
 
-        NOTIFY_CAPABILITIES_RESPONSE = 0,
+        NOTIFY_CAPABILITIES_RESPONSE = 1,
         NOTIFY_ENABLE_RESPONSE,
         NOTIFY_CONFIG_RESPONSE,
         NOTIFY_DISABLE_RESPONSE,
@@ -128,24 +120,30 @@ class WifiNanIfaceAidlTest : public testing::TestWithParam<std::string> {
         EVENT_SUSPENSION_MODE_CHANGE,
     };
 
+    // Used as a mechanism to inform the test about data/event callbacks.
+    inline void notify(CallbackType callbackType) {
+        std::unique_lock<std::mutex> lock(mtx_);
+        callback_event_bitmap_ |= (UINT64_C(0x1) << callbackType);
+        cv_.notify_one();
+    }
+
     // Test code calls this function to wait for data/event callback.
-    // Must set callbackType = INVALID before calling this function.
+    // Must set callback_event_bitmap_ to 0 before calling this function.
     inline std::cv_status wait(CallbackType waitForCallbackType) {
         std::unique_lock<std::mutex> lock(mtx_);
         EXPECT_NE(INVALID, waitForCallbackType);
 
         std::cv_status status = std::cv_status::no_timeout;
         auto now = std::chrono::system_clock::now();
-        while (count_ == 0) {
+        while (!(receivedCallback(waitForCallbackType))) {
             status = cv_.wait_until(lock, now + std::chrono::seconds(TIMEOUT_PERIOD));
             if (status == std::cv_status::timeout) return status;
-            if (waitForCallbackType != ANY_CALLBACK && callback_type_ != INVALID &&
-                callback_type_ != waitForCallbackType) {
-                count_--;
-            }
         }
-        count_--;
         return status;
+    }
+
+    inline bool receivedCallback(CallbackType waitForCallbackType) {
+        return callback_event_bitmap_ & (UINT64_C(0x1) << waitForCallbackType);
     }
 
     class WifiNanIfaceEventCallback : public BnWifiNanIfaceEventCallback {
@@ -153,285 +151,247 @@ class WifiNanIfaceAidlTest : public testing::TestWithParam<std::string> {
         WifiNanIfaceEventCallback(WifiNanIfaceAidlTest& parent) : parent_(parent){};
 
         ::ndk::ScopedAStatus eventClusterEvent(const NanClusterEventInd& event) override {
-            parent_.callback_type_ = EVENT_CLUSTER_EVENT;
             parent_.nan_cluster_event_ind_ = event;
-            parent_.notify();
+            parent_.notify(EVENT_CLUSTER_EVENT);
             return ndk::ScopedAStatus::ok();
         }
         ::ndk::ScopedAStatus eventDataPathConfirm(const NanDataPathConfirmInd& event) override {
-            parent_.callback_type_ = EVENT_DATA_PATH_CONFIRM;
             parent_.nan_data_path_confirm_ind_ = event;
-            parent_.notify();
+            parent_.notify(EVENT_DATA_PATH_CONFIRM);
             return ndk::ScopedAStatus::ok();
         }
         ::ndk::ScopedAStatus eventDataPathRequest(const NanDataPathRequestInd& event) override {
-            parent_.callback_type_ = EVENT_DATA_PATH_REQUEST;
             parent_.nan_data_path_request_ind_ = event;
-            parent_.notify();
+            parent_.notify(EVENT_DATA_PATH_REQUEST);
             return ndk::ScopedAStatus::ok();
         }
         ::ndk::ScopedAStatus eventDataPathScheduleUpdate(
                 const NanDataPathScheduleUpdateInd& event) override {
-            parent_.callback_type_ = EVENT_DATA_PATH_SCHEDULE_UPDATE;
             parent_.nan_data_path_schedule_update_ind_ = event;
-            parent_.notify();
+            parent_.notify(EVENT_DATA_PATH_SCHEDULE_UPDATE);
             return ndk::ScopedAStatus::ok();
         }
         ::ndk::ScopedAStatus eventDataPathTerminated(int32_t ndpInstanceId) override {
-            parent_.callback_type_ = EVENT_DATA_PATH_TERMINATED;
             parent_.ndp_instance_id_ = ndpInstanceId;
-            parent_.notify();
+            parent_.notify(EVENT_DATA_PATH_TERMINATED);
             return ndk::ScopedAStatus::ok();
         }
         ::ndk::ScopedAStatus eventDisabled(const NanStatus& status) override {
-            parent_.callback_type_ = EVENT_DISABLED;
             parent_.status_ = status;
-            parent_.notify();
+            parent_.notify(EVENT_DISABLED);
             return ndk::ScopedAStatus::ok();
         }
         ::ndk::ScopedAStatus eventFollowupReceived(const NanFollowupReceivedInd& event) override {
-            parent_.callback_type_ = EVENT_FOLLOWUP_RECEIVED;
             parent_.nan_followup_received_ind_ = event;
-            parent_.notify();
+            parent_.notify(EVENT_FOLLOWUP_RECEIVED);
             return ndk::ScopedAStatus::ok();
         }
         ::ndk::ScopedAStatus eventMatch(const NanMatchInd& event) override {
-            parent_.callback_type_ = EVENT_MATCH;
             parent_.nan_match_ind_ = event;
-            parent_.notify();
+            parent_.notify(EVENT_MATCH);
             return ndk::ScopedAStatus::ok();
         }
         ::ndk::ScopedAStatus eventMatchExpired(int8_t discoverySessionId, int32_t peerId) override {
-            parent_.callback_type_ = EVENT_MATCH_EXPIRED;
             parent_.session_id_ = discoverySessionId;
             parent_.peer_id_ = peerId;
-            parent_.notify();
+            parent_.notify(EVENT_MATCH_EXPIRED);
             return ndk::ScopedAStatus::ok();
         }
         ::ndk::ScopedAStatus eventPublishTerminated(int8_t sessionId,
                                                     const NanStatus& status) override {
-            parent_.callback_type_ = EVENT_PUBLISH_TERMINATED;
             parent_.session_id_ = sessionId;
             parent_.status_ = status;
-            parent_.notify();
+            parent_.notify(EVENT_PUBLISH_TERMINATED);
             return ndk::ScopedAStatus::ok();
         }
         ::ndk::ScopedAStatus eventSubscribeTerminated(int8_t sessionId,
                                                       const NanStatus& status) override {
-            parent_.callback_type_ = EVENT_SUBSCRIBE_TERMINATED;
             parent_.session_id_ = sessionId;
             parent_.status_ = status;
-            parent_.notify();
+            parent_.notify(EVENT_SUBSCRIBE_TERMINATED);
             return ndk::ScopedAStatus::ok();
         }
         ::ndk::ScopedAStatus eventTransmitFollowup(char16_t id, const NanStatus& status) override {
-            parent_.callback_type_ = EVENT_TRANSMIT_FOLLOWUP;
             parent_.id_ = id;
             parent_.status_ = status;
-            parent_.notify();
+            parent_.notify(EVENT_TRANSMIT_FOLLOWUP);
             return ndk::ScopedAStatus::ok();
         }
         ::ndk::ScopedAStatus eventPairingConfirm(const NanPairingConfirmInd& event) override {
-            parent_.callback_type_ = EVENT_PAIRING_CONFIRM;
             parent_.nan_pairing_confirm_ind_ = event;
-            parent_.notify();
+            parent_.notify(EVENT_PAIRING_CONFIRM);
             return ndk::ScopedAStatus::ok();
         }
         ::ndk::ScopedAStatus eventPairingRequest(const NanPairingRequestInd& event) override {
-            parent_.callback_type_ = EVENT_PAIRING_REQUEST;
             parent_.nan_pairing_request_ind_ = event;
-            parent_.notify();
+            parent_.notify(EVENT_PAIRING_REQUEST);
             return ndk::ScopedAStatus::ok();
         }
         ::ndk::ScopedAStatus eventBootstrappingConfirm(
                 const NanBootstrappingConfirmInd& event) override {
-            parent_.callback_type_ = EVENT_BOOTSTRAPPING_CONFIRM;
             parent_.nan_bootstrapping_confirm_ind_ = event;
-            parent_.notify();
+            parent_.notify(EVENT_BOOTSTRAPPING_CONFIRM);
             return ndk::ScopedAStatus::ok();
         }
         ::ndk::ScopedAStatus eventBootstrappingRequest(
                 const NanBootstrappingRequestInd& event) override {
-            parent_.callback_type_ = EVENT_BOOTSTRAPPING_REQUEST;
             parent_.nan_bootstrapping_request_ind_ = event;
-            parent_.notify();
+            parent_.notify(EVENT_BOOTSTRAPPING_REQUEST);
             return ndk::ScopedAStatus::ok();
         }
         ::ndk::ScopedAStatus eventSuspensionModeChanged(
                 const NanSuspensionModeChangeInd& event) override {
-            parent_.callback_type_ = EVENT_SUSPENSION_MODE_CHANGE;
             parent_.nan_suspension_mode_change_ind_ = event;
-            parent_.notify();
+            parent_.notify(EVENT_SUSPENSION_MODE_CHANGE);
             return ndk::ScopedAStatus::ok();
         }
         ::ndk::ScopedAStatus notifyCapabilitiesResponse(
                 char16_t id, const NanStatus& status,
                 const NanCapabilities& capabilities) override {
-            parent_.callback_type_ = NOTIFY_CAPABILITIES_RESPONSE;
             parent_.id_ = id;
             parent_.status_ = status;
             parent_.capabilities_ = capabilities;
-            parent_.notify();
+            parent_.notify(NOTIFY_CAPABILITIES_RESPONSE);
             return ndk::ScopedAStatus::ok();
         }
         ::ndk::ScopedAStatus notifyConfigResponse(char16_t id, const NanStatus& status) override {
-            parent_.callback_type_ = NOTIFY_CONFIG_RESPONSE;
             parent_.id_ = id;
             parent_.status_ = status;
-            parent_.notify();
+            parent_.notify(NOTIFY_CONFIG_RESPONSE);
             return ndk::ScopedAStatus::ok();
         }
         ::ndk::ScopedAStatus notifyCreateDataInterfaceResponse(char16_t id,
                                                                const NanStatus& status) override {
-            parent_.callback_type_ = NOTIFY_CREATE_DATA_INTERFACE_RESPONSE;
             parent_.id_ = id;
             parent_.status_ = status;
-            parent_.notify();
+            parent_.notify(NOTIFY_CREATE_DATA_INTERFACE_RESPONSE);
             return ndk::ScopedAStatus::ok();
         }
         ::ndk::ScopedAStatus notifyDeleteDataInterfaceResponse(char16_t id,
                                                                const NanStatus& status) override {
-            parent_.callback_type_ = NOTIFY_DELETE_DATA_INTERFACE_RESPONSE;
             parent_.id_ = id;
             parent_.status_ = status;
-            parent_.notify();
+            parent_.notify(NOTIFY_DELETE_DATA_INTERFACE_RESPONSE);
             return ndk::ScopedAStatus::ok();
         }
         ::ndk::ScopedAStatus notifyDisableResponse(char16_t id, const NanStatus& status) override {
-            parent_.callback_type_ = NOTIFY_DISABLE_RESPONSE;
             parent_.id_ = id;
             parent_.status_ = status;
-            parent_.notify();
+            parent_.notify(NOTIFY_DISABLE_RESPONSE);
             return ndk::ScopedAStatus::ok();
         }
         ::ndk::ScopedAStatus notifyEnableResponse(char16_t id, const NanStatus& status) override {
-            parent_.callback_type_ = NOTIFY_ENABLE_RESPONSE;
             parent_.id_ = id;
             parent_.status_ = status;
-            parent_.notify();
+            parent_.notify(NOTIFY_ENABLE_RESPONSE);
             return ndk::ScopedAStatus::ok();
         }
         ::ndk::ScopedAStatus notifyInitiateDataPathResponse(char16_t id, const NanStatus& status,
                                                             int32_t ndpInstanceId) override {
-            parent_.callback_type_ = NOTIFY_INITIATE_DATA_PATH_RESPONSE;
             parent_.id_ = id;
             parent_.status_ = status;
             parent_.ndp_instance_id_ = ndpInstanceId;
-            parent_.notify();
+            parent_.notify(NOTIFY_INITIATE_DATA_PATH_RESPONSE);
             return ndk::ScopedAStatus::ok();
         }
         ::ndk::ScopedAStatus notifyRespondToDataPathIndicationResponse(
                 char16_t id, const NanStatus& status) override {
-            parent_.callback_type_ = NOTIFY_RESPOND_TO_DATA_PATH_INDICATION_RESPONSE;
             parent_.id_ = id;
             parent_.status_ = status;
-            parent_.notify();
+            parent_.notify(NOTIFY_RESPOND_TO_DATA_PATH_INDICATION_RESPONSE);
             return ndk::ScopedAStatus::ok();
         }
         ::ndk::ScopedAStatus notifyStartPublishResponse(char16_t id, const NanStatus& status,
                                                         int8_t sessionId) override {
-            parent_.callback_type_ = NOTIFY_START_PUBLISH_RESPONSE;
             parent_.id_ = id;
             parent_.status_ = status;
             parent_.session_id_ = sessionId;
-            parent_.notify();
+            parent_.notify(NOTIFY_START_PUBLISH_RESPONSE);
             return ndk::ScopedAStatus::ok();
         }
         ::ndk::ScopedAStatus notifyStartSubscribeResponse(char16_t id, const NanStatus& status,
                                                           int8_t sessionId) override {
-            parent_.callback_type_ = NOTIFY_START_SUBSCRIBE_RESPONSE;
             parent_.id_ = id;
             parent_.status_ = status;
             parent_.session_id_ = sessionId;
-            parent_.notify();
+            parent_.notify(NOTIFY_START_SUBSCRIBE_RESPONSE);
             return ndk::ScopedAStatus::ok();
         }
         ::ndk::ScopedAStatus notifyStopPublishResponse(char16_t id,
                                                        const NanStatus& status) override {
-            parent_.callback_type_ = NOTIFY_STOP_PUBLISH_RESPONSE;
             parent_.id_ = id;
             parent_.status_ = status;
-            parent_.notify();
+            parent_.notify(NOTIFY_STOP_PUBLISH_RESPONSE);
             return ndk::ScopedAStatus::ok();
         }
         ::ndk::ScopedAStatus notifyStopSubscribeResponse(char16_t id,
                                                          const NanStatus& status) override {
-            parent_.callback_type_ = NOTIFY_STOP_SUBSCRIBE_RESPONSE;
             parent_.id_ = id;
             parent_.status_ = status;
-            parent_.notify();
+            parent_.notify(NOTIFY_STOP_SUBSCRIBE_RESPONSE);
             return ndk::ScopedAStatus::ok();
         }
         ::ndk::ScopedAStatus notifyTerminateDataPathResponse(char16_t id,
                                                              const NanStatus& status) override {
-            parent_.callback_type_ = NOTIFY_TERMINATE_DATA_PATH_RESPONSE;
             parent_.id_ = id;
             parent_.status_ = status;
-            parent_.notify();
+            parent_.notify(NOTIFY_TERMINATE_DATA_PATH_RESPONSE);
             return ndk::ScopedAStatus::ok();
         }
         ::ndk::ScopedAStatus notifySuspendResponse(char16_t id, const NanStatus& status) override {
-            parent_.callback_type_ = NOTIFY_SUSPEND_RESPONSE;
             parent_.id_ = id;
             parent_.status_ = status;
-            parent_.notify();
+            parent_.notify(NOTIFY_SUSPEND_RESPONSE);
             return ndk::ScopedAStatus::ok();
         }
         ::ndk::ScopedAStatus notifyResumeResponse(char16_t id, const NanStatus& status) override {
-            parent_.callback_type_ = NOTIFY_RESUME_RESPONSE;
             parent_.id_ = id;
             parent_.status_ = status;
-            parent_.notify();
+            parent_.notify(NOTIFY_RESUME_RESPONSE);
             return ndk::ScopedAStatus::ok();
         }
         ::ndk::ScopedAStatus notifyTransmitFollowupResponse(char16_t id,
                                                             const NanStatus& status) override {
-            parent_.callback_type_ = NOTIFY_TRANSMIT_FOLLOWUP_RESPONSE;
             parent_.id_ = id;
             parent_.status_ = status;
-            parent_.notify();
+            parent_.notify(NOTIFY_TRANSMIT_FOLLOWUP_RESPONSE);
             return ndk::ScopedAStatus::ok();
         }
         ::ndk::ScopedAStatus notifyInitiatePairingResponse(char16_t id, const NanStatus& status,
                                                            int32_t pairingInstanceId) override {
-            parent_.callback_type_ = NOTIFY_INITIATE_PAIRING_RESPONSE;
             parent_.id_ = id;
             parent_.status_ = status;
             parent_.pairing_instance_id_ = pairingInstanceId;
-            parent_.notify();
+            parent_.notify(NOTIFY_INITIATE_PAIRING_RESPONSE);
             return ndk::ScopedAStatus::ok();
         }
         ::ndk::ScopedAStatus notifyRespondToPairingIndicationResponse(
                 char16_t id, const NanStatus& status) override {
-            parent_.callback_type_ = NOTIFY_RESPOND_TO_PAIRING_INDICATION_RESPONSE;
             parent_.id_ = id;
             parent_.status_ = status;
-            parent_.notify();
+            parent_.notify(NOTIFY_RESPOND_TO_PAIRING_INDICATION_RESPONSE);
             return ndk::ScopedAStatus::ok();
         }
         ::ndk::ScopedAStatus notifyInitiateBootstrappingResponse(
                 char16_t id, const NanStatus& status, int32_t bootstrapppingInstanceId) override {
-            parent_.callback_type_ = NOTIFY_INITIATE_BOOTSTRAPPING_RESPONSE;
             parent_.id_ = id;
             parent_.status_ = status;
             parent_.bootstrappping_instance_id_ = bootstrapppingInstanceId;
-            parent_.notify();
+            parent_.notify(NOTIFY_INITIATE_BOOTSTRAPPING_RESPONSE);
             return ndk::ScopedAStatus::ok();
         }
         ::ndk::ScopedAStatus notifyRespondToBootstrappingIndicationResponse(
                 char16_t id, const NanStatus& status) override {
-            parent_.callback_type_ = NOTIFY_RESPOND_TO_BOOTSTRAPPING_INDICATION_RESPONSE;
             parent_.id_ = id;
             parent_.status_ = status;
-            parent_.notify();
+            parent_.notify(NOTIFY_RESPOND_TO_BOOTSTRAPPING_INDICATION_RESPONSE);
             return ndk::ScopedAStatus::ok();
         }
         ::ndk::ScopedAStatus notifyTerminatePairingResponse(char16_t id,
                                                             const NanStatus& status) override {
-            parent_.callback_type_ = NOTIFY_TERMINATE_PAIRING_RESPONSE;
             parent_.id_ = id;
             parent_.status_ = status;
-            parent_.notify();
+            parent_.notify(NOTIFY_TERMINATE_PAIRING_RESPONSE);
             return ndk::ScopedAStatus::ok();
         }
 
@@ -441,7 +401,7 @@ class WifiNanIfaceAidlTest : public testing::TestWithParam<std::string> {
 
   protected:
     std::shared_ptr<IWifiNanIface> wifi_nan_iface_;
-    CallbackType callback_type_;
+    uint64_t callback_event_bitmap_;
     uint16_t id_;
     uint8_t session_id_;
     uint32_t ndp_instance_id_;
@@ -468,7 +428,6 @@ class WifiNanIfaceAidlTest : public testing::TestWithParam<std::string> {
     // synchronization objects
     std::mutex mtx_;
     std::condition_variable cv_;
-    int count_ = 0;
 };
 
 /*
@@ -488,7 +447,7 @@ TEST_P(WifiNanIfaceAidlTest, FailOnIfaceInvalid) {
  */
 TEST_P(WifiNanIfaceAidlTest, EnableRequest_InvalidArgs) {
     uint16_t inputCmdId = 10;
-    callback_type_ = INVALID;
+    callback_event_bitmap_ = 0;
     NanEnableRequest nanEnableRequest = {};
     NanConfigRequestSupplemental nanConfigRequestSupp = {};
     auto status =
@@ -498,7 +457,7 @@ TEST_P(WifiNanIfaceAidlTest, EnableRequest_InvalidArgs) {
 
         // Wait for a callback.
         ASSERT_EQ(std::cv_status::no_timeout, wait(NOTIFY_ENABLE_RESPONSE));
-        ASSERT_EQ(NOTIFY_ENABLE_RESPONSE, callback_type_);
+        ASSERT_TRUE(receivedCallback(NOTIFY_ENABLE_RESPONSE));
         ASSERT_EQ(id_, inputCmdId);
         ASSERT_EQ(status_.status, NanStatusCode::INVALID_ARGS);
     }
@@ -509,7 +468,7 @@ TEST_P(WifiNanIfaceAidlTest, EnableRequest_InvalidArgs) {
  */
 TEST_P(WifiNanIfaceAidlTest, ConfigRequest_InvalidArgs) {
     uint16_t inputCmdId = 10;
-    callback_type_ = INVALID;
+    callback_event_bitmap_ = 0;
     NanConfigRequest nanConfigRequest = {};
     NanConfigRequestSupplemental nanConfigRequestSupp = {};
     auto status =
@@ -520,7 +479,7 @@ TEST_P(WifiNanIfaceAidlTest, ConfigRequest_InvalidArgs) {
 
         // Wait for a callback.
         ASSERT_EQ(std::cv_status::no_timeout, wait(NOTIFY_CONFIG_RESPONSE));
-        ASSERT_EQ(NOTIFY_CONFIG_RESPONSE, callback_type_);
+        ASSERT_TRUE(receivedCallback(NOTIFY_CONFIG_RESPONSE));
         ASSERT_EQ(id_, inputCmdId);
         ASSERT_EQ(status_.status, NanStatusCode::INVALID_ARGS);
     }
@@ -561,12 +520,12 @@ TEST_P(WifiNanIfaceAidlTest, ConfigRequest_InvalidShimArgs) {
  */
 TEST_P(WifiNanIfaceAidlTest, NotifyCapabilitiesResponse) {
     uint16_t inputCmdId = 10;
-    callback_type_ = INVALID;
+    callback_event_bitmap_ = 0;
     EXPECT_TRUE(wifi_nan_iface_->getCapabilitiesRequest(inputCmdId).isOk());
 
     // Wait for a callback.
     ASSERT_EQ(std::cv_status::no_timeout, wait(NOTIFY_CAPABILITIES_RESPONSE));
-    ASSERT_EQ(NOTIFY_CAPABILITIES_RESPONSE, callback_type_);
+    ASSERT_TRUE(receivedCallback(NOTIFY_CAPABILITIES_RESPONSE));
     ASSERT_EQ(id_, inputCmdId);
     ASSERT_EQ(status_.status, NanStatusCode::SUCCESS);
 
@@ -654,14 +613,14 @@ TEST_P(WifiNanIfaceAidlTest, StartPublishRequest) {
     nanConfigRequestSupp.numberOfSpatialStreamsInDiscovery = 0;
     nanConfigRequestSupp.enableDiscoveryWindowEarlyTermination = false;
 
-    callback_type_ = INVALID;
+    callback_event_bitmap_ = 0;
     auto status = wifi_nan_iface_->enableRequest(inputCmdId, req, nanConfigRequestSupp);
     if (!checkStatusCode(&status, WifiStatusCode::ERROR_NOT_SUPPORTED)) {
         ASSERT_TRUE(status.isOk());
 
         // Wait for a callback.
         ASSERT_EQ(std::cv_status::no_timeout, wait(NOTIFY_ENABLE_RESPONSE));
-        ASSERT_EQ(NOTIFY_ENABLE_RESPONSE, callback_type_);
+        ASSERT_TRUE(receivedCallback(NOTIFY_ENABLE_RESPONSE));
         ASSERT_EQ(id_, inputCmdId);
         ASSERT_EQ(status_.status, NanStatusCode::SUCCESS);
     }
@@ -688,7 +647,7 @@ TEST_P(WifiNanIfaceAidlTest, StartPublishRequest) {
 
         // Wait for a callback.
         ASSERT_EQ(std::cv_status::no_timeout, wait(NOTIFY_START_PUBLISH_RESPONSE));
-        ASSERT_EQ(NOTIFY_START_PUBLISH_RESPONSE, callback_type_);
+        ASSERT_TRUE(receivedCallback(NOTIFY_START_PUBLISH_RESPONSE));
         ASSERT_EQ(id_, inputCmdId + 1);
         ASSERT_EQ(status_.status, NanStatusCode::SUCCESS);
     }
@@ -699,7 +658,7 @@ TEST_P(WifiNanIfaceAidlTest, StartPublishRequest) {
  */
 TEST_P(WifiNanIfaceAidlTest, RespondToDataPathIndicationRequest_InvalidArgs) {
     uint16_t inputCmdId = 10;
-    callback_type_ = INVALID;
+    callback_event_bitmap_ = 0;
     NanRespondToDataPathIndicationRequest nanRespondToDataPathIndicationRequest = {};
     nanRespondToDataPathIndicationRequest.ifaceName = "AwareInterfaceNameTooLong";
     auto status = wifi_nan_iface_->respondToDataPathIndicationRequest(
@@ -716,7 +675,7 @@ TEST_P(WifiNanIfaceAidlTest, RespondToDataPathIndicationRequest_InvalidArgs) {
  */
 TEST_P(WifiNanIfaceAidlTest, InitiateDataPathRequest_InvalidArgs) {
     uint16_t inputCmdId = 10;
-    callback_type_ = INVALID;
+    callback_event_bitmap_ = 0;
     NanInitiateDataPathRequest nanInitiateDataPathRequest = {};
     nanInitiateDataPathRequest.ifaceName = "AwareInterfaceNameTooLong";
     auto status = wifi_nan_iface_->initiateDataPathRequest(inputCmdId, nanInitiateDataPathRequest);
