@@ -22,15 +22,20 @@ cc_binary {
         "Session.cpp",
         "main.cpp",
     ],
+    stl: "c++_static",
     shared_libs: [
-        "libbase",
         "libbinder_ndk",
+        "liblog",
+    ],
+    static_libs: [
+        "libandroid.hardware.biometrics.fingerprint.VirtualProps",
+        "libbase",
         "android.hardware.biometrics.fingerprint-V3-ndk",
         "android.hardware.biometrics.common-V3-ndk",
         "android.hardware.biometrics.common.thread",
         "android.hardware.biometrics.common.util",
+        "android.hardware.keymaster-V4-ndk",
     ],
-    static_libs: ["libandroid.hardware.biometrics.fingerprint.VirtualProps"],
     installable: false, // install APEX instead
 }
 
