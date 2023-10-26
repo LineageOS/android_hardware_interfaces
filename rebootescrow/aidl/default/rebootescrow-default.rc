@@ -1,4 +1,4 @@
-service vendor.rebootescrow-default /vendor/bin/hw/android.hardware.rebootescrow-service.default
+service vendor.rebootescrow-default /apex/com.android.hardware.rebootescrow/bin/hw/android.hardware.rebootescrow-service.default
     interface aidl android.hardware.rebootescrow.IRebootEscrow/default
     class hal
     user system
