@@ -51,6 +51,9 @@
           "include-filter": "com.android.car.hal.fakevhal.FakeVehicleStubUnitTest"
         }
       ]
+    },
+    {
+      "name": "VehicleHalProtoMessageConverterTest"
     }
   ]
 }
