@@ -128,7 +128,6 @@ cc_library {
     shared_libs: [
         "libaudio_aidl_conversion_common_ndk",
         "libaudioutils",
-        "libaudioutils_nonvndk",
         "libbluetooth_audio_session_aidl",
         "liblog",
         "libmedia_helper",
@@ -163,7 +162,6 @@ cc_binary {
         "libaudioserviceexampleimpl",
     ],
     shared_libs: [
-        "libaudioutils_nonvndk",
         "libaudio_aidl_conversion_common_ndk",
         "libbluetooth_audio_session_aidl",
         "liblog",
