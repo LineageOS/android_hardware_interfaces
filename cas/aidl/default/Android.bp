@@ -80,7 +80,8 @@ cc_binary {
 
 cc_fuzz {
     name: "android.hardware.cas-service_fuzzer",
-    vendor: true,
+    // TODO(b/307611931): avoid fuzzing on vendor until hermiticity issue is fixed
+    // vendor: true,
 
     defaults: ["service_fuzzer_defaults"],
     srcs: ["fuzzer.cpp"],
