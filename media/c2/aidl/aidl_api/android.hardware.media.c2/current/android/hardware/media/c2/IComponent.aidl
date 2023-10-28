@@ -49,8 +49,12 @@ interface IComponent {
     long blockPoolId;
     android.hardware.media.c2.IConfigurable configurable;
   }
+  parcelable C2AidlGbAllocator {
+    android.hardware.media.c2.IGraphicBufferAllocator igba;
+    ParcelFileDescriptor waitableFd;
+  }
   union BlockPoolAllocator {
     int allocatorId;
-    android.hardware.media.c2.IGraphicBufferAllocator igba;
+    android.hardware.media.c2.IComponent.C2AidlGbAllocator allocator;
   }
 }
