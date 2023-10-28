@@ -70,4 +70,31 @@ parcelable VehicleAreaConfig {
      * well.
      */
     VehiclePropertyAccess access = VehiclePropertyAccess.NONE;
+
+    /**
+     * Whether variable update rate is supported.
+     *
+     * This applies for continuous property only.
+     *
+     * It is HIGHLY RECOMMENDED to support variable update rate for all non-heartbeat continuous
+     * properties for better performance.
+     *
+     * If variable update rate is supported and 'enableVariableUpdateRate' is true in subscribe
+     * options, VHAL must only sends property update event when the property's value changes
+     * (a.k.a treat continuous as an on-change property).
+     *
+     * E.g. if the client is subscribing at 5hz at time 0. If the property's value is 0 initially
+     * and becomes 1 after 1 second.
+
+     * If variable update rate is not enabled, VHAL clients will receive 5 property change events
+     * with value 0 and 5 events with value 1 after 2 seconds.
+     *
+     * If variable update rate is enabled, VHAL clients will receive 1 property change event
+     * with value 1 at time 1s. VHAL may/may not send a property event for the initial value (e.g.
+     * a property change event with value 0 at time 0s). VHAL client must not rely on the first
+     * property event, and must use getValues to fetch the initial value. In fact, car service is
+     * using getValues to fetch the initial value, convert it to a property event and deliver to
+     * car service clients.
+     */
+    boolean supportVariableUpdateRate;
 }
