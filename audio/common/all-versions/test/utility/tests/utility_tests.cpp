@@ -70,6 +70,7 @@ namespace {
 std::string substitute(const char* fmt, const char* param) {
     std::string buffer(static_cast<size_t>(strlen(fmt) + strlen(param)), '\0');
     snprintf(buffer.data(), buffer.size(), fmt, param);
+    buffer.resize(strlen(buffer.c_str()));
     return buffer;
 }
 
