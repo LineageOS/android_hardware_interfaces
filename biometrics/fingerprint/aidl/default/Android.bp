@@ -11,8 +11,6 @@ cc_binary {
     name: "android.hardware.biometrics.fingerprint-service.example",
     vendor: true,
     relative_install_path: "hw",
-    init_rc: [":fingerprint-example.rc"],
-    vintf_fragments: [":fingerprint-example.xml"],
     local_include_dirs: ["include"],
     srcs: [
         "FakeLockoutTracker.cpp",
@@ -24,15 +22,21 @@ cc_binary {
         "Session.cpp",
         "main.cpp",
     ],
+    stl: "c++_static",
     shared_libs: [
-        "libbase",
         "libbinder_ndk",
+        "liblog",
+    ],
+    static_libs: [
+        "libandroid.hardware.biometrics.fingerprint.VirtualProps",
+        "libbase",
         "android.hardware.biometrics.fingerprint-V3-ndk",
         "android.hardware.biometrics.common-V3-ndk",
         "android.hardware.biometrics.common.thread",
         "android.hardware.biometrics.common.util",
+        "android.hardware.keymaster-V4-ndk",
     ],
-    static_libs: ["libandroid.hardware.biometrics.fingerprint.VirtualProps"],
+    installable: false, // install APEX instead
 }
 
 cc_test {
@@ -143,12 +147,35 @@ sysprop_library {
     vendor: true,
 }
 
-filegroup {
+prebuilt_etc {
     name: "fingerprint-example.rc",
-    srcs: ["fingerprint-example.rc"],
+    src: "fingerprint-example.rc",
+    installable: false,
 }
 
-filegroup {
+prebuilt_etc {
     name: "fingerprint-example.xml",
-    srcs: ["fingerprint-example.xml"],
+    src: "fingerprint-example.xml",
+    sub_dir: "vintf",
+    installable: false,
+}
+
+apex {
+    name: "com.android.hardware.biometrics.fingerprint.virtual",
+    manifest: "apex_manifest.json",
+    file_contexts: "apex_file_contexts",
+    key: "com.android.hardware.key",
+    certificate: ":com.android.hardware.certificate",
+    updatable: false,
+    vendor: true,
+
+    binaries: [
+        "android.hardware.biometrics.fingerprint-service.example",
+    ],
+    prebuilts: [
+        // init_rc
+        "fingerprint-example.rc",
+        // vintf_fragment
+        "fingerprint-example.xml",
+    ],
 }
