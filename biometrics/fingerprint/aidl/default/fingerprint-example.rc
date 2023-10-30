@@ -1,4 +1,4 @@
-service vendor.fingerprint-example /vendor/bin/hw/android.hardware.biometrics.fingerprint-service.example
+service vendor.fingerprint-example /apex/com.android.hardware.biometrics.fingerprint.virtual/bin/hw/android.hardware.biometrics.fingerprint-service.example
     class hal
     user nobody
     group nobody

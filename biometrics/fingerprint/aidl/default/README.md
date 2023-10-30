@@ -11,12 +11,6 @@ This HAL can be used on emulators, like cuttlefish, or on real devices. Add the
 following to your device's `.mk` file to include it:
 
 ```
-PRODUCT_PACKAGES_DEBUG += android.hardware.biometrics.fingerprint-service.example
-```
-
-or add the following to include it as an apex:
-
-```
 PRODUCT_PACKAGES_DEBUG += com.android.hardware.biometrics.fingerprint.virtual
 ```
 
