@@ -41,6 +41,7 @@ oneway interface IRadioDataResponse {
      * @param id The allocated id. On an error, this is set to 0.
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.data is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INTERNAL_ERR
@@ -53,6 +54,7 @@ oneway interface IRadioDataResponse {
      * @param dcResponse Attributes of data call
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.ims is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INTERNAL_ERR
@@ -65,6 +67,7 @@ oneway interface IRadioDataResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.data is not defined
      *   RadioError:NONE indicates success. Any other error will remove the network from the list.
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INVALID_CALL_ID
@@ -83,6 +86,7 @@ oneway interface IRadioDataResponse {
      * @param dcResponse List of SetupDataCallResult
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.data is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INTERNAL_ERR
@@ -95,6 +99,7 @@ oneway interface IRadioDataResponse {
      * @param slicingConfig Current slicing configuration
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.data is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INTERNAL_ERR
@@ -106,6 +111,7 @@ oneway interface IRadioDataResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.ims is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INTERNAL_ERR
@@ -117,6 +123,7 @@ oneway interface IRadioDataResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.data is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:NO_MEMORY
@@ -135,6 +142,7 @@ oneway interface IRadioDataResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.data is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:SUBSCRIPTION_NOT_AVAILABLE
@@ -150,6 +158,7 @@ oneway interface IRadioDataResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      *  Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.data is not defined
      *  RadioError:NONE
      *  RadioError:RADIO_NOT_AVAILABLE
      *  RadioError:MODEM_ERR
@@ -161,6 +170,7 @@ oneway interface IRadioDataResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.data is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:SUBSCRIPTION_NOT_AVAILABLE
@@ -180,6 +190,7 @@ oneway interface IRadioDataResponse {
      * @param dcResponse SetupDataCallResult
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.data is not defined
      *   RadioError:NONE must be returned on both success and failure of setup with the
      *              DataCallResponse.status containing the actual status
      *              For all other errors the DataCallResponse is ignored.
@@ -197,6 +208,7 @@ oneway interface IRadioDataResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.ims is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INTERNAL_ERR
@@ -212,6 +224,7 @@ oneway interface IRadioDataResponse {
      *        request.
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.data is not defined
      *   RadioError:NONE
      *   RadioError:NO_RESOURCES
      *   RadioError:INVALID_ARGUMENTS
@@ -222,6 +235,7 @@ oneway interface IRadioDataResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.data is not defined
      *   RadioError:NONE
      *   RadioError:INVALID_ARGUMENTS
      */

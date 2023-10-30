@@ -33,6 +33,7 @@ oneway interface IRadioVoiceResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.calling is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INVALID_STATE
@@ -61,6 +62,7 @@ oneway interface IRadioVoiceResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.calling is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:SIM_BUSY
@@ -81,6 +83,7 @@ oneway interface IRadioVoiceResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.calling is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE (radio resetting)
      *   RadioError:NO_MEMORY
@@ -101,6 +104,7 @@ oneway interface IRadioVoiceResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.calling is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE (radio resetting)
      *   RadioError:DIAL_MODIFIED_TO_USSD
@@ -129,6 +133,7 @@ oneway interface IRadioVoiceResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.calling is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE (radio resetting)
      *   RadioError:DIAL_MODIFIED_TO_USSD
@@ -152,6 +157,7 @@ oneway interface IRadioVoiceResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.calling is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:OPERATION_NO_ALLOWED
@@ -170,6 +176,7 @@ oneway interface IRadioVoiceResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.calling is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INVALID_ARGUMENTS
@@ -196,6 +203,7 @@ oneway interface IRadioVoiceResponse {
      *        CallForwardInfo must be returned with the service class set to "data + voice = 3".
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.calling is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:SS_MODIFIED_TO_DIAL
@@ -223,6 +231,7 @@ oneway interface IRadioVoiceResponse {
      *        for data and voice and disabled for everything else.
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.calling is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:SS_MODIFIED_TO_DIAL
@@ -245,6 +254,7 @@ oneway interface IRadioVoiceResponse {
      * @param status indicates CLIP status
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.calling is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INVALID_ARGUMENTS
@@ -264,6 +274,7 @@ oneway interface IRadioVoiceResponse {
      * @param m is "m" parameter from TS 27.007 7.7
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.calling is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:SS_MODIFIED_TO_DIAL
@@ -285,6 +296,7 @@ oneway interface IRadioVoiceResponse {
      * @param calls Current call list
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.calling is not defined
      *   RadioError:NO_MEMORY
      *   RadioError:INTERNAL_ERR
      *   RadioError:SYSTEM_ERR
@@ -327,6 +339,7 @@ oneway interface IRadioVoiceResponse {
      * for tone generation or error notification.
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.calling is not defined
      *   RadioError:NONE
      *   RadioError:NO_MEMORY
      *   RadioError:RADIO_NOT_AVAILABLE
@@ -346,6 +359,7 @@ oneway interface IRadioVoiceResponse {
      * @param enable true for "mute enabled" and false for "mute disabled"
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.calling is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:SS_MODIFIED_TO_DIAL
@@ -367,6 +381,7 @@ oneway interface IRadioVoiceResponse {
      *        true for Enhanced Privacy Mode (Private Long Code Mask)
      *
      * Valid errors:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.calling is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INVALID_ARGUMENTS
@@ -384,6 +399,7 @@ oneway interface IRadioVoiceResponse {
      * @param mode TtyMode
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.calling is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INVALID_ARGUMENTS
@@ -400,6 +416,7 @@ oneway interface IRadioVoiceResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.calling is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:NO_MEMORY
@@ -417,6 +434,7 @@ oneway interface IRadioVoiceResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.calling is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE (radio resetting)
      *   RadioError:INVALID_ARGUMENTS
@@ -434,6 +452,7 @@ oneway interface IRadioVoiceResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.calling is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE (radio resetting)
      *   RadioError:INVALID_STATE
@@ -454,6 +473,7 @@ oneway interface IRadioVoiceResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.calling is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE (radio resetting)
      *   RadioError:INVALID_STATE
@@ -474,6 +494,7 @@ oneway interface IRadioVoiceResponse {
      * @param enable true for "vonr enabled" and false for "vonr disabled"
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.ims is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:MODEM_ERR
@@ -486,6 +507,7 @@ oneway interface IRadioVoiceResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.calling is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE (radio resetting)
      *   RadioError:INVALID_STATE
@@ -507,6 +529,7 @@ oneway interface IRadioVoiceResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.calling is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INVALID_ARGUMENTS
@@ -527,6 +550,7 @@ oneway interface IRadioVoiceResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.cdma is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INVALID_ARGUMENTS
@@ -547,6 +571,7 @@ oneway interface IRadioVoiceResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.calling is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INVALID_ARGUMENTS
@@ -565,6 +590,7 @@ oneway interface IRadioVoiceResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.calling is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:FDN_CHECK_FAILURE
@@ -590,6 +616,7 @@ oneway interface IRadioVoiceResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.calling is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INVALID_ARGUMENTS
@@ -610,6 +637,7 @@ oneway interface IRadioVoiceResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.calling is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:SS_MODIFIED_TO_DIAL
@@ -632,6 +660,7 @@ oneway interface IRadioVoiceResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.calling is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:SS_MODIFIED_TO_DIAL
@@ -654,6 +683,7 @@ oneway interface IRadioVoiceResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.calling is not defined
      *   RadioError:NONE
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:RADIO_NOT_AVAILABLE
@@ -672,6 +702,7 @@ oneway interface IRadioVoiceResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.calling is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INVALID_ARGUMENTS
@@ -688,6 +719,7 @@ oneway interface IRadioVoiceResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.calling is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INVALID_ARGUMENTS
@@ -705,6 +737,7 @@ oneway interface IRadioVoiceResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.calling is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INVALID_ARGUMENTS
@@ -721,6 +754,7 @@ oneway interface IRadioVoiceResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.calling is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INVALID_ARGUMENTS
@@ -734,6 +768,7 @@ oneway interface IRadioVoiceResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.calling is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INVALID_ARGUMENTS
@@ -753,6 +788,7 @@ oneway interface IRadioVoiceResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.calling is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INVALID_ARGUMENTS
@@ -772,6 +808,7 @@ oneway interface IRadioVoiceResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.calling is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE (radio resetting)
      *   RadioError:INVALID_STATE

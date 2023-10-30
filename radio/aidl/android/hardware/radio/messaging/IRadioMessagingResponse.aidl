@@ -31,6 +31,8 @@ oneway interface IRadioMessagingResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.messaging is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INTERNAL_ERR
@@ -44,6 +46,7 @@ oneway interface IRadioMessagingResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.cdma is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INVALID_ARGUMENTS
@@ -66,6 +69,8 @@ oneway interface IRadioMessagingResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.messaging is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INTERNAL_ERR
@@ -88,6 +93,7 @@ oneway interface IRadioMessagingResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.cdma is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INVALID_ARGUMENTS
@@ -109,6 +115,8 @@ oneway interface IRadioMessagingResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.messaging is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:SIM_FULL
@@ -131,6 +139,7 @@ oneway interface IRadioMessagingResponse {
      * @param configs Vector of CDMA Broadcast SMS configs.
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.cdma is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INVALID_ARGUMENTS
@@ -153,6 +162,8 @@ oneway interface IRadioMessagingResponse {
      * @param configs Vector of GSM/WCDMA Cell broadcast configs
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.messaging is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INVALID_ARGUMENTS
@@ -175,6 +186,8 @@ oneway interface IRadioMessagingResponse {
      * @param smsc Short Message Service Center address on the device
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.messaging is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INVALID_ARGUMENTS
@@ -196,6 +209,8 @@ oneway interface IRadioMessagingResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.messaging is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INVALID_ARGUMENTS
@@ -216,6 +231,7 @@ oneway interface IRadioMessagingResponse {
      * @param sms Response to sms sent as defined by SendSmsResult
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.cdma is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:SMS_SEND_FAIL_RETRY
@@ -249,6 +265,7 @@ oneway interface IRadioMessagingResponse {
      * @param sms Sms result struct as defined by SendSmsResult
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.cdma is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INVALID_ARGUMENTS
@@ -282,6 +299,7 @@ oneway interface IRadioMessagingResponse {
      * @param sms Response to sms sent as defined by SendSmsResult
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.ims is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:SMS_SEND_FAIL_RETRY
@@ -309,6 +327,8 @@ oneway interface IRadioMessagingResponse {
      * @param sms Response to sms sent as defined by SendSmsResult
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.messaging is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:SMS_SEND_FAIL_RETRY
@@ -341,6 +361,8 @@ oneway interface IRadioMessagingResponse {
      * @param sms Response to sms sent as defined by SendSmsResult
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.messaging is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:SMS_SEND_FAIL_RETRY
@@ -371,6 +393,7 @@ oneway interface IRadioMessagingResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.cdma is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INVALID_ARGUMENTS
@@ -391,6 +414,7 @@ oneway interface IRadioMessagingResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.cdma is not
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INVALID_ARGUMENTS
@@ -410,6 +434,8 @@ oneway interface IRadioMessagingResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.messaging is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INVALID_ARGUMENTS
@@ -430,6 +456,8 @@ oneway interface IRadioMessagingResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.messaging is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INVALID_ARGUMENTS
@@ -449,6 +477,8 @@ oneway interface IRadioMessagingResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.messaging is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INVALID_ARGUMENTS
@@ -471,6 +501,7 @@ oneway interface IRadioMessagingResponse {
      * @param index record index where the cmda sms message is stored
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.cdma is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INVALID_ARGUMENTS
@@ -497,6 +528,8 @@ oneway interface IRadioMessagingResponse {
      * @param index record index where the message is stored
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.messaging is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:SIM_FULL

@@ -29,6 +29,8 @@ oneway interface ISapCallback {
      * @param serial Id to match req-resp. Value must match the one in req.
      * @param resultCode ResultCode to indicate if command was processed correctly
      *        Possible values:
+     *        SapResultCode:NOT_SUPPORTED  when android.hardware.telephony.subscription is not
+     *                                     defined
      *        SapResultCode:SUCCESS,
      *        SapResultCode:GENERIC_FAILURE,
      *        SapResultCode:CARD_NOT_ACCESSSIBLE,
@@ -77,6 +79,8 @@ oneway interface ISapCallback {
      * @param serial Id to match req-resp. Value must match the one in req.
      * @param resultCode ResultCode to indicate if command was processed correctly
      *        Possible values:
+     *        SapResultCode:NOT_SUPPORTED  when android.hardware.telephony.subscription is not
+     *                                     defined
      *        SapResultCode:SUCCESS,
      *        SapResultCode:GENERIC_FAILURE,
      *        SapResultCode:CARD_NOT_ACCESSSIBLE, (possible only for power on req)
@@ -92,6 +96,8 @@ oneway interface ISapCallback {
      * @param serial Id to match req-resp. Value must match the one in req.
      * @param resultCode ResultCode to indicate if command was processed correctly
      *        Possible values:
+     *        SapResultCode:NOT_SUPPORTED  when android.hardware.telephony.subscription is not
+     *                                     defined
      *        SapResultCode:SUCCESS,
      *        SapResultCode:GENERIC_FAILURE,
      *        SapResultCode:CARD_NOT_ACCESSSIBLE,
@@ -114,6 +120,8 @@ oneway interface ISapCallback {
      * @param serial Id to match req-resp. Value must match the one in req.
      * @param resultCode ResultCode to indicate if command was processed correctly
      *        Possible values:
+     *        SapResultCode:NOT_SUPPORTED  when android.hardware.telephony.subscription is not
+     *                                     defined
      *        SapResultCode:SUCCESS,
      *        SapResultCode:GENERIC_FAILURE,
      *        SapResultCode:CARD_ALREADY_POWERED_OFF,
@@ -130,6 +138,8 @@ oneway interface ISapCallback {
      * @param serial Id to match req-resp. Value must match the one in req.
      * @param resultCode ResultCode to indicate if command was processed correctly
      *        Possible values:
+     *        SapResultCode:NOT_SUPPORTED  when android.hardware.telephony.subscription is not
+     *                                     defined
      *        SapResultCode:SUCCESS,
      *        SapResultCode:GENERIC_FAILURE
      *        SapResultCode:DATA_NOT_AVAILABLE
@@ -145,6 +155,8 @@ oneway interface ISapCallback {
      * @param serial Id to match req-resp. Value must match the one in req.
      * @param resultCode ResultCode to indicate if command was processed correctly
      *        Possible values:
+     *        SapResultCode:NOT_SUPPORTED  when android.hardware.telephony.subscription is not
+     *                                     defined
      *        SapResultCode:SUCCESS
      *        SapResultCode:NOT_SUPPORTED
      */
