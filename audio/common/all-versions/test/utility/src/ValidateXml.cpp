@@ -19,6 +19,7 @@
 
 #include <numeric>
 
+#include <libxml/parser.h>
 #define LIBXML_SCHEMAS_ENABLED
 #include <libxml/xmlschemastypes.h>
 #define LIBXML_XINCLUDE_ENABLED
