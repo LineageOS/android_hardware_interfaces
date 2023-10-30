@@ -52,6 +52,7 @@ using aidl::android::hardware::audio::effect::Processing;
 using aidl::android::media::audio::common::AudioSource;
 using aidl::android::media::audio::common::AudioStreamType;
 using aidl::android::media::audio::common::AudioUuid;
+using android::hardware::audio::common::testing::detail::TestExecutionTracer;
 
 /// Effect factory testing.
 class EffectFactoryTest : public testing::TestWithParam<std::string> {
@@ -303,6 +304,7 @@ GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(EffectFactoryTest);
 
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
+    ::testing::UnitTest::GetInstance()->listeners().Append(new TestExecutionTracer());
     ABinderProcess_setThreadPoolMaxThreadCount(1);
     ABinderProcess_startThreadPool();
     return RUN_ALL_TESTS();

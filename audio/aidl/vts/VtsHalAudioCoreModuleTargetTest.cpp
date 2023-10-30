@@ -108,6 +108,7 @@ using aidl::android::media::audio::common::MicrophoneInfo;
 using aidl::android::media::audio::common::Void;
 using android::hardware::audio::common::StreamLogic;
 using android::hardware::audio::common::StreamWorker;
+using android::hardware::audio::common::testing::detail::TestExecutionTracer;
 using ndk::enum_range;
 using ndk::ScopedAStatus;
 
@@ -4443,21 +4444,6 @@ TEST_P(AudioModuleRemoteSubmix, OpenInputMultipleTimes) {
 INSTANTIATE_TEST_SUITE_P(AudioModuleRemoteSubmixTest, AudioModuleRemoteSubmix,
                          ::testing::ValuesIn(getRemoteSubmixModuleInstance()));
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(AudioModuleRemoteSubmix);
-
-class TestExecutionTracer : public ::testing::EmptyTestEventListener {
-  public:
-    void OnTestStart(const ::testing::TestInfo& test_info) override {
-        TraceTestState("Started", test_info);
-    }
-    void OnTestEnd(const ::testing::TestInfo& test_info) override {
-        TraceTestState("Completed", test_info);
-    }
-
-  private:
-    static void TraceTestState(const std::string& state, const ::testing::TestInfo& test_info) {
-        LOG(INFO) << state << " " << test_info.test_suite_name() << "::" << test_info.name();
-    }
-};
 
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
