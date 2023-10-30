@@ -329,6 +329,11 @@ struct PropIdAreaIdHash {
     }
 };
 
+inline std::string propIdToString(int32_t propId) {
+    return toString(
+            static_cast<aidl::android::hardware::automotive::vehicle::VehicleProperty>(propId));
+}
+
 }  // namespace vehicle
 }  // namespace automotive
 }  // namespace hardware

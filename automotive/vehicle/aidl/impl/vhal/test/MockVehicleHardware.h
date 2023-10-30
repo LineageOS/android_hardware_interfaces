@@ -29,6 +29,7 @@
 #include <list>
 #include <memory>
 #include <mutex>
+#include <set>
 #include <thread>
 #include <unordered_map>
 #include <vector>
@@ -59,8 +60,10 @@ class MockVehicleHardware final : public IVehicleHardware {
     void registerOnPropertyChangeEvent(
             std::unique_ptr<const PropertyChangeCallback> callback) override;
     void registerOnPropertySetErrorEvent(std::unique_ptr<const PropertySetErrorCallback>) override;
-    aidl::android::hardware::automotive::vehicle::StatusCode updateSampleRate(
-            int32_t propId, int32_t areaId, float sampleRate) override;
+    aidl::android::hardware::automotive::vehicle::StatusCode subscribe(
+            aidl::android::hardware::automotive::vehicle::SubscribeOptions options) override;
+    aidl::android::hardware::automotive::vehicle::StatusCode unsubscribe(int32_t propId,
+                                                                         int32_t areaId) override;
     std::chrono::nanoseconds getPropertyOnChangeEventBatchingWindow() override;
 
     // Test functions.
@@ -90,6 +93,9 @@ class MockVehicleHardware final : public IVehicleHardware {
     void sendOnPropertySetErrorEvent(const std::vector<SetValueErrorEvent>& errorEvents);
     void setPropertyOnChangeEventBatchingWindow(std::chrono::nanoseconds window);
 
+    std::set<std::pair<int32_t, int32_t>> getSubscribedOnChangePropIdAreaIds();
+    std::set<std::pair<int32_t, int32_t>> getSubscribedContinuousPropIdAreaIds();
+
   private:
     mutable std::mutex mLock;
     mutable std::condition_variable mCv;
@@ -114,6 +120,7 @@ class MockVehicleHardware final : public IVehicleHardware {
             const std::vector<aidl::android::hardware::automotive::vehicle::GetValueRequest>&)>
             mGetValueResponder GUARDED_BY(mLock);
     std::chrono::nanoseconds mEventBatchingWindow GUARDED_BY(mLock) = std::chrono::nanoseconds(0);
+    std::set<std::pair<int32_t, int32_t>> mSubOnChangePropIdAreaIds GUARDED_BY(mLock);
 
     template <class ResultType>
     aidl::android::hardware::automotive::vehicle::StatusCode returnResponse(
@@ -126,6 +133,8 @@ class MockVehicleHardware final : public IVehicleHardware {
             const std::vector<RequestType>& requests,
             std::list<std::vector<RequestType>>* storedRequests,
             std::list<std::vector<ResultType>>* storedResponses) const REQUIRES(mLock);
+    aidl::android::hardware::automotive::vehicle::StatusCode subscribePropIdAreaId(
+            int32_t propId, int32_t areaId, float sampleRateHz);
 
     DumpResult mDumpResult;
 

@@ -114,6 +114,8 @@ class SubscriptionManagerTest : public testing::Test {
 
     void clearEvents() { return getCallback()->clearEvents(); }
 
+    std::shared_ptr<MockVehicleHardware> getHardware() { return mHardware; }
+
   private:
     std::unique_ptr<SubscriptionManager> mManager;
     std::shared_ptr<PropertyCallback> mCallback;
@@ -131,6 +133,9 @@ TEST_F(SubscriptionManagerTest, testSubscribeGlobalContinuous) {
 
     auto result = getManager()->subscribe(getCallbackClient(), options, true);
     ASSERT_TRUE(result.ok()) << "failed to subscribe: " << result.error().message();
+
+    ASSERT_THAT(getHardware()->getSubscribedContinuousPropIdAreaIds(),
+                UnorderedElementsAre(std::pair<int32_t, int32_t>(0, 0)));
 
     std::this_thread::sleep_for(std::chrono::seconds(1));
 
@@ -240,6 +245,8 @@ TEST_F(SubscriptionManagerTest, testUnsubscribeGlobalContinuous) {
     result = getManager()->unsubscribe(getCallbackClient()->asBinder().get());
     ASSERT_TRUE(result.ok()) << "failed to unsubscribe: " << result.error().message();
 
+    ASSERT_EQ(getHardware()->getSubscribedContinuousPropIdAreaIds().size(), 0u);
+
     // Wait for the last events to come.
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
@@ -316,7 +323,7 @@ TEST_F(SubscriptionManagerTest, testUnsubscribeByCallback) {
     EXPECT_TRUE(getEvents().empty());
 }
 
-TEST_F(SubscriptionManagerTest, testUnsubscribeFailure) {
+TEST_F(SubscriptionManagerTest, testUnsubscribeUnsubscribedPropId) {
     std::vector<SubscribeOptions> options = {
             {
                     .propId = 0,
@@ -334,14 +341,21 @@ TEST_F(SubscriptionManagerTest, testUnsubscribeFailure) {
     // Property ID: 2 was not subscribed.
     result = getManager()->unsubscribe(getCallbackClient()->asBinder().get(),
                                        std::vector<int32_t>({0, 1, 2}));
-    ASSERT_FALSE(result.ok()) << "unsubscribe an unsubscribed property must fail";
+    ASSERT_TRUE(result.ok()) << "unsubscribe an unsubscribed property must do nothing";
 
-    // Since property 0 and property 1 was not unsubscribed successfully, we should be able to
-    // unsubscribe them again.
-    result = getManager()->unsubscribe(getCallbackClient()->asBinder().get(),
-                                       std::vector<int32_t>({0, 1}));
-    ASSERT_TRUE(result.ok()) << "a failed unsubscription must not unsubscribe any properties"
-                             << result.error().message();
+    std::vector<VehiclePropValue> updatedValues = {
+            {
+                    .prop = 0,
+                    .areaId = 0,
+            },
+            {
+                    .prop = 1,
+                    .areaId = 0,
+            },
+    };
+    auto clients = getManager()->getSubscribedClients(std::vector<VehiclePropValue>(updatedValues));
+
+    ASSERT_EQ(clients.size(), 0u) << "all subscribed properties must be unsubscribed";
 }
 
 TEST_F(SubscriptionManagerTest, testSubscribeOnchange) {
@@ -370,6 +384,11 @@ TEST_F(SubscriptionManagerTest, testSubscribeOnchange) {
     ASSERT_TRUE(result.ok()) << "failed to subscribe: " << result.error().message();
     result = getManager()->subscribe(client2, options2, false);
     ASSERT_TRUE(result.ok()) << "failed to subscribe: " << result.error().message();
+    ASSERT_THAT(getHardware()->getSubscribedOnChangePropIdAreaIds(),
+                UnorderedElementsAre(std::pair<int32_t, int32_t>(0, 0),
+                                     std::pair<int32_t, int32_t>(0, 1),
+                                     std::pair<int32_t, int32_t>(1, 0)));
+    ASSERT_EQ(getHardware()->getSubscribedContinuousPropIdAreaIds().size(), 0u);
 
     std::vector<VehiclePropValue> updatedValues = {
             {
@@ -483,6 +502,8 @@ TEST_F(SubscriptionManagerTest, testUnsubscribeOnchange) {
     auto clients = getManager()->getSubscribedClients(std::vector<VehiclePropValue>(updatedValues));
 
     ASSERT_THAT(clients[getCallbackClient()], ElementsAre(updatedValues[1]));
+    ASSERT_THAT(getHardware()->getSubscribedOnChangePropIdAreaIds(),
+                UnorderedElementsAre(std::pair<int32_t, int32_t>(1, 0)));
 }
 
 TEST_F(SubscriptionManagerTest, testCheckSampleRateHzValid) {

@@ -92,7 +92,7 @@ class VehiclePropertyStore final {
     // used as the key.
     void registerProperty(
             const aidl::android::hardware::automotive::vehicle::VehiclePropConfig& config,
-            TokenFunction tokenFunc = nullptr);
+            TokenFunction tokenFunc = nullptr) EXCLUDES(mLock);
 
     // Stores provided value. Returns error if config wasn't registered. If 'updateStatus' is
     // true, the 'status' in 'propValue' would be stored. Otherwise, if this is a new value,
@@ -102,44 +102,47 @@ class VehiclePropertyStore final {
     // 'EventMode' controls whether the 'OnValueChangeCallback' will be called for this operation.
     VhalResult<void> writeValue(VehiclePropValuePool::RecyclableType propValue,
                                 bool updateStatus = false,
-                                EventMode mode = EventMode::ON_VALUE_CHANGE);
+                                EventMode mode = EventMode::ON_VALUE_CHANGE) EXCLUDES(mLock);
 
     // Remove a given property value from the property store. The 'propValue' would be used to
     // generate the key for the value to remove.
     void removeValue(
-            const aidl::android::hardware::automotive::vehicle::VehiclePropValue& propValue);
+            const aidl::android::hardware::automotive::vehicle::VehiclePropValue& propValue)
+            EXCLUDES(mLock);
 
     // Remove all the values for the property.
-    void removeValuesForProperty(int32_t propId);
+    void removeValuesForProperty(int32_t propId) EXCLUDES(mLock);
 
     // Read all the stored values.
-    std::vector<VehiclePropValuePool::RecyclableType> readAllValues() const;
+    std::vector<VehiclePropValuePool::RecyclableType> readAllValues() const EXCLUDES(mLock);
 
     // Read all the values for the property.
-    ValuesResultType readValuesForProperty(int32_t propId) const;
+    ValuesResultType readValuesForProperty(int32_t propId) const EXCLUDES(mLock);
 
     // Read the value for the requested property. Returns {@code StatusCode::NOT_AVAILABLE} if the
     // value has not been set yet. Returns {@code StatusCode::INVALID_ARG} if the property is
     // not configured.
     ValueResultType readValue(
-            const aidl::android::hardware::automotive::vehicle::VehiclePropValue& request) const;
+            const aidl::android::hardware::automotive::vehicle::VehiclePropValue& request) const
+            EXCLUDES(mLock);
 
     // Read the value for the requested property. Returns {@code StatusCode::NOT_AVAILABLE} if the
     // value has not been set yet. Returns {@code StatusCode::INVALID_ARG} if the property is
     // not configured.
-    ValueResultType readValue(int32_t prop, int32_t area = 0, int64_t token = 0) const;
+    ValueResultType readValue(int32_t prop, int32_t area = 0, int64_t token = 0) const
+            EXCLUDES(mLock);
 
     // Get all property configs.
     std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropConfig> getAllConfigs()
-            const;
+            const EXCLUDES(mLock);
 
     // Get the property config for the requested property.
     android::base::Result<const aidl::android::hardware::automotive::vehicle::VehiclePropConfig*,
                           VhalError>
-    getConfig(int32_t propId) const;
+    getConfig(int32_t propId) const EXCLUDES(mLock);
 
     // Set a callback that would be called when a property value has been updated.
-    void setOnValueChangeCallback(const OnValueChangeCallback& callback);
+    void setOnValueChangeCallback(const OnValueChangeCallback& callback) EXCLUDES(mLock);
 
     inline std::shared_ptr<VehiclePropValuePool> getValuePool() { return mValuePool; }
 

@@ -60,6 +60,8 @@ using ::aidl::android::hardware::automotive::vehicle::RawPropValues;
 using ::aidl::android::hardware::automotive::vehicle::SetValueRequest;
 using ::aidl::android::hardware::automotive::vehicle::SetValueResult;
 using ::aidl::android::hardware::automotive::vehicle::StatusCode;
+using ::aidl::android::hardware::automotive::vehicle::SubscribeOptions;
+using ::aidl::android::hardware::automotive::vehicle::toString;
 using ::aidl::android::hardware::automotive::vehicle::VehicleApPowerStateReport;
 using ::aidl::android::hardware::automotive::vehicle::VehicleApPowerStateReq;
 using ::aidl::android::hardware::automotive::vehicle::VehicleArea;
@@ -67,6 +69,7 @@ using ::aidl::android::hardware::automotive::vehicle::VehicleHwKeyInputAction;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropConfig;
 using ::aidl::android::hardware::automotive::vehicle::VehicleProperty;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyAccess;
+using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyChangeMode;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyGroup;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyStatus;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType;
@@ -1926,49 +1929,132 @@ void FakeVehicleHardware::registerOnPropertySetErrorEvent(
     mOnPropertySetErrorCallback = std::move(callback);
 }
 
-StatusCode FakeVehicleHardware::updateSampleRate(int32_t propId, int32_t areaId, float sampleRate) {
-    // DefaultVehicleHal makes sure that sampleRate must be within minSampleRate and maxSampleRate.
-    // For fake implementation, we would write the same value with a new timestamp into propStore
-    // at sample rate.
-    std::scoped_lock<std::mutex> lockGuard(mLock);
+StatusCode FakeVehicleHardware::subscribe(SubscribeOptions options) {
+    int32_t propId = options.propId;
 
+    auto configResult = mServerSidePropStore->getConfig(propId);
+    if (!configResult.ok()) {
+        ALOGE("subscribe: property: %" PRId32 " is not supported", propId);
+        return StatusCode::INVALID_ARG;
+    }
+
+    std::scoped_lock<std::mutex> lockGuard(mLock);
+    for (int areaId : options.areaIds) {
+        if (StatusCode status = subscribePropIdAreaIdLocked(propId, areaId, options.sampleRate,
+                                                            options.enableVariableUpdateRate,
+                                                            *configResult.value());
+            status != StatusCode::OK) {
+            return status;
+        }
+    }
+    return StatusCode::OK;
+}
+
+bool FakeVehicleHardware::isVariableUpdateRateSupported(const VehiclePropConfig& vehiclePropConfig,
+                                                        int32_t areaId) {
+    for (size_t i = 0; i < vehiclePropConfig.areaConfigs.size(); i++) {
+        const auto& areaConfig = vehiclePropConfig.areaConfigs[i];
+        if (areaConfig.areaId != areaId) {
+            continue;
+        }
+        if (areaConfig.supportVariableUpdateRate) {
+            return true;
+        }
+        break;
+    }
+    return false;
+}
+
+StatusCode FakeVehicleHardware::subscribePropIdAreaIdLocked(
+        int32_t propId, int32_t areaId, float sampleRateHz, bool enableVariableUpdateRate,
+        const VehiclePropConfig& vehiclePropConfig) {
+    PropIdAreaId propIdAreaId{
+            .propId = propId,
+            .areaId = areaId,
+    };
+    switch (vehiclePropConfig.changeMode) {
+        case VehiclePropertyChangeMode::STATIC:
+            ALOGW("subscribe to a static property, do nothing.");
+            return StatusCode::OK;
+        case VehiclePropertyChangeMode::ON_CHANGE:
+            mSubOnChangePropIdAreaIds.insert(std::move(propIdAreaId));
+            return StatusCode::OK;
+        case VehiclePropertyChangeMode::CONTINUOUS:
+            if (sampleRateHz == 0.f) {
+                ALOGE("Must not use sample rate 0 for a continuous property");
+                return StatusCode::INTERNAL_ERROR;
+            }
+            if (mRecurrentActions.find(propIdAreaId) != mRecurrentActions.end()) {
+                mRecurrentTimer->unregisterTimerCallback(mRecurrentActions[propIdAreaId]);
+            }
+            int64_t intervalInNanos = static_cast<int64_t>(1'000'000'000. / sampleRateHz);
+
+            // For continuous properties, we must generate a new onPropertyChange event
+            // periodically according to the sample rate.
+            auto eventMode = VehiclePropertyStore::EventMode::ALWAYS;
+            if (isVariableUpdateRateSupported(vehiclePropConfig, areaId) &&
+                enableVariableUpdateRate) {
+                eventMode = VehiclePropertyStore::EventMode::ON_VALUE_CHANGE;
+            }
+            auto action = std::make_shared<RecurrentTimer::Callback>([this, propId, areaId,
+                                                                      eventMode] {
+                // Refresh the property value. In real implementation, this should poll the latest
+                // value from vehicle bus. Here, we are just refreshing the existing value with a
+                // new timestamp.
+                auto result = getValue(VehiclePropValue{
+                        .areaId = areaId,
+                        .prop = propId,
+                        .value = {},
+                });
+                if (!result.ok()) {
+                    // Failed to read current value, skip refreshing.
+                    return;
+                }
+                result.value()->timestamp = elapsedRealtimeNano();
+
+                mServerSidePropStore->writeValue(std::move(result.value()), /*updateStatus=*/true,
+                                                 eventMode);
+            });
+            mRecurrentTimer->registerTimerCallback(intervalInNanos, action);
+            mRecurrentActions[propIdAreaId] = action;
+            return StatusCode::OK;
+    }
+}
+
+StatusCode FakeVehicleHardware::unsubscribe(int32_t propId, int32_t areaId) {
+    std::scoped_lock<std::mutex> lockGuard(mLock);
     PropIdAreaId propIdAreaId{
             .propId = propId,
             .areaId = areaId,
     };
     if (mRecurrentActions.find(propIdAreaId) != mRecurrentActions.end()) {
         mRecurrentTimer->unregisterTimerCallback(mRecurrentActions[propIdAreaId]);
+        mRecurrentActions.erase(propIdAreaId);
     }
-    if (sampleRate == 0) {
-        return StatusCode::OK;
-    }
-    int64_t interval = static_cast<int64_t>(1'000'000'000. / sampleRate);
-    auto action = std::make_shared<RecurrentTimer::Callback>([this, propId, areaId] {
-        // Refresh the property value. In real implementation, this should poll the latest value
-        // from vehicle bus. Here, we are just refreshing the existing value with a new timestamp.
-        auto result = getValue(VehiclePropValue{
-                .areaId = areaId,
-                .prop = propId,
-                .value = {},
-        });
-        if (!result.ok()) {
-            // Failed to read current value, skip refreshing.
-            return;
-        }
-        result.value()->timestamp = elapsedRealtimeNano();
-        // For continuous properties, we must generate a new onPropertyChange event periodically
-        // according to the sample rate.
-        mServerSidePropStore->writeValue(std::move(result.value()), /*updateStatus=*/true,
-                                         VehiclePropertyStore::EventMode::ALWAYS);
-    });
-    mRecurrentTimer->registerTimerCallback(interval, action);
-    mRecurrentActions[propIdAreaId] = action;
+    mSubOnChangePropIdAreaIds.erase(propIdAreaId);
     return StatusCode::OK;
 }
 
 void FakeVehicleHardware::onValueChangeCallback(const VehiclePropValue& value) {
     if (mOnPropertyChangeCallback == nullptr) {
         return;
+    }
+
+    PropIdAreaId propIdAreaId{
+            .propId = value.prop,
+            .areaId = value.areaId,
+    };
+
+    {
+        std::scoped_lock<std::mutex> lockGuard(mLock);
+        if (mRecurrentActions.find(propIdAreaId) == mRecurrentActions.end() &&
+            mSubOnChangePropIdAreaIds.find(propIdAreaId) == mSubOnChangePropIdAreaIds.end()) {
+            if (FAKE_VEHICLEHARDWARE_DEBUG) {
+                ALOGD("The updated property value: %s is not subscribed, ignore",
+                      value.toString().c_str());
+            }
+            return;
+        }
     }
 
     std::vector<VehiclePropValue> updatedValues;

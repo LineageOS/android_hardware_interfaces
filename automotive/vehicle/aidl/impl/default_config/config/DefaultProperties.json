@@ -3579,7 +3579,13 @@
             "property": "VehicleProperty::WATCHDOG_TERMINATED_PROCESS"
         },
         {
-            "property": "VehicleProperty::VHAL_HEARTBEAT"
+            "property": "VehicleProperty::VHAL_HEARTBEAT",
+            "areas": [
+                {
+                    "areaId": 0,
+                    "supportVariableUpdateRate": false
+                }
+            ]
         },
         {
             "property": "VehicleProperty::CLUSTER_SWITCH_UI",
@@ -3640,6 +3646,12 @@
                 0,
                 0,
                 16
+            ],
+            "areas": [
+                {
+                    "areaId": 0,
+                    "supportVariableUpdateRate": false
+                }
             ],
             "comment": "configArray specifies it consists of int64[2] and byte[16]."
         },
