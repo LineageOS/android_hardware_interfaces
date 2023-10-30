@@ -40,7 +40,10 @@ cc_defaults {
         "general-tests",
         "vts",
     ],
-    srcs: [":effectCommonFile"],
+    srcs: [
+        ":effectCommonFile",
+        "TestUtils.cpp",
+    ],
 }
 
 cc_test {
