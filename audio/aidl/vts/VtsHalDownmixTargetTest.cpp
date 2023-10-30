@@ -28,7 +28,7 @@ using aidl::android::hardware::audio::effect::getEffectTypeUuidDownmix;
 using aidl::android::hardware::audio::effect::IEffect;
 using aidl::android::hardware::audio::effect::IFactory;
 using aidl::android::hardware::audio::effect::Parameter;
-
+using android::hardware::audio::common::testing::detail::TestExecutionTracer;
 /**
  * Here we focus on specific parameter checking, general IEffect interfaces testing performed in
  * VtsAudioEffectTargetTest.
@@ -136,6 +136,7 @@ GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(DownmixParamTest);
 
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
+    ::testing::UnitTest::GetInstance()->listeners().Append(new TestExecutionTracer());
     ABinderProcess_setThreadPoolMaxThreadCount(1);
     ABinderProcess_startThreadPool();
     return RUN_ALL_TESTS();
