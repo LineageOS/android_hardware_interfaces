@@ -46,33 +46,42 @@ void KeyMaster4UtilsFuzzer::invokeKeyMasterUtils() {
     support::getOsVersion();
     support::getOsPatchlevel();
 
-    VerificationToken token;
-    token.challenge = mFdp->ConsumeIntegral<uint64_t>();
-    token.timestamp = mFdp->ConsumeIntegral<uint64_t>();
-    token.securityLevel = mFdp->PickValueInArray(kSecurityLevel);
-    size_t vectorSize = mFdp->ConsumeIntegralInRange<size_t>(0, kMaxVectorSize);
-    token.mac.resize(vectorSize);
-    for (size_t n = 0; n < vectorSize; ++n) {
-        token.mac[n] = n;
+    while (mFdp->remaining_bytes() > 0) {
+        auto keymaster_function = mFdp->PickValueInArray<const std::function<void()>>({
+                [&]() {
+                    VerificationToken token;
+                    token.challenge = mFdp->ConsumeIntegral<uint64_t>();
+                    token.timestamp = mFdp->ConsumeIntegral<uint64_t>();
+                    token.securityLevel = mFdp->PickValueInArray(kSecurityLevel);
+                    size_t vectorSize = mFdp->ConsumeIntegralInRange<size_t>(0, kMaxVectorSize);
+                    token.mac.resize(vectorSize);
+                    for (size_t n = 0; n < vectorSize; ++n) {
+                        token.mac[n] = mFdp->ConsumeIntegral<uint8_t>();
+                    }
+                    std::optional<std::vector<uint8_t>> serialized =
+                            serializeVerificationToken(token);
+                    if (serialized.has_value()) {
+                        std::optional<VerificationToken> deserialized =
+                                deserializeVerificationToken(serialized.value());
+                    }
+                },
+                [&]() {
+                    std::vector<uint8_t> dataVector;
+                    size_t size = mFdp->ConsumeIntegralInRange<size_t>(0, sizeof(hw_auth_token_t));
+                    dataVector = mFdp->ConsumeBytes<uint8_t>(size);
+                    support::blob2hidlVec(dataVector.data(), dataVector.size());
+                    support::blob2hidlVec(dataVector);
+                    HardwareAuthToken authToken = support::hidlVec2AuthToken(dataVector);
+                    hidl_vec<uint8_t> volatile hidlVector = support::authToken2HidlVec(authToken);
+                },
+                [&]() {
+                    std::string str = mFdp->ConsumeRandomLengthString(kMaxCharacters);
+                    support::blob2hidlVec(str);
+                },
+        });
+        keymaster_function();
     }
-    std::optional<std::vector<uint8_t>> serialized = serializeVerificationToken(token);
-    if (serialized.has_value()) {
-        std::optional<VerificationToken> deserialized =
-                deserializeVerificationToken(serialized.value());
-    }
-
-    std::vector<uint8_t> dataVector;
-    size_t size = mFdp->ConsumeIntegralInRange<size_t>(0, sizeof(hw_auth_token_t));
-    dataVector = mFdp->ConsumeBytes<uint8_t>(size);
-    support::blob2hidlVec(dataVector.data(), dataVector.size());
-
-    support::blob2hidlVec(dataVector);
-
-    std::string str = mFdp->ConsumeRandomLengthString(kMaxCharacters);
-    support::blob2hidlVec(str);
-
-    HardwareAuthToken authToken = support::hidlVec2AuthToken(dataVector);
-    hidl_vec<uint8_t> volatile hidlVector = support::authToken2HidlVec(authToken);
+    return;
 }
 
 void KeyMaster4UtilsFuzzer::process(const uint8_t* data, size_t size) {
