@@ -326,6 +326,8 @@ Filter::~Filter() {
     ALOGV("%s", __FUNCTION__);
     mFilterThreadRunning = true;
     std::vector<DemuxFilterEvent> events;
+
+    mFilterCount += 1;
     // All the filter event callbacks in start are for testing purpose.
     switch (mType.mainType) {
         case DemuxFilterMainType::TS:
@@ -361,6 +363,8 @@ Filter::~Filter() {
 
 ::ndk::ScopedAStatus Filter::stop() {
     ALOGV("%s", __FUNCTION__);
+
+    mFilterCount -= 1;
 
     mFilterThreadRunning = false;
     if (mFilterThread.joinable()) {

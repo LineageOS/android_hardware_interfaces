@@ -289,6 +289,7 @@ class Filter : public BnFilter {
     uint8_t mIpCidMonitored = 0;
 
     PlaybackStatus mIptvDvrPlaybackStatus;
+    std::atomic<int> mFilterCount = 0;
 };
 
 }  // namespace tuner
