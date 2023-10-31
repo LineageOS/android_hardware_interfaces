@@ -26,11 +26,11 @@ package {
 cc_defaults {
     name: "BroadcastRadioHalDefaults",
     static_libs: [
-        "android.hardware.broadcastradio@common-utils-aidl-lib",
+        "android.hardware.broadcastradio@common-utils-aidl-lib-V2",
         "android.hardware.broadcastradio@common-utils-lib",
     ],
     shared_libs: [
-        "android.hardware.broadcastradio-V1-ndk",
+        "android.hardware.broadcastradio-V2-ndk",
         "libbase",
         "libbinder_ndk",
         "liblog",
@@ -84,7 +84,7 @@ cc_fuzz {
     ],
     static_libs: [
         "DefaultBroadcastRadioHal",
-        "android.hardware.broadcastradio-V1-ndk",
+        "android.hardware.broadcastradio-V2-ndk",
     ],
     srcs: [
         "fuzzer.cpp",

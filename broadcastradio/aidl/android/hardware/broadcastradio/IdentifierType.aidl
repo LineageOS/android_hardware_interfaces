@@ -154,11 +154,42 @@ enum IdentifierType {
 
     /**
      * 32bit primary identifier for SiriusXM Satellite Radio.
+     *
+     * @deprecated SiriusXM Satellite Radio is not supported.
      */
     SXM_SERVICE_ID = DRMO_FREQUENCY_KHZ + 2,
 
     /**
      * 0-999 range
+     *
+     * @deprecated SiriusXM Satellite Radio is not supported.
      */
     SXM_CHANNEL,
+
+    /**
+     * 64bit additional identifier for HD Radio representing station location.
+     *
+     * Consists of (from the LSB):
+     * - 4 bit: Bits 0:3 of altitude
+     * - 13 bit: Fractional bits of longitude
+     * - 8 bit: Integer bits of longitude
+     * - 1 bit: 0 for east and 1 for west for longitude
+     * - 1 bit: 0, representing latitude
+     * - 5 bit: pad of zeros separating longitude and latitude
+     * - 4 bit: Bits 4:7 of altitude
+     * - 13 bit: Fractional bits of latitude
+     * - 8 bit: Integer bits of latitude
+     * - 1 bit: 0 for north and 1 for south for latitude
+     * - 1 bit: 1, representing latitude
+     * - 5 bit: pad of zeros
+     *
+     * This format is defined in NRSC-5-C document: SY_IDD_1020s.
+     *
+     * Due to Station ID abuse, some HD_STATION_ID_EXT identifiers may be not
+     * globally unique. To provide a best-effort solution, the station’s
+     * broadcast antenna containing the latitude and longitude may be carried
+     * as additional identifier and may be used by the tuner hardware to
+     * double-check tuning.
+     */
+    HD_STATION_LOCATION,
 }

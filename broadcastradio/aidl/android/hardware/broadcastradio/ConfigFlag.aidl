@@ -36,10 +36,12 @@ enum ConfigFlag {
      * Forces the analog playback for the supporting radio technology.
      *
      * User may disable digital playback for FM HD Radio or hybrid FM/DAB with
-     * this option. This is purely user choice, ie. does not reflect digital-
+     * this option. This is purely user choice, i.e. does not reflect digital-
      * analog handover state managed from the HAL implementation side.
      *
-     * Some radio technologies may not support this, ie. DAB.
+     * Some radio technologies may not support this, i.e. DAB.
+     *
+     * @deprecated Use {link #FORCE_ANALOG_FM} instead
      */
     FORCE_ANALOG,
 
@@ -89,4 +91,26 @@ enum ConfigFlag {
      * Enables DAB-FM soft-linking (related content).
      */
     DAB_FM_SOFT_LINKING,
+
+    /**
+     * Forces the FM analog playback for the supporting radio technology.
+     *
+     * User may disable FM digital playback for FM HD Radio or hybrid FM/DAB
+     * with this option. This is purely user choice, i.e. does not reflect
+     * digital-analog handover state managed from the HAL implementation side.
+     *
+     * Some radio technologies may not support this, i.e. DAB.
+     */
+    FORCE_ANALOG_FM,
+
+    /**
+     * Forces the AM analog playback for the supporting radio technology.
+     *
+     * User may disable AM digital playback for AM HD Radio or hybrid AM/DAB
+     * with this option. This is purely user choice, i.e. does not reflect
+     * digital-analog handover state managed from the HAL implementation side.
+     *
+     * Some radio technologies may not support this, i.e. DAB.
+     */
+    FORCE_ANALOG_AM,
 }

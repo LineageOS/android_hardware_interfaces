@@ -17,7 +17,6 @@
 #pragma once
 
 #include <aidl/android/hardware/broadcastradio/IdentifierType.h>
-#include <aidl/android/hardware/broadcastradio/Metadata.h>
 #include <aidl/android/hardware/broadcastradio/ProgramFilter.h>
 #include <aidl/android/hardware/broadcastradio/ProgramIdentifier.h>
 #include <aidl/android/hardware/broadcastradio/ProgramInfo.h>

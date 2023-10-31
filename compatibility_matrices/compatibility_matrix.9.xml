@@ -157,6 +157,7 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.broadcastradio</name>
+        <version>1-2</version>
         <interface>
             <name>IBroadcastRadio</name>
             <regex-instance>.*</regex-instance>
