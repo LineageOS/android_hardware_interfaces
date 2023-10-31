@@ -509,6 +509,24 @@ TEST_F(VehiclePropertyStoreTest, testPropertyChangeCallbackForceNoUpdate) {
     ASSERT_EQ(updatedValue.prop, INVALID_PROP_ID);
 }
 
+TEST_F(VehiclePropertyStoreTest, testPropertyChangeCallbackUseVehiclePropertyStore_noDeadLock) {
+    VehiclePropValue fuelCapacity = {
+            .prop = toInt(VehicleProperty::INFO_FUEL_CAPACITY),
+            .value = {.floatValues = {1.0}},
+    };
+
+    std::vector<VehiclePropConfig> configs;
+
+    mStore->setOnValueChangeCallback(
+            [this, &configs]([[maybe_unused]] const VehiclePropValue& value) {
+                configs = mStore->getAllConfigs();
+            });
+
+    ASSERT_RESULT_OK(mStore->writeValue(mValuePool->obtain(fuelCapacity), /*updateStatus=*/true,
+                                        VehiclePropertyStore::EventMode::ALWAYS));
+    ASSERT_EQ(configs.size(), static_cast<size_t>(2));
+}
+
 }  // namespace vehicle
 }  // namespace automotive
 }  // namespace hardware

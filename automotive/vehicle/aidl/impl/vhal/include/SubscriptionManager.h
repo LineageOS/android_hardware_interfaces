@@ -119,7 +119,7 @@ class SubscriptionManager final {
     mutable std::mutex mLock;
     std::unordered_map<PropIdAreaId, std::unordered_map<ClientIdType, CallbackType>,
                        PropIdAreaIdHash>
-            mClientsByPropIdArea GUARDED_BY(mLock);
+            mClientsByPropIdAreaId GUARDED_BY(mLock);
     std::unordered_map<ClientIdType, std::unordered_set<PropIdAreaId, PropIdAreaIdHash>>
             mSubscribedPropsByClient GUARDED_BY(mLock);
     std::unordered_map<PropIdAreaId, ContSubConfigs, PropIdAreaIdHash> mContSubConfigsByPropIdArea
@@ -128,12 +128,21 @@ class SubscriptionManager final {
     VhalResult<void> addContinuousSubscriberLocked(const ClientIdType& clientId,
                                                    const PropIdAreaId& propIdAreaId,
                                                    float sampleRateHz) REQUIRES(mLock);
+    VhalResult<void> addOnChangeSubscriberLocked(const PropIdAreaId& propIdAreaId) REQUIRES(mLock);
+    // Removes the subscription client for the continuous [propId, areaId].
     VhalResult<void> removeContinuousSubscriberLocked(const ClientIdType& clientId,
                                                       const PropIdAreaId& propIdAreaId)
             REQUIRES(mLock);
+    // Removes one subscription client for the on-change [propId, areaId].
+    VhalResult<void> removeOnChangeSubscriberLocked(const PropIdAreaId& propIdAreaId)
+            REQUIRES(mLock);
 
-    VhalResult<void> updateContSubConfigs(const PropIdAreaId& PropIdAreaId,
-                                          const ContSubConfigs& newConfig) REQUIRES(mLock);
+    VhalResult<void> updateContSubConfigsLocked(const PropIdAreaId& PropIdAreaId,
+                                                const ContSubConfigs& newConfig) REQUIRES(mLock);
+
+    VhalResult<void> unsubscribePropIdAreaIdLocked(SubscriptionManager::ClientIdType clientId,
+                                                   const PropIdAreaId& propIdAreaId)
+            REQUIRES(mLock);
 
     // Checks whether the manager is empty. For testing purpose.
     bool isEmpty();

@@ -91,9 +91,13 @@ class FakeVehicleHardware : public IVehicleHardware {
     void registerOnPropertySetErrorEvent(
             std::unique_ptr<const PropertySetErrorCallback> callback) override;
 
-    // Update the sample rate for the [propId, areaId] pair.
-    aidl::android::hardware::automotive::vehicle::StatusCode updateSampleRate(
-            int32_t propId, int32_t areaId, float sampleRate) override;
+    // Subscribe to a new [propId, areaId] or change the update rate.
+    aidl::android::hardware::automotive::vehicle::StatusCode subscribe(
+            aidl::android::hardware::automotive::vehicle::SubscribeOptions options) override;
+
+    // Unsubscribe to a [propId, areaId].
+    aidl::android::hardware::automotive::vehicle::StatusCode unsubscribe(int32_t propId,
+                                                                         int32_t areaId) override;
 
   protected:
     // mValuePool is also used in mServerSidePropStore.
@@ -154,6 +158,7 @@ class FakeVehicleHardware : public IVehicleHardware {
             mRecurrentActions GUARDED_BY(mLock);
     std::unordered_map<PropIdAreaId, VehiclePropValuePool::RecyclableType, PropIdAreaIdHash>
             mSavedProps GUARDED_BY(mLock);
+    std::unordered_set<PropIdAreaId, PropIdAreaIdHash> mSubOnChangePropIdAreaIds GUARDED_BY(mLock);
     // PendingRequestHandler is thread-safe.
     mutable PendingRequestHandler<GetValuesCallback,
                                   aidl::android::hardware::automotive::vehicle::GetValueRequest>
@@ -176,7 +181,8 @@ class FakeVehicleHardware : public IVehicleHardware {
     void storePropInitialValue(const ConfigDeclaration& config);
     // The callback that would be called when a vehicle property value change happens.
     void onValueChangeCallback(
-            const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value);
+            const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value)
+            EXCLUDES(mLock);
     // Load the config files in format '*.json' from the directory and parse the config files
     // into a map from property ID to ConfigDeclarations.
     void loadPropConfigsFromDir(const std::string& dirPath,
@@ -262,6 +268,11 @@ class FakeVehicleHardware : public IVehicleHardware {
     void generateVendorConfigs(
             std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropConfig>&) const;
 
+    aidl::android::hardware::automotive::vehicle::StatusCode subscribePropIdAreaIdLocked(
+            int32_t propId, int32_t areaId, float sampleRateHz, bool enableVariableUpdateRate,
+            const aidl::android::hardware::automotive::vehicle::VehiclePropConfig&
+                    vehiclePropConfig) REQUIRES(mLock);
+
     static aidl::android::hardware::automotive::vehicle::VehiclePropValue createHwInputKeyProp(
             aidl::android::hardware::automotive::vehicle::VehicleHwKeyInputAction action,
             int32_t keyCode, int32_t targetDisplay);
@@ -275,6 +286,10 @@ class FakeVehicleHardware : public IVehicleHardware {
 
     static std::string genFakeDataHelp();
     static std::string parseErrMsg(std::string fieldName, std::string value, std::string type);
+    static bool isVariableUpdateRateSupported(
+            const aidl::android::hardware::automotive::vehicle::VehiclePropConfig&
+                    vehiclePropConfig,
+            int32_t areaId);
 };
 
 }  // namespace fake
