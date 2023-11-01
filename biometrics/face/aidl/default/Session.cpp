@@ -175,4 +175,10 @@ ndk::ScopedAStatus Session::onContextChanged(const common::OperationContext& /*c
     return ndk::ScopedAStatus::ok();
 }
 
+ndk::ScopedAStatus Session::enrollWithOptions(const FaceEnrollOptions& options,
+                                              std::shared_ptr<common::ICancellationSignal>* out) {
+    return enroll(options.hardwareAuthToken, options.enrollmentType, options.features,
+                  options.nativeHandlePreview, out);
+}
+
 }  // namespace aidl::android::hardware::biometrics::face

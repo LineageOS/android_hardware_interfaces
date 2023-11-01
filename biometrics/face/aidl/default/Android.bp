@@ -27,6 +27,7 @@ cc_binary {
     shared_libs: [
         "libbinder_ndk",
         "liblog",
+        "libnativewindow",
     ],
     srcs: [
         "main.cpp",
@@ -34,12 +35,15 @@ cc_binary {
         "FakeFaceEngine.cpp",
         "Session.cpp",
     ],
+    include_dirs: [
+        "frameworks/native/aidl/gui",
+    ],
     stl: "c++_static",
     static_libs: [
         "android.hardware.biometrics.common-V3-ndk",
         "android.hardware.biometrics.common.thread",
         "android.hardware.biometrics.common.util",
-        "android.hardware.biometrics.face-V3-ndk",
+        "android.hardware.biometrics.face-V4-ndk",
         "android.hardware.common-V2-ndk",
         "android.hardware.keymaster-V4-ndk",
         "libandroid.hardware.biometrics.face.VirtualProps",
@@ -63,10 +67,14 @@ cc_test {
     shared_libs: [
         "libbase",
         "libbinder_ndk",
+        "libnativewindow",
+    ],
+    include_dirs: [
+        "frameworks/native/aidl/gui",
     ],
     static_libs: [
         "libandroid.hardware.biometrics.face.VirtualProps",
-        "android.hardware.biometrics.face-V3-ndk",
+        "android.hardware.biometrics.face-V4-ndk",
         "android.hardware.biometrics.common-V3-ndk",
         "android.hardware.keymaster-V4-ndk",
         "android.hardware.biometrics.common.util",
