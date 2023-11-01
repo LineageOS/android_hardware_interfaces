@@ -76,6 +76,7 @@ ndk::ScopedAStatus GnssMeasurementInterface::setCallbackWithOptions(
         stop();
     }
     mIntervalMs = std::max(options.intervalMs, 1000);
+    mGnss->setGnssMeasurementInterval(mIntervalMs);
     start(options.enableCorrVecOutputs, options.enableFullTracking);
 
     return ndk::ScopedAStatus::ok();
@@ -104,6 +105,7 @@ void GnssMeasurementInterface::start(const bool enableCorrVecOutputs,
     }
 
     mIsActive = true;
+    mGnss->setGnssMeasurementEnabled(true);
     mThreads.emplace_back(std::thread([this, enableCorrVecOutputs, enableFullTracking]() {
         waitForStoppingThreads();
         mThreadBlocker.reset();
@@ -129,7 +131,7 @@ void GnssMeasurementInterface::start(const bool enableCorrVecOutputs,
                 auto measurement =
                         Utils::getMockMeasurement(enableCorrVecOutputs, enableFullTracking);
                 this->reportMeasurement(measurement);
-                if (!mLocationEnabled) {
+                if (!mLocationEnabled || mLocationIntervalMs > mIntervalMs) {
                     mGnss->reportSvStatus();
                 }
             }
@@ -142,6 +144,7 @@ void GnssMeasurementInterface::start(const bool enableCorrVecOutputs,
 void GnssMeasurementInterface::stop() {
     ALOGD("stop");
     mIsActive = false;
+    mGnss->setGnssMeasurementEnabled(false);
     mThreadBlocker.notify();
     for (auto iter = mThreads.begin(); iter != mThreads.end(); ++iter) {
         if (iter->joinable()) {

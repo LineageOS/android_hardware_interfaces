@@ -71,6 +71,23 @@ parcelable ProgramInfo {
     const int FLAG_STEREO = 1 << 5;
 
     /**
+     * A signal has been acquired if this bit is set.
+     */
+
+    const int FLAG_SIGNAL_ACQUISITION = 1 << 6;
+    /**
+     * An HD Station Information Service (SIS) information is available if this
+     * bit is set.
+     */
+
+    const int FLAG_HD_SIS_ACQUISITION = 1 << 7;
+
+    /**
+     * An HD digital audio is available if this bit is set.
+     */
+    const int FLAG_HD_AUDIO_ACQUISITION = 1 << 8;
+
+    /**
      * An identifier used to point at the program (primarily to tune to it).
      *
      * This field is required - its type field must not be set to
@@ -153,7 +170,8 @@ parcelable ProgramInfo {
      *
      * It can be a combination of {@link #FLAG_LIVE}, {@link #FLAG_MUTED},
      * {@link #FLAG_TRAFFIC_PROGRAM}, {@link #FLAG_TRAFFIC_ANNOUNCEMENT},
-     * {@link #FLAG_TUNABLE}, and {@link #FLAG_STEREO}.
+     * {@link #FLAG_TUNABLE}, {@link #FLAG_STEREO}, {@link #FLAG_SIGNAL_ACQUISITION},
+     * {@link #FLAG_HD_SIS_ACQUISITION}, and {@link #FLAG_HD_AUDIO_ACQUISITION}.
      */
     int infoFlags;
 

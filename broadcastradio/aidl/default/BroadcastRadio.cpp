@@ -16,6 +16,7 @@
 
 #include "BroadcastRadio.h"
 #include <broadcastradio-utils-aidl/Utils.h>
+#include <broadcastradio-utils-aidl/UtilsV2.h>
 #include "resources.h"
 
 #include <aidl/android/hardware/broadcastradio/IdentifierType.h>
@@ -221,7 +222,7 @@ ScopedAStatus BroadcastRadio::tune(const ProgramSelector& program) {
                 resultToInt(Result::NOT_SUPPORTED), "selector is not supported");
     }
 
-    if (!utils::isValid(program)) {
+    if (!utils::isValidV2(program)) {
         LOG(ERROR) << __func__ << ": selector is not valid: " << program.toString();
         return ScopedAStatus::fromServiceSpecificErrorWithMessage(
                 resultToInt(Result::INVALID_ARGUMENTS), "selector is not valid");
