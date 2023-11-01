@@ -45,3 +45,44 @@ aidl_interface {
         },
     },
 }
+
+// cc_defaults that includes the latest Authgraph AIDL library.
+// Modules that depend on Authgraph directly can include this cc_defaults to avoid
+// managing dependency versions explicitly.
+cc_defaults {
+    name: "authgraph_use_latest_hal_aidl_ndk_static",
+    static_libs: [
+        "android.hardware.security.authgraph-V1-ndk",
+    ],
+}
+
+cc_defaults {
+    name: "authgraph_use_latest_hal_aidl_ndk_shared",
+    shared_libs: [
+        "android.hardware.security.authgraph-V1-ndk",
+    ],
+}
+
+cc_defaults {
+    name: "authgraph_use_latest_hal_aidl_cpp_static",
+    static_libs: [
+        "android.hardware.security.authgraph-V1-cpp",
+    ],
+}
+
+cc_defaults {
+    name: "authgraph_use_latest_hal_aidl_cpp_shared",
+    shared_libs: [
+        "android.hardware.security.authgraph-V1-cpp",
+    ],
+}
+
+// A rust_defaults that includes the latest Authgraph AIDL library.
+// Modules that depend on Authgraph directly can include this rust_defaults to avoid
+// managing dependency versions explicitly.
+rust_defaults {
+    name: "authgraph_use_latest_hal_aidl_rust",
+    rustlibs: [
+        "android.hardware.security.authgraph-V1-rust",
+    ],
+}
