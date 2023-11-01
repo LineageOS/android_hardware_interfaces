@@ -503,6 +503,14 @@
         </interface>
     </hal>
     <hal format="aidl" optional="true" updatable-via-apex="true">
+        <name>android.hardware.security.authgraph</name>
+        <version>1</version>
+        <interface>
+            <name>IAuthGraphKeyExchange</name>
+            <instance>nonsecure</instance>
+        </interface>
+    </hal>
+    <hal format="aidl" optional="true" updatable-via-apex="true">
         <name>android.hardware.security.secureclock</name>
         <version>1</version>
         <interface>
