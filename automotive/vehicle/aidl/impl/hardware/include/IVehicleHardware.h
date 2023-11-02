@@ -117,18 +117,53 @@ class IVehicleHardware {
         return std::chrono::nanoseconds(0);
     }
 
-    // A [propId, areaId] is newly subscribed or the update rate is changed.
+    // A [propId, areaId] is newly subscribed or the subscribe options are changed.
     //
-    // The 'options' contains the property ID, area ID and sample rate in Hz.
+    // The subscribe options contain sample rate in Hz or enable/disable variable update rate.
     //
-    // For continuous property, the sample rate is never 0 and indicates the new sample rate (or
-    // the initial sample rate if this property was not subscribed before).
+    // For continuous properties:
     //
-    // For on-change property, the sample rate is always 0 and must be ignored.
+    // The sample rate is never 0 and indicates the desired polling rate for this property. The
+    // sample rate is guaranteed to be within supported {@code minSampleRate} and
+    // {@code maxSampleRate} as specified in {@code VehiclePropConfig}.
+    //
+    // If the specified sample rate is not supported, e.g. vehicle bus only supports 5hz and 10hz
+    // polling rate but the sample rate is 8hz, impl must choose the higher polling rate (10hz).
+    //
+    // Whether variable update rate is enabled is specified by {@code enableVariableUpdateRate} in
+    // {@code SubscribeOptions}. If variable update rate is not supported for the
+    // [propId, areaId], impl must ignore this option and always treat it as disabled.
+    //
+    // If variable update rate is disabled/not supported, impl must report all the property events
+    // for this [propId, areaId] through {@code propertyChangeCallback} according to the sample
+    // rate. E.g. a sample rate of 10hz must generate at least 10 property change events per second.
+    //
+    // If variable update rate is enabled AND supported, impl must only report property events
+    // when the [propId, areaId]'s value or status changes (a.k.a same as on-change property).
+    // The sample rate still guides the polling rate, but duplicate property events must be dropped
+    // and not reported via {@code propertyChangeCallback}.
+    //
+    // Async property set error events are not affected by variable update rate and must always
+    // be reported.
+    //
+    // If the impl is always polling at {@code maxSampleRate} for all continuous [propId, areaId]s,
+    // and do not support variable update rate for any [propId, areaId], then this function can be a
+    // no-op.
+    //
+    // For on-change properties:
+    //
+    // The sample rate is always 0 and must be ignored. If the impl is always subscribing to all
+    // on-change properties, then this function can be no-op.
+    //
+    // For all properties:
+    //
+    // It is recommended to only deliver the subscribed property events to DefaultVehicleHal to
+    // improve performance. However, even if unsubscribed property events are delivered, they
+    // will be filtered out by DefaultVehicleHal.
     //
     // A subscription from VHAL client might not necessarily trigger this function.
     // DefaultVehicleHal will aggregate all the subscriptions from all the clients and notify
-    // IVehicleHardware if new subscriptions are required or sample rate is updated.
+    // IVehicleHardware if new subscriptions are required or subscribe options are updated.
     //
     // For example:
     // 1. VHAL initially have no subscriber for speed.
@@ -144,15 +179,6 @@ class IVehicleHardware {
     // 5. The second subscriber is removed, 'unsubscribe' is called.
     //    The impl can optionally disable the polling for vehicle speed.
     //
-    // It is recommended to only deliver the subscribed property events to DefaultVehicleHal to
-    // improve performance. However, even if unsubscribed property events are delivered, they
-    // will be filtered out by DefaultVehicleHal.
-    //
-    // For continuous property, if the impl is always polling at {@code maxSampleRate} as specified
-    // in config, then this function can be a no-op.
-    //
-    // For on-change property, if the impl is always subscribing to all on-change properties, then
-    // this function can be no-op.
     virtual aidl::android::hardware::automotive::vehicle::StatusCode subscribe(
             [[maybe_unused]] aidl::android::hardware::automotive::vehicle::SubscribeOptions
                     options) {

@@ -98,10 +98,20 @@ constexpr int32_t AREA_CONTINUOUS_PROP = 10005 + 0x10000000 + 0x03000000 + 0x004
 constexpr int32_t READ_ONLY_PROP = 10006 + 0x10000000 + 0x01000000 + 0x00400000;
 // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
 constexpr int32_t WRITE_ONLY_PROP = 10007 + 0x10000000 + 0x01000000 + 0x00400000;
+// VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
+constexpr int32_t GLOBAL_CONTINUOUS_PROP_NO_VUR = 10008 + 0x10000000 + 0x01000000 + 0x00400000;
 
 int32_t testInt32VecProp(size_t i) {
     // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32_VEC
     return static_cast<int32_t>(i) + 0x10000000 + 0x01000000 + 0x00410000;
+}
+
+std::string toString(const std::vector<SubscribeOptions>& options) {
+    std::string optionsStr;
+    for (const auto& option : options) {
+        optionsStr += option.toString() + "\n";
+    }
+    return optionsStr;
 }
 
 struct PropConfigCmp {
@@ -245,8 +255,18 @@ class DefaultVehicleHalTest : public testing::Test {
                 .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
         });
         // A global continuous property.
+        testConfigs.push_back(VehiclePropConfig{.prop = GLOBAL_CONTINUOUS_PROP,
+                                                .access = VehiclePropertyAccess::READ_WRITE,
+                                                .changeMode = VehiclePropertyChangeMode::CONTINUOUS,
+                                                .minSampleRate = 0.0,
+                                                .maxSampleRate = 100.0,
+                                                .areaConfigs = {{
+                                                        .areaId = 0,
+                                                        .supportVariableUpdateRate = true,
+                                                }}});
+        // A global continuous property that does not support VUR.
         testConfigs.push_back(VehiclePropConfig{
-                .prop = GLOBAL_CONTINUOUS_PROP,
+                .prop = GLOBAL_CONTINUOUS_PROP_NO_VUR,
                 .access = VehiclePropertyAccess::READ_WRITE,
                 .changeMode = VehiclePropertyChangeMode::CONTINUOUS,
                 .minSampleRate = 0.0,
@@ -286,11 +306,13 @@ class DefaultVehicleHalTest : public testing::Test {
                                         .areaId = toInt(VehicleAreaWindow::ROW_1_LEFT),
                                         .minInt32Value = 0,
                                         .maxInt32Value = 100,
+                                        .supportVariableUpdateRate = true,
                                 },
                                 {
                                         .areaId = toInt(VehicleAreaWindow::ROW_1_RIGHT),
                                         .minInt32Value = 0,
                                         .maxInt32Value = 100,
+                                        .supportVariableUpdateRate = false,
                                 },
                         },
         });
@@ -1352,6 +1374,62 @@ TEST_F(DefaultVehicleHalTest, testSubscribeGlobalContinuousRateOutOfRange) {
     EXPECT_EQ(countClients(), static_cast<size_t>(1));
 }
 
+TEST_F(DefaultVehicleHalTest, testSubscribeContinuous_propNotSupportVur) {
+    std::vector<SubscribeOptions> options = {
+            {
+                    .propId = GLOBAL_CONTINUOUS_PROP,
+                    .sampleRate = 20.0,
+                    .enableVariableUpdateRate = true,
+            },
+            {
+                    .propId = GLOBAL_CONTINUOUS_PROP_NO_VUR,
+                    .sampleRate = 30.0,
+                    .enableVariableUpdateRate = true,
+            },
+    };
+
+    auto status = getClient()->subscribe(getCallbackClient(), options, 0);
+
+    ASSERT_TRUE(status.isOk()) << "subscribe failed: " << status.getMessage();
+    auto receivedSubscribeOptions = getHardware()->getSubscribeOptions();
+    ASSERT_THAT(receivedSubscribeOptions, UnorderedElementsAre(
+                                                  SubscribeOptions{
+                                                          .propId = GLOBAL_CONTINUOUS_PROP,
+                                                          .areaIds = {0},
+                                                          .enableVariableUpdateRate = true,
+                                                          .sampleRate = 20.0,
+                                                  },
+                                                  SubscribeOptions{
+                                                          .propId = GLOBAL_CONTINUOUS_PROP_NO_VUR,
+                                                          .areaIds = {0},
+                                                          .enableVariableUpdateRate = false,
+                                                          .sampleRate = 30.0,
+                                                  }))
+            << "received unexpected subscribe options: " << toString(receivedSubscribeOptions);
+}
+
+TEST_F(DefaultVehicleHalTest, testSubscribeContinuous_propSupportVurNotEnabled) {
+    std::vector<SubscribeOptions> options = {
+            {
+                    .propId = GLOBAL_CONTINUOUS_PROP,
+                    .sampleRate = 20.0,
+                    .enableVariableUpdateRate = false,
+            },
+    };
+
+    auto status = getClient()->subscribe(getCallbackClient(), options, 0);
+
+    ASSERT_TRUE(status.isOk()) << "subscribe failed: " << status.getMessage();
+    auto receivedSubscribeOptions = getHardware()->getSubscribeOptions();
+    ASSERT_THAT(receivedSubscribeOptions, UnorderedElementsAre(SubscribeOptions{
+                                                  .propId = GLOBAL_CONTINUOUS_PROP,
+                                                  .areaIds = {0},
+                                                  .enableVariableUpdateRate = false,
+                                                  .sampleRate = 20.0,
+                                          }))
+            << "received unexpected subscribe options: " << toString(receivedSubscribeOptions);
+}
+
 TEST_F(DefaultVehicleHalTest, testSubscribeAreaContinuous) {
     std::vector<SubscribeOptions> options = {
             {
@@ -1402,6 +1480,44 @@ TEST_F(DefaultVehicleHalTest, testSubscribeAreaContinuous) {
     ASSERT_GE(leftCount, static_cast<size_t>(15));
     // Should trigger about 10 times, check for at least 5 events to be safe.
     ASSERT_GE(rightCount, static_cast<size_t>(5));
+}
+
+TEST_F(DefaultVehicleHalTest, testAreaContinuous_areaNotSupportVur) {
+    std::vector<SubscribeOptions> options = {
+            {
+                    .propId = AREA_CONTINUOUS_PROP,
+                    .sampleRate = 20.0,
+                    .areaIds = {toInt(VehicleAreaWindow::ROW_1_LEFT)},
+                    .enableVariableUpdateRate = true,
+            },
+            {
+                    .propId = AREA_CONTINUOUS_PROP,
+                    .sampleRate = 10.0,
+                    .areaIds = {toInt(VehicleAreaWindow::ROW_1_RIGHT)},
+                    .enableVariableUpdateRate = true,
+            },
+    };
+
+    auto status = getClient()->subscribe(getCallbackClient(), options, 0);
+
+    ASSERT_TRUE(status.isOk()) << "subscribe failed: " << status.getMessage();
+    auto receivedSubscribeOptions = getHardware()->getSubscribeOptions();
+    ASSERT_THAT(receivedSubscribeOptions,
+                UnorderedElementsAre(
+                        SubscribeOptions{
+                                .propId = AREA_CONTINUOUS_PROP,
+                                .sampleRate = 20.0,
+                                .areaIds = {toInt(VehicleAreaWindow::ROW_1_LEFT)},
+                                .enableVariableUpdateRate = true,
+                        },
+                        SubscribeOptions{
+                                .propId = AREA_CONTINUOUS_PROP,
+                                .sampleRate = 10.0,
+                                .areaIds = {toInt(VehicleAreaWindow::ROW_1_RIGHT)},
+                                // Area2 actually does not support VUR.
+                                .enableVariableUpdateRate = false,
+                        }))
+            << "received unexpected subscribe options: " << toString(receivedSubscribeOptions);
 }
 
 TEST_F(DefaultVehicleHalTest, testUnsubscribeOnChange) {
