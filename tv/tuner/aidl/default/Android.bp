@@ -23,6 +23,7 @@ cc_defaults {
         "TimeFilter.cpp",
         "Tuner.cpp",
         "service.cpp",
+        "dtv_plugin.cpp",
     ],
     static_libs: [
         "libaidlcommonsupport",
