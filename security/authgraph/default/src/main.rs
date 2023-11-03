@@ -30,7 +30,7 @@ use android_hardware_security_authgraph::aidl::android::hardware::security::auth
 };
 use authgraph_boringssl as boring;
 use authgraph_core::{key::MillisecondsSinceEpoch, keyexchange as ke, traits};
-use authgraph_hal::{err_to_binder, Innto, TryInnto};
+use authgraph_hal::{errcode_to_binder, Innto, TryInnto};
 use log::{error, info};
 use std::ffi::CString;
 use std::sync::Mutex;
@@ -128,6 +128,13 @@ fn unsigned_pub_key(pub_key: &PubKey) -> binder::Result<&[u8]> {
             Some(&CString::new("expected unsigned public key").unwrap()),
         )),
     }
+}
+
+fn err_to_binder(err: authgraph_core::error::Error) -> binder::Status {
+    if err.0 != authgraph_wire::ErrorCode::Ok && !err.1.is_empty() {
+        error!("failure {:?} message: '{}'", err.0, err.1);
+    }
+    errcode_to_binder(err.0)
 }
 
 /// This nonsecure implementation of the AuthGraph HAL interface directly calls the AuthGraph
