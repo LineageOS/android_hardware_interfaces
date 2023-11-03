@@ -655,6 +655,8 @@ oneway interface IRadioNetwork {
      * @param serial Serial number of request
      *
      * Response callback is IRadioNetworkResponse.isCellularIdentifierTransparencyEnabledResponse
+     *
+     * This is available when android.hardware.telephony.access is defined.
      */
     void isCellularIdentifierTransparencyEnabled(in int serial);
 
@@ -683,6 +685,36 @@ oneway interface IRadioNetwork {
      *         clear
      *
      * Response function is IRadioNetworkResponse.setCellularIdentifierTransparencyEnabledResponse
+     *
+     * This is available when android.hardware.telephony.access is defined.
      */
     void setCellularIdentifierTransparencyEnabled(in int serial, in boolean enabled);
+
+    /**
+     * Enables or disables security algorithm update reports via indication API
+     * {@link IRadioNetworkIndication.securityAlgorithmsUpdated()}.
+     *
+     * Note: The default value shall be enabled.
+     *
+     * @param serial Serial number of request.
+     * @param enable {@code true} to enable security algorithm update reports, {@code false} to
+     *         disable.
+     *
+     * Response function is IRadioNetworkResponse.setSecurityAlgorithmsUpdatedEnabledResponse()
+     *
+     * This is available when android.hardware.telephony.access is defined.
+     */
+    void setSecurityAlgorithmsUpdatedEnabled(in int serial, boolean enable);
+
+    /**
+     * Checks whether security algorithm update reports are enabled via indication API
+     * {@link IRadioNetworkIndication.securityAlgorithmsUpdated()}.
+     *
+     * @param serial Serial number of request.
+     *
+     * Response function is IRadioNetworkResponse.isSecurityAlgorithmsUpdatedEnabledResponse()
+     *
+     * This is available when android.hardware.telephony.access is defined.
+     */
+    void isSecurityAlgorithmsUpdatedEnabled(in int serial);
 }

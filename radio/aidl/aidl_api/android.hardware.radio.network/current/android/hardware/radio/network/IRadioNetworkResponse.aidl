@@ -83,4 +83,6 @@ interface IRadioNetworkResponse {
   oneway void setN1ModeEnabledResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void isCellularIdentifierTransparencyEnabledResponse(in android.hardware.radio.RadioResponseInfo info, boolean isEnabled);
   oneway void setCellularIdentifierTransparencyEnabledResponse(in android.hardware.radio.RadioResponseInfo info);
+  oneway void setSecurityAlgorithmsUpdatedEnabledResponse(in android.hardware.radio.RadioResponseInfo info);
+  oneway void isSecurityAlgorithmsUpdatedEnabledResponse(in android.hardware.radio.RadioResponseInfo info, in boolean isEnabled);
 }
