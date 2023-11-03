@@ -80,19 +80,22 @@ class BroadcastRadio final : public BnBroadcastRadio {
     Properties mProperties GUARDED_BY(mMutex);
     ProgramSelector mCurrentProgram GUARDED_BY(mMutex) = {};
     std::vector<VirtualProgram> mProgramList GUARDED_BY(mMutex) = {};
+    std::optional<AmFmBandRange> mCurrentAmFmBandRange GUARDED_BY(mMutex);
     std::shared_ptr<ITunerCallback> mCallback GUARDED_BY(mMutex);
 
     // Bitmap for all ConfigFlag values
     int mConfigFlagValues GUARDED_BY(mMutex) = 0;
 
-    std::optional<AmFmBandRange> getAmFmRangeLocked() const REQUIRES(mMutex);
+    bool adjustAmFmRangeLocked() REQUIRES(mMutex);
     void cancelLocked() REQUIRES(mMutex);
     ProgramInfo tuneInternalLocked(const ProgramSelector& sel) REQUIRES(mMutex);
+    void startProgramListUpdatesLocked(const ProgramFilter& filter) REQUIRES(mMutex);
     void cancelProgramListUpdateLocked() REQUIRES(mMutex);
     bool findNextLocked(const ProgramSelector& current, bool directionUp, bool skipSubChannel,
                         VirtualProgram* nextProgram) const REQUIRES(mMutex);
     void jumpToFirstSubChannelLocked(std::vector<VirtualProgram>::const_iterator& it) const
             REQUIRES(mMutex);
+    bool isConfigFlagSetLocked(ConfigFlag flag) const REQUIRES(mMutex);
 
     binder_status_t cmdHelp(int fd) const;
     binder_status_t cmdTune(int fd, const char** args, uint32_t numArgs);

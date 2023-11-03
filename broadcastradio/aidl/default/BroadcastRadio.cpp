@@ -48,6 +48,8 @@ inline constexpr std::chrono::milliseconds kTuneDelayTimeMs = 150ms;
 inline constexpr std::chrono::seconds kListDelayTimeS = 1s;
 
 // clang-format off
+const AmFmBandRange kFmFullBandRange = {65000, 108000, 10, 0};
+const AmFmBandRange kAmFullBandRange = {150, 30000, 1, 0};
 const AmFmRegionConfig kDefaultAmFmConfig = {
         {
                 {87500, 108000, 100, 100},  // FM
@@ -75,6 +77,44 @@ Properties initProperties(const VirtualRadio& virtualRadio) {
     });
 
     return prop;
+}
+
+bool isDigitalProgramAllowed(const ProgramSelector& sel, bool forceAnalogFm, bool forceAnalogAm) {
+    if (sel.primaryId.type != IdentifierType::HD_STATION_ID_EXT) {
+        return true;
+    }
+    int32_t freq = static_cast<int32_t>(utils::getAmFmFrequency(sel));
+    bool isFm = freq >= kFmFullBandRange.lowerBound && freq <= kFmFullBandRange.upperBound;
+    return isFm ? !forceAnalogFm : !forceAnalogAm;
+}
+
+/**
+ * Checks whether a program selector is in the current band.
+ *
+ * <p>For an AM/FM program, this method checks whether it is in the current AM/FM band. For a
+ * program selector is also an HD program, it is also checked whether HD radio is enabled in the
+ * current AM/FM band. For a non-AM/FM program, the method will returns {@code true} directly.
+ * @param sel Program selector to be checked
+ * @param currentAmFmBandRange the current AM/FM band
+ * @param forceAnalogFm whether FM band is forced to be analog
+ * @param forceAnalogAm  whether AM band is forced to be analog
+ * @return whether the program selector is in the current band if it is an AM/FM (including HD)
+ * selector, {@code true} otherwise
+ */
+bool isProgramInBand(const ProgramSelector& sel,
+                     const std::optional<AmFmBandRange>& currentAmFmBandRange, bool forceAnalogFm,
+                     bool forceAnalogAm) {
+    if (!utils::hasAmFmFrequency(sel)) {
+        return true;
+    }
+    if (!currentAmFmBandRange.has_value()) {
+        return false;
+    }
+    int32_t freq = static_cast<int32_t>(utils::getAmFmFrequency(sel));
+    if (freq < currentAmFmBandRange->lowerBound || freq > currentAmFmBandRange->upperBound) {
+        return false;
+    }
+    return isDigitalProgramAllowed(sel, forceAnalogFm, forceAnalogAm);
 }
 
 // Makes ProgramInfo that does not point to any particular program
@@ -131,6 +171,7 @@ BroadcastRadio::BroadcastRadio(const VirtualRadio& virtualRadio)
         } else {
             mCurrentProgram = sel;
         }
+        adjustAmFmRangeLocked();
     }
 }
 
@@ -143,8 +184,8 @@ ScopedAStatus BroadcastRadio::getAmFmRegionConfig(bool full, AmFmRegionConfig* r
     if (full) {
         *returnConfigs = {};
         returnConfigs->ranges = vector<AmFmBandRange>({
-                {65000, 108000, 10, 0},  // FM
-                {150, 30000, 1, 0},      // AM
+                kFmFullBandRange,
+                kAmFullBandRange,
         });
         returnConfigs->fmDeemphasis =
                 AmFmRegionConfig::DEEMPHASIS_D50 | AmFmRegionConfig::DEEMPHASIS_D75;
@@ -190,14 +231,24 @@ ProgramInfo BroadcastRadio::tuneInternalLocked(const ProgramSelector& sel) {
 
     VirtualProgram virtualProgram = {};
     ProgramInfo programInfo;
-    if (mVirtualRadio.getProgram(sel, &virtualProgram)) {
+    bool isProgramAllowed =
+            isDigitalProgramAllowed(sel, isConfigFlagSetLocked(ConfigFlag::FORCE_ANALOG_FM),
+                                    isConfigFlagSetLocked(ConfigFlag::FORCE_ANALOG_AM));
+    if (isProgramAllowed && mVirtualRadio.getProgram(sel, &virtualProgram)) {
         mCurrentProgram = virtualProgram.selector;
         programInfo = virtualProgram;
     } else {
-        mCurrentProgram = sel;
+        if (!isProgramAllowed) {
+            mCurrentProgram = utils::makeSelectorAmfm(utils::getAmFmFrequency(sel));
+        } else {
+            mCurrentProgram = sel;
+        }
         programInfo = makeSampleProgramInfo(sel);
     }
     mIsTuneCompleted = true;
+    if (adjustAmFmRangeLocked()) {
+        startProgramListUpdatesLocked({});
+    }
 
     return programInfo;
 }
@@ -278,10 +329,11 @@ bool BroadcastRadio::findNextLocked(const ProgramSelector& current, bool directi
     if (directionUp) {
         if (found < mProgramList.end() - 1) {
             // When seeking up, tuner will jump to the first selector which is main program service
-            // greater than the current program selector in the program list (if not exist, jump
-            // to the first selector) for skipping sub-channels case or AM/FM without HD radio
-            // enabled case. Otherwise, the tuner will jump to the first selector greater than the
-            // current program selector.
+            // greater than and of the same band as the current program selector in the program
+            // list (if not exist, jump to the first selector in the same band) for skipping
+            // sub-channels case or AM/FM without HD radio enabled case. Otherwise, the tuner will
+            // jump to the first selector which is greater than and of the same band as the current
+            // program selector.
             if (utils::tunesTo(current, found->selector)) found++;
             if (skipSubChannel && hasAmFmFrequency) {
                 auto firstFound = found;
@@ -299,17 +351,19 @@ bool BroadcastRadio::findNextLocked(const ProgramSelector& current, bool directi
                 }
             }
         } else {
-            // If the selector of current program is no less than all selectors or not found in the
-            // program list, seeking up should wrap the tuner to the beginning of the program list.
+            // If the selector of current program is no less than all selectors of the same band or
+            // not found in the program list, seeking up should wrap the tuner to the first program
+            // selector of the same band in the program list.
             found = mProgramList.begin();
         }
     } else {
         if (found > mProgramList.begin() && found != mProgramList.end()) {
             // When seeking down, tuner will jump to the first selector which is main program
-            // service less than the current program selector in the program list (if not exist,
-            // jump to the last main program service selector) for skipping sub-channels case or
-            // AM/FM without HD radio enabled case. Otherwise, the tuner will jump to the first
-            // selector less than the current program selector.
+            // service less than and of the same band as the current program selector in the
+            // program list (if not exist, jump to the last main program service selector of the
+            // same band) for skipping sub-channels case or AM/FM without HD radio enabled case.
+            // Otherwise, the tuner will jump to the first selector less than and of the same band
+            // as the current program selector.
             found--;
             if (hasAmFmFrequency && utils::hasAmFmFrequency(found->selector)) {
                 uint32_t nextFreq = utils::getAmFmFrequency(found->selector);
@@ -332,11 +386,11 @@ bool BroadcastRadio::findNextLocked(const ProgramSelector& current, bool directi
                 }
             }
         } else {
-            // If the selector of current program is no greater than all selectors or not found
-            // in the program list, seeking down should wrap the tuner to the end of the program
-            // list. If the last program selector in the program list is sub-channel and skipping
-            // sub-channels is needed, the tuner will jump to the last main program service in
-            // the program list.
+            // If the selector of current program is no greater than all selectors of the same band
+            // or not found in the program list, seeking down should wrap the tuner to the last
+            // selector of the same band in the program list. If the last program selector in the
+            // program list is sub-channel and skipping sub-channels is needed, the tuner will jump
+            // to the last main program service of the same band in the program list.
             found = mProgramList.end() - 1;
             jumpToFirstSubChannelLocked(found);
         }
@@ -371,7 +425,14 @@ ScopedAStatus BroadcastRadio::seek(bool directionUp, bool skipSubChannel) {
 
     cancelLocked();
 
-    mProgramList = mVirtualRadio.getProgramList();
+    auto filterCb = [this](const VirtualProgram& program) {
+        return isProgramInBand(program.selector, mCurrentAmFmBandRange,
+                               isConfigFlagSetLocked(ConfigFlag::FORCE_ANALOG_FM),
+                               isConfigFlagSetLocked(ConfigFlag::FORCE_ANALOG_AM));
+    };
+    const auto& list = mVirtualRadio.getProgramList();
+    mProgramList.clear();
+    std::copy_if(list.begin(), list.end(), std::back_inserter(mProgramList), filterCb);
     std::shared_ptr<ITunerCallback> callback = mCallback;
     auto cancelTask = [callback]() { callback->onTuneFailed(Result::CANCELED, {}); };
 
@@ -425,24 +486,22 @@ ScopedAStatus BroadcastRadio::step(bool directionUp) {
                 resultToInt(Result::NOT_SUPPORTED), "cannot step in anything else than AM/FM");
     }
 
-    std::optional<AmFmBandRange> range = getAmFmRangeLocked();
-    if (!range) {
-        LOG(ERROR) << __func__ << ": can't find current band or tune operation is in process";
+    if (!mCurrentAmFmBandRange.has_value()) {
+        LOG(ERROR) << __func__ << ": can't find current band";
         return ScopedAStatus::fromServiceSpecificErrorWithMessage(
-                resultToInt(Result::INTERNAL_ERROR),
-                "can't find current band or tune operation is in process");
+                resultToInt(Result::INTERNAL_ERROR), "can't find current band");
     }
 
     if (directionUp) {
-        stepTo += range->spacing;
+        stepTo += mCurrentAmFmBandRange->spacing;
     } else {
-        stepTo -= range->spacing;
+        stepTo -= mCurrentAmFmBandRange->spacing;
     }
-    if (stepTo > range->upperBound) {
-        stepTo = range->lowerBound;
+    if (stepTo > mCurrentAmFmBandRange->upperBound) {
+        stepTo = mCurrentAmFmBandRange->lowerBound;
     }
-    if (stepTo < range->lowerBound) {
-        stepTo = range->upperBound;
+    if (stepTo < mCurrentAmFmBandRange->lowerBound) {
+        stepTo = mCurrentAmFmBandRange->upperBound;
     }
 
     mIsTuneCompleted = false;
@@ -479,15 +538,13 @@ ScopedAStatus BroadcastRadio::cancel() {
     return ScopedAStatus::ok();
 }
 
-ScopedAStatus BroadcastRadio::startProgramListUpdates(const ProgramFilter& filter) {
-    LOG(DEBUG) << __func__ << ": requested program list updates, filter = " << filter.toString()
-               << "...";
-
-    auto filterCb = [&filter](const VirtualProgram& program) {
-        return utils::satisfies(filter, program.selector);
+void BroadcastRadio::startProgramListUpdatesLocked(const ProgramFilter& filter) {
+    auto filterCb = [&filter, this](const VirtualProgram& program) {
+        return utils::satisfies(filter, program.selector) &&
+               isProgramInBand(program.selector, mCurrentAmFmBandRange,
+                               isConfigFlagSetLocked(ConfigFlag::FORCE_ANALOG_FM),
+                               isConfigFlagSetLocked(ConfigFlag::FORCE_ANALOG_AM));
     };
-
-    lock_guard<mutex> lk(mMutex);
 
     cancelProgramListUpdateLocked();
 
@@ -514,6 +571,15 @@ ScopedAStatus BroadcastRadio::startProgramListUpdates(const ProgramFilter& filte
         callback->onProgramListUpdated(chunk);
     };
     mProgramListThread->schedule(task, kListDelayTimeS);
+}
+
+ScopedAStatus BroadcastRadio::startProgramListUpdates(const ProgramFilter& filter) {
+    LOG(DEBUG) << __func__ << ": requested program list updates, filter = " << filter.toString()
+               << "...";
+
+    lock_guard<mutex> lk(mMutex);
+
+    startProgramListUpdatesLocked(filter);
 
     return ScopedAStatus::ok();
 }
@@ -530,24 +596,37 @@ ScopedAStatus BroadcastRadio::stopProgramListUpdates() {
     return ScopedAStatus::ok();
 }
 
+bool BroadcastRadio::isConfigFlagSetLocked(ConfigFlag flag) const {
+    int flagBit = static_cast<int>(flag);
+    return ((mConfigFlagValues >> flagBit) & 1) == 1;
+}
+
 ScopedAStatus BroadcastRadio::isConfigFlagSet(ConfigFlag flag, bool* returnIsSet) {
     LOG(DEBUG) << __func__ << ": flag = " << toString(flag);
 
-    int flagBit = static_cast<int>(flag);
+    if (flag == ConfigFlag::FORCE_ANALOG) {
+        flag = ConfigFlag::FORCE_ANALOG_FM;
+    }
     lock_guard<mutex> lk(mMutex);
-    *returnIsSet = ((mConfigFlagValues >> flagBit) & 1) == 1;
+    *returnIsSet = isConfigFlagSetLocked(flag);
     return ScopedAStatus::ok();
 }
 
 ScopedAStatus BroadcastRadio::setConfigFlag(ConfigFlag flag, bool value) {
     LOG(DEBUG) << __func__ << ": flag = " << toString(flag) << ", value = " << value;
 
+    if (flag == ConfigFlag::FORCE_ANALOG) {
+        flag = ConfigFlag::FORCE_ANALOG_FM;
+    }
     int flagBitMask = 1 << (static_cast<int>(flag));
     lock_guard<mutex> lk(mMutex);
     if (value) {
         mConfigFlagValues |= flagBitMask;
     } else {
         mConfigFlagValues &= ~flagBitMask;
+    }
+    if (flag == ConfigFlag::FORCE_ANALOG_AM || flag == ConfigFlag::FORCE_ANALOG_FM) {
+        startProgramListUpdatesLocked({});
     }
     return ScopedAStatus::ok();
 }
@@ -567,24 +646,25 @@ ScopedAStatus BroadcastRadio::getParameters([[maybe_unused]] const vector<string
     return ScopedAStatus::ok();
 }
 
-std::optional<AmFmBandRange> BroadcastRadio::getAmFmRangeLocked() const {
-    if (!mIsTuneCompleted) {
-        LOG(WARNING) << __func__ << ": tune operation is in process";
-        return {};
-    }
+bool BroadcastRadio::adjustAmFmRangeLocked() {
+    bool hasBandBefore = mCurrentAmFmBandRange.has_value();
     if (!utils::hasAmFmFrequency(mCurrentProgram)) {
         LOG(WARNING) << __func__ << ": current program does not has AMFM_FREQUENCY_KHZ identifier";
-        return {};
+        mCurrentAmFmBandRange.reset();
+        return hasBandBefore;
     }
 
-    int64_t freq = utils::getAmFmFrequency(mCurrentProgram);
+    int32_t freq = static_cast<int32_t>(utils::getAmFmFrequency(mCurrentProgram));
     for (const auto& range : mAmFmConfig.ranges) {
         if (range.lowerBound <= freq && range.upperBound >= freq) {
-            return range;
+            bool isBandChanged = hasBandBefore ? *mCurrentAmFmBandRange != range : true;
+            mCurrentAmFmBandRange = range;
+            return isBandChanged;
         }
     }
 
-    return {};
+    mCurrentAmFmBandRange.reset();
+    return !hasBandBefore;
 }
 
 ScopedAStatus BroadcastRadio::registerAnnouncementListener(
