@@ -1889,6 +1889,101 @@ TEST_F(FakeVehicleHardwareTest, testHvacPowerOnSendCurrentHvacPropValues) {
     }
 }
 
+TEST_F(FakeVehicleHardwareTest, testHvacDualOnSynchronizesTemp) {
+    auto hvacDualOnConfig = std::move(getVehiclePropConfig(toInt(VehicleProperty::HVAC_DUAL_ON)));
+    auto hvacTemperatureSetConfig =
+            std::move(getVehiclePropConfig(toInt(VehicleProperty::HVAC_TEMPERATURE_SET)));
+    EXPECT_NE(hvacDualOnConfig, nullptr);
+    EXPECT_NE(hvacTemperatureSetConfig, nullptr);
+    for (auto& hvacTemperatureSetConfig : hvacTemperatureSetConfig->areaConfigs) {
+        int32_t hvacTemperatureSetAreaId = hvacTemperatureSetConfig.areaId;
+        subscribe(toInt(VehicleProperty::HVAC_TEMPERATURE_SET), hvacTemperatureSetAreaId,
+                  /*sampleRateHz*/ 0);
+    }
+    for (auto& hvacDualOnConfig : hvacDualOnConfig->areaConfigs) {
+        int32_t hvacDualOnAreaId = hvacDualOnConfig.areaId;
+        subscribe(toInt(VehicleProperty::HVAC_DUAL_ON), hvacDualOnAreaId, /*sampleRateHz*/ 0);
+        StatusCode status = setValue(VehiclePropValue{.prop = toInt(VehicleProperty::HVAC_DUAL_ON),
+                                                      .areaId = hvacDualOnAreaId,
+                                                      .value.int32Values = {1}});
+        EXPECT_EQ(status, StatusCode::OK);
+
+        // Verify there's an event for all HVAC_TEMPERATURE_SET
+        // area IDs covered by the HVAC_DUAL_ON area ID
+        auto events = getChangedProperties();
+        std::unordered_set<float> temperatureValues;
+        for (const auto& event : events) {
+            // Ignore HVAC_DUAL_ON event
+            if (event.prop == toInt(VehicleProperty::HVAC_DUAL_ON)) {
+                continue;
+            }
+            EXPECT_EQ(event.prop, toInt(VehicleProperty::HVAC_TEMPERATURE_SET));
+            EXPECT_EQ((hvacDualOnAreaId & event.areaId), event.areaId);
+            EXPECT_EQ(1u, event.value.floatValues.size());
+            temperatureValues.insert(event.value.floatValues[0]);
+        }
+        // Verify that the temperature value is the same for all events
+        // Ie the temperature in all area IDs are synchronized
+        EXPECT_EQ(1u, temperatureValues.size());
+        clearChangedProperties();
+
+        // Verify when any HVAC_TEMPERATURE_SET area ID is changed all
+        // area IDs covered by the HVAC_DUAL_ON area ID are also changed
+        for (auto& hvacTemperatureSetConfig : hvacTemperatureSetConfig->areaConfigs) {
+            int32_t hvacTemperatureSetAreaId = hvacTemperatureSetConfig.areaId;
+            if ((hvacDualOnAreaId & hvacTemperatureSetAreaId) != hvacTemperatureSetAreaId) {
+                continue;
+            }
+            float expectedValue = 25;
+            status = setValue(VehiclePropValue{.prop = toInt(VehicleProperty::HVAC_TEMPERATURE_SET),
+                                               .areaId = hvacTemperatureSetAreaId,
+                                               .value.floatValues = {expectedValue}});
+            EXPECT_EQ(status, StatusCode::OK);
+            events = getChangedProperties();
+            for (const auto& event : events) {
+                EXPECT_EQ(event.prop, toInt(VehicleProperty::HVAC_TEMPERATURE_SET));
+                EXPECT_EQ(1u, event.value.floatValues.size());
+                EXPECT_EQ(expectedValue, event.value.floatValues[0]);
+            }
+            clearChangedProperties();
+        }
+
+        status = setValue(VehiclePropValue{.prop = toInt(VehicleProperty::HVAC_DUAL_ON),
+                                           .areaId = hvacDualOnAreaId,
+                                           .value.int32Values = {0}});
+        EXPECT_EQ(status, StatusCode::OK);
+
+        // When HVAC_DUAL_ON is disabled, there should be no events created
+        // for HVAC_TEMPERATURE_SET ie no temperature synchronization.
+        events = getChangedProperties();
+        EXPECT_EQ(1u, events.size());
+        EXPECT_EQ(events[0].prop, toInt(VehicleProperty::HVAC_DUAL_ON));
+        EXPECT_EQ(events[0].areaId, hvacDualOnAreaId);
+        clearChangedProperties();
+
+        // Verify when any HVAC_TEMPERATURE_SET area ID is
+        // changed other area IDs do not change.
+        for (auto& hvacTemperatureSetConfig : hvacTemperatureSetConfig->areaConfigs) {
+            int32_t hvacTemperatureSetAreaId = hvacTemperatureSetConfig.areaId;
+            if ((hvacDualOnAreaId & hvacTemperatureSetAreaId) != hvacTemperatureSetAreaId) {
+                continue;
+            }
+            float expectedValue = 24;
+            status = setValue(VehiclePropValue{.prop = toInt(VehicleProperty::HVAC_TEMPERATURE_SET),
+                                               .areaId = hvacTemperatureSetAreaId,
+                                               .value.floatValues = {expectedValue}});
+            EXPECT_EQ(status, StatusCode::OK);
+            events = getChangedProperties();
+            EXPECT_EQ(1u, events.size());
+            EXPECT_EQ(events[0].prop, toInt(VehicleProperty::HVAC_TEMPERATURE_SET));
+            EXPECT_EQ(events[0].areaId, hvacTemperatureSetAreaId);
+            EXPECT_EQ(1u, events[0].value.floatValues.size());
+            EXPECT_EQ(expectedValue, events[0].value.floatValues[0]);
+            clearChangedProperties();
+        }
+    }
+}
+
 TEST_F(FakeVehicleHardwareTest, testGetAdasPropNotAvailable) {
     std::unordered_map<int32_t, std::vector<int32_t>> adasEnabledPropToDependentProps = {
             {

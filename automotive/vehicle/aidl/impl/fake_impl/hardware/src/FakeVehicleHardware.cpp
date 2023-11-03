@@ -601,6 +601,65 @@ VhalResult<void> FakeVehicleHardware::setUserHalProp(const VehiclePropValue& val
     return {};
 }
 
+VhalResult<void> FakeVehicleHardware::synchronizeHvacTemp(int32_t hvacDualOnAreaId,
+                                                          std::optional<float> newTempC) const {
+    auto hvacTemperatureSetResults = mServerSidePropStore->readValuesForProperty(
+            toInt(VehicleProperty::HVAC_TEMPERATURE_SET));
+    if (!hvacTemperatureSetResults.ok()) {
+        return StatusError(StatusCode::NOT_AVAILABLE)
+               << "Failed to get HVAC_TEMPERATURE_SET, error: "
+               << getErrorMsg(hvacTemperatureSetResults);
+    }
+    auto& hvacTemperatureSetValues = hvacTemperatureSetResults.value();
+    std::optional<float> tempCToSynchronize = newTempC;
+    for (size_t i = 0; i < hvacTemperatureSetValues.size(); i++) {
+        int32_t areaId = hvacTemperatureSetValues[i]->areaId;
+        if ((hvacDualOnAreaId & areaId) != areaId) {
+            continue;
+        }
+        if (hvacTemperatureSetValues[i]->status != VehiclePropertyStatus::AVAILABLE) {
+            continue;
+        }
+        // When HVAC_DUAL_ON is initially enabled, synchronize all area IDs
+        // to the temperature of the first area ID, which is the driver's.
+        if (!tempCToSynchronize.has_value()) {
+            tempCToSynchronize = hvacTemperatureSetValues[i]->value.floatValues[0];
+            continue;
+        }
+        auto updatedValue = std::move(hvacTemperatureSetValues[i]);
+        updatedValue->value.floatValues[0] = tempCToSynchronize.value();
+        updatedValue->timestamp = elapsedRealtimeNano();
+        // This will trigger a property change event for the current hvac property value.
+        auto writeResult =
+                mServerSidePropStore->writeValue(std::move(updatedValue), /*updateStatus=*/true,
+                                                 VehiclePropertyStore::EventMode::ALWAYS);
+        if (!writeResult.ok()) {
+            return StatusError(getErrorCode(writeResult))
+                   << "Failed to write value into property store, error: "
+                   << getErrorMsg(writeResult);
+        }
+    }
+    return {};
+}
+
+std::optional<int32_t> FakeVehicleHardware::getSyncedAreaIdIfHvacDualOn(
+        int32_t hvacTemperatureSetAreaId) const {
+    auto hvacDualOnResults =
+            mServerSidePropStore->readValuesForProperty(toInt(VehicleProperty::HVAC_DUAL_ON));
+    if (!hvacDualOnResults.ok()) {
+        return std::nullopt;
+    }
+    auto& hvacDualOnValues = hvacDualOnResults.value();
+    for (size_t i = 0; i < hvacDualOnValues.size(); i++) {
+        if ((hvacDualOnValues[i]->areaId & hvacTemperatureSetAreaId) == hvacTemperatureSetAreaId &&
+            hvacDualOnValues[i]->value.int32Values.size() == 1 &&
+            hvacDualOnValues[i]->value.int32Values[0] == 1) {
+            return hvacDualOnValues[i]->areaId;
+        }
+    }
+    return std::nullopt;
+}
+
 FakeVehicleHardware::ValueResultType FakeVehicleHardware::getUserHalProp(
         const VehiclePropValue& value) const {
     auto propId = value.prop;
@@ -853,6 +912,28 @@ VhalResult<void> FakeVehicleHardware::maybeSetSpecialValue(const VehiclePropValu
         case toInt(VehicleProperty::HVAC_TEMPERATURE_VALUE_SUGGESTION):
             *isSpecialValue = true;
             return setHvacTemperatureValueSuggestion(value);
+        case toInt(VehicleProperty::HVAC_TEMPERATURE_SET):
+            if (value.value.floatValues.size() != 1) {
+                *isSpecialValue = true;
+                return StatusError(StatusCode::INVALID_ARG)
+                       << "HVAC_DUAL_ON requires only one float value";
+            }
+            if (auto hvacDualOnAreaId = getSyncedAreaIdIfHvacDualOn(value.areaId);
+                hvacDualOnAreaId.has_value()) {
+                *isSpecialValue = true;
+                return synchronizeHvacTemp(hvacDualOnAreaId.value(), value.value.floatValues[0]);
+            }
+            return {};
+        case toInt(VehicleProperty::HVAC_DUAL_ON):
+            if (value.value.int32Values.size() != 1) {
+                *isSpecialValue = true;
+                return StatusError(StatusCode::INVALID_ARG)
+                       << "HVAC_DUAL_ON requires only one int32 value";
+            }
+            if (value.value.int32Values[0] == 1) {
+                synchronizeHvacTemp(value.areaId, std::nullopt);
+            }
+            return {};
         case toInt(VehicleProperty::LANE_CENTERING_ASSIST_COMMAND): {
             isAdasPropertyAvailableResult =
                     isAdasPropertyAvailable(toInt(VehicleProperty::LANE_CENTERING_ASSIST_STATE));

@@ -695,7 +695,39 @@ ScopedAStatus DefaultVehicleHal::subscribe(const CallbackType& callback,
         if (config.changeMode == VehiclePropertyChangeMode::CONTINUOUS) {
             optionCopy.sampleRate = getDefaultSampleRateHz(
                     optionCopy.sampleRate, config.minSampleRate, config.maxSampleRate);
-            continuousSubscriptions.push_back(std::move(optionCopy));
+            if (!optionCopy.enableVariableUpdateRate) {
+                continuousSubscriptions.push_back(std::move(optionCopy));
+            } else {
+                // If clients enables to VUR, we need to check whether VUR is supported for the
+                // specific [propId, areaId] and overwrite the option to disable if not supported.
+                std::vector<int32_t> areasVurEnabled;
+                std::vector<int32_t> areasVurDisabled;
+                for (int32_t areaId : optionCopy.areaIds) {
+                    const VehicleAreaConfig* areaConfig = getAreaConfig(propId, areaId, config);
+                    if (areaConfig == nullptr) {
+                        areasVurDisabled.push_back(areaId);
+                        continue;
+                    }
+                    if (!areaConfig->supportVariableUpdateRate) {
+                        areasVurDisabled.push_back(areaId);
+                        continue;
+                    }
+                    areasVurEnabled.push_back(areaId);
+                }
+                if (!areasVurEnabled.empty()) {
+                    SubscribeOptions optionVurEnabled = optionCopy;
+                    optionVurEnabled.areaIds = areasVurEnabled;
+                    optionVurEnabled.enableVariableUpdateRate = true;
+                    continuousSubscriptions.push_back(std::move(optionVurEnabled));
+                }
+
+                if (!areasVurDisabled.empty()) {
+                    // We use optionCopy for areas with VUR disabled.
+                    optionCopy.areaIds = areasVurDisabled;
+                    optionCopy.enableVariableUpdateRate = false;
+                    continuousSubscriptions.push_back(std::move(optionCopy));
+                }
+            }
         } else {
             onChangeSubscriptions.push_back(std::move(optionCopy));
         }

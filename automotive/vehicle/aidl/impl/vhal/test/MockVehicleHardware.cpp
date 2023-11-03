@@ -90,6 +90,10 @@ StatusCode MockVehicleHardware::checkHealth() {
 }
 
 StatusCode MockVehicleHardware::subscribe(SubscribeOptions options) {
+    {
+        std::scoped_lock<std::mutex> lockGuard(mLock);
+        mSubscribeOptions.push_back(options);
+    }
     for (int32_t areaId : options.areaIds) {
         if (auto status = subscribePropIdAreaId(options.propId, areaId, options.sampleRate);
             status != StatusCode::OK) {
@@ -97,6 +101,16 @@ StatusCode MockVehicleHardware::subscribe(SubscribeOptions options) {
         }
     }
     return StatusCode::OK;
+}
+
+std::vector<SubscribeOptions> MockVehicleHardware::getSubscribeOptions() {
+    std::scoped_lock<std::mutex> lockGuard(mLock);
+    return mSubscribeOptions;
+}
+
+void MockVehicleHardware::clearSubscribeOptions() {
+    std::scoped_lock<std::mutex> lockGuard(mLock);
+    mSubscribeOptions.clear();
 }
 
 StatusCode MockVehicleHardware::subscribePropIdAreaId(int32_t propId, int32_t areaId,

@@ -222,6 +222,9 @@ class FakeVehicleHardware : public IVehicleHardware {
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value) const;
     bool isHvacPropAndHvacNotAvailable(int32_t propId, int32_t areaId) const;
     VhalResult<void> isAdasPropertyAvailable(int32_t adasStatePropertyId) const;
+    VhalResult<void> synchronizeHvacTemp(int32_t hvacDualOnAreaId,
+                                         std::optional<float> newTempC) const;
+    std::optional<int32_t> getSyncedAreaIdIfHvacDualOn(int32_t hvacTemperatureSetAreaId) const;
 
     std::unordered_map<int32_t, ConfigDeclaration> loadConfigDeclarations();
 

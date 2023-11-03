@@ -42,11 +42,13 @@ using ::ndk::ScopedAStatus;
 
 constexpr float ONE_SECOND_IN_NANOS = 1'000'000'000.;
 
-SubscribeOptions newSubscribeOptions(int32_t propId, int32_t areaId, float sampleRateHz) {
+SubscribeOptions newSubscribeOptions(int32_t propId, int32_t areaId, float sampleRateHz,
+                                     bool enableVur) {
     SubscribeOptions subscribedOptions;
     subscribedOptions.propId = propId;
     subscribedOptions.areaIds = {areaId};
     subscribedOptions.sampleRate = sampleRateHz;
+    subscribedOptions.enableVariableUpdateRate = enableVur;
 
     return subscribedOptions;
 }
@@ -79,30 +81,48 @@ Result<int64_t> SubscriptionManager::getIntervalNanos(float sampleRateHz) {
     return intervalNanos;
 }
 
-void ContSubConfigs::refreshMaxSampleRateHz() {
+void ContSubConfigs::refreshCombinedConfig() {
     float maxSampleRateHz = 0.;
+    bool enableVur = true;
     // This is not called frequently so a brute-focre is okay. More efficient way exists but this
     // is simpler.
-    for (const auto& [_, sampleRateHz] : mSampleRateHzByClient) {
-        if (sampleRateHz > maxSampleRateHz) {
-            maxSampleRateHz = sampleRateHz;
+    for (const auto& [_, subConfig] : mConfigByClient) {
+        if (subConfig.sampleRateHz > maxSampleRateHz) {
+            maxSampleRateHz = subConfig.sampleRateHz;
+        }
+        if (!subConfig.enableVur) {
+            // If one client does not enable variable update rate, we cannot enable variable update
+            // rate in IVehicleHardware.
+            enableVur = false;
         }
     }
     mMaxSampleRateHz = maxSampleRateHz;
+    mEnableVur = enableVur;
 }
 
-void ContSubConfigs::addClient(const ClientIdType& clientId, float sampleRateHz) {
-    mSampleRateHzByClient[clientId] = sampleRateHz;
-    refreshMaxSampleRateHz();
+void ContSubConfigs::addClient(const ClientIdType& clientId, float sampleRateHz, bool enableVur) {
+    mConfigByClient[clientId] = {
+            .sampleRateHz = sampleRateHz,
+            .enableVur = enableVur,
+    };
+    refreshCombinedConfig();
 }
 
 void ContSubConfigs::removeClient(const ClientIdType& clientId) {
-    mSampleRateHzByClient.erase(clientId);
-    refreshMaxSampleRateHz();
+    mConfigByClient.erase(clientId);
+    refreshCombinedConfig();
 }
 
 float ContSubConfigs::getMaxSampleRateHz() const {
     return mMaxSampleRateHz;
+}
+
+bool ContSubConfigs::isVurEnabled() const {
+    return mEnableVur;
+}
+
+bool ContSubConfigs::isVurEnabledForClient(const ClientIdType& clientId) {
+    return mConfigByClient[clientId].enableVur;
 }
 
 VhalResult<void> SubscriptionManager::addOnChangeSubscriberLocked(
@@ -115,7 +135,7 @@ VhalResult<void> SubscriptionManager::addOnChangeSubscriberLocked(
     int32_t propId = propIdAreaId.propId;
     int32_t areaId = propIdAreaId.areaId;
     if (auto status = mVehicleHardware->subscribe(
-                newSubscribeOptions(propId, areaId, /*updateRateHz=*/0));
+                newSubscribeOptions(propId, areaId, /*updateRateHz=*/0, /*enableVur*/ false));
         status != StatusCode::OK) {
         return StatusError(status)
                << StringPrintf("failed subscribe for prop: %s, areaId: %" PRId32,
@@ -125,10 +145,11 @@ VhalResult<void> SubscriptionManager::addOnChangeSubscriberLocked(
 }
 
 VhalResult<void> SubscriptionManager::addContinuousSubscriberLocked(
-        const ClientIdType& clientId, const PropIdAreaId& propIdAreaId, float sampleRateHz) {
+        const ClientIdType& clientId, const PropIdAreaId& propIdAreaId, float sampleRateHz,
+        bool enableVur) {
     // Make a copy so that we don't modify 'mContSubConfigsByPropIdArea' on failure cases.
     ContSubConfigs newConfig = mContSubConfigsByPropIdArea[propIdAreaId];
-    newConfig.addClient(clientId, sampleRateHz);
+    newConfig.addClient(clientId, sampleRateHz, enableVur);
     return updateContSubConfigsLocked(propIdAreaId, newConfig);
 }
 
@@ -159,24 +180,27 @@ VhalResult<void> SubscriptionManager::removeOnChangeSubscriberLocked(
 
 VhalResult<void> SubscriptionManager::updateContSubConfigsLocked(const PropIdAreaId& propIdAreaId,
                                                                  const ContSubConfigs& newConfig) {
-    if (newConfig.getMaxSampleRateHz() ==
-        mContSubConfigsByPropIdArea[propIdAreaId].getMaxSampleRateHz()) {
+    const auto& oldConfig = mContSubConfigsByPropIdArea[propIdAreaId];
+    float newRateHz = newConfig.getMaxSampleRateHz();
+    float oldRateHz = oldConfig.getMaxSampleRateHz();
+    if (newRateHz == oldRateHz && newConfig.isVurEnabled() == oldConfig.isVurEnabled()) {
         mContSubConfigsByPropIdArea[propIdAreaId] = newConfig;
         return {};
     }
-    float newRateHz = newConfig.getMaxSampleRateHz();
     int32_t propId = propIdAreaId.propId;
     int32_t areaId = propIdAreaId.areaId;
-    if (auto status = mVehicleHardware->updateSampleRate(propId, areaId, newRateHz);
-        status != StatusCode::OK) {
-        return StatusError(status)
-               << StringPrintf("failed to update sample rate for prop: %s, areaId: %" PRId32
-                               ", sample rate: %f HZ",
-                               propIdToString(propId).c_str(), areaId, newRateHz);
+    if (newRateHz != oldRateHz) {
+        if (auto status = mVehicleHardware->updateSampleRate(propId, areaId, newRateHz);
+            status != StatusCode::OK) {
+            return StatusError(status)
+                   << StringPrintf("failed to update sample rate for prop: %s, areaId: %" PRId32
+                                   ", sample rate: %f HZ",
+                                   propIdToString(propId).c_str(), areaId, newRateHz);
+        }
     }
     if (newRateHz != 0) {
-        if (auto status =
-                    mVehicleHardware->subscribe(newSubscribeOptions(propId, areaId, newRateHz));
+        if (auto status = mVehicleHardware->subscribe(
+                    newSubscribeOptions(propId, areaId, newRateHz, newConfig.isVurEnabled()));
             status != StatusCode::OK) {
             return StatusError(status) << StringPrintf(
                            "failed subscribe for prop: %s, areaId"
@@ -228,7 +252,8 @@ VhalResult<void> SubscriptionManager::subscribe(const std::shared_ptr<IVehicleCa
             };
             VhalResult<void> result;
             if (isContinuousProperty) {
-                result = addContinuousSubscriberLocked(clientId, propIdAreaId, option.sampleRate);
+                result = addContinuousSubscriberLocked(clientId, propIdAreaId, option.sampleRate,
+                                                       option.enableVariableUpdateRate);
             } else {
                 result = addOnChangeSubscriberLocked(propIdAreaId);
             }
@@ -324,6 +349,34 @@ VhalResult<void> SubscriptionManager::unsubscribe(SubscriptionManager::ClientIdT
     return {};
 }
 
+bool SubscriptionManager::isValueUpdatedLocked(const std::shared_ptr<IVehicleCallback>& callback,
+                                               const VehiclePropValue& value) {
+    const auto& it = mContSubValuesByCallback[callback].find(value);
+    if (it == mContSubValuesByCallback[callback].end()) {
+        mContSubValuesByCallback[callback].insert(value);
+        return true;
+    }
+
+    if (it->timestamp > value.timestamp) {
+        ALOGE("The updated property value: %s is outdated, ignored", value.toString().c_str());
+        return false;
+    }
+
+    if (it->value == value.value && it->status == value.status) {
+        // Even though the property value is the same, we need to store the new property event to
+        // update the timestamp.
+        mContSubValuesByCallback[callback].insert(value);
+        ALOGD("The updated property value for propId: %" PRId32 ", areaId: %" PRId32
+              " has the "
+              "same value and status, ignored if VUR is enabled",
+              it->prop, it->areaId);
+        return false;
+    }
+
+    mContSubValuesByCallback[callback].insert(value);
+    return true;
+}
+
 std::unordered_map<std::shared_ptr<IVehicleCallback>, std::vector<VehiclePropValue>>
 SubscriptionManager::getSubscribedClients(std::vector<VehiclePropValue>&& updatedValues) {
     std::scoped_lock<std::mutex> lockGuard(mLock);
@@ -338,8 +391,18 @@ SubscriptionManager::getSubscribedClients(std::vector<VehiclePropValue>&& update
             continue;
         }
 
-        for (const auto& [_, client] : mClientsByPropIdAreaId[propIdAreaId]) {
-            clients[client].push_back(value);
+        for (const auto& [client, callback] : mClientsByPropIdAreaId[propIdAreaId]) {
+            auto& subConfigs = mContSubConfigsByPropIdArea[propIdAreaId];
+            // If client wants VUR (and VUR is supported as checked in DefaultVehicleHal), it is
+            // possible that VUR is not enabled in IVehicleHardware because another client does not
+            // enable VUR. We will implement VUR filtering here for the client that enables it.
+            if (subConfigs.isVurEnabledForClient(client) && !subConfigs.isVurEnabled()) {
+                if (isValueUpdatedLocked(callback, value)) {
+                    clients[callback].push_back(value);
+                }
+            } else {
+                clients[callback].push_back(value);
+            }
         }
     }
     return clients;

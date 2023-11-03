@@ -95,6 +95,9 @@ class MockVehicleHardware final : public IVehicleHardware {
 
     std::set<std::pair<int32_t, int32_t>> getSubscribedOnChangePropIdAreaIds();
     std::set<std::pair<int32_t, int32_t>> getSubscribedContinuousPropIdAreaIds();
+    std::vector<aidl::android::hardware::automotive::vehicle::SubscribeOptions>
+    getSubscribeOptions();
+    void clearSubscribeOptions();
 
   private:
     mutable std::mutex mLock;
@@ -121,6 +124,8 @@ class MockVehicleHardware final : public IVehicleHardware {
             mGetValueResponder GUARDED_BY(mLock);
     std::chrono::nanoseconds mEventBatchingWindow GUARDED_BY(mLock) = std::chrono::nanoseconds(0);
     std::set<std::pair<int32_t, int32_t>> mSubOnChangePropIdAreaIds GUARDED_BY(mLock);
+    std::vector<aidl::android::hardware::automotive::vehicle::SubscribeOptions> mSubscribeOptions
+            GUARDED_BY(mLock);
 
     template <class ResultType>
     aidl::android::hardware::automotive::vehicle::StatusCode returnResponse(

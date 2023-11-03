@@ -36,5 +36,6 @@ package android.hardware.automotive.vehicle;
 enum VehiclePropertyGroup {
   SYSTEM = 0x10000000,
   VENDOR = 0x20000000,
+  BACKPORTED = 0x30000000,
   MASK = 0xf0000000,
 }
