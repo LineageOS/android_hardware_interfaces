@@ -391,7 +391,7 @@ class CertificateRequestTestBase : public VtsRemotelyProvisionedComponentTests {
         for (auto& key : keysToSign_) {
             bytevec privateKeyBlob;
             auto status = provisionable_->generateEcdsaP256KeyPair(testMode, &key, &privateKeyBlob);
-            ASSERT_TRUE(status.isOk()) << status.getMessage();
+            ASSERT_TRUE(status.isOk()) << status.getDescription();
 
             vector<uint8_t> payload_value;
             check_maced_pubkey(key, testMode, &payload_value);
@@ -436,7 +436,7 @@ TEST_P(CertificateRequestTest, EmptyRequest_testMode) {
         auto status = provisionable_->generateCertificateRequest(
                 testMode, {} /* keysToSign */, testEekChain_.chain, challenge_, &deviceInfo,
                 &protectedData, &keysToSignMac);
-        ASSERT_TRUE(status.isOk()) << status.getMessage();
+        ASSERT_TRUE(status.isOk()) << status.getDescription();
 
         auto result = verifyProductionProtectedData(
                 deviceInfo, cppbor::Array(), keysToSignMac, protectedData, testEekChain_, eekId_,
@@ -461,7 +461,7 @@ TEST_P(CertificateRequestTest, NewKeyPerCallInTestMode) {
     auto status = provisionable_->generateCertificateRequest(
             testMode, {} /* keysToSign */, testEekChain_.chain, challenge_, &deviceInfo,
             &protectedData, &keysToSignMac);
-    ASSERT_TRUE(status.isOk()) << status.getMessage();
+    ASSERT_TRUE(status.isOk()) << status.getDescription();
 
     auto firstBcc = verifyProductionProtectedData(
             deviceInfo, /*keysToSign=*/cppbor::Array(), keysToSignMac, protectedData, testEekChain_,
@@ -471,7 +471,7 @@ TEST_P(CertificateRequestTest, NewKeyPerCallInTestMode) {
     status = provisionable_->generateCertificateRequest(
             testMode, {} /* keysToSign */, testEekChain_.chain, challenge_, &deviceInfo,
             &protectedData, &keysToSignMac);
-    ASSERT_TRUE(status.isOk()) << status.getMessage();
+    ASSERT_TRUE(status.isOk()) << status.getDescription();
 
     auto secondBcc = verifyProductionProtectedData(
             deviceInfo, /*keysToSign=*/cppbor::Array(), keysToSignMac, protectedData, testEekChain_,
@@ -521,7 +521,7 @@ TEST_P(CertificateRequestTest, NonEmptyRequest_testMode) {
         auto status = provisionable_->generateCertificateRequest(
                 testMode, keysToSign_, testEekChain_.chain, challenge_, &deviceInfo, &protectedData,
                 &keysToSignMac);
-        ASSERT_TRUE(status.isOk()) << status.getMessage();
+        ASSERT_TRUE(status.isOk()) << status.getDescription();
 
         auto result = verifyProductionProtectedData(
                 deviceInfo, cborKeysToSign_, keysToSignMac, protectedData, testEekChain_, eekId_,
@@ -565,7 +565,7 @@ TEST_P(CertificateRequestTest, NonEmptyRequestCorruptMac_testMode) {
     auto status = provisionable_->generateCertificateRequest(
             testMode, {keyWithCorruptMac}, testEekChain_.chain, challenge_, &deviceInfo,
             &protectedData, &keysToSignMac);
-    ASSERT_FALSE(status.isOk()) << status.getMessage();
+    ASSERT_FALSE(status.isOk()) << status.getDescription();
     EXPECT_EQ(status.getServiceSpecificError(), BnRemotelyProvisionedComponent::STATUS_INVALID_MAC);
 }
 
@@ -585,7 +585,7 @@ TEST_P(CertificateRequestTest, NonEmptyRequestCorruptMac_prodMode) {
     auto status = provisionable_->generateCertificateRequest(
             testMode, {keyWithCorruptMac}, getProdEekChain(rpcHardwareInfo.supportedEekCurve),
             challenge_, &deviceInfo, &protectedData, &keysToSignMac);
-    ASSERT_FALSE(status.isOk()) << status.getMessage();
+    ASSERT_FALSE(status.isOk()) << status.getDescription();
     EXPECT_EQ(status.getServiceSpecificError(), BnRemotelyProvisionedComponent::STATUS_INVALID_MAC);
 }
 
@@ -711,7 +711,7 @@ TEST_P(CertificateRequestV2Test, EmptyRequest) {
         auto challenge = randomBytes(size);
         auto status =
                 provisionable_->generateCertificateRequestV2({} /* keysToSign */, challenge, &csr);
-        ASSERT_TRUE(status.isOk()) << status.getMessage();
+        ASSERT_TRUE(status.isOk()) << status.getDescription();
 
         auto result = verifyProductionCsr(cppbor::Array(), csr, provisionable_.get(), challenge);
         ASSERT_TRUE(result) << result.message();
@@ -732,7 +732,7 @@ TEST_P(CertificateRequestV2Test, NonEmptyRequest) {
         SCOPED_TRACE(testing::Message() << "challenge[" << size << "]");
         auto challenge = randomBytes(size);
         auto status = provisionable_->generateCertificateRequestV2(keysToSign_, challenge, &csr);
-        ASSERT_TRUE(status.isOk()) << status.getMessage();
+        ASSERT_TRUE(status.isOk()) << status.getDescription();
 
         auto result = verifyProductionCsr(cborKeysToSign_, csr, provisionable_.get(), challenge);
         ASSERT_TRUE(result) << result.message();
@@ -747,7 +747,7 @@ TEST_P(CertificateRequestV2Test, EmptyRequestWithInvalidChallengeFail) {
 
     auto status = provisionable_->generateCertificateRequestV2(
             /* keysToSign */ {}, randomBytes(MAX_CHALLENGE_SIZE + 1), &csr);
-    EXPECT_FALSE(status.isOk()) << status.getMessage();
+    EXPECT_FALSE(status.isOk()) << status.getDescription();
     EXPECT_EQ(status.getServiceSpecificError(), BnRemotelyProvisionedComponent::STATUS_FAILED);
 }
 
@@ -762,13 +762,13 @@ TEST_P(CertificateRequestV2Test, NonEmptyRequestReproducible) {
     bytevec csr;
 
     auto status = provisionable_->generateCertificateRequestV2(keysToSign_, challenge_, &csr);
-    ASSERT_TRUE(status.isOk()) << status.getMessage();
+    ASSERT_TRUE(status.isOk()) << status.getDescription();
 
     auto firstCsr = verifyProductionCsr(cborKeysToSign_, csr, provisionable_.get(), challenge_);
     ASSERT_TRUE(firstCsr) << firstCsr.message();
 
     status = provisionable_->generateCertificateRequestV2(keysToSign_, challenge_, &csr);
-    ASSERT_TRUE(status.isOk()) << status.getMessage();
+    ASSERT_TRUE(status.isOk()) << status.getDescription();
 
     auto secondCsr = verifyProductionCsr(cborKeysToSign_, csr, provisionable_.get(), challenge_);
     ASSERT_TRUE(secondCsr) << secondCsr.message();
@@ -786,7 +786,7 @@ TEST_P(CertificateRequestV2Test, NonEmptyRequestMultipleKeys) {
     bytevec csr;
 
     auto status = provisionable_->generateCertificateRequestV2(keysToSign_, challenge_, &csr);
-    ASSERT_TRUE(status.isOk()) << status.getMessage();
+    ASSERT_TRUE(status.isOk()) << status.getDescription();
 
     auto result = verifyProductionCsr(cborKeysToSign_, csr, provisionable_.get(), challenge_);
     ASSERT_TRUE(result) << result.message();
@@ -804,7 +804,7 @@ TEST_P(CertificateRequestV2Test, NonEmptyRequestCorruptMac) {
     bytevec csr;
     auto status =
             provisionable_->generateCertificateRequestV2({keyWithCorruptMac}, challenge_, &csr);
-    ASSERT_FALSE(status.isOk()) << status.getMessage();
+    ASSERT_FALSE(status.isOk()) << status.getDescription();
     EXPECT_EQ(status.getServiceSpecificError(), BnRemotelyProvisionedComponent::STATUS_INVALID_MAC);
 }
 
@@ -818,7 +818,7 @@ TEST_P(CertificateRequestV2Test, CertificateRequestV1Removed_prodMode) {
     auto status = provisionable_->generateCertificateRequest(
             false /* testMode */, {} /* keysToSign */, {} /* EEK chain */, challenge_, &deviceInfo,
             &protectedData, &keysToSignMac);
-    ASSERT_FALSE(status.isOk()) << status.getMessage();
+    ASSERT_FALSE(status.isOk()) << status.getDescription();
     EXPECT_EQ(status.getServiceSpecificError(), BnRemotelyProvisionedComponent::STATUS_REMOVED);
 }
 
@@ -832,7 +832,7 @@ TEST_P(CertificateRequestV2Test, CertificateRequestV1Removed_testMode) {
     auto status = provisionable_->generateCertificateRequest(
             true /* testMode */, {} /* keysToSign */, {} /* EEK chain */, challenge_, &deviceInfo,
             &protectedData, &keysToSignMac);
-    ASSERT_FALSE(status.isOk()) << status.getMessage();
+    ASSERT_FALSE(status.isOk()) << status.getDescription();
     EXPECT_EQ(status.getServiceSpecificError(), BnRemotelyProvisionedComponent::STATUS_REMOVED);
 }
 
@@ -916,7 +916,7 @@ TEST_P(CertificateRequestV2Test, DeviceInfo) {
     bytevec csr;
     irpcStatus =
             provisionable_->generateCertificateRequestV2({} /* keysToSign */, challenge_, &csr);
-    ASSERT_TRUE(irpcStatus.isOk()) << irpcStatus.getMessage();
+    ASSERT_TRUE(irpcStatus.isOk()) << irpcStatus.getDescription();
 
     auto result = verifyProductionCsr(cppbor::Array(), csr, provisionable_.get(), challenge_);
     ASSERT_TRUE(result) << result.message();
