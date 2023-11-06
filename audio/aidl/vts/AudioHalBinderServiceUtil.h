@@ -71,8 +71,7 @@ class AudioHalBinderServiceUtil {
 
         bool waitForFired(std::chrono::milliseconds timeoutMs) {
             std::unique_lock<std::mutex> lock(mutex);
-            condition.wait_for(lock, timeoutMs, [this]() { return fired; });
-            return fired;
+            return condition.wait_for(lock, timeoutMs, [this]() { return fired; });
         }
 
       private:
