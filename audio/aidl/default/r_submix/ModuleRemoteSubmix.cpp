@@ -21,6 +21,7 @@
 #include <android-base/logging.h>
 #include <error/expected_utils.h>
 
+#include "SubmixRoute.h"
 #include "core-impl/ModuleRemoteSubmix.h"
 #include "core-impl/StreamRemoteSubmix.h"
 
@@ -104,6 +105,14 @@ ndk::ScopedAStatus ModuleRemoteSubmix::onMasterMuteChanged(bool __unused) {
 ndk::ScopedAStatus ModuleRemoteSubmix::onMasterVolumeChanged(float __unused) {
     LOG(DEBUG) << __func__ << ": is not supported";
     return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+}
+
+int32_t ModuleRemoteSubmix::getNominalLatencyMs(const AudioPortConfig&) {
+    // See the note on kDefaultPipePeriodCount.
+    static constexpr int32_t kMaxLatencyMs =
+            (r_submix::kDefaultPipeSizeInFrames * 1000) / r_submix::kDefaultSampleRateHz;
+    static constexpr int32_t kMinLatencyMs = kMaxLatencyMs / r_submix::kDefaultPipePeriodCount;
+    return (kMaxLatencyMs + kMinLatencyMs) / 2;
 }
 
 }  // namespace aidl::android::hardware::audio::core

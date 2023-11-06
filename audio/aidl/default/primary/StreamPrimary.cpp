@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-#include <limits>
+#include <chrono>
 
 #define LOG_TAG "AHAL_StreamPrimary"
 #include <android-base/logging.h>
 #include <android-base/properties.h>
+#include <audio_utils/clock.h>
 #include <error/expected_utils.h>
 
 #include "PrimaryMixer.h"
@@ -37,8 +38,32 @@ using android::base::GetBoolProperty;
 namespace aidl::android::hardware::audio::core {
 
 StreamPrimary::StreamPrimary(StreamContext* context, const Metadata& metadata)
-    : StreamAlsa(context, metadata, 3 /*readWriteRetries*/), mIsInput(isInput(metadata)) {
+    : StreamAlsa(context, metadata, 3 /*readWriteRetries*/),
+      mIsAsynchronous(!!getContext().getAsyncCallback()) {
     context->startStreamDataProcessor();
+}
+
+::android::status_t StreamPrimary::transfer(void* buffer, size_t frameCount,
+                                            size_t* actualFrameCount, int32_t* latencyMs) {
+    auto start = std::chrono::steady_clock::now();
+    if (auto status = StreamAlsa::transfer(buffer, frameCount, actualFrameCount, latencyMs);
+        status != ::android::OK) {
+        return status;
+    }
+    // This is a workaround for the emulator implementation which has a host-side buffer
+    // and this can result in reading faster than real time.
+    if (mIsInput && !mIsAsynchronous) {
+        auto recordDurationUs = std::chrono::duration_cast<std::chrono::microseconds>(
+                std::chrono::steady_clock::now() - start);
+        const long projectedVsObservedOffsetUs =
+                *actualFrameCount * MICROS_PER_SECOND / mContext.getSampleRate() -
+                recordDurationUs.count();
+        if (projectedVsObservedOffsetUs > 0) {
+            LOG(VERBOSE) << __func__ << ": sleeping for " << projectedVsObservedOffsetUs << " us";
+            usleep(projectedVsObservedOffsetUs);
+        }
+    }
+    return ::android::OK;
 }
 
 std::vector<alsa::DeviceProfile> StreamPrimary::getDeviceProfiles() {
@@ -66,7 +91,8 @@ bool StreamInPrimary::useStubStream(const AudioDevice& device) {
             GetBoolProperty("ro.boot.audio.tinyalsa.simulate_input", false);
     return kSimulateInput || device.type.type == AudioDeviceType::IN_TELEPHONY_RX ||
            device.type.type == AudioDeviceType::IN_FM_TUNER ||
-           device.type.connection == AudioDeviceDescription::CONNECTION_BUS;
+           device.type.connection == AudioDeviceDescription::CONNECTION_BUS ||
+           (device.type.type == AudioDeviceType::IN_DEVICE && device.type.connection.empty());
 }
 
 StreamSwitcher::DeviceSwitchBehavior StreamInPrimary::switchCurrentStream(
@@ -101,6 +127,11 @@ ndk::ScopedAStatus StreamInPrimary::getHwGain(std::vector<float>* _aidl_return) 
     if (isStubStream()) {
         return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
     }
+    float gain;
+    RETURN_STATUS_IF_ERROR(primary::PrimaryMixer::getInstance().getMicGain(&gain));
+    _aidl_return->resize(0);
+    _aidl_return->resize(mChannelCount, gain);
+    RETURN_STATUS_IF_ERROR(setHwGainImpl(*_aidl_return));
     return getHwGainImpl(_aidl_return);
 }
 
@@ -132,7 +163,8 @@ bool StreamOutPrimary::useStubStream(const AudioDevice& device) {
     static const bool kSimulateOutput =
             GetBoolProperty("ro.boot.audio.tinyalsa.ignore_output", false);
     return kSimulateOutput || device.type.type == AudioDeviceType::OUT_TELEPHONY_TX ||
-           device.type.connection == AudioDeviceDescription::CONNECTION_BUS;
+           device.type.connection == AudioDeviceDescription::CONNECTION_BUS ||
+           (device.type.type == AudioDeviceType::OUT_DEVICE && device.type.connection.empty());
 }
 
 StreamSwitcher::DeviceSwitchBehavior StreamOutPrimary::switchCurrentStream(
@@ -167,6 +199,9 @@ ndk::ScopedAStatus StreamOutPrimary::getHwVolume(std::vector<float>* _aidl_retur
     if (isStubStream()) {
         return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
     }
+    RETURN_STATUS_IF_ERROR(primary::PrimaryMixer::getInstance().getVolumes(_aidl_return));
+    _aidl_return->resize(mChannelCount);
+    RETURN_STATUS_IF_ERROR(setHwVolumeImpl(*_aidl_return));
     return getHwVolumeImpl(_aidl_return);
 }
 
