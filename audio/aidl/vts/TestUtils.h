@@ -18,7 +18,6 @@
 
 #include <algorithm>
 #include <initializer_list>
-#include <iostream>
 
 #include <android/binder_auto_utils.h>
 #include <gtest/gtest.h>
