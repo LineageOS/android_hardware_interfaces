@@ -175,7 +175,7 @@ class Module : public BnModule {
     bool mMicMute = false;
     bool mMasterMute = false;
     float mMasterVolume = 1.0f;
-    ChildInterface<sounddose::ISoundDose> mSoundDose;
+    ChildInterface<sounddose::SoundDose> mSoundDose;
     std::optional<bool> mIsMmapSupported;
 
   protected:
