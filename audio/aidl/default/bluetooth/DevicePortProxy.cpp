@@ -19,10 +19,24 @@
 #include <android-base/logging.h>
 #include <android-base/stringprintf.h>
 #include <audio_utils/primitives.h>
-#include <inttypes.h>
 #include <log/log.h>
 
+#include "BluetoothAudioSessionControl.h"
 #include "core-impl/DevicePortProxy.h"
+
+using aidl::android::hardware::audio::common::SinkMetadata;
+using aidl::android::hardware::audio::common::SourceMetadata;
+using aidl::android::hardware::bluetooth::audio::AudioConfiguration;
+using aidl::android::hardware::bluetooth::audio::BluetoothAudioSessionControl;
+using aidl::android::hardware::bluetooth::audio::BluetoothAudioStatus;
+using aidl::android::hardware::bluetooth::audio::ChannelMode;
+using aidl::android::hardware::bluetooth::audio::PcmConfiguration;
+using aidl::android::hardware::bluetooth::audio::PortStatusCallbacks;
+using aidl::android::hardware::bluetooth::audio::PresentationPosition;
+using aidl::android::hardware::bluetooth::audio::SessionType;
+using aidl::android::media::audio::common::AudioDeviceDescription;
+using aidl::android::media::audio::common::AudioDeviceType;
+using android::base::StringPrintf;
 
 namespace android::bluetooth::audio::aidl {
 
@@ -32,20 +46,6 @@ namespace {
 constexpr unsigned int kMaxWaitingTimeMs = 4500;
 
 }  // namespace
-
-using ::aidl::android::hardware::audio::common::SinkMetadata;
-using ::aidl::android::hardware::audio::common::SourceMetadata;
-using ::aidl::android::hardware::bluetooth::audio::AudioConfiguration;
-using ::aidl::android::hardware::bluetooth::audio::BluetoothAudioSessionControl;
-using ::aidl::android::hardware::bluetooth::audio::BluetoothAudioStatus;
-using ::aidl::android::hardware::bluetooth::audio::ChannelMode;
-using ::aidl::android::hardware::bluetooth::audio::PcmConfiguration;
-using ::aidl::android::hardware::bluetooth::audio::PortStatusCallbacks;
-using ::aidl::android::hardware::bluetooth::audio::PresentationPosition;
-using ::aidl::android::hardware::bluetooth::audio::SessionType;
-using ::aidl::android::media::audio::common::AudioDeviceDescription;
-using ::aidl::android::media::audio::common::AudioDeviceType;
-using ::android::base::StringPrintf;
 
 std::ostream& operator<<(std::ostream& os, const BluetoothStreamState& state) {
     switch (state) {

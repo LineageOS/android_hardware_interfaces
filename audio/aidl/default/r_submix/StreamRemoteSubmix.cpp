@@ -17,8 +17,6 @@
 #define LOG_TAG "AHAL_StreamRemoteSubmix"
 #include <android-base/logging.h>
 
-#include <cmath>
-
 #include "core-impl/StreamRemoteSubmix.h"
 
 using aidl::android::hardware::audio::common::SinkMetadata;
@@ -158,27 +156,8 @@ void StreamRemoteSubmix::shutdown() {
 
 ::android::status_t StreamRemoteSubmix::transfer(void* buffer, size_t frameCount,
                                                  size_t* actualFrameCount, int32_t* latencyMs) {
-    *latencyMs = (getStreamPipeSizeInFrames() * MILLIS_PER_SECOND) / mStreamConfig.sampleRate;
+    *latencyMs = getDelayInUsForFrameCount(getStreamPipeSizeInFrames()) / 1000;
     LOG(VERBOSE) << __func__ << ": Latency " << *latencyMs << "ms";
-
-    sp<MonoPipe> sink = mCurrentRoute->getSink();
-    if (sink != nullptr) {
-        if (sink->isShutdown()) {
-            sink.clear();
-            LOG(VERBOSE) << __func__ << ": pipe shutdown, ignoring the transfer.";
-            // the pipe has already been shutdown, this buffer will be lost but we must simulate
-            // timing so we don't drain the output faster than realtime
-            const size_t delayUs = static_cast<size_t>(
-                    std::roundf(frameCount * MICROS_PER_SECOND / mStreamConfig.sampleRate));
-            usleep(delayUs);
-
-            *actualFrameCount = frameCount;
-            return ::android::OK;
-        }
-    } else {
-        LOG(ERROR) << __func__ << ": transfer without a pipe!";
-        return ::android::UNEXPECTED_NULL;
-    }
     mCurrentRoute->exitStandby(mIsInput);
     return (mIsInput ? inRead(buffer, frameCount, actualFrameCount)
                      : outWrite(buffer, frameCount, actualFrameCount));
@@ -202,6 +181,10 @@ void StreamRemoteSubmix::shutdown() {
     return ::android::OK;
 }
 
+long StreamRemoteSubmix::getDelayInUsForFrameCount(size_t frameCount) {
+    return frameCount * MICROS_PER_SECOND / mStreamConfig.sampleRate;
+}
+
 // Calculate the maximum size of the pipe buffer in frames for the specified stream.
 size_t StreamRemoteSubmix::getStreamPipeSizeInFrames() {
     auto pipeConfig = mCurrentRoute->mPipeConfig;
@@ -215,11 +198,11 @@ size_t StreamRemoteSubmix::getStreamPipeSizeInFrames() {
     if (sink != nullptr) {
         if (sink->isShutdown()) {
             sink.clear();
-            LOG(VERBOSE) << __func__ << ": pipe shutdown, ignoring the write.";
+            const auto delayUs = getDelayInUsForFrameCount(frameCount);
+            LOG(DEBUG) << __func__ << ": pipe shutdown, ignoring the write, sleeping for "
+                       << delayUs << " us";
             // the pipe has already been shutdown, this buffer will be lost but we must
             // simulate timing so we don't drain the output faster than realtime
-            const size_t delayUs = static_cast<size_t>(
-                    std::roundf(frameCount * MICROS_PER_SECOND / mStreamConfig.sampleRate));
             usleep(delayUs);
             *actualFrameCount = frameCount;
             return ::android::OK;
@@ -229,17 +212,18 @@ size_t StreamRemoteSubmix::getStreamPipeSizeInFrames() {
         return ::android::UNKNOWN_ERROR;
     }
 
-    const size_t availableToWrite = sink->availableToWrite();
+    const bool shouldBlockWrite = mCurrentRoute->shouldBlockWrite();
+    size_t availableToWrite = sink->availableToWrite();
     // NOTE: sink has been checked above and sink and source life cycles are synchronized
     sp<MonoPipeReader> source = mCurrentRoute->getSource();
     // If the write to the sink should be blocked, flush enough frames from the pipe to make space
     // to write the most recent data.
-    if (!mCurrentRoute->shouldBlockWrite() && availableToWrite < frameCount) {
+    if (!shouldBlockWrite && availableToWrite < frameCount) {
         static uint8_t flushBuffer[64];
         const size_t flushBufferSizeFrames = sizeof(flushBuffer) / mStreamConfig.frameSize;
         size_t framesToFlushFromSource = frameCount - availableToWrite;
-        LOG(VERBOSE) << __func__ << ": flushing " << framesToFlushFromSource
-                     << " frames from the pipe to avoid blocking";
+        LOG(DEBUG) << __func__ << ": flushing " << framesToFlushFromSource
+                   << " frames from the pipe to avoid blocking";
         while (framesToFlushFromSource) {
             const size_t flushSize = std::min(framesToFlushFromSource, flushBufferSizeFrames);
             framesToFlushFromSource -= flushSize;
@@ -247,7 +231,12 @@ size_t StreamRemoteSubmix::getStreamPipeSizeInFrames() {
             source->read(flushBuffer, flushSize);
         }
     }
+    availableToWrite = sink->availableToWrite();
 
+    if (!shouldBlockWrite && frameCount > availableToWrite) {
+        // Truncate the request to avoid blocking.
+        frameCount = availableToWrite;
+    }
     ssize_t writtenFrames = sink->write(buffer, frameCount);
     if (writtenFrames < 0) {
         if (writtenFrames == (ssize_t)::android::NEGOTIATE) {
@@ -261,7 +250,6 @@ size_t StreamRemoteSubmix::getStreamPipeSizeInFrames() {
             writtenFrames = sink->write(buffer, frameCount);
         }
     }
-    sink.clear();
 
     if (writtenFrames < 0) {
         LOG(ERROR) << __func__ << ": failed writing to pipe with " << writtenFrames;
@@ -286,8 +274,9 @@ size_t StreamRemoteSubmix::getStreamPipeSizeInFrames() {
         } else {
             LOG(ERROR) << __func__ << ": Read errors " << readErrorCount;
         }
-        const size_t delayUs = static_cast<size_t>(
-                std::roundf(frameCount * MICROS_PER_SECOND / mStreamConfig.sampleRate));
+        const auto delayUs = getDelayInUsForFrameCount(frameCount);
+        LOG(DEBUG) << __func__ << ": no source, ignoring the read, sleeping for " << delayUs
+                   << " us";
         usleep(delayUs);
         memset(buffer, 0, mStreamConfig.frameSize * frameCount);
         *actualFrameCount = frameCount;
@@ -296,7 +285,7 @@ size_t StreamRemoteSubmix::getStreamPipeSizeInFrames() {
 
     // read the data from the pipe
     int attempts = 0;
-    const size_t delayUs = static_cast<size_t>(std::roundf(kReadAttemptSleepUs));
+    const long delayUs = kReadAttemptSleepUs;
     char* buff = (char*)buffer;
     size_t remainingFrames = frameCount;
     int availableToRead = source->availableToRead();
@@ -313,11 +302,12 @@ size_t StreamRemoteSubmix::getStreamPipeSizeInFrames() {
             buff += framesRead * mStreamConfig.frameSize;
             availableToRead -= framesRead;
             LOG(VERBOSE) << __func__ << ": (attempts = " << attempts << ") got " << framesRead
-                         << " frames, remaining=" << remainingFrames;
+                         << " frames, remaining =" << remainingFrames;
         } else {
             attempts++;
             LOG(WARNING) << __func__ << ": read returned " << framesRead
-                         << " , read failure attempts = " << attempts;
+                         << " , read failure attempts = " << attempts << ", sleeping for "
+                         << delayUs << " us";
             usleep(delayUs);
         }
     }
@@ -337,18 +327,18 @@ size_t StreamRemoteSubmix::getStreamPipeSizeInFrames() {
     // compute how much we need to sleep after reading the data by comparing the wall clock with
     //   the projected time at which we should return.
     // wall clock after reading from the pipe
-    auto recordDurationUs = std::chrono::steady_clock::now() - mCurrentRoute->getRecordStartTime();
+    auto recordDurationUs = std::chrono::duration_cast<std::chrono::microseconds>(
+            std::chrono::steady_clock::now() - mCurrentRoute->getRecordStartTime());
 
     // readCounterFrames contains the number of frames that have been read since the beginning of
     // recording (including this call): it's converted to usec and compared to how long we've been
     // recording for, which gives us how long we must wait to sync the projected recording time, and
     // the observed recording time.
-    const int projectedVsObservedOffsetUs =
-            std::roundf((readCounterFrames * MICROS_PER_SECOND / mStreamConfig.sampleRate) -
-                        recordDurationUs.count());
+    const long projectedVsObservedOffsetUs =
+            getDelayInUsForFrameCount(readCounterFrames) - recordDurationUs.count();
 
     LOG(VERBOSE) << __func__ << ": record duration " << recordDurationUs.count()
-                 << " microseconds, will wait: " << projectedVsObservedOffsetUs << " microseconds";
+                 << " us, will wait: " << projectedVsObservedOffsetUs << " us";
     if (projectedVsObservedOffsetUs > 0) {
         usleep(projectedVsObservedOffsetUs);
     }
