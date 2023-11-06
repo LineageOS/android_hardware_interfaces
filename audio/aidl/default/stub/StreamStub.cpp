@@ -94,7 +94,7 @@ StreamStub::StreamStub(StreamContext* context, const Metadata& metadata)
 }
 
 ::android::status_t StreamStub::transfer(void* buffer, size_t frameCount, size_t* actualFrameCount,
-                                         int32_t* latencyMs) {
+                                         int32_t*) {
     if (!mIsInitialized) {
         LOG(FATAL) << __func__ << ": must not happen for an uninitialized driver";
     }
@@ -117,7 +117,6 @@ StreamStub::StreamStub(StreamContext* context, const Metadata& metadata)
         }
     }
     *actualFrameCount = frameCount;
-    *latencyMs = Module::kLatencyMs;
     return ::android::OK;
 }
 

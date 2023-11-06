@@ -27,10 +27,13 @@ class StreamPrimary : public StreamAlsa {
   public:
     StreamPrimary(StreamContext* context, const Metadata& metadata);
 
+    ::android::status_t transfer(void* buffer, size_t frameCount, size_t* actualFrameCount,
+                                 int32_t* latencyMs) override;
+
   protected:
     std::vector<alsa::DeviceProfile> getDeviceProfiles() override;
 
-    const bool mIsInput;
+    const bool mIsAsynchronous;
 };
 
 class StreamInPrimary final : public StreamIn, public StreamSwitcher, public StreamInHwGainHelper {
@@ -79,6 +82,10 @@ class StreamOutPrimary final : public StreamOut,
 
     ndk::ScopedAStatus getHwVolume(std::vector<float>* _aidl_return) override;
     ndk::ScopedAStatus setHwVolume(const std::vector<float>& in_channelVolumes) override;
+
+    ndk::ScopedAStatus setConnectedDevices(
+            const std::vector<::aidl::android::media::audio::common::AudioDevice>& devices)
+            override;
 };
 
 }  // namespace aidl::android::hardware::audio::core

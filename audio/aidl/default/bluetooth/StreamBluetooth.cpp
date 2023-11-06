@@ -20,52 +20,49 @@
 #include <android-base/logging.h>
 #include <audio_utils/clock.h>
 
-#include "BluetoothAudioSessionControl.h"
+#include "BluetoothAudioSession.h"
 #include "core-impl/StreamBluetooth.h"
 
-namespace aidl::android::hardware::audio::core {
+using aidl::android::hardware::audio::common::frameCountFromDurationUs;
+using aidl::android::hardware::audio::common::SinkMetadata;
+using aidl::android::hardware::audio::common::SourceMetadata;
+using aidl::android::hardware::audio::core::VendorParameter;
+using aidl::android::hardware::bluetooth::audio::ChannelMode;
+using aidl::android::hardware::bluetooth::audio::PcmConfiguration;
+using aidl::android::hardware::bluetooth::audio::PresentationPosition;
+using aidl::android::media::audio::common::AudioChannelLayout;
+using aidl::android::media::audio::common::AudioDevice;
+using aidl::android::media::audio::common::AudioDeviceAddress;
+using aidl::android::media::audio::common::AudioFormatDescription;
+using aidl::android::media::audio::common::AudioFormatType;
+using aidl::android::media::audio::common::AudioOffloadInfo;
+using aidl::android::media::audio::common::MicrophoneDynamicInfo;
+using aidl::android::media::audio::common::MicrophoneInfo;
+using android::bluetooth::audio::aidl::BluetoothAudioPortAidl;
+using android::bluetooth::audio::aidl::BluetoothAudioPortAidlIn;
+using android::bluetooth::audio::aidl::BluetoothAudioPortAidlOut;
+using android::bluetooth::audio::aidl::BluetoothStreamState;
 
-using ::aidl::android::hardware::audio::common::SinkMetadata;
-using ::aidl::android::hardware::audio::common::SourceMetadata;
-using ::aidl::android::hardware::audio::core::VendorParameter;
-using ::aidl::android::hardware::bluetooth::audio::ChannelMode;
-using ::aidl::android::hardware::bluetooth::audio::PcmConfiguration;
-using ::aidl::android::hardware::bluetooth::audio::PresentationPosition;
-using ::aidl::android::media::audio::common::AudioChannelLayout;
-using ::aidl::android::media::audio::common::AudioDevice;
-using ::aidl::android::media::audio::common::AudioDeviceAddress;
-using ::aidl::android::media::audio::common::AudioFormatDescription;
-using ::aidl::android::media::audio::common::AudioFormatType;
-using ::aidl::android::media::audio::common::AudioOffloadInfo;
-using ::aidl::android::media::audio::common::MicrophoneDynamicInfo;
-using ::aidl::android::media::audio::common::MicrophoneInfo;
-using ::android::bluetooth::audio::aidl::BluetoothAudioPortAidl;
-using ::android::bluetooth::audio::aidl::BluetoothAudioPortAidlIn;
-using ::android::bluetooth::audio::aidl::BluetoothAudioPortAidlOut;
-using ::android::bluetooth::audio::aidl::BluetoothStreamState;
+namespace aidl::android::hardware::audio::core {
 
 constexpr int kBluetoothDefaultInputBufferMs = 20;
 constexpr int kBluetoothDefaultOutputBufferMs = 10;
 // constexpr int kBluetoothSpatializerOutputBufferMs = 10;
 
-size_t getFrameCount(uint64_t durationUs, uint32_t sampleRate) {
-    return (durationUs * sampleRate) / 1000000;
-}
-
 // pcm configuration params are not really used by the module
 StreamBluetooth::StreamBluetooth(StreamContext* context, const Metadata& metadata,
-                                 Module::BtProfileHandles&& btHandles)
+                                 ModuleBluetooth::BtProfileHandles&& btHandles)
     : StreamCommonImpl(context, metadata),
       mSampleRate(getContext().getSampleRate()),
       mChannelLayout(getContext().getChannelLayout()),
       mFormat(getContext().getFormat()),
       mFrameSizeBytes(getContext().getFrameSize()),
       mIsInput(isInput(metadata)),
-      mBluetoothA2dp(std::move(std::get<Module::BtInterface::BTA2DP>(btHandles))),
-      mBluetoothLe(std::move(std::get<Module::BtInterface::BTLE>(btHandles))) {
+      mBluetoothA2dp(std::move(std::get<ModuleBluetooth::BtInterface::BTA2DP>(btHandles))),
+      mBluetoothLe(std::move(std::get<ModuleBluetooth::BtInterface::BTLE>(btHandles))) {
     mPreferredDataIntervalUs =
-            mIsInput ? kBluetoothDefaultInputBufferMs : kBluetoothDefaultOutputBufferMs;
-    mPreferredFrameCount = getFrameCount(mPreferredDataIntervalUs, mSampleRate);
+            (mIsInput ? kBluetoothDefaultInputBufferMs : kBluetoothDefaultOutputBufferMs) * 1000;
+    mPreferredFrameCount = frameCountFromDurationUs(mPreferredDataIntervalUs, mSampleRate);
     mIsInitialized = false;
     mIsReadyToClose = false;
 }
@@ -226,7 +223,7 @@ bool StreamBluetooth::checkConfigParams(
     if (config.dataIntervalUs > 0) {
         mPreferredDataIntervalUs =
                 std::min((int32_t)mPreferredDataIntervalUs, config.dataIntervalUs);
-        mPreferredFrameCount = getFrameCount(mPreferredDataIntervalUs, mSampleRate);
+        mPreferredFrameCount = frameCountFromDurationUs(mPreferredDataIntervalUs, mSampleRate);
     }
     return true;
 }
@@ -318,7 +315,7 @@ ndk::ScopedAStatus StreamBluetooth::bluetoothParametersUpdated() {
 
 StreamInBluetooth::StreamInBluetooth(StreamContext&& context, const SinkMetadata& sinkMetadata,
                                      const std::vector<MicrophoneInfo>& microphones,
-                                     Module::BtProfileHandles&& btProfileHandles)
+                                     ModuleBluetooth::BtProfileHandles&& btProfileHandles)
     : StreamIn(std::move(context), microphones),
       StreamBluetooth(&mContextInstance, sinkMetadata, std::move(btProfileHandles)) {}
 
@@ -331,7 +328,7 @@ ndk::ScopedAStatus StreamInBluetooth::getActiveMicrophones(
 StreamOutBluetooth::StreamOutBluetooth(StreamContext&& context,
                                        const SourceMetadata& sourceMetadata,
                                        const std::optional<AudioOffloadInfo>& offloadInfo,
-                                       Module::BtProfileHandles&& btProfileHandles)
+                                       ModuleBluetooth::BtProfileHandles&& btProfileHandles)
     : StreamOut(std::move(context), offloadInfo),
       StreamBluetooth(&mContextInstance, sourceMetadata, std::move(btProfileHandles)) {}
 
