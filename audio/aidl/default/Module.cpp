@@ -242,7 +242,8 @@ ndk::ScopedAStatus Module::createStreamContext(
                 portConfigIt->channelMask.value(), portConfigIt->sampleRate.value().value, flags,
                 portConfigIt->ext.get<AudioPortExt::mix>().handle,
                 std::make_unique<StreamContext::DataMQ>(frameSize * in_bufferSizeFrames),
-                asyncCallback, outEventCallback, params);
+                asyncCallback, outEventCallback,
+                std::weak_ptr<sounddose::StreamDataProcessorInterface>{}, params);
         if (temp.isValid()) {
             *out_context = std::move(temp);
         } else {

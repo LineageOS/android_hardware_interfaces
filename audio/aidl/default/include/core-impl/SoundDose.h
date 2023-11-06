@@ -20,10 +20,22 @@
 
 #include <aidl/android/hardware/audio/core/sounddose/BnSoundDose.h>
 #include <aidl/android/media/audio/common/AudioDevice.h>
-
-using aidl::android::media::audio::common::AudioDevice;
+#include <aidl/android/media/audio/common/AudioFormatDescription.h>
 
 namespace aidl::android::hardware::audio::core::sounddose {
+
+// Interface used for processing the data received by a stream.
+class StreamDataProcessorInterface {
+  public:
+    virtual ~StreamDataProcessorInterface() = default;
+
+    virtual void startDataProcessor(
+            uint32_t samplerate, uint32_t channelCount,
+            const ::aidl::android::media::audio::common::AudioFormatDescription& format) = 0;
+    virtual void setAudioDevice(
+            const ::aidl::android::media::audio::common::AudioDevice& audioDevice) = 0;
+    virtual void process(const void* buffer, size_t size) = 0;
+};
 
 class SoundDose : public BnSoundDose {
   public:
