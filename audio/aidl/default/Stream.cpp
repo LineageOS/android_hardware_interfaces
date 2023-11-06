@@ -90,6 +90,14 @@ bool StreamContext::isValid() const {
     return true;
 }
 
+void StreamContext::startStreamDataProcessor() {
+    auto streamDataProcessor = mStreamDataProcessor.lock();
+    if (streamDataProcessor != nullptr) {
+        streamDataProcessor->startDataProcessor(mSampleRate, getChannelCount(mChannelLayout),
+                                                mFormat);
+    }
+}
+
 void StreamContext::reset() {
     mCommandMQ.reset();
     mReplyMQ.reset();
@@ -592,6 +600,10 @@ bool StreamOutWorkerLogic::write(size_t clientSize, StreamDescriptor::Reply* rep
                 status != ::android::OK) {
                 fatal = true;
                 LOG(ERROR) << __func__ << ": write failed: " << status;
+            }
+            auto streamDataProcessor = mContext->getStreamDataProcessor().lock();
+            if (streamDataProcessor != nullptr) {
+                streamDataProcessor->process(mDataBuffer.get(), actualFrameCount * frameSize);
             }
         } else {
             if (mContext->getAsyncCallback() == nullptr) {
