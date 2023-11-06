@@ -46,7 +46,7 @@ class StreamRemoteSubmix : public StreamCommonImpl {
     ndk::ScopedAStatus prepareToClose() override;
 
   private:
-    size_t getPipeSizeInFrames();
+    long getDelayInUsForFrameCount(size_t frameCount);
     size_t getStreamPipeSizeInFrames();
     ::android::status_t outWrite(void* buffer, size_t frameCount, size_t* actualFrameCount);
     ::android::status_t inRead(void* buffer, size_t frameCount, size_t* actualFrameCount);

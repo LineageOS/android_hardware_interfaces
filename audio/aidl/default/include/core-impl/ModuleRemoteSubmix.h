@@ -50,6 +50,9 @@ class ModuleRemoteSubmix : public Module {
             override;
     ndk::ScopedAStatus onMasterMuteChanged(bool mute) override;
     ndk::ScopedAStatus onMasterVolumeChanged(float volume) override;
+    int32_t getNominalLatencyMs(
+            const ::aidl::android::media::audio::common::AudioPortConfig& portConfig) override;
+    // TODO(b/307586684): Report proper minimum stream buffer size by overriding 'setAudioPatch'.
 };
 
 }  // namespace aidl::android::hardware::audio::core
