@@ -551,6 +551,11 @@ TEST_P(CameraAidlTest, configureStreamsAvailableOutputs) {
             stream.rotation = StreamRotation::ROTATION_0;
             stream.dynamicRangeProfile = RequestAvailableDynamicRangeProfilesMap::
                     ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_STANDARD;
+            stream.useCase = ScalerAvailableStreamUseCases::
+                    ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_DEFAULT;
+            stream.colorSpace = static_cast<int>(
+                    RequestAvailableColorSpaceProfilesMap::
+                            ANDROID_REQUEST_AVAILABLE_COLOR_SPACE_PROFILES_MAP_UNSPECIFIED);
 
             std::vector<Stream> streams = {stream};
             StreamConfiguration config;
