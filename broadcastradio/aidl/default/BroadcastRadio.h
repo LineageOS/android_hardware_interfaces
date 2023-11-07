@@ -91,6 +91,9 @@ class BroadcastRadio final : public BnBroadcastRadio {
     ProgramInfo tuneInternalLocked(const ProgramSelector& sel) REQUIRES(mMutex);
     void startProgramListUpdatesLocked(const ProgramFilter& filter) REQUIRES(mMutex);
     void cancelProgramListUpdateLocked() REQUIRES(mMutex);
+    void handleProgramInfoUpdateRadioCallback(ProgramInfo programInfo,
+                                              const std::shared_ptr<ITunerCallback>& callback)
+            EXCLUDES(mMutex);
     bool findNextLocked(const ProgramSelector& current, bool directionUp, bool skipSubChannel,
                         VirtualProgram* nextProgram) const REQUIRES(mMutex);
     void jumpToFirstSubChannelLocked(std::vector<VirtualProgram>::const_iterator& it) const

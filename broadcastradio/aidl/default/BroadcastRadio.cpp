@@ -245,7 +245,10 @@ ProgramInfo BroadcastRadio::tuneInternalLocked(const ProgramSelector& sel) {
         }
         programInfo = makeSampleProgramInfo(sel);
     }
-    mIsTuneCompleted = true;
+    programInfo.infoFlags |= ProgramInfo::FLAG_SIGNAL_ACQUISITION;
+    if (programInfo.selector.primaryId.type != IdentifierType::HD_STATION_ID_EXT) {
+        mIsTuneCompleted = true;
+    }
     if (adjustAmFmRangeLocked()) {
         startProgramListUpdatesLocked({});
     }
@@ -274,6 +277,32 @@ ScopedAStatus BroadcastRadio::unsetTunerCallback() {
     mCallback = nullptr;
 
     return ScopedAStatus::ok();
+}
+
+void BroadcastRadio::handleProgramInfoUpdateRadioCallback(
+        ProgramInfo programInfo, const std::shared_ptr<ITunerCallback>& callback) {
+    callback->onCurrentProgramInfoChanged(programInfo);
+    if (programInfo.selector.primaryId.type != IdentifierType::HD_STATION_ID_EXT) {
+        return;
+    }
+    ProgramSelector sel = programInfo.selector;
+    auto cancelTask = [sel, callback]() { callback->onTuneFailed(Result::CANCELED, sel); };
+    programInfo.infoFlags |= ProgramInfo::FLAG_HD_SIS_ACQUISITION;
+    auto sisAcquiredTask = [this, callback, programInfo, cancelTask]() {
+        callback->onCurrentProgramInfoChanged(programInfo);
+        auto audioAcquiredTask = [this, callback, programInfo]() {
+            ProgramInfo hdProgramInfoWithAudio = programInfo;
+            hdProgramInfoWithAudio.infoFlags |= ProgramInfo::FLAG_HD_AUDIO_ACQUISITION;
+            callback->onCurrentProgramInfoChanged(hdProgramInfoWithAudio);
+            lock_guard<mutex> lk(mMutex);
+            mIsTuneCompleted = true;
+        };
+        lock_guard<mutex> lk(mMutex);
+        mTuningThread->schedule(audioAcquiredTask, cancelTask, kTuneDelayTimeMs);
+    };
+
+    lock_guard<mutex> lk(mMutex);
+    mTuningThread->schedule(sisAcquiredTask, cancelTask, kTuneDelayTimeMs);
 }
 
 ScopedAStatus BroadcastRadio::tune(const ProgramSelector& program) {
@@ -308,7 +337,7 @@ ScopedAStatus BroadcastRadio::tune(const ProgramSelector& program) {
             lock_guard<mutex> lk(mMutex);
             programInfo = tuneInternalLocked(program);
         }
-        callback->onCurrentProgramInfoChanged(programInfo);
+        handleProgramInfoUpdateRadioCallback(programInfo, callback);
     };
     auto cancelTask = [program, callback]() { callback->onTuneFailed(Result::CANCELED, program); };
     mTuningThread->schedule(task, cancelTask, kTuneDelayTimeMs);
@@ -456,7 +485,7 @@ ScopedAStatus BroadcastRadio::seek(bool directionUp, bool skipSubChannel) {
             lock_guard<mutex> lk(mMutex);
             programInfo = tuneInternalLocked(nextProgram.selector);
         }
-        callback->onCurrentProgramInfoChanged(programInfo);
+        handleProgramInfoUpdateRadioCallback(programInfo, callback);
     };
     mTuningThread->schedule(task, cancelTask, kSeekDelayTimeMs);
 
@@ -512,7 +541,7 @@ ScopedAStatus BroadcastRadio::step(bool directionUp) {
             lock_guard<mutex> lk(mMutex);
             programInfo = tuneInternalLocked(utils::makeSelectorAmfm(stepTo));
         }
-        callback->onCurrentProgramInfoChanged(programInfo);
+        handleProgramInfoUpdateRadioCallback(programInfo, callback);
     };
     auto cancelTask = [callback]() { callback->onTuneFailed(Result::CANCELED, {}); };
     mTuningThread->schedule(task, cancelTask, kStepDelayTimeMs);
