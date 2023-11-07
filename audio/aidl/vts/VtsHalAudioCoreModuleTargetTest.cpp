@@ -446,6 +446,7 @@ class AudioCoreModuleBase {
 
     void TearDownImpl() {
         debug.reset();
+        ASSERT_NE(module, nullptr);
         std::vector<AudioPort> finalPorts;
         ASSERT_IS_OK(module->getAudioPorts(&finalPorts));
         EXPECT_NO_FATAL_FAILURE(VerifyVectorsAreEqual<AudioPort>(initialPorts, finalPorts))
