@@ -1,4 +1,0 @@
-service nlinterceptor /vendor/bin/hw/android.hardware.net.nlinterceptor-service.default
-    class hal
-    user root
-    group system inet

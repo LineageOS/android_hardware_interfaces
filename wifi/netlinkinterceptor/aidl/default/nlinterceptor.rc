@@ -1,0 +1,4 @@
+service nlinterceptor /apex/com.android.hardware.net.nlinterceptor/bin/hw/android.hardware.net.nlinterceptor-service.default
+    class hal
+    user root
+    group system inet
