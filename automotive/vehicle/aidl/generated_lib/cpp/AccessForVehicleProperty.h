@@ -175,6 +175,7 @@ std::unordered_map<VehicleProperty, VehiclePropertyAccess> AccessForVehiclePrope
         {VehicleProperty::SEAT_LUMBAR_VERTICAL_POS, VehiclePropertyAccess::READ_WRITE},
         {VehicleProperty::SEAT_LUMBAR_VERTICAL_MOVE, VehiclePropertyAccess::READ_WRITE},
         {VehicleProperty::SEAT_WALK_IN_POS, VehiclePropertyAccess::READ_WRITE},
+        {VehicleProperty::SEAT_BELT_PRETENSIONER_DEPLOYED, VehiclePropertyAccess::READ},
         {VehicleProperty::SEAT_OCCUPANCY, VehiclePropertyAccess::READ},
         {VehicleProperty::WINDOW_POS, VehiclePropertyAccess::READ_WRITE},
         {VehicleProperty::WINDOW_MOVE, VehiclePropertyAccess::READ_WRITE},

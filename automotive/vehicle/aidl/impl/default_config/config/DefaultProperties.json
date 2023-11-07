@@ -1372,6 +1372,31 @@
             ]
         },
         {
+            "property": "VehicleProperty::SEAT_BELT_PRETENSIONER_DEPLOYED",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "Constants::SEAT_1_LEFT"
+                },
+                {
+                    "areaId": "Constants::SEAT_1_RIGHT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_LEFT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_RIGHT"
+                },
+                {
+                    "areaId": "Constants::SEAT_2_CENTER"
+                }
+            ]
+        },
+        {
             "property": "VehicleProperty::SEAT_OCCUPANCY",
             "defaultValue": {
                 "int32Values": [

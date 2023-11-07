@@ -2826,6 +2826,24 @@ enum VehicleProperty {
     SEAT_WALK_IN_POS =
             0x0BA3 + VehiclePropertyGroup.SYSTEM + VehicleArea.SEAT + VehiclePropertyType.INT32,
     /**
+     * Seat belt pretensioner deployed.
+     *
+     * Property to relay information on whether the seat belt pretensioner has been deployed for a
+     * particular seat due to a collision. This is different from the regular seat belt tightening
+     * system that continuously adds tension to the seat belts so that they fit snugly around the
+     * person sitting in the seat, nor is it the seat belt retractor system that locks the seat belt
+     * in place during sudden brakes or when the user jerks the seat belt.
+     *
+     * If this property is dependant on the state of other properties, and those properties are
+     * currently in the state that doesn't support this property, this should return
+     * StatusCode#NOT_AVAILABLE
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     */
+    SEAT_BELT_PRETENSIONER_DEPLOYED =
+            0x0BA6 + VehiclePropertyGroup.SYSTEM + VehicleArea.SEAT + VehiclePropertyType.BOOLEAN,
+    /**
      * Seat Occupancy
      *
      * Indicates whether a particular seat is occupied or not, to the best of the car's ability
