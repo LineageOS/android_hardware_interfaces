@@ -25,8 +25,6 @@ package {
 
 cc_binary {
     name: "android.hardware.net.nlinterceptor-service.default",
-    init_rc: ["nlinterceptor-default.rc"],
-    vintf_fragments: ["nlinterceptor-default.xml"],
     vendor: true,
     relative_install_path: "hw",
     defaults: ["nlinterceptor@defaults"],
@@ -45,4 +43,35 @@ cc_binary {
         "service.cpp",
         "util.cpp",
     ],
+    installable: false, // installed in APEX
+}
+
+apex {
+    name: "com.android.hardware.net.nlinterceptor",
+    vendor: true,
+    manifest: "apex_manifest.json",
+    file_contexts: "apex_file_contexts",
+    key: "com.android.hardware.key",
+    certificate: ":com.android.hardware.certificate",
+    updatable: false,
+    binaries: [
+        "android.hardware.net.nlinterceptor-service.default",
+    ],
+    prebuilts: [
+        "nlinterceptor.rc",
+        "nlinterceptor.xml",
+    ],
+}
+
+prebuilt_etc {
+    name: "nlinterceptor.rc",
+    src: "nlinterceptor.rc",
+    installable: false,
+}
+
+prebuilt_etc {
+    name: "nlinterceptor.xml",
+    src: "nlinterceptor.xml",
+    sub_dir: "vintf",
+    installable: false,
 }
