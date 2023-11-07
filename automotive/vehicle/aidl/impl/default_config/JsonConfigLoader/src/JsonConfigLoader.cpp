@@ -61,6 +61,7 @@ using ::aidl::android::hardware::automotive::vehicle::LaneDepartureWarningState;
 using ::aidl::android::hardware::automotive::vehicle::LaneKeepAssistState;
 using ::aidl::android::hardware::automotive::vehicle::LocationCharacterization;
 using ::aidl::android::hardware::automotive::vehicle::RawPropValues;
+using ::aidl::android::hardware::automotive::vehicle::VehicleAirbagLocation;
 using ::aidl::android::hardware::automotive::vehicle::VehicleApPowerStateReport;
 using ::aidl::android::hardware::automotive::vehicle::VehicleApPowerStateReq;
 using ::aidl::android::hardware::automotive::vehicle::VehicleAreaConfig;
@@ -247,6 +248,8 @@ JsonValueParser::JsonValueParser() {
             std::make_unique<ConstantParser<WindshieldWipersSwitch>>();
     mConstantParsersByType["VehicleAutonomousState"] =
             std::make_unique<ConstantParser<VehicleAutonomousState>>();
+    mConstantParsersByType["VehicleAirbagLocation"] =
+            std::make_unique<ConstantParser<VehicleAirbagLocation>>();
     mConstantParsersByType["EmergencyLaneKeepAssistState"] =
             std::make_unique<ConstantParser<EmergencyLaneKeepAssistState>>();
     mConstantParsersByType["CruiseControlType"] =
