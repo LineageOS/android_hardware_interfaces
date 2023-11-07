@@ -34,6 +34,6 @@
 package android.hardware.wifi.supplicant;
 @Backing(type="byte") @VintfStability
 enum QosPolicyRequestType {
-  QOS_POLICY_ADD = 0,
-  QOS_POLICY_REMOVE = 1,
+  QOS_POLICY_ADD,
+  QOS_POLICY_REMOVE,
 }

@@ -34,8 +34,8 @@
 package android.hardware.wifi.supplicant;
 @Backing(type="int") @VintfStability
 enum DppAkm {
-  PSK = 0,
-  PSK_SAE = 1,
-  SAE = 2,
-  DPP = 3,
+  PSK,
+  PSK_SAE,
+  SAE,
+  DPP,
 }

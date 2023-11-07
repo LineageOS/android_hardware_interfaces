@@ -34,6 +34,6 @@
 package android.hardware.wifi.supplicant;
 @Backing(type="byte") @VintfStability
 enum IpVersion {
-  VERSION_4 = 0,
-  VERSION_6 = 1,
+  VERSION_4,
+  VERSION_6,
 }

@@ -34,6 +34,6 @@
 package android.hardware.wifi.supplicant;
 @Backing(type="int") @VintfStability
 enum DppNetRole {
-  STA = 0,
-  AP = 1,
+  STA,
+  AP,
 }
