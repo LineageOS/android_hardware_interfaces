@@ -45,8 +45,8 @@ cc_library {
     name: "libaudioaidlranges",
     host_supported: true,
     vendor_available: true,
-    static_libs: [
-        "android.hardware.audio.effect-V1-ndk",
+    defaults: [
+        "latest_android_hardware_audio_effect_ndk_shared",
     ],
     export_include_dirs: ["include"],
     header_libs: ["libaudioaidl_headers"],
@@ -59,8 +59,10 @@ cc_test {
     name: "libaudioaidlcommon_test",
     host_supported: true,
     vendor_available: true,
+    defaults: [
+        "latest_android_media_audio_common_types_ndk_static",
+    ],
     static_libs: [
-        "android.media.audio.common.types-V1-ndk",
         "libaudioaidlcommon",
     ],
     shared_libs: [
