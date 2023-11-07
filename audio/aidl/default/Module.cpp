@@ -18,7 +18,6 @@
 #include <set>
 
 #define LOG_TAG "AHAL_Module"
-#include <Utils.h>
 #include <aidl/android/media/audio/common/AudioInputFlags.h>
 #include <aidl/android/media/audio/common/AudioOutputFlags.h>
 #include <android-base/logging.h>
@@ -35,6 +34,7 @@
 #include "core-impl/SoundDose.h"
 #include "core-impl/utils.h"
 
+using aidl::android::hardware::audio::common::frameCountFromDurationMs;
 using aidl::android::hardware::audio::common::getFrameSizeInBytes;
 using aidl::android::hardware::audio::common::isBitPositionFlagSet;
 using aidl::android::hardware::audio::common::isValidAudioMode;
@@ -202,15 +202,17 @@ ndk::ScopedAStatus Module::createStreamContext(
         LOG(ERROR) << __func__ << ": non-positive buffer size " << in_bufferSizeFrames;
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
     }
-    if (in_bufferSizeFrames < kMinimumStreamBufferSizeFrames) {
-        LOG(ERROR) << __func__ << ": insufficient buffer size " << in_bufferSizeFrames
-                   << ", must be at least " << kMinimumStreamBufferSizeFrames;
-        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
-    }
     auto& configs = getConfig().portConfigs;
     auto portConfigIt = findById<AudioPortConfig>(configs, in_portConfigId);
     // Since this is a private method, it is assumed that
     // validity of the portConfigId has already been checked.
+    const int32_t minimumStreamBufferSizeFrames = calculateBufferSizeFrames(
+            getNominalLatencyMs(*portConfigIt), portConfigIt->sampleRate.value().value);
+    if (in_bufferSizeFrames < minimumStreamBufferSizeFrames) {
+        LOG(ERROR) << __func__ << ": insufficient buffer size " << in_bufferSizeFrames
+                   << ", must be at least " << minimumStreamBufferSizeFrames;
+        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+    }
     const size_t frameSize =
             getFrameSizeInBytes(portConfigIt->format.value(), portConfigIt->channelMask.value());
     if (frameSize == 0) {
@@ -243,8 +245,8 @@ ndk::ScopedAStatus Module::createStreamContext(
         StreamContext temp(
                 std::make_unique<StreamContext::CommandMQ>(1, true /*configureEventFlagWord*/),
                 std::make_unique<StreamContext::ReplyMQ>(1, true /*configureEventFlagWord*/),
-                portConfigIt->portId, portConfigIt->format.value(),
-                portConfigIt->channelMask.value(), portConfigIt->sampleRate.value().value, flags,
+                portConfigIt->format.value(), portConfigIt->channelMask.value(),
+                portConfigIt->sampleRate.value().value, flags, getNominalLatencyMs(*portConfigIt),
                 portConfigIt->ext.get<AudioPortExt::mix>().handle,
                 std::make_unique<StreamContext::DataMQ>(frameSize * in_bufferSizeFrames),
                 asyncCallback, outEventCallback, mSoundDose.getInstance(), params);
@@ -361,6 +363,12 @@ std::set<int32_t> Module::portIdsFromPortConfigIds(C portConfigIds) {
 
 std::unique_ptr<Module::Configuration> Module::initializeConfig() {
     return internal::getConfiguration(getType());
+}
+
+int32_t Module::getNominalLatencyMs(const AudioPortConfig&) {
+    // Arbitrary value. Implementations must override this method to provide their actual latency.
+    static constexpr int32_t kLatencyMs = 5;
+    return kLatencyMs;
 }
 
 std::vector<AudioRoute*> Module::getAudioRoutesForAudioPortImpl(int32_t portId) {
@@ -613,32 +621,30 @@ ndk::ScopedAStatus Module::connectExternalDevice(const AudioPort& in_templateIdA
 
     std::vector<AudioRoute*> routesToMixPorts = getAudioRoutesForAudioPortImpl(templateId);
     std::set<int32_t> routableMixPortIds = getRoutableAudioPortIds(templateId, &routesToMixPorts);
-    if (hasDynamicProfilesOnly(connectedPort.profiles)) {
-        if (!mDebug.simulateDeviceConnections) {
-            RETURN_STATUS_IF_ERROR(populateConnectedDevicePort(&connectedPort));
-        } else {
-            auto& connectedProfiles = getConfig().connectedProfiles;
-            if (auto connectedProfilesIt = connectedProfiles.find(templateId);
-                connectedProfilesIt != connectedProfiles.end()) {
-                connectedPort.profiles = connectedProfilesIt->second;
-            }
+    if (!mDebug.simulateDeviceConnections) {
+        // Even if the device port has static profiles, the HAL module might need to update
+        // them, or abort the connection process.
+        RETURN_STATUS_IF_ERROR(populateConnectedDevicePort(&connectedPort));
+    } else if (hasDynamicProfilesOnly(connectedPort.profiles)) {
+        auto& connectedProfiles = getConfig().connectedProfiles;
+        if (auto connectedProfilesIt = connectedProfiles.find(templateId);
+            connectedProfilesIt != connectedProfiles.end()) {
+            connectedPort.profiles = connectedProfilesIt->second;
         }
-        if (hasDynamicProfilesOnly(connectedPort.profiles)) {
-            // Possible case 2. Check if all routable mix ports have static profiles.
-            if (auto dynamicMixPortIt = std::find_if(ports.begin(), ports.end(),
-                                                     [&routableMixPortIds](const auto& p) {
-                                                         return routableMixPortIds.count(p.id) >
-                                                                        0 &&
-                                                                hasDynamicProfilesOnly(p.profiles);
-                                                     });
-                dynamicMixPortIt != ports.end()) {
-                LOG(ERROR) << __func__
-                           << ": connected port only has dynamic profiles after connecting "
-                           << "external device " << connectedPort.toString() << ", and there exist "
-                           << "a routable mix port with dynamic profiles: "
-                           << dynamicMixPortIt->toString();
-                return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
-            }
+    }
+    if (hasDynamicProfilesOnly(connectedPort.profiles)) {
+        // Possible case 2. Check if all routable mix ports have static profiles.
+        if (auto dynamicMixPortIt = std::find_if(ports.begin(), ports.end(),
+                                                 [&routableMixPortIds](const auto& p) {
+                                                     return routableMixPortIds.count(p.id) > 0 &&
+                                                            hasDynamicProfilesOnly(p.profiles);
+                                                 });
+            dynamicMixPortIt != ports.end()) {
+            LOG(ERROR) << __func__ << ": connected port only has dynamic profiles after connecting "
+                       << "external device " << connectedPort.toString() << ", and there exist "
+                       << "a routable mix port with dynamic profiles: "
+                       << dynamicMixPortIt->toString();
+            return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
         }
     }
 
@@ -969,11 +975,21 @@ ndk::ScopedAStatus Module::setAudioPatch(const AudioPatch& in_requested, AudioPa
             return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
         }
     }
+    // Find the highest sample rate among mix port configs.
+    std::map<int32_t, AudioPortConfig*> sampleRates;
+    std::vector<AudioPortConfig*>& mixPortConfigs =
+            sources[0]->ext.getTag() == AudioPortExt::mix ? sources : sinks;
+    for (auto mix : mixPortConfigs) {
+        sampleRates.emplace(mix->sampleRate.value().value, mix);
+    }
     *_aidl_return = in_requested;
-    _aidl_return->minimumStreamBufferSizeFrames = kMinimumStreamBufferSizeFrames;
+    auto maxSampleRateIt = std::max_element(sampleRates.begin(), sampleRates.end());
+    const int32_t latencyMs = getNominalLatencyMs(*(maxSampleRateIt->second));
+    _aidl_return->minimumStreamBufferSizeFrames =
+            calculateBufferSizeFrames(latencyMs, maxSampleRateIt->first);
     _aidl_return->latenciesMs.clear();
     _aidl_return->latenciesMs.insert(_aidl_return->latenciesMs.end(),
-                                     _aidl_return->sinkPortConfigIds.size(), kLatencyMs);
+                                     _aidl_return->sinkPortConfigIds.size(), latencyMs);
     AudioPatch oldPatch{};
     if (existing == patches.end()) {
         _aidl_return->id = getConfig().nextPatchId++;
@@ -1215,7 +1231,7 @@ ndk::ScopedAStatus Module::setMasterMute(bool in_mute) {
         // Reset master mute if it failed.
         onMasterMuteChanged(mMasterMute);
     }
-    return std::move(result);
+    return result;
 }
 
 ndk::ScopedAStatus Module::getMasterVolume(float* _aidl_return) {
@@ -1237,7 +1253,7 @@ ndk::ScopedAStatus Module::setMasterVolume(float in_volume) {
                        << "), error=" << result;
             onMasterVolumeChanged(mMasterVolume);
         }
-        return std::move(result);
+        return result;
     }
     LOG(ERROR) << __func__ << ": invalid master volume value: " << in_volume;
     return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
@@ -1556,11 +1572,6 @@ std::vector<MicrophoneInfo> Module::getMicrophoneInfos() {
         }
     }
     return result;
-}
-
-Module::BtProfileHandles Module::getBtProfileManagerHandles() {
-    return std::make_tuple(std::weak_ptr<IBluetooth>(), std::weak_ptr<IBluetoothA2dp>(),
-                           std::weak_ptr<IBluetoothLe>());
 }
 
 ndk::ScopedAStatus Module::bluetoothParametersUpdated() {

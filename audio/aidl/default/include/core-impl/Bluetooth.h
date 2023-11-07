@@ -46,9 +46,9 @@ class Bluetooth : public BnBluetooth {
 class BluetoothA2dp : public BnBluetoothA2dp, public ParamChangeHandler {
   public:
     BluetoothA2dp() = default;
+    ndk::ScopedAStatus isEnabled(bool* _aidl_return) override;
 
   private:
-    ndk::ScopedAStatus isEnabled(bool* _aidl_return) override;
     ndk::ScopedAStatus setEnabled(bool in_enabled) override;
     ndk::ScopedAStatus supportsOffloadReconfiguration(bool* _aidl_return) override;
     ndk::ScopedAStatus reconfigureOffload(
@@ -61,9 +61,9 @@ class BluetoothA2dp : public BnBluetoothA2dp, public ParamChangeHandler {
 class BluetoothLe : public BnBluetoothLe, public ParamChangeHandler {
   public:
     BluetoothLe() = default;
+    ndk::ScopedAStatus isEnabled(bool* _aidl_return) override;
 
   private:
-    ndk::ScopedAStatus isEnabled(bool* _aidl_return) override;
     ndk::ScopedAStatus setEnabled(bool in_enabled) override;
     ndk::ScopedAStatus supportsOffloadReconfiguration(bool* _aidl_return) override;
     ndk::ScopedAStatus reconfigureOffload(
