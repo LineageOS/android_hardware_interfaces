@@ -13,9 +13,9 @@ aidl_interface {
     name: "android.hardware.automotive.audiocontrol",
     vendor_available: true,
     srcs: ["android/hardware/automotive/audiocontrol/*.aidl"],
-    imports: [
-        "android.hardware.audio.common-V1",
-        "android.media.audio.common.types-V2",
+    defaults: [
+        "latest_android_hardware_audio_common_import_interface",
+        "latest_android_media_audio_common_types_import_interface",
     ],
     stability: "vintf",
     backend: {
@@ -52,6 +52,37 @@ aidl_interface {
         },
 
     ],
-    frozen: true,
+    frozen: false,
 
+}
+
+// Note: This should always be one version ahead of the last frozen version
+latest_android_hardware_automotive_audiocontrol = "android.hardware.automotive.audiocontrol-V4"
+
+cc_defaults {
+    name: "latest_android_hardware_automotive_audiocontrol_cpp_static",
+    static_libs: [
+        latest_android_hardware_automotive_audiocontrol + "-cpp",
+    ],
+}
+
+cc_defaults {
+    name: "latest_android_hardware_automotive_audiocontrol_cpp_shared",
+    shared_libs: [
+        latest_android_hardware_automotive_audiocontrol + "-cpp",
+    ],
+}
+
+cc_defaults {
+    name: "latest_android_hardware_automotive_audiocontrol_ndk_static",
+    static_libs: [
+        latest_android_hardware_automotive_audiocontrol + "-ndk",
+    ],
+}
+
+cc_defaults {
+    name: "latest_android_hardware_automotive_audiocontrol_ndk_shared",
+    shared_libs: [
+        latest_android_hardware_automotive_audiocontrol + "-ndk",
+    ],
 }

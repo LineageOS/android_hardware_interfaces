@@ -48,6 +48,9 @@ cc_library_shared {
         "libhardware_headers",
         "libxsdc-utils",
     ],
+    defaults: [
+        "latest_android_hardware_bluetooth_audio_ndk_shared",
+    ],
     shared_libs: [
         "android.hardware.bluetooth.audio@2.0",
         "android.hardware.bluetooth.audio@2.1",
@@ -56,7 +59,6 @@ cc_library_shared {
         "libbinder_ndk",
         "libfmq",
         "liblog",
-        "android.hardware.bluetooth.audio-V3-ndk",
         "libhidlbase",
         "libxml2",
     ],
