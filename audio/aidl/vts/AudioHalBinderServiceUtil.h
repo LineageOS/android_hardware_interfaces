@@ -42,20 +42,9 @@ class AudioHalBinderServiceUtil {
 
     ndk::SpAIBinder restartService(
             std::chrono::milliseconds timeoutMs = std::chrono::milliseconds(3000)) {
-        mDeathHandler.reset(new AidlDeathRecipient(mBinder));
-        if (STATUS_OK != mDeathHandler->linkToDeath()) {
-            LOG(ERROR) << "linkToDeath failed";
-            return nullptr;
+        if (!stopService(timeoutMs)) {
+            return {};
         }
-        if (!android::base::SetProperty("sys.audio.restart.hal", "1")) {
-            LOG(ERROR) << "SetProperty failed";
-            return nullptr;
-        }
-        if (!mDeathHandler->waitForFired(timeoutMs)) {
-            LOG(ERROR) << "Timeout wait for death";
-            return nullptr;
-        }
-        mDeathHandler.reset();
         return connectToService(mServiceName);
     }
 
@@ -71,8 +60,7 @@ class AudioHalBinderServiceUtil {
 
         bool waitForFired(std::chrono::milliseconds timeoutMs) {
             std::unique_lock<std::mutex> lock(mutex);
-            condition.wait_for(lock, timeoutMs, [this]() { return fired; });
-            return fired;
+            return condition.wait_for(lock, timeoutMs, [this]() { return fired; });
         }
 
       private:
@@ -94,7 +82,23 @@ class AudioHalBinderServiceUtil {
         }
     };
 
+    bool stopService(std::chrono::milliseconds timeoutMs) {
+        AidlDeathRecipient deathHandler(mBinder);
+        if (STATUS_OK != deathHandler.linkToDeath()) {
+            LOG(ERROR) << "linkToDeath failed";
+            return false;
+        }
+        if (!android::base::SetProperty("sys.audio.restart.hal", "1")) {
+            LOG(ERROR) << "SetProperty failed";
+            return false;
+        }
+        if (!deathHandler.waitForFired(timeoutMs)) {
+            LOG(ERROR) << "Timeout wait for death of " << mServiceName;
+            return false;
+        }
+        return true;
+    }
+
     std::string mServiceName;
     ndk::SpAIBinder mBinder;
-    std::unique_ptr<AidlDeathRecipient> mDeathHandler;
 };
