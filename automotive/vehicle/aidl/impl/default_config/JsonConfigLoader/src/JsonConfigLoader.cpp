@@ -55,6 +55,7 @@ using ::aidl::android::hardware::automotive::vehicle::FuelType;
 using ::aidl::android::hardware::automotive::vehicle::GsrComplianceRequirementType;
 using ::aidl::android::hardware::automotive::vehicle::HandsOnDetectionDriverState;
 using ::aidl::android::hardware::automotive::vehicle::HandsOnDetectionWarning;
+using ::aidl::android::hardware::automotive::vehicle::ImpactSensorLocation;
 using ::aidl::android::hardware::automotive::vehicle::LaneCenteringAssistCommand;
 using ::aidl::android::hardware::automotive::vehicle::LaneCenteringAssistState;
 using ::aidl::android::hardware::automotive::vehicle::LaneDepartureWarningState;
@@ -250,6 +251,8 @@ JsonValueParser::JsonValueParser() {
             std::make_unique<ConstantParser<VehicleAutonomousState>>();
     mConstantParsersByType["VehicleAirbagLocation"] =
             std::make_unique<ConstantParser<VehicleAirbagLocation>>();
+    mConstantParsersByType["ImpactSensorLocation"] =
+            std::make_unique<ConstantParser<ImpactSensorLocation>>();
     mConstantParsersByType["EmergencyLaneKeepAssistState"] =
             std::make_unique<ConstantParser<EmergencyLaneKeepAssistState>>();
     mConstantParsersByType["CruiseControlType"] =

@@ -37,6 +37,7 @@ public final class EnumForVehicleProperty {
         Map.entry(VehicleProperty.INFO_DRIVER_SEAT, List.of(VehicleAreaSeat.class)),
         Map.entry(VehicleProperty.INFO_MULTI_EV_PORT_LOCATIONS, List.of(PortLocationType.class)),
         Map.entry(VehicleProperty.ENGINE_OIL_LEVEL, List.of(VehicleOilLevel.class)),
+        Map.entry(VehicleProperty.IMPACT_DETECTED, List.of(ImpactSensorLocation.class)),
         Map.entry(VehicleProperty.GEAR_SELECTION, List.of(VehicleGear.class)),
         Map.entry(VehicleProperty.CURRENT_GEAR, List.of(VehicleGear.class)),
         Map.entry(VehicleProperty.TURN_SIGNAL_STATE, List.of(VehicleTurnSignal.class)),

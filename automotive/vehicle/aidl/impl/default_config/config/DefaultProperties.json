@@ -2572,6 +2572,27 @@
             }
         },
         {
+            "property": "VehicleProperty::IMPACT_DETECTED",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": 0,
+                    "supportedEnumValues": [
+                        "ImpactSensorLocation::FRONT",
+                        "ImpactSensorLocation::FRONT_LEFT_DOOR_SIDE",
+                        "ImpactSensorLocation::FRONT_RIGHT_DOOR_SIDE",
+                        "ImpactSensorLocation::REAR_LEFT_DOOR_SIDE",
+                        "ImpactSensorLocation::REAR_RIGHT_DOOR_SIDE",
+                        "ImpactSensorLocation::REAR"
+                    ]
+                }
+            ]
+        },
+        {
             "property": "VehicleProperty::DOOR_LOCK",
             "areas": [
                 {

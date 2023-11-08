@@ -69,6 +69,7 @@ enum VehicleProperty {
   TIRE_PRESSURE = (((0x0309 + 0x10000000) + 0x07000000) + 0x00600000) /* 392168201 */,
   CRITICALLY_LOW_TIRE_PRESSURE = (((0x030A + 0x10000000) + 0x07000000) + 0x00600000) /* 392168202 */,
   ENGINE_IDLE_AUTO_STOP_ENABLED = (((0x0320 + android.hardware.automotive.vehicle.VehiclePropertyGroup.SYSTEM) + android.hardware.automotive.vehicle.VehicleArea.GLOBAL) + android.hardware.automotive.vehicle.VehiclePropertyType.BOOLEAN) /* 287310624 */,
+  IMPACT_DETECTED = (((0x0330 + android.hardware.automotive.vehicle.VehiclePropertyGroup.SYSTEM) + android.hardware.automotive.vehicle.VehicleArea.GLOBAL) + android.hardware.automotive.vehicle.VehiclePropertyType.INT32) /* 289407792 */,
   GEAR_SELECTION = (((0x0400 + 0x10000000) + 0x01000000) + 0x00400000) /* 289408000 */,
   CURRENT_GEAR = (((0x0401 + 0x10000000) + 0x01000000) + 0x00400000) /* 289408001 */,
   PARKING_BRAKE_ON = (((0x0402 + 0x10000000) + 0x01000000) + 0x00200000) /* 287310850 */,
