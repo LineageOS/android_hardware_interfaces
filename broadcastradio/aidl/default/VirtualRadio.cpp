@@ -16,6 +16,7 @@
 
 #include "VirtualRadio.h"
 #include <broadcastradio-utils-aidl/Utils.h>
+#include <unordered_set>
 
 namespace aidl::android::hardware::broadcastradio {
 
@@ -23,6 +24,7 @@ using ::aidl::android::hardware::broadcastradio::utils::makeSelectorAmfm;
 using ::aidl::android::hardware::broadcastradio::utils::makeSelectorDab;
 using ::aidl::android::hardware::broadcastradio::utils::makeSelectorHd;
 using ::std::string;
+using ::std::unordered_set;
 using ::std::vector;
 
 VirtualRadio::VirtualRadio(const string& name, const vector<VirtualProgram>& initialList)
@@ -60,6 +62,20 @@ bool VirtualRadio::getProgram(const ProgramSelector& selector, VirtualProgram* p
         return true;
     }
     return false;
+}
+
+vector<IdentifierType> VirtualRadio::getSupportedIdentifierTypes() const {
+    unordered_set<IdentifierType> supportedIdentifierTypeSet;
+    for (const auto& program : mPrograms) {
+        IdentifierType type = program.selector.primaryId.type;
+        if (supportedIdentifierTypeSet.count(type)) {
+            continue;
+        }
+        supportedIdentifierTypeSet.insert(type);
+    }
+    vector<IdentifierType> supportedIdentifierTypes(supportedIdentifierTypeSet.begin(),
+                                                    supportedIdentifierTypeSet.end());
+    return supportedIdentifierTypes;
 }
 
 // get singleton of AMFM Virtual Radio
@@ -103,14 +119,24 @@ const VirtualRadio& VirtualRadio::getDabRadio() {
     static VirtualRadio dabRadioMock(
         "DAB radio mock",
         {
-            {makeSelectorDab(/* sidExt= */ 0xA000000001u, /* ensemble= */ 0x0001u,
+            {makeSelectorDab(/* sidExt= */ 0x0E10000C221u, /* ensemble= */ 0xCE15u,
                 /* freq= */ 225648u), "BBC Radio 1", "Khalid", "Talk"},
-            {makeSelectorDab(/* sidExt= */ 0xB000000001u, /* ensemble= */ 0x1001u,
+            {makeSelectorDab(/* sidExt= */ 0x0E10000C222u, /* ensemble= */ 0xCE15u,
+                    /* freq= */ 225648u), "BBC Radio 2", "Khalid", "Talk"},
+            {makeSelectorDab(/* sidExt= */ 0xE10000C224u, /* ensemble= */ 0xCE15u,
+                    /* freq= */ 225648u), "BBC Radio 4", "ArtistBBC1", "TitleCountry1"},
+            {makeSelectorDab(/* sidExt= */ 0x1E10000C224u, /* ensemble= */ 0xCE15u,
+                    /* freq= */ 225648u), "BBC Radio 4 LW", "ArtistBBC2", "TitleCountry2"},
+            {makeSelectorDab(/* sidExt= */ 0x0E10000C21Au, /* ensemble= */ 0xC181u,
                 /* freq= */ 222064u), "Classic FM", "Jean Sibelius", "Andante Festivo"},
-            {makeSelectorDab(/* sidExt= */ 0xB000000002u, /* ensemble= */ 0x1002u,
-                /* freq= */ 227360u), "Absolute Radio", "Coldplay", "Clocks"},
-            {makeSelectorDab(/* sidExt= */ 0xB000000002u, /* ensemble= */ 0x1002u,
+            {makeSelectorDab(/* sidExt= */ 0x0E10000C1C0u, /* ensemble= */ 0xC181u,
+                /* freq= */ 223936u), "Absolute Radio", "Coldplay", "Clocks"},
+            {makeSelectorDab(/* sidExt= */ 0x0E10000C1C0u, /* ensemble= */ 0xC181u,
                 /* freq= */ 222064u), "Absolute Radio", "Coldplay", "Clocks"},
+            {makeSelectorDab(/* sidExt= */ 0x0E10000CCE7u, /* ensemble= */ 0xC19Du,
+                    /* freq= */ 218640u), "Absolute Radio Country", "ArtistCountry1", "TitleCountry1"},
+            {makeSelectorDab(/* sidExt= */ 0x0E10000CCE7u, /* ensemble= */ 0xC1A0u,
+                    /* freq= */ 218640u), "Absolute Radio Country", "ArtistCountry2", "TitleCountry2"},
         });
     // clang-format on
     return dabRadioMock;
