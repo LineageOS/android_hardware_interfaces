@@ -131,6 +131,8 @@ ndk::ScopedAStatus StreamRemoteSubmix::prepareToClose() {
             LOG(DEBUG) << __func__ << ": shutting down MonoPipe sink";
 
             sink->shutdown(true);
+            // The client already considers this stream as closed, release the output end.
+            route->closeStream(mIsInput);
         } else {
             LOG(DEBUG) << __func__ << ": stream already closed.";
             ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
