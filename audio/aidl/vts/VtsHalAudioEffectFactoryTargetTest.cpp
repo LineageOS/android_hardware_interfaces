@@ -32,7 +32,6 @@
 
 #include <aidl/android/hardware/audio/effect/IFactory.h>
 
-#include "AudioHalBinderServiceUtil.h"
 #include "EffectFactoryHelper.h"
 #include "TestUtils.h"
 

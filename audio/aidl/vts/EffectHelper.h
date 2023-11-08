@@ -35,7 +35,6 @@
 #include <system/audio_effects/aidl_effects_utils.h>
 #include <system/audio_effects/effect_uuid.h>
 
-#include "AudioHalBinderServiceUtil.h"
 #include "EffectFactoryHelper.h"
 #include "TestUtils.h"
 

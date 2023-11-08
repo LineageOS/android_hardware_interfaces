@@ -24,6 +24,7 @@
 #include <aidl/Vintf.h>
 #include <android/binder_auto_utils.h>
 
+#include "AudioHalBinderServiceUtil.h"
 #include "TestUtils.h"
 
 using namespace android;
