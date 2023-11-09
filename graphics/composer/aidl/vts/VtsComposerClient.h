@@ -197,6 +197,7 @@ class VtsComposerClient {
     std::vector<RefreshRateChangedDebugData> takeListOfRefreshRateChangedDebugData();
 
     static constexpr int32_t kMaxFrameIntervalNs = 50000000;  // 20fps
+    static constexpr int32_t kNoFrameIntervalNs = 0;
 
   private:
     void addDisplayConfigs(VtsDisplay*, const std::vector<DisplayConfiguration>&);
