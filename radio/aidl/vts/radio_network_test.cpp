@@ -1962,3 +1962,81 @@ TEST_P(RadioNetworkTest, isNullCipherAndIntegrityEnabled) {
             radioRsp_network->rspInfo.error,
             {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::MODEM_ERR}));
 }
+
+TEST_P(RadioNetworkTest, isCellularIdentifierTransparencyEnabled) {
+    int32_t aidl_version;
+    ndk::ScopedAStatus aidl_status = radio_network->getInterfaceVersion(&aidl_version);
+    ASSERT_OK(aidl_status);
+    if (aidl_version < 3) {
+        ALOGI("Skipped the test since"
+                " isCellularIdentifierTransparencyEnabled is not supported on version < 3.");
+        GTEST_SKIP();
+    }
+
+    serial = GetRandomSerialNumber();
+
+    ndk::ScopedAStatus res = radio_network->isCellularIdentifierTransparencyEnabled(serial);
+    ASSERT_OK(res);
+
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_network->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_network->rspInfo.serial);
+
+    ASSERT_TRUE(CheckAnyOfErrors(
+            radioRsp_network->rspInfo.error,
+            {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::MODEM_ERR}));
+
+    // the default value should be true if we have not called the setter
+    EXPECT_TRUE(radioRsp_network->isCellularIdentifierTransparencyEnabled);
+
+}
+
+TEST_P(RadioNetworkTest, setCellularIdentifierTransparencyEnabled) {
+    int32_t aidl_version;
+    ndk::ScopedAStatus aidl_status = radio_network->getInterfaceVersion(&aidl_version);
+    ASSERT_OK(aidl_status);
+    if (aidl_version < 3) {
+        ALOGI("Skipped the test since"
+                " setCellularIdentifierTransparencyEnabled is not supported on version < 3.");
+        GTEST_SKIP();
+    }
+
+    // Get current value
+    serial = GetRandomSerialNumber();
+    radio_network->isCellularIdentifierTransparencyEnabled(serial);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    bool originalTransparencySetting = radioRsp_network->isCellularIdentifierTransparencyEnabled;
+
+    // We want to test flipping the value, so we are going to set it to the opposite of what
+    // the existing setting is. The test for isCellularIdentifierTransparencyEnabled should check
+    // for the right default value.
+    bool valueToSet = !originalTransparencySetting;
+    serial = GetRandomSerialNumber();
+    radio_network->setCellularIdentifierTransparencyEnabled(serial, valueToSet);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_network->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_network->rspInfo.serial);
+
+    ASSERT_TRUE(CheckAnyOfErrors(
+            radioRsp_network->rspInfo.error,
+            {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::MODEM_ERR}));
+
+    // Assert the value has changed
+    serial = GetRandomSerialNumber();
+    ndk::ScopedAStatus res = radio_network->isCellularIdentifierTransparencyEnabled(serial);
+
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_network->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_network->rspInfo.serial);
+    ASSERT_TRUE(CheckAnyOfErrors(
+            radioRsp_network->rspInfo.error,
+            {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::MODEM_ERR}));
+    EXPECT_EQ(valueToSet, radioRsp_network->isCellularIdentifierTransparencyEnabled);
+
+    // Reset original state
+    radio_network->setCellularIdentifierTransparencyEnabled(serial, originalTransparencySetting);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_network->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_network->rspInfo.serial);
+}

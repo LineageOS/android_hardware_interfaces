@@ -372,4 +372,19 @@ ScopedAStatus RadioNetwork::setN1ModeEnabled(int32_t serial, bool /*enable*/) {
     respond()->setN1ModeEnabledResponse(notSupported(serial));
     return ok();
 }
+
+ScopedAStatus RadioNetwork::isCellularIdentifierTransparencyEnabled(int32_t serial) {
+    LOG_CALL << serial;
+    LOG(ERROR) << " isCellularIdentifierTransparencyEnabled is unsupported by HIDL HALs";
+    respond()->isCellularIdentifierTransparencyEnabledResponse(notSupported(serial), false);
+    return ok();
+}
+
+ScopedAStatus RadioNetwork::setCellularIdentifierTransparencyEnabled(int32_t serial,
+                                                                     bool /*enabled*/) {
+    LOG_CALL << serial;
+    LOG(ERROR) << " setCellularIdentifierTransparencyEnabled is unsupported by HIDL HALs";
+    respond()->setCellularIdentifierTransparencyEnabledResponse(notSupported(serial));
+    return ok();
+}
 }  // namespace android::hardware::radio::compat
