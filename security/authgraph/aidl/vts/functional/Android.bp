@@ -46,3 +46,36 @@ cc_test {
         "vts",
     ],
 }
+
+rust_test {
+    name: "VtsAidlAuthGraphRoleTest",
+    srcs: ["role_test.rs"],
+    test_suites: [
+        "general-tests",
+        "vts",
+    ],
+    defaults: [
+        "authgraph_use_latest_hal_aidl_rust",
+    ],
+    rustlibs: [
+        "libauthgraph_vts_test",
+        "libbinder_rs",
+    ],
+}
+
+rust_library {
+    name: "libauthgraph_vts_test",
+    crate_name: "authgraph_vts_test",
+    srcs: ["lib.rs"],
+    defaults: [
+        "authgraph_use_latest_hal_aidl_rust",
+    ],
+    rustlibs: [
+        "libauthgraph_boringssl",
+        "libauthgraph_core",
+        "libauthgraph_hal",
+        "libauthgraph_nonsecure",
+        "libbinder_rs",
+        "libcoset",
+    ],
+}
