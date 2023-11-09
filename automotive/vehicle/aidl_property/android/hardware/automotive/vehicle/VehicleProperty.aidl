@@ -427,6 +427,19 @@ enum VehicleProperty {
     RANGE_REMAINING = 0x0308 + 0x10000000 + 0x01000000
             + 0x00600000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:FLOAT
     /**
+     * EV battery average temperature
+     *
+     * Exposes the temperature of the battery in an EV. If multiple batteries exist in the EV, or
+     * multiple temperature sensors exist, this property should be set to the mean or a meaningful
+     * weighted average that best represents the overall temperature of the battery system.
+     *
+     * @change_mode VehiclePropertyChangeMode.CONTINUOUS
+     * @access VehiclePropertyAccess.READ
+     * @unit VehicleUnit:CELSIUS
+     */
+    EV_BATTERY_AVERAGE_TEMPERATURE =
+            0x030E + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.FLOAT,
+    /**
      * Tire pressure
      *
      * Each tires is identified by its areaConfig.areaId config and their
