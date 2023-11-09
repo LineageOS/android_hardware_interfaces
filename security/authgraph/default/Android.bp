@@ -36,6 +36,7 @@ rust_binary {
         "libauthgraph_core",
         "libauthgraph_boringssl",
         "libauthgraph_hal",
+        "libauthgraph_wire",
         "libbinder_rs",
         "liblibc",
         "liblog_rust",
