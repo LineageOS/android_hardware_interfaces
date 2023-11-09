@@ -220,7 +220,8 @@ TEST_P(GraphicsCompositionTest, SingleSolidColorLayer) {
 
         writeLayers(layers);
         ASSERT_TRUE(mReader.takeErrors().empty());
-        mWriter->validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp);
+        mWriter->validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp,
+                                 VtsComposerClient::kNoFrameIntervalNs);
         execute();
         // if hwc cannot handle and asks for composition change,
         // just succeed the test
@@ -279,7 +280,8 @@ TEST_P(GraphicsCompositionTest, SetLayerBuffer) {
 
         writeLayers(layers);
         ASSERT_TRUE(mReader.takeErrors().empty());
-        mWriter->validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp);
+        mWriter->validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp,
+                                 VtsComposerClient::kNoFrameIntervalNs);
         execute();
 
         if (!mReader.takeChangedCompositionTypes(getPrimaryDisplayId()).empty()) {
@@ -338,7 +340,8 @@ TEST_P(GraphicsCompositionTest, SetLayerBufferNoEffect) {
                                       getDisplayHeight(), mPixelFormat, mDataspace);
         ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
 
-        mWriter->validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp);
+        mWriter->validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp,
+                                 VtsComposerClient::kNoFrameIntervalNs);
         execute();
 
         if (!mReader.takeChangedCompositionTypes(getPrimaryDisplayId()).empty()) {
@@ -465,7 +468,8 @@ TEST_P(GraphicsCompositionTest, ClientComposition) {
         ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
         writeLayers(layers);
         ASSERT_TRUE(mReader.takeErrors().empty());
-        mWriter->validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp);
+        mWriter->validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp,
+                                 VtsComposerClient::kNoFrameIntervalNs);
         execute();
 
         auto changedCompositionTypes = mReader.takeChangedCompositionTypes(getPrimaryDisplayId());
@@ -498,7 +502,8 @@ TEST_P(GraphicsCompositionTest, ClientComposition) {
             mWriter->setClientTarget(getPrimaryDisplayId(), /*slot*/ 0, buffer, clientFence,
                                      clientDataspace, std::vector<common::Rect>(1, damage));
             layer->setToClientComposition(*mWriter);
-            mWriter->validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp);
+            mWriter->validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp,
+                                     VtsComposerClient::kNoFrameIntervalNs);
             execute();
             changedCompositionTypes = mReader.takeChangedCompositionTypes(getPrimaryDisplayId());
             ASSERT_TRUE(changedCompositionTypes.empty());
@@ -575,7 +580,8 @@ TEST_P(GraphicsCompositionTest, DeviceAndClientComposition) {
         clientLayer->setDisplayFrame(clientFrame);
         clientLayer->setZOrder(0);
         clientLayer->write(*mWriter);
-        mWriter->validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp);
+        mWriter->validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp,
+                                 VtsComposerClient::kNoFrameIntervalNs);
         execute();
 
         auto changedCompositionTypes = mReader.takeChangedCompositionTypes(getPrimaryDisplayId());
@@ -604,7 +610,8 @@ TEST_P(GraphicsCompositionTest, DeviceAndClientComposition) {
         mWriter->setClientTarget(getPrimaryDisplayId(), /*slot*/ 0, buffer, clientFence,
                                  clientDataspace, std::vector<common::Rect>(1, clientFrame));
         clientLayer->setToClientComposition(*mWriter);
-        mWriter->validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp);
+        mWriter->validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp,
+                                 VtsComposerClient::kNoFrameIntervalNs);
         execute();
         changedCompositionTypes = mReader.takeChangedCompositionTypes(getPrimaryDisplayId());
         ASSERT_TRUE(changedCompositionTypes.empty());
@@ -652,7 +659,8 @@ TEST_P(GraphicsCompositionTest, SetLayerDamage) {
 
         writeLayers(layers);
         ASSERT_TRUE(mReader.takeErrors().empty());
-        mWriter->validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp);
+        mWriter->validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp,
+                                 VtsComposerClient::kNoFrameIntervalNs);
         execute();
         if (!mReader.takeChangedCompositionTypes(getPrimaryDisplayId()).empty()) {
             GTEST_SUCCEED();
@@ -680,7 +688,8 @@ TEST_P(GraphicsCompositionTest, SetLayerDamage) {
 
         writeLayers(layers);
         ASSERT_TRUE(mReader.takeErrors().empty());
-        mWriter->validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp);
+        mWriter->validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp,
+                                 VtsComposerClient::kNoFrameIntervalNs);
         execute();
         ASSERT_TRUE(mReader.takeErrors().empty());
         ASSERT_TRUE(mReader.takeChangedCompositionTypes(getPrimaryDisplayId()).empty());
@@ -721,7 +730,8 @@ TEST_P(GraphicsCompositionTest, SetLayerPlaneAlpha) {
 
         writeLayers(layers);
         ASSERT_TRUE(mReader.takeErrors().empty());
-        mWriter->validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp);
+        mWriter->validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp,
+                                 VtsComposerClient::kNoFrameIntervalNs);
         execute();
         if (!mReader.takeChangedCompositionTypes(getPrimaryDisplayId()).empty()) {
             GTEST_SUCCEED();
@@ -785,7 +795,8 @@ TEST_P(GraphicsCompositionTest, SetLayerSourceCrop) {
         ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
         writeLayers(layers);
         ASSERT_TRUE(mReader.takeErrors().empty());
-        mWriter->validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp);
+        mWriter->validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp,
+                                 VtsComposerClient::kNoFrameIntervalNs);
         execute();
         if (!mReader.takeChangedCompositionTypes(getPrimaryDisplayId()).empty()) {
             GTEST_SUCCEED();
@@ -843,7 +854,8 @@ TEST_P(GraphicsCompositionTest, SetLayerZOrder) {
 
         writeLayers(layers);
         ASSERT_TRUE(mReader.takeErrors().empty());
-        mWriter->validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp);
+        mWriter->validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp,
+                                 VtsComposerClient::kNoFrameIntervalNs);
         execute();
         if (!mReader.takeChangedCompositionTypes(getPrimaryDisplayId()).empty()) {
             GTEST_SUCCEED();
@@ -865,7 +877,8 @@ TEST_P(GraphicsCompositionTest, SetLayerZOrder) {
 
         writeLayers(layers);
         ASSERT_TRUE(mReader.takeErrors().empty());
-        mWriter->validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp);
+        mWriter->validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp,
+                                 VtsComposerClient::kNoFrameIntervalNs);
         execute();
         ASSERT_TRUE(mReader.takeChangedCompositionTypes(getPrimaryDisplayId()).empty());
         ASSERT_TRUE(mReader.takeErrors().empty());
@@ -930,7 +943,8 @@ TEST_P(GraphicsCompositionTest, SetLayerBrightnessDims) {
 
         writeLayers(layers);
         ASSERT_TRUE(mReader.takeErrors().empty());
-        mWriter->validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp);
+        mWriter->validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp,
+                                 VtsComposerClient::kNoFrameIntervalNs);
         execute();
         if (!mReader.takeChangedCompositionTypes(getPrimaryDisplayId()).empty()) {
             GTEST_SUCCEED()
@@ -1065,7 +1079,8 @@ TEST_P(GraphicsBlendModeCompositionTest, None) {
         ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
         writeLayers(mLayers);
         ASSERT_TRUE(mReader.takeErrors().empty());
-        mWriter->validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp);
+        mWriter->validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp,
+                                 VtsComposerClient::kNoFrameIntervalNs);
         execute();
         if (!mReader.takeChangedCompositionTypes(getPrimaryDisplayId()).empty()) {
             GTEST_SUCCEED();
@@ -1110,7 +1125,8 @@ TEST_P(GraphicsBlendModeCompositionTest, Coverage) {
         ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
         writeLayers(mLayers);
         ASSERT_TRUE(mReader.takeErrors().empty());
-        mWriter->validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp);
+        mWriter->validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp,
+                                 VtsComposerClient::kNoFrameIntervalNs);
         execute();
         if (!mReader.takeChangedCompositionTypes(getPrimaryDisplayId()).empty()) {
             GTEST_SUCCEED();
@@ -1150,7 +1166,8 @@ TEST_P(GraphicsBlendModeCompositionTest, Premultiplied) {
         ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
         writeLayers(mLayers);
         ASSERT_TRUE(mReader.takeErrors().empty());
-        mWriter->validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp);
+        mWriter->validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp,
+                                 VtsComposerClient::kNoFrameIntervalNs);
         execute();
         if (!mReader.takeChangedCompositionTypes(getPrimaryDisplayId()).empty()) {
             GTEST_SUCCEED();
@@ -1234,7 +1251,8 @@ TEST_P(GraphicsTransformCompositionTest, FLIP_H) {
 
         writeLayers(mLayers);
         ASSERT_TRUE(mReader.takeErrors().empty());
-        mWriter->validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp);
+        mWriter->validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp,
+                                 VtsComposerClient::kNoFrameIntervalNs);
         execute();
         if (!mReader.takeChangedCompositionTypes(getPrimaryDisplayId()).empty()) {
             GTEST_SUCCEED();
@@ -1280,7 +1298,8 @@ TEST_P(GraphicsTransformCompositionTest, FLIP_V) {
 
         writeLayers(mLayers);
         ASSERT_TRUE(mReader.takeErrors().empty());
-        mWriter->validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp);
+        mWriter->validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp,
+                                 VtsComposerClient::kNoFrameIntervalNs);
         execute();
         if (!mReader.takeChangedCompositionTypes(getPrimaryDisplayId()).empty()) {
             GTEST_SUCCEED();
@@ -1326,7 +1345,8 @@ TEST_P(GraphicsTransformCompositionTest, ROT_180) {
 
         writeLayers(mLayers);
         ASSERT_TRUE(mReader.takeErrors().empty());
-        mWriter->validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp);
+        mWriter->validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp,
+                                 VtsComposerClient::kNoFrameIntervalNs);
         execute();
         if (!mReader.takeChangedCompositionTypes(getPrimaryDisplayId()).empty()) {
             GTEST_SUCCEED();
@@ -1419,7 +1439,8 @@ TEST_P(GraphicsColorManagementCompositionTest, ColorConversion) {
             EXPECT_TRUE(mComposerClient->setPowerMode(getPrimaryDisplayId(), PowerMode::ON).isOk());
 
             ASSERT_TRUE(mReader.takeErrors().empty());
-            mWriter->validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp);
+            mWriter->validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp,
+                                     VtsComposerClient::kNoFrameIntervalNs);
             execute();
             if (!mReader.takeChangedCompositionTypes(getPrimaryDisplayId()).empty()) {
                 continue;

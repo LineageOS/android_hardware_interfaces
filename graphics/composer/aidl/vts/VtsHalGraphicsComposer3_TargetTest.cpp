@@ -1479,7 +1479,8 @@ class GraphicsComposerAidlCommandTest : public GraphicsComposerAidlTest {
                                   /*acquireFence*/ -1);
             writer.setLayerDataspace(display.getDisplayId(), layer, common::Dataspace::UNKNOWN);
 
-            writer.validateDisplay(display.getDisplayId(), ComposerClientWriter::kNoTimestamp);
+            writer.validateDisplay(display.getDisplayId(), ComposerClientWriter::kNoTimestamp,
+                                   VtsComposerClient::kNoFrameIntervalNs);
             execute();
             ASSERT_TRUE(mReader.takeErrors().empty());
 
@@ -1496,7 +1497,8 @@ class GraphicsComposerAidlCommandTest : public GraphicsComposerAidlTest {
                                   /*acquireFence*/ -1);
             writer.setLayerSurfaceDamage(display.getDisplayId(), layer,
                                          std::vector<Rect>(1, {0, 0, 10, 10}));
-            writer.validateDisplay(display.getDisplayId(), ComposerClientWriter::kNoTimestamp);
+            writer.validateDisplay(display.getDisplayId(), ComposerClientWriter::kNoTimestamp,
+                                   VtsComposerClient::kNoFrameIntervalNs);
             execute();
             ASSERT_TRUE(mReader.takeErrors().empty());
 
@@ -1510,7 +1512,8 @@ class GraphicsComposerAidlCommandTest : public GraphicsComposerAidlTest {
     sp<::android::Fence> presentAndGetFence(
             std::optional<ClockMonotonicTimestamp> expectedPresentTime) {
         auto& writer = getWriter(getPrimaryDisplayId());
-        writer.validateDisplay(getPrimaryDisplayId(), expectedPresentTime);
+        writer.validateDisplay(getPrimaryDisplayId(), expectedPresentTime,
+                               VtsComposerClient::kNoFrameIntervalNs);
         execute();
         EXPECT_TRUE(mReader.takeErrors().empty());
 
@@ -1852,20 +1855,23 @@ TEST_P(GraphicsComposerAidlCommandTest, SetOutputBuffer) {
 
 TEST_P(GraphicsComposerAidlCommandTest, ValidDisplay) {
     auto& writer = getWriter(getPrimaryDisplayId());
-    writer.validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp);
+    writer.validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp,
+                           VtsComposerClient::kNoFrameIntervalNs);
     execute();
 }
 
 TEST_P(GraphicsComposerAidlCommandTest, AcceptDisplayChanges) {
     auto& writer = getWriter(getPrimaryDisplayId());
-    writer.validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp);
+    writer.validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp,
+                           VtsComposerClient::kNoFrameIntervalNs);
     writer.acceptDisplayChanges(getPrimaryDisplayId());
     execute();
 }
 
 TEST_P(GraphicsComposerAidlCommandTest, PresentDisplay) {
     auto& writer = getWriter(getPrimaryDisplayId());
-    writer.validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp);
+    writer.validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp,
+                           VtsComposerClient::kNoFrameIntervalNs);
     writer.presentDisplay(getPrimaryDisplayId());
     execute();
 }
@@ -1904,7 +1910,8 @@ TEST_P(GraphicsComposerAidlCommandTest, PresentDisplayNoLayerStateChanges) {
         writer.setLayerBuffer(getPrimaryDisplayId(), layer, /*slot*/ 0, handle,
                               /*acquireFence*/ -1);
         writer.setLayerDataspace(getPrimaryDisplayId(), layer, Dataspace::UNKNOWN);
-        writer.validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp);
+        writer.validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp,
+                               VtsComposerClient::kNoFrameIntervalNs);
         execute();
         if (!mReader.takeChangedCompositionTypes(getPrimaryDisplayId()).empty()) {
             GTEST_SUCCEED() << "Composition change requested, skipping test";
@@ -1946,7 +1953,8 @@ TEST_P(GraphicsComposerAidlCommandTest, SetLayerCursorPosition) {
                    (float)getPrimaryDisplay().getDisplayHeight()};
     configureLayer(getPrimaryDisplay(), layer, Composition::CURSOR, displayFrame, cropRect);
     writer.setLayerDataspace(getPrimaryDisplayId(), layer, Dataspace::UNKNOWN);
-    writer.validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp);
+    writer.validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp,
+                           VtsComposerClient::kNoFrameIntervalNs);
 
     execute();
 
@@ -1961,7 +1969,8 @@ TEST_P(GraphicsComposerAidlCommandTest, SetLayerCursorPosition) {
     execute();
 
     writer.setLayerCursorPosition(getPrimaryDisplayId(), layer, /*x*/ 0, /*y*/ 0);
-    writer.validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp);
+    writer.validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp,
+                           VtsComposerClient::kNoFrameIntervalNs);
     writer.presentDisplay(getPrimaryDisplayId());
     execute();
 }
@@ -2160,7 +2169,8 @@ TEST_P(GraphicsComposerAidlCommandTest, DisplayDecoration) {
         auto& writer = getWriter(display.getDisplayId());
         writer.setLayerBuffer(display.getDisplayId(), layer, /*slot*/ 0, decorBuffer->handle,
                               /*acquireFence*/ -1);
-        writer.validateDisplay(display.getDisplayId(), ComposerClientWriter::kNoTimestamp);
+        writer.validateDisplay(display.getDisplayId(), ComposerClientWriter::kNoTimestamp,
+                               VtsComposerClient::kNoFrameIntervalNs);
         execute();
         if (support) {
             ASSERT_TRUE(mReader.takeErrors().empty());
@@ -2864,7 +2874,8 @@ TEST_P(GraphicsComposerAidlCommandTest, MultiThreadedPresent) {
         auto& reader = readers.at(displayId);
         lock.unlock();
 
-        writer.validateDisplay(displayId, ComposerClientWriter::kNoTimestamp);
+        writer.validateDisplay(displayId, ComposerClientWriter::kNoTimestamp,
+                               VtsComposerClient::kNoFrameIntervalNs);
         execute(writer, reader);
 
         threads.emplace_back([this, displayId, &readers, &readersMutex]() {
