@@ -21,6 +21,7 @@
 #include <iostream>
 #include <thread>
 #include "Tuner.h"
+#include "dtv_plugin.h"
 
 using namespace std;
 
@@ -60,6 +61,10 @@ class Frontend : public BnFrontend {
     FrontendType getFrontendType();
     int32_t getFrontendId();
     string getSourceFile();
+    dtv_plugin* getIptvPluginInterface();
+    string getIptvTransportDescription();
+    dtv_streamer* getIptvPluginStreamer();
+    void readTuneByte(dtv_streamer* streamer, void* buf, size_t size, int timeout_ms);
     bool isLocked();
     void getFrontendInfo(FrontendInfo* _aidl_return);
     void setTunerService(std::shared_ptr<Tuner> tuner);
@@ -81,6 +86,10 @@ class Frontend : public BnFrontend {
     std::ifstream mFrontendData;
     FrontendCapabilities mFrontendCaps;
     vector<FrontendStatusType> mFrontendStatusCaps;
+    dtv_plugin* mIptvPluginInterface;
+    string mIptvTransportDescription;
+    dtv_streamer* mIptvPluginStreamer;
+    std::thread mIptvFrontendTuneThread;
 };
 
 }  // namespace tuner
