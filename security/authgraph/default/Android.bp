@@ -63,3 +63,20 @@ rust_binary {
         "src/main.rs",
     ],
 }
+
+rust_fuzz {
+    name: "android.hardware.authgraph-service.nonsecure_fuzzer",
+    rustlibs: [
+        "libauthgraph_hal",
+        "libauthgraph_nonsecure",
+        "libbinder_random_parcel_rs",
+        "libbinder_rs",
+    ],
+    srcs: ["src/fuzzer.rs"],
+    fuzz_config: {
+        cc: [
+            "drysdale@google.com",
+            "hasinitg@google.com",
+        ],
+    },
+}
