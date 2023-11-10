@@ -34,7 +34,7 @@
 package android.hardware.biometrics.face;
 @Backing(type="byte") @VintfStability
 enum FaceSensorType {
-  UNKNOWN = 0,
-  RGB = 1,
-  IR = 2,
+  UNKNOWN,
+  RGB,
+  IR,
 }

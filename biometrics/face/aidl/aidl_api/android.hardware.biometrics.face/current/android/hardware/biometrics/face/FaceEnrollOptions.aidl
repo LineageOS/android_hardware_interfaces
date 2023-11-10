@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,15 +32,15 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.biometrics.face;
-@Backing(type="byte") @VintfStability
-enum Error {
-  UNKNOWN,
-  HW_UNAVAILABLE,
-  UNABLE_TO_PROCESS,
-  TIMEOUT,
-  NO_SPACE,
-  CANCELED,
-  UNABLE_TO_REMOVE,
-  VENDOR,
-  REENROLL_REQUIRED,
+@VintfStability
+parcelable FaceEnrollOptions {
+  android.hardware.keymaster.HardwareAuthToken hardwareAuthToken;
+  android.hardware.biometrics.face.EnrollmentType enrollmentType;
+  android.hardware.biometrics.face.Feature[] features;
+  /**
+   * @deprecated use {@link surfacePreview} instead {@link NativeHandle} a handle used to render content from the face HAL. Note that only one of [{@link surfacePreview}, {@link nativeHandlePreview}] should be set at one time.
+   */
+  @nullable android.hardware.common.NativeHandle nativeHandlePreview;
+  @nullable android.view.Surface surfacePreview;
+  @nullable android.hardware.biometrics.common.OperationContext context;
 }

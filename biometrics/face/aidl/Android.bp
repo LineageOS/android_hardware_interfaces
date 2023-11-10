@@ -18,6 +18,9 @@ aidl_interface {
         "android.hardware.common-V2",
         "android.hardware.keymaster-V4",
     ],
+    include_dirs: [
+        "frameworks/native/aidl/gui",
+    ],
     stability: "vintf",
     backend: {
         java: {
@@ -25,6 +28,11 @@ aidl_interface {
         },
         cpp: {
             enabled: false,
+        },
+        ndk: {
+            additional_shared_libraries: [
+                "libnativewindow",
+            ],
         },
     },
     versions_with_info: [
@@ -54,6 +62,6 @@ aidl_interface {
         },
 
     ],
-    frozen: true,
+    frozen: false,
 
 }
