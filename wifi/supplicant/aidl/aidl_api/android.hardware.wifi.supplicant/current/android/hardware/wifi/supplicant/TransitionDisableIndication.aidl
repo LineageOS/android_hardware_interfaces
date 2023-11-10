@@ -34,8 +34,8 @@
 package android.hardware.wifi.supplicant;
 @Backing(type="int") @VintfStability
 enum TransitionDisableIndication {
-  USE_WPA3_PERSONAL = 1,
-  USE_SAE_PK = 2,
-  USE_WPA3_ENTERPRISE = 4,
-  USE_ENHANCED_OPEN = 8,
+  USE_WPA3_PERSONAL = (1 << 0) /* 1 */,
+  USE_SAE_PK = (1 << 1) /* 2 */,
+  USE_WPA3_ENTERPRISE = (1 << 2) /* 4 */,
+  USE_ENHANCED_OPEN = (1 << 3) /* 8 */,
 }

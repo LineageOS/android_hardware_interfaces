@@ -19,8 +19,8 @@
 package android.hardware.wifi.supplicant;
 @Backing(type="int") @VintfStability
 enum QosPolicyScsRequestStatusCode {
-  SENT = 0,
-  ALREADY_ACTIVE = 1,
-  NOT_EXIST = 2,
-  INVALID = 3,
+  SENT,
+  ALREADY_ACTIVE,
+  NOT_EXIST,
+  INVALID,
 }

@@ -34,8 +34,8 @@
 package android.hardware.wifi.supplicant;
 @Backing(type="int") @VintfStability
 enum ProtoMask {
-  WPA = 1,
-  RSN = 2,
-  WAPI = 4,
-  OSEN = 8,
+  WPA = (1 << 0) /* 1 */,
+  RSN = (1 << 1) /* 2 */,
+  WAPI = (1 << 2) /* 4 */,
+  OSEN = (1 << 3) /* 8 */,
 }
