@@ -565,6 +565,8 @@ void Filter::filterThreadLoop() {
 
     ALOGD("[Filter] filter %" PRIu64 " threadLoop start.", mFilterId);
 
+    ALOGI("IPTV DVR Playback status on Filter: %d", mIptvDvrPlaybackStatus);
+
     // For the first time of filter output, implementation needs to send the filter
     // Event Callback without waiting for the DATA_CONSUMED to init the process.
     while (mFilterThreadRunning) {

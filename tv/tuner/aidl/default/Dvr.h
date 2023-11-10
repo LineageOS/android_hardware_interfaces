@@ -95,7 +95,7 @@ class Dvr : public BnDvr {
     bool createDvrMQ();
     int writePlaybackFMQ(void* buf, size_t size);
     bool writeRecordFMQ(const std::vector<int8_t>& data);
-    bool addPlaybackFilter(int64_t filterId, std::shared_ptr<IFilter> filter);
+    bool addPlaybackFilter(int64_t filterId, std::shared_ptr<Filter> filter);
     bool removePlaybackFilter(int64_t filterId);
     bool readPlaybackFMQ(bool isVirtualFrontend, bool isRecording);
     bool processEsDataOnPlayback(bool isVirtualFrontend, bool isRecording);
@@ -110,7 +110,7 @@ class Dvr : public BnDvr {
     DvrType mType;
     uint32_t mBufferSize;
     std::shared_ptr<IDvrCallback> mCallback;
-    std::map<int64_t, std::shared_ptr<IFilter>> mFilters;
+    std::map<int64_t, std::shared_ptr<Filter>> mFilters;
 
     void deleteEventFlag();
     bool readDataFromMQ();
