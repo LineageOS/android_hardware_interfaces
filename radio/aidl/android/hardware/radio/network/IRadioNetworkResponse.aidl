@@ -666,4 +666,31 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:INVALID_STATE
      */
     void setN1ModeEnabledResponse(in RadioResponseInfo info);
+
+    /**
+     * Response of isCellularIdentifierTransparencyEnabled.
+     *
+     * @param info Response info struct containing response type, serial no. and error.
+     * @param isEnabled Indicates whether cellular identifier transparency is enabled or not.
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:INTERNAL_ERR
+     */
+    void isCellularIdentifierTransparencyEnabledResponse(
+            in RadioResponseInfo info, boolean isEnabled);
+
+    /**
+     * Response of setCellularIdentifierTransparencyEnabled.
+     *
+     * @param info Response info struct containing response type, serial no. and error.
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:INVALID_STATE
+     */
+    void setCellularIdentifierTransparencyEnabledResponse(in RadioResponseInfo info);
 }

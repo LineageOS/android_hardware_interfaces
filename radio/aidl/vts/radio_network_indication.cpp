@@ -97,3 +97,9 @@ ndk::ScopedAStatus RadioNetworkIndication::emergencyNetworkScanResult(
         RadioIndicationType /*type*/, const EmergencyRegResult& /*result*/) {
     return ndk::ScopedAStatus::ok();
 }
+
+ndk::ScopedAStatus RadioNetworkIndication::cellularIdentifierDisclosed(
+        RadioIndicationType /*type*/,
+        const CellularIdentifierDisclosure& /*disclosures*/) {
+    return ndk::ScopedAStatus::ok();
+}
