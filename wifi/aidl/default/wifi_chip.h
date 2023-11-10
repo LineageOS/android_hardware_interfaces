@@ -19,6 +19,7 @@
 
 #include <aidl/android/hardware/wifi/BnWifiChip.h>
 #include <aidl/android/hardware/wifi/IWifiRttController.h>
+#include <aidl/android/hardware/wifi/common/OuiKeyedData.h>
 #include <android-base/macros.h>
 
 #include <list>
@@ -96,6 +97,10 @@ class WifiChip : public BnWifiChip {
     ndk::ScopedAStatus requestFirmwareDebugDump(std::vector<uint8_t>* _aidl_return) override;
     ndk::ScopedAStatus createApIface(std::shared_ptr<IWifiApIface>* _aidl_return) override;
     ndk::ScopedAStatus createBridgedApIface(std::shared_ptr<IWifiApIface>* _aidl_return) override;
+    ndk::ScopedAStatus createApOrBridgedApIface(
+            IfaceConcurrencyType in_ifaceType,
+            const std::vector<common::OuiKeyedData>& in_vendorData,
+            std::shared_ptr<IWifiApIface>* _aidl_return) override;
     ndk::ScopedAStatus getApIfaceNames(std::vector<std::string>* _aidl_return) override;
     ndk::ScopedAStatus getApIface(const std::string& in_ifname,
                                   std::shared_ptr<IWifiApIface>* _aidl_return) override;
@@ -176,6 +181,8 @@ class WifiChip : public BnWifiChip {
     ndk::ScopedAStatus createVirtualApInterface(const std::string& apVirtIf);
     std::pair<std::shared_ptr<IWifiApIface>, ndk::ScopedAStatus> createApIfaceInternal();
     std::pair<std::shared_ptr<IWifiApIface>, ndk::ScopedAStatus> createBridgedApIfaceInternal();
+    std::pair<std::shared_ptr<IWifiApIface>, ndk::ScopedAStatus> createApOrBridgedApIfaceInternal(
+            IfaceConcurrencyType ifaceType, const std::vector<common::OuiKeyedData>& vendorData);
     std::pair<std::vector<std::string>, ndk::ScopedAStatus> getApIfaceNamesInternal();
     std::pair<std::shared_ptr<IWifiApIface>, ndk::ScopedAStatus> getApIfaceInternal(
             const std::string& ifname);

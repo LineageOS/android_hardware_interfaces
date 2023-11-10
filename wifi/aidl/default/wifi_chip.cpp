@@ -369,6 +369,14 @@ ndk::ScopedAStatus WifiChip::createBridgedApIface(std::shared_ptr<IWifiApIface>*
                            &WifiChip::createBridgedApIfaceInternal, _aidl_return);
 }
 
+ndk::ScopedAStatus WifiChip::createApOrBridgedApIface(
+        IfaceConcurrencyType in_ifaceType, const std::vector<common::OuiKeyedData>& in_vendorData,
+        std::shared_ptr<IWifiApIface>* _aidl_return) {
+    return validateAndCall(this, WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
+                           &WifiChip::createApOrBridgedApIfaceInternal, _aidl_return, in_ifaceType,
+                           in_vendorData);
+}
+
 ndk::ScopedAStatus WifiChip::getApIfaceNames(std::vector<std::string>* _aidl_return) {
     return validateAndCall(this, WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
                            &WifiChip::getApIfaceNamesInternal, _aidl_return);
@@ -852,6 +860,18 @@ WifiChip::createBridgedApIfaceInternal() {
     }
     std::shared_ptr<WifiApIface> iface = newWifiApIface(br_ifname);
     return {iface, ndk::ScopedAStatus::ok()};
+}
+
+std::pair<std::shared_ptr<IWifiApIface>, ndk::ScopedAStatus>
+WifiChip::createApOrBridgedApIfaceInternal(
+        IfaceConcurrencyType ifaceType, const std::vector<common::OuiKeyedData>& /* vendorData */) {
+    if (ifaceType == IfaceConcurrencyType::AP) {
+        return createApIfaceInternal();
+    } else if (ifaceType == IfaceConcurrencyType::AP_BRIDGED) {
+        return createBridgedApIfaceInternal();
+    } else {
+        return {nullptr, createWifiStatus(WifiStatusCode::ERROR_INVALID_ARGS)};
+    }
 }
 
 std::pair<std::vector<std::string>, ndk::ScopedAStatus> WifiChip::getApIfaceNamesInternal() {
