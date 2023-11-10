@@ -17,6 +17,9 @@
 #include <algorithm>
 #include <chrono>
 
+#define LOG_TAG "VtsHalAudio.ModuleConfig"
+#include <android-base/logging.h>
+
 #include <Utils.h>
 #include <aidl/android/media/audio/common/AudioInputFlags.h>
 #include <aidl/android/media/audio/common/AudioIoFlags.h>
