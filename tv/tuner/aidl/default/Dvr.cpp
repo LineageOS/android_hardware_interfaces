@@ -236,6 +236,20 @@ void Dvr::playbackThreadLoop() {
     ALOGD("[Dvr] playback thread ended.");
 }
 
+void Dvr::maySendIptvPlaybackStatusCallback() {
+    lock_guard<mutex> lock(mPlaybackStatusLock);
+    int availableToRead = mDvrMQ->availableToRead();
+    int availableToWrite = mDvrMQ->availableToWrite();
+
+    PlaybackStatus newStatus = checkPlaybackStatusChange(availableToWrite, availableToRead,
+                                                         IPTV_PLAYBACK_STATUS_THRESHOLD_HIGH,
+                                                         IPTV_PLAYBACK_STATUS_THRESHOLD_LOW);
+    if (mPlaybackStatus != newStatus) {
+        mCallback->onPlaybackStatus(newStatus);
+        mPlaybackStatus = newStatus;
+    }
+}
+
 void Dvr::maySendPlaybackStatusCallback() {
     lock_guard<mutex> lock(mPlaybackStatusLock);
     int availableToRead = mDvrMQ->availableToRead();
@@ -441,6 +455,24 @@ bool Dvr::startFilterDispatcher(bool isVirtualFrontend, bool isRecording) {
     }
 
     return true;
+}
+
+int Dvr::writePlaybackFMQ(void* buf, size_t size) {
+    lock_guard<mutex> lock(mWriteLock);
+    ALOGI("Playback status: %d", mPlaybackStatus);
+    if (mPlaybackStatus == PlaybackStatus::SPACE_FULL) {
+        ALOGW("[Dvr] stops writing and wait for the client side flushing.");
+        return DVR_WRITE_FAILURE_REASON_FMQ_FULL;
+    }
+    ALOGI("availableToWrite before: %zu", mDvrMQ->availableToWrite());
+    if (mDvrMQ->write((int8_t*)buf, size)) {
+        mDvrEventFlag->wake(static_cast<uint32_t>(DemuxQueueNotifyBits::DATA_READY));
+        ALOGI("availableToWrite: %zu", mDvrMQ->availableToWrite());
+        maySendIptvPlaybackStatusCallback();
+        return DVR_WRITE_SUCCESS;
+    }
+    maySendIptvPlaybackStatusCallback();
+    return DVR_WRITE_FAILURE_REASON_UNKNOWN;
 }
 
 bool Dvr::writeRecordFMQ(const vector<int8_t>& data) {

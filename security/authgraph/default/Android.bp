@@ -22,6 +22,26 @@ package {
     default_applicable_licenses: ["hardware_interfaces_license"],
 }
 
+rust_library {
+    name: "libauthgraph_nonsecure",
+    crate_name: "authgraph_nonsecure",
+    defaults: [
+        "authgraph_use_latest_hal_aidl_rust",
+    ],
+    vendor_available: true,
+    rustlibs: [
+        "libandroid_logger",
+        "libauthgraph_boringssl",
+        "libauthgraph_core",
+        "libauthgraph_hal",
+        "libbinder_rs",
+        "liblibc",
+        "liblog_rust",
+    ],
+    srcs: ["src/lib.rs"],
+
+}
+
 rust_binary {
     name: "android.hardware.security.authgraph-service.nonsecure",
     relative_install_path: "hw",
@@ -33,9 +53,8 @@ rust_binary {
     ],
     rustlibs: [
         "libandroid_logger",
-        "libauthgraph_core",
-        "libauthgraph_boringssl",
         "libauthgraph_hal",
+        "libauthgraph_nonsecure",
         "libbinder_rs",
         "liblibc",
         "liblog_rust",
@@ -43,4 +62,21 @@ rust_binary {
     srcs: [
         "src/main.rs",
     ],
+}
+
+rust_fuzz {
+    name: "android.hardware.authgraph-service.nonsecure_fuzzer",
+    rustlibs: [
+        "libauthgraph_hal",
+        "libauthgraph_nonsecure",
+        "libbinder_random_parcel_rs",
+        "libbinder_rs",
+    ],
+    srcs: ["src/fuzzer.rs"],
+    fuzz_config: {
+        cc: [
+            "drysdale@google.com",
+            "hasinitg@google.com",
+        ],
+    },
 }
