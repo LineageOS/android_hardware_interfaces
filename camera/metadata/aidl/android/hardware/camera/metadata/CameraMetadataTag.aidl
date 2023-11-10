@@ -1330,8 +1330,8 @@ enum CameraMetadataTag {
     /**
      * android.sensor.frameDuration [dynamic, int64, public]
      *
-     * <p>Duration from start of frame exposure to
-     * start of next frame exposure.</p>
+     * <p>Duration from start of frame readout to
+     * start of next frame readout.</p>
      */
     ANDROID_SENSOR_FRAME_DURATION,
     /**
