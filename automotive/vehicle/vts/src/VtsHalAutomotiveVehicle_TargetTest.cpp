@@ -969,6 +969,12 @@ TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyEvBatteryAverageTemperatureConfi
                    VehicleArea::GLOBAL, VehiclePropertyType::FLOAT);
 }
 
+TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyLowSpeedCollisionWarningEnabledConfig) {
+    verifyProperty(VehicleProperty::LOW_SPEED_COLLISION_WARNING_ENABLED,
+                   VehiclePropertyAccess::READ_WRITE, VehiclePropertyChangeMode::ON_CHANGE,
+                   VehiclePropertyGroup::SYSTEM, VehicleArea::GLOBAL, VehiclePropertyType::BOOLEAN);
+}
+
 bool VtsHalAutomotiveVehicleTargetTest::checkIsSupported(int32_t propertyId) {
     auto result = mVhalClient->getPropConfigs({propertyId});
     return result.ok();

@@ -5358,6 +5358,31 @@ enum VehicleProperty {
     DRIVER_DISTRACTION_WARNING =
             0x1020 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
 
+    /**
+     * Enable or disable Low Speed Collision Warning.
+     *
+     * Set true to enable low speed collision warning and false to disable low speed collision
+     * warning. When low speed collision warning is enabled, the ADAS system in the vehicle should
+     * warn the driver of potential collisions at low speeds. This property is different from the
+     * pre-existing FORWARD_COLLISION_WARNING_ENABLED, which should apply to higher speed
+     * applications only. If the vehicle doesn't have a separate collision detection system for low
+     * speed environments, this property should not be implemented.
+     *
+     * In general, LOW_SPEED_COLLISION_WARNING_ENABLED should always return true or false. If the
+     * feature is not available due to some temporary state, such as the vehicle speed being too
+     * high, that information must be conveyed through the ErrorState values in the
+     * LOW_SPEED_COLLISION_WARNING_STATE property.
+     *
+     * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
+     * implement it as VehiclePropertyAccess.READ only.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
+     */
+    LOW_SPEED_COLLISION_WARNING_ENABLED =
+            0x1021 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+
     /***************************************************************************
      * End of ADAS Properties
      **************************************************************************/
