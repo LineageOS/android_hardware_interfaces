@@ -29,6 +29,7 @@
 #include <aidl/android/hardware/graphics/composer3/Composition.h>
 #include <aidl/android/hardware/graphics/composer3/DisplayBrightness.h>
 #include <aidl/android/hardware/graphics/composer3/LayerBrightness.h>
+#include <aidl/android/hardware/graphics/composer3/LayerLifecycleBatchCommandType.h>
 #include <aidl/android/hardware/graphics/composer3/PerFrameMetadata.h>
 #include <aidl/android/hardware/graphics/composer3/PerFrameMetadataBlob.h>
 
@@ -97,6 +98,15 @@ class ComposerClientWriter final {
                          int releaseFence) {
         getDisplayCommand(display).virtualDisplayOutputBuffer.emplace(
                 getBufferCommand(slot, buffer, releaseFence));
+    }
+
+    void setLayerLifecycleBatchCommandType(int64_t display, int64_t layer,
+                                           LayerLifecycleBatchCommandType cmd) {
+        getLayerCommand(display, layer).layerLifecycleBatchCommandType = cmd;
+    }
+
+    void setNewBufferSlotCount(int64_t display, int64_t layer, int32_t newBufferSlotToCount) {
+        getLayerCommand(display, layer).newBufferSlotCount = newBufferSlotToCount;
     }
 
     void validateDisplay(int64_t display,
