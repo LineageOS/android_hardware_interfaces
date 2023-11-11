@@ -34,8 +34,8 @@
 package android.hardware.wifi.supplicant;
 @Backing(type="int") @VintfStability
 enum AuthAlgMask {
-  OPEN = 1,
-  SHARED = 2,
-  LEAP = 4,
-  SAE = 16,
+  OPEN = (1 << 0) /* 1 */,
+  SHARED = (1 << 1) /* 2 */,
+  LEAP = (1 << 2) /* 4 */,
+  SAE = (1 << 4) /* 16 */,
 }

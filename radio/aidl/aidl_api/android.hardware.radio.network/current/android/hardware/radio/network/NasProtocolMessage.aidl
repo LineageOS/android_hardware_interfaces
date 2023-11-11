@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,13 +31,17 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.wifi.supplicant;
-@Backing(type="int") @VintfStability
-enum DppCurve {
-  PRIME256V1,
-  SECP384R1,
-  SECP521R1,
-  BRAINPOOLP256R1,
-  BRAINPOOLP384R1,
-  BRAINPOOLP512R1,
+package android.hardware.radio.network;
+/* @hide */
+@Backing(type="int") @JavaDerive(toString=true) @VintfStability
+enum NasProtocolMessage {
+  UNKNOWN = 0,
+  ATTACH_REQUEST = 1,
+  IDENTITY_RESPONSE = 2,
+  DETACH_REQUEST = 3,
+  TRACKING_AREA_UPDATE_REQUEST = 4,
+  LOCATION_UPDATE_REQUEST = 5,
+  AUTHENTICATION_AND_CIPHERING_RESPONSE = 6,
+  REGISTRATION_REQUEST = 7,
+  DEREGISTRATION_REQUEST = 8,
 }

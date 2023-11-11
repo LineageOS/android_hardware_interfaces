@@ -48,9 +48,17 @@ interface ISupplicantP2pIfaceCallback {
   oneway void onProvisionDiscoveryCompleted(in byte[] p2pDeviceAddress, in boolean isRequest, in android.hardware.wifi.supplicant.P2pProvDiscStatusCode status, in android.hardware.wifi.supplicant.WpsConfigMethods configMethods, in String generatedPin);
   oneway void onR2DeviceFound(in byte[] srcAddress, in byte[] p2pDeviceAddress, in byte[] primaryDeviceType, in String deviceName, in android.hardware.wifi.supplicant.WpsConfigMethods configMethods, in byte deviceCapabilities, in android.hardware.wifi.supplicant.P2pGroupCapabilityMask groupCapabilities, in byte[] wfdDeviceInfo, in byte[] wfdR2DeviceInfo);
   oneway void onServiceDiscoveryResponse(in byte[] srcAddress, in char updateIndicator, in byte[] tlvs);
+  /**
+   * @deprecated This callback is deprecated from AIDL v3, newer HAL should call onPeerClientJoined()
+   */
   oneway void onStaAuthorized(in byte[] srcAddress, in byte[] p2pDeviceAddress);
+  /**
+   * @deprecated This callback is deprecated from AIDL v3, newer HAL should call onPeerClientDisconnected()
+   */
   oneway void onStaDeauthorized(in byte[] srcAddress, in byte[] p2pDeviceAddress);
   oneway void onGroupFrequencyChanged(in String groupIfname, in int frequency);
   oneway void onDeviceFoundWithVendorElements(in byte[] srcAddress, in byte[] p2pDeviceAddress, in byte[] primaryDeviceType, in String deviceName, in android.hardware.wifi.supplicant.WpsConfigMethods configMethods, in byte deviceCapabilities, in android.hardware.wifi.supplicant.P2pGroupCapabilityMask groupCapabilities, in byte[] wfdDeviceInfo, in byte[] wfdR2DeviceInfo, in byte[] vendorElemBytes);
   oneway void onGroupStartedWithParams(in android.hardware.wifi.supplicant.P2pGroupStartedEventParams groupStartedEventParams);
+  oneway void onPeerClientJoined(in android.hardware.wifi.supplicant.P2pPeerClientJoinedEventParams clientJoinedEventParams);
+  oneway void onPeerClientDisconnected(in android.hardware.wifi.supplicant.P2pPeerClientDisconnectedEventParams clientDisconnectedEventParams);
 }

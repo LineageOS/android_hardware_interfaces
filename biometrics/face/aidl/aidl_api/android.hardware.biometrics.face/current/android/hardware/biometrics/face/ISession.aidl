@@ -37,6 +37,9 @@ interface ISession {
   void generateChallenge();
   void revokeChallenge(in long challenge);
   android.hardware.biometrics.face.EnrollmentStageConfig[] getEnrollmentConfig(in android.hardware.biometrics.face.EnrollmentType enrollmentType);
+  /**
+   * @deprecated use {@link enrollWithOptions} instead.
+   */
   android.hardware.biometrics.common.ICancellationSignal enroll(in android.hardware.keymaster.HardwareAuthToken hat, in android.hardware.biometrics.face.EnrollmentType type, in android.hardware.biometrics.face.Feature[] features, in @nullable android.hardware.common.NativeHandle previewSurface);
   android.hardware.biometrics.common.ICancellationSignal authenticate(in long operationId);
   android.hardware.biometrics.common.ICancellationSignal detectInteraction();
@@ -49,7 +52,11 @@ interface ISession {
   void resetLockout(in android.hardware.keymaster.HardwareAuthToken hat);
   void close();
   android.hardware.biometrics.common.ICancellationSignal authenticateWithContext(in long operationId, in android.hardware.biometrics.common.OperationContext context);
+  /**
+   * @deprecated use {@link enrollWithOptions} instead.
+   */
   android.hardware.biometrics.common.ICancellationSignal enrollWithContext(in android.hardware.keymaster.HardwareAuthToken hat, in android.hardware.biometrics.face.EnrollmentType type, in android.hardware.biometrics.face.Feature[] features, in @nullable android.hardware.common.NativeHandle previewSurface, in android.hardware.biometrics.common.OperationContext context);
   android.hardware.biometrics.common.ICancellationSignal detectInteractionWithContext(in android.hardware.biometrics.common.OperationContext context);
   void onContextChanged(in android.hardware.biometrics.common.OperationContext context);
+  android.hardware.biometrics.common.ICancellationSignal enrollWithOptions(in android.hardware.biometrics.face.FaceEnrollOptions options);
 }

@@ -18,6 +18,8 @@ package android.hardware.wifi.supplicant;
 
 import android.hardware.wifi.supplicant.P2pGroupCapabilityMask;
 import android.hardware.wifi.supplicant.P2pGroupStartedEventParams;
+import android.hardware.wifi.supplicant.P2pPeerClientDisconnectedEventParams;
+import android.hardware.wifi.supplicant.P2pPeerClientJoinedEventParams;
 import android.hardware.wifi.supplicant.P2pProvDiscStatusCode;
 import android.hardware.wifi.supplicant.P2pStatusCode;
 import android.hardware.wifi.supplicant.WpsConfigMethods;
@@ -192,6 +194,9 @@ oneway interface ISupplicantP2pIfaceCallback {
 
     /**
      * Used to indicate when a STA device is connected to this device.
+     * <p>
+     * @deprecated This callback is deprecated from AIDL v3, newer HAL should call
+     * onPeerClientJoined()
      *
      * @param srcAddress MAC address of the device that was authorized.
      * @param p2pDeviceAddress P2P device address.
@@ -200,6 +205,9 @@ oneway interface ISupplicantP2pIfaceCallback {
 
     /**
      * Used to indicate when a STA device is disconnected from this device.
+     * <p>
+     * @deprecated This callback is deprecated from AIDL v3, newer HAL should call
+     * onPeerClientDisconnected()
      *
      * @param srcAddress MAC address of the device that was deauthorized.
      * @param p2pDeviceAddress P2P device address.
@@ -251,4 +259,20 @@ oneway interface ISupplicantP2pIfaceCallback {
      * @param groupStartedEventParams Parameters describing the P2P group.
      */
     void onGroupStartedWithParams(in P2pGroupStartedEventParams groupStartedEventParams);
+
+    /**
+     * Used to indicate that a P2P client has joined this device group owner.
+     *
+     * @param clientJoinedEventParams Parameters associated with peer client joined event.
+     */
+    void onPeerClientJoined(in P2pPeerClientJoinedEventParams clientJoinedEventParams);
+
+    /**
+     * Used to indicate that a P2P client has disconnected from this device group owner.
+     *
+     * @param clientDisconnectedEventParams Parameters associated with peer client disconnected
+     *         event.
+     */
+    void onPeerClientDisconnected(
+            in P2pPeerClientDisconnectedEventParams clientDisconnectedEventParams);
 }

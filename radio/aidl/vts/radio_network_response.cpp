@@ -320,3 +320,18 @@ ndk::ScopedAStatus RadioNetworkResponse::setN1ModeEnabledResponse(const RadioRes
     parent_network.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
+
+ndk::ScopedAStatus RadioNetworkResponse::setCellularIdentifierTransparencyEnabledResponse(
+        const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_network.notify(info.serial);
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus RadioNetworkResponse::isCellularIdentifierTransparencyEnabledResponse(
+        const RadioResponseInfo& info, bool enabled) {
+    rspInfo = info;
+    this->isCellularIdentifierTransparencyEnabled = enabled;
+    parent_network.notify(info.serial);
+    return ndk::ScopedAStatus::ok();
+}

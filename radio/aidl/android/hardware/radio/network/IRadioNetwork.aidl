@@ -557,4 +557,44 @@ oneway interface IRadioNetwork {
      * Response function is IRadioNetworkResponse.setN1ModeEnabledResponse()
      */
     void setN1ModeEnabled(in int serial, boolean enable);
+
+    /**
+     * Get whether pre-auth cellular identifier in-the-clear transparency is enabled. If
+     * IRadioNetworkInterface.setCellularIdentifierTransparencyEnabled has been called, this should
+     * return the value of the `enabled` parameter of the last successful call. If it hasn't been
+     * called this should return the default value of true.
+     *
+     * @param serial Serial number of request
+     *
+     * Response callback is IRadioNetworkResponse.isCellularIdentifierTransparencyEnabledResponse
+     */
+    void isCellularIdentifierTransparencyEnabled(in int serial);
+
+    /**
+     * Enable or disable transparency for in-the-clear cellular identifiers. If the value of enabled
+     * is true, the modem must call IRadioNetworkIndication.cellularIdentifierDisclosed when an
+     * IMSI, IMEI, or unciphered SUCI (in 5G SA) appears in one of the following UE-initiated NAS
+     * messages before a security context is established.
+     *
+     * Note: Cellular identifiers disclosed in uplink messages covered under a NAS Security Context
+     * as well as identifiers disclosed in downlink messages are out of scope.
+     *
+     * This feature applies to 2g, 3g, 4g, and 5g (SA and NSA) messages sent before a NAS security
+     * context is established. In scope message definitions and their associated spec references can
+     * be found in NasProtocolMessage.
+     *
+     * If the value of enabled is false, the modem must not call
+     * IRadioNetworkIndication.sentCellularIdentifierDisclosure again until a subsequent call
+     * re-enables this functionality. The modem may choose to stop tracking cellular identifiers in
+     * the clear during this time.
+     *
+     * Note: The default value of enabled shall be true.
+     *
+     * @param serial Serial number of request
+     * @param enabled Whether or not to enable sending indications for cellular identifiers in the
+     *         clear
+     *
+     * Response function is IRadioNetworkResponse.setCellularIdentifierTransparencyEnabledResponse
+     */
+    void setCellularIdentifierTransparencyEnabled(in int serial, in boolean enabled);
 }

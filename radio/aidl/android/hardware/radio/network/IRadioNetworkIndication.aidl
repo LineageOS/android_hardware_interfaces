@@ -21,6 +21,7 @@ import android.hardware.radio.RadioTechnology;
 import android.hardware.radio.network.BarringInfo;
 import android.hardware.radio.network.CellIdentity;
 import android.hardware.radio.network.CellInfo;
+import android.hardware.radio.network.CellularIdentifierDisclosure;
 import android.hardware.radio.network.EmergencyRegResult;
 import android.hardware.radio.network.LinkCapacityEstimate;
 import android.hardware.radio.network.NetworkScanResult;
@@ -200,4 +201,30 @@ oneway interface IRadioNetworkIndication {
      * @param result the result of the Emergency Network Scan
      */
     void emergencyNetworkScanResult(in RadioIndicationType type, in EmergencyRegResult result);
+
+    /**
+     * Report a cellular identifier disclosure event. See
+     * IRadioNetwork.setCellularIdnetifierTransparencyEnabled for more details.
+     *
+     * A non-exhaustive list of when this method should be called follows:
+     *
+     * - If a device attempts an IMSI attach to the network.
+     * - If a device includes an IMSI in the IDENTITY_RESPONSE message on the NAS and a security context
+     * has not yet been established.
+     * - If a device includes an IMSI in a DETACH_REQUEST message sent on the NAS and the message is
+     * sent before a security context has been established.
+     * - If a device includes an IMSI in a TRACKING_AREA_UPDATE message sent on the NAS and the message
+     * is sent before a security context has been established.
+     * - If a device uses a 2G network to send a LOCATION_UPDATE_REQUEST message on the NAS that
+     * includes an IMSI or IMEI.
+     * - If a device uses a 2G network to send a AUTHENTICATION_AND_CIPHERING_RESPONSE message on the
+     * NAS and the message includes an IMEISV.
+     *
+     * @param type Type of radio indication
+     * @param disclosure A CellularIdentifierDisclosure as specified by
+     *         IRadioNetwork.setCellularIdentifierTransparencyEnabled.
+     *
+     */
+    void cellularIdentifierDisclosed(
+            in RadioIndicationType type, in CellularIdentifierDisclosure disclosure);
 }

@@ -34,6 +34,6 @@
 package android.hardware.biometrics.face;
 @Backing(type="byte") @VintfStability
 enum EnrollmentType {
-  DEFAULT = 0,
-  ACCESSIBILITY = 1,
+  DEFAULT,
+  ACCESSIBILITY,
 }

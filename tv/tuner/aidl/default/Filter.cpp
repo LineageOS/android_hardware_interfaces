@@ -326,6 +326,8 @@ Filter::~Filter() {
     ALOGV("%s", __FUNCTION__);
     mFilterThreadRunning = true;
     std::vector<DemuxFilterEvent> events;
+
+    mFilterCount += 1;
     // All the filter event callbacks in start are for testing purpose.
     switch (mType.mainType) {
         case DemuxFilterMainType::TS:
@@ -361,6 +363,8 @@ Filter::~Filter() {
 
 ::ndk::ScopedAStatus Filter::stop() {
     ALOGV("%s", __FUNCTION__);
+
+    mFilterCount -= 1;
 
     mFilterThreadRunning = false;
     if (mFilterThread.joinable()) {
@@ -564,6 +568,8 @@ void Filter::filterThreadLoop() {
     }
 
     ALOGD("[Filter] filter %" PRIu64 " threadLoop start.", mFilterId);
+
+    ALOGI("IPTV DVR Playback status on Filter: %d", mIptvDvrPlaybackStatus);
 
     // For the first time of filter output, implementation needs to send the filter
     // Event Callback without waiting for the DATA_CONSUMED to init the process.

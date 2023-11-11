@@ -34,8 +34,8 @@
 package android.hardware.wifi.supplicant;
 @Backing(type="int") @VintfStability
 enum OcspType {
-  NONE = 0,
-  REQUEST_CERT_STATUS = 1,
-  REQUIRE_CERT_STATUS = 2,
-  REQUIRE_ALL_CERTS_STATUS = 3,
+  NONE,
+  REQUEST_CERT_STATUS,
+  REQUIRE_CERT_STATUS,
+  REQUIRE_ALL_CERTS_STATUS,
 }

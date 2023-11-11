@@ -34,7 +34,7 @@
 package android.hardware.wifi.supplicant;
 @Backing(type="byte") @VintfStability
 enum SaeH2eMode {
-  DISABLED = 0,
-  H2E_OPTIONAL = 1,
-  H2E_MANDATORY = 2,
+  DISABLED,
+  H2E_OPTIONAL,
+  H2E_MANDATORY,
 }

@@ -98,17 +98,21 @@ class ComposerClientWriter final {
     }
 
     void validateDisplay(int64_t display,
-                         std::optional<ClockMonotonicTimestamp> expectedPresentTime) {
+                         std::optional<ClockMonotonicTimestamp> expectedPresentTime,
+                         int32_t frameIntervalNs) {
         auto& command = getDisplayCommand(display);
         command.expectedPresentTime = expectedPresentTime;
         command.validateDisplay = true;
+        command.frameIntervalNs = frameIntervalNs;
     }
 
     void presentOrvalidateDisplay(int64_t display,
-                                  std::optional<ClockMonotonicTimestamp> expectedPresentTime) {
+                                  std::optional<ClockMonotonicTimestamp> expectedPresentTime,
+                                  int32_t frameIntervalNs) {
         auto& command = getDisplayCommand(display);
         command.expectedPresentTime = expectedPresentTime;
         command.presentOrValidateDisplay = true;
+        command.frameIntervalNs = frameIntervalNs;
     }
 
     void acceptDisplayChanges(int64_t display) {

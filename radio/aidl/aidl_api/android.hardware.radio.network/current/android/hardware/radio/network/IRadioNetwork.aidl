@@ -82,4 +82,6 @@ interface IRadioNetwork {
   oneway void isNullCipherAndIntegrityEnabled(in int serial);
   oneway void isN1ModeEnabled(in int serial);
   oneway void setN1ModeEnabled(in int serial, boolean enable);
+  oneway void isCellularIdentifierTransparencyEnabled(in int serial);
+  oneway void setCellularIdentifierTransparencyEnabled(in int serial, in boolean enabled);
 }
