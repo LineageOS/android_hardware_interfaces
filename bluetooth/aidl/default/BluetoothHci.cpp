@@ -320,6 +320,7 @@ ndk::ScopedAStatus BluetoothHci::close() {
   {
     std::lock_guard<std::mutex> guard(mStateMutex);
     mState = HalState::READY;
+    mH4 = nullptr;
   }
   return ndk::ScopedAStatus::ok();
 }
@@ -346,13 +347,16 @@ ndk::ScopedAStatus BluetoothHci::sendIsoData(
 
 ndk::ScopedAStatus BluetoothHci::send(PacketType type,
     const std::vector<uint8_t>& v) {
-  if (mH4 == nullptr) {
-    return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
-  }
   if (v.empty()) {
     ALOGE("Packet is empty, no data was found to be sent");
     return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
   }
+
+  std::lock_guard<std::mutex> guard(mStateMutex);
+  if (mH4 == nullptr) {
+    return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
+  }
+
   mH4->Send(type, v);
   return ndk::ScopedAStatus::ok();
 }
