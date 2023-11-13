@@ -16,6 +16,7 @@
 
 #define LOG_TAG "VehiclePropertyStore"
 #include <utils/Log.h>
+#include <utils/SystemClock.h>
 
 #include "VehiclePropertyStore.h"
 
@@ -107,12 +108,19 @@ void VehiclePropertyStore::registerProperty(const VehiclePropConfig& config,
 
 VhalResult<void> VehiclePropertyStore::writeValue(VehiclePropValuePool::RecyclableType propValue,
                                                   bool updateStatus,
-                                                  VehiclePropertyStore::EventMode eventMode) {
+                                                  VehiclePropertyStore::EventMode eventMode,
+                                                  bool useCurrentTimestamp) {
     bool valueUpdated = true;
     VehiclePropValue updatedValue;
     OnValueChangeCallback onValueChangeCallback = nullptr;
     {
         std::scoped_lock<std::mutex> g(mLock);
+
+        // Must set timestamp inside the lock to make sure no other writeValue will update the
+        // the timestamp to a newer one while we are writing this value.
+        if (useCurrentTimestamp) {
+            propValue->timestamp = elapsedRealtimeNano();
+        }
 
         int32_t propId = propValue->prop;
 

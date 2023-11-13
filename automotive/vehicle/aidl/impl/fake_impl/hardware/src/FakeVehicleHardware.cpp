@@ -1055,10 +1055,11 @@ VhalResult<void> FakeVehicleHardware::setValue(const VehiclePropValue& value) {
     }
 
     auto updatedValue = mValuePool->obtain(value);
-    int64_t timestamp = elapsedRealtimeNano();
-    updatedValue->timestamp = timestamp;
 
-    auto writeResult = mServerSidePropStore->writeValue(std::move(updatedValue));
+    auto writeResult = mServerSidePropStore->writeValue(
+            std::move(updatedValue),
+            /*updateStatus=*/false, /*mode=*/VehiclePropertyStore::EventMode::ON_VALUE_CHANGE,
+            /*useCurrentTimestamp=*/true);
     if (!writeResult.ok()) {
         return StatusError(getErrorCode(writeResult))
                << StringPrintf("failed to write value into property store, error: %s",
@@ -2091,10 +2092,10 @@ StatusCode FakeVehicleHardware::subscribePropIdAreaIdLocked(
                     // Failed to read current value, skip refreshing.
                     return;
                 }
-                result.value()->timestamp = elapsedRealtimeNano();
 
-                mServerSidePropStore->writeValue(std::move(result.value()), /*updateStatus=*/true,
-                                                 eventMode);
+                mServerSidePropStore->writeValue(std::move(result.value()),
+                                                 /*updateStatus=*/true, eventMode,
+                                                 /*useCurrentTimestamp=*/true);
             });
             mRecurrentTimer->registerTimerCallback(intervalInNanos, action);
             mRecurrentActions[propIdAreaId] = action;
