@@ -73,7 +73,7 @@ const Descriptor VisualizerSw::kDescriptor = {
                           .proxy = std::nullopt},
                    .flags = {.type = Flags::Type::INSERT,
                              .insert = Flags::Insert::FIRST,
-                             .volume = Flags::Volume::CTRL},
+                             .volume = Flags::Volume::NONE},
                    .name = VisualizerSw::kEffectName,
                    .implementor = "The Android Open Source Project"},
         .capability = VisualizerSw::kCapability};
