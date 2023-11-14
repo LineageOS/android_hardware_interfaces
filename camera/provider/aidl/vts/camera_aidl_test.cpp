@@ -1152,6 +1152,58 @@ void CameraAidlTest::verifyMonochromeCharacteristics(const CameraMetadata& chars
     }
 }
 
+void CameraAidlTest::verifyManualFlashStrengthControlCharacteristics(
+        const camera_metadata_t* staticMeta) {
+    camera_metadata_ro_entry singleMaxEntry;
+    camera_metadata_ro_entry singleDefEntry;
+    camera_metadata_ro_entry torchMaxEntry;
+    camera_metadata_ro_entry torchDefEntry;
+    bool torch_supported = false;
+    int32_t singleMaxLevel = 0;
+    int32_t singleDefLevel = 0;
+    int32_t torchMaxLevel = 0;
+    int32_t torchDefLevel = 0;
+
+    // determine whether the device supports torch or not
+    torch_supported = isTorchSupported(staticMeta);
+
+    int singleMaxRetCode = find_camera_metadata_ro_entry(staticMeta,
+            ANDROID_FLASH_SINGLE_STRENGTH_MAX_LEVEL, &singleMaxEntry);
+    int singleDefRetCode = find_camera_metadata_ro_entry(staticMeta,
+            ANDROID_FLASH_SINGLE_STRENGTH_DEFAULT_LEVEL, &singleDefEntry);
+    int torchMaxRetCode = find_camera_metadata_ro_entry(staticMeta,
+            ANDROID_FLASH_TORCH_STRENGTH_MAX_LEVEL, &torchMaxEntry);
+    int torchDefRetCode = find_camera_metadata_ro_entry(staticMeta,
+            ANDROID_FLASH_TORCH_STRENGTH_DEFAULT_LEVEL, &torchDefEntry);
+    if (torch_supported) {
+        if(singleMaxRetCode == 0 && singleDefRetCode == 0 && torchMaxRetCode == 0 &&
+                torchDefRetCode == 0) {
+            singleMaxLevel = *singleMaxEntry.data.i32;
+            singleDefLevel = *singleDefEntry.data.i32;
+            torchMaxLevel = *torchMaxEntry.data.i32;
+            torchDefLevel = *torchDefEntry.data.i32;
+            ASSERT_TRUE((singleMaxEntry.count == singleDefEntry.count == torchMaxEntry.count
+                    == torchDefEntry.count == 1));
+        } else {
+            ASSERT_TRUE((singleMaxEntry.count == singleDefEntry.count == torchMaxEntry.count
+                    == torchDefEntry.count == 0));
+        }
+        // if the device supports this feature default levels should be greater than 0
+        if (singleMaxLevel > 1) {
+            ASSERT_GT(torchMaxLevel, 1);
+            ASSERT_GT(torchDefLevel, 0);
+            ASSERT_GT(singleDefLevel, 0);
+            ASSERT_TRUE(torchDefLevel <= torchMaxLevel); // default levels should be <= max levels
+            ASSERT_TRUE(singleDefLevel <= singleMaxLevel);
+        }
+    } else {
+        ASSERT_TRUE(singleMaxRetCode != 0);
+        ASSERT_TRUE(singleDefRetCode != 0);
+        ASSERT_TRUE(torchMaxRetCode != 0);
+        ASSERT_TRUE(torchDefRetCode != 0);
+    }
+}
+
 void CameraAidlTest::verifyRecommendedConfigs(const CameraMetadata& chars) {
     size_t CONFIG_ENTRY_SIZE = 5;
     size_t CONFIG_ENTRY_TYPE_OFFSET = 3;
