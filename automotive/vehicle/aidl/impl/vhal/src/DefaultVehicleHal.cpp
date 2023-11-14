@@ -605,6 +605,23 @@ ScopedAStatus DefaultVehicleHal::getPropConfigs(const std::vector<int32_t>& prop
     return vectorToStableLargeParcelable(std::move(configs), output);
 }
 
+bool hasRequiredAccess(VehiclePropertyAccess access, VehiclePropertyAccess requiredAccess) {
+    return access == requiredAccess || access == VehiclePropertyAccess::READ_WRITE;
+}
+
+bool areaConfigsHaveRequiredAccess(const std::vector<VehicleAreaConfig>& areaConfigs,
+                                   VehiclePropertyAccess requiredAccess) {
+    if (areaConfigs.empty()) {
+        return false;
+    }
+    for (VehicleAreaConfig areaConfig : areaConfigs) {
+        if (!hasRequiredAccess(areaConfig.access, requiredAccess)) {
+            return false;
+        }
+    }
+    return true;
+}
+
 VhalResult<void> DefaultVehicleHal::checkSubscribeOptions(
         const std::vector<SubscribeOptions>& options) {
     for (const auto& option : options) {
@@ -614,6 +631,26 @@ VhalResult<void> DefaultVehicleHal::checkSubscribeOptions(
                    << StringPrintf("no config for property, ID: %" PRId32, propId);
         }
         const VehiclePropConfig& config = mConfigsByPropId[propId];
+        std::vector<VehicleAreaConfig> areaConfigs;
+        if (option.areaIds.empty()) {
+            areaConfigs = config.areaConfigs;
+        } else {
+            std::unordered_map<int, VehicleAreaConfig> areaConfigByAreaId;
+            for (const VehicleAreaConfig& areaConfig : config.areaConfigs) {
+                areaConfigByAreaId.emplace(areaConfig.areaId, areaConfig);
+            }
+            for (int areaId : option.areaIds) {
+                auto it = areaConfigByAreaId.find(areaId);
+                if (it != areaConfigByAreaId.end()) {
+                    areaConfigs.push_back(it->second);
+                } else if (areaId != 0 || !areaConfigByAreaId.empty()) {
+                    return StatusError(StatusCode::INVALID_ARG)
+                           << StringPrintf("invalid area ID: %" PRId32 " for prop ID: %" PRId32
+                                           ", not listed in config",
+                                           areaId, propId);
+                }
+            }
+        }
 
         if (config.changeMode != VehiclePropertyChangeMode::ON_CHANGE &&
             config.changeMode != VehiclePropertyChangeMode::CONTINUOUS) {
@@ -621,8 +658,9 @@ VhalResult<void> DefaultVehicleHal::checkSubscribeOptions(
                    << "only support subscribing to ON_CHANGE or CONTINUOUS property";
         }
 
-        if (config.access != VehiclePropertyAccess::READ &&
-            config.access != VehiclePropertyAccess::READ_WRITE) {
+        // Either VehiclePropConfig.access or VehicleAreaConfig.access will be specified
+        if (!hasRequiredAccess(config.access, VehiclePropertyAccess::READ) &&
+            !areaConfigsHaveRequiredAccess(areaConfigs, VehiclePropertyAccess::READ)) {
             return StatusError(StatusCode::ACCESS_DENIED)
                    << StringPrintf("Property %" PRId32 " has no read access", propId);
         }
@@ -642,20 +680,6 @@ VhalResult<void> DefaultVehicleHal::checkSubscribeOptions(
             if (!SubscriptionManager::checkSampleRateHz(sampleRateHz)) {
                 return StatusError(StatusCode::INVALID_ARG)
                        << "invalid sample rate: " << sampleRateHz << " HZ";
-            }
-        }
-
-        if (isGlobalProp(propId)) {
-            continue;
-        }
-
-        // Non-global property.
-        for (int32_t areaId : option.areaIds) {
-            if (auto areaConfig = getAreaConfig(propId, areaId, config); areaConfig == nullptr) {
-                return StatusError(StatusCode::INVALID_ARG)
-                       << StringPrintf("invalid area ID: %" PRId32 " for prop ID: %" PRId32
-                                       ", not listed in config",
-                                       areaId, propId);
             }
         }
     }
@@ -776,36 +800,42 @@ IVehicleHardware* DefaultVehicleHal::getHardware() {
     return mVehicleHardware.get();
 }
 
-VhalResult<void> DefaultVehicleHal::checkWritePermission(const VehiclePropValue& value) const {
+VhalResult<void> DefaultVehicleHal::checkPermissionHelper(
+        const VehiclePropValue& value, VehiclePropertyAccess accessToTest) const {
+    static const std::unordered_set<VehiclePropertyAccess> validAccesses = {
+            VehiclePropertyAccess::WRITE, VehiclePropertyAccess::READ,
+            VehiclePropertyAccess::READ_WRITE};
+    if (validAccesses.find(accessToTest) == validAccesses.end()) {
+        return StatusError(StatusCode::INVALID_ARG)
+               << "checkPermissionHelper parameter is an invalid access type";
+    }
+
     int32_t propId = value.prop;
     auto result = getConfig(propId);
     if (!result.ok()) {
         return StatusError(StatusCode::INVALID_ARG) << getErrorMsg(result);
     }
     const VehiclePropConfig* config = result.value();
+    const VehicleAreaConfig* areaConfig = getAreaConfig(value, *config);
 
-    if (config->access != VehiclePropertyAccess::WRITE &&
-        config->access != VehiclePropertyAccess::READ_WRITE) {
+    if (areaConfig == nullptr && !isGlobalProp(propId)) {
+        return StatusError(StatusCode::INVALID_ARG) << "no config for area ID: " << value.areaId;
+    }
+    if (!hasRequiredAccess(config->access, accessToTest) &&
+        (areaConfig == nullptr || !hasRequiredAccess(areaConfig->access, accessToTest))) {
         return StatusError(StatusCode::ACCESS_DENIED)
-               << StringPrintf("Property %" PRId32 " has no write access", propId);
+               << StringPrintf("Property %" PRId32 " does not have the following access: %" PRId32,
+                               propId, accessToTest);
     }
     return {};
 }
 
-VhalResult<void> DefaultVehicleHal::checkReadPermission(const VehiclePropValue& value) const {
-    int32_t propId = value.prop;
-    auto result = getConfig(propId);
-    if (!result.ok()) {
-        return StatusError(StatusCode::INVALID_ARG) << getErrorMsg(result);
-    }
-    const VehiclePropConfig* config = result.value();
+VhalResult<void> DefaultVehicleHal::checkWritePermission(const VehiclePropValue& value) const {
+    return checkPermissionHelper(value, VehiclePropertyAccess::WRITE);
+}
 
-    if (config->access != VehiclePropertyAccess::READ &&
-        config->access != VehiclePropertyAccess::READ_WRITE) {
-        return StatusError(StatusCode::ACCESS_DENIED)
-               << StringPrintf("Property %" PRId32 " has no read access", propId);
-    }
-    return {};
+VhalResult<void> DefaultVehicleHal::checkReadPermission(const VehiclePropValue& value) const {
+    return checkPermissionHelper(value, VehiclePropertyAccess::READ);
 }
 
 void DefaultVehicleHal::checkHealth(IVehicleHardware* vehicleHardware,
