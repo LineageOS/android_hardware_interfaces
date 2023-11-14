@@ -5383,6 +5383,28 @@ enum VehicleProperty {
     LOW_SPEED_COLLISION_WARNING_ENABLED =
             0x1021 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
 
+    /**
+     * Low Speed Collision Warning state.
+     *
+     * Returns the current state of Low Speed Collision Warning. This property must always return a
+     * valid state defined in LowSpeedCollisionWarningState or ErrorState. It must not surface
+     * errors through StatusCode and must use the supported error states instead. This property is
+     * different from the pre-existing FORWARD_COLLISION_WARNING_STATE, which should apply to higher
+     * speed applications only. If the vehicle doesn't have a separate collision detection system
+     * for low speed environments, this property should not be implemented.
+     *
+     * For the global area ID (0), the VehicleAreaConfig#supportedEnumValues array must be defined
+     * unless all states of both LowSpeedCollisionWarningState (including OTHER, which is not
+     * recommended) and ErrorState are supported.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     * @data_enum LowSpeedCollisionWarningState
+     * @data_enum ErrorState
+     */
+    LOW_SPEED_COLLISION_WARNING_STATE =
+            0x1022 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
+
     /***************************************************************************
      * End of ADAS Properties
      **************************************************************************/

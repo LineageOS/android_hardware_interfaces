@@ -1593,6 +1593,61 @@ std::vector<SetSpecialValueTestCase> setSpecialValueTestCases() {
                             },
             },
             SetSpecialValueTestCase{
+                    .name = "set_low_speed_collision_warning_enabled_false",
+                    .valuesToSet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::
+                                                            LOW_SPEED_COLLISION_WARNING_ENABLED),
+                                            .value.int32Values = {0},
+                                    },
+                            },
+                    .expectedValuesToGet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::
+                                                            LOW_SPEED_COLLISION_WARNING_ENABLED),
+                                            .value.int32Values = {0},
+                                    },
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::
+                                                            LOW_SPEED_COLLISION_WARNING_STATE),
+                                            .value.int32Values = {toInt(
+                                                    ErrorState::NOT_AVAILABLE_DISABLED)},
+                                    },
+                            },
+            },
+            SetSpecialValueTestCase{
+                    .name = "set_low_speed_collision_warning_enabled_true",
+                    .valuesToSet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::
+                                                            LOW_SPEED_COLLISION_WARNING_ENABLED),
+                                            .value.int32Values = {1},
+                                    },
+                            },
+                    .expectedValuesToGet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::
+                                                            LOW_SPEED_COLLISION_WARNING_ENABLED),
+                                            .value.int32Values = {1},
+                                    },
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::
+                                                            LOW_SPEED_COLLISION_WARNING_STATE),
+                                            .value.int32Values = {1},
+                                    },
+                            },
+            },
+            SetSpecialValueTestCase{
                     .name = "set_shutdown_request",
                     .valuesToSet =
                             {
@@ -2147,6 +2202,13 @@ TEST_F(FakeVehicleHardwareTest, testSendAdasPropertiesState) {
                     {
                             toInt(VehicleProperty::HANDS_ON_DETECTION_DRIVER_STATE),
                             toInt(VehicleProperty::HANDS_ON_DETECTION_WARNING),
+                    },
+            },
+            // LSCW
+            {
+                    toInt(VehicleProperty::LOW_SPEED_COLLISION_WARNING_ENABLED),
+                    {
+                            toInt(VehicleProperty::LOW_SPEED_COLLISION_WARNING_STATE),
                     },
             },
     };
