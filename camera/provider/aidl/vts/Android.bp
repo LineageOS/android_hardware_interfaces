@@ -53,6 +53,7 @@ cc_test {
         "android.hardware.graphics.mapper@2.0",
         "android.hardware.graphics.mapper@3.0",
         "android.hardware.graphics.mapper@4.0",
+        "camera_platform_flags_c_lib",
     ],
 
     // Statically link to libs not guaranteed to be present on the device.
@@ -67,6 +68,7 @@ cc_test {
         "libhidlmemory",
         "libgralloctypes",
         "libaidlcommonsupport",
+        "libgtest",
     ],
 
     require_root: true,

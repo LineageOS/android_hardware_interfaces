@@ -100,6 +100,10 @@ constexpr int32_t READ_ONLY_PROP = 10006 + 0x10000000 + 0x01000000 + 0x00400000;
 constexpr int32_t WRITE_ONLY_PROP = 10007 + 0x10000000 + 0x01000000 + 0x00400000;
 // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
 constexpr int32_t GLOBAL_CONTINUOUS_PROP_NO_VUR = 10008 + 0x10000000 + 0x01000000 + 0x00400000;
+// VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
+constexpr int32_t GLOBAL_NONE_ACCESS_PROP = 10009 + 0x10000000 + 0x01000000 + 0x00400000;
+// VehiclePropertyGroup:SYSTEM,VehicleArea:WINDOW,VehiclePropertyType:INT32
+constexpr int32_t AREA_NONE_ACCESS_PROP = 10010 + 0x10000000 + 0x03000000 + 0x00400000;
 
 int32_t testInt32VecProp(size_t i) {
     // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32_VEC
@@ -175,6 +179,26 @@ std::vector<SetValuesInvalidRequestTestCase> getSetValuesInvalidRequestTestCases
                                     .value.int32Values = {0},
                             },
                     .expectedStatus = StatusCode::ACCESS_DENIED,
+            },
+            {
+                    .name = "none_access",
+                    .request =
+                            {
+                                    .prop = GLOBAL_NONE_ACCESS_PROP,
+                                    .value.int32Values = {0},
+                            },
+                    .expectedStatus = StatusCode::ACCESS_DENIED,
+            },
+            {
+                    .name = "none_area_access",
+                    .request =
+                            {
+                                    .prop = AREA_NONE_ACCESS_PROP,
+                                    .value.int32Values = {0},
+                                    // Only ROW_1_LEFT is allowed.
+                                    .areaId = toInt(VehicleAreaWindow::ROW_1_RIGHT),
+                            },
+                    .expectedStatus = StatusCode::ACCESS_DENIED,
             }};
 }
 
@@ -228,11 +252,11 @@ class DefaultVehicleHalTest : public testing::Test {
         for (size_t i = 0; i < 10000; i++) {
             testConfigs.push_back(VehiclePropConfig{
                     .prop = testInt32VecProp(i),
-                    .access = VehiclePropertyAccess::READ_WRITE,
                     .areaConfigs =
                             {
                                     {
                                             .areaId = 0,
+                                            .access = VehiclePropertyAccess::READ_WRITE,
                                             .minInt32Value = 0,
                                             .maxInt32Value = 100,
                                     },
@@ -242,9 +266,9 @@ class DefaultVehicleHalTest : public testing::Test {
         // A property with area config.
         testConfigs.push_back(
                 VehiclePropConfig{.prop = INT32_WINDOW_PROP,
-                                  .access = VehiclePropertyAccess::READ_WRITE,
                                   .areaConfigs = {{
                                           .areaId = toInt(VehicleAreaWindow::ROW_1_LEFT),
+                                          .access = VehiclePropertyAccess::READ_WRITE,
                                           .minInt32Value = 0,
                                           .maxInt32Value = 100,
                                   }}});
@@ -275,18 +299,19 @@ class DefaultVehicleHalTest : public testing::Test {
         // A per-area on-change property.
         testConfigs.push_back(VehiclePropConfig{
                 .prop = AREA_ON_CHANGE_PROP,
-                .access = VehiclePropertyAccess::READ_WRITE,
                 .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
                 .areaConfigs =
                         {
                                 {
 
                                         .areaId = toInt(VehicleAreaWindow::ROW_1_LEFT),
+                                        .access = VehiclePropertyAccess::READ_WRITE,
                                         .minInt32Value = 0,
                                         .maxInt32Value = 100,
                                 },
                                 {
                                         .areaId = toInt(VehicleAreaWindow::ROW_1_RIGHT),
+                                        .access = VehiclePropertyAccess::READ,
                                         .minInt32Value = 0,
                                         .maxInt32Value = 100,
                                 },
@@ -295,7 +320,6 @@ class DefaultVehicleHalTest : public testing::Test {
         // A per-area continuous property.
         testConfigs.push_back(VehiclePropConfig{
                 .prop = AREA_CONTINUOUS_PROP,
-                .access = VehiclePropertyAccess::READ_WRITE,
                 .changeMode = VehiclePropertyChangeMode::CONTINUOUS,
                 .minSampleRate = 0.0,
                 .maxSampleRate = 1000.0,
@@ -304,12 +328,14 @@ class DefaultVehicleHalTest : public testing::Test {
                                 {
 
                                         .areaId = toInt(VehicleAreaWindow::ROW_1_LEFT),
+                                        .access = VehiclePropertyAccess::READ_WRITE,
                                         .minInt32Value = 0,
                                         .maxInt32Value = 100,
                                         .supportVariableUpdateRate = true,
                                 },
                                 {
                                         .areaId = toInt(VehicleAreaWindow::ROW_1_RIGHT),
+                                        .access = VehiclePropertyAccess::READ_WRITE,
                                         .minInt32Value = 0,
                                         .maxInt32Value = 100,
                                         .supportVariableUpdateRate = false,
@@ -331,6 +357,37 @@ class DefaultVehicleHalTest : public testing::Test {
                 .changeMode = VehiclePropertyChangeMode::CONTINUOUS,
                 .minSampleRate = 0.0,
                 .maxSampleRate = 1000.0,
+        });
+        // Global access set to NONE
+        testConfigs.push_back(VehiclePropConfig{
+                .prop = GLOBAL_NONE_ACCESS_PROP,
+                .access = VehiclePropertyAccess::NONE,
+                .changeMode = VehiclePropertyChangeMode::CONTINUOUS,
+                .minSampleRate = 0.0,
+                .maxSampleRate = 100.0,
+        });
+        // Area access set to NONE
+        testConfigs.push_back(VehiclePropConfig{
+                .prop = AREA_NONE_ACCESS_PROP,
+                .changeMode = VehiclePropertyChangeMode::CONTINUOUS,
+                .minSampleRate = 0.0,
+                .maxSampleRate = 1000.0,
+                .areaConfigs =
+                        {
+                                {
+
+                                        .areaId = toInt(VehicleAreaWindow::ROW_1_LEFT),
+                                        .access = VehiclePropertyAccess::NONE,
+                                        .minInt32Value = 0,
+                                        .maxInt32Value = 100,
+                                },
+                                {
+                                        .areaId = toInt(VehicleAreaWindow::ROW_1_RIGHT),
+                                        .access = VehiclePropertyAccess::NONE,
+                                        .minInt32Value = 0,
+                                        .maxInt32Value = 100,
+                                },
+                        },
         });
         // Register the heartbeat event property.
         testConfigs.push_back(VehiclePropConfig{
@@ -673,6 +730,21 @@ TEST_F(DefaultVehicleHalTest, testGetValuesNoReadPermission) {
                                                     .prop = WRITE_ONLY_PROP,
                                             },
                             },
+                            {
+                                    .requestId = 1,
+                                    .prop =
+                                            {
+                                                    .prop = GLOBAL_NONE_ACCESS_PROP,
+                                            },
+                            },
+                            {
+                                    .requestId = 2,
+                                    .prop =
+                                            {
+                                                    .prop = AREA_NONE_ACCESS_PROP,
+                                                    .areaId = toInt(VehicleAreaWindow::ROW_1_LEFT),
+                                            },
+                            },
                     },
     };
 
@@ -688,6 +760,14 @@ TEST_F(DefaultVehicleHalTest, testGetValuesNoReadPermission) {
     EXPECT_EQ(maybeResult.value().payloads, std::vector<GetValueResult>({
                                                     {
                                                             .requestId = 0,
+                                                            .status = StatusCode::ACCESS_DENIED,
+                                                    },
+                                                    {
+                                                            .requestId = 1,
+                                                            .status = StatusCode::ACCESS_DENIED,
+                                                    },
+                                                    {
+                                                            .requestId = 2,
                                                             .status = StatusCode::ACCESS_DENIED,
                                                     },
                                             }))
@@ -1316,8 +1396,8 @@ TEST_F(DefaultVehicleHalTest, testSubscribeAreaOnChangeAllAreas) {
 
     auto maybeResults = getCallback()->nextOnPropertyEventResults();
     ASSERT_TRUE(maybeResults.has_value()) << "no results in callback";
-    ASSERT_THAT(maybeResults.value().payloads, UnorderedElementsAre(testValue1, testValue2))
-            << "results mismatch, expect two on-change events for all updated areas";
+    ASSERT_THAT(maybeResults.value().payloads, UnorderedElementsAre(testValue1))
+            << "results mismatch, expect one on-change events for all updated areas";
     ASSERT_FALSE(getCallback()->nextOnPropertyEventResults().has_value())
             << "more results than expected";
 }
@@ -1627,6 +1707,27 @@ TEST_F(DefaultVehicleHalTest, testSubscribeNoReadPermission) {
     ASSERT_EQ(status.getServiceSpecificError(), toInt(StatusCode::ACCESS_DENIED));
 }
 
+TEST_F(DefaultVehicleHalTest, testSubscribeGlobalNoneAccess) {
+    std::vector<SubscribeOptions> options = {{
+            .propId = GLOBAL_NONE_ACCESS_PROP,
+    }};
+
+    auto status = getClient()->subscribe(getCallbackClient(), options, 0);
+
+    ASSERT_FALSE(status.isOk()) << "subscribe to a property with NONE global access must fail";
+    ASSERT_EQ(status.getServiceSpecificError(), toInt(StatusCode::ACCESS_DENIED));
+}
+
+TEST_F(DefaultVehicleHalTest, testSubscribeAreaNoneAccess) {
+    std::vector<SubscribeOptions> options = {
+            {.propId = AREA_NONE_ACCESS_PROP, .areaIds = {toInt(VehicleAreaWindow::ROW_1_LEFT)}}};
+
+    auto status = getClient()->subscribe(getCallbackClient(), options, 0);
+
+    ASSERT_FALSE(status.isOk()) << "subscribe to a property with NONE area access must fail";
+    ASSERT_EQ(status.getServiceSpecificError(), toInt(StatusCode::ACCESS_DENIED));
+}
+
 TEST_F(DefaultVehicleHalTest, testUnsubscribeFailure) {
     auto status = getClient()->unsubscribe(getCallbackClient(),
                                            std::vector<int32_t>({GLOBAL_ON_CHANGE_PROP}));
@@ -1881,7 +1982,7 @@ TEST_F(DefaultVehicleHalTest, testBatchOnPropertyChangeEvents) {
     };
     SetValueResult result3 = {
             .requestId = 3,
-            .status = StatusCode::OK,
+            .status = StatusCode::ACCESS_DENIED,
     };
     // Prepare the responses
     for (int i = 0; i < 2; i++) {
@@ -1907,9 +2008,8 @@ TEST_F(DefaultVehicleHalTest, testBatchOnPropertyChangeEvents) {
 
         auto maybeResults = getCallback()->nextOnPropertyEventResults();
         ASSERT_TRUE(maybeResults.has_value()) << "no results in callback";
-        ASSERT_THAT(maybeResults.value().payloads,
-                    UnorderedElementsAre(testValue1, testValue2, testValue3))
-                << "results mismatch, expect 3 batched on change events";
+        ASSERT_THAT(maybeResults.value().payloads, UnorderedElementsAre(testValue1, testValue2))
+                << "results mismatch, expect 2 batched on change events";
         ASSERT_FALSE(getCallback()->nextOnPropertyEventResults().has_value())
                 << "more results than expected";
     }

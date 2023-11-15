@@ -77,7 +77,7 @@ parcelable VehicleAreaConfig {
      * This applies for continuous property only.
      *
      * It is HIGHLY RECOMMENDED to support variable update rate for all non-heartbeat continuous
-     * properties for better performance.
+     * properties for better performance unless the property is large.
      *
      * If variable update rate is supported and 'enableVariableUpdateRate' is true in subscribe
      * options, VHAL must only sends property update event when the property's value changes
@@ -95,6 +95,9 @@ parcelable VehicleAreaConfig {
      * property event, and must use getValues to fetch the initial value. In fact, car service is
      * using getValues to fetch the initial value, convert it to a property event and deliver to
      * car service clients.
+     *
+     * NOTE: If this is true, car service may cache the property update event for filtering purpose,
+     * so this should be false if the property is large (e.g. a byte array of 1k in size).
      */
     boolean supportVariableUpdateRate;
 }

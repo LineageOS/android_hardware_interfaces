@@ -262,6 +262,9 @@ class CameraAidlTest : public ::testing::TestWithParam<std::string> {
 
     static void verifyMonochromeCharacteristics(const CameraMetadata& chars);
 
+    static void verifyManualFlashStrengthControlCharacteristics(
+            const camera_metadata_t* staticMeta);
+
     static void verifyMonochromeCameraResult(
             const ::android::hardware::camera::common::V1_0::helper::CameraMetadata& metadata);
 

@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <gtest/gtest.h>
 
 #include <aidl/Vintf.h>
 #include <aidl/android/hardware/camera/common/VendorTagSection.h>
@@ -29,6 +30,7 @@
 #include <hidl/GtestPrinter.h>
 #include <hidl/HidlSupport.h>
 #include <torch_provider_cb.h>
+#include <com_android_internal_camera_flags.h>
 #include <list>
 
 using ::aidl::android::hardware::camera::common::CameraDeviceStatus;
@@ -50,6 +52,7 @@ const uint32_t kMaxStillWidth = 2048;
 const uint32_t kMaxStillHeight = 1536;
 
 const int64_t kEmptyFlushTimeoutMSec = 200;
+namespace flags = com::android::internal::camera::flags;
 
 const static std::vector<int64_t> kMandatoryUseCases = {
         ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_DEFAULT,
@@ -156,6 +159,28 @@ TEST_P(CameraAidlTest, getResourceCost) {
         for (const auto& name : resourceCost.conflictingDevices) {
             ALOGI("    Conflicting device: %s", name.c_str());
         }
+    }
+}
+
+// Validate the integrity of manual flash strength control metadata
+TEST_P(CameraAidlTest, validateManualFlashStrengthControlKeys) {
+    if (flags::camera_manual_flash_strength_control()) {
+        std::vector<std::string> cameraDeviceNames = getCameraDeviceNames(mProvider);
+        for (const auto& name : cameraDeviceNames) {
+            ALOGI("validateManualFlashStrengthControlKeys: Testing camera device %s", name.c_str());
+            CameraMetadata meta;
+            std::shared_ptr<ICameraDevice> cameraDevice;
+            openEmptyDeviceSession(name, mProvider, &mSession /*out*/, &meta /*out*/,
+                    &cameraDevice /*out*/);
+            ndk::ScopedAStatus ret = cameraDevice->getCameraCharacteristics(&meta);
+            ASSERT_TRUE(ret.isOk());
+            const camera_metadata_t* staticMeta =
+                    reinterpret_cast<const camera_metadata_t*>(meta.metadata.data());
+            verifyManualFlashStrengthControlCharacteristics(staticMeta);
+        }
+    } else {
+        ALOGI("validateManualFlashStrengthControlKeys: Test skipped.\n");
+        GTEST_SKIP();
     }
 }
 

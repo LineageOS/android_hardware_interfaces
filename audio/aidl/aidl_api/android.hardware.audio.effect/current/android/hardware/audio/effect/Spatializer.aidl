@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,12 +31,19 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.power;
+package android.hardware.audio.effect;
 @VintfStability
-parcelable WorkDuration {
-  long timeStampNanos;
-  long durationNanos;
-  long workPeriodStartTimestampNanos;
-  long cpuDurationNanos;
-  long gpuDurationNanos;
+union Spatializer {
+  android.hardware.audio.effect.VendorExtension vendor;
+  android.media.audio.common.Spatialization.Level spatializationLevel;
+  android.media.audio.common.HeadTracking.Mode headTrackingMode;
+  android.media.audio.common.AudioChannelLayout[] supportedChannelLayout;
+  android.media.audio.common.Spatialization.Mode spatializationMode;
+  float[6] headToStage;
+  const int HEAD_TO_STAGE_VEC_SIZE = 6;
+  @VintfStability
+  union Id {
+    android.hardware.audio.effect.VendorExtension vendorExtensionTag;
+    android.hardware.audio.effect.Spatializer.Tag commonTag;
+  }
 }

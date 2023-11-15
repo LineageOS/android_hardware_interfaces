@@ -60,6 +60,7 @@ union Parameter {
     android.hardware.audio.effect.Visualizer.Id visualizerTag;
     android.hardware.audio.effect.Volume.Id volumeTag;
     android.hardware.audio.effect.Parameter.Tag commonTag;
+    android.hardware.audio.effect.Spatializer.Id spatializerTag;
   }
   @VintfStability
   parcelable Common {
@@ -91,5 +92,6 @@ union Parameter {
     android.hardware.audio.effect.Virtualizer virtualizer;
     android.hardware.audio.effect.Visualizer visualizer;
     android.hardware.audio.effect.Volume volume;
+    android.hardware.audio.effect.Spatializer spatializer;
   }
 }
