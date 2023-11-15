@@ -2078,25 +2078,10 @@ StatusCode FakeVehicleHardware::subscribePropIdAreaIdLocked(
                 enableVariableUpdateRate) {
                 eventMode = VehiclePropertyStore::EventMode::ON_VALUE_CHANGE;
             }
-            auto action = std::make_shared<RecurrentTimer::Callback>([this, propId, areaId,
-                                                                      eventMode] {
-                // Refresh the property value. In real implementation, this should poll the latest
-                // value from vehicle bus. Here, we are just refreshing the existing value with a
-                // new timestamp.
-                auto result = getValue(VehiclePropValue{
-                        .areaId = areaId,
-                        .prop = propId,
-                        .value = {},
-                });
-                if (!result.ok()) {
-                    // Failed to read current value, skip refreshing.
-                    return;
-                }
-
-                mServerSidePropStore->writeValue(std::move(result.value()),
-                                                 /*updateStatus=*/true, eventMode,
-                                                 /*useCurrentTimestamp=*/true);
-            });
+            auto action =
+                    std::make_shared<RecurrentTimer::Callback>([this, propId, areaId, eventMode] {
+                        mServerSidePropStore->refreshTimestamp(propId, areaId, eventMode);
+                    });
             mRecurrentTimer->registerTimerCallback(intervalInNanos, action);
             mRecurrentActions[propIdAreaId] = action;
             return StatusCode::OK;
