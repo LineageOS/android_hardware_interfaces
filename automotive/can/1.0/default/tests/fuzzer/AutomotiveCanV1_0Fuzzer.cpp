@@ -18,9 +18,9 @@
 
 namespace android::hardware::automotive::can::V1_0::implementation::fuzzer {
 
-constexpr CanController::InterfaceType kInterfaceType[] = {CanController::InterfaceType::VIRTUAL,
-                                                           CanController::InterfaceType::SOCKETCAN,
-                                                           CanController::InterfaceType::SLCAN};
+constexpr CanController::InterfaceType kInterfaceType[] = {
+        CanController::InterfaceType::VIRTUAL, CanController::InterfaceType::SOCKETCAN,
+        CanController::InterfaceType::SLCAN, CanController::InterfaceType::INDEXED};
 constexpr FilterFlag kFilterFlag[] = {FilterFlag::DONT_CARE, FilterFlag::SET, FilterFlag::NOT_SET};
 constexpr size_t kInterfaceTypeLength = std::size(kInterfaceType);
 constexpr size_t kFilterFlagLength = std::size(kFilterFlag);
@@ -28,8 +28,8 @@ constexpr size_t kMaxCharacters = 30;
 constexpr size_t kMaxPayloadBytes = 64;
 constexpr size_t kMaxFilters = 20;
 constexpr size_t kMaxSerialNumber = 1000;
-constexpr size_t kMaxBuses = 10;
-constexpr size_t kMaxRepeat = 5;
+constexpr size_t kMaxBuses = 100;
+constexpr size_t kMaxRepeat = 100;
 
 Bus CanFuzzer::makeBus() {
     ICanController::BusConfig config = {};
@@ -56,9 +56,13 @@ hidl_vec<hidl_string> CanFuzzer::getBusNames() {
 }
 
 void CanFuzzer::invokeUpInterface() {
-    const CanController::InterfaceType iftype =
-            kInterfaceType[mFuzzedDataProvider->ConsumeIntegralInRange<size_t>(
-                    0, kInterfaceTypeLength - 1)];
+    CanController::InterfaceType controller;
+    if (mFuzzedDataProvider->ConsumeBool()) {
+        controller = (CanController::InterfaceType)mFuzzedDataProvider->ConsumeIntegral<uint8_t>();
+    } else {
+        controller = kInterfaceType[mFuzzedDataProvider->ConsumeIntegralInRange<size_t>(
+                0, kInterfaceTypeLength - 1)];
+    }
     std::string configName;
 
     if (const bool shouldInvokeValidBus = mFuzzedDataProvider->ConsumeBool();
@@ -73,7 +77,7 @@ void CanFuzzer::invokeUpInterface() {
 
     ICanController::BusConfig config = {.name = configName};
 
-    if (iftype == CanController::InterfaceType::SOCKETCAN) {
+    if (controller == CanController::InterfaceType::SOCKETCAN) {
         CanController::BusConfig::InterfaceId::Socketcan socketcan = {};
         if (const bool shouldPassSerialSocket = mFuzzedDataProvider->ConsumeBool();
             shouldPassSerialSocket) {
@@ -83,7 +87,7 @@ void CanFuzzer::invokeUpInterface() {
             socketcan.ifname(ifname);
         }
         config.interfaceId.socketcan(socketcan);
-    } else if (iftype == CanController::InterfaceType::SLCAN) {
+    } else if (controller == CanController::InterfaceType::SLCAN) {
         CanController::BusConfig::InterfaceId::Slcan slcan = {};
         if (const bool shouldPassSerialSlcan = mFuzzedDataProvider->ConsumeBool();
             shouldPassSerialSlcan) {
@@ -93,8 +97,12 @@ void CanFuzzer::invokeUpInterface() {
             slcan.ttyname(ifname);
         }
         config.interfaceId.slcan(slcan);
-    } else if (iftype == CanController::InterfaceType::VIRTUAL) {
+    } else if (controller == CanController::InterfaceType::VIRTUAL) {
         config.interfaceId.virtualif({ifname});
+    } else if (controller == CanController::InterfaceType::INDEXED) {
+        CanController::BusConfig::InterfaceId::Indexed indexed;
+        indexed.index = mFuzzedDataProvider->ConsumeIntegral<uint8_t>();
+        config.interfaceId.indexed(indexed);
     }
 
     const size_t numInvocations =
@@ -108,8 +116,13 @@ void CanFuzzer::invokeDownInterface() {
     hidl_string configName;
     if (const bool shouldInvokeValidBus = mFuzzedDataProvider->ConsumeBool();
         (shouldInvokeValidBus) && (mBusNames.size() > 0)) {
-        const size_t busNameIndex =
-                mFuzzedDataProvider->ConsumeIntegralInRange<size_t>(0, mBusNames.size() - 1);
+        size_t busNameIndex;
+        if (mBusNames.size() == 1) {
+            busNameIndex = 0;
+        } else {
+            busNameIndex =
+                    mFuzzedDataProvider->ConsumeIntegralInRange<size_t>(0, mBusNames.size() - 1);
+        }
         configName = mBusNames[busNameIndex];
     } else {
         configName = mFuzzedDataProvider->ConsumeRandomLengthString(kMaxCharacters);
@@ -120,12 +133,6 @@ void CanFuzzer::invokeDownInterface() {
     for (size_t i = 0; i < numInvocations; ++i) {
         mCanController->downInterface(configName);
     }
-}
-
-void CanFuzzer::invokeController() {
-    getSupportedInterfaceTypes();
-    invokeUpInterface();
-    invokeDownInterface();
 }
 
 void CanFuzzer::invokeBus() {
@@ -152,12 +159,22 @@ void CanFuzzer::invokeBus() {
             for (uint32_t k = 0; k < numFilters; ++k) {
                 filterVector[k].id = mFuzzedDataProvider->ConsumeIntegral<uint32_t>();
                 filterVector[k].mask = mFuzzedDataProvider->ConsumeIntegral<uint32_t>();
-                filterVector[k].rtr =
-                        kFilterFlag[mFuzzedDataProvider->ConsumeIntegralInRange<size_t>(
-                                0, kFilterFlagLength - 1)];
-                filterVector[k].extendedFormat =
-                        kFilterFlag[mFuzzedDataProvider->ConsumeIntegralInRange<size_t>(
-                                0, kFilterFlagLength - 1)];
+                if (mFuzzedDataProvider->ConsumeBool()) {
+                    filterVector[k].rtr =
+                            (FilterFlag)mFuzzedDataProvider->ConsumeIntegral<uint8_t>();
+                } else {
+                    filterVector[k].rtr =
+                            kFilterFlag[mFuzzedDataProvider->ConsumeIntegralInRange<size_t>(
+                                    0, kFilterFlagLength - 1)];
+                }
+                if (mFuzzedDataProvider->ConsumeBool()) {
+                    filterVector[k].extendedFormat =
+                            (FilterFlag)mFuzzedDataProvider->ConsumeIntegral<uint8_t>();
+                } else {
+                    filterVector[k].extendedFormat =
+                            kFilterFlag[mFuzzedDataProvider->ConsumeIntegralInRange<size_t>(
+                                    0, kFilterFlagLength - 1)];
+                }
                 filterVector[k].exclude = mFuzzedDataProvider->ConsumeBool();
             }
             auto listener = listeningBus.listen(filterVector);
@@ -175,8 +192,16 @@ void CanFuzzer::deInit() {
 
 void CanFuzzer::process(const uint8_t* data, size_t size) {
     mFuzzedDataProvider = new FuzzedDataProvider(data, size);
-    invokeController();
-    invokeBus();
+    while (mFuzzedDataProvider->remaining_bytes()) {
+        auto CanFuzzerFunction =
+                mFuzzedDataProvider->PickValueInArray<const std::function<void()>>({
+                        [&]() { getSupportedInterfaceTypes(); },
+                        [&]() { invokeUpInterface(); },
+                        [&]() { invokeDownInterface(); },
+                        [&]() { invokeBus(); },
+                });
+        CanFuzzerFunction();
+    }
 }
 
 bool CanFuzzer::init() {
