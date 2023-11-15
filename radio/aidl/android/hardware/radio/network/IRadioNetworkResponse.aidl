@@ -51,6 +51,8 @@ oneway interface IRadioNetworkResponse {
      * @param networkTypeBitmap a 32-bit bitmap of RadioAccessFamily.
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.radio.access is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:OPERATION_NOT_ALLOWED
@@ -67,6 +69,8 @@ oneway interface IRadioNetworkResponse {
      * @param bandModes List of RadioBandMode listing supported modes
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.radio.access is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INVALID_ARGUMENTS
@@ -84,6 +88,8 @@ oneway interface IRadioNetworkResponse {
      * @param networkInfos List of network operator information as OperatorInfos
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.radio.access is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:OPERATION_NOT_ALLOWED
@@ -104,6 +110,8 @@ oneway interface IRadioNetworkResponse {
      * @param barringInfos a vector of barring info for all barring service types
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.radio.access is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INTERNAL_ERR
@@ -117,6 +125,7 @@ oneway interface IRadioNetworkResponse {
      * @param type CdmaRoamingType
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.cdma is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INVALID_ARGUMENTS
@@ -135,6 +144,8 @@ oneway interface IRadioNetworkResponse {
      * @param cellInfo List of current cell information known to radio
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.radio.access is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INTERNAL_ERR
@@ -146,6 +157,8 @@ oneway interface IRadioNetworkResponse {
      * @param dataRegResponse Current data registration response as defined by RegStateResult
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.radio.access is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INTERNAL_ERR
@@ -160,6 +173,7 @@ oneway interface IRadioNetworkResponse {
      * @param ratFamily RadioTechnologyFamily. This value is valid only if isRegistered is true.
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.ims is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INTERNAL_ERR
@@ -178,6 +192,8 @@ oneway interface IRadioNetworkResponse {
      * @param selection false for automatic selection, true for manual selection
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.radio.access is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:NO_MEMORY
@@ -197,6 +213,8 @@ oneway interface IRadioNetworkResponse {
      * @param numeric is 5 or 6 digit numeric code (MCC + MNC) or empty string if unregistered
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.radio.access is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:NO_MEMORY
@@ -213,6 +231,8 @@ oneway interface IRadioNetworkResponse {
      * @param signalStrength Current signal strength
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.radio.access is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INTERNAL_ERR
@@ -224,6 +244,8 @@ oneway interface IRadioNetworkResponse {
      * @param specifiers List of RadioAccessSpecifiers that are scanned.
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.radio.access is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INTERNAL_ERR
@@ -237,6 +259,8 @@ oneway interface IRadioNetworkResponse {
      * @param rat Current voice RAT
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.radio.access is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INTERNAL_ERR
@@ -251,6 +275,8 @@ oneway interface IRadioNetworkResponse {
      * @param voiceRegResponse Current Voice registration response as defined by RegStateResult
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.radio.access is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INTERNAL_ERR
@@ -264,6 +290,8 @@ oneway interface IRadioNetworkResponse {
      *        else false.
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.radio.access is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INTERNAL_ERR
@@ -274,6 +302,8 @@ oneway interface IRadioNetworkResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.radio.access is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:OPERATION_NOT_ALLOWED
@@ -289,6 +319,8 @@ oneway interface IRadioNetworkResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.radio.access is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:OPERATION_NOT_ALLOWED
@@ -306,6 +338,8 @@ oneway interface IRadioNetworkResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.radio.access is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:SS_MODIFIED_TO_DIAL
@@ -326,6 +360,7 @@ oneway interface IRadioNetworkResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.cdma is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:NO_MEMORY
@@ -344,6 +379,8 @@ oneway interface IRadioNetworkResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.radio.access is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:NO_MEMORY
@@ -359,6 +396,8 @@ oneway interface IRadioNetworkResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.radio.access is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:RADIO_NOT_AVAILABLE
@@ -371,6 +410,8 @@ oneway interface IRadioNetworkResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.radio.access is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:RADIO_NOT_AVAILABLE
@@ -382,6 +423,8 @@ oneway interface IRadioNetworkResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.radio.access is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:NO_MEMORY
@@ -399,6 +442,8 @@ oneway interface IRadioNetworkResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.radio.access is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:ILLEGAL_SIM_OR_ME
@@ -420,6 +465,8 @@ oneway interface IRadioNetworkResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.radio.access is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:ILLEGAL_SIM_OR_ME
@@ -442,6 +489,8 @@ oneway interface IRadioNetworkResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.radio.access is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INTERNAL_ERR
@@ -453,6 +502,8 @@ oneway interface IRadioNetworkResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.radio.access is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:RADIO_NOT_AVAILABLE
@@ -463,6 +514,7 @@ oneway interface IRadioNetworkResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.calling is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INVALID_ARGUMENTS
@@ -481,6 +533,8 @@ oneway interface IRadioNetworkResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.radio.access is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INTERNAL_ERR
@@ -492,6 +546,8 @@ oneway interface IRadioNetworkResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.radio.access is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:DEVICE_IN_USE
@@ -505,6 +561,8 @@ oneway interface IRadioNetworkResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.radio.access is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:INTERNAL_ERR
      *   RadioError:MODEM_ERR
@@ -516,6 +574,8 @@ oneway interface IRadioNetworkResponse {
      * @param remainingRetries Number of retries remaining, must be equal to -1 if unknown.
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.radio.access is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:PASSWORD_INCORRECT (code is invalid)
@@ -535,6 +595,7 @@ oneway interface IRadioNetworkResponse {
      * @param info Response info struct containing response type, serial no. and error.
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INVALID_STATE
@@ -549,6 +610,7 @@ oneway interface IRadioNetworkResponse {
      * @param usageSetting the usage setting for the current SIM.
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INVALID_STATE
@@ -565,6 +627,8 @@ oneway interface IRadioNetworkResponse {
      * @param regState the current registration state of the modem.
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.radio.access is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:RADIO_NOT_AVAILABLE
@@ -580,6 +644,8 @@ oneway interface IRadioNetworkResponse {
      * @param info Response info struct containing response type, serial no. and error.
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.radio.access is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:RADIO_NOT_AVAILABLE
@@ -595,6 +661,8 @@ oneway interface IRadioNetworkResponse {
      * @param info Response info struct containing response type, serial no. and error.
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.radio.access is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:RADIO_NOT_AVAILABLE
@@ -609,6 +677,8 @@ oneway interface IRadioNetworkResponse {
      * @param info Response info struct containing response type, serial no. and error.
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.radio.access is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:RADIO_NOT_AVAILABLE
@@ -620,6 +690,8 @@ oneway interface IRadioNetworkResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.radio.access is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:MODEM_ERR
@@ -631,6 +703,8 @@ oneway interface IRadioNetworkResponse {
      * @param enabled the last known state of null ciphering and integrity algorithms
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.radio.access is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:MODEM_ERR
@@ -645,6 +719,8 @@ oneway interface IRadioNetworkResponse {
      * @param isEnabled Indicates whether N1 mode is enabled or not.
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.radio.access is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INTERNAL_ERR
@@ -659,6 +735,8 @@ oneway interface IRadioNetworkResponse {
      * @param info Response info struct containing response type, serial no. and error.
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.radio.access is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INTERNAL_ERR

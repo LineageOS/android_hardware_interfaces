@@ -32,6 +32,8 @@ oneway interface IImsMediaSession {
      * Set the listener functions to receive IMS media session specific notifications.
      *
      * @param sessionListener Object containing notification methods
+     *
+     * This is available when android.hardware.telephony.ims is defined.
      */
     void setListener(in IImsMediaSessionListener sessionListener);
 
@@ -40,6 +42,8 @@ oneway interface IImsMediaSession {
      * the media stream by changing the value of the MediaDirection.
      *
      * @param config provides remote end point info and codec details
+     *
+     * This is available when android.hardware.telephony.ims is defined.
      */
     void modifySession(in RtpConfig config);
 
@@ -48,6 +52,8 @@ oneway interface IImsMediaSession {
      *
      * @param dtmfDigit single char having one of 12 values: 0-9, *, #
      * @param duration of the key press in milliseconds.
+     *
+     * This is available when android.hardware.telephony.ims is defined.
      */
     void sendDtmf(char dtmfDigit, int duration);
 
@@ -57,12 +63,16 @@ oneway interface IImsMediaSession {
      * stopDtmf() is not received yet, then that digit must be stopped first
      *
      * @param dtmfDigit single char having one of 12 values: 0-9, *, #
+     *
+     * This is available when android.hardware.telephony.ims is defined.
      */
     void startDtmf(char dtmfDigit);
 
     /**
      * Stop sending the last DTMF digit started by startDtmf().
      * stopDtmf() without preceding startDtmf() must be ignored.
+     *
+     * This is available when android.hardware.telephony.ims is defined.
      */
     void stopDtmf();
 
@@ -70,6 +80,8 @@ oneway interface IImsMediaSession {
      * Send RTP header extension to the other party in the next RTP packet.
      *
      * @param extensions data to be transmitted via RTP header extension
+     *
+     * This is available when android.hardware.telephony.ims is defined.
      */
     void sendHeaderExtension(in List<RtpHeaderExtension> extensions);
 
@@ -78,6 +90,8 @@ oneway interface IImsMediaSession {
      * media quality notifications.
      *
      * @param threshold media quality thresholds for various quality parameters
+     *
+     * This is available when android.hardware.telephony.ims is defined.
      */
     void setMediaQualityThreshold(in MediaQualityThreshold threshold);
 }

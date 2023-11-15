@@ -59,6 +59,13 @@ void RadioMessagingTest::SetUp() {
  * Test IRadioMessaging.sendSms() for the response returned.
  */
 TEST_P(RadioMessagingTest, sendSms) {
+    if (telephony_flags::enforce_telephony_feature_mapping()) {
+        if (!deviceSupportsFeature(FEATURE_TELEPHONY_MESSAGING)) {
+            GTEST_SKIP() << "Skipping sendSms "
+                            "due to undefined FEATURE_TELEPHONY_MESSAGING";
+        }
+    }
+
     serial = GetRandomSerialNumber();
     GsmSmsMessage msg;
     msg.smscPdu = "";
@@ -83,6 +90,13 @@ TEST_P(RadioMessagingTest, sendSms) {
  * Test IRadioMessaging.sendSmsExpectMore() for the response returned.
  */
 TEST_P(RadioMessagingTest, sendSmsExpectMore) {
+    if (telephony_flags::enforce_telephony_feature_mapping()) {
+        if (!deviceSupportsFeature(FEATURE_TELEPHONY_MESSAGING)) {
+            GTEST_SKIP() << "Skipping sendSmsExpectMore "
+                            "due to undefined FEATURE_TELEPHONY_MESSAGING";
+        }
+    }
+
     serial = GetRandomSerialNumber();
     GsmSmsMessage msg;
     msg.smscPdu = "";
@@ -106,6 +120,13 @@ TEST_P(RadioMessagingTest, sendSmsExpectMore) {
  * Test IRadioMessaging.sendCdmaSms() for the response returned.
  */
 TEST_P(RadioMessagingTest, sendCdmaSms) {
+    if (telephony_flags::enforce_telephony_feature_mapping()) {
+        if (!deviceSupportsFeature(FEATURE_TELEPHONY_CDMA)) {
+            GTEST_SKIP() << "Skipping sendCdmaSms "
+                            "due to undefined FEATURE_TELEPHONY_CDMA";
+        }
+    }
+
     serial = GetRandomSerialNumber();
 
     // Create a CdmaSmsAddress
@@ -150,6 +171,13 @@ TEST_P(RadioMessagingTest, sendCdmaSms) {
  * Test IRadioMessaging.sendCdmaSmsExpectMore() for the response returned.
  */
 TEST_P(RadioMessagingTest, sendCdmaSmsExpectMore) {
+    if (telephony_flags::enforce_telephony_feature_mapping()) {
+        if (!deviceSupportsFeature(FEATURE_TELEPHONY_CDMA)) {
+            GTEST_SKIP() << "Skipping sendCdmaSmsExpectMore "
+                            "due to undefined FEATURE_TELEPHONY_CDMA";
+        }
+    }
+
     serial = GetRandomSerialNumber();
 
     // Create a CdmaSmsAddress
@@ -194,6 +222,13 @@ TEST_P(RadioMessagingTest, sendCdmaSmsExpectMore) {
  * Test IRadioMessaging.setGsmBroadcastConfig() for the response returned.
  */
 TEST_P(RadioMessagingTest, setGsmBroadcastConfig) {
+    if (telephony_flags::enforce_telephony_feature_mapping()) {
+        if (!deviceSupportsFeature(FEATURE_TELEPHONY_MESSAGING)) {
+            GTEST_SKIP() << "Skipping setGsmBroadcastConfig "
+                            "due to undefined FEATURE_TELEPHONY_MESSAGING";
+        }
+    }
+
     serial = GetRandomSerialNumber();
 
     // Create GsmBroadcastSmsConfigInfo #1
@@ -257,6 +292,13 @@ TEST_P(RadioMessagingTest, setGsmBroadcastConfig) {
  * Test IRadioMessaging.getGsmBroadcastConfig() for the response returned.
  */
 TEST_P(RadioMessagingTest, getGsmBroadcastConfig) {
+    if (telephony_flags::enforce_telephony_feature_mapping()) {
+        if (!deviceSupportsFeature(FEATURE_TELEPHONY_MESSAGING)) {
+            GTEST_SKIP() << "Skipping getGsmBroadcastConfig "
+                            "due to undefined FEATURE_TELEPHONY_MESSAGING";
+        }
+    }
+
     serial = GetRandomSerialNumber();
 
     radio_messaging->getGsmBroadcastConfig(serial);
@@ -277,6 +319,13 @@ TEST_P(RadioMessagingTest, getGsmBroadcastConfig) {
  * Test IRadioMessaging.setCdmaBroadcastConfig() for the response returned.
  */
 TEST_P(RadioMessagingTest, setCdmaBroadcastConfig) {
+    if (telephony_flags::enforce_telephony_feature_mapping()) {
+        if (!deviceSupportsFeature(FEATURE_TELEPHONY_CDMA)) {
+            GTEST_SKIP() << "Skipping setCdmaBroadcastConfig "
+                            "due to undefined FEATURE_TELEPHONY_CDMA";
+        }
+    }
+
     serial = GetRandomSerialNumber();
 
     CdmaBroadcastSmsConfigInfo cbSmsConfig;
@@ -303,6 +352,13 @@ TEST_P(RadioMessagingTest, setCdmaBroadcastConfig) {
  * Test IRadioMessaging.getCdmaBroadcastConfig() for the response returned.
  */
 TEST_P(RadioMessagingTest, getCdmaBroadcastConfig) {
+    if (telephony_flags::enforce_telephony_feature_mapping()) {
+        if (!deviceSupportsFeature(FEATURE_TELEPHONY_CDMA)) {
+            GTEST_SKIP() << "Skipping getCdmaBroadcastConfig "
+                            "due to undefined FEATURE_TELEPHONY_CDMA";
+        }
+    }
+
     serial = GetRandomSerialNumber();
 
     radio_messaging->getCdmaBroadcastConfig(serial);
@@ -321,6 +377,13 @@ TEST_P(RadioMessagingTest, getCdmaBroadcastConfig) {
  * Test IRadioMessaging.setCdmaBroadcastActivation() for the response returned.
  */
 TEST_P(RadioMessagingTest, setCdmaBroadcastActivation) {
+    if (telephony_flags::enforce_telephony_feature_mapping()) {
+        if (!deviceSupportsFeature(FEATURE_TELEPHONY_CDMA)) {
+            GTEST_SKIP() << "Skipping setCdmaBroadcastActivation "
+                            "due to undefined FEATURE_TELEPHONY_CDMA";
+        }
+    }
+
     serial = GetRandomSerialNumber();
     bool activate = false;
 
@@ -341,6 +404,13 @@ TEST_P(RadioMessagingTest, setCdmaBroadcastActivation) {
  * Test IRadioMessaging.setGsmBroadcastActivation() for the response returned.
  */
 TEST_P(RadioMessagingTest, setGsmBroadcastActivation) {
+    if (telephony_flags::enforce_telephony_feature_mapping()) {
+        if (!deviceSupportsFeature(FEATURE_TELEPHONY_MESSAGING)) {
+            GTEST_SKIP() << "Skipping setGsmBroadcastActivation "
+                            "due to undefined FEATURE_TELEPHONY_MESSAGING";
+        }
+    }
+
     serial = GetRandomSerialNumber();
     bool activate = false;
 
@@ -363,6 +433,13 @@ TEST_P(RadioMessagingTest, setGsmBroadcastActivation) {
  * Test IRadioMessaging.acknowledgeLastIncomingGsmSms() for the response returned.
  */
 TEST_P(RadioMessagingTest, acknowledgeLastIncomingGsmSms) {
+    if (telephony_flags::enforce_telephony_feature_mapping()) {
+        if (!deviceSupportsFeature(FEATURE_TELEPHONY_MESSAGING)) {
+            GTEST_SKIP() << "Skipping acknowledgeLastIncomingGsmSms "
+                            "due to undefined FEATURE_TELEPHONY_MESSAGING";
+        }
+    }
+
     serial = GetRandomSerialNumber();
     bool success = true;
 
@@ -384,6 +461,13 @@ TEST_P(RadioMessagingTest, acknowledgeLastIncomingGsmSms) {
  * Test IRadioMessaging.acknowledgeIncomingGsmSmsWithPdu() for the response returned.
  */
 TEST_P(RadioMessagingTest, acknowledgeIncomingGsmSmsWithPdu) {
+    if (telephony_flags::enforce_telephony_feature_mapping()) {
+        if (!deviceSupportsFeature(FEATURE_TELEPHONY_MESSAGING)) {
+            GTEST_SKIP() << "Skipping acknowledgeIncomingGsmSmsWithPdu "
+                            "due to undefined FEATURE_TELEPHONY_MESSAGING";
+        }
+    }
+
     serial = GetRandomSerialNumber();
     bool success = true;
     std::string ackPdu = "";
@@ -405,6 +489,13 @@ TEST_P(RadioMessagingTest, acknowledgeIncomingGsmSmsWithPdu) {
  * Test IRadioMessaging.acknowledgeLastIncomingCdmaSms() for the response returned.
  */
 TEST_P(RadioMessagingTest, acknowledgeLastIncomingCdmaSms) {
+    if (telephony_flags::enforce_telephony_feature_mapping()) {
+        if (!deviceSupportsFeature(FEATURE_TELEPHONY_CDMA)) {
+            GTEST_SKIP() << "Skipping acknowledgeIncomingGsmSmsWithPdu "
+                            "due to undefined FEATURE_TELEPHONY_CDMA";
+        }
+    }
+
     serial = GetRandomSerialNumber();
 
     // Create a CdmaSmsAck
@@ -429,6 +520,13 @@ TEST_P(RadioMessagingTest, acknowledgeLastIncomingCdmaSms) {
  * Test IRadioMessaging.sendImsSms() for the response returned.
  */
 TEST_P(RadioMessagingTest, sendImsSms) {
+    if (telephony_flags::enforce_telephony_feature_mapping()) {
+        if (!deviceSupportsFeature(FEATURE_TELEPHONY_IMS)) {
+            GTEST_SKIP() << "Skipping acknowledgeIncomingGsmSmsWithPdu "
+                            "due to undefined FEATURE_TELEPHONY_IMS";
+        }
+    }
+
     serial = GetRandomSerialNumber();
 
     // Create a CdmaSmsAddress
@@ -479,6 +577,13 @@ TEST_P(RadioMessagingTest, sendImsSms) {
  * Test IRadioMessaging.getSmscAddress() for the response returned.
  */
 TEST_P(RadioMessagingTest, getSmscAddress) {
+    if (telephony_flags::enforce_telephony_feature_mapping()) {
+        if (!deviceSupportsFeature(FEATURE_TELEPHONY_MESSAGING)) {
+            GTEST_SKIP() << "Skipping getSmscAddress "
+                            "due to undefined FEATURE_TELEPHONY_MESSAGING";
+        }
+    }
+
     serial = GetRandomSerialNumber();
 
     radio_messaging->getSmscAddress(serial);
@@ -499,6 +604,13 @@ TEST_P(RadioMessagingTest, getSmscAddress) {
  * Test IRadioMessaging.setSmscAddress() for the response returned.
  */
 TEST_P(RadioMessagingTest, setSmscAddress) {
+    if (telephony_flags::enforce_telephony_feature_mapping()) {
+        if (!deviceSupportsFeature(FEATURE_TELEPHONY_MESSAGING)) {
+            GTEST_SKIP() << "Skipping setSmscAddress "
+                            "due to undefined FEATURE_TELEPHONY_MESSAGING";
+        }
+    }
+
     serial = GetRandomSerialNumber();
     std::string address = std::string("smscAddress");
 
@@ -520,6 +632,13 @@ TEST_P(RadioMessagingTest, setSmscAddress) {
  * Test IRadioMessaging.writeSmsToSim() for the response returned.
  */
 TEST_P(RadioMessagingTest, writeSmsToSim) {
+    if (telephony_flags::enforce_telephony_feature_mapping()) {
+        if (!deviceSupportsFeature(FEATURE_TELEPHONY_MESSAGING)) {
+            GTEST_SKIP() << "Skipping writeSmsToSim "
+                            "due to undefined FEATURE_TELEPHONY_MESSAGING";
+        }
+    }
+
     serial = GetRandomSerialNumber();
     SmsWriteArgs smsWriteArgs;
     smsWriteArgs.status = SmsWriteArgs::STATUS_REC_UNREAD;
@@ -546,6 +665,13 @@ TEST_P(RadioMessagingTest, writeSmsToSim) {
  * Test IRadioMessaging.deleteSmsOnSim() for the response returned.
  */
 TEST_P(RadioMessagingTest, deleteSmsOnSim) {
+    if (telephony_flags::enforce_telephony_feature_mapping()) {
+        if (!deviceSupportsFeature(FEATURE_TELEPHONY_MESSAGING)) {
+            GTEST_SKIP() << "Skipping deleteSmsOnSim "
+                            "due to undefined FEATURE_TELEPHONY_MESSAGING";
+        }
+    }
+
     serial = GetRandomSerialNumber();
     int index = 1;
 
@@ -569,6 +695,13 @@ TEST_P(RadioMessagingTest, deleteSmsOnSim) {
  * Test IRadioMessaging.writeSmsToRuim() for the response returned.
  */
 TEST_P(RadioMessagingTest, writeSmsToRuim) {
+    if (telephony_flags::enforce_telephony_feature_mapping()) {
+        if (!deviceSupportsFeature(FEATURE_TELEPHONY_CDMA)) {
+            GTEST_SKIP() << "Skipping writeSmsToRuim "
+                            "due to undefined FEATURE_TELEPHONY_CDMA";
+        }
+    }
+
     serial = GetRandomSerialNumber();
 
     // Create a CdmaSmsAddress
@@ -620,6 +753,13 @@ TEST_P(RadioMessagingTest, writeSmsToRuim) {
  * Test IRadioMessaging.deleteSmsOnRuim() for the response returned.
  */
 TEST_P(RadioMessagingTest, deleteSmsOnRuim) {
+    if (telephony_flags::enforce_telephony_feature_mapping()) {
+        if (!deviceSupportsFeature(FEATURE_TELEPHONY_CDMA)) {
+            GTEST_SKIP() << "Skipping deleteSmsOnRuim "
+                            "due to undefined FEATURE_TELEPHONY_CDMA";
+        }
+    }
+
     serial = GetRandomSerialNumber();
     int index = 1;
 
@@ -671,6 +811,13 @@ TEST_P(RadioMessagingTest, deleteSmsOnRuim) {
  * Test IRadioMessaging.reportSmsMemoryStatus() for the response returned.
  */
 TEST_P(RadioMessagingTest, reportSmsMemoryStatus) {
+    if (telephony_flags::enforce_telephony_feature_mapping()) {
+        if (!deviceSupportsFeature(FEATURE_TELEPHONY_MESSAGING)) {
+            GTEST_SKIP() << "Skipping reportSmsMemoryStatus "
+                            "due to undefined FEATURE_TELEPHONY_MESSAGING";
+        }
+    }
+
     serial = GetRandomSerialNumber();
     bool available = true;
 
