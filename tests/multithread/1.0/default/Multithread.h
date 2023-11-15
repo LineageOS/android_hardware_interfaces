@@ -33,7 +33,7 @@ struct Multithread : public IMultithread {
     std::condition_variable mCv;
     std::mutex mCvMutex;
 
-    static constexpr auto kTimeoutDuration = 100ms;
+    static constexpr auto kTimeoutDuration = 1000ms;
 };
 
 extern "C" IMultithread* HIDL_FETCH_IMultithread(const char* name);
