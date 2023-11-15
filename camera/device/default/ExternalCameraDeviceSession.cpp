@@ -789,9 +789,8 @@ Status ExternalCameraDeviceSession::switchToOffline(
                 outputBuffer.bufferId = buffer.bufferId;
                 outputBuffer.status = BufferStatus::ERROR;
                 if (buffer.acquireFence >= 0) {
-                    native_handle_t* handle = native_handle_create(/*numFds*/ 1, /*numInts*/ 0);
-                    handle->data[0] = buffer.acquireFence;
-                    outputBuffer.releaseFence = android::makeToAidl(handle);
+                    outputBuffer.releaseFence.fds.resize(1);
+                    outputBuffer.releaseFence.fds.at(0).set(buffer.acquireFence);
                 }
             } else {
                 offlineBuffers.push_back(buffer);
@@ -1769,9 +1768,8 @@ Status ExternalCameraDeviceSession::processCaptureRequestError(
         result.outputBuffers[i].bufferId = req->buffers[i].bufferId;
         result.outputBuffers[i].status = BufferStatus::ERROR;
         if (req->buffers[i].acquireFence >= 0) {
-            native_handle_t* handle = native_handle_create(/*numFds*/ 1, /*numInts*/ 0);
-            handle->data[0] = req->buffers[i].acquireFence;
-            result.outputBuffers[i].releaseFence = ::android::makeToAidl(handle);
+            result.outputBuffers[i].releaseFence.fds.resize(1);
+            result.outputBuffers[i].releaseFence.fds.at(0).set(req->buffers[i].acquireFence);
         }
     }
 
@@ -1815,18 +1813,16 @@ Status ExternalCameraDeviceSession::processCaptureResult(std::shared_ptr<HalRequ
         if (req->buffers[i].fenceTimeout) {
             result.outputBuffers[i].status = BufferStatus::ERROR;
             if (req->buffers[i].acquireFence >= 0) {
-                native_handle_t* handle = native_handle_create(/*numFds*/ 1, /*numInts*/ 0);
-                handle->data[0] = req->buffers[i].acquireFence;
-                result.outputBuffers[i].releaseFence = ::android::makeToAidl(handle);
+                result.outputBuffers[i].releaseFence.fds.resize(1);
+                result.outputBuffers[i].releaseFence.fds.at(0).set(req->buffers[i].acquireFence);
             }
             notifyError(req->frameNumber, req->buffers[i].streamId, ErrorCode::ERROR_BUFFER);
         } else {
             result.outputBuffers[i].status = BufferStatus::OK;
             // TODO: refactor
             if (req->buffers[i].acquireFence >= 0) {
-                native_handle_t* handle = native_handle_create(/*numFds*/ 1, /*numInts*/ 0);
-                handle->data[0] = req->buffers[i].acquireFence;
-                result.outputBuffers[i].releaseFence = ::android::makeToAidl(handle);
+                result.outputBuffers[i].releaseFence.fds.resize(1);
+                result.outputBuffers[i].releaseFence.fds.at(0).set(req->buffers[i].acquireFence);
             }
         }
     }
