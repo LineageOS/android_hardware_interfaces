@@ -25,7 +25,7 @@ use libfuzzer_sys::fuzz_target;
 use std::sync::{Arc, Mutex};
 
 fuzz_target!(|data: &[u8]| {
-    let local_ta = LocalTa::new();
+    let local_ta = LocalTa::new().expect("Failed to create an AuthGraph local TA.");
     let service = AuthGraphService::new_as_binder(Arc::new(Mutex::new(local_ta)));
     fuzz_service(&mut service.as_binder(), data);
 });

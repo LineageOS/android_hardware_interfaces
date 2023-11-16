@@ -48,31 +48,31 @@ macro_rules! require_nonsecure {
 
 #[test]
 fn test_nonsecure_source_mainline() {
-    let mut impls = vts::test_impls();
-    vts::source::test_mainline(&mut impls, require_nonsecure!());
+    let mut sink = vts::test_ag_participant().expect("failed to create a local sink");
+    vts::source::test_mainline(&mut sink, require_nonsecure!());
 }
 #[test]
 fn test_nonsecure_source_corrupt_sig() {
-    let mut impls = vts::test_impls();
-    vts::source::test_corrupt_sig(&mut impls, require_nonsecure!());
+    let mut sink = vts::test_ag_participant().expect("failed to create a local sink");
+    vts::source::test_corrupt_sig(&mut sink, require_nonsecure!());
 }
 #[test]
 fn test_nonsecure_source_corrupt_keys() {
-    let mut impls = vts::test_impls();
-    vts::source::test_corrupt_key(&mut impls, require_nonsecure!());
+    let mut sink = vts::test_ag_participant().expect("failed to create a local sink");
+    vts::source::test_corrupt_key(&mut sink, require_nonsecure!());
 }
 #[test]
 fn test_nonsecure_sink_mainline() {
-    let mut impls = vts::test_impls();
-    vts::sink::test_mainline(&mut impls, require_nonsecure!());
+    let mut source = vts::test_ag_participant().expect("failed to create a local source");
+    vts::sink::test_mainline(&mut source, require_nonsecure!());
 }
 #[test]
 fn test_nonsecure_sink_corrupt_sig() {
-    let mut impls = vts::test_impls();
-    vts::sink::test_corrupt_sig(&mut impls, require_nonsecure!());
+    let mut source = vts::test_ag_participant().expect("failed to create a local source");
+    vts::sink::test_corrupt_sig(&mut source, require_nonsecure!());
 }
 #[test]
 fn test_nonsecure_sink_corrupt_keys() {
-    let mut impls = vts::test_impls();
-    vts::sink::test_corrupt_keys(&mut impls, require_nonsecure!());
+    let mut source = vts::test_ag_participant().expect("failed to create a local source");
+    vts::sink::test_corrupt_keys(&mut source, require_nonsecure!());
 }
