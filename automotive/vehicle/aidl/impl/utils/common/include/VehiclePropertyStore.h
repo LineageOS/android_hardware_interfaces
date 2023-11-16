@@ -100,9 +100,11 @@ class VehiclePropertyStore final {
     // override an existing value, the status for the existing value would be used for the
     // overridden value.
     // 'EventMode' controls whether the 'OnValueChangeCallback' will be called for this operation.
+    // If 'useCurrentTimestamp' is true, the property value will be set to the current timestamp.
     VhalResult<void> writeValue(VehiclePropValuePool::RecyclableType propValue,
                                 bool updateStatus = false,
-                                EventMode mode = EventMode::ON_VALUE_CHANGE) EXCLUDES(mLock);
+                                EventMode mode = EventMode::ON_VALUE_CHANGE,
+                                bool useCurrentTimestamp = false) EXCLUDES(mLock);
 
     // Remove a given property value from the property store. The 'propValue' would be used to
     // generate the key for the value to remove.

@@ -41,6 +41,8 @@ oneway interface IRadioVoice {
      * @param serial Serial number of request.
      *
      * Response function is IRadioVoiceResponse.acceptCallResponse()
+     *
+     * This is available when android.hardware.telephony.calling is defined.
      */
     void acceptCall(in int serial);
 
@@ -50,6 +52,8 @@ oneway interface IRadioVoice {
      * @param serial Serial number of request.
      *
      * Response function is IRadioVoiceResponse.cancelPendingUssdResponse()
+     *
+     * This is available when android.hardware.telephony.calling is defined.
      */
     void cancelPendingUssd(in int serial);
 
@@ -59,6 +63,8 @@ oneway interface IRadioVoice {
      * @param serial Serial number of request.
      *
      * Response function is IRadioVoiceResponse.conferenceResponse()
+     *
+     * This is available when android.hardware.telephony.calling is defined.
      */
     void conference(in int serial);
 
@@ -69,6 +75,8 @@ oneway interface IRadioVoice {
      * @param dialInfo Dial struct
      *
      * Response function is IRadioVoiceResponse.dialResponse()
+     *
+     * This is available when android.hardware.telephony.calling is defined.
      */
     void dial(in int serial, in Dial dialInfo);
 
@@ -125,6 +133,8 @@ oneway interface IRadioVoice {
      * @param isTesting Flag indicating if this request is for testing purpose.
      *
      * Response function is IRadioVoiceResponse.emergencyDialResponse()
+     *
+     * This is available when android.hardware.telephony.calling is defined.
      */
     void emergencyDial(in int serial, in Dial dialInfo, in int categories, in String[] urns,
             in EmergencyCallRouting routing, in boolean hasKnownUserIntentEmergency,
@@ -137,6 +147,8 @@ oneway interface IRadioVoice {
      * @param serial Serial number of request.
      *
      * Response function is IRadioVoiceResponse.exitEmergencyCallbackModeResponse()
+     *
+     * This is available when android.hardware.telephony.calling is defined.
      */
     void exitEmergencyCallbackMode(in int serial);
 
@@ -146,6 +158,8 @@ oneway interface IRadioVoice {
      * @param serial Serial number of request.
      *
      * Response function is IRadioVoiceResponse.explicitCallTransferResponse()
+     *
+     * This is available when android.hardware.telephony.calling is defined.
      */
     void explicitCallTransfer(in int serial);
 
@@ -156,6 +170,8 @@ oneway interface IRadioVoice {
      * @param callInfo CallForwardInfo
      *
      * Response function is IRadioVoiceResponse.getCallForwardStatusResponse()
+     *
+     * This is available when android.hardware.telephony.calling is defined.
      */
     void getCallForwardStatus(in int serial, in CallForwardInfo callInfo);
 
@@ -166,6 +182,8 @@ oneway interface IRadioVoice {
      * @param serviceClass Service class is the TS 27.007 service class to query
      *
      * Response function is IRadioVoiceResponse.getCallWaitingResponse()
+     *
+     * This is available when android.hardware.telephony.calling is defined.
      */
     void getCallWaiting(in int serial, in int serviceClass);
 
@@ -175,6 +193,8 @@ oneway interface IRadioVoice {
      * @param serial Serial number of request.
      *
      * Response function is IRadioVoiceResponse.getClipResponse()
+     *
+     * This is available when android.hardware.telephony.calling is defined.
      */
     void getClip(in int serial);
 
@@ -184,6 +204,8 @@ oneway interface IRadioVoice {
      * @param serial Serial number of request.
      *
      * Response function is IRadioVoiceResponse.getClirResponse()
+     *
+     * This is available when android.hardware.telephony.calling is defined.
      */
     void getClir(in int serial);
 
@@ -193,6 +215,8 @@ oneway interface IRadioVoice {
      * @param serial Serial number of request.
      *
      * Response function is IRadioVoiceResponse.getCurrentCallsResponse()
+     *
+     * This is available when android.hardware.telephony.calling is defined.
      */
     void getCurrentCalls(in int serial);
 
@@ -202,6 +226,8 @@ oneway interface IRadioVoice {
      * @param serial Serial number of request.
      *
      * Response function is IRadioVoiceResponse.getLastCallFailCauseResponse()
+     *
+     * This is available when android.hardware.telephony.calling is defined.
      */
     void getLastCallFailCause(in int serial);
 
@@ -211,6 +237,8 @@ oneway interface IRadioVoice {
      * @param serial Serial number of request.
      *
      * Response function is IRadioVoiceResponse.getMuteResponse()
+     *
+     * This is available when android.hardware.telephony.calling is defined.
      */
     void getMute(in int serial);
 
@@ -220,6 +248,8 @@ oneway interface IRadioVoice {
      * @param serial Serial number of request.
      *
      * Response function is IRadioVoiceResponse.getPreferredVoicePrivacyResponse()
+     *
+     * This is available when android.hardware.telephony.calling is defined.
      */
     void getPreferredVoicePrivacy(in int serial);
 
@@ -229,6 +259,8 @@ oneway interface IRadioVoice {
      * @param serial Serial number of request.
      *
      * Response function is IRadioVoiceResponse.getTtyModeResponse()
+     *
+     * This is available when android.hardware.telephony.calling is defined.
      */
     void getTtyMode(in int serial);
 
@@ -241,6 +273,8 @@ oneway interface IRadioVoice {
      * @param accept true = accept the call setup, false = reject the call setup
      *
      * Response function is IRadioVoiceResponse.handleStkCallSetupRequestFromSimResponse()
+     *
+     * This is available when android.hardware.telephony.calling is defined.
      */
     void handleStkCallSetupRequestFromSim(in int serial, in boolean accept);
 
@@ -252,6 +286,8 @@ oneway interface IRadioVoice {
      * @param gsmIndex Connection index (value of 'x' in CHLD above)
      *
      * Response function is IRadioVoiceResponse.hangupResponse()
+     *
+     * This is available when android.hardware.telephony.calling is defined.
      */
     void hangup(in int serial, in int gsmIndex);
 
@@ -262,6 +298,8 @@ oneway interface IRadioVoice {
      * @param serial Serial number of request.
      *
      * Response function is IRadioVoiceResponse.hangupForegroundResumeBackgroundResponse()
+     *
+     * This is available when android.hardware.telephony.calling is defined.
      */
     void hangupForegroundResumeBackground(in int serial);
 
@@ -272,6 +310,8 @@ oneway interface IRadioVoice {
      * @param serial Serial number of request.
      *
      * Response function is IRadioVoiceResponse.hangupWaitingOrBackgroundResponse()
+     *
+     * This is available when android.hardware.telephony.calling is defined.
      */
     void hangupWaitingOrBackground(in int serial);
 
@@ -281,6 +321,8 @@ oneway interface IRadioVoice {
      * @param serial Serial number of request.
      *
      * Response function is IRadioVoiceResponse.isVoNrEnabledResponse()
+     *
+     * This is available when android.hardware.telephony.ims is defined.
      */
     void isVoNrEnabled(in int serial);
 
@@ -290,6 +332,8 @@ oneway interface IRadioVoice {
      * @param serial Serial number of request.
      *
      * Response function is IRadioVoiceResponse.rejectCallResponse()
+     *
+     * This is available when android.hardware.telephony.calling is defined.
      */
     void rejectCall(in int serial);
 
@@ -297,6 +341,8 @@ oneway interface IRadioVoice {
      * When response type received from a radio indication or radio response is
      * RadioIndicationType:UNSOLICITED_ACK_EXP or RadioResponseType:SOLICITED_ACK_EXP respectively,
      * acknowledge the receipt of those messages by sending responseAcknowledgement().
+     *
+     * This is available when android.hardware.telephony.calling is defined.
      */
     void responseAcknowledgement();
 
@@ -309,6 +355,8 @@ oneway interface IRadioVoice {
      * @param off is the DTMF OFF length in milliseconds, or 0 to use default
      *
      * Response function is IRadioVoiceResponse.sendBurstDtmfResponse()
+     *
+     * This is available when android.hardware.telephony.calling is defined.
      */
     void sendBurstDtmf(in int serial, in String dtmf, in int on, in int off);
 
@@ -319,6 +367,8 @@ oneway interface IRadioVoice {
      * @param featureCode String associated with Flash command
      *
      * Response function is IRadioVoiceResponse.sendCdmaFeatureCodeResponse()
+     *
+     * This is available when android.hardware.telephony.cdma is defined.
      */
     void sendCdmaFeatureCode(in int serial, in String featureCode);
 
@@ -330,6 +380,8 @@ oneway interface IRadioVoice {
      * @param s string with single char having one of 12 values: 0-9, *, #
      *
      * Response function is IRadioVoiceResponse.sendDtmfResponse()
+     *
+     * This is available when android.hardware.telephony.calling is defined.
      */
     void sendDtmf(in int serial, in String s);
 
@@ -347,6 +399,8 @@ oneway interface IRadioVoice {
      * @param ussd string containing the USSD request in UTF-8 format
      *
      * Response function is IRadioVoiceResponse.sendUssdResponse()
+     *
+     * This is available when android.hardware.telephony.calling is defined.
      */
     void sendUssd(in int serial, in String ussd);
 
@@ -363,6 +417,8 @@ oneway interface IRadioVoice {
      * @param gsmIndex contains Connection index (value of 'x' in CHLD above)
      *
      * Response function is IRadioVoiceResponse.separateConnectionResponse()
+     *
+     * This is available when android.hardware.telephony.calling is defined.
      */
     void separateConnection(in int serial, in int gsmIndex);
 
@@ -373,6 +429,8 @@ oneway interface IRadioVoice {
      * @param callInfo CallForwardInfo
      *
      * Response function is IRadioVoiceResponse.setCallForwardResponse()
+     *
+     * This is available when android.hardware.telephony.calling is defined.
      */
     void setCallForward(in int serial, in CallForwardInfo callInfo);
 
@@ -384,6 +442,8 @@ oneway interface IRadioVoice {
      * @param serviceClass is the TS 27.007 service class bit vector of services to modify
      *
      * Response function is IRadioVoiceResponse.setCallWaitingResponse()
+     *
+     * This is available when android.hardware.telephony.calling is defined.
      */
     void setCallWaiting(in int serial, in boolean enable, in int serviceClass);
 
@@ -394,6 +454,8 @@ oneway interface IRadioVoice {
      * @param status "n" parameter from TS 27.007 7.7
      *
      * Response function is IRadioVoiceResponse.setClirResponse()
+     *
+     * This is available when android.hardware.telephony.calling is defined.
      */
     void setClir(in int serial, in int status);
 
@@ -405,6 +467,8 @@ oneway interface IRadioVoice {
      * @param enable true for "enable mute" and false for "disable mute"
      *
      * Response function is IRadioVoiceResponse.setMuteResponse()
+     *
+     * This is available when android.hardware.telephony.calling is defined.
      */
     void setMute(in int serial, in boolean enable);
 
@@ -416,6 +480,8 @@ oneway interface IRadioVoice {
      *        true for Enhanced Privacy Mode (Private Long Code Mask)
      *
      * Response function is IRadioVoiceResponse.setPreferredVoicePrivacyResponse()
+     *
+     * This is available when android.hardware.telephony.calling is defined.
      */
     void setPreferredVoicePrivacy(in int serial, in boolean enable);
 
@@ -424,6 +490,8 @@ oneway interface IRadioVoice {
      *
      * @param radioVoiceResponse Object containing response functions
      * @param radioVoiceIndication Object containing radio indications
+     *
+     * This is available when android.hardware.telephony.calling is defined.
      */
     void setResponseFunctions(in IRadioVoiceResponse radioVoiceResponse,
             in IRadioVoiceIndication radioVoiceIndication);
@@ -435,6 +503,8 @@ oneway interface IRadioVoice {
      * @param mode TtyMode
      *
      * Response function is IRadioVoiceResponse.setTtyModeResponse()
+     *
+     * This is available when android.hardware.telephony.calling is defined.
      */
     void setTtyMode(in int serial, in TtyMode mode);
 
@@ -445,6 +515,8 @@ oneway interface IRadioVoice {
      * @param enable true for "enable vonr" and false for "disable vonr"
      *
      * Response function is IRadioVoiceResponse.setVoNrEnabledResponse()
+     *
+     * This is available when android.hardware.telephony.ims is defined.
      */
     void setVoNrEnabled(in int serial, in boolean enable);
 
@@ -457,6 +529,8 @@ oneway interface IRadioVoice {
      * @param s string having a single character with one of 12 values: 0-9,*,#
      *
      * Response function is IRadioVoiceResponse.startDtmfResponse()
+     *
+     * This is available when android.hardware.telephony.calling is defined.
      */
     void startDtmf(in int serial, in String s);
 
@@ -466,6 +540,8 @@ oneway interface IRadioVoice {
      * @param serial Serial number of request.
      *
      * Response function is IRadioVoiceResponse.stopDtmfResponse()
+     *
+     * This is available when android.hardware.telephony.calling is defined.
      */
     void stopDtmf(in int serial);
 
@@ -483,6 +559,8 @@ oneway interface IRadioVoice {
      * @param serial Serial number of request.
      *
      * Response function is IRadioVoiceResponse.switchWaitingOrHoldingAndActiveResponse()
+     *
+     * This is available when android.hardware.telephony.calling is defined.
      */
     void switchWaitingOrHoldingAndActive(in int serial);
 }

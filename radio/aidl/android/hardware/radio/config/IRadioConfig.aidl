@@ -40,6 +40,8 @@ oneway interface IRadioConfig {
      *
      * Response callback is
      * IRadioConfigResponse.getHalDeviceCapabilitiesResponse()
+     *
+     * This is available when android.hardware.telephony is defined.
      */
     void getHalDeviceCapabilities(in int serial);
 
@@ -54,6 +56,8 @@ oneway interface IRadioConfig {
      *
      * Response callback is IRadioConfigResponse.getNumOfLiveModemsResponse() which
      * will return <byte>.
+     *
+     * This is available when android.hardware.telephony is defined.
      */
     void getNumOfLiveModems(in int serial);
 
@@ -64,6 +68,8 @@ oneway interface IRadioConfig {
      *
      * Response callback is IRadioResponse.getPhoneCapabilityResponse() which
      * will return <PhoneCapability>.
+     *
+     * This is available when android.hardware.telephony is defined.
      */
     void getPhoneCapability(in int serial);
 
@@ -76,6 +82,8 @@ oneway interface IRadioConfig {
      * @param serial Serial number of request.
      *
      * Response callback is IRadioConfigResponse.getSimSlotsStatusResponse()
+     *
+     * This is available when android.hardware.telephony.subscription is defined.
      */
     void getSimSlotsStatus(in int serial);
 
@@ -93,6 +101,8 @@ oneway interface IRadioConfig {
      * @param modemsConfig byte object including the number of live modems
      *
      * Response callback is IRadioResponse.setNumOfLiveModemsResponse()
+     *
+     * This is available when android.hardware.telephony is defined.
      */
     void setNumOfLiveModems(in int serial, in byte numOfLiveModems);
 
@@ -107,6 +117,8 @@ oneway interface IRadioConfig {
      * from getPhoneCapability().
      *
      * Response callback is IRadioConfigResponse.setPreferredDataModemResponse()
+     *
+     * This is available when android.hardware.telephony.data is defined.
      */
     void setPreferredDataModem(in int serial, in byte modemId);
 
@@ -115,6 +127,8 @@ oneway interface IRadioConfig {
      *
      * @param radioConfigResponse Object containing radio config response functions
      * @param radioConfigIndication Object containing radio config indications
+     *
+     * This is available when android.hardware.telephony is defined.
      */
     void setResponseFunctions(in IRadioConfigResponse radioConfigResponse,
             in IRadioConfigIndication radioConfigIndication);
@@ -173,6 +187,8 @@ oneway interface IRadioConfig {
      *        getSimSlotsStatusResponse
      *
      * Response callback is IRadioConfigResponse.setSimSlotsMappingResponse()
+     *
+     * This is available when android.hardware.telephony.subscription is defined.
      */
     void setSimSlotsMapping(in int serial, in SlotPortMapping[] slotMap);
 }

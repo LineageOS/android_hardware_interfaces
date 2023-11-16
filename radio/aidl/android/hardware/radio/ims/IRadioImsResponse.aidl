@@ -29,6 +29,7 @@ oneway interface IRadioImsResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.ims is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INVALID_STATE
@@ -45,6 +46,7 @@ oneway interface IRadioImsResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.ims is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INVALID_STATE
@@ -63,6 +65,7 @@ oneway interface IRadioImsResponse {
      *        it should be {@code null}.
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.ims is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INVALID_STATE
@@ -80,6 +83,7 @@ oneway interface IRadioImsResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.ims is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INVALID_STATE
@@ -96,6 +100,7 @@ oneway interface IRadioImsResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.ims is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INVALID_STATE
@@ -112,6 +117,7 @@ oneway interface IRadioImsResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.ims is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INVALID_STATE
@@ -128,6 +134,7 @@ oneway interface IRadioImsResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.ims is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INVALID_STATE
