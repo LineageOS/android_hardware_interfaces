@@ -83,6 +83,7 @@ interface IWifiChip {
   void triggerSubsystemRestart();
   void enableStaChannelForPeerNetwork(in int channelCategoryEnableFlag);
   void setMloMode(in android.hardware.wifi.IWifiChip.ChipMloMode mode);
+  @PropagateAllowBlocking android.hardware.wifi.IWifiApIface createApOrBridgedApIface(in android.hardware.wifi.IfaceConcurrencyType iface, in android.hardware.wifi.common.OuiKeyedData[] vendorData);
   const int NO_POWER_CAP_CONSTANT = 0x7FFFFFFF;
   @Backing(type="int") @VintfStability
   enum FeatureSetMask {

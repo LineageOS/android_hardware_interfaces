@@ -648,7 +648,7 @@
     </hal>
     <hal format="aidl" optional="true" updatable-via-apex="true">
         <name>android.hardware.wifi</name>
-        <version>1</version>
+        <version>1-2</version>
         <interface>
             <name>IWifi</name>
             <instance>default</instance>
