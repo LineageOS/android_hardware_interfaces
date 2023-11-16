@@ -42,4 +42,5 @@ interface IImsMediaSessionListener {
   oneway void triggerAnbrQuery(in android.hardware.radio.ims.media.RtpConfig config);
   oneway void onDtmfReceived(char dtmfDigit, int durationMs);
   oneway void onCallQualityChanged(in android.hardware.radio.ims.media.CallQuality callQuality);
+  oneway void notifyRtpReceptionStats(in android.hardware.radio.ims.media.RtpReceptionStats stats);
 }

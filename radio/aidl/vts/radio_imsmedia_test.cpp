@@ -260,6 +260,59 @@ ndk::ScopedAStatus RadioImsMediaTest::triggerOpenSession(int32_t sessionId) {
     return result;
 }
 
+TEST_P(RadioImsMediaTest, testAvSyncOperation) {
+    int32_t sessionId = 1;
+    RtpConfig modifyRtpConfig;
+    int32_t receptionInterval = 1000;
+    int32_t delay = 200;
+
+    modifyRtpConfig.direction = static_cast<int32_t>(MediaDirection::RTP_TX) |
+                                static_cast<int32_t>(MediaDirection::RTP_RX) |
+                                static_cast<int32_t>(MediaDirection::RTCP_TX) |
+                                static_cast<int32_t>(MediaDirection::RTCP_RX);
+    modifyRtpConfig.remoteAddress.ipAddress = "122.22.22.33";
+    modifyRtpConfig.remoteAddress.portNumber = 1234;
+
+    if (!deviceSupportsFeature(FEATURE_TELEPHONY_IMS)) {
+        ALOGI("Skipping setListener because ims is not supported in device");
+        return;
+    } else {
+        ALOGI("Running setListener because ims is supported in device");
+    }
+
+    ndk::ScopedAStatus res = radio_imsmedia->setListener(radio_imsmedialistener);
+    ASSERT_OK(res);
+
+    serial = SERIAL_OPEN_SESSION;
+    res = triggerOpenSession(sessionId);
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(sessionId, radio_imsmedialistener->mSessionId);
+    ASSERT_NE(nullptr, radio_imsmedialistener->mSession);
+
+    radio_imsmediasession = radio_imsmedialistener->mSession;
+    radio_imsmediasession->setListener(radio_imsmediasessionlistener);
+    ASSERT_OK(res);
+
+    serial = SERIAL_MODIFY_SESSION;
+    res = radio_imsmediasession->modifySession(modifyRtpConfig);
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(modifyRtpConfig, radio_imsmediasessionlistener->mConfig);
+    verifyError(radio_imsmediasessionlistener->mError);
+
+    res = radio_imsmediasession->requestRtpReceptionStats(receptionInterval);
+    ASSERT_OK(res);
+
+    res = radio_imsmediasession->adjustDelay(delay);
+    ASSERT_OK(res);
+
+    serial = SERIAL_CLOSE_SESSION;
+    res = radio_imsmedia->closeSession(sessionId);
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+}
+
 void RadioImsMediaTest::verifyError(RtpError error) {
     switch (error) {
         case RtpError::NONE:

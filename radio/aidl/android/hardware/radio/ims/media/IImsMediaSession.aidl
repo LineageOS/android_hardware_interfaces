@@ -94,4 +94,26 @@ oneway interface IImsMediaSession {
      * This is available when android.hardware.telephony.ims is defined.
      */
     void setMediaQualityThreshold(in MediaQualityThreshold threshold);
+
+    /**
+     * Queries the current RTP reception statistics of the RTP stream. It will trigger the
+       IImsMediaSessionListener#notifyRtpReceptionStats(RtpReceptionStats).
+     *
+     * @param intervalMs The interval of the time in milliseconds of the RTP reception
+     * notification. When it is zero, the report is disabled.
+     *
+     * This is available when android.hardware.telephony.ims is defined.
+     */
+    void requestRtpReceptionStats(in int intervalMs);
+
+    /**
+     * Adjust the delay in the jitter buffer to synchronize the audio with the time of video
+     * frames
+     *
+     * @param delayMs The delay to apply to the jitter buffer. If it is positive, the jitter
+     * buffer increases the delay, if it is negative, the jitter buffer decreases the delay.
+     *
+     * This is available when android.hardware.telephony.ims is defined.
+     */
+    void adjustDelay(in int delayMs);
 }
