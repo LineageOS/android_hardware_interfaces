@@ -18,7 +18,9 @@
 
 use authgraph_boringssl as boring;
 use authgraph_core::{
+    error,
     key::MillisecondsSinceEpoch,
+    keyexchange,
     ta::{AuthGraphTa, Role},
     traits,
 };
@@ -57,16 +59,17 @@ pub struct LocalTa {
 
 impl LocalTa {
     /// Create a new instance.
-    pub fn new() -> Self {
-        Self {
+    pub fn new() -> Result<Self, error::Error> {
+        Ok(Self {
             ta: Arc::new(Mutex::new(AuthGraphTa::new(
-                boring::trait_impls(
+                keyexchange::AuthGraphParticipant::new(
+                    boring::crypto_trait_impls(),
                     Box::<boring::test_device::AgDevice>::default(),
-                    Some(Box::new(StdClock::default())),
-                ),
+                    keyexchange::MAX_OPENED_SESSIONS,
+                )?,
                 Role::Both,
             ))),
-        }
+        })
     }
 }
 

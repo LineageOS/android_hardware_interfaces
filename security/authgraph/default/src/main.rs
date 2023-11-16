@@ -65,7 +65,8 @@ fn inner_main() -> Result<(), HalServiceError> {
     binder::ProcessState::start_thread_pool();
 
     // Register the service
-    let local_ta = LocalTa::new();
+    let local_ta =
+        LocalTa::new().map_err(|e| format!("Failed to create the TA because: {e:?}"))?;
     let service = service::AuthGraphService::new_as_binder(Arc::new(Mutex::new(local_ta)));
     let service_name = format!("{}/{}", SERVICE_NAME, SERVICE_INSTANCE);
     binder::add_service(&service_name, service.as_binder()).map_err(|e| {
