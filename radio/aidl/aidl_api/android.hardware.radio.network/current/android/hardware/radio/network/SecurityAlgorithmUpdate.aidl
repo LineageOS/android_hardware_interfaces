@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,17 +31,12 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.radio.ims.media;
+package android.hardware.radio.network;
 /* @hide */
-@VintfStability
-interface IImsMediaSession {
-  oneway void setListener(in android.hardware.radio.ims.media.IImsMediaSessionListener sessionListener);
-  oneway void modifySession(in android.hardware.radio.ims.media.RtpConfig config);
-  oneway void sendDtmf(char dtmfDigit, int duration);
-  oneway void startDtmf(char dtmfDigit);
-  oneway void stopDtmf();
-  oneway void sendHeaderExtension(in List<android.hardware.radio.ims.media.RtpHeaderExtension> extensions);
-  oneway void setMediaQualityThreshold(in android.hardware.radio.ims.media.MediaQualityThreshold threshold);
-  oneway void requestRtpReceptionStats(in int intervalMs);
-  oneway void adjustDelay(in int delayMs);
+@JavaDerive(toString=true) @VintfStability
+parcelable SecurityAlgorithmUpdate {
+  android.hardware.radio.network.ConnectionEvent connectionEvent;
+  android.hardware.radio.network.SecurityAlgorithm encryption;
+  android.hardware.radio.network.SecurityAlgorithm integrity;
+  boolean isUnprotectedEmergency;
 }

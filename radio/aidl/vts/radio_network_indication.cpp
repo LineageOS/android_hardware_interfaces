@@ -103,3 +103,8 @@ ndk::ScopedAStatus RadioNetworkIndication::cellularIdentifierDisclosed(
         const CellularIdentifierDisclosure& /*disclosures*/) {
     return ndk::ScopedAStatus::ok();
 }
+
+ndk::ScopedAStatus RadioNetworkIndication::securityAlgorithmsUpdated(
+        RadioIndicationType /*type*/, const SecurityAlgorithmUpdate& /*securityAlgorithmUpdate*/) {
+    return ndk::ScopedAStatus::ok();
+}

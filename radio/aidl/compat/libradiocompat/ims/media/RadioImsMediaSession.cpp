@@ -60,5 +60,12 @@ ScopedAStatus RadioImsMediaSession::setMediaQualityThreshold(
     LOG(ERROR) << " setMediaQualityThreshold is unsupported by HIDL HALs";
     return ok();
 }
-
+ScopedAStatus RadioImsMediaSession::requestRtpReceptionStats(int32_t /*in_intervalMs*/) {
+    LOG(ERROR) << " requestRtpReceptionStats is unsupported by HIDL HALs";
+    return ok();
+}
+ScopedAStatus RadioImsMediaSession::adjustDelay(int32_t /*in_delayMs*/) {
+    LOG(ERROR) << " adjustDelay is unsupported by HIDL HALs";
+    return ok();
+}
 }  // namespace android::hardware::radio::compat

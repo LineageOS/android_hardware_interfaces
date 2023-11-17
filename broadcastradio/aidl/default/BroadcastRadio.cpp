@@ -329,7 +329,7 @@ ScopedAStatus BroadcastRadio::step(bool directionUp) {
     std::optional<AmFmBandRange> range = getAmFmRangeLocked();
     if (!range) {
         LOG(ERROR) << __func__ << ": can't find current band or tune operation is in process";
-        ScopedAStatus::fromServiceSpecificErrorWithMessage(
+        return ScopedAStatus::fromServiceSpecificErrorWithMessage(
                 resultToInt(Result::INTERNAL_ERROR),
                 "can't find current band or tune operation is in process");
     }

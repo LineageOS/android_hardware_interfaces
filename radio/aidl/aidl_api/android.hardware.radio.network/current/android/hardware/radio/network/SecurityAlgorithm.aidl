@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,17 +31,50 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.radio.ims.media;
+package android.hardware.radio.network;
 /* @hide */
-@VintfStability
-interface IImsMediaSession {
-  oneway void setListener(in android.hardware.radio.ims.media.IImsMediaSessionListener sessionListener);
-  oneway void modifySession(in android.hardware.radio.ims.media.RtpConfig config);
-  oneway void sendDtmf(char dtmfDigit, int duration);
-  oneway void startDtmf(char dtmfDigit);
-  oneway void stopDtmf();
-  oneway void sendHeaderExtension(in List<android.hardware.radio.ims.media.RtpHeaderExtension> extensions);
-  oneway void setMediaQualityThreshold(in android.hardware.radio.ims.media.MediaQualityThreshold threshold);
-  oneway void requestRtpReceptionStats(in int intervalMs);
-  oneway void adjustDelay(in int delayMs);
+@Backing(type="int") @JavaDerive(toString=true) @VintfStability
+enum SecurityAlgorithm {
+  A50 = 0,
+  A51 = 1,
+  A52 = 2,
+  A53 = 3,
+  A54 = 4,
+  GEA0 = 14,
+  GEA1 = 15,
+  GEA2 = 16,
+  GEA3 = 17,
+  GEA4 = 18,
+  GEA5 = 19,
+  UEA0 = 29,
+  UEA1 = 30,
+  UEA2 = 31,
+  EEA0 = 41,
+  EEA1 = 42,
+  EEA2 = 43,
+  EEA3 = 44,
+  EEA4_ZUC = 45,
+  NEA0 = 55,
+  NEA1 = 56,
+  NEA2 = 57,
+  NEA3 = 58,
+  SIP_NULL = 68,
+  AES_GCM = 69,
+  AES_GMAC = 70,
+  AES_CBC = 71,
+  DES_EDE3_CBC = 72,
+  AES_EDE3_CBC = 73,
+  HMAC_SHA1_96 = 74,
+  HMAC_SHA1_96_null = 75,
+  HMAC_MD5_96 = 76,
+  HMAC_MD5_96_null = 77,
+  SRTP_AES_COUNTER = 87,
+  SRTP_AES_F8 = 88,
+  SRTP_HMAC_SHA1 = 89,
+  ENCR_AES_GCM_16 = 99,
+  ENCR_AES_CBC = 100,
+  AUTH_HMAC_SHA2_256_128 = 101,
+  UNKNOWN = 113,
+  OTHER = 114,
+  ORYX = 124,
 }

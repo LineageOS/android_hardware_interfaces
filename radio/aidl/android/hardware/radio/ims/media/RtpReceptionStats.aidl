@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-#![allow(missing_docs)]
-#![no_main]
-extern crate libfuzzer_sys;
+package android.hardware.radio.ims.media;
 
-use authgraph_hal::service::AuthGraphService;
-use authgraph_nonsecure::LocalTa;
-use binder_random_parcel_rs::fuzz_service;
-use libfuzzer_sys::fuzz_target;
-use std::sync::{Arc, Mutex};
-
-fuzz_target!(|data: &[u8]| {
-    let local_ta = LocalTa::new().expect("Failed to create an AuthGraph local TA.");
-    let service = AuthGraphService::new_as_binder(Arc::new(Mutex::new(local_ta)));
-    fuzz_service(&mut service.as_binder(), data);
-});
+@VintfStability
+parcelable RtpReceptionStats {
+    /** The timestamp of the latest RTP packet received */
+    int rtpTimestamp;
+    /** The sequence number of latest RTP packet received */
+    int rtpSequenceNumber;
+    /** The system clock time in millisecond of latest RTP packet received */
+    int timeDurationMs;
+    /** The jitter buffer size in millisecond when latest RTP packet received */
+    int jitterBufferMs;
+    /** The round trip time delay in millisecond when latest RTP packet received */
+    int roundTripTimeMs;
+}

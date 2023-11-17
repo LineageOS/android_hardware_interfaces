@@ -752,6 +752,8 @@ oneway interface IRadioNetworkResponse {
      * @param isEnabled Indicates whether cellular identifier transparency is enabled or not.
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.radio.access is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INTERNAL_ERR
@@ -765,10 +767,43 @@ oneway interface IRadioNetworkResponse {
      * @param info Response info struct containing response type, serial no. and error.
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.radio.access is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INTERNAL_ERR
      *   RadioError:INVALID_STATE
      */
     void setCellularIdentifierTransparencyEnabledResponse(in RadioResponseInfo info);
+
+    /**
+     * Response of setSecurityAlgorithmsUpdatedEnabled.
+     *
+     * @param info Response info struct containing response type, serial no. and error.
+     *
+     * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.radio.access is not
+     *                                    defined
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:INVALID_STATE
+     */
+    void setSecurityAlgorithmsUpdatedEnabledResponse(in RadioResponseInfo info);
+
+    /**
+     * Response of isSecurityAlgorithmsUpdatedEnabled.
+     *
+     * @param info Response info struct containing response type, serial no. and error.
+     * @param isEnabled Indicates whether cellular ciphering transparency is enabled or not.
+     *
+     * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.radio.access is not
+     *                                    defined
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:INTERNAL_ERR
+     */
+    void isSecurityAlgorithmsUpdatedEnabledResponse(
+            in RadioResponseInfo info, in boolean isEnabled);
 }

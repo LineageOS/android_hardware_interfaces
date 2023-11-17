@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,17 +31,22 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.radio.ims.media;
+package android.hardware.radio.network;
 /* @hide */
-@VintfStability
-interface IImsMediaSession {
-  oneway void setListener(in android.hardware.radio.ims.media.IImsMediaSessionListener sessionListener);
-  oneway void modifySession(in android.hardware.radio.ims.media.RtpConfig config);
-  oneway void sendDtmf(char dtmfDigit, int duration);
-  oneway void startDtmf(char dtmfDigit);
-  oneway void stopDtmf();
-  oneway void sendHeaderExtension(in List<android.hardware.radio.ims.media.RtpHeaderExtension> extensions);
-  oneway void setMediaQualityThreshold(in android.hardware.radio.ims.media.MediaQualityThreshold threshold);
-  oneway void requestRtpReceptionStats(in int intervalMs);
-  oneway void adjustDelay(in int delayMs);
+@Backing(type="int") @JavaDerive(toString=true) @VintfStability
+enum ConnectionEvent {
+  CS_SERVICE_GSM = 0,
+  SIGNALLING_GSM = 1,
+  PS_SERVICE_GPRS = 2,
+  SIGNALLING_GPRS = 3,
+  PS_SERVICE_3G = 4,
+  SIGNALLING_3G = 5,
+  NAS_SIGNALLING_LTE = 6,
+  AS_SIGNALLING_LTE = 7,
+  VOLTE_SIP = 8,
+  VOLTE_RTP = 9,
+  NAS_SIGNALLING_5G = 10,
+  AS_SIGNALLING_5G = 11,
+  VONR_SIP = 12,
+  VONR_RTP = 13,
 }

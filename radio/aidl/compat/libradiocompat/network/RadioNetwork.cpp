@@ -387,4 +387,19 @@ ScopedAStatus RadioNetwork::setCellularIdentifierTransparencyEnabled(int32_t ser
     respond()->setCellularIdentifierTransparencyEnabledResponse(notSupported(serial));
     return ok();
 }
+
+ScopedAStatus RadioNetwork::isSecurityAlgorithmsUpdatedEnabled(int32_t serial) {
+    LOG_CALL << serial;
+    LOG(ERROR) << " isSecurityAlgorithmsUpdatedEnabled is unsupported by HIDL HALs";
+    respond()->isSecurityAlgorithmsUpdatedEnabledResponse(notSupported(serial), false);
+    return ok();
+}
+
+ScopedAStatus RadioNetwork::setSecurityAlgorithmsUpdatedEnabled(int32_t serial, bool /*enable*/) {
+    LOG_CALL << serial;
+    LOG(ERROR) << " setSecurityAlgorithmsUpdatedEnabled is unsupported by HIDL HALs";
+    respond()->setSecurityAlgorithmsUpdatedEnabledResponse(notSupported(serial));
+    return ok();
+}
+
 }  // namespace android::hardware::radio::compat

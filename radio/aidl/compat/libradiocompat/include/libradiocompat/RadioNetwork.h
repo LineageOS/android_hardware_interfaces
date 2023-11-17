@@ -111,6 +111,9 @@ class RadioNetwork : public RadioCompatBase,
     ::ndk::ScopedAStatus setCellularIdentifierTransparencyEnabled(int32_t serial,
                                                                   bool enabled) override;
 
+    ::ndk::ScopedAStatus setSecurityAlgorithmsUpdatedEnabled(int32_t serial, bool enabled) override;
+    ::ndk::ScopedAStatus isSecurityAlgorithmsUpdatedEnabled(int32_t serial) override;
+
   protected:
     std::shared_ptr<::aidl::android::hardware::radio::network::IRadioNetworkResponse> respond();
 
