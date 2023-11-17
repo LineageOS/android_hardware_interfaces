@@ -34,6 +34,8 @@ Frontend::Frontend(FrontendType type, int32_t id) {
     mTuner = nullptr;
     // Init callback to nullptr
     mCallback = nullptr;
+    mIptvPluginInterface = nullptr;
+    mIptvPluginStreamer = nullptr;
 
     switch (mType) {
         case FrontendType::ISDBS: {
