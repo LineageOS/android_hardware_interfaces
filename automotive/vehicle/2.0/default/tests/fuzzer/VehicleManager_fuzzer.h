@@ -98,6 +98,13 @@ class VehicleHalManagerFuzzer {
     }
     void process(const uint8_t* data, size_t size);
 
+    template <typename T>
+    void fillParameter(size_t size, std::vector<T>& data) {
+        for (size_t i = 0; i < size; ++i) {
+            data.push_back(mFuzzedDataProvider->ConsumeIntegral<T>());
+        }
+    }
+
   private:
     FuzzedDataProvider* mFuzzedDataProvider = nullptr;
     VehiclePropValue mActualValue = VehiclePropValue{};
@@ -108,6 +115,7 @@ class VehicleHalManagerFuzzer {
     std::unique_ptr<VehicleHalManager> mManager;
 
     void invokeDebug();
+    void initValue();
     void invokePropConfigs();
     void invokeSubscribe();
     void invokeSetAndGetValues();
