@@ -148,6 +148,10 @@ bool convertLegacyNanDataPathScheduleUpdateIndToAidl(
 // RTT controller conversion methods.
 bool convertAidlVectorOfRttConfigToLegacy(const std::vector<RttConfig>& aidl_configs,
                                           std::vector<legacy_hal::wifi_rtt_config>* legacy_configs);
+bool convertAidlVectorOfRttConfigToLegacyV3(
+        const std::vector<RttConfig>& aidl_configs,
+        std::vector<legacy_hal::wifi_rtt_config_v3>* legacy_configs);
+
 bool convertAidlRttLciInformationToLegacy(const RttLciInformation& aidl_info,
                                           legacy_hal::wifi_lci_information* legacy_info);
 bool convertAidlRttLcrInformationToLegacy(const RttLcrInformation& aidl_info,
@@ -161,11 +165,18 @@ bool convertLegacyRttResponderToAidl(const legacy_hal::wifi_rtt_responder& legac
 bool convertLegacyRttCapabilitiesToAidl(
         const legacy_hal::wifi_rtt_capabilities& legacy_capabilities,
         RttCapabilities* aidl_capabilities);
+bool convertLegacyRttCapabilitiesV3ToAidl(
+        const legacy_hal::wifi_rtt_capabilities_v3& legacy_capabilities_v3,
+        RttCapabilities* aidl_capabilities);
+
 bool convertLegacyVectorOfRttResultToAidl(
         const std::vector<const legacy_hal::wifi_rtt_result*>& legacy_results,
         std::vector<RttResult>* aidl_results);
 bool convertLegacyVectorOfRttResultV2ToAidl(
         const std::vector<const legacy_hal::wifi_rtt_result_v2*>& legacy_results,
+        std::vector<RttResult>* aidl_results);
+bool convertLegacyVectorOfRttResultV3ToAidl(
+        const std::vector<const legacy_hal::wifi_rtt_result_v3*>& legacy_results,
         std::vector<RttResult>* aidl_results);
 uint32_t convertAidlWifiBandToLegacyMacBand(WifiBand band);
 uint32_t convertAidlWifiIfaceModeToLegacy(uint32_t aidl_iface_mask);
