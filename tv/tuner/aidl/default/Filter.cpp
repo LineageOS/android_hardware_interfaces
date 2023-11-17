@@ -328,6 +328,8 @@ Filter::~Filter() {
     std::vector<DemuxFilterEvent> events;
 
     mFilterCount += 1;
+    mDemux->setIptvThreadRunning(true);
+
     // All the filter event callbacks in start are for testing purpose.
     switch (mType.mainType) {
         case DemuxFilterMainType::TS:
@@ -365,6 +367,9 @@ Filter::~Filter() {
     ALOGV("%s", __FUNCTION__);
 
     mFilterCount -= 1;
+    if (mFilterCount == 0) {
+        mDemux->setIptvThreadRunning(false);
+    }
 
     mFilterThreadRunning = false;
     if (mFilterThread.joinable()) {
