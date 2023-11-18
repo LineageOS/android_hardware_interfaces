@@ -34,6 +34,8 @@ Frontend::Frontend(FrontendType type, int32_t id) {
     mTuner = nullptr;
     // Init callback to nullptr
     mCallback = nullptr;
+    mIptvPluginInterface = nullptr;
+    mIptvPluginStreamer = nullptr;
 
     switch (mType) {
         case FrontendType::ISDBS: {
@@ -215,7 +217,7 @@ Frontend::~Frontend() {
 
 void Frontend::readTuneByte(dtv_streamer* streamer, void* buf, size_t buf_size, int timeout_ms) {
     ssize_t bytes_read = mIptvPluginInterface->read_stream(streamer, buf, buf_size, timeout_ms);
-    if (bytes_read == 0) {
+    if (bytes_read <= 0) {
         ALOGI("[   ERROR   ] Tune byte couldn't be read.");
         return;
     }
