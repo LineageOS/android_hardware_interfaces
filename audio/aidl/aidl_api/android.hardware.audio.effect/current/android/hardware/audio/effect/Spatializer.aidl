@@ -35,12 +35,13 @@ package android.hardware.audio.effect;
 @VintfStability
 union Spatializer {
   android.hardware.audio.effect.VendorExtension vendor;
-  android.media.audio.common.Spatialization.Level spatializationLevel;
-  android.media.audio.common.HeadTracking.Mode headTrackingMode;
   android.media.audio.common.AudioChannelLayout[] supportedChannelLayout;
+  android.media.audio.common.Spatialization.Level spatializationLevel;
   android.media.audio.common.Spatialization.Mode spatializationMode;
-  float[6] headToStage;
-  const int HEAD_TO_STAGE_VEC_SIZE = 6;
+  int headTrackingSensorId;
+  android.media.audio.common.HeadTracking.Mode headTrackingMode;
+  android.media.audio.common.HeadTracking.ConnectionMode headTrackingConnectionMode;
+  android.media.audio.common.HeadTracking.SensorData headTrackingSensorData;
   @VintfStability
   union Id {
     android.hardware.audio.effect.VendorExtension vendorExtensionTag;
