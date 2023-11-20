@@ -26,8 +26,8 @@ import android.hardware.security.authgraph.SessionIdSignature;
 @RustDerive(Clone=true, Eq=true, PartialEq=true)
 parcelable SessionInfo {
     /**
-     * The arcs that encrypt the two derived symmetric encryption keys (for two-way communication)
-     * from the party's per-boot key.
+     * The arcs that encrypt the two derived symmetric encryption keys (for two-way communication).
+     * The encryption key is the party's per-boot key.
      */
     Arc[2] sharedKeys;
 
