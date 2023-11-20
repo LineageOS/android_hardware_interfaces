@@ -1,0 +1,3 @@
+service android.hardware.macsec /vendor/bin/hw/android.hardware.macsec-service
+    class early_hal
+    user nobody
