@@ -27,20 +27,22 @@ import android.hardware.security.authgraph.Key;
 @RustDerive(Clone=true, Eq=true, PartialEq=true)
 parcelable SessionInitiationInfo {
     /**
-     * An ephemeral EC key created for the ECDH process.
+     * An ephemeral EC key created for the Elliptic-curve Diffie-Hellman (ECDH) process.
      */
     Key key;
 
     /**
-     * The identity of the party who created the Diffie-Hellman key exchange key.
+     * The identity of the party who creates this `SessionInitiationInfo`.
      */
     Identity identity;
 
     /**
-     * Nonce value specific to this session. The nonce serves three purposes:
+     * Nonce (a cryptographic random number of 16 bytes) specific to this session.
+     * The nonce serves three purposes:
      * 1. freshness of key exchange
      * 2. creating a session id (a publicly known value related to the exchanged keys)
-     * 3. usage as salt into the HKDF-EXTRACT function during key derivation from the shared DH key
+     * 3. usage as salt into the HKDF-EXTRACT function during key derivation from the Diffie-Hellman
+     *    shared secret
      */
     byte[] nonce;
 

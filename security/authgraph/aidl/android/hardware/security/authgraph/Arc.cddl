@@ -28,19 +28,19 @@ ArcProtectedHeaders = {
     ? -70003 : int,   ; Timestamp in milliseconds since some starting point (generally
                       ; the most recent device boot) which all of the applications within
                       ; the secure domain must agree upon
-    ? -70004 : bstr .size 16,      ; Nonce used in key exchange methods
+    ? -70004 : bstr .size 16,      ; Nonce (a cryptographic random number of 16 bytes) used in key
+                                   ; exchange methods
     ? -70005 : PayloadType,        ; Payload type, if needed to disambiguate, when processing an arc
     ? -70006 : int,                ; Version of the payload structure (if applicable)
     ? -70007 : int,                ; Sequence number (if needed to prevent replay attacks)
     ? -70008 : Direction           ; Direction of the encryption key (i.e. whether it is used to
                                    ; encrypt incoming messages or outgoing messages)
     ? -70009 : bool,               ; "authentication_completed" - this is used during authenticated
-                                   ; key exchange indicate whether signature verification is done
-    ? -70010 : bstr .size 32       ; "session_id" computed during key exchange protocol
+                                   ; key exchange to indicate whether signature verification is done
+    ? -70010 : bstr .size 32       ; "session_id" computed during the key exchange protocol
 }
 
-; Permissions indicate what an arc can be used with. Permissions are added to an arc during the
-; `create()` primitive operation and are propagated during `mint` and `snap` primitive operations.
+; Permissions indicate what an arc can be used with.
 Permission = &(
     -4770552 : IdentityEncoded,  ; "source_id" - in the operations performed by a source, the
                                  ; source adds its own identity to the permissions of an arc.
@@ -54,12 +54,10 @@ Permission = &(
                                      ; biometrics.
 )
 
-; Limitations indicate what restrictions are applied on the usage of an arc. Permissions are added
-; to an arc during the `create` primitive operation and are propagated during `snap` primitive
-; operation.
+; Limitations indicate what restrictions are applied on the usage of an arc.
 Limitation = &(
-    -4770554 : bstr,      ; "challenge" - is added to an arc that transfers an auth key to a channel
-                          ; key, in order to ensure the freshness of the authentication.
+    -4770554 : bstr,      ; "challenge" - is added to an arc that encrypts an auth key from a
+                          ; channel key, in order to ensure the freshness of the authentication.
                           ; A challenge is issued by a sink (e.g. Keymint TA, Biometric TAs).
 )
 
@@ -83,7 +81,7 @@ Payload = &(
     ; Any other payload formats should also be defined here
 )
 
-SecretKey = &(                     ; One of the payload types of an Arc is a secret key
+SecretKey = &(
     SymmetricKey,
     ECPrivateKey,    ; Private key of a key pair generated for key exchange
 )
