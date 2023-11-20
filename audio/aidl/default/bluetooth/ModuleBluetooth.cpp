@@ -33,7 +33,22 @@ using aidl::android::media::audio::common::MicrophoneInfo;
 using android::bluetooth::audio::aidl::BluetoothAudioPortAidl;
 using android::bluetooth::audio::aidl::BluetoothAudioPortAidlOut;
 
+// TODO(b/312265159) bluetooth audio should be in its own process
+// Remove this and the shared_libs when that happens
+extern "C" binder_status_t createIBluetoothAudioProviderFactory();
+
 namespace aidl::android::hardware::audio::core {
+
+ModuleBluetooth::ModuleBluetooth(std::unique_ptr<Module::Configuration>&& config)
+    : Module(Type::BLUETOOTH, std::move(config)) {
+    // TODO(b/312265159) bluetooth audio should be in its own process
+    // Remove this and the shared_libs when that happens
+    binder_status_t status = createIBluetoothAudioProviderFactory();
+    if (status != STATUS_OK) {
+        LOG(ERROR) << "Failed to create bluetooth audio provider factory. Status: "
+                   << ::android::statusToString(status);
+    }
+}
 
 ndk::ScopedAStatus ModuleBluetooth::getBluetoothA2dp(
         std::shared_ptr<IBluetoothA2dp>* _aidl_return) {
