@@ -439,6 +439,9 @@ void BluetoothAudioSession::ReportControlStatus(bool start_resp,
 }
 
 void BluetoothAudioSession::ReportLowLatencyModeAllowedChanged(bool allowed) {
+  if (session_type_ != SessionType::A2DP_HARDWARE_OFFLOAD_ENCODING_DATAPATH) {
+    return;
+  }
   std::lock_guard<std::recursive_mutex> guard(mutex_);
   low_latency_allowed_ = allowed;
   // TODO(b/294498919): Remove this after there is API to update latency mode
