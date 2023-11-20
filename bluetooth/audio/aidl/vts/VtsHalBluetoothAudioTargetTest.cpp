@@ -1515,7 +1515,7 @@ class BluetoothAudioProviderHfpSoftwareEncodingAidl
   }
 
   bool OpenSession(int32_t sample_rate, int8_t bits_per_sample,
-                      ChannelMode channel_mode, int32_t data_interval_us) {
+                   ChannelMode channel_mode, int32_t data_interval_us) {
     PcmConfiguration pcm_config{
         .sampleRateHz = sample_rate,
         .channelMode = channel_mode,
@@ -1552,9 +1552,9 @@ TEST_P(BluetoothAudioProviderHfpSoftwareEncodingAidl,
   for (auto sample_rate : hfp_sample_rates_) {
     for (auto bits_per_sample : hfp_bits_per_samples_) {
       for (auto channel_mode : hfp_channel_modes_) {
-        for (auto data_interval_us: hfp_data_interval_us_) {
-          EXPECT_TRUE(OpenSession(sample_rate, bits_per_sample,
-                      channel_mode, data_interval_us));
+        for (auto data_interval_us : hfp_data_interval_us_) {
+          EXPECT_TRUE(OpenSession(sample_rate, bits_per_sample, channel_mode,
+                                  data_interval_us));
           EXPECT_TRUE(audio_provider_->endSession().isOk());
         }
       }
@@ -1582,7 +1582,7 @@ class BluetoothAudioProviderHfpSoftwareDecodingAidl
   }
 
   bool OpenSession(int32_t sample_rate, int8_t bits_per_sample,
-                      ChannelMode channel_mode, int32_t data_interval_us) {
+                   ChannelMode channel_mode, int32_t data_interval_us) {
     PcmConfiguration pcm_config{
         .sampleRateHz = sample_rate,
         .channelMode = channel_mode,
@@ -1616,10 +1616,10 @@ TEST_P(BluetoothAudioProviderHfpSoftwareDecodingAidl,
   for (auto sample_rate : hfp_sample_rates_) {
     for (auto bits_per_sample : hfp_bits_per_samples_) {
       for (auto channel_mode : hfp_channel_modes_) {
-        for (auto data_interval_us: hfp_data_interval_us_) {
-            EXPECT_TRUE(OpenSession(sample_rate, bits_per_sample,
-                        channel_mode, data_interval_us));
-            EXPECT_TRUE(audio_provider_->endSession().isOk());
+        for (auto data_interval_us : hfp_data_interval_us_) {
+          EXPECT_TRUE(OpenSession(sample_rate, bits_per_sample, channel_mode,
+                                  data_interval_us));
+          EXPECT_TRUE(audio_provider_->endSession().isOk());
         }
       }
     }
@@ -1899,7 +1899,7 @@ class BluetoothAudioProviderHfpHardwareAidl
   }
 
   bool OpenSession(CodecId codec_id, int connection_handle, bool nrec,
-                      bool controller_codec) {
+                   bool controller_codec) {
     // Check if can open session with a Hfp configuration
     HfpConfiguration hfp_configuration{
         .codecId = codec_id,
@@ -3039,6 +3039,22 @@ TEST_P(
     ASSERT_TRUE(aidl_retval.isOk());
     EXPECT_TRUE(audio_provider_->endSession().isOk());
   }
+}
+
+TEST_P(BluetoothAudioProviderLeAudioBroadcastHardwareAidl,
+       GetEmptyBroadcastConfigurationEmptyCapability) {
+  std::vector<std::optional<LeAudioDeviceCapabilities>> empty_capability;
+  IBluetoothAudioProvider::LeAudioBroadcastConfigurationRequirement
+      empty_requirement;
+
+  IBluetoothAudioProvider::LeAudioBroadcastConfigurationSetting* configuration =
+      new IBluetoothAudioProvider::LeAudioBroadcastConfigurationSetting();
+
+  // Check empty capability for source direction
+  auto aidl_retval = audio_provider_->getLeAudioBroadcastConfiguration(
+      empty_capability, empty_requirement, configuration);
+
+  ASSERT_TRUE(aidl_retval.isOk());
 }
 
 /**
