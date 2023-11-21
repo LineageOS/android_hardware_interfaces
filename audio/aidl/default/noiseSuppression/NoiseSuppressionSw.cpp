@@ -67,7 +67,7 @@ const Descriptor NoiseSuppressionSw::kDescriptor = {
                           .proxy = std::nullopt},
                    .flags = {.type = Flags::Type::PRE_PROC,
                              .insert = Flags::Insert::FIRST,
-                             .volume = Flags::Volume::CTRL},
+                             .volume = Flags::Volume::NONE},
                    .name = NoiseSuppressionSw::kEffectName,
                    .implementor = "The Android Open Source Project"}};
 

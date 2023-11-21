@@ -76,7 +76,7 @@ const Descriptor AcousticEchoCancelerSw::kDescriptor = {
                           .proxy = std::nullopt},
                    .flags = {.type = Flags::Type::PRE_PROC,
                              .insert = Flags::Insert::FIRST,
-                             .volume = Flags::Volume::CTRL},
+                             .volume = Flags::Volume::NONE},
                    .name = AcousticEchoCancelerSw::kEffectName,
                    .implementor = "The Android Open Source Project"},
         .capability = AcousticEchoCancelerSw::kCapability};
