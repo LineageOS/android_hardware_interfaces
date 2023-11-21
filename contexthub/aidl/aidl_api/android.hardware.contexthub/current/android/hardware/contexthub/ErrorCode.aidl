@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,15 +32,11 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.contexthub;
-@VintfStability
-interface IContextHubCallback {
-  void handleNanoappInfo(in android.hardware.contexthub.NanoappInfo[] appInfo);
-  void handleContextHubMessage(in android.hardware.contexthub.ContextHubMessage msg, in String[] msgContentPerms);
-  void handleContextHubAsyncEvent(in android.hardware.contexthub.AsyncEventType evt);
-  void handleTransactionResult(in int transactionId, in boolean success);
-  void handleNanSessionRequest(in android.hardware.contexthub.NanSessionRequest request);
-  void handleMessageDeliveryStatus(in char hostEndpointId, in android.hardware.contexthub.MessageDeliveryStatus messageDeliveryStatus);
-  byte[16] getUuid();
-  String getName();
-  const int CONTEXTHUB_NAN_TRANSACTION_TIMEOUT_MS = 10000;
+@Backing(type="byte") @VintfStability
+enum ErrorCode {
+  OK = 0,
+  TRANSIENT_ERROR,
+  PERMANENT_ERROR,
+  PERMISSION_DENIED,
+  DESTINATION_NOT_FOUND,
 }

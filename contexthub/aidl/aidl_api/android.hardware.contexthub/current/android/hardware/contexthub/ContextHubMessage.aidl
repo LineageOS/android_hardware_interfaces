@@ -39,4 +39,6 @@ parcelable ContextHubMessage {
   int messageType;
   byte[] messageBody;
   String[] permissions;
+  boolean isReliable;
+  int messageSequenceNumber;
 }
