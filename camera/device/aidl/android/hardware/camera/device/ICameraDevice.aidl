@@ -435,4 +435,34 @@ interface ICameraDevice {
      *
      */
     boolean isStreamCombinationWithSettingsSupported(in StreamConfiguration streams);
+
+    /**
+     * getSessionCharacteristics
+     *
+     * Gets the session characteristics associated with a particular session
+     * configuration by the CameraDevice.
+     *
+     * For Android 15, the characteristics which need to be set are:
+     *   - ANDROID_CONTROL_ZOOM_RATIO_RANGE
+     *
+     * A service specific error will be returned on the following conditions
+     *     INTERNAL_ERROR:
+     *         The camera device cannot be opened due to an internal
+     *         error.
+     *     CAMERA_DISCONNECTED:
+     *         An external camera device has been disconnected, and is no longer
+     *         available. This camera device interface is now stale, and a new
+     *         instance must be acquired if the device is reconnected. All
+     *         subsequent calls on this interface must return
+     *         CAMERA_DISCONNECTED.
+     *     ILLEGAL_ARGUMENT:
+     *         If the given session configuration is not supported.
+     *
+     * @param sessionConfig: The session configuration for which the
+     * characteristics are being fetched.
+     *
+     * @return The static metadata for this particular session config, or an
+     * empty metadata structure if a service specific error is returned.
+     */
+    CameraMetadata getSessionCharacteristics(in StreamConfiguration sessionConfig);
 }
