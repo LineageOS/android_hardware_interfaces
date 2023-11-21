@@ -3362,6 +3362,69 @@ bool convertLegacyIfaceCombinationsMatrixToChipMode(
     return true;
 }
 
+bool convertCachedScanReportToAidl(const legacy_hal::WifiCachedScanReport& report,
+                                   CachedScanData* aidl_scan_data) {
+    if (!aidl_scan_data) {
+        return false;
+    }
+    *aidl_scan_data = {};
+
+    std::vector<CachedScanResult> aidl_scan_results;
+    for (const auto& result : report.results) {
+        CachedScanResult aidl_scan_result;
+        if (!convertCachedScanResultToAidl(result, report.ts, &aidl_scan_result)) {
+            return false;
+        }
+        aidl_scan_results.push_back(aidl_scan_result);
+    }
+    aidl_scan_data->cachedScanResults = aidl_scan_results;
+
+    aidl_scan_data->scannedFrequenciesMhz = report.scanned_freqs;
+    return true;
+}
+
+bool convertCachedScanResultToAidl(const legacy_hal::wifi_cached_scan_result& legacy_scan_result,
+                                   uint64_t ts_us, CachedScanResult* aidl_scan_result) {
+    if (!aidl_scan_result) {
+        return false;
+    }
+    *aidl_scan_result = {};
+    aidl_scan_result->timeStampInUs = ts_us - legacy_scan_result.age_ms * 1000;
+    if (aidl_scan_result->timeStampInUs < 0) {
+        aidl_scan_result->timeStampInUs = 0;
+        return false;
+    }
+    size_t max_len_excluding_null = sizeof(legacy_scan_result.ssid) - 1;
+    size_t ssid_len = strnlen((const char*)legacy_scan_result.ssid, max_len_excluding_null);
+    aidl_scan_result->ssid =
+            std::vector<uint8_t>(legacy_scan_result.ssid, legacy_scan_result.ssid + ssid_len);
+    aidl_scan_result->bssid = std::array<uint8_t, 6>();
+    std::copy(legacy_scan_result.bssid, legacy_scan_result.bssid + 6,
+              std::begin(aidl_scan_result->bssid));
+    aidl_scan_result->frequencyMhz = legacy_scan_result.chanspec.primary_frequency;
+    aidl_scan_result->channelWidthMhz =
+            convertLegacyWifiChannelWidthToAidl(legacy_scan_result.chanspec.width);
+    aidl_scan_result->rssiDbm = legacy_scan_result.rssi;
+    aidl_scan_result->preambleType = convertScanResultFlagsToPreambleType(legacy_scan_result.flags);
+    return true;
+}
+
+WifiRatePreamble convertScanResultFlagsToPreambleType(int flags) {
+    if ((flags & WIFI_CACHED_SCAN_RESULT_FLAGS_EHT_OPS_PRESENT) > 0) {
+        return WifiRatePreamble::EHT;
+    }
+    if ((flags & WIFI_CACHED_SCAN_RESULT_FLAGS_HE_OPS_PRESENT) > 0) {
+        return WifiRatePreamble::HE;
+    }
+    if ((flags & WIFI_CACHED_SCAN_RESULT_FLAGS_VHT_OPS_PRESENT) > 0) {
+        return WifiRatePreamble::VHT;
+    }
+    if ((flags & WIFI_CACHED_SCAN_RESULT_FLAGS_HT_OPS_PRESENT) > 0) {
+        return WifiRatePreamble::HT;
+    }
+    return WifiRatePreamble::OFDM;
+}
+
 }  // namespace aidl_struct_util
 }  // namespace wifi
 }  // namespace hardware

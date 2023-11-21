@@ -202,6 +202,11 @@ bool convertLegacyNanBootstrappingConfirmIndToAidl(
         const legacy_hal::NanBootstrappingConfirmInd& legacy_ind,
         NanBootstrappingConfirmInd* aidl_ind);
 uint32_t convertAidlChannelCategoryToLegacy(uint32_t aidl_channel_category_mask);
+bool convertCachedScanReportToAidl(const legacy_hal::WifiCachedScanReport& report,
+                                   CachedScanData* aidl_scan_data);
+bool convertCachedScanResultToAidl(const legacy_hal::wifi_cached_scan_result& legacy_scan_result,
+                                   uint64_t ts_us, CachedScanResult* aidl_scan_result);
+WifiRatePreamble convertScanResultFlagsToPreambleType(int flags);
 }  // namespace aidl_struct_util
 }  // namespace wifi
 }  // namespace hardware
