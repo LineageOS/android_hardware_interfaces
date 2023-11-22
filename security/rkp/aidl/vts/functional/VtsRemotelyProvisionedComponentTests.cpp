@@ -55,6 +55,8 @@ constexpr int32_t VERSION_WITH_SUPPORTED_NUM_KEYS_IN_CSR = 3;
 
 constexpr uint8_t MIN_CHALLENGE_SIZE = 0;
 constexpr uint8_t MAX_CHALLENGE_SIZE = 64;
+const string RKP_VM_INSTANCE_NAME =
+        "android.hardware.security.keymint.IRemotelyProvisionedComponent/avf";
 
 #define INSTANTIATE_REM_PROV_AIDL_TEST(name)                                         \
     GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(name);                             \
@@ -181,7 +183,12 @@ class VtsRemotelyProvisionedComponentTests : public testing::TestWithParam<std::
             provisionable_ = IRemotelyProvisionedComponent::fromBinder(binder);
         }
         ASSERT_NE(provisionable_, nullptr);
-        ASSERT_TRUE(provisionable_->getHardwareInfo(&rpcHardwareInfo).isOk());
+        auto status = provisionable_->getHardwareInfo(&rpcHardwareInfo);
+        if (GetParam() == RKP_VM_INSTANCE_NAME &&
+            status.getExceptionCode() == EX_UNSUPPORTED_OPERATION) {
+            GTEST_SKIP() << "The RKP VM is not supported on this system.";
+        }
+        ASSERT_TRUE(status.isOk());
     }
 
     static vector<string> build_params() {
@@ -207,7 +214,11 @@ TEST(NonParameterizedTests, eachRpcHasAUniqueId) {
         ASSERT_NE(rpc, nullptr);
 
         RpcHardwareInfo hwInfo;
-        ASSERT_TRUE(rpc->getHardwareInfo(&hwInfo).isOk());
+        auto status = rpc->getHardwareInfo(&hwInfo);
+        if (hal == RKP_VM_INSTANCE_NAME && status.getExceptionCode() == EX_UNSUPPORTED_OPERATION) {
+            GTEST_SKIP() << "The RKP VM is not supported on this system.";
+        }
+        ASSERT_TRUE(status.isOk());
 
         if (hwInfo.versionNumber >= VERSION_WITH_UNIQUE_ID_SUPPORT) {
             ASSERT_TRUE(hwInfo.uniqueId);
