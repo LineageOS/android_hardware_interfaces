@@ -279,6 +279,8 @@ class CameraAidlTest : public ::testing::TestWithParam<std::string> {
     static void verifyLogicalCameraResult(const camera_metadata_t* staticMetadata,
                                           const std::vector<uint8_t>& resultMetadata);
 
+    static void verifyLensIntrinsicsResult(const std::vector<uint8_t>& resultMetadata);
+
     static void verifyBuffersReturned(const std::shared_ptr<ICameraDeviceSession>& session,
                                       int32_t streamId, const std::shared_ptr<DeviceCb>& cb,
                                       uint32_t streamConfigCounter = 0);

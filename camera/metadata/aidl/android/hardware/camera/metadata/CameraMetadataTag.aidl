@@ -1868,6 +1868,18 @@ enum CameraMetadataTag {
      */
     ANDROID_STATISTICS_OIS_Y_SHIFTS,
     /**
+     * android.statistics.lensIntrinsicTimestamps [dynamic, int64[], ndk_public]
+     *
+     * <p>An array of timestamps of lens intrinsics samples, in nanoseconds.</p>
+     */
+    ANDROID_STATISTICS_LENS_INTRINSIC_TIMESTAMPS,
+    /**
+     * android.statistics.lensIntrinsicSamples [dynamic, float[], ndk_public]
+     *
+     * <p>An array of intra-frame lens intrinsics.</p>
+     */
+    ANDROID_STATISTICS_LENS_INTRINSIC_SAMPLES,
+    /**
      * android.statistics.info.availableFaceDetectModes [static, byte[], public]
      *
      * <p>List of face detection modes for ANDROID_STATISTICS_FACE_DETECT_MODE that are
@@ -2240,6 +2252,13 @@ enum CameraMetadataTag {
      * <p>String containing the ID of the underlying active physical camera.</p>
      */
     ANDROID_LOGICAL_MULTI_CAMERA_ACTIVE_PHYSICAL_ID,
+    /**
+     * android.logicalMultiCamera.activePhysicalSensorCropRegion [dynamic, int32[], public]
+     *
+     * <p>The current region of the active physical sensor that will be read out for this
+     * capture.</p>
+     */
+    ANDROID_LOGICAL_MULTI_CAMERA_ACTIVE_PHYSICAL_SENSOR_CROP_REGION,
     /**
      * android.distortionCorrection.mode [dynamic, enum, public]
      *
