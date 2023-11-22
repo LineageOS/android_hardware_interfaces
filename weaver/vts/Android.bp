@@ -34,7 +34,10 @@ cc_test {
         "libbinder_ndk",
         "libbase",
     ],
-    static_libs: ["android.hardware.weaver-V2-ndk"],
+    static_libs: [
+        "android.hardware.weaver-V2-ndk",
+        "android.hardware.weaver@1.0",
+    ],
     test_suites: [
         "general-tests",
         "vts",
