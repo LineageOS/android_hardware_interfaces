@@ -14,7 +14,7 @@ aidl_interface {
         "android/hardware/camera/provider/*.aidl",
     ],
     imports: [
-        "android.hardware.camera.device-V2",
+        "android.hardware.camera.device-V3",
         "android.hardware.camera.common-V1",
     ],
     frozen: true,
@@ -38,7 +38,7 @@ aidl_interface {
         {
             version: "2",
             imports: [
-                "android.hardware.camera.device-V2",
+                "android.hardware.camera.device-V3",
                 "android.hardware.camera.common-V1",
             ],
         },
