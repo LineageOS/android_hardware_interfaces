@@ -50,6 +50,7 @@ cc_test {
 rust_test {
     name: "VtsAidlAuthGraphRoleTest",
     srcs: ["role_test.rs"],
+    require_root: true,
     test_suites: [
         "general-tests",
         "vts",
