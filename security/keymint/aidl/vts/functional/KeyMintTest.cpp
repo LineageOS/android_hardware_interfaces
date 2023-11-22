@@ -4123,13 +4123,13 @@ TEST_P(ImportKeyTest, EcdsaSuccess) {
  * when the EC_CURVE is not explicitly specified.
  */
 TEST_P(ImportKeyTest, EcdsaSuccessCurveNotSpecified) {
-    if (AidlVersion() < 4) {
+    if (get_vsr_api_level() < __ANDROID_API_V__) {
         /*
-         * The KeyMint spec before V4 was not clear as to whether EC_CURVE was optional on import of
-         * EC keys. However, this was not checked at the time so we can only be strict about
-         * checking this for implementations of KeyMint version 4 and above.
+         * The KeyMint spec was previously not clear as to whether EC_CURVE was optional on import
+         * of EC keys. However, this was not checked at the time so we can only be strict about
+         * checking this for implementations at VSR-V or later.
          */
-        GTEST_SKIP() << "Skipping EC_CURVE on import only strict since KeyMint v4";
+        GTEST_SKIP() << "Skipping EC_CURVE on import only strict >= VSR-V";
     }
 
     ASSERT_EQ(ErrorCode::OK, ImportKey(AuthorizationSetBuilder()
