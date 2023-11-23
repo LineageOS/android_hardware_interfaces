@@ -18,38 +18,11 @@
 
 use authgraph_boringssl as boring;
 use authgraph_core::{
-    error,
-    key::MillisecondsSinceEpoch,
-    keyexchange,
+    error, keyexchange,
     ta::{AuthGraphTa, Role},
-    traits,
 };
 use authgraph_hal::channel::SerializedChannel;
 use std::sync::{Arc, Mutex};
-use std::time::Instant;
-
-/// Monotonic clock with an epoch that starts at the point of construction.
-/// (This makes it unsuitable for use outside of testing, because the epoch
-/// will not match that of any other component.)
-pub struct StdClock(Instant);
-
-impl Default for StdClock {
-    fn default() -> Self {
-        Self(Instant::now())
-    }
-}
-
-impl traits::MonotonicClock for StdClock {
-    fn now(&self) -> MillisecondsSinceEpoch {
-        let millis: i64 = self
-            .0
-            .elapsed()
-            .as_millis()
-            .try_into()
-            .expect("failed to fit timestamp in i64");
-        MillisecondsSinceEpoch(millis)
-    }
-}
 
 /// Implementation of the AuthGraph TA that runs locally in-process (and which is therefore
 /// insecure).
