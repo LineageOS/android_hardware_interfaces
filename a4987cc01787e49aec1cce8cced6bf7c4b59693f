@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2f5f5abc_1aa79594",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 14048
+      },
+      "writtenOn": "2023-11-23T23:40:13Z",
+      "side": 1,
+      "message": "Fixes bcm bluetooth startup for tegra",
+      "revId": "a4987cc01787e49aec1cce8cced6bf7c4b59693f",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
