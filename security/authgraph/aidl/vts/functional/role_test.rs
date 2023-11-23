@@ -22,13 +22,18 @@ use authgraph_vts_test as vts;
 use android_hardware_security_authgraph::aidl::android::hardware::security::authgraph::{
     IAuthGraphKeyExchange::IAuthGraphKeyExchange,
 };
+use binder::StatusCode;
 
 const AUTH_GRAPH_NONSECURE: &str =
     "android.hardware.security.authgraph.IAuthGraphKeyExchange/nonsecure";
 
 /// Retrieve the /nonsecure instance of AuthGraph, which supports both sink and source roles.
 fn get_nonsecure() -> Option<binder::Strong<dyn IAuthGraphKeyExchange>> {
-    binder::get_interface(AUTH_GRAPH_NONSECURE).ok()
+    match binder::get_interface(AUTH_GRAPH_NONSECURE) {
+        Ok(ag) => Some(ag),
+        Err(StatusCode::NAME_NOT_FOUND) => None,
+        Err(e) => panic!("failed to get AuthGraph/nonsecure: {e:?}"),
+    }
 }
 
 /// Macro to require availability of a /nonsecure instance of AuthGraph.

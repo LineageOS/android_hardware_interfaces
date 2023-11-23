@@ -520,6 +520,15 @@ ErrMsgOr<std::unique_ptr<cppbor::Map>> parseAndValidateDeviceInfo(
                    std::to_string(info.versionNumber) + ").";
         }
     }
+    // Bypasses the device info validation since the device info in AVF is currently
+    // empty. Check b/299256925 for more information.
+    //
+    // TODO(b/300911665): This check is temporary and will be replaced once the markers
+    // on the DICE chain become available. We need to determine if the CSR is from the
+    // RKP VM using the markers on the DICE chain.
+    if (info.uniqueId == "AVF Remote Provisioning 1") {
+        return std::move(parsed);
+    }
 
     std::string error;
     std::string tmp;
