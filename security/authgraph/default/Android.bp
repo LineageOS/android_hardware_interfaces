@@ -46,11 +46,11 @@ rust_binary {
     name: "android.hardware.security.authgraph-service.nonsecure",
     relative_install_path: "hw",
     vendor: true,
-    init_rc: ["authgraph.rc"],
-    vintf_fragments: ["authgraph.xml"],
+    installable: false, // install com.android.hardware.security.authgraph
     defaults: [
         "authgraph_use_latest_hal_aidl_rust",
     ],
+    prefer_rlib: true,
     rustlibs: [
         "libandroid_logger",
         "libauthgraph_hal",
@@ -79,4 +79,35 @@ rust_fuzz {
             "hasinitg@google.com",
         ],
     },
+}
+
+prebuilt_etc {
+    name: "authgraph.xml",
+    src: "authgraph.xml",
+    sub_dir: "vintf",
+    installable: false,
+}
+
+prebuilt_etc {
+    name: "authgraph.rc",
+    src: "authgraph.rc",
+    installable: false,
+}
+
+apex {
+    name: "com.android.hardware.security.authgraph",
+    manifest: "apex_manifest.json",
+    file_contexts: "apex_file_contexts",
+    key: "com.android.hardware.key",
+    certificate: ":com.android.hardware.certificate",
+    vendor: true,
+    updatable: false,
+
+    binaries: [
+        "android.hardware.security.authgraph-service.nonsecure",
+    ],
+    prebuilts: [
+        "authgraph.rc",
+        "authgraph.xml",
+    ],
 }
