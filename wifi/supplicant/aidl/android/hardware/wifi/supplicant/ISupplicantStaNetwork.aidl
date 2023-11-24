@@ -16,6 +16,7 @@
 
 package android.hardware.wifi.supplicant;
 
+import android.hardware.wifi.common.OuiKeyedData;
 import android.hardware.wifi.supplicant.AuthAlgMask;
 import android.hardware.wifi.supplicant.DppConnectionKeys;
 import android.hardware.wifi.supplicant.EapMethod;
@@ -1153,4 +1154,15 @@ interface ISupplicantStaNetwork {
      *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
      */
     void disableEht();
+
+    /**
+     * Set additional vendor-provided configuration data.
+     *
+     * @param vendorData List of |OuiKeyedData| containing the vendor-provided
+     *         configuration data.
+     * @throws ServiceSpecificException with one of the following values:
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+     */
+    void setVendorData(in OuiKeyedData[] vendorData);
 }
