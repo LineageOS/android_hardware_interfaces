@@ -596,8 +596,14 @@ TEST_P(AudioEffectTest, SetAndGetParameterVolume) {
 
     Parameter::Id id = Parameter::Id::make<Parameter::Id::commonTag>(Parameter::volumeStereo);
     Parameter::VolumeStereo volume = {.left = 10.0, .right = 10.0};
-    ASSERT_NO_FATAL_FAILURE(
-            setAndGetParameter(id, Parameter::make<Parameter::volumeStereo>(volume)));
+    if (mDescriptor.common.flags.volume == Flags::Volume::CTRL) {
+        Parameter get;
+        EXPECT_IS_OK(mEffect->setParameter(volume));
+        EXPECT_IS_OK(mEffect->getParameter(id, &get));
+    } else {
+        ASSERT_NO_FATAL_FAILURE(
+                setAndGetParameter(id, Parameter::make<Parameter::volumeStereo>(volume)));
+    }
 
     ASSERT_NO_FATAL_FAILURE(command(mEffect, CommandId::STOP));
     ASSERT_NO_FATAL_FAILURE(expectState(mEffect, State::IDLE));
