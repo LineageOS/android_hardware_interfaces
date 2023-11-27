@@ -39,7 +39,7 @@ interface IGraphicBufferAllocator {
   ParcelFileDescriptor getWaitableFd();
   parcelable Allocation {
     android.hardware.HardwareBuffer buffer;
-    ParcelFileDescriptor fence;
+    @nullable ParcelFileDescriptor fence;
   }
   parcelable Description {
     int width;
