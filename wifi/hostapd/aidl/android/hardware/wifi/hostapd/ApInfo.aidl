@@ -16,6 +16,7 @@
 
 package android.hardware.wifi.hostapd;
 
+import android.hardware.wifi.common.OuiKeyedData;
 import android.hardware.wifi.hostapd.ChannelBandwidth;
 import android.hardware.wifi.hostapd.Generation;
 
@@ -57,4 +58,9 @@ parcelable ApInfo {
      * MAC Address of the apIfaceInstance.
      */
     byte[] apIfaceInstanceMacAddress;
+
+    /**
+     * Optional vendor-specific information.
+     */
+    @nullable OuiKeyedData[] vendorData;
 }
