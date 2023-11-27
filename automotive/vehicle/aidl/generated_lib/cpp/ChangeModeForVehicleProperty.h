@@ -291,6 +291,7 @@ std::unordered_map<VehicleProperty, VehiclePropertyChangeMode> ChangeModeForVehi
         {VehicleProperty::DRIVER_DISTRACTION_WARNING, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::LOW_SPEED_COLLISION_WARNING_ENABLED, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::LOW_SPEED_COLLISION_WARNING_STATE, VehiclePropertyChangeMode::ON_CHANGE},
+        {VehicleProperty::CROSS_TRAFFIC_MONITORING_ENABLED, VehiclePropertyChangeMode::ON_CHANGE},
 };
 
 }  // namespace vehicle

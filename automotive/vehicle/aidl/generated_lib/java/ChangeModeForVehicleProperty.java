@@ -282,7 +282,8 @@ public final class ChangeModeForVehicleProperty {
         Map.entry(VehicleProperty.DRIVER_DISTRACTION_WARNING_ENABLED, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.DRIVER_DISTRACTION_WARNING, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.LOW_SPEED_COLLISION_WARNING_ENABLED, VehiclePropertyChangeMode.ON_CHANGE),
-        Map.entry(VehicleProperty.LOW_SPEED_COLLISION_WARNING_STATE, VehiclePropertyChangeMode.ON_CHANGE)
+        Map.entry(VehicleProperty.LOW_SPEED_COLLISION_WARNING_STATE, VehiclePropertyChangeMode.ON_CHANGE),
+        Map.entry(VehicleProperty.CROSS_TRAFFIC_MONITORING_ENABLED, VehiclePropertyChangeMode.ON_CHANGE)
     );
 
 }
