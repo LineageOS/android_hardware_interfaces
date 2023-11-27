@@ -29,11 +29,11 @@ pub fn test(
 }
 
 /// Perform mainline AuthGraph key exchange with the provided sink and local implementation.
-/// Return the agreed AES keys in plaintext.
+/// Return the agreed AES keys in plaintext, together with the session ID.
 pub fn test_mainline(
     local_source: &mut ke::AuthGraphParticipant,
     sink: binder::Strong<dyn IAuthGraphKeyExchange>,
-) -> [key::AesKey; 2] {
+) -> ([key::AesKey; 2], Vec<u8>) {
     // Step 1: create an ephemeral ECDH key at the (local) source.
     let source_init_info = local_source
         .create()
@@ -113,7 +113,7 @@ pub fn test_mainline(
         Ok(array) => array,
         Err(_) => panic!("wrong number of decrypted shared key arcs"),
     };
-    decrypted_shared_keys_array
+    (decrypted_shared_keys_array, sink_info.sessionId)
 }
 
 /// Perform mainline AuthGraph key exchange with the provided sink, but provide an invalid
