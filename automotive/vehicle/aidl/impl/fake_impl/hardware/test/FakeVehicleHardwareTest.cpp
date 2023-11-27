@@ -1648,6 +1648,61 @@ std::vector<SetSpecialValueTestCase> setSpecialValueTestCases() {
                             },
             },
             SetSpecialValueTestCase{
+                    .name = "set_electronic_stability_control_enabled_false",
+                    .valuesToSet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::
+                                                            ELECTRONIC_STABILITY_CONTROL_ENABLED),
+                                            .value.int32Values = {0},
+                                    },
+                            },
+                    .expectedValuesToGet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::
+                                                            ELECTRONIC_STABILITY_CONTROL_ENABLED),
+                                            .value.int32Values = {0},
+                                    },
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::
+                                                            ELECTRONIC_STABILITY_CONTROL_STATE),
+                                            .value.int32Values = {toInt(
+                                                    ErrorState::NOT_AVAILABLE_DISABLED)},
+                                    },
+                            },
+            },
+            SetSpecialValueTestCase{
+                    .name = "set_electronic_stability_control_enabled_true",
+                    .valuesToSet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::
+                                                            ELECTRONIC_STABILITY_CONTROL_ENABLED),
+                                            .value.int32Values = {1},
+                                    },
+                            },
+                    .expectedValuesToGet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::
+                                                            ELECTRONIC_STABILITY_CONTROL_ENABLED),
+                                            .value.int32Values = {1},
+                                    },
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::
+                                                            ELECTRONIC_STABILITY_CONTROL_STATE),
+                                            .value.int32Values = {1},
+                                    },
+                            },
+            },
+            SetSpecialValueTestCase{
                     .name = "set_shutdown_request",
                     .valuesToSet =
                             {
@@ -2209,6 +2264,13 @@ TEST_F(FakeVehicleHardwareTest, testSendAdasPropertiesState) {
                     toInt(VehicleProperty::LOW_SPEED_COLLISION_WARNING_ENABLED),
                     {
                             toInt(VehicleProperty::LOW_SPEED_COLLISION_WARNING_STATE),
+                    },
+            },
+            // ESC
+            {
+                    toInt(VehicleProperty::ELECTRONIC_STABILITY_CONTROL_ENABLED),
+                    {
+                            toInt(VehicleProperty::ELECTRONIC_STABILITY_CONTROL_STATE),
                     },
             },
     };

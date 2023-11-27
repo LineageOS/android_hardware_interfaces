@@ -4136,6 +4136,27 @@
                     1
                 ]
             }
+        },
+        {
+            "property": "VehicleProperty::ELECTRONIC_STABILITY_CONTROL_STATE",
+            "defaultValue": {
+                "int32Values": [
+                    "ElectronicStabilityControlState::ENABLED"
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": 0,
+                    "supportedEnumValues": [
+                        "ErrorState::NOT_AVAILABLE_SAFETY",
+                        "ErrorState::NOT_AVAILABLE_SPEED_HIGH",
+                        "ErrorState::NOT_AVAILABLE_SPEED_LOW",
+                        "ErrorState::NOT_AVAILABLE_DISABLED",
+                        "ElectronicStabilityControlState::ENABLED",
+                        "ElectronicStabilityControlState::ACTIVATED"
+                    ]
+                }
+            ]
         }
     ]
 }

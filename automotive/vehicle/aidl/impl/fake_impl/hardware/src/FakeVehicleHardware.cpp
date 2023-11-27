@@ -232,6 +232,13 @@ const std::unordered_map<int32_t, std::vector<int32_t>> mAdasEnabledPropToAdasPr
                         toInt(VehicleProperty::LOW_SPEED_COLLISION_WARNING_STATE),
                 },
         },
+        // ESC
+        {
+                toInt(VehicleProperty::ELECTRONIC_STABILITY_CONTROL_ENABLED),
+                {
+                        toInt(VehicleProperty::ELECTRONIC_STABILITY_CONTROL_STATE),
+                },
+        },
 };
 }  // namespace
 
