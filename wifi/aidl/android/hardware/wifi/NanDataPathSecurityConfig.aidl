@@ -58,4 +58,49 @@ parcelable NanDataPathSecurityConfig {
      * setting up the Secure Data Path.
      */
     byte[16] scid;
+
+    /**
+     * Enables the 16 replay counter for ND-TKSA(NAN Data Pairwise Security Association) and
+     * NM-TKSA(NAN managerment Pairwise Security Association), if set to false will use 4 replay
+     * counter as default
+     * Wi-Fi Aware spec 4.0: 9.5.21.2 Cipher Suite Information attribute
+     */
+    boolean enable16ReplyCountersForTksa;
+
+    /**
+     * Enables the 16 replay counter for GTKSA(Group Transient Key security associations), if set to
+     * false will use 4 replay counter as default.
+     * Wi-Fi Aware spec 4.0: 9.5.21.2 Cipher Suite Information attribute
+     */
+    boolean enable16ReplyCountersForGtksa;
+
+    /**
+     * GTK(Group Transient Key) used to protect group addressed data frames,
+     * IGTK(Integrity Group Transient Key) used to protect multicast management frames, set to true
+     * if supported.
+     * Wi-Fi Aware spec 4.0: 9.5.21.2 Cipher Suite Information attribute
+     */
+    boolean supportGtkAndIgtk;
+
+    /**
+     * BIGTK(Beacon Integrity Group Transient Key) used to protect Beacon frames, set to true if
+     * supported.
+     * Ref: Wi-Fi Aware spec 4.0: 9.5.21.2 Cipher Suite Information attribute
+     */
+    boolean supportBigtksa;
+
+    /**
+     * Enables NCS-BIP-256 for IGTKSA(Integrity Group Transient Key security associations)
+     * and BIGTK(Beacon Integrity Group Transient Key security associations), if set to false will
+     * use NCS-BIP-128 as default
+     * Wi-Fi Aware spec 4.0: 9.5.21.2 Cipher Suite Information attribute
+     */
+    boolean enableNcsBip256;
+
+    /**
+     * Require enhanced frame protection if supported, which includes multicast management frame
+     * protection, group addressed data protection and beacon frame protection.
+     * Wi-Fi Aware spec 4.0: 7.3 frame protection
+     */
+    boolean requiresEnhancedFrameProtection;
 }
