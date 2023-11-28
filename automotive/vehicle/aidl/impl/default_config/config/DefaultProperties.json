@@ -4165,6 +4165,32 @@
                     1
                 ]
             }
+        },
+        {
+            "property": "VehicleProperty::CROSS_TRAFFIC_MONITORING_WARNING_STATE",
+            "defaultValue": {
+                "int32Values": [
+                    "CrossTrafficMonitoringWarningState::NO_WARNING"
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": 0,
+                    "supportedEnumValues": [
+                        "ErrorState::NOT_AVAILABLE_SAFETY",
+                        "ErrorState::NOT_AVAILABLE_POOR_VISIBILITY",
+                        "ErrorState::NOT_AVAILABLE_SPEED_HIGH",
+                        "ErrorState::NOT_AVAILABLE_DISABLED",
+                        "CrossTrafficMonitoringWarningState::NO_WARNING",
+                        "CrossTrafficMonitoringWarningState::WARNING_FRONT_LEFT",
+                        "CrossTrafficMonitoringWarningState::WARNING_FRONT_RIGHT",
+                        "CrossTrafficMonitoringWarningState::WARNING_FRONT_BOTH",
+                        "CrossTrafficMonitoringWarningState::WARNING_REAR_LEFT",
+                        "CrossTrafficMonitoringWarningState::WARNING_REAR_RIGHT",
+                        "CrossTrafficMonitoringWarningState::WARNING_REAR_BOTH"
+                    ]
+                }
+            ]
         }
     ]
 }
