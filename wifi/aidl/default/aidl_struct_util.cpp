@@ -3202,6 +3202,8 @@ bool convertAidlNanBootstrappingInitiatorRequestToLegacy(
     legacy_request->cookie_length = aidl_request.cookie.size();
 
     memcpy(legacy_request->cookie, aidl_request.cookie.data(), legacy_request->cookie_length);
+    legacy_request->publish_subscribe_id = static_cast<uint8_t>(aidl_request.discoverySessionId);
+    legacy_request->comeback = aidl_request.isComeback ? 0x1 : 0x0;
 
     return true;
 }
@@ -3219,6 +3221,7 @@ bool convertAidlNanBootstrappingIndicationResponseToLegacy(
     legacy_request->service_instance_id = aidl_request.bootstrappingInstanceId;
     legacy_request->rsp_code = aidl_request.acceptRequest ? NAN_BOOTSTRAPPING_REQUEST_ACCEPT
                                                           : NAN_BOOTSTRAPPING_REQUEST_REJECT;
+    legacy_request->publish_subscribe_id = static_cast<uint8_t>(aidl_request.discoverySessionId);
 
     return true;
 }
