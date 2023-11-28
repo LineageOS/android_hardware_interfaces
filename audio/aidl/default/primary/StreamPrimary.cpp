@@ -60,7 +60,7 @@ StreamPrimary::StreamPrimary(StreamContext* context, const Metadata& metadata)
     } else {
         LOG(DEBUG) << __func__ << ": skipping transfer (" << frameCount << " frames)";
         *actualFrameCount = frameCount;
-        if (mIsInput) memset(buffer, 0, frameCount);
+        if (mIsInput) memset(buffer, 0, frameCount * mFrameSizeBytes);
         mSkipNextTransfer = false;
     }
     if (!mIsAsynchronous) {
