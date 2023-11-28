@@ -490,6 +490,18 @@ enum CameraMetadataTag {
      */
     ANDROID_CONTROL_AUTOFRAMING_STATE,
     /**
+     * android.control.lowLightBoostInfoLuminanceRange [static, float[], public]
+     *
+     * <p>The operating luminance range of low light boost measured in lux (lx).</p>
+     */
+    ANDROID_CONTROL_LOW_LIGHT_BOOST_INFO_LUMINANCE_RANGE,
+    /**
+     * android.control.lowLightBoostState [dynamic, enum, public]
+     *
+     * <p>Current state of the low light boost AE mode.</p>
+     */
+    ANDROID_CONTROL_LOW_LIGHT_BOOST_STATE,
+    /**
      * android.demosaic.mode [controls, enum, system]
      *
      * <p>Controls the quality of the demosaicing
