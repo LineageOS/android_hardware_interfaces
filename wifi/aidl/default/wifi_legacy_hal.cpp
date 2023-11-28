@@ -457,6 +457,76 @@ void onSyncCachedScanResults(wifi_cached_scan_report* cache_report) {
     }
 }
 
+// Callback to be invoked for TWT failure
+std::function<void((wifi_request_id, wifi_twt_error_code error_code))>
+        on_twt_failure_internal_callback;
+void onAsyncTwtError(wifi_request_id id, wifi_twt_error_code error_code) {
+    const auto lock = aidl_sync_util::acquireGlobalLock();
+    if (on_twt_failure_internal_callback) {
+        on_twt_failure_internal_callback(id, error_code);
+    }
+}
+
+// Callback to be invoked for TWT session creation
+std::function<void((wifi_request_id, wifi_twt_session twt_session))>
+        on_twt_session_create_internal_callback;
+void onAsyncTwtSessionCreate(wifi_request_id id, wifi_twt_session twt_session) {
+    const auto lock = aidl_sync_util::acquireGlobalLock();
+    if (on_twt_session_create_internal_callback) {
+        on_twt_session_create_internal_callback(id, twt_session);
+    }
+}
+
+// Callback to be invoked for TWT session update
+std::function<void((wifi_request_id, wifi_twt_session twt_session))>
+        on_twt_session_update_internal_callback;
+void onAsyncTwtSessionUpdate(wifi_request_id id, wifi_twt_session twt_session) {
+    const auto lock = aidl_sync_util::acquireGlobalLock();
+    if (on_twt_session_update_internal_callback) {
+        on_twt_session_update_internal_callback(id, twt_session);
+    }
+}
+
+// Callback to be invoked for TWT session teardown
+std::function<void(
+        (wifi_request_id, int twt_session_id, wifi_twt_teardown_reason_code reason_code))>
+        on_twt_session_teardown_internal_callback;
+void onAsyncTwtSessionTeardown(wifi_request_id id, int twt_session_id,
+                               wifi_twt_teardown_reason_code reason_code) {
+    const auto lock = aidl_sync_util::acquireGlobalLock();
+    if (on_twt_session_teardown_internal_callback) {
+        on_twt_session_teardown_internal_callback(id, twt_session_id, reason_code);
+    }
+}
+
+// Callback to be invoked for TWT session get stats
+std::function<void((wifi_request_id, int twt_session_id, wifi_twt_session_stats stats))>
+        on_twt_session_stats_internal_callback;
+void onAsyncTwtSessionStats(wifi_request_id id, int twt_session_id, wifi_twt_session_stats stats) {
+    const auto lock = aidl_sync_util::acquireGlobalLock();
+    if (on_twt_session_stats_internal_callback) {
+        on_twt_session_stats_internal_callback(id, twt_session_id, stats);
+    }
+}
+
+// Callback to be invoked for TWT session suspend
+std::function<void((wifi_request_id, int twt_session_id))> on_twt_session_suspend_internal_callback;
+void onAsyncTwtSessionSuspend(wifi_request_id id, int twt_session_id) {
+    const auto lock = aidl_sync_util::acquireGlobalLock();
+    if (on_twt_session_suspend_internal_callback) {
+        on_twt_session_suspend_internal_callback(id, twt_session_id);
+    }
+}
+
+// Callback to be invoked for TWT session resume
+std::function<void((wifi_request_id, int twt_session_id))> on_twt_session_resume_internal_callback;
+void onAsyncTwtSessionResume(wifi_request_id id, int twt_session_id) {
+    const auto lock = aidl_sync_util::acquireGlobalLock();
+    if (on_twt_session_resume_internal_callback) {
+        on_twt_session_resume_internal_callback(id, twt_session_id);
+    }
+}
+
 // End of the free-standing "C" style callbacks.
 
 WifiLegacyHal::WifiLegacyHal(const std::weak_ptr<::android::wifi_system::InterfaceTool> iface_tool,
@@ -1787,6 +1857,103 @@ wifi_error WifiLegacyHal::setCoexUnsafeChannels(
 
 wifi_error WifiLegacyHal::setVoipMode(const std::string& iface_name, wifi_voip_mode mode) {
     return global_func_table_.wifi_set_voip_mode(getIfaceHandle(iface_name), mode);
+}
+
+std::pair<wifi_twt_capabilities, wifi_error> WifiLegacyHal::twtGetCapabilities(
+        const std::string& ifaceName) {
+    wifi_twt_capabilities capabs = {};
+    wifi_error status =
+            global_func_table_.wifi_twt_get_capabilities(getIfaceHandle(ifaceName), &capabs);
+    return {capabs, status};
+}
+
+wifi_error WifiLegacyHal::twtSessionSetup(
+        const std::string& ifaceName, uint32_t cmdId, const wifi_twt_request& request,
+        const on_twt_failure& on_twt_failure_user_callback,
+        const on_twt_session_create& on_twt_session_create_user_callback,
+        const on_twt_session_update& on_twt_session_update_user_callback,
+        const on_twt_session_teardown& on_twt_session_teardown_user_callback,
+        const on_twt_session_stats& on_twt_session_stats_user_callback,
+        const on_twt_session_suspend& on_twt_session_suspend_user_callback,
+        const on_twt_session_resume& on_twt_session_resume_user_callback) {
+    if (on_twt_failure_internal_callback || on_twt_session_create_internal_callback ||
+        on_twt_session_update_internal_callback || on_twt_session_teardown_internal_callback ||
+        on_twt_session_stats_internal_callback) {
+        return WIFI_ERROR_NOT_AVAILABLE;
+    }
+
+    on_twt_failure_internal_callback = [on_twt_failure_user_callback](
+                                               wifi_request_id id, wifi_twt_error_code error_code) {
+        on_twt_failure_user_callback(id, error_code);
+    };
+
+    on_twt_session_create_internal_callback = [on_twt_session_create_user_callback](
+                                                      wifi_request_id id,
+                                                      wifi_twt_session twt_session) {
+        on_twt_session_create_user_callback(id, twt_session);
+    };
+
+    on_twt_session_update_internal_callback = [on_twt_session_update_user_callback](
+                                                      wifi_request_id id,
+                                                      wifi_twt_session twt_session) {
+        on_twt_session_update_user_callback(id, twt_session);
+    };
+
+    on_twt_session_teardown_internal_callback = [on_twt_session_teardown_user_callback](
+                                                        wifi_request_id id, int session_id,
+                                                        wifi_twt_teardown_reason_code reason_code) {
+        on_twt_session_teardown_user_callback(id, session_id, reason_code);
+    };
+
+    on_twt_session_stats_internal_callback = [on_twt_session_stats_user_callback](
+                                                     wifi_request_id id, int session_id,
+                                                     wifi_twt_session_stats stats) {
+        on_twt_session_stats_user_callback(id, session_id, stats);
+    };
+
+    on_twt_session_suspend_internal_callback = [on_twt_session_suspend_user_callback](
+                                                       wifi_request_id id, int session_id) {
+        on_twt_session_suspend_user_callback(id, session_id);
+    };
+
+    on_twt_session_resume_internal_callback = [on_twt_session_resume_user_callback](
+                                                      wifi_request_id id, int session_id) {
+        on_twt_session_resume_user_callback(id, session_id);
+    };
+
+    return global_func_table_.wifi_twt_session_setup(
+            cmdId, getIfaceHandle(ifaceName), request,
+            {onAsyncTwtError, onAsyncTwtSessionCreate, onAsyncTwtSessionUpdate,
+             onAsyncTwtSessionTeardown, onAsyncTwtSessionStats, onAsyncTwtSessionSuspend,
+             onAsyncTwtSessionResume});
+}
+
+wifi_error WifiLegacyHal::twtSessionUpdate(const std::string& ifaceName, uint32_t cmdId,
+                                           uint32_t sessionId, const wifi_twt_request& request) {
+    return global_func_table_.wifi_twt_session_update(cmdId, getIfaceHandle(ifaceName), sessionId,
+                                                      request);
+}
+
+wifi_error WifiLegacyHal::twtSessionSuspend(const std::string& ifaceName, uint32_t cmdId,
+                                            uint32_t sessionId) {
+    return global_func_table_.wifi_twt_session_suspend(cmdId, getIfaceHandle(ifaceName), sessionId);
+}
+
+wifi_error WifiLegacyHal::twtSessionResume(const std::string& ifaceName, uint32_t cmdId,
+                                           uint32_t sessionId) {
+    return global_func_table_.wifi_twt_session_resume(cmdId, getIfaceHandle(ifaceName), sessionId);
+}
+
+wifi_error WifiLegacyHal::twtSessionTeardown(const std::string& ifaceName, uint32_t cmdId,
+                                             uint32_t sessionId) {
+    return global_func_table_.wifi_twt_session_teardown(cmdId, getIfaceHandle(ifaceName),
+                                                        sessionId);
+}
+
+wifi_error WifiLegacyHal::twtSessionGetStats(const std::string& ifaceName, uint32_t cmdId,
+                                             uint32_t sessionId) {
+    return global_func_table_.wifi_twt_session_get_stats(cmdId, getIfaceHandle(ifaceName),
+                                                         sessionId);
 }
 
 wifi_error WifiLegacyHal::twtRegisterHandler(const std::string& iface_name,

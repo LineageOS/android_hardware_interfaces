@@ -376,6 +376,13 @@ using ::wifi_scan_cmd_params;
 using ::WIFI_SCAN_FLAG_INTERRUPTED;
 using ::wifi_scan_result;
 using ::WIFI_SUCCESS;
+using ::wifi_twt_capabilities;
+using ::wifi_twt_error_code;
+using ::wifi_twt_events;
+using ::wifi_twt_request;
+using ::wifi_twt_session;
+using ::wifi_twt_session_stats;
+using ::wifi_twt_teardown_reason_code;
 using ::wifi_tx_packet_fate;
 using ::wifi_tx_report;
 using ::wifi_usable_channel;
@@ -554,6 +561,16 @@ struct CachedScanResultsCallbfackHandlers {
     // Callback for Cached Scan Results
     std::function<void(wifi_cached_scan_report*)> on_cached_scan_results;
 };
+
+using on_twt_failure = std::function<void(wifi_request_id id, wifi_twt_error_code error_code)>;
+using on_twt_session_create = std::function<void(wifi_request_id id, wifi_twt_session twt_session)>;
+using on_twt_session_update = std::function<void(wifi_request_id id, wifi_twt_session twt_session)>;
+using on_twt_session_teardown = std::function<void(wifi_request_id id, int session_id,
+                                                   wifi_twt_teardown_reason_code reason_code)>;
+using on_twt_session_stats =
+        std::function<void(wifi_request_id id, int session_id, wifi_twt_session_stats stats)>;
+using on_twt_session_suspend = std::function<void(wifi_request_id id, int session_id)>;
+using on_twt_session_resume = std::function<void(wifi_request_id id, int session_id)>;
 
 /**
  * Class that encapsulates all legacy HAL interactions.
@@ -761,19 +778,39 @@ class WifiLegacyHal {
 
     wifi_error setVoipMode(const std::string& iface_name, wifi_voip_mode mode);
 
+    // TWT functions
+    std::pair<wifi_twt_capabilities, wifi_error> twtGetCapabilities(const std::string& ifaceName);
+    wifi_error twtSessionSetup(const std::string& ifaceName, uint32_t cmdId,
+                               const wifi_twt_request& request,
+                               const on_twt_failure& on_twt_failure_user_callback,
+                               const on_twt_session_create& on_twt_session_create_user_callback,
+                               const on_twt_session_update& on_twt_session_update_user_callback,
+                               const on_twt_session_teardown& on_twt_session_teardown_user_callback,
+                               const on_twt_session_stats& on_twt_session_stats_user_callback,
+                               const on_twt_session_suspend& on_twt_session_suspend_user_callback,
+                               const on_twt_session_resume& on_twt_session_resume_user_callback);
+    wifi_error twtSessionUpdate(const std::string& ifaceName, uint32_t cmdId, uint32_t sessionId,
+                                const wifi_twt_request& request);
+    wifi_error twtSessionSuspend(const std::string& ifaceName, uint32_t cmdId, uint32_t sessionId);
+    wifi_error twtSessionResume(const std::string& ifaceName, uint32_t cmdId, uint32_t sessionId);
+    wifi_error twtSessionTeardown(const std::string& ifaceName, uint32_t cmdId, uint32_t sessionId);
+    wifi_error twtSessionGetStats(const std::string& ifaceName, uint32_t cmdId, uint32_t sessionId);
+
+    // Note: Following TWT functions are deprecated
+    // Deprecated
     wifi_error twtRegisterHandler(const std::string& iface_name,
                                   const TwtCallbackHandlers& handler);
-
+    // Deprecated by twtGetCapabilities
     std::pair<wifi_error, TwtCapabilitySet> twtGetCapability(const std::string& iface_name);
-
+    // Deprecated by twtSessionSetup
     wifi_error twtSetupRequest(const std::string& iface_name, const TwtSetupRequest& msg);
-
+    // Deprecated by twtSessionTeardown
     wifi_error twtTearDownRequest(const std::string& iface_name, const TwtTeardownRequest& msg);
-
+    // Deprecated by twtSessionSuspend and twtSessionResume
     wifi_error twtInfoFrameRequest(const std::string& iface_name, const TwtInfoFrameRequest& msg);
-
+    // Deprecated by twtSessionGetStats
     std::pair<wifi_error, TwtStats> twtGetStats(const std::string& iface_name, uint8_t configId);
-
+    // Deprecated
     wifi_error twtClearStats(const std::string& iface_name, uint8_t configId);
 
     wifi_error setScanMode(const std::string& iface_name, bool enable);
