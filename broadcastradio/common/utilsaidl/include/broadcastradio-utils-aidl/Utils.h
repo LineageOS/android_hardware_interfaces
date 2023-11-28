@@ -139,6 +139,7 @@ ProgramIdentifier makeIdentifier(IdentifierType type, int64_t value);
 ProgramSelector makeSelectorAmfm(uint32_t frequency);
 ProgramSelector makeSelectorDab(uint64_t sidExt);
 ProgramSelector makeSelectorDab(uint64_t sidExt, uint32_t ensemble, uint64_t freq);
+ProgramSelector makeSelectorHd(uint64_t stationId, uint64_t subChannel, uint64_t frequency);
 
 bool satisfies(const ProgramFilter& filter, const ProgramSelector& sel);
 
@@ -157,6 +158,14 @@ void updateProgramList(const ProgramListChunk& chunk, ProgramInfoSet* list);
 std::optional<std::string> getMetadataString(const ProgramInfo& info, const Metadata::Tag& tag);
 
 ProgramIdentifier makeHdRadioStationName(const std::string& name);
+
+uint32_t getHdFrequency(const ProgramSelector& sel);
+
+int getHdSubchannel(const ProgramSelector& sel);
+
+bool hasAmFmFrequency(const ProgramSelector& sel);
+
+uint32_t getAmFmFrequency(const ProgramSelector& sel);
 
 template <typename aidl_type>
 inline std::string vectorToString(const std::vector<aidl_type>& in_values) {
