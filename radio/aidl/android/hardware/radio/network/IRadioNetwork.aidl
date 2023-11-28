@@ -692,8 +692,6 @@ oneway interface IRadioNetwork {
      * Enables or disables security algorithm update reports via indication API
      * {@link IRadioNetworkIndication.securityAlgorithmsUpdated()}.
      *
-     * Note: The default value shall be enabled.
-     *
      * @param serial Serial number of request.
      * @param enable {@code true} to enable security algorithm update reports, {@code false} to
      *         disable.
