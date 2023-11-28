@@ -173,4 +173,10 @@ enum Mode {
      * or switching between inner and outer panels.
      */
     DISPLAY_CHANGE,
+
+    /**
+     * This mode indicates that the device is rendering to a remote display in
+     * a vehicle (such as Android Auto projection screen).
+     */
+    AUTOMOTIVE_PROJECTION,
 }
