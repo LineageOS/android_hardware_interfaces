@@ -54,6 +54,9 @@ interface ISupplicantStaIface {
   android.hardware.wifi.supplicant.IfaceType getType();
   android.hardware.wifi.supplicant.WpaDriverCapabilitiesMask getWpaDriverCapabilities();
   void initiateAnqpQuery(in byte[] macAddress, in android.hardware.wifi.supplicant.AnqpInfoId[] infoElements, in android.hardware.wifi.supplicant.Hs20AnqpSubtypes[] subTypes);
+  /**
+   * @deprecated No longer in use.
+   */
   void initiateHs20IconQuery(in byte[] macAddress, in String fileName);
   void initiateTdlsDiscover(in byte[] macAddress);
   void initiateTdlsSetup(in byte[] macAddress);

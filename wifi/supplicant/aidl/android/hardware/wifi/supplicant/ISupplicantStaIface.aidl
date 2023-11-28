@@ -304,6 +304,8 @@ interface ISupplicantStaIface {
      * The icon data fetched must be returned in the
      * |ISupplicantStaIfaceCallback.onHs20IconQueryDone| callback.
      *
+     * @deprecated No longer in use.
+     *
      * @param macAddress MAC address of the access point.
      * @param fileName Name of the file to request from the access point.
      * @throws ServiceSpecificException with one of the following values:
