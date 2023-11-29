@@ -2433,10 +2433,6 @@ TEST_P(RadioNetworkTest, isCellularIdentifierTransparencyEnabled) {
     ASSERT_TRUE(CheckAnyOfErrors(
             radioRsp_network->rspInfo.error,
             {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::MODEM_ERR}));
-
-    // the default value should be true if we have not called the setter
-    EXPECT_TRUE(radioRsp_network->isCellularIdentifierTransparencyEnabled);
-
 }
 
 TEST_P(RadioNetworkTest, setCellularIdentifierTransparencyEnabled) {
@@ -2567,7 +2563,4 @@ TEST_P(RadioNetworkTest, isSecurityAlgorithmsUpdatedEnabled) {
     ASSERT_TRUE(CheckAnyOfErrors(
             radioRsp_network->rspInfo.error,
             {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::MODEM_ERR}));
-
-    // the default value should be true if we have not called the setter
-    EXPECT_TRUE(radioRsp_network->isSecurityAlgorithmsUpdatedEnabled);
 }

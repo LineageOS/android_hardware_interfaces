@@ -54,5 +54,14 @@ enum NasProtocolMessage {
     REGISTRATION_REQUEST = 7,
     // Reference: 3GPP TS 24.501 8.2.12
     // Applies to 5g networks
-    DEREGISTRATION_REQUEST = 8
+    DEREGISTRATION_REQUEST = 8,
+    // Reference: 3GPP TS 24.008 9.2.4
+    // Applies to 2g and 3g networks
+    CM_REESTABLISHMENT_REQUEST = 9,
+    // Reference: 3GPP TS 24.008 9.2.9
+    // Applies to 2g and 3g networks
+    CM_SERVICE_REQUEST = 10,
+    // Reference: 3GPP TS 24.008 9.2.14
+    // Applies to 2g and 3g networks. Used for circuit-switched detach.
+    IMSI_DETACH_INDICATION = 11
 }
