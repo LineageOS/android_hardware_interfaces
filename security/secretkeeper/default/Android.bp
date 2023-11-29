@@ -22,8 +22,8 @@ rust_binary {
     name: "android.hardware.security.secretkeeper-service.nonsecure",
     relative_install_path: "hw",
     vendor: true,
-    init_rc: ["secretkeeper.rc"],
-    vintf_fragments: ["secretkeeper.xml"],
+    installable: false, // install APEX
+    prefer_rlib: true,
     rustlibs: [
         "android.hardware.security.secretkeeper-V1-rust",
         "libandroid_logger",
@@ -33,5 +33,36 @@ rust_binary {
     ],
     srcs: [
         "src/main.rs",
+    ],
+}
+
+prebuilt_etc {
+    name: "secretkeeper.rc",
+    src: "secretkeeper.rc",
+    installable: false,
+}
+
+prebuilt_etc {
+    name: "secretkeeper.xml",
+    src: "secretkeeper.xml",
+    sub_dir: "vintf",
+    installable: false,
+}
+
+apex {
+    name: "com.android.hardware.security.secretkeeper",
+    manifest: "apex_manifest.json",
+    file_contexts: "apex_file_contexts",
+    key: "com.android.hardware.key",
+    certificate: ":com.android.hardware.certificate",
+    vendor: true,
+    updatable: false,
+
+    binaries: [
+        "android.hardware.security.secretkeeper-service.nonsecure",
+    ],
+    prebuilts: [
+        "secretkeeper.rc",
+        "secretkeeper.xml",
     ],
 }
