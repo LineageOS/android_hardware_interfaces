@@ -35,10 +35,10 @@ var (
 	pctx = android.NewPackageContext("android/vintf")
 
 	assembleVintfRule = pctx.AndroidStaticRule("assemble_vintf", blueprint.RuleParams{
-		Command:     `${assembleVintfCmd} -i ${inputs} -o ${out} ${extraParams}`,
+		Command:     `${assembleVintfCmd} -i ${inputs} -o ${out}`,
 		CommandDeps: []string{"${assembleVintfCmd}"},
 		Description: "assemble_vintf -i ${inputs}",
-	}, "inputs", "extraParams")
+	}, "inputs")
 
 	xmllintXsd = pctx.AndroidStaticRule("xmllint-xsd", blueprint.RuleParams{
 		Command:     `$XmlLintCmd --quiet --schema $xsd $in > /dev/null && touch -a $out`,
@@ -64,13 +64,6 @@ type vintfCompatibilityMatrixProperties struct {
 
 	// list of kernel_config modules to be combined to final output
 	Kernel_configs []string
-
-	// Default is "default" for compatibility matrices on /vendor
-	// and /odm, and "disallow" for compatibility matrices on /system,
-	// /product, and /system_ext.
-	// If value is "only", only android.* HALs are allowed. If value
-	// is "disallow", none of android.* HALs are allowed.
-	Core_hals *string
 }
 
 type vintfCompatibilityMatrixRule struct {
@@ -173,8 +166,7 @@ func (g *vintfCompatibilityMatrixRule) GenerateAndroidBuildActions(ctx android.M
 		Implicits:   inputPaths,
 		Output:      g.genFile,
 		Args: map[string]string{
-			"inputs":      strings.Join(inputPaths.Strings(), ":"),
-			"extraParams": strings.Join(g.getExtraParams(), " "),
+			"inputs": strings.Join(inputPaths.Strings(), ":"),
 		},
 	})
 	g.generateValidateBuildAction(ctx, g.genFile, schema.Path())
@@ -198,24 +190,4 @@ func (g *vintfCompatibilityMatrixRule) AndroidMk() android.AndroidMkData {
 			},
 		},
 	}
-}
-
-// Return extra parameters to assemble_vintf.
-func (g *vintfCompatibilityMatrixRule) getExtraParams() []string {
-	var extraParams []string
-
-	coreHalsStrategy := proptools.StringDefault(
-		g.properties.Core_hals,
-		g.defaultCoreHalsStrategy(),
-	)
-	extraParams = append(extraParams, "--core-hals", proptools.ShellEscape(coreHalsStrategy))
-	return extraParams
-}
-
-func (g *vintfCompatibilityMatrixRule) defaultCoreHalsStrategy() string {
-	// TODO(b/290408770): default to "disallow" for FCMs
-
-	// For Device (vendor, odm) compatibility matrix, default is
-	// to not check anything.
-	return "default"
 }
