@@ -28,8 +28,7 @@ class ModuleBluetooth final : public Module {
                        std::weak_ptr<IBluetoothLe>>
             BtProfileHandles;
 
-    ModuleBluetooth(std::unique_ptr<Configuration>&& config)
-        : Module(Type::BLUETOOTH, std::move(config)) {}
+    ModuleBluetooth(std::unique_ptr<Configuration>&& config);
 
   private:
     ChildInterface<BluetoothA2dp>& getBtA2dp();
