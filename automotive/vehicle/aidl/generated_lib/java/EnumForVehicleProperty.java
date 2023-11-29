@@ -93,7 +93,8 @@ public final class EnumForVehicleProperty {
         Map.entry(VehicleProperty.CRUISE_CONTROL_STATE, List.of(CruiseControlState.class, ErrorState.class)),
         Map.entry(VehicleProperty.CRUISE_CONTROL_COMMAND, List.of(CruiseControlCommand.class)),
         Map.entry(VehicleProperty.HANDS_ON_DETECTION_DRIVER_STATE, List.of(HandsOnDetectionDriverState.class, ErrorState.class)),
-        Map.entry(VehicleProperty.HANDS_ON_DETECTION_WARNING, List.of(HandsOnDetectionWarning.class, ErrorState.class))
+        Map.entry(VehicleProperty.HANDS_ON_DETECTION_WARNING, List.of(HandsOnDetectionWarning.class, ErrorState.class)),
+        Map.entry(VehicleProperty.DRIVER_DROWSINESS_ATTENTION_STATE, List.of(DriverDrowsinessAttentionState.class, ErrorState.class))
     );
 
 }
