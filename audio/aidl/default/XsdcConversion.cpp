@@ -205,24 +205,28 @@ ConversionResult<AudioProfile> convertAudioProfileToAidl(const ap_xsd::Profile& 
 ConversionResult<AudioIoFlags> convertIoFlagsToAidl(
         const std::vector<ap_xsd::AudioInOutFlag>& flags, const ap_xsd::Role role,
         bool flagsForMixPort) {
-    int flagMask = 0;
+    int legacyFlagMask = 0;
     if ((role == ap_xsd::Role::sink && flagsForMixPort) ||
         (role == ap_xsd::Role::source && !flagsForMixPort)) {
         for (const ap_xsd::AudioInOutFlag& flag : flags) {
             audio_input_flags_t legacyFlag;
             if (::android::InputFlagConverter::fromString(ap_xsd::toString(flag), legacyFlag)) {
-                flagMask |= static_cast<int>(legacyFlag);
+                legacyFlagMask |= static_cast<int>(legacyFlag);
             }
         }
-        return AudioIoFlags::make<AudioIoFlags::Tag::input>(flagMask);
+        return AudioIoFlags::make<AudioIoFlags::Tag::input>(
+                VALUE_OR_FATAL(legacy2aidl_audio_input_flags_t_int32_t_mask(
+                        static_cast<audio_input_flags_t>(legacyFlagMask))));
     } else {
         for (const ap_xsd::AudioInOutFlag& flag : flags) {
             audio_output_flags_t legacyFlag;
             if (::android::OutputFlagConverter::fromString(ap_xsd::toString(flag), legacyFlag)) {
-                flagMask |= static_cast<int>(legacyFlag);
+                legacyFlagMask |= static_cast<int>(legacyFlag);
             }
         }
-        return AudioIoFlags::make<AudioIoFlags::Tag::output>(flagMask);
+        return AudioIoFlags::make<AudioIoFlags::Tag::output>(
+                VALUE_OR_FATAL(legacy2aidl_audio_output_flags_t_int32_t_mask(
+                        static_cast<audio_output_flags_t>(legacyFlagMask))));
     }
 }
 
