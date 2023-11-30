@@ -14,8 +14,9 @@ CsrPayload = [                      ; CBOR Array defining the payload for Csr
 ; be extended without requiring a version bump of the HAL. Custom certificate types may
 ; be used, but the provisioning server may reject the request for an unknown certificate
 ; type. The currently defined certificate types are:
-;  - "widevine"
-;  - "keymint"
+;  * "widevine" -- Widevine content protection system
+;  * "keymint"  -- KeyMint HAL
+;  * "rkp-vm"   -- See "Support for Android Virtualization Framework" in the README.md file.
 CertificateType = tstr
 
 KeysToSign = [ * PublicKey ]   ; Please see PublicKey.cddl for the PublicKey definition.
@@ -112,6 +113,7 @@ ConfigurationDescriptor = {                  ; Configuration Descriptor
     ? -70003 : int / tstr,                   ; Component version
     ? -70004 : null,                         ; Resettable
     ? -70005 : uint,                         ; Security version
+    ? -70006 : null,                         ; RKP VM marker
 }
 
 ; Each entry in the DICE chain is a DiceChainEntryPayload signed by the key from the previous
