@@ -4128,6 +4128,14 @@
                     ]
                 }
             ]
+        },
+        {
+            "property": "VehicleProperty::ELECTRONIC_STABILITY_CONTROL_ENABLED",
+            "defaultValue": {
+                "int32Values": [
+                    1
+                ]
+            }
         }
     ]
 }

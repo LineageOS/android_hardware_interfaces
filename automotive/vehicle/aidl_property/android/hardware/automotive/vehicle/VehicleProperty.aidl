@@ -688,6 +688,27 @@ enum VehicleProperty {
     EV_STOPPING_MODE =
             0x040D + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
     /**
+     * Enable or disable Electronic Stability Control (ESC).
+     *
+     * Set true to enable ESC and false to disable ESC. When ESC is enabled, a system in the vehicle
+     * should be controlling the tires during instances with high risk of skidding to actively
+     * prevent the same from happening.
+     *
+     * In general, ELECTRONIC_STABILITY_CONTROL_ENABLED should always return true or false. If the
+     * feature is not available due to some temporary state, such as the vehicle speed being too
+     * high, that information must be conveyed through the ErrorState values in the
+     * ELECTRONIC_STABILITY_CONTROL_STATE property.
+     *
+     * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
+     * implement it as VehiclePropertyAccess.READ only.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
+     */
+    ELECTRONIC_STABILITY_CONTROL_ENABLED =
+            0x040E + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+    /**
      * HVAC Properties
      *
      * Additional rules for mapping non-GLOBAL VehicleArea type HVAC properties

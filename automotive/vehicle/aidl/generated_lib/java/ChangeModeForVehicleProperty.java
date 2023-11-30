@@ -77,6 +77,7 @@ public final class ChangeModeForVehicleProperty {
         Map.entry(VehicleProperty.ABS_ACTIVE, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.TRACTION_CONTROL_ACTIVE, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.EV_STOPPING_MODE, VehiclePropertyChangeMode.ON_CHANGE),
+        Map.entry(VehicleProperty.ELECTRONIC_STABILITY_CONTROL_ENABLED, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.HVAC_FAN_SPEED, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.HVAC_FAN_DIRECTION, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.HVAC_TEMPERATURE_CURRENT, VehiclePropertyChangeMode.ON_CHANGE),
