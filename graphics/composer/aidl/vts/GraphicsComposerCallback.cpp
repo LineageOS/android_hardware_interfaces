@@ -17,6 +17,7 @@
 #include "GraphicsComposerCallback.h"
 #include <log/log_main.h>
 #include <utils/Timers.h>
+#include <cinttypes>
 
 #pragma push_macro("LOG_TAG")
 #undef LOG_TAG
@@ -191,6 +192,20 @@ int32_t GraphicsComposerCallback::getInvalidRefreshRateDebugEnabledCallbackCount
         mVsyncIdleTime = systemTime();
     }
     return ::ndk::ScopedAStatus::ok();
+}
+
+::ndk::ScopedAStatus GraphicsComposerCallback::onHotplugEvent(int64_t in_display,
+                                                              common::DisplayHotplugEvent event) {
+    switch (event) {
+        case common::DisplayHotplugEvent::CONNECTED:
+            return onHotplug(in_display, true);
+        case common::DisplayHotplugEvent::DISCONNECTED:
+            return onHotplug(in_display, false);
+        default:
+            ALOGE("%s(): display:%" PRIu64 ", event:%d", __func__, in_display,
+                  static_cast<int32_t>(event));
+            return ::ndk::ScopedAStatus::ok();
+    }
 }
 
 }  // namespace aidl::android::hardware::graphics::composer3::vts

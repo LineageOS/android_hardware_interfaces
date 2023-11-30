@@ -49,7 +49,12 @@ VirtualProgram::operator ProgramInfo() const {
             break;
         case IdentifierType::HD_STATION_ID_EXT:
             info.logicallyTunedTo = selectId(IdentifierType::HD_STATION_ID_EXT);
-            info.physicallyTunedTo = selectId(IdentifierType::AMFM_FREQUENCY_KHZ);
+            if (utils::hasId(info.selector, IdentifierType::AMFM_FREQUENCY_KHZ)) {
+                info.physicallyTunedTo = selectId(IdentifierType::AMFM_FREQUENCY_KHZ);
+            } else {
+                info.physicallyTunedTo = utils::makeIdentifier(
+                        IdentifierType::AMFM_FREQUENCY_KHZ, utils::getHdFrequency(info.selector));
+            }
             break;
         case IdentifierType::DAB_SID_EXT:
             info.logicallyTunedTo = selectId(IdentifierType::DAB_SID_EXT);
@@ -91,9 +96,34 @@ bool operator<(const VirtualProgram& lhs, const VirtualProgram& rhs) {
     auto& l = lhs.selector;
     auto& r = rhs.selector;
 
-    // Two programs with the same primaryId are considered the same.
-    if (l.primaryId.type != r.primaryId.type) return l.primaryId.type < r.primaryId.type;
+    if ((utils::hasId(l, IdentifierType::AMFM_FREQUENCY_KHZ) ||
+         l.primaryId.type == IdentifierType::HD_STATION_ID_EXT) &&
+        (utils::hasId(r, IdentifierType::AMFM_FREQUENCY_KHZ) ||
+         r.primaryId.type == IdentifierType::HD_STATION_ID_EXT)) {
+        uint32_t freq1 = utils::getAmFmFrequency(l);
+        int subChannel1 = l.primaryId.type == IdentifierType::HD_STATION_ID_EXT
+                                  ? utils::getHdSubchannel(l)
+                                  : 0;
+        uint32_t freq2 = utils::getAmFmFrequency(r);
+        int subChannel2 = r.primaryId.type == IdentifierType::HD_STATION_ID_EXT
+                                  ? utils::getHdSubchannel(r)
+                                  : 0;
+        return freq1 < freq2 || (freq1 == freq2 && (l.primaryId.type < r.primaryId.type ||
+                                                    subChannel1 < subChannel2));
+    } else if (l.primaryId.type == IdentifierType::DAB_SID_EXT &&
+               l.primaryId.type == IdentifierType::DAB_SID_EXT) {
+        uint64_t dabFreq1 = utils::getId(l, IdentifierType::DAB_FREQUENCY_KHZ);
+        uint64_t dabFreq2 = utils::getId(r, IdentifierType::DAB_FREQUENCY_KHZ);
+        if (dabFreq1 != dabFreq2) {
+            return dabFreq1 < dabFreq2;
+        }
+        return utils::getId(l, IdentifierType::DAB_ENSEMBLE) <
+               utils::getId(r, IdentifierType::DAB_ENSEMBLE);
+    }
 
+    if (l.primaryId.type != r.primaryId.type) {
+        return l.primaryId.type < r.primaryId.type;
+    }
     return l.primaryId.value < r.primaryId.value;
 }
 

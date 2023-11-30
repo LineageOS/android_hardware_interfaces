@@ -49,12 +49,6 @@ bool haveEqualIds(const ProgramSelector& a, const ProgramSelector& b, const Iden
     return getId(a, type) == getId(b, type);
 }
 
-int getHdSubchannel(const ProgramSelector& sel) {
-    int64_t hdSidExt = getId(sel, IdentifierType::HD_STATION_ID_EXT, /* defaultValue */ 0);
-    hdSidExt >>= 32;        // Station ID number
-    return hdSidExt & 0xF;  // HD Radio subchannel
-}
-
 bool maybeGetId(const ProgramSelector& sel, const IdentifierType& type, int64_t* val) {
     // iterate through primaryId and secondaryIds
     for (auto it = begin(sel); it != end(sel); it++) {
@@ -132,8 +126,13 @@ bool tunesTo(const ProgramSelector& a, const ProgramSelector& b) {
         case IdentifierType::AMFM_FREQUENCY_KHZ:
             if (haveEqualIds(a, b, IdentifierType::HD_STATION_ID_EXT)) return true;
             if (haveEqualIds(a, b, IdentifierType::RDS_PI)) return true;
-            return getHdSubchannel(b) == 0 &&
-                   haveEqualIds(a, b, IdentifierType::AMFM_FREQUENCY_KHZ);
+            if (getHdSubchannel(b) != 0) {  // supplemental program services
+                return false;
+            }
+            return haveEqualIds(a, b, IdentifierType::AMFM_FREQUENCY_KHZ) ||
+                   (b.primaryId.type == IdentifierType::HD_STATION_ID_EXT &&
+                    static_cast<uint32_t>(getId(a, IdentifierType::AMFM_FREQUENCY_KHZ)) ==
+                            getAmFmFrequency(b));
         case IdentifierType::DAB_SID_EXT:
             if (!haveEqualIds(a, b, IdentifierType::DAB_SID_EXT)) {
                 return false;
@@ -316,6 +315,13 @@ ProgramSelector makeSelectorDab(uint64_t sidExt) {
     return sel;
 }
 
+ProgramSelector makeSelectorHd(uint64_t stationId, uint64_t subChannel, uint64_t frequency) {
+    ProgramSelector sel = {};
+    uint64_t sidExt = stationId | (subChannel << 32) | (frequency << 36);
+    sel.primaryId = makeIdentifier(IdentifierType::HD_STATION_ID_EXT, sidExt);
+    return sel;
+}
+
 ProgramSelector makeSelectorDab(uint64_t sidExt, uint32_t ensemble, uint64_t freq) {
     ProgramSelector sel = {};
     sel.primaryId = makeIdentifier(IdentifierType::DAB_SID_EXT, sidExt);
@@ -481,6 +487,32 @@ ProgramIdentifier makeHdRadioStationName(const std::string& name) {
 
 IdentifierType getType(int typeAsInt) {
     return static_cast<IdentifierType>(typeAsInt);
+}
+
+int getHdSubchannel(const ProgramSelector& sel) {
+    int64_t hdSidExt = getId(sel, IdentifierType::HD_STATION_ID_EXT, kValueForNotFoundIdentifier);
+    hdSidExt >>= 32;        // Station ID number
+    return hdSidExt & 0xF;  // HD Radio subchannel
+}
+
+uint32_t getHdFrequency(const ProgramSelector& sel) {
+    int64_t hdSidExt = getId(sel, IdentifierType::HD_STATION_ID_EXT, kValueForNotFoundIdentifier);
+    if (hdSidExt == kValueForNotFoundIdentifier) {
+        return kValueForNotFoundIdentifier;
+    }
+    return static_cast<uint32_t>((hdSidExt >> 36) & 0x3FFFF);  // HD Radio subchannel
+}
+
+bool hasAmFmFrequency(const ProgramSelector& sel) {
+    return hasId(sel, IdentifierType::AMFM_FREQUENCY_KHZ) ||
+           sel.primaryId.type == IdentifierType::HD_STATION_ID_EXT;
+}
+
+uint32_t getAmFmFrequency(const ProgramSelector& sel) {
+    if (hasId(sel, IdentifierType::AMFM_FREQUENCY_KHZ)) {
+        return static_cast<uint32_t>(getId(sel, IdentifierType::AMFM_FREQUENCY_KHZ));
+    }
+    return getHdFrequency(sel);
 }
 
 bool parseArgInt(const std::string& s, int* out) {

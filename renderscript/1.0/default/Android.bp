@@ -27,6 +27,12 @@ cc_library_shared {
         "android.hardware.renderscript@1.0",
     ],
 
+    runtime_libs: [
+        "libRS_internal",
+        //TODO(b/313564579) Install libRSDriver as dependency of libRS_internal
+        "libRSDriver",
+    ],
+
     product_variables: {
         override_rs_driver: {
             cflags: ["-DOVERRIDE_RS_DRIVER=%s"],

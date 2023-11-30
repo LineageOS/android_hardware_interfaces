@@ -176,6 +176,42 @@ VhalResult<void> VehiclePropertyStore::writeValue(VehiclePropValuePool::Recyclab
     return {};
 }
 
+void VehiclePropertyStore::refreshTimestamp(int32_t propId, int32_t areaId, EventMode eventMode) {
+    VehiclePropValue updatedValue;
+    OnValueChangeCallback onValueChangeCallback = nullptr;
+    {
+        std::scoped_lock<std::mutex> g(mLock);
+
+        VehiclePropertyStore::Record* record = getRecordLocked(propId);
+        if (record == nullptr) {
+            return;
+        }
+
+        VehiclePropValue propValue = {
+                .areaId = areaId,
+                .prop = propId,
+                .value = {},
+        };
+
+        VehiclePropertyStore::RecordId recId = getRecordIdLocked(propValue, *record);
+        if (auto it = record->values.find(recId); it != record->values.end()) {
+            it->second->timestamp = elapsedRealtimeNano();
+            updatedValue = *(it->second);
+        } else {
+            return;
+        }
+        if (!mOnValueChangeCallback) {
+            return;
+        }
+        onValueChangeCallback = mOnValueChangeCallback;
+    }
+
+    // Invoke the callback outside the lock to prevent dead-lock.
+    if (eventMode == EventMode::ALWAYS) {
+        onValueChangeCallback(updatedValue);
+    }
+}
+
 void VehiclePropertyStore::removeValue(const VehiclePropValue& propValue) {
     std::scoped_lock<std::mutex> g(mLock);
 

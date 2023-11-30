@@ -106,6 +106,11 @@ class VehiclePropertyStore final {
                                 EventMode mode = EventMode::ON_VALUE_CHANGE,
                                 bool useCurrentTimestamp = false) EXCLUDES(mLock);
 
+    // Refresh the timestamp for the stored property value for [propId, areaId]. If eventMode is
+    // always, generates the property update event, otherwise, only update the stored timestamp
+    // without generating event. This operation is atomic with other writeValue operations.
+    void refreshTimestamp(int32_t propId, int32_t areaId, EventMode eventMode) EXCLUDES(mLock);
+
     // Remove a given property value from the property store. The 'propValue' would be used to
     // generate the key for the value to remove.
     void removeValue(

@@ -1792,6 +1792,12 @@ void verify_root_of_trust(const vector<uint8_t>& verified_boot_key, bool device_
     std::string empty_boot_key(32, '\0');
     std::string verified_boot_key_str((const char*)verified_boot_key.data(),
                                       verified_boot_key.size());
+    if (get_vsr_api_level() >= __ANDROID_API_V__) {
+        // The attestation should contain the SHA-256 hash of the verified boot
+        // key.  However, this was not checked for earlier versions of the KeyMint
+        // HAL so only be strict for VSR-V and above.
+        EXPECT_LE(verified_boot_key.size(), 32);
+    }
     EXPECT_NE(property_get("ro.boot.verifiedbootstate", property_value, ""), 0);
     if (!strcmp(property_value, "green")) {
         EXPECT_EQ(verified_boot_state, VerifiedBoot::VERIFIED);

@@ -21,6 +21,7 @@ namespace aidl::android::hardware::broadcastradio {
 
 using ::aidl::android::hardware::broadcastradio::utils::makeSelectorAmfm;
 using ::aidl::android::hardware::broadcastradio::utils::makeSelectorDab;
+using ::aidl::android::hardware::broadcastradio::utils::makeSelectorHd;
 using ::std::string;
 using ::std::vector;
 
@@ -38,11 +39,25 @@ const vector<VirtualProgram>& VirtualRadio::getProgramList() const {
 }
 
 bool VirtualRadio::getProgram(const ProgramSelector& selector, VirtualProgram* programOut) const {
-    for (const auto& program : mPrograms) {
-        if (utils::tunesTo(selector, program.selector)) {
-            *programOut = program;
-            return true;
+    for (auto it = mPrograms.begin(); it != mPrograms.end(); it++) {
+        if (!utils::tunesTo(selector, it->selector)) {
+            continue;
         }
+        auto firstMatchIt = it;
+        if (utils::hasAmFmFrequency(it->selector)) {
+            uint32_t channelFreq = utils::getAmFmFrequency(it->selector);
+            it++;
+            while (it != mPrograms.end() && utils::hasAmFmFrequency(it->selector) &&
+                   utils::getAmFmFrequency(it->selector) == channelFreq) {
+                if (it->selector == selector) {
+                    *programOut = *it;
+                    return true;
+                }
+                it++;
+            }
+        }
+        *programOut = *firstMatchIt;
+        return true;
     }
     return false;
 }
@@ -56,15 +71,27 @@ const VirtualRadio& VirtualRadio::getAmFmRadio() {
             {makeSelectorAmfm(/* frequency= */ 94900u), "Wild 94.9", "Drake ft. Rihanna",
                 "Too Good"},
             {makeSelectorAmfm(/* frequency= */ 96500u), "KOIT", "Celine Dion", "All By Myself"},
-            {makeSelectorAmfm(/* frequency= */ 97300u), "Alice@97.3", "Drops of Jupiter", "Train"},
-            {makeSelectorAmfm(/* frequency= */ 99700u), "99.7 Now!", "The Chainsmokers", "Closer"},
             {makeSelectorAmfm(/* frequency= */ 101300u), "101-3 KISS-FM", "Justin Timberlake",
                 "Rock Your Body"},
             {makeSelectorAmfm(/* frequency= */ 103700u), "iHeart80s @ 103.7", "Michael Jackson",
                 "Billie Jean"},
             {makeSelectorAmfm(/* frequency= */ 106100u), "106 KMEL", "Drake", "Marvins Room"},
-            {makeSelectorAmfm(/* frequency= */ 700u), "700 AM", "Artist700", "Title700"},
-            {makeSelectorAmfm(/* frequency= */ 1700u), "1700 AM", "Artist1700", "Title1700"},
+            {makeSelectorAmfm(/* frequency= */ 560u), "Talk Radio 560 KSFO", "Artist560", "Title560"},
+            {makeSelectorAmfm(/* frequency= */ 680u), "KNBR 680", "Artist680", "Title680"},
+            {makeSelectorAmfm(/* frequency= */ 97300u), "Alice@97.3", "Drops of Jupiter", "Train"},
+            {makeSelectorAmfm(/* frequency= */ 99700u), "99.7 Now!", "The Chainsmokers", "Closer"},
+            {makeSelectorHd(/* stationId= */ 0xA0000001u, /* subChannel= */ 0u, /* frequency= */ 97700u),
+                "K-LOVE", "ArtistHd0", "TitleHd0"},
+            {makeSelectorHd(/* stationId= */ 0xA0000001u, /* subChannel= */ 1u, /* frequency= */ 97700u),
+                "Air1", "ArtistHd1", "TitleHd1"},
+            {makeSelectorHd(/* stationId= */ 0xA0000001u, /* subChannel= */ 2u, /* frequency= */ 97700u),
+                "K-LOVE Classics", "ArtistHd2", "TitleHd2"},
+            {makeSelectorHd(/* stationId= */ 0xA0000001u, /* subChannel= */ 0u, /* frequency= */ 98500u),
+                "98.5-1 South Bay's Classic Rock", "ArtistHd0", "TitleHd0"},
+            {makeSelectorHd(/* stationId= */ 0xA0000001u, /* subChannel= */ 1u, /* frequency= */ 98500u),
+                "Highway 1 - Different", "ArtistHd1", "TitleHd1"},
+            {makeSelectorHd(/* stationId= */ 0xB0000001u, /* subChannel= */ 0u, /* frequency= */ 1170u),
+                "KLOK", "ArtistHd1", "TitleHd1"},
         });
     // clang-format on
     return amFmRadioMock;
