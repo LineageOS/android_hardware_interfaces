@@ -40,6 +40,13 @@ ndk::ScopedAStatus RadioConfigResponse::getPhoneCapabilityResponse(
     return ndk::ScopedAStatus::ok();
 }
 
+ndk::ScopedAStatus RadioConfigResponse::getSimultaneousCallingSupportResponse(
+        const RadioResponseInfo& info, const std::vector<int32_t>& /* enabledLogicalSlots */) {
+    rspInfo = info;
+    parent_config.notify(info.serial);
+    return ndk::ScopedAStatus::ok();
+}
+
 ndk::ScopedAStatus RadioConfigResponse::setPreferredDataModemResponse(
         const RadioResponseInfo& info) {
     rspInfo = info;

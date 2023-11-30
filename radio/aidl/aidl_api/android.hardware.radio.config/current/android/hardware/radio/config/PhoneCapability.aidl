@@ -39,4 +39,6 @@ parcelable PhoneCapability {
   byte maxActiveInternetData;
   boolean isInternetLingeringSupported;
   byte[] logicalModemIds;
+  byte maxActiveVoice = UNKNOWN /* -1 */;
+  const byte UNKNOWN = (-1) /* -1 */;
 }

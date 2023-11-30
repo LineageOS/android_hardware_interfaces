@@ -62,6 +62,13 @@ ScopedAStatus RadioConfig::getPhoneCapability(int32_t serial) {
     return ok();
 }
 
+ScopedAStatus RadioConfig::getSimultaneousCallingSupport(int32_t serial) {
+    LOG_CALL << serial;
+    LOG(ERROR) << " getSimultaneousCallingSupport is unsupported by HIDL HALs";
+    respond()->getSimultaneousCallingSupportResponse(notSupported(serial), {});
+    return ok();
+}
+
 ScopedAStatus RadioConfig::getSimSlotsStatus(int32_t serial) {
     LOG_CALL << serial;
     mHal1_1->getSimSlotsStatus(serial);

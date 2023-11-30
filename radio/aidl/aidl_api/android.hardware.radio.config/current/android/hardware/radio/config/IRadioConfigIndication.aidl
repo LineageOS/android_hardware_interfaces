@@ -36,4 +36,5 @@ package android.hardware.radio.config;
 @VintfStability
 interface IRadioConfigIndication {
   oneway void simSlotsStatusChanged(in android.hardware.radio.RadioIndicationType type, in android.hardware.radio.config.SimSlotStatus[] slotStatus);
+  oneway void onSimultaneousCallingSupportChanged(in int[] enabledLogicalSlots);
 }
