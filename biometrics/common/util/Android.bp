@@ -13,6 +13,6 @@ cc_library {
     shared_libs: [
         "libbase",
         "libbinder_ndk",
-        "android.hardware.biometrics.common-V3-ndk",
+        "android.hardware.biometrics.common-V4-ndk",
     ],
 }
