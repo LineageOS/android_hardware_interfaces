@@ -3219,6 +3219,19 @@
             }
         },
         {
+            "property": "VehicleProperty::HEAD_UP_DISPLAY_ENABLED",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "Constants::SEAT_1_LEFT"
+                }
+            ]
+        },
+        {
             "property": "VehicleProperty::OBD2_LIVE_FRAME",
             "configArray": [
                 0,

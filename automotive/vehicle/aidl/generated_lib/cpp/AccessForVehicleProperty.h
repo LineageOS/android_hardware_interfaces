@@ -125,6 +125,7 @@ std::unordered_map<VehicleProperty, VehiclePropertyAccess> AccessForVehiclePrope
         {VehicleProperty::DISPLAY_BRIGHTNESS, VehiclePropertyAccess::READ_WRITE},
         {VehicleProperty::PER_DISPLAY_BRIGHTNESS, VehiclePropertyAccess::READ_WRITE},
         {VehicleProperty::VALET_MODE_ENABLED, VehiclePropertyAccess::READ_WRITE},
+        {VehicleProperty::HEAD_UP_DISPLAY_ENABLED, VehiclePropertyAccess::READ_WRITE},
         {VehicleProperty::HW_KEY_INPUT, VehiclePropertyAccess::READ},
         {VehicleProperty::HW_KEY_INPUT_V2, VehiclePropertyAccess::READ},
         {VehicleProperty::HW_MOTION_INPUT, VehiclePropertyAccess::READ},

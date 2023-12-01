@@ -117,6 +117,7 @@ public final class AccessForVehicleProperty {
         Map.entry(VehicleProperty.DISPLAY_BRIGHTNESS, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.PER_DISPLAY_BRIGHTNESS, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.VALET_MODE_ENABLED, VehiclePropertyAccess.READ_WRITE),
+        Map.entry(VehicleProperty.HEAD_UP_DISPLAY_ENABLED, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.HW_KEY_INPUT, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.HW_KEY_INPUT_V2, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.HW_MOTION_INPUT, VehiclePropertyAccess.READ),

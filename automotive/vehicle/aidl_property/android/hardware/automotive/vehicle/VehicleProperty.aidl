@@ -1590,6 +1590,22 @@ enum VehicleProperty {
     VALET_MODE_ENABLED =
             0x0A05 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
     /**
+     * Head up display (HUD) enabled
+     *
+     * This property allows the user to turn on/off the HUD for their seat.
+     *
+     * Each HUD in the vehicle should be assigned to the seat that is intended to use it. For
+     * example, if there is a single HUD in the vehicle that is used by the driver so that they no
+     * longer need to continuously look at the instrument cluster, then this property should be
+     * defined with a single area ID equal to the driver's seat area value.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
+     */
+    HEAD_UP_DISPLAY_ENABLED =
+            0x0A06 + VehiclePropertyGroup.SYSTEM + VehicleArea.SEAT + VehiclePropertyType.BOOLEAN,
+    /**
      * Property to feed H/W input events to android
      *
      * int32Values[0] : action defined by VehicleHwKeyInputAction
