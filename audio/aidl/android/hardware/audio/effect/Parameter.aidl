@@ -16,6 +16,8 @@
 
 package android.hardware.audio.effect;
 
+import android.hardware.audio.common.SinkMetadata;
+import android.hardware.audio.common.SourceMetadata;
 import android.hardware.audio.effect.AcousticEchoCanceler;
 import android.hardware.audio.effect.AutomaticGainControlV1;
 import android.hardware.audio.effect.AutomaticGainControlV2;
@@ -198,4 +200,20 @@ union Parameter {
         Spatializer spatializer;
     }
     Specific specific;
+
+    /**
+     * SinkMetadata defines the metadata of record AudioTracks which the effect instance associate
+     * with.
+     * The effect engine is required to set Flags.sinkMetadataIndication to true if it wants to
+     * receive sinkMetadata update from the audio framework.
+     */
+    SinkMetadata sinkMetadata;
+
+    /**
+     * SourceMetadata defines the metadata of playback AudioTracks which the effect instance
+     * associate with.
+     * The effect engine is required to set Flags.sourceMetadataIndication to true if it wants to
+     * receive sourceMetadata update from the audio framework.
+     */
+    SourceMetadata sourceMetadata;
 }
