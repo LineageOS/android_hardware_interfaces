@@ -36,6 +36,7 @@ class VirtualRadio final {
     std::string getName() const;
     const std::vector<VirtualProgram>& getProgramList() const;
     bool getProgram(const ProgramSelector& selector, VirtualProgram* program) const;
+    std::vector<IdentifierType> getSupportedIdentifierTypes() const;
 
     static const VirtualRadio& getAmFmRadio();
     static const VirtualRadio& getDabRadio();

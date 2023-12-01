@@ -489,6 +489,21 @@ IdentifierType getType(int typeAsInt) {
     return static_cast<IdentifierType>(typeAsInt);
 }
 
+uint32_t getDabSId(const ProgramSelector& sel) {
+    int64_t dabSidExt = getId(sel, IdentifierType::DAB_SID_EXT, /* defaultValue */ 0);
+    return static_cast<uint32_t>(dabSidExt & 0xFFFFFFFF);
+}
+
+int getDabEccCode(const ProgramSelector& sel) {
+    int64_t dabSidExt = getId(sel, IdentifierType::DAB_SID_EXT, /* defaultValue */ 0);
+    return static_cast<uint32_t>((dabSidExt >> 32) & 0xFF);
+}
+
+int getDabSCIdS(const ProgramSelector& sel) {
+    int64_t dabSidExt = getId(sel, IdentifierType::DAB_SID_EXT, /* defaultValue */ 0);
+    return static_cast<uint32_t>((dabSidExt >> 40) & 0xF);
+}
+
 int getHdSubchannel(const ProgramSelector& sel) {
     int64_t hdSidExt = getId(sel, IdentifierType::HD_STATION_ID_EXT, kValueForNotFoundIdentifier);
     hdSidExt >>= 32;        // Station ID number
