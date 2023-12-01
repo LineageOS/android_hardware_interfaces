@@ -144,4 +144,18 @@ parcelable Flags {
      * Set to true if the effect instance bypass audio data (no processing).
      */
     boolean bypass;
+
+    /**
+     * Effect instance sets this flag to true if it requires record AudioTrack metadata update. In
+     * this case the framework must call IEffect.setParameter to notify effect instance when there
+     * is a change in sinkMetadata.
+     */
+    boolean sinkMetadataIndication;
+
+    /**
+     * Effect instance sets this flag to true if it requires playback AudioTrack metadata update. In
+     * this case the framework must call IEffect.setParameter to notify effect instance when there
+     * is a change in sourceMetadata.
+     */
+    boolean sourceMetadataIndication;
 }
