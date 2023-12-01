@@ -1147,6 +1147,8 @@ legacy_hal::fw_roaming_state_t convertAidlRoamingStateToLegacy(StaRoamingState s
             return legacy_hal::ROAMING_ENABLE;
         case StaRoamingState::DISABLED:
             return legacy_hal::ROAMING_DISABLE;
+        case StaRoamingState::AGGRESSIVE:
+            return legacy_hal::ROAMING_AGGRESSIVE;
     };
     CHECK(false);
 }
