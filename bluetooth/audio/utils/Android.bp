@@ -63,6 +63,10 @@ cc_library_shared {
         "libhidlbase",
         "libxml2",
         "libflatbuffers-cpp",
+        "server_configurable_flags",
+    ],
+    static_libs: [
+        "btaudiohal_flags_c_lib",
     ],
     generated_sources: ["le_audio_codec_capabilities"],
     generated_headers: [
