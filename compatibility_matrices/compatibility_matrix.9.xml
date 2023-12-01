@@ -157,6 +157,14 @@
         </interface>
     </hal>
     <hal format="aidl" optional="true">
+        <name>android.hardware.bluetooth.finder</name>
+        <version>1</version>
+        <interface>
+            <name>IBluetoothFinder</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="aidl" optional="true">
         <name>android.hardware.boot</name>
         <interface>
             <name>IBootControl</name>
