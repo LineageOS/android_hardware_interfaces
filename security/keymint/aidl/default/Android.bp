@@ -7,39 +7,29 @@ package {
     default_applicable_licenses: ["hardware_interfaces_license"],
 }
 
-cc_binary {
+rust_binary {
     name: "android.hardware.security.keymint-service",
     relative_install_path: "hw",
+    vendor: true,
     init_rc: ["android.hardware.security.keymint-service.rc"],
     vintf_fragments: [
         "android.hardware.security.keymint-service.xml",
         "android.hardware.security.sharedsecret-service.xml",
         "android.hardware.security.secureclock-service.xml",
     ],
-    vendor: true,
-    cflags: [
-        "-Wall",
-        "-Wextra",
-    ],
     defaults: [
-        "keymint_use_latest_hal_aidl_ndk_shared",
-    ],
-    shared_libs: [
-        "android.hardware.security.rkp-V3-ndk",
-        "android.hardware.security.sharedsecret-V1-ndk",
-        "android.hardware.security.secureclock-V1-ndk",
-        "libbase",
-        "libbinder_ndk",
-        "libcppbor_external",
-        "libcrypto",
-        "libkeymaster_portable",
-        "libkeymint",
-        "liblog",
-        "libpuresoftkeymasterdevice",
-        "libutils",
+        "keymint_use_latest_hal_aidl_rust",
     ],
     srcs: [
-        "service.cpp",
+        "main.rs",
+    ],
+    rustlibs: [
+        "libandroid_logger",
+        "libbinder_rs",
+        "liblog_rust",
+        "libkmr_hal",
+        "libkmr_hal_nonsecure",
+        "libkmr_ta_nonsecure",
     ],
     required: [
         "android.hardware.hardware_keystore.xml",
@@ -51,4 +41,40 @@ prebuilt_etc {
     sub_dir: "permissions",
     vendor: true,
     src: "android.hardware.hardware_keystore.xml",
+}
+
+rust_library {
+    name: "libkmr_hal_nonsecure",
+    crate_name: "kmr_hal_nonsecure",
+    vendor_available: true,
+    lints: "android",
+    rustlibs: [
+        "libbinder_rs",
+        "libhex",
+        "liblibc",
+        "liblog_rust",
+        "libkmr_hal",
+        "libkmr_wire",
+    ],
+    srcs: ["hal/lib.rs"],
+
+}
+
+rust_library {
+    name: "libkmr_ta_nonsecure",
+    crate_name: "kmr_ta_nonsecure",
+    vendor_available: true,
+    host_supported: true,
+    lints: "android",
+    rustlibs: [
+        "libhex",
+        "liblibc",
+        "liblog_rust",
+        "libkmr_common",
+        "libkmr_crypto_boring",
+        "libkmr_ta",
+        "libkmr_wire",
+    ],
+    srcs: ["ta/lib.rs"],
+
 }
