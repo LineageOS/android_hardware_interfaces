@@ -66,12 +66,7 @@ Properties initProperties(const VirtualRadio& virtualRadio) {
 
     prop.maker = "Android";
     prop.product = virtualRadio.getName();
-    prop.supportedIdentifierTypes = vector<IdentifierType>({
-            IdentifierType::AMFM_FREQUENCY_KHZ,
-            IdentifierType::RDS_PI,
-            IdentifierType::HD_STATION_ID_EXT,
-            IdentifierType::DAB_SID_EXT,
-    });
+    prop.supportedIdentifierTypes = virtualRadio.getSupportedIdentifierTypes();
     prop.vendorInfo = vector<VendorKeyValue>({
             {"com.android.sample", "sample"},
     });
@@ -245,7 +240,10 @@ ProgramInfo BroadcastRadio::tuneInternalLocked(const ProgramSelector& sel) {
         }
         programInfo = makeSampleProgramInfo(sel);
     }
-    mIsTuneCompleted = true;
+    programInfo.infoFlags |= ProgramInfo::FLAG_SIGNAL_ACQUISITION;
+    if (programInfo.selector.primaryId.type != IdentifierType::HD_STATION_ID_EXT) {
+        mIsTuneCompleted = true;
+    }
     if (adjustAmFmRangeLocked()) {
         startProgramListUpdatesLocked({});
     }
@@ -274,6 +272,32 @@ ScopedAStatus BroadcastRadio::unsetTunerCallback() {
     mCallback = nullptr;
 
     return ScopedAStatus::ok();
+}
+
+void BroadcastRadio::handleProgramInfoUpdateRadioCallback(
+        ProgramInfo programInfo, const std::shared_ptr<ITunerCallback>& callback) {
+    callback->onCurrentProgramInfoChanged(programInfo);
+    if (programInfo.selector.primaryId.type != IdentifierType::HD_STATION_ID_EXT) {
+        return;
+    }
+    ProgramSelector sel = programInfo.selector;
+    auto cancelTask = [sel, callback]() { callback->onTuneFailed(Result::CANCELED, sel); };
+    programInfo.infoFlags |= ProgramInfo::FLAG_HD_SIS_ACQUISITION;
+    auto sisAcquiredTask = [this, callback, programInfo, cancelTask]() {
+        callback->onCurrentProgramInfoChanged(programInfo);
+        auto audioAcquiredTask = [this, callback, programInfo]() {
+            ProgramInfo hdProgramInfoWithAudio = programInfo;
+            hdProgramInfoWithAudio.infoFlags |= ProgramInfo::FLAG_HD_AUDIO_ACQUISITION;
+            callback->onCurrentProgramInfoChanged(hdProgramInfoWithAudio);
+            lock_guard<mutex> lk(mMutex);
+            mIsTuneCompleted = true;
+        };
+        lock_guard<mutex> lk(mMutex);
+        mTuningThread->schedule(audioAcquiredTask, cancelTask, kTuneDelayTimeMs);
+    };
+
+    lock_guard<mutex> lk(mMutex);
+    mTuningThread->schedule(sisAcquiredTask, cancelTask, kTuneDelayTimeMs);
 }
 
 ScopedAStatus BroadcastRadio::tune(const ProgramSelector& program) {
@@ -308,7 +332,7 @@ ScopedAStatus BroadcastRadio::tune(const ProgramSelector& program) {
             lock_guard<mutex> lk(mMutex);
             programInfo = tuneInternalLocked(program);
         }
-        callback->onCurrentProgramInfoChanged(programInfo);
+        handleProgramInfoUpdateRadioCallback(programInfo, callback);
     };
     auto cancelTask = [program, callback]() { callback->onTuneFailed(Result::CANCELED, program); };
     mTuningThread->schedule(task, cancelTask, kTuneDelayTimeMs);
@@ -323,7 +347,9 @@ bool BroadcastRadio::findNextLocked(const ProgramSelector& current, bool directi
     }
     // The list is not sorted here since it has already stored in VirtualRadio.
     bool hasAmFmFrequency = utils::hasAmFmFrequency(current);
-    uint32_t currentFreq = hasAmFmFrequency ? utils::getAmFmFrequency(current) : 0;
+    bool hasDabSId = utils::hasId(current, IdentifierType::DAB_SID_EXT);
+    uint32_t currentChannel =
+            hasAmFmFrequency ? utils::getAmFmFrequency(current) : utils::getDabSId(current);
     auto found =
             std::lower_bound(mProgramList.begin(), mProgramList.end(), VirtualProgram({current}));
     if (directionUp) {
@@ -335,18 +361,22 @@ bool BroadcastRadio::findNextLocked(const ProgramSelector& current, bool directi
             // jump to the first selector which is greater than and of the same band as the current
             // program selector.
             if (utils::tunesTo(current, found->selector)) found++;
-            if (skipSubChannel && hasAmFmFrequency) {
-                auto firstFound = found;
-                while (utils::getAmFmFrequency(found->selector) == currentFreq) {
-                    if (found < mProgramList.end() - 1) {
-                        found++;
-                    } else {
-                        found = mProgramList.begin();
-                    }
-                    if (found == firstFound) {
-                        // Only one main channel exists in the program list, the tuner cannot skip
-                        // sub-channel to the next program selector.
-                        return false;
+            if (skipSubChannel) {
+                if (hasAmFmFrequency || hasDabSId) {
+                    auto firstFound = found;
+                    while ((hasAmFmFrequency &&
+                            utils::getAmFmFrequency(found->selector) == currentChannel) ||
+                           (hasDabSId && utils::getDabSId(found->selector) == currentChannel)) {
+                        if (found < mProgramList.end() - 1) {
+                            found++;
+                        } else {
+                            found = mProgramList.begin();
+                        }
+                        if (found == firstFound) {
+                            // Only one main channel exists in the program list, the tuner cannot
+                            // skip sub-channel to the next program selector.
+                            return false;
+                        }
                     }
                 }
             }
@@ -365,9 +395,11 @@ bool BroadcastRadio::findNextLocked(const ProgramSelector& current, bool directi
             // Otherwise, the tuner will jump to the first selector less than and of the same band
             // as the current program selector.
             found--;
-            if (hasAmFmFrequency && utils::hasAmFmFrequency(found->selector)) {
-                uint32_t nextFreq = utils::getAmFmFrequency(found->selector);
-                if (nextFreq != currentFreq) {
+            if ((hasAmFmFrequency && utils::hasAmFmFrequency(found->selector)) ||
+                (hasDabSId && utils::hasId(found->selector, IdentifierType::DAB_SID_EXT))) {
+                uint32_t nextChannel = hasAmFmFrequency ? utils::getAmFmFrequency(found->selector)
+                                                        : utils::getDabSId(found->selector);
+                if (nextChannel != currentChannel) {
                     jumpToFirstSubChannelLocked(found);
                 } else if (skipSubChannel) {
                     jumpToFirstSubChannelLocked(found);
@@ -400,16 +432,28 @@ bool BroadcastRadio::findNextLocked(const ProgramSelector& current, bool directi
 }
 
 void BroadcastRadio::jumpToFirstSubChannelLocked(vector<VirtualProgram>::const_iterator& it) const {
-    if (!utils::hasAmFmFrequency(it->selector) || it == mProgramList.begin()) {
+    if (it == mProgramList.begin()) {
         return;
     }
-    uint32_t currentFrequency = utils::getAmFmFrequency(it->selector);
-    it--;
-    while (it != mProgramList.begin() && utils::hasAmFmFrequency(it->selector) &&
-           utils::getAmFmFrequency(it->selector) == currentFrequency) {
+    bool hasAmFmFrequency = utils::hasAmFmFrequency(it->selector);
+    bool hasDabSId = utils::hasId(it->selector, IdentifierType::DAB_SID_EXT);
+    if (hasAmFmFrequency || hasDabSId) {
+        uint32_t currentChannel = hasAmFmFrequency ? utils::getAmFmFrequency(it->selector)
+                                                   : utils::getDabSId(it->selector);
         it--;
+        while (it != mProgramList.begin()) {
+            if (hasAmFmFrequency && utils::hasAmFmFrequency(it->selector) &&
+                utils::getAmFmFrequency(it->selector) == currentChannel) {
+                it--;
+            } else if (hasDabSId && utils::hasId(it->selector, IdentifierType::DAB_SID_EXT) &&
+                       utils::getDabSId(it->selector) == currentChannel) {
+                it--;
+            } else {
+                break;
+            }
+        }
+        it++;
     }
-    it++;
 }
 
 ScopedAStatus BroadcastRadio::seek(bool directionUp, bool skipSubChannel) {
@@ -456,7 +500,7 @@ ScopedAStatus BroadcastRadio::seek(bool directionUp, bool skipSubChannel) {
             lock_guard<mutex> lk(mMutex);
             programInfo = tuneInternalLocked(nextProgram.selector);
         }
-        callback->onCurrentProgramInfoChanged(programInfo);
+        handleProgramInfoUpdateRadioCallback(programInfo, callback);
     };
     mTuningThread->schedule(task, cancelTask, kSeekDelayTimeMs);
 
@@ -512,7 +556,7 @@ ScopedAStatus BroadcastRadio::step(bool directionUp) {
             lock_guard<mutex> lk(mMutex);
             programInfo = tuneInternalLocked(utils::makeSelectorAmfm(stepTo));
         }
-        callback->onCurrentProgramInfoChanged(programInfo);
+        handleProgramInfoUpdateRadioCallback(programInfo, callback);
     };
     auto cancelTask = [callback]() { callback->onTuneFailed(Result::CANCELED, {}); };
     mTuningThread->schedule(task, cancelTask, kStepDelayTimeMs);

@@ -111,14 +111,25 @@ bool operator<(const VirtualProgram& lhs, const VirtualProgram& rhs) {
         return freq1 < freq2 || (freq1 == freq2 && (l.primaryId.type < r.primaryId.type ||
                                                     subChannel1 < subChannel2));
     } else if (l.primaryId.type == IdentifierType::DAB_SID_EXT &&
-               l.primaryId.type == IdentifierType::DAB_SID_EXT) {
+               r.primaryId.type == IdentifierType::DAB_SID_EXT) {
         uint64_t dabFreq1 = utils::getId(l, IdentifierType::DAB_FREQUENCY_KHZ);
         uint64_t dabFreq2 = utils::getId(r, IdentifierType::DAB_FREQUENCY_KHZ);
         if (dabFreq1 != dabFreq2) {
             return dabFreq1 < dabFreq2;
         }
-        return utils::getId(l, IdentifierType::DAB_ENSEMBLE) <
-               utils::getId(r, IdentifierType::DAB_ENSEMBLE);
+        uint32_t ecc1 = utils::getDabEccCode(l);
+        uint32_t ecc2 = utils::getDabEccCode(r);
+        if (ecc1 != ecc2) {
+            return ecc1 < ecc2;
+        }
+        uint64_t dabEnsemble1 = utils::getId(l, IdentifierType::DAB_ENSEMBLE);
+        uint64_t dabEnsemble2 = utils::getId(r, IdentifierType::DAB_ENSEMBLE);
+        if (dabEnsemble1 != dabEnsemble2) {
+            return dabEnsemble1 < dabEnsemble2;
+        }
+        uint32_t sId1 = utils::getDabSId(l);
+        uint32_t sId2 = utils::getDabSId(r);
+        return sId1 < sId2 || (sId1 == sId2 && utils::getDabSCIdS(l) < utils::getDabSCIdS(r));
     }
 
     if (l.primaryId.type != r.primaryId.type) {

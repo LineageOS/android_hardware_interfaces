@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2022 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -31,46 +31,10 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.audio.effect;
+package android.hardware.bluetooth.finder;
 @VintfStability
-parcelable Flags {
-  android.hardware.audio.effect.Flags.Type type = android.hardware.audio.effect.Flags.Type.INSERT;
-  android.hardware.audio.effect.Flags.Insert insert = android.hardware.audio.effect.Flags.Insert.ANY;
-  android.hardware.audio.effect.Flags.Volume volume = android.hardware.audio.effect.Flags.Volume.NONE;
-  android.hardware.audio.effect.Flags.HardwareAccelerator hwAcceleratorMode = android.hardware.audio.effect.Flags.HardwareAccelerator.NONE;
-  boolean offloadIndication;
-  boolean deviceIndication;
-  boolean audioModeIndication;
-  boolean audioSourceIndication;
-  boolean bypass;
-  boolean sinkMetadataIndication;
-  boolean sourceMetadataIndication;
-  @Backing(type="byte") @VintfStability
-  enum Type {
-    INSERT = 0,
-    AUXILIARY = 1,
-    REPLACE = 2,
-    PRE_PROC = 3,
-    POST_PROC = 4,
-  }
-  @Backing(type="byte") @VintfStability
-  enum Insert {
-    ANY = 0,
-    FIRST = 1,
-    LAST = 2,
-    EXCLUSIVE = 3,
-  }
-  @Backing(type="byte") @VintfStability
-  enum Volume {
-    NONE = 0,
-    CTRL = 1,
-    IND = 2,
-    MONITOR = 3,
-  }
-  @Backing(type="byte") @VintfStability
-  enum HardwareAccelerator {
-    NONE = 0,
-    SIMPLE = 1,
-    TUNNEL = 2,
-  }
+interface IBluetoothFinder {
+  void sendEids(in android.hardware.bluetooth.finder.Eid[] eids);
+  void setPoweredOffFinderMode(in boolean enable);
+  boolean getPoweredOffFinderMode();
 }

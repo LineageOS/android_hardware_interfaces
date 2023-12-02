@@ -163,6 +163,12 @@ uint32_t getHdFrequency(const ProgramSelector& sel);
 
 int getHdSubchannel(const ProgramSelector& sel);
 
+uint32_t getDabSId(const ProgramSelector& sel);
+
+int getDabEccCode(const ProgramSelector& sel);
+
+int getDabSCIdS(const ProgramSelector& sel);
+
 bool hasAmFmFrequency(const ProgramSelector& sel);
 
 uint32_t getAmFmFrequency(const ProgramSelector& sel);
