@@ -275,6 +275,7 @@ std::unordered_map<VehicleProperty, VehiclePropertyChangeMode> ChangeModeForVehi
         {VehicleProperty::HANDS_ON_DETECTION_WARNING, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::DRIVER_DROWSINESS_ATTENTION_SYSTEM_ENABLED, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::DRIVER_DROWSINESS_ATTENTION_STATE, VehiclePropertyChangeMode::ON_CHANGE},
+        {VehicleProperty::DRIVER_DROWSINESS_ATTENTION_WARNING_ENABLED, VehiclePropertyChangeMode::ON_CHANGE},
 };
 
 }  // namespace vehicle
