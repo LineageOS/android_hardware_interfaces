@@ -34,6 +34,6 @@
 package android.hardware.bluetooth.audio;
 @Backing(type="byte") @VintfStability
 enum SbcAllocMethod {
-  ALLOC_MD_S = 0,
-  ALLOC_MD_L = 1,
+  ALLOC_MD_S,
+  ALLOC_MD_L,
 }
