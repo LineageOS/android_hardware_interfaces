@@ -34,8 +34,8 @@
 package android.hardware.bluetooth.audio;
 @Backing(type="int") @VintfStability
 enum AptxMode {
-  UNKNOWN = 0,
-  HIGH_QUALITY = 4096,
-  LOW_LATENCY = 8192,
-  ULTRA_LOW_LATENCY = 16384,
+  UNKNOWN = 0x00,
+  HIGH_QUALITY = 0x1000,
+  LOW_LATENCY = 0x2000,
+  ULTRA_LOW_LATENCY = 0x4000,
 }

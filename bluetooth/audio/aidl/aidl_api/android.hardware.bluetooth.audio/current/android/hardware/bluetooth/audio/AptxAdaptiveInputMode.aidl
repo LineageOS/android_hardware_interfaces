@@ -34,6 +34,6 @@
 package android.hardware.bluetooth.audio;
 @Backing(type="int") @VintfStability
 enum AptxAdaptiveInputMode {
-  STEREO = 0,
-  DUAL_MONO = 1,
+  STEREO = 0x00,
+  DUAL_MONO = 0x01,
 }
