@@ -57,12 +57,6 @@ const VehicleAreaConfig* getAreaConfig(const VehiclePropValue& propValue,
     return nullptr;
 }
 
-VehicleHal::VehiclePropValuePtr addTimestamp(VehicleHal::VehiclePropValuePtr v) {
-    if (v.get()) {
-        v->timestamp = elapsedRealtimeNano();
-    }
-    return v;
-}
 }  // namespace
 
 VehicleHal::VehiclePropValuePtr DefaultVehicleHal::createVhalHeartBeatProp() {
@@ -102,7 +96,7 @@ VehicleHal::VehiclePropValuePtr DefaultVehicleHal::getUserHalProp(
             *outStatus = StatusCode::INTERNAL_ERROR;
         }
     }
-    return addTimestamp(std::move(v));
+    return v;
 }
 
 VehicleHal::VehiclePropValuePtr DefaultVehicleHal::get(const VehiclePropValue& requestedPropValue,
@@ -118,13 +112,13 @@ VehicleHal::VehiclePropValuePtr DefaultVehicleHal::get(const VehiclePropValue& r
     if (propId == OBD2_FREEZE_FRAME) {
         v = getValuePool()->obtainComplex();
         *outStatus = fillObd2FreezeFrame(mPropStore, requestedPropValue, v.get());
-        return addTimestamp(std::move(v));
+        return v;
     }
 
     if (propId == OBD2_FREEZE_FRAME_INFO) {
         v = getValuePool()->obtainComplex();
         *outStatus = fillObd2DtcInfo(mPropStore, v.get());
-        return addTimestamp(std::move(v));
+        return v;
     }
 
     auto internalPropValue = mPropStore->readValueOrNull(requestedPropValue);
@@ -139,7 +133,7 @@ VehicleHal::VehiclePropValuePtr DefaultVehicleHal::get(const VehiclePropValue& r
     } else {
         *outStatus = StatusCode::TRY_AGAIN;
     }
-    return addTimestamp(std::move(v));
+    return v;
 }
 
 std::vector<VehiclePropConfig> DefaultVehicleHal::listProperties() {
@@ -486,26 +480,42 @@ VehicleHal::VehiclePropValuePtr DefaultVehicleHal::doInternalHealthCheck() {
 
 void DefaultVehicleHal::onContinuousPropertyTimer(const std::vector<int32_t>& properties) {
     auto& pool = *getValuePool();
-
     for (int32_t property : properties) {
-        VehiclePropValuePtr v;
+        std::vector<VehiclePropValuePtr> events;
         if (isContinuousProperty(property)) {
-            auto internalPropValue = mPropStore->readValueOrNull(property);
-            if (internalPropValue != nullptr) {
-                v = pool.obtain(*internalPropValue);
+            const VehiclePropConfig* config = mPropStore->getConfigOrNull(property);
+            std::vector<int32_t> areaIds;
+            if (isGlobalProp(property)) {
+                areaIds.push_back(0);
+            } else {
+                for (auto& c : config->areaConfigs) {
+                    areaIds.push_back(c.areaId);
+                }
+            }
+
+            for (int areaId : areaIds) {
+                auto v = pool.obtain(*mPropStore->refreshTimestamp(property, areaId));
+                if (v.get()) {
+                    events.push_back(std::move(v));
+                }
             }
         } else if (property == static_cast<int32_t>(VehicleProperty::VHAL_HEARTBEAT)) {
             // VHAL_HEARTBEAT is not a continuous value, but it needs to be updated periodically.
             // So, the update is done through onContinuousPropertyTimer.
-            v = doInternalHealthCheck();
+            auto v = doInternalHealthCheck();
+            if (!v.get()) {
+                // Internal health check failed.
+                continue;
+            }
+            mPropStore->writeValueWithCurrentTimestamp(v.get(), /*updateStatus=*/true);
+            events.push_back(std::move(v));
         } else {
             ALOGE("Unexpected onContinuousPropertyTimer for property: 0x%x", property);
             continue;
         }
 
-        if (v.get()) {
-            v->timestamp = elapsedRealtimeNano();
-            doHalEvent(std::move(v));
+        for (VehiclePropValuePtr& event : events) {
+            doHalEvent(std::move(event));
         }
     }
 }
@@ -556,7 +566,7 @@ bool DefaultVehicleHal::isContinuousProperty(int32_t propId) const {
 void DefaultVehicleHal::onPropertyValue(const VehiclePropValue& value, bool updateStatus) {
     VehiclePropValuePtr updatedPropValue = getValuePool()->obtain(value);
 
-    if (mPropStore->writeValue(*updatedPropValue, updateStatus)) {
+    if (mPropStore->writeValueWithCurrentTimestamp(updatedPropValue.get(), updateStatus)) {
         doHalEvent(std::move(updatedPropValue));
     }
 }

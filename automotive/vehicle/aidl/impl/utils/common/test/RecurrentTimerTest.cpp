@@ -60,9 +60,14 @@ class RecurrentTimerTest : public testing::Test {
         mCallbacks.clear();
     }
 
-    size_t countTimerCallbackQueue(RecurrentTimer* timer) {
+    size_t countCallbackInfoById(RecurrentTimer* timer) {
         std::scoped_lock<std::mutex> lockGuard(timer->mLock);
-        return timer->mCallbackQueue.size();
+        return timer->mCallbackInfoById.size();
+    }
+
+    size_t countIdByCallback(RecurrentTimer* timer) {
+        std::scoped_lock<std::mutex> lockGuard(timer->mLock);
+        return timer->mIdByCallback.size();
     }
 
   private:
@@ -109,6 +114,9 @@ TEST_F(RecurrentTimerTest, testRegisterUnregisterRegister) {
             << "Not enough callbacks called before timeout";
 
     timer.unregisterTimerCallback(action);
+
+    ASSERT_EQ(countCallbackInfoById(&timer), 0u);
+    ASSERT_EQ(countIdByCallback(&timer), 0u);
 }
 
 TEST_F(RecurrentTimerTest, testDestroyTimerWithCallback) {
@@ -198,8 +206,8 @@ TEST_F(RecurrentTimerTest, testRegisterSameCallbackMultipleTimes) {
 
     timer.unregisterTimerCallback(action);
 
-    // Make sure there is no item in the callback queue.
-    ASSERT_EQ(countTimerCallbackQueue(&timer), static_cast<size_t>(0));
+    ASSERT_EQ(countCallbackInfoById(&timer), 0u);
+    ASSERT_EQ(countIdByCallback(&timer), 0u);
 }
 
 TEST_F(RecurrentTimerTest, testRegisterCallbackMultipleTimesNoDeadLock) {
