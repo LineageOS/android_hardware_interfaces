@@ -44,5 +44,5 @@ interface IComposerCallback {
   oneway void onVsyncPeriodTimingChanged(long display, in android.hardware.graphics.composer3.VsyncPeriodChangeTimeline updatedTimeline);
   oneway void onVsyncIdle(long display);
   oneway void onRefreshRateChangedDebug(in android.hardware.graphics.composer3.RefreshRateChangedDebugData data);
-  oneway void onHotplugEvent(long display, android.hardware.graphics.common.DisplayHotplugEvent event);
+  void onHotplugEvent(long display, android.hardware.graphics.common.DisplayHotplugEvent event);
 }
