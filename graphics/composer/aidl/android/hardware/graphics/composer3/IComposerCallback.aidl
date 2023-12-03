@@ -138,5 +138,5 @@ interface IComposerCallback {
      * @param display is the display that triggers the hotplug event.
      * @param event is the type of event that occurred.
      */
-    oneway void onHotplugEvent(long display, DisplayHotplugEvent event);
+    void onHotplugEvent(long display, DisplayHotplugEvent event);
 }
