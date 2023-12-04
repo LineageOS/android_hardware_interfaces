@@ -320,9 +320,9 @@ std::unique_ptr<Configuration> getPrimaryConfiguration() {
 //    - no profiles specified
 //
 // Mix ports:
-//  * "r_submix output", maximum 20 opened streams, maximum 10 active streams
+//  * "r_submix output", maximum 10 opened streams, maximum 10 active streams
 //    - profile PCM 16-bit; MONO, STEREO; 8000, 11025, 16000, 32000, 44100, 48000
-//  * "r_submix input", maximum 20 opened streams, maximum 10 active streams
+//  * "r_submix input", maximum 10 opened streams, maximum 10 active streams
 //    - profile PCM 16-bit; MONO, STEREO; 8000, 11025, 16000, 32000, 44100, 48000
 //
 // Routes:
@@ -355,12 +355,12 @@ std::unique_ptr<Configuration> getRSubmixConfiguration() {
         // Mix ports
 
         AudioPort rsubmixOutMix =
-                createPort(c.nextPortId++, "r_submix output", 0, false, createPortMixExt(20, 10));
+                createPort(c.nextPortId++, "r_submix output", 0, false, createPortMixExt(10, 10));
         rsubmixOutMix.profiles = remoteSubmixPcmAudioProfiles;
         c.ports.push_back(rsubmixOutMix);
 
         AudioPort rsubmixInMix =
-                createPort(c.nextPortId++, "r_submix input", 0, true, createPortMixExt(20, 10));
+                createPort(c.nextPortId++, "r_submix input", 0, true, createPortMixExt(10, 10));
         rsubmixInMix.profiles = remoteSubmixPcmAudioProfiles;
         c.ports.push_back(rsubmixInMix);
 
