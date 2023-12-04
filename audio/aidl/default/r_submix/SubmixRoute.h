@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include <chrono>
 #include <mutex>
 
 #include <android-base/thread_annotations.h>
@@ -83,14 +82,6 @@ class SubmixRoute {
         std::lock_guard guard(mLock);
         return mReadCounterFrames;
     }
-    int getReadErrorCount() {
-        std::lock_guard guard(mLock);
-        return mReadErrorCount;
-    }
-    std::chrono::time_point<std::chrono::steady_clock> getRecordStartTime() {
-        std::lock_guard guard(mLock);
-        return mRecordStartTime;
-    }
     sp<MonoPipe> getSink() {
         std::lock_guard guard(mLock);
         return mSink;
@@ -126,9 +117,6 @@ class SubmixRoute {
     bool mStreamOutStandby GUARDED_BY(mLock) = true;
     // how many frames have been requested to be read since standby
     long mReadCounterFrames GUARDED_BY(mLock) = 0;
-    int mReadErrorCount GUARDED_BY(mLock) = 0;
-    // wall clock when recording starts
-    std::chrono::time_point<std::chrono::steady_clock> mRecordStartTime GUARDED_BY(mLock);
 
     // Pipe variables: they handle the ring buffer that "pipes" audio:
     //  - from the submix virtual audio output == what needs to be played
