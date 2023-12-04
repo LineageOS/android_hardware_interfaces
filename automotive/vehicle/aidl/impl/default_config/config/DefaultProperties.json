@@ -3631,6 +3631,14 @@
             ]
         },
         {
+            "property": "VehicleProperty::DRIVER_DISTRACTION_WARNING_ENABLED",
+            "defaultValue": {
+                "int32Values": [
+                    1
+                ]
+            }
+        },
+        {
             "property": "VehicleProperty::INITIAL_USER_INFO"
         },
         {

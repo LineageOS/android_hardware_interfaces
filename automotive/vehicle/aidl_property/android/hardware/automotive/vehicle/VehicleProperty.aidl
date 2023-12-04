@@ -5226,6 +5226,29 @@ enum VehicleProperty {
     DRIVER_DISTRACTION_STATE =
             0x101E + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
 
+    /**
+     * Enable or disable driver distraction warnings.
+     *
+     * Set true to enable driver distraction warnings and false to disable driver distraction
+     * warnings.
+     *
+     * When driver distraction warnings are enabled, the driver distraction monitoring system inside
+     * the vehicle should warn the driver when it detects the driver is distracted.
+     *
+     * In general, DRIVER_DISTRACTION_WARNING_ENABLED should always return true or false. If the
+     * feature is not available due to some temporary state, that information must be conveyed
+     * through the ErrorState values in the DRIVER_DISTRACTION_WARNING property.
+     *
+     * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
+     * implement it as VehiclePropertyAccess.READ only.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
+     */
+    DRIVER_DISTRACTION_WARNING_ENABLED =
+            0x101F + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+
     /***************************************************************************
      * End of ADAS Properties
      **************************************************************************/
