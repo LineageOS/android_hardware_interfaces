@@ -90,7 +90,7 @@ vintf_compatibility_matrix {
         "compatibility_matrix.9.xml",
     ],
     kernel_configs: [
-        "kernel_config_v_5.15",
         "kernel_config_v_6.1",
+        "kernel_config_v_6.6",
     ],
 }
