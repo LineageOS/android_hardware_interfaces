@@ -2090,6 +2090,17 @@ bool convertAidlNanDataPathInitiatorRequestToLegacy(
     memcpy(legacy_request->scid, aidl_request.securityConfig.scid.data(), legacy_request->scid_len);
     legacy_request->publish_subscribe_id = static_cast<uint8_t>(aidl_request.discoverySessionId);
 
+    legacy_request->csia_capabilities |=
+            aidl_request.securityConfig.enable16ReplyCountersForTksa ? 0x1 : 0x0;
+    legacy_request->csia_capabilities |=
+            aidl_request.securityConfig.enable16ReplyCountersForGtksa ? 0x8 : 0x0;
+    if (aidl_request.securityConfig.supportGtkAndIgtk) {
+        legacy_request->csia_capabilities |= aidl_request.securityConfig.supportBigtksa ? 0x4 : 0x2;
+    }
+    legacy_request->csia_capabilities |= aidl_request.securityConfig.enableNcsBip256 ? 0x16 : 0x0;
+    legacy_request->gtk_protection =
+            aidl_request.securityConfig.requiresEnhancedFrameProtection ? 1 : 0;
+
     return true;
 }
 
@@ -2171,6 +2182,17 @@ bool convertAidlNanDataPathIndicationResponseToLegacy(
     }
     memcpy(legacy_request->scid, aidl_request.securityConfig.scid.data(), legacy_request->scid_len);
     legacy_request->publish_subscribe_id = static_cast<uint8_t>(aidl_request.discoverySessionId);
+
+    legacy_request->csia_capabilities |=
+            aidl_request.securityConfig.enable16ReplyCountersForTksa ? 0x1 : 0x0;
+    legacy_request->csia_capabilities |=
+            aidl_request.securityConfig.enable16ReplyCountersForGtksa ? 0x8 : 0x0;
+    if (aidl_request.securityConfig.supportGtkAndIgtk) {
+        legacy_request->csia_capabilities |= aidl_request.securityConfig.supportBigtksa ? 0x4 : 0x2;
+    }
+    legacy_request->csia_capabilities |= aidl_request.securityConfig.enableNcsBip256 ? 0x16 : 0x0;
+    legacy_request->gtk_protection =
+            aidl_request.securityConfig.requiresEnhancedFrameProtection ? 1 : 0;
 
     return true;
 }
