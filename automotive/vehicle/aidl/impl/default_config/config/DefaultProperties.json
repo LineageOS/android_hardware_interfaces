@@ -3613,6 +3613,24 @@
             }
         },
         {
+            "property": "VehicleProperty::DRIVER_DISTRACTION_STATE",
+            "defaultValue": {
+                "int32Values": [
+                    "DriverDistractionState::NOT_DISTRACTED"
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": 0,
+                    "supportedEnumValues": [
+                        "ErrorState::NOT_AVAILABLE_DISABLED",
+                        "DriverDistractionState::NOT_DISTRACTED",
+                        "DriverDistractionState::DISTRACTED"
+                    ]
+                }
+            ]
+        },
+        {
             "property": "VehicleProperty::INITIAL_USER_INFO"
         },
         {

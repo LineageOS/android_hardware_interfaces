@@ -24,6 +24,7 @@
 #include <aidl/android/hardware/automotive/vehicle/CruiseControlType.h>
 #include <aidl/android/hardware/automotive/vehicle/DiagnosticFloatSensorIndex.h>
 #include <aidl/android/hardware/automotive/vehicle/DiagnosticIntegerSensorIndex.h>
+#include <aidl/android/hardware/automotive/vehicle/DriverDistractionState.h>
 #include <aidl/android/hardware/automotive/vehicle/DriverDrowsinessAttentionState.h>
 #include <aidl/android/hardware/automotive/vehicle/DriverDrowsinessAttentionWarning.h>
 #include <aidl/android/hardware/automotive/vehicle/EmergencyLaneKeepAssistState.h>
