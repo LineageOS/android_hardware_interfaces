@@ -4204,6 +4204,14 @@
                     ]
                 }
             ]
+        },
+        {
+            "property": "VehicleProperty::LOW_SPEED_AUTOMATIC_EMERGENCY_BRAKING_ENABLED",
+            "defaultValue": {
+                "int32Values": [
+                    1
+                ]
+            }
         }
     ]
 }

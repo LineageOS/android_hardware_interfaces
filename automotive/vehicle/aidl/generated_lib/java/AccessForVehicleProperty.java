@@ -285,7 +285,8 @@ public final class AccessForVehicleProperty {
         Map.entry(VehicleProperty.LOW_SPEED_COLLISION_WARNING_ENABLED, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.LOW_SPEED_COLLISION_WARNING_STATE, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.CROSS_TRAFFIC_MONITORING_ENABLED, VehiclePropertyAccess.READ_WRITE),
-        Map.entry(VehicleProperty.CROSS_TRAFFIC_MONITORING_WARNING_STATE, VehiclePropertyAccess.READ)
+        Map.entry(VehicleProperty.CROSS_TRAFFIC_MONITORING_WARNING_STATE, VehiclePropertyAccess.READ),
+        Map.entry(VehicleProperty.LOW_SPEED_AUTOMATIC_EMERGENCY_BRAKING_ENABLED, VehiclePropertyAccess.READ_WRITE)
     );
 
 }
