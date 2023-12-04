@@ -271,7 +271,8 @@ public final class AccessForVehicleProperty {
         Map.entry(VehicleProperty.DRIVER_DROWSINESS_ATTENTION_WARNING, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.DRIVER_DISTRACTION_SYSTEM_ENABLED, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.DRIVER_DISTRACTION_STATE, VehiclePropertyAccess.READ),
-        Map.entry(VehicleProperty.DRIVER_DISTRACTION_WARNING_ENABLED, VehiclePropertyAccess.READ_WRITE)
+        Map.entry(VehicleProperty.DRIVER_DISTRACTION_WARNING_ENABLED, VehiclePropertyAccess.READ_WRITE),
+        Map.entry(VehicleProperty.DRIVER_DISTRACTION_WARNING, VehiclePropertyAccess.READ)
     );
 
 }

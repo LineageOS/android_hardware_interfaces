@@ -96,7 +96,8 @@ public final class EnumForVehicleProperty {
         Map.entry(VehicleProperty.HANDS_ON_DETECTION_WARNING, List.of(HandsOnDetectionWarning.class, ErrorState.class)),
         Map.entry(VehicleProperty.DRIVER_DROWSINESS_ATTENTION_STATE, List.of(DriverDrowsinessAttentionState.class, ErrorState.class)),
         Map.entry(VehicleProperty.DRIVER_DROWSINESS_ATTENTION_WARNING, List.of(DriverDrowsinessAttentionWarning.class, ErrorState.class)),
-        Map.entry(VehicleProperty.DRIVER_DISTRACTION_STATE, List.of(DriverDistractionState.class, ErrorState.class))
+        Map.entry(VehicleProperty.DRIVER_DISTRACTION_STATE, List.of(DriverDistractionState.class, ErrorState.class)),
+        Map.entry(VehicleProperty.DRIVER_DISTRACTION_WARNING, List.of(DriverDistractionWarning.class, ErrorState.class))
     );
 
 }

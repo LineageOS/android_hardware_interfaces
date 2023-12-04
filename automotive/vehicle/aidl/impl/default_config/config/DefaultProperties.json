@@ -3639,6 +3639,24 @@
             }
         },
         {
+            "property": "VehicleProperty::DRIVER_DISTRACTION_WARNING",
+            "defaultValue": {
+                "int32Values": [
+                    "DriverDistractionWarning::NO_WARNING"
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": 0,
+                    "supportedEnumValues": [
+                        "ErrorState::NOT_AVAILABLE_DISABLED",
+                        "DriverDistractionWarning::NO_WARNING",
+                        "DriverDistractionWarning::WARNING"
+                    ]
+                }
+            ]
+        },
+        {
             "property": "VehicleProperty::INITIAL_USER_INFO"
         },
         {
