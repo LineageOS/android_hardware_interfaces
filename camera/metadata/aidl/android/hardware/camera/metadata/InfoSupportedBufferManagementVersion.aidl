@@ -30,4 +30,5 @@ package android.hardware.camera.metadata;
 @Backing(type="int")
 enum InfoSupportedBufferManagementVersion {
     ANDROID_INFO_SUPPORTED_BUFFER_MANAGEMENT_VERSION_AIDL_DEVICE,
+    ANDROID_INFO_SUPPORTED_BUFFER_MANAGEMENT_VERSION_SESSION_CONFIGURABLE,
 }
