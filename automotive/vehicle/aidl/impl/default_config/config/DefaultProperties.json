@@ -4212,6 +4212,28 @@
                     1
                 ]
             }
+        },
+        {
+            "property": "VehicleProperty::LOW_SPEED_AUTOMATIC_EMERGENCY_BRAKING_STATE",
+            "defaultValue": {
+                "int32Values": [
+                    "LowSpeedAutomaticEmergencyBrakingState::ENABLED"
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": 0,
+                    "supportedEnumValues": [
+                        "ErrorState::NOT_AVAILABLE_SAFETY",
+                        "ErrorState::NOT_AVAILABLE_POOR_VISIBILITY",
+                        "ErrorState::NOT_AVAILABLE_SPEED_HIGH",
+                        "ErrorState::NOT_AVAILABLE_DISABLED",
+                        "LowSpeedAutomaticEmergencyBrakingState::ENABLED",
+                        "LowSpeedAutomaticEmergencyBrakingState::ACTIVATED",
+                        "LowSpeedAutomaticEmergencyBrakingState::USER_OVERRIDE"
+                    ]
+                }
+            ]
         }
     ]
 }

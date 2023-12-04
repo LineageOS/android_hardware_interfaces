@@ -4694,7 +4694,9 @@ enum VehicleProperty {
      *
      * Returns the current state of AEB. This property must always return a valid state defined in
      * AutomaticEmergencyBrakingState or ErrorState. It must not surface errors through StatusCode
-     * and must use the supported error states instead.
+     * and must use the supported error states instead. This property should apply for higher speed
+     * applications only. For representing the state of the low speed automatic emergency braking
+     * system, LOW_SPEED_AUTOMATIC_EMERGENCY_BRAKING_STATE should be used.
      *
      * If AEB includes forward collision warnings before activating the brakes, those warnings must
      * be surfaced through the Forward Collision Warning (FCW) properties.
@@ -5544,6 +5546,32 @@ enum VehicleProperty {
      */
     LOW_SPEED_AUTOMATIC_EMERGENCY_BRAKING_ENABLED =
             0x1025 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+
+    /**
+     * Low Speed Automatic Emergency Braking state.
+     *
+     * Returns the current state of Low Speed Automatic Emergency Braking. This property must always
+     * return a valid state defined in LowSpeedAutomaticEmergencyBrakingState or ErrorState. It must
+     * not surface errors through StatusCode and must use the supported error states instead. This
+     * property is different from the pre-existing AUTOMATIC_EMERGENCY_BRAKING_STATE, which should
+     * apply to higher speed applications only. If the vehicle doesn't have a separate collision
+     * avoidance system for low speed environments, this property should not be implemented.
+     *
+     * If Low Speed Automatic Emergency Braking includes collision warnings before activating the
+     * brakes, those warnings must be surfaced through use of LOW_SPEED_COLLISION_WARNING_ENABLED
+     * and LOW_SPEED_COLLISION_WARNING_STATE.
+     *
+     * For the global area ID (0), the VehicleAreaConfig#supportedEnumValues array must be defined
+     * unless all states of both LowSpeedAutomaticEmergencyBrakingState (including OTHER, which is
+     * not recommended) and ErrorState are supported.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     * @data_enum LowSpeedAutomaticEmergencyBrakingState
+     * @data_enum ErrorState
+     */
+    LOW_SPEED_AUTOMATIC_EMERGENCY_BRAKING_STATE =
+            0x1026 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
 
     /***************************************************************************
      * End of ADAS Properties

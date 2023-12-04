@@ -295,6 +295,7 @@ std::unordered_map<VehicleProperty, VehiclePropertyAccess> AccessForVehiclePrope
         {VehicleProperty::CROSS_TRAFFIC_MONITORING_ENABLED, VehiclePropertyAccess::READ_WRITE},
         {VehicleProperty::CROSS_TRAFFIC_MONITORING_WARNING_STATE, VehiclePropertyAccess::READ},
         {VehicleProperty::LOW_SPEED_AUTOMATIC_EMERGENCY_BRAKING_ENABLED, VehiclePropertyAccess::READ_WRITE},
+        {VehicleProperty::LOW_SPEED_AUTOMATIC_EMERGENCY_BRAKING_STATE, VehiclePropertyAccess::READ},
 };
 
 }  // namespace vehicle
