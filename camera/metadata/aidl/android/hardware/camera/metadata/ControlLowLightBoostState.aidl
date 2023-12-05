@@ -23,17 +23,12 @@
 package android.hardware.camera.metadata;
 
 /**
- * android.control.aeMode enumeration values
- * @see ANDROID_CONTROL_AE_MODE
+ * android.control.lowLightBoostState enumeration values
+ * @see ANDROID_CONTROL_LOW_LIGHT_BOOST_STATE
  */
 @VintfStability
 @Backing(type="int")
-enum ControlAeMode {
-    ANDROID_CONTROL_AE_MODE_OFF,
-    ANDROID_CONTROL_AE_MODE_ON,
-    ANDROID_CONTROL_AE_MODE_ON_AUTO_FLASH,
-    ANDROID_CONTROL_AE_MODE_ON_ALWAYS_FLASH,
-    ANDROID_CONTROL_AE_MODE_ON_AUTO_FLASH_REDEYE,
-    ANDROID_CONTROL_AE_MODE_ON_EXTERNAL_FLASH,
-    ANDROID_CONTROL_AE_MODE_ON_LOW_LIGHT_BOOST_BRIGHTNESS_PRIORITY,
+enum ControlLowLightBoostState {
+    ANDROID_CONTROL_LOW_LIGHT_BOOST_STATE_INACTIVE,
+    ANDROID_CONTROL_LOW_LIGHT_BOOST_STATE_ACTIVE,
 }
