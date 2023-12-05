@@ -59,9 +59,8 @@ interface IBluetoothAudioProvider {
      *    audioConfig.pcmConfig parameter. Invalid if streaming is offloaded
      *    from/to hardware or on failure
      */
-    MQDescriptor<byte, SynchronizedReadWrite> startSession(
-            in IBluetoothAudioPort hostIf, in AudioConfiguration audioConfig,
-            in LatencyMode[] supportedLatencyModes);
+    MQDescriptor<byte, SynchronizedReadWrite> startSession(in IBluetoothAudioPort hostIf,
+            in AudioConfiguration audioConfig, in LatencyMode[] supportedLatencyModes);
     /**
      * Callback for IBluetoothAudioPort.startStream()
      *
