@@ -73,10 +73,8 @@ std::map<AudioDeviceAddress, std::shared_ptr<SubmixRoute>> StreamRemoteSubmix::s
         LOG(ERROR) << __func__ << ": nullptr sink when opening stream";
         return ::android::NO_INIT;
     }
-    // If the sink has been shutdown or pipe recreation is forced, delete the pipe and
-    // recreate it.
-    if (sink->isShutdown()) {
-        LOG(DEBUG) << __func__ << ": Non-nullptr shut down sink when opening stream";
+    if ((!mIsInput || mCurrentRoute->isStreamInOpen()) && sink->isShutdown()) {
+        LOG(DEBUG) << __func__ << ": Shut down sink when opening stream";
         if (::android::OK != mCurrentRoute->resetPipe()) {
             LOG(ERROR) << __func__ << ": reset pipe failed";
             return ::android::NO_INIT;
