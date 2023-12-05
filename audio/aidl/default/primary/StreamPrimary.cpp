@@ -116,8 +116,8 @@ bool StreamInPrimary::useStubStream(const AudioDevice& device) {
             GetBoolProperty("ro.boot.audio.tinyalsa.simulate_input", false);
     return kSimulateInput || device.type.type == AudioDeviceType::IN_TELEPHONY_RX ||
            device.type.type == AudioDeviceType::IN_FM_TUNER ||
-           device.type.connection == AudioDeviceDescription::CONNECTION_BUS ||
-           (device.type.type == AudioDeviceType::IN_DEVICE && device.type.connection.empty());
+           device.type.connection == AudioDeviceDescription::CONNECTION_BUS /*deprecated */ ||
+           (device.type.type == AudioDeviceType::IN_BUS && device.type.connection.empty());
 }
 
 StreamSwitcher::DeviceSwitchBehavior StreamInPrimary::switchCurrentStream(
@@ -188,8 +188,8 @@ bool StreamOutPrimary::useStubStream(const AudioDevice& device) {
     static const bool kSimulateOutput =
             GetBoolProperty("ro.boot.audio.tinyalsa.ignore_output", false);
     return kSimulateOutput || device.type.type == AudioDeviceType::OUT_TELEPHONY_TX ||
-           device.type.connection == AudioDeviceDescription::CONNECTION_BUS ||
-           (device.type.type == AudioDeviceType::OUT_DEVICE && device.type.connection.empty());
+           device.type.connection == AudioDeviceDescription::CONNECTION_BUS /*deprecated*/ ||
+           (device.type.type == AudioDeviceType::OUT_BUS && device.type.connection.empty());
 }
 
 StreamSwitcher::DeviceSwitchBehavior StreamOutPrimary::switchCurrentStream(
