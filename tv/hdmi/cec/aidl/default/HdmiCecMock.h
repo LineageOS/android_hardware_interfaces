@@ -40,6 +40,7 @@ using ::aidl::android::hardware::tv::hdmi::cec::SendMessageResult;
 
 struct HdmiCecMock : public BnHdmiCec {
     HdmiCecMock();
+    ~HdmiCecMock();
     ::ndk::ScopedAStatus addLogicalAddress(CecLogicalAddress addr, Result* _aidl_return) override;
     ::ndk::ScopedAStatus clearLogicalAddress() override;
     ::ndk::ScopedAStatus enableAudioReturnChannel(int32_t portId, bool enable) override;

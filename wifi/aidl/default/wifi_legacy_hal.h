@@ -186,6 +186,7 @@ using ::NanTransmitFollowupRequest;
 using ::NanTxType;
 using ::NpkSecurityAssociation;
 using ::PASN;
+using ::ROAMING_AGGRESSIVE;
 using ::ROAMING_DISABLE;
 using ::ROAMING_ENABLE;
 using ::RTT_PEER_AP;

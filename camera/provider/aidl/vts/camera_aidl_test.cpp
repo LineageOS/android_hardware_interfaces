@@ -30,6 +30,7 @@
 #include <aidlcommonsupport/NativeHandle.h>
 #include <android/binder_manager.h>
 #include <android/binder_process.h>
+#include <com_android_internal_camera_flags.h>
 #include <device_cb.h>
 #include <empty_device_cb.h>
 #include <grallocusage/GrallocUsageConversion.h>
@@ -39,6 +40,7 @@
 #include <ui/GraphicBufferAllocator.h>
 #include <regex>
 #include <typeinfo>
+#include "utils/Errors.h"
 
 using ::aidl::android::hardware::camera::common::CameraDeviceStatus;
 using ::aidl::android::hardware::camera::common::TorchModeStatus;
@@ -100,6 +102,8 @@ bool parseProviderName(const std::string& serviceDescriptor, std::string* type /
 
     return true;
 }
+
+namespace flags = com::android::internal::camera::flags;
 
 const std::vector<int64_t> kMandatoryUseCases = {
         ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_DEFAULT,
@@ -477,6 +481,38 @@ void CameraAidlTest::verifyLogicalCameraResult(const camera_metadata_t* staticMe
         ASSERT_NE(physicalIds.find(mainPhysicalId), physicalIds.end());
     } else {
         ADD_FAILURE() << "Get LOGICAL_MULTI_CAMERA_ACTIVE_PHYSICAL_ID failed!";
+    }
+
+    if (flags::concert_mode()) {
+        auto ret = find_camera_metadata_ro_entry(
+                metadata, ANDROID_LOGICAL_MULTI_CAMERA_ACTIVE_PHYSICAL_SENSOR_CROP_REGION, &entry);
+        if ((ret == android::OK) && (entry.count > 0)) {
+            ASSERT_TRUE(entry.count == 4);
+            ASSERT_GE(entry.data.i32[0], 0);  // Top must be non-negative
+            ASSERT_GE(entry.data.i32[1], 0);  // Left must be non-negative
+            ASSERT_GT(entry.data.i32[2], 0);  // Width must be positive
+            ASSERT_GT(entry.data.i32[3], 0);  // Height must be positive
+        }
+    }
+}
+
+void CameraAidlTest::verifyLensIntrinsicsResult(const std::vector<uint8_t>& resultMetadata) {
+    if (flags::concert_mode()) {
+        camera_metadata_t* metadata = (camera_metadata_t*)resultMetadata.data();
+
+        camera_metadata_ro_entry timestampsEntry, intrinsicsEntry;
+        auto tsRet = find_camera_metadata_ro_entry(
+                metadata, ANDROID_STATISTICS_LENS_INTRINSIC_TIMESTAMPS, &timestampsEntry);
+        auto inRet = find_camera_metadata_ro_entry(
+                metadata, ANDROID_STATISTICS_LENS_INTRINSIC_SAMPLES, &intrinsicsEntry);
+        ASSERT_EQ(tsRet, inRet);
+        ASSERT_TRUE((intrinsicsEntry.count % 5) == 0);
+        ASSERT_EQ(timestampsEntry.count, intrinsicsEntry.count / 5);
+        if (timestampsEntry.count > 0) {
+            for (size_t i = 0; i < timestampsEntry.count - 1; i++) {
+                ASSERT_GE(timestampsEntry.data.i64[i + 1], timestampsEntry.data.i64[i]);
+            }
+        }
     }
 }
 
