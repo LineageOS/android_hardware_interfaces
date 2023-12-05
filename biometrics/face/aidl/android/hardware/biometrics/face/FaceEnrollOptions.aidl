@@ -26,6 +26,7 @@ import android.view.Surface;
 
 /**
  * Enroll options used to pass information to the HAL when requesting an enroll operation.
+ * @hide
  */
 @VintfStability
 parcelable FaceEnrollOptions {
