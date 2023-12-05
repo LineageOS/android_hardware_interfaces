@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 The Android Open Source Project
+ * Copyright 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,13 +33,24 @@
 
 package android.hardware.bluetooth.audio;
 @VintfStability
-interface IBluetoothAudioProviderFactory {
-  android.hardware.bluetooth.audio.AudioCapabilities[] getProviderCapabilities(in android.hardware.bluetooth.audio.SessionType sessionType);
-  android.hardware.bluetooth.audio.IBluetoothAudioProvider openProvider(in android.hardware.bluetooth.audio.SessionType sessionType);
-  @nullable android.hardware.bluetooth.audio.IBluetoothAudioProviderFactory.ProviderInfo getProviderInfo(in android.hardware.bluetooth.audio.SessionType sessionType);
-  @VintfStability
-  parcelable ProviderInfo {
-    String name;
-    android.hardware.bluetooth.audio.CodecInfo[] codecInfos;
+parcelable CodecInfo {
+  android.hardware.bluetooth.audio.CodecId id;
+  String name;
+  android.hardware.bluetooth.audio.CodecInfo.Transport transport;
+  parcelable A2dp {
+    byte[] capabilities;
+    android.hardware.bluetooth.audio.ChannelMode[] channelMode;
+    int[] samplingFrequencyHz;
+    int[] bitdepth;
+    boolean lossless;
+  }
+  parcelable Hfp {
+    int inputDataPath = 1;
+    int outputDataPath = 1;
+    boolean useControllerCodec = true;
+  }
+  union Transport {
+    android.hardware.bluetooth.audio.CodecInfo.A2dp a2dp;
+    android.hardware.bluetooth.audio.CodecInfo.Hfp hfp;
   }
 }

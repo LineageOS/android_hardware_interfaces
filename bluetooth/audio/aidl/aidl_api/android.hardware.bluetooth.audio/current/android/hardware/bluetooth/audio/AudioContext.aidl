@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 The Android Open Source Project
+ * Copyright 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,13 +33,18 @@
 
 package android.hardware.bluetooth.audio;
 @VintfStability
-interface IBluetoothAudioProviderFactory {
-  android.hardware.bluetooth.audio.AudioCapabilities[] getProviderCapabilities(in android.hardware.bluetooth.audio.SessionType sessionType);
-  android.hardware.bluetooth.audio.IBluetoothAudioProvider openProvider(in android.hardware.bluetooth.audio.SessionType sessionType);
-  @nullable android.hardware.bluetooth.audio.IBluetoothAudioProviderFactory.ProviderInfo getProviderInfo(in android.hardware.bluetooth.audio.SessionType sessionType);
-  @VintfStability
-  parcelable ProviderInfo {
-    String name;
-    android.hardware.bluetooth.audio.CodecInfo[] codecInfos;
-  }
+parcelable AudioContext {
+  int bitmask;
+  const int UNSPECIFIED = 0x0001;
+  const int CONVERSATIONAL = 0x0002;
+  const int MEDIA = 0x0004;
+  const int GAME = 0x0008;
+  const int INSTRUCTIONAL = 0x0010;
+  const int VOICE_ASSISTANTS = 0x0020;
+  const int LIVE_AUDIO = 0x0040;
+  const int SOUND_EFFECTS = 0x0080;
+  const int NOTIFICATIONS = 0x0100;
+  const int RINGTONE_ALERTS = 0x0200;
+  const int ALERTS = 0x0400;
+  const int EMERGENCY_ALARM = 0x0800;
 }
