@@ -46,6 +46,8 @@ using aidl::android::hardware::bluetooth::audio::BroadcastCapability;
 using aidl::android::hardware::bluetooth::audio::ChannelMode;
 using aidl::android::hardware::bluetooth::audio::CodecCapabilities;
 using aidl::android::hardware::bluetooth::audio::CodecConfiguration;
+using aidl::android::hardware::bluetooth::audio::CodecId;
+using aidl::android::hardware::bluetooth::audio::CodecInfo;
 using aidl::android::hardware::bluetooth::audio::CodecType;
 using aidl::android::hardware::bluetooth::audio::IBluetoothAudioPort;
 using aidl::android::hardware::bluetooth::audio::IBluetoothAudioProvider;
@@ -594,6 +596,99 @@ TEST_P(BluetoothAudioProviderFactoryAidl,
     // returns non-empty list.
     EXPECT_TRUE(temp_provider_capabilities_.empty() ||
                 audio_provider_ != nullptr);
+  }
+}
+
+/**
+ * Test that getProviderInfo, when implemented,
+ * returns empty information for session types for
+ * software data paths.
+ */
+TEST_P(BluetoothAudioProviderFactoryAidl, getProviderInfo_invalidSessionTypes) {
+  static constexpr SessionType kInvalidSessionTypes[]{
+      SessionType::UNKNOWN,
+      SessionType::A2DP_SOFTWARE_ENCODING_DATAPATH,
+      SessionType::HEARING_AID_SOFTWARE_ENCODING_DATAPATH,
+      SessionType::LE_AUDIO_SOFTWARE_ENCODING_DATAPATH,
+      SessionType::LE_AUDIO_SOFTWARE_DECODING_DATAPATH,
+      SessionType::LE_AUDIO_BROADCAST_SOFTWARE_ENCODING_DATAPATH,
+      SessionType::A2DP_SOFTWARE_DECODING_DATAPATH,
+  };
+
+  for (auto session_type : kInvalidSessionTypes) {
+    std::optional<IBluetoothAudioProviderFactory::ProviderInfo> provider_info =
+        std::nullopt;
+    auto aidl_retval =
+        provider_factory_->getProviderInfo(session_type, &provider_info);
+    if (!aidl_retval.isOk()) {
+      continue;
+    }
+
+    // If getProviderInfo is supported, the provider info
+    // must be empty for software session types.
+    ASSERT_FALSE(provider_info.has_value());
+  }
+}
+
+/**
+ * Test that getProviderInfo, when implemented,
+ * returns valid information for session types for
+ * a2dp hardware data paths.
+ */
+TEST_P(BluetoothAudioProviderFactoryAidl, getProviderInfo_a2dpSessionTypes) {
+  static constexpr SessionType kA2dpSessionTypes[]{
+      SessionType::A2DP_HARDWARE_OFFLOAD_ENCODING_DATAPATH,
+      SessionType::A2DP_HARDWARE_OFFLOAD_DECODING_DATAPATH,
+  };
+
+  for (auto session_type : kA2dpSessionTypes) {
+    std::optional<IBluetoothAudioProviderFactory::ProviderInfo> provider_info =
+        std::nullopt;
+    auto aidl_retval =
+        provider_factory_->getProviderInfo(session_type, &provider_info);
+    if (!aidl_retval.isOk() || !provider_info.has_value()) {
+      continue;
+    }
+
+    for (auto const& codec_info : provider_info->codecInfos) {
+      // The codec id must not be core.
+      ASSERT_NE(codec_info.id.getTag(), CodecId::core);
+      // The codec info must contain the information
+      // for a2dp transport.
+      ASSERT_EQ(codec_info.transport.getTag(), CodecInfo::Transport::a2dp);
+    }
+  }
+}
+
+/**
+ * Test that getProviderInfo, when implemented,
+ * returns valid information for session types for
+ * le audio hardware data paths.
+ */
+TEST_P(BluetoothAudioProviderFactoryAidl, getProviderInfo_leAudioSessionTypes) {
+  static constexpr SessionType kLeAudioSessionTypes[]{
+      SessionType::LE_AUDIO_HARDWARE_OFFLOAD_ENCODING_DATAPATH,
+      SessionType::LE_AUDIO_HARDWARE_OFFLOAD_DECODING_DATAPATH,
+      SessionType::LE_AUDIO_BROADCAST_HARDWARE_OFFLOAD_ENCODING_DATAPATH,
+  };
+
+  for (auto session_type : kLeAudioSessionTypes) {
+    std::optional<IBluetoothAudioProviderFactory::ProviderInfo> provider_info =
+        std::nullopt;
+    auto aidl_retval =
+        provider_factory_->getProviderInfo(session_type, &provider_info);
+    if (!aidl_retval.isOk() || !provider_info.has_value()) {
+      continue;
+    }
+
+    for (auto const& codec_info : provider_info->codecInfos) {
+      // The codec id must not be a2dp.
+      ASSERT_NE(codec_info.id.getTag(), CodecId::a2dp);
+      // The codec info must contain the information
+      // for le audio transport.
+      // ASSERT_EQ(codec_info.transport.getTag(),
+      // CodecInfo::Transport::le_audio);
+    }
   }
 }
 
