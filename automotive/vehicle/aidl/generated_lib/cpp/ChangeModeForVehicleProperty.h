@@ -198,6 +198,7 @@ std::unordered_map<VehicleProperty, VehiclePropertyChangeMode> ChangeModeForVehi
         {VehicleProperty::GLOVE_BOX_LOCKED, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::VEHICLE_MAP_SERVICE, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::LOCATION_CHARACTERIZATION, VehiclePropertyChangeMode::STATIC},
+        {VehicleProperty::ULTRASONICS_SENSOR_POSITION, VehiclePropertyChangeMode::STATIC},
         {VehicleProperty::OBD2_LIVE_FRAME, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::OBD2_FREEZE_FRAME, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::OBD2_FREEZE_FRAME_INFO, VehiclePropertyChangeMode::ON_CHANGE},
