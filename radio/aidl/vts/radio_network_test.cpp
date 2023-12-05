@@ -90,6 +90,11 @@ TEST_P(RadioNetworkTest, setGetAllowedNetworkTypesBitmap) {
 
     serial = GetRandomSerialNumber();
 
+    // get aidl version
+    int32_t aidl_version;
+    ndk::ScopedAStatus aidl_status = radio_network->getInterfaceVersion(&aidl_version);
+    ASSERT_OK(aidl_status);
+
     // save current value
     radio_network->getAllowedNetworkTypesBitmap(serial);
     EXPECT_EQ(std::cv_status::no_timeout, wait());
@@ -125,6 +130,11 @@ TEST_P(RadioNetworkTest, setGetAllowedNetworkTypesBitmap) {
                  RadioError::INVALID_ARGUMENTS, RadioError::MODEM_ERR,
                  RadioError::REQUEST_NOT_SUPPORTED, RadioError::NO_RESOURCES}));
         if (radioRsp_network->rspInfo.error == RadioError::NONE) {
+            if (aidl_version < 2) {
+                radioRsp_network->networkTypeBitmapResponse
+                    &= ~static_cast<int32_t>(RadioAccessFamily::LTE_CA);
+            }
+
             // verify we get the value we set
             EXPECT_EQ(radioRsp_network->networkTypeBitmapResponse, allowedNetworkTypesBitmap);
         }
