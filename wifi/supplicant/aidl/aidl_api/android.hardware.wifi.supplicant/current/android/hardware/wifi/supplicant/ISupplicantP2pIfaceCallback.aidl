@@ -34,6 +34,9 @@
 package android.hardware.wifi.supplicant;
 @VintfStability
 interface ISupplicantP2pIfaceCallback {
+  /**
+   * @deprecated This callback is deprecated from AIDL v2, newer HAL should call onDeviceFoundWithParams.
+   */
   oneway void onDeviceFound(in byte[] srcAddress, in byte[] p2pDeviceAddress, in byte[] primaryDeviceType, in String deviceName, in android.hardware.wifi.supplicant.WpsConfigMethods configMethods, in byte deviceCapabilities, in android.hardware.wifi.supplicant.P2pGroupCapabilityMask groupCapabilities, in byte[] wfdDeviceInfo);
   oneway void onDeviceLost(in byte[] p2pDeviceAddress);
   oneway void onFindStopped();
@@ -60,9 +63,13 @@ interface ISupplicantP2pIfaceCallback {
    */
   oneway void onStaDeauthorized(in byte[] srcAddress, in byte[] p2pDeviceAddress);
   oneway void onGroupFrequencyChanged(in String groupIfname, in int frequency);
+  /**
+   * @deprecated This callback is deprecated from AIDL v3, newer HAL should call onDeviceFoundWithParams.
+   */
   oneway void onDeviceFoundWithVendorElements(in byte[] srcAddress, in byte[] p2pDeviceAddress, in byte[] primaryDeviceType, in String deviceName, in android.hardware.wifi.supplicant.WpsConfigMethods configMethods, in byte deviceCapabilities, in android.hardware.wifi.supplicant.P2pGroupCapabilityMask groupCapabilities, in byte[] wfdDeviceInfo, in byte[] wfdR2DeviceInfo, in byte[] vendorElemBytes);
   oneway void onGroupStartedWithParams(in android.hardware.wifi.supplicant.P2pGroupStartedEventParams groupStartedEventParams);
   oneway void onPeerClientJoined(in android.hardware.wifi.supplicant.P2pPeerClientJoinedEventParams clientJoinedEventParams);
   oneway void onPeerClientDisconnected(in android.hardware.wifi.supplicant.P2pPeerClientDisconnectedEventParams clientDisconnectedEventParams);
   oneway void onProvisionDiscoveryCompletedEvent(in android.hardware.wifi.supplicant.P2pProvisionDiscoveryCompletedEventParams provisionDiscoveryCompletedEventParams);
+  oneway void onDeviceFoundWithParams(in android.hardware.wifi.supplicant.P2pDeviceFoundEventParams deviceFoundEventParams);
 }
