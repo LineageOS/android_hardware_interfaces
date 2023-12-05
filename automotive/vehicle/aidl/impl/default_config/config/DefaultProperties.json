@@ -3546,6 +3546,14 @@
             ]
         },
         {
+            "property": "VehicleProperty::DRIVER_DROWSINESS_ATTENTION_SYSTEM_ENABLED",
+            "defaultValue": {
+                "int32Values": [
+                    1
+                ]
+            }
+        },
+        {
             "property": "VehicleProperty::INITIAL_USER_INFO"
         },
         {
