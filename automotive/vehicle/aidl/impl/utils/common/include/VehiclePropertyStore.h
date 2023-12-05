@@ -143,10 +143,16 @@ class VehiclePropertyStore final {
     std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropConfig> getAllConfigs()
             const EXCLUDES(mLock);
 
-    // Get the property config for the requested property.
+    // Deprecated, use getPropConfig instead. This is unsafe to use if registerProperty overwrites
+    // an existing config.
     android::base::Result<const aidl::android::hardware::automotive::vehicle::VehiclePropConfig*,
                           VhalError>
     getConfig(int32_t propId) const EXCLUDES(mLock);
+
+    // Get the property config for the requested property.
+    android::base::Result<aidl::android::hardware::automotive::vehicle::VehiclePropConfig,
+                          VhalError>
+    getPropConfig(int32_t propId) const EXCLUDES(mLock);
 
     // Set a callback that would be called when a property value has been updated.
     void setOnValueChangeCallback(const OnValueChangeCallback& callback) EXCLUDES(mLock);
