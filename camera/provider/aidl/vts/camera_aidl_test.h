@@ -279,8 +279,7 @@ class CameraAidlTest : public ::testing::TestWithParam<std::string> {
     static void verifySettingsOverrideCharacteristics(const camera_metadata_t* metadata);
 
     static void verifyStreamCombination(const std::shared_ptr<ICameraDevice>& device,
-                                        const StreamConfiguration& config, bool expectedStatus,
-                                        bool expectStreamCombQuery);
+                                        const StreamConfiguration& config, bool expectedStatus);
 
     static void verifyLogicalCameraResult(const camera_metadata_t* staticMetadata,
                                           const std::vector<uint8_t>& resultMetadata);
@@ -625,6 +624,7 @@ namespace {
 // device@<major>.<minor>/<type>/id
 const char* kDeviceNameRE = "device@([0-9]+\\.[0-9]+)/\\s+/(.+)";
 const std::string CAMERA_DEVICE_API_VERSION_1 = "1.1";
+const int32_t CAMERA_DEVICE_API_MINOR_VERSION_3 = 3;
 
 const int32_t kMaxVideoWidth = 4096;
 const int32_t kMaxVideoHeight = 2160;
