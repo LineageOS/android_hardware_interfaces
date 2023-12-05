@@ -48,21 +48,21 @@ class VehiclePropertyStore final {
 
     enum class EventMode : uint8_t {
         /**
-         * Only invoke OnValueChangeCallback if the new property value (ignoring timestamp) is
-         * different than the existing value.
+         * Only invoke OnValueChangeCallback or OnValuesChangeCallback if the new property value
+         * (ignoring timestamp) is different than the existing value.
          *
          * This should be used for regular cases.
          */
         ON_VALUE_CHANGE,
         /**
-         * Always invoke OnValueChangeCallback.
+         * Always invoke OnValueChangeCallback or OnValuesChangeCallback.
          *
          * This should be used for the special properties that are used for delivering event, e.g.
          * HW_KEY_INPUT.
          */
         ALWAYS,
         /**
-         * Never invoke OnValueChangeCallback.
+         * Never invoke OnValueChangeCallback or OnValuesChangeCalblack.
          *
          * This should be used for continuous property subscription when the sample rate for the
          * subscription is smaller than the refresh rate for the property. E.g., the vehicle speed
@@ -82,6 +82,10 @@ class VehiclePropertyStore final {
     using OnValueChangeCallback = std::function<void(
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue&)>;
 
+    // Callback when one or more property values have been updated or new values added.
+    using OnValuesChangeCallback = std::function<void(
+            std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropValue>)>;
+
     // Function that used to calculate unique token for given VehiclePropValue.
     using TokenFunction = std::function<int64_t(
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value)>;
@@ -99,7 +103,8 @@ class VehiclePropertyStore final {
     // 'status' would be initialized to {@code VehiclePropertyStatus::AVAILABLE}, if this is to
     // override an existing value, the status for the existing value would be used for the
     // overridden value.
-    // 'EventMode' controls whether the 'OnValueChangeCallback' will be called for this operation.
+    // 'EventMode' controls whether the 'OnValueChangeCallback' or 'OnValuesChangeCallback' will be
+    // called for this operation.
     // If 'useCurrentTimestamp' is true, the property value will be set to the current timestamp.
     VhalResult<void> writeValue(VehiclePropValuePool::RecyclableType propValue,
                                 bool updateStatus = false,
@@ -110,6 +115,11 @@ class VehiclePropertyStore final {
     // always, generates the property update event, otherwise, only update the stored timestamp
     // without generating event. This operation is atomic with other writeValue operations.
     void refreshTimestamp(int32_t propId, int32_t areaId, EventMode eventMode) EXCLUDES(mLock);
+
+    // Refresh the timestamp for multiple [propId, areaId]s.
+    void refreshTimestamps(
+            std::unordered_map<PropIdAreaId, EventMode, PropIdAreaIdHash> eventModeByPropIdAreaId)
+            EXCLUDES(mLock);
 
     // Remove a given property value from the property store. The 'propValue' would be used to
     // generate the key for the value to remove.
@@ -157,6 +167,13 @@ class VehiclePropertyStore final {
     // Set a callback that would be called when a property value has been updated.
     void setOnValueChangeCallback(const OnValueChangeCallback& callback) EXCLUDES(mLock);
 
+    // Set a callback that would be called when one or more property values have been updated.
+    // For backward compatibility, this is optional. If this is not set, then multiple property
+    // updates will be delivered through multiple OnValueChangeCallback instead.
+    // It is recommended to set this and batch the property update events for better performance.
+    // If this is set, then OnValueChangeCallback will not be used.
+    void setOnValuesChangeCallback(const OnValuesChangeCallback& callback) EXCLUDES(mLock);
+
     inline std::shared_ptr<VehiclePropValuePool> getValuePool() { return mValuePool; }
 
   private:
@@ -184,6 +201,7 @@ class VehiclePropertyStore final {
     mutable std::mutex mLock;
     std::unordered_map<int32_t, Record> mRecordsByPropId GUARDED_BY(mLock);
     OnValueChangeCallback mOnValueChangeCallback GUARDED_BY(mLock);
+    OnValuesChangeCallback mOnValuesChangeCallback GUARDED_BY(mLock);
 
     const Record* getRecordLocked(int32_t propId) const;
 
