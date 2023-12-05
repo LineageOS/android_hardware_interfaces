@@ -17,8 +17,10 @@
 package android.hardware.bluetooth.audio;
 
 import android.hardware.bluetooth.audio.AudioCapabilities;
+import android.hardware.bluetooth.audio.CodecInfo;
 import android.hardware.bluetooth.audio.IBluetoothAudioProvider;
 import android.hardware.bluetooth.audio.SessionType;
+
 /**
  * This factory allows a HAL implementation to be split into multiple
  * independent providers.
@@ -62,4 +64,24 @@ interface IBluetoothAudioProviderFactory {
      * @return provider The provider of the specified session type
      */
     IBluetoothAudioProvider openProvider(in SessionType sessionType);
+
+    /**
+     * General information relative to a provider
+     * - An optional name
+     * - A list of codec information
+     */
+    @VintfStability
+    parcelable ProviderInfo {
+        String name;
+        CodecInfo[] codecInfos;
+    }
+
+    /**
+     * Get general information relative to a provider.
+     *
+     * @param sessionType Hardware Offload provider (*_HARDWARE_OFFLOAD_*)
+     * @return General information relative to the provider.
+     *         The `null` value can be returned when the provider is not available
+     */
+    @nullable ProviderInfo getProviderInfo(in SessionType sessionType);
 }
