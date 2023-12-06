@@ -65,7 +65,11 @@ wifi_hal_cc_defaults {
 
 cc_library_static {
     name: "android.hardware.wifi-service-lib",
-    defaults: ["android.hardware.wifi-service-cppflags-defaults"],
+    defaults: [
+        "android.hardware.wifi-service-cppflags-defaults",
+        "wifi_force_disable_aidlchipcaps_defaults",
+        "wifi_force_disable_aidlstaifacecaps_defaults",
+    ],
     proprietary: true,
     min_sdk_version: "34",
     compile_multilib: "first",
