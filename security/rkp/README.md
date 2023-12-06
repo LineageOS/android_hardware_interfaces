@@ -196,8 +196,8 @@ The Android Virtualization Framwork (AVF) relies on RKP to provision keys for VM
 privileged vm, the RKP VM, is reponsible for generating and managing the keys for client
 VMs that run virtualized workloads. See the following for more background information on the
 RKP VM:
-*    [rkp-vm]: https://android.googlesource.com/platform/packages/modules/Virtualization/+/main/service_vm/README.md#rkp-vm-remote-key-provisioning-virtual-machine
-*    [rkp-service]: https://source.android.com/docs/core/ota/modular-system/remote-key-provisioning#stack-architecture
+*    [rkp-vm](https://android.googlesource.com/platform/packages/modules/Virtualization/+/main/service_vm/README.md#rkp-vm-remote-key-provisioning-virtual-machine)
+*    [rkp-service](https://source.android.com/docs/core/ota/modular-system/remote-key-provisioning#stack-architecture)
 
 It is important to distinquish the RKP VM from other components, such as KeyMint. An
 [RKP VM marker](https://pigweed.googlesource.com/open-dice/+/HEAD/docs/android.md#configuration-descriptor)
