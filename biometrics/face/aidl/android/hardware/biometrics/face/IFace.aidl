@@ -20,6 +20,9 @@ import android.hardware.biometrics.face.ISession;
 import android.hardware.biometrics.face.ISessionCallback;
 import android.hardware.biometrics.face.SensorProps;
 
+/**
+ * @hide
+ */
 @VintfStability
 interface IFace {
     /**

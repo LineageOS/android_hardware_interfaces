@@ -42,6 +42,7 @@ import android.hardware.keymaster.HardwareAuthToken;
  * ISession only supports execution of one operation at a time, regardless of whether it's
  * cancellable or not. The framework must wait for a corresponding callback indicating the end of
  * the current operation before a new operation can be started.
+ * @hide
  */
 
 @VintfStability
