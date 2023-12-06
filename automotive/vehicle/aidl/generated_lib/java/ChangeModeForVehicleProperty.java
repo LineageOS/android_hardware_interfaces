@@ -195,6 +195,7 @@ public final class ChangeModeForVehicleProperty {
         Map.entry(VehicleProperty.ULTRASONICS_SENSOR_FIELD_OF_VIEW, VehiclePropertyChangeMode.STATIC),
         Map.entry(VehicleProperty.ULTRASONICS_SENSOR_DETECTION_RANGE, VehiclePropertyChangeMode.STATIC),
         Map.entry(VehicleProperty.ULTRASONICS_SENSOR_SUPPORTED_RANGES, VehiclePropertyChangeMode.STATIC),
+        Map.entry(VehicleProperty.ULTRASONICS_SENSOR_MEASURED_DISTANCE, VehiclePropertyChangeMode.CONTINUOUS),
         Map.entry(VehicleProperty.OBD2_LIVE_FRAME, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.OBD2_FREEZE_FRAME, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.OBD2_FREEZE_FRAME_INFO, VehiclePropertyChangeMode.ON_CHANGE),

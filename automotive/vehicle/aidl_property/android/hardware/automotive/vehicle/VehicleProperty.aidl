@@ -3455,6 +3455,32 @@ enum VehicleProperty {
             + VehiclePropertyType.INT32_VEC,
 
     /**
+     * The distance reading of the nearest detected object per sensor in millimeters.
+     *
+     * Each individual sensor is identified by its VehicleAreaConfig#areaId and returns the sensor's
+     * measured distance formatted as [distance, distance_error] where:
+     *
+     *     int32Values[0] = distance, the measured distance of the nearest object in millimeters.
+     *                      If only a range is supported, this value must be set to the minimum
+     *                      supported distance in the detected range as specified in
+     *                      ULTRASONICS_SENSOR_SUPPORTED_RANGES.
+     *     int32Values[1] = distance_error, the error of the measured distance value in
+     *                      millimeters.
+     *
+     * If no object is detected, an empty vector must be returned. If distance_error is not
+     * available then an array of only the measured distance must be returned.
+     *
+     * If the data is aggregated by another ECU, then OEMs have the option of reporting the same
+     * reading across all included sensors or reporting a virtual representation of all the included
+     * sensors as if they were one sensor.
+     *
+     * @change_mode VehiclePropertyChangeMode.CONTINUOUS
+     * @access VehiclePropertyAccess.READ
+     */
+    ULTRASONICS_SENSOR_MEASURED_DISTANCE = 0x0C25 + VehiclePropertyGroup.SYSTEM + VehicleArea.VENDOR
+            + VehiclePropertyType.INT32_VEC,
+
+    /**
      * OBD2 Live Sensor Data
      *
      * Reports a snapshot of the current (live) values of the OBD2 sensors available.
