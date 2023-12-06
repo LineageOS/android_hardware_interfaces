@@ -17,8 +17,9 @@
 package android.hardware.radio.network;
 
 /**
- * Each enum value represents a message type on the NAS. The relevant cellular generation is noted.
- * Sample spec references are provided, but generally only reference one network generation's spec.
+ * Each enum value represents a message type on the Non-Access Stratum (NAS). The relevant cellular
+ * generation is noted for each message type. Sample spec references are provided, but generally
+ * only reference one network generation's spec.
  *
  * @hide
  */
