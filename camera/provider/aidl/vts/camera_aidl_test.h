@@ -64,6 +64,7 @@ using ::aidl::android::hardware::camera::device::BufferRequest;
 using ::aidl::android::hardware::camera::device::BufferRequestStatus;
 using ::aidl::android::hardware::camera::device::CameraMetadata;
 using ::aidl::android::hardware::camera::device::CaptureResult;
+using ::aidl::android::hardware::camera::device::ConfigureStreamsRet;
 using ::aidl::android::hardware::camera::device::ErrorCode;
 using ::aidl::android::hardware::camera::device::HalStream;
 using ::aidl::android::hardware::camera::device::ICameraDevice;
@@ -200,6 +201,11 @@ class CameraAidlTest : public ::testing::TestWithParam<std::string> {
             std::vector<HalStream>* halStreams, bool* supportsPartialResults /*out*/,
             int32_t* partialResultCount /*out*/, std::shared_ptr<DeviceCb>* outCb /*out*/,
             int32_t* jpegBufferSize /*out*/, bool* useHalBufManager /*out*/);
+
+    ndk::ScopedAStatus configureStreams(std::shared_ptr<ICameraDeviceSession>& session,
+                                        const StreamConfiguration& config,
+                                        bool sessionHalBufferManager, bool* useHalBufManager,
+                                        std::vector<HalStream>* halStreams);
 
     void configureStreams(
             const std::string& name, const std::shared_ptr<ICameraProvider>& provider,
