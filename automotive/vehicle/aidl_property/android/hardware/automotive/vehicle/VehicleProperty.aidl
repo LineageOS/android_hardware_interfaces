@@ -3409,6 +3409,52 @@ enum VehicleProperty {
             + VehiclePropertyType.INT32_VEC,
 
     /**
+     * Static data for the supported ranges of each ultrasonic sensor in millimeters.
+     *
+     * For ultrasonic sensors that only support readings within a specific range. For example, if
+     * an ultrasonic sensor detects an object at 700mm, but can only report that an object has been
+     * detected between 500mm and 1000mm.
+     *
+     * Each individual sensor is identified by its VehicleAreaConfig#areaId and returns the sensor's
+     * supported ranges formatted as [range_min_1, range_max_1, range_min_2, range_max_2, ...]
+     * where:
+     *
+     *     int32Values[0] = range_min_1, the minimum of one supported range by the specified sensor
+     *                      in millimeters, inclusive.
+     *     int32Values[1] = range_max_1, the maximum of one supported range by the specified sensor
+     *                      in millimeters, inclusive.
+     *     int32Values[2] = range_min_2, the minimum of another supported range by the specified
+     *                      sensor in millimeters, inclusive.
+     *     int32Values[3] = range_max_2, the maximum of another supported range by the specified
+                            sensor in millimeters, inclusive.
+     *
+     * Example:
+     *     - Ultrasonic sensor supports the following ranges:
+     *           - 150mm to 499mm
+     *           - 500mm to 999mm
+     *           - 1000mm to 1500mm
+     *     - The associated supported ranges should be formatted as:
+     *           - int32Values[0] = 150
+     *           - int32Values[1] = 499
+     *           - int32Values[2] = 500
+     *           - int32Values[3] = 999
+     *           - int32Values[4] = 1000
+     *           - int32Values[5] = 1500
+     *
+     * If this property is not defined, all the values within the ULTRASONICS_SENSOR_DETECTION_RANGE
+     * for the specified sensor are assumed to be supported.
+     *
+     * If the data is aggregated by another ECU, then OEMs have the option of reporting the same
+     * reading across all included sensors or reporting a virtual representation of all the included
+     * sensors as if they were one sensor.
+     *
+     * @change_mode VehiclePropertyChangeMode.STATIC
+     * @access VehiclePropertyAccess.READ
+     */
+    ULTRASONICS_SENSOR_SUPPORTED_RANGES = 0x0C24 + VehiclePropertyGroup.SYSTEM + VehicleArea.VENDOR
+            + VehiclePropertyType.INT32_VEC,
+
+    /**
      * OBD2 Live Sensor Data
      *
      * Reports a snapshot of the current (live) values of the OBD2 sensors available.
