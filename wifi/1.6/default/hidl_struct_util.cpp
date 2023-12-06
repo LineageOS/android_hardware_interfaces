@@ -161,6 +161,11 @@ bool convertLegacyFeaturesToHidlChipCapabilities(uint64_t legacy_feature_set,
     *hidl_caps |= HidlChipCaps::DEBUG_RING_BUFFER_VENDOR_DATA;
     *hidl_caps |= HidlChipCaps::DEBUG_HOST_WAKE_REASON_STATS;
     *hidl_caps |= HidlChipCaps::DEBUG_ERROR_ALERTS;
+
+#ifdef WIFI_FORCE_DISABLE_HIDLCHIPCAPS
+    *hidl_caps &= ~(uint32_t)WIFI_FORCE_DISABLE_HIDLCHIPCAPS;
+#endif
+
     return true;
 }
 
@@ -530,6 +535,11 @@ bool convertLegacyFeaturesToHidlStaCapabilities(uint64_t legacy_feature_set,
     // There is no flag for this one in the legacy feature set. Adding it to the
     // set because all the current devices support it.
     *hidl_caps |= HidlStaIfaceCaps::APF;
+
+#ifdef WIFI_FORCE_DISABLE_HIDLSTAIFACECAPS
+    *hidl_caps &= ~(uint32_t)WIFI_FORCE_DISABLE_HIDLSTAIFACECAPS;
+#endif
+
     return true;
 }
 
