@@ -191,6 +191,7 @@ public final class ChangeModeForVehicleProperty {
         Map.entry(VehicleProperty.VEHICLE_MAP_SERVICE, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.LOCATION_CHARACTERIZATION, VehiclePropertyChangeMode.STATIC),
         Map.entry(VehicleProperty.ULTRASONICS_SENSOR_POSITION, VehiclePropertyChangeMode.STATIC),
+        Map.entry(VehicleProperty.ULTRASONICS_SENSOR_ORIENTATION, VehiclePropertyChangeMode.STATIC),
         Map.entry(VehicleProperty.OBD2_LIVE_FRAME, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.OBD2_FREEZE_FRAME, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.OBD2_FREEZE_FRAME_INFO, VehiclePropertyChangeMode.ON_CHANGE),
