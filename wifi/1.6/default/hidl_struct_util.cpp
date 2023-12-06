@@ -158,8 +158,8 @@ bool convertLegacyFeaturesToHidlChipCapabilities(uint64_t legacy_feature_set,
 
     // There are no flags for these 3 in the legacy feature set. Adding them to
     // the set because all the current devices support it.
-    *hidl_caps |= HidlChipCaps::DEBUG_RING_BUFFER_VENDOR_DATA;
-    *hidl_caps |= HidlChipCaps::DEBUG_HOST_WAKE_REASON_STATS;
+    //*hidl_caps |= HidlChipCaps::DEBUG_RING_BUFFER_VENDOR_DATA;
+    //*hidl_caps |= HidlChipCaps::DEBUG_HOST_WAKE_REASON_STATS;
     *hidl_caps |= HidlChipCaps::DEBUG_ERROR_ALERTS;
     return true;
 }
@@ -512,7 +512,7 @@ bool convertLegacyFeaturesToHidlStaCapabilities(uint64_t legacy_feature_set,
         return false;
     }
     *hidl_caps = {};
-    using HidlStaIfaceCaps = IWifiStaIface::StaIfaceCapabilityMask;
+    //using HidlStaIfaceCaps = IWifiStaIface::StaIfaceCapabilityMask;
     for (const auto feature : {legacy_hal::WIFI_LOGGER_PACKET_FATE_SUPPORTED}) {
         if (feature & legacy_logger_feature_set) {
             *hidl_caps |= convertLegacyLoggerFeatureToHidlStaIfaceCapability(feature);
@@ -529,7 +529,7 @@ bool convertLegacyFeaturesToHidlStaCapabilities(uint64_t legacy_feature_set,
     }
     // There is no flag for this one in the legacy feature set. Adding it to the
     // set because all the current devices support it.
-    *hidl_caps |= HidlStaIfaceCaps::APF;
+    //*hidl_caps |= HidlStaIfaceCaps::APF;
     return true;
 }
 
