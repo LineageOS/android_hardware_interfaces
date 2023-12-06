@@ -53,7 +53,6 @@ enum SecurityAlgorithm {
   EEA1 = 42,
   EEA2 = 43,
   EEA3 = 44,
-  EEA4_ZUC = 45,
   NEA0 = 55,
   NEA1 = 56,
   NEA2 = 57,
