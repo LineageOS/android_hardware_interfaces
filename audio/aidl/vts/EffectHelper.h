@@ -283,4 +283,32 @@ class EffectHelper {
         }
         return functor(result);
     }
+
+    static void processAndWriteToOutput(std::vector<float>& inputBuffer,
+                                        std::vector<float>& outputBuffer,
+                                        const std::shared_ptr<IEffect>& mEffect,
+                                        IEffect::OpenEffectReturn* mOpenEffectReturn) {
+        // Initialize AidlMessagequeues
+        auto statusMQ = std::make_unique<EffectHelper::StatusMQ>(mOpenEffectReturn->statusMQ);
+        ASSERT_TRUE(statusMQ->isValid());
+        auto inputMQ = std::make_unique<EffectHelper::DataMQ>(mOpenEffectReturn->inputDataMQ);
+        ASSERT_TRUE(inputMQ->isValid());
+        auto outputMQ = std::make_unique<EffectHelper::DataMQ>(mOpenEffectReturn->outputDataMQ);
+        ASSERT_TRUE(outputMQ->isValid());
+
+        // Enabling the process
+        ASSERT_NO_FATAL_FAILURE(command(mEffect, CommandId::START));
+        ASSERT_NO_FATAL_FAILURE(expectState(mEffect, State::PROCESSING));
+
+        // Write from buffer to message queues and calling process
+        EXPECT_NO_FATAL_FAILURE(EffectHelper::writeToFmq(statusMQ, inputMQ, inputBuffer));
+
+        // Read the updated message queues into buffer
+        EXPECT_NO_FATAL_FAILURE(EffectHelper::readFromFmq(statusMQ, 1, outputMQ,
+                                                          outputBuffer.size(), outputBuffer));
+
+        // Disable the process
+        ASSERT_NO_FATAL_FAILURE(command(mEffect, CommandId::RESET));
+        ASSERT_NO_FATAL_FAILURE(expectState(mEffect, State::IDLE));
+    }
 };
