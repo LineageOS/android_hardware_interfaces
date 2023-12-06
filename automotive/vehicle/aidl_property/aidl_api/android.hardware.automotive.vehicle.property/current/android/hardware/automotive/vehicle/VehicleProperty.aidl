@@ -198,6 +198,7 @@ enum VehicleProperty {
   LOCATION_CHARACTERIZATION = (((0x0C10 + android.hardware.automotive.vehicle.VehiclePropertyGroup.SYSTEM) + android.hardware.automotive.vehicle.VehicleArea.GLOBAL) + android.hardware.automotive.vehicle.VehiclePropertyType.INT32) /* 289410064 */,
   ULTRASONICS_SENSOR_POSITION = (((0x0C20 + android.hardware.automotive.vehicle.VehiclePropertyGroup.SYSTEM) + android.hardware.automotive.vehicle.VehicleArea.VENDOR) + android.hardware.automotive.vehicle.VehiclePropertyType.INT32_VEC) /* 406916128 */,
   ULTRASONICS_SENSOR_ORIENTATION = (((0x0C21 + android.hardware.automotive.vehicle.VehiclePropertyGroup.SYSTEM) + android.hardware.automotive.vehicle.VehicleArea.VENDOR) + android.hardware.automotive.vehicle.VehiclePropertyType.INT32_VEC) /* 406916129 */,
+  ULTRASONICS_SENSOR_FIELD_OF_VIEW = (((0x0C22 + android.hardware.automotive.vehicle.VehiclePropertyGroup.SYSTEM) + android.hardware.automotive.vehicle.VehicleArea.VENDOR) + android.hardware.automotive.vehicle.VehiclePropertyType.INT32_VEC) /* 406916130 */,
   OBD2_LIVE_FRAME = (((0x0D00 + 0x10000000) + 0x01000000) + 0x00e00000) /* 299896064 */,
   OBD2_FREEZE_FRAME = (((0x0D01 + 0x10000000) + 0x01000000) + 0x00e00000) /* 299896065 */,
   OBD2_FREEZE_FRAME_INFO = (((0x0D02 + 0x10000000) + 0x01000000) + 0x00e00000) /* 299896066 */,
