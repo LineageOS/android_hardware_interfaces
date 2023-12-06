@@ -73,6 +73,7 @@ cc_library_static {
         "-Wall",
         "-Werror",
         "-Wextra",
+        "-DWIFI_FORCE_DISABLE_AIDLSTAIFACECAPS=1",
     ],
     // Allow implicit fallthroughs in wifi_legacy_hal.cpp until they are fixed.
     cflags: ["-Wno-error=implicit-fallthrough"],

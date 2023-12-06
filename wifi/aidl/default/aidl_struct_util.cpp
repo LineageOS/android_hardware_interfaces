@@ -123,6 +123,10 @@ bool convertLegacyChipFeaturesToAidl(uint64_t legacy_feature_set, uint32_t* aidl
         }
     }
 
+#ifdef WIFI_FORCE_DISABLE_AIDLCHIPCAPS
+    *aidl_feature_set &= ~(uint32_t)WIFI_FORCE_DISABLE_AIDLCHIPCAPS;
+#endif
+
     return true;
 }
 
@@ -473,6 +477,11 @@ bool convertLegacyStaIfaceFeaturesToAidl(uint64_t legacy_feature_set, uint32_t* 
     // There is no flag for this one in the legacy feature set. Adding it to the
     // set because all the current devices support it.
     *aidl_feature_set |= static_cast<uint32_t>(IWifiStaIface::FeatureSetMask::APF);
+
+#ifdef WIFI_FORCE_DISABLE_AIDLSTAIFACECAPS
+    *aidl_feature_set &= ~(uint32_t)WIFI_FORCE_DISABLE_AIDLSTAIFACECAPS;
+#endif
+
     return true;
 }
 
