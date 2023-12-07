@@ -99,6 +99,10 @@ interface IWifiStaIface {
          * Support for keep alive packet offload.
          */
         KEEP_ALIVE = 1 << 13,
+        /**
+         * Support for configuring roaming mode.
+         */
+        ROAMING_MODE_CONTROL = 1 << 14,
     }
 
     /**
