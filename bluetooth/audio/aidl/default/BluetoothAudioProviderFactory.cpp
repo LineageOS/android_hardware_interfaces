@@ -22,6 +22,7 @@
 #include <android-base/logging.h>
 
 #include "A2dpOffloadAudioProvider.h"
+#include "A2dpOffloadCodecFactory.h"
 #include "A2dpSoftwareAudioProvider.h"
 #include "BluetoothAudioProvider.h"
 #include "HearingAidAudioProvider.h"
@@ -150,7 +151,14 @@ ndk::ScopedAStatus BluetoothAudioProviderFactory::getProviderInfo(
     SessionType session_type, std::optional<ProviderInfo>* _aidl_return) {
   *_aidl_return = std::nullopt;
 
-  (void)session_type;
+  if (session_type == SessionType::A2DP_HARDWARE_OFFLOAD_ENCODING_DATAPATH ||
+      session_type == SessionType::A2DP_HARDWARE_OFFLOAD_DECODING_DATAPATH) {
+    auto& provider_info = _aidl_return->emplace();
+
+    provider_info.name = A2dpOffloadCodecFactory::GetInstance()->name;
+    for (auto codec : A2dpOffloadCodecFactory::GetInstance()->codecs)
+      provider_info.codecInfos.push_back(codec->info);
+  }
 
   return ndk::ScopedAStatus::ok();
 }

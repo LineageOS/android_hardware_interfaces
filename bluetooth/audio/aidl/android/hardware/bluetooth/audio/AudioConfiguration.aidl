@@ -16,6 +16,7 @@
 
 package android.hardware.bluetooth.audio;
 
+import android.hardware.bluetooth.audio.A2dpStreamConfiguration;
 import android.hardware.bluetooth.audio.CodecConfiguration;
 import android.hardware.bluetooth.audio.HfpConfiguration;
 import android.hardware.bluetooth.audio.LeAudioBroadcastConfiguration;
@@ -32,4 +33,5 @@ union AudioConfiguration {
     LeAudioConfiguration leAudioConfig;
     LeAudioBroadcastConfiguration leAudioBroadcastConfig;
     HfpConfiguration hfpConfig;
+    A2dpStreamConfiguration a2dp;
 }
