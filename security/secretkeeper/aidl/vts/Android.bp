@@ -28,6 +28,8 @@ rust_test {
     rustlibs: [
         "libsecretkeeper_comm_nostd",
         "android.hardware.security.secretkeeper-V1-rust",
+        "libauthgraph_core",
+        "libauthgraph_vts_test",
         "libbinder_rs",
         "liblog_rust",
     ],

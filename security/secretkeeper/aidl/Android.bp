@@ -20,8 +20,15 @@ aidl_interface {
     name: "android.hardware.security.secretkeeper",
     vendor_available: true,
     srcs: ["android/hardware/security/secretkeeper/*.aidl"],
+    imports: [
+        "android.hardware.security.authgraph-V1",
+    ],
     stability: "vintf",
+    frozen: false,
     backend: {
+        java: {
+            enabled: false,
+        },
         ndk: {
             enabled: true,
         },
@@ -33,4 +40,45 @@ aidl_interface {
             ],
         },
     },
+}
+
+// cc_defaults that includes the latest Secretkeeper AIDL library.
+// Modules that depend on Secretkeeper directly can include this cc_defaults to avoid
+// managing dependency versions explicitly.
+cc_defaults {
+    name: "secretkeeper_use_latest_hal_aidl_ndk_static",
+    static_libs: [
+        "android.hardware.security.secretkeeper-V1-ndk",
+    ],
+}
+
+cc_defaults {
+    name: "secretkeeper_use_latest_hal_aidl_ndk_shared",
+    shared_libs: [
+        "android.hardware.security.secretkeeper-V1-ndk",
+    ],
+}
+
+cc_defaults {
+    name: "secretkeeper_use_latest_hal_aidl_cpp_static",
+    static_libs: [
+        "android.hardware.security.secretkeeper-V1-cpp",
+    ],
+}
+
+cc_defaults {
+    name: "secretkeeper_use_latest_hal_aidl_cpp_shared",
+    shared_libs: [
+        "android.hardware.security.secretkeeper-V1-cpp",
+    ],
+}
+
+// A rust_defaults that includes the latest Secretkeeper AIDL library.
+// Modules that depend on Secretkeeper directly can include this rust_defaults to avoid
+// managing dependency versions explicitly.
+rust_defaults {
+    name: "secretkeeper_use_latest_hal_aidl_rust",
+    rustlibs: [
+        "android.hardware.security.secretkeeper-V1-rust",
+    ],
 }

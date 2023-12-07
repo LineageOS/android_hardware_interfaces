@@ -26,6 +26,7 @@ use android_hardware_security_authgraph::aidl::android::hardware::security::auth
 use authgraph_boringssl as boring;
 use authgraph_core::{error::Error as AgError, keyexchange as ke};
 use coset::CborSerializable;
+use std::{cell::RefCell, rc::Rc};
 
 pub mod sink;
 pub mod source;
@@ -34,7 +35,7 @@ pub mod source;
 pub fn test_ag_participant() -> Result<ke::AuthGraphParticipant, AgError> {
     Ok(ke::AuthGraphParticipant::new(
         boring::crypto_trait_impls(),
-        Box::<boring::test_device::AgDevice>::default(),
+        Rc::new(RefCell::new(boring::test_device::AgDevice::default())),
         ke::MAX_OPENED_SESSIONS,
     )?)
 }
