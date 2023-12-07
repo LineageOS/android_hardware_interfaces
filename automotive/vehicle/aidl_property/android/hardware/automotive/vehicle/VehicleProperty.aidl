@@ -5135,6 +5135,30 @@ enum VehicleProperty {
     DRIVER_DROWSINESS_ATTENTION_STATE =
             0x101A + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
 
+    /**
+     * Enable or disable driver drowsiness and attention warnings.
+     *
+     * Set true to enable driver drowsiness and attention warnings and false to disable driver
+     * drowsiness and attention warnings.
+     *
+     * When driver drowsiness and attention warnings are enabled, the driver drowsiness and
+     * attention monitoring system inside the vehicle should warn the driver when it detects the
+     * driver is drowsy or not attentive.
+     *
+     * In general, DRIVER_DROWSINESS_ATTENTION_WARNING_ENABLED should always return true or false.
+     * If the feature is not available due to some temporary state, that information must be
+     * conveyed through the ErrorState values in the DRIVER_DROWSINESS_ATTENTION_WARNING property.
+     *
+     * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
+     * implement it as VehiclePropertyAccess.READ only.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
+     */
+    DRIVER_DROWSINESS_ATTENTION_WARNING_ENABLED =
+            0x101B + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+
     /***************************************************************************
      * End of ADAS Properties
      **************************************************************************/
