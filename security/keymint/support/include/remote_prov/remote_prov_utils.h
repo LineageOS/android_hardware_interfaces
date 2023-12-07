@@ -130,7 +130,7 @@ struct JsonOutput {
  *   }
  */
 JsonOutput jsonEncodeCsrWithBuild(const std::string instance_name,
-                                  const cppbor::Array& csr);
+                                  const cppbor::Array& csr, const std::string serialno_prop);
 
 /**
  * Parses a DeviceInfo structure from the given CBOR data. The parsed data is then validated to
