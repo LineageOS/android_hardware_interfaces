@@ -35,6 +35,7 @@
 #include <broadcastradio-utils-aidl/UtilsV2.h>
 #include <cutils/bitops.h>
 #include <gmock/gmock.h>
+#include <gtest/gtest.h>
 
 #include <chrono>
 #include <condition_variable>
@@ -75,12 +76,6 @@ const ConfigFlag kConfigFlagValues[] = {
 
 constexpr int32_t kAidlVersion1 = 1;
 constexpr int32_t kAidlVersion2 = 2;
-
-void printSkipped(const std::string& msg) {
-    const auto testInfo = testing::UnitTest::GetInstance()->current_test_info();
-    LOG(INFO) << "[  SKIPPED ] " << testInfo->test_case_name() << "." << testInfo->name()
-              << " with message: " << msg;
-}
 
 bool isValidAmFmFreq(int64_t freq, int aidlVersion) {
     ProgramIdentifier id = bcutils::makeIdentifier(IdentifierType::AMFM_FREQUENCY_KHZ, freq);
@@ -385,7 +380,7 @@ std::optional<bcutils::ProgramInfoSet> BroadcastRadioHalTest::getProgramList(
     auto startResult = mModule->startProgramListUpdates(filter);
 
     if (startResult.getServiceSpecificError() == resultToInt(Result::NOT_SUPPORTED)) {
-        printSkipped("Program list not supported");
+        LOG(WARNING) << "Program list not supported";
         return std::nullopt;
     }
     EXPECT_TRUE(startResult.isOk());
@@ -430,8 +425,7 @@ TEST_P(BroadcastRadioHalTest, GetAmFmRegionConfig) {
     bool supported = getAmFmRegionConfig(/* full= */ false, &config);
 
     if (!supported) {
-        printSkipped("AM/FM not supported");
-        return;
+        GTEST_SKIP() << "AM/FM not supported";
     }
 
     EXPECT_LE(popcountll(static_cast<unsigned long long>(config.fmDeemphasis)), 1);
@@ -459,8 +453,7 @@ TEST_P(BroadcastRadioHalTest, GetAmFmRegionConfigRanges) {
     bool supported = getAmFmRegionConfig(/* full= */ false, &config);
 
     if (!supported) {
-        printSkipped("AM/FM not supported");
-        return;
+        GTEST_SKIP() << "AM/FM not supported";
     }
 
     EXPECT_GT(config.ranges.size(), 0u);
@@ -488,7 +481,7 @@ TEST_P(BroadcastRadioHalTest, GetAmFmRegionConfigCapabilitiesForFM) {
     if (supported && supportsFM(config)) {
         EXPECT_GE(popcountll(static_cast<unsigned long long>(config.fmDeemphasis)), 1);
     } else {
-        printSkipped("FM not supported");
+        GTEST_SKIP() << "FM not supported";
     }
 }
 
@@ -509,8 +502,7 @@ TEST_P(BroadcastRadioHalTest, GetAmFmRegionConfigCapabilitiesRanges) {
     bool supported = getAmFmRegionConfig(/* full= */ true, &config);
 
     if (!supported) {
-        printSkipped("AM/FM not supported");
-        return;
+        GTEST_SKIP() << "AM/FM not supported";
     }
 
     EXPECT_GT(config.ranges.size(), 0u);
@@ -536,8 +528,7 @@ TEST_P(BroadcastRadioHalTest, GetDabRegionConfig) {
     auto halResult = mModule->getDabRegionConfig(&config);
 
     if (halResult.getServiceSpecificError() == resultToInt(Result::NOT_SUPPORTED)) {
-        printSkipped("DAB not supported");
-        return;
+        GTEST_SKIP() << "DAB not supported";
     }
     ASSERT_TRUE(halResult.isOk());
 
@@ -671,7 +662,7 @@ TEST_P(BroadcastRadioHalTest, TuneFailsWithEmpty) {
  *  - if it is supported, the method succeeds;
  *  - after a successful tune call, onCurrentProgramInfoChanged callback is
  *    invoked carrying a proper selector;
- *  - program changes exactly to what was requested.
+ *  - program changes to a program info with the program selector requested.
  */
 TEST_P(BroadcastRadioHalTest, FmTune) {
     LOG(DEBUG) << "FmTune Test";
@@ -715,8 +706,7 @@ TEST_P(BroadcastRadioHalTest, HdTune) {
     LOG(DEBUG) << "HdTune Test";
     auto programList = getProgramList();
     if (!programList) {
-        printSkipped("Empty station list, tune cannot be performed");
-        return;
+        GTEST_SKIP() << "Empty station list, tune cannot be performed";
     }
     ProgramSelector hdSel = {};
     ProgramIdentifier physicallyTunedToExpected = {};
@@ -732,8 +722,7 @@ TEST_P(BroadcastRadioHalTest, HdTune) {
         break;
     }
     if (!hdStationPresent) {
-        printSkipped("No HD stations in the list, tune cannot be performed");
-        return;
+        GTEST_SKIP() << "No HD stations in the list, tune cannot be performed";
     }
 
     // try tuning
@@ -762,7 +751,7 @@ TEST_P(BroadcastRadioHalTest, HdTune) {
  *  - if it is supported, the method succeeds;
  *  - after a successful tune call, onCurrentProgramInfoChanged callback is
  *    invoked carrying a proper selector;
- *  - program changes exactly to what was requested.
+ *  - program changes to a program info with the program selector requested.
  */
 TEST_P(BroadcastRadioHalTest, DabTune) {
     LOG(DEBUG) << "DabTune Test";
@@ -771,8 +760,7 @@ TEST_P(BroadcastRadioHalTest, DabTune) {
     auto halResult = mModule->getDabRegionConfig(&config);
 
     if (halResult.getServiceSpecificError() == resultToInt(Result::NOT_SUPPORTED)) {
-        printSkipped("DAB not supported");
-        return;
+        GTEST_SKIP() << "DAB not supported";
     }
     ASSERT_TRUE(halResult.isOk());
     ASSERT_NE(config.size(), 0U);
@@ -780,8 +768,7 @@ TEST_P(BroadcastRadioHalTest, DabTune) {
     auto programList = getProgramList();
 
     if (!programList) {
-        printSkipped("Empty DAB station list, tune cannot be performed");
-        return;
+        GTEST_SKIP() << "Empty DAB station list, tune cannot be performed";
     }
 
     ProgramSelector sel = {};
@@ -811,8 +798,7 @@ TEST_P(BroadcastRadioHalTest, DabTune) {
     }
 
     if (!dabStationPresent) {
-        printSkipped("No DAB stations in the list, tune cannot be performed");
-        return;
+        GTEST_SKIP() << "No DAB stations in the list, tune cannot be performed";
     }
 
     // try tuning
@@ -844,7 +830,7 @@ TEST_P(BroadcastRadioHalTest, DabTune) {
  * Verifies that:
  *  - the method succeeds;
  *  - the program info is changed within kTuneTimeoutMs;
- *  - works both directions and with or without skipping sub-channel.
+ *  - works both directions and with or without ing sub-channel.
  */
 TEST_P(BroadcastRadioHalTest, Seek) {
     LOG(DEBUG) << "Seek Test";
@@ -854,8 +840,7 @@ TEST_P(BroadcastRadioHalTest, Seek) {
     auto result = mModule->seek(/* in_directionUp= */ true, /* in_skipSubChannel= */ true);
 
     if (result.getServiceSpecificError() == resultToInt(Result::NOT_SUPPORTED)) {
-        printSkipped("Seek not supported");
-        return;
+        GTEST_SKIP() << "Seek not supported";
     }
 
     EXPECT_TRUE(result.isOk());
@@ -905,8 +890,7 @@ TEST_P(BroadcastRadioHalTest, Step) {
     auto result = mModule->step(/* in_directionUp= */ true);
 
     if (result.getServiceSpecificError() == resultToInt(Result::NOT_SUPPORTED)) {
-        printSkipped("Step not supported");
-        return;
+        GTEST_SKIP() << "Step not supported";
     }
     EXPECT_TRUE(result.isOk());
     EXPECT_TRUE(mCallback->waitOnCurrentProgramInfoChangedCallback());
@@ -957,8 +941,7 @@ TEST_P(BroadcastRadioHalTest, Cancel) {
         auto result = mModule->seek(/* in_directionUp= */ true, /* in_skipSubChannel= */ true);
 
         if (result.getServiceSpecificError() == notSupportedError) {
-            printSkipped("Cancel is skipped because of seek not supported");
-            return;
+            GTEST_SKIP() << "Cancel is skipped because of seek not supported";
         }
         EXPECT_TRUE(result.isOk());
 
@@ -1152,8 +1135,7 @@ TEST_P(BroadcastRadioHalTest, GetProgramListFromAmFmFilter) {
 
     std::optional<bcutils::ProgramInfoSet> completeList = getProgramList();
     if (!completeList) {
-        printSkipped("No program list available");
-        return;
+        GTEST_SKIP() << "No program list available";
     }
 
     ProgramFilter amfmFilter = {};
@@ -1178,8 +1160,7 @@ TEST_P(BroadcastRadioHalTest, GetProgramListFromAmFmFilter) {
     }
 
     if (expectedResultSize == 0) {
-        printSkipped("No Am/FM programs available");
-        return;
+        GTEST_SKIP() << "No Am/FM programs available";
     }
     std::optional<bcutils::ProgramInfoSet> amfmList = getProgramList(amfmFilter);
     ASSERT_EQ(amfmList->size(), expectedResultSize) << "amfm filter result size is wrong";
@@ -1200,8 +1181,7 @@ TEST_P(BroadcastRadioHalTest, GetProgramListFromDabFilter) {
 
     std::optional<bcutils::ProgramInfoSet> completeList = getProgramList();
     if (!completeList) {
-        printSkipped("No program list available");
-        return;
+        GTEST_SKIP() << "No program list available";
     }
 
     ProgramFilter dabFilter = {};
@@ -1225,8 +1205,7 @@ TEST_P(BroadcastRadioHalTest, GetProgramListFromDabFilter) {
     }
 
     if (expectedResultSize == 0) {
-        printSkipped("No DAB programs available");
-        return;
+        GTEST_SKIP() << "No DAB programs available";
     }
     std::optional<bcutils::ProgramInfoSet> dabList = getProgramList(dabFilter);
     ASSERT_EQ(dabList->size(), expectedResultSize) << "dab filter result size is wrong";
@@ -1245,8 +1224,7 @@ TEST_P(BroadcastRadioHalTest, HdRadioStationNameId) {
 
     std::optional<bcutils::ProgramInfoSet> list = getProgramList();
     if (!list) {
-        printSkipped("No program list");
-        return;
+        GTEST_SKIP() << "No program list";
     }
 
     for (const auto& program : *list) {
@@ -1297,8 +1275,7 @@ TEST_P(BroadcastRadioHalTest, AnnouncementListenerRegistration) {
 
     if (halResult.getServiceSpecificError() == resultToInt(Result::NOT_SUPPORTED)) {
         ASSERT_EQ(closeHandle.get(), nullptr);
-        printSkipped("Announcements not supported");
-        return;
+        GTEST_SKIP() << "Announcements not supported";
     }
 
     ASSERT_TRUE(halResult.isOk());
