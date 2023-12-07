@@ -25,6 +25,8 @@
 #include "A2dpSoftwareAudioProvider.h"
 #include "BluetoothAudioProvider.h"
 #include "HearingAidAudioProvider.h"
+#include "HfpOffloadAudioProvider.h"
+#include "HfpSoftwareAudioProvider.h"
 #include "LeAudioOffloadAudioProvider.h"
 #include "LeAudioSoftwareAudioProvider.h"
 
@@ -77,6 +79,15 @@ ndk::ScopedAStatus BluetoothAudioProviderFactory::openProvider(
       break;
     case SessionType::A2DP_HARDWARE_OFFLOAD_DECODING_DATAPATH:
       provider = ndk::SharedRefBase::make<A2dpOffloadDecodingAudioProvider>();
+      break;
+    case SessionType::HFP_SOFTWARE_ENCODING_DATAPATH:
+      provider = ndk::SharedRefBase::make<HfpSoftwareOutputAudioProvider>();
+      break;
+    case SessionType::HFP_SOFTWARE_DECODING_DATAPATH:
+      provider = ndk::SharedRefBase::make<HfpSoftwareInputAudioProvider>();
+      break;
+    case SessionType::HFP_HARDWARE_OFFLOAD_DATAPATH:
+      provider = ndk::SharedRefBase::make<HfpOffloadAudioProvider>();
       break;
     default:
       provider = nullptr;
