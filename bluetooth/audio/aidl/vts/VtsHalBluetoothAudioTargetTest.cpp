@@ -49,6 +49,7 @@ using aidl::android::hardware::bluetooth::audio::CodecConfiguration;
 using aidl::android::hardware::bluetooth::audio::CodecId;
 using aidl::android::hardware::bluetooth::audio::CodecInfo;
 using aidl::android::hardware::bluetooth::audio::CodecType;
+using aidl::android::hardware::bluetooth::audio::HfpConfiguration;
 using aidl::android::hardware::bluetooth::audio::IBluetoothAudioPort;
 using aidl::android::hardware::bluetooth::audio::IBluetoothAudioProvider;
 using aidl::android::hardware::bluetooth::audio::IBluetoothAudioProviderFactory;
@@ -92,6 +93,13 @@ static constexpr int8_t a2dp_bits_per_samples[] = {0, 16, 24, 32};
 static constexpr ChannelMode a2dp_channel_modes[] = {
     ChannelMode::UNKNOWN, ChannelMode::MONO, ChannelMode::STEREO};
 static std::vector<LatencyMode> latency_modes = {LatencyMode::FREE};
+
+// Some valid configs for HFP PCM configuration (software sessions)
+static constexpr int32_t hfp_sample_rates_[] = {8000, 16000, 32000};
+static constexpr int8_t hfp_bits_per_samples_[] = {16};
+static constexpr ChannelMode hfp_channel_modes_[] = {ChannelMode::MONO};
+static constexpr int32_t hfp_data_interval_us_[] = {7500};
+
 // Helpers
 
 template <typename T>
@@ -197,7 +205,8 @@ class BluetoothAudioProviderFactoryAidl
       case SessionType::HEARING_AID_SOFTWARE_ENCODING_DATAPATH:
       case SessionType::LE_AUDIO_SOFTWARE_ENCODING_DATAPATH:
       case SessionType::LE_AUDIO_SOFTWARE_DECODING_DATAPATH:
-      case SessionType::LE_AUDIO_BROADCAST_SOFTWARE_ENCODING_DATAPATH: {
+      case SessionType::LE_AUDIO_BROADCAST_SOFTWARE_ENCODING_DATAPATH:
+      case SessionType::HFP_SOFTWARE_ENCODING_DATAPATH: {
         // All software paths are mandatory and must have exact 1
         // "PcmParameters"
         ASSERT_EQ(temp_provider_capabilities_.size(), 1);
@@ -258,7 +267,8 @@ class BluetoothAudioProviderFactoryAidl
                     AudioCapabilities::leAudioCapabilities);
         }
       } break;
-      case SessionType::A2DP_SOFTWARE_DECODING_DATAPATH: {
+      case SessionType::A2DP_SOFTWARE_DECODING_DATAPATH:
+      case SessionType::HFP_SOFTWARE_DECODING_DATAPATH: {
         if (!temp_provider_capabilities_.empty()) {
           ASSERT_EQ(temp_provider_capabilities_.size(), 1);
           ASSERT_EQ(temp_provider_capabilities_[0].getTag(),
@@ -298,7 +308,10 @@ class BluetoothAudioProviderFactoryAidl
                   LE_AUDIO_BROADCAST_HARDWARE_OFFLOAD_ENCODING_DATAPATH ||
           session_type ==
               SessionType::A2DP_HARDWARE_OFFLOAD_DECODING_DATAPATH ||
-          session_type == SessionType::A2DP_SOFTWARE_DECODING_DATAPATH);
+          session_type == SessionType::A2DP_SOFTWARE_DECODING_DATAPATH ||
+          session_type == SessionType::HFP_HARDWARE_OFFLOAD_DATAPATH ||
+          session_type == SessionType::HFP_SOFTWARE_DECODING_DATAPATH ||
+          session_type == SessionType::HFP_SOFTWARE_ENCODING_DATAPATH);
       ASSERT_EQ(audio_provider_, nullptr);
     }
   }
@@ -575,6 +588,8 @@ class BluetoothAudioProviderFactoryAidl
       SessionType::LE_AUDIO_BROADCAST_HARDWARE_OFFLOAD_ENCODING_DATAPATH,
       SessionType::A2DP_SOFTWARE_DECODING_DATAPATH,
       SessionType::A2DP_HARDWARE_OFFLOAD_DECODING_DATAPATH,
+      SessionType::HFP_SOFTWARE_ENCODING_DATAPATH,
+      SessionType::HFP_SOFTWARE_DECODING_DATAPATH,
   };
 };
 
@@ -745,6 +760,137 @@ TEST_P(BluetoothAudioProviderA2dpEncodingSoftwareAidl,
           EXPECT_TRUE(data_mq.isValid());
         }
         EXPECT_TRUE(audio_provider_->endSession().isOk());
+      }
+    }
+  }
+}
+
+/**
+ * openProvider HFP_SOFTWARE_ENCODING_DATAPATH
+ */
+class BluetoothAudioProviderHfpSoftwareEncodingAidl
+    : public BluetoothAudioProviderFactoryAidl {
+ public:
+  virtual void SetUp() override {
+    BluetoothAudioProviderFactoryAidl::SetUp();
+    GetProviderCapabilitiesHelper(SessionType::HFP_SOFTWARE_ENCODING_DATAPATH);
+    OpenProviderHelper(SessionType::HFP_SOFTWARE_ENCODING_DATAPATH);
+    ASSERT_NE(audio_provider_, nullptr);
+  }
+
+  virtual void TearDown() override {
+    audio_port_ = nullptr;
+    audio_provider_ = nullptr;
+    BluetoothAudioProviderFactoryAidl::TearDown();
+  }
+
+  bool OpenSession(int32_t sample_rate, int8_t bits_per_sample,
+                      ChannelMode channel_mode, int32_t data_interval_us) {
+    PcmConfiguration pcm_config{
+        .sampleRateHz = sample_rate,
+        .channelMode = channel_mode,
+        .bitsPerSample = bits_per_sample,
+        .dataIntervalUs = data_interval_us,
+    };
+    // Checking against provider capability from getProviderCapabilities
+    // For HFP software, it's
+    // BluetoothAudioCodecs::GetSoftwarePcmCapabilities();
+    DataMQDesc mq_desc;
+    auto aidl_retval = audio_provider_->startSession(
+        audio_port_, AudioConfiguration(pcm_config), latency_modes, &mq_desc);
+    DataMQ data_mq(mq_desc);
+
+    if (!aidl_retval.isOk()) return false;
+    if (!data_mq.isValid()) return false;
+    return true;
+  }
+};
+
+/**
+ * Test whether we can open a provider of type
+ */
+TEST_P(BluetoothAudioProviderHfpSoftwareEncodingAidl,
+       OpenHfpSoftwareEncodingProvider) {}
+
+/**
+ * Test whether each provider of type
+ * SessionType::HFP_SOFTWARE_ENCODING_DATAPATH can be started and stopped with
+ * different PCM config
+ */
+TEST_P(BluetoothAudioProviderHfpSoftwareEncodingAidl,
+       StartAndEndHfpEncodingSoftwareSessionWithPossiblePcmConfig) {
+  for (auto sample_rate : hfp_sample_rates_) {
+    for (auto bits_per_sample : hfp_bits_per_samples_) {
+      for (auto channel_mode : hfp_channel_modes_) {
+        for (auto data_interval_us: hfp_data_interval_us_) {
+          EXPECT_TRUE(OpenSession(sample_rate, bits_per_sample,
+                      channel_mode, data_interval_us));
+          EXPECT_TRUE(audio_provider_->endSession().isOk());
+        }
+      }
+    }
+  }
+}
+
+/**
+ * openProvider HFP_SOFTWARE_DECODING_DATAPATH
+ */
+class BluetoothAudioProviderHfpSoftwareDecodingAidl
+    : public BluetoothAudioProviderFactoryAidl {
+ public:
+  virtual void SetUp() override {
+    BluetoothAudioProviderFactoryAidl::SetUp();
+    GetProviderCapabilitiesHelper(SessionType::HFP_SOFTWARE_DECODING_DATAPATH);
+    OpenProviderHelper(SessionType::HFP_SOFTWARE_DECODING_DATAPATH);
+    ASSERT_NE(audio_provider_, nullptr);
+  }
+
+  virtual void TearDown() override {
+    audio_port_ = nullptr;
+    audio_provider_ = nullptr;
+    BluetoothAudioProviderFactoryAidl::TearDown();
+  }
+
+  bool OpenSession(int32_t sample_rate, int8_t bits_per_sample,
+                      ChannelMode channel_mode, int32_t data_interval_us) {
+    PcmConfiguration pcm_config{
+        .sampleRateHz = sample_rate,
+        .channelMode = channel_mode,
+        .bitsPerSample = bits_per_sample,
+        .dataIntervalUs = data_interval_us,
+    };
+    DataMQDesc mq_desc;
+    auto aidl_retval = audio_provider_->startSession(
+        audio_port_, AudioConfiguration(pcm_config), latency_modes, &mq_desc);
+    DataMQ data_mq(mq_desc);
+
+    if (!aidl_retval.isOk()) return false;
+    if (!data_mq.isValid()) return false;
+    return true;
+  }
+};
+
+/**
+ * Test whether we can open a provider of type
+ */
+TEST_P(BluetoothAudioProviderHfpSoftwareDecodingAidl,
+       OpenHfpSoftwareDecodingProvider) {}
+
+/**
+ * Test whether each provider of type
+ * SessionType::HFP_SOFTWARE_DECODING_DATAPATH can be started and stopped with
+ * different PCM config
+ */
+TEST_P(BluetoothAudioProviderHfpSoftwareDecodingAidl,
+       StartAndEndHfpDecodingSoftwareSessionWithPossiblePcmConfig) {
+  for (auto sample_rate : hfp_sample_rates_) {
+    for (auto bits_per_sample : hfp_bits_per_samples_) {
+      for (auto channel_mode : hfp_channel_modes_) {
+        for (auto data_interval_us: hfp_data_interval_us_) {
+            EXPECT_TRUE(OpenSession(sample_rate, bits_per_sample,
+                        channel_mode, data_interval_us));
+            EXPECT_TRUE(audio_provider_->endSession().isOk());
+        }
       }
     }
   }
@@ -1000,6 +1146,62 @@ TEST_P(BluetoothAudioProviderA2dpEncodingHardwareAidl,
       EXPECT_TRUE(audio_provider_->endSession().isOk());
     }
   }
+}
+
+/**
+ * openProvider HFP_HARDWARE_OFFLOAD_DATAPATH
+ */
+class BluetoothAudioProviderHfpHardwareAidl
+    : public BluetoothAudioProviderFactoryAidl {
+ public:
+  virtual void SetUp() override {
+    BluetoothAudioProviderFactoryAidl::SetUp();
+    OpenProviderHelper(SessionType::HFP_HARDWARE_OFFLOAD_DATAPATH);
+    // Can open or empty capability
+    ASSERT_TRUE(temp_provider_capabilities_.empty() ||
+                audio_provider_ != nullptr);
+  }
+
+  virtual void TearDown() override {
+    audio_port_ = nullptr;
+    audio_provider_ = nullptr;
+    BluetoothAudioProviderFactoryAidl::TearDown();
+  }
+
+  bool OpenSession(CodecId codec_id, int connection_handle, bool nrec,
+                      bool controller_codec) {
+    // Check if can open session with a Hfp configuration
+    HfpConfiguration hfp_configuration{
+        .codecId = codec_id,
+        .connectionHandle = connection_handle,
+        .nrec = nrec,
+        .controllerCodec = controller_codec,
+    };
+    DataMQDesc mq_desc;
+    auto aidl_retval = audio_provider_->startSession(
+        audio_port_, AudioConfiguration(hfp_configuration), latency_modes,
+        &mq_desc);
+
+    // Only check if aidl is ok to start session.
+    return aidl_retval.isOk();
+  }
+};
+
+/**
+ * Test whether we can open a provider of type
+ */
+TEST_P(BluetoothAudioProviderHfpHardwareAidl, OpenHfpHardwareProvider) {}
+
+/**
+ * Test whether each provider of type
+ * SessionType::HFP_SOFTWARE_DECODING_DATAPATH can be started and stopped with
+ * different HFP config
+ */
+TEST_P(BluetoothAudioProviderHfpHardwareAidl,
+       StartAndEndHfpHardwareSessionWithPossiblePcmConfig) {
+  // Try to open with a sample configuration
+  EXPECT_TRUE(OpenSession(CodecId::Core::CVSD, 6, false, true));
+  EXPECT_TRUE(audio_provider_->endSession().isOk());
 }
 
 /**
@@ -2275,6 +2477,29 @@ GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(
     BluetoothAudioProviderA2dpDecodingHardwareAidl);
 INSTANTIATE_TEST_SUITE_P(PerInstance,
                          BluetoothAudioProviderA2dpDecodingHardwareAidl,
+                         testing::ValuesIn(android::getAidlHalInstanceNames(
+                             IBluetoothAudioProviderFactory::descriptor)),
+                         android::PrintInstanceNameToString);
+
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(
+    BluetoothAudioProviderHfpHardwareAidl);
+INSTANTIATE_TEST_SUITE_P(PerInstance, BluetoothAudioProviderHfpHardwareAidl,
+                         testing::ValuesIn(android::getAidlHalInstanceNames(
+                             IBluetoothAudioProviderFactory::descriptor)),
+                         android::PrintInstanceNameToString);
+
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(
+    BluetoothAudioProviderHfpSoftwareDecodingAidl);
+INSTANTIATE_TEST_SUITE_P(PerInstance,
+                         BluetoothAudioProviderHfpSoftwareDecodingAidl,
+                         testing::ValuesIn(android::getAidlHalInstanceNames(
+                             IBluetoothAudioProviderFactory::descriptor)),
+                         android::PrintInstanceNameToString);
+
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(
+    BluetoothAudioProviderHfpSoftwareEncodingAidl);
+INSTANTIATE_TEST_SUITE_P(PerInstance,
+                         BluetoothAudioProviderHfpSoftwareEncodingAidl,
                          testing::ValuesIn(android::getAidlHalInstanceNames(
                              IBluetoothAudioProviderFactory::descriptor)),
                          android::PrintInstanceNameToString);
