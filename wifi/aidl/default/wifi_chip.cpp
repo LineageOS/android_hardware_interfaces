@@ -1924,7 +1924,7 @@ ndk::ScopedAStatus WifiChip::setVoipModeInternal(const WifiChip::VoipMode in_mod
     wifi_voip_mode mode;
     switch (in_mode) {
         case WifiChip::VoipMode::VOICE:
-            mode = wifi_voip_mode::WIFI_VOIP_MODE_ON;
+            mode = wifi_voip_mode::WIFI_VOIP_MODE_VOICE;
             break;
         case WifiChip::VoipMode::OFF:
             mode = wifi_voip_mode::WIFI_VOIP_MODE_OFF;
