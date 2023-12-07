@@ -67,6 +67,7 @@ void aidlToProto(const aidl_vehicle::VehiclePropConfig& in, proto::VehiclePropCo
     for (auto& areaConfig : in.areaConfigs) {
         auto* protoACfg = out->add_area_configs();
         protoACfg->set_area_id(areaConfig.areaId);
+        protoACfg->set_access(static_cast<proto::VehiclePropertyAccess>(toInt(areaConfig.access)));
         protoACfg->set_min_int64_value(areaConfig.minInt64Value);
         protoACfg->set_max_int64_value(areaConfig.maxInt64Value);
         protoACfg->set_min_float_value(areaConfig.minFloatValue);
@@ -95,6 +96,7 @@ void protoToAidl(const proto::VehiclePropConfig& in, aidl_vehicle::VehiclePropCo
     auto cast_to_acfg = [](const proto::VehicleAreaConfig& protoAcfg) {
         auto vehicleAreaConfig = aidl_vehicle::VehicleAreaConfig{
                 .areaId = protoAcfg.area_id(),
+                .access = static_cast<aidl_vehicle::VehiclePropertyAccess>(protoAcfg.access()),
                 .minInt32Value = protoAcfg.min_int32_value(),
                 .maxInt32Value = protoAcfg.max_int32_value(),
                 .minInt64Value = protoAcfg.min_int64_value(),

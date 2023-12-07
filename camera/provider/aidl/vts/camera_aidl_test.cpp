@@ -58,6 +58,8 @@ using ::ndk::ScopedAStatus;
 using ::ndk::SpAIBinder;
 
 namespace {
+namespace flags = com::android::internal::camera::flags;
+
 bool parseProviderName(const std::string& serviceDescriptor, std::string* type /*out*/,
                        uint32_t* id /*out*/) {
     if (!type || !id) {
@@ -1899,17 +1901,32 @@ void CameraAidlTest::createStreamConfiguration(std::vector<Stream>& streams,
 }
 
 void CameraAidlTest::verifyStreamCombination(const std::shared_ptr<ICameraDevice>& device,
-                                             const StreamConfiguration& config, bool expectedStatus,
-                                             bool expectStreamCombQuery) {
+                                             const StreamConfiguration& config,
+                                             bool expectedStatus) {
     if (device != nullptr) {
         bool streamCombinationSupported;
         ScopedAStatus ret =
                 device->isStreamCombinationSupported(config, &streamCombinationSupported);
-        // TODO: Check is unsupported operation is correct.
-        ASSERT_TRUE(ret.isOk() ||
-                    (expectStreamCombQuery && ret.getExceptionCode() == EX_UNSUPPORTED_OPERATION));
-        if (ret.isOk()) {
-            ASSERT_EQ(expectedStatus, streamCombinationSupported);
+        ASSERT_TRUE(ret.isOk());
+        ASSERT_EQ(expectedStatus, streamCombinationSupported);
+
+        if (flags::feature_combination_query()) {
+            int32_t interfaceVersion;
+            ret = device->getInterfaceVersion(&interfaceVersion);
+            ASSERT_TRUE(ret.isOk());
+            bool supportFeatureCombinationQuery =
+                    (interfaceVersion >= CAMERA_DEVICE_API_MINOR_VERSION_3);
+            if (supportFeatureCombinationQuery) {
+                ret = device->isStreamCombinationWithSettingsSupported(config,
+                                                                       &streamCombinationSupported);
+                // TODO: Do not allow OPERATION_NOT_SUPPORTED once HAL
+                // implementation is in place.
+                ASSERT_TRUE(ret.isOk() || static_cast<Status>(ret.getServiceSpecificError()) ==
+                                                  Status::OPERATION_NOT_SUPPORTED);
+                if (ret.isOk()) {
+                    ASSERT_EQ(expectedStatus, streamCombinationSupported);
+                }
+            }
         }
     }
 }

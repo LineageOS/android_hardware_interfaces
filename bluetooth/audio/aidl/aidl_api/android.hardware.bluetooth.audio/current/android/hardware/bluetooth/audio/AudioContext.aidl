@@ -1,11 +1,11 @@
-/**
- * Copyright (c) 2021, The Android Open Source Project
+/*
+ * Copyright 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -31,11 +31,20 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.graphics.composer3;
+package android.hardware.bluetooth.audio;
 @VintfStability
-parcelable ClientTarget {
-  android.hardware.graphics.composer3.Buffer buffer;
-  android.hardware.graphics.common.Dataspace dataspace;
-  android.hardware.graphics.common.Rect[] damage;
-  float hdrSdrRatio = 1.0f;
+parcelable AudioContext {
+  int bitmask;
+  const int UNSPECIFIED = 0x0001;
+  const int CONVERSATIONAL = 0x0002;
+  const int MEDIA = 0x0004;
+  const int GAME = 0x0008;
+  const int INSTRUCTIONAL = 0x0010;
+  const int VOICE_ASSISTANTS = 0x0020;
+  const int LIVE_AUDIO = 0x0040;
+  const int SOUND_EFFECTS = 0x0080;
+  const int NOTIFICATIONS = 0x0100;
+  const int RINGTONE_ALERTS = 0x0200;
+  const int ALERTS = 0x0400;
+  const int EMERGENCY_ALARM = 0x0800;
 }

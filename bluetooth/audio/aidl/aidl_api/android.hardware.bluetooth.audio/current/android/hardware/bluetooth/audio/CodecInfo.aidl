@@ -1,11 +1,11 @@
-/**
- * Copyright (c) 2021, The Android Open Source Project
+/*
+ * Copyright 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -31,11 +31,26 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.graphics.composer3;
+package android.hardware.bluetooth.audio;
 @VintfStability
-parcelable ClientTarget {
-  android.hardware.graphics.composer3.Buffer buffer;
-  android.hardware.graphics.common.Dataspace dataspace;
-  android.hardware.graphics.common.Rect[] damage;
-  float hdrSdrRatio = 1.0f;
+parcelable CodecInfo {
+  android.hardware.bluetooth.audio.CodecId id;
+  String name;
+  android.hardware.bluetooth.audio.CodecInfo.Transport transport;
+  parcelable A2dp {
+    byte[] capabilities;
+    android.hardware.bluetooth.audio.ChannelMode[] channelMode;
+    int[] samplingFrequencyHz;
+    int[] bitdepth;
+    boolean lossless;
+  }
+  parcelable Hfp {
+    int inputDataPath = 1;
+    int outputDataPath = 1;
+    boolean useControllerCodec = true;
+  }
+  union Transport {
+    android.hardware.bluetooth.audio.CodecInfo.A2dp a2dp;
+    android.hardware.bluetooth.audio.CodecInfo.Hfp hfp;
+  }
 }
