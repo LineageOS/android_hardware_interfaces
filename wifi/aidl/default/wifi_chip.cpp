@@ -20,6 +20,7 @@
 #include <android-base/unique_fd.h>
 #include <cutils/properties.h>
 #include <fcntl.h>
+#include <hardware_legacy/wifi_hal.h>
 #include <net/if.h>
 #include <sys/stat.h>
 #include <sys/sysmacros.h>
@@ -603,6 +604,11 @@ ndk::ScopedAStatus WifiChip::enableStaChannelForPeerNetwork(int32_t in_channelCa
 ndk::ScopedAStatus WifiChip::setMloMode(const ChipMloMode in_mode) {
     return validateAndCall(this, WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
                            &WifiChip::setMloModeInternal, in_mode);
+}
+
+ndk::ScopedAStatus WifiChip::setVoipMode(const VoipMode in_mode) {
+    return validateAndCall(this, WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
+                           &WifiChip::setVoipModeInternal, in_mode);
 }
 
 void WifiChip::invalidateAndRemoveAllIfaces() {
@@ -1911,6 +1917,23 @@ ndk::ScopedAStatus WifiChip::setMloModeInternal(const WifiChip::ChipMloMode in_m
             return createWifiStatus(WifiStatusCode::ERROR_INVALID_ARGS);
     }
     return createWifiStatusFromLegacyError(legacy_hal_.lock()->setMloMode(mode));
+}
+
+ndk::ScopedAStatus WifiChip::setVoipModeInternal(const WifiChip::VoipMode in_mode) {
+    const auto ifname = getFirstActiveWlanIfaceName();
+    wifi_voip_mode mode;
+    switch (in_mode) {
+        case WifiChip::VoipMode::VOICE:
+            mode = wifi_voip_mode::WIFI_VOIP_MODE_ON;
+            break;
+        case WifiChip::VoipMode::OFF:
+            mode = wifi_voip_mode::WIFI_VOIP_MODE_OFF;
+            break;
+        default:
+            PLOG(ERROR) << "Error: invalid mode: " << toString(in_mode);
+            return createWifiStatus(WifiStatusCode::ERROR_INVALID_ARGS);
+    }
+    return createWifiStatusFromLegacyError(legacy_hal_.lock()->setVoipMode(ifname, mode));
 }
 
 }  // namespace wifi

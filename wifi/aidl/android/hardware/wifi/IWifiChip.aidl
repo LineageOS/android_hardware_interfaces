@@ -385,6 +385,16 @@ interface IWifiChip {
     }
 
     /**
+     * This enum represents the different VoIP mode that can be set through |setVoipMode|.
+     */
+    @VintfStability
+    @Backing(type="int")
+    enum VoipMode {
+        OFF = 0,
+        VOICE = 1,
+    }
+
+    /**
      * Configure the Chip.
      * This may NOT be called to reconfigure a chip due to an internal
      * limitation. Calling this when chip is already configured in a different
@@ -1173,4 +1183,23 @@ interface IWifiChip {
     @PropagateAllowBlocking
     IWifiApIface createApOrBridgedApIface(
             in IfaceConcurrencyType iface, in OuiKeyedData[] vendorData);
+
+    /**
+     * API to set the wifi VoIP mode.
+     *
+     * The VoIP mode is a hint to the HAL to enable or disable Wi-Fi VoIP
+     * optimization. The optimization should be enabled if the mode is NOT set to |OFF|.
+     * Furthermore, HAL should implement relevant optimization techniques based on the
+     * current operational mode.
+     *
+     * Note: Wi-Fi VoIP optimization may trade-off power against Wi-Fi
+     * performance but it provides better voice quility.
+     *
+     * @param mode Voip mode as defined by the enum |VoipMode|
+     * @throws ServiceSpecificException with one of the following values:
+     *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|,
+     *         |WifiStatusCode.ERROR_INVALID_ARGS|,
+     *         |WifiStatusCode.ERROR_UNKNOWN|
+     */
+    void setVoipMode(in VoipMode mode);
 }
