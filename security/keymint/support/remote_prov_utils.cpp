@@ -337,9 +337,9 @@ ErrMsgOr<std::vector<BccEntryData>> validateBcc(const cppbor::Array* bcc,
     return result;
 }
 
-JsonOutput jsonEncodeCsrWithBuild(const std::string instance_name, const cppbor::Array& csr) {
+JsonOutput jsonEncodeCsrWithBuild(const std::string instance_name, const cppbor::Array& csr,
+                                  const std::string serialno_prop) {
     const std::string kFingerprintProp = "ro.build.fingerprint";
-    const std::string kSerialNoProp = "ro.serialno";
 
     if (!::android::base::WaitForPropertyCreation(kFingerprintProp)) {
         return JsonOutput::Error("Unable to read build fingerprint");
@@ -364,7 +364,7 @@ JsonOutput jsonEncodeCsrWithBuild(const std::string instance_name, const cppbor:
     Json::Value json(Json::objectValue);
     json["name"] = instance_name;
     json["build_fingerprint"] = ::android::base::GetProperty(kFingerprintProp, /*default=*/"");
-    json["serialno"] = ::android::base::GetProperty(kSerialNoProp, /*default=*/"");
+    json["serialno"] = ::android::base::GetProperty(serialno_prop, /*default=*/"");
     json["csr"] = base64.data();  // Boring writes a NUL-terminated c-string
 
     Json::StreamWriterBuilder factory;
