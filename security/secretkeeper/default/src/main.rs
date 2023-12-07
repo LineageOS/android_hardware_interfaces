@@ -14,80 +14,106 @@
  * limitations under the License.
  */
 
-use binder::{BinderFeatures, Interface};
+//! Non-secure implementation of the Secretkeeper HAL.
+
 use log::{error, info, Level};
-use secretkeeper_comm::data_types::error::SecretkeeperError;
-use secretkeeper_comm::data_types::packet::{RequestPacket, ResponsePacket};
-use secretkeeper_comm::data_types::request::Request;
-use secretkeeper_comm::data_types::request_response_impl::{
-    GetVersionRequest, GetVersionResponse, Opcode,
-};
-use secretkeeper_comm::data_types::response::Response;
-
+use std::sync::{Arc, Mutex};
+use authgraph_boringssl as boring;
+use authgraph_core::ta::{Role, AuthGraphTa};
+use authgraph_core::keyexchange::{MAX_OPENED_SESSIONS, AuthGraphParticipant};
+use secretkeeper_comm::ta::SecretkeeperTa;
+use secretkeeper_hal::SecretkeeperService;
+use authgraph_hal::channel::SerializedChannel;
 use android_hardware_security_secretkeeper::aidl::android::hardware::security::secretkeeper::ISecretkeeper::{
-    BnSecretkeeper, BpSecretkeeper, ISecretkeeper,
+    ISecretkeeper, BpSecretkeeper,
 };
+use std::cell::RefCell;
+use std::rc::Rc;
+use std::sync::mpsc;
 
-const CURRENT_VERSION: u64 = 1;
+/// Implementation of the Secrekeeper TA that runs locally in-process (and which is therefore
+/// insecure).
+pub struct LocalTa {
+    in_tx: mpsc::Sender<Vec<u8>>,
+    out_rx: mpsc::Receiver<Vec<u8>>,
+}
 
-#[derive(Debug, Default)]
-pub struct NonSecureSecretkeeper;
+/// Prefix byte for messages intended for the AuthGraph TA.
+const AG_MESSAGE_PREFIX: u8 = 0x00;
+/// Prefix byte for messages intended for the Secretkeeper TA.
+const SK_MESSAGE_PREFIX: u8 = 0x01;
 
-impl Interface for NonSecureSecretkeeper {}
+impl LocalTa {
+    /// Create a new instance.
+    pub fn new() -> Self {
+        // Create a pair of channels to communicate with the TA thread.
+        let (in_tx, in_rx) = mpsc::channel();
+        let (out_tx, out_rx) = mpsc::channel();
 
-impl ISecretkeeper for NonSecureSecretkeeper {
-    fn processSecretManagementRequest(&self, request: &[u8]) -> binder::Result<Vec<u8>> {
-        Ok(self.process_opaque_request(request))
+        // The TA code expects to run single threaded, so spawn a thread to run it in.
+        std::thread::spawn(move || {
+            let mut crypto_impls = boring::crypto_trait_impls();
+            let sk_ta = Rc::new(RefCell::new(
+                SecretkeeperTa::new(&mut crypto_impls)
+                    .expect("Failed to create local Secretkeeper TA"),
+            ));
+            let mut ag_ta = AuthGraphTa::new(
+                AuthGraphParticipant::new(crypto_impls, sk_ta.clone(), MAX_OPENED_SESSIONS)
+                    .expect("Failed to create local AuthGraph TA"),
+                Role::Sink,
+            );
+
+            // Loop forever processing request messages.
+            loop {
+                let req_data: Vec<u8> = in_rx.recv().expect("failed to receive next req");
+                let rsp_data = match req_data[0] {
+                    AG_MESSAGE_PREFIX => ag_ta.process(&req_data[1..]),
+                    SK_MESSAGE_PREFIX => {
+                        // It's safe to `borrow_mut()` because this code is not a callback
+                        // from AuthGraph (the only other holder of an `Rc`), and so there
+                        // can be no live `borrow()`s in this (single) thread.
+                        sk_ta.borrow_mut().process(&req_data[1..])
+                    }
+                    prefix => panic!("unexpected messageprefix {prefix}!"),
+                };
+                out_tx.send(rsp_data).expect("failed to send out rsp");
+            }
+        });
+        Self { in_tx, out_rx }
+    }
+
+    fn execute_for(&mut self, prefix: u8, req_data: &[u8]) -> Vec<u8> {
+        let mut prefixed_req = Vec::with_capacity(req_data.len() + 1);
+        prefixed_req.push(prefix);
+        prefixed_req.extend_from_slice(req_data);
+        self.in_tx
+            .send(prefixed_req)
+            .expect("failed to send in request");
+        self.out_rx.recv().expect("failed to receive response")
     }
 }
 
-impl NonSecureSecretkeeper {
-    // A set of requests to Secretkeeper are 'opaque' - encrypted bytes with inner structure
-    // described by CDDL. They need to be decrypted, deserialized and processed accordingly.
-    fn process_opaque_request(&self, request: &[u8]) -> Vec<u8> {
-        // TODO(b/291224769) The request will need to be decrypted & response need to be encrypted
-        // with key & related artifacts pre-shared via Authgraph Key Exchange HAL.
-        self.process_opaque_request_unhandled_error(request)
-            .unwrap_or_else(
-                // SecretkeeperError is also a valid 'Response', serialize to a response packet.
-                |sk_err| {
-                    Response::serialize_to_packet(&sk_err)
-                        .into_bytes()
-                        .expect("Panicking due to serialization failing")
-                },
-            )
+pub struct AuthGraphChannel(Arc<Mutex<LocalTa>>);
+impl SerializedChannel for AuthGraphChannel {
+    const MAX_SIZE: usize = usize::MAX;
+    fn execute(&self, req_data: &[u8]) -> binder::Result<Vec<u8>> {
+        Ok(self
+            .0
+            .lock()
+            .unwrap()
+            .execute_for(AG_MESSAGE_PREFIX, req_data))
     }
+}
 
-    fn process_opaque_request_unhandled_error(
-        &self,
-        request: &[u8],
-    ) -> Result<Vec<u8>, SecretkeeperError> {
-        let request_packet = RequestPacket::from_bytes(request).map_err(|e| {
-            error!("Failed to get Request packet from bytes: {:?}", e);
-            SecretkeeperError::RequestMalformed
-        })?;
-        let response_packet = match request_packet
-            .opcode()
-            .map_err(|_| SecretkeeperError::RequestMalformed)?
-        {
-            Opcode::GetVersion => Self::process_get_version_request(request_packet)?,
-            _ => todo!("TODO(b/291224769): Unimplemented operations"),
-        };
-
-        response_packet
-            .into_bytes()
-            .map_err(|_| SecretkeeperError::UnexpectedServerError)
-    }
-
-    fn process_get_version_request(
-        request: RequestPacket,
-    ) -> Result<ResponsePacket, SecretkeeperError> {
-        // Deserialization really just verifies the structural integrity of the request such
-        // as args being empty.
-        let _request = GetVersionRequest::deserialize_from_packet(request)
-            .map_err(|_| SecretkeeperError::RequestMalformed)?;
-        let response = GetVersionResponse::new(CURRENT_VERSION);
-        Ok(response.serialize_to_packet())
+pub struct SecretkeeperChannel(Arc<Mutex<LocalTa>>);
+impl SerializedChannel for SecretkeeperChannel {
+    const MAX_SIZE: usize = usize::MAX;
+    fn execute(&self, req_data: &[u8]) -> binder::Result<Vec<u8>> {
+        Ok(self
+            .0
+            .lock()
+            .unwrap()
+            .execute_for(SK_MESSAGE_PREFIX, req_data))
     }
 }
 
@@ -104,17 +130,17 @@ fn main() {
         error!("{}", panic_info);
     }));
 
-    let service = NonSecureSecretkeeper::default();
-    let service_binder = BnSecretkeeper::new_binder(service, BinderFeatures::default());
+    let ta = Arc::new(Mutex::new(LocalTa::new()));
+    let ag_channel = AuthGraphChannel(ta.clone());
+    let sk_channel = SecretkeeperChannel(ta.clone());
+
+    let service = SecretkeeperService::new_as_binder(sk_channel, ag_channel);
     let service_name = format!(
         "{}/nonsecure",
         <BpSecretkeeper as ISecretkeeper>::get_descriptor()
     );
-    binder::add_service(&service_name, service_binder.as_binder()).unwrap_or_else(|e| {
-        panic!(
-            "Failed to register service {} because of {:?}.",
-            service_name, e
-        );
+    binder::add_service(&service_name, service.as_binder()).unwrap_or_else(|e| {
+        panic!("Failed to register service {service_name} because of {e:?}.",);
     });
     info!("Registered Binder service, joining threadpool.");
     binder::ProcessState::join_thread_pool();
