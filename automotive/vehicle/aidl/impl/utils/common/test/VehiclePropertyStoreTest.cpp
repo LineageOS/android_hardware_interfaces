@@ -101,16 +101,16 @@ TEST_F(VehiclePropertyStoreTest, testGetAllConfigs) {
     ASSERT_EQ(configs.size(), static_cast<size_t>(2));
 }
 
-TEST_F(VehiclePropertyStoreTest, testGetConfig) {
-    VhalResult<const VehiclePropConfig*> result =
-            mStore->getConfig(toInt(VehicleProperty::INFO_FUEL_CAPACITY));
+TEST_F(VehiclePropertyStoreTest, testGetPropConfig) {
+    VhalResult<VehiclePropConfig> result =
+            mStore->getPropConfig(toInt(VehicleProperty::INFO_FUEL_CAPACITY));
 
     ASSERT_RESULT_OK(result);
-    ASSERT_EQ(*(result.value()), mConfigFuelCapacity);
+    ASSERT_EQ(result.value(), mConfigFuelCapacity);
 }
 
-TEST_F(VehiclePropertyStoreTest, testGetConfigWithInvalidPropId) {
-    VhalResult<const VehiclePropConfig*> result = mStore->getConfig(INVALID_PROP_ID);
+TEST_F(VehiclePropertyStoreTest, testGetPropConfigWithInvalidPropId) {
+    VhalResult<VehiclePropConfig> result = mStore->getPropConfig(INVALID_PROP_ID);
 
     EXPECT_FALSE(result.ok()) << "expect error when getting a config for an invalid property ID";
     EXPECT_EQ(result.error().code(), StatusCode::INVALID_ARG);

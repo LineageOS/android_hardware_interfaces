@@ -318,6 +318,17 @@ VhalResult<const VehiclePropConfig*> VehiclePropertyStore::getConfig(int32_t pro
     return &record->propConfig;
 }
 
+VhalResult<VehiclePropConfig> VehiclePropertyStore::getPropConfig(int32_t propId) const {
+    std::scoped_lock<std::mutex> g(mLock);
+
+    const VehiclePropertyStore::Record* record = getRecordLocked(propId);
+    if (record == nullptr) {
+        return StatusError(StatusCode::INVALID_ARG) << "property: " << propId << " not registered";
+    }
+
+    return record->propConfig;
+}
+
 void VehiclePropertyStore::setOnValueChangeCallback(
         const VehiclePropertyStore::OnValueChangeCallback& callback) {
     std::scoped_lock<std::mutex> g(mLock);
