@@ -20,6 +20,8 @@ cc_library_shared {
         "A2dpOffloadAudioProvider.cpp",
         "A2dpSoftwareAudioProvider.cpp",
         "HearingAidAudioProvider.cpp",
+        "HfpOffloadAudioProvider.cpp",
+        "HfpSoftwareAudioProvider.cpp",
         "LeAudioOffloadAudioProvider.cpp",
         "LeAudioSoftwareAudioProvider.cpp",
         "service.cpp",
