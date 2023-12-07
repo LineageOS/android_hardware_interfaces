@@ -16,6 +16,8 @@
 
 package android.hardware.security.secretkeeper;
 
+import android.hardware.security.authgraph.IAuthGraphKeyExchange;
+
 @VintfStability
 /**
  * Secretkeeper service definition.
@@ -29,16 +31,21 @@ package android.hardware.security.secretkeeper;
  * - A completely separate, purpose-built and certified secure CPU.
  *
  * TODO(b/291224769): Extend the HAL interface to include:
- * 1. Session setup api: This is used to perform cryptographic operations that allow shared keys to
- * be exchanged between session participants, typically (but not necessarily) a pVM instance and
- * Secretkeeper. This session setup is based on public key cryptography.
- * 2. Dice policy operation - These allow sealing of the secrets with a class of Dice chains.
+ * 1. Dice policy operation - These allow sealing of the secrets with a class of Dice chains.
  * Typical operations are (securely) updating the dice policy sealing the Secrets above. These
  * operations are core to AntiRollback protected secrets - ie, ensuring secrets of a pVM are only
  * accessible to same or higher versions of the images.
- * 3. Maintenance api: This is required for removing the Secretkeeper entries for obsolete pvMs.
+ * 2. Maintenance api: This is required for removing the Secretkeeper entries for obsolete pvMs.
  */
 interface ISecretkeeper {
+    /**
+     * Retrieve the instance of the `IAuthGraphKeyExchange` HAL that should be used for shared
+     * session key establishment.  These keys are used to perform encryption of messages as
+     * described in SecretManagement.cddl, allowing the client and Secretkeeper to have a
+     * cryptographically secure channel.
+     */
+    IAuthGraphKeyExchange getAuthGraphKe();
+
     /**
      * processSecretManagementRequest method is used for interacting with the Secret Management API
      *
