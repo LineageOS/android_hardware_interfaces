@@ -872,6 +872,36 @@ TEST_P(WifiChipAidlTest, CreateBridgedApIfaceAndremoveIfaceInstanceFromBridgedAp
     EXPECT_EQ(instances_after_remove.size(), 1);
 }
 
+/*
+ * SetVoipMode_off
+ * Tests the setVoipMode() API with VoIP mode OFF.
+ */
+TEST_P(WifiChipAidlTest, SetVoipMode_off) {
+    configureChipForConcurrencyType(IfaceConcurrencyType::STA);
+    int32_t features = getChipFeatureSet(wifi_chip_);
+    if (features & static_cast<int32_t>(IWifiChip::FeatureSetMask::SET_VOIP_MODE)) {
+        auto status = wifi_chip_->setVoipMode(IWifiChip::VoipMode::OFF);
+        EXPECT_TRUE(status.isOk());
+    } else {
+        GTEST_SKIP() << "setVoipMode() is not supported by vendor.";
+    }
+}
+
+/*
+ * SetVoipMode_voice
+ * Tests the setVoipMode() API with VoIP mode VOICE.
+ */
+TEST_P(WifiChipAidlTest, SetVoipMode_voice) {
+    configureChipForConcurrencyType(IfaceConcurrencyType::STA);
+    int32_t features = getChipFeatureSet(wifi_chip_);
+    if (features & static_cast<int32_t>(IWifiChip::FeatureSetMask::SET_VOIP_MODE)) {
+        auto status = wifi_chip_->setVoipMode(IWifiChip::VoipMode::VOICE);
+        EXPECT_TRUE(status.isOk());
+    } else {
+        GTEST_SKIP() << "setVoipMode() is not supported by vendor.";
+    }
+}
+
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(WifiChipAidlTest);
 INSTANTIATE_TEST_SUITE_P(WifiTest, WifiChipAidlTest,
                          testing::ValuesIn(android::getAidlHalInstanceNames(IWifi::descriptor)),
