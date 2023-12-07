@@ -61,6 +61,7 @@ interface IWifiStaIface {
   void stopRssiMonitoring(in int cmdId);
   void stopSendingKeepAlivePackets(in int cmdId);
   void setDtimMultiplier(in int multiplier);
+  android.hardware.wifi.CachedScanData getCachedScanData();
   @Backing(type="int") @VintfStability
   enum FeatureSetMask {
     APF = (1 << 0) /* 1 */,

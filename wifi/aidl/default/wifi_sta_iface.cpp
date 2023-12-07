@@ -219,6 +219,11 @@ ndk::ScopedAStatus WifiStaIface::setDtimMultiplier(int32_t in_multiplier) {
                            &WifiStaIface::setDtimMultiplierInternal, in_multiplier);
 }
 
+ndk::ScopedAStatus WifiStaIface::getCachedScanData(CachedScanData* _aidl_return) {
+    return validateAndCall(this, WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
+                           &WifiStaIface::getCachedScanDataInternal, _aidl_return);
+}
+
 std::pair<std::string, ndk::ScopedAStatus> WifiStaIface::getNameInternal() {
     return {ifname_, ndk::ScopedAStatus::ok()};
 }
@@ -538,6 +543,21 @@ ndk::ScopedAStatus WifiStaIface::setScanModeInternal(bool enable) {
 ndk::ScopedAStatus WifiStaIface::setDtimMultiplierInternal(const int multiplier) {
     legacy_hal::wifi_error legacy_status = legacy_hal_.lock()->setDtimConfig(ifname_, multiplier);
     return createWifiStatusFromLegacyError(legacy_status);
+}
+
+std::pair<CachedScanData, ndk::ScopedAStatus> WifiStaIface::getCachedScanDataInternal() {
+    legacy_hal::WifiCachedScanReport cached_scan_report;
+    legacy_hal::wifi_error legacy_status =
+            legacy_hal_.lock()->getWifiCachedScanResults(ifname_, cached_scan_report);
+    if (legacy_status != legacy_hal::WIFI_SUCCESS) {
+        return {CachedScanData{}, createWifiStatusFromLegacyError(legacy_status)};
+    }
+    CachedScanData aidl_scan_data;
+    if (!aidl_struct_util::convertCachedScanReportToAidl(cached_scan_report, &aidl_scan_data)) {
+        return {CachedScanData{}, createWifiStatus(WifiStatusCode::ERROR_UNKNOWN)};
+    }
+
+    return {aidl_scan_data, ndk::ScopedAStatus::ok()};
 }
 
 }  // namespace wifi

@@ -257,6 +257,7 @@ using ::WIFI_BAND_ABG_WITH_DFS;
 using ::WIFI_BAND_BG;
 using ::WIFI_BAND_UNSPECIFIED;
 using ::wifi_cached_scan_report;
+using ::wifi_cached_scan_result;
 using ::wifi_cached_scan_results;
 using ::WIFI_CHAN_WIDTH_10;
 using ::WIFI_CHAN_WIDTH_160;
@@ -423,6 +424,12 @@ struct LinkLayerMlStats {
     bool valid;
 };
 
+struct WifiCachedScanReport {
+    uint64_t ts;
+    std::vector<int> scanned_freqs;
+    std::vector<wifi_cached_scan_result> results;
+};
+
 #pragma GCC diagnostic pop
 
 // The |WLAN_DRIVER_WAKE_REASON_CNT.cmd_event_wake_cnt| and
@@ -533,8 +540,9 @@ struct ChreCallbackHandlers {
     std::function<void(chre_nan_rtt_state)> on_wifi_chre_nan_rtt_state;
 };
 
-// Cached Scan Results response and event callbacks struct.
-struct CachedScanResultsCallbackHandlers {
+using on_cached_scan_results_callback = std::function<void(wifi_cached_scan_report*)>;
+
+struct CachedScanResultsCallbfackHandlers {
     // Callback for Cached Scan Results
     std::function<void(wifi_cached_scan_report*)> on_cached_scan_results;
 };
@@ -777,7 +785,7 @@ class WifiLegacyHal {
 
     wifi_error enableWifiTxPowerLimits(const std::string& iface_name, bool enable);
     wifi_error getWifiCachedScanResults(const std::string& iface_name,
-                                        const CachedScanResultsCallbackHandlers& handler);
+                                        WifiCachedScanReport& report);
     std::pair<wifi_error, wifi_chip_capabilities> getWifiChipCapabilities();
     wifi_error enableStaChannelForPeerNetwork(uint32_t channelCategoryEnableFlag);
     wifi_error setMloMode(wifi_mlo_mode mode);
