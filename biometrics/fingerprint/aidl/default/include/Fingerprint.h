@@ -43,6 +43,7 @@ class Fingerprint : public BnFingerprint {
   private:
     void resetConfigToDefault();
     void onHelp(int);
+    void onSimFingerDown();
 
     std::unique_ptr<FakeFingerprintEngine> mEngine;
     WorkerThread mWorker;

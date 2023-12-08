@@ -107,12 +107,18 @@ class SubscriptionClient final : public ConnectedClient {
     // Gets the callback to be called when the request for this client has finished.
     std::shared_ptr<const IVehicleHardware::GetValuesCallback> getResultCallback();
 
-    // Marshals the updated values into largeParcelable and sents it through {@code onPropertyEvent}
+    // Marshals the updated values into largeParcelable and sends it through {@code onPropertyEvent}
     // callback.
     static void sendUpdatedValues(
             CallbackType callback,
             std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropValue>&&
                     updatedValues);
+    // Marshals the set property error events into largeParcelable and sends it through
+    // {@code onPropertySetError} callback.
+    static void sendPropertySetErrors(
+            CallbackType callback,
+            std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropError>&&
+                    vehiclePropErrors);
 
   protected:
     // Gets the callback to be called when the request for this client has timeout.

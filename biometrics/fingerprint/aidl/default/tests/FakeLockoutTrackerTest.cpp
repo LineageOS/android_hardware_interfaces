@@ -65,11 +65,11 @@ TEST_F(FakeLockoutTrackerTest, addFailedAttemptLockoutTimed) {
     ASSERT_EQ(mLockoutTracker.getMode(), FakeLockoutTracker::LockoutMode::kTimed);
     // time left
     int N = 5;
-    int64_t prevTimeLeft = INT_MIN;
+    int64_t prevTimeLeft = INT_MAX;
     for (int i = 0; i < N; i++) {
         SLEEP_MS(LOCKOUT_TIMED_DURATION / N + 1);
         int64_t currTimeLeft = mLockoutTracker.getLockoutTimeLeft();
-        ASSERT_TRUE(currTimeLeft > prevTimeLeft);
+        ASSERT_TRUE(currTimeLeft < prevTimeLeft);
         prevTimeLeft = currTimeLeft;
     }
     ASSERT_EQ(mLockoutTracker.getMode(), FakeLockoutTracker::LockoutMode::kNone);

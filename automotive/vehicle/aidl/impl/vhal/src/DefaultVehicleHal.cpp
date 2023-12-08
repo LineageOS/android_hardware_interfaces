@@ -144,6 +144,11 @@ DefaultVehicleHal::DefaultVehicleHal(std::unique_ptr<IVehicleHardware> vehicleHa
                     [subscriptionManagerCopy](std::vector<VehiclePropValue> updatedValues) {
                         onPropertyChangeEvent(subscriptionManagerCopy, updatedValues);
                     }));
+    mVehicleHardware->registerOnPropertySetErrorEvent(
+            std::make_unique<IVehicleHardware::PropertySetErrorCallback>(
+                    [subscriptionManagerCopy](std::vector<SetValueErrorEvent> errorEvents) {
+                        onPropertySetErrorEvent(subscriptionManagerCopy, errorEvents);
+                    }));
 
     // Register heartbeat event.
     mRecurrentAction = std::make_shared<std::function<void()>>(
@@ -177,7 +182,7 @@ DefaultVehicleHal::~DefaultVehicleHal() {
 }
 
 void DefaultVehicleHal::onPropertyChangeEvent(
-        std::weak_ptr<SubscriptionManager> subscriptionManager,
+        const std::weak_ptr<SubscriptionManager>& subscriptionManager,
         const std::vector<VehiclePropValue>& updatedValues) {
     auto manager = subscriptionManager.lock();
     if (manager == nullptr) {
@@ -191,6 +196,20 @@ void DefaultVehicleHal::onPropertyChangeEvent(
             values.push_back(*valuePtr);
         }
         SubscriptionClient::sendUpdatedValues(callback, std::move(values));
+    }
+}
+
+void DefaultVehicleHal::onPropertySetErrorEvent(
+        const std::weak_ptr<SubscriptionManager>& subscriptionManager,
+        const std::vector<SetValueErrorEvent>& errorEvents) {
+    auto manager = subscriptionManager.lock();
+    if (manager == nullptr) {
+        ALOGW("the SubscriptionManager is destroyed, DefaultVehicleHal is ending");
+        return;
+    }
+    auto vehiclePropErrorsByClient = manager->getSubscribedClientsForErrorEvents(errorEvents);
+    for (auto& [callback, vehiclePropErrors] : vehiclePropErrorsByClient) {
+        SubscriptionClient::sendPropertySetErrors(callback, std::move(vehiclePropErrors));
     }
 }
 
@@ -692,15 +711,19 @@ ScopedAStatus DefaultVehicleHal::subscribe(const CallbackType& callback,
         // Create a new SubscriptionClient if there isn't an existing one.
         mSubscriptionClients->maybeAddClient(callback);
 
-        // Since we have already check the sample rates, the following functions must succeed.
         if (!onChangeSubscriptions.empty()) {
-            return toScopedAStatus(mSubscriptionManager->subscribe(callback, onChangeSubscriptions,
-                                                                   /*isContinuousProperty=*/false));
+            auto result = mSubscriptionManager->subscribe(callback, onChangeSubscriptions,
+                                                          /*isContinuousProperty=*/false);
+            if (!result.ok()) {
+                return toScopedAStatus(result);
+            }
         }
         if (!continuousSubscriptions.empty()) {
-            return toScopedAStatus(mSubscriptionManager->subscribe(callback,
-                                                                   continuousSubscriptions,
-                                                                   /*isContinuousProperty=*/true));
+            auto result = mSubscriptionManager->subscribe(callback, continuousSubscriptions,
+                                                          /*isContinuousProperty=*/true);
+            if (!result.ok()) {
+                return toScopedAStatus(result);
+            }
         }
     }
     return ScopedAStatus::ok();

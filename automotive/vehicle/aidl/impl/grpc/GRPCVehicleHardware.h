@@ -82,6 +82,10 @@ class GRPCVehicleHardware : public IVehicleHardware {
 
     bool waitForConnected(std::chrono::milliseconds waitTime);
 
+  protected:
+    std::shared_mutex mCallbackMutex;
+    std::unique_ptr<const PropertyChangeCallback> mOnPropChange;
+
   private:
     void ValuePollingLoop();
 
@@ -90,8 +94,6 @@ class GRPCVehicleHardware : public IVehicleHardware {
     std::unique_ptr<proto::VehicleServer::Stub> mGrpcStub;
     std::thread mValuePollingThread;
 
-    std::shared_mutex mCallbackMutex;
-    std::unique_ptr<const PropertyChangeCallback> mOnPropChange;
     std::unique_ptr<const PropertySetErrorCallback> mOnSetErr;
 
     std::mutex mShutdownMutex;

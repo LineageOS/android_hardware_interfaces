@@ -17,6 +17,7 @@
 #include "Fingerprint.h"
 #include "Session.h"
 
+#include <android-base/properties.h>
 #include <fingerprint.sysprop.h>
 
 #include <android-base/file.h>
@@ -59,6 +60,7 @@ Fingerprint::Fingerprint() : mWorker(MAX_WORKER_QUEUE_SIZE) {
                              << sensorTypeProp;
     }
     LOG(INFO) << "sensorTypeProp:" << sensorTypeProp;
+    LOG(INFO) << "ro.product.name=" << ::android::base::GetProperty("ro.product.name", "UNKNOWN");
 }
 
 ndk::ScopedAStatus Fingerprint::getSensorProps(std::vector<SensorProps>* out) {
@@ -105,16 +107,16 @@ ndk::ScopedAStatus Fingerprint::createSession(int32_t sensorId, int32_t userId,
 
     mSession->linkToDeath(cb->asBinder().get());
 
-    LOG(INFO) << "createSession: sensorId:" << sensorId << " userId:" << userId;
+    LOG(INFO) << __func__ << ": sensorId:" << sensorId << " userId:" << userId;
     return ndk::ScopedAStatus::ok();
 }
 
 binder_status_t Fingerprint::dump(int fd, const char** /*args*/, uint32_t numArgs) {
     if (fd < 0) {
-        LOG(ERROR) << "Fingerprint::dump fd invalid: " << fd;
+        LOG(ERROR) << __func__ << "fd invalid: " << fd;
         return STATUS_BAD_VALUE;
     } else {
-        LOG(INFO) << "Fingerprint::dump fd:" << fd << "numArgs:" << numArgs;
+        LOG(INFO) << __func__ << " fd:" << fd << "numArgs:" << numArgs;
     }
 
     dprintf(fd, "----- FingerprintVirtualHal::dump -----\n");
@@ -131,11 +133,11 @@ binder_status_t Fingerprint::dump(int fd, const char** /*args*/, uint32_t numArg
 
 binder_status_t Fingerprint::handleShellCommand(int in, int out, int err, const char** args,
                                                 uint32_t numArgs) {
-    LOG(INFO) << "Fingerprint::handleShellCommand in:" << in << " out:" << out << " err:" << err
+    LOG(INFO) << __func__ << " in:" << in << " out:" << out << " err:" << err
               << " numArgs:" << numArgs;
 
     if (numArgs == 0) {
-        LOG(INFO) << "Fingerprint::handleShellCommand: available commands";
+        LOG(INFO) << __func__ << ": available commands";
         onHelp(out);
         return STATUS_OK;
     }
@@ -163,7 +165,7 @@ void Fingerprint::onHelp(int fd) {
 }
 
 void Fingerprint::resetConfigToDefault() {
-    LOG(INFO) << "reset virtual HAL configuration to default";
+    LOG(INFO) << __func__ << ": reset virtual HAL configuration to default";
 #define RESET_CONFIG_O(__NAME__) \
     if (FingerprintHalProperties::__NAME__()) FingerprintHalProperties::__NAME__(std::nullopt)
 #define RESET_CONFIG_V(__NAME__)                       \
