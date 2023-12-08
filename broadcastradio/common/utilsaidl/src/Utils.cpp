@@ -355,6 +355,55 @@ bool satisfies(const ProgramFilter& filter, const ProgramSelector& sel) {
     return true;
 }
 
+bool ProgramSelectorComparator::operator()(const ProgramSelector& lhs,
+                                           const ProgramSelector& rhs) const {
+    if ((utils::hasId(lhs, IdentifierType::AMFM_FREQUENCY_KHZ) ||
+         lhs.primaryId.type == IdentifierType::HD_STATION_ID_EXT) &&
+        (utils::hasId(rhs, IdentifierType::AMFM_FREQUENCY_KHZ) ||
+         rhs.primaryId.type == IdentifierType::HD_STATION_ID_EXT)) {
+        uint32_t freq1 = utils::getAmFmFrequency(lhs);
+        int subChannel1 = lhs.primaryId.type == IdentifierType::HD_STATION_ID_EXT
+                                  ? utils::getHdSubchannel(lhs)
+                                  : 0;
+        uint32_t freq2 = utils::getAmFmFrequency(rhs);
+        int subChannel2 = rhs.primaryId.type == IdentifierType::HD_STATION_ID_EXT
+                                  ? utils::getHdSubchannel(rhs)
+                                  : 0;
+        return freq1 < freq2 || (freq1 == freq2 && (lhs.primaryId.type < rhs.primaryId.type ||
+                                                    subChannel1 < subChannel2));
+    }
+    if (lhs.primaryId.type == IdentifierType::DAB_SID_EXT &&
+        rhs.primaryId.type == IdentifierType::DAB_SID_EXT) {
+        uint64_t dabFreq1 = utils::getId(lhs, IdentifierType::DAB_FREQUENCY_KHZ);
+        uint64_t dabFreq2 = utils::getId(rhs, IdentifierType::DAB_FREQUENCY_KHZ);
+        if (dabFreq1 != dabFreq2) {
+            return dabFreq1 < dabFreq2;
+        }
+        uint32_t ecc1 = utils::getDabEccCode(lhs);
+        uint32_t ecc2 = utils::getDabEccCode(rhs);
+        if (ecc1 != ecc2) {
+            return ecc1 < ecc2;
+        }
+        uint64_t dabEnsemble1 = utils::getId(lhs, IdentifierType::DAB_ENSEMBLE);
+        uint64_t dabEnsemble2 = utils::getId(rhs, IdentifierType::DAB_ENSEMBLE);
+        if (dabEnsemble1 != dabEnsemble2) {
+            return dabEnsemble1 < dabEnsemble2;
+        }
+        uint32_t sId1 = utils::getDabSId(lhs);
+        uint32_t sId2 = utils::getDabSId(rhs);
+        return sId1 < sId2 || (sId1 == sId2 && utils::getDabSCIdS(lhs) < utils::getDabSCIdS(rhs));
+    }
+
+    if (lhs.primaryId.type != rhs.primaryId.type) {
+        return lhs.primaryId.type < rhs.primaryId.type;
+    }
+    return lhs.primaryId.value < rhs.primaryId.value;
+}
+
+bool ProgramInfoComparator::operator()(const ProgramInfo& lhs, const ProgramInfo& rhs) const {
+    return ProgramSelectorComparator()(lhs.selector, rhs.selector);
+}
+
 size_t ProgramInfoHasher::operator()(const ProgramInfo& info) const {
     const ProgramIdentifier& id = info.selector.primaryId;
 
