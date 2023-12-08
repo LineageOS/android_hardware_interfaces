@@ -21,7 +21,7 @@ use std::sync::{Arc, Mutex};
 use authgraph_boringssl as boring;
 use authgraph_core::ta::{Role, AuthGraphTa};
 use authgraph_core::keyexchange::{MAX_OPENED_SESSIONS, AuthGraphParticipant};
-use secretkeeper_comm::ta::SecretkeeperTa;
+use secretkeeper_core::ta::SecretkeeperTa;
 use secretkeeper_hal::SecretkeeperService;
 use authgraph_hal::channel::SerializedChannel;
 use android_hardware_security_secretkeeper::aidl::android::hardware::security::secretkeeper::ISecretkeeper::{

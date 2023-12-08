@@ -35,7 +35,7 @@ rust_binary {
         "libauthgraph_hal",
         "libbinder_rs",
         "liblog_rust",
-        "libsecretkeeper_comm_nostd",
+        "libsecretkeeper_core_nostd",
         "libsecretkeeper_hal",
     ],
     srcs: [
