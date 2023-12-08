@@ -21,6 +21,8 @@
 #include <BluetoothAudioSessionReport.h>
 #include <android-base/logging.h>
 
+#include "A2dpOffloadCodecFactory.h"
+
 namespace aidl {
 namespace android {
 namespace hardware {
@@ -162,6 +164,27 @@ ndk::ScopedAStatus BluetoothAudioProvider::setLowLatencyModeAllowed(
   BluetoothAudioSessionReport::ReportLowLatencyModeAllowedChanged(
     session_type_, allowed);
   return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus BluetoothAudioProvider::parseA2dpConfiguration(
+    [[maybe_unused]] const CodecId& codec_id,
+    [[maybe_unused]] const std::vector<uint8_t>& configuration,
+    [[maybe_unused]] CodecParameters* codec_parameters,
+    [[maybe_unused]] A2dpStatus* _aidl_return) {
+  LOG(INFO) << __func__ << " - SessionType=" << toString(session_type_)
+            << " is illegal";
+  return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+}
+
+ndk::ScopedAStatus BluetoothAudioProvider::getA2dpConfiguration(
+    [[maybe_unused]] const std::vector<A2dpRemoteCapabilities>&
+        remote_a2dp_capabilities,
+    [[maybe_unused]] const A2dpConfigurationHint& hint,
+    [[maybe_unused]] std::optional<audio::A2dpConfiguration>* _aidl_return) {
+  LOG(INFO) << __func__ << " - SessionType=" << toString(session_type_)
+            << " is illegal";
+
+  return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
 }
 
 }  // namespace audio

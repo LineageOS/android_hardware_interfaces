@@ -16,8 +16,14 @@
 
 package android.hardware.bluetooth.audio;
 
+import android.hardware.bluetooth.audio.A2dpConfiguration;
+import android.hardware.bluetooth.audio.A2dpConfigurationHint;
+import android.hardware.bluetooth.audio.A2dpRemoteCapabilities;
+import android.hardware.bluetooth.audio.A2dpStatus;
 import android.hardware.bluetooth.audio.AudioConfiguration;
 import android.hardware.bluetooth.audio.BluetoothAudioStatus;
+import android.hardware.bluetooth.audio.CodecId;
+import android.hardware.bluetooth.audio.CodecParameters;
 import android.hardware.bluetooth.audio.IBluetoothAudioPort;
 import android.hardware.bluetooth.audio.LatencyMode;
 import android.hardware.common.fmq.MQDescriptor;
@@ -92,4 +98,30 @@ interface IBluetoothAudioProvider {
      * mode, the API will be called with supported is false.
      */
     void setLowLatencyModeAllowed(in boolean allowed);
+
+    /**
+     * Validate and parse an A2DP Configuration,
+     * shall be used with A2DP session types
+     *
+     * @param codecId Identify the codec
+     * @param The configuration as defined by the A2DP's `Codec Specific
+     *        Information Elements`, or `Vendor Specific Value` when CodecId
+     *        format is set to `VENDOR`.
+     * @param codecParameters result of parsing, when the validation succeeded.
+     * @return A2DP Status of the parsing
+     */
+    A2dpStatus parseA2dpConfiguration(
+            in CodecId codecId, in byte[] configuration, out CodecParameters codecParameters);
+
+    /**
+     * Return a configuration, from a list of remote Capabilites,
+     * shall be used with A2DP session types
+     *
+     * @param remoteCapabilities The capabilities of the remote device
+     * @param hint Hint on selection (audio context and/or codec)
+     * @return The requested configuration. A null value value is returned
+     *         when no suitable configuration has been found.
+     */
+    @nullable A2dpConfiguration getA2dpConfiguration(
+            in List<A2dpRemoteCapabilities> remoteA2dpCapabilities, in A2dpConfigurationHint hint);
 }

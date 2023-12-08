@@ -22,6 +22,10 @@
 #include <BluetoothAudioSessionReport.h>
 #include <android-base/logging.h>
 
+#include "A2dpOffloadCodecAac.h"
+#include "A2dpOffloadCodecFactory.h"
+#include "A2dpOffloadCodecSbc.h"
+
 namespace aidl {
 namespace android {
 namespace hardware {
@@ -48,19 +52,44 @@ ndk::ScopedAStatus A2dpOffloadAudioProvider::startSession(
     const std::shared_ptr<IBluetoothAudioPort>& host_if,
     const AudioConfiguration& audio_config,
     const std::vector<LatencyMode>& latency_modes, DataMQDesc* _aidl_return) {
-  if (audio_config.getTag() != AudioConfiguration::a2dpConfig) {
+  if (audio_config.getTag() == AudioConfiguration::Tag::a2dp) {
+    auto a2dp_config = audio_config.get<AudioConfiguration::Tag::a2dp>();
+    A2dpStatus a2dp_status = A2dpStatus::NOT_SUPPORTED_CODEC_TYPE;
+
+    if (a2dp_config.codecId ==
+        A2dpOffloadCodecSbc::GetInstance()->GetCodecId()) {
+      SbcParameters sbc_parameters;
+      a2dp_status = A2dpOffloadCodecSbc::GetInstance()->ParseConfiguration(
+          a2dp_config.configuration, &sbc_parameters);
+
+    } else if (a2dp_config.codecId ==
+               A2dpOffloadCodecAac::GetInstance()->GetCodecId()) {
+      AacParameters aac_parameters;
+      a2dp_status = A2dpOffloadCodecAac::GetInstance()->ParseConfiguration(
+          a2dp_config.configuration, &aac_parameters);
+    }
+    if (a2dp_status != A2dpStatus::OK) {
+      LOG(WARNING) << __func__ << " - Invalid Audio Configuration="
+                   << audio_config.toString();
+      *_aidl_return = DataMQDesc();
+      return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+    }
+  } else if (audio_config.getTag() == AudioConfiguration::Tag::a2dpConfig) {
+    if (!BluetoothAudioCodecs::IsOffloadCodecConfigurationValid(
+            session_type_,
+            audio_config.get<AudioConfiguration::a2dpConfig>())) {
+      LOG(WARNING) << __func__ << " - Invalid Audio Configuration="
+                   << audio_config.toString();
+      *_aidl_return = DataMQDesc();
+      return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+    }
+  } else {
     LOG(WARNING) << __func__ << " - Invalid Audio Configuration="
                  << audio_config.toString();
     *_aidl_return = DataMQDesc();
     return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
   }
-  if (!BluetoothAudioCodecs::IsOffloadCodecConfigurationValid(
-          session_type_, audio_config.get<AudioConfiguration::a2dpConfig>())) {
-    LOG(WARNING) << __func__ << " - Invalid Audio Configuration="
-                 << audio_config.toString();
-    *_aidl_return = DataMQDesc();
-    return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
-  }
+
   return BluetoothAudioProvider::startSession(
       host_if, audio_config, latency_modes, _aidl_return);
 }
@@ -70,6 +99,36 @@ ndk::ScopedAStatus A2dpOffloadAudioProvider::onSessionReady(
   *_aidl_return = DataMQDesc();
   BluetoothAudioSessionReport::OnSessionStarted(
       session_type_, stack_iface_, nullptr, *audio_config_, latency_modes_);
+  return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus A2dpOffloadAudioProvider::parseA2dpConfiguration(
+    const CodecId& codec_id, const std::vector<uint8_t>& configuration,
+    CodecParameters* codec_parameters, A2dpStatus* _aidl_return) {
+  auto codec = A2dpOffloadCodecFactory::GetInstance()->GetCodec(codec_id);
+  if (!codec) {
+    LOG(INFO) << __func__ << " - SessionType=" << toString(session_type_)
+              << " - CodecId=" << codec_id.toString() << " is not found";
+    return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+  }
+
+  *_aidl_return = codec->ParseConfiguration(configuration, codec_parameters);
+
+  return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus A2dpOffloadAudioProvider::getA2dpConfiguration(
+    const std::vector<A2dpRemoteCapabilities>& remote_a2dp_capabilities,
+    const A2dpConfigurationHint& hint,
+    std::optional<audio::A2dpConfiguration>* _aidl_return) {
+  *_aidl_return = std::nullopt;
+  A2dpConfiguration avdtp_configuration;
+
+  if (A2dpOffloadCodecFactory::GetInstance()->GetConfiguration(
+          remote_a2dp_capabilities, hint, &avdtp_configuration))
+    *_aidl_return =
+        std::make_optional<A2dpConfiguration>(std::move(avdtp_configuration));
+
   return ndk::ScopedAStatus::ok();
 }
 
