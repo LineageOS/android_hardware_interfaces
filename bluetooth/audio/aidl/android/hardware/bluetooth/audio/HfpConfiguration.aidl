@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,28 +14,31 @@
  * limitations under the License.
  */
 
-package android.hardware.biometrics.face;
+package android.hardware.bluetooth.audio;
 
-/**
- * @hide
- */
+import android.hardware.bluetooth.audio.CodecId;
+
 @VintfStability
-@Backing(type="byte")
-enum Feature {
+parcelable HfpConfiguration {
     /**
-     * Require the user to look at the device during enrollment and authentication. This feature
-     * can be disabled to accommodate people who have limited vision.
+     * Codec identifier.
      */
-    REQUIRE_ATTENTION,
+    CodecId codecId;
 
     /**
-     * Require a diverse set of poses during enrollment. This feature can be disabled to accommodate
-     * people with limited mobility.
+     * The connection handle used for SCO connection.
+     * Range: 0x0000 to 0x0EFF.
      */
-    REQUIRE_DIVERSE_POSES,
+    int connectionHandle;
 
     /**
-     * Enable debugging functionality.
+     *  Echo canceling and noise reduction functions resident in the AG.
      */
-    DEBUG,
+    boolean nrec;
+
+    /**
+     *  Indicate whether the codec is encoded and decoded in the controller.
+     *  If the codec is inside the DSP, then it would be transparent mode.
+     */
+    boolean controllerCodec;
 }

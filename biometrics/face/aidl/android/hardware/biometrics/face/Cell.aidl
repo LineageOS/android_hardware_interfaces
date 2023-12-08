@@ -18,6 +18,7 @@ package android.hardware.biometrics.face;
 
 /**
  * Coordinates of an enrollment UI cell in a vendor-defined coordinate system.
+ * @hide
  */
 @VintfStability
 parcelable Cell {

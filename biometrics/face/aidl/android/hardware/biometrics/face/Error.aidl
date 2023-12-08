@@ -15,7 +15,9 @@
  */
 
 package android.hardware.biometrics.face;
-
+/**
+ * @hide
+ */
 @VintfStability
 @Backing(type="byte")
 enum Error {

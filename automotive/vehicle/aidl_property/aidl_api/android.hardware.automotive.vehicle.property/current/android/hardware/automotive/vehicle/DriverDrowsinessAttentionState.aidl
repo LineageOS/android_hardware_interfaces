@@ -31,9 +31,17 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.security.secretkeeper;
-@VintfStability
-interface ISecretkeeper {
-  android.hardware.security.authgraph.IAuthGraphKeyExchange getAuthGraphKe();
-  byte[] processSecretManagementRequest(in byte[] request);
+package android.hardware.automotive.vehicle;
+@Backing(type="int") @VintfStability
+enum DriverDrowsinessAttentionState {
+  OTHER = 0,
+  KSS_RATING_1_EXTREMELY_ALERT = 1,
+  KSS_RATING_2_VERY_ALERT = 2,
+  KSS_RATING_3_ALERT = 3,
+  KSS_RATING_4_RATHER_ALERT = 4,
+  KSS_RATING_5_NEITHER_ALERT_NOR_SLEEPY = 5,
+  KSS_RATING_6_SOME_SLEEPINESS = 6,
+  KSS_RATING_7_SLEEPY_NO_EFFORT = 7,
+  KSS_RATING_8_SLEEPY_SOME_EFFORT = 8,
+  KSS_RATING_9_VERY_SLEEPY = 9,
 }

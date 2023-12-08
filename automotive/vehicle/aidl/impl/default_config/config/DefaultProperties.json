@@ -3554,6 +3554,39 @@
             }
         },
         {
+            "property": "VehicleProperty::DRIVER_DROWSINESS_ATTENTION_STATE",
+            "defaultValue": {
+                "int32Values": [
+                    "DriverDrowsinessAttentionState::KSS_RATING_3_ALERT"
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": 0,
+                    "supportedEnumValues": [
+                        "ErrorState::NOT_AVAILABLE_DISABLED",
+                        "DriverDrowsinessAttentionState::KSS_RATING_1_EXTREMELY_ALERT",
+                        "DriverDrowsinessAttentionState::KSS_RATING_2_VERY_ALERT",
+                        "DriverDrowsinessAttentionState::KSS_RATING_3_ALERT",
+                        "DriverDrowsinessAttentionState::KSS_RATING_4_RATHER_ALERT",
+                        "DriverDrowsinessAttentionState::KSS_RATING_5_NEITHER_ALERT_NOR_SLEEPY",
+                        "DriverDrowsinessAttentionState::KSS_RATING_6_SOME_SLEEPINESS",
+                        "DriverDrowsinessAttentionState::KSS_RATING_7_SLEEPY_NO_EFFORT",
+                        "DriverDrowsinessAttentionState::KSS_RATING_8_SLEEPY_SOME_EFFORT",
+                        "DriverDrowsinessAttentionState::KSS_RATING_9_VERY_SLEEPY"
+                    ]
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::DRIVER_DROWSINESS_ATTENTION_WARNING_ENABLED",
+            "defaultValue": {
+                "int32Values": [
+                    1
+                ]
+            }
+        },
+        {
             "property": "VehicleProperty::INITIAL_USER_INFO"
         },
         {

@@ -25,31 +25,31 @@ package android.hardware.radio.network;
 @Backing(type="int")
 @JavaDerive(toString=true)
 enum ConnectionEvent {
-    // 2G GSM
-    CS_SERVICE_GSM = 0,
-    SIGNALLING_GSM = 1,
+    // 2G GSM circuit switched
+    CS_SIGNALLING_GSM = 0,
 
     // 2G GPRS packet services
-    PS_SERVICE_GPRS = 2,
-    SIGNALLING_GPRS = 3,
+    PS_SIGNALLING_GPRS = 1,
 
-    // 3G packet services
-    PS_SERVICE_3G = 4,
-    SIGNALLING_3G = 5,
+    // 3G circuit switched
+    CS_SIGNALLING_3G = 2,
+
+    // 3G packet switched
+    PS_SIGNALLING_3G = 3,
 
     // 4G LTE packet services
-    NAS_SIGNALLING_LTE = 6,
-    AS_SIGNALLING_LTE = 7,
+    NAS_SIGNALLING_LTE = 4,
+    AS_SIGNALLING_LTE = 5,
 
     // VoLTE
-    VOLTE_SIP = 8,
-    VOLTE_RTP = 9,
+    VOLTE_SIP = 6,
+    VOLTE_RTP = 7,
 
     // 5G packet services
-    NAS_SIGNALLING_5G = 10,
-    AS_SIGNALLING_5G = 11,
+    NAS_SIGNALLING_5G = 8,
+    AS_SIGNALLING_5G = 9,
 
     // VoNR
-    VONR_SIP = 12,
-    VONR_RTP = 13,
+    VONR_SIP = 10,
+    VONR_RTP = 11,
 }

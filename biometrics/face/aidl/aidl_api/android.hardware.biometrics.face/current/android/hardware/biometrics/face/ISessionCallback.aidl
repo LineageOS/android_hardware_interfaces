@@ -32,6 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.biometrics.face;
+/* @hide */
 @VintfStability
 interface ISessionCallback {
   void onChallengeGenerated(in long challenge);

@@ -265,7 +265,9 @@ public final class ChangeModeForVehicleProperty {
         Map.entry(VehicleProperty.HANDS_ON_DETECTION_ENABLED, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.HANDS_ON_DETECTION_DRIVER_STATE, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.HANDS_ON_DETECTION_WARNING, VehiclePropertyChangeMode.ON_CHANGE),
-        Map.entry(VehicleProperty.DRIVER_DROWSINESS_ATTENTION_SYSTEM_ENABLED, VehiclePropertyChangeMode.ON_CHANGE)
+        Map.entry(VehicleProperty.DRIVER_DROWSINESS_ATTENTION_SYSTEM_ENABLED, VehiclePropertyChangeMode.ON_CHANGE),
+        Map.entry(VehicleProperty.DRIVER_DROWSINESS_ATTENTION_STATE, VehiclePropertyChangeMode.ON_CHANGE),
+        Map.entry(VehicleProperty.DRIVER_DROWSINESS_ATTENTION_WARNING_ENABLED, VehiclePropertyChangeMode.ON_CHANGE)
     );
 
 }
