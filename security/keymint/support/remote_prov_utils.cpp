@@ -978,7 +978,7 @@ ErrMsgOr<hwtrust::DiceChain::Kind> getDiceChainKind() {
             return hwtrust::DiceChain::Kind::kVsr13;
         case __ANDROID_API_U__:
             return hwtrust::DiceChain::Kind::kVsr14;
-        case __ANDROID_API_V__:
+        case 202404: /* TODO(b/315056516) Use a version macro for vendor API 24Q2 */
             return hwtrust::DiceChain::Kind::kVsr15;
         default:
             return "Unsupported vendor API level: " + std::to_string(vendor_api_level);
