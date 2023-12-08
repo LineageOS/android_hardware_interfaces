@@ -40,4 +40,6 @@ interface IBluetoothAudioProvider {
   void streamSuspended(in android.hardware.bluetooth.audio.BluetoothAudioStatus status);
   void updateAudioConfiguration(in android.hardware.bluetooth.audio.AudioConfiguration audioConfig);
   void setLowLatencyModeAllowed(in boolean allowed);
+  android.hardware.bluetooth.audio.A2dpStatus parseA2dpConfiguration(in android.hardware.bluetooth.audio.CodecId codecId, in byte[] configuration, out android.hardware.bluetooth.audio.CodecParameters codecParameters);
+  @nullable android.hardware.bluetooth.audio.A2dpConfiguration getA2dpConfiguration(in List<android.hardware.bluetooth.audio.A2dpRemoteCapabilities> remoteA2dpCapabilities, in android.hardware.bluetooth.audio.A2dpConfigurationHint hint);
 }
