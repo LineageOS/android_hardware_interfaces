@@ -34,7 +34,16 @@ class A2dpOffloadAudioProvider : public BluetoothAudioProvider {
       const std::shared_ptr<IBluetoothAudioPort>& host_if,
       const AudioConfiguration& audio_config,
       const std::vector<LatencyMode>& latency_modes,
-      DataMQDesc* _aidl_return);
+      DataMQDesc* _aidl_return) override;
+
+  ndk::ScopedAStatus parseA2dpConfiguration(
+      const CodecId& codec_id, const std::vector<uint8_t>& configuration,
+      CodecParameters* codec_parameters, A2dpStatus* _aidl_return) override;
+
+  ndk::ScopedAStatus getA2dpConfiguration(
+      const std::vector<A2dpRemoteCapabilities>& remote_a2dp_capabilities,
+      const A2dpConfigurationHint& hint,
+      std::optional<audio::A2dpConfiguration>* _aidl_return) override;
 
  private:
   ndk::ScopedAStatus onSessionReady(DataMQDesc* _aidl_return) override;

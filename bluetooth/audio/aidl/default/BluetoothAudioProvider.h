@@ -50,6 +50,14 @@ class BluetoothAudioProvider : public BnBluetoothAudioProvider {
       const AudioConfiguration& audio_config);
   ndk::ScopedAStatus setLowLatencyModeAllowed(bool allowed);
 
+  ndk::ScopedAStatus parseA2dpConfiguration(
+      const CodecId& codec_id, const std::vector<uint8_t>& configuration,
+      CodecParameters* codec_parameters, A2dpStatus* _aidl_return);
+  ndk::ScopedAStatus getA2dpConfiguration(
+      const std::vector<A2dpRemoteCapabilities>& remote_a2dp_capabilities,
+      const A2dpConfigurationHint& hint,
+      std::optional<audio::A2dpConfiguration>* _aidl_return);
+
   virtual bool isValid(const SessionType& sessionType) = 0;
 
  protected:
