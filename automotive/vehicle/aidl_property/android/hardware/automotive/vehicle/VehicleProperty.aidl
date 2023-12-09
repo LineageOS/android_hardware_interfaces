@@ -5249,6 +5249,27 @@ enum VehicleProperty {
     DRIVER_DISTRACTION_WARNING_ENABLED =
             0x101F + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
 
+    /**
+     * Driver distraction warning.
+     *
+     * Returns whether a warning is being sent to the driver for being distracted.
+     *
+     * Generally, this property should return a valid state defined in DriverDistractionWarning or
+     * ErrorState. For example, if the feature is not available due to some temporary state, that
+     * information should be conveyed through an ErrorState.
+     *
+     * For the global area ID (0), the VehicleAreaConfig#supportedEnumValues array must be defined
+     * unless all states of both DriverDistractionWarning (including OTHER, which is not
+     * recommended) and ErrorState are supported.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     * @data_enum DriverDistractionWarning
+     * @data_enum ErrorState
+     */
+    DRIVER_DISTRACTION_WARNING =
+            0x1020 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
+
     /***************************************************************************
      * End of ADAS Properties
      **************************************************************************/
