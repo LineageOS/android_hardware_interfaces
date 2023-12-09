@@ -96,6 +96,8 @@ IWifiStaIface::FeatureSetMask convertLegacyStaIfaceFeatureToAidl(uint64_t featur
             return IWifiStaIface::FeatureSetMask::KEEP_ALIVE;
         case WIFI_FEATURE_ROAMING_MODE_CONTROL:
             return IWifiStaIface::FeatureSetMask::ROAMING_MODE_CONTROL;
+        case WIFI_FEATURE_CACHED_SCAN_RESULTS:
+            return IWifiStaIface::FeatureSetMask::CACHED_SCAN_DATA;
     };
     CHECK(false) << "Unknown legacy feature: " << feature;
     return {};
@@ -463,7 +465,7 @@ bool convertLegacyStaIfaceFeaturesToAidl(uint64_t legacy_feature_set, uint32_t* 
           WIFI_FEATURE_CONTROL_ROAMING, WIFI_FEATURE_IE_WHITELIST, WIFI_FEATURE_SCAN_RAND,
           WIFI_FEATURE_INFRA_5G, WIFI_FEATURE_HOTSPOT, WIFI_FEATURE_PNO, WIFI_FEATURE_TDLS,
           WIFI_FEATURE_TDLS_OFFCHANNEL, WIFI_FEATURE_CONFIG_NDO, WIFI_FEATURE_MKEEP_ALIVE,
-          WIFI_FEATURE_ROAMING_MODE_CONTROL}) {
+          WIFI_FEATURE_ROAMING_MODE_CONTROL, WIFI_FEATURE_CACHED_SCAN_RESULTS}) {
         if (feature & legacy_feature_set) {
             *aidl_feature_set |= static_cast<uint32_t>(convertLegacyStaIfaceFeatureToAidl(feature));
         }
