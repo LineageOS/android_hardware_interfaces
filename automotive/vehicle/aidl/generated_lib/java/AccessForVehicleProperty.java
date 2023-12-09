@@ -267,7 +267,8 @@ public final class AccessForVehicleProperty {
         Map.entry(VehicleProperty.HANDS_ON_DETECTION_WARNING, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.DRIVER_DROWSINESS_ATTENTION_SYSTEM_ENABLED, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.DRIVER_DROWSINESS_ATTENTION_STATE, VehiclePropertyAccess.READ),
-        Map.entry(VehicleProperty.DRIVER_DROWSINESS_ATTENTION_WARNING_ENABLED, VehiclePropertyAccess.READ_WRITE)
+        Map.entry(VehicleProperty.DRIVER_DROWSINESS_ATTENTION_WARNING_ENABLED, VehiclePropertyAccess.READ_WRITE),
+        Map.entry(VehicleProperty.DRIVER_DROWSINESS_ATTENTION_WARNING, VehiclePropertyAccess.READ)
     );
 
 }

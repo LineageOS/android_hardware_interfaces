@@ -5159,6 +5159,27 @@ enum VehicleProperty {
     DRIVER_DROWSINESS_ATTENTION_WARNING_ENABLED =
             0x101B + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
 
+    /**
+     * Driver drowsiness and attention warning.
+     *
+     * Returns whether a warning is being sent to the driver for being drowsy or not attentive.
+     *
+     * Generally, this property should return a valid state defined in
+     * DriverDrowsinessAttentionWarning or ErrorState. For example, if the feature is not available
+     * due to some temporary state, that information should be conveyed through an ErrorState.
+     *
+     * For the global area ID (0), the VehicleAreaConfig#supportedEnumValues array must be defined
+     * unless all states of both DriverDrowsinessAttentionWarning (including OTHER, which is not
+     * recommended) and ErrorState are supported.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     * @data_enum DriverDrowsinessAttentionWarning
+     * @data_enum ErrorState
+     */
+    DRIVER_DROWSINESS_ATTENTION_WARNING =
+            0x101C + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
+
     /***************************************************************************
      * End of ADAS Properties
      **************************************************************************/
