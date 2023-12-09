@@ -83,6 +83,10 @@ interface IWifiChip {
          * Chip supports Tid-To-Link mapping negotiation.
          */
         T2LM_NEGOTIATION = 1 << 8,
+        /**
+         * Chip supports voip mode setting.
+         */
+        SET_VOIP_MODE = 1 << 9,
     }
 
     /**

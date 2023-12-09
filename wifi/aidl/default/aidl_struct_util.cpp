@@ -59,6 +59,8 @@ IWifiChip::FeatureSetMask convertLegacyChipFeatureToAidl(uint64_t feature) {
             return IWifiChip::FeatureSetMask::P2P_RAND_MAC;
         case WIFI_FEATURE_AFC_CHANNEL:
             return IWifiChip::FeatureSetMask::SET_AFC_CHANNEL_ALLOWANCE;
+        case WIFI_FEATURE_SET_VOIP_MODE:
+            return IWifiChip::FeatureSetMask::SET_VOIP_MODE;
     };
     CHECK(false) << "Unknown legacy feature: " << feature;
     return {};
@@ -111,7 +113,8 @@ bool convertLegacyChipFeaturesToAidl(uint64_t legacy_feature_set, uint32_t* aidl
                                       WIFI_FEATURE_INFRA_60G,
                                       WIFI_FEATURE_SET_LATENCY_MODE,
                                       WIFI_FEATURE_P2P_RAND_MAC,
-                                      WIFI_FEATURE_AFC_CHANNEL};
+                                      WIFI_FEATURE_AFC_CHANNEL,
+                                      WIFI_FEATURE_SET_VOIP_MODE};
     for (const auto feature : features) {
         if (feature & legacy_feature_set) {
             *aidl_feature_set |= static_cast<uint32_t>(convertLegacyChipFeatureToAidl(feature));
