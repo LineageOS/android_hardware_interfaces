@@ -54,6 +54,7 @@ namespace {
 using ::aidl::android::hardware::automotive::vehicle::CruiseControlCommand;
 using ::aidl::android::hardware::automotive::vehicle::CruiseControlType;
 using ::aidl::android::hardware::automotive::vehicle::DriverDrowsinessAttentionState;
+using ::aidl::android::hardware::automotive::vehicle::DriverDrowsinessAttentionWarning;
 using ::aidl::android::hardware::automotive::vehicle::ErrorState;
 using ::aidl::android::hardware::automotive::vehicle::GetValueRequest;
 using ::aidl::android::hardware::automotive::vehicle::GetValueResult;
@@ -200,6 +201,13 @@ const std::unordered_map<int32_t, std::vector<int32_t>> mAdasEnabledPropToAdasPr
                         toInt(VehicleProperty::DRIVER_DROWSINESS_ATTENTION_STATE),
                 },
         },
+        // Driver Drowsiness and Attention Warning
+        {
+                toInt(VehicleProperty::DRIVER_DROWSINESS_ATTENTION_WARNING_ENABLED),
+                {
+                        toInt(VehicleProperty::DRIVER_DROWSINESS_ATTENTION_WARNING),
+                },
+        },
 };
 }  // namespace
 
@@ -312,13 +320,13 @@ void FakeVehicleHardware::init() {
     }
 
     // OBD2_LIVE_FRAME and OBD2_FREEZE_FRAME must be configured in default configs.
-    auto maybeObd2LiveFrame = mServerSidePropStore->getConfig(OBD2_LIVE_FRAME);
+    auto maybeObd2LiveFrame = mServerSidePropStore->getPropConfig(OBD2_LIVE_FRAME);
     if (maybeObd2LiveFrame.has_value()) {
-        mFakeObd2Frame->initObd2LiveFrame(*maybeObd2LiveFrame.value());
+        mFakeObd2Frame->initObd2LiveFrame(maybeObd2LiveFrame.value());
     }
-    auto maybeObd2FreezeFrame = mServerSidePropStore->getConfig(OBD2_FREEZE_FRAME);
+    auto maybeObd2FreezeFrame = mServerSidePropStore->getPropConfig(OBD2_FREEZE_FRAME);
     if (maybeObd2FreezeFrame.has_value()) {
-        mFakeObd2Frame->initObd2FreezeFrame(*maybeObd2FreezeFrame.value());
+        mFakeObd2Frame->initObd2FreezeFrame(maybeObd2FreezeFrame.value());
     }
 
     mServerSidePropStore->setOnValueChangeCallback(
@@ -480,7 +488,7 @@ void FakeVehicleHardware::updateHvacTemperatureValueSuggestionInput(
 VhalResult<void> FakeVehicleHardware::setHvacTemperatureValueSuggestion(
         const VehiclePropValue& hvacTemperatureValueSuggestion) {
     auto hvacTemperatureSetConfigResult =
-            mServerSidePropStore->getConfig(toInt(VehicleProperty::HVAC_TEMPERATURE_SET));
+            mServerSidePropStore->getPropConfig(toInt(VehicleProperty::HVAC_TEMPERATURE_SET));
 
     if (!hvacTemperatureSetConfigResult.ok()) {
         return StatusError(getErrorCode(hvacTemperatureSetConfigResult)) << StringPrintf(
@@ -507,7 +515,7 @@ VhalResult<void> FakeVehicleHardware::setHvacTemperatureValueSuggestion(
     }
 
     auto updatedValue = mValuePool->obtain(hvacTemperatureValueSuggestion);
-    const auto& hvacTemperatureSetConfigArray = hvacTemperatureSetConfigResult.value()->configArray;
+    const auto& hvacTemperatureSetConfigArray = hvacTemperatureSetConfigResult.value().configArray;
     auto& hvacTemperatureValueSuggestionInput = updatedValue->value.floatValues;
 
     updateHvacTemperatureValueSuggestionInput(hvacTemperatureSetConfigArray,
@@ -830,14 +838,14 @@ void FakeVehicleHardware::sendHvacPropertiesCurrentValues(int32_t areaId, int32_
 void FakeVehicleHardware::sendAdasPropertiesState(int32_t propertyId, int32_t state) {
     auto& adasDependentPropIds = mAdasEnabledPropToAdasPropWithErrorState.find(propertyId)->second;
     for (auto dependentPropId : adasDependentPropIds) {
-        auto dependentPropConfigResult = mServerSidePropStore->getConfig(dependentPropId);
+        auto dependentPropConfigResult = mServerSidePropStore->getPropConfig(dependentPropId);
         if (!dependentPropConfigResult.ok()) {
             ALOGW("Failed to get config for ADAS property 0x%x, error: %s", dependentPropId,
                   getErrorMsg(dependentPropConfigResult).c_str());
             continue;
         }
         auto& dependentPropConfig = dependentPropConfigResult.value();
-        for (auto& areaConfig : dependentPropConfig->areaConfigs) {
+        for (auto& areaConfig : dependentPropConfig.areaConfigs) {
             int32_t hardcoded_state = state;
             // TODO: restore old/initial values here instead of hardcoded value (b/295542701)
             if (state == 1 && dependentPropId == toInt(VehicleProperty::CRUISE_CONTROL_TYPE)) {
@@ -1710,12 +1718,12 @@ std::string FakeVehicleHardware::dumpSpecificProperty(const std::vector<std::str
             continue;
         }
         int32_t prop = propResult.value();
-        auto result = mServerSidePropStore->getConfig(prop);
+        auto result = mServerSidePropStore->getPropConfig(prop);
         if (!result.ok()) {
             msg += StringPrintf("No property %d\n", prop);
             continue;
         }
-        msg += dumpOnePropertyByConfig(rowNumber++, *result.value());
+        msg += dumpOnePropertyByConfig(rowNumber++, result.value());
     }
     return msg;
 }
@@ -2022,7 +2030,7 @@ void FakeVehicleHardware::registerOnPropertySetErrorEvent(
 StatusCode FakeVehicleHardware::subscribe(SubscribeOptions options) {
     int32_t propId = options.propId;
 
-    auto configResult = mServerSidePropStore->getConfig(propId);
+    auto configResult = mServerSidePropStore->getPropConfig(propId);
     if (!configResult.ok()) {
         ALOGE("subscribe: property: %" PRId32 " is not supported", propId);
         return StatusCode::INVALID_ARG;
@@ -2032,7 +2040,7 @@ StatusCode FakeVehicleHardware::subscribe(SubscribeOptions options) {
     for (int areaId : options.areaIds) {
         if (StatusCode status = subscribePropIdAreaIdLocked(propId, areaId, options.sampleRate,
                                                             options.enableVariableUpdateRate,
-                                                            *configResult.value());
+                                                            configResult.value());
             status != StatusCode::OK) {
             return status;
         }

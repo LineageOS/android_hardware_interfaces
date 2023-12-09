@@ -40,5 +40,6 @@ interface IContextHubCallback {
   void handleTransactionResult(in int transactionId, in boolean success);
   void handleNanSessionRequest(in android.hardware.contexthub.NanSessionRequest request);
   byte[16] getUuid();
+  String getName();
   const int CONTEXTHUB_NAN_TRANSACTION_TIMEOUT_MS = 10000;
 }

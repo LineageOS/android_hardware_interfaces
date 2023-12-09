@@ -274,4 +274,5 @@ enum VehicleProperty {
   DRIVER_DROWSINESS_ATTENTION_SYSTEM_ENABLED = (((0x1019 + android.hardware.automotive.vehicle.VehiclePropertyGroup.SYSTEM) + android.hardware.automotive.vehicle.VehicleArea.GLOBAL) + android.hardware.automotive.vehicle.VehiclePropertyType.BOOLEAN) /* 287313945 */,
   DRIVER_DROWSINESS_ATTENTION_STATE = (((0x101A + android.hardware.automotive.vehicle.VehiclePropertyGroup.SYSTEM) + android.hardware.automotive.vehicle.VehicleArea.GLOBAL) + android.hardware.automotive.vehicle.VehiclePropertyType.INT32) /* 289411098 */,
   DRIVER_DROWSINESS_ATTENTION_WARNING_ENABLED = (((0x101B + android.hardware.automotive.vehicle.VehiclePropertyGroup.SYSTEM) + android.hardware.automotive.vehicle.VehicleArea.GLOBAL) + android.hardware.automotive.vehicle.VehiclePropertyType.BOOLEAN) /* 287313947 */,
+  DRIVER_DROWSINESS_ATTENTION_WARNING = (((0x101C + android.hardware.automotive.vehicle.VehiclePropertyGroup.SYSTEM) + android.hardware.automotive.vehicle.VehicleArea.GLOBAL) + android.hardware.automotive.vehicle.VehiclePropertyType.INT32) /* 289411100 */,
 }

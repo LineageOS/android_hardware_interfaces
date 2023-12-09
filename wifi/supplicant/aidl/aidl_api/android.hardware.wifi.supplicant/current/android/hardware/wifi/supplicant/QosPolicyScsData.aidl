@@ -22,4 +22,11 @@ parcelable QosPolicyScsData {
   byte policyId;
   byte userPriority;
   android.hardware.wifi.supplicant.QosPolicyClassifierParams classifierParams;
+  android.hardware.wifi.supplicant.QosPolicyScsData.LinkDirection direction;
+  @nullable android.hardware.wifi.supplicant.QosCharacteristics QosCharacteristics;
+  @Backing(type="byte") @VintfStability
+  enum LinkDirection {
+    DOWNLINK,
+    UPLINK,
+  }
 }

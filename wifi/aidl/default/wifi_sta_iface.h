@@ -90,6 +90,7 @@ class WifiStaIface : public BnWifiStaIface {
     ndk::ScopedAStatus getFactoryMacAddress(std::array<uint8_t, 6>* _aidl_return) override;
     ndk::ScopedAStatus setScanMode(bool in_enable) override;
     ndk::ScopedAStatus setDtimMultiplier(int32_t in_multiplier) override;
+    ndk::ScopedAStatus getCachedScanData(CachedScanData* _aidl_return) override;
 
   private:
     // Corresponding worker functions for the AIDL methods.
@@ -130,6 +131,7 @@ class WifiStaIface : public BnWifiStaIface {
     std::pair<std::array<uint8_t, 6>, ndk::ScopedAStatus> getFactoryMacAddressInternal();
     ndk::ScopedAStatus setScanModeInternal(bool enable);
     ndk::ScopedAStatus setDtimMultiplierInternal(const int multiplier);
+    std::pair<CachedScanData, ndk::ScopedAStatus> getCachedScanDataInternal();
 
     void setWeakPtr(std::weak_ptr<WifiStaIface> ptr);
 

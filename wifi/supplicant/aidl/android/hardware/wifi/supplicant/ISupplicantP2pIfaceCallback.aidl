@@ -16,6 +16,7 @@
 
 package android.hardware.wifi.supplicant;
 
+import android.hardware.wifi.supplicant.P2pDeviceFoundEventParams;
 import android.hardware.wifi.supplicant.P2pGroupCapabilityMask;
 import android.hardware.wifi.supplicant.P2pGroupStartedEventParams;
 import android.hardware.wifi.supplicant.P2pPeerClientDisconnectedEventParams;
@@ -38,6 +39,9 @@ import android.hardware.wifi.supplicant.WpsDevPasswordId;
 oneway interface ISupplicantP2pIfaceCallback {
     /**
      * Used to indicate that a P2P device has been found.
+     * <p>
+     * @deprecated This callback is deprecated from AIDL v2, newer HAL should call
+     * onDeviceFoundWithParams.
      *
      * @param srcAddress MAC address of the device found. This must either
      *        be the P2P device address or the P2P interface address.
@@ -228,6 +232,9 @@ oneway interface ISupplicantP2pIfaceCallback {
 
     /**
      * Used to indicate that a P2P device has been found.
+     * <p>
+     * @deprecated This callback is deprecated from AIDL v3, newer HAL should call
+     * onDeviceFoundWithParams.
      *
      * @param srcAddress MAC address of the device found. This must either
      *        be the P2P device address for a peer which is not in a group,
@@ -288,4 +295,11 @@ oneway interface ISupplicantP2pIfaceCallback {
      */
     void onProvisionDiscoveryCompletedEvent(
             in P2pProvisionDiscoveryCompletedEventParams provisionDiscoveryCompletedEventParams);
+
+    /**
+     * Used to indicate that a P2P device has been found.
+     *
+     * @param deviceFoundEventParams Parameters associated with the device found event.
+     */
+    void onDeviceFoundWithParams(in P2pDeviceFoundEventParams deviceFoundEventParams);
 }

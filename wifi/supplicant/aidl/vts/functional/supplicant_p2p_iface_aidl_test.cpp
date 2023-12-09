@@ -35,6 +35,7 @@ using aidl::android::hardware::wifi::supplicant::IfaceType;
 using aidl::android::hardware::wifi::supplicant::ISupplicant;
 using aidl::android::hardware::wifi::supplicant::ISupplicantP2pIface;
 using aidl::android::hardware::wifi::supplicant::MiracastMode;
+using aidl::android::hardware::wifi::supplicant::P2pDeviceFoundEventParams;
 using aidl::android::hardware::wifi::supplicant::P2pFrameTypeMask;
 using aidl::android::hardware::wifi::supplicant::P2pGroupCapabilityMask;
 using aidl::android::hardware::wifi::supplicant::P2pGroupStartedEventParams;
@@ -197,6 +198,10 @@ class SupplicantP2pIfaceCallback : public BnSupplicantP2pIfaceCallback {
     ::ndk::ScopedAStatus onProvisionDiscoveryCompletedEvent(
             const P2pProvisionDiscoveryCompletedEventParams&
             /* provisionDiscoveryCompletedEventParams */) override {
+        return ndk::ScopedAStatus::ok();
+    }
+    ::ndk::ScopedAStatus onDeviceFoundWithParams(
+            const P2pDeviceFoundEventParams& /* deviceFoundEventParams */) override {
         return ndk::ScopedAStatus::ok();
     }
 };

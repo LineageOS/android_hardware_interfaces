@@ -134,7 +134,7 @@
     </hal>
     <hal format="aidl" optional="true" updatable-via-apex="true">
         <name>android.hardware.biometrics.fingerprint</name>
-        <version>3</version>
+        <version>3-4</version>
         <interface>
             <name>IFingerprint</name>
             <instance>default</instance>
@@ -577,7 +577,7 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.thermal</name>
-        <version>1</version>
+        <version>2</version>
         <interface>
             <name>IThermal</name>
             <instance>default</instance>

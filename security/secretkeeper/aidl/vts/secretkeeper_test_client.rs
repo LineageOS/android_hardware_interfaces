@@ -16,6 +16,7 @@
 
 #[cfg(test)]
 use binder::StatusCode;
+use coset::CborSerializable;
 use log::warn;
 use secretkeeper_comm::data_types::error::SecretkeeperError;
 use secretkeeper_comm::data_types::request::Request;
@@ -110,7 +111,7 @@ fn secret_management_get_version() {
     };
     let request = GetVersionRequest {};
     let request_packet = request.serialize_to_packet();
-    let request_bytes = request_packet.into_bytes().unwrap();
+    let request_bytes = request_packet.to_vec().unwrap();
 
     // TODO(b/291224769) The request will need to be encrypted & response need to be decrypted
     // with key & related artifacts pre-shared via Authgraph Key Exchange HAL.
@@ -119,14 +120,14 @@ fn secret_management_get_version() {
         .processSecretManagementRequest(&request_bytes)
         .unwrap();
 
-    let response_packet = ResponsePacket::from_bytes(&response_bytes).unwrap();
+    let response_packet = ResponsePacket::from_slice(&response_bytes).unwrap();
     assert_eq!(
         response_packet.response_type().unwrap(),
         ResponseType::Success
     );
     let get_version_response =
         *GetVersionResponse::deserialize_from_packet(response_packet).unwrap();
-    assert_eq!(get_version_response.version(), CURRENT_VERSION);
+    assert_eq!(get_version_response.version, CURRENT_VERSION);
 }
 
 #[test]
@@ -140,7 +141,7 @@ fn secret_management_malformed_request() {
     };
     let request = GetVersionRequest {};
     let request_packet = request.serialize_to_packet();
-    let mut request_bytes = request_packet.into_bytes().unwrap();
+    let mut request_bytes = request_packet.to_vec().unwrap();
 
     // Deform the request
     request_bytes[0] = !request_bytes[0];
@@ -152,7 +153,7 @@ fn secret_management_malformed_request() {
         .processSecretManagementRequest(&request_bytes)
         .unwrap();
 
-    let response_packet = ResponsePacket::from_bytes(&response_bytes).unwrap();
+    let response_packet = ResponsePacket::from_slice(&response_bytes).unwrap();
     assert_eq!(
         response_packet.response_type().unwrap(),
         ResponseType::Error

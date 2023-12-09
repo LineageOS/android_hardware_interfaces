@@ -59,6 +59,8 @@ IWifiChip::FeatureSetMask convertLegacyChipFeatureToAidl(uint64_t feature) {
             return IWifiChip::FeatureSetMask::P2P_RAND_MAC;
         case WIFI_FEATURE_AFC_CHANNEL:
             return IWifiChip::FeatureSetMask::SET_AFC_CHANNEL_ALLOWANCE;
+        case WIFI_FEATURE_SET_VOIP_MODE:
+            return IWifiChip::FeatureSetMask::SET_VOIP_MODE;
     };
     CHECK(false) << "Unknown legacy feature: " << feature;
     return {};
@@ -92,6 +94,8 @@ IWifiStaIface::FeatureSetMask convertLegacyStaIfaceFeatureToAidl(uint64_t featur
             return IWifiStaIface::FeatureSetMask::ND_OFFLOAD;
         case WIFI_FEATURE_MKEEP_ALIVE:
             return IWifiStaIface::FeatureSetMask::KEEP_ALIVE;
+        case WIFI_FEATURE_ROAMING_MODE_CONTROL:
+            return IWifiStaIface::FeatureSetMask::ROAMING_MODE_CONTROL;
     };
     CHECK(false) << "Unknown legacy feature: " << feature;
     return {};
@@ -109,7 +113,8 @@ bool convertLegacyChipFeaturesToAidl(uint64_t legacy_feature_set, uint32_t* aidl
                                       WIFI_FEATURE_INFRA_60G,
                                       WIFI_FEATURE_SET_LATENCY_MODE,
                                       WIFI_FEATURE_P2P_RAND_MAC,
-                                      WIFI_FEATURE_AFC_CHANNEL};
+                                      WIFI_FEATURE_AFC_CHANNEL,
+                                      WIFI_FEATURE_SET_VOIP_MODE};
     for (const auto feature : features) {
         if (feature & legacy_feature_set) {
             *aidl_feature_set |= static_cast<uint32_t>(convertLegacyChipFeatureToAidl(feature));
@@ -457,7 +462,8 @@ bool convertLegacyStaIfaceFeaturesToAidl(uint64_t legacy_feature_set, uint32_t* 
          {WIFI_FEATURE_GSCAN, WIFI_FEATURE_LINK_LAYER_STATS, WIFI_FEATURE_RSSI_MONITOR,
           WIFI_FEATURE_CONTROL_ROAMING, WIFI_FEATURE_IE_WHITELIST, WIFI_FEATURE_SCAN_RAND,
           WIFI_FEATURE_INFRA_5G, WIFI_FEATURE_HOTSPOT, WIFI_FEATURE_PNO, WIFI_FEATURE_TDLS,
-          WIFI_FEATURE_TDLS_OFFCHANNEL, WIFI_FEATURE_CONFIG_NDO, WIFI_FEATURE_MKEEP_ALIVE}) {
+          WIFI_FEATURE_TDLS_OFFCHANNEL, WIFI_FEATURE_CONFIG_NDO, WIFI_FEATURE_MKEEP_ALIVE,
+          WIFI_FEATURE_ROAMING_MODE_CONTROL}) {
         if (feature & legacy_feature_set) {
             *aidl_feature_set |= static_cast<uint32_t>(convertLegacyStaIfaceFeatureToAidl(feature));
         }
@@ -3202,6 +3208,8 @@ bool convertAidlNanBootstrappingInitiatorRequestToLegacy(
     legacy_request->cookie_length = aidl_request.cookie.size();
 
     memcpy(legacy_request->cookie, aidl_request.cookie.data(), legacy_request->cookie_length);
+    legacy_request->publish_subscribe_id = static_cast<uint8_t>(aidl_request.discoverySessionId);
+    legacy_request->comeback = aidl_request.isComeback ? 0x1 : 0x0;
 
     return true;
 }
@@ -3219,6 +3227,7 @@ bool convertAidlNanBootstrappingIndicationResponseToLegacy(
     legacy_request->service_instance_id = aidl_request.bootstrappingInstanceId;
     legacy_request->rsp_code = aidl_request.acceptRequest ? NAN_BOOTSTRAPPING_REQUEST_ACCEPT
                                                           : NAN_BOOTSTRAPPING_REQUEST_REJECT;
+    legacy_request->publish_subscribe_id = static_cast<uint8_t>(aidl_request.discoverySessionId);
 
     return true;
 }
@@ -3384,6 +3393,69 @@ bool convertLegacyIfaceCombinationsMatrixToChipMode(
 
     chip_mode->availableCombinations = driver_Combinations_vec;
     return true;
+}
+
+bool convertCachedScanReportToAidl(const legacy_hal::WifiCachedScanReport& report,
+                                   CachedScanData* aidl_scan_data) {
+    if (!aidl_scan_data) {
+        return false;
+    }
+    *aidl_scan_data = {};
+
+    std::vector<CachedScanResult> aidl_scan_results;
+    for (const auto& result : report.results) {
+        CachedScanResult aidl_scan_result;
+        if (!convertCachedScanResultToAidl(result, report.ts, &aidl_scan_result)) {
+            return false;
+        }
+        aidl_scan_results.push_back(aidl_scan_result);
+    }
+    aidl_scan_data->cachedScanResults = aidl_scan_results;
+
+    aidl_scan_data->scannedFrequenciesMhz = report.scanned_freqs;
+    return true;
+}
+
+bool convertCachedScanResultToAidl(const legacy_hal::wifi_cached_scan_result& legacy_scan_result,
+                                   uint64_t ts_us, CachedScanResult* aidl_scan_result) {
+    if (!aidl_scan_result) {
+        return false;
+    }
+    *aidl_scan_result = {};
+    aidl_scan_result->timeStampInUs = ts_us - legacy_scan_result.age_ms * 1000;
+    if (aidl_scan_result->timeStampInUs < 0) {
+        aidl_scan_result->timeStampInUs = 0;
+        return false;
+    }
+    size_t max_len_excluding_null = sizeof(legacy_scan_result.ssid) - 1;
+    size_t ssid_len = strnlen((const char*)legacy_scan_result.ssid, max_len_excluding_null);
+    aidl_scan_result->ssid =
+            std::vector<uint8_t>(legacy_scan_result.ssid, legacy_scan_result.ssid + ssid_len);
+    aidl_scan_result->bssid = std::array<uint8_t, 6>();
+    std::copy(legacy_scan_result.bssid, legacy_scan_result.bssid + 6,
+              std::begin(aidl_scan_result->bssid));
+    aidl_scan_result->frequencyMhz = legacy_scan_result.chanspec.primary_frequency;
+    aidl_scan_result->channelWidthMhz =
+            convertLegacyWifiChannelWidthToAidl(legacy_scan_result.chanspec.width);
+    aidl_scan_result->rssiDbm = legacy_scan_result.rssi;
+    aidl_scan_result->preambleType = convertScanResultFlagsToPreambleType(legacy_scan_result.flags);
+    return true;
+}
+
+WifiRatePreamble convertScanResultFlagsToPreambleType(int flags) {
+    if ((flags & WIFI_CACHED_SCAN_RESULT_FLAGS_EHT_OPS_PRESENT) > 0) {
+        return WifiRatePreamble::EHT;
+    }
+    if ((flags & WIFI_CACHED_SCAN_RESULT_FLAGS_HE_OPS_PRESENT) > 0) {
+        return WifiRatePreamble::HE;
+    }
+    if ((flags & WIFI_CACHED_SCAN_RESULT_FLAGS_VHT_OPS_PRESENT) > 0) {
+        return WifiRatePreamble::VHT;
+    }
+    if ((flags & WIFI_CACHED_SCAN_RESULT_FLAGS_HT_OPS_PRESENT) > 0) {
+        return WifiRatePreamble::HT;
+    }
+    return WifiRatePreamble::OFDM;
 }
 
 }  // namespace aidl_struct_util

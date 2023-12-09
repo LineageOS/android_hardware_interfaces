@@ -439,6 +439,7 @@ void onAsyncChreNanRttState(chre_nan_rtt_state state) {
 // Callback to report cached scan results
 std::function<void(wifi_cached_scan_report*)> on_cached_scan_results_internal_callback;
 void onSyncCachedScanResults(wifi_cached_scan_report* cache_report) {
+    const auto lock = aidl_sync_util::acquireGlobalLock();
     if (on_cached_scan_results_internal_callback) {
         on_cached_scan_results_internal_callback(cache_report);
     }
@@ -1858,13 +1859,16 @@ wifi_error WifiLegacyHal::enableWifiTxPowerLimits(const std::string& iface_name,
     return global_func_table_.wifi_enable_tx_power_limits(getIfaceHandle(iface_name), enable);
 }
 
-wifi_error WifiLegacyHal::getWifiCachedScanResults(
-        const std::string& iface_name, const CachedScanResultsCallbackHandlers& handler) {
-    on_cached_scan_results_internal_callback = handler.on_cached_scan_results;
-
+wifi_error WifiLegacyHal::getWifiCachedScanResults(const std::string& iface_name,
+                                                   WifiCachedScanReport& report) {
+    on_cached_scan_results_internal_callback = [&report](wifi_cached_scan_report* report_ptr) {
+        report.results.assign(report_ptr->results, report_ptr->results + report_ptr->result_cnt);
+        report.scanned_freqs.assign(report_ptr->scanned_freq_list,
+                                    report_ptr->scanned_freq_list + report_ptr->scanned_freq_num);
+        report.ts = report_ptr->ts;
+    };
     wifi_error status = global_func_table_.wifi_get_cached_scan_results(getIfaceHandle(iface_name),
                                                                         {onSyncCachedScanResults});
-
     on_cached_scan_results_internal_callback = nullptr;
     return status;
 }
@@ -1934,6 +1938,7 @@ void WifiLegacyHal::invalidate() {
     on_twt_event_info_frame_received_callback = nullptr;
     on_twt_event_device_notify_callback = nullptr;
     on_chre_nan_rtt_internal_callback = nullptr;
+    on_cached_scan_results_internal_callback = nullptr;
 }
 
 }  // namespace legacy_hal

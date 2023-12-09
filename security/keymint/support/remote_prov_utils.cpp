@@ -337,9 +337,9 @@ ErrMsgOr<std::vector<BccEntryData>> validateBcc(const cppbor::Array* bcc,
     return result;
 }
 
-JsonOutput jsonEncodeCsrWithBuild(const std::string instance_name, const cppbor::Array& csr) {
+JsonOutput jsonEncodeCsrWithBuild(const std::string instance_name, const cppbor::Array& csr,
+                                  const std::string serialno_prop) {
     const std::string kFingerprintProp = "ro.build.fingerprint";
-    const std::string kSerialNoProp = "ro.serialno";
 
     if (!::android::base::WaitForPropertyCreation(kFingerprintProp)) {
         return JsonOutput::Error("Unable to read build fingerprint");
@@ -364,7 +364,7 @@ JsonOutput jsonEncodeCsrWithBuild(const std::string instance_name, const cppbor:
     Json::Value json(Json::objectValue);
     json["name"] = instance_name;
     json["build_fingerprint"] = ::android::base::GetProperty(kFingerprintProp, /*default=*/"");
-    json["serialno"] = ::android::base::GetProperty(kSerialNoProp, /*default=*/"");
+    json["serialno"] = ::android::base::GetProperty(serialno_prop, /*default=*/"");
     json["csr"] = base64.data();  // Boring writes a NUL-terminated c-string
 
     Json::StreamWriterBuilder factory;
@@ -978,7 +978,7 @@ ErrMsgOr<hwtrust::DiceChain::Kind> getDiceChainKind() {
             return hwtrust::DiceChain::Kind::kVsr13;
         case __ANDROID_API_U__:
             return hwtrust::DiceChain::Kind::kVsr14;
-        case __ANDROID_API_V__:
+        case 202404: /* TODO(b/315056516) Use a version macro for vendor API 24Q2 */
             return hwtrust::DiceChain::Kind::kVsr15;
         default:
             return "Unsupported vendor API level: " + std::to_string(vendor_api_level);

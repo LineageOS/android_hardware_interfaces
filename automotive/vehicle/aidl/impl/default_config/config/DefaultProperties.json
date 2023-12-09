@@ -3587,6 +3587,24 @@
             }
         },
         {
+            "property": "VehicleProperty::DRIVER_DROWSINESS_ATTENTION_WARNING",
+            "defaultValue": {
+                "int32Values": [
+                    "DriverDrowsinessAttentionWarning::NO_WARNING"
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": 0,
+                    "supportedEnumValues": [
+                        "ErrorState::NOT_AVAILABLE_DISABLED",
+                        "DriverDrowsinessAttentionWarning::NO_WARNING",
+                        "DriverDrowsinessAttentionWarning::WARNING"
+                    ]
+                }
+            ]
+        },
+        {
             "property": "VehicleProperty::INITIAL_USER_INFO"
         },
         {
