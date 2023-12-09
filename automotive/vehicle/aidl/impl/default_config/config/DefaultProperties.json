@@ -3605,6 +3605,14 @@
             ]
         },
         {
+            "property": "VehicleProperty::DRIVER_DISTRACTION_SYSTEM_ENABLED",
+            "defaultValue": {
+                "int32Values": [
+                    1
+                ]
+            }
+        },
+        {
             "property": "VehicleProperty::INITIAL_USER_INFO"
         },
         {
