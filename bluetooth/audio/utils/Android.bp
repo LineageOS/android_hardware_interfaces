@@ -36,6 +36,7 @@ cc_library_shared {
 cc_library_shared {
     name: "libbluetooth_audio_session_aidl",
     vendor: true,
+    host_supported: true,
     srcs: [
         "aidl_session/BluetoothAudioCodecs.cpp",
         "aidl_session/BluetoothAudioSession.cpp",

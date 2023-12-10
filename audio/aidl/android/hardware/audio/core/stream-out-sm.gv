@@ -14,8 +14,8 @@
 
 // To render: dot -Tpng stream-out-sm.gv -o stream-out-sm.png
 digraph stream_out_state_machine {
-    node [shape=doublecircle style=filled fillcolor=black width=0.5] I;
-    node [shape=point width=0.5] F;
+    node [shape=point style=filled fillcolor=black width=0.5] I;
+    node [shape=doublecircle width=0.5] F;
     node [shape=oval width=1];
     node [fillcolor=lightgreen] STANDBY;  // buffer is empty
     node [fillcolor=lightgreen] IDLE;     // buffer is empty

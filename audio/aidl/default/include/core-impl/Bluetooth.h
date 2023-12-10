@@ -22,6 +22,15 @@
 
 namespace aidl::android::hardware::audio::core {
 
+class ParamChangeHandler {
+  public:
+    ParamChangeHandler() = default;
+    void registerHandler(std::function<ndk::ScopedAStatus()> handler) { mHandler = handler; }
+
+  protected:
+    std::function<ndk::ScopedAStatus()> mHandler = nullptr;
+};
+
 class Bluetooth : public BnBluetooth {
   public:
     Bluetooth();
@@ -34,7 +43,7 @@ class Bluetooth : public BnBluetooth {
     HfpConfig mHfpConfig;
 };
 
-class BluetoothA2dp : public BnBluetoothA2dp {
+class BluetoothA2dp : public BnBluetoothA2dp, public ParamChangeHandler {
   public:
     BluetoothA2dp() = default;
 
@@ -49,7 +58,7 @@ class BluetoothA2dp : public BnBluetoothA2dp {
     bool mEnabled = false;
 };
 
-class BluetoothLe : public BnBluetoothLe {
+class BluetoothLe : public BnBluetoothLe, public ParamChangeHandler {
   public:
     BluetoothLe() = default;
 

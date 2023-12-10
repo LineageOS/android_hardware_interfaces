@@ -106,6 +106,9 @@ void ThreadController::workerThread() {
         std::lock_guard<std::mutex> lock(mWorkerLock);
         mWorkerState = error.empty() ? WorkerState::RUNNING : WorkerState::STOPPED;
         mError = error;
+#if defined(__ANDROID__)
+        mTid = pthread_gettid_np(pthread_self());
+#endif
     }
     mWorkerCv.notify_one();
     if (!error.empty()) return;

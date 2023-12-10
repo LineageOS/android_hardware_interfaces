@@ -76,7 +76,7 @@ ndk::ScopedAStatus EffectImpl::close() {
 }
 
 ndk::ScopedAStatus EffectImpl::setParameter(const Parameter& param) {
-    LOG(DEBUG) << getEffectName() << __func__ << " with: " << param.toString();
+    LOG(VERBOSE) << getEffectName() << __func__ << " with: " << param.toString();
 
     const auto tag = param.getTag();
     switch (tag) {
@@ -100,7 +100,6 @@ ndk::ScopedAStatus EffectImpl::setParameter(const Parameter& param) {
 }
 
 ndk::ScopedAStatus EffectImpl::getParameter(const Parameter::Id& id, Parameter* param) {
-    LOG(DEBUG) << getEffectName() << __func__ << id.toString();
     auto tag = id.getTag();
     switch (tag) {
         case Parameter::Id::commonTag: {
@@ -117,7 +116,7 @@ ndk::ScopedAStatus EffectImpl::getParameter(const Parameter::Id& id, Parameter* 
             break;
         }
     }
-    LOG(DEBUG) << getEffectName() << __func__ << param->toString();
+    LOG(VERBOSE) << getEffectName() << __func__ << id.toString() << param->toString();
     return ndk::ScopedAStatus::ok();
 }
 
@@ -254,7 +253,7 @@ IEffect::Status EffectImpl::effectProcessImpl(float* in, float* out, int samples
     for (int i = 0; i < samples; i++) {
         *out++ = *in++;
     }
-    LOG(DEBUG) << getEffectName() << __func__ << " done processing " << samples << " samples";
+    LOG(VERBOSE) << getEffectName() << __func__ << " done processing " << samples << " samples";
     return {STATUS_OK, samples, samples};
 }
 

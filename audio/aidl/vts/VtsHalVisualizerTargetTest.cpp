@@ -195,9 +195,7 @@ INSTANTIATE_TEST_SUITE_P(
                     std::get<PARAM_MEASUREMENT_MODE>(info.param));
             std::string latency = std::to_string(std::get<PARAM_LATENCY>(info.param));
 
-            std::string name = "Implementor_" + descriptor.common.implementor + "_name_" +
-                               descriptor.common.name + "_UUID_" +
-                               descriptor.common.id.uuid.toString() + "_captureSize" + captureSize +
+            std::string name = getPrefix(descriptor) + "_captureSize" + captureSize +
                                "_scalingMode" + scalingMode + "_measurementMode" + measurementMode +
                                "_latency" + latency;
             std::replace_if(

@@ -41,10 +41,9 @@ using ::android::hardware::wifi::V1_0::IWifiChip;
 using ::android::wifi_system::HostapdManager;
 using ::android::wifi_system::SupplicantManager;
 
-namespace {
 // Helper function to initialize the driver and firmware to AP mode
 // using the vendor HAL HIDL interface.
-void initilializeDriverAndFirmware(const std::string& wifi_instance_name) {
+void initializeDriverAndFirmware(const std::string& wifi_instance_name) {
     if (getWifi(wifi_instance_name) != nullptr) {
         sp<IWifiChip> wifi_chip = getWifiChip(wifi_instance_name);
         ChipModeId mode_id;
@@ -57,21 +56,20 @@ void initilializeDriverAndFirmware(const std::string& wifi_instance_name) {
 
 // Helper function to deinitialize the driver and firmware
 // using the vendor HAL HIDL interface.
-void deInitilializeDriverAndFirmware(const std::string& wifi_instance_name) {
+void deInitializeDriverAndFirmware(const std::string& wifi_instance_name) {
     if (getWifi(wifi_instance_name) != nullptr) {
         stopWifi(wifi_instance_name);
     } else {
         LOG(WARNING) << __func__ << ": Vendor HAL not supported";
     }
 }
-}  // namespace
 
 void stopSupplicantIfNeeded(const std::string& instance_name) {
     SupplicantManager supplicant_manager;
     if (supplicant_manager.IsSupplicantRunning()) {
         LOG(INFO) << "Supplicant is running, stop supplicant first.";
         ASSERT_TRUE(supplicant_manager.StopSupplicant());
-        deInitilializeDriverAndFirmware(instance_name);
+        deInitializeDriverAndFirmware(instance_name);
         ASSERT_FALSE(supplicant_manager.IsSupplicantRunning());
     }
 }
@@ -80,13 +78,13 @@ void stopHostapd(const std::string& instance_name) {
     HostapdManager hostapd_manager;
 
     ASSERT_TRUE(hostapd_manager.StopHostapd());
-    deInitilializeDriverAndFirmware(instance_name);
+    deInitializeDriverAndFirmware(instance_name);
 }
 
 void startHostapdAndWaitForHidlService(
     const std::string& wifi_instance_name,
     const std::string& hostapd_instance_name) {
-    initilializeDriverAndFirmware(wifi_instance_name);
+    initializeDriverAndFirmware(wifi_instance_name);
 
     HostapdManager hostapd_manager;
     ASSERT_TRUE(hostapd_manager.StartHostapd());
@@ -99,4 +97,25 @@ bool is_1_1(const sp<IHostapd>& hostapd) {
     sp<::android::hardware::wifi::hostapd::V1_1::IHostapd> hostapd_1_1 =
         ::android::hardware::wifi::hostapd::V1_1::IHostapd::castFrom(hostapd);
     return hostapd_1_1.get() != nullptr;
+}
+
+void toggleWifiFramework(bool enable) {
+    std::string cmd = "/system/bin/cmd wifi set-wifi-enabled ";
+    cmd += enable ? "enabled" : "disabled";
+    testing::checkSubstringInCommandOutput(cmd.c_str(), "X");
+}
+
+void toggleWifiScanAlwaysAvailable(bool enable) {
+    std::string cmd = "/system/bin/cmd wifi set-scan-always-available ";
+    cmd += enable ? "enabled" : "disabled";
+    testing::checkSubstringInCommandOutput(cmd.c_str(), "X");
+}
+
+bool isWifiFrameworkEnabled() {
+    return testing::checkSubstringInCommandOutput("/system/bin/cmd wifi status", "Wifi is enabled");
+}
+
+bool isWifiScanAlwaysAvailable() {
+    return testing::checkSubstringInCommandOutput("/system/bin/cmd wifi status",
+                                                  "Wifi scanning is always available");
 }

@@ -195,12 +195,10 @@ INSTANTIATE_TEST_SUITE_P(
                     std::to_string(std::get<PARAM_VIBRATION_INFORMATION_Q_FACTOR>(info.param));
             std::string maxAmplitude =
                     std::to_string(std::get<PARAM_VIBRATION_INFORMATION_MAX_AMPLITUDE>(info.param));
-            std::string name = "Implementor_" + descriptor.common.implementor + "_name_" +
-                               descriptor.common.name + "_UUID_" +
-                               descriptor.common.id.uuid.toString() + "_hapticScaleId" +
-                               hapticScaleID + "_hapticScaleVibScale" + hapticScaleVibScale +
-                               "_resonantFrequency" + resonantFrequency + "_qFactor" + qFactor +
-                               "_maxAmplitude" + maxAmplitude;
+            std::string name = getPrefix(descriptor) + "_hapticScaleId" + hapticScaleID +
+                               "_hapticScaleVibScale" + hapticScaleVibScale + "_resonantFrequency" +
+                               resonantFrequency + "_qFactor" + qFactor + "_maxAmplitude" +
+                               maxAmplitude;
             std::replace_if(
                     name.begin(), name.end(), [](const char c) { return !std::isalnum(c); }, '_');
             return name;
@@ -210,7 +208,7 @@ INSTANTIATE_TEST_SUITE_P(
         HapticGeneratorInvalidTest, HapticGeneratorParamTest,
         ::testing::Combine(testing::ValuesIn(EffectFactoryHelper::getAllEffectDescriptors(
                                    IFactory::descriptor, getEffectTypeUuidHapticGenerator())),
-                           testing::Values(MIN_ID - 1),
+                           testing::Values(MIN_ID),
                            testing::Values(HapticGenerator::VibratorScale::NONE),
                            testing::Values(MIN_FLOAT), testing::Values(MIN_FLOAT),
                            testing::Values(MIN_FLOAT)),

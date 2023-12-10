@@ -36,6 +36,11 @@
 #include "EffectFactoryHelper.h"
 #include "TestUtils.h"
 
+#include <system/audio_aidl_utils.h>
+
+using namespace android;
+using ::android::audio::utils::toString;
+
 using namespace android;
 
 using aidl::android::hardware::audio::effect::Descriptor;
@@ -93,7 +98,7 @@ class EffectFactoryTest : public testing::TestWithParam<std::string> {
             std::shared_ptr<IEffect> effect;
             EXPECT_STATUS(expectStatus, mEffectFactory->createEffect(uuid, &effect));
             if (expectStatus == EX_NONE) {
-                EXPECT_NE(effect, nullptr) << " null effect with uuid: " << uuid.toString();
+                EXPECT_NE(effect, nullptr) << " null effect with uuid: " << toString(uuid);
                 effects.push_back(std::move(effect));
             }
         }
@@ -129,17 +134,18 @@ TEST_P(EffectFactoryTest, CanBeRestarted) {
 /**
  * @brief Check at least support list of effect must be supported by aosp:
  * https://developer.android.com/reference/android/media/audiofx/AudioEffect
+ *
+ * For Android 13, they are: Equalizer, LoudnessEnhancer, Visualizer, and DynamicsProcessing.
+ * https://source.android.com/docs/compatibility/13/android-13-cdd#552_audio_effects
  */
-TEST_P(EffectFactoryTest, ExpectAllAospEffectTypes) {
+TEST_P(EffectFactoryTest, SupportMandatoryEffectTypes) {
     std::vector<Descriptor> descs;
-    std::set<AudioUuid> typeUuidSet(
-            {aidl::android::hardware::audio::effect::getEffectTypeUuidBassBoost(),
-             aidl::android::hardware::audio::effect::getEffectTypeUuidEqualizer(),
-             aidl::android::hardware::audio::effect::getEffectTypeUuidEnvReverb(),
-             aidl::android::hardware::audio::effect::getEffectTypeUuidPresetReverb(),
-             aidl::android::hardware::audio::effect::getEffectTypeUuidDynamicsProcessing(),
-             aidl::android::hardware::audio::effect::getEffectTypeUuidHapticGenerator(),
-             aidl::android::hardware::audio::effect::getEffectTypeUuidVirtualizer()});
+    std::set<AudioUuid> typeUuidSet({
+            aidl::android::hardware::audio::effect::getEffectTypeUuidEqualizer(),
+            aidl::android::hardware::audio::effect::getEffectTypeUuidDynamicsProcessing(),
+            aidl::android::hardware::audio::effect::getEffectTypeUuidLoudnessEnhancer(),
+            aidl::android::hardware::audio::effect::getEffectTypeUuidVisualizer(),
+    });
 
     EXPECT_IS_OK(mEffectFactory->queryEffects(std::nullopt, std::nullopt, std::nullopt, &descs));
     EXPECT_TRUE(descs.size() >= typeUuidSet.size());
@@ -148,7 +154,7 @@ TEST_P(EffectFactoryTest, ExpectAllAospEffectTypes) {
     }
     std::string msg = " missing type UUID:\n";
     for (const auto& uuid : typeUuidSet) {
-        msg += (uuid.toString() + "\n");
+        msg += (toString(uuid) + "\n");
     }
     SCOPED_TRACE(msg);
     EXPECT_EQ(0UL, typeUuidSet.size());

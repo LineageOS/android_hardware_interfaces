@@ -27,30 +27,41 @@ using aidl::android::media::audio::common::AudioHalEngineConfig;
 
 namespace aidl::android::hardware::audio::core {
 ndk::ScopedAStatus Config::getSurroundSoundConfig(SurroundSoundConfig* _aidl_return) {
-    SurroundSoundConfig surroundSoundConfig;
-    // TODO: parse from XML; for now, use empty config as default
-    *_aidl_return = std::move(surroundSoundConfig);
+    static const auto& func = __func__;
+    static const SurroundSoundConfig surroundSoundConfig = [this]() {
+        SurroundSoundConfig surroundCfg = mAudioPolicyConverter.getSurroundSoundConfig();
+        if (mAudioPolicyConverter.getStatus() != ::android::OK) {
+            LOG(WARNING) << func << ": " << mAudioPolicyConverter.getError();
+        }
+        return surroundCfg;
+    }();
+    *_aidl_return = surroundSoundConfig;
     LOG(DEBUG) << __func__ << ": returning " << _aidl_return->toString();
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus Config::getEngineConfig(AudioHalEngineConfig* _aidl_return) {
+    static const auto& func = __func__;
     static const AudioHalEngineConfig returnEngCfg = [this]() {
         AudioHalEngineConfig engConfig;
         if (mEngConfigConverter.getStatus() == ::android::OK) {
             engConfig = mEngConfigConverter.getAidlEngineConfig();
         } else {
-            LOG(INFO) << __func__ << mEngConfigConverter.getError();
+            LOG(INFO) << func << ": " << mEngConfigConverter.getError();
             if (mAudioPolicyConverter.getStatus() == ::android::OK) {
                 engConfig = mAudioPolicyConverter.getAidlEngineConfig();
             } else {
-                LOG(WARNING) << __func__ << mAudioPolicyConverter.getError();
+                LOG(WARNING) << func << ": " << mAudioPolicyConverter.getError();
             }
         }
+        // Logging full contents of the config is an overkill, just provide statistics.
+        LOG(DEBUG) << func
+                   << ": number of strategies parsed: " << engConfig.productStrategies.size()
+                   << ", default strategy: " << engConfig.defaultProductStrategyId
+                   << ", number of volume groups parsed: " << engConfig.volumeGroups.size();
         return engConfig;
     }();
     *_aidl_return = returnEngCfg;
-    LOG(DEBUG) << __func__ << ": returning " << _aidl_return->toString();
     return ndk::ScopedAStatus::ok();
 }
 }  // namespace aidl::android::hardware::audio::core

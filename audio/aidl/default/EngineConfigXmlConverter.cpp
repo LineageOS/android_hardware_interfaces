@@ -140,7 +140,7 @@ AudioHalAttributesGroup EngineConfigXmlConverter::convertAttributesGroupToAidl(
     aidlAttributesGroup.volumeGroupName = xsdcAttributesGroup.getVolumeGroup();
     if (xsdcAttributesGroup.hasAttributes_optional()) {
         aidlAttributesGroup.attributes =
-                convertCollectionToAidl<xsd::AttributesType, AudioAttributes>(
+                convertCollectionToAidlUnchecked<xsd::AttributesType, AudioAttributes>(
                         xsdcAttributesGroup.getAttributes_optional(),
                         std::bind(&EngineConfigXmlConverter::convertAudioAttributesToAidl, this,
                                   std::placeholders::_1));
@@ -172,7 +172,7 @@ AudioHalProductStrategy EngineConfigXmlConverter::convertProductStrategyToAidl(
 
     if (xsdcProductStrategy.hasAttributesGroup()) {
         aidlProductStrategy.attributesGroups =
-                convertCollectionToAidl<xsd::AttributesGroup, AudioHalAttributesGroup>(
+                convertCollectionToAidlUnchecked<xsd::AttributesGroup, AudioHalAttributesGroup>(
                         xsdcProductStrategy.getAttributesGroup(),
                         std::bind(&EngineConfigXmlConverter::convertAttributesGroupToAidl, this,
                                   std::placeholders::_1));
@@ -204,13 +204,13 @@ AudioHalVolumeCurve EngineConfigXmlConverter::convertVolumeCurveToAidl(
                     getXsdcConfig()->getVolumes());
         }
         aidlVolumeCurve.curvePoints =
-                convertCollectionToAidl<std::string, AudioHalVolumeCurve::CurvePoint>(
+                convertCollectionToAidlUnchecked<std::string, AudioHalVolumeCurve::CurvePoint>(
                         mVolumesReferenceMap.at(xsdcVolumeCurve.getRef()).getPoint(),
                         std::bind(&EngineConfigXmlConverter::convertCurvePointToAidl, this,
                                   std::placeholders::_1));
     } else {
         aidlVolumeCurve.curvePoints =
-                convertCollectionToAidl<std::string, AudioHalVolumeCurve::CurvePoint>(
+                convertCollectionToAidlUnchecked<std::string, AudioHalVolumeCurve::CurvePoint>(
                         xsdcVolumeCurve.getPoint(),
                         std::bind(&EngineConfigXmlConverter::convertCurvePointToAidl, this,
                                   std::placeholders::_1));
@@ -224,10 +224,11 @@ AudioHalVolumeGroup EngineConfigXmlConverter::convertVolumeGroupToAidl(
     aidlVolumeGroup.name = xsdcVolumeGroup.getName();
     aidlVolumeGroup.minIndex = xsdcVolumeGroup.getIndexMin();
     aidlVolumeGroup.maxIndex = xsdcVolumeGroup.getIndexMax();
-    aidlVolumeGroup.volumeCurves = convertCollectionToAidl<xsd::Volume, AudioHalVolumeCurve>(
-            xsdcVolumeGroup.getVolume(),
-            std::bind(&EngineConfigXmlConverter::convertVolumeCurveToAidl, this,
-                      std::placeholders::_1));
+    aidlVolumeGroup.volumeCurves =
+            convertCollectionToAidlUnchecked<xsd::Volume, AudioHalVolumeCurve>(
+                    xsdcVolumeGroup.getVolume(),
+                    std::bind(&EngineConfigXmlConverter::convertVolumeCurveToAidl, this,
+                              std::placeholders::_1));
     return aidlVolumeGroup;
 }
 
@@ -251,7 +252,7 @@ AudioHalCapCriterionType EngineConfigXmlConverter::convertCapCriterionTypeToAidl
     aidlCapCriterionType.name = xsdcCriterionType.getName();
     aidlCapCriterionType.isInclusive = !(static_cast<bool>(xsdcCriterionType.getType()));
     aidlCapCriterionType.values =
-            convertWrappedCollectionToAidl<xsd::ValuesType, xsd::ValueType, std::string>(
+            convertWrappedCollectionToAidlUnchecked<xsd::ValuesType, xsd::ValueType, std::string>(
                     xsdcCriterionType.getValues(), &xsd::ValuesType::getValue,
                     std::bind(&EngineConfigXmlConverter::convertCriterionTypeValueToAidl, this,
                               std::placeholders::_1));
@@ -266,9 +267,9 @@ void EngineConfigXmlConverter::init() {
     initProductStrategyMap();
     if (getXsdcConfig()->hasProductStrategies()) {
         mAidlEngineConfig.productStrategies =
-                convertWrappedCollectionToAidl<xsd::ProductStrategies,
-                                               xsd::ProductStrategies::ProductStrategy,
-                                               AudioHalProductStrategy>(
+                convertWrappedCollectionToAidlUnchecked<xsd::ProductStrategies,
+                                                        xsd::ProductStrategies::ProductStrategy,
+                                                        AudioHalProductStrategy>(
                         getXsdcConfig()->getProductStrategies(),
                         &xsd::ProductStrategies::getProductStrategy,
                         std::bind(&EngineConfigXmlConverter::convertProductStrategyToAidl, this,
@@ -278,7 +279,7 @@ void EngineConfigXmlConverter::init() {
         }
     }
     if (getXsdcConfig()->hasVolumeGroups()) {
-        mAidlEngineConfig.volumeGroups = convertWrappedCollectionToAidl<
+        mAidlEngineConfig.volumeGroups = convertWrappedCollectionToAidlUnchecked<
                 xsd::VolumeGroupsType, xsd::VolumeGroupsType::VolumeGroup, AudioHalVolumeGroup>(
                 getXsdcConfig()->getVolumeGroups(), &xsd::VolumeGroupsType::getVolumeGroup,
                 std::bind(&EngineConfigXmlConverter::convertVolumeGroupToAidl, this,
@@ -287,18 +288,16 @@ void EngineConfigXmlConverter::init() {
     if (getXsdcConfig()->hasCriteria() && getXsdcConfig()->hasCriterion_types()) {
         AudioHalEngineConfig::CapSpecificConfig capSpecificConfig;
         capSpecificConfig.criteria =
-                convertWrappedCollectionToAidl<xsd::CriteriaType, xsd::CriterionType,
-                                               AudioHalCapCriterion>(
+                convertWrappedCollectionToAidlUnchecked<xsd::CriteriaType, xsd::CriterionType,
+                                                        AudioHalCapCriterion>(
                         getXsdcConfig()->getCriteria(), &xsd::CriteriaType::getCriterion,
                         std::bind(&EngineConfigXmlConverter::convertCapCriterionToAidl, this,
                                   std::placeholders::_1));
-        capSpecificConfig.criterionTypes =
-                convertWrappedCollectionToAidl<xsd::CriterionTypesType, xsd::CriterionTypeType,
-                                               AudioHalCapCriterionType>(
-                        getXsdcConfig()->getCriterion_types(),
-                        &xsd::CriterionTypesType::getCriterion_type,
-                        std::bind(&EngineConfigXmlConverter::convertCapCriterionTypeToAidl, this,
-                                  std::placeholders::_1));
+        capSpecificConfig.criterionTypes = convertWrappedCollectionToAidlUnchecked<
+                xsd::CriterionTypesType, xsd::CriterionTypeType, AudioHalCapCriterionType>(
+                getXsdcConfig()->getCriterion_types(), &xsd::CriterionTypesType::getCriterion_type,
+                std::bind(&EngineConfigXmlConverter::convertCapCriterionTypeToAidl, this,
+                          std::placeholders::_1));
         mAidlEngineConfig.capSpecificConfig = capSpecificConfig;
     }
 }

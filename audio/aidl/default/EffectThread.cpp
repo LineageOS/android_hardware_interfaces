@@ -48,6 +48,8 @@ RetCode EffectThread::createThread(std::shared_ptr<EffectContext> context, const
     mPriority = priority;
     {
         std::lock_guard lg(mThreadMutex);
+        mStop = true;
+        mExit = false;
         mThreadContext = std::move(context);
         auto statusMQ = mThreadContext->getStatusFmq();
         EventFlag* efGroup = nullptr;
@@ -149,8 +151,8 @@ void EffectThread::process_l() {
         IEffect::Status status = effectProcessImpl(buffer, buffer, processSamples);
         outputMQ->write(buffer, status.fmqProduced);
         statusMQ->writeBlocking(&status, 1);
-        LOG(DEBUG) << mName << __func__ << ": done processing, effect consumed "
-                   << status.fmqConsumed << " produced " << status.fmqProduced;
+        LOG(VERBOSE) << mName << __func__ << ": done processing, effect consumed "
+                     << status.fmqConsumed << " produced " << status.fmqProduced;
     }
 }
 

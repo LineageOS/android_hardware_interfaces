@@ -93,9 +93,13 @@ class TestSessionCallback : public BnSessionCallback {
         return ndk::ScopedAStatus::ok();
     };
     ndk::ScopedAStatus onLockoutTimed(int64_t /* timeout */) override {
+        mLockoutTimed = true;
         return ndk::ScopedAStatus::ok();
     }
-    ndk::ScopedAStatus onLockoutCleared() override { return ndk::ScopedAStatus::ok(); }
+    ndk::ScopedAStatus onLockoutCleared() override {
+        mLockoutCleared = true;
+        return ndk::ScopedAStatus::ok();
+    }
     ndk::ScopedAStatus onSessionClosed() override { return ndk::ScopedAStatus::ok(); }
 
     Error mError = Error::UNKNOWN;
@@ -110,6 +114,8 @@ class TestSessionCallback : public BnSessionCallback {
     bool mAuthenticateFailed = false;
     bool mAuthenticatorIdInvalidated = false;
     bool mLockoutPermanent = false;
+    bool mLockoutTimed = false;
+    bool mLockoutCleared = false;
     int mInteractionDetectedCount = 0;
     int32_t mLastAcquiredInfo = -1;
     int32_t mLastAcquiredVendorCode = -1;
@@ -131,6 +137,8 @@ class FakeFingerprintEngineTest : public ::testing::Test {
         FingerprintHalProperties::operation_authenticate_acquired("");
         FingerprintHalProperties::operation_enroll_latency({});
         FingerprintHalProperties::operation_authenticate_latency({});
+        FingerprintHalProperties::operation_detect_interaction_latency({});
+        FingerprintHalProperties::operation_authenticate_fails(false);
         FingerprintHalProperties::operation_detect_interaction_latency({});
     }
 
@@ -178,11 +186,14 @@ TEST_F(FakeFingerprintEngineTest, Enroll) {
     FingerprintHalProperties::next_enrollment("4:0,0:true");
     keymaster::HardwareAuthToken hat{.mac = {2, 4}};
     mEngine.enrollImpl(mCallback.get(), hat, mCancel.get_future());
+    ASSERT_EQ(mEngine.getWorkMode(), FakeFingerprintEngine::WorkMode::kEnroll);
+    mEngine.fingerDownAction();
     ASSERT_FALSE(FingerprintHalProperties::next_enrollment().has_value());
     ASSERT_EQ(1, FingerprintHalProperties::enrollments().size());
     ASSERT_EQ(4, FingerprintHalProperties::enrollments()[0].value());
     ASSERT_EQ(4, mCallback->mLastEnrolled);
     ASSERT_EQ(1, mCallback->mLastAcquiredInfo);
+    ASSERT_EQ(mEngine.getWorkMode(), FakeFingerprintEngine::WorkMode::kIdle);
 }
 
 TEST_F(FakeFingerprintEngineTest, EnrollCancel) {
@@ -192,6 +203,7 @@ TEST_F(FakeFingerprintEngineTest, EnrollCancel) {
     keymaster::HardwareAuthToken hat{.mac = {2, 4}};
     mCancel.set_value();
     mEngine.enrollImpl(mCallback.get(), hat, mCancel.get_future());
+    mEngine.fingerDownAction();
     ASSERT_EQ(Error::CANCELED, mCallback->mError);
     ASSERT_EQ(-1, mCallback->mLastEnrolled);
     ASSERT_EQ(0, FingerprintHalProperties::enrollments().size());
@@ -204,6 +216,7 @@ TEST_F(FakeFingerprintEngineTest, EnrollFail) {
     FingerprintHalProperties::next_enrollment(next);
     keymaster::HardwareAuthToken hat{.mac = {2, 4}};
     mEngine.enrollImpl(mCallback.get(), hat, mCancel.get_future());
+    mEngine.fingerDownAction();
     ASSERT_EQ(Error::UNABLE_TO_PROCESS, mCallback->mError);
     ASSERT_EQ(-1, mCallback->mLastEnrolled);
     ASSERT_EQ(0, FingerprintHalProperties::enrollments().size());
@@ -216,6 +229,7 @@ TEST_F(FakeFingerprintEngineTest, EnrollAcquired) {
     keymaster::HardwareAuthToken hat{.mac = {2, 4}};
     int32_t prevCnt = mCallback->mLastAcquiredCount;
     mEngine.enrollImpl(mCallback.get(), hat, mCancel.get_future());
+    mEngine.fingerDownAction();
     ASSERT_FALSE(FingerprintHalProperties::next_enrollment().has_value());
     ASSERT_EQ(1, FingerprintHalProperties::enrollments().size());
     ASSERT_EQ(4, FingerprintHalProperties::enrollments()[0].value());
@@ -229,9 +243,12 @@ TEST_F(FakeFingerprintEngineTest, Authenticate) {
     FingerprintHalProperties::enrollments({1, 2});
     FingerprintHalProperties::enrollment_hit(2);
     mEngine.authenticateImpl(mCallback.get(), 0, mCancel.get_future());
+    ASSERT_EQ(mEngine.getWorkMode(), FakeFingerprintEngine::WorkMode::kAuthenticate);
+    mEngine.fingerDownAction();
     ASSERT_FALSE(mCallback->mAuthenticateFailed);
     ASSERT_EQ(2, mCallback->mLastAuthenticated);
     ASSERT_EQ(1, mCallback->mLastAcquiredInfo);
+    ASSERT_EQ(mEngine.getWorkMode(), FakeFingerprintEngine::WorkMode::kIdle);
 }
 
 TEST_F(FakeFingerprintEngineTest, AuthenticateCancel) {
@@ -239,6 +256,7 @@ TEST_F(FakeFingerprintEngineTest, AuthenticateCancel) {
     FingerprintHalProperties::enrollment_hit(2);
     mCancel.set_value();
     mEngine.authenticateImpl(mCallback.get(), 0, mCancel.get_future());
+    mEngine.fingerDownAction();
     ASSERT_EQ(Error::CANCELED, mCallback->mError);
     ASSERT_EQ(-1, mCallback->mLastAuthenticated);
 }
@@ -247,6 +265,7 @@ TEST_F(FakeFingerprintEngineTest, AuthenticateNotSet) {
     FingerprintHalProperties::enrollments({1, 2});
     FingerprintHalProperties::enrollment_hit({});
     mEngine.authenticateImpl(mCallback.get(), 0, mCancel.get_future());
+    mEngine.fingerDownAction();
     ASSERT_TRUE(mCallback->mAuthenticateFailed);
 }
 
@@ -254,7 +273,9 @@ TEST_F(FakeFingerprintEngineTest, AuthenticateNotEnrolled) {
     FingerprintHalProperties::enrollments({1, 2});
     FingerprintHalProperties::enrollment_hit(3);
     mEngine.authenticateImpl(mCallback.get(), 0, mCancel.get_future());
+    mEngine.fingerDownAction();
     ASSERT_TRUE(mCallback->mAuthenticateFailed);
+    ASSERT_EQ(mEngine.getWorkMode(), FakeFingerprintEngine::WorkMode::kAuthenticate);
 }
 
 TEST_F(FakeFingerprintEngineTest, AuthenticateLockout) {
@@ -262,6 +283,7 @@ TEST_F(FakeFingerprintEngineTest, AuthenticateLockout) {
     FingerprintHalProperties::enrollment_hit(2);
     FingerprintHalProperties::lockout(true);
     mEngine.authenticateImpl(mCallback.get(), 0, mCancel.get_future());
+    mEngine.fingerDownAction();
     ASSERT_TRUE(mCallback->mLockoutPermanent);
     ASSERT_NE(mCallback->mError, Error::UNKNOWN);
 }
@@ -269,6 +291,7 @@ TEST_F(FakeFingerprintEngineTest, AuthenticateLockout) {
 TEST_F(FakeFingerprintEngineTest, AuthenticateError8) {
     FingerprintHalProperties::operation_authenticate_error(8);
     mEngine.authenticateImpl(mCallback.get(), 0, mCancel.get_future());
+    mEngine.fingerDownAction();
     ASSERT_EQ(mCallback->mError, (Error)8);
     ASSERT_EQ(mCallback->mErrorVendorCode, 0);
 }
@@ -276,8 +299,17 @@ TEST_F(FakeFingerprintEngineTest, AuthenticateError8) {
 TEST_F(FakeFingerprintEngineTest, AuthenticateError9) {
     FingerprintHalProperties::operation_authenticate_error(1009);
     mEngine.authenticateImpl(mCallback.get(), 0, mCancel.get_future());
+    mEngine.fingerDownAction();
     ASSERT_EQ(mCallback->mError, (Error)7);
     ASSERT_EQ(mCallback->mErrorVendorCode, 9);
+}
+
+TEST_F(FakeFingerprintEngineTest, AuthenticateFails) {
+    FingerprintHalProperties::operation_authenticate_fails(true);
+    mEngine.authenticateImpl(mCallback.get(), 0, mCancel.get_future());
+    mEngine.fingerDownAction();
+    ASSERT_TRUE(mCallback->mAuthenticateFailed);
+    ASSERT_EQ(mEngine.getWorkMode(), FakeFingerprintEngine::WorkMode::kAuthenticate);
 }
 
 TEST_F(FakeFingerprintEngineTest, AuthenticateAcquired) {
@@ -287,6 +319,7 @@ TEST_F(FakeFingerprintEngineTest, AuthenticateAcquired) {
     FingerprintHalProperties::operation_authenticate_acquired("4,1009");
     int32_t prevCount = mCallback->mLastAcquiredCount;
     mEngine.authenticateImpl(mCallback.get(), 0, mCancel.get_future());
+    mEngine.fingerDownAction();
     ASSERT_FALSE(mCallback->mAuthenticateFailed);
     ASSERT_EQ(2, mCallback->mLastAuthenticated);
     ASSERT_EQ(prevCount + 2, mCallback->mLastAcquiredCount);
@@ -300,8 +333,11 @@ TEST_F(FakeFingerprintEngineTest, InteractionDetect) {
     FingerprintHalProperties::enrollment_hit(2);
     FingerprintHalProperties::operation_detect_interaction_acquired("");
     mEngine.detectInteractionImpl(mCallback.get(), mCancel.get_future());
+    ASSERT_EQ(mEngine.getWorkMode(), FakeFingerprintEngine::WorkMode::kDetectInteract);
+    mEngine.fingerDownAction();
     ASSERT_EQ(1, mCallback->mInteractionDetectedCount);
     ASSERT_EQ(1, mCallback->mLastAcquiredInfo);
+    ASSERT_EQ(mEngine.getWorkMode(), FakeFingerprintEngine::WorkMode::kIdle);
 }
 
 TEST_F(FakeFingerprintEngineTest, InteractionDetectCancel) {
@@ -310,6 +346,7 @@ TEST_F(FakeFingerprintEngineTest, InteractionDetectCancel) {
     FingerprintHalProperties::enrollment_hit(2);
     mCancel.set_value();
     mEngine.detectInteractionImpl(mCallback.get(), mCancel.get_future());
+    mEngine.fingerDownAction();
     ASSERT_EQ(Error::CANCELED, mCallback->mError);
     ASSERT_EQ(0, mCallback->mInteractionDetectedCount);
 }
@@ -319,6 +356,7 @@ TEST_F(FakeFingerprintEngineTest, InteractionDetectNotSet) {
     FingerprintHalProperties::enrollments({1, 2});
     FingerprintHalProperties::enrollment_hit({});
     mEngine.detectInteractionImpl(mCallback.get(), mCancel.get_future());
+    mEngine.fingerDownAction();
     ASSERT_EQ(0, mCallback->mInteractionDetectedCount);
 }
 
@@ -326,6 +364,7 @@ TEST_F(FakeFingerprintEngineTest, InteractionDetectNotEnrolled) {
     FingerprintHalProperties::enrollments({1, 2});
     FingerprintHalProperties::enrollment_hit(25);
     mEngine.detectInteractionImpl(mCallback.get(), mCancel.get_future());
+    mEngine.fingerDownAction();
     ASSERT_EQ(0, mCallback->mInteractionDetectedCount);
 }
 
@@ -333,6 +372,7 @@ TEST_F(FakeFingerprintEngineTest, InteractionDetectError) {
     FingerprintHalProperties::detect_interaction(true);
     FingerprintHalProperties::operation_detect_interaction_error(8);
     mEngine.detectInteractionImpl(mCallback.get(), mCancel.get_future());
+    mEngine.fingerDownAction();
     ASSERT_EQ(0, mCallback->mInteractionDetectedCount);
     ASSERT_EQ(mCallback->mError, (Error)8);
     ASSERT_EQ(mCallback->mErrorVendorCode, 0);
@@ -345,6 +385,7 @@ TEST_F(FakeFingerprintEngineTest, InteractionDetectAcquired) {
     FingerprintHalProperties::operation_detect_interaction_acquired("4,1013");
     int32_t prevCount = mCallback->mLastAcquiredCount;
     mEngine.detectInteractionImpl(mCallback.get(), mCancel.get_future());
+    mEngine.fingerDownAction();
     ASSERT_EQ(1, mCallback->mInteractionDetectedCount);
     ASSERT_EQ(prevCount + 2, mCallback->mLastAcquiredCount);
     ASSERT_EQ(7, mCallback->mLastAcquiredInfo);
@@ -354,9 +395,7 @@ TEST_F(FakeFingerprintEngineTest, InteractionDetectAcquired) {
 TEST_F(FakeFingerprintEngineTest, EnumerateEnrolled) {
     FingerprintHalProperties::enrollments({2, 4, 8});
     mEngine.enumerateEnrollmentsImpl(mCallback.get());
-    ASSERT_EQ(
-            4,
-            mCallback->mLastEnrollmentEnumerated.size());  // Due to workaround. TODO (b/243129174)
+    ASSERT_EQ(3, mCallback->mLastEnrollmentEnumerated.size());
     for (auto id : FingerprintHalProperties::enrollments()) {
         ASSERT_TRUE(std::find(mCallback->mLastEnrollmentEnumerated.begin(),
                               mCallback->mLastEnrollmentEnumerated.end(),
@@ -464,9 +503,15 @@ TEST_F(FakeFingerprintEngineTest, randomLatency) {
                 FingerprintHalProperties::operation_detect_interaction_latency()));
     }
     ASSERT_TRUE(latencySet.size() > 95);
-    FingerprintHalProperties::operation_detect_interaction_latency({});
 }
 
+TEST_F(FakeFingerprintEngineTest, lockoutTimer) {
+    mEngine.startLockoutTimer(200, mCallback.get());
+    ASSERT_TRUE(mEngine.getLockoutTimerStarted());
+    std::this_thread::sleep_for(std::chrono::milliseconds(210));
+    ASSERT_FALSE(mEngine.getLockoutTimerStarted());
+    ASSERT_TRUE(mCallback->mLockoutCleared);
+}
 }  // namespace aidl::android::hardware::biometrics::fingerprint
 
 int main(int argc, char** argv) {

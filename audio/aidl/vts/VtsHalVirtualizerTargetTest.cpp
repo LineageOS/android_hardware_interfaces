@@ -141,9 +141,7 @@ INSTANTIATE_TEST_SUITE_P(
         [](const testing::TestParamInfo<VirtualizerParamTest::ParamType>& info) {
             auto descriptor = std::get<PARAM_INSTANCE_NAME>(info.param).second;
             std::string strength = std::to_string(std::get<PARAM_STRENGTH>(info.param));
-            std::string name = "Implementor_" + descriptor.common.implementor + "_name_" +
-                               descriptor.common.name + "_UUID_" +
-                               descriptor.common.id.uuid.toString() + "_strength" + strength;
+            std::string name = getPrefix(descriptor) + "_strength" + strength;
             std::replace_if(
                     name.begin(), name.end(), [](const char c) { return !std::isalnum(c); }, '_');
             return name;

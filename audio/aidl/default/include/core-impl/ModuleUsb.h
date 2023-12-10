@@ -16,13 +16,13 @@
 
 #pragma once
 
-#include "core-impl/Module.h"
+#include "core-impl/ModuleAlsa.h"
 
 namespace aidl::android::hardware::audio::core {
 
-class ModuleUsb : public Module {
+class ModuleUsb final : public ModuleAlsa {
   public:
-    explicit ModuleUsb(Module::Type type) : Module(type) {}
+    ModuleUsb() : ModuleAlsa(Type::USB) {}
 
   private:
     // IModule interfaces
@@ -32,6 +32,17 @@ class ModuleUsb : public Module {
     ndk::ScopedAStatus setMicMute(bool in_mute) override;
 
     // Module interfaces
+    ndk::ScopedAStatus createInputStream(
+            StreamContext&& context,
+            const ::aidl::android::hardware::audio::common::SinkMetadata& sinkMetadata,
+            const std::vector<::aidl::android::media::audio::common::MicrophoneInfo>& microphones,
+            std::shared_ptr<StreamIn>* result) override;
+    ndk::ScopedAStatus createOutputStream(
+            StreamContext&& context,
+            const ::aidl::android::hardware::audio::common::SourceMetadata& sourceMetadata,
+            const std::optional<::aidl::android::media::audio::common::AudioOffloadInfo>&
+                    offloadInfo,
+            std::shared_ptr<StreamOut>* result) override;
     ndk::ScopedAStatus populateConnectedDevicePort(
             ::aidl::android::media::audio::common::AudioPort* audioPort) override;
     ndk::ScopedAStatus checkAudioPatchEndpointsMatch(

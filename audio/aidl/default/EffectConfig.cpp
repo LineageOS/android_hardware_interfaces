@@ -18,6 +18,7 @@
 #include <string>
 #define LOG_TAG "AHAL_EffectConfig"
 #include <android-base/logging.h>
+#include <system/audio_aidl_utils.h>
 #include <system/audio_effects/audio_effects_conf.h>
 #include <system/audio_effects/effect_uuid.h>
 
@@ -116,53 +117,59 @@ bool EffectConfig::parseLibrary(const tinyxml2::XMLElement& xml) {
 
 bool EffectConfig::parseEffect(const tinyxml2::XMLElement& xml) {
     struct EffectLibraries effectLibraries;
-    std::vector<LibraryUuid> libraryUuids;
+    std::vector<Library> libraries;
     std::string name = xml.Attribute("name");
     RETURN_VALUE_IF(name == "", false, "effectsNoName");
 
     LOG(DEBUG) << __func__ << dump(xml);
-    struct LibraryUuid libraryUuid;
+    struct Library library;
     if (std::strcmp(xml.Name(), "effectProxy") == 0) {
         // proxy lib and uuid
-        RETURN_VALUE_IF(!parseLibraryUuid(xml, libraryUuid, true), false, "parseProxyLibFailed");
-        effectLibraries.proxyLibrary = libraryUuid;
+        RETURN_VALUE_IF(!parseLibrary(xml, library, true), false, "parseProxyLibFailed");
+        effectLibraries.proxyLibrary = library;
         // proxy effect libs and UUID
         auto xmlProxyLib = xml.FirstChildElement();
         RETURN_VALUE_IF(!xmlProxyLib, false, "noLibForProxy");
         while (xmlProxyLib) {
-            struct LibraryUuid tempLibraryUuid;
-            RETURN_VALUE_IF(!parseLibraryUuid(*xmlProxyLib, tempLibraryUuid), false,
+            struct Library tempLibrary;
+            RETURN_VALUE_IF(!parseLibrary(*xmlProxyLib, tempLibrary), false,
                             "parseEffectLibFailed");
-            libraryUuids.push_back(std::move(tempLibraryUuid));
+            libraries.push_back(std::move(tempLibrary));
             xmlProxyLib = xmlProxyLib->NextSiblingElement();
         }
     } else {
         // expect only one library if not proxy
-        RETURN_VALUE_IF(!parseLibraryUuid(xml, libraryUuid), false, "parseEffectLibFailed");
-        libraryUuids.push_back(std::move(libraryUuid));
+        RETURN_VALUE_IF(!parseLibrary(xml, library), false, "parseEffectLibFailed");
+        libraries.push_back(std::move(library));
     }
 
-    effectLibraries.libraries = std::move(libraryUuids);
+    effectLibraries.libraries = std::move(libraries);
     mEffectsMap[name] = std::move(effectLibraries);
     return true;
 }
 
-bool EffectConfig::parseLibraryUuid(const tinyxml2::XMLElement& xml,
-                                    struct LibraryUuid& libraryUuid, bool isProxy) {
+bool EffectConfig::parseLibrary(const tinyxml2::XMLElement& xml, struct Library& library,
+                                bool isProxy) {
     // Retrieve library name only if not effectProxy element
     if (!isProxy) {
         const char* name = xml.Attribute("library");
         RETURN_VALUE_IF(!name, false, "noLibraryAttribute");
-        libraryUuid.name = name;
+        library.name = name;
     }
 
     const char* uuidStr = xml.Attribute("uuid");
     RETURN_VALUE_IF(!uuidStr, false, "noUuidAttribute");
-    libraryUuid.uuid = stringToUuid(uuidStr);
-    RETURN_VALUE_IF((libraryUuid.uuid == getEffectUuidZero()), false, "invalidUuidAttribute");
+    library.uuid = stringToUuid(uuidStr);
+    if (const char* typeUuidStr = xml.Attribute("type")) {
+        library.type = stringToUuid(typeUuidStr);
+    }
+    RETURN_VALUE_IF((library.uuid == getEffectUuidZero()), false, "invalidUuidAttribute");
 
-    LOG(DEBUG) << __func__ << (isProxy ? " proxy " : libraryUuid.name) << " : "
-               << libraryUuid.uuid.toString();
+    LOG(DEBUG) << __func__ << (isProxy ? " proxy " : library.name) << " : uuid "
+               << ::android::audio::utils::toString(library.uuid)
+               << (library.type.has_value()
+                           ? ::android::audio::utils::toString(library.type.value())
+                           : "");
     return true;
 }
 
@@ -240,7 +247,8 @@ EffectConfig::getProcessingMap() const {
     return mProcessingMap;
 }
 
-bool EffectConfig::findUuid(const std::string& xmlEffectName, AudioUuid* uuid) {
+bool EffectConfig::findUuid(const std::pair<std::string, struct EffectLibraries>& effectElem,
+                            AudioUuid* uuid) {
 // Difference from EFFECT_TYPE_LIST_DEF, there could be multiple name mapping to same Effect Type
 #define EFFECT_XML_TYPE_LIST_DEF(V)                        \
     V("acoustic_echo_canceler", AcousticEchoCanceler)      \
@@ -250,6 +258,7 @@ bool EffectConfig::findUuid(const std::string& xmlEffectName, AudioUuid* uuid) {
     V("downmix", Downmix)                                  \
     V("dynamics_processing", DynamicsProcessing)           \
     V("equalizer", Equalizer)                              \
+    V("extensioneffect", Extension)                        \
     V("haptic_generator", HapticGenerator)                 \
     V("loudness_enhancer", LoudnessEnhancer)               \
     V("env_reverb", EnvReverb)                             \
@@ -266,6 +275,7 @@ bool EffectConfig::findUuid(const std::string& xmlEffectName, AudioUuid* uuid) {
 
 #define GENERATE_MAP_ENTRY_V(s, symbol) {s, &getEffectTypeUuid##symbol},
 
+    const std::string xmlEffectName = effectElem.first;
     typedef const AudioUuid& (*UuidGetter)(void);
     static const std::map<std::string, UuidGetter> uuidMap{
             // std::make_pair("s", &getEffectTypeUuidExtension)};
@@ -273,6 +283,14 @@ bool EffectConfig::findUuid(const std::string& xmlEffectName, AudioUuid* uuid) {
     if (auto it = uuidMap.find(xmlEffectName); it != uuidMap.end()) {
         *uuid = (*it->second)();
         return true;
+    }
+
+    const auto& libs = effectElem.second.libraries;
+    for (const auto& lib : libs) {
+        if (lib.type.has_value()) {
+            *uuid = lib.type.value();
+            return true;
+        }
     }
     return false;
 }

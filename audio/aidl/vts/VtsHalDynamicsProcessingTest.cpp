@@ -513,9 +513,7 @@ INSTANTIATE_TEST_SUITE_P(
             auto descriptor = std::get<ENGINE_TEST_INSTANCE_NAME>(info.param).second;
             DynamicsProcessing::EngineArchitecture cfg;
             fillEngineArchConfig(cfg, info.param);
-            std::string name = "Implementor_" + descriptor.common.implementor + "_name_" +
-                               descriptor.common.name + "_UUID_" +
-                               descriptor.common.id.uuid.toString() + "_Cfg_" + cfg.toString();
+            std::string name = getPrefix(descriptor) + "_Cfg_" + cfg.toString();
             std::replace_if(
                     name.begin(), name.end(), [](const char c) { return !std::isalnum(c); }, '_');
             return name;

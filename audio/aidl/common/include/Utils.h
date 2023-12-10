@@ -29,6 +29,21 @@
 #include <aidl/android/media/audio/common/AudioMode.h>
 #include <aidl/android/media/audio/common/AudioOutputFlags.h>
 #include <aidl/android/media/audio/common/PcmType.h>
+#include <android/binder_auto_utils.h>
+
+namespace ndk {
+
+// This enables use of 'error/expected_utils' for ScopedAStatus.
+
+inline bool errorIsOk(const ScopedAStatus& s) {
+    return s.isOk();
+}
+
+inline std::string errorToString(const ScopedAStatus& s) {
+    return s.getDescription();
+}
+
+}  // namespace ndk
 
 namespace aidl::android::hardware::audio::common {
 
@@ -102,37 +117,14 @@ constexpr size_t getFrameSizeInBytes(
 constexpr bool isDefaultAudioFormat(
         const ::aidl::android::media::audio::common::AudioFormatDescription& desc) {
     return desc.type == ::aidl::android::media::audio::common::AudioFormatType::DEFAULT &&
-           desc.pcm == ::aidl::android::media::audio::common::PcmType::DEFAULT;
+           desc.pcm == ::aidl::android::media::audio::common::PcmType::DEFAULT &&
+           desc.encoding.empty();
 }
 
 constexpr bool isTelephonyDeviceType(
         ::aidl::android::media::audio::common::AudioDeviceType device) {
     return device == ::aidl::android::media::audio::common::AudioDeviceType::IN_TELEPHONY_RX ||
            device == ::aidl::android::media::audio::common::AudioDeviceType::OUT_TELEPHONY_TX;
-}
-
-constexpr bool isUsbInputDeviceType(::aidl::android::media::audio::common::AudioDeviceType type) {
-    switch (type) {
-        case ::aidl::android::media::audio::common::AudioDeviceType::IN_DOCK:
-        case ::aidl::android::media::audio::common::AudioDeviceType::IN_ACCESSORY:
-        case ::aidl::android::media::audio::common::AudioDeviceType::IN_DEVICE:
-        case ::aidl::android::media::audio::common::AudioDeviceType::IN_HEADSET:
-            return true;
-        default:
-            return false;
-    }
-}
-
-constexpr bool isUsbOutputtDeviceType(::aidl::android::media::audio::common::AudioDeviceType type) {
-    switch (type) {
-        case ::aidl::android::media::audio::common::AudioDeviceType::OUT_DOCK:
-        case ::aidl::android::media::audio::common::AudioDeviceType::OUT_ACCESSORY:
-        case ::aidl::android::media::audio::common::AudioDeviceType::OUT_DEVICE:
-        case ::aidl::android::media::audio::common::AudioDeviceType::OUT_HEADSET:
-            return true;
-        default:
-            return false;
-    }
 }
 
 constexpr bool isValidAudioMode(::aidl::android::media::audio::common::AudioMode mode) {

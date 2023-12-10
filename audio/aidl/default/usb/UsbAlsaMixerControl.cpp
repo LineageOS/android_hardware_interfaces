@@ -17,150 +17,11 @@
 #define LOG_TAG "AHAL_UsbAlsaMixerControl"
 #include <android-base/logging.h>
 
-#include <cmath>
-#include <string>
-#include <vector>
-
 #include <android/binder_status.h>
 
 #include "UsbAlsaMixerControl.h"
 
 namespace aidl::android::hardware::audio::core::usb {
-
-//-----------------------------------------------------------------------------
-
-MixerControl::MixerControl(struct mixer_ctl* ctl)
-    : mCtl(ctl),
-      mNumValues(mixer_ctl_get_num_values(ctl)),
-      mMinValue(mixer_ctl_get_range_min(ctl)),
-      mMaxValue(mixer_ctl_get_range_max(ctl)) {}
-
-unsigned int MixerControl::getNumValues() const {
-    return mNumValues;
-}
-
-int MixerControl::getMaxValue() const {
-    return mMaxValue;
-}
-
-int MixerControl::getMinValue() const {
-    return mMinValue;
-}
-
-int MixerControl::setArray(const void* array, size_t count) {
-    const std::lock_guard guard(mLock);
-    return mixer_ctl_set_array(mCtl, array, count);
-}
-
-//-----------------------------------------------------------------------------
-
-// static
-const std::map<AlsaMixer::Control, std::vector<AlsaMixer::ControlNamesAndExpectedCtlType>>
-        AlsaMixer::kPossibleControls = {
-                {AlsaMixer::MASTER_SWITCH, {{"Master Playback Switch", MIXER_CTL_TYPE_BOOL}}},
-                {AlsaMixer::MASTER_VOLUME, {{"Master Playback Volume", MIXER_CTL_TYPE_INT}}},
-                {AlsaMixer::HW_VOLUME,
-                 {{"Headphone Playback Volume", MIXER_CTL_TYPE_INT},
-                  {"Headset Playback Volume", MIXER_CTL_TYPE_INT},
-                  {"PCM Playback Volume", MIXER_CTL_TYPE_INT}}}};
-
-// static
-std::map<AlsaMixer::Control, std::shared_ptr<MixerControl>> AlsaMixer::initializeMixerControls(
-        struct mixer* mixer) {
-    std::map<AlsaMixer::Control, std::shared_ptr<MixerControl>> mixerControls;
-    std::string mixerCtlNames;
-    for (const auto& [control, possibleCtls] : kPossibleControls) {
-        for (const auto& [ctlName, expectedCtlType] : possibleCtls) {
-            struct mixer_ctl* ctl = mixer_get_ctl_by_name(mixer, ctlName.c_str());
-            if (ctl != nullptr && mixer_ctl_get_type(ctl) == expectedCtlType) {
-                mixerControls.emplace(control, std::make_unique<MixerControl>(ctl));
-                if (!mixerCtlNames.empty()) {
-                    mixerCtlNames += ",";
-                }
-                mixerCtlNames += ctlName;
-                break;
-            }
-        }
-    }
-    LOG(DEBUG) << __func__ << ": available mixer control names=[" << mixerCtlNames << "]";
-    return mixerControls;
-}
-
-AlsaMixer::AlsaMixer(struct mixer* mixer)
-    : mMixer(mixer), mMixerControls(initializeMixerControls(mMixer)) {}
-
-AlsaMixer::~AlsaMixer() {
-    mixer_close(mMixer);
-}
-
-namespace {
-
-int volumeFloatToInteger(float fValue, int maxValue, int minValue) {
-    return minValue + std::ceil((maxValue - minValue) * fValue);
-}
-
-float volumeIntegerToFloat(int iValue, int maxValue, int minValue) {
-    if (iValue > maxValue) {
-        return 1.0f;
-    }
-    if (iValue < minValue) {
-        return 0.0f;
-    }
-    return static_cast<float>(iValue - minValue) / (maxValue - minValue);
-}
-
-}  // namespace
-
-ndk::ScopedAStatus AlsaMixer::setMasterMute(bool muted) {
-    auto it = mMixerControls.find(AlsaMixer::MASTER_SWITCH);
-    if (it == mMixerControls.end()) {
-        return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
-    }
-    const int numValues = it->second->getNumValues();
-    std::vector<int> values(numValues, muted ? 0 : 1);
-    if (int err = it->second->setArray(values.data(), numValues); err != 0) {
-        LOG(ERROR) << __func__ << ": failed to set master mute, err=" << err;
-        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
-    }
-    return ndk::ScopedAStatus::ok();
-}
-
-ndk::ScopedAStatus AlsaMixer::setMasterVolume(float volume) {
-    auto it = mMixerControls.find(AlsaMixer::MASTER_VOLUME);
-    if (it == mMixerControls.end()) {
-        return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
-    }
-    const int numValues = it->second->getNumValues();
-    std::vector<int> values(numValues, volumeFloatToInteger(volume, it->second->getMaxValue(),
-                                                            it->second->getMinValue()));
-    if (int err = it->second->setArray(values.data(), numValues); err != 0) {
-        LOG(ERROR) << __func__ << ": failed to set master volume, err=" << err;
-        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
-    }
-    return ndk::ScopedAStatus::ok();
-}
-
-ndk::ScopedAStatus AlsaMixer::setVolumes(std::vector<float> volumes) {
-    auto it = mMixerControls.find(AlsaMixer::HW_VOLUME);
-    if (it == mMixerControls.end()) {
-        return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
-    }
-    const int numValues = it->second->getNumValues();
-    const int maxValue = it->second->getMaxValue();
-    const int minValue = it->second->getMinValue();
-    std::vector<int> values;
-    size_t i = 0;
-    for (; i < numValues && i < values.size(); ++i) {
-        values.emplace_back(volumeFloatToInteger(volumes[i], maxValue, minValue));
-    }
-    if (int err = it->second->setArray(values.data(), values.size()); err != 0) {
-        LOG(ERROR) << __func__ << ": failed to set volume, err=" << err;
-        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
-    }
-    return ndk::ScopedAStatus::ok();
-}
-
-//-----------------------------------------------------------------------------
 
 // static
 UsbAlsaMixerControl& UsbAlsaMixerControl::getInstance() {
@@ -172,12 +33,10 @@ void UsbAlsaMixerControl::setDeviceConnectionState(int card, bool masterMuted, f
                                                    bool connected) {
     LOG(DEBUG) << __func__ << ": card=" << card << ", connected=" << connected;
     if (connected) {
-        struct mixer* mixer = mixer_open(card);
-        if (mixer == nullptr) {
-            PLOG(ERROR) << __func__ << ": failed to open mixer for card=" << card;
+        auto alsaMixer = std::make_shared<alsa::Mixer>(card);
+        if (!alsaMixer->isValid()) {
             return;
         }
-        auto alsaMixer = std::make_shared<AlsaMixer>(mixer);
         alsaMixer->setMasterMute(masterMuted);
         alsaMixer->setMasterVolume(masterVolume);
         const std::lock_guard guard(mLock);
@@ -216,7 +75,7 @@ ndk::ScopedAStatus UsbAlsaMixerControl::setMasterVolume(float volume) {
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus UsbAlsaMixerControl::setVolumes(int card, std::vector<float> volumes) {
+ndk::ScopedAStatus UsbAlsaMixerControl::setVolumes(int card, const std::vector<float>& volumes) {
     auto alsaMixer = getAlsaMixer(card);
     if (alsaMixer == nullptr) {
         LOG(ERROR) << __func__ << ": no mixer control found for card=" << card;
@@ -225,13 +84,13 @@ ndk::ScopedAStatus UsbAlsaMixerControl::setVolumes(int card, std::vector<float> 
     return alsaMixer->setVolumes(volumes);
 }
 
-std::shared_ptr<AlsaMixer> UsbAlsaMixerControl::getAlsaMixer(int card) {
+std::shared_ptr<alsa::Mixer> UsbAlsaMixerControl::getAlsaMixer(int card) {
     const std::lock_guard guard(mLock);
     const auto it = mMixerControls.find(card);
     return it == mMixerControls.end() ? nullptr : it->second;
 }
 
-std::map<int, std::shared_ptr<AlsaMixer>> UsbAlsaMixerControl::getAlsaMixers() {
+std::map<int, std::shared_ptr<alsa::Mixer>> UsbAlsaMixerControl::getAlsaMixers() {
     const std::lock_guard guard(mLock);
     return mMixerControls;
 }

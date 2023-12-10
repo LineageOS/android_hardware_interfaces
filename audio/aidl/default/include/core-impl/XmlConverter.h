@@ -20,6 +20,7 @@
 #include <string>
 #include <unordered_map>
 
+#include <media/AidlConversionUtil.h>
 #include <system/audio_config.h>
 #include <utils/Errors.h>
 
@@ -52,10 +53,16 @@ class XmlConverter {
                                      const ::android::status_t& status) {
         std::string errorMessage;
         if (status != ::android::OK) {
-            if (!isReadableConfigFile) {
-                errorMessage = "Could not read requested config file:" + configFilePath;
+            if (configFilePath.empty()) {
+                errorMessage = "No audio configuration files found";
+            } else if (!isReadableConfigFile) {
+                errorMessage = std::string("Could not read requested XML config file: \"")
+                                       .append(configFilePath)
+                                       .append("\"");
             } else {
-                errorMessage = "Invalid config file: " + configFilePath;
+                errorMessage = std::string("Invalid XML config file: \"")
+                                       .append(configFilePath)
+                                       .append("\"");
             }
         }
         return errorMessage;
@@ -78,7 +85,7 @@ class XmlConverter {
  *     </Modules>
  */
 template <typename W, typename X, typename A>
-static std::vector<A> convertWrappedCollectionToAidl(
+std::vector<A> convertWrappedCollectionToAidlUnchecked(
         const std::vector<W>& xsdcWrapperTypeVec,
         std::function<const std::vector<X>&(const W&)> getInnerTypeVec,
         std::function<A(const X&)> convertToAidl) {
@@ -100,12 +107,12 @@ static std::vector<A> convertWrappedCollectionToAidl(
 }
 
 template <typename X, typename A>
-static std::vector<A> convertCollectionToAidl(const std::vector<X>& xsdcTypeVec,
-                                              std::function<A(const X&)> convertToAidl) {
+std::vector<A> convertCollectionToAidlUnchecked(const std::vector<X>& xsdcTypeVec,
+                                                std::function<A(const X&)> itemConversion) {
     std::vector<A> resultAidlTypeVec;
     resultAidlTypeVec.reserve(xsdcTypeVec.size());
     std::transform(xsdcTypeVec.begin(), xsdcTypeVec.end(), std::back_inserter(resultAidlTypeVec),
-                   convertToAidl);
+                   itemConversion);
     return resultAidlTypeVec;
 }
 
@@ -121,8 +128,7 @@ static std::vector<A> convertCollectionToAidl(const std::vector<X>& xsdcTypeVec,
  *     </Wrapper>
  */
 template <typename W, typename R>
-static std::unordered_map<std::string, R> generateReferenceMap(
-        const std::vector<W>& xsdcWrapperTypeVec) {
+std::unordered_map<std::string, R> generateReferenceMap(const std::vector<W>& xsdcWrapperTypeVec) {
     std::unordered_map<std::string, R> resultMap;
     if (!xsdcWrapperTypeVec.empty()) {
         /*

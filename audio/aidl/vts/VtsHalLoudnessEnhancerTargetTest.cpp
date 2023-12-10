@@ -131,9 +131,7 @@ INSTANTIATE_TEST_SUITE_P(
         [](const testing::TestParamInfo<LoudnessEnhancerParamTest::ParamType>& info) {
             auto descriptor = std::get<PARAM_INSTANCE_NAME>(info.param).second;
             std::string gainMb = std::to_string(std::get<PARAM_GAIN_MB>(info.param));
-            std::string name = "Implementor_" + descriptor.common.implementor + "_name_" +
-                               descriptor.common.name + "_UUID_" +
-                               descriptor.common.id.uuid.toString() + "_gainMb_" + gainMb;
+            std::string name = getPrefix(descriptor) + "_gainMb_" + gainMb;
             std::replace_if(
                     name.begin(), name.end(), [](const char c) { return !std::isalnum(c); }, '_');
             return name;

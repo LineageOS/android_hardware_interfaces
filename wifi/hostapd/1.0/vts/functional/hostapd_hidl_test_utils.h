@@ -17,14 +17,17 @@
 #ifndef HOSTAPD_HIDL_TEST_UTILS_H
 #define HOSTAPD_HIDL_TEST_UTILS_H
 
+#include <VtsCoreUtil.h>
 #include <android/hardware/wifi/hostapd/1.0/IHostapd.h>
 #include <android/hardware/wifi/hostapd/1.1/IHostapd.h>
 
 // Used to stop the android wifi framework before every test.
-void stopWifiFramework(const std::string& instance_name);
-void startWifiFramework(const std::string& instance_name);
 void stopSupplicantIfNeeded(const std::string& instance_name);
 void stopHostapd(const std::string& instance_name);
+void toggleWifiFramework(bool enable);
+void toggleWifiScanAlwaysAvailable(bool enable);
+bool isWifiFrameworkEnabled();
+bool isWifiScanAlwaysAvailable();
 // Used to configure the chip, driver and start wpa_hostapd before every
 // test.
 void startHostapdAndWaitForHidlService(
@@ -33,5 +36,9 @@ void startHostapdAndWaitForHidlService(
 
 bool is_1_1(const android::sp<android::hardware::wifi::hostapd::V1_0::IHostapd>&
                 hostapd);
+// Used to initialize/deinitialize the driver and firmware at the
+// beginning and end of each test.
+void initializeDriverAndFirmware(const std::string& wifi_instance_name);
+void deInitializeDriverAndFirmware(const std::string& wifi_instance_name);
 
 #endif /* HOSTAPD_HIDL_TEST_UTILS_H */

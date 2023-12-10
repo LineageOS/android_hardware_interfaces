@@ -359,6 +359,7 @@ class KeyMintAidlTestBase : public ::testing::TestWithParam<string> {
     bool is_attest_key_feature_disabled(void) const;
     bool is_strongbox_enabled(void) const;
     bool is_chipset_allowed_km4_strongbox(void) const;
+    bool shouldSkipAttestKeyTest(void) const;
     void skipAttestKeyTest(void) const;
 
   protected:
@@ -421,7 +422,7 @@ vector<uint8_t> make_name_from_str(const string& name);
 void check_maced_pubkey(const MacedPublicKey& macedPubKey, bool testMode,
                         vector<uint8_t>* payload_value);
 void p256_pub_key(const vector<uint8_t>& coseKeyData, EVP_PKEY_Ptr* signingKey);
-void device_id_attestation_vsr_check(const ErrorCode& result);
+void device_id_attestation_check_acceptable_error(Tag tag, const ErrorCode& result);
 bool check_feature(const std::string& name);
 
 AuthorizationSet HwEnforcedAuthorizations(const vector<KeyCharacteristics>& key_characteristics);

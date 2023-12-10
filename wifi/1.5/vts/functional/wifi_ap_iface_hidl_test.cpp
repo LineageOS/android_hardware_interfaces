@@ -58,12 +58,16 @@ class WifiApIfaceHidlTest : public ::testing::TestWithParam<std::string> {
             "wifi_softap_bridged_ap_supported");
         // Make sure to start with a clean state
         stopWifi(GetInstanceName());
+        // Read AP mode capabilities from the wifi chip modes
+        sp<IWifiChip> wifi_chip_ = getWifiChip_1_5(GetInstanceName());
+        isApModeSupport_ = doesChipSupportIfaceType(wifi_chip_, IfaceType::AP);
     }
 
     virtual void TearDown() override { stopWifi(GetInstanceName()); }
 
    protected:
     bool isBridgedSupport_ = false;
+    bool isApModeSupport_ = false;
     std::string GetInstanceName() { return GetParam(); }
 };
 
@@ -83,6 +87,7 @@ TEST_P(WifiApIfaceHidlTest, resetToFactoryMacAddressInBridgedModeTest) {
  * resetToFactoryMacAddress in non-bridged mode
  */
 TEST_P(WifiApIfaceHidlTest, resetToFactoryMacAddressTest) {
+    if (!isApModeSupport_) GTEST_SKIP() << "Missing AP support";
     sp<IWifiApIface> wifi_ap_iface = getWifiApIface_1_5(GetInstanceName());
     ASSERT_NE(nullptr, wifi_ap_iface.get());
     const auto& status = HIDL_INVOKE(wifi_ap_iface, resetToFactoryMacAddress);
@@ -93,6 +98,7 @@ TEST_P(WifiApIfaceHidlTest, resetToFactoryMacAddressTest) {
  * getBridgedInstances in non-bridged mode
  */
 TEST_P(WifiApIfaceHidlTest, getBridgedInstancesTest) {
+    if (!isApModeSupport_) GTEST_SKIP() << "Missing AP support";
     sp<IWifiApIface> wifi_ap_iface = getWifiApIface_1_5(GetInstanceName());
     ASSERT_NE(nullptr, wifi_ap_iface.get());
     const auto& status_and_instances =

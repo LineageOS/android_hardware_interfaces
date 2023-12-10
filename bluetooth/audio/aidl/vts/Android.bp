@@ -15,11 +15,14 @@ cc_test {
     ],
     tidy_timeout_srcs: ["VtsHalBluetoothAudioTargetTest.cpp"],
     srcs: ["VtsHalBluetoothAudioTargetTest.cpp"],
-    shared_libs: [
-        "android.hardware.audio.common-V1-ndk",
+    static_libs: [
+        "android.hardware.audio.common-V2-ndk",
         "android.hardware.bluetooth.audio-V3-ndk",
         "android.hardware.common-V2-ndk",
         "android.hardware.common.fmq-V1-ndk",
+        "android.media.audio.common.types-V2-ndk",
+    ],
+    shared_libs: [
         "libbase",
         "libbinder_ndk",
         "libcutils",

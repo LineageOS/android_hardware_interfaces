@@ -23,6 +23,19 @@
 
 #define ASSERT_OK(ret) ASSERT_TRUE(ret.isOk())
 
+namespace {
+const RadioAccessSpecifierBands EUTRAN_BAND_17 =
+        RadioAccessSpecifierBands::make<RadioAccessSpecifierBands::eutranBands>(
+                {EutranBands::BAND_17});
+const RadioAccessSpecifierBands EUTRAN_BAND_20 =
+        RadioAccessSpecifierBands::make<RadioAccessSpecifierBands::eutranBands>(
+                {EutranBands::BAND_20});
+const RadioAccessSpecifier EUTRAN_SPECIFIER_17 = {
+        .accessNetwork = AccessNetwork::EUTRAN, .bands = EUTRAN_BAND_17, .channels = {1, 2}};
+const RadioAccessSpecifier EUTRAN_SPECIFIER_20 = {
+        .accessNetwork = AccessNetwork::EUTRAN, .bands = EUTRAN_BAND_20, .channels = {128, 129}};
+}  // namespace
+
 void RadioNetworkTest::SetUp() {
     RadioServiceTest::SetUp();
     std::string serviceName = GetParam();
@@ -106,7 +119,7 @@ TEST_P(RadioNetworkTest, setGetAllowedNetworkTypesBitmap) {
                  RadioError::REQUEST_NOT_SUPPORTED, RadioError::NO_RESOURCES}));
         if (radioRsp_network->rspInfo.error == RadioError::NONE) {
             // verify we get the value we set
-            ASSERT_EQ(radioRsp_network->networkTypeBitmapResponse, allowedNetworkTypesBitmap);
+            EXPECT_EQ(radioRsp_network->networkTypeBitmapResponse, allowedNetworkTypesBitmap);
         }
     }
 
@@ -289,7 +302,7 @@ TEST_P(RadioNetworkTest, setSignalStrengthReportingCriteria_invalidHysteresisDb)
     signalThresholdInfo.hysteresisDb = 10;  // hysteresisDb too large given threshold list deltas
     signalThresholdInfo.thresholds = {-109, -103, -97, -89};
     signalThresholdInfo.isEnabled = true;
-    signalThresholdInfo.ran = AccessNetwork::GERAN;
+    signalThresholdInfo.ran = AccessNetwork::EUTRAN;
 
     ndk::ScopedAStatus res =
             radio_network->setSignalStrengthReportingCriteria(serial, {signalThresholdInfo});
@@ -314,7 +327,7 @@ TEST_P(RadioNetworkTest, setSignalStrengthReportingCriteria_EmptyThresholds) {
     signalThresholdInfo.hysteresisMs = 0;
     signalThresholdInfo.hysteresisDb = 0;
     signalThresholdInfo.isEnabled = true;
-    signalThresholdInfo.ran = AccessNetwork::GERAN;
+    signalThresholdInfo.ran = AccessNetwork::EUTRAN;
 
     ndk::ScopedAStatus res =
             radio_network->setSignalStrengthReportingCriteria(serial, {signalThresholdInfo});
@@ -351,7 +364,8 @@ TEST_P(RadioNetworkTest, setSignalStrengthReportingCriteria_Geran) {
 
     ALOGI("setSignalStrengthReportingCriteria_Geran, rspInfo.error = %s\n",
           toString(radioRsp_network->rspInfo.error).c_str());
-    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error, {RadioError::NONE}));
+    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error,
+                                 {RadioError::NONE, RadioError::REQUEST_NOT_SUPPORTED}));
 }
 
 /*
@@ -677,7 +691,7 @@ TEST_P(RadioNetworkTest, setSignalStrengthReportingCriteria_multiRansPerRequest)
         ASSERT_OK(res);
         EXPECT_EQ(std::cv_status::no_timeout, wait());
         if (radioRsp_network->rspInfo.error == RadioError::NONE) {
-            supportedSignalThresholdInfos.push_back(signalThresholdInfoGeran);
+            supportedSignalThresholdInfos.push_back(signalThresholdInfoEutran);
         } else {
             // Refer to IRadioNetworkResponse#setSignalStrengthReportingCriteriaResponse
             ASSERT_TRUE(CheckAnyOfErrors(
@@ -711,7 +725,7 @@ TEST_P(RadioNetworkTest, setLinkCapacityReportingCriteria_invalidHysteresisDlKbp
     ndk::ScopedAStatus res = radio_network->setLinkCapacityReportingCriteria(
             serial, 5000,
             5000,  // hysteresisDlKbps too big for thresholds delta
-            100, {1000, 5000, 10000, 20000}, {500, 1000, 5000, 10000}, AccessNetwork::GERAN);
+            100, {1000, 5000, 10000, 20000}, {500, 1000, 5000, 10000}, AccessNetwork::EUTRAN);
     ASSERT_OK(res);
     EXPECT_EQ(std::cv_status::no_timeout, wait());
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_network->rspInfo.type);
@@ -719,11 +733,7 @@ TEST_P(RadioNetworkTest, setLinkCapacityReportingCriteria_invalidHysteresisDlKbp
 
     ALOGI("setLinkCapacityReportingCriteria_invalidHysteresisDlKbps, rspInfo.error = %s\n",
           toString(radioRsp_network->rspInfo.error).c_str());
-    // Allow REQUEST_NOT_SUPPORTED as setLinkCapacityReportingCriteria() may not be supported
-    // for GERAN
-    ASSERT_TRUE(
-            CheckAnyOfErrors(radioRsp_network->rspInfo.error,
-                             {RadioError::INVALID_ARGUMENTS, RadioError::REQUEST_NOT_SUPPORTED}));
+    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error, {RadioError::INVALID_ARGUMENTS}));
 }
 
 /*
@@ -734,7 +744,7 @@ TEST_P(RadioNetworkTest, setLinkCapacityReportingCriteria_invalidHysteresisUlKbp
 
     ndk::ScopedAStatus res = radio_network->setLinkCapacityReportingCriteria(
             serial, 5000, 500, 1000,  // hysteresisUlKbps too big for thresholds delta
-            {1000, 5000, 10000, 20000}, {500, 1000, 5000, 10000}, AccessNetwork::GERAN);
+            {1000, 5000, 10000, 20000}, {500, 1000, 5000, 10000}, AccessNetwork::EUTRAN);
     ASSERT_OK(res);
     EXPECT_EQ(std::cv_status::no_timeout, wait());
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_network->rspInfo.type);
@@ -742,11 +752,7 @@ TEST_P(RadioNetworkTest, setLinkCapacityReportingCriteria_invalidHysteresisUlKbp
 
     ALOGI("setLinkCapacityReportingCriteria_invalidHysteresisUlKbps, rspInfo.error = %s\n",
           toString(radioRsp_network->rspInfo.error).c_str());
-    // Allow REQUEST_NOT_SUPPORTED as setLinkCapacityReportingCriteria() may not be supported
-    // for GERAN
-    ASSERT_TRUE(
-            CheckAnyOfErrors(radioRsp_network->rspInfo.error,
-                             {RadioError::INVALID_ARGUMENTS, RadioError::REQUEST_NOT_SUPPORTED}));
+    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error, {RadioError::INVALID_ARGUMENTS}));
 }
 
 /*
@@ -756,7 +762,7 @@ TEST_P(RadioNetworkTest, setLinkCapacityReportingCriteria_emptyParams) {
     serial = GetRandomSerialNumber();
 
     ndk::ScopedAStatus res = radio_network->setLinkCapacityReportingCriteria(
-            serial, 0, 0, 0, {}, {}, AccessNetwork::GERAN);
+            serial, 0, 0, 0, {}, {}, AccessNetwork::EUTRAN);
     ASSERT_OK(res);
     EXPECT_EQ(std::cv_status::no_timeout, wait());
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_network->rspInfo.type);
@@ -764,10 +770,7 @@ TEST_P(RadioNetworkTest, setLinkCapacityReportingCriteria_emptyParams) {
 
     ALOGI("setLinkCapacityReportingCriteria_emptyParams, rspInfo.error = %s\n",
           toString(radioRsp_network->rspInfo.error).c_str());
-    // Allow REQUEST_NOT_SUPPORTED as setLinkCapacityReportingCriteria() may not be supported
-    // for GERAN
-    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error,
-                                 {RadioError::NONE, RadioError::REQUEST_NOT_SUPPORTED}));
+    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error, {RadioError::NONE}));
 }
 
 /*
@@ -808,19 +811,9 @@ TEST_P(RadioNetworkTest, setSystemSelectionChannels) {
     }
     std::vector<RadioAccessSpecifier> originalSpecifiers = radioRsp_network->specifiers;
 
-    RadioAccessSpecifierBands bandP900 =
-            RadioAccessSpecifierBands::make<RadioAccessSpecifierBands::geranBands>(
-                    {GeranBands::BAND_P900});
-    RadioAccessSpecifierBands band850 =
-            RadioAccessSpecifierBands::make<RadioAccessSpecifierBands::geranBands>(
-                    {GeranBands::BAND_850});
-    RadioAccessSpecifier specifierP900 = {
-            .accessNetwork = AccessNetwork::GERAN, .bands = bandP900, .channels = {1, 2}};
-    RadioAccessSpecifier specifier850 = {
-            .accessNetwork = AccessNetwork::GERAN, .bands = band850, .channels = {128, 129}};
-
     serial = GetRandomSerialNumber();
-    res = radio_network->setSystemSelectionChannels(serial, true, {specifierP900, specifier850});
+    res = radio_network->setSystemSelectionChannels(serial, true,
+                                                    {::EUTRAN_SPECIFIER_17, ::EUTRAN_SPECIFIER_20});
     ASSERT_OK(res);
     EXPECT_EQ(std::cv_status::no_timeout, wait());
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_network->rspInfo.type);
@@ -833,8 +826,8 @@ TEST_P(RadioNetworkTest, setSystemSelectionChannels) {
 
     if (radioRsp_network->rspInfo.error == RadioError::NONE) {
         serial = GetRandomSerialNumber();
-        res = radio_network->setSystemSelectionChannels(serial, false,
-                                                        {specifierP900, specifier850});
+        res = radio_network->setSystemSelectionChannels(
+                serial, false, {::EUTRAN_SPECIFIER_17, ::EUTRAN_SPECIFIER_20});
         ASSERT_OK(res);
         EXPECT_EQ(std::cv_status::no_timeout, wait());
         EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_network->rspInfo.type);
@@ -857,20 +850,9 @@ TEST_P(RadioNetworkTest, setSystemSelectionChannels) {
 TEST_P(RadioNetworkTest, startNetworkScan) {
     serial = GetRandomSerialNumber();
 
-    RadioAccessSpecifierBands band17 =
-            RadioAccessSpecifierBands::make<RadioAccessSpecifierBands::eutranBands>(
-                    {EutranBands::BAND_17});
-    RadioAccessSpecifierBands band20 =
-            RadioAccessSpecifierBands::make<RadioAccessSpecifierBands::eutranBands>(
-                    {EutranBands::BAND_20});
-    RadioAccessSpecifier specifier17 = {
-            .accessNetwork = AccessNetwork::EUTRAN, .bands = band17, .channels = {1, 2}};
-    RadioAccessSpecifier specifier20 = {
-            .accessNetwork = AccessNetwork::EUTRAN, .bands = band20, .channels = {128, 129}};
-
     NetworkScanRequest request = {.type = NetworkScanRequest::SCAN_TYPE_ONE_SHOT,
                                   .interval = 60,
-                                  .specifiers = {specifier17, specifier20},
+                                  .specifiers = {::EUTRAN_SPECIFIER_17, ::EUTRAN_SPECIFIER_20},
                                   .maxSearchTime = 60,
                                   .incrementalResults = false,
                                   .incrementalResultsPeriodicity = 1};
@@ -886,16 +868,15 @@ TEST_P(RadioNetworkTest, startNetworkScan) {
     if (cardStatus.cardState == CardStatus::STATE_ABSENT) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error, {RadioError::SIM_ABSENT}));
     } else if (cardStatus.cardState == CardStatus::STATE_PRESENT) {
-        if (deviceSupportsFeature(FEATURE_TELEPHONY_GSM)) {
+        if (deviceSupportsFeature(FEATURE_TELEPHONY_GSM) && isLteConnected()) {
             // Modems support 3GPP RAT family need to
             // support scanning requests combined with some parameters.
             ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error,
                                          {RadioError::NONE, RadioError::OPERATION_NOT_ALLOWED}));
         } else {
-            ASSERT_TRUE(CheckAnyOfErrors(
-                    radioRsp_network->rspInfo.error,
-                    {RadioError::NONE, RadioError::OPERATION_NOT_ALLOWED, RadioError::NONE,
-                     RadioError::INVALID_ARGUMENTS, RadioError::REQUEST_NOT_SUPPORTED}));
+            ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error,
+                                         {RadioError::NONE, RadioError::OPERATION_NOT_ALLOWED,
+                                          RadioError::INVALID_ARGUMENTS}));
         }
     }
 
@@ -925,9 +906,8 @@ TEST_P(RadioNetworkTest, startNetworkScan_InvalidArgument) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error,
                                      {RadioError::SIM_ABSENT, RadioError::INVALID_ARGUMENTS}));
     } else if (cardStatus.cardState == CardStatus::STATE_PRESENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(
-                radioRsp_network->rspInfo.error,
-                {RadioError::INVALID_ARGUMENTS, RadioError::REQUEST_NOT_SUPPORTED}));
+        ASSERT_TRUE(
+                CheckAnyOfErrors(radioRsp_network->rspInfo.error, {RadioError::INVALID_ARGUMENTS}));
     }
 }
 
@@ -937,20 +917,9 @@ TEST_P(RadioNetworkTest, startNetworkScan_InvalidArgument) {
 TEST_P(RadioNetworkTest, startNetworkScan_InvalidInterval1) {
     serial = GetRandomSerialNumber();
 
-    RadioAccessSpecifierBands bandP900 =
-            RadioAccessSpecifierBands::make<RadioAccessSpecifierBands::geranBands>(
-                    {GeranBands::BAND_P900});
-    RadioAccessSpecifierBands band850 =
-            RadioAccessSpecifierBands::make<RadioAccessSpecifierBands::geranBands>(
-                    {GeranBands::BAND_850});
-    RadioAccessSpecifier specifierP900 = {
-            .accessNetwork = AccessNetwork::GERAN, .bands = bandP900, .channels = {1, 2}};
-    RadioAccessSpecifier specifier850 = {
-            .accessNetwork = AccessNetwork::GERAN, .bands = band850, .channels = {128, 129}};
-
     NetworkScanRequest request = {.type = NetworkScanRequest::SCAN_TYPE_PERIODIC,
                                   .interval = 4,
-                                  .specifiers = {specifierP900, specifier850},
+                                  .specifiers = {::EUTRAN_SPECIFIER_17, ::EUTRAN_SPECIFIER_20},
                                   .maxSearchTime = 60,
                                   .incrementalResults = false,
                                   .incrementalResultsPeriodicity = 1};
@@ -966,9 +935,8 @@ TEST_P(RadioNetworkTest, startNetworkScan_InvalidInterval1) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error,
                                      {RadioError::SIM_ABSENT, RadioError::INVALID_ARGUMENTS}));
     } else if (cardStatus.cardState == CardStatus::STATE_PRESENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(
-                radioRsp_network->rspInfo.error,
-                {RadioError::INVALID_ARGUMENTS, RadioError::REQUEST_NOT_SUPPORTED}));
+        ASSERT_TRUE(
+                CheckAnyOfErrors(radioRsp_network->rspInfo.error, {RadioError::INVALID_ARGUMENTS}));
     }
 }
 
@@ -978,20 +946,9 @@ TEST_P(RadioNetworkTest, startNetworkScan_InvalidInterval1) {
 TEST_P(RadioNetworkTest, startNetworkScan_InvalidInterval2) {
     serial = GetRandomSerialNumber();
 
-    RadioAccessSpecifierBands bandP900 =
-            RadioAccessSpecifierBands::make<RadioAccessSpecifierBands::geranBands>(
-                    {GeranBands::BAND_P900});
-    RadioAccessSpecifierBands band850 =
-            RadioAccessSpecifierBands::make<RadioAccessSpecifierBands::geranBands>(
-                    {GeranBands::BAND_850});
-    RadioAccessSpecifier specifierP900 = {
-            .accessNetwork = AccessNetwork::GERAN, .bands = bandP900, .channels = {1, 2}};
-    RadioAccessSpecifier specifier850 = {
-            .accessNetwork = AccessNetwork::GERAN, .bands = band850, .channels = {128, 129}};
-
     NetworkScanRequest request = {.type = NetworkScanRequest::SCAN_TYPE_PERIODIC,
                                   .interval = 301,
-                                  .specifiers = {specifierP900, specifier850},
+                                  .specifiers = {::EUTRAN_SPECIFIER_17, ::EUTRAN_SPECIFIER_20},
                                   .maxSearchTime = 60,
                                   .incrementalResults = false,
                                   .incrementalResultsPeriodicity = 1};
@@ -1007,9 +964,8 @@ TEST_P(RadioNetworkTest, startNetworkScan_InvalidInterval2) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error,
                                      {RadioError::SIM_ABSENT, RadioError::INVALID_ARGUMENTS}));
     } else if (cardStatus.cardState == CardStatus::STATE_PRESENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(
-                radioRsp_network->rspInfo.error,
-                {RadioError::INVALID_ARGUMENTS, RadioError::REQUEST_NOT_SUPPORTED}));
+        ASSERT_TRUE(
+                CheckAnyOfErrors(radioRsp_network->rspInfo.error, {RadioError::INVALID_ARGUMENTS}));
     }
 }
 
@@ -1019,20 +975,9 @@ TEST_P(RadioNetworkTest, startNetworkScan_InvalidInterval2) {
 TEST_P(RadioNetworkTest, startNetworkScan_InvalidMaxSearchTime1) {
     serial = GetRandomSerialNumber();
 
-    RadioAccessSpecifierBands bandP900 =
-            RadioAccessSpecifierBands::make<RadioAccessSpecifierBands::geranBands>(
-                    {GeranBands::BAND_P900});
-    RadioAccessSpecifierBands band850 =
-            RadioAccessSpecifierBands::make<RadioAccessSpecifierBands::geranBands>(
-                    {GeranBands::BAND_850});
-    RadioAccessSpecifier specifierP900 = {
-            .accessNetwork = AccessNetwork::GERAN, .bands = bandP900, .channels = {1, 2}};
-    RadioAccessSpecifier specifier850 = {
-            .accessNetwork = AccessNetwork::GERAN, .bands = band850, .channels = {128, 129}};
-
     NetworkScanRequest request = {.type = NetworkScanRequest::SCAN_TYPE_ONE_SHOT,
                                   .interval = 60,
-                                  .specifiers = {specifierP900, specifier850},
+                                  .specifiers = {::EUTRAN_SPECIFIER_17, ::EUTRAN_SPECIFIER_20},
                                   .maxSearchTime = 59,
                                   .incrementalResults = false,
                                   .incrementalResultsPeriodicity = 1};
@@ -1048,9 +993,8 @@ TEST_P(RadioNetworkTest, startNetworkScan_InvalidMaxSearchTime1) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error,
                                      {RadioError::SIM_ABSENT, RadioError::INVALID_ARGUMENTS}));
     } else if (cardStatus.cardState == CardStatus::STATE_PRESENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(
-                radioRsp_network->rspInfo.error,
-                {RadioError::INVALID_ARGUMENTS, RadioError::REQUEST_NOT_SUPPORTED}));
+        ASSERT_TRUE(
+                CheckAnyOfErrors(radioRsp_network->rspInfo.error, {RadioError::INVALID_ARGUMENTS}));
     }
 }
 
@@ -1060,20 +1004,9 @@ TEST_P(RadioNetworkTest, startNetworkScan_InvalidMaxSearchTime1) {
 TEST_P(RadioNetworkTest, startNetworkScan_InvalidMaxSearchTime2) {
     serial = GetRandomSerialNumber();
 
-    RadioAccessSpecifierBands bandP900 =
-            RadioAccessSpecifierBands::make<RadioAccessSpecifierBands::geranBands>(
-                    {GeranBands::BAND_P900});
-    RadioAccessSpecifierBands band850 =
-            RadioAccessSpecifierBands::make<RadioAccessSpecifierBands::geranBands>(
-                    {GeranBands::BAND_850});
-    RadioAccessSpecifier specifierP900 = {
-            .accessNetwork = AccessNetwork::GERAN, .bands = bandP900, .channels = {1, 2}};
-    RadioAccessSpecifier specifier850 = {
-            .accessNetwork = AccessNetwork::GERAN, .bands = band850, .channels = {128, 129}};
-
     NetworkScanRequest request = {.type = NetworkScanRequest::SCAN_TYPE_ONE_SHOT,
                                   .interval = 60,
-                                  .specifiers = {specifierP900, specifier850},
+                                  .specifiers = {::EUTRAN_SPECIFIER_17, ::EUTRAN_SPECIFIER_20},
                                   .maxSearchTime = 3601,
                                   .incrementalResults = false,
                                   .incrementalResultsPeriodicity = 1};
@@ -1089,9 +1022,8 @@ TEST_P(RadioNetworkTest, startNetworkScan_InvalidMaxSearchTime2) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error,
                                      {RadioError::SIM_ABSENT, RadioError::INVALID_ARGUMENTS}));
     } else if (cardStatus.cardState == CardStatus::STATE_PRESENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(
-                radioRsp_network->rspInfo.error,
-                {RadioError::INVALID_ARGUMENTS, RadioError::REQUEST_NOT_SUPPORTED}));
+        ASSERT_TRUE(
+                CheckAnyOfErrors(radioRsp_network->rspInfo.error, {RadioError::INVALID_ARGUMENTS}));
     }
 }
 
@@ -1101,20 +1033,9 @@ TEST_P(RadioNetworkTest, startNetworkScan_InvalidMaxSearchTime2) {
 TEST_P(RadioNetworkTest, startNetworkScan_InvalidPeriodicity1) {
     serial = GetRandomSerialNumber();
 
-    RadioAccessSpecifierBands bandP900 =
-            RadioAccessSpecifierBands::make<RadioAccessSpecifierBands::geranBands>(
-                    {GeranBands::BAND_P900});
-    RadioAccessSpecifierBands band850 =
-            RadioAccessSpecifierBands::make<RadioAccessSpecifierBands::geranBands>(
-                    {GeranBands::BAND_850});
-    RadioAccessSpecifier specifierP900 = {
-            .accessNetwork = AccessNetwork::GERAN, .bands = bandP900, .channels = {1, 2}};
-    RadioAccessSpecifier specifier850 = {
-            .accessNetwork = AccessNetwork::GERAN, .bands = band850, .channels = {128, 129}};
-
     NetworkScanRequest request = {.type = NetworkScanRequest::SCAN_TYPE_ONE_SHOT,
                                   .interval = 60,
-                                  .specifiers = {specifierP900, specifier850},
+                                  .specifiers = {::EUTRAN_SPECIFIER_17, ::EUTRAN_SPECIFIER_20},
                                   .maxSearchTime = 600,
                                   .incrementalResults = true,
                                   .incrementalResultsPeriodicity = 0};
@@ -1130,9 +1051,8 @@ TEST_P(RadioNetworkTest, startNetworkScan_InvalidPeriodicity1) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error,
                                      {RadioError::SIM_ABSENT, RadioError::INVALID_ARGUMENTS}));
     } else if (cardStatus.cardState == CardStatus::STATE_PRESENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(
-                radioRsp_network->rspInfo.error,
-                {RadioError::INVALID_ARGUMENTS, RadioError::REQUEST_NOT_SUPPORTED}));
+        ASSERT_TRUE(
+                CheckAnyOfErrors(radioRsp_network->rspInfo.error, {RadioError::INVALID_ARGUMENTS}));
     }
 }
 
@@ -1142,20 +1062,9 @@ TEST_P(RadioNetworkTest, startNetworkScan_InvalidPeriodicity1) {
 TEST_P(RadioNetworkTest, startNetworkScan_InvalidPeriodicity2) {
     serial = GetRandomSerialNumber();
 
-    RadioAccessSpecifierBands bandP900 =
-            RadioAccessSpecifierBands::make<RadioAccessSpecifierBands::geranBands>(
-                    {GeranBands::BAND_P900});
-    RadioAccessSpecifierBands band850 =
-            RadioAccessSpecifierBands::make<RadioAccessSpecifierBands::geranBands>(
-                    {GeranBands::BAND_850});
-    RadioAccessSpecifier specifierP900 = {
-            .accessNetwork = AccessNetwork::GERAN, .bands = bandP900, .channels = {1, 2}};
-    RadioAccessSpecifier specifier850 = {
-            .accessNetwork = AccessNetwork::GERAN, .bands = band850, .channels = {128, 129}};
-
     NetworkScanRequest request = {.type = NetworkScanRequest::SCAN_TYPE_ONE_SHOT,
                                   .interval = 60,
-                                  .specifiers = {specifierP900, specifier850},
+                                  .specifiers = {::EUTRAN_SPECIFIER_17, ::EUTRAN_SPECIFIER_20},
                                   .maxSearchTime = 600,
                                   .incrementalResults = true,
                                   .incrementalResultsPeriodicity = 11};
@@ -1171,9 +1080,8 @@ TEST_P(RadioNetworkTest, startNetworkScan_InvalidPeriodicity2) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error,
                                      {RadioError::SIM_ABSENT, RadioError::INVALID_ARGUMENTS}));
     } else if (cardStatus.cardState == CardStatus::STATE_PRESENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(
-                radioRsp_network->rspInfo.error,
-                {RadioError::INVALID_ARGUMENTS, RadioError::REQUEST_NOT_SUPPORTED}));
+        ASSERT_TRUE(
+                CheckAnyOfErrors(radioRsp_network->rspInfo.error, {RadioError::INVALID_ARGUMENTS}));
     }
 }
 
@@ -1183,20 +1091,9 @@ TEST_P(RadioNetworkTest, startNetworkScan_InvalidPeriodicity2) {
 TEST_P(RadioNetworkTest, startNetworkScan_GoodRequest1) {
     serial = GetRandomSerialNumber();
 
-    RadioAccessSpecifierBands bandP900 =
-            RadioAccessSpecifierBands::make<RadioAccessSpecifierBands::geranBands>(
-                    {GeranBands::BAND_P900});
-    RadioAccessSpecifierBands band850 =
-            RadioAccessSpecifierBands::make<RadioAccessSpecifierBands::geranBands>(
-                    {GeranBands::BAND_850});
-    RadioAccessSpecifier specifierP900 = {
-            .accessNetwork = AccessNetwork::GERAN, .bands = bandP900, .channels = {1, 2}};
-    RadioAccessSpecifier specifier850 = {
-            .accessNetwork = AccessNetwork::GERAN, .bands = band850, .channels = {128, 129}};
-
     NetworkScanRequest request = {.type = NetworkScanRequest::SCAN_TYPE_ONE_SHOT,
                                   .interval = 60,
-                                  .specifiers = {specifierP900, specifier850},
+                                  .specifiers = {::EUTRAN_SPECIFIER_17, ::EUTRAN_SPECIFIER_20},
                                   .maxSearchTime = 360,
                                   .incrementalResults = false,
                                   .incrementalResultsPeriodicity = 10};
@@ -1213,8 +1110,7 @@ TEST_P(RadioNetworkTest, startNetworkScan_GoodRequest1) {
                                      {RadioError::NONE, RadioError::SIM_ABSENT}));
     } else if (cardStatus.cardState == CardStatus::STATE_PRESENT) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error,
-                                     {RadioError::NONE, RadioError::INVALID_ARGUMENTS,
-                                      RadioError::REQUEST_NOT_SUPPORTED}));
+                                     {RadioError::NONE, RadioError::INVALID_ARGUMENTS}));
     }
 
     if (radioRsp_network->rspInfo.error == RadioError::NONE) {
@@ -1229,20 +1125,9 @@ TEST_P(RadioNetworkTest, startNetworkScan_GoodRequest1) {
 TEST_P(RadioNetworkTest, startNetworkScan_GoodRequest2) {
     serial = GetRandomSerialNumber();
 
-    RadioAccessSpecifierBands bandP900 =
-            RadioAccessSpecifierBands::make<RadioAccessSpecifierBands::geranBands>(
-                    {GeranBands::BAND_P900});
-    RadioAccessSpecifierBands band850 =
-            RadioAccessSpecifierBands::make<RadioAccessSpecifierBands::geranBands>(
-                    {GeranBands::BAND_850});
-    RadioAccessSpecifier specifierP900 = {
-            .accessNetwork = AccessNetwork::GERAN, .bands = bandP900, .channels = {1, 2}};
-    RadioAccessSpecifier specifier850 = {
-            .accessNetwork = AccessNetwork::GERAN, .bands = band850, .channels = {128, 129}};
-
     NetworkScanRequest request = {.type = NetworkScanRequest::SCAN_TYPE_ONE_SHOT,
                                   .interval = 60,
-                                  .specifiers = {specifierP900, specifier850},
+                                  .specifiers = {::EUTRAN_SPECIFIER_17, ::EUTRAN_SPECIFIER_20},
                                   .maxSearchTime = 360,
                                   .incrementalResults = false,
                                   .incrementalResultsPeriodicity = 10,
@@ -1260,8 +1145,7 @@ TEST_P(RadioNetworkTest, startNetworkScan_GoodRequest2) {
                                      {RadioError::NONE, RadioError::SIM_ABSENT}));
     } else if (cardStatus.cardState == CardStatus::STATE_PRESENT) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error,
-                                     {RadioError::NONE, RadioError::INVALID_ARGUMENTS,
-                                      RadioError::REQUEST_NOT_SUPPORTED}));
+                                     {RadioError::NONE, RadioError::INVALID_ARGUMENTS}));
     }
 
     if (radioRsp_network->rspInfo.error == RadioError::NONE) {
@@ -1278,21 +1162,23 @@ TEST_P(RadioNetworkTest, setNetworkSelectionModeManual) {
 
     // can't camp on nonexistent MCCMNC, so we expect this to fail.
     ndk::ScopedAStatus res =
-            radio_network->setNetworkSelectionModeManual(serial, "123456", AccessNetwork::GERAN);
+            radio_network->setNetworkSelectionModeManual(serial, "123456", AccessNetwork::EUTRAN);
     EXPECT_EQ(std::cv_status::no_timeout, wait());
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_network->rspInfo.type);
     EXPECT_EQ(serial, radioRsp_network->rspInfo.serial);
 
     if (cardStatus.cardState == CardStatus::STATE_ABSENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error,
-                                     {RadioError::NONE, RadioError::ILLEGAL_SIM_OR_ME,
-                                      RadioError::INVALID_ARGUMENTS, RadioError::INVALID_STATE},
-                                     CHECK_GENERAL_ERROR));
+        ASSERT_TRUE(CheckAnyOfErrors(
+                radioRsp_network->rspInfo.error,
+                {RadioError::NONE, RadioError::ILLEGAL_SIM_OR_ME, RadioError::INVALID_ARGUMENTS,
+                 RadioError::INVALID_STATE, RadioError::RADIO_NOT_AVAILABLE, RadioError::NO_MEMORY,
+                 RadioError::INTERNAL_ERR, RadioError::SYSTEM_ERR, RadioError::CANCELLED}));
     } else if (cardStatus.cardState == CardStatus::STATE_PRESENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error,
-                                     {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE,
-                                      RadioError::INVALID_ARGUMENTS, RadioError::INVALID_STATE},
-                                     CHECK_GENERAL_ERROR));
+        ASSERT_TRUE(CheckAnyOfErrors(
+                radioRsp_network->rspInfo.error,
+                {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::INVALID_ARGUMENTS,
+                 RadioError::INVALID_STATE, RadioError::NO_MEMORY, RadioError::INTERNAL_ERR,
+                 RadioError::SYSTEM_ERR, RadioError::CANCELLED}));
     }
 }
 

@@ -21,11 +21,17 @@
 #include <functional>
 #include <unordered_map>
 
+#define LOG_TAG "AHAL_ApmXmlConverter"
+#include <android-base/logging.h>
+
 #include <aidl/android/media/audio/common/AudioHalEngineConfig.h>
+#include <media/stagefright/foundation/MediaDefs.h>
 #include <system/audio-base-utils.h>
 
+#include "core-impl/AidlConversionXsdc.h"
 #include "core-impl/AudioPolicyConfigXmlConverter.h"
 
+using aidl::android::media::audio::common::AudioFormatDescription;
 using aidl::android::media::audio::common::AudioHalEngineConfig;
 using aidl::android::media::audio::common::AudioHalVolumeCurve;
 using aidl::android::media::audio::common::AudioHalVolumeGroup;
@@ -68,13 +74,13 @@ AudioHalVolumeCurve AudioPolicyConfigXmlConverter::convertVolumeCurveToAidl(
                     getXsdcConfig()->getVolumes());
         }
         aidlVolumeCurve.curvePoints =
-                convertCollectionToAidl<std::string, AudioHalVolumeCurve::CurvePoint>(
+                convertCollectionToAidlUnchecked<std::string, AudioHalVolumeCurve::CurvePoint>(
                         mVolumesReferenceMap.at(xsdcVolumeCurve.getRef()).getPoint(),
                         std::bind(&AudioPolicyConfigXmlConverter::convertCurvePointToAidl, this,
                                   std::placeholders::_1));
     } else {
         aidlVolumeCurve.curvePoints =
-                convertCollectionToAidl<std::string, AudioHalVolumeCurve::CurvePoint>(
+                convertCollectionToAidlUnchecked<std::string, AudioHalVolumeCurve::CurvePoint>(
                         xsdcVolumeCurve.getPoint(),
                         std::bind(&AudioPolicyConfigXmlConverter::convertCurvePointToAidl, this,
                                   std::placeholders::_1));
@@ -87,12 +93,69 @@ void AudioPolicyConfigXmlConverter::mapStreamToVolumeCurve(const xsd::Volume& xs
             convertVolumeCurveToAidl(xsdcVolumeCurve));
 }
 
+const SurroundSoundConfig& AudioPolicyConfigXmlConverter::getSurroundSoundConfig() {
+    static const SurroundSoundConfig aidlSurroundSoundConfig = [this]() {
+        if (auto xsdcConfig = getXsdcConfig(); xsdcConfig && xsdcConfig->hasSurroundSound()) {
+            auto configConv = xsdc2aidl_SurroundSoundConfig(*xsdcConfig->getFirstSurroundSound());
+            if (configConv.ok()) {
+                return configConv.value();
+            }
+            LOG(ERROR) << "There was an error converting surround formats to AIDL: "
+                       << configConv.error();
+        }
+        LOG(WARNING) << "Audio policy config does not have <surroundSound> section, using default";
+        return getDefaultSurroundSoundConfig();
+    }();
+    return aidlSurroundSoundConfig;
+}
+
 const AudioHalEngineConfig& AudioPolicyConfigXmlConverter::getAidlEngineConfig() {
     if (mAidlEngineConfig.volumeGroups.empty() && getXsdcConfig() &&
         getXsdcConfig()->hasVolumes()) {
         parseVolumes();
     }
     return mAidlEngineConfig;
+}
+
+// static
+const SurroundSoundConfig& AudioPolicyConfigXmlConverter::getDefaultSurroundSoundConfig() {
+    // Provide a config similar to the one used by the framework by default
+    // (see AudioPolicyConfig::setDefaultSurroundFormats).
+#define ENCODED_FORMAT(format)        \
+    AudioFormatDescription {          \
+        .encoding = ::android::format \
+    }
+#define SIMPLE_FORMAT(format)                   \
+    SurroundSoundConfig::SurroundFormatFamily { \
+        .primaryFormat = ENCODED_FORMAT(format) \
+    }
+
+    static const SurroundSoundConfig defaultConfig = {
+            .formatFamilies = {
+                    SIMPLE_FORMAT(MEDIA_MIMETYPE_AUDIO_AC3),
+                    SIMPLE_FORMAT(MEDIA_MIMETYPE_AUDIO_EAC3),
+                    SIMPLE_FORMAT(MEDIA_MIMETYPE_AUDIO_DTS),
+                    SIMPLE_FORMAT(MEDIA_MIMETYPE_AUDIO_DTS_HD),
+                    SIMPLE_FORMAT(MEDIA_MIMETYPE_AUDIO_DTS_HD_MA),
+                    SIMPLE_FORMAT(MEDIA_MIMETYPE_AUDIO_DTS_UHD_P1),
+                    SIMPLE_FORMAT(MEDIA_MIMETYPE_AUDIO_DTS_UHD_P2),
+                    SIMPLE_FORMAT(MEDIA_MIMETYPE_AUDIO_DOLBY_TRUEHD),
+                    SIMPLE_FORMAT(MEDIA_MIMETYPE_AUDIO_EAC3_JOC),
+                    SurroundSoundConfig::SurroundFormatFamily{
+                            .primaryFormat = ENCODED_FORMAT(MEDIA_MIMETYPE_AUDIO_AAC_LC),
+                            .subFormats =
+                                    {
+                                            ENCODED_FORMAT(MEDIA_MIMETYPE_AUDIO_AAC_HE_V1),
+                                            ENCODED_FORMAT(MEDIA_MIMETYPE_AUDIO_AAC_HE_V2),
+                                            ENCODED_FORMAT(MEDIA_MIMETYPE_AUDIO_AAC_ELD),
+                                            ENCODED_FORMAT(MEDIA_MIMETYPE_AUDIO_AAC_XHE),
+                                    }},
+                    SIMPLE_FORMAT(MEDIA_MIMETYPE_AUDIO_AC4),
+            }};
+#undef SIMPLE_FORMAT
+#undef ENCODED_FORMAT
+
+    return defaultConfig;
 }
 
 void AudioPolicyConfigXmlConverter::mapStreamsToVolumeCurves() {

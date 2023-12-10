@@ -4,6 +4,12 @@
       "name": "VtsHalAudioCoreTargetTest"
     },
     {
+      "name": "VtsHalAudioCoreConfigTargetTest"
+    },
+    {
+      "name": "audio_policy_config_xml_converter_tests"
+    },
+    {
       "name": "VtsHalAudioEffectFactoryTargetTest"
     },
     {

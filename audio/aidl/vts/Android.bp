@@ -55,6 +55,7 @@ cc_test {
         "VtsHalAudioCoreConfigTargetTest.cpp",
         "VtsHalAudioCoreModuleTargetTest.cpp",
     ],
+    test_config: "VtsHalAudioCoreTargetTest.xml",
 }
 
 cc_test {

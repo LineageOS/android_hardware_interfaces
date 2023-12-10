@@ -16,20 +16,21 @@
 
 #include <cstdlib>
 #include <ctime>
+#include <sstream>
 #include <utility>
+#include <vector>
 
 #include <android-base/logging.h>
+#include <android-base/properties.h>
 #include <android/binder_ibinder_platform.h>
 #include <android/binder_manager.h>
 #include <android/binder_process.h>
 
 #include "core-impl/Config.h"
 #include "core-impl/Module.h"
-#include "core-impl/ModuleUsb.h"
 
 using aidl::android::hardware::audio::core::Config;
 using aidl::android::hardware::audio::core::Module;
-using aidl::android::hardware::audio::core::ModuleUsb;
 
 int main() {
     // Random values are used in the implementation.
@@ -52,18 +53,21 @@ int main() {
     CHECK_EQ(STATUS_OK, status);
 
     // Make modules
-    auto createModule = [](Module::Type type, const std::string& instance) {
+    auto createModule = [](Module::Type type) {
         auto module = Module::createInstance(type);
         ndk::SpAIBinder moduleBinder = module->asBinder();
-        const std::string moduleName = std::string(Module::descriptor).append("/").append(instance);
+        std::stringstream moduleName;
+        moduleName << Module::descriptor << "/" << type;
         AIBinder_setMinSchedulerPolicy(moduleBinder.get(), SCHED_NORMAL, ANDROID_PRIORITY_AUDIO);
-        binder_status_t status = AServiceManager_addService(moduleBinder.get(), moduleName.c_str());
+        binder_status_t status =
+                AServiceManager_addService(moduleBinder.get(), moduleName.str().c_str());
         CHECK_EQ(STATUS_OK, status);
         return std::make_pair(module, moduleBinder);
     };
-    auto modules = {createModule(Module::Type::DEFAULT, "default"),
-                    createModule(Module::Type::R_SUBMIX, "r_submix"),
-                    createModule(Module::Type::USB, "usb")};
+    auto modules = {createModule(Module::Type::DEFAULT), createModule(Module::Type::R_SUBMIX),
+                    createModule(Module::Type::USB), createModule(Module::Type::STUB),
+                    createModule(Module::Type::BLUETOOTH)};
+    (void)modules;
 
     ABinderProcess_joinThreadPool();
     return EXIT_FAILURE;  // should not reach

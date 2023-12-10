@@ -222,6 +222,8 @@ class BluetoothAidlTest : public ::testing::TestWithParam<std::string> {
   int wait_for_completed_packets_event(uint16_t handle);
   void send_and_wait_for_cmd_complete(std::unique_ptr<CommandBuilder> cmd,
                                       std::vector<uint8_t>& cmd_complete);
+  void reassemble_sco_loopback_pkt(std::vector<uint8_t>& scoPackets,
+    size_t size);
 
   // A simple test implementation of BluetoothHciCallbacks.
   class BluetoothHciCallbacks
@@ -569,6 +571,11 @@ void BluetoothAidlTest::sendAndCheckSco(int num_packets, size_t size,
     ASSERT_TRUE(
         sco_queue.tryPopWithTimeout(sco_loopback, kWaitForScoDataTimeout));
 
+    if (sco_loopback.size() < size) {
+      // The packets may have been split for USB. Reassemble before checking.
+      reassemble_sco_loopback_pkt(sco_loopback, size);
+    }
+
     ASSERT_EQ(sco_packet, sco_loopback);
   }
   logger.setTotalBytes(num_packets * size * 2);
@@ -701,6 +708,22 @@ void BluetoothAidlTest::send_and_wait_for_cmd_complete(
         static_cast<int>(view.GetOpCode()));
   ASSERT_NO_FATAL_FAILURE(
       wait_for_command_complete_event(view.GetOpCode(), cmd_complete));
+}
+
+// Handle the loopback packet.
+void BluetoothAidlTest::reassemble_sco_loopback_pkt(std::vector<uint8_t>& scoPackets,
+        size_t size) {
+    std::vector<uint8_t> sco_packet_whole;
+    sco_packet_whole.assign(scoPackets.begin(), scoPackets.end());
+    while (size + 3 > sco_packet_whole.size()) {
+      std::vector<uint8_t> sco_packets;
+      ASSERT_TRUE(
+      sco_queue.tryPopWithTimeout(sco_packets, kWaitForScoDataTimeout));
+      sco_packet_whole.insert(sco_packet_whole.end(), sco_packets.begin() + 3,
+          sco_packets.end());
+    }
+    scoPackets.assign(sco_packet_whole.begin(), sco_packet_whole.end());
+    scoPackets[2] = size;
 }
 
 // Empty test: Initialize()/Close() are called in SetUp()/TearDown().

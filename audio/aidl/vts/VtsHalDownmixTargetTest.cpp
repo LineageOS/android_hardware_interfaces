@@ -126,9 +126,7 @@ INSTANTIATE_TEST_SUITE_P(
         [](const testing::TestParamInfo<DownmixParamTest::ParamType>& info) {
             auto descriptor = std::get<PARAM_INSTANCE_NAME>(info.param).second;
             std::string type = std::to_string(static_cast<int>(std::get<PARAM_TYPE>(info.param)));
-            std::string name = "Implementor_" + descriptor.common.implementor + "_name_" +
-                               descriptor.common.name + "_UUID_" +
-                               descriptor.common.id.uuid.toString() + "_type" + type;
+            std::string name = getPrefix(descriptor) + "_type" + type;
             std::replace_if(
                     name.begin(), name.end(), [](const char c) { return !std::isalnum(c); }, '_');
             return name;

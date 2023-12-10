@@ -12,7 +12,17 @@
   <hal format="aidl">
     <name>android.hardware.audio.core</name>
     <version>1</version>
+    <fqname>IModule/stub</fqname>
+  </hal>
+  <hal format="aidl">
+    <name>android.hardware.audio.core</name>
+    <version>1</version>
     <fqname>IModule/usb</fqname>
+  </hal>
+  <hal format="aidl">
+    <name>android.hardware.audio.core</name>
+    <version>1</version>
+    <fqname>IModule/bluetooth</fqname>
   </hal>
   <hal format="aidl">
     <name>android.hardware.audio.core</name>

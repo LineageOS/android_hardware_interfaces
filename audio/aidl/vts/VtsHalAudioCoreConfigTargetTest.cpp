@@ -20,21 +20,27 @@
 #include <unordered_set>
 #include <vector>
 
+#define LOG_TAG "VtsHalAudioCore.Config"
+
+#include <Utils.h>
 #include <aidl/Gtest.h>
 #include <aidl/Vintf.h>
 #include <aidl/android/hardware/audio/core/IConfig.h>
 #include <aidl/android/media/audio/common/AudioFlag.h>
 #include <aidl/android/media/audio/common/AudioProductStrategyType.h>
-#define LOG_TAG "VtsHalAudioCore.Config"
 #include <android-base/logging.h>
 
 #include "AudioHalBinderServiceUtil.h"
 #include "TestUtils.h"
 
 using namespace android;
+using aidl::android::hardware::audio::common::isDefaultAudioFormat;
 using aidl::android::hardware::audio::core::IConfig;
+using aidl::android::hardware::audio::core::SurroundSoundConfig;
 using aidl::android::media::audio::common::AudioAttributes;
 using aidl::android::media::audio::common::AudioFlag;
+using aidl::android::media::audio::common::AudioFormatDescription;
+using aidl::android::media::audio::common::AudioFormatType;
 using aidl::android::media::audio::common::AudioHalAttributesGroup;
 using aidl::android::media::audio::common::AudioHalCapCriterion;
 using aidl::android::media::audio::common::AudioHalCapCriterionType;
@@ -46,6 +52,7 @@ using aidl::android::media::audio::common::AudioProductStrategyType;
 using aidl::android::media::audio::common::AudioSource;
 using aidl::android::media::audio::common::AudioStreamType;
 using aidl::android::media::audio::common::AudioUsage;
+using aidl::android::media::audio::common::PcmType;
 
 class AudioCoreConfig : public testing::TestWithParam<std::string> {
   public:
@@ -58,6 +65,7 @@ class AudioCoreConfig : public testing::TestWithParam<std::string> {
     void RestartService() {
         ASSERT_NE(mConfig, nullptr);
         mEngineConfig.reset();
+        mSurroundSoundConfig.reset();
         mConfig = IConfig::fromBinder(mBinderUtil.restartService());
         ASSERT_NE(mConfig, nullptr);
     }
@@ -67,6 +75,14 @@ class AudioCoreConfig : public testing::TestWithParam<std::string> {
             auto tempConfig = std::make_unique<AudioHalEngineConfig>();
             ASSERT_IS_OK(mConfig->getEngineConfig(tempConfig.get()));
             mEngineConfig = std::move(tempConfig);
+        }
+    }
+
+    void SetUpSurroundSoundConfig() {
+        if (mSurroundSoundConfig == nullptr) {
+            auto tempConfig = std::make_unique<SurroundSoundConfig>();
+            ASSERT_IS_OK(mConfig->getSurroundSoundConfig(tempConfig.get()));
+            mSurroundSoundConfig = std::move(tempConfig);
         }
     }
 
@@ -325,9 +341,41 @@ class AudioCoreConfig : public testing::TestWithParam<std::string> {
         }
     }
 
+    void ValidateAudioFormatDescription(const AudioFormatDescription& format) {
+        EXPECT_NE(AudioFormatType::SYS_RESERVED_INVALID, format.type);
+        if (format.type == AudioFormatType::PCM) {
+            EXPECT_NE(PcmType::DEFAULT, format.pcm);
+            EXPECT_TRUE(format.encoding.empty()) << format.encoding;
+        } else {
+            EXPECT_FALSE(format.encoding.empty());
+        }
+    }
+
+    /**
+     * Verify that the surround sound configuration is not empty.
+     * Verify each of the formatFamilies has a non-empty primaryFormat.
+     * Verify that each format only appears once.
+     */
+    void ValidateSurroundSoundConfig() {
+        EXPECT_FALSE(mSurroundSoundConfig->formatFamilies.empty());
+        std::set<AudioFormatDescription> formatSet;
+        for (const SurroundSoundConfig::SurroundFormatFamily& family :
+             mSurroundSoundConfig->formatFamilies) {
+            EXPECT_NO_FATAL_FAILURE(ValidateAudioFormatDescription(family.primaryFormat));
+            EXPECT_FALSE(isDefaultAudioFormat(family.primaryFormat));
+            EXPECT_TRUE(formatSet.insert(family.primaryFormat).second);
+            for (const AudioFormatDescription& subformat : family.subFormats) {
+                EXPECT_NO_FATAL_FAILURE(ValidateAudioFormatDescription(subformat));
+                EXPECT_FALSE(isDefaultAudioFormat(subformat));
+                EXPECT_TRUE(formatSet.insert(subformat).second);
+            }
+        }
+    }
+
   private:
     std::shared_ptr<IConfig> mConfig;
     std::unique_ptr<AudioHalEngineConfig> mEngineConfig;
+    std::unique_ptr<SurroundSoundConfig> mSurroundSoundConfig;
     AudioHalBinderServiceUtil mBinderUtil;
 };
 
@@ -342,6 +390,11 @@ TEST_P(AudioCoreConfig, CanBeRestarted) {
 TEST_P(AudioCoreConfig, GetEngineConfigIsValid) {
     ASSERT_NO_FATAL_FAILURE(SetUpEngineConfig());
     EXPECT_NO_FATAL_FAILURE(ValidateAudioHalEngineConfig());
+}
+
+TEST_P(AudioCoreConfig, GetSurroundSoundConfigIsValid) {
+    ASSERT_NO_FATAL_FAILURE(SetUpSurroundSoundConfig());
+    EXPECT_NO_FATAL_FAILURE(ValidateSurroundSoundConfig());
 }
 
 INSTANTIATE_TEST_SUITE_P(AudioCoreConfigTest, AudioCoreConfig,

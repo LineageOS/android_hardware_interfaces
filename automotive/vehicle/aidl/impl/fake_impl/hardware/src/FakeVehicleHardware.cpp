@@ -990,9 +990,11 @@ DumpResult FakeVehicleHardware::dump(const std::vector<std::string>& options) {
     } else if (EqualsIgnoreCase(option, "--genTestVendorConfigs")) {
         mAddExtraTestVendorConfigs = true;
         result.refreshPropertyConfigs = true;
+        result.buffer = "successfully generated vendor configs";
     } else if (EqualsIgnoreCase(option, "--restoreVendorConfigs")) {
         mAddExtraTestVendorConfigs = false;
         result.refreshPropertyConfigs = true;
+        result.buffer = "successfully restored vendor configs";
     } else {
         result.buffer = StringPrintf("Invalid option: %s\n", option.c_str());
     }
@@ -1808,6 +1810,7 @@ void FakeVehicleHardware::registerOnPropertyChangeEvent(
 
 void FakeVehicleHardware::registerOnPropertySetErrorEvent(
         std::unique_ptr<const PropertySetErrorCallback> callback) {
+    // In FakeVehicleHardware, we will never use mOnPropertySetErrorCallback.
     if (mOnPropertySetErrorCallback != nullptr) {
         ALOGE("registerOnPropertySetErrorEvent must only be called once");
         return;

@@ -134,7 +134,7 @@ static AudioRoute createRoute(const std::vector<AudioPort>& sources, const Audio
 // Device ports:
 //  * "Speaker", OUT_SPEAKER, default
 //    - no profiles specified
-//  * "Built-in Mic", IN_MICROPHONE, default
+//  * "Built-In Mic", IN_MICROPHONE, default
 //    - no profiles specified
 //  * "Telephony Tx", OUT_TELEPHONY_TX
 //    - no profiles specified
@@ -142,62 +142,38 @@ static AudioRoute createRoute(const std::vector<AudioPort>& sources, const Audio
 //    - no profiles specified
 //  * "FM Tuner", IN_FM_TUNER
 //    - no profiles specified
-//  * "USB Out", OUT_DEVICE, CONNECTION_USB
-//    - no profiles specified
-//  * "USB In", IN_DEVICE, CONNECTION_USB
-//    - no profiles specified
 //
 // Mix ports:
 //  * "primary output", PRIMARY, 1 max open, 1 max active stream
 //    - profile PCM 16-bit; MONO, STEREO; 8000, 11025, 16000, 32000, 44100, 48000
-//    - profile PCM 24-bit; MONO, STEREO; 8000, 11025, 16000, 32000, 44100, 48000
-//  * "compressed offload", DIRECT|COMPRESS_OFFLOAD|NON_BLOCKING, 1 max open, 1 max active stream
-//    - profile MP3; MONO, STEREO; 44100, 48000
-//  * "primary input", 2 max open, 2 max active streams
-//    - profile PCM 16-bit; MONO, STEREO, FRONT_BACK;
-//        8000, 11025, 12000, 16000, 22050, 24000, 32000, 44100, 48000
-//    - profile PCM 24-bit; MONO, STEREO, FRONT_BACK;
-//        8000, 11025, 12000, 16000, 22050, 24000, 32000, 44100, 48000
+//  * "primary input", 1 max open, 1 max active stream
+//    - profile PCM 16-bit; MONO, STEREO;
+//        8000, 11025, 16000, 32000, 44100, 48000
 //  * "telephony_tx", 1 max open, 1 max active stream
 //    - profile PCM 16-bit; MONO, STEREO; 8000, 11025, 16000, 32000, 44100, 48000
-//    - profile PCM 24-bit; MONO, STEREO; 8000, 11025, 16000, 32000, 44100, 48000
 //  * "telephony_rx", 1 max open, 1 max active stream
 //    - profile PCM 16-bit; MONO, STEREO; 8000, 11025, 16000, 32000, 44100, 48000
-//    - profile PCM 24-bit; MONO, STEREO; 8000, 11025, 16000, 32000, 44100, 48000
 //  * "fm_tuner", 1 max open, 1 max active stream
 //    - profile PCM 16-bit; MONO, STEREO; 8000, 11025, 16000, 32000, 44100, 48000
-//    - profile PCM 24-bit; MONO, STEREO; 8000, 11025, 16000, 32000, 44100, 48000
 //
 // Routes:
-//  "primary out", "compressed offload" -> "Speaker"
-//  "primary out", "compressed offload" -> "USB Out"
-//  "Built-in Mic", "USB In" -> "primary input"
-//  "telephony_tx" -> "Telephony Tx"
+//  "primary out" -> "Speaker"
+//  "Built-In Mic" -> "primary input"
 //  "Telephony Rx" -> "telephony_rx"
+//  "telephony_tx" -> "Telephony Tx"
 //  "FM Tuner" -> "fm_tuner"
 //
 // Initial port configs:
-//  * "Speaker" device port: PCM 24-bit; STEREO; 48000
-//  * "Built-in Mic" device port: PCM 24-bit; MONO; 48000
-//  * "Telephony Tx" device port: PCM 24-bit; MONO; 48000
-//  * "Telephony Rx" device port: PCM 24-bit; MONO; 48000
-//  * "FM Tuner" device port: PCM 24-bit; STEREO; 48000
-//
-// Profiles for device port connected state:
-//  * USB Out":
-//    - profile PCM 16-bit; MONO, STEREO; 8000, 11025, 16000, 32000, 44100, 48000
-//    - profile PCM 24-bit; MONO, STEREO; 8000, 11025, 16000, 32000, 44100, 48000
-//  * USB In":
-//    - profile PCM 16-bit; MONO, STEREO; 8000, 11025, 16000, 32000, 44100, 48000
-//    - profile PCM 24-bit; MONO, STEREO; 8000, 11025, 16000, 32000, 44100, 48000
+//  * "Speaker" device port: PCM 16-bit; STEREO; 48000
+//  * "Built-In Mic" device port: PCM 16-bit; MONO; 48000
+//  * "Telephony Tx" device port: PCM 16-bit; MONO; 48000
+//  * "Telephony Rx" device port: PCM 16-bit; MONO; 48000
+//  * "FM Tuner" device port: PCM 16-bit; STEREO; 48000
 //
 std::unique_ptr<Configuration> getPrimaryConfiguration() {
     static const Configuration configuration = []() {
         const std::vector<AudioProfile> standardPcmAudioProfiles = {
                 createProfile(PcmType::INT_16_BIT,
-                              {AudioChannelLayout::LAYOUT_MONO, AudioChannelLayout::LAYOUT_STEREO},
-                              {8000, 11025, 16000, 32000, 44100, 48000}),
-                createProfile(PcmType::INT_24_BIT,
                               {AudioChannelLayout::LAYOUT_MONO, AudioChannelLayout::LAYOUT_STEREO},
                               {8000, 11025, 16000, 32000, 44100, 48000})};
         Configuration c;
@@ -210,17 +186,17 @@ std::unique_ptr<Configuration> getPrimaryConfiguration() {
                                            1 << AudioPortDeviceExt::FLAG_INDEX_DEFAULT_DEVICE));
         c.ports.push_back(speakerOutDevice);
         c.initialConfigs.push_back(
-                createPortConfig(speakerOutDevice.id, speakerOutDevice.id, PcmType::INT_24_BIT,
+                createPortConfig(speakerOutDevice.id, speakerOutDevice.id, PcmType::INT_16_BIT,
                                  AudioChannelLayout::LAYOUT_STEREO, 48000, 0, false,
                                  createDeviceExt(AudioDeviceType::OUT_SPEAKER, 0)));
 
         AudioPort micInDevice =
-                createPort(c.nextPortId++, "Built-in Mic", 0, true,
+                createPort(c.nextPortId++, "Built-In Mic", 0, true,
                            createDeviceExt(AudioDeviceType::IN_MICROPHONE,
                                            1 << AudioPortDeviceExt::FLAG_INDEX_DEFAULT_DEVICE));
         c.ports.push_back(micInDevice);
         c.initialConfigs.push_back(
-                createPortConfig(micInDevice.id, micInDevice.id, PcmType::INT_24_BIT,
+                createPortConfig(micInDevice.id, micInDevice.id, PcmType::INT_16_BIT,
                                  AudioChannelLayout::LAYOUT_MONO, 48000, 0, true,
                                  createDeviceExt(AudioDeviceType::IN_MICROPHONE, 0)));
 
@@ -230,7 +206,7 @@ std::unique_ptr<Configuration> getPrimaryConfiguration() {
         c.ports.push_back(telephonyTxOutDevice);
         c.initialConfigs.push_back(
                 createPortConfig(telephonyTxOutDevice.id, telephonyTxOutDevice.id,
-                                 PcmType::INT_24_BIT, AudioChannelLayout::LAYOUT_MONO, 48000, 0,
+                                 PcmType::INT_16_BIT, AudioChannelLayout::LAYOUT_MONO, 48000, 0,
                                  false, createDeviceExt(AudioDeviceType::OUT_TELEPHONY_TX, 0)));
 
         AudioPort telephonyRxInDevice =
@@ -239,64 +215,33 @@ std::unique_ptr<Configuration> getPrimaryConfiguration() {
         c.ports.push_back(telephonyRxInDevice);
         c.initialConfigs.push_back(
                 createPortConfig(telephonyRxInDevice.id, telephonyRxInDevice.id,
-                                 PcmType::INT_24_BIT, AudioChannelLayout::LAYOUT_MONO, 48000, 0,
+                                 PcmType::INT_16_BIT, AudioChannelLayout::LAYOUT_MONO, 48000, 0,
                                  true, createDeviceExt(AudioDeviceType::IN_TELEPHONY_RX, 0)));
 
         AudioPort fmTunerInDevice = createPort(c.nextPortId++, "FM Tuner", 0, true,
                                                createDeviceExt(AudioDeviceType::IN_FM_TUNER, 0));
         c.ports.push_back(fmTunerInDevice);
         c.initialConfigs.push_back(
-                createPortConfig(fmTunerInDevice.id, fmTunerInDevice.id, PcmType::INT_24_BIT,
+                createPortConfig(fmTunerInDevice.id, fmTunerInDevice.id, PcmType::INT_16_BIT,
                                  AudioChannelLayout::LAYOUT_STEREO, 48000, 0, true,
                                  createDeviceExt(AudioDeviceType::IN_FM_TUNER, 0)));
-
-        AudioPort usbOutDevice =
-                createPort(c.nextPortId++, "USB Out", 0, false,
-                           createDeviceExt(AudioDeviceType::OUT_DEVICE, 0,
-                                           AudioDeviceDescription::CONNECTION_USB));
-        c.ports.push_back(usbOutDevice);
-        c.connectedProfiles[usbOutDevice.id] = standardPcmAudioProfiles;
-
-        AudioPort usbInDevice = createPort(c.nextPortId++, "USB In", 0, true,
-                                           createDeviceExt(AudioDeviceType::IN_DEVICE, 0,
-                                                           AudioDeviceDescription::CONNECTION_USB));
-        c.ports.push_back(usbInDevice);
-        c.connectedProfiles[usbInDevice.id] = standardPcmAudioProfiles;
 
         // Mix ports
 
         AudioPort primaryOutMix = createPort(c.nextPortId++, "primary output",
                                              makeBitPositionFlagMask(AudioOutputFlags::PRIMARY),
-                                             false, createPortMixExt(1, 1));
+                                             false, createPortMixExt(0, 0));
         primaryOutMix.profiles.insert(primaryOutMix.profiles.begin(),
                                       standardPcmAudioProfiles.begin(),
                                       standardPcmAudioProfiles.end());
         c.ports.push_back(primaryOutMix);
 
-        AudioPort compressedOffloadOutMix =
-                createPort(c.nextPortId++, "compressed offload",
-                           makeBitPositionFlagMask({AudioOutputFlags::DIRECT,
-                                                    AudioOutputFlags::COMPRESS_OFFLOAD,
-                                                    AudioOutputFlags::NON_BLOCKING}),
-                           false, createPortMixExt(1, 1));
-        compressedOffloadOutMix.profiles.push_back(
-                createProfile(::android::MEDIA_MIMETYPE_AUDIO_MPEG,
-                              {AudioChannelLayout::LAYOUT_MONO, AudioChannelLayout::LAYOUT_STEREO},
-                              {44100, 48000}));
-        c.ports.push_back(compressedOffloadOutMix);
-
         AudioPort primaryInMix =
-                createPort(c.nextPortId++, "primary input", 0, true, createPortMixExt(2, 2));
+                createPort(c.nextPortId++, "primary input", 0, true, createPortMixExt(0, 0));
         primaryInMix.profiles.push_back(
                 createProfile(PcmType::INT_16_BIT,
-                              {AudioChannelLayout::LAYOUT_MONO, AudioChannelLayout::LAYOUT_STEREO,
-                               AudioChannelLayout::LAYOUT_FRONT_BACK},
-                              {8000, 11025, 12000, 16000, 22050, 24000, 32000, 44100, 48000}));
-        primaryInMix.profiles.push_back(
-                createProfile(PcmType::INT_24_BIT,
-                              {AudioChannelLayout::LAYOUT_MONO, AudioChannelLayout::LAYOUT_STEREO,
-                               AudioChannelLayout::LAYOUT_FRONT_BACK},
-                              {8000, 11025, 12000, 16000, 22050, 24000, 32000, 44100, 48000}));
+                              {AudioChannelLayout::LAYOUT_MONO, AudioChannelLayout::LAYOUT_STEREO},
+                              {8000, 11025, 16000, 32000, 44100, 48000}));
         c.ports.push_back(primaryInMix);
 
         AudioPort telephonyTxOutMix =
@@ -320,11 +265,10 @@ std::unique_ptr<Configuration> getPrimaryConfiguration() {
                                      standardPcmAudioProfiles.end());
         c.ports.push_back(fmTunerInMix);
 
-        c.routes.push_back(createRoute({primaryOutMix, compressedOffloadOutMix}, speakerOutDevice));
-        c.routes.push_back(createRoute({primaryOutMix, compressedOffloadOutMix}, usbOutDevice));
-        c.routes.push_back(createRoute({micInDevice, usbInDevice}, primaryInMix));
-        c.routes.push_back(createRoute({telephonyTxOutMix}, telephonyTxOutDevice));
+        c.routes.push_back(createRoute({primaryOutMix}, speakerOutDevice));
+        c.routes.push_back(createRoute({micInDevice}, primaryInMix));
         c.routes.push_back(createRoute({telephonyRxInDevice}, telephonyRxInMix));
+        c.routes.push_back(createRoute({telephonyTxOutMix}, telephonyTxOutDevice));
         c.routes.push_back(createRoute({fmTunerInDevice}, fmTunerInMix));
 
         c.portConfigs.insert(c.portConfigs.end(), c.initialConfigs.begin(), c.initialConfigs.end());
@@ -345,15 +289,21 @@ std::unique_ptr<Configuration> getPrimaryConfiguration() {
 //
 // Device ports:
 //  * "Remote Submix Out", OUT_SUBMIX
-//    - profile PCM 24-bit; STEREO; 48000
+//    - no profiles specified
 //  * "Remote Submix In", IN_SUBMIX
-//    - profile PCM 24-bit; STEREO; 48000
+//    - no profiles specified
 //
 // Mix ports:
-//  * "r_submix output", stream count unlimited
-//    - profile PCM 24-bit; STEREO; 48000
-//  * "r_submix input", stream count unlimited
-//    - profile PCM 24-bit; STEREO; 48000
+//  * "r_submix output", unlimited max open, unlimited max active stream
+//    - profile PCM 16-bit; MONO, STEREO; 8000, 11025, 16000, 32000, 44100, 48000
+//    - profile PCM 24-bit; MONO, STEREO; 8000, 11025, 16000, 32000, 44100, 48000
+//    - profile PCM 32-bit; MONO, STEREO; 8000, 11025, 16000, 32000, 44100, 48000
+//    - profile PCM 32-bit float; MONO, STEREO; 8000, 11025, 16000, 32000, 44100, 48000
+//  * "r_submix input", unlimited max open, unlimited max active stream
+//    - profile PCM 16-bit; MONO, STEREO; 8000, 11025, 16000, 32000, 44100, 48000
+//    - profile PCM 24-bit; MONO, STEREO; 8000, 11025, 16000, 32000, 44100, 48000
+//    - profile PCM 32-bit; MONO, STEREO; 8000, 11025, 16000, 32000, 44100, 48000
+//    - profile PCM 32-bit float; MONO, STEREO; 8000, 11025, 16000, 32000, 44100, 48000
 //
 // Routes:
 //  "r_submix output" -> "Remote Submix Out"
@@ -362,33 +312,46 @@ std::unique_ptr<Configuration> getPrimaryConfiguration() {
 std::unique_ptr<Configuration> getRSubmixConfiguration() {
     static const Configuration configuration = []() {
         Configuration c;
+        const std::vector<AudioProfile> standardPcmAudioProfiles{
+                createProfile(PcmType::FLOAT_32_BIT,
+                              {AudioChannelLayout::LAYOUT_MONO, AudioChannelLayout::LAYOUT_STEREO},
+                              {8000, 11025, 16000, 32000, 44100, 48000}),
+                createProfile(PcmType::INT_32_BIT,
+                              {AudioChannelLayout::LAYOUT_MONO, AudioChannelLayout::LAYOUT_STEREO},
+                              {8000, 11025, 16000, 32000, 44100, 48000}),
+                createProfile(PcmType::INT_24_BIT,
+                              {AudioChannelLayout::LAYOUT_MONO, AudioChannelLayout::LAYOUT_STEREO},
+                              {8000, 11025, 16000, 32000, 44100, 48000}),
+                createProfile(PcmType::INT_16_BIT,
+                              {AudioChannelLayout::LAYOUT_MONO, AudioChannelLayout::LAYOUT_STEREO},
+                              {8000, 11025, 16000, 32000, 44100, 48000})};
 
         // Device ports
 
-        AudioPort rsubmixOutDevice = createPort(c.nextPortId++, "Remote Submix Out", 0, false,
-                                                createDeviceExt(AudioDeviceType::OUT_SUBMIX, 0));
-        rsubmixOutDevice.profiles.push_back(
-                createProfile(PcmType::INT_24_BIT, {AudioChannelLayout::LAYOUT_STEREO}, {48000}));
+        AudioPort rsubmixOutDevice =
+                createPort(c.nextPortId++, "Remote Submix Out", 0, false,
+                           createDeviceExt(AudioDeviceType::OUT_SUBMIX, 0,
+                                           AudioDeviceDescription::CONNECTION_VIRTUAL));
         c.ports.push_back(rsubmixOutDevice);
+        c.connectedProfiles[rsubmixOutDevice.id] = standardPcmAudioProfiles;
 
-        AudioPort rsubmixInDevice = createPort(c.nextPortId++, "Remote Submix In", 0, true,
-                                               createDeviceExt(AudioDeviceType::IN_SUBMIX, 0));
-        rsubmixInDevice.profiles.push_back(
-                createProfile(PcmType::INT_24_BIT, {AudioChannelLayout::LAYOUT_STEREO}, {48000}));
+        AudioPort rsubmixInDevice =
+                createPort(c.nextPortId++, "Remote Submix In", 0, true,
+                           createDeviceExt(AudioDeviceType::IN_SUBMIX, 0,
+                                           AudioDeviceDescription::CONNECTION_VIRTUAL));
         c.ports.push_back(rsubmixInDevice);
+        c.connectedProfiles[rsubmixInDevice.id] = standardPcmAudioProfiles;
 
         // Mix ports
 
         AudioPort rsubmixOutMix =
                 createPort(c.nextPortId++, "r_submix output", 0, false, createPortMixExt(0, 0));
-        rsubmixOutMix.profiles.push_back(
-                createProfile(PcmType::INT_24_BIT, {AudioChannelLayout::LAYOUT_STEREO}, {48000}));
+        rsubmixOutMix.profiles = standardPcmAudioProfiles;
         c.ports.push_back(rsubmixOutMix);
 
         AudioPort rsubmixInMix =
                 createPort(c.nextPortId++, "r_submix input", 0, true, createPortMixExt(0, 0));
-        rsubmixInMix.profiles.push_back(
-                createProfile(PcmType::INT_24_BIT, {AudioChannelLayout::LAYOUT_STEREO}, {48000}));
+        rsubmixInMix.profiles = standardPcmAudioProfiles;
         c.ports.push_back(rsubmixInMix);
 
         c.routes.push_back(createRoute({rsubmixOutMix}, rsubmixOutDevice));
@@ -402,22 +365,31 @@ std::unique_ptr<Configuration> getRSubmixConfiguration() {
 // Usb configuration:
 //
 // Device ports:
+//  * "USB Device Out", OUT_DEVICE, CONNECTION_USB
+//    - no profiles specified
 //  * "USB Headset Out", OUT_HEADSET, CONNECTION_USB
+//    - no profiles specified
+//  * "USB Device In", IN_DEVICE, CONNECTION_USB
 //    - no profiles specified
 //  * "USB Headset In", IN_HEADSET, CONNECTION_USB
 //    - no profiles specified
 //
 // Mix ports:
-//  * "usb_headset output", 1 max open, 1 max active stream
+//  * "usb_device output", 1 max open, 1 max active stream
 //    - no profiles specified
-//  * "usb_headset input", 1 max open, 1 max active stream
+//  * "usb_device input", 1 max open, 1 max active stream
 //    - no profiles specified
 //
+// Routes:
+//  * "usb_device output" -> "USB Device Out"
+//  * "usb_device output" -> "USB Headset Out"
+//  * "USB Device In", "USB Headset In" -> "usb_device input"
+//
 // Profiles for device port connected state:
-//  * USB Headset Out":
+//  * "USB Device Out", "USB Headset Out":
 //    - profile PCM 16-bit; MONO, STEREO, INDEX_MASK_1, INDEX_MASK_2; 44100, 48000
 //    - profile PCM 24-bit; MONO, STEREO, INDEX_MASK_1, INDEX_MASK_2; 44100, 48000
-//  * USB Headset In":
+//  * "USB Device In", "USB Headset In":
 //    - profile PCM 16-bit; MONO, STEREO, INDEX_MASK_1, INDEX_MASK_2; 44100, 48000
 //    - profile PCM 24-bit; MONO, STEREO, INDEX_MASK_1, INDEX_MASK_2; 44100, 48000
 //
@@ -436,12 +408,25 @@ std::unique_ptr<Configuration> getUsbConfiguration() {
 
         // Device ports
 
+        AudioPort usbOutDevice =
+                createPort(c.nextPortId++, "USB Device Out", 0, false,
+                           createDeviceExt(AudioDeviceType::OUT_DEVICE, 0,
+                                           AudioDeviceDescription::CONNECTION_USB));
+        c.ports.push_back(usbOutDevice);
+        c.connectedProfiles[usbOutDevice.id] = standardPcmAudioProfiles;
+
         AudioPort usbOutHeadset =
                 createPort(c.nextPortId++, "USB Headset Out", 0, false,
                            createDeviceExt(AudioDeviceType::OUT_HEADSET, 0,
                                            AudioDeviceDescription::CONNECTION_USB));
         c.ports.push_back(usbOutHeadset);
         c.connectedProfiles[usbOutHeadset.id] = standardPcmAudioProfiles;
+
+        AudioPort usbInDevice = createPort(c.nextPortId++, "USB Device In", 0, true,
+                                           createDeviceExt(AudioDeviceType::IN_DEVICE, 0,
+                                                           AudioDeviceDescription::CONNECTION_USB));
+        c.ports.push_back(usbInDevice);
+        c.connectedProfiles[usbInDevice.id] = standardPcmAudioProfiles;
 
         AudioPort usbInHeadset =
                 createPort(c.nextPortId++, "USB Headset In", 0, true,
@@ -452,16 +437,233 @@ std::unique_ptr<Configuration> getUsbConfiguration() {
 
         // Mix ports
 
-        AudioPort usbHeadsetOutMix =
-                createPort(c.nextPortId++, "usb_headset output", 0, false, createPortMixExt(1, 1));
-        c.ports.push_back(usbHeadsetOutMix);
+        AudioPort usbDeviceOutMix =
+                createPort(c.nextPortId++, "usb_device output", 0, false, createPortMixExt(1, 1));
+        c.ports.push_back(usbDeviceOutMix);
 
-        AudioPort usbHeadsetInMix =
-                createPort(c.nextPortId++, "usb_headset input", 0, true, createPortMixExt(1, 1));
-        c.ports.push_back(usbHeadsetInMix);
+        AudioPort usbDeviceInMix =
+                createPort(c.nextPortId++, "usb_device input", 0, true, createPortMixExt(1, 1));
+        c.ports.push_back(usbDeviceInMix);
 
-        c.routes.push_back(createRoute({usbHeadsetOutMix}, usbOutHeadset));
-        c.routes.push_back(createRoute({usbInHeadset}, usbHeadsetInMix));
+        c.routes.push_back(createRoute({usbDeviceOutMix}, usbOutDevice));
+        c.routes.push_back(createRoute({usbDeviceOutMix}, usbOutHeadset));
+        c.routes.push_back(createRoute({usbInDevice, usbInHeadset}, usbDeviceInMix));
+
+        return c;
+    }();
+    return std::make_unique<Configuration>(configuration);
+}
+
+// Stub configuration:
+//
+// Device ports:
+//  * "Test Out", OUT_AFE_PROXY
+//    - no profiles specified
+//  * "Test In", IN_AFE_PROXY
+//    - no profiles specified
+//  * "Wired Headset", OUT_HEADSET
+//    - profile PCM 24-bit; STEREO; 48000
+//  * "Wired Headset Mic", IN_HEADSET
+//    - profile PCM 24-bit; MONO; 48000
+//
+// Mix ports:
+//  * "test output", 1 max open, 1 max active stream
+//    - profile PCM 24-bit; MONO, STEREO; 8000, 11025, 16000, 32000, 44100, 48000
+//  * "test fast output", 1 max open, 1 max active stream
+//    - profile PCM 24-bit; STEREO; 44100, 48000
+//  * "test compressed offload", DIRECT|COMPRESS_OFFLOAD|NON_BLOCKING, 1 max open, 1 max active
+//  stream
+//    - profile MP3; MONO, STEREO; 44100, 48000
+//  * "test input", 2 max open, 2 max active streams
+//    - profile PCM 24-bit; MONO, STEREO, FRONT_BACK;
+//        8000, 11025, 16000, 22050, 32000, 44100, 48000
+//
+// Routes:
+//  "test output", "test fast output", "test compressed offload" -> "Test Out"
+//  "test output" -> "Wired Headset"
+//  "Test In", "Wired Headset Mic" -> "test input"
+//
+// Initial port configs:
+//  * "Test Out" device port: PCM 24-bit; STEREO; 48000
+//  * "Test In" device port: PCM 24-bit; MONO; 48000
+//
+std::unique_ptr<Configuration> getStubConfiguration() {
+    static const Configuration configuration = []() {
+        Configuration c;
+
+        // Device ports
+
+        AudioPort testOutDevice = createPort(c.nextPortId++, "Test Out", 0, false,
+                                             createDeviceExt(AudioDeviceType::OUT_AFE_PROXY, 0));
+        c.ports.push_back(testOutDevice);
+        c.initialConfigs.push_back(
+                createPortConfig(testOutDevice.id, testOutDevice.id, PcmType::INT_24_BIT,
+                                 AudioChannelLayout::LAYOUT_STEREO, 48000, 0, false,
+                                 createDeviceExt(AudioDeviceType::OUT_AFE_PROXY, 0)));
+
+        AudioPort headsetOutDevice =
+                createPort(c.nextPortId++, "Wired Headset", 0, false,
+                           createDeviceExt(AudioDeviceType::OUT_HEADSET, 0,
+                                           AudioDeviceDescription::CONNECTION_ANALOG));
+        headsetOutDevice.profiles.push_back(
+                createProfile(PcmType::INT_24_BIT, {AudioChannelLayout::LAYOUT_STEREO}, {48000}));
+        c.ports.push_back(headsetOutDevice);
+
+        AudioPort testInDevice = createPort(c.nextPortId++, "Test In", 0, true,
+                                            createDeviceExt(AudioDeviceType::IN_AFE_PROXY, 0));
+        c.ports.push_back(testInDevice);
+        c.initialConfigs.push_back(
+                createPortConfig(testInDevice.id, testInDevice.id, PcmType::INT_24_BIT,
+                                 AudioChannelLayout::LAYOUT_MONO, 48000, 0, true,
+                                 createDeviceExt(AudioDeviceType::IN_AFE_PROXY, 0)));
+
+        AudioPort headsetInDevice =
+                createPort(c.nextPortId++, "Wired Headset Mic", 0, true,
+                           createDeviceExt(AudioDeviceType::IN_HEADSET, 0,
+                                           AudioDeviceDescription::CONNECTION_ANALOG));
+        headsetInDevice.profiles.push_back(
+                createProfile(PcmType::INT_24_BIT, {AudioChannelLayout::LAYOUT_MONO}, {48000}));
+        c.ports.push_back(headsetInDevice);
+
+        // Mix ports
+
+        AudioPort testOutMix =
+                createPort(c.nextPortId++, "test output", 0, false, createPortMixExt(1, 1));
+        testOutMix.profiles.push_back(
+                createProfile(PcmType::INT_24_BIT,
+                              {AudioChannelLayout::LAYOUT_MONO, AudioChannelLayout::LAYOUT_STEREO},
+                              {8000, 11025, 16000, 32000, 44100, 48000}));
+        c.ports.push_back(testOutMix);
+
+        AudioPort testFastOutMix = createPort(c.nextPortId++, "test fast output",
+                                              makeBitPositionFlagMask({AudioOutputFlags::FAST}),
+                                              false, createPortMixExt(1, 1));
+        testFastOutMix.profiles.push_back(createProfile(
+                PcmType::INT_24_BIT, {AudioChannelLayout::LAYOUT_STEREO}, {44100, 48000}));
+        c.ports.push_back(testFastOutMix);
+
+        AudioPort compressedOffloadOutMix =
+                createPort(c.nextPortId++, "test compressed offload",
+                           makeBitPositionFlagMask({AudioOutputFlags::DIRECT,
+                                                    AudioOutputFlags::COMPRESS_OFFLOAD,
+                                                    AudioOutputFlags::NON_BLOCKING}),
+                           false, createPortMixExt(1, 1));
+        compressedOffloadOutMix.profiles.push_back(
+                createProfile(::android::MEDIA_MIMETYPE_AUDIO_MPEG,
+                              {AudioChannelLayout::LAYOUT_MONO, AudioChannelLayout::LAYOUT_STEREO},
+                              {44100, 48000}));
+        c.ports.push_back(compressedOffloadOutMix);
+
+        AudioPort testInMIx =
+                createPort(c.nextPortId++, "test input", 0, true, createPortMixExt(2, 2));
+        testInMIx.profiles.push_back(
+                createProfile(PcmType::INT_16_BIT,
+                              {AudioChannelLayout::LAYOUT_MONO, AudioChannelLayout::LAYOUT_STEREO,
+                               AudioChannelLayout::LAYOUT_FRONT_BACK},
+                              {8000, 11025, 16000, 22050, 32000, 44100, 48000}));
+        testInMIx.profiles.push_back(
+                createProfile(PcmType::INT_24_BIT,
+                              {AudioChannelLayout::LAYOUT_MONO, AudioChannelLayout::LAYOUT_STEREO,
+                               AudioChannelLayout::LAYOUT_FRONT_BACK},
+                              {8000, 11025, 16000, 22050, 32000, 44100, 48000}));
+        c.ports.push_back(testInMIx);
+
+        c.routes.push_back(
+                createRoute({testOutMix, testFastOutMix, compressedOffloadOutMix}, testOutDevice));
+        c.routes.push_back(createRoute({testOutMix}, headsetOutDevice));
+        c.routes.push_back(createRoute({testInDevice, headsetInDevice}, testInMIx));
+
+        c.portConfigs.insert(c.portConfigs.end(), c.initialConfigs.begin(), c.initialConfigs.end());
+
+        return c;
+    }();
+    return std::make_unique<Configuration>(configuration);
+}
+
+// Bluetooth configuration:
+//
+// Device ports:
+//  * "BT A2DP Out", OUT_DEVICE, CONNECTION_BT_A2DP
+//    - profile PCM 16-bit; STEREO; 44100, 48000, 88200, 96000
+//  * "BT A2DP Headphones", OUT_HEADPHONE, CONNECTION_BT_A2DP
+//    - profile PCM 16-bit; STEREO; 44100, 48000, 88200, 96000
+//  * "BT A2DP Speaker", OUT_SPEAKER, CONNECTION_BT_A2DP
+//    - profile PCM 16-bit; STEREO; 44100, 48000, 88200, 96000
+//  * "BT Hearing Aid Out", OUT_HEARING_AID, CONNECTION_WIRELESS
+//    - no profiles specified
+//
+// Mix ports:
+//  * "a2dp output", 1 max open, 1 max active stream
+//    - no profiles specified
+//  * "hearing aid output", 1 max open, 1 max active stream
+//    - profile PCM 16-bit; STEREO; 16000, 24000
+//
+// Routes:
+//  "a2dp output" -> "BT A2DP Out"
+//  "a2dp output" -> "BT A2DP Headphones"
+//  "a2dp output" -> "BT A2DP Speaker"
+//  "hearing aid output" -> "BT Hearing Aid Out"
+//
+std::unique_ptr<Configuration> getBluetoothConfiguration() {
+    static const Configuration configuration = []() {
+        const std::vector<AudioProfile> standardPcmAudioProfiles = {
+                createProfile(PcmType::INT_16_BIT, {AudioChannelLayout::LAYOUT_STEREO},
+                              {44100, 48000, 88200, 96000})};
+        Configuration c;
+
+        // Device ports
+        AudioPort btOutDevice =
+                createPort(c.nextPortId++, "BT A2DP Out", 0, false,
+                           createDeviceExt(AudioDeviceType::OUT_DEVICE, 0,
+                                           AudioDeviceDescription::CONNECTION_BT_A2DP));
+        btOutDevice.profiles.insert(btOutDevice.profiles.begin(), standardPcmAudioProfiles.begin(),
+                                    standardPcmAudioProfiles.end());
+        c.ports.push_back(btOutDevice);
+        c.connectedProfiles[btOutDevice.id] = standardPcmAudioProfiles;
+
+        AudioPort btOutHeadphone =
+                createPort(c.nextPortId++, "BT A2DP Headphones", 0, false,
+                           createDeviceExt(AudioDeviceType::OUT_HEADPHONE, 0,
+                                           AudioDeviceDescription::CONNECTION_BT_A2DP));
+        btOutHeadphone.profiles.insert(btOutHeadphone.profiles.begin(),
+                                       standardPcmAudioProfiles.begin(),
+                                       standardPcmAudioProfiles.end());
+        c.ports.push_back(btOutHeadphone);
+        c.connectedProfiles[btOutHeadphone.id] = standardPcmAudioProfiles;
+
+        AudioPort btOutSpeaker =
+                createPort(c.nextPortId++, "BT A2DP Speaker", 0, false,
+                           createDeviceExt(AudioDeviceType::OUT_SPEAKER, 0,
+                                           AudioDeviceDescription::CONNECTION_BT_A2DP));
+        btOutSpeaker.profiles.insert(btOutSpeaker.profiles.begin(),
+                                     standardPcmAudioProfiles.begin(),
+                                     standardPcmAudioProfiles.end());
+        c.ports.push_back(btOutSpeaker);
+        c.connectedProfiles[btOutSpeaker.id] = standardPcmAudioProfiles;
+
+        AudioPort btOutHearingAid =
+                createPort(c.nextPortId++, "BT Hearing Aid Out", 0, false,
+                           createDeviceExt(AudioDeviceType::OUT_HEARING_AID, 0,
+                                           AudioDeviceDescription::CONNECTION_WIRELESS));
+        c.ports.push_back(btOutHearingAid);
+        c.connectedProfiles[btOutHearingAid.id] = std::vector<AudioProfile>(
+                {createProfile(PcmType::INT_16_BIT, {AudioChannelLayout::LAYOUT_STEREO}, {16000})});
+
+        // Mix ports
+        AudioPort btOutMix =
+                createPort(c.nextPortId++, "a2dp output", 0, false, createPortMixExt(1, 1));
+        c.ports.push_back(btOutMix);
+
+        AudioPort btHearingOutMix =
+                createPort(c.nextPortId++, "hearing aid output", 0, false, createPortMixExt(1, 1));
+        btHearingOutMix.profiles.push_back(createProfile(
+                PcmType::INT_16_BIT, {AudioChannelLayout::LAYOUT_STEREO}, {16000, 24000}));
+        c.ports.push_back(btHearingOutMix);
+
+        c.routes.push_back(createRoute({btOutMix}, btOutDevice));
+        c.routes.push_back(createRoute({btOutMix}, btOutHeadphone));
+        c.routes.push_back(createRoute({btOutMix}, btOutSpeaker));
+        c.routes.push_back(createRoute({btHearingOutMix}, btOutHearingAid));
 
         return c;
     }();

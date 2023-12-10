@@ -14,63 +14,34 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "AHAL_ModuleUsb"
-
 #include <vector>
 
+#define LOG_TAG "AHAL_ModuleUsb"
 #include <Utils.h>
 #include <android-base/logging.h>
-#include <tinyalsa/asoundlib.h>
 
 #include "UsbAlsaMixerControl.h"
-#include "UsbAlsaUtils.h"
+#include "alsa/Utils.h"
 #include "core-impl/ModuleUsb.h"
+#include "core-impl/StreamUsb.h"
 
-extern "C" {
-#include "alsa_device_profile.h"
-}
-
-using aidl::android::hardware::audio::common::isUsbInputDeviceType;
-using aidl::android::media::audio::common::AudioChannelLayout;
-using aidl::android::media::audio::common::AudioDeviceAddress;
+using aidl::android::hardware::audio::common::SinkMetadata;
+using aidl::android::hardware::audio::common::SourceMetadata;
 using aidl::android::media::audio::common::AudioDeviceDescription;
-using aidl::android::media::audio::common::AudioDeviceType;
-using aidl::android::media::audio::common::AudioFormatDescription;
-using aidl::android::media::audio::common::AudioFormatType;
+using aidl::android::media::audio::common::AudioOffloadInfo;
 using aidl::android::media::audio::common::AudioPort;
 using aidl::android::media::audio::common::AudioPortConfig;
 using aidl::android::media::audio::common::AudioPortExt;
-using aidl::android::media::audio::common::AudioProfile;
+using aidl::android::media::audio::common::MicrophoneInfo;
 
 namespace aidl::android::hardware::audio::core {
 
 namespace {
 
-std::vector<AudioChannelLayout> populateChannelMasksFromProfile(const alsa_device_profile* profile,
-                                                                bool isInput) {
-    std::vector<AudioChannelLayout> channels;
-    for (size_t i = 0; i < AUDIO_PORT_MAX_CHANNEL_MASKS && profile->channel_counts[i] != 0; ++i) {
-        auto layoutMask =
-                usb::getChannelLayoutMaskFromChannelCount(profile->channel_counts[i], isInput);
-        if (layoutMask.getTag() == AudioChannelLayout::Tag::layoutMask) {
-            channels.push_back(layoutMask);
-        }
-        auto indexMask = usb::getChannelIndexMaskFromChannelCount(profile->channel_counts[i]);
-        if (indexMask.getTag() == AudioChannelLayout::Tag::indexMask) {
-            channels.push_back(indexMask);
-        }
-    }
-    return channels;
-}
-
-std::vector<int> populateSampleRatesFromProfile(const alsa_device_profile* profile) {
-    std::vector<int> sampleRates;
-    for (int i = 0; i < std::min(MAX_PROFILE_SAMPLE_RATES, AUDIO_PORT_MAX_SAMPLING_RATES) &&
-                    profile->sample_rates[i] != 0;
-         i++) {
-        sampleRates.push_back(profile->sample_rates[i]);
-    }
-    return sampleRates;
+bool isUsbDevicePort(const AudioPort& audioPort) {
+    return audioPort.ext.getTag() == AudioPortExt::Tag::device &&
+           audioPort.ext.get<AudioPortExt::Tag::device>().device.type.connection ==
+                   AudioDeviceDescription::CONNECTION_USB;
 }
 
 }  // namespace
@@ -97,56 +68,31 @@ ndk::ScopedAStatus ModuleUsb::setMicMute(bool in_mute __unused) {
     return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
 }
 
-ndk::ScopedAStatus ModuleUsb::populateConnectedDevicePort(AudioPort* audioPort) {
-    if (audioPort->ext.getTag() != AudioPortExt::Tag::device) {
-        LOG(ERROR) << __func__ << ": port id " << audioPort->id << " is not a device port";
+ndk::ScopedAStatus ModuleUsb::createInputStream(StreamContext&& context,
+                                                const SinkMetadata& sinkMetadata,
+                                                const std::vector<MicrophoneInfo>& microphones,
+                                                std::shared_ptr<StreamIn>* result) {
+    return createStreamInstance<StreamInUsb>(result, std::move(context), sinkMetadata, microphones);
+}
+
+ndk::ScopedAStatus ModuleUsb::createOutputStream(StreamContext&& context,
+                                                 const SourceMetadata& sourceMetadata,
+                                                 const std::optional<AudioOffloadInfo>& offloadInfo,
+                                                 std::shared_ptr<StreamOut>* result) {
+    if (offloadInfo.has_value()) {
+        LOG(ERROR) << __func__ << ": offload is not supported";
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
     }
-    auto& devicePort = audioPort->ext.get<AudioPortExt::Tag::device>();
-    if (devicePort.device.type.connection != AudioDeviceDescription::CONNECTION_USB) {
+    return createStreamInstance<StreamOutUsb>(result, std::move(context), sourceMetadata,
+                                              offloadInfo);
+}
+
+ndk::ScopedAStatus ModuleUsb::populateConnectedDevicePort(AudioPort* audioPort) {
+    if (!isUsbDevicePort(*audioPort)) {
         LOG(ERROR) << __func__ << ": port id " << audioPort->id << " is not a usb device port";
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
     }
-    if (devicePort.device.address.getTag() != AudioDeviceAddress::Tag::alsa) {
-        LOG(ERROR) << __func__ << ": port id " << audioPort->id << " is not using alsa address";
-        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
-    }
-    auto& alsaAddress = devicePort.device.address.get<AudioDeviceAddress::Tag::alsa>();
-    if (alsaAddress.size() != 2 || alsaAddress[0] < 0 || alsaAddress[1] < 0) {
-        LOG(ERROR) << __func__ << ": port id " << audioPort->id << " invalid alsa address";
-        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
-    }
-
-    const bool isInput = isUsbInputDeviceType(devicePort.device.type.type);
-    alsa_device_profile profile;
-    profile_init(&profile, isInput ? PCM_IN : PCM_OUT);
-    profile.card = alsaAddress[0];
-    profile.device = alsaAddress[1];
-    if (!profile_read_device_info(&profile)) {
-        LOG(ERROR) << __func__ << ": failed to read device info, card=" << profile.card
-                   << ", device=" << profile.device;
-        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
-    }
-
-    std::vector<AudioChannelLayout> channels = populateChannelMasksFromProfile(&profile, isInput);
-    std::vector<int> sampleRates = populateSampleRatesFromProfile(&profile);
-
-    for (size_t i = 0; i < std::min(MAX_PROFILE_FORMATS, AUDIO_PORT_MAX_AUDIO_PROFILES) &&
-                       profile.formats[i] != PCM_FORMAT_INVALID;
-         ++i) {
-        auto audioFormatDescription =
-                usb::legacy2aidl_pcm_format_AudioFormatDescription(profile.formats[i]);
-        if (audioFormatDescription.type == AudioFormatType::DEFAULT) {
-            LOG(WARNING) << __func__ << ": unknown pcm type=" << profile.formats[i];
-            continue;
-        }
-        AudioProfile audioProfile = {.format = audioFormatDescription,
-                                     .channelMasks = channels,
-                                     .sampleRates = sampleRates};
-        audioPort->profiles.push_back(std::move(audioProfile));
-    }
-
-    return ndk::ScopedAStatus::ok();
+    return ModuleAlsa::populateConnectedDevicePort(audioPort);
 }
 
 ndk::ScopedAStatus ModuleUsb::checkAudioPatchEndpointsMatch(
@@ -167,16 +113,15 @@ ndk::ScopedAStatus ModuleUsb::checkAudioPatchEndpointsMatch(
 
 void ModuleUsb::onExternalDeviceConnectionChanged(
         const ::aidl::android::media::audio::common::AudioPort& audioPort, bool connected) {
-    if (audioPort.ext.getTag() != AudioPortExt::Tag::device) {
+    if (!isUsbDevicePort(audioPort)) {
         return;
     }
-    const auto& address = audioPort.ext.get<AudioPortExt::Tag::device>().device.address;
-    if (address.getTag() != AudioDeviceAddress::alsa) {
+    auto profile = alsa::getDeviceProfile(audioPort);
+    if (!profile.has_value()) {
         return;
     }
-    const int card = address.get<AudioDeviceAddress::alsa>()[0];
-    usb::UsbAlsaMixerControl::getInstance().setDeviceConnectionState(card, mMasterMute,
-                                                                     mMasterVolume, connected);
+    usb::UsbAlsaMixerControl::getInstance().setDeviceConnectionState(profile->card, getMasterMute(),
+                                                                     getMasterVolume(), connected);
 }
 
 ndk::ScopedAStatus ModuleUsb::onMasterMuteChanged(bool mute) {

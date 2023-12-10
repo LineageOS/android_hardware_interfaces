@@ -20,6 +20,7 @@
 #include <android-base/logging.h>
 #include <android-base/stringprintf.h>
 #include <android/binder_manager.h>
+#include <hardware/audio.h>
 
 #include "BluetoothAudioSession.h"
 
@@ -440,6 +441,16 @@ void BluetoothAudioSession::ReportControlStatus(bool start_resp,
 void BluetoothAudioSession::ReportLowLatencyModeAllowedChanged(bool allowed) {
   std::lock_guard<std::recursive_mutex> guard(mutex_);
   low_latency_allowed_ = allowed;
+  // TODO(b/294498919): Remove this after there is API to update latency mode
+  // after audio session started. If low_latency_allowed_ is true, the session
+  // can support LOW_LATENCY and FREE LatencyMode.
+  if (low_latency_allowed_) {
+    if (std::find(latency_modes_.begin(), latency_modes_.end(),
+                  LatencyMode::LOW_LATENCY) == latency_modes_.end()) {
+      LOG(INFO) << __func__ << " - insert LOW_LATENCY LatencyMode";
+      latency_modes_.push_back(LatencyMode::LOW_LATENCY);
+    }
+  }
   if (observers_.empty()) {
     LOG(WARNING) << __func__ << " - SessionType=" << toString(session_type_)
                  << " has NO port state observer";
@@ -476,23 +487,9 @@ bool BluetoothAudioSession::GetPresentationPosition(
 
 void BluetoothAudioSession::UpdateSourceMetadata(
     const struct source_metadata& source_metadata) {
-  std::lock_guard<std::recursive_mutex> guard(mutex_);
-  if (!IsSessionReady()) {
-    LOG(DEBUG) << __func__ << " - SessionType=" << toString(session_type_)
-               << " has NO session";
-    return;
-  }
-
   ssize_t track_count = source_metadata.track_count;
   LOG(INFO) << __func__ << " - SessionType=" << toString(session_type_) << ","
             << track_count << " track(s)";
-  if (session_type_ == SessionType::A2DP_SOFTWARE_ENCODING_DATAPATH ||
-      session_type_ == SessionType::A2DP_HARDWARE_OFFLOAD_ENCODING_DATAPATH ||
-      session_type_ == SessionType::A2DP_SOFTWARE_DECODING_DATAPATH ||
-      session_type_ == SessionType::A2DP_HARDWARE_OFFLOAD_DECODING_DATAPATH) {
-    return;
-  }
-
   SourceMetadata hal_source_metadata;
   hal_source_metadata.tracks.resize(track_count);
   for (int i = 0; i < track_count; i++) {
@@ -509,33 +506,14 @@ void BluetoothAudioSession::UpdateSourceMetadata(
                  << toString(hal_source_metadata.tracks[i].contentType)
                  << ", gain=" << hal_source_metadata.tracks[i].gain;
   }
-
-  auto hal_retval = stack_iface_->updateSourceMetadata(hal_source_metadata);
-  if (!hal_retval.isOk()) {
-    LOG(WARNING) << __func__ << " - IBluetoothAudioPort SessionType="
-                 << toString(session_type_) << " failed";
-  }
+  UpdateSourceMetadata(hal_source_metadata);
 }
 
 void BluetoothAudioSession::UpdateSinkMetadata(
     const struct sink_metadata& sink_metadata) {
-  std::lock_guard<std::recursive_mutex> guard(mutex_);
-  if (!IsSessionReady()) {
-    LOG(DEBUG) << __func__ << " - SessionType=" << toString(session_type_)
-               << " has NO session";
-    return;
-  }
-
   ssize_t track_count = sink_metadata.track_count;
   LOG(INFO) << __func__ << " - SessionType=" << toString(session_type_) << ","
             << track_count << " track(s)";
-  if (session_type_ == SessionType::A2DP_SOFTWARE_ENCODING_DATAPATH ||
-      session_type_ == SessionType::A2DP_HARDWARE_OFFLOAD_ENCODING_DATAPATH ||
-      session_type_ == SessionType::A2DP_SOFTWARE_DECODING_DATAPATH ||
-      session_type_ == SessionType::A2DP_HARDWARE_OFFLOAD_DECODING_DATAPATH) {
-    return;
-  }
-
   SinkMetadata hal_sink_metadata;
   hal_sink_metadata.tracks.resize(track_count);
   for (int i = 0; i < track_count; i++) {
@@ -550,12 +528,57 @@ void BluetoothAudioSession::UpdateSinkMetadata(
               << ", dest_device_address="
               << sink_metadata.tracks[i].dest_device_address;
   }
+  UpdateSinkMetadata(hal_sink_metadata);
+}
+
+bool BluetoothAudioSession::UpdateSourceMetadata(
+    const SourceMetadata& hal_source_metadata) {
+  std::lock_guard<std::recursive_mutex> guard(mutex_);
+  if (!IsSessionReady()) {
+    LOG(DEBUG) << __func__ << " - SessionType=" << toString(session_type_)
+               << " has NO session";
+    return false;
+  }
+
+  if (session_type_ == SessionType::A2DP_SOFTWARE_ENCODING_DATAPATH ||
+      session_type_ == SessionType::A2DP_HARDWARE_OFFLOAD_ENCODING_DATAPATH ||
+      session_type_ == SessionType::A2DP_SOFTWARE_DECODING_DATAPATH ||
+      session_type_ == SessionType::A2DP_HARDWARE_OFFLOAD_DECODING_DATAPATH) {
+    return false;
+  }
+
+  auto hal_retval = stack_iface_->updateSourceMetadata(hal_source_metadata);
+  if (!hal_retval.isOk()) {
+    LOG(WARNING) << __func__ << " - IBluetoothAudioPort SessionType="
+                 << toString(session_type_) << " failed";
+    return false;
+  }
+  return true;
+}
+
+bool BluetoothAudioSession::UpdateSinkMetadata(
+    const SinkMetadata& hal_sink_metadata) {
+  std::lock_guard<std::recursive_mutex> guard(mutex_);
+  if (!IsSessionReady()) {
+    LOG(DEBUG) << __func__ << " - SessionType=" << toString(session_type_)
+               << " has NO session";
+    return false;
+  }
+
+  if (session_type_ == SessionType::A2DP_SOFTWARE_ENCODING_DATAPATH ||
+      session_type_ == SessionType::A2DP_HARDWARE_OFFLOAD_ENCODING_DATAPATH ||
+      session_type_ == SessionType::A2DP_SOFTWARE_DECODING_DATAPATH ||
+      session_type_ == SessionType::A2DP_HARDWARE_OFFLOAD_DECODING_DATAPATH) {
+    return false;
+  }
 
   auto hal_retval = stack_iface_->updateSinkMetadata(hal_sink_metadata);
   if (!hal_retval.isOk()) {
     LOG(WARNING) << __func__ << " - IBluetoothAudioPort SessionType="
                  << toString(session_type_) << " failed";
+    return false;
   }
+  return true;
 }
 
 std::vector<LatencyMode> BluetoothAudioSession::GetSupportedLatencyModes() {

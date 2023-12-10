@@ -54,7 +54,6 @@ cc_test {
         "libgui",
         "libhidlbase",
         "libprocessgroup",
-        "libtinyxml2",
         "android.hardware.graphics.mapper@2.0",
         "android.hardware.graphics.mapper@2.1",
         "android.hardware.graphics.mapper@3.0",

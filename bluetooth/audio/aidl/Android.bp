@@ -24,12 +24,13 @@ package {
 aidl_interface {
     name: "android.hardware.bluetooth.audio",
     vendor_available: true,
+    host_supported: true,
     srcs: ["android/hardware/bluetooth/audio/*.aidl"],
     stability: "vintf",
     imports: [
         "android.hardware.common-V2",
         "android.hardware.common.fmq-V1",
-        "android.hardware.audio.common-V1",
+        "android.hardware.audio.common-V2",
     ],
     backend: {
         cpp: {
@@ -69,7 +70,7 @@ aidl_interface {
             imports: [
                 "android.hardware.common-V2",
                 "android.hardware.common.fmq-V1",
-                "android.hardware.audio.common-V1",
+                "android.hardware.audio.common-V2",
             ],
         },
 
