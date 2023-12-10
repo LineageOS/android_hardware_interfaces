@@ -53,6 +53,8 @@ namespace {
 
 using ::aidl::android::hardware::automotive::vehicle::CruiseControlCommand;
 using ::aidl::android::hardware::automotive::vehicle::CruiseControlType;
+using ::aidl::android::hardware::automotive::vehicle::DriverDistractionState;
+using ::aidl::android::hardware::automotive::vehicle::DriverDistractionWarning;
 using ::aidl::android::hardware::automotive::vehicle::DriverDrowsinessAttentionState;
 using ::aidl::android::hardware::automotive::vehicle::DriverDrowsinessAttentionWarning;
 using ::aidl::android::hardware::automotive::vehicle::ErrorState;
@@ -206,6 +208,21 @@ const std::unordered_map<int32_t, std::vector<int32_t>> mAdasEnabledPropToAdasPr
                 toInt(VehicleProperty::DRIVER_DROWSINESS_ATTENTION_WARNING_ENABLED),
                 {
                         toInt(VehicleProperty::DRIVER_DROWSINESS_ATTENTION_WARNING),
+                },
+        },
+        // Driver Distraction
+        {
+                toInt(VehicleProperty::DRIVER_DISTRACTION_SYSTEM_ENABLED),
+                {
+                        toInt(VehicleProperty::DRIVER_DISTRACTION_STATE),
+                        toInt(VehicleProperty::DRIVER_DISTRACTION_WARNING),
+                },
+        },
+        // Driver Distraction Warning
+        {
+                toInt(VehicleProperty::DRIVER_DISTRACTION_WARNING_ENABLED),
+                {
+                        toInt(VehicleProperty::DRIVER_DISTRACTION_WARNING),
                 },
         },
 };

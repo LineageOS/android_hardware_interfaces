@@ -3605,6 +3605,58 @@
             ]
         },
         {
+            "property": "VehicleProperty::DRIVER_DISTRACTION_SYSTEM_ENABLED",
+            "defaultValue": {
+                "int32Values": [
+                    1
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::DRIVER_DISTRACTION_STATE",
+            "defaultValue": {
+                "int32Values": [
+                    "DriverDistractionState::NOT_DISTRACTED"
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": 0,
+                    "supportedEnumValues": [
+                        "ErrorState::NOT_AVAILABLE_DISABLED",
+                        "DriverDistractionState::NOT_DISTRACTED",
+                        "DriverDistractionState::DISTRACTED"
+                    ]
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::DRIVER_DISTRACTION_WARNING_ENABLED",
+            "defaultValue": {
+                "int32Values": [
+                    1
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::DRIVER_DISTRACTION_WARNING",
+            "defaultValue": {
+                "int32Values": [
+                    "DriverDistractionWarning::NO_WARNING"
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": 0,
+                    "supportedEnumValues": [
+                        "ErrorState::NOT_AVAILABLE_DISABLED",
+                        "DriverDistractionWarning::NO_WARNING",
+                        "DriverDistractionWarning::WARNING"
+                    ]
+                }
+            ]
+        },
+        {
             "property": "VehicleProperty::INITIAL_USER_INFO"
         },
         {

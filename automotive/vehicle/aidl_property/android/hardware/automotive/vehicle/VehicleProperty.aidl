@@ -5180,6 +5180,96 @@ enum VehicleProperty {
     DRIVER_DROWSINESS_ATTENTION_WARNING =
             0x101C + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
 
+    /**
+     * Enable or disable driver distraction monitoring.
+     *
+     * Set true to enable driver distraction monitoring and false to disable driver
+     * distraction monitoring. When driver distraction monitoring is enabled, a system
+     * inside the vehicle should be monitoring the distraction level of the driver and
+     * warn the driver if needed.
+     *
+     * In general, DRIVER_DISTRACTION_SYSTEM_ENABLED should always return true or false. If the
+     * feature is not available due to some temporary state, that information must be conveyed
+     * through the ErrorState values in the DRIVER_DISTRACTION_STATE property.
+     *
+     * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
+     * implement it as VehiclePropertyAccess.READ only.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
+     */
+    DRIVER_DISTRACTION_SYSTEM_ENABLED =
+            0x101D + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+
+    /**
+     * Driver distraction state.
+     *
+     * Returns the current detected driver distraction state.
+     *
+     * Generally, this property should return a valid state defined in the DriverDistractionState or
+     * ErrorState. For example, if the feature is not available due to some temporary state, that
+     * information should be conveyed through ErrorState.
+     *
+     * If the vehicle is sending a warning to the user because the driver is too distracted, the
+     * warning should be surfaced through {@link #DRIVER_DISTRACTION_WARNING}.
+     *
+     * For the global area ID (0), the VehicleAreaConfig#supportedEnumValues array must be defined
+     * unless all states of both DriverDistractionState (including OTHER, which is not
+     * recommended) and ErrorState are supported.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     * @data_enum DriverDistractionState
+     * @data_enum ErrorState
+     */
+    DRIVER_DISTRACTION_STATE =
+            0x101E + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
+
+    /**
+     * Enable or disable driver distraction warnings.
+     *
+     * Set true to enable driver distraction warnings and false to disable driver distraction
+     * warnings.
+     *
+     * When driver distraction warnings are enabled, the driver distraction monitoring system inside
+     * the vehicle should warn the driver when it detects the driver is distracted.
+     *
+     * In general, DRIVER_DISTRACTION_WARNING_ENABLED should always return true or false. If the
+     * feature is not available due to some temporary state, that information must be conveyed
+     * through the ErrorState values in the DRIVER_DISTRACTION_WARNING property.
+     *
+     * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
+     * implement it as VehiclePropertyAccess.READ only.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
+     */
+    DRIVER_DISTRACTION_WARNING_ENABLED =
+            0x101F + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+
+    /**
+     * Driver distraction warning.
+     *
+     * Returns whether a warning is being sent to the driver for being distracted.
+     *
+     * Generally, this property should return a valid state defined in DriverDistractionWarning or
+     * ErrorState. For example, if the feature is not available due to some temporary state, that
+     * information should be conveyed through an ErrorState.
+     *
+     * For the global area ID (0), the VehicleAreaConfig#supportedEnumValues array must be defined
+     * unless all states of both DriverDistractionWarning (including OTHER, which is not
+     * recommended) and ErrorState are supported.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     * @data_enum DriverDistractionWarning
+     * @data_enum ErrorState
+     */
+    DRIVER_DISTRACTION_WARNING =
+            0x1020 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
+
     /***************************************************************************
      * End of ADAS Properties
      **************************************************************************/
