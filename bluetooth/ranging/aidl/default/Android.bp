@@ -1,0 +1,29 @@
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
+cc_binary {
+    name: "android.hardware.bluetooth.ranging-service.default",
+    relative_install_path: "hw",
+    init_rc: ["bluetooth-ranging-service-default.rc"],
+    vintf_fragments: [":manifest_android.hardware.bluetooth.ranging-service.default.xml"],
+    vendor: true,
+    srcs: [
+        "BluetoothChannelSounding.cpp",
+        "BluetoothChannelSoundingSession.cpp",
+        "service.cpp",
+    ],
+    shared_libs: [
+        "android.hardware.bluetooth.ranging-V1-ndk",
+        "libbase",
+        "libbinder_ndk",
+        "libhidlbase",
+        "libutils",
+        "liblog",
+    ],
+}
+
+filegroup {
+    name: "manifest_android.hardware.bluetooth.ranging-service.default.xml",
+    srcs: ["bluetooth-ranging-service-default.xml"],
+}
