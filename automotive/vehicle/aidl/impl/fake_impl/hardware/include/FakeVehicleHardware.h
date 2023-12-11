@@ -142,6 +142,16 @@ class FakeVehicleHardware : public IVehicleHardware {
         void handleRequestsOnce();
     };
 
+    struct RefreshInfo {
+        VehiclePropertyStore::EventMode eventMode;
+        int64_t intervalInNanos;
+    };
+
+    struct ActionForInterval {
+        std::unordered_set<PropIdAreaId, PropIdAreaIdHash> propIdAreaIdsToRefresh;
+        std::shared_ptr<RecurrentTimer::Callback> recurrentAction;
+    };
+
     const std::unique_ptr<obd2frame::FakeObd2Frame> mFakeObd2Frame;
     const std::unique_ptr<FakeUserHal> mFakeUserHal;
     // RecurrentTimer is thread-safe.
@@ -154,8 +164,9 @@ class FakeVehicleHardware : public IVehicleHardware {
     std::unique_ptr<const PropertySetErrorCallback> mOnPropertySetErrorCallback;
 
     std::mutex mLock;
-    std::unordered_map<PropIdAreaId, std::shared_ptr<RecurrentTimer::Callback>, PropIdAreaIdHash>
-            mRecurrentActions GUARDED_BY(mLock);
+    std::unordered_map<PropIdAreaId, RefreshInfo, PropIdAreaIdHash> mRefreshInfoByPropIdAreaId
+            GUARDED_BY(mLock);
+    std::unordered_map<int64_t, ActionForInterval> mActionByIntervalInNanos GUARDED_BY(mLock);
     std::unordered_map<PropIdAreaId, VehiclePropValuePool::RecyclableType, PropIdAreaIdHash>
             mSavedProps GUARDED_BY(mLock);
     std::unordered_set<PropIdAreaId, PropIdAreaIdHash> mSubOnChangePropIdAreaIds GUARDED_BY(mLock);
@@ -182,6 +193,10 @@ class FakeVehicleHardware : public IVehicleHardware {
     // The callback that would be called when a vehicle property value change happens.
     void onValueChangeCallback(
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value)
+            EXCLUDES(mLock);
+    // The callback that would be called when multiple vehicle property value changes happen.
+    void onValuesChangeCallback(
+            std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropValue> values)
             EXCLUDES(mLock);
     // Load the config files in format '*.json' from the directory and parse the config files
     // into a map from property ID to ConfigDeclarations.
@@ -275,6 +290,11 @@ class FakeVehicleHardware : public IVehicleHardware {
             int32_t propId, int32_t areaId, float sampleRateHz, bool enableVariableUpdateRate,
             const aidl::android::hardware::automotive::vehicle::VehiclePropConfig&
                     vehiclePropConfig) REQUIRES(mLock);
+
+    void registerRefreshLocked(PropIdAreaId propIdAreaId, VehiclePropertyStore::EventMode eventMode,
+                               float sampleRateHz) REQUIRES(mLock);
+    void unregisterRefreshLocked(PropIdAreaId propIdAreaId) REQUIRES(mLock);
+    void refreshTimeStampForInterval(int64_t intervalInNanos) EXCLUDES(mLock);
 
     static aidl::android::hardware::automotive::vehicle::VehiclePropValue createHwInputKeyProp(
             aidl::android::hardware::automotive::vehicle::VehicleHwKeyInputAction action,
