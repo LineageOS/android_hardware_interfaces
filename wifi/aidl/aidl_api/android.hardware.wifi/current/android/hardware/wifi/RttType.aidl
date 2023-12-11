@@ -36,4 +36,6 @@ package android.hardware.wifi;
 enum RttType {
   ONE_SIDED = 1,
   TWO_SIDED = 2,
+  TWO_SIDED_11MC = TWO_SIDED /* 2 */,
+  TWO_SIDED_11AZ_NTB = 3,
 }
