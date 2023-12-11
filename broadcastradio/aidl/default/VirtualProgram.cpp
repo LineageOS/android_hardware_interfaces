@@ -93,49 +93,7 @@ VirtualProgram::operator ProgramInfo() const {
 }
 
 bool operator<(const VirtualProgram& lhs, const VirtualProgram& rhs) {
-    auto& l = lhs.selector;
-    auto& r = rhs.selector;
-
-    if ((utils::hasId(l, IdentifierType::AMFM_FREQUENCY_KHZ) ||
-         l.primaryId.type == IdentifierType::HD_STATION_ID_EXT) &&
-        (utils::hasId(r, IdentifierType::AMFM_FREQUENCY_KHZ) ||
-         r.primaryId.type == IdentifierType::HD_STATION_ID_EXT)) {
-        uint32_t freq1 = utils::getAmFmFrequency(l);
-        int subChannel1 = l.primaryId.type == IdentifierType::HD_STATION_ID_EXT
-                                  ? utils::getHdSubchannel(l)
-                                  : 0;
-        uint32_t freq2 = utils::getAmFmFrequency(r);
-        int subChannel2 = r.primaryId.type == IdentifierType::HD_STATION_ID_EXT
-                                  ? utils::getHdSubchannel(r)
-                                  : 0;
-        return freq1 < freq2 || (freq1 == freq2 && (l.primaryId.type < r.primaryId.type ||
-                                                    subChannel1 < subChannel2));
-    } else if (l.primaryId.type == IdentifierType::DAB_SID_EXT &&
-               r.primaryId.type == IdentifierType::DAB_SID_EXT) {
-        uint64_t dabFreq1 = utils::getId(l, IdentifierType::DAB_FREQUENCY_KHZ);
-        uint64_t dabFreq2 = utils::getId(r, IdentifierType::DAB_FREQUENCY_KHZ);
-        if (dabFreq1 != dabFreq2) {
-            return dabFreq1 < dabFreq2;
-        }
-        uint32_t ecc1 = utils::getDabEccCode(l);
-        uint32_t ecc2 = utils::getDabEccCode(r);
-        if (ecc1 != ecc2) {
-            return ecc1 < ecc2;
-        }
-        uint64_t dabEnsemble1 = utils::getId(l, IdentifierType::DAB_ENSEMBLE);
-        uint64_t dabEnsemble2 = utils::getId(r, IdentifierType::DAB_ENSEMBLE);
-        if (dabEnsemble1 != dabEnsemble2) {
-            return dabEnsemble1 < dabEnsemble2;
-        }
-        uint32_t sId1 = utils::getDabSId(l);
-        uint32_t sId2 = utils::getDabSId(r);
-        return sId1 < sId2 || (sId1 == sId2 && utils::getDabSCIdS(l) < utils::getDabSCIdS(r));
-    }
-
-    if (l.primaryId.type != r.primaryId.type) {
-        return l.primaryId.type < r.primaryId.type;
-    }
-    return l.primaryId.value < r.primaryId.value;
+    return utils::ProgramSelectorComparator()(lhs.selector, rhs.selector);
 }
 
 }  // namespace aidl::android::hardware::broadcastradio
