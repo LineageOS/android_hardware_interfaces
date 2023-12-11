@@ -2913,6 +2913,69 @@ TEST_P(GraphicsComposerAidlCommandTest, MultiThreadedPresent) {
     }
 }
 
+class GraphicsComposerAidlBatchedCommandTest : public GraphicsComposerAidlCommandTest {
+  protected:
+    void SetUp() override {
+        GraphicsComposerAidlCommandTest::SetUp();
+        if (getInterfaceVersion() <= 2) {
+            GTEST_SKIP() << "Device interface version is expected to be >= 3";
+        }
+    }
+    void TearDown() override {
+        const auto errors = mReader.takeErrors();
+        ASSERT_TRUE(mReader.takeErrors().empty());
+        ASSERT_NO_FATAL_FAILURE(GraphicsComposerAidlTest::TearDown());
+    }
+};
+
+TEST_P(GraphicsComposerAidlBatchedCommandTest, CreateBatchedCommand) {
+    auto& writer = getWriter(getPrimaryDisplayId());
+    int64_t layer = 5;
+    writer.setLayerLifecycleBatchCommandType(getPrimaryDisplayId(), layer,
+                                             LayerLifecycleBatchCommandType::CREATE);
+    writer.setNewBufferSlotCount(getPrimaryDisplayId(), layer, 1);
+    writer.validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp,
+                           VtsComposerClient::kNoFrameIntervalNs);
+    execute();
+    ASSERT_TRUE(mReader.takeErrors().empty());
+}
+
+TEST_P(GraphicsComposerAidlBatchedCommandTest, DestroyBatchedCommand) {
+    auto& writer = getWriter(getPrimaryDisplayId());
+    int64_t layer = 5;
+    writer.setLayerLifecycleBatchCommandType(getPrimaryDisplayId(), layer,
+                                             LayerLifecycleBatchCommandType::CREATE);
+    writer.setNewBufferSlotCount(getPrimaryDisplayId(), layer, 1);
+    writer.validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp,
+                           VtsComposerClient::kNoFrameIntervalNs);
+    execute();
+    ASSERT_TRUE(mReader.takeErrors().empty());
+    writer.setLayerLifecycleBatchCommandType(getPrimaryDisplayId(), layer,
+                                             LayerLifecycleBatchCommandType::DESTROY);
+    layer++;
+    writer.setLayerLifecycleBatchCommandType(getPrimaryDisplayId(), layer,
+                                             LayerLifecycleBatchCommandType::CREATE);
+    writer.setNewBufferSlotCount(getPrimaryDisplayId(), layer, 1);
+
+    execute();
+    ASSERT_TRUE(mReader.takeErrors().empty());
+}
+
+TEST_P(GraphicsComposerAidlBatchedCommandTest, NoCreateDestroyBatchedCommandIncorrectLayer) {
+    auto& writer = getWriter(getPrimaryDisplayId());
+    int64_t layer = 5;
+    writer.setLayerLifecycleBatchCommandType(getPrimaryDisplayId(), layer,
+                                             LayerLifecycleBatchCommandType::DESTROY);
+    execute();
+    const auto errors = mReader.takeErrors();
+    ASSERT_TRUE(errors.size() == 1 && errors[0].errorCode == IComposerClient::EX_BAD_LAYER);
+}
+
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(GraphicsComposerAidlBatchedCommandTest);
+INSTANTIATE_TEST_SUITE_P(
+        PerInstance, GraphicsComposerAidlBatchedCommandTest,
+        testing::ValuesIn(::android::getAidlHalInstanceNames(IComposer::descriptor)),
+        ::android::PrintInstanceNameToString);
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(GraphicsComposerAidlCommandTest);
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, GraphicsComposerAidlCommandTest,
