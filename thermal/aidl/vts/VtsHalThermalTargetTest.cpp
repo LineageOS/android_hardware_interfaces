@@ -26,6 +26,7 @@
 
 #include <aidl/Gtest.h>
 #include <aidl/Vintf.h>
+#include <aidl/android/hardware/thermal/BnCoolingDeviceChangedCallback.h>
 #include <aidl/android/hardware/thermal/BnThermal.h>
 #include <aidl/android/hardware/thermal/BnThermalChangedCallback.h>
 #include <android-base/logging.h>
@@ -59,6 +60,15 @@ static const Temperature kThrottleTemp = {
         .throttlingStatus = ThrottlingSeverity::CRITICAL,
 };
 
+static const CoolingDevice kCoolingDevice = {
+        .type = CoolingType::CPU,
+        .name = "test cooling device",
+        .value = 1,
+        .powerLimitMw = 300,
+        .powerMw = 500,
+        .timeWindowMs = 7000,
+};
+
 // Callback class for receiving thermal event notifications from main class
 class ThermalCallback : public BnThermalChangedCallback {
   public:
@@ -85,6 +95,33 @@ class ThermalCallback : public BnThermalChangedCallback {
     bool mInvoke = false;
 };
 
+// Callback class for receiving cooling device event notifications from main class
+class CoolingDeviceCallback : public BnCoolingDeviceChangedCallback {
+  public:
+    ndk::ScopedAStatus notifyCoolingDeviceChanged(const CoolingDevice&) override {
+        {
+            std::lock_guard<std::mutex> lock(mMutex);
+            mInvoke = true;
+        }
+        mNotifyCoolingDeviceChanged.notify_all();
+        return ndk::ScopedAStatus::ok();
+    }
+
+    template <typename R, typename P>
+    [[nodiscard]] bool waitForCallback(std::chrono::duration<R, P> duration) {
+        std::unique_lock<std::mutex> lock(mMutex);
+        bool r = mNotifyCoolingDeviceChanged.wait_for(lock, duration,
+                                                      [this] { return this->mInvoke; });
+        mInvoke = false;
+        return r;
+    }
+
+  private:
+    std::mutex mMutex;
+    std::condition_variable mNotifyCoolingDeviceChanged;
+    bool mInvoke = false;
+};
+
 // The main test class for THERMAL HIDL HAL.
 class ThermalAidlTest : public testing::TestWithParam<std::string> {
   public:
@@ -97,19 +134,42 @@ class ThermalAidlTest : public testing::TestWithParam<std::string> {
         ASSERT_NE(mThermalCallback, nullptr);
         ::ndk::ScopedAStatus status = mThermal->registerThermalChangedCallback(mThermalCallback);
         ASSERT_TRUE(status.isOk()) << status.getMessage();
+
+        auto ret = mThermal->getInterfaceVersion(&thermal_version);
+        ASSERT_TRUE(ret.isOk()) << ret;
+        if (thermal_version > 1) {
+            mCoolingDeviceCallback = ndk::SharedRefBase::make<CoolingDeviceCallback>();
+            ASSERT_NE(mCoolingDeviceCallback, nullptr);
+            status = mThermal->registerCoolingDeviceChangedCallbackWithType(mCoolingDeviceCallback,
+                                                                            kCoolingDevice.type);
+            ASSERT_TRUE(status.isOk()) << status.getMessage();
+        }
     }
 
     void TearDown() override {
         ::ndk::ScopedAStatus status = mThermal->unregisterThermalChangedCallback(mThermalCallback);
         ASSERT_TRUE(status.isOk()) << status.getMessage();
+
         // Expect to fail if unregister again
         status = mThermal->unregisterThermalChangedCallback(mThermalCallback);
         ASSERT_EQ(EX_ILLEGAL_ARGUMENT, status.getExceptionCode());
+
+        auto ret = mThermal->getInterfaceVersion(&thermal_version);
+        ASSERT_TRUE(ret.isOk()) << ret;
+        if (thermal_version > 1) {
+            status = mThermal->unregisterCoolingDeviceChangedCallback(mCoolingDeviceCallback);
+            ASSERT_TRUE(status.isOk()) << status.getMessage();
+            status = mThermal->unregisterCoolingDeviceChangedCallback(mCoolingDeviceCallback);
+            ASSERT_EQ(EX_ILLEGAL_ARGUMENT, status.getExceptionCode());
+        }
     }
+    // Stores thermal version
+    int32_t thermal_version;
 
   protected:
     std::shared_ptr<IThermal> mThermal;
     std::shared_ptr<ThermalCallback> mThermalCallback;
+    std::shared_ptr<CoolingDeviceCallback> mCoolingDeviceCallback;
 };
 
 // Test ThermalChangedCallback::notifyThrottling().
@@ -119,6 +179,21 @@ TEST_P(ThermalAidlTest, NotifyThrottlingTest) {
     ::ndk::ScopedAStatus status = thermalCallback->notifyThrottling(kThrottleTemp);
     ASSERT_TRUE(status.isOk()) << status.getMessage();
     ASSERT_TRUE(thermalCallback->waitForCallback(200ms));
+}
+
+// Test CoolingDeviceChangedCallback::notifyCoolingDeviceChanged().
+// This just calls into and back from our local CoolingDeviceChangedCallback impl.
+TEST_P(ThermalAidlTest, NotifyCoolingDeviceChangedTest) {
+    auto ret = mThermal->getInterfaceVersion(&thermal_version);
+    ASSERT_TRUE(ret.isOk()) << ret;
+    if (thermal_version < 2) {
+        return;
+    }
+    std::shared_ptr<CoolingDeviceCallback> cdevCallback =
+            ndk::SharedRefBase::make<CoolingDeviceCallback>();
+    ::ndk::ScopedAStatus status = cdevCallback->notifyCoolingDeviceChanged(kCoolingDevice);
+    ASSERT_TRUE(status.isOk()) << status.getMessage();
+    ASSERT_TRUE(cdevCallback->waitForCallback(200ms));
 }
 
 // Test Thermal->registerThermalChangedCallback.
@@ -167,6 +242,37 @@ TEST_P(ThermalAidlTest, RegisterThermalChangedCallbackWithTypeTest) {
     status = mThermal->unregisterThermalChangedCallback(nullptr);
     ASSERT_TRUE(status.getExceptionCode() == EX_ILLEGAL_ARGUMENT
         || status.getExceptionCode() == EX_NULL_POINTER);
+}
+
+// Test Thermal->registerCoolingDeviceChangedCallbackWithType.
+TEST_P(ThermalAidlTest, RegisterCoolingDeviceChangedCallbackWithTypeTest) {
+    auto ret = mThermal->getInterfaceVersion(&thermal_version);
+    ASSERT_TRUE(ret.isOk()) << ret;
+    if (thermal_version < 2) {
+        return;
+    }
+
+    // Expect to fail with same callback
+    ::ndk::ScopedAStatus status = mThermal->registerCoolingDeviceChangedCallbackWithType(
+            mCoolingDeviceCallback, CoolingType::CPU);
+    ASSERT_EQ(EX_ILLEGAL_ARGUMENT, status.getExceptionCode());
+    // Expect to fail with null callback
+    status = mThermal->registerCoolingDeviceChangedCallbackWithType(nullptr, CoolingType::CPU);
+    ASSERT_TRUE(status.getExceptionCode() == EX_ILLEGAL_ARGUMENT ||
+                status.getExceptionCode() == EX_NULL_POINTER);
+    std::shared_ptr<CoolingDeviceCallback> localCoolingDeviceCallback =
+            ndk::SharedRefBase::make<CoolingDeviceCallback>();
+    // Expect to succeed with different callback
+    status = mThermal->registerCoolingDeviceChangedCallbackWithType(localCoolingDeviceCallback,
+                                                                    CoolingType::CPU);
+    ASSERT_TRUE(status.isOk()) << status.getMessage();
+    // Remove the local callback
+    status = mThermal->unregisterCoolingDeviceChangedCallback(localCoolingDeviceCallback);
+    ASSERT_TRUE(status.isOk()) << status.getMessage();
+    // Expect to fail with null callback
+    status = mThermal->unregisterCoolingDeviceChangedCallback(nullptr);
+    ASSERT_TRUE(status.getExceptionCode() == EX_ILLEGAL_ARGUMENT ||
+                status.getExceptionCode() == EX_NULL_POINTER);
 }
 
 // Test Thermal->getCurrentTemperatures().

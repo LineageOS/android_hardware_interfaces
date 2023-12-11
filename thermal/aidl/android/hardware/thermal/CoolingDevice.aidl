@@ -40,4 +40,16 @@ parcelable CoolingDevice {
      * means deeper throttling.
      */
     long value;
+    /**
+     * Power budget (mW) of the cooling device.
+     */
+    long powerLimitMw;
+    /**
+     * Target cooling device's AVG power for the last time_window_ms.
+     */
+    long powerMw;
+    /**
+     * The time window (millisecond) to calculate the power consumption
+     */
+    long timeWindowMs;
 }
