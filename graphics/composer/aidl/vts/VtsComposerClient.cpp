@@ -517,7 +517,8 @@ std::pair<ScopedAStatus, std::vector<VtsDisplay>> VtsComposerClient::getDisplays
 void VtsComposerClient::addDisplayConfigs(VtsDisplay* vtsDisplay,
                                           const std::vector<DisplayConfiguration>& configs) {
     for (const auto& config : configs) {
-        vtsDisplay->addDisplayConfig(config.configId, {config.vsyncPeriod, config.configGroup});
+        vtsDisplay->addDisplayConfig(config.configId,
+                                     {config.vsyncPeriod, config.configGroup, config.vrrConfig});
     }
 }
 
