@@ -18,6 +18,7 @@ package android.hardware.wifi;
 
 import android.hardware.wifi.NanIdentityResolutionAttribute;
 import android.hardware.wifi.NanPairingRequestType;
+import android.hardware.wifi.common.OuiKeyedData;
 
 /**
  * NAN pairing request indication message structure.
@@ -58,4 +59,9 @@ parcelable NanPairingRequestInd {
      * The NIRA from peer for NAN pairing verification
      */
     NanIdentityResolutionAttribute peerNira;
+    /**
+     * Optional vendor-specific parameters. Null value indicates
+     * that no vendor data is provided.
+     */
+    @nullable OuiKeyedData[] vendorData;
 }

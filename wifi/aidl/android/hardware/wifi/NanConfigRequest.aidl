@@ -17,6 +17,7 @@
 package android.hardware.wifi;
 
 import android.hardware.wifi.NanBandSpecificConfig;
+import android.hardware.wifi.common.OuiKeyedData;
 
 /**
  * Configuration parameters of NAN. Used when enabling and re-configuring a NAN cluster.
@@ -79,4 +80,9 @@ parcelable NanConfigRequest {
      * Additional configuration provided per band. Indexed by |NanBandIndex|.
      */
     NanBandSpecificConfig[3] bandSpecificConfig;
+    /**
+     * Optional vendor-specific parameters. Null value indicates
+     * that no vendor data is provided.
+     */
+    @nullable OuiKeyedData[] vendorData;
 }

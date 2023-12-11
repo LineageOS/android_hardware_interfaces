@@ -19,6 +19,7 @@ package android.hardware.wifi;
 import android.hardware.wifi.NanCipherSuiteType;
 import android.hardware.wifi.NanIdentityResolutionAttribute;
 import android.hardware.wifi.NanPairingConfig;
+import android.hardware.wifi.common.OuiKeyedData;
 
 /**
  * Match indication structure.
@@ -137,4 +138,9 @@ parcelable NanMatchInd {
      * The NIRA from peer for NAN pairing verification
      */
     NanIdentityResolutionAttribute peerNira;
+    /**
+     * Optional vendor-specific parameters. Null value indicates
+     * that no vendor data is provided.
+     */
+    @nullable OuiKeyedData[] vendorData;
 }
