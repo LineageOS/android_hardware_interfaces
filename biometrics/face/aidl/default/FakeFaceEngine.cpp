@@ -1,3 +1,21 @@
+/*
+ * Copyright (C) 2023 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#define LOG_TAG "FaceVirtualHalEngine"
+
 #include "FakeFaceEngine.h"
 
 #include <android-base/logging.h>
@@ -186,6 +204,10 @@ void FakeFaceEngine::authenticateImpl(ISessionCallback* cb, int64_t /*operationI
         return;
     }
 
+    if (mLockoutTracker.checkIfLockout(cb)) {
+        return;
+    }
+
     int i = 0;
     do {
         if (FaceHalProperties::lockout().value_or(false)) {
@@ -197,6 +219,7 @@ void FakeFaceEngine::authenticateImpl(ISessionCallback* cb, int64_t /*operationI
 
         if (FaceHalProperties::operation_authenticate_fails().value_or(false)) {
             LOG(ERROR) << "Fail: operation_authenticate_fails";
+            mLockoutTracker.addFailedAttempt(cb);
             cb->onAuthenticationFailed();
             return;
         }
@@ -231,10 +254,12 @@ void FakeFaceEngine::authenticateImpl(ISessionCallback* cb, int64_t /*operationI
     } while (!Util::hasElapsed(now, duration));
 
     if (id > 0 && isEnrolled) {
+        mLockoutTracker.reset();
         cb->onAuthenticationSucceeded(id, {} /* hat */);
         return;
     } else {
         LOG(ERROR) << "Fail: face not enrolled";
+        mLockoutTracker.addFailedAttempt(cb);
         cb->onAuthenticationFailed();
         cb->onError(Error::TIMEOUT, 0 /* vendorError*/);
         return;
@@ -389,6 +414,7 @@ void FakeFaceEngine::resetLockoutImpl(ISessionCallback* cb,
                                       const keymaster::HardwareAuthToken& /*hat*/) {
     BEGIN_OP(0);
     FaceHalProperties::lockout(false);
+    mLockoutTracker.reset();
     cb->onLockoutCleared();
 }
 
