@@ -98,9 +98,6 @@ void SubmixRoute::openStream(bool isInput) {
         }
         mStreamInStandby = true;
         mReadCounterFrames = 0;
-        if (mSink != nullptr) {
-            mSink->shutdown(false);
-        }
     } else {
         mStreamOutOpen = true;
     }
@@ -109,7 +106,8 @@ void SubmixRoute::openStream(bool isInput) {
 void SubmixRoute::closeStream(bool isInput) {
     std::lock_guard guard(mLock);
     if (isInput) {
-        if (--mInputRefCount == 0) {
+        mInputRefCount--;
+        if (mInputRefCount == 0) {
             mStreamInOpen = false;
             if (mSink != nullptr) {
                 mSink->shutdown(true);
