@@ -29,6 +29,7 @@ import android.hardware.wifi.supplicant.ISupplicantStaNetwork;
 import android.hardware.wifi.supplicant.IfaceType;
 import android.hardware.wifi.supplicant.KeyMgmtMask;
 import android.hardware.wifi.supplicant.MloLinksInfo;
+import android.hardware.wifi.supplicant.MscsParams;
 import android.hardware.wifi.supplicant.QosPolicyScsData;
 import android.hardware.wifi.supplicant.QosPolicyScsRequestStatus;
 import android.hardware.wifi.supplicant.QosPolicyStatus;
@@ -852,4 +853,28 @@ interface ISupplicantStaIface {
      *          being processed. Supplicant will only handle one request at a time.
      */
     QosPolicyScsRequestStatus[] removeQosPolicyForScs(in byte[] scsPolicyIds);
+
+    /**
+     * Enable Mirrored Stream Classification Service (MSCS) and configure using
+     * the provided configuration values.
+     *
+     * If MSCS has already been enabled/configured, this will overwrite the
+     * existing configuration.
+     *
+     * @param params |MscsParams| object containing the configuration.
+     * @throws ServiceSpecificException with one of the following values:
+     *         |SupplicantStatusCode.FAILURE_ARGS_INVALID| if the configuration is invalid.
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN| if the configuration could not be set.
+     */
+    void configureMscs(in MscsParams params);
+
+    /**
+     * Disable Mirrored Stream Classification Service (MSCS).
+     *
+     * If MSCS is enabled/configured, this will send a remove request to the AP.
+     *
+     * @throws ServiceSpecificException with one of the following values:
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+     */
+    void disableMscs();
 }
