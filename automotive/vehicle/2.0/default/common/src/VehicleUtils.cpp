@@ -30,7 +30,7 @@ namespace V2_0 {
 
 std::unique_ptr<VehiclePropValue> createVehiclePropValue(
     VehiclePropertyType type, size_t vecSize) {
-    auto val = std::unique_ptr<VehiclePropValue>(new VehiclePropValue);
+    auto val = std::unique_ptr<VehiclePropValue>(new VehiclePropValue());
     switch (type) {
         case VehiclePropertyType::INT32:      // fall through
         case VehiclePropertyType::INT32_VEC:  // fall through
