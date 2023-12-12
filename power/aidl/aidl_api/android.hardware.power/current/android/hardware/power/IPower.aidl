@@ -40,4 +40,7 @@ interface IPower {
   boolean isBoostSupported(in android.hardware.power.Boost type);
   android.hardware.power.IPowerHintSession createHintSession(in int tgid, in int uid, in int[] threadIds, in long durationNanos);
   long getHintSessionPreferredRate();
+  android.hardware.power.IPowerHintSession createHintSessionWithConfig(in int tgid, in int uid, in int[] threadIds, in long durationNanos, in android.hardware.power.SessionTag tag, out android.hardware.power.SessionConfig config);
+  android.hardware.power.ChannelConfig getSessionChannel(in int tgid, in int uid);
+  oneway void closeSessionChannel(in int tgid, in int uid);
 }
