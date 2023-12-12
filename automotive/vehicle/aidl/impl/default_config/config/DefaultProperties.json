@@ -3595,6 +3595,169 @@
             ]
         },
         {
+            "property": "VehicleProperty::ULTRASONICS_SENSOR_ORIENTATION",
+            "comment":
+                    "Default values for 12 individual ultrasonic sensors installed on the vehicle. Six sensors on the front bumper. Six sensors on the back bumper.",
+            "areas": [
+                {
+                    "defaultValue": {
+                        "floatValues": [
+                            0.924,
+                            0,
+                            0,
+                            0.383
+                        ]
+                    },
+                    "areaId": 1,
+                    "comment":
+                            "Rough quaternion values [w, x, y, z] representing front left most sensor rotated 45 degrees counter-clockwise."
+                },
+                {
+                    "defaultValue": {
+                        "floatValues": [
+                            1,
+                            0,
+                            0,
+                            0
+                        ]
+                    },
+                    "areaId": 2,
+                    "comment":
+                            "Rough quaternion values [w, x, y, z] representing front 2nd to the left sensor rotated 0 degrees"
+                },
+                {
+                    "defaultValue": {
+                        "floatValues": [
+                            1,
+                            0,
+                            0,
+                            0
+                        ]
+                    },
+                    "areaId": 4,
+                    "comment":
+                            "Rough quaternion values [w, x, y, z] representing front 3rd to the left sensor rotated 0 degrees"
+                },
+                {
+                    "defaultValue": {
+                        "floatValues": [
+                            1,
+                            0,
+                            0,
+                            0
+                        ]
+                    },
+                    "areaId": 8,
+                    "comment":
+                            "Rough quaternion values [w, x, y, z] representing front 3rd to the right sensor rotated 0 degrees"
+                },
+                {
+                    "defaultValue": {
+                        "floatValues": [
+                            1,
+                            0,
+                            0,
+                            0
+                        ]
+                    },
+                    "areaId": 16,
+                    "comment":
+                            "Rough quaternion values [w, x, y, z] representing front 2nd to the right sensor rotated 0 degrees"
+                },
+                {
+                    "defaultValue": {
+                        "floatValues": [
+                            0.924,
+                            0,
+                            0,
+                            -0.383
+                        ]
+                    },
+                    "areaId": 32,
+                    "comment":
+                            "Rough quaternion values [w, x, y, z] representing front right most sensor rotated 45 degrees clockwise."
+                },
+                {
+                    "defaultValue": {
+                        "floatValues": [
+                            60,
+                            61,
+                            62,
+                            63
+                        ]
+                    },
+                    "areaId": 64,
+                    "comment":
+                            "Rough quaternion values [w, x, y, z] representing back left most sensor rotated 45 degrees counter-clockwise."
+                },
+                {
+                    "defaultValue": {
+                        "floatValues": [
+                            70,
+                            71,
+                            72,
+                            73
+                        ]
+                    },
+                    "areaId": 128,
+                    "comment":
+                            "Rough quaternion values [w, x, y, z] representing back 2nd to the left sensor rotated 0 degrees"
+                },
+                {
+                    "defaultValue": {
+                        "floatValues": [
+                            81,
+                            82,
+                            83,
+                            84
+                        ]
+                    },
+                    "areaId": 256,
+                    "comment":
+                            "Rough quaternion values [w, x, y, z] representing back 3rd to the right sensor rotated 0 degrees"
+                },
+                {
+                    "defaultValue": {
+                        "floatValues": [
+                            90,
+                            91,
+                            92,
+                            93
+                        ]
+                    },
+                    "areaId": 512,
+                    "comment":
+                            "Rough quaternion values [w, x, y, z] representing back 3rd to the right sensor rotated 0 degrees"
+                },
+                {
+                    "defaultValue": {
+                        "floatValues": [
+                            100,
+                            101,
+                            102,
+                            103
+                        ]
+                    },
+                    "areaId": 1024,
+                    "comment":
+                            "Rough quaternion values [w, x, y, z] representing back 2nd to the right sensor rotated 0 degrees"
+                },
+                {
+                    "defaultValue": {
+                        "floatValues": [
+                            110,
+                            111,
+                            112,
+                            113
+                        ]
+                    },
+                    "areaId": 2048,
+                    "comment":
+                            "Rough quaternion values [w, x, y, z] representing back right most sensor rotated 45 degrees clockwise."
+                }
+            ]
+        },
+        {
             "property": "VehicleProperty::ELECTRONIC_TOLL_COLLECTION_CARD_TYPE",
             "defaultValue": {
                 "int32Values": [
