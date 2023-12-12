@@ -939,6 +939,12 @@ TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyClusterHeartbeatConfig) {
                    VehicleArea::GLOBAL, VehiclePropertyType::MIXED);
 }
 
+TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyVehicleDrivingAutomationCurrentLevelConfig) {
+    verifyProperty(VehicleProperty::VEHICLE_DRIVING_AUTOMATION_CURRENT_LEVEL,
+                   VehiclePropertyAccess::READ, VehiclePropertyChangeMode::ON_CHANGE,
+                   VehiclePropertyGroup::SYSTEM, VehicleArea::GLOBAL, VehiclePropertyType::INT32);
+}
+
 bool VtsHalAutomotiveVehicleTargetTest::checkIsSupported(int32_t propertyId) {
     auto result = mVhalClient->getPropConfigs({propertyId});
     return result.ok();

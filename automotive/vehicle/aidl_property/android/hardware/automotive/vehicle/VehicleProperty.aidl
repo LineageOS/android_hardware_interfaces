@@ -4501,6 +4501,25 @@ enum VehicleProperty {
     CLUSTER_HEARTBEAT =
             0x0F4B + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.MIXED,
 
+    /**
+     * Current state of vehicle autonomy.
+     *
+     * Defines the level of autonomy currently engaged in the vehicle from the J3016_202104 revision
+     * of the SAE standard levels 0-5, with 0 representing no autonomy and 5 representing full
+     * driving automation. These levels should be used in accordance with the standards defined in
+     * https://www.sae.org/standards/content/j3016_202104/ and
+     * https://www.sae.org/blog/sae-j3016-update
+     *
+     * For the global area ID (0), the VehicleAreaConfig#supportedEnumValues array must be defined
+     * unless all states of VehicleAutonomousState are supported.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     * @data_enum VehicleAutonomousState
+     */
+    VEHICLE_DRIVING_AUTOMATION_CURRENT_LEVEL =
+            0x0F4C + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
+
     /***********************************************************************************************
      * Start of ADAS Properties
      *
