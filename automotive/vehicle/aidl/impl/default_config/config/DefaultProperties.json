@@ -4010,6 +4010,175 @@
             ]
         },
         {
+            "property": "VehicleProperty::ULTRASONICS_SENSOR_SUPPORTED_RANGES",
+            "areas": [
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            150,
+                            999,
+                            1000,
+                            1999,
+                            2000,
+                            4000
+                        ]
+                    },
+                    "areaId": 1,
+                    "comment": "Rough values representing front left most sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            150,
+                            999,
+                            1000,
+                            1999,
+                            2000,
+                            3000
+                        ]
+                    },
+                    "areaId": 2,
+                    "comment": "Rough values representing front 2nd to the left sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            150,
+                            999,
+                            1000,
+                            1999,
+                            2000,
+                            3000
+                        ]
+                    },
+                    "areaId": 4,
+                    "comment": "Rough values representing front 3rd to the left sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            150,
+                            999,
+                            1000,
+                            1999,
+                            2000,
+                            3000
+                        ]
+                    },
+                    "areaId": 8,
+                    "comment": "Rough values representing front 3rd to the right sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            150,
+                            999,
+                            1000,
+                            1999,
+                            2000,
+                            3000
+                        ]
+                    },
+                    "areaId": 16,
+                    "comment": "Rough values representing front 2nd to the right sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            150,
+                            999,
+                            1000,
+                            1999,
+                            2000,
+                            4000
+                        ]
+                    },
+                    "areaId": 32,
+                    "comment": "Rough values representing front right most sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            150,
+                            999,
+                            1000,
+                            1999,
+                            2000,
+                            4000
+                        ]
+                    },
+                    "areaId": 64,
+                    "comment": "Rough values representing back left most sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            150,
+                            999,
+                            1000,
+                            1999,
+                            2000,
+                            3000
+                        ]
+                    },
+                    "areaId": 128,
+                    "comment": "Rough values representing back 2nd to the left sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            150,
+                            999,
+                            1000,
+                            3000
+                        ]
+                    },
+                    "areaId": 256,
+                    "comment": "Rough values representing back 3rd to the left sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            150,
+                            999,
+                            1000,
+                            3000
+                        ]
+                    },
+                    "areaId": 512,
+                    "comment": "Rough values representing back 3rd to the right sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            150,
+                            999,
+                            1000,
+                            1999,
+                            2000,
+                            3000
+                        ]
+                    },
+                    "areaId": 1024,
+                    "comment": "Rough values representing back 2nd to the right sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            150,
+                            999,
+                            1000,
+                            1999,
+                            2000,
+                            4000
+                        ]
+                    },
+                    "areaId": 2048,
+                    "comment": "Rough values representing back right most sensor."
+                }
+            ]
+        },
+        {
             "property": "VehicleProperty::ELECTRONIC_TOLL_COLLECTION_CARD_TYPE",
             "defaultValue": {
                 "int32Values": [
