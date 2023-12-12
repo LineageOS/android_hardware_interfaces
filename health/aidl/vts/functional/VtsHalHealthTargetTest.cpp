@@ -84,6 +84,21 @@ Matcher<T> IsValidEnum() {
     return AnyOfArray(enum_range<T>().begin(), enum_range<T>().end());
 }
 
+MATCHER(IsValidSerialNumber, "") {
+    if (!arg) {
+        return true;
+    }
+    if (arg->size() < 6) {
+        return false;
+    }
+    for (const auto& c : *arg) {
+        if (!isalnum(c)) {
+            return false;
+        }
+    }
+    return true;
+}
+
 class HealthAidl : public testing::TestWithParam<std::string> {
   public:
     void SetUp() override {
@@ -270,7 +285,7 @@ TEST_P(HealthAidl, setChargingPolicy) {
     ASSERT_THAT(static_cast<int>(value), AnyOf(Eq(1), Eq(4)));
 }
 
-MATCHER(IsValidHealthData, "") {
+MATCHER_P(IsValidHealthData, version, "") {
     *result_listener << "value is " << arg.toString() << ".";
     if (!ExplainMatchResult(Ge(-1), arg.batteryManufacturingDateSeconds, result_listener)) {
         *result_listener << " for batteryManufacturingDateSeconds.";
@@ -282,6 +297,15 @@ MATCHER(IsValidHealthData, "") {
     }
     if (!ExplainMatchResult(Ge(-1), arg.batteryStateOfHealth, result_listener)) {
         *result_listener << " for batteryStateOfHealth.";
+        return false;
+    }
+    if (!ExplainMatchResult(IsValidSerialNumber(), arg.batterySerialNumber, result_listener)) {
+        *result_listener << " for batterySerialNumber.";
+        return false;
+    }
+    if (!ExplainMatchResult(IsValidEnum<BatteryPartStatus>(), arg.batteryPartStatus,
+                            result_listener)) {
+        *result_listener << " for batteryPartStatus.";
         return false;
     }
 
@@ -303,7 +327,7 @@ TEST_P(HealthAidl, getBatteryHealthData) {
     status = health->getBatteryHealthData(&value);
     ASSERT_THAT(status, AnyOf(IsOk(), ExceptionIs(EX_UNSUPPORTED_OPERATION)));
     if (!status.isOk()) return;
-    ASSERT_THAT(value, IsValidHealthData());
+    ASSERT_THAT(value, IsValidHealthData(version));
 }
 
 MATCHER(IsValidStorageInfo, "") {
