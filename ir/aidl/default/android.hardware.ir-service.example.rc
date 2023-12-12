@@ -1,4 +1,4 @@
-service vendor.ir-default /apex/com.android.hardware.ir/bin/hw/android.hardware.ir-service.example
+service vendor.ir-default /vendor/bin/hw/android.hardware.ir-service.example
     class hal
     user system
     group system
