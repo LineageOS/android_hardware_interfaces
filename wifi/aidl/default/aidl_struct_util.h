@@ -218,6 +218,18 @@ bool convertCachedScanReportToAidl(const legacy_hal::WifiCachedScanReport& repor
 bool convertCachedScanResultToAidl(const legacy_hal::wifi_cached_scan_result& legacy_scan_result,
                                    uint64_t ts_us, CachedScanResult* aidl_scan_result);
 WifiRatePreamble convertScanResultFlagsToPreambleType(int flags);
+bool convertTwtCapabilitiesToAidl(const legacy_hal::wifi_twt_capabilities legacy_twt_capabs,
+                                  TwtCapabilities* aidl_twt_capabs);
+bool convertAidlTwtRequestToLegacy(const TwtRequest aidl_twt_request,
+                                   legacy_hal::wifi_twt_request* legacy_twt_request);
+IWifiStaIfaceEventCallback::TwtErrorCode convertLegacyHalTwtErrorCodeToAidl(
+        legacy_hal::wifi_twt_error_code legacy_error_code);
+IWifiStaIfaceEventCallback::TwtTeardownReasonCode convertLegacyHalTwtReasonCodeToAidl(
+        legacy_hal::wifi_twt_teardown_reason_code legacy_reason_code);
+bool convertLegacyHalTwtSessionToAidl(legacy_hal::wifi_twt_session twt_session,
+                                      TwtSession* aidl_twt_session);
+bool convertLegacyHalTwtSessionStatsToAidl(legacy_hal::wifi_twt_session_stats twt_stats,
+                                           TwtSessionStats* aidl_twt_stats);
 }  // namespace aidl_struct_util
 }  // namespace wifi
 }  // namespace hardware

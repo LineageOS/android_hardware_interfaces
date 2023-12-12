@@ -62,6 +62,13 @@ interface IWifiStaIface {
   void stopSendingKeepAlivePackets(in int cmdId);
   void setDtimMultiplier(in int multiplier);
   android.hardware.wifi.CachedScanData getCachedScanData();
+  android.hardware.wifi.TwtCapabilities twtGetCapabilities();
+  void twtSessionSetup(in int cmdId, in android.hardware.wifi.TwtRequest twtRequest);
+  void twtSessionUpdate(in int cmdId, in int sessionId, in android.hardware.wifi.TwtRequest twtRequest);
+  void twtSessionSuspend(in int cmdId, in int sessionId);
+  void twtSessionResume(in int cmdId, in int sessionId);
+  void twtSessionTeardown(in int cmdId, in int sessionId);
+  void twtSessionGetStats(in int cmdId, in int sessionId);
   @Backing(type="int") @VintfStability
   enum FeatureSetMask {
     APF = (1 << 0) /* 1 */,
