@@ -32,6 +32,7 @@ rust_test {
         "libcoset",
         "libauthgraph_vts_test",
         "libbinder_rs",
+        "libcoset",
         "liblog_rust",
     ],
     require_root: true,
