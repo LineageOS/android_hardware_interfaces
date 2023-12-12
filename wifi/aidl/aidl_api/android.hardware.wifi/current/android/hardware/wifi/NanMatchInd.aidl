@@ -51,4 +51,5 @@ parcelable NanMatchInd {
   byte[] scid;
   android.hardware.wifi.NanPairingConfig peerPairingConfig;
   android.hardware.wifi.NanIdentityResolutionAttribute peerNira;
+  @nullable android.hardware.wifi.common.OuiKeyedData[] vendorData;
 }

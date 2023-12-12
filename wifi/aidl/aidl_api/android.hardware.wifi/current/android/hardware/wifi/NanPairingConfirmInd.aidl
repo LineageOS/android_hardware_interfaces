@@ -40,4 +40,5 @@ parcelable NanPairingConfirmInd {
   android.hardware.wifi.NanPairingRequestType requestType;
   boolean enablePairingCache;
   android.hardware.wifi.NpkSecurityAssociation npksa;
+  @nullable android.hardware.wifi.common.OuiKeyedData[] vendorData;
 }

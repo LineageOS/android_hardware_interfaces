@@ -337,8 +337,8 @@ ErrMsgOr<std::vector<BccEntryData>> validateBcc(const cppbor::Array* bcc,
     return result;
 }
 
-JsonOutput jsonEncodeCsrWithBuild(const std::string instance_name, const cppbor::Array& csr,
-                                  const std::string serialno_prop) {
+JsonOutput jsonEncodeCsrWithBuild(const std::string& instance_name, const cppbor::Array& csr,
+                                  const std::string& serialno_prop) {
     const std::string kFingerprintProp = "ro.build.fingerprint";
 
     if (!::android::base::WaitForPropertyCreation(kFingerprintProp)) {

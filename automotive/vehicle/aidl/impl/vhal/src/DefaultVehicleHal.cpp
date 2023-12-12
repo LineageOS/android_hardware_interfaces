@@ -194,6 +194,7 @@ void DefaultVehicleHal::handleBatchedPropertyEvents(std::vector<VehiclePropValue
 void DefaultVehicleHal::onPropertyChangeEvent(
         const std::weak_ptr<SubscriptionManager>& subscriptionManager,
         std::vector<VehiclePropValue>&& updatedValues) {
+    ATRACE_CALL();
     auto manager = subscriptionManager.lock();
     if (manager == nullptr) {
         ALOGW("the SubscriptionManager is destroyed, DefaultVehicleHal is ending");

@@ -104,6 +104,10 @@ interface IWifiStaIface {
          * Support for configuring roaming mode.
          */
         ROAMING_MODE_CONTROL = 1 << 14,
+        /**
+         * Support for cached scan data report.
+         */
+        CACHED_SCAN_DATA = 1 << 15,
     }
 
     /**

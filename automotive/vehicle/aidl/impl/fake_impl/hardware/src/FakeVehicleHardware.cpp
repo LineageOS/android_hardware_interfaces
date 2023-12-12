@@ -346,8 +346,9 @@ void FakeVehicleHardware::init() {
         mFakeObd2Frame->initObd2FreezeFrame(maybeObd2FreezeFrame.value());
     }
 
-    mServerSidePropStore->setOnValueChangeCallback(
-            [this](const VehiclePropValue& value) { return onValueChangeCallback(value); });
+    mServerSidePropStore->setOnValuesChangeCallback([this](std::vector<VehiclePropValue> values) {
+        return onValuesChangeCallback(std::move(values));
+    });
 }
 
 std::vector<VehiclePropConfig> FakeVehicleHardware::getAllPropertyConfigs() const {
@@ -2080,6 +2081,81 @@ bool FakeVehicleHardware::isVariableUpdateRateSupported(const VehiclePropConfig&
     return false;
 }
 
+void FakeVehicleHardware::refreshTimeStampForInterval(int64_t intervalInNanos) {
+    std::unordered_map<PropIdAreaId, VehiclePropertyStore::EventMode, PropIdAreaIdHash>
+            eventModeByPropIdAreaId;
+
+    {
+        std::scoped_lock<std::mutex> lockGuard(mLock);
+
+        if (mActionByIntervalInNanos.find(intervalInNanos) == mActionByIntervalInNanos.end()) {
+            ALOGE("No actions scheduled for the interval: %" PRId64 ", ignore the refresh request",
+                  intervalInNanos);
+            return;
+        }
+
+        ActionForInterval actionForInterval = mActionByIntervalInNanos[intervalInNanos];
+
+        // Make a copy so that we don't hold the lock while trying to refresh the timestamp.
+        // Refreshing the timestamp will inovke onValueChangeCallback which also requires lock, so
+        // we must not hold lock.
+        for (const PropIdAreaId& propIdAreaId : actionForInterval.propIdAreaIdsToRefresh) {
+            const RefreshInfo& refreshInfo = mRefreshInfoByPropIdAreaId[propIdAreaId];
+            eventModeByPropIdAreaId[propIdAreaId] = refreshInfo.eventMode;
+        }
+    }
+
+    mServerSidePropStore->refreshTimestamps(eventModeByPropIdAreaId);
+}
+
+void FakeVehicleHardware::registerRefreshLocked(PropIdAreaId propIdAreaId,
+                                                VehiclePropertyStore::EventMode eventMode,
+                                                float sampleRateHz) {
+    if (mRefreshInfoByPropIdAreaId.find(propIdAreaId) != mRefreshInfoByPropIdAreaId.end()) {
+        unregisterRefreshLocked(propIdAreaId);
+    }
+
+    int64_t intervalInNanos = static_cast<int64_t>(1'000'000'000. / sampleRateHz);
+    RefreshInfo refreshInfo = {
+            .eventMode = eventMode,
+            .intervalInNanos = intervalInNanos,
+    };
+    mRefreshInfoByPropIdAreaId[propIdAreaId] = refreshInfo;
+
+    if (mActionByIntervalInNanos.find(intervalInNanos) != mActionByIntervalInNanos.end()) {
+        // If we have already registered for this interval, then add the action info to the
+        // actions list.
+        mActionByIntervalInNanos[intervalInNanos].propIdAreaIdsToRefresh.insert(propIdAreaId);
+        return;
+    }
+
+    // This is the first action for the interval, register a timer callback for that interval.
+    auto action = std::make_shared<RecurrentTimer::Callback>(
+            [this, intervalInNanos] { refreshTimeStampForInterval(intervalInNanos); });
+    mActionByIntervalInNanos[intervalInNanos] = ActionForInterval{
+            .propIdAreaIdsToRefresh = {propIdAreaId},
+            .recurrentAction = action,
+    };
+    mRecurrentTimer->registerTimerCallback(intervalInNanos, action);
+}
+
+void FakeVehicleHardware::unregisterRefreshLocked(PropIdAreaId propIdAreaId) {
+    if (mRefreshInfoByPropIdAreaId.find(propIdAreaId) == mRefreshInfoByPropIdAreaId.end()) {
+        ALOGW("PropId: %" PRId32 ", areaId: %" PRId32 " was not registered for refresh, ignore",
+              propIdAreaId.propId, propIdAreaId.areaId);
+        return;
+    }
+
+    int64_t intervalInNanos = mRefreshInfoByPropIdAreaId[propIdAreaId].intervalInNanos;
+    auto& actionForInterval = mActionByIntervalInNanos[intervalInNanos];
+    actionForInterval.propIdAreaIdsToRefresh.erase(propIdAreaId);
+    if (actionForInterval.propIdAreaIdsToRefresh.empty()) {
+        mRecurrentTimer->unregisterTimerCallback(actionForInterval.recurrentAction);
+        mActionByIntervalInNanos.erase(intervalInNanos);
+    }
+    mRefreshInfoByPropIdAreaId.erase(propIdAreaId);
+}
+
 StatusCode FakeVehicleHardware::subscribePropIdAreaIdLocked(
         int32_t propId, int32_t areaId, float sampleRateHz, bool enableVariableUpdateRate,
         const VehiclePropConfig& vehiclePropConfig) {
@@ -2099,11 +2175,6 @@ StatusCode FakeVehicleHardware::subscribePropIdAreaIdLocked(
                 ALOGE("Must not use sample rate 0 for a continuous property");
                 return StatusCode::INTERNAL_ERROR;
             }
-            if (mRecurrentActions.find(propIdAreaId) != mRecurrentActions.end()) {
-                mRecurrentTimer->unregisterTimerCallback(mRecurrentActions[propIdAreaId]);
-            }
-            int64_t intervalInNanos = static_cast<int64_t>(1'000'000'000. / sampleRateHz);
-
             // For continuous properties, we must generate a new onPropertyChange event
             // periodically according to the sample rate.
             auto eventMode = VehiclePropertyStore::EventMode::ALWAYS;
@@ -2111,12 +2182,8 @@ StatusCode FakeVehicleHardware::subscribePropIdAreaIdLocked(
                 enableVariableUpdateRate) {
                 eventMode = VehiclePropertyStore::EventMode::ON_VALUE_CHANGE;
             }
-            auto action =
-                    std::make_shared<RecurrentTimer::Callback>([this, propId, areaId, eventMode] {
-                        mServerSidePropStore->refreshTimestamp(propId, areaId, eventMode);
-                    });
-            mRecurrentTimer->registerTimerCallback(intervalInNanos, action);
-            mRecurrentActions[propIdAreaId] = action;
+
+            registerRefreshLocked(propIdAreaId, eventMode, sampleRateHz);
             return StatusCode::OK;
     }
 }
@@ -2127,39 +2194,47 @@ StatusCode FakeVehicleHardware::unsubscribe(int32_t propId, int32_t areaId) {
             .propId = propId,
             .areaId = areaId,
     };
-    if (mRecurrentActions.find(propIdAreaId) != mRecurrentActions.end()) {
-        mRecurrentTimer->unregisterTimerCallback(mRecurrentActions[propIdAreaId]);
-        mRecurrentActions.erase(propIdAreaId);
+    if (mRefreshInfoByPropIdAreaId.find(propIdAreaId) != mRefreshInfoByPropIdAreaId.end()) {
+        unregisterRefreshLocked(propIdAreaId);
     }
     mSubOnChangePropIdAreaIds.erase(propIdAreaId);
     return StatusCode::OK;
 }
 
 void FakeVehicleHardware::onValueChangeCallback(const VehiclePropValue& value) {
-    if (mOnPropertyChangeCallback == nullptr) {
-        return;
-    }
+    ATRACE_CALL();
+    onValuesChangeCallback({value});
+}
 
-    PropIdAreaId propIdAreaId{
-            .propId = value.prop,
-            .areaId = value.areaId,
-    };
+void FakeVehicleHardware::onValuesChangeCallback(std::vector<VehiclePropValue> values) {
+    ATRACE_CALL();
+    std::vector<VehiclePropValue> subscribedUpdatedValues;
 
     {
         std::scoped_lock<std::mutex> lockGuard(mLock);
-        if (mRecurrentActions.find(propIdAreaId) == mRecurrentActions.end() &&
-            mSubOnChangePropIdAreaIds.find(propIdAreaId) == mSubOnChangePropIdAreaIds.end()) {
-            if (FAKE_VEHICLEHARDWARE_DEBUG) {
-                ALOGD("The updated property value: %s is not subscribed, ignore",
-                      value.toString().c_str());
-            }
+        if (mOnPropertyChangeCallback == nullptr) {
             return;
+        }
+
+        for (const auto& value : values) {
+            PropIdAreaId propIdAreaId{
+                    .propId = value.prop,
+                    .areaId = value.areaId,
+            };
+            if (mRefreshInfoByPropIdAreaId.find(propIdAreaId) == mRefreshInfoByPropIdAreaId.end() &&
+                mSubOnChangePropIdAreaIds.find(propIdAreaId) == mSubOnChangePropIdAreaIds.end()) {
+                if (FAKE_VEHICLEHARDWARE_DEBUG) {
+                    ALOGD("The updated property value: %s is not subscribed, ignore",
+                          value.toString().c_str());
+                }
+                continue;
+            }
+
+            subscribedUpdatedValues.push_back(value);
         }
     }
 
-    std::vector<VehiclePropValue> updatedValues;
-    updatedValues.push_back(value);
-    (*mOnPropertyChangeCallback)(std::move(updatedValues));
+    (*mOnPropertyChangeCallback)(std::move(subscribedUpdatedValues));
 }
 
 void FakeVehicleHardware::loadPropConfigsFromDir(

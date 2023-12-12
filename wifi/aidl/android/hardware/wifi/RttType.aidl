@@ -23,5 +23,18 @@ package android.hardware.wifi;
 @Backing(type="int")
 enum RttType {
     ONE_SIDED = 1,
+    /**
+     * Two-sided RTT 11mc type.
+     *
+     * Note: TWO_SIDED was used for IEEE 802.11mc. Use TWO_SIDED_11MC for IEEE 802.11mc instead.
+     */
     TWO_SIDED = 2,
+    /**
+     * Two-sided RTT 11mc type is same as two-sided.
+     */
+    TWO_SIDED_11MC = TWO_SIDED,
+    /**
+     * Two-sided RTT 11az non trigger based (non-TB) type.
+     */
+    TWO_SIDED_11AZ_NTB = 3,
 }

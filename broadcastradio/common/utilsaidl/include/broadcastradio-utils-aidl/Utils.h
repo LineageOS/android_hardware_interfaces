@@ -143,6 +143,14 @@ ProgramSelector makeSelectorHd(uint64_t stationId, uint64_t subChannel, uint64_t
 
 bool satisfies(const ProgramFilter& filter, const ProgramSelector& sel);
 
+struct ProgramSelectorComparator {
+    bool operator()(const ProgramSelector& lhs, const ProgramSelector& rhs) const;
+};
+
+struct ProgramInfoComparator {
+    bool operator()(const ProgramInfo& lhs, const ProgramInfo& rhs) const;
+};
+
 struct ProgramInfoHasher {
     size_t operator()(const ProgramInfo& info) const;
 };

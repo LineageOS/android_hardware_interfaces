@@ -215,6 +215,8 @@ using ::RTT_STATUS_NO_WIFI;
 using ::RTT_STATUS_SUCCESS;
 using ::RTT_TYPE_1_SIDED;
 using ::RTT_TYPE_2_SIDED;
+using ::RTT_TYPE_2_SIDED_11AZ_NTB;
+using ::RTT_TYPE_2_SIDED_11MC;
 using ::RX_PKT_FATE_DRV_DROP_FILTER;
 using ::RX_PKT_FATE_DRV_DROP_INVALID;
 using ::RX_PKT_FATE_DRV_DROP_NOBUFS;
@@ -351,16 +353,20 @@ using ::WIFI_RTT_BW_5;
 using ::WIFI_RTT_BW_80;
 using ::WIFI_RTT_BW_UNSPECIFIED;
 using ::wifi_rtt_capabilities;
+using ::wifi_rtt_capabilities_v3;
 using ::wifi_rtt_config;
+using ::wifi_rtt_config_v3;
 using ::wifi_rtt_preamble;
 using ::WIFI_RTT_PREAMBLE_EHT;
 using ::WIFI_RTT_PREAMBLE_HE;
 using ::WIFI_RTT_PREAMBLE_HT;
+using ::WIFI_RTT_PREAMBLE_INVALID;
 using ::WIFI_RTT_PREAMBLE_LEGACY;
 using ::WIFI_RTT_PREAMBLE_VHT;
 using ::wifi_rtt_responder;
 using ::wifi_rtt_result;
 using ::wifi_rtt_result_v2;
+using ::wifi_rtt_result_v3;
 using ::wifi_rtt_status;
 using ::wifi_rtt_type;
 using ::wifi_rx_packet_fate;
@@ -493,6 +499,8 @@ using on_rtt_results_callback =
         std::function<void(wifi_request_id, const std::vector<const wifi_rtt_result*>&)>;
 using on_rtt_results_callback_v2 =
         std::function<void(wifi_request_id, const std::vector<const wifi_rtt_result_v2*>&)>;
+using on_rtt_results_callback_v3 =
+        std::function<void(wifi_request_id, const std::vector<const wifi_rtt_result_v3*>&)>;
 
 // Callback for ring buffer data.
 using on_ring_buffer_data_callback = std::function<void(
@@ -668,9 +676,15 @@ class WifiLegacyHal {
                                     const std::vector<wifi_rtt_config>& rtt_configs,
                                     const on_rtt_results_callback& on_results_callback,
                                     const on_rtt_results_callback_v2& on_results_callback_v2);
+    wifi_error startRttRangeRequestV3(const std::string& iface_name, wifi_request_id id,
+                                      const std::vector<wifi_rtt_config_v3>& rtt_configs,
+                                      const on_rtt_results_callback_v3& on_results_callback);
+
     wifi_error cancelRttRangeRequest(const std::string& iface_name, wifi_request_id id,
                                      const std::vector<std::array<uint8_t, ETH_ALEN>>& mac_addrs);
     std::pair<wifi_error, wifi_rtt_capabilities> getRttCapabilities(const std::string& iface_name);
+    std::pair<wifi_error, wifi_rtt_capabilities_v3> getRttCapabilitiesV3(
+            const std::string& iface_name);
     std::pair<wifi_error, wifi_rtt_responder> getRttResponderInfo(const std::string& iface_name);
     wifi_error enableRttResponder(const std::string& iface_name, wifi_request_id id,
                                   const wifi_channel_info& channel_hint, uint32_t max_duration_secs,

@@ -179,6 +179,8 @@ bool initHalFuncTableWithStubs(wifi_hal_fn* hal_fn) {
     populateStubFor(&hal_fn->wifi_set_scan_mode);
     populateStubFor(&hal_fn->wifi_set_mlo_mode);
     populateStubFor(&hal_fn->wifi_get_supported_iface_concurrency_matrix);
+    populateStubFor(&hal_fn->wifi_get_rtt_capabilities_v3);
+    populateStubFor(&hal_fn->wifi_rtt_range_request_v3);
     return true;
 }
 
