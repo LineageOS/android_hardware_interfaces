@@ -112,7 +112,7 @@ int32_t ModuleRemoteSubmix::getNominalLatencyMs(const AudioPortConfig&) {
     static constexpr int32_t kMaxLatencyMs =
             (r_submix::kDefaultPipeSizeInFrames * 1000) / r_submix::kDefaultSampleRateHz;
     static constexpr int32_t kMinLatencyMs = kMaxLatencyMs / r_submix::kDefaultPipePeriodCount;
-    return kMinLatencyMs;
+    return (kMaxLatencyMs + kMinLatencyMs) / 2;
 }
 
 }  // namespace aidl::android::hardware::audio::core
