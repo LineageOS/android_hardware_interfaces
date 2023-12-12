@@ -153,6 +153,8 @@ ndk::ScopedAStatus Health::getBatteryHealthData(BatteryHealthData* out) {
         !res.isOk()) {
         LOG(WARNING) << "Cannot get Battery_state_of_health: " << res.getDescription();
     }
+    out->batterySerialNumber = std::nullopt;
+    out->batteryPartStatus = BatteryPartStatus::UNSUPPORTED;
     return ndk::ScopedAStatus::ok();
 }
 
