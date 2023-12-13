@@ -36,9 +36,11 @@ using ::android::binder::Status;
 using ::android::hardware::contexthub::AsyncEventType;
 using ::android::hardware::contexthub::ContextHubInfo;
 using ::android::hardware::contexthub::ContextHubMessage;
+using ::android::hardware::contexthub::ErrorCode;
 using ::android::hardware::contexthub::HostEndpointInfo;
 using ::android::hardware::contexthub::IContextHub;
 using ::android::hardware::contexthub::IContextHubCallbackDefault;
+using ::android::hardware::contexthub::MessageDeliveryStatus;
 using ::android::hardware::contexthub::NanoappBinary;
 using ::android::hardware::contexthub::NanoappInfo;
 using ::android::hardware::contexthub::NanoappRpcService;
@@ -132,6 +134,12 @@ class EmptyContextHubCallback : public android::hardware::contexthub::BnContextH
         return Status::ok();
     }
 
+    Status handleMessageDeliveryStatus(
+            char16_t /* hostEndPointId */,
+            const MessageDeliveryStatus& /* messageDeliveryStatus */) override {
+        return Status::ok();
+    }
+
     Status getUuid(std::array<uint8_t, 16>* out_uuid) override {
         *out_uuid = kUuid;
         return Status::ok();
@@ -169,6 +177,12 @@ class QueryAppsCallback : public android::hardware::contexthub::BnContextHubCall
     }
 
     Status handleNanSessionRequest(const NanSessionRequest& /* request */) override {
+        return Status::ok();
+    }
+
+    Status handleMessageDeliveryStatus(
+            char16_t /* hostEndPointId */,
+            const MessageDeliveryStatus& /* messageDeliveryStatus */) override {
         return Status::ok();
     }
 
@@ -245,6 +259,12 @@ class TransactionResultCallback : public android::hardware::contexthub::BnContex
     }
 
     Status handleNanSessionRequest(const NanSessionRequest& /* request */) override {
+        return Status::ok();
+    }
+
+    Status handleMessageDeliveryStatus(
+            char16_t /* hostEndPointId */,
+            const MessageDeliveryStatus& /* messageDeliveryStatus */) override {
         return Status::ok();
     }
 
@@ -428,6 +448,20 @@ TEST_P(ContextHubAidl, TestNanSessionStateChange) {
         ASSERT_TRUE(status.isOk());
         update.state = false;
         ASSERT_TRUE(contextHub->onNanSessionStateChanged(update).isOk());
+    }
+}
+
+TEST_P(ContextHubAidl, TestSendMessageDeliveryStatusToHub) {
+    MessageDeliveryStatus messageDeliveryStatus;
+    messageDeliveryStatus.messageSequenceNumber = 123;
+    messageDeliveryStatus.errorCode = ErrorCode::OK;
+
+    Status status = contextHub->sendMessageDeliveryStatusToHub(getHubId(), messageDeliveryStatus);
+    if (status.exceptionCode() == Status::EX_UNSUPPORTED_OPERATION ||
+        status.transactionError() == android::UNKNOWN_TRANSACTION) {
+        GTEST_SKIP() << "Not supported -> old API; or not implemented";
+    } else {
+        EXPECT_TRUE(status.isOk());
     }
 }
 
