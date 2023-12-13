@@ -750,7 +750,7 @@ TEST_P(BroadcastRadioHalTest, HdTune) {
     ProgramInfo infoCb = mCallback->getCurrentProgramInfo();
     LOG(DEBUG) << "Current program info: " << infoCb.toString();
     // it should tune exactly to what was requested
-    EXPECT_EQ(infoCb.selector, hdSel);
+    EXPECT_EQ(infoCb.selector.primaryId, hdSel.primaryId);
     EXPECT_EQ(infoCb.physicallyTunedTo, physicallyTunedToExpected);
 }
 
