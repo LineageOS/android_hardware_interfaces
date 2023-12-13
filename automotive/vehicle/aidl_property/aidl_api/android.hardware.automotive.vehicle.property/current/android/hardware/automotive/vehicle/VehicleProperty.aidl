@@ -285,4 +285,5 @@ enum VehicleProperty {
   DRIVER_DISTRACTION_WARNING_ENABLED = (((0x101F + android.hardware.automotive.vehicle.VehiclePropertyGroup.SYSTEM) + android.hardware.automotive.vehicle.VehicleArea.GLOBAL) + android.hardware.automotive.vehicle.VehiclePropertyType.BOOLEAN) /* 287313951 */,
   DRIVER_DISTRACTION_WARNING = (((0x1020 + android.hardware.automotive.vehicle.VehiclePropertyGroup.SYSTEM) + android.hardware.automotive.vehicle.VehicleArea.GLOBAL) + android.hardware.automotive.vehicle.VehiclePropertyType.INT32) /* 289411104 */,
   LOW_SPEED_COLLISION_WARNING_ENABLED = (((0x1021 + android.hardware.automotive.vehicle.VehiclePropertyGroup.SYSTEM) + android.hardware.automotive.vehicle.VehicleArea.GLOBAL) + android.hardware.automotive.vehicle.VehiclePropertyType.BOOLEAN) /* 287313953 */,
+  LOW_SPEED_COLLISION_WARNING_STATE = (((0x1022 + android.hardware.automotive.vehicle.VehiclePropertyGroup.SYSTEM) + android.hardware.automotive.vehicle.VehicleArea.GLOBAL) + android.hardware.automotive.vehicle.VehiclePropertyType.INT32) /* 289411106 */,
 }

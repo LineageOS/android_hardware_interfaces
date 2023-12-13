@@ -100,7 +100,8 @@ public final class EnumForVehicleProperty {
         Map.entry(VehicleProperty.DRIVER_DROWSINESS_ATTENTION_STATE, List.of(DriverDrowsinessAttentionState.class, ErrorState.class)),
         Map.entry(VehicleProperty.DRIVER_DROWSINESS_ATTENTION_WARNING, List.of(DriverDrowsinessAttentionWarning.class, ErrorState.class)),
         Map.entry(VehicleProperty.DRIVER_DISTRACTION_STATE, List.of(DriverDistractionState.class, ErrorState.class)),
-        Map.entry(VehicleProperty.DRIVER_DISTRACTION_WARNING, List.of(DriverDistractionWarning.class, ErrorState.class))
+        Map.entry(VehicleProperty.DRIVER_DISTRACTION_WARNING, List.of(DriverDistractionWarning.class, ErrorState.class)),
+        Map.entry(VehicleProperty.LOW_SPEED_COLLISION_WARNING_STATE, List.of(LowSpeedCollisionWarningState.class, ErrorState.class))
     );
 
 }

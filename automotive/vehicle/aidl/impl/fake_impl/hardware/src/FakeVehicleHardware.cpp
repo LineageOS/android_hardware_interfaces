@@ -225,6 +225,13 @@ const std::unordered_map<int32_t, std::vector<int32_t>> mAdasEnabledPropToAdasPr
                         toInt(VehicleProperty::DRIVER_DISTRACTION_WARNING),
                 },
         },
+        // LSCW
+        {
+                toInt(VehicleProperty::LOW_SPEED_COLLISION_WARNING_ENABLED),
+                {
+                        toInt(VehicleProperty::LOW_SPEED_COLLISION_WARNING_STATE),
+                },
+        },
 };
 }  // namespace
 
