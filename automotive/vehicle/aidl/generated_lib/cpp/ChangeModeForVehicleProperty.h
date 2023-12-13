@@ -68,6 +68,7 @@ std::unordered_map<VehicleProperty, VehiclePropertyChangeMode> ChangeModeForVehi
         {VehicleProperty::EV_CHARGE_PORT_CONNECTED, VehiclePropertyChangeMode::ON_CHANGE},
         {VehicleProperty::EV_BATTERY_INSTANTANEOUS_CHARGE_RATE, VehiclePropertyChangeMode::CONTINUOUS},
         {VehicleProperty::RANGE_REMAINING, VehiclePropertyChangeMode::CONTINUOUS},
+        {VehicleProperty::EV_BATTERY_AVERAGE_TEMPERATURE, VehiclePropertyChangeMode::CONTINUOUS},
         {VehicleProperty::TIRE_PRESSURE, VehiclePropertyChangeMode::CONTINUOUS},
         {VehicleProperty::CRITICALLY_LOW_TIRE_PRESSURE, VehiclePropertyChangeMode::STATIC},
         {VehicleProperty::ENGINE_IDLE_AUTO_STOP_ENABLED, VehiclePropertyChangeMode::ON_CHANGE},

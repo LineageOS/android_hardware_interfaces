@@ -66,6 +66,7 @@ enum VehicleProperty {
   EV_CHARGE_PORT_CONNECTED = (((0x030B + 0x10000000) + 0x01000000) + 0x00200000) /* 287310603 */,
   EV_BATTERY_INSTANTANEOUS_CHARGE_RATE = (((0x030C + 0x10000000) + 0x01000000) + 0x00600000) /* 291504908 */,
   RANGE_REMAINING = (((0x0308 + 0x10000000) + 0x01000000) + 0x00600000) /* 291504904 */,
+  EV_BATTERY_AVERAGE_TEMPERATURE = (((0x030E + android.hardware.automotive.vehicle.VehiclePropertyGroup.SYSTEM) + android.hardware.automotive.vehicle.VehicleArea.GLOBAL) + android.hardware.automotive.vehicle.VehiclePropertyType.FLOAT) /* 291504910 */,
   TIRE_PRESSURE = (((0x0309 + 0x10000000) + 0x07000000) + 0x00600000) /* 392168201 */,
   CRITICALLY_LOW_TIRE_PRESSURE = (((0x030A + 0x10000000) + 0x07000000) + 0x00600000) /* 392168202 */,
   ENGINE_IDLE_AUTO_STOP_ENABLED = (((0x0320 + android.hardware.automotive.vehicle.VehiclePropertyGroup.SYSTEM) + android.hardware.automotive.vehicle.VehicleArea.GLOBAL) + android.hardware.automotive.vehicle.VehiclePropertyType.BOOLEAN) /* 287310624 */,

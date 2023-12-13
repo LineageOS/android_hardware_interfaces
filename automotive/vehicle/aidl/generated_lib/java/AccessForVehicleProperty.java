@@ -60,6 +60,7 @@ public final class AccessForVehicleProperty {
         Map.entry(VehicleProperty.EV_CHARGE_PORT_CONNECTED, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.EV_BATTERY_INSTANTANEOUS_CHARGE_RATE, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.RANGE_REMAINING, VehiclePropertyAccess.READ_WRITE),
+        Map.entry(VehicleProperty.EV_BATTERY_AVERAGE_TEMPERATURE, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.TIRE_PRESSURE, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.CRITICALLY_LOW_TIRE_PRESSURE, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.ENGINE_IDLE_AUTO_STOP_ENABLED, VehiclePropertyAccess.READ_WRITE),

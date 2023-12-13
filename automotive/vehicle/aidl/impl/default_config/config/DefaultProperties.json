@@ -1629,6 +1629,16 @@
             "minSampleRate": 1.0
         },
         {
+            "property": "VehicleProperty::EV_BATTERY_AVERAGE_TEMPERATURE",
+            "defaultValue": {
+                "floatValues": [
+                    25.0
+                ]
+            },
+            "maxSampleRate": 2.0,
+            "minSampleRate": 1.0
+        },
+        {
             "property": "VehicleProperty::TIRE_PRESSURE",
             "defaultValue": {
                 "floatValues": [

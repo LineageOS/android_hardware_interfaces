@@ -68,6 +68,7 @@ std::unordered_map<VehicleProperty, VehiclePropertyAccess> AccessForVehiclePrope
         {VehicleProperty::EV_CHARGE_PORT_CONNECTED, VehiclePropertyAccess::READ},
         {VehicleProperty::EV_BATTERY_INSTANTANEOUS_CHARGE_RATE, VehiclePropertyAccess::READ},
         {VehicleProperty::RANGE_REMAINING, VehiclePropertyAccess::READ_WRITE},
+        {VehicleProperty::EV_BATTERY_AVERAGE_TEMPERATURE, VehiclePropertyAccess::READ},
         {VehicleProperty::TIRE_PRESSURE, VehiclePropertyAccess::READ},
         {VehicleProperty::CRITICALLY_LOW_TIRE_PRESSURE, VehiclePropertyAccess::READ},
         {VehicleProperty::ENGINE_IDLE_AUTO_STOP_ENABLED, VehiclePropertyAccess::READ_WRITE},
