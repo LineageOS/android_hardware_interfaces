@@ -42,6 +42,10 @@ parcelable ChannelSoundingSingleSideData {
      */
     @nullable Nadm[] packetNadm;
     /**
+     * Measured Frequency Offset from mode 0, relative to the remote device, in 0.01ppm
+     */
+    @nullable int[] measuredFreqOffset;
+    /**
      * Packet_PCT1 or packet_PCT2 of mode-1 or mode-3, if sounding sequence is used and sounding
      * phase-based ranging is supported.
      */
