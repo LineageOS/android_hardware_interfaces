@@ -49,6 +49,11 @@ enum VehicleArea {
     DOOR = 0x06000000,
     /** WHEEL maps to enum VehicleAreaWheel */
     WHEEL = 0x07000000,
+    /**
+     * A property with the VENDOR vehicle area contains area IDs that are vendor defined. Each area
+     * ID within this area type must be unique with no overlapping bits set.
+     */
+    VENDOR = 0x08000000,
 
     MASK = 0x0f000000,
 }
