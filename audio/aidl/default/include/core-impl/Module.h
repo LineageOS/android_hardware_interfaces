@@ -70,6 +70,7 @@ class Module : public BnModule {
             const ::aidl::android::media::audio::common::AudioPort& in_templateIdAndAdditionalData,
             ::aidl::android::media::audio::common::AudioPort* _aidl_return) override;
     ndk::ScopedAStatus disconnectExternalDevice(int32_t in_portId) override;
+    ndk::ScopedAStatus prepareToDisconnectExternalDevice(int32_t in_portId) override;
     ndk::ScopedAStatus getAudioPatches(std::vector<AudioPatch>* _aidl_return) override;
     ndk::ScopedAStatus getAudioPort(
             int32_t in_portId,
@@ -195,6 +196,8 @@ class Module : public BnModule {
             const std::vector<::aidl::android::media::audio::common::AudioPortConfig*>& sinks);
     virtual void onExternalDeviceConnectionChanged(
             const ::aidl::android::media::audio::common::AudioPort& audioPort, bool connected);
+    virtual void onPrepareToDisconnectExternalDevice(
+            const ::aidl::android::media::audio::common::AudioPort& audioPort);
     virtual ndk::ScopedAStatus onMasterMuteChanged(bool mute);
     virtual ndk::ScopedAStatus onMasterVolumeChanged(float volume);
     virtual std::vector<::aidl::android::media::audio::common::MicrophoneInfo> getMicrophoneInfos();
