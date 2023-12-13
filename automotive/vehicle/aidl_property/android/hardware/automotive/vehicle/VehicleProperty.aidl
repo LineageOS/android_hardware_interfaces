@@ -5482,6 +5482,25 @@ enum VehicleProperty {
     CROSS_TRAFFIC_MONITORING_ENABLED =
             0x1023 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
 
+    /**
+     * Cross Traffic Monitoring warning state.
+     *
+     * Returns the current state of Cross Traffic Monitoring Warning. This property must always
+     * return a valid state defined in CrossTrafficMonitoringWarningState or ErrorState. It must not
+     * surface errors through StatusCode and must use the supported error states instead.
+     *
+     * For the global area ID (0), the VehicleAreaConfig#supportedEnumValues array must be defined
+     * unless all states of both CrossTrafficMonitoringWarningState (including OTHER, which is not
+     * recommended) and ErrorState are supported.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     * @data_enum CrossTrafficMonitoringWarningState
+     * @data_enum ErrorState
+     */
+    CROSS_TRAFFIC_MONITORING_WARNING_STATE =
+            0x1024 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
+
     /***************************************************************************
      * End of ADAS Properties
      **************************************************************************/
