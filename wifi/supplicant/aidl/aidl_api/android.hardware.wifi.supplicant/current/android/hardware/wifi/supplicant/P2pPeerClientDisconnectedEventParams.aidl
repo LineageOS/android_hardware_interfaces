@@ -37,4 +37,5 @@ parcelable P2pPeerClientDisconnectedEventParams {
   String groupInterfaceName;
   byte[6] clientInterfaceAddress;
   byte[6] clientDeviceAddress;
+  @nullable android.hardware.wifi.common.OuiKeyedData[] vendorData;
 }

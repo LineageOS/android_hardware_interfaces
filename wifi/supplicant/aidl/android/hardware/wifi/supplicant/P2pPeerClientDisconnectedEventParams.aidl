@@ -16,6 +16,8 @@
 
 package android.hardware.wifi.supplicant;
 
+import android.hardware.wifi.common.OuiKeyedData;
+
 /**
  * Parameters passed as a part of P2P peer client disconnected event.
  */
@@ -29,4 +31,10 @@ parcelable P2pPeerClientDisconnectedEventParams {
 
     /** P2P device interface MAC address of the client that disconnected. */
     byte[6] clientDeviceAddress;
+
+    /**
+     * Optional vendor-specific parameters. Null value indicates
+     * that no vendor data is provided.
+     */
+    @nullable OuiKeyedData[] vendorData;
 }
