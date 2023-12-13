@@ -128,9 +128,4 @@ parcelable RttConfig {
      * IEEE 802.11az Non-Trigger-based (non-TB) maximum measurement time in milliseconds.
      */
     int ntbMaxMeasurementTimeMillis;
-    /**
-     * Multiple transmissions of HE-LTF symbols in an HE Ranging NDP. A value of 1 indicates no
-     * repetition.
-     */
-    int txLtfRepetitionCount;
 }

@@ -146,9 +146,15 @@ parcelable RttResult {
      */
     RttBw packetBw;
     /**
-     * IEEE 802.11az Transmit LTF repetitions used to get this result.
+     * Multiple transmissions of HE-LTF symbols in an HE (I2R) Ranging NDP. An HE-LTF repetition
+     * value of 1 indicates no repetitions.
      */
-    int txLtfRepetitionCount;
+    byte i2rTxLtfRepetitionCount;
+    /**
+     * Multiple transmissions of HE-LTF symbols in an HE (R2I) Ranging NDP. An HE-LTF repetition
+     * value of 1 indicates no repetitions.
+     */
+    byte r2iTxLtfRepetitionCount;
     /**
      * Minimum non-trigger based (non-TB) dynamic measurement time in milliseconds assigned by the
      * IEEE 802.11az responder.
