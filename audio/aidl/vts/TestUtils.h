@@ -69,6 +69,23 @@ inline ::testing::AssertionResult assertResult(const char* exp_expr, const char*
                                          << "\n  but is has completed with: " << status;
 }
 
+inline ::testing::AssertionResult assertIsOkOrUnknownTransaction(
+        const char* expr, const ::ndk::ScopedAStatus& status) {
+    if (status.getStatus() == STATUS_UNKNOWN_TRANSACTION) {
+        return ::testing::AssertionSuccess();
+    }
+    return assertIsOk(expr, status);
+}
+
+inline ::testing::AssertionResult assertResultOrUnknownTransaction(
+        const char* exp_expr, const char* act_expr, int32_t expected,
+        const ::ndk::ScopedAStatus& status) {
+    if (status.getStatus() == STATUS_UNKNOWN_TRANSACTION) {
+        return ::testing::AssertionSuccess();
+    }
+    return assertResult(exp_expr, act_expr, expected, status);
+}
+
 }  // namespace detail
 
 }  // namespace android::hardware::audio::common::testing
@@ -93,3 +110,15 @@ inline ::testing::AssertionResult assertResult(const char* exp_expr, const char*
             GTEST_SKIP() << "Skip data path for offload";                                        \
         }                                                                                        \
     })
+
+// Test that the transaction status 'isOk' if it is a known transaction
+#define EXPECT_IS_OK_OR_UNKNOWN_TRANSACTION(ret)                                                 \
+    EXPECT_PRED_FORMAT1(                                                                         \
+            ::android::hardware::audio::common::testing::detail::assertIsOkOrUnknownTransaction, \
+            ret)
+
+// Test that the transaction status is as expected if it is a known transaction
+#define EXPECT_STATUS_OR_UNKNOWN_TRANSACTION(expected, ret)                                        \
+    EXPECT_PRED_FORMAT2(                                                                           \
+            ::android::hardware::audio::common::testing::detail::assertResultOrUnknownTransaction, \
+            expected, ret)
