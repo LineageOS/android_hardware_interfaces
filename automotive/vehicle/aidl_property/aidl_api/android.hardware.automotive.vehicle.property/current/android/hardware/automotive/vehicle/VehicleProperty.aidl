@@ -173,6 +173,7 @@ enum VehicleProperty {
   SEAT_LUMBAR_VERTICAL_POS = (((0x0BA1 + android.hardware.automotive.vehicle.VehiclePropertyGroup.SYSTEM) + android.hardware.automotive.vehicle.VehicleArea.SEAT) + android.hardware.automotive.vehicle.VehiclePropertyType.INT32) /* 356518817 */,
   SEAT_LUMBAR_VERTICAL_MOVE = (((0x0BA2 + android.hardware.automotive.vehicle.VehiclePropertyGroup.SYSTEM) + android.hardware.automotive.vehicle.VehicleArea.SEAT) + android.hardware.automotive.vehicle.VehiclePropertyType.INT32) /* 356518818 */,
   SEAT_WALK_IN_POS = (((0x0BA3 + android.hardware.automotive.vehicle.VehiclePropertyGroup.SYSTEM) + android.hardware.automotive.vehicle.VehicleArea.SEAT) + android.hardware.automotive.vehicle.VehiclePropertyType.INT32) /* 356518819 */,
+  SEAT_BELT_PRETENSIONER_DEPLOYED = (((0x0BA6 + android.hardware.automotive.vehicle.VehiclePropertyGroup.SYSTEM) + android.hardware.automotive.vehicle.VehicleArea.SEAT) + android.hardware.automotive.vehicle.VehiclePropertyType.BOOLEAN) /* 354421670 */,
   SEAT_OCCUPANCY = (((0x0BB0 + 0x10000000) + 0x05000000) + 0x00400000) /* 356518832 */,
   WINDOW_POS = (((0x0BC0 + 0x10000000) + 0x03000000) + 0x00400000) /* 322964416 */,
   WINDOW_MOVE = (((0x0BC1 + 0x10000000) + 0x03000000) + 0x00400000) /* 322964417 */,
