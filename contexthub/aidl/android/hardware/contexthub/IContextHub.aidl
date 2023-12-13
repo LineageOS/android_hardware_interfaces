@@ -147,7 +147,7 @@ interface IContextHub {
 
     /**
      * Register a callback for the HAL implementation to send asynchronous messages to the service
-     * from a Context hub. There can only be one callback registered for a single Context Hub ID.
+     * from a Context hub. Each HAL client can only have one callback for each Context Hub ID.
      *
      * A call to this function when a callback has already been registered must override the
      * previous registration.
