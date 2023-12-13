@@ -53,6 +53,7 @@ public final class EnumForVehicleProperty {
         Map.entry(VehicleProperty.HW_CUSTOM_INPUT, List.of(CustomInputType.class)),
         Map.entry(VehicleProperty.SEAT_FOOTWELL_LIGHTS_STATE, List.of(VehicleLightState.class)),
         Map.entry(VehicleProperty.SEAT_FOOTWELL_LIGHTS_SWITCH, List.of(VehicleLightSwitch.class)),
+        Map.entry(VehicleProperty.SEAT_AIRBAGS_DEPLOYED, List.of(VehicleAirbagLocation.class)),
         Map.entry(VehicleProperty.SEAT_OCCUPANCY, List.of(VehicleSeatOccupancyState.class)),
         Map.entry(VehicleProperty.WINDSHIELD_WIPERS_STATE, List.of(WindshieldWipersState.class)),
         Map.entry(VehicleProperty.WINDSHIELD_WIPERS_SWITCH, List.of(WindshieldWipersSwitch.class)),

@@ -2676,6 +2676,28 @@ enum VehicleProperty {
     SEAT_AIRBAG_ENABLED =
             0x0B9E + VehiclePropertyGroup.SYSTEM + VehicleArea.SEAT + VehiclePropertyType.BOOLEAN,
     /**
+     * Seat airbags deployed
+     *
+     * Bit flag property to relay information on which airbags have been deployed in the vehicle at
+     * each seat, vs which ones are currently still armed. If SEAT_AIRBAG_ENABLED is set to false at
+     * a particular areaId, this property should return status code UNAVAILABLE at that areaId.
+     *
+     * Enums apply to each seat, not the global vehicle. For example, VehicleAirbagsLocation#CURTAIN
+     * at the driver seat areaId represents whether the driver side curtain airbag has been
+     * deployed. Multiple bit flags can be set to indicate that multiple different airbags have been
+     * deployed for the seat.
+     *
+     * For each seat area ID, the VehicleAreaConfig#supportedEnumValues array must be defined unless
+     * all states of VehicleAirbagLocation are supported (including OTHER, which is not
+     * recommended).
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     * @data_enum VehicleAirbagLocation
+     */
+    SEAT_AIRBAGS_DEPLOYED =
+            0x0BA5 + VehiclePropertyGroup.SYSTEM + VehicleArea.SEAT + VehiclePropertyType.INT32,
+    /**
      * Represents property for seat’s hipside (bottom cushion’s side) support position.
      *
      * The maxInt32Value and minInt32Value in each VehicleAreaConfig must be defined. All integers

@@ -1328,6 +1328,50 @@
             ]
         },
         {
+            "property": "VehicleProperty::SEAT_AIRBAGS_DEPLOYED",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "Constants::SEAT_1_LEFT",
+                    "supportedEnumValues": [
+                        "VehicleAirbagLocation::FRONT",
+                        "VehicleAirbagLocation::KNEE",
+                        "VehicleAirbagLocation::LEFT_SIDE",
+                        "VehicleAirbagLocation::RIGHT_SIDE",
+                        "VehicleAirbagLocation::CURTAIN"
+                    ]
+                },
+                {
+                    "areaId": "Constants::SEAT_1_RIGHT",
+                    "supportedEnumValues": [
+                        "VehicleAirbagLocation::FRONT",
+                        "VehicleAirbagLocation::KNEE",
+                        "VehicleAirbagLocation::LEFT_SIDE",
+                        "VehicleAirbagLocation::RIGHT_SIDE",
+                        "VehicleAirbagLocation::CURTAIN"
+                    ]
+                },
+                {
+                    "areaId": "Constants::SEAT_2_LEFT",
+                    "supportedEnumValues": [
+                        "VehicleAirbagLocation::FRONT",
+                        "VehicleAirbagLocation::CURTAIN"
+                    ]
+                },
+                {
+                    "areaId": "Constants::SEAT_2_RIGHT",
+                    "supportedEnumValues": [
+                        "VehicleAirbagLocation::FRONT",
+                        "VehicleAirbagLocation::CURTAIN"
+                    ]
+                }
+            ]
+        },
+        {
             "property": "VehicleProperty::SEAT_OCCUPANCY",
             "defaultValue": {
                 "int32Values": [
