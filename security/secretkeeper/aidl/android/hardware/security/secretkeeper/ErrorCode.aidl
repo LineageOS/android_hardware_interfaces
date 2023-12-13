@@ -14,28 +14,20 @@
  * limitations under the License.
  */
 
-package {
-    default_applicable_licenses: ["Android-Apache-2.0"],
-}
+package android.hardware.security.secretkeeper;
 
-rust_test {
-    name: "VtsSecretkeeperTargetTest",
-    srcs: ["secretkeeper_test_client.rs"],
-    test_suites: [
-        "general-tests",
-        "vts",
-    ],
-    rustlibs: [
-        "libsecretkeeper_comm_nostd",
-        "libsecretkeeper_core_nostd",
-        "android.hardware.security.secretkeeper-V1-rust",
-        "libauthgraph_boringssl",
-        "libauthgraph_core",
-        "libcoset",
-        "libauthgraph_vts_test",
-        "libbinder_rs",
-        "libcoset",
-        "liblog_rust",
-    ],
-    require_root: true,
+/**
+ * Secretkeeper unencrypted error code, returned via AIDL as service specific errors in
+ * EX_SERVICE_SPECIFIC.
+ * @hide
+ */
+@VintfStability
+@Backing(type="int")
+enum ErrorCode {
+    OK = 0,
+    UNKNOWN_KEY_ID = 1,
+    INTERNAL_ERROR = 2,
+    REQUEST_MALFORMED = 3,
+
+    // TODO(b/291224769): Create a more exhaustive set of error code values.
 }

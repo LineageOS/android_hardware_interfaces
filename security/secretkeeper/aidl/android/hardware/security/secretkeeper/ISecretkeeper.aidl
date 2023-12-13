@@ -35,7 +35,7 @@ import android.hardware.security.authgraph.IAuthGraphKeyExchange;
  * Typical operations are (securely) updating the dice policy sealing the Secrets above. These
  * operations are core to AntiRollback protected secrets - ie, ensuring secrets of a pVM are only
  * accessible to same or higher versions of the images.
- * 2. Maintenance api: This is required for removing the Secretkeeper entries for obsolete pvMs.
+ * 2. Maintenance API: This is required for removing the Secretkeeper entries for obsolete pVMs.
  */
 interface ISecretkeeper {
     /**
@@ -60,7 +60,11 @@ interface ISecretkeeper {
      * Virtual Machines). For this, service (& client) must implement a key exchange protocol, which
      * is critical for establishing the secure channel.
      *
+     * If an encrypted response cannot be generated, then a service-specific Binder error using an
+     * error code from ErrorCode.aidl will be returned.
+     *
      * Secretkeeper database should guarantee the following properties:
+     *
      * 1. Confidentiality: No entity (of security privilege lower than Secretkeeper) should
      *    be able to get a client's data in clear.
      *
