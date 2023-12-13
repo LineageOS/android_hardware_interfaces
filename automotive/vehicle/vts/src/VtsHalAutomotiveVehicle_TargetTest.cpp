@@ -987,6 +987,12 @@ TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyValetModeEnabledConfig) {
                    VehicleArea::GLOBAL, VehiclePropertyType::BOOLEAN);
 }
 
+TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyElectronicStabilityControlEnabledConfig) {
+    verifyProperty(VehicleProperty::ELECTRONIC_STABILITY_CONTROL_ENABLED,
+                   VehiclePropertyAccess::READ_WRITE, VehiclePropertyChangeMode::ON_CHANGE,
+                   VehiclePropertyGroup::SYSTEM, VehicleArea::GLOBAL, VehiclePropertyType::BOOLEAN);
+}
+
 bool VtsHalAutomotiveVehicleTargetTest::checkIsSupported(int32_t propertyId) {
     auto result = mVhalClient->getPropConfigs({propertyId});
     return result.ok();

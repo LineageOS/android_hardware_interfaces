@@ -83,6 +83,7 @@ enum VehicleProperty {
   ABS_ACTIVE = (((0x040A + 0x10000000) + 0x01000000) + 0x00200000) /* 287310858 */,
   TRACTION_CONTROL_ACTIVE = (((0x040B + 0x10000000) + 0x01000000) + 0x00200000) /* 287310859 */,
   EV_STOPPING_MODE = (((0x040D + android.hardware.automotive.vehicle.VehiclePropertyGroup.SYSTEM) + android.hardware.automotive.vehicle.VehicleArea.GLOBAL) + android.hardware.automotive.vehicle.VehiclePropertyType.INT32) /* 289408013 */,
+  ELECTRONIC_STABILITY_CONTROL_ENABLED = (((0x040E + android.hardware.automotive.vehicle.VehiclePropertyGroup.SYSTEM) + android.hardware.automotive.vehicle.VehicleArea.GLOBAL) + android.hardware.automotive.vehicle.VehiclePropertyType.BOOLEAN) /* 287310862 */,
   HVAC_FAN_SPEED = (((0x0500 + 0x10000000) + 0x05000000) + 0x00400000) /* 356517120 */,
   HVAC_FAN_DIRECTION = (((0x0501 + 0x10000000) + 0x05000000) + 0x00400000) /* 356517121 */,
   HVAC_TEMPERATURE_CURRENT = (((0x0502 + 0x10000000) + 0x05000000) + 0x00600000) /* 358614274 */,
