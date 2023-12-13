@@ -3576,6 +3576,132 @@ WifiRatePreamble convertScanResultFlagsToPreambleType(int flags) {
     return WifiRatePreamble::OFDM;
 }
 
+bool convertTwtCapabilitiesToAidl(legacy_hal::wifi_twt_capabilities legacy_twt_capabs,
+                                  TwtCapabilities* aidl_twt_capabs) {
+    if (!aidl_twt_capabs) {
+        return false;
+    }
+    aidl_twt_capabs->isTwtRequesterSupported = legacy_twt_capabs.is_twt_requester_supported;
+    aidl_twt_capabs->isTwtResponderSupported = legacy_twt_capabs.is_twt_responder_supported;
+    aidl_twt_capabs->isBroadcastTwtSupported = legacy_twt_capabs.is_flexible_twt_supported;
+    if (legacy_twt_capabs.min_wake_duration_micros > legacy_twt_capabs.max_wake_duration_micros) {
+        return false;
+    }
+    aidl_twt_capabs->minWakeDurationMicros = legacy_twt_capabs.min_wake_duration_micros;
+    aidl_twt_capabs->maxWakeDurationMicros = legacy_twt_capabs.max_wake_duration_micros;
+    if (legacy_twt_capabs.min_wake_interval_micros > legacy_twt_capabs.max_wake_interval_micros) {
+        return false;
+    }
+    aidl_twt_capabs->minWakeIntervalMicros = legacy_twt_capabs.min_wake_interval_micros;
+    aidl_twt_capabs->maxWakeIntervalMicros = legacy_twt_capabs.max_wake_interval_micros;
+    return true;
+}
+
+bool convertAidlTwtRequestToLegacy(const TwtRequest aidl_twt_request,
+                                   legacy_hal::wifi_twt_request* legacy_twt_request) {
+    if (legacy_twt_request == nullptr) {
+        return false;
+    }
+    legacy_twt_request->mlo_link_id = aidl_twt_request.mloLinkId;
+    if (aidl_twt_request.minWakeDurationMicros > aidl_twt_request.maxWakeDurationMicros) {
+        return false;
+    }
+    legacy_twt_request->min_wake_duration_micros = aidl_twt_request.minWakeDurationMicros;
+    legacy_twt_request->max_wake_duration_micros = aidl_twt_request.maxWakeDurationMicros;
+    if (aidl_twt_request.minWakeIntervalMicros > aidl_twt_request.maxWakeIntervalMicros) {
+        return false;
+    }
+    legacy_twt_request->min_wake_interval_micros = aidl_twt_request.minWakeIntervalMicros;
+    legacy_twt_request->max_wake_interval_micros = aidl_twt_request.maxWakeIntervalMicros;
+    return true;
+}
+
+IWifiStaIfaceEventCallback::TwtErrorCode convertLegacyHalTwtErrorCodeToAidl(
+        legacy_hal::wifi_twt_error_code legacy_error_code) {
+    switch (legacy_error_code) {
+        case WIFI_TWT_ERROR_CODE_TIMEOUT:
+            return IWifiStaIfaceEventCallback::TwtErrorCode::TIMEOUT;
+        case WIFI_TWT_ERROR_CODE_PEER_REJECTED:
+            return IWifiStaIfaceEventCallback::TwtErrorCode::PEER_REJECTED;
+        case WIFI_TWT_ERROR_CODE_PEER_NOT_SUPPORTED:
+            return IWifiStaIfaceEventCallback::TwtErrorCode::PEER_NOT_SUPPORTED;
+        case WIFI_TWT_ERROR_CODE_NOT_SUPPORTED:
+            return IWifiStaIfaceEventCallback::TwtErrorCode::NOT_SUPPORTED;
+        case WIFI_TWT_ERROR_CODE_NOT_AVAILABLE:
+            return IWifiStaIfaceEventCallback::TwtErrorCode::NOT_AVAILABLE;
+        case WIFI_TWT_ERROR_CODE_MAX_SESSION_REACHED:
+            return IWifiStaIfaceEventCallback::TwtErrorCode::MAX_SESSION_REACHED;
+        case WIFI_TWT_ERROR_CODE_INVALID_PARAMS:
+            return IWifiStaIfaceEventCallback::TwtErrorCode::INVALID_PARAMS;
+        case WIFI_TWT_ERROR_CODE_ALREADY_SUSPENDED:
+            return IWifiStaIfaceEventCallback::TwtErrorCode::ALREADY_SUSPENDED;
+        case WIFI_TWT_ERROR_CODE_ALREADY_RESUMED:
+            return IWifiStaIfaceEventCallback::TwtErrorCode::ALREADY_RESUMED;
+        default:
+            return IWifiStaIfaceEventCallback::TwtErrorCode::FAILURE_UNKNOWN;
+    }
+}
+
+IWifiStaIfaceEventCallback::TwtTeardownReasonCode convertLegacyHalTwtReasonCodeToAidl(
+        legacy_hal::wifi_twt_teardown_reason_code legacy_reason_code) {
+    switch (legacy_reason_code) {
+        case WIFI_TWT_TEARDOWN_REASON_CODE_LOCALLY_REQUESTED:
+            return IWifiStaIfaceEventCallback::TwtTeardownReasonCode::LOCALLY_REQUESTED;
+        case WIFI_TWT_TEARDOWN_REASON_CODE_INTERNALLY_INITIATED:
+            return IWifiStaIfaceEventCallback::TwtTeardownReasonCode::INTERNALLY_INITIATED;
+        case WIFI_TWT_TEARDOWN_REASON_CODE_PEER_INITIATED:
+            return IWifiStaIfaceEventCallback::TwtTeardownReasonCode::PEER_INITIATED;
+        default:
+            return IWifiStaIfaceEventCallback::TwtTeardownReasonCode::UNKNOWN;
+    }
+}
+
+bool convertLegacyHalTwtSessionToAidl(legacy_hal::wifi_twt_session twt_session,
+                                      TwtSession* aidl_twt_session) {
+    if (aidl_twt_session == nullptr) {
+        return false;
+    }
+
+    aidl_twt_session->sessionId = twt_session.session_id;
+    aidl_twt_session->mloLinkId = twt_session.mlo_link_id;
+    aidl_twt_session->wakeDurationMicros = twt_session.wake_duration_micros;
+    aidl_twt_session->wakeIntervalMicros = twt_session.wake_interval_micros;
+    switch (twt_session.negotiation_type) {
+        case WIFI_TWT_NEGO_TYPE_INDIVIDUAL:
+            aidl_twt_session->negotiationType = TwtSession::TwtNegotiationType::INDIVIDUAL;
+            break;
+        case WIFI_TWT_NEGO_TYPE_BROADCAST:
+            aidl_twt_session->negotiationType = TwtSession::TwtNegotiationType::BROADCAST;
+            break;
+        default:
+            return false;
+    }
+    aidl_twt_session->isTriggerEnabled = twt_session.is_trigger_enabled;
+    aidl_twt_session->isAnnounced = twt_session.is_announced;
+    aidl_twt_session->isImplicit = twt_session.is_implicit;
+    aidl_twt_session->isProtected = twt_session.is_protected;
+    aidl_twt_session->isUpdatable = twt_session.is_updatable;
+    aidl_twt_session->isSuspendable = twt_session.is_suspendable;
+    aidl_twt_session->isResponderPmModeEnabled = twt_session.is_responder_pm_mode_enabled;
+    return true;
+}
+
+bool convertLegacyHalTwtSessionStatsToAidl(legacy_hal::wifi_twt_session_stats twt_stats,
+                                           TwtSessionStats* aidl_twt_stats) {
+    if (aidl_twt_stats == nullptr) {
+        return false;
+    }
+
+    aidl_twt_stats->avgTxPktCount = twt_stats.avg_pkt_num_tx;
+    aidl_twt_stats->avgRxPktCount = twt_stats.avg_pkt_num_rx;
+    aidl_twt_stats->avgTxPktSize = twt_stats.avg_tx_pkt_size;
+    aidl_twt_stats->avgRxPktSize = twt_stats.avg_rx_pkt_size;
+    aidl_twt_stats->avgEospDurationMicros = twt_stats.avg_eosp_dur_us;
+    aidl_twt_stats->eospCount = twt_stats.eosp_count;
+
+    return true;
+}
+
 }  // namespace aidl_struct_util
 }  // namespace wifi
 }  // namespace hardware

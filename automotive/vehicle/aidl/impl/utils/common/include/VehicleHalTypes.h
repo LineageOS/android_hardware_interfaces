@@ -67,6 +67,7 @@
 #include <aidl/android/hardware/automotive/vehicle/VehicleAreaSeat.h>
 #include <aidl/android/hardware/automotive/vehicle/VehicleAreaWheel.h>
 #include <aidl/android/hardware/automotive/vehicle/VehicleAreaWindow.h>
+#include <aidl/android/hardware/automotive/vehicle/VehicleAutonomousState.h>
 #include <aidl/android/hardware/automotive/vehicle/VehicleGear.h>
 #include <aidl/android/hardware/automotive/vehicle/VehicleHvacFanDirection.h>
 #include <aidl/android/hardware/automotive/vehicle/VehicleIgnitionState.h>

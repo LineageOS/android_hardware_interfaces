@@ -48,7 +48,7 @@ aidl_interface {
         },
 
     ],
-    frozen: true,
+    frozen: false,
 
 }
 
@@ -80,7 +80,7 @@ cc_library {
     name: "android.hardware.health-translate-ndk",
     defaults: ["android.hardware.health-translate-ndk_defaults"],
     shared_libs: [
-        "android.hardware.health-V2-ndk",
+        "android.hardware.health-V3-ndk",
     ],
 }
 
@@ -97,7 +97,7 @@ java_library {
     name: "android.hardware.health-translate-java",
     srcs: ["android/hardware/health/Translate.java"],
     libs: [
-        "android.hardware.health-V2-java",
+        "android.hardware.health-V3-java",
         "android.hardware.health-V2.0-java",
         "android.hardware.health-V2.1-java",
     ],

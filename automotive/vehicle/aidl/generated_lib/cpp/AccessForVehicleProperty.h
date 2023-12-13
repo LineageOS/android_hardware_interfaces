@@ -248,6 +248,7 @@ std::unordered_map<VehicleProperty, VehiclePropertyAccess> AccessForVehiclePrope
         {VehicleProperty::SHUTDOWN_REQUEST, VehiclePropertyAccess::WRITE},
         {VehicleProperty::VEHICLE_IN_USE, VehiclePropertyAccess::READ_WRITE},
         {VehicleProperty::CLUSTER_HEARTBEAT, VehiclePropertyAccess::WRITE},
+        {VehicleProperty::VEHICLE_DRIVING_AUTOMATION_CURRENT_LEVEL, VehiclePropertyAccess::READ},
         {VehicleProperty::AUTOMATIC_EMERGENCY_BRAKING_ENABLED, VehiclePropertyAccess::READ_WRITE},
         {VehicleProperty::AUTOMATIC_EMERGENCY_BRAKING_STATE, VehiclePropertyAccess::READ},
         {VehicleProperty::FORWARD_COLLISION_WARNING_ENABLED, VehiclePropertyAccess::READ_WRITE},

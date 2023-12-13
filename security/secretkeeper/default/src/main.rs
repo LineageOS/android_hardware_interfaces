@@ -15,17 +15,21 @@
  */
 
 //! Non-secure implementation of the Secretkeeper HAL.
+mod store;
 
-use log::{error, info, Level};
-use std::sync::{Arc, Mutex};
 use authgraph_boringssl as boring;
-use authgraph_core::ta::{Role, AuthGraphTa};
-use authgraph_core::keyexchange::{MAX_OPENED_SESSIONS, AuthGraphParticipant};
+use authgraph_core::keyexchange::{AuthGraphParticipant, MAX_OPENED_SESSIONS};
+use authgraph_core::ta::{AuthGraphTa, Role};
+use authgraph_hal::channel::SerializedChannel;
+use log::{error, info, Level};
 use secretkeeper_core::ta::SecretkeeperTa;
 use secretkeeper_hal::SecretkeeperService;
-use authgraph_hal::channel::SerializedChannel;
+use std::sync::Arc;
+use std::sync::Mutex;
+use store::InMemoryStore;
+
 use android_hardware_security_secretkeeper::aidl::android::hardware::security::secretkeeper::ISecretkeeper::{
-    ISecretkeeper, BpSecretkeeper,
+    BpSecretkeeper, ISecretkeeper,
 };
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -53,8 +57,9 @@ impl LocalTa {
         // The TA code expects to run single threaded, so spawn a thread to run it in.
         std::thread::spawn(move || {
             let mut crypto_impls = boring::crypto_trait_impls();
+            let storage_impl = Box::new(InMemoryStore::default());
             let sk_ta = Rc::new(RefCell::new(
-                SecretkeeperTa::new(&mut crypto_impls)
+                SecretkeeperTa::new(&mut crypto_impls, storage_impl)
                     .expect("Failed to create local Secretkeeper TA"),
             ));
             let mut ag_ta = AuthGraphTa::new(
