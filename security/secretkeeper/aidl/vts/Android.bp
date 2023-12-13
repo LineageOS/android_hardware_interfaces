@@ -25,6 +25,7 @@ rust_test {
         "general-tests",
         "vts",
     ],
+    test_config: "AndroidTest.xml",
     rustlibs: [
         "libsecretkeeper_comm_nostd",
         "libsecretkeeper_core_nostd",
@@ -36,6 +37,7 @@ rust_test {
         "libbinder_rs",
         "libcoset",
         "liblog_rust",
+        "liblogger",
     ],
     require_root: true,
 }
