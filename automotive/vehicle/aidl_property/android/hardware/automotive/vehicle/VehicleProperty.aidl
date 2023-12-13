@@ -5460,6 +5460,28 @@ enum VehicleProperty {
     LOW_SPEED_COLLISION_WARNING_STATE =
             0x1022 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
 
+    /**
+     * Enable or disable Cross Traffic Monitoring.
+     *
+     * Set true to enable Cross Traffic Monitoring and false to disable Cross Traffic Monitoring.
+     * When Cross Traffic Monitoring is enabled, the ADAS system in the vehicle should be turned on
+     * and monitoring for potential sideways collisions.
+     *
+     * In general, CROSS_TRAFFIC_MONITORING_ENABLED should always return true or false. If the
+     * feature is not available due to some temporary state, such as the vehicle speed being too
+     * high, that information must be conveyed through the ErrorState values in the
+     * CROSS_TRAFFIC_MONITORING_STATE property.
+     *
+     * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
+     * implement it as VehiclePropertyAccess.READ only.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
+     */
+    CROSS_TRAFFIC_MONITORING_ENABLED =
+            0x1023 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+
     /***************************************************************************
      * End of ADAS Properties
      **************************************************************************/

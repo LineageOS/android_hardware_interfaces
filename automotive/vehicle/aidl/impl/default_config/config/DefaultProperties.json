@@ -4157,6 +4157,14 @@
                     ]
                 }
             ]
+        },
+        {
+            "property": "VehicleProperty::CROSS_TRAFFIC_MONITORING_ENABLED",
+            "defaultValue": {
+                "int32Values": [
+                    1
+                ]
+            }
         }
     ]
 }
