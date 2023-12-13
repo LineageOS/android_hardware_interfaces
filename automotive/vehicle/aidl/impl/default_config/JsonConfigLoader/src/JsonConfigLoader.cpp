@@ -45,6 +45,7 @@ using ::aidl::android::hardware::automotive::vehicle::DriverDistractionState;
 using ::aidl::android::hardware::automotive::vehicle::DriverDistractionWarning;
 using ::aidl::android::hardware::automotive::vehicle::DriverDrowsinessAttentionState;
 using ::aidl::android::hardware::automotive::vehicle::DriverDrowsinessAttentionWarning;
+using ::aidl::android::hardware::automotive::vehicle::ElectronicStabilityControlState;
 using ::aidl::android::hardware::automotive::vehicle::EmergencyLaneKeepAssistState;
 using ::aidl::android::hardware::automotive::vehicle::ErrorState;
 using ::aidl::android::hardware::automotive::vehicle::EvConnectorType;
@@ -291,6 +292,8 @@ JsonValueParser::JsonValueParser() {
             std::make_unique<ConstantParser<LaneCenteringAssistState>>();
     mConstantParsersByType["LowSpeedCollisionWarningState"] =
             std::make_unique<ConstantParser<LowSpeedCollisionWarningState>>();
+    mConstantParsersByType["ElectronicStabilityControlState"] =
+            std::make_unique<ConstantParser<ElectronicStabilityControlState>>();
     mConstantParsersByType["Constants"] = std::make_unique<LocalVariableParser>();
 #ifdef ENABLE_VEHICLE_HAL_TEST_PROPERTIES
     mConstantParsersByType["TestVendorProperty"] =

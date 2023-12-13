@@ -78,6 +78,7 @@ public final class AccessForVehicleProperty {
         Map.entry(VehicleProperty.TRACTION_CONTROL_ACTIVE, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.EV_STOPPING_MODE, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.ELECTRONIC_STABILITY_CONTROL_ENABLED, VehiclePropertyAccess.READ_WRITE),
+        Map.entry(VehicleProperty.ELECTRONIC_STABILITY_CONTROL_STATE, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.HVAC_FAN_SPEED, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.HVAC_FAN_DIRECTION, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.HVAC_TEMPERATURE_CURRENT, VehiclePropertyAccess.READ),

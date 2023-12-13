@@ -709,6 +709,24 @@ enum VehicleProperty {
     ELECTRONIC_STABILITY_CONTROL_ENABLED =
             0x040E + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
     /**
+     * Electronic Stability Control (ESC) state.
+     *
+     * Returns the current state of ESC. This property must always return a valid state defined in
+     * ElectronicStabilityControlState or ErrorState. It must not surface errors through StatusCode
+     * and must use the supported error states instead.
+     *
+     * For the global area ID (0), the VehicleAreaConfig#supportedEnumValues array must be defined
+     * unless all states of both ElectronicStabilityControlState (including OTHER, which is not
+     * recommended) and ErrorState are supported.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     * @data_enum ElectronicStabilityControlState
+     * @data_enum ErrorState
+     */
+    ELECTRONIC_STABILITY_CONTROL_STATE =
+            0x040F + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
+    /**
      * HVAC Properties
      *
      * Additional rules for mapping non-GLOBAL VehicleArea type HVAC properties
