@@ -16,8 +16,9 @@
 
 #[cfg(test)]
 use binder::StatusCode;
-use coset::CborSerializable;
+use coset::{CborSerializable, CoseEncrypt0};
 use log::warn;
+use secretkeeper_core::cipher;
 use secretkeeper_comm::data_types::error::SecretkeeperError;
 use secretkeeper_comm::data_types::request::Request;
 use secretkeeper_comm::data_types::request_response_impl::{
@@ -28,6 +29,7 @@ use secretkeeper_comm::data_types::response::Response;
 use secretkeeper_comm::data_types::packet::{ResponsePacket, ResponseType};
 use android_hardware_security_secretkeeper::aidl::android::hardware::security::secretkeeper::ISecretkeeper::ISecretkeeper;
 use authgraph_vts_test as ag_vts;
+use authgraph_boringssl as boring;
 use authgraph_core::key;
 
 const SECRETKEEPER_IDENTIFIER: &str =
@@ -73,7 +75,50 @@ fn get_connection() -> Option<binder::Strong<dyn ISecretkeeper>> {
         }
     }
 }
-fn authgraph_key_exchange(sk: binder::Strong<dyn ISecretkeeper>) -> [key::AesKey; 2] {
+
+/// Secretkeeper client information.
+struct SkClient {
+    sk: binder::Strong<dyn ISecretkeeper>,
+    aes_keys: [key::AesKey; 2],
+    session_id: Vec<u8>,
+}
+
+impl SkClient {
+    fn new() -> Option<Self> {
+        let sk = get_connection()?;
+        let (aes_keys, session_id) = authgraph_key_exchange(sk.clone());
+        Some(Self {
+            sk,
+            aes_keys,
+            session_id,
+        })
+    }
+    /// Wrapper around `ISecretkeeper::processSecretManagementRequest` that handles
+    /// encryption and decryption.
+    fn secret_management_request(&self, req_data: &[u8]) -> Vec<u8> {
+        let aes_gcm = boring::BoringAes;
+        let rng = boring::BoringRng;
+        let request_bytes = cipher::encrypt_message(
+            &aes_gcm,
+            &rng,
+            &self.aes_keys[0],
+            &self.session_id,
+            &req_data,
+        )
+        .unwrap();
+
+        let response_bytes = self
+            .sk
+            .processSecretManagementRequest(&request_bytes)
+            .unwrap();
+
+        let response_encrypt0 = CoseEncrypt0::from_slice(&response_bytes).unwrap();
+        cipher::decrypt_message(&aes_gcm, &self.aes_keys[1], &response_encrypt0).unwrap()
+    }
+}
+
+/// Perform AuthGraph key exchange, returning the session keys and session ID.
+fn authgraph_key_exchange(sk: binder::Strong<dyn ISecretkeeper>) -> ([key::AesKey; 2], Vec<u8>) {
     let sink = sk.getAuthGraphKe().expect("failed to get AuthGraph");
     let mut source = ag_vts::test_ag_participant().expect("failed to create a local source");
     ag_vts::sink::test_mainline(&mut source, sink)
@@ -90,7 +135,7 @@ fn authgraph_mainline() {
             return;
         }
     };
-    let _aes_keys = authgraph_key_exchange(sk);
+    let (_aes_keys, _session_id) = authgraph_key_exchange(sk);
 }
 
 /// Test that the AuthGraph instance returned by SecretKeeper correctly rejects
@@ -130,23 +175,19 @@ fn authgraph_corrupt_keys() {
 
 #[test]
 fn secret_management_get_version() {
-    let secretkeeper = match get_connection() {
+    let sk_client = match SkClient::new() {
         Some(sk) => sk,
         None => {
             warn!("Secretkeeper HAL is unavailable, skipping test");
             return;
         }
     };
+
     let request = GetVersionRequest {};
     let request_packet = request.serialize_to_packet();
     let request_bytes = request_packet.to_vec().unwrap();
 
-    // TODO(b/291224769) The request will need to be encrypted & response need to be decrypted
-    // with key & related artifacts pre-shared via Authgraph Key Exchange HAL.
-
-    let response_bytes = secretkeeper
-        .processSecretManagementRequest(&request_bytes)
-        .unwrap();
+    let response_bytes = sk_client.secret_management_request(&request_bytes);
 
     let response_packet = ResponsePacket::from_slice(&response_bytes).unwrap();
     assert_eq!(
@@ -160,13 +201,14 @@ fn secret_management_get_version() {
 
 #[test]
 fn secret_management_malformed_request() {
-    let secretkeeper = match get_connection() {
+    let sk_client = match SkClient::new() {
         Some(sk) => sk,
         None => {
             warn!("Secretkeeper HAL is unavailable, skipping test");
             return;
         }
     };
+
     let request = GetVersionRequest {};
     let request_packet = request.serialize_to_packet();
     let mut request_bytes = request_packet.to_vec().unwrap();
@@ -174,12 +216,7 @@ fn secret_management_malformed_request() {
     // Deform the request
     request_bytes[0] = !request_bytes[0];
 
-    // TODO(b/291224769) The request will need to be encrypted & response need to be decrypted
-    // with key & related artifacts pre-shared via Authgraph Key Exchange HAL.
-
-    let response_bytes = secretkeeper
-        .processSecretManagementRequest(&request_bytes)
-        .unwrap();
+    let response_bytes = sk_client.secret_management_request(&request_bytes);
 
     let response_packet = ResponsePacket::from_slice(&response_bytes).unwrap();
     assert_eq!(
@@ -192,7 +229,7 @@ fn secret_management_malformed_request() {
 
 #[test]
 fn secret_management_store_get_secret_found() {
-    let secretkeeper = match get_connection() {
+    let sk_client = match SkClient::new() {
         Some(sk) => sk,
         None => {
             warn!("Secretkeeper HAL is unavailable, skipping test");
@@ -207,9 +244,8 @@ fn secret_management_store_get_secret_found() {
     };
 
     let store_request = store_request.serialize_to_packet().to_vec().unwrap();
-    let store_response = secretkeeper
-        .processSecretManagementRequest(&store_request)
-        .unwrap();
+
+    let store_response = sk_client.secret_management_request(&store_request);
     let store_response = ResponsePacket::from_slice(&store_response).unwrap();
 
     assert_eq!(
@@ -226,9 +262,7 @@ fn secret_management_store_get_secret_found() {
     };
     let get_request = get_request.serialize_to_packet().to_vec().unwrap();
 
-    let get_response = secretkeeper
-        .processSecretManagementRequest(&get_request)
-        .unwrap();
+    let get_response = sk_client.secret_management_request(&get_request);
     let get_response = ResponsePacket::from_slice(&get_response).unwrap();
     assert_eq!(get_response.response_type().unwrap(), ResponseType::Success);
     let get_response = *GetSecretResponse::deserialize_from_packet(get_response).unwrap();
@@ -237,7 +271,7 @@ fn secret_management_store_get_secret_found() {
 
 #[test]
 fn secret_management_store_get_secret_not_found() {
-    let secretkeeper = match get_connection() {
+    let sk_client = match SkClient::new() {
         Some(sk) => sk,
         None => {
             warn!("Secretkeeper HAL is unavailable, skipping test");
@@ -253,9 +287,7 @@ fn secret_management_store_get_secret_not_found() {
     };
 
     let store_request = store_request.serialize_to_packet().to_vec().unwrap();
-    let store_response = secretkeeper
-        .processSecretManagementRequest(&store_request)
-        .unwrap();
+    let store_response = sk_client.secret_management_request(&store_request);
     let store_response = ResponsePacket::from_slice(&store_response).unwrap();
 
     assert_eq!(
@@ -269,9 +301,7 @@ fn secret_management_store_get_secret_not_found() {
         updated_sealing_policy: None,
     };
     let get_request = get_request.serialize_to_packet().to_vec().unwrap();
-    let get_response = secretkeeper
-        .processSecretManagementRequest(&get_request)
-        .unwrap();
+    let get_response = sk_client.secret_management_request(&get_request);
 
     // Check that response is `SecretkeeperError::EntryNotFound`
     let get_response = ResponsePacket::from_slice(&get_response).unwrap();
