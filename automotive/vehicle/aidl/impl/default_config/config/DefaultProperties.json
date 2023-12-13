@@ -4091,6 +4091,14 @@
                     ]
                 }
             ]
+        },
+        {
+            "property": "VehicleProperty::LOW_SPEED_COLLISION_WARNING_ENABLED",
+            "defaultValue": {
+                "int32Values": [
+                    1
+                ]
+            }
         }
     ]
 }
