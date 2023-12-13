@@ -2664,26 +2664,40 @@ TEST_P(GraphicsComposerAidlCommandV2Test, SetRefreshRateChangedCallbackDebug_Ena
         return;
     }
 
-    const auto displayId = getPrimaryDisplayId();
-    EXPECT_TRUE(mComposerClient->setPowerMode(displayId, PowerMode::ON).isOk());
-    // Enable the callback
-    ASSERT_TRUE(mComposerClient
-                        ->setRefreshRateChangedCallbackDebugEnabled(displayId,
-                                                                    /*enabled*/ true)
-                        .isOk());
-    std::this_thread::sleep_for(100ms);
+    for (VtsDisplay& display : mDisplays) {
+        const auto displayId = display.getDisplayId();
+        EXPECT_TRUE(mComposerClient->setPowerMode(displayId, PowerMode::ON).isOk());
+        // Enable the callback
+        ASSERT_TRUE(mComposerClient
+                            ->setRefreshRateChangedCallbackDebugEnabled(displayId,
+                                                                        /*enabled*/ true)
+                            .isOk());
+        std::this_thread::sleep_for(100ms);
 
-    const auto displayFilter = [displayId](auto refreshRateChangedDebugData) {
-        return displayId == refreshRateChangedDebugData.display;
-    };
+        const auto [status, configId] = mComposerClient->getActiveConfig(display.getDisplayId());
+        EXPECT_TRUE(status.isOk());
 
-    // Check that we immediately got a callback
-    EXPECT_TRUE(checkIfCallbackRefreshRateChangedDebugEnabledReceived(displayFilter));
+        const auto displayFilter = [&](auto refreshRateChangedDebugData) {
+            bool nonVrrRateMatching = true;
+            if (std::optional<VrrConfig> vrrConfigOpt =
+                        display.getDisplayConfig(configId).vrrConfig;
+                getInterfaceVersion() >= 3 && !vrrConfigOpt) {
+                nonVrrRateMatching = refreshRateChangedDebugData.refreshPeriodNanos ==
+                                     refreshRateChangedDebugData.vsyncPeriodNanos;
+            }
+            const bool isDisplaySame =
+                    display.getDisplayId() == refreshRateChangedDebugData.display;
+            return nonVrrRateMatching && isDisplaySame;
+        };
 
-    ASSERT_TRUE(mComposerClient
-                        ->setRefreshRateChangedCallbackDebugEnabled(displayId,
-                                                                    /*enabled*/ false)
-                        .isOk());
+        // Check that we immediately got a callback
+        EXPECT_TRUE(checkIfCallbackRefreshRateChangedDebugEnabledReceived(displayFilter));
+
+        ASSERT_TRUE(mComposerClient
+                            ->setRefreshRateChangedCallbackDebugEnabled(displayId,
+                                                                        /*enabled*/ false)
+                            .isOk());
+    }
 }
 
 TEST_P(GraphicsComposerAidlCommandV2Test,
@@ -3001,7 +3015,6 @@ INSTANTIATE_TEST_SUITE_P(
         PerInstance, GraphicsComposerAidlCommandV2Test,
         testing::ValuesIn(::android::getAidlHalInstanceNames(IComposer::descriptor)),
         ::android::PrintInstanceNameToString);
-
 }  // namespace aidl::android::hardware::graphics::composer3::vts
 
 int main(int argc, char** argv) {
