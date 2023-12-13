@@ -484,6 +484,22 @@ enum VehicleProperty {
     ENGINE_IDLE_AUTO_STOP_ENABLED =
             0x0320 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
     /**
+     * Impact detected.
+     *
+     * Bit flag property to relay information on whether an impact has occurred on a particular side
+     * of the vehicle as described through the ImpactSensorLocation enum. As a bit flag property,
+     * this property can be set to multiple ORed together values of the enum when necessary.
+     *
+     * For the global area ID (0), the VehicleAreaConfig#supportedEnumValues array must be defined
+     * unless all bit flags of ImpactSensorLocation are supported.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     * @data_enum ImpactSensorLocation
+     */
+    IMPACT_DETECTED =
+            0x0330 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
+    /**
      * Currently selected gear
      *
      * This is the gear selected by the user.
