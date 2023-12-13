@@ -4545,12 +4545,22 @@ enum VehicleProperty {
     /**
      * Request the head unit to be shutdown.
      *
+     * <p>This is required for executing a task when the head unit is powered off (remote task
+     * feature). After the head unit is powered-on to execute the task, the head unit should
+     * be shutdown. The head unit will send this message once the task is finished.
+     *
+     * <p>This is not for the case when a user wants to shutdown the head unit.
+     *
      * <p>This usually involves telling a separate system outside the head unit (e.g. a power
      * controller) to prepare shutting down the head unit.
      *
-     * <p>This does not mean the head unit will shutdown immediately.
+     * <p>Note that the external system must validate whether this request is valid by checking
+     * whether the vehicle is currently in use. If a user enters the vehicle after a
+     * SHUTDOWN_REQUEST is sent, then the system must ignore this request. It
+     * is recommended to store a VehicleInUse property in the power controller and exposes it
+     * through VEHICLE_IN_USE property. A shutdown request must be ignored if VehicleInUse is true.
      *
-     * <p>This means that another system will start sending a shutdown signal to the head unit,
+     * <p>If allowed, the external system will start sending a shutdown signal to the head unit,
      * which will cause VHAL to send SHUTDOWN_PREPARE message to Android. Android will then start
      * the shut down process by handling the message.
      *
