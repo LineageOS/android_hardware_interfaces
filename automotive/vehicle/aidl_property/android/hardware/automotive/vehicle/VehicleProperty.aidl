@@ -1535,6 +1535,22 @@ enum VehicleProperty {
     PER_DISPLAY_BRIGHTNESS = 0x0A04 + 0x10000000 + 0x01000000
             + 0x00410000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32_VEC
     /**
+     * Valet mode enabled
+     *
+     * This property allows the user to enable/disable valet mode in their vehicle. Valet mode is
+     * a privacy and security setting that prevents an untrusted driver to access more private areas
+     * in the vehicle, such as the glove box or the trunk(s).
+     *
+     * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
+     * implement it as VehiclePropertyAccess.READ only.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
+     */
+    VALET_MODE_ENABLED =
+            0x0A05 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+    /**
      * Property to feed H/W input events to android
      *
      * int32Values[0] : action defined by VehicleHwKeyInputAction

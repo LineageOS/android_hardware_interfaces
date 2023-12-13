@@ -3211,6 +3211,14 @@
             ]
         },
         {
+            "property": "VehicleProperty::VALET_MODE_ENABLED",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            }
+        },
+        {
             "property": "VehicleProperty::OBD2_LIVE_FRAME",
             "configArray": [
                 0,

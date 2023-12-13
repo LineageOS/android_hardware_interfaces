@@ -114,6 +114,7 @@ public final class ChangeModeForVehicleProperty {
         Map.entry(VehicleProperty.AP_POWER_BOOTUP_REASON, VehiclePropertyChangeMode.STATIC),
         Map.entry(VehicleProperty.DISPLAY_BRIGHTNESS, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.PER_DISPLAY_BRIGHTNESS, VehiclePropertyChangeMode.ON_CHANGE),
+        Map.entry(VehicleProperty.VALET_MODE_ENABLED, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.HW_KEY_INPUT, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.HW_KEY_INPUT_V2, VehiclePropertyChangeMode.ON_CHANGE),
         Map.entry(VehicleProperty.HW_MOTION_INPUT, VehiclePropertyChangeMode.ON_CHANGE),

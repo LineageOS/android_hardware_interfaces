@@ -120,6 +120,7 @@ enum VehicleProperty {
   AP_POWER_BOOTUP_REASON = (((0x0A02 + 0x10000000) + 0x01000000) + 0x00400000) /* 289409538 */,
   DISPLAY_BRIGHTNESS = (((0x0A03 + 0x10000000) + 0x01000000) + 0x00400000) /* 289409539 */,
   PER_DISPLAY_BRIGHTNESS = (((0x0A04 + 0x10000000) + 0x01000000) + 0x00410000) /* 289475076 */,
+  VALET_MODE_ENABLED = (((0x0A05 + android.hardware.automotive.vehicle.VehiclePropertyGroup.SYSTEM) + android.hardware.automotive.vehicle.VehicleArea.GLOBAL) + android.hardware.automotive.vehicle.VehiclePropertyType.BOOLEAN) /* 287312389 */,
   HW_KEY_INPUT = (((0x0A10 + 0x10000000) + 0x01000000) + 0x00410000) /* 289475088 */,
   HW_KEY_INPUT_V2 = (((0x0A11 + android.hardware.automotive.vehicle.VehiclePropertyGroup.SYSTEM) + android.hardware.automotive.vehicle.VehicleArea.SEAT) + android.hardware.automotive.vehicle.VehiclePropertyType.MIXED) /* 367004177 */,
   HW_MOTION_INPUT = (((0x0A12 + android.hardware.automotive.vehicle.VehiclePropertyGroup.SYSTEM) + android.hardware.automotive.vehicle.VehicleArea.SEAT) + android.hardware.automotive.vehicle.VehiclePropertyType.MIXED) /* 367004178 */,
