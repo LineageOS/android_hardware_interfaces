@@ -16,13 +16,11 @@
 
 #define LOG_TAG "VtsHalAudioEffectTargetTest"
 
-#include <chrono>
 #include <memory>
 #include <string>
 #include <vector>
 
 #include <aidl/Gtest.h>
-#include <aidl/Vintf.h>
 #include <aidl/android/hardware/audio/effect/IEffect.h>
 #include <aidl/android/hardware/audio/effect/IFactory.h>
 #include <android-base/logging.h>

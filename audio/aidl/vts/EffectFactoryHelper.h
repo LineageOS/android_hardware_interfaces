@@ -21,6 +21,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include <aidl/Vintf.h>
 #include <android/binder_auto_utils.h>
 
 #include "TestUtils.h"

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include <aidl/Vintf.h>
 #define LOG_TAG "VtsHalVolumeTest"
 #include <android-base/logging.h>
 
