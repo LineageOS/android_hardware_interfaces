@@ -46,6 +46,7 @@ class CallbackManager {
     ~CallbackManager();
 
     RadioResponse& response() const;
+    RadioIndication& indication() const;
 
     template <typename ResponseType, typename IndicationType>
     void setResponseFunctions(const std::shared_ptr<ResponseType>& response,

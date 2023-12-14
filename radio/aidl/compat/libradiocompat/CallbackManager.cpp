@@ -53,6 +53,10 @@ RadioResponse& CallbackManager::response() const {
     return *mRadioResponse;
 }
 
+RadioIndication& CallbackManager::indication() const {
+    return *mRadioIndication;
+}
+
 void CallbackManager::setResponseFunctionsDelayed() {
     std::unique_lock<std::mutex> lock(mDelayedSetterGuard);
     mDelayedSetterDeadline = std::chrono::steady_clock::now() + kDelayedSetterDelay;
