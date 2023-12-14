@@ -3219,6 +3219,19 @@
             }
         },
         {
+            "property": "VehicleProperty::HEAD_UP_DISPLAY_ENABLED",
+            "defaultValue": {
+                "int32Values": [
+                    0
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": "Constants::SEAT_1_LEFT"
+                }
+            ]
+        },
+        {
             "property": "VehicleProperty::OBD2_LIVE_FRAME",
             "configArray": [
                 0,
@@ -4188,6 +4201,36 @@
                         "CrossTrafficMonitoringWarningState::WARNING_REAR_LEFT",
                         "CrossTrafficMonitoringWarningState::WARNING_REAR_RIGHT",
                         "CrossTrafficMonitoringWarningState::WARNING_REAR_BOTH"
+                    ]
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::LOW_SPEED_AUTOMATIC_EMERGENCY_BRAKING_ENABLED",
+            "defaultValue": {
+                "int32Values": [
+                    1
+                ]
+            }
+        },
+        {
+            "property": "VehicleProperty::LOW_SPEED_AUTOMATIC_EMERGENCY_BRAKING_STATE",
+            "defaultValue": {
+                "int32Values": [
+                    "LowSpeedAutomaticEmergencyBrakingState::ENABLED"
+                ]
+            },
+            "areas": [
+                {
+                    "areaId": 0,
+                    "supportedEnumValues": [
+                        "ErrorState::NOT_AVAILABLE_SAFETY",
+                        "ErrorState::NOT_AVAILABLE_POOR_VISIBILITY",
+                        "ErrorState::NOT_AVAILABLE_SPEED_HIGH",
+                        "ErrorState::NOT_AVAILABLE_DISABLED",
+                        "LowSpeedAutomaticEmergencyBrakingState::ENABLED",
+                        "LowSpeedAutomaticEmergencyBrakingState::ACTIVATED",
+                        "LowSpeedAutomaticEmergencyBrakingState::USER_OVERRIDE"
                     ]
                 }
             ]

@@ -1590,6 +1590,22 @@ enum VehicleProperty {
     VALET_MODE_ENABLED =
             0x0A05 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
     /**
+     * Head up display (HUD) enabled
+     *
+     * This property allows the user to turn on/off the HUD for their seat.
+     *
+     * Each HUD in the vehicle should be assigned to the seat that is intended to use it. For
+     * example, if there is a single HUD in the vehicle that is used by the driver so that they no
+     * longer need to continuously look at the instrument cluster, then this property should be
+     * defined with a single area ID equal to the driver's seat area value.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
+     */
+    HEAD_UP_DISPLAY_ENABLED =
+            0x0A06 + VehiclePropertyGroup.SYSTEM + VehicleArea.SEAT + VehiclePropertyType.BOOLEAN,
+    /**
      * Property to feed H/W input events to android
      *
      * int32Values[0] : action defined by VehicleHwKeyInputAction
@@ -4799,7 +4815,9 @@ enum VehicleProperty {
      * Enable or disable Automatic Emergency Braking (AEB).
      *
      * Set true to enable AEB and false to disable AEB. When AEB is enabled, the ADAS system in the
-     * vehicle should be turned on and monitoring to avoid potential collisions.
+     * vehicle should be turned on and monitoring to avoid potential collisions. This property
+     * should apply for higher speed applications only. For enabling low speed automatic emergency
+     * braking, LOW_SPEED_AUTOMATIC_EMERGENCY_BRAKING_ENABLED should be used.
      *
      * In general, AUTOMATIC_EMERGENCY_BRAKING_ENABLED should always return true or false. If the
      * feature is not available due to some temporary state, such as the vehicle speed being too
@@ -4821,7 +4839,9 @@ enum VehicleProperty {
      *
      * Returns the current state of AEB. This property must always return a valid state defined in
      * AutomaticEmergencyBrakingState or ErrorState. It must not surface errors through StatusCode
-     * and must use the supported error states instead.
+     * and must use the supported error states instead. This property should apply for higher speed
+     * applications only. For representing the state of the low speed automatic emergency braking
+     * system, LOW_SPEED_AUTOMATIC_EMERGENCY_BRAKING_STATE should be used.
      *
      * If AEB includes forward collision warnings before activating the brakes, those warnings must
      * be surfaced through the Forward Collision Warning (FCW) properties.
@@ -5645,6 +5665,58 @@ enum VehicleProperty {
      */
     CROSS_TRAFFIC_MONITORING_WARNING_STATE =
             0x1024 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
+
+    /**
+     * Enable or disable Low Speed Automatic Emergency Braking.
+     *
+     * Set true to enable Low Speed Automatic Emergency Braking or false to disable Low Speed
+     * Automatic Emergency Braking. When Low Speed Automatic Emergency Braking is enabled, the ADAS
+     * system in the vehicle should be turned on and monitoring to avoid potential collisions in low
+     * speed conditions. This property is different from the pre-existing
+     * AUTOMATIC_EMERGENCY_BRAKING_ENABLED, which should apply to higher speed applications only. If
+     * the vehicle doesn't have a separate collision avoidance system for low speed environments,
+     * this property should not be implemented.
+     *
+     * In general, LOW_SPEED_AUTOMATIC_EMERGENCY_BRAKING_ENABLED should always return true or false.
+     * If the feature is not available due to some temporary state, such as the vehicle speed being
+     * too low, that information must be conveyed through the ErrorState values in the
+     * LOW_SPEED_AUTOMATIC_EMERGENCY_BRAKING_STATE property.
+     *
+     * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
+     * implement it as VehiclePropertyAccess.READ only.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
+     */
+    LOW_SPEED_AUTOMATIC_EMERGENCY_BRAKING_ENABLED =
+            0x1025 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+
+    /**
+     * Low Speed Automatic Emergency Braking state.
+     *
+     * Returns the current state of Low Speed Automatic Emergency Braking. This property must always
+     * return a valid state defined in LowSpeedAutomaticEmergencyBrakingState or ErrorState. It must
+     * not surface errors through StatusCode and must use the supported error states instead. This
+     * property is different from the pre-existing AUTOMATIC_EMERGENCY_BRAKING_STATE, which should
+     * apply to higher speed applications only. If the vehicle doesn't have a separate collision
+     * avoidance system for low speed environments, this property should not be implemented.
+     *
+     * If Low Speed Automatic Emergency Braking includes collision warnings before activating the
+     * brakes, those warnings must be surfaced through use of LOW_SPEED_COLLISION_WARNING_ENABLED
+     * and LOW_SPEED_COLLISION_WARNING_STATE.
+     *
+     * For the global area ID (0), the VehicleAreaConfig#supportedEnumValues array must be defined
+     * unless all states of both LowSpeedAutomaticEmergencyBrakingState (including OTHER, which is
+     * not recommended) and ErrorState are supported.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     * @data_enum LowSpeedAutomaticEmergencyBrakingState
+     * @data_enum ErrorState
+     */
+    LOW_SPEED_AUTOMATIC_EMERGENCY_BRAKING_STATE =
+            0x1026 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
 
     /***************************************************************************
      * End of ADAS Properties

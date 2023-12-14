@@ -63,6 +63,7 @@ using ::aidl::android::hardware::automotive::vehicle::LaneCenteringAssistState;
 using ::aidl::android::hardware::automotive::vehicle::LaneDepartureWarningState;
 using ::aidl::android::hardware::automotive::vehicle::LaneKeepAssistState;
 using ::aidl::android::hardware::automotive::vehicle::LocationCharacterization;
+using ::aidl::android::hardware::automotive::vehicle::LowSpeedAutomaticEmergencyBrakingState;
 using ::aidl::android::hardware::automotive::vehicle::LowSpeedCollisionWarningState;
 using ::aidl::android::hardware::automotive::vehicle::RawPropValues;
 using ::aidl::android::hardware::automotive::vehicle::VehicleAirbagLocation;
@@ -297,6 +298,8 @@ JsonValueParser::JsonValueParser() {
             std::make_unique<ConstantParser<ElectronicStabilityControlState>>();
     mConstantParsersByType["CrossTrafficMonitoringWarningState"] =
             std::make_unique<ConstantParser<CrossTrafficMonitoringWarningState>>();
+    mConstantParsersByType["LowSpeedAutomaticEmergencyBrakingState"] =
+            std::make_unique<ConstantParser<LowSpeedAutomaticEmergencyBrakingState>>();
     mConstantParsersByType["Constants"] = std::make_unique<LocalVariableParser>();
 #ifdef ENABLE_VEHICLE_HAL_TEST_PROPERTIES
     mConstantParsersByType["TestVendorProperty"] =

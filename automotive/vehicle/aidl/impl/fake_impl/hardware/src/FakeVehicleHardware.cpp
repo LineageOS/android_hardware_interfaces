@@ -246,6 +246,13 @@ const std::unordered_map<int32_t, std::vector<int32_t>> mAdasEnabledPropToAdasPr
                         toInt(VehicleProperty::CROSS_TRAFFIC_MONITORING_WARNING_STATE),
                 },
         },
+        // LSAEB
+        {
+                toInt(VehicleProperty::LOW_SPEED_AUTOMATIC_EMERGENCY_BRAKING_ENABLED),
+                {
+                        toInt(VehicleProperty::LOW_SPEED_AUTOMATIC_EMERGENCY_BRAKING_STATE),
+                },
+        },
 };
 }  // namespace
 

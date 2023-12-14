@@ -50,6 +50,7 @@
 #include <aidl/android/hardware/automotive/vehicle/LaneDepartureWarningState.h>
 #include <aidl/android/hardware/automotive/vehicle/LaneKeepAssistState.h>
 #include <aidl/android/hardware/automotive/vehicle/LocationCharacterization.h>
+#include <aidl/android/hardware/automotive/vehicle/LowSpeedAutomaticEmergencyBrakingState.h>
 #include <aidl/android/hardware/automotive/vehicle/LowSpeedCollisionWarningState.h>
 #include <aidl/android/hardware/automotive/vehicle/Obd2CommonIgnitionMonitors.h>
 #include <aidl/android/hardware/automotive/vehicle/Obd2FuelSystemStatus.h>
