@@ -283,6 +283,64 @@ TEST_P(CameraAidlTest, getCameraCharacteristics) {
     }
 }
 
+TEST_P(CameraAidlTest, getSessionCharacteristics) {
+    if (flags::feature_combination_query()) {
+        std::vector<std::string> cameraDeviceNames = getCameraDeviceNames(mProvider);
+
+        for (const auto& name : cameraDeviceNames) {
+            std::shared_ptr<ICameraDevice> device;
+            ALOGI("getSessionCharacteristics: Testing camera device %s", name.c_str());
+            ndk::ScopedAStatus ret = mProvider->getCameraDeviceInterface(name, &device);
+            ALOGI("getCameraDeviceInterface returns: %d:%d", ret.getExceptionCode(),
+                  ret.getServiceSpecificError());
+            ASSERT_TRUE(ret.isOk());
+            ASSERT_NE(device, nullptr);
+
+            CameraMetadata meta;
+            openEmptyDeviceSession(name, mProvider, &mSession /*out*/, &meta /*out*/,
+                                   &device /*out*/);
+
+            std::vector<AvailableStream> outputStreams;
+            camera_metadata_t* staticMeta =
+                    reinterpret_cast<camera_metadata_t*>(meta.metadata.data());
+            outputStreams.clear();
+            ASSERT_EQ(Status::OK, getAvailableOutputStreams(staticMeta, outputStreams));
+            ASSERT_NE(0u, outputStreams.size());
+
+            AvailableStream sampleStream = outputStreams[0];
+
+            int32_t streamId = 0;
+            Stream stream = {streamId,
+                             StreamType::OUTPUT,
+                             sampleStream.width,
+                             sampleStream.height,
+                             static_cast<PixelFormat>(sampleStream.format),
+                             static_cast<aidl::android::hardware::graphics::common::BufferUsage>(
+                                     GRALLOC1_CONSUMER_USAGE_VIDEO_ENCODER),
+                             Dataspace::UNKNOWN,
+                             StreamRotation::ROTATION_0,
+                             std::string(),
+                             /*bufferSize*/ 0,
+                             /*groupId*/ -1,
+                             {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT},
+                             RequestAvailableDynamicRangeProfilesMap::
+                                     ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_STANDARD};
+
+            std::vector<Stream> streams = {stream};
+            StreamConfiguration config;
+            createStreamConfiguration(streams, StreamConfigurationMode::NORMAL_MODE, &config);
+
+            CameraMetadata chars;
+            ret = device->getSessionCharacteristics(config, &chars);
+            ASSERT_TRUE(ret.isOk());
+            verifySessionCharacteristics(chars);
+        }
+    } else {
+        ALOGI("getSessionCharacteristics: Test skipped.\n");
+        GTEST_SKIP();
+    }
+}
+
 // Verify that the torch strength level can be set and retrieved successfully.
 TEST_P(CameraAidlTest, turnOnTorchWithStrengthLevel) {
     std::vector<std::string> cameraDeviceNames = getCameraDeviceNames(mProvider);
