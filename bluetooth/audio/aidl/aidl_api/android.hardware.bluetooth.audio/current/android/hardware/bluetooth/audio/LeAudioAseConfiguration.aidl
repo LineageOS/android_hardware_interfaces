@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 The Android Open Source Project
+ * Copyright 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,27 +33,18 @@
 
 package android.hardware.bluetooth.audio;
 @VintfStability
-parcelable LeAudioConfiguration {
-  android.hardware.bluetooth.audio.CodecType codecType;
-  android.hardware.bluetooth.audio.LeAudioConfiguration.StreamMap[] streamMap;
-  int peerDelayUs;
-  android.hardware.bluetooth.audio.LeAudioCodecConfiguration leAudioCodecConfig;
-  @nullable byte[] vendorSpecificMetadata;
-  @VintfStability
-  parcelable StreamMap {
-    char streamHandle;
-    int audioChannelAllocation;
-    boolean isStreamActive;
-    @nullable android.hardware.bluetooth.audio.LeAudioAseConfiguration aseConfiguration;
-    @nullable android.hardware.bluetooth.audio.ConfigurationFlags flags;
-    @nullable android.hardware.bluetooth.audio.LeAudioConfiguration.StreamMap.BluetoothDeviceAddress bluetoothDeviceAddress;
-    parcelable BluetoothDeviceAddress {
-      byte[6] deviceAddress;
-      android.hardware.bluetooth.audio.LeAudioConfiguration.StreamMap.BluetoothDeviceAddress.DeviceAddressType deviceAddressType;
-      enum DeviceAddressType {
-        BLE_ADDRESS_PUBLIC = 0x00,
-        BLE_ADDRESS_RANDOM = 0x01,
-      }
-    }
+parcelable LeAudioAseConfiguration {
+  android.hardware.bluetooth.audio.LeAudioAseConfiguration.TargetLatency targetLatency;
+  android.hardware.bluetooth.audio.Phy targetPhy;
+  @nullable android.hardware.bluetooth.audio.CodecId codecId;
+  android.hardware.bluetooth.audio.CodecSpecificConfigurationLtv[] codecConfiguration;
+  @nullable byte[] vendorCodecConfiguration;
+  @nullable android.hardware.bluetooth.audio.MetadataLtv[] metadata;
+  @Backing(type="byte") @VintfStability
+  enum TargetLatency {
+    UNDEFINED = 0x00,
+    LOWER = 0x01,
+    BALANCED_LATENCY_RELIABILITY = 0x02,
+    HIGHER_RELIABILITY = 0x03,
   }
 }
