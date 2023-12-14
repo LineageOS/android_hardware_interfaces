@@ -17,17 +17,13 @@
 package android.hardware.security.secretkeeper;
 
 /**
- * Secretkeeper unencrypted error code, returned via AIDL as service specific errors in
- * EX_SERVICE_SPECIFIC.
+ * SecretId contains an identifier for a secret held by Secretkeeper.
  * @hide
  */
 @VintfStability
-@Backing(type="int")
-enum ErrorCode {
-    OK = 0,
-    UNKNOWN_KEY_ID = 1,
-    INTERNAL_ERROR = 2,
-    REQUEST_MALFORMED = 3,
-
-    // TODO(b/291224769): Create a more exhaustive set of error code values.
+parcelable SecretId {
+    /**
+     * 64-byte identifier for a secret.
+     */
+    byte[] id;
 }

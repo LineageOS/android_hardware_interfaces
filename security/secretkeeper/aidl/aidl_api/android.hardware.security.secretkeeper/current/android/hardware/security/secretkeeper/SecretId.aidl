@@ -33,10 +33,7 @@
 
 package android.hardware.security.secretkeeper;
 /* @hide */
-@Backing(type="int") @VintfStability
-enum ErrorCode {
-  OK = 0,
-  UNKNOWN_KEY_ID = 1,
-  INTERNAL_ERROR = 2,
-  REQUEST_MALFORMED = 3,
+@VintfStability
+parcelable SecretId {
+  byte[] id;
 }
