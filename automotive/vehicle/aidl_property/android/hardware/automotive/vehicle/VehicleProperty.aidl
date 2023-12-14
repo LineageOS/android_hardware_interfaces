@@ -3327,6 +3327,30 @@ enum VehicleProperty {
      */
     LOCATION_CHARACTERIZATION =
             0x0C10 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
+
+    /**
+     * Static data for the position of each ultrasonic sensor installed on the vehicle.
+     *
+     * Each individual sensor is identified by its unique VehicleAreaConfig#areaId and returns the
+     * sensor's position formatted as [x, y, z] where:
+     *
+     *     int32Values[0] = x, the position of the sensor along the x-axis relative to the origin of
+     *                      the Android Automotive sensor coordinate frame in millimeters
+     *     int32Values[1] = y, the position of the sensor along the y-axis relative to the origin of
+     *                      the Android Automotive sensor coordinate frame in millimeters.
+     *     int32Values[2] = z, the position of the sensor along the z-axis relative to the origin of
+     *                      the Android Automotive sensor coordinate frame in millimeters.
+     *
+     * If the data is aggregated by another ECU, then OEMs have the option of reporting the same
+     * reading across all included sensors or reporting a virtual representation of all the included
+     * sensors as if they were one sensor.
+     *
+     * @change_mode VehiclePropertyChangeMode.STATIC
+     * @access VehiclePropertyAccess.READ
+     */
+    ULTRASONICS_SENSOR_POSITION = 0x0C20 + VehiclePropertyGroup.SYSTEM + VehicleArea.VENDOR
+            + VehiclePropertyType.INT32_VEC,
+
     /**
      * OBD2 Live Sensor Data
      *

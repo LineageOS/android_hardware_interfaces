@@ -191,6 +191,7 @@ public final class AccessForVehicleProperty {
         Map.entry(VehicleProperty.GLOVE_BOX_LOCKED, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.VEHICLE_MAP_SERVICE, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.LOCATION_CHARACTERIZATION, VehiclePropertyAccess.READ),
+        Map.entry(VehicleProperty.ULTRASONICS_SENSOR_POSITION, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.OBD2_LIVE_FRAME, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.OBD2_FREEZE_FRAME, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.OBD2_FREEZE_FRAME_INFO, VehiclePropertyAccess.READ),
