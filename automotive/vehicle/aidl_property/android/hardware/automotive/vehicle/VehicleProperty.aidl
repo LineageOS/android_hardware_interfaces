@@ -427,6 +427,19 @@ enum VehicleProperty {
     RANGE_REMAINING = 0x0308 + 0x10000000 + 0x01000000
             + 0x00600000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:FLOAT
     /**
+     * EV battery average temperature
+     *
+     * Exposes the temperature of the battery in an EV. If multiple batteries exist in the EV, or
+     * multiple temperature sensors exist, this property should be set to the mean or a meaningful
+     * weighted average that best represents the overall temperature of the battery system.
+     *
+     * @change_mode VehiclePropertyChangeMode.CONTINUOUS
+     * @access VehiclePropertyAccess.READ
+     * @unit VehicleUnit:CELSIUS
+     */
+    EV_BATTERY_AVERAGE_TEMPERATURE =
+            0x030E + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.FLOAT,
+    /**
      * Tire pressure
      *
      * Each tires is identified by its areaConfig.areaId config and their
@@ -483,6 +496,22 @@ enum VehicleProperty {
      */
     ENGINE_IDLE_AUTO_STOP_ENABLED =
             0x0320 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+    /**
+     * Impact detected.
+     *
+     * Bit flag property to relay information on whether an impact has occurred on a particular side
+     * of the vehicle as described through the ImpactSensorLocation enum. As a bit flag property,
+     * this property can be set to multiple ORed together values of the enum when necessary.
+     *
+     * For the global area ID (0), the VehicleAreaConfig#supportedEnumValues array must be defined
+     * unless all bit flags of ImpactSensorLocation are supported.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     * @data_enum ImpactSensorLocation
+     */
+    IMPACT_DETECTED =
+            0x0330 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
     /**
      * Currently selected gear
      *
@@ -658,6 +687,45 @@ enum VehicleProperty {
      */
     EV_STOPPING_MODE =
             0x040D + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
+    /**
+     * Enable or disable Electronic Stability Control (ESC).
+     *
+     * Set true to enable ESC and false to disable ESC. When ESC is enabled, a system in the vehicle
+     * should be controlling the tires during instances with high risk of skidding to actively
+     * prevent the same from happening.
+     *
+     * In general, ELECTRONIC_STABILITY_CONTROL_ENABLED should always return true or false. If the
+     * feature is not available due to some temporary state, such as the vehicle speed being too
+     * high, that information must be conveyed through the ErrorState values in the
+     * ELECTRONIC_STABILITY_CONTROL_STATE property.
+     *
+     * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
+     * implement it as VehiclePropertyAccess.READ only.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
+     */
+    ELECTRONIC_STABILITY_CONTROL_ENABLED =
+            0x040E + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+    /**
+     * Electronic Stability Control (ESC) state.
+     *
+     * Returns the current state of ESC. This property must always return a valid state defined in
+     * ElectronicStabilityControlState or ErrorState. It must not surface errors through StatusCode
+     * and must use the supported error states instead.
+     *
+     * For the global area ID (0), the VehicleAreaConfig#supportedEnumValues array must be defined
+     * unless all states of both ElectronicStabilityControlState (including OTHER, which is not
+     * recommended) and ErrorState are supported.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     * @data_enum ElectronicStabilityControlState
+     * @data_enum ErrorState
+     */
+    ELECTRONIC_STABILITY_CONTROL_STATE =
+            0x040F + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
     /**
      * HVAC Properties
      *
@@ -1505,6 +1573,22 @@ enum VehicleProperty {
      */
     PER_DISPLAY_BRIGHTNESS = 0x0A04 + 0x10000000 + 0x01000000
             + 0x00410000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32_VEC
+    /**
+     * Valet mode enabled
+     *
+     * This property allows the user to enable/disable valet mode in their vehicle. Valet mode is
+     * a privacy and security setting that prevents an untrusted driver to access more private areas
+     * in the vehicle, such as the glove box or the trunk(s).
+     *
+     * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
+     * implement it as VehiclePropertyAccess.READ only.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
+     */
+    VALET_MODE_ENABLED =
+            0x0A05 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
     /**
      * Property to feed H/W input events to android
      *
@@ -2676,6 +2760,28 @@ enum VehicleProperty {
     SEAT_AIRBAG_ENABLED =
             0x0B9E + VehiclePropertyGroup.SYSTEM + VehicleArea.SEAT + VehiclePropertyType.BOOLEAN,
     /**
+     * Seat airbags deployed
+     *
+     * Bit flag property to relay information on which airbags have been deployed in the vehicle at
+     * each seat, vs which ones are currently still armed. If SEAT_AIRBAG_ENABLED is set to false at
+     * a particular areaId, this property should return status code UNAVAILABLE at that areaId.
+     *
+     * Enums apply to each seat, not the global vehicle. For example, VehicleAirbagsLocation#CURTAIN
+     * at the driver seat areaId represents whether the driver side curtain airbag has been
+     * deployed. Multiple bit flags can be set to indicate that multiple different airbags have been
+     * deployed for the seat.
+     *
+     * For each seat area ID, the VehicleAreaConfig#supportedEnumValues array must be defined unless
+     * all states of VehicleAirbagLocation are supported (including OTHER, which is not
+     * recommended).
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     * @data_enum VehicleAirbagLocation
+     */
+    SEAT_AIRBAGS_DEPLOYED =
+            0x0BA5 + VehiclePropertyGroup.SYSTEM + VehicleArea.SEAT + VehiclePropertyType.INT32,
+    /**
      * Represents property for seat’s hipside (bottom cushion’s side) support position.
      *
      * The maxInt32Value and minInt32Value in each VehicleAreaConfig must be defined. All integers
@@ -2803,6 +2909,24 @@ enum VehicleProperty {
      */
     SEAT_WALK_IN_POS =
             0x0BA3 + VehiclePropertyGroup.SYSTEM + VehicleArea.SEAT + VehiclePropertyType.INT32,
+    /**
+     * Seat belt pretensioner deployed.
+     *
+     * Property to relay information on whether the seat belt pretensioner has been deployed for a
+     * particular seat due to a collision. This is different from the regular seat belt tightening
+     * system that continuously adds tension to the seat belts so that they fit snugly around the
+     * person sitting in the seat, nor is it the seat belt retractor system that locks the seat belt
+     * in place during sudden brakes or when the user jerks the seat belt.
+     *
+     * If this property is dependant on the state of other properties, and those properties are
+     * currently in the state that doesn't support this property, this should return
+     * StatusCode#NOT_AVAILABLE
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     */
+    SEAT_BELT_PRETENSIONER_DEPLOYED =
+            0x0BA6 + VehiclePropertyGroup.SYSTEM + VehicleArea.SEAT + VehiclePropertyType.BOOLEAN,
     /**
      * Seat Occupancy
      *
@@ -5288,6 +5412,75 @@ enum VehicleProperty {
      */
     DRIVER_DISTRACTION_WARNING =
             0x1020 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
+
+    /**
+     * Enable or disable Low Speed Collision Warning.
+     *
+     * Set true to enable low speed collision warning and false to disable low speed collision
+     * warning. When low speed collision warning is enabled, the ADAS system in the vehicle should
+     * warn the driver of potential collisions at low speeds. This property is different from the
+     * pre-existing FORWARD_COLLISION_WARNING_ENABLED, which should apply to higher speed
+     * applications only. If the vehicle doesn't have a separate collision detection system for low
+     * speed environments, this property should not be implemented.
+     *
+     * In general, LOW_SPEED_COLLISION_WARNING_ENABLED should always return true or false. If the
+     * feature is not available due to some temporary state, such as the vehicle speed being too
+     * high, that information must be conveyed through the ErrorState values in the
+     * LOW_SPEED_COLLISION_WARNING_STATE property.
+     *
+     * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
+     * implement it as VehiclePropertyAccess.READ only.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
+     */
+    LOW_SPEED_COLLISION_WARNING_ENABLED =
+            0x1021 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+
+    /**
+     * Low Speed Collision Warning state.
+     *
+     * Returns the current state of Low Speed Collision Warning. This property must always return a
+     * valid state defined in LowSpeedCollisionWarningState or ErrorState. It must not surface
+     * errors through StatusCode and must use the supported error states instead. This property is
+     * different from the pre-existing FORWARD_COLLISION_WARNING_STATE, which should apply to higher
+     * speed applications only. If the vehicle doesn't have a separate collision detection system
+     * for low speed environments, this property should not be implemented.
+     *
+     * For the global area ID (0), the VehicleAreaConfig#supportedEnumValues array must be defined
+     * unless all states of both LowSpeedCollisionWarningState (including OTHER, which is not
+     * recommended) and ErrorState are supported.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     * @data_enum LowSpeedCollisionWarningState
+     * @data_enum ErrorState
+     */
+    LOW_SPEED_COLLISION_WARNING_STATE =
+            0x1022 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
+
+    /**
+     * Enable or disable Cross Traffic Monitoring.
+     *
+     * Set true to enable Cross Traffic Monitoring and false to disable Cross Traffic Monitoring.
+     * When Cross Traffic Monitoring is enabled, the ADAS system in the vehicle should be turned on
+     * and monitoring for potential sideways collisions.
+     *
+     * In general, CROSS_TRAFFIC_MONITORING_ENABLED should always return true or false. If the
+     * feature is not available due to some temporary state, such as the vehicle speed being too
+     * high, that information must be conveyed through the ErrorState values in the
+     * CROSS_TRAFFIC_MONITORING_STATE property.
+     *
+     * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
+     * implement it as VehiclePropertyAccess.READ only.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
+     * @access VehiclePropertyAccess.READ
+     */
+    CROSS_TRAFFIC_MONITORING_ENABLED =
+            0x1023 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
 
     /***************************************************************************
      * End of ADAS Properties
