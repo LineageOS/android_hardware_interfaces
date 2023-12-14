@@ -203,6 +203,7 @@ std::unordered_map<VehicleProperty, VehiclePropertyAccess> AccessForVehiclePrope
         {VehicleProperty::ULTRASONICS_SENSOR_ORIENTATION, VehiclePropertyAccess::READ},
         {VehicleProperty::ULTRASONICS_SENSOR_FIELD_OF_VIEW, VehiclePropertyAccess::READ},
         {VehicleProperty::ULTRASONICS_SENSOR_DETECTION_RANGE, VehiclePropertyAccess::READ},
+        {VehicleProperty::ULTRASONICS_SENSOR_SUPPORTED_RANGES, VehiclePropertyAccess::READ},
         {VehicleProperty::OBD2_LIVE_FRAME, VehiclePropertyAccess::READ},
         {VehicleProperty::OBD2_FREEZE_FRAME, VehiclePropertyAccess::READ},
         {VehicleProperty::OBD2_FREEZE_FRAME_INFO, VehiclePropertyAccess::READ},

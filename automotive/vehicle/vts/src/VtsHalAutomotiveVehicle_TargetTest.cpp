@@ -572,6 +572,13 @@ TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyUltrasonicsSensorDetectionRangeC
                    VehicleArea::VENDOR, VehiclePropertyType::INT32_VEC);
 }
 
+TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyUltrasonicsSensorSupportedRangesConfig) {
+    verifyProperty(VehicleProperty::ULTRASONICS_SENSOR_SUPPORTED_RANGES,
+                   VehiclePropertyAccess::READ, VehiclePropertyChangeMode::STATIC,
+                   VehiclePropertyGroup::SYSTEM, VehicleArea::VENDOR,
+                   VehiclePropertyType::INT32_VEC);
+}
+
 TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyEmergencyLaneKeepAssistEnabledConfig) {
     verifyProperty(VehicleProperty::EMERGENCY_LANE_KEEP_ASSIST_ENABLED,
                    VehiclePropertyAccess::READ_WRITE, VehiclePropertyChangeMode::ON_CHANGE,
