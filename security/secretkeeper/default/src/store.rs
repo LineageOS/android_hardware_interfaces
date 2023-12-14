@@ -33,4 +33,14 @@ impl KeyValueStore for InMemoryStore {
         let optional_val = self.0.get(key);
         Ok(optional_val.cloned())
     }
+
+    fn delete(&mut self, key: &[u8]) -> Result<(), Error> {
+        self.0.remove(key);
+        Ok(())
+    }
+
+    fn delete_all(&mut self) -> Result<(), Error> {
+        self.0.clear();
+        Ok(())
+    }
 }
