@@ -16,6 +16,7 @@
 
 package android.hardware.wifi.supplicant;
 
+import android.hardware.wifi.common.OuiKeyedData;
 import android.hardware.wifi.supplicant.P2pProvDiscStatusCode;
 import android.hardware.wifi.supplicant.WpsConfigMethods;
 
@@ -45,4 +46,9 @@ parcelable P2pProvisionDiscoveryCompletedEventParams {
      * Refer to WFA Wi-Fi_Direct_Specification_v1.9 section 3.2.1 for more details.
      */
     String groupInterfaceName;
+    /**
+     * Optional vendor-specific parameters. Null value indicates
+     * that no vendor data is provided.
+     */
+    @nullable OuiKeyedData[] vendorData;
 }
