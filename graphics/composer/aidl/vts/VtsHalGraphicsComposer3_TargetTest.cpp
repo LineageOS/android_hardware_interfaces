@@ -1554,6 +1554,7 @@ TEST_P(GraphicsComposerAidlCommandTest, SetLayerColorTransform) {
 }
 
 TEST_P(GraphicsComposerAidlCommandTest, SetDisplayBrightness) {
+    EXPECT_TRUE(mComposerClient->setPowerMode(getPrimaryDisplayId(), PowerMode::ON).isOk());
     const auto& [status, capabilities] =
             mComposerClient->getDisplayCapabilities(getPrimaryDisplayId());
     ASSERT_TRUE(status.isOk());
