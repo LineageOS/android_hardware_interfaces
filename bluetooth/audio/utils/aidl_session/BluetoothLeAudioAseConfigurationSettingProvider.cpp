@@ -32,7 +32,7 @@
     (p) += 4;                                                         \
   }
 
-#define LOG_TAG "BTAudioCodecsAidl"
+#define LOG_TAG "BTAudioAseConfigAidl"
 
 #include "BluetoothLeAudioAseConfigurationSettingProvider.h"
 
@@ -58,9 +58,9 @@ namespace audio {
 
 /* Internal structure definition */
 std::map<std::string,
-         std::tuple<std::vector<std::optional<AseDirectionConfiguration>>*,
-                    std::vector<std::optional<AseDirectionConfiguration>>*,
-                    ConfigurationFlags*>>
+         std::tuple<std::vector<std::optional<AseDirectionConfiguration>>,
+                    std::vector<std::optional<AseDirectionConfiguration>>,
+                    ConfigurationFlags>>
     configurations_;
 
 std::vector<LeAudioAseConfigurationSetting> ase_configuration_settings_;
@@ -251,7 +251,7 @@ static const std::vector<
     kLeAudioSetScenarios = {{"/vendor/etc/aidl/le_audio/"
                              "aidl_audio_set_scenarios.bfbs",
                              "/vendor/etc/aidl/le_audio/"
-                             "aidl_audio_set_configurations.json"}};
+                             "aidl_audio_set_scenarios.json"}};
 
 /* Implementation */
 
@@ -263,7 +263,9 @@ AudioSetConfigurationProviderJson::GetLeAudioAseConfigurationSettings() {
 
 void AudioSetConfigurationProviderJson::
     LoadAudioSetConfigurationProviderJson() {
-  if (configurations_.empty() && ase_configuration_settings_.empty()) {
+  if (configurations_.empty() || ase_configuration_settings_.empty()) {
+    ase_configuration_settings_.clear();
+    configurations_.clear();
     auto loaded = LoadContent(kLeAudioSetConfigs, kLeAudioSetScenarios,
                               CodecLocation::HOST);
     if (!loaded)
@@ -565,7 +567,7 @@ bool AudioSetConfigurationProviderJson::LoadConfigurationsFromFiles(
   std::string configurations_schema_binary_content;
   bool ok = flatbuffers::LoadFile(schema_file, true,
                                   &configurations_schema_binary_content);
-  LOG(INFO) << __func__ << "Loading file " << schema_file;
+  LOG(INFO) << __func__ << ": Loading file " << schema_file;
   if (!ok) return ok;
 
   /* Load the binary schema */
@@ -576,17 +578,17 @@ bool AudioSetConfigurationProviderJson::LoadConfigurationsFromFiles(
 
   /* Load the content from JSON */
   std::string configurations_json_content;
-  LOG(INFO) << __func__ << "Loading file " << schema_file;
+  LOG(INFO) << __func__ << ": Loading file " << content_file;
   ok = flatbuffers::LoadFile(content_file, false, &configurations_json_content);
   if (!ok) return ok;
 
   /* Parse */
-  LOG(INFO) << __func__ << "Parse JSON content" << schema_file;
+  LOG(INFO) << __func__ << ": Parse JSON content";
   ok = configurations_parser_.Parse(configurations_json_content.c_str());
   if (!ok) return ok;
 
   /* Import from flatbuffers */
-  LOG(INFO) << __func__ << "Build flat buffer structure" << schema_file;
+  LOG(INFO) << __func__ << ": Build flat buffer structure";
   auto configurations_root = le_audio::GetAudioSetConfigurations(
       configurations_parser_.builder_.GetBufferPointer());
   if (!configurations_root) return false;
@@ -629,7 +631,7 @@ bool AudioSetConfigurationProviderJson::LoadConfigurationsFromFiles(
     if (sourceAseConfiguration.empty() && sinkAseConfiguration.empty())
       continue;
     configurations_[flat_cfg->name()->str()] = std::make_tuple(
-        &sourceAseConfiguration, &sinkAseConfiguration, &configurationFlags);
+        sourceAseConfiguration, sinkAseConfiguration, configurationFlags);
   }
 
   return true;
@@ -641,6 +643,7 @@ bool AudioSetConfigurationProviderJson::LoadScenariosFromFiles(
   std::string scenarios_schema_binary_content;
   bool ok = flatbuffers::LoadFile(schema_file, true,
                                   &scenarios_schema_binary_content);
+  LOG(INFO) << __func__ << ": Loading file " << schema_file;
   if (!ok) return ok;
 
   /* Load the binary schema */
@@ -650,15 +653,18 @@ bool AudioSetConfigurationProviderJson::LoadScenariosFromFiles(
   if (!ok) return ok;
 
   /* Load the content from JSON */
+  LOG(INFO) << __func__ << ": Loading file " << content_file;
   std::string scenarios_json_content;
   ok = flatbuffers::LoadFile(content_file, false, &scenarios_json_content);
   if (!ok) return ok;
 
   /* Parse */
+  LOG(INFO) << __func__ << ": Parse json content";
   ok = scenarios_parser_.Parse(scenarios_json_content.c_str());
   if (!ok) return ok;
 
   /* Import from flatbuffers */
+  LOG(INFO) << __func__ << ": Build flat buffer structure";
   auto scenarios_root = le_audio::GetAudioSetScenarios(
       scenarios_parser_.builder_.GetBufferPointer());
   if (!scenarios_root) return false;
@@ -667,6 +673,7 @@ bool AudioSetConfigurationProviderJson::LoadScenariosFromFiles(
   if ((flat_scenarios == nullptr) || (flat_scenarios->size() == 0))
     return false;
 
+  LOG(INFO) << __func__ << ": Turn flat buffer into structure";
   AudioContext media_context = AudioContext();
   media_context.bitmask =
       (AudioContext::ALERTS | AudioContext::INSTRUCTIONAL |
@@ -686,9 +693,10 @@ bool AudioSetConfigurationProviderJson::LoadScenariosFromFiles(
   AudioContext voice_assistants_context = AudioContext();
   voice_assistants_context.bitmask = AudioContext::VOICE_ASSISTANTS;
 
-  LOG(DEBUG) << ": Updating " << flat_scenarios->size() << " scenarios.";
+  LOG(DEBUG) << "Updating " << flat_scenarios->size() << " scenarios.";
   for (auto const& scenario : *flat_scenarios) {
-    LOG(DEBUG) << "Scenario " << scenario->name()->c_str() << " configs:";
+    LOG(DEBUG) << "Scenario " << scenario->name()->c_str()
+               << " configs: " << scenario->configurations()->size();
 
     if (!scenario->configurations()) continue;
     std::string scenario_name = scenario->name()->c_str();
@@ -704,19 +712,24 @@ bool AudioSetConfigurationProviderJson::LoadScenariosFromFiles(
     else if (scenario_name == "VoiceAssistants")
       context = AudioContext(voice_assistants_context);
 
-    for (auto config_name : *scenario->configurations()) {
-      if (configurations_.count(config_name->str()) == 0) continue;
-      auto [source, sink, flags] = configurations_.at(config_name->str());
+    for (auto it = scenario->configurations()->begin();
+         it != scenario->configurations()->end(); ++it) {
+      auto config_name = it->str();
+      auto configuration = configurations_.find(config_name);
+      if (configuration == configurations_.end()) continue;
+      LOG(DEBUG) << "Getting configuration with name: " << config_name;
+      auto [source, sink, flags] = configuration->second;
       // Each configuration will create a LeAudioAseConfigurationSetting
       // with the same {context, packing}
       // and different data
       LeAudioAseConfigurationSetting setting;
       setting.audioContext = context;
       // TODO: Packing
-      setting.sourceAseConfiguration = *source;
-      setting.sinkAseConfiguration = *sink;
-      setting.flags = *flags;
+      setting.sourceAseConfiguration = source;
+      setting.sinkAseConfiguration = sink;
+      setting.flags = flags;
       // Add to list of setting
+      LOG(DEBUG) << "Pushing configuration to list: " << config_name;
       ase_configuration_settings_.push_back(setting);
     }
   }
