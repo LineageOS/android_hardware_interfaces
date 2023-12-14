@@ -156,8 +156,8 @@ parcelable RttResult {
      */
     byte r2iTxLtfRepetitionCount;
     /**
-     * Minimum non-trigger based (non-TB) dynamic measurement time in milliseconds assigned by the
-     * IEEE 802.11az responder.
+     * Minimum non-trigger based (non-TB) dynamic measurement time in units of 100 microseconds
+     * assigned by the IEEE 802.11az responder.
      *
      * After initial non-TB negotiation, if the next ranging request for this peer comes in between
      * [ntbMinMeasurementTime, ntbMaxMeasurementTime], vendor software shall do the NDPA sounding
@@ -166,11 +166,13 @@ parcelable RttResult {
      * If the ranging request for this peer comes sooner than minimum measurement time, vendor
      * software shall return the cached result of the last measurement including the time stamp
      * |RttResult.timestamp|.
+     *
+     * Reference: IEEE Std 802.11az-2022 spec, section 9.4.2.298 Ranging Parameters element.
      */
-    int ntbMinMeasurementTimeMillis;
+    long ntbMinMeasurementTime;
     /**
-     * Maximum non-trigger based (non-TB) dynamic measurement time in milliseconds assigned by the
-     * IEEE 802.11az responder.
+     * Maximum non-trigger based (non-TB) dynamic measurement time in units of 10 milliseconds
+     * assigned by the IEEE 802.11az responder.
      *
      * After initial non-TB negotiation, if the next ranging request for this peer comes in between
      * [ntbMinMeasurementTime, ntbMaxMeasurementTime], vendor software shall do the NDPA sounding
@@ -179,6 +181,8 @@ parcelable RttResult {
      * If the ranging request for this peer comes later than the maximum measurement time, vendor
      * software shall clean up any existing IEEE 802.11ax non-TB ranging session and re-do the
      * non-TB ranging negotiation.
+     *
+     * Reference: IEEE Std 802.11az-2022 spec, section 9.4.2.298 Ranging Parameters element.
      */
-    int ntbMaxMeasurementTimeMillis;
+    long ntbMaxMeasurementTime;
 }
