@@ -46,5 +46,4 @@ parcelable RttCapabilities {
   android.hardware.wifi.RttBw azBwSupport;
   boolean ntbInitiatorSupported;
   boolean ntbResponderSupported;
-  int maxTxLtfRepetitionCount;
 }

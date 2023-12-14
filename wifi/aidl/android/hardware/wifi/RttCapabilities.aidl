@@ -78,9 +78,4 @@ parcelable RttCapabilities {
      * Whether IEEE 802.11az Non-Trigger-based (non-TB) responder mode is supported.
      */
     boolean ntbResponderSupported;
-    /**
-     * Maximum HE LTF repetitions the IEEE 802.11az initiator is capable of transmitting in the
-     * preamble of I2R NDP.
-     */
-    int maxTxLtfRepetitionCount;
 }
