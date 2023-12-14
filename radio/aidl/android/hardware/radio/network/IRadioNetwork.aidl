@@ -649,8 +649,8 @@ oneway interface IRadioNetwork {
     /**
      * Get whether pre-auth cellular identifier in-the-clear transparency is enabled. If
      * IRadioNetworkInterface.setCellularIdentifierTransparencyEnabled has been called, this should
-     * return the value of the `enabled` parameter of the last successful call. If it hasn't been
-     * called this should return the default value of true.
+     * return the value of the `enabled` parameter of the last successful call and false if
+     * IRadioNetworkInterface.setCellularIdentifierTransparencyEnabled has not been called yet.
      *
      * @param serial Serial number of request
      *
