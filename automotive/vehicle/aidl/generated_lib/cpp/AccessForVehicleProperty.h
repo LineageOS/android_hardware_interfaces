@@ -200,6 +200,7 @@ std::unordered_map<VehicleProperty, VehiclePropertyAccess> AccessForVehiclePrope
         {VehicleProperty::VEHICLE_MAP_SERVICE, VehiclePropertyAccess::READ_WRITE},
         {VehicleProperty::LOCATION_CHARACTERIZATION, VehiclePropertyAccess::READ},
         {VehicleProperty::ULTRASONICS_SENSOR_POSITION, VehiclePropertyAccess::READ},
+        {VehicleProperty::ULTRASONICS_SENSOR_ORIENTATION, VehiclePropertyAccess::READ},
         {VehicleProperty::OBD2_LIVE_FRAME, VehiclePropertyAccess::READ},
         {VehicleProperty::OBD2_FREEZE_FRAME, VehiclePropertyAccess::READ},
         {VehicleProperty::OBD2_FREEZE_FRAME_INFO, VehiclePropertyAccess::READ},

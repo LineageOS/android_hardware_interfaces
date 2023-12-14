@@ -3352,6 +3352,37 @@ enum VehicleProperty {
             + VehiclePropertyType.INT32_VEC,
 
     /**
+     * Static data for the orientation of each ultrasonic sensor installed on the vehicle.
+     *
+     * Each individual sensor is identified by its VehicleAreaConfig#areaId and returns the sensor's
+     * orientation formatted as [qw, qx, qy, qz] where:
+     *
+     *     int32Values[0] = qw, the quaternion coefficient w within the quaterinion (w + xi + yj +
+     *                      zk) describing the rotation of the sensor relative to the Android
+     *                      Automotive sensor coordinate frame.
+     *     int32Values[1] = qx, the quaternion coefficient x within the quaterinion (w + xi + yj +
+     *                      zk) describing the rotation of the sensor relative to the Android
+     *                      Automotive sensor coordinate frame.
+     *     int32Values[2] = qy, the quaternion coefficient y within the quaterinion (w + xi + yj +
+     *                      zk) describing the rotation of the sensor relative to the Android
+     *                      Automotive sensor coordinate frame.
+     *     int32Values[3] = qz, the quaternion coefficient z within the quaterinion (w + xi + yj +
+     *                      zk) describing the rotation of the sensor relative to the Android
+     *                      Automotive sensor coordinate frame.
+     *
+     * This assumes each sensor uses the same axes conventions as Android Automotive.
+     *
+     * If the data is aggregated by another ECU, then OEMs have the option of reporting the same
+     * reading across all included sensors or reporting a virtual representation of all the included
+     * sensors as if they were one sensor.
+     *
+     * @change_mode VehiclePropertyChangeMode.STATIC
+     * @access VehiclePropertyAccess.READ
+     */
+    ULTRASONICS_SENSOR_ORIENTATION = 0x0C21 + VehiclePropertyGroup.SYSTEM + VehicleArea.VENDOR
+            + VehiclePropertyType.INT32_VEC,
+
+    /**
      * OBD2 Live Sensor Data
      *
      * Reports a snapshot of the current (live) values of the OBD2 sensors available.
