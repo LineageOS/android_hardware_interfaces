@@ -507,14 +507,93 @@ ndk::ScopedAStatus LeAudioOffloadAudioProvider::getLeAudioAseConfiguration(
   return ndk::ScopedAStatus::ok();
 };
 
+bool LeAudioOffloadAudioProvider::isMatchedQosRequirement(
+    LeAudioAseQosConfiguration setting_qos,
+    AseQosDirectionRequirement requirement_qos) {
+  if (setting_qos.retransmissionNum !=
+      requirement_qos.preferredRetransmissionNum)
+    return false;
+  if (setting_qos.maxTransportLatencyMs > requirement_qos.maxTransportLatencyMs)
+    return false;
+  // Ignore other parameters, as they are not populated in the setting_qos
+  return true;
+}
+
 ndk::ScopedAStatus LeAudioOffloadAudioProvider::getLeAudioAseQosConfiguration(
     const IBluetoothAudioProvider::LeAudioAseQosConfigurationRequirement&
         in_qosRequirement,
     IBluetoothAudioProvider::LeAudioAseQosConfigurationPair* _aidl_return) {
-  /* TODO: Implement */
-  (void)in_qosRequirement;
-  (void)_aidl_return;
-  return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+  IBluetoothAudioProvider::LeAudioAseQosConfigurationPair result;
+  // Get all configuration settings
+  std::vector<IBluetoothAudioProvider::LeAudioAseConfigurationSetting>
+      ase_configuration_settings =
+          BluetoothAudioCodecs::GetLeAudioAseConfigurationSettings();
+
+  // Direction QoS matching
+  // Only handle one direction input case
+  uint8_t direction = 0;
+  std::optional<AseQosDirectionRequirement> direction_qos_requirement =
+      std::nullopt;
+  if (in_qosRequirement.sinkAseQosRequirement.has_value()) {
+    direction_qos_requirement = in_qosRequirement.sinkAseQosRequirement.value();
+    direction = kLeAudioDirectionSink;
+  } else if (in_qosRequirement.sourceAseQosRequirement.has_value()) {
+    direction_qos_requirement =
+        in_qosRequirement.sourceAseQosRequirement.value();
+    direction = kLeAudioDirectionSource;
+  }
+
+  for (auto& setting : ase_configuration_settings) {
+    // Context matching
+    if (setting.audioContext != in_qosRequirement.contextType) continue;
+
+    // Match configuration flags
+    // Currently configuration flags are not populated, ignore.
+
+    // Get a list of all matched AseDirectionConfiguration
+    // for the input direction
+    std::vector<std::optional<AseDirectionConfiguration>>*
+        direction_configuration = nullptr;
+    if (direction == kLeAudioDirectionSink) {
+      if (!setting.sinkAseConfiguration.has_value()) continue;
+      direction_configuration = &setting.sinkAseConfiguration.value();
+    } else {
+      if (!setting.sourceAseConfiguration.has_value()) continue;
+      direction_configuration = &setting.sourceAseConfiguration.value();
+    }
+
+    for (auto cfg : *direction_configuration) {
+      if (!cfg.has_value()) continue;
+      // If no requirement, return the first QoS
+      if (!direction_qos_requirement.has_value()) {
+        result.sinkQosConfiguration = cfg.value().qosConfiguration;
+        result.sourceQosConfiguration = cfg.value().qosConfiguration;
+        *_aidl_return = result;
+        return ndk::ScopedAStatus::ok();
+      }
+
+      // If has requirement, return the first matched QoS
+      // Try to match the ASE configuration
+      // and QoS with requirement
+      if (!cfg.value().qosConfiguration.has_value()) continue;
+      if (isMatchedAseConfiguration(
+              cfg.value().aseConfiguration,
+              direction_qos_requirement.value().aseConfiguration) &&
+          isMatchedQosRequirement(cfg.value().qosConfiguration.value(),
+                                  direction_qos_requirement.value())) {
+        if (direction == kLeAudioDirectionSink)
+          result.sinkQosConfiguration = cfg.value().qosConfiguration;
+        else
+          result.sourceQosConfiguration = cfg.value().qosConfiguration;
+        *_aidl_return = result;
+        return ndk::ScopedAStatus::ok();
+      }
+    }
+  }
+
+  // No match, return empty QoS
+  *_aidl_return = result;
+  return ndk::ScopedAStatus::ok();
 };
 
 ndk::ScopedAStatus LeAudioOffloadAudioProvider::onSinkAseMetadataChanged(
