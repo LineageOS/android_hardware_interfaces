@@ -107,7 +107,7 @@ BluetoothLeAudioCodecsProvider::GetLeAudioCodecInfo(
         break;
       default:
         codec_info.name = "UNDEFINE";
-        codec_info.id = CodecId::make<CodecId::Tag::undef>();
+        codec_info.id = CodecId::Vendor();
         break;
     }
     codec_info.transport =
