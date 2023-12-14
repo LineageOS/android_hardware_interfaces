@@ -27,6 +27,7 @@
 
 using aidl::android::hardware::audio::common::SinkMetadata;
 using aidl::android::hardware::audio::common::SourceMetadata;
+using aidl::android::media::audio::common::AudioFormatType;
 using aidl::android::media::audio::common::AudioOffloadInfo;
 using aidl::android::media::audio::common::AudioPort;
 using aidl::android::media::audio::common::AudioPortConfig;
@@ -47,6 +48,10 @@ ndk::ScopedAStatus ModuleRemoteSubmix::setMicMute(bool in_mute __unused) {
 ndk::ScopedAStatus ModuleRemoteSubmix::createInputStream(
         StreamContext&& context, const SinkMetadata& sinkMetadata,
         const std::vector<MicrophoneInfo>& microphones, std::shared_ptr<StreamIn>* result) {
+    if (context.getFormat().type != AudioFormatType::PCM) {
+        LOG(DEBUG) << __func__ << ": not supported for format " << context.getFormat().toString();
+        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+    }
     return createStreamInstance<StreamInRemoteSubmix>(result, std::move(context), sinkMetadata,
                                                       microphones);
 }
@@ -54,6 +59,10 @@ ndk::ScopedAStatus ModuleRemoteSubmix::createInputStream(
 ndk::ScopedAStatus ModuleRemoteSubmix::createOutputStream(
         StreamContext&& context, const SourceMetadata& sourceMetadata,
         const std::optional<AudioOffloadInfo>& offloadInfo, std::shared_ptr<StreamOut>* result) {
+    if (context.getFormat().type != AudioFormatType::PCM) {
+        LOG(DEBUG) << __func__ << ": not supported for format " << context.getFormat().toString();
+        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+    }
     return createStreamInstance<StreamOutRemoteSubmix>(result, std::move(context), sourceMetadata,
                                                        offloadInfo);
 }
