@@ -187,6 +187,120 @@ ndk::ScopedAStatus BluetoothAudioProvider::getA2dpConfiguration(
   return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
 }
 
+ndk::ScopedAStatus BluetoothAudioProvider::setCodecPriority(
+    const ::aidl::android::hardware::bluetooth::audio::CodecId& in_codecId,
+    int32_t in_priority) {
+  /* TODO: Implement */
+  (void)in_codecId;
+  (void)in_priority;
+  return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+};
+
+ndk::ScopedAStatus BluetoothAudioProvider::getLeAudioAseConfiguration(
+    const std::optional<std::vector<std::optional<
+        ::aidl::android::hardware::bluetooth::audio::IBluetoothAudioProvider::
+            LeAudioDeviceCapabilities>>>& in_remoteSinkAudioCapabilities,
+    const std::optional<std::vector<std::optional<
+        ::aidl::android::hardware::bluetooth::audio::IBluetoothAudioProvider::
+            LeAudioDeviceCapabilities>>>& in_remoteSourceAudioCapabilities,
+    const std::vector<
+        ::aidl::android::hardware::bluetooth::audio::IBluetoothAudioProvider::
+            LeAudioConfigurationRequirement>& in_requirements,
+    std::vector<::aidl::android::hardware::bluetooth::audio::
+                    IBluetoothAudioProvider::LeAudioAseConfigurationSetting>*
+        _aidl_return) {
+  /* TODO: Implement */
+  (void)in_remoteSinkAudioCapabilities;
+  (void)in_remoteSourceAudioCapabilities;
+  (void)in_requirements;
+  (void)_aidl_return;
+  return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+};
+
+ndk::ScopedAStatus BluetoothAudioProvider::getLeAudioAseQosConfiguration(
+    const ::aidl::android::hardware::bluetooth::audio::IBluetoothAudioProvider::
+        LeAudioAseQosConfigurationRequirement& in_qosRequirement,
+    ::aidl::android::hardware::bluetooth::audio::IBluetoothAudioProvider::
+        LeAudioAseQosConfigurationPair* _aidl_return) {
+  /* TODO: Implement */
+  (void)in_qosRequirement;
+  (void)_aidl_return;
+  return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+};
+
+ndk::ScopedAStatus BluetoothAudioProvider::getLeAudioAseDatapathConfiguration(
+    const ::aidl::android::hardware::bluetooth::audio::AudioContext& in_context,
+    const std::vector<::aidl::android::hardware::bluetooth::audio::
+                          LeAudioConfiguration::StreamMap>& in_streamMap,
+    ::aidl::android::hardware::bluetooth::audio::IBluetoothAudioProvider::
+        LeAudioDataPathConfigurationPair* _aidl_return) {
+  /* TODO: Implement */
+  (void)in_context;
+  (void)in_streamMap;
+  (void)_aidl_return;
+  return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+}
+
+ndk::ScopedAStatus BluetoothAudioProvider::onSinkAseMetadataChanged(
+    ::aidl::android::hardware::bluetooth::audio::IBluetoothAudioProvider::
+        AseState in_state,
+    int32_t cigId, int32_t cisId,
+    const std::optional<std::vector<std::optional<
+        ::aidl::android::hardware::bluetooth::audio::MetadataLtv>>>&
+        in_metadata) {
+  /* TODO: Implement */
+  (void)in_state;
+  (void)cigId;
+  (void)cisId;
+  (void)in_metadata;
+  return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+};
+
+ndk::ScopedAStatus BluetoothAudioProvider::onSourceAseMetadataChanged(
+    ::aidl::android::hardware::bluetooth::audio::IBluetoothAudioProvider::
+        AseState in_state,
+    int32_t cigId, int32_t cisId,
+    const std::optional<std::vector<std::optional<
+        ::aidl::android::hardware::bluetooth::audio::MetadataLtv>>>&
+        in_metadata) {
+  /* TODO: Implement */
+  (void)in_state;
+  (void)cigId;
+  (void)cisId;
+  (void)in_metadata;
+  return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+};
+
+ndk::ScopedAStatus BluetoothAudioProvider::getLeAudioBroadcastConfiguration(
+    const std::optional<std::vector<std::optional<
+        ::aidl::android::hardware::bluetooth::audio::IBluetoothAudioProvider::
+            LeAudioDeviceCapabilities>>>& in_remoteSinkAudioCapabilities,
+    const ::aidl::android::hardware::bluetooth::audio::IBluetoothAudioProvider::
+        LeAudioBroadcastConfigurationRequirement& in_requirement,
+    ::aidl::android::hardware::bluetooth::audio::IBluetoothAudioProvider::
+        LeAudioBroadcastConfigurationSetting* _aidl_return) {
+  /* TODO: Implement */
+  (void)in_remoteSinkAudioCapabilities;
+  (void)in_requirement;
+  (void)_aidl_return;
+  return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+};
+
+ndk::ScopedAStatus
+BluetoothAudioProvider::getLeAudioBroadcastDatapathConfiguration(
+    const ::aidl::android::hardware::bluetooth::audio::AudioContext& in_context,
+    const std::vector<::aidl::android::hardware::bluetooth::audio::
+                          LeAudioBroadcastConfiguration::BroadcastStreamMap>&
+        in_streamMap,
+    ::aidl::android::hardware::bluetooth::audio::IBluetoothAudioProvider::
+        LeAudioDataPathConfiguration* _aidl_return) {
+  /* TODO: Implement */
+  (void)in_context;
+  (void)in_streamMap;
+  (void)_aidl_return;
+  return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+}
+
 }  // namespace audio
 }  // namespace bluetooth
 }  // namespace hardware
