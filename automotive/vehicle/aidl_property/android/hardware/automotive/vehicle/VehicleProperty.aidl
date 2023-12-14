@@ -3406,6 +3406,27 @@ enum VehicleProperty {
             + VehiclePropertyType.INT32_VEC,
 
     /**
+     * Static data for the detection range of each ultrasonic sensor in millimeters.
+     *
+     * Each individual sensor is identified by its VehicleAreaConfig#areaId and returns the sensor's
+     * detection range formatted as [minimum, maximum] where:
+     *
+     *     int32Values[0] = minimum, the minimum range detectable by the ultrasonic sensor in
+     *                      millimeters.
+     *     int32Values[1] = maximum, the maximum range detectable by the ultrasonic sensor in
+     *                      millimeters.
+     *
+     * If the data is aggregated by another ECU, then OEMs have the option of reporting the same
+     * reading across all included sensors or reporting a virtual representation of all the included
+     * sensors as if they were one sensor.
+     *
+     * @change_mode VehiclePropertyChangeMode.STATIC
+     * @access VehiclePropertyAccess.READ
+     */
+    ULTRASONICS_SENSOR_DETECTION_RANGE = 0x0C23 + VehiclePropertyGroup.SYSTEM + VehicleArea.VENDOR
+            + VehiclePropertyType.INT32_VEC,
+
+    /**
      * OBD2 Live Sensor Data
      *
      * Reports a snapshot of the current (live) values of the OBD2 sensors available.
