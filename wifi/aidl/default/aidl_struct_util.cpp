@@ -2741,8 +2741,8 @@ bool convertAidlRttConfigToLegacyV3(const RttConfig& aidl_config,
     if (!convertAidlRttConfigToLegacy(aidl_config, &(legacy_config->rtt_config))) {
         return false;
     }
-    legacy_config->ntb_min_measurement_time_millis = aidl_config.ntbMinMeasurementTimeMillis;
-    legacy_config->ntb_max_measurement_time_millis = aidl_config.ntbMaxMeasurementTimeMillis;
+    legacy_config->ntb_min_measurement_time = aidl_config.ntbMinMeasurementTime;
+    legacy_config->ntb_max_measurement_time = aidl_config.ntbMaxMeasurementTime;
     return true;
 }
 
@@ -2993,8 +2993,8 @@ bool convertLegacyVectorOfRttResultToAidl(
         aidl_result.packetBw = RttBw::BW_UNSPECIFIED;
         aidl_result.i2rTxLtfRepetitionCount = 0;
         aidl_result.r2iTxLtfRepetitionCount = 0;
-        aidl_result.ntbMinMeasurementTimeMillis = 0;
-        aidl_result.ntbMaxMeasurementTimeMillis = 0;
+        aidl_result.ntbMinMeasurementTime = 0;
+        aidl_result.ntbMaxMeasurementTime = 0;
         aidl_results->push_back(aidl_result);
     }
     return true;
@@ -3017,8 +3017,8 @@ bool convertLegacyVectorOfRttResultV2ToAidl(
         aidl_result.packetBw = convertLegacyRttBwToAidl(legacy_result->packet_bw);
         aidl_result.i2rTxLtfRepetitionCount = 0;
         aidl_result.r2iTxLtfRepetitionCount = 0;
-        aidl_result.ntbMinMeasurementTimeMillis = 0;
-        aidl_result.ntbMaxMeasurementTimeMillis = 0;
+        aidl_result.ntbMinMeasurementTime = 0;
+        aidl_result.ntbMaxMeasurementTime = 0;
         aidl_results->push_back(aidl_result);
     }
     return true;
@@ -3042,8 +3042,8 @@ bool convertLegacyVectorOfRttResultV3ToAidl(
         aidl_result.packetBw = convertLegacyRttBwToAidl(legacy_result->rtt_result.packet_bw);
         aidl_result.i2rTxLtfRepetitionCount = legacy_result->i2r_tx_ltf_repetition_count;
         aidl_result.r2iTxLtfRepetitionCount = legacy_result->r2i_tx_ltf_repetition_count;
-        aidl_result.ntbMinMeasurementTimeMillis = legacy_result->ntb_min_measurement_time_millis;
-        aidl_result.ntbMaxMeasurementTimeMillis = legacy_result->ntb_max_measurement_time_millis;
+        aidl_result.ntbMinMeasurementTime = legacy_result->ntb_min_measurement_time;
+        aidl_result.ntbMaxMeasurementTime = legacy_result->ntb_max_measurement_time;
         aidl_results->push_back(aidl_result);
     }
     return true;
