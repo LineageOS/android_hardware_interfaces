@@ -18,6 +18,7 @@
 
 #include <aidl/android/hardware/bluetooth/audio/CodecCapabilities.h>
 #include <aidl/android/hardware/bluetooth/audio/CodecConfiguration.h>
+#include <aidl/android/hardware/bluetooth/audio/CodecInfo.h>
 #include <aidl/android/hardware/bluetooth/audio/LeAudioCodecCapabilitiesSetting.h>
 #include <aidl/android/hardware/bluetooth/audio/LeAudioConfiguration.h>
 #include <aidl/android/hardware/bluetooth/audio/OpusConfiguration.h>
@@ -46,6 +47,8 @@ class BluetoothAudioCodecs {
 
   static std::vector<LeAudioCodecCapabilitiesSetting>
   GetLeAudioOffloadCodecCapabilities(const SessionType& session_type);
+  static std::vector<CodecInfo> GetLeAudioOffloadCodecInfo(
+      const SessionType& session_type);
 
  private:
   template <typename T>
