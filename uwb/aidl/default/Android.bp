@@ -24,6 +24,8 @@ rust_binary {
         "libtokio_util",
         "libnix",
         "libanyhow",
+        "libpdl_runtime",
+        "libuwb_uci_packets",
     ],
     proc_macros: [
         "libasync_trait",
