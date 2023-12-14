@@ -16,6 +16,8 @@
 
 package android.hardware.automotive.remoteaccess;
 
+import android.hardware.automotive.remoteaccess.TaskType;
+
 @VintfStability
 @JavaDerive(equals=true, toString=true)
 parcelable ScheduleInfo {
@@ -31,8 +33,14 @@ parcelable ScheduleInfo {
      */
     String scheduleId;
     /**
+     * The type for the task.
+     */
+    TaskType taskType;
+    /**
      * The opaque task data that will be sent back to the remote task client app when the task is
      * executed. It is not interpreted/parsed by the Android system.
+     *
+     * <p>This is only used for {@code TaskType.CUSTOM}.
      */
     byte[] taskData;
     /**

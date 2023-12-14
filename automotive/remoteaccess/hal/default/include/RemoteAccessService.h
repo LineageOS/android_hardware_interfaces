@@ -81,6 +81,9 @@ class RemoteAccessService
 
     ndk::ScopedAStatus isTaskScheduleSupported(bool* out) override;
 
+    ndk::ScopedAStatus getSupportedTaskTypesForScheduling(
+            std::vector<aidl::android::hardware::automotive::remoteaccess::TaskType>* out) override;
+
     ndk::ScopedAStatus scheduleTask(
             const aidl::android::hardware::automotive::remoteaccess::ScheduleInfo& scheduleInfo)
             override;

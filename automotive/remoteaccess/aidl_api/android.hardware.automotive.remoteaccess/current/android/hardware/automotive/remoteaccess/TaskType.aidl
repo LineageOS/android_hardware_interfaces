@@ -32,13 +32,8 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.automotive.remoteaccess;
-@JavaDerive(equals=true, toString=true) @VintfStability
-parcelable ScheduleInfo {
-  String clientId;
-  String scheduleId;
-  android.hardware.automotive.remoteaccess.TaskType taskType;
-  byte[] taskData;
-  int count;
-  long startTimeInEpochSeconds;
-  long periodicInSeconds;
+@Backing(type="int") @VintfStability
+enum TaskType {
+  CUSTOM = 0,
+  ENTER_GARAGE_MODE = 1,
 }

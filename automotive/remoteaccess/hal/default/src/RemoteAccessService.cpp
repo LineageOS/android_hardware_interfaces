@@ -40,6 +40,7 @@ namespace {
 using ::aidl::android::hardware::automotive::remoteaccess::ApState;
 using ::aidl::android::hardware::automotive::remoteaccess::IRemoteTaskCallback;
 using ::aidl::android::hardware::automotive::remoteaccess::ScheduleInfo;
+using ::aidl::android::hardware::automotive::remoteaccess::TaskType;
 using ::aidl::android::hardware::automotive::vehicle::VehicleProperty;
 using ::android::base::Error;
 using ::android::base::ParseInt;
@@ -316,6 +317,13 @@ ScopedAStatus RemoteAccessService::notifyApStateChange(const ApState& newState) 
 
 ScopedAStatus RemoteAccessService::isTaskScheduleSupported(bool* out) {
     *out = true;
+    return ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus RemoteAccessService::getSupportedTaskTypesForScheduling(
+        std::vector<TaskType>* out) {
+    // TODO(b/316233421): support ENTER_GARAGE_MODE type.
+    out->push_back(TaskType::CUSTOM);
     return ScopedAStatus::ok();
 }
 

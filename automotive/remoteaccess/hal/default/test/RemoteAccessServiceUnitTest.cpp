@@ -48,6 +48,7 @@ using ::android::frameworks::automotive::vhal::VhalClientResult;
 using ::aidl::android::hardware::automotive::remoteaccess::ApState;
 using ::aidl::android::hardware::automotive::remoteaccess::BnRemoteTaskCallback;
 using ::aidl::android::hardware::automotive::remoteaccess::ScheduleInfo;
+using ::aidl::android::hardware::automotive::remoteaccess::TaskType;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropValue;
 
 using ::grpc::ClientAsyncReaderInterface;
@@ -61,6 +62,7 @@ using ::grpc::testing::MockClientReader;
 using ::ndk::ScopedAStatus;
 using ::testing::_;
 using ::testing::DoAll;
+using ::testing::ElementsAre;
 using ::testing::Return;
 using ::testing::SetArgPointee;
 
@@ -432,6 +434,14 @@ TEST_F(RemoteAccessServiceUnitTest, TestIsTaskScheduleSupported) {
 
     EXPECT_TRUE(status.isOk());
     EXPECT_TRUE(out);
+}
+
+TEST_F(RemoteAccessServiceUnitTest, TestGetSupportedTaskTypesForScheduling) {
+    std::vector<TaskType> out;
+    ScopedAStatus status = getService()->getSupportedTaskTypesForScheduling(&out);
+
+    EXPECT_TRUE(status.isOk());
+    EXPECT_THAT(out, ElementsAre(TaskType::CUSTOM));
 }
 
 TEST_F(RemoteAccessServiceUnitTest, TestScheduleTask) {
