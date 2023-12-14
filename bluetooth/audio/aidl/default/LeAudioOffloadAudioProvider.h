@@ -87,7 +87,7 @@ class LeAudioOffloadAudioProvider : public BluetoothAudioProvider {
 
   // Private matching function definitions
   bool isMatchedValidCodec(CodecId cfg_codec, CodecId req_codec);
-  bool isMatchedContext(
+  bool isCapabilitiesMatchedContext(
       AudioContext setting_context,
       const IBluetoothAudioProvider::LeAudioDeviceCapabilities& capabilities);
   bool isMatchedSamplingFreq(
@@ -113,9 +113,8 @@ class LeAudioOffloadAudioProvider : public BluetoothAudioProvider {
   bool isCapabilitiesMatchedCodecConfiguration(
       std::vector<CodecSpecificConfigurationLtv>& codec_cfg,
       std::vector<CodecSpecificCapabilitiesLtv> codec_capabilities);
-  bool isRequirementAseConfigurationMatched(
-      LeAudioAseConfiguration setting_cfg,
-      LeAudioAseConfiguration requirement_cfg);
+  bool isMatchedAseConfiguration(LeAudioAseConfiguration setting_cfg,
+                                 LeAudioAseConfiguration requirement_cfg);
   void filterCapabilitiesAseDirectionConfiguration(
       std::vector<std::optional<AseDirectionConfiguration>>&
           direction_configurations,
