@@ -34,6 +34,10 @@ using AseDirectionRequirement = IBluetoothAudioProvider::
     LeAudioConfigurationRequirement::AseDirectionRequirement;
 using AseDirectionConfiguration = IBluetoothAudioProvider::
     LeAudioAseConfigurationSetting::AseDirectionConfiguration;
+using AseQosDirectionRequirement = IBluetoothAudioProvider::
+    LeAudioAseQosConfigurationRequirement::AseQosDirectionRequirement;
+using LeAudioAseQosConfiguration =
+    IBluetoothAudioProvider::LeAudioAseQosConfiguration;
 
 class LeAudioOffloadAudioProvider : public BluetoothAudioProvider {
  public:
@@ -138,6 +142,8 @@ class LeAudioOffloadAudioProvider : public BluetoothAudioProvider {
       IBluetoothAudioProvider::LeAudioAseConfigurationSetting& setting,
       const IBluetoothAudioProvider::LeAudioConfigurationRequirement&
           requirement);
+  bool isMatchedQosRequirement(LeAudioAseQosConfiguration setting_qos,
+                               AseQosDirectionRequirement requirement_qos);
 };
 
 class LeAudioOffloadOutputAudioProvider : public LeAudioOffloadAudioProvider {
