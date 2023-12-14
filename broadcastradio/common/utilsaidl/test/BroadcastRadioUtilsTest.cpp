@@ -66,6 +66,177 @@ std::vector<GetBandTestCase> getBandTestCases() {
                              .bandResult = utils::FrequencyBand::UNKNOWN}});
 }
 
+struct IsValidIdentifierTestCase {
+    std::string name;
+    ProgramIdentifier id;
+    bool valid;
+};
+
+std::vector<IsValidIdentifierTestCase> getIsValidIdentifierTestCases() {
+    return std::vector<IsValidIdentifierTestCase>({
+            IsValidIdentifierTestCase{.name = "invalid_id_type",
+                                      .id = utils::makeIdentifier(IdentifierType::INVALID, 0),
+                                      .valid = false},
+            IsValidIdentifierTestCase{
+                    .name = "invalid_dab_frequency_high",
+                    .id = utils::makeIdentifier(IdentifierType::DAB_FREQUENCY_KHZ, 10000000u),
+                    .valid = false},
+            IsValidIdentifierTestCase{
+                    .name = "invalid_dab_frequency_low",
+                    .id = utils::makeIdentifier(IdentifierType::DAB_FREQUENCY_KHZ, 100000u),
+                    .valid = false},
+            IsValidIdentifierTestCase{
+                    .name = "valid_dab_frequency",
+                    .id = utils::makeIdentifier(IdentifierType::DAB_FREQUENCY_KHZ, 1000000u),
+                    .valid = true},
+            IsValidIdentifierTestCase{
+                    .name = "invalid_am_fm_frequency_high",
+                    .id = utils::makeIdentifier(IdentifierType::AMFM_FREQUENCY_KHZ, 10000000u),
+                    .valid = false},
+            IsValidIdentifierTestCase{
+                    .name = "invalid_am_fm_frequency_low",
+                    .id = utils::makeIdentifier(IdentifierType::AMFM_FREQUENCY_KHZ, 100u),
+                    .valid = false},
+            IsValidIdentifierTestCase{.name = "valid_am_fm_frequency",
+                                      .id = utils::makeIdentifier(
+                                              IdentifierType::AMFM_FREQUENCY_KHZ, kFmFrequencyKHz),
+                                      .valid = true},
+            IsValidIdentifierTestCase{
+                    .name = "drmo_frequency_high",
+                    .id = utils::makeIdentifier(IdentifierType::DRMO_FREQUENCY_KHZ, 10000000u),
+                    .valid = false},
+            IsValidIdentifierTestCase{
+                    .name = "drmo_frequency_low",
+                    .id = utils::makeIdentifier(IdentifierType::DRMO_FREQUENCY_KHZ, 100u),
+                    .valid = false},
+            IsValidIdentifierTestCase{.name = "valid_drmo_frequency",
+                                      .id = utils::makeIdentifier(
+                                              IdentifierType::DRMO_FREQUENCY_KHZ, kFmFrequencyKHz),
+                                      .valid = true},
+            IsValidIdentifierTestCase{.name = "invalid_rds_low",
+                                      .id = utils::makeIdentifier(IdentifierType::RDS_PI, 0x0),
+                                      .valid = false},
+            IsValidIdentifierTestCase{.name = "invalid_rds_high",
+                                      .id = utils::makeIdentifier(IdentifierType::RDS_PI, 0x10000),
+                                      .valid = false},
+            IsValidIdentifierTestCase{.name = "valid_rds",
+                                      .id = utils::makeIdentifier(IdentifierType::RDS_PI, 0x1000),
+                                      .valid = true},
+            IsValidIdentifierTestCase{
+                    .name = "invalid_hd_id_zero",
+                    .id = utils::makeSelectorHd(/* stationId= */ 0u, kHdSubChannel, kHdFrequency)
+                                  .primaryId,
+                    .valid = false},
+            IsValidIdentifierTestCase{
+                    .name = "invalid_hd_suchannel",
+                    .id = utils::makeSelectorHd(kHdStationId, /* subChannel= */ 8u, kHdFrequency)
+                                  .primaryId,
+                    .valid = false},
+            IsValidIdentifierTestCase{
+                    .name = "invalid_hd_frequency_low",
+                    .id = utils::makeSelectorHd(kHdStationId, kHdSubChannel, /* frequency= */ 100u)
+                                  .primaryId,
+                    .valid = false},
+            IsValidIdentifierTestCase{
+                    .name = "valid_hd_id",
+                    .id = utils::makeSelectorHd(kHdStationId, kHdSubChannel, kHdFrequency)
+                                  .primaryId,
+                    .valid = true},
+            IsValidIdentifierTestCase{
+                    .name = "invalid_hd_station_name",
+                    .id = utils::makeIdentifier(IdentifierType::HD_STATION_NAME, 0x41422D464D),
+                    .valid = false},
+            IsValidIdentifierTestCase{
+                    .name = "valid_hd_station_name",
+                    .id = utils::makeIdentifier(IdentifierType::HD_STATION_NAME, 0x414231464D),
+                    .valid = true},
+            IsValidIdentifierTestCase{
+                    .name = "invalid_dab_sid",
+                    .id = utils::makeIdentifier(IdentifierType::DAB_SID_EXT, 0x0E100000000u),
+                    .valid = false},
+            IsValidIdentifierTestCase{
+                    .name = "invalid_dab_ecc_low",
+                    .id = utils::makeIdentifier(IdentifierType::DAB_SID_EXT, 0x0F700000221u),
+                    .valid = false},
+            IsValidIdentifierTestCase{
+                    .name = "invalid_dab_ecc_high",
+                    .id = utils::makeIdentifier(IdentifierType::DAB_SID_EXT, 0x09900000221u),
+                    .valid = false},
+            IsValidIdentifierTestCase{
+                    .name = "valid_dab_sid_ext",
+                    .id = utils::makeIdentifier(IdentifierType::DAB_SID_EXT, kDabSidExt),
+                    .valid = true},
+            IsValidIdentifierTestCase{
+                    .name = "invalid_dab_ensemble_zero",
+                    .id = utils::makeIdentifier(IdentifierType::DAB_ENSEMBLE, 0x0),
+                    .valid = false},
+            IsValidIdentifierTestCase{
+                    .name = "invalid_dab_ensemble_high",
+                    .id = utils::makeIdentifier(IdentifierType::DAB_ENSEMBLE, 0x10000),
+                    .valid = false},
+            IsValidIdentifierTestCase{
+                    .name = "valid_dab_ensemble",
+                    .id = utils::makeIdentifier(IdentifierType::DAB_ENSEMBLE, kDabEnsemble),
+                    .valid = true},
+            IsValidIdentifierTestCase{.name = "invalid_dab_scid_low",
+                                      .id = utils::makeIdentifier(IdentifierType::DAB_SCID, 0xF),
+                                      .valid = false},
+            IsValidIdentifierTestCase{.name = "invalid_dab_scid_high",
+                                      .id = utils::makeIdentifier(IdentifierType::DAB_SCID, 0x1000),
+                                      .valid = false},
+            IsValidIdentifierTestCase{.name = "valid_dab_scid",
+                                      .id = utils::makeIdentifier(IdentifierType::DAB_SCID, 0x100),
+                                      .valid = true},
+            IsValidIdentifierTestCase{
+                    .name = "invalid_drmo_id_zero",
+                    .id = utils::makeIdentifier(IdentifierType::DRMO_SERVICE_ID, 0x0),
+                    .valid = false},
+            IsValidIdentifierTestCase{
+                    .name = "invalid_drmo_id_high",
+                    .id = utils::makeIdentifier(IdentifierType::DRMO_SERVICE_ID, 0x1000000),
+                    .valid = false},
+            IsValidIdentifierTestCase{
+                    .name = "valid_drmo_id",
+                    .id = utils::makeIdentifier(IdentifierType::DRMO_SERVICE_ID, 0x100000),
+                    .valid = true},
+    });
+}
+
+struct IsValidSelectorTestCase {
+    std::string name;
+    ProgramSelector sel;
+    bool valid;
+};
+
+std::vector<IsValidSelectorTestCase> getIsValidSelectorTestCases() {
+    return std::vector<IsValidSelectorTestCase>({
+            IsValidSelectorTestCase{.name = "valid_am_fm_selector",
+                                    .sel = utils::makeSelectorAmfm(kFmFrequencyKHz),
+                                    .valid = true},
+            IsValidSelectorTestCase{
+                    .name = "valid_hd_selector",
+                    .sel = utils::makeSelectorHd(kHdStationId, kHdSubChannel, kHdFrequency),
+                    .valid = true},
+            IsValidSelectorTestCase{
+                    .name = "valid_dab_selector",
+                    .sel = utils::makeSelectorDab(kDabSidExt, kDabEnsemble, kDabFrequencyKhz),
+                    .valid = true},
+            IsValidSelectorTestCase{.name = "valid_rds_selector",
+                                    .sel = ProgramSelector{.primaryId = utils::makeIdentifier(
+                                                                   IdentifierType::RDS_PI, 0x1000)},
+                                    .valid = true},
+            IsValidSelectorTestCase{.name = "selector_with_invalid_id",
+                                    .sel = utils::makeSelectorHd(kHdStationId, kHdSubChannel,
+                                                                 /* frequency= */ 100u),
+                                    .valid = false},
+            IsValidSelectorTestCase{
+                    .name = "selector_with_invalid_primary_id_type",
+                    .sel = ProgramSelector{.primaryId = utils::makeIdentifier(
+                                                   IdentifierType::DAB_ENSEMBLE, kDabEnsemble)},
+                    .valid = false},
+    });
+}
+
 struct IsValidMetadataTestCase {
     std::string name;
     Metadata metadata;
@@ -145,6 +316,34 @@ TEST_P(IsValidMetadataTest, IsValidMetadata) {
     IsValidMetadataTestCase testParam = GetParam();
 
     ASSERT_EQ(utils::isValidMetadata(testParam.metadata), testParam.valid);
+}
+
+class IsValidIdentifierTest : public testing::TestWithParam<IsValidIdentifierTestCase> {};
+
+INSTANTIATE_TEST_SUITE_P(IsValidIdentifierTests, IsValidIdentifierTest,
+                         testing::ValuesIn(getIsValidIdentifierTestCases()),
+                         [](const testing::TestParamInfo<IsValidIdentifierTest::ParamType>& info) {
+                             return info.param.name;
+                         });
+
+TEST_P(IsValidIdentifierTest, IsValid) {
+    IsValidIdentifierTestCase testcase = GetParam();
+
+    ASSERT_EQ(utils::isValid(testcase.id), testcase.valid);
+}
+
+class IsValidSelectorTest : public testing::TestWithParam<IsValidSelectorTestCase> {};
+
+INSTANTIATE_TEST_SUITE_P(IsValidSelectorTests, IsValidSelectorTest,
+                         testing::ValuesIn(getIsValidSelectorTestCases()),
+                         [](const testing::TestParamInfo<IsValidSelectorTest::ParamType>& info) {
+                             return info.param.name;
+                         });
+
+TEST_P(IsValidSelectorTest, IsValid) {
+    IsValidSelectorTestCase testcase = GetParam();
+
+    ASSERT_EQ(utils::isValid(testcase.sel), testcase.valid);
 }
 
 TEST(BroadcastRadioUtilsTest, IsSupportedWithSupportedSelector) {
