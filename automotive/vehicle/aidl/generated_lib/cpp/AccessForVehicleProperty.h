@@ -199,6 +199,11 @@ std::unordered_map<VehicleProperty, VehiclePropertyAccess> AccessForVehiclePrope
         {VehicleProperty::GLOVE_BOX_LOCKED, VehiclePropertyAccess::READ_WRITE},
         {VehicleProperty::VEHICLE_MAP_SERVICE, VehiclePropertyAccess::READ_WRITE},
         {VehicleProperty::LOCATION_CHARACTERIZATION, VehiclePropertyAccess::READ},
+        {VehicleProperty::ULTRASONICS_SENSOR_POSITION, VehiclePropertyAccess::READ},
+        {VehicleProperty::ULTRASONICS_SENSOR_ORIENTATION, VehiclePropertyAccess::READ},
+        {VehicleProperty::ULTRASONICS_SENSOR_FIELD_OF_VIEW, VehiclePropertyAccess::READ},
+        {VehicleProperty::ULTRASONICS_SENSOR_DETECTION_RANGE, VehiclePropertyAccess::READ},
+        {VehicleProperty::ULTRASONICS_SENSOR_SUPPORTED_RANGES, VehiclePropertyAccess::READ},
         {VehicleProperty::OBD2_LIVE_FRAME, VehiclePropertyAccess::READ},
         {VehicleProperty::OBD2_FREEZE_FRAME, VehiclePropertyAccess::READ},
         {VehicleProperty::OBD2_FREEZE_FRAME_INFO, VehiclePropertyAccess::READ},
@@ -292,6 +297,7 @@ std::unordered_map<VehicleProperty, VehiclePropertyAccess> AccessForVehiclePrope
         {VehicleProperty::LOW_SPEED_COLLISION_WARNING_ENABLED, VehiclePropertyAccess::READ_WRITE},
         {VehicleProperty::LOW_SPEED_COLLISION_WARNING_STATE, VehiclePropertyAccess::READ},
         {VehicleProperty::CROSS_TRAFFIC_MONITORING_ENABLED, VehiclePropertyAccess::READ_WRITE},
+        {VehicleProperty::CROSS_TRAFFIC_MONITORING_WARNING_STATE, VehiclePropertyAccess::READ},
 };
 
 }  // namespace vehicle

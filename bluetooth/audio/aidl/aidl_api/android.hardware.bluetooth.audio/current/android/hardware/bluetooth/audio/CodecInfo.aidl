@@ -49,7 +49,15 @@ parcelable CodecInfo {
     int outputDataPath = 1;
     boolean useControllerCodec = true;
   }
+  parcelable LeAudio {
+    android.hardware.bluetooth.audio.ChannelMode[] channelMode;
+    int[] samplingFrequencyHz;
+    int[] frameDurationUs;
+    int[] bitdepth;
+    @nullable android.hardware.bluetooth.audio.ConfigurationFlags flags;
+  }
   union Transport {
+    android.hardware.bluetooth.audio.CodecInfo.LeAudio leAudio;
     android.hardware.bluetooth.audio.CodecInfo.A2dp a2dp;
     android.hardware.bluetooth.audio.CodecInfo.Hfp hfp;
   }

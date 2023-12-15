@@ -3327,6 +3327,151 @@ enum VehicleProperty {
      */
     LOCATION_CHARACTERIZATION =
             0x0C10 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
+
+    /**
+     * Static data for the position of each ultrasonic sensor installed on the vehicle.
+     *
+     * Each individual sensor is identified by its unique VehicleAreaConfig#areaId and returns the
+     * sensor's position formatted as [x, y, z] where:
+     *
+     *     int32Values[0] = x, the position of the sensor along the x-axis relative to the origin of
+     *                      the Android Automotive sensor coordinate frame in millimeters
+     *     int32Values[1] = y, the position of the sensor along the y-axis relative to the origin of
+     *                      the Android Automotive sensor coordinate frame in millimeters.
+     *     int32Values[2] = z, the position of the sensor along the z-axis relative to the origin of
+     *                      the Android Automotive sensor coordinate frame in millimeters.
+     *
+     * If the data is aggregated by another ECU, then OEMs have the option of reporting the same
+     * reading across all included sensors or reporting a virtual representation of all the included
+     * sensors as if they were one sensor.
+     *
+     * @change_mode VehiclePropertyChangeMode.STATIC
+     * @access VehiclePropertyAccess.READ
+     */
+    ULTRASONICS_SENSOR_POSITION = 0x0C20 + VehiclePropertyGroup.SYSTEM + VehicleArea.VENDOR
+            + VehiclePropertyType.INT32_VEC,
+
+    /**
+     * Static data for the orientation of each ultrasonic sensor installed on the vehicle.
+     *
+     * Each individual sensor is identified by its VehicleAreaConfig#areaId and returns the sensor's
+     * orientation formatted as [qw, qx, qy, qz] where:
+     *
+     *     int32Values[0] = qw, the quaternion coefficient w within the quaterinion (w + xi + yj +
+     *                      zk) describing the rotation of the sensor relative to the Android
+     *                      Automotive sensor coordinate frame.
+     *     int32Values[1] = qx, the quaternion coefficient x within the quaterinion (w + xi + yj +
+     *                      zk) describing the rotation of the sensor relative to the Android
+     *                      Automotive sensor coordinate frame.
+     *     int32Values[2] = qy, the quaternion coefficient y within the quaterinion (w + xi + yj +
+     *                      zk) describing the rotation of the sensor relative to the Android
+     *                      Automotive sensor coordinate frame.
+     *     int32Values[3] = qz, the quaternion coefficient z within the quaterinion (w + xi + yj +
+     *                      zk) describing the rotation of the sensor relative to the Android
+     *                      Automotive sensor coordinate frame.
+     *
+     * This assumes each sensor uses the same axes conventions as Android Automotive.
+     *
+     * If the data is aggregated by another ECU, then OEMs have the option of reporting the same
+     * reading across all included sensors or reporting a virtual representation of all the included
+     * sensors as if they were one sensor.
+     *
+     * @change_mode VehiclePropertyChangeMode.STATIC
+     * @access VehiclePropertyAccess.READ
+     */
+    ULTRASONICS_SENSOR_ORIENTATION = 0x0C21 + VehiclePropertyGroup.SYSTEM + VehicleArea.VENDOR
+            + VehiclePropertyType.INT32_VEC,
+
+    /**
+     * Static data for the field of view of each ultrasonic sensor in degrees.
+     *
+     * Each individual sensor is identified by its VehicleAreaConfig#areaId and returns the sensor's
+     * field of view formatted as [horizontal, vertical] where:
+     *
+     *     int32Values[0] = horizontal, the horizontal field of view for the specified ultrasonic
+     *                      sensor in degrees.
+     *     int32Values[1] = vertical, the vertical field of view for the associated specified
+     *                      ultrasonic sensor in degrees.
+     *
+     * This assumes each sensor uses the same axes conventions as Android Automotive.
+     *
+     * If the data is aggregated by another ECU, then OEMs have the option of reporting the same
+     * reading across all included sensors or reporting a virtual representation of all the included
+     * sensors as if they were one sensor.
+     *
+     * @change_mode VehiclePropertyChangeMode.STATIC
+     * @access VehiclePropertyAccess.READ
+     */
+    ULTRASONICS_SENSOR_FIELD_OF_VIEW = 0x0C22 + VehiclePropertyGroup.SYSTEM + VehicleArea.VENDOR
+            + VehiclePropertyType.INT32_VEC,
+
+    /**
+     * Static data for the detection range of each ultrasonic sensor in millimeters.
+     *
+     * Each individual sensor is identified by its VehicleAreaConfig#areaId and returns the sensor's
+     * detection range formatted as [minimum, maximum] where:
+     *
+     *     int32Values[0] = minimum, the minimum range detectable by the ultrasonic sensor in
+     *                      millimeters.
+     *     int32Values[1] = maximum, the maximum range detectable by the ultrasonic sensor in
+     *                      millimeters.
+     *
+     * If the data is aggregated by another ECU, then OEMs have the option of reporting the same
+     * reading across all included sensors or reporting a virtual representation of all the included
+     * sensors as if they were one sensor.
+     *
+     * @change_mode VehiclePropertyChangeMode.STATIC
+     * @access VehiclePropertyAccess.READ
+     */
+    ULTRASONICS_SENSOR_DETECTION_RANGE = 0x0C23 + VehiclePropertyGroup.SYSTEM + VehicleArea.VENDOR
+            + VehiclePropertyType.INT32_VEC,
+
+    /**
+     * Static data for the supported ranges of each ultrasonic sensor in millimeters.
+     *
+     * For ultrasonic sensors that only support readings within a specific range. For example, if
+     * an ultrasonic sensor detects an object at 700mm, but can only report that an object has been
+     * detected between 500mm and 1000mm.
+     *
+     * Each individual sensor is identified by its VehicleAreaConfig#areaId and returns the sensor's
+     * supported ranges formatted as [range_min_1, range_max_1, range_min_2, range_max_2, ...]
+     * where:
+     *
+     *     int32Values[0] = range_min_1, the minimum of one supported range by the specified sensor
+     *                      in millimeters, inclusive.
+     *     int32Values[1] = range_max_1, the maximum of one supported range by the specified sensor
+     *                      in millimeters, inclusive.
+     *     int32Values[2] = range_min_2, the minimum of another supported range by the specified
+     *                      sensor in millimeters, inclusive.
+     *     int32Values[3] = range_max_2, the maximum of another supported range by the specified
+                            sensor in millimeters, inclusive.
+     *
+     * Example:
+     *     - Ultrasonic sensor supports the following ranges:
+     *           - 150mm to 499mm
+     *           - 500mm to 999mm
+     *           - 1000mm to 1500mm
+     *     - The associated supported ranges should be formatted as:
+     *           - int32Values[0] = 150
+     *           - int32Values[1] = 499
+     *           - int32Values[2] = 500
+     *           - int32Values[3] = 999
+     *           - int32Values[4] = 1000
+     *           - int32Values[5] = 1500
+     *
+     * If this property is not defined, all the values within the ULTRASONICS_SENSOR_DETECTION_RANGE
+     * for the specified sensor are assumed to be supported.
+     *
+     * If the data is aggregated by another ECU, then OEMs have the option of reporting the same
+     * reading across all included sensors or reporting a virtual representation of all the included
+     * sensors as if they were one sensor.
+     *
+     * @change_mode VehiclePropertyChangeMode.STATIC
+     * @access VehiclePropertyAccess.READ
+     */
+    ULTRASONICS_SENSOR_SUPPORTED_RANGES = 0x0C24 + VehiclePropertyGroup.SYSTEM + VehicleArea.VENDOR
+            + VehiclePropertyType.INT32_VEC,
+
     /**
      * OBD2 Live Sensor Data
      *
@@ -5481,6 +5626,25 @@ enum VehicleProperty {
      */
     CROSS_TRAFFIC_MONITORING_ENABLED =
             0x1023 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
+
+    /**
+     * Cross Traffic Monitoring warning state.
+     *
+     * Returns the current state of Cross Traffic Monitoring Warning. This property must always
+     * return a valid state defined in CrossTrafficMonitoringWarningState or ErrorState. It must not
+     * surface errors through StatusCode and must use the supported error states instead.
+     *
+     * For the global area ID (0), the VehicleAreaConfig#supportedEnumValues array must be defined
+     * unless all states of both CrossTrafficMonitoringWarningState (including OTHER, which is not
+     * recommended) and ErrorState are supported.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
+     * @data_enum CrossTrafficMonitoringWarningState
+     * @data_enum ErrorState
+     */
+    CROSS_TRAFFIC_MONITORING_WARNING_STATE =
+            0x1024 + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
 
     /***************************************************************************
      * End of ADAS Properties
