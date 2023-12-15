@@ -35,6 +35,7 @@ package android.hardware.bluetooth.ranging;
 @VintfStability
 parcelable ChannelSoudingRawData {
   int procedureCounter;
+  int[] frequencyCompensation;
   boolean aborted;
   android.hardware.bluetooth.ranging.ChannelSoundingSingleSideData initiatorData;
   android.hardware.bluetooth.ranging.ChannelSoundingSingleSideData reflectorData;
