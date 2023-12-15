@@ -23,7 +23,8 @@ class A2dpBits {
   uint8_t* data_;
 
  public:
-  A2dpBits(const std::vector<uint8_t>& vector) : cdata_(vector.data()) {}
+  A2dpBits(const std::vector<uint8_t>& vector)
+      : cdata_(vector.data()), data_(nullptr) {}
 
   A2dpBits(std::vector<uint8_t>& vector)
       : cdata_(vector.data()), data_(vector.data()) {}
