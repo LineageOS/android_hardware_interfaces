@@ -46,7 +46,7 @@ parcelable TwtSession {
     /**
      * Time interval in microseconds between two successive TWT service periods.
      */
-    int wakeIntervalMicros;
+    long wakeIntervalMicros;
 
     /**
      * TWT negotiation type.

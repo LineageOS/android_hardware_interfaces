@@ -40,6 +40,6 @@ parcelable TwtCapabilities {
   boolean isFlexibleTwtScheduleSupported;
   int minWakeDurationMicros;
   int maxWakeDurationMicros;
-  int minWakeIntervalMicros;
-  int maxWakeIntervalMicros;
+  long minWakeIntervalMicros;
+  long maxWakeIntervalMicros;
 }
