@@ -95,6 +95,7 @@ class UsbCallback : public ::testing::VtsHalHidlTargetCallbackBase<UsbClientCall
                                             Status retval) override {
         UsbClientCallbackArgs arg;
         if (retval == Status::SUCCESS) {
+            arg.usb_last_port_status.status.portName = currentPortStatus[0].status.portName.c_str();
             arg.usb_last_port_status.status.supportedModes =
                 currentPortStatus[0].status.supportedModes;
             arg.usb_last_port_status.status.currentMode = currentPortStatus[0].status.currentMode;
@@ -165,9 +166,12 @@ TEST_P(UsbHidlTest, queryPortStatus) {
     auto res = usb_cb_2->WaitForCallback(kCallbackNameNotifyPortStatusChange_1_1);
     EXPECT_TRUE(res.no_timeout);
     EXPECT_EQ(2, res.args->last_usb_cookie);
-    EXPECT_EQ(PortMode::NONE, res.args->usb_last_port_status.status.currentMode);
-    EXPECT_EQ(PortMode::NONE, res.args->usb_last_port_status.status.supportedModes);
-    EXPECT_EQ(Status::SUCCESS, res.args->usb_last_status);
+    // if there are no type-c ports, skip below checks
+    if (!res.args->usb_last_port_status.status.portName.empty()) {
+        EXPECT_EQ(PortMode::NONE, res.args->usb_last_port_status.status.currentMode);
+        EXPECT_EQ(PortMode::NONE, res.args->usb_last_port_status.status.supportedModes);
+        EXPECT_EQ(Status::SUCCESS, res.args->usb_last_status);
+    }
 }
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(UsbHidlTest);
 INSTANTIATE_TEST_SUITE_P(
