@@ -55,13 +55,6 @@ VehiclePropValuePool::RecyclableType VehiclePropValuePool::obtain(const VehicleP
     int propId = src.prop;
     VehiclePropertyType type = getPropType(propId);
     size_t vectorSize = getVehicleRawValueVectorSize(src.value, type);
-    if (vectorSize == 0 && !isComplexType(type)) {
-        ALOGW("empty vehicle prop value, contains no content");
-        ALOGW("empty vehicle prop value, contains no content, prop: %d", propId);
-        // Return any empty VehiclePropValue.
-        return RecyclableType{new VehiclePropValue{}, mDisposableDeleter};
-    }
-
     auto dest = obtain(type, vectorSize);
 
     dest->prop = propId;
