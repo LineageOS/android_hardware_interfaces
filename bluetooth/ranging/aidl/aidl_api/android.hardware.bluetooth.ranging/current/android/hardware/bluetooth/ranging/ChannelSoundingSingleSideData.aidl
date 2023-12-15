@@ -38,6 +38,7 @@ parcelable ChannelSoundingSingleSideData {
   @nullable byte[] packetQuality;
   @nullable byte[] packetRssiDbm;
   @nullable android.hardware.bluetooth.ranging.Nadm[] packetNadm;
+  @nullable int[] measuredFreqOffset;
   @nullable List<android.hardware.bluetooth.ranging.ComplexNumber> packetPct1;
   @nullable List<android.hardware.bluetooth.ranging.ComplexNumber> packetPct2;
   byte referencePowerDbm;
