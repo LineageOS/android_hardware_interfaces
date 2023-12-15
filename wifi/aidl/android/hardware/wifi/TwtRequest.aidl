@@ -36,9 +36,9 @@ parcelable TwtRequest {
     /**
      * Minimum TWT wake interval in microseconds.
      */
-    int minWakeIntervalMicros;
+    long minWakeIntervalMicros;
     /**
      * Maximum TWT wake interval in microseconds.
      */
-    int maxWakeIntervalMicros;
+    long maxWakeIntervalMicros;
 }
