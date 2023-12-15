@@ -36,6 +36,7 @@ package android.hardware.bluetooth.ranging;
 parcelable StepTonePct {
   List<android.hardware.bluetooth.ranging.ComplexNumber> tonePcts;
   byte[] toneQualityIndicator;
+  byte toneExtensionAntennaIndex;
   const int TONE_QUALITY_GOOD = 0;
   const int TONE_QUALITY_MEDIUM = 1;
   const int TONE_QUALITY_LOW = 2;
@@ -44,4 +45,9 @@ parcelable StepTonePct {
   const int EXTENSION_SLOT_TONE_NOT_EXPECTED_TO_BE_PRESENT = 1;
   const int EXTENSION_SLOT_TONE_EXPECTED_TO_BE_PRESENT = 2;
   const int EXTENSION_SLOT_SHIFT_AMOUNT = 4;
+  const byte TONE_EXTENSION_ANTENNA_1 = 0x0;
+  const byte TONE_EXTENSION_ANTENNA_2 = 0x1;
+  const byte TONE_EXTENSION_ANTENNA_3 = 0x2;
+  const byte TONE_EXTENSION_ANTENNA_4 = 0x3;
+  const byte TONE_EXTENSION_UNUSED = 0xFFu8;
 }
