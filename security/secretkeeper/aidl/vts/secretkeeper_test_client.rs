@@ -14,27 +14,28 @@
  * limitations under the License.
  */
 
-#[cfg(test)]
+#![cfg(test)]
+
+use android_hardware_security_secretkeeper::aidl::android::hardware::security::secretkeeper::ISecretkeeper::ISecretkeeper;
+use android_hardware_security_secretkeeper::aidl::android::hardware::security::secretkeeper::SecretId::SecretId;
+use authgraph_vts_test as ag_vts;
+use authgraph_boringssl as boring;
+use authgraph_core::key;
 use binder::StatusCode;
 use coset::{CborSerializable, CoseEncrypt0};
-use log::warn;
+use log::{info, warn};
 use secretkeeper_core::cipher;
 use secretkeeper_comm::data_types::error::SecretkeeperError;
 use secretkeeper_comm::data_types::request::Request;
 use secretkeeper_comm::data_types::request_response_impl::{
     GetVersionRequest, GetVersionResponse, GetSecretRequest, GetSecretResponse, StoreSecretRequest,
     StoreSecretResponse };
-use secretkeeper_comm::data_types::{Id, ID_SIZE, Secret, SECRET_SIZE};
+use secretkeeper_comm::data_types::{Id, Secret};
 use secretkeeper_comm::data_types::response::Response;
 use secretkeeper_comm::data_types::packet::{ResponsePacket, ResponseType};
-use android_hardware_security_secretkeeper::aidl::android::hardware::security::secretkeeper::ISecretkeeper::ISecretkeeper;
-use android_hardware_security_secretkeeper::aidl::android::hardware::security::secretkeeper::SecretId::SecretId;
-use authgraph_vts_test as ag_vts;
-use authgraph_boringssl as boring;
-use authgraph_core::key;
 
-const SECRETKEEPER_IDENTIFIER: &str =
-    "android.hardware.security.secretkeeper.ISecretkeeper/nonsecure";
+const SECRETKEEPER_SERVICE: &str = "android.hardware.security.secretkeeper.ISecretkeeper";
+const SECRETKEEPER_INSTANCES: [&'static str; 2] = ["nonsecure", "default"];
 const CURRENT_VERSION: u64 = 1;
 
 // TODO(b/291238565): This will change once libdice_policy switches to Explicit-key DiceCertChain
@@ -47,38 +48,62 @@ const HYPOTHETICAL_DICE_POLICY: [u8; 43] = [
 ];
 
 // Random bytes (of ID_SIZE/SECRET_SIZE) generated for tests.
-const ID_EXAMPLE: [u8; ID_SIZE] = [
+const ID_EXAMPLE: Id = Id([
     0xF1, 0xB2, 0xED, 0x3B, 0xD1, 0xBD, 0xF0, 0x7D, 0xE1, 0xF0, 0x01, 0xFC, 0x61, 0x71, 0xD3, 0x42,
     0xE5, 0x8A, 0xAF, 0x33, 0x6C, 0x11, 0xDC, 0xC8, 0x6F, 0xAE, 0x12, 0x5C, 0x26, 0x44, 0x6B, 0x86,
     0xCC, 0x24, 0xFD, 0xBF, 0x91, 0x4A, 0x54, 0x84, 0xF9, 0x01, 0x59, 0x25, 0x70, 0x89, 0x38, 0x8D,
     0x5E, 0xE6, 0x91, 0xDF, 0x68, 0x60, 0x69, 0x26, 0xBE, 0xFE, 0x79, 0x58, 0xF7, 0xEA, 0x81, 0x7D,
-];
-const ID_EXAMPLE_2: [u8; ID_SIZE] = [
+]);
+const ID_EXAMPLE_2: Id = Id([
     0x6A, 0xCC, 0xB1, 0xEB, 0xBB, 0xAB, 0xE3, 0xEA, 0x44, 0xBD, 0xDC, 0x75, 0x75, 0x7D, 0xC0, 0xE5,
     0xC7, 0x86, 0x41, 0x56, 0x39, 0x66, 0x96, 0x10, 0xCB, 0x43, 0x10, 0x79, 0x03, 0xDC, 0xE6, 0x9F,
     0x12, 0x2B, 0xEF, 0x28, 0x9C, 0x1E, 0x32, 0x46, 0x5F, 0xA3, 0xE7, 0x8D, 0x53, 0x63, 0xE8, 0x30,
     0x5A, 0x17, 0x6F, 0xEF, 0x42, 0xD6, 0x58, 0x7A, 0xF0, 0xCB, 0xD4, 0x40, 0x58, 0x96, 0x32, 0xF4,
-];
-const ID_NOT_STORED: [u8; ID_SIZE] = [
+]);
+const ID_NOT_STORED: Id = Id([
     0x56, 0xD0, 0x4E, 0xAA, 0xC1, 0x7B, 0x55, 0x6B, 0xA0, 0x2C, 0x65, 0x43, 0x39, 0x0A, 0x6C, 0xE9,
     0x1F, 0xD0, 0x0E, 0x20, 0x3E, 0xFB, 0xF5, 0xF9, 0x3F, 0x5B, 0x11, 0x1B, 0x18, 0x73, 0xF6, 0xBB,
     0xAB, 0x9F, 0xF2, 0xD6, 0xBD, 0xBA, 0x25, 0x68, 0x22, 0x30, 0xF2, 0x1F, 0x90, 0x05, 0xF3, 0x64,
     0xE7, 0xEF, 0xC6, 0xB6, 0xA0, 0x85, 0xC9, 0x40, 0x40, 0xF0, 0xB4, 0xB9, 0xD8, 0x28, 0xEE, 0x9C,
-];
-const SECRET_EXAMPLE: [u8; SECRET_SIZE] = [
+]);
+const SECRET_EXAMPLE: Secret = Secret([
     0xA9, 0x89, 0x97, 0xFE, 0xAE, 0x97, 0x55, 0x4B, 0x32, 0x35, 0xF0, 0xE8, 0x93, 0xDA, 0xEA, 0x24,
     0x06, 0xAC, 0x36, 0x8B, 0x3C, 0x95, 0x50, 0x16, 0x67, 0x71, 0x65, 0x26, 0xEB, 0xD0, 0xC3, 0x98,
-];
+]);
 
-fn get_connection() -> Option<binder::Strong<dyn ISecretkeeper>> {
-    match binder::get_interface(SECRETKEEPER_IDENTIFIER) {
-        Ok(sk) => Some(sk),
-        Err(StatusCode::NAME_NOT_FOUND) => None,
-        Err(e) => {
-            panic!(
-                "unexpected error while fetching connection to Secretkeeper {:?}",
-                e
-            );
+fn get_connection() -> Option<(binder::Strong<dyn ISecretkeeper>, String)> {
+    // Initialize logging (which is OK to call multiple times).
+    logger::init(logger::Config::default().with_min_level(log::Level::Debug));
+
+    // TODO: replace this with a parameterized set of tests that run for each available instance of
+    // ISecretkeeper (rather than having a fixed set of instance names to look for).
+    for instance in &SECRETKEEPER_INSTANCES {
+        let name = format!("{SECRETKEEPER_SERVICE}/{instance}");
+        match binder::get_interface(&name) {
+            Ok(sk) => {
+                info!("Running test against /{instance}");
+                return Some((sk, name));
+            }
+            Err(StatusCode::NAME_NOT_FOUND) => {
+                info!("No /{instance} instance of ISecretkeeper present");
+            }
+            Err(e) => {
+                panic!("unexpected error while fetching connection to Secretkeeper {:?}", e);
+            }
+        }
+    }
+    None
+}
+
+/// Macro to perform test setup. Invokes `return` if no Secretkeeper instance available.
+macro_rules! setup_client {
+    {} => {
+        match SkClient::new() {
+            Some(sk) => sk,
+            None => {
+                warn!("Secretkeeper HAL is unavailable, skipping test");
+                return;
+            }
         }
     }
 }
@@ -86,41 +111,85 @@ fn get_connection() -> Option<binder::Strong<dyn ISecretkeeper>> {
 /// Secretkeeper client information.
 struct SkClient {
     sk: binder::Strong<dyn ISecretkeeper>,
+    name: String,
     aes_keys: [key::AesKey; 2],
     session_id: Vec<u8>,
 }
 
+impl Drop for SkClient {
+    fn drop(&mut self) {
+        // Delete any IDs that may be left over.
+        self.delete(&[&ID_EXAMPLE, &ID_EXAMPLE_2]);
+    }
+}
+
 impl SkClient {
     fn new() -> Option<Self> {
-        let sk = get_connection()?;
+        let (sk, name) = get_connection()?;
         let (aes_keys, session_id) = authgraph_key_exchange(sk.clone());
-        Some(Self {
-            sk,
-            aes_keys,
-            session_id,
-        })
+        Some(Self { sk, name, aes_keys, session_id })
     }
+
     /// Wrapper around `ISecretkeeper::processSecretManagementRequest` that handles
     /// encryption and decryption.
     fn secret_management_request(&self, req_data: &[u8]) -> Vec<u8> {
         let aes_gcm = boring::BoringAes;
         let rng = boring::BoringRng;
-        let request_bytes = cipher::encrypt_message(
-            &aes_gcm,
-            &rng,
-            &self.aes_keys[0],
-            &self.session_id,
-            &req_data,
-        )
-        .unwrap();
+        let request_bytes =
+            cipher::encrypt_message(&aes_gcm, &rng, &self.aes_keys[0], &self.session_id, &req_data)
+                .unwrap();
 
-        let response_bytes = self
-            .sk
-            .processSecretManagementRequest(&request_bytes)
-            .unwrap();
+        let response_bytes = self.sk.processSecretManagementRequest(&request_bytes).unwrap();
 
         let response_encrypt0 = CoseEncrypt0::from_slice(&response_bytes).unwrap();
         cipher::decrypt_message(&aes_gcm, &self.aes_keys[1], &response_encrypt0).unwrap()
+    }
+
+    /// Helper method to store a secret.
+    fn store(&self, id: &Id, secret: &Secret) {
+        let store_request = StoreSecretRequest {
+            id: id.clone(),
+            secret: secret.clone(),
+            sealing_policy: HYPOTHETICAL_DICE_POLICY.to_vec(),
+        };
+        let store_request = store_request.serialize_to_packet().to_vec().unwrap();
+
+        let store_response = self.secret_management_request(&store_request);
+        let store_response = ResponsePacket::from_slice(&store_response).unwrap();
+
+        assert_eq!(store_response.response_type().unwrap(), ResponseType::Success);
+        // Really just checking that the response is indeed StoreSecretResponse
+        let _ = StoreSecretResponse::deserialize_from_packet(store_response).unwrap();
+    }
+
+    /// Helper method to get a secret.
+    fn get(&self, id: &Id) -> Option<Secret> {
+        let get_request = GetSecretRequest { id: id.clone(), updated_sealing_policy: None };
+        let get_request = get_request.serialize_to_packet().to_vec().unwrap();
+
+        let get_response = self.secret_management_request(&get_request);
+        let get_response = ResponsePacket::from_slice(&get_response).unwrap();
+
+        if get_response.response_type().unwrap() == ResponseType::Success {
+            let get_response = *GetSecretResponse::deserialize_from_packet(get_response).unwrap();
+            Some(Secret(get_response.secret.0))
+        } else {
+            // Only expect a not-found failure.
+            let err = *SecretkeeperError::deserialize_from_packet(get_response).unwrap();
+            assert_eq!(err, SecretkeeperError::EntryNotFound);
+            None
+        }
+    }
+
+    /// Helper method to delete secrets.
+    fn delete(&self, ids: &[&Id]) {
+        let ids: Vec<SecretId> = ids.iter().map(|id| SecretId { id: id.0.to_vec() }).collect();
+        self.sk.deleteIds(&ids).unwrap();
+    }
+
+    /// Helper method to delete everything.
+    fn delete_all(&self) {
+        self.sk.deleteAll().unwrap();
     }
 }
 
@@ -135,7 +204,7 @@ fn authgraph_key_exchange(sk: binder::Strong<dyn ISecretkeeper>) -> ([key::AesKe
 /// mainline key exchange against a local source implementation.
 #[test]
 fn authgraph_mainline() {
-    let sk = match get_connection() {
+    let (sk, _) = match get_connection() {
         Some(sk) => sk,
         None => {
             warn!("Secretkeeper HAL is unavailable, skipping test");
@@ -149,7 +218,7 @@ fn authgraph_mainline() {
 /// a corrupted session ID signature.
 #[test]
 fn authgraph_corrupt_sig() {
-    let sk = match get_connection() {
+    let (sk, _) = match get_connection() {
         Some(sk) => sk,
         None => {
             warn!("Secretkeeper HAL is unavailable, skipping test");
@@ -165,7 +234,7 @@ fn authgraph_corrupt_sig() {
 /// when corrupted keys are returned to it.
 #[test]
 fn authgraph_corrupt_keys() {
-    let sk = match get_connection() {
+    let (sk, _) = match get_connection() {
         Some(sk) => sk,
         None => {
             warn!("Secretkeeper HAL is unavailable, skipping test");
@@ -182,13 +251,7 @@ fn authgraph_corrupt_keys() {
 
 #[test]
 fn secret_management_get_version() {
-    let sk_client = match SkClient::new() {
-        Some(sk) => sk,
-        None => {
-            warn!("Secretkeeper HAL is unavailable, skipping test");
-            return;
-        }
-    };
+    let sk_client = setup_client!();
 
     let request = GetVersionRequest {};
     let request_packet = request.serialize_to_packet();
@@ -197,10 +260,7 @@ fn secret_management_get_version() {
     let response_bytes = sk_client.secret_management_request(&request_bytes);
 
     let response_packet = ResponsePacket::from_slice(&response_bytes).unwrap();
-    assert_eq!(
-        response_packet.response_type().unwrap(),
-        ResponseType::Success
-    );
+    assert_eq!(response_packet.response_type().unwrap(), ResponseType::Success);
     let get_version_response =
         *GetVersionResponse::deserialize_from_packet(response_packet).unwrap();
     assert_eq!(get_version_response.version, CURRENT_VERSION);
@@ -208,13 +268,7 @@ fn secret_management_get_version() {
 
 #[test]
 fn secret_management_malformed_request() {
-    let sk_client = match SkClient::new() {
-        Some(sk) => sk,
-        None => {
-            warn!("Secretkeeper HAL is unavailable, skipping test");
-            return;
-        }
-    };
+    let sk_client = setup_client!();
 
     let request = GetVersionRequest {};
     let request_packet = request.serialize_to_packet();
@@ -226,268 +280,112 @@ fn secret_management_malformed_request() {
     let response_bytes = sk_client.secret_management_request(&request_bytes);
 
     let response_packet = ResponsePacket::from_slice(&response_bytes).unwrap();
-    assert_eq!(
-        response_packet.response_type().unwrap(),
-        ResponseType::Error
-    );
+    assert_eq!(response_packet.response_type().unwrap(), ResponseType::Error);
     let err = *SecretkeeperError::deserialize_from_packet(response_packet).unwrap();
     assert_eq!(err, SecretkeeperError::RequestMalformed);
 }
 
 #[test]
 fn secret_management_store_get_secret_found() {
-    let sk_client = match SkClient::new() {
-        Some(sk) => sk,
-        None => {
-            warn!("Secretkeeper HAL is unavailable, skipping test");
-            return;
-        }
-    };
+    let sk_client = setup_client!();
 
-    let store_request = StoreSecretRequest {
-        id: Id(ID_EXAMPLE),
-        secret: Secret(SECRET_EXAMPLE),
-        sealing_policy: HYPOTHETICAL_DICE_POLICY.to_vec(),
-    };
-
-    let store_request = store_request.serialize_to_packet().to_vec().unwrap();
-
-    let store_response = sk_client.secret_management_request(&store_request);
-    let store_response = ResponsePacket::from_slice(&store_response).unwrap();
-
-    assert_eq!(
-        store_response.response_type().unwrap(),
-        ResponseType::Success
-    );
-    // Really just checking that the response is indeed StoreSecretResponse
-    let _ = StoreSecretResponse::deserialize_from_packet(store_response).unwrap();
+    sk_client.store(&ID_EXAMPLE, &SECRET_EXAMPLE);
 
     // Get the secret that was just stored
-    let get_request = GetSecretRequest {
-        id: Id(ID_EXAMPLE),
-        updated_sealing_policy: None,
-    };
-    let get_request = get_request.serialize_to_packet().to_vec().unwrap();
-
-    let get_response = sk_client.secret_management_request(&get_request);
-    let get_response = ResponsePacket::from_slice(&get_response).unwrap();
-    assert_eq!(get_response.response_type().unwrap(), ResponseType::Success);
-    let get_response = *GetSecretResponse::deserialize_from_packet(get_response).unwrap();
-    assert_eq!(get_response.secret.0, SECRET_EXAMPLE);
+    assert_eq!(sk_client.get(&ID_EXAMPLE), Some(SECRET_EXAMPLE));
 }
 
 #[test]
 fn secret_management_store_get_secret_not_found() {
-    let sk_client = match SkClient::new() {
-        Some(sk) => sk,
-        None => {
-            warn!("Secretkeeper HAL is unavailable, skipping test");
-            return;
-        }
-    };
+    let sk_client = setup_client!();
 
     // Store a secret (corresponding to an id).
-    let store_request = StoreSecretRequest {
-        id: Id(ID_EXAMPLE),
-        secret: Secret(SECRET_EXAMPLE),
-        sealing_policy: HYPOTHETICAL_DICE_POLICY.to_vec(),
-    };
-
-    let store_request = store_request.serialize_to_packet().to_vec().unwrap();
-    let store_response = sk_client.secret_management_request(&store_request);
-    let store_response = ResponsePacket::from_slice(&store_response).unwrap();
-
-    assert_eq!(
-        store_response.response_type().unwrap(),
-        ResponseType::Success
-    );
-    // Really just checking that the response is indeed StoreSecretResponse
-    let _ = StoreSecretResponse::deserialize_from_packet(store_response).unwrap();
+    sk_client.store(&ID_EXAMPLE, &SECRET_EXAMPLE);
 
     // Get the secret that was never stored
-    let get_request = GetSecretRequest {
-        id: Id(ID_NOT_STORED),
-        updated_sealing_policy: None,
-    };
-    let get_request = get_request.serialize_to_packet().to_vec().unwrap();
-
-    let get_response = sk_client.secret_management_request(&get_request);
-
-    // Expect the entry not to be found.
-    let get_response = ResponsePacket::from_slice(&get_response).unwrap();
-    assert_eq!(get_response.response_type().unwrap(), ResponseType::Error);
-    let err = *SecretkeeperError::deserialize_from_packet(get_response).unwrap();
-    assert_eq!(err, SecretkeeperError::EntryNotFound);
+    assert_eq!(sk_client.get(&ID_NOT_STORED), None);
 }
 
 #[test]
 fn secretkeeper_store_delete_ids() {
-    let sk_client = match SkClient::new() {
-        Some(sk) => sk,
-        None => {
-            warn!("Secretkeeper HAL is unavailable, skipping test");
-            return;
-        }
-    };
+    let sk_client = setup_client!();
 
-    let store_request = StoreSecretRequest {
-        id: Id(ID_EXAMPLE),
-        secret: Secret(SECRET_EXAMPLE),
-        sealing_policy: HYPOTHETICAL_DICE_POLICY.to_vec(),
-    };
+    sk_client.store(&ID_EXAMPLE, &SECRET_EXAMPLE);
+    sk_client.store(&ID_EXAMPLE_2, &SECRET_EXAMPLE);
+    sk_client.delete(&[&ID_EXAMPLE]);
 
-    let store_request = store_request.serialize_to_packet().to_vec().unwrap();
-    let store_response = sk_client.secret_management_request(&store_request);
-    let store_response = ResponsePacket::from_slice(&store_response).unwrap();
+    assert_eq!(sk_client.get(&ID_EXAMPLE), None);
+    assert_eq!(sk_client.get(&ID_EXAMPLE_2), Some(SECRET_EXAMPLE));
 
-    assert_eq!(
-        store_response.response_type().unwrap(),
-        ResponseType::Success
-    );
-    // Really just checking that the response is indeed StoreSecretResponse
-    let _ = StoreSecretResponse::deserialize_from_packet(store_response).unwrap();
+    sk_client.delete(&[&ID_EXAMPLE_2]);
 
-    sk_client
-        .sk
-        .deleteIds(&[SecretId {
-            id: ID_EXAMPLE.to_vec(),
-        }])
-        .unwrap();
+    assert_eq!(sk_client.get(&ID_EXAMPLE), None);
+    assert_eq!(sk_client.get(&ID_EXAMPLE_2), None);
+}
 
-    // Try to get the secret that was just stored & deleted
-    let get_request = GetSecretRequest {
-        id: Id(ID_EXAMPLE),
-        updated_sealing_policy: None,
-    };
-    let get_request = get_request.serialize_to_packet().to_vec().unwrap();
+#[test]
+fn secretkeeper_store_delete_multiple_ids() {
+    let sk_client = setup_client!();
 
-    let get_response = sk_client.secret_management_request(&get_request);
+    sk_client.store(&ID_EXAMPLE, &SECRET_EXAMPLE);
+    sk_client.store(&ID_EXAMPLE_2, &SECRET_EXAMPLE);
+    sk_client.delete(&[&ID_EXAMPLE, &ID_EXAMPLE_2]);
 
-    // Expect the entry not to be found.
-    let get_response = ResponsePacket::from_slice(&get_response).unwrap();
-    assert_eq!(get_response.response_type().unwrap(), ResponseType::Error);
-    let err = *SecretkeeperError::deserialize_from_packet(get_response).unwrap();
-    assert_eq!(err, SecretkeeperError::EntryNotFound);
+    assert_eq!(sk_client.get(&ID_EXAMPLE), None);
+    assert_eq!(sk_client.get(&ID_EXAMPLE_2), None);
+}
+
+#[test]
+fn secretkeeper_store_delete_duplicate_ids() {
+    let sk_client = setup_client!();
+
+    sk_client.store(&ID_EXAMPLE, &SECRET_EXAMPLE);
+    sk_client.store(&ID_EXAMPLE_2, &SECRET_EXAMPLE);
+    // Delete the same secret twice.
+    sk_client.delete(&[&ID_EXAMPLE, &ID_EXAMPLE]);
+
+    assert_eq!(sk_client.get(&ID_EXAMPLE), None);
+    assert_eq!(sk_client.get(&ID_EXAMPLE_2), Some(SECRET_EXAMPLE));
+}
+
+#[test]
+fn secretkeeper_store_delete_nonexistent() {
+    let sk_client = setup_client!();
+
+    sk_client.store(&ID_EXAMPLE, &SECRET_EXAMPLE);
+    sk_client.store(&ID_EXAMPLE_2, &SECRET_EXAMPLE);
+    sk_client.delete(&[&ID_NOT_STORED]);
+
+    assert_eq!(sk_client.get(&ID_EXAMPLE), Some(SECRET_EXAMPLE));
+    assert_eq!(sk_client.get(&ID_EXAMPLE_2), Some(SECRET_EXAMPLE));
+    assert_eq!(sk_client.get(&ID_NOT_STORED), None);
 }
 
 #[test]
 fn secretkeeper_store_delete_all() {
-    let sk_client = match SkClient::new() {
-        Some(sk) => sk,
-        None => {
-            warn!("Secretkeeper HAL is unavailable, skipping test");
-            return;
-        }
-    };
+    let sk_client = setup_client!();
 
-    let store_request = StoreSecretRequest {
-        id: Id(ID_EXAMPLE),
-        secret: Secret(SECRET_EXAMPLE),
-        sealing_policy: HYPOTHETICAL_DICE_POLICY.to_vec(),
-    };
+    if sk_client.name != "nonsecure" {
+        // Don't run deleteAll() on a secure device, as it might affect
+        // real secrets.
+        warn!("skipping deleteAll test due to real impl");
+        return;
+    }
 
-    let store_request = store_request.serialize_to_packet().to_vec().unwrap();
-    let store_response = sk_client.secret_management_request(&store_request);
-    let store_response = ResponsePacket::from_slice(&store_response).unwrap();
+    sk_client.store(&ID_EXAMPLE, &SECRET_EXAMPLE);
+    sk_client.store(&ID_EXAMPLE_2, &SECRET_EXAMPLE);
 
-    assert_eq!(
-        store_response.response_type().unwrap(),
-        ResponseType::Success
-    );
-    // Really just checking that the response is indeed StoreSecretResponse
-    let _ = StoreSecretResponse::deserialize_from_packet(store_response).unwrap();
+    sk_client.delete_all();
 
-    let store_request = StoreSecretRequest {
-        id: Id(ID_EXAMPLE_2),
-        secret: Secret(SECRET_EXAMPLE),
-        sealing_policy: HYPOTHETICAL_DICE_POLICY.to_vec(),
-    };
-
-    let store_request = store_request.serialize_to_packet().to_vec().unwrap();
-    let store_response = sk_client.secret_management_request(&store_request);
-    let store_response = ResponsePacket::from_slice(&store_response).unwrap();
-
-    assert_eq!(
-        store_response.response_type().unwrap(),
-        ResponseType::Success
-    );
-    // Really just checking that the response is indeed StoreSecretResponse
-    let _ = StoreSecretResponse::deserialize_from_packet(store_response).unwrap();
-
-    sk_client.sk.deleteAll().unwrap();
-
-    // Get the first secret that was just stored before deleteAll
-    let get_request = GetSecretRequest {
-        id: Id(ID_EXAMPLE),
-        updated_sealing_policy: None,
-    };
-    let get_request = get_request.serialize_to_packet().to_vec().unwrap();
-
-    let get_response = sk_client.secret_management_request(&get_request);
-
-    // Expect the entry not to be found.
-    let get_response = ResponsePacket::from_slice(&get_response).unwrap();
-    assert_eq!(get_response.response_type().unwrap(), ResponseType::Error);
-    let err = *SecretkeeperError::deserialize_from_packet(get_response).unwrap();
-    assert_eq!(err, SecretkeeperError::EntryNotFound);
-
-    // Get the second secret that was just stored before deleteAll
-    let get_request = GetSecretRequest {
-        id: Id(ID_EXAMPLE_2),
-        updated_sealing_policy: None,
-    };
-    let get_request = get_request.serialize_to_packet().to_vec().unwrap();
-
-    let get_response = sk_client.secret_management_request(&get_request);
-
-    // Expect the entry not to be found.
-    let get_response = ResponsePacket::from_slice(&get_response).unwrap();
-    assert_eq!(get_response.response_type().unwrap(), ResponseType::Error);
-    let err = *SecretkeeperError::deserialize_from_packet(get_response).unwrap();
-    assert_eq!(err, SecretkeeperError::EntryNotFound);
+    assert_eq!(sk_client.get(&ID_EXAMPLE), None);
+    assert_eq!(sk_client.get(&ID_EXAMPLE_2), None);
 
     // Store a new secret (corresponding to an id).
-    let store_request = StoreSecretRequest {
-        id: Id(ID_EXAMPLE),
-        secret: Secret(SECRET_EXAMPLE),
-        sealing_policy: HYPOTHETICAL_DICE_POLICY.to_vec(),
-    };
-
-    let store_request = store_request.serialize_to_packet().to_vec().unwrap();
-    let store_response = sk_client.secret_management_request(&store_request);
-    let store_response = ResponsePacket::from_slice(&store_response).unwrap();
-
-    assert_eq!(
-        store_response.response_type().unwrap(),
-        ResponseType::Success
-    );
+    sk_client.store(&ID_EXAMPLE, &SECRET_EXAMPLE);
 
     // Get the restored secret.
-    let get_request = GetSecretRequest {
-        id: Id(ID_EXAMPLE),
-        updated_sealing_policy: None,
-    };
-    let get_request = get_request.serialize_to_packet().to_vec().unwrap();
-
-    let get_response = sk_client.secret_management_request(&get_request);
-    let get_response = ResponsePacket::from_slice(&get_response).unwrap();
-
-    // Get the secret that was just re-stored.
-    assert_eq!(get_response.response_type().unwrap(), ResponseType::Success);
-    let get_response = *GetSecretResponse::deserialize_from_packet(get_response).unwrap();
-    assert_eq!(get_response.secret.0, SECRET_EXAMPLE);
+    assert_eq!(sk_client.get(&ID_EXAMPLE), Some(SECRET_EXAMPLE));
 
     // (Try to) Get the secret that was never stored
-    let get_request = GetSecretRequest {
-        id: Id(ID_NOT_STORED),
-        updated_sealing_policy: None,
-    };
-    let get_request = get_request.serialize_to_packet().to_vec().unwrap();
-    let get_response = sk_client.secret_management_request(&get_request);
-
-    // Check that response is `SecretkeeperError::EntryNotFound`
-    let get_response = ResponsePacket::from_slice(&get_response).unwrap();
-    assert_eq!(get_response.response_type().unwrap(), ResponseType::Error);
-    let err = *SecretkeeperError::deserialize_from_packet(get_response).unwrap();
-    assert_eq!(err, SecretkeeperError::EntryNotFound);
+    assert_eq!(sk_client.get(&ID_NOT_STORED), None);
 }
