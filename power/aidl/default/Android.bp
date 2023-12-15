@@ -29,8 +29,12 @@ cc_binary {
     vintf_fragments: [":android.hardware.power.xml"],
     vendor: true,
     shared_libs: [
+        "android.hardware.common-V2-ndk",
+        "android.hardware.common.fmq-V1-ndk",
         "libbase",
         "libbinder_ndk",
+        "libcutils",
+        "libfmq",
     ],
     srcs: [
         "main.cpp",

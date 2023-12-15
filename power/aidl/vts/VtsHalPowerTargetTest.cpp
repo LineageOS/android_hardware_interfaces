@@ -24,18 +24,30 @@
 #include <android/binder_process.h>
 #include <android/binder_status.h>
 
+#include <fmq/AidlMessageQueue.h>
+#include <fmq/EventFlag.h>
+
 #include <unistd.h>
+#include <cstdint>
+#include "aidl/android/hardware/common/fmq/SynchronizedReadWrite.h"
+#include "fmq/EventFlag.h"
 
 namespace aidl::android::hardware::power {
 namespace {
 
+using ::aidl::android::hardware::common::fmq::SynchronizedReadWrite;
+using ::android::AidlMessageQueue;
 using android::hardware::power::Boost;
+using android::hardware::power::ChannelConfig;
+using android::hardware::power::ChannelMessage;
 using android::hardware::power::IPower;
 using android::hardware::power::IPowerHintSession;
 using android::hardware::power::Mode;
 using android::hardware::power::SessionHint;
 using android::hardware::power::SessionMode;
 using android::hardware::power::WorkDuration;
+
+using SessionMessageQueue = AidlMessageQueue<ChannelMessage, SynchronizedReadWrite>;
 
 const std::vector<Boost> kBoosts{ndk::enum_range<Boost>().begin(), ndk::enum_range<Boost>().end()};
 
@@ -190,6 +202,31 @@ TEST_P(PowerAidl, getHintSessionPreferredRate) {
     ASSERT_GE(rate, 1000000);
 }
 
+TEST_P(PowerAidl, createHintSessionWithConfig) {
+    if (mServiceVersion < 5) {
+        GTEST_SKIP() << "DEVICE not launching with Power V5 and beyond.";
+    }
+    std::shared_ptr<IPowerHintSession> session;
+    SessionConfig config;
+
+    auto status = power->createHintSessionWithConfig(getpid(), getuid(), kSelfTids, 16666666L,
+                                                     SessionTag::OTHER, &config, &session);
+    ASSERT_TRUE(status.isOk());
+    ASSERT_NE(nullptr, session);
+}
+
+TEST_P(PowerAidl, getAndCloseSessionChannel) {
+    if (mServiceVersion < 5) {
+        GTEST_SKIP() << "DEVICE not launching with Power V5 and beyond.";
+    }
+    ChannelConfig config;
+    auto status = power->getSessionChannel(getpid(), getuid(), &config);
+    ASSERT_TRUE(status.isOk());
+    auto messageQueue = std::make_shared<SessionMessageQueue>(config.channelDescriptor, true);
+    ASSERT_TRUE(messageQueue->isValid());
+    ASSERT_TRUE(power->closeSessionChannel(getpid(), getuid()).isOk());
+}
+
 TEST_P(HintSessionAidl, createAndCloseHintSession) {
     ASSERT_TRUE(mSession->pause().isOk());
     ASSERT_TRUE(mSession->resume().isOk());
@@ -250,6 +287,14 @@ TEST_P(HintSessionAidl, setSessionMode) {
         ASSERT_TRUE(mSession->setMode(sessionMode, true).isOk());
         ASSERT_TRUE(mSession->setMode(sessionMode, false).isOk());
     }
+}
+
+TEST_P(HintSessionAidl, getSessionConfig) {
+    if (mServiceVersion < 5) {
+        GTEST_SKIP() << "DEVICE not launching with Power V5 and beyond.";
+    }
+    SessionConfig config;
+    ASSERT_TRUE(mSession->getSessionConfig(&config).isOk());
 }
 
 // FIXED_PERFORMANCE mode is required for all devices which ship on Android 11

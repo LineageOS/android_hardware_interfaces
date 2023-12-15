@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,14 +33,9 @@
 
 package android.hardware.power;
 @VintfStability
-interface IPowerHintSession {
-  oneway void updateTargetWorkDuration(long targetDurationNanos);
-  oneway void reportActualWorkDuration(in android.hardware.power.WorkDuration[] durations);
-  oneway void pause();
-  oneway void resume();
-  oneway void close();
-  oneway void sendHint(android.hardware.power.SessionHint hint);
-  void setThreads(in int[] threadIds);
-  oneway void setMode(android.hardware.power.SessionMode type, boolean enabled);
-  android.hardware.power.SessionConfig getSessionConfig();
+parcelable ChannelConfig {
+  android.hardware.common.fmq.MQDescriptor<android.hardware.power.ChannelMessage,android.hardware.common.fmq.SynchronizedReadWrite> channelDescriptor;
+  @nullable android.hardware.common.fmq.MQDescriptor<byte,android.hardware.common.fmq.SynchronizedReadWrite> eventFlagDescriptor;
+  int readFlagBitmask;
+  int writeFlagBitmask;
 }

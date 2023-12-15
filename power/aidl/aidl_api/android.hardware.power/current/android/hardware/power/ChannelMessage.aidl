@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,15 +32,21 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.power;
-@VintfStability
-interface IPowerHintSession {
-  oneway void updateTargetWorkDuration(long targetDurationNanos);
-  oneway void reportActualWorkDuration(in android.hardware.power.WorkDuration[] durations);
-  oneway void pause();
-  oneway void resume();
-  oneway void close();
-  oneway void sendHint(android.hardware.power.SessionHint hint);
-  void setThreads(in int[] threadIds);
-  oneway void setMode(android.hardware.power.SessionMode type, boolean enabled);
-  android.hardware.power.SessionConfig getSessionConfig();
+@FixedSize @VintfStability
+parcelable ChannelMessage {
+  int sessionID;
+  android.hardware.power.ChannelMessage.ChannelMessageContents data;
+  @FixedSize @VintfStability
+  union ChannelMessageContents {
+    int[20] tids = {(-1) /* -1 */, (-1) /* -1 */, (-1) /* -1 */, (-1) /* -1 */, (-1) /* -1 */, (-1) /* -1 */, (-1) /* -1 */, (-1) /* -1 */, (-1) /* -1 */, (-1) /* -1 */, (-1) /* -1 */, (-1) /* -1 */, (-1) /* -1 */, (-1) /* -1 */, (-1) /* -1 */, (-1) /* -1 */, (-1) /* -1 */, (-1) /* -1 */, (-1) /* -1 */, (-1) /* -1 */};
+    long targetDuration;
+    android.hardware.power.SessionHint hint;
+    android.hardware.power.ChannelMessage.ChannelMessageContents.SessionModeSetter mode;
+    android.hardware.power.WorkDurationFixedV1 workDuration;
+    @FixedSize @VintfStability
+    parcelable SessionModeSetter {
+      android.hardware.power.SessionMode modeInt;
+      boolean enabled;
+    }
+  }
 }
