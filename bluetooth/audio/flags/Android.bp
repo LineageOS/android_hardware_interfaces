@@ -1,0 +1,12 @@
+aconfig_declarations {
+    name: "btaudiohal_flags",
+    package: "com.android.btaudio.hal.flags",
+    srcs: ["btaudiohal.aconfig"],
+}
+
+cc_aconfig_library {
+    name: "btaudiohal_flags_c_lib",
+    aconfig_declarations: "btaudiohal_flags",
+    vendor: true,
+    host_supported: true,
+}
