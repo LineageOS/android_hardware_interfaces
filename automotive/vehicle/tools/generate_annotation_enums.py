@@ -42,6 +42,8 @@ ACCESS_JAVA_FILE_PATH = ('hardware/interfaces/automotive/vehicle/aidl/generated_
     'AccessForVehicleProperty.java')
 ENUM_JAVA_FILE_PATH = ('hardware/interfaces/automotive/vehicle/aidl/generated_lib/java/' +
                          'EnumForVehicleProperty.java')
+VERSION_CPP_FILE_PATH = ('hardware/interfaces/automotive/vehicle/aidl/generated_lib/cpp/' +
+    'VersionForVehicleProperty.h')
 SCRIPT_PATH = 'hardware/interfaces/automotive/vehicle/tools/generate_annotation_enums.py'
 
 TAB = '    '
@@ -50,6 +52,7 @@ RE_ENUM_END = re.compile('\s*\}\;')
 RE_COMMENT_BEGIN = re.compile('\s*\/\*\*?')
 RE_COMMENT_END = re.compile('\s*\*\/')
 RE_CHANGE_MODE = re.compile('\s*\* @change_mode (\S+)\s*')
+RE_VERSION = re.compile('\s*\* @version (\S+)\s*')
 RE_ACCESS = re.compile('\s*\* @access (\S+)\s*')
 RE_DATA_ENUM = re.compile('\s*\* @data_enum (\S+)\s*')
 RE_UNIT = re.compile('\s*\* @unit (\S+)\s+')
@@ -81,8 +84,7 @@ LICENSE = """/*
 
 """
 
-CHANGE_MODE_CPP_HEADER = """#ifndef android_hardware_automotive_vehicle_aidl_generated_lib_ChangeModeForVehicleProperty_H_
-#define android_hardware_automotive_vehicle_aidl_generated_lib_ChangeModeForVehicleProperty_H_
+CHANGE_MODE_CPP_HEADER = """#pragma once
 
 #include <aidl/android/hardware/automotive/vehicle/VehicleProperty.h>
 #include <aidl/android/hardware/automotive/vehicle/VehiclePropertyChangeMode.h>
@@ -98,7 +100,7 @@ namespace vehicle {
 std::unordered_map<VehicleProperty, VehiclePropertyChangeMode> ChangeModeForVehicleProperty = {
 """
 
-CHANGE_MODE_CPP_FOOTER = """
+CPP_FOOTER = """
 };
 
 }  // namespace vehicle
@@ -106,12 +108,9 @@ CHANGE_MODE_CPP_FOOTER = """
 }  // namespace hardware
 }  // namespace android
 }  // aidl
-
-#endif  // android_hardware_automotive_vehicle_aidl_generated_lib_ChangeModeForVehicleProperty_H_
 """
 
-ACCESS_CPP_HEADER = """#ifndef android_hardware_automotive_vehicle_aidl_generated_lib_AccessForVehicleProperty_H_
-#define android_hardware_automotive_vehicle_aidl_generated_lib_AccessForVehicleProperty_H_
+ACCESS_CPP_HEADER = """#pragma once
 
 #include <aidl/android/hardware/automotive/vehicle/VehicleProperty.h>
 #include <aidl/android/hardware/automotive/vehicle/VehiclePropertyAccess.h>
@@ -127,16 +126,19 @@ namespace vehicle {
 std::unordered_map<VehicleProperty, VehiclePropertyAccess> AccessForVehicleProperty = {
 """
 
-ACCESS_CPP_FOOTER = """
-};
+VERSION_CPP_HEADER = """#pragma once
 
-}  // namespace vehicle
-}  // namespace automotive
-}  // namespace hardware
-}  // namespace android
-}  // aidl
+#include <aidl/android/hardware/automotive/vehicle/VehicleProperty.h>
 
-#endif  // android_hardware_automotive_vehicle_aidl_generated_lib_AccessForVehicleProperty_H_
+#include <unordered_map>
+
+namespace aidl {
+namespace android {
+namespace hardware {
+namespace automotive {
+namespace vehicle {
+
+std::unordered_map<VehicleProperty, int32_t> VersionForVehicleProperty = {
 """
 
 CHANGE_MODE_JAVA_HEADER = """package android.hardware.automotive.vehicle;
@@ -148,7 +150,7 @@ public final class ChangeModeForVehicleProperty {
     public static final Map<Integer, Integer> values = Map.ofEntries(
 """
 
-CHANGE_MODE_JAVA_FOOTER = """
+JAVA_FOOTER = """
     );
 
 }
@@ -163,12 +165,6 @@ public final class AccessForVehicleProperty {
     public static final Map<Integer, Integer> values = Map.ofEntries(
 """
 
-ACCESS_JAVA_FOOTER = """
-    );
-
-}
-"""
-
 ENUM_JAVA_HEADER = """package android.hardware.automotive.vehicle;
 
 import java.util.List;
@@ -177,12 +173,6 @@ import java.util.Map;
 public final class EnumForVehicleProperty {
 
     public static final Map<Integer, List<Class<?>>> values = Map.ofEntries(
-"""
-
-ENUM_JAVA_FOOTER = """
-    );
-
-}
 """
 
 
@@ -196,6 +186,7 @@ class PropertyConfig:
         self.access_modes = []
         self.enum_types = []
         self.unit_type = None
+        self.version = None
 
     def __repr__(self):
         return self.__str__()
@@ -258,6 +249,11 @@ class FileParser:
                     match = RE_DATA_ENUM.match(line)
                     if match:
                         config.enum_types.append(match.group(1))
+                    match = RE_VERSION.match(line)
+                    if match:
+                        if config.version != None:
+                            raise Exception('Duplicate version annotation for property: ' + prop_name)
+                        config.version = match.group(1)
                 else:
                     match = RE_VALUE.match(line)
                     if match:
@@ -270,6 +266,9 @@ class FileParser:
                         if not config.access_modes:
                             raise Exception(
                                     'No access_mode annotation for property: ' + prop_name)
+                        if not config.version:
+                            raise Exception(
+                                    'no version annotation for property: ' + prop_name)
                         config.name = prop_name
                         configs.append(config)
 
@@ -295,6 +294,9 @@ class FileParser:
                     continue;
                 if not cpp:
                     annotation = "List.of(" + ', '.join([class_name + ".class" for class_name in config.enum_types]) + ")"
+            elif field == 'version':
+                if cpp:
+                    annotation = config.version
             else:
                 raise Exception('Unknown field: ' + field)
             if counter != 0:
@@ -347,6 +349,69 @@ def createTempFile():
     return f.name
 
 
+class GeneratedFile:
+
+    def __init__(self, type):
+        self.type = type
+        self.cpp_file_path = None
+        self.java_file_path = None
+        self.cpp_header = None
+        self.java_header = None
+        self.cpp_footer = None
+        self.java_footer = None
+        self.cpp_output_file = None
+        self.java_output_file = None
+
+    def setCppFilePath(self, cpp_file_path):
+        self.cpp_file_path = cpp_file_path
+
+    def setJavaFilePath(self, java_file_path):
+        self.java_file_path = java_file_path
+
+    def setCppHeader(self, cpp_header):
+        self.cpp_header = cpp_header
+
+    def setCppFooter(self, cpp_footer):
+        self.cpp_footer = cpp_footer
+
+    def setJavaHeader(self, java_header):
+        self.java_header = java_header
+
+    def setJavaFooter(self, java_footer):
+        self.java_footer = java_footer
+
+    def convert(self, file_parser, check_only, temp_files):
+        if self.cpp_file_path:
+            output_file = GeneratedFile._getOutputFile(self.cpp_file_path, check_only, temp_files)
+            file_parser.convert(output_file, self.cpp_header, self.cpp_footer, True, self.type)
+            self.cpp_output_file = output_file
+
+        if self.java_file_path:
+            output_file = GeneratedFile._getOutputFile(self.java_file_path, check_only, temp_files)
+            file_parser.convert(output_file, self.java_header, self.java_footer, False, self.type)
+            self.java_output_file = output_file
+
+    def cmp(self):
+        if self.cpp_file_path:
+            if not filecmp.cmp(self.cpp_output_file, self.cpp_file_path):
+                return False
+
+        if self.java_file_path:
+            if not filecmp.cmp(self.java_output_file, self.java_file_path):
+                return False
+
+        return True
+
+    @staticmethod
+    def _getOutputFile(file_path, check_only, temp_files):
+        if not check_only:
+            return file_path
+
+        temp_file = createTempFile()
+        temp_files.append(temp_file)
+        return temp_file
+
+
 def main():
     parser = argparse.ArgumentParser(
             description='Generate Java and C++ enums based on annotations in VehicleProperty.aidl')
@@ -382,51 +447,52 @@ def main():
         f.outputAsCsv(args.output_csv)
         return
 
-    change_mode_cpp_file = os.path.join(android_top, CHANGE_MODE_CPP_FILE_PATH);
-    access_cpp_file = os.path.join(android_top, ACCESS_CPP_FILE_PATH);
-    change_mode_java_file = os.path.join(android_top, CHANGE_MODE_JAVA_FILE_PATH);
-    access_java_file = os.path.join(android_top, ACCESS_JAVA_FILE_PATH);
-    enum_java_file = os.path.join(android_top, ENUM_JAVA_FILE_PATH);
+    generated_files = []
+
+    change_mode = GeneratedFile('change_mode')
+    change_mode.setCppFilePath(os.path.join(android_top, CHANGE_MODE_CPP_FILE_PATH))
+    change_mode.setJavaFilePath(os.path.join(android_top, CHANGE_MODE_JAVA_FILE_PATH))
+    change_mode.setCppHeader(CHANGE_MODE_CPP_HEADER)
+    change_mode.setCppFooter(CPP_FOOTER)
+    change_mode.setJavaHeader(CHANGE_MODE_JAVA_HEADER)
+    change_mode.setJavaFooter(JAVA_FOOTER)
+    generated_files.append(change_mode)
+
+    access_mode = GeneratedFile('access_mode')
+    access_mode.setCppFilePath(os.path.join(android_top, ACCESS_CPP_FILE_PATH))
+    access_mode.setJavaFilePath(os.path.join(android_top, ACCESS_JAVA_FILE_PATH))
+    access_mode.setCppHeader(ACCESS_CPP_HEADER)
+    access_mode.setCppFooter(CPP_FOOTER)
+    access_mode.setJavaHeader(ACCESS_JAVA_HEADER)
+    access_mode.setJavaFooter(JAVA_FOOTER)
+    generated_files.append(access_mode)
+
+    enum_types = GeneratedFile('enum_types')
+    enum_types.setJavaFilePath(os.path.join(android_top, ENUM_JAVA_FILE_PATH))
+    enum_types.setJavaHeader(ENUM_JAVA_HEADER)
+    enum_types.setJavaFooter(JAVA_FOOTER)
+    generated_files.append(enum_types)
+
+    version = GeneratedFile('version')
+    version.setCppFilePath(os.path.join(android_top, VERSION_CPP_FILE_PATH))
+    version.setCppHeader(VERSION_CPP_HEADER)
+    version.setCppFooter(CPP_FOOTER)
+    generated_files.append(version)
+
     temp_files = []
 
-    if not args.check_only:
-        change_mode_cpp_output = change_mode_cpp_file
-        access_cpp_output = access_cpp_file
-        change_mode_java_output = change_mode_java_file
-        access_java_output = access_java_file
-        enum_java_output = enum_java_file
-    else:
-        change_mode_cpp_output = createTempFile()
-        temp_files.append(change_mode_cpp_output)
-        access_cpp_output = createTempFile()
-        temp_files.append(access_cpp_output)
-        change_mode_java_output = createTempFile()
-        temp_files.append(change_mode_java_output)
-        access_java_output = createTempFile()
-        temp_files.append(access_java_output)
-        enum_java_output = createTempFile()
-        temp_files.append(enum_java_output)
-
     try:
-        f.convert(change_mode_cpp_output, CHANGE_MODE_CPP_HEADER, CHANGE_MODE_CPP_FOOTER,
-                True, 'change_mode')
-        f.convert(change_mode_java_output, CHANGE_MODE_JAVA_HEADER,
-                CHANGE_MODE_JAVA_FOOTER, False, 'change_mode')
-        f.convert(access_cpp_output, ACCESS_CPP_HEADER, ACCESS_CPP_FOOTER, True, 'access_mode')
-        f.convert(access_java_output, ACCESS_JAVA_HEADER, ACCESS_JAVA_FOOTER, False, 'access_mode')
-        f.convert(enum_java_output, ENUM_JAVA_HEADER, ENUM_JAVA_FOOTER, False, 'enum_types')
+        for generated_file in generated_files:
+            generated_file.convert(f, args.check_only, temp_files)
 
         if not args.check_only:
             return
 
-        if ((not filecmp.cmp(change_mode_cpp_output, change_mode_cpp_file)) or
-                (not filecmp.cmp(change_mode_java_output, change_mode_java_file)) or
-                (not filecmp.cmp(access_cpp_output, access_cpp_file)) or
-                (not filecmp.cmp(access_java_output, access_java_file)) or
-                (not filecmp.cmp(enum_java_output, enum_java_file))):
-            print('The generated enum files for VehicleProperty.aidl requires update, ')
-            print('Run \npython ' + android_top + '/' + SCRIPT_PATH)
-            sys.exit(1)
+        for generated_file in generated_files:
+            if not generated_file.cmp():
+                print('The generated enum files for VehicleProperty.aidl requires update, ')
+                print('Run \npython ' + android_top + '/' + SCRIPT_PATH)
+                sys.exit(1)
     except Exception as e:
         print('Error parsing VehicleProperty.aidl')
         print(e)
