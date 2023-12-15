@@ -20,6 +20,7 @@
 #include <android-base/logging.h>
 #include <android-base/stringprintf.h>
 #include <android/binder_manager.h>
+#include <com_android_btaudio_hal_flags.h>
 #include <hardware/audio.h>
 
 #include "BluetoothAudioSession.h"
@@ -35,6 +36,14 @@ static constexpr int kFmqReceiveTimeoutMs =
     1000;                               // 1000 ms timeout for receiving
 static constexpr int kWritePollMs = 1;  // polled non-blocking interval
 static constexpr int kReadPollMs = 1;   // polled non-blocking interval
+
+static std::string toString(const std::vector<LatencyMode>& latencies) {
+  std::stringstream latencyModesStr;
+  for (LatencyMode mode : latencies) {
+    latencyModesStr << " " << toString(mode);
+  }
+  return latencyModesStr.str();
+}
 
 BluetoothAudioSession::BluetoothAudioSession(const SessionType& session_type)
     : session_type_(session_type), stack_iface_(nullptr), data_mq_(nullptr) {}
@@ -65,6 +74,7 @@ void BluetoothAudioSession::OnSessionStarted(
     stack_iface_ = stack_iface;
     latency_modes_ = latency_modes;
     LOG(INFO) << __func__ << " - SessionType=" << toString(session_type_)
+              << " - All LatencyModes=" << toString(latency_modes)
               << ", AudioConfiguration=" << audio_config.toString();
     ReportSessionStatus();
   }
@@ -604,31 +614,46 @@ std::vector<LatencyMode> BluetoothAudioSession::GetSupportedLatencyModes() {
     return std::vector<LatencyMode>();
   }
 
-  std::vector<LatencyMode> supported_latency_modes;
-  if (session_type_ ==
-      SessionType::LE_AUDIO_HARDWARE_OFFLOAD_ENCODING_DATAPATH) {
-    for (LatencyMode mode : latency_modes_) {
-      if (mode == LatencyMode::LOW_LATENCY) {
-        // LOW_LATENCY is not supported for LE_HARDWARE_OFFLOAD_ENC sessions
-        continue;
+  if (com::android::btaudio::hal::flags::dsa_lea()) {
+    std::vector<LatencyMode> supported_latency_modes;
+    if (session_type_ ==
+        SessionType::LE_AUDIO_HARDWARE_OFFLOAD_ENCODING_DATAPATH) {
+      for (LatencyMode mode : latency_modes_) {
+        if (mode == LatencyMode::LOW_LATENCY) {
+          // LOW_LATENCY is not supported for LE_HARDWARE_OFFLOAD_ENC sessions
+          continue;
+        }
+        supported_latency_modes.push_back(mode);
       }
-      supported_latency_modes.push_back(mode);
+    } else {
+      for (LatencyMode mode : latency_modes_) {
+        if (!low_latency_allowed_ && mode == LatencyMode::LOW_LATENCY) {
+          // ignore LOW_LATENCY mode if Bluetooth stack doesn't allow
+          continue;
+        }
+        if (mode == LatencyMode::DYNAMIC_SPATIAL_AUDIO_SOFTWARE ||
+            mode == LatencyMode::DYNAMIC_SPATIAL_AUDIO_HARDWARE) {
+          // DSA_SW and DSA_HW only supported for LE_HARDWARE_OFFLOAD_ENC
+          // sessions
+          continue;
+        }
+        supported_latency_modes.push_back(mode);
+      }
     }
-  } else {
-    for (LatencyMode mode : latency_modes_) {
-      if (!low_latency_allowed_ && mode == LatencyMode::LOW_LATENCY) {
-        // ignore LOW_LATENCY mode if Bluetooth stack doesn't allow
-        continue;
-      }
-      if (mode == LatencyMode::DYNAMIC_SPATIAL_AUDIO_SOFTWARE ||
-          mode == LatencyMode::DYNAMIC_SPATIAL_AUDIO_HARDWARE) {
-        // DSA_SW and DSA_HW only supported for LE_HARDWARE_OFFLOAD_ENC sessions
-        continue;
-      }
-      supported_latency_modes.push_back(mode);
-    }
+    LOG(DEBUG) << __func__ << " - Supported LatencyMode="
+               << toString(supported_latency_modes);
+    return supported_latency_modes;
   }
-  return supported_latency_modes;
+
+  if (low_latency_allowed_) return latency_modes_;
+  std::vector<LatencyMode> modes;
+  for (LatencyMode mode : latency_modes_) {
+    if (mode == LatencyMode::LOW_LATENCY)
+      // ignore those low latency mode if Bluetooth stack doesn't allow
+      continue;
+    modes.push_back(mode);
+  }
+  return modes;
 }
 
 void BluetoothAudioSession::SetLatencyMode(const LatencyMode& latency_mode) {
