@@ -19,12 +19,39 @@ package android.hardware.automotive.remoteaccess;
 import android.hardware.automotive.remoteaccess.ApState;
 import android.hardware.automotive.remoteaccess.IRemoteTaskCallback;
 import android.hardware.automotive.remoteaccess.ScheduleInfo;
+import android.hardware.automotive.remoteaccess.TaskType;
 
 /**
- * Interface representing a remote wakeup client.
+ * The remote access HAL.
  *
- * A wakeup client is a binary outside Android framework that communicates with
- * a wakeup server and receives wake up command.
+ * <p>This HAL represents an external system that is always on even when Android
+ * is powered off. It is capable of wakeing up and notifying Android when a
+ * remote task arrives.
+ *
+ * <p>For cloud-based remote access, a cloud server will issue the remote task
+ * to the external system, which will then be forwarded to Android. The client
+ * is expected to call {@code setRemoteTaskCallback} to register the remote
+ * task callback and uses the information returned from {@code getVehicleId},
+ * {@code getWakeupServiceName} and {@code getProcessorId} to register with
+ * a remote server.
+ *
+ * <p>For serverless remote access, the remote task comes from the external
+ * system alone and no server is involved. The external system may support
+ * scheduling a remote task to executed later through {@code scheduleTask}.
+ *
+ * <p>For both cloud-based and serverless remote access, the ideal use case
+ * is to wake up Android when the vehicle is not in use and then shutdown
+ * Android after the task is complete. However, user may access the vehicle
+ * during this period, and Android must not be shutdown if this happens.
+ *
+ * <p>If this interface is implemented, then VHAL property
+ * {@code VEHICLE_IN_USE} must be supported to represent whether the vehicle is
+ * currently in use. Android will check this before sending the shutdown
+ * request.
+ *
+ * <p>The external power controller system must also check whether vehicle is
+ * in use upon receiving the shutdown request and makes sure that an
+ * user-unexpected shutdown must not happen.
  */
 @VintfStability
 interface IRemoteAccess {
@@ -110,6 +137,17 @@ interface IRemoteAccess {
     boolean isTaskScheduleSupported();
 
     /**
+     * Returns the supported task types for scheduling.
+     *
+     * <p>If task scheduling is not supported, this returns an empty array.
+     *
+     * <p>Otherwise, at least {@code TaskType.CUSTOM} must be supported.
+     *
+     * @return An array of supported task types.
+     */
+    TaskType[] getSupportedTaskTypesForScheduling();
+
+    /**
      * Schedules a task to be executed later even when the vehicle is off.
      *
      * <p>If {@link isTaskScheduleSupported} returns {@code false}. This is no-op.
@@ -127,6 +165,8 @@ interface IRemoteAccess {
      *
      * <p>Must return {@code EX_ILLEGAL_ARGUMENT} if a pending schedule with the same
      * {@code scheduleId} for this client exists.
+     *
+     * <p>Must return {@code EX_ILLEGAL_ARGUMENT} if the task type is not supported.
      */
     void scheduleTask(in ScheduleInfo scheduleInfo);
 

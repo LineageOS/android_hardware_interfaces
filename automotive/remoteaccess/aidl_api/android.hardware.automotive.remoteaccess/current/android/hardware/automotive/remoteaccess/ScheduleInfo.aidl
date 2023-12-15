@@ -36,6 +36,7 @@ package android.hardware.automotive.remoteaccess;
 parcelable ScheduleInfo {
   String clientId;
   String scheduleId;
+  android.hardware.automotive.remoteaccess.TaskType taskType;
   byte[] taskData;
   int count;
   long startTimeInEpochSeconds;
