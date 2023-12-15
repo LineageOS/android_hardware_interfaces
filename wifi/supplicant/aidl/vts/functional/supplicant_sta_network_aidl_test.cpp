@@ -110,6 +110,7 @@ class SupplicantStaNetworkAidlTest
         initializeService();
         supplicant_ = getSupplicant(GetParam().c_str());
         ASSERT_NE(supplicant_, nullptr);
+        ASSERT_TRUE(supplicant_->getInterfaceVersion(&interface_version_).isOk());
         ASSERT_TRUE(supplicant_
                         ->setDebugParams(DebugLevel::EXCESSIVE,
                                          true,  // show timestamps
@@ -131,6 +132,7 @@ class SupplicantStaNetworkAidlTest
     std::shared_ptr<ISupplicant> supplicant_;
     std::shared_ptr<ISupplicantStaIface> sta_iface_;
     std::shared_ptr<ISupplicantStaNetwork> sta_network_;
+    int interface_version_;
 
     void removeNetwork() {
         ASSERT_NE(sta_iface_, nullptr);
@@ -826,6 +828,9 @@ TEST_P(SupplicantStaNetworkAidlTest, SetMinimumTlsVersionEapPhase1Param) {
  * disableEht
  */
 TEST_P(SupplicantStaNetworkAidlTest, DisableEht) {
+    if (interface_version_ < 3) {
+        GTEST_SKIP() << "disableEht is available as of Supplicant V3";
+    }
     EXPECT_TRUE(sta_network_->disableEht().isOk());
 }
 
