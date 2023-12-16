@@ -22,6 +22,7 @@
 #include <LargeParcelableBase.h>
 #include <VehicleHalTypes.h>
 #include <VehicleUtils.h>
+#include <VersionForVehicleProperty.h>
 
 #include <android-base/result.h>
 #include <android-base/stringprintf.h>
@@ -61,6 +62,7 @@ using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyAccess;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyChangeMode;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyStatus;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropValue;
+using ::aidl::android::hardware::automotive::vehicle::VersionForVehicleProperty;
 using ::android::automotive::car_binder_lib::LargeParcelableBase;
 using ::android::base::Error;
 using ::android::base::expected;
@@ -94,8 +96,13 @@ float getDefaultSampleRateHz(float sampleRateHz, float minSampleRateHz, float ma
 }  // namespace
 
 DefaultVehicleHal::DefaultVehicleHal(std::unique_ptr<IVehicleHardware> vehicleHardware)
+    : DefaultVehicleHal(std::move(vehicleHardware), /* testInterfaceVersion= */ 0){};
+
+DefaultVehicleHal::DefaultVehicleHal(std::unique_ptr<IVehicleHardware> vehicleHardware,
+                                     int32_t testInterfaceVersion)
     : mVehicleHardware(std::move(vehicleHardware)),
-      mPendingRequestPool(std::make_shared<PendingRequestPool>(TIMEOUT_IN_NANO)) {
+      mPendingRequestPool(std::make_shared<PendingRequestPool>(TIMEOUT_IN_NANO)),
+      mTestInterfaceVersion(testInterfaceVersion) {
     if (!getAllPropConfigsFromHardware()) {
         return;
     }
@@ -312,13 +319,46 @@ void DefaultVehicleHal::setTimeout(int64_t timeoutInNano) {
     mPendingRequestPool = std::make_unique<PendingRequestPool>(timeoutInNano);
 }
 
+int32_t DefaultVehicleHal::getVhalInterfaceVersion() {
+    if (mTestInterfaceVersion != 0) {
+        return mTestInterfaceVersion;
+    }
+    int32_t myVersion = 0;
+    getInterfaceVersion(&myVersion);
+    return myVersion;
+}
+
 bool DefaultVehicleHal::getAllPropConfigsFromHardware() {
     auto configs = mVehicleHardware->getAllPropertyConfigs();
+    std::vector<VehiclePropConfig> filteredConfigs;
+    int32_t myVersion = getVhalInterfaceVersion();
     for (auto& config : configs) {
+        if (!isSystemProp(config.prop)) {
+            filteredConfigs.push_back(std::move(config));
+            continue;
+        }
+        VehicleProperty property = static_cast<VehicleProperty>(config.prop);
+        std::string propertyName = aidl::android::hardware::automotive::vehicle::toString(property);
+        auto it = VersionForVehicleProperty.find(property);
+        if (it == VersionForVehicleProperty.end()) {
+            ALOGE("The property: %s is not a supported system property, ignore",
+                  propertyName.c_str());
+            continue;
+        }
+        int requiredVersion = it->second;
+        if (myVersion < requiredVersion) {
+            ALOGE("The property: %s is not supported for current client VHAL version, "
+                  "require %d, current version: %d, ignore",
+                  propertyName.c_str(), requiredVersion, myVersion);
+            continue;
+        }
+        filteredConfigs.push_back(std::move(config));
+    }
+    for (auto& config : filteredConfigs) {
         mConfigsByPropId[config.prop] = config;
     }
     VehiclePropConfigs vehiclePropConfigs;
-    vehiclePropConfigs.payloads = std::move(configs);
+    vehiclePropConfigs.payloads = std::move(filteredConfigs);
     auto result = LargeParcelableBase::parcelableToStableLargeParcelable(vehiclePropConfigs);
     if (!result.ok()) {
         ALOGE("failed to convert configs to shared memory file, error: %s, code: %d",
@@ -413,9 +453,9 @@ ScopedAStatus DefaultVehicleHal::getValues(const CallbackType& callback,
                     .status = getErrorCode(result),
                     .prop = {},
             });
-        } else {
-            hardwareRequests.push_back(request);
+            continue;
         }
+        hardwareRequests.push_back(request);
     }
 
     // The set of request Ids that we would send to hardware.
@@ -816,6 +856,7 @@ VhalResult<void> DefaultVehicleHal::checkPermissionHelper(
     if (!result.ok()) {
         return StatusError(StatusCode::INVALID_ARG) << getErrorMsg(result);
     }
+
     const VehiclePropConfig* config = result.value();
     const VehicleAreaConfig* areaConfig = getAreaConfig(value, *config);
 
@@ -900,6 +941,7 @@ binder_status_t DefaultVehicleHal::dump(int fd, const char** args, uint32_t numA
     dprintf(fd, "Vehicle HAL State: \n");
     {
         std::scoped_lock<std::mutex> lockGuard(mLock);
+        dprintf(fd, "Interface version: %" PRId32 "\n", getVhalInterfaceVersion());
         dprintf(fd, "Containing %zu property configs\n", mConfigsByPropId.size());
         dprintf(fd, "Currently have %zu getValues clients\n", mGetValuesClients.size());
         dprintf(fd, "Currently have %zu setValues clients\n", mSetValuesClients.size());
