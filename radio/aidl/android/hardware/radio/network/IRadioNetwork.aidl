@@ -649,8 +649,8 @@ oneway interface IRadioNetwork {
     /**
      * Get whether pre-auth cellular identifier in-the-clear transparency is enabled. If
      * IRadioNetworkInterface.setCellularIdentifierTransparencyEnabled has been called, this should
-     * return the value of the `enabled` parameter of the last successful call. If it hasn't been
-     * called this should return the default value of true.
+     * return the value of the `enabled` parameter of the last successful call and false if
+     * IRadioNetworkInterface.setCellularIdentifierTransparencyEnabled has not been called yet.
      *
      * @param serial Serial number of request
      *
@@ -669,7 +669,7 @@ oneway interface IRadioNetwork {
      * Note: Cellular identifiers disclosed in uplink messages covered under a NAS Security Context
      * as well as identifiers disclosed in downlink messages are out of scope.
      *
-     * This feature applies to 2g, 3g, 4g, and 5g (SA and NSA) messages sent before a NAS security
+     * This feature applies to 2g, 3g, 4g, and 5g (SA and NSA) messages sent before a security
      * context is established. In scope message definitions and their associated spec references can
      * be found in NasProtocolMessage.
      *
@@ -677,8 +677,6 @@ oneway interface IRadioNetwork {
      * IRadioNetworkIndication.sentCellularIdentifierDisclosure again until a subsequent call
      * re-enables this functionality. The modem may choose to stop tracking cellular identifiers in
      * the clear during this time.
-     *
-     * Note: The default value of enabled shall be true.
      *
      * @param serial Serial number of request
      * @param enabled Whether or not to enable sending indications for cellular identifiers in the
@@ -693,8 +691,6 @@ oneway interface IRadioNetwork {
     /**
      * Enables or disables security algorithm update reports via indication API
      * {@link IRadioNetworkIndication.securityAlgorithmsUpdated()}.
-     *
-     * Note: The default value shall be enabled.
      *
      * @param serial Serial number of request.
      * @param enable {@code true} to enable security algorithm update reports, {@code false} to

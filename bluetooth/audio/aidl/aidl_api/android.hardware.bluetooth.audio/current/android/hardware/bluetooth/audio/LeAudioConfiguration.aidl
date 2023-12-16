@@ -44,5 +44,16 @@ parcelable LeAudioConfiguration {
     char streamHandle;
     int audioChannelAllocation;
     boolean isStreamActive;
+    @nullable android.hardware.bluetooth.audio.LeAudioAseConfiguration aseConfiguration;
+    @nullable android.hardware.bluetooth.audio.ConfigurationFlags flags;
+    @nullable android.hardware.bluetooth.audio.LeAudioConfiguration.StreamMap.BluetoothDeviceAddress bluetoothDeviceAddress;
+    parcelable BluetoothDeviceAddress {
+      byte[6] deviceAddress;
+      android.hardware.bluetooth.audio.LeAudioConfiguration.StreamMap.BluetoothDeviceAddress.DeviceAddressType deviceAddressType;
+      enum DeviceAddressType {
+        BLE_ADDRESS_PUBLIC = 0x00,
+        BLE_ADDRESS_RANDOM = 0x01,
+      }
+    }
   }
 }

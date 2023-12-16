@@ -37,11 +37,13 @@ public final class EnumForVehicleProperty {
         Map.entry(VehicleProperty.INFO_DRIVER_SEAT, List.of(VehicleAreaSeat.class)),
         Map.entry(VehicleProperty.INFO_MULTI_EV_PORT_LOCATIONS, List.of(PortLocationType.class)),
         Map.entry(VehicleProperty.ENGINE_OIL_LEVEL, List.of(VehicleOilLevel.class)),
+        Map.entry(VehicleProperty.IMPACT_DETECTED, List.of(ImpactSensorLocation.class)),
         Map.entry(VehicleProperty.GEAR_SELECTION, List.of(VehicleGear.class)),
         Map.entry(VehicleProperty.CURRENT_GEAR, List.of(VehicleGear.class)),
         Map.entry(VehicleProperty.TURN_SIGNAL_STATE, List.of(VehicleTurnSignal.class)),
         Map.entry(VehicleProperty.IGNITION_STATE, List.of(VehicleIgnitionState.class)),
         Map.entry(VehicleProperty.EV_STOPPING_MODE, List.of(EvStoppingMode.class)),
+        Map.entry(VehicleProperty.ELECTRONIC_STABILITY_CONTROL_STATE, List.of(ElectronicStabilityControlState.class, ErrorState.class)),
         Map.entry(VehicleProperty.HVAC_FAN_DIRECTION, List.of(VehicleHvacFanDirection.class)),
         Map.entry(VehicleProperty.HVAC_TEMPERATURE_DISPLAY_UNITS, List.of(VehicleUnit.class)),
         Map.entry(VehicleProperty.HVAC_FAN_DIRECTION_AVAILABLE, List.of(VehicleHvacFanDirection.class)),
@@ -53,6 +55,7 @@ public final class EnumForVehicleProperty {
         Map.entry(VehicleProperty.HW_CUSTOM_INPUT, List.of(CustomInputType.class)),
         Map.entry(VehicleProperty.SEAT_FOOTWELL_LIGHTS_STATE, List.of(VehicleLightState.class)),
         Map.entry(VehicleProperty.SEAT_FOOTWELL_LIGHTS_SWITCH, List.of(VehicleLightSwitch.class)),
+        Map.entry(VehicleProperty.SEAT_AIRBAGS_DEPLOYED, List.of(VehicleAirbagLocation.class)),
         Map.entry(VehicleProperty.SEAT_OCCUPANCY, List.of(VehicleSeatOccupancyState.class)),
         Map.entry(VehicleProperty.WINDSHIELD_WIPERS_STATE, List.of(WindshieldWipersState.class)),
         Map.entry(VehicleProperty.WINDSHIELD_WIPERS_SWITCH, List.of(WindshieldWipersSwitch.class)),
@@ -81,6 +84,7 @@ public final class EnumForVehicleProperty {
         Map.entry(VehicleProperty.TRAILER_PRESENT, List.of(TrailerState.class)),
         Map.entry(VehicleProperty.GENERAL_SAFETY_REGULATION_COMPLIANCE_REQUIREMENT, List.of(GsrComplianceRequirementType.class)),
         Map.entry(VehicleProperty.SHUTDOWN_REQUEST, List.of(VehicleApPowerStateShutdownParam.class)),
+        Map.entry(VehicleProperty.VEHICLE_DRIVING_AUTOMATION_CURRENT_LEVEL, List.of(VehicleAutonomousState.class)),
         Map.entry(VehicleProperty.AUTOMATIC_EMERGENCY_BRAKING_STATE, List.of(AutomaticEmergencyBrakingState.class, ErrorState.class)),
         Map.entry(VehicleProperty.FORWARD_COLLISION_WARNING_STATE, List.of(ForwardCollisionWarningState.class, ErrorState.class)),
         Map.entry(VehicleProperty.BLIND_SPOT_WARNING_STATE, List.of(BlindSpotWarningState.class, ErrorState.class)),
@@ -93,7 +97,14 @@ public final class EnumForVehicleProperty {
         Map.entry(VehicleProperty.CRUISE_CONTROL_STATE, List.of(CruiseControlState.class, ErrorState.class)),
         Map.entry(VehicleProperty.CRUISE_CONTROL_COMMAND, List.of(CruiseControlCommand.class)),
         Map.entry(VehicleProperty.HANDS_ON_DETECTION_DRIVER_STATE, List.of(HandsOnDetectionDriverState.class, ErrorState.class)),
-        Map.entry(VehicleProperty.HANDS_ON_DETECTION_WARNING, List.of(HandsOnDetectionWarning.class, ErrorState.class))
+        Map.entry(VehicleProperty.HANDS_ON_DETECTION_WARNING, List.of(HandsOnDetectionWarning.class, ErrorState.class)),
+        Map.entry(VehicleProperty.DRIVER_DROWSINESS_ATTENTION_STATE, List.of(DriverDrowsinessAttentionState.class, ErrorState.class)),
+        Map.entry(VehicleProperty.DRIVER_DROWSINESS_ATTENTION_WARNING, List.of(DriverDrowsinessAttentionWarning.class, ErrorState.class)),
+        Map.entry(VehicleProperty.DRIVER_DISTRACTION_STATE, List.of(DriverDistractionState.class, ErrorState.class)),
+        Map.entry(VehicleProperty.DRIVER_DISTRACTION_WARNING, List.of(DriverDistractionWarning.class, ErrorState.class)),
+        Map.entry(VehicleProperty.LOW_SPEED_COLLISION_WARNING_STATE, List.of(LowSpeedCollisionWarningState.class, ErrorState.class)),
+        Map.entry(VehicleProperty.CROSS_TRAFFIC_MONITORING_WARNING_STATE, List.of(CrossTrafficMonitoringWarningState.class, ErrorState.class)),
+        Map.entry(VehicleProperty.LOW_SPEED_AUTOMATIC_EMERGENCY_BRAKING_STATE, List.of(LowSpeedAutomaticEmergencyBrakingState.class, ErrorState.class))
     );
 
 }

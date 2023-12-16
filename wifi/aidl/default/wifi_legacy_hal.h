@@ -186,6 +186,7 @@ using ::NanTransmitFollowupRequest;
 using ::NanTxType;
 using ::NpkSecurityAssociation;
 using ::PASN;
+using ::ROAMING_AGGRESSIVE;
 using ::ROAMING_DISABLE;
 using ::ROAMING_ENABLE;
 using ::RTT_PEER_AP;
@@ -214,6 +215,8 @@ using ::RTT_STATUS_NO_WIFI;
 using ::RTT_STATUS_SUCCESS;
 using ::RTT_TYPE_1_SIDED;
 using ::RTT_TYPE_2_SIDED;
+using ::RTT_TYPE_2_SIDED_11AZ_NTB;
+using ::RTT_TYPE_2_SIDED_11MC;
 using ::RX_PKT_FATE_DRV_DROP_FILTER;
 using ::RX_PKT_FATE_DRV_DROP_INVALID;
 using ::RX_PKT_FATE_DRV_DROP_NOBUFS;
@@ -256,6 +259,7 @@ using ::WIFI_BAND_ABG_WITH_DFS;
 using ::WIFI_BAND_BG;
 using ::WIFI_BAND_UNSPECIFIED;
 using ::wifi_cached_scan_report;
+using ::wifi_cached_scan_result;
 using ::wifi_cached_scan_results;
 using ::WIFI_CHAN_WIDTH_10;
 using ::WIFI_CHAN_WIDTH_160;
@@ -349,16 +353,20 @@ using ::WIFI_RTT_BW_5;
 using ::WIFI_RTT_BW_80;
 using ::WIFI_RTT_BW_UNSPECIFIED;
 using ::wifi_rtt_capabilities;
+using ::wifi_rtt_capabilities_v3;
 using ::wifi_rtt_config;
+using ::wifi_rtt_config_v3;
 using ::wifi_rtt_preamble;
 using ::WIFI_RTT_PREAMBLE_EHT;
 using ::WIFI_RTT_PREAMBLE_HE;
 using ::WIFI_RTT_PREAMBLE_HT;
+using ::WIFI_RTT_PREAMBLE_INVALID;
 using ::WIFI_RTT_PREAMBLE_LEGACY;
 using ::WIFI_RTT_PREAMBLE_VHT;
 using ::wifi_rtt_responder;
 using ::wifi_rtt_result;
 using ::wifi_rtt_result_v2;
+using ::wifi_rtt_result_v3;
 using ::wifi_rtt_status;
 using ::wifi_rtt_type;
 using ::wifi_rx_packet_fate;
@@ -368,6 +376,13 @@ using ::wifi_scan_cmd_params;
 using ::WIFI_SCAN_FLAG_INTERRUPTED;
 using ::wifi_scan_result;
 using ::WIFI_SUCCESS;
+using ::wifi_twt_capabilities;
+using ::wifi_twt_error_code;
+using ::wifi_twt_events;
+using ::wifi_twt_request;
+using ::wifi_twt_session;
+using ::wifi_twt_session_stats;
+using ::wifi_twt_teardown_reason_code;
 using ::wifi_tx_packet_fate;
 using ::wifi_tx_report;
 using ::wifi_usable_channel;
@@ -420,6 +435,12 @@ struct LinkLayerMlStats {
     std::vector<LinkStats> links;
     std::vector<LinkLayerRadioStats> radios;
     bool valid;
+};
+
+struct WifiCachedScanReport {
+    uint64_t ts;
+    std::vector<int> scanned_freqs;
+    std::vector<wifi_cached_scan_result> results;
 };
 
 #pragma GCC diagnostic pop
@@ -485,6 +506,8 @@ using on_rtt_results_callback =
         std::function<void(wifi_request_id, const std::vector<const wifi_rtt_result*>&)>;
 using on_rtt_results_callback_v2 =
         std::function<void(wifi_request_id, const std::vector<const wifi_rtt_result_v2*>&)>;
+using on_rtt_results_callback_v3 =
+        std::function<void(wifi_request_id, const std::vector<const wifi_rtt_result_v3*>&)>;
 
 // Callback for ring buffer data.
 using on_ring_buffer_data_callback = std::function<void(
@@ -532,11 +555,22 @@ struct ChreCallbackHandlers {
     std::function<void(chre_nan_rtt_state)> on_wifi_chre_nan_rtt_state;
 };
 
-// Cached Scan Results response and event callbacks struct.
-struct CachedScanResultsCallbackHandlers {
+using on_cached_scan_results_callback = std::function<void(wifi_cached_scan_report*)>;
+
+struct CachedScanResultsCallbfackHandlers {
     // Callback for Cached Scan Results
     std::function<void(wifi_cached_scan_report*)> on_cached_scan_results;
 };
+
+using on_twt_failure = std::function<void(wifi_request_id id, wifi_twt_error_code error_code)>;
+using on_twt_session_create = std::function<void(wifi_request_id id, wifi_twt_session twt_session)>;
+using on_twt_session_update = std::function<void(wifi_request_id id, wifi_twt_session twt_session)>;
+using on_twt_session_teardown = std::function<void(wifi_request_id id, int session_id,
+                                                   wifi_twt_teardown_reason_code reason_code)>;
+using on_twt_session_stats =
+        std::function<void(wifi_request_id id, int session_id, wifi_twt_session_stats stats)>;
+using on_twt_session_suspend = std::function<void(wifi_request_id id, int session_id)>;
+using on_twt_session_resume = std::function<void(wifi_request_id id, int session_id)>;
 
 /**
  * Class that encapsulates all legacy HAL interactions.
@@ -659,9 +693,15 @@ class WifiLegacyHal {
                                     const std::vector<wifi_rtt_config>& rtt_configs,
                                     const on_rtt_results_callback& on_results_callback,
                                     const on_rtt_results_callback_v2& on_results_callback_v2);
+    wifi_error startRttRangeRequestV3(const std::string& iface_name, wifi_request_id id,
+                                      const std::vector<wifi_rtt_config_v3>& rtt_configs,
+                                      const on_rtt_results_callback_v3& on_results_callback);
+
     wifi_error cancelRttRangeRequest(const std::string& iface_name, wifi_request_id id,
                                      const std::vector<std::array<uint8_t, ETH_ALEN>>& mac_addrs);
     std::pair<wifi_error, wifi_rtt_capabilities> getRttCapabilities(const std::string& iface_name);
+    std::pair<wifi_error, wifi_rtt_capabilities_v3> getRttCapabilitiesV3(
+            const std::string& iface_name);
     std::pair<wifi_error, wifi_rtt_responder> getRttResponderInfo(const std::string& iface_name);
     wifi_error enableRttResponder(const std::string& iface_name, wifi_request_id id,
                                   const wifi_channel_info& channel_hint, uint32_t max_duration_secs,
@@ -738,19 +778,39 @@ class WifiLegacyHal {
 
     wifi_error setVoipMode(const std::string& iface_name, wifi_voip_mode mode);
 
+    // TWT functions
+    std::pair<wifi_twt_capabilities, wifi_error> twtGetCapabilities(const std::string& ifaceName);
+    wifi_error twtSessionSetup(const std::string& ifaceName, uint32_t cmdId,
+                               const wifi_twt_request& request,
+                               const on_twt_failure& on_twt_failure_user_callback,
+                               const on_twt_session_create& on_twt_session_create_user_callback,
+                               const on_twt_session_update& on_twt_session_update_user_callback,
+                               const on_twt_session_teardown& on_twt_session_teardown_user_callback,
+                               const on_twt_session_stats& on_twt_session_stats_user_callback,
+                               const on_twt_session_suspend& on_twt_session_suspend_user_callback,
+                               const on_twt_session_resume& on_twt_session_resume_user_callback);
+    wifi_error twtSessionUpdate(const std::string& ifaceName, uint32_t cmdId, uint32_t sessionId,
+                                const wifi_twt_request& request);
+    wifi_error twtSessionSuspend(const std::string& ifaceName, uint32_t cmdId, uint32_t sessionId);
+    wifi_error twtSessionResume(const std::string& ifaceName, uint32_t cmdId, uint32_t sessionId);
+    wifi_error twtSessionTeardown(const std::string& ifaceName, uint32_t cmdId, uint32_t sessionId);
+    wifi_error twtSessionGetStats(const std::string& ifaceName, uint32_t cmdId, uint32_t sessionId);
+
+    // Note: Following TWT functions are deprecated
+    // Deprecated
     wifi_error twtRegisterHandler(const std::string& iface_name,
                                   const TwtCallbackHandlers& handler);
-
+    // Deprecated by twtGetCapabilities
     std::pair<wifi_error, TwtCapabilitySet> twtGetCapability(const std::string& iface_name);
-
+    // Deprecated by twtSessionSetup
     wifi_error twtSetupRequest(const std::string& iface_name, const TwtSetupRequest& msg);
-
+    // Deprecated by twtSessionTeardown
     wifi_error twtTearDownRequest(const std::string& iface_name, const TwtTeardownRequest& msg);
-
+    // Deprecated by twtSessionSuspend and twtSessionResume
     wifi_error twtInfoFrameRequest(const std::string& iface_name, const TwtInfoFrameRequest& msg);
-
+    // Deprecated by twtSessionGetStats
     std::pair<wifi_error, TwtStats> twtGetStats(const std::string& iface_name, uint8_t configId);
-
+    // Deprecated
     wifi_error twtClearStats(const std::string& iface_name, uint8_t configId);
 
     wifi_error setScanMode(const std::string& iface_name, bool enable);
@@ -776,7 +836,7 @@ class WifiLegacyHal {
 
     wifi_error enableWifiTxPowerLimits(const std::string& iface_name, bool enable);
     wifi_error getWifiCachedScanResults(const std::string& iface_name,
-                                        const CachedScanResultsCallbackHandlers& handler);
+                                        WifiCachedScanReport& report);
     std::pair<wifi_error, wifi_chip_capabilities> getWifiChipCapabilities();
     wifi_error enableStaChannelForPeerNetwork(uint32_t channelCategoryEnableFlag);
     wifi_error setMloMode(wifi_mlo_mode mode);

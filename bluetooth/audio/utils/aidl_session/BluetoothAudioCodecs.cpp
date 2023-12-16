@@ -32,6 +32,7 @@
 #include <aidl/android/hardware/bluetooth/audio/SbcChannelMode.h>
 #include <android-base/logging.h>
 
+#include "BluetoothLeAudioAseConfigurationSettingProvider.h"
 #include "BluetoothLeAudioCodecsProvider.h"
 
 namespace aidl {
@@ -41,7 +42,7 @@ namespace bluetooth {
 namespace audio {
 
 static const PcmCapabilities kDefaultSoftwarePcmCapabilities = {
-    .sampleRateHz = {16000, 24000, 32000, 44100, 48000, 88200, 96000},
+    .sampleRateHz = {8000, 16000, 24000, 32000, 44100, 48000, 88200, 96000},
     .channelMode = {ChannelMode::MONO, ChannelMode::STEREO},
     .bitsPerSample = {16, 24, 32},
     .dataIntervalUs = {},
@@ -97,6 +98,8 @@ const std::vector<CodecCapabilities> kDefaultOffloadA2dpCodecCapabilities = {
     {.codecType = CodecType::OPUS, .capabilities = {}}};
 
 std::vector<LeAudioCodecCapabilitiesSetting> kDefaultOffloadLeAudioCapabilities;
+std::unordered_map<SessionType, std::vector<CodecInfo>>
+    kDefaultOffloadLeAudioCodecInfoMap;
 
 template <class T>
 bool BluetoothAudioCodecs::ContainedInVector(
@@ -409,6 +412,37 @@ BluetoothAudioCodecs::GetLeAudioOffloadCodecCapabilities(
             le_audio_offload_setting);
   }
   return kDefaultOffloadLeAudioCapabilities;
+}
+
+std::vector<CodecInfo> BluetoothAudioCodecs::GetLeAudioOffloadCodecInfo(
+    const SessionType& session_type) {
+  if (session_type !=
+          SessionType::LE_AUDIO_HARDWARE_OFFLOAD_ENCODING_DATAPATH &&
+      session_type !=
+          SessionType::LE_AUDIO_HARDWARE_OFFLOAD_DECODING_DATAPATH &&
+      session_type !=
+          SessionType::LE_AUDIO_BROADCAST_HARDWARE_OFFLOAD_ENCODING_DATAPATH) {
+    return std::vector<CodecInfo>();
+  }
+
+  if (kDefaultOffloadLeAudioCodecInfoMap.empty()) {
+    auto le_audio_offload_setting =
+        BluetoothLeAudioCodecsProvider::ParseFromLeAudioOffloadSettingFile();
+    auto kDefaultOffloadLeAudioCodecInfoMap =
+        BluetoothLeAudioCodecsProvider::GetLeAudioCodecInfo(
+            le_audio_offload_setting);
+  }
+  auto codec_info_map_iter =
+      kDefaultOffloadLeAudioCodecInfoMap.find(session_type);
+  if (codec_info_map_iter == kDefaultOffloadLeAudioCodecInfoMap.end())
+    return std::vector<CodecInfo>();
+  return codec_info_map_iter->second;
+}
+
+std::vector<LeAudioAseConfigurationSetting>
+BluetoothAudioCodecs::GetLeAudioAseConfigurationSettings() {
+  return AudioSetConfigurationProviderJson::
+      GetLeAudioAseConfigurationSettings();
 }
 
 }  // namespace audio

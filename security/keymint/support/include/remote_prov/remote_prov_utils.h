@@ -17,6 +17,7 @@
 #pragma once
 
 #include <memory>
+#include <string>
 #include <vector>
 #include "aidl/android/hardware/security/keymint/IRemotelyProvisionedComponent.h"
 
@@ -129,8 +130,8 @@ struct JsonOutput {
  *     "name": <string>
  *   }
  */
-JsonOutput jsonEncodeCsrWithBuild(const std::string instance_name,
-                                  const cppbor::Array& csr);
+JsonOutput jsonEncodeCsrWithBuild(const std::string& instance_name, const cppbor::Array& csr,
+                                  const std::string& serialno_prop);
 
 /**
  * Parses a DeviceInfo structure from the given CBOR data. The parsed data is then validated to

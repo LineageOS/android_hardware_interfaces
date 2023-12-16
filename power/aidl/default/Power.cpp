@@ -18,6 +18,8 @@
 #include "PowerHintSession.h"
 
 #include <android-base/logging.h>
+#include <fmq/AidlMessageQueue.h>
+#include <fmq/EventFlag.h>
 
 namespace aidl {
 namespace android {
@@ -27,6 +29,10 @@ namespace impl {
 namespace example {
 
 using namespace std::chrono_literals;
+using ::aidl::android::hardware::common::fmq::MQDescriptor;
+using ::aidl::android::hardware::common::fmq::SynchronizedReadWrite;
+using ::aidl::android::hardware::power::ChannelMessage;
+using ::android::AidlMessageQueue;
 
 using ndk::ScopedAStatus;
 
@@ -68,6 +74,27 @@ ScopedAStatus Power::createHintSession(int32_t, int32_t, const std::vector<int32
     mPowerHintSessions.push_back(powerHintSession);
     *_aidl_return = powerHintSession;
     return ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus Power::createHintSessionWithConfig(
+        int32_t tgid, int32_t uid, const std::vector<int32_t>& threadIds, int64_t durationNanos,
+        SessionTag, SessionConfig* config, std::shared_ptr<IPowerHintSession>* _aidl_return) {
+    auto out = createHintSession(tgid, uid, threadIds, durationNanos, _aidl_return);
+    static_cast<PowerHintSession*>(_aidl_return->get())->getSessionConfig(config);
+    return out;
+}
+
+ndk::ScopedAStatus Power::getSessionChannel(int32_t, int32_t, ChannelConfig* _aidl_return) {
+    static AidlMessageQueue<ChannelMessage, SynchronizedReadWrite> stubQueue{1, true};
+    _aidl_return->channelDescriptor = stubQueue.dupeDesc();
+    _aidl_return->readFlagBitmask = 0;
+    _aidl_return->writeFlagBitmask = 0;
+    _aidl_return->eventFlagDescriptor = std::nullopt;
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus Power::closeSessionChannel(int32_t, int32_t) {
+    return ndk::ScopedAStatus::ok();
 }
 
 ScopedAStatus Power::getHintSessionPreferredRate(int64_t* outNanoseconds) {

@@ -45,4 +45,5 @@ parcelable ContextHubInfo {
   byte chreApiMinorVersion;
   char chrePatchVersion;
   String[] supportedPermissions;
+  boolean supportsReliableMessages;
 }

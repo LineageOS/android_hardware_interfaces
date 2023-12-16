@@ -190,3 +190,30 @@ following links:
 *   [RpcHardwareInfo](https://cs.android.com/android/platform/superproject/+/master:hardware/interfaces/security/rkp/aidl/android/hardware/security/keymint/RpcHardwareInfo.aidl)
 *   [DeviceInfo](https://cs.android.com/android/platform/superproject/+/master:hardware/interfaces/security/rkp/aidl/android/hardware/security/keymint/DeviceInfo.aidl)
 
+### Support for Android Virtualization Framework
+
+The Android Virtualization Framwork (AVF) relies on RKP to provision keys for VMs. A
+privileged vm, the RKP VM, is reponsible for generating and managing the keys for client
+VMs that run virtualized workloads. See the following for more background information on the
+RKP VM:
+*    [rkp-vm](https://android.googlesource.com/platform/packages/modules/Virtualization/+/main/service_vm/README.md#rkp-vm-remote-key-provisioning-virtual-machine)
+*    [rkp-service](https://source.android.com/docs/core/ota/modular-system/remote-key-provisioning#stack-architecture)
+
+It is important to distinquish the RKP VM from other components, such as KeyMint. An
+[RKP VM marker](https://pigweed.googlesource.com/open-dice/+/HEAD/docs/android.md#configuration-descriptor)
+(key `-70006) is used for this purpose. The existence or absence of this marker is used to
+identify the type of component decribed by a given DICE chain.
+
+The following describes which certificate types may be request based on the RKP VM marker:
+1. "rkp-vm": If a DICE chain has zero or more certificates without the RKP VM
+   marker followed by one or more certificates with the marker, then that chain
+   describes an RKP VM. If there are further certificates without the RKP VM
+   marker, then the chain does not describe an RKP VM.
+
+   Implementations must include the first RPK VM marker as early as possible
+   after the point of divergence between TEE and non-TEE components in the DICE
+   chain, prior to loading the Android Bootloader (ABL).
+2. "widevine" or "keymint": If there are no certificates with the RKP VM
+   marker then it describes a TEE component.
+3. None: Any component described by a DICE chain that does not match the above
+   two categories.

@@ -822,6 +822,13 @@ TEST_P(SupplicantStaNetworkAidlTest, SetMinimumTlsVersionEapPhase1Param) {
               tlsV13Supported);
 }
 
+/*
+ * disableEht
+ */
+TEST_P(SupplicantStaNetworkAidlTest, DisableEht) {
+    EXPECT_TRUE(sta_network_->disableEht().isOk());
+}
+
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(SupplicantStaNetworkAidlTest);
 INSTANTIATE_TEST_SUITE_P(Supplicant, SupplicantStaNetworkAidlTest,
                          testing::ValuesIn(android::getAidlHalInstanceNames(

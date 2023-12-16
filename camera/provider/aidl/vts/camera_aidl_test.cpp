@@ -30,6 +30,7 @@
 #include <aidlcommonsupport/NativeHandle.h>
 #include <android/binder_manager.h>
 #include <android/binder_process.h>
+#include <com_android_internal_camera_flags.h>
 #include <device_cb.h>
 #include <empty_device_cb.h>
 #include <grallocusage/GrallocUsageConversion.h>
@@ -39,6 +40,7 @@
 #include <ui/GraphicBufferAllocator.h>
 #include <regex>
 #include <typeinfo>
+#include "utils/Errors.h"
 
 using ::aidl::android::hardware::camera::common::CameraDeviceStatus;
 using ::aidl::android::hardware::camera::common::TorchModeStatus;
@@ -56,6 +58,8 @@ using ::ndk::ScopedAStatus;
 using ::ndk::SpAIBinder;
 
 namespace {
+namespace flags = com::android::internal::camera::flags;
+
 bool parseProviderName(const std::string& serviceDescriptor, std::string* type /*out*/,
                        uint32_t* id /*out*/) {
     if (!type || !id) {
@@ -100,6 +104,8 @@ bool parseProviderName(const std::string& serviceDescriptor, std::string* type /
 
     return true;
 }
+
+namespace flags = com::android::internal::camera::flags;
 
 const std::vector<int64_t> kMandatoryUseCases = {
         ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_DEFAULT,
@@ -477,6 +483,38 @@ void CameraAidlTest::verifyLogicalCameraResult(const camera_metadata_t* staticMe
         ASSERT_NE(physicalIds.find(mainPhysicalId), physicalIds.end());
     } else {
         ADD_FAILURE() << "Get LOGICAL_MULTI_CAMERA_ACTIVE_PHYSICAL_ID failed!";
+    }
+
+    if (flags::concert_mode()) {
+        auto ret = find_camera_metadata_ro_entry(
+                metadata, ANDROID_LOGICAL_MULTI_CAMERA_ACTIVE_PHYSICAL_SENSOR_CROP_REGION, &entry);
+        if ((ret == android::OK) && (entry.count > 0)) {
+            ASSERT_TRUE(entry.count == 4);
+            ASSERT_GE(entry.data.i32[0], 0);  // Top must be non-negative
+            ASSERT_GE(entry.data.i32[1], 0);  // Left must be non-negative
+            ASSERT_GT(entry.data.i32[2], 0);  // Width must be positive
+            ASSERT_GT(entry.data.i32[3], 0);  // Height must be positive
+        }
+    }
+}
+
+void CameraAidlTest::verifyLensIntrinsicsResult(const std::vector<uint8_t>& resultMetadata) {
+    if (flags::concert_mode()) {
+        camera_metadata_t* metadata = (camera_metadata_t*)resultMetadata.data();
+
+        camera_metadata_ro_entry timestampsEntry, intrinsicsEntry;
+        auto tsRet = find_camera_metadata_ro_entry(
+                metadata, ANDROID_STATISTICS_LENS_INTRINSIC_TIMESTAMPS, &timestampsEntry);
+        auto inRet = find_camera_metadata_ro_entry(
+                metadata, ANDROID_STATISTICS_LENS_INTRINSIC_SAMPLES, &intrinsicsEntry);
+        ASSERT_EQ(tsRet, inRet);
+        ASSERT_TRUE((intrinsicsEntry.count % 5) == 0);
+        ASSERT_EQ(timestampsEntry.count, intrinsicsEntry.count / 5);
+        if (timestampsEntry.count > 0) {
+            for (size_t i = 0; i < timestampsEntry.count - 1; i++) {
+                ASSERT_GE(timestampsEntry.data.i64[i + 1], timestampsEntry.data.i64[i]);
+            }
+        }
     }
 }
 
@@ -1350,13 +1388,17 @@ void CameraAidlTest::verifyLogicalOrUltraHighResCameraMetadata(
     bool hasHalBufferManager =
             (0 == retcode && 1 == entry.count &&
              entry.data.i32[0] == ANDROID_INFO_SUPPORTED_BUFFER_MANAGEMENT_VERSION_HIDL_DEVICE_3_5);
+    bool sessionHalBufferManager =
+            (0 == retcode && 1 == entry.count &&
+             entry.data.i32[0] ==
+                     ANDROID_INFO_SUPPORTED_BUFFER_MANAGEMENT_VERSION_SESSION_CONFIGURABLE);
     retcode = find_camera_metadata_ro_entry(
             metadata, ANDROID_SCALER_MULTI_RESOLUTION_STREAM_SUPPORTED, &entry);
     bool multiResolutionStreamSupported =
             (0 == retcode && 1 == entry.count &&
              entry.data.u8[0] == ANDROID_SCALER_MULTI_RESOLUTION_STREAM_SUPPORTED_TRUE);
     if (multiResolutionStreamSupported) {
-        ASSERT_TRUE(hasHalBufferManager);
+        ASSERT_TRUE(hasHalBufferManager || sessionHalBufferManager);
     }
 
     std::string version, cameraId;
@@ -1859,17 +1901,32 @@ void CameraAidlTest::createStreamConfiguration(std::vector<Stream>& streams,
 }
 
 void CameraAidlTest::verifyStreamCombination(const std::shared_ptr<ICameraDevice>& device,
-                                             const StreamConfiguration& config, bool expectedStatus,
-                                             bool expectStreamCombQuery) {
+                                             const StreamConfiguration& config,
+                                             bool expectedStatus) {
     if (device != nullptr) {
         bool streamCombinationSupported;
         ScopedAStatus ret =
                 device->isStreamCombinationSupported(config, &streamCombinationSupported);
-        // TODO: Check is unsupported operation is correct.
-        ASSERT_TRUE(ret.isOk() ||
-                    (expectStreamCombQuery && ret.getExceptionCode() == EX_UNSUPPORTED_OPERATION));
-        if (ret.isOk()) {
-            ASSERT_EQ(expectedStatus, streamCombinationSupported);
+        ASSERT_TRUE(ret.isOk());
+        ASSERT_EQ(expectedStatus, streamCombinationSupported);
+
+        if (flags::feature_combination_query()) {
+            int32_t interfaceVersion;
+            ret = device->getInterfaceVersion(&interfaceVersion);
+            ASSERT_TRUE(ret.isOk());
+            bool supportFeatureCombinationQuery =
+                    (interfaceVersion >= CAMERA_DEVICE_API_MINOR_VERSION_3);
+            if (supportFeatureCombinationQuery) {
+                ret = device->isStreamCombinationWithSettingsSupported(config,
+                                                                       &streamCombinationSupported);
+                // TODO: Do not allow OPERATION_NOT_SUPPORTED once HAL
+                // implementation is in place.
+                ASSERT_TRUE(ret.isOk() || static_cast<Status>(ret.getServiceSpecificError()) ==
+                                                  Status::OPERATION_NOT_SUPPORTED);
+                if (ret.isOk()) {
+                    ASSERT_EQ(expectedStatus, streamCombinationSupported);
+                }
+            }
         }
     }
 }
@@ -2440,6 +2497,28 @@ void CameraAidlTest::configureStreamUseCaseInternal(const AvailableStream &thres
 
 }
 
+ndk::ScopedAStatus CameraAidlTest::configureStreams(std::shared_ptr<ICameraDeviceSession>& session,
+                                                    const StreamConfiguration& config,
+                                                    bool sessionHalBufferManager,
+                                                    bool* useHalBufManager,
+                                                    std::vector<HalStream>* halStreams) {
+    auto ret = ndk::ScopedAStatus::ok();
+    ConfigureStreamsRet aidl_return;
+    if (sessionHalBufferManager) {
+        ret = session->configureStreamsV2(config, &aidl_return);
+    } else {
+        ret = session->configureStreams(config, halStreams);
+    }
+    if (!ret.isOk()) {
+        return ret;
+    }
+    if (sessionHalBufferManager) {
+        *useHalBufManager = aidl_return.enableHalBufferManager;
+        *halStreams = std::move(aidl_return.halStreams);
+    }
+    return ndk::ScopedAStatus::ok();
+}
+
 void CameraAidlTest::configureSingleStream(
         const std::string& name, const std::shared_ptr<ICameraProvider>& provider,
         const AvailableStream* previewThreshold, uint64_t bufferUsage, RequestTemplate reqTemplate,
@@ -2494,11 +2573,15 @@ void CameraAidlTest::configureSingleStream(
     ASSERT_NE(*session, nullptr);
 
     *useHalBufManager = false;
+    bool sessionHalBufferManager = false;
     status = find_camera_metadata_ro_entry(
             staticMeta, ANDROID_INFO_SUPPORTED_BUFFER_MANAGEMENT_VERSION, &entry);
     if ((0 == status) && (entry.count == 1)) {
         *useHalBufManager = (entry.data.u8[0] ==
                              ANDROID_INFO_SUPPORTED_BUFFER_MANAGEMENT_VERSION_HIDL_DEVICE_3_5);
+        sessionHalBufferManager =
+                (entry.data.u8[0] ==
+                 ANDROID_INFO_SUPPORTED_BUFFER_MANAGEMENT_VERSION_SESSION_CONFIGURABLE);
     }
 
     outputPreviewStreams.clear();
@@ -2557,7 +2640,8 @@ void CameraAidlTest::configureSingleStream(
         ASSERT_EQ(supported, true);
 
         std::vector<HalStream> halConfigs;
-        ret = (*session)->configureStreams(config, &halConfigs);
+        ret = configureStreams(*session, config, sessionHalBufferManager, useHalBufManager,
+                               &halConfigs);
         ALOGI("configureStreams returns status: %d:%d", ret.getExceptionCode(),
               ret.getServiceSpecificError());
         ASSERT_TRUE(ret.isOk());
@@ -2853,11 +2937,15 @@ void CameraAidlTest::configurePreviewStreams(
     ASSERT_NE(*session, nullptr);
 
     *useHalBufManager = false;
+    bool sessionHalBufferManager = false;
     status = find_camera_metadata_ro_entry(
             staticMeta, ANDROID_INFO_SUPPORTED_BUFFER_MANAGEMENT_VERSION, &entry);
     if ((0 == status) && (entry.count == 1)) {
         *useHalBufManager = (entry.data.u8[0] ==
                              ANDROID_INFO_SUPPORTED_BUFFER_MANAGEMENT_VERSION_HIDL_DEVICE_3_5);
+        sessionHalBufferManager =
+                (entry.data.u8[0] ==
+                 ANDROID_INFO_SUPPORTED_BUFFER_MANAGEMENT_VERSION_SESSION_CONFIGURABLE);
     }
 
     outputPreviewStreams.clear();
@@ -2912,7 +3000,9 @@ void CameraAidlTest::configurePreviewStreams(
 
     config.streamConfigCounter = streamConfigCounter;
     std::vector<HalStream> halConfigs;
-    ret = (*session)->configureStreams(config, &halConfigs);
+    ret = configureStreams(*session, config, sessionHalBufferManager, useHalBufManager,
+                           &halConfigs);
+
     ASSERT_TRUE(ret.isOk());
     ASSERT_EQ(physicalIds.size(), halConfigs.size());
     *halStreams = halConfigs;
@@ -2992,11 +3082,15 @@ void CameraAidlTest::configureStreams(const std::string& name,
     ASSERT_NE(*session, nullptr);
 
     *useHalBufManager = false;
+    bool sessionHalBufferManager = false;
     status = find_camera_metadata_ro_entry(
             staticMeta, ANDROID_INFO_SUPPORTED_BUFFER_MANAGEMENT_VERSION, &entry);
     if ((0 == status) && (entry.count == 1)) {
         *useHalBufManager = (entry.data.u8[0] ==
                              ANDROID_INFO_SUPPORTED_BUFFER_MANAGEMENT_VERSION_HIDL_DEVICE_3_5);
+        sessionHalBufferManager =
+                (entry.data.u8[0] ==
+                 ANDROID_INFO_SUPPORTED_BUFFER_MANAGEMENT_VERSION_SESSION_CONFIGURABLE);
     }
 
     outputStreams.clear();
@@ -3050,7 +3144,8 @@ void CameraAidlTest::configureStreams(const std::string& name,
     ASSERT_TRUE(ret.isOk());
     ASSERT_EQ(supported, true);
 
-    ret = (*session)->configureStreams(config, halStreams);
+    ret = configureStreams(*session, config, sessionHalBufferManager, useHalBufManager, halStreams);
+
     ASSERT_TRUE(ret.isOk());
 
     if (*useHalBufManager) {
@@ -3434,11 +3529,15 @@ void CameraAidlTest::configureOfflineStillStream(
     }
 
     *useHalBufManager = false;
+    bool sessionHalBufferManager = false;
     status = find_camera_metadata_ro_entry(
             staticMeta, ANDROID_INFO_SUPPORTED_BUFFER_MANAGEMENT_VERSION, &entry);
     if ((0 == status) && (entry.count == 1)) {
         *useHalBufManager = (entry.data.u8[0] ==
                              ANDROID_INFO_SUPPORTED_BUFFER_MANAGEMENT_VERSION_HIDL_DEVICE_3_5);
+        sessionHalBufferManager =
+                (entry.data.u8[0] ==
+                 ANDROID_INFO_SUPPORTED_BUFFER_MANAGEMENT_VERSION_SESSION_CONFIGURABLE);
     }
 
     auto st = getJpegBufferSize(staticMeta, jpegBufferSize);
@@ -3491,7 +3590,8 @@ void CameraAidlTest::configureOfflineStillStream(
 
     StreamConfiguration config = {streams, StreamConfigurationMode::NORMAL_MODE, CameraMetadata()};
 
-    (*session)->configureStreams(config, halStreams);
+    ret = configureStreams(*session, config, sessionHalBufferManager, useHalBufManager, halStreams);
+
     ASSERT_TRUE(ret.isOk());
 
     if (*useHalBufManager) {

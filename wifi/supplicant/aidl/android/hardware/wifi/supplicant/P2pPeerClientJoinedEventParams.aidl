@@ -16,6 +16,8 @@
 
 package android.hardware.wifi.supplicant;
 
+import android.hardware.wifi.common.OuiKeyedData;
+
 /**
  * Parameters passed as a part of P2P peer client joined event.
  */
@@ -39,4 +41,10 @@ parcelable P2pPeerClientJoinedEventParams {
      * The value is set to zero if the IP address is not allocated via EAPOL exchange.
      */
     int clientIpAddress;
+
+    /**
+     * Optional vendor-specific parameters. Null value indicates
+     * that no vendor data is provided.
+     */
+    @nullable OuiKeyedData[] vendorData;
 }

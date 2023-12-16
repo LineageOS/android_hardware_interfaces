@@ -52,7 +52,6 @@ enum SecurityAlgorithm {
     EEA1 = 42,
     EEA2 = 43,
     EEA3 = 44,
-    EEA4_ZUC = 45,
 
     // 5G PS services (3GPP TS 33.401 for 5G NSA and 3GPP TS 33.501 for 5G SA)
     NEA0 = 55,

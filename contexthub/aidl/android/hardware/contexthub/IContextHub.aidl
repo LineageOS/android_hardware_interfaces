@@ -20,6 +20,7 @@ import android.hardware.contexthub.ContextHubInfo;
 import android.hardware.contexthub.ContextHubMessage;
 import android.hardware.contexthub.HostEndpointInfo;
 import android.hardware.contexthub.IContextHubCallback;
+import android.hardware.contexthub.MessageDeliveryStatus;
 import android.hardware.contexthub.NanSessionStateUpdate;
 import android.hardware.contexthub.NanoappBinary;
 import android.hardware.contexthub.NanoappInfo;
@@ -147,7 +148,7 @@ interface IContextHub {
 
     /**
      * Register a callback for the HAL implementation to send asynchronous messages to the service
-     * from a Context hub. There can only be one callback registered for a single Context Hub ID.
+     * from a Context hub. Each HAL client can only have one callback for each Context Hub ID.
      *
      * A call to this function when a callback has already been registered must override the
      * previous registration.
@@ -234,6 +235,21 @@ interface IContextHub {
      *               test mode.
      */
     void setTestMode(in boolean enable);
+
+    /**
+     * Sends a message delivery status to the Context Hub in response to receiving a
+     * ContextHubMessage with isReliable=true. Each reliable message should have a
+     * messageDeliveryStatus response. This method sends the message delivery status
+     * back to the Context Hub.
+     *
+     * @param contextHubId The identifier of the Context Hub.
+     * @param messageDeliveryStatus The status to be sent.
+     *
+     * @throws EX_UNSUPPORTED_OPERATION if ContextHubInfo.supportsReliableMessages is false for
+     * this hub.
+     */
+    void sendMessageDeliveryStatusToHub(
+            in int contextHubId, in MessageDeliveryStatus messageDeliveryStatus);
 
     /**
      * Error codes that are used as service specific errors with the AIDL return

@@ -1828,7 +1828,7 @@ TEST_P(GraphicsComposerAidlCommandTest, SetClientTarget) {
 
     auto& writer = getWriter(getPrimaryDisplayId());
     writer.setClientTarget(getPrimaryDisplayId(), /*slot*/ 0, nullptr, /*acquireFence*/ -1,
-                           Dataspace::UNKNOWN, std::vector<Rect>());
+                           Dataspace::UNKNOWN, std::vector<Rect>(), 1.0f);
 
     execute();
 }
@@ -2664,26 +2664,40 @@ TEST_P(GraphicsComposerAidlCommandV2Test, SetRefreshRateChangedCallbackDebug_Ena
         return;
     }
 
-    const auto displayId = getPrimaryDisplayId();
-    EXPECT_TRUE(mComposerClient->setPowerMode(displayId, PowerMode::ON).isOk());
-    // Enable the callback
-    ASSERT_TRUE(mComposerClient
-                        ->setRefreshRateChangedCallbackDebugEnabled(displayId,
-                                                                    /*enabled*/ true)
-                        .isOk());
-    std::this_thread::sleep_for(100ms);
+    for (VtsDisplay& display : mDisplays) {
+        const auto displayId = display.getDisplayId();
+        EXPECT_TRUE(mComposerClient->setPowerMode(displayId, PowerMode::ON).isOk());
+        // Enable the callback
+        ASSERT_TRUE(mComposerClient
+                            ->setRefreshRateChangedCallbackDebugEnabled(displayId,
+                                                                        /*enabled*/ true)
+                            .isOk());
+        std::this_thread::sleep_for(100ms);
 
-    const auto displayFilter = [displayId](auto refreshRateChangedDebugData) {
-        return displayId == refreshRateChangedDebugData.display;
-    };
+        const auto [status, configId] = mComposerClient->getActiveConfig(display.getDisplayId());
+        EXPECT_TRUE(status.isOk());
 
-    // Check that we immediately got a callback
-    EXPECT_TRUE(checkIfCallbackRefreshRateChangedDebugEnabledReceived(displayFilter));
+        const auto displayFilter = [&](auto refreshRateChangedDebugData) {
+            bool nonVrrRateMatching = true;
+            if (std::optional<VrrConfig> vrrConfigOpt =
+                        display.getDisplayConfig(configId).vrrConfig;
+                getInterfaceVersion() >= 3 && !vrrConfigOpt) {
+                nonVrrRateMatching = refreshRateChangedDebugData.refreshPeriodNanos ==
+                                     refreshRateChangedDebugData.vsyncPeriodNanos;
+            }
+            const bool isDisplaySame =
+                    display.getDisplayId() == refreshRateChangedDebugData.display;
+            return nonVrrRateMatching && isDisplaySame;
+        };
 
-    ASSERT_TRUE(mComposerClient
-                        ->setRefreshRateChangedCallbackDebugEnabled(displayId,
-                                                                    /*enabled*/ false)
-                        .isOk());
+        // Check that we immediately got a callback
+        EXPECT_TRUE(checkIfCallbackRefreshRateChangedDebugEnabledReceived(displayFilter));
+
+        ASSERT_TRUE(mComposerClient
+                            ->setRefreshRateChangedCallbackDebugEnabled(displayId,
+                                                                        /*enabled*/ false)
+                            .isOk());
+    }
 }
 
 TEST_P(GraphicsComposerAidlCommandV2Test,
@@ -2913,6 +2927,69 @@ TEST_P(GraphicsComposerAidlCommandTest, MultiThreadedPresent) {
     }
 }
 
+class GraphicsComposerAidlBatchedCommandTest : public GraphicsComposerAidlCommandTest {
+  protected:
+    void SetUp() override {
+        GraphicsComposerAidlCommandTest::SetUp();
+        if (getInterfaceVersion() <= 2) {
+            GTEST_SKIP() << "Device interface version is expected to be >= 3";
+        }
+    }
+    void TearDown() override {
+        const auto errors = mReader.takeErrors();
+        ASSERT_TRUE(mReader.takeErrors().empty());
+        ASSERT_NO_FATAL_FAILURE(GraphicsComposerAidlTest::TearDown());
+    }
+};
+
+TEST_P(GraphicsComposerAidlBatchedCommandTest, CreateBatchedCommand) {
+    auto& writer = getWriter(getPrimaryDisplayId());
+    int64_t layer = 5;
+    writer.setLayerLifecycleBatchCommandType(getPrimaryDisplayId(), layer,
+                                             LayerLifecycleBatchCommandType::CREATE);
+    writer.setNewBufferSlotCount(getPrimaryDisplayId(), layer, 1);
+    writer.validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp,
+                           VtsComposerClient::kNoFrameIntervalNs);
+    execute();
+    ASSERT_TRUE(mReader.takeErrors().empty());
+}
+
+TEST_P(GraphicsComposerAidlBatchedCommandTest, DestroyBatchedCommand) {
+    auto& writer = getWriter(getPrimaryDisplayId());
+    int64_t layer = 5;
+    writer.setLayerLifecycleBatchCommandType(getPrimaryDisplayId(), layer,
+                                             LayerLifecycleBatchCommandType::CREATE);
+    writer.setNewBufferSlotCount(getPrimaryDisplayId(), layer, 1);
+    writer.validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp,
+                           VtsComposerClient::kNoFrameIntervalNs);
+    execute();
+    ASSERT_TRUE(mReader.takeErrors().empty());
+    writer.setLayerLifecycleBatchCommandType(getPrimaryDisplayId(), layer,
+                                             LayerLifecycleBatchCommandType::DESTROY);
+    layer++;
+    writer.setLayerLifecycleBatchCommandType(getPrimaryDisplayId(), layer,
+                                             LayerLifecycleBatchCommandType::CREATE);
+    writer.setNewBufferSlotCount(getPrimaryDisplayId(), layer, 1);
+
+    execute();
+    ASSERT_TRUE(mReader.takeErrors().empty());
+}
+
+TEST_P(GraphicsComposerAidlBatchedCommandTest, NoCreateDestroyBatchedCommandIncorrectLayer) {
+    auto& writer = getWriter(getPrimaryDisplayId());
+    int64_t layer = 5;
+    writer.setLayerLifecycleBatchCommandType(getPrimaryDisplayId(), layer,
+                                             LayerLifecycleBatchCommandType::DESTROY);
+    execute();
+    const auto errors = mReader.takeErrors();
+    ASSERT_TRUE(errors.size() == 1 && errors[0].errorCode == IComposerClient::EX_BAD_LAYER);
+}
+
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(GraphicsComposerAidlBatchedCommandTest);
+INSTANTIATE_TEST_SUITE_P(
+        PerInstance, GraphicsComposerAidlBatchedCommandTest,
+        testing::ValuesIn(::android::getAidlHalInstanceNames(IComposer::descriptor)),
+        ::android::PrintInstanceNameToString);
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(GraphicsComposerAidlCommandTest);
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, GraphicsComposerAidlCommandTest,
@@ -2938,7 +3015,6 @@ INSTANTIATE_TEST_SUITE_P(
         PerInstance, GraphicsComposerAidlCommandV2Test,
         testing::ValuesIn(::android::getAidlHalInstanceNames(IComposer::descriptor)),
         ::android::PrintInstanceNameToString);
-
 }  // namespace aidl::android::hardware::graphics::composer3::vts
 
 int main(int argc, char** argv) {

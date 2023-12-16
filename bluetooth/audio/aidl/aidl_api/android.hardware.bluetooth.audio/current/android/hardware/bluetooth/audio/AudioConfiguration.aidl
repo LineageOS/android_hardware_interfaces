@@ -38,4 +38,6 @@ union AudioConfiguration {
   android.hardware.bluetooth.audio.CodecConfiguration a2dpConfig;
   android.hardware.bluetooth.audio.LeAudioConfiguration leAudioConfig;
   android.hardware.bluetooth.audio.LeAudioBroadcastConfiguration leAudioBroadcastConfig;
+  android.hardware.bluetooth.audio.HfpConfiguration hfpConfig;
+  android.hardware.bluetooth.audio.A2dpStreamConfiguration a2dp;
 }

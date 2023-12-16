@@ -14,8 +14,10 @@ use tokio_util::sync::CancellationToken;
 
 use std::fs::{File, OpenOptions};
 use std::io::{self, Read, Write};
-use std::os::fd::AsRawFd;
 use std::os::unix::fs::OpenOptionsExt;
+
+use pdl_runtime::Packet;
+use uwb_uci_packets::{DeviceResetCmdBuilder, ResetConfig, UciControlPacket, UciControlPacketHal};
 
 enum State {
     Closed,
@@ -47,11 +49,23 @@ impl UwbChip {
 impl State {
     /// Terminate the reader task.
     async fn close(&mut self) -> Result<()> {
-        if let State::Opened { ref mut token, ref callbacks, ref mut death_recipient, ref mut handle, .. } = *self {
+        if let State::Opened {
+            ref mut token,
+            ref callbacks,
+            ref mut death_recipient,
+            ref mut handle,
+            ref mut serial,
+        } = *self
+        {
             log::info!("waiting for task cancellation");
             callbacks.as_binder().unlink_to_death(death_recipient)?;
             token.cancel();
             handle.await.unwrap();
+            consume_device_reset_rsp_and_ntf(
+                &mut serial
+                    .try_clone()
+                    .map_err(|_| binder::StatusCode::UNKNOWN_ERROR)?,
+            );
             log::info!("task successfully cancelled");
             callbacks.onHalEvent(UwbEvent::CLOSE_CPLT, UwbStatus::OK)?;
             *self = State::Closed;
@@ -60,14 +74,26 @@ impl State {
     }
 }
 
-pub fn makeraw(file: File) -> io::Result<File> {
-    let fd = file.as_raw_fd();
+fn consume_device_reset_rsp_and_ntf(reader: &mut File) {
+    // Poll the DeviceResetRsp and DeviceStatusNtf before hal is closed to prevent
+    // the host from getting response and notifications from a 'powered down' UWBS.
+    // Do nothing when these packets are received.
+    const DEVICE_RESET_RSP: [u8; 5] = [64, 0, 0, 1, 0];
+    const DEVICE_STATUS_NTF: [u8; 5] = [96, 1, 0, 1, 1];
+    let mut buffer = vec![0; DEVICE_RESET_RSP.len() + DEVICE_STATUS_NTF.len()];
+    read_exact(reader, &mut buffer).unwrap();
 
-    // Configure the file descritpro as raw fd.
+    // Make sure received packets are the expected ones.
+    assert_eq!(&buffer[0..DEVICE_RESET_RSP.len()], &DEVICE_RESET_RSP);
+    assert_eq!(&buffer[DEVICE_RESET_RSP.len()..], &DEVICE_STATUS_NTF);
+}
+
+pub fn makeraw(file: File) -> io::Result<File> {
+    // Configure the file descriptor as raw fd.
     use nix::sys::termios::*;
-    let mut attrs = tcgetattr(fd)?;
+    let mut attrs = tcgetattr(&file)?;
     cfmakeraw(&mut attrs);
-    tcsetattr(fd, SetArg::TCSANOW, &attrs)?;
+    tcsetattr(&file, SetArg::TCSANOW, &attrs)?;
 
     Ok(file)
 }
@@ -212,7 +238,21 @@ impl IUwbChipAsyncServer for UwbChip {
 
         let mut state = self.state.lock().await;
 
-        if matches!(*state, State::Opened { .. }) {
+        if let State::Opened { ref mut serial, .. } = *state {
+            let packet: UciControlPacket = DeviceResetCmdBuilder {
+                reset_config: ResetConfig::UwbsReset,
+            }
+            .build()
+            .into();
+            // DeviceResetCmd need to be send to reset the device to stop all running
+            // activities on UWBS.
+            let packet_vec: Vec<UciControlPacketHal> = packet.into();
+            for hal_packet in packet_vec.into_iter() {
+                serial
+                    .write(&hal_packet.to_vec())
+                    .map(|written| written as i32)
+                    .map_err(|_| binder::StatusCode::UNKNOWN_ERROR)?;
+            }
             state.close().await
         } else {
             Err(binder::ExceptionCode::ILLEGAL_STATE.into())

@@ -134,7 +134,7 @@
     </hal>
     <hal format="aidl" optional="true" updatable-via-apex="true">
         <name>android.hardware.biometrics.fingerprint</name>
-        <version>3</version>
+        <version>3-4</version>
         <interface>
             <name>IFingerprint</name>
             <instance>default</instance>
@@ -157,6 +157,22 @@
         </interface>
     </hal>
     <hal format="aidl" optional="true">
+        <name>android.hardware.bluetooth.ranging</name>
+        <version>1</version>
+        <interface>
+            <name>IBluetoothChannelSounding</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="aidl" optional="true">
+        <name>android.hardware.bluetooth.finder</name>
+        <version>1</version>
+        <interface>
+            <name>IBluetoothFinder</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="aidl" optional="true">
         <name>android.hardware.boot</name>
         <interface>
             <name>IBootControl</name>
@@ -173,7 +189,7 @@
     </hal>
     <hal format="aidl" optional="true" updatable-via-apex="true">
         <name>android.hardware.camera.provider</name>
-        <version>1-2</version>
+        <version>1-3</version>
         <interface>
             <name>ICameraProvider</name>
             <regex-instance>[^/]+/[0-9]+</regex-instance>
@@ -251,7 +267,7 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.health</name>
-        <version>1-2</version>
+        <version>3</version>
         <interface>
             <name>IHealth</name>
             <instance>default</instance>
@@ -302,6 +318,14 @@
         <interface>
             <name>IInputProcessor</name>
             <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="aidl" optional="true">
+        <name>android.hardware.security.secretkeeper</name>
+        <version>1</version>
+        <interface>
+            <name>ISecretkeeper</name>
+            <instance>nonsecure</instance>
         </interface>
     </hal>
     <hal format="aidl" optional="true" updatable-via-apex="true">
@@ -561,7 +585,7 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.thermal</name>
-        <version>1</version>
+        <version>2</version>
         <interface>
             <name>IThermal</name>
             <instance>default</instance>
@@ -672,7 +696,7 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.wifi.hostapd</name>
-        <version>1</version>
+        <version>1-2</version>
         <interface>
             <name>IHostapd</name>
             <instance>default</instance>

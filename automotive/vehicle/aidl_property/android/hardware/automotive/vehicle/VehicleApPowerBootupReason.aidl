@@ -34,7 +34,24 @@ enum VehicleApPowerBootupReason {
     SYSTEM_USER_DETECTION = 1,
     /**
      * Automatic power on to execute a remote task. This is triggered by
-     * receiving a wakeup message from TCU wakeup client.
+     * receiving a wakeup message from an external system in the vehicle.
      */
     SYSTEM_REMOTE_ACCESS = 2,
+    /**
+     * Automatic power on to enter garage mode. This is triggered by
+     * receiving a wakeup message from an external system in the vehicle.
+     *
+     * Note that this does not necessarily mean Android will enter
+     * the garage mode since user may enter the vehicle after this is set.
+     * The system will only enter garage mode if VEHICLE_IN_USE is not true
+     * upon check.
+     *
+     * To consider the Time-Of-Check-Time-Of-Use issue, there is a slight chance
+     * that the vehicle become in-use after car service does the VEHICLE_IN_USE
+     * check. The external power controller must also check whether the vehicle
+     * is in use upon receiving the SHUTDOWN_REQUEST, before sending out
+     * SHUTDOWN_PREPARE, to make sure the system does not enter garage mode or
+     * shutdown if the vehicle is currently in use.
+     */
+    SYSTEM_ENTER_GARAGE_MODE = 3,
 }

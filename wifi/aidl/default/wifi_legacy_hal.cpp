@@ -183,10 +183,13 @@ std::function<void(wifi_request_id, unsigned num_results, wifi_rtt_result* rtt_r
         on_rtt_results_internal_callback;
 std::function<void(wifi_request_id, unsigned num_results, wifi_rtt_result_v2* rtt_results_v2[])>
         on_rtt_results_internal_callback_v2;
+std::function<void(wifi_request_id, unsigned num_results, wifi_rtt_result_v3* rtt_results_v3[])>
+        on_rtt_results_internal_callback_v3;
 
 void invalidateRttResultsCallbacks() {
     on_rtt_results_internal_callback = nullptr;
     on_rtt_results_internal_callback_v2 = nullptr;
+    on_rtt_results_internal_callback_v3 = nullptr;
 };
 
 void onAsyncRttResults(wifi_request_id id, unsigned num_results, wifi_rtt_result* rtt_results[]) {
@@ -202,6 +205,15 @@ void onAsyncRttResultsV2(wifi_request_id id, unsigned num_results,
     const auto lock = aidl_sync_util::acquireGlobalLock();
     if (on_rtt_results_internal_callback_v2) {
         on_rtt_results_internal_callback_v2(id, num_results, rtt_results_v2);
+        invalidateRttResultsCallbacks();
+    }
+}
+
+void onAsyncRttResultsV3(wifi_request_id id, unsigned num_results,
+                         wifi_rtt_result_v3* rtt_results_v3[]) {
+    const auto lock = aidl_sync_util::acquireGlobalLock();
+    if (on_rtt_results_internal_callback_v3) {
+        on_rtt_results_internal_callback_v3(id, num_results, rtt_results_v3);
         invalidateRttResultsCallbacks();
     }
 }
@@ -439,8 +451,79 @@ void onAsyncChreNanRttState(chre_nan_rtt_state state) {
 // Callback to report cached scan results
 std::function<void(wifi_cached_scan_report*)> on_cached_scan_results_internal_callback;
 void onSyncCachedScanResults(wifi_cached_scan_report* cache_report) {
+    const auto lock = aidl_sync_util::acquireGlobalLock();
     if (on_cached_scan_results_internal_callback) {
         on_cached_scan_results_internal_callback(cache_report);
+    }
+}
+
+// Callback to be invoked for TWT failure
+std::function<void((wifi_request_id, wifi_twt_error_code error_code))>
+        on_twt_failure_internal_callback;
+void onAsyncTwtError(wifi_request_id id, wifi_twt_error_code error_code) {
+    const auto lock = aidl_sync_util::acquireGlobalLock();
+    if (on_twt_failure_internal_callback) {
+        on_twt_failure_internal_callback(id, error_code);
+    }
+}
+
+// Callback to be invoked for TWT session creation
+std::function<void((wifi_request_id, wifi_twt_session twt_session))>
+        on_twt_session_create_internal_callback;
+void onAsyncTwtSessionCreate(wifi_request_id id, wifi_twt_session twt_session) {
+    const auto lock = aidl_sync_util::acquireGlobalLock();
+    if (on_twt_session_create_internal_callback) {
+        on_twt_session_create_internal_callback(id, twt_session);
+    }
+}
+
+// Callback to be invoked for TWT session update
+std::function<void((wifi_request_id, wifi_twt_session twt_session))>
+        on_twt_session_update_internal_callback;
+void onAsyncTwtSessionUpdate(wifi_request_id id, wifi_twt_session twt_session) {
+    const auto lock = aidl_sync_util::acquireGlobalLock();
+    if (on_twt_session_update_internal_callback) {
+        on_twt_session_update_internal_callback(id, twt_session);
+    }
+}
+
+// Callback to be invoked for TWT session teardown
+std::function<void(
+        (wifi_request_id, int twt_session_id, wifi_twt_teardown_reason_code reason_code))>
+        on_twt_session_teardown_internal_callback;
+void onAsyncTwtSessionTeardown(wifi_request_id id, int twt_session_id,
+                               wifi_twt_teardown_reason_code reason_code) {
+    const auto lock = aidl_sync_util::acquireGlobalLock();
+    if (on_twt_session_teardown_internal_callback) {
+        on_twt_session_teardown_internal_callback(id, twt_session_id, reason_code);
+    }
+}
+
+// Callback to be invoked for TWT session get stats
+std::function<void((wifi_request_id, int twt_session_id, wifi_twt_session_stats stats))>
+        on_twt_session_stats_internal_callback;
+void onAsyncTwtSessionStats(wifi_request_id id, int twt_session_id, wifi_twt_session_stats stats) {
+    const auto lock = aidl_sync_util::acquireGlobalLock();
+    if (on_twt_session_stats_internal_callback) {
+        on_twt_session_stats_internal_callback(id, twt_session_id, stats);
+    }
+}
+
+// Callback to be invoked for TWT session suspend
+std::function<void((wifi_request_id, int twt_session_id))> on_twt_session_suspend_internal_callback;
+void onAsyncTwtSessionSuspend(wifi_request_id id, int twt_session_id) {
+    const auto lock = aidl_sync_util::acquireGlobalLock();
+    if (on_twt_session_suspend_internal_callback) {
+        on_twt_session_suspend_internal_callback(id, twt_session_id);
+    }
+}
+
+// Callback to be invoked for TWT session resume
+std::function<void((wifi_request_id, int twt_session_id))> on_twt_session_resume_internal_callback;
+void onAsyncTwtSessionResume(wifi_request_id id, int twt_session_id) {
+    const auto lock = aidl_sync_util::acquireGlobalLock();
+    if (on_twt_session_resume_internal_callback) {
+        on_twt_session_resume_internal_callback(id, twt_session_id);
     }
 }
 
@@ -1251,6 +1334,38 @@ wifi_error WifiLegacyHal::registerSubsystemRestartCallbackHandler(
     return status;
 }
 
+wifi_error WifiLegacyHal::startRttRangeRequestV3(
+        const std::string& iface_name, wifi_request_id id,
+        const std::vector<wifi_rtt_config_v3>& rtt_configs,
+        const on_rtt_results_callback_v3& on_results_user_callback_v3) {
+    if (on_rtt_results_internal_callback_v3) {
+        return WIFI_ERROR_NOT_AVAILABLE;
+    }
+
+    on_rtt_results_internal_callback_v3 = [on_results_user_callback_v3](
+                                                  wifi_request_id id, unsigned num_results,
+                                                  wifi_rtt_result_v3* rtt_results_v3[]) {
+        if (num_results > 0 && !rtt_results_v3) {
+            LOG(ERROR) << "Unexpected nullptr in RTT v3 results";
+            return;
+        }
+        std::vector<const wifi_rtt_result_v3*> rtt_results_vec_v3;
+        std::copy_if(rtt_results_v3, rtt_results_v3 + num_results,
+                     back_inserter(rtt_results_vec_v3),
+                     [](wifi_rtt_result_v3* rtt_result_v3) { return rtt_result_v3 != nullptr; });
+        on_results_user_callback_v3(id, rtt_results_vec_v3);
+    };
+
+    std::vector<wifi_rtt_config_v3> rtt_configs_internal(rtt_configs);
+    wifi_error status = global_func_table_.wifi_rtt_range_request_v3(
+            id, getIfaceHandle(iface_name), rtt_configs.size(), rtt_configs_internal.data(),
+            {onAsyncRttResultsV3});
+    if (status != WIFI_SUCCESS) {
+        invalidateRttResultsCallbacks();
+    }
+    return status;
+}
+
 wifi_error WifiLegacyHal::startRttRangeRequest(
         const std::string& iface_name, wifi_request_id id,
         const std::vector<wifi_rtt_config>& rtt_configs,
@@ -1325,6 +1440,14 @@ std::pair<wifi_error, wifi_rtt_capabilities> WifiLegacyHal::getRttCapabilities(
     wifi_error status =
             global_func_table_.wifi_get_rtt_capabilities(getIfaceHandle(iface_name), &rtt_caps);
     return {status, rtt_caps};
+}
+
+std::pair<wifi_error, wifi_rtt_capabilities_v3> WifiLegacyHal::getRttCapabilitiesV3(
+        const std::string& iface_name) {
+    wifi_rtt_capabilities_v3 rtt_caps_v3;
+    wifi_error status = global_func_table_.wifi_get_rtt_capabilities_v3(getIfaceHandle(iface_name),
+                                                                        &rtt_caps_v3);
+    return {status, rtt_caps_v3};
 }
 
 std::pair<wifi_error, wifi_rtt_responder> WifiLegacyHal::getRttResponderInfo(
@@ -1736,6 +1859,103 @@ wifi_error WifiLegacyHal::setVoipMode(const std::string& iface_name, wifi_voip_m
     return global_func_table_.wifi_set_voip_mode(getIfaceHandle(iface_name), mode);
 }
 
+std::pair<wifi_twt_capabilities, wifi_error> WifiLegacyHal::twtGetCapabilities(
+        const std::string& ifaceName) {
+    wifi_twt_capabilities capabs = {};
+    wifi_error status =
+            global_func_table_.wifi_twt_get_capabilities(getIfaceHandle(ifaceName), &capabs);
+    return {capabs, status};
+}
+
+wifi_error WifiLegacyHal::twtSessionSetup(
+        const std::string& ifaceName, uint32_t cmdId, const wifi_twt_request& request,
+        const on_twt_failure& on_twt_failure_user_callback,
+        const on_twt_session_create& on_twt_session_create_user_callback,
+        const on_twt_session_update& on_twt_session_update_user_callback,
+        const on_twt_session_teardown& on_twt_session_teardown_user_callback,
+        const on_twt_session_stats& on_twt_session_stats_user_callback,
+        const on_twt_session_suspend& on_twt_session_suspend_user_callback,
+        const on_twt_session_resume& on_twt_session_resume_user_callback) {
+    if (on_twt_failure_internal_callback || on_twt_session_create_internal_callback ||
+        on_twt_session_update_internal_callback || on_twt_session_teardown_internal_callback ||
+        on_twt_session_stats_internal_callback) {
+        return WIFI_ERROR_NOT_AVAILABLE;
+    }
+
+    on_twt_failure_internal_callback = [on_twt_failure_user_callback](
+                                               wifi_request_id id, wifi_twt_error_code error_code) {
+        on_twt_failure_user_callback(id, error_code);
+    };
+
+    on_twt_session_create_internal_callback = [on_twt_session_create_user_callback](
+                                                      wifi_request_id id,
+                                                      wifi_twt_session twt_session) {
+        on_twt_session_create_user_callback(id, twt_session);
+    };
+
+    on_twt_session_update_internal_callback = [on_twt_session_update_user_callback](
+                                                      wifi_request_id id,
+                                                      wifi_twt_session twt_session) {
+        on_twt_session_update_user_callback(id, twt_session);
+    };
+
+    on_twt_session_teardown_internal_callback = [on_twt_session_teardown_user_callback](
+                                                        wifi_request_id id, int session_id,
+                                                        wifi_twt_teardown_reason_code reason_code) {
+        on_twt_session_teardown_user_callback(id, session_id, reason_code);
+    };
+
+    on_twt_session_stats_internal_callback = [on_twt_session_stats_user_callback](
+                                                     wifi_request_id id, int session_id,
+                                                     wifi_twt_session_stats stats) {
+        on_twt_session_stats_user_callback(id, session_id, stats);
+    };
+
+    on_twt_session_suspend_internal_callback = [on_twt_session_suspend_user_callback](
+                                                       wifi_request_id id, int session_id) {
+        on_twt_session_suspend_user_callback(id, session_id);
+    };
+
+    on_twt_session_resume_internal_callback = [on_twt_session_resume_user_callback](
+                                                      wifi_request_id id, int session_id) {
+        on_twt_session_resume_user_callback(id, session_id);
+    };
+
+    return global_func_table_.wifi_twt_session_setup(
+            cmdId, getIfaceHandle(ifaceName), request,
+            {onAsyncTwtError, onAsyncTwtSessionCreate, onAsyncTwtSessionUpdate,
+             onAsyncTwtSessionTeardown, onAsyncTwtSessionStats, onAsyncTwtSessionSuspend,
+             onAsyncTwtSessionResume});
+}
+
+wifi_error WifiLegacyHal::twtSessionUpdate(const std::string& ifaceName, uint32_t cmdId,
+                                           uint32_t sessionId, const wifi_twt_request& request) {
+    return global_func_table_.wifi_twt_session_update(cmdId, getIfaceHandle(ifaceName), sessionId,
+                                                      request);
+}
+
+wifi_error WifiLegacyHal::twtSessionSuspend(const std::string& ifaceName, uint32_t cmdId,
+                                            uint32_t sessionId) {
+    return global_func_table_.wifi_twt_session_suspend(cmdId, getIfaceHandle(ifaceName), sessionId);
+}
+
+wifi_error WifiLegacyHal::twtSessionResume(const std::string& ifaceName, uint32_t cmdId,
+                                           uint32_t sessionId) {
+    return global_func_table_.wifi_twt_session_resume(cmdId, getIfaceHandle(ifaceName), sessionId);
+}
+
+wifi_error WifiLegacyHal::twtSessionTeardown(const std::string& ifaceName, uint32_t cmdId,
+                                             uint32_t sessionId) {
+    return global_func_table_.wifi_twt_session_teardown(cmdId, getIfaceHandle(ifaceName),
+                                                        sessionId);
+}
+
+wifi_error WifiLegacyHal::twtSessionGetStats(const std::string& ifaceName, uint32_t cmdId,
+                                             uint32_t sessionId) {
+    return global_func_table_.wifi_twt_session_get_stats(cmdId, getIfaceHandle(ifaceName),
+                                                         sessionId);
+}
+
 wifi_error WifiLegacyHal::twtRegisterHandler(const std::string& iface_name,
                                              const TwtCallbackHandlers& user_callbacks) {
     on_twt_event_setup_response_callback = user_callbacks.on_setup_response;
@@ -1858,13 +2078,16 @@ wifi_error WifiLegacyHal::enableWifiTxPowerLimits(const std::string& iface_name,
     return global_func_table_.wifi_enable_tx_power_limits(getIfaceHandle(iface_name), enable);
 }
 
-wifi_error WifiLegacyHal::getWifiCachedScanResults(
-        const std::string& iface_name, const CachedScanResultsCallbackHandlers& handler) {
-    on_cached_scan_results_internal_callback = handler.on_cached_scan_results;
-
+wifi_error WifiLegacyHal::getWifiCachedScanResults(const std::string& iface_name,
+                                                   WifiCachedScanReport& report) {
+    on_cached_scan_results_internal_callback = [&report](wifi_cached_scan_report* report_ptr) {
+        report.results.assign(report_ptr->results, report_ptr->results + report_ptr->result_cnt);
+        report.scanned_freqs.assign(report_ptr->scanned_freq_list,
+                                    report_ptr->scanned_freq_list + report_ptr->scanned_freq_num);
+        report.ts = report_ptr->ts;
+    };
     wifi_error status = global_func_table_.wifi_get_cached_scan_results(getIfaceHandle(iface_name),
                                                                         {onSyncCachedScanResults});
-
     on_cached_scan_results_internal_callback = nullptr;
     return status;
 }
@@ -1934,6 +2157,7 @@ void WifiLegacyHal::invalidate() {
     on_twt_event_info_frame_received_callback = nullptr;
     on_twt_event_device_notify_callback = nullptr;
     on_chre_nan_rtt_internal_callback = nullptr;
+    on_cached_scan_results_internal_callback = nullptr;
 }
 
 }  // namespace legacy_hal

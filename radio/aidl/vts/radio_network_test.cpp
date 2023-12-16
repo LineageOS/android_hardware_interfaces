@@ -90,6 +90,11 @@ TEST_P(RadioNetworkTest, setGetAllowedNetworkTypesBitmap) {
 
     serial = GetRandomSerialNumber();
 
+    // get aidl version
+    int32_t aidl_version;
+    ndk::ScopedAStatus aidl_status = radio_network->getInterfaceVersion(&aidl_version);
+    ASSERT_OK(aidl_status);
+
     // save current value
     radio_network->getAllowedNetworkTypesBitmap(serial);
     EXPECT_EQ(std::cv_status::no_timeout, wait());
@@ -125,6 +130,11 @@ TEST_P(RadioNetworkTest, setGetAllowedNetworkTypesBitmap) {
                  RadioError::INVALID_ARGUMENTS, RadioError::MODEM_ERR,
                  RadioError::REQUEST_NOT_SUPPORTED, RadioError::NO_RESOURCES}));
         if (radioRsp_network->rspInfo.error == RadioError::NONE) {
+            if (aidl_version < 2) {
+                radioRsp_network->networkTypeBitmapResponse
+                    &= ~static_cast<int32_t>(RadioAccessFamily::LTE_CA);
+            }
+
             // verify we get the value we set
             EXPECT_EQ(radioRsp_network->networkTypeBitmapResponse, allowedNetworkTypesBitmap);
         }
@@ -2372,9 +2382,16 @@ TEST_P(RadioNetworkTest, setNullCipherAndIntegrityEnabled) {
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_network->rspInfo.type);
     EXPECT_EQ(serial, radioRsp_network->rspInfo.serial);
 
-    ASSERT_TRUE(CheckAnyOfErrors(
-            radioRsp_network->rspInfo.error,
-            {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::MODEM_ERR}));
+    if (aidl_version >= 3 && deviceSupportsFeature(FEATURE_TELEPHONY_RADIO_ACCESS)) {
+        ASSERT_TRUE(CheckAnyOfErrors(
+                radioRsp_network->rspInfo.error,
+                {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::MODEM_ERR}));
+    } else {
+        // For aidl_version 2, API is optional
+        ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error,
+                                     {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE,
+                                      RadioError::MODEM_ERR, RadioError::REQUEST_NOT_SUPPORTED}));
+    }
 }
 
 /**
@@ -2406,9 +2423,16 @@ TEST_P(RadioNetworkTest, isNullCipherAndIntegrityEnabled) {
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_network->rspInfo.type);
     EXPECT_EQ(serial, radioRsp_network->rspInfo.serial);
 
-    ASSERT_TRUE(CheckAnyOfErrors(
-            radioRsp_network->rspInfo.error,
-            {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::MODEM_ERR}));
+    if (aidl_version >= 3 && deviceSupportsFeature(FEATURE_TELEPHONY_RADIO_ACCESS)) {
+        ASSERT_TRUE(CheckAnyOfErrors(
+                radioRsp_network->rspInfo.error,
+                {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::MODEM_ERR}));
+    } else {
+        // For aidl_version 2, API is optional
+        ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error,
+                                     {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE,
+                                      RadioError::MODEM_ERR, RadioError::REQUEST_NOT_SUPPORTED}));
+    }
 }
 
 TEST_P(RadioNetworkTest, isCellularIdentifierTransparencyEnabled) {
@@ -2433,10 +2457,6 @@ TEST_P(RadioNetworkTest, isCellularIdentifierTransparencyEnabled) {
     ASSERT_TRUE(CheckAnyOfErrors(
             radioRsp_network->rspInfo.error,
             {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::MODEM_ERR}));
-
-    // the default value should be true if we have not called the setter
-    EXPECT_TRUE(radioRsp_network->isCellularIdentifierTransparencyEnabled);
-
 }
 
 TEST_P(RadioNetworkTest, setCellularIdentifierTransparencyEnabled) {
@@ -2567,7 +2587,4 @@ TEST_P(RadioNetworkTest, isSecurityAlgorithmsUpdatedEnabled) {
     ASSERT_TRUE(CheckAnyOfErrors(
             radioRsp_network->rspInfo.error,
             {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::MODEM_ERR}));
-
-    // the default value should be true if we have not called the setter
-    EXPECT_TRUE(radioRsp_network->isSecurityAlgorithmsUpdatedEnabled);
 }

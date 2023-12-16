@@ -18,67 +18,66 @@
 
 use authgraph_boringssl as boring;
 use authgraph_core::{
-    error,
-    key::MillisecondsSinceEpoch,
-    keyexchange,
+    error, keyexchange,
     ta::{AuthGraphTa, Role},
-    traits,
 };
 use authgraph_hal::channel::SerializedChannel;
-use std::sync::{Arc, Mutex};
-use std::time::Instant;
-
-/// Monotonic clock with an epoch that starts at the point of construction.
-/// (This makes it unsuitable for use outside of testing, because the epoch
-/// will not match that of any other component.)
-pub struct StdClock(Instant);
-
-impl Default for StdClock {
-    fn default() -> Self {
-        Self(Instant::now())
-    }
-}
-
-impl traits::MonotonicClock for StdClock {
-    fn now(&self) -> MillisecondsSinceEpoch {
-        let millis: i64 = self
-            .0
-            .elapsed()
-            .as_millis()
-            .try_into()
-            .expect("failed to fit timestamp in i64");
-        MillisecondsSinceEpoch(millis)
-    }
-}
+use std::cell::RefCell;
+use std::rc::Rc;
+use std::sync::{mpsc, Mutex};
 
 /// Implementation of the AuthGraph TA that runs locally in-process (and which is therefore
 /// insecure).
 pub struct LocalTa {
-    ta: Arc<Mutex<AuthGraphTa>>,
+    channels: Mutex<Channels>,
+}
+
+struct Channels {
+    in_tx: mpsc::Sender<Vec<u8>>,
+    out_rx: mpsc::Receiver<Vec<u8>>,
 }
 
 impl LocalTa {
     /// Create a new instance.
     pub fn new() -> Result<Self, error::Error> {
-        Ok(Self {
-            ta: Arc::new(Mutex::new(AuthGraphTa::new(
+        // Create a pair of channels to communicate with the TA thread.
+        let (in_tx, in_rx) = mpsc::channel();
+        let (out_tx, out_rx) = mpsc::channel();
+
+        // The TA code expects to run single threaded, so spawn a thread to run it in.
+        std::thread::spawn(move || {
+            let mut ta = AuthGraphTa::new(
                 keyexchange::AuthGraphParticipant::new(
                     boring::crypto_trait_impls(),
-                    Box::<boring::test_device::AgDevice>::default(),
+                    Rc::new(RefCell::new(boring::test_device::AgDevice::default())),
                     keyexchange::MAX_OPENED_SESSIONS,
-                )?,
+                )
+                .expect("failed to create AG participant"),
                 Role::Both,
-            ))),
+            );
+            // Loop forever processing request messages.
+            loop {
+                let req_data: Vec<u8> = in_rx.recv().expect("failed to receive next req");
+                let rsp_data = ta.process(&req_data);
+                out_tx.send(rsp_data).expect("failed to send out rsp");
+            }
+        });
+        Ok(Self {
+            channels: Mutex::new(Channels { in_tx, out_rx }),
         })
     }
 }
 
-/// Pretend to be a serialized channel to the TA, but actually just directly invoke the TA with
-/// incoming requests.
 impl SerializedChannel for LocalTa {
     const MAX_SIZE: usize = usize::MAX;
 
-    fn execute(&mut self, req_data: &[u8]) -> binder::Result<Vec<u8>> {
-        Ok(self.ta.lock().unwrap().process(req_data))
+    fn execute(&self, req_data: &[u8]) -> binder::Result<Vec<u8>> {
+        // Serialize across both request and response.
+        let channels = self.channels.lock().unwrap();
+        channels
+            .in_tx
+            .send(req_data.to_vec())
+            .expect("failed to send in request");
+        Ok(channels.out_rx.recv().expect("failed to receive response"))
     }
 }

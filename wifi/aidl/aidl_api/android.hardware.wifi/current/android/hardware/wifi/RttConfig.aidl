@@ -48,4 +48,6 @@ parcelable RttConfig {
   int burstDuration;
   android.hardware.wifi.RttPreamble preamble;
   android.hardware.wifi.RttBw bw;
+  long ntbMinMeasurementTime;
+  long ntbMaxMeasurementTime;
 }

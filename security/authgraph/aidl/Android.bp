@@ -34,7 +34,7 @@ aidl_interface {
             platform_apis: true,
         },
         ndk: {
-            apps_enabled: false,
+            enabled: true,
         },
         rust: {
             enabled: true,

@@ -23,6 +23,9 @@ import android.hardware.biometrics.face.Error;
 import android.hardware.biometrics.face.Feature;
 import android.hardware.keymaster.HardwareAuthToken;
 
+/**
+ * @hide
+ */
 @VintfStability
 interface ISessionCallback {
     /**

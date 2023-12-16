@@ -35,7 +35,7 @@ package android.hardware.thermal;
 /* @hide */
 @Backing(type="int") @VintfStability
 enum TemperatureType {
-  UNKNOWN = (-1),
+  UNKNOWN = (-1) /* -1 */,
   CPU = 0,
   GPU = 1,
   BATTERY = 2,
@@ -50,4 +50,10 @@ enum TemperatureType {
   DISPLAY = 11,
   MODEM = 12,
   SOC = 13,
+  WIFI = 14,
+  CAMERA = 15,
+  FLASHLIGHT = 16,
+  SPEAKER = 17,
+  AMBIENT = 18,
+  POGO = 19,
 }

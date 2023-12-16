@@ -31,7 +31,6 @@ vintf_compatibility_matrix {
         "kernel_config_q_4.14",
         "kernel_config_q_4.19",
     ],
-    core_hals: "only",
 }
 
 vintf_compatibility_matrix {
@@ -45,7 +44,6 @@ vintf_compatibility_matrix {
         "kernel_config_r_4.19",
         "kernel_config_r_5.4",
     ],
-    core_hals: "only",
 }
 
 vintf_compatibility_matrix {
@@ -59,7 +57,6 @@ vintf_compatibility_matrix {
         "kernel_config_s_5.4",
         "kernel_config_s_5.10",
     ],
-    core_hals: "only",
 }
 
 vintf_compatibility_matrix {
@@ -72,7 +69,6 @@ vintf_compatibility_matrix {
         "kernel_config_t_5.10",
         "kernel_config_t_5.15",
     ],
-    core_hals: "only",
 }
 
 vintf_compatibility_matrix {
@@ -85,7 +81,6 @@ vintf_compatibility_matrix {
         "kernel_config_u_5.15",
         "kernel_config_u_6.1",
     ],
-    core_hals: "only",
 }
 
 vintf_compatibility_matrix {
@@ -95,8 +90,7 @@ vintf_compatibility_matrix {
         "compatibility_matrix.9.xml",
     ],
     kernel_configs: [
-        "kernel_config_v_5.15",
         "kernel_config_v_6.1",
+        "kernel_config_v_6.6",
     ],
-    core_hals: "only",
 }

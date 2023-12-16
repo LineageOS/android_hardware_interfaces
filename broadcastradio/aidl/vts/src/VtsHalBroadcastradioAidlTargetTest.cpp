@@ -702,6 +702,59 @@ TEST_P(BroadcastRadioHalTest, FmTune) {
 }
 
 /**
+ * Test tuning with HD selector.
+ *
+ * Verifies that:
+ *  - if AM/FM HD selector is not supported, the method returns NOT_SUPPORTED;
+ *  - if it is supported, the method succeeds;
+ *  - after a successful tune call, onCurrentProgramInfoChanged callback is
+ *    invoked carrying a proper selector;
+ *  - program changes to a program info with the program selector requested.
+ */
+TEST_P(BroadcastRadioHalTest, HdTune) {
+    LOG(DEBUG) << "HdTune Test";
+    auto programList = getProgramList();
+    if (!programList) {
+        printSkipped("Empty station list, tune cannot be performed");
+        return;
+    }
+    ProgramSelector hdSel = {};
+    ProgramIdentifier physicallyTunedToExpected = {};
+    bool hdStationPresent = false;
+    for (auto&& programInfo : *programList) {
+        if (programInfo.selector.primaryId.type != IdentifierType::HD_STATION_ID_EXT) {
+            continue;
+        }
+        hdSel = programInfo.selector;
+        hdStationPresent = true;
+        physicallyTunedToExpected = bcutils::makeIdentifier(IdentifierType::AMFM_FREQUENCY_KHZ,
+                                                            bcutils::getAmFmFrequency(hdSel));
+        break;
+    }
+    if (!hdStationPresent) {
+        printSkipped("No HD stations in the list, tune cannot be performed");
+        return;
+    }
+
+    // try tuning
+    auto result = mModule->tune(hdSel);
+
+    // expect a failure if it's not supported
+    if (!bcutils::isSupported(mProperties, hdSel)) {
+        EXPECT_EQ(result.getServiceSpecificError(), resultToInt(Result::NOT_SUPPORTED));
+        return;
+    }
+    // expect a callback if it succeeds
+    EXPECT_TRUE(result.isOk());
+    EXPECT_TRUE(mCallback->waitOnCurrentProgramInfoChangedCallback());
+    ProgramInfo infoCb = mCallback->getCurrentProgramInfo();
+    LOG(DEBUG) << "Current program info: " << infoCb.toString();
+    // it should tune exactly to what was requested
+    EXPECT_EQ(infoCb.selector.primaryId, hdSel.primaryId);
+    EXPECT_EQ(infoCb.physicallyTunedTo, physicallyTunedToExpected);
+}
+
+/**
  * Test tuning with DAB selector.
  *
  * Verifies that:

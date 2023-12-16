@@ -11,7 +11,7 @@ aidl_interface {
     name: "android.hardware.camera.device",
     vendor_available: true,
     srcs: ["android/hardware/camera/device/*.aidl"],
-    frozen: true,
+    frozen: false,
     stability: "vintf",
     imports: [
         "android.hardware.common-V2",

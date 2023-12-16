@@ -49,7 +49,12 @@ VirtualProgram::operator ProgramInfo() const {
             break;
         case IdentifierType::HD_STATION_ID_EXT:
             info.logicallyTunedTo = selectId(IdentifierType::HD_STATION_ID_EXT);
-            info.physicallyTunedTo = selectId(IdentifierType::AMFM_FREQUENCY_KHZ);
+            if (utils::hasId(info.selector, IdentifierType::AMFM_FREQUENCY_KHZ)) {
+                info.physicallyTunedTo = selectId(IdentifierType::AMFM_FREQUENCY_KHZ);
+            } else {
+                info.physicallyTunedTo = utils::makeIdentifier(
+                        IdentifierType::AMFM_FREQUENCY_KHZ, utils::getHdFrequency(info.selector));
+            }
             break;
         case IdentifierType::DAB_SID_EXT:
             info.logicallyTunedTo = selectId(IdentifierType::DAB_SID_EXT);
@@ -88,13 +93,7 @@ VirtualProgram::operator ProgramInfo() const {
 }
 
 bool operator<(const VirtualProgram& lhs, const VirtualProgram& rhs) {
-    auto& l = lhs.selector;
-    auto& r = rhs.selector;
-
-    // Two programs with the same primaryId are considered the same.
-    if (l.primaryId.type != r.primaryId.type) return l.primaryId.type < r.primaryId.type;
-
-    return l.primaryId.value < r.primaryId.value;
+    return utils::ProgramSelectorComparator()(lhs.selector, rhs.selector);
 }
 
 }  // namespace aidl::android::hardware::broadcastradio

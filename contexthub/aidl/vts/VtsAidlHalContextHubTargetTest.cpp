@@ -36,9 +36,11 @@ using ::android::binder::Status;
 using ::android::hardware::contexthub::AsyncEventType;
 using ::android::hardware::contexthub::ContextHubInfo;
 using ::android::hardware::contexthub::ContextHubMessage;
+using ::android::hardware::contexthub::ErrorCode;
 using ::android::hardware::contexthub::HostEndpointInfo;
 using ::android::hardware::contexthub::IContextHub;
 using ::android::hardware::contexthub::IContextHubCallbackDefault;
+using ::android::hardware::contexthub::MessageDeliveryStatus;
 using ::android::hardware::contexthub::NanoappBinary;
 using ::android::hardware::contexthub::NanoappInfo;
 using ::android::hardware::contexthub::NanoappRpcService;
@@ -49,8 +51,9 @@ using ::android::hardware::contexthub::vts_utils::kNonExistentAppId;
 using ::android::hardware::contexthub::vts_utils::waitForCallback;
 
 // 6612b522-b717-41c8-b48d-c0b1cc64e142
-const std::array<uint8_t, 16> kUuid = {0x66, 0x12, 0xb5, 0x22, 0xb7, 0x17, 0x41, 0xc8,
-                                       0xb4, 0x8d, 0xc0, 0xb1, 0xcc, 0x64, 0xe1, 0x42};
+constexpr std::array<uint8_t, 16> kUuid = {0x66, 0x12, 0xb5, 0x22, 0xb7, 0x17, 0x41, 0xc8,
+                                           0xb4, 0x8d, 0xc0, 0xb1, 0xcc, 0x64, 0xe1, 0x42};
+const String16 kName{"VtsAidlHalContextHubTargetTest"};
 
 class ContextHubAidl : public testing::TestWithParam<std::tuple<std::string, int32_t>> {
   public:
@@ -131,8 +134,19 @@ class EmptyContextHubCallback : public android::hardware::contexthub::BnContextH
         return Status::ok();
     }
 
+    Status handleMessageDeliveryStatus(
+            char16_t /* hostEndPointId */,
+            const MessageDeliveryStatus& /* messageDeliveryStatus */) override {
+        return Status::ok();
+    }
+
     Status getUuid(std::array<uint8_t, 16>* out_uuid) override {
         *out_uuid = kUuid;
+        return Status::ok();
+    }
+
+    Status getName(::android::String16* out_name) override {
+        *out_name = kName;
         return Status::ok();
     }
 };
@@ -166,8 +180,19 @@ class QueryAppsCallback : public android::hardware::contexthub::BnContextHubCall
         return Status::ok();
     }
 
+    Status handleMessageDeliveryStatus(
+            char16_t /* hostEndPointId */,
+            const MessageDeliveryStatus& /* messageDeliveryStatus */) override {
+        return Status::ok();
+    }
+
     Status getUuid(std::array<uint8_t, 16>* out_uuid) override {
         *out_uuid = kUuid;
+        return Status::ok();
+    }
+
+    Status getName(::android::String16* out_name) override {
+        *out_name = kName;
         return Status::ok();
     }
 
@@ -237,8 +262,19 @@ class TransactionResultCallback : public android::hardware::contexthub::BnContex
         return Status::ok();
     }
 
+    Status handleMessageDeliveryStatus(
+            char16_t /* hostEndPointId */,
+            const MessageDeliveryStatus& /* messageDeliveryStatus */) override {
+        return Status::ok();
+    }
+
     Status getUuid(std::array<uint8_t, 16>* out_uuid) override {
         *out_uuid = kUuid;
+        return Status::ok();
+    }
+
+    Status getName(::android::String16* out_name) override {
+        *out_name = kName;
         return Status::ok();
     }
 
@@ -412,6 +448,20 @@ TEST_P(ContextHubAidl, TestNanSessionStateChange) {
         ASSERT_TRUE(status.isOk());
         update.state = false;
         ASSERT_TRUE(contextHub->onNanSessionStateChanged(update).isOk());
+    }
+}
+
+TEST_P(ContextHubAidl, TestSendMessageDeliveryStatusToHub) {
+    MessageDeliveryStatus messageDeliveryStatus;
+    messageDeliveryStatus.messageSequenceNumber = 123;
+    messageDeliveryStatus.errorCode = ErrorCode::OK;
+
+    Status status = contextHub->sendMessageDeliveryStatusToHub(getHubId(), messageDeliveryStatus);
+    if (status.exceptionCode() == Status::EX_UNSUPPORTED_OPERATION ||
+        status.transactionError() == android::UNKNOWN_TRANSACTION) {
+        GTEST_SKIP() << "Not supported -> old API; or not implemented";
+    } else {
+        EXPECT_TRUE(status.isOk());
     }
 }
 

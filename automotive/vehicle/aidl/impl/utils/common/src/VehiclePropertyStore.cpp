@@ -113,6 +113,9 @@ VhalResult<void> VehiclePropertyStore::writeValue(VehiclePropValuePool::Recyclab
     bool valueUpdated = true;
     VehiclePropValue updatedValue;
     OnValueChangeCallback onValueChangeCallback = nullptr;
+    OnValuesChangeCallback onValuesChangeCallback = nullptr;
+    int32_t propId;
+    int32_t areaId;
     {
         std::scoped_lock<std::mutex> g(mLock);
 
@@ -122,7 +125,8 @@ VhalResult<void> VehiclePropertyStore::writeValue(VehiclePropValuePool::Recyclab
             propValue->timestamp = elapsedRealtimeNano();
         }
 
-        int32_t propId = propValue->prop;
+        propId = propValue->prop;
+        areaId = propValue->areaId;
 
         VehiclePropertyStore::Record* record = getRecordLocked(propId);
         if (record == nullptr) {
@@ -163,17 +167,97 @@ VhalResult<void> VehiclePropertyStore::writeValue(VehiclePropValuePool::Recyclab
             return {};
         }
         updatedValue = *(record->values[recId]);
-        if (mOnValueChangeCallback == nullptr) {
-            return {};
-        }
+
+        onValuesChangeCallback = mOnValuesChangeCallback;
         onValueChangeCallback = mOnValueChangeCallback;
+    }
+
+    if (onValuesChangeCallback == nullptr && onValueChangeCallback == nullptr) {
+        ALOGW("No callback registered, ignoring property update for propId: %" PRId32
+              ", area ID: %" PRId32,
+              propId, areaId);
+        return {};
     }
 
     // Invoke the callback outside the lock to prevent dead-lock.
     if (eventMode == EventMode::ALWAYS || valueUpdated) {
-        onValueChangeCallback(updatedValue);
+        if (onValuesChangeCallback != nullptr) {
+            onValuesChangeCallback({updatedValue});
+        } else {
+            onValueChangeCallback(updatedValue);
+        }
     }
     return {};
+}
+
+void VehiclePropertyStore::refreshTimestamp(int32_t propId, int32_t areaId, EventMode eventMode) {
+    std::unordered_map<PropIdAreaId, EventMode, PropIdAreaIdHash> eventModeByPropIdAreaId;
+    PropIdAreaId propIdAreaId = {
+            .propId = propId,
+            .areaId = areaId,
+    };
+    eventModeByPropIdAreaId[propIdAreaId] = eventMode;
+    refreshTimestamps(eventModeByPropIdAreaId);
+}
+
+void VehiclePropertyStore::refreshTimestamps(
+        std::unordered_map<PropIdAreaId, EventMode, PropIdAreaIdHash> eventModeByPropIdAreaId) {
+    std::vector<VehiclePropValue> updatedValues;
+    OnValuesChangeCallback onValuesChangeCallback = nullptr;
+    OnValueChangeCallback onValueChangeCallback = nullptr;
+    {
+        std::scoped_lock<std::mutex> g(mLock);
+
+        onValuesChangeCallback = mOnValuesChangeCallback;
+        onValueChangeCallback = mOnValueChangeCallback;
+
+        for (const auto& [propIdAreaId, eventMode] : eventModeByPropIdAreaId) {
+            int32_t propId = propIdAreaId.propId;
+            int32_t areaId = propIdAreaId.areaId;
+            VehiclePropertyStore::Record* record = getRecordLocked(propId);
+            if (record == nullptr) {
+                continue;
+            }
+
+            VehiclePropValue propValue = {
+                    .areaId = areaId,
+                    .prop = propId,
+                    .value = {},
+            };
+
+            VehiclePropertyStore::RecordId recId = getRecordIdLocked(propValue, *record);
+            if (auto it = record->values.find(recId); it != record->values.end()) {
+                it->second->timestamp = elapsedRealtimeNano();
+                if (eventMode == EventMode::ALWAYS) {
+                    updatedValues.push_back(*(it->second));
+                }
+            } else {
+                continue;
+            }
+        }
+    }
+
+    // Invoke the callback outside the lock to prevent dead-lock.
+    if (updatedValues.empty()) {
+        return;
+    }
+    if (!onValuesChangeCallback && !onValueChangeCallback) {
+        // If no callback is set, then we don't have to do anything.
+        for (const auto& updateValue : updatedValues) {
+            ALOGW("No callback registered, ignoring property update for propId: %" PRId32
+                  ", area ID: %" PRId32,
+                  updateValue.prop, updateValue.areaId);
+        }
+        return;
+    }
+    if (onValuesChangeCallback != nullptr) {
+        onValuesChangeCallback(updatedValues);
+    } else {
+        // Fallback to use multiple onValueChangeCallback
+        for (const auto& updateValue : updatedValues) {
+            onValueChangeCallback(updateValue);
+        }
+    }
 }
 
 void VehiclePropertyStore::removeValue(const VehiclePropValue& propValue) {
@@ -282,11 +366,29 @@ VhalResult<const VehiclePropConfig*> VehiclePropertyStore::getConfig(int32_t pro
     return &record->propConfig;
 }
 
+VhalResult<VehiclePropConfig> VehiclePropertyStore::getPropConfig(int32_t propId) const {
+    std::scoped_lock<std::mutex> g(mLock);
+
+    const VehiclePropertyStore::Record* record = getRecordLocked(propId);
+    if (record == nullptr) {
+        return StatusError(StatusCode::INVALID_ARG) << "property: " << propId << " not registered";
+    }
+
+    return record->propConfig;
+}
+
 void VehiclePropertyStore::setOnValueChangeCallback(
         const VehiclePropertyStore::OnValueChangeCallback& callback) {
     std::scoped_lock<std::mutex> g(mLock);
 
     mOnValueChangeCallback = callback;
+}
+
+void VehiclePropertyStore::setOnValuesChangeCallback(
+        const VehiclePropertyStore::OnValuesChangeCallback& callback) {
+    std::scoped_lock<std::mutex> g(mLock);
+
+    mOnValuesChangeCallback = callback;
 }
 
 }  // namespace vehicle

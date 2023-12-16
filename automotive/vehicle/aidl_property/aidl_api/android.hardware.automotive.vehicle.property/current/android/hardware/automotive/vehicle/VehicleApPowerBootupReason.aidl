@@ -37,4 +37,5 @@ enum VehicleApPowerBootupReason {
   USER_POWER_ON = 0,
   SYSTEM_USER_DETECTION = 1,
   SYSTEM_REMOTE_ACCESS = 2,
+  SYSTEM_ENTER_GARAGE_MODE = 3,
 }

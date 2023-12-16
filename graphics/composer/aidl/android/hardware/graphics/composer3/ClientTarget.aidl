@@ -36,4 +36,14 @@ parcelable ClientTarget {
      * The surface damage regions.
      */
     Rect[] damage;
+
+    /**
+     * The HDR/SDR ratio.
+     * Only meaningful for extended_range client targets to communicate the amount of HDR heaedroom
+     * inside the client target. For floating point client targets, this means that for each color
+     * channel the maximum SDR luminance is 1.0, and the maximum display relative luminance is
+     * the hdrSdrRatio.
+     * Note that this ratio is meant to be >= 1.0.
+     */
+    float hdrSdrRatio = 1.0f;
 }

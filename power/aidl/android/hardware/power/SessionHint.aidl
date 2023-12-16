@@ -52,4 +52,17 @@ enum SessionHint {
      * power hint session is noncritical despite its CPU intensity.
      */
     POWER_EFFICIENCY = 4,
+
+    /**
+     * This hint indicates an increase in GPU workload intensity. It means that
+     * this hint session needs extra GPU resources to meet the target duration.
+     * This hint must be sent before reporting the actual duration to the session.
+     */
+    GPU_LOAD_UP = 5,
+
+    /**
+     * This hint indicates a decrease in GPU workload intensity. It means that
+     * this hint session can reduce GPU resources and still meet the target duration.
+     */
+    GPU_LOAD_DOWN = 6,
 }

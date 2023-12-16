@@ -14,7 +14,7 @@ aidl_interface {
         "android/hardware/biometrics/face/**/*.aidl",
     ],
     imports: [
-        "android.hardware.biometrics.common-V3",
+        "android.hardware.biometrics.common-V4",
         "android.hardware.common-V2",
         "android.hardware.keymaster-V4",
     ],
@@ -60,8 +60,16 @@ aidl_interface {
                 "android.hardware.keymaster-V4",
             ],
         },
+        {
+            version: "4",
+            imports: [
+                "android.hardware.biometrics.common-V4",
+                "android.hardware.common-V2",
+                "android.hardware.keymaster-V4",
+            ],
+        },
 
     ],
-    frozen: false,
+    frozen: true,
 
 }

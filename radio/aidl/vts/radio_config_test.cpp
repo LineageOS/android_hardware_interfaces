@@ -122,6 +122,41 @@ TEST_P(RadioConfigTest, getPhoneCapability) {
 }
 
 /*
+ * Test IRadioConfig.getSimultaneousCallingSupport() for the response returned.
+ */
+TEST_P(RadioConfigTest, getSimultaneousCallingSupport) {
+    if (telephony_flags::enforce_telephony_feature_mapping()) {
+        if (!deviceSupportsFeature(FEATURE_TELEPHONY)) {
+            GTEST_SKIP() << "Skipping getSimultaneousCallingSupport "
+                            "due to undefined FEATURE_TELEPHONY";
+        }
+    }
+
+    int32_t aidl_version;
+    ndk::ScopedAStatus aidl_status = radio_config->getInterfaceVersion(&aidl_version);
+    ASSERT_OK(aidl_status);
+    if (aidl_version < 3) {
+        ALOGI("Skipped the test since"
+                " getSimultaneousCallingSupport is not supported on version < 3.");
+        GTEST_SKIP();
+    }
+
+    serial = GetRandomSerialNumber();
+    ndk::ScopedAStatus res = radio_config->getSimultaneousCallingSupport(serial);
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_config->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_config->rspInfo.serial);
+    ALOGI("getSimultaneousCallingSupport, rspInfo.error = %s\n",
+          toString(radioRsp_config->rspInfo.error).c_str());
+
+    ASSERT_TRUE(CheckAnyOfErrors(
+            radioRsp_config->rspInfo.error,
+            {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::INTERNAL_ERR,
+            RadioError::MODEM_ERR, RadioError::REQUEST_NOT_SUPPORTED}));
+}
+
+/*
  * Test IRadioConfig.setPreferredDataModem() for the response returned.
  */
 TEST_P(RadioConfigTest, setPreferredDataModem) {

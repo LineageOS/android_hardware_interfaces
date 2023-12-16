@@ -28,11 +28,20 @@ aidl_interface {
         "android/hardware/power/*.aidl",
     ],
     stability: "vintf",
+    imports: [
+        "android.hardware.common.fmq-V1",
+        "android.hardware.common-V2",
+    ],
     backend: {
         cpp: {
+            enabled: false,
+        },
+        ndk: {
             enabled: true,
         },
         java: {
+            sdk_version: "module_current",
+            enabled: true,
             platform_apis: true,
         },
     },
