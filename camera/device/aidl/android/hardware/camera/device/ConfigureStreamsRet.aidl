@@ -34,9 +34,4 @@ parcelable ConfigureStreamsRet {
      * overridden format, maximum buffers etc.
      */
     HalStream[] halStreams;
-    /**
-     * A boolean informing the camera framework whether the HAL buffer manager
-     * must be used for the session configured.
-     */
-    boolean enableHalBufferManager = false;
 }

@@ -656,7 +656,6 @@ TEST_P(CameraAidlTest, configureConcurrentStreamsAvailableOutputs) {
     for (const auto& cameraDeviceIds : concurrentDeviceCombinations) {
         std::vector<CameraIdAndStreamCombination> cameraIdsAndStreamCombinations;
         std::vector<CameraTestInfo> cameraTestInfos;
-        size_t i = 0;
         for (const auto& id : cameraDeviceIds.combination) {
             CameraTestInfo cti;
             auto it = idToNameMap.find(id);
@@ -707,7 +706,6 @@ TEST_P(CameraAidlTest, configureConcurrentStreamsAvailableOutputs) {
             cameraIdAndStreamCombination.cameraId = id;
             cameraIdAndStreamCombination.streamConfiguration = cti.config;
             cameraIdsAndStreamCombinations.push_back(cameraIdAndStreamCombination);
-            i++;
             cameraTestInfos.push_back(cti);
         }
         // Now verify that concurrent streams are supported
@@ -1572,7 +1570,7 @@ TEST_P(CameraAidlTest, processMultiCaptureRequestPreview) {
 
         std::vector<HalStream> halStreams;
         bool supportsPartialResults = false;
-        bool useHalBufManager = false;
+        std::set<int32_t> halBufManagedStreamIds;
         int32_t partialResultCount = 0;
         Stream previewStream;
         std::shared_ptr<DeviceCb> cb;
@@ -1580,7 +1578,7 @@ TEST_P(CameraAidlTest, processMultiCaptureRequestPreview) {
         configurePreviewStreams(
                 name, mProvider, &previewThreshold, physicalIds, &mSession, &previewStream,
                 &halStreams /*out*/, &supportsPartialResults /*out*/, &partialResultCount /*out*/,
-                &useHalBufManager /*out*/, &cb /*out*/, 0 /*streamConfigCounter*/, true);
+                &halBufManagedStreamIds /*out*/, &cb /*out*/, 0 /*streamConfigCounter*/, true);
         if (mSession == nullptr) {
             // stream combination not supported by HAL, skip test for device
             continue;
@@ -1617,7 +1615,9 @@ TEST_P(CameraAidlTest, processMultiCaptureRequestPreview) {
         size_t k = 0;
         for (const auto& halStream : halStreams) {
             buffer_handle_t buffer_handle;
-            if (useHalBufManager) {
+            bool useHalBufManagerForStream =
+                    halBufManagedStreamIds.find(halStream.id) != halBufManagedStreamIds.end();
+            if (useHalBufManagerForStream) {
                 outputBuffers[k] = {halStream.id,     /*bufferId*/ 0, NativeHandle(),
                                     BufferStatus::OK, NativeHandle(), NativeHandle()};
             } else {
@@ -1721,10 +1721,13 @@ TEST_P(CameraAidlTest, processMultiCaptureRequestPreview) {
         defaultPreviewSettings.unlock(settingsBuffer);
         filteredSettings.unlock(filteredSettingsBuffer);
 
-        if (useHalBufManager) {
-            std::vector<int32_t> streamIds(halStreams.size());
-            for (size_t i = 0; i < streamIds.size(); i++) {
-                streamIds[i] = halStreams[i].id;
+        if (halBufManagedStreamIds.size() != 0) {
+            std::vector<int32_t> streamIds;
+            for (size_t i = 0; i < halStreams.size(); i++) {
+                int32_t streamId = halStreams[i].id;
+                if (halBufManagedStreamIds.find(streamId) != halBufManagedStreamIds.end()) {
+                    streamIds.emplace_back(streamId);
+                }
             }
             verifyBuffersReturned(mSession, streamIds, cb);
         }
@@ -1788,7 +1791,7 @@ TEST_P(CameraAidlTest, processUltraHighResolutionRequest) {
 
         std::vector<HalStream> halStreams;
         bool supportsPartialResults = false;
-        bool useHalBufManager = false;
+        std::set<int32_t> halBufManagedStreamIds;
         int32_t partialResultCount = 0;
         Stream previewStream;
         std::shared_ptr<DeviceCb> cb;
@@ -1800,8 +1803,8 @@ TEST_P(CameraAidlTest, processUltraHighResolutionRequest) {
                         GRALLOC1_CONSUMER_USAGE_CPU_READ);
             previewStream.dataSpace = Dataspace::UNKNOWN;
             configureStreams(name, mProvider, format, &mSession, &previewStream, &halStreams,
-                             &supportsPartialResults, &partialResultCount, &useHalBufManager, &cb,
-                             0, /*maxResolution*/ true);
+                             &supportsPartialResults, &partialResultCount, &halBufManagedStreamIds,
+                             &cb, 0, /*maxResolution*/ true);
             ASSERT_NE(mSession, nullptr);
 
             ::aidl::android::hardware::common::fmq::MQDescriptor<
@@ -1832,7 +1835,9 @@ TEST_P(CameraAidlTest, processUltraHighResolutionRequest) {
             size_t k = 0;
             for (const auto& halStream : halStreams) {
                 buffer_handle_t buffer_handle;
-                if (useHalBufManager) {
+                bool halBufManagerUsed =
+                        halBufManagedStreamIds.find(halStream.id) != halBufManagedStreamIds.end();
+                if (halBufManagerUsed) {
                     outputBuffers[k] = {halStream.id,   0,
                                         NativeHandle(), BufferStatus::OK,
                                         NativeHandle(), NativeHandle()};
@@ -1884,10 +1889,12 @@ TEST_P(CameraAidlTest, processUltraHighResolutionRequest) {
                 ASSERT_FALSE(inflightReq->errorCodeValid);
                 ASSERT_NE(inflightReq->resultOutputBuffers.size(), 0u);
             }
-            if (useHalBufManager) {
-                std::vector<int32_t> streamIds(halStreams.size());
-                for (size_t i = 0; i < streamIds.size(); i++) {
-                    streamIds[i] = halStreams[i].id;
+            if (halBufManagedStreamIds.size()) {
+                std::vector<int32_t> streamIds;
+                for (size_t i = 0; i < halStreams.size(); i++) {
+                    if (contains(halBufManagedStreamIds, halStreams[i].id)) {
+                        streamIds.emplace_back(halStreams[i].id);
+                    }
                 }
                 verifyBuffersReturned(mSession, streamIds, cb);
             }
@@ -1949,7 +1956,7 @@ TEST_P(CameraAidlTest, process10BitDynamicRangeRequest) {
 
         std::vector<HalStream> halStreams;
         bool supportsPartialResults = false;
-        bool useHalBufManager = false;
+        std::set<int32_t> halBufManagedStreamIds;
         int32_t partialResultCount = 0;
         Stream previewStream;
         std::shared_ptr<DeviceCb> cb;
@@ -1960,7 +1967,7 @@ TEST_P(CameraAidlTest, process10BitDynamicRangeRequest) {
             previewStream.dataSpace = getDataspace(PixelFormat::IMPLEMENTATION_DEFINED);
             configureStreams(name, mProvider, PixelFormat::IMPLEMENTATION_DEFINED, &mSession,
                              &previewStream, &halStreams, &supportsPartialResults,
-                             &partialResultCount, &useHalBufManager, &cb, 0,
+                             &partialResultCount, &halBufManagedStreamIds, &cb, 0,
                              /*maxResolution*/ false, profile);
             ASSERT_NE(mSession, nullptr);
 
@@ -1999,7 +2006,7 @@ TEST_P(CameraAidlTest, process10BitDynamicRangeRequest) {
                 auto bufferId = requestId + 1; // Buffer id value 0 is not valid
                 for (const auto& halStream : halStreams) {
                     buffer_handle_t buffer_handle;
-                    if (useHalBufManager) {
+                    if (contains(halBufManagedStreamIds, halStream.id)) {
                         outputBuffers[k] = {halStream.id,   0,
                                             NativeHandle(), BufferStatus::OK,
                                             NativeHandle(), NativeHandle()};
@@ -2065,10 +2072,12 @@ TEST_P(CameraAidlTest, process10BitDynamicRangeRequest) {
                 verify10BitMetadata(mHandleImporter, *inflightReq, profile);
             }
 
-            if (useHalBufManager) {
-                std::vector<int32_t> streamIds(halStreams.size());
-                for (size_t i = 0; i < streamIds.size(); i++) {
-                    streamIds[i] = halStreams[i].id;
+            if (halBufManagedStreamIds.size() != 0) {
+                std::vector<int32_t> streamIds;
+                for (size_t i = 0; i < halStreams.size(); i++) {
+                    if (contains(halBufManagedStreamIds, halStreams[i].id)) {
+                        streamIds.emplace_back(halStreams[i].id);
+                    }
                 }
                 mSession->signalStreamFlush(streamIds, /*streamConfigCounter*/ 0);
                 cb->waitForBuffersReturned();
@@ -2400,11 +2409,11 @@ TEST_P(CameraAidlTest, switchToOffline) {
         std::vector<HalStream> halStreams;
         std::shared_ptr<DeviceCb> cb;
         int32_t jpegBufferSize;
-        bool useHalBufManager;
+        std::set<int32_t> halBufManagedStreamIds;
         configureOfflineStillStream(name, mProvider, &threshold, &mSession /*out*/, &stream /*out*/,
                                     &halStreams /*out*/, &supportsPartialResults /*out*/,
                                     &partialResultCount /*out*/, &cb /*out*/,
-                                    &jpegBufferSize /*out*/, &useHalBufManager /*out*/);
+                                    &jpegBufferSize /*out*/, &halBufManagedStreamIds /*out*/);
 
         auto ret = mSession->constructDefaultRequestSettings(RequestTemplate::STILL_CAPTURE,
                                                              &settings);
@@ -2440,7 +2449,7 @@ TEST_P(CameraAidlTest, switchToOffline) {
             StreamBuffer& outputBuffer = outputBuffers[0];
 
             std::unique_lock<std::mutex> l(mLock);
-            if (useHalBufManager) {
+            if (contains(halBufManagedStreamIds, halStream.id)) {
                 outputBuffer = {halStream.id,  0, NativeHandle(), BufferStatus::OK, NativeHandle(),
                                 NativeHandle()};
             } else {
