@@ -67,9 +67,9 @@ enum SecurityAlgorithm {
     DES_EDE3_CBC = 72,
     AES_EDE3_CBC = 73,
     HMAC_SHA1_96 = 74,
-    HMAC_SHA1_96_null = 75,
+    HMAC_SHA1_96_NULL = 75,
     HMAC_MD5_96 = 76,
-    HMAC_MD5_96_null = 77,
+    HMAC_MD5_96_NULL = 77,
 
     // RTP (see 3GPP TS 33.328)
     SRTP_AES_COUNTER = 87,
