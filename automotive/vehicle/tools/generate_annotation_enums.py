@@ -182,6 +182,7 @@ class PropertyConfig:
     def __init__(self):
         self.name = None
         self.description = None
+        self.comment = None
         self.change_mode = None
         self.access_modes = []
         self.enum_types = []
@@ -194,8 +195,9 @@ class PropertyConfig:
     def __str__(self):
         return ('PropertyConfig{{' +
             'name: {}, description: {}, change_mode: {}, access_modes: {}, enum_types: {}' +
-            ', unit_type: {}}}').format(self.name, self.description, self.change_mode,
-                self.access_modes, self.enum_types, self.unit_type)
+            ', unit_type: {}, version: {}, comment: {}}}').format(self.name, self.description,
+                self.change_mode, self.access_modes, self.enum_types, self.unit_type,
+                self.version, self.comment)
 
 
 class FileParser:
@@ -221,39 +223,59 @@ class FileParser:
                     in_comment = True
                     config = PropertyConfig()
                     description = ''
+                    continue
+
                 if RE_COMMENT_END.match(line):
                     in_comment = False
                 if in_comment:
-                    if not config.description:
-                        sline = line.strip()
-                        # Skip the first line of comment
-                        if sline.startswith('*'):
-                            # Remove the '*'.
-                            sline = sline[1:].strip()
-                            # We reach an empty line of comment, the description part is ending.
-                            if sline == '':
-                                config.description = description
-                            else:
-                                if description != '':
-                                    description += ' '
-                                description += sline
                     match = RE_CHANGE_MODE.match(line)
                     if match:
                         config.change_mode = match.group(1).replace('VehiclePropertyChangeMode.', '')
+                        continue
                     match = RE_ACCESS.match(line)
                     if match:
                         config.access_modes.append(match.group(1).replace('VehiclePropertyAccess.', ''))
+                        continue
                     match = RE_UNIT.match(line)
                     if match:
                         config.unit_type = match.group(1)
+                        continue
                     match = RE_DATA_ENUM.match(line)
                     if match:
                         config.enum_types.append(match.group(1))
+                        continue
                     match = RE_VERSION.match(line)
                     if match:
                         if config.version != None:
                             raise Exception('Duplicate version annotation for property: ' + prop_name)
                         config.version = match.group(1)
+                        continue
+
+                    sline = line.strip()
+                    if sline.startswith('*'):
+                        # Remove the '*'.
+                        sline = sline[1:].strip()
+
+                    if not config.description:
+                        # We reach an empty line of comment, the description part is ending.
+                        if sline == '':
+                            config.description = description
+                        else:
+                            if description != '':
+                                description += ' '
+                            description += sline
+                    else:
+                        if not config.comment:
+                            if sline != '':
+                                # This is the first line for comment.
+                                config.comment = sline
+                        else:
+                            if sline != '':
+                                # Concat this line with the previous line's comment with a space.
+                                config.comment += ' ' + sline
+                            else:
+                                # Treat empty line comment as a new line.
+                                config.comment += '\n'
                 else:
                     match = RE_VALUE.match(line)
                     if match:
@@ -319,7 +341,7 @@ class FileParser:
             f.write(content)
 
     def outputAsCsv(self, output):
-        content = 'name,description,change mode,access mode,enum type,unit type\n'
+        content = 'name,description,change mode,access mode,enum type,unit type,comment\n'
         for config in self.configs:
             enum_types = None
             if not config.enum_types:
@@ -330,14 +352,18 @@ class FileParser:
             if not unit_type:
                 unit_type = '/'
             access_modes = ''
-            content += '"{}","{}","{}","{}","{}","{}"\n'.format(
+            comment = config.comment
+            if not comment:
+                comment = ''
+            content += '"{}","{}","{}","{}","{}","{}", "{}"\n'.format(
                     config.name,
                     # Need to escape quote as double quote.
                     config.description.replace('"', '""'),
                     config.change_mode,
                     '/'.join(config.access_modes),
                     enum_types,
-                    unit_type)
+                    unit_type,
+                    comment.replace('"', '""'))
 
         with open(output, 'w+') as f:
             f.write(content)
