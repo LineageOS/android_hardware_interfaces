@@ -19,12 +19,14 @@
 #include <IVhalClient.h>
 #include <VehicleHalTypes.h>
 #include <VehicleUtils.h>
+#include <VersionForVehicleProperty.h>
 #include <aidl/Gtest.h>
 #include <aidl/Vintf.h>
 #include <aidl/android/hardware/automotive/vehicle/IVehicle.h>
 #include <android-base/stringprintf.h>
 #include <android-base/thread_annotations.h>
 #include <android/binder_process.h>
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <hidl/GtestPrinter.h>
 #include <hidl/ServiceManagement.h>
@@ -47,6 +49,7 @@ using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyAccess;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyChangeMode;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyGroup;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType;
+using ::aidl::android::hardware::automotive::vehicle::VersionForVehicleProperty;
 using ::android::getAidlHalInstanceNames;
 using ::android::base::ScopedLockAssertion;
 using ::android::base::StringPrintf;
@@ -58,7 +61,10 @@ using ::android::frameworks::automotive::vhal::ISubscriptionCallback;
 using ::android::frameworks::automotive::vhal::IVhalClient;
 using ::android::hardware::getAllHalInstanceNames;
 using ::android::hardware::Sanitize;
+using ::android::hardware::automotive::vehicle::isSystemProp;
+using ::android::hardware::automotive::vehicle::propIdToString;
 using ::android::hardware::automotive::vehicle::toInt;
+using ::testing::Ge;
 
 constexpr int32_t kInvalidProp = 0x31600207;
 
@@ -200,6 +206,41 @@ TEST_P(VtsHalAutomotiveVehicleTargetTest, getPropConfigsWithInvalidProp) {
     ASSERT_FALSE(result.ok()) << StringPrintf(
             "Expect failure to get prop configs for invalid prop: %" PRId32, kInvalidProp);
     ASSERT_NE(result.error().message(), "") << "Expect error message not to be empty";
+}
+
+// Test system property IDs returned by getPropConfigs() are defined in the VHAL property interface.
+TEST_P(VtsHalAutomotiveVehicleTargetTest, testPropConfigs_onlyDefinedSystemPropertyIdsReturned) {
+    if (!mVhalClient->isAidlVhal()) {
+        GTEST_SKIP() << "Skip for HIDL VHAL because HAL interface run-time version is only"
+                     << "introduced for AIDL";
+    }
+
+    auto result = mVhalClient->getAllPropConfigs();
+    ASSERT_TRUE(result.ok()) << "Failed to get all property configs, error: "
+                             << result.error().message();
+
+    int32_t vhalVersion = mVhalClient->getRemoteInterfaceVersion();
+    const auto& configs = result.value();
+    for (size_t i = 0; i < configs.size(); i++) {
+        int32_t propId = configs[i]->getPropId();
+        if (!isSystemProp(propId)) {
+            continue;
+        }
+
+        std::string propName = propIdToString(propId);
+        auto it = VersionForVehicleProperty.find(static_cast<VehicleProperty>(propId));
+        bool found = (it != VersionForVehicleProperty.end());
+        EXPECT_TRUE(found) << "System Property: " << propName
+                           << " is not defined in VHAL property interface";
+        if (!found) {
+            continue;
+        }
+        int32_t requiredVersion = it->second;
+        EXPECT_THAT(vhalVersion, Ge(requiredVersion))
+                << "System Property: " << propName << " requires VHAL version: " << requiredVersion
+                << ", but the current VHAL version"
+                << " is " << vhalVersion << ", must not be supported";
+    }
 }
 
 // Test get() return current value for properties.
