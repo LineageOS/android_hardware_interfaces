@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-#include <aidl/Vintf.h>
-
 #define LOG_TAG "VtsHalSpatializerTest"
 #include <android-base/logging.h>
 

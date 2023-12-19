@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include <aidl/Vintf.h>
 #define LOG_TAG "VtsHalEnvironmentalReverbTest"
 #include <android-base/logging.h>
 
