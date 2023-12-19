@@ -22,6 +22,7 @@ use authgraph_core::{
     ta::{AuthGraphTa, Role},
 };
 use authgraph_hal::channel::SerializedChannel;
+use log::error;
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::sync::{mpsc, Mutex};
@@ -57,10 +58,23 @@ impl LocalTa {
             );
             // Loop forever processing request messages.
             loop {
-                let req_data: Vec<u8> = in_rx.recv().expect("failed to receive next req");
+                let req_data: Vec<u8> = match in_rx.recv() {
+                    Ok(data) => data,
+                    Err(_) => {
+                        error!("local TA failed to receive request!");
+                        break;
+                    }
+                };
                 let rsp_data = ta.process(&req_data);
-                out_tx.send(rsp_data).expect("failed to send out rsp");
+                match out_tx.send(rsp_data) {
+                    Ok(_) => {}
+                    Err(_) => {
+                        error!("local TA failed to send out response");
+                        break;
+                    }
+                }
             }
+            error!("local TA terminating!");
         });
         Ok(Self {
             channels: Mutex::new(Channels { in_tx, out_rx }),
