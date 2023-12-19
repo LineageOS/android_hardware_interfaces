@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-#include <limits.h>
-
-#include <aidl/Vintf.h>
 #define LOG_TAG "VtsHalBassBoostTest"
 #include <android-base/logging.h>
 

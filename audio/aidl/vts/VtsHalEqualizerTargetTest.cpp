@@ -15,15 +15,10 @@
  */
 
 #include <algorithm>
-#include <limits>
-#include <map>
-#include <memory>
-#include <optional>
 #include <string>
 #include <vector>
 
 #include <aidl/Gtest.h>
-#include <aidl/Vintf.h>
 #include <aidl/android/hardware/audio/effect/IEffect.h>
 #include <aidl/android/hardware/audio/effect/IFactory.h>
 #define LOG_TAG "VtsHalEqualizerTest"
