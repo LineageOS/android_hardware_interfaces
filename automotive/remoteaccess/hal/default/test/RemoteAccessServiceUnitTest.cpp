@@ -95,9 +95,9 @@ class MockGrpcClientStub : public WakeupClient::StubInterface {
     MOCK_METHOD(Status, IsTaskScheduled,
                 (ClientContext * context, const IsTaskScheduledRequest& request,
                  IsTaskScheduledResponse* response));
-    MOCK_METHOD(Status, GetAllScheduledTasks,
-                (ClientContext * context, const GetAllScheduledTasksRequest& request,
-                 GetAllScheduledTasksResponse* response));
+    MOCK_METHOD(Status, GetAllPendingScheduledTasks,
+                (ClientContext * context, const GetAllPendingScheduledTasksRequest& request,
+                 GetAllPendingScheduledTasksResponse* response));
     // Async methods which we do not care.
     MOCK_METHOD(ClientAsyncReaderInterface<GetRemoteTasksResponse>*, AsyncGetRemoteTasksRaw,
                 (ClientContext * context, const GetRemoteTasksRequest& request, CompletionQueue* cq,
@@ -141,13 +141,13 @@ class MockGrpcClientStub : public WakeupClient::StubInterface {
                 PrepareAsyncIsTaskScheduledRaw,
                 (ClientContext * context, const IsTaskScheduledRequest& request,
                  CompletionQueue* cq));
-    MOCK_METHOD(ClientAsyncResponseReaderInterface<GetAllScheduledTasksResponse>*,
-                AsyncGetAllScheduledTasksRaw,
-                (ClientContext * context, const GetAllScheduledTasksRequest& request,
+    MOCK_METHOD(ClientAsyncResponseReaderInterface<GetAllPendingScheduledTasksResponse>*,
+                AsyncGetAllPendingScheduledTasksRaw,
+                (ClientContext * context, const GetAllPendingScheduledTasksRequest& request,
                  CompletionQueue* cq));
-    MOCK_METHOD(ClientAsyncResponseReaderInterface<GetAllScheduledTasksResponse>*,
-                PrepareAsyncGetAllScheduledTasksRaw,
-                (ClientContext * context, const GetAllScheduledTasksRequest& request,
+    MOCK_METHOD(ClientAsyncResponseReaderInterface<GetAllPendingScheduledTasksResponse>*,
+                PrepareAsyncGetAllPendingScheduledTasksRaw,
+                (ClientContext * context, const GetAllPendingScheduledTasksRequest& request,
                  CompletionQueue* cq));
 };
 
@@ -573,13 +573,13 @@ TEST_F(RemoteAccessServiceUnitTest, TestIsTaskScheduled) {
     EXPECT_EQ(grpcRequest.scheduleid(), kTestScheduleId);
 }
 
-TEST_F(RemoteAccessServiceUnitTest, testGetAllScheduledTasks) {
+TEST_F(RemoteAccessServiceUnitTest, testGetAllPendingScheduledTasks) {
     std::vector<ScheduleInfo> result;
-    GetAllScheduledTasksRequest grpcRequest = {};
-    EXPECT_CALL(*getGrpcWakeupClientStub(), GetAllScheduledTasks)
+    GetAllPendingScheduledTasksRequest grpcRequest = {};
+    EXPECT_CALL(*getGrpcWakeupClientStub(), GetAllPendingScheduledTasks)
             .WillOnce([&grpcRequest]([[maybe_unused]] ClientContext* context,
-                                     const GetAllScheduledTasksRequest& request,
-                                     GetAllScheduledTasksResponse* response) {
+                                     const GetAllPendingScheduledTasksRequest& request,
+                                     GetAllPendingScheduledTasksResponse* response) {
                 grpcRequest = request;
                 GrpcScheduleInfo* newInfo = response->add_allscheduledtasks();
                 newInfo->set_clientid(kTestClientId);
@@ -591,7 +591,7 @@ TEST_F(RemoteAccessServiceUnitTest, testGetAllScheduledTasks) {
                 return Status();
             });
 
-    ScopedAStatus status = getService()->getAllScheduledTasks(kTestClientId, &result);
+    ScopedAStatus status = getService()->getAllPendingScheduledTasks(kTestClientId, &result);
 
     ASSERT_TRUE(status.isOk());
     EXPECT_EQ(grpcRequest.clientid(), kTestClientId);

@@ -280,7 +280,7 @@ TEST_F(TestWakeupClientServiceImplUnitTest, TestUnscheduleAllTasks) {
     EXPECT_EQ(getRemoteTaskResponses().size(), 0);
 }
 
-TEST_F(TestWakeupClientServiceImplUnitTest, TestGetAllScheduledTasks) {
+TEST_F(TestWakeupClientServiceImplUnitTest, TestGetAllPendingScheduledTasks) {
     std::string scheduleId1 = "scheduleId1";
     std::string scheduleId2 = "scheduleId2";
     int64_t time1 = getNow();
@@ -296,19 +296,19 @@ TEST_F(TestWakeupClientServiceImplUnitTest, TestGetAllScheduledTasks) {
     ASSERT_TRUE(status.ok());
 
     ClientContext context;
-    GetAllScheduledTasksRequest request;
-    GetAllScheduledTasksResponse response;
+    GetAllPendingScheduledTasksRequest request;
+    GetAllPendingScheduledTasksResponse response;
     request.set_clientid("invalid client Id");
-    status = getStub()->GetAllScheduledTasks(&context, request, &response);
+    status = getStub()->GetAllPendingScheduledTasks(&context, request, &response);
 
     ASSERT_TRUE(status.ok());
     EXPECT_EQ(response.allscheduledtasks_size(), 0);
 
     ClientContext context2;
-    GetAllScheduledTasksRequest request2;
-    GetAllScheduledTasksResponse response2;
+    GetAllPendingScheduledTasksRequest request2;
+    GetAllPendingScheduledTasksResponse response2;
     request2.set_clientid(kTestClientId);
-    status = getStub()->GetAllScheduledTasks(&context2, request2, &response2);
+    status = getStub()->GetAllPendingScheduledTasks(&context2, request2, &response2);
 
     ASSERT_TRUE(status.ok());
     ASSERT_EQ(response2.allscheduledtasks_size(), 2);

@@ -469,11 +469,11 @@ Status TestWakeupClientServiceImpl::IsTaskScheduled(ServerContext* context,
     return Status::OK;
 }
 
-Status TestWakeupClientServiceImpl::GetAllScheduledTasks(ServerContext* context,
-                                                         const GetAllScheduledTasksRequest* request,
-                                                         GetAllScheduledTasksResponse* response) {
+Status TestWakeupClientServiceImpl::GetAllPendingScheduledTasks(
+        ServerContext* context, const GetAllPendingScheduledTasksRequest* request,
+        GetAllPendingScheduledTasksResponse* response) {
     const std::string& clientId = request->clientid();
-    printf("GetAllScheduledTasks called with client Id: %s\n", clientId.c_str());
+    printf("GetAllPendingScheduledTasks called with client Id: %s\n", clientId.c_str());
     response->clear_allscheduledtasks();
     {
         std::unique_lock lk(mLock);

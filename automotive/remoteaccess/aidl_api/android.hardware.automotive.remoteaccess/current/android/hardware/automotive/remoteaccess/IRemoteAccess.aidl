@@ -46,5 +46,5 @@ interface IRemoteAccess {
   void unscheduleTask(String clientId, String scheduleId);
   void unscheduleAllTasks(String clientId);
   boolean isTaskScheduled(String clientId, String scheduleId);
-  List<android.hardware.automotive.remoteaccess.ScheduleInfo> getAllScheduledTasks(String clientId);
+  List<android.hardware.automotive.remoteaccess.ScheduleInfo> getAllPendingScheduledTasks(String clientId);
 }

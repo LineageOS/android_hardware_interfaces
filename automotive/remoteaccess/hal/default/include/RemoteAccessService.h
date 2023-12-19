@@ -96,7 +96,7 @@ class RemoteAccessService
     ndk::ScopedAStatus isTaskScheduled(const std::string& clientId, const std::string& scheduleId,
                                        bool* out) override;
 
-    ndk::ScopedAStatus getAllScheduledTasks(
+    ndk::ScopedAStatus getAllPendingScheduledTasks(
             const std::string& clientId,
             std::vector<aidl::android::hardware::automotive::remoteaccess::ScheduleInfo>* out)
             override;
