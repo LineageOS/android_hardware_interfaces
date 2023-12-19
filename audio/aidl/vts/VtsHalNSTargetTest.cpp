@@ -16,7 +16,6 @@
 
 #include <unordered_set>
 
-#include <aidl/Vintf.h>
 #include <aidl/android/hardware/audio/effect/NoiseSuppression.h>
 #define LOG_TAG "VtsHalNSParamTest"
 #include <android-base/logging.h>

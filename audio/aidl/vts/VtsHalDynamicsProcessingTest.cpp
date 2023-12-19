@@ -18,7 +18,6 @@
 #include <string>
 #include <unordered_set>
 
-#include <aidl/Vintf.h>
 #define LOG_TAG "VtsHalDynamicsProcessingTest"
 #include <android-base/logging.h>
 
