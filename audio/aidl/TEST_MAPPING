@@ -51,5 +51,10 @@
     {
       "name": "VtsHalNSTargetTest"
     }
+  ],
+  "postsubmit": [
+    {
+      "name": "VtsHalSpatializerTargetTest"
+    }
   ]
 }
