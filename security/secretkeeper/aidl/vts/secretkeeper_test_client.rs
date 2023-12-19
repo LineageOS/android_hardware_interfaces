@@ -35,7 +35,7 @@ use secretkeeper_comm::data_types::response::Response;
 use secretkeeper_comm::data_types::packet::{ResponsePacket, ResponseType};
 
 const SECRETKEEPER_SERVICE: &str = "android.hardware.security.secretkeeper.ISecretkeeper";
-const SECRETKEEPER_INSTANCES: [&'static str; 2] = ["nonsecure", "default"];
+const SECRETKEEPER_INSTANCES: [&'static str; 2] = ["default", "nonsecure"];
 const CURRENT_VERSION: u64 = 1;
 
 // TODO(b/291238565): This will change once libdice_policy switches to Explicit-key DiceCertChain
@@ -75,9 +75,16 @@ fn get_connection() -> Option<(binder::Strong<dyn ISecretkeeper>, String)> {
     // Initialize logging (which is OK to call multiple times).
     logger::init(logger::Config::default().with_min_level(log::Level::Debug));
 
+    // Determine which instances are available.
+    let available = binder::get_declared_instances(SECRETKEEPER_SERVICE).unwrap_or_default();
+
     // TODO: replace this with a parameterized set of tests that run for each available instance of
     // ISecretkeeper (rather than having a fixed set of instance names to look for).
     for instance in &SECRETKEEPER_INSTANCES {
+        if available.iter().find(|s| s == instance).is_none() {
+            // Skip undeclared instances.
+            continue;
+        }
         let name = format!("{SECRETKEEPER_SERVICE}/{instance}");
         match binder::get_interface(&name) {
             Ok(sk) => {
@@ -92,6 +99,7 @@ fn get_connection() -> Option<(binder::Strong<dyn ISecretkeeper>, String)> {
             }
         }
     }
+    info!("no Secretkeeper instances in {SECRETKEEPER_INSTANCES:?} are declared and present");
     None
 }
 
