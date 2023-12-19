@@ -1,0 +1,20 @@
+cc_test {
+    name: "VtsHalLmpEventTargetTest",
+    defaults: [
+        "VtsHalTargetTestDefaults",
+        "use_libaidlvintf_gtest_helper_static",
+    ],
+    srcs: ["VtsHalLmpEventTargetTest.cpp"],
+    shared_libs: [
+        "libbinder",
+        "libbinder_ndk"
+    ],
+    static_libs: [
+        "android.hardware.bluetooth.lmp_event-V1-ndk",
+    ],
+    test_suites: [
+        "general-tests",
+        "vts",
+    ]
+}
+
