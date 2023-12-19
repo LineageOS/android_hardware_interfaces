@@ -42,11 +42,8 @@ aidl_interface {
             ],
         },
         rust: {
-            min_sdk_version: "31",
-            enabled: true,
-            additional_rustlibs: [
-                "libnativewindow_rs",
-            ],
+            // No users, and no rust implementation of android.os.Surface yet
+            enabled: false,
         },
     },
 }
