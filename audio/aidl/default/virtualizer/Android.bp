@@ -27,8 +27,6 @@ cc_library_shared {
     name: "libvirtualizersw",
     defaults: [
         "aidlaudioeffectservice_defaults",
-        "latest_android_media_audio_common_types_ndk_shared",
-        "latest_android_hardware_audio_effect_ndk_shared",
     ],
     srcs: [
         "VirtualizerSw.cpp",
