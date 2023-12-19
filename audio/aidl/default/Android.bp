@@ -204,6 +204,7 @@ cc_defaults {
     vendor: true,
     shared_libs: [
         "libaudioaidlcommon",
+        "libaudioutils",
         "libbase",
         "libbinder_ndk",
         "libcutils",
