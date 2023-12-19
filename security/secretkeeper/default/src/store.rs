@@ -13,12 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+//! In-memory store for nonsecure Secretkeeper.
+
 use secretkeeper_comm::data_types::error::Error;
 use secretkeeper_core::store::KeyValueStore;
 use std::collections::HashMap;
 
-/// An in-memory implementation of KeyValueStore. Please note that this is entirely for
-/// testing purposes. Refer to the documentation of `PolicyGatedStorage` & Secretkeeper HAL for
+/// An in-memory implementation of [`KeyValueStore`]. Please note that this is entirely for testing
+/// purposes. Refer to the documentation of `PolicyGatedStorage` and Secretkeeper HAL for
 /// persistence requirements.
 #[derive(Default)]
 pub struct InMemoryStore(HashMap<Vec<u8>, Vec<u8>>);
