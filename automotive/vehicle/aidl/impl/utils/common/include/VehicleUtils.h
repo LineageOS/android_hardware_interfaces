@@ -124,7 +124,6 @@ createVehiclePropValueVec(aidl::android::hardware::automotive::vehicle::VehicleP
             break;  // Valid, but nothing to do.
         default:
             ALOGE("createVehiclePropValue: unknown type: %d", toInt(type));
-            val.reset(nullptr);
     }
     return val;
 }

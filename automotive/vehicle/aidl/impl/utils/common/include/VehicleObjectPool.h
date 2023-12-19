@@ -235,7 +235,7 @@ class VehiclePropValuePool {
 
     bool isDisposable(aidl::android::hardware::automotive::vehicle::VehiclePropertyType type,
                       size_t vectorSize) const {
-        return vectorSize > mMaxRecyclableVectorSize || isComplexType(type);
+        return vectorSize == 0 || vectorSize > mMaxRecyclableVectorSize || isComplexType(type);
     }
 
     RecyclableType obtainDisposable(

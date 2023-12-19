@@ -22,8 +22,7 @@
 
 // clang-format off
 
-#ifndef android_hardware_automotive_vehicle_aidl_generated_lib_AccessForVehicleProperty_H_
-#define android_hardware_automotive_vehicle_aidl_generated_lib_AccessForVehicleProperty_H_
+#pragma once
 
 #include <aidl/android/hardware/automotive/vehicle/VehicleProperty.h>
 #include <aidl/android/hardware/automotive/vehicle/VehiclePropertyAccess.h>
@@ -309,5 +308,3 @@ std::unordered_map<VehicleProperty, VehiclePropertyAccess> AccessForVehiclePrope
 }  // namespace hardware
 }  // namespace android
 }  // aidl
-
-#endif  // android_hardware_automotive_vehicle_aidl_generated_lib_AccessForVehicleProperty_H_
