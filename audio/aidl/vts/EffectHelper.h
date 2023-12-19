@@ -21,6 +21,7 @@
 #include <string>
 #include <type_traits>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include <Utils.h>
@@ -263,12 +264,11 @@ class EffectHelper {
         return s;
     }
 
-    template <typename T, typename S, Range::Tag R, typename T::Tag tag, typename Functor>
+    template <typename T, typename S, Range::Tag R, typename T::Tag tag>
     static std::set<S> getTestValueSet(
-            std::vector<std::pair<std::shared_ptr<IFactory>, Descriptor>> kFactoryDescList,
-            Functor functor) {
+            std::vector<std::pair<std::shared_ptr<IFactory>, Descriptor>> descList) {
         std::set<S> result;
-        for (const auto& [_, desc] : kFactoryDescList) {
+        for (const auto& [_, desc] : descList) {
             if (desc.capability.range.getTag() == R) {
                 const auto& ranges = desc.capability.range.get<R>();
                 for (const auto& range : ranges) {
@@ -281,6 +281,14 @@ class EffectHelper {
                 }
             }
         }
+        return result;
+    }
+
+    template <typename T, typename S, Range::Tag R, typename T::Tag tag, typename Functor>
+    static std::set<S> getTestValueSet(
+            std::vector<std::pair<std::shared_ptr<IFactory>, Descriptor>> descList,
+            Functor functor) {
+        auto result = getTestValueSet<T, S, R, tag>(descList);
         return functor(result);
     }
 
