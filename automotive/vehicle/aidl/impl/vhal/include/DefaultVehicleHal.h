@@ -49,6 +49,9 @@ class DefaultVehicleHal final : public aidl::android::hardware::automotive::vehi
 
     explicit DefaultVehicleHal(std::unique_ptr<IVehicleHardware> hardware);
 
+    // Test-only
+    DefaultVehicleHal(std::unique_ptr<IVehicleHardware> hardware, int32_t testInterfaceVersion);
+
     ~DefaultVehicleHal();
 
     ndk::ScopedAStatus getAllPropConfigs(
@@ -153,6 +156,8 @@ class DefaultVehicleHal final : public aidl::android::hardware::automotive::vehi
             mPropertyChangeEventsBatchingConsumer;
     // Only set once during initialization.
     std::chrono::nanoseconds mEventBatchingWindow;
+    // Only used for testing.
+    int32_t mTestInterfaceVersion = 0;
 
     std::mutex mLock;
     std::unordered_map<const AIBinder*, std::unique_ptr<OnBinderDiedContext>> mOnBinderDiedContexts
@@ -226,6 +231,8 @@ class DefaultVehicleHal final : public aidl::android::hardware::automotive::vehi
     void handleBatchedPropertyEvents(
             std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropValue>&&
                     batchedEvents);
+
+    int32_t getVhalInterfaceVersion();
 
     // Puts the property change events into a queue so that they can handled in batch.
     static void batchPropertyChangeEvent(
