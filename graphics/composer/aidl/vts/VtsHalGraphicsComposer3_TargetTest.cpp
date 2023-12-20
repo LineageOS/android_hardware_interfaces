@@ -1275,8 +1275,8 @@ TEST_P(GraphicsComposerAidlV3Test, GetDisplayConfigurations) {
                 if (vrrConfig.notifyExpectedPresentConfig) {
                     const auto& notifyExpectedPresentConfig =
                             *vrrConfig.notifyExpectedPresentConfig;
-                    EXPECT_GT(0, notifyExpectedPresentConfig.notifyExpectedPresentHeadsUpNs);
-                    EXPECT_GE(0, notifyExpectedPresentConfig.notifyExpectedPresentTimeoutNs);
+                    EXPECT_GE(notifyExpectedPresentConfig.headsUpNs, 0);
+                    EXPECT_GE(notifyExpectedPresentConfig.timeoutNs, 0);
                 }
             }
         }
