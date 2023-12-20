@@ -331,6 +331,7 @@
         <version>1</version>
         <interface>
             <name>ISecretkeeper</name>
+            <instance>default</instance>
             <instance>nonsecure</instance>
         </interface>
     </hal>
