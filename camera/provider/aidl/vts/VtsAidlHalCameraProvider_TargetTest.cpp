@@ -531,11 +531,7 @@ TEST_P(CameraAidlTest, constructDefaultRequestSettings) {
             }
 
             if (ret.isOk()) {
-                const camera_metadata_t* metadata = (camera_metadata_t*)rawMetadata.metadata.data();
-                size_t expectedSize = rawMetadata.metadata.size();
-                int result = validate_camera_metadata_structure(metadata, &expectedSize);
-                ASSERT_TRUE((result == 0) || (result == CAMERA_METADATA_VALIDATION_SHIFTED));
-                verifyRequestTemplate(metadata, reqTemplate);
+                validateDefaultRequestMetadata(reqTemplate, rawMetadata);
             } else {
                 ASSERT_EQ(0u, rawMetadata.metadata.size());
             }
@@ -546,24 +542,12 @@ TEST_P(CameraAidlTest, constructDefaultRequestSettings) {
                     ndk::ScopedAStatus ret2 =
                             device->constructDefaultRequestSettings(reqTemplate, &rawMetadata2);
 
-                    // TODO: Do not allow OPERATION_NOT_SUPPORTED once HAL
-                    // implementation is in place.
-                    if (static_cast<Status>(ret2.getServiceSpecificError()) !=
-                        Status::OPERATION_NOT_SUPPORTED) {
-                        ASSERT_EQ(ret.isOk(), ret2.isOk());
-                        ASSERT_EQ(ret.getStatus(), ret2.getStatus());
+                    ASSERT_EQ(ret.isOk(), ret2.isOk());
+                    ASSERT_EQ(ret.getStatus(), ret2.getStatus());
 
-                        ASSERT_EQ(rawMetadata.metadata.size(), rawMetadata2.metadata.size());
-                        if (ret2.isOk()) {
-                            const camera_metadata_t* metadata =
-                                    (camera_metadata_t*)rawMetadata2.metadata.data();
-                            size_t expectedSize = rawMetadata2.metadata.size();
-                            int result =
-                                    validate_camera_metadata_structure(metadata, &expectedSize);
-                            ASSERT_TRUE((result == 0) ||
-                                        (result == CAMERA_METADATA_VALIDATION_SHIFTED));
-                            verifyRequestTemplate(metadata, reqTemplate);
-                        }
+                    ASSERT_EQ(rawMetadata.metadata.size(), rawMetadata2.metadata.size());
+                    if (ret2.isOk()) {
+                        validateDefaultRequestMetadata(reqTemplate, rawMetadata2);
                     }
                 }
             }

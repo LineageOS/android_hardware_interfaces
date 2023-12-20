@@ -4026,3 +4026,12 @@ void CameraAidlTest::getSupportedDurations(const camera_metadata_t* ch, uint32_t
         }
     }
 }
+
+void CameraAidlTest::validateDefaultRequestMetadata(RequestTemplate reqTemplate,
+                                                    const CameraMetadata& rawMetadata) {
+    const camera_metadata_t* metadata = (camera_metadata_t*)rawMetadata.metadata.data();
+    size_t expectedSize = rawMetadata.metadata.size();
+    int result = validate_camera_metadata_structure(metadata, &expectedSize);
+    ASSERT_TRUE((result == 0) || (result == CAMERA_METADATA_VALIDATION_SHIFTED));
+    verifyRequestTemplate(metadata, reqTemplate);
+}
