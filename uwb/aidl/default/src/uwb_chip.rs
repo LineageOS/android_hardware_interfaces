@@ -61,6 +61,20 @@ impl State {
             callbacks.as_binder().unlink_to_death(death_recipient)?;
             token.cancel();
             handle.await.unwrap();
+            let packet: UciControlPacket = DeviceResetCmdBuilder {
+                reset_config: ResetConfig::UwbsReset,
+            }
+            .build()
+            .into();
+            // DeviceResetCmd need to be send to reset the device to stop all running
+            // activities on UWBS.
+            let packet_vec: Vec<UciControlPacketHal> = packet.into();
+            for hal_packet in packet_vec.into_iter() {
+                serial
+                    .write(&hal_packet.to_vec())
+                    .map(|written| written as i32)
+                    .map_err(|_| binder::StatusCode::UNKNOWN_ERROR)?;
+            }
             consume_device_reset_rsp_and_ntf(
                 &mut serial
                     .try_clone()
@@ -238,21 +252,7 @@ impl IUwbChipAsyncServer for UwbChip {
 
         let mut state = self.state.lock().await;
 
-        if let State::Opened { ref mut serial, .. } = *state {
-            let packet: UciControlPacket = DeviceResetCmdBuilder {
-                reset_config: ResetConfig::UwbsReset,
-            }
-            .build()
-            .into();
-            // DeviceResetCmd need to be send to reset the device to stop all running
-            // activities on UWBS.
-            let packet_vec: Vec<UciControlPacketHal> = packet.into();
-            for hal_packet in packet_vec.into_iter() {
-                serial
-                    .write(&hal_packet.to_vec())
-                    .map(|written| written as i32)
-                    .map_err(|_| binder::StatusCode::UNKNOWN_ERROR)?;
-            }
+        if let State::Opened { .. } = *state {
             state.close().await
         } else {
             Err(binder::ExceptionCode::ILLEGAL_STATE.into())
