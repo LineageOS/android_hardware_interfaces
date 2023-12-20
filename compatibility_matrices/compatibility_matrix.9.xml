@@ -173,6 +173,14 @@
         </interface>
     </hal>
     <hal format="aidl" optional="true">
+        <name>android.hardware.bluetooth.lmp_event</name>
+        <version>1</version>
+        <interface>
+            <name>IBluetoothLmpEvent</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="aidl" optional="true">
         <name>android.hardware.boot</name>
         <interface>
             <name>IBootControl</name>

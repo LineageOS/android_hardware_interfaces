@@ -18,6 +18,28 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
+rust_library {
+    name: "libsecretkeeper_nonsecure",
+    crate_name: "secretkeeper_nonsecure",
+    srcs: [
+        "src/lib.rs",
+    ],
+    vendor_available: true,
+    defaults: [
+        "authgraph_use_latest_hal_aidl_rust",
+    ],
+    rustlibs: [
+        "android.hardware.security.secretkeeper-V1-rust",
+        "libauthgraph_boringssl",
+        "libauthgraph_core",
+        "libauthgraph_hal",
+        "libbinder_rs",
+        "liblog_rust",
+        "libsecretkeeper_core_nostd",
+        "libsecretkeeper_comm_nostd",
+    ],
+}
+
 rust_binary {
     name: "android.hardware.security.secretkeeper-service.nonsecure",
     relative_install_path: "hw",
@@ -30,18 +52,32 @@ rust_binary {
     rustlibs: [
         "android.hardware.security.secretkeeper-V1-rust",
         "libandroid_logger",
-        "libauthgraph_boringssl",
-        "libauthgraph_core",
-        "libauthgraph_hal",
         "libbinder_rs",
         "liblog_rust",
-        "libsecretkeeper_comm_nostd",
-        "libsecretkeeper_core_nostd",
         "libsecretkeeper_hal",
+        "libsecretkeeper_nonsecure",
     ],
     srcs: [
         "src/main.rs",
     ],
+}
+
+rust_fuzz {
+    name: "android.hardware.security.secretkeeper-service.nonsecure_fuzzer",
+    rustlibs: [
+        "libsecretkeeper_hal",
+        "libsecretkeeper_nonsecure",
+        "libbinder_random_parcel_rs",
+        "libbinder_rs",
+    ],
+    srcs: ["src/fuzzer.rs"],
+    fuzz_config: {
+        cc: [
+            "alanstokes@google.com",
+            "drysdale@google.com",
+            "shikhapanwar@google.com",
+        ],
+    },
 }
 
 prebuilt_etc {
