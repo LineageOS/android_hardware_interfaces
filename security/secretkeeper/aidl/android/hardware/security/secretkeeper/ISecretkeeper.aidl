@@ -39,9 +39,14 @@ interface ISecretkeeper {
 
     /**
      * Retrieve the instance of the `IAuthGraphKeyExchange` HAL that should be used for shared
-     * session key establishment.  These keys are used to perform encryption of messages as
+     * session key establishment. These keys are used to perform encryption of messages as
      * described in SecretManagement.cddl, allowing the client and Secretkeeper to have a
-     * cryptographically secure channel.
+     * cryptographically secure channel. In the key exchange protocol the client acts as P1
+     * (source) and Secretkeeper as P2 (sink). The interface returned here can be used to invoke
+     * methods on the sink.
+     *
+     * The client's identity is its DICE chain; Secretkeeper's identity is a
+     * per-boot key pair.
      */
     IAuthGraphKeyExchange getAuthGraphKe();
 
@@ -56,8 +61,8 @@ interface ISecretkeeper {
      * ProtectedRequestPacket & ProtectedResponsePacket using symmetric keys agreed between
      * the client & service. This cryptographic protection is required because the messages are
      * ferried via Android, which is allowed to be outside the TCB of clients (for example protected
-     * Virtual Machines). For this, service (& client) must implement a key exchange protocol, which
-     * is critical for establishing the secure channel.
+     * Virtual Machines). For this, service (& client) must implement the AuthGraph key exchange
+     * protocol to establish a secure channel between them.
      *
      * If an encrypted response cannot be generated, then a service-specific Binder error using one
      * of the ERROR_ codes above will be returned.
