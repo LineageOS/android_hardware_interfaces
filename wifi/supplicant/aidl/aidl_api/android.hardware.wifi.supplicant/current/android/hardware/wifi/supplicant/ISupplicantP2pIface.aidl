@@ -42,6 +42,9 @@ interface ISupplicantP2pIface {
   void cancelConnect();
   void cancelServiceDiscovery(in long identifier);
   void cancelWps(in String groupIfName);
+  /**
+   * @deprecated This method is deprecated from AIDL v3, newer HALs should use configureExtListenWithParams.
+   */
   void configureExtListen(in int periodInMillis, in int intervalInMillis);
   /**
    * @deprecated This method is deprecated from AIDL v3, newer HALs should use connectWithParams.
@@ -111,4 +114,5 @@ interface ISupplicantP2pIface {
   void configureEapolIpAddressAllocationParams(in int ipAddressGo, in int ipAddressMask, in int ipAddressStart, in int ipAddressEnd);
   String connectWithParams(in android.hardware.wifi.supplicant.P2pConnectInfo connectInfo);
   void findWithParams(in android.hardware.wifi.supplicant.P2pDiscoveryInfo discoveryInfo);
+  void configureExtListenWithParams(in android.hardware.wifi.supplicant.P2pExtListenInfo extListenInfo);
 }
