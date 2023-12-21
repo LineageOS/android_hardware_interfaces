@@ -16,7 +16,6 @@
 
 #include <string>
 
-#include <aidl/Vintf.h>
 #define LOG_TAG "VtsHalLoudnessEnhancerTest"
 #include <android-base/logging.h>
 

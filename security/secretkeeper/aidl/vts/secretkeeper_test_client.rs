@@ -24,18 +24,19 @@ use authgraph_core::key;
 use binder::StatusCode;
 use coset::{CborSerializable, CoseEncrypt0};
 use log::{info, warn};
+use secretkeeper_client::SkSession;
 use secretkeeper_core::cipher;
 use secretkeeper_comm::data_types::error::SecretkeeperError;
 use secretkeeper_comm::data_types::request::Request;
 use secretkeeper_comm::data_types::request_response_impl::{
     GetVersionRequest, GetVersionResponse, GetSecretRequest, GetSecretResponse, StoreSecretRequest,
     StoreSecretResponse };
-use secretkeeper_comm::data_types::{Id, Secret};
+use secretkeeper_comm::data_types::{Id, Secret, SeqNum};
 use secretkeeper_comm::data_types::response::Response;
 use secretkeeper_comm::data_types::packet::{ResponsePacket, ResponseType};
 
 const SECRETKEEPER_SERVICE: &str = "android.hardware.security.secretkeeper.ISecretkeeper";
-const SECRETKEEPER_INSTANCES: [&'static str; 2] = ["nonsecure", "default"];
+const SECRETKEEPER_INSTANCES: [&'static str; 2] = ["default", "nonsecure"];
 const CURRENT_VERSION: u64 = 1;
 
 // TODO(b/291238565): This will change once libdice_policy switches to Explicit-key DiceCertChain
@@ -75,9 +76,16 @@ fn get_connection() -> Option<(binder::Strong<dyn ISecretkeeper>, String)> {
     // Initialize logging (which is OK to call multiple times).
     logger::init(logger::Config::default().with_min_level(log::Level::Debug));
 
+    // Determine which instances are available.
+    let available = binder::get_declared_instances(SECRETKEEPER_SERVICE).unwrap_or_default();
+
     // TODO: replace this with a parameterized set of tests that run for each available instance of
     // ISecretkeeper (rather than having a fixed set of instance names to look for).
     for instance in &SECRETKEEPER_INSTANCES {
+        if available.iter().find(|s| s == instance).is_none() {
+            // Skip undeclared instances.
+            continue;
+        }
         let name = format!("{SECRETKEEPER_SERVICE}/{instance}");
         match binder::get_interface(&name) {
             Ok(sk) => {
@@ -88,10 +96,14 @@ fn get_connection() -> Option<(binder::Strong<dyn ISecretkeeper>, String)> {
                 info!("No /{instance} instance of ISecretkeeper present");
             }
             Err(e) => {
-                panic!("unexpected error while fetching connection to Secretkeeper {:?}", e);
+                panic!(
+                    "unexpected error while fetching connection to Secretkeeper {:?}",
+                    e
+                );
             }
         }
     }
+    info!("no Secretkeeper instances in {SECRETKEEPER_INSTANCES:?} are declared and present");
     None
 }
 
@@ -112,8 +124,7 @@ macro_rules! setup_client {
 struct SkClient {
     sk: binder::Strong<dyn ISecretkeeper>,
     name: String,
-    aes_keys: [key::AesKey; 2],
-    session_id: Vec<u8>,
+    session: SkSession,
 }
 
 impl Drop for SkClient {
@@ -126,27 +137,58 @@ impl Drop for SkClient {
 impl SkClient {
     fn new() -> Option<Self> {
         let (sk, name) = get_connection()?;
-        let (aes_keys, session_id) = authgraph_key_exchange(sk.clone());
-        Some(Self { sk, name, aes_keys, session_id })
+        Some(Self {
+            sk: sk.clone(),
+            name,
+            session: SkSession::new(sk).unwrap(),
+        })
     }
 
-    /// Wrapper around `ISecretkeeper::processSecretManagementRequest` that handles
+    /// This method is wrapper that use `SkSession::secret_management_request` which handles
     /// encryption and decryption.
-    fn secret_management_request(&self, req_data: &[u8]) -> Vec<u8> {
+    fn secret_management_request(&mut self, req_data: &[u8]) -> Vec<u8> {
+        self.session.secret_management_request(req_data).unwrap()
+    }
+
+    /// Unlike the method [`secret_management_request`], this method directly uses
+    /// `cipher::encrypt_message` & `cipher::decrypt_message`, allowing finer control of request
+    /// & response aad.
+    fn secret_management_request_custom_aad(
+        &self,
+        req_data: &[u8],
+        req_aad: &[u8],
+        expected_res_aad: &[u8],
+    ) -> Vec<u8> {
         let aes_gcm = boring::BoringAes;
         let rng = boring::BoringRng;
-        let request_bytes =
-            cipher::encrypt_message(&aes_gcm, &rng, &self.aes_keys[0], &self.session_id, &req_data)
-                .unwrap();
+        let request_bytes = cipher::encrypt_message(
+            &aes_gcm,
+            &rng,
+            self.session.encryption_key(),
+            self.session.session_id(),
+            &req_data,
+            req_aad,
+        )
+        .unwrap();
 
-        let response_bytes = self.sk.processSecretManagementRequest(&request_bytes).unwrap();
+        // Binder call!
+        let response_bytes = self
+            .sk
+            .processSecretManagementRequest(&request_bytes)
+            .unwrap();
 
         let response_encrypt0 = CoseEncrypt0::from_slice(&response_bytes).unwrap();
-        cipher::decrypt_message(&aes_gcm, &self.aes_keys[1], &response_encrypt0).unwrap()
+        cipher::decrypt_message(
+            &aes_gcm,
+            self.session.decryption_key(),
+            &response_encrypt0,
+            expected_res_aad,
+        )
+        .unwrap()
     }
 
     /// Helper method to store a secret.
-    fn store(&self, id: &Id, secret: &Secret) {
+    fn store(&mut self, id: &Id, secret: &Secret) {
         let store_request = StoreSecretRequest {
             id: id.clone(),
             secret: secret.clone(),
@@ -157,14 +199,20 @@ impl SkClient {
         let store_response = self.secret_management_request(&store_request);
         let store_response = ResponsePacket::from_slice(&store_response).unwrap();
 
-        assert_eq!(store_response.response_type().unwrap(), ResponseType::Success);
+        assert_eq!(
+            store_response.response_type().unwrap(),
+            ResponseType::Success
+        );
         // Really just checking that the response is indeed StoreSecretResponse
         let _ = StoreSecretResponse::deserialize_from_packet(store_response).unwrap();
     }
 
     /// Helper method to get a secret.
-    fn get(&self, id: &Id) -> Option<Secret> {
-        let get_request = GetSecretRequest { id: id.clone(), updated_sealing_policy: None };
+    fn get(&mut self, id: &Id) -> Option<Secret> {
+        let get_request = GetSecretRequest {
+            id: id.clone(),
+            updated_sealing_policy: None,
+        };
         let get_request = get_request.serialize_to_packet().to_vec().unwrap();
 
         let get_response = self.secret_management_request(&get_request);
@@ -183,7 +231,10 @@ impl SkClient {
 
     /// Helper method to delete secrets.
     fn delete(&self, ids: &[&Id]) {
-        let ids: Vec<SecretId> = ids.iter().map(|id| SecretId { id: id.0.to_vec() }).collect();
+        let ids: Vec<SecretId> = ids
+            .iter()
+            .map(|id| SecretId { id: id.0.to_vec() })
+            .collect();
         self.sk.deleteIds(&ids).unwrap();
     }
 
@@ -251,7 +302,7 @@ fn authgraph_corrupt_keys() {
 
 #[test]
 fn secret_management_get_version() {
-    let sk_client = setup_client!();
+    let mut sk_client = setup_client!();
 
     let request = GetVersionRequest {};
     let request_packet = request.serialize_to_packet();
@@ -260,7 +311,10 @@ fn secret_management_get_version() {
     let response_bytes = sk_client.secret_management_request(&request_bytes);
 
     let response_packet = ResponsePacket::from_slice(&response_bytes).unwrap();
-    assert_eq!(response_packet.response_type().unwrap(), ResponseType::Success);
+    assert_eq!(
+        response_packet.response_type().unwrap(),
+        ResponseType::Success
+    );
     let get_version_response =
         *GetVersionResponse::deserialize_from_packet(response_packet).unwrap();
     assert_eq!(get_version_response.version, CURRENT_VERSION);
@@ -268,7 +322,7 @@ fn secret_management_get_version() {
 
 #[test]
 fn secret_management_malformed_request() {
-    let sk_client = setup_client!();
+    let mut sk_client = setup_client!();
 
     let request = GetVersionRequest {};
     let request_packet = request.serialize_to_packet();
@@ -280,14 +334,17 @@ fn secret_management_malformed_request() {
     let response_bytes = sk_client.secret_management_request(&request_bytes);
 
     let response_packet = ResponsePacket::from_slice(&response_bytes).unwrap();
-    assert_eq!(response_packet.response_type().unwrap(), ResponseType::Error);
+    assert_eq!(
+        response_packet.response_type().unwrap(),
+        ResponseType::Error
+    );
     let err = *SecretkeeperError::deserialize_from_packet(response_packet).unwrap();
     assert_eq!(err, SecretkeeperError::RequestMalformed);
 }
 
 #[test]
 fn secret_management_store_get_secret_found() {
-    let sk_client = setup_client!();
+    let mut sk_client = setup_client!();
 
     sk_client.store(&ID_EXAMPLE, &SECRET_EXAMPLE);
 
@@ -297,7 +354,7 @@ fn secret_management_store_get_secret_found() {
 
 #[test]
 fn secret_management_store_get_secret_not_found() {
-    let sk_client = setup_client!();
+    let mut sk_client = setup_client!();
 
     // Store a secret (corresponding to an id).
     sk_client.store(&ID_EXAMPLE, &SECRET_EXAMPLE);
@@ -308,7 +365,7 @@ fn secret_management_store_get_secret_not_found() {
 
 #[test]
 fn secretkeeper_store_delete_ids() {
-    let sk_client = setup_client!();
+    let mut sk_client = setup_client!();
 
     sk_client.store(&ID_EXAMPLE, &SECRET_EXAMPLE);
     sk_client.store(&ID_EXAMPLE_2, &SECRET_EXAMPLE);
@@ -325,7 +382,7 @@ fn secretkeeper_store_delete_ids() {
 
 #[test]
 fn secretkeeper_store_delete_multiple_ids() {
-    let sk_client = setup_client!();
+    let mut sk_client = setup_client!();
 
     sk_client.store(&ID_EXAMPLE, &SECRET_EXAMPLE);
     sk_client.store(&ID_EXAMPLE_2, &SECRET_EXAMPLE);
@@ -337,7 +394,7 @@ fn secretkeeper_store_delete_multiple_ids() {
 
 #[test]
 fn secretkeeper_store_delete_duplicate_ids() {
-    let sk_client = setup_client!();
+    let mut sk_client = setup_client!();
 
     sk_client.store(&ID_EXAMPLE, &SECRET_EXAMPLE);
     sk_client.store(&ID_EXAMPLE_2, &SECRET_EXAMPLE);
@@ -350,7 +407,7 @@ fn secretkeeper_store_delete_duplicate_ids() {
 
 #[test]
 fn secretkeeper_store_delete_nonexistent() {
-    let sk_client = setup_client!();
+    let mut sk_client = setup_client!();
 
     sk_client.store(&ID_EXAMPLE, &SECRET_EXAMPLE);
     sk_client.store(&ID_EXAMPLE_2, &SECRET_EXAMPLE);
@@ -363,7 +420,7 @@ fn secretkeeper_store_delete_nonexistent() {
 
 #[test]
 fn secretkeeper_store_delete_all() {
-    let sk_client = setup_client!();
+    let mut sk_client = setup_client!();
 
     if sk_client.name != "nonsecure" {
         // Don't run deleteAll() on a secure device, as it might affect
@@ -388,4 +445,106 @@ fn secretkeeper_store_delete_all() {
 
     // (Try to) Get the secret that was never stored
     assert_eq!(sk_client.get(&ID_NOT_STORED), None);
+}
+
+// This test checks that Secretkeeper uses the expected [`RequestSeqNum`] as aad while
+// decrypting requests and the responses are encrypted with correct [`ResponseSeqNum`] for the
+// first few messages.
+#[test]
+fn secret_management_replay_protection_seq_num() {
+    let sk_client = setup_client!();
+    // Construct encoded request packets for the test
+    let (req_1, req_2, req_3) = construct_secret_management_requests();
+
+    // Lets now construct the seq_numbers(in request & expected in response)
+    let mut seq_a = SeqNum::new();
+    let [seq_0, seq_1, seq_2] = std::array::from_fn(|_| seq_a.get_then_increment().unwrap());
+
+    // Check first request/response is successful
+    let res = ResponsePacket::from_slice(
+        &sk_client.secret_management_request_custom_aad(&req_1, &seq_0, &seq_0),
+    )
+    .unwrap();
+    assert_eq!(res.response_type().unwrap(), ResponseType::Success);
+
+    // Check 2nd request/response is successful
+    let res = ResponsePacket::from_slice(
+        &sk_client.secret_management_request_custom_aad(&req_2, &seq_1, &seq_1),
+    )
+    .unwrap();
+    assert_eq!(res.response_type().unwrap(), ResponseType::Success);
+
+    // Check 3rd request/response is successful
+    let res = ResponsePacket::from_slice(
+        &sk_client.secret_management_request_custom_aad(&req_3, &seq_2, &seq_2),
+    )
+    .unwrap();
+    assert_eq!(res.response_type().unwrap(), ResponseType::Success);
+}
+
+// This test checks that Secretkeeper uses fresh [`RequestSeqNum`] & [`ResponseSeqNum`]
+// for new sessions.
+#[test]
+fn secret_management_replay_protection_seq_num_per_session() {
+    let sk_client = setup_client!();
+
+    // Construct encoded request packets for the test
+    let (req_1, _, _) = construct_secret_management_requests();
+
+    // Lets now construct the seq_number (in request & expected in response)
+    let mut seq_a = SeqNum::new();
+    let seq_0 = seq_a.get_then_increment().unwrap();
+    // Check first request/response is successful
+    let res = ResponsePacket::from_slice(
+        &sk_client.secret_management_request_custom_aad(&req_1, &seq_0, &seq_0),
+    )
+    .unwrap();
+    assert_eq!(res.response_type().unwrap(), ResponseType::Success);
+
+    // Start another session
+    let sk_client_diff = setup_client!();
+    // Check first request/response is with seq_0 is successful
+    let res = ResponsePacket::from_slice(
+        &sk_client_diff.secret_management_request_custom_aad(&req_1, &seq_0, &seq_0),
+    )
+    .unwrap();
+    assert_eq!(res.response_type().unwrap(), ResponseType::Success);
+}
+
+// This test checks that Secretkeeper rejects requests with out of order [`RequestSeqNum`]
+#[test]
+#[should_panic]
+fn secret_management_replay_protection_out_of_seq_req_not_accepted() {
+    let sk_client = setup_client!();
+
+    // Construct encoded request packets for the test
+    let (req_1, req_2, _) = construct_secret_management_requests();
+
+    // Lets now construct the seq_numbers(in request & expected in response)
+    let mut seq_a = SeqNum::new();
+    let [seq_0, seq_1, seq_2] = std::array::from_fn(|_| seq_a.get_then_increment().unwrap());
+
+    // Assume First request/response is successful
+    sk_client.secret_management_request_custom_aad(&req_1, &seq_0, &seq_0);
+
+    // Check 2nd request/response with skipped seq_num in request is a binder error
+    // This should panic!
+    sk_client.secret_management_request_custom_aad(&req_2, /*Skipping seq_1*/ &seq_2, &seq_1);
+}
+
+fn construct_secret_management_requests() -> (Vec<u8>, Vec<u8>, Vec<u8>) {
+    let version_request = GetVersionRequest {};
+    let version_request = version_request.serialize_to_packet().to_vec().unwrap();
+    let store_request = StoreSecretRequest {
+        id: ID_EXAMPLE,
+        secret: SECRET_EXAMPLE,
+        sealing_policy: HYPOTHETICAL_DICE_POLICY.to_vec(),
+    };
+    let store_request = store_request.serialize_to_packet().to_vec().unwrap();
+    let get_request = GetSecretRequest {
+        id: ID_EXAMPLE,
+        updated_sealing_policy: None,
+    };
+    let get_request = get_request.serialize_to_packet().to_vec().unwrap();
+    (version_request, store_request, get_request)
 }

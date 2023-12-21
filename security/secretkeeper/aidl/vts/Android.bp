@@ -27,6 +27,7 @@ rust_test {
     ],
     test_config: "AndroidTest.xml",
     rustlibs: [
+        "libsecretkeeper_client",
         "libsecretkeeper_comm_nostd",
         "libsecretkeeper_core_nostd",
         "android.hardware.security.secretkeeper-V1-rust",

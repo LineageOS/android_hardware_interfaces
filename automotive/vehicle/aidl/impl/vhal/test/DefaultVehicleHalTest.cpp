@@ -79,36 +79,37 @@ using ::ndk::ScopedFileDescriptor;
 using ::ndk::SpAIBinder;
 
 using ::testing::ContainsRegex;
+using ::testing::ElementsAre;
 using ::testing::Eq;
 using ::testing::UnorderedElementsAre;
 using ::testing::UnorderedElementsAreArray;
 using ::testing::WhenSortedBy;
 
 constexpr int32_t INVALID_PROP_ID = 0;
-// VehiclePropertyGroup:SYSTEM,VehicleArea:WINDOW,VehiclePropertyType:INT32
-constexpr int32_t INT32_WINDOW_PROP = 10001 + 0x10000000 + 0x03000000 + 0x00400000;
-// VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
-constexpr int32_t GLOBAL_ON_CHANGE_PROP = 10002 + 0x10000000 + 0x01000000 + 0x00400000;
-// VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
-constexpr int32_t GLOBAL_CONTINUOUS_PROP = 10003 + 0x10000000 + 0x01000000 + 0x00400000;
-// VehiclePropertyGroup:SYSTEM,VehicleArea:WINDOW,VehiclePropertyType:INT32
-constexpr int32_t AREA_ON_CHANGE_PROP = 10004 + 0x10000000 + 0x03000000 + 0x00400000;
-// VehiclePropertyGroup:SYSTEM,VehicleArea:WINDOW,VehiclePropertyType:INT32
-constexpr int32_t AREA_CONTINUOUS_PROP = 10005 + 0x10000000 + 0x03000000 + 0x00400000;
-// VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
-constexpr int32_t READ_ONLY_PROP = 10006 + 0x10000000 + 0x01000000 + 0x00400000;
-// VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
-constexpr int32_t WRITE_ONLY_PROP = 10007 + 0x10000000 + 0x01000000 + 0x00400000;
-// VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
-constexpr int32_t GLOBAL_CONTINUOUS_PROP_NO_VUR = 10008 + 0x10000000 + 0x01000000 + 0x00400000;
-// VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
-constexpr int32_t GLOBAL_NONE_ACCESS_PROP = 10009 + 0x10000000 + 0x01000000 + 0x00400000;
-// VehiclePropertyGroup:SYSTEM,VehicleArea:WINDOW,VehiclePropertyType:INT32
-constexpr int32_t AREA_NONE_ACCESS_PROP = 10010 + 0x10000000 + 0x03000000 + 0x00400000;
+// VehiclePropertyGroup:VENDOR,VehicleArea:WINDOW,VehiclePropertyType:INT32
+constexpr int32_t INT32_WINDOW_PROP = 10001 + 0x20000000 + 0x03000000 + 0x00400000;
+// VehiclePropertyGroup:VENDOR,VehicleArea:GLOBAL,VehiclePropertyType:INT32
+constexpr int32_t GLOBAL_ON_CHANGE_PROP = 10002 + 0x20000000 + 0x01000000 + 0x00400000;
+// VehiclePropertyGroup:VENDOR,VehicleArea:GLOBAL,VehiclePropertyType:INT32
+constexpr int32_t GLOBAL_CONTINUOUS_PROP = 10003 + 0x20000000 + 0x01000000 + 0x00400000;
+// VehiclePropertyGroup:VENDOR,VehicleArea:WINDOW,VehiclePropertyType:INT32
+constexpr int32_t AREA_ON_CHANGE_PROP = 10004 + 0x20000000 + 0x03000000 + 0x00400000;
+// VehiclePropertyGroup:VENDOR,VehicleArea:WINDOW,VehiclePropertyType:INT32
+constexpr int32_t AREA_CONTINUOUS_PROP = 10005 + 0x20000000 + 0x03000000 + 0x00400000;
+// VehiclePropertyGroup:VENDOR,VehicleArea:GLOBAL,VehiclePropertyType:INT32
+constexpr int32_t READ_ONLY_PROP = 10006 + 0x20000000 + 0x01000000 + 0x00400000;
+// VehiclePropertyGroup:VENDOR,VehicleArea:GLOBAL,VehiclePropertyType:INT32
+constexpr int32_t WRITE_ONLY_PROP = 10007 + 0x20000000 + 0x01000000 + 0x00400000;
+// VehiclePropertyGroup:VENDOR,VehicleArea:GLOBAL,VehiclePropertyType:INT32
+constexpr int32_t GLOBAL_CONTINUOUS_PROP_NO_VUR = 10008 + 0x20000000 + 0x01000000 + 0x00400000;
+// VehiclePropertyGroup:VENDOR,VehicleArea:GLOBAL,VehiclePropertyType:INT32
+constexpr int32_t GLOBAL_NONE_ACCESS_PROP = 10009 + 0x20000000 + 0x01000000 + 0x00400000;
+// VehiclePropertyGroup:VENDOR,VehicleArea:WINDOW,VehiclePropertyType:INT32
+constexpr int32_t AREA_NONE_ACCESS_PROP = 10010 + 0x20000000 + 0x03000000 + 0x00400000;
 
 int32_t testInt32VecProp(size_t i) {
-    // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32_VEC
-    return static_cast<int32_t>(i) + 0x10000000 + 0x01000000 + 0x00410000;
+    // VehiclePropertyGroup:VENDOR,VehicleArea:GLOBAL,VehiclePropertyType:INT32_VEC
+    return static_cast<int32_t>(i) + 0x20000000 + 0x01000000 + 0x00410000;
 }
 
 std::string toString(const std::vector<SubscribeOptions>& options) {
@@ -556,10 +557,10 @@ class DefaultVehicleHalTest : public testing::Test {
 TEST_F(DefaultVehicleHalTest, testGetAllPropConfigsSmall) {
     auto testConfigs = std::vector<VehiclePropConfig>({
             VehiclePropConfig{
-                    .prop = 1,
+                    .prop = testInt32VecProp(1),
             },
             VehiclePropConfig{
-                    .prop = 2,
+                    .prop = testInt32VecProp(2),
             },
     });
 
@@ -580,7 +581,7 @@ TEST_F(DefaultVehicleHalTest, testGetAllPropConfigsLarge) {
     // 5000 VehiclePropConfig exceeds 4k memory limit, so it would be sent through shared memory.
     for (size_t i = 0; i < 5000; i++) {
         testConfigs.push_back(VehiclePropConfig{
-                .prop = static_cast<int32_t>(i),
+                .prop = testInt32VecProp(i),
         });
     }
 
@@ -600,13 +601,42 @@ TEST_F(DefaultVehicleHalTest, testGetAllPropConfigsLarge) {
     ASSERT_EQ(result.value().getObject()->payloads, testConfigs);
 }
 
+TEST_F(DefaultVehicleHalTest, testGetAllPropConfigsFilterOutUnsupportedPropIdsForThisVersion) {
+    auto testConfigs = std::vector<VehiclePropConfig>({
+            // This is supported from V2.
+            VehiclePropConfig{
+                    .prop = toInt(VehicleProperty::PERF_VEHICLE_SPEED),
+            },
+            // This is supported from V3
+            VehiclePropConfig{
+                    .prop = toInt(VehicleProperty::ULTRASONICS_SENSOR_POSITION),
+            },
+    });
+
+    auto hardware = std::make_unique<MockVehicleHardware>();
+    hardware->setPropertyConfigs(testConfigs);
+    auto vhal = ndk::SharedRefBase::make<DefaultVehicleHal>(std::move(hardware),
+                                                            /* testInterfaceVersion= */ 2);
+    std::shared_ptr<IVehicle> client = IVehicle::fromBinder(vhal->asBinder());
+
+    VehiclePropConfigs output;
+    auto status = client->getAllPropConfigs(&output);
+
+    ASSERT_TRUE(status.isOk()) << "getAllPropConfigs failed: " << status.getMessage();
+    ASSERT_THAT(output.payloads, ElementsAre(VehiclePropConfig{
+                                         .prop = toInt(VehicleProperty::PERF_VEHICLE_SPEED),
+                                 }));
+}
+
 TEST_F(DefaultVehicleHalTest, testGetPropConfigs) {
+    int32_t propId1 = testInt32VecProp(1);
+    int32_t propId2 = testInt32VecProp(2);
     auto testConfigs = std::vector<VehiclePropConfig>({
             VehiclePropConfig{
-                    .prop = 1,
+                    .prop = propId1,
             },
             VehiclePropConfig{
-                    .prop = 2,
+                    .prop = propId2,
             },
     });
 
@@ -616,7 +646,7 @@ TEST_F(DefaultVehicleHalTest, testGetPropConfigs) {
     std::shared_ptr<IVehicle> client = IVehicle::fromBinder(vhal->asBinder());
 
     VehiclePropConfigs output;
-    auto status = client->getPropConfigs(std::vector<int32_t>({1, 2}), &output);
+    auto status = client->getPropConfigs(std::vector<int32_t>({propId1, propId2}), &output);
 
     ASSERT_TRUE(status.isOk()) << "getPropConfigs failed: " << status.getMessage();
     ASSERT_EQ(output.payloads, testConfigs);
@@ -625,10 +655,10 @@ TEST_F(DefaultVehicleHalTest, testGetPropConfigs) {
 TEST_F(DefaultVehicleHalTest, testGetPropConfigsInvalidArg) {
     auto testConfigs = std::vector<VehiclePropConfig>({
             VehiclePropConfig{
-                    .prop = 1,
+                    .prop = testInt32VecProp(1),
             },
             VehiclePropConfig{
-                    .prop = 2,
+                    .prop = testInt32VecProp(2),
             },
     });
 
@@ -638,7 +668,9 @@ TEST_F(DefaultVehicleHalTest, testGetPropConfigsInvalidArg) {
     std::shared_ptr<IVehicle> client = IVehicle::fromBinder(vhal->asBinder());
 
     VehiclePropConfigs output;
-    auto status = client->getPropConfigs(std::vector<int32_t>({1, 2, 3}), &output);
+    auto status = client->getPropConfigs(
+            std::vector<int32_t>({testInt32VecProp(1), testInt32VecProp(2), testInt32VecProp(3)}),
+            &output);
 
     ASSERT_FALSE(status.isOk()) << "getPropConfigs must fail with invalid prop ID";
     ASSERT_EQ(status.getServiceSpecificError(), toInt(StatusCode::INVALID_ARG));
