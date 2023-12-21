@@ -138,9 +138,9 @@ class TestWakeupClientServiceImpl : public WakeupClient::Service {
                                  const IsTaskScheduledRequest* request,
                                  IsTaskScheduledResponse* response) override;
 
-    grpc::Status GetAllScheduledTasks(grpc::ServerContext* context,
-                                      const GetAllScheduledTasksRequest* request,
-                                      GetAllScheduledTasksResponse* response) override;
+    grpc::Status GetAllPendingScheduledTasks(
+            grpc::ServerContext* context, const GetAllPendingScheduledTasksRequest* request,
+            GetAllPendingScheduledTasksResponse* response) override;
 
     /**
      * Starts generating fake tasks for the specific client repeatedly.

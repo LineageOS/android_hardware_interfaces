@@ -399,13 +399,13 @@ ScopedAStatus RemoteAccessService::isTaskScheduled(const std::string& clientId,
     return ScopedAStatus::ok();
 }
 
-ScopedAStatus RemoteAccessService::getAllScheduledTasks(const std::string& clientId,
-                                                        std::vector<ScheduleInfo>* out) {
+ScopedAStatus RemoteAccessService::getAllPendingScheduledTasks(const std::string& clientId,
+                                                               std::vector<ScheduleInfo>* out) {
     ClientContext context;
-    GetAllScheduledTasksRequest request = {};
-    GetAllScheduledTasksResponse response = {};
+    GetAllPendingScheduledTasksRequest request = {};
+    GetAllPendingScheduledTasksResponse response = {};
     request.set_clientid(clientId);
-    Status status = mGrpcStub->GetAllScheduledTasks(&context, request, &response);
+    Status status = mGrpcStub->GetAllPendingScheduledTasks(&context, request, &response);
     if (!status.ok()) {
         return rpcStatusToScopedAStatus(status, "Failed to call isTaskScheduled");
     }

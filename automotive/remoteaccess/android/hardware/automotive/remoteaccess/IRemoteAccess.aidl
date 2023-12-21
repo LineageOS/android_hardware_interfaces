@@ -201,5 +201,5 @@ interface IRemoteAccess {
      *
      * <p>The finished scheduled tasks will not be included.
      */
-    List<ScheduleInfo> getAllScheduledTasks(String clientId);
+    List<ScheduleInfo> getAllPendingScheduledTasks(String clientId);
 }
