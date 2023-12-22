@@ -18,6 +18,7 @@ package android.hardware.thermal;
 
 import android.hardware.thermal.CoolingDevice;
 import android.hardware.thermal.CoolingType;
+import android.hardware.thermal.ICoolingDeviceChangedCallback;
 import android.hardware.thermal.IThermalChangedCallback;
 import android.hardware.thermal.Temperature;
 import android.hardware.thermal.TemperatureThreshold;
@@ -188,4 +189,40 @@ interface IThermal {
      *         getMessage() must be populated with human-readable error message.
      */
     void unregisterThermalChangedCallback(in IThermalChangedCallback callback);
+
+    /**
+     * Register an ICoolingDeviceChangedCallback for a given CoolingType, used by
+     * the Thermal HAL to receive CDEV events when cooling device status
+     * changed.
+     * Multiple registrations with different ICoolingDeviceChangedCallback must be allowed.
+     * Multiple registrations with same ICoolingDeviceChangedCallback is not allowed, client
+     * should unregister the given ICoolingDeviceChangedCallback first.
+     *
+     * @param callback the ICoolingChangedCallback to use for receiving
+     *    cooling device events. If nullptr callback is given, the status code will be
+     *    STATUS_BAD_VALUE and the operation will fail.
+     * @param type the type to be filtered.
+     *
+     * @throws EX_ILLEGAL_ARGUMENT If the callback is given nullptr or already registered. And the
+     *         getMessage() must be populated with human-readable error message.
+     * @throws EX_ILLEGAL_STATE If the Thermal HAL is not initialized successfully. And the
+     *         getMessage() must be populated with human-readable error message.
+     */
+    void registerCoolingDeviceChangedCallbackWithType(
+            in ICoolingDeviceChangedCallback callback, in CoolingType type);
+
+    /**
+     * Unregister an ICoolingDeviceChangedCallback, used by the Thermal HAL
+     * to receive CDEV events when cooling device status changed.
+     *
+     * @param callback the ICoolingDeviceChangedCallback to use for receiving
+     *    cooling device events. if nullptr callback is given, the status code will be
+     *    STATUS_BAD_VALUE and the operation will fail.
+     *
+     * @throws EX_ILLEGAL_ARGUMENT If the callback is given nullptr or not previously registered.
+     *         And the getMessage() must be populated with human-readable error message.
+     * @throws EX_ILLEGAL_STATE If the Thermal HAL is not initialized successfully. And the
+     *         getMessage() must be populated with human-readable error message.
+     */
+    void unregisterCoolingDeviceChangedCallback(in ICoolingDeviceChangedCallback callback);
 }
