@@ -25,5 +25,5 @@ parcelable SecretId {
     /**
      * 64-byte identifier for a secret.
      */
-    byte[] id;
+    byte[64] id;
 }

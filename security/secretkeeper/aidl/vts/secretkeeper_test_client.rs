@@ -233,7 +233,7 @@ impl SkClient {
     fn delete(&self, ids: &[&Id]) {
         let ids: Vec<SecretId> = ids
             .iter()
-            .map(|id| SecretId { id: id.0.to_vec() })
+            .map(|id| SecretId { id: id.0 })
             .collect();
         self.sk.deleteIds(&ids).unwrap();
     }

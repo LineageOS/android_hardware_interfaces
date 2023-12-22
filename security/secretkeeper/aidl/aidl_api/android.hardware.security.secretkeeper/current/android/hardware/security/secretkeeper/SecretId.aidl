@@ -35,5 +35,5 @@ package android.hardware.security.secretkeeper;
 /* @hide */
 @VintfStability
 parcelable SecretId {
-  byte[] id;
+  byte[64] id;
 }
