@@ -75,8 +75,9 @@ class MockGrpcClientStub : public WakeupClient::StubInterface {
         return Status::OK;
     }
 
-    Status GetAllScheduledTasks(ClientContext* context, const GetAllScheduledTasksRequest& request,
-                                GetAllScheduledTasksResponse* response) {
+    Status GetAllPendingScheduledTasks(ClientContext* context,
+                                       const GetAllPendingScheduledTasksRequest& request,
+                                       GetAllPendingScheduledTasksResponse* response) {
         return Status::OK;
     }
 
@@ -165,17 +166,19 @@ class MockGrpcClientStub : public WakeupClient::StubInterface {
         return nullptr;
     }
 
-    ClientAsyncResponseReaderInterface<GetAllScheduledTasksResponse>* AsyncGetAllScheduledTasksRaw(
+    ClientAsyncResponseReaderInterface<GetAllPendingScheduledTasksResponse>*
+    AsyncGetAllPendingScheduledTasksRaw(
             [[maybe_unused]] ClientContext* context,
-            [[maybe_unused]] const GetAllScheduledTasksRequest& request,
+            [[maybe_unused]] const GetAllPendingScheduledTasksRequest& request,
             [[maybe_unused]] CompletionQueue* cq) {
         return nullptr;
     }
 
-    ClientAsyncResponseReaderInterface<GetAllScheduledTasksResponse>*
-    PrepareAsyncGetAllScheduledTasksRaw([[maybe_unused]] ClientContext* context,
-                                        [[maybe_unused]] const GetAllScheduledTasksRequest& request,
-                                        [[maybe_unused]] CompletionQueue* c) {
+    ClientAsyncResponseReaderInterface<GetAllPendingScheduledTasksResponse>*
+    PrepareAsyncGetAllPendingScheduledTasksRaw(
+            [[maybe_unused]] ClientContext* context,
+            [[maybe_unused]] const GetAllPendingScheduledTasksRequest& request,
+            [[maybe_unused]] CompletionQueue* c) {
         return nullptr;
     }
 };

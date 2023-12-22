@@ -99,7 +99,8 @@ service WakeupClient {
      *
      * <p>The finished scheduled tasks will not be included.
      */
-    rpc GetAllScheduledTasks(GetAllScheduledTasksRequest) returns (GetAllScheduledTasksResponse) {}
+    rpc GetAllPendingScheduledTasks(GetAllPendingScheduledTasksRequest)
+            returns (GetAllPendingScheduledTasksResponse) {}
 }
 
 message GetRemoteTasksRequest {}
@@ -154,10 +155,10 @@ message IsTaskScheduledResponse {
     bool isTaskScheduled = 1;
 }
 
-message GetAllScheduledTasksRequest {
+message GetAllPendingScheduledTasksRequest {
     string clientId = 1;
 }
 
-message GetAllScheduledTasksResponse {
+message GetAllPendingScheduledTasksResponse {
     repeated GrpcScheduleInfo allScheduledTasks = 1;
 }
