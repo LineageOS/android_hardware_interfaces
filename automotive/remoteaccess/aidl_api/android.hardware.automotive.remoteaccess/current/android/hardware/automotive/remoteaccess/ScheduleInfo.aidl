@@ -41,4 +41,5 @@ parcelable ScheduleInfo {
   int count;
   long startTimeInEpochSeconds;
   long periodicInSeconds;
+  const int MAX_TASK_DATA_SIZE_IN_BYTES = 10240;
 }

@@ -167,6 +167,9 @@ interface IRemoteAccess {
      * {@code scheduleId} for this client exists.
      *
      * <p>Must return {@code EX_ILLEGAL_ARGUMENT} if the task type is not supported.
+     *
+     * <p>Must return {@code EX_ILLEGLA_ARGUMENT} if the scheduleInfo is not valid (e.g. count is
+     * a negative number).
      */
     void scheduleTask(in ScheduleInfo scheduleInfo);
 
