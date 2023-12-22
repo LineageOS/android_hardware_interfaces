@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2024 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,17 +34,16 @@
 package android.hardware.biometrics.common;
 /* @hide */
 @VintfStability
-parcelable OperationContext {
-  int id = 0;
-  android.hardware.biometrics.common.OperationReason reason = android.hardware.biometrics.common.OperationReason.UNKNOWN;
-  /**
-   * @deprecated use displayState instead.
-   */
-  boolean isAod = false;
-  boolean isCrypto = false;
-  android.hardware.biometrics.common.WakeReason wakeReason = android.hardware.biometrics.common.WakeReason.UNKNOWN;
-  android.hardware.biometrics.common.DisplayState displayState = android.hardware.biometrics.common.DisplayState.UNKNOWN;
-  @nullable android.hardware.biometrics.common.AuthenticateReason authenticateReason;
-  android.hardware.biometrics.common.FoldState foldState = android.hardware.biometrics.common.FoldState.UNKNOWN;
-  @nullable android.hardware.biometrics.common.OperationState operationState;
+union OperationState {
+  android.hardware.biometrics.common.OperationState.FingerprintOperationState fingerprintOperationState;
+  android.hardware.biometrics.common.OperationState.FaceOperationState faceOperationState;
+  @VintfStability
+  parcelable FingerprintOperationState {
+    ParcelableHolder extension;
+    boolean isHardwareIgnoringTouches = false;
+  }
+  @VintfStability
+  parcelable FaceOperationState {
+    ParcelableHolder extension;
+  }
 }
