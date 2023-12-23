@@ -38,4 +38,7 @@ parcelable CoolingDevice {
   android.hardware.thermal.CoolingType type;
   String name;
   long value;
+  long powerLimitMw;
+  long powerMw;
+  long timeWindowMs;
 }

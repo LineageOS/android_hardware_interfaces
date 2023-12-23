@@ -48,6 +48,7 @@ void TunerFilterAidlTest::configSingleFilterInDemuxTest(FilterConfig filterConf,
     ASSERT_TRUE(mFrontendTests.setFrontendCallback());
     ASSERT_TRUE(mDemuxTests.openDemux(demux, demuxId));
     ASSERT_TRUE(mDemuxTests.setDemuxFrontendDataSource(feId));
+    mFrontendTests.setDemux(demux);
     mFilterTests.setDemux(demux);
     ASSERT_TRUE(mFilterTests.openFilterInDemux(filterConf.type, filterConf.bufferSize));
     ASSERT_TRUE(mFilterTests.getNewlyOpenedFilterId_64bit(filterId));
@@ -683,6 +684,10 @@ TEST_P(TunerDemuxAidlTest, openDemux) {
     if (!live.hasFrontendConnection) {
         return;
     }
+    // Do not execute tests for IPTV Frontend
+    if (frontendMap[live.frontendId].type == FrontendType::IPTV) {
+        return;
+    }
     auto live_configs = generateLiveConfigurations();
     for (auto& configuration : live_configs) {
         live = configuration;
@@ -779,6 +784,10 @@ TEST_P(TunerFilterAidlTest, StartFilterInDemux) {
     if (!live.hasFrontendConnection) {
         return;
     }
+    // Do not execute tests for IPTV Frontend
+    if (frontendMap[live.frontendId].type == FrontendType::IPTV) {
+        return;
+    }
     // TODO use parameterized tests
     auto live_configs = generateLiveConfigurations();
     for (auto& configuration : live_configs) {
@@ -791,6 +800,10 @@ TEST_P(TunerFilterAidlTest, ConfigIpFilterInDemuxWithCid) {
     description("Open and configure an ip filter in Demux.");
     // TODO use parameterized tests
     if (!live.hasFrontendConnection) {
+        return;
+    }
+    // Do not execute tests for IPTV Frontend
+    if (frontendMap[live.frontendId].type == FrontendType::IPTV) {
         return;
     }
     auto live_configs = generateLiveConfigurations();
@@ -806,6 +819,10 @@ TEST_P(TunerFilterAidlTest, ConfigIpFilterInDemuxWithCid) {
 TEST_P(TunerFilterAidlTest, ReconfigFilterToReceiveStartId) {
     description("Recofigure and restart a filter to test start id.");
     if (!live.hasFrontendConnection) {
+        return;
+    }
+    // Do not execute tests for IPTV Frontend
+    if (frontendMap[live.frontendId].type == FrontendType::IPTV) {
         return;
     }
     // TODO use parameterized tests
@@ -1111,6 +1128,10 @@ TEST_P(TunerRecordAidlTest, RecordDataFlowWithTsRecordFilterTest) {
     if (!record.support) {
         return;
     }
+    // Do not execute tests for IPTV Frontend
+    if (frontendMap[live.frontendId].type == FrontendType::IPTV) {
+        return;
+    }
     auto record_configs = generateRecordConfigurations();
     for (auto& configuration : record_configs) {
         record = configuration;
@@ -1123,6 +1144,10 @@ TEST_P(TunerRecordAidlTest, AttachFiltersToRecordTest) {
     description("Attach a single filter to the record dvr test.");
     // TODO use parameterized tests
     if (!record.support) {
+        return;
+    }
+    // Do not execute tests for IPTV Frontend
+    if (frontendMap[live.frontendId].type == FrontendType::IPTV) {
         return;
     }
     auto record_configs = generateRecordConfigurations();
@@ -1155,6 +1180,10 @@ TEST_P(TunerRecordAidlTest, LnbRecordDataFlowWithTsRecordFilterTest) {
 TEST_P(TunerRecordAidlTest, SetStatusCheckIntervalHintToRecordTest) {
     description("Set status check interval hint to record test.");
     if (!record.support) {
+        return;
+    }
+    // Do not execute tests for IPTV Frontend
+    if (frontendMap[live.frontendId].type == FrontendType::IPTV) {
         return;
     }
     auto record_configs = generateRecordConfigurations();
@@ -1194,6 +1223,10 @@ TEST_P(TunerFrontendAidlTest, BlindScanFrontend) {
     if (!scan.hasFrontendConnection) {
         return;
     }
+    // Blind scan is not applicable for IPTV frontend
+    if (frontendMap[live.frontendId].type == FrontendType::IPTV) {
+        return;
+    }
     vector<ScanHardwareConnections> scan_configs = generateScanConfigurations();
     for (auto& configuration : scan_configs) {
         scan = configuration;
@@ -1216,6 +1249,10 @@ TEST_P(TunerFrontendAidlTest, TuneFrontendWithFrontendSettings) {
 TEST_P(TunerFrontendAidlTest, BlindScanFrontendWithEndFrequency) {
     description("Run an blind frontend scan with setting and check lock scanMessage");
     if (!scan.hasFrontendConnection) {
+        return;
+    }
+    // Blind scan is not application for IPTV frontend
+    if (frontendMap[live.frontendId].type == FrontendType::IPTV) {
         return;
     }
     vector<ScanHardwareConnections> scan_configs = generateScanConfigurations();
@@ -1242,6 +1279,10 @@ TEST_P(TunerFrontendAidlTest, LinkToCiCam) {
 
 TEST_P(TunerFrontendAidlTest, getHardwareInfo) {
     description("Test Frontend get hardware info");
+    // Do not execute tests for IPTV Frontend
+    if (frontendMap[live.frontendId].type == FrontendType::IPTV) {
+        return;
+    }
     if (!live.hasFrontendConnection) {
         return;
     }
@@ -1289,6 +1330,10 @@ TEST_P(TunerBroadcastAidlTest, BroadcastDataFlowAudioFilterTest) {
     if (!live.hasFrontendConnection) {
         return;
     }
+    // Do not execute tests for IPTV Frontend
+    if (frontendMap[live.frontendId].type == FrontendType::IPTV) {
+        return;
+    }
     auto live_configs = generateLiveConfigurations();
     for (auto& configuration : live_configs) {
         live = configuration;
@@ -1314,6 +1359,10 @@ TEST_P(TunerBroadcastAidlTest, BroadcastDataFlowSectionFilterTest) {
 TEST_P(TunerBroadcastAidlTest, IonBufferTest) {
     description("Test the av filter data bufferring.");
     if (!live.hasFrontendConnection) {
+        return;
+    }
+    // Do not execute tests for IPTV Frontend
+    if (frontendMap[live.frontendId].type == FrontendType::IPTV) {
         return;
     }
     auto live_configs = generateLiveConfigurations();
@@ -1345,6 +1394,10 @@ TEST_P(TunerBroadcastAidlTest, MediaFilterWithSharedMemoryHandle) {
     if (!live.hasFrontendConnection) {
         return;
     }
+    // Do not execute tests for IPTV Frontend
+    if (frontendMap[live.frontendId].type == FrontendType::IPTV) {
+        return;
+    }
     auto live_configs = generateLiveConfigurations();
     for (auto& configuration : live_configs) {
         live = configuration;
@@ -1356,6 +1409,10 @@ TEST_P(TunerBroadcastAidlTest, MediaFilterWithSharedMemoryHandle) {
 TEST_P(TunerDescramblerAidlTest, CreateDescrambler) {
     description("Create Descrambler");
     if (!descrambling.support) {
+        return;
+    }
+    // Do not execute tests for IPTV Frontend
+    if (frontendMap[live.frontendId].type == FrontendType::IPTV) {
         return;
     }
     vector<DescramblingHardwareConnections> descrambling_configs =
@@ -1392,6 +1449,10 @@ TEST_P(TunerDescramblerAidlTest, CreateDescrambler) {
 TEST_P(TunerDescramblerAidlTest, ScrambledBroadcastDataFlowMediaFiltersTest) {
     description("Test ts audio filter in scrambled broadcast use case");
     if (!descrambling.support) {
+        return;
+    }
+    // Do not execute tests for IPTV Frontend
+    if (frontendMap[live.frontendId].type == FrontendType::IPTV) {
         return;
     }
     vector<DescramblingHardwareConnections> descrambling_configs =

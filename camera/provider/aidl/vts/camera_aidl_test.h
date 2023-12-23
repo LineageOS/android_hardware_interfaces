@@ -281,6 +281,8 @@ class CameraAidlTest : public ::testing::TestWithParam<std::string> {
     static void verifyStreamCombination(const std::shared_ptr<ICameraDevice>& device,
                                         const StreamConfiguration& config, bool expectedStatus);
 
+    static void verifySessionCharacteristics(const CameraMetadata& chars);
+
     static void verifyLogicalCameraResult(const camera_metadata_t* staticMetadata,
                                           const std::vector<uint8_t>& resultMetadata);
 
@@ -587,6 +589,9 @@ class CameraAidlTest : public ::testing::TestWithParam<std::string> {
 
     static void waitForReleaseFence(
             std::vector<InFlightRequest::StreamBufferAndTimestamp>& resultOutputBuffers);
+
+    static void validateDefaultRequestMetadata(RequestTemplate reqTemplate,
+                                               const CameraMetadata& rawMetadata);
 
     // Map from frame number to the in-flight request state
     typedef std::unordered_map<uint32_t, std::shared_ptr<InFlightRequest>> InFlightMap;

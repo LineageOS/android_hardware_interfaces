@@ -444,6 +444,7 @@ interface ICameraDevice {
      *
      * For Android 15, the characteristics which need to be set are:
      *   - ANDROID_CONTROL_ZOOM_RATIO_RANGE
+     *   - SCALER_AVAILABLE_MAX_DIGITAL_ZOOM
      *
      * A service specific error will be returned on the following conditions
      *     INTERNAL_ERROR:

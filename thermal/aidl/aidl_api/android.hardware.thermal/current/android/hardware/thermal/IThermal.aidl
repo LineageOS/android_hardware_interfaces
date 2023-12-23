@@ -44,4 +44,6 @@ interface IThermal {
   void registerThermalChangedCallback(in android.hardware.thermal.IThermalChangedCallback callback);
   void registerThermalChangedCallbackWithType(in android.hardware.thermal.IThermalChangedCallback callback, in android.hardware.thermal.TemperatureType type);
   void unregisterThermalChangedCallback(in android.hardware.thermal.IThermalChangedCallback callback);
+  void registerCoolingDeviceChangedCallbackWithType(in android.hardware.thermal.ICoolingDeviceChangedCallback callback, in android.hardware.thermal.CoolingType type);
+  void unregisterCoolingDeviceChangedCallback(in android.hardware.thermal.ICoolingDeviceChangedCallback callback);
 }

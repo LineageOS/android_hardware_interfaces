@@ -45,15 +45,16 @@ parcelable VrrConfig {
          * The minimal time in nanoseconds that IComposerClient.notifyExpectedPresent needs to be
          * called ahead of an expectedPresentTime provided on a presentDisplay command.
          */
-        int notifyExpectedPresentHeadsUpNs;
+        int headsUpNs;
 
         /**
          * The time in nanoseconds that represents a timeout from the previous presentDisplay, which
          * after this point the display needs a call to IComposerClient.notifyExpectedPresent before
-         * sending the next frame. If set to 0, there is no need to call
+         * sending the next frame.
+         * If set to 0, hint is sent for every frame.
          * IComposerClient.notifyExpectedPresent for timeout.
          */
-        int notifyExpectedPresentTimeoutNs;
+        int timeoutNs;
     }
 
     /**

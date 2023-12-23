@@ -1,11 +1,11 @@
-/**
- * Copyright 2023, The Android Open Source Project
+/*
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -31,18 +31,9 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.graphics.composer3;
+package android.hardware.thermal;
+/* @hide */
 @VintfStability
-parcelable VrrConfig {
-  int minFrameIntervalNs;
-  @nullable android.hardware.graphics.composer3.VrrConfig.FrameIntervalPowerHint[] frameIntervalPowerHints;
-  @nullable android.hardware.graphics.composer3.VrrConfig.NotifyExpectedPresentConfig notifyExpectedPresentConfig;
-  parcelable FrameIntervalPowerHint {
-    int frameIntervalNs;
-    int averageRefreshPeriodNs;
-  }
-  parcelable NotifyExpectedPresentConfig {
-    int headsUpNs;
-    int timeoutNs;
-  }
+interface ICoolingDeviceChangedCallback {
+  oneway void notifyCoolingDeviceChanged(in android.hardware.thermal.CoolingDevice coolingDevice);
 }

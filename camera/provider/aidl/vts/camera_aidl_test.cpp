@@ -1931,6 +1931,55 @@ void CameraAidlTest::verifyStreamCombination(const std::shared_ptr<ICameraDevice
     }
 }
 
+void CameraAidlTest::verifySessionCharacteristics(const CameraMetadata& chars) {
+    if (flags::feature_combination_query()) {
+        const camera_metadata_t* metadata =
+                reinterpret_cast<const camera_metadata_t*>(chars.metadata.data());
+
+        size_t expectedSize = chars.metadata.size();
+        int result = validate_camera_metadata_structure(metadata, &expectedSize);
+        ASSERT_TRUE((result == 0) || (result == CAMERA_METADATA_VALIDATION_SHIFTED));
+        size_t entryCount = get_camera_metadata_entry_count(metadata);
+        ASSERT_GT(entryCount, 0u);
+
+        camera_metadata_ro_entry entry;
+        int retcode = 0;
+        float maxDigitalZoom = 1.0;
+
+        retcode = find_camera_metadata_ro_entry(metadata, ANDROID_SCALER_AVAILABLE_MAX_DIGITAL_ZOOM,
+                                                &entry);
+        // ANDROID_SCALER_AVAILABLE_MAX_DIGITAL_ZOOM should always be present.
+        if ((0 == retcode) && (entry.count == 1)) {
+            maxDigitalZoom = entry.data.f[0];
+        } else {
+            ADD_FAILURE() << "Get camera scalerAvailableMaxDigitalZoom failed!";
+        }
+
+        retcode = find_camera_metadata_ro_entry(metadata, ANDROID_CONTROL_ZOOM_RATIO_RANGE, &entry);
+        bool hasZoomRatioRange = (0 == retcode && entry.count == 2);
+        if (!hasZoomRatioRange) {
+            return;
+        }
+        float minZoomRatio = entry.data.f[0];
+        float maxZoomRatio = entry.data.f[1];
+        constexpr float FLOATING_POINT_THRESHOLD = 0.00001f;
+        if (abs(maxDigitalZoom - maxZoomRatio) > FLOATING_POINT_THRESHOLD) {
+            ADD_FAILURE() << "Difference between maximum digital zoom " << maxDigitalZoom
+                          << " and maximum zoom ratio " << maxZoomRatio
+                          << " is greater than the threshold " << FLOATING_POINT_THRESHOLD << "!";
+        }
+        if (minZoomRatio > maxZoomRatio) {
+            ADD_FAILURE() << "Maximum zoom ratio is less than minimum zoom ratio!";
+        }
+        if (minZoomRatio > 1.0f) {
+            ADD_FAILURE() << "Minimum zoom ratio is more than 1.0!";
+        }
+        if (maxZoomRatio < 1.0f) {
+            ADD_FAILURE() << "Maximum zoom ratio is less than 1.0!";
+        }
+    }
+}
+
 std::vector<ConcurrentCameraIdCombination> CameraAidlTest::getConcurrentDeviceCombinations(
         std::shared_ptr<ICameraProvider>& provider) {
     std::vector<ConcurrentCameraIdCombination> combinations;
@@ -4025,4 +4074,13 @@ void CameraAidlTest::getSupportedDurations(const camera_metadata_t* ch, uint32_t
             }
         }
     }
+}
+
+void CameraAidlTest::validateDefaultRequestMetadata(RequestTemplate reqTemplate,
+                                                    const CameraMetadata& rawMetadata) {
+    const camera_metadata_t* metadata = (camera_metadata_t*)rawMetadata.metadata.data();
+    size_t expectedSize = rawMetadata.metadata.size();
+    int result = validate_camera_metadata_structure(metadata, &expectedSize);
+    ASSERT_TRUE((result == 0) || (result == CAMERA_METADATA_VALIDATION_SHIFTED));
+    verifyRequestTemplate(metadata, reqTemplate);
 }

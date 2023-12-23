@@ -14,16 +14,23 @@
  * limitations under the License.
  */
 
-package android.hardware.security.secretkeeper;
+package android.hardware.thermal;
+
+import android.hardware.thermal.CoolingDevice;
+import android.hardware.thermal.Temperature;
 
 /**
- * SecretId contains an identifier for a secret held by Secretkeeper.
+ * ICoolingDeviceChangedCallback send cooling device change notification to clients.
  * @hide
  */
 @VintfStability
-parcelable SecretId {
+interface ICoolingDeviceChangedCallback {
     /**
-     * 64-byte identifier for a secret.
+     * Send a cooling device change event to all ThermalHAL
+     * cooling device event listeners.
+     *
+     * @param cooling_device The cooling device information associated with the
+     *     change event.
      */
-    byte[64] id;
+    oneway void notifyCoolingDeviceChanged(in CoolingDevice coolingDevice);
 }
