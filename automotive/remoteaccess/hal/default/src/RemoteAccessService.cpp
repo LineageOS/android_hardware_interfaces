@@ -103,6 +103,10 @@ std::string boolToString(bool x) {
 
 RemoteAccessService::RemoteAccessService(WakeupClient::StubInterface* grpcStub)
     : mGrpcStub(grpcStub) {
+    if (mGrpcStub != nullptr) {
+        mGrpcServerExist = true;
+    }
+
     std::ifstream debugTaskFile;
     debugTaskFile.open(DEBUG_TASK_FILE, std::ios::in);
     if (!debugTaskFile.is_open()) {
@@ -177,9 +181,9 @@ void RemoteAccessService::maybeStopTaskLoop() {
     mTaskLoopRunning = false;
 }
 
-void RemoteAccessService::updateGrpcConnected(bool connected) {
+void RemoteAccessService::updateGrpcReadChannelOpen(bool grpcReadChannelOpen) {
     std::lock_guard<std::mutex> lockGuard(mLock);
-    mGrpcConnected = connected;
+    mGrpcReadChannelOpen = grpcReadChannelOpen;
 }
 
 Result<void> RemoteAccessService::deliverRemoteTaskThroughCallback(const std::string& clientId,
@@ -213,7 +217,7 @@ void RemoteAccessService::runTaskLoop() {
             mGetRemoteTasksContext.reset(new ClientContext());
             reader = mGrpcStub->GetRemoteTasks(mGetRemoteTasksContext.get(), request);
         }
-        updateGrpcConnected(true);
+        updateGrpcReadChannelOpen(true);
         GetRemoteTasksResponse response;
         while (reader->Read(&response)) {
             ALOGI("Receiving one task from remote task client");
@@ -225,7 +229,7 @@ void RemoteAccessService::runTaskLoop() {
                 continue;
             }
         }
-        updateGrpcConnected(false);
+        updateGrpcReadChannelOpen(false);
         Status status = reader->Finish();
         mGetRemoteTasksContext.reset();
 
@@ -298,6 +302,11 @@ ScopedAStatus RemoteAccessService::clearRemoteTaskCallback() {
 }
 
 ScopedAStatus RemoteAccessService::notifyApStateChange(const ApState& newState) {
+    if (!mGrpcServerExist) {
+        ALOGW("GRPC server does not exist, do nothing");
+        return ScopedAStatus::ok();
+    }
+
     ClientContext context;
     NotifyWakeupRequiredRequest request = {};
     request.set_iswakeuprequired(newState.isWakeupRequired);
@@ -315,19 +324,40 @@ ScopedAStatus RemoteAccessService::notifyApStateChange(const ApState& newState) 
     return ScopedAStatus::ok();
 }
 
+bool RemoteAccessService::isTaskScheduleSupported() {
+    if (!mGrpcServerExist) {
+        ALOGW("GRPC server does not exist, task scheduling not supported");
+        return false;
+    }
+
+    return true;
+}
+
 ScopedAStatus RemoteAccessService::isTaskScheduleSupported(bool* out) {
-    *out = true;
+    *out = isTaskScheduleSupported();
     return ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus RemoteAccessService::getSupportedTaskTypesForScheduling(
         std::vector<TaskType>* out) {
+    out->clear();
+    if (!isTaskScheduleSupported()) {
+        ALOGW("Task scheduleing is not supported, return empty task types");
+        return ScopedAStatus::ok();
+    }
+
     // TODO(b/316233421): support ENTER_GARAGE_MODE type.
     out->push_back(TaskType::CUSTOM);
     return ScopedAStatus::ok();
 }
 
 ScopedAStatus RemoteAccessService::scheduleTask(const ScheduleInfo& scheduleInfo) {
+    if (!isTaskScheduleSupported()) {
+        ALOGW("Task scheduleing is not supported, return exception");
+        return ScopedAStatus::fromExceptionCodeWithMessage(EX_ILLEGAL_ARGUMENT,
+                                                           "task scheduling is not supported");
+    }
+
     ClientContext context;
     ScheduleTaskRequest request = {};
     ScheduleTaskResponse response = {};
@@ -379,6 +409,11 @@ ScopedAStatus RemoteAccessService::scheduleTask(const ScheduleInfo& scheduleInfo
 
 ScopedAStatus RemoteAccessService::unscheduleTask(const std::string& clientId,
                                                   const std::string& scheduleId) {
+    if (!isTaskScheduleSupported()) {
+        ALOGW("Task scheduleing is not supported, do nothing");
+        return ScopedAStatus::ok();
+    }
+
     ClientContext context;
     UnscheduleTaskRequest request = {};
     UnscheduleTaskResponse response = {};
@@ -392,6 +427,11 @@ ScopedAStatus RemoteAccessService::unscheduleTask(const std::string& clientId,
 }
 
 ScopedAStatus RemoteAccessService::unscheduleAllTasks(const std::string& clientId) {
+    if (!isTaskScheduleSupported()) {
+        ALOGW("Task scheduleing is not supported, do nothing");
+        return ScopedAStatus::ok();
+    }
+
     ClientContext context;
     UnscheduleAllTasksRequest request = {};
     UnscheduleAllTasksResponse response = {};
@@ -405,6 +445,12 @@ ScopedAStatus RemoteAccessService::unscheduleAllTasks(const std::string& clientI
 
 ScopedAStatus RemoteAccessService::isTaskScheduled(const std::string& clientId,
                                                    const std::string& scheduleId, bool* out) {
+    if (!isTaskScheduleSupported()) {
+        ALOGW("Task scheduleing is not supported, return false");
+        *out = false;
+        return ScopedAStatus::ok();
+    }
+
     ClientContext context;
     IsTaskScheduledRequest request = {};
     IsTaskScheduledResponse response = {};
@@ -420,6 +466,12 @@ ScopedAStatus RemoteAccessService::isTaskScheduled(const std::string& clientId,
 
 ScopedAStatus RemoteAccessService::getAllPendingScheduledTasks(const std::string& clientId,
                                                                std::vector<ScheduleInfo>* out) {
+    if (!isTaskScheduleSupported()) {
+        ALOGW("Task scheduleing is not supported, return empty array");
+        out->clear();
+        return ScopedAStatus::ok();
+    }
+
     ClientContext context;
     GetAllPendingScheduledTasksRequest request = {};
     GetAllPendingScheduledTasksResponse response = {};
@@ -560,9 +612,11 @@ void RemoteAccessService::printCurrentStatus(int fd) {
     dprintf(fd,
             "\nRemoteAccess HAL status \n"
             "Remote task callback registered: %s\n"
-            "Task receiving GRPC connection established: %s\n"
+            "GRPC server exist: %s\n"
+            "GRPC read channel for receiving tasks open: %s\n"
             "Received task count by clientId: \n%s\n",
-            boolToString(mRemoteTaskCallback.get()).c_str(), boolToString(mGrpcConnected).c_str(),
+            boolToString(mRemoteTaskCallback.get()).c_str(), boolToString(mGrpcServerExist).c_str(),
+            boolToString(mGrpcReadChannelOpen).c_str(),
             clientIdToTaskCountToStringLocked().c_str());
 }
 
