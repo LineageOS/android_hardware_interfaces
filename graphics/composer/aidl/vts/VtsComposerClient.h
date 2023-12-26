@@ -25,6 +25,7 @@
 #include <android/binder_manager.h>
 #include <android/binder_process.h>
 #include <android/hardware/graphics/composer3/ComposerClientReader.h>
+#include <android/hardware/graphics/composer3/ComposerClientWriter.h>
 #include <binder/ProcessState.h>
 #include <gtest/gtest.h>
 #include <ui/Fence.h>
@@ -59,7 +60,7 @@ class VtsComposerClient {
 
     ScopedAStatus createClient();
 
-    bool tearDown();
+    bool tearDown(ComposerClientWriter*);
 
     std::pair<ScopedAStatus, int32_t> getInterfaceVersion() const;
 
@@ -69,9 +70,10 @@ class VtsComposerClient {
 
     ScopedAStatus destroyVirtualDisplay(int64_t display);
 
-    std::pair<ScopedAStatus, int64_t> createLayer(int64_t display, int32_t bufferSlotCount);
+    std::pair<ScopedAStatus, int64_t> createLayer(int64_t display, int32_t bufferSlotCount,
+                                                  ComposerClientWriter*);
 
-    ScopedAStatus destroyLayer(int64_t display, int64_t layer);
+    ScopedAStatus destroyLayer(int64_t display, int64_t layer, ComposerClientWriter*);
 
     std::pair<ScopedAStatus, int32_t> getActiveConfig(int64_t display);
 
@@ -211,7 +213,7 @@ class VtsComposerClient {
 
     void removeLayerFromDisplayResources(int64_t display, int64_t layer);
 
-    bool destroyAllLayers();
+    bool destroyAllLayers(ComposerClientWriter*);
 
     bool verifyComposerCallbackParams();
 
@@ -229,6 +231,8 @@ class VtsComposerClient {
     std::shared_ptr<IComposerClient> mComposerClient;
     std::shared_ptr<GraphicsComposerCallback> mComposerCallback;
     std::unordered_map<int64_t, DisplayResource> mDisplayResources;
+    bool mSupportsBatchedCreateLayer = false;
+    std::atomic<int64_t> mNextLayerHandle = 1;
 };
 
 class VtsDisplay {

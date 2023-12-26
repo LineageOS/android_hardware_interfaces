@@ -293,8 +293,8 @@ LayerSettings TestColorLayer::toRenderEngineLayerSettings() {
 TestBufferLayer::TestBufferLayer(const std::shared_ptr<VtsComposerClient>& client,
                                  TestRenderEngine& renderEngine, int64_t display, uint32_t width,
                                  uint32_t height, common::PixelFormat format,
-                                 Composition composition)
-    : TestLayer{client, display}, mRenderEngine(renderEngine) {
+                                 ComposerClientWriter& writer, Composition composition)
+    : TestLayer{client, display, writer}, mRenderEngine(renderEngine) {
     mComposition = composition;
     mWidth = width;
     mHeight = height;
