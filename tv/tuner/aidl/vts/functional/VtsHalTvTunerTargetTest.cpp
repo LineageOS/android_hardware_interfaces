@@ -1198,6 +1198,10 @@ TEST_P(TunerFrontendAidlTest, BlindScanFrontend) {
     vector<ScanHardwareConnections> scan_configs = generateScanConfigurations();
     for (auto& configuration : scan_configs) {
         scan = configuration;
+        // Skip test if the frontend implementation doesn't support blind scan
+        if (!frontendMap[scan.frontendId].supportBlindScan) {
+            continue;
+        }
         mFrontendTests.scanTest(frontendMap[scan.frontendId], FrontendScanType::SCAN_BLIND);
     }
 }
@@ -1222,6 +1226,10 @@ TEST_P(TunerFrontendAidlTest, BlindScanFrontendWithEndFrequency) {
     vector<ScanHardwareConnections> scan_configs = generateScanConfigurations();
     for (auto& configuration : scan_configs) {
         scan = configuration;
+        // Skip test if the frontend implementation doesn't support blind scan
+        if (!frontendMap[scan.frontendId].supportBlindScan) {
+            continue;
+        }
         mFrontendTests.scanTest(frontendMap[scan.frontendId], FrontendScanType::SCAN_BLIND);
     }
 }

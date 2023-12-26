@@ -114,6 +114,7 @@ struct FrontendConfig {
     FrontendSettings settings;
     vector<FrontendStatusType> tuneStatusTypes;
     vector<FrontendStatus> expectTuneStatuses;
+    bool supportBlindScan;
 };
 
 struct FilterConfig {
@@ -353,6 +354,11 @@ struct TunerTestingConfigAidlReader1_0 {
                     hasSwFe = true;
                 } else {
                     hasHwFe = true;
+                }
+                if (feConfig.hasSupportBlindScan()) {
+                    frontendMap[id].supportBlindScan = feConfig.getSupportBlindScan();
+                } else {
+                    frontendMap[id].supportBlindScan = true;
                 }
                 // TODO: b/182519645 complete the tune status config
                 frontendMap[id].tuneStatusTypes = types;
