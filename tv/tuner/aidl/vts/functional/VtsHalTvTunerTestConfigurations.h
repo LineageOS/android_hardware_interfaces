@@ -612,6 +612,7 @@ inline void initFrontendConfig() {
     frontendMap[defaultFeId].isSoftwareFe = true;
     frontendMap[defaultFeId].canConnectToCiCam = true;
     frontendMap[defaultFeId].ciCamId = 0;
+    frontendMap[defaultFeId].supportBlindScan = true;
     FrontendDvbtSettings dvbt;
     dvbt.transmissionMode = FrontendDvbtTransmissionMode::MODE_8K_E;
     frontendMap[defaultFeId].settings.set<FrontendSettings::Tag::dvbt>(dvbt);

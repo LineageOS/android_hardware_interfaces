@@ -369,6 +369,7 @@ package android.media.tuner.testing.configuration.V1_0 {
     method @Nullable public android.media.tuner.testing.configuration.V1_0.IsdbsFrontendSettings getIsdbsFrontendSettings_optional();
     method @Nullable public android.media.tuner.testing.configuration.V1_0.IsdbtFrontendSettings getIsdbtFrontendSettings_optional();
     method @Nullable public java.math.BigInteger getRemoveOutputPid();
+    method @Nullable public boolean getSupportBlindScan();
     method @Nullable public android.media.tuner.testing.configuration.V1_0.FrontendTypeEnum getType();
     method public void setAtscFrontendSettings_optional(@Nullable android.media.tuner.testing.configuration.V1_0.AtscFrontendSettings);
     method public void setConnectToCicamId(@Nullable java.math.BigInteger);
@@ -381,6 +382,7 @@ package android.media.tuner.testing.configuration.V1_0 {
     method public void setIsdbsFrontendSettings_optional(@Nullable android.media.tuner.testing.configuration.V1_0.IsdbsFrontendSettings);
     method public void setIsdbtFrontendSettings_optional(@Nullable android.media.tuner.testing.configuration.V1_0.IsdbtFrontendSettings);
     method public void setRemoveOutputPid(@Nullable java.math.BigInteger);
+    method public void setSupportBlindScan(@Nullable boolean);
     method public void setType(@Nullable android.media.tuner.testing.configuration.V1_0.FrontendTypeEnum);
   }
 
