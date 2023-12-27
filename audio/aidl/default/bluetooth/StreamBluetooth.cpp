@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "AHAL_StreamBluetooth"
+#include <algorithm>
 
+#define LOG_TAG "AHAL_StreamBluetooth"
 #include <Utils.h>
 #include <android-base/logging.h>
 #include <audio_utils/clock.h>
@@ -31,6 +32,7 @@ using aidl::android::hardware::bluetooth::audio::ChannelMode;
 using aidl::android::hardware::bluetooth::audio::PcmConfiguration;
 using aidl::android::hardware::bluetooth::audio::PresentationPosition;
 using aidl::android::media::audio::common::AudioChannelLayout;
+using aidl::android::media::audio::common::AudioConfigBase;
 using aidl::android::media::audio::common::AudioDevice;
 using aidl::android::media::audio::common::AudioDeviceAddress;
 using aidl::android::media::audio::common::AudioFormatDescription;
@@ -48,51 +50,33 @@ namespace aidl::android::hardware::audio::core {
 constexpr int kBluetoothDefaultInputBufferMs = 20;
 constexpr int kBluetoothDefaultOutputBufferMs = 10;
 // constexpr int kBluetoothSpatializerOutputBufferMs = 10;
+constexpr int kBluetoothDefaultRemoteDelayMs = 200;
 
-// pcm configuration params are not really used by the module
 StreamBluetooth::StreamBluetooth(StreamContext* context, const Metadata& metadata,
-                                 ModuleBluetooth::BtProfileHandles&& btHandles)
+                                 ModuleBluetooth::BtProfileHandles&& btHandles,
+                                 const std::shared_ptr<BluetoothAudioPortAidl>& btDeviceProxy,
+                                 const PcmConfiguration& pcmConfig)
     : StreamCommonImpl(context, metadata),
-      mSampleRate(getContext().getSampleRate()),
-      mChannelLayout(getContext().getChannelLayout()),
-      mFormat(getContext().getFormat()),
       mFrameSizeBytes(getContext().getFrameSize()),
       mIsInput(isInput(metadata)),
       mBluetoothA2dp(std::move(std::get<ModuleBluetooth::BtInterface::BTA2DP>(btHandles))),
-      mBluetoothLe(std::move(std::get<ModuleBluetooth::BtInterface::BTLE>(btHandles))) {
-    mPreferredDataIntervalUs =
-            (mIsInput ? kBluetoothDefaultInputBufferMs : kBluetoothDefaultOutputBufferMs) * 1000;
-    mPreferredFrameCount = frameCountFromDurationUs(mPreferredDataIntervalUs, mSampleRate);
-    mIsInitialized = false;
-    mIsReadyToClose = false;
-}
+      mBluetoothLe(std::move(std::get<ModuleBluetooth::BtInterface::BTLE>(btHandles))),
+      mPreferredDataIntervalUs(pcmConfig.dataIntervalUs != 0
+                                       ? pcmConfig.dataIntervalUs
+                                       : (mIsInput ? kBluetoothDefaultInputBufferMs
+                                                   : kBluetoothDefaultOutputBufferMs) *
+                                                 1000),
+      mPreferredFrameCount(
+              frameCountFromDurationUs(mPreferredDataIntervalUs, pcmConfig.sampleRateHz)),
+      mBtDeviceProxy(btDeviceProxy) {}
 
 ::android::status_t StreamBluetooth::init() {
-    return ::android::OK;  // defering this till we get AudioDeviceDescription
-}
-
-const StreamCommonInterface::ConnectedDevices& StreamBluetooth::getConnectedDevices() const {
     std::lock_guard guard(mLock);
-    return StreamCommonImpl::getConnectedDevices();
-}
-
-ndk::ScopedAStatus StreamBluetooth::setConnectedDevices(
-        const std::vector<AudioDevice>& connectedDevices) {
-    if (mIsInput && connectedDevices.size() > 1) {
-        LOG(ERROR) << __func__ << ": wrong device size(" << connectedDevices.size()
-                   << ") for input stream";
-        return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+    if (mBtDeviceProxy == nullptr) {
+        // This is a normal situation in VTS tests.
+        LOG(INFO) << __func__ << ": no BT HAL proxy, stream is non-functional";
     }
-    for (const auto& connectedDevice : connectedDevices) {
-        if (connectedDevice.address.getTag() != AudioDeviceAddress::mac) {
-            LOG(ERROR) << __func__ << ": bad device address" << connectedDevice.address.toString();
-            return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
-        }
-    }
-    std::lock_guard guard(mLock);
-    RETURN_STATUS_IF_ERROR(StreamCommonImpl::setConnectedDevices(connectedDevices));
-    mIsInitialized = false;  // updated connected device list, need initialization
-    return ndk::ScopedAStatus::ok();
+    return ::android::OK;
 }
 
 ::android::status_t StreamBluetooth::drain(StreamDescriptor::DrainMode) {
@@ -112,167 +96,111 @@ ndk::ScopedAStatus StreamBluetooth::setConnectedDevices(
 ::android::status_t StreamBluetooth::transfer(void* buffer, size_t frameCount,
                                               size_t* actualFrameCount, int32_t* latencyMs) {
     std::lock_guard guard(mLock);
-    if (!mIsInitialized || mIsReadyToClose) {
-        // 'setConnectedDevices' has been called or stream is ready to close, so no transfers
+    if (mBtDeviceProxy == nullptr || mBtDeviceProxy->getState() == BluetoothStreamState::DISABLED) {
         *actualFrameCount = 0;
         *latencyMs = StreamDescriptor::LATENCY_UNKNOWN;
         return ::android::OK;
     }
     *actualFrameCount = 0;
     *latencyMs = 0;
-    for (auto proxy : mBtDeviceProxies) {
-        if (!proxy->start()) {
-            LOG(ERROR) << __func__ << ": state = " << proxy->getState() << " failed to start ";
-            return -EIO;
-        }
-        const size_t fc = std::min(frameCount, mPreferredFrameCount);
-        const size_t bytesToTransfer = fc * mFrameSizeBytes;
-        if (mIsInput) {
-            const size_t totalRead = proxy->readData(buffer, bytesToTransfer);
-            *actualFrameCount = std::max(*actualFrameCount, totalRead / mFrameSizeBytes);
-        } else {
-            const size_t totalWrite = proxy->writeData(buffer, bytesToTransfer);
-            *actualFrameCount = std::max(*actualFrameCount, totalWrite / mFrameSizeBytes);
-        }
-        PresentationPosition presentation_position;
-        if (!proxy->getPresentationPosition(presentation_position)) {
-            LOG(ERROR) << __func__ << ": getPresentationPosition returned error ";
-            return ::android::UNKNOWN_ERROR;
-        }
-        *latencyMs =
-                std::max(*latencyMs, (int32_t)(presentation_position.remoteDeviceAudioDelayNanos /
-                                               NANOS_PER_MILLISECOND));
+    if (!mBtDeviceProxy->start()) {
+        LOG(ERROR) << __func__ << ": state= " << mBtDeviceProxy->getState() << " failed to start";
+        return -EIO;
     }
+    const size_t fc = std::min(frameCount, mPreferredFrameCount);
+    const size_t bytesToTransfer = fc * mFrameSizeBytes;
+    if (mIsInput) {
+        const size_t totalRead = mBtDeviceProxy->readData(buffer, bytesToTransfer);
+        *actualFrameCount = std::max(*actualFrameCount, totalRead / mFrameSizeBytes);
+    } else {
+        const size_t totalWrite = mBtDeviceProxy->writeData(buffer, bytesToTransfer);
+        *actualFrameCount = std::max(*actualFrameCount, totalWrite / mFrameSizeBytes);
+    }
+    PresentationPosition presentation_position;
+    if (!mBtDeviceProxy->getPresentationPosition(presentation_position)) {
+        presentation_position.remoteDeviceAudioDelayNanos =
+                kBluetoothDefaultRemoteDelayMs * NANOS_PER_MILLISECOND;
+        LOG(WARNING) << __func__ << ": getPresentationPosition failed, latency info is unavailable";
+    }
+    // TODO(b/317117580): incorporate logic from
+    //                    packages/modules/Bluetooth/system/audio_bluetooth_hw/stream_apis.cc
+    //                    out_calculate_feeding_delay_ms / in_calculate_starving_delay_ms
+    *latencyMs = std::max(*latencyMs, (int32_t)(presentation_position.remoteDeviceAudioDelayNanos /
+                                                NANOS_PER_MILLISECOND));
     return ::android::OK;
 }
 
-::android::status_t StreamBluetooth::initialize() {
-    if (!::aidl::android::hardware::bluetooth::audio::BluetoothAudioSession::IsAidlAvailable()) {
-        LOG(ERROR) << __func__ << ": IBluetoothAudioProviderFactory service not available";
-        return ::android::UNKNOWN_ERROR;
-    }
-    if (StreamCommonImpl::getConnectedDevices().empty()) {
-        LOG(ERROR) << __func__ << ", has no connected devices";
-        return ::android::NO_INIT;
-    }
-    // unregister older proxies (if any)
-    for (auto proxy : mBtDeviceProxies) {
-        proxy->stop();
-        proxy->unregisterPort();
-    }
-    mBtDeviceProxies.clear();
-    for (auto it = StreamCommonImpl::getConnectedDevices().begin();
-         it != StreamCommonImpl::getConnectedDevices().end(); ++it) {
-        std::shared_ptr<BluetoothAudioPortAidl> proxy =
-                mIsInput ? std::shared_ptr<BluetoothAudioPortAidl>(
-                                   std::make_shared<BluetoothAudioPortAidlIn>())
-                         : std::shared_ptr<BluetoothAudioPortAidl>(
-                                   std::make_shared<BluetoothAudioPortAidlOut>());
-        if (proxy->registerPort(it->type)) {
-            LOG(ERROR) << __func__ << ": cannot init HAL";
-            return ::android::UNKNOWN_ERROR;
-        }
-        PcmConfiguration config;
-        if (!proxy->loadAudioConfig(&config)) {
-            LOG(ERROR) << __func__ << ": state=" << proxy->getState()
-                       << " failed to get audio config";
-            return ::android::UNKNOWN_ERROR;
-        }
-        // TODO: Ensure minimum duration for spatialized output?
-        // WAR to support Mono / 16 bits per sample as the Bluetooth stack required
-        if (!mIsInput && config.channelMode == ChannelMode::MONO && config.bitsPerSample == 16) {
-            proxy->forcePcmStereoToMono(true);
-            config.channelMode = ChannelMode::STEREO;
-            LOG(INFO) << __func__ << ": force channels = to be AUDIO_CHANNEL_OUT_STEREO";
-        }
-        if (!checkConfigParams(config)) {
-            LOG(ERROR) << __func__ << " checkConfigParams failed";
-            return ::android::UNKNOWN_ERROR;
-        }
-        mBtDeviceProxies.push_back(std::move(proxy));
-    }
-    mIsInitialized = true;
-    return ::android::OK;
-}
-
-bool StreamBluetooth::checkConfigParams(
-        ::aidl::android::hardware::bluetooth::audio::PcmConfiguration& config) {
-    if ((int)mSampleRate != config.sampleRateHz) {
-        LOG(ERROR) << __func__ << ": Sample Rate mismatch, stream val = " << mSampleRate
-                   << " hal val = " << config.sampleRateHz;
+// static
+bool StreamBluetooth::checkConfigParams(const PcmConfiguration& pcmConfig,
+                                        const AudioConfigBase& config) {
+    if ((int)config.sampleRate != pcmConfig.sampleRateHz) {
+        LOG(ERROR) << __func__ << ": sample rate mismatch, stream value=" << config.sampleRate
+                   << ", BT HAL value=" << pcmConfig.sampleRateHz;
         return false;
     }
-    auto channelCount = aidl::android::hardware::audio::common::getChannelCount(mChannelLayout);
-    if ((config.channelMode == ChannelMode::MONO && channelCount != 1) ||
-        (config.channelMode == ChannelMode::STEREO && channelCount != 2)) {
-        LOG(ERROR) << __func__ << ": Channel count mismatch, stream val = " << channelCount
-                   << " hal val = " << toString(config.channelMode);
+    const auto channelCount =
+            aidl::android::hardware::audio::common::getChannelCount(config.channelMask);
+    if ((pcmConfig.channelMode == ChannelMode::MONO && channelCount != 1) ||
+        (pcmConfig.channelMode == ChannelMode::STEREO && channelCount != 2)) {
+        LOG(ERROR) << __func__ << ": Channel count mismatch, stream value=" << channelCount
+                   << ", BT HAL value=" << toString(pcmConfig.channelMode);
         return false;
     }
-    if (mFormat.type != AudioFormatType::PCM) {
-        LOG(ERROR) << __func__ << ": unexpected format type "
-                   << aidl::android::media::audio::common::toString(mFormat.type);
+    if (config.format.type != AudioFormatType::PCM) {
+        LOG(ERROR) << __func__
+                   << ": unexpected stream format type: " << toString(config.format.type);
         return false;
     }
-    int8_t bps = aidl::android::hardware::audio::common::getPcmSampleSizeInBytes(mFormat.pcm) * 8;
-    if (bps != config.bitsPerSample) {
-        LOG(ERROR) << __func__ << ": bits per sample mismatch, stream val = " << bps
-                   << " hal val = " << config.bitsPerSample;
+    const int8_t bitsPerSample =
+            aidl::android::hardware::audio::common::getPcmSampleSizeInBytes(config.format.pcm) * 8;
+    if (bitsPerSample != pcmConfig.bitsPerSample) {
+        LOG(ERROR) << __func__ << ": bits per sample mismatch, stream value=" << bitsPerSample
+                   << ", BT HAL value=" << pcmConfig.bitsPerSample;
         return false;
-    }
-    if (config.dataIntervalUs > 0) {
-        mPreferredDataIntervalUs =
-                std::min((int32_t)mPreferredDataIntervalUs, config.dataIntervalUs);
-        mPreferredFrameCount = frameCountFromDurationUs(mPreferredDataIntervalUs, mSampleRate);
     }
     return true;
 }
 
 ndk::ScopedAStatus StreamBluetooth::prepareToClose() {
     std::lock_guard guard(mLock);
-    mIsReadyToClose = true;
+    if (mBtDeviceProxy != nullptr) {
+        if (mBtDeviceProxy->getState() != BluetoothStreamState::DISABLED) {
+            mBtDeviceProxy->stop();
+        }
+    }
     return ndk::ScopedAStatus::ok();
 }
 
 ::android::status_t StreamBluetooth::standby() {
     std::lock_guard guard(mLock);
-    if (!mIsInitialized) {
-        if (auto status = initialize(); status != ::android::OK) return status;
-    }
-    for (auto proxy : mBtDeviceProxies) {
-        if (!proxy->suspend()) {
-            LOG(ERROR) << __func__ << ": state = " << proxy->getState() << " failed to stand by ";
-            return -EIO;
-        }
-    }
+    if (mBtDeviceProxy != nullptr) mBtDeviceProxy->suspend();
     return ::android::OK;
 }
 
 ::android::status_t StreamBluetooth::start() {
     std::lock_guard guard(mLock);
-    if (!mIsInitialized) return initialize();
+    if (mBtDeviceProxy != nullptr) mBtDeviceProxy->start();
     return ::android::OK;
 }
 
 void StreamBluetooth::shutdown() {
     std::lock_guard guard(mLock);
-    for (auto proxy : mBtDeviceProxies) {
-        proxy->stop();
-        proxy->unregisterPort();
+    if (mBtDeviceProxy != nullptr) {
+        mBtDeviceProxy->stop();
+        mBtDeviceProxy = nullptr;
     }
-    mBtDeviceProxies.clear();
 }
 
 ndk::ScopedAStatus StreamBluetooth::updateMetadataCommon(const Metadata& metadata) {
     std::lock_guard guard(mLock);
-    if (!mIsInitialized) return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+    if (mBtDeviceProxy == nullptr) {
+        return ndk::ScopedAStatus::ok();
+    }
     bool isOk = true;
     if (isInput(metadata)) {
-        isOk = mBtDeviceProxies[0]->updateSinkMetadata(std::get<SinkMetadata>(metadata));
+        isOk = mBtDeviceProxy->updateSinkMetadata(std::get<SinkMetadata>(metadata));
     } else {
-        for (auto proxy : mBtDeviceProxies) {
-            if (!proxy->updateSourceMetadata(std::get<SourceMetadata>(metadata))) isOk = false;
-        }
+        isOk = mBtDeviceProxy->updateSourceMetadata(std::get<SourceMetadata>(metadata));
     }
     return isOk ? ndk::ScopedAStatus::ok()
                 : ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
@@ -280,7 +208,6 @@ ndk::ScopedAStatus StreamBluetooth::updateMetadataCommon(const Metadata& metadat
 
 ndk::ScopedAStatus StreamBluetooth::bluetoothParametersUpdated() {
     if (mIsInput) {
-        LOG(WARNING) << __func__ << ": not handled";
         return ndk::ScopedAStatus::ok();
     }
     auto applyParam = [](const std::shared_ptr<BluetoothAudioPortAidl>& proxy,
@@ -297,15 +224,10 @@ ndk::ScopedAStatus StreamBluetooth::bluetoothParametersUpdated() {
     bool hasLeParam, enableLe;
     auto btLe = mBluetoothLe.lock();
     hasLeParam = btLe != nullptr && btLe->isEnabled(&enableLe).isOk();
-    std::unique_lock lock(mLock);
-    ::android::base::ScopedLockAssertion lock_assertion(mLock);
-    if (!mIsInitialized) {
-        LOG(WARNING) << __func__ << ": init not done";
-        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
-    }
-    for (auto proxy : mBtDeviceProxies) {
-        if ((hasA2dpParam && proxy->isA2dp() && !applyParam(proxy, enableA2dp)) ||
-            (hasLeParam && proxy->isLeAudio() && !applyParam(proxy, enableLe))) {
+    std::lock_guard guard(mLock);
+    if (mBtDeviceProxy != nullptr) {
+        if ((hasA2dpParam && mBtDeviceProxy->isA2dp() && !applyParam(mBtDeviceProxy, enableA2dp)) ||
+            (hasLeParam && mBtDeviceProxy->isLeAudio() && !applyParam(mBtDeviceProxy, enableLe))) {
             LOG(DEBUG) << __func__ << ": applyParam failed";
             return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
         }
@@ -313,11 +235,20 @@ ndk::ScopedAStatus StreamBluetooth::bluetoothParametersUpdated() {
     return ndk::ScopedAStatus::ok();
 }
 
+// static
+int32_t StreamInBluetooth::getNominalLatencyMs(size_t dataIntervalUs) {
+    if (dataIntervalUs == 0) dataIntervalUs = kBluetoothDefaultInputBufferMs * 1000LL;
+    return dataIntervalUs / 1000LL;
+}
+
 StreamInBluetooth::StreamInBluetooth(StreamContext&& context, const SinkMetadata& sinkMetadata,
                                      const std::vector<MicrophoneInfo>& microphones,
-                                     ModuleBluetooth::BtProfileHandles&& btProfileHandles)
+                                     ModuleBluetooth::BtProfileHandles&& btProfileHandles,
+                                     const std::shared_ptr<BluetoothAudioPortAidl>& btDeviceProxy,
+                                     const PcmConfiguration& pcmConfig)
     : StreamIn(std::move(context), microphones),
-      StreamBluetooth(&mContextInstance, sinkMetadata, std::move(btProfileHandles)) {}
+      StreamBluetooth(&mContextInstance, sinkMetadata, std::move(btProfileHandles), btDeviceProxy,
+                      pcmConfig) {}
 
 ndk::ScopedAStatus StreamInBluetooth::getActiveMicrophones(
         std::vector<MicrophoneDynamicInfo>* _aidl_return __unused) {
@@ -325,11 +256,20 @@ ndk::ScopedAStatus StreamInBluetooth::getActiveMicrophones(
     return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
 }
 
+// static
+int32_t StreamOutBluetooth::getNominalLatencyMs(size_t dataIntervalUs) {
+    if (dataIntervalUs == 0) dataIntervalUs = kBluetoothDefaultOutputBufferMs * 1000LL;
+    return dataIntervalUs / 1000LL;
+}
+
 StreamOutBluetooth::StreamOutBluetooth(StreamContext&& context,
                                        const SourceMetadata& sourceMetadata,
                                        const std::optional<AudioOffloadInfo>& offloadInfo,
-                                       ModuleBluetooth::BtProfileHandles&& btProfileHandles)
+                                       ModuleBluetooth::BtProfileHandles&& btProfileHandles,
+                                       const std::shared_ptr<BluetoothAudioPortAidl>& btDeviceProxy,
+                                       const PcmConfiguration& pcmConfig)
     : StreamOut(std::move(context), offloadInfo),
-      StreamBluetooth(&mContextInstance, sourceMetadata, std::move(btProfileHandles)) {}
+      StreamBluetooth(&mContextInstance, sourceMetadata, std::move(btProfileHandles), btDeviceProxy,
+                      pcmConfig) {}
 
 }  // namespace aidl::android::hardware::audio::core

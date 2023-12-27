@@ -500,14 +500,12 @@ bool BluetoothAudioSession::GetPresentationPosition(
                << " has NO session";
     return false;
   }
-  bool retval = false;
-
   if (!stack_iface_->getPresentationPosition(&presentation_position).isOk()) {
     LOG(WARNING) << __func__ << " - IBluetoothAudioPort SessionType="
                  << toString(session_type_) << " failed";
     return false;
   }
-  return retval;
+  return true;
 }
 
 void BluetoothAudioSession::UpdateSourceMetadata(
