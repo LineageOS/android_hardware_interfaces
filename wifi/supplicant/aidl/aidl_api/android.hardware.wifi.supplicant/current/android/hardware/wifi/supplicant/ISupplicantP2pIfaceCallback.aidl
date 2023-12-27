@@ -35,7 +35,7 @@ package android.hardware.wifi.supplicant;
 @VintfStability
 interface ISupplicantP2pIfaceCallback {
   /**
-   * @deprecated This callback is deprecated from AIDL v2, newer HAL should call onDeviceFoundWithParams.
+   * @deprecated This callback is deprecated from AIDL v3, newer HAL should call onDeviceFoundWithParams.
    */
   oneway void onDeviceFound(in byte[] srcAddress, in byte[] p2pDeviceAddress, in byte[] primaryDeviceType, in String deviceName, in android.hardware.wifi.supplicant.WpsConfigMethods configMethods, in byte deviceCapabilities, in android.hardware.wifi.supplicant.P2pGroupCapabilityMask groupCapabilities, in byte[] wfdDeviceInfo);
   oneway void onDeviceLost(in byte[] p2pDeviceAddress);

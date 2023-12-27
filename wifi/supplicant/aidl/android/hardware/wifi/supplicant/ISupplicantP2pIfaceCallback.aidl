@@ -40,7 +40,7 @@ oneway interface ISupplicantP2pIfaceCallback {
     /**
      * Used to indicate that a P2P device has been found.
      * <p>
-     * @deprecated This callback is deprecated from AIDL v2, newer HAL should call
+     * @deprecated This callback is deprecated from AIDL v3, newer HAL should call
      * onDeviceFoundWithParams.
      *
      * @param srcAddress MAC address of the device found. This must either

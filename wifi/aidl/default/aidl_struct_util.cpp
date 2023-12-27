@@ -2886,8 +2886,8 @@ bool convertLegacyRttCapabilitiesToAidl(
     aidl_capabilities->bwSupport = convertLegacyRttBwBitmapToAidl(legacy_capabilities.bw_support);
     aidl_capabilities->mcVersion = legacy_capabilities.mc_version;
     // Initialize 11az parameters to default
-    aidl_capabilities->azPreambleSupport = RttPreamble::INVALID;
-    aidl_capabilities->azBwSupport = RttBw::BW_UNSPECIFIED;
+    aidl_capabilities->azPreambleSupport = (int)RttPreamble::INVALID;
+    aidl_capabilities->azBwSupport = (int)RttBw::BW_UNSPECIFIED;
     aidl_capabilities->ntbInitiatorSupported = false;
     aidl_capabilities->ntbResponderSupported = false;
     return true;
@@ -2912,9 +2912,9 @@ bool convertLegacyRttCapabilitiesV3ToAidl(
             convertLegacyRttBwBitmapToAidl(legacy_capabilities_v3.rtt_capab.bw_support);
     aidl_capabilities->mcVersion = legacy_capabilities_v3.rtt_capab.mc_version;
     aidl_capabilities->azPreambleSupport =
-            convertLegacyRttPreambleBitmapToAidl(legacy_capabilities_v3.az_preamble_support);
+            (int)convertLegacyRttPreambleBitmapToAidl(legacy_capabilities_v3.az_preamble_support);
     aidl_capabilities->azBwSupport =
-            convertLegacyRttBwBitmapToAidl(legacy_capabilities_v3.az_bw_support);
+            (int)convertLegacyRttBwBitmapToAidl(legacy_capabilities_v3.az_bw_support);
     aidl_capabilities->ntbInitiatorSupported = legacy_capabilities_v3.ntb_initiator_supported;
     aidl_capabilities->ntbResponderSupported = legacy_capabilities_v3.ntb_responder_supported;
     return true;
@@ -3587,13 +3587,13 @@ bool convertTwtCapabilitiesToAidl(legacy_hal::wifi_twt_capabilities legacy_twt_c
     if (legacy_twt_capabs.min_wake_duration_micros > legacy_twt_capabs.max_wake_duration_micros) {
         return false;
     }
-    aidl_twt_capabs->minWakeDurationMicros = legacy_twt_capabs.min_wake_duration_micros;
-    aidl_twt_capabs->maxWakeDurationMicros = legacy_twt_capabs.max_wake_duration_micros;
+    aidl_twt_capabs->minWakeDurationUs = legacy_twt_capabs.min_wake_duration_micros;
+    aidl_twt_capabs->maxWakeDurationUs = legacy_twt_capabs.max_wake_duration_micros;
     if (legacy_twt_capabs.min_wake_interval_micros > legacy_twt_capabs.max_wake_interval_micros) {
         return false;
     }
-    aidl_twt_capabs->minWakeIntervalMicros = legacy_twt_capabs.min_wake_interval_micros;
-    aidl_twt_capabs->maxWakeIntervalMicros = legacy_twt_capabs.max_wake_interval_micros;
+    aidl_twt_capabs->minWakeIntervalUs = legacy_twt_capabs.min_wake_interval_micros;
+    aidl_twt_capabs->maxWakeIntervalUs = legacy_twt_capabs.max_wake_interval_micros;
     return true;
 }
 
@@ -3603,16 +3603,16 @@ bool convertAidlTwtRequestToLegacy(const TwtRequest aidl_twt_request,
         return false;
     }
     legacy_twt_request->mlo_link_id = aidl_twt_request.mloLinkId;
-    if (aidl_twt_request.minWakeDurationMicros > aidl_twt_request.maxWakeDurationMicros) {
+    if (aidl_twt_request.minWakeDurationUs > aidl_twt_request.maxWakeDurationUs) {
         return false;
     }
-    legacy_twt_request->min_wake_duration_micros = aidl_twt_request.minWakeDurationMicros;
-    legacy_twt_request->max_wake_duration_micros = aidl_twt_request.maxWakeDurationMicros;
-    if (aidl_twt_request.minWakeIntervalMicros > aidl_twt_request.maxWakeIntervalMicros) {
+    legacy_twt_request->min_wake_duration_micros = aidl_twt_request.minWakeDurationUs;
+    legacy_twt_request->max_wake_duration_micros = aidl_twt_request.maxWakeDurationUs;
+    if (aidl_twt_request.minWakeIntervalUs > aidl_twt_request.maxWakeIntervalUs) {
         return false;
     }
-    legacy_twt_request->min_wake_interval_micros = aidl_twt_request.minWakeIntervalMicros;
-    legacy_twt_request->max_wake_interval_micros = aidl_twt_request.maxWakeIntervalMicros;
+    legacy_twt_request->min_wake_interval_micros = aidl_twt_request.minWakeIntervalUs;
+    legacy_twt_request->max_wake_interval_micros = aidl_twt_request.maxWakeIntervalUs;
     return true;
 }
 
@@ -3664,8 +3664,8 @@ bool convertLegacyHalTwtSessionToAidl(legacy_hal::wifi_twt_session twt_session,
 
     aidl_twt_session->sessionId = twt_session.session_id;
     aidl_twt_session->mloLinkId = twt_session.mlo_link_id;
-    aidl_twt_session->wakeDurationMicros = twt_session.wake_duration_micros;
-    aidl_twt_session->wakeIntervalMicros = twt_session.wake_interval_micros;
+    aidl_twt_session->wakeDurationUs = twt_session.wake_duration_micros;
+    aidl_twt_session->wakeIntervalUs = twt_session.wake_interval_micros;
     switch (twt_session.negotiation_type) {
         case WIFI_TWT_NEGO_TYPE_INDIVIDUAL:
             aidl_twt_session->negotiationType = TwtSession::TwtNegotiationType::INDIVIDUAL;
@@ -3696,7 +3696,7 @@ bool convertLegacyHalTwtSessionStatsToAidl(legacy_hal::wifi_twt_session_stats tw
     aidl_twt_stats->avgRxPktCount = twt_stats.avg_pkt_num_rx;
     aidl_twt_stats->avgTxPktSize = twt_stats.avg_tx_pkt_size;
     aidl_twt_stats->avgRxPktSize = twt_stats.avg_rx_pkt_size;
-    aidl_twt_stats->avgEospDurationMicros = twt_stats.avg_eosp_dur_us;
+    aidl_twt_stats->avgEospDurationUs = twt_stats.avg_eosp_dur_us;
     aidl_twt_stats->eospCount = twt_stats.eosp_count;
 
     return true;

@@ -35,8 +35,8 @@ package android.hardware.wifi;
 @VintfStability
 parcelable TwtRequest {
   int mloLinkId;
-  int minWakeDurationMicros;
-  int maxWakeDurationMicros;
-  long minWakeIntervalMicros;
-  long maxWakeIntervalMicros;
+  int minWakeDurationUs;
+  int maxWakeDurationUs;
+  long minWakeIntervalUs;
+  long maxWakeIntervalUs;
 }
