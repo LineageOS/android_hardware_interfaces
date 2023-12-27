@@ -64,12 +64,12 @@ parcelable RttCapabilities {
      * Bit mask indicating what preamble is supported by IEEE 802.11az initiator.
      * Combination of |RttPreamble| values.
      */
-    RttPreamble azPreambleSupport;
+    int azPreambleSupport;
     /**
      * Bit mask indicating what BW is supported by IEEE 802.11az initiator.
      * Combination of |RttBw| values.
      */
-    RttBw azBwSupport;
+    int azBwSupport;
     /**
      * Whether the initiator supports IEEE 802.11az Non-Trigger-based (non-TB) measurement.
      */

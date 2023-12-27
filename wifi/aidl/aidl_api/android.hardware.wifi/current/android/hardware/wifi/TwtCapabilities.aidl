@@ -38,8 +38,8 @@ parcelable TwtCapabilities {
   boolean isTwtResponderSupported;
   boolean isBroadcastTwtSupported;
   boolean isFlexibleTwtScheduleSupported;
-  int minWakeDurationMicros;
-  int maxWakeDurationMicros;
-  long minWakeIntervalMicros;
-  long maxWakeIntervalMicros;
+  int minWakeDurationUs;
+  int maxWakeDurationUs;
+  long minWakeIntervalUs;
+  long maxWakeIntervalUs;
 }

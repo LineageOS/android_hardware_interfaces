@@ -40,17 +40,17 @@ parcelable TwtCapabilities {
     /**
      * Minimum TWT wake duration in microseconds.
      */
-    int minWakeDurationMicros;
+    int minWakeDurationUs;
     /**
      * Maximum TWT wake duration in microseconds.
      */
-    int maxWakeDurationMicros;
+    int maxWakeDurationUs;
     /**
      * Minimum TWT wake interval in microseconds.
      */
-    long minWakeIntervalMicros;
+    long minWakeIntervalUs;
     /**
      * Maximum TWT wake interval in microseconds.
      */
-    long maxWakeIntervalMicros;
+    long maxWakeIntervalUs;
 }

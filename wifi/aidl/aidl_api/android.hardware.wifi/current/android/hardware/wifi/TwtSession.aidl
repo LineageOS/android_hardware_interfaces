@@ -36,8 +36,8 @@ package android.hardware.wifi;
 parcelable TwtSession {
   int sessionId;
   int mloLinkId;
-  int wakeDurationMicros;
-  long wakeIntervalMicros;
+  int wakeDurationUs;
+  long wakeIntervalUs;
   android.hardware.wifi.TwtSession.TwtNegotiationType negotiationType;
   boolean isTriggerEnabled;
   boolean isAnnounced;

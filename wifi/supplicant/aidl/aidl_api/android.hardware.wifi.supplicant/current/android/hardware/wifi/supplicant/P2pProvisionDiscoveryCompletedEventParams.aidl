@@ -37,7 +37,7 @@ parcelable P2pProvisionDiscoveryCompletedEventParams {
   byte[6] p2pDeviceAddress;
   boolean isRequest;
   android.hardware.wifi.supplicant.P2pProvDiscStatusCode status;
-  android.hardware.wifi.supplicant.WpsConfigMethods configMethods;
+  int configMethods;
   String generatedPin;
   String groupInterfaceName;
   @nullable android.hardware.wifi.common.OuiKeyedData[] vendorData;
