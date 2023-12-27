@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include <mutex>
 #include <vector>
 
 #include "core-impl/Stream.h"
@@ -55,13 +54,6 @@ class StreamRemoteSubmix : public StreamCommonImpl {
     const bool mIsInput;
     r_submix::AudioConfig mStreamConfig;
     std::shared_ptr<r_submix::SubmixRoute> mCurrentRoute = nullptr;
-
-    // Mutex lock to protect vector of submix routes, each of these submix routes have their mutex
-    // locks and none of the mutex locks should be taken together.
-    static std::mutex sSubmixRoutesLock;
-    static std::map<::aidl::android::media::audio::common::AudioDeviceAddress,
-                    std::shared_ptr<r_submix::SubmixRoute>>
-            sSubmixRoutes GUARDED_BY(sSubmixRoutesLock);
 
     // limit for number of read error log entries to avoid spamming the logs
     static constexpr int kMaxReadErrorLogs = 5;
