@@ -43,26 +43,10 @@ StreamRemoteSubmix::StreamRemoteSubmix(StreamContext* context, const Metadata& m
     mStreamConfig.sampleRate = context->getSampleRate();
 }
 
-std::mutex StreamRemoteSubmix::sSubmixRoutesLock;
-std::map<AudioDeviceAddress, std::shared_ptr<SubmixRoute>> StreamRemoteSubmix::sSubmixRoutes;
-
 ::android::status_t StreamRemoteSubmix::init() {
-    {
-        std::lock_guard guard(sSubmixRoutesLock);
-        auto routeItr = sSubmixRoutes.find(mDeviceAddress);
-        if (routeItr != sSubmixRoutes.end()) {
-            mCurrentRoute = routeItr->second;
-        }
-        // If route is not available for this port, add it.
-        if (mCurrentRoute == nullptr) {
-            // Initialize the pipe.
-            mCurrentRoute = std::make_shared<SubmixRoute>();
-            if (::android::OK != mCurrentRoute->createPipe(mStreamConfig)) {
-                LOG(ERROR) << __func__ << ": create pipe failed";
-                return ::android::NO_INIT;
-            }
-            sSubmixRoutes.emplace(mDeviceAddress, mCurrentRoute);
-        }
+    mCurrentRoute = SubmixRoute::findOrCreateRoute(mDeviceAddress, mStreamConfig);
+    if (mCurrentRoute == nullptr) {
+        return ::android::NO_INIT;
     }
     if (!mCurrentRoute->isStreamConfigValid(mIsInput, mStreamConfig)) {
         LOG(ERROR) << __func__ << ": invalid stream config";
@@ -80,7 +64,6 @@ std::map<AudioDeviceAddress, std::shared_ptr<SubmixRoute>> StreamRemoteSubmix::s
             return ::android::NO_INIT;
         }
     }
-
     mCurrentRoute->openStream(mIsInput);
     return ::android::OK;
 }
@@ -114,14 +97,7 @@ std::map<AudioDeviceAddress, std::shared_ptr<SubmixRoute>> StreamRemoteSubmix::s
 
 ndk::ScopedAStatus StreamRemoteSubmix::prepareToClose() {
     if (!mIsInput) {
-        std::shared_ptr<SubmixRoute> route = nullptr;
-        {
-            std::lock_guard guard(sSubmixRoutesLock);
-            auto routeItr = sSubmixRoutes.find(mDeviceAddress);
-            if (routeItr != sSubmixRoutes.end()) {
-                route = routeItr->second;
-            }
-        }
+        std::shared_ptr<SubmixRoute> route = SubmixRoute::findRoute(mDeviceAddress);
         if (route != nullptr) {
             sp<MonoPipe> sink = route->getSink();
             if (sink == nullptr) {
@@ -148,9 +124,7 @@ void StreamRemoteSubmix::shutdown() {
     if (!mCurrentRoute->hasAtleastOneStreamOpen()) {
         mCurrentRoute->releasePipe();
         LOG(DEBUG) << __func__ << ": pipe destroyed";
-
-        std::lock_guard guard(sSubmixRoutesLock);
-        sSubmixRoutes.erase(mDeviceAddress);
+        SubmixRoute::removeRoute(mDeviceAddress);
     }
     mCurrentRoute.reset();
 }
@@ -201,7 +175,7 @@ long StreamRemoteSubmix::getDelayInUsForFrameCount(size_t frameCount) {
 
 // Calculate the maximum size of the pipe buffer in frames for the specified stream.
 size_t StreamRemoteSubmix::getStreamPipeSizeInFrames() {
-    auto pipeConfig = mCurrentRoute->mPipeConfig;
+    auto pipeConfig = mCurrentRoute->getPipeConfig();
     const size_t maxFrameSize = std::max(mStreamConfig.frameSize, pipeConfig.frameSize);
     return (pipeConfig.frameCount * pipeConfig.frameSize) / maxFrameSize;
 }
