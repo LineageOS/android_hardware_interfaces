@@ -2109,7 +2109,7 @@ bool FakeVehicleHardware::isVariableUpdateRateSupported(const VehiclePropConfig&
     return false;
 }
 
-void FakeVehicleHardware::refreshTimeStampForInterval(int64_t intervalInNanos) {
+void FakeVehicleHardware::refreshTimestampForInterval(int64_t intervalInNanos) {
     std::unordered_map<PropIdAreaId, VehiclePropertyStore::EventMode, PropIdAreaIdHash>
             eventModeByPropIdAreaId;
 
@@ -2159,7 +2159,7 @@ void FakeVehicleHardware::registerRefreshLocked(PropIdAreaId propIdAreaId,
 
     // This is the first action for the interval, register a timer callback for that interval.
     auto action = std::make_shared<RecurrentTimer::Callback>(
-            [this, intervalInNanos] { refreshTimeStampForInterval(intervalInNanos); });
+            [this, intervalInNanos] { refreshTimestampForInterval(intervalInNanos); });
     mActionByIntervalInNanos[intervalInNanos] = ActionForInterval{
             .propIdAreaIdsToRefresh = {propIdAreaId},
             .recurrentAction = action,
@@ -2201,7 +2201,7 @@ StatusCode FakeVehicleHardware::subscribePropIdAreaIdLocked(
         case VehiclePropertyChangeMode::CONTINUOUS:
             if (sampleRateHz == 0.f) {
                 ALOGE("Must not use sample rate 0 for a continuous property");
-                return StatusCode::INTERNAL_ERROR;
+                return StatusCode::INVALID_ARG;
             }
             // For continuous properties, we must generate a new onPropertyChange event
             // periodically according to the sample rate.

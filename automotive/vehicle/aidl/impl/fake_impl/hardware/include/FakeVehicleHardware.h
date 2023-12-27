@@ -294,7 +294,7 @@ class FakeVehicleHardware : public IVehicleHardware {
     void registerRefreshLocked(PropIdAreaId propIdAreaId, VehiclePropertyStore::EventMode eventMode,
                                float sampleRateHz) REQUIRES(mLock);
     void unregisterRefreshLocked(PropIdAreaId propIdAreaId) REQUIRES(mLock);
-    void refreshTimeStampForInterval(int64_t intervalInNanos) EXCLUDES(mLock);
+    void refreshTimestampForInterval(int64_t intervalInNanos) EXCLUDES(mLock);
 
     static aidl::android::hardware::automotive::vehicle::VehiclePropValue createHwInputKeyProp(
             aidl::android::hardware::automotive::vehicle::VehicleHwKeyInputAction action,

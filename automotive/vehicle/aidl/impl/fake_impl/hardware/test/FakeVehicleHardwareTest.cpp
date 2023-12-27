@@ -3444,6 +3444,14 @@ TEST_F(FakeVehicleHardwareTest, testSubscribeUnusubscribe_onChange) {
             << "must not receive on change events if the propId, areaId is unsubscribed";
 }
 
+TEST_F(FakeVehicleHardwareTest, testSubscribeContinuous_rate0_mustReturnInvalidArg) {
+    int32_t propSpeed = toInt(VehicleProperty::PERF_VEHICLE_SPEED);
+    int32_t areaId = 0;
+    auto status = getHardware()->subscribe(newSubscribeOptions(propSpeed, areaId, 0));
+
+    ASSERT_EQ(status, StatusCode::INVALID_ARG);
+}
+
 TEST_F(FakeVehicleHardwareTest, testSetHvacTemperatureValueSuggestion) {
     float CELSIUS = static_cast<float>(toInt(VehicleUnit::CELSIUS));
     float FAHRENHEIT = static_cast<float>(toInt(VehicleUnit::FAHRENHEIT));
