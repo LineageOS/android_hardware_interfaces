@@ -29,6 +29,10 @@ class ModuleRemoteSubmix : public Module {
     // IModule interfaces
     ndk::ScopedAStatus getMicMute(bool* _aidl_return) override;
     ndk::ScopedAStatus setMicMute(bool in_mute) override;
+    ndk::ScopedAStatus setAudioPortConfig(
+            const ::aidl::android::media::audio::common::AudioPortConfig& in_requested,
+            ::aidl::android::media::audio::common::AudioPortConfig* out_suggested,
+            bool* _aidl_return) override;
 
     // Module interfaces
     ndk::ScopedAStatus createInputStream(
