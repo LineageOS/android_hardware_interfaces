@@ -24,6 +24,7 @@ import android.hardware.wifi.supplicant.IfaceType;
 import android.hardware.wifi.supplicant.MiracastMode;
 import android.hardware.wifi.supplicant.P2pConnectInfo;
 import android.hardware.wifi.supplicant.P2pDiscoveryInfo;
+import android.hardware.wifi.supplicant.P2pExtListenInfo;
 import android.hardware.wifi.supplicant.P2pFrameTypeMask;
 import android.hardware.wifi.supplicant.P2pGroupCapabilityMask;
 import android.hardware.wifi.supplicant.WpsConfigMethods;
@@ -165,6 +166,9 @@ interface ISupplicantP2pIface {
      * (with interval obviously having to be larger than or equal to duration).
      * If the P2P module is not idle at the time the Extended Listen Timing
      * timeout occurs, the Listen State operation must be skipped.
+     * <p>
+     * @deprecated This method is deprecated from AIDL v3, newer HALs should use
+     * configureExtListenWithParams.
      *
      * @param periodInMillis Period in milliseconds.
      * @param intervalInMillis Interval in milliseconds.
@@ -882,4 +886,21 @@ interface ISupplicantP2pIface {
      *         |SupplicantStatusCode.FAILURE_IFACE_DISABLED|
      */
     void findWithParams(in P2pDiscoveryInfo discoveryInfo);
+
+    /**
+     * Configure Extended Listen Timing.
+     *
+     * If enabled, listen state must be entered every |intervalMs| for at
+     * least |periodMs|. Both values have acceptable range of 1-65535
+     * (note that the interval must be larger than or equal to the duration).
+     * If the P2P module is not idle at the time the Extended Listen Timing
+     * timeout occurs, the Listen State operation must be skipped.
+     *
+     * @param extListenInfo Parameters to configure extended listening timing.
+     * @throws ServiceSpecificException with one of the following values:
+     *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+     */
+    void configureExtListenWithParams(in P2pExtListenInfo extListenInfo);
 }
