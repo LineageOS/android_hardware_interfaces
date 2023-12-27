@@ -109,7 +109,7 @@ ndk::ScopedAStatus ModuleBluetooth::createOutputStream(
                                                     offloadInfo, getBtProfileManagerHandles());
 }
 
-ndk::ScopedAStatus ModuleBluetooth::populateConnectedDevicePort(AudioPort* audioPort) {
+ndk::ScopedAStatus ModuleBluetooth::populateConnectedDevicePort(AudioPort* audioPort, int32_t) {
     if (audioPort->ext.getTag() != AudioPortExt::device) {
         LOG(ERROR) << __func__ << ": not a device port: " << audioPort->toString();
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
