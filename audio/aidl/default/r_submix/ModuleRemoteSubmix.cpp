@@ -67,7 +67,7 @@ ndk::ScopedAStatus ModuleRemoteSubmix::createOutputStream(
                                                        offloadInfo);
 }
 
-ndk::ScopedAStatus ModuleRemoteSubmix::populateConnectedDevicePort(AudioPort* audioPort) {
+ndk::ScopedAStatus ModuleRemoteSubmix::populateConnectedDevicePort(AudioPort* audioPort, int32_t) {
     // Find the corresponding mix port and copy its profiles.
     // At this moment, the port has the same ID as the template port, see connectExternalDevice.
     std::vector<AudioRoute*> routes = getAudioRoutesForAudioPortImpl(audioPort->id);

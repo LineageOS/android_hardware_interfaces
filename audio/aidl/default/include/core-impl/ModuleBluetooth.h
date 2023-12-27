@@ -52,7 +52,8 @@ class ModuleBluetooth final : public Module {
                     offloadInfo,
             std::shared_ptr<StreamOut>* result) override;
     ndk::ScopedAStatus populateConnectedDevicePort(
-            ::aidl::android::media::audio::common::AudioPort* audioPort) override;
+            ::aidl::android::media::audio::common::AudioPort* audioPort,
+            int32_t nextPortId) override;
     ndk::ScopedAStatus onMasterMuteChanged(bool mute) override;
     ndk::ScopedAStatus onMasterVolumeChanged(float volume) override;
 
