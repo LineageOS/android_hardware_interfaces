@@ -105,6 +105,10 @@ void TaskQueue::waitForTask() {
     });
 }
 
+bool TaskQueue::isStopped() {
+    return mStopped;
+}
+
 void TaskQueue::stopWait() {
     mStopped = true;
     {
@@ -241,7 +245,7 @@ Status TestWakeupClientServiceImpl::GetRemoteTasks(ServerContext* context,
     while (true) {
         mTaskQueue->waitForTask();
 
-        if (mServerStopped) {
+        if (mTaskQueue->isStopped()) {
             // Server stopped, exit the loop.
             printf("Server stopped exit loop\n");
             break;
@@ -250,11 +254,13 @@ Status TestWakeupClientServiceImpl::GetRemoteTasks(ServerContext* context,
         while (true) {
             auto maybeTask = mTaskQueue->maybePopOne();
             if (!maybeTask.has_value()) {
+                printf("no task left\n");
                 // No task left, loop again and wait for another task(s).
                 break;
             }
             // Loop through all the task in the queue but obtain lock for each element so we don't
             // hold lock while writing the response.
+            printf("Sending one remote task\n");
             const GetRemoteTasksResponse& response = maybeTask.value();
             if (!writer->Write(response)) {
                 // Broken stream, maybe the client is shutting down.
