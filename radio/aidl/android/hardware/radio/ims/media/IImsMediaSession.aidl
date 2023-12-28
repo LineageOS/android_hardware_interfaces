@@ -110,8 +110,7 @@ oneway interface IImsMediaSession {
      * Adjust the delay in the jitter buffer to synchronize the audio with the time of video
      * frames
      *
-     * @param delayMs The delay to apply to the jitter buffer. If it is positive, the jitter
-     * buffer increases the delay, if it is negative, the jitter buffer decreases the delay.
+     * @param delayMs The additional delay to the jitter buffer in milliseconds.
      *
      * This is available when android.hardware.telephony.ims is defined.
      */
