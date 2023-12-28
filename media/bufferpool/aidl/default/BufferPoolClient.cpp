@@ -297,7 +297,7 @@ BufferPoolClient::Impl::Impl(const std::shared_ptr<IAccessor> &accessor,
       mLastEvictCacheMs(::android::elapsedRealtime()) {
     IAccessor::ConnectionInfo conInfo;
     bool valid = false;
-    if(accessor->connect(observer, &conInfo).isOk()) {
+    if (accessor && accessor->connect(observer, &conInfo).isOk()) {
         auto channel = std::make_unique<BufferStatusChannel>(conInfo.toFmqDesc);
         auto observer = std::make_unique<BufferInvalidationListener>(conInfo.fromFmqDesc);
 
