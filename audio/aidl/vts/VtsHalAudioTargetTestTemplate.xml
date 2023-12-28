@@ -13,7 +13,7 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<configuration description="Runs VtsHalAudioCoreTargetTest.">
+<configuration description="Runs {MODULE}.">
     <option name="test-suite-tag" value="apct" />
     <option name="test-suite-tag" value="apct-native" />
 
@@ -27,12 +27,12 @@
 
     <target_preparer class="com.android.tradefed.targetprep.PushFilePreparer">
         <option name="cleanup" value="true" />
-        <option name="push" value="VtsHalAudioCoreTargetTest->/data/local/tmp/VtsHalAudioCoreTargetTest" />
+        <option name="push" value="{MODULE}->/data/local/tmp/{MODULE}" />
     </target_preparer>
 
     <test class="com.android.tradefed.testtype.GTest" >
         <option name="native-test-device-path" value="/data/local/tmp" />
-        <option name="module-name" value="VtsHalAudioCoreTargetTest" />
+        <option name="module-name" value="{MODULE}" />
         <option name="native-test-timeout" value="10m" />
     </test>
 </configuration>
