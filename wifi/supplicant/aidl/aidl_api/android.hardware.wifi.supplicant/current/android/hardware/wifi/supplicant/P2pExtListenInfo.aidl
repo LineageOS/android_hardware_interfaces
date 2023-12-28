@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,24 +31,10 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.wifi;
+package android.hardware.wifi.supplicant;
 @VintfStability
-parcelable TwtSession {
-  int sessionId;
-  int mloLinkId;
-  int wakeDurationUs;
-  long wakeIntervalUs;
-  android.hardware.wifi.TwtSession.TwtNegotiationType negotiationType;
-  boolean isTriggerEnabled;
-  boolean isAnnounced;
-  boolean isImplicit;
-  boolean isProtected;
-  boolean isUpdatable;
-  boolean isSuspendable;
-  boolean isResponderPmModeEnabled;
-  @Backing(type="byte") @VintfStability
-  enum TwtNegotiationType {
-    INDIVIDUAL = 0,
-    BROADCAST = 1,
-  }
+parcelable P2pExtListenInfo {
+  int periodMs;
+  int intervalMs;
+  @nullable android.hardware.wifi.common.OuiKeyedData[] vendorData;
 }

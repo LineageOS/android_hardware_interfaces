@@ -38,6 +38,6 @@ parcelable TwtSessionStats {
   int avgRxPktCount;
   int avgTxPktSize;
   int avgRxPktSize;
-  int avgEospDurationMicros;
+  int avgEospDurationUs;
   int eospCount;
 }

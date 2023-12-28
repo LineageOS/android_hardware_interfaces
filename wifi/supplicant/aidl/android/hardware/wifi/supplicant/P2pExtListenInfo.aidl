@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,40 +14,26 @@
  * limitations under the License.
  */
 
-package android.hardware.wifi;
+package android.hardware.wifi.supplicant;
+
+import android.hardware.wifi.common.OuiKeyedData;
 
 /**
- * Target Wake Time (TWT) Session Stats
+ * Parameters used to configure the P2P Extended Listen Interval.
  */
 @VintfStability
-parcelable TwtSessionStats {
+parcelable P2pExtListenInfo {
     /**
-     * Average number of Tx packets in each wake duration.
+     * Period in milliseconds.
      */
-    int avgTxPktCount;
-
+    int periodMs;
     /**
-     * Average number of Rx packets in each wake duration.
+     * Interval in milliseconds.
      */
-    int avgRxPktCount;
-
+    int intervalMs;
     /**
-     * Average bytes per Tx packets in each wake duration.
+     * Optional vendor-specific parameters. Null value indicates
+     * that no vendor data is provided.
      */
-    int avgTxPktSize;
-
-    /**
-     * Average bytes per Rx packets in each wake duration.
-     */
-    int avgRxPktSize;
-
-    /**
-     * Average End of Service period in microseconds.
-     */
-    int avgEospDurationUs;
-
-    /**
-     * Count of early terminations.
-     */
-    int eospCount;
+    @nullable OuiKeyedData[] vendorData;
 }
