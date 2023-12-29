@@ -47,6 +47,7 @@ aidl_interface {
         },
         ndk: {
             gen_trace: true,
+            min_sdk_version: "34",
         },
         cpp: {
             enabled: false,
