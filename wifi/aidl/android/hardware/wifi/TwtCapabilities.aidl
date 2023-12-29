@@ -18,6 +18,14 @@ package android.hardware.wifi;
 
 /**
  * Target Wake Time (TWT) Capabilities supported.
+ *
+ * TWT allows Wi-Fi stations to manage activity in a network by scheduling to operate at different
+ * times. This minimizes the contention and reduces the required amount of time that a station
+ * utilizing a power management mode needs to be awake.
+ *
+ * IEEE 802.11ax standard defines two modes of TWT operation:
+ *  - Individual TWT (default mode of operation if TWT requester is supported)
+ *  - Broadcast TWT
  */
 @VintfStability
 parcelable TwtCapabilities {

@@ -43,8 +43,5 @@ aidl_interface {
         cpp: {
             enabled: false,
         },
-        ndk: {
-            min_sdk_version: "34",
-        },
     },
 }
