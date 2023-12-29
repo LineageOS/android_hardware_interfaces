@@ -36,6 +36,7 @@ cc_defaults {
         "-Werror",
         "-Wthread-safety",
     ],
+    test_config_template: "VtsHalAudioTargetTestTemplate.xml",
     test_suites: [
         "general-tests",
         "vts",
@@ -71,7 +72,6 @@ cc_test {
         "VtsHalAudioCoreConfigTargetTest.cpp",
         "VtsHalAudioCoreModuleTargetTest.cpp",
     ],
-    test_config: "VtsHalAudioCoreTargetTest.xml",
 }
 
 cc_test {
