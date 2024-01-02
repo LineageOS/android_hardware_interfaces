@@ -233,14 +233,22 @@ oneway interface IRadioNetworkIndication {
      * Indicates that a new ciphering or integrity algorithm was used for a particular voice,
      * signaling, or data connection attempt for a given PLMN and/or access network. Due to
      * power concerns, once a connection type has been reported on, follow-up reports about that
-     * connection type are only generated if there is any change to the previously reported
+     * connection type are only generated if there is any change to the most-recently reported
      * encryption or integrity, or if the value of SecurityAlgorithmUpdate#isUnprotectedEmergency
-     * changes. Thus the AP is only to be notified when there is new information. List is reset upon
-     * rebooting thus info about initial connections is always passed to the AP after a reboot.
-     * List is also reset if the SIM is changed or if there has been a change in the access network.
+     * changes. Thus the AP is only to be notified when there is new information. A change only in
+     * cell ID should not trigger an update, as the design is intended to be agnostic to dual
+     * connectivity ("secondary serving cells").
      *
-     * Note: a change only in cell ID should not trigger an update, as the design is intended to
-     * be agnostic to dual connectivity ("secondary serving cells").
+     * Sample scenario to further clarify "most-recently reported":
+     *
+     * 1. Modem reports user is connected to a null-ciphered 3G network.
+     * 2. User then moves and connects to a well-ciphered 5G network, and modem reports this.
+     * 3. User returns to original location and reconnects to the null-ciphered 3G network. Modem
+     *    should report this as it's different than the most-recently reported data from step (2).
+     *
+     * List is reset upon rebooting thus info about initial connections is always passed to the AP
+     * after a reboot. List is also reset if the SIM is changed or if there has been a change in
+     * the access network.
      *
      * @param type Type of radio indication
      * @param securityAlgorithmUpdate SecurityAlgorithmUpdate encapsulates details of security
