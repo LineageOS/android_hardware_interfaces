@@ -37,7 +37,7 @@ class IpStreamer {
 
   private:
     int mSockfd = -1;
-    FILE* mFp;
+    FILE* mFp = nullptr;
     bool mIsIpV4 = true;                                         // By default, set to IPV4
     int mPort = 12345;                                           // default port
     int mBufferSize = 188;                                       // bytes
