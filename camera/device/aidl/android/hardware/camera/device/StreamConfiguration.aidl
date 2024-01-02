@@ -59,6 +59,14 @@ parcelable StreamConfiguration {
      * pipeline updates. The field is optional, clients can choose to ignore it and avoid
      * including any initial settings. If parameters are present, then hal must examine
      * their values and configure the internal camera pipeline accordingly.
+     *
+     * A null pointer is equivalent to a valid CameraMetadata object with zero entries.
+     *
+     * For a StreamConfiguration passed to ICameraDevice.isStreamCombinationWithSettingsSupported
+     * or ICameraDevice.getSessionCharacteristics, this variable may also contain keys
+     * that are not session parameters, but are used to specify certain features for a
+     * session. For example, CONTROL_VIDEO_STABILIZATION_MODE may be included even if it's not a
+     * session parameter.
      */
     CameraMetadata sessionParams;
 
