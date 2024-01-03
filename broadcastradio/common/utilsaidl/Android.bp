@@ -26,7 +26,7 @@ package {
 cc_library_static {
     name: "android.hardware.broadcastradio@common-utils-aidl-lib",
     defaults: [
-        "VtsBroadcastRadioDefaults",
+        "BroadcastRadioUtilsDefaults",
     ],
     shared_libs: [
         "android.hardware.broadcastradio-V1-ndk",
@@ -36,7 +36,7 @@ cc_library_static {
 cc_library_static {
     name: "android.hardware.broadcastradio@common-utils-aidl-lib-V2",
     defaults: [
-        "VtsBroadcastRadioDefaults",
+        "BroadcastRadioUtilsDefaults",
     ],
     srcs: [
         "src/UtilsV2.cpp",
@@ -46,8 +46,23 @@ cc_library_static {
     ],
 }
 
+cc_test {
+    name: "broadcastradio_utils_aidl_test",
+    defaults: [
+        "BroadcastRadioUtilsDefaults",
+    ],
+    srcs: [
+        "test/*.cpp",
+    ],
+    static_libs: [
+        "android.hardware.broadcastradio@common-utils-aidl-lib-V2",
+        "android.hardware.broadcastradio-V2-ndk",
+    ],
+    test_suites: ["general-tests"],
+}
+
 cc_defaults {
-    name: "VtsBroadcastRadioDefaults",
+    name: "BroadcastRadioUtilsDefaults",
     vendor_available: true,
     relative_install_path: "hw",
     cflags: [
