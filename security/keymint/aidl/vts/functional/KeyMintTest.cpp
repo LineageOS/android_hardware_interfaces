@@ -8796,10 +8796,11 @@ INSTANTIATE_KEYMINT_AIDL_TEST(VsrRequirementTest);
 
 }  // namespace aidl::android::hardware::security::keymint::test
 
+using aidl::android::hardware::security::keymint::test::KeyMintAidlTestBase;
+
 int main(int argc, char** argv) {
     std::cout << "Testing ";
-    auto halInstances =
-            aidl::android::hardware::security::keymint::test::KeyMintAidlTestBase::build_params();
+    auto halInstances = KeyMintAidlTestBase::build_params();
     std::cout << "HAL instances:\n";
     for (auto& entry : halInstances) {
         std::cout << "    " << entry << '\n';
@@ -8809,12 +8810,10 @@ int main(int argc, char** argv) {
     for (int i = 1; i < argc; ++i) {
         if (argv[i][0] == '-') {
             if (std::string(argv[i]) == "--arm_deleteAllKeys") {
-                aidl::android::hardware::security::keymint::test::KeyMintAidlTestBase::
-                        arm_deleteAllKeys = true;
+                KeyMintAidlTestBase::arm_deleteAllKeys = true;
             }
             if (std::string(argv[i]) == "--dump_attestations") {
-                aidl::android::hardware::security::keymint::test::KeyMintAidlTestBase::
-                        dump_Attestations = true;
+                KeyMintAidlTestBase::dump_Attestations = true;
             } else {
                 std::cout << "NOT dumping attestations" << std::endl;
             }
@@ -8829,8 +8828,7 @@ int main(int argc, char** argv) {
                     std::cerr << "Missing argument for --keyblob_dir\n";
                     return 1;
                 }
-                aidl::android::hardware::security::keymint::test::KeyMintAidlTestBase::keyblob_dir =
-                        std::string(argv[i + 1]);
+                KeyMintAidlTestBase::keyblob_dir = std::string(argv[i + 1]);
                 ++i;
             }
             if (std::string(argv[i]) == "--expect_upgrade") {
@@ -8839,11 +8837,17 @@ int main(int argc, char** argv) {
                     return 1;
                 }
                 std::string arg = argv[i + 1];
-                aidl::android::hardware::security::keymint::test::KeyMintAidlTestBase::
-                        expect_upgrade =
-                                arg == "yes"
-                                        ? true
-                                        : (arg == "no" ? false : std::optional<bool>(std::nullopt));
+                KeyMintAidlTestBase::expect_upgrade =
+                        arg == "yes" ? true
+                                     : (arg == "no" ? false : std::optional<bool>(std::nullopt));
+                if (KeyMintAidlTestBase::expect_upgrade.has_value()) {
+                    std::cout << "expect_upgrade = "
+                              << (KeyMintAidlTestBase::expect_upgrade.value() ? "true" : "false")
+                              << std::endl;
+                } else {
+                    std::cerr << "Error! Option --expect_upgrade " << arg << " unrecognized"
+                              << std::endl;
+                }
                 ++i;
             }
         }
