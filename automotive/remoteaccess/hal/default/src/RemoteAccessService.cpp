@@ -331,6 +331,24 @@ ScopedAStatus RemoteAccessService::scheduleTask(const ScheduleInfo& scheduleInfo
     ClientContext context;
     ScheduleTaskRequest request = {};
     ScheduleTaskResponse response = {};
+
+    if (scheduleInfo.count < 0) {
+        return ScopedAStatus::fromExceptionCodeWithMessage(EX_ILLEGAL_ARGUMENT,
+                                                           "count must be >= 0");
+    }
+    if (scheduleInfo.startTimeInEpochSeconds < 0) {
+        return ScopedAStatus::fromExceptionCodeWithMessage(EX_ILLEGAL_ARGUMENT,
+                                                           "startTimeInEpochSeconds must be >= 0");
+    }
+    if (scheduleInfo.periodicInSeconds < 0) {
+        return ScopedAStatus::fromExceptionCodeWithMessage(EX_ILLEGAL_ARGUMENT,
+                                                           "periodicInSeconds must be >= 0");
+    }
+    if (scheduleInfo.taskData.size() > scheduleInfo.MAX_TASK_DATA_SIZE_IN_BYTES) {
+        return ScopedAStatus::fromExceptionCodeWithMessage(EX_ILLEGAL_ARGUMENT,
+                                                           "task data too big");
+    }
+
     request.mutable_scheduleinfo()->set_clientid(scheduleInfo.clientId);
     request.mutable_scheduleinfo()->set_scheduleid(scheduleInfo.scheduleId);
     request.mutable_scheduleinfo()->set_data(scheduleInfo.taskData.data(),
@@ -348,7 +366,8 @@ ScopedAStatus RemoteAccessService::scheduleTask(const ScheduleInfo& scheduleInfo
         case ErrorCode::OK:
             return ScopedAStatus::ok();
         case ErrorCode::INVALID_ARG:
-            return ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+            return ScopedAStatus::fromExceptionCodeWithMessage(
+                    EX_ILLEGAL_ARGUMENT, "received invalid_arg from grpc server");
         default:
             // Should not happen.
             return ScopedAStatus::fromServiceSpecificErrorWithMessage(

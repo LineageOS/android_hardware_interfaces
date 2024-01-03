@@ -473,7 +473,71 @@ TEST_F(RemoteAccessServiceUnitTest, TestScheduleTask) {
     EXPECT_EQ(grpcRequest.scheduleinfo().periodicinseconds(), kTestPeriodicInSeconds);
 }
 
-TEST_F(RemoteAccessServiceUnitTest, TestScheduleTask_InvalidArg) {
+TEST_F(RemoteAccessServiceUnitTest, TestScheduleTask_InvalidCount) {
+    ScheduleInfo scheduleInfo = {
+            .clientId = kTestClientId,
+            .scheduleId = kTestScheduleId,
+            .taskData = kTestData,
+            .count = -1,
+            .startTimeInEpochSeconds = kTestStartTimeInEpochSeconds,
+            .periodicInSeconds = kTestPeriodicInSeconds,
+    };
+
+    ScopedAStatus status = getService()->scheduleTask(scheduleInfo);
+
+    ASSERT_FALSE(status.isOk());
+    ASSERT_EQ(status.getExceptionCode(), EX_ILLEGAL_ARGUMENT);
+}
+
+TEST_F(RemoteAccessServiceUnitTest, TestScheduleTask_InvalidStartTimeInEpochSeconds) {
+    ScheduleInfo scheduleInfo = {
+            .clientId = kTestClientId,
+            .scheduleId = kTestScheduleId,
+            .taskData = kTestData,
+            .count = kTestCount,
+            .startTimeInEpochSeconds = -1,
+            .periodicInSeconds = kTestPeriodicInSeconds,
+    };
+
+    ScopedAStatus status = getService()->scheduleTask(scheduleInfo);
+
+    ASSERT_FALSE(status.isOk());
+    ASSERT_EQ(status.getExceptionCode(), EX_ILLEGAL_ARGUMENT);
+}
+
+TEST_F(RemoteAccessServiceUnitTest, TestScheduleTask_InvalidPeriodicInSeconds) {
+    ScheduleInfo scheduleInfo = {
+            .clientId = kTestClientId,
+            .scheduleId = kTestScheduleId,
+            .taskData = kTestData,
+            .count = kTestCount,
+            .startTimeInEpochSeconds = kTestStartTimeInEpochSeconds,
+            .periodicInSeconds = -1,
+    };
+
+    ScopedAStatus status = getService()->scheduleTask(scheduleInfo);
+
+    ASSERT_FALSE(status.isOk());
+    ASSERT_EQ(status.getExceptionCode(), EX_ILLEGAL_ARGUMENT);
+}
+
+TEST_F(RemoteAccessServiceUnitTest, TestScheduleTask_TaskDataTooLarge) {
+    ScheduleInfo scheduleInfo = {
+            .clientId = kTestClientId,
+            .scheduleId = kTestScheduleId,
+            .taskData = std::vector<uint8_t>(ScheduleInfo::MAX_TASK_DATA_SIZE_IN_BYTES + 1),
+            .count = kTestCount,
+            .startTimeInEpochSeconds = kTestStartTimeInEpochSeconds,
+            .periodicInSeconds = kTestPeriodicInSeconds,
+    };
+
+    ScopedAStatus status = getService()->scheduleTask(scheduleInfo);
+
+    ASSERT_FALSE(status.isOk());
+    ASSERT_EQ(status.getExceptionCode(), EX_ILLEGAL_ARGUMENT);
+}
+
+TEST_F(RemoteAccessServiceUnitTest, TestScheduleTask_InvalidArgFromGrpcServer) {
     EXPECT_CALL(*getGrpcWakeupClientStub(), ScheduleTask)
             .WillOnce([]([[maybe_unused]] ClientContext* context,
                          [[maybe_unused]] const ScheduleTaskRequest& request,
