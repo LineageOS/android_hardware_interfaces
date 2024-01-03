@@ -148,11 +148,15 @@ parcelable RttResult {
     /**
      * Multiple transmissions of HE-LTF symbols in an HE (I2R) Ranging NDP. An HE-LTF repetition
      * value of 1 indicates no repetitions.
+     *
+     * Note: A required field for IEEE 802.11az result.
      */
     byte i2rTxLtfRepetitionCount;
     /**
      * Multiple transmissions of HE-LTF symbols in an HE (R2I) Ranging NDP. An HE-LTF repetition
      * value of 1 indicates no repetitions.
+     *
+     * Note: A required field for IEEE 802.11az result.
      */
     byte r2iTxLtfRepetitionCount;
     /**
@@ -168,6 +172,8 @@ parcelable RttResult {
      * |RttResult.timestamp|.
      *
      * Reference: IEEE Std 802.11az-2022 spec, section 9.4.2.298 Ranging Parameters element.
+     *
+     * Note: A required field for IEEE 802.11az result.
      */
     long ntbMinMeasurementTime;
     /**
@@ -183,6 +189,22 @@ parcelable RttResult {
      * non-TB ranging negotiation.
      *
      * Reference: IEEE Std 802.11az-2022 spec, section 9.4.2.298 Ranging Parameters element.
+     *
+     * Note: A required field for IEEE 802.11az result.
      */
     long ntbMaxMeasurementTime;
+    /**
+     * Number of transmit space-time streams used. Value is in the range 1 to 8.
+     *
+     * Note: Maximum limit is ultimately defined by the number of antennas that can be supported.
+     * A required field for IEEE 802.11az result.
+     */
+    byte numTxSpatialStreams;
+    /**
+     * Number of receive space-time streams used. Value is in the range 1 to 8.
+     *
+     * Note: Maximum limit is ultimately defined by the number of antennas that can be supported.
+     * A required field for IEEE 802.11az result.
+     */
+    byte numRxSpatialStreams;
 }

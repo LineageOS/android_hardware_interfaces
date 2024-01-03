@@ -2995,6 +2995,8 @@ bool convertLegacyVectorOfRttResultToAidl(
         aidl_result.r2iTxLtfRepetitionCount = 0;
         aidl_result.ntbMinMeasurementTime = 0;
         aidl_result.ntbMaxMeasurementTime = 0;
+        aidl_result.numTxSpatialStreams = 0;
+        aidl_result.numRxSpatialStreams = 0;
         aidl_results->push_back(aidl_result);
     }
     return true;
@@ -3019,6 +3021,8 @@ bool convertLegacyVectorOfRttResultV2ToAidl(
         aidl_result.r2iTxLtfRepetitionCount = 0;
         aidl_result.ntbMinMeasurementTime = 0;
         aidl_result.ntbMaxMeasurementTime = 0;
+        aidl_result.numTxSpatialStreams = 0;
+        aidl_result.numRxSpatialStreams = 0;
         aidl_results->push_back(aidl_result);
     }
     return true;
@@ -3044,6 +3048,8 @@ bool convertLegacyVectorOfRttResultV3ToAidl(
         aidl_result.r2iTxLtfRepetitionCount = legacy_result->r2i_tx_ltf_repetition_count;
         aidl_result.ntbMinMeasurementTime = legacy_result->ntb_min_measurement_time;
         aidl_result.ntbMaxMeasurementTime = legacy_result->ntb_max_measurement_time;
+        aidl_result.numTxSpatialStreams = legacy_result->num_tx_sts;
+        aidl_result.numRxSpatialStreams = legacy_result->num_rx_sts;
         aidl_results->push_back(aidl_result);
     }
     return true;
