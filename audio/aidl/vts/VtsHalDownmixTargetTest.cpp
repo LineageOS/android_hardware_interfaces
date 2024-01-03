@@ -32,6 +32,9 @@ using aidl::android::hardware::audio::effect::Parameter;
 using android::audio_utils::channels::ChannelMix;
 using android::hardware::audio::common::testing::detail::TestExecutionTracer;
 
+// minimal HAL interface version to run downmix data path test
+constexpr int32_t kMinDataTestHalVersion = 2;
+
 // Testing for enum values
 static const std::vector<Downmix::Type> kTypeValues = {ndk::enum_range<Downmix::Type>().begin(),
                                                        ndk::enum_range<Downmix::Type>().end()};
@@ -228,6 +231,10 @@ class DownmixFoldDataTest : public ::testing::TestWithParam<DownmixDataTestParam
 
     void SetUp() override {
         SetUpDownmix(mInputChannelLayout);
+        if (int32_t version;
+            mEffect->getInterfaceVersion(&version).isOk() && version < kMinDataTestHalVersion) {
+            GTEST_SKIP() << "Skipping the data test for version: " << version << "\n";
+        }
         if (!isLayoutValid(mInputChannelLayout)) {
             GTEST_SKIP() << "Layout not supported \n";
         }
@@ -375,6 +382,10 @@ class DownmixStripDataTest : public ::testing::TestWithParam<DownmixStripDataTes
 
     void SetUp() override {
         SetUpDownmix(mInputChannelLayout);
+        if (int32_t version;
+            mEffect->getInterfaceVersion(&version).isOk() && version < kMinDataTestHalVersion) {
+            GTEST_SKIP() << "Skipping the data test for version: " << version << "\n";
+        }
         if (!isLayoutValid(mInputChannelLayout)) {
             GTEST_SKIP() << "Layout not supported \n";
         }
@@ -418,7 +429,7 @@ INSTANTIATE_TEST_SUITE_P(
         [](const testing::TestParamInfo<DownmixParamTest::ParamType>& info) {
             auto descriptor = std::get<PARAM_INSTANCE_NAME>(info.param).second;
             std::string type = std::to_string(static_cast<int>(std::get<PARAM_TYPE>(info.param)));
-            std::string name = getPrefix(descriptor) + "_type" + type;
+            std::string name = getPrefix(descriptor) + "_type_" + type;
             std::replace_if(
                     name.begin(), name.end(), [](const char c) { return !std::isalnum(c); }, '_');
             return name;
@@ -434,7 +445,7 @@ INSTANTIATE_TEST_SUITE_P(
         [](const testing::TestParamInfo<DownmixFoldDataTest::ParamType>& info) {
             auto descriptor = std::get<FOLD_INSTANCE_NAME>(info.param).second;
             std::string layout = std::to_string(std::get<FOLD_INPUT_LAYOUT>(info.param));
-            std::string name = getPrefix(descriptor) + "_fold" + "_layout" + layout;
+            std::string name = getPrefix(descriptor) + "_fold_layout_" + layout;
             std::replace_if(
                     name.begin(), name.end(), [](const char c) { return !std::isalnum(c); }, '_');
             return name;
@@ -451,7 +462,7 @@ INSTANTIATE_TEST_SUITE_P(
             auto descriptor = std::get<STRIP_INSTANCE_NAME>(info.param).second;
             std::string layout =
                     std::to_string(static_cast<int>(std::get<STRIP_INPUT_LAYOUT>(info.param)));
-            std::string name = getPrefix(descriptor) + "_strip" + "_layout" + layout;
+            std::string name = getPrefix(descriptor) + "_strip_layout_" + layout;
             std::replace_if(
                     name.begin(), name.end(), [](const char c) { return !std::isalnum(c); }, '_');
             return name;
