@@ -21,6 +21,7 @@ import android.hardware.wifi.RttStatus;
 import android.hardware.wifi.RttType;
 import android.hardware.wifi.WifiInformationElement;
 import android.hardware.wifi.WifiRateInfo;
+import android.hardware.wifi.common.OuiKeyedData;
 
 /**
  * RTT results.
@@ -207,4 +208,9 @@ parcelable RttResult {
      * A required field for IEEE 802.11az result.
      */
     byte numRxSpatialStreams;
+    /**
+     * Optional vendor-specific parameters. Null value indicates
+     * that no vendor data is provided.
+     */
+    @nullable OuiKeyedData[] vendorData;
 }

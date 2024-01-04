@@ -21,6 +21,7 @@ import android.hardware.wifi.RttPeerType;
 import android.hardware.wifi.RttPreamble;
 import android.hardware.wifi.RttType;
 import android.hardware.wifi.WifiChannelInfo;
+import android.hardware.wifi.common.OuiKeyedData;
 
 /**
  * RTT configuration.
@@ -134,4 +135,9 @@ parcelable RttConfig {
      * Reference: IEEE Std 802.11az-2022 spec, section 9.4.2.298 Ranging Parameters element.
      */
     long ntbMaxMeasurementTime;
+    /**
+     * Optional vendor-specific parameters. Null value indicates
+     * that no vendor data is provided.
+     */
+    @nullable OuiKeyedData[] vendorData;
 }

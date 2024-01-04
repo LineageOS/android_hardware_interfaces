@@ -46,4 +46,5 @@ parcelable RttCapabilities {
   int azBwSupport;
   boolean ntbInitiatorSupported;
   boolean ntbResponderSupported;
+  @nullable android.hardware.wifi.common.OuiKeyedData[] vendorData;
 }
