@@ -258,7 +258,8 @@ class KeyBlobUpgradeTest : public KeyMintAidlTestBase {
 
                 if (upgraded_keyblob.empty()) {
                     std::cerr << "Keyblob '" << name << "' did not require upgrade\n";
-                    EXPECT_TRUE(!expectUpgrade) << "Keyblob '" << name << "' unexpectedly upgraded";
+                    EXPECT_FALSE(expectUpgrade)
+                            << "Keyblob '" << name << "' unexpectedly left as-is";
                 } else {
                     // Ensure the old format keyblob is deleted (so any secure deletion data is
                     // cleaned up).
@@ -275,8 +276,7 @@ class KeyBlobUpgradeTest : public KeyMintAidlTestBase {
                     save_keyblob(subdir, name, upgraded_keyblob, key_characteristics);
                     // Cert file is left unchanged.
                     std::cerr << "Keyblob '" << name << "' upgraded\n";
-                    EXPECT_TRUE(expectUpgrade)
-                            << "Keyblob '" << name << "' unexpectedly left as-is";
+                    EXPECT_TRUE(expectUpgrade) << "Keyblob '" << name << "' unexpectedly upgraded";
                 }
             }
         }
