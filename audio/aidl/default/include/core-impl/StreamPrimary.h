@@ -36,7 +36,7 @@ class StreamPrimary : public StreamAlsa {
     std::vector<alsa::DeviceProfile> getDeviceProfiles() override;
 
     const bool mIsAsynchronous;
-    long mStartTimeNs = 0;
+    int64_t mStartTimeNs = 0;
     long mFramesSinceStart = 0;
     bool mSkipNextTransfer = false;
 };

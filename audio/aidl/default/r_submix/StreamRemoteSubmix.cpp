@@ -138,7 +138,7 @@ void StreamRemoteSubmix::shutdown() {
                                     : outWrite(buffer, frameCount, actualFrameCount));
     const long bufferDurationUs =
             (*actualFrameCount) * MICROS_PER_SECOND / mContext.getSampleRate();
-    const long totalDurationUs = (::android::uptimeNanos() - mStartTimeNs) / NANOS_PER_MICROSECOND;
+    const auto totalDurationUs = (::android::uptimeNanos() - mStartTimeNs) / NANOS_PER_MICROSECOND;
     mFramesSinceStart += *actualFrameCount;
     const long totalOffsetUs =
             mFramesSinceStart * MICROS_PER_SECOND / mContext.getSampleRate() - totalDurationUs;
@@ -274,8 +274,8 @@ size_t StreamRemoteSubmix::getStreamPipeSizeInFrames() {
     char* buff = (char*)buffer;
     size_t actuallyRead = 0;
     long remainingFrames = frameCount;
-    const long deadlineTimeNs = ::android::uptimeNanos() +
-                                getDelayInUsForFrameCount(frameCount) * NANOS_PER_MICROSECOND;
+    const int64_t deadlineTimeNs = ::android::uptimeNanos() +
+                                   getDelayInUsForFrameCount(frameCount) * NANOS_PER_MICROSECOND;
     while (remainingFrames > 0) {
         ssize_t framesRead = source->read(buff, remainingFrames);
         LOG(VERBOSE) << __func__ << ": frames read " << framesRead;
