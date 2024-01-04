@@ -45,7 +45,7 @@ interface IBluetoothAudioProvider {
   void setCodecPriority(in android.hardware.bluetooth.audio.CodecId codecId, int priority);
   List<android.hardware.bluetooth.audio.IBluetoothAudioProvider.LeAudioAseConfigurationSetting> getLeAudioAseConfiguration(in @nullable List<android.hardware.bluetooth.audio.IBluetoothAudioProvider.LeAudioDeviceCapabilities> remoteSinkAudioCapabilities, in @nullable List<android.hardware.bluetooth.audio.IBluetoothAudioProvider.LeAudioDeviceCapabilities> remoteSourceAudioCapabilities, in List<android.hardware.bluetooth.audio.IBluetoothAudioProvider.LeAudioConfigurationRequirement> requirements);
   android.hardware.bluetooth.audio.IBluetoothAudioProvider.LeAudioAseQosConfigurationPair getLeAudioAseQosConfiguration(in android.hardware.bluetooth.audio.IBluetoothAudioProvider.LeAudioAseQosConfigurationRequirement qosRequirement);
-  android.hardware.bluetooth.audio.IBluetoothAudioProvider.LeAudioDataPathConfigurationPair getLeAudioAseDatapathConfiguration(in android.hardware.bluetooth.audio.AudioContext context, in android.hardware.bluetooth.audio.LeAudioConfiguration.StreamMap[] streamMap);
+  android.hardware.bluetooth.audio.IBluetoothAudioProvider.LeAudioDataPathConfigurationPair getLeAudioAseDatapathConfiguration(in @nullable android.hardware.bluetooth.audio.IBluetoothAudioProvider.StreamConfig sinkConfig, in @nullable android.hardware.bluetooth.audio.IBluetoothAudioProvider.StreamConfig sourceConfig);
   void onSinkAseMetadataChanged(in android.hardware.bluetooth.audio.IBluetoothAudioProvider.AseState state, int cigId, int cisId, in @nullable android.hardware.bluetooth.audio.MetadataLtv[] metadata);
   void onSourceAseMetadataChanged(in android.hardware.bluetooth.audio.IBluetoothAudioProvider.AseState state, int cigId, int cisId, in @nullable android.hardware.bluetooth.audio.MetadataLtv[] metadata);
   android.hardware.bluetooth.audio.IBluetoothAudioProvider.LeAudioBroadcastConfigurationSetting getLeAudioBroadcastConfiguration(in @nullable List<android.hardware.bluetooth.audio.IBluetoothAudioProvider.LeAudioDeviceCapabilities> remoteSinkAudioCapabilities, in android.hardware.bluetooth.audio.IBluetoothAudioProvider.LeAudioBroadcastConfigurationRequirement requirement);
@@ -145,6 +145,10 @@ interface IBluetoothAudioProvider {
   parcelable LeAudioDataPathConfigurationPair {
     @nullable android.hardware.bluetooth.audio.IBluetoothAudioProvider.LeAudioDataPathConfiguration inputConfig;
     @nullable android.hardware.bluetooth.audio.IBluetoothAudioProvider.LeAudioDataPathConfiguration outputConfig;
+  }
+  parcelable StreamConfig {
+    android.hardware.bluetooth.audio.AudioContext context;
+    android.hardware.bluetooth.audio.LeAudioConfiguration.StreamMap[] streamMap;
   }
   @Backing(type="byte") @VintfStability
   enum AseState {
