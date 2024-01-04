@@ -63,4 +63,6 @@ parcelable RttResult {
   byte r2iTxLtfRepetitionCount;
   long ntbMinMeasurementTime;
   long ntbMaxMeasurementTime;
+  byte numTxSpatialStreams;
+  byte numRxSpatialStreams;
 }
