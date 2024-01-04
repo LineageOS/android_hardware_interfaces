@@ -41,8 +41,9 @@ ndk::ScopedAStatus RadioConfigResponse::getPhoneCapabilityResponse(
 }
 
 ndk::ScopedAStatus RadioConfigResponse::getSimultaneousCallingSupportResponse(
-        const RadioResponseInfo& info, const std::vector<int32_t>& /* enabledLogicalSlots */) {
+        const RadioResponseInfo& info, const std::vector<int32_t>& enabledLogicalSlots) {
     rspInfo = info;
+    currentEnabledLogicalSlots = enabledLogicalSlots;
     parent_config.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }

@@ -150,10 +150,17 @@ TEST_P(RadioConfigTest, getSimultaneousCallingSupport) {
     ALOGI("getSimultaneousCallingSupport, rspInfo.error = %s\n",
           toString(radioRsp_config->rspInfo.error).c_str());
 
+    // REQUEST_NOT_SUPPORTED is omitted here because users of the V3 HAL should implement this
+    // method and return at least an empty array
     ASSERT_TRUE(CheckAnyOfErrors(
             radioRsp_config->rspInfo.error,
             {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::INTERNAL_ERR,
-            RadioError::MODEM_ERR, RadioError::REQUEST_NOT_SUPPORTED}));
+            RadioError::MODEM_ERR}));
+
+    if (radioRsp_config->rspInfo.error == RadioError ::NONE) {
+        // The size of enabledLogicalSLots should be 0 or a positive number:
+        EXPECT_GE(radioRsp_config->currentEnabledLogicalSlots.size(), 0);
+    }
 }
 
 /*
