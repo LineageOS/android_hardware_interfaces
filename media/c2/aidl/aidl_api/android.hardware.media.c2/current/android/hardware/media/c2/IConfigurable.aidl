@@ -37,12 +37,23 @@ interface IConfigurable {
   android.hardware.media.c2.IConfigurable.ConfigResult config(in android.hardware.media.c2.Params inParams, in boolean mayBlock);
   int getId();
   String getName();
-  android.hardware.media.c2.Params query(in int[] indices, in boolean mayBlock);
+  android.hardware.media.c2.IConfigurable.QueryResult query(in int[] indices, in boolean mayBlock);
   android.hardware.media.c2.ParamDescriptor[] querySupportedParams(in int start, in int count);
-  android.hardware.media.c2.FieldSupportedValuesQueryResult[] querySupportedValues(in android.hardware.media.c2.FieldSupportedValuesQuery[] inFields, in boolean mayBlock);
+  android.hardware.media.c2.IConfigurable.QuerySupportedValuesResult querySupportedValues(in android.hardware.media.c2.FieldSupportedValuesQuery[] inFields, in boolean mayBlock);
   @VintfStability
   parcelable ConfigResult {
     android.hardware.media.c2.Params params;
     android.hardware.media.c2.SettingResult[] failures;
+    android.hardware.media.c2.Status status;
+  }
+  @VintfStability
+  parcelable QueryResult {
+    android.hardware.media.c2.Params params;
+    android.hardware.media.c2.Status status;
+  }
+  @VintfStability
+  parcelable QuerySupportedValuesResult {
+    android.hardware.media.c2.FieldSupportedValuesQueryResult[] values;
+    android.hardware.media.c2.Status status;
   }
 }
