@@ -70,7 +70,7 @@ void FakeFaceEngine::enrollImpl(ISessionCallback* cb, const keymaster::HardwareA
                                 EnrollmentType /*enrollmentType*/,
                                 const std::vector<Feature>& /*features*/,
                                 const std::future<void>& cancel) {
-    BEGIN_OP(FaceHalProperties::operation_start_enroll_latency().value_or(0));
+    BEGIN_OP(getLatency(FaceHalProperties::operation_enroll_latency()));
 
     // Do proper HAT verification in the real implementation.
     if (hat.mac.empty()) {
@@ -158,7 +158,7 @@ void FakeFaceEngine::enrollImpl(ISessionCallback* cb, const keymaster::HardwareA
 
 void FakeFaceEngine::authenticateImpl(ISessionCallback* cb, int64_t /*operationId*/,
                                       const std::future<void>& cancel) {
-    BEGIN_OP(FaceHalProperties::operation_authenticate_latency().value_or(0));
+    BEGIN_OP(getLatency(FaceHalProperties::operation_authenticate_latency()));
 
     auto id = FaceHalProperties::enrollment_hit().value_or(0);
     auto enrolls = FaceHalProperties::enrollments();
@@ -291,7 +291,7 @@ std::pair<Error, int32_t> FakeFaceEngine::convertError(int32_t code) {
 }
 
 void FakeFaceEngine::detectInteractionImpl(ISessionCallback* cb, const std::future<void>& cancel) {
-    BEGIN_OP(FaceHalProperties::operation_detect_interaction_latency().value_or(0));
+    BEGIN_OP(getLatency(FaceHalProperties::operation_detect_interaction_latency()));
 
     if (FaceHalProperties::operation_detect_interaction_fails().value_or(false)) {
         LOG(ERROR) << "Fail: operation_detect_interaction_fails";
@@ -416,6 +416,35 @@ void FakeFaceEngine::resetLockoutImpl(ISessionCallback* cb,
     FaceHalProperties::lockout(false);
     mLockoutTracker.reset();
     cb->onLockoutCleared();
+}
+
+int32_t FakeFaceEngine::getRandomInRange(int32_t bound1, int32_t bound2) {
+    std::uniform_int_distribution<int32_t> dist(std::min(bound1, bound2), std::max(bound1, bound2));
+    return dist(mRandom);
+}
+
+int32_t FakeFaceEngine::getLatency(const std::vector<std::optional<std::int32_t>>& latencyIn) {
+    int32_t res = DEFAULT_LATENCY;
+
+    std::vector<int32_t> latency;
+    for (auto x : latencyIn)
+        if (x.has_value()) latency.push_back(*x);
+
+    switch (latency.size()) {
+        case 0:
+            break;
+        case 1:
+            res = latency[0];
+            break;
+        case 2:
+            res = getRandomInRange(latency[0], latency[1]);
+            break;
+        default:
+            LOG(ERROR) << "ERROR: unexpected input of size " << latency.size();
+            break;
+    }
+
+    return res;
 }
 
 }  // namespace aidl::android::hardware::biometrics::face

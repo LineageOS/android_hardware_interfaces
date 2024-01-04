@@ -22,6 +22,7 @@
 #include <android-base/logging.h>
 
 #include "FakeFaceEngine.h"
+#include "util/Util.h"
 
 using namespace ::android::face::virt;
 using namespace ::aidl::android::hardware::biometrics::face;
@@ -137,11 +138,15 @@ class FakeFaceEngineTest : public ::testing::Test {
     void SetUp() override {
         LOG(ERROR) << "JRM SETUP";
         mCallback = ndk::SharedRefBase::make<TestSessionCallback>();
+    }
+
+    void TearDown() override {
         FaceHalProperties::enrollments({});
         FaceHalProperties::challenge({});
         FaceHalProperties::features({});
         FaceHalProperties::authenticator_id({});
         FaceHalProperties::strength("");
+        FaceHalProperties::operation_detect_interaction_latency({});
     }
 
     FakeFaceEngine mEngine;
@@ -381,6 +386,28 @@ TEST_F(FakeFaceEngineTest, ResetLockoutWithAuth) {
     mEngine.authenticateImpl(mCallback.get(), 0 /* operationId*/, cancelFuture);
     ASSERT_EQ(33, mCallback->mLastAuthenticated);
     ASSERT_FALSE(mCallback->mAuthenticateFailed);
+}
+
+TEST_F(FakeFaceEngineTest, LatencyDefault) {
+    FaceHalProperties::operation_detect_interaction_latency({});
+    ASSERT_EQ(DEFAULT_LATENCY,
+              mEngine.getLatency(FaceHalProperties::operation_detect_interaction_latency()));
+}
+
+TEST_F(FakeFaceEngineTest, LatencyFixed) {
+    FaceHalProperties::operation_detect_interaction_latency({10});
+    ASSERT_EQ(10, mEngine.getLatency(FaceHalProperties::operation_detect_interaction_latency()));
+}
+
+TEST_F(FakeFaceEngineTest, LatencyRandom) {
+    FaceHalProperties::operation_detect_interaction_latency({1, 1000});
+    std::set<int32_t> latencySet;
+    for (int i = 0; i < 100; i++) {
+        auto x = mEngine.getLatency(FaceHalProperties::operation_detect_interaction_latency());
+        ASSERT_TRUE(x >= 1 && x <= 1000);
+        latencySet.insert(x);
+    }
+    ASSERT_TRUE(latencySet.size() > 95);  // unique values
 }
 
 }  // namespace aidl::android::hardware::biometrics::face
