@@ -21,14 +21,17 @@ import android.hardware.bluetooth.ranging.Nadm;
 import android.hardware.bluetooth.ranging.StepTonePct;
 
 /**
- * Raw ranging data of Channel Sounding from either Initator or Reflector
+ * Raw ranging data of Channel Sounding from either Initator or Reflector.
+ * See Channel Sounding CR_PR 3.1.10 and Channel Sounding HCI Updates CR_PR 3.1.23 for details.
+ *
+ * Specification: https://www.bluetooth.com/specifications/specs/channel-sounding-cr-pr/
  */
 @VintfStability
 parcelable ChannelSoundingSingleSideData {
     /**
      * PCT (complex value) measured from mode-2 or mode-3 steps in a CS procedure (in time order).
      */
-    @nullable List<StepTonePct> stepTonePcts;
+    @nullable StepTonePct[] stepTonePcts;
     /**
      * Packet Quality from mode-1 or mode-3 steps in a CS procedures (in time order).
      */
@@ -49,8 +52,8 @@ parcelable ChannelSoundingSingleSideData {
      * Packet_PCT1 or packet_PCT2 of mode-1 or mode-3, if sounding sequence is used and sounding
      * phase-based ranging is supported.
      */
-    @nullable List<ComplexNumber> packetPct1;
-    @nullable List<ComplexNumber> packetPct2;
+    @nullable ComplexNumber[] packetPct1;
+    @nullable ComplexNumber[] packetPct2;
     /**
      * Reference power level (-127 to 20) of the signal in the procedure, in dBm.
      */
