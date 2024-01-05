@@ -256,6 +256,8 @@ TEST_P(GraphicsComposerHidlTest, CreateVirtualDisplay_2_2) {
  * required client targets.
  */
 TEST_P(GraphicsComposerHidlTest, GetClientTargetSupport_2_2) {
+    ASSERT_NO_FATAL_FAILURE(
+            mComposerClient->setPowerMode_2_2(mPrimaryDisplay, IComposerClient::PowerMode::ON));
     std::vector<Config> configs = mComposerClient->getDisplayConfigs(mPrimaryDisplay);
     for (auto config : configs) {
         int32_t width = mComposerClient->getDisplayAttribute(mPrimaryDisplay, config,
