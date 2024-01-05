@@ -64,7 +64,7 @@ class StreamRemoteSubmix : public StreamCommonImpl {
     // 5ms between two read attempts when pipe is empty
     static constexpr int kReadAttemptSleepUs = 5000;
 
-    long mStartTimeNs = 0;
+    int64_t mStartTimeNs = 0;
     long mFramesSinceStart = 0;
     int mReadErrorCount = 0;
 };
