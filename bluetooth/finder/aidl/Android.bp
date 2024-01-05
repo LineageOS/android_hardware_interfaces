@@ -28,7 +28,11 @@ aidl_interface {
         },
         java: {
             enabled: true,
-            platform_apis: true,
+            sdk_version: "module_current",
+            min_sdk_version: "30",
+            apex_available: [
+                "com.android.tethering",
+            ],
         },
     },
 }
