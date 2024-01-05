@@ -41,6 +41,7 @@ interface IEffect {
   android.hardware.audio.effect.State getState();
   void setParameter(in android.hardware.audio.effect.Parameter param);
   android.hardware.audio.effect.Parameter getParameter(in android.hardware.audio.effect.Parameter.Id paramId);
+  android.hardware.audio.effect.IEffect.OpenEffectReturn reopen();
   @FixedSize @VintfStability
   parcelable Status {
     int status;

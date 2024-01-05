@@ -60,6 +60,16 @@ ndk::ScopedAStatus EffectImpl::open(const Parameter::Common& common,
     return ndk::ScopedAStatus::ok();
 }
 
+ndk::ScopedAStatus EffectImpl::reopen(OpenEffectReturn* ret) {
+    RETURN_IF(mState == State::INIT, EX_ILLEGAL_STATE, "alreadyClosed");
+
+    // TODO: b/302036943 add reopen implementation
+    auto context = getContext();
+    RETURN_IF(!context, EX_NULL_POINTER, "nullContext");
+    context->dupeFmq(ret);
+    return ndk::ScopedAStatus::ok();
+}
+
 ndk::ScopedAStatus EffectImpl::close() {
     RETURN_OK_IF(mState == State::INIT);
     RETURN_IF(mState == State::PROCESSING, EX_ILLEGAL_STATE, "closeAtProcessing");
