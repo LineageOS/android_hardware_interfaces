@@ -2506,6 +2506,40 @@ TEST_P(BluetoothAudioProviderLeAudioOutputHardwareAidl, GetQoSConfiguration) {
   // QoS Configurations should not be empty, as we searched for all contexts
   ASSERT_FALSE(QoSConfigurations.empty());
 }
+
+TEST_P(BluetoothAudioProviderLeAudioOutputHardwareAidl,
+       GetDataPathConfiguration) {
+  IBluetoothAudioProvider::StreamConfig sink_requirement;
+  IBluetoothAudioProvider::StreamConfig source_requirement;
+  std::vector<IBluetoothAudioProvider::LeAudioDataPathConfiguration>
+      DataPathConfigurations;
+  bool is_supported = false;
+
+  for (auto bitmask : all_context_bitmasks) {
+    sink_requirement.context = GetAudioContext(bitmask);
+    source_requirement.context = GetAudioContext(bitmask);
+    IBluetoothAudioProvider::LeAudioDataPathConfigurationPair result;
+    auto aidl_retval = audio_provider_->getLeAudioAseDatapathConfiguration(
+        sink_requirement, source_requirement, &result);
+    if (!aidl_retval.isOk()) {
+      // If not OK, then it could be not supported, as it is an optional feature
+      ASSERT_EQ(aidl_retval.getExceptionCode(), EX_UNSUPPORTED_OPERATION);
+    } else {
+      is_supported = true;
+      if (result.inputConfig.has_value())
+        DataPathConfigurations.push_back(result.inputConfig.value());
+      if (result.inputConfig.has_value())
+        DataPathConfigurations.push_back(result.inputConfig.value());
+    }
+  }
+
+  if (is_supported) {
+    // Datapath Configurations should not be empty, as we searched for all
+    // contexts
+    ASSERT_FALSE(DataPathConfigurations.empty());
+  }
+}
+
 /**
  * Test whether each provider of type
  * SessionType::LE_AUDIO_HARDWARE_OFFLOAD_ENCODING_DATAPATH can be started and
