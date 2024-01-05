@@ -428,7 +428,7 @@ std::vector<CodecInfo> BluetoothAudioCodecs::GetLeAudioOffloadCodecInfo(
   if (kDefaultOffloadLeAudioCodecInfoMap.empty()) {
     auto le_audio_offload_setting =
         BluetoothLeAudioCodecsProvider::ParseFromLeAudioOffloadSettingFile();
-    auto kDefaultOffloadLeAudioCodecInfoMap =
+    kDefaultOffloadLeAudioCodecInfoMap =
         BluetoothLeAudioCodecsProvider::GetLeAudioCodecInfo(
             le_audio_offload_setting);
   }
