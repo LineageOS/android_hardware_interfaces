@@ -21,7 +21,7 @@ import android.hardware.bluetooth.finder.Eid;
 @VintfStability
 interface IBluetoothFinder {
     /**
-     * API to set the EIDs to the Bluetooth Controller
+     * API to set Find My Device network EIDs to the Bluetooth Controller
      *
      * @param eids array of 20 bytes EID to the Bluetooth
      * controller
