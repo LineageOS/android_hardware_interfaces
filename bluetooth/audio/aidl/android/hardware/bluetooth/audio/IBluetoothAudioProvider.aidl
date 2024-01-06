@@ -519,14 +519,37 @@ interface IBluetoothAudioProvider {
     }
 
     /**
+     * Stream Configuration
+     */
+    parcelable StreamConfig {
+        /**
+         * Streaming Audio Context.
+         * This can serve as a hint for selecting the proper configuration by
+         * the offloader.
+         */
+        AudioContext context;
+        /**
+         * Stream configuration, including connection handles and audio channel
+         * allocations.
+         */
+        StreamMap[] streamMap;
+    }
+
+    /**
      * Used to get a data path configuration which dynamically depends on CIS
      * connection handles in StreamMap. This is used if non-dynamic data path
      * was not provided in LeAudioAseConfigurationSetting. Calling this during
      * the unicast audio stream establishment might slightly delay the stream
      * start.
+     *
+     * @param sinkConfig - remote sink device stream configuration
+     * @param sourceConfig - remote source device stream configuration
+     *
+     * @return LeAudioDataPathConfigurationPair
      */
     LeAudioDataPathConfigurationPair getLeAudioAseDatapathConfiguration(
-            in AudioContext context, in StreamMap[] streamMap);
+            in @nullable StreamConfig sinkConfig,
+            in @nullable StreamConfig sourceConfig);
 
     /*
      * Audio Stream Endpoint state used to report Metadata changes on the remote

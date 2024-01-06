@@ -18,6 +18,7 @@ package android.hardware.wifi;
 
 import android.hardware.wifi.RttBw;
 import android.hardware.wifi.RttPreamble;
+import android.hardware.wifi.common.OuiKeyedData;
 
 /**
  * RTT Capabilities.
@@ -78,4 +79,9 @@ parcelable RttCapabilities {
      * Whether IEEE 802.11az Non-Trigger-based (non-TB) responder mode is supported.
      */
     boolean ntbResponderSupported;
+    /**
+     * Optional vendor-specific parameters. Null value indicates
+     * that no vendor data is provided.
+     */
+    @nullable OuiKeyedData[] vendorData;
 }

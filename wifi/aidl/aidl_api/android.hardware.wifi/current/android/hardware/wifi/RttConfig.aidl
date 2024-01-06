@@ -50,4 +50,5 @@ parcelable RttConfig {
   android.hardware.wifi.RttBw bw;
   long ntbMinMeasurementTime;
   long ntbMaxMeasurementTime;
+  @nullable android.hardware.wifi.common.OuiKeyedData[] vendorData;
 }
