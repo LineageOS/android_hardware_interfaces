@@ -30,6 +30,7 @@ cc_test {
     ],
     static_libs: [
         "libgtest",
+        "libgmock",
         "libvhalclient",
     ],
     shared_libs: [
@@ -40,6 +41,9 @@ cc_test {
         "VtsHalTargetTestDefaults",
         "use_libaidlvintf_gtest_helper_static",
         "vhalclient_defaults",
+    ],
+    header_libs: [
+        "IVehicleGeneratedHeaders",
     ],
     test_suites: [
         "general-tests",
