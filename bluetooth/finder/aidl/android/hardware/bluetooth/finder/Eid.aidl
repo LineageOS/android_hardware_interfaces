@@ -17,7 +17,7 @@
 package android.hardware.bluetooth.finder;
 
 /**
- * Ephemeral Identifier
+ * Find My Device network ephemeral identifier
  */
 @VintfStability
 parcelable Eid {
