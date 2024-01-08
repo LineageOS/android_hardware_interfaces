@@ -43,9 +43,6 @@ static bool isInvalidFileContent = false;
 
 std::optional<setting::LeAudioOffloadSetting>
 BluetoothLeAudioCodecsProvider::ParseFromLeAudioOffloadSettingFile() {
-  if (!leAudioCodecCapabilities.empty() || isInvalidFileContent) {
-    return std::nullopt;
-  }
   auto le_audio_offload_setting =
       setting::readLeAudioOffloadSetting(kLeAudioCodecCapabilitiesFile);
   if (!le_audio_offload_setting.has_value()) {
