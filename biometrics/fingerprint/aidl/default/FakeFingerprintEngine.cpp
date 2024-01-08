@@ -62,12 +62,17 @@ void FakeFingerprintEngine::enrollImpl(ISessionCallback* cb,
         return;
     }
 
+    waitForFingerDown(cb, cancel);
+
     updateContext(WorkMode::kEnroll, cb, const_cast<std::future<void>&>(cancel), 0, hat);
 }
 
 void FakeFingerprintEngine::authenticateImpl(ISessionCallback* cb, int64_t operationId,
                                              const std::future<void>& cancel) {
     BEGIN_OP(0);
+
+    waitForFingerDown(cb, cancel);
+
     updateContext(WorkMode::kAuthenticate, cb, const_cast<std::future<void>&>(cancel), operationId,
                   keymaster::HardwareAuthToken());
 }
@@ -83,6 +88,8 @@ void FakeFingerprintEngine::detectInteractionImpl(ISessionCallback* cb,
         cb->onError(Error::UNABLE_TO_PROCESS, 0 /* vendorError */);
         return;
     }
+
+    waitForFingerDown(cb, cancel);
 
     updateContext(WorkMode::kDetectInteract, cb, const_cast<std::future<void>&>(cancel), 0,
                   keymaster::HardwareAuthToken());
@@ -398,6 +405,7 @@ ndk::ScopedAStatus FakeFingerprintEngine::onPointerDownImpl(int32_t /*pointerId*
 
 ndk::ScopedAStatus FakeFingerprintEngine::onPointerUpImpl(int32_t /*pointerId*/) {
     BEGIN_OP(0);
+    mFingerIsDown = false;
     return ndk::ScopedAStatus::ok();
 }
 
@@ -533,4 +541,17 @@ void FakeFingerprintEngine::lockoutTimerExpired(ISessionCallback* cb) {
     isLockoutTimerStarted = false;
     isLockoutTimerAborted = false;
 }
+
+void FakeFingerprintEngine::waitForFingerDown(ISessionCallback* cb,
+                                              const std::future<void>& cancel) {
+    while (!mFingerIsDown) {
+        if (shouldCancel(cancel)) {
+            LOG(ERROR) << "waitForFingerDown, Fail: cancel";
+            cb->onError(Error::CANCELED, 0 /* vendorCode */);
+            return;
+        }
+        SLEEP_MS(10);
+    }
+}
+
 }  // namespace aidl::android::hardware::biometrics::fingerprint
