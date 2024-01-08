@@ -39,6 +39,7 @@ class RadioConfigResponse : public BnRadioConfigResponse {
     PhoneCapability phoneCap;
     bool modemReducedFeatureSet1;
     std::vector<SimSlotStatus> simSlotStatus;
+    std::vector<int32_t> currentEnabledLogicalSlots;
 
     virtual ndk::ScopedAStatus getSimSlotsStatusResponse(
             const RadioResponseInfo& info, const std::vector<SimSlotStatus>& slotStatus) override;
