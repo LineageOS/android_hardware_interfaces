@@ -736,8 +736,7 @@ TEST_P(BluetoothAudioProviderFactoryAidl, getProviderInfo_leAudioSessionTypes) {
       ASSERT_NE(codec_info.id.getTag(), CodecId::a2dp);
       // The codec info must contain the information
       // for le audio transport.
-      // ASSERT_EQ(codec_info.transport.getTag(),
-      // CodecInfo::Transport::le_audio);
+      ASSERT_EQ(codec_info.transport.getTag(), CodecInfo::Transport::leAudio);
     }
   }
 }
