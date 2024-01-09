@@ -22,6 +22,9 @@ aidl_interface {
         "android.hardware.common-V2",
         "android.hardware.media.bufferpool2-V1",
     ],
+    include_dirs: [
+        "frameworks/native/aidl/gui",
+    ],
     stability: "vintf",
     backend: {
         cpp: {
