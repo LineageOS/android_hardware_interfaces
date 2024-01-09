@@ -21,6 +21,9 @@ package {
 rust_test {
     name: "VtsSecretkeeperTargetTest",
     srcs: ["secretkeeper_test_client.rs"],
+    defaults: [
+        "rdroidtest.defaults",
+    ],
     test_suites: [
         "general-tests",
         "vts",
@@ -38,7 +41,6 @@ rust_test {
         "libbinder_rs",
         "libcoset",
         "liblog_rust",
-        "liblogger",
     ],
     require_root: true,
 }
