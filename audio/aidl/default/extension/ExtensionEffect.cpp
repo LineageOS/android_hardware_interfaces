@@ -123,10 +123,6 @@ std::shared_ptr<EffectContext> ExtensionEffect::createContext(const Parameter::C
     return mContext;
 }
 
-std::shared_ptr<EffectContext> ExtensionEffect::getContext() {
-    return mContext;
-}
-
 RetCode ExtensionEffect::releaseContext() {
     if (mContext) {
         mContext.reset();
