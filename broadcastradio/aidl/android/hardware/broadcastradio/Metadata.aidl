@@ -86,7 +86,7 @@ union Metadata {
     /**
      * DAB ensemble name abbreviated (string).
      *
-     * <p>Note: The string must be up to 8 characters long.
+     * <p>Note: The string should be <= 8 characters.
      *
      * <p>Note: If the short variant is present, the long ({@link Metadata#dabEnsembleName})
      * one must be present as well.
@@ -101,7 +101,7 @@ union Metadata {
     /**
      * DAB service name abbreviated (string)
      *
-     * <p>Note: The string must be up to 8 characters long.
+     * <p>Note: The string should be <= 8 characters.
      */
     String dabServiceNameShort;
 
@@ -113,7 +113,7 @@ union Metadata {
     /**
      * DAB component name abbreviated (string)
      *
-     * <p>Note: The string must be up to 8 characters long.
+     * <p>Note: The string should be <= 8 characters.
      */
     String dabComponentNameShort;
 
@@ -161,7 +161,7 @@ union Metadata {
     /**
      * HD short station name or HD universal short station name
      *
-     * <p>It can be up to 12 characters (see SY_IDD_1020s for more info).
+     * <p>It can be <= 12 characters (see SY_IDD_1020s for more info).
      */
     String hdStationNameShort;
 
