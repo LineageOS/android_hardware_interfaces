@@ -30,12 +30,20 @@ enum SessionTag {
     SURFACEFLINGER,
 
     /**
-     * This tag is used to mark HWUI hint sessions.
+     * This tag is used to mark hint sessions created by HWUI.
      */
     HWUI,
 
     /**
-     * This tag is used to mark Game hint sessions.
+     * This tag is used to mark hint sessions created by applications that are
+     * categorized as games.
      */
     GAME,
+
+    /**
+     * This tag is used to mark the hint session is created by the application.
+     * If an applications is categorized as game, then GAME should be used
+     * instead.
+     */
+    APP,
 }
