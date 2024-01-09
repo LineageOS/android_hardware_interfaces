@@ -22,6 +22,7 @@
 
 #include <atomic>
 #include <chrono>
+#include <functional>
 #include <thread>
 
 namespace android::hardware::automotive::can::V1_0::implementation {
