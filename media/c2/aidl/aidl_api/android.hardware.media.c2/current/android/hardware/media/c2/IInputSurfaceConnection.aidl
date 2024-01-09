@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,30 +33,7 @@
 
 package android.hardware.media.c2;
 @VintfStability
-interface IComponent {
-  android.hardware.common.NativeHandle configureVideoTunnel(in int avSyncHwId);
-  android.hardware.media.c2.IComponent.BlockPool createBlockPool(in android.hardware.media.c2.IComponent.BlockPoolAllocator allocator);
-  void destroyBlockPool(in long blockPoolId);
-  void drain(in boolean withEos);
-  android.hardware.media.c2.WorkBundle flush();
-  android.hardware.media.c2.IComponentInterface getInterface();
-  void queue(in android.hardware.media.c2.WorkBundle workBundle);
-  void release();
-  void reset();
-  void start();
-  void stop();
-  android.hardware.media.c2.IInputSurfaceConnection connectToInputSurface(in android.hardware.media.c2.IInputSurface inputSurface);
-  android.hardware.media.c2.IInputSink asInputSink();
-  parcelable BlockPool {
-    long blockPoolId;
-    android.hardware.media.c2.IConfigurable configurable;
-  }
-  parcelable C2AidlGbAllocator {
-    android.hardware.media.c2.IGraphicBufferAllocator igba;
-    ParcelFileDescriptor waitableFd;
-  }
-  union BlockPoolAllocator {
-    int allocatorId;
-    android.hardware.media.c2.IComponent.C2AidlGbAllocator allocator;
-  }
+interface IInputSurfaceConnection {
+  void disconnect();
+  void signalEndOfStream();
 }
