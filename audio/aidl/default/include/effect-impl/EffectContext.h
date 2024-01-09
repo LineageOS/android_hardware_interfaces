@@ -21,6 +21,7 @@
 #include <Utils.h>
 #include <android-base/logging.h>
 #include <fmq/AidlMessageQueue.h>
+#include <fmq/EventFlag.h>
 
 #include <aidl/android/hardware/audio/effect/BnEffect.h>
 #include "EffectTypes.h"
@@ -36,127 +37,73 @@ class EffectContext {
             float, ::aidl::android::hardware::common::fmq::SynchronizedReadWrite>
             DataMQ;
 
-    EffectContext(size_t statusDepth, const Parameter::Common& common) {
-        auto& input = common.input;
-        auto& output = common.output;
-
-        LOG_ALWAYS_FATAL_IF(
-                input.base.format.pcm != aidl::android::media::audio::common::PcmType::FLOAT_32_BIT,
-                "inputFormatNotFloat");
-        LOG_ALWAYS_FATAL_IF(output.base.format.pcm !=
-                                    aidl::android::media::audio::common::PcmType::FLOAT_32_BIT,
-                            "outputFormatNotFloat");
-
-        size_t inputChannelCount =
-                ::aidl::android::hardware::audio::common::getChannelCount(input.base.channelMask);
-        LOG_ALWAYS_FATAL_IF(inputChannelCount == 0, "inputChannelCountNotValid");
-        size_t outputChannelCount =
-                ::aidl::android::hardware::audio::common::getChannelCount(output.base.channelMask);
-        LOG_ALWAYS_FATAL_IF(outputChannelCount == 0, "outputChannelCountNotValid");
-
-        mInputFrameSize = ::aidl::android::hardware::audio::common::getFrameSizeInBytes(
-                input.base.format, input.base.channelMask);
-        mOutputFrameSize = ::aidl::android::hardware::audio::common::getFrameSizeInBytes(
-                output.base.format, output.base.channelMask);
-        // in/outBuffer size in float (FMQ data format defined for DataMQ)
-        size_t inBufferSizeInFloat = input.frameCount * mInputFrameSize / sizeof(float);
-        size_t outBufferSizeInFloat = output.frameCount * mOutputFrameSize / sizeof(float);
-
-        // only status FMQ use the EventFlag
-        mStatusMQ = std::make_shared<StatusMQ>(statusDepth, true /*configureEventFlagWord*/);
-        mInputMQ = std::make_shared<DataMQ>(inBufferSizeInFloat);
-        mOutputMQ = std::make_shared<DataMQ>(outBufferSizeInFloat);
-
-        if (!mStatusMQ->isValid() || !mInputMQ->isValid() || !mOutputMQ->isValid()) {
-            LOG(ERROR) << __func__ << " created invalid FMQ";
+    EffectContext(size_t statusDepth, const Parameter::Common& common);
+    virtual ~EffectContext() {
+        if (mEfGroup) {
+            ::android::hardware::EventFlag::deleteEventFlag(&mEfGroup);
         }
-        mWorkBuffer.reserve(std::max(inBufferSizeInFloat, outBufferSizeInFloat));
-        mCommon = common;
     }
-    virtual ~EffectContext() {}
 
-    std::shared_ptr<StatusMQ> getStatusFmq() { return mStatusMQ; }
-    std::shared_ptr<DataMQ> getInputDataFmq() { return mInputMQ; }
-    std::shared_ptr<DataMQ> getOutputDataFmq() { return mOutputMQ; }
+    std::shared_ptr<StatusMQ> getStatusFmq() const;
+    std::shared_ptr<DataMQ> getInputDataFmq() const;
+    std::shared_ptr<DataMQ> getOutputDataFmq() const;
 
-    float* getWorkBuffer() { return static_cast<float*>(mWorkBuffer.data()); }
+    float* getWorkBuffer();
 
     // reset buffer status by abandon input data in FMQ
-    void resetBuffer() {
-        auto buffer = static_cast<float*>(mWorkBuffer.data());
-        std::vector<IEffect::Status> status(mStatusMQ->availableToRead());
-        mInputMQ->read(buffer, mInputMQ->availableToRead());
-    }
+    void resetBuffer();
+    void dupeFmq(IEffect::OpenEffectReturn* effectRet);
+    size_t getInputFrameSize() const;
+    size_t getOutputFrameSize() const;
+    int getSessionId() const;
+    int getIoHandle() const;
 
-    void dupeFmq(IEffect::OpenEffectReturn* effectRet) {
-        if (effectRet) {
-            effectRet->statusMQ = mStatusMQ->dupeDesc();
-            effectRet->inputDataMQ = mInputMQ->dupeDesc();
-            effectRet->outputDataMQ = mOutputMQ->dupeDesc();
-        }
-    }
-    size_t getInputFrameSize() { return mInputFrameSize; }
-    size_t getOutputFrameSize() { return mOutputFrameSize; }
-    int getSessionId() { return mCommon.session; }
-    int getIoHandle() { return mCommon.ioHandle; }
+    virtual void dupeFmqWithReopen(IEffect::OpenEffectReturn* effectRet);
 
     virtual RetCode setOutputDevice(
-            const std::vector<aidl::android::media::audio::common::AudioDeviceDescription>&
-                    device) {
-        mOutputDevice = device;
-        return RetCode::SUCCESS;
-    }
+            const std::vector<aidl::android::media::audio::common::AudioDeviceDescription>& device);
 
     virtual std::vector<aidl::android::media::audio::common::AudioDeviceDescription>
-    getOutputDevice() {
-        return mOutputDevice;
-    }
+    getOutputDevice();
 
-    virtual RetCode setAudioMode(const aidl::android::media::audio::common::AudioMode& mode) {
-        mMode = mode;
-        return RetCode::SUCCESS;
-    }
-    virtual aidl::android::media::audio::common::AudioMode getAudioMode() { return mMode; }
+    virtual RetCode setAudioMode(const aidl::android::media::audio::common::AudioMode& mode);
+    virtual aidl::android::media::audio::common::AudioMode getAudioMode();
 
-    virtual RetCode setAudioSource(const aidl::android::media::audio::common::AudioSource& source) {
-        mSource = source;
-        return RetCode::SUCCESS;
-    }
-    virtual aidl::android::media::audio::common::AudioSource getAudioSource() { return mSource; }
+    virtual RetCode setAudioSource(const aidl::android::media::audio::common::AudioSource& source);
+    virtual aidl::android::media::audio::common::AudioSource getAudioSource();
 
-    virtual RetCode setVolumeStereo(const Parameter::VolumeStereo& volumeStereo) {
-        mVolumeStereo = volumeStereo;
-        return RetCode::SUCCESS;
-    }
-    virtual Parameter::VolumeStereo getVolumeStereo() { return mVolumeStereo; }
+    virtual RetCode setVolumeStereo(const Parameter::VolumeStereo& volumeStereo);
+    virtual Parameter::VolumeStereo getVolumeStereo();
 
-    virtual RetCode setCommon(const Parameter::Common& common) {
-        mCommon = common;
-        LOG(VERBOSE) << __func__ << mCommon.toString();
-        return RetCode::SUCCESS;
-    }
-    virtual Parameter::Common getCommon() {
-        LOG(VERBOSE) << __func__ << mCommon.toString();
-        return mCommon;
-    }
+    virtual RetCode setCommon(const Parameter::Common& common);
+    virtual Parameter::Common getCommon();
+
+    virtual ::android::hardware::EventFlag* getStatusEventFlag();
 
   protected:
-    // common parameters
     size_t mInputFrameSize;
     size_t mOutputFrameSize;
-    Parameter::Common mCommon;
-    std::vector<aidl::android::media::audio::common::AudioDeviceDescription> mOutputDevice;
-    aidl::android::media::audio::common::AudioMode mMode;
-    aidl::android::media::audio::common::AudioSource mSource;
-    Parameter::VolumeStereo mVolumeStereo;
+    size_t mInputChannelCount;
+    size_t mOutputChannelCount;
+    Parameter::Common mCommon = {};
+    std::vector<aidl::android::media::audio::common::AudioDeviceDescription> mOutputDevice = {};
+    aidl::android::media::audio::common::AudioMode mMode =
+            aidl::android::media::audio::common::AudioMode::SYS_RESERVED_INVALID;
+    aidl::android::media::audio::common::AudioSource mSource =
+            aidl::android::media::audio::common::AudioSource::SYS_RESERVED_INVALID;
+    Parameter::VolumeStereo mVolumeStereo = {};
+    RetCode updateIOFrameSize(const Parameter::Common& common);
+    RetCode notifyDataMqUpdate();
 
   private:
     // fmq and buffers
     std::shared_ptr<StatusMQ> mStatusMQ;
     std::shared_ptr<DataMQ> mInputMQ;
     std::shared_ptr<DataMQ> mOutputMQ;
-    // TODO handle effect process input and output
+    // std::shared_ptr<IEffect::OpenEffectReturn> mRet;
     // work buffer set by effect instances, the access and update are in same thread
     std::vector<float> mWorkBuffer;
+
+    ::android::hardware::EventFlag* mEfGroup;
 };
 }  // namespace aidl::android::hardware::audio::effect
