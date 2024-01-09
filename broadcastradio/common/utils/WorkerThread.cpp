@@ -69,8 +69,11 @@ void WorkerThread::cancelAll() {
 }
 
 void WorkerThread::threadLoop() {
-    while (!mIsTerminating) {
+    while (true) {
         unique_lock<mutex> lk(mMut);
+        if (mIsTerminating) {
+            return;
+        }
         if (mTasks.empty()) {
             mCond.wait(lk);
             continue;
