@@ -34,6 +34,7 @@ rust_library {
         "libauthgraph_core",
         "libauthgraph_hal",
         "libbinder_rs",
+        "libcoset",
         "liblog_rust",
         "libsecretkeeper_core_nostd",
         "libsecretkeeper_comm_nostd",

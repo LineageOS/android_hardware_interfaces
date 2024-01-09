@@ -53,8 +53,12 @@ impl LocalTa {
             let mut crypto_impls = boring::crypto_trait_impls();
             let storage_impl = Box::new(store::InMemoryStore::default());
             let sk_ta = Rc::new(RefCell::new(
-                SecretkeeperTa::new(&mut crypto_impls, storage_impl)
-                    .expect("Failed to create local Secretkeeper TA"),
+                SecretkeeperTa::new(
+                    &mut crypto_impls,
+                    storage_impl,
+                    coset::iana::EllipticCurve::Ed25519,
+                )
+                .expect("Failed to create local Secretkeeper TA"),
             ));
             let mut ag_ta = AuthGraphTa::new(
                 AuthGraphParticipant::new(crypto_impls, sk_ta.clone(), MAX_OPENED_SESSIONS)
