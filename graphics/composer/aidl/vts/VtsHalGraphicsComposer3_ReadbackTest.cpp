@@ -85,6 +85,7 @@ class GraphicsCompositionTestBase : public ::testing::Test {
     }
 
     void TearDown() override {
+        ASSERT_FALSE(mDisplays.empty());
         ASSERT_TRUE(mComposerClient->setPowerMode(getPrimaryDisplayId(), PowerMode::OFF).isOk());
         ASSERT_TRUE(mComposerClient->tearDown(mWriter.get()));
         mComposerClient.reset();
