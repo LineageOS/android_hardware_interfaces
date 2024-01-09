@@ -65,4 +65,11 @@ enum SessionHint {
      * this hint session can reduce GPU resources and still meet the target duration.
      */
     GPU_LOAD_DOWN = 6,
+
+    /**
+     * This hint indicates an upcoming GPU workload that is completely changed and
+     * unknown. It means that the hint session should reset GPU resources to a known
+     * baseline to prepare for an arbitrary load, and must wake up if inactive.
+     */
+    GPU_LOAD_RESET = 7,
 }
