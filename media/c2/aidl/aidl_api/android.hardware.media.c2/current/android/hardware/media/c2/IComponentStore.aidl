@@ -41,6 +41,7 @@ interface IComponentStore {
   android.hardware.media.bufferpool2.IClientManager getPoolClientManager();
   android.hardware.media.c2.StructDescriptor[] getStructDescriptors(in int[] indices);
   android.hardware.media.c2.IComponentStore.ComponentTraits[] listComponents();
+  android.hardware.media.c2.IInputSurface createInputSurface();
   @VintfStability
   parcelable ComponentTraits {
     String name;
