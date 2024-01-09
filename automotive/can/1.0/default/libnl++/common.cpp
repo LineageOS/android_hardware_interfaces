@@ -20,6 +20,8 @@
 
 #include <net/if.h>
 
+#include <algorithm>
+
 namespace android::nl {
 
 unsigned int nametoindex(const std::string& ifname) {
