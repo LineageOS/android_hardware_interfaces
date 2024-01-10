@@ -42,6 +42,9 @@ aidl_interface {
                 "com.android.car.framework",
             ],
         },
+        rust: {
+            enabled: true,
+        },
     },
     versions_with_info: [
         {
