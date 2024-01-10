@@ -17,6 +17,7 @@
 #define LOG_TAG "BcRadioAidlDef.utilsV2"
 
 #include "broadcastradio-utils-aidl/UtilsV2.h"
+#include "broadcastradio-utils-aidl/Utils.h"
 
 #include <android-base/logging.h>
 #include <android-base/strings.h>
@@ -137,10 +138,33 @@ bool isValidV2(const ProgramSelector& sel) {
     return isValidV2(sel.primaryId);
 }
 
-std::optional<std::string> getMetadataStringV2(const ProgramInfo& info, const Metadata::Tag& tag) {
-    auto isRdsPs = [tag](const Metadata& item) { return item.getTag() == tag; };
+bool isValidMetadataV2(const Metadata& metadata) {
+    if (!isValidMetadata(metadata)) {
+        return false;
+    }
 
-    auto it = std::find_if(info.metadata.begin(), info.metadata.end(), isRdsPs);
+    if (metadata.getTag() == Metadata::hdStationNameShort) {
+        if (metadata.get<Metadata::hdStationNameShort>().size() > 12) {
+            LOG(ERROR) << "metadata not valid, expected HD short name length <= 12";
+            return false;
+        }
+    } else if (metadata.getTag() == Metadata::hdSubChannelsAvailable) {
+        if (metadata.get<Metadata::hdSubChannelsAvailable>() < 0) {
+            LOG(ERROR) << "metadata not valid, expected HD subchannels available >= 0";
+            return false;
+        } else if (metadata.get<Metadata::hdSubChannelsAvailable>() >
+                   std::numeric_limits<uint8_t>::max()) {
+            LOG(ERROR) << "metadata not valid, expected 8bit HD subchannels available";
+            return false;
+        }
+    }
+    return true;
+}
+
+std::optional<std::string> getMetadataStringV2(const ProgramInfo& info, const Metadata::Tag& tag) {
+    auto hasMetadataType = [tag](const Metadata& item) { return item.getTag() == tag; };
+
+    auto it = std::find_if(info.metadata.begin(), info.metadata.end(), hasMetadataType);
     if (it == info.metadata.end()) {
         return std::nullopt;
     }
