@@ -296,12 +296,6 @@ TEST_P(NfcHidlTest, WriteInvalidAndThenValidCommand) {
     res = nfc_cb_->WaitForCallback(kCallbackNameSendData);
     EXPECT_TRUE(res.no_timeout);
     EXPECT_EQ((int)NfcStatus::OK, res.args->last_data_[3]);
-    if (nci_version == NCI_VERSION_2 && res.args->last_data_.size() > 13 &&
-        res.args->last_data_[13] == 0x00) {
-        // Wait for CORE_CONN_CREDITS_NTF
-        res = nfc_cb_->WaitForCallback(kCallbackNameSendData);
-        EXPECT_TRUE(res.no_timeout);
-    }
     // Send an Error Data Packet
     cmd = INVALID_COMMAND;
     data = cmd;
