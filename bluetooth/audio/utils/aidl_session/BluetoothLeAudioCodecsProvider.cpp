@@ -43,9 +43,6 @@ static bool isInvalidFileContent = false;
 
 std::optional<setting::LeAudioOffloadSetting>
 BluetoothLeAudioCodecsProvider::ParseFromLeAudioOffloadSettingFile() {
-  if (!leAudioCodecCapabilities.empty() || isInvalidFileContent) {
-    return std::nullopt;
-  }
   auto le_audio_offload_setting =
       setting::readLeAudioOffloadSetting(kLeAudioCodecCapabilitiesFile);
   if (!le_audio_offload_setting.has_value()) {
@@ -77,8 +74,6 @@ BluetoothLeAudioCodecsProvider::GetLeAudioCodecInfo(
   for (auto& p : configuration_map_) {
     // Initialize new CodecInfo for the config
     auto config_name = p.first;
-    if (config_codec_info_map_.count(config_name) == 0)
-      config_codec_info_map_[config_name] = CodecInfo();
 
     // Getting informations from codecConfig and strategyConfig
     const auto codec_config_name = p.second.getCodecConfiguration();
@@ -91,6 +86,9 @@ BluetoothLeAudioCodecsProvider::GetLeAudioCodecInfo(
         strategy_configuration_map_.find(strategy_config_name);
     if (strategy_configuration_map_iter == strategy_configuration_map_.end())
       continue;
+
+    if (config_codec_info_map_.count(config_name) == 0)
+      config_codec_info_map_[config_name] = CodecInfo();
 
     const auto& codec_config = codec_configuration_map_iter->second;
     const auto codec = codec_config.getCodec();
@@ -137,12 +135,19 @@ BluetoothLeAudioCodecsProvider::GetLeAudioCodecInfo(
     }
   }
 
-  // Goes through every scenario, deduplicate configuration
+  // Goes through every scenario, deduplicate configuration, skip the invalid
+  // config references (e.g. the "invalid" entries in the xml file).
   std::set<std::string> encoding_config, decoding_config, broadcast_config;
   for (auto& s : supported_scenarios_) {
-    if (s.hasEncode()) encoding_config.insert(s.getEncode());
-    if (s.hasDecode()) decoding_config.insert(s.getDecode());
-    if (s.hasBroadcast()) broadcast_config.insert(s.getBroadcast());
+    if (s.hasEncode() && config_codec_info_map_.count(s.getEncode())) {
+      encoding_config.insert(s.getEncode());
+    }
+    if (s.hasDecode() && config_codec_info_map_.count(s.getDecode())) {
+      decoding_config.insert(s.getDecode());
+    }
+    if (s.hasBroadcast() && config_codec_info_map_.count(s.getBroadcast())) {
+      broadcast_config.insert(s.getBroadcast());
+    }
   }
 
   // Split by session types and add results
