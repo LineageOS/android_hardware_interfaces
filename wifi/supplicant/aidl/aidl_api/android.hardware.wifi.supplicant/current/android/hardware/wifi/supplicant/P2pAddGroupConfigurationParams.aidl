@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2024 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,24 +32,13 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.wifi.supplicant;
-@Backing(type="int") @VintfStability
-enum KeyMgmtMask {
-  WPA_EAP = (1 << 0) /* 1 */,
-  WPA_PSK = (1 << 1) /* 2 */,
-  NONE = (1 << 2) /* 4 */,
-  IEEE8021X = (1 << 3) /* 8 */,
-  FT_EAP = (1 << 5) /* 32 */,
-  FT_PSK = (1 << 6) /* 64 */,
-  OSEN = (1 << 15) /* 32768 */,
-  WPA_EAP_SHA256 = (1 << 7) /* 128 */,
-  WPA_PSK_SHA256 = (1 << 8) /* 256 */,
-  SAE = (1 << 10) /* 1024 */,
-  SUITE_B_192 = (1 << 17) /* 131072 */,
-  OWE = (1 << 22) /* 4194304 */,
-  DPP = (1 << 23) /* 8388608 */,
-  WAPI_PSK = (1 << 12) /* 4096 */,
-  WAPI_CERT = (1 << 13) /* 8192 */,
-  FILS_SHA256 = (1 << 18) /* 262144 */,
-  FILS_SHA384 = (1 << 19) /* 524288 */,
-  PASN = (1 << 25) /* 33554432 */,
+@VintfStability
+parcelable P2pAddGroupConfigurationParams {
+  byte[] ssid;
+  String passphrase;
+  boolean isPersistent;
+  int frequencyMHzOrBand;
+  byte[6] goInterfaceAddress;
+  boolean joinExistingGroup;
+  int keyMgmtMask;
 }
