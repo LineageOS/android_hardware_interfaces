@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="6" by="lint 8.0.0-dev" type="baseline" dependencies="true" variant="all" version="8.0.0-dev">
+<issues format="6" by="lint 8.4.0-alpha01" type="baseline" client="" dependencies="true" name="" variant="all" version="8.4.0-alpha01">
 
     <issue
         id="NewApi"
@@ -7,8 +7,8 @@
         errorLine1="      this.markVintfStability();"
         errorLine2="           ~~~~~~~~~~~~~~~~~~">
         <location
-            file="out/.intermediates/hardware/interfaces/wifi/hostapd/aidl/android.hardware.wifi.hostapd-V1-java-source/gen/android/hardware/wifi/hostapd/IHostapd.java"
-            line="55"
+            file="out/soong/.intermediates/hardware/interfaces/wifi/hostapd/aidl/android.hardware.wifi.hostapd-V1-java-source/gen/android/hardware/wifi/hostapd/IHostapd.java"
+            line="57"
             column="12"/>
     </issue>
 
@@ -18,8 +18,8 @@
         errorLine1="      this.markVintfStability();"
         errorLine2="           ~~~~~~~~~~~~~~~~~~">
         <location
-            file="out/.intermediates/hardware/interfaces/wifi/hostapd/aidl/android.hardware.wifi.hostapd-V1-java-source/gen/android/hardware/wifi/hostapd/IHostapdCallback.java"
-            line="46"
+            file="out/soong/.intermediates/hardware/interfaces/wifi/hostapd/aidl/android.hardware.wifi.hostapd-V1-java-source/gen/android/hardware/wifi/hostapd/IHostapdCallback.java"
+            line="48"
             column="12"/>
     </issue>
 
@@ -29,8 +29,8 @@
         errorLine1="      this.markVintfStability();"
         errorLine2="           ~~~~~~~~~~~~~~~~~~">
         <location
-            file="out/.intermediates/hardware/interfaces/wifi/hostapd/aidl/android.hardware.wifi.hostapd-V2-java-source/gen/android/hardware/wifi/hostapd/IHostapd.java"
-            line="117"
+            file="out/soong/.intermediates/hardware/interfaces/wifi/hostapd/aidl/android.hardware.wifi.hostapd-V2-java-source/gen/android/hardware/wifi/hostapd/IHostapd.java"
+            line="119"
             column="12"/>
     </issue>
 
@@ -40,8 +40,8 @@
         errorLine1="      this.markVintfStability();"
         errorLine2="           ~~~~~~~~~~~~~~~~~~">
         <location
-            file="out/.intermediates/hardware/interfaces/wifi/hostapd/aidl/android.hardware.wifi.hostapd-V2-java-source/gen/android/hardware/wifi/hostapd/IHostapdCallback.java"
-            line="62"
+            file="out/soong/.intermediates/hardware/interfaces/wifi/hostapd/aidl/android.hardware.wifi.hostapd-V2-java-source/gen/android/hardware/wifi/hostapd/IHostapdCallback.java"
+            line="64"
             column="12"/>
     </issue>
 
