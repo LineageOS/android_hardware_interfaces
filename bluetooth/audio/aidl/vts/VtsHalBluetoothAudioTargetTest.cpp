@@ -736,8 +736,7 @@ TEST_P(BluetoothAudioProviderFactoryAidl, getProviderInfo_leAudioSessionTypes) {
       ASSERT_NE(codec_info.id.getTag(), CodecId::a2dp);
       // The codec info must contain the information
       // for le audio transport.
-      // ASSERT_EQ(codec_info.transport.getTag(),
-      // CodecInfo::Transport::le_audio);
+      ASSERT_EQ(codec_info.transport.getTag(), CodecInfo::Transport::leAudio);
     }
   }
 }
@@ -1664,7 +1663,7 @@ TEST_P(BluetoothAudioProviderA2dpEncodingHardwareAidl,
 TEST_P(BluetoothAudioProviderA2dpEncodingHardwareAidl,
        StartAndEndA2dpSbcEncodingHardwareSession) {
   if (!IsOffloadSupported()) {
-    return;
+    GTEST_SKIP();
   }
 
   CodecConfiguration codec_config = {
@@ -1694,7 +1693,7 @@ TEST_P(BluetoothAudioProviderA2dpEncodingHardwareAidl,
 TEST_P(BluetoothAudioProviderA2dpEncodingHardwareAidl,
        StartAndEndA2dpAacEncodingHardwareSession) {
   if (!IsOffloadSupported()) {
-    return;
+    GTEST_SKIP();
   }
 
   CodecConfiguration codec_config = {
@@ -1724,7 +1723,7 @@ TEST_P(BluetoothAudioProviderA2dpEncodingHardwareAidl,
 TEST_P(BluetoothAudioProviderA2dpEncodingHardwareAidl,
        StartAndEndA2dpLdacEncodingHardwareSession) {
   if (!IsOffloadSupported()) {
-    return;
+    GTEST_SKIP();
   }
 
   CodecConfiguration codec_config = {
@@ -1754,7 +1753,7 @@ TEST_P(BluetoothAudioProviderA2dpEncodingHardwareAidl,
 TEST_P(BluetoothAudioProviderA2dpEncodingHardwareAidl,
        StartAndEndA2dpOpusEncodingHardwareSession) {
   if (!IsOffloadSupported()) {
-    return;
+    GTEST_SKIP();
   }
 
   CodecConfiguration codec_config = {
@@ -1784,7 +1783,7 @@ TEST_P(BluetoothAudioProviderA2dpEncodingHardwareAidl,
 TEST_P(BluetoothAudioProviderA2dpEncodingHardwareAidl,
        StartAndEndA2dpAptxEncodingHardwareSession) {
   if (!IsOffloadSupported()) {
-    return;
+    GTEST_SKIP();
   }
 
   for (auto codec_type : {CodecType::APTX, CodecType::APTX_HD}) {
@@ -1820,7 +1819,7 @@ TEST_P(BluetoothAudioProviderA2dpEncodingHardwareAidl,
 TEST_P(BluetoothAudioProviderA2dpEncodingHardwareAidl,
        StartAndEndA2dpEncodingHardwareSessionInvalidCodecConfig) {
   if (!IsOffloadSupported()) {
-    return;
+    GTEST_SKIP();
   }
   ASSERT_NE(audio_provider_, nullptr);
 
@@ -2420,7 +2419,7 @@ TEST_P(
     BluetoothAudioProviderLeAudioOutputHardwareAidl,
     StartAndEndLeAudioOutputSessionWithPossibleUnicastConfigFromProviderInfo) {
   if (!IsOffloadOutputProviderInfoSupported()) {
-    return;
+    GTEST_SKIP();
   }
 
   auto lc3_codec_configs = GetUnicastLc3SupportedListFromProviderInfo();
@@ -2548,7 +2547,7 @@ TEST_P(BluetoothAudioProviderLeAudioOutputHardwareAidl,
 TEST_P(BluetoothAudioProviderLeAudioOutputHardwareAidl,
        StartAndEndLeAudioOutputSessionWithPossibleUnicastConfig) {
   if (!IsOffloadOutputSupported()) {
-    return;
+    GTEST_SKIP();
   }
 
   auto lc3_codec_configs =
@@ -2581,7 +2580,7 @@ TEST_P(BluetoothAudioProviderLeAudioOutputHardwareAidl,
 TEST_P(BluetoothAudioProviderLeAudioOutputHardwareAidl,
        DISABLED_StartAndEndLeAudioOutputSessionWithInvalidAudioConfiguration) {
   if (!IsOffloadOutputSupported()) {
-    return;
+    GTEST_SKIP();
   }
 
   auto lc3_codec_configs =
@@ -2619,7 +2618,7 @@ static std::vector<uint8_t> vendorMetadata = {0x0B,  // Length
 TEST_P(BluetoothAudioProviderLeAudioOutputHardwareAidl,
        StartAndEndLeAudioOutputSessionWithAptxAdaptiveLeUnicastConfig) {
   if (!IsOffloadOutputSupported()) {
-    return;
+    GTEST_SKIP();
   }
   for (auto codec_type :
        {CodecType::APTX_ADAPTIVE_LE, CodecType::APTX_ADAPTIVE_LEX}) {
@@ -2656,7 +2655,7 @@ TEST_P(
     BluetoothAudioProviderLeAudioOutputHardwareAidl,
     BluetoothAudioProviderLeAudioOutputHardwareAidl_StartAndEndLeAudioOutputSessionWithInvalidAptxAdaptiveLeAudioConfiguration) {
   if (!IsOffloadOutputSupported()) {
-    return;
+    GTEST_SKIP();
   }
 
   for (auto codec_type :
@@ -2742,7 +2741,7 @@ TEST_P(
     BluetoothAudioProviderLeAudioInputHardwareAidl,
     StartAndEndLeAudioInputSessionWithPossibleUnicastConfigFromProviderInfo) {
   if (!IsOffloadOutputProviderInfoSupported()) {
-    return;
+    GTEST_SKIP();
   }
 
   auto lc3_codec_configs = GetUnicastLc3SupportedListFromProviderInfo();
@@ -2772,7 +2771,7 @@ TEST_P(
 TEST_P(BluetoothAudioProviderLeAudioInputHardwareAidl,
        StartAndEndLeAudioInputSessionWithPossibleUnicastConfig) {
   if (!IsOffloadInputSupported()) {
-    return;
+    GTEST_SKIP();
   }
 
   auto lc3_codec_configs =
@@ -2805,7 +2804,7 @@ TEST_P(BluetoothAudioProviderLeAudioInputHardwareAidl,
 TEST_P(BluetoothAudioProviderLeAudioInputHardwareAidl,
        DISABLED_StartAndEndLeAudioInputSessionWithInvalidAudioConfiguration) {
   if (!IsOffloadInputSupported()) {
-    return;
+    GTEST_SKIP();
   }
 
   auto lc3_codec_configs =
@@ -3259,7 +3258,7 @@ TEST_P(BluetoothAudioProviderA2dpDecodingHardwareAidl,
 TEST_P(BluetoothAudioProviderA2dpDecodingHardwareAidl,
        StartAndEndA2dpSbcDecodingHardwareSession) {
   if (!IsOffloadSupported()) {
-    return;
+    GTEST_SKIP();
   }
 
   CodecConfiguration codec_config = {
@@ -3289,7 +3288,7 @@ TEST_P(BluetoothAudioProviderA2dpDecodingHardwareAidl,
 TEST_P(BluetoothAudioProviderA2dpDecodingHardwareAidl,
        StartAndEndA2dpAacDecodingHardwareSession) {
   if (!IsOffloadSupported()) {
-    return;
+    GTEST_SKIP();
   }
 
   CodecConfiguration codec_config = {
@@ -3319,7 +3318,7 @@ TEST_P(BluetoothAudioProviderA2dpDecodingHardwareAidl,
 TEST_P(BluetoothAudioProviderA2dpDecodingHardwareAidl,
        StartAndEndA2dpLdacDecodingHardwareSession) {
   if (!IsOffloadSupported()) {
-    return;
+    GTEST_SKIP();
   }
 
   CodecConfiguration codec_config = {
@@ -3349,7 +3348,7 @@ TEST_P(BluetoothAudioProviderA2dpDecodingHardwareAidl,
 TEST_P(BluetoothAudioProviderA2dpDecodingHardwareAidl,
        StartAndEndA2dpOpusDecodingHardwareSession) {
   if (!IsOffloadSupported()) {
-    return;
+    GTEST_SKIP();
   }
 
   CodecConfiguration codec_config = {
@@ -3379,7 +3378,7 @@ TEST_P(BluetoothAudioProviderA2dpDecodingHardwareAidl,
 TEST_P(BluetoothAudioProviderA2dpDecodingHardwareAidl,
        StartAndEndA2dpAptxDecodingHardwareSession) {
   if (!IsOffloadSupported()) {
-    return;
+    GTEST_SKIP();
   }
 
   for (auto codec_type : {CodecType::APTX, CodecType::APTX_HD}) {
@@ -3415,7 +3414,7 @@ TEST_P(BluetoothAudioProviderA2dpDecodingHardwareAidl,
 TEST_P(BluetoothAudioProviderA2dpDecodingHardwareAidl,
        StartAndEndA2dpDecodingHardwareSessionInvalidCodecConfig) {
   if (!IsOffloadSupported()) {
-    return;
+    GTEST_SKIP();
   }
   ASSERT_NE(audio_provider_, nullptr);
 
