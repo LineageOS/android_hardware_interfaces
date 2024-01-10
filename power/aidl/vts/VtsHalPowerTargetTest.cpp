@@ -93,8 +93,6 @@ const std::vector<int32_t> kSelfTids = {
 
 const std::vector<int32_t> kEmptyTids = {};
 
-const std::vector<WorkDuration> kNoDurations = {};
-
 const std::vector<WorkDuration> kDurationsWithZero = {
         DurationWrapper(1000L, 1L),
         DurationWrapper(0L, 2L),
