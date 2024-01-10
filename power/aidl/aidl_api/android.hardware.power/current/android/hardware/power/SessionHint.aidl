@@ -41,4 +41,5 @@ enum SessionHint {
   POWER_EFFICIENCY = 4,
   GPU_LOAD_UP = 5,
   GPU_LOAD_DOWN = 6,
+  GPU_LOAD_RESET = 7,
 }

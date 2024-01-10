@@ -31,6 +31,8 @@ digraph effect_state_machine {
     IDLE -> INIT[label = "IEffect.close()"];
 
     INIT -> INIT[label = "IEffect.getState\nIEffect.getDescriptor"];
-    IDLE -> IDLE[label = "IEffect.getParameter\nIEffect.setParameter\nIEffect.getDescriptor\nIEffect.command(RESET)"];
-    PROCESSING -> PROCESSING[label = "IEffect.getParameter\nIEffect.setParameter\nIEffect.getDescriptor"];
+    IDLE -> IDLE[label = "IEffect.getParameter\nIEffect.setParameter\nIEffect.getDescriptor\nIEffect.command(RESET)\nIEffect.reopen"];
+    PROCESSING
+            -> PROCESSING
+                    [label = "IEffect.getParameter\nIEffect.setParameter\nIEffect.getDescriptor\nIEffect.reopen"];
 }

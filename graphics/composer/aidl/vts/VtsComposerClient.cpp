@@ -68,6 +68,9 @@ bool VtsComposerClient::tearDown(ComposerClientWriter* writer) {
 
 std::pair<ScopedAStatus, int32_t> VtsComposerClient::getInterfaceVersion() const {
     int32_t version = 1;
+    if (!mComposerClient) {
+        return {ScopedAStatus{nullptr}, version};
+    }
     auto status = mComposerClient->getInterfaceVersion(&version);
     return {std::move(status), version};
 }

@@ -38,4 +38,5 @@ enum SessionTag {
   SURFACEFLINGER,
   HWUI,
   GAME,
+  APP,
 }
