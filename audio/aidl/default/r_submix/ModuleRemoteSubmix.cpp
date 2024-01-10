@@ -16,6 +16,7 @@
 
 #define LOG_TAG "AHAL_ModuleRemoteSubmix"
 
+#include <stdio.h>
 #include <vector>
 
 #include <android-base/logging.h>
@@ -172,6 +173,11 @@ int32_t ModuleRemoteSubmix::getNominalLatencyMs(const AudioPortConfig&) {
             (r_submix::kDefaultPipeSizeInFrames * 1000) / r_submix::kDefaultSampleRateHz;
     static constexpr int32_t kMinLatencyMs = kMaxLatencyMs / r_submix::kDefaultPipePeriodCount;
     return kMinLatencyMs;
+}
+
+binder_status_t ModuleRemoteSubmix::dump(int fd, const char** /*args*/, uint32_t /*numArgs*/) {
+    dprintf(fd, "\nSubmixRoutes:\n%s\n", r_submix::SubmixRoute::dumpRoutes().c_str());
+    return STATUS_OK;
 }
 
 }  // namespace aidl::android::hardware::audio::core

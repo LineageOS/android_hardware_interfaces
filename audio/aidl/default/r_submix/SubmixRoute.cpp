@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include <mutex>
+
 #define LOG_TAG "AHAL_SubmixRoute"
 #include <android-base/logging.h>
 #include <media/AidlConversionCppNdk.h>
@@ -28,10 +30,11 @@ using aidl::android::media::audio::common::AudioDeviceAddress;
 namespace aidl::android::hardware::audio::core::r_submix {
 
 // static
-SubmixRoute::RoutesMonitor SubmixRoute::getRoutes() {
+SubmixRoute::RoutesMonitor SubmixRoute::getRoutes(bool tryLock) {
     static std::mutex submixRoutesLock;
     static RoutesMap submixRoutes;
-    return RoutesMonitor(submixRoutesLock, submixRoutes);
+    return !tryLock ? RoutesMonitor(submixRoutesLock, submixRoutes)
+                    : RoutesMonitor(submixRoutesLock, submixRoutes, tryLock);
 }
 
 // static
@@ -64,6 +67,21 @@ std::shared_ptr<SubmixRoute> SubmixRoute::findRoute(const AudioDeviceAddress& de
 // static
 void SubmixRoute::removeRoute(const AudioDeviceAddress& deviceAddress) {
     getRoutes()->erase(deviceAddress);
+}
+
+// static
+std::string SubmixRoute::dumpRoutes() {
+    auto routes = getRoutes(true /*tryLock*/);
+    std::string result;
+    if (routes->empty()) result.append(" <Empty>");
+    for (const auto& r : *(routes.operator->())) {
+        result.append(" - ")
+                .append(r.first.toString())
+                .append(": ")
+                .append(r.second->dump())
+                .append("\n");
+    }
+    return result;
 }
 
 // Verify a submix input or output stream can be opened.
@@ -256,6 +274,25 @@ void SubmixRoute::exitStandby(bool isInput) {
             mStreamOutStandbyTransition = true;
         }
     }
+}
+
+std::string SubmixRoute::dump() NO_THREAD_SAFETY_ANALYSIS {
+    const bool isLocked = mLock.try_lock();
+    std::string result = std::string(isLocked ? "" : "! ")
+                                 .append("Input ")
+                                 .append(mStreamInOpen ? "open" : "closed")
+                                 .append(mStreamInStandby ? ", standby" : ", active")
+                                 .append(", refcount: ")
+                                 .append(std::to_string(mInputRefCount))
+                                 .append(", framesRead: ")
+                                 .append(mSource ? std::to_string(mSource->framesRead()) : "<null>")
+                                 .append("; Output ")
+                                 .append(mStreamOutOpen ? "open" : "closed")
+                                 .append(mStreamOutStandby ? ", standby" : ", active")
+                                 .append(", framesWritten: ")
+                                 .append(mSink ? std::to_string(mSink->framesWritten()) : "<null>");
+    if (isLocked) mLock.unlock();
+    return result;
 }
 
 }  // namespace aidl::android::hardware::audio::core::r_submix
