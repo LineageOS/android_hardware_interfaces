@@ -17,6 +17,7 @@
 #pragma once
 
 #include <mutex>
+#include <string>
 
 #include <android-base/thread_annotations.h>
 #include <audio_utils/clock.h>
@@ -68,6 +69,7 @@ class SubmixRoute {
             const ::aidl::android::media::audio::common::AudioDeviceAddress& deviceAddress);
     static void removeRoute(
             const ::aidl::android::media::audio::common::AudioDeviceAddress& deviceAddress);
+    static std::string dumpRoutes();
 
     bool isStreamInOpen() {
         std::lock_guard guard(mLock);
@@ -115,20 +117,24 @@ class SubmixRoute {
     void standby(bool isInput);
     long updateReadCounterFrames(size_t frameCount);
 
+    std::string dump();
+
   private:
     using RoutesMap = std::map<::aidl::android::media::audio::common::AudioDeviceAddress,
                                std::shared_ptr<r_submix::SubmixRoute>>;
     class RoutesMonitor {
       public:
         RoutesMonitor(std::mutex& mutex, RoutesMap& routes) : mLock(mutex), mRoutes(routes) {}
+        RoutesMonitor(std::mutex& mutex, RoutesMap& routes, bool /*tryLock*/)
+            : mLock(mutex, std::try_to_lock), mRoutes(routes) {}
         RoutesMap* operator->() { return &mRoutes; }
 
       private:
-        std::lock_guard<std::mutex> mLock;
+        std::unique_lock<std::mutex> mLock;
         RoutesMap& mRoutes;
     };
 
-    static RoutesMonitor getRoutes();
+    static RoutesMonitor getRoutes(bool tryLock = false);
 
     bool isStreamConfigCompatible(const AudioConfig& streamConfig);
 

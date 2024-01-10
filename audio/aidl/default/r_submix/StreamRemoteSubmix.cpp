@@ -267,6 +267,7 @@ size_t StreamRemoteSubmix::getStreamPipeSizeInFrames() {
         }
         return ::android::OK;
     }
+    mReadErrorCount = 0;
 
     LOG(VERBOSE) << __func__ << ": " << mDeviceAddress.toString() << ", " << frameCount
                  << " frames";
@@ -294,7 +295,12 @@ size_t StreamRemoteSubmix::getStreamPipeSizeInFrames() {
         }
     }
     if (actuallyRead < frameCount) {
-        LOG(WARNING) << __func__ << ": read " << actuallyRead << " vs. requested " << frameCount;
+        if (++mReadFailureCount < kMaxReadFailureAttempts) {
+            LOG(WARNING) << __func__ << ": read " << actuallyRead << " vs. requested " << frameCount
+                         << " (not all errors will be logged)";
+        }
+    } else {
+        mReadFailureCount = 0;
     }
     mCurrentRoute->updateReadCounterFrames(*actualFrameCount);
     return ::android::OK;

@@ -67,6 +67,7 @@ class StreamRemoteSubmix : public StreamCommonImpl {
     int64_t mStartTimeNs = 0;
     long mFramesSinceStart = 0;
     int mReadErrorCount = 0;
+    int mReadFailureCount = 0;
 };
 
 class StreamInRemoteSubmix final : public StreamIn, public StreamSwitcher {
