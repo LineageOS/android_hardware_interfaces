@@ -35,5 +35,6 @@ package android.hardware.media.bufferpool2;
 @VintfStability
 parcelable Buffer {
   int id;
-  android.hardware.common.NativeHandle buffer;
+  @nullable android.hardware.common.NativeHandle buffer;
+  @nullable android.hardware.HardwareBuffer hwbBuffer;
 }
