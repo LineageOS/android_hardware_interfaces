@@ -290,7 +290,8 @@ class CameraAidlTest : public ::testing::TestWithParam<std::string> {
     static void verifyStreamCombination(const std::shared_ptr<ICameraDevice>& device,
                                         const StreamConfiguration& config, bool expectedStatus);
 
-    static void verifySessionCharacteristics(const CameraMetadata& chars);
+    static void verifySessionCharacteristics(const CameraMetadata& session_chars,
+                                             const CameraMetadata& camera_chars);
 
     static void verifyLogicalCameraResult(const camera_metadata_t* staticMetadata,
                                           const std::vector<uint8_t>& resultMetadata);
