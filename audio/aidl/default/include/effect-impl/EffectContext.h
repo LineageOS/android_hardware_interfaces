@@ -46,6 +46,14 @@ class EffectContext {
         LOG_ALWAYS_FATAL_IF(output.base.format.pcm !=
                                     aidl::android::media::audio::common::PcmType::FLOAT_32_BIT,
                             "outputFormatNotFloat");
+
+        size_t inputChannelCount =
+                ::aidl::android::hardware::audio::common::getChannelCount(input.base.channelMask);
+        LOG_ALWAYS_FATAL_IF(inputChannelCount == 0, "inputChannelCountNotValid");
+        size_t outputChannelCount =
+                ::aidl::android::hardware::audio::common::getChannelCount(output.base.channelMask);
+        LOG_ALWAYS_FATAL_IF(outputChannelCount == 0, "outputChannelCountNotValid");
+
         mInputFrameSize = ::aidl::android::hardware::audio::common::getFrameSizeInBytes(
                 input.base.format, input.base.channelMask);
         mOutputFrameSize = ::aidl::android::hardware::audio::common::getFrameSizeInBytes(
