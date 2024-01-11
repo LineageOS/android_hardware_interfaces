@@ -18,6 +18,9 @@ aidl_interface {
             ],
             min_sdk_version: "30",
             enabled: true,
+            lint: {
+                baseline_filename: "lint-baseline.xml",
+            },
         },
         ndk: {
             apps_enabled: false,
