@@ -75,6 +75,7 @@ class FakeFingerprintEngine {
     enum class WorkMode : int8_t { kIdle = 0, kAuthenticate, kEnroll, kDetectInteract };
 
     WorkMode getWorkMode() { return mWorkMode; }
+    void notifyFingerdown() { mFingerIsDown = true; }
 
     virtual std::string toString() const {
         std::ostringstream os;
@@ -100,6 +101,7 @@ class FakeFingerprintEngine {
     keymaster::HardwareAuthToken mHat;
     std::future<void> mCancel;
     int64_t mOperationId;
+    bool mFingerIsDown;
 
   private:
     static constexpr int32_t FINGERPRINT_ACQUIRED_VENDOR_BASE = 1000;
@@ -109,6 +111,7 @@ class FakeFingerprintEngine {
     int32_t getRandomInRange(int32_t bound1, int32_t bound2);
     bool checkSensorLockout(ISessionCallback*);
     void clearLockout(ISessionCallback* cb);
+    void waitForFingerDown(ISessionCallback* cb, const std::future<void>& cancel);
 
     FakeLockoutTracker mLockoutTracker;
 

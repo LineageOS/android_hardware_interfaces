@@ -249,6 +249,7 @@ ndk::ScopedAStatus Session::close() {
 ndk::ScopedAStatus Session::onPointerDown(int32_t pointerId, int32_t x, int32_t y, float minor,
                                           float major) {
     LOG(INFO) << "onPointerDown";
+    mEngine->notifyFingerdown();
     mWorker->schedule(Callable::from([this, pointerId, x, y, minor, major] {
         mEngine->onPointerDownImpl(pointerId, x, y, minor, major);
         enterIdling();
