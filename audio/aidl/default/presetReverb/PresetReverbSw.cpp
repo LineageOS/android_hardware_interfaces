@@ -161,10 +161,6 @@ std::shared_ptr<EffectContext> PresetReverbSw::createContext(const Parameter::Co
     return mContext;
 }
 
-std::shared_ptr<EffectContext> PresetReverbSw::getContext() {
-    return mContext;
-}
-
 RetCode PresetReverbSw::releaseContext() {
     if (mContext) {
         mContext.reset();
