@@ -51,6 +51,8 @@ namespace fake {
 
 namespace {
 
+#define PROP_ID_TO_CSTR(A) (propIdToString(A).c_str())
+
 using ::aidl::android::hardware::automotive::vehicle::CruiseControlCommand;
 using ::aidl::android::hardware::automotive::vehicle::CruiseControlType;
 using ::aidl::android::hardware::automotive::vehicle::DriverDistractionState;
@@ -725,7 +727,7 @@ std::optional<int32_t> FakeVehicleHardware::getSyncedAreaIdIfHvacDualOn(
 FakeVehicleHardware::ValueResultType FakeVehicleHardware::getUserHalProp(
         const VehiclePropValue& value) const {
     auto propId = value.prop;
-    ALOGI("get(): getting value for prop %d from User HAL", propId);
+    ALOGI("get(): getting value for prop %s from User HAL", PROP_ID_TO_CSTR(propId));
 
     auto result = mFakeUserHal->onGetProperty(value);
     if (!result.ok()) {
@@ -1088,7 +1090,7 @@ StatusCode FakeVehicleHardware::setValues(std::shared_ptr<const SetValuesCallbac
                                           const std::vector<SetValueRequest>& requests) {
     for (auto& request : requests) {
         if (FAKE_VEHICLEHARDWARE_DEBUG) {
-            ALOGD("Set value for property ID: %d", request.value.prop);
+            ALOGD("Set value for property ID: %s", PROP_ID_TO_CSTR(request.value.prop));
         }
 
         // In a real VHAL implementation, you could either send the setValue request to vehicle bus
@@ -1109,9 +1111,9 @@ VhalResult<void> FakeVehicleHardware::setValue(const VehiclePropValue& value) {
     auto setSpecialValueResult = maybeSetSpecialValue(value, &isSpecialValue);
     if (isSpecialValue) {
         if (!setSpecialValueResult.ok()) {
-            return StatusError(getErrorCode(setSpecialValueResult))
-                   << StringPrintf("failed to set special value for property ID: %d, error: %s",
-                                   value.prop, getErrorMsg(setSpecialValueResult).c_str());
+            return StatusError(getErrorCode(setSpecialValueResult)) << StringPrintf(
+                           "failed to set special value for property ID: %s, error: %s",
+                           PROP_ID_TO_CSTR(value.prop), getErrorMsg(setSpecialValueResult).c_str());
         }
         return {};
     }
@@ -1150,7 +1152,7 @@ StatusCode FakeVehicleHardware::getValues(std::shared_ptr<const GetValuesCallbac
                                           const std::vector<GetValueRequest>& requests) const {
     for (auto& request : requests) {
         if (FAKE_VEHICLEHARDWARE_DEBUG) {
-            ALOGD("getValues(%d)", request.prop.prop);
+            ALOGD("getValues(%s)", PROP_ID_TO_CSTR(request.prop.prop));
         }
 
         // In a real VHAL implementation, you could either send the getValue request to vehicle bus
@@ -1189,8 +1191,8 @@ FakeVehicleHardware::ValueResultType FakeVehicleHardware::getValue(
     if (isSpecialValue) {
         if (!result.ok()) {
             return StatusError(getErrorCode(result))
-                   << StringPrintf("failed to get special value: %d, error: %s", value.prop,
-                                   getErrorMsg(result).c_str());
+                   << StringPrintf("failed to get special value: %s, error: %s",
+                                   PROP_ID_TO_CSTR(value.prop), getErrorMsg(result).c_str());
         } else {
             return result;
         }
@@ -1249,6 +1251,8 @@ DumpResult FakeVehicleHardware::dump(const std::vector<std::string>& options) {
         mAddExtraTestVendorConfigs = false;
         result.refreshPropertyConfigs = true;
         result.buffer = "successfully restored vendor configs";
+    } else if (EqualsIgnoreCase(option, "--dumpSub")) {
+        result.buffer = dumpSubscriptions();
     } else {
         result.buffer = StringPrintf("Invalid option: %s\n", option.c_str());
     }
@@ -1380,7 +1384,8 @@ std::string FakeVehicleHardware::genFakeDataCommand(const std::vector<std::strin
         if (mGeneratorHub->unregisterGenerator(propId)) {
             return "Linear event generator stopped successfully";
         }
-        return StringPrintf("No linear event generator found for property: %d", propId);
+        return StringPrintf("No linear event generator found for property: %s",
+                            PROP_ID_TO_CSTR(propId));
     } else if (command == "--startjson") {
         // --genfakedata --startjson --path path repetition
         // or
@@ -1650,6 +1655,26 @@ void FakeVehicleHardware::eventFromVehicleBus(const VehiclePropValue& value) {
     mServerSidePropStore->writeValue(mValuePool->obtain(value));
 }
 
+std::string FakeVehicleHardware::dumpSubscriptions() {
+    std::scoped_lock<std::mutex> lockGuard(mLock);
+    std::string result = "Subscriptions: \n";
+    for (const auto& [interval, actionForInterval] : mActionByIntervalInNanos) {
+        for (const auto& propIdAreaId : actionForInterval.propIdAreaIdsToRefresh) {
+            const auto& refreshInfo = mRefreshInfoByPropIdAreaId[propIdAreaId];
+            bool vur = (refreshInfo.eventMode == VehiclePropertyStore::EventMode::ON_VALUE_CHANGE);
+            float sampleRateHz = 1'000'000'000. / refreshInfo.intervalInNanos;
+            result += StringPrintf("Continuous{property: %s, areaId: %d, rate: %lf hz, vur: %b}\n",
+                                   PROP_ID_TO_CSTR(propIdAreaId.propId), propIdAreaId.areaId,
+                                   sampleRateHz, vur);
+        }
+    }
+    for (const auto& propIdAreaId : mSubOnChangePropIdAreaIds) {
+        result += StringPrintf("OnChange{property: %s, areaId: %d}\n",
+                               PROP_ID_TO_CSTR(propIdAreaId.propId), propIdAreaId.areaId);
+    }
+    return result;
+}
+
 std::string FakeVehicleHardware::dumpHelp() {
     return "Usage: \n\n"
            "[no args]: dumps (id and value) all supported properties \n"
@@ -1717,8 +1742,9 @@ std::string FakeVehicleHardware::dumpOnePropertyById(int32_t propId, int32_t are
         result = mServerSidePropStore->readValue(value);
     }
     if (!result.ok()) {
-        return StringPrintf("failed to read property value: %d, error: %s, code: %d\n", propId,
-                            getErrorMsg(result).c_str(), getIntErrorCode(result));
+        return StringPrintf("failed to read property value: %s, error: %s, code: %d\n",
+                            PROP_ID_TO_CSTR(propId), getErrorMsg(result).c_str(),
+                            getIntErrorCode(result));
 
     } else {
         return result.value()->toString() + "\n";
@@ -1733,7 +1759,7 @@ std::string FakeVehicleHardware::dumpListProperties() {
     int rowNumber = 1;
     std::string msg = StringPrintf("listing %zu properties\n", configs.size());
     for (const auto& config : configs) {
-        msg += StringPrintf("%d: %d\n", rowNumber++, config.prop);
+        msg += StringPrintf("%d: %s\n", rowNumber++, PROP_ID_TO_CSTR(config.prop));
     }
     return msg;
 }
@@ -1766,7 +1792,7 @@ std::string FakeVehicleHardware::dumpSpecificProperty(const std::vector<std::str
         int32_t prop = propResult.value();
         auto result = mServerSidePropStore->getPropConfig(prop);
         if (!result.ok()) {
-            msg += StringPrintf("No property %d\n", prop);
+            msg += StringPrintf("No property %s\n", PROP_ID_TO_CSTR(prop));
             continue;
         }
         msg += dumpOnePropertyByConfig(rowNumber++, result.value());
@@ -1952,8 +1978,9 @@ std::string FakeVehicleHardware::dumpGetPropertyWithArg(const std::vector<std::s
     }
 
     if (!result.ok()) {
-        return StringPrintf("failed to read property value: %d, error: %s, code: %d\n", prop.prop,
-                            getErrorMsg(result).c_str(), getIntErrorCode(result));
+        return StringPrintf("failed to read property value: %s, error: %s, code: %d\n",
+                            PROP_ID_TO_CSTR(prop.prop), getErrorMsg(result).c_str(),
+                            getIntErrorCode(result));
     }
     return StringPrintf("Get property result: %s\n", result.value()->toString().c_str());
 }
@@ -2046,7 +2073,7 @@ std::string FakeVehicleHardware::dumpInjectEvent(const std::vector<std::string>&
 
     eventFromVehicleBus(prop);
 
-    return StringPrintf("Event for property: %d injected", prop.prop);
+    return StringPrintf("Event for property: %s injected", PROP_ID_TO_CSTR(prop.prop));
 }
 
 StatusCode FakeVehicleHardware::checkHealth() {
