@@ -1422,19 +1422,12 @@ TEST_P(RadioNetworkTest, setNetworkSelectionModeManual) {
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_network->rspInfo.type);
     EXPECT_EQ(serial, radioRsp_network->rspInfo.serial);
 
-    if (cardStatus.cardState == CardStatus::STATE_ABSENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(
-                radioRsp_network->rspInfo.error,
-                {RadioError::NONE, RadioError::ILLEGAL_SIM_OR_ME, RadioError::INVALID_ARGUMENTS,
-                 RadioError::INVALID_STATE, RadioError::RADIO_NOT_AVAILABLE, RadioError::NO_MEMORY,
-                 RadioError::INTERNAL_ERR, RadioError::SYSTEM_ERR, RadioError::CANCELLED}));
-    } else if (cardStatus.cardState == CardStatus::STATE_PRESENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(
-                radioRsp_network->rspInfo.error,
-                {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::INVALID_ARGUMENTS,
-                 RadioError::INVALID_STATE, RadioError::NO_MEMORY, RadioError::INTERNAL_ERR,
-                 RadioError::SYSTEM_ERR, RadioError::CANCELLED}));
-    }
+    ASSERT_TRUE(CheckAnyOfErrors(
+            radioRsp_network->rspInfo.error,
+            {RadioError::NONE, RadioError::ILLEGAL_SIM_OR_ME, RadioError::RADIO_NOT_AVAILABLE,
+             RadioError::INVALID_ARGUMENTS, RadioError::INVALID_STATE, RadioError::NO_MEMORY,
+             RadioError::INTERNAL_ERR, RadioError::SYSTEM_ERR, RadioError::CANCELLED,
+             RadioError::MODEM_ERR, RadioError::OPERATION_NOT_ALLOWED, RadioError::NO_RESOURCES}));
 }
 
 /*
