@@ -84,10 +84,10 @@ vintf_compatibility_matrix {
 }
 
 vintf_compatibility_matrix {
-    name: "framework_compatibility_matrix.9.xml",
-    stem: "compatibility_matrix.9.xml",
+    name: "framework_compatibility_matrix.202404.xml",
+    stem: "compatibility_matrix.202404.xml",
     srcs: [
-        "compatibility_matrix.9.xml",
+        "compatibility_matrix.202404.xml",
     ],
     kernel_configs: [
         "kernel_config_v_6.1",
