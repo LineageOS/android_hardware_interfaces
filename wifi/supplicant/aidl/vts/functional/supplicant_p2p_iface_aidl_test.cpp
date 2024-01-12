@@ -37,8 +37,10 @@ using aidl::android::hardware::wifi::supplicant::ISupplicantP2pIface;
 using aidl::android::hardware::wifi::supplicant::MiracastMode;
 using aidl::android::hardware::wifi::supplicant::P2pDeviceFoundEventParams;
 using aidl::android::hardware::wifi::supplicant::P2pFrameTypeMask;
+using aidl::android::hardware::wifi::supplicant::P2pGoNegotiationReqEventParams;
 using aidl::android::hardware::wifi::supplicant::P2pGroupCapabilityMask;
 using aidl::android::hardware::wifi::supplicant::P2pGroupStartedEventParams;
+using aidl::android::hardware::wifi::supplicant::P2pInvitationEventParams;
 using aidl::android::hardware::wifi::supplicant::P2pPeerClientDisconnectedEventParams;
 using aidl::android::hardware::wifi::supplicant::P2pPeerClientJoinedEventParams;
 using aidl::android::hardware::wifi::supplicant::P2pProvDiscStatusCode;
@@ -202,6 +204,14 @@ class SupplicantP2pIfaceCallback : public BnSupplicantP2pIfaceCallback {
     }
     ::ndk::ScopedAStatus onDeviceFoundWithParams(
             const P2pDeviceFoundEventParams& /* deviceFoundEventParams */) override {
+        return ndk::ScopedAStatus::ok();
+    }
+    ::ndk::ScopedAStatus onGoNegotiationRequestWithParams(
+            const P2pGoNegotiationReqEventParams& /* goNegotiationReqEventParams */) override {
+        return ndk::ScopedAStatus::ok();
+    }
+    ::ndk::ScopedAStatus onInvitationReceivedWithParams(
+            const P2pInvitationEventParams& /* invitationEventParams */) override {
         return ndk::ScopedAStatus::ok();
     }
 };
