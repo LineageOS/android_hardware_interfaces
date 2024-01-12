@@ -53,21 +53,24 @@ class AutomaticGainControlV1Sw final : public EffectImpl {
     }
 
     ndk::ScopedAStatus getDescriptor(Descriptor* _aidl_return) override;
-    ndk::ScopedAStatus setParameterSpecific(const Parameter::Specific& specific) override;
-    ndk::ScopedAStatus getParameterSpecific(const Parameter::Id& id,
-                                            Parameter::Specific* specific) override;
+    ndk::ScopedAStatus setParameterSpecific(const Parameter::Specific& specific)
+            REQUIRES(mImplMutex) override;
+    ndk::ScopedAStatus getParameterSpecific(const Parameter::Id& id, Parameter::Specific* specific)
+            REQUIRES(mImplMutex) override;
 
-    std::shared_ptr<EffectContext> createContext(const Parameter::Common& common) override;
-    std::shared_ptr<EffectContext> getContext() override;
-    RetCode releaseContext() override;
+    std::shared_ptr<EffectContext> createContext(const Parameter::Common& common)
+            REQUIRES(mImplMutex) override;
+    RetCode releaseContext() REQUIRES(mImplMutex) override;
 
     std::string getEffectName() override { return kEffectName; };
-    IEffect::Status effectProcessImpl(float* in, float* out, int samples) override;
+    IEffect::Status effectProcessImpl(float* in, float* out, int samples)
+            REQUIRES(mImplMutex) override;
 
   private:
     static const std::vector<Range::AutomaticGainControlV1Range> kRanges;
-    std::shared_ptr<AutomaticGainControlV1SwContext> mContext;
+    std::shared_ptr<AutomaticGainControlV1SwContext> mContext GUARDED_BY(mImplMutex);
     ndk::ScopedAStatus getParameterAutomaticGainControlV1(const AutomaticGainControlV1::Tag& tag,
-                                                          Parameter::Specific* specific);
+                                                          Parameter::Specific* specific)
+            REQUIRES(mImplMutex);
 };
 }  // namespace aidl::android::hardware::audio::effect

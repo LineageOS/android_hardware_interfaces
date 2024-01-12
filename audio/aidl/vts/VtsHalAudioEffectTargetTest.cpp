@@ -609,6 +609,49 @@ TEST_P(AudioEffectTest, SetAndGetParameterVolume) {
     ASSERT_NO_FATAL_FAILURE(destroy(mFactory, mEffect));
 }
 
+// Verify Parameters kept after reset.
+TEST_P(AudioEffectTest, SetCommonParameterAndReopen) {
+    ASSERT_NO_FATAL_FAILURE(create(mFactory, mEffect, mDescriptor));
+
+    Parameter::Common common = EffectHelper::createParamCommon(
+            0 /* session */, 1 /* ioHandle */, 44100 /* iSampleRate */, 44100 /* oSampleRate */,
+            kInputFrameCount /* iFrameCount */, kOutputFrameCount /* oFrameCount */);
+    IEffect::OpenEffectReturn ret;
+    ASSERT_NO_FATAL_FAILURE(open(mEffect, common, std::nullopt /* specific */, &ret, EX_NONE));
+    auto statusMQ = std::make_unique<EffectHelper::StatusMQ>(ret.statusMQ);
+    ASSERT_TRUE(statusMQ->isValid());
+    auto inputMQ = std::make_unique<EffectHelper::DataMQ>(ret.inputDataMQ);
+    ASSERT_TRUE(inputMQ->isValid());
+    auto outputMQ = std::make_unique<EffectHelper::DataMQ>(ret.outputDataMQ);
+    ASSERT_TRUE(outputMQ->isValid());
+
+    Parameter::Id id = Parameter::Id::make<Parameter::Id::commonTag>(Parameter::common);
+    common.input.frameCount++;
+    ASSERT_NO_FATAL_FAILURE(setAndGetParameter(id, Parameter::make<Parameter::common>(common)));
+    ASSERT_TRUE(statusMQ->isValid());
+    expectDataMqUpdateEventFlag(statusMQ);
+    EXPECT_IS_OK(mEffect->reopen(&ret));
+    inputMQ = std::make_unique<EffectHelper::DataMQ>(ret.inputDataMQ);
+    outputMQ = std::make_unique<EffectHelper::DataMQ>(ret.outputDataMQ);
+    ASSERT_TRUE(statusMQ->isValid());
+    ASSERT_TRUE(inputMQ->isValid());
+    ASSERT_TRUE(outputMQ->isValid());
+
+    common.output.frameCount++;
+    ASSERT_NO_FATAL_FAILURE(setAndGetParameter(id, Parameter::make<Parameter::common>(common)));
+    ASSERT_TRUE(statusMQ->isValid());
+    expectDataMqUpdateEventFlag(statusMQ);
+    EXPECT_IS_OK(mEffect->reopen(&ret));
+    inputMQ = std::make_unique<EffectHelper::DataMQ>(ret.inputDataMQ);
+    outputMQ = std::make_unique<EffectHelper::DataMQ>(ret.outputDataMQ);
+    ASSERT_TRUE(statusMQ->isValid());
+    ASSERT_TRUE(inputMQ->isValid());
+    ASSERT_TRUE(outputMQ->isValid());
+
+    ASSERT_NO_FATAL_FAILURE(close(mEffect));
+    ASSERT_NO_FATAL_FAILURE(destroy(mFactory, mEffect));
+}
+
 /// Data processing test
 // Send data to effects and expect it to be consumed by checking statusMQ.
 // Effects exposing bypass flags or operating in offload mode will be skipped.
@@ -671,6 +714,59 @@ TEST_P(AudioEffectDataPathTest, ConsumeDataAfterRestart) {
     ASSERT_NO_FATAL_FAILURE(command(mEffect, CommandId::START));
     ASSERT_NO_FATAL_FAILURE(expectState(mEffect, State::PROCESSING));
 
+    EXPECT_NO_FATAL_FAILURE(EffectHelper::allocateInputData(common, inputMQ, buffer));
+    EXPECT_NO_FATAL_FAILURE(EffectHelper::writeToFmq(statusMQ, inputMQ, buffer));
+    EXPECT_NO_FATAL_FAILURE(
+            EffectHelper::readFromFmq(statusMQ, 1, outputMQ, buffer.size(), buffer));
+
+    ASSERT_NO_FATAL_FAILURE(command(mEffect, CommandId::STOP));
+    ASSERT_NO_FATAL_FAILURE(expectState(mEffect, State::IDLE));
+    EXPECT_NO_FATAL_FAILURE(EffectHelper::readFromFmq(statusMQ, 0, outputMQ, 0, buffer));
+
+    ASSERT_NO_FATAL_FAILURE(close(mEffect));
+    ASSERT_NO_FATAL_FAILURE(destroy(mFactory, mEffect));
+}
+
+// Send data to effects and expect it to be consumed after effect reopen (IO AudioConfig change).
+// Effects exposing bypass flags or operating in offload mode will be skipped.
+TEST_P(AudioEffectDataPathTest, ConsumeDataAfterReopen) {
+    ASSERT_NO_FATAL_FAILURE(create(mFactory, mEffect, mDescriptor));
+
+    Parameter::Common common = EffectHelper::createParamCommon(
+            0 /* session */, 1 /* ioHandle */, 44100 /* iSampleRate */, 44100 /* oSampleRate */,
+            kInputFrameCount /* iFrameCount */, kOutputFrameCount /* oFrameCount */);
+    IEffect::OpenEffectReturn ret;
+    ASSERT_NO_FATAL_FAILURE(open(mEffect, common, std::nullopt /* specific */, &ret, EX_NONE));
+    auto statusMQ = std::make_unique<EffectHelper::StatusMQ>(ret.statusMQ);
+    ASSERT_TRUE(statusMQ->isValid());
+    auto inputMQ = std::make_unique<EffectHelper::DataMQ>(ret.inputDataMQ);
+    ASSERT_TRUE(inputMQ->isValid());
+    auto outputMQ = std::make_unique<EffectHelper::DataMQ>(ret.outputDataMQ);
+    ASSERT_TRUE(outputMQ->isValid());
+
+    std::vector<float> buffer;
+    ASSERT_NO_FATAL_FAILURE(command(mEffect, CommandId::START));
+    ASSERT_NO_FATAL_FAILURE(expectState(mEffect, State::PROCESSING));
+    EXPECT_NO_FATAL_FAILURE(EffectHelper::allocateInputData(common, inputMQ, buffer));
+    EXPECT_NO_FATAL_FAILURE(EffectHelper::writeToFmq(statusMQ, inputMQ, buffer));
+    EXPECT_NO_FATAL_FAILURE(
+            EffectHelper::readFromFmq(statusMQ, 1, outputMQ, buffer.size(), buffer));
+
+    // set a new common parameter with different IO frameCount, reopen
+    Parameter::Id id = Parameter::Id::make<Parameter::Id::commonTag>(Parameter::common);
+    common.input.frameCount += 4;
+    common.output.frameCount += 4;
+    ASSERT_NO_FATAL_FAILURE(setAndGetParameter(id, Parameter::make<Parameter::common>(common)));
+    ASSERT_TRUE(statusMQ->isValid());
+    expectDataMqUpdateEventFlag(statusMQ);
+    EXPECT_IS_OK(mEffect->reopen(&ret));
+    inputMQ = std::make_unique<EffectHelper::DataMQ>(ret.inputDataMQ);
+    outputMQ = std::make_unique<EffectHelper::DataMQ>(ret.outputDataMQ);
+    ASSERT_TRUE(statusMQ->isValid());
+    ASSERT_TRUE(inputMQ->isValid());
+    ASSERT_TRUE(outputMQ->isValid());
+
+    // verify data consume again
     EXPECT_NO_FATAL_FAILURE(EffectHelper::allocateInputData(common, inputMQ, buffer));
     EXPECT_NO_FATAL_FAILURE(EffectHelper::writeToFmq(statusMQ, inputMQ, buffer));
     EXPECT_NO_FATAL_FAILURE(
