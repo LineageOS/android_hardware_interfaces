@@ -18,9 +18,8 @@
 
 #include <aidl/android/hardware/bluetooth/audio/A2dpStatus.h>
 #include <aidl/android/hardware/bluetooth/audio/ChannelMode.h>
+#include <aidl/android/hardware/bluetooth/audio/CodecInfo.h>
 #include <aidl/android/hardware/bluetooth/audio/CodecParameters.h>
-
-#include "BluetoothAudioProviderFactory.h"
 
 namespace aidl::android::hardware::bluetooth::audio {
 

@@ -29,14 +29,12 @@ struct AacParameters : public CodecParameters {
 class A2dpOffloadCodecAac : public A2dpOffloadCodec {
   CodecInfo info_;
 
-  A2dpOffloadCodecAac();
-
   A2dpStatus ParseConfiguration(const std::vector<uint8_t>& configuration,
                                 CodecParameters* codec_parameters,
                                 AacParameters* aac_parameters) const;
 
  public:
-  static const A2dpOffloadCodecAac* GetInstance();
+  A2dpOffloadCodecAac();
 
   A2dpStatus ParseConfiguration(
       const std::vector<uint8_t>& configuration,
