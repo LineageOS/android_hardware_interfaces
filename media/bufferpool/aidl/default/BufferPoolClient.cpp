@@ -757,7 +757,13 @@ BufferPoolStatus BufferPoolClient::Impl::fetchBufferHandle(
         return svcSpecific ? svcSpecific : ResultStatus::CRITICAL_ERROR;
     }
     if (results[0].getTag() == FetchResult::buffer) {
-        *handle = ::android::dupFromAidl(results[0].get<FetchResult::buffer>().buffer);
+        if (results[0].get<FetchResult::buffer>().buffer.has_value()) {
+            *handle = ::android::dupFromAidl(results[0].get<FetchResult::buffer>().buffer.value());
+        } else {
+            // TODO: Support HardwareBuffer
+            ALOGW("handle nullptr");
+            *handle = nullptr;
+        }
         return ResultStatus::OK;
     }
     return results[0].get<FetchResult::failure>();
