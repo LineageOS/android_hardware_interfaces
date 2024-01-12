@@ -141,10 +141,6 @@ std::shared_ptr<EffectContext> SpatializerSw::createContext(const Parameter::Com
     return mContext;
 }
 
-std::shared_ptr<EffectContext> SpatializerSw::getContext() {
-    return mContext;
-}
-
 RetCode SpatializerSw::releaseContext() {
     if (mContext) {
         mContext.reset();

@@ -230,6 +230,7 @@ cc_defaults {
 filegroup {
     name: "effectCommonFile",
     srcs: [
+        "EffectContext.cpp",
         "EffectThread.cpp",
         "EffectImpl.cpp",
     ],
