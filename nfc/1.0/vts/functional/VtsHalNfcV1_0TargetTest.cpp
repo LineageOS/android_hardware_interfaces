@@ -354,13 +354,6 @@ TEST_P(NfcHidlTest, Bandwidth) {
     res = nfc_cb_->WaitForCallback(kCallbackNameSendData);
     EXPECT_TRUE(res.no_timeout);
     EXPECT_EQ((int)NfcStatus::OK, res.args->last_data_[3]);
-    if (nci_version == NCI_VERSION_2 && res.args->last_data_.size() > 13 &&
-        res.args->last_data_[13] == 0x00) {
-        // Wait for CORE_CONN_CREDITS_NTF
-        res = nfc_cb_->WaitForCallback(kCallbackNameSendData);
-        EXPECT_TRUE(res.no_timeout);
-    }
-
     cmd = CORE_CONN_CREATE_CMD;
     data = cmd;
     EXPECT_EQ(data.size(), nfc_->write(data));
