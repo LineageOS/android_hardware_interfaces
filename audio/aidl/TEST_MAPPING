@@ -55,6 +55,21 @@
   "postsubmit": [
     {
       "name": "VtsHalSpatializerTargetTest"
+    },
+    {
+      "name": "audiorecord_tests"
+    },
+    {
+      "name": "audioeffect_tests"
+    },
+    {
+      "name": "audiorouting_tests"
+    },
+    {
+      "name": "trackplayerbase_tests"
+    },
+    {
+      "name": "audiosystem_tests"
     }
   ]
 }

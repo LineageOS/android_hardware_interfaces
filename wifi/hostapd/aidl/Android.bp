@@ -39,6 +39,9 @@ aidl_interface {
                 "com.android.wifi",
             ],
             min_sdk_version: "30",
+            lint: {
+                baseline_filename: "lint-baseline.xml",
+            },
         },
         ndk: {
             gen_trace: true,
