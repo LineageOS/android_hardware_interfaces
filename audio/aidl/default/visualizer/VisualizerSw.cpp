@@ -190,10 +190,6 @@ std::shared_ptr<EffectContext> VisualizerSw::createContext(const Parameter::Comm
     return mContext;
 }
 
-std::shared_ptr<EffectContext> VisualizerSw::getContext() {
-    return mContext;
-}
-
 RetCode VisualizerSw::releaseContext() {
     if (mContext) {
         mContext.reset();
