@@ -4583,8 +4583,7 @@ GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(AudioModulePatch);
 static std::vector<std::string> getRemoteSubmixModuleInstance() {
     auto instances = android::getAidlHalInstanceNames(IModule::descriptor);
     for (auto instance : instances) {
-        if (instance.find("r_submix") != std::string::npos)
-            return (std::vector<std::string>{instance});
+        if (instance.ends_with("/r_submix")) return (std::vector<std::string>{instance});
     }
     return {};
 }
@@ -4672,6 +4671,9 @@ class AudioModuleRemoteSubmix : public AudioCoreModule {
         // Turn off "debug" which enables connections simulation. Since devices of the remote
         // submix module are virtual, there is no need for simulation.
         ASSERT_NO_FATAL_FAILURE(SetUpImpl(GetParam(), false /*setUpDebug*/));
+        if (int32_t version; module->getInterfaceVersion(&version).isOk() && version < 2) {
+            GTEST_SKIP() << "V1 uses a deprecated remote submix device type encoding";
+        }
         ASSERT_NO_FATAL_FAILURE(SetUpModuleConfig());
     }
 };
