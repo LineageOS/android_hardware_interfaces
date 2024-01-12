@@ -69,18 +69,9 @@ class WifiStaIfaceAidlTest : public testing::TestWithParam<std::string> {
 
     std::shared_ptr<IWifiStaIface> wifi_sta_iface_;
 
-    // Checks if the MdnsOffloadManagerService is installed.
-    bool isMdnsOffloadServicePresent() {
-        int status =
-                // --query-flags MATCH_SYSTEM_ONLY(1048576) will only return matched service
-                // installed on system or system_ext partition. The MdnsOffloadManagerService should
-                // be installed on system_ext partition.
-                // NOLINTNEXTLINE(cert-env33-c)
-                system("pm query-services --query-flags 1048576"
-                       " com.android.tv.mdnsoffloadmanager/"
-                       "com.android.tv.mdnsoffloadmanager.MdnsOffloadManagerService"
-                       " | egrep -q mdnsoffloadmanager");
-        return status == 0;
+    // Checks if the mDNS Offload is supported by any NIC.
+    bool isMdnsOffloadPresentInNIC() {
+        return testing::deviceSupportsFeature("android.hardware.mdns_offload");
     }
 
     // Detected panel TV device by using ro.oem.key1 property.
@@ -146,7 +137,7 @@ TEST_P(WifiStaIfaceAidlTest, GetFeatureSet) {
 TEST_P(WifiStaIfaceAidlTest, CheckApfIsSupported) {
     // Flat panel TV devices that support MDNS offload do not have to implement APF if the WiFi
     // chipset does not have sufficient RAM to do so.
-    if (isPanelTvDevice() && isMdnsOffloadServicePresent()) {
+    if (isPanelTvDevice() && isMdnsOffloadPresentInNIC()) {
         GTEST_SKIP() << "Panel TV supports mDNS offload. It is not required to support APF";
     }
     int vendor_api_level = property_get_int32("ro.vendor.api_level", 0);
