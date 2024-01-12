@@ -30,6 +30,8 @@ rust_test {
     ],
     test_config: "AndroidTest.xml",
     rustlibs: [
+        "libdiced_open_dice",
+        "libdice_policy",
         "libsecretkeeper_client",
         "libsecretkeeper_comm_nostd",
         "libsecretkeeper_core_nostd",
@@ -39,6 +41,7 @@ rust_test {
         "libcoset",
         "libauthgraph_vts_test",
         "libbinder_rs",
+        "libciborium",
         "libcoset",
         "liblog_rust",
     ],
