@@ -145,6 +145,7 @@ TEST_F(FakeFingerprintEngineUdfpsTest, initialization) {
 TEST_F(FakeFingerprintEngineUdfpsTest, authenticate) {
     std::shared_ptr<TestSessionCallback> cb = ndk::SharedRefBase::make<TestSessionCallback>();
     std::promise<void> cancel;
+    mEngine.notifyFingerdown();
     mEngine.authenticateImpl(cb.get(), 1, cancel.get_future());
     ASSERT_TRUE(mEngine.getWorkMode() == FakeFingerprintEngineUdfps::WorkMode::kAuthenticate);
     mEngine.onPointerDownImpl(1, 2, 3, 4.0, 5.0);
@@ -158,6 +159,7 @@ TEST_F(FakeFingerprintEngineUdfpsTest, enroll) {
     std::promise<void> cancel;
     keymaster::HardwareAuthToken hat{.mac = {5, 6}};
     FingerprintHalProperties::next_enrollment("5:0,0:true");
+    mEngine.notifyFingerdown();
     mEngine.enrollImpl(cb.get(), hat, cancel.get_future());
     ASSERT_TRUE(mEngine.getWorkMode() == FakeFingerprintEngineUdfps::WorkMode::kEnroll);
     mEngine.onPointerDownImpl(1, 2, 3, 4.0, 5.0);
@@ -173,6 +175,7 @@ TEST_F(FakeFingerprintEngineUdfpsTest, detectInteraction) {
     FingerprintHalProperties::operation_detect_interaction_acquired("");
     std::shared_ptr<TestSessionCallback> cb = ndk::SharedRefBase::make<TestSessionCallback>();
     std::promise<void> cancel;
+    mEngine.notifyFingerdown();
     mEngine.detectInteractionImpl(cb.get(), cancel.get_future());
     ASSERT_TRUE(mEngine.getWorkMode() == FakeFingerprintEngineUdfps::WorkMode::kDetectInteract);
     mEngine.onPointerDownImpl(1, 2, 3, 4.0, 5.0);

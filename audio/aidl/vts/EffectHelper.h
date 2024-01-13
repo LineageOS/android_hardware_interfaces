@@ -43,6 +43,7 @@ using namespace android;
 using aidl::android::hardware::audio::effect::CommandId;
 using aidl::android::hardware::audio::effect::Descriptor;
 using aidl::android::hardware::audio::effect::IEffect;
+using aidl::android::hardware::audio::effect::kEventFlagDataMqUpdate;
 using aidl::android::hardware::audio::effect::kEventFlagNotEmpty;
 using aidl::android::hardware::audio::effect::Parameter;
 using aidl::android::hardware::audio::effect::Range;
@@ -190,6 +191,16 @@ class EffectHelper {
         if (expectFloats != 0) {
             ASSERT_TRUE(dataMq->read(buffer.data(), expectFloats));
         }
+    }
+    static void expectDataMqUpdateEventFlag(std::unique_ptr<StatusMQ>& statusMq) {
+        EventFlag* efGroup;
+        ASSERT_EQ(::android::OK,
+                  EventFlag::createEventFlag(statusMq->getEventFlagWord(), &efGroup));
+        ASSERT_NE(nullptr, efGroup);
+        uint32_t efState = 0;
+        EXPECT_EQ(::android::OK, efGroup->wait(kEventFlagDataMqUpdate, &efState, 1'000'000 /*1ms*/,
+                                               true /* retry */));
+        EXPECT_TRUE(efState & kEventFlagDataMqUpdate);
     }
     static Parameter::Common createParamCommon(
             int session = 0, int ioHandle = -1, int iSampleRate = 48000, int oSampleRate = 48000,

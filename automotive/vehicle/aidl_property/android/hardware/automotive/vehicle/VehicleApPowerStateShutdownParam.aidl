@@ -20,7 +20,7 @@ package android.hardware.automotive.vehicle;
 @Backing(type="int")
 enum VehicleApPowerStateShutdownParam {
     /**
-     * AP must shutdown without Garage mode. Postponing is not allowed.
+     * AP must shutdown without Garage mode.
      * If AP need to shutdown as soon as possible, EMERGENCY_SHUTDOWN shall be used.
      */
     SHUTDOWN_IMMEDIATELY = 1,
@@ -36,13 +36,11 @@ enum VehicleApPowerStateShutdownParam {
     SHUTDOWN_ONLY = 3,
     /**
      * AP can enter deep sleep, without Garage mode.
-     * Postponing is not allowed.
      * Depending on the actual implementation, it may shut down immediately
      */
     SLEEP_IMMEDIATELY = 4,
     /**
      * AP can hibernate (suspend to disk) without Garage mode.
-     * Postponing is not allowed.
      * Depending on the actual implementation, it may shut down immediately.
      */
     HIBERNATE_IMMEDIATELY = 5,

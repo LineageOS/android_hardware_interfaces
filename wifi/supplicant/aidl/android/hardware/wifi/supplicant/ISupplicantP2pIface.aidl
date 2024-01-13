@@ -22,6 +22,7 @@ import android.hardware.wifi.supplicant.ISupplicantP2pIfaceCallback;
 import android.hardware.wifi.supplicant.ISupplicantP2pNetwork;
 import android.hardware.wifi.supplicant.IfaceType;
 import android.hardware.wifi.supplicant.MiracastMode;
+import android.hardware.wifi.supplicant.P2pAddGroupConfigurationParams;
 import android.hardware.wifi.supplicant.P2pConnectInfo;
 import android.hardware.wifi.supplicant.P2pDiscoveryInfo;
 import android.hardware.wifi.supplicant.P2pExtListenInfo;
@@ -74,6 +75,9 @@ interface ISupplicantP2pIface {
      * whose network name and group owner's MAC address matches the specified SSID
      * and peer address without WPS process. If peerAddress is 00:00:00:00:00:00, the first found
      * group whose network name matches the specified SSID is joined.
+     * <p>
+     * @deprecated This method is deprecated from AIDL v3, newer HALs should use
+     * addGroupWithConfigurationParams.
      *
      * @param ssid The SSID of this group.
      * @param pskPassphrase The passphrase of this group.
@@ -903,4 +907,16 @@ interface ISupplicantP2pIface {
      *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
      */
     void configureExtListenWithParams(in P2pExtListenInfo extListenInfo);
+
+    /**
+     * Set up a P2P group owner or join a group as a group client
+     * with the specified configuration.
+     *
+     * @param groupConfigurationParams Parameters associated with this add group operation.
+     * @throws ServiceSpecificException with one of the following values:
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+     */
+    void addGroupWithConfigurationParams(
+            in P2pAddGroupConfigurationParams groupConfigurationParams);
 }

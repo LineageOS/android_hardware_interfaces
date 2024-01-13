@@ -267,10 +267,6 @@ std::shared_ptr<EffectContext> EnvReverbSw::createContext(const Parameter::Commo
     return mContext;
 }
 
-std::shared_ptr<EffectContext> EnvReverbSw::getContext() {
-    return mContext;
-}
-
 RetCode EnvReverbSw::releaseContext() {
     if (mContext) {
         mContext.reset();

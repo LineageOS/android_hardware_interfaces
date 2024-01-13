@@ -41,7 +41,7 @@ parcelable CarrierInfo {
   @nullable String gid1;
   @nullable String gid2;
   @nullable String imsiPrefix;
-  @nullable List<android.hardware.radio.sim.Plmn> ephlmn;
+  @nullable List<android.hardware.radio.sim.Plmn> ehplmn;
   @nullable String iccid;
   @nullable String impi;
 }

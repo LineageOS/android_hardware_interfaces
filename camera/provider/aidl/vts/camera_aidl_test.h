@@ -439,7 +439,8 @@ class CameraAidlTest : public ::testing::TestWithParam<std::string> {
             int32_t frameCount, const bool *overrideSequence, const bool *expectedResults);
 
     bool supportZoomSettingsOverride(const camera_metadata_t* staticMeta);
-    bool supportsCroppedRawUseCase(const camera_metadata_t *staticMeta);
+    static bool supportsStreamUseCaseCap(const camera_metadata_t* staticMeta);
+    static bool supportsCroppedRawUseCase(const camera_metadata_t* staticMeta);
     bool isPerFrameControl(const camera_metadata_t* staticMeta);
 
     void getSupportedSizes(const camera_metadata_t* ch, uint32_t tag, int32_t format,

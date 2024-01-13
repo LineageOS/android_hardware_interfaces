@@ -36,6 +36,9 @@ package android.hardware.wifi.supplicant;
 interface ISupplicantP2pIface {
   void addBonjourService(in byte[] query, in byte[] response);
   void addGroup(in boolean persistent, in int persistentNetworkId);
+  /**
+   * @deprecated This method is deprecated from AIDL v3, newer HALs should use addGroupWithConfigurationParams.
+   */
   void addGroupWithConfig(in byte[] ssid, in String pskPassphrase, in boolean persistent, in int freq, in byte[] peerAddress, in boolean joinExistingGroup);
   @PropagateAllowBlocking android.hardware.wifi.supplicant.ISupplicantP2pNetwork addNetwork();
   void addUpnpService(in int version, in String serviceName);
@@ -115,4 +118,5 @@ interface ISupplicantP2pIface {
   String connectWithParams(in android.hardware.wifi.supplicant.P2pConnectInfo connectInfo);
   void findWithParams(in android.hardware.wifi.supplicant.P2pDiscoveryInfo discoveryInfo);
   void configureExtListenWithParams(in android.hardware.wifi.supplicant.P2pExtListenInfo extListenInfo);
+  void addGroupWithConfigurationParams(in android.hardware.wifi.supplicant.P2pAddGroupConfigurationParams groupConfigurationParams);
 }

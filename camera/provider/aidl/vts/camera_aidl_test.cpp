@@ -319,14 +319,7 @@ void CameraAidlTest::verifyStreamUseCaseCharacteristics(const camera_metadata_t*
     // Check capabilities
     int retcode =
             find_camera_metadata_ro_entry(metadata, ANDROID_REQUEST_AVAILABLE_CAPABILITIES, &entry);
-    bool hasStreamUseCaseCap = false;
-    if ((0 == retcode) && (entry.count > 0)) {
-        if (std::find(entry.data.u8, entry.data.u8 + entry.count,
-                      ANDROID_REQUEST_AVAILABLE_CAPABILITIES_STREAM_USE_CASE) !=
-            entry.data.u8 + entry.count) {
-            hasStreamUseCaseCap = true;
-        }
-    }
+    bool hasStreamUseCaseCap = supportsStreamUseCaseCap(metadata);
 
     bool supportMandatoryUseCases = false;
     retcode = find_camera_metadata_ro_entry(metadata, ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES,
@@ -2436,10 +2429,10 @@ void CameraAidlTest::configureStreamUseCaseInternal(const AvailableStream &thres
                                &cameraDevice /*out*/);
 
         camera_metadata_t* staticMeta = reinterpret_cast<camera_metadata_t*>(meta.metadata.data());
-        // Check if camera support depth only
-        if (isDepthOnly(staticMeta) ||
-                (threshold.format == static_cast<int32_t>(PixelFormat::RAW16) &&
-                        !supportsCroppedRawUseCase(staticMeta))) {
+        // Check if camera support depth only or doesn't support stream use case capability
+        if (isDepthOnly(staticMeta) || !supportsStreamUseCaseCap(staticMeta) ||
+            (threshold.format == static_cast<int32_t>(PixelFormat::RAW16) &&
+             !supportsCroppedRawUseCase(staticMeta))) {
             ndk::ScopedAStatus ret = mSession->close();
             mSession = nullptr;
             ASSERT_TRUE(ret.isOk());
@@ -3506,6 +3499,21 @@ bool CameraAidlTest::supportsCroppedRawUseCase(const camera_metadata_t *staticMe
         }
     }
     return false;
+}
+
+bool CameraAidlTest::supportsStreamUseCaseCap(const camera_metadata_t* staticMeta) {
+    camera_metadata_ro_entry entry;
+    int retcode = find_camera_metadata_ro_entry(staticMeta, ANDROID_REQUEST_AVAILABLE_CAPABILITIES,
+                                                &entry);
+    bool hasStreamUseCaseCap = false;
+    if ((0 == retcode) && (entry.count > 0)) {
+        if (std::find(entry.data.u8, entry.data.u8 + entry.count,
+                      ANDROID_REQUEST_AVAILABLE_CAPABILITIES_STREAM_USE_CASE) !=
+            entry.data.u8 + entry.count) {
+            hasStreamUseCaseCap = true;
+        }
+    }
+    return hasStreamUseCaseCap;
 }
 
 bool CameraAidlTest::isPerFrameControl(const camera_metadata_t* staticMeta) {
