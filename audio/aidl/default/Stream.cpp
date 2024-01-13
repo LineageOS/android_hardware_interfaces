@@ -180,17 +180,20 @@ StreamInWorkerLogic::Status StreamInWorkerLogic::cycle() {
     StreamDescriptor::Reply reply{};
     reply.status = STATUS_BAD_VALUE;
     switch (command.getTag()) {
-        case Tag::halReservedExit:
-            if (const int32_t cookie = command.get<Tag::halReservedExit>();
-                cookie == (mContext->getInternalCommandCookie() ^ getTid())) {
+        case Tag::halReservedExit: {
+            const int32_t cookie = command.get<Tag::halReservedExit>();
+            if (cookie == (mContext->getInternalCommandCookie() ^ getTid())) {
                 mDriver->shutdown();
                 setClosed();
-                // This is an internal command, no need to reply.
-                return Status::EXIT;
             } else {
                 LOG(WARNING) << __func__ << ": EXIT command has a bad cookie: " << cookie;
             }
-            break;
+            if (cookie != 0) {  // This is an internal command, no need to reply.
+                return Status::EXIT;
+            } else {
+                break;
+            }
+        }
         case Tag::getStatus:
             populateReply(&reply, mIsConnected);
             break;
@@ -400,17 +403,20 @@ StreamOutWorkerLogic::Status StreamOutWorkerLogic::cycle() {
     reply.status = STATUS_BAD_VALUE;
     using Tag = StreamDescriptor::Command::Tag;
     switch (command.getTag()) {
-        case Tag::halReservedExit:
-            if (const int32_t cookie = command.get<Tag::halReservedExit>();
-                cookie == (mContext->getInternalCommandCookie() ^ getTid())) {
+        case Tag::halReservedExit: {
+            const int32_t cookie = command.get<Tag::halReservedExit>();
+            if (cookie == (mContext->getInternalCommandCookie() ^ getTid())) {
                 mDriver->shutdown();
                 setClosed();
-                // This is an internal command, no need to reply.
-                return Status::EXIT;
             } else {
                 LOG(WARNING) << __func__ << ": EXIT command has a bad cookie: " << cookie;
             }
-            break;
+            if (cookie != 0) {  // This is an internal command, no need to reply.
+                return Status::EXIT;
+            } else {
+                break;
+            }
+        }
         case Tag::getStatus:
             populateReply(&reply, mIsConnected);
             break;
