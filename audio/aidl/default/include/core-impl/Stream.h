@@ -90,7 +90,7 @@ class StreamContext {
                   std::weak_ptr<sounddose::StreamDataProcessorInterface> streamDataProcessor,
                   DebugParameters debugParameters)
         : mCommandMQ(std::move(commandMQ)),
-          mInternalCommandCookie(std::rand()),
+          mInternalCommandCookie(std::rand() | 1 /* make sure it's not 0 */),
           mReplyMQ(std::move(replyMQ)),
           mFormat(format),
           mChannelLayout(channelLayout),

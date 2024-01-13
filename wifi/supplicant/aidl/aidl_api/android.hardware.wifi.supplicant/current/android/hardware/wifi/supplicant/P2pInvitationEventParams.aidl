@@ -33,13 +33,11 @@
 
 package android.hardware.wifi.supplicant;
 @VintfStability
-parcelable P2pAddGroupConfigurationParams {
-  byte[] ssid;
-  String passphrase;
-  boolean isPersistent;
-  int frequencyMHzOrBand;
-  byte[6] goInterfaceAddress;
-  boolean joinExistingGroup;
-  int keyMgmtMask;
+parcelable P2pInvitationEventParams {
+  byte[6] srcAddress;
+  byte[6] goDeviceAddress;
+  byte[6] bssid;
+  int persistentNetworkId;
+  int operatingFrequencyMHz;
   @nullable android.hardware.wifi.common.OuiKeyedData[] vendorData;
 }

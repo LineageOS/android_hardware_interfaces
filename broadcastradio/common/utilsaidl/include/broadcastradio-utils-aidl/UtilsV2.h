@@ -28,6 +28,7 @@ namespace utils {
 
 bool isValidV2(const ProgramIdentifier& id);
 bool isValidV2(const ProgramSelector& sel);
+bool isValidMetadataV2(const Metadata& metadata);
 std::optional<std::string> getMetadataStringV2(const ProgramInfo& info, const Metadata::Tag& tag);
 
 }  // namespace utils

@@ -256,6 +256,7 @@ class FakeVehicleHardware : public IVehicleHardware {
     std::string dumpSaveProperty(const std::vector<std::string>& options);
     std::string dumpRestoreProperty(const std::vector<std::string>& options);
     std::string dumpInjectEvent(const std::vector<std::string>& options);
+    std::string dumpSubscriptions();
 
     template <typename T>
     android::base::Result<T> safelyParseInt(int index, const std::string& s) {

@@ -61,7 +61,7 @@ cc_test {
         "android.hardware.camera.common@1.0-helper",
         "android.hardware.camera.common-V1-ndk",
         "android.hardware.camera.device-V3-ndk",
-        "android.hardware.camera.metadata-V2-ndk",
+        "android.hardware.camera.metadata-V3-ndk",
         "android.hardware.camera.provider-V3-ndk",
         "android.hidl.allocator@1.0",
         "libgrallocusage",

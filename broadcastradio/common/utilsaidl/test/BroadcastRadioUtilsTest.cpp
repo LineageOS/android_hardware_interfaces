@@ -32,7 +32,74 @@ constexpr uint64_t kDabFrequencyKhz = 225648u;
 constexpr uint64_t kHdStationId = 0xA0000001u;
 constexpr uint64_t kHdSubChannel = 1u;
 constexpr uint64_t kHdFrequency = 97700u;
+
+struct IsValidMetadataTestCase {
+    std::string name;
+    Metadata metadata;
+    bool valid;
+};
+
+std::vector<IsValidMetadataTestCase> getIsValidMetadataTestCases() {
+    return std::vector<IsValidMetadataTestCase>({
+            IsValidMetadataTestCase{.name = "valid_rds_pty",
+                                    .metadata = Metadata::make<Metadata::rdsPty>(1),
+                                    .valid = true},
+            IsValidMetadataTestCase{.name = "negative_rds_pty",
+                                    .metadata = Metadata::make<Metadata::rdsPty>(-1),
+                                    .valid = false},
+            IsValidMetadataTestCase{.name = "large_rds_pty",
+                                    .metadata = Metadata::make<Metadata::rdsPty>(256),
+                                    .valid = false},
+            IsValidMetadataTestCase{.name = "valid_rbds_pty",
+                                    .metadata = Metadata::make<Metadata::rbdsPty>(1),
+                                    .valid = true},
+            IsValidMetadataTestCase{.name = "negative_rbds_pty",
+                                    .metadata = Metadata::make<Metadata::rbdsPty>(-1),
+                                    .valid = false},
+            IsValidMetadataTestCase{.name = "large_rbds_pty",
+                                    .metadata = Metadata::make<Metadata::rbdsPty>(256),
+                                    .valid = false},
+            IsValidMetadataTestCase{
+                    .name = "valid_dab_ensemble_name_short",
+                    .metadata = Metadata::make<Metadata::dabEnsembleNameShort>("name"),
+                    .valid = true},
+            IsValidMetadataTestCase{
+                    .name = "too_long_dab_ensemble_name_short",
+                    .metadata = Metadata::make<Metadata::dabEnsembleNameShort>("name_long"),
+                    .valid = false},
+            IsValidMetadataTestCase{
+                    .name = "valid_dab_service_name_short",
+                    .metadata = Metadata::make<Metadata::dabServiceNameShort>("name"),
+                    .valid = true},
+            IsValidMetadataTestCase{
+                    .name = "too_long_dab_service_name_short",
+                    .metadata = Metadata::make<Metadata::dabServiceNameShort>("name_long"),
+                    .valid = false},
+            IsValidMetadataTestCase{
+                    .name = "valid_dab_component_name_short",
+                    .metadata = Metadata::make<Metadata::dabComponentNameShort>("name"),
+                    .valid = true},
+            IsValidMetadataTestCase{
+                    .name = "too_long_dab_component_name_short",
+                    .metadata = Metadata::make<Metadata::dabComponentNameShort>("name_long"),
+                    .valid = false},
+    });
+}
 }  // namespace
+
+class IsValidMetadataTest : public testing::TestWithParam<IsValidMetadataTestCase> {};
+
+INSTANTIATE_TEST_SUITE_P(IsValidMetadataTests, IsValidMetadataTest,
+                         testing::ValuesIn(getIsValidMetadataTestCases()),
+                         [](const testing::TestParamInfo<IsValidMetadataTest::ParamType>& info) {
+                             return info.param.name;
+                         });
+
+TEST_P(IsValidMetadataTest, IsValidMetadata) {
+    IsValidMetadataTestCase testParam = GetParam();
+
+    ASSERT_EQ(utils::isValidMetadata(testParam.metadata), testParam.valid);
+}
 
 TEST(BroadcastRadioUtilsTest, HasIdWithPrimaryIdType) {
     ProgramSelector sel = utils::makeSelectorAmfm(kFmFrequencyKHz);

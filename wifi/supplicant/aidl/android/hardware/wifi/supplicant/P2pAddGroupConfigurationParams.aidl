@@ -16,6 +16,7 @@
 
 package android.hardware.wifi.supplicant;
 
+import android.hardware.wifi.common.OuiKeyedData;
 import android.hardware.wifi.supplicant.KeyMgmtMask;
 
 /**
@@ -65,4 +66,10 @@ parcelable P2pAddGroupConfigurationParams {
      *
      */
     int keyMgmtMask;
+
+    /**
+     * Optional vendor-specific parameters. Null value indicates
+     * that no vendor data is provided.
+     */
+    @nullable OuiKeyedData[] vendorData;
 }
