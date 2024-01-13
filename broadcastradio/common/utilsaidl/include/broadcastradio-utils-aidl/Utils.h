@@ -143,6 +143,8 @@ ProgramSelector makeSelectorHd(uint64_t stationId, uint64_t subChannel, uint64_t
 
 bool satisfies(const ProgramFilter& filter, const ProgramSelector& sel);
 
+bool isValidMetadata(const Metadata& metadata);
+
 struct ProgramSelectorComparator {
     bool operator()(const ProgramSelector& lhs, const ProgramSelector& rhs) const;
 };
