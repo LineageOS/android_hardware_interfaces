@@ -138,7 +138,6 @@ class DownmixEffectHelper : public EffectHelper {
 
     void setDataTestParams(int32_t layoutType) {
         mInputBuffer.resize(kBufferSize);
-        mOutputBuffer.resize(kBufferSize);
 
         // Get the number of channels used
         mInputChannelCount = getChannelCount(
@@ -146,6 +145,7 @@ class DownmixEffectHelper : public EffectHelper {
 
         // In case of downmix, output is always configured to stereo layout.
         mOutputBufferSize = (mInputBuffer.size() / mInputChannelCount) * kOutputChannelCount;
+        mOutputBuffer.resize(mOutputBufferSize);
     }
 
     // Generate mInputBuffer values between -kMaxDownmixSample to kMaxDownmixSample
@@ -262,13 +262,13 @@ class DownmixFoldDataTest : public ::testing::TestWithParam<DownmixDataTestParam
         for (size_t i = 0, j = position; i < mOutputBufferSize;
              i += kOutputChannelCount, j += mInputChannelCount) {
             // Validate Left channel has no audio
-            ASSERT_EQ(mOutputBuffer[i], 0);
+            ASSERT_EQ(mOutputBuffer[i], 0) << " at " << i;
             // Validate Right channel has audio
             if (mInputBuffer[j] != 0) {
-                ASSERT_NE(mOutputBuffer[i + 1], 0);
+                ASSERT_NE(mOutputBuffer[i + 1], 0) << " at " << i;
             } else {
                 // No change in output when input is 0
-                ASSERT_EQ(mOutputBuffer[i + 1], mInputBuffer[j]);
+                ASSERT_EQ(mOutputBuffer[i + 1], mInputBuffer[j]) << " at " << i;
             }
         }
     }
@@ -401,9 +401,6 @@ class DownmixStripDataTest : public ::testing::TestWithParam<DownmixStripDataTes
              i += mInputChannelCount, j += kOutputChannelCount) {
             ASSERT_EQ(mOutputBuffer[j], mInputBuffer[i]);
             ASSERT_EQ(mOutputBuffer[j + 1], mInputBuffer[i + 1]);
-        }
-        for (size_t i = mOutputBufferSize; i < kBufferSize; i++) {
-            ASSERT_EQ(mOutputBuffer[i], mInputBuffer[i]);
         }
     }
 
