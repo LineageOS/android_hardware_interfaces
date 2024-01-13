@@ -41,11 +41,17 @@ interface ISupplicantP2pIfaceCallback {
   oneway void onDeviceLost(in byte[] p2pDeviceAddress);
   oneway void onFindStopped();
   oneway void onGoNegotiationCompleted(in android.hardware.wifi.supplicant.P2pStatusCode status);
+  /**
+   * @deprecated This method is deprecated from AIDL v3, newer HALs should use onGoNegotiationRequestWithParams.
+   */
   oneway void onGoNegotiationRequest(in byte[] srcAddress, in android.hardware.wifi.supplicant.WpsDevPasswordId passwordId);
   oneway void onGroupFormationFailure(in String failureReason);
   oneway void onGroupFormationSuccess();
   oneway void onGroupRemoved(in String groupIfname, in boolean isGroupOwner);
   oneway void onGroupStarted(in String groupIfname, in boolean isGroupOwner, in byte[] ssid, in int frequency, in byte[] psk, in String passphrase, in byte[] goDeviceAddress, in boolean isPersistent);
+  /**
+   * @deprecated This method is deprecated from AIDL v3, newer HALs should use onInvitationReceivedWithParams.
+   */
   oneway void onInvitationReceived(in byte[] srcAddress, in byte[] goDeviceAddress, in byte[] bssid, in int persistentNetworkId, in int operatingFrequency);
   oneway void onInvitationResult(in byte[] bssid, in android.hardware.wifi.supplicant.P2pStatusCode status);
   /**
@@ -72,4 +78,6 @@ interface ISupplicantP2pIfaceCallback {
   oneway void onPeerClientDisconnected(in android.hardware.wifi.supplicant.P2pPeerClientDisconnectedEventParams clientDisconnectedEventParams);
   oneway void onProvisionDiscoveryCompletedEvent(in android.hardware.wifi.supplicant.P2pProvisionDiscoveryCompletedEventParams provisionDiscoveryCompletedEventParams);
   oneway void onDeviceFoundWithParams(in android.hardware.wifi.supplicant.P2pDeviceFoundEventParams deviceFoundEventParams);
+  oneway void onGoNegotiationRequestWithParams(in android.hardware.wifi.supplicant.P2pGoNegotiationReqEventParams params);
+  oneway void onInvitationReceivedWithParams(in android.hardware.wifi.supplicant.P2pInvitationEventParams params);
 }

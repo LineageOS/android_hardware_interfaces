@@ -35,6 +35,9 @@ package android.hardware.wifi.supplicant;
 @VintfStability
 interface ISupplicantP2pIface {
   void addBonjourService(in byte[] query, in byte[] response);
+  /**
+   * @deprecated This method is deprecated from AIDL v3, newer HALs should use createGroupOwner.
+   */
   void addGroup(in boolean persistent, in int persistentNetworkId);
   /**
    * @deprecated This method is deprecated from AIDL v3, newer HALs should use addGroupWithConfigurationParams.
@@ -119,4 +122,5 @@ interface ISupplicantP2pIface {
   void findWithParams(in android.hardware.wifi.supplicant.P2pDiscoveryInfo discoveryInfo);
   void configureExtListenWithParams(in android.hardware.wifi.supplicant.P2pExtListenInfo extListenInfo);
   void addGroupWithConfigurationParams(in android.hardware.wifi.supplicant.P2pAddGroupConfigurationParams groupConfigurationParams);
+  void createGroupOwner(in android.hardware.wifi.supplicant.P2pCreateGroupOwnerInfo groupOwnerInfo);
 }
