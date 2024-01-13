@@ -112,7 +112,7 @@ my_system_matrix_deps := \
 # interfaces (in the `next` release configuration).
 ifeq ($(RELEASE_AIDL_USE_UNFROZEN),true)
 my_system_matrix_deps += \
-    framework_compatibility_matrix.9.xml
+    framework_compatibility_matrix.202404.xml
 endif
 
 my_framework_matrix_deps += \
