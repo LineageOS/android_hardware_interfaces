@@ -750,18 +750,12 @@ Size getMaxThumbnailResolution(const common::V1_0::helper::CameraMetadata& chars
 
 void freeReleaseFences(std::vector<CaptureResult>& results) {
     for (auto& result : results) {
-        native_handle_t* inputReleaseFence =
-                ::android::makeFromAidl(result.inputBuffer.releaseFence);
-        if (inputReleaseFence != nullptr) {
-            native_handle_close(inputReleaseFence);
-            native_handle_delete(inputReleaseFence);
-        }
+        // NativeHandles free fd's on desctruction. Simply delete the objects!
+        result.inputBuffer.releaseFence.fds.clear();  // Implicitly closes fds
+        result.inputBuffer.releaseFence.ints.clear();
         for (auto& buf : result.outputBuffers) {
-            native_handle_t* outReleaseFence = ::android::makeFromAidl(buf.releaseFence);
-            if (outReleaseFence != nullptr) {
-                native_handle_close(outReleaseFence);
-                native_handle_delete(outReleaseFence);
-            }
+            buf.releaseFence.fds.clear();  // Implicitly closes fds
+            buf.releaseFence.ints.clear();
         }
     }
 }
