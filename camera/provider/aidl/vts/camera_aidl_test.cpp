@@ -316,14 +316,11 @@ void CameraAidlTest::verifyMonochromeCameraResult(
 
 void CameraAidlTest::verifyStreamUseCaseCharacteristics(const camera_metadata_t* metadata) {
     camera_metadata_ro_entry entry;
-    // Check capabilities
-    int retcode =
-            find_camera_metadata_ro_entry(metadata, ANDROID_REQUEST_AVAILABLE_CAPABILITIES, &entry);
     bool hasStreamUseCaseCap = supportsStreamUseCaseCap(metadata);
 
     bool supportMandatoryUseCases = false;
-    retcode = find_camera_metadata_ro_entry(metadata, ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES,
-                                            &entry);
+    int retcode = find_camera_metadata_ro_entry(metadata, ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES,
+                                                &entry);
     if ((0 == retcode) && (entry.count > 0)) {
         supportMandatoryUseCases = true;
         for (size_t i = 0; i < kMandatoryUseCases.size(); i++) {
