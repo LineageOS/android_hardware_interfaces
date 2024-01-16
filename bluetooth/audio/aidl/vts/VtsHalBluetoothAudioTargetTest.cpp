@@ -2302,8 +2302,8 @@ class BluetoothAudioProviderLeAudioOutputHardwareAidl
     frame_duration.bitmask =
         CodecSpecificCapabilitiesLtv::SupportedFrameDurations::US7500;
     auto octets = CodecSpecificCapabilitiesLtv::SupportedOctetsPerCodecFrame();
-    octets.minimum = 0;
-    octets.maximum = 60;
+    octets.min = 0;
+    octets.max = 60;
     auto frames = CodecSpecificCapabilitiesLtv::SupportedMaxCodecFramesPerSDU();
     frames.value = 2;
     capability.codecSpecificCapabilities = {sampling_rate, frame_duration,
@@ -2567,7 +2567,7 @@ TEST_P(BluetoothAudioProviderLeAudioOutputHardwareAidl, GetQoSConfiguration) {
   std::vector<IBluetoothAudioProvider::LeAudioAseQosConfiguration>
       QoSConfigurations;
   for (auto bitmask : all_context_bitmasks) {
-    requirement.contextType = GetAudioContext(bitmask);
+    requirement.audioContext = GetAudioContext(bitmask);
     IBluetoothAudioProvider::LeAudioAseQosConfigurationPair result;
     auto aidl_retval =
         audio_provider_->getLeAudioAseQosConfiguration(requirement, &result);
@@ -2590,8 +2590,8 @@ TEST_P(BluetoothAudioProviderLeAudioOutputHardwareAidl,
   bool is_supported = false;
 
   for (auto bitmask : all_context_bitmasks) {
-    sink_requirement.context = GetAudioContext(bitmask);
-    source_requirement.context = GetAudioContext(bitmask);
+    sink_requirement.audioContext = GetAudioContext(bitmask);
+    source_requirement.audioContext = GetAudioContext(bitmask);
     IBluetoothAudioProvider::LeAudioDataPathConfigurationPair result;
     auto aidl_retval = audio_provider_->getLeAudioAseDatapathConfiguration(
         sink_requirement, source_requirement, &result);

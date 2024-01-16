@@ -74,8 +74,8 @@ union CodecSpecificCapabilitiesLtv {
     const int EIGHT = 0x80;
   }
   parcelable SupportedOctetsPerCodecFrame {
-    int minimum;
-    int maximum;
+    int min;
+    int max;
   }
   parcelable SupportedMaxCodecFramesPerSDU {
     int value;
