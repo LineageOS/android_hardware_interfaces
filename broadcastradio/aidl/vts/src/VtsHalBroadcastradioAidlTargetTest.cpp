@@ -250,6 +250,16 @@ ScopedAStatus TunerCallbackImpl::onCurrentProgramInfoChanged(const ProgramInfo& 
         }
     }
 
+    for (const auto& metadataItem : info.metadata) {
+        bool validMetadata = false;
+        if (mCallbackAidlVersion == kAidlVersion1) {
+            validMetadata = bcutils::isValidMetadata(metadataItem);
+        } else {
+            validMetadata = bcutils::isValidMetadataV2(metadataItem);
+        }
+        EXPECT_TRUE(validMetadata) << "Invalid metadata " << metadataItem.toString().c_str();
+    }
+
     {
         std::lock_guard<std::mutex> lk(mLock);
         mCurrentProgramInfo = info;
