@@ -39,7 +39,7 @@ parcelable CodecParameters {
   int bitdepth;
   int minBitrate;
   int maxBitrate;
-  boolean lowLatency;
-  boolean lossless;
+  boolean lowLatency = false;
+  boolean lossless = false;
   byte[] vendorSpecificParameters;
 }
