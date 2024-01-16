@@ -33,6 +33,39 @@ constexpr uint64_t kHdStationId = 0xA0000001u;
 constexpr uint64_t kHdSubChannel = 1u;
 constexpr uint64_t kHdFrequency = 97700u;
 
+const Properties kAmFmTunerProp = {
+        .maker = "makerTest",
+        .product = "productTest",
+        .supportedIdentifierTypes = {IdentifierType::AMFM_FREQUENCY_KHZ, IdentifierType::RDS_PI,
+                                     IdentifierType::HD_STATION_ID_EXT}};
+
+struct GetBandTestCase {
+    std::string name;
+    int64_t frequency;
+    utils::FrequencyBand bandResult;
+};
+
+std::vector<GetBandTestCase> getBandTestCases() {
+    return std::vector<GetBandTestCase>(
+            {GetBandTestCase{.name = "unknown_low_band",
+                             .frequency = 0,
+                             .bandResult = utils::FrequencyBand::UNKNOWN},
+             GetBandTestCase{.name = "am_lw_band",
+                             .frequency = 30,
+                             .bandResult = utils::FrequencyBand::AM_LW},
+             GetBandTestCase{.name = "am_mw_band",
+                             .frequency = 700,
+                             .bandResult = utils::FrequencyBand::AM_MW},
+             GetBandTestCase{.name = "am_sw_band",
+                             .frequency = 2000,
+                             .bandResult = utils::FrequencyBand::AM_SW},
+             GetBandTestCase{
+                     .name = "fm_band", .frequency = 97900, .bandResult = utils::FrequencyBand::FM},
+             GetBandTestCase{.name = "unknown_high_band",
+                             .frequency = 110000,
+                             .bandResult = utils::FrequencyBand::UNKNOWN}});
+}
+
 struct IsValidMetadataTestCase {
     std::string name;
     Metadata metadata;
@@ -87,6 +120,19 @@ std::vector<IsValidMetadataTestCase> getIsValidMetadataTestCases() {
 }
 }  // namespace
 
+class GetBandTest : public testing::TestWithParam<GetBandTestCase> {};
+
+INSTANTIATE_TEST_SUITE_P(GetBandTests, GetBandTest, testing::ValuesIn(getBandTestCases()),
+                         [](const testing::TestParamInfo<GetBandTest::ParamType>& info) {
+                             return info.param.name;
+                         });
+
+TEST_P(GetBandTest, GetBand) {
+    GetBandTestCase testcase = GetParam();
+
+    ASSERT_EQ(utils::getBand(testcase.frequency), testcase.bandResult);
+}
+
 class IsValidMetadataTest : public testing::TestWithParam<IsValidMetadataTestCase> {};
 
 INSTANTIATE_TEST_SUITE_P(IsValidMetadataTests, IsValidMetadataTest,
@@ -99,6 +145,24 @@ TEST_P(IsValidMetadataTest, IsValidMetadata) {
     IsValidMetadataTestCase testParam = GetParam();
 
     ASSERT_EQ(utils::isValidMetadata(testParam.metadata), testParam.valid);
+}
+
+TEST(BroadcastRadioUtilsTest, IsSupportedWithSupportedSelector) {
+    ProgramSelector sel = utils::makeSelectorAmfm(kFmFrequencyKHz);
+
+    ASSERT_TRUE(utils::isSupported(kAmFmTunerProp, sel));
+}
+
+TEST(BroadcastRadioUtilsTest, IsSupportedWithUnsupportedSelector) {
+    ProgramSelector sel = utils::makeSelectorDab(kDabSidExt, kDabEnsemble, kDabFrequencyKhz);
+
+    ASSERT_FALSE(utils::isSupported(kAmFmTunerProp, sel));
+}
+
+TEST(BroadcastRadioUtilsTest, GetBandWithFmFrequency) {
+    ProgramSelector sel = utils::makeSelectorAmfm(kFmFrequencyKHz);
+
+    ASSERT_TRUE(utils::hasId(sel, IdentifierType::AMFM_FREQUENCY_KHZ));
 }
 
 TEST(BroadcastRadioUtilsTest, HasIdWithPrimaryIdType) {
@@ -150,6 +214,25 @@ TEST(BroadcastRadioUtilsTest, GetIdWithIdNotFoundAndDefaultValue) {
 
     ASSERT_EQ(utils::getId(sel, IdentifierType::AMFM_FREQUENCY_KHZ, kFmFrequencyKHz),
               static_cast<int64_t>(kFmFrequencyKHz));
+}
+
+TEST(BroadcastRadioUtilsTest, GetAllIdsWithAvailableIds) {
+    int64_t secondaryFrequencyKHz = kFmFrequencyKHz + 200;
+    ProgramSelector sel = utils::makeSelectorAmfm(kFmFrequencyKHz);
+    sel.secondaryIds.push_back(
+            utils::makeIdentifier(IdentifierType::AMFM_FREQUENCY_KHZ, secondaryFrequencyKHz));
+
+    std::vector<int> allIds = utils::getAllIds(sel, IdentifierType::AMFM_FREQUENCY_KHZ);
+
+    ASSERT_EQ(allIds.size(), 2u);
+    EXPECT_NE(std::find(allIds.begin(), allIds.end(), kFmFrequencyKHz), allIds.end());
+    EXPECT_NE(std::find(allIds.begin(), allIds.end(), secondaryFrequencyKHz), allIds.end());
+}
+
+TEST(BroadcastRadioUtilsTest, GetAllIdsWithIdNotFound) {
+    ProgramSelector sel = utils::makeSelectorDab(kDabSidExt, kDabEnsemble, kDabFrequencyKhz);
+
+    ASSERT_TRUE(utils::getAllIds(sel, IdentifierType::AMFM_FREQUENCY_KHZ).empty());
 }
 
 TEST(BroadcastRadioUtilsTest, MakeIdentifier) {
@@ -270,6 +353,38 @@ TEST(BroadcastRadioUtilsTest, GetDabSCIdS) {
     ProgramSelector sel = utils::makeSelectorDab(kDabSidExt, kDabEnsemble, kDabFrequencyKhz);
 
     ASSERT_EQ(utils::getDabSCIdS(sel), kDabSCIdS);
+}
+
+TEST(BroadcastRadioUtilsTest, SatisfiesWithSatisfiedIdTypesFilter) {
+    ProgramFilter filter = ProgramFilter{.identifierTypes = {IdentifierType::DAB_FREQUENCY_KHZ}};
+    ProgramSelector sel = utils::makeSelectorDab(kDabSidExt, kDabEnsemble, kDabFrequencyKhz);
+
+    ASSERT_TRUE(utils::satisfies(filter, sel));
+}
+
+TEST(BroadcastRadioUtilsTest, SatisfiesWithUnsatisfiedIdTypesFilter) {
+    ProgramFilter filter = ProgramFilter{.identifierTypes = {IdentifierType::DAB_FREQUENCY_KHZ}};
+    ProgramSelector sel = utils::makeSelectorAmfm(kFmFrequencyKHz);
+
+    ASSERT_FALSE(utils::satisfies(filter, sel));
+}
+
+TEST(BroadcastRadioUtilsTest, SatisfiesWithSatisfiedIdsFilter) {
+    ProgramFilter filter =
+            ProgramFilter{.identifiers = {utils::makeIdentifier(IdentifierType::DAB_FREQUENCY_KHZ,
+                                                                kDabFrequencyKhz)}};
+    ProgramSelector sel = utils::makeSelectorDab(kDabSidExt, kDabEnsemble, kDabFrequencyKhz);
+
+    ASSERT_TRUE(utils::satisfies(filter, sel));
+}
+
+TEST(BroadcastRadioUtilsTest, SatisfiesWithUnsatisfiedIdsFilter) {
+    ProgramFilter filter =
+            ProgramFilter{.identifiers = {utils::makeIdentifier(IdentifierType::DAB_FREQUENCY_KHZ,
+                                                                kDabFrequencyKhz)}};
+    ProgramSelector sel = utils::makeSelectorDab(kDabSidExt, kDabEnsemble, kDabFrequencyKhz + 100);
+
+    ASSERT_FALSE(utils::satisfies(filter, sel));
 }
 
 }  // namespace aidl::android::hardware::broadcastradio
