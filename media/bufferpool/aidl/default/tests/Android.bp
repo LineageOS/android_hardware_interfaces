@@ -36,8 +36,9 @@ cc_test {
         "libcutils",
         "libfmq",
         "liblog",
+        "libnativewindow",
         "libutils",
-        "android.hardware.media.bufferpool2-V1-ndk",
+        "android.hardware.media.bufferpool2-V2-ndk",
     ],
     static_libs: [
         "libaidlcommonsupport",
@@ -59,8 +60,9 @@ cc_test {
         "libcutils",
         "libfmq",
         "liblog",
+        "libnativewindow",
         "libutils",
-        "android.hardware.media.bufferpool2-V1-ndk",
+        "android.hardware.media.bufferpool2-V2-ndk",
     ],
     static_libs: [
         "libaidlcommonsupport",
@@ -82,8 +84,9 @@ cc_test {
         "libcutils",
         "libfmq",
         "liblog",
+        "libnativewindow",
         "libutils",
-        "android.hardware.media.bufferpool2-V1-ndk",
+        "android.hardware.media.bufferpool2-V2-ndk",
     ],
     static_libs: [
         "libaidlcommonsupport",
