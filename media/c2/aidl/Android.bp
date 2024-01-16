@@ -20,7 +20,7 @@ aidl_interface {
     ],
     imports: [
         "android.hardware.common-V2",
-        "android.hardware.media.bufferpool2-V1",
+        "android.hardware.media.bufferpool2-V2",
     ],
     include_dirs: [
         "frameworks/native/aidl/gui",

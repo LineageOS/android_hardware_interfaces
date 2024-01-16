@@ -33,15 +33,16 @@ cc_library {
         "libcutils",
         "libfmq",
         "liblog",
+        "libnativewindow",
         "libutils",
-        "android.hardware.media.bufferpool2-V1-ndk",
+        "android.hardware.media.bufferpool2-V2-ndk",
     ],
     static_libs: [
         "libaidlcommonsupport",
     ],
     export_shared_lib_headers: [
         "libfmq",
-        "android.hardware.media.bufferpool2-V1-ndk",
+        "android.hardware.media.bufferpool2-V2-ndk",
     ],
     double_loadable: true,
     cflags: [
