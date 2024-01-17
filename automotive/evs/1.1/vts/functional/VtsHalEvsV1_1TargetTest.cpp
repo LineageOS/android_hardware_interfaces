@@ -1968,6 +1968,13 @@ TEST_P(EvsHidlTest, CameraUseStreamConfigToDisplay) {
 
     // Test each reported camera
     for (auto&& cam: cameraInfo) {
+        bool isLogicalCam = false;
+        getPhysicalCameraIds(cam.v1.cameraId, isLogicalCam);
+        if (isLogicalCam) {
+            LOG(INFO) << "Skip a logical device " << cam.v1.cameraId;
+            continue;
+        }
+
         // choose a configuration that has a frame rate faster than minReqFps.
         Stream targetCfg = {};
         const int32_t minReqFps = 15;
