@@ -1,0 +1,7 @@
+<manifest version="1.0" type="device">
+    <hal format="aidl">
+        <name>android.hardware.automotive.vehicle</name>
+        <version>3</version>
+        <fqname>IVehicle/default</fqname>
+    </hal>
+</manifest>
