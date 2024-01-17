@@ -16,9 +16,13 @@
 
 package android.hardware.bluetooth.ranging;
 
+/**
+ * Same as the BLE address type, except anonymous isn't supported for ranging.
+ */
 @VintfStability
 @Backing(type="int")
 enum AddressType {
     PUBLIC = 0x00,
+    /* Still may be fixed on the device and is not randomized on boot */
     RANDOM = 0x01,
 }
