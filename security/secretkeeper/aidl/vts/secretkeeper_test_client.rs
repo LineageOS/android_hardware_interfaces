@@ -19,7 +19,7 @@ mod dice_sample;
 
 use crate::dice_sample::make_explicit_owned_dice;
 
-use rdroidtest_macro::{ignore_if, rdroidtest};
+use rdroidtest::{ignore_if, rdroidtest};
 use android_hardware_security_secretkeeper::aidl::android::hardware::security::secretkeeper::ISecretkeeper::ISecretkeeper;
 use android_hardware_security_secretkeeper::aidl::android::hardware::security::secretkeeper::SecretId::SecretId;
 use authgraph_vts_test as ag_vts;
