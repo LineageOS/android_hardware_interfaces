@@ -21,6 +21,9 @@ import android.hardware.bluetooth.ranging.ModeType;
 
 /**
  * Raw ranging data of Channel Sounding.
+ * See Channel Sounding CR_PR 3.1.10 and Channel Sounding HCI Updates CR_PR 3.1.23 for details.
+ *
+ * Specification: https://www.bluetooth.com/specifications/specs/channel-sounding-cr-pr/
  */
 @VintfStability
 parcelable ChannelSoudingRawData {

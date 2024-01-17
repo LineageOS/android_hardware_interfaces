@@ -17,7 +17,7 @@
 package android.hardware.bluetooth.ranging;
 
 @VintfStability
-@Backing(type="int")
+@Backing(type="byte")
 enum ModeType {
     ZERO = 0x00,
     ONE = 0x01,
