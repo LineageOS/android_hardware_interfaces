@@ -34,13 +34,13 @@
 package android.hardware.bluetooth.ranging;
 @VintfStability
 parcelable ChannelSoundingSingleSideData {
-  @nullable List<android.hardware.bluetooth.ranging.StepTonePct> stepTonePcts;
+  @nullable android.hardware.bluetooth.ranging.StepTonePct[] stepTonePcts;
   @nullable byte[] packetQuality;
   @nullable byte[] packetRssiDbm;
   @nullable android.hardware.bluetooth.ranging.Nadm[] packetNadm;
   @nullable int[] measuredFreqOffset;
-  @nullable List<android.hardware.bluetooth.ranging.ComplexNumber> packetPct1;
-  @nullable List<android.hardware.bluetooth.ranging.ComplexNumber> packetPct2;
+  @nullable android.hardware.bluetooth.ranging.ComplexNumber[] packetPct1;
+  @nullable android.hardware.bluetooth.ranging.ComplexNumber[] packetPct2;
   byte referencePowerDbm;
   @nullable byte[] vendorSpecificCsSingleSidedata;
 }

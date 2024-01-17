@@ -16,6 +16,12 @@
 
 package android.hardware.bluetooth.ranging;
 
+/**
+ * Normalized Attack Detector Metric.
+ * See Channel Sounding CR_PR, 3.13.24 for details.
+ *
+ * Specification: https://www.bluetooth.com/specifications/specs/channel-sounding-cr-pr/
+ */
 @VintfStability
 @Backing(type="byte")
 enum Nadm {
@@ -26,5 +32,7 @@ enum Nadm {
     ATTACK_IS_LIKELY = 0x04,
     ATTACK_IS_VERY_LIKELY = 0x05,
     ATTACK_IS_EXTREMELY_LIKELY = 0x06,
+    /* If a device is unable to determine a NADM value, then it shall report a NADM value of Unknown
+     */
     UNKNOWN = 0xFFu8,
 }
