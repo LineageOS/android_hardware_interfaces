@@ -64,12 +64,16 @@ class EffectConfig {
     const ProcessingLibrariesMap& getProcessingMap() const;
 
   private:
-    static constexpr const char* kEffectLibPath[] =
 #ifdef __LP64__
-            {"/odm/lib64/soundfx", "/vendor/lib64/soundfx", "/system/lib64/soundfx"};
+#define SOUND_FX_PATH "/lib64/soundfx/"
 #else
-            {"/odm/lib/soundfx", "/vendor/lib/soundfx", "/system/lib/soundfx"};
+#define SOUND_FX_PATH "/lib/soundfx/"
 #endif
+    static constexpr const char* kEffectLibPath[] =
+      { "/odm" SOUND_FX_PATH, "/vendor" SOUND_FX_PATH, "/system" SOUND_FX_PATH };
+
+    static constexpr const char* kEffectLibApexPath = SOUND_FX_PATH;
+#undef SOUND_FX_PATH
 
     int mSkippedElements;
     /* Parsed Libraries result */
