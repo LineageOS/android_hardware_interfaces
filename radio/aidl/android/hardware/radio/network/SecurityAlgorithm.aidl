@@ -60,7 +60,11 @@ enum SecurityAlgorithm {
     NEA3 = 58,
 
     // IMS and SIP layer security (See 3GPP TS 33.203)
+    // No IPsec config
+    SIP_NO_IPSEC_CONFIG = 66,
     IMS_NULL = 67,
+
+    // Has IPsec config
     SIP_NULL = 68,
     AES_GCM = 69,
     AES_GMAC = 70,
@@ -70,7 +74,10 @@ enum SecurityAlgorithm {
     HMAC_SHA1_96 = 74,
     HMAC_MD5_96 = 75,
 
-    // RTP (see 3GPP TS 33.328)
+    // RTP and SRTP (see 3GPP TS 33.328)
+    // When SRTP is not being used
+    RTP = 85,
+    // When SRTP is available and used
     SRTP_NULL = 86,
     SRTP_AES_COUNTER = 87,
     SRTP_AES_F8 = 88,
