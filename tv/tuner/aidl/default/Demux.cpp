@@ -125,6 +125,7 @@ void Demux::setIptvThreadRunning(bool isIptvThreadRunning) {
 
 void Demux::frontendIptvInputThreadLoop(dtv_plugin* interface, dtv_streamer* streamer) {
     Timer *timer, *fullBufferTimer;
+    bool isTuneBytePushedToDvr = false;
     while (true) {
         std::unique_lock<std::mutex> lock(mIsIptvThreadRunningMutex);
         mIsIptvThreadRunningCv.wait(lock, [this] { return mIsIptvReadThreadRunning; });
@@ -137,10 +138,24 @@ void Demux::frontendIptvInputThreadLoop(dtv_plugin* interface, dtv_streamer* str
         }
         timer = new Timer();
         void* buf = malloc(sizeof(char) * IPTV_BUFFER_SIZE);
-        if (buf == nullptr) ALOGI("Buffer allocation failed");
-        ssize_t bytes_read =
-                interface->read_stream(streamer, buf, IPTV_BUFFER_SIZE, IPTV_PLAYBACK_TIMEOUT);
-        if (bytes_read == 0) {
+        if (buf == nullptr) {
+            ALOGE("[Demux] Buffer allocation failed");
+            return;
+        }
+        ssize_t bytes_read;
+        void* tuneByteBuffer = mFrontend->getTuneByteBuffer();
+        if (!isTuneBytePushedToDvr && tuneByteBuffer != nullptr) {
+            memcpy(buf, tuneByteBuffer, 1);
+            char* offsetBuf = (char*)buf + 1;
+            bytes_read = interface->read_stream(streamer, (void*)offsetBuf, IPTV_BUFFER_SIZE - 1,
+                                                IPTV_PLAYBACK_TIMEOUT);
+            isTuneBytePushedToDvr = true;
+        } else {
+            bytes_read =
+                    interface->read_stream(streamer, buf, IPTV_BUFFER_SIZE, IPTV_PLAYBACK_TIMEOUT);
+        }
+
+        if (bytes_read <= 0) {
             double elapsed_time = timer->get_elapsed_time_ms();
             if (elapsed_time > IPTV_PLAYBACK_TIMEOUT) {
                 ALOGE("[Demux] timeout reached - elapsed_time: %f, timeout: %d", elapsed_time,

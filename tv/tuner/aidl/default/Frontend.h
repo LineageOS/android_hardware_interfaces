@@ -68,6 +68,7 @@ class Frontend : public BnFrontend {
     string getIptvTransportDescription();
     dtv_streamer* getIptvPluginStreamer();
     void readTuneByte(void* buf);
+    void* getTuneByteBuffer() { return mTuneByteBuffer; };
     dtv_streamer* createIptvPluginStreamer(dtv_plugin* interface, const char* transport_desc);
     dtv_plugin* createIptvPluginInterface();
     bool isLocked();
@@ -95,6 +96,7 @@ class Frontend : public BnFrontend {
     string mIptvTransportDescription;
     dtv_streamer* mIptvPluginStreamer;
     std::thread mIptvFrontendTuneThread;
+    void* mTuneByteBuffer = nullptr;
 };
 
 }  // namespace tuner

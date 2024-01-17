@@ -188,6 +188,9 @@ Frontend::~Frontend() {
     mCallback = nullptr;
     mIsLocked = false;
     mTuner = nullptr;
+    if (mTuneByteBuffer != nullptr) {
+        free(mTuneByteBuffer);
+    }
 }
 
 ::ndk::ScopedAStatus Frontend::close() {
@@ -246,11 +249,12 @@ void Frontend::readTuneByte(void* buf) {
     }
     mCallback->onEvent(FrontendEventType::LOCKED);
     mIsLocked = true;
+    mTuneByteBuffer = buf;
 }
 
 ::ndk::ScopedAStatus Frontend::tune(const FrontendSettings& in_settings) {
     if (mCallback == nullptr) {
-        ALOGW("[   WARN   ] Frontend callback is not set for tunin0g");
+        ALOGW("[   WARN   ] Frontend callback is not set for tuning");
         return ::ndk::ScopedAStatus::fromServiceSpecificError(
                 static_cast<int32_t>(Result::INVALID_STATE));
     }
@@ -298,7 +302,6 @@ void Frontend::readTuneByte(void* buf) {
         if (mIptvFrontendTuneThread.joinable()) {
             mIptvFrontendTuneThread.join();
         }
-        free(buf);
     }
 
     return ::ndk::ScopedAStatus::ok();
