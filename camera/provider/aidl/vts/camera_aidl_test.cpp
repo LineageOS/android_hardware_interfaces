@@ -1912,13 +1912,8 @@ void CameraAidlTest::verifyStreamCombination(const std::shared_ptr<ICameraDevice
             if (supportFeatureCombinationQuery) {
                 ret = device->isStreamCombinationWithSettingsSupported(config,
                                                                        &streamCombinationSupported);
-                // TODO: Do not allow OPERATION_NOT_SUPPORTED once HAL
-                // implementation is in place.
-                ASSERT_TRUE(ret.isOk() || static_cast<Status>(ret.getServiceSpecificError()) ==
-                                                  Status::OPERATION_NOT_SUPPORTED);
-                if (ret.isOk()) {
-                    ASSERT_EQ(expectedStatus, streamCombinationSupported);
-                }
+                ASSERT_TRUE(ret.isOk());
+                ASSERT_EQ(expectedStatus, streamCombinationSupported);
             }
         }
     }
