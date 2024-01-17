@@ -18,6 +18,19 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
+rust_library {
+    name: "libsecretkeeper_test",
+    crate_name: "secretkeeper_test",
+    srcs: ["lib.rs"],
+    rustlibs: [
+        "libciborium",
+        "libcoset",
+        "libdiced_open_dice",
+        "liblog_rust",
+        "libsecretkeeper_client",
+    ],
+}
+
 rust_test {
     name: "VtsSecretkeeperTargetTest",
     srcs: ["secretkeeper_test_client.rs"],
@@ -30,20 +43,40 @@ rust_test {
     ],
     test_config: "AndroidTest.xml",
     rustlibs: [
-        "libdiced_open_dice",
-        "libdice_policy",
-        "libsecretkeeper_client",
-        "libsecretkeeper_comm_nostd",
-        "libsecretkeeper_core_nostd",
         "android.hardware.security.secretkeeper-V1-rust",
         "libauthgraph_boringssl",
         "libauthgraph_core",
-        "libcoset",
         "libauthgraph_vts_test",
         "libbinder_rs",
         "libciborium",
         "libcoset",
+        "libdice_policy",
         "liblog_rust",
+        "libsecretkeeper_client",
+        "libsecretkeeper_comm_nostd",
+        "libsecretkeeper_core_nostd",
+        "libsecretkeeper_test",
     ],
     require_root: true,
+}
+
+rust_binary {
+    name: "secretkeeper_cli",
+    srcs: ["secretkeeper_cli.rs"],
+    lints: "android",
+    rlibs: [
+        "android.hardware.security.secretkeeper-V1-rust",
+        "libanyhow",
+        "libauthgraph_boringssl",
+        "libauthgraph_core",
+        "libbinder_rs",
+        "libclap",
+        "libcoset",
+        "libdice_policy",
+        "libhex",
+        "liblog_rust",
+        "libsecretkeeper_client",
+        "libsecretkeeper_comm_nostd",
+        "libsecretkeeper_test",
+    ],
 }
