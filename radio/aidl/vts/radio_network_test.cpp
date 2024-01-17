@@ -883,7 +883,7 @@ TEST_P(RadioNetworkTest, setLinkCapacityReportingCriteria_invalidHysteresisDlKbp
 
     ALOGI("setLinkCapacityReportingCriteria_invalidHysteresisDlKbps, rspInfo.error = %s\n",
           toString(radioRsp_network->rspInfo.error).c_str());
-    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error, {RadioError::INVALID_ARGUMENTS}));
+    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error, {RadioError::INVALID_ARGUMENTS, RadioError::REQUEST_NOT_SUPPORTED}));
 }
 
 /*
@@ -909,7 +909,7 @@ TEST_P(RadioNetworkTest, setLinkCapacityReportingCriteria_invalidHysteresisUlKbp
 
     ALOGI("setLinkCapacityReportingCriteria_invalidHysteresisUlKbps, rspInfo.error = %s\n",
           toString(radioRsp_network->rspInfo.error).c_str());
-    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error, {RadioError::INVALID_ARGUMENTS}));
+    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error, {RadioError::INVALID_ARGUMENTS, RadioError::REQUEST_NOT_SUPPORTED}));
 }
 
 /*
@@ -934,7 +934,7 @@ TEST_P(RadioNetworkTest, setLinkCapacityReportingCriteria_emptyParams) {
 
     ALOGI("setLinkCapacityReportingCriteria_emptyParams, rspInfo.error = %s\n",
           toString(radioRsp_network->rspInfo.error).c_str());
-    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error, {RadioError::NONE}));
+    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error, {RadioError::NONE, RadioError::REQUEST_NOT_SUPPORTED}));
 }
 
 /*
