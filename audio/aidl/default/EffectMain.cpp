@@ -21,15 +21,39 @@
 #include <android/binder_process.h>
 #include <system/audio_config.h>
 
+#ifdef __ANDROID_APEX__
+#include <android/apexsupport.h>
+#endif
+
 /** Default name of effect configuration file. */
 static const char* kDefaultConfigName = "audio_effects_config.xml";
+
+static inline std::string config_file_path() {
+    if (__builtin_available(android AAPEXSUPPORT_API, *)) {
+        AApexInfo *apexInfo;
+        if (AApexInfo_create(&apexInfo) == AAPEXINFO_OK) {
+            std::string apexName(AApexInfo_getName(apexInfo));
+            AApexInfo_destroy(apexInfo);
+            std::string candidatePath("/apex/");
+            candidatePath.append(apexName).append("/etc/").append(kDefaultConfigName);
+            LOG(DEBUG) << __func__ << " effect lib path " << candidatePath;
+            if (access(candidatePath.c_str(), R_OK) == 0) {
+                return std::move(candidatePath);
+            }
+        }
+    } else {
+        LOG(DEBUG) << __func__ << " libapexsupport is not supported";
+    }
+    LOG(DEBUG) << __func__ << ": Unable to resolve config file path in APEX";
+    return android::audio_find_readable_configuration_file(kDefaultConfigName);
+}
 
 int main() {
     // This is a debug implementation, always enable debug logging.
     android::base::SetMinimumLogSeverity(::android::base::DEBUG);
     ABinderProcess_setThreadPoolMaxThreadCount(0);
 
-    auto configFile = android::audio_find_readable_configuration_file(kDefaultConfigName);
+    auto configFile = config_file_path();
     if (configFile == "") {
         LOG(ERROR) << __func__ << ": config file " << kDefaultConfigName << " not found!";
         return EXIT_FAILURE;
