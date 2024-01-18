@@ -106,7 +106,7 @@ class Demux : public BnDemux {
     void setIsRecording(bool isRecording);
     bool isRecording();
     void startFrontendInputLoop();
-    void frontendIptvInputThreadLoop(dtv_plugin* interface, dtv_streamer* streamer);
+    void frontendIptvInputThreadLoop(dtv_plugin* interface, dtv_streamer* streamer, void* buf);
 
     /**
      * A dispatcher to read and dispatch input data to all the started filters.
@@ -130,6 +130,10 @@ class Demux : public BnDemux {
      * Setter for IPTV Reading thread
      */
     void setIptvThreadRunning(bool isIptvThreadRunning);
+    /**
+     * Stops IPTV playback reading thread.
+     */
+    void stopIptvFrontendInput();
 
   private:
     // Tuner service
@@ -208,7 +212,8 @@ class Demux : public BnDemux {
     /**
      * Controls IPTV reading thread status
      */
-    bool mIsIptvReadThreadRunning;
+    bool mIsIptvReadThreadRunning = false;
+    std::atomic<bool> mIsIptvReadThreadTerminated = false;
     std::mutex mIsIptvThreadRunningMutex;
     std::condition_variable mIsIptvThreadRunningCv;
 
