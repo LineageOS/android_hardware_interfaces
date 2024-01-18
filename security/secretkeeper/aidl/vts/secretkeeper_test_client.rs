@@ -14,19 +14,14 @@
  * limitations under the License.
  */
 
-#![cfg(test)]
-mod dice_sample;
-
-use crate::dice_sample::make_explicit_owned_dice;
-
-use rdroidtest_macro::{ignore_if, rdroidtest};
 use android_hardware_security_secretkeeper::aidl::android::hardware::security::secretkeeper::ISecretkeeper::ISecretkeeper;
 use android_hardware_security_secretkeeper::aidl::android::hardware::security::secretkeeper::SecretId::SecretId;
 use authgraph_vts_test as ag_vts;
 use authgraph_boringssl as boring;
 use authgraph_core::key;
 use coset::{CborSerializable, CoseEncrypt0};
-use dice_policy::{ConstraintSpec, ConstraintType, DicePolicy};
+use dice_policy::{ConstraintSpec, ConstraintType, DicePolicy, MissingAction};
+use rdroidtest::{ignore_if, rdroidtest};
 use secretkeeper_client::dice::OwnedDiceArtifactsWithExplicitKey;
 use secretkeeper_client::SkSession;
 use secretkeeper_core::cipher;
@@ -38,6 +33,10 @@ use secretkeeper_comm::data_types::request_response_impl::{
 use secretkeeper_comm::data_types::{Id, Secret, SeqNum};
 use secretkeeper_comm::data_types::response::Response;
 use secretkeeper_comm::data_types::packet::{ResponsePacket, ResponseType};
+use secretkeeper_test::{
+    AUTHORITY_HASH, MODE, CONFIG_DESC, SECURITY_VERSION,
+    dice_sample::make_explicit_owned_dice
+};
 
 const SECRETKEEPER_SERVICE: &str = "android.hardware.security.secretkeeper.ISecretkeeper";
 const CURRENT_VERSION: u64 = 1;
@@ -246,25 +245,16 @@ fn assert_entry_not_found(res: Result<Secret, Error>) {
 /// Construct a sealing policy on the dice chain. This method uses the following set of
 /// constraints which are compatible with sample DICE chains used in VTS.
 /// 1. ExactMatch on AUTHORITY_HASH (non-optional).
-/// 2. ExactMatch on KEY_MODE (non-optional).
+/// 2. ExactMatch on MODE (non-optional).
 /// 3. GreaterOrEqual on SECURITY_VERSION (optional).
 fn sealing_policy(dice: &[u8]) -> Vec<u8> {
-    let authority_hash: i64 = -4670549;
-    let key_mode: i64 = -4670551;
-    let config_desc: i64 = -4670548;
-    let security_version: i64 = -70005;
-
     let constraint_spec = [
-        ConstraintSpec::new(
-            ConstraintType::ExactMatch,
-            vec![authority_hash],
-            /* Optional */ false,
-        ),
-        ConstraintSpec::new(ConstraintType::ExactMatch, vec![key_mode], false),
+        ConstraintSpec::new(ConstraintType::ExactMatch, vec![AUTHORITY_HASH], MissingAction::Fail),
+        ConstraintSpec::new(ConstraintType::ExactMatch, vec![MODE], MissingAction::Fail),
         ConstraintSpec::new(
             ConstraintType::GreaterOrEqual,
-            vec![config_desc, security_version],
-            true,
+            vec![CONFIG_DESC, SECURITY_VERSION],
+            MissingAction::Ignore,
         ),
     ];
 

@@ -32,10 +32,10 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.bluetooth.ranging;
-@Backing(type="int") @VintfStability
+@Backing(type="byte") @VintfStability
 enum SubModeType {
   ONE = 0x01,
   TWO = 0x02,
   THREE = 0x03,
-  UNUSED = 0xff,
+  UNUSED = 0xffu8,
 }

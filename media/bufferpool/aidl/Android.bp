@@ -26,6 +26,9 @@ aidl_interface {
     vendor_available: true,
     double_loadable: true,
     srcs: ["android/hardware/media/bufferpool2/*.aidl"],
+    headers: [
+        "HardwareBuffer_aidl",
+    ],
     imports: [
         "android.hardware.common-V2",
         "android.hardware.common.fmq-V1",
@@ -44,10 +47,13 @@ aidl_interface {
                 "//apex_available:platform",
                 "com.android.media.swcodec",
             ],
+            additional_shared_libraries: [
+                "libnativewindow",
+            ],
             min_sdk_version: "29",
         },
         rust: {
-            enabled: true,
+            enabled: false,
         },
     },
     versions_with_info: [
@@ -59,6 +65,6 @@ aidl_interface {
             ],
         },
     ],
-    frozen: true,
+    frozen: false,
 
 }

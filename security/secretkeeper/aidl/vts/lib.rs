@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,21 @@
  * limitations under the License.
  */
 
-package android.hardware.bluetooth.ranging;
+//! Test helper functions.
 
-@VintfStability
-@Backing(type="byte")
-enum ModeType {
-    ZERO = 0x00,
-    ONE = 0x01,
-    TWO = 0x02,
-    THREE = 0x03,
-}
+pub mod dice_sample;
+
+// Constants for DICE map keys.
+
+/// Map key for authority hash.
+pub const AUTHORITY_HASH: i64 = -4670549;
+/// Map key for config descriptor.
+pub const CONFIG_DESC: i64 = -4670548;
+/// Map key for component name.
+pub const COMPONENT_NAME: i64 = -70002;
+/// Map key for component version.
+pub const COMPONENT_VERSION: i64 = -70003;
+/// Map key for security version.
+pub const SECURITY_VERSION: i64 = -70005;
+/// Map key for mode.
+pub const MODE: i64 = -4670551;

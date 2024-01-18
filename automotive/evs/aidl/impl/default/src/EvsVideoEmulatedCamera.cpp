@@ -222,10 +222,9 @@ void EvsVideoEmulatedCamera::onCodecOutputAvailable(const int32_t index,
 
     // Lock our output buffer for writing
     uint8_t* pixels = nullptr;
-    int32_t bytesPerStride = 0;
     auto& mapper = ::android::GraphicBufferMapper::get();
     mapper.lock(renderBufferHandle, GRALLOC_USAGE_SW_WRITE_OFTEN | GRALLOC_USAGE_SW_READ_NEVER,
-                ::android::Rect(mWidth, mHeight), (void**)&pixels, nullptr, &bytesPerStride);
+                ::android::Rect(mWidth, mHeight), (void**)&pixels);
 
     // If we failed to lock the pixel buffer, we're about to crash, but log it first
     if (!pixels) {
