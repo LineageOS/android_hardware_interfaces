@@ -246,13 +246,6 @@ void EvsVideoEmulatedCamera::onCodecOutputAvailable(const int32_t index,
         *(pixels++) = *(v_head++);
     }
 
-    const auto status =
-            AMediaCodec_releaseOutputBuffer(mVideoCodec.get(), index, /* render = */ false);
-    if (status != AMEDIA_OK) {
-        LOG(ERROR) << __func__
-                   << ": Received error in releasing output buffer. Error code: " << status;
-    }
-
     // Release our output buffer
     mapper.unlock(renderBufferHandle);
 
@@ -305,6 +298,12 @@ void EvsVideoEmulatedCamera::renderOneFrame() {
         return;
     }
     onCodecOutputAvailable(codecOutputputBufferIdx, info);
+    const auto release_status = AMediaCodec_releaseOutputBuffer(
+            mVideoCodec.get(), codecOutputputBufferIdx, /* render = */ false);
+    if (release_status != AMEDIA_OK) {
+        LOG(ERROR) << __func__
+                   << ": Received error in releasing output buffer. Error code: " << release_status;
+    }
 }
 
 void EvsVideoEmulatedCamera::initializeParameters() {
