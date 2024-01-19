@@ -34,6 +34,11 @@ struct ClientManager : public BnClientManager {
         ::aidl::android::hardware::media::bufferpool2::IClientManager::Registration* _aidl_return)
         override;
 
+    ::ndk::ScopedAStatus registerPassiveSender(
+        const std::shared_ptr<IAccessor>& in_bufferPool,
+        ::aidl::android::hardware::media::bufferpool2::IClientManager::Registration* _aidl_return)
+        override;
+
     /** Gets an instance. */
     static std::shared_ptr<ClientManager> getInstance();
 

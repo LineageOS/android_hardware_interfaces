@@ -35,6 +35,7 @@ package android.hardware.media.bufferpool2;
 @VintfStability
 interface IClientManager {
   android.hardware.media.bufferpool2.IClientManager.Registration registerSender(in android.hardware.media.bufferpool2.IAccessor bufferPool);
+  android.hardware.media.bufferpool2.IClientManager.Registration registerPassiveSender(in android.hardware.media.bufferpool2.IAccessor bufferPool);
   @VintfStability
   parcelable Registration {
     long connectionId;
