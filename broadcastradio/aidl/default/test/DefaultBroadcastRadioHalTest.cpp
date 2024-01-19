@@ -14,10 +14,13 @@
  * limitations under the License.
  */
 
+#include "MockBroadcastRadioCallback.h"
+
 #include <BroadcastRadio.h>
 #include <VirtualRadio.h>
 #include <broadcastradio-utils-aidl/Utils.h>
 
+#include <android-base/logging.h>
 #include <gtest/gtest.h>
 
 namespace aidl::android::hardware::broadcastradio {
@@ -74,10 +77,19 @@ const VirtualRadio& getAmFmMockTestRadio() {
 class DefaultBroadcastRadioHalTest : public testing::Test {
   public:
     void SetUp() override {
+        ::android::base::SetDefaultTag("BcRadioAidlDef.test");
         const VirtualRadio& amFmRadioMockTest = getAmFmMockTestRadio();
         mBroadcastRadioHal = ::ndk::SharedRefBase::make<BroadcastRadio>(amFmRadioMockTest);
+        mTunerCallback = ndk::SharedRefBase::make<MockBroadcastRadioCallback>();
     }
+
+    void TearDown() override {
+        mBroadcastRadioHal->unsetTunerCallback();
+        EXPECT_FALSE(mTunerCallback->isTunerFailed());
+    }
+
     std::shared_ptr<BroadcastRadio> mBroadcastRadioHal;
+    std::shared_ptr<MockBroadcastRadioCallback> mTunerCallback;
 };
 
 TEST_F(DefaultBroadcastRadioHalTest, GetAmFmRegionConfig) {
@@ -134,6 +146,26 @@ TEST_F(DefaultBroadcastRadioHalTest, GetProperties) {
     for (const auto& program : mockPrograms) {
         EXPECT_NE(supportedTypeSet.find(program.selector.primaryId.type), supportedTypeSet.end());
     }
+}
+
+TEST_F(DefaultBroadcastRadioHalTest, SetTunerCallback) {
+    auto halResult = mBroadcastRadioHal->setTunerCallback(mTunerCallback);
+
+    ASSERT_TRUE(halResult.isOk());
+}
+
+TEST_F(DefaultBroadcastRadioHalTest, SetTunerCallbackWithNull) {
+    auto halResult = mBroadcastRadioHal->setTunerCallback(nullptr);
+
+    ASSERT_EQ(halResult.getServiceSpecificError(), utils::resultToInt(Result::INVALID_ARGUMENTS));
+}
+
+TEST_F(DefaultBroadcastRadioHalTest, UnsetTunerCallbackWithNull) {
+    ASSERT_TRUE(mBroadcastRadioHal->setTunerCallback(mTunerCallback).isOk());
+
+    auto halResult = mBroadcastRadioHal->unsetTunerCallback();
+
+    ASSERT_TRUE(halResult.isOk());
 }
 
 }  // namespace aidl::android::hardware::broadcastradio
