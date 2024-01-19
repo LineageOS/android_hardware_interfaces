@@ -118,8 +118,6 @@ cc_library {
 cc_binary {
     name: "android.hardware.audio.service-aidl.example",
     relative_install_path: "hw",
-    init_rc: ["android.hardware.audio.service-aidl.example.rc"],
-    vintf_fragments: ["android.hardware.audio.service-aidl.xml"],
     defaults: [
         "aidlaudioservice_defaults",
         "latest_android_hardware_audio_core_sounddose_ndk_shared",
@@ -146,6 +144,7 @@ cc_binary {
         "-Wthread-safety",
         "-DBACKEND_NDK",
     ],
+    installable: false, //installed in apex com.android.hardware.audio
 }
 
 cc_test {
@@ -239,10 +238,9 @@ filegroup {
 cc_binary {
     name: "android.hardware.audio.effect.service-aidl.example",
     relative_install_path: "hw",
-    init_rc: ["android.hardware.audio.effect.service-aidl.example.rc"],
-    vintf_fragments: ["android.hardware.audio.effect.service-aidl.xml"],
     defaults: ["aidlaudioeffectservice_defaults"],
     shared_libs: [
+        "libapexsupport",
         "libtinyxml2",
     ],
     srcs: [
@@ -250,6 +248,7 @@ cc_binary {
         "EffectFactory.cpp",
         "EffectMain.cpp",
     ],
+    installable: false, //installed in apex com.android.hardware.audio.effect
 }
 
 cc_library_headers {
@@ -257,4 +256,23 @@ cc_library_headers {
     export_include_dirs: ["include"],
     vendor_available: true,
     host_supported: true,
+}
+
+prebuilt_etc {
+    name: "android.hardware.audio.service-aidl.example.rc",
+    src: "android.hardware.audio.service-aidl.example.rc",
+    installable: false,
+}
+
+prebuilt_etc {
+    name: "android.hardware.audio.service-aidl.xml",
+    src: "android.hardware.audio.service-aidl.xml",
+    sub_dir: "vintf",
+    installable: false,
+}
+
+prebuilt_etc {
+    name: "audio_effects_config.xml",
+    src: "audio_effects_config.xml",
+    installable: false,
 }

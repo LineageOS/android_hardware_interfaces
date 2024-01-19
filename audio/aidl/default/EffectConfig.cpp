@@ -24,6 +24,10 @@
 
 #include "effectFactory-impl/EffectConfig.h"
 
+#ifdef __ANDROID_APEX__
+#include <android/apexsupport.h>
+#endif
+
 using aidl::android::media::audio::common::AudioSource;
 using aidl::android::media::audio::common::AudioStreamType;
 using aidl::android::media::audio::common::AudioUuid;
@@ -89,6 +93,24 @@ std::vector<std::reference_wrapper<const tinyxml2::XMLElement>> EffectConfig::ge
 }
 
 bool EffectConfig::resolveLibrary(const std::string& path, std::string* resolvedPath) {
+    if (__builtin_available(android AAPEXSUPPORT_API, *)) {
+        AApexInfo *apexInfo;
+        if (AApexInfo_create(&apexInfo) == AAPEXINFO_OK) {
+            std::string apexName(AApexInfo_getName(apexInfo));
+            AApexInfo_destroy(apexInfo);
+            std::string candidatePath("/apex/");
+            candidatePath.append(apexName).append(kEffectLibApexPath).append(path);
+            LOG(DEBUG) << __func__ << " effect lib path " << candidatePath;
+            if (access(candidatePath.c_str(), R_OK) == 0) {
+                *resolvedPath = std::move(candidatePath);
+                return true;
+            }
+        }
+    } else {
+        LOG(DEBUG) << __func__ << " libapexsupport is not supported";
+    }
+
+    // If audio effects libs are not in vendor apex, locate them in kEffectLibPath
     for (auto* libraryDirectory : kEffectLibPath) {
         std::string candidatePath = std::string(libraryDirectory) + '/' + path;
         if (access(candidatePath.c_str(), R_OK) == 0) {
