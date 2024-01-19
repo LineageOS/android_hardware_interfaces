@@ -355,6 +355,70 @@ TEST(BroadcastRadioUtilsTest, GetDabSCIdS) {
     ASSERT_EQ(utils::getDabSCIdS(sel), kDabSCIdS);
 }
 
+TEST(BroadcastRadioUtilsTest, TunesToWithTheSameHdSelector) {
+    ProgramSelector sel = utils::makeSelectorHd(kHdStationId, kHdSubChannel, kHdFrequency);
+    ProgramSelector selTarget = utils::makeSelectorHd(kHdStationId, kHdSubChannel, kHdFrequency);
+
+    ASSERT_TRUE(utils::tunesTo(sel, selTarget));
+}
+
+TEST(BroadcastRadioUtilsTest, TunesToAmFmSelectorWithDifferentSubChannels) {
+    ProgramSelector sel = utils::makeSelectorHd(kHdStationId, kHdSubChannel, kHdFrequency);
+    ProgramSelector selTarget = utils::makeSelectorAmfm(kHdFrequency);
+
+    ASSERT_FALSE(utils::tunesTo(sel, selTarget));
+}
+
+TEST(BroadcastRadioUtilsTest, TunesToMainHdChannelWithDifferentSubChannels) {
+    ProgramSelector sel = utils::makeSelectorAmfm(kHdFrequency);
+    ProgramSelector selTarget =
+            utils::makeSelectorHd(kHdStationId, /* subChannel= */ 0, kHdFrequency);
+
+    ASSERT_TRUE(utils::tunesTo(sel, selTarget));
+}
+
+TEST(BroadcastRadioUtilsTest, TunesToWithTheSameAmFmSelector) {
+    ProgramSelector sel = utils::makeSelectorAmfm(kFmFrequencyKHz);
+    ProgramSelector selTarget = utils::makeSelectorAmfm(kFmFrequencyKHz);
+
+    ASSERT_TRUE(utils::tunesTo(sel, selTarget));
+}
+
+TEST(BroadcastRadioUtilsTest, TunesToWithDifferentFrequencies) {
+    ProgramSelector sel = utils::makeSelectorAmfm(kFmFrequencyKHz);
+    ProgramSelector selTarget = utils::makeSelectorAmfm(kFmFrequencyKHz + 200);
+
+    ASSERT_FALSE(utils::tunesTo(sel, selTarget));
+}
+
+TEST(BroadcastRadioUtilsTest, TunesToWithTheSameDabSelector) {
+    ProgramSelector sel = utils::makeSelectorDab(kDabSidExt, kDabEnsemble, kDabFrequencyKhz);
+    ProgramSelector selTarget = utils::makeSelectorDab(kDabSidExt, kDabEnsemble, kDabFrequencyKhz);
+
+    ASSERT_TRUE(utils::tunesTo(sel, selTarget));
+}
+
+TEST(BroadcastRadioUtilsTest, TunesToWithDabSelectorOfDifferentPrimaryIds) {
+    ProgramSelector sel = utils::makeSelectorDab(kDabSidExt + 1, kDabEnsemble, kDabFrequencyKhz);
+    ProgramSelector selTarget = utils::makeSelectorDab(kDabSidExt, kDabEnsemble, kDabFrequencyKhz);
+
+    ASSERT_FALSE(utils::tunesTo(sel, selTarget));
+}
+
+TEST(BroadcastRadioUtilsTest, TunesToWithDabSelectorOfDifferentSecondayIds) {
+    ProgramSelector sel = utils::makeSelectorDab(kDabSidExt, kDabEnsemble + 100, kDabFrequencyKhz);
+    ProgramSelector selTarget = utils::makeSelectorDab(kDabSidExt, kDabEnsemble, kDabFrequencyKhz);
+
+    ASSERT_FALSE(utils::tunesTo(sel, selTarget));
+}
+
+TEST(BroadcastRadioUtilsTest, TunesToWithDabSelectorWithoutSecondaryIds) {
+    ProgramSelector sel = utils::makeSelectorDab(kDabSidExt);
+    ProgramSelector selTarget = utils::makeSelectorDab(kDabSidExt, kDabEnsemble, kDabFrequencyKhz);
+
+    ASSERT_TRUE(utils::tunesTo(sel, selTarget));
+}
+
 TEST(BroadcastRadioUtilsTest, SatisfiesWithSatisfiedIdTypesFilter) {
     ProgramFilter filter = ProgramFilter{.identifierTypes = {IdentifierType::DAB_FREQUENCY_KHZ}};
     ProgramSelector sel = utils::makeSelectorDab(kDabSidExt, kDabEnsemble, kDabFrequencyKhz);
