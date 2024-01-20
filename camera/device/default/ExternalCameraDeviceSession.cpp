@@ -789,8 +789,10 @@ Status ExternalCameraDeviceSession::switchToOffline(
                 outputBuffer.bufferId = buffer.bufferId;
                 outputBuffer.status = BufferStatus::ERROR;
                 if (buffer.acquireFence >= 0) {
-                    outputBuffer.releaseFence.fds.resize(1);
-                    outputBuffer.releaseFence.fds.at(0).set(buffer.acquireFence);
+                    native_handle_t* handle = native_handle_create(/*numFds*/ 1, /*numInts*/ 0);
+                    handle->data[0] = buffer.acquireFence;
+                    outputBuffer.releaseFence = android::dupToAidl(handle);
+                    native_handle_delete(handle);
                 }
             } else {
                 offlineBuffers.push_back(buffer);
@@ -1389,12 +1391,14 @@ Status ExternalCameraDeviceSession::importRequestLockedImpl(
 
     // All buffers are imported. Now validate output buffer acquire fences
     for (size_t i = 0; i < numOutputBufs; i++) {
-        if (!sHandleImporter.importFence(
-                    ::android::makeFromAidl(request.outputBuffers[i].acquireFence), allFences[i])) {
+        native_handle_t* h = ::android::makeFromAidl(request.outputBuffers[i].acquireFence);
+        if (!sHandleImporter.importFence(h, allFences[i])) {
             ALOGE("%s: output buffer %zu acquire fence is invalid", __FUNCTION__, i);
             cleanupInflightFences(allFences, i);
+            native_handle_delete(h);
             return Status::INTERNAL_ERROR;
         }
+        native_handle_delete(h);
     }
     return Status::OK;
 }
@@ -1768,8 +1772,10 @@ Status ExternalCameraDeviceSession::processCaptureRequestError(
         result.outputBuffers[i].bufferId = req->buffers[i].bufferId;
         result.outputBuffers[i].status = BufferStatus::ERROR;
         if (req->buffers[i].acquireFence >= 0) {
-            result.outputBuffers[i].releaseFence.fds.resize(1);
-            result.outputBuffers[i].releaseFence.fds.at(0).set(req->buffers[i].acquireFence);
+            native_handle_t* handle = native_handle_create(/*numFds*/ 1, /*numInts*/ 0);
+            handle->data[0] = req->buffers[i].acquireFence;
+            result.outputBuffers[i].releaseFence = android::dupToAidl(handle);
+            native_handle_delete(handle);
         }
     }
 
@@ -1813,16 +1819,20 @@ Status ExternalCameraDeviceSession::processCaptureResult(std::shared_ptr<HalRequ
         if (req->buffers[i].fenceTimeout) {
             result.outputBuffers[i].status = BufferStatus::ERROR;
             if (req->buffers[i].acquireFence >= 0) {
-                result.outputBuffers[i].releaseFence.fds.resize(1);
-                result.outputBuffers[i].releaseFence.fds.at(0).set(req->buffers[i].acquireFence);
+                native_handle_t* handle = native_handle_create(/*numFds*/ 1, /*numInts*/ 0);
+                handle->data[0] = req->buffers[i].acquireFence;
+                result.outputBuffers[i].releaseFence = android::dupToAidl(handle);
+                native_handle_delete(handle);
             }
             notifyError(req->frameNumber, req->buffers[i].streamId, ErrorCode::ERROR_BUFFER);
         } else {
             result.outputBuffers[i].status = BufferStatus::OK;
             // TODO: refactor
             if (req->buffers[i].acquireFence >= 0) {
-                result.outputBuffers[i].releaseFence.fds.resize(1);
-                result.outputBuffers[i].releaseFence.fds.at(0).set(req->buffers[i].acquireFence);
+                native_handle_t* handle = native_handle_create(/*numFds*/ 1, /*numInts*/ 0);
+                handle->data[0] = req->buffers[i].acquireFence;
+                result.outputBuffers[i].releaseFence = android::dupToAidl(handle);
+                native_handle_delete(handle);
             }
         }
     }
@@ -2086,9 +2096,10 @@ bool ExternalCameraDeviceSession::BufferRequestThread::threadLoop() {
                     // TODO: create a batch import API so we don't need to lock/unlock mCbsLock
                     // repeatedly?
                     lk.unlock();
-                    Status s =
-                            parent->importBuffer(streamId, hBuf.bufferId, makeFromAidl(hBuf.buffer),
-                                                 /*out*/ &mBufferReqs[i].bufPtr);
+                    native_handle_t* h = makeFromAidl(hBuf.buffer);
+                    Status s = parent->importBuffer(streamId, hBuf.bufferId, h,
+                                                    /*out*/ &mBufferReqs[i].bufPtr);
+                    native_handle_delete(h);
                     lk.lock();
 
                     if (s != Status::OK) {
@@ -2096,12 +2107,14 @@ bool ExternalCameraDeviceSession::BufferRequestThread::threadLoop() {
                         cleanupInflightFences(importedFences, i - 1);
                         return false;
                     }
-                    if (!sHandleImporter.importFence(makeFromAidl(hBuf.acquireFence),
-                                                     mBufferReqs[i].acquireFence)) {
+                    h = makeFromAidl(hBuf.acquireFence);
+                    if (!sHandleImporter.importFence(h, mBufferReqs[i].acquireFence)) {
                         ALOGE("%s: stream %d import fence failed!", __FUNCTION__, streamId);
                         cleanupInflightFences(importedFences, i - 1);
+                        native_handle_delete(h);
                         return false;
                     }
+                    native_handle_delete(h);
                     importedFences[i] = mBufferReqs[i].acquireFence;
                 } break;
                 default:
