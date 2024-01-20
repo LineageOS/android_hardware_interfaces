@@ -62,6 +62,14 @@ cc_binary {
         "libutils",
         "libhardware",
     ],
+<<<<<<< HEAD   (64f26d bluetooth: do not fatally error on unknown packet types)
+=======
+
+    defaults: [
+        "android_hardware_audio_config_defaults",
+        "audio_broken_threadpool_defaults",
+    ],
+>>>>>>> CHANGE (3f988c audio HAL: Support disabling binder thread pool)
 }
 
 // Legacy service name, use android.hardware.audio.service instead
