@@ -16,6 +16,23 @@
       "message": "Only for initial testing, proper build system var plumbing will be added if it works.",
       "revId": "ab46ada4bd94a4156696dbf950763833681d6521",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2593fe11_7a4a8b33",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 14048
+      },
+      "writtenOn": "2024-01-20T23:01:14Z",
+      "side": 1,
+      "message": "Verified working on loki using the nvidia 3.10 kernel, where without this or reverts it fails to boot.",
+      "revId": "ab46ada4bd94a4156696dbf950763833681d6521",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
