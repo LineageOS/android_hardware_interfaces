@@ -47,6 +47,7 @@ cc_binary {
         "-Wall",
         "-Wextra",
         "-Werror",
+        "-DDISABLE_AUDIO_THREADPOOL",
     ],
 
     shared_libs: [
