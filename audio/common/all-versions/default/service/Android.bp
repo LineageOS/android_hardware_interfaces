@@ -43,6 +43,7 @@ cc_binary {
 
     defaults: [
         "android_hardware_audio_config_defaults",
+        "audio_broken_threadpool_defaults",
     ],
 
     srcs: ["service.cpp"],
