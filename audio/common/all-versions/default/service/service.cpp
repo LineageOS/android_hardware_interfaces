@@ -79,8 +79,10 @@ int main(int /* argc */, char* /* argv */ []) {
     // start a threadpool for vndbinder interactions
     ::android::ProcessState::self()->startThreadPool();
 
+#ifndef DISABLE_AUDIO_THREADPOOL
     ABinderProcess_setThreadPoolMaxThreadCount(1);
     ABinderProcess_startThreadPool();
+#endif
 
     const int32_t defaultValue = -1;
     int32_t value =
@@ -133,10 +135,12 @@ int main(int /* argc */, char* /* argv */ []) {
     };
 
     const std::vector<std::pair<std::string,std::string>> optionalInterfaceSharedLibs = {
+#ifndef DISABLE_AUDIO_THREADPOOL
         {
             "android.hardware.bluetooth.audio-impl",
             "createIBluetoothAudioProviderFactory",
         },
+#endif
     };
     // clang-format on
 
