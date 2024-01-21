@@ -51,6 +51,24 @@
       "parentUuid": "2593fe11_7a4a8b33",
       "revId": "ab46ada4bd94a4156696dbf950763833681d6521",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f44e4b7c_b0638028",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 14048
+      },
+      "writtenOn": "2024-01-21T01:45:03Z",
+      "side": 1,
+      "message": "https://review.lineageos.org/c/LineageOS/android_device_google_marlin/+/362013\nThere are multiple shipping devices that fork the hal to do this. When I hit a device that needed it, the discussion came up to commonize changes instead of continuing to duplicate forks.",
+      "parentUuid": "a8023660_2c47fd4f",
+      "revId": "ab46ada4bd94a4156696dbf950763833681d6521",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
