@@ -38,8 +38,8 @@ parcelable ConfigurationFlags {
   const int NONE = 0x0000;
   const int LOSSLESS = 0x0001;
   const int LOW_LATENCY = 0x0002;
-  const int ALLOW_ASYMMETRIC_CONFIGURATIONS = 0x0003;
-  const int SPATIAL_AUDIO = 0x0004;
-  const int PROVIDE_ASE_METADATA = 0x0005;
-  const int MONO_MIC_CONFIGURATION = 0x0006;
+  const int ALLOW_ASYMMETRIC_CONFIGURATIONS = 0x0004;
+  const int SPATIAL_AUDIO = 0x0008;
+  const int PROVIDE_ASE_METADATA = 0x0010;
+  const int MONO_MIC_CONFIGURATION = 0x0020;
 }
