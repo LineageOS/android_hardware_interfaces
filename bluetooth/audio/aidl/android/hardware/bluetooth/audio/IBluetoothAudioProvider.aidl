@@ -136,14 +136,31 @@ interface IBluetoothAudioProvider {
             in List<A2dpRemoteCapabilities> remoteA2dpCapabilities, in A2dpConfigurationHint hint);
 
     /**
+     * Predefined values for the codec priority, used by `setCodecPriority()`.
+     * Besides these special values, the codec priority can be set to 1 for
+     * the highest possible priority, or to any other 4 bytes wide integer N,
+     * where N has the higher priority than N + 1.
+     */
+    const int CODEC_PRIORITY_DISABLED = -1;
+    const int CODEC_PRIORITY_NONE = 0;
+
+    /**
      * Set specific codec priority
      *
      *  It should be assumed that the external module will start with all its
-     *  integrated codecs priority 0 by default.
+     *  integrated codecs priority set to `CODEC_PRIORITY_NONE` by default.
+     *
+     * Note: If the BT stack sets a particular codec priority to
+     *       CODEC_PRIORITY_DISABLED, the configuration provider shal not return
+     *       a particular codec when asked for the configuration. Other priority
+     *       levels and the prioritization mechanism details are not specified
+     *       and the vendor can implement them as desired.
      *
      * @param codecId:  codecId
-     * @param priority: 0 for no priority, -1 for codec disabled,
-     *                  from 1 to N, where 1 is highest.
+     * @param priority: `CODEC_PRIORITY_NONE` for no priority,
+     *        `CODEC_PRIORITY_DISABLED` for the disabled codec, or priority
+     *        level from 1 to N, where the priority of N + 1 is lower than N,
+     *        and N equal to 1 is the highest possible codec priority.
      */
     void setCodecPriority(in CodecId codecId, int priority);
 
@@ -240,7 +257,8 @@ interface IBluetoothAudioProvider {
         IsoDataPathConfiguration isoDataPathConfiguration;
     }
 
-    /* All the LeAudioAseQosConfiguration parameters are defined by the
+    /**
+     * All the LeAudioAseQosConfiguration parameters are defined by the
      * Bluetooth Audio Stream Control Service specification v.1.0, Sec. 5: "ASE
      * Control Operations".
      */
@@ -330,11 +348,11 @@ interface IBluetoothAudioProvider {
         /**
          * Sink ASEs configuration
          */
-        @nullable List<AseDirectionConfiguration> sinkAseConfiguration;
+        @nullable AseDirectionConfiguration[] sinkAseConfiguration;
         /**
          * Source ASEs configuration
          */
-        @nullable List<AseDirectionConfiguration> sourceAseConfiguration;
+        @nullable AseDirectionConfiguration[] sourceAseConfiguration;
         /**
          * Additional flags, used for configurations with special features
          */
@@ -371,11 +389,11 @@ interface IBluetoothAudioProvider {
         /**
          * Sink ASEs configuration setting
          */
-        @nullable List<AseDirectionRequirement> sinkAseRequirement;
+        @nullable AseDirectionRequirement[] sinkAseRequirement;
         /**
          * Source ASEs configuration setting
          */
-        @nullable List<AseDirectionRequirement> sourceAseRequirement;
+        @nullable AseDirectionRequirement[] sourceAseRequirement;
         /**
          * Additional flags, used to request configurations with special
          * features
@@ -395,25 +413,57 @@ interface IBluetoothAudioProvider {
      *       BluetoothStack expects to get configuration list for SINK and SOURCE
      *       on either _ENCODING or _DECODING session.
      *
-     * @param remoteSinkAudioCapabilities List of remote sink capabilities
+     * Note: When the requirements are not met, either for one or both
+     *       directions, the corresponding returned AseDirectionConfiguration
+     *       can be set to null. Otherwise it shall contain an ASE configuration
+     *       array with the number of configurations equal to the number of ASEs
+     *       which should be configured by the BT stack for this particular
+     *       direction.
+     *       The provider shall match all the requirements set by the Bluetooth
+     *       stack or return a null configuration for the direction when these
+     *       requirements are not met. In response, the BT Stack may decide to
+     *       reduce the requirements to the minimum, which is the `audioContext`
+     *       and the `LeAudioAseConfiguration.codecConfiguration` with the
+     *       mandatory `CodecSpecificConfigurationLtv.SamplingFrequency` and
+     *       `CodecSpecificConfigurationLtv.AudioChannelAllocation` fields set.
+     *       When these minimum requirements are not met as well, the Bt stack
+     *       may set either `sinkAseRequirement` or `sourceAseRequirement`, or
+     *       both to null. In such case the provider has the freedom of
+     *       providing a configuration for the null-ed direction requirements or
+     *       not for the particular audio context. However returning neither of
+     *       the direction configurations (both nulled) is considered as an
+     *       invalid behavior.
+     *       If the returned configurations are not complete (either
+     *       `qosConfiguration` or `dataPathConfiguration` are null), the BT
+     *       stack will ask for these dynamically during the stream
+     *       establishment, using the corresponding
+     *       `getLeAudioAseQosConfiguration()` and
+     *       `getLeAudioAseDatapathConfiguration()` API calls. This behavior
+     *       is not desired as it slows down the stream establishment, and
+     *       should be implemented only if really needed (e.g. when the provider
+     *       needs to monitor the remote device ASE states, using the
+     *       `onSinkAseMetadataChanged()` and `onSourceAseMetadataChanged()`
+     *       callbacks to derive the valid QoS and/or data path configuration).
+     *
+     * @param remoteSinkAudioCapabilities Array of remote sink capabilities
      *        supported by an active group devices.
-     * @param remoteSourceAudioCapabilities List of remote source capabilities
+     * @param remoteSourceAudioCapabilities Array of remote source capabilities
      *        supported by an active group devices.
      * @param requirements ASE configuration requirements
      *
-     * @return List<LeAudioAseConfigurationSetting>
+     * @return LeAudioAseConfigurationSetting[]
      */
-    List<LeAudioAseConfigurationSetting> getLeAudioAseConfiguration(
-            in @nullable List<LeAudioDeviceCapabilities> remoteSinkAudioCapabilities,
-            in @nullable List<LeAudioDeviceCapabilities> remoteSourceAudioCapabilities,
-            in List<LeAudioConfigurationRequirement> requirements);
+    LeAudioAseConfigurationSetting[] getLeAudioAseConfiguration(
+            in @nullable LeAudioDeviceCapabilities[] remoteSinkAudioCapabilities,
+            in @nullable LeAudioDeviceCapabilities[] remoteSourceAudioCapabilities,
+            in LeAudioConfigurationRequirement[] requirements);
 
     @VintfStability
     parcelable LeAudioAseQosConfigurationRequirement {
         /**
          * Audio Contect Type that this requirements apply to
          */
-        AudioContext contextType;
+        AudioContext audioContext;
 
         /**
          * QoS preferences received in Codec Configured ASE state. As defined in
@@ -501,6 +551,18 @@ interface IBluetoothAudioProvider {
      * parameters are not within the boundaries received from the remote device
      * after configuring the ASEs.
      *
+     * Note: When the requirements are not met, either for one or both
+     *       directions, the corresponding configurations in the returned
+     *       LeAudioAseQosConfigurationPair can be set to null. The minimum
+     *       requirement can have only the `audioContext` field set and just a
+     *       single (either sink or source) AseQosDirectionRequirement, where
+     *       only the preferred parameter fields are not specified. The
+     *       configuration provider should always be able to satisfy such
+     *       requirement for all the audio contexts specified by Bluetooth SIG.
+     *       The Bluetooth stack can reduce the requirements to the minimum,
+     *       when more precisely specified requirements are not met by the
+     *       configuration provider.
+     *
      * @param qosRequirement ASE QoS configurations requirements
      *
      * @return LeAudioAseQosConfigurationPair
@@ -527,7 +589,7 @@ interface IBluetoothAudioProvider {
          * This can serve as a hint for selecting the proper configuration by
          * the offloader.
          */
-        AudioContext context;
+        AudioContext audioContext;
         /**
          * Stream configuration, including connection handles and audio channel
          * allocations.
@@ -545,13 +607,25 @@ interface IBluetoothAudioProvider {
      * @param sinkConfig - remote sink device stream configuration
      * @param sourceConfig - remote source device stream configuration
      *
+     * Note: The provider shall provide a data path configuration for each
+     *       of the non-null configurations passed to this function if these
+     *       configurations are supported by the configuration provider.
+     *       The Bluetooth stack can set either only sink or source
+     *       configuration if it expects just a single direction data path
+     *       configuration. Not providing a valid data path configuration for
+     *       the stream configured with the codec parameters provided by the
+     *       configuration provider will be considered an invalid behavior.
+     *       The BT stack can pass asymmetric sink and source configurations
+     *       if `ALLOW_ASYMMETRIC_CONFIGURATIONS` flag was set by the provider
+     *       in the `CodecInfo` information for the particular codec.
+     *
      * @return LeAudioDataPathConfigurationPair
      */
     LeAudioDataPathConfigurationPair getLeAudioAseDatapathConfiguration(
             in @nullable StreamConfig sinkConfig,
             in @nullable StreamConfig sourceConfig);
 
-    /*
+    /**
      * Audio Stream Endpoint state used to report Metadata changes on the remote
      * device audio endpoints.
      */
@@ -564,14 +638,32 @@ interface IBluetoothAudioProvider {
     }
 
     /**
-     * Used to report metadata changes to the provider. This allows for a
-     * pseudo communication channel between the remote device and the provider,
-     * using the vendor specific metadata of the changing ASE state.
-     * It is used only when ASE is using configurations marked with the
-     * `PROVIDE_ASE_METADATA` flag.
+     * Used to report sink endpoint metadata changes to the provider. This
+     * allows for a pseudo communication channel between the remote device and
+     * the provider, using the vendor specific metadata of the changing ASE
+     * state. It is used only when Audio Stream Endpoint (ASE) is using
+     * configurations marked with the `PROVIDE_ASE_METADATA` flag.
+     *
+     * @param state - current Audio Stream Endpoint state of the remote device
+     * @param cigId - Coordinate Isochronous Group identifier
+     * @param cisId - Coordinate Isochronous Stream identifier
+     * @param metadata - remote sink device metadata for the given ASE
      */
     void onSinkAseMetadataChanged(
             in AseState state, int cigId, int cisId, in @nullable MetadataLtv[] metadata);
+
+    /**
+     * Used to report source endpoint metadata changes to the provider. This
+     * allows for a pseudo communication channel between the remote device and
+     * the provider, using the vendor specific metadata of the changing ASE
+     * state. It is used only when Audio Stream Endpoint (ASE) is using
+     * configurations marked with the `PROVIDE_ASE_METADATA` flag.
+     *
+     * @param state - current Audio Stream Endpoint state of the remote device
+     * @param cigId - Coordinate Isochronous Group identifier
+     * @param cisId - Coordinate Isochronous Stream identifier
+     * @param metadata - remote source device metadata for the given ASE
+     */
     void onSourceAseMetadataChanged(
             in AseState state, int cigId, int cisId, in @nullable MetadataLtv[] metadata);
 
@@ -595,7 +687,7 @@ interface IBluetoothAudioProvider {
          * This can serve as a hint for selecting the proper configuration by
          * the offloader.
          */
-        AudioContext context;
+        AudioContext audioContext;
         /**
          * Streaming Broadcast Audio Quality
          */
@@ -614,7 +706,7 @@ interface IBluetoothAudioProvider {
      */
     @VintfStability
     parcelable LeAudioBroadcastConfigurationRequirement {
-        List<LeAudioBroadcastSubgroupConfigurationRequirement> subgroupConfigurationRequirements;
+        LeAudioBroadcastSubgroupConfigurationRequirement[] subgroupConfigurationRequirements;
     }
 
     /**
@@ -635,11 +727,10 @@ interface IBluetoothAudioProvider {
 
     /**
      * Subgroup configuration with a list of BIS configurations
-     *
      */
     @VintfStability
     parcelable LeAudioBroadcastSubgroupConfiguration {
-        List<LeAudioSubgroupBisConfiguration> bisConfigurations;
+        LeAudioSubgroupBisConfiguration[] bisConfigurations;
 
         /**
          * Vendor specific codec configuration for all the BISes inside this
@@ -659,7 +750,6 @@ interface IBluetoothAudioProvider {
      * LeAudioBroadcastConfigurationSetting is a result of
      * getLeAudioBroadcastConfiguration. It is used in HCI_LE_Create_BIG command
      * and for creating the Broadcast Announcements.
-     *
      */
     @VintfStability
     parcelable LeAudioBroadcastConfigurationSetting {
@@ -705,18 +795,23 @@ interface IBluetoothAudioProvider {
         @nullable LeAudioDataPathConfiguration dataPathConfiguration;
 
         /**
-         * A list of subgroup configurations in the broadcast.
+         * An array of subgroup configurations in the broadcast.
          */
-        List<LeAudioBroadcastSubgroupConfiguration> subgroupsConfigurations;
+        LeAudioBroadcastSubgroupConfiguration[] subgroupsConfigurations;
     }
 
     /**
      * Get Broadcast configuration. Output of this function will be used
      * in HCI_LE_Create_BIG  (0x0068) command and also to create BIG INFO
      *
+     * @param remoteSinkAudioCapabilities - remote device sink endpoint
+     *        capabilities
+     * @param requirement - requested configuration requirements
+     *
+     * @return the whole broadcast audio stream configuration
      */
     LeAudioBroadcastConfigurationSetting getLeAudioBroadcastConfiguration(
-            in @nullable List<LeAudioDeviceCapabilities> remoteSinkAudioCapabilities,
+            in @nullable LeAudioDeviceCapabilities[] remoteSinkAudioCapabilities,
             in LeAudioBroadcastConfigurationRequirement requirement);
 
     /**
@@ -725,7 +820,12 @@ interface IBluetoothAudioProvider {
      * not provided in LeAudioBroadcastConfigurationSetting. Calling this during
      * the broadcast audio stream establishment might slightly delay the stream
      * start.
+     *
+     * @param audioContext - audio stream context for the given stream map
+     * @param streamMap - channel map with BIS configurations
+     *
+     * @return broadcast audio stream data path configuration
      */
     LeAudioDataPathConfiguration getLeAudioBroadcastDatapathConfiguration(
-            in AudioContext context, in BroadcastStreamMap[] streamMap);
+            in AudioContext audioContext, in BroadcastStreamMap[] streamMap);
 }

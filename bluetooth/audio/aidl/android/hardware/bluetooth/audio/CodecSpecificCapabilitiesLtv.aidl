@@ -23,6 +23,9 @@ package android.hardware.bluetooth.audio;
  */
 @VintfStability
 union CodecSpecificCapabilitiesLtv {
+    /**
+     * Supported sampling frequencies in Hertz
+     */
     parcelable SupportedSamplingFrequencies {
         const int HZ8000 = 0x0001;
         const int HZ11025 = 0x0002;
@@ -41,10 +44,13 @@ union CodecSpecificCapabilitiesLtv {
         /* 16 bits wide bit mask */
         int bitmask;
     }
+    /**
+     * Supported frame durations in microseconds
+     */
     parcelable SupportedFrameDurations {
         const int US7500 = 0x01;
         const int US10000 = 0x02;
-        // Bits 2-3 are RFU
+        /* Bits 2-3 are RFU */
         const int US7500PREFERRED = 0x10;
         const int US10000PREFERRED = 0x20;
 
@@ -65,8 +71,8 @@ union CodecSpecificCapabilitiesLtv {
         int bitmask;
     }
     parcelable SupportedOctetsPerCodecFrame {
-        int minimum;
-        int maximum;
+        int min;
+        int max;
     }
     parcelable SupportedMaxCodecFramesPerSDU {
         int value;
