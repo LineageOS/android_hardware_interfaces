@@ -25,6 +25,8 @@ import android.hardware.bluetooth.audio.CodecId;
 parcelable A2dpRemoteCapabilities {
     /**
      * Remote Stream Endpoint identifier
+     * Allocated by the remote device to identify a specific codec and capabilities,
+     * in the meaning of the AVDTP standard.
      */
     int seid;
 

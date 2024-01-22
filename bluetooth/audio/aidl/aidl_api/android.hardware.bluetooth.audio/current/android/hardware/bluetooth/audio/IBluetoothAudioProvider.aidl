@@ -41,7 +41,7 @@ interface IBluetoothAudioProvider {
   void updateAudioConfiguration(in android.hardware.bluetooth.audio.AudioConfiguration audioConfig);
   void setLowLatencyModeAllowed(in boolean allowed);
   android.hardware.bluetooth.audio.A2dpStatus parseA2dpConfiguration(in android.hardware.bluetooth.audio.CodecId codecId, in byte[] configuration, out android.hardware.bluetooth.audio.CodecParameters codecParameters);
-  @nullable android.hardware.bluetooth.audio.A2dpConfiguration getA2dpConfiguration(in List<android.hardware.bluetooth.audio.A2dpRemoteCapabilities> remoteA2dpCapabilities, in android.hardware.bluetooth.audio.A2dpConfigurationHint hint);
+  @nullable android.hardware.bluetooth.audio.A2dpConfiguration getA2dpConfiguration(in android.hardware.bluetooth.audio.A2dpRemoteCapabilities[] remoteA2dpCapabilities, in android.hardware.bluetooth.audio.A2dpConfigurationHint hint);
   void setCodecPriority(in android.hardware.bluetooth.audio.CodecId codecId, int priority);
   android.hardware.bluetooth.audio.IBluetoothAudioProvider.LeAudioAseConfigurationSetting[] getLeAudioAseConfiguration(in @nullable android.hardware.bluetooth.audio.IBluetoothAudioProvider.LeAudioDeviceCapabilities[] remoteSinkAudioCapabilities, in @nullable android.hardware.bluetooth.audio.IBluetoothAudioProvider.LeAudioDeviceCapabilities[] remoteSourceAudioCapabilities, in android.hardware.bluetooth.audio.IBluetoothAudioProvider.LeAudioConfigurationRequirement[] requirements);
   android.hardware.bluetooth.audio.IBluetoothAudioProvider.LeAudioAseQosConfigurationPair getLeAudioAseQosConfiguration(in android.hardware.bluetooth.audio.IBluetoothAudioProvider.LeAudioAseQosConfigurationRequirement qosRequirement);

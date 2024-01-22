@@ -37,20 +37,18 @@ enum : bool {
  * Class implementation
  */
 
-const A2dpOffloadCodecFactory* A2dpOffloadCodecFactory::GetInstance() {
-  static A2dpOffloadCodecFactory instance;
-  return &instance;
-}
-
 A2dpOffloadCodecFactory::A2dpOffloadCodecFactory()
     : name("Offload"), codecs(ranked_codecs_) {
   ranked_codecs_.reserve(kEnableAac + kEnableSbc);
 
-  if (kEnableAac) ranked_codecs_.push_back(A2dpOffloadCodecAac::GetInstance());
-  if (kEnableSbc) ranked_codecs_.push_back(A2dpOffloadCodecSbc::GetInstance());
+  if (kEnableAac)
+    ranked_codecs_.push_back(std::make_shared<A2dpOffloadCodecAac>());
+  if (kEnableSbc)
+    ranked_codecs_.push_back(std::make_shared<A2dpOffloadCodecSbc>());
 }
 
-const A2dpOffloadCodec* A2dpOffloadCodecFactory::GetCodec(CodecId id) const {
+std::shared_ptr<const A2dpOffloadCodec> A2dpOffloadCodecFactory::GetCodec(
+    CodecId id) const {
   auto codec = std::find_if(begin(ranked_codecs_), end(ranked_codecs_),
                             [&](auto c) { return id == c->info.id; });
 
