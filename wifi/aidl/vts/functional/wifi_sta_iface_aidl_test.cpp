@@ -71,7 +71,7 @@ class WifiStaIfaceAidlTest : public testing::TestWithParam<std::string> {
 
     // Checks if the mDNS Offload is supported by any NIC.
     bool isMdnsOffloadPresentInNIC() {
-        return testing::deviceSupportsFeature("android.hardware.mdns_offload");
+        return testing::deviceSupportsFeature("com.google.android.tv.mdns_offload");
     }
 
     // Detected panel TV device by using ro.oem.key1 property.
