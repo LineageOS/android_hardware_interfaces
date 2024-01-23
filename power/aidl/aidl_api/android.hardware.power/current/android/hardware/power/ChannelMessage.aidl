@@ -35,10 +35,11 @@ package android.hardware.power;
 @FixedSize @VintfStability
 parcelable ChannelMessage {
   int sessionID;
+  long timeStampNanos;
   android.hardware.power.ChannelMessage.ChannelMessageContents data;
   @FixedSize @VintfStability
   union ChannelMessageContents {
-    int[20] tids = {(-1) /* -1 */, (-1) /* -1 */, (-1) /* -1 */, (-1) /* -1 */, (-1) /* -1 */, (-1) /* -1 */, (-1) /* -1 */, (-1) /* -1 */, (-1) /* -1 */, (-1) /* -1 */, (-1) /* -1 */, (-1) /* -1 */, (-1) /* -1 */, (-1) /* -1 */, (-1) /* -1 */, (-1) /* -1 */, (-1) /* -1 */, (-1) /* -1 */, (-1) /* -1 */, (-1) /* -1 */};
+    long[16] reserved = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     long targetDuration;
     android.hardware.power.SessionHint hint;
     android.hardware.power.ChannelMessage.ChannelMessageContents.SessionModeSetter mode;
