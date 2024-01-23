@@ -26,9 +26,12 @@ import android.hardware.bluetooth.audio.ConfigurationFlags;
 @VintfStability
 parcelable CodecInfo {
     /**
-     * Codec identifier and human readable name
+     * Codec identifier
      */
     CodecId id;
+    /**
+     * Human readable name used to present codec to the user and for debug logs
+     */
     String name;
 
     /**
@@ -92,17 +95,18 @@ parcelable CodecInfo {
      */
     parcelable LeAudio {
         /**
-         * Channel configuration: Mono, Dual-Mono or Stereo
+         * List of independently supported channel modes: Mono, Dual-Mono, or
+         * Stereo.
          */
         ChannelMode[] channelMode;
 
         /**
-         * Supported sampling frequencies, in Hz.
+         * List of supported sampling frequencies, in Hz.
          */
         int[] samplingFrequencyHz;
 
-        /*
-         * FrameDuration in microseconds.
+        /**
+         * List of supported FrameDurations in microseconds.
          */
         int[] frameDurationUs;
 
