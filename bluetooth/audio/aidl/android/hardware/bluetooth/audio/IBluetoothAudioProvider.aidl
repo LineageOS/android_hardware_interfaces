@@ -133,7 +133,7 @@ interface IBluetoothAudioProvider {
      *         when no suitable configuration has been found.
      */
     @nullable A2dpConfiguration getA2dpConfiguration(
-            in List<A2dpRemoteCapabilities> remoteA2dpCapabilities, in A2dpConfigurationHint hint);
+            in A2dpRemoteCapabilities[] remoteA2dpCapabilities, in A2dpConfigurationHint hint);
 
     /**
      * Predefined values for the codec priority, used by `setCodecPriority()`.

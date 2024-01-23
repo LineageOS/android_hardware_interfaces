@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include "A2dpOffloadCodecFactory.h"
 #include "BluetoothAudioProvider.h"
 
 namespace aidl {
@@ -26,8 +27,6 @@ namespace audio {
 
 class A2dpOffloadAudioProvider : public BluetoothAudioProvider {
  public:
-  A2dpOffloadAudioProvider();
-
   bool isValid(const SessionType& session_type) override;
 
   ndk::ScopedAStatus startSession(
@@ -45,18 +44,23 @@ class A2dpOffloadAudioProvider : public BluetoothAudioProvider {
       const A2dpConfigurationHint& hint,
       std::optional<audio::A2dpConfiguration>* _aidl_return) override;
 
+ protected:
+  A2dpOffloadAudioProvider(const A2dpOffloadCodecFactory&);
+
  private:
+  const A2dpOffloadCodecFactory& codec_factory_;
+
   ndk::ScopedAStatus onSessionReady(DataMQDesc* _aidl_return) override;
 };
 
 class A2dpOffloadEncodingAudioProvider : public A2dpOffloadAudioProvider {
  public:
-  A2dpOffloadEncodingAudioProvider();
+  A2dpOffloadEncodingAudioProvider(const A2dpOffloadCodecFactory&);
 };
 
 class A2dpOffloadDecodingAudioProvider : public A2dpOffloadAudioProvider {
  public:
-  A2dpOffloadDecodingAudioProvider();
+  A2dpOffloadDecodingAudioProvider(const A2dpOffloadCodecFactory&);
 };
 
 }  // namespace audio

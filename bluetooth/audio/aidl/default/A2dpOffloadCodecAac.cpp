@@ -194,11 +194,6 @@ static ChannelMode GetChannelModeEnum(int channel_mode) {
  * AAC Class implementation
  */
 
-const A2dpOffloadCodecAac* A2dpOffloadCodecAac::GetInstance() {
-  static A2dpOffloadCodecAac instance;
-  return &instance;
-}
-
 A2dpOffloadCodecAac::A2dpOffloadCodecAac()
     : A2dpOffloadCodec(info_),
       info_({.id = CodecId(CodecId::A2dp::AAC), .name = "AAC"}) {
