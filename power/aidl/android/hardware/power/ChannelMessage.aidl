@@ -38,6 +38,12 @@ parcelable ChannelMessage {
     int sessionID;
 
     /**
+     * Timestamp in nanoseconds based on CLOCK_MONOTONIC when the message was sent,
+     * used to ensure all messages can be processed in a coherent order.
+     */
+    long timeStampNanos;
+
+    /**
      * A union defining the different messages that can be passed through the
      * channel. Each type corresponds to a different call in IPowerHintSession.
      */
@@ -47,12 +53,9 @@ parcelable ChannelMessage {
     @VintfStability
     union ChannelMessageContents {
         /**
-         * List of TIDs for this session to change to. Can be used in cases
-         * where HintManagerService is not needed to validate the TIDs, such as
-         * when all TIDs directly belong to the process that owns the session.
+         * Reserves the maximum fixed size for the ChannelMessage.
          */
-        int[20] tids = {
-                -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
+        long[16] reserved = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
         /**
          * Setting this field will update the session’s target duration, equivalent

@@ -34,7 +34,6 @@
 package android.hardware.power;
 @FixedSize @VintfStability
 parcelable WorkDurationFixedV1 {
-  long timeStampNanos;
   long durationNanos;
   long workPeriodStartTimestampNanos;
   long cpuDurationNanos;

@@ -20,12 +20,6 @@ package android.hardware.power;
 @VintfStability
 parcelable WorkDurationFixedV1 {
     /**
-     * Timestamp in nanoseconds based on CLOCK_MONOTONIC when the duration
-     * sample was measured.
-     */
-    long timeStampNanos;
-
-    /**
      * Total work duration in nanoseconds.
      */
     long durationNanos;
