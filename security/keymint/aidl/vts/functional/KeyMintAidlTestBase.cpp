@@ -64,6 +64,13 @@ namespace test {
 
 namespace {
 
+// Possible values for the feature version.  Assumes that future KeyMint versions
+// will continue with the 100 * AIDL_version numbering scheme.
+//
+// Must be kept in numerically increasing order.
+const int32_t kFeatureVersions[] = {10,  11,  20,  30,  40,  41,  100, 200,
+                                    300, 400, 500, 600, 700, 800, 900};
+
 // Invalid value for a patchlevel (which is of form YYYYMMDD).
 const uint32_t kInvalidPatchlevel = 99998877;
 
@@ -2276,6 +2283,43 @@ bool check_feature(const std::string& name) {
         return false;
     }
     return hasFeature;
+}
+
+// Return the numeric value associated with a feature.
+std::optional<int32_t> keymint_feature_value(bool strongbox) {
+    std::string name = strongbox ? FEATURE_STRONGBOX_KEYSTORE : FEATURE_HARDWARE_KEYSTORE;
+    ::android::String16 name16(name.c_str());
+    ::android::sp<::android::IServiceManager> sm(::android::defaultServiceManager());
+    ::android::sp<::android::IBinder> binder(
+            sm->waitForService(::android::String16("package_native")));
+    if (binder == nullptr) {
+        GTEST_LOG_(ERROR) << "waitForService package_native failed";
+        return std::nullopt;
+    }
+    ::android::sp<::android::content::pm::IPackageManagerNative> packageMgr =
+            ::android::interface_cast<::android::content::pm::IPackageManagerNative>(binder);
+    if (packageMgr == nullptr) {
+        GTEST_LOG_(ERROR) << "Cannot find package manager";
+        return std::nullopt;
+    }
+
+    // Package manager has no mechanism to retrieve the version of a feature,
+    // only to indicate whether a certain version or above is present.
+    std::optional<int32_t> result = std::nullopt;
+    for (auto version : kFeatureVersions) {
+        bool hasFeature = false;
+        auto status = packageMgr->hasSystemFeature(name16, version, &hasFeature);
+        if (!status.isOk()) {
+            GTEST_LOG_(ERROR) << "hasSystemFeature('" << name << "', " << version
+                              << ") failed: " << status;
+            return result;
+        } else if (hasFeature) {
+            result = version;
+        } else {
+            break;
+        }
+    }
+    return result;
 }
 
 }  // namespace test
