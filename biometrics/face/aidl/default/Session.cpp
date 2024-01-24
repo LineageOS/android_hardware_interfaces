@@ -14,20 +14,38 @@
  * limitations under the License.
  */
 
+#undef LOG_TAG
+#define LOG_TAG "FaceVirtualHalSession"
+
 #include <android-base/logging.h>
 
 #include "Session.h"
-
-#undef LOG_TAG
-#define LOG_TAG "FaceVirtualHalSession"
 
 namespace aidl::android::hardware::biometrics::face {
 
 constexpr size_t MAX_WORKER_QUEUE_SIZE = 5;
 
+void onClientDeath(void* cookie) {
+    LOG(INFO) << "FaceService has died";
+    Session* session = static_cast<Session*>(cookie);
+    if (session && !session->isClosed()) {
+        session->close();
+    }
+}
+
 Session::Session(std::unique_ptr<FakeFaceEngine> engine, std::shared_ptr<ISessionCallback> cb)
-    : mEngine(std::move(engine)), mCb(std::move(cb)), mRandom(std::mt19937::default_seed) {
+    : mEngine(std::move(engine)),
+      mCb(std::move(cb)),
+      mRandom(std::mt19937::default_seed),
+      mStateClosed(false) {
+    CHECK(mEngine);
+    CHECK(mCb);
     mThread = std::make_unique<WorkerThread>(MAX_WORKER_QUEUE_SIZE);
+    mDeathRecipient = AIBinder_DeathRecipient_new(onClientDeath);
+}
+
+binder_status_t Session::linkToDeath(AIBinder* binder) {
+    return AIBinder_linkToDeath(binder, mDeathRecipient, this);
 }
 
 ndk::ScopedAStatus Session::generateChallenge() {
@@ -144,9 +162,12 @@ ndk::ScopedAStatus Session::resetLockout(const keymaster::HardwareAuthToken& hat
 }
 
 ndk::ScopedAStatus Session::close() {
+    LOG(INFO) << "close";
     if (mCb) {
         mCb->onSessionClosed();
     }
+    AIBinder_DeathRecipient_delete(mDeathRecipient);
+    mStateClosed = true;
     return ndk::ScopedAStatus::ok();
 }
 
