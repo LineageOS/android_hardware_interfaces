@@ -25,6 +25,7 @@ package android.hardware.camera.metadata;
 /**
  * android.statistics.sceneFlicker enumeration values
  * @see ANDROID_STATISTICS_SCENE_FLICKER
+ * See system/media/camera/docs/metadata_definitions.xml for details.
  */
 @VintfStability
 @Backing(type="int")

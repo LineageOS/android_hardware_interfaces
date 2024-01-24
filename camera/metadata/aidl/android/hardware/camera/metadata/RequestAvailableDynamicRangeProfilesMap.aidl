@@ -25,6 +25,7 @@ package android.hardware.camera.metadata;
 /**
  * android.request.availableDynamicRangeProfilesMap enumeration values
  * @see ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP
+ * See system/media/camera/docs/metadata_definitions.xml for details.
  */
 @VintfStability
 @Backing(type="long")

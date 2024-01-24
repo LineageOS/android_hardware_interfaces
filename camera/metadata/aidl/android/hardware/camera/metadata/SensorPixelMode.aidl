@@ -25,6 +25,7 @@ package android.hardware.camera.metadata;
 /**
  * android.sensor.pixelMode enumeration values
  * @see ANDROID_SENSOR_PIXEL_MODE
+ * See system/media/camera/docs/metadata_definitions.xml for details.
  */
 @VintfStability
 @Backing(type="int")

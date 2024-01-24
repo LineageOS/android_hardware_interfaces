@@ -25,6 +25,7 @@ package android.hardware.camera.metadata;
 /**
  * android.sensor.info.timestampSource enumeration values
  * @see ANDROID_SENSOR_INFO_TIMESTAMP_SOURCE
+ * See system/media/camera/docs/metadata_definitions.xml for details.
  */
 @VintfStability
 @Backing(type="int")

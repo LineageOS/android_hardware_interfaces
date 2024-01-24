@@ -25,6 +25,7 @@ package android.hardware.camera.metadata;
 /**
  * android.scaler.physicalCameraMultiResolutionStreamConfigurations enumeration values
  * @see ANDROID_SCALER_PHYSICAL_CAMERA_MULTI_RESOLUTION_STREAM_CONFIGURATIONS
+ * See system/media/camera/docs/metadata_definitions.xml for details.
  */
 @VintfStability
 @Backing(type="int")

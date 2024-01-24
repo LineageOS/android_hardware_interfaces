@@ -25,6 +25,7 @@ package android.hardware.camera.metadata;
 /**
  * android.led.transmit enumeration values
  * @see ANDROID_LED_TRANSMIT
+ * See system/media/camera/docs/metadata_definitions.xml for details.
  */
 @VintfStability
 @Backing(type="int")

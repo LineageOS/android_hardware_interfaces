@@ -25,6 +25,7 @@ package android.hardware.camera.metadata;
 /**
  * android.sensor.testPatternMode enumeration values
  * @see ANDROID_SENSOR_TEST_PATTERN_MODE
+ * See system/media/camera/docs/metadata_definitions.xml for details.
  */
 @VintfStability
 @Backing(type="int")

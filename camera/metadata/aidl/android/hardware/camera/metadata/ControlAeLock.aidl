@@ -25,6 +25,7 @@ package android.hardware.camera.metadata;
 /**
  * android.control.aeLock enumeration values
  * @see ANDROID_CONTROL_AE_LOCK
+ * See system/media/camera/docs/metadata_definitions.xml for details.
  */
 @VintfStability
 @Backing(type="int")

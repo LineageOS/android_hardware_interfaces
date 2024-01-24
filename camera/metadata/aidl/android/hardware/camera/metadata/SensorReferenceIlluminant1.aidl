@@ -25,6 +25,7 @@ package android.hardware.camera.metadata;
 /**
  * android.sensor.referenceIlluminant1 enumeration values
  * @see ANDROID_SENSOR_REFERENCE_ILLUMINANT1
+ * See system/media/camera/docs/metadata_definitions.xml for details.
  */
 @VintfStability
 @Backing(type="int")
