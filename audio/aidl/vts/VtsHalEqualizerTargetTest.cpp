@@ -29,7 +29,6 @@
 #include <android/binder_process.h>
 #include <gtest/gtest.h>
 
-#include "AudioHalBinderServiceUtil.h"
 #include "EffectHelper.h"
 #include "TestUtils.h"
 
