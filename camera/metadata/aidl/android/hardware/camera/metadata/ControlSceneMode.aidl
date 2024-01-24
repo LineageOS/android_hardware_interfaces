@@ -25,6 +25,7 @@ package android.hardware.camera.metadata;
 /**
  * android.control.sceneMode enumeration values
  * @see ANDROID_CONTROL_SCENE_MODE
+ * See system/media/camera/docs/metadata_definitions.xml for details.
  */
 @VintfStability
 @Backing(type="int")

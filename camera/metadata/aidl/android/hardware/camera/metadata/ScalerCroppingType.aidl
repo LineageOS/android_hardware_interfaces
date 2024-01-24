@@ -25,6 +25,7 @@ package android.hardware.camera.metadata;
 /**
  * android.scaler.croppingType enumeration values
  * @see ANDROID_SCALER_CROPPING_TYPE
+ * See system/media/camera/docs/metadata_definitions.xml for details.
  */
 @VintfStability
 @Backing(type="int")

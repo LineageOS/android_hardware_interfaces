@@ -25,6 +25,7 @@ package android.hardware.camera.metadata;
 /**
  * android.depth.depthIsExclusive enumeration values
  * @see ANDROID_DEPTH_DEPTH_IS_EXCLUSIVE
+ * See system/media/camera/docs/metadata_definitions.xml for details.
  */
 @VintfStability
 @Backing(type="int")

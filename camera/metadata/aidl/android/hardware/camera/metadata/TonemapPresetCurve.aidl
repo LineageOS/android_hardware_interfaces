@@ -25,6 +25,7 @@ package android.hardware.camera.metadata;
 /**
  * android.tonemap.presetCurve enumeration values
  * @see ANDROID_TONEMAP_PRESET_CURVE
+ * See system/media/camera/docs/metadata_definitions.xml for details.
  */
 @VintfStability
 @Backing(type="int")

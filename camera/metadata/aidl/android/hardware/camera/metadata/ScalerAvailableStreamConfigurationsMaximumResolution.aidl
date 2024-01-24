@@ -25,6 +25,7 @@ package android.hardware.camera.metadata;
 /**
  * android.scaler.availableStreamConfigurationsMaximumResolution enumeration values
  * @see ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_MAXIMUM_RESOLUTION
+ * See system/media/camera/docs/metadata_definitions.xml for details.
  */
 @VintfStability
 @Backing(type="int")

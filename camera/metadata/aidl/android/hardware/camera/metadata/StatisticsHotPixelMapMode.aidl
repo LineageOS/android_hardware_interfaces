@@ -25,6 +25,7 @@ package android.hardware.camera.metadata;
 /**
  * android.statistics.hotPixelMapMode enumeration values
  * @see ANDROID_STATISTICS_HOT_PIXEL_MAP_MODE
+ * See system/media/camera/docs/metadata_definitions.xml for details.
  */
 @VintfStability
 @Backing(type="int")

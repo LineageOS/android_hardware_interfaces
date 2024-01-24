@@ -25,6 +25,7 @@ package android.hardware.camera.metadata;
 /**
  * android.statistics.lensShadingMapMode enumeration values
  * @see ANDROID_STATISTICS_LENS_SHADING_MAP_MODE
+ * See system/media/camera/docs/metadata_definitions.xml for details.
  */
 @VintfStability
 @Backing(type="int")

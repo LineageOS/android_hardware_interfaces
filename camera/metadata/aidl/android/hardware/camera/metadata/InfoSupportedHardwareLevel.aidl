@@ -25,6 +25,7 @@ package android.hardware.camera.metadata;
 /**
  * android.info.supportedHardwareLevel enumeration values
  * @see ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL
+ * See system/media/camera/docs/metadata_definitions.xml for details.
  */
 @VintfStability
 @Backing(type="int")

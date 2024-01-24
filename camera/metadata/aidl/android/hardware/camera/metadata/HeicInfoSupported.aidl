@@ -25,6 +25,7 @@ package android.hardware.camera.metadata;
 /**
  * android.heic.info.supported enumeration values
  * @see ANDROID_HEIC_INFO_SUPPORTED
+ * See system/media/camera/docs/metadata_definitions.xml for details.
  */
 @VintfStability
 @Backing(type="int")

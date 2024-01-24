@@ -25,6 +25,7 @@ package android.hardware.camera.metadata;
 /**
  * android.statistics.oisDataMode enumeration values
  * @see ANDROID_STATISTICS_OIS_DATA_MODE
+ * See system/media/camera/docs/metadata_definitions.xml for details.
  */
 @VintfStability
 @Backing(type="int")

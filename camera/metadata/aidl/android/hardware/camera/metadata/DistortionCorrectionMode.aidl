@@ -25,6 +25,7 @@ package android.hardware.camera.metadata;
 /**
  * android.distortionCorrection.mode enumeration values
  * @see ANDROID_DISTORTION_CORRECTION_MODE
+ * See system/media/camera/docs/metadata_definitions.xml for details.
  */
 @VintfStability
 @Backing(type="int")
