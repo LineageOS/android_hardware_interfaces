@@ -18,9 +18,16 @@
 //! module duplicates a large chunk of code in libdiced_sample_inputs. We avoid modifying the
 //! latter for testing purposes because it is installed on device.
 
-use ciborium::{de, ser, value::Value};
+use crate::{
+    COMPONENT_NAME, COMPONENT_RESETTABLE, COMPONENT_VERSION, SUBCOMPONENT_AUTHORITY_HASH,
+    SUBCOMPONENT_CODE_HASH, SUBCOMPONENT_DESCRIPTORS, SUBCOMPONENT_NAME,
+    SUBCOMPONENT_SECURITY_VERSION,
+};
+use ciborium::{cbor, de, ser, value::Value};
 use core::ffi::CStr;
-use coset::{iana, Algorithm, AsCborValue, CoseKey, KeyOperation, KeyType, Label};
+use coset::{
+    iana, Algorithm, AsCborValue, CborSerializable, CoseKey, KeyOperation, KeyType, Label,
+};
 use diced_open_dice::{
     derive_cdi_private_key_seed, keypair_from_seed, retry_bcc_format_config_descriptor,
     retry_bcc_main_flow, retry_dice_main_flow, Config, DiceArtifacts, DiceConfigValues, DiceError,
@@ -100,7 +107,8 @@ fn ed25519_public_key_to_cbor_value(public_key: &[u8]) -> Value {
 ///
 /// The DICE chain is of the following format:
 /// public key derived from UDS -> ABL certificate -> AVB certificate -> Android certificate
-/// The `security_version` is included in the Android certificate.
+/// The `security_version` is included in the Android certificate as well as each subcomponent
+/// of AVB certificate.
 pub fn make_explicit_owned_dice(security_version: u64) -> OwnedDiceArtifactsWithExplicitKey {
     let dice = make_sample_bcc_and_cdis(security_version);
     OwnedDiceArtifactsWithExplicitKey::from_owned_artifacts(dice).unwrap()
@@ -135,16 +143,31 @@ fn make_sample_bcc_and_cdis(security_version: u64) -> OwnedDiceArtifacts {
     ser::into_writer(&bcc_value, &mut bcc).unwrap();
 
     // Appends AVB certificate to DICE chain.
-    let config_values = DiceConfigValues {
-        component_name: Some(CStr::from_bytes_with_nul(b"AVB\0").unwrap()),
-        component_version: Some(1),
-        resettable: true,
-        ..Default::default()
-    };
-    let config_descriptor = retry_bcc_format_config_descriptor(&config_values).unwrap();
+    let config_desc = cbor!({
+        COMPONENT_NAME => "AVB",
+        COMPONENT_VERSION => 1,
+        COMPONENT_RESETTABLE => null,
+        SUBCOMPONENT_DESCRIPTORS => [
+            {
+                SUBCOMPONENT_NAME => "sub_1",
+                SUBCOMPONENT_SECURITY_VERSION => security_version,
+                SUBCOMPONENT_CODE_HASH=> b"xoxo",
+                SUBCOMPONENT_AUTHORITY_HASH => b"oxox"
+            },
+            {
+                SUBCOMPONENT_NAME => "sub_2",
+                SUBCOMPONENT_SECURITY_VERSION => security_version,
+                SUBCOMPONENT_CODE_HASH => b"xoxo",
+                SUBCOMPONENT_AUTHORITY_HASH => b"oxox",
+            }
+        ]
+    })
+    .unwrap()
+    .to_vec()
+    .unwrap();
     let input_values = InputValues::new(
         CODE_HASH_AVB,
-        Config::Descriptor(config_descriptor.as_slice()),
+        Config::Descriptor(&config_desc),
         AUTHORITY_HASH_AVB,
         DiceMode::kDiceModeNormal,
         HIDDEN_AVB,
