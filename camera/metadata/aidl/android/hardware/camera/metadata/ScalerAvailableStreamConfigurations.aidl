@@ -25,6 +25,7 @@ package android.hardware.camera.metadata;
 /**
  * android.scaler.availableStreamConfigurations enumeration values
  * @see ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS
+ * See system/media/camera/docs/metadata_definitions.xml for details.
  */
 @VintfStability
 @Backing(type="int")

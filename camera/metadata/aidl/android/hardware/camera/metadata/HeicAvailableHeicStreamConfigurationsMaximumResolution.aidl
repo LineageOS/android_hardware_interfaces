@@ -25,6 +25,7 @@ package android.hardware.camera.metadata;
 /**
  * android.heic.availableHeicStreamConfigurationsMaximumResolution enumeration values
  * @see ANDROID_HEIC_AVAILABLE_HEIC_STREAM_CONFIGURATIONS_MAXIMUM_RESOLUTION
+ * See system/media/camera/docs/metadata_definitions.xml for details.
  */
 @VintfStability
 @Backing(type="int")

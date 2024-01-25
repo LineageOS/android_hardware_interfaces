@@ -25,6 +25,7 @@ package android.hardware.camera.metadata;
 /**
  * android.sensor.info.lensShadingApplied enumeration values
  * @see ANDROID_SENSOR_INFO_LENS_SHADING_APPLIED
+ * See system/media/camera/docs/metadata_definitions.xml for details.
  */
 @VintfStability
 @Backing(type="int")

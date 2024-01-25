@@ -25,6 +25,7 @@ package android.hardware.camera.metadata;
 /**
  * android.automotive.location enumeration values
  * @see ANDROID_AUTOMOTIVE_LOCATION
+ * See system/media/camera/docs/metadata_definitions.xml for details.
  */
 @VintfStability
 @Backing(type="int")

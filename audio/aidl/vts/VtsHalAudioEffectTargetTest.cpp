@@ -29,7 +29,6 @@
 #include <android/binder_process.h>
 #include <fmq/AidlMessageQueue.h>
 
-#include "AudioHalBinderServiceUtil.h"
 #include "EffectFactoryHelper.h"
 #include "EffectHelper.h"
 #include "TestUtils.h"

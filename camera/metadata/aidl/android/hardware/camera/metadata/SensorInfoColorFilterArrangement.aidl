@@ -25,6 +25,7 @@ package android.hardware.camera.metadata;
 /**
  * android.sensor.info.colorFilterArrangement enumeration values
  * @see ANDROID_SENSOR_INFO_COLOR_FILTER_ARRANGEMENT
+ * See system/media/camera/docs/metadata_definitions.xml for details.
  */
 @VintfStability
 @Backing(type="int")

@@ -21,6 +21,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <map>
 
 #include <openssl/curve25519.h>
 #include <openssl/ec.h>
@@ -1027,9 +1028,9 @@ TEST_P(NewKeyGenerationTest, RsaWithMissingValidity) {
          * The KeyMint V1 spec required that CERTIFICATE_NOT_{BEFORE,AFTER} be
          * specified for asymmetric key generation. However, this was not
          * checked at the time so we can only be strict about checking this for
-         * implementations of KeyMint version 2 and above.
+         * implementations of KeyMint version 3 and above.
          */
-        GTEST_SKIP() << "Validity strict since KeyMint v2";
+        GTEST_SKIP() << "Validity strict since KeyMint v3";
     }
     // Per RFC 5280 4.1.2.5, an undefined expiration (not-after) field should be set to
     // GeneralizedTime 999912312359559, which is 253402300799000 ms from Jan 1, 1970.
@@ -8793,6 +8794,90 @@ TEST_P(VsrRequirementTest, Vsr14Test) {
 }
 
 INSTANTIATE_KEYMINT_AIDL_TEST(VsrRequirementTest);
+
+class InstanceTest : public testing::Test {
+  protected:
+    static void SetUpTestSuite() {
+        auto params = ::android::getAidlHalInstanceNames(IKeyMintDevice::descriptor);
+        for (auto& param : params) {
+            ASSERT_TRUE(AServiceManager_isDeclared(param.c_str()))
+                    << "IKeyMintDevice instance " << param << " found but not declared.";
+            ::ndk::SpAIBinder binder(AServiceManager_waitForService(param.c_str()));
+            auto keymint = IKeyMintDevice::fromBinder(binder);
+            ASSERT_NE(keymint, nullptr) << "Failed to get IKeyMintDevice instance " << param;
+
+            KeyMintHardwareInfo info;
+            ASSERT_TRUE(keymint->getHardwareInfo(&info).isOk());
+            ASSERT_EQ(keymints_.count(info.securityLevel), 0)
+                    << "There must be exactly one IKeyMintDevice with security level "
+                    << info.securityLevel;
+
+            keymints_[info.securityLevel] = std::move(keymint);
+        }
+    }
+
+    int32_t AidlVersion(shared_ptr<IKeyMintDevice> keymint) {
+        int32_t version = 0;
+        auto status = keymint->getInterfaceVersion(&version);
+        if (!status.isOk()) {
+            ADD_FAILURE() << "Failed to determine interface version";
+        }
+        return version;
+    }
+
+    static std::map<SecurityLevel, shared_ptr<IKeyMintDevice>> keymints_;
+};
+
+std::map<SecurityLevel, shared_ptr<IKeyMintDevice>> InstanceTest::keymints_;
+
+// @VsrTest = VSR-3.10-017
+// Check that the AIDL version advertised by the HAL service matches
+// the value in the package manager feature version.
+TEST_F(InstanceTest, AidlVersionInFeature) {
+    if (is_gsi_image()) {
+        GTEST_SKIP() << "Versions not required to match under GSI";
+    }
+    if (keymints_.count(SecurityLevel::TRUSTED_ENVIRONMENT) == 1) {
+        auto tee = keymints_.find(SecurityLevel::TRUSTED_ENVIRONMENT)->second;
+        int32_t tee_aidl_version = AidlVersion(tee) * 100;
+        std::optional<int32_t> tee_feature_version = keymint_feature_value(/* strongbox */ false);
+        ASSERT_TRUE(tee_feature_version.has_value());
+        EXPECT_EQ(tee_aidl_version, tee_feature_version.value());
+    }
+    if (keymints_.count(SecurityLevel::STRONGBOX) == 1) {
+        auto sb = keymints_.find(SecurityLevel::STRONGBOX)->second;
+        int32_t sb_aidl_version = AidlVersion(sb) * 100;
+        std::optional<int32_t> sb_feature_version = keymint_feature_value(/* strongbox */ true);
+        ASSERT_TRUE(sb_feature_version.has_value());
+        EXPECT_EQ(sb_aidl_version, sb_feature_version.value());
+    }
+}
+
+// @VsrTest = VSR-3.10-017
+// Check that if package manager advertises support for KeyMint of a particular version, that
+// version is present as a HAL service.
+TEST_F(InstanceTest, FeatureVersionInAidl) {
+    if (is_gsi_image()) {
+        GTEST_SKIP() << "Versions not required to match under GSI";
+    }
+    std::optional<int32_t> tee_feature_version = keymint_feature_value(/* strongbox */ false);
+    if (tee_feature_version.has_value() && tee_feature_version.value() >= 100) {
+        // Feature flag advertises the existence of KeyMint; check it is present.
+        ASSERT_EQ(keymints_.count(SecurityLevel::TRUSTED_ENVIRONMENT), 1);
+        auto tee = keymints_.find(SecurityLevel::TRUSTED_ENVIRONMENT)->second;
+        int32_t tee_aidl_version = AidlVersion(tee) * 100;
+        EXPECT_EQ(tee_aidl_version, tee_feature_version.value());
+    }
+
+    std::optional<int32_t> sb_feature_version = keymint_feature_value(/* strongbox */ true);
+    if (sb_feature_version.has_value() && sb_feature_version.value() >= 100) {
+        // Feature flag advertises the existence of KeyMint; check it is present.
+        ASSERT_EQ(keymints_.count(SecurityLevel::STRONGBOX), 1);
+        auto sb = keymints_.find(SecurityLevel::STRONGBOX)->second;
+        int32_t sb_aidl_version = AidlVersion(sb) * 100;
+        EXPECT_EQ(sb_aidl_version, sb_feature_version.value());
+    }
+}
 
 }  // namespace aidl::android::hardware::security::keymint::test
 

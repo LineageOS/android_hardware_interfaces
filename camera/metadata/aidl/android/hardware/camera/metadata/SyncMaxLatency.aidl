@@ -25,6 +25,7 @@ package android.hardware.camera.metadata;
 /**
  * android.sync.maxLatency enumeration values
  * @see ANDROID_SYNC_MAX_LATENCY
+ * See system/media/camera/docs/metadata_definitions.xml for details.
  */
 @VintfStability
 @Backing(type="int")
