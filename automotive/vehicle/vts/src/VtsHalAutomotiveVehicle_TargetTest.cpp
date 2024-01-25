@@ -48,9 +48,11 @@ using ::aidl::android::hardware::automotive::vehicle::VehicleProperty;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyAccess;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyChangeMode;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyGroup;
+using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyStatus;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType;
 using ::aidl::android::hardware::automotive::vehicle::VersionForVehicleProperty;
 using ::android::getAidlHalInstanceNames;
+using ::android::uptimeMillis;
 using ::android::base::ScopedLockAssertion;
 using ::android::base::StringPrintf;
 using ::android::frameworks::automotive::vhal::ErrorCode;
@@ -59,6 +61,7 @@ using ::android::frameworks::automotive::vhal::IHalPropConfig;
 using ::android::frameworks::automotive::vhal::IHalPropValue;
 using ::android::frameworks::automotive::vhal::ISubscriptionCallback;
 using ::android::frameworks::automotive::vhal::IVhalClient;
+using ::android::frameworks::automotive::vhal::VhalClientResult;
 using ::android::hardware::getAllHalInstanceNames;
 using ::android::hardware::Sanitize;
 using ::android::hardware::automotive::vehicle::isSystemProp;
@@ -67,6 +70,8 @@ using ::android::hardware::automotive::vehicle::toInt;
 using ::testing::Ge;
 
 constexpr int32_t kInvalidProp = 0x31600207;
+// The timeout for retrying getting prop value after setting prop value.
+constexpr int64_t kRetryGetPropAfterSetPropTimeoutMillis = 10'000;
 
 struct ServiceDescriptor {
     std::string name;
@@ -123,6 +128,10 @@ class VtsVehicleCallback final : public ISubscriptionCallback {
 class VtsHalAutomotiveVehicleTargetTest : public testing::TestWithParam<ServiceDescriptor> {
   protected:
     bool checkIsSupported(int32_t propertyId);
+
+    static bool isUnavailable(const VhalClientResult<std::unique_ptr<IHalPropValue>>& result);
+    static bool isResultOkayWithValue(
+            const VhalClientResult<std::unique_ptr<IHalPropValue>>& result, int32_t value);
 
   public:
     void verifyProperty(VehicleProperty propId, VehiclePropertyAccess access,
@@ -269,6 +278,30 @@ TEST_P(VtsHalAutomotiveVehicleTargetTest, getInvalidProp) {
             "Expect failure to get property for invalid prop: %" PRId32, kInvalidProp);
 }
 
+bool VtsHalAutomotiveVehicleTargetTest::isResultOkayWithValue(
+        const VhalClientResult<std::unique_ptr<IHalPropValue>>& result, int32_t value) {
+    return result.ok() && result.value() != nullptr &&
+           result.value()->getStatus() == VehiclePropertyStatus::AVAILABLE &&
+           result.value()->getInt32Values().size() == 1 &&
+           result.value()->getInt32Values()[0] == value;
+}
+
+bool VtsHalAutomotiveVehicleTargetTest::isUnavailable(
+        const VhalClientResult<std::unique_ptr<IHalPropValue>>& result) {
+    if (result.ok()) {
+        return false;
+    }
+    if (result.error().code() == ErrorCode::NOT_AVAILABLE_FROM_VHAL) {
+        return true;
+    }
+    if (result.value() != nullptr &&
+        result.value()->getStatus() == VehiclePropertyStatus::UNAVAILABLE) {
+        return true;
+    }
+
+    return false;
+}
+
 // Test set() on read_write properties.
 TEST_P(VtsHalAutomotiveVehicleTargetTest, setProp) {
     ALOGD("VtsHalAutomotiveVehicleTargetTest::setProp");
@@ -296,6 +329,14 @@ TEST_P(VtsHalAutomotiveVehicleTargetTest, setProp) {
             auto propToGet = mVhalClient->createHalPropValue(propId);
             auto getValueResult = mVhalClient->getValueSync(*propToGet);
 
+            if (isUnavailable(getValueResult)) {
+                ALOGW("getProperty for %" PRId32
+                      " returns NOT_AVAILABLE, "
+                      "skip testing setProp",
+                      propId);
+                return;
+            }
+
             ASSERT_TRUE(getValueResult.ok())
                     << StringPrintf("Failed to get value for property: %" PRId32 ", error: %s",
                                     propId, getValueResult.error().message().c_str());
@@ -308,17 +349,48 @@ TEST_P(VtsHalAutomotiveVehicleTargetTest, setProp) {
                     "Expect exactly 1 int value for boolean property: %" PRId32 ", got %zu", propId,
                     intValueSize);
 
-            int setValue = value.getInt32Values()[0] == 1 ? 0 : 1;
+            int32_t setValue = value.getInt32Values()[0] == 1 ? 0 : 1;
             auto propToSet = mVhalClient->createHalPropValue(propId);
             propToSet->setInt32Values({setValue});
             auto setValueResult = mVhalClient->setValueSync(*propToSet);
 
+            if (!setValueResult.ok() &&
+                setValueResult.error().code() == ErrorCode::NOT_AVAILABLE_FROM_VHAL) {
+                ALOGW("setProperty for %" PRId32
+                      " returns NOT_AVAILABLE, "
+                      "skip verifying getProperty returns the same value",
+                      propId);
+                return;
+            }
+
             ASSERT_TRUE(setValueResult.ok())
                     << StringPrintf("Failed to set value for property: %" PRId32 ", error: %s",
                                     propId, setValueResult.error().message().c_str());
+            // Retry getting the value until we pass the timeout. getValue might not return
+            // the expected value immediately since setValue is async.
+            auto timeoutMillis = uptimeMillis() + kRetryGetPropAfterSetPropTimeoutMillis;
 
-            // check set success
-            getValueResult = mVhalClient->getValueSync(*propToGet);
+            while (true) {
+                getValueResult = mVhalClient->getValueSync(*propToGet);
+                if (isResultOkayWithValue(getValueResult, setValue)) {
+                    break;
+                }
+                if (uptimeMillis() >= timeoutMillis) {
+                    // Reach timeout, the following assert should fail.
+                    break;
+                }
+                // Sleep for 100ms between each getValueSync retry.
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            }
+
+            if (isUnavailable(getValueResult)) {
+                ALOGW("getProperty for %" PRId32
+                      " returns NOT_AVAILABLE, "
+                      "skip verifying the return value",
+                      propId);
+                return;
+            }
+
             ASSERT_TRUE(getValueResult.ok())
                     << StringPrintf("Failed to get value for property: %" PRId32 ", error: %s",
                                     propId, getValueResult.error().message().c_str());
