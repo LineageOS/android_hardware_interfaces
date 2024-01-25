@@ -33,6 +33,11 @@ namespace keymaster = aidl::android::hardware::keymaster;
 
 using aidl::android::hardware::common::NativeHandle;
 
+enum class SessionState {
+    IDLING,
+    CLOSED,
+};
+
 class Session : public BnSession {
   public:
     explicit Session(std::unique_ptr<FakeFaceEngine> engine, std::shared_ptr<ISessionCallback> cb);
@@ -93,12 +98,28 @@ class Session : public BnSession {
             const FaceEnrollOptions& options,
             std::shared_ptr<common::ICancellationSignal>* out) override;
 
+    binder_status_t linkToDeath(AIBinder* binder);
+
+    virtual std::string toString() const {
+        std::ostringstream os;
+        os << std::endl << "----- Face::Session:: -----" << std::endl;
+        os << "mStateClosed:" << mStateClosed << std::endl;
+        os << mEngine->toString();
+
+        return os.str();
+    }
+
+    bool isClosed() { return mStateClosed; }
+
   private:
     std::unique_ptr<FakeFaceEngine> mEngine;
     std::shared_ptr<ISessionCallback> mCb;
     std::mt19937 mRandom;
     std::unique_ptr<WorkerThread> mThread;
-    std::shared_ptr<CancellationSignal> mCancellationSignal;
+
+    // Binder death handler.
+    AIBinder_DeathRecipient* mDeathRecipient;
+    bool mStateClosed;
 };
 
 }  // namespace aidl::android::hardware::biometrics::face
