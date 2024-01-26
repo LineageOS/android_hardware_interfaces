@@ -35,12 +35,16 @@ int main(int /* argc */, char** /* argv */) {
       ndk::SharedRefBase::make<BluetoothFinder>();
   std::string instance =
       std::string() + BluetoothFinder::descriptor + "/default";
-  auto result =
-      AServiceManager_addService(service->asBinder().get(), instance.c_str());
-  if (result == STATUS_OK) {
-    ABinderProcess_joinThreadPool();
+  if (AServiceManager_isDeclared(instance.c_str())) {
+    auto result =
+        AServiceManager_addService(service->asBinder().get(), instance.c_str());
+    if (result != STATUS_OK) {
+      ALOGE("Could not register as a service!");
+    }
   } else {
-    ALOGE("Could not register as a service!");
+    ALOGE("Could not register as a service because it's not declared.");
   }
+  // Keep running
+  ABinderProcess_joinThreadPool();
   return 0;
 }
