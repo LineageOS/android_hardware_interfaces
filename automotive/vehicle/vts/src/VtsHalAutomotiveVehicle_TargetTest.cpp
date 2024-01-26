@@ -670,7 +670,7 @@ TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyUltrasonicsSensorPositionConfig)
 TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyUltrasonicsSensorOrientationConfig) {
     verifyProperty(VehicleProperty::ULTRASONICS_SENSOR_ORIENTATION, VehiclePropertyAccess::READ,
                    VehiclePropertyChangeMode::STATIC, VehiclePropertyGroup::SYSTEM,
-                   VehicleArea::VENDOR, VehiclePropertyType::INT32_VEC);
+                   VehicleArea::VENDOR, VehiclePropertyType::FLOAT_VEC);
 }
 
 TEST_P(VtsHalAutomotiveVehicleTargetTest, verifyUltrasonicsSensorFieldOfViewConfig) {
