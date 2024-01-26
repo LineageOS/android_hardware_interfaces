@@ -3456,6 +3456,145 @@
             }
         },
         {
+            "property": "VehicleProperty::ULTRASONICS_SENSOR_POSITION",
+            "comment":
+                    "Default values for 12 individual ultrasonic sensors installed on the vehicle. Six sensors on the front bumper. Six sensors on the back bumper.",
+            "areas": [
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            -1000,
+                            3900,
+                            0
+                        ]
+                    },
+                    "areaId": 1,
+                    "comment": "Rough numbers representing front left most sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            -600,
+                            4000,
+                            0
+                        ]
+                    },
+                    "areaId": 2,
+                    "comment": "Rough numbers representing front 2nd to the left sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            -200,
+                            4000,
+                            0
+                        ]
+                    },
+                    "areaId": 4,
+                    "comment": "Rough numbers representing front 3rd to the left sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            200,
+                            4000,
+                            0
+                        ]
+                    },
+                    "areaId": 8,
+                    "comment": "Rough numbers representing front 3rd to the right sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            600,
+                            4000,
+                            0
+                        ]
+                    },
+                    "areaId": 16,
+                    "comment": "Rough numbers representing front 2nd to the right sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            1000,
+                            3900,
+                            0
+                        ]
+                    },
+                    "areaId": 32,
+                    "comment": "Rough numbers representing front right most sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            -1000,
+                            -900,
+                            0
+                        ]
+                    },
+                    "areaId": 64,
+                    "comment": "Rough numbers representing back left most sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            -600,
+                            -1000,
+                            0
+                        ]
+                    },
+                    "areaId": 128,
+                    "comment": "Rough numbers representing back 2nd to the left sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            -200,
+                            -1000,
+                            0
+                        ]
+                    },
+                    "areaId": 256,
+                    "comment": "Rough numbers representing back 3rd to the left sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            200,
+                            -1000,
+                            0
+                        ]
+                    },
+                    "areaId": 512,
+                    "comment": "Rough numbers representing back 3rd to the right sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            600,
+                            -1000,
+                            0
+                        ]
+                    },
+                    "areaId": 1024,
+                    "comment": "Rough numbers representing back 2nd to the right sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            1000,
+                            -900,
+                            0
+                        ]
+                    },
+                    "areaId": 2048,
+                    "comment": "Rough numbers representing back right most sensor."
+                }
+            ]
+        },
+        {
             "property": "VehicleProperty::ELECTRONIC_TOLL_COLLECTION_CARD_TYPE",
             "defaultValue": {
                 "int32Values": [
