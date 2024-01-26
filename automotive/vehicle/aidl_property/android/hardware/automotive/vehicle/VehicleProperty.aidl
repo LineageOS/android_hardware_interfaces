@@ -3561,7 +3561,7 @@ enum VehicleProperty {
      * @version 3
      */
     ULTRASONICS_SENSOR_ORIENTATION = 0x0C21 + VehiclePropertyGroup.SYSTEM + VehicleArea.VENDOR
-            + VehiclePropertyType.INT32_VEC,
+            + VehiclePropertyType.FLOAT_VEC,
 
     /**
      * Static data for the field of view of each ultrasonic sensor in degrees.
