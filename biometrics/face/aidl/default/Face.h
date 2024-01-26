@@ -17,16 +17,26 @@
 #pragma once
 
 #include <aidl/android/hardware/biometrics/face/BnFace.h>
+#include "Session.h"
 
 namespace aidl::android::hardware::biometrics::face {
 
 class Face : public BnFace {
   public:
+    Face() : mSession(nullptr) {}
     ndk::ScopedAStatus getSensorProps(std::vector<SensorProps>* _aidl_return) override;
 
     ndk::ScopedAStatus createSession(int32_t sensorId, int32_t userId,
                                      const std::shared_ptr<ISessionCallback>& cb,
                                      std::shared_ptr<ISession>* _aidl_return) override;
+
+    binder_status_t dump(int fd, const char** args, uint32_t numArgs);
+    binder_status_t handleShellCommand(int in, int out, int err, const char** argv, uint32_t argc);
+
+  private:
+    std::shared_ptr<Session> mSession;
+    void resetConfigToDefault();
+    void onHelp(int);
 };
 
 }  // namespace aidl::android::hardware::biometrics::face
