@@ -731,9 +731,20 @@ inline void determineLive() {
     if (videoFilterIds.empty() || audioFilterIds.empty() || frontendMap.empty()) {
         return;
     }
-    if (hasSwFe && !hasHwFe && dvrMap.empty()) {
-        ALOGD("Cannot configure Live. Only software frontends and no dvr connections");
-        return;
+    if (!hasHwFe) {
+        if (hasSwFe) {
+            if (dvrMap.empty()) {
+                ALOGD("Cannot configure Live. Only software frontends and no dvr connections.");
+                return;
+            }
+            // Live is available if there is SW FE and some DVR is attached.
+        } else {
+            // We will arrive here because frontendMap won't be empty since
+            // there will be at least a default frontend declared. But the
+            // default frontend doesn't count as "hasSwFe".
+            ALOGD("Cannot configure Live. No frontend declared at all.");
+            return;
+        }
     }
     ALOGD("Can support live");
     live.hasFrontendConnection = true;
