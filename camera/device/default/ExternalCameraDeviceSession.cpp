@@ -538,6 +538,19 @@ Status ExternalCameraDeviceSession::processOneCaptureRequest(const CaptureReques
         return Status::INTERNAL_ERROR;
     }
 
+    if (request.outputBuffers.empty()) {
+        ALOGE("%s: No output buffers provided.", __FUNCTION__);
+        return Status::ILLEGAL_ARGUMENT;
+    }
+
+    for (auto& outputBuf : request.outputBuffers) {
+        if (outputBuf.streamId == -1 || mStreamMap.find(outputBuf.streamId) == mStreamMap.end()) {
+            ALOGE("%s: Invalid streamId in CaptureRequest.outputBuffers: %d", __FUNCTION__,
+                  outputBuf.streamId);
+            return Status::ILLEGAL_ARGUMENT;
+        }
+    }
+
     const camera_metadata_t* rawSettings = nullptr;
     bool converted;
     CameraMetadata settingsFmq;  // settings from FMQ
@@ -572,8 +585,6 @@ Status ExternalCameraDeviceSession::processOneCaptureRequest(const CaptureReques
         return Status::ILLEGAL_ARGUMENT;
     }
 
-    std::vector<buffer_handle_t*> allBufPtrs;
-    std::vector<int> allFences;
     size_t numOutputBufs = request.outputBuffers.size();
 
     if (numOutputBufs == 0) {
@@ -629,11 +640,6 @@ Status ExternalCameraDeviceSession::processOneCaptureRequest(const CaptureReques
         }
     }
 
-    status = importRequestLocked(request, allBufPtrs, allFences);
-    if (status != Status::OK) {
-        return status;
-    }
-
     nsecs_t shutterTs = 0;
     std::unique_ptr<V4L2Frame> frameIn = dequeueV4l2FrameLocked(&shutterTs);
     if (frameIn == nullptr) {
@@ -656,8 +662,8 @@ Status ExternalCameraDeviceSession::processOneCaptureRequest(const CaptureReques
         halBuf.height = stream.height;
         halBuf.format = stream.format;
         halBuf.usage = stream.usage;
-        halBuf.bufPtr = allBufPtrs[i];
-        halBuf.acquireFence = allFences[i];
+        halBuf.bufPtr = nullptr;  // threadloop will request buffer from cameraservice
+        halBuf.acquireFence = 0;  // threadloop will request fence from cameraservice
         halBuf.fenceTimeout = false;
     }
     {
@@ -1349,58 +1355,6 @@ bool ExternalCameraDeviceSession::isSupported(
     }
     ALOGI("%s: resolution %dx%d is not supported", __FUNCTION__, width, height);
     return false;
-}
-
-Status ExternalCameraDeviceSession::importRequestLocked(const CaptureRequest& request,
-                                                        std::vector<buffer_handle_t*>& allBufPtrs,
-                                                        std::vector<int>& allFences) {
-    return importRequestLockedImpl(request, allBufPtrs, allFences);
-}
-
-Status ExternalCameraDeviceSession::importRequestLockedImpl(
-        const CaptureRequest& request, std::vector<buffer_handle_t*>& allBufPtrs,
-        std::vector<int>& allFences) {
-    size_t numOutputBufs = request.outputBuffers.size();
-    size_t numBufs = numOutputBufs;
-    // Validate all I/O buffers
-    std::vector<buffer_handle_t> allBufs;
-    std::vector<uint64_t> allBufIds;
-    allBufs.resize(numBufs);
-    allBufIds.resize(numBufs);
-    allBufPtrs.resize(numBufs);
-    allFences.resize(numBufs);
-    std::vector<int32_t> streamIds(numBufs);
-
-    for (size_t i = 0; i < numOutputBufs; i++) {
-        allBufs[i] = ::android::makeFromAidl(request.outputBuffers[i].buffer);
-        allBufIds[i] = request.outputBuffers[i].bufferId;
-        allBufPtrs[i] = &allBufs[i];
-        streamIds[i] = request.outputBuffers[i].streamId;
-    }
-
-    {
-        Mutex::Autolock _l(mCbsLock);
-        for (size_t i = 0; i < numBufs; i++) {
-            Status st = importBufferLocked(streamIds[i], allBufIds[i], allBufs[i], &allBufPtrs[i]);
-            if (st != Status::OK) {
-                // Detailed error logs printed in importBuffer
-                return st;
-            }
-        }
-    }
-
-    // All buffers are imported. Now validate output buffer acquire fences
-    for (size_t i = 0; i < numOutputBufs; i++) {
-        native_handle_t* h = ::android::makeFromAidl(request.outputBuffers[i].acquireFence);
-        if (!sHandleImporter.importFence(h, allFences[i])) {
-            ALOGE("%s: output buffer %zu acquire fence is invalid", __FUNCTION__, i);
-            cleanupInflightFences(allFences, i);
-            native_handle_delete(h);
-            return Status::INTERNAL_ERROR;
-        }
-        native_handle_delete(h);
-    }
-    return Status::OK;
 }
 
 Status ExternalCameraDeviceSession::importBuffer(int32_t streamId, uint64_t bufId,
