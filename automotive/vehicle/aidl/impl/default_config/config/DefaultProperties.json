@@ -3758,6 +3758,537 @@
             ]
         },
         {
+            "property": "VehicleProperty::ULTRASONICS_SENSOR_FIELD_OF_VIEW",
+            "comment":
+                    "Default values for 12 individual ultrasonic sensors installed on the vehicle. Six sensors on the front bumper. Six sensors on the back bumper.",
+            "areas": [
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            85,
+                            45
+                        ]
+                    },
+                    "areaId": 1,
+                    "comment": "Rough values representing front left most sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            75,
+                            45
+                        ]
+                    },
+                    "areaId": 2,
+                    "comment": "Rough values representing front 2nd to the left sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            75,
+                            45
+                        ]
+                    },
+                    "areaId": 4,
+                    "comment": "Rough values representing front 3rd to the left sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            75,
+                            45
+                        ]
+                    },
+                    "areaId": 8,
+                    "comment": "Rough values representing front 3rd to the right sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            75,
+                            45
+                        ]
+                    },
+                    "areaId": 16,
+                    "comment": "Rough values representing front 2nd to the right sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            85,
+                            45
+                        ]
+                    },
+                    "areaId": 32,
+                    "comment": "Rough values representing front right most sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            85,
+                            45
+                        ]
+                    },
+                    "areaId": 64,
+                    "comment": "Rough values representing back left most sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            75,
+                            45
+                        ]
+                    },
+                    "areaId": 128,
+                    "comment": "Rough values representing back 2nd to the left sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            75,
+                            45
+                        ]
+                    },
+                    "areaId": 256,
+                    "comment": "Rough values representing back 3rd to the left sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            75,
+                            45
+                        ]
+                    },
+                    "areaId": 512,
+                    "comment": "Rough values representing back 3rd to the right sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            75,
+                            45
+                        ]
+                    },
+                    "areaId": 1024,
+                    "comment": "Rough values representing back 2nd to the right sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            85,
+                            45
+                        ]
+                    },
+                    "areaId": 2048,
+                    "comment": "Rough values representing back right most sensor."
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::ULTRASONICS_SENSOR_DETECTION_RANGE",
+            "areas": [
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            150,
+                            4000
+                        ]
+                    },
+                    "areaId": 1,
+                    "comment": "Rough values representing front left most sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            150,
+                            3000
+                        ]
+                    },
+                    "areaId": 2,
+                    "comment": "Rough values representing front 2nd to the left sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            150,
+                            3000
+                        ]
+                    },
+                    "areaId": 4,
+                    "comment": "Rough values representing front 3rd to the left sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            150,
+                            3000
+                        ]
+                    },
+                    "areaId": 8,
+                    "comment": "Rough values representing front 3rd to the right sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            150,
+                            3000
+                        ]
+                    },
+                    "areaId": 16,
+                    "comment": "Rough values representing front 2nd to the right sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            150,
+                            4000
+                        ]
+                    },
+                    "areaId": 32,
+                    "comment": "Rough values representing front right most sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            150,
+                            4000
+                        ]
+                    },
+                    "areaId": 64,
+                    "comment": "Rough values representing back left most sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            150,
+                            3000
+                        ]
+                    },
+                    "areaId": 128,
+                    "comment": "Rough values representing back 2nd to the left sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            150,
+                            3000
+                        ]
+                    },
+                    "areaId": 256,
+                    "comment": "Rough values representing back 3rd to the left sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            150,
+                            3000
+                        ]
+                    },
+                    "areaId": 512,
+                    "comment": "Rough values representing back 3rd to the right sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            150,
+                            3000
+                        ]
+                    },
+                    "areaId": 1024,
+                    "comment": "Rough values representing back 2nd to the right sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            150,
+                            4000
+                        ]
+                    },
+                    "areaId": 2048,
+                    "comment": "Rough values representing back right most sensor."
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::ULTRASONICS_SENSOR_SUPPORTED_RANGES",
+            "areas": [
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            150,
+                            999,
+                            1000,
+                            1999,
+                            2000,
+                            4000
+                        ]
+                    },
+                    "areaId": 1,
+                    "comment": "Rough values representing front left most sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            150,
+                            999,
+                            1000,
+                            1999,
+                            2000,
+                            3000
+                        ]
+                    },
+                    "areaId": 2,
+                    "comment": "Rough values representing front 2nd to the left sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            150,
+                            999,
+                            1000,
+                            1999,
+                            2000,
+                            3000
+                        ]
+                    },
+                    "areaId": 4,
+                    "comment": "Rough values representing front 3rd to the left sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            150,
+                            999,
+                            1000,
+                            1999,
+                            2000,
+                            3000
+                        ]
+                    },
+                    "areaId": 8,
+                    "comment": "Rough values representing front 3rd to the right sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            150,
+                            999,
+                            1000,
+                            1999,
+                            2000,
+                            3000
+                        ]
+                    },
+                    "areaId": 16,
+                    "comment": "Rough values representing front 2nd to the right sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            150,
+                            999,
+                            1000,
+                            1999,
+                            2000,
+                            4000
+                        ]
+                    },
+                    "areaId": 32,
+                    "comment": "Rough values representing front right most sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            150,
+                            999,
+                            1000,
+                            1999,
+                            2000,
+                            4000
+                        ]
+                    },
+                    "areaId": 64,
+                    "comment": "Rough values representing back left most sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            150,
+                            999,
+                            1000,
+                            1999,
+                            2000,
+                            3000
+                        ]
+                    },
+                    "areaId": 128,
+                    "comment": "Rough values representing back 2nd to the left sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            150,
+                            999,
+                            1000,
+                            3000
+                        ]
+                    },
+                    "areaId": 256,
+                    "comment": "Rough values representing back 3rd to the left sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            150,
+                            999,
+                            1000,
+                            3000
+                        ]
+                    },
+                    "areaId": 512,
+                    "comment": "Rough values representing back 3rd to the right sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            150,
+                            999,
+                            1000,
+                            1999,
+                            2000,
+                            3000
+                        ]
+                    },
+                    "areaId": 1024,
+                    "comment": "Rough values representing back 2nd to the right sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            150,
+                            999,
+                            1000,
+                            1999,
+                            2000,
+                            4000
+                        ]
+                    },
+                    "areaId": 2048,
+                    "comment": "Rough values representing back right most sensor."
+                }
+            ]
+        },
+        {
+            "property": "VehicleProperty::ULTRASONICS_SENSOR_MEASURED_DISTANCE",
+            "areas": [
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            2000,
+                            10
+                        ]
+                    },
+                    "areaId": 1,
+                    "comment": "Rough values representing front left most sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": []
+                    },
+                    "areaId": 2,
+                    "comment":
+                            "Rough values representing front 2nd to the left sensor. Nothing detected."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": []
+                    },
+                    "areaId": 4,
+                    "comment":
+                            "Rough values representing front 3rd to the left sensor. Nothing detected."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": []
+                    },
+                    "areaId": 8,
+                    "comment":
+                            "Rough values representing front 3rd to the right sensor. Nothing detected."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": []
+                    },
+                    "areaId": 16,
+                    "comment":
+                            "Rough values representing front 2nd to the right sensor. Nothing detected."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": []
+                    },
+                    "areaId": 32,
+                    "comment":
+                            "Rough values representing front right most sensor. Nothing detected."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": []
+                    },
+                    "areaId": 64,
+                    "comment": "Rough values representing back left most sensor. Nothing detected."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": []
+                    },
+                    "areaId": 128,
+                    "comment":
+                            "Rough values representing back 2nd to the left sensor. Nothing detected."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": []
+                    },
+                    "areaId": 256,
+                    "comment":
+                            "Rough values representing back 3rd to the left sensor. Nothing detected."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            1000
+                        ]
+                    },
+                    "areaId": 512,
+                    "comment":
+                            "Rough values representing back 3rd to the right sensor. Nothing detected."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            2000,
+                            50
+                        ]
+                    },
+                    "areaId": 1024,
+                    "comment": "Rough values representing back 2nd to the right sensor."
+                },
+                {
+                    "defaultValue": {
+                        "int32Values": [
+                            2000
+                        ]
+                    },
+                    "areaId": 2048,
+                    "comment":
+                            "Rough values representing back right most sensor. No distance error."
+                }
+            ],
+            "maxSampleRate": 10.0,
+            "minSampleRate": 1.0
+        },
+        {
             "property": "VehicleProperty::ELECTRONIC_TOLL_COLLECTION_CARD_TYPE",
             "defaultValue": {
                 "int32Values": [
