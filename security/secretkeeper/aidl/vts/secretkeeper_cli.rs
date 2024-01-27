@@ -24,7 +24,8 @@ use authgraph_boringssl::BoringSha256;
 use authgraph_core::traits::Sha256;
 use clap::{Args, Parser, Subcommand};
 use coset::CborSerializable;
-use dice_policy::{ConstraintSpec, ConstraintType, DicePolicy, MissingAction};
+use dice_policy_builder::{ConstraintSpec, ConstraintType, MissingAction, policy_for_dice_chain};
+
 use secretkeeper_client::{dice::OwnedDiceArtifactsWithExplicitKey, SkSession};
 use secretkeeper_comm::data_types::{
     error::SecretkeeperError,
@@ -146,7 +147,7 @@ impl SkClient {
                 MissingAction::Ignore,
             ),
         ];
-        DicePolicy::from_dice_chain(dice, &constraint_spec)
+        policy_for_dice_chain(dice, &constraint_spec)
             .unwrap()
             .to_vec()
             .context("serialize DICE policy")

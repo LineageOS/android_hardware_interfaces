@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 The Android Open Source Project
+ * Copyright (C) 2024 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,16 @@
  * limitations under the License.
  */
 
-package {
-    default_applicable_licenses: ["Android-Apache-2.0"],
-}
-
-cc_defaults {
-    name: "VehicleHalInterfaceDefaults",
-    static_libs: [
-        "android.hardware.automotive.vehicle-V3-ndk",
-        "android.hardware.automotive.vehicle.property-V3-ndk",
-    ],
-}
-
-rust_defaults {
-    name: "VehicleHalInterfaceRustDefaults",
+rust_binary {
+    name: "android.hardware.automotive.vehicle-V3-rust-service",
+    relative_install_path: "hw",
+    vendor: true,
+    srcs: ["src/*.rs"],
+    crate_root: "src/main.rs",
+    defaults: ["VehicleHalInterfaceRustDefaults"],
+    vintf_fragments: ["vhal-rust-service.xml"],
+    init_rc: ["vhal-rust-service.rc"],
     rustlibs: [
-        "android.hardware.automotive.vehicle-V3-rust",
-        "android.hardware.automotive.vehicle.property-V3-rust",
+        "libbinder_rs",
     ],
 }
