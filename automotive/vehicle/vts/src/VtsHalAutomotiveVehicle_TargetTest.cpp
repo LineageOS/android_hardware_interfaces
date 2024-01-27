@@ -288,11 +288,8 @@ bool VtsHalAutomotiveVehicleTargetTest::isResultOkayWithValue(
 
 bool VtsHalAutomotiveVehicleTargetTest::isUnavailable(
         const VhalClientResult<std::unique_ptr<IHalPropValue>>& result) {
-    if (result.ok()) {
-        return false;
-    }
-    if (result.error().code() == ErrorCode::NOT_AVAILABLE_FROM_VHAL) {
-        return true;
+    if (!result.ok()) {
+        return result.error().code() == ErrorCode::NOT_AVAILABLE_FROM_VHAL;
     }
     if (result.value() != nullptr &&
         result.value()->getStatus() == VehiclePropertyStatus::UNAVAILABLE) {
