@@ -48,7 +48,7 @@ static std::optional<std::string> readString(std::istream& s, std::streamsize n)
     char buff[n];
     auto got = s.read(buff, n).gcount();
     if (!s.good() && !s.eof()) return std::nullopt;
-    return std::string(buff, 0, std::min(n, got));
+    return std::string(buff, got);
 }
 
 std::optional<CanBusConfig> parseConfigFile(const std::string& filepath) {
