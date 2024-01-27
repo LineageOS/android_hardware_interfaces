@@ -1726,8 +1726,8 @@ Status ExternalCameraDeviceSession::processCaptureRequestError(
         result.outputBuffers[i].bufferId = req->buffers[i].bufferId;
         result.outputBuffers[i].status = BufferStatus::ERROR;
         if (req->buffers[i].acquireFence >= 0) {
-            native_handle_t* handle = native_handle_create(/*numFds*/ 1, /*numInts*/ 0);
-            handle->data[0] = req->buffers[i].acquireFence;
+            // numFds = 0 for error
+            native_handle_t* handle = native_handle_create(/*numFds*/ 0, /*numInts*/ 0);
             result.outputBuffers[i].releaseFence = android::dupToAidl(handle);
             native_handle_delete(handle);
         }
@@ -1961,6 +1961,7 @@ int ExternalCameraDeviceSession::BufferRequestThread::waitForBufferRequestDone(
         std::chrono::milliseconds timeout = std::chrono::milliseconds(kReqProcTimeoutMs);
         auto st = mRequestDoneCond.wait_for(lk, timeout);
         if (st == std::cv_status::timeout) {
+            mRequestingBuffer = false;
             ALOGE("%s: wait for buffer request finish timeout!", __FUNCTION__);
             return -1;
         }
@@ -2078,6 +2079,7 @@ bool ExternalCameraDeviceSession::BufferRequestThread::threadLoop() {
         }
     } else {
         ALOGE("%s: requestStreamBuffers call failed!", __FUNCTION__);
+        return false;
     }
 
     mPendingReturnBufferReqs = std::move(mBufferReqs);
@@ -2797,9 +2799,15 @@ bool ExternalCameraDeviceSession::OutputThread::threadLoop() {
     ATRACE_END();
 
     if (res != 0) {
+        // HAL buffer management buffer request can fail
         ALOGE("%s: wait for BufferRequest done failed! res %d", __FUNCTION__, res);
         lk.unlock();
-        return onDeviceError("%s: failed to process buffer request error!", __FUNCTION__);
+        Status st = parent->processCaptureRequestError(req);
+        if (st != Status::OK) {
+            return onDeviceError("%s: failed to process capture request error!", __FUNCTION__);
+        }
+        signalRequestDone();
+        return true;
     }
 
     ALOGV("%s processing new request", __FUNCTION__);
