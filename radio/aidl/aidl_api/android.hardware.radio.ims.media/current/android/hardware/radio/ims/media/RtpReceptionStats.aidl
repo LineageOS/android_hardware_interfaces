@@ -35,8 +35,8 @@ package android.hardware.radio.ims.media;
 @VintfStability
 parcelable RtpReceptionStats {
   int rtpTimestamp;
-  int rtpSequenceNumber;
-  int timeDurationMs;
+  int rtcpSrTimestamp;
+  long rtcpSrNtpTimestamp;
   int jitterBufferMs;
   int roundTripTimeMs;
 }

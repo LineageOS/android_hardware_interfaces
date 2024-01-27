@@ -41,10 +41,11 @@ fn main() {
     let lmp_event_service = lmp_event::LmpEvent::new();
     let lmp_event_service_binder = BnBluetoothLmpEvent::new_binder(lmp_event_service, BinderFeatures::default());
 
-    binder::add_service(
-        &format!("{}/default", lmp_event::LmpEvent::get_descriptor()),
-        lmp_event_service_binder.as_binder(),
-    ).expect("Failed to register service");
-
+    let descriptor = format!("{}/default", lmp_event::LmpEvent::get_descriptor());
+    if binder::is_declared(&descriptor).expect("Failed to check if declared") {
+        binder::add_service(&descriptor, lmp_event_service_binder.as_binder()).expect("Failed to register service");
+    } else {
+        info!("{LOG_TAG}: Failed to register service. Not declared.");
+    }
     binder::ProcessState::join_thread_pool()
 }

@@ -75,7 +75,7 @@ enum VehicleProperty {
     INFO_MODEL = 0x0102 + 0x10000000 + 0x01000000
             + 0x00100000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:STRING
     /**
-     * Model year of vehicle.
+     * Model year of vehicle in YYYY format based on the Gregorian calendar.
      *
      * @change_mode VehiclePropertyChangeMode.STATIC
      * @access VehiclePropertyAccess.READ
@@ -3561,7 +3561,7 @@ enum VehicleProperty {
      * @version 3
      */
     ULTRASONICS_SENSOR_ORIENTATION = 0x0C21 + VehiclePropertyGroup.SYSTEM + VehicleArea.VENDOR
-            + VehiclePropertyType.INT32_VEC,
+            + VehiclePropertyType.FLOAT_VEC,
 
     /**
      * Static data for the field of view of each ultrasonic sensor in degrees.
