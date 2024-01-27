@@ -1965,6 +1965,12 @@ int ExternalCameraDeviceSession::BufferRequestThread::waitForBufferRequestDone(
             ALOGE("%s: wait for buffer request finish timeout!", __FUNCTION__);
             return -1;
         }
+
+        if (mPendingReturnBufferReqs.empty()) {
+            mRequestingBuffer = false;
+            ALOGE("%s: cameraservice did not return any buffers!", __FUNCTION__);
+            return -1;
+        }
     }
     mRequestingBuffer = false;
     *outBufReqs = std::move(mPendingReturnBufferReqs);
@@ -2014,6 +2020,8 @@ bool ExternalCameraDeviceSession::BufferRequestThread::threadLoop() {
     if (!ret.isOk()) {
         ALOGE("%s: Transaction error: %d:%d", __FUNCTION__, ret.getExceptionCode(),
               ret.getServiceSpecificError());
+        mBufferReqs.clear();
+        mRequestDoneCond.notify_one();
         return false;
     }
 
@@ -2022,17 +2030,24 @@ bool ExternalCameraDeviceSession::BufferRequestThread::threadLoop() {
         if (bufRets.size() != mHalBufferReqs.size()) {
             ALOGE("%s: expect %zu buffer requests returned, only got %zu", __FUNCTION__,
                   mHalBufferReqs.size(), bufRets.size());
+            mBufferReqs.clear();
+            lk.unlock();
+            mRequestDoneCond.notify_one();
             return false;
         }
 
         auto parent = mParent.lock();
         if (parent == nullptr) {
             ALOGE("%s: session has been disconnected!", __FUNCTION__);
+            mBufferReqs.clear();
+            lk.unlock();
+            mRequestDoneCond.notify_one();
             return false;
         }
 
         std::vector<int> importedFences;
         importedFences.resize(bufRets.size());
+        bool hasError = false;
         for (size_t i = 0; i < bufRets.size(); i++) {
             int streamId = bufRets[i].streamId;
             switch (bufRets[i].val.getTag()) {
@@ -2043,7 +2058,8 @@ bool ExternalCameraDeviceSession::BufferRequestThread::threadLoop() {
                             bufRets[i].val.get<StreamBuffersVal::Tag::buffers>();
                     if (hBufs.size() != 1) {
                         ALOGE("%s: expect 1 buffer returned, got %zu!", __FUNCTION__, hBufs.size());
-                        return false;
+                        hasError = true;
+                        break;
                     }
                     const StreamBuffer& hBuf = hBufs[0];
 
@@ -2060,26 +2076,38 @@ bool ExternalCameraDeviceSession::BufferRequestThread::threadLoop() {
                     if (s != Status::OK) {
                         ALOGE("%s: stream %d import buffer failed!", __FUNCTION__, streamId);
                         cleanupInflightFences(importedFences, i - 1);
-                        return false;
+                        hasError = true;
+                        break;
                     }
                     h = makeFromAidl(hBuf.acquireFence);
                     if (!sHandleImporter.importFence(h, mBufferReqs[i].acquireFence)) {
                         ALOGE("%s: stream %d import fence failed!", __FUNCTION__, streamId);
                         cleanupInflightFences(importedFences, i - 1);
                         native_handle_delete(h);
-                        return false;
+                        hasError = true;
+                        break;
                     }
                     native_handle_delete(h);
                     importedFences[i] = mBufferReqs[i].acquireFence;
                 } break;
                 default:
                     ALOGE("%s: Unknown StreamBuffersVal!", __FUNCTION__);
-                    return false;
+                    hasError = true;
+                    break;
+            }
+            if (hasError) {
+                mBufferReqs.clear();
+                lk.unlock();
+                mRequestDoneCond.notify_one();
+                return true;
             }
         }
     } else {
         ALOGE("%s: requestStreamBuffers call failed!", __FUNCTION__);
-        return false;
+        mBufferReqs.clear();
+        lk.unlock();
+        mRequestDoneCond.notify_one();
+        return true;
     }
 
     mPendingReturnBufferReqs = std::move(mBufferReqs);
@@ -2784,6 +2812,11 @@ bool ExternalCameraDeviceSession::OutputThread::threadLoop() {
         if (res != 0) {
             // For some webcam, the first few V4L2 frames might be malformed...
             ALOGE("%s: Convert V4L2 frame to YU12 failed! res %d", __FUNCTION__, res);
+
+            ATRACE_BEGIN("Wait for BufferRequest done");
+            res = waitForBufferRequestDone(&req->buffers);
+            ATRACE_END();
+
             lk.unlock();
             Status st = parent->processCaptureRequestError(req);
             if (st != Status::OK) {
