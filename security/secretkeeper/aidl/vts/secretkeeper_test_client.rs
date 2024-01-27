@@ -20,7 +20,7 @@ use authgraph_vts_test as ag_vts;
 use authgraph_boringssl as boring;
 use authgraph_core::key;
 use coset::{CborSerializable, CoseEncrypt0};
-use dice_policy::{ConstraintSpec, ConstraintType, DicePolicy, MissingAction};
+use dice_policy_builder::{ConstraintSpec, ConstraintType, MissingAction, policy_for_dice_chain};
 use rdroidtest::{ignore_if, rdroidtest};
 use secretkeeper_client::dice::OwnedDiceArtifactsWithExplicitKey;
 use secretkeeper_client::SkSession;
@@ -258,7 +258,7 @@ fn sealing_policy(dice: &[u8]) -> Vec<u8> {
         ),
     ];
 
-    DicePolicy::from_dice_chain(dice, &constraint_spec).unwrap().to_vec().unwrap()
+    policy_for_dice_chain(dice, &constraint_spec).unwrap().to_vec().unwrap()
 }
 
 /// Perform AuthGraph key exchange, returning the session keys and session ID.
