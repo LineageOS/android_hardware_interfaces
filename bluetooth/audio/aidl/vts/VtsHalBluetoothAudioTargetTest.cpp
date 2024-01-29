@@ -2583,6 +2583,10 @@ TEST_P(BluetoothAudioProviderLeAudioOutputHardwareAidl, GetQoSConfiguration) {
 
 TEST_P(BluetoothAudioProviderLeAudioOutputHardwareAidl,
        GetDataPathConfiguration) {
+  if (GetProviderFactoryInterfaceVersion() <
+      BluetoothAudioHalVersion::VERSION_AIDL_V4) {
+    GTEST_SKIP();
+  }
   IBluetoothAudioProvider::StreamConfig sink_requirement;
   IBluetoothAudioProvider::StreamConfig source_requirement;
   std::vector<IBluetoothAudioProvider::LeAudioDataPathConfiguration>
