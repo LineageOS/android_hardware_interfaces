@@ -87,6 +87,21 @@ class SocketInterface : public ot::Spinel::SpinelInterface {
     otError SendFrame(const uint8_t* aFrame, uint16_t aLength);
 
     /**
+     * Waits for receiving part or all of Spinel frame within specified
+     * interval.
+     *
+     * @param[in]  aTimeout  The timeout value in microseconds.
+     *
+     * @retval OT_ERROR_NONE             Part or all of Spinel frame is
+     * received.
+     * @retval OT_ERROR_RESPONSE_TIMEOUT No Spinel frame is received within @p
+     * aTimeout.
+     * @retval OT_EXIT_FAILURE           RCP error
+     *
+     */
+    otError WaitForFrame(uint64_t aTimeoutUs);
+
+    /**
      * Updates the file descriptor sets with file descriptors used by the radio
      * driver.
      *
@@ -95,6 +110,15 @@ class SocketInterface : public ot::Spinel::SpinelInterface {
      *
      */
     void UpdateFdSet(void* aMainloopContext);
+
+    /**
+     * Performs radio driver processing.
+     *
+     * @param[in]   aMainloopContext  A pointer to the mainloop context
+     * containing fd_sets.
+     *
+     */
+    void Process(const void* aMainloopContext);
 
     /**
      * Returns the bus speed between the host and the radio.
@@ -137,6 +161,17 @@ class SocketInterface : public ot::Spinel::SpinelInterface {
 
   private:
     /**
+     * Instructs `SocketInterface` to read data from radio over the
+     * socket.
+     *
+     * If a full Spinel frame is received, this method invokes the
+     * `HandleSocketFrame()` (on the `aCallback` object from constructor) to
+     * pass the received frame to be processed.
+     *
+     */
+    void Read(void);
+
+    /**
      * Writes a given frame to the socket.
      *
      * @param[in] aFrame  A pointer to buffer containing the frame to write.
@@ -144,6 +179,22 @@ class SocketInterface : public ot::Spinel::SpinelInterface {
      *
      */
     void Write(const uint8_t* aFrame, uint16_t aLength);
+
+    /**
+     * Process received data.
+     *
+     * If a full frame is finished processing and we obtain the raw Spinel
+     * frame, this method invokes the `HandleSocketFrame()` (on the `aCallback`
+     * object from constructor) to pass the received frame to be processed.
+     *
+     * @param[in] aBuffer  A pointer to buffer containing data.
+     * @param[in] aLength  The length (number of bytes) in the buffer.
+     *
+     */
+    void ProcessReceivedData(const uint8_t* aBuffer, uint16_t aLength);
+
+    static void HandleSocketFrame(void* aContext, otError aError);
+    void HandleSocketFrame(otError aError);
 
     /**
      * Opens file specified by aRadioUrl.
