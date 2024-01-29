@@ -46,7 +46,7 @@ EffectContext::EffectContext(size_t statusDepth, const Parameter::Common& common
     ::android::status_t status =
             EventFlag::createEventFlag(mStatusMQ->getEventFlagWord(), &mEfGroup);
     LOG_ALWAYS_FATAL_IF(status != ::android::OK || !mEfGroup, " create EventFlagGroup failed ");
-    mWorkBuffer.reserve(std::max(inBufferSizeInFloat, outBufferSizeInFloat));
+    mWorkBuffer.resize(std::max(inBufferSizeInFloat, outBufferSizeInFloat));
 }
 
 // reset buffer status by abandon input data in FMQ
@@ -80,6 +80,10 @@ void EffectContext::dupeFmq(IEffect::OpenEffectReturn* effectRet) {
 
 float* EffectContext::getWorkBuffer() {
     return static_cast<float*>(mWorkBuffer.data());
+}
+
+size_t EffectContext::getWorkBufferSize() const {
+    return mWorkBuffer.size();
 }
 
 std::shared_ptr<EffectContext::StatusMQ> EffectContext::getStatusFmq() const {
@@ -206,6 +210,8 @@ RetCode EffectContext::updateIOFrameSize(const Parameter::Common& common) {
     mInputFrameSize = iFrameSize;
     mOutputFrameSize = oFrameSize;
     if (needUpdateMq) {
+        mWorkBuffer.resize(std::max(common.input.frameCount * mInputFrameSize / sizeof(float),
+                                    common.output.frameCount * mOutputFrameSize / sizeof(float)));
         return notifyDataMqUpdate();
     }
     return RetCode::SUCCESS;

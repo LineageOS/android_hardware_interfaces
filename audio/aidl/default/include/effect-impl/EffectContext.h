@@ -49,6 +49,7 @@ class EffectContext {
     std::shared_ptr<DataMQ> getOutputDataFmq() const;
 
     float* getWorkBuffer();
+    size_t getWorkBufferSize() const;
 
     // reset buffer status by abandon input data in FMQ
     void resetBuffer();
