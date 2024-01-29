@@ -1,0 +1,24 @@
+<compatibility-matrix version="1.0" type="framework" level="202404">
+  <!-- This file holds the HIDL media.c2 interface while it
+  is being deprecated. This will be removed after the flag ramping
+  complete. This interface is not allowed in the 202404 vendor interface -->
+    <hal format="hidl" optional="true">
+        <name>android.hardware.media.c2</name>
+        <version>1.0-2</version>
+        <interface>
+            <name>IComponentStore</name>
+            <instance>software</instance>
+            <regex-instance>default[0-9]*</regex-instance>
+            <regex-instance>vendor[0-9]*_software</regex-instance>
+        </interface>
+    </hal>
+    <hal format="hidl" optional="true">
+        <name>android.hardware.media.c2</name>
+        <version>1.0</version>
+        <interface>
+            <name>IConfigurable</name>
+            <instance>default</instance>
+            <instance>software</instance>
+        </interface>
+    </hal>
+</compatibility-matrix>
