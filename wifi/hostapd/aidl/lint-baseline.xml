@@ -45,4 +45,22 @@
             column="12"/>
     </issue>
 
+    <issue
+        id="NewApi"
+        message="Call requires API level 31 (current min is 30): `android.os.Binder#markVintfStability`"
+        errorLine1="      this.markVintfStability();"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="out/soong/.intermediates/hardware/interfaces/wifi/hostapd/aidl/android.hardware.wifi.hostapd-V3-java-source/gen/android/hardware/wifi/hostapd/IHostapd.java"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 31 (current min is 30): `android.os.Binder#markVintfStability`"
+        errorLine1="      this.markVintfStability();"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="out/soong/.intermediates/hardware/interfaces/wifi/hostapd/aidl/android.hardware.wifi.hostapd-V3-java-source/gen/android/hardware/wifi/hostapd/IHostapdCallback.java"/>
+    </issue>
+
 </issues>
