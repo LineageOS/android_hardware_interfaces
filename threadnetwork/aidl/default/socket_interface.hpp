@@ -49,6 +49,57 @@ class SocketInterface : public ot::Spinel::SpinelInterface {
     ~SocketInterface();
 
     /**
+     * Initializes the interface to the Radio Co-processor (RCP)
+     *
+     * @note This method should be called before reading and sending Spinel
+     * frames to the interface.
+     *
+     * @param[in] aCallback         Callback on frame received
+     * @param[in] aCallbackContext  Callback context
+     * @param[in] aFrameBuffer      A reference to a `RxFrameBuffer` object.
+     *
+     * @retval OT_ERROR_NONE       The interface is initialized successfully
+     * @retval OT_ERROR_ALREADY    The interface is already initialized.
+     * @retval OT_ERROR_FAILED     Failed to initialize the interface.
+     *
+     */
+    otError Init(ReceiveFrameCallback aCallback, void* aCallbackContext,
+                 RxFrameBuffer& aFrameBuffer);
+
+    /**
+     * Deinitializes the interface to the RCP.
+     *
+     */
+    void Deinit(void);
+
+    /**
+     * Updates the file descriptor sets with file descriptors used by the radio
+     * driver.
+     *
+     * @param[in,out]   aMainloopContext  A pointer to the mainloop context
+     * containing fd_sets.
+     *
+     */
+    void UpdateFdSet(void* aMainloopContext);
+
+    /**
+     * Returns the bus speed between the host and the radio.
+     *
+     * @return   Bus speed in bits/second.
+     *
+     */
+    uint32_t GetBusSpeed(void) const { return 1000000; }
+
+    /**
+     * Hardware resets the RCP.
+     *
+     * @retval OT_ERROR_NONE            Successfully reset the RCP.
+     * @retval OT_ERROR_NOT_IMPLEMENT   The hardware reset is not implemented.
+     *
+     */
+    otError HardwareReset(void) { return OT_ERROR_NOT_IMPLEMENTED; }
+
+    /**
      * Returns the RCP interface metrics.
      *
      * @return The RCP interface metrics.
@@ -71,6 +122,24 @@ class SocketInterface : public ot::Spinel::SpinelInterface {
     }
 
   private:
+    /**
+     * Opens file specified by aRadioUrl.
+     *
+     * @param[in] aRadioUrl  A reference to object containing path to file and
+     * data for configuring the connection with tty type file.
+     *
+     * @retval The file descriptor of newly opened file.
+     * @retval -1 Fail to open file.
+     *
+     */
+    int OpenFile(const ot::Url::Url& aRadioUrl);
+
+    /**
+     * Closes file associated with the file descriptor.
+     *
+     */
+    void CloseFile(void);
+
     ReceiveFrameCallback mReceiveFrameCallback;
     void* mReceiveFrameContext;
     RxFrameBuffer* mReceiveFrameBuffer;
