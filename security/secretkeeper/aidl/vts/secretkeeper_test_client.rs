@@ -171,7 +171,16 @@ impl SkClient {
 
     /// Helper method to get a secret.
     fn get(&mut self, id: &Id) -> Result<Secret, Error> {
-        let get_request = GetSecretRequest { id: id.clone(), updated_sealing_policy: None };
+        self.get_update_policy(id, None)
+    }
+
+    /// Helper method to get a secret, updating the sealing policy along the way.
+    fn get_update_policy(
+        &mut self,
+        id: &Id,
+        updated_sealing_policy: Option<Vec<u8>>,
+    ) -> Result<Secret, Error> {
+        let get_request = GetSecretRequest { id: id.clone(), updated_sealing_policy };
         let get_request = get_request.serialize_to_packet().to_vec()?;
 
         let get_response = self.secret_management_request(&get_request)?;
@@ -532,8 +541,9 @@ fn secret_management_replay_protection_out_of_seq_req_not_accepted(instance: Str
 #[rdroidtest(get_instances())]
 fn secret_management_policy_gate(instance: String) {
     let dice_chain = make_explicit_owned_dice(/*Security version in a node */ 100);
-    let mut sk_client = SkClient::with_identity(&instance, dice_chain);
-    sk_client.store(&ID_EXAMPLE, &SECRET_EXAMPLE).unwrap();
+    let mut sk_client_original = SkClient::with_identity(&instance, dice_chain);
+    sk_client_original.store(&ID_EXAMPLE, &SECRET_EXAMPLE).unwrap();
+    assert_eq!(sk_client_original.get(&ID_EXAMPLE).unwrap(), SECRET_EXAMPLE);
 
     // Start a session with higher security_version & get the stored secret.
     let dice_chain_upgraded = make_explicit_owned_dice(/*Security version in a node */ 101);
@@ -545,6 +555,20 @@ fn secret_management_policy_gate(instance: String) {
     let mut sk_client_downgraded = SkClient::with_identity(&instance, dice_chain_downgraded);
     assert!(matches!(
         sk_client_downgraded.get(&ID_EXAMPLE).unwrap_err(),
+        Error::SecretkeeperError(SecretkeeperError::DicePolicyError)
+    ));
+
+    // Now get the secret with the later version, and upgrade the sealing policy along the way.
+    let sealing_policy =
+        sealing_policy(sk_client_upgraded.dice_artifacts.explicit_key_dice_chain().unwrap());
+    assert_eq!(
+        sk_client_upgraded.get_update_policy(&ID_EXAMPLE, Some(sealing_policy)).unwrap(),
+        SECRET_EXAMPLE
+    );
+
+    // The original version of the client should no longer be able to retrieve the secret.
+    assert!(matches!(
+        sk_client_original.get(&ID_EXAMPLE).unwrap_err(),
         Error::SecretkeeperError(SecretkeeperError::DicePolicyError)
     ));
 }
