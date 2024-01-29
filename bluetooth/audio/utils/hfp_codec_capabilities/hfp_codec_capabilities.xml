@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!---
+  This is an example to configure HFP hardware offload supported capability settings
+  There are 3 list in this file. Add element into each list as needed.
+
+  pathConfiguration: input / output path configuration
+  transportConfiguration: transmit / receive configuration
+
+  configuration:
+    For each configuration, there are attributes:
+      - name
+      - codec
+      - useControllerCodec
+      - maxLatencyMs
+      - packetTypes
+      - retransmissionEffort
+      - input and output path configuration (reference by name)
+      - transmit and receive configuration (reference by name)
+-->
+<hfpOffloadSetting>
+
+  <pathConfiguration name="CVSD_IO" bandwidth="16000" codec="CVSD" codedDataSize="16" pcmDataFormat="2" pcmPayloadMsbPosition="0" dataPath="1" transportUnitSize="0" />
+  <pathConfiguration name="MSBC_IO" bandwidth="32000" codec="MSBC" codedDataSize="16" pcmDataFormat="2" pcmPayloadMsbPosition="0" dataPath="1" transportUnitSize="0" />
+  <pathConfiguration name="LC3_IO" bandwidth="64000" codec="MSBC" codedDataSize="16" pcmDataFormat="2" pcmPayloadMsbPosition="0" dataPath="1" transportUnitSize="0" />
+
+  <transportConfiguration name="CVSD_TXRX" bandwidth="8000" codec="CVSD" codedFrameSize="60" />
+  <transportConfiguration name="MSBC_TXRX" bandwidth="8000" codec="MSBC" codedFrameSize="60" />
+  <transportConfiguration name="LC3_TXRX" bandwidth="8000" codec="LC3" codedFrameSize="60" />
+
+  <configuration name="CVSD_D1_controller" codec="CVSD" maxLatencyMs="65535" packetTypes="7" retransmissionEffort="0" useControllerCodec="true" inputPathConfiguration="CVSD_IO" outputPathConfiguration="CVSD_IO" inputTransportConfiguration="CVSD_TXRX" outTransportConfiguration="CVSD_TXRX" />
+  <configuration name="CVSD_S3_controller" codec="CVSD" maxLatencyMs="10" packetTypes="959" retransmissionEffort="1" useControllerCodec="true" inputPathConfiguration="CVSD_IO" outputPathConfiguration="CVSD_IO" inputTransportConfiguration="CVSD_TXRX" outTransportConfiguration="CVSD_TXRX" />
+  <configuration name="CVSD_S4_controller" codec="CVSD" maxLatencyMs="12" packetTypes="959" retransmissionEffort="2" useControllerCodec="true" inputPathConfiguration="CVSD_IO" outputPathConfiguration="CVSD_IO" inputTransportConfiguration="CVSD_TXRX" outTransportConfiguration="CVSD_TXRX" />
+
+  <configuration name="MSBC_T1_controller" codec="MSBC" maxLatencyMs="8" packetTypes="968" retransmissionEffort="2" useControllerCodec="true" inputPathConfiguration="MSBC_IO" outputPathConfiguration="MSBC_IO" inputTransportConfiguration="MSBC_TXRX" outTransportConfiguration="MSBC_TXRX" />
+  <configuration name="MSBC_T2_controller" codec="MSBC" maxLatencyMs="13" packetTypes="904" retransmissionEffort="2" useControllerCodec="true" inputPathConfiguration="MSBC_IO" outputPathConfiguration="MSBC_IO" inputTransportConfiguration="MSBC_TXRX" outTransportConfiguration="MSBC_TXRX" />
+
+  <configuration name="LC3_T1_controller" codec="LC3" maxLatencyMs="8" packetTypes="968" retransmissionEffort="2" useControllerCodec="true" inputPathConfiguration="LC3_IO" outputPathConfiguration="LC3_IO" inputTransportConfiguration="LC3_TXRX" outTransportConfiguration="LC3_TXRX" />
+  <configuration name="LC3_T2_controller" codec="LC3" maxLatencyMs="13" packetTypes="896" retransmissionEffort="2" useControllerCodec="true" inputPathConfiguration="LC3_IO" outputPathConfiguration="LC3_IO" inputTransportConfiguration="LC3_TXRX" outTransportConfiguration="LC3_TXRX" />
+
+</hfpOffloadSetting>
