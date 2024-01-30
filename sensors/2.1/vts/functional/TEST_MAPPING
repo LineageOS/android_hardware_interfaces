@@ -1,0 +1,12 @@
+{
+  "presubmit": [
+    {
+      "name": "VtsHalSensorsV2_1TargetTest"
+    }
+  ],
+  "kernel-presubmit": [
+    {
+      "name": "VtsHalSensorsV2_1TargetTest"
+    }
+  ]
+}

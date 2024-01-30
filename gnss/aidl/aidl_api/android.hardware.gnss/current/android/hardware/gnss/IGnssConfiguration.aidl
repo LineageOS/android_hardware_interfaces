@@ -42,11 +42,11 @@ interface IGnssConfiguration {
   void setEmergencySuplPdn(in boolean enable);
   void setEsExtensionSec(in int emergencyExtensionSeconds);
   void setBlocklist(in android.hardware.gnss.BlocklistedSource[] blocklist);
-  const int SUPL_MODE_MSB = 1;
-  const int SUPL_MODE_MSA = 2;
-  const int LPP_PROFILE_USER_PLANE = 1;
-  const int LPP_PROFILE_CONTROL_PLANE = 2;
-  const int GLONASS_POS_PROTOCOL_RRC_CPLANE = 1;
-  const int GLONASS_POS_PROTOCOL_RRLP_UPLANE = 2;
-  const int GLONASS_POS_PROTOCOL_LPP_UPLANE = 4;
+  const int SUPL_MODE_MSB = 0x01;
+  const int SUPL_MODE_MSA = 0x02;
+  const int LPP_PROFILE_USER_PLANE = 0x01;
+  const int LPP_PROFILE_CONTROL_PLANE = 0x02;
+  const int GLONASS_POS_PROTOCOL_RRC_CPLANE = 0x01;
+  const int GLONASS_POS_PROTOCOL_RRLP_UPLANE = 0x02;
+  const int GLONASS_POS_PROTOCOL_LPP_UPLANE = 0x04;
 }

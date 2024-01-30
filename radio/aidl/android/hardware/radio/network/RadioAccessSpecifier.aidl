@@ -19,6 +19,7 @@ package android.hardware.radio.network;
 import android.hardware.radio.AccessNetwork;
 import android.hardware.radio.network.RadioAccessSpecifierBands;
 
+/** @hide */
 @VintfStability
 @JavaDerive(toString=true)
 parcelable RadioAccessSpecifier {

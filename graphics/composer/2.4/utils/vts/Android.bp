@@ -26,7 +26,6 @@ package {
 cc_library_static {
     name: "android.hardware.graphics.composer@2.4-vts",
     defaults: [
-        "android.hardware.graphics.allocator-ndk_static",
         "hidl_defaults",
     ],
     srcs: [

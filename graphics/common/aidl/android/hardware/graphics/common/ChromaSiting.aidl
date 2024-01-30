@@ -37,4 +37,12 @@ enum ChromaSiting {
      * Cb and Cr are vertically sited interstitially.
      * This is used by 4:2:0 for MPEG-2 frame pictures. */
     COSITED_HORIZONTAL = 3,
+
+    /* Cb and Cr are horizontally sited interstitially with a luma sample.
+     * Cb and Cr are vertically sited coincident. */
+    COSITED_VERTICAL = 4,
+
+    /* Cb and Cr are both horizontally & vertically sited coincident
+     * with a luma sample. */
+    COSITED_BOTH = 5,
 }

@@ -34,7 +34,7 @@
 package android.hardware.wifi.supplicant;
 @Backing(type="int") @VintfStability
 enum DppStatusErrorCode {
-  UNKNOWN = -1,
+  UNKNOWN = (-1) /* -1 */,
   SUCCESS = 0,
   NOT_COMPATIBLE = 1,
   AUTH_FAILURE = 2,

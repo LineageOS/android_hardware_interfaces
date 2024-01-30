@@ -77,19 +77,19 @@ interface IGnss {
   }
   @Backing(type="int") @VintfStability
   enum GnssAidingData {
-    EPHEMERIS = 1,
-    ALMANAC = 2,
-    POSITION = 4,
-    TIME = 8,
-    IONO = 16,
-    UTC = 32,
-    HEALTH = 64,
-    SVDIR = 128,
-    SVSTEER = 256,
-    SADATA = 512,
-    RTI = 1024,
-    CELLDB_INFO = 32768,
-    ALL = 65535,
+    EPHEMERIS = 0x0001,
+    ALMANAC = 0x0002,
+    POSITION = 0x0004,
+    TIME = 0x0008,
+    IONO = 0x0010,
+    UTC = 0x0020,
+    HEALTH = 0x0040,
+    SVDIR = 0x0080,
+    SVSTEER = 0x0100,
+    SADATA = 0x0200,
+    RTI = 0x0400,
+    CELLDB_INFO = 0x8000,
+    ALL = 0xFFFF,
   }
   @VintfStability
   parcelable PositionModeOptions {

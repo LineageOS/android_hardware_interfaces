@@ -32,7 +32,8 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.ims.media;
-@VintfStability
+/* @hide */
+@JavaDerive(toString=true) @VintfStability
 parcelable AmrParams {
   android.hardware.radio.ims.media.AmrMode amrMode;
   boolean octetAligned;

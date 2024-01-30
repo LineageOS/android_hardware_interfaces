@@ -174,4 +174,15 @@ parcelable DisplayCommand {
      * or perform a VALIDATE_DISPLAY action instead.
      */
     boolean presentOrValidateDisplay;
+
+    /**
+     * If a value greater than 0 is set, it provides a hint about the next frame(s)
+     * cadence. This parameter represents the time in nanoseconds of when to expect the
+     * next frames to arrive. For example. frameIntervalNs=33333333 indicates that the
+     * cadence of the next frames is 30Hz.
+     *
+     * The implementation should take the necessary steps to present the next frames as
+     * close as possible to the cadence.
+     */
+    int frameIntervalNs;
 }

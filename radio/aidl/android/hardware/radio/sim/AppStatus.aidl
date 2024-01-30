@@ -19,6 +19,7 @@ package android.hardware.radio.sim;
 import android.hardware.radio.sim.PersoSubstate;
 import android.hardware.radio.sim.PinState;
 
+/** @hide */
 @VintfStability
 @JavaDerive(toString=true)
 parcelable AppStatus {

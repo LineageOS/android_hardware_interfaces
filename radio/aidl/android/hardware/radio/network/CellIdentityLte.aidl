@@ -20,6 +20,7 @@ import android.hardware.radio.network.ClosedSubscriberGroupInfo;
 import android.hardware.radio.network.EutranBands;
 import android.hardware.radio.network.OperatorInfo;
 
+/** @hide */
 @VintfStability
 @JavaDerive(toString=true)
 parcelable CellIdentityLte {

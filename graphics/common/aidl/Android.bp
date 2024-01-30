@@ -15,7 +15,7 @@ aidl_interface {
         enabled: true,
         support_system_process: true,
     },
-    vndk_use_version: "4",
+    vndk_use_version: "5",
     srcs: [
         "android/hardware/graphics/common/*.aidl",
     ],
@@ -43,7 +43,7 @@ aidl_interface {
             enabled: true,
         },
     },
-    frozen: true,
+    frozen: false,
     versions_with_info: [
         {
             version: "1",

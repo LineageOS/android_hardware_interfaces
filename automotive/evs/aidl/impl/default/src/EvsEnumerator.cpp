@@ -17,8 +17,9 @@
 #include "EvsEnumerator.h"
 
 #include "ConfigManager.h"
+#include "EvsAllCameras.h"
+#include "EvsCameraBase.h"
 #include "EvsGlDisplay.h"
-#include "EvsMockCamera.h"
 
 #include <aidl/android/hardware/automotive/evs/EvsResult.h>
 #include <aidl/android/hardware/graphics/common/BufferUsage.h>
@@ -243,7 +244,7 @@ ScopedAStatus EvsEnumerator::openCamera(const std::string& id, const Stream& cfg
     }
 
     // Has this camera already been instantiated by another caller?
-    std::shared_ptr<EvsMockCamera> pActiveCamera = pRecord->activeInstance.lock();
+    std::shared_ptr<EvsCameraBase> pActiveCamera = pRecord->activeInstance.lock();
     if (pActiveCamera) {
         LOG(WARNING) << "Killing previous camera because of new caller";
         closeCamera(pActiveCamera);
@@ -253,12 +254,31 @@ ScopedAStatus EvsEnumerator::openCamera(const std::string& id, const Stream& cfg
     if (!sConfigManager) {
         pActiveCamera = EvsMockCamera::Create(id.data());
     } else {
-        pActiveCamera = EvsMockCamera::Create(id.data(), sConfigManager->getCameraInfo(id), &cfg);
+        auto& cameraInfo = sConfigManager->getCameraInfo(id);
+        switch (cameraInfo->deviceType) {
+            using DeviceType = ConfigManager::CameraInfo::DeviceType;
+
+            // Default to MOCK for backward compatibility.
+            case DeviceType::NONE:
+            case DeviceType::MOCK:
+                pActiveCamera = EvsMockCamera::Create(id.data(), cameraInfo, &cfg);
+                break;
+
+            case DeviceType::VIDEO:
+                pActiveCamera = EvsVideoEmulatedCamera::Create(id.data(), cameraInfo, &cfg);
+                break;
+
+            default:
+                LOG(ERROR) << __func__ << ": camera device type "
+                           << static_cast<std::int32_t>(cameraInfo->deviceType)
+                           << " is not supported.";
+                break;
+        }
     }
 
     pRecord->activeInstance = pActiveCamera;
     if (!pActiveCamera) {
-        LOG(ERROR) << "Failed to create new EvsMockCamera object for " << id;
+        LOG(ERROR) << "Failed to create new EVS camera object for " << id;
         return ScopedAStatus::fromServiceSpecificError(
                 static_cast<int>(EvsResult::UNDERLYING_SERVICE_ERROR));
     }
@@ -445,7 +465,7 @@ void EvsEnumerator::closeCamera_impl(const std::shared_ptr<IEvsCamera>& pCamera,
     if (!pRecord) {
         LOG(ERROR) << "Asked to close a camera whose name isn't recognized";
     } else {
-        std::shared_ptr<EvsMockCamera> pActiveCamera = pRecord->activeInstance.lock();
+        std::shared_ptr<EvsCameraBase> pActiveCamera = pRecord->activeInstance.lock();
         if (!pActiveCamera) {
             LOG(WARNING) << "Somehow a camera is being destroyed "
                          << "when the enumerator didn't know one existed";

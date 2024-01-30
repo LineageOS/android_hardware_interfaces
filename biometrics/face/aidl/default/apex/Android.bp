@@ -17,7 +17,7 @@ package {
 }
 
 apex {
-    name: "com.android.hardware.biometrics.face",
+    name: "com.android.hardware.biometrics.face.virtual",
     manifest: "manifest.json",
     file_contexts: "file_contexts",
     key: "com.android.hardware.key",
@@ -31,11 +31,9 @@ apex {
     ],
     prebuilts: [
         // init_rc
-        "face-default-apex.rc",
+        "face-example-apex.rc",
         // vintf_fragment
-        "face-default-apex.xml",
-        // permission
-        "android.hardware.biometrics.face.prebuilt.xml",
+        "face-example-apex.xml",
     ],
 
     overrides: [
@@ -44,23 +42,21 @@ apex {
 }
 
 prebuilt_etc {
-    name: "face-default-apex.rc",
-    src: ":gen-face-default-apex.rc",
-    vendor: true,
+    name: "face-example-apex.rc",
+    src: ":gen-face-example-apex.rc",
     installable: false,
 }
 
 genrule {
-    name: "gen-face-default-apex.rc",
-    srcs: [":face-default.rc"],
-    out: ["face-default-apex.rc"],
-    cmd: "sed -e 's@/vendor/bin/@/apex/com.android.hardware.biometrics.face/bin/@' $(in) > $(out)",
+    name: "gen-face-example-apex.rc",
+    srcs: [":face-example.rc"],
+    out: ["face-example-apex.rc"],
+    cmd: "sed -e 's@/vendor/bin/@/apex/com.android.hardware.biometrics.face.virtual/bin/@' $(in) > $(out)",
 }
 
 prebuilt_etc {
-    name: "face-default-apex.xml",
-    src: ":face-default.xml",
+    name: "face-example-apex.xml",
+    src: ":face-example.xml",
     sub_dir: "vintf",
-    vendor: true,
     installable: false,
 }

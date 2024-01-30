@@ -21,6 +21,7 @@ import android.hardware.radio.config.SlotPortMapping;
 import android.hardware.radio.sim.AppStatus;
 import android.hardware.radio.sim.PinState;
 
+/** @hide */
 @VintfStability
 @JavaDerive(toString=true)
 parcelable CardStatus {

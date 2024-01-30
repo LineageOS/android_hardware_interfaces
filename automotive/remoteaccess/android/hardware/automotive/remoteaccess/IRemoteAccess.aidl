@@ -18,6 +18,7 @@ package android.hardware.automotive.remoteaccess;
 
 import android.hardware.automotive.remoteaccess.ApState;
 import android.hardware.automotive.remoteaccess.IRemoteTaskCallback;
+import android.hardware.automotive.remoteaccess.ScheduleInfo;
 
 /**
  * Interface representing a remote wakeup client.
@@ -96,4 +97,69 @@ interface IRemoteAccess {
      * <p>If {@code isWakeupRequired} is false, it must not try to wake up AP.
      */
     void notifyApStateChange(in ApState state);
+
+    /**
+     * Returns whether task scheduling is supported.
+     *
+     * <p>If this returns {@code true}, user may use {@link scheduleTask} to schedule a task to be
+     * executed at a later time. If the device is off when the task is scheduled to be executed,
+     * the device will be woken up to execute the task.
+     *
+     * @return {@code true} if serverless remote task scheduling is supported.
+     */
+    boolean isTaskScheduleSupported();
+
+    /**
+     * Schedules a task to be executed later even when the vehicle is off.
+     *
+     * <p>If {@link isTaskScheduleSupported} returns {@code false}. This is no-op.
+     *
+     * <p>This sends a scheduled task message to a device external to Android so that the device
+     * can wake up Android and deliver the task through {@link IRemoteTaskCallback}.
+     *
+     * <p>Note that the scheduled task execution is on a best-effort basis. Multiple situations
+     * might cause the task not to execute successfully:
+     *
+     * <ul>
+     * <li>The vehicle is low on battery and the other device decides not to wake up Android.
+     * <li>User turns off vehicle while the task is executing.
+     * <li>The task logic itself fails.
+     *
+     * <p>Must return {@code EX_ILLEGAL_ARGUMENT} if a pending schedule with the same
+     * {@code scheduleId} for this client exists.
+     */
+    void scheduleTask(in ScheduleInfo scheduleInfo);
+
+    /**
+     * Unschedules a scheduled task.
+     *
+     * <p>If {@link isTaskScheduleSupported} returns {@code false}. This is no-op.
+     *
+     * <p>Does nothing if a pending schedule with {@code clientId} and {@code scheduleId} does not
+     * exist.
+     */
+    void unscheduleTask(String clientId, String scheduleId);
+
+    /**
+     * Unschedules all scheduled tasks for the client.
+     *
+     * <p>If {@link isTaskScheduleSupported} returns {@code false}. This is no-op.
+     */
+    void unscheduleAllTasks(String clientId);
+
+    /**
+     * Returns whether the specified task is scheduled.
+     *
+     * <p>If {@link isTaskScheduleSupported} returns {@code false}, This must return {@code false}.
+     */
+    boolean isTaskScheduled(String clientId, String scheduleId);
+
+    /**
+     * Gets all pending scheduled tasks for the client.
+     *
+     * <p>If {@link isTaskScheduleSupported} returns {@code false}. This must return empty array.
+     *
+     * <p>The finished scheduled tasks will not be included.
+     */
+    List<ScheduleInfo> getAllScheduledTasks(String clientId);
 }

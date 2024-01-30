@@ -59,6 +59,7 @@ using ::aidl::android::hardware::automotive::vehicle::SetValueResult;
 using ::aidl::android::hardware::automotive::vehicle::SetValueResults;
 using ::aidl::android::hardware::automotive::vehicle::StatusCode;
 using ::aidl::android::hardware::automotive::vehicle::SubscribeOptions;
+using ::aidl::android::hardware::automotive::vehicle::VehicleAreaConfig;
 using ::aidl::android::hardware::automotive::vehicle::VehicleAreaWindow;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropConfig;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropConfigs;
@@ -98,10 +99,24 @@ constexpr int32_t AREA_CONTINUOUS_PROP = 10005 + 0x10000000 + 0x03000000 + 0x004
 constexpr int32_t READ_ONLY_PROP = 10006 + 0x10000000 + 0x01000000 + 0x00400000;
 // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
 constexpr int32_t WRITE_ONLY_PROP = 10007 + 0x10000000 + 0x01000000 + 0x00400000;
+// VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
+constexpr int32_t GLOBAL_CONTINUOUS_PROP_NO_VUR = 10008 + 0x10000000 + 0x01000000 + 0x00400000;
+// VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
+constexpr int32_t GLOBAL_NONE_ACCESS_PROP = 10009 + 0x10000000 + 0x01000000 + 0x00400000;
+// VehiclePropertyGroup:SYSTEM,VehicleArea:WINDOW,VehiclePropertyType:INT32
+constexpr int32_t AREA_NONE_ACCESS_PROP = 10010 + 0x10000000 + 0x03000000 + 0x00400000;
 
 int32_t testInt32VecProp(size_t i) {
     // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32_VEC
     return static_cast<int32_t>(i) + 0x10000000 + 0x01000000 + 0x00410000;
+}
+
+std::string toString(const std::vector<SubscribeOptions>& options) {
+    std::string optionsStr;
+    for (const auto& option : options) {
+        optionsStr += option.toString() + "\n";
+    }
+    return optionsStr;
 }
 
 struct PropConfigCmp {
@@ -165,6 +180,26 @@ std::vector<SetValuesInvalidRequestTestCase> getSetValuesInvalidRequestTestCases
                                     .value.int32Values = {0},
                             },
                     .expectedStatus = StatusCode::ACCESS_DENIED,
+            },
+            {
+                    .name = "none_access",
+                    .request =
+                            {
+                                    .prop = GLOBAL_NONE_ACCESS_PROP,
+                                    .value.int32Values = {0},
+                            },
+                    .expectedStatus = StatusCode::ACCESS_DENIED,
+            },
+            {
+                    .name = "none_area_access",
+                    .request =
+                            {
+                                    .prop = AREA_NONE_ACCESS_PROP,
+                                    .value.int32Values = {0},
+                                    // Only ROW_1_LEFT is allowed.
+                                    .areaId = toInt(VehicleAreaWindow::ROW_1_RIGHT),
+                            },
+                    .expectedStatus = StatusCode::ACCESS_DENIED,
             }};
 }
 
@@ -211,17 +246,18 @@ std::vector<SubscribeInvalidOptionsTestCase> getSubscribeInvalidOptionsTestCases
 
 class DefaultVehicleHalTest : public testing::Test {
   public:
-    void SetUp() override {
-        auto hardware = std::make_unique<MockVehicleHardware>();
+    void SetUp() override { init(std::make_unique<MockVehicleHardware>()); }
+
+    void init(std::unique_ptr<MockVehicleHardware> hardware) {
         std::vector<VehiclePropConfig> testConfigs;
         for (size_t i = 0; i < 10000; i++) {
             testConfigs.push_back(VehiclePropConfig{
                     .prop = testInt32VecProp(i),
-                    .access = VehiclePropertyAccess::READ_WRITE,
                     .areaConfigs =
                             {
                                     {
                                             .areaId = 0,
+                                            .access = VehiclePropertyAccess::READ_WRITE,
                                             .minInt32Value = 0,
                                             .maxInt32Value = 100,
                                     },
@@ -231,9 +267,9 @@ class DefaultVehicleHalTest : public testing::Test {
         // A property with area config.
         testConfigs.push_back(
                 VehiclePropConfig{.prop = INT32_WINDOW_PROP,
-                                  .access = VehiclePropertyAccess::READ_WRITE,
                                   .areaConfigs = {{
                                           .areaId = toInt(VehicleAreaWindow::ROW_1_LEFT),
+                                          .access = VehiclePropertyAccess::READ_WRITE,
                                           .minInt32Value = 0,
                                           .maxInt32Value = 100,
                                   }}});
@@ -244,8 +280,18 @@ class DefaultVehicleHalTest : public testing::Test {
                 .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
         });
         // A global continuous property.
+        testConfigs.push_back(VehiclePropConfig{.prop = GLOBAL_CONTINUOUS_PROP,
+                                                .access = VehiclePropertyAccess::READ_WRITE,
+                                                .changeMode = VehiclePropertyChangeMode::CONTINUOUS,
+                                                .minSampleRate = 0.0,
+                                                .maxSampleRate = 100.0,
+                                                .areaConfigs = {{
+                                                        .areaId = 0,
+                                                        .supportVariableUpdateRate = true,
+                                                }}});
+        // A global continuous property that does not support VUR.
         testConfigs.push_back(VehiclePropConfig{
-                .prop = GLOBAL_CONTINUOUS_PROP,
+                .prop = GLOBAL_CONTINUOUS_PROP_NO_VUR,
                 .access = VehiclePropertyAccess::READ_WRITE,
                 .changeMode = VehiclePropertyChangeMode::CONTINUOUS,
                 .minSampleRate = 0.0,
@@ -254,18 +300,19 @@ class DefaultVehicleHalTest : public testing::Test {
         // A per-area on-change property.
         testConfigs.push_back(VehiclePropConfig{
                 .prop = AREA_ON_CHANGE_PROP,
-                .access = VehiclePropertyAccess::READ_WRITE,
                 .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
                 .areaConfigs =
                         {
                                 {
 
                                         .areaId = toInt(VehicleAreaWindow::ROW_1_LEFT),
+                                        .access = VehiclePropertyAccess::READ_WRITE,
                                         .minInt32Value = 0,
                                         .maxInt32Value = 100,
                                 },
                                 {
                                         .areaId = toInt(VehicleAreaWindow::ROW_1_RIGHT),
+                                        .access = VehiclePropertyAccess::READ,
                                         .minInt32Value = 0,
                                         .maxInt32Value = 100,
                                 },
@@ -274,7 +321,6 @@ class DefaultVehicleHalTest : public testing::Test {
         // A per-area continuous property.
         testConfigs.push_back(VehiclePropConfig{
                 .prop = AREA_CONTINUOUS_PROP,
-                .access = VehiclePropertyAccess::READ_WRITE,
                 .changeMode = VehiclePropertyChangeMode::CONTINUOUS,
                 .minSampleRate = 0.0,
                 .maxSampleRate = 1000.0,
@@ -283,13 +329,17 @@ class DefaultVehicleHalTest : public testing::Test {
                                 {
 
                                         .areaId = toInt(VehicleAreaWindow::ROW_1_LEFT),
+                                        .access = VehiclePropertyAccess::READ_WRITE,
                                         .minInt32Value = 0,
                                         .maxInt32Value = 100,
+                                        .supportVariableUpdateRate = true,
                                 },
                                 {
                                         .areaId = toInt(VehicleAreaWindow::ROW_1_RIGHT),
+                                        .access = VehiclePropertyAccess::READ_WRITE,
                                         .minInt32Value = 0,
                                         .maxInt32Value = 100,
+                                        .supportVariableUpdateRate = false,
                                 },
                         },
         });
@@ -308,6 +358,37 @@ class DefaultVehicleHalTest : public testing::Test {
                 .changeMode = VehiclePropertyChangeMode::CONTINUOUS,
                 .minSampleRate = 0.0,
                 .maxSampleRate = 1000.0,
+        });
+        // Global access set to NONE
+        testConfigs.push_back(VehiclePropConfig{
+                .prop = GLOBAL_NONE_ACCESS_PROP,
+                .access = VehiclePropertyAccess::NONE,
+                .changeMode = VehiclePropertyChangeMode::CONTINUOUS,
+                .minSampleRate = 0.0,
+                .maxSampleRate = 100.0,
+        });
+        // Area access set to NONE
+        testConfigs.push_back(VehiclePropConfig{
+                .prop = AREA_NONE_ACCESS_PROP,
+                .changeMode = VehiclePropertyChangeMode::CONTINUOUS,
+                .minSampleRate = 0.0,
+                .maxSampleRate = 1000.0,
+                .areaConfigs =
+                        {
+                                {
+
+                                        .areaId = toInt(VehicleAreaWindow::ROW_1_LEFT),
+                                        .access = VehiclePropertyAccess::NONE,
+                                        .minInt32Value = 0,
+                                        .maxInt32Value = 100,
+                                },
+                                {
+                                        .areaId = toInt(VehicleAreaWindow::ROW_1_RIGHT),
+                                        .access = VehiclePropertyAccess::NONE,
+                                        .minInt32Value = 0,
+                                        .maxInt32Value = 100,
+                                },
+                        },
         });
         // Register the heartbeat event property.
         testConfigs.push_back(VehiclePropConfig{
@@ -350,7 +431,7 @@ class DefaultVehicleHalTest : public testing::Test {
     size_t countClients() {
         std::scoped_lock<std::mutex> lockGuard(mVhal->mLock);
         return mVhal->mGetValuesClients.size() + mVhal->mSetValuesClients.size() +
-               mVhal->mSubscriptionClients->countClients();
+               mVhal->countSubscribeClients();
     }
 
     std::shared_ptr<PendingRequestPool> getPool() { return mVhal->mPendingRequestPool; }
@@ -650,6 +731,21 @@ TEST_F(DefaultVehicleHalTest, testGetValuesNoReadPermission) {
                                                     .prop = WRITE_ONLY_PROP,
                                             },
                             },
+                            {
+                                    .requestId = 1,
+                                    .prop =
+                                            {
+                                                    .prop = GLOBAL_NONE_ACCESS_PROP,
+                                            },
+                            },
+                            {
+                                    .requestId = 2,
+                                    .prop =
+                                            {
+                                                    .prop = AREA_NONE_ACCESS_PROP,
+                                                    .areaId = toInt(VehicleAreaWindow::ROW_1_LEFT),
+                                            },
+                            },
                     },
     };
 
@@ -665,6 +761,14 @@ TEST_F(DefaultVehicleHalTest, testGetValuesNoReadPermission) {
     EXPECT_EQ(maybeResult.value().payloads, std::vector<GetValueResult>({
                                                     {
                                                             .requestId = 0,
+                                                            .status = StatusCode::ACCESS_DENIED,
+                                                    },
+                                                    {
+                                                            .requestId = 1,
+                                                            .status = StatusCode::ACCESS_DENIED,
+                                                    },
+                                                    {
+                                                            .requestId = 2,
                                                             .status = StatusCode::ACCESS_DENIED,
                                                     },
                                             }))
@@ -1293,8 +1397,8 @@ TEST_F(DefaultVehicleHalTest, testSubscribeAreaOnChangeAllAreas) {
 
     auto maybeResults = getCallback()->nextOnPropertyEventResults();
     ASSERT_TRUE(maybeResults.has_value()) << "no results in callback";
-    ASSERT_THAT(maybeResults.value().payloads, UnorderedElementsAre(testValue1, testValue2))
-            << "results mismatch, expect two on-change events for all updated areas";
+    ASSERT_THAT(maybeResults.value().payloads, UnorderedElementsAre(testValue1))
+            << "results mismatch, expect one on-change events for all updated areas";
     ASSERT_FALSE(getCallback()->nextOnPropertyEventResults().has_value())
             << "more results than expected";
 }
@@ -1351,6 +1455,62 @@ TEST_F(DefaultVehicleHalTest, testSubscribeGlobalContinuousRateOutOfRange) {
     EXPECT_EQ(countClients(), static_cast<size_t>(1));
 }
 
+TEST_F(DefaultVehicleHalTest, testSubscribeContinuous_propNotSupportVur) {
+    std::vector<SubscribeOptions> options = {
+            {
+                    .propId = GLOBAL_CONTINUOUS_PROP,
+                    .sampleRate = 20.0,
+                    .enableVariableUpdateRate = true,
+            },
+            {
+                    .propId = GLOBAL_CONTINUOUS_PROP_NO_VUR,
+                    .sampleRate = 30.0,
+                    .enableVariableUpdateRate = true,
+            },
+    };
+
+    auto status = getClient()->subscribe(getCallbackClient(), options, 0);
+
+    ASSERT_TRUE(status.isOk()) << "subscribe failed: " << status.getMessage();
+    auto receivedSubscribeOptions = getHardware()->getSubscribeOptions();
+    ASSERT_THAT(receivedSubscribeOptions, UnorderedElementsAre(
+                                                  SubscribeOptions{
+                                                          .propId = GLOBAL_CONTINUOUS_PROP,
+                                                          .areaIds = {0},
+                                                          .enableVariableUpdateRate = true,
+                                                          .sampleRate = 20.0,
+                                                  },
+                                                  SubscribeOptions{
+                                                          .propId = GLOBAL_CONTINUOUS_PROP_NO_VUR,
+                                                          .areaIds = {0},
+                                                          .enableVariableUpdateRate = false,
+                                                          .sampleRate = 30.0,
+                                                  }))
+            << "received unexpected subscribe options: " << toString(receivedSubscribeOptions);
+}
+
+TEST_F(DefaultVehicleHalTest, testSubscribeContinuous_propSupportVurNotEnabled) {
+    std::vector<SubscribeOptions> options = {
+            {
+                    .propId = GLOBAL_CONTINUOUS_PROP,
+                    .sampleRate = 20.0,
+                    .enableVariableUpdateRate = false,
+            },
+    };
+
+    auto status = getClient()->subscribe(getCallbackClient(), options, 0);
+
+    ASSERT_TRUE(status.isOk()) << "subscribe failed: " << status.getMessage();
+    auto receivedSubscribeOptions = getHardware()->getSubscribeOptions();
+    ASSERT_THAT(receivedSubscribeOptions, UnorderedElementsAre(SubscribeOptions{
+                                                  .propId = GLOBAL_CONTINUOUS_PROP,
+                                                  .areaIds = {0},
+                                                  .enableVariableUpdateRate = false,
+                                                  .sampleRate = 20.0,
+                                          }))
+            << "received unexpected subscribe options: " << toString(receivedSubscribeOptions);
+}
+
 TEST_F(DefaultVehicleHalTest, testSubscribeAreaContinuous) {
     std::vector<SubscribeOptions> options = {
             {
@@ -1401,6 +1561,44 @@ TEST_F(DefaultVehicleHalTest, testSubscribeAreaContinuous) {
     ASSERT_GE(leftCount, static_cast<size_t>(15));
     // Should trigger about 10 times, check for at least 5 events to be safe.
     ASSERT_GE(rightCount, static_cast<size_t>(5));
+}
+
+TEST_F(DefaultVehicleHalTest, testAreaContinuous_areaNotSupportVur) {
+    std::vector<SubscribeOptions> options = {
+            {
+                    .propId = AREA_CONTINUOUS_PROP,
+                    .sampleRate = 20.0,
+                    .areaIds = {toInt(VehicleAreaWindow::ROW_1_LEFT)},
+                    .enableVariableUpdateRate = true,
+            },
+            {
+                    .propId = AREA_CONTINUOUS_PROP,
+                    .sampleRate = 10.0,
+                    .areaIds = {toInt(VehicleAreaWindow::ROW_1_RIGHT)},
+                    .enableVariableUpdateRate = true,
+            },
+    };
+
+    auto status = getClient()->subscribe(getCallbackClient(), options, 0);
+
+    ASSERT_TRUE(status.isOk()) << "subscribe failed: " << status.getMessage();
+    auto receivedSubscribeOptions = getHardware()->getSubscribeOptions();
+    ASSERT_THAT(receivedSubscribeOptions,
+                UnorderedElementsAre(
+                        SubscribeOptions{
+                                .propId = AREA_CONTINUOUS_PROP,
+                                .sampleRate = 20.0,
+                                .areaIds = {toInt(VehicleAreaWindow::ROW_1_LEFT)},
+                                .enableVariableUpdateRate = true,
+                        },
+                        SubscribeOptions{
+                                .propId = AREA_CONTINUOUS_PROP,
+                                .sampleRate = 10.0,
+                                .areaIds = {toInt(VehicleAreaWindow::ROW_1_RIGHT)},
+                                // Area2 actually does not support VUR.
+                                .enableVariableUpdateRate = false,
+                        }))
+            << "received unexpected subscribe options: " << toString(receivedSubscribeOptions);
 }
 
 TEST_F(DefaultVehicleHalTest, testUnsubscribeOnChange) {
@@ -1507,6 +1705,27 @@ TEST_F(DefaultVehicleHalTest, testSubscribeNoReadPermission) {
     auto status = getClient()->subscribe(getCallbackClient(), options, 0);
 
     ASSERT_FALSE(status.isOk()) << "subscribe to a write-only property must fail";
+    ASSERT_EQ(status.getServiceSpecificError(), toInt(StatusCode::ACCESS_DENIED));
+}
+
+TEST_F(DefaultVehicleHalTest, testSubscribeGlobalNoneAccess) {
+    std::vector<SubscribeOptions> options = {{
+            .propId = GLOBAL_NONE_ACCESS_PROP,
+    }};
+
+    auto status = getClient()->subscribe(getCallbackClient(), options, 0);
+
+    ASSERT_FALSE(status.isOk()) << "subscribe to a property with NONE global access must fail";
+    ASSERT_EQ(status.getServiceSpecificError(), toInt(StatusCode::ACCESS_DENIED));
+}
+
+TEST_F(DefaultVehicleHalTest, testSubscribeAreaNoneAccess) {
+    std::vector<SubscribeOptions> options = {
+            {.propId = AREA_NONE_ACCESS_PROP, .areaIds = {toInt(VehicleAreaWindow::ROW_1_LEFT)}}};
+
+    auto status = getClient()->subscribe(getCallbackClient(), options, 0);
+
+    ASSERT_FALSE(status.isOk()) << "subscribe to a property with NONE area access must fail";
     ASSERT_EQ(status.getServiceSpecificError(), toInt(StatusCode::ACCESS_DENIED));
 }
 
@@ -1709,6 +1928,92 @@ TEST_F(DefaultVehicleHalTest, testOnPropertySetErrorEvent) {
     ASSERT_TRUE(maybeVehiclePropErrors.has_value());
     const auto& vehiclePropErrors = maybeVehiclePropErrors.value();
     ASSERT_THAT(vehiclePropErrors.payloads, UnorderedElementsAreArray(expectedResults));
+}
+
+TEST_F(DefaultVehicleHalTest, testBatchOnPropertyChangeEvents) {
+    auto hardware = std::make_unique<MockVehicleHardware>();
+    hardware->setPropertyOnChangeEventBatchingWindow(std::chrono::milliseconds(10));
+    init(std::move(hardware));
+
+    std::vector<SubscribeOptions> options = {
+            {
+                    .propId = GLOBAL_ON_CHANGE_PROP,
+            },
+            {
+                    .propId = AREA_ON_CHANGE_PROP,
+                    // No areaIds means subscribing to all area IDs.
+                    .areaIds = {},
+            },
+    };
+
+    getClient()->subscribe(getCallbackClient(), options, 0);
+    VehiclePropValue testValue1 = {
+            .prop = GLOBAL_ON_CHANGE_PROP,
+            .value.int32Values = {0},
+    };
+    SetValueRequest request1 = {
+            .requestId = 1,
+            .value = testValue1,
+    };
+    SetValueResult result1 = {
+            .requestId = 1,
+            .status = StatusCode::OK,
+    };
+    VehiclePropValue testValue2 = {
+            .prop = AREA_ON_CHANGE_PROP,
+            .areaId = toInt(VehicleAreaWindow::ROW_1_LEFT),
+            .value.int32Values = {1},
+    };
+    SetValueRequest request2 = {
+            .requestId = 2,
+            .value = testValue2,
+    };
+    SetValueResult result2 = {
+            .requestId = 2,
+            .status = StatusCode::OK,
+    };
+    VehiclePropValue testValue3 = {
+            .prop = AREA_ON_CHANGE_PROP,
+            .areaId = toInt(VehicleAreaWindow::ROW_1_RIGHT),
+            .value.int32Values = {1},
+    };
+    SetValueRequest request3 = {
+            .requestId = 3,
+            .value = testValue3,
+    };
+    SetValueResult result3 = {
+            .requestId = 3,
+            .status = StatusCode::ACCESS_DENIED,
+    };
+    // Prepare the responses
+    for (int i = 0; i < 2; i++) {
+        getHardware()->addSetValueResponses({result1});
+        getHardware()->addSetValueResponses({result2, result3});
+    }
+
+    // Try to cause two batches, each with three on property change events.
+    // Set GLOBAL_ON_CHANGE_PROP causing one event.
+    // Set AREA_ON_CHANGE_PROP with two areas causing two events.
+    for (int i = 0; i < 2; i++) {
+        auto status = getClient()->setValues(getCallbackClient(),
+                                             SetValueRequests{.payloads = {request1}});
+        ASSERT_TRUE(status.isOk()) << "setValues failed: " << status.getMessage();
+
+        status = getClient()->setValues(getCallbackClient(),
+                                        SetValueRequests{.payloads = {request2, request3}});
+        ASSERT_TRUE(status.isOk()) << "setValues failed: " << status.getMessage();
+
+        ASSERT_TRUE(getCallback()->waitForOnPropertyEventResults(/*size=*/1,
+                                                                 /*timeoutInNano=*/1'000'000'000))
+                << "not received enough property change events before timeout";
+
+        auto maybeResults = getCallback()->nextOnPropertyEventResults();
+        ASSERT_TRUE(maybeResults.has_value()) << "no results in callback";
+        ASSERT_THAT(maybeResults.value().payloads, UnorderedElementsAre(testValue1, testValue2))
+                << "results mismatch, expect 2 batched on change events";
+        ASSERT_FALSE(getCallback()->nextOnPropertyEventResults().has_value())
+                << "more results than expected";
+    }
 }
 
 }  // namespace vehicle

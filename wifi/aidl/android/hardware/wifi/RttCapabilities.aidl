@@ -33,24 +33,25 @@ parcelable RttCapabilities {
      */
     boolean rttFtmSupported;
     /**
-     * Whether initiator supports LCI request. Applies to 2-sided RTT.
+     * Whether initiator supports Location Configuration Information (LCI) request. Applies to
+     * 2-sided RTT.
      */
     boolean lciSupported;
     /**
-     * Whether initiator supports LCR request. Applies to 2-sided RTT.
+     * Whether initiator supports Location Civic Report (LCR) request. Applies to 2-sided RTT.
      */
     boolean lcrSupported;
     /**
-     * Whether 11mc responder mode is supported.
+     * Whether IEEE 802.11mc responder mode is supported.
      */
     boolean responderSupported;
     /**
-     * Bit mask indicating what preamble is supported by initiator.
+     * Bit mask indicating what preamble is supported by IEEE 802.11mc initiator.
      * Combination of |RttPreamble| values.
      */
     RttPreamble preambleSupport;
     /**
-     * Bit mask indicating what BW is supported by initiator.
+     * Bit mask indicating what BW is supported by IEEE 802.11mc initiator.
      * Combination of |RttBw| values.
      */
     RttBw bwSupport;
@@ -59,4 +60,27 @@ parcelable RttCapabilities {
      * For instance, version 4.0 must be 40 and version 4.3 must be 43 etc.
      */
     byte mcVersion;
+    /**
+     * Bit mask indicating what preamble is supported by IEEE 802.11az initiator.
+     * Combination of |RttPreamble| values.
+     */
+    RttPreamble azPreambleSupport;
+    /**
+     * Bit mask indicating what BW is supported by IEEE 802.11az initiator.
+     * Combination of |RttBw| values.
+     */
+    RttBw azBwSupport;
+    /**
+     * Whether the initiator supports IEEE 802.11az Non-Trigger-based (non-TB) measurement.
+     */
+    boolean ntbInitiatorSupported;
+    /**
+     * Whether IEEE 802.11az Non-Trigger-based (non-TB) responder mode is supported.
+     */
+    boolean ntbResponderSupported;
+    /**
+     * Maximum HE LTF repetitions the IEEE 802.11az initiator is capable of transmitting in the
+     * preamble of I2R NDP.
+     */
+    int maxTxLtfRepetitionCount;
 }

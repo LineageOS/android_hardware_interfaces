@@ -19,6 +19,7 @@ package android.hardware.radio.network;
 import android.hardware.radio.RadioError;
 import android.hardware.radio.network.CellInfo;
 
+/** @hide */
 @VintfStability
 @JavaDerive(toString=true)
 parcelable NetworkScanResult {

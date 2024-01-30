@@ -24,6 +24,7 @@ import android.hardware.radio.ims.ImsStreamType;
 
 /**
  * Interface declaring unsolicited radio indications for ims APIs.
+ * @hide
  */
 @VintfStability
 oneway interface IRadioImsIndication {

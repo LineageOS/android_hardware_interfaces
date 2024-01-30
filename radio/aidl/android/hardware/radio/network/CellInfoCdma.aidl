@@ -20,6 +20,7 @@ import android.hardware.radio.network.CdmaSignalStrength;
 import android.hardware.radio.network.CellIdentityCdma;
 import android.hardware.radio.network.EvdoSignalStrength;
 
+/** @hide */
 @VintfStability
 @JavaDerive(toString=true)
 parcelable CellInfoCdma {

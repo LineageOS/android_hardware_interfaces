@@ -236,6 +236,25 @@ void Dvr::playbackThreadLoop() {
     ALOGD("[Dvr] playback thread ended.");
 }
 
+void Dvr::maySendIptvPlaybackStatusCallback() {
+    lock_guard<mutex> lock(mPlaybackStatusLock);
+    int availableToRead = mDvrMQ->availableToRead();
+    int availableToWrite = mDvrMQ->availableToWrite();
+
+    PlaybackStatus newStatus = checkPlaybackStatusChange(availableToWrite, availableToRead,
+                                                         IPTV_PLAYBACK_STATUS_THRESHOLD_HIGH,
+                                                         IPTV_PLAYBACK_STATUS_THRESHOLD_LOW);
+    if (mPlaybackStatus != newStatus) {
+        map<int64_t, std::shared_ptr<Filter>>::iterator it;
+        for (it = mFilters.begin(); it != mFilters.end(); it++) {
+            std::shared_ptr<Filter> currentFilter = it->second;
+            currentFilter->setIptvDvrPlaybackStatus(newStatus);
+        }
+        mCallback->onPlaybackStatus(newStatus);
+        mPlaybackStatus = newStatus;
+    }
+}
+
 void Dvr::maySendPlaybackStatusCallback() {
     lock_guard<mutex> lock(mPlaybackStatusLock);
     int availableToRead = mDvrMQ->availableToRead();
@@ -379,7 +398,7 @@ bool Dvr::processEsDataOnPlayback(bool isVirtualFrontend, bool isRecording) {
 
     // Read es raw data from the FMQ per meta data built previously
     vector<int8_t> frameData;
-    map<int64_t, std::shared_ptr<IFilter>>::iterator it;
+    map<int64_t, std::shared_ptr<Filter>>::iterator it;
     int pid = 0;
     for (int i = 0; i < totalFrames; i++) {
         frameData.resize(esMeta[i].len);
@@ -411,7 +430,7 @@ void Dvr::getMetaDataValue(int& index, int8_t* dataOutputBuffer, int& value) {
 }
 
 void Dvr::startTpidFilter(vector<int8_t> data) {
-    map<int64_t, std::shared_ptr<IFilter>>::iterator it;
+    map<int64_t, std::shared_ptr<Filter>>::iterator it;
     for (it = mFilters.begin(); it != mFilters.end(); it++) {
         uint16_t pid = ((data[1] & 0x1f) << 8) | ((data[2] & 0xff));
         if (DEBUG_DVR) {
@@ -432,7 +451,7 @@ bool Dvr::startFilterDispatcher(bool isVirtualFrontend, bool isRecording) {
         }
     }
 
-    map<int64_t, std::shared_ptr<IFilter>>::iterator it;
+    map<int64_t, std::shared_ptr<Filter>>::iterator it;
     // Handle the output data per filter type
     for (it = mFilters.begin(); it != mFilters.end(); it++) {
         if (!mDemux->startFilterHandler(it->first).isOk()) {
@@ -441,6 +460,24 @@ bool Dvr::startFilterDispatcher(bool isVirtualFrontend, bool isRecording) {
     }
 
     return true;
+}
+
+int Dvr::writePlaybackFMQ(void* buf, size_t size) {
+    lock_guard<mutex> lock(mWriteLock);
+    ALOGI("Playback status: %d", mPlaybackStatus);
+    if (mPlaybackStatus == PlaybackStatus::SPACE_FULL) {
+        ALOGW("[Dvr] stops writing and wait for the client side flushing.");
+        return DVR_WRITE_FAILURE_REASON_FMQ_FULL;
+    }
+    ALOGI("availableToWrite before: %zu", mDvrMQ->availableToWrite());
+    if (mDvrMQ->write((int8_t*)buf, size)) {
+        mDvrEventFlag->wake(static_cast<uint32_t>(DemuxQueueNotifyBits::DATA_READY));
+        ALOGI("availableToWrite: %zu", mDvrMQ->availableToWrite());
+        maySendIptvPlaybackStatusCallback();
+        return DVR_WRITE_SUCCESS;
+    }
+    maySendIptvPlaybackStatusCallback();
+    return DVR_WRITE_FAILURE_REASON_UNKNOWN;
 }
 
 bool Dvr::writeRecordFMQ(const vector<int8_t>& data) {
@@ -486,7 +523,7 @@ RecordStatus Dvr::checkRecordStatusChange(uint32_t availableToWrite, uint32_t av
     return mRecordStatus;
 }
 
-bool Dvr::addPlaybackFilter(int64_t filterId, std::shared_ptr<IFilter> filter) {
+bool Dvr::addPlaybackFilter(int64_t filterId, std::shared_ptr<Filter> filter) {
     mFilters[filterId] = filter;
     return true;
 }

@@ -29,6 +29,7 @@
 #include <aidl/android/hardware/graphics/composer3/Composition.h>
 #include <aidl/android/hardware/graphics/composer3/DisplayBrightness.h>
 #include <aidl/android/hardware/graphics/composer3/LayerBrightness.h>
+#include <aidl/android/hardware/graphics/composer3/LayerLifecycleBatchCommandType.h>
 #include <aidl/android/hardware/graphics/composer3/PerFrameMetadata.h>
 #include <aidl/android/hardware/graphics/composer3/PerFrameMetadataBlob.h>
 
@@ -83,11 +84,13 @@ class ComposerClientWriter final {
     }
 
     void setClientTarget(int64_t display, uint32_t slot, const native_handle_t* target,
-                         int acquireFence, Dataspace dataspace, const std::vector<Rect>& damage) {
+                         int acquireFence, Dataspace dataspace, const std::vector<Rect>& damage,
+                         float hdrSdrRatio) {
         ClientTarget clientTargetCommand;
         clientTargetCommand.buffer = getBufferCommand(slot, target, acquireFence);
         clientTargetCommand.dataspace = dataspace;
         clientTargetCommand.damage.assign(damage.begin(), damage.end());
+        clientTargetCommand.hdrSdrRatio = hdrSdrRatio;
         getDisplayCommand(display).clientTarget.emplace(std::move(clientTargetCommand));
     }
 
@@ -97,18 +100,31 @@ class ComposerClientWriter final {
                 getBufferCommand(slot, buffer, releaseFence));
     }
 
+    void setLayerLifecycleBatchCommandType(int64_t display, int64_t layer,
+                                           LayerLifecycleBatchCommandType cmd) {
+        getLayerCommand(display, layer).layerLifecycleBatchCommandType = cmd;
+    }
+
+    void setNewBufferSlotCount(int64_t display, int64_t layer, int32_t newBufferSlotToCount) {
+        getLayerCommand(display, layer).newBufferSlotCount = newBufferSlotToCount;
+    }
+
     void validateDisplay(int64_t display,
-                         std::optional<ClockMonotonicTimestamp> expectedPresentTime) {
+                         std::optional<ClockMonotonicTimestamp> expectedPresentTime,
+                         int32_t frameIntervalNs) {
         auto& command = getDisplayCommand(display);
         command.expectedPresentTime = expectedPresentTime;
         command.validateDisplay = true;
+        command.frameIntervalNs = frameIntervalNs;
     }
 
     void presentOrvalidateDisplay(int64_t display,
-                                  std::optional<ClockMonotonicTimestamp> expectedPresentTime) {
+                                  std::optional<ClockMonotonicTimestamp> expectedPresentTime,
+                                  int32_t frameIntervalNs) {
         auto& command = getDisplayCommand(display);
         command.expectedPresentTime = expectedPresentTime;
         command.presentOrValidateDisplay = true;
+        command.frameIntervalNs = frameIntervalNs;
     }
 
     void acceptDisplayChanges(int64_t display) {

@@ -21,6 +21,7 @@ import android.hardware.radio.data.SliceInfo;
 
 /**
  * This struct represents a single route selection descriptor as defined in 3GPP TS 24.526.
+ * @hide
  */
 @VintfStability
 @JavaDerive(toString=true)

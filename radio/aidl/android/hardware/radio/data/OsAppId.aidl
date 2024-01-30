@@ -18,6 +18,7 @@ package android.hardware.radio.data;
 
 /**
  * This struct represents the OsId + OsAppId as defined in TS 24.526 Section 5.2
+ * @hide
  */
 @VintfStability
 @JavaDerive(toString=true)

@@ -47,7 +47,7 @@ cc_library_static {
     ],
     export_static_lib_headers: [
         "android.hardware.graphics.allocator@4.0",
-        "android.hardware.graphics.common-V4-ndk",
+        "android.hardware.graphics.common-V5-ndk",
         "android.hardware.graphics.mapper@4.0",
     ],
     export_include_dirs: ["include"],

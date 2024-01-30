@@ -21,6 +21,7 @@
 #include <aidl/android/hardware/automotive/remoteaccess/BnRemoteAccess.h>
 #include <aidl/android/hardware/automotive/remoteaccess/BnRemoteTaskCallback.h>
 #include <aidl/android/hardware/automotive/remoteaccess/IRemoteTaskCallback.h>
+#include <aidl/android/hardware/automotive/remoteaccess/ScheduleInfo.h>
 #include <android-base/thread_annotations.h>
 #include <android/binder_auto_utils.h>
 #include <utils/SystemClock.h>
@@ -77,6 +78,25 @@ class RemoteAccessService
 
     ndk::ScopedAStatus notifyApStateChange(
             const aidl::android::hardware::automotive::remoteaccess::ApState& newState) override;
+
+    ndk::ScopedAStatus isTaskScheduleSupported(bool* out) override;
+
+    ndk::ScopedAStatus scheduleTask(
+            const aidl::android::hardware::automotive::remoteaccess::ScheduleInfo& scheduleInfo)
+            override;
+
+    ndk::ScopedAStatus unscheduleTask(const std::string& clientId,
+                                      const std::string& scheduleId) override;
+
+    ndk::ScopedAStatus unscheduleAllTasks(const std::string& clientId) override;
+
+    ndk::ScopedAStatus isTaskScheduled(const std::string& clientId, const std::string& scheduleId,
+                                       bool* out) override;
+
+    ndk::ScopedAStatus getAllScheduledTasks(
+            const std::string& clientId,
+            std::vector<aidl::android::hardware::automotive::remoteaccess::ScheduleInfo>* out)
+            override;
 
     binder_status_t dump(int fd, const char** args, uint32_t numArgs) override;
 

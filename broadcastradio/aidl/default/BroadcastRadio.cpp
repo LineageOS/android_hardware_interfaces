@@ -16,6 +16,7 @@
 
 #include "BroadcastRadio.h"
 #include <broadcastradio-utils-aidl/Utils.h>
+#include <broadcastradio-utils-aidl/UtilsV2.h>
 #include "resources.h"
 
 #include <aidl/android/hardware/broadcastradio/IdentifierType.h>
@@ -47,6 +48,8 @@ inline constexpr std::chrono::milliseconds kTuneDelayTimeMs = 150ms;
 inline constexpr std::chrono::seconds kListDelayTimeS = 1s;
 
 // clang-format off
+const AmFmBandRange kFmFullBandRange = {65000, 108000, 10, 0};
+const AmFmBandRange kAmFullBandRange = {150, 30000, 1, 0};
 const AmFmRegionConfig kDefaultAmFmConfig = {
         {
                 {87500, 108000, 100, 100},  // FM
@@ -63,12 +66,7 @@ Properties initProperties(const VirtualRadio& virtualRadio) {
 
     prop.maker = "Android";
     prop.product = virtualRadio.getName();
-    prop.supportedIdentifierTypes = vector<IdentifierType>({
-            IdentifierType::AMFM_FREQUENCY_KHZ,
-            IdentifierType::RDS_PI,
-            IdentifierType::HD_STATION_ID_EXT,
-            IdentifierType::DAB_SID_EXT,
-    });
+    prop.supportedIdentifierTypes = virtualRadio.getSupportedIdentifierTypes();
     prop.vendorInfo = vector<VendorKeyValue>({
             {"com.android.sample", "sample"},
     });
@@ -76,14 +74,71 @@ Properties initProperties(const VirtualRadio& virtualRadio) {
     return prop;
 }
 
+bool isDigitalProgramAllowed(const ProgramSelector& sel, bool forceAnalogFm, bool forceAnalogAm) {
+    if (sel.primaryId.type != IdentifierType::HD_STATION_ID_EXT) {
+        return true;
+    }
+    int32_t freq = static_cast<int32_t>(utils::getAmFmFrequency(sel));
+    bool isFm = freq >= kFmFullBandRange.lowerBound && freq <= kFmFullBandRange.upperBound;
+    return isFm ? !forceAnalogFm : !forceAnalogAm;
+}
+
+/**
+ * Checks whether a program selector is in the current band.
+ *
+ * <p>For an AM/FM program, this method checks whether it is in the current AM/FM band. For a
+ * program selector is also an HD program, it is also checked whether HD radio is enabled in the
+ * current AM/FM band. For a non-AM/FM program, the method will returns {@code true} directly.
+ * @param sel Program selector to be checked
+ * @param currentAmFmBandRange the current AM/FM band
+ * @param forceAnalogFm whether FM band is forced to be analog
+ * @param forceAnalogAm  whether AM band is forced to be analog
+ * @return whether the program selector is in the current band if it is an AM/FM (including HD)
+ * selector, {@code true} otherwise
+ */
+bool isProgramInBand(const ProgramSelector& sel,
+                     const std::optional<AmFmBandRange>& currentAmFmBandRange, bool forceAnalogFm,
+                     bool forceAnalogAm) {
+    if (!utils::hasAmFmFrequency(sel)) {
+        return true;
+    }
+    if (!currentAmFmBandRange.has_value()) {
+        return false;
+    }
+    int32_t freq = static_cast<int32_t>(utils::getAmFmFrequency(sel));
+    if (freq < currentAmFmBandRange->lowerBound || freq > currentAmFmBandRange->upperBound) {
+        return false;
+    }
+    return isDigitalProgramAllowed(sel, forceAnalogFm, forceAnalogAm);
+}
+
 // Makes ProgramInfo that does not point to any particular program
 ProgramInfo makeSampleProgramInfo(const ProgramSelector& selector) {
     ProgramInfo info = {};
     info.selector = selector;
-    info.logicallyTunedTo =
-            utils::makeIdentifier(IdentifierType::AMFM_FREQUENCY_KHZ,
-                                  utils::getId(selector, IdentifierType::AMFM_FREQUENCY_KHZ));
-    info.physicallyTunedTo = info.logicallyTunedTo;
+    switch (info.selector.primaryId.type) {
+        case IdentifierType::AMFM_FREQUENCY_KHZ:
+            info.logicallyTunedTo = utils::makeIdentifier(
+                    IdentifierType::AMFM_FREQUENCY_KHZ,
+                    utils::getId(selector, IdentifierType::AMFM_FREQUENCY_KHZ));
+            info.physicallyTunedTo = info.logicallyTunedTo;
+            break;
+        case IdentifierType::HD_STATION_ID_EXT:
+            info.logicallyTunedTo = utils::makeIdentifier(IdentifierType::AMFM_FREQUENCY_KHZ,
+                                                          utils::getAmFmFrequency(info.selector));
+            info.physicallyTunedTo = info.logicallyTunedTo;
+            break;
+        case IdentifierType::DAB_SID_EXT:
+            info.logicallyTunedTo = info.selector.primaryId;
+            info.physicallyTunedTo = utils::makeIdentifier(
+                    IdentifierType::DAB_FREQUENCY_KHZ,
+                    utils::getId(selector, IdentifierType::DAB_FREQUENCY_KHZ));
+            break;
+        default:
+            info.logicallyTunedTo = info.selector.primaryId;
+            info.physicallyTunedTo = info.logicallyTunedTo;
+            break;
+    }
     return info;
 }
 
@@ -111,19 +166,21 @@ BroadcastRadio::BroadcastRadio(const VirtualRadio& virtualRadio)
         } else {
             mCurrentProgram = sel;
         }
+        adjustAmFmRangeLocked();
     }
 }
 
 BroadcastRadio::~BroadcastRadio() {
-    mThread.reset();
+    mTuningThread.reset();
+    mProgramListThread.reset();
 }
 
 ScopedAStatus BroadcastRadio::getAmFmRegionConfig(bool full, AmFmRegionConfig* returnConfigs) {
     if (full) {
         *returnConfigs = {};
         returnConfigs->ranges = vector<AmFmBandRange>({
-                {65000, 108000, 10, 0},  // FM
-                {150, 30000, 1, 0},      // AM
+                kFmFullBandRange,
+                kAmFullBandRange,
         });
         returnConfigs->fmDeemphasis =
                 AmFmRegionConfig::DEEMPHASIS_D50 | AmFmRegionConfig::DEEMPHASIS_D75;
@@ -169,14 +226,27 @@ ProgramInfo BroadcastRadio::tuneInternalLocked(const ProgramSelector& sel) {
 
     VirtualProgram virtualProgram = {};
     ProgramInfo programInfo;
-    if (mVirtualRadio.getProgram(sel, &virtualProgram)) {
+    bool isProgramAllowed =
+            isDigitalProgramAllowed(sel, isConfigFlagSetLocked(ConfigFlag::FORCE_ANALOG_FM),
+                                    isConfigFlagSetLocked(ConfigFlag::FORCE_ANALOG_AM));
+    if (isProgramAllowed && mVirtualRadio.getProgram(sel, &virtualProgram)) {
         mCurrentProgram = virtualProgram.selector;
         programInfo = virtualProgram;
     } else {
-        mCurrentProgram = sel;
+        if (!isProgramAllowed) {
+            mCurrentProgram = utils::makeSelectorAmfm(utils::getAmFmFrequency(sel));
+        } else {
+            mCurrentProgram = sel;
+        }
         programInfo = makeSampleProgramInfo(sel);
     }
-    mIsTuneCompleted = true;
+    programInfo.infoFlags |= ProgramInfo::FLAG_SIGNAL_ACQUISITION;
+    if (programInfo.selector.primaryId.type != IdentifierType::HD_STATION_ID_EXT) {
+        mIsTuneCompleted = true;
+    }
+    if (adjustAmFmRangeLocked()) {
+        startProgramListUpdatesLocked({});
+    }
 
     return programInfo;
 }
@@ -204,6 +274,32 @@ ScopedAStatus BroadcastRadio::unsetTunerCallback() {
     return ScopedAStatus::ok();
 }
 
+void BroadcastRadio::handleProgramInfoUpdateRadioCallback(
+        ProgramInfo programInfo, const std::shared_ptr<ITunerCallback>& callback) {
+    callback->onCurrentProgramInfoChanged(programInfo);
+    if (programInfo.selector.primaryId.type != IdentifierType::HD_STATION_ID_EXT) {
+        return;
+    }
+    ProgramSelector sel = programInfo.selector;
+    auto cancelTask = [sel, callback]() { callback->onTuneFailed(Result::CANCELED, sel); };
+    programInfo.infoFlags |= ProgramInfo::FLAG_HD_SIS_ACQUISITION;
+    auto sisAcquiredTask = [this, callback, programInfo, cancelTask]() {
+        callback->onCurrentProgramInfoChanged(programInfo);
+        auto audioAcquiredTask = [this, callback, programInfo]() {
+            ProgramInfo hdProgramInfoWithAudio = programInfo;
+            hdProgramInfoWithAudio.infoFlags |= ProgramInfo::FLAG_HD_AUDIO_ACQUISITION;
+            callback->onCurrentProgramInfoChanged(hdProgramInfoWithAudio);
+            lock_guard<mutex> lk(mMutex);
+            mIsTuneCompleted = true;
+        };
+        lock_guard<mutex> lk(mMutex);
+        mTuningThread->schedule(audioAcquiredTask, cancelTask, kTuneDelayTimeMs);
+    };
+
+    lock_guard<mutex> lk(mMutex);
+    mTuningThread->schedule(sisAcquiredTask, cancelTask, kTuneDelayTimeMs);
+}
+
 ScopedAStatus BroadcastRadio::tune(const ProgramSelector& program) {
     LOG(DEBUG) << __func__ << ": tune to " << program.toString() << "...";
 
@@ -220,7 +316,7 @@ ScopedAStatus BroadcastRadio::tune(const ProgramSelector& program) {
                 resultToInt(Result::NOT_SUPPORTED), "selector is not supported");
     }
 
-    if (!utils::isValid(program)) {
+    if (!utils::isValidV2(program)) {
         LOG(ERROR) << __func__ << ": selector is not valid: " << program.toString();
         return ScopedAStatus::fromServiceSpecificErrorWithMessage(
                 resultToInt(Result::INVALID_ARGUMENTS), "selector is not valid");
@@ -236,12 +332,128 @@ ScopedAStatus BroadcastRadio::tune(const ProgramSelector& program) {
             lock_guard<mutex> lk(mMutex);
             programInfo = tuneInternalLocked(program);
         }
-        callback->onCurrentProgramInfoChanged(programInfo);
+        handleProgramInfoUpdateRadioCallback(programInfo, callback);
     };
     auto cancelTask = [program, callback]() { callback->onTuneFailed(Result::CANCELED, program); };
-    mThread->schedule(task, cancelTask, kTuneDelayTimeMs);
+    mTuningThread->schedule(task, cancelTask, kTuneDelayTimeMs);
 
     return ScopedAStatus::ok();
+}
+
+bool BroadcastRadio::findNextLocked(const ProgramSelector& current, bool directionUp,
+                                    bool skipSubChannel, VirtualProgram* nextProgram) const {
+    if (mProgramList.empty()) {
+        return false;
+    }
+    // The list is not sorted here since it has already stored in VirtualRadio.
+    bool hasAmFmFrequency = utils::hasAmFmFrequency(current);
+    bool hasDabSId = utils::hasId(current, IdentifierType::DAB_SID_EXT);
+    uint32_t currentChannel =
+            hasAmFmFrequency ? utils::getAmFmFrequency(current) : utils::getDabSId(current);
+    auto found =
+            std::lower_bound(mProgramList.begin(), mProgramList.end(), VirtualProgram({current}));
+    if (directionUp) {
+        if (found < mProgramList.end() - 1) {
+            // When seeking up, tuner will jump to the first selector which is main program service
+            // greater than and of the same band as the current program selector in the program
+            // list (if not exist, jump to the first selector in the same band) for skipping
+            // sub-channels case or AM/FM without HD radio enabled case. Otherwise, the tuner will
+            // jump to the first selector which is greater than and of the same band as the current
+            // program selector.
+            if (utils::tunesTo(current, found->selector)) found++;
+            if (skipSubChannel) {
+                if (hasAmFmFrequency || hasDabSId) {
+                    auto firstFound = found;
+                    while ((hasAmFmFrequency &&
+                            utils::getAmFmFrequency(found->selector) == currentChannel) ||
+                           (hasDabSId && utils::getDabSId(found->selector) == currentChannel)) {
+                        if (found < mProgramList.end() - 1) {
+                            found++;
+                        } else {
+                            found = mProgramList.begin();
+                        }
+                        if (found == firstFound) {
+                            // Only one main channel exists in the program list, the tuner cannot
+                            // skip sub-channel to the next program selector.
+                            return false;
+                        }
+                    }
+                }
+            }
+        } else {
+            // If the selector of current program is no less than all selectors of the same band or
+            // not found in the program list, seeking up should wrap the tuner to the first program
+            // selector of the same band in the program list.
+            found = mProgramList.begin();
+        }
+    } else {
+        if (found > mProgramList.begin() && found != mProgramList.end()) {
+            // When seeking down, tuner will jump to the first selector which is main program
+            // service less than and of the same band as the current program selector in the
+            // program list (if not exist, jump to the last main program service selector of the
+            // same band) for skipping sub-channels case or AM/FM without HD radio enabled case.
+            // Otherwise, the tuner will jump to the first selector less than and of the same band
+            // as the current program selector.
+            found--;
+            if ((hasAmFmFrequency && utils::hasAmFmFrequency(found->selector)) ||
+                (hasDabSId && utils::hasId(found->selector, IdentifierType::DAB_SID_EXT))) {
+                uint32_t nextChannel = hasAmFmFrequency ? utils::getAmFmFrequency(found->selector)
+                                                        : utils::getDabSId(found->selector);
+                if (nextChannel != currentChannel) {
+                    jumpToFirstSubChannelLocked(found);
+                } else if (skipSubChannel) {
+                    jumpToFirstSubChannelLocked(found);
+                    auto firstFound = found;
+                    if (found > mProgramList.begin()) {
+                        found--;
+                    } else {
+                        found = mProgramList.end() - 1;
+                    }
+                    jumpToFirstSubChannelLocked(found);
+                    if (found == firstFound) {
+                        // Only one main channel exists in the program list, the tuner cannot skip
+                        // sub-channel to the next program selector.
+                        return false;
+                    }
+                }
+            }
+        } else {
+            // If the selector of current program is no greater than all selectors of the same band
+            // or not found in the program list, seeking down should wrap the tuner to the last
+            // selector of the same band in the program list. If the last program selector in the
+            // program list is sub-channel and skipping sub-channels is needed, the tuner will jump
+            // to the last main program service of the same band in the program list.
+            found = mProgramList.end() - 1;
+            jumpToFirstSubChannelLocked(found);
+        }
+    }
+    *nextProgram = *found;
+    return true;
+}
+
+void BroadcastRadio::jumpToFirstSubChannelLocked(vector<VirtualProgram>::const_iterator& it) const {
+    if (it == mProgramList.begin()) {
+        return;
+    }
+    bool hasAmFmFrequency = utils::hasAmFmFrequency(it->selector);
+    bool hasDabSId = utils::hasId(it->selector, IdentifierType::DAB_SID_EXT);
+    if (hasAmFmFrequency || hasDabSId) {
+        uint32_t currentChannel = hasAmFmFrequency ? utils::getAmFmFrequency(it->selector)
+                                                   : utils::getDabSId(it->selector);
+        it--;
+        while (it != mProgramList.begin()) {
+            if (hasAmFmFrequency && utils::hasAmFmFrequency(it->selector) &&
+                utils::getAmFmFrequency(it->selector) == currentChannel) {
+                it--;
+            } else if (hasDabSId && utils::hasId(it->selector, IdentifierType::DAB_SID_EXT) &&
+                       utils::getDabSId(it->selector) == currentChannel) {
+                it--;
+            } else {
+                break;
+            }
+        }
+        it++;
+    }
 }
 
 ScopedAStatus BroadcastRadio::seek(bool directionUp, bool skipSubChannel) {
@@ -257,50 +469,40 @@ ScopedAStatus BroadcastRadio::seek(bool directionUp, bool skipSubChannel) {
 
     cancelLocked();
 
+    auto filterCb = [this](const VirtualProgram& program) {
+        return isProgramInBand(program.selector, mCurrentAmFmBandRange,
+                               isConfigFlagSetLocked(ConfigFlag::FORCE_ANALOG_FM),
+                               isConfigFlagSetLocked(ConfigFlag::FORCE_ANALOG_AM));
+    };
     const auto& list = mVirtualRadio.getProgramList();
+    mProgramList.clear();
+    std::copy_if(list.begin(), list.end(), std::back_inserter(mProgramList), filterCb);
     std::shared_ptr<ITunerCallback> callback = mCallback;
     auto cancelTask = [callback]() { callback->onTuneFailed(Result::CANCELED, {}); };
-    if (list.empty()) {
-        mIsTuneCompleted = false;
+
+    VirtualProgram nextProgram = {};
+    bool foundNext = findNextLocked(mCurrentProgram, directionUp, skipSubChannel, &nextProgram);
+    mIsTuneCompleted = false;
+    if (!foundNext) {
         auto task = [callback]() {
             LOG(DEBUG) << "seek: program list is empty, seek couldn't stop";
 
             callback->onTuneFailed(Result::TIMEOUT, {});
         };
-        mThread->schedule(task, cancelTask, kSeekDelayTimeMs);
+        mTuningThread->schedule(task, cancelTask, kSeekDelayTimeMs);
 
         return ScopedAStatus::ok();
     }
 
-    // The list is not sorted here since it has already stored in VirtualRadio.
-    // If the list is not sorted in advance, it should be sorted here.
-    const auto& current = mCurrentProgram;
-    auto found = std::lower_bound(list.begin(), list.end(), VirtualProgram({current}));
-    if (directionUp) {
-        if (found < list.end() - 1) {
-            if (tunesTo(current, found->selector)) found++;
-        } else {
-            found = list.begin();
-        }
-    } else {
-        if (found > list.begin() && found != list.end()) {
-            found--;
-        } else {
-            found = list.end() - 1;
-        }
-    }
-    const ProgramSelector tuneTo = found->selector;
-
-    mIsTuneCompleted = false;
-    auto task = [this, tuneTo, callback]() {
+    auto task = [this, nextProgram, callback]() {
         ProgramInfo programInfo = {};
         {
             lock_guard<mutex> lk(mMutex);
-            programInfo = tuneInternalLocked(tuneTo);
+            programInfo = tuneInternalLocked(nextProgram.selector);
         }
-        callback->onCurrentProgramInfoChanged(programInfo);
+        handleProgramInfoUpdateRadioCallback(programInfo, callback);
     };
-    mThread->schedule(task, cancelTask, kSeekDelayTimeMs);
+    mTuningThread->schedule(task, cancelTask, kSeekDelayTimeMs);
 
     return ScopedAStatus::ok();
 }
@@ -317,31 +519,33 @@ ScopedAStatus BroadcastRadio::step(bool directionUp) {
 
     cancelLocked();
 
-    if (!utils::hasId(mCurrentProgram, IdentifierType::AMFM_FREQUENCY_KHZ)) {
+    int64_t stepTo;
+    if (utils::hasId(mCurrentProgram, IdentifierType::AMFM_FREQUENCY_KHZ)) {
+        stepTo = utils::getId(mCurrentProgram, IdentifierType::AMFM_FREQUENCY_KHZ);
+    } else if (mCurrentProgram.primaryId.type == IdentifierType::HD_STATION_ID_EXT) {
+        stepTo = utils::getHdFrequency(mCurrentProgram);
+    } else {
         LOG(WARNING) << __func__ << ": can't step in anything else than AM/FM";
         return ScopedAStatus::fromServiceSpecificErrorWithMessage(
                 resultToInt(Result::NOT_SUPPORTED), "cannot step in anything else than AM/FM");
     }
 
-    int64_t stepTo = utils::getId(mCurrentProgram, IdentifierType::AMFM_FREQUENCY_KHZ);
-    std::optional<AmFmBandRange> range = getAmFmRangeLocked();
-    if (!range) {
-        LOG(ERROR) << __func__ << ": can't find current band or tune operation is in process";
-        ScopedAStatus::fromServiceSpecificErrorWithMessage(
-                resultToInt(Result::INTERNAL_ERROR),
-                "can't find current band or tune operation is in process");
+    if (!mCurrentAmFmBandRange.has_value()) {
+        LOG(ERROR) << __func__ << ": can't find current band";
+        return ScopedAStatus::fromServiceSpecificErrorWithMessage(
+                resultToInt(Result::INTERNAL_ERROR), "can't find current band");
     }
 
     if (directionUp) {
-        stepTo += range->spacing;
+        stepTo += mCurrentAmFmBandRange->spacing;
     } else {
-        stepTo -= range->spacing;
+        stepTo -= mCurrentAmFmBandRange->spacing;
     }
-    if (stepTo > range->upperBound) {
-        stepTo = range->lowerBound;
+    if (stepTo > mCurrentAmFmBandRange->upperBound) {
+        stepTo = mCurrentAmFmBandRange->lowerBound;
     }
-    if (stepTo < range->lowerBound) {
-        stepTo = range->upperBound;
+    if (stepTo < mCurrentAmFmBandRange->lowerBound) {
+        stepTo = mCurrentAmFmBandRange->upperBound;
     }
 
     mIsTuneCompleted = false;
@@ -352,18 +556,18 @@ ScopedAStatus BroadcastRadio::step(bool directionUp) {
             lock_guard<mutex> lk(mMutex);
             programInfo = tuneInternalLocked(utils::makeSelectorAmfm(stepTo));
         }
-        callback->onCurrentProgramInfoChanged(programInfo);
+        handleProgramInfoUpdateRadioCallback(programInfo, callback);
     };
     auto cancelTask = [callback]() { callback->onTuneFailed(Result::CANCELED, {}); };
-    mThread->schedule(task, cancelTask, kStepDelayTimeMs);
+    mTuningThread->schedule(task, cancelTask, kStepDelayTimeMs);
 
     return ScopedAStatus::ok();
 }
 
 void BroadcastRadio::cancelLocked() {
-    LOG(DEBUG) << __func__ << ": cancelling current operations...";
+    LOG(DEBUG) << __func__ << ": cancelling current tuning operations...";
 
-    mThread->cancelAll();
+    mTuningThread->cancelAll();
     if (mCurrentProgram.primaryId.type != IdentifierType::INVALID) {
         mIsTuneCompleted = true;
     }
@@ -378,15 +582,15 @@ ScopedAStatus BroadcastRadio::cancel() {
     return ScopedAStatus::ok();
 }
 
-ScopedAStatus BroadcastRadio::startProgramListUpdates(const ProgramFilter& filter) {
-    LOG(DEBUG) << __func__ << ": requested program list updates, filter = " << filter.toString()
-               << "...";
-
-    auto filterCb = [&filter](const VirtualProgram& program) {
-        return utils::satisfies(filter, program.selector);
+void BroadcastRadio::startProgramListUpdatesLocked(const ProgramFilter& filter) {
+    auto filterCb = [&filter, this](const VirtualProgram& program) {
+        return utils::satisfies(filter, program.selector) &&
+               isProgramInBand(program.selector, mCurrentAmFmBandRange,
+                               isConfigFlagSetLocked(ConfigFlag::FORCE_ANALOG_FM),
+                               isConfigFlagSetLocked(ConfigFlag::FORCE_ANALOG_AM));
     };
 
-    lock_guard<mutex> lk(mMutex);
+    cancelProgramListUpdateLocked();
 
     const auto& list = mVirtualRadio.getProgramList();
     vector<VirtualProgram> filteredList;
@@ -410,31 +614,65 @@ ScopedAStatus BroadcastRadio::startProgramListUpdates(const ProgramFilter& filte
 
         callback->onProgramListUpdated(chunk);
     };
-    mThread->schedule(task, kListDelayTimeS);
+    mProgramListThread->schedule(task, kListDelayTimeS);
+}
+
+ScopedAStatus BroadcastRadio::startProgramListUpdates(const ProgramFilter& filter) {
+    LOG(DEBUG) << __func__ << ": requested program list updates, filter = " << filter.toString()
+               << "...";
+
+    lock_guard<mutex> lk(mMutex);
+
+    startProgramListUpdatesLocked(filter);
 
     return ScopedAStatus::ok();
+}
+
+void BroadcastRadio::cancelProgramListUpdateLocked() {
+    LOG(DEBUG) << __func__ << ": cancelling current program list update operations...";
+    mProgramListThread->cancelAll();
 }
 
 ScopedAStatus BroadcastRadio::stopProgramListUpdates() {
     LOG(DEBUG) << __func__ << ": requested program list updates to stop...";
-    // TODO(b/243681584) Implement stop program list updates method
+    lock_guard<mutex> lk(mMutex);
+    cancelProgramListUpdateLocked();
     return ScopedAStatus::ok();
 }
 
-ScopedAStatus BroadcastRadio::isConfigFlagSet(ConfigFlag flag, [[maybe_unused]] bool* returnIsSet) {
+bool BroadcastRadio::isConfigFlagSetLocked(ConfigFlag flag) const {
+    int flagBit = static_cast<int>(flag);
+    return ((mConfigFlagValues >> flagBit) & 1) == 1;
+}
+
+ScopedAStatus BroadcastRadio::isConfigFlagSet(ConfigFlag flag, bool* returnIsSet) {
     LOG(DEBUG) << __func__ << ": flag = " << toString(flag);
 
-    LOG(INFO) << __func__ << ": getting ConfigFlag is not supported";
-    return ScopedAStatus::fromServiceSpecificErrorWithMessage(
-            resultToInt(Result::NOT_SUPPORTED), "getting ConfigFlag is not supported");
+    if (flag == ConfigFlag::FORCE_ANALOG) {
+        flag = ConfigFlag::FORCE_ANALOG_FM;
+    }
+    lock_guard<mutex> lk(mMutex);
+    *returnIsSet = isConfigFlagSetLocked(flag);
+    return ScopedAStatus::ok();
 }
 
 ScopedAStatus BroadcastRadio::setConfigFlag(ConfigFlag flag, bool value) {
     LOG(DEBUG) << __func__ << ": flag = " << toString(flag) << ", value = " << value;
 
-    LOG(INFO) << __func__ << ": setting ConfigFlag is not supported";
-    return ScopedAStatus::fromServiceSpecificErrorWithMessage(
-            resultToInt(Result::NOT_SUPPORTED), "setting ConfigFlag is not supported");
+    if (flag == ConfigFlag::FORCE_ANALOG) {
+        flag = ConfigFlag::FORCE_ANALOG_FM;
+    }
+    int flagBitMask = 1 << (static_cast<int>(flag));
+    lock_guard<mutex> lk(mMutex);
+    if (value) {
+        mConfigFlagValues |= flagBitMask;
+    } else {
+        mConfigFlagValues &= ~flagBitMask;
+    }
+    if (flag == ConfigFlag::FORCE_ANALOG_AM || flag == ConfigFlag::FORCE_ANALOG_FM) {
+        startProgramListUpdatesLocked({});
+    }
+    return ScopedAStatus::ok();
 }
 
 ScopedAStatus BroadcastRadio::setParameters(
@@ -452,24 +690,25 @@ ScopedAStatus BroadcastRadio::getParameters([[maybe_unused]] const vector<string
     return ScopedAStatus::ok();
 }
 
-std::optional<AmFmBandRange> BroadcastRadio::getAmFmRangeLocked() const {
-    if (!mIsTuneCompleted) {
-        LOG(WARNING) << __func__ << ": tune operation is in process";
-        return {};
-    }
-    if (!utils::hasId(mCurrentProgram, IdentifierType::AMFM_FREQUENCY_KHZ)) {
+bool BroadcastRadio::adjustAmFmRangeLocked() {
+    bool hasBandBefore = mCurrentAmFmBandRange.has_value();
+    if (!utils::hasAmFmFrequency(mCurrentProgram)) {
         LOG(WARNING) << __func__ << ": current program does not has AMFM_FREQUENCY_KHZ identifier";
-        return {};
+        mCurrentAmFmBandRange.reset();
+        return hasBandBefore;
     }
 
-    int64_t freq = utils::getId(mCurrentProgram, IdentifierType::AMFM_FREQUENCY_KHZ);
+    int32_t freq = static_cast<int32_t>(utils::getAmFmFrequency(mCurrentProgram));
     for (const auto& range : mAmFmConfig.ranges) {
         if (range.lowerBound <= freq && range.upperBound >= freq) {
-            return range;
+            bool isBandChanged = hasBandBefore ? *mCurrentAmFmBandRange != range : true;
+            mCurrentAmFmBandRange = range;
+            return isBandChanged;
         }
     }
 
-    return {};
+    mCurrentAmFmBandRange.reset();
+    return !hasBandBefore;
 }
 
 ScopedAStatus BroadcastRadio::registerAnnouncementListener(

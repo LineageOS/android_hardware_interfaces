@@ -40,7 +40,7 @@ struct GnssNavigationMessageInterface : public BnGnssNavigationMessageInterface 
 
     std::atomic<long> mMinIntervalMillis;
     std::atomic<bool> mIsActive;
-    std::thread mThread;
+    std::vector<std::thread> mThreads;
     std::vector<std::future<void>> mFutures;
     ::android::hardware::gnss::common::ThreadBlocker mThreadBlocker;
 

@@ -29,6 +29,7 @@ using ::aidl::android::hardware::automotive::vehicle::GetValueResult;
 using ::aidl::android::hardware::automotive::vehicle::SetValueRequest;
 using ::aidl::android::hardware::automotive::vehicle::SetValueResult;
 using ::aidl::android::hardware::automotive::vehicle::StatusCode;
+using ::aidl::android::hardware::automotive::vehicle::SubscribeOptions;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropConfig;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropValue;
 
@@ -88,7 +89,40 @@ StatusCode MockVehicleHardware::checkHealth() {
     return StatusCode::OK;
 }
 
-StatusCode MockVehicleHardware::updateSampleRate(int32_t propId, int32_t areaId, float sampleRate) {
+StatusCode MockVehicleHardware::subscribe(SubscribeOptions options) {
+    {
+        std::scoped_lock<std::mutex> lockGuard(mLock);
+        mSubscribeOptions.push_back(options);
+    }
+    for (int32_t areaId : options.areaIds) {
+        if (auto status = subscribePropIdAreaId(options.propId, areaId, options.sampleRate);
+            status != StatusCode::OK) {
+            return status;
+        }
+    }
+    return StatusCode::OK;
+}
+
+std::vector<SubscribeOptions> MockVehicleHardware::getSubscribeOptions() {
+    std::scoped_lock<std::mutex> lockGuard(mLock);
+    return mSubscribeOptions;
+}
+
+void MockVehicleHardware::clearSubscribeOptions() {
+    std::scoped_lock<std::mutex> lockGuard(mLock);
+    mSubscribeOptions.clear();
+}
+
+StatusCode MockVehicleHardware::subscribePropIdAreaId(int32_t propId, int32_t areaId,
+                                                      float sampleRateHz) {
+    if (sampleRateHz == 0) {
+        // on-change property.
+        std::scoped_lock<std::mutex> lockGuard(mLock);
+        mSubOnChangePropIdAreaIds.insert(std::pair<int32_t, int32_t>(propId, areaId));
+        return StatusCode::OK;
+    }
+
+    // continuous property.
     std::shared_ptr<std::function<void()>> action;
 
     {
@@ -97,9 +131,6 @@ StatusCode MockVehicleHardware::updateSampleRate(int32_t propId, int32_t areaId,
             // Remove the previous action register for this [propId, areaId].
             mRecurrentTimer->unregisterTimerCallback(mRecurrentActions[propId][areaId]);
         }
-        if (sampleRate == 0) {
-            return StatusCode::OK;
-        }
 
         // We are sure 'propertyChangeCallback' would be alive because we would unregister timer
         // before destroying 'this' which owns mPropertyChangeCallback.
@@ -107,8 +138,8 @@ StatusCode MockVehicleHardware::updateSampleRate(int32_t propId, int32_t areaId,
         action = std::make_shared<std::function<void()>>([propertyChangeCallback, propId, areaId] {
             std::vector<VehiclePropValue> values = {
                     {
-                            .prop = propId,
                             .areaId = areaId,
+                            .prop = propId,
                     },
             };
             (*propertyChangeCallback)(values);
@@ -119,9 +150,43 @@ StatusCode MockVehicleHardware::updateSampleRate(int32_t propId, int32_t areaId,
 
     // In mock implementation, we generate a new property change event for this property at sample
     // rate.
-    int64_t interval = static_cast<int64_t>(1'000'000'000. / sampleRate);
+    int64_t interval = static_cast<int64_t>(1'000'000'000. / sampleRateHz);
     mRecurrentTimer->registerTimerCallback(interval, action);
     return StatusCode::OK;
+}
+
+StatusCode MockVehicleHardware::unsubscribe(int32_t propId, int32_t areaId) {
+    std::scoped_lock<std::mutex> lockGuard(mLock);
+    // For on-change property.
+    mSubOnChangePropIdAreaIds.erase(std::make_pair(propId, areaId));
+    // for continuous property.
+    if (mRecurrentActions[propId][areaId] != nullptr) {
+        // Remove the previous action register for this [propId, areaId].
+        mRecurrentTimer->unregisterTimerCallback(mRecurrentActions[propId][areaId]);
+        mRecurrentActions[propId].erase(areaId);
+        if (mRecurrentActions[propId].empty()) {
+            mRecurrentActions.erase(propId);
+        }
+    }
+    return StatusCode::OK;
+}
+
+std::set<std::pair<int32_t, int32_t>> MockVehicleHardware::getSubscribedOnChangePropIdAreaIds() {
+    std::scoped_lock<std::mutex> lockGuard(mLock);
+    std::set<std::pair<int32_t, int32_t>> propIdAreaIds;
+    propIdAreaIds = mSubOnChangePropIdAreaIds;
+    return propIdAreaIds;
+}
+
+std::set<std::pair<int32_t, int32_t>> MockVehicleHardware::getSubscribedContinuousPropIdAreaIds() {
+    std::scoped_lock<std::mutex> lockGuard(mLock);
+    std::set<std::pair<int32_t, int32_t>> propIdAreaIds;
+    for (const auto& [propId, actionByAreaId] : mRecurrentActions) {
+        for (const auto& [areaId, _] : actionByAreaId) {
+            propIdAreaIds.insert(std::make_pair(propId, areaId));
+        }
+    }
+    return propIdAreaIds;
 }
 
 void MockVehicleHardware::registerOnPropertyChangeEvent(
@@ -184,6 +249,16 @@ void MockVehicleHardware::setStatus(const char* functionName, StatusCode status)
 void MockVehicleHardware::setSleepTime(int64_t timeInNano) {
     std::scoped_lock<std::mutex> lockGuard(mLock);
     mSleepTime = timeInNano;
+}
+
+void MockVehicleHardware::setPropertyOnChangeEventBatchingWindow(std::chrono::nanoseconds window) {
+    std::scoped_lock<std::mutex> lockGuard(mLock);
+    mEventBatchingWindow = window;
+}
+
+std::chrono::nanoseconds MockVehicleHardware::getPropertyOnChangeEventBatchingWindow() {
+    std::scoped_lock<std::mutex> lockGuard(mLock);
+    return mEventBatchingWindow;
 }
 
 template <class ResultType>

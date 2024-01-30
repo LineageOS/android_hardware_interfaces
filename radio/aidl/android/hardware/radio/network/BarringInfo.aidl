@@ -18,6 +18,7 @@ package android.hardware.radio.network;
 
 import android.hardware.radio.network.BarringTypeSpecificInfo;
 
+/** @hide */
 @VintfStability
 @JavaDerive(toString=true)
 parcelable BarringInfo {

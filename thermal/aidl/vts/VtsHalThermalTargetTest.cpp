@@ -128,7 +128,8 @@ TEST_P(ThermalAidlTest, RegisterThermalChangedCallbackTest) {
     ASSERT_EQ(EX_ILLEGAL_ARGUMENT, status.getExceptionCode());
     // Expect to fail with null callback
     status = mThermal->registerThermalChangedCallback(nullptr);
-    ASSERT_EQ(EX_ILLEGAL_ARGUMENT, status.getExceptionCode());
+    ASSERT_TRUE(status.getExceptionCode() == EX_ILLEGAL_ARGUMENT
+        || status.getExceptionCode() == EX_NULL_POINTER);
     std::shared_ptr<ThermalCallback> localThermalCallback =
             ndk::SharedRefBase::make<ThermalCallback>();
     // Expect to succeed with different callback
@@ -139,7 +140,8 @@ TEST_P(ThermalAidlTest, RegisterThermalChangedCallbackTest) {
     ASSERT_TRUE(status.isOk()) << status.getMessage();
     // Expect to fail with null callback
     status = mThermal->unregisterThermalChangedCallback(nullptr);
-    ASSERT_EQ(EX_ILLEGAL_ARGUMENT, status.getExceptionCode());
+    ASSERT_TRUE(status.getExceptionCode() == EX_ILLEGAL_ARGUMENT
+        || status.getExceptionCode() == EX_NULL_POINTER);
 }
 
 // Test Thermal->registerThermalChangedCallbackWithType.
@@ -150,7 +152,8 @@ TEST_P(ThermalAidlTest, RegisterThermalChangedCallbackWithTypeTest) {
     ASSERT_EQ(EX_ILLEGAL_ARGUMENT, status.getExceptionCode());
     // Expect to fail with null callback
     status = mThermal->registerThermalChangedCallbackWithType(nullptr, TemperatureType::SKIN);
-    ASSERT_EQ(EX_ILLEGAL_ARGUMENT, status.getExceptionCode());
+    ASSERT_TRUE(status.getExceptionCode() == EX_ILLEGAL_ARGUMENT
+        || status.getExceptionCode() == EX_NULL_POINTER);
     std::shared_ptr<ThermalCallback> localThermalCallback =
             ndk::SharedRefBase::make<ThermalCallback>();
     // Expect to succeed with different callback
@@ -162,7 +165,8 @@ TEST_P(ThermalAidlTest, RegisterThermalChangedCallbackWithTypeTest) {
     ASSERT_TRUE(status.isOk()) << status.getMessage();
     // Expect to fail with null callback
     status = mThermal->unregisterThermalChangedCallback(nullptr);
-    ASSERT_EQ(EX_ILLEGAL_ARGUMENT, status.getExceptionCode());
+    ASSERT_TRUE(status.getExceptionCode() == EX_ILLEGAL_ARGUMENT
+        || status.getExceptionCode() == EX_NULL_POINTER);
 }
 
 // Test Thermal->getCurrentTemperatures().

@@ -26,7 +26,6 @@
 #include <android/hardware/graphics/composer/2.2/IComposerClient.h>
 #include <composer-command-buffer/2.2/ComposerCommandBuffer.h>
 #include <composer-vts/2.1/ComposerVts.h>
-#include <mapper-vts/2.1/MapperVts.h>
 #include <utils/StrongPointer.h>
 
 namespace android {
@@ -41,14 +40,6 @@ using common::V1_1::ColorMode;
 using common::V1_1::Dataspace;
 using common::V1_1::PixelFormat;
 using common::V1_1::RenderIntent;
-using IMapper2_1 = android::hardware::graphics::mapper::V2_1::IMapper;
-using IMapper3 = android::hardware::graphics::mapper::V3_0::IMapper;
-using IMapper4 = android::hardware::graphics::mapper::V4_0::IMapper;
-using Gralloc2 = android::hardware::graphics::mapper::V2_0::vts::Gralloc;
-using Gralloc2_1 = android::hardware::graphics::mapper::V2_1::vts::Gralloc;
-using Gralloc3 = android::hardware::graphics::mapper::V3_0::vts::Gralloc;
-using Gralloc4 = android::hardware::graphics::mapper::V4_0::vts::Gralloc;
-using IAllocator = aidl::android::hardware::graphics::allocator::IAllocator;
 
 class ComposerClient;
 
@@ -90,28 +81,6 @@ class ComposerClient : public V2_1::vts::ComposerClient {
 
    private:
     const sp<IComposerClient> mClient;
-};
-
-class Gralloc : public V2_1::vts::Gralloc {
-  public:
-    using NativeHandleWrapper = V2_1::vts::NativeHandleWrapper;
-
-    Gralloc();
-    const NativeHandleWrapper allocate(uint32_t width, uint32_t height, uint32_t layerCount,
-                                       PixelFormat format, uint64_t usage, bool import = true,
-                                       uint32_t* outStride = nullptr) {
-        return V2_1::vts::Gralloc::allocate(
-                width, height, layerCount,
-                static_cast<android::hardware::graphics::common::V1_0::PixelFormat>(format), usage,
-                import, outStride);
-    }
-
-    bool validateBufferSize(const native_handle_t* bufferHandle, uint32_t width, uint32_t height,
-                            uint32_t layerCount, PixelFormat format, uint64_t usage,
-                            uint32_t stride);
-
-  protected:
-    std::shared_ptr<Gralloc2_1> mGralloc2_1 = nullptr;
 };
 
 }  // namespace vts

@@ -32,6 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.data;
+/* @hide */
 @VintfStability
 interface IRadioData {
   oneway void allocatePduSessionId(in int serial);

@@ -37,4 +37,5 @@ parcelable TvMessageEvent {
   android.hardware.tv.input.TvMessageEventType type;
   int streamId;
   android.hardware.tv.input.TvMessage[] messages;
+  int deviceId;
 }

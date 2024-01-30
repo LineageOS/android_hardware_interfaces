@@ -23,6 +23,7 @@
 #include <aidl/android/hardware/automotive/evs/BufferDesc.h>
 #include <aidl/android/hardware/automotive/evs/DisplayDesc.h>
 #include <aidl/android/hardware/automotive/evs/DisplayState.h>
+#include <android-base/thread_annotations.h>
 
 #include <thread>
 

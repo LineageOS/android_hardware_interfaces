@@ -26,9 +26,11 @@ package android.hardware.radio.ims.media;
  *     Receive-Only : RTP_RX | RTCP_TX | RTCP_RX - eg. Remote Hold.
  *     Send-Receive : RTP_TX | RTP_RX | RTCP_TX | RTCP_RX - eg. Active call.
  *     Send-Only    : RTP_TX | RTCP_TX | RTCP_RX - eg. Simplex call, voice mail, etc
+ * @hide
  */
 @VintfStability
 @Backing(type="int")
+@JavaDerive(toString=true)
 enum MediaDirection {
     /**
      * No RTP/RTCP flow in either direction. The implementation

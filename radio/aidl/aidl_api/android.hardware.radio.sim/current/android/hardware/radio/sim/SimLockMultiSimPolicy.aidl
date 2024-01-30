@@ -32,8 +32,16 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.sim;
+/* @hide */
 @Backing(type="int") @JavaDerive(toString=true) @VintfStability
 enum SimLockMultiSimPolicy {
   NO_MULTISIM_POLICY,
   ONE_VALID_SIM_MUST_BE_PRESENT,
+  APPLY_TO_ALL_SLOTS,
+  APPLY_TO_ONLY_SLOT_1,
+  VALID_SIM_MUST_PRESENT_ON_SLOT_1,
+  ACTIVE_SERVICE_ON_SLOT_1_TO_UNBLOCK_OTHER_SLOTS,
+  ACTIVE_SERVICE_ON_ANY_SLOT_TO_UNBLOCK_OTHER_SLOTS,
+  ALL_SIMS_MUST_BE_VALID,
+  SLOT_POLICY_OTHER,
 }

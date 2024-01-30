@@ -20,6 +20,7 @@ import android.hardware.biometrics.common.ICancellationSignal;
 import android.hardware.biometrics.common.OperationContext;
 import android.hardware.biometrics.face.EnrollmentStageConfig;
 import android.hardware.biometrics.face.EnrollmentType;
+import android.hardware.biometrics.face.FaceEnrollOptions;
 import android.hardware.biometrics.face.Feature;
 import android.hardware.common.NativeHandle;
 import android.hardware.keymaster.HardwareAuthToken;
@@ -41,6 +42,7 @@ import android.hardware.keymaster.HardwareAuthToken;
  * ISession only supports execution of one operation at a time, regardless of whether it's
  * cancellable or not. The framework must wait for a corresponding callback indicating the end of
  * the current operation before a new operation can be started.
+ * @hide
  */
 
 @VintfStability
@@ -115,44 +117,7 @@ interface ISession {
     EnrollmentStageConfig[] getEnrollmentConfig(in EnrollmentType enrollmentType);
 
     /**
-     * enroll:
-     *
-     * A request to add a face enrollment.
-     *
-     * At any point during enrollment, if a non-recoverable error occurs, the HAL must notify the
-     * framework via ISessionCallback#onError with the applicable enrollment-specific error.
-     *
-     * Before capturing face data, the HAL must first verify the authenticity and integrity of the
-     * provided HardwareAuthToken. In addition, it must check that the challenge within the provided
-     * HardwareAuthToken is valid. See ISession#generateChallenge. If any of the above checks fail,
-     * the framework must be notified using ISessionCallback#onError with Error::UNABLE_TO_PROCESS.
-     *
-     * During enrollment, the HAL may notify the framework via ISessionCallback#onAcquired with
-     * messages that may be used to guide the user. This callback can be invoked multiple times if
-     * necessary. Similarly, the framework may be notified of enrollment progress changes via
-     * ISessionCallback#onEnrollmentProgress. Once the framework is notified that there are 0
-     * "remaining" steps, the framework may cache the "enrollmentId". See
-     * ISessionCallback#onEnrollmentProgress for more info.
-     *
-     * When a face is successfully added and before the framework is notified of remaining=0, the
-     * HAL must update and associate this (sensorId, userId) pair with a new entropy-encoded random
-     * identifier. See ISession#getAuthenticatorId for more information.
-     *
-     * Callbacks that signify the end of this operation's lifecycle:
-     *   - ISessionCallback#onError
-     *   - ISessionCallback#onEnrollmentProgress(enrollmentId, remaining=0)
-     *
-     * Other applicable callbacks:
-     *   - ISessionCallback#onAcquired
-     *
-     * @param hat See above documentation.
-     * @param enrollmentType See the EnrollmentType enum.
-     * @param features See the Feature enum.
-     * @param previewSurface A surface provided by the framework if SensorProps#halControlsPreview
-     *                       is set to true. The HAL must send the preview frames to previewSurface
-     *                       if it's not null.
-     * @return ICancellationSignal An object that can be used by the framework to cancel this
-     * operation.
+     * @deprecated use {@link enrollWithOptions} instead.
      */
     ICancellationSignal enroll(in HardwareAuthToken hat, in EnrollmentType type,
             in Feature[] features, in @nullable NativeHandle previewSurface);
@@ -456,7 +421,9 @@ interface ISession {
     /* See ISession#authenticateWithContext(long) */
     ICancellationSignal authenticateWithContext(in long operationId, in OperationContext context);
 
-    /* See ISession#enroll(HardwareAuthToken, EnrollmentType, Feature[], NativeHandle) */
+    /*
+     * @deprecated use {@link enrollWithOptions} instead.
+     */
     ICancellationSignal enrollWithContext(in HardwareAuthToken hat, in EnrollmentType type,
             in Feature[] features, in @nullable NativeHandle previewSurface,
             in OperationContext context);
@@ -469,4 +436,41 @@ interface ISession {
      * running when the context changes.
      */
     void onContextChanged(in OperationContext context);
+
+    /**
+     * enrollWithOptions:
+     *
+     * A request to add a face enrollment.
+     *
+     * At any point during enrollment, if a non-recoverable error occurs, the HAL must notify the
+     * framework via ISessionCallback#onError with the applicable enrollment-specific error.
+     *
+     * Before capturing face data, the HAL must first verify the authenticity and integrity of the
+     * provided HardwareAuthToken. In addition, it must check that the challenge within the provided
+     * HardwareAuthToken is valid. See ISession#generateChallenge. If any of the above checks fail,
+     * the framework must be notified using ISessionCallback#onError with Error::UNABLE_TO_PROCESS.
+     *
+     * During enrollment, the HAL may notify the framework via ISessionCallback#onAcquired with
+     * messages that may be used to guide the user. This callback can be invoked multiple times if
+     * necessary. Similarly, the framework may be notified of enrollment progress changes via
+     * ISessionCallback#onEnrollmentProgress. Once the framework is notified that there are 0
+     * "remaining" steps, the framework may cache the "enrollmentId". See
+     * ISessionCallback#onEnrollmentProgress for more info.
+     *
+     * When a face is successfully added and before the framework is notified of remaining=0, the
+     * HAL must update and associate this (sensorId, userId) pair with a new entropy-encoded random
+     * identifier. See ISession#getAuthenticatorId for more information.
+     *
+     * Callbacks that signify the end of this operation's lifecycle:
+     *   - ISessionCallback#onError
+     *   - ISessionCallback#onEnrollmentProgress(enrollmentId, remaining=0)
+     *
+     * Other applicable callbacks:
+     *   - ISessionCallback#onAcquired
+     *
+     * @param FaceEnrollOptions See {@link FaceEnrollOptions} for more detail.
+     * @return ICancellationSignal An object that can be used by the framework to cancel this
+     * operation.
+     */
+    ICancellationSignal enrollWithOptions(in FaceEnrollOptions options);
 }

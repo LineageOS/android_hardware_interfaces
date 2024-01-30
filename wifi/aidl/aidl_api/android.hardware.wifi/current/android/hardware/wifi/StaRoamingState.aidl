@@ -36,4 +36,5 @@ package android.hardware.wifi;
 enum StaRoamingState {
   DISABLED = 0,
   ENABLED = 1,
+  AGGRESSIVE = 2,
 }

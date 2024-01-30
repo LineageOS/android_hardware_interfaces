@@ -32,6 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.voice;
+/* @hide */
 @VintfStability
 interface IRadioVoiceIndication {
   oneway void callRing(in android.hardware.radio.RadioIndicationType type, in boolean isGsm, in android.hardware.radio.voice.CdmaSignalInfoRecord record);

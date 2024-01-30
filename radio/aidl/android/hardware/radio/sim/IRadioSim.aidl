@@ -37,6 +37,7 @@ import android.hardware.radio.sim.SimLockMultiSimPolicy;
  * duration of a method call. If clients provide colliding serials (including passing the same
  * serial to different methods), multiple responses (one for each method call) must still be served.
  * setResponseFunctions must work with IRadioSimResponse and IRadioSimIndication.
+ * @hide
  */
 @VintfStability
 oneway interface IRadioSim {
@@ -48,6 +49,8 @@ oneway interface IRadioSim {
      * @param serial Serial number of request.
      *
      * Response function is IRadioSimResponse.areUiccApplicationsEnabledResponse()
+     *
+     * This is available when android.hardware.telephony.subscription is defined.
      */
     void areUiccApplicationsEnabled(in int serial);
 
@@ -60,6 +63,8 @@ oneway interface IRadioSim {
      * @param aid AID value, See ETSI 102.221 8.1 and 101.220 4, empty string if no value.
      *
      * Response function is IRadioSimResponse.changeIccPin2ForAppResponse()
+     *
+     * This is available when android.hardware.telephony.subscription is defined.
      */
     void changeIccPin2ForApp(in int serial, in String oldPin2, in String newPin2, in String aid);
 
@@ -72,6 +77,8 @@ oneway interface IRadioSim {
      * @param aid AID value, See ETSI 102.221 8.1 and 101.220 4, empty string if no value.
      *
      * Response function is IRadioSimResponse.changeIccPinForAppResponse()
+     *
+     * This is available when android.hardware.telephony.subscription is defined.
      */
     void changeIccPinForApp(in int serial, in String oldPin, in String newPin, in String aid);
 
@@ -90,6 +97,8 @@ oneway interface IRadioSim {
      * @param enable true if to enable uiccApplications, false to disable.
      *
      * Response function is IRadioSimResponse.enableUiccApplicationsResponse()
+     *
+     * This is available when android.hardware.telephony.subscription is defined.
      */
     void enableUiccApplications(in int serial, in boolean enable);
 
@@ -99,6 +108,8 @@ oneway interface IRadioSim {
      * @param serial Serial number of request.
      *
      * Response function is IRadioSimResponse.getAllowedCarriersResponse()
+     *
+     * This is available when android.hardware.telephony.subscription is defined.
      */
     void getAllowedCarriers(in int serial);
 
@@ -110,6 +121,8 @@ oneway interface IRadioSim {
      * @param serial Serial number of request.
      *
      * Response function is IRadioSimResponse.getCdmaSubscriptionResponse()
+     *
+     * This is available when android.hardware.telephony.cdma is defined.
      */
     void getCdmaSubscription(in int serial);
 
@@ -119,6 +132,8 @@ oneway interface IRadioSim {
      * @param serial Serial number of request.
      *
      * Response function is IRadioSimResponse.getCdmaSubscriptionSourceResponse()
+     *
+     * This is available when android.hardware.telephony.cdma is defined.
      */
     void getCdmaSubscriptionSource(in int serial);
 
@@ -134,6 +149,8 @@ oneway interface IRadioSim {
      *        This is only applicable in the case of Fixed Dialing Numbers (FDN) requests.
      *
      * Response function is IRadioSimResponse.getFacilityLockForAppResponse()
+     *
+     * This is available when android.hardware.telephony.subscription is defined.
      */
     void getFacilityLockForApp(in int serial, in String facility, in String password,
             in int serviceClass, in String appId);
@@ -144,6 +161,8 @@ oneway interface IRadioSim {
      * @param serial Serial number of request.
      *
      * Response function is IRadioSimResponse.getIccCardStatusResponse()
+     *
+     * This is available when android.hardware.telephony.subscription is defined.
      */
     void getIccCardStatus(in int serial);
 
@@ -154,6 +173,8 @@ oneway interface IRadioSim {
      * @param aid AID value, See ETSI 102.221 8.1 and 101.220 4, empty string if no value.
      *
      * Response function is IRadioSimResponse.getImsiForAppResponse()
+     *
+     * This is available when android.hardware.telephony.subscription is defined.
      */
     void getImsiForApp(in int serial, in String aid);
 
@@ -163,6 +184,8 @@ oneway interface IRadioSim {
      * @param serial Serial number of request.
      *
      * Response function is IRadioSimResponse.getSimPhonebookCapacityResponse()
+     *
+     * This is available when android.hardware.telephony.subscription is defined.
      */
     void getSimPhonebookCapacity(in int serial);
 
@@ -174,6 +197,8 @@ oneway interface IRadioSim {
      * @param serial Serial number of request.
      *
      * Response function is IRadioSimResponse.getSimPhonebookRecordsResponse()
+     *
+     * This is available when android.hardware.telephony.subscription is defined.
      */
     void getSimPhonebookRecords(in int serial);
 
@@ -185,6 +210,8 @@ oneway interface IRadioSim {
      * @param channelId session id of the logical channel (+CCHC).
      *
      * Response function is IRadioSimResponse.iccCloseLogicalChannelResponse()
+     *
+     * This is available when android.hardware.telephony.subscription is defined.
      *
      * @deprecated use iccCloseLogicalChannelWithSessionInfo instead.
      */
@@ -201,6 +228,8 @@ oneway interface IRadioSim {
      * @param iccIo IccIo
      *
      * Response function is IRadioSimResponse.iccIoForAppResponse()
+     *
+     * This is available when android.hardware.telephony.subscription is defined.
      */
     void iccIoForApp(in int serial, in IccIo iccIo);
 
@@ -219,6 +248,8 @@ oneway interface IRadioSim {
      * @param p2 P2 value, described in ISO 7816-4. Ignore if equal to RadioConst:P2_CONSTANT_NO_P2
      *
      * Response function is IRadioSimResponse.iccOpenLogicalChannelResponse()
+     *
+     * This is available when android.hardware.telephony.subscription is defined.
      */
     void iccOpenLogicalChannel(in int serial, in String aid, in int p2);
 
@@ -232,6 +263,8 @@ oneway interface IRadioSim {
      * @param message SimApdu to be sent
      *
      * Response function is IRadioSimResponse.iccTransmitApduBasicChannelResponse()
+     *
+     * This is available when android.hardware.telephony.subscription is defined.
      */
     void iccTransmitApduBasicChannel(in int serial, in SimApdu message);
 
@@ -244,6 +277,8 @@ oneway interface IRadioSim {
      * @param message SimApdu to be sent
      *
      * Response function is IRadioSimResponse.iccTransmitApduLogicalChannelResponse()
+     *
+     * This is available when android.hardware.telephony.subscription is defined.
      */
     void iccTransmitApduLogicalChannel(in int serial, in SimApdu message);
 
@@ -253,6 +288,8 @@ oneway interface IRadioSim {
      * @param serial Serial number of request.
      *
      * Response function is IRadioSimResponse.reportStkServiceIsRunningResponse()
+     *
+     * This is available when android.hardware.telephony.subscription is defined.
      */
     void reportStkServiceIsRunning(in int serial);
 
@@ -266,6 +303,8 @@ oneway interface IRadioSim {
      * @param aid AID value, See ETSI 102.221 8.1 and 101.220 4, empty string if no value
      *
      * Response function is IRadioSimResponse.requestIccSimAuthenticationResponse()
+     *
+     * This is available when android.hardware.telephony.subscription is defined.
      */
     void requestIccSimAuthentication(
             in int serial, in int authContext, in String authData, in String aid);
@@ -274,6 +313,8 @@ oneway interface IRadioSim {
      * When response type received from a radio indication or radio response is
      * RadioIndicationType:UNSOLICITED_ACK_EXP or RadioResponseType:SOLICITED_ACK_EXP respectively,
      * acknowledge the receipt of those messages by sending responseAcknowledgement().
+     *
+     * This is available when android.hardware.telephony.subscription is defined.
      */
     void responseAcknowledgement();
 
@@ -285,6 +326,8 @@ oneway interface IRadioSim {
      * @param contents SAT/USAT command in hexadecimal format string starting with command tag
      *
      * Response function is IRadioSimResponse.sendEnvelopeResponse()
+     *
+     * This is available when android.hardware.telephony.subscription is defined.
      */
     void sendEnvelope(in int serial, in String contents);
 
@@ -300,6 +343,8 @@ oneway interface IRadioSim {
      * @param contents SAT/USAT command in hexadecimal format starting with command tag
      *
      * Response function is IRadioSimResponse.sendEnvelopeWithStatusResponse()
+     *
+     * This is available when android.hardware.telephony.subscription is defined.
      */
     void sendEnvelopeWithStatus(in int serial, in String contents);
 
@@ -311,6 +356,8 @@ oneway interface IRadioSim {
      *        first byte of response data
      *
      * Response function is IRadioSimResponse.sendTerminalResponseResponseToSim()
+     *
+     * This is available when android.hardware.telephony.subscription is defined.
      */
     void sendTerminalResponseToSim(in int serial, in String contents);
 
@@ -330,6 +377,8 @@ oneway interface IRadioSim {
      * @param multiSimPolicy Policy to be used for devices with multiple SIMs.
      *
      * Response function is IRadioSimResponse.setAllowedCarriersResponse()
+     *
+     * This is available when android.hardware.telephony.subscription is defined.
      */
     void setAllowedCarriers(in int serial, in CarrierRestrictions carriers,
             in SimLockMultiSimPolicy multiSimPolicy);
@@ -343,6 +392,8 @@ oneway interface IRadioSim {
      * @param imsiEncryptionInfo ImsiEncryptionInfo
      *
      * Response function is IRadioSimResponse.setCarrierInfoForImsiEncryptionResponse()
+     *
+     * This is available when android.hardware.telephony.subscription is defined.
      */
     void setCarrierInfoForImsiEncryption(in int serial, in ImsiEncryptionInfo imsiEncryptionInfo);
 
@@ -353,6 +404,8 @@ oneway interface IRadioSim {
      * @param cdmaSub CdmaSubscriptionSource
      *
      * Response function is IRadioSimResponse.setCdmaSubscriptionSourceResponse()
+     *
+     * This is available when android.hardware.telephony.cdma is defined.
      */
     void setCdmaSubscriptionSource(in int serial, in CdmaSubscriptionSource cdmaSub);
 
@@ -369,6 +422,8 @@ oneway interface IRadioSim {
      *        This is only applicable in the case of Fixed Dialing Numbers (FDN) requests.
      *
      * Response function is IRadioSimResponse.setFacilityLockForAppResponse()
+     *
+     * This is available when android.hardware.telephony.subscription is defined.
      */
     void setFacilityLockForApp(in int serial, in String facility, in boolean lockState,
             in String password, in int serviceClass, in String appId);
@@ -378,6 +433,8 @@ oneway interface IRadioSim {
      *
      * @param radioSimResponse Object containing response functions
      * @param radioSimIndication Object containing radio indications
+     *
+     * This is available when android.hardware.telephony.subscription is defined.
      */
     void setResponseFunctions(
             in IRadioSimResponse radioSimResponse, in IRadioSimIndication radioSimIndication);
@@ -408,6 +465,8 @@ oneway interface IRadioSim {
      *                POWER_UP_PASS_THROUGH if powering up the SIM card in pass through mode
      *
      * Response function is IRadioSimResponse.setSimCardPowerResponse()
+     *
+     * This is available when android.hardware.telephony.subscription is defined.
      */
     void setSimCardPower(in int serial, in CardPowerState powerUp);
 
@@ -418,6 +477,8 @@ oneway interface IRadioSim {
      * @param uiccSub SelectUiccSub
      *
      * Response function is IRadioSimResponse.setUiccSubscriptionResponse()
+     *
+     * This is available when android.hardware.telephony.subscription is defined.
      */
     void setUiccSubscription(in int serial, in SelectUiccSub uiccSub);
 
@@ -430,6 +491,8 @@ oneway interface IRadioSim {
      * @param aid AID value, See ETSI 102.221 8.1 and 101.220 4, empty string if no value.
      *
      * Response function is IRadioSimResponse.supplyIccPin2ForAppResponse()
+     *
+     * This is available when android.hardware.telephony.subscription is defined.
      */
     void supplyIccPin2ForApp(in int serial, in String pin2, in String aid);
 
@@ -441,6 +504,8 @@ oneway interface IRadioSim {
      * @param aid AID value, See ETSI 102.221 8.1 and 101.220 4, empty string if no value.
      *
      * Response function is IRadioSimResponse.supplyIccPinForAppResponse()
+     *
+     * This is available when android.hardware.telephony.subscription is defined.
      */
     void supplyIccPinForApp(in int serial, in String pin, in String aid);
 
@@ -453,6 +518,8 @@ oneway interface IRadioSim {
      * @param aid AID value, See ETSI 102.221 8.1 and 101.220 4, empty string if no value.
      *
      * Response function is IRadioSimResponse.supplyIccPuk2ForAppResponse()
+     *
+     * This is available when android.hardware.telephony.subscription is defined.
      */
     void supplyIccPuk2ForApp(in int serial, in String puk2, in String pin2, in String aid);
 
@@ -465,6 +532,8 @@ oneway interface IRadioSim {
      * @param aid AID value, See ETSI 102.221 8.1 and 101.220 4, empty string if no value.
      *
      * Response function is IRadioSimResponse.supplyIccPukForAppResponse()
+     *
+     * This is available when android.hardware.telephony.subscription is defined.
      */
     void supplyIccPukForApp(in int serial, in String puk, in String pin, in String aid);
 
@@ -480,6 +549,8 @@ oneway interface IRadioSim {
      * @param controlKey the unlock code for removing persoType personalization from this device
      *
      * Response function is IRadioSimResponse.supplySimDepersonalizationResponse()
+     *
+     * This is available when android.hardware.telephony.subscription is defined.
      */
     void supplySimDepersonalization(
             in int serial, in PersoSubstate persoType, in String controlKey);
@@ -495,6 +566,8 @@ oneway interface IRadioSim {
      * @param recordInfo Details of the record to insert, delete or update.
      *
      * Response function is IRadioSimResponse.updateSimPhonebookRecordsResponse()
+     *
+     * This is available when android.hardware.telephony.subscription is defined.
      */
     void updateSimPhonebookRecords(in int serial, in PhonebookRecordInfo recordInfo);
 
@@ -510,6 +583,8 @@ oneway interface IRadioSim {
      * @param sessionInfo Details of the opened logical channel info like sessionId and isEs10.
      *
      * Response function is IRadioSimResponse.iccCloseLogicalChannelWithSessionInfoResponse()
+     *
+     * This is available when android.hardware.telephony.subscription is defined.
      */
     void iccCloseLogicalChannelWithSessionInfo(in int serial, in SessionInfo sessionInfo);
 }

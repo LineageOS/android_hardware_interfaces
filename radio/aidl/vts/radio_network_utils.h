@@ -46,6 +46,8 @@ class RadioNetworkResponse : public BnRadioNetworkResponse {
     std::vector<BarringInfo> barringInfoList;
     UsageSetting usageSetting;
     std::vector<RadioAccessSpecifier> specifiers;
+    bool isCellularIdentifierTransparencyEnabled;
+    bool isSecurityAlgorithmsUpdatedEnabled;
 
     virtual ndk::ScopedAStatus acknowledgeRequest(int32_t serial) override;
 
@@ -169,6 +171,18 @@ class RadioNetworkResponse : public BnRadioNetworkResponse {
             const RadioResponseInfo& info, bool isEnabled) override;
 
     virtual ndk::ScopedAStatus setN1ModeEnabledResponse(const RadioResponseInfo& info) override;
+
+    virtual ndk::ScopedAStatus setCellularIdentifierTransparencyEnabledResponse(
+            const RadioResponseInfo& info) override;
+
+    virtual ndk::ScopedAStatus isCellularIdentifierTransparencyEnabledResponse(
+            const RadioResponseInfo& info, bool /*enabled*/) override;
+
+    virtual ndk::ScopedAStatus isSecurityAlgorithmsUpdatedEnabledResponse(
+            const RadioResponseInfo& info, bool isEnabled) override;
+
+    virtual ndk::ScopedAStatus setSecurityAlgorithmsUpdatedEnabledResponse(
+            const RadioResponseInfo& info) override;
 };
 
 /* Callback class for radio network indication */
@@ -226,6 +240,13 @@ class RadioNetworkIndication : public BnRadioNetworkIndication {
 
     virtual ndk::ScopedAStatus emergencyNetworkScanResult(
             RadioIndicationType type, const EmergencyRegResult& result) override;
+
+    virtual ndk::ScopedAStatus cellularIdentifierDisclosed(
+            RadioIndicationType type, const CellularIdentifierDisclosure& disclosures) override;
+
+    virtual ndk::ScopedAStatus securityAlgorithmsUpdated(
+            RadioIndicationType type,
+            const SecurityAlgorithmUpdate& securityAlgorithmUpdate) override;
 };
 
 // The main test class for Radio AIDL Network.

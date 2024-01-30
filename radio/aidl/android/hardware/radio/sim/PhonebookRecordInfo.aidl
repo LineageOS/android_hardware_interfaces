@@ -19,6 +19,7 @@ package android.hardware.radio.sim;
 /**
  * Phonebook-record-information specified by EF_ADN (Abbreviated dialing numbers) record of SIM
  * as per 3GPP spec 31.102 v15 Section-4.4.2.3.
+ * @hide
  */
 @VintfStability
 @JavaDerive(toString=true)

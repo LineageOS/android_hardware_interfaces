@@ -52,8 +52,6 @@ using ::android::hardware::sensors::V1_0::SharedMemType;
 using ::android::hardware::sensors::V1_0::Vec3;
 using ::android::hardware::sensors::V2_1::implementation::convertToOldSensorInfos;
 using std::chrono::duration_cast;
-using std::chrono::microseconds;
-using std::chrono::milliseconds;
 using std::chrono::nanoseconds;
 
 using EventV1_0 = ::android::hardware::sensors::V1_0::Event;
@@ -91,7 +89,7 @@ class EventCallback : public IEventCallback<EventType> {
     }
 
     void waitForFlushEvents(const std::vector<SensorInfoType>& sensorsToWaitFor,
-                            int32_t numCallsToFlush, milliseconds timeout) {
+                            int32_t numCallsToFlush, std::chrono::milliseconds timeout) {
         std::unique_lock<std::recursive_mutex> lock(mFlushMutex);
         mFlushCV.wait_for(lock, timeout,
                           [&] { return flushesReceived(sensorsToWaitFor, numCallsToFlush); });
@@ -102,7 +100,8 @@ class EventCallback : public IEventCallback<EventType> {
         return mEventMap[sensorHandle];
     }
 
-    void waitForEvents(const std::vector<SensorInfoType>& sensorsToWaitFor, milliseconds timeout) {
+    void waitForEvents(const std::vector<SensorInfoType>& sensorsToWaitFor,
+                       std::chrono::milliseconds timeout) {
         std::unique_lock<std::recursive_mutex> lock(mEventMutex);
         mEventCV.wait_for(lock, timeout, [&] { return eventsReceived(sensorsToWaitFor); });
     }
@@ -472,7 +471,7 @@ TEST_P(SensorsHidlTest, InjectSensorEventData) {
     }
 
     // Wait for events to be written back to the Event FMQ
-    callback.waitForEvents(sensors, milliseconds(1000) /* timeout */);
+    callback.waitForEvents(sensors, std::chrono::milliseconds(1000) /* timeout */);
     getEnvironment()->unregisterCallback();
 
     for (const auto& s : sensors) {
@@ -623,7 +622,7 @@ void SensorsHidlTest::runFlushTest(const std::vector<SensorInfoType>& sensors, b
     }
 
     // Wait up to one second for the flush events
-    callback.waitForFlushEvents(sensors, flushCalls, milliseconds(1000) /* timeout */);
+    callback.waitForFlushEvents(sensors, flushCalls, std::chrono::milliseconds(1000) /* timeout */);
 
     // Deactivate all sensors after waiting for flush events so pending flush events are not
     // abandoned by the HAL.
@@ -748,8 +747,8 @@ TEST_P(SensorsHidlTest, Activate) {
 }
 
 TEST_P(SensorsHidlTest, NoStaleEvents) {
-    constexpr milliseconds kFiveHundredMs(500);
-    constexpr milliseconds kOneSecond(1000);
+    constexpr std::chrono::milliseconds kFiveHundredMs(500);
+    constexpr std::chrono::milliseconds kOneSecond(1000);
 
     // Register the callback to receive sensor events
     EventCallback callback;
@@ -757,10 +756,11 @@ TEST_P(SensorsHidlTest, NoStaleEvents) {
 
     // This test is not valid for one-shot, on-change or special-report-mode sensors
     const std::vector<SensorInfoType> sensors = getNonOneShotAndNonOnChangeAndNonSpecialSensors();
-    milliseconds maxMinDelay(0);
+    std::chrono::milliseconds maxMinDelay(0);
     for (const SensorInfoType& sensor : sensors) {
-        milliseconds minDelay = duration_cast<milliseconds>(microseconds(sensor.minDelay));
-        maxMinDelay = milliseconds(std::max(maxMinDelay.count(), minDelay.count()));
+        std::chrono::milliseconds minDelay = duration_cast<std::chrono::milliseconds>(
+                std::chrono::microseconds(sensor.minDelay));
+        maxMinDelay = std::chrono::milliseconds(std::max(maxMinDelay.count(), minDelay.count()));
     }
 
     // Activate the sensors so that they start generating events
@@ -787,7 +787,7 @@ TEST_P(SensorsHidlTest, NoStaleEvents) {
     }
 
     // Allow some time to pass, reset the callback, then reactivate the sensors
-    usleep(duration_cast<microseconds>(kOneSecond + (5 * maxMinDelay)).count());
+    usleep(duration_cast<std::chrono::microseconds>(kOneSecond + (5 * maxMinDelay)).count());
     callback.reset();
     activateAllSensors(true);
     callback.waitForEvents(sensors, kFiveHundredMs + (5 * maxMinDelay));
@@ -806,12 +806,19 @@ TEST_P(SensorsHidlTest, NoStaleEvents) {
             continue;
         }
 
+        // Skip sensors with no events
+        const std::vector<EventType> events = callback.getEvents(sensor.sensorHandle);
+        if (events.empty()) {
+            continue;
+        }
+
         // Ensure that the first event received is not stale by ensuring that its timestamp is
         // sufficiently different from the previous event
-        const EventType newEvent = callback.getEvents(sensor.sensorHandle).front();
-        milliseconds delta = duration_cast<milliseconds>(
+        const EventType newEvent = events.front();
+        std::chrono::milliseconds delta = duration_cast<std::chrono::milliseconds>(
                 nanoseconds(newEvent.timestamp - lastEventTimestampMap[sensor.sensorHandle]));
-        milliseconds sensorMinDelay = duration_cast<milliseconds>(microseconds(sensor.minDelay));
+        std::chrono::milliseconds sensorMinDelay = duration_cast<std::chrono::milliseconds>(
+                std::chrono::microseconds(sensor.minDelay));
         ASSERT_GE(delta, kFiveHundredMs + (3 * sensorMinDelay));
     }
 }

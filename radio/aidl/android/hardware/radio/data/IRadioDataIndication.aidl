@@ -25,6 +25,7 @@ import android.hardware.radio.data.SlicingConfig;
 
 /**
  * Interface declaring unsolicited radio indications for data APIs.
+ * @hide
  */
 @VintfStability
 oneway interface IRadioDataIndication {

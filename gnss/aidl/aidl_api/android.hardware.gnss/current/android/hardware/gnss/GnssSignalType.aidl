@@ -42,6 +42,7 @@ parcelable GnssSignalType {
   const @utf8InCpp String CODE_TYPE_B = "B";
   const @utf8InCpp String CODE_TYPE_C = "C";
   const @utf8InCpp String CODE_TYPE_D = "D";
+  const @utf8InCpp String CODE_TYPE_E = "E";
   const @utf8InCpp String CODE_TYPE_I = "I";
   const @utf8InCpp String CODE_TYPE_L = "L";
   const @utf8InCpp String CODE_TYPE_M = "M";

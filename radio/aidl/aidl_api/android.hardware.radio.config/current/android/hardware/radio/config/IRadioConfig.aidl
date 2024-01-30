@@ -40,6 +40,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.config;
+/* @hide */
 @VintfStability
 interface IRadioConfig {
   oneway void getHalDeviceCapabilities(in int serial);

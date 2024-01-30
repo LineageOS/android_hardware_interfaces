@@ -19,6 +19,7 @@ package android.hardware.radio.network;
 import android.hardware.radio.network.CellIdentityWcdma;
 import android.hardware.radio.network.WcdmaSignalStrength;
 
+/** @hide */
 @VintfStability
 @JavaDerive(toString=true)
 parcelable CellInfoWcdma {

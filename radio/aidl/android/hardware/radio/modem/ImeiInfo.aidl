@@ -18,26 +18,25 @@ package android.hardware.radio.modem;
 
 /**
  * ImeiInfo to encapsulate the IMEI information from modem
+ * @hide
  */
-
 @VintfStability
 @JavaDerive(toString=true)
 parcelable ImeiInfo {
-
     @VintfStability
     @Backing(type="int")
     /**
      * ImeiType enum is used identify the IMEI as primary or secondary as mentioned in GSMA TS.37
      */
     enum ImeiType {
-       /**
-        * This is the primary IMEI of the device as mentioned in the GSMA TS.37. In a multi-SIM
-        * device the modem must set one IMEI with this type as mentioned in GSMA TS37_2.2_REQ_8.
-        * A single SIM with one IMEI must by default set that IMEI with this type.
-        */
-       PRIMARY = 1,
-       /** This is not the primary IMEI of the device */
-       SECONDARY = 2,
+        /**
+         * This is the primary IMEI of the device as mentioned in the GSMA TS.37. In a multi-SIM
+         * device the modem must set one IMEI with this type as mentioned in GSMA TS37_2.2_REQ_8.
+         * A single SIM with one IMEI must by default set that IMEI with this type.
+         */
+        PRIMARY = 1,
+        /** This is not the primary IMEI of the device */
+        SECONDARY = 2,
     }
 
     /** Primary or secondary IMEI as mentioned in GSMA spec TS.37 */
@@ -48,7 +47,7 @@ parcelable ImeiInfo {
      * SIM activations or swaps.
      */
     String imei;
-   /**
+    /**
      * IMEI software version, see 3gpp spec 23.003 section 6.
      */
     String svn;

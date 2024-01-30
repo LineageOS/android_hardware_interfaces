@@ -19,11 +19,12 @@ package android.hardware.radio.modem;
 import android.hardware.radio.RadioResponseInfo;
 import android.hardware.radio.modem.ActivityStatsInfo;
 import android.hardware.radio.modem.HardwareConfig;
-import android.hardware.radio.modem.RadioCapability;
 import android.hardware.radio.modem.ImeiInfo;
+import android.hardware.radio.modem.RadioCapability;
 
 /**
  * Interface declaring response functions to solicited radio requests for modem APIs.
+ * @hide
  */
 @VintfStability
 oneway interface IRadioModemResponse {
@@ -40,6 +41,7 @@ oneway interface IRadioModemResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:MODEM_ERR
@@ -54,6 +56,7 @@ oneway interface IRadioModemResponse {
      * @param version string containing version string for log reporting
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:EMPTY_RECORD
@@ -78,6 +81,7 @@ oneway interface IRadioModemResponse {
      * accessing the device.
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:NO_MEMORY
@@ -99,6 +103,7 @@ oneway interface IRadioModemResponse {
      * @param config Array of HardwareConfig of the radio.
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      */
@@ -109,6 +114,8 @@ oneway interface IRadioModemResponse {
      * @param activityInfo modem activity information
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.radio.access is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:NO_MEMORY
@@ -125,6 +132,7 @@ oneway interface IRadioModemResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:MODEM_ERR
@@ -136,6 +144,8 @@ oneway interface IRadioModemResponse {
      * @param rc Radio capability as defined by RadioCapability in types.hal
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.radio.access is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:OPERATION_NOT_ALLOWED
@@ -174,6 +184,7 @@ oneway interface IRadioModemResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.cdma is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *
@@ -196,6 +207,8 @@ oneway interface IRadioModemResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.radio.access is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:OPERATION_NOT_ALLOWED
@@ -211,6 +224,7 @@ oneway interface IRadioModemResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:NO_MEMORY
@@ -228,6 +242,8 @@ oneway interface IRadioModemResponse {
      *        feedback return status
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.radio.access is not
+     *                                    defined
      *   RadioError:NONE means a unsol radioCapability() will be sent within 30 seconds.
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:OPERATION_NOT_ALLOWED
@@ -246,6 +262,8 @@ oneway interface IRadioModemResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.radio.access is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:INTERNAL_ERR
      *   RadioError:INVALID_ARGUMENTS
@@ -264,6 +282,7 @@ oneway interface IRadioModemResponse {
      * @param imeiInfo IMEI information
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.gsm is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:MODEM_ERR

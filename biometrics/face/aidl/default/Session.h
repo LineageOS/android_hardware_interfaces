@@ -19,6 +19,7 @@
 #include <random>
 
 #include <aidl/android/hardware/biometrics/face/BnSession.h>
+#include <aidl/android/hardware/biometrics/face/FaceEnrollOptions.h>
 #include <aidl/android/hardware/biometrics/face/ISessionCallback.h>
 
 #include "FakeFaceEngine.h"
@@ -87,6 +88,10 @@ class Session : public BnSession {
             std::shared_ptr<common::ICancellationSignal>* out) override;
 
     ndk::ScopedAStatus onContextChanged(const common::OperationContext& context) override;
+
+    ndk::ScopedAStatus enrollWithOptions(
+            const FaceEnrollOptions& options,
+            std::shared_ptr<common::ICancellationSignal>* out) override;
 
   private:
     std::unique_ptr<FakeFaceEngine> mEngine;

@@ -95,12 +95,13 @@ ExternalCameraProviderImpl_2_4::~ExternalCameraProviderImpl_2_4() {
 
 Return<Status> ExternalCameraProviderImpl_2_4::setCallback(
         const sp<ICameraProviderCallback>& callback) {
+    if (callback == nullptr) {
+        return Status::ILLEGAL_ARGUMENT;
+    }
+
     {
         Mutex::Autolock _l(mLock);
         mCallbacks = callback;
-    }
-    if (mCallbacks == nullptr) {
-        return Status::OK;
     }
     // Send a callback for all devices to initialize
     {

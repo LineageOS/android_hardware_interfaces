@@ -14,9 +14,12 @@ aidl_interface {
         "android/hardware/biometrics/face/**/*.aidl",
     ],
     imports: [
-        "android.hardware.biometrics.common-V3",
+        "android.hardware.biometrics.common-V4",
         "android.hardware.common-V2",
         "android.hardware.keymaster-V4",
+    ],
+    include_dirs: [
+        "frameworks/native/aidl/gui",
     ],
     stability: "vintf",
     backend: {
@@ -25,6 +28,11 @@ aidl_interface {
         },
         cpp: {
             enabled: false,
+        },
+        ndk: {
+            additional_shared_libraries: [
+                "libnativewindow",
+            ],
         },
     },
     versions_with_info: [
@@ -48,6 +56,14 @@ aidl_interface {
             version: "3",
             imports: [
                 "android.hardware.biometrics.common-V3",
+                "android.hardware.common-V2",
+                "android.hardware.keymaster-V4",
+            ],
+        },
+        {
+            version: "4",
+            imports: [
+                "android.hardware.biometrics.common-V4",
                 "android.hardware.common-V2",
                 "android.hardware.keymaster-V4",
             ],

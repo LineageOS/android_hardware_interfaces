@@ -122,21 +122,29 @@ private:
             }
 
             std::unique_lock<std::mutex> g(mLock);
+            // mStopRequested might be set to true after we enter the loop. Must check inside
+            // the lock to make sure the value will not change before we start the wait.
+            if (mStopRequested) {
+                return;
+            }
             mCond.wait_until(g, nextEventTime);  // nextEventTime can be nanoseconds::max()
         }
     }
 
     void stop() {
-        mStopRequested = true;
         {
             std::lock_guard<std::mutex> g(mLock);
             mCookieToEventsMap.clear();
+            // Even though this is atomic, this must be set inside the lock to make sure we will
+            // not change this after we check mStopRequested, but before we start the wait.
+            mStopRequested = true;
         }
         mCond.notify_one();
         if (mTimerThread.joinable()) {
             mTimerThread.join();
         }
     }
+
 private:
     mutable std::mutex mLock;
     std::thread mTimerThread;

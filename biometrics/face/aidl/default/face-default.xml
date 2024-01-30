@@ -1,7 +1,0 @@
-<manifest version="1.0" type="device">
-    <hal format="aidl">
-        <name>android.hardware.biometrics.face</name>
-        <version>3</version>
-        <fqname>IFace/default</fqname>
-    </hal>
-</manifest>

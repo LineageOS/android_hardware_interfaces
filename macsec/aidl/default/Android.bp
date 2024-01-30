@@ -1,0 +1,64 @@
+//
+// Copyright (C) 2023 The Android Open Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
+package {
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "hardware_interfaces_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-Apache-2.0
+    default_applicable_licenses: ["hardware_interfaces_license"],
+}
+
+cc_binary {
+    name: "android.hardware.macsec-service",
+    init_rc: ["android.hardware.macsec.rc"],
+    vendor: true,
+    relative_install_path: "hw",
+    srcs: [
+        "MacsecPskPlugin.cpp",
+        "service.cpp",
+    ],
+    shared_libs: [
+        "android.hardware.macsec-V1-ndk",
+        "libcrypto",
+        "libbase",
+        "libbinder_ndk",
+    ],
+    vintf_fragments: ["android.hardware.macsec.xml"],
+}
+
+cc_fuzz {
+    name: "android.hardware.macsec@V1-default-service.aidl_fuzzer",
+    vendor: true,
+    srcs: [
+        "MacsecPskPlugin.cpp",
+        "fuzzer/fuzzer.cpp",
+    ],
+    shared_libs: [
+        "android.hardware.macsec-V1-ndk",
+        "libcrypto",
+        "liblog",
+    ],
+    defaults: [
+        "service_fuzzer_defaults",
+    ],
+    fuzz_config: {
+        cc: [
+            "keithmok@google.com",
+        ],
+    },
+}

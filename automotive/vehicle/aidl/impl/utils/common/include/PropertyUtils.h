@@ -77,22 +77,6 @@ constexpr int SEAT_1_RIGHT = toInt(propertyutils_impl::VehicleAreaSeat::ROW_1_RI
 constexpr int SEAT_2_LEFT = toInt(propertyutils_impl::VehicleAreaSeat::ROW_2_LEFT);
 constexpr int SEAT_2_RIGHT = toInt(propertyutils_impl::VehicleAreaSeat::ROW_2_RIGHT);
 constexpr int SEAT_2_CENTER = toInt(propertyutils_impl::VehicleAreaSeat::ROW_2_CENTER);
-constexpr int VENDOR_EXTENSION_BOOLEAN_PROPERTY =
-        0x101 | toInt(propertyutils_impl::VehiclePropertyGroup::VENDOR) |
-        toInt(propertyutils_impl::VehiclePropertyType::BOOLEAN) |
-        toInt(propertyutils_impl::VehicleArea::DOOR);
-constexpr int VENDOR_EXTENSION_FLOAT_PROPERTY =
-        0x102 | toInt(propertyutils_impl::VehiclePropertyGroup::VENDOR) |
-        toInt(propertyutils_impl::VehiclePropertyType::FLOAT) |
-        toInt(propertyutils_impl::VehicleArea::SEAT);
-constexpr int VENDOR_EXTENSION_INT_PROPERTY =
-        0x103 | toInt(propertyutils_impl::VehiclePropertyGroup::VENDOR) |
-        toInt(propertyutils_impl::VehiclePropertyType::INT32) |
-        toInt(propertyutils_impl::VehicleArea::WINDOW);
-constexpr int VENDOR_EXTENSION_STRING_PROPERTY =
-        0x104 | toInt(propertyutils_impl::VehiclePropertyGroup::VENDOR) |
-        toInt(propertyutils_impl::VehiclePropertyType::STRING) |
-        toInt(propertyutils_impl::VehicleArea::GLOBAL);
 constexpr int FUEL_DOOR_REAR_LEFT = toInt(propertyutils_impl::PortLocationType::REAR_LEFT);
 constexpr int CHARGE_PORT_FRONT_LEFT = toInt(propertyutils_impl::PortLocationType::FRONT_LEFT);
 constexpr int CHARGE_PORT_REAR_LEFT = toInt(propertyutils_impl::PortLocationType::REAR_LEFT);
@@ -113,11 +97,6 @@ constexpr int ALL_WHEELS =
 constexpr int HVAC_LEFT = SEAT_1_LEFT | SEAT_2_LEFT | SEAT_2_CENTER;
 constexpr int HVAC_RIGHT = SEAT_1_RIGHT | SEAT_2_RIGHT;
 constexpr int HVAC_ALL = HVAC_LEFT | HVAC_RIGHT;
-
-const int32_t HVAC_POWER_PROPERTIES[] = {
-        toInt(propertyutils_impl::VehicleProperty::HVAC_FAN_SPEED),
-        toInt(propertyutils_impl::VehicleProperty::HVAC_FAN_DIRECTION),
-};
 
 }  // namespace vehicle
 }  // namespace automotive

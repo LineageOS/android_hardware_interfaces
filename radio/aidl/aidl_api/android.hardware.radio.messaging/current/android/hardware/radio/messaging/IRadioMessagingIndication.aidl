@@ -32,6 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.messaging;
+/* @hide */
 @VintfStability
 interface IRadioMessagingIndication {
   oneway void cdmaNewSms(in android.hardware.radio.RadioIndicationType type, in android.hardware.radio.messaging.CdmaSmsMessage msg);

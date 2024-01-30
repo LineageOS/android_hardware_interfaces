@@ -17,36 +17,36 @@
 #pragma once
 
 #include "ConfigManager.h"
+#include "EvsCamera.h"
 
-#include <aidl/android/hardware/automotive/evs/BnEvsCamera.h>
-#include <aidl/android/hardware/automotive/evs/BufferDesc.h>
 #include <aidl/android/hardware/automotive/evs/CameraDesc.h>
 #include <aidl/android/hardware/automotive/evs/CameraParam.h>
-#include <aidl/android/hardware/automotive/evs/EvsResult.h>
 #include <aidl/android/hardware/automotive/evs/IEvsCameraStream.h>
 #include <aidl/android/hardware/automotive/evs/IEvsDisplay.h>
 #include <aidl/android/hardware/automotive/evs/ParameterRange.h>
 #include <aidl/android/hardware/automotive/evs/Stream.h>
-// #include <android-base/result.h>
 #include <android/hardware_buffer.h>
 #include <ui/GraphicBuffer.h>
 
-#include <functional>
+#include <cstdint>
+#include <memory>
 #include <thread>
+#include <unordered_map>
+#include <vector>
 
 namespace aidl::android::hardware::automotive::evs::implementation {
 
-class EvsMockCamera : public evs::BnEvsCamera {
-    // This prevents constructors from direct access while it allows this class to
-    // be instantiated via ndk::SharedRefBase::make<>.
+class EvsMockCamera : public EvsCamera {
   private:
-    struct Sigil {
-        explicit Sigil() = default;
-    };
+    using Base = EvsCamera;
 
   public:
+    EvsMockCamera(Sigil sigil, const char* deviceName,
+                  std::unique_ptr<ConfigManager::CameraInfo>& camInfo);
+    EvsMockCamera(const EvsMockCamera&) = delete;
+    EvsMockCamera& operator=(const EvsMockCamera&) = delete;
+
     // Methods from ::android::hardware::automotive::evs::IEvsCamera follow.
-    ndk::ScopedAStatus doneWithFrame(const std::vector<evs::BufferDesc>& buffers) override;
     ndk::ScopedAStatus forcePrimaryClient(
             const std::shared_ptr<evs::IEvsDisplay>& display) override;
     ndk::ScopedAStatus getCameraInfo(evs::CameraDesc* _aidl_return) override;
@@ -58,47 +58,37 @@ class EvsMockCamera : public evs::BnEvsCamera {
     ndk::ScopedAStatus getParameterList(std::vector<evs::CameraParam>* _aidl_return) override;
     ndk::ScopedAStatus getPhysicalCameraInfo(const std::string& deviceId,
                                              evs::CameraDesc* _aidl_return) override;
-    ndk::ScopedAStatus importExternalBuffers(const std::vector<evs::BufferDesc>& buffers,
-                                             int32_t* _aidl_return) override;
-    ndk::ScopedAStatus pauseVideoStream() override;
-    ndk::ScopedAStatus resumeVideoStream() override;
     ndk::ScopedAStatus setExtendedInfo(int32_t opaqueIdentifier,
                                        const std::vector<uint8_t>& opaqueValue) override;
     ndk::ScopedAStatus setIntParameter(evs::CameraParam id, int32_t value,
                                        std::vector<int32_t>* effectiveValue) override;
     ndk::ScopedAStatus setPrimaryClient() override;
-    ndk::ScopedAStatus setMaxFramesInFlight(int32_t bufferCount) override;
-    ndk::ScopedAStatus startVideoStream(
-            const std::shared_ptr<evs::IEvsCameraStream>& receiver) override;
-    ndk::ScopedAStatus stopVideoStream() override;
     ndk::ScopedAStatus unsetPrimaryClient() override;
+
+    const evs::CameraDesc& getDesc() { return mDescription; }
 
     static std::shared_ptr<EvsMockCamera> Create(const char* deviceName);
     static std::shared_ptr<EvsMockCamera> Create(
             const char* deviceName, std::unique_ptr<ConfigManager::CameraInfo>& camInfo,
             const evs::Stream* streamCfg = nullptr);
-    EvsMockCamera(const EvsMockCamera&) = delete;
-    EvsMockCamera& operator=(const EvsMockCamera&) = delete;
-
-    virtual ~EvsMockCamera() override;
-    void shutdown();
-
-    const evs::CameraDesc& getDesc() { return mDescription; }
-
-    // Constructors
-    EvsMockCamera(Sigil sigil, const char* deviceName,
-                  std::unique_ptr<ConfigManager::CameraInfo>& camInfo);
 
   private:
-    // These three functions are expected to be called while mAccessLock is held
-    bool setAvailableFrames_Locked(unsigned bufferCount);
-    unsigned increaseAvailableFrames_Locked(unsigned numToAdd);
-    unsigned decreaseAvailableFrames_Locked(unsigned numToRemove);
-
     void generateFrames();
     void fillMockFrame(buffer_handle_t handle, const AHardwareBuffer_Desc* pDesc);
-    void returnBufferLocked(const uint32_t bufferId);
-    ndk::ScopedAStatus stopVideoStream_impl();
+
+    ::android::status_t allocateOneFrame(buffer_handle_t* handle) override;
+
+    bool startVideoStreamImpl_locked(const std::shared_ptr<evs::IEvsCameraStream>& receiver,
+                                     ndk::ScopedAStatus& status,
+                                     std::unique_lock<std::mutex>& lck) override;
+
+    bool stopVideoStreamImpl_locked(ndk::ScopedAStatus& status,
+                                    std::unique_lock<std::mutex>& lck) override;
+
+    bool postVideoStreamStop_locked(ndk::ScopedAStatus& status,
+                                    std::unique_lock<std::mutex>& lck) override;
+
+    void initializeParameters();
 
     CameraDesc mDescription = {};  // The properties of this camera
 
@@ -119,28 +109,6 @@ class EvsMockCamera : public evs::BnEvsCamera {
     // Bytes per line in the buffers
     uint32_t mStride = 0;
 
-    struct BufferRecord {
-        buffer_handle_t handle;
-        bool inUse;
-
-        explicit BufferRecord(buffer_handle_t h) : handle(h), inUse(false){};
-    };
-
-    std::vector<BufferRecord> mBuffers;  // Graphics buffers to transfer images
-    unsigned mFramesAllowed;             // How many buffers are we currently using
-    unsigned mFramesInUse;               // How many buffers are currently outstanding
-
-    enum StreamStateValues {
-        STOPPED,
-        RUNNING,
-        STOPPING,
-        DEAD,
-    };
-    StreamStateValues mStreamState;
-
-    // Synchronization necessary to deconflict mCaptureThread from the main service thread
-    std::mutex mAccessLock;
-
     // Static camera module information
     std::unique_ptr<ConfigManager::CameraInfo>& mCameraInfo;
 
@@ -160,7 +128,6 @@ class EvsMockCamera : public evs::BnEvsCamera {
         int32_t value;
     };
     std::unordered_map<CameraParam, std::shared_ptr<CameraParameterDesc>> mParams;
-    void initializeParameters();
 };
 
 }  // namespace aidl::android::hardware::automotive::evs::implementation

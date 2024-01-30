@@ -27,7 +27,6 @@ cc_test {
         "libgtest",
         "libgmock",
     ],
-    header_libs: ["VehicleHalTestUtilHeaders"],
     defaults: ["VehicleHalDefaults"],
     test_suites: ["device-tests"],
 }

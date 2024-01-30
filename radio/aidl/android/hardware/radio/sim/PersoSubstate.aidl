@@ -19,6 +19,7 @@ package android.hardware.radio.sim;
 /**
  * Additional personalization categories in addition to those specified in 3GPP TS 22.022 and
  * 3GPP2 C.S0068-0.
+ * @hide
  */
 @VintfStability
 @Backing(type="int")

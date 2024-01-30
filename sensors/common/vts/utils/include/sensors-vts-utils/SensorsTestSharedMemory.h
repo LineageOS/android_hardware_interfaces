@@ -17,7 +17,11 @@
 #ifndef ANDROID_SENSORS_TEST_SHARED_MEMORY_H
 #define ANDROID_SENSORS_TEST_SHARED_MEMORY_H
 
-#include "GrallocWrapper.h"
+#include <aidl/android/hardware/graphics/common/BufferUsage.h>
+#include <aidl/android/hardware/graphics/common/PixelFormat.h>
+#include <ui/GraphicBuffer.h>
+#include <ui/GraphicBufferAllocator.h>
+#include <ui/GraphicBufferMapper.h>
 
 #include <android-base/macros.h>
 #include <log/log.h>
@@ -28,6 +32,8 @@
 #include <cutils/ashmem.h>
 
 using namespace ::android::hardware::sensors::V1_0;
+using ::aidl::android::hardware::graphics::common::BufferUsage;
+using ::aidl::android::hardware::graphics::common::PixelFormat;
 
 template <class SensorTypeVersion, class EventType>
 class SensorsTestSharedMemory {
@@ -48,11 +54,20 @@ class SensorsTestSharedMemory {
     }
 
     SharedMemInfo getSharedMemInfo() const {
-        SharedMemInfo mem = {.type = mType,
-                             .format = SharedMemFormat::SENSORS_EVENT,
-                             .size = static_cast<uint32_t>(mSize),
-                             .memoryHandle = mNativeHandle};
-        return mem;
+        if (mType == SharedMemType::GRALLOC) {
+            SharedMemInfo mem = {.type = mType,
+                                 .format = SharedMemFormat::SENSORS_EVENT,
+                                 .size = static_cast<uint32_t>(mSize),
+                                 .memoryHandle = mBufferHandle};
+            return mem;
+
+        } else {
+            SharedMemInfo mem = {.type = mType,
+                                 .format = SharedMemFormat::SENSORS_EVENT,
+                                 .size = static_cast<uint32_t>(mSize),
+                                 .memoryHandle = mNativeHandle};
+            return mem;
+        }
     }
     char* getBuffer() const { return mBuffer; }
     size_t getSize() const { return mSize; }
@@ -128,17 +143,26 @@ class SensorsTestSharedMemory {
             }
             case SharedMemType::GRALLOC: {
                 if (mSize != 0) {
-                    mGrallocWrapper->freeBuffer(mNativeHandle);
-                    mNativeHandle = nullptr;
+                    android::status_t status =
+                            android::GraphicBufferAllocator::get().free(mBufferHandle);
+                    if (status != android::OK) {
+                        ALOGE("SensorsAidlTestSharedMemory Gralloc failed to free buffer. Status: "
+                              "%s",
+                              android::statusToString(status).c_str());
+                    }
+                    mBufferHandle = nullptr;
+                    mBuffer = nullptr;
                     mSize = 0;
                 }
                 break;
             }
             default: {
-                if (mNativeHandle != nullptr || mSize != 0 || mBuffer != nullptr) {
-                    ALOGE("SensorsTestSharedMemory %p not properly destructed: "
-                          "type %d, native handle %p, size %zu, buffer %p",
-                          this, static_cast<int>(mType), mNativeHandle, mSize, mBuffer);
+                if (mNativeHandle != nullptr || mSize != 0 || mBuffer != nullptr ||
+                    mBufferHandle != nullptr) {
+                    ALOGE("SensorsAidlTestSharedMemory %p not properly destructed: "
+                          "type %d, native handle %p, size %zu, buffer %p, buffer handle %p",
+                          this, static_cast<int>(mType), mNativeHandle, mSize, mBuffer,
+                          mBufferHandle);
                 }
                 break;
             }
@@ -171,14 +195,33 @@ class SensorsTestSharedMemory {
                 break;
             }
             case SharedMemType::GRALLOC: {
-                mGrallocWrapper = std::make_unique<::android::GrallocWrapper>();
-                if (!mGrallocWrapper->isInitialized()) {
+                static constexpr uint64_t kBufferUsage =
+                        static_cast<uint64_t>(BufferUsage::SENSOR_DIRECT_DATA) |
+                        static_cast<uint64_t>(BufferUsage::CPU_READ_OFTEN) |
+                        static_cast<uint64_t>(BufferUsage::CPU_WRITE_RARELY);
+
+                uint32_t stride = 0;
+                buffer_handle_t bufferHandle;
+                android::status_t status = android::GraphicBufferAllocator::get().allocate(
+                        size, 1, static_cast<int>(PixelFormat::BLOB), 1, kBufferUsage,
+                        &bufferHandle, &stride, "SensorVts");
+                if (status != android::OK) {
+                    ALOGE("SensorsAidlTestSharedMemory failed to allocate memory. Status: %s",
+                          android::statusToString(status).c_str());
                     break;
                 }
-
-                std::pair<native_handle_t*, void*> buf = mGrallocWrapper->allocate(size);
-                handle = buf.first;
-                buffer = static_cast<char*>(buf.second);
+                // Per the HAL, all-zeros Rect means the entire buffer
+                android::Rect rect = {0, 0, 0, 0};
+                void* ret;
+                status = android::GraphicBufferMapper::get().lock(bufferHandle, kBufferUsage, rect,
+                                                                  &ret);
+                if (status != android::OK) {
+                    ALOGE("SensorsAidlTestSharedMemory failed to import buffer: Status: %s",
+                          android::statusToString(status).c_str());
+                } else {
+                    buffer = static_cast<char*>(ret);
+                    mBufferHandle = bufferHandle;
+                }
                 break;
             }
             default:
@@ -194,9 +237,9 @@ class SensorsTestSharedMemory {
 
     SharedMemType mType;
     native_handle_t* mNativeHandle;
+    buffer_handle_t mBufferHandle;
     size_t mSize;
     char* mBuffer;
-    std::unique_ptr<::android::GrallocWrapper> mGrallocWrapper;
 
     DISALLOW_COPY_AND_ASSIGN(SensorsTestSharedMemory);
 };

@@ -22,6 +22,7 @@ import android.hardware.radio.network.OperatorInfo;
 /**
  * The CellIdentity structure should be reported once for each element of the PLMN-IdentityInfoList
  * broadcast in SIB1 CellAccessRelatedInfo as per 3GPP TS 38.331 Section 6.3.2.
+ * @hide
  */
 @VintfStability
 @JavaDerive(toString=true)

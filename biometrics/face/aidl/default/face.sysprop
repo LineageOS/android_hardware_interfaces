@@ -92,7 +92,7 @@ prop {
     api_name: "challenge"
 }
 
-# if locked out
+# if forced to lock out (Default to false)
 prop {
     prop_name: "vendor.face.virtual.lockout"
     type: Boolean
@@ -156,4 +156,67 @@ prop {
     scope: Public
     access: ReadWrite
     api_name: "operation_authenticate_duration"
+}
+
+# insert error for authenticate operations
+prop {
+    prop_name: "vendor.face.virtual.operation_authenticate_error"
+    type: Integer
+    scope: Internal
+    access: ReadWrite
+    api_name: "operation_authenticate_error"
+}
+
+# acquired info during authentication in format of sequence
+prop {
+    prop_name: "vendor.face.virtual.operation_authenticate_acquired"
+    type: String
+    scope: Internal
+    access: ReadWrite
+    api_name: "operation_authenticate_acquired"
+}
+
+# whether support lockout based on the failed auth attempts (default: false)
+prop {
+    prop_name: "persist.vendor.face.virtual.lockout_enable"
+    type: Boolean
+    scope: Internal
+    access: ReadWrite
+    api_name: "lockout_enable"
+}
+
+# whether support timed_lockout based on the failed auth attempts (default: false)
+prop {
+    prop_name: "persist.vendor.face.virtual.lockout_timed_enable"
+    type: Boolean
+    scope: Internal
+    access: ReadWrite
+    api_name: "lockout_timed_enable"
+}
+
+# temperory lockout threshold  in number of consecutive failed auth attempts
+prop {
+    prop_name: "persist.vendor.face.virtual.lockout_timed_threshold"
+    type: Integer
+    scope: Internal
+    access: ReadWrite
+    api_name: "lockout_timed_threshold"
+}
+
+# temporary lockout duration in ms (default: 10000ms)
+prop {
+    prop_name: "persist.vendor.face.virtual.lockout_timed_duration"
+    type: Integer
+    scope: Internal
+    access: ReadWrite
+    api_name: "lockout_timed_duration"
+}
+
+# permanently lockout threshold  in number of consecutive failed auth attempts
+prop {
+    prop_name: "persist.vendor.face.virtual.lockout_permanent_threshold"
+    type: Integer
+    scope: Internal
+    access: ReadWrite
+    api_name: "lockout_permanent_threshold"
 }

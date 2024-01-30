@@ -20,6 +20,7 @@ import android.hardware.radio.data.QosBandwidth;
 
 /**
  * LTE/EPS Quality of Service parameters as per 3gpp spec 24.301 sec 9.9.4.3.
+ * @hide
  */
 @VintfStability
 @JavaDerive(toString=true)

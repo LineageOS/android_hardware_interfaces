@@ -20,6 +20,7 @@ import android.hardware.radio.data.ApnAuthType;
 import android.hardware.radio.data.PdpProtocolType;
 import android.hardware.radio.data.TrafficDescriptor;
 
+/** @hide */
 @VintfStability
 @JavaDerive(toString=true)
 parcelable DataProfileInfo {
@@ -37,6 +38,21 @@ parcelable DataProfileInfo {
     const int TYPE_COMMON = 0;
     const int TYPE_3GPP = 1;
     const int TYPE_3GPP2 = 2;
+
+    /**
+     * Innfrastructure type unknown. This is only for initializing.
+     */
+    const int INFRASTRUCTURE_UNKNOWN = 0;
+
+    /**
+     * Indicating this APN can be used when the device is using terrestrial cellular networks.
+     */
+    const int INFRASTRUCTURE_CELLULAR = 1 << 0;
+
+    /**
+     * Indicating this APN can be used when the device is attached to satellite.
+     */
+    const int INFRASTRUCTURE_SATELLITE = 1 << 1;
 
     /**
      * ID of the data profile.
@@ -130,4 +146,10 @@ parcelable DataProfileInfo {
      * apn; apn must be used as the end point if one is not specified through URSP rules.
      */
     TrafficDescriptor trafficDescriptor;
+    /**
+     * The infrastructure bitmap which the APN can be used on. For example, some APNs can only
+     * be used when the device is using cellular network, using satellite network, or can be used
+     * in either cases.
+     */
+    int infrastructureBitmap = INFRASTRUCTURE_UNKNOWN;
 }
