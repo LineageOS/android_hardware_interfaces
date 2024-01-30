@@ -67,9 +67,32 @@ class ThreadNetworkAidl : public testing::TestWithParam<std::string> {
     }
 
     virtual void TearDown() override { thread_chip->close(); }
+    bool DeviceSupportsFeature(const char* feature);
 
+    static constexpr char kTvFeatureName[] = "android.software.leanback";
     std::shared_ptr<IThreadChip> thread_chip;
 };
+
+bool ThreadNetworkAidl::DeviceSupportsFeature(const char* feature) {
+    bool device_supports_feature = false;
+    FILE* p = popen("pm list features", "re");
+    char* line = nullptr;
+    size_t len = 0;
+
+    if (!p) {
+        return false;
+    }
+
+    while (getline(&line, &len, p) > 0) {
+        if (strstr(line, feature)) {
+            device_supports_feature = true;
+            break;
+        }
+    }
+    pclose(p);
+
+    return device_supports_feature;
+}
 
 TEST_P(ThreadNetworkAidl, Open) {
     std::shared_ptr<ThreadChipCallback> callback =
@@ -121,6 +144,10 @@ TEST_P(ThreadNetworkAidl, SendSpinelFrame) {
                     open_cb_promise.set_value();
                 }
             });
+
+    if (DeviceSupportsFeature(kTvFeatureName)) {
+        GTEST_SKIP() << "SendSpinelFrame test is bypassed on TV devices";
+    }
 
     ASSERT_NE(callback, nullptr);
 
