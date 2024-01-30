@@ -33,6 +33,9 @@ namespace tuner {
 
 class Tuner;
 
+const int TUNE_BUFFER_SIZE = 1;        // byte
+const int TUNE_BUFFER_TIMEOUT = 2000;  // ms
+
 class Frontend : public BnFrontend {
   public:
     Frontend(FrontendType type, int32_t id);
@@ -64,7 +67,10 @@ class Frontend : public BnFrontend {
     dtv_plugin* getIptvPluginInterface();
     string getIptvTransportDescription();
     dtv_streamer* getIptvPluginStreamer();
-    void readTuneByte(dtv_streamer* streamer, void* buf, size_t size, int timeout_ms);
+    void readTuneByte(void* buf);
+    void* getTuneByteBuffer() { return mTuneByteBuffer; };
+    dtv_streamer* createIptvPluginStreamer(dtv_plugin* interface, const char* transport_desc);
+    dtv_plugin* createIptvPluginInterface();
     bool isLocked();
     void getFrontendInfo(FrontendInfo* _aidl_return);
     void setTunerService(std::shared_ptr<Tuner> tuner);
@@ -90,6 +96,7 @@ class Frontend : public BnFrontend {
     string mIptvTransportDescription;
     dtv_streamer* mIptvPluginStreamer;
     std::thread mIptvFrontendTuneThread;
+    void* mTuneByteBuffer = nullptr;
 };
 
 }  // namespace tuner

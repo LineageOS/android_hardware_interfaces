@@ -26,6 +26,7 @@
 #include <android-base/stringprintf.h>
 #include <android-base/thread_annotations.h>
 #include <android/binder_process.h>
+#include <android/hardware/automotive/vehicle/2.0/IVehicle.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <hidl/GtestPrinter.h>
@@ -288,11 +289,8 @@ bool VtsHalAutomotiveVehicleTargetTest::isResultOkayWithValue(
 
 bool VtsHalAutomotiveVehicleTargetTest::isUnavailable(
         const VhalClientResult<std::unique_ptr<IHalPropValue>>& result) {
-    if (result.ok()) {
-        return false;
-    }
-    if (result.error().code() == ErrorCode::NOT_AVAILABLE_FROM_VHAL) {
-        return true;
+    if (!result.ok()) {
+        return result.error().code() == ErrorCode::NOT_AVAILABLE_FROM_VHAL;
     }
     if (result.value() != nullptr &&
         result.value()->getStatus() == VehiclePropertyStatus::UNAVAILABLE) {
@@ -1193,7 +1191,8 @@ std::vector<ServiceDescriptor> getDescriptors() {
                 .isAidlService = true,
         });
     }
-    for (std::string name : getAllHalInstanceNames(IVehicle::descriptor)) {
+    for (std::string name : getAllHalInstanceNames(
+                 android::hardware::automotive::vehicle::V2_0::IVehicle::descriptor)) {
         descriptors.push_back({
                 .name = name,
                 .isAidlService = false,
