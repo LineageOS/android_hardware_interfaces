@@ -29,6 +29,9 @@ aidl_interface {
         cpp: {
             enabled: false,
         },
+        rust: {
+            enabled: false,
+        },
         ndk: {
             additional_shared_libraries: [
                 "libnativewindow",
