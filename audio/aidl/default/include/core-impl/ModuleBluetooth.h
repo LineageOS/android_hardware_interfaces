@@ -86,7 +86,7 @@ class ModuleBluetooth final : public Module {
             const ::aidl::android::media::audio::common::AudioPort& audioPort, CachedProxy& proxy);
 
     static constexpr int kCreateProxyRetries = 5;
-    static constexpr int kCreateProxyRetrySleepMs = 250;
+    static constexpr int kCreateProxyRetrySleepMs = 75;
     ChildInterface<BluetoothA2dp> mBluetoothA2dp;
     ChildInterface<BluetoothLe> mBluetoothLe;
     std::map<int32_t /*instantiated device port ID*/, CachedProxy> mProxies;
