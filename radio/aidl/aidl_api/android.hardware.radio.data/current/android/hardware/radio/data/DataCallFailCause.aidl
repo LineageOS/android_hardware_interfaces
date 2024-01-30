@@ -32,6 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.data;
+/* @hide */
 @Backing(type="int") @JavaDerive(toString=true) @VintfStability
 enum DataCallFailCause {
   NONE = 0,
@@ -101,12 +102,12 @@ enum DataCallFailCause {
   OEM_DCFAILCAUSE_13 = 0x100D,
   OEM_DCFAILCAUSE_14 = 0x100E,
   OEM_DCFAILCAUSE_15 = 0x100F,
-  VOICE_REGISTRATION_FAIL = (-1),
-  DATA_REGISTRATION_FAIL = (-2),
-  SIGNAL_LOST = (-3),
-  PREF_RADIO_TECH_CHANGED = (-4),
-  RADIO_POWER_OFF = (-5),
-  TETHERED_CALL_ACTIVE = (-6),
+  VOICE_REGISTRATION_FAIL = (-1) /* -1 */,
+  DATA_REGISTRATION_FAIL = (-2) /* -2 */,
+  SIGNAL_LOST = (-3) /* -3 */,
+  PREF_RADIO_TECH_CHANGED = (-4) /* -4 */,
+  RADIO_POWER_OFF = (-5) /* -5 */,
+  TETHERED_CALL_ACTIVE = (-6) /* -6 */,
   ERROR_UNSPECIFIED = 0xffff,
   LLC_SNDCP = 0x19,
   ACTIVATION_REJECTED_BCM_VIOLATION = 0x30,

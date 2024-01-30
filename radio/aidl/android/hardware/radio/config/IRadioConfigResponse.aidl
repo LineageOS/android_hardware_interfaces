@@ -21,6 +21,7 @@ import android.hardware.radio.config.SimSlotStatus;
 
 /**
  * Interface declaring response functions to solicited radio config requests.
+ * @hide
  */
 @VintfStability
 oneway interface IRadioConfigResponse {
@@ -39,6 +40,7 @@ oneway interface IRadioConfigResponse {
      *          IRadioIndication.currentPhysicalChannelConfigs_1_6()
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INTERNAL_ERR
@@ -52,6 +54,7 @@ oneway interface IRadioConfigResponse {
      *        are enabled and actively working as part of a working connectivity stack
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      */
@@ -64,6 +67,7 @@ oneway interface IRadioConfigResponse {
      *        how many logical modems it has, how many data connections it supports.
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INTERNAL_ERR
@@ -77,6 +81,8 @@ oneway interface IRadioConfigResponse {
      *        equal to the number of physical slots on the device
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.subscription is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:NO_MEMORY
@@ -90,6 +96,7 @@ oneway interface IRadioConfigResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INVALID_ARGUMENTS
@@ -100,6 +107,7 @@ oneway interface IRadioConfigResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.data is not defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INTERNAL_ERR
@@ -111,6 +119,8 @@ oneway interface IRadioConfigResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED when android.hardware.telephony.subscription is not
+     *                                    defined
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:NO_MEMORY

@@ -18,6 +18,7 @@ package android.hardware.radio.messaging;
 
 import android.hardware.radio.messaging.CdmaSmsMessage;
 
+/** @hide */
 @VintfStability
 @JavaDerive(toString=true)
 parcelable CdmaSmsWriteArgs {

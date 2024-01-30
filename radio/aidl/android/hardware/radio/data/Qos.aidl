@@ -21,6 +21,7 @@ import android.hardware.radio.data.NrQos;
 
 /**
  * EPS or NR QOS parameters
+ * @hide
  */
 @VintfStability
 @JavaDerive(toString=true)

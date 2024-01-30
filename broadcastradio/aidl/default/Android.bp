@@ -23,32 +23,75 @@ package {
     default_applicable_licenses: ["hardware_interfaces_license"],
 }
 
+cc_defaults {
+    name: "BroadcastRadioHalDefaults",
+    static_libs: [
+        "android.hardware.broadcastradio@common-utils-aidl-lib-V2",
+        "android.hardware.broadcastradio@common-utils-lib",
+    ],
+    shared_libs: [
+        "android.hardware.broadcastradio-V2-ndk",
+        "libbase",
+        "libbinder_ndk",
+        "liblog",
+        "libcutils",
+    ],
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+    ],
+}
+
 cc_binary {
     name: "android.hardware.broadcastradio-service.default",
     relative_install_path: "hw",
     init_rc: ["broadcastradio-default.rc"],
     vintf_fragments: ["broadcastradio-default.xml"],
     vendor: true,
-    cflags: [
-        "-Wall",
-        "-Wextra",
-        "-Werror",
+    defaults: [
+        "BroadcastRadioHalDefaults",
+    ],
+    srcs: [
+        "main.cpp",
+    ],
+    static_libs: [
+        "DefaultBroadcastRadioHal",
+    ],
+}
+
+cc_library {
+    name: "DefaultBroadcastRadioHal",
+    vendor_available: true,
+    export_include_dirs: ["."],
+    defaults: [
+        "BroadcastRadioHalDefaults",
     ],
     srcs: [
         "BroadcastRadio.cpp",
-        "main.cpp",
         "VirtualProgram.cpp",
         "VirtualRadio.cpp",
     ],
+}
+
+cc_fuzz {
+    name: "android.hardware.broadcastradio-service.default_fuzzer",
+    // TODO(b/307611931): avoid fuzzing on vendor until hermiticity issue is fixed
+    // vendor: true,
+    defaults: [
+        "BroadcastRadioHalDefaults",
+        "service_fuzzer_defaults",
+    ],
     static_libs: [
-        "android.hardware.broadcastradio@common-utils-aidl-lib",
-        "android.hardware.broadcastradio@common-utils-lib",
+        "DefaultBroadcastRadioHal",
+        "android.hardware.broadcastradio-V2-ndk",
     ],
-    shared_libs: [
-        "android.hardware.broadcastradio-V1-ndk",
-        "libbase",
-        "libbinder_ndk",
-        "liblog",
-        "libcutils",
+    srcs: [
+        "fuzzer.cpp",
     ],
+    fuzz_config: {
+        cc: [
+            "xuweilin@google.com",
+        ],
+    },
 }

@@ -43,6 +43,19 @@ using ::android::hardware::EventFlag;
 
 using DvrMQ = AidlMessageQueue<int8_t, SynchronizedReadWrite>;
 
+const int DVR_WRITE_SUCCESS = 0;
+const int DVR_WRITE_FAILURE_REASON_FMQ_FULL = 1;
+const int DVR_WRITE_FAILURE_REASON_UNKNOWN = 2;
+
+const int TS_SIZE = 188;
+const int IPTV_BUFFER_SIZE = TS_SIZE * 7 * 8;  // defined in service_streamer_udp in cbs v3 project
+
+// Thresholds are defined to indicate how full the buffers are.
+const double HIGH_THRESHOLD_PERCENT = 0.90;
+const double LOW_THRESHOLD_PERCENT = 0.15;
+const int IPTV_PLAYBACK_STATUS_THRESHOLD_HIGH = IPTV_BUFFER_SIZE * HIGH_THRESHOLD_PERCENT;
+const int IPTV_PLAYBACK_STATUS_THRESHOLD_LOW = IPTV_BUFFER_SIZE * LOW_THRESHOLD_PERCENT;
+
 struct MediaEsMetaData {
     bool isAudio;
     int startIndex;
@@ -80,8 +93,9 @@ class Dvr : public BnDvr {
      * Return false is any of the above processes fails.
      */
     bool createDvrMQ();
+    int writePlaybackFMQ(void* buf, size_t size);
     bool writeRecordFMQ(const std::vector<int8_t>& data);
-    bool addPlaybackFilter(int64_t filterId, std::shared_ptr<IFilter> filter);
+    bool addPlaybackFilter(int64_t filterId, std::shared_ptr<Filter> filter);
     bool removePlaybackFilter(int64_t filterId);
     bool readPlaybackFMQ(bool isVirtualFrontend, bool isRecording);
     bool processEsDataOnPlayback(bool isVirtualFrontend, bool isRecording);
@@ -96,12 +110,13 @@ class Dvr : public BnDvr {
     DvrType mType;
     uint32_t mBufferSize;
     std::shared_ptr<IDvrCallback> mCallback;
-    std::map<int64_t, std::shared_ptr<IFilter>> mFilters;
+    std::map<int64_t, std::shared_ptr<Filter>> mFilters;
 
     void deleteEventFlag();
     bool readDataFromMQ();
     void getMetaDataValue(int& index, int8_t* dataOutputBuffer, int& value);
     void maySendPlaybackStatusCallback();
+    void maySendIptvPlaybackStatusCallback();
     void maySendRecordStatusCallback();
     PlaybackStatus checkPlaybackStatusChange(uint32_t availableToWrite, uint32_t availableToRead,
                                              int64_t highThreshold, int64_t lowThreshold);

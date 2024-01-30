@@ -32,6 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.ims;
+/* @hide */
 @VintfStability
 interface IRadioImsIndication {
   oneway void onConnectionSetupFailure(in android.hardware.radio.RadioIndicationType type, int token, in android.hardware.radio.ims.ConnectionFailureInfo info);

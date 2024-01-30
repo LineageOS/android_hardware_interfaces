@@ -16,6 +16,7 @@
 
 package android.hardware.radio.network;
 
+/** @hide */
 @VintfStability
 @JavaDerive(toString=true)
 parcelable LteSignalStrength {

@@ -20,6 +20,7 @@ import android.hardware.radio.AccessNetwork;
 import android.hardware.radio.ims.ImsRegistrationState;
 import android.hardware.radio.ims.SuggestedAction;
 
+/** @hide */
 @VintfStability
 @JavaDerive(toString=true)
 parcelable ImsRegistration {

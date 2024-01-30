@@ -24,7 +24,6 @@ namespace composer {
 namespace V2_2 {
 namespace vts {
 
-using mapper::V2_1::IMapper;
 using renderengine::DisplaySettings;
 using renderengine::LayerSettings;
 using renderengine::RenderEngineCreationArgs;
@@ -72,7 +71,7 @@ void TestRenderEngine::drawLayers() {
     auto texture = std::make_shared<renderengine::impl::ExternalTexture>(
             mGraphicBuffer, *mRenderEngine, renderengine::impl::ExternalTexture::Usage::WRITEABLE);
     auto result = mRenderEngine
-                          ->drawLayers(mDisplaySettings, compositionLayers, texture, true,
+                          ->drawLayers(mDisplaySettings, compositionLayers, texture,
                                        std::move(bufferFence))
                           .get();
     if (result.ok()) {

@@ -63,6 +63,8 @@ class GraphicsComposerCallback : public BnComposerCallback {
     virtual ::ndk::ScopedAStatus onVsyncIdle(int64_t in_display) override;
     virtual ::ndk::ScopedAStatus onRefreshRateChangedDebug(
             const RefreshRateChangedDebugData&) override;
+    virtual ::ndk::ScopedAStatus onHotplugEvent(int64_t in_display,
+                                                common::DisplayHotplugEvent) override;
 
     mutable std::mutex mMutex;
     // the set of all currently connected displays

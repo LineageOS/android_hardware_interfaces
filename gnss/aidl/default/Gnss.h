@@ -85,6 +85,8 @@ class Gnss : public BnGnss {
             override;
 
     void reportSvStatus() const;
+    void setGnssMeasurementEnabled(const bool enabled);
+    void setGnssMeasurementInterval(const long intervalMs);
     std::shared_ptr<GnssConfiguration> mGnssConfiguration;
     std::shared_ptr<GnssPowerIndication> mGnssPowerIndication;
     std::shared_ptr<GnssMeasurementInterface> mGnssMeasurementInterface;
@@ -101,10 +103,12 @@ class Gnss : public BnGnss {
     static std::shared_ptr<IGnssCallback> sGnssCallback;
 
     std::atomic<long> mMinIntervalMs;
+    std::atomic<long> mGnssMeasurementIntervalMs;
     std::atomic<bool> mIsActive;
     std::atomic<bool> mIsSvStatusActive;
     std::atomic<bool> mIsNmeaActive;
     std::atomic<bool> mFirstFixReceived;
+    std::atomic<bool> mGnssMeasurementEnabled;
     std::thread mThread;
     ::android::hardware::gnss::common::ThreadBlocker mThreadBlocker;
 

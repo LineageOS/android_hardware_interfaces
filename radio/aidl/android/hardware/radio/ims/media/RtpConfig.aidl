@@ -22,7 +22,9 @@ import android.hardware.radio.ims.media.RtcpConfig;
 import android.hardware.radio.ims.media.RtpAddress;
 import android.hardware.radio.ims.media.RtpSessionParams;
 
+/** @hide */
 @VintfStability
+@JavaDerive(toString=true)
 parcelable RtpConfig {
     /** Media flow direction. The bitfield of MediaDirection(s) */
     int direction;

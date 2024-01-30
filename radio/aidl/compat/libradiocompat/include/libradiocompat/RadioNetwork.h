@@ -107,6 +107,12 @@ class RadioNetwork : public RadioCompatBase,
 
     ::ndk::ScopedAStatus setNullCipherAndIntegrityEnabled(int32_t serial, bool enabled) override;
     ::ndk::ScopedAStatus isNullCipherAndIntegrityEnabled(int32_t serial) override;
+    ::ndk::ScopedAStatus isCellularIdentifierTransparencyEnabled(int32_t serial) override;
+    ::ndk::ScopedAStatus setCellularIdentifierTransparencyEnabled(int32_t serial,
+                                                                  bool enabled) override;
+
+    ::ndk::ScopedAStatus setSecurityAlgorithmsUpdatedEnabled(int32_t serial, bool enabled) override;
+    ::ndk::ScopedAStatus isSecurityAlgorithmsUpdatedEnabled(int32_t serial) override;
 
   protected:
     std::shared_ptr<::aidl::android::hardware::radio::network::IRadioNetworkResponse> respond();

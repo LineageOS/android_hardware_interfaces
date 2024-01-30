@@ -16,6 +16,7 @@
 
 package android.hardware.radio.sim;
 
+/** @hide */
 @VintfStability
 @JavaDerive(toString=true)
 parcelable IccIoResult {

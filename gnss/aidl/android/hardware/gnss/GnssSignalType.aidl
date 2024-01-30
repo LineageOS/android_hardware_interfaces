@@ -46,25 +46,35 @@ parcelable GnssSignalType {
     double carrierFrequencyHz;
 
     /**
-     * GNSS signal code type "A" representing GALILEO E1A, GALILEO E6A, IRNSS L5A, IRNSS SA.
+     * GNSS signal code type "A" representing GALILEO E1A, GALILEO E6A, NavIC L5A SPS, NavIC SA SPS,
+     * GLONASS G1a L1OCd, GLONASS G2a L2CSI.
      */
     const @utf8InCpp String CODE_TYPE_A = "A";
 
     /**
-     * GNSS signal code type "B" representing GALILEO E1B, GALILEO E6B, IRNSS L5B, IRNSS SB.
+     * GNSS signal code type "B" representing GALILEO E1B, GALILEO E6B, NavIC L5B RS (D),
+     * NavIC SB RS (D), GLONASS G1a L1OCp, GLONASS G2a L2OCp, QZSS L1Sb.
      */
     const @utf8InCpp String CODE_TYPE_B = "B";
 
     /**
      * GNSS signal code type "C" representing GPS L1 C/A,  GPS L2 C/A, GLONASS G1 C/A,
-     * GLONASS G2 C/A, GALILEO E1C, GALILEO E6C, SBAS L1 C/A, QZSS L1 C/A, IRNSS L5C.
+     * GLONASS G2 C/A, GALILEO E1C, GALILEO E6C, SBAS L1 C/A, QZSS L1 C/A, NavIC L5C RS (P),
+     * NavIC SC RS (P).
      */
     const @utf8InCpp String CODE_TYPE_C = "C";
 
     /**
-     * GNSS signal code type "D" representing BDS B1C D.
+     * GNSS signal code type "D" representing GPS L2 (L1(C/A) + (P2-P1) (semi-codeless)),
+     * QZSS L5S(I), BDS B1C Data, BDS B2a Data, BDS B2b Data, BDS B2 (B2a+B2b) Data, BDS B3a Data,
+     * NavIC L1 Data.
      */
     const @utf8InCpp String CODE_TYPE_D = "D";
+
+    /**
+     * GNSS signal code type "E" representing QZSS L1 C/B, QZSS L6E.
+     */
+    const @utf8InCpp String CODE_TYPE_E = "E";
 
     /**
      * GNSS signal code type "I" representing GPS L5 I, GLONASS G3 I, GALILEO E5a I, GALILEO E5b I,
@@ -74,7 +84,7 @@ parcelable GnssSignalType {
 
     /**
      * GNSS signal code type "L" representing GPS L1C (P), GPS L2C (L), QZSS L1C (P), QZSS L2C (L),
-     * LEX(6) L.
+     * QZSS L6P, BDS B1a Pilot.
      */
     const @utf8InCpp String CODE_TYPE_L = "L";
 
@@ -89,7 +99,9 @@ parcelable GnssSignalType {
     const @utf8InCpp String CODE_TYPE_N = "N";
 
     /**
-     * GNSS signal code type "P" representing GPS L1P, GPS L2P, GLONASS G1P, GLONASS G2P, BDS B1C P.
+     * GNSS signal code type "P" representing GPS L1P, GPS L2P, GLONASS G1P, GLONASS G2P,
+     * BDS B1C Pilot, BDS B2a Pilot, BDS B2b Pilot, BDS B2 (B2a+B2b) Pilot, BDS B3a Pilot,
+     * QZSS L5S(Q), NavIC L1 Pilot.
      */
     const @utf8InCpp String CODE_TYPE_P = "P";
 
@@ -101,7 +113,7 @@ parcelable GnssSignalType {
 
     /**
      * GNSS signal code type "S" represents GPS L1C (D), GPS L2C (M), QZSS L1C (D), QZSS L2C (M),
-     * LEX(6) S.
+     * QZSS L6D, BDS B1a Data.
      */
     const @utf8InCpp String CODE_TYPE_S = "S";
 
@@ -112,9 +124,11 @@ parcelable GnssSignalType {
 
     /**
      * GNSS signal code type "X" representing GPS L1C (D+P), GPS L2C (M+L), GPS L5 (I+Q),
-     * GLONASS G3 (I+Q), GALILEO E1 (B+C), GALILEO E5a (I+Q), GALILEO E5b (I+Q), GALILEO E5a+b(I+Q),
-     * GALILEO E6 (B+C), SBAS L5 (I+Q), QZSS L1C (D+P), QZSS L2C (M+L), QZSS L5 (I+Q),
-     * LEX(6) (S+L), BDS B1 (I+Q), BDS B1C (D+P), BDS B2 (I+Q), BDS B3 (I+Q), IRNSS L5 (B+C).
+     * GLONASS G1a L1OCd+L1OCp, GLONASS G2a L2CSI+L2OCp, GLONASS G3 (I+Q), GALILEO E1 (B+C),
+     * GALILEO E5a (I+Q), GALILEO E5b (I+Q), GALILEO E5a+b (I+Q), GALILEO E6 (B+C), SBAS L5 (I+Q),
+     * QZSS L1C (D+P), QZSS L2C (M+L), QZSS L5 (I+Q), QZSS L6 (D+P), BDS B1 (I+Q),
+     * BDS B1C Data+Pilot, BDS B2a Data+Pilot, BDS B2 (I+Q), BDS B2 (B2a+B2b) Data+Pilot,
+     * BDS B3 (I+Q), NavIC L5 (B+C), NavIC S (B+C), NavIC L1 Data+Pilot.
      */
     const @utf8InCpp String CODE_TYPE_X = "X";
 
@@ -124,7 +138,9 @@ parcelable GnssSignalType {
     const @utf8InCpp String CODE_TYPE_Y = "Y";
 
     /**
-     * GNSS signal code type "Z" representing GALILEO E1 (A+B+C), GALILEO E6 (A+B+C), QZSS L1-SAIF.
+     * GNSS signal code type "Z" representing GALILEO E1 (A+B+C), GALILEO E6 (A+B+C),
+     * QZSS L1S/L1-SAIF, QZSS L5S (I+Q), QZSS L6 (D+E), BDS B1A Data+Pilot, BDS B2b Data+Pilot,
+     * BDS B3a Data+Pilot.
      */
     const @utf8InCpp String CODE_TYPE_Z = "Z";
 
@@ -142,10 +158,11 @@ parcelable GnssSignalType {
      * The value is one of the constant Strings with prefix CODE_TYPE_ defined in this parcelable.
      *
      * This is used to specify the observation descriptor defined in GNSS Observation Data File
-     * Header Section Description in the RINEX standard (Version 3.XX). In RINEX Version 3.03,
-     * in Appendix Table A2 Attributes are listed as uppercase letters (for instance, "A" for
-     * "A channel"). In the future, if for instance a code "G" was added in the official RINEX
-     * standard, "G" could be specified here.
+     * Header Section Description in the RINEX standard (Version 4.00) e.g., in Tables 9-16 (see
+     * https://igs.org/wg/rinex/#documents-formats). In cases where the code type does not align
+     * with the above listed values, the code type from the most recent version of RINEX should be
+     * used. In the future, if for instance a code "G" was added in the official RINEX standard,
+     * "G" could be specified here.
      */
     @utf8InCpp String codeType;
 }

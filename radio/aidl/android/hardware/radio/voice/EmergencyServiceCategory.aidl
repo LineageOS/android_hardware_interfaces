@@ -31,6 +31,7 @@ package android.hardware.radio.voice;
  * services are associated with this emergency number.
  *
  * Reference: 3gpp 22.101, Section 10 - Emergency Calls
+ * @hide
  */
 @VintfStability
 @Backing(type="int")

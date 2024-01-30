@@ -16,8 +16,12 @@
 
 package android.hardware.radio.ims.media;
 
-/** RTP Header Extensions, see RFC 8285 */
+/**
+ * RTP Header Extensions, see RFC 8285
+ * @hide
+ */
 @VintfStability
+@JavaDerive(toString=true)
 parcelable RtpHeaderExtension {
     /** Local identifier */
     int localId;

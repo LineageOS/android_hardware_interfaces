@@ -22,6 +22,7 @@ import android.hardware.radio.network.CellIdentity;
 import android.hardware.radio.network.RegState;
 import android.hardware.radio.network.RegistrationFailCause;
 
+/** @hide */
 @VintfStability
 @JavaDerive(toString=true)
 parcelable RegStateResult {

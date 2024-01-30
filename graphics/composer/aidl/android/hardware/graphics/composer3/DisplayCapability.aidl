@@ -80,4 +80,20 @@ enum DisplayCapability {
      * IComposerCallback.onVsyncIdle.
      */
     DISPLAY_IDLE_TIMER = 7,
+    /**
+     * Indicates that both the composer HAL implementation and the given display
+     * support calling executeCommands concurrently from separate threads.
+     * executeCommands for a particular display will never run concurrently to
+     * any other executeCommands for the same display. In addition, the
+     * CommandResultPayload must only reference displays included in the
+     * DisplayCommands passed to executeCommands. Displays referenced from
+     * separate threads must have minimal interference with one another. If a
+     * HWC-managed display has this capability, SurfaceFlinger can run
+     * executeCommands for this display concurrently with other displays with the
+     * same capability.
+     * @see IComposerClient.executeCommands
+     * @see DisplayCommand.presentDisplay
+     * @see DisplayCommand.validateDisplay
+     */
+    MULTI_THREADED_PRESENT = 8,
 }

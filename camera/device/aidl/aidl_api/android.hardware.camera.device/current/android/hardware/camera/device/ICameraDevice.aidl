@@ -43,4 +43,7 @@ interface ICameraDevice {
   void setTorchMode(boolean on);
   void turnOnTorchWithStrengthLevel(int torchStrength);
   int getTorchStrengthLevel();
+  android.hardware.camera.device.CameraMetadata constructDefaultRequestSettings(in android.hardware.camera.device.RequestTemplate type);
+  boolean isStreamCombinationWithSettingsSupported(in android.hardware.camera.device.StreamConfiguration streams);
+  android.hardware.camera.device.CameraMetadata getSessionCharacteristics(in android.hardware.camera.device.StreamConfiguration sessionConfig);
 }

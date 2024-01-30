@@ -32,7 +32,7 @@ cc_test {
         "libbinder_ndk",
     ],
     static_libs: [
-        "android.hardware.thermal-V1-ndk",
+        "android.hardware.thermal-V2-ndk",
     ],
     test_suites: [
         "vts",

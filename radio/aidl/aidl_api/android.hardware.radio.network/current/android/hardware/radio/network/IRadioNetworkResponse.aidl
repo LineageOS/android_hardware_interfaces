@@ -32,6 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.network;
+/* @hide */
 @VintfStability
 interface IRadioNetworkResponse {
   oneway void acknowledgeRequest(in int serial);
@@ -80,4 +81,8 @@ interface IRadioNetworkResponse {
   oneway void isNullCipherAndIntegrityEnabledResponse(in android.hardware.radio.RadioResponseInfo info, in boolean isEnabled);
   oneway void isN1ModeEnabledResponse(in android.hardware.radio.RadioResponseInfo info, boolean isEnabled);
   oneway void setN1ModeEnabledResponse(in android.hardware.radio.RadioResponseInfo info);
+  oneway void isCellularIdentifierTransparencyEnabledResponse(in android.hardware.radio.RadioResponseInfo info, boolean isEnabled);
+  oneway void setCellularIdentifierTransparencyEnabledResponse(in android.hardware.radio.RadioResponseInfo info);
+  oneway void setSecurityAlgorithmsUpdatedEnabledResponse(in android.hardware.radio.RadioResponseInfo info);
+  oneway void isSecurityAlgorithmsUpdatedEnabledResponse(in android.hardware.radio.RadioResponseInfo info, in boolean isEnabled);
 }

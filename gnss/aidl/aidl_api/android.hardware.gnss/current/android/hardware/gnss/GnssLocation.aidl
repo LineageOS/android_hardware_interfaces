@@ -47,12 +47,12 @@ parcelable GnssLocation {
   double bearingAccuracyDegrees;
   long timestampMillis;
   android.hardware.gnss.ElapsedRealtime elapsedRealtime;
-  const int HAS_LAT_LONG = 1;
-  const int HAS_ALTITUDE = 2;
-  const int HAS_SPEED = 4;
-  const int HAS_BEARING = 8;
-  const int HAS_HORIZONTAL_ACCURACY = 16;
-  const int HAS_VERTICAL_ACCURACY = 32;
-  const int HAS_SPEED_ACCURACY = 64;
-  const int HAS_BEARING_ACCURACY = 128;
+  const int HAS_LAT_LONG = 0x0001;
+  const int HAS_ALTITUDE = 0x0002;
+  const int HAS_SPEED = 0x0004;
+  const int HAS_BEARING = 0x0008;
+  const int HAS_HORIZONTAL_ACCURACY = 0x0010;
+  const int HAS_VERTICAL_ACCURACY = 0x0020;
+  const int HAS_SPEED_ACCURACY = 0x0040;
+  const int HAS_BEARING_ACCURACY = 0x0080;
 }

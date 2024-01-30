@@ -18,6 +18,7 @@ package android.hardware.radio.voice;
 
 /**
  * Indicates how the implementation should handle the emergency call if it is required by Android.
+ * @hide
  */
 @VintfStability
 @Backing(type="int")

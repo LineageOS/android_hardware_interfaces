@@ -40,6 +40,18 @@ std::string_view ConfigManager::sConfigDefaultPath =
 std::string_view ConfigManager::sConfigOverridePath =
         "/vendor/etc/automotive/evs/evs_configuration_override.xml";
 
+ConfigManager::CameraInfo::DeviceType ConfigManager::CameraInfo::deviceTypeFromSV(
+        const std::string_view sv) {
+    using namespace std::string_view_literals;
+    static const std::unordered_map<std::string_view, DeviceType> nameToType = {
+            {"mock"sv, DeviceType::MOCK},
+            {"v4l2"sv, DeviceType::V4L2},
+            {"video"sv, DeviceType::VIDEO},
+    };
+    const auto search = nameToType.find(sv);
+    return search == nameToType.end() ? DeviceType::UNKNOWN : search->second;
+}
+
 void ConfigManager::printElementNames(const XMLElement* rootElem, const std::string& prefix) const {
     const XMLElement* curElem = rootElem;
 
@@ -126,6 +138,10 @@ void ConfigManager::readCameraInfo(const XMLElement* const aCameraElem) {
 bool ConfigManager::readCameraDeviceInfo(CameraInfo* aCamera, const XMLElement* aDeviceElem) {
     if (aCamera == nullptr || aDeviceElem == nullptr) {
         return false;
+    }
+
+    if (const auto typeAttr = aDeviceElem->FindAttribute("type")) {
+        aCamera->deviceType = CameraInfo::deviceTypeFromSV(typeAttr->Value());
     }
 
     /* size information to allocate camera_metadata_t */

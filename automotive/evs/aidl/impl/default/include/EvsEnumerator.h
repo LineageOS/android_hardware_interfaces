@@ -17,8 +17,8 @@
 #pragma once
 
 #include "ConfigManager.h"
+#include "EvsCameraBase.h"
 #include "EvsGlDisplay.h"
-#include "EvsMockCamera.h"
 
 #include <aidl/android/frameworks/automotive/display/ICarDisplayProxy.h>
 #include <aidl/android/hardware/automotive/evs/BnEvsEnumerator.h>
@@ -27,6 +27,7 @@
 #include <aidl/android/hardware/automotive/evs/IEvsCamera.h>
 #include <aidl/android/hardware/automotive/evs/IEvsEnumeratorStatusCallback.h>
 #include <aidl/android/hardware/automotive/evs/Stream.h>
+#include <android-base/thread_annotations.h>
 #include <utils/Thread.h>
 
 #include <atomic>
@@ -72,7 +73,7 @@ class EvsEnumerator final : public ::aidl::android::hardware::automotive::evs::B
   private:
     struct CameraRecord {
         evs::CameraDesc desc;
-        std::weak_ptr<EvsMockCamera> activeInstance;
+        std::weak_ptr<EvsCameraBase> activeInstance;
 
         CameraRecord(const char* cameraId) : desc() { desc.id = cameraId; }
     };

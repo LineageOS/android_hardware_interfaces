@@ -34,6 +34,6 @@
 package android.hardware.wifi.supplicant;
 @Backing(type="int") @VintfStability
 enum IfaceType {
-  STA = 0,
-  P2P = 1,
+  STA,
+  P2P,
 }

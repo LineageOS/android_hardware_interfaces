@@ -19,6 +19,7 @@ package android.hardware.radio.network;
 /**
  * Type to define the NR specific network capabilities for voice over PS including emergency and
  * normal voice calls.
+ * @hide
  */
 @VintfStability
 @JavaDerive(toString=true)

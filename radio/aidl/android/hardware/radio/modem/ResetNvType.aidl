@@ -16,7 +16,10 @@
 
 package android.hardware.radio.modem;
 
-/** Note: This will be deprecated along with nvResetConfig in Android U. */
+/**
+ * Note: This will be deprecated along with nvResetConfig in Android U.
+ * @hide
+ */
 @VintfStability
 @Backing(type="int")
 @JavaDerive(toString=true)

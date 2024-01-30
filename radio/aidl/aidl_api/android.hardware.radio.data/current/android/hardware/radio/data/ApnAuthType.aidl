@@ -32,6 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.data;
+/* @hide */
 @Backing(type="int") @JavaDerive(toString=true) @VintfStability
 enum ApnAuthType {
   NO_PAP_NO_CHAP,

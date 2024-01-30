@@ -44,26 +44,31 @@ interface IGnssNavigationMessageCallback {
     int messageId;
     int submessageId;
     byte[] data;
-    const int STATUS_PARITY_PASSED = 1;
-    const int STATUS_PARITY_REBUILT = 2;
+    const int STATUS_PARITY_PASSED = (1 << 0) /* 1 */;
+    const int STATUS_PARITY_REBUILT = (1 << 1) /* 2 */;
     const int STATUS_UNKNOWN = 0;
     @Backing(type="int") @VintfStability
     enum GnssNavigationMessageType {
       UNKNOWN = 0,
-      GPS_L1CA = 257,
-      GPS_L2CNAV = 258,
-      GPS_L5CNAV = 259,
-      SBS = 513,
-      GPS_CNAV2 = 260,
-      GLO_L1CA = 769,
-      QZS_L1CA = 1025,
-      BDS_D1 = 1281,
-      BDS_D2 = 1282,
-      BDS_CNAV1 = 1283,
-      BDS_CNAV2 = 1284,
-      GAL_I = 1537,
-      GAL_F = 1538,
-      IRN_L5CA = 1793,
+      GPS_L1CA = 0x0101,
+      GPS_L2CNAV = 0x0102,
+      GPS_L5CNAV = 0x0103,
+      SBS = 0x0201,
+      GPS_CNAV2 = 0x0104,
+      GLO_L1CA = 0x0301,
+      QZS_L1CA = 0x0401,
+      BDS_D1 = 0x0501,
+      BDS_D2 = 0x0502,
+      BDS_CNAV1 = 0x0503,
+      BDS_CNAV2 = 0x0504,
+      GAL_I = 0x0601,
+      GAL_F = 0x0602,
+      /**
+       * @deprecated Use IRN_L5 instead.
+       */
+      IRN_L5CA = 0x0701,
+      IRN_L5 = 0x0702,
+      IRN_L1 = 0x0703,
     }
   }
 }

@@ -19,6 +19,7 @@
 
 #include <aidl/android/hardware/wifi/BnWifiChip.h>
 #include <aidl/android/hardware/wifi/IWifiRttController.h>
+#include <aidl/android/hardware/wifi/common/OuiKeyedData.h>
 #include <android-base/macros.h>
 
 #include <list>
@@ -96,6 +97,10 @@ class WifiChip : public BnWifiChip {
     ndk::ScopedAStatus requestFirmwareDebugDump(std::vector<uint8_t>* _aidl_return) override;
     ndk::ScopedAStatus createApIface(std::shared_ptr<IWifiApIface>* _aidl_return) override;
     ndk::ScopedAStatus createBridgedApIface(std::shared_ptr<IWifiApIface>* _aidl_return) override;
+    ndk::ScopedAStatus createApOrBridgedApIface(
+            IfaceConcurrencyType in_ifaceType,
+            const std::vector<common::OuiKeyedData>& in_vendorData,
+            std::shared_ptr<IWifiApIface>* _aidl_return) override;
     ndk::ScopedAStatus getApIfaceNames(std::vector<std::string>* _aidl_return) override;
     ndk::ScopedAStatus getApIface(const std::string& in_ifname,
                                   std::shared_ptr<IWifiApIface>* _aidl_return) override;
@@ -153,6 +158,7 @@ class WifiChip : public BnWifiChip {
             int32_t in_channelCategoryEnableFlag) override;
     binder_status_t dump(int fd, const char** args, uint32_t numArgs) override;
     ndk::ScopedAStatus setMloMode(const ChipMloMode in_mode) override;
+    ndk::ScopedAStatus setVoipMode(const VoipMode in_mode) override;
 
   private:
     void invalidateAndRemoveAllIfaces();
@@ -176,6 +182,8 @@ class WifiChip : public BnWifiChip {
     ndk::ScopedAStatus createVirtualApInterface(const std::string& apVirtIf);
     std::pair<std::shared_ptr<IWifiApIface>, ndk::ScopedAStatus> createApIfaceInternal();
     std::pair<std::shared_ptr<IWifiApIface>, ndk::ScopedAStatus> createBridgedApIfaceInternal();
+    std::pair<std::shared_ptr<IWifiApIface>, ndk::ScopedAStatus> createApOrBridgedApIfaceInternal(
+            IfaceConcurrencyType ifaceType, const std::vector<common::OuiKeyedData>& vendorData);
     std::pair<std::vector<std::string>, ndk::ScopedAStatus> getApIfaceNamesInternal();
     std::pair<std::shared_ptr<IWifiApIface>, ndk::ScopedAStatus> getApIfaceInternal(
             const std::string& ifname);
@@ -262,6 +270,7 @@ class WifiChip : public BnWifiChip {
     getSupportedRadioCombinationsInternal();
     std::pair<WifiChipCapabilities, ndk::ScopedAStatus> getWifiChipCapabilitiesInternal();
     ndk::ScopedAStatus setMloModeInternal(const ChipMloMode in_mode);
+    ndk::ScopedAStatus setVoipModeInternal(const VoipMode in_mode);
     void retrieveDynamicIfaceCombination();
     void setWeakPtr(std::weak_ptr<WifiChip> ptr);
 

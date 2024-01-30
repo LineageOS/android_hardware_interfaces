@@ -27,12 +27,10 @@
 
 #include <android/hardware/graphics/composer/2.1/types.h>
 
-#include <android/hardware/graphics/mapper/2.0/IMapper.h>
-#include <android/hardware/graphics/mapper/3.0/IMapper.h>
-#include <android/hardware/graphics/mapper/4.0/IMapper.h>
 #include <log/log.h>
 
 namespace android {
+class GraphicBufferMapper;
 namespace hardware {
 namespace graphics {
 namespace composer {
@@ -42,6 +40,7 @@ namespace hal {
 // wrapper for IMapper to import buffers and sideband streams
 class ComposerHandleImporter {
   public:
+    ComposerHandleImporter();
     bool init();
 
     Error importBuffer(const native_handle_t* rawHandle, const native_handle_t** outBufferHandle);
@@ -50,9 +49,7 @@ class ComposerHandleImporter {
     void freeStream(const native_handle_t* streamHandle);
 
   private:
-    sp<mapper::V2_0::IMapper> mMapper2;
-    sp<mapper::V3_0::IMapper> mMapper3;
-    sp<mapper::V4_0::IMapper> mMapper4;
+    GraphicBufferMapper& mMapper;
 };
 
 class ComposerHandleCache {

@@ -18,6 +18,7 @@ package android.hardware.radio.network;
 
 /**
  * NR Dual connectivity state
+ * @hide
  */
 @VintfStability
 @Backing(type="byte")

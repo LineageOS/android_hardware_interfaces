@@ -45,4 +45,5 @@ parcelable OperationContext {
   android.hardware.biometrics.common.WakeReason wakeReason = android.hardware.biometrics.common.WakeReason.UNKNOWN;
   android.hardware.biometrics.common.DisplayState displayState = android.hardware.biometrics.common.DisplayState.UNKNOWN;
   @nullable android.hardware.biometrics.common.AuthenticateReason authenticateReason;
+  android.hardware.biometrics.common.FoldState foldState = android.hardware.biometrics.common.FoldState.UNKNOWN;
 }

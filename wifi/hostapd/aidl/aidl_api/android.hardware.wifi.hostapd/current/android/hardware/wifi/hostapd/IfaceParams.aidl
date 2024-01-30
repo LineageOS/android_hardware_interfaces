@@ -37,4 +37,5 @@ parcelable IfaceParams {
   String name;
   android.hardware.wifi.hostapd.HwModeParams hwModeParams;
   android.hardware.wifi.hostapd.ChannelParams[] channelParams;
+  @nullable android.hardware.wifi.common.OuiKeyedData[] vendorData;
 }

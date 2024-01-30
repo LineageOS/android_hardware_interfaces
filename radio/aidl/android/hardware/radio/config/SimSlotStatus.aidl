@@ -19,6 +19,7 @@ package android.hardware.radio.config;
 import android.hardware.radio.config.MultipleEnabledProfilesMode;
 import android.hardware.radio.config.SimPortInfo;
 
+/** @hide */
 @VintfStability
 @JavaDerive(toString=true)
 parcelable SimSlotStatus {

@@ -34,11 +34,11 @@
 package android.hardware.wifi.supplicant;
 @Backing(type="int") @VintfStability
 enum P2pGroupCapabilityMask {
-  GROUP_OWNER = 1,
-  PERSISTENT_GROUP = 2,
-  GROUP_LIMIT = 4,
-  INTRA_BSS_DIST = 8,
-  CROSS_CONN = 16,
-  PERSISTENT_RECONN = 32,
-  GROUP_FORMATION = 64,
+  GROUP_OWNER = (1 << 0) /* 1 */,
+  PERSISTENT_GROUP = (1 << 1) /* 2 */,
+  GROUP_LIMIT = (1 << 2) /* 4 */,
+  INTRA_BSS_DIST = (1 << 3) /* 8 */,
+  CROSS_CONN = (1 << 4) /* 16 */,
+  PERSISTENT_RECONN = (1 << 5) /* 32 */,
+  GROUP_FORMATION = (1 << 6) /* 64 */,
 }

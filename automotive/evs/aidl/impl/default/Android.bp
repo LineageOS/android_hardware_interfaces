@@ -21,24 +21,11 @@ package {
     default_applicable_licenses: ["hardware_interfaces_license"],
 }
 
-cc_binary {
-    name: "android.hardware.automotive.evs-aidl-default-service",
+cc_defaults {
+    name: "android.hardware.automotive.evs-aidl-default-service-default",
     defaults: ["EvsHalDefaults"],
-    vintf_fragments: ["manifest_evs-default-service.xml"],
-    init_rc: ["evs-default-service.rc"],
-    vendor: true,
-    relative_install_path: "hw",
-    cflags: [
-        "-DGL_GLEXT_PROTOTYPES",
-        "-DEGL_EGLEXT_PROTOTYPES",
-        "-Wall",
-        "-Wextra",
-        "-Werror",
-        "-Wthread-safety",
-    ],
-    srcs: [
-        ":libgui_frame_event_aidl",
-        "src/*.cpp",
+    header_libs: [
+        "libstagefright_headers",
     ],
     shared_libs: [
         "android.hardware.graphics.bufferqueue@1.0",
@@ -46,27 +33,62 @@ cc_binary {
         "android.hidl.token@1.0-utils",
         "libEGL",
         "libGLESv2",
-        "libbase",
         "libbinder_ndk",
         "libbufferqueueconverter",
         "libcamera_metadata",
         "libhardware_legacy",
         "libhidlbase",
-        "liblog",
+        "libmediandk",
         "libnativewindow",
         "libtinyxml2",
         "libui",
-        "libutils",
         "libyuv",
     ],
-    static_libs: [
-        "android.frameworks.automotive.display-V1-ndk",
+}
+
+cc_library {
+    name: "android.hardware.automotive.evs-aidl-default-service-lib",
+    defaults: ["android.hardware.automotive.evs-aidl-default-service-default"],
+    vendor: true,
+    cflags: [
+        "-DGL_GLEXT_PROTOTYPES",
+        "-DEGL_EGLEXT_PROTOTYPES",
+    ],
+    srcs: [
+        ":libgui_frame_event_aidl",
+        "src/*.cpp",
+    ],
+    exclude_srcs: ["src/service.cpp"],
+    whole_static_libs: [
+        "android.frameworks.automotive.display-V2-ndk",
         "android.hardware.automotive.evs-V2-ndk",
         "android.hardware.common-V2-ndk",
         "libaidlcommonsupport",
         "libcutils",
     ],
+    header_libs: [
+        "libgui_aidl_headers",
+    ],
     local_include_dirs: ["include"],
+    include_dirs: ["frameworks/native/include/"],
+    export_include_dirs: ["include"],
+}
+
+cc_binary {
+    name: "android.hardware.automotive.evs-aidl-default-service",
+    defaults: ["android.hardware.automotive.evs-aidl-default-service-default"],
+    vintf_fragments: ["manifest_evs-default-service.xml"],
+    init_rc: ["evs-default-service.rc"],
+    vendor: true,
+    relative_install_path: "hw",
+    cflags: [
+        "-DGL_GLEXT_PROTOTYPES",
+        "-DEGL_EGLEXT_PROTOTYPES",
+    ],
+    srcs: ["src/service.cpp"],
+    static_libs: [
+        "android.hardware.automotive.evs-aidl-default-service-lib",
+    ],
     include_dirs: ["frameworks/native/include/"],
     required: ["evs_mock_hal_configuration.xml"],
 }
@@ -76,4 +98,32 @@ prebuilt_etc {
     soc_specific: true,
     src: "resources/evs_mock_configuration.xml",
     sub_dir: "automotive/evs",
+}
+
+cc_test {
+    name: "android.hardware.automotive.evs-aidl-default-service_cam_buffer_test",
+    defaults: ["android.hardware.automotive.evs-aidl-default-service-default"],
+    vendor: true,
+    srcs: ["tests/EvsCameraBufferTest.cpp"],
+    static_libs: [
+        "android.hardware.automotive.evs-aidl-default-service-lib",
+        "libgmock",
+    ],
+    test_suites: [
+        "general-tests",
+    ],
+}
+
+cc_test {
+    name: "android.hardware.automotive.evs-aidl-default-service_cam_state_test",
+    defaults: ["android.hardware.automotive.evs-aidl-default-service-default"],
+    vendor: true,
+    srcs: ["tests/EvsCameraStateTest.cpp"],
+    static_libs: [
+        "android.hardware.automotive.evs-aidl-default-service-lib",
+        "libgmock",
+    ],
+    test_suites: [
+        "general-tests",
+    ],
 }

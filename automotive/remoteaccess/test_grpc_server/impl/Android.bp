@@ -38,6 +38,50 @@ cc_binary {
     ],
     cflags: [
         "-Wno-unused-parameter",
-        "-DGRPC_SERVICE_ADDRESS=\"localhost:50051\"",
+        "-DGRPC_SERVICE_ADDRESS=\"127.0.0.1:50051\"",
+    ],
+}
+
+cc_binary_host {
+    name: "TestWakeupClientServerHost",
+    srcs: ["src/*.cpp"],
+    local_include_dirs: ["include"],
+    shared_libs: [
+        "libbase",
+        "libutils",
+        "libgrpc++",
+        "libprotobuf-cpp-full",
+    ],
+    whole_static_libs: [
+        "wakeup_client_protos",
+    ],
+    cflags: [
+        "-Wno-unused-parameter",
+        "-DGRPC_SERVICE_ADDRESS=\"127.0.0.1:50051\"",
+        "-DHOST",
+    ],
+}
+
+cc_test_host {
+    name: "TestWakeupClientServerHostUnitTest",
+    srcs: [
+        "test/*.cpp",
+        "src/TestWakeupClientServiceImpl.cpp",
+    ],
+    local_include_dirs: ["include"],
+    shared_libs: [
+        "libbase",
+        "libutils",
+        "libgrpc++",
+        "libprotobuf-cpp-full",
+    ],
+    static_libs: [
+        "libgtest",
+    ],
+    whole_static_libs: [
+        "wakeup_client_protos",
+    ],
+    cflags: [
+        "-Wno-unused-parameter",
     ],
 }

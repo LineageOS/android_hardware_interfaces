@@ -19,6 +19,7 @@ package android.hardware.radio.network;
 import android.hardware.radio.network.CellConnectionStatus;
 import android.hardware.radio.network.CellInfoRatSpecificInfo;
 
+/** @hide */
 @VintfStability
 @JavaDerive(toString=true)
 parcelable CellInfo {

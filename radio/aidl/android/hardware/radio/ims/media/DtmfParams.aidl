@@ -16,7 +16,9 @@
 
 package android.hardware.radio.ims.media;
 
+/** @hide */
 @VintfStability
+@JavaDerive(toString=true)
 parcelable DtmfParams {
     /**
      * Dynamic payload type number to be used for DTMF RTP packets received.

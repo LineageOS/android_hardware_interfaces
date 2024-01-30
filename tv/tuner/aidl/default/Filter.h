@@ -147,6 +147,7 @@ class Filter : public BnFilter {
     bool isMediaFilter() { return mIsMediaFilter; };
     bool isPcrFilter() { return mIsPcrFilter; };
     bool isRecordFilter() { return mIsRecordFilter; };
+    void setIptvDvrPlaybackStatus(PlaybackStatus newStatus) { mIptvDvrPlaybackStatus = newStatus; };
 
   private:
     // Demux service
@@ -286,6 +287,9 @@ class Filter : public BnFilter {
     int mStartId = 0;
     uint8_t mScramblingStatusMonitored = 0;
     uint8_t mIpCidMonitored = 0;
+
+    PlaybackStatus mIptvDvrPlaybackStatus;
+    std::atomic<int> mFilterCount = 0;
 };
 
 }  // namespace tuner

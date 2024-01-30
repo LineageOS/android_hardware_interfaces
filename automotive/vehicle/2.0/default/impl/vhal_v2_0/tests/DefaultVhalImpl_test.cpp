@@ -81,8 +81,13 @@ using ::android::hardware::automotive::vehicle::V2_0::impl::OBD2_FREEZE_FRAME;
 using ::android::hardware::automotive::vehicle::V2_0::impl::OBD2_FREEZE_FRAME_CLEAR;
 using ::android::hardware::automotive::vehicle::V2_0::impl::OBD2_FREEZE_FRAME_INFO;
 using ::android::hardware::automotive::vehicle::V2_0::impl::OBD2_LIVE_FRAME;
+using ::android::hardware::automotive::vehicle::V2_0::impl::WHEEL_FRONT_LEFT;
+using ::android::hardware::automotive::vehicle::V2_0::impl::WHEEL_FRONT_RIGHT;
+using ::android::hardware::automotive::vehicle::V2_0::impl::WHEEL_REAR_LEFT;
+using ::android::hardware::automotive::vehicle::V2_0::impl::WHEEL_REAR_RIGHT;
 
 using ::testing::HasSubstr;
+using ::testing::UnorderedElementsAre;
 
 using VehiclePropValuePtr = recyclable_ptr<VehiclePropValue>;
 
@@ -152,7 +157,7 @@ class DefaultVhalImplTest : public ::testing::Test {
 TEST_F(DefaultVhalImplTest, testListProperties) {
     std::vector<VehiclePropConfig> configs = mHal->listProperties();
 
-    EXPECT_EQ((size_t)124, configs.size());
+    EXPECT_EQ((size_t)125, configs.size());
 }
 
 TEST_F(DefaultVhalImplTest, testGetDefaultPropertyFloat) {
@@ -344,6 +349,38 @@ TEST_F(DefaultVhalImplTest, testSubscribe) {
     const auto& lastEvent = receivedEvents[receivedEvents.size() - 1];
     ASSERT_EQ((size_t)1, lastEvent->value.floatValues.size());
     EXPECT_EQ(1.0f, lastEvent->value.floatValues[0]);
+}
+
+TEST_F(DefaultVhalImplTest, testSubscribeContinuous_withMultipleAreaIds) {
+    // Clear existing events.
+    mEventQueue.flush();
+    int propId = toInt(VehicleProperty::TIRE_PRESSURE);
+
+    auto status = mHal->subscribe(propId, 1);
+
+    ASSERT_EQ(StatusCode::OK, status);
+
+    std::vector<VehiclePropValuePtr> receivedEvents;
+    // Wait for 2 updates, each for 4 area IDs.
+    waitForEvents(&receivedEvents, 4 * 2);
+
+    std::vector<int> areasForUpdate1;
+    std::vector<int> areasForUpdate2;
+
+    for (size_t i = 0; i < receivedEvents.size(); i++) {
+        ASSERT_EQ(receivedEvents[i]->prop, propId);
+
+        if (i < 4) {
+            areasForUpdate1.push_back(receivedEvents[i]->areaId);
+        } else {
+            areasForUpdate2.push_back(receivedEvents[i]->areaId);
+        }
+    }
+
+    ASSERT_THAT(areasForUpdate1, UnorderedElementsAre(WHEEL_FRONT_LEFT, WHEEL_FRONT_RIGHT,
+                                                      WHEEL_REAR_LEFT, WHEEL_REAR_RIGHT));
+    ASSERT_THAT(areasForUpdate2, UnorderedElementsAre(WHEEL_FRONT_LEFT, WHEEL_FRONT_RIGHT,
+                                                      WHEEL_REAR_LEFT, WHEEL_REAR_RIGHT));
 }
 
 TEST_F(DefaultVhalImplTest, testSubscribeInvalidProp) {
@@ -1318,7 +1355,6 @@ TEST_F(DefaultVhalImplTest, testDebugSetInt) {
     ASSERT_EQ((size_t)1, events.size());
     ASSERT_EQ((size_t)1, events[0]->value.int32Values.size());
     EXPECT_EQ(2022, events[0]->value.int32Values[0]);
-    EXPECT_EQ(1000, events[0]->timestamp);
 
     VehiclePropValue value;
     StatusCode status;
@@ -1352,7 +1388,6 @@ TEST_F(DefaultVhalImplTest, testDebugSetBool) {
     ASSERT_EQ((size_t)1, events.size());
     EXPECT_EQ(0, events[0]->value.int32Values[0]);
     EXPECT_EQ(DOOR_1_LEFT, events[0]->areaId);
-    EXPECT_EQ(1000, events[0]->timestamp);
 
     VehiclePropValue value;
     StatusCode status;
@@ -1391,7 +1426,6 @@ TEST_F(DefaultVhalImplTest, testDebugSetFloat) {
     ASSERT_EQ((size_t)1, events.size());
     ASSERT_EQ((size_t)1, events[0]->value.floatValues.size());
     EXPECT_EQ(10.5, events[0]->value.floatValues[0]);
-    EXPECT_EQ(1000, events[0]->timestamp);
 
     VehiclePropValue value;
     StatusCode status;

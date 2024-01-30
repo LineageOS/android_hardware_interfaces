@@ -16,6 +16,7 @@
 
 package android.hardware.wifi.supplicant;
 
+import android.hardware.wifi.common.OuiKeyedData;
 import android.hardware.wifi.supplicant.LegacyMode;
 import android.hardware.wifi.supplicant.WifiTechnology;
 
@@ -48,4 +49,9 @@ parcelable ConnectionCapabilities {
      * Indicates the AP support for TID-to-link mapping negotiation.
      */
     boolean apTidToLinkMapNegotiationSupported;
+    /**
+     * Additional vendor-specific data. Null value indicates
+     * that no vendor data is provided.
+     */
+    @nullable OuiKeyedData[] vendorData;
 }

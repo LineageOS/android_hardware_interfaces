@@ -34,6 +34,7 @@ import android.hardware.radio.ims.SrvccCall;
  * duration of a method call. If clients provide colliding serials (including passing the same
  * serial to different methods), multiple responses (one for each method call) must still be served.
  * setResponseFunctions must work with IRadioImsResponse and IRadioImsIndication.
+ * @hide
  */
 @VintfStability
 oneway interface IRadioIms {
@@ -44,6 +45,8 @@ oneway interface IRadioIms {
      * @param srvccCalls the list of calls
      *
      * Response function is IRadioImsResponse.setSrvccCallInfoResponse()
+     *
+     * This is available when android.hardware.telephony.ims is defined.
      */
     void setSrvccCallInfo(int serial, in SrvccCall[] srvccCalls);
 
@@ -59,6 +62,8 @@ oneway interface IRadioIms {
      * @param imsRegistration IMS registration information
      *
      * Response function is IRadioImsResponse.updateImsRegistrationInfoResponse()
+     *
+     * This is available when android.hardware.telephony.ims is defined.
      */
     void updateImsRegistrationInfo(int serial, in ImsRegistration imsRegistration);
 
@@ -89,10 +94,11 @@ oneway interface IRadioIms {
      *        mobile terminated use case eg. MO/MT call/SMS etc
      *
      * Response function is IRadioImsResponse.startImsTrafficResponse()
+     *
+     * This is available when android.hardware.telephony.ims is defined.
      */
-    void startImsTraffic(int serial, int token,
-            ImsTrafficType imsTrafficType, AccessNetwork accessNetworkType,
-            ImsCall.Direction trafficDirection);
+    void startImsTraffic(int serial, int token, ImsTrafficType imsTrafficType,
+            AccessNetwork accessNetworkType, ImsCall.Direction trafficDirection);
 
     /**
      * Indicates IMS traffic has been stopped.
@@ -103,6 +109,8 @@ oneway interface IRadioIms {
      * @param token The token assigned by startImsTraffic()
      *
      * Response function is IRadioImsResponse.stopImsTrafficResponse()
+     *
+     * This is available when android.hardware.telephony.ims is defined.
      */
     void stopImsTraffic(int serial, int token);
 
@@ -114,6 +122,8 @@ oneway interface IRadioIms {
      * @param reason Specifies the reason that causes EPS fallback
      *
      * Response function is IRadioImsResponse.triggerEpsFallbackResponse()
+     *
+     * This is available when android.hardware.telephony.ims is defined.
      */
     void triggerEpsFallback(int serial, in EpsFallbackReason reason);
 
@@ -122,9 +132,11 @@ oneway interface IRadioIms {
      *
      * @param radioImsResponse Object containing response functions
      * @param radioImsIndication Object containing radio indications
+     *
+     * This is available when android.hardware.telephony.ims is defined.
      */
-    void setResponseFunctions(in IRadioImsResponse radioImsResponse,
-            in IRadioImsIndication radioImsIndication);
+    void setResponseFunctions(
+            in IRadioImsResponse radioImsResponse, in IRadioImsIndication radioImsIndication);
 
     /**
      * Access Network Bitrate Recommendation Query (ANBRQ), see 3GPP TS 26.114.
@@ -137,8 +149,11 @@ oneway interface IRadioIms {
      * @param bitsPerSecond The bit rate requested by the opponent UE
      *
      * Response function is IRadioImsResponse.sendAnbrQueryResponse()
+     *
+     * This is available when android.hardware.telephony.ims is defined.
      */
-    void sendAnbrQuery(int serial, ImsStreamType mediaType, ImsStreamDirection direction, int bitsPerSecond);
+    void sendAnbrQuery(
+            int serial, ImsStreamType mediaType, ImsStreamDirection direction, int bitsPerSecond);
 
     /**
      * Provides a list of IMS call information to radio.
@@ -147,6 +162,8 @@ oneway interface IRadioIms {
      * @param imsCalls The list of IMS calls
      *
      * Response function is IRadioImsResponse.updateImsCallStatusResponse()
+     *
+     * This is available when android.hardware.telephony.ims is defined.
      */
     void updateImsCallStatus(int serial, in ImsCall[] imsCalls);
 }

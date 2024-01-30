@@ -36,20 +36,29 @@ namespace hardware {
 namespace automotive {
 namespace vehicle {
 
+// A structure to represent subscription config for one subscription client.
+struct SubConfig {
+    float sampleRateHz;
+    bool enableVur;
+};
+
 // A class to represent all the subscription configs for a continuous [propId, areaId].
 class ContSubConfigs final {
   public:
     using ClientIdType = const AIBinder*;
 
-    void addClient(const ClientIdType& clientId, float sampleRateHz);
+    void addClient(const ClientIdType& clientId, float sampleRateHz, bool enableVur);
     void removeClient(const ClientIdType& clientId);
     float getMaxSampleRateHz() const;
+    bool isVurEnabled() const;
+    bool isVurEnabledForClient(const ClientIdType& clientId);
 
   private:
     float mMaxSampleRateHz = 0.;
-    std::unordered_map<ClientIdType, float> mSampleRateHzByClient;
+    bool mEnableVur;
+    std::unordered_map<ClientIdType, SubConfig> mConfigByClient;
 
-    void refreshMaxSampleRateHz();
+    void refreshCombinedConfig();
 };
 
 // A thread-safe subscription manager that manages all VHAL subscriptions.
@@ -58,6 +67,7 @@ class SubscriptionManager final {
     using ClientIdType = const AIBinder*;
     using CallbackType =
             std::shared_ptr<aidl::android::hardware::automotive::vehicle::IVehicleCallback>;
+    using VehiclePropValue = aidl::android::hardware::automotive::vehicle::VehiclePropValue;
 
     explicit SubscriptionManager(IVehicleHardware* vehicleHardware);
     ~SubscriptionManager();
@@ -92,18 +102,17 @@ class SubscriptionManager final {
     // For a list of updated properties, returns a map that maps clients subscribing to
     // the updated properties to a list of updated values. This would only return on-change property
     // clients that should be informed for the given updated values.
-    std::unordered_map<
-            CallbackType,
-            std::vector<const aidl::android::hardware::automotive::vehicle::VehiclePropValue*>>
-    getSubscribedClients(
-            const std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropValue>&
-                    updatedValues);
+    std::unordered_map<CallbackType, std::vector<VehiclePropValue>> getSubscribedClients(
+            std::vector<VehiclePropValue>&& updatedValues);
 
     // For a list of set property error events, returns a map that maps clients subscribing to the
     // properties to a list of errors for each client.
     std::unordered_map<CallbackType,
                        std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropError>>
     getSubscribedClientsForErrorEvents(const std::vector<SetValueErrorEvent>& errorEvents);
+
+    // Returns the number of subscribed clients.
+    size_t countClients();
 
     // Checks whether the sample rate is valid.
     static bool checkSampleRateHz(float sampleRateHz);
@@ -114,27 +123,59 @@ class SubscriptionManager final {
 
     IVehicleHardware* mVehicleHardware;
 
+    struct VehiclePropValueHashPropIdAreaId {
+        inline size_t operator()(const VehiclePropValue& vehiclePropValue) const {
+            size_t res = 0;
+            hashCombine(res, vehiclePropValue.prop);
+            hashCombine(res, vehiclePropValue.areaId);
+            return res;
+        }
+    };
+
+    struct VehiclePropValueEqualPropIdAreaId {
+        inline bool operator()(const VehiclePropValue& left, const VehiclePropValue& right) const {
+            return left.prop == right.prop && left.areaId == right.areaId;
+        }
+    };
+
     mutable std::mutex mLock;
     std::unordered_map<PropIdAreaId, std::unordered_map<ClientIdType, CallbackType>,
                        PropIdAreaIdHash>
-            mClientsByPropIdArea GUARDED_BY(mLock);
+            mClientsByPropIdAreaId GUARDED_BY(mLock);
     std::unordered_map<ClientIdType, std::unordered_set<PropIdAreaId, PropIdAreaIdHash>>
             mSubscribedPropsByClient GUARDED_BY(mLock);
     std::unordered_map<PropIdAreaId, ContSubConfigs, PropIdAreaIdHash> mContSubConfigsByPropIdArea
             GUARDED_BY(mLock);
+    std::unordered_map<CallbackType,
+                       std::unordered_set<VehiclePropValue, VehiclePropValueHashPropIdAreaId,
+                                          VehiclePropValueEqualPropIdAreaId>>
+            mContSubValuesByCallback GUARDED_BY(mLock);
 
     VhalResult<void> addContinuousSubscriberLocked(const ClientIdType& clientId,
                                                    const PropIdAreaId& propIdAreaId,
-                                                   float sampleRateHz) REQUIRES(mLock);
+                                                   float sampleRateHz, bool enableVur)
+            REQUIRES(mLock);
+    VhalResult<void> addOnChangeSubscriberLocked(const PropIdAreaId& propIdAreaId) REQUIRES(mLock);
+    // Removes the subscription client for the continuous [propId, areaId].
     VhalResult<void> removeContinuousSubscriberLocked(const ClientIdType& clientId,
                                                       const PropIdAreaId& propIdAreaId)
             REQUIRES(mLock);
+    // Removes one subscription client for the on-change [propId, areaId].
+    VhalResult<void> removeOnChangeSubscriberLocked(const PropIdAreaId& propIdAreaId)
+            REQUIRES(mLock);
 
-    VhalResult<void> updateContSubConfigs(const PropIdAreaId& PropIdAreaId,
-                                          const ContSubConfigs& newConfig) REQUIRES(mLock);
+    VhalResult<void> updateContSubConfigsLocked(const PropIdAreaId& PropIdAreaId,
+                                                const ContSubConfigs& newConfig) REQUIRES(mLock);
+
+    VhalResult<void> unsubscribePropIdAreaIdLocked(SubscriptionManager::ClientIdType clientId,
+                                                   const PropIdAreaId& propIdAreaId)
+            REQUIRES(mLock);
 
     // Checks whether the manager is empty. For testing purpose.
     bool isEmpty();
+
+    bool isValueUpdatedLocked(const CallbackType& callback, const VehiclePropValue& value)
+            REQUIRES(mLock);
 
     // Get the interval in nanoseconds accroding to sample rate.
     static android::base::Result<int64_t> getIntervalNanos(float sampleRateHz);

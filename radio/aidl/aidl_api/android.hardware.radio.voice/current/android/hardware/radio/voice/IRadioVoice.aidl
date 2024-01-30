@@ -32,6 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.voice;
+/* @hide */
 @VintfStability
 interface IRadioVoice {
   oneway void acceptCall(in int serial);

@@ -18,14 +18,13 @@
 
 #include <android-base/logging.h>
 #include <android-base/properties.h>
-#include <android/hardware/graphics/mapper/2.0/IMapper.h>
 #include <composer-vts/2.1/GraphicsComposerCallback.h>
 #include <composer-vts/2.1/TestCommandReader.h>
 #include <composer-vts/2.2/ComposerVts.h>
 #include <gtest/gtest.h>
 #include <hidl/GtestPrinter.h>
 #include <hidl/ServiceManagement.h>
-#include <mapper-vts/2.0/MapperVts.h>
+#include <ui/GraphicBuffer.h>
 
 namespace android {
 namespace hardware {
@@ -40,7 +39,6 @@ using common::V1_1::ColorMode;
 using common::V1_1::Dataspace;
 using common::V1_1::PixelFormat;
 using common::V1_1::RenderIntent;
-using V2_1::vts::NativeHandleWrapper;
 
 class GraphicsComposerHidlTest : public ::testing::TestWithParam<std::string> {
   protected:
@@ -141,8 +139,6 @@ class GraphicsComposerHidlCommandTest : public GraphicsComposerHidlTest {
     void SetUp() override {
         ASSERT_NO_FATAL_FAILURE(GraphicsComposerHidlTest::SetUp());
 
-        ASSERT_NO_FATAL_FAILURE(mGralloc = std::make_unique<Gralloc>());
-
         mWriter = std::make_unique<CommandWriterBase>(1024);
         mReader = std::make_unique<V2_1::vts::TestCommandReader>();
     }
@@ -152,20 +148,10 @@ class GraphicsComposerHidlCommandTest : public GraphicsComposerHidlTest {
         ASSERT_NO_FATAL_FAILURE(GraphicsComposerHidlTest::TearDown());
     }
 
-    NativeHandleWrapper allocate() {
-        uint64_t usage =
-                static_cast<uint64_t>(BufferUsage::CPU_WRITE_OFTEN | BufferUsage::CPU_READ_OFTEN);
-        return mGralloc->allocate(/*width*/ 64, /*height*/ 64, /*layerCount*/ 1,
-                                  PixelFormat::RGBA_8888, usage);
-    }
-
     void execute() { mComposerClient->execute(mReader.get(), mWriter.get()); }
 
     std::unique_ptr<CommandWriterBase> mWriter;
     std::unique_ptr<V2_1::vts::TestCommandReader> mReader;
-
-   private:
-    std::unique_ptr<Gralloc> mGralloc;
 };
 
 /**
@@ -437,13 +423,11 @@ TEST_P(GraphicsComposerHidlTest, SetReadbackBuffer) {
     uint64_t usage =
             static_cast<uint64_t>(BufferUsage::COMPOSER_OVERLAY | BufferUsage::CPU_READ_OFTEN);
 
-    std::unique_ptr<Gralloc> gralloc;
-    std::unique_ptr<NativeHandleWrapper> buffer;
-    ASSERT_NO_FATAL_FAILURE(gralloc = std::make_unique<Gralloc>());
-    ASSERT_NO_FATAL_FAILURE(buffer.reset(new NativeHandleWrapper(
-            gralloc->allocate(mDisplayWidth, mDisplayHeight, 1, mReadbackPixelFormat, usage))));
+    sp<GraphicBuffer> buffer = sp<GraphicBuffer>::make(mDisplayWidth, mDisplayHeight,
+                                                       (int32_t)mReadbackPixelFormat, 1, usage);
+    ASSERT_EQ(STATUS_OK, buffer->initCheck());
 
-    mComposerClient->setReadbackBuffer(mPrimaryDisplay, buffer->get(), -1);
+    mComposerClient->setReadbackBuffer(mPrimaryDisplay, buffer->handle, -1);
 }
 
 /**
@@ -460,14 +444,12 @@ TEST_P(GraphicsComposerHidlTest, SetReadbackBufferBadDisplay) {
     uint64_t usage =
             static_cast<uint64_t>(BufferUsage::COMPOSER_OVERLAY | BufferUsage::CPU_READ_OFTEN);
 
-    std::unique_ptr<Gralloc> gralloc;
-    std::unique_ptr<NativeHandleWrapper> buffer;
-    ASSERT_NO_FATAL_FAILURE(gralloc = std::make_unique<Gralloc>());
-    ASSERT_NO_FATAL_FAILURE(buffer.reset(new NativeHandleWrapper(
-            gralloc->allocate(mDisplayWidth, mDisplayHeight, 1, mReadbackPixelFormat, usage))));
+    sp<GraphicBuffer> buffer = sp<GraphicBuffer>::make(mDisplayWidth, mDisplayHeight,
+                                                       (int32_t)mReadbackPixelFormat, 1, usage);
+    ASSERT_EQ(STATUS_OK, buffer->initCheck());
 
-    Error error =
-            mComposerClient->getRaw()->setReadbackBuffer(mInvalidDisplayId, buffer->get(), nullptr);
+    Error error = mComposerClient->getRaw()->setReadbackBuffer(mInvalidDisplayId, buffer->handle,
+                                                               nullptr);
     ASSERT_EQ(Error::BAD_DISPLAY, error);
 }
 

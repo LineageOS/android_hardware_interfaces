@@ -18,6 +18,7 @@ package android.hardware.radio.data;
 
 /**
  * Describes a data link address for mobile data connection.
+ * @hide
  */
 @VintfStability
 @JavaDerive(toString=true)

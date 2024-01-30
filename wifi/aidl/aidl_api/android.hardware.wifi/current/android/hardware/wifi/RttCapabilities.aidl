@@ -42,4 +42,9 @@ parcelable RttCapabilities {
   android.hardware.wifi.RttPreamble preambleSupport;
   android.hardware.wifi.RttBw bwSupport;
   byte mcVersion;
+  android.hardware.wifi.RttPreamble azPreambleSupport;
+  android.hardware.wifi.RttBw azBwSupport;
+  boolean ntbInitiatorSupported;
+  boolean ntbResponderSupported;
+  int maxTxLtfRepetitionCount;
 }

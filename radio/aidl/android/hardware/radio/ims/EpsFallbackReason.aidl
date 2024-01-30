@@ -16,6 +16,7 @@
 
 package android.hardware.radio.ims;
 
+/** @hide */
 @VintfStability
 @JavaDerive(toString=true)
 @Backing(type="int")

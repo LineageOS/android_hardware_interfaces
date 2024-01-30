@@ -34,7 +34,7 @@
 package android.hardware.wifi.supplicant;
 @Backing(type="int") @VintfStability
 enum GroupMgmtCipherMask {
-  BIP_GMAC_128 = 2048,
-  BIP_GMAC_256 = 4096,
-  BIP_CMAC_256 = 8192,
+  BIP_GMAC_128 = (1 << 11) /* 2048 */,
+  BIP_GMAC_256 = (1 << 12) /* 4096 */,
+  BIP_CMAC_256 = (1 << 13) /* 8192 */,
 }

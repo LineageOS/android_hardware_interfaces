@@ -32,6 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.config;
+/* @hide */
 @Backing(type="int") @JavaDerive(toString=true) @VintfStability
 enum MultipleEnabledProfilesMode {
   NONE,

@@ -33,6 +33,7 @@ import android.hardware.wifi.WifiDebugRingBufferVerboseLevel;
 import android.hardware.wifi.WifiIfaceMode;
 import android.hardware.wifi.WifiRadioCombination;
 import android.hardware.wifi.WifiUsableChannel;
+import android.hardware.wifi.common.OuiKeyedData;
 
 /**
  * Interface that represents a chip that must be configured as a single unit.
@@ -82,6 +83,10 @@ interface IWifiChip {
          * Chip supports Tid-To-Link mapping negotiation.
          */
         T2LM_NEGOTIATION = 1 << 8,
+        /**
+         * Chip supports voip mode setting.
+         */
+        SET_VOIP_MODE = 1 << 9,
     }
 
     /**
@@ -381,6 +386,16 @@ interface IWifiChip {
          * - If 5G is not supported, then channel 6 has to be considered.
          */
         NAN_INSTANT_MODE = 1 << 2,
+    }
+
+    /**
+     * This enum represents the different VoIP mode that can be set through |setVoipMode|.
+     */
+    @VintfStability
+    @Backing(type="int")
+    enum VoipMode {
+        OFF = 0,
+        VOICE = 1,
     }
 
     /**
@@ -1149,4 +1164,46 @@ interface IWifiChip {
      *
      */
     void setMloMode(in ChipMloMode mode);
+
+    /**
+     * Create an AP or bridged AP iface on the chip using vendor-provided configuration parameters.
+     *
+     * Depending on the mode the chip is configured in, the interface creation
+     * may fail (code: |WifiStatusCode.ERROR_NOT_AVAILABLE|) if we've already
+     * reached the maximum allowed (specified in |ChipIfaceCombination|) number
+     * of ifaces of the AP or AP_BRIDGED type.
+     *
+     * @param  iface IfaceConcurrencyType to be created. Takes one of
+               |IfaceConcurrencyType.AP| or |IfaceConcurrencyType.AP_BRIDGED|
+     * @param  vendorData Vendor-provided configuration data as a list of |OuiKeyedData|.
+     * @return AIDL interface object representing the iface if
+     *         successful, null otherwise.
+     * @throws ServiceSpecificException with one of the following values:
+     *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|,
+     *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+     *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
+     *         |WifiStatusCode.ERROR_INVALID_ARGS|
+     */
+    @PropagateAllowBlocking
+    IWifiApIface createApOrBridgedApIface(
+            in IfaceConcurrencyType iface, in OuiKeyedData[] vendorData);
+
+    /**
+     * API to set the wifi VoIP mode.
+     *
+     * The VoIP mode is a hint to the HAL to enable or disable Wi-Fi VoIP
+     * optimization. The optimization should be enabled if the mode is NOT set to |OFF|.
+     * Furthermore, HAL should implement relevant optimization techniques based on the
+     * current operational mode.
+     *
+     * Note: Wi-Fi VoIP optimization may trade-off power against Wi-Fi
+     * performance but it provides better voice quility.
+     *
+     * @param mode Voip mode as defined by the enum |VoipMode|
+     * @throws ServiceSpecificException with one of the following values:
+     *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|,
+     *         |WifiStatusCode.ERROR_INVALID_ARGS|,
+     *         |WifiStatusCode.ERROR_UNKNOWN|
+     */
+    void setVoipMode(in VoipMode mode);
 }

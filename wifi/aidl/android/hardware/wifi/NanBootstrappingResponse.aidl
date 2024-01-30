@@ -29,4 +29,11 @@ parcelable NanBootstrappingResponse {
      * True if accept the request, false otherwise.
      */
     boolean acceptRequest;
+
+    /**
+     * ID of an active publish or subscribe discovery session. Follow-up message is transmitted in
+     * the context of the discovery session. NAN Spec: Service Descriptor Attribute (SDA) / Instance
+     * ID
+     */
+    byte discoverySessionId;
 }

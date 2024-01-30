@@ -19,7 +19,9 @@
 #include <FakeObd2Frame.h>
 #include <FakeUserHal.h>
 #include <PropertyUtils.h>
-#include <TestPropertyUtils.h>
+
+#include <aidl/android/hardware/automotive/vehicle/VehicleApPowerStateShutdownParam.h>
+#include <android/hardware/automotive/vehicle/TestVendorProperty.h>
 
 #include <android-base/expected.h>
 #include <android-base/file.h>
@@ -33,6 +35,7 @@
 #include <inttypes.h>
 #include <chrono>
 #include <condition_variable>
+#include <memory>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -60,6 +63,8 @@ namespace vehicle {
 namespace fake {
 namespace {
 
+using ::aidl::android::hardware::automotive::vehicle::CruiseControlCommand;
+using ::aidl::android::hardware::automotive::vehicle::CruiseControlType;
 using ::aidl::android::hardware::automotive::vehicle::ErrorState;
 using ::aidl::android::hardware::automotive::vehicle::GetValueRequest;
 using ::aidl::android::hardware::automotive::vehicle::GetValueResult;
@@ -67,13 +72,17 @@ using ::aidl::android::hardware::automotive::vehicle::RawPropValues;
 using ::aidl::android::hardware::automotive::vehicle::SetValueRequest;
 using ::aidl::android::hardware::automotive::vehicle::SetValueResult;
 using ::aidl::android::hardware::automotive::vehicle::StatusCode;
+using ::aidl::android::hardware::automotive::vehicle::SubscribeOptions;
 using ::aidl::android::hardware::automotive::vehicle::VehicleApPowerStateReport;
 using ::aidl::android::hardware::automotive::vehicle::VehicleApPowerStateReq;
+using ::aidl::android::hardware::automotive::vehicle::VehicleApPowerStateShutdownParam;
 using ::aidl::android::hardware::automotive::vehicle::VehicleAreaMirror;
 using ::aidl::android::hardware::automotive::vehicle::VehicleHwKeyInputAction;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropConfig;
 using ::aidl::android::hardware::automotive::vehicle::VehicleProperty;
+using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyAccess;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyStatus;
+using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropValue;
 using ::aidl::android::hardware::automotive::vehicle::VehicleUnit;
 using ::android::base::expected;
@@ -86,6 +95,7 @@ using ::testing::ContainsRegex;
 using ::testing::Eq;
 using ::testing::HasSubstr;
 using ::testing::IsSubsetOf;
+using ::testing::UnorderedElementsAre;
 using ::testing::WhenSortedBy;
 
 using std::chrono::milliseconds;
@@ -102,6 +112,10 @@ class FakeVehicleHardwareTestHelper {
 
     std::unordered_map<int32_t, ConfigDeclaration> loadConfigDeclarations() {
         return mHardware->loadConfigDeclarations();
+    }
+
+    std::unordered_set<int32_t> getHvacPowerDependentProps() {
+        return mHardware->hvacPowerDependentProps;
     }
 
   private:
@@ -135,6 +149,15 @@ class FakeVehicleHardwareTest : public ::testing::Test {
 
     void setHardware(std::unique_ptr<FakeVehicleHardware> hardware) {
         mHardware = std::move(hardware);
+    }
+
+    static SubscribeOptions newSubscribeOptions(int32_t propId, int32_t areaId,
+                                                float sampleRateHz) {
+        SubscribeOptions options;
+        options.areaIds = {areaId};
+        options.propId = propId;
+        options.sampleRate = sampleRateHz;
+        return options;
     }
 
     StatusCode setValues(const std::vector<SetValueRequest>& requests) {
@@ -324,6 +347,13 @@ class FakeVehicleHardwareTest : public ::testing::Test {
         return mEventCount[propIdAreaId];
     }
 
+    void subscribe(int32_t propId, int32_t areaId, float sampleRateHz) {
+        ASSERT_EQ(StatusCode::OK,
+                  getHardware()->subscribe(newSubscribeOptions(propId, areaId, sampleRateHz)))
+                << "failed to subscribe to propId: " << propId << "areaId: " << areaId
+                << ", sampleRateHz: " << sampleRateHz;
+    }
+
     static void addSetValueRequest(std::vector<SetValueRequest>& requests,
                                    std::vector<SetValueResult>& expectedResults, int64_t requestId,
                                    const VehiclePropValue& value, StatusCode expectedStatus) {
@@ -358,24 +388,24 @@ class FakeVehicleHardwareTest : public ::testing::Test {
     }
 
     std::vector<VehiclePropValue> getTestPropValues() {
-        VehiclePropValue fuelCapacity = {
-                .prop = toInt(VehicleProperty::INFO_FUEL_CAPACITY),
-                .value = {.floatValues = {1.0}},
+        VehiclePropValue oilLevel = {
+                .prop = toInt(VehicleProperty::ENGINE_OIL_LEVEL),
+                .value = {.int32Values = {1}},
         };
 
-        VehiclePropValue leftTirePressure = {
-                .prop = toInt(VehicleProperty::TIRE_PRESSURE),
+        VehiclePropValue leftHvacTemp = {
+                .prop = toInt(VehicleProperty::HVAC_TEMPERATURE_CURRENT),
                 .value = {.floatValues = {170.0}},
-                .areaId = WHEEL_FRONT_LEFT,
+                .areaId = SEAT_1_LEFT,
         };
 
-        VehiclePropValue rightTirePressure = {
-                .prop = toInt(VehicleProperty::TIRE_PRESSURE),
+        VehiclePropValue rightHvacTemp = {
+                .prop = toInt(VehicleProperty::HVAC_TEMPERATURE_CURRENT),
                 .value = {.floatValues = {180.0}},
-                .areaId = WHEEL_FRONT_RIGHT,
+                .areaId = SEAT_1_RIGHT,
         };
 
-        return {fuelCapacity, leftTirePressure, rightTirePressure};
+        return {oilLevel, leftHvacTemp, rightHvacTemp};
     }
 
     struct PropValueCmp {
@@ -384,6 +414,25 @@ class FakeVehicleHardwareTest : public ::testing::Test {
                    ((a.prop == b.prop) && (a.value == b.value) && (a.areaId < b.areaId));
         }
     } mPropValueCmp;
+
+    std::unique_ptr<VehiclePropConfig> getVehiclePropConfig(int32_t propertyId) {
+        auto configs = mHardware->getAllPropertyConfigs();
+        for (auto& config : configs) {
+            if (config.prop == propertyId) {
+                auto ptr = std::make_unique<VehiclePropConfig>();
+                ptr->prop = config.prop;
+                ptr->access = config.access;
+                ptr->changeMode = config.changeMode;
+                ptr->areaConfigs = config.areaConfigs;
+                ptr->configArray = config.configArray;
+                ptr->configString = config.configString;
+                ptr->minSampleRate = config.minSampleRate;
+                ptr->maxSampleRate = config.maxSampleRate;
+                return ptr;
+            }
+        }
+        return std::unique_ptr<VehiclePropConfig>(nullptr);
+    }
 
   private:
     std::unique_ptr<FakeVehicleHardware> mHardware;
@@ -406,6 +455,29 @@ TEST_F(FakeVehicleHardwareTest, testGetAllPropertyConfigs) {
     ASSERT_EQ(configs.size(), helper.loadConfigDeclarations().size());
 }
 
+TEST_F(FakeVehicleHardwareTest, testGetAllPropertyConfigs_defaultSupportVUR) {
+    std::vector<VehiclePropConfig> configs = getHardware()->getAllPropertyConfigs();
+
+    for (const auto& config : configs) {
+        bool expectedSupportVUR = true;
+        if (config.prop == toInt(VehicleProperty::VHAL_HEARTBEAT) ||
+            config.prop == toInt(VehicleProperty::CLUSTER_HEARTBEAT)) {
+            expectedSupportVUR = false;
+        }
+        EXPECT_GE(config.areaConfigs.size(), 1u)
+                << "expect at least one area config, including global area config, propId: "
+                << config.prop;
+        if (config.areaConfigs.size() == 0) {
+            continue;
+        }
+        for (const auto& areaConfig : config.areaConfigs) {
+            EXPECT_EQ(areaConfig.supportVariableUpdateRate, expectedSupportVUR)
+                    << "unexpected supportVariableUpdateRate for propId: " << config.prop
+                    << ", areaId: " << areaConfig.areaId;
+        }
+    }
+}
+
 TEST_F(FakeVehicleHardwareTest, testGetDefaultValues) {
     std::vector<GetValueRequest> getValueRequests;
     std::vector<GetValueResult> expectedGetValueResults;
@@ -424,13 +496,13 @@ TEST_F(FakeVehicleHardwareTest, testGetDefaultValues) {
             continue;
         }
 
-        if (propId == ECHO_REVERSE_BYTES) {
+        if (propId == toInt(TestVendorProperty::ECHO_REVERSE_BYTES)) {
             // Ignore ECHO_REVERSE_BYTES, it has special logic.
             continue;
         }
 
-        if (propId == VENDOR_PROPERTY_ID) {
-            // Ignore VENDOR_PROPERTY_ID, it has special logic.
+        if (propId == toInt(TestVendorProperty::VENDOR_PROPERTY_FOR_ERROR_CODE_TESTING)) {
+            // Ignore VENDOR_PROPERTY_FOR_ERROR_CODE_TESTING, it has special logic.
             continue;
         }
 
@@ -528,17 +600,13 @@ TEST_F(FakeVehicleHardwareTest, testSetValuesError) {
     ASSERT_THAT(getSetValueResults(), ContainerEq(expectedResults));
 }
 
-TEST_F(FakeVehicleHardwareTest, testRegisterOnPropertyChangeEvent) {
-    // We have already registered this callback in Setup, here we are registering again.
-    auto callback = std::make_unique<IVehicleHardware::PropertyChangeCallback>(
-            [this](const std::vector<VehiclePropValue>& values) { onPropertyChangeEvent(values); });
-    getHardware()->registerOnPropertyChangeEvent(std::move(callback));
-
+TEST_F(FakeVehicleHardwareTest, testSetValues_getUpdateEvents) {
     auto testValues = getTestPropValues();
     std::vector<SetValueRequest> requests;
     std::vector<SetValueResult> expectedResults;
     int64_t requestId = 1;
     for (auto& value : testValues) {
+        subscribe(value.prop, value.areaId, /*sampleRateHz=*/0);
         addSetValueRequest(requests, expectedResults, requestId++, value, StatusCode::OK);
     }
     int64_t timestamp = elapsedRealtimeNano();
@@ -963,7 +1031,8 @@ std::vector<SetSpecialValueTestCase> setSpecialValueTestCases() {
                     .expectedValuesToGet =
                             {
                                     VehiclePropValue{
-                                            .prop = VENDOR_CLUSTER_REPORT_STATE,
+                                            .prop = toInt(TestVendorProperty::
+                                                                  VENDOR_CLUSTER_REPORT_STATE),
                                             .value.int32Values = {1},
                                     },
                             },
@@ -980,7 +1049,8 @@ std::vector<SetSpecialValueTestCase> setSpecialValueTestCases() {
                     .expectedValuesToGet =
                             {
                                     VehiclePropValue{
-                                            .prop = VENDOR_CLUSTER_REQUEST_DISPLAY,
+                                            .prop = toInt(TestVendorProperty::
+                                                                  VENDOR_CLUSTER_REQUEST_DISPLAY),
                                             .value.int32Values = {1},
                                     },
                             },
@@ -998,7 +1068,8 @@ std::vector<SetSpecialValueTestCase> setSpecialValueTestCases() {
                     .expectedValuesToGet =
                             {
                                     VehiclePropValue{
-                                            .prop = VENDOR_CLUSTER_NAVIGATION_STATE,
+                                            .prop = toInt(TestVendorProperty::
+                                                                  VENDOR_CLUSTER_NAVIGATION_STATE),
                                             .value.byteValues = {0x1},
                                     },
                             },
@@ -1008,7 +1079,8 @@ std::vector<SetSpecialValueTestCase> setSpecialValueTestCases() {
                     .valuesToSet =
                             {
                                     VehiclePropValue{
-                                            .prop = VENDOR_CLUSTER_SWITCH_UI,
+                                            .prop = toInt(
+                                                    TestVendorProperty::VENDOR_CLUSTER_SWITCH_UI),
                                             .value.int32Values = {1},
                                     },
                             },
@@ -1025,7 +1097,8 @@ std::vector<SetSpecialValueTestCase> setSpecialValueTestCases() {
                     .valuesToSet =
                             {
                                     VehiclePropValue{
-                                            .prop = VENDOR_CLUSTER_DISPLAY_STATE,
+                                            .prop = toInt(TestVendorProperty::
+                                                                  VENDOR_CLUSTER_DISPLAY_STATE),
                                             .value.int32Values = {1, 2},
                                     },
                             },
@@ -1451,7 +1524,7 @@ std::vector<SetSpecialValueTestCase> setSpecialValueTestCases() {
                                     },
                                     VehiclePropValue{
                                             .prop = toInt(VehicleProperty::CRUISE_CONTROL_TYPE),
-                                            .value.int32Values = {1},
+                                            .value.int32Values = {2},
                                     },
                                     VehiclePropValue{
                                             .prop = toInt(VehicleProperty::CRUISE_CONTROL_STATE),
@@ -1519,6 +1592,143 @@ std::vector<SetSpecialValueTestCase> setSpecialValueTestCases() {
                                     },
                             },
             },
+            SetSpecialValueTestCase{
+                    .name = "set_low_speed_collision_warning_enabled_false",
+                    .valuesToSet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::
+                                                            LOW_SPEED_COLLISION_WARNING_ENABLED),
+                                            .value.int32Values = {0},
+                                    },
+                            },
+                    .expectedValuesToGet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::
+                                                            LOW_SPEED_COLLISION_WARNING_ENABLED),
+                                            .value.int32Values = {0},
+                                    },
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::
+                                                            LOW_SPEED_COLLISION_WARNING_STATE),
+                                            .value.int32Values = {toInt(
+                                                    ErrorState::NOT_AVAILABLE_DISABLED)},
+                                    },
+                            },
+            },
+            SetSpecialValueTestCase{
+                    .name = "set_low_speed_collision_warning_enabled_true",
+                    .valuesToSet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::
+                                                            LOW_SPEED_COLLISION_WARNING_ENABLED),
+                                            .value.int32Values = {1},
+                                    },
+                            },
+                    .expectedValuesToGet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::
+                                                            LOW_SPEED_COLLISION_WARNING_ENABLED),
+                                            .value.int32Values = {1},
+                                    },
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::
+                                                            LOW_SPEED_COLLISION_WARNING_STATE),
+                                            .value.int32Values = {1},
+                                    },
+                            },
+            },
+            SetSpecialValueTestCase{
+                    .name = "set_electronic_stability_control_enabled_false",
+                    .valuesToSet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::
+                                                            ELECTRONIC_STABILITY_CONTROL_ENABLED),
+                                            .value.int32Values = {0},
+                                    },
+                            },
+                    .expectedValuesToGet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::
+                                                            ELECTRONIC_STABILITY_CONTROL_ENABLED),
+                                            .value.int32Values = {0},
+                                    },
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::
+                                                            ELECTRONIC_STABILITY_CONTROL_STATE),
+                                            .value.int32Values = {toInt(
+                                                    ErrorState::NOT_AVAILABLE_DISABLED)},
+                                    },
+                            },
+            },
+            SetSpecialValueTestCase{
+                    .name = "set_electronic_stability_control_enabled_true",
+                    .valuesToSet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::
+                                                            ELECTRONIC_STABILITY_CONTROL_ENABLED),
+                                            .value.int32Values = {1},
+                                    },
+                            },
+                    .expectedValuesToGet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::
+                                                            ELECTRONIC_STABILITY_CONTROL_ENABLED),
+                                            .value.int32Values = {1},
+                                    },
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::
+                                                            ELECTRONIC_STABILITY_CONTROL_STATE),
+                                            .value.int32Values = {1},
+                                    },
+                            },
+            },
+            SetSpecialValueTestCase{
+                    .name = "set_shutdown_request",
+                    .valuesToSet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(VehicleProperty::SHUTDOWN_REQUEST),
+                                            .value.int32Values =
+                                                    {
+                                                            toInt(VehicleApPowerStateShutdownParam::
+                                                                          SHUTDOWN_ONLY),
+                                                    },
+                                    },
+                            },
+                    .expectedValuesToGet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(VehicleProperty::AP_POWER_STATE_REQ),
+                                            .value.int32Values =
+                                                    {
+                                                            toInt(VehicleApPowerStateReq::
+                                                                          SHUTDOWN_PREPARE),
+                                                            toInt(VehicleApPowerStateShutdownParam::
+                                                                          SHUTDOWN_ONLY),
+                                                    },
+                                    },
+                            },
+            },
     };
 }
 
@@ -1561,27 +1771,30 @@ INSTANTIATE_TEST_SUITE_P(
             return info.param.name;
         });
 
-TEST_F(FakeVehicleHardwareTest, testSetWaitForVhalAfterCarServiceCrash) {
-    int32_t propId = toInt(VehicleProperty::AP_POWER_STATE_REPORT);
+TEST_F(FakeVehicleHardwareTest, testSetWaitForVhal_alwaysTriggerEvents) {
+    int32_t powerReq = toInt(VehicleProperty::AP_POWER_STATE_REQ);
+    subscribe(powerReq, /*areaId*/ 0, /*sampleRateHz*/ 0);
+
+    int32_t powerReport = toInt(VehicleProperty::AP_POWER_STATE_REPORT);
     VehiclePropValue request = VehiclePropValue{
-            .prop = propId,
+            .prop = powerReport,
             .value.int32Values = {toInt(VehicleApPowerStateReport::WAIT_FOR_VHAL)},
     };
-    ASSERT_EQ(setValue(request), StatusCode::OK) << "failed to set property " << propId;
+    ASSERT_EQ(setValue(request), StatusCode::OK) << "failed to set property " << powerReport;
 
     // Clear existing events.
     clearChangedProperties();
 
     // Simulate a Car Service crash, Car Service would restart and send the message again.
-    ASSERT_EQ(setValue(request), StatusCode::OK) << "failed to set property " << propId;
+    ASSERT_EQ(setValue(request), StatusCode::OK) << "failed to set property " << powerReport;
 
     std::vector<VehiclePropValue> events = getChangedProperties();
     // Even though the state is already ON, we should receive another ON event.
-    ASSERT_EQ(events.size(), 1u);
+    ASSERT_EQ(events.size(), 1u) << "failed to receive on-change events AP_POWER_STATE_REQ ON";
     // Erase the timestamp for comparison.
     events[0].timestamp = 0;
     auto expectedValue = VehiclePropValue{
-            .prop = toInt(VehicleProperty::AP_POWER_STATE_REQ),
+            .prop = powerReq,
             .status = VehiclePropertyStatus::AVAILABLE,
             .value.int32Values = {toInt(VehicleApPowerStateReq::ON), 0},
     };
@@ -1650,23 +1863,35 @@ TEST_F(FakeVehicleHardwareTest, testSetVehicleMapService) {
 }
 
 TEST_F(FakeVehicleHardwareTest, testGetHvacPropNotAvailable) {
-    int seatAreaIds[5] = {SEAT_1_LEFT, SEAT_1_RIGHT, SEAT_2_LEFT, SEAT_2_CENTER, SEAT_2_RIGHT};
-    for (int areaId : seatAreaIds) {
+    FakeVehicleHardwareTestHelper helper(getHardware());
+    auto hvacPowerOnConfig = std::move(getVehiclePropConfig(toInt(VehicleProperty::HVAC_POWER_ON)));
+    EXPECT_NE(hvacPowerOnConfig, nullptr);
+    for (auto& hvacPowerOnAreaConfig : hvacPowerOnConfig->areaConfigs) {
+        int hvacPowerAreaId = hvacPowerOnAreaConfig.areaId;
+        // Turn off HVAC_POWER_ON for only 1 area ID
         StatusCode status = setValue(VehiclePropValue{.prop = toInt(VehicleProperty::HVAC_POWER_ON),
-                                                      .areaId = areaId,
+                                                      .areaId = hvacPowerAreaId,
                                                       .value.int32Values = {0}});
+        EXPECT_EQ(status, StatusCode::OK);
 
-        ASSERT_EQ(status, StatusCode::OK);
-
-        for (size_t i = 0; i < sizeof(HVAC_POWER_PROPERTIES) / sizeof(int32_t); i++) {
-            int powerPropId = HVAC_POWER_PROPERTIES[i];
-            for (int powerDependentAreaId : seatAreaIds) {
+        for (auto& powerPropId : helper.getHvacPowerDependentProps()) {
+            auto powerPropConfig = std::move(getVehiclePropConfig(powerPropId));
+            EXPECT_NE(powerPropConfig, nullptr);
+            if (powerPropConfig->access == VehiclePropertyAccess::WRITE) {
+                continue;
+            }
+            // Try getting a value at each area ID supported by the power dependent property
+            for (auto& powerPropAreaConfig : powerPropConfig->areaConfigs) {
+                int powerDependentAreaId = powerPropAreaConfig.areaId;
                 auto getValueResult = getValue(VehiclePropValue{
                         .prop = powerPropId,
                         .areaId = powerDependentAreaId,
                 });
 
-                if (areaId == powerDependentAreaId) {
+                // If the current area ID is contained within the HVAC_POWER_ON area ID
+                // turned off, then getValue should fail and a StatusCode error should be
+                // returned. Otherwise, a value should be returned.
+                if ((hvacPowerAreaId & powerDependentAreaId) == powerDependentAreaId) {
                     EXPECT_FALSE(getValueResult.ok());
                     EXPECT_EQ(getValueResult.error(), StatusCode::NOT_AVAILABLE_DISABLED);
                 } else {
@@ -1679,28 +1904,45 @@ TEST_F(FakeVehicleHardwareTest, testGetHvacPropNotAvailable) {
         // on this value from any power dependent property values other than those with the same
         // areaId.
         setValue(VehiclePropValue{.prop = toInt(VehicleProperty::HVAC_POWER_ON),
-                                  .areaId = areaId,
+                                  .areaId = hvacPowerAreaId,
                                   .value.int32Values = {1}});
     }
 }
 
 TEST_F(FakeVehicleHardwareTest, testSetHvacPropNotAvailable) {
-    int seatAreaIds[5] = {SEAT_1_LEFT, SEAT_1_RIGHT, SEAT_2_LEFT, SEAT_2_CENTER, SEAT_2_RIGHT};
-    for (int areaId : seatAreaIds) {
+    FakeVehicleHardwareTestHelper helper(getHardware());
+    auto hvacPowerOnConfig = std::move(getVehiclePropConfig(toInt(VehicleProperty::HVAC_POWER_ON)));
+    EXPECT_NE(hvacPowerOnConfig, nullptr);
+    for (auto& hvacPowerOnAreaConfig : hvacPowerOnConfig->areaConfigs) {
+        int hvacPowerAreaId = hvacPowerOnAreaConfig.areaId;
+        // Turn off HVAC_POWER_ON for only 1 area ID
         StatusCode status = setValue(VehiclePropValue{.prop = toInt(VehicleProperty::HVAC_POWER_ON),
-                                                      .areaId = areaId,
+                                                      .areaId = hvacPowerAreaId,
                                                       .value.int32Values = {0}});
+        EXPECT_EQ(status, StatusCode::OK);
 
-        ASSERT_EQ(status, StatusCode::OK);
+        for (auto& powerPropId : helper.getHvacPowerDependentProps()) {
+            auto powerPropConfig = std::move(getVehiclePropConfig(powerPropId));
+            EXPECT_NE(powerPropConfig, nullptr);
+            if (powerPropConfig->access == VehiclePropertyAccess::READ) {
+                continue;
+            }
+            auto propType = getPropType(powerPropId);
+            // Try setting a value at each area ID supported by the power dependent property
+            for (auto& powerPropAreaConfig : powerPropConfig->areaConfigs) {
+                int powerDependentAreaId = powerPropAreaConfig.areaId;
+                auto val = VehiclePropValue{.prop = powerPropId, .areaId = powerDependentAreaId};
+                if (propType == VehiclePropertyType::FLOAT) {
+                    val.value.floatValues.emplace_back(20);
+                } else {
+                    val.value.int32Values.emplace_back(1);
+                }
+                status = setValue(val);
 
-        for (size_t i = 0; i < sizeof(HVAC_POWER_PROPERTIES) / sizeof(int32_t); i++) {
-            int powerPropId = HVAC_POWER_PROPERTIES[i];
-            for (int powerDependentAreaId : seatAreaIds) {
-                StatusCode status = setValue(VehiclePropValue{.prop = powerPropId,
-                                                              .areaId = powerDependentAreaId,
-                                                              .value.int32Values = {1}});
-
-                if (areaId == powerDependentAreaId) {
+                // If the current area ID is contained within the HVAC_POWER_ON area ID
+                // turned off, then setValue should fail and a StatusCode error should be
+                // returned. Otherwise, an ok StatusCode should be returned.
+                if ((hvacPowerAreaId & powerDependentAreaId) == powerDependentAreaId) {
                     EXPECT_EQ(status, StatusCode::NOT_AVAILABLE_DISABLED);
                 } else {
                     EXPECT_EQ(status, StatusCode::OK);
@@ -1712,37 +1954,142 @@ TEST_F(FakeVehicleHardwareTest, testSetHvacPropNotAvailable) {
         // on this value from any power dependent property values other than those with the same
         // areaId.
         setValue(VehiclePropValue{.prop = toInt(VehicleProperty::HVAC_POWER_ON),
-                                  .areaId = areaId,
+                                  .areaId = hvacPowerAreaId,
                                   .value.int32Values = {1}});
     }
 }
 
 TEST_F(FakeVehicleHardwareTest, testHvacPowerOnSendCurrentHvacPropValues) {
-    int seatAreaIds[5] = {SEAT_1_LEFT, SEAT_1_RIGHT, SEAT_2_LEFT, SEAT_2_CENTER, SEAT_2_RIGHT};
-    for (int areaId : seatAreaIds) {
+    FakeVehicleHardwareTestHelper helper(getHardware());
+    auto hvacPowerOnConfig = std::move(getVehiclePropConfig(toInt(VehicleProperty::HVAC_POWER_ON)));
+    EXPECT_NE(hvacPowerOnConfig, nullptr);
+    for (auto& hvacPowerOnAreaConfig : hvacPowerOnConfig->areaConfigs) {
+        int hvacPowerAreaId = hvacPowerOnAreaConfig.areaId;
         StatusCode status = setValue(VehiclePropValue{.prop = toInt(VehicleProperty::HVAC_POWER_ON),
-                                                      .areaId = areaId,
+                                                      .areaId = hvacPowerAreaId,
                                                       .value.int32Values = {0}});
-
-        ASSERT_EQ(status, StatusCode::OK);
-
-        clearChangedProperties();
-        setValue(VehiclePropValue{.prop = toInt(VehicleProperty::HVAC_POWER_ON),
-                                  .areaId = areaId,
-                                  .value.int32Values = {1}});
-
+        EXPECT_EQ(status, StatusCode::OK);
         auto events = getChangedProperties();
-        // If we turn HVAC power on, we expect to receive one property event for every HVAC prop
-        // areas plus one event for HVAC_POWER_ON.
-        std::vector<int32_t> changedPropIds;
-        for (size_t i = 0; i < sizeof(HVAC_POWER_PROPERTIES) / sizeof(int32_t); i++) {
-            changedPropIds.push_back(HVAC_POWER_PROPERTIES[i]);
-        }
-        changedPropIds.push_back(toInt(VehicleProperty::HVAC_POWER_ON));
-
         for (const auto& event : events) {
-            EXPECT_EQ(event.areaId, areaId);
-            EXPECT_THAT(event.prop, AnyOfArray(changedPropIds));
+            // Ignore HVAC_POWER_ON event
+            if (event.prop == toInt(VehicleProperty::HVAC_POWER_ON)) {
+                continue;
+            }
+            EXPECT_THAT(event.prop, AnyOfArray(helper.getHvacPowerDependentProps()));
+            EXPECT_EQ((hvacPowerAreaId & event.areaId), hvacPowerAreaId);
+            EXPECT_EQ(event.status, VehiclePropertyStatus::UNAVAILABLE);
+        }
+        clearChangedProperties();
+
+        status = setValue(VehiclePropValue{.prop = toInt(VehicleProperty::HVAC_POWER_ON),
+                                           .areaId = hvacPowerAreaId,
+                                           .value.int32Values = {1}});
+        EXPECT_EQ(status, StatusCode::OK);
+        events = getChangedProperties();
+        for (const auto& event : events) {
+            // Ignore HVAC_POWER_ON event
+            if (event.prop == toInt(VehicleProperty::HVAC_POWER_ON)) {
+                continue;
+            }
+            EXPECT_THAT(event.prop, AnyOfArray(helper.getHvacPowerDependentProps()));
+            EXPECT_EQ((hvacPowerAreaId & event.areaId), hvacPowerAreaId);
+            EXPECT_EQ(event.status, VehiclePropertyStatus::AVAILABLE);
+        }
+        clearChangedProperties();
+    }
+}
+
+TEST_F(FakeVehicleHardwareTest, testHvacDualOnSynchronizesTemp) {
+    auto hvacDualOnConfig = std::move(getVehiclePropConfig(toInt(VehicleProperty::HVAC_DUAL_ON)));
+    auto hvacTemperatureSetConfig =
+            std::move(getVehiclePropConfig(toInt(VehicleProperty::HVAC_TEMPERATURE_SET)));
+    EXPECT_NE(hvacDualOnConfig, nullptr);
+    EXPECT_NE(hvacTemperatureSetConfig, nullptr);
+    for (auto& hvacTemperatureSetConfig : hvacTemperatureSetConfig->areaConfigs) {
+        int32_t hvacTemperatureSetAreaId = hvacTemperatureSetConfig.areaId;
+        subscribe(toInt(VehicleProperty::HVAC_TEMPERATURE_SET), hvacTemperatureSetAreaId,
+                  /*sampleRateHz*/ 0);
+    }
+    for (auto& hvacDualOnConfig : hvacDualOnConfig->areaConfigs) {
+        int32_t hvacDualOnAreaId = hvacDualOnConfig.areaId;
+        subscribe(toInt(VehicleProperty::HVAC_DUAL_ON), hvacDualOnAreaId, /*sampleRateHz*/ 0);
+        StatusCode status = setValue(VehiclePropValue{.prop = toInt(VehicleProperty::HVAC_DUAL_ON),
+                                                      .areaId = hvacDualOnAreaId,
+                                                      .value.int32Values = {1}});
+        EXPECT_EQ(status, StatusCode::OK);
+
+        // Verify there's an event for all HVAC_TEMPERATURE_SET
+        // area IDs covered by the HVAC_DUAL_ON area ID
+        auto events = getChangedProperties();
+        std::unordered_set<float> temperatureValues;
+        for (const auto& event : events) {
+            // Ignore HVAC_DUAL_ON event
+            if (event.prop == toInt(VehicleProperty::HVAC_DUAL_ON)) {
+                continue;
+            }
+            EXPECT_EQ(event.prop, toInt(VehicleProperty::HVAC_TEMPERATURE_SET));
+            EXPECT_EQ((hvacDualOnAreaId & event.areaId), event.areaId);
+            EXPECT_EQ(1u, event.value.floatValues.size());
+            temperatureValues.insert(event.value.floatValues[0]);
+        }
+        // Verify that the temperature value is the same for all events
+        // Ie the temperature in all area IDs are synchronized
+        EXPECT_EQ(1u, temperatureValues.size());
+        clearChangedProperties();
+
+        // Verify when any HVAC_TEMPERATURE_SET area ID is changed all
+        // area IDs covered by the HVAC_DUAL_ON area ID are also changed
+        for (auto& hvacTemperatureSetConfig : hvacTemperatureSetConfig->areaConfigs) {
+            int32_t hvacTemperatureSetAreaId = hvacTemperatureSetConfig.areaId;
+            if ((hvacDualOnAreaId & hvacTemperatureSetAreaId) != hvacTemperatureSetAreaId) {
+                continue;
+            }
+            float expectedValue = 25;
+            status = setValue(VehiclePropValue{.prop = toInt(VehicleProperty::HVAC_TEMPERATURE_SET),
+                                               .areaId = hvacTemperatureSetAreaId,
+                                               .value.floatValues = {expectedValue}});
+            EXPECT_EQ(status, StatusCode::OK);
+            events = getChangedProperties();
+            for (const auto& event : events) {
+                EXPECT_EQ(event.prop, toInt(VehicleProperty::HVAC_TEMPERATURE_SET));
+                EXPECT_EQ(1u, event.value.floatValues.size());
+                EXPECT_EQ(expectedValue, event.value.floatValues[0]);
+            }
+            clearChangedProperties();
+        }
+
+        status = setValue(VehiclePropValue{.prop = toInt(VehicleProperty::HVAC_DUAL_ON),
+                                           .areaId = hvacDualOnAreaId,
+                                           .value.int32Values = {0}});
+        EXPECT_EQ(status, StatusCode::OK);
+
+        // When HVAC_DUAL_ON is disabled, there should be no events created
+        // for HVAC_TEMPERATURE_SET ie no temperature synchronization.
+        events = getChangedProperties();
+        EXPECT_EQ(1u, events.size());
+        EXPECT_EQ(events[0].prop, toInt(VehicleProperty::HVAC_DUAL_ON));
+        EXPECT_EQ(events[0].areaId, hvacDualOnAreaId);
+        clearChangedProperties();
+
+        // Verify when any HVAC_TEMPERATURE_SET area ID is
+        // changed other area IDs do not change.
+        for (auto& hvacTemperatureSetConfig : hvacTemperatureSetConfig->areaConfigs) {
+            int32_t hvacTemperatureSetAreaId = hvacTemperatureSetConfig.areaId;
+            if ((hvacDualOnAreaId & hvacTemperatureSetAreaId) != hvacTemperatureSetAreaId) {
+                continue;
+            }
+            float expectedValue = 24;
+            status = setValue(VehiclePropValue{.prop = toInt(VehicleProperty::HVAC_TEMPERATURE_SET),
+                                               .areaId = hvacTemperatureSetAreaId,
+                                               .value.floatValues = {expectedValue}});
+            EXPECT_EQ(status, StatusCode::OK);
+            events = getChangedProperties();
+            EXPECT_EQ(1u, events.size());
+            EXPECT_EQ(events[0].prop, toInt(VehicleProperty::HVAC_TEMPERATURE_SET));
+            EXPECT_EQ(events[0].areaId, hvacTemperatureSetAreaId);
+            EXPECT_EQ(1u, events[0].value.floatValues.size());
+            EXPECT_EQ(expectedValue, events[0].value.floatValues[0]);
+            clearChangedProperties();
         }
     }
 }
@@ -1801,6 +2148,47 @@ TEST_F(FakeVehicleHardwareTest, testSetAdasPropNotAvailable) {
             StatusCode status = setValue(VehiclePropValue{.prop = dependentProp});
             EXPECT_EQ(status, StatusCode::NOT_AVAILABLE_DISABLED);
         }
+    }
+}
+
+TEST_F(FakeVehicleHardwareTest, testGetAccPropertiesOnStandardCc) {
+    std::vector<int32_t> ccTypeDependentProperties = {
+            toInt(VehicleProperty::ADAPTIVE_CRUISE_CONTROL_TARGET_TIME_GAP),
+            toInt(VehicleProperty::ADAPTIVE_CRUISE_CONTROL_LEAD_VEHICLE_MEASURED_DISTANCE),
+    };
+
+    StatusCode status =
+            setValue(VehiclePropValue{.prop = toInt(VehicleProperty::CRUISE_CONTROL_TYPE),
+                                      .value.int32Values = {toInt(CruiseControlType::STANDARD)}});
+    EXPECT_EQ(status, StatusCode::OK);
+
+    for (int32_t dependentProp : ccTypeDependentProperties) {
+        auto getValueResult = getValue(VehiclePropValue{.prop = dependentProp});
+        EXPECT_FALSE(getValueResult.ok());
+        EXPECT_EQ(getValueResult.error(), StatusCode::NOT_AVAILABLE_DISABLED);
+    }
+}
+
+TEST_F(FakeVehicleHardwareTest, testSetAccPropertiesOnStandardCc) {
+    std::vector<VehiclePropValue> testVehiclePropValues = {
+            VehiclePropValue{
+                    .prop = toInt(VehicleProperty::ADAPTIVE_CRUISE_CONTROL_TARGET_TIME_GAP),
+                    .value.int32Values = {3}},
+            VehiclePropValue{
+                    .prop = toInt(VehicleProperty::CRUISE_CONTROL_COMMAND),
+                    .value.int32Values = {toInt(CruiseControlCommand::INCREASE_TARGET_TIME_GAP)}},
+            VehiclePropValue{
+                    .prop = toInt(VehicleProperty::CRUISE_CONTROL_COMMAND),
+                    .value.int32Values = {toInt(CruiseControlCommand::DECREASE_TARGET_TIME_GAP)}}};
+
+    StatusCode status =
+            setValue(VehiclePropValue{.prop = toInt(VehicleProperty::CRUISE_CONTROL_TYPE),
+                                      .value.int32Values = {toInt(CruiseControlType::STANDARD)}});
+    EXPECT_EQ(status, StatusCode::OK);
+
+    for (auto value : testVehiclePropValues) {
+        status = setValue(value);
+        EXPECT_EQ(status, StatusCode::NOT_AVAILABLE_DISABLED);
     }
 }
 
@@ -1871,7 +2259,37 @@ TEST_F(FakeVehicleHardwareTest, testSendAdasPropertiesState) {
                             toInt(VehicleProperty::HANDS_ON_DETECTION_WARNING),
                     },
             },
+            // LSCW
+            {
+                    toInt(VehicleProperty::LOW_SPEED_COLLISION_WARNING_ENABLED),
+                    {
+                            toInt(VehicleProperty::LOW_SPEED_COLLISION_WARNING_STATE),
+                    },
+            },
+            // ESC
+            {
+                    toInt(VehicleProperty::ELECTRONIC_STABILITY_CONTROL_ENABLED),
+                    {
+                            toInt(VehicleProperty::ELECTRONIC_STABILITY_CONTROL_STATE),
+                    },
+            },
     };
+
+    // First subscribe to all the properties that we will change.
+    for (auto& enabledToErrorStateProps : adasEnabledPropToAdasPropWithErrorState) {
+        std::unordered_set<int32_t> expectedChangedPropIds(enabledToErrorStateProps.second.begin(),
+                                                           enabledToErrorStateProps.second.end());
+        expectedChangedPropIds.insert(enabledToErrorStateProps.first);
+
+        for (int32_t propId : expectedChangedPropIds) {
+            int32_t areaId = 0;
+            if (propId == toInt(VehicleProperty::BLIND_SPOT_WARNING_STATE)) {
+                areaId = toInt(VehicleAreaMirror::DRIVER_LEFT);
+            }
+            subscribe(propId, areaId, /*sampleRateHz*/ 0);
+        }
+    }
+
     for (auto& enabledToErrorStateProps : adasEnabledPropToAdasPropWithErrorState) {
         int32_t adasEnabledPropertyId = enabledToErrorStateProps.first;
         StatusCode status =
@@ -1952,9 +2370,16 @@ TEST_F(FakeVehicleHardwareTest, testGetUserIdAssoc) {
 }
 
 TEST_F(FakeVehicleHardwareTest, testSwitchUser) {
+    SubscribeOptions options;
+    int32_t propSwitchUser = toInt(VehicleProperty::SWITCH_USER);
+    options.propId = propSwitchUser;
+    options.areaIds = {0, 1};
+    ASSERT_EQ(StatusCode::OK, getHardware()->subscribe(options))
+            << "failed to subscribe to propId: " << propSwitchUser;
+
     // This is the same example as used in User HAL Emulation doc.
     VehiclePropValue valueToSet = {
-            .prop = toInt(VehicleProperty::SWITCH_USER),
+            .prop = propSwitchUser,
             .areaId = 1,
             .value.int32Values = {666, 3, 2},
     };
@@ -1965,7 +2390,7 @@ TEST_F(FakeVehicleHardwareTest, testSwitchUser) {
 
     // Simulate a request from Android side.
     VehiclePropValue switchUserRequest = {
-            .prop = toInt(VehicleProperty::SWITCH_USER),
+            .prop = propSwitchUser,
             .areaId = 0,
             .value.int32Values = {666, 3},
     };
@@ -1995,7 +2420,7 @@ TEST_F(FakeVehicleHardwareTest, testSwitchUser) {
     events[0].timestamp = 0;
     auto expectedValue = VehiclePropValue{
             .areaId = 0,
-            .prop = toInt(VehicleProperty::SWITCH_USER),
+            .prop = propSwitchUser,
             .value.int32Values =
                     {
                             // Request ID
@@ -2010,6 +2435,13 @@ TEST_F(FakeVehicleHardwareTest, testSwitchUser) {
 }
 
 TEST_F(FakeVehicleHardwareTest, testCreateUser) {
+    SubscribeOptions options;
+    int32_t propCreateUser = toInt(VehicleProperty::CREATE_USER);
+    options.propId = propCreateUser;
+    options.areaIds = {0, 1};
+    ASSERT_EQ(StatusCode::OK, getHardware()->subscribe(options))
+            << "failed to subscribe to propId: " << propCreateUser;
+
     // This is the same example as used in User HAL Emulation doc.
     VehiclePropValue valueToSet = {
             .prop = toInt(VehicleProperty::CREATE_USER),
@@ -2023,7 +2455,7 @@ TEST_F(FakeVehicleHardwareTest, testCreateUser) {
 
     // Simulate a request from Android side.
     VehiclePropValue createUserRequest = {
-            .prop = toInt(VehicleProperty::CREATE_USER),
+            .prop = propCreateUser,
             .areaId = 0,
             .value.int32Values = {666},
     };
@@ -2052,7 +2484,7 @@ TEST_F(FakeVehicleHardwareTest, testCreateUser) {
     events[0].timestamp = 0;
     auto expectedValue = VehiclePropValue{
             .areaId = 0,
-            .prop = toInt(VehicleProperty::CREATE_USER),
+            .prop = propCreateUser,
             .value.int32Values =
                     {
                             // Request ID
@@ -2065,9 +2497,16 @@ TEST_F(FakeVehicleHardwareTest, testCreateUser) {
 }
 
 TEST_F(FakeVehicleHardwareTest, testInitialUserInfo) {
+    SubscribeOptions options;
+    int32_t propInitialUserInfo = toInt(VehicleProperty::INITIAL_USER_INFO);
+    options.propId = propInitialUserInfo;
+    options.areaIds = {0, 1};
+    ASSERT_EQ(StatusCode::OK, getHardware()->subscribe(options))
+            << "failed to subscribe to propId: " << propInitialUserInfo;
+
     // This is the same example as used in User HAL Emulation doc.
     VehiclePropValue valueToSet = {
-            .prop = toInt(VehicleProperty::INITIAL_USER_INFO),
+            .prop = propInitialUserInfo,
             .areaId = 1,
             .value.int32Values = {666, 1, 11},
     };
@@ -2078,7 +2517,7 @@ TEST_F(FakeVehicleHardwareTest, testInitialUserInfo) {
 
     // Simulate a request from Android side.
     VehiclePropValue initialUserInfoRequest = {
-            .prop = toInt(VehicleProperty::INITIAL_USER_INFO),
+            .prop = propInitialUserInfo,
             .areaId = 0,
             .value.int32Values = {3},
     };
@@ -2095,7 +2534,7 @@ TEST_F(FakeVehicleHardwareTest, testInitialUserInfo) {
     events[0].timestamp = 0;
     auto expectedValue = VehiclePropValue{
             .areaId = 0,
-            .prop = toInt(VehicleProperty::INITIAL_USER_INFO),
+            .prop = propInitialUserInfo,
             .value.int32Values = {3, 1, 11},
     };
     EXPECT_EQ(events[0], expectedValue);
@@ -2110,7 +2549,7 @@ TEST_F(FakeVehicleHardwareTest, testInitialUserInfo) {
     events[0].timestamp = 0;
     expectedValue = VehiclePropValue{
             .areaId = 0,
-            .prop = toInt(VehicleProperty::INITIAL_USER_INFO),
+            .prop = propInitialUserInfo,
             .value.int32Values =
                     {
                             // Request ID
@@ -2252,13 +2691,14 @@ TEST_F(FakeVehicleHardwareTest, testSaveRestoreProp) {
 }
 
 TEST_F(FakeVehicleHardwareTest, testDumpInjectEvent) {
-    int32_t prop = toInt(VehicleProperty::PERF_VEHICLE_SPEED);
+    int32_t prop = toInt(VehicleProperty::ENGINE_OIL_LEVEL);
     std::string propIdStr = std::to_string(prop);
 
+    subscribe(prop, /*areaId*/ 0, /*sampleRateHz*/ 0);
+
     int64_t timestamp = elapsedRealtimeNano();
-    // Inject an event with float value 123.4 and timestamp.
     DumpResult result = getHardware()->dump(
-            {"--inject-event", propIdStr, "-f", "123.4", "-t", std::to_string(timestamp)});
+            {"--inject-event", propIdStr, "-i", "1234", "-t", std::to_string(timestamp)});
 
     ASSERT_FALSE(result.callerShouldDumpState);
     ASSERT_THAT(result.buffer,
@@ -2269,7 +2709,7 @@ TEST_F(FakeVehicleHardwareTest, testDumpInjectEvent) {
     ASSERT_EQ(events.size(), 1u);
     auto event = events[0];
     ASSERT_EQ(event.timestamp, timestamp);
-    ASSERT_EQ(event.value.floatValues, std::vector<float>({123.4}));
+    ASSERT_EQ(event.value.int32Values, std::vector<int32_t>({1234}));
 }
 
 TEST_F(FakeVehicleHardwareTest, testDumpInvalidOptions) {
@@ -2612,9 +3052,13 @@ INSTANTIATE_TEST_SUITE_P(
         });
 
 TEST_F(FakeVehicleHardwareTest, testDebugGenFakeDataLinear) {
-    // Start a fake linear data generator for vehicle speed at 0.1s interval.
+    // Start a fake linear data generator for engine oil level at 0.1s interval.
     // range: 0 - 100, current value: 30, step: 20.
-    std::string propIdString = StringPrintf("%d", toInt(VehicleProperty::PERF_VEHICLE_SPEED));
+    int32_t prop = toInt(VehicleProperty::ENGINE_OIL_LEVEL);
+
+    subscribe(prop, /*areaId*/ 0, /*sampleRateHz*/ 0);
+
+    std::string propIdString = StringPrintf("%d", prop);
     std::vector<std::string> options = {"--genfakedata",         "--startlinear", propIdString,
                                         /*middleValue=*/"50",
                                         /*currentValue=*/"30",
@@ -2627,15 +3071,14 @@ TEST_F(FakeVehicleHardwareTest, testDebugGenFakeDataLinear) {
     ASSERT_FALSE(result.callerShouldDumpState);
     ASSERT_THAT(result.buffer, HasSubstr("successfully"));
 
-    ASSERT_TRUE(waitForChangedProperties(toInt(VehicleProperty::PERF_VEHICLE_SPEED), 0, /*count=*/5,
-                                         milliseconds(1000)))
+    ASSERT_TRUE(waitForChangedProperties(prop, 0, /*count=*/5, milliseconds(1000)))
             << "not enough events generated for linear data generator";
 
     int32_t value = 30;
     auto events = getChangedProperties();
     for (size_t i = 0; i < 5; i++) {
-        ASSERT_EQ(1u, events[i].value.floatValues.size());
-        EXPECT_EQ(static_cast<float>(value), events[i].value.floatValues[0]);
+        ASSERT_EQ(1u, events[i].value.int32Values.size());
+        EXPECT_EQ(value, events[i].value.int32Values[0]);
         value = (value + 20) % 100;
     }
 
@@ -2651,7 +3094,7 @@ TEST_F(FakeVehicleHardwareTest, testDebugGenFakeDataLinear) {
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
     // There should be no new events generated.
-    EXPECT_EQ(0u, getEventCount(toInt(VehicleProperty::PERF_VEHICLE_SPEED), 0));
+    EXPECT_EQ(0u, getEventCount(prop, 0));
 }
 
 std::string getTestFilePath(const char* filename) {
@@ -2660,6 +3103,8 @@ std::string getTestFilePath(const char* filename) {
 }
 
 TEST_F(FakeVehicleHardwareTest, testDebugGenFakeDataJson) {
+    subscribe(toInt(VehicleProperty::GEAR_SELECTION), /*areaId*/ 0, /*sampleRateHz*/ 0);
+
     std::vector<std::string> options = {"--genfakedata", "--startjson", "--path",
                                         getTestFilePath("prop.json"), "2"};
 
@@ -2686,6 +3131,8 @@ TEST_F(FakeVehicleHardwareTest, testDebugGenFakeDataJson) {
 }
 
 TEST_F(FakeVehicleHardwareTest, testDebugGenFakeDataJsonByContent) {
+    subscribe(toInt(VehicleProperty::GEAR_SELECTION), /*areaId*/ 0, /*sampleRateHz*/ 0);
+
     std::vector<std::string> options = {
             "--genfakedata", "--startjson", "--content",
             "[{\"timestamp\":1000000,\"areaId\":0,\"value\":8,\"prop\":289408000}]", "1"};
@@ -2760,7 +3207,10 @@ TEST_F(FakeVehicleHardwareTest, testDebugGenFakeDataJsonStopInvalidFile) {
 }
 
 TEST_F(FakeVehicleHardwareTest, testDebugGenFakeDataKeyPress) {
+    int32_t propHwKeyInput = toInt(VehicleProperty::HW_KEY_INPUT);
     std::vector<std::string> options = {"--genfakedata", "--keypress", "1", "2"};
+
+    subscribe(propHwKeyInput, /*areaId*/ 0, /*sampleRateHz*/ 0);
 
     DumpResult result = getHardware()->dump(options);
 
@@ -2769,8 +3219,8 @@ TEST_F(FakeVehicleHardwareTest, testDebugGenFakeDataKeyPress) {
 
     auto events = getChangedProperties();
     ASSERT_EQ(2u, events.size());
-    EXPECT_EQ(toInt(VehicleProperty::HW_KEY_INPUT), events[0].prop);
-    EXPECT_EQ(toInt(VehicleProperty::HW_KEY_INPUT), events[1].prop);
+    EXPECT_EQ(propHwKeyInput, events[0].prop);
+    EXPECT_EQ(propHwKeyInput, events[1].prop);
     ASSERT_EQ(3u, events[0].value.int32Values.size());
     ASSERT_EQ(3u, events[1].value.int32Values.size());
     EXPECT_EQ(toInt(VehicleHwKeyInputAction::ACTION_DOWN), events[0].value.int32Values[0]);
@@ -2782,7 +3232,10 @@ TEST_F(FakeVehicleHardwareTest, testDebugGenFakeDataKeyPress) {
 }
 
 TEST_F(FakeVehicleHardwareTest, testDebugGenFakeDataKeyInputV2) {
+    int32_t propHwKeyInputV2 = toInt(VehicleProperty::HW_KEY_INPUT_V2);
     std::vector<std::string> options = {"--genfakedata", "--keyinputv2", "1", "2", "3", "4", "5"};
+
+    subscribe(propHwKeyInputV2, /*areaId*/ 1, /*sampleRateHz*/ 0);
 
     DumpResult result = getHardware()->dump(options);
 
@@ -2801,6 +3254,7 @@ TEST_F(FakeVehicleHardwareTest, testDebugGenFakeDataKeyInputV2) {
 }
 
 TEST_F(FakeVehicleHardwareTest, testDebugGenFakeDataMotionInput) {
+    int32_t propHwMotionInput = toInt(VehicleProperty::HW_MOTION_INPUT);
     std::vector<std::string> options = {"--genfakedata",
                                         "--motioninput",
                                         "1",
@@ -2823,6 +3277,8 @@ TEST_F(FakeVehicleHardwareTest, testDebugGenFakeDataMotionInput) {
                                         "65.5",
                                         "76.6"};
 
+    subscribe(propHwMotionInput, /*areaId*/ 1, /*sampleRateHz*/ 0);
+
     DumpResult result = getHardware()->dump(options);
 
     ASSERT_FALSE(result.callerShouldDumpState);
@@ -2830,7 +3286,7 @@ TEST_F(FakeVehicleHardwareTest, testDebugGenFakeDataMotionInput) {
 
     auto events = getChangedProperties();
     ASSERT_EQ(1u, events.size());
-    EXPECT_EQ(toInt(VehicleProperty::HW_MOTION_INPUT), events[0].prop);
+    EXPECT_EQ(propHwMotionInput, events[0].prop);
     ASSERT_EQ(9u, events[0].value.int32Values.size());
     EXPECT_EQ(2, events[0].value.int32Values[0]);
     EXPECT_EQ(3, events[0].value.int32Values[1]);
@@ -2855,7 +3311,7 @@ TEST_F(FakeVehicleHardwareTest, testDebugGenFakeDataMotionInput) {
 
 TEST_F(FakeVehicleHardwareTest, testGetEchoReverseBytes) {
     ASSERT_EQ(setValue(VehiclePropValue{
-                      .prop = ECHO_REVERSE_BYTES,
+                      .prop = toInt(TestVendorProperty::ECHO_REVERSE_BYTES),
                       .value =
                               {
                                       .byteValues = {0x01, 0x02, 0x03, 0x04},
@@ -2864,30 +3320,34 @@ TEST_F(FakeVehicleHardwareTest, testGetEchoReverseBytes) {
               StatusCode::OK);
 
     auto result = getValue(VehiclePropValue{
-            .prop = ECHO_REVERSE_BYTES,
+            .prop = toInt(TestVendorProperty::ECHO_REVERSE_BYTES),
     });
 
     ASSERT_TRUE(result.ok()) << "failed to get ECHO_REVERSE_BYTES value: " << getStatus(result);
     ASSERT_EQ(result.value().value.byteValues, std::vector<uint8_t>({0x04, 0x03, 0x02, 0x01}));
 }
 
-TEST_F(FakeVehicleHardwareTest, testUpdateSampleRate) {
+TEST_F(FakeVehicleHardwareTest, testSubscribeUnsubscribe_continuous) {
     int32_t propSpeed = toInt(VehicleProperty::PERF_VEHICLE_SPEED);
     int32_t propSteering = toInt(VehicleProperty::PERF_STEERING_ANGLE);
     int32_t areaId = 0;
-    getHardware()->updateSampleRate(propSpeed, areaId, 5);
+
+    auto status = getHardware()->subscribe(newSubscribeOptions(propSpeed, areaId, 5));
+    ASSERT_EQ(status, StatusCode::OK) << "failed to subscribe";
 
     ASSERT_TRUE(waitForChangedProperties(propSpeed, areaId, /*count=*/5, milliseconds(1500)))
             << "not enough events generated for speed";
 
-    getHardware()->updateSampleRate(propSteering, areaId, 10);
+    status = getHardware()->subscribe(newSubscribeOptions(propSteering, areaId, 10));
+    ASSERT_EQ(status, StatusCode::OK) << "failed to subscribe";
 
     ASSERT_TRUE(waitForChangedProperties(propSteering, areaId, /*count=*/10, milliseconds(1500)))
             << "not enough events generated for steering";
 
     int64_t timestamp = elapsedRealtimeNano();
     // Disable refreshing for propSpeed.
-    getHardware()->updateSampleRate(propSpeed, areaId, 0);
+    status = getHardware()->unsubscribe(propSpeed, areaId);
+    ASSERT_EQ(status, StatusCode::OK) << "failed to unsubscribe";
     clearChangedProperties();
 
     ASSERT_TRUE(waitForChangedProperties(propSteering, areaId, /*count=*/5, milliseconds(1500)))
@@ -2900,12 +3360,99 @@ TEST_F(FakeVehicleHardwareTest, testUpdateSampleRate) {
     }
 }
 
+TEST_F(FakeVehicleHardwareTest, testSubscribe_enableVUR) {
+    int32_t propSpeed = toInt(VehicleProperty::PERF_VEHICLE_SPEED);
+    int32_t areaId = 0;
+    SubscribeOptions options;
+    options.propId = propSpeed;
+    options.areaIds = {areaId};
+    options.enableVariableUpdateRate = true;
+    options.sampleRate = 5;
+    int64_t timestamp = elapsedRealtimeNano();
+
+    auto status = getHardware()->subscribe(options);
+    ASSERT_EQ(status, StatusCode::OK) << "failed to subscribe";
+
+    status = setValue({
+            .prop = propSpeed,
+            .areaId = 0,
+            .value.floatValues = {1.1f},
+    });
+    ASSERT_EQ(status, StatusCode::OK) << "failed to set speed";
+
+    status = setValue({
+            .prop = propSpeed,
+            .areaId = 0,
+            .value.floatValues = {1.2f},
+    });
+    ASSERT_EQ(status, StatusCode::OK) << "failed to set speed";
+
+    ASSERT_TRUE(waitForChangedProperties(propSpeed, areaId, /*count=*/2, milliseconds(100)))
+            << "not enough events generated for speed";
+    auto updatedValues = getChangedProperties();
+    std::unordered_set<float> gotValues;
+    for (auto& value : updatedValues) {
+        EXPECT_GE(value.timestamp, timestamp) << "timestamp must be updated";
+        EXPECT_EQ(value.prop, propSpeed) << "propId must be correct";
+        EXPECT_EQ(value.areaId, areaId) << "areaId must be correct";
+        gotValues.insert(value.value.floatValues[0]);
+    }
+    EXPECT_THAT(gotValues, UnorderedElementsAre(1.1f, 1.2f))
+            << "must only receive property event for changed value";
+}
+
+TEST_F(FakeVehicleHardwareTest, testSubscribeUnusubscribe_onChange) {
+    int32_t propHvac = toInt(VehicleProperty::HVAC_TEMPERATURE_SET);
+    int32_t areaId = SEAT_1_LEFT;
+
+    auto status = getHardware()->subscribe(newSubscribeOptions(propHvac, areaId, 0));
+    ASSERT_EQ(status, StatusCode::OK) << "failed to subscribe";
+
+    status = setValue({
+            .prop = propHvac,
+            .areaId = areaId,
+            .value.floatValues = {20.0f},
+    });
+    ASSERT_EQ(status, StatusCode::OK) << "failed to set hvac value";
+
+    ASSERT_TRUE(waitForChangedProperties(propHvac, areaId, /*count=*/1, milliseconds(100)))
+            << "not enough on change events generated for hvac";
+    clearChangedProperties();
+
+    status = setValue({
+            .prop = propHvac,
+            .areaId = areaId,
+            .value.floatValues = {21.0f},
+    });
+    ASSERT_EQ(status, StatusCode::OK) << "failed to set hvac value";
+
+    ASSERT_TRUE(waitForChangedProperties(propHvac, areaId, /*count=*/1, milliseconds(100)))
+            << "not enough on change events generated for hvac";
+    clearChangedProperties();
+
+    status = getHardware()->unsubscribe(propHvac, areaId);
+    ASSERT_EQ(status, StatusCode::OK);
+
+    status = setValue({
+            .prop = propHvac,
+            .areaId = areaId,
+            .value.floatValues = {22.0f},
+    });
+    ASSERT_EQ(status, StatusCode::OK) << "failed to set hvac value";
+
+    ASSERT_FALSE(waitForChangedProperties(propHvac, areaId, /*count=*/1, milliseconds(100)))
+            << "must not receive on change events if the propId, areaId is unsubscribed";
+}
+
 TEST_F(FakeVehicleHardwareTest, testSetHvacTemperatureValueSuggestion) {
     float CELSIUS = static_cast<float>(toInt(VehicleUnit::CELSIUS));
     float FAHRENHEIT = static_cast<float>(toInt(VehicleUnit::FAHRENHEIT));
+    int32_t propHvacTempValueSuggest = toInt(VehicleProperty::HVAC_TEMPERATURE_VALUE_SUGGESTION);
+
+    subscribe(propHvacTempValueSuggest, HVAC_ALL, /*sampleRateHz*/ 0);
 
     VehiclePropValue floatArraySizeFour = {
-            .prop = toInt(VehicleProperty::HVAC_TEMPERATURE_VALUE_SUGGESTION),
+            .prop = propHvacTempValueSuggest,
             .areaId = HVAC_ALL,
             .value.floatValues = {0, CELSIUS, 0, 0},
     };
@@ -2913,14 +3460,14 @@ TEST_F(FakeVehicleHardwareTest, testSetHvacTemperatureValueSuggestion) {
     EXPECT_EQ(status, StatusCode::OK);
 
     VehiclePropValue floatArraySizeZero = {
-            .prop = toInt(VehicleProperty::HVAC_TEMPERATURE_VALUE_SUGGESTION),
+            .prop = propHvacTempValueSuggest,
             .areaId = HVAC_ALL,
     };
     status = setValue(floatArraySizeZero);
     EXPECT_EQ(status, StatusCode::INVALID_ARG);
 
     VehiclePropValue floatArraySizeFive = {
-            .prop = toInt(VehicleProperty::HVAC_TEMPERATURE_VALUE_SUGGESTION),
+            .prop = propHvacTempValueSuggest,
             .areaId = HVAC_ALL,
             .value.floatValues = {0, CELSIUS, 0, 0, 0},
     };
@@ -2928,7 +3475,7 @@ TEST_F(FakeVehicleHardwareTest, testSetHvacTemperatureValueSuggestion) {
     EXPECT_EQ(status, StatusCode::INVALID_ARG);
 
     VehiclePropValue invalidUnit = {
-            .prop = toInt(VehicleProperty::HVAC_TEMPERATURE_VALUE_SUGGESTION),
+            .prop = propHvacTempValueSuggest,
             .areaId = HVAC_ALL,
             .value.floatValues = {0, 0, 0, 0},
     };
@@ -2938,13 +3485,8 @@ TEST_F(FakeVehicleHardwareTest, testSetHvacTemperatureValueSuggestion) {
 
     // Config array values from HVAC_TEMPERATURE_SET in DefaultProperties.json
     auto configs = getHardware()->getAllPropertyConfigs();
-    VehiclePropConfig* hvacTemperatureSetConfig = nullptr;
-    for (auto& config : configs) {
-        if (config.prop == toInt(VehicleProperty::HVAC_TEMPERATURE_SET)) {
-            hvacTemperatureSetConfig = &config;
-            break;
-        }
-    }
+    auto hvacTemperatureSetConfig =
+            std::move(getVehiclePropConfig(toInt(VehicleProperty::HVAC_TEMPERATURE_SET)));
     EXPECT_NE(hvacTemperatureSetConfig, nullptr);
 
     auto& hvacTemperatureSetConfigArray = hvacTemperatureSetConfig->configArray;
@@ -2964,9 +3506,7 @@ TEST_F(FakeVehicleHardwareTest, testSetHvacTemperatureValueSuggestion) {
                     .valuesToSet =
                             {
                                     VehiclePropValue{
-                                            .prop = toInt(
-                                                    VehicleProperty::
-                                                            HVAC_TEMPERATURE_VALUE_SUGGESTION),
+                                            .prop = propHvacTempValueSuggest,
                                             .areaId = HVAC_ALL,
                                             .value.floatValues = {minTempInCelsius, CELSIUS, 0, 0},
                                     },
@@ -2974,9 +3514,7 @@ TEST_F(FakeVehicleHardwareTest, testSetHvacTemperatureValueSuggestion) {
                     .expectedValuesToGet =
                             {
                                     VehiclePropValue{
-                                            .prop = toInt(
-                                                    VehicleProperty::
-                                                            HVAC_TEMPERATURE_VALUE_SUGGESTION),
+                                            .prop = propHvacTempValueSuggest,
                                             .areaId = HVAC_ALL,
                                             .value.floatValues = {minTempInCelsius, CELSIUS,
                                                                   minTempInCelsius,
@@ -2989,9 +3527,7 @@ TEST_F(FakeVehicleHardwareTest, testSetHvacTemperatureValueSuggestion) {
                     .valuesToSet =
                             {
                                     VehiclePropValue{
-                                            .prop = toInt(
-                                                    VehicleProperty::
-                                                            HVAC_TEMPERATURE_VALUE_SUGGESTION),
+                                            .prop = propHvacTempValueSuggest,
                                             .areaId = HVAC_ALL,
                                             .value.floatValues = {minTempInFahrenheit, FAHRENHEIT,
                                                                   0, 0},
@@ -3000,9 +3536,7 @@ TEST_F(FakeVehicleHardwareTest, testSetHvacTemperatureValueSuggestion) {
                     .expectedValuesToGet =
                             {
                                     VehiclePropValue{
-                                            .prop = toInt(
-                                                    VehicleProperty::
-                                                            HVAC_TEMPERATURE_VALUE_SUGGESTION),
+                                            .prop = propHvacTempValueSuggest,
                                             .areaId = HVAC_ALL,
                                             .value.floatValues = {minTempInFahrenheit, FAHRENHEIT,
                                                                   minTempInCelsius,
@@ -3015,9 +3549,7 @@ TEST_F(FakeVehicleHardwareTest, testSetHvacTemperatureValueSuggestion) {
                     .valuesToSet =
                             {
                                     VehiclePropValue{
-                                            .prop = toInt(
-                                                    VehicleProperty::
-                                                            HVAC_TEMPERATURE_VALUE_SUGGESTION),
+                                            .prop = propHvacTempValueSuggest,
                                             .areaId = HVAC_ALL,
                                             .value.floatValues = {maxTempInCelsius, CELSIUS, 0, 0},
                                     },
@@ -3025,9 +3557,7 @@ TEST_F(FakeVehicleHardwareTest, testSetHvacTemperatureValueSuggestion) {
                     .expectedValuesToGet =
                             {
                                     VehiclePropValue{
-                                            .prop = toInt(
-                                                    VehicleProperty::
-                                                            HVAC_TEMPERATURE_VALUE_SUGGESTION),
+                                            .prop = propHvacTempValueSuggest,
                                             .areaId = HVAC_ALL,
                                             .value.floatValues = {maxTempInCelsius, CELSIUS,
                                                                   maxTempInCelsius,
@@ -3040,9 +3570,7 @@ TEST_F(FakeVehicleHardwareTest, testSetHvacTemperatureValueSuggestion) {
                     .valuesToSet =
                             {
                                     VehiclePropValue{
-                                            .prop = toInt(
-                                                    VehicleProperty::
-                                                            HVAC_TEMPERATURE_VALUE_SUGGESTION),
+                                            .prop = propHvacTempValueSuggest,
                                             .areaId = HVAC_ALL,
                                             .value.floatValues = {maxTempInFahrenheit, FAHRENHEIT,
                                                                   0, 0},
@@ -3051,9 +3579,7 @@ TEST_F(FakeVehicleHardwareTest, testSetHvacTemperatureValueSuggestion) {
                     .expectedValuesToGet =
                             {
                                     VehiclePropValue{
-                                            .prop = toInt(
-                                                    VehicleProperty::
-                                                            HVAC_TEMPERATURE_VALUE_SUGGESTION),
+                                            .prop = propHvacTempValueSuggest,
                                             .areaId = HVAC_ALL,
                                             .value.floatValues = {maxTempInFahrenheit, FAHRENHEIT,
                                                                   maxTempInCelsius,
@@ -3066,9 +3592,7 @@ TEST_F(FakeVehicleHardwareTest, testSetHvacTemperatureValueSuggestion) {
                     .valuesToSet =
                             {
                                     VehiclePropValue{
-                                            .prop = toInt(
-                                                    VehicleProperty::
-                                                            HVAC_TEMPERATURE_VALUE_SUGGESTION),
+                                            .prop = propHvacTempValueSuggest,
                                             .areaId = HVAC_ALL,
                                             .value.floatValues = {minTempInCelsius - 1, CELSIUS, 0,
                                                                   0},
@@ -3077,9 +3601,7 @@ TEST_F(FakeVehicleHardwareTest, testSetHvacTemperatureValueSuggestion) {
                     .expectedValuesToGet =
                             {
                                     VehiclePropValue{
-                                            .prop = toInt(
-                                                    VehicleProperty::
-                                                            HVAC_TEMPERATURE_VALUE_SUGGESTION),
+                                            .prop = propHvacTempValueSuggest,
                                             .areaId = HVAC_ALL,
                                             .value.floatValues = {minTempInCelsius - 1, CELSIUS,
                                                                   minTempInCelsius,
@@ -3092,9 +3614,7 @@ TEST_F(FakeVehicleHardwareTest, testSetHvacTemperatureValueSuggestion) {
                     .valuesToSet =
                             {
                                     VehiclePropValue{
-                                            .prop = toInt(
-                                                    VehicleProperty::
-                                                            HVAC_TEMPERATURE_VALUE_SUGGESTION),
+                                            .prop = propHvacTempValueSuggest,
                                             .areaId = HVAC_ALL,
                                             .value.floatValues = {minTempInFahrenheit - 1,
                                                                   FAHRENHEIT, 0, 0},
@@ -3103,9 +3623,7 @@ TEST_F(FakeVehicleHardwareTest, testSetHvacTemperatureValueSuggestion) {
                     .expectedValuesToGet =
                             {
                                     VehiclePropValue{
-                                            .prop = toInt(
-                                                    VehicleProperty::
-                                                            HVAC_TEMPERATURE_VALUE_SUGGESTION),
+                                            .prop = propHvacTempValueSuggest,
                                             .areaId = HVAC_ALL,
                                             .value.floatValues = {minTempInFahrenheit - 1,
                                                                   FAHRENHEIT, minTempInCelsius,
@@ -3118,9 +3636,7 @@ TEST_F(FakeVehicleHardwareTest, testSetHvacTemperatureValueSuggestion) {
                     .valuesToSet =
                             {
                                     VehiclePropValue{
-                                            .prop = toInt(
-                                                    VehicleProperty::
-                                                            HVAC_TEMPERATURE_VALUE_SUGGESTION),
+                                            .prop = propHvacTempValueSuggest,
                                             .areaId = HVAC_ALL,
                                             .value.floatValues = {maxTempInCelsius + 1, CELSIUS, 0,
                                                                   0},
@@ -3129,9 +3645,7 @@ TEST_F(FakeVehicleHardwareTest, testSetHvacTemperatureValueSuggestion) {
                     .expectedValuesToGet =
                             {
                                     VehiclePropValue{
-                                            .prop = toInt(
-                                                    VehicleProperty::
-                                                            HVAC_TEMPERATURE_VALUE_SUGGESTION),
+                                            .prop = propHvacTempValueSuggest,
                                             .areaId = HVAC_ALL,
                                             .value.floatValues = {maxTempInCelsius + 1, CELSIUS,
                                                                   maxTempInCelsius,
@@ -3144,9 +3658,7 @@ TEST_F(FakeVehicleHardwareTest, testSetHvacTemperatureValueSuggestion) {
                     .valuesToSet =
                             {
                                     VehiclePropValue{
-                                            .prop = toInt(
-                                                    VehicleProperty::
-                                                            HVAC_TEMPERATURE_VALUE_SUGGESTION),
+                                            .prop = propHvacTempValueSuggest,
                                             .areaId = HVAC_ALL,
                                             .value.floatValues = {maxTempInFahrenheit + 1,
                                                                   FAHRENHEIT, 0, 0},
@@ -3155,9 +3667,7 @@ TEST_F(FakeVehicleHardwareTest, testSetHvacTemperatureValueSuggestion) {
                     .expectedValuesToGet =
                             {
                                     VehiclePropValue{
-                                            .prop = toInt(
-                                                    VehicleProperty::
-                                                            HVAC_TEMPERATURE_VALUE_SUGGESTION),
+                                            .prop = propHvacTempValueSuggest,
                                             .areaId = HVAC_ALL,
                                             .value.floatValues = {maxTempInFahrenheit + 1,
                                                                   FAHRENHEIT, maxTempInCelsius,
@@ -3170,9 +3680,7 @@ TEST_F(FakeVehicleHardwareTest, testSetHvacTemperatureValueSuggestion) {
                     .valuesToSet =
                             {
                                     VehiclePropValue{
-                                            .prop = toInt(
-                                                    VehicleProperty::
-                                                            HVAC_TEMPERATURE_VALUE_SUGGESTION),
+                                            .prop = propHvacTempValueSuggest,
                                             .areaId = HVAC_ALL,
                                             .value.floatValues = {minTempInCelsius +
                                                                           incrementInCelsius * 2.5f,
@@ -3182,9 +3690,7 @@ TEST_F(FakeVehicleHardwareTest, testSetHvacTemperatureValueSuggestion) {
                     .expectedValuesToGet =
                             {
                                     VehiclePropValue{
-                                            .prop = toInt(
-                                                    VehicleProperty::
-                                                            HVAC_TEMPERATURE_VALUE_SUGGESTION),
+                                            .prop = propHvacTempValueSuggest,
                                             .areaId = HVAC_ALL,
                                             .value.floatValues =
                                                     {minTempInCelsius + incrementInCelsius * 2.5f,
@@ -3200,9 +3706,7 @@ TEST_F(FakeVehicleHardwareTest, testSetHvacTemperatureValueSuggestion) {
                     .valuesToSet =
                             {
                                     VehiclePropValue{
-                                            .prop = toInt(
-                                                    VehicleProperty::
-                                                            HVAC_TEMPERATURE_VALUE_SUGGESTION),
+                                            .prop = propHvacTempValueSuggest,
                                             .areaId = HVAC_ALL,
                                             .value.floatValues = {minTempInFahrenheit +
                                                                           incrementInFahrenheit *
@@ -3213,9 +3717,7 @@ TEST_F(FakeVehicleHardwareTest, testSetHvacTemperatureValueSuggestion) {
                     .expectedValuesToGet =
                             {
                                     VehiclePropValue{
-                                            .prop = toInt(
-                                                    VehicleProperty::
-                                                            HVAC_TEMPERATURE_VALUE_SUGGESTION),
+                                            .prop = propHvacTempValueSuggest,
                                             .areaId = HVAC_ALL,
                                             .value.floatValues =
                                                     {minTempInFahrenheit +

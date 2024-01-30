@@ -40,4 +40,5 @@ enum VehicleApPowerStateShutdownParam {
   SLEEP_IMMEDIATELY = 4,
   HIBERNATE_IMMEDIATELY = 5,
   CAN_HIBERNATE = 6,
+  EMERGENCY_SHUTDOWN = 7,
 }

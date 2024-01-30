@@ -36,4 +36,7 @@ package android.hardware.power;
 parcelable WorkDuration {
   long timeStampNanos;
   long durationNanos;
+  long workPeriodStartTimestampNanos;
+  long cpuDurationNanos;
+  long gpuDurationNanos;
 }

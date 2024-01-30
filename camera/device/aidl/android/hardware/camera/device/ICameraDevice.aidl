@@ -21,6 +21,7 @@ import android.hardware.camera.device.CameraMetadata;
 import android.hardware.camera.device.ICameraDeviceCallback;
 import android.hardware.camera.device.ICameraDeviceSession;
 import android.hardware.camera.device.ICameraInjectionSession;
+import android.hardware.camera.device.RequestTemplate;
 import android.hardware.camera.device.StreamConfiguration;
 import android.os.ParcelFileDescriptor;
 
@@ -346,4 +347,122 @@ interface ICameraDevice {
      *
      */
     int getTorchStrengthLevel();
+
+    /**
+     * constructDefaultRequestSettings:
+     *
+     * This is the same as ICameraDeviceSession.constructDefaultRequestSettings, with
+     * the exception that it can be called before the ICameraDevice.open call.
+     *
+     * @param type The requested template CaptureRequest type to create the default settings for.
+     *
+     * @return capture settings for the requested use case.
+     *
+     */
+    CameraMetadata constructDefaultRequestSettings(in RequestTemplate type);
+
+    /**
+     * isStreamCombinationWithSettingsSupported:
+     *
+     * This is the same as isStreamCombinationSupported with below exceptions:
+     *
+     * 1. The input StreamConfiguration parameter may contain session parameters
+     * supported by this camera device. When checking if the particular StreamConfiguration
+     * is supported, the camera HAL must take the session parameters into consideration.
+     *
+     * 2. For version 3 of this interface, the camera compliance test will verify that
+     * isStreamCombinationWithSettingsSupported behaves properly for all combinations of
+     * below features. This function must return true for all supported combinations,
+     * and return false for non-supported feature combinations. The list of features
+     * required may grow in future versions.
+     *
+     * - Stream Combinations (a subset of LEGACY device mandatory stream combinations):
+     *   {
+     *     //                    4:3                16:9
+     *     // S1440P:         1920 x 1440         2560 x 1440
+     *     // S1080P:         1440 x 1080         1920 x 1080
+     *     // S720P:           960 x 720          1280 x 720
+     *
+     *     // Simple preview, GPU video processing, or no-preview video recording
+     *     {PRIV, MAXIMUM},
+     *     {PRIV, PREVIEW},
+     *     {PRIV, S1440P},
+     *     {PRIV, S1080P},
+     *     {PRIV, S720P},
+     *     // In-application video/image processing
+     *     {YUV, MAXIMUM},
+     *     {YUV, PREVIEW},
+     *     {YUV, S1440P},
+     *     {YUV, S1080P},
+     *     {YUV, S720P},
+     *     // Standard still imaging.
+     *     {PRIV, PREVIEW, JPEG, MAXIMUM},
+     *     {PRIV, S1440P,  JPEG, MAXIMUM},
+     *     {PRIV, S1080P,  JPEG, MAXIMUM},
+     *     {PRIV, S720P,   JPEG, MAXIMUM},
+     *     {PRIV, S1440P,  JPEG, S1440P},
+     *     {PRIV, S1080P,  JPEG, S1080P},
+     *     {PRIV, S720P,   JPEG, S1080P},
+     *     // In-app processing plus still capture.
+     *     {YUV,  PREVIEW, JPEG, MAXIMUM},
+     *     {YUV,  S1440P,  JPEG, MAXIMUM},
+     *     {YUV,  S1080P,  JPEG, MAXIMUM},
+     *     {YUV,  S720P,   JPEG, MAXIMUM},
+     *     // Standard recording.
+     *     {PRIV, PREVIEW, PRIV, PREVIEW},
+     *     {PRIV, S1440P,  PRIV, S1440P},
+     *     {PRIV, S1080P,  PRIV, S1080P},
+     *     {PRIV, S720P,   PRIV, S720P},
+     *     // Preview plus in-app processing.
+     *     {PRIV, PREVIEW, YUV,  PREVIEW},
+     *     {PRIV, S1440P,  YUV,  S1440P},
+     *     {PRIV, S1080P,  YUV,  S1080P},
+     *     {PRIV, S720P,   YUV,  S720P},
+     *   }
+     * - VIDEO_STABILIZATION_MODES: {OFF, PREVIEW}
+     * - AE_TARGET_FPS_RANGE: {{*, 30}, {*, 60}}
+     * - DYNAMIC_RANGE_PROFILE: {STANDARD, HLG10}
+     *
+     * Note: If a combination contains a S1440P, S1080P, or S720P stream,
+     * both 4:3 and 16:9 aspect ratio will be considered. For example, for the
+     * stream combination of {PRIV, S1440P, JPEG, MAXIMUM}, and if MAXIMUM ==
+     * 4032 x 3024, the camera compliance test will verify both
+     * {PRIV, 1920 x 1440, JPEG, 4032 x 3024} and {PRIV, 2560 x 1440, JPEG, 4032 x 2268}.
+     *
+     * @param streams The StreamConfiguration to be tested, with optional session parameters.
+     *
+     * @return true in case the stream combination is supported, false otherwise.
+     *
+     */
+    boolean isStreamCombinationWithSettingsSupported(in StreamConfiguration streams);
+
+    /**
+     * getSessionCharacteristics
+     *
+     * Gets the session characteristics associated with a particular session
+     * configuration by the CameraDevice.
+     *
+     * For Android 15, the characteristics which need to be set are:
+     *   - ANDROID_CONTROL_ZOOM_RATIO_RANGE
+     *
+     * A service specific error will be returned on the following conditions
+     *     INTERNAL_ERROR:
+     *         The camera device cannot be opened due to an internal
+     *         error.
+     *     CAMERA_DISCONNECTED:
+     *         An external camera device has been disconnected, and is no longer
+     *         available. This camera device interface is now stale, and a new
+     *         instance must be acquired if the device is reconnected. All
+     *         subsequent calls on this interface must return
+     *         CAMERA_DISCONNECTED.
+     *     ILLEGAL_ARGUMENT:
+     *         If the given session configuration is not supported.
+     *
+     * @param sessionConfig: The session configuration for which the
+     * characteristics are being fetched.
+     *
+     * @return The static metadata for this particular session config, or an
+     * empty metadata structure if a service specific error is returned.
+     */
+    CameraMetadata getSessionCharacteristics(in StreamConfiguration sessionConfig);
 }

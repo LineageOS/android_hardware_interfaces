@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,9 +60,11 @@ public final class AccessForVehicleProperty {
         Map.entry(VehicleProperty.EV_CHARGE_PORT_CONNECTED, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.EV_BATTERY_INSTANTANEOUS_CHARGE_RATE, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.RANGE_REMAINING, VehiclePropertyAccess.READ_WRITE),
+        Map.entry(VehicleProperty.EV_BATTERY_AVERAGE_TEMPERATURE, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.TIRE_PRESSURE, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.CRITICALLY_LOW_TIRE_PRESSURE, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.ENGINE_IDLE_AUTO_STOP_ENABLED, VehiclePropertyAccess.READ_WRITE),
+        Map.entry(VehicleProperty.IMPACT_DETECTED, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.GEAR_SELECTION, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.CURRENT_GEAR, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.PARKING_BRAKE_ON, VehiclePropertyAccess.READ),
@@ -75,6 +77,8 @@ public final class AccessForVehicleProperty {
         Map.entry(VehicleProperty.ABS_ACTIVE, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.TRACTION_CONTROL_ACTIVE, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.EV_STOPPING_MODE, VehiclePropertyAccess.READ_WRITE),
+        Map.entry(VehicleProperty.ELECTRONIC_STABILITY_CONTROL_ENABLED, VehiclePropertyAccess.READ_WRITE),
+        Map.entry(VehicleProperty.ELECTRONIC_STABILITY_CONTROL_STATE, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.HVAC_FAN_SPEED, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.HVAC_FAN_DIRECTION, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.HVAC_TEMPERATURE_CURRENT, VehiclePropertyAccess.READ),
@@ -112,6 +116,7 @@ public final class AccessForVehicleProperty {
         Map.entry(VehicleProperty.AP_POWER_BOOTUP_REASON, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.DISPLAY_BRIGHTNESS, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.PER_DISPLAY_BRIGHTNESS, VehiclePropertyAccess.READ_WRITE),
+        Map.entry(VehicleProperty.VALET_MODE_ENABLED, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.HW_KEY_INPUT, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.HW_KEY_INPUT_V2, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.HW_MOTION_INPUT, VehiclePropertyAccess.READ),
@@ -161,11 +166,13 @@ public final class AccessForVehicleProperty {
         Map.entry(VehicleProperty.SEAT_FOOTWELL_LIGHTS_SWITCH, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.SEAT_EASY_ACCESS_ENABLED, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.SEAT_AIRBAG_ENABLED, VehiclePropertyAccess.READ_WRITE),
+        Map.entry(VehicleProperty.SEAT_AIRBAGS_DEPLOYED, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.SEAT_CUSHION_SIDE_SUPPORT_POS, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.SEAT_CUSHION_SIDE_SUPPORT_MOVE, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.SEAT_LUMBAR_VERTICAL_POS, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.SEAT_LUMBAR_VERTICAL_MOVE, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.SEAT_WALK_IN_POS, VehiclePropertyAccess.READ_WRITE),
+        Map.entry(VehicleProperty.SEAT_BELT_PRETENSIONER_DEPLOYED, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.SEAT_OCCUPANCY, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.WINDOW_POS, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.WINDOW_MOVE, VehiclePropertyAccess.READ_WRITE),
@@ -184,6 +191,11 @@ public final class AccessForVehicleProperty {
         Map.entry(VehicleProperty.GLOVE_BOX_LOCKED, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.VEHICLE_MAP_SERVICE, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.LOCATION_CHARACTERIZATION, VehiclePropertyAccess.READ),
+        Map.entry(VehicleProperty.ULTRASONICS_SENSOR_POSITION, VehiclePropertyAccess.READ),
+        Map.entry(VehicleProperty.ULTRASONICS_SENSOR_ORIENTATION, VehiclePropertyAccess.READ),
+        Map.entry(VehicleProperty.ULTRASONICS_SENSOR_FIELD_OF_VIEW, VehiclePropertyAccess.READ),
+        Map.entry(VehicleProperty.ULTRASONICS_SENSOR_DETECTION_RANGE, VehiclePropertyAccess.READ),
+        Map.entry(VehicleProperty.ULTRASONICS_SENSOR_SUPPORTED_RANGES, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.OBD2_LIVE_FRAME, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.OBD2_FREEZE_FRAME, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.OBD2_FREEZE_FRAME_INFO, VehiclePropertyAccess.READ),
@@ -239,6 +251,8 @@ public final class AccessForVehicleProperty {
         Map.entry(VehicleProperty.SUPPORTED_PROPERTY_IDS, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.SHUTDOWN_REQUEST, VehiclePropertyAccess.WRITE),
         Map.entry(VehicleProperty.VEHICLE_IN_USE, VehiclePropertyAccess.READ_WRITE),
+        Map.entry(VehicleProperty.CLUSTER_HEARTBEAT, VehiclePropertyAccess.WRITE),
+        Map.entry(VehicleProperty.VEHICLE_DRIVING_AUTOMATION_CURRENT_LEVEL, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.AUTOMATIC_EMERGENCY_BRAKING_ENABLED, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.AUTOMATIC_EMERGENCY_BRAKING_STATE, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.FORWARD_COLLISION_WARNING_ENABLED, VehiclePropertyAccess.READ_WRITE),
@@ -263,7 +277,19 @@ public final class AccessForVehicleProperty {
         Map.entry(VehicleProperty.ADAPTIVE_CRUISE_CONTROL_LEAD_VEHICLE_MEASURED_DISTANCE, VehiclePropertyAccess.READ),
         Map.entry(VehicleProperty.HANDS_ON_DETECTION_ENABLED, VehiclePropertyAccess.READ_WRITE),
         Map.entry(VehicleProperty.HANDS_ON_DETECTION_DRIVER_STATE, VehiclePropertyAccess.READ),
-        Map.entry(VehicleProperty.HANDS_ON_DETECTION_WARNING, VehiclePropertyAccess.READ)
+        Map.entry(VehicleProperty.HANDS_ON_DETECTION_WARNING, VehiclePropertyAccess.READ),
+        Map.entry(VehicleProperty.DRIVER_DROWSINESS_ATTENTION_SYSTEM_ENABLED, VehiclePropertyAccess.READ_WRITE),
+        Map.entry(VehicleProperty.DRIVER_DROWSINESS_ATTENTION_STATE, VehiclePropertyAccess.READ),
+        Map.entry(VehicleProperty.DRIVER_DROWSINESS_ATTENTION_WARNING_ENABLED, VehiclePropertyAccess.READ_WRITE),
+        Map.entry(VehicleProperty.DRIVER_DROWSINESS_ATTENTION_WARNING, VehiclePropertyAccess.READ),
+        Map.entry(VehicleProperty.DRIVER_DISTRACTION_SYSTEM_ENABLED, VehiclePropertyAccess.READ_WRITE),
+        Map.entry(VehicleProperty.DRIVER_DISTRACTION_STATE, VehiclePropertyAccess.READ),
+        Map.entry(VehicleProperty.DRIVER_DISTRACTION_WARNING_ENABLED, VehiclePropertyAccess.READ_WRITE),
+        Map.entry(VehicleProperty.DRIVER_DISTRACTION_WARNING, VehiclePropertyAccess.READ),
+        Map.entry(VehicleProperty.LOW_SPEED_COLLISION_WARNING_ENABLED, VehiclePropertyAccess.READ_WRITE),
+        Map.entry(VehicleProperty.LOW_SPEED_COLLISION_WARNING_STATE, VehiclePropertyAccess.READ),
+        Map.entry(VehicleProperty.CROSS_TRAFFIC_MONITORING_ENABLED, VehiclePropertyAccess.READ_WRITE),
+        Map.entry(VehicleProperty.CROSS_TRAFFIC_MONITORING_WARNING_STATE, VehiclePropertyAccess.READ)
     );
 
 }

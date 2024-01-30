@@ -19,6 +19,7 @@ package android.hardware.radio.network;
 import android.hardware.radio.network.LteVopsInfo;
 import android.hardware.radio.network.NrIndicators;
 
+/** @hide */
 @VintfStability
 @JavaDerive(toString=true)
 parcelable EutranRegistrationInfo {

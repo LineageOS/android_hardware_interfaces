@@ -36,9 +36,9 @@ package android.hardware.graphics.common;
 @Backing(type="int") @VintfStability
 enum Transform {
   NONE = 0,
-  FLIP_H = 1,
-  FLIP_V = 2,
-  ROT_90 = 4,
-  ROT_180 = 3,
-  ROT_270 = 7,
+  FLIP_H = (1 << 0) /* 1 */,
+  FLIP_V = (1 << 1) /* 2 */,
+  ROT_90 = (1 << 2) /* 4 */,
+  ROT_180 = (FLIP_H | FLIP_V) /* 3 */,
+  ROT_270 = ((FLIP_H | FLIP_V) | ROT_90) /* 7 */,
 }

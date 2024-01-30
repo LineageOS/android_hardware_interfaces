@@ -27,9 +27,11 @@ int main() {
     ABinderProcess_setThreadPoolMaxThreadCount(0);
     std::shared_ptr<Face> hal = ndk::SharedRefBase::make<Face>();
 
-    const std::string instance = std::string(Face::descriptor) + "/default";
-    binder_status_t status = AServiceManager_addService(hal->asBinder().get(), instance.c_str());
+    const std::string instance = std::string(Face::descriptor) + "/virtual";
+    binder_status_t status =
+            AServiceManager_registerLazyService(hal->asBinder().get(), instance.c_str());
     CHECK_EQ(status, STATUS_OK);
+    AServiceManager_forceLazyServicesPersist(true);
 
     ABinderProcess_joinThreadPool();
     return EXIT_FAILURE;  // should not reach
