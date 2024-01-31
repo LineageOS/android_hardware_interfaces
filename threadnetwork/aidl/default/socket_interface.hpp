@@ -73,6 +73,20 @@ class SocketInterface : public ot::Spinel::SpinelInterface {
     void Deinit(void);
 
     /**
+     * Sends a Spinel frame to Radio Co-processor (RCP) over the
+     * socket.
+     *
+     * @param[in] aFrame     A pointer to buffer containing the Spinel frame to
+     * send.
+     * @param[in] aLength    The length (number of bytes) in the frame.
+     *
+     * @retval OT_ERROR_NONE     Successfully sent the Spinel frame.
+     * @retval OT_ERROR_FAILED   Failed to send a frame.
+     *
+     */
+    otError SendFrame(const uint8_t* aFrame, uint16_t aLength);
+
+    /**
      * Updates the file descriptor sets with file descriptors used by the radio
      * driver.
      *
@@ -122,6 +136,15 @@ class SocketInterface : public ot::Spinel::SpinelInterface {
     }
 
   private:
+    /**
+     * Writes a given frame to the socket.
+     *
+     * @param[in] aFrame  A pointer to buffer containing the frame to write.
+     * @param[in] aLength The length (number of bytes) in the frame.
+     *
+     */
+    void Write(const uint8_t* aFrame, uint16_t aLength);
+
     /**
      * Opens file specified by aRadioUrl.
      *
