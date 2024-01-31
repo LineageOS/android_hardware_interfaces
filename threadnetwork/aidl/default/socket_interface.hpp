@@ -140,6 +140,30 @@ class SocketInterface : public ot::Spinel::SpinelInterface {
      */
     void CloseFile(void);
 
+    /**
+     * Check if socket file is created.
+     *
+     * @param[in] aPath  Socket file path name.
+     *
+     * @retval TRUE The required socket file is created.
+     * @retval FALSE The required socket file is not created.
+     *
+     */
+    bool IsSocketFileExisted(const char* aPath);
+
+    /**
+     * Wait until the socket file is created.
+     *
+     * @param[in] aPath  Socket file path name.
+     *
+     */
+    void WaitForSocketFileCreated(const char* aPath);
+
+    enum {
+        kMaxSelectTimeMs = 2000,  ///< Maximum wait time in Milliseconds for file
+                                  ///< descriptor to become available.
+    };
+
     ReceiveFrameCallback mReceiveFrameCallback;
     void* mReceiveFrameContext;
     RxFrameBuffer* mReceiveFrameBuffer;

@@ -24,14 +24,18 @@
 
 #include <errno.h>
 #include <openthread/logging.h>
+#include <sys/inotify.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/un.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include <string>
+
 #include "common/code_utils.hpp"
 #include "openthread/openthread-system.h"
+#include "platform-posix.h"
 
 namespace aidl {
 namespace android {
@@ -53,6 +57,8 @@ otError SocketInterface::Init(ReceiveFrameCallback aCallback, void* aCallbackCon
     otError error = OT_ERROR_NONE;
 
     VerifyOrExit(mSockFd == -1, error = OT_ERROR_ALREADY);
+
+    WaitForSocketFileCreated(mRadioUrl.GetPath());
 
     mSockFd = OpenFile(mRadioUrl);
     VerifyOrExit(mSockFd != -1, error = OT_ERROR_FAILED);
@@ -123,6 +129,66 @@ void SocketInterface::CloseFile(void) {
 
 exit:
     return;
+}
+
+void SocketInterface::WaitForSocketFileCreated(const char* aPath) {
+    int inotifyFd;
+    int wd;
+    int lastSlashIdx;
+    std::string folderPath;
+    std::string socketPath(aPath);
+
+    VerifyOrExit(!IsSocketFileExisted(aPath));
+
+    inotifyFd = inotify_init();
+    VerifyOrDie(inotifyFd != -1, OT_EXIT_ERROR_ERRNO);
+
+    lastSlashIdx = socketPath.find_last_of('/');
+    VerifyOrDie(lastSlashIdx != std::string::npos, OT_EXIT_ERROR_ERRNO);
+
+    folderPath = socketPath.substr(0, lastSlashIdx);
+    wd = inotify_add_watch(inotifyFd, folderPath.c_str(), IN_CREATE);
+    VerifyOrDie(wd != -1, OT_EXIT_ERROR_ERRNO);
+
+    otLogInfoPlat("Waiting for socket file %s be created...", aPath);
+
+    while (true) {
+        fd_set fds;
+        FD_ZERO(&fds);
+        FD_SET(inotifyFd, &fds);
+        struct timeval timeout = {kMaxSelectTimeMs / MS_PER_S,
+                                  (kMaxSelectTimeMs % MS_PER_S) * MS_PER_S};
+
+        int rval = select(inotifyFd + 1, &fds, nullptr, nullptr, &timeout);
+        VerifyOrDie(rval >= 0, OT_EXIT_ERROR_ERRNO);
+
+        if (rval == 0 && IsSocketFileExisted(aPath)) {
+            break;
+        }
+
+        if (FD_ISSET(inotifyFd, &fds)) {
+            char buffer[sizeof(struct inotify_event)];
+            ssize_t bytesRead = read(inotifyFd, buffer, sizeof(buffer));
+
+            VerifyOrDie(bytesRead >= 0, OT_EXIT_ERROR_ERRNO);
+
+            struct inotify_event* event = reinterpret_cast<struct inotify_event*>(buffer);
+            if ((event->mask & IN_CREATE) && IsSocketFileExisted(aPath)) {
+                break;
+            }
+        }
+    }
+
+    close(inotifyFd);
+
+exit:
+    otLogInfoPlat("Socket file: %s is created", aPath);
+    return;
+}
+
+bool SocketInterface::IsSocketFileExisted(const char* aPath) {
+    struct stat st;
+    return stat(aPath, &st) == 0 && S_ISSOCK(st.st_mode);
 }
 
 }  // namespace threadnetwork
