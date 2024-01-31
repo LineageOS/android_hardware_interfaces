@@ -286,7 +286,8 @@ TEST_F(JsonConfigLoaderUnitTest, testCheckDefaultAccessChangeMode) {
     ASSERT_EQ(configs.size(), 1u);
 
     const VehiclePropConfig& propConfig = configs.begin()->second.config;
-    ASSERT_EQ(propConfig.access, VehiclePropertyAccess::READ);
+    ASSERT_EQ(propConfig.access, VehiclePropertyAccess::NONE);
+    ASSERT_EQ(propConfig.areaConfigs[0].access, VehiclePropertyAccess::READ);
     ASSERT_EQ(propConfig.changeMode, VehiclePropertyChangeMode::STATIC);
 }
 
@@ -307,7 +308,8 @@ TEST_F(JsonConfigLoaderUnitTest, testAccessOverride) {
     ASSERT_EQ(configs.size(), 1u);
 
     const VehiclePropConfig& propConfig = configs.begin()->second.config;
-    ASSERT_EQ(propConfig.access, VehiclePropertyAccess::WRITE);
+    ASSERT_EQ(propConfig.access, VehiclePropertyAccess::NONE);
+    ASSERT_EQ(propConfig.areaConfigs[0].access, VehiclePropertyAccess::WRITE);
     ASSERT_EQ(propConfig.changeMode, VehiclePropertyChangeMode::STATIC);
 }
 
@@ -328,7 +330,8 @@ TEST_F(JsonConfigLoaderUnitTest, testChangeModeOverride) {
     ASSERT_EQ(configs.size(), 1u);
 
     const VehiclePropConfig& propConfig = configs.begin()->second.config;
-    ASSERT_EQ(propConfig.access, VehiclePropertyAccess::READ);
+    ASSERT_EQ(propConfig.access, VehiclePropertyAccess::NONE);
+    ASSERT_EQ(propConfig.areaConfigs[0].access, VehiclePropertyAccess::READ);
     ASSERT_EQ(propConfig.changeMode, VehiclePropertyChangeMode::ON_CHANGE);
 }
 
@@ -350,7 +353,8 @@ TEST_F(JsonConfigLoaderUnitTest, testCustomProp) {
     ASSERT_EQ(configs.size(), 1u);
 
     const VehiclePropConfig& propConfig = configs.begin()->second.config;
-    ASSERT_EQ(propConfig.access, VehiclePropertyAccess::WRITE);
+    ASSERT_EQ(propConfig.access, VehiclePropertyAccess::NONE);
+    ASSERT_EQ(propConfig.areaConfigs[0].access, VehiclePropertyAccess::WRITE);
     ASSERT_EQ(propConfig.changeMode, VehiclePropertyChangeMode::ON_CHANGE);
 }
 
@@ -550,10 +554,12 @@ TEST_F(JsonConfigLoaderUnitTest, testAreas_Simple) {
     ASSERT_EQ(configs.size(), 1u);
 
     const VehiclePropConfig& config = configs.begin()->second.config;
+    ASSERT_EQ(config.access, VehiclePropertyAccess::NONE);
     ASSERT_EQ(config.areaConfigs.size(), 1u);
     const VehicleAreaConfig& areaConfig = config.areaConfigs[0];
     ASSERT_EQ(areaConfig.minInt32Value, 1);
     ASSERT_EQ(areaConfig.maxInt32Value, 7);
+    ASSERT_EQ(areaConfig.access, VehiclePropertyAccess::READ);
     ASSERT_EQ(areaConfig.areaId, HVAC_ALL);
 }
 
@@ -635,9 +641,11 @@ TEST_F(JsonConfigLoaderUnitTest, testAreas_HandlesNoSupportedEnumValuesDeclared)
     ASSERT_EQ(configs.size(), 1u);
 
     const VehiclePropConfig& config = configs.begin()->second.config;
+    ASSERT_EQ(config.access, VehiclePropertyAccess::NONE);
     ASSERT_EQ(config.areaConfigs.size(), 1u);
 
     const VehicleAreaConfig& areaConfig = config.areaConfigs[0];
+    ASSERT_EQ(areaConfig.access, VehiclePropertyAccess::READ);
     ASSERT_EQ(areaConfig.areaId, 0);
     ASSERT_FALSE(areaConfig.supportedEnumValues);
 }
@@ -662,9 +670,11 @@ TEST_F(JsonConfigLoaderUnitTest, testAreas_HandlesSupportedEnumValues) {
     ASSERT_EQ(configs.size(), 1u);
 
     const VehiclePropConfig& config = configs.begin()->second.config;
+    ASSERT_EQ(config.access, VehiclePropertyAccess::NONE);
     ASSERT_EQ(config.areaConfigs.size(), 1u);
 
     const VehicleAreaConfig& areaConfig = config.areaConfigs[0];
+    ASSERT_EQ(areaConfig.access, VehiclePropertyAccess::READ);
     ASSERT_EQ(areaConfig.areaId, 0);
     ASSERT_TRUE(areaConfig.supportedEnumValues);
     ASSERT_EQ(areaConfig.supportedEnumValues.value().size(), 2u);
@@ -692,11 +702,105 @@ TEST_F(JsonConfigLoaderUnitTest, testAreas_HandlesEmptySupportedEnumValues) {
     ASSERT_EQ(configs.size(), 1u);
 
     const VehiclePropConfig& config = configs.begin()->second.config;
+    ASSERT_EQ(config.access, VehiclePropertyAccess::NONE);
     ASSERT_EQ(config.areaConfigs.size(), 1u);
 
     const VehicleAreaConfig& areaConfig = config.areaConfigs[0];
+    ASSERT_EQ(areaConfig.access, VehiclePropertyAccess::READ);
     ASSERT_EQ(areaConfig.areaId, 0);
     ASSERT_FALSE(areaConfig.supportedEnumValues);
+}
+
+TEST_F(JsonConfigLoaderUnitTest, testAccess_areaOverrideGlobalDefault) {
+    std::istringstream iss(R"(
+    {
+        "properties": [{
+            "property": "VehicleProperty::CABIN_LIGHTS_SWITCH",
+            "areas": [{
+                "access": "VehiclePropertyAccess::READ",
+                "areaId": 0
+            }]
+        }]
+    }
+    )");
+
+    auto result = mLoader.loadPropConfig(iss);
+    ASSERT_TRUE(result.ok());
+
+    auto configs = result.value();
+    ASSERT_EQ(configs.size(), 1u);
+
+    const VehiclePropConfig& config = configs.begin()->second.config;
+    ASSERT_EQ(config.access, VehiclePropertyAccess::NONE);
+    ASSERT_EQ(config.areaConfigs.size(), 1u);
+
+    const VehicleAreaConfig& areaConfig = config.areaConfigs[0];
+    ASSERT_EQ(areaConfig.access, VehiclePropertyAccess::READ);
+    ASSERT_EQ(areaConfig.areaId, 0);
+}
+
+TEST_F(JsonConfigLoaderUnitTest, testAccess_globalOverrideDefault) {
+    std::istringstream iss(R"(
+    {
+        "properties": [{
+            "property": "VehicleProperty::CABIN_LIGHTS_SWITCH",
+            "areas": [{
+                "areaId": 0
+            }],
+            "access": "VehiclePropertyAccess::READ"
+        }]
+    }
+    )");
+
+    auto result = mLoader.loadPropConfig(iss);
+    ASSERT_TRUE(result.ok());
+
+    auto configs = result.value();
+    ASSERT_EQ(configs.size(), 1u);
+
+    const VehiclePropConfig& config = configs.begin()->second.config;
+    ASSERT_EQ(config.access, VehiclePropertyAccess::NONE);
+    ASSERT_EQ(config.areaConfigs.size(), 1u);
+
+    const VehicleAreaConfig& areaConfig = config.areaConfigs[0];
+    ASSERT_EQ(areaConfig.access, VehiclePropertyAccess::READ);
+    ASSERT_EQ(areaConfig.areaId, 0);
+}
+
+TEST_F(JsonConfigLoaderUnitTest, testAccess_areaOverrideGlobal) {
+    std::istringstream iss(R"(
+    {
+        "properties": [{
+            "property": "VehicleProperty::CABIN_LIGHTS_SWITCH",
+            "areas": [{
+                "access": "VehiclePropertyAccess::WRITE",
+                "areaId": 0
+            },
+            {
+                "areaId": 1
+            }],
+            "access": "VehiclePropertyAccess::READ",
+        }]
+    }
+    )");
+
+    auto result = mLoader.loadPropConfig(iss);
+    ASSERT_TRUE(result.ok());
+
+    auto configs = result.value();
+    ASSERT_EQ(configs.size(), 1u);
+
+    const VehiclePropConfig& config = configs.begin()->second.config;
+    ASSERT_EQ(config.access, VehiclePropertyAccess::NONE);
+    ASSERT_EQ(config.areaConfigs.size(), 2u);
+
+    const VehicleAreaConfig& areaConfig1 = config.areaConfigs[0];
+    ASSERT_EQ(areaConfig1.access, VehiclePropertyAccess::WRITE);
+    ASSERT_EQ(areaConfig1.areaId, 0);
+
+    const VehicleAreaConfig& areaConfig2 = config.areaConfigs[1];
+    ASSERT_EQ(areaConfig2.access, VehiclePropertyAccess::READ);
+    ASSERT_EQ(areaConfig2.areaId, 1);
 }
 
 }  // namespace vehicle

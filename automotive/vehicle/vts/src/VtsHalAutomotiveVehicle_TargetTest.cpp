@@ -135,6 +135,7 @@ class VtsHalAutomotiveVehicleTargetTest : public testing::TestWithParam<ServiceD
             const VhalClientResult<std::unique_ptr<IHalPropValue>>& result, int32_t value);
 
   public:
+    void verifyAccessMode(int actualAccess, int expectedAccess);
     void verifyProperty(VehicleProperty propId, VehiclePropertyAccess access,
                         VehiclePropertyChangeMode changeMode, VehiclePropertyGroup group,
                         VehicleArea area, VehiclePropertyType propertyType);
@@ -322,8 +323,13 @@ TEST_P(VtsHalAutomotiveVehicleTargetTest, setProp) {
         const IHalPropConfig& cfg = *cfgPtr;
         int32_t propId = cfg.getPropId();
         // test on boolean and writable property
-        if (cfg.getAccess() == toInt(VehiclePropertyAccess::READ_WRITE) &&
-            isBooleanGlobalProp(propId) && !hvacProps.count(propId)) {
+        bool isReadWrite = (cfg.getAccess() == toInt(VehiclePropertyAccess::READ_WRITE));
+        if (cfg.getAreaConfigSize() != 0 &&
+            cfg.getAreaConfigs()[0]->getAccess() != toInt(VehiclePropertyAccess::NONE)) {
+            isReadWrite = (cfg.getAreaConfigs()[0]->getAccess() ==
+                           toInt(VehiclePropertyAccess::READ_WRITE));
+        }
+        if (isReadWrite && isBooleanGlobalProp(propId) && !hvacProps.count(propId)) {
             auto propToGet = mVhalClient->createHalPropValue(propId);
             auto getValueResult = mVhalClient->getValueSync(*propToGet);
 
@@ -580,6 +586,53 @@ TEST_P(VtsHalAutomotiveVehicleTargetTest, testGetValuesTimestampAIDL) {
     }
 }
 
+// Test that access mode is populated in exclusively one of the VehiclePropConfig or the
+// VehicleAreaConfigs. Either VehiclePropConfig.access must be populated, or all the
+// VehicleAreaConfig.access fields should be populated.
+TEST_P(VtsHalAutomotiveVehicleTargetTest, testAccessModeExclusivityAIDL) {
+    if (!mVhalClient->isAidlVhal()) {
+        GTEST_SKIP() << "Skip checking access mode for HIDL because the access mode field is only "
+                        "present for AIDL";
+    }
+
+    auto result = mVhalClient->getAllPropConfigs();
+    ASSERT_TRUE(result.ok());
+    for (const auto& cfgPtr : result.value()) {
+        const IHalPropConfig& cfg = *cfgPtr;
+
+        bool propAccessIsSet = (cfg.getAccess() != toInt(VehiclePropertyAccess::NONE));
+        bool unsetAreaAccessExists = false;
+        bool setAreaAccessExists = false;
+
+        for (const auto& areaConfig : cfg.getAreaConfigs()) {
+            if (areaConfig->getAccess() == toInt(VehiclePropertyAccess::NONE)) {
+                unsetAreaAccessExists = true;
+            } else {
+                setAreaAccessExists = true;
+            }
+        }
+
+        ASSERT_FALSE(propAccessIsSet && setAreaAccessExists) << StringPrintf(
+                "Both prop and area config access is set for propertyId %d", cfg.getPropId());
+        ASSERT_FALSE(!propAccessIsSet && !setAreaAccessExists) << StringPrintf(
+                "Neither prop and area config access is set for propertyId %d", cfg.getPropId());
+        ASSERT_FALSE(unsetAreaAccessExists && setAreaAccessExists) << StringPrintf(
+                "Area access is only set in some configs for propertyId %d", cfg.getPropId());
+    }
+}
+
+void VtsHalAutomotiveVehicleTargetTest::verifyAccessMode(int actualAccess, int expectedAccess) {
+    if (expectedAccess == toInt(VehiclePropertyAccess::READ_WRITE)) {
+        ASSERT_TRUE(actualAccess == expectedAccess ||
+                    actualAccess == toInt(VehiclePropertyAccess::READ))
+                << StringPrintf("Expect to get VehiclePropertyAccess: %i or %i, got %i",
+                                expectedAccess, toInt(VehiclePropertyAccess::READ), actualAccess);
+        return;
+    }
+    ASSERT_EQ(actualAccess, expectedAccess) << StringPrintf(
+            "Expect to get VehiclePropertyAccess: %i, got %i", expectedAccess, actualAccess);
+}
+
 // Helper function to compare actual vs expected property config
 void VtsHalAutomotiveVehicleTargetTest::verifyProperty(VehicleProperty propId,
                                                        VehiclePropertyAccess access,
@@ -622,7 +675,6 @@ void VtsHalAutomotiveVehicleTargetTest::verifyProperty(VehicleProperty propId,
 
     const auto& config = result.value().at(0);
     int actualPropId = config->getPropId();
-    int actualAccess = config->getAccess();
     int actualChangeMode = config->getChangeMode();
     int actualGroup = actualPropId & toInt(VehiclePropertyGroup::MASK);
     int actualArea = actualPropId & toInt(VehicleArea::MASK);
@@ -631,14 +683,17 @@ void VtsHalAutomotiveVehicleTargetTest::verifyProperty(VehicleProperty propId,
     ASSERT_EQ(actualPropId, expectedPropId)
             << StringPrintf("Expect to get property ID: %i, got %i", expectedPropId, actualPropId);
 
-    if (expectedAccess == toInt(VehiclePropertyAccess::READ_WRITE)) {
-        ASSERT_TRUE(actualAccess == expectedAccess ||
-                    actualAccess == toInt(VehiclePropertyAccess::READ))
-                << StringPrintf("Expect to get VehiclePropertyAccess: %i or %i, got %i",
-                                expectedAccess, toInt(VehiclePropertyAccess::READ), actualAccess);
+    int globalAccess = config->getAccess();
+    if (config->getAreaConfigSize() == 0) {
+        verifyAccessMode(globalAccess, expectedAccess);
     } else {
-        ASSERT_EQ(actualAccess, expectedAccess) << StringPrintf(
-                "Expect to get VehiclePropertyAccess: %i, got %i", expectedAccess, actualAccess);
+        for (const auto& areaConfig : config->getAreaConfigs()) {
+            int areaConfigAccess = areaConfig->getAccess();
+            int actualAccess = (areaConfigAccess != toInt(VehiclePropertyAccess::NONE))
+                                       ? areaConfigAccess
+                                       : globalAccess;
+            verifyAccessMode(actualAccess, expectedAccess);
+        }
     }
 
     ASSERT_EQ(actualChangeMode, expectedChangeMode)
