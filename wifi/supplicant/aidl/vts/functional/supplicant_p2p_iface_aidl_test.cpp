@@ -35,7 +35,9 @@ using aidl::android::hardware::wifi::supplicant::IfaceType;
 using aidl::android::hardware::wifi::supplicant::ISupplicant;
 using aidl::android::hardware::wifi::supplicant::ISupplicantP2pIface;
 using aidl::android::hardware::wifi::supplicant::MiracastMode;
+using aidl::android::hardware::wifi::supplicant::P2pConnectInfo;
 using aidl::android::hardware::wifi::supplicant::P2pDeviceFoundEventParams;
+using aidl::android::hardware::wifi::supplicant::P2pDiscoveryInfo;
 using aidl::android::hardware::wifi::supplicant::P2pFrameTypeMask;
 using aidl::android::hardware::wifi::supplicant::P2pGoNegotiationReqEventParams;
 using aidl::android::hardware::wifi::supplicant::P2pGroupCapabilityMask;
@@ -45,6 +47,7 @@ using aidl::android::hardware::wifi::supplicant::P2pPeerClientDisconnectedEventP
 using aidl::android::hardware::wifi::supplicant::P2pPeerClientJoinedEventParams;
 using aidl::android::hardware::wifi::supplicant::P2pProvDiscStatusCode;
 using aidl::android::hardware::wifi::supplicant::P2pProvisionDiscoveryCompletedEventParams;
+using aidl::android::hardware::wifi::supplicant::P2pScanType;
 using aidl::android::hardware::wifi::supplicant::P2pStatusCode;
 using aidl::android::hardware::wifi::supplicant::SupplicantStatusCode;
 using aidl::android::hardware::wifi::supplicant::WpsConfigMethods;
@@ -69,6 +72,7 @@ const uint32_t kTestNetworkId = 7;
 const uint32_t kTestGroupFreq = 0;
 const bool kTestGroupPersistent = false;
 const bool kTestGroupIsJoin = false;
+const auto& kTestVendorData = generateOuiKeyedDataList(5);
 
 }  // namespace
 
@@ -222,6 +226,7 @@ class SupplicantP2pIfaceAidlTest : public testing::TestWithParam<std::string> {
         initializeService();
         supplicant_ = getSupplicant(GetParam().c_str());
         ASSERT_NE(supplicant_, nullptr);
+        ASSERT_TRUE(supplicant_->getInterfaceVersion(&interface_version_).isOk());
         ASSERT_TRUE(supplicant_
                         ->setDebugParams(DebugLevel::EXCESSIVE,
                                          true,  // show timestamps
@@ -247,6 +252,7 @@ class SupplicantP2pIfaceAidlTest : public testing::TestWithParam<std::string> {
    protected:
     std::shared_ptr<ISupplicant> supplicant_;
     std::shared_ptr<ISupplicantP2pIface> p2p_iface_;
+    int interface_version_;
 };
 
 /*
@@ -550,6 +556,34 @@ TEST_P(SupplicantP2pIfaceAidlTest, FindSpecificFrequency) {
 }
 
 /*
+ * FindWithParams
+ */
+TEST_P(SupplicantP2pIfaceAidlTest, FindWithParams) {
+    if (interface_version_ < 3) {
+        GTEST_SKIP() << "findWithParams is available as of Supplicant V3";
+    }
+
+    P2pDiscoveryInfo discoveryParams;
+    discoveryParams.timeoutInSec = kTestFindTimeout;
+    discoveryParams.vendorData = kTestVendorData;
+
+    discoveryParams.scanType = P2pScanType::FULL;
+    EXPECT_TRUE(p2p_iface_->findWithParams(discoveryParams).isOk());
+    EXPECT_TRUE(p2p_iface_->stopFind().isOk());
+    sleep(1);
+
+    discoveryParams.scanType = P2pScanType::SOCIAL;
+    EXPECT_TRUE(p2p_iface_->findWithParams(discoveryParams).isOk());
+    EXPECT_TRUE(p2p_iface_->stopFind().isOk());
+    sleep(1);
+
+    discoveryParams.scanType = P2pScanType::SPECIFIC_FREQ;
+    discoveryParams.frequencyMhz = 2412;
+    EXPECT_TRUE(p2p_iface_->findWithParams(discoveryParams).isOk());
+    EXPECT_TRUE(p2p_iface_->stopFind().isOk());
+}
+
+/*
  * StopFind
  */
 TEST_P(SupplicantP2pIfaceAidlTest, StopFind) {
@@ -573,6 +607,27 @@ TEST_P(SupplicantP2pIfaceAidlTest, Connect) {
                         ->connect(kTestMacAddr, WpsProvisionMethod::PBC, kTestConnectPin, true,
                                   false, kTestConnectGoIntent, &pin)
                         .isOk());
+}
+
+/*
+ * ConnectWithParams
+ */
+TEST_P(SupplicantP2pIfaceAidlTest, ConnectWithParams) {
+    if (interface_version_ < 3) {
+        GTEST_SKIP() << "connectWithParams is available as of Supplicant V3";
+    }
+
+    P2pConnectInfo connectInfo;
+    connectInfo.peerAddress = vecToArrayMacAddr(kTestMacAddr);
+    connectInfo.provisionMethod = WpsProvisionMethod::PBC;
+    connectInfo.preSelectedPin = kTestConnectPin;
+    connectInfo.joinExistingGroup = true;
+    connectInfo.persistent = false;
+    connectInfo.goIntent = kTestConnectGoIntent;
+    connectInfo.vendorData = kTestVendorData;
+
+    std::string pin;
+    EXPECT_TRUE(p2p_iface_->connectWithParams(connectInfo, &pin).isOk());
 }
 
 /*
