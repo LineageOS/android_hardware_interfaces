@@ -16,12 +16,13 @@
 
 #include <algorithm>
 
+#define ATRACE_TAG ATRACE_TAG_AUDIO
 #define LOG_TAG "AHAL_StreamBluetooth"
 #include <Utils.h>
 #include <android-base/logging.h>
 #include <audio_utils/clock.h>
+#include <utils/Trace.h>
 
-#include "BluetoothAudioSession.h"
 #include "core-impl/StreamBluetooth.h"
 
 using aidl::android::hardware::audio::common::frameCountFromDurationUs;
@@ -109,13 +110,10 @@ StreamBluetooth::StreamBluetooth(StreamContext* context, const Metadata& metadat
     }
     const size_t fc = std::min(frameCount, mPreferredFrameCount);
     const size_t bytesToTransfer = fc * mFrameSizeBytes;
-    if (mIsInput) {
-        const size_t totalRead = mBtDeviceProxy->readData(buffer, bytesToTransfer);
-        *actualFrameCount = std::max(*actualFrameCount, totalRead / mFrameSizeBytes);
-    } else {
-        const size_t totalWrite = mBtDeviceProxy->writeData(buffer, bytesToTransfer);
-        *actualFrameCount = std::max(*actualFrameCount, totalWrite / mFrameSizeBytes);
-    }
+    const size_t bytesTransferred = mIsInput ? mBtDeviceProxy->readData(buffer, bytesToTransfer)
+                                             : mBtDeviceProxy->writeData(buffer, bytesToTransfer);
+    *actualFrameCount = bytesTransferred / mFrameSizeBytes;
+    ATRACE_INT("BTdropped", bytesToTransfer - bytesTransferred);
     PresentationPosition presentation_position;
     if (!mBtDeviceProxy->getPresentationPosition(presentation_position)) {
         presentation_position.remoteDeviceAudioDelayNanos =
