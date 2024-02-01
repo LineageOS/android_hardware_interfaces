@@ -47,6 +47,7 @@ class Bump(object):
         self.current_level = cmdline_args.current
         self.current_module_name = f"framework_compatibility_matrix.{self.current_level}.xml"
         self.current_xml = self.interfaces_dir / f"compatibility_matrices/compatibility_matrix.{self.current_level}.xml"
+        self.device_module_name = "framework_compatibility_matrix.device.xml"
 
         self.next_level = cmdline_args.next
         self.next_module_name = f"framework_compatibility_matrix.{self.next_level}.xml"
@@ -81,7 +82,8 @@ class Bump(object):
         ])
 
     def copy_matrix(self):
-        shutil.copyfile(self.current_xml, self.next_xml)
+        with open(self.current_xml) as f_current, open(self.next_xml, "w") as f_next:
+            f_next.write(f_current.read().replace(f"level=\"{self.current_level}\"", f"level=\"{self.next_level}\""))
 
     def edit_android_bp(self):
         android_bp = self.interfaces_dir / "compatibility_matrices/Android.bp"
@@ -124,19 +126,20 @@ class Bump(object):
 
     def edit_android_mk(self):
         android_mk = self.interfaces_dir / "compatibility_matrices/Android.mk"
+        lines = []
         with open(android_mk) as f:
             if self.next_module_name in f.read():
                 return
             f.seek(0)
-            lines = f.readlines()
-        current_module_line_number = None
-        for line_number, line in enumerate(lines):
-            if self.current_module_name in line:
-                current_module_line_number = line_number
-                break
-        assert current_module_line_number is not None
-        lines.insert(current_module_line_number + 1,
-                     f"    {self.next_module_name} \\\n")
+            for line in f:
+              if f"    {self.device_module_name} \\\n" in line:
+                  lines.append(f"    {self.current_module_name} \\\n")
+
+              if self.current_module_name in line:
+                  lines.append(f"    {self.next_module_name} \\\n")
+              else:
+                  lines.append(line)
+
         with open(android_mk, "w") as f:
             f.write("".join(lines))
 
