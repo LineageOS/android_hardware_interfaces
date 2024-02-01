@@ -4,7 +4,13 @@
       "name": "VtsHalAudioCoreTargetTest"
     },
     {
+      "name": "audioeffect_tests"
+    },
+    {
       "name": "audio_policy_config_xml_converter_tests"
+    },
+    {
+      "name": "trackplayerbase_tests"
     },
     {
       "name": "VtsHalAudioEffectFactoryTargetTest"
@@ -60,13 +66,7 @@
       "name": "audiorecord_tests"
     },
     {
-      "name": "audioeffect_tests"
-    },
-    {
       "name": "audiorouting_tests"
-    },
-    {
-      "name": "trackplayerbase_tests"
     },
     {
       "name": "audiosystem_tests"
