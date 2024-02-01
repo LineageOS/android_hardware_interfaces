@@ -37,6 +37,7 @@ cc_binary {
     srcs: [
         "main.cpp",
         "service.cpp",
+        "socket_interface.cpp",
         "thread_chip.cpp",
         "utils.cpp",
     ],
@@ -63,6 +64,7 @@ cc_fuzz {
     ],
 
     srcs: [
+        "socket_interface.cpp",
         "thread_chip.cpp",
         "utils.cpp",
         "fuzzer.cpp",
