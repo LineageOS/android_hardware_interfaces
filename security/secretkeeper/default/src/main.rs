@@ -16,7 +16,7 @@
 
 //! Non-secure implementation of the Secretkeeper HAL.
 
-use log::{error, info, Level};
+use log::{error, info, LevelFilter};
 use secretkeeper_hal::SecretkeeperService;
 use secretkeeper_nonsecure::{AuthGraphChannel, SecretkeeperChannel, LocalTa};
 use std::sync::{Arc, Mutex};
@@ -29,8 +29,8 @@ fn main() {
     android_logger::init_once(
         android_logger::Config::default()
             .with_tag("NonSecureSecretkeeper")
-            .with_min_level(Level::Info)
-            .with_log_id(android_logger::LogId::System),
+            .with_max_level(LevelFilter::Info)
+            .with_log_buffer(android_logger::LogId::System),
     );
     // Redirect panic messages to logcat.
     std::panic::set_hook(Box::new(|panic_info| {
