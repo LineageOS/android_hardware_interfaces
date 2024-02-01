@@ -91,6 +91,12 @@ cc_test {
     name: "VtsHalBassBoostTargetTest",
     defaults: ["VtsHalAudioEffectTargetTestDefaults"],
     srcs: ["VtsHalBassBoostTargetTest.cpp"],
+    cflags: [
+        "-Wno-error=unused-parameter",
+    ],
+    static_libs: [
+        "libpffft",
+    ],
 }
 
 cc_test {
