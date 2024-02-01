@@ -13,6 +13,7 @@
 // limitations under the License.
 
 package {
+    default_team: "trendy_team_fwk_nfc",
     // See: http://go/android-license-faq
     // A large-scale-change added 'default_applicable_licenses' to import
     // all of the 'license_kinds' from "hardware_interfaces_license"
@@ -34,7 +35,7 @@ aidl_interface {
             sdk_version: "module_current",
             enabled: false,
         },
-	ndk: {
+        ndk: {
             enabled: true,
             apex_available: [
                 "//apex_available:platform",

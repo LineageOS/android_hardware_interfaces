@@ -487,10 +487,11 @@ bool JsonConfigParser::tryParseJsonArrayToVariable(const Json::Value& parentJson
 }
 
 template <class T>
-void JsonConfigParser::parseAccessChangeMode(
-        const Json::Value& parentJsonNode, const std::string& fieldName, int propId,
-        const std::string& propStr, const std::unordered_map<VehicleProperty, T>& defaultMap,
-        T* outPtr, std::vector<std::string>* errors) {
+void JsonConfigParser::parseAccessChangeMode(const Json::Value& parentJsonNode,
+                                             const std::string& fieldName,
+                                             const std::string& propStr,
+                                             const T* defaultAccessChangeModeValuePtr, T* outPtr,
+                                             std::vector<std::string>* errors) {
     if (!parentJsonNode.isObject()) {
         errors->push_back("Node: " + parentJsonNode.toStyledString() + " is not an object");
         return;
@@ -504,12 +505,11 @@ void JsonConfigParser::parseAccessChangeMode(
         *outPtr = static_cast<T>(result.value());
         return;
     }
-    auto it = defaultMap.find(static_cast<VehicleProperty>(propId));
-    if (it == defaultMap.end()) {
+    if (defaultAccessChangeModeValuePtr == NULL) {
         errors->push_back("No " + fieldName + " specified for property: " + propStr);
         return;
     }
-    *outPtr = it->second;
+    *outPtr = *defaultAccessChangeModeValuePtr;
     return;
 }
 
@@ -538,7 +538,8 @@ bool JsonConfigParser::parsePropValues(const Json::Value& parentJsonNode,
 }
 
 void JsonConfigParser::parseAreas(const Json::Value& parentJsonNode, const std::string& fieldName,
-                                  ConfigDeclaration* config, std::vector<std::string>* errors) {
+                                  ConfigDeclaration* config, std::vector<std::string>* errors,
+                                  VehiclePropertyAccess defaultAccess) {
     if (!parentJsonNode.isObject()) {
         errors->push_back("Node: " + parentJsonNode.toStyledString() + " is not an object");
         return;
@@ -546,6 +547,7 @@ void JsonConfigParser::parseAreas(const Json::Value& parentJsonNode, const std::
     if (!parentJsonNode.isMember(fieldName)) {
         return;
     }
+    std::string propStr = parentJsonNode["property"].toStyledString();
     const Json::Value& jsonValue = parentJsonNode[fieldName];
 
     if (!jsonValue.isArray()) {
@@ -561,6 +563,8 @@ void JsonConfigParser::parseAreas(const Json::Value& parentJsonNode, const std::
         }
         VehicleAreaConfig areaConfig = {};
         areaConfig.areaId = areaId;
+        parseAccessChangeMode(jsonAreaConfig, "access", propStr, &defaultAccess, &areaConfig.access,
+                              errors);
         tryParseJsonValueToVariable(jsonAreaConfig, "minInt32Value", /*optional=*/true,
                                     &areaConfig.minInt32Value, errors);
         tryParseJsonValueToVariable(jsonAreaConfig, "maxInt32Value", /*optional=*/true,
@@ -608,12 +612,21 @@ std::optional<ConfigDeclaration> JsonConfigParser::parseEachProperty(
 
     configDecl.config.prop = propId;
     std::string propStr = propJsonValue["property"].toStyledString();
+    VehiclePropertyAccess* defaultAccessMode = NULL;
+    auto itAccess = AccessForVehicleProperty.find(static_cast<VehicleProperty>(propId));
+    if (itAccess != AccessForVehicleProperty.end()) {
+        defaultAccessMode = &itAccess->second;
+    }
+    VehiclePropertyChangeMode* defaultChangeMode = NULL;
+    auto itChangeMode = ChangeModeForVehicleProperty.find(static_cast<VehicleProperty>(propId));
+    if (itChangeMode != ChangeModeForVehicleProperty.end()) {
+        defaultChangeMode = &itChangeMode->second;
+    }
+    VehiclePropertyAccess access = VehiclePropertyAccess::NONE;
+    parseAccessChangeMode(propJsonValue, "access", propStr, defaultAccessMode, &access, errors);
 
-    parseAccessChangeMode(propJsonValue, "access", propId, propStr, AccessForVehicleProperty,
-                          &configDecl.config.access, errors);
-
-    parseAccessChangeMode(propJsonValue, "changeMode", propId, propStr,
-                          ChangeModeForVehicleProperty, &configDecl.config.changeMode, errors);
+    parseAccessChangeMode(propJsonValue, "changeMode", propStr, defaultChangeMode,
+                          &configDecl.config.changeMode, errors);
 
     tryParseJsonValueToVariable(propJsonValue, "configString", /*optional=*/true,
                                 &configDecl.config.configString, errors);
@@ -629,21 +642,23 @@ std::optional<ConfigDeclaration> JsonConfigParser::parseEachProperty(
     tryParseJsonValueToVariable(propJsonValue, "maxSampleRate", /*optional=*/true,
                                 &configDecl.config.maxSampleRate, errors);
 
-    parseAreas(propJsonValue, "areas", &configDecl, errors);
-
-    if (errors->size() != initialErrorCount) {
-        return std::nullopt;
-    }
+    parseAreas(propJsonValue, "areas", &configDecl, errors, access);
 
     // If there is no area config, by default we allow variable update rate, so we have to add
     // a global area config.
     if (configDecl.config.areaConfigs.size() == 0) {
         VehicleAreaConfig areaConfig = {
                 .areaId = 0,
+                .access = access,
                 .supportVariableUpdateRate = true,
         };
         configDecl.config.areaConfigs.push_back(std::move(areaConfig));
     }
+
+    if (errors->size() != initialErrorCount) {
+        return std::nullopt;
+    }
+
     return configDecl;
 }
 

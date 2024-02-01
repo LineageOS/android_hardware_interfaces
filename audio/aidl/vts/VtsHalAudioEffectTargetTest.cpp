@@ -608,8 +608,11 @@ TEST_P(AudioEffectTest, SetAndGetParameterVolume) {
     ASSERT_NO_FATAL_FAILURE(destroy(mFactory, mEffect));
 }
 
-// Verify Parameters kept after reset.
-TEST_P(AudioEffectTest, SetCommonParameterAndReopen) {
+/**
+ * Verify DataMqUpdateEventFlag after common parameter setting.
+ * verify reopen sequence.
+ */
+TEST_P(AudioEffectDataPathTest, SetCommonParameterAndReopen) {
     ASSERT_NO_FATAL_FAILURE(create(mFactory, mEffect, mDescriptor));
 
     Parameter::Common common = EffectHelper::createParamCommon(
