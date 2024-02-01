@@ -650,4 +650,80 @@ TEST(BroadcastRadioUtilsTest, SatisfiesWithUnsatisfiedIdsFilter) {
     ASSERT_FALSE(utils::satisfies(filter, sel));
 }
 
+TEST(BroadcastRadioUtilsTest, ProgramSelectorComparatorWithDifferentAmFmFrequencies) {
+    ProgramSelector sel1 = utils::makeSelectorAmfm(kHdFrequency - 200);
+    ProgramSelector sel2 = utils::makeSelectorHd(kHdStationId, kHdSubChannel, kHdFrequency);
+
+    EXPECT_TRUE(utils::ProgramSelectorComparator()(sel1, sel2));
+    EXPECT_FALSE(utils::ProgramSelectorComparator()(sel2, sel1));
+}
+
+TEST(BroadcastRadioUtilsTest, ProgramSelectorComparatorWithDifferentAmFmSubChannels) {
+    ProgramSelector sel1 = utils::makeSelectorHd(kHdStationId, kHdSubChannel, kHdFrequency);
+    ProgramSelector sel2 = utils::makeSelectorHd(kHdStationId, kHdSubChannel + 1, kHdFrequency);
+
+    EXPECT_TRUE(utils::ProgramSelectorComparator()(sel1, sel2));
+    EXPECT_FALSE(utils::ProgramSelectorComparator()(sel2, sel1));
+}
+
+TEST(BroadcastRadioUtilsTest, ProgramSelectorComparatorWithDifferentDabFrequencies) {
+    ProgramSelector sel1 = utils::makeSelectorDab(kDabSidExt + 100, kDabEnsemble, kDabFrequencyKhz);
+    ProgramSelector sel2 = utils::makeSelectorDab(kDabSidExt, kDabEnsemble, kDabFrequencyKhz + 100);
+
+    EXPECT_TRUE(utils::ProgramSelectorComparator()(sel1, sel2));
+    EXPECT_FALSE(utils::ProgramSelectorComparator()(sel2, sel1));
+}
+
+TEST(BroadcastRadioUtilsTest, ProgramSelectorComparatorWithDifferentDabEccCode) {
+    ProgramSelector sel1 =
+            utils::makeSelectorDab(/* stationId= */ 0x0E10000C221u, kDabEnsemble, kDabFrequencyKhz);
+    ProgramSelector sel2 =
+            utils::makeSelectorDab(/* stationId= */ 0x0E20000C221u, kDabEnsemble, kDabFrequencyKhz);
+
+    EXPECT_TRUE(utils::ProgramSelectorComparator()(sel1, sel2));
+    EXPECT_FALSE(utils::ProgramSelectorComparator()(sel2, sel1));
+}
+
+TEST(BroadcastRadioUtilsTest, ProgramSelectorComparatorWithDifferentDabEnsembles) {
+    ProgramSelector sel1 = utils::makeSelectorDab(kDabSidExt, kDabEnsemble, kDabFrequencyKhz);
+    ProgramSelector sel2 = utils::makeSelectorDab(kDabSidExt, kDabEnsemble + 1, kDabFrequencyKhz);
+
+    EXPECT_TRUE(utils::ProgramSelectorComparator()(sel1, sel2));
+    EXPECT_FALSE(utils::ProgramSelectorComparator()(sel2, sel1));
+}
+
+TEST(BroadcastRadioUtilsTest, ProgramSelectorComparatorWithDifferentDabSid) {
+    ProgramSelector sel1 =
+            utils::makeSelectorDab(/* stationId= */ 0x0E10000C221u, kDabEnsemble, kDabFrequencyKhz);
+    ProgramSelector sel2 =
+            utils::makeSelectorDab(/* stationId= */ 0x0E10000C222u, kDabEnsemble, kDabFrequencyKhz);
+
+    EXPECT_TRUE(utils::ProgramSelectorComparator()(sel1, sel2));
+    EXPECT_FALSE(utils::ProgramSelectorComparator()(sel2, sel1));
+}
+
+TEST(BroadcastRadioUtilsTest, ProgramSelectorComparatorWithDifferentDabSCIdS) {
+    ProgramSelector sel1 =
+            utils::makeSelectorDab(/* stationId= */ 0x0E10000C221u, kDabEnsemble, kDabFrequencyKhz);
+    ProgramSelector sel2 =
+            utils::makeSelectorDab(/* stationId= */ 0x1E10000C221u, kDabEnsemble, kDabFrequencyKhz);
+
+    EXPECT_TRUE(utils::ProgramSelectorComparator()(sel1, sel2));
+    EXPECT_FALSE(utils::ProgramSelectorComparator()(sel2, sel1));
+}
+
+TEST(BroadcastRadioUtilsTest, ProgramInfoComparator) {
+    ProgramSelector sel1 = utils::makeSelectorAmfm(kFmFrequencyKHz);
+    ProgramSelector sel2 = utils::makeSelectorAmfm(kFmFrequencyKHz + 200);
+    ProgramInfo info1 = {.selector = sel1,
+                         .logicallyTunedTo = sel1.primaryId,
+                         .physicallyTunedTo = sel1.primaryId};
+    ProgramInfo info2 = {.selector = sel2,
+                         .logicallyTunedTo = sel2.primaryId,
+                         .physicallyTunedTo = sel2.primaryId};
+
+    EXPECT_TRUE(utils::ProgramInfoComparator()(info1, info2));
+    EXPECT_FALSE(utils::ProgramInfoComparator()(info2, info1));
+}
+
 }  // namespace aidl::android::hardware::broadcastradio
