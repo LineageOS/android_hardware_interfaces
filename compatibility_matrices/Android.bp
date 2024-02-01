@@ -22,18 +22,6 @@ package {
 }
 
 vintf_compatibility_matrix {
-    name: "framework_compatibility_matrix.4.xml",
-    stem: "compatibility_matrix.4.xml",
-    srcs: [
-        "compatibility_matrix.4.xml",
-    ],
-    kernel_configs: [
-        "kernel_config_q_4.14",
-        "kernel_config_q_4.19",
-    ],
-}
-
-vintf_compatibility_matrix {
     name: "framework_compatibility_matrix.5.xml",
     stem: "compatibility_matrix.5.xml",
     srcs: [
