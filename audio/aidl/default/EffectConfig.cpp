@@ -93,7 +93,7 @@ std::vector<std::reference_wrapper<const tinyxml2::XMLElement>> EffectConfig::ge
 }
 
 bool EffectConfig::resolveLibrary(const std::string& path, std::string* resolvedPath) {
-    if (__builtin_available(android AAPEXSUPPORT_API, *)) {
+    if constexpr (__ANDROID_VENDOR_API__ >= 202404) {
         AApexInfo *apexInfo;
         if (AApexInfo_create(&apexInfo) == AAPEXINFO_OK) {
             std::string apexName(AApexInfo_getName(apexInfo));
