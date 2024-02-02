@@ -29,7 +29,7 @@
 static const char* kDefaultConfigName = "audio_effects_config.xml";
 
 static inline std::string config_file_path() {
-    if (__builtin_available(android AAPEXSUPPORT_API, *)) {
+    if constexpr (__ANDROID_VENDOR_API__ >= 202404) {
         AApexInfo *apexInfo;
         if (AApexInfo_create(&apexInfo) == AAPEXINFO_OK) {
             std::string apexName(AApexInfo_getName(apexInfo));
