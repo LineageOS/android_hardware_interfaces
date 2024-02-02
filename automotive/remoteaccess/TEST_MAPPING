@@ -1,0 +1,7 @@
+{
+  "auto-presubmit": [
+    {
+      "name": "VtsHalAutomotiveRemoteAccess_TargetTest"
+    }
+  ]
+}

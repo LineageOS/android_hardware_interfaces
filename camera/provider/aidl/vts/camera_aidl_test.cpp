@@ -2438,18 +2438,20 @@ void CameraAidlTest::configureStreamUseCaseInternal(const AvailableStream &thres
         ASSERT_NE(0u, outputPreviewStreams.size());
 
         // Combine valid and invalid stream use cases
-        std::vector<int64_t> useCases(kMandatoryUseCases);
-        useCases.push_back(ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_CROPPED_RAW + 1);
+        std::vector<int64_t> testedUseCases;
+        testedUseCases.push_back(ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_CROPPED_RAW + 1);
 
         std::vector<int64_t> supportedUseCases;
         if (threshold.format == static_cast<int32_t>(PixelFormat::RAW16)) {
             // If the format is RAW16, supported use case is only CROPPED_RAW.
             // All others are unsupported for this format.
-            useCases.push_back(ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_CROPPED_RAW);
+            testedUseCases.push_back(ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_CROPPED_RAW);
             supportedUseCases.push_back(ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_CROPPED_RAW);
             supportedUseCases.push_back(ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_DEFAULT);
         } else {
             camera_metadata_ro_entry entry;
+            testedUseCases.insert(testedUseCases.end(), kMandatoryUseCases.begin(),
+                                  kMandatoryUseCases.end());
             auto retcode = find_camera_metadata_ro_entry(
                     staticMeta, ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES, &entry);
             if ((0 == retcode) && (entry.count > 0)) {
@@ -2490,7 +2492,7 @@ void CameraAidlTest::configureStreamUseCaseInternal(const AvailableStream &thres
         ASSERT_TRUE(ret.isOk());
         config.sessionParams = req;
 
-        for (int64_t useCase : useCases) {
+        for (int64_t useCase : testedUseCases) {
             bool useCaseSupported = std::find(supportedUseCases.begin(), supportedUseCases.end(),
                                               useCase) != supportedUseCases.end();
 

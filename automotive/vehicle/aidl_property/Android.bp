@@ -56,5 +56,11 @@ aidl_interface {
             imports: [],
         },
     ],
+}
 
+filegroup {
+    name: "android.hardware.automotive.vehicle.property-files",
+    srcs: [
+        "android/hardware/automotive/vehicle/*.aidl",
+    ],
 }

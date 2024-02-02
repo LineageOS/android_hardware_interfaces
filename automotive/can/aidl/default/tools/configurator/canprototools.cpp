@@ -48,23 +48,18 @@ static std::optional<std::string> readString(std::istream& s, std::streamsize n)
     char buff[n];
     auto got = s.read(buff, n).gcount();
     if (!s.good() && !s.eof()) return std::nullopt;
-    return std::string(buff, 0, std::min(n, got));
+    return std::string(buff, got);
 }
 
-/*
-  parseConfigFile *used to* contain the body of parseConfigStream. However, it seems there's some
-  sort of odd behavior with IstreamInputStream and/or TextFormat::Parse, which causes HW Address
-  Sanitizer to flag a "tag-mismatch" in this function. Having the ifstream defined in a wrapper
-  function seems to solve this problem. The exact cause of this problem is yet unknown, but probably
-  lies somewhere in the protobuf implementation.
-*/
-static __attribute__((noinline)) std::optional<CanBusConfig> parseConfigStream(
-        std::ifstream& cfg_stream) {
+std::optional<CanBusConfig> parseConfigFile(const std::string& filepath) {
+    std::ifstream cfg_stream(filepath);
+
+    // text headers that would be present in a plaintext proto config file.
     static const std::array<std::string, 3> text_headers = {"buses", "#", "controller"};
     auto cfg_file_snippet = readString(cfg_stream, 10);
 
     if (!cfg_file_snippet.has_value()) {
-        LOG(ERROR) << "Can't read config from stream (maybe failed to open file?)";
+        LOG(ERROR) << "Can't open " << filepath << " for reading";
         return std::nullopt;
     }
     cfg_stream.seekg(0);
@@ -82,23 +77,14 @@ static __attribute__((noinline)) std::optional<CanBusConfig> parseConfigStream(
     if (text_format) {
         google::protobuf::io::IstreamInputStream pb_stream(&cfg_stream);
         if (!google::protobuf::TextFormat::Parse(&pb_stream, &config)) {
-            LOG(ERROR) << "Parsing text format config failed";
+            LOG(ERROR) << "Failed to parse (text format) " << filepath;
             return std::nullopt;
         }
     } else if (!config.ParseFromIstream(&cfg_stream)) {
-        LOG(ERROR) << "Parsing binary format config failed";
+        LOG(ERROR) << "Failed to parse (binary format) " << filepath;
         return std::nullopt;
     }
     return config;
-}
-
-std::optional<CanBusConfig> parseConfigFile(const std::string& filepath) {
-    std::ifstream cfg_stream(filepath);
-    auto cfg_maybe = parseConfigStream(cfg_stream);
-    if (!cfg_maybe.has_value()) {
-        LOG(ERROR) << "Failed to parse " << filepath;
-    }
-    return cfg_maybe;
 }
 
 std::optional<BusConfig> fromPbBus(const Bus& pb_bus) {
