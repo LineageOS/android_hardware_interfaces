@@ -117,6 +117,21 @@ class DefaultBroadcastRadioHalTest : public testing::Test {
         }
     }
 
+    bool getAmFmBandRange(utils::FrequencyBand band, AmFmBandRange* res) {
+        AmFmRegionConfig config;
+        auto halResult = mBroadcastRadioHal->getAmFmRegionConfig(/* full= */ false, &config);
+        if (!halResult.isOk()) {
+            return false;
+        }
+        for (const auto& range : config.ranges) {
+            if (utils::getBand(range.lowerBound) == band) {
+                *res = range;
+                return true;
+            }
+        }
+        return false;
+    }
+
     std::shared_ptr<BroadcastRadio> mBroadcastRadioHal;
     std::shared_ptr<MockBroadcastRadioCallback> mTunerCallback;
 };
@@ -244,6 +259,93 @@ TEST_F(DefaultBroadcastRadioHalTest, TuneWithoutTunerCallback) {
     auto halResult = mBroadcastRadioHal->tune(kFmSel1);
 
     ASSERT_EQ(halResult.getServiceSpecificError(), utils::resultToInt(Result::INVALID_STATE));
+}
+
+TEST_F(DefaultBroadcastRadioHalTest, StepUp) {
+    AmFmBandRange fmRange;
+    ASSERT_TRUE(getAmFmBandRange(utils::FrequencyBand::FM, &fmRange));
+    ProgramSelector nextChannelSel =
+            utils::makeSelectorAmfm(kFmSel1.primaryId.value + fmRange.spacing);
+    ASSERT_TRUE(mBroadcastRadioHal->setTunerCallback(mTunerCallback).isOk());
+    mTunerCallback->reset();
+    ASSERT_TRUE(mBroadcastRadioHal->tune(kFmSel1).isOk());
+    verifyUpdatedProgramInfo(kFmSel1);
+
+    auto halResult = mBroadcastRadioHal->step(/* in_directionUp= */ true);
+
+    ASSERT_TRUE(halResult.isOk());
+    verifyUpdatedProgramInfo(nextChannelSel);
+}
+
+TEST_F(DefaultBroadcastRadioHalTest, StepUpFromUpperBound) {
+    AmFmBandRange fmRange;
+    ASSERT_TRUE(getAmFmBandRange(utils::FrequencyBand::FM, &fmRange));
+    ProgramSelector upperBoundSel = utils::makeSelectorAmfm(fmRange.upperBound);
+    ProgramSelector lowerBoundSel = utils::makeSelectorAmfm(fmRange.lowerBound);
+    ASSERT_TRUE(mBroadcastRadioHal->setTunerCallback(mTunerCallback).isOk());
+    mTunerCallback->reset();
+    ASSERT_TRUE(mBroadcastRadioHal->tune(upperBoundSel).isOk());
+    verifyUpdatedProgramInfo(upperBoundSel);
+
+    auto halResult = mBroadcastRadioHal->step(/* in_directionUp= */ true);
+
+    ASSERT_TRUE(halResult.isOk());
+    verifyUpdatedProgramInfo(lowerBoundSel);
+}
+
+TEST_F(DefaultBroadcastRadioHalTest, StepDown) {
+    AmFmBandRange fmRange;
+    ASSERT_TRUE(getAmFmBandRange(utils::FrequencyBand::FM, &fmRange));
+    ProgramSelector nextChannelSel =
+            utils::makeSelectorAmfm(kFmSel1.primaryId.value - fmRange.spacing);
+    ASSERT_TRUE(mBroadcastRadioHal->setTunerCallback(mTunerCallback).isOk());
+    mTunerCallback->reset();
+    ASSERT_TRUE(mBroadcastRadioHal->tune(kFmSel1).isOk());
+    verifyUpdatedProgramInfo(kFmSel1);
+
+    auto halResult = mBroadcastRadioHal->step(/* directionUp= */ false);
+
+    ASSERT_TRUE(halResult.isOk());
+    verifyUpdatedProgramInfo(nextChannelSel);
+}
+
+TEST_F(DefaultBroadcastRadioHalTest, StepDownFromLowerBound) {
+    AmFmBandRange fmRange;
+    ASSERT_TRUE(getAmFmBandRange(utils::FrequencyBand::FM, &fmRange));
+    ProgramSelector upperBoundSel = utils::makeSelectorAmfm(fmRange.upperBound);
+    ProgramSelector lowerBoundSel = utils::makeSelectorAmfm(fmRange.lowerBound);
+    ASSERT_TRUE(mBroadcastRadioHal->setTunerCallback(mTunerCallback).isOk());
+    mTunerCallback->reset();
+    ASSERT_TRUE(mBroadcastRadioHal->tune(lowerBoundSel).isOk());
+    verifyUpdatedProgramInfo(lowerBoundSel);
+
+    auto halResult = mBroadcastRadioHal->step(/* directionUp= */ false);
+
+    ASSERT_TRUE(halResult.isOk());
+    verifyUpdatedProgramInfo(upperBoundSel);
+}
+
+TEST_F(DefaultBroadcastRadioHalTest, StepWithoutTunerCallback) {
+    ASSERT_TRUE(mBroadcastRadioHal->setTunerCallback(mTunerCallback).isOk());
+    mTunerCallback->reset();
+    ASSERT_TRUE(mBroadcastRadioHal->tune(kFmSel1).isOk());
+    verifyUpdatedProgramInfo(kFmSel1);
+    mBroadcastRadioHal->unsetTunerCallback();
+
+    auto halResult = mBroadcastRadioHal->step(/* directionUp= */ false);
+
+    ASSERT_EQ(halResult.getServiceSpecificError(), utils::resultToInt(Result::INVALID_STATE));
+}
+
+TEST_F(DefaultBroadcastRadioHalTest, Cancel) {
+    ASSERT_TRUE(mBroadcastRadioHal->setTunerCallback(mTunerCallback).isOk());
+    mTunerCallback->reset();
+    ASSERT_TRUE(mBroadcastRadioHal->tune(kFmSel1).isOk());
+
+    auto halResult = mBroadcastRadioHal->cancel();
+
+    ASSERT_TRUE(halResult.isOk());
+    mTunerCallback->reset();
 }
 
 }  // namespace aidl::android::hardware::broadcastradio
