@@ -20,7 +20,7 @@ use authgraph_vts_test as ag_vts;
 use authgraph_boringssl as boring;
 use authgraph_core::key;
 use coset::{CborSerializable, CoseEncrypt0};
-use dice_policy_builder::{ConstraintSpec, ConstraintType, MissingAction, policy_for_dice_chain};
+use dice_policy_builder::{CertIndex, ConstraintSpec, ConstraintType, MissingAction, WILDCARD_FULL_ARRAY, policy_for_dice_chain};
 use rdroidtest::{ignore_if, rdroidtest};
 use secretkeeper_client::dice::OwnedDiceArtifactsWithExplicitKey;
 use secretkeeper_client::SkSession;
@@ -34,13 +34,13 @@ use secretkeeper_comm::data_types::{Id, Secret, SeqNum};
 use secretkeeper_comm::data_types::response::Response;
 use secretkeeper_comm::data_types::packet::{ResponsePacket, ResponseType};
 use secretkeeper_test::{
-    AUTHORITY_HASH, MODE, CONFIG_DESC, SECURITY_VERSION,
+    AUTHORITY_HASH, MODE, CONFIG_DESC, SECURITY_VERSION, SUBCOMPONENT_AUTHORITY_HASH,
+    SUBCOMPONENT_DESCRIPTORS, SUBCOMPONENT_SECURITY_VERSION,
     dice_sample::make_explicit_owned_dice
 };
 
 const SECRETKEEPER_SERVICE: &str = "android.hardware.security.secretkeeper.ISecretkeeper";
 const CURRENT_VERSION: u64 = 1;
-
 // Random bytes (of ID_SIZE/SECRET_SIZE) generated for tests.
 const ID_EXAMPLE: Id = Id([
     0xF1, 0xB2, 0xED, 0x3B, 0xD1, 0xBD, 0xF0, 0x7D, 0xE1, 0xF0, 0x01, 0xFC, 0x61, 0x71, 0xD3, 0x42,
@@ -256,14 +256,51 @@ fn assert_entry_not_found(res: Result<Secret, Error>) {
 /// 1. ExactMatch on AUTHORITY_HASH (non-optional).
 /// 2. ExactMatch on MODE (non-optional).
 /// 3. GreaterOrEqual on SECURITY_VERSION (optional).
+/// 4. The second last DiceChainEntry contain SubcomponentDescriptor, for each of those:
+///     a) GreaterOrEqual on SECURITY_VERSION (Required)
+//      b) ExactMatch on AUTHORITY_HASH (Required).
 fn sealing_policy(dice: &[u8]) -> Vec<u8> {
     let constraint_spec = [
-        ConstraintSpec::new(ConstraintType::ExactMatch, vec![AUTHORITY_HASH], MissingAction::Fail),
-        ConstraintSpec::new(ConstraintType::ExactMatch, vec![MODE], MissingAction::Fail),
+        ConstraintSpec::new(
+            ConstraintType::ExactMatch,
+            vec![AUTHORITY_HASH],
+            MissingAction::Fail,
+            CertIndex::All,
+        ),
+        ConstraintSpec::new(
+            ConstraintType::ExactMatch,
+            vec![MODE],
+            MissingAction::Fail,
+            CertIndex::All,
+        ),
         ConstraintSpec::new(
             ConstraintType::GreaterOrEqual,
             vec![CONFIG_DESC, SECURITY_VERSION],
             MissingAction::Ignore,
+            CertIndex::All,
+        ),
+        // Constraints on sub components in the second last DiceChainEntry
+        ConstraintSpec::new(
+            ConstraintType::GreaterOrEqual,
+            vec![
+                CONFIG_DESC,
+                SUBCOMPONENT_DESCRIPTORS,
+                WILDCARD_FULL_ARRAY,
+                SUBCOMPONENT_SECURITY_VERSION,
+            ],
+            MissingAction::Fail,
+            CertIndex::FromEnd(1),
+        ),
+        ConstraintSpec::new(
+            ConstraintType::ExactMatch,
+            vec![
+                CONFIG_DESC,
+                SUBCOMPONENT_DESCRIPTORS,
+                WILDCARD_FULL_ARRAY,
+                SUBCOMPONENT_AUTHORITY_HASH,
+            ],
+            MissingAction::Fail,
+            CertIndex::FromEnd(1),
         ),
     ];
 

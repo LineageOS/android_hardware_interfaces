@@ -21,7 +21,7 @@ use android_hardware_bluetooth_lmp_event::aidl::android::hardware::bluetooth::lm
 };
 
 use binder::BinderFeatures;
-use log::{info, Level};
+use log::{info, LevelFilter};
 
 mod lmp_event;
 
@@ -30,7 +30,7 @@ const LOG_TAG: &str = "lmp_event_service_example";
 fn main() {
     info!("{LOG_TAG}: starting service");
     let logger_success = logger::init(
-        logger::Config::default().with_tag_on_device(LOG_TAG).with_min_level(Level::Trace)
+        logger::Config::default().with_tag_on_device(LOG_TAG).with_max_level(LevelFilter::Trace)
     );
     if !logger_success {
         panic!("{LOG_TAG}: Failed to start logger");
