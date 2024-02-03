@@ -1,5 +1,5 @@
 {
-  "postsubmit": [
+  "presubmit": [
     {
       "name": "broadcastradio_utils_aidl_test"
     },
