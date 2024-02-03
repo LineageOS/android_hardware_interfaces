@@ -1,4 +1,5 @@
 package: "com.android.btaudio.hal.flags"
+container: "system"
 
 flag {
     name: "dsa_lea"
