@@ -30,6 +30,7 @@ cc_defaults {
         "VtsHalTargetTestDefaults",
     ],
     shared_libs: [
+        "libbinder",
         "libbinder_ndk",
         "libcrypto",
     ],
