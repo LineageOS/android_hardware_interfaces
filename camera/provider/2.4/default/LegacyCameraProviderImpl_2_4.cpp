@@ -448,11 +448,11 @@ bool LegacyCameraProviderImpl_2_4::setUpVendorTags() {
 // Methods from ::android::hardware::camera::provider::V2_4::ICameraProvider follow.
 Return<Status> LegacyCameraProviderImpl_2_4::setCallback(
         const sp<ICameraProviderCallback>& callback) {
-    if (callback == nullptr) {
-        return Status::ILLEGAL_ARGUMENT;
-    }
     Mutex::Autolock _l(mCbLock);
     mCallbacks = callback;
+    if (callback == nullptr) {
+        return Status::OK;
+    }
     // Add and report all presenting external cameras.
     for (auto const& statusPair : mCameraStatusMap) {
         int id = std::stoi(statusPair.first);
