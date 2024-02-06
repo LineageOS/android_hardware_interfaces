@@ -22,6 +22,7 @@
 using aidl::android::hardware::audio::common::getChannelCount;
 using aidl::android::hardware::audio::common::getFrameSizeInBytes;
 using aidl::android::hardware::audio::effect::IEffect;
+using aidl::android::hardware::audio::effect::kReopenSupportedVersion;
 using aidl::android::media::audio::common::PcmType;
 using ::android::hardware::EventFlag;
 
@@ -40,7 +41,8 @@ EffectContext::EffectContext(size_t statusDepth, const Parameter::Common& common
     mOutputMQ = std::make_shared<DataMQ>(outBufferSizeInFloat);
 
     if (!mStatusMQ->isValid() || !mInputMQ->isValid() || !mOutputMQ->isValid()) {
-        LOG(ERROR) << __func__ << " created invalid FMQ";
+        LOG(ERROR) << __func__ << " created invalid FMQ, statusMQ: " << mStatusMQ->isValid()
+                   << " inputMQ: " << mInputMQ->isValid() << " outputMQ: " << mOutputMQ->isValid();
     }
 
     ::android::status_t status =
@@ -52,7 +54,9 @@ EffectContext::EffectContext(size_t statusDepth, const Parameter::Common& common
 // reset buffer status by abandon input data in FMQ
 void EffectContext::resetBuffer() {
     auto buffer = static_cast<float*>(mWorkBuffer.data());
-    std::vector<IEffect::Status> status(mStatusMQ->availableToRead());
+    if (mStatusMQ) {
+        std::vector<IEffect::Status> status(mStatusMQ->availableToRead());
+    }
     if (mInputMQ) {
         mInputMQ->read(buffer, mInputMQ->availableToRead());
     }
@@ -71,7 +75,7 @@ void EffectContext::dupeFmqWithReopen(IEffect::OpenEffectReturn* effectRet) {
 }
 
 void EffectContext::dupeFmq(IEffect::OpenEffectReturn* effectRet) {
-    if (effectRet) {
+    if (effectRet && mStatusMQ && mInputMQ && mOutputMQ) {
         effectRet->statusMQ = mStatusMQ->dupeDesc();
         effectRet->inputDataMQ = mInputMQ->dupeDesc();
         effectRet->outputDataMQ = mOutputMQ->dupeDesc();
@@ -191,24 +195,34 @@ EventFlag* EffectContext::getStatusEventFlag() {
 }
 
 RetCode EffectContext::updateIOFrameSize(const Parameter::Common& common) {
-    const auto iFrameSize = ::aidl::android::hardware::audio::common::getFrameSizeInBytes(
+    const auto prevInputFrameSize = mInputFrameSize;
+    const auto prevOutputFrameSize = mOutputFrameSize;
+    mInputFrameSize = ::aidl::android::hardware::audio::common::getFrameSizeInBytes(
             common.input.base.format, common.input.base.channelMask);
-    const auto oFrameSize = ::aidl::android::hardware::audio::common::getFrameSizeInBytes(
+    mOutputFrameSize = ::aidl::android::hardware::audio::common::getFrameSizeInBytes(
             common.output.base.format, common.output.base.channelMask);
 
+    // workBuffer and data MQ not allocated yet, no need to update
+    if (mWorkBuffer.size() == 0 || !mInputMQ || !mOutputMQ) {
+        return RetCode::SUCCESS;
+    }
+    // IEffect::reopen introduced in android.hardware.audio.effect-V2
+    if (mVersion < kReopenSupportedVersion) {
+        LOG(WARNING) << __func__ << " skipped for HAL version " << mVersion;
+        return RetCode::SUCCESS;
+    }
     bool needUpdateMq = false;
-    if (mInputMQ &&
-        (mInputFrameSize != iFrameSize || mCommon.input.frameCount != common.input.frameCount)) {
+    if (mInputFrameSize != prevInputFrameSize ||
+        mCommon.input.frameCount != common.input.frameCount) {
         mInputMQ.reset();
         needUpdateMq = true;
     }
-    if (mOutputMQ &&
-        (mOutputFrameSize != oFrameSize || mCommon.output.frameCount != common.output.frameCount)) {
+    if (mOutputFrameSize != prevOutputFrameSize ||
+        mCommon.output.frameCount != common.output.frameCount) {
         mOutputMQ.reset();
         needUpdateMq = true;
     }
-    mInputFrameSize = iFrameSize;
-    mOutputFrameSize = oFrameSize;
+
     if (needUpdateMq) {
         mWorkBuffer.resize(std::max(common.input.frameCount * mInputFrameSize / sizeof(float),
                                     common.output.frameCount * mOutputFrameSize / sizeof(float)));
