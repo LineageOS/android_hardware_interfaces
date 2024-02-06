@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b1302297_160a1458",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 14048
+      },
+      "writtenOn": "2024-02-06T07:40:36Z",
+      "side": 1,
+      "message": "Verified to fix the majority of wifi related vts failures on quill.",
+      "revId": "7dbc88f8259015384c7006c5c0a7b11decd15885",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
