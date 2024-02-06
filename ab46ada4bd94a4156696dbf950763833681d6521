@@ -69,6 +69,24 @@
       "parentUuid": "a8023660_2c47fd4f",
       "revId": "ab46ada4bd94a4156696dbf950763833681d6521",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "fc374e4b_7ee29dbb",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 16185
+      },
+      "writtenOn": "2024-02-06T18:35:23Z",
+      "side": 1,
+      "message": "@seba - affects a LOT of msm8996 on 4.4 (even the ones using qcom8998 as base\"). So relevant still.\n\nThere are 3 shipping cases of this on msm8996 and one on Tegra (whole device set) now.",
+      "parentUuid": "f44e4b7c_b0638028",
+      "revId": "ab46ada4bd94a4156696dbf950763833681d6521",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
