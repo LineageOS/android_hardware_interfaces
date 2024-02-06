@@ -24,6 +24,10 @@
 #include <gtest/gtest.h>
 #include <hidl/GtestPrinter.h>
 #include <hidl/ServiceManagement.h>
+#include <utils/SystemClock.h>
+
+#include <chrono>
+#include <thread>
 
 using namespace android::hardware::automotive::vehicle::V2_0;
 using ::android::sp;
@@ -32,6 +36,7 @@ using ::android::hardware::Return;
 
 constexpr auto kTimeout = std::chrono::milliseconds(500);
 constexpr auto kInvalidProp = 0x31600207;
+static constexpr auto kPropSetDelayMillis = std::chrono::milliseconds(10000);
 
 class VtsVehicleCallback : public IVehicleCallback {
   private:
@@ -240,8 +245,25 @@ TEST_P(VehicleHalHidlTest, setProp) {
 
             // check set success
             invokeGet(cfg.prop, 0);
-            ASSERT_EQ(StatusCode::OK, mActualStatusCode);
+            // Retry getting the value until we pass the timeout. getValue might not return
+            // the expected value immediately since setValue is async.
+            auto propSetTimeoutMillis = ::android::uptimeMillis() + kPropSetDelayMillis.count();
+            while (true) {
+                invokeGet(cfg.prop, 0);
+                if (mActualStatusCode == StatusCode::OK &&
+                    mActualValue.status == VehiclePropertyStatus::AVAILABLE &&
+                    mActualValue.value.int32Values[0] == setValue) {
+                    break;
+                }
+                if (::android::uptimeMillis() >= propSetTimeoutMillis) {
+                    // Reach timeout, the following assert should fail.
+                    break;
+                }
+                // Sleep for 100ms between each invokeGet retry.
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            }
 
+            ASSERT_EQ(StatusCode::OK, mActualStatusCode);
             // If the property isn't available, it doesn't make sense to check
             // the returned value.
             if (mActualValue.status == VehiclePropertyStatus::AVAILABLE) {
