@@ -44,6 +44,7 @@ class EffectContext {
         }
     }
 
+    void setVersion(int version) { mVersion = version; }
     std::shared_ptr<StatusMQ> getStatusFmq() const;
     std::shared_ptr<DataMQ> getInputDataFmq() const;
     std::shared_ptr<DataMQ> getOutputDataFmq() const;
@@ -82,10 +83,11 @@ class EffectContext {
     virtual ::android::hardware::EventFlag* getStatusEventFlag();
 
   protected:
-    size_t mInputFrameSize;
-    size_t mOutputFrameSize;
-    size_t mInputChannelCount;
-    size_t mOutputChannelCount;
+    int mVersion = 0;
+    size_t mInputFrameSize = 0;
+    size_t mOutputFrameSize = 0;
+    size_t mInputChannelCount = 0;
+    size_t mOutputChannelCount = 0;
     Parameter::Common mCommon = {};
     std::vector<aidl::android::media::audio::common::AudioDeviceDescription> mOutputDevice = {};
     aidl::android::media::audio::common::AudioMode mMode =
@@ -98,13 +100,13 @@ class EffectContext {
 
   private:
     // fmq and buffers
-    std::shared_ptr<StatusMQ> mStatusMQ;
-    std::shared_ptr<DataMQ> mInputMQ;
-    std::shared_ptr<DataMQ> mOutputMQ;
+    std::shared_ptr<StatusMQ> mStatusMQ = nullptr;
+    std::shared_ptr<DataMQ> mInputMQ = nullptr;
+    std::shared_ptr<DataMQ> mOutputMQ = nullptr;
     // std::shared_ptr<IEffect::OpenEffectReturn> mRet;
     // work buffer set by effect instances, the access and update are in same thread
-    std::vector<float> mWorkBuffer;
+    std::vector<float> mWorkBuffer = {};
 
-    ::android::hardware::EventFlag* mEfGroup;
+    ::android::hardware::EventFlag* mEfGroup = nullptr;
 };
 }  // namespace aidl::android::hardware::audio::effect
