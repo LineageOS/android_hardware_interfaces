@@ -1,3 +1,4 @@
+
 /*
  * Copyright 2024 The Android Open Source Project
  *
@@ -13,22 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.hardware.security.see.hwcrypto;
-
-import android.hardware.security.see.hwcrypto.types.SymmetricAuthOperationParameters;
-import android.hardware.security.see.hwcrypto.types.SymmetricOperationParameters;
+package android.hardware.security.see.hwcrypto.types;
 
 /*
- * Type that describes the parameters for the different operations that can be performed.
+ * Type encapsulating nonce used on non-authenticated AES symmetric encryption.
  */
-union OperationParameters {
-    /*
-     * Parameters for authenticated symmetric cryptography (AES GCM).
-     */
-    SymmetricAuthOperationParameters symmetricAuthCrypto;
-
-    /*
-     * Parameters for non-authenticated symmetric cryptography (AES/TDES).
-     */
-    SymmetricOperationParameters symmetricCrypto;
+parcelable CipherModeParameters {
+    byte[16] nonce;
 }
