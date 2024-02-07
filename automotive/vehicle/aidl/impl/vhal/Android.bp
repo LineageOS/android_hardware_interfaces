@@ -55,6 +55,10 @@ cc_library {
         "src/ConnectedClient.cpp",
         "src/DefaultVehicleHal.cpp",
         "src/SubscriptionManager.cpp",
+        // A target to check whether the file
+        // android.hardware.automotive.vehicle-types-meta.json needs update.
+        // The output is just an empty cpp file and not actually used.
+        ":check_generated_enum_metadata_json",
     ],
     static_libs: [
         "VehicleHalUtils",
