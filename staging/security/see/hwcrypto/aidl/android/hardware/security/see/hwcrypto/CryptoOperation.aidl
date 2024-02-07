@@ -16,6 +16,7 @@
 package android.hardware.security.see.hwcrypto;
 
 import android.hardware.security.see.hwcrypto.MemoryBufferParameter;
+import android.hardware.security.see.hwcrypto.OperationParameters;
 import android.hardware.security.see.hwcrypto.PatternParameters;
 import android.hardware.security.see.hwcrypto.types.OperationData;
 import android.hardware.security.see.hwcrypto.types.Void;
@@ -36,7 +37,7 @@ union CryptoOperation {
      * Sets the parameters for the current operation, for more info on specific parameters see
      * <code>OperationParameters</code>.
      */
-    Void setOperationParameters;
+    OperationParameters setOperationParameters;
 
     /*
      * Sets the pattern for a decrypt type operation. A pattern is used to describe that the Input
