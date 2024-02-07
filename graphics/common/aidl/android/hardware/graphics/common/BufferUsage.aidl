@@ -150,7 +150,7 @@ enum BufferUsage {
     FRONT_BUFFER = 1L << 32,
 
     /** bits 28-31 are reserved for vendor extensions */
-    VENDOR_MASK = 0xf << 28,
+    VENDOR_MASK = 0xfL << 28,
 
     /** bits 33-47 must be zero and are reserved for future versions */
     /** bits 48-63 are reserved for vendor extensions */
