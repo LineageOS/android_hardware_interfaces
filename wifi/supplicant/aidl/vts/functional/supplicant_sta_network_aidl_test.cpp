@@ -72,6 +72,7 @@ const std::string kTestEapMatch = "match";
 const KeyMgmtMask kTestKeyMgmt =
     static_cast<KeyMgmtMask>(static_cast<uint32_t>(KeyMgmtMask::WPA_PSK) |
                              static_cast<uint32_t>(KeyMgmtMask::WPA_EAP));
+const auto& kTestVendorData = generateOuiKeyedDataList(5);
 
 }  // namespace
 
@@ -832,6 +833,16 @@ TEST_P(SupplicantStaNetworkAidlTest, DisableEht) {
         GTEST_SKIP() << "disableEht is available as of Supplicant V3";
     }
     EXPECT_TRUE(sta_network_->disableEht().isOk());
+}
+
+/*
+ * SetVendorData
+ */
+TEST_P(SupplicantStaNetworkAidlTest, SetVendorData) {
+    if (interface_version_ < 3) {
+        GTEST_SKIP() << "setVendorData is available as of Supplicant V3";
+    }
+    EXPECT_TRUE(sta_network_->setVendorData(kTestVendorData).isOk());
 }
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(SupplicantStaNetworkAidlTest);

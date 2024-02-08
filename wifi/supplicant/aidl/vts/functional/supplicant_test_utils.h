@@ -102,7 +102,7 @@ std::array<uint8_t, 6> vecToArrayMacAddr(std::vector<uint8_t> vectorAddr) {
     return arrayAddr;
 }
 
-std::optional<OuiKeyedData> generateOuiKeyedData(int oui) {
+OuiKeyedData generateOuiKeyedData(int oui) {
     PersistableBundle bundle;
     bundle.putString("stringKey", "stringValue");
     bundle.putInt("intKey", 12345);
@@ -110,13 +110,27 @@ std::optional<OuiKeyedData> generateOuiKeyedData(int oui) {
     OuiKeyedData data;
     data.oui = oui;
     data.vendorData = bundle;
-    return std::optional<OuiKeyedData>{data};
+    return data;
 }
 
-std::optional<std::vector<std::optional<OuiKeyedData>>> generateOuiKeyedDataList(int size) {
-    std::vector<std::optional<OuiKeyedData>> dataList;
+std::vector<OuiKeyedData> generateOuiKeyedDataList(int size) {
+    std::vector<OuiKeyedData> dataList;
     for (int i = 0; i < size; i++) {
         dataList.push_back(generateOuiKeyedData(i + 1));
+    }
+    return dataList;
+}
+
+// Wraps generateOuiKeyedData result in std::optional
+std::optional<OuiKeyedData> generateOuiKeyedDataOptional(int oui) {
+    return std::optional<OuiKeyedData>{generateOuiKeyedData(oui)};
+}
+
+// Generate OuiKeyedData list fully wrapped in std::optional
+std::optional<std::vector<std::optional<OuiKeyedData>>> generateOuiKeyedDataListOptional(int size) {
+    std::vector<std::optional<OuiKeyedData>> dataList;
+    for (int i = 0; i < size; i++) {
+        dataList.push_back(generateOuiKeyedDataOptional(i + 1));
     }
     return std::optional<std::vector<std::optional<OuiKeyedData>>>{dataList};
 }
