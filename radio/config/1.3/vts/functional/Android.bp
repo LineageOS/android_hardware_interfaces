@@ -15,6 +15,7 @@
 //
 
 package {
+    default_team: "trendy_team_fwk_telephony",
     // See: http://go/android-license-faq
     // A large-scale-change added 'default_applicable_licenses' to import
     // all of the 'license_kinds' from "hardware_interfaces_license"
@@ -50,7 +51,7 @@ cc_test {
 cc_library_static {
     name: "RadioConfigVtsTestResponse",
     defaults: ["VtsHalTargetTestDefaults"],
-    srcs : [
+    srcs: [
         "radio_config_response.cpp",
         "radio_config_hidl_hal_test.cpp",
     ],

@@ -32,6 +32,7 @@ constexpr uint64_t kDabFrequencyKhz = 225648u;
 constexpr uint64_t kHdStationId = 0xA0000001u;
 constexpr uint64_t kHdSubChannel = 1u;
 constexpr uint64_t kHdFrequency = 97700u;
+constexpr int64_t kRdsValue = 0xBEEF;
 
 const Properties kAmFmTunerProp = {
         .maker = "makerTest",
@@ -344,6 +345,87 @@ TEST_P(IsValidSelectorTest, IsValid) {
     IsValidSelectorTestCase testcase = GetParam();
 
     ASSERT_EQ(utils::isValid(testcase.sel), testcase.valid);
+}
+
+TEST(BroadcastRadioUtilsTest, IdentifierIteratorBegin) {
+    ProgramSelector sel = {
+            .primaryId = utils::makeIdentifier(IdentifierType::RDS_PI, kRdsValue),
+            .secondaryIds = {
+                    utils::makeIdentifier(IdentifierType::AMFM_FREQUENCY_KHZ, kFmFrequencyKHz),
+                    utils::makeIdentifier(IdentifierType::AMFM_FREQUENCY_KHZ,
+                                          kFmFrequencyKHz + 200)}};
+
+    utils::IdentifierIterator it = begin(sel);
+
+    utils::IdentifierIterator selEnd = end(sel);
+    ASSERT_NE(selEnd, it);
+    EXPECT_EQ(sel.primaryId, *it);
+}
+
+TEST(BroadcastRadioUtilsTest, IdentifierIteratorIncrement) {
+    ProgramSelector sel = {
+            .primaryId = utils::makeIdentifier(IdentifierType::RDS_PI, kRdsValue),
+            .secondaryIds = {
+                    utils::makeIdentifier(IdentifierType::AMFM_FREQUENCY_KHZ, kFmFrequencyKHz),
+                    utils::makeIdentifier(IdentifierType::AMFM_FREQUENCY_KHZ,
+                                          kFmFrequencyKHz + 200)}};
+    utils::IdentifierIterator it = begin(sel);
+    utils::IdentifierIterator selEnd = end(sel);
+
+    ASSERT_NE(selEnd, ++it);
+    EXPECT_EQ(sel.secondaryIds[0], *it);
+    ASSERT_NE(selEnd, ++it);
+    EXPECT_EQ(sel.secondaryIds[1], *it);
+    ASSERT_EQ(selEnd, ++it);
+}
+
+TEST(BroadcastRadioUtilsTest, IdentifierIteratorIncrementWithValue) {
+    ProgramSelector sel = {
+            .primaryId = utils::makeIdentifier(IdentifierType::RDS_PI, kRdsValue),
+            .secondaryIds = {
+                    utils::makeIdentifier(IdentifierType::AMFM_FREQUENCY_KHZ, kFmFrequencyKHz),
+                    utils::makeIdentifier(IdentifierType::AMFM_FREQUENCY_KHZ,
+                                          kFmFrequencyKHz + 200)}};
+    utils::IdentifierIterator it1 = begin(sel);
+    utils::IdentifierIterator it2 = it1;
+    it2++;
+    it2++;
+
+    ASSERT_EQ(it1 + 2, it2);
+}
+
+TEST(BroadcastRadioUtilsTest, IdentifierIteratorBeginEndWithoutSecondaryIds) {
+    ProgramSelector sel = {.primaryId = utils::makeIdentifier(IdentifierType::RDS_PI, kRdsValue)};
+
+    utils::IdentifierIterator it = begin(sel);
+    utils::IdentifierIterator selEnd = end(sel);
+
+    ASSERT_EQ(selEnd, ++it);
+}
+
+TEST(BroadcastRadioUtilsTest, IdentifierIteratorBeginEndWithDifferentObjects) {
+    ProgramSelector sel1 = utils::makeSelectorAmfm(kFmFrequencyKHz);
+    ProgramSelector sel2 = utils::makeSelectorAmfm(kFmFrequencyKHz);
+
+    utils::IdentifierIterator it1 = begin(sel1);
+    utils::IdentifierIterator it2 = begin(sel2);
+    utils::IdentifierIterator end1 = end(sel1);
+    utils::IdentifierIterator end2 = end(sel2);
+
+    ASSERT_NE(it1, it2);
+    ASSERT_NE(end1, end2);
+}
+
+TEST(BroadcastRadioUtilsTest, IdentifierIteratorBeginEndWithTheSameObject) {
+    ProgramSelector sel = utils::makeSelectorAmfm(kFmFrequencyKHz);
+
+    utils::IdentifierIterator it1 = begin(sel);
+    utils::IdentifierIterator it2 = begin(sel);
+    utils::IdentifierIterator end1 = end(sel);
+    utils::IdentifierIterator end2 = end(sel);
+
+    ASSERT_EQ(it1, it2);
+    ASSERT_EQ(end1, end2);
 }
 
 TEST(BroadcastRadioUtilsTest, IsSupportedWithSupportedSelector) {
