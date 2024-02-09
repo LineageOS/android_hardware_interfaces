@@ -82,11 +82,3 @@ vintf_compatibility_matrix {
         "kernel_config_v_6.6",
     ],
 }
-
-vintf_compatibility_matrix {
-    name: "framework_compatibility_matrix.tmp.xml",
-    stem: "compatibility_matrix.tmp.xml",
-    srcs: [
-        "compatibility_matrix.tmp.xml",
-    ],
-}
