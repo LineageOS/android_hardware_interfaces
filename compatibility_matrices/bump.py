@@ -16,8 +16,6 @@
 #
 """
 Creates the next compatibility matrix.
-
-Requires libvintf Level.h to be updated before executing this script.
 """
 
 import argparse
@@ -44,16 +42,16 @@ class Bump(object):
         self.top = pathlib.Path(os.environ["ANDROID_BUILD_TOP"])
         self.interfaces_dir = self.top / "hardware/interfaces"
 
-        self.current_level = cmdline_args.current
+        self.current_level = cmdline_args.current_level
+        self.current_letter = cmdline_args.current_letter
         self.current_module_name = f"framework_compatibility_matrix.{self.current_level}.xml"
         self.current_xml = self.interfaces_dir / f"compatibility_matrices/compatibility_matrix.{self.current_level}.xml"
+        self.device_module_name = "framework_compatibility_matrix.device.xml"
 
-        self.next_level = cmdline_args.next
+        self.next_level = cmdline_args.next_level
+        self.next_letter = cmdline_args.next_letter
         self.next_module_name = f"framework_compatibility_matrix.{self.next_level}.xml"
         self.next_xml = self.interfaces_dir / f"compatibility_matrices/compatibility_matrix.{self.next_level}.xml"
-
-        self.level_to_letter = self.get_level_to_letter_mapping()
-        print("Found level mapping in libvintf Level.h:", self.level_to_letter)
 
     def run(self):
         self.bump_kernel_configs()
@@ -61,27 +59,16 @@ class Bump(object):
         self.edit_android_bp()
         self.edit_android_mk()
 
-    def get_level_to_letter_mapping(self):
-        levels_file = self.top / "system/libvintf/include/vintf/Level.h"
-        with open(levels_file) as f:
-            lines = f.readlines()
-            pairs = [
-                line.split("=", maxsplit=2) for line in lines if "=" in line
-            ]
-            return {
-                level.strip().removesuffix(","): letter.strip()
-                for letter, level in pairs
-            }
-
     def bump_kernel_configs(self):
         check_call([
             self.top / "kernel/configs/tools/bump.py",
-            self.level_to_letter[self.current_level].lower(),
-            self.level_to_letter[self.next_level].lower(),
+            self.current_letter,
+            self.next_letter,
         ])
 
     def copy_matrix(self):
-        shutil.copyfile(self.current_xml, self.next_xml)
+        with open(self.current_xml) as f_current, open(self.next_xml, "w") as f_next:
+            f_next.write(f_current.read().replace(f"level=\"{self.current_level}\"", f"level=\"{self.next_level}\""))
 
     def edit_android_bp(self):
         android_bp = self.interfaces_dir / "compatibility_matrices/Android.bp"
@@ -100,7 +87,7 @@ class Bump(object):
         next_kernel_configs = check_output(
             """grep -rh name: | sed -E 's/^.*"(.*)".*/\\1/g'""",
             cwd=self.top / "kernel/configs" /
-            self.level_to_letter[self.next_level].lower(),
+            self.next_letter,
             text=True,
             shell=True,
         ).splitlines()
@@ -124,31 +111,38 @@ class Bump(object):
 
     def edit_android_mk(self):
         android_mk = self.interfaces_dir / "compatibility_matrices/Android.mk"
+        lines = []
         with open(android_mk) as f:
             if self.next_module_name in f.read():
                 return
             f.seek(0)
-            lines = f.readlines()
-        current_module_line_number = None
-        for line_number, line in enumerate(lines):
-            if self.current_module_name in line:
-                current_module_line_number = line_number
-                break
-        assert current_module_line_number is not None
-        lines.insert(current_module_line_number + 1,
-                     f"    {self.next_module_name} \\\n")
+            for line in f:
+              if f"    {self.device_module_name} \\\n" in line:
+                  lines.append(f"    {self.current_module_name} \\\n")
+
+              if self.current_module_name in line:
+                  lines.append(f"    {self.next_module_name} \\\n")
+              else:
+                  lines.append(line)
+
         with open(android_mk, "w") as f:
             f.write("".join(lines))
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("current",
+    parser.add_argument("current_level",
                         type=str,
                         help="VINTF level of the current version (e.g. 9)")
-    parser.add_argument("next",
+    parser.add_argument("next_level",
                         type=str,
                         help="VINTF level of the next version (e.g. 10)")
+    parser.add_argument("current_letter",
+                        type=str,
+                        help="Letter of the API level of the current version (e.g. v)")
+    parser.add_argument("next_letter",
+                        type=str,
+                        help="Letter of the API level of the next version (e.g. w)")
     cmdline_args = parser.parse_args()
 
     Bump(cmdline_args).run()
