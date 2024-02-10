@@ -337,6 +337,91 @@ TEST_F(DefaultBroadcastRadioHalTest, StepWithoutTunerCallback) {
     ASSERT_EQ(halResult.getServiceSpecificError(), utils::resultToInt(Result::INVALID_STATE));
 }
 
+TEST_F(DefaultBroadcastRadioHalTest, SeekUpWithoutSkipSubchannel) {
+    ASSERT_TRUE(mBroadcastRadioHal->setTunerCallback(mTunerCallback).isOk());
+    mTunerCallback->reset();
+    ASSERT_TRUE(mBroadcastRadioHal->tune(kFmHdFreq1Sel1).isOk());
+    verifyUpdatedProgramInfo(kFmHdFreq1Sel1);
+
+    auto halResult = mBroadcastRadioHal->seek(/* directionUp= */ true, /* skipSubChannel= */ false);
+
+    ASSERT_TRUE(halResult.isOk());
+    verifyUpdatedProgramInfo(kFmHdFreq1Sel2);
+}
+
+TEST_F(DefaultBroadcastRadioHalTest, SeekUpWithSkipSubchannel) {
+    ASSERT_TRUE(mBroadcastRadioHal->setTunerCallback(mTunerCallback).isOk());
+    mTunerCallback->reset();
+    ASSERT_TRUE(mBroadcastRadioHal->tune(kFmHdFreq1Sel1).isOk());
+    verifyUpdatedProgramInfo(kFmHdFreq1Sel1);
+
+    auto halResult = mBroadcastRadioHal->seek(/* directionUp= */ true, /* skipSubChannel= */ true);
+
+    ASSERT_TRUE(halResult.isOk());
+    verifyUpdatedProgramInfo(kFmSel2);
+}
+
+TEST_F(DefaultBroadcastRadioHalTest, SeekUpFromLastProgramInProgramList) {
+    ASSERT_TRUE(mBroadcastRadioHal->setTunerCallback(mTunerCallback).isOk());
+    mTunerCallback->reset();
+    ASSERT_TRUE(mBroadcastRadioHal->tune(kFmHdFreq2Sel1).isOk());
+    verifyUpdatedProgramInfo(kFmHdFreq2Sel1);
+
+    auto halResult = mBroadcastRadioHal->seek(/* directionUp= */ true, /* skipSubChannel= */ true);
+
+    ASSERT_TRUE(halResult.isOk());
+    verifyUpdatedProgramInfo(kFmSel1);
+}
+
+TEST_F(DefaultBroadcastRadioHalTest, SeekDownWithoutSkipSubchannel) {
+    ASSERT_TRUE(mBroadcastRadioHal->setTunerCallback(mTunerCallback).isOk());
+    mTunerCallback->reset();
+    ASSERT_TRUE(mBroadcastRadioHal->tune(kFmHdFreq1Sel2).isOk());
+    verifyUpdatedProgramInfo(kFmHdFreq1Sel2);
+
+    auto halResult =
+            mBroadcastRadioHal->seek(/* directionUp= */ false, /* skipSubChannel= */ false);
+
+    ASSERT_TRUE(halResult.isOk());
+    verifyUpdatedProgramInfo(kFmHdFreq1Sel1);
+}
+
+TEST_F(DefaultBroadcastRadioHalTest, SeekDownWithSkipSubchannel) {
+    ASSERT_TRUE(mBroadcastRadioHal->setTunerCallback(mTunerCallback).isOk());
+    mTunerCallback->reset();
+    ASSERT_TRUE(mBroadcastRadioHal->tune(kFmHdFreq1Sel2).isOk());
+    verifyUpdatedProgramInfo(kFmHdFreq1Sel2);
+
+    auto halResult = mBroadcastRadioHal->seek(/* directionUp= */ false, /* skipSubChannel= */ true);
+
+    ASSERT_TRUE(halResult.isOk());
+    verifyUpdatedProgramInfo(kFmSel1);
+}
+
+TEST_F(DefaultBroadcastRadioHalTest, SeekDownWithFirstProgramInProgramList) {
+    ASSERT_TRUE(mBroadcastRadioHal->setTunerCallback(mTunerCallback).isOk());
+    mTunerCallback->reset();
+    ASSERT_TRUE(mBroadcastRadioHal->tune(kFmSel1).isOk());
+    verifyUpdatedProgramInfo(kFmSel1);
+
+    auto halResult = mBroadcastRadioHal->seek(/* directionUp= */ false, /* skipSubChannel= */ true);
+
+    ASSERT_TRUE(halResult.isOk());
+    verifyUpdatedProgramInfo(kFmHdFreq2Sel1);
+}
+
+TEST_F(DefaultBroadcastRadioHalTest, SeekWithoutTunerCallback) {
+    ASSERT_TRUE(mBroadcastRadioHal->setTunerCallback(mTunerCallback).isOk());
+    mTunerCallback->reset();
+    ASSERT_TRUE(mBroadcastRadioHal->tune(kFmSel1).isOk());
+    verifyUpdatedProgramInfo(kFmSel1);
+    mBroadcastRadioHal->unsetTunerCallback();
+
+    auto halResult = mBroadcastRadioHal->seek(/* directionUp= */ false, /* skipSubChannel= */ true);
+
+    ASSERT_EQ(halResult.getServiceSpecificError(), utils::resultToInt(Result::INVALID_STATE));
+}
+
 TEST_F(DefaultBroadcastRadioHalTest, Cancel) {
     ASSERT_TRUE(mBroadcastRadioHal->setTunerCallback(mTunerCallback).isOk());
     mTunerCallback->reset();
