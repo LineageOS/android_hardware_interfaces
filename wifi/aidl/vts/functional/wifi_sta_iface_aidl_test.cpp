@@ -74,7 +74,17 @@ class WifiStaIfaceAidlTest : public testing::TestWithParam<std::string> {
         return testing::deviceSupportsFeature("com.google.android.tv.mdns_offload");
     }
 
-    // Detected panel TV device by using ro.oem.key1 property.
+    bool doesDeviceSupportFullNetworkingUnder2w() {
+        return testing::deviceSupportsFeature("com.google.android.tv.full_networking_under_2w");
+    }
+
+    // Detect TV devices.
+    bool isTvDevice() {
+        return testing::deviceSupportsFeature("android.software.leanback") ||
+               testing::deviceSupportsFeature("android.hardware.type.television");
+    }
+
+    // Detect Panel TV devices by using ro.oem.key1 property.
     // https://docs.partner.android.com/tv/build/platform/props-vars/ro-oem-key1
     bool isPanelTvDevice() {
         const std::string oem_key1 = getPropertyString("ro.oem.key1");
@@ -135,10 +145,23 @@ TEST_P(WifiStaIfaceAidlTest, GetFeatureSet) {
  */
 // @VsrTest = 5.3.12
 TEST_P(WifiStaIfaceAidlTest, CheckApfIsSupported) {
-    // Flat panel TV devices that support MDNS offload do not have to implement APF if the WiFi
-    // chipset does not have sufficient RAM to do so.
-    if (isPanelTvDevice() && isMdnsOffloadPresentInNIC()) {
-        GTEST_SKIP() << "Panel TV supports mDNS offload. It is not required to support APF";
+    const std::string oem_key1 = getPropertyString("ro.oem.key1");
+    if (isTvDevice()) {
+        // Flat panel TV devices that support MDNS offload do not have to implement APF if the WiFi
+        // chipset does not have sufficient RAM to do so.
+        if (isPanelTvDevice() && isMdnsOffloadPresentInNIC()) {
+            GTEST_SKIP() << "Panel TV supports mDNS offload. It is not required to support APF";
+        }
+        // For TV devices declaring the
+        // com.google.android.tv.full_networking_under_2w feature, this indicates
+        // the device can meet the <= 2W standby power requirement while
+        // continuously processing network packets on the CPU, even in standby mode.
+        // In these cases, APF support is strongly recommended rather than being
+        // mandatory.
+        if (doesDeviceSupportFullNetworkingUnder2w()) {
+            GTEST_SKIP() << "TV Device meets the <= 2W standby power demand requirement. It is not "
+                            "required to support APF.";
+        }
     }
     int vendor_api_level = property_get_int32("ro.vendor.api_level", 0);
     // Before VSR 14, APF support is optional.
