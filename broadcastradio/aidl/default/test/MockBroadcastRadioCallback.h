@@ -49,10 +49,12 @@ class MockBroadcastRadioCallback final : public BnTunerCallback {
     ScopedAStatus onConfigFlagUpdated(ConfigFlag in_flag, bool in_value) override;
 
     bool waitOnCurrentProgramInfoChangedCallback();
+    bool waitProgramReady();
     bool isTunerFailed();
     void reset();
 
     ProgramInfo getCurrentProgramInfo();
+    utils::ProgramInfoSet getProgramList();
 
   private:
     class CallbackFlag final {
@@ -98,6 +100,7 @@ class MockBroadcastRadioCallback final : public BnTunerCallback {
     ProgramInfo mCurrentProgramInfo GUARDED_BY(mLock);
     utils::ProgramInfoSet mProgramList GUARDED_BY(mLock);
     CallbackFlag mOnCurrentProgramInfoChangedFlag = CallbackFlag(IBroadcastRadio::TUNER_TIMEOUT_MS);
+    CallbackFlag mOnProgramListReadyFlag = CallbackFlag(IBroadcastRadio::LIST_COMPLETE_TIMEOUT_MS);
 };
 
 }  // namespace aidl::android::hardware::broadcastradio
