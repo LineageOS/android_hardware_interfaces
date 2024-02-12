@@ -286,7 +286,7 @@ TEST_F(JsonConfigLoaderUnitTest, testCheckDefaultAccessChangeMode) {
     ASSERT_EQ(configs.size(), 1u);
 
     const VehiclePropConfig& propConfig = configs.begin()->second.config;
-    ASSERT_EQ(propConfig.access, VehiclePropertyAccess::NONE);
+    ASSERT_EQ(propConfig.access, VehiclePropertyAccess::READ);
     ASSERT_EQ(propConfig.areaConfigs[0].access, VehiclePropertyAccess::READ);
     ASSERT_EQ(propConfig.changeMode, VehiclePropertyChangeMode::STATIC);
 }
@@ -308,7 +308,7 @@ TEST_F(JsonConfigLoaderUnitTest, testAccessOverride) {
     ASSERT_EQ(configs.size(), 1u);
 
     const VehiclePropConfig& propConfig = configs.begin()->second.config;
-    ASSERT_EQ(propConfig.access, VehiclePropertyAccess::NONE);
+    ASSERT_EQ(propConfig.access, VehiclePropertyAccess::WRITE);
     ASSERT_EQ(propConfig.areaConfigs[0].access, VehiclePropertyAccess::WRITE);
     ASSERT_EQ(propConfig.changeMode, VehiclePropertyChangeMode::STATIC);
 }
@@ -330,7 +330,7 @@ TEST_F(JsonConfigLoaderUnitTest, testChangeModeOverride) {
     ASSERT_EQ(configs.size(), 1u);
 
     const VehiclePropConfig& propConfig = configs.begin()->second.config;
-    ASSERT_EQ(propConfig.access, VehiclePropertyAccess::NONE);
+    ASSERT_EQ(propConfig.access, VehiclePropertyAccess::READ);
     ASSERT_EQ(propConfig.areaConfigs[0].access, VehiclePropertyAccess::READ);
     ASSERT_EQ(propConfig.changeMode, VehiclePropertyChangeMode::ON_CHANGE);
 }
@@ -353,7 +353,7 @@ TEST_F(JsonConfigLoaderUnitTest, testCustomProp) {
     ASSERT_EQ(configs.size(), 1u);
 
     const VehiclePropConfig& propConfig = configs.begin()->second.config;
-    ASSERT_EQ(propConfig.access, VehiclePropertyAccess::NONE);
+    ASSERT_EQ(propConfig.access, VehiclePropertyAccess::WRITE);
     ASSERT_EQ(propConfig.areaConfigs[0].access, VehiclePropertyAccess::WRITE);
     ASSERT_EQ(propConfig.changeMode, VehiclePropertyChangeMode::ON_CHANGE);
 }
@@ -554,7 +554,7 @@ TEST_F(JsonConfigLoaderUnitTest, testAreas_Simple) {
     ASSERT_EQ(configs.size(), 1u);
 
     const VehiclePropConfig& config = configs.begin()->second.config;
-    ASSERT_EQ(config.access, VehiclePropertyAccess::NONE);
+    ASSERT_EQ(config.access, VehiclePropertyAccess::READ);
     ASSERT_EQ(config.areaConfigs.size(), 1u);
     const VehicleAreaConfig& areaConfig = config.areaConfigs[0];
     ASSERT_EQ(areaConfig.minInt32Value, 1);
@@ -641,7 +641,7 @@ TEST_F(JsonConfigLoaderUnitTest, testAreas_HandlesNoSupportedEnumValuesDeclared)
     ASSERT_EQ(configs.size(), 1u);
 
     const VehiclePropConfig& config = configs.begin()->second.config;
-    ASSERT_EQ(config.access, VehiclePropertyAccess::NONE);
+    ASSERT_EQ(config.access, VehiclePropertyAccess::READ);
     ASSERT_EQ(config.areaConfigs.size(), 1u);
 
     const VehicleAreaConfig& areaConfig = config.areaConfigs[0];
@@ -670,7 +670,7 @@ TEST_F(JsonConfigLoaderUnitTest, testAreas_HandlesSupportedEnumValues) {
     ASSERT_EQ(configs.size(), 1u);
 
     const VehiclePropConfig& config = configs.begin()->second.config;
-    ASSERT_EQ(config.access, VehiclePropertyAccess::NONE);
+    ASSERT_EQ(config.access, VehiclePropertyAccess::READ);
     ASSERT_EQ(config.areaConfigs.size(), 1u);
 
     const VehicleAreaConfig& areaConfig = config.areaConfigs[0];
@@ -702,7 +702,7 @@ TEST_F(JsonConfigLoaderUnitTest, testAreas_HandlesEmptySupportedEnumValues) {
     ASSERT_EQ(configs.size(), 1u);
 
     const VehiclePropConfig& config = configs.begin()->second.config;
-    ASSERT_EQ(config.access, VehiclePropertyAccess::NONE);
+    ASSERT_EQ(config.access, VehiclePropertyAccess::READ);
     ASSERT_EQ(config.areaConfigs.size(), 1u);
 
     const VehicleAreaConfig& areaConfig = config.areaConfigs[0];
@@ -731,7 +731,7 @@ TEST_F(JsonConfigLoaderUnitTest, testAccess_areaOverrideGlobalDefault) {
     ASSERT_EQ(configs.size(), 1u);
 
     const VehiclePropConfig& config = configs.begin()->second.config;
-    ASSERT_EQ(config.access, VehiclePropertyAccess::NONE);
+    ASSERT_EQ(config.access, VehiclePropertyAccess::READ_WRITE);
     ASSERT_EQ(config.areaConfigs.size(), 1u);
 
     const VehicleAreaConfig& areaConfig = config.areaConfigs[0];
@@ -759,7 +759,7 @@ TEST_F(JsonConfigLoaderUnitTest, testAccess_globalOverrideDefault) {
     ASSERT_EQ(configs.size(), 1u);
 
     const VehiclePropConfig& config = configs.begin()->second.config;
-    ASSERT_EQ(config.access, VehiclePropertyAccess::NONE);
+    ASSERT_EQ(config.access, VehiclePropertyAccess::READ);
     ASSERT_EQ(config.areaConfigs.size(), 1u);
 
     const VehicleAreaConfig& areaConfig = config.areaConfigs[0];
@@ -791,7 +791,7 @@ TEST_F(JsonConfigLoaderUnitTest, testAccess_areaOverrideGlobal) {
     ASSERT_EQ(configs.size(), 1u);
 
     const VehiclePropConfig& config = configs.begin()->second.config;
-    ASSERT_EQ(config.access, VehiclePropertyAccess::NONE);
+    ASSERT_EQ(config.access, VehiclePropertyAccess::READ);
     ASSERT_EQ(config.areaConfigs.size(), 2u);
 
     const VehicleAreaConfig& areaConfig1 = config.areaConfigs[0];

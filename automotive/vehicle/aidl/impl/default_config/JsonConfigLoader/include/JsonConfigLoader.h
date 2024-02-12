@@ -142,10 +142,8 @@ class JsonConfigParser {
                          std::vector<std::string>* errors);
 
     // Prase a JSON field as an array of area configs.
-    void parseAreas(
-            const Json::Value& parentJsonNode, const std::string& fieldName,
-            ConfigDeclaration* outPtr, std::vector<std::string>* errors,
-            aidl::android::hardware::automotive::vehicle::VehiclePropertyAccess defaultAccess);
+    void parseAreas(const Json::Value& parentJsonNode, const std::string& fieldName,
+                    ConfigDeclaration* outPtr, std::vector<std::string>* errors);
 };
 
 }  // namespace jsonconfigloader_impl

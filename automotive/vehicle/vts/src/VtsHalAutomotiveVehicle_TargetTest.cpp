@@ -58,6 +58,7 @@ using ::android::base::ScopedLockAssertion;
 using ::android::base::StringPrintf;
 using ::android::frameworks::automotive::vhal::ErrorCode;
 using ::android::frameworks::automotive::vhal::HalPropError;
+using ::android::frameworks::automotive::vhal::IHalAreaConfig;
 using ::android::frameworks::automotive::vhal::IHalPropConfig;
 using ::android::frameworks::automotive::vhal::IHalPropValue;
 using ::android::frameworks::automotive::vhal::ISubscriptionCallback;
@@ -136,6 +137,9 @@ class VtsHalAutomotiveVehicleTargetTest : public testing::TestWithParam<ServiceD
 
   public:
     void verifyAccessMode(int actualAccess, int expectedAccess);
+    void verifyGlobalAccessIsMaximalAreaAccessSubset(
+            int propertyLevelAccess,
+            const std::vector<std::unique_ptr<IHalAreaConfig>>& areaConfigs) const;
     void verifyProperty(VehicleProperty propId, VehiclePropertyAccess access,
                         VehiclePropertyChangeMode changeMode, VehiclePropertyGroup group,
                         VehicleArea area, VehiclePropertyType propertyType);
@@ -251,6 +255,23 @@ TEST_P(VtsHalAutomotiveVehicleTargetTest, testPropConfigs_onlyDefinedSystemPrope
                 << "System Property: " << propName << " requires VHAL version: " << requiredVersion
                 << ", but the current VHAL version"
                 << " is " << vhalVersion << ", must not be supported";
+    }
+}
+
+TEST_P(VtsHalAutomotiveVehicleTargetTest, testPropConfigs_globalAccessIsMaximalAreaAccessSubset) {
+    if (!mVhalClient->isAidlVhal()) {
+        GTEST_SKIP() << "Skip for HIDL VHAL because HAL interface run-time version is only"
+                     << "introduced for AIDL";
+    }
+
+    auto result = mVhalClient->getAllPropConfigs();
+    ASSERT_TRUE(result.ok()) << "Failed to get all property configs, error: "
+                             << result.error().message();
+
+    const auto& configs = result.value();
+    for (size_t i = 0; i < configs.size(); i++) {
+        verifyGlobalAccessIsMaximalAreaAccessSubset(configs[i]->getAccess(),
+                                                    configs[i]->getAreaConfigs());
     }
 }
 
@@ -586,42 +607,10 @@ TEST_P(VtsHalAutomotiveVehicleTargetTest, testGetValuesTimestampAIDL) {
     }
 }
 
-// Test that access mode is populated in exclusively one of the VehiclePropConfig or the
-// VehicleAreaConfigs. Either VehiclePropConfig.access must be populated, or all the
-// VehicleAreaConfig.access fields should be populated.
-TEST_P(VtsHalAutomotiveVehicleTargetTest, testAccessModeExclusivityAIDL) {
-    if (!mVhalClient->isAidlVhal()) {
-        GTEST_SKIP() << "Skip checking access mode for HIDL because the access mode field is only "
-                        "present for AIDL";
-    }
-
-    auto result = mVhalClient->getAllPropConfigs();
-    ASSERT_TRUE(result.ok());
-    for (const auto& cfgPtr : result.value()) {
-        const IHalPropConfig& cfg = *cfgPtr;
-
-        bool propAccessIsSet = (cfg.getAccess() != toInt(VehiclePropertyAccess::NONE));
-        bool unsetAreaAccessExists = false;
-        bool setAreaAccessExists = false;
-
-        for (const auto& areaConfig : cfg.getAreaConfigs()) {
-            if (areaConfig->getAccess() == toInt(VehiclePropertyAccess::NONE)) {
-                unsetAreaAccessExists = true;
-            } else {
-                setAreaAccessExists = true;
-            }
-        }
-
-        ASSERT_FALSE(propAccessIsSet && setAreaAccessExists) << StringPrintf(
-                "Both prop and area config access is set for propertyId %d", cfg.getPropId());
-        ASSERT_FALSE(!propAccessIsSet && !setAreaAccessExists) << StringPrintf(
-                "Neither prop and area config access is set for propertyId %d", cfg.getPropId());
-        ASSERT_FALSE(unsetAreaAccessExists && setAreaAccessExists) << StringPrintf(
-                "Area access is only set in some configs for propertyId %d", cfg.getPropId());
-    }
-}
-
 void VtsHalAutomotiveVehicleTargetTest::verifyAccessMode(int actualAccess, int expectedAccess) {
+    if (actualAccess == toInt(VehiclePropertyAccess::NONE)) {
+        return;
+    }
     if (expectedAccess == toInt(VehiclePropertyAccess::READ_WRITE)) {
         ASSERT_TRUE(actualAccess == expectedAccess ||
                     actualAccess == toInt(VehiclePropertyAccess::READ))
@@ -631,6 +620,44 @@ void VtsHalAutomotiveVehicleTargetTest::verifyAccessMode(int actualAccess, int e
     }
     ASSERT_EQ(actualAccess, expectedAccess) << StringPrintf(
             "Expect to get VehiclePropertyAccess: %i, got %i", expectedAccess, actualAccess);
+}
+
+void VtsHalAutomotiveVehicleTargetTest::verifyGlobalAccessIsMaximalAreaAccessSubset(
+        int propertyLevelAccess,
+        const std::vector<std::unique_ptr<IHalAreaConfig>>& areaConfigs) const {
+    bool readOnlyPresent = false;
+    bool writeOnlyPresent = false;
+    bool readWritePresent = false;
+    int maximalAreaAccessSubset = toInt(VehiclePropertyAccess::NONE);
+    for (size_t i = 0; i < areaConfigs.size(); i++) {
+        int access = areaConfigs[i]->getAccess();
+        switch (access) {
+            case toInt(VehiclePropertyAccess::READ):
+                readOnlyPresent = true;
+                break;
+            case toInt(VehiclePropertyAccess::WRITE):
+                writeOnlyPresent = true;
+                break;
+            case toInt(VehiclePropertyAccess::READ_WRITE):
+                readWritePresent = true;
+                break;
+            default:
+                ASSERT_EQ(access, toInt(VehiclePropertyAccess::NONE)) << StringPrintf(
+                        "Area access can be NONE only if global property access is also NONE");
+                return;
+        }
+    }
+
+    if (readOnlyPresent && !writeOnlyPresent) {
+        maximalAreaAccessSubset = toInt(VehiclePropertyAccess::READ);
+    } else if (writeOnlyPresent) {
+        maximalAreaAccessSubset = toInt(VehiclePropertyAccess::WRITE);
+    } else if (readWritePresent) {
+        maximalAreaAccessSubset = toInt(VehiclePropertyAccess::READ_WRITE);
+    }
+    ASSERT_EQ(propertyLevelAccess, maximalAreaAccessSubset) << StringPrintf(
+            "Expected global access to be equal to maximal area access subset %d, Instead got %d",
+            maximalAreaAccessSubset, propertyLevelAccess);
 }
 
 // Helper function to compare actual vs expected property config
