@@ -447,13 +447,14 @@ TEST_P(VibratorAidl, ComposeValidPrimitives) {
 
     std::vector<CompositeEffect> composite;
 
-    for (auto primitive : supported) {
+    for (int i = 0; i < supported.size(); i++) {
+        auto primitive = supported[i];
+        float t = static_cast<float>(i + 1) / supported.size();
         CompositeEffect effect;
 
-        effect.delayMs = std::rand() % (maxDelay + 1);
+        effect.delayMs = maxDelay * t;
         effect.primitive = primitive;
-        effect.scale = static_cast<float>(std::rand()) / static_cast<float>(RAND_MAX);
-        composite.emplace_back(effect);
+        effect.scale = t;
 
         if (composite.size() == maxSize) {
             break;
@@ -534,19 +535,24 @@ TEST_P(VibratorAidl, ComposeDelayBoundary) {
     EXPECT_EQ(Status::EX_NONE, vibrator->getCompositionDelayMax(&maxDelay).exceptionCode());
 
     std::vector<CompositeEffect> composite(1);
-    CompositeEffect effect;
+    CompositeEffect& effect = composite[0];
 
-    effect.delayMs = 1;
     effect.primitive = CompositePrimitive::CLICK;
     effect.scale = 1.0f;
 
-    std::fill(composite.begin(), composite.end(), effect);
+    effect.delayMs = 0;
+    EXPECT_EQ(Status::EX_NONE, vibrator->compose(composite, nullptr).exceptionCode());
+    EXPECT_TRUE(vibrator->off().isOk());
+
+    effect.delayMs = 1;
+    EXPECT_EQ(Status::EX_NONE, vibrator->compose(composite, nullptr).exceptionCode());
+    EXPECT_TRUE(vibrator->off().isOk());
+
+    effect.delayMs = maxDelay;
     EXPECT_EQ(Status::EX_NONE, vibrator->compose(composite, nullptr).exceptionCode());
     EXPECT_TRUE(vibrator->off().isOk());
 
     effect.delayMs = maxDelay + 1;
-
-    std::fill(composite.begin(), composite.end(), effect);
     EXPECT_EQ(Status::EX_ILLEGAL_ARGUMENT, vibrator->compose(composite, nullptr).exceptionCode());
 }
 
