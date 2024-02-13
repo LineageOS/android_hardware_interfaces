@@ -14,19 +14,22 @@
  * limitations under the License.
  */
 
-#include "cppbor.h"
-#include "keymaster/cppcose/cppcose.h"
 #include <aidl/android/hardware/security/keymint/RpcHardwareInfo.h>
 #include <android-base/properties.h>
+#include <cppbor.h>
 #include <cppbor_parse.h>
-#include <cstdint>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <keymaster/android_keymaster_utils.h>
+#include <keymaster/cppcose/cppcose.h>
 #include <keymaster/logger.h>
 #include <keymaster/remote_provisioning_utils.h>
 #include <openssl/curve25519.h>
 #include <remote_prov/remote_prov_utils.h>
+
+#include <algorithm>
+#include <cstdint>
+#include <span>
 
 namespace aidl::android::hardware::security::keymint::remote_prov {
 namespace {
@@ -36,7 +39,11 @@ using ::keymaster::kStatusFailed;
 using ::keymaster::kStatusInvalidEek;
 using ::keymaster::StatusOr;
 using ::testing::ElementsAreArray;
-using byte_view = std::basic_string_view<uint8_t>;
+using byte_view = std::span<const uint8_t>;
+
+inline bool equal_byte_views(const byte_view& view1, const byte_view& view2) {
+    return std::equal(view1.begin(), view1.end(), view2.begin(), view2.end());
+}
 
 struct KeyInfoEcdsa {
     CoseKeyCurve curve;
@@ -44,7 +51,8 @@ struct KeyInfoEcdsa {
     byte_view pubKeyY;
 
     bool operator==(const KeyInfoEcdsa& other) const {
-        return curve == other.curve && pubKeyX == other.pubKeyX && pubKeyY == other.pubKeyY;
+        return curve == other.curve && equal_byte_views(pubKeyX, other.pubKeyX) &&
+               equal_byte_views(pubKeyY, other.pubKeyY);
     }
 };
 
