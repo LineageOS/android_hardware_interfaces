@@ -38,6 +38,7 @@ apex {
         "libpreprocessingaidl",
         "libpresetreverbsw",
         "libreverbaidl",
+        "libspatializersw",
         "libvirtualizersw",
         "libvisualizeraidl",
         "libvolumesw",
