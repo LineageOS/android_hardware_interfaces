@@ -1064,32 +1064,53 @@ TEST_P(NewKeyGenerationTest, RsaWithMissingValidity) {
 TEST_P(NewKeyGenerationTest, RsaWithSpecifiedValidity) {
     vector<uint8_t> key_blob;
     vector<KeyCharacteristics> key_characteristics;
-    ASSERT_EQ(ErrorCode::OK,
-              GenerateKey(AuthorizationSetBuilder()
-                                  .RsaSigningKey(2048, 65537)
-                                  .Digest(Digest::NONE)
-                                  .Padding(PaddingMode::NONE)
-                                  .Authorization(TAG_CERTIFICATE_NOT_BEFORE,
-                                                 1183806000000 /* 2007-07-07T11:00:00Z */)
-                                  .Authorization(TAG_CERTIFICATE_NOT_AFTER,
-                                                 1916049600000 /* 2030-09-19T12:00:00Z */),
-                          &key_blob, &key_characteristics));
-    ASSERT_GT(cert_chain_.size(), 0);
+    vector<uint64_t> test_vector_not_before_millis = {
+            458046000000,    /* 1984-07-07T11:00:00Z */
+            1183806000000,   /* 2007-07-07T11:00:00Z */
+            1924991999000,   /* 2030-12-31T23:59:59Z */
+            3723753599000,   /* 2087-12-31T23:59:59Z */
+            26223868799000,  /* 2800-12-31T23:59:59Z */
+            45157996799000,  /* 3400-12-31T23:59:59Z */
+            60719587199000,  /* 3894-02-15T23:59:59Z */
+            95302051199000,  /* 4989-12-31T23:59:59Z */
+            86182012799000,  /* 4700-12-31T23:59:59Z */
+            111427574399000, /* 5500-12-31T23:59:59Z */
+            136988668799000, /* 6310-12-31T23:59:59Z */
+            139828895999000, /* 6400-12-31T23:59:59Z */
+            169839503999000, /* 7351-12-31T23:59:59Z */
+            171385804799000, /* 7400-12-31T23:59:59Z */
+            190320019199000, /* 8000-12-31T23:59:59Z */
+            193475692799000, /* 8100-12-31T23:59:59Z */
+            242515209599000, /* 9654-12-31T23:59:59Z */
+            250219065599000, /* 9899-02-15T23:59:59Z */
+    };
+    for (auto notBefore : test_vector_not_before_millis) {
+        uint64_t notAfter = notBefore + 378691200000 /* 12 years milliseconds*/;
+        ASSERT_EQ(ErrorCode::OK,
+                  GenerateKey(AuthorizationSetBuilder()
+                                      .RsaSigningKey(2048, 65537)
+                                      .Digest(Digest::NONE)
+                                      .Padding(PaddingMode::NONE)
+                                      .Authorization(TAG_CERTIFICATE_NOT_BEFORE, notBefore)
+                                      .Authorization(TAG_CERTIFICATE_NOT_AFTER, notAfter),
+                              &key_blob, &key_characteristics));
+        ASSERT_GT(cert_chain_.size(), 0);
 
-    X509_Ptr cert(parse_cert_blob(cert_chain_[0].encodedCertificate));
-    ASSERT_TRUE(!!cert.get());
+        X509_Ptr cert(parse_cert_blob(cert_chain_[0].encodedCertificate));
+        ASSERT_TRUE(!!cert.get());
 
-    const ASN1_TIME* not_before = X509_get0_notBefore(cert.get());
-    ASSERT_NE(not_before, nullptr);
-    time_t not_before_time;
-    ASSERT_EQ(ASN1_TIME_to_time_t(not_before, &not_before_time), 1);
-    EXPECT_EQ(not_before_time, 1183806000);
+        const ASN1_TIME* not_before = X509_get0_notBefore(cert.get());
+        ASSERT_NE(not_before, nullptr);
+        time_t not_before_time;
+        ASSERT_EQ(ASN1_TIME_to_time_t(not_before, &not_before_time), 1);
+        EXPECT_EQ(not_before_time, (notBefore / 1000));
 
-    const ASN1_TIME* not_after = X509_get0_notAfter(cert.get());
-    ASSERT_NE(not_after, nullptr);
-    time_t not_after_time;
-    ASSERT_EQ(ASN1_TIME_to_time_t(not_after, &not_after_time), 1);
-    EXPECT_EQ(not_after_time, 1916049600);
+        const ASN1_TIME* not_after = X509_get0_notAfter(cert.get());
+        ASSERT_NE(not_after, nullptr);
+        time_t not_after_time;
+        ASSERT_EQ(ASN1_TIME_to_time_t(not_after, &not_after_time), 1);
+        EXPECT_EQ(not_after_time, (notAfter / 1000));
+    }
 }
 
 /*
