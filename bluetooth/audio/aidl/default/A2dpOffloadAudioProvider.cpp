@@ -120,6 +120,12 @@ ndk::ScopedAStatus A2dpOffloadAudioProvider::onSessionReady(
 ndk::ScopedAStatus A2dpOffloadAudioProvider::parseA2dpConfiguration(
     const CodecId& codec_id, const std::vector<uint8_t>& configuration,
     CodecParameters* codec_parameters, A2dpStatus* _aidl_return) {
+  if (!kEnableA2dpCodecExtensibility) {
+    // parseA2dpConfiguration must not be implemented if A2dp codec
+    // extensibility is not supported.
+    return ndk::ScopedAStatus::fromStatus(STATUS_UNKNOWN_TRANSACTION);
+  }
+
   auto codec = codec_factory_.GetCodec(codec_id);
   if (!codec) {
     LOG(INFO) << __func__ << " - SessionType=" << toString(session_type_)
@@ -136,6 +142,12 @@ ndk::ScopedAStatus A2dpOffloadAudioProvider::getA2dpConfiguration(
     const std::vector<A2dpRemoteCapabilities>& remote_a2dp_capabilities,
     const A2dpConfigurationHint& hint,
     std::optional<audio::A2dpConfiguration>* _aidl_return) {
+  if (!kEnableA2dpCodecExtensibility) {
+    // getA2dpConfiguration must not be implemented if A2dp codec
+    // extensibility is not supported.
+    return ndk::ScopedAStatus::fromStatus(STATUS_UNKNOWN_TRANSACTION);
+  }
+
   *_aidl_return = std::nullopt;
   A2dpConfiguration avdtp_configuration;
 
