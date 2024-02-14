@@ -421,7 +421,7 @@ GeneralResult<SharedMemory> unvalidatedConvert(const aidl_hal::Memory& memory) {
 
             return createSharedMemoryFromAHWB(ahwb, /*takeOwnership=*/true);
 #else   // __ANDROID__
-            LOG(FATAL) << "GeneralResult<SharedMemory> unvalidatedConvert(const aidl_hal::Memory& "
+            LOG(ERROR) << "GeneralResult<SharedMemory> unvalidatedConvert(const aidl_hal::Memory& "
                           "memory): Not Available on Host Build";
             return NN_ERROR() << "createFromHandle failed";
 #endif  // __ANDROID__
@@ -732,7 +732,7 @@ nn::GeneralResult<Memory> unvalidatedConvert(const nn::Memory::HardwareBuffer& m
     };
     return Memory::make<Memory::Tag::hardwareBuffer>(std::move(hardwareBuffer));
 #else   // __ANDROID__
-    LOG(FATAL) << "nn::GeneralResult<Memory> unvalidatedConvert(const nn::Memory::HardwareBuffer& "
+    LOG(ERROR) << "nn::GeneralResult<Memory> unvalidatedConvert(const nn::Memory::HardwareBuffer& "
                   "memory): Not Available on Host Build";
     (void)memory;
     return (NN_ERROR() << "unvalidatedConvert failed").operator nn::GeneralResult<Memory>();

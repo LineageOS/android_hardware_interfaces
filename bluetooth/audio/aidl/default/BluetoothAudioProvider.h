@@ -35,6 +35,23 @@ namespace hardware {
 namespace bluetooth {
 namespace audio {
 
+/// Enable flag for the reference implementation for A2dp Codec
+/// Extensibility.
+///
+/// A2dp Codec extensibility cannot be enabled until the following
+/// requirements are fulfilled.
+///
+///  1. The Bluetooth controller must support the HCI Requirements
+///     v1.04 or later, and must support the vendor HCI command
+///     A2DP Offload Start (v2), A2DP Offload Stop (v2) as indicated
+///     by the field a2dp_offload_v2 of the vendor capabilities.
+///
+///  2. The implementation of the provider must be completed with
+///     DSP configuration for streaming.
+enum : bool {
+  kEnableA2dpCodecExtensibility = false,
+};
+
 class BluetoothAudioProvider : public BnBluetoothAudioProvider {
  public:
   BluetoothAudioProvider();

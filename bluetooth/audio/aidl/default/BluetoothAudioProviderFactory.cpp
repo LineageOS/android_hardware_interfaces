@@ -159,6 +159,12 @@ ndk::ScopedAStatus BluetoothAudioProviderFactory::getProviderInfo(
 
   if (session_type == SessionType::A2DP_HARDWARE_OFFLOAD_ENCODING_DATAPATH ||
       session_type == SessionType::A2DP_HARDWARE_OFFLOAD_DECODING_DATAPATH) {
+    if (!kEnableA2dpCodecExtensibility) {
+      // Implementing getProviderInfo equates supporting
+      // A2dp codec extensibility.
+      return ndk::ScopedAStatus::fromStatus(STATUS_UNKNOWN_TRANSACTION);
+    }
+
     auto& provider_info = _aidl_return->emplace();
 
     provider_info.name = a2dp_offload_codec_factory_.name;
