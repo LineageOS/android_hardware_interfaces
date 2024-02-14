@@ -94,6 +94,7 @@ bool convertLegacyLinkLayerMlStatsToAidl(const legacy_hal::LinkLayerMlStats& leg
                                          StaLinkLayerStats* aidl_stats);
 bool convertLegacyLinkLayerStatsToAidl(const legacy_hal::LinkLayerStats& legacy_stats,
                                        StaLinkLayerStats* aidl_stats);
+void logAidlLinkLayerStatsSize(StaLinkLayerStats& aidl_stats);
 bool convertLegacyRoamingCapabilitiesToAidl(
         const legacy_hal::wifi_roaming_capabilities& legacy_caps,
         StaRoamingCapabilities* aidl_caps);
