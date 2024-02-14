@@ -455,6 +455,25 @@ TEST_F(DefaultBroadcastRadioHalTest, Cancel) {
     mTunerCallback->reset();
 }
 
+TEST_F(DefaultBroadcastRadioHalTest, SetConfigFlag) {
+    ConfigFlag flag = ConfigFlag::FORCE_MONO;
+
+    auto setResult = mBroadcastRadioHal->setConfigFlag(flag, /* value= */ true);
+
+    ASSERT_TRUE(setResult.isOk());
+}
+
+TEST_F(DefaultBroadcastRadioHalTest, GetConfigFlag) {
+    bool gotValue = false;
+    ConfigFlag flag = ConfigFlag::FORCE_MONO;
+    mBroadcastRadioHal->setConfigFlag(flag, /* value= */ true);
+
+    auto getResult = mBroadcastRadioHal->isConfigFlagSet(flag, &gotValue);
+
+    ASSERT_TRUE(getResult.isOk());
+    ASSERT_TRUE(gotValue);
+}
+
 TEST_F(DefaultBroadcastRadioHalTest, StartProgramListUpdatesWithEmptyFilter) {
     switchToFmBand();
 
@@ -478,6 +497,19 @@ TEST_F(DefaultBroadcastRadioHalTest, StartProgramListUpdatesWithAmFmFilter) {
     ASSERT_TRUE(programList.has_value());
     for (auto it = programList->begin(); it != programList->end(); it++) {
         EXPECT_TRUE(utils::hasId(it->selector, IdentifierType::AMFM_FREQUENCY_KHZ));
+        EXPECT_EQ(utils::getBand(utils::getAmFmFrequency(it->selector)), utils::FrequencyBand::FM);
+    }
+}
+
+TEST_F(DefaultBroadcastRadioHalTest, StartProgramListUpdatesWhenHdIsDisabled) {
+    switchToFmBand();
+    mBroadcastRadioHal->setConfigFlag(ConfigFlag::FORCE_ANALOG_FM, /* value= */ true);
+
+    auto programList = getProgramList();
+
+    ASSERT_TRUE(programList.has_value());
+    for (auto it = programList->begin(); it != programList->end(); it++) {
+        EXPECT_FALSE(utils::hasId(it->selector, IdentifierType::HD_STATION_ID_EXT));
         EXPECT_EQ(utils::getBand(utils::getAmFmFrequency(it->selector)), utils::FrequencyBand::FM);
     }
 }
