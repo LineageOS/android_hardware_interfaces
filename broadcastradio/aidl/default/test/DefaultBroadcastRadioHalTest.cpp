@@ -132,6 +132,37 @@ class DefaultBroadcastRadioHalTest : public testing::Test {
         return false;
     }
 
+    std::optional<utils::ProgramInfoSet> getProgramList() {
+        ProgramFilter emptyFilter = {};
+        return getProgramList(emptyFilter);
+    }
+
+    std::optional<utils::ProgramInfoSet> getProgramList(const ProgramFilter& filter) {
+        mTunerCallback->reset();
+
+        auto startResult = mBroadcastRadioHal->startProgramListUpdates(filter);
+
+        EXPECT_TRUE(startResult.isOk());
+
+        if (!startResult.isOk()) {
+            return std::nullopt;
+        }
+        EXPECT_TRUE(mTunerCallback->waitProgramReady());
+
+        auto stopResult = mBroadcastRadioHal->stopProgramListUpdates();
+
+        EXPECT_TRUE(stopResult.isOk());
+
+        return mTunerCallback->getProgramList();
+    }
+
+    void switchToFmBand() {
+        ASSERT_TRUE(mBroadcastRadioHal->setTunerCallback(mTunerCallback).isOk());
+        mTunerCallback->reset();
+        ASSERT_TRUE(mBroadcastRadioHal->tune(kFmSel1).isOk());
+        verifyUpdatedProgramInfo(kFmSel1);
+    }
+
     std::shared_ptr<BroadcastRadio> mBroadcastRadioHal;
     std::shared_ptr<MockBroadcastRadioCallback> mTunerCallback;
 };
@@ -326,10 +357,7 @@ TEST_F(DefaultBroadcastRadioHalTest, StepDownFromLowerBound) {
 }
 
 TEST_F(DefaultBroadcastRadioHalTest, StepWithoutTunerCallback) {
-    ASSERT_TRUE(mBroadcastRadioHal->setTunerCallback(mTunerCallback).isOk());
-    mTunerCallback->reset();
-    ASSERT_TRUE(mBroadcastRadioHal->tune(kFmSel1).isOk());
-    verifyUpdatedProgramInfo(kFmSel1);
+    switchToFmBand();
     mBroadcastRadioHal->unsetTunerCallback();
 
     auto halResult = mBroadcastRadioHal->step(/* directionUp= */ false);
@@ -399,10 +427,7 @@ TEST_F(DefaultBroadcastRadioHalTest, SeekDownWithSkipSubchannel) {
 }
 
 TEST_F(DefaultBroadcastRadioHalTest, SeekDownWithFirstProgramInProgramList) {
-    ASSERT_TRUE(mBroadcastRadioHal->setTunerCallback(mTunerCallback).isOk());
-    mTunerCallback->reset();
-    ASSERT_TRUE(mBroadcastRadioHal->tune(kFmSel1).isOk());
-    verifyUpdatedProgramInfo(kFmSel1);
+    switchToFmBand();
 
     auto halResult = mBroadcastRadioHal->seek(/* directionUp= */ false, /* skipSubChannel= */ true);
 
@@ -411,10 +436,7 @@ TEST_F(DefaultBroadcastRadioHalTest, SeekDownWithFirstProgramInProgramList) {
 }
 
 TEST_F(DefaultBroadcastRadioHalTest, SeekWithoutTunerCallback) {
-    ASSERT_TRUE(mBroadcastRadioHal->setTunerCallback(mTunerCallback).isOk());
-    mTunerCallback->reset();
-    ASSERT_TRUE(mBroadcastRadioHal->tune(kFmSel1).isOk());
-    verifyUpdatedProgramInfo(kFmSel1);
+    switchToFmBand();
     mBroadcastRadioHal->unsetTunerCallback();
 
     auto halResult = mBroadcastRadioHal->seek(/* directionUp= */ false, /* skipSubChannel= */ true);
@@ -431,6 +453,33 @@ TEST_F(DefaultBroadcastRadioHalTest, Cancel) {
 
     ASSERT_TRUE(halResult.isOk());
     mTunerCallback->reset();
+}
+
+TEST_F(DefaultBroadcastRadioHalTest, StartProgramListUpdatesWithEmptyFilter) {
+    switchToFmBand();
+
+    auto programList = getProgramList();
+
+    ASSERT_TRUE(programList.has_value());
+    for (auto it = programList->begin(); it != programList->end(); it++) {
+        EXPECT_EQ(utils::getBand(utils::getAmFmFrequency(it->selector)), utils::FrequencyBand::FM);
+    }
+}
+
+TEST_F(DefaultBroadcastRadioHalTest, StartProgramListUpdatesWithAmFmFilter) {
+    ProgramFilter amFmFilter = {.identifierTypes = {IdentifierType::AMFM_FREQUENCY_KHZ},
+                                .identifiers = {},
+                                .includeCategories = false,
+                                .excludeModifications = false};
+    switchToFmBand();
+
+    auto programList = getProgramList(amFmFilter);
+
+    ASSERT_TRUE(programList.has_value());
+    for (auto it = programList->begin(); it != programList->end(); it++) {
+        EXPECT_TRUE(utils::hasId(it->selector, IdentifierType::AMFM_FREQUENCY_KHZ));
+        EXPECT_EQ(utils::getBand(utils::getAmFmFrequency(it->selector)), utils::FrequencyBand::FM);
+    }
 }
 
 }  // namespace aidl::android::hardware::broadcastradio

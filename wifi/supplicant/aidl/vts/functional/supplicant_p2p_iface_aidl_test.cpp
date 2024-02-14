@@ -35,6 +35,7 @@ using aidl::android::hardware::wifi::supplicant::IfaceType;
 using aidl::android::hardware::wifi::supplicant::ISupplicant;
 using aidl::android::hardware::wifi::supplicant::ISupplicantP2pIface;
 using aidl::android::hardware::wifi::supplicant::MiracastMode;
+using aidl::android::hardware::wifi::supplicant::P2pAddGroupConfigurationParams;
 using aidl::android::hardware::wifi::supplicant::P2pConnectInfo;
 using aidl::android::hardware::wifi::supplicant::P2pCreateGroupOwnerInfo;
 using aidl::android::hardware::wifi::supplicant::P2pDeviceFoundEventParams;
@@ -550,6 +551,27 @@ TEST_P(SupplicantP2pIfaceAidlTest, CreateGroupOwner) {
     info.vendorData = kTestVendorDataOptional;
 
     EXPECT_TRUE(p2p_iface_->createGroupOwner(info).isOk());
+}
+
+/*
+ * AddGroupWithConfigurationParams
+ */
+TEST_P(SupplicantP2pIfaceAidlTest, AddGroupWithConfigurationParams) {
+    if (interface_version_ < 3) {
+        GTEST_SKIP() << "addGroupWithConfigurationParams is available as of Supplicant V3";
+    }
+
+    P2pAddGroupConfigurationParams params;
+    params.ssid = kTestSsid;
+    params.passphrase = kTestPassphrase;
+    params.isPersistent = kTestGroupPersistent;
+    params.frequencyMHzOrBand = kTestGroupFreq;
+    params.goInterfaceAddress = vecToArrayMacAddr(kTestZeroMacAddr);
+    params.joinExistingGroup = kTestGroupIsJoin;
+    params.keyMgmtMask = 0;
+    params.vendorData = kTestVendorDataOptional;
+
+    EXPECT_TRUE(p2p_iface_->addGroupWithConfigurationParams(params).isOk());
 }
 
 /*

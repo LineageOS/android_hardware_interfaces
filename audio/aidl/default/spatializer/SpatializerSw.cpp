@@ -108,6 +108,8 @@ ndk::ScopedAStatus SpatializerSw::setParameterSpecific(const Parameter::Specific
 
 ndk::ScopedAStatus SpatializerSw::getParameterSpecific(const Parameter::Id& id,
                                                        Parameter::Specific* specific) {
+    RETURN_IF(!mContext, EX_NULL_POINTER, "nullContext");
+
     auto tag = id.getTag();
     RETURN_IF(Parameter::Id::spatializerTag != tag, EX_ILLEGAL_ARGUMENT, "wrongIdTag");
     auto spatializerId = id.get<Parameter::Id::spatializerTag>();

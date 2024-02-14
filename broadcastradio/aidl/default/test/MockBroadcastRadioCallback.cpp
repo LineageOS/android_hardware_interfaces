@@ -49,8 +49,16 @@ ScopedAStatus MockBroadcastRadioCallback::onCurrentProgramInfoChanged(const Prog
     return ndk::ScopedAStatus::ok();
 }
 
-ScopedAStatus MockBroadcastRadioCallback::onProgramListUpdated(
-        [[maybe_unused]] const ProgramListChunk& chunk) {
+ScopedAStatus MockBroadcastRadioCallback::onProgramListUpdated(const ProgramListChunk& chunk) {
+    {
+        std::lock_guard<std::mutex> lk(mLock);
+        updateProgramList(chunk, &mProgramList);
+    }
+
+    if (chunk.complete) {
+        mOnProgramListReadyFlag.notify();
+    }
+
     return ndk::ScopedAStatus::ok();
 }
 
@@ -76,8 +84,13 @@ bool MockBroadcastRadioCallback::waitOnCurrentProgramInfoChangedCallback() {
     return mOnCurrentProgramInfoChangedFlag.wait();
 }
 
+bool MockBroadcastRadioCallback::waitProgramReady() {
+    return mOnProgramListReadyFlag.wait();
+}
+
 void MockBroadcastRadioCallback::reset() {
     mOnCurrentProgramInfoChangedFlag.reset();
+    mOnProgramListReadyFlag.reset();
 }
 
 bool MockBroadcastRadioCallback::isTunerFailed() {
@@ -88,6 +101,11 @@ bool MockBroadcastRadioCallback::isTunerFailed() {
 ProgramInfo MockBroadcastRadioCallback::getCurrentProgramInfo() {
     std::lock_guard<std::mutex> lk(mLock);
     return mCurrentProgramInfo;
+}
+
+utils::ProgramInfoSet MockBroadcastRadioCallback::getProgramList() {
+    std::lock_guard<std::mutex> lk(mLock);
+    return mProgramList;
 }
 
 }  // namespace aidl::android::hardware::broadcastradio
