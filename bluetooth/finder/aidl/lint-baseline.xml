@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<issues format="6" by="lint 8.4.0-alpha01" type="baseline" client="" dependencies="true" name="" variant="all" version="8.4.0-alpha01">
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 33 (current min is 30): `android.os.Parcel#writeFixedArray`"
+        errorLine1="    _aidl_parcel.writeFixedArray(bytes, _aidl_flag, 20);"
+        errorLine2="                 ~~~~~~~~~~~~~~~">
+        <location
+            file="out/soong/.intermediates/hardware/interfaces/bluetooth/finder/aidl/android.hardware.bluetooth.finder-V1-java-source/gen/android/hardware/bluetooth/finder/Eid.java"
+            line="28"
+            column="18"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 33 (current min is 30): `android.os.Parcel#createFixedArray`"
+        errorLine1="      bytes = _aidl_parcel.createFixedArray(byte[].class, 20);"
+        errorLine2="                           ~~~~~~~~~~~~~~~~">
+        <location
+            file="out/soong/.intermediates/hardware/interfaces/bluetooth/finder/aidl/android.hardware.bluetooth.finder-V1-java-source/gen/android/hardware/bluetooth/finder/Eid.java"
+            line="41"
+            column="28"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 31 (current min is 30): `android.os.Binder#markVintfStability`"
+        errorLine1="      this.markVintfStability();"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="out/soong/.intermediates/hardware/interfaces/bluetooth/finder/aidl/android.hardware.bluetooth.finder-V1-java-source/gen/android/hardware/bluetooth/finder/IBluetoothFinder.java"
+            line="67"
+            column="12"/>
+    </issue>
+
+</issues>
