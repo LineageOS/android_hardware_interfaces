@@ -22,6 +22,7 @@ import android.hardware.automotive.vehicle.VehiclePropertyChangeMode;
 
 @VintfStability
 @JavaDerive(equals=true, toString=true)
+@RustDerive(Clone=true)
 parcelable VehiclePropConfig {
     /** Property identifier */
     int prop;

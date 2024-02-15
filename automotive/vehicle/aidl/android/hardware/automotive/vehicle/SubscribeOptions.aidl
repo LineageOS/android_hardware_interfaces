@@ -21,6 +21,7 @@ package android.hardware.automotive.vehicle;
  */
 @VintfStability
 @JavaDerive(equals=true, toString=true)
+@RustDerive(Clone=true)
 parcelable SubscribeOptions {
     /** Property to subscribe */
     int propId;
