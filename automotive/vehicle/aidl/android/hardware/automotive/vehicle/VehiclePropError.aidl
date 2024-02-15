@@ -20,6 +20,7 @@ import android.hardware.automotive.vehicle.StatusCode;
 
 @VintfStability
 @JavaDerive(equals=true, toString=true)
+@RustDerive(Clone=true)
 parcelable VehiclePropError {
     // Property ID.
     int propId;

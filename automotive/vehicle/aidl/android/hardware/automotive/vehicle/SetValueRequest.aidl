@@ -20,6 +20,7 @@ import android.hardware.automotive.vehicle.VehiclePropValue;
 
 @VintfStability
 @JavaDerive(equals=true, toString=true)
+@RustDerive(Clone=true)
 parcelable SetValueRequest {
     // A unique request ID. For every client, the request ID must start with 1
     // and monotonically increase for every SetValueRequest. If it hits
