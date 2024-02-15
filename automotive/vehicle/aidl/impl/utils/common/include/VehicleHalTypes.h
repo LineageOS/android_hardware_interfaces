@@ -19,6 +19,7 @@
 
 #include <aidl/android/hardware/automotive/vehicle/AutomaticEmergencyBrakingState.h>
 #include <aidl/android/hardware/automotive/vehicle/BlindSpotWarningState.h>
+#include <aidl/android/hardware/automotive/vehicle/CameraServiceState.h>
 #include <aidl/android/hardware/automotive/vehicle/CrossTrafficMonitoringWarningState.h>
 #include <aidl/android/hardware/automotive/vehicle/CruiseControlCommand.h>
 #include <aidl/android/hardware/automotive/vehicle/CruiseControlState.h>

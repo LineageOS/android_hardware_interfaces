@@ -1129,6 +1129,14 @@
                 "data_enum": "VehicleAutonomousState"
             },
             {
+                "name": "CAMERA_SERVICE_CURRENT_STATE",
+                "value": 289476429,
+                "data_enums": [
+                    "CameraServiceState"
+                ],
+                "data_enum": "CameraServiceState"
+            },
+            {
                 "name": "AUTOMATIC_EMERGENCY_BRAKING_ENABLED",
                 "value": 287313920
             },
@@ -2815,6 +2823,28 @@
             {
                 "name": "ERROR",
                 "value": 4
+            }
+        ]
+    },
+    {
+        "name": "CameraServiceState",
+        "package": "android.hardware.automotive.vehicle",
+        "values": [
+            {
+                "name": "UNAVAILABLE",
+                "value": 0
+            },
+            {
+                "name": "INACTIVE",
+                "value": 1
+            },
+            {
+                "name": "REQUESTED",
+                "value": 2
+            },
+            {
+                "name": "ACTIVE",
+                "value": 3
             }
         ]
     },

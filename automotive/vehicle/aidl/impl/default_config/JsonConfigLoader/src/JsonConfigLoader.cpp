@@ -37,6 +37,7 @@ namespace jsonconfigloader_impl {
 using ::aidl::android::hardware::automotive::vehicle::AccessForVehicleProperty;
 using ::aidl::android::hardware::automotive::vehicle::AutomaticEmergencyBrakingState;
 using ::aidl::android::hardware::automotive::vehicle::BlindSpotWarningState;
+using ::aidl::android::hardware::automotive::vehicle::CameraServiceState;
 using ::aidl::android::hardware::automotive::vehicle::ChangeModeForVehicleProperty;
 using ::aidl::android::hardware::automotive::vehicle::CrossTrafficMonitoringWarningState;
 using ::aidl::android::hardware::automotive::vehicle::CruiseControlCommand;
@@ -259,6 +260,8 @@ JsonValueParser::JsonValueParser() {
             std::make_unique<ConstantParser<ImpactSensorLocation>>();
     mConstantParsersByType["EmergencyLaneKeepAssistState"] =
             std::make_unique<ConstantParser<EmergencyLaneKeepAssistState>>();
+    mConstantParsersByType["CameraServiceState"] =
+            std::make_unique<ConstantParser<CameraServiceState>>();
     mConstantParsersByType["CruiseControlType"] =
             std::make_unique<ConstantParser<CruiseControlType>>();
     mConstantParsersByType["CruiseControlState"] =
