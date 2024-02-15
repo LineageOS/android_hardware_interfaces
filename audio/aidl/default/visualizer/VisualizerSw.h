@@ -19,20 +19,22 @@
 #include <vector>
 
 #include <aidl/android/hardware/audio/effect/BnEffect.h>
+#include <system/audio_effects/effect_visualizer.h>
 #include "effect-impl/EffectImpl.h"
 
 namespace aidl::android::hardware::audio::effect {
 
 class VisualizerSwContext final : public EffectContext {
   public:
-    static const int kMinCaptureSize = 0x80;
-    static const int kMaxCaptureSize = 0x400;
-    static const int kMaxLatencyMs = 3000;
-    static const int kMaxCaptureBufSize = 0xffff;
+    // need align the min/max capture size to VISUALIZER_CAPTURE_SIZE_MIN and
+    // VISUALIZER_CAPTURE_SIZE_MAX because of limitation in audio_utils fixedfft.
+    static constexpr int32_t kMinCaptureSize = VISUALIZER_CAPTURE_SIZE_MIN;
+    static constexpr int32_t kMaxCaptureSize = VISUALIZER_CAPTURE_SIZE_MAX;
+    static constexpr int32_t kMaxLatencyMs = 3000;
     VisualizerSwContext(int statusDepth, const Parameter::Common& common)
         : EffectContext(statusDepth, common) {
         LOG(DEBUG) << __func__;
-        mCaptureSampleBuffer.resize(kMaxCaptureBufSize);
+        mCaptureSampleBuffer.resize(kMaxCaptureSize);
         fill(mCaptureSampleBuffer.begin(), mCaptureSampleBuffer.end(), 0x80);
     }
 
