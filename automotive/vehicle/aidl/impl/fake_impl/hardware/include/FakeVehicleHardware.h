@@ -32,6 +32,8 @@
 #include <android-base/result.h>
 #include <android-base/stringprintf.h>
 #include <android-base/thread_annotations.h>
+#include <grpc++/grpc++.h>
+#include <wakeup_client.grpc.pb.h>
 
 #include <memory>
 #include <mutex>
@@ -240,6 +242,11 @@ class FakeVehicleHardware : public IVehicleHardware {
     VhalResult<void> synchronizeHvacTemp(int32_t hvacDualOnAreaId,
                                          std::optional<float> newTempC) const;
     std::optional<int32_t> getSyncedAreaIdIfHvacDualOn(int32_t hvacTemperatureSetAreaId) const;
+    ValueResultType getPowerPropFromExternalService(int32_t propId) const;
+    ValueResultType getVehicleInUse(
+            android::hardware::automotive::remoteaccess::PowerController::Stub* clientStub) const;
+    ValueResultType getApPowerBootupReason(
+            android::hardware::automotive::remoteaccess::PowerController::Stub* clientStub) const;
 
     std::unordered_map<int32_t, ConfigDeclaration> loadConfigDeclarations();
 

@@ -506,6 +506,12 @@ TEST_F(FakeVehicleHardwareTest, testGetDefaultValues) {
             continue;
         }
 
+        if (propId == toInt(VehicleProperty::VEHICLE_IN_USE) ||
+            propId == toInt(VehicleProperty::AP_POWER_BOOTUP_REASON)) {
+            // These may be controller by an external power control unit.
+            continue;
+        }
+
         if (isGlobalProp(propId)) {
             if (config.initialValue == RawPropValues{}) {
                 addGetValueRequest(getValueRequests, expectedGetValueResults, requestId++,

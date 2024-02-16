@@ -41,7 +41,9 @@ cc_test {
         "libgmock",
     ],
     shared_libs: [
+        "libgrpc++",
         "libjsoncpp",
+        "libprotobuf-cpp-full",
     ],
     data: [
         ":VehicleHalDefaultProperties_JSON",

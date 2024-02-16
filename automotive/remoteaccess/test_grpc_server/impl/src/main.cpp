@@ -33,7 +33,12 @@
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
 
-using ::android::hardware::automotive::remoteaccess::TestWakeupClientServiceImpl;
+using ::android::hardware::automotive::remoteaccess::BOOTUP_REASON_SYSTEM_ENTER_GARAGE_MODE;
+using ::android::hardware::automotive::remoteaccess::BOOTUP_REASON_SYSTEM_REMOTE_ACCESS;
+using ::android::hardware::automotive::remoteaccess::BOOTUP_REASON_USER_POWER_ON;
+using ::android::hardware::automotive::remoteaccess::PowerControllerServiceImpl;
+using ::android::hardware::automotive::remoteaccess::ServiceImpl;
+using ::android::hardware::automotive::remoteaccess::WakeupClientServiceImpl;
 using ::grpc::Server;
 using ::grpc::ServerBuilder;
 using ::grpc::ServerWriter;
@@ -48,11 +53,13 @@ const char* COMMAND_SET_VHAL_PROP =
 
 pid_t emuPid = 0;
 
-void RunServer(const std::string& serviceAddr,
-               std::shared_ptr<TestWakeupClientServiceImpl> service) {
+void RunServer(const std::string& serviceAddr, std::shared_ptr<ServiceImpl> service) {
     ServerBuilder builder;
     builder.AddListeningPort(serviceAddr, grpc::InsecureServerCredentials());
-    builder.RegisterService(service.get());
+    WakeupClientServiceImpl wakeupClientService(service.get());
+    builder.RegisterService(&wakeupClientService);
+    PowerControllerServiceImpl powerControllerService(service.get());
+    builder.RegisterService(&powerControllerService);
     std::unique_ptr<Server> server(builder.BuildAndStart());
     printf("Test Remote Access GRPC Server listening on %s\n", serviceAddr.c_str());
     server->Wait();
@@ -81,20 +88,21 @@ void updateEmuStatus() {
     }
 }
 
-bool powerOnEmu() {
+bool powerOnEmu(ServiceImpl* service, int32_t bootupReason) {
     updateEmuStatus();
     if (emuPid != 0) {
         printf("The emulator is already running\n");
         return false;
     }
+    service->setBootupReason(bootupReason);
     emuPid = runCommand(COMMAND_RUN_EMU);
     printf("Emulator started in process: %d\n", emuPid);
     return true;
 }
 
-bool powerOn() {
+bool powerOn(ServiceImpl* service, int32_t bootupReason) {
 #ifdef HOST
-    return powerOnEmu();
+    return powerOnEmu(service, bootupReason);
 #else
     printf("power on is only supported on host\n");
     return false;
@@ -133,21 +141,6 @@ void powerOff() {
 #endif
 }
 
-void setVehicleInUse(bool vehicleInUse) {
-#ifdef HOST
-    printf("Set vehicleInUse to %d\n", vehicleInUse);
-    int value = 0;
-    if (vehicleInUse) {
-        value = 1;
-    }
-    const char* command = getSetPropCommand(VEHICLE_IN_USE, value);
-    runCommand(command);
-    delete[] command;
-#else
-    printf("set vehicleInUse is only supported on host\n");
-#endif
-}
-
 void help() {
     std::cout << "Remote Access Host Test Utility" << std::endl
               << "help:\t"
@@ -171,8 +164,7 @@ void help() {
               << "(only supported on host)" << std::endl;
 }
 
-void parseCommand(const std::string& userInput,
-                  std::shared_ptr<TestWakeupClientServiceImpl> service) {
+void parseCommand(const std::string& userInput, std::shared_ptr<ServiceImpl> service) {
     if (userInput == "") {
         // ignore empty line.
     } else if (userInput == "help") {
@@ -199,8 +191,10 @@ void parseCommand(const std::string& userInput,
         printf("isWakeupRequired: %B, isRemoteTaskConnectionAlive: %B\n",
                service->isWakeupRequired(), service->isRemoteTaskConnectionAlive());
     } else if (userInput == "power on") {
-        powerOn();
+        service->setVehicleInUse(true);
+        powerOn(service.get(), BOOTUP_REASON_USER_POWER_ON);
     } else if (userInput == "power off") {
+        service->setVehicleInUse(false);
         powerOff();
     } else if (userInput.rfind("inject task", 0) == 0) {
         std::stringstream ss;
@@ -226,7 +220,7 @@ void parseCommand(const std::string& userInput,
         printf("Remote task with client ID: %s, data: %s injected\n", clientId.c_str(),
                taskData.c_str());
     } else if (userInput == "set vehicleInUse") {
-        setVehicleInUse(true);
+        service->setVehicleInUse(true);
     } else {
         printf("Unknown command, see 'help'\n");
     }
@@ -242,14 +236,11 @@ void saHandler(int signum) {
     exit(-1);
 }
 
-class MyTestWakeupClientServiceImpl final : public TestWakeupClientServiceImpl {
+class MyServiceImpl final : public ServiceImpl {
   public:
-    void wakeupApplicationProcessor() override {
+    void wakeupApplicationProcessor(int32_t bootupReason) override {
 #ifdef HOST
-        if (powerOnEmu()) {
-            // If we wake up AP to execute remote task, vehicle in use should be false.
-            setVehicleInUse(false);
-        }
+        powerOnEmu(this, bootupReason);
 #else
         wakeupAp();
 #endif
@@ -262,8 +253,7 @@ int main(int argc, char** argv) {
         serviceAddr = argv[1];
     }
     // Let the server thread run, we will force kill the server when we exit the program.
-    std::shared_ptr<TestWakeupClientServiceImpl> service =
-            std::make_shared<MyTestWakeupClientServiceImpl>();
+    std::shared_ptr<ServiceImpl> service = std::make_shared<MyServiceImpl>();
     std::thread serverThread([serviceAddr, service] { RunServer(serviceAddr, service); });
 
     // Register the signal handler for SIGTERM and SIGINT so that we can stop the emulator before

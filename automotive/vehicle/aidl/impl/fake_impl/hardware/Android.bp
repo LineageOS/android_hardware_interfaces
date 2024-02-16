@@ -27,10 +27,18 @@ cc_library {
     ],
     local_include_dirs: ["include"],
     export_include_dirs: ["include"],
-    cflags: ["-DENABLE_VEHICLE_HAL_TEST_PROPERTIES"],
+    cflags: [
+        "-DENABLE_VEHICLE_HAL_TEST_PROPERTIES",
+        // Uncomment this if running on emulator and connecting to a local grpc server
+        // running on host 127.0.0.1:50051 (TestWakeupClientServerHost)
+        // "-DPOWER_GRPC_SERVICE_ADDRESS=\"10.0.2.2:50051\"",
+    ],
     defaults: [
         "VehicleHalDefaults",
         "FakeVehicleHardwareDefaults",
+    ],
+    whole_static_libs: [
+        "wakeup_client_protos",
     ],
 }
 
@@ -54,7 +62,9 @@ cc_defaults {
         "Prebuilt_VehicleHalVendorClusterTestProperties_JSON",
     ],
     shared_libs: [
+        "libgrpc++",
         "libjsoncpp",
+        "libprotobuf-cpp-full",
     ],
     export_static_lib_headers: ["VehicleHalUtils"],
 }

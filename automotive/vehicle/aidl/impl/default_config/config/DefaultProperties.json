@@ -3196,6 +3196,14 @@
             }
         },
         {
+            "property": "VehicleProperty::AP_POWER_BOOTUP_REASON",
+            "defaultValue": {
+                "int32Values": [
+                    "VehicleApPowerBootupReason::USER_POWER_ON"
+                ]
+            }
+        },
+        {
             "property": "VehicleProperty::DISPLAY_BRIGHTNESS",
             "defaultValue": {
                 "int32Values": [

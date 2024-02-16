@@ -30,6 +30,11 @@ namespace hardware {
 namespace automotive {
 namespace remoteaccess {
 
+// The following are the same as VehicleApPowerBootupReason defined in VHAL.
+constexpr int32_t BOOTUP_REASON_USER_POWER_ON = 0;
+constexpr int32_t BOOTUP_REASON_SYSTEM_REMOTE_ACCESS = 2;
+constexpr int32_t BOOTUP_REASON_SYSTEM_ENTER_GARAGE_MODE = 3;
+
 // A class to generate fake task for testing. Not required for real implementation. In real
 // implementation, the task should come from remote task server. This class is thread-safe.
 class FakeTaskGenerator final {
@@ -98,50 +103,57 @@ class TaskQueue final {
 };
 
 // forward-declaration
-class TestWakeupClientServiceImpl;
+class ServiceImpl;
 
 class TaskScheduleMsgHandler final : public android::MessageHandler {
   public:
-    TaskScheduleMsgHandler(TestWakeupClientServiceImpl* mImpl);
+    TaskScheduleMsgHandler(ServiceImpl* impl);
     void handleMessage(const android::Message& message) override;
 
   private:
-    TestWakeupClientServiceImpl* mImpl;
+    ServiceImpl* mImpl;
 };
 
-class TestWakeupClientServiceImpl : public WakeupClient::Service {
+class ServiceImpl {
   public:
-    TestWakeupClientServiceImpl();
+    ServiceImpl();
 
-    ~TestWakeupClientServiceImpl();
+    virtual ~ServiceImpl() = 0;
 
     // Stop the handling for all income requests. Prepare for shutdown.
     void stopServer();
 
     grpc::Status GetRemoteTasks(grpc::ServerContext* context, const GetRemoteTasksRequest* request,
-                                grpc::ServerWriter<GetRemoteTasksResponse>* writer) override;
+                                grpc::ServerWriter<GetRemoteTasksResponse>* writer);
 
     grpc::Status NotifyWakeupRequired(grpc::ServerContext* context,
                                       const NotifyWakeupRequiredRequest* request,
-                                      NotifyWakeupRequiredResponse* response) override;
+                                      NotifyWakeupRequiredResponse* response);
 
     grpc::Status ScheduleTask(grpc::ServerContext* context, const ScheduleTaskRequest* request,
-                              ScheduleTaskResponse* response) override;
+                              ScheduleTaskResponse* response);
 
     grpc::Status UnscheduleTask(grpc::ServerContext* context, const UnscheduleTaskRequest* request,
-                                UnscheduleTaskResponse* response) override;
+                                UnscheduleTaskResponse* response);
 
     grpc::Status UnscheduleAllTasks(grpc::ServerContext* context,
                                     const UnscheduleAllTasksRequest* request,
-                                    UnscheduleAllTasksResponse* response) override;
+                                    UnscheduleAllTasksResponse* response);
 
     grpc::Status IsTaskScheduled(grpc::ServerContext* context,
                                  const IsTaskScheduledRequest* request,
-                                 IsTaskScheduledResponse* response) override;
+                                 IsTaskScheduledResponse* response);
 
-    grpc::Status GetAllPendingScheduledTasks(
-            grpc::ServerContext* context, const GetAllPendingScheduledTasksRequest* request,
-            GetAllPendingScheduledTasksResponse* response) override;
+    grpc::Status GetAllPendingScheduledTasks(grpc::ServerContext* context,
+                                             const GetAllPendingScheduledTasksRequest* request,
+                                             GetAllPendingScheduledTasksResponse* response);
+
+    grpc::Status IsVehicleInUse(grpc::ServerContext* context, const IsVehicleInUseRequest* request,
+                                IsVehicleInUseResponse* response);
+
+    grpc::Status GetApPowerBootupReason(grpc::ServerContext* context,
+                                        const GetApPowerBootupReasonRequest* request,
+                                        GetApPowerBootupReasonResponse* response);
 
     /**
      * Starts generating fake tasks for the specific client repeatedly.
@@ -177,13 +189,23 @@ class TestWakeupClientServiceImpl : public WakeupClient::Service {
      * This must be implemented by child class and contains device specific logic. E.g. this might
      * be sending QEMU commands for the emulator device.
      */
-    virtual void wakeupApplicationProcessor() = 0;
+    virtual void wakeupApplicationProcessor(int32_t bootupReason) = 0;
 
     /**
      * Cleans up a scheduled task info.
      */
     void cleanupScheduledTaskLocked(const std::string& clientId, const std::string& scheduleId)
             REQUIRES(mLock);
+
+    /**
+     * Sets whether vehicle is in use.
+     */
+    void setVehicleInUse(bool vehicleInUse);
+
+    /**
+     * Sets the bootup reason.
+     */
+    void setBootupReason(int32_t bootupReason);
 
   private:
     friend class TaskScheduleMsgHandler;
@@ -218,6 +240,8 @@ class TestWakeupClientServiceImpl : public WakeupClient::Service {
     std::atomic<bool> mServerStopped = false;
     std::unordered_map<std::string, std::unordered_map<std::string, ScheduleInfo>>
             mInfoByScheduleIdByClientId GUARDED_BY(mLock);
+    std::atomic<bool> mVehicleInUse = false;
+    std::atomic<int32_t> mBootupReason = BOOTUP_REASON_USER_POWER_ON;
 
     // Thread-safe. For test impl only.
     FakeTaskGenerator mFakeTaskGenerator;
@@ -230,6 +254,72 @@ class TestWakeupClientServiceImpl : public WakeupClient::Service {
             REQUIRES(mLock);
     void handleAddTask(int scheduleMsgId);
     void loop();
+};
+
+class WakeupClientServiceImpl : public WakeupClient::Service {
+  public:
+    WakeupClientServiceImpl(ServiceImpl* impl) { mImpl = impl; }
+
+    grpc::Status GetRemoteTasks(grpc::ServerContext* context, const GetRemoteTasksRequest* request,
+                                grpc::ServerWriter<GetRemoteTasksResponse>* writer) override {
+        return mImpl->GetRemoteTasks(context, request, writer);
+    }
+
+    grpc::Status NotifyWakeupRequired(grpc::ServerContext* context,
+                                      const NotifyWakeupRequiredRequest* request,
+                                      NotifyWakeupRequiredResponse* response) override {
+        return mImpl->NotifyWakeupRequired(context, request, response);
+    }
+
+    grpc::Status ScheduleTask(grpc::ServerContext* context, const ScheduleTaskRequest* request,
+                              ScheduleTaskResponse* response) override {
+        return mImpl->ScheduleTask(context, request, response);
+    }
+
+    grpc::Status UnscheduleTask(grpc::ServerContext* context, const UnscheduleTaskRequest* request,
+                                UnscheduleTaskResponse* response) override {
+        return mImpl->UnscheduleTask(context, request, response);
+    }
+
+    grpc::Status UnscheduleAllTasks(grpc::ServerContext* context,
+                                    const UnscheduleAllTasksRequest* request,
+                                    UnscheduleAllTasksResponse* response) override {
+        return mImpl->UnscheduleAllTasks(context, request, response);
+    }
+
+    grpc::Status IsTaskScheduled(grpc::ServerContext* context,
+                                 const IsTaskScheduledRequest* request,
+                                 IsTaskScheduledResponse* response) override {
+        return mImpl->IsTaskScheduled(context, request, response);
+    }
+
+    grpc::Status GetAllPendingScheduledTasks(
+            grpc::ServerContext* context, const GetAllPendingScheduledTasksRequest* request,
+            GetAllPendingScheduledTasksResponse* response) override {
+        return mImpl->GetAllPendingScheduledTasks(context, request, response);
+    }
+
+  private:
+    ServiceImpl* mImpl;
+};
+
+class PowerControllerServiceImpl : public PowerController::Service {
+  public:
+    PowerControllerServiceImpl(ServiceImpl* impl) { mImpl = impl; }
+
+    grpc::Status IsVehicleInUse(grpc::ServerContext* context, const IsVehicleInUseRequest* request,
+                                IsVehicleInUseResponse* response) override {
+        return mImpl->IsVehicleInUse(context, request, response);
+    }
+
+    grpc::Status GetApPowerBootupReason(grpc::ServerContext* context,
+                                        const GetApPowerBootupReasonRequest* request,
+                                        GetApPowerBootupReasonResponse* response) override {
+        return mImpl->GetApPowerBootupReason(context, request, response);
+    }
+
+  private:
+    ServiceImpl* mImpl;
 };
 
 }  // namespace remoteaccess

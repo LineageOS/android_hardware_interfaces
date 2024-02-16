@@ -82,6 +82,12 @@ using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropValue;
 using ::aidl::android::hardware::automotive::vehicle::VehicleUnit;
 
+using ::android::hardware::automotive::remoteaccess::GetApPowerBootupReasonRequest;
+using ::android::hardware::automotive::remoteaccess::GetApPowerBootupReasonResponse;
+using ::android::hardware::automotive::remoteaccess::IsVehicleInUseRequest;
+using ::android::hardware::automotive::remoteaccess::IsVehicleInUseResponse;
+using ::android::hardware::automotive::remoteaccess::PowerController;
+
 using ::android::base::EqualsIgnoreCase;
 using ::android::base::Error;
 using ::android::base::GetIntProperty;
@@ -256,6 +262,11 @@ const std::unordered_map<int32_t, std::vector<int32_t>> mAdasEnabledPropToAdasPr
                 },
         },
 };
+
+// The list of VHAL properties that might be handled by an external power controller.
+const std::unordered_set<int32_t> mPowerPropIds = {toInt(VehicleProperty::VEHICLE_IN_USE),
+                                                   toInt(VehicleProperty::AP_POWER_BOOTUP_REASON)};
+
 }  // namespace
 
 void FakeVehicleHardware::storePropInitialValue(const ConfigDeclaration& config) {
@@ -763,6 +774,13 @@ FakeVehicleHardware::ValueResultType FakeVehicleHardware::maybeGetSpecialValue(
     int32_t propId = value.prop;
     ValueResultType result;
 
+#ifdef POWER_GRPC_SERVICE_ADDRESS
+    if (mPowerPropIds.find(propId) != mPowerPropIds.end()) {
+        *isSpecialValue = true;
+        return getPowerPropFromExternalService(propId);
+    }
+#endif
+
     if (propId >= STARTING_VENDOR_CODE_PROPERTIES_FOR_TEST &&
         propId < ENDING_VENDOR_CODE_PROPERTIES_FOR_TEST) {
         *isSpecialValue = true;
@@ -842,6 +860,61 @@ FakeVehicleHardware::ValueResultType FakeVehicleHardware::maybeGetSpecialValue(
     }
 
     return nullptr;
+}
+
+FakeVehicleHardware::ValueResultType FakeVehicleHardware::getPowerPropFromExternalService(
+        [[maybe_unused]] int32_t propId) const {
+#ifdef POWER_GRPC_SERVICE_ADDRESS
+    auto channel =
+            grpc::CreateChannel(POWER_GRPC_SERVICE_ADDRESS, grpc::InsecureChannelCredentials());
+    auto clientStub = PowerController::NewStub(channel);
+    switch (propId) {
+        case toInt(VehicleProperty::VEHICLE_IN_USE):
+            return getVehicleInUse(clientStub.get());
+        case toInt(VehicleProperty::AP_POWER_BOOTUP_REASON):
+            return getApPowerBootupReason(clientStub.get());
+        default:
+            return StatusError(StatusCode::INTERNAL_ERROR)
+                   << "Unsupported power property ID: " << propId;
+    }
+#else
+    // Must not reach here.
+    return StatusError(StatusCode::INTERNAL_ERROR);
+#endif
+}
+
+FakeVehicleHardware::ValueResultType FakeVehicleHardware::getVehicleInUse(
+        PowerController::Stub* clientStub) const {
+    IsVehicleInUseRequest request = {};
+    IsVehicleInUseResponse response = {};
+    grpc::ClientContext context;
+    auto status = clientStub->IsVehicleInUse(&context, request, &response);
+    if (!status.ok()) {
+        return StatusError(StatusCode::TRY_AGAIN) << "Cannot connect to GRPC service "
+                                                  << ", error: " << status.error_message();
+    }
+    auto result = mValuePool->obtainBoolean(response.isvehicleinuse());
+    result->prop = toInt(VehicleProperty::VEHICLE_IN_USE);
+    result->areaId = 0;
+    result->timestamp = elapsedRealtimeNano();
+    return result;
+}
+
+FakeVehicleHardware::ValueResultType FakeVehicleHardware::getApPowerBootupReason(
+        PowerController::Stub* clientStub) const {
+    GetApPowerBootupReasonRequest request = {};
+    GetApPowerBootupReasonResponse response = {};
+    grpc::ClientContext context;
+    auto status = clientStub->GetApPowerBootupReason(&context, request, &response);
+    if (!status.ok()) {
+        return StatusError(StatusCode::TRY_AGAIN) << "Cannot connect to GRPC service "
+                                                  << ", error: " << status.error_message();
+    }
+    auto result = mValuePool->obtainInt32(response.bootupreason());
+    result->prop = toInt(VehicleProperty::AP_POWER_BOOTUP_REASON);
+    result->areaId = 0;
+    result->timestamp = elapsedRealtimeNano();
+    return result;
 }
 
 FakeVehicleHardware::ValueResultType FakeVehicleHardware::getEchoReverseBytes(
