@@ -5067,6 +5067,30 @@ enum VehicleProperty {
     VEHICLE_DRIVING_AUTOMATION_CURRENT_LEVEL =
             0x0F4C + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
 
+    /**
+     * Reports current state of CarEvsService types.
+     *
+     * Informs other components of current state of each CarEvsService service type with values
+     * defined in CameraServiceState. CarEvsService will update this property whenever a service
+     * type transitions into a new state.
+     *
+     * int32[0]: Current state of REARVIEW service type.
+     * int32[1]: Current state of SURROUNDVIEW service type.
+     * int32[2]: Current state of FRONTVIEW service type.
+     * int32[3]: Current state of LEFTVIEW service type.
+     * int32[4]: Current state of RIGHTVIEW service type.
+     * int32[5]: Current state of DRIVERVIEW service type.
+     * int32[6]: Current state of FRONT_PASSENGERVIEW service type.
+     * int32[7]: Current state of REAR_PASSENGERVIEW service type.
+     *
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.WRITE
+     * @data_enum CameraServiceState
+     * @version 3
+     */
+    CAMERA_SERVICE_CURRENT_STATE = 0x0F4D + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL
+            + VehiclePropertyType.INT32_VEC,
+
     /***********************************************************************************************
      * Start of ADAS Properties
      *

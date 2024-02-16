@@ -85,6 +85,7 @@ public final class EnumForVehicleProperty {
         Map.entry(VehicleProperty.GENERAL_SAFETY_REGULATION_COMPLIANCE_REQUIREMENT, List.of(GsrComplianceRequirementType.class)),
         Map.entry(VehicleProperty.SHUTDOWN_REQUEST, List.of(VehicleApPowerStateShutdownParam.class)),
         Map.entry(VehicleProperty.VEHICLE_DRIVING_AUTOMATION_CURRENT_LEVEL, List.of(VehicleAutonomousState.class)),
+        Map.entry(VehicleProperty.CAMERA_SERVICE_CURRENT_STATE, List.of(CameraServiceState.class)),
         Map.entry(VehicleProperty.AUTOMATIC_EMERGENCY_BRAKING_STATE, List.of(AutomaticEmergencyBrakingState.class, ErrorState.class)),
         Map.entry(VehicleProperty.FORWARD_COLLISION_WARNING_STATE, List.of(ForwardCollisionWarningState.class, ErrorState.class)),
         Map.entry(VehicleProperty.BLIND_SPOT_WARNING_STATE, List.of(BlindSpotWarningState.class, ErrorState.class)),
