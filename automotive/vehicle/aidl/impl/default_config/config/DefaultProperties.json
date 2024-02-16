@@ -5067,6 +5067,21 @@
                     ]
                 }
             ]
+        },
+        {
+            "property": "VehicleProperty::CAMERA_SERVICE_CURRENT_STATE",
+            "defaultValue": {
+                "int32Values": [
+                    "CameraServiceState::UNAVAILABLE",
+                    "CameraServiceState::UNAVAILABLE",
+                    "CameraServiceState::UNAVAILABLE",
+                    "CameraServiceState::UNAVAILABLE",
+                    "CameraServiceState::UNAVAILABLE",
+                    "CameraServiceState::UNAVAILABLE",
+                    "CameraServiceState::UNAVAILABLE",
+                    "CameraServiceState::UNAVAILABLE"
+                ]
+            }
         }
     ]
 }
