@@ -8760,40 +8760,6 @@ TEST_P(EarlyBootKeyTest, DISABLED_FullTest) {
 
 INSTANTIATE_KEYMINT_AIDL_TEST(EarlyBootKeyTest);
 
-using UnlockedDeviceRequiredTest = KeyMintAidlTestBase;
-
-// This may be a problematic test.  It can't be run repeatedly without unlocking the device in
-// between runs... and on most test devices there are no enrolled credentials so it can't be
-// unlocked at all, meaning the only way to get the test to pass again on a properly-functioning
-// device is to reboot it.  For that reason, this is disabled by default.  It can be used as part of
-// a manual test process, which includes unlocking between runs, which is why it's included here.
-// Well, that and the fact that it's the only test we can do without also making calls into the
-// Gatekeeper HAL.  We haven't written any cross-HAL tests, and don't know what all of the
-// implications might be, so that may or may not be a solution.
-TEST_P(UnlockedDeviceRequiredTest, DISABLED_KeysBecomeUnusable) {
-    auto [aesKeyData, hmacKeyData, rsaKeyData, ecdsaKeyData] =
-            CreateTestKeys(TAG_UNLOCKED_DEVICE_REQUIRED, ErrorCode::OK);
-    KeyBlobDeleter aes_deleter(keymint_, aesKeyData.blob);
-    KeyBlobDeleter hmac_deleter(keymint_, hmacKeyData.blob);
-    KeyBlobDeleter rsa_deleter(keymint_, rsaKeyData.blob);
-    KeyBlobDeleter ecdsa_deleter(keymint_, ecdsaKeyData.blob);
-
-    EXPECT_EQ(ErrorCode::OK, UseAesKey(aesKeyData.blob));
-    EXPECT_EQ(ErrorCode::OK, UseHmacKey(hmacKeyData.blob));
-    EXPECT_EQ(ErrorCode::OK, UseRsaKey(rsaKeyData.blob));
-    EXPECT_EQ(ErrorCode::OK, UseEcdsaKey(ecdsaKeyData.blob));
-
-    ErrorCode rc = GetReturnErrorCode(
-            keyMint().deviceLocked(false /* passwordOnly */, {} /* timestampToken */));
-    ASSERT_EQ(ErrorCode::OK, rc);
-    EXPECT_EQ(ErrorCode::DEVICE_LOCKED, UseAesKey(aesKeyData.blob));
-    EXPECT_EQ(ErrorCode::DEVICE_LOCKED, UseHmacKey(hmacKeyData.blob));
-    EXPECT_EQ(ErrorCode::DEVICE_LOCKED, UseRsaKey(rsaKeyData.blob));
-    EXPECT_EQ(ErrorCode::DEVICE_LOCKED, UseEcdsaKey(ecdsaKeyData.blob));
-}
-
-INSTANTIATE_KEYMINT_AIDL_TEST(UnlockedDeviceRequiredTest);
-
 using VsrRequirementTest = KeyMintAidlTestBase;
 
 // @VsrTest = VSR-3.10-008

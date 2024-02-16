@@ -482,11 +482,12 @@ enum Tag {
 
     /**
      * Tag::UNLOCKED_DEVICE_REQUIRED specifies that the key may only be used when the device is
-     * unlocked, as reported to KeyMint via authToken operation parameter and the
-     * IKeyMintDevice::deviceLocked() method
+     * unlocked.
      *
-     * Must be hardware-enforced (but is also keystore-enforced on a per-user basis: see the
-     * deviceLocked() documentation).
+     * This tag was originally intended to be hardware-enforced.  However, the support for hardware
+     * enforcement of this tag is now considered deprecated because it cannot work correctly, and
+     * even if implemented it does nothing because it was never enabled by Keystore.  Refer to the
+     * documentation for the deprecated method IKeyMintDevice::deviceLocked().
      */
     UNLOCKED_DEVICE_REQUIRED = TagType.BOOL | 509,
 
