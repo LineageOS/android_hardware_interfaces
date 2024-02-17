@@ -1291,6 +1291,9 @@ TEST_P(GraphicsComposerAidlV3Test, GetDisplayConfigurations) {
                                                                frameIntervalPowerHints.cend());
                     EXPECT_LE(minFrameInterval->frameIntervalNs,
                               VtsComposerClient::kMaxFrameIntervalNs);
+                    const auto maxFrameInterval = *max_element(frameIntervalPowerHints.cbegin(),
+                                                               frameIntervalPowerHints.cend());
+                    EXPECT_GE(maxFrameInterval->frameIntervalNs, vrrConfig.minFrameIntervalNs);
 
                     EXPECT_TRUE(std::all_of(frameIntervalPowerHints.cbegin(),
                                             frameIntervalPowerHints.cend(),
@@ -1382,17 +1385,6 @@ TEST_P(GraphicsComposerAidlV3Test, GetDisplayConfigsIsSubsetOfGetDisplayConfigur
                         }
                     }));
         }
-    }
-}
-
-// TODO(b/291792736) Add detailed VTS test cases for NotifyExpectedPresent
-TEST_P(GraphicsComposerAidlV3Test, NotifyExpectedPresent) {
-    for (const auto& display : mDisplays) {
-        EXPECT_TRUE(mComposerClient
-                            ->notifyExpectedPresent(display.getDisplayId(),
-                                                    ClockMonotonicTimestamp{0},
-                                                    std::chrono::nanoseconds{8ms}.count())
-                            .isOk());
     }
 }
 
@@ -1539,18 +1531,20 @@ class GraphicsComposerAidlCommandTest : public GraphicsComposerAidlTest {
     }
 
     sp<::android::Fence> presentAndGetFence(
-            std::optional<ClockMonotonicTimestamp> expectedPresentTime) {
-        auto& writer = getWriter(getPrimaryDisplayId());
-        writer.validateDisplay(getPrimaryDisplayId(), expectedPresentTime,
-                               VtsComposerClient::kNoFrameIntervalNs);
+            std::optional<ClockMonotonicTimestamp> expectedPresentTime,
+            std::optional<int64_t> displayIdOpt = {},
+            int32_t frameIntervalNs = VtsComposerClient::kNoFrameIntervalNs) {
+        const auto displayId = displayIdOpt.value_or(getPrimaryDisplayId());
+        auto& writer = getWriter(displayId);
+        writer.validateDisplay(displayId, expectedPresentTime, frameIntervalNs);
         execute();
         EXPECT_TRUE(mReader.takeErrors().empty());
 
-        writer.presentDisplay(getPrimaryDisplayId());
+        writer.presentDisplay(displayId);
         execute();
         EXPECT_TRUE(mReader.takeErrors().empty());
 
-        auto presentFence = mReader.takePresentFence(getPrimaryDisplayId());
+        auto presentFence = mReader.takePresentFence(displayId);
         // take ownership
         const int fenceOwner = presentFence.get();
         *presentFence.getR() = -1;
@@ -1569,18 +1563,17 @@ class GraphicsComposerAidlCommandTest : public GraphicsComposerAidlTest {
         return vsyncPeriod;
     }
 
-    int64_t createOnScreenLayer(Composition composition = Composition::DEVICE) {
-        auto& writer = getWriter(getPrimaryDisplayId());
+    int64_t createOnScreenLayer(const VtsDisplay& display,
+                                Composition composition = Composition::DEVICE) {
+        auto& writer = getWriter(display.getDisplayId());
         const auto& [status, layer] =
-                mComposerClient->createLayer(getPrimaryDisplayId(), kBufferSlotCount, &writer);
+                mComposerClient->createLayer(display.getDisplayId(), kBufferSlotCount, &writer);
         EXPECT_TRUE(status.isOk());
-        Rect displayFrame{0, 0, getPrimaryDisplay().getDisplayWidth(),
-                          getPrimaryDisplay().getDisplayHeight()};
-        FRect cropRect{0, 0, (float)getPrimaryDisplay().getDisplayWidth(),
-                       (float)getPrimaryDisplay().getDisplayHeight()};
-        configureLayer(getPrimaryDisplay(), layer, composition, displayFrame, cropRect);
+        Rect displayFrame{0, 0, display.getDisplayWidth(), display.getDisplayHeight()};
+        FRect cropRect{0, 0, (float)display.getDisplayWidth(), (float)display.getDisplayHeight()};
+        configureLayer(display, layer, composition, displayFrame, cropRect);
 
-        writer.setLayerDataspace(getPrimaryDisplayId(), layer, common::Dataspace::UNKNOWN);
+        writer.setLayerDataspace(display.getDisplayId(), layer, common::Dataspace::UNKNOWN);
         return layer;
     }
 
@@ -1692,7 +1685,7 @@ class GraphicsComposerAidlCommandTest : public GraphicsComposerAidlTest {
         ASSERT_NE(nullptr, buffer1);
         ASSERT_NE(nullptr, buffer2);
 
-        const auto layer = createOnScreenLayer();
+        const auto layer = createOnScreenLayer(getPrimaryDisplay());
         auto& writer = getWriter(getPrimaryDisplayId());
         writer.setLayerBuffer(getPrimaryDisplayId(), layer, /*slot*/ 0, buffer1->handle,
                               /*acquireFence*/ -1);
@@ -1723,6 +1716,38 @@ class GraphicsComposerAidlCommandTest : public GraphicsComposerAidlTest {
         EXPECT_GE(actualPresentTime, expectedPresentTime - vsyncPeriod / 2);
 
         ASSERT_TRUE(mComposerClient->setPowerMode(getPrimaryDisplayId(), PowerMode::OFF).isOk());
+    }
+
+    void forEachNotifyExpectedPresentConfig(
+            std::function<void(VtsDisplay&, const DisplayConfiguration&)> func) {
+        for (VtsDisplay& display : mDisplays) {
+            const auto displayId = display.getDisplayId();
+            EXPECT_TRUE(mComposerClient->setPowerMode(displayId, PowerMode::ON).isOk());
+            const auto& [status, displayConfigurations] =
+                    mComposerClient->getDisplayConfigurations(displayId);
+            EXPECT_TRUE(status.isOk());
+            EXPECT_FALSE(displayConfigurations.empty());
+            for (const auto& config : displayConfigurations) {
+                if (config.vrrConfig && config.vrrConfig->notifyExpectedPresentConfig) {
+                    const auto [vsyncPeriodStatus, oldVsyncPeriod] =
+                            mComposerClient->getDisplayVsyncPeriod(displayId);
+                    ASSERT_TRUE(vsyncPeriodStatus.isOk());
+                    const auto& [timelineStatus, timeline] =
+                            mComposerClient->setActiveConfigWithConstraints(
+                                    &display, config.configId,
+                                    VsyncPeriodChangeConstraints{.seamlessRequired = false});
+                    ASSERT_TRUE(timelineStatus.isOk());
+                    if (timeline.refreshRequired) {
+                        sendRefreshFrame(display, &timeline);
+                    }
+                    waitForVsyncPeriodChange(displayId, timeline, systemTime(), oldVsyncPeriod,
+                                             config.vsyncPeriod);
+                    func(display, config);
+                }
+            }
+            EXPECT_TRUE(
+                    mComposerClient->setPowerMode(getPrimaryDisplayId(), PowerMode::OFF).isOk());
+        }
     }
 
     void configureLayer(const VtsDisplay& display, int64_t layer, Composition composition,
@@ -2592,7 +2617,7 @@ TEST_P(GraphicsComposerAidlCommandTest, SetIdleTimerEnabled_Timeout_2) {
     const auto buffer = allocate(::android::PIXEL_FORMAT_RGBA_8888);
     ASSERT_NE(nullptr, buffer->handle);
 
-    const auto layer = createOnScreenLayer();
+    const auto layer = createOnScreenLayer(getPrimaryDisplay());
     auto& writer = getWriter(getPrimaryDisplayId());
     writer.setLayerBuffer(getPrimaryDisplayId(), layer, /*slot*/ 0, buffer->handle,
                           /*acquireFence*/ -1);
@@ -2778,8 +2803,8 @@ TEST_P(GraphicsComposerAidlCommandV2Test,
     }
 
     // Send the REFRESH_RATE_INDICATOR update
-    ASSERT_NO_FATAL_FAILURE(
-            sendBufferUpdate(createOnScreenLayer(Composition::REFRESH_RATE_INDICATOR)));
+    ASSERT_NO_FATAL_FAILURE(sendBufferUpdate(
+            createOnScreenLayer(getPrimaryDisplay(), Composition::REFRESH_RATE_INDICATOR)));
     std::this_thread::sleep_for(1s);
     EXPECT_FALSE(checkIfCallbackRefreshRateChangedDebugEnabledReceived(displayFilter))
             << "A callback should not be received for REFRESH_RATE_INDICATOR";
@@ -3073,6 +3098,141 @@ TEST_P(GraphicsComposerAidlCommandV3Test, NoCreateDestroyBatchedCommandIncorrect
     execute();
     const auto errors = mReader.takeErrors();
     ASSERT_TRUE(errors.size() == 1 && errors[0].errorCode == IComposerClient::EX_BAD_LAYER);
+}
+
+TEST_P(GraphicsComposerAidlCommandV3Test, notifyExpectedPresentTimeout) {
+    if (hasCapability(Capability::PRESENT_FENCE_IS_NOT_RELIABLE)) {
+        GTEST_SUCCEED() << "Device has unreliable present fences capability, skipping";
+        return;
+    }
+    forEachNotifyExpectedPresentConfig([&](VtsDisplay& display,
+                                           const DisplayConfiguration& config) {
+        const auto displayId = display.getDisplayId();
+        auto minFrameIntervalNs = config.vrrConfig->minFrameIntervalNs;
+        const auto timeoutNs = config.vrrConfig->notifyExpectedPresentConfig->timeoutNs;
+
+        const auto buffer = allocate(::android::PIXEL_FORMAT_RGBA_8888);
+        ASSERT_NE(nullptr, buffer);
+        const auto layer = createOnScreenLayer(display);
+        auto& writer = getWriter(displayId);
+        writer.setLayerBuffer(displayId, layer, /*slot*/ 0, buffer->handle,
+                              /*acquireFence*/ -1);
+        sp<::android::Fence> presentFence = presentAndGetFence(ComposerClientWriter::kNoTimestamp,
+                                                               displayId, minFrameIntervalNs);
+        presentFence->waitForever(LOG_TAG);
+        auto lastPresentTimeNs = presentFence->getSignalTime();
+
+        // Frame presents 30ms after timeout
+        const auto timeout = static_cast<const std::chrono::nanoseconds>(timeoutNs);
+        const auto vsyncPeriod = config.vsyncPeriod;
+        int32_t frameAfterTimeoutNs =
+                vsyncPeriod * static_cast<int32_t>((timeout + 30ms).count() / vsyncPeriod);
+        auto expectedPresentTimestamp =
+                ClockMonotonicTimestamp{lastPresentTimeNs + frameAfterTimeoutNs};
+        std::this_thread::sleep_for(timeout);
+        mComposerClient->notifyExpectedPresent(displayId, expectedPresentTimestamp,
+                                               minFrameIntervalNs);
+        presentFence = presentAndGetFence(expectedPresentTimestamp, displayId, minFrameIntervalNs);
+        presentFence->waitForever(LOG_TAG);
+        lastPresentTimeNs = presentFence->getSignalTime();
+        ASSERT_GE(lastPresentTimeNs, expectedPresentTimestamp.timestampNanos - vsyncPeriod / 2);
+        mComposerClient->destroyLayer(displayId, layer, &writer);
+    });
+}
+
+TEST_P(GraphicsComposerAidlCommandV3Test, notifyExpectedPresentFrameIntervalChange) {
+    if (hasCapability(Capability::PRESENT_FENCE_IS_NOT_RELIABLE)) {
+        GTEST_SUCCEED() << "Device has unreliable present fences capability, skipping";
+        return;
+    }
+    forEachNotifyExpectedPresentConfig([&](VtsDisplay& display,
+                                           const DisplayConfiguration& config) {
+        const auto displayId = display.getDisplayId();
+        const auto buffer = allocate(::android::PIXEL_FORMAT_RGBA_8888);
+        ASSERT_NE(nullptr, buffer);
+        const auto layer = createOnScreenLayer(display);
+        auto& writer = getWriter(displayId);
+        writer.setLayerBuffer(displayId, layer, /*slot*/ 0, buffer->handle,
+                              /*acquireFence*/ -1);
+        auto minFrameIntervalNs = config.vrrConfig->minFrameIntervalNs;
+        sp<::android::Fence> presentFence = presentAndGetFence(ComposerClientWriter::kNoTimestamp,
+                                                               displayId, minFrameIntervalNs);
+        presentFence->waitForever(LOG_TAG);
+        auto lastPresentTimeNs = presentFence->getSignalTime();
+
+        auto vsyncPeriod = config.vsyncPeriod;
+        int32_t highestDivisor = VtsComposerClient::kMaxFrameIntervalNs / vsyncPeriod;
+        int32_t lowestDivisor = minFrameIntervalNs / vsyncPeriod;
+        const auto headsUpNs = config.vrrConfig->notifyExpectedPresentConfig->headsUpNs;
+        float totalDivisorsPassed = 0.f;
+        for (int divisor = lowestDivisor; divisor <= highestDivisor; divisor++) {
+            const auto frameIntervalNs = vsyncPeriod * divisor;
+            const auto frameAfterHeadsUp = frameIntervalNs * (headsUpNs / frameIntervalNs);
+            auto presentTime = lastPresentTimeNs + frameIntervalNs + frameAfterHeadsUp;
+            const auto expectedPresentTimestamp = ClockMonotonicTimestamp{presentTime};
+            ASSERT_TRUE(mComposerClient
+                                ->notifyExpectedPresent(displayId, expectedPresentTimestamp,
+                                                        frameIntervalNs)
+                                .isOk());
+            presentFence = presentAndGetFence(expectedPresentTimestamp, displayId, frameIntervalNs);
+            presentFence->waitForever(LOG_TAG);
+            lastPresentTimeNs = presentFence->getSignalTime();
+            if (lastPresentTimeNs >= expectedPresentTimestamp.timestampNanos - vsyncPeriod / 2) {
+                ++totalDivisorsPassed;
+            }
+        }
+        EXPECT_TRUE(totalDivisorsPassed >
+                    (static_cast<float>(highestDivisor - lowestDivisor)) * 0.75f);
+        mComposerClient->destroyLayer(displayId, layer, &writer);
+    });
+}
+
+TEST_P(GraphicsComposerAidlCommandV3Test, frameIntervalChangeAtPresentFrame) {
+    if (hasCapability(Capability::PRESENT_FENCE_IS_NOT_RELIABLE)) {
+        GTEST_SUCCEED() << "Device has unreliable present fences capability, skipping";
+        return;
+    }
+    forEachNotifyExpectedPresentConfig([&](VtsDisplay& display,
+                                           const DisplayConfiguration& config) {
+        const auto displayId = display.getDisplayId();
+        const auto buffer = allocate(::android::PIXEL_FORMAT_RGBA_8888);
+        ASSERT_NE(nullptr, buffer);
+        const auto layer = createOnScreenLayer(display);
+        auto& writer = getWriter(displayId);
+        writer.setLayerBuffer(displayId, layer, /*slot*/ 0, buffer->handle,
+                              /*acquireFence*/ -1);
+        auto minFrameIntervalNs = config.vrrConfig->minFrameIntervalNs;
+
+        auto vsyncPeriod = config.vsyncPeriod;
+        int32_t highestDivisor = VtsComposerClient::kMaxFrameIntervalNs / vsyncPeriod;
+        int32_t lowestDivisor = minFrameIntervalNs / vsyncPeriod;
+        const auto headsUpNs = config.vrrConfig->notifyExpectedPresentConfig->headsUpNs;
+        float totalDivisorsPassed = 0.f;
+        int divisor = lowestDivisor;
+        auto frameIntervalNs = vsyncPeriod * divisor;
+        sp<::android::Fence> presentFence =
+                presentAndGetFence(ComposerClientWriter::kNoTimestamp, displayId, frameIntervalNs);
+        presentFence->waitForever(LOG_TAG);
+        auto lastPresentTimeNs = presentFence->getSignalTime();
+        do {
+            frameIntervalNs = vsyncPeriod * divisor;
+            ++divisor;
+            const auto nextFrameIntervalNs = vsyncPeriod * divisor;
+            const auto frameAfterHeadsUp = frameIntervalNs * (headsUpNs / frameIntervalNs);
+            auto presentTime = lastPresentTimeNs + frameIntervalNs + frameAfterHeadsUp;
+            const auto expectedPresentTimestamp = ClockMonotonicTimestamp{presentTime};
+            presentFence =
+                    presentAndGetFence(expectedPresentTimestamp, displayId, nextFrameIntervalNs);
+            presentFence->waitForever(LOG_TAG);
+            lastPresentTimeNs = presentFence->getSignalTime();
+            if (lastPresentTimeNs >= expectedPresentTimestamp.timestampNanos - vsyncPeriod / 2) {
+                ++totalDivisorsPassed;
+            }
+        } while (divisor < highestDivisor);
+        EXPECT_TRUE(totalDivisorsPassed >
+                    (static_cast<float>(highestDivisor - lowestDivisor)) * 0.75f);
+        mComposerClient->destroyLayer(displayId, layer, &writer);
+    });
 }
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(GraphicsComposerAidlCommandTest);
