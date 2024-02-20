@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0a23944d_4459b879",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 5911
+      },
+      "writtenOn": "2024-02-20T07:09:12Z",
+      "side": 1,
+      "message": "which \"older kernels\" do we still have in 21? 4.4 is kind of the bottom of the barrel now, and this doesnt happen on any 4.4 i have seen?",
+      "revId": "74063304255b4ba0bc083ec0cadc0dbef648baa7",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
