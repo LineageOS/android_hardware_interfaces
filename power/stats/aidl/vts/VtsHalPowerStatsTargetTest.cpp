@@ -65,10 +65,10 @@ class PowerStatsAidl : public testing::TestWithParam<std::string> {
     template <typename T, typename S, typename R>
     void testMatching(std::vector<T> const& c1, R T::*f1, std::vector<S> const& c2, R S::*f2);
 
-    bool containsTimedEntity(const std::string& str);
+    bool isEntitySkipped(const std::string& str);
 
-    void excludeTimedEntities(std::vector<PowerEntity>* entities,
-                              std::vector<StateResidencyResult>* results);
+    void excludeSkippedEntities(std::vector<PowerEntity>* entities,
+                                std::vector<StateResidencyResult>* results);
 
     std::shared_ptr<IPowerStats> powerstats;
 };
@@ -116,15 +116,20 @@ void PowerStatsAidl::testMatching(std::vector<T> const& c1, R T::*f1, std::vecto
     EXPECT_EQ(c1fields, c2fields);
 }
 
-bool PowerStatsAidl::containsTimedEntity(const std::string& str) {
+bool PowerStatsAidl::isEntitySkipped(const std::string& str) {
+    bool skip = false;
     // TODO(b/229698505): Extend PowerEntityInfo to identify timed power entity
-    return str.find("AoC") != std::string::npos;
+    skip |= str.find("AoC") != std::string::npos;
+    // Lassen GNSS power stats will be present after running GPS session once.
+    // Otherwise, VTS will fail due to missing GPS power stats.
+    skip |= str.find("GPS") != std::string::npos;
+    return skip;
 }
 
-void PowerStatsAidl::excludeTimedEntities(std::vector<PowerEntity>* entities,
-                                          std::vector<StateResidencyResult>* results) {
+void PowerStatsAidl::excludeSkippedEntities(std::vector<PowerEntity>* entities,
+                                            std::vector<StateResidencyResult>* results) {
     for (auto it = entities->begin(); it != entities->end(); it++) {
-        if (containsTimedEntity((*it).name)) {
+        if (isEntitySkipped((*it).name)) {
             auto entityId = (*it).id;
             entities->erase(it--);
 
@@ -214,19 +219,19 @@ TEST_P(PowerStatsAidl, TestGetStateResidency) {
 }
 
 // State residency must return all results except timed power entities
-TEST_P(PowerStatsAidl, TestGetStateResidencyAllResultsExceptTimedEntities) {
+TEST_P(PowerStatsAidl, TestGetStateResidencyAllResultsExceptSkippedEntities) {
     std::vector<PowerEntity> entities;
     ASSERT_OK(powerstats->getPowerEntityInfo(&entities));
 
     std::vector<StateResidencyResult> results;
     ASSERT_OK(powerstats->getStateResidency({}, &results));
-    excludeTimedEntities(&entities, &results);
+    excludeSkippedEntities(&entities, &results);
 
     testMatching(entities, &PowerEntity::id, results, &StateResidencyResult::id);
 }
 
 // Each result must contain all state residencies except timed power entities
-TEST_P(PowerStatsAidl, TestGetStateResidencyAllStateResidenciesExceptTimedEntities) {
+TEST_P(PowerStatsAidl, TestGetStateResidencyAllStateResidenciesExceptSkippedEntities) {
     std::vector<PowerEntity> entities;
     ASSERT_OK(powerstats->getPowerEntityInfo(&entities));
 
@@ -234,7 +239,7 @@ TEST_P(PowerStatsAidl, TestGetStateResidencyAllStateResidenciesExceptTimedEntiti
     ASSERT_OK(powerstats->getStateResidency({}, &results));
 
     for (auto entity : entities) {
-        if (!containsTimedEntity(entity.name)) {
+        if (!isEntitySkipped(entity.name)) {
             auto it = std::find_if(results.begin(), results.end(),
                                    [&entity](const auto& x) { return x.id == entity.id; });
             ASSERT_NE(it, results.end());
@@ -255,7 +260,7 @@ TEST_P(PowerStatsAidl, TestGetStateResidencySelectedResultsExceptTimedEntities) 
     std::vector<PowerEntity> selectedEntities = getRandomSubset(entities);
     std::vector<int32_t> selectedIds;
     for (auto it = selectedEntities.begin(); it != selectedEntities.end(); it++) {
-        if (!containsTimedEntity((*it).name)) {
+        if (!isEntitySkipped((*it).name)) {
             selectedIds.push_back((*it).id);
         } else {
             selectedEntities.erase(it--);
