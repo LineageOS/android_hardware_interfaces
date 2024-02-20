@@ -34,6 +34,24 @@
       "parentUuid": "0a23944d_4459b879",
       "revId": "74063304255b4ba0bc083ec0cadc0dbef648baa7",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "42cec1e8_50afcc6e",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 16185
+      },
+      "writtenOn": "2024-02-20T21:13:59Z",
+      "side": 1,
+      "message": "oh, and the original culprit, being 4.4 exynos",
+      "parentUuid": "ec5712fa_6fadd977",
+      "revId": "74063304255b4ba0bc083ec0cadc0dbef648baa7",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
