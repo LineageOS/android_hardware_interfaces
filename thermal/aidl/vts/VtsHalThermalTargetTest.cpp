@@ -20,6 +20,7 @@
 #include <memory>
 #include <string>
 #include <thread>
+#include <unordered_map>
 #include <vector>
 
 #define LOG_TAG "thermal_aidl_hal_test"
@@ -330,6 +331,49 @@ TEST_P(ThermalAidlTest, TemperatureThresholdTest) {
         } else {
             ASSERT_EQ(EX_ILLEGAL_STATE, status.getExceptionCode());
         }
+    }
+}
+
+// Test Thermal->getTemperatureThresholdsWithType(SKIN).
+// @VsrTest = GMS-VSR-3.2.5-001
+// @VsrTest = VSR-3.2.5-001
+// @VsrTest = GMS-VSR-3.2.5-002
+// @VsrTest = VSR-3.2.5-002
+TEST_P(ThermalAidlTest, SkinTemperatureThresholdsTest) {
+    auto apiLevel = ::android::base::GetIntProperty<int32_t>("ro.vendor.api_level", 0);
+    if (apiLevel < 35) {
+        GTEST_SKIP() << "Skipping test as the vendor level is below 35: " << apiLevel;
+    }
+    std::vector<Temperature> temperatures;
+    ::ndk::ScopedAStatus status =
+            mThermal->getTemperaturesWithType(TemperatureType::SKIN, &temperatures);
+    ASSERT_TRUE(status.isOk()) << "getTemperaturesWithType(SKIN) failed";
+    ASSERT_FALSE(temperatures.empty()) << "getTemperaturesWithType(SKIN) returns empty";
+    ASSERT_EQ(1, temperatures.size())
+            << "getTemperaturesWithType(SKIN) returns multiple temperatures";
+
+    std::vector<TemperatureThreshold> thresholds;
+    status = mThermal->getTemperatureThresholdsWithType(TemperatureType::SKIN, &thresholds);
+    ASSERT_TRUE(status.isOk()) << "getTemperatureThresholdsWithType(SKIN) failed";
+    ASSERT_FALSE(thresholds.empty()) << "getTemperatureThresholdsWithType(SKIN) returns empty";
+    ASSERT_EQ(1, thresholds.size())
+            << "getTemperatureThresholdsWithType(SKIN) returns multiple thresholds";
+    auto temperature = temperatures[0];
+    auto threshold = thresholds[0];
+    ASSERT_EQ(temperature.name, threshold.name);
+    auto severities = ::ndk::enum_range<ThrottlingSeverity>();
+    auto cardinality = std::distance(severities.begin(), severities.end());
+    ASSERT_NE(NAN, temperature.value);
+    ASSERT_EQ(cardinality, threshold.hotThrottlingThresholds.size());
+    float lastThreshold = threshold.hotThrottlingThresholds[1];
+    // skip NONE, and check that the rest should be set and non-decreasing
+    for (auto i = 2; i < cardinality; i++) {
+        float t = threshold.hotThrottlingThresholds[i];
+        ASSERT_NE(NAN, t);
+        ASSERT_TRUE(t >= lastThreshold) << "Temperature thresholds should be non-decreasing "
+                                        << "but got " << t << " for status " << i << " and "
+                                        << lastThreshold << " for status " << i - 1;
+        lastThreshold = t;
     }
 }
 
