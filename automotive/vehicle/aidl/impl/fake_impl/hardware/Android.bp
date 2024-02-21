@@ -29,9 +29,6 @@ cc_library {
     export_include_dirs: ["include"],
     cflags: [
         "-DENABLE_VEHICLE_HAL_TEST_PROPERTIES",
-        // Uncomment this if running on emulator and connecting to a local grpc server
-        // running on host 127.0.0.1:50051 (TestWakeupClientServerHost)
-        // "-DPOWER_GRPC_SERVICE_ADDRESS=\"10.0.2.2:50051\"",
     ],
     defaults: [
         "VehicleHalDefaults",

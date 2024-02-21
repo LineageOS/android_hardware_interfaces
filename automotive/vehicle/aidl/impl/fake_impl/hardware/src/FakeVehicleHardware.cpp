@@ -114,6 +114,9 @@ constexpr char DEFAULT_CONFIG_DIR[] = "/vendor/etc/automotive/vhalconfig/";
 // The directory for property configuration file that overrides the default configuration file.
 // For config file format, see impl/default_config/config/README.md.
 constexpr char OVERRIDE_CONFIG_DIR[] = "/vendor/etc/automotive/vhaloverride/";
+// The optional config file for power controller grpc service that provides vehicleInUse and
+// ApPowerBootupReason property.
+constexpr char GRPC_SERVICE_CONFIG_FILE[] = "/vendor/etc/automotive/powercontroller/serverconfig";
 // If OVERRIDE_PROPERTY is set, we will use the configuration files from OVERRIDE_CONFIG_DIR to
 // overwrite the default configs.
 constexpr char OVERRIDE_PROPERTY[] = "persist.vendor.vhal_init_value_override";
@@ -267,6 +270,17 @@ const std::unordered_map<int32_t, std::vector<int32_t>> mAdasEnabledPropToAdasPr
 const std::unordered_set<int32_t> mPowerPropIds = {toInt(VehicleProperty::VEHICLE_IN_USE),
                                                    toInt(VehicleProperty::AP_POWER_BOOTUP_REASON)};
 
+void maybeGetGrpcServiceInfo(std::string* address) {
+    std::ifstream ifs(GRPC_SERVICE_CONFIG_FILE);
+    if (!ifs) {
+        ALOGI("Cannot open grpc service config file at: %s, assume no service is available",
+              GRPC_SERVICE_CONFIG_FILE);
+        return;
+    }
+    ifs >> *address;
+    ifs.close();
+}
+
 }  // namespace
 
 void FakeVehicleHardware::storePropInitialValue(const ConfigDeclaration& config) {
@@ -357,6 +371,8 @@ std::unordered_map<int32_t, ConfigDeclaration> FakeVehicleHardware::loadConfigDe
 }
 
 void FakeVehicleHardware::init() {
+    maybeGetGrpcServiceInfo(&mPowerControllerServiceAddress);
+
     for (auto& [_, configDeclaration] : loadConfigDeclarations()) {
         VehiclePropConfig cfg = configDeclaration.config;
         VehiclePropertyStore::TokenFunction tokenFunction = nullptr;
@@ -774,12 +790,12 @@ FakeVehicleHardware::ValueResultType FakeVehicleHardware::maybeGetSpecialValue(
     int32_t propId = value.prop;
     ValueResultType result;
 
-#ifdef POWER_GRPC_SERVICE_ADDRESS
-    if (mPowerPropIds.find(propId) != mPowerPropIds.end()) {
-        *isSpecialValue = true;
-        return getPowerPropFromExternalService(propId);
+    if (mPowerControllerServiceAddress != "") {
+        if (mPowerPropIds.find(propId) != mPowerPropIds.end()) {
+            *isSpecialValue = true;
+            return getPowerPropFromExternalService(propId);
+        }
     }
-#endif
 
     if (propId >= STARTING_VENDOR_CODE_PROPERTIES_FOR_TEST &&
         propId < ENDING_VENDOR_CODE_PROPERTIES_FOR_TEST) {
@@ -863,10 +879,9 @@ FakeVehicleHardware::ValueResultType FakeVehicleHardware::maybeGetSpecialValue(
 }
 
 FakeVehicleHardware::ValueResultType FakeVehicleHardware::getPowerPropFromExternalService(
-        [[maybe_unused]] int32_t propId) const {
-#ifdef POWER_GRPC_SERVICE_ADDRESS
+        int32_t propId) const {
     auto channel =
-            grpc::CreateChannel(POWER_GRPC_SERVICE_ADDRESS, grpc::InsecureChannelCredentials());
+            grpc::CreateChannel(mPowerControllerServiceAddress, grpc::InsecureChannelCredentials());
     auto clientStub = PowerController::NewStub(channel);
     switch (propId) {
         case toInt(VehicleProperty::VEHICLE_IN_USE):
@@ -877,10 +892,6 @@ FakeVehicleHardware::ValueResultType FakeVehicleHardware::getPowerPropFromExtern
             return StatusError(StatusCode::INTERNAL_ERROR)
                    << "Unsupported power property ID: " << propId;
     }
-#else
-    // Must not reach here.
-    return StatusError(StatusCode::INTERNAL_ERROR);
-#endif
 }
 
 FakeVehicleHardware::ValueResultType FakeVehicleHardware::getVehicleInUse(

@@ -189,6 +189,10 @@ class FakeVehicleHardware : public IVehicleHardware {
     // Only used during initialization.
     JsonConfigLoader mLoader;
 
+    // Only used during initialization. If not empty, points to an external grpc server that
+    // provides power controlling related properties.
+    std::string mPowerControllerServiceAddress = "";
+
     void init();
     // Stores the initial value to property store.
     void storePropInitialValue(const ConfigDeclaration& config);

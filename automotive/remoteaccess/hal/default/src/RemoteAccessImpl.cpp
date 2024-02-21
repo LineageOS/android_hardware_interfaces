@@ -27,37 +27,66 @@
 #include <libnetdevice/libnetdevice.h>
 #include <stdlib.h>
 
+namespace {
+
+constexpr char GRPC_SERVICE_CONFIG_FILE[] = "/vendor/etc/automotive/powercontroller/serverconfig";
 constexpr char SERVICE_NAME[] = "android.hardware.automotive.remoteaccess.IRemoteAccess/default";
 
+void maybeGetGrpcServiceInfo(std::string* address, std::string* ifname) {
+    std::ifstream ifs(GRPC_SERVICE_CONFIG_FILE);
+    if (!ifs) {
+        LOG(INFO) << "Cannot open grpc service config file at: " << GRPC_SERVICE_CONFIG_FILE
+                  << ", assume no service is available";
+        return;
+    }
+    int count = 0;
+    while (ifs.good()) {
+        std::string line;
+        ifs >> line;
+        // First line is address, second line, if present is ifname.
+        if (count == 0) {
+            *address = line;
+        } else {
+            *ifname = line;
+            break;
+        }
+        count++;
+    }
+    ifs.close();
+}
+
+}  // namespace
+
 int main(int /* argc */, char* /* argv */[]) {
-    android::hardware::automotive::remoteaccess::WakeupClient::StubInterface* grpcStub = nullptr;
+    std::string grpcServiceAddress = "";
+    std::string grpcServiceIfname = "";
+    maybeGetGrpcServiceInfo(&grpcServiceAddress, &grpcServiceIfname);
 
-#ifdef GRPC_SERVICE_ADDRESS
-    LOG(INFO) << "Registering RemoteAccessService as service, server: " << GRPC_SERVICE_ADDRESS
-              << "...";
-    grpc::ChannelArguments grpcargs = {};
+    std::unique_ptr<android::hardware::automotive::remoteaccess::WakeupClient::Stub> grpcStub;
 
-#ifdef GRPC_SERVICE_IFNAME
-    grpcargs.SetSocketMutator(
-            android::hardware::automotive::remoteaccess::MakeBindToDeviceSocketMutator(
-                    GRPC_SERVICE_IFNAME));
-    LOG(DEBUG) << "GRPC_SERVICE_IFNAME specified as: " << GRPC_SERVICE_IFNAME;
-    LOG(INFO) << "Waiting for interface: " << GRPC_SERVICE_IFNAME;
-    android::netdevice::waitFor({GRPC_SERVICE_IFNAME},
-                                android::netdevice::WaitCondition::PRESENT_AND_UP);
-    LOG(INFO) << "Waiting for interface: " << GRPC_SERVICE_IFNAME << " done";
-#endif  // #ifdef GRPC_SERVICE_IFNAME
-    auto channel = grpc::CreateChannel(GRPC_SERVICE_ADDRESS, grpc::InsecureChannelCredentials());
-    auto clientStub = android::hardware::automotive::remoteaccess::WakeupClient::NewStub(channel);
+    if (grpcServiceAddress != "") {
+        LOG(INFO) << "Registering RemoteAccessService as service, server: " << grpcServiceAddress
+                  << "...";
+        grpc::ChannelArguments grpcargs = {};
 
-    grpcStub = clientStub.get();
-
-#else
-    LOG(INFO) << "GRPC_SERVICE_ADDRESS is not defined, work in fake mode";
-#endif  // #ifdef GRPC_SERVICE_ADDRESS
+        if (grpcServiceIfname != "") {
+            grpcargs.SetSocketMutator(
+                    android::hardware::automotive::remoteaccess::MakeBindToDeviceSocketMutator(
+                            grpcServiceIfname));
+            LOG(DEBUG) << "grpcServiceIfname specified as: " << grpcServiceIfname;
+            LOG(INFO) << "Waiting for interface: " << grpcServiceIfname;
+            android::netdevice::waitFor({grpcServiceIfname},
+                                        android::netdevice::WaitCondition::PRESENT_AND_UP);
+            LOG(INFO) << "Waiting for interface: " << grpcServiceIfname << " done";
+        }
+        auto channel = grpc::CreateChannel(grpcServiceAddress, grpc::InsecureChannelCredentials());
+        grpcStub = android::hardware::automotive::remoteaccess::WakeupClient::NewStub(channel);
+    } else {
+        LOG(INFO) << "grpcServiceAddress is not defined, work in fake mode";
+    }
 
     auto service = ndk::SharedRefBase::make<
-            android::hardware::automotive::remoteaccess::RemoteAccessService>(grpcStub);
+            android::hardware::automotive::remoteaccess::RemoteAccessService>(grpcStub.get());
 
     binder_exception_t err = AServiceManager_addService(service->asBinder().get(), SERVICE_NAME);
     if (err != EX_NONE) {
