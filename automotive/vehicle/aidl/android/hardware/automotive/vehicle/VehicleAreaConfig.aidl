@@ -53,21 +53,25 @@ parcelable VehicleAreaConfig {
     /**
      * Defines if the area ID for this property is READ, WRITE or READ_WRITE. This only applies if
      * the property is defined in the framework as a READ_WRITE property. Access (if set) should be
-     * equal to, or a superset of, the VehiclePropConfig.access of the property.
+     * equal to, or a superset of, the VehiclePropConfig.access of the property. If access is not
+     * set for this VehicleAreaConfig (i.e. access == VehiclePropertyAccess.NONE), then it will
+     * automatically be assumed that the areaId access is the same as the VehiclePropConfig.access
+     * of the property.
      *
      * For example, if a property is defined as READ_WRITE, but the OEM wants to specify certain
      * area Ids as READ-only, the corresponding areaIds should have an access set to READ, while the
      * others must be set to READ_WRITE. We do not support setting specific area Ids to WRITE-only
      * when the property is READ-WRITE.
      *
-     * Exclusively one of VehiclePropConfig and the VehicleAreaConfigs should be specified for a
-     * single property. If VehiclePropConfig.access is populated, none of the
-     * VehicleAreaConfig.access values should be populated. If VehicleAreaConfig.access values are
-     * populated, VehiclePropConfig.access must not be populated.
+     * VehiclePropConfig.access should be equal the maximal subset of the accesses set in
+     * VehiclePropConfig.areaConfigs, excluding those with access == VehiclePropertyAccess.NONE. For
+     * example, if a VehiclePropConfig has some area configs with an access of
+     * VehiclePropertyAccess.READ and others with an access of VehiclePropertyAccess.READ_WRITE, the
+     * VehiclePropConfig object's access should be VehiclePropertyAccess.READ.
      *
-     * VehicleAreaConfigs should not be partially populated with access. If the OEM wants to specify
-     * access for one area Id, all other configs should be populated with their access levels as
-     * well.
+     * In the scenario where the OEM actually wants to set VehicleAreaConfig.access =
+     * VehiclePropertyAccess.NONE, the maximal subset rule should apply with this area config
+     * included, making the VehiclePropConfig.access = VehiclePropertyAccess.NONE.
      */
     VehiclePropertyAccess access = VehiclePropertyAccess.NONE;
 

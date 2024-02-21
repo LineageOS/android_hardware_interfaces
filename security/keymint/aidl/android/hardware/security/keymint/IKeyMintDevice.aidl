@@ -794,33 +794,40 @@ interface IKeyMintDevice {
             in @nullable HardwareAuthToken authToken);
 
     /**
-     * Called by client to notify the IKeyMintDevice that the device is now locked, and keys with
-     * the UNLOCKED_DEVICE_REQUIRED tag should no longer be usable.  When this function is called,
-     * the IKeyMintDevice should note the current timestamp, and attempts to use
-     * UNLOCKED_DEVICE_REQUIRED keys must be rejected with Error::DEVICE_LOCKED until an
-     * authentication token with a later timestamp is presented.  If the `passwordOnly' argument is
-     * set to true the sufficiently-recent authentication token must indicate that the user
-     * authenticated with a password, not a biometric.
+     * This method is deprecated and has never been used.  Implementations should return
+     * ErrorCode::UNIMPLEMENTED.
      *
-     * Note that the IKeyMintDevice UNLOCKED_DEVICE_REQUIRED semantics are slightly different from
-     * the UNLOCKED_DEVICE_REQUIRED semantics enforced by keystore.  Keystore handles device locking
-     * on a per-user basis.  Because auth tokens do not contain an Android user ID, it's not
-     * possible to replicate the keystore enforcement logic in IKeyMintDevice.  So from the
-     * IKeyMintDevice perspective, any user unlock unlocks all UNLOCKED_DEVICE_REQUIRED keys.
-     * Keystore will continue enforcing the per-user device locking.
+     * This method was originally intended to be used to notify KeyMint that the device is now
+     * locked, and keys with the UNLOCKED_DEVICE_REQUIRED tag should no longer be usable until a
+     * later valid HardwareAuthToken is presented.  However, Android has never called this method
+     * and it cannot start doing so, because KeyMint's enforcement of UNLOCKED_DEVICE_REQUIRED did
+     * not provide the correct semantics and therefore could never be enabled.  Specifically, the
+     * following issues existed with the design of KeyMint's enforcement of
+     * UNLOCKED_DEVICE_REQUIRED:
      *
-     * @param passwordOnly specifies whether the device must be unlocked with a password, rather
-     * than a biometric, before UNLOCKED_DEVICE_REQUIRED keys can be used.
+     * o It assumed a global device lock state only.  Android actually has a separate lock state for
+     *   each user.  See the javadoc for KeyguardManager#isDeviceLocked().
+     * o It assumed that unlocking the device involves a successful user authentication that
+     *   generates a HardwareAuthToken.  This is not necessarily the case, since Android supports
+     *   weaker unlock methods including class 1 and 2 biometrics and trust agents.  These unlock
+     *   methods do not generate a HardwareAuthToken or interact with KeyMint in any way.  Also,
+     *   UNLOCKED_DEVICE_REQUIRED must work even for users who do not have a secure lock screen.
+     * o It would have made UNLOCKED_DEVICE_REQUIRED incompatible with requiring user
+     *   authentication in some cases.  These two key protections can each require a different
+     *   HardwareAuthToken, but KeyMint only supports one HardwareAuthToken per operation.
+     * o It would have provided no security benefit over Keystore's enforcement of
+     *   UNLOCKED_DEVICE_REQUIRED.  This is because since Android 12, Keystore enforces
+     *   UNLOCKED_DEVICE_REQUIRED not just logically, but it also cryptographically by
+     *   superencrypting all such keys and wiping or re-encrypting the superencryption key when the
+     *   device is locked (whenever possible).  KeyMint is still used to support biometric unlocks,
+     *   but this mechanism does not use KeyMint's direct enforcement of UNLOCKED_DEVICE_REQUIRED.
      *
-     * @param timestampToken is used by StrongBox implementations of IKeyMintDevice.  It
-     * provides the StrongBox IKeyMintDevice with a fresh, MACed timestamp which it can use as the
-     * device-lock time, for future comparison against auth tokens when operations using
-     * UNLOCKED_DEVICE_REQUIRED keys are attempted.  Unless the auth token timestamp is newer than
-     * the timestamp in the timestampToken, the device is still considered to be locked.
-     * Crucially, if a StrongBox IKeyMintDevice receives a deviceLocked() call with a timestampToken
-     * timestamp that is less than the timestamp in the last deviceLocked() call, it must ignore the
-     * new timestamp.  TEE IKeyMintDevice implementations will receive an empty timestampToken (zero
-     * values and empty vectors) and should use their own clock as the device-lock time.
+     * Therefore, this method is not useful, and there is no reason for it be called.
+     * Implementations should return ErrorCode::UNIMPLEMENTED and should not include
+     * UNLOCKED_DEVICE_REQUIRED in the list of hardware-enforced key parameters.
+     *
+     * @param passwordOnly N/A due to the deprecation
+     * @param timestampToken N/A due to the deprecation
      */
     void deviceLocked(in boolean passwordOnly, in @nullable TimeStampToken timestampToken);
 

@@ -29,9 +29,20 @@ parcelable VehiclePropConfig {
     /**
      * Defines if the property is read or write or both.
      *
-     * If populating VehicleAreaConfig.access fields for this property, this field should not be
-     * populated. If the OEM decides to populate this field, none of the VehicleAreaConfig.access
-     * fields should be populated.
+     * If any VehicleAreaConfig.access is not set (i.e. VehicleAreaConfig.access ==
+     * VehiclePropertyAccess.NONE) for this property, it will automatically be assumed that the
+     * areaId access is the same as the VehiclePropConfig.access.
+     *
+     * VehiclePropConfig.access should be equal the maximal subset of the accesses set in its
+     * areaConfigs, excluding those with access == VehiclePropertyAccess.NONE. For example, if a
+     * VehiclePropConfig has some area configs with an access of VehiclePropertyAccess.READ and
+     * others with an access of VehiclePropertyAccess.READ_WRITE, the VehiclePropConfig object's
+     * access should be VehiclePropertyAccess.READ.
+     *
+     * In the scenario where the OEM actually wants to set VehicleAreaConfig.access =
+     * VehiclePropertyAccess.NONE for a particular area config, the maximal subset rule should apply
+     * with this area config included, making the VehiclePropConfig.access =
+     * VehiclePropertyAccess.NONE.
      */
     VehiclePropertyAccess access = VehiclePropertyAccess.NONE;
 
