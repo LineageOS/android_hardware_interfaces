@@ -1916,52 +1916,83 @@ void CameraAidlTest::verifyStreamCombination(const std::shared_ptr<ICameraDevice
     }
 }
 
-void CameraAidlTest::verifySessionCharacteristics(const CameraMetadata& chars) {
-    if (flags::feature_combination_query()) {
-        const camera_metadata_t* metadata =
-                reinterpret_cast<const camera_metadata_t*>(chars.metadata.data());
+void CameraAidlTest::verifySessionCharacteristics(const CameraMetadata& session_chars,
+                                                  const CameraMetadata& camera_chars) {
+    if (!flags::feature_combination_query()) {
+        return;
+    }
 
-        size_t expectedSize = chars.metadata.size();
-        int result = validate_camera_metadata_structure(metadata, &expectedSize);
-        ASSERT_TRUE((result == 0) || (result == CAMERA_METADATA_VALIDATION_SHIFTED));
-        size_t entryCount = get_camera_metadata_entry_count(metadata);
-        ASSERT_GT(entryCount, 0u);
+    const camera_metadata_t* session_metadata =
+            reinterpret_cast<const camera_metadata_t*>(session_chars.metadata.data());
 
-        camera_metadata_ro_entry entry;
-        int retcode = 0;
-        float maxDigitalZoom = 1.0;
+    const camera_metadata_t* camera_metadata =
+            reinterpret_cast<const camera_metadata_t*>(camera_chars.metadata.data());
 
-        retcode = find_camera_metadata_ro_entry(metadata, ANDROID_SCALER_AVAILABLE_MAX_DIGITAL_ZOOM,
-                                                &entry);
-        // ANDROID_SCALER_AVAILABLE_MAX_DIGITAL_ZOOM should always be present.
-        if ((0 == retcode) && (entry.count == 1)) {
-            maxDigitalZoom = entry.data.f[0];
-        } else {
-            ADD_FAILURE() << "Get camera scalerAvailableMaxDigitalZoom failed!";
+    size_t expectedSize = session_chars.metadata.size();
+    int result = validate_camera_metadata_structure(session_metadata, &expectedSize);
+    ASSERT_TRUE((result == 0) || (result == CAMERA_METADATA_VALIDATION_SHIFTED));
+    size_t entryCount = get_camera_metadata_entry_count(session_metadata);
+    // There should be at least 1 characteristic present:
+    // SCALER_MAX_DIGITAL_ZOOM must always be available.
+    // ZOOM_RATIO_RANGE must be available if ZOOM_RATIO is supported.
+    ASSERT_TRUE(entryCount >= 1);
+
+    camera_metadata_ro_entry entry;
+    int retcode = 0;
+    float maxDigitalZoom = 1.0;
+
+    for (size_t i = 0; i < entryCount; i++) {
+        retcode = get_camera_metadata_ro_entry(session_metadata, i, &entry);
+        ASSERT_TRUE(retcode == 0);
+
+        std::set<uint32_t> allowed_tags = {ANDROID_SCALER_AVAILABLE_MAX_DIGITAL_ZOOM,
+                                           ANDROID_CONTROL_ZOOM_RATIO_RANGE};
+
+        if (contains(allowed_tags, entry.tag)) {
+            continue;
         }
 
-        retcode = find_camera_metadata_ro_entry(metadata, ANDROID_CONTROL_ZOOM_RATIO_RANGE, &entry);
-        bool hasZoomRatioRange = (0 == retcode && entry.count == 2);
-        if (!hasZoomRatioRange) {
-            return;
-        }
-        float minZoomRatio = entry.data.f[0];
-        float maxZoomRatio = entry.data.f[1];
-        constexpr float FLOATING_POINT_THRESHOLD = 0.00001f;
-        if (abs(maxDigitalZoom - maxZoomRatio) > FLOATING_POINT_THRESHOLD) {
-            ADD_FAILURE() << "Difference between maximum digital zoom " << maxDigitalZoom
-                          << " and maximum zoom ratio " << maxZoomRatio
-                          << " is greater than the threshold " << FLOATING_POINT_THRESHOLD << "!";
-        }
-        if (minZoomRatio > maxZoomRatio) {
-            ADD_FAILURE() << "Maximum zoom ratio is less than minimum zoom ratio!";
-        }
-        if (minZoomRatio > 1.0f) {
-            ADD_FAILURE() << "Minimum zoom ratio is more than 1.0!";
-        }
-        if (maxZoomRatio < 1.0f) {
-            ADD_FAILURE() << "Maximum zoom ratio is less than 1.0!";
-        }
+        // Other than the ones above, no tags should be allowed apart from vendor tags.
+        ASSERT_TRUE(entry.tag >= VENDOR_SECTION_START);
+    }
+
+    retcode = find_camera_metadata_ro_entry(session_metadata,
+                                            ANDROID_SCALER_AVAILABLE_MAX_DIGITAL_ZOOM, &entry);
+    if ((0 == retcode) && (entry.count == 1)) {
+        maxDigitalZoom = entry.data.f[0];
+    } else {
+        ADD_FAILURE() << "Get camera scalerAvailableMaxDigitalZoom failed!";
+    }
+
+    retcode = find_camera_metadata_ro_entry(camera_metadata, ANDROID_CONTROL_ZOOM_RATIO_RANGE,
+                                            &entry);
+    bool hasZoomRatioRange = (0 == retcode && entry.count == 2);
+    if (!hasZoomRatioRange) {
+        ALOGI("Skipping the rest of the test as ZOOM_RATIO_RANGE is not in camera characteristics");
+        return;
+    }
+
+    // Session characteristics must contain zoom_ratio_range if camera characteristics has it.
+    retcode = find_camera_metadata_ro_entry(session_metadata, ANDROID_CONTROL_ZOOM_RATIO_RANGE,
+                                            &entry);
+    ASSERT_TRUE(0 == retcode && entry.count == 2);
+
+    float minZoomRatio = entry.data.f[0];
+    float maxZoomRatio = entry.data.f[1];
+    constexpr float FLOATING_POINT_THRESHOLD = 0.00001f;
+    if (abs(maxDigitalZoom - maxZoomRatio) > FLOATING_POINT_THRESHOLD) {
+        ADD_FAILURE() << "Difference between maximum digital zoom " << maxDigitalZoom
+                      << " and maximum zoom ratio " << maxZoomRatio
+                      << " is greater than the threshold " << FLOATING_POINT_THRESHOLD << "!";
+    }
+    if (minZoomRatio > maxZoomRatio) {
+        ADD_FAILURE() << "Maximum zoom ratio is less than minimum zoom ratio!";
+    }
+    if (minZoomRatio > 1.0f) {
+        ADD_FAILURE() << "Minimum zoom ratio is more than 1.0!";
+    }
+    if (maxZoomRatio < 1.0f) {
+        ADD_FAILURE() << "Maximum zoom ratio is less than 1.0!";
     }
 }
 

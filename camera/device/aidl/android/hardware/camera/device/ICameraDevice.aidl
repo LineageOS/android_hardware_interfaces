@@ -450,6 +450,9 @@ interface ICameraDevice {
      *   - ANDROID_CONTROL_ZOOM_RATIO_RANGE
      *   - SCALER_AVAILABLE_MAX_DIGITAL_ZOOM
      *
+     * No other tags (other than vendor tags) should be set in the characteristics returned from
+     * the HAL.
+     *
      * A service specific error will be returned on the following conditions
      *     INTERNAL_ERROR:
      *         The camera device cannot be opened due to an internal
