@@ -23,6 +23,7 @@
 
 #include "FakeFingerprintEngine.h"
 #include "FakeFingerprintEngineUdfps.h"
+#include "Fingerprint.h"
 
 using namespace ::android::fingerprint::virt;
 using namespace ::aidl::android::hardware::biometrics::fingerprint;
@@ -99,7 +100,7 @@ class FakeFingerprintEngineUdfpsTest : public ::testing::Test {
 
     void TearDown() override {
         // reset to default
-        FingerprintHalProperties::sensor_location("");
+        Fingerprint::cfg().set<std::string>("sensor_location", "");
     }
 
     FakeFingerprintEngineUdfps mEngine;
@@ -113,14 +114,14 @@ bool isDefaultLocation(SensorLocation& sc) {
 
 TEST_F(FakeFingerprintEngineUdfpsTest, getSensorLocationOk) {
     auto loc = "100:200:30";
-    FingerprintHalProperties::sensor_location(loc);
+    Fingerprint::cfg().set<std::string>("sensor_location", loc);
     SensorLocation sc = mEngine.getSensorLocation();
     ASSERT_TRUE(sc.sensorLocationX == 100);
     ASSERT_TRUE(sc.sensorLocationY == 200);
     ASSERT_TRUE(sc.sensorRadius == 30);
 
     loc = "100:200:30:screen1";
-    FingerprintHalProperties::sensor_location(loc);
+    Fingerprint::cfg().set<std::string>("sensor_location", loc);
     sc = mEngine.getSensorLocation();
     ASSERT_TRUE(sc.sensorLocationX == 100);
     ASSERT_TRUE(sc.sensorLocationY == 200);
@@ -132,7 +133,7 @@ TEST_F(FakeFingerprintEngineUdfpsTest, getSensorLocationBad) {
     const std::vector<std::string> badStr{"", "100", "10:20", "10,20,5", "a:b:c"};
     SensorLocation sc;
     for (const auto& s : badStr) {
-        FingerprintHalProperties::sensor_location(s);
+        Fingerprint::cfg().set<std::string>("sensor_location", s);
         sc = mEngine.getSensorLocation();
         ASSERT_TRUE(isDefaultLocation(sc));
     }
@@ -158,7 +159,7 @@ TEST_F(FakeFingerprintEngineUdfpsTest, enroll) {
     std::shared_ptr<TestSessionCallback> cb = ndk::SharedRefBase::make<TestSessionCallback>();
     std::promise<void> cancel;
     keymaster::HardwareAuthToken hat{.mac = {5, 6}};
-    FingerprintHalProperties::next_enrollment("5:0,0:true");
+    Fingerprint::cfg().set<std::string>("next_enrollment", "5:0,0:true");
     mEngine.notifyFingerdown();
     mEngine.enrollImpl(cb.get(), hat, cancel.get_future());
     ASSERT_TRUE(mEngine.getWorkMode() == FakeFingerprintEngineUdfps::WorkMode::kEnroll);
@@ -169,10 +170,10 @@ TEST_F(FakeFingerprintEngineUdfpsTest, enroll) {
 }
 
 TEST_F(FakeFingerprintEngineUdfpsTest, detectInteraction) {
-    FingerprintHalProperties::detect_interaction(true);
-    FingerprintHalProperties::enrollments({1, 2});
-    FingerprintHalProperties::enrollment_hit(2);
-    FingerprintHalProperties::operation_detect_interaction_acquired("");
+    Fingerprint::cfg().set<bool>("detect_interaction", true);
+    Fingerprint::cfg().setopt<OptIntVec>("enrollments", {1, 2});
+    Fingerprint::cfg().set<std::int32_t>("enrollment_hit", 2);
+    Fingerprint::cfg().set<std::string>("operation_detect_interaction_acquired", "");
     std::shared_ptr<TestSessionCallback> cb = ndk::SharedRefBase::make<TestSessionCallback>();
     std::promise<void> cancel;
     mEngine.notifyFingerdown();
