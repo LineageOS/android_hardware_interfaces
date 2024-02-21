@@ -21,7 +21,7 @@ cc_test {
         "libvndksupport",
     ],
     static_libs: [
-        "android.hardware.wifi.hostapd-V1-ndk",
+        "android.hardware.wifi.hostapd-V2-ndk",
         "VtsHalWifiV1_0TargetTestUtil",
         "VtsHalWifiV1_5TargetTestUtil",
         "VtsHalWifiV1_6TargetTestUtil",
