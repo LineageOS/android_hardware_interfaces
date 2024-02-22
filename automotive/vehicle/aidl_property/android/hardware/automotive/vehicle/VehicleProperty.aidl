@@ -79,7 +79,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.STATIC
      * @access VehiclePropertyAccess.READ
-     * @unit VehicleUnit:YEAR
+     * @unit VehicleUnit.YEAR
      * @version 2
      */
     INFO_MODEL_YEAR = 0x0103 + 0x10000000 + 0x01000000
@@ -89,7 +89,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.STATIC
      * @access VehiclePropertyAccess.READ
-     * @unit VehicleUnit:MILLILITER
+     * @unit VehicleUnit.MILLILITER
      * @version 2
      */
     INFO_FUEL_CAPACITY = 0x0104 + 0x10000000 + 0x01000000
@@ -124,7 +124,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.STATIC
      * @access VehiclePropertyAccess.READ
-     * @unit VehicleUnit:WH
+     * @unit VehicleUnit.WATT_HOUR
      * @version 2
      */
     INFO_EV_BATTERY_CAPACITY = 0x0106 + 0x10000000 + 0x01000000
@@ -184,7 +184,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.STATIC
      * @access VehiclePropertyAccess.READ
-     * @unit VehicleUnit:MILLIMETER
+     * @unit VehicleUnit.MILLIMETER
      * @version 2
      */
     INFO_EXTERIOR_DIMENSIONS = 0x010B + 0x10000000 + 0x01000000
@@ -210,7 +210,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.CONTINUOUS
      * @access VehiclePropertyAccess.READ
-     * @unit VehicleUnit:KILOMETER
+     * @unit VehicleUnit.KILOMETER
      * @version 2
      */
     PERF_ODOMETER = 0x0204 + 0x10000000 + 0x01000000
@@ -226,7 +226,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.CONTINUOUS
      * @access VehiclePropertyAccess.READ
-     * @unit VehicleUnit:METER_PER_SEC
+     * @unit VehicleUnit.METER_PER_SEC
      * @version 2
      */
     PERF_VEHICLE_SPEED = 0x0207 + 0x10000000 + 0x01000000
@@ -239,7 +239,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.CONTINUOUS
      * @access VehiclePropertyAccess.READ
-     * @unit VehicleUnit:METER_PER_SEC
+     * @unit VehicleUnit.METER_PER_SEC
      * @version 2
      */
     PERF_VEHICLE_SPEED_DISPLAY = 0x0208 + 0x10000000 + 0x01000000
@@ -251,7 +251,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.CONTINUOUS
      * @access VehiclePropertyAccess.READ
-     * @unit VehicleUnit:DEGREES
+     * @unit VehicleUnit.DEGREES
      * @version 2
      */
     PERF_STEERING_ANGLE = 0x0209 + 0x10000000 + 0x01000000
@@ -263,7 +263,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.CONTINUOUS
      * @access VehiclePropertyAccess.READ
-     * @unit VehicleUnit:DEGREES
+     * @unit VehicleUnit.DEGREES
      * @version 2
      */
     PERF_REAR_STEERING_ANGLE = 0x0210 + 0x10000000 + 0x01000000
@@ -273,7 +273,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.CONTINUOUS
      * @access VehiclePropertyAccess.READ
-     * @unit VehicleUnit:CELSIUS
+     * @unit VehicleUnit.CELSIUS
      * @version 2
      */
     ENGINE_COOLANT_TEMP = 0x0301 + 0x10000000 + 0x01000000
@@ -293,7 +293,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.CONTINUOUS
      * @access VehiclePropertyAccess.READ
-     * @unit VehicleUnit:CELSIUS
+     * @unit VehicleUnit.CELSIUS
      * @version 2
      */
     ENGINE_OIL_TEMP = 0x0304 + 0x10000000 + 0x01000000
@@ -303,7 +303,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.CONTINUOUS
      * @access VehiclePropertyAccess.READ
-     * @unit VehicleUnit:RPM
+     * @unit VehicleUnit.RPM
      * @version 2
      */
     ENGINE_RPM = 0x0305 + 0x10000000 + 0x01000000
@@ -356,7 +356,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.CONTINUOUS
      * @access VehiclePropertyAccess.READ
-     * @unit VehicleUnit:MILLILITER
+     * @unit VehicleUnit.MILLILITER
      * @version 2
      */
     FUEL_LEVEL = 0x0307 + 0x10000000 + 0x01000000
@@ -383,7 +383,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.CONTINUOUS
      * @access VehiclePropertyAccess.READ
-     * @unit VehicleUnit:WH
+     * @unit VehicleUnit.WATT_HOUR
      * @version 2
      */
     EV_BATTERY_LEVEL = 0x0309 + 0x10000000 + 0x01000000
@@ -398,7 +398,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ
-     * @unit VehicleUnit:WH
+     * @unit VehicleUnit.WATT_HOUR
      * @version 2
      */
     EV_CURRENT_BATTERY_CAPACITY =
@@ -433,7 +433,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.CONTINUOUS
      * @access VehiclePropertyAccess.READ
-     * @unit VehicleUnit:MW
+     * @unit VehicleUnit.MILLIWATTS
      * @version 2
      */
     EV_BATTERY_INSTANTANEOUS_CHARGE_RATE = 0x030C + 0x10000000 + 0x01000000
@@ -452,7 +452,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.CONTINUOUS
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
-     * @unit VehicleUnit:METER
+     * @unit VehicleUnit.METER
      * @version 2
      */
     RANGE_REMAINING = 0x0308 + 0x10000000 + 0x01000000
@@ -466,7 +466,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.CONTINUOUS
      * @access VehiclePropertyAccess.READ
-     * @unit VehicleUnit:CELSIUS
+     * @unit VehicleUnit.CELSIUS
      * @version 3
      */
     EV_BATTERY_AVERAGE_TEMPERATURE =
@@ -494,7 +494,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.CONTINUOUS
      * @access VehiclePropertyAccess.READ
-     * @unit VehicleUnit:KILOPASCAL
+     * @unit VehicleUnit.KILOPASCAL
      * @version 2
      */
     TIRE_PRESSURE = 0x0309 + 0x10000000 + 0x07000000
@@ -510,7 +510,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.STATIC
      * @access VehiclePropertyAccess.READ
-     * @unit VehicleUnit:KILOPASCAL
+     * @unit VehicleUnit.KILOPASCAL
      * @version 2
      */
     CRITICALLY_LOW_TIRE_PRESSURE = 0x030A + 0x10000000 + 0x07000000
@@ -862,7 +862,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ
-     * @unit VehicleUnit:CELSIUS
+     * @unit VehicleUnit.CELSIUS
      * @version 2
      */
     HVAC_TEMPERATURE_CURRENT = 0x0502 + 0x10000000 + 0x05000000
@@ -894,7 +894,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
-     * @unit VehicleUnit:CELSIUS
+     * @unit VehicleUnit.CELSIUS
      * @version 2
      */
     HVAC_TEMPERATURE_SET = 0x0503 + 0x10000000 + 0x05000000
@@ -1130,7 +1130,7 @@ enum VehicleProperty {
      *              configArray[1] = FAHRENHEIT
      *
      * This parameter MAY be used for displaying any HVAC temperature in the system.
-     * Values must be one of VehicleUnit::CELSIUS or VehicleUnit::FAHRENHEIT
+     * Values must be one of VehicleUnit.CELSIUS or VehicleUnit.FAHRENHEIT
      * Note that internally, all temperatures are represented in floating point Celsius.
      *
      * If updating HVAC_TEMPERATURE_DISPLAY_UNITS affects the values of other *_DISPLAY_UNITS
@@ -1287,7 +1287,7 @@ enum VehicleProperty {
      *
      *      floatValues[0] = the requested value that an application wants to set a temperature to.
      *      floatValues[1] = the unit for floatValues[0]. It should be one of
-     *                       {VehicleUnit:CELSIUS, VehicleUnit:FAHRENHEIT}.
+     *                       {VehicleUnit.CELSIUS, VehicleUnit.FAHRENHEIT}.
      *      floatValues[2] = the value OEMs suggested in CELSIUS. This value is not included
      *                       in the request.
      *      floatValues[3] = the value OEMs suggested in FAHRENHEIT. This value is not included
@@ -1300,18 +1300,18 @@ enum VehicleProperty {
      * For example, when a user uses the voice assistant to set HVAC temperature to 66.2 in
      * Fahrenheit.
      * First, an application will set this property with the value
-     * [66.2, (float)VehicleUnit:FAHRENHEIT,0,0].
+     * [66.2, (float)VehicleUnit.FAHRENHEIT,0,0].
      * If OEMs suggest to set 19.0 in Celsius or 66.5 in Fahrenheit for user's request, then VHAL
      * must generate a callback with property value
-     * [66.2, (float)VehicleUnit:FAHRENHEIT, 19.0, 66.5]. After the voice assistant gets the
+     * [66.2, (float)VehicleUnit.FAHRENHEIT, 19.0, 66.5]. After the voice assistant gets the
      * callback, it will inform the user and set HVAC temperature to the suggested value.
      *
      * Another example, an application receives 21 Celsius as the current temperature value by
      * querying HVC_TEMPERATURE_SET. But the application wants to know what value is displayed on
      * the car's UI in Fahrenheit.
-     * For this, the application sets the property to [21, (float)VehicleUnit:CELSIUS, 0, 0]. If
+     * For this, the application sets the property to [21, (float)VehicleUnit.CELSIUS, 0, 0]. If
      * the suggested value by the OEM for 21 Celsius is 70 Fahrenheit, then VHAL must generate a
-     * callback with property value [21, (float)VehicleUnit:CELSIUS, 21.0, 70.0].
+     * callback with property value [21, (float)VehicleUnit.CELSIUS, 21.0, 70.0].
      * In this case, the application can know that the value is 70.0 Fahrenheit in the car’s UI.
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
@@ -1504,7 +1504,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ
-     * @unit VehicleUnit:MILLI_SECS
+     * @unit VehicleUnit.MILLI_SECS
      * @version 2
      */
     EXTERNAL_CAR_TIME = 0x0608 + 0x10000000 // VehiclePropertyGroup:SYSTEM
@@ -1534,7 +1534,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.WRITE
-     * @unit VehicleUnit:MILLI_SECS
+     * @unit VehicleUnit.MILLI_SECS
      * @version 2
      */
     ANDROID_EPOCH_TIME = 0x0606 + 0x10000000 + 0x01000000
@@ -1559,7 +1559,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.CONTINUOUS
      * @access VehiclePropertyAccess.READ
-     * @unit VehicleUnit:CELSIUS
+     * @unit VehicleUnit.CELSIUS
      * @version 2
      */
     ENV_OUTSIDE_TEMPERATURE = 0x0703 + 0x10000000 + 0x01000000
@@ -3212,7 +3212,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ
-     * @unit VehicleUnit:MILLI_SECS
+     * @unit VehicleUnit.MILLI_SECS
      * @version 2
      */
     WINDSHIELD_WIPERS_PERIOD =
@@ -4789,7 +4789,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
-     * @unit VehicleUnit:AMPERE
+     * @unit VehicleUnit.AMPERE
      * @version 2
      */
     EV_CHARGE_CURRENT_DRAW_LIMIT = 0x0F3F + 0x10000000 + 0x01000000
@@ -4854,7 +4854,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.CONTINUOUS
      * @access VehiclePropertyAccess.READ
-     * @unit VehicleUnit:SECS
+     * @unit VehicleUnit.SECS
      * @version 2
      */
     EV_CHARGE_TIME_REMAINING = 0x0F43 + 0x10000000 + 0x01000000
@@ -4888,7 +4888,7 @@ enum VehicleProperty {
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
 
     /**
-     * Vehicle’s curb weight
+     * Vehicle’s curb weight in kilograms.
      *
      * Returns the vehicle's curb weight in kilograms. Curb weight is
      * the total weight of the vehicle with standard equipment and all
@@ -4905,10 +4905,8 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.STATIC
      * @access VehiclePropertyAccess.READ
-     * @unit VehicleUnit:KILOGRAM
      * @version 2
      */
-
     VEHICLE_CURB_WEIGHT = 0x0F46 + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
 
@@ -5567,7 +5565,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ
-     * @unit VehicleUnit:METER_PER_SEC
+     * @unit VehicleUnit.METER_PER_SEC
      * @version 2
      */
     CRUISE_CONTROL_TARGET_SPEED =
@@ -5599,7 +5597,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
-     * @unit VehicleUnit:MILLI_SECS
+     * @unit VehicleUnit.MILLI_SECS
      * @version 2
      */
     ADAPTIVE_CRUISE_CONTROL_TARGET_TIME_GAP =
@@ -5630,7 +5628,7 @@ enum VehicleProperty {
      *
      * @change_mode VehiclePropertyChangeMode.CONTINUOUS
      * @access VehiclePropertyAccess.READ
-     * @unit VehicleUnit:MILLIMETER
+     * @unit VehicleUnit.MILLIMETER
      * @version 2
      */
     ADAPTIVE_CRUISE_CONTROL_LEAD_VEHICLE_MEASURED_DISTANCE =

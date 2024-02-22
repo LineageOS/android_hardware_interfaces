@@ -18,7 +18,8 @@
 
    Need ANDROID_BUILD_TOP environmental variable to be set. This script will update
    ChangeModeForVehicleProperty.h and AccessForVehicleProperty.h under generated_lib/cpp and
-   ChangeModeForVehicleProperty.java, AccessForVehicleProperty.java, EnumForVehicleProperty.java under generated_lib/java.
+   ChangeModeForVehicleProperty.java, AccessForVehicleProperty.java, EnumForVehicleProperty.java
+   UnitsForVehicleProperty.java under generated_lib/java.
 
    Usage:
    $ python generate_annotation_enums.py
@@ -42,6 +43,8 @@ ACCESS_JAVA_FILE_PATH = ('hardware/interfaces/automotive/vehicle/aidl/generated_
     'AccessForVehicleProperty.java')
 ENUM_JAVA_FILE_PATH = ('hardware/interfaces/automotive/vehicle/aidl/generated_lib/java/' +
                          'EnumForVehicleProperty.java')
+UNITS_JAVA_FILE_PATH = ('hardware/interfaces/automotive/vehicle/aidl/generated_lib/java/' +
+                       'UnitsForVehicleProperty.java')
 VERSION_CPP_FILE_PATH = ('hardware/interfaces/automotive/vehicle/aidl/generated_lib/cpp/' +
     'VersionForVehicleProperty.h')
 SCRIPT_PATH = 'hardware/interfaces/automotive/vehicle/tools/generate_annotation_enums.py'
@@ -173,6 +176,15 @@ import java.util.Map;
 public final class EnumForVehicleProperty {
 
     public static final Map<Integer, List<Class<?>>> values = Map.ofEntries(
+"""
+
+UNITS_JAVA_HEADER = """package android.hardware.automotive.vehicle;
+
+import java.util.Map;
+
+public final class UnitsForVehicleProperty {
+
+    public static final Map<Integer, Integer> values = Map.ofEntries(
 """
 
 
@@ -316,6 +328,12 @@ class FileParser:
                     continue;
                 if not cpp:
                     annotation = "List.of(" + ', '.join([class_name + ".class" for class_name in config.enum_types]) + ")"
+            elif field == 'unit_type':
+                if not config.unit_type:
+                    continue
+                if not cpp:
+                    annotation = config.unit_type
+
             elif field == 'version':
                 if cpp:
                     annotation = config.version
@@ -498,6 +516,12 @@ def main():
     enum_types.setJavaHeader(ENUM_JAVA_HEADER)
     enum_types.setJavaFooter(JAVA_FOOTER)
     generated_files.append(enum_types)
+
+    unit_type = GeneratedFile('unit_type')
+    unit_type.setJavaFilePath(os.path.join(android_top, UNITS_JAVA_FILE_PATH))
+    unit_type.setJavaHeader(UNITS_JAVA_HEADER)
+    unit_type.setJavaFooter(JAVA_FOOTER)
+    generated_files.append(unit_type)
 
     version = GeneratedFile('version')
     version.setCppFilePath(os.path.join(android_top, VERSION_CPP_FILE_PATH))
