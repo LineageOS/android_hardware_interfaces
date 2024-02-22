@@ -43,6 +43,7 @@ struct Utils {
 
     static void checkElapsedRealtime(
             const android::hardware::gnss::ElapsedRealtime& elapsedRealtime);
+    static void checkPositionDebug(android::hardware::gnss::IGnssDebug::DebugData data);
 
     static const android::hardware::gnss::GnssLocation getMockLocation(
             double latitudeDegrees, double longitudeDegrees, double horizontalAccuracyMeters);
@@ -57,6 +58,7 @@ struct Utils {
             V2_0::GnssConstellationType constellation);
 
     static bool isAutomotiveDevice();
+    static double distanceMeters(double lat1, double lon1, double lat2, double lon2);
 
   private:
     template <class T>

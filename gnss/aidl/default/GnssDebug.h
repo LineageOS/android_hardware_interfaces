@@ -20,6 +20,8 @@
 
 namespace aidl::android::hardware::gnss {
 
+class Gnss;
+
 struct GnssDebug : public BnGnssDebug {
   public:
     ndk::ScopedAStatus getDebugData(DebugData* debugData) override;
