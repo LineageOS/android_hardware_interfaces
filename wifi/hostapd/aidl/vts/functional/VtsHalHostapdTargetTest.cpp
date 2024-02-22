@@ -58,6 +58,7 @@ const int kIfaceChannel = 6;
 const int kIfaceInvalidChannel = 567;
 const std::vector<uint8_t> kTestZeroMacAddr(6, 0x0);
 const Ieee80211ReasonCode kTestDisconnectReasonCode = Ieee80211ReasonCode::WLAN_REASON_UNSPECIFIED;
+const auto& kTestVendorDataOptional = generateOuiKeyedDataListOptional(5);
 
 inline BandMask operator|(BandMask a, BandMask b) {
     return static_cast<BandMask>(static_cast<int32_t>(a) |
@@ -74,6 +75,7 @@ class HostapdAidl : public testing::TestWithParam<std::string> {
         hostapd = getHostapd(GetParam());
         ASSERT_NE(hostapd, nullptr);
         EXPECT_TRUE(hostapd->setDebugParams(DebugLevel::EXCESSIVE).isOk());
+        EXPECT_TRUE(hostapd->getInterfaceVersion(&interface_version_).isOk());
 
         isAcsSupport = testing::checkSubstringInCommandOutput(
             "/system/bin/cmd wifi get-softap-supported-features",
@@ -98,6 +100,7 @@ class HostapdAidl : public testing::TestWithParam<std::string> {
     bool isAcsSupport;
     bool isWpa3SaeSupport;
     bool isBridgedSupport;
+    int interface_version_;
 
     IfaceParams getIfaceParamsWithoutAcs(std::string iface_name) {
         IfaceParams iface_params;
@@ -339,6 +342,22 @@ TEST_P(HostapdAidl, AddPskAccessPointWithoutAcsAndNonMetered) {
 TEST_P(HostapdAidl, AddOpenAccessPointWithoutAcs) {
     std::string ifname = setupApIfaceAndGetName(false);
     auto status = hostapd->addAccessPoint(getIfaceParamsWithoutAcs(ifname), getOpenNwParams());
+    EXPECT_TRUE(status.isOk());
+}
+
+/**
+ * Adds an access point with Open network config & ACS disabled.
+ * IfaceParams will also include vendor data.
+ * Access point creation should pass.
+ */
+TEST_P(HostapdAidl, AddOpenAccessPointWithVendorData) {
+    if (interface_version_ < 2) {
+        GTEST_SKIP() << "Vendor data is available in IfaceParams as of Hostapd V2";
+    }
+    std::string ifname = setupApIfaceAndGetName(false);
+    IfaceParams params = getIfaceParamsWithoutAcs(ifname);
+    params.vendorData = kTestVendorDataOptional;
+    auto status = hostapd->addAccessPoint(params, getOpenNwParams());
     EXPECT_TRUE(status.isOk());
 }
 
