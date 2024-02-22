@@ -234,6 +234,14 @@ std::vector<SubscribeInvalidOptionsTestCase> getSubscribeInvalidOptionsTestCases
                             },
             },
             {
+                    .name = "invalid_resolution",
+                    .option =
+                            {
+                                    .propId = GLOBAL_CONTINUOUS_PROP,
+                                    .resolution = 2.0,
+                            },
+            },
+            {
                     .name = "static_property",
                     .option =
                             {

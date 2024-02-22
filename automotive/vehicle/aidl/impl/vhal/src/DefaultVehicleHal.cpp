@@ -722,6 +722,10 @@ VhalResult<void> DefaultVehicleHal::checkSubscribeOptions(
                 return StatusError(StatusCode::INVALID_ARG)
                        << "invalid sample rate: " << sampleRateHz << " HZ";
             }
+            if (!SubscriptionManager::checkResolution(option.resolution)) {
+                return StatusError(StatusCode::INVALID_ARG)
+                       << "invalid resolution: " << option.resolution;
+            }
         }
     }
     return {};
