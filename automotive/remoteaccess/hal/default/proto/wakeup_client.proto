@@ -124,6 +124,11 @@ message ScheduleTaskResponse {
     ErrorCode errorCode = 1;
 }
 
+enum ScheduleTaskType {
+    CUSTOM = 0;
+    ENTER_GARAGE_MODE = 1;
+}
+
 message GrpcScheduleInfo {
     string clientId = 1;
     string scheduleId = 2;
@@ -131,6 +136,7 @@ message GrpcScheduleInfo {
     int32 count = 4;
     int64 startTimeInEpochSeconds = 5;
     int64 periodicInSeconds = 6;
+    ScheduleTaskType taskType = 7;
 }
 
 message UnscheduleTaskRequest {
@@ -161,4 +167,26 @@ message GetAllPendingScheduledTasksRequest {
 
 message GetAllPendingScheduledTasksResponse {
     repeated GrpcScheduleInfo allScheduledTasks = 1;
+}
+
+/**
+ * Service provided by a power controller unit.
+ */
+service PowerController {
+    rpc IsVehicleInUse(IsVehicleInUseRequest) returns (IsVehicleInUseResponse) {}
+
+    rpc GetApPowerBootupReason(GetApPowerBootupReasonRequest)
+            returns (GetApPowerBootupReasonResponse) {}
+}
+
+message IsVehicleInUseRequest {}
+
+message IsVehicleInUseResponse {
+    bool isVehicleInUse = 1;
+}
+
+message GetApPowerBootupReasonRequest {}
+
+message GetApPowerBootupReasonResponse {
+    int32 bootupReason = 1;
 }
