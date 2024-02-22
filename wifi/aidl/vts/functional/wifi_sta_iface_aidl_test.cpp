@@ -29,6 +29,7 @@
 
 #include "wifi_aidl_test_utils.h"
 
+using aidl::android::hardware::wifi::CachedScanData;
 using aidl::android::hardware::wifi::IWifi;
 using aidl::android::hardware::wifi::IWifiStaIface;
 using aidl::android::hardware::wifi::MacAddress;
@@ -335,6 +336,23 @@ TEST_P(WifiStaIfaceAidlTest, PacketFateMonitoring) {
         std::vector<WifiDebugTxPacketFateReport> tx_reports;
         EXPECT_TRUE(wifi_sta_iface_->getDebugRxPacketFates(&rx_reports).isOk());
         EXPECT_TRUE(wifi_sta_iface_->getDebugTxPacketFates(&tx_reports).isOk());
+    }
+}
+
+/*
+ * CachedScanData
+ */
+TEST_P(WifiStaIfaceAidlTest, CachedScanData) {
+    if (!isFeatureSupported(IWifiStaIface::FeatureSetMask::CACHED_SCAN_DATA)) {
+        GTEST_SKIP() << "Cached scan data is not supported.";
+    }
+
+    // Retrieve cached scan data.
+    CachedScanData cached_scan_data = {};
+    EXPECT_TRUE(wifi_sta_iface_->getCachedScanData(&cached_scan_data).isOk());
+
+    if (cached_scan_data.cachedScanResults.size() > 0) {
+        EXPECT_GT(cached_scan_data.cachedScanResults[0].frequencyMhz, 0);
     }
 }
 
