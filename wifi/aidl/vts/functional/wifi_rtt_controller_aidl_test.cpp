@@ -21,6 +21,7 @@
 #include <aidl/Vintf.h>
 #include <aidl/android/hardware/wifi/BnWifi.h>
 #include <aidl/android/hardware/wifi/BnWifiRttControllerEventCallback.h>
+#include <android-base/logging.h>
 #include <android/binder_manager.h>
 #include <android/binder_status.h>
 #include <binder/IServiceManager.h>
@@ -42,6 +43,10 @@ using aidl::android::hardware::wifi::WifiChannelInfo;
 using aidl::android::hardware::wifi::WifiChannelWidthInMhz;
 using aidl::android::hardware::wifi::WifiStatusCode;
 
+namespace {
+const auto& kTestVendorDataOptional = generateOuiKeyedDataListOptional(5);
+}
+
 class WifiRttControllerAidlTest : public testing::TestWithParam<std::string> {
   public:
     void SetUp() override {
@@ -50,6 +55,7 @@ class WifiRttControllerAidlTest : public testing::TestWithParam<std::string> {
         stopWifiService(getInstanceName());
         wifi_rtt_controller_ = getWifiRttController();
         ASSERT_NE(nullptr, wifi_rtt_controller_.get());
+        ASSERT_TRUE(wifi_rtt_controller_->getInterfaceVersion(&interface_version_).isOk());
 
         // Check RTT support before we run the test.
         RttCapabilities caps = {};
@@ -82,6 +88,7 @@ class WifiRttControllerAidlTest : public testing::TestWithParam<std::string> {
     }
 
     std::shared_ptr<IWifiRttController> wifi_rtt_controller_;
+    int interface_version_;
 
   private:
     const char* getInstanceName() { return GetParam().c_str(); }
@@ -226,6 +233,10 @@ TEST_P(WifiRttControllerAidlTest, RangeRequest) {
     config.numRetriesPerRttFrame = 3;
     config.numRetriesPerFtmr = 3;
     config.burstDuration = 9;
+    if (interface_version_ >= 2) {
+        LOG(INFO) << "Including vendor data in Rtt Config";
+        config.vendorData = kTestVendorDataOptional;
+    }
 
     int cmdId = 55;
     std::vector<RttConfig> configs = {config};

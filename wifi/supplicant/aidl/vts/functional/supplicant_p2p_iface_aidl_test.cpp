@@ -27,6 +27,7 @@
 #include <cutils/properties.h>
 
 #include "supplicant_test_utils.h"
+#include "wifi_aidl_test_utils.h"
 
 using aidl::android::hardware::wifi::supplicant::BnSupplicantP2pIfaceCallback;
 using aidl::android::hardware::wifi::supplicant::DebugLevel;

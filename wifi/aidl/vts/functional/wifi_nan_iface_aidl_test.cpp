@@ -22,6 +22,7 @@
 #include <aidl/android/hardware/wifi/BnWifi.h>
 #include <aidl/android/hardware/wifi/BnWifiNanIfaceEventCallback.h>
 #include <aidl/android/hardware/wifi/NanBandIndex.h>
+#include <android-base/logging.h>
 #include <android/binder_manager.h>
 #include <android/binder_status.h>
 #include <binder/IServiceManager.h>
@@ -60,6 +61,10 @@ using aidl::android::hardware::wifi::NanTxType;
 
 #define TIMEOUT_PERIOD 10
 
+namespace {
+const auto& kTestVendorDataOptional = generateOuiKeyedDataListOptional(5);
+}
+
 class WifiNanIfaceAidlTest : public testing::TestWithParam<std::string> {
   public:
     void SetUp() override {
@@ -72,6 +77,7 @@ class WifiNanIfaceAidlTest : public testing::TestWithParam<std::string> {
         std::shared_ptr<WifiNanIfaceEventCallback> callback =
                 ndk::SharedRefBase::make<WifiNanIfaceEventCallback>(*this);
         EXPECT_TRUE(wifi_nan_iface_->registerEventCallback(callback).isOk());
+        EXPECT_TRUE(wifi_nan_iface_->getInterfaceVersion(&interface_version_).isOk());
     }
 
     void TearDown() override { stopWifiService(getInstanceName()); }
@@ -401,6 +407,7 @@ class WifiNanIfaceAidlTest : public testing::TestWithParam<std::string> {
 
   protected:
     std::shared_ptr<IWifiNanIface> wifi_nan_iface_;
+    int interface_version_;
     uint64_t callback_event_bitmap_;
     uint16_t id_;
     uint8_t session_id_;
@@ -640,6 +647,10 @@ TEST_P(WifiNanIfaceAidlTest, StartPublishRequest) {
     nanPublishRequest.autoAcceptDataPathRequests = false;
     nanPublishRequest.publishType = NanPublishType::UNSOLICITED;
     nanPublishRequest.txType = NanTxType::BROADCAST;
+    if (interface_version_ >= 2) {
+        LOG(INFO) << "Including vendor data in Publish request";
+        nanPublishRequest.vendorData = kTestVendorDataOptional;
+    }
 
     status = wifi_nan_iface_->startPublishRequest(inputCmdId + 1, nanPublishRequest);
     if (!checkStatusCode(&status, WifiStatusCode::ERROR_NOT_SUPPORTED)) {

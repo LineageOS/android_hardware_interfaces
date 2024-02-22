@@ -43,6 +43,7 @@ using aidl::android::hardware::wifi::supplicant::ISupplicant;
 using aidl::android::hardware::wifi::supplicant::ISupplicantStaIface;
 using aidl::android::hardware::wifi::supplicant::ISupplicantStaNetwork;
 using aidl::android::hardware::wifi::supplicant::KeyMgmtMask;
+using aidl::android::hardware::wifi::supplicant::MscsParams;
 using aidl::android::hardware::wifi::supplicant::WpaDriverCapabilitiesMask;
 using aidl::android::hardware::wifi::supplicant::WpsConfigMethods;
 using android::ProcessState;
@@ -252,6 +253,7 @@ class SupplicantStaIfaceAidlTest : public testing::TestWithParam<std::string> {
                                          true,  // show timestamps
                                          true)
                         .isOk());
+        ASSERT_TRUE(supplicant_->getInterfaceVersion(&interface_version_).isOk());
         EXPECT_TRUE(supplicant_->getStaInterface(getStaIfaceName(), &sta_iface_)
                         .isOk());
         ASSERT_NE(sta_iface_, nullptr);
@@ -293,6 +295,7 @@ class SupplicantStaIfaceAidlTest : public testing::TestWithParam<std::string> {
    protected:
     std::shared_ptr<ISupplicant> supplicant_;
     std::shared_ptr<ISupplicantStaIface> sta_iface_;
+    int interface_version_;
 
    private:
     // synchronization objects
@@ -786,6 +789,22 @@ TEST_P(SupplicantStaIfaceAidlTest, StartDppConfiguratorInitiator) {
 
     // ...and then remove the peer URI.
     EXPECT_TRUE(sta_iface_->removeDppUri(peer_id).isOk());
+}
+
+/*
+ * Configure and Disable MSCS
+ */
+TEST_P(SupplicantStaIfaceAidlTest, ConfigureAndDisableMscs) {
+    if (interface_version_ < 3) {
+        GTEST_SKIP() << "MSCS configure/disable is available as of Supplicant V3";
+    }
+    MscsParams params;
+    params.upBitmap = 0;
+    params.upLimit = 7;
+    params.streamTimeoutUs = 1000;  // 1 ms
+    params.frameClassifierMask = 0;
+    EXPECT_TRUE(sta_iface_->configureMscs(params).isOk());
+    EXPECT_TRUE(sta_iface_->disableMscs().isOk());
 }
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(SupplicantStaIfaceAidlTest);

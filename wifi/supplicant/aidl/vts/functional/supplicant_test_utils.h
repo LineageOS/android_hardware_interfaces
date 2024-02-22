@@ -16,18 +16,14 @@
 
 #pragma once
 
-#include <android/persistable_bundle_aidl.h>
-
 #include "supplicant_aidl_test_utils.h"
 #include "supplicant_legacy_test_utils.h"
 
-using aidl::android::hardware::wifi::common::OuiKeyedData;
 using aidl::android::hardware::wifi::supplicant::IfaceInfo;
 using aidl::android::hardware::wifi::supplicant::ISupplicant;
 using aidl::android::hardware::wifi::supplicant::ISupplicantP2pIface;
 using aidl::android::hardware::wifi::supplicant::ISupplicantStaIface;
 using aidl::android::hardware::wifi::supplicant::KeyMgmtMask;
-using aidl::android::os::PersistableBundle;
 
 std::string getStaIfaceName() {
     std::array<char, PROPERTY_VALUE_MAX> buffer;
@@ -100,37 +96,4 @@ std::array<uint8_t, 6> vecToArrayMacAddr(std::vector<uint8_t> vectorAddr) {
     std::array<uint8_t, 6> arrayAddr;
     std::copy(vectorAddr.begin(), vectorAddr.begin() + 6, arrayAddr.begin());
     return arrayAddr;
-}
-
-OuiKeyedData generateOuiKeyedData(int oui) {
-    PersistableBundle bundle;
-    bundle.putString("stringKey", "stringValue");
-    bundle.putInt("intKey", 12345);
-
-    OuiKeyedData data;
-    data.oui = oui;
-    data.vendorData = bundle;
-    return data;
-}
-
-std::vector<OuiKeyedData> generateOuiKeyedDataList(int size) {
-    std::vector<OuiKeyedData> dataList;
-    for (int i = 0; i < size; i++) {
-        dataList.push_back(generateOuiKeyedData(i + 1));
-    }
-    return dataList;
-}
-
-// Wraps generateOuiKeyedData result in std::optional
-std::optional<OuiKeyedData> generateOuiKeyedDataOptional(int oui) {
-    return std::optional<OuiKeyedData>{generateOuiKeyedData(oui)};
-}
-
-// Generate OuiKeyedData list fully wrapped in std::optional
-std::optional<std::vector<std::optional<OuiKeyedData>>> generateOuiKeyedDataListOptional(int size) {
-    std::vector<std::optional<OuiKeyedData>> dataList;
-    for (int i = 0; i < size; i++) {
-        dataList.push_back(generateOuiKeyedDataOptional(i + 1));
-    }
-    return std::optional<std::vector<std::optional<OuiKeyedData>>>{dataList};
 }

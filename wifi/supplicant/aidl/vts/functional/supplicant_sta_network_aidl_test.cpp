@@ -27,6 +27,7 @@
 #include <cutils/properties.h>
 
 #include "supplicant_test_utils.h"
+#include "wifi_aidl_test_utils.h"
 
 using aidl::android::hardware::wifi::supplicant::AuthAlgMask;
 using aidl::android::hardware::wifi::supplicant::BnSupplicantStaNetworkCallback;
