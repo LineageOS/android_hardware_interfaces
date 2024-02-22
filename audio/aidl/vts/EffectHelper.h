@@ -37,6 +37,7 @@
 
 #include "EffectFactoryHelper.h"
 #include "TestUtils.h"
+#include "pffft.hpp"
 
 using namespace android;
 using aidl::android::hardware::audio::effect::CommandId;
@@ -328,5 +329,46 @@ class EffectHelper {
         // Disable the process
         ASSERT_NO_FATAL_FAILURE(command(mEffect, CommandId::RESET));
         ASSERT_NO_FATAL_FAILURE(expectState(mEffect, State::IDLE));
+    }
+
+    // Find FFT bin indices for testFrequencies and get bin center frequencies
+    void roundToFreqCenteredToFftBin(std::vector<int>& testFrequencies,
+                                     std::vector<int>& binOffsets, const float kBinWidth) {
+        for (size_t i = 0; i < testFrequencies.size(); i++) {
+            binOffsets[i] = std::round(testFrequencies[i] / kBinWidth);
+            testFrequencies[i] = std::round(binOffsets[i] * kBinWidth);
+        }
+    }
+
+    // Generate multitone input between -1 to +1 using testFrequencies
+    void generateMultiTone(const std::vector<int>& testFrequencies, std::vector<float>& input,
+                           const int samplingFrequency) {
+        for (size_t i = 0; i < input.size(); i++) {
+            input[i] = 0;
+
+            for (size_t j = 0; j < testFrequencies.size(); j++) {
+                input[i] += sin(2 * M_PI * testFrequencies[j] * i / samplingFrequency);
+            }
+            input[i] /= testFrequencies.size();
+        }
+    }
+
+    // Use FFT transform to convert the buffer to frequency domain
+    // Compute its magnitude at binOffsets
+    std::vector<float> calculateMagnitude(const std::vector<float>& buffer,
+                                          const std::vector<int>& binOffsets, const int nPointFFT) {
+        std::vector<float> fftInput(nPointFFT);
+        PFFFT_Setup* inputHandle = pffft_new_setup(nPointFFT, PFFFT_REAL);
+        pffft_transform_ordered(inputHandle, buffer.data(), fftInput.data(), nullptr,
+                                PFFFT_FORWARD);
+        pffft_destroy_setup(inputHandle);
+        std::vector<float> bufferMag(binOffsets.size());
+        for (size_t i = 0; i < binOffsets.size(); i++) {
+            size_t k = binOffsets[i];
+            bufferMag[i] = sqrt((fftInput[k * 2] * fftInput[k * 2]) +
+                                (fftInput[k * 2 + 1] * fftInput[k * 2 + 1]));
+        }
+
+        return bufferMag;
     }
 };
