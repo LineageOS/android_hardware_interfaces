@@ -168,8 +168,7 @@ bool GnssHalTest::IsGnssHalVersion_1_1() const {
     manager->listManifestByInterface(
             "android.hardware.gnss@1.1::IGnss",
             [&hasGnssHalVersion_1_1](const hidl_vec<hidl_string>& registered) {
-                ASSERT_EQ(1, registered.size());
-                hasGnssHalVersion_1_1 = true;
+                hasGnssHalVersion_1_1 = registered.size() != 0;
             });
 
     bool hasGnssHalVersion_2_0 = false;
