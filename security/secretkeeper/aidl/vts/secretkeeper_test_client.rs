@@ -19,11 +19,11 @@ use android_hardware_security_secretkeeper::aidl::android::hardware::security::s
 use authgraph_vts_test as ag_vts;
 use authgraph_boringssl as boring;
 use authgraph_core::key;
-use coset::{CborSerializable, CoseEncrypt0};
+use coset::{CborOrdering, CborSerializable, CoseEncrypt0, CoseKey};
 use dice_policy_builder::{CertIndex, ConstraintSpec, ConstraintType, MissingAction, WILDCARD_FULL_ARRAY, policy_for_dice_chain};
 use rdroidtest::{ignore_if, rdroidtest};
 use secretkeeper_client::dice::OwnedDiceArtifactsWithExplicitKey;
-use secretkeeper_client::SkSession;
+use secretkeeper_client::{SkSession, Error as SkClientError};
 use secretkeeper_core::cipher;
 use secretkeeper_comm::data_types::error::SecretkeeperError;
 use secretkeeper_comm::data_types::request::Request;
@@ -38,9 +38,14 @@ use secretkeeper_test::{
     SUBCOMPONENT_DESCRIPTORS, SUBCOMPONENT_SECURITY_VERSION,
     dice_sample::make_explicit_owned_dice
 };
+use std::fs;
+use std::path::Path;
 
 const SECRETKEEPER_SERVICE: &str = "android.hardware.security.secretkeeper.ISecretkeeper";
 const CURRENT_VERSION: u64 = 1;
+const SECRETKEEPER_KEY_HOST_DT: &str =
+    "/proc/device-tree/avf/reference/avf/secretkeeper_public_key";
+
 // Random bytes (of ID_SIZE/SECRET_SIZE) generated for tests.
 const ID_EXAMPLE: Id = Id([
     0xF1, 0xB2, 0xED, 0x3B, 0xD1, 0xBD, 0xF0, 0x7D, 0xE1, 0xF0, 0x01, 0xFC, 0x61, 0x71, 0xD3, 0x42,
@@ -65,6 +70,22 @@ const SECRET_EXAMPLE: Secret = Secret([
     0x06, 0xAC, 0x36, 0x8B, 0x3C, 0x95, 0x50, 0x16, 0x67, 0x71, 0x65, 0x26, 0xEB, 0xD0, 0xC3, 0x98,
 ]);
 
+// Android expects the public key of Secretkeeper instance to be present in the Linux device tree.
+// This allows clients to (cryptographically) verify that they are indeed talking to the real
+// secretkeeper.
+// Note that this is the identity of the `default` instance (and not `nonsecure`)!
+fn get_secretkeeper_identity() -> Option<CoseKey> {
+    let path = Path::new(SECRETKEEPER_KEY_HOST_DT);
+    if path.exists() {
+        let key = fs::read(path).unwrap();
+        let mut key = CoseKey::from_slice(&key).unwrap();
+        key.canonicalize(CborOrdering::Lexicographic);
+        Some(key)
+    } else {
+        None
+    }
+}
+
 fn get_instances() -> Vec<(String, String)> {
     // Determine which instances are available.
     binder::get_declared_instances(SECRETKEEPER_SERVICE)
@@ -80,6 +101,7 @@ fn get_connection(instance: &str) -> binder::Strong<dyn ISecretkeeper> {
 }
 
 /// Secretkeeper client information.
+#[derive(Debug)]
 struct SkClient {
     sk: binder::Strong<dyn ISecretkeeper>,
     session: SkSession,
@@ -95,19 +117,40 @@ impl Drop for SkClient {
 
 impl SkClient {
     /// Create an `SkClient` using the default `OwnedDiceArtifactsWithExplicitKey` for identity.
-    fn new(instance: &str) -> Self {
+    fn new(instance: &str) -> Result<Self, SkClientError> {
         let default_dice = make_explicit_owned_dice(/*Security version in a node */ 5);
-        Self::with_identity(instance, default_dice)
+        Self::create(instance, default_dice, None)
     }
 
-    /// Create an `SkClient` using the given `OwnedDiceArtifactsWithExplicitKey` for identity.
-    fn with_identity(instance: &str, dice_artifacts: OwnedDiceArtifactsWithExplicitKey) -> Self {
+    /// Create an `SkClient` using given `OwnedDiceArtifactsWithExplicitKey` as client identity.
+    fn with_identity(
+        instance: &str,
+        dice_artifacts: OwnedDiceArtifactsWithExplicitKey,
+    ) -> Result<Self, SkClientError> {
+        Self::create(instance, dice_artifacts, None)
+    }
+
+    /// Create an `SkClient` with default client identity, requiring Secretkeeper's identity to be
+    /// matched against given `expected_sk_key`.
+    fn with_expected_sk_identity(
+        instance: &str,
+        expected_sk_key: coset::CoseKey,
+    ) -> Result<Self, SkClientError> {
+        let default_dice = make_explicit_owned_dice(/*Security version in a node */ 5);
+        Self::create(instance, default_dice, Some(expected_sk_key))
+    }
+
+    fn create(
+        instance: &str,
+        dice_artifacts: OwnedDiceArtifactsWithExplicitKey,
+        expected_sk_key: Option<coset::CoseKey>,
+    ) -> Result<Self, SkClientError> {
         let sk = get_connection(instance);
-        Self {
+        Ok(Self {
             sk: sk.clone(),
-            session: SkSession::new(sk, &dice_artifacts).unwrap(),
+            session: SkSession::new(sk, &dice_artifacts, expected_sk_key)?,
             dice_artifacts,
-        }
+        })
     }
 
     /// This method is wrapper that use `SkSession::secret_management_request` which handles
@@ -347,7 +390,7 @@ fn authgraph_corrupt_keys(instance: String) {
 
 #[rdroidtest(get_instances())]
 fn secret_management_get_version(instance: String) {
-    let mut sk_client = SkClient::new(&instance);
+    let mut sk_client = SkClient::new(&instance).unwrap();
 
     let request = GetVersionRequest {};
     let request_packet = request.serialize_to_packet();
@@ -364,7 +407,7 @@ fn secret_management_get_version(instance: String) {
 
 #[rdroidtest(get_instances())]
 fn secret_management_malformed_request(instance: String) {
-    let mut sk_client = SkClient::new(&instance);
+    let mut sk_client = SkClient::new(&instance).unwrap();
 
     let request = GetVersionRequest {};
     let request_packet = request.serialize_to_packet();
@@ -383,7 +426,7 @@ fn secret_management_malformed_request(instance: String) {
 
 #[rdroidtest(get_instances())]
 fn secret_management_store_get_secret_found(instance: String) {
-    let mut sk_client = SkClient::new(&instance);
+    let mut sk_client = SkClient::new(&instance).unwrap();
 
     sk_client.store(&ID_EXAMPLE, &SECRET_EXAMPLE).unwrap();
 
@@ -393,7 +436,7 @@ fn secret_management_store_get_secret_found(instance: String) {
 
 #[rdroidtest(get_instances())]
 fn secret_management_store_get_secret_not_found(instance: String) {
-    let mut sk_client = SkClient::new(&instance);
+    let mut sk_client = SkClient::new(&instance).unwrap();
 
     // Store a secret (corresponding to an id).
     sk_client.store(&ID_EXAMPLE, &SECRET_EXAMPLE).unwrap();
@@ -404,7 +447,7 @@ fn secret_management_store_get_secret_not_found(instance: String) {
 
 #[rdroidtest(get_instances())]
 fn secretkeeper_store_delete_ids(instance: String) {
-    let mut sk_client = SkClient::new(&instance);
+    let mut sk_client = SkClient::new(&instance).unwrap();
 
     sk_client.store(&ID_EXAMPLE, &SECRET_EXAMPLE).unwrap();
     sk_client.store(&ID_EXAMPLE_2, &SECRET_EXAMPLE).unwrap();
@@ -420,7 +463,7 @@ fn secretkeeper_store_delete_ids(instance: String) {
 
 #[rdroidtest(get_instances())]
 fn secretkeeper_store_delete_multiple_ids(instance: String) {
-    let mut sk_client = SkClient::new(&instance);
+    let mut sk_client = SkClient::new(&instance).unwrap();
 
     sk_client.store(&ID_EXAMPLE, &SECRET_EXAMPLE).unwrap();
     sk_client.store(&ID_EXAMPLE_2, &SECRET_EXAMPLE).unwrap();
@@ -431,7 +474,7 @@ fn secretkeeper_store_delete_multiple_ids(instance: String) {
 }
 #[rdroidtest(get_instances())]
 fn secretkeeper_store_delete_duplicate_ids(instance: String) {
-    let mut sk_client = SkClient::new(&instance);
+    let mut sk_client = SkClient::new(&instance).unwrap();
 
     sk_client.store(&ID_EXAMPLE, &SECRET_EXAMPLE).unwrap();
     sk_client.store(&ID_EXAMPLE_2, &SECRET_EXAMPLE).unwrap();
@@ -444,7 +487,7 @@ fn secretkeeper_store_delete_duplicate_ids(instance: String) {
 
 #[rdroidtest(get_instances())]
 fn secretkeeper_store_delete_nonexistent(instance: String) {
-    let mut sk_client = SkClient::new(&instance);
+    let mut sk_client = SkClient::new(&instance).unwrap();
 
     sk_client.store(&ID_EXAMPLE, &SECRET_EXAMPLE).unwrap();
     sk_client.store(&ID_EXAMPLE_2, &SECRET_EXAMPLE).unwrap();
@@ -459,7 +502,7 @@ fn secretkeeper_store_delete_nonexistent(instance: String) {
 #[rdroidtest(get_instances())]
 #[ignore_if(|p| p != "nonsecure")]
 fn secretkeeper_store_delete_all(instance: String) {
-    let mut sk_client = SkClient::new(&instance);
+    let mut sk_client = SkClient::new(&instance).unwrap();
 
     sk_client.store(&ID_EXAMPLE, &SECRET_EXAMPLE).unwrap();
     sk_client.store(&ID_EXAMPLE_2, &SECRET_EXAMPLE).unwrap();
@@ -486,7 +529,7 @@ fn secretkeeper_store_delete_all(instance: String) {
 fn secret_management_replay_protection_seq_num(instance: String) {
     let dice_chain = make_explicit_owned_dice(/*Security version in a node */ 5);
     let sealing_policy = sealing_policy(dice_chain.explicit_key_dice_chain().unwrap());
-    let sk_client = SkClient::with_identity(&instance, dice_chain);
+    let sk_client = SkClient::with_identity(&instance, dice_chain).unwrap();
     // Construct encoded request packets for the test
     let (req_1, req_2, req_3) = construct_secret_management_requests(sealing_policy);
 
@@ -522,7 +565,7 @@ fn secret_management_replay_protection_seq_num(instance: String) {
 fn secret_management_replay_protection_seq_num_per_session(instance: String) {
     let dice_chain = make_explicit_owned_dice(/*Security version in a node */ 5);
     let sealing_policy = sealing_policy(dice_chain.explicit_key_dice_chain().unwrap());
-    let sk_client = SkClient::with_identity(&instance, dice_chain);
+    let sk_client = SkClient::with_identity(&instance, dice_chain).unwrap();
 
     // Construct encoded request packets for the test
     let (req_1, _, _) = construct_secret_management_requests(sealing_policy);
@@ -538,7 +581,7 @@ fn secret_management_replay_protection_seq_num_per_session(instance: String) {
     assert_eq!(res.response_type().unwrap(), ResponseType::Success);
 
     // Start another session
-    let sk_client_diff = SkClient::new(&instance);
+    let sk_client_diff = SkClient::new(&instance).unwrap();
     // Check first request/response is with seq_0 is successful
     let res = ResponsePacket::from_slice(
         &sk_client_diff.secret_management_request_custom_aad(&req_1, &seq_0, &seq_0).unwrap(),
@@ -553,7 +596,7 @@ fn secret_management_replay_protection_seq_num_per_session(instance: String) {
 fn secret_management_replay_protection_out_of_seq_req_not_accepted(instance: String) {
     let dice_chain = make_explicit_owned_dice(/*Security version in a node */ 5);
     let sealing_policy = sealing_policy(dice_chain.explicit_key_dice_chain().unwrap());
-    let sk_client = SkClient::with_identity(&instance, dice_chain);
+    let sk_client = SkClient::with_identity(&instance, dice_chain).unwrap();
 
     // Construct encoded request packets for the test
     let (req_1, req_2, _) = construct_secret_management_requests(sealing_policy);
@@ -578,18 +621,19 @@ fn secret_management_replay_protection_out_of_seq_req_not_accepted(instance: Str
 #[rdroidtest(get_instances())]
 fn secret_management_policy_gate(instance: String) {
     let dice_chain = make_explicit_owned_dice(/*Security version in a node */ 100);
-    let mut sk_client_original = SkClient::with_identity(&instance, dice_chain);
+    let mut sk_client_original = SkClient::with_identity(&instance, dice_chain).unwrap();
     sk_client_original.store(&ID_EXAMPLE, &SECRET_EXAMPLE).unwrap();
     assert_eq!(sk_client_original.get(&ID_EXAMPLE).unwrap(), SECRET_EXAMPLE);
 
     // Start a session with higher security_version & get the stored secret.
     let dice_chain_upgraded = make_explicit_owned_dice(/*Security version in a node */ 101);
-    let mut sk_client_upgraded = SkClient::with_identity(&instance, dice_chain_upgraded);
+    let mut sk_client_upgraded = SkClient::with_identity(&instance, dice_chain_upgraded).unwrap();
     assert_eq!(sk_client_upgraded.get(&ID_EXAMPLE).unwrap(), SECRET_EXAMPLE);
 
     // Start a session with lower security_version (This should be denied access to the secret).
     let dice_chain_downgraded = make_explicit_owned_dice(/*Security version in a node */ 99);
-    let mut sk_client_downgraded = SkClient::with_identity(&instance, dice_chain_downgraded);
+    let mut sk_client_downgraded =
+        SkClient::with_identity(&instance, dice_chain_downgraded).unwrap();
     assert!(matches!(
         sk_client_downgraded.get(&ID_EXAMPLE).unwrap_err(),
         Error::SecretkeeperError(SecretkeeperError::DicePolicyError)
@@ -607,6 +651,30 @@ fn secret_management_policy_gate(instance: String) {
     assert!(matches!(
         sk_client_original.get(&ID_EXAMPLE).unwrap_err(),
         Error::SecretkeeperError(SecretkeeperError::DicePolicyError)
+    ));
+}
+
+// This test checks that the identity of Secretkeeper (in context of AuthGraph key exchange) is
+// same as the one advertized in Linux device tree. This is only expected from `default` instance.
+#[rdroidtest(get_instances())]
+#[ignore_if(|p| p != "default")]
+fn secretkeeper_check_identity(instance: String) {
+    let sk_key = get_secretkeeper_identity()
+        .expect("Failed to extract identity of default instance from device tree");
+    // Create a session with this expected identity. This succeeds only if the identity used by
+    // Secretkeeper is sk_key.
+    let _ = SkClient::with_expected_sk_identity(&instance, sk_key).unwrap();
+    // Create a session using any other expected sk identity, this should fail. Note that the
+    // failure arises from validation which happens at the local participant.
+    let mut any_other_key = CoseKey::default();
+    any_other_key.canonicalize(CborOrdering::Lexicographic);
+    let err = SkClient::with_expected_sk_identity(&instance, any_other_key).unwrap_err();
+    assert!(matches!(
+        err,
+        SkClientError::AuthgraphError(authgraph_core::error::Error(
+            authgraph_wire::ErrorCode::InvalidPeerKeKey,
+            _
+        ))
     ));
 }
 
