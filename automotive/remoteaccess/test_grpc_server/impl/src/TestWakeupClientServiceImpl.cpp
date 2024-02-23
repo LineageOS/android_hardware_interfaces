@@ -38,7 +38,7 @@ using ::grpc::ServerWriter;
 using ::grpc::Status;
 
 constexpr int64_t kTaskIntervalInMs = 5'000;
-constexpr int64_t kTaskTimeoutInMs = 20'000;
+constexpr int64_t kTaskTimeoutInMs = 60'000;
 
 int64_t msToNs(int64_t ms) {
     return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::milliseconds(ms))
@@ -140,21 +140,21 @@ void TaskQueue::handleTaskTimeout() {
     }
 }
 
-TestWakeupClientServiceImpl::TestWakeupClientServiceImpl() {
+ServiceImpl::ServiceImpl() {
     mTaskScheduleMsgHandler = android::sp<TaskScheduleMsgHandler>::make(this);
     mLooper = android::sp<Looper>::make(/*opts=*/0);
     mLooperThread = std::thread([this] { loop(); });
     mTaskQueue = std::make_unique<TaskQueue>(mLooper);
 }
 
-TestWakeupClientServiceImpl::~TestWakeupClientServiceImpl() {
+ServiceImpl::~ServiceImpl() {
     if (mServerStopped) {
         return;
     }
     stopServer();
 }
 
-void TestWakeupClientServiceImpl::stopServer() {
+void ServiceImpl::stopServer() {
     mTaskQueue->stopWait();
     stopGeneratingFakeTask();
     // Set the flag so that the loop thread will exit.
@@ -165,7 +165,7 @@ void TestWakeupClientServiceImpl::stopServer() {
     }
 }
 
-void TestWakeupClientServiceImpl::loop() {
+void ServiceImpl::loop() {
     Looper::setForThread(mLooper);
 
     while (true) {
@@ -176,23 +176,22 @@ void TestWakeupClientServiceImpl::loop() {
     }
 }
 
-void TestWakeupClientServiceImpl::injectTask(const std::string& taskData,
-                                             const std::string& clientId) {
+void ServiceImpl::injectTask(const std::string& taskData, const std::string& clientId) {
     GetRemoteTasksResponse response;
     response.set_data(taskData);
     response.set_clientid(clientId);
     injectTaskResponse(response);
 }
 
-void TestWakeupClientServiceImpl::injectTaskResponse(const GetRemoteTasksResponse& response) {
+void ServiceImpl::injectTaskResponse(const GetRemoteTasksResponse& response) {
     printf("Receive a new task\n");
     mTaskQueue->add(response);
     if (mWakeupRequired) {
-        wakeupApplicationProcessor();
+        wakeupApplicationProcessor(BOOTUP_REASON_SYSTEM_REMOTE_ACCESS);
     }
 }
 
-void TestWakeupClientServiceImpl::startGeneratingFakeTask(const std::string& clientId) {
+void ServiceImpl::startGeneratingFakeTask(const std::string& clientId) {
     std::lock_guard<std::mutex> lockGuard(mLock);
     if (mGeneratingFakeTask) {
         printf("Fake task is already being generated\n");
@@ -203,7 +202,7 @@ void TestWakeupClientServiceImpl::startGeneratingFakeTask(const std::string& cli
     printf("Started generating fake tasks\n");
 }
 
-void TestWakeupClientServiceImpl::stopGeneratingFakeTask() {
+void ServiceImpl::stopGeneratingFakeTask() {
     {
         std::lock_guard<std::mutex> lockGuard(mLock);
         if (!mGeneratingFakeTask) {
@@ -219,7 +218,7 @@ void TestWakeupClientServiceImpl::stopGeneratingFakeTask() {
     printf("Stopped generating fake tasks\n");
 }
 
-void TestWakeupClientServiceImpl::fakeTaskGenerateLoop(const std::string& clientId) {
+void ServiceImpl::fakeTaskGenerateLoop(const std::string& clientId) {
     // In actual implementation, this should communicate with the remote server and receives tasks
     // from it. Here we simulate receiving one remote task every {kTaskIntervalInMs}ms.
     while (true) {
@@ -237,9 +236,8 @@ void TestWakeupClientServiceImpl::fakeTaskGenerateLoop(const std::string& client
     }
 }
 
-Status TestWakeupClientServiceImpl::GetRemoteTasks(ServerContext* context,
-                                                   const GetRemoteTasksRequest* request,
-                                                   ServerWriter<GetRemoteTasksResponse>* writer) {
+Status ServiceImpl::GetRemoteTasks(ServerContext* context, const GetRemoteTasksRequest* request,
+                                   ServerWriter<GetRemoteTasksResponse>* writer) {
     printf("GetRemoteTasks called\n");
     mRemoteTaskConnectionAlive = true;
     while (true) {
@@ -277,15 +275,15 @@ Status TestWakeupClientServiceImpl::GetRemoteTasks(ServerContext* context,
     return Status::CANCELLED;
 }
 
-Status TestWakeupClientServiceImpl::NotifyWakeupRequired(ServerContext* context,
-                                                         const NotifyWakeupRequiredRequest* request,
-                                                         NotifyWakeupRequiredResponse* response) {
+Status ServiceImpl::NotifyWakeupRequired(ServerContext* context,
+                                         const NotifyWakeupRequiredRequest* request,
+                                         NotifyWakeupRequiredResponse* response) {
     printf("NotifyWakeupRequired called\n");
     if (request->iswakeuprequired() && !mWakeupRequired && !mTaskQueue->isEmpty()) {
         // If wakeup is now required and previously not required, this means we have finished
         // shutting down the device. If there are still pending tasks, try waking up AP again
         // to finish executing those tasks.
-        wakeupApplicationProcessor();
+        wakeupApplicationProcessor(BOOTUP_REASON_SYSTEM_REMOTE_ACCESS);
     }
     mWakeupRequired = request->iswakeuprequired();
     if (mWakeupRequired) {
@@ -296,23 +294,22 @@ Status TestWakeupClientServiceImpl::NotifyWakeupRequired(ServerContext* context,
     return Status::OK;
 }
 
-void TestWakeupClientServiceImpl::cleanupScheduledTaskLocked(const std::string& clientId,
-                                                             const std::string& scheduleId) {
+void ServiceImpl::cleanupScheduledTaskLocked(const std::string& clientId,
+                                             const std::string& scheduleId) {
     mInfoByScheduleIdByClientId[clientId].erase(scheduleId);
     if (mInfoByScheduleIdByClientId[clientId].size() == 0) {
         mInfoByScheduleIdByClientId.erase(clientId);
     }
 }
 
-TaskScheduleMsgHandler::TaskScheduleMsgHandler(TestWakeupClientServiceImpl* impl) : mImpl(impl) {}
+TaskScheduleMsgHandler::TaskScheduleMsgHandler(ServiceImpl* impl) : mImpl(impl) {}
 
 void TaskScheduleMsgHandler::handleMessage(const android::Message& message) {
     mImpl->handleAddTask(message.what);
 }
 
-Status TestWakeupClientServiceImpl::ScheduleTask(ServerContext* context,
-                                                 const ScheduleTaskRequest* request,
-                                                 ScheduleTaskResponse* response) {
+Status ServiceImpl::ScheduleTask(ServerContext* context, const ScheduleTaskRequest* request,
+                                 ScheduleTaskResponse* response) {
     std::lock_guard<std::mutex> lockGuard(mLock);
 
     const GrpcScheduleInfo& grpcScheduleInfo = request->scheduleinfo();
@@ -359,8 +356,7 @@ Status TestWakeupClientServiceImpl::ScheduleTask(ServerContext* context,
     return Status::OK;
 }
 
-bool TestWakeupClientServiceImpl::getScheduleInfoLocked(int scheduleMsgId,
-                                                        ScheduleInfo** outScheduleInfoPtr) {
+bool ServiceImpl::getScheduleInfoLocked(int scheduleMsgId, ScheduleInfo** outScheduleInfoPtr) {
     for (auto& [_, infoByScheduleId] : mInfoByScheduleIdByClientId) {
         for (auto& [_, scheduleInfo] : infoByScheduleId) {
             if (scheduleInfo.scheduleMsgId == scheduleMsgId) {
@@ -372,7 +368,7 @@ bool TestWakeupClientServiceImpl::getScheduleInfoLocked(int scheduleMsgId,
     return false;
 }
 
-void TestWakeupClientServiceImpl::handleAddTask(int scheduleMsgId) {
+void ServiceImpl::handleAddTask(int scheduleMsgId) {
     std::lock_guard<std::mutex> lockGuard(mLock);
 
     ScheduleInfo* scheduleInfoPtr;
@@ -385,15 +381,27 @@ void TestWakeupClientServiceImpl::handleAddTask(int scheduleMsgId) {
     const GrpcScheduleInfo& grpcScheduleInfo = *scheduleInfoPtr->grpcScheduleInfo;
     const std::string scheduleId = grpcScheduleInfo.scheduleid();
     const std::string clientId = grpcScheduleInfo.clientid();
-
-    GetRemoteTasksResponse injectResponse;
-    injectResponse.set_data(grpcScheduleInfo.data().data(), grpcScheduleInfo.data().size());
-    injectResponse.set_clientid(clientId);
-    injectTaskResponse(injectResponse);
     scheduleInfoPtr->currentCount++;
+    ScheduleTaskType taskType = grpcScheduleInfo.tasktype();
+    printf("Sending scheduled tasks for scheduleId: %s, clientId: %s, taskCount: %d, "
+           "taskType: %d\n",
+           scheduleId.c_str(), clientId.c_str(), scheduleInfoPtr->currentCount,
+           static_cast<int>(taskType));
 
-    printf("Sending scheduled tasks for scheduleId: %s, clientId: %s, taskCount: %d\n",
-           scheduleId.c_str(), clientId.c_str(), scheduleInfoPtr->currentCount);
+    if (taskType == ScheduleTaskType::ENTER_GARAGE_MODE) {
+        if (mWakeupRequired) {
+            wakeupApplicationProcessor(BOOTUP_REASON_SYSTEM_ENTER_GARAGE_MODE);
+        } else {
+            printf("Ignore ENTER_GARAGE_MODE task type because the head unit is already running");
+        }
+    } else if (grpcScheduleInfo.tasktype() == ScheduleTaskType::CUSTOM) {
+        GetRemoteTasksResponse injectResponse;
+        injectResponse.set_data(grpcScheduleInfo.data().data(), grpcScheduleInfo.data().size());
+        injectResponse.set_clientid(clientId);
+        injectTaskResponse(injectResponse);
+    } else {
+        printf("Unknown task type: %d\n", static_cast<int>(taskType));
+    }
 
     if (scheduleInfoPtr->totalCount != 0 &&
         scheduleInfoPtr->currentCount == scheduleInfoPtr->totalCount) {
@@ -407,9 +415,8 @@ void TestWakeupClientServiceImpl::handleAddTask(int scheduleMsgId) {
                                 android::Message(scheduleMsgId));
 }
 
-Status TestWakeupClientServiceImpl::UnscheduleTask(ServerContext* context,
-                                                   const UnscheduleTaskRequest* request,
-                                                   UnscheduleTaskResponse* response) {
+Status ServiceImpl::UnscheduleTask(ServerContext* context, const UnscheduleTaskRequest* request,
+                                   UnscheduleTaskResponse* response) {
     std::lock_guard<std::mutex> lockGuard(mLock);
 
     const std::string& clientId = request->clientid();
@@ -431,9 +438,9 @@ Status TestWakeupClientServiceImpl::UnscheduleTask(ServerContext* context,
     return Status::OK;
 }
 
-Status TestWakeupClientServiceImpl::UnscheduleAllTasks(ServerContext* context,
-                                                       const UnscheduleAllTasksRequest* request,
-                                                       UnscheduleAllTasksResponse* response) {
+Status ServiceImpl::UnscheduleAllTasks(ServerContext* context,
+                                       const UnscheduleAllTasksRequest* request,
+                                       UnscheduleAllTasksResponse* response) {
     std::lock_guard<std::mutex> lockGuard(mLock);
 
     const std::string& clientId = request->clientid();
@@ -452,9 +459,8 @@ Status TestWakeupClientServiceImpl::UnscheduleAllTasks(ServerContext* context,
     return Status::OK;
 }
 
-Status TestWakeupClientServiceImpl::IsTaskScheduled(ServerContext* context,
-                                                    const IsTaskScheduledRequest* request,
-                                                    IsTaskScheduledResponse* response) {
+Status ServiceImpl::IsTaskScheduled(ServerContext* context, const IsTaskScheduledRequest* request,
+                                    IsTaskScheduledResponse* response) {
     std::lock_guard<std::mutex> lockGuard(mLock);
 
     const std::string& clientId = request->clientid();
@@ -475,9 +481,9 @@ Status TestWakeupClientServiceImpl::IsTaskScheduled(ServerContext* context,
     return Status::OK;
 }
 
-Status TestWakeupClientServiceImpl::GetAllPendingScheduledTasks(
-        ServerContext* context, const GetAllPendingScheduledTasksRequest* request,
-        GetAllPendingScheduledTasksResponse* response) {
+Status ServiceImpl::GetAllPendingScheduledTasks(ServerContext* context,
+                                                const GetAllPendingScheduledTasksRequest* request,
+                                                GetAllPendingScheduledTasksResponse* response) {
     const std::string& clientId = request->clientid();
     printf("GetAllPendingScheduledTasks called with client Id: %s\n", clientId.c_str());
     response->clear_allscheduledtasks();
@@ -493,12 +499,33 @@ Status TestWakeupClientServiceImpl::GetAllPendingScheduledTasks(
     return Status::OK;
 }
 
-bool TestWakeupClientServiceImpl::isWakeupRequired() {
+Status ServiceImpl::IsVehicleInUse(ServerContext* context, const IsVehicleInUseRequest* request,
+                                   IsVehicleInUseResponse* response) {
+    response->set_isvehicleinuse(mVehicleInUse);
+    return Status::OK;
+}
+
+Status ServiceImpl::GetApPowerBootupReason(ServerContext* context,
+                                           const GetApPowerBootupReasonRequest* request,
+                                           GetApPowerBootupReasonResponse* response) {
+    response->set_bootupreason(mBootupReason);
+    return Status::OK;
+}
+
+bool ServiceImpl::isWakeupRequired() {
     return mWakeupRequired;
 }
 
-bool TestWakeupClientServiceImpl::isRemoteTaskConnectionAlive() {
+bool ServiceImpl::isRemoteTaskConnectionAlive() {
     return mRemoteTaskConnectionAlive;
+}
+
+void ServiceImpl::setVehicleInUse(bool vehicleInUse) {
+    mVehicleInUse = vehicleInUse;
+}
+
+void ServiceImpl::setBootupReason(int32_t bootupReason) {
+    mBootupReason = bootupReason;
 }
 
 }  // namespace remoteaccess

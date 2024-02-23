@@ -52,11 +52,6 @@ cc_binary {
     defaults: ["remote-access-hal-defaults"],
     vintf_fragments: ["remoteaccess-default-service.xml"],
     init_rc: ["remoteaccess-default-service.rc"],
-    cflags: [
-        // Uncomment this if running on emulator and connecting to a local grpc server
-        // running on host 127.0.0.1:50051 (TestWakeupClientServerHost)
-        // "-DGRPC_SERVICE_ADDRESS=\"10.0.2.2:50051\"",
-    ],
 }
 
 cc_binary {
@@ -64,10 +59,6 @@ cc_binary {
     defaults: ["remote-access-hal-defaults"],
     vintf_fragments: ["remoteaccess-default-service.xml"],
     init_rc: ["remoteaccess-tcu-test-service.rc"],
-    cflags: [
-        "-DGRPC_SERVICE_ADDRESS=\"10.10.10.1:50051\"",
-        "-DGRPC_SERVICE_IFNAME=\"eth1\"",
-    ],
 }
 
 cc_library {

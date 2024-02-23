@@ -346,8 +346,8 @@ ndk::ScopedAStatus RemoteAccessService::getSupportedTaskTypesForScheduling(
         return ScopedAStatus::ok();
     }
 
-    // TODO(b/316233421): support ENTER_GARAGE_MODE type.
     out->push_back(TaskType::CUSTOM);
+    out->push_back(TaskType::ENTER_GARAGE_MODE);
     return ScopedAStatus::ok();
 }
 
@@ -380,6 +380,8 @@ ScopedAStatus RemoteAccessService::scheduleTask(const ScheduleInfo& scheduleInfo
     }
 
     request.mutable_scheduleinfo()->set_clientid(scheduleInfo.clientId);
+    request.mutable_scheduleinfo()->set_tasktype(
+            static_cast<ScheduleTaskType>(scheduleInfo.taskType));
     request.mutable_scheduleinfo()->set_scheduleid(scheduleInfo.scheduleId);
     request.mutable_scheduleinfo()->set_data(scheduleInfo.taskData.data(),
                                              scheduleInfo.taskData.size());
@@ -485,6 +487,7 @@ ScopedAStatus RemoteAccessService::getAllPendingScheduledTasks(const std::string
         const GrpcScheduleInfo& rpcScheduleInfo = response.allscheduledtasks(i);
         ScheduleInfo scheduleInfo = {
                 .clientId = rpcScheduleInfo.clientid(),
+                .taskType = static_cast<TaskType>(rpcScheduleInfo.tasktype()),
                 .scheduleId = rpcScheduleInfo.scheduleid(),
                 .taskData = stringToBytes(rpcScheduleInfo.data()),
                 .count = rpcScheduleInfo.count(),

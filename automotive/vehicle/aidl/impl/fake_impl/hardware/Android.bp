@@ -27,10 +27,15 @@ cc_library {
     ],
     local_include_dirs: ["include"],
     export_include_dirs: ["include"],
-    cflags: ["-DENABLE_VEHICLE_HAL_TEST_PROPERTIES"],
+    cflags: [
+        "-DENABLE_VEHICLE_HAL_TEST_PROPERTIES",
+    ],
     defaults: [
         "VehicleHalDefaults",
         "FakeVehicleHardwareDefaults",
+    ],
+    whole_static_libs: [
+        "wakeup_client_protos",
     ],
 }
 
@@ -54,7 +59,9 @@ cc_defaults {
         "Prebuilt_VehicleHalVendorClusterTestProperties_JSON",
     ],
     shared_libs: [
+        "libgrpc++",
         "libjsoncpp",
+        "libprotobuf-cpp-full",
     ],
     export_static_lib_headers: ["VehicleHalUtils"],
 }
