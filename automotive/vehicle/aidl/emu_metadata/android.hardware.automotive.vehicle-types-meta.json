@@ -1089,7 +1089,7 @@
                 "data_enum": "TrailerState"
             },
             {
-                "name": "Vehicle’s curb weight",
+                "name": "VEHICLE_CURB_WEIGHT",
                 "value": 289410886
             },
             {

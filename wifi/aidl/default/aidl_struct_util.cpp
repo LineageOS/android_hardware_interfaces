@@ -1085,6 +1085,41 @@ bool convertLegacyLinkLayerStatsToAidl(const legacy_hal::LinkLayerStats& legacy_
     return true;
 }
 
+// TODO (b/324519882): Remove logs after validating the structure size.
+void logAidlLinkLayerStatsSize(StaLinkLayerStats& aidl_stats) {
+    unsigned long expectedMaxRadios = 5;
+    unsigned long expectedMaxLinks = 5;
+    unsigned long expectedMaxChannelStats = 512;
+    unsigned long expectedMaxPeers = 3;
+    unsigned long expectedMaxRateStats = 1024;
+
+    unsigned long maxChannelStats = 0, maxPeers = 0, maxRateStats = 0;
+    for (size_t i = 0; i < aidl_stats.radios.size(); i++) {
+        maxChannelStats =
+                std::max(maxChannelStats, (unsigned long)aidl_stats.radios[i].channelStats.size());
+    }
+    for (size_t i = 0; i < aidl_stats.iface.links.size(); i++) {
+        maxPeers = std::max(maxPeers, (unsigned long)aidl_stats.iface.links[i].peers.size());
+        for (size_t j = 0; j < aidl_stats.iface.links[i].peers.size(); j++) {
+            maxRateStats =
+                    std::max(maxRateStats,
+                             (unsigned long)aidl_stats.iface.links[i].peers[j].rateStats.size());
+        }
+    }
+
+    if (aidl_stats.radios.size() > expectedMaxRadios ||
+        aidl_stats.iface.links.size() > expectedMaxLinks ||
+        maxChannelStats > expectedMaxChannelStats || maxPeers > expectedMaxPeers ||
+        maxRateStats > expectedMaxRateStats) {
+        LOG(INFO) << "StaLinkLayerStats exceeds expected vector size";
+        LOG(INFO) << "  numRadios: " << aidl_stats.radios.size();
+        LOG(INFO) << "  numLinks: " << aidl_stats.iface.links.size();
+        LOG(INFO) << "  maxChannelStats: " << maxChannelStats;
+        LOG(INFO) << "  maxPeers: " << maxPeers;
+        LOG(INFO) << "  maxRateStats: " << maxRateStats;
+    }
+}
+
 bool convertLegacyPeerInfoStatsToAidl(const legacy_hal::WifiPeerInfo& legacy_peer_info_stats,
                                       StaPeerInfo* aidl_peer_info_stats) {
     if (!aidl_peer_info_stats) {

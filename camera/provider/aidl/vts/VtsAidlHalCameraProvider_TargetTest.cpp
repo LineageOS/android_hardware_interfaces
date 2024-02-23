@@ -330,10 +330,14 @@ TEST_P(CameraAidlTest, getSessionCharacteristics) {
             StreamConfiguration config;
             createStreamConfiguration(streams, StreamConfigurationMode::NORMAL_MODE, &config);
 
-            CameraMetadata chars;
-            ret = device->getSessionCharacteristics(config, &chars);
+            CameraMetadata camera_chars;
+            ret = device->getCameraCharacteristics(&camera_chars);
             ASSERT_TRUE(ret.isOk());
-            verifySessionCharacteristics(chars);
+
+            CameraMetadata session_chars;
+            ret = device->getSessionCharacteristics(config, &session_chars);
+            ASSERT_TRUE(ret.isOk());
+            verifySessionCharacteristics(session_chars, camera_chars);
         }
     } else {
         ALOGI("getSessionCharacteristics: Test skipped.\n");

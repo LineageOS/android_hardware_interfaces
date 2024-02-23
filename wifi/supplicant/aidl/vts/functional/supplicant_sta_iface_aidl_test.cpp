@@ -44,6 +44,9 @@ using aidl::android::hardware::wifi::supplicant::ISupplicantStaIface;
 using aidl::android::hardware::wifi::supplicant::ISupplicantStaNetwork;
 using aidl::android::hardware::wifi::supplicant::KeyMgmtMask;
 using aidl::android::hardware::wifi::supplicant::MscsParams;
+using aidl::android::hardware::wifi::supplicant::QosCharacteristics;
+using aidl::android::hardware::wifi::supplicant::QosPolicyScsData;
+using aidl::android::hardware::wifi::supplicant::QosPolicyScsRequestStatus;
 using aidl::android::hardware::wifi::supplicant::WpaDriverCapabilitiesMask;
 using aidl::android::hardware::wifi::supplicant::WpsConfigMethods;
 using android::ProcessState;
@@ -805,6 +808,39 @@ TEST_P(SupplicantStaIfaceAidlTest, ConfigureAndDisableMscs) {
     params.frameClassifierMask = 0;
     EXPECT_TRUE(sta_iface_->configureMscs(params).isOk());
     EXPECT_TRUE(sta_iface_->disableMscs().isOk());
+}
+
+/*
+ * Add and remove QoS policy with traffic characteristics
+ */
+TEST_P(SupplicantStaIfaceAidlTest, AddAndRemoveQosWithTrafficChars) {
+    if (interface_version_ < 3) {
+        GTEST_SKIP() << "QosCharacteristics is available as of Supplicant V3";
+    }
+
+    QosCharacteristics qosChars;
+    qosChars.minServiceIntervalUs = 2000;
+    qosChars.maxServiceIntervalUs = 5000;
+    qosChars.minDataRateKbps = 500;
+    qosChars.delayBoundUs = 200;
+    qosChars.optionalFieldMask = 0;  // no optional fields
+
+    uint8_t policyId = 5;
+    QosPolicyScsData qosPolicy;
+    qosPolicy.policyId = policyId;
+    qosPolicy.direction = QosPolicyScsData::LinkDirection::UPLINK;
+    qosPolicy.QosCharacteristics = qosChars;
+
+    std::vector<uint8_t> policyIdList{policyId};
+    std::vector<QosPolicyScsData> policyList{qosPolicy};
+    std::vector<QosPolicyScsRequestStatus> responseList;
+
+    // Check that we receive some reply for this request.
+    // Policy may not be accepted (ex. policy with this id already exists).
+    EXPECT_TRUE(sta_iface_->addQosPolicyRequestForScs(policyList, &responseList).isOk());
+    EXPECT_EQ(1, responseList.size());
+    EXPECT_TRUE(sta_iface_->removeQosPolicyForScs(policyIdList, &responseList).isOk());
+    EXPECT_EQ(1, responseList.size());
 }
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(SupplicantStaIfaceAidlTest);
