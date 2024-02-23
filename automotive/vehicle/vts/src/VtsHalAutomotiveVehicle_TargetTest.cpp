@@ -37,6 +37,7 @@
 
 #include <chrono>
 #include <mutex>
+#include <thread>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -63,6 +64,7 @@ using ::android::frameworks::automotive::vhal::IHalPropConfig;
 using ::android::frameworks::automotive::vhal::IHalPropValue;
 using ::android::frameworks::automotive::vhal::ISubscriptionCallback;
 using ::android::frameworks::automotive::vhal::IVhalClient;
+using ::android::frameworks::automotive::vhal::SubscribeOptionsBuilder;
 using ::android::frameworks::automotive::vhal::VhalClientResult;
 using ::android::hardware::getAllHalInstanceNames;
 using ::android::hardware::Sanitize;
@@ -83,8 +85,8 @@ struct ServiceDescriptor {
 class VtsVehicleCallback final : public ISubscriptionCallback {
   private:
     std::mutex mLock;
-    std::unordered_map<int32_t, size_t> mEventsCount GUARDED_BY(mLock);
-    std::unordered_map<int32_t, std::vector<int64_t>> mEventTimestamps GUARDED_BY(mLock);
+    std::unordered_map<int32_t, std::vector<std::unique_ptr<IHalPropValue>>> mEvents
+            GUARDED_BY(mLock);
     std::condition_variable mEventCond;
 
   public:
@@ -93,8 +95,7 @@ class VtsVehicleCallback final : public ISubscriptionCallback {
             std::lock_guard<std::mutex> lockGuard(mLock);
             for (auto& value : values) {
                 int32_t propId = value->getPropId();
-                mEventsCount[propId] += 1;
-                mEventTimestamps[propId].push_back(value->getTimestamp());
+                mEvents[propId].push_back(std::move(value->clone()));
             }
         }
         mEventCond.notify_one();
@@ -110,20 +111,37 @@ class VtsVehicleCallback final : public ISubscriptionCallback {
         std::unique_lock<std::mutex> uniqueLock(mLock);
         return mEventCond.wait_for(uniqueLock, timeout, [this, propId, expectedEvents] {
             ScopedLockAssertion lockAssertion(mLock);
-            return mEventsCount[propId] >= expectedEvents;
+            return mEvents[propId].size() >= expectedEvents;
         });
     }
 
-    std::vector<int64_t> getEventTimestamps(int32_t propId) {
-        {
-            std::lock_guard<std::mutex> lockGuard(mLock);
-            return mEventTimestamps[propId];
+    std::vector<std::unique_ptr<IHalPropValue>> getEvents(int32_t propId) {
+        std::lock_guard<std::mutex> lockGuard(mLock);
+        std::vector<std::unique_ptr<IHalPropValue>> events;
+        if (mEvents.find(propId) == mEvents.end()) {
+            return events;
         }
+        for (const auto& eventPtr : mEvents[propId]) {
+            events.push_back(std::move(eventPtr->clone()));
+        }
+        return events;
+    }
+
+    std::vector<int64_t> getEventTimestamps(int32_t propId) {
+        std::lock_guard<std::mutex> lockGuard(mLock);
+        std::vector<int64_t> timestamps;
+        if (mEvents.find(propId) == mEvents.end()) {
+            return timestamps;
+        }
+        for (const auto& valuePtr : mEvents[propId]) {
+            timestamps.push_back(valuePtr->getTimestamp());
+        }
+        return timestamps;
     }
 
     void reset() {
         std::lock_guard<std::mutex> lockGuard(mLock);
-        mEventsCount.clear();
+        mEvents.clear();
     }
 };
 
@@ -543,6 +561,93 @@ TEST_P(VtsHalAutomotiveVehicleTargetTest, subscribeAndUnsubscribe) {
     mCallback->reset();
     ASSERT_FALSE(mCallback->waitForExpectedEvents(propId, 10, std::chrono::seconds(1)))
             << "Expect not to get events after unsubscription";
+}
+
+bool isVariableUpdateRateSupported(const std::unique_ptr<IHalPropConfig>& config, int32_t areaId) {
+    for (const auto& areaConfigPtr : config->getAreaConfigs()) {
+        if (areaConfigPtr->getAreaId() == areaId &&
+            areaConfigPtr->isVariableUpdateRateSupported()) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// Test subscribe with variable update rate enabled if supported.
+TEST_P(VtsHalAutomotiveVehicleTargetTest, subscribe_enableVurIfSupported) {
+    ALOGD("VtsHalAutomotiveVehicleTargetTest::subscribe_enableVurIfSupported");
+
+    int32_t propId = toInt(VehicleProperty::PERF_VEHICLE_SPEED);
+    if (!checkIsSupported(propId)) {
+        GTEST_SKIP() << "Property: " << propId << " is not supported, skip the test";
+    }
+    if (!mVhalClient->isAidlVhal()) {
+        GTEST_SKIP() << "Variable update rate is only supported by AIDL VHAL";
+    }
+
+    auto propConfigsResult = mVhalClient->getPropConfigs({propId});
+
+    ASSERT_TRUE(propConfigsResult.ok()) << "Failed to get property config for PERF_VEHICLE_SPEED: "
+                                        << "error: " << propConfigsResult.error().message();
+    ASSERT_EQ(propConfigsResult.value().size(), 1u)
+            << "Expect to return 1 config for PERF_VEHICLE_SPEED";
+    auto& propConfig = propConfigsResult.value()[0];
+    float maxSampleRate = propConfig->getMaxSampleRate();
+    if (maxSampleRate < 1) {
+        GTEST_SKIP() << "Sample rate for vehicle speed < 1 times/sec, skip test since it would "
+                        "take too long";
+    }
+    // PERF_VEHICLE_SPEED is a global property, so areaId is 0.
+    if (!isVariableUpdateRateSupported(propConfig, /* areaId= */ 0)) {
+        GTEST_SKIP() << "Variable update rate is not supported for PERF_VEHICLE_SPEED, "
+                     << "skip testing";
+    }
+
+    auto client = mVhalClient->getSubscriptionClient(mCallback);
+    ASSERT_NE(client, nullptr) << "Failed to get subscription client";
+    SubscribeOptionsBuilder builder(propId);
+    // By default variable update rate is true.
+    builder.setSampleRate(maxSampleRate);
+    auto option = builder.build();
+
+    auto result = client->subscribe({option});
+
+    ASSERT_TRUE(result.ok()) << StringPrintf("Failed to subscribe to property: %" PRId32
+                                             ", error: %s",
+                                             propId, result.error().message().c_str());
+
+    ASSERT_TRUE(mCallback->waitForExpectedEvents(propId, 1, std::chrono::seconds(2)))
+            << "Must get at least 1 events within 2 seconds after subscription for rate: "
+            << maxSampleRate;
+
+    // Sleep for 1 seconds to wait for more possible events to arrive.
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    client->unsubscribe({propId});
+
+    auto events = mCallback->getEvents(propId);
+    if (events.size() == 1) {
+        // We only received one event, the value is not changing so nothing to check here.
+        return;
+    }
+
+    // Sort the values by the timestamp.
+    std::map<int64_t, float> valuesByTimestamp;
+    for (size_t i = 0; i < events.size(); i++) {
+        valuesByTimestamp[events[i]->getTimestamp()] = events[i]->getFloatValues()[0];
+    }
+
+    size_t i = 0;
+    float previousValue;
+    for (const auto& [_, value] : valuesByTimestamp) {
+        if (i == 0) {
+            previousValue = value;
+        } else {
+            ASSERT_FALSE(value != previousValue) << "received duplicate value: " << value
+                                                 << " when variable update rate is true";
+            previousValue = value;
+        }
+    }
 }
 
 // Test subscribe() with an invalid property.
