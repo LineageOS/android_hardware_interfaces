@@ -249,7 +249,7 @@ cc_binary {
         "EffectFactory.cpp",
         "EffectMain.cpp",
     ],
-    installable: false, //installed in apex com.android.hardware.audio.effect
+    installable: false, //installed in apex com.android.hardware.audio
 }
 
 cc_library_headers {
@@ -269,11 +269,5 @@ prebuilt_etc {
     name: "android.hardware.audio.service-aidl.xml",
     src: "android.hardware.audio.service-aidl.xml",
     sub_dir: "vintf",
-    installable: false,
-}
-
-prebuilt_etc {
-    name: "audio_effects_config.xml",
-    src: "audio_effects_config.xml",
     installable: false,
 }
