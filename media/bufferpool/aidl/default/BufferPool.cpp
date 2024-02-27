@@ -102,11 +102,11 @@ void BufferPool::Invalidation::onBufferInvalidated(
         if (it->isInvalidated(bufferId)) {
             uint32_t msgId = 0;
             if (it->mNeedsAck) {
-                msgId = ++mInvalidationId;
-                if (msgId == 0) {
-                    // wrap happens
-                    msgId = ++mInvalidationId;
+                if (mInvalidationId == UINT_MAX) {
+                    // wrap happens;
+                    mInvalidationId = 0;
                 }
+                msgId = ++mInvalidationId;
             }
             channel.postInvalidation(msgId, it->mFrom, it->mTo);
             it = mPendings.erase(it);
@@ -125,11 +125,11 @@ void BufferPool::Invalidation::onInvalidationRequest(
         const std::shared_ptr<Accessor> &impl) {
         uint32_t msgId = 0;
     if (needsAck) {
-        msgId = ++mInvalidationId;
-        if (msgId == 0) {
-            // wrap happens
-            msgId = ++mInvalidationId;
+        if (mInvalidationId == UINT_MAX) {
+            //wrap happens
+            mInvalidationId = 0;
         }
+        msgId = ++mInvalidationId;
     }
     ALOGV("bufferpool2 invalidation requested and queued");
     if (left == 0) {
