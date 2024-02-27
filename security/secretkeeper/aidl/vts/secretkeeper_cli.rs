@@ -120,7 +120,7 @@ impl SkClient {
     fn new(instance: &str, dice_artifacts: OwnedDiceArtifactsWithExplicitKey) -> Self {
         let sk: binder::Strong<dyn ISecretkeeper> =
             binder::get_interface(&format!("{SECRETKEEPER_SERVICE}/{instance}")).unwrap();
-        let session = SkSession::new(sk.clone(), &dice_artifacts).unwrap();
+        let session = SkSession::new(sk.clone(), &dice_artifacts, None).unwrap();
         Self { sk, session, dice_artifacts }
     }
 

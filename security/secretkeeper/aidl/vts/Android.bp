@@ -47,6 +47,7 @@ rust_test {
         "android.hardware.security.secretkeeper-V1-rust",
         "libauthgraph_boringssl",
         "libauthgraph_core",
+        "libauthgraph_wire",
         "libauthgraph_vts_test",
         "libbinder_rs",
         "libciborium",
