@@ -67,8 +67,9 @@ Dataspace ReadbackHelper::getDataspaceForColorMode(ColorMode mode) {
         case ColorMode::DISPLAY_P3:
             return Dataspace::DISPLAY_P3;
         case ColorMode::SRGB:
+            return Dataspace::SRGB;
         default:
-            return common::Dataspace::UNKNOWN;
+            return Dataspace::UNKNOWN;
     }
 }
 

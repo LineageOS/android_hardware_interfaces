@@ -522,6 +522,83 @@ TEST_P(GraphicsCompositionTest, ClientComposition) {
     }
 }
 
+TEST_P(GraphicsCompositionTest, MixedColorSpaces) {
+    ASSERT_TRUE(
+            mComposerClient->setClientTargetSlotCount(getPrimaryDisplayId(), kClientTargetSlotCount)
+                    .isOk());
+    const auto& [status, properties] = mComposerClient->getOverlaySupport();
+    if (!status.isOk() && status.getExceptionCode() == EX_SERVICE_SPECIFIC &&
+        status.getServiceSpecificError() == IComposerClient::EX_UNSUPPORTED) {
+        GTEST_SUCCEED() << "getOverlaySupport is not supported";
+        return;
+    }
+
+    if (properties.supportMixedColorSpaces == false) {
+        GTEST_SUCCEED() << "supportMixedColorSpaces is not supported";
+        return;
+    }
+
+    for (ColorMode mode : mTestColorModes) {
+        EXPECT_TRUE(mComposerClient
+                            ->setColorMode(getPrimaryDisplayId(), mode, RenderIntent::COLORIMETRIC)
+                            .isOk());
+
+        bool isSupported;
+        ASSERT_NO_FATAL_FAILURE(isSupported = getHasReadbackBuffer());
+        if (!isSupported) {
+            GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
+            return;
+        }
+
+        // sRGB layer
+        auto srgbLayer = std::make_shared<TestBufferLayer>(
+                mComposerClient, *mTestRenderEngine, getPrimaryDisplayId(), getDisplayWidth(),
+                getDisplayHeight() / 2, PixelFormat::RGBA_8888, *mWriter);
+        std::vector<Color> sRgbDeviceColors(srgbLayer->getWidth() * srgbLayer->getHeight());
+        ReadbackHelper::fillColorsArea(sRgbDeviceColors, getDisplayWidth(),
+                                       {0, 0, static_cast<int32_t>(srgbLayer->getWidth()),
+                                        static_cast<int32_t>(srgbLayer->getHeight())},
+                                       GREEN);
+        srgbLayer->setDisplayFrame({0, 0, static_cast<int32_t>(srgbLayer->getWidth()),
+                                    static_cast<int32_t>(srgbLayer->getHeight())});
+        srgbLayer->setZOrder(10);
+        srgbLayer->setDataspace(Dataspace::SRGB);
+        ASSERT_NO_FATAL_FAILURE(srgbLayer->setBuffer(sRgbDeviceColors));
+
+        // display P3 layer
+        auto displayP3Layer = std::make_shared<TestBufferLayer>(
+                mComposerClient, *mTestRenderEngine, getPrimaryDisplayId(), getDisplayWidth(),
+                getDisplayHeight() / 2, PixelFormat::RGBA_8888, *mWriter);
+        std::vector<Color> displayP3DeviceColors(
+                static_cast<size_t>(displayP3Layer->getWidth() * displayP3Layer->getHeight()));
+        ReadbackHelper::fillColorsArea(displayP3DeviceColors, getDisplayWidth(),
+                                       {0, 0, static_cast<int32_t>(displayP3Layer->getWidth()),
+                                        static_cast<int32_t>(displayP3Layer->getHeight())},
+                                       RED);
+        displayP3Layer->setDisplayFrame(
+                {0, getDisplayHeight() / 2, getDisplayWidth(), getDisplayHeight()});
+        displayP3Layer->setZOrder(10);
+        displayP3Layer->setDataspace(Dataspace::DISPLAY_P3);
+        ASSERT_NO_FATAL_FAILURE(displayP3Layer->setBuffer(displayP3DeviceColors));
+
+        writeLayers({srgbLayer, displayP3Layer});
+
+        mWriter->validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp,
+                                 VtsComposerClient::kNoFrameIntervalNs);
+        execute();
+
+        auto changedCompositionTypes = mReader.takeChangedCompositionTypes(getPrimaryDisplayId());
+        ASSERT_TRUE(changedCompositionTypes.empty());
+
+        mWriter->presentDisplay(getPrimaryDisplayId());
+        execute();
+
+        changedCompositionTypes = mReader.takeChangedCompositionTypes(getPrimaryDisplayId());
+        ASSERT_TRUE(changedCompositionTypes.empty());
+        ASSERT_TRUE(mReader.takeErrors().empty());
+    }
+}
+
 TEST_P(GraphicsCompositionTest, DeviceAndClientComposition) {
     ASSERT_TRUE(
             mComposerClient->setClientTargetSlotCount(getPrimaryDisplayId(), kClientTargetSlotCount)
