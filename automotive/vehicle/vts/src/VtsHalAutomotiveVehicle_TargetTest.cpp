@@ -640,13 +640,12 @@ TEST_P(VtsHalAutomotiveVehicleTargetTest, subscribe_enableVurIfSupported) {
     size_t i = 0;
     float previousValue;
     for (const auto& [_, value] : valuesByTimestamp) {
-        if (i == 0) {
-            previousValue = value;
-        } else {
+        if (i != 0) {
             ASSERT_FALSE(value != previousValue) << "received duplicate value: " << value
                                                  << " when variable update rate is true";
-            previousValue = value;
         }
+        previousValue = value;
+        i++;
     }
 }
 
