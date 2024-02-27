@@ -35,6 +35,7 @@ cc_binary {
         "libbinder_ndk",
         "libcutils",
         "libfmq",
+        "libutils",
     ],
     srcs: [
         "main.cpp",

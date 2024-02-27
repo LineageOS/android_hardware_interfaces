@@ -30,13 +30,13 @@
 #include <unistd.h>
 #include <cstdint>
 #include "aidl/android/hardware/common/fmq/SynchronizedReadWrite.h"
-#include "fmq/EventFlag.h"
 
 namespace aidl::android::hardware::power {
 namespace {
 
 using ::aidl::android::hardware::common::fmq::SynchronizedReadWrite;
 using ::android::AidlMessageQueue;
+using ::android::hardware::EventFlag;
 using android::hardware::power::Boost;
 using android::hardware::power::ChannelConfig;
 using android::hardware::power::ChannelMessage;
@@ -46,8 +46,12 @@ using android::hardware::power::Mode;
 using android::hardware::power::SessionHint;
 using android::hardware::power::SessionMode;
 using android::hardware::power::WorkDuration;
+using ChannelMessageContents = ChannelMessage::ChannelMessageContents;
+using ModeSetter = ChannelMessage::ChannelMessageContents::SessionModeSetter;
+using MessageTag = ChannelMessage::ChannelMessageContents::Tag;
 
 using SessionMessageQueue = AidlMessageQueue<ChannelMessage, SynchronizedReadWrite>;
+using FlagMessageQueue = AidlMessageQueue<int8_t, SynchronizedReadWrite>;
 
 const std::vector<Boost> kBoosts{ndk::enum_range<Boost>().begin(), ndk::enum_range<Boost>().end()};
 
@@ -139,6 +143,51 @@ class HintSessionAidl : public PowerAidl {
     std::shared_ptr<IPowerHintSession> mSession;
 };
 
+class FMQAidl : public PowerAidl {
+  public:
+    virtual void SetUp() override {
+        PowerAidl::SetUp();
+        if (mServiceVersion < 5) {
+            GTEST_SKIP() << "DEVICE not launching with Power V5 and beyond.";
+        }
+
+        auto status =
+                power->createHintSessionWithConfig(getpid(), getuid(), kSelfTids, 16666666L,
+                                                   SessionTag::OTHER, &mSessionConfig, &mSession);
+        ASSERT_TRUE(status.isOk());
+        ASSERT_NE(nullptr, mSession);
+
+        status = power->getSessionChannel(getpid(), getuid(), &mChannelConfig);
+        ASSERT_TRUE(status.isOk());
+        mChannel = std::make_shared<SessionMessageQueue>(mChannelConfig.channelDescriptor, true);
+        ASSERT_TRUE(mChannel->isValid());
+
+        if (mChannelConfig.eventFlagDescriptor.has_value()) {
+            mFlagChannel =
+                    std::make_shared<FlagMessageQueue>(*mChannelConfig.eventFlagDescriptor, true);
+            ASSERT_EQ(EventFlag::createEventFlag(mFlagChannel->getEventFlagWord(), &mEventFlag),
+                      ::android::OK);
+        } else {
+            ASSERT_EQ(EventFlag::createEventFlag(mChannel->getEventFlagWord(), &mEventFlag),
+                      ::android::OK);
+        }
+
+        ASSERT_NE(mEventFlag, nullptr);
+    }
+    virtual void TearDown() {
+        mSession->close();
+        ASSERT_TRUE(power->closeSessionChannel(getpid(), getuid()).isOk());
+    }
+
+  protected:
+    std::shared_ptr<IPowerHintSession> mSession;
+    std::shared_ptr<SessionMessageQueue> mChannel;
+    std::shared_ptr<FlagMessageQueue> mFlagChannel;
+    SessionConfig mSessionConfig;
+    ChannelConfig mChannelConfig;
+    ::android::hardware::EventFlag* mEventFlag;
+};
+
 TEST_P(PowerAidl, setMode) {
     for (const auto& mode : kModes) {
         ASSERT_TRUE(power->setMode(mode, true).isOk());
@@ -213,16 +262,12 @@ TEST_P(PowerAidl, createHintSessionWithConfig) {
     ASSERT_NE(nullptr, session);
 }
 
-TEST_P(PowerAidl, getAndCloseSessionChannel) {
-    if (mServiceVersion < 5) {
-        GTEST_SKIP() << "DEVICE not launching with Power V5 and beyond.";
-    }
-    ChannelConfig config;
-    auto status = power->getSessionChannel(getpid(), getuid(), &config);
-    ASSERT_TRUE(status.isOk());
-    auto messageQueue = std::make_shared<SessionMessageQueue>(config.channelDescriptor, true);
-    ASSERT_TRUE(messageQueue->isValid());
-    ASSERT_TRUE(power->closeSessionChannel(getpid(), getuid()).isOk());
+// FIXED_PERFORMANCE mode is required for all devices which ship on Android 11
+// or later
+TEST_P(PowerAidl, hasFixedPerformance) {
+    bool supported;
+    ASSERT_TRUE(power->isModeSupported(Mode::FIXED_PERFORMANCE, &supported).isOk());
+    ASSERT_TRUE(supported);
 }
 
 TEST_P(HintSessionAidl, createAndCloseHintSession) {
@@ -295,21 +340,69 @@ TEST_P(HintSessionAidl, getSessionConfig) {
     ASSERT_TRUE(mSession->getSessionConfig(&config).isOk());
 }
 
-// FIXED_PERFORMANCE mode is required for all devices which ship on Android 11
-// or later
-TEST_P(PowerAidl, hasFixedPerformance) {
-    bool supported;
-    ASSERT_TRUE(power->isModeSupported(Mode::FIXED_PERFORMANCE, &supported).isOk());
-    ASSERT_TRUE(supported);
+TEST_P(FMQAidl, getAndCloseSessionChannel) {}
+
+TEST_P(FMQAidl, writeItems) {
+    std::vector<ChannelMessage> messages{
+            {.sessionID = static_cast<int32_t>(mSessionConfig.id),
+             .timeStampNanos = 1000,
+             .data = ChannelMessageContents::make<MessageTag::workDuration, WorkDurationFixedV1>(
+                     {.durationNanos = 1000,
+                      .workPeriodStartTimestampNanos = 10,
+                      .cpuDurationNanos = 900,
+                      .gpuDurationNanos = 100})},
+            {.sessionID = static_cast<int32_t>(mSessionConfig.id),
+             .timeStampNanos = 1000,
+             .data = ChannelMessageContents::make<MessageTag::mode, ModeSetter>(
+                     {.modeInt = SessionMode::POWER_EFFICIENCY, .enabled = true})},
+            {.sessionID = static_cast<int32_t>(mSessionConfig.id),
+             .timeStampNanos = 1000,
+             .data = ChannelMessageContents::make<MessageTag::hint, SessionHint>(
+                     SessionHint::CPU_LOAD_UP)},
+            {.sessionID = static_cast<int32_t>(mSessionConfig.id),
+             .timeStampNanos = 1000,
+             .data = ChannelMessageContents::make<MessageTag::targetDuration, int64_t>(
+                     10000000 /* 10ms */)},
+    };
+    for (auto& message : messages) {
+        ASSERT_TRUE(mChannel->writeBlocking(&message, 1, mChannelConfig.readFlagBitmask,
+                                            mChannelConfig.writeFlagBitmask, 100000000,
+                                            mEventFlag));
+    }
+    // Make sure this still works after everything else is done to check crash
+    ASSERT_TRUE(mSession->setThreads(kSelfTids).isOk());
+}
+
+TEST_P(FMQAidl, writeExcess) {
+    std::vector<ChannelMessage> messages;
+    size_t channelSize = mChannel->getQuantumCount();
+    for (size_t i = 0; i < channelSize; ++i) {
+        messages.push_back({.sessionID = static_cast<int32_t>(mSessionConfig.id),
+                            .timeStampNanos = 1000,
+                            .data = ChannelMessageContents::make<MessageTag::hint, SessionHint>(
+                                    SessionHint::CPU_LOAD_UP)});
+    }
+    ASSERT_TRUE(mChannel->writeBlocking(messages.data(), messages.size(),
+                                        mChannelConfig.readFlagBitmask,
+                                        mChannelConfig.writeFlagBitmask, 100000000, mEventFlag));
+    ASSERT_TRUE(mChannel->writeBlocking(messages.data(), messages.size(),
+                                        mChannelConfig.readFlagBitmask,
+                                        mChannelConfig.writeFlagBitmask, 1000000000, mEventFlag));
+    // Make sure this still works after everything else is done to check crash
+    ASSERT_TRUE(mSession->setThreads(kSelfTids).isOk());
 }
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(PowerAidl);
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(HintSessionAidl);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(FMQAidl);
 
 INSTANTIATE_TEST_SUITE_P(Power, PowerAidl,
                          testing::ValuesIn(::android::getAidlHalInstanceNames(IPower::descriptor)),
                          ::android::PrintInstanceNameToString);
 INSTANTIATE_TEST_SUITE_P(Power, HintSessionAidl,
+                         testing::ValuesIn(::android::getAidlHalInstanceNames(IPower::descriptor)),
+                         ::android::PrintInstanceNameToString);
+INSTANTIATE_TEST_SUITE_P(Power, FMQAidl,
                          testing::ValuesIn(::android::getAidlHalInstanceNames(IPower::descriptor)),
                          ::android::PrintInstanceNameToString);
 
