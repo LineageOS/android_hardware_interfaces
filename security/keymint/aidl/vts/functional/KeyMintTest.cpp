@@ -1086,6 +1086,7 @@ TEST_P(NewKeyGenerationTest, RsaWithSpecifiedValidity) {
     };
     for (auto notBefore : test_vector_not_before_millis) {
         uint64_t notAfter = notBefore + 378691200000 /* 12 years milliseconds*/;
+        SCOPED_TRACE(testing::Message() << "notBefore: " << notBefore << " notAfter: " << notAfter);
         ASSERT_EQ(ErrorCode::OK,
                   GenerateKey(AuthorizationSetBuilder()
                                       .RsaSigningKey(2048, 65537)
@@ -1101,14 +1102,14 @@ TEST_P(NewKeyGenerationTest, RsaWithSpecifiedValidity) {
 
         const ASN1_TIME* not_before = X509_get0_notBefore(cert.get());
         ASSERT_NE(not_before, nullptr);
-        time_t not_before_time;
-        ASSERT_EQ(ASN1_TIME_to_time_t(not_before, &not_before_time), 1);
+        int64_t not_before_time;
+        ASSERT_EQ(ASN1_TIME_to_posix(not_before, &not_before_time), 1);
         EXPECT_EQ(not_before_time, (notBefore / 1000));
 
         const ASN1_TIME* not_after = X509_get0_notAfter(cert.get());
         ASSERT_NE(not_after, nullptr);
-        time_t not_after_time;
-        ASSERT_EQ(ASN1_TIME_to_time_t(not_after, &not_after_time), 1);
+        int64_t not_after_time;
+        ASSERT_EQ(ASN1_TIME_to_posix(not_after, &not_after_time), 1);
         EXPECT_EQ(not_after_time, (notAfter / 1000));
     }
 }
