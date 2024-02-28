@@ -161,6 +161,48 @@ TEST_P(WifiRttControllerAidlTest, EnableResponder) {
 }
 
 /*
+ * Request80211azNtbRangeMeasurement
+ * Tests the two sided 11az non-trigger based ranging - 802.11az NTB FTM protocol.
+ */
+TEST_P(WifiRttControllerAidlTest, Request80211azNtbRangeMeasurement) {
+    if (interface_version_ < 2) {
+        GTEST_SKIP() << "Request80211azNtbRangeMeasurement is available as of RttController V2";
+    }
+
+    RttCapabilities caps = getCapabilities();
+    if (!caps.ntbInitiatorSupported) {
+        GTEST_SKIP() << "Skipping 11az NTB RTT since driver/fw does not support";
+    }
+
+    RttConfig config;
+    config.addr = {{0x00, 0x01, 0x02, 0x03, 0x04, 0x05}};
+    config.type = RttType::TWO_SIDED_11AZ_NTB;
+    config.peer = RttPeerType::AP;
+    config.channel.width = WifiChannelWidthInMhz::WIDTH_80;
+    config.channel.centerFreq = 5180;
+    config.channel.centerFreq0 = 5210;
+    config.channel.centerFreq1 = 0;
+    config.bw = RttBw::BW_20MHZ;
+    config.preamble = RttPreamble::HT;
+    config.mustRequestLci = false;
+    config.mustRequestLcr = false;
+    config.numFramesPerBurst = 8;
+    config.numRetriesPerRttFrame = 0;
+    config.numRetriesPerFtmr = 0;
+    // 11az non-trigger based minimum measurement time in units of 100 microseconds.
+    config.ntbMinMeasurementTime = 2500;
+    // 11az non-trigger based maximum measurement time in units of 10 milliseconds.
+    config.ntbMaxMeasurementTime = 1500;
+
+    int cmdId = 55;
+    std::vector<RttConfig> configs = {config};
+    EXPECT_TRUE(wifi_rtt_controller_->rangeRequest(cmdId, configs).isOk());
+
+    // Sleep for 2 seconds to wait for driver/firmware to complete RTT.
+    sleep(2);
+}
+
+/*
  * Request2SidedRangeMeasurement
  * Tests the two sided ranging - 802.11mc FTM protocol.
  */
