@@ -142,6 +142,11 @@ enum VehicleProperty {
     /**
      * Fuel door location
      *
+     * This property must communicate the location of the fuel door on the vehicle. This property
+     * does not apply to electric vehicles. That is, if INFO_FUEL_TYPE only contains
+     * FuelType::FUEL_TYPE_ELECTRIC, this property must not be implemented. For EVs, implement
+     * INFO_EV_PORT_LOCATION or INFO_MULTI_EV_PORT_LOCATIONS.
+     *
      * @change_mode VehiclePropertyChangeMode.STATIC
      * @data_enum PortLocationType
      * @access VehiclePropertyAccess.READ
@@ -350,9 +355,14 @@ enum VehicleProperty {
     WHEEL_TICK = 0x0306 + 0x10000000 + 0x01000000
             + 0x00510000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT64_VEC
     /**
-     * Fuel remaining in the vehicle, in milliliters
+     * Fuel level in milliliters
      *
-     * Value may not exceed INFO_FUEL_CAPACITY
+     * This property must communicate the current amount of fuel remaining in the vehicle in
+     * milliliters. This property does not apply to electric vehicles. That is, if INFO_FUEL_TYPE
+     * only contains FuelType::FUEL_TYPE_ELECTRIC, this property must not be implemented. For EVs,
+     * implement EV_BATTERY_LEVEL.
+     *
+     * Value may not exceed INFO_FUEL_CAPACITY.
      *
      * @change_mode VehiclePropertyChangeMode.CONTINUOUS
      * @access VehiclePropertyAccess.READ
@@ -363,6 +373,11 @@ enum VehicleProperty {
             + 0x00600000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:FLOAT
     /**
      * Fuel door open
+     *
+     * This property must communicate whether the fuel door on the vehicle is open or not. This
+     * property does not apply to electric vehicles. That is, if INFO_FUEL_TYPE only contains
+     * FuelType::FUEL_TYPE_ELECTRIC, this property must not be implemented. For EVs, implement
+     * EV_CHARGE_PORT_OPEN.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
