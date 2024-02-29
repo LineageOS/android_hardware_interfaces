@@ -13,7 +13,7 @@ aidl_interface {
     srcs: [
         "android/hardware/biometrics/common/*.aidl",
     ],
-    frozen: false,
+    frozen: true,
     stability: "vintf",
     backend: {
         java: {
@@ -34,6 +34,10 @@ aidl_interface {
         },
         {
             version: "3",
+            imports: [],
+        },
+        {
+            version: "4",
             imports: [],
         },
 

@@ -31,8 +31,13 @@ aidl_interface {
             version: "2",
             imports: [],
         },
+        {
+            version: "3",
+            imports: [],
+        },
 
     ],
+    frozen: true,
 
 }
 
@@ -60,8 +65,13 @@ aidl_interface {
             version: "2",
             imports: ["android.hardware.radio-V2"],
         },
+        {
+            version: "3",
+            imports: ["android.hardware.radio-V3"],
+        },
 
     ],
+    frozen: true,
 
 }
 
@@ -89,8 +99,13 @@ aidl_interface {
             version: "2",
             imports: ["android.hardware.radio-V2"],
         },
+        {
+            version: "3",
+            imports: ["android.hardware.radio-V3"],
+        },
 
     ],
+    frozen: true,
 }
 
 aidl_interface {
@@ -117,8 +132,13 @@ aidl_interface {
             version: "2",
             imports: ["android.hardware.radio-V2"],
         },
+        {
+            version: "3",
+            imports: ["android.hardware.radio-V3"],
+        },
 
     ],
+    frozen: true,
 }
 
 aidl_interface {
@@ -145,8 +165,13 @@ aidl_interface {
             version: "2",
             imports: ["android.hardware.radio-V2"],
         },
+        {
+            version: "3",
+            imports: ["android.hardware.radio-V3"],
+        },
 
     ],
+    frozen: true,
 }
 
 aidl_interface {
@@ -173,8 +198,13 @@ aidl_interface {
             version: "2",
             imports: ["android.hardware.radio-V2"],
         },
+        {
+            version: "3",
+            imports: ["android.hardware.radio-V3"],
+        },
 
     ],
+    frozen: true,
 }
 
 aidl_interface {
@@ -238,8 +268,16 @@ aidl_interface {
                 "android.hardware.radio.config-V2",
             ],
         },
+        {
+            version: "3",
+            imports: [
+                "android.hardware.radio-V3",
+                "android.hardware.radio.config-V3",
+            ],
+        },
 
     ],
+    frozen: true,
 }
 
 aidl_interface {
@@ -266,8 +304,13 @@ aidl_interface {
             version: "2",
             imports: ["android.hardware.radio-V2"],
         },
+        {
+            version: "3",
+            imports: ["android.hardware.radio-V3"],
+        },
 
     ],
+    frozen: true,
 }
 
 aidl_interface {
@@ -295,7 +338,16 @@ aidl_interface {
                 "android.hardware.radio.data-V2",
             ],
         },
+        {
+            version: "2",
+            imports: [
+                "android.hardware.radio-V3",
+                "android.hardware.radio.data-V3",
+            ],
+        },
+
     ],
+    frozen: true,
 }
 
 aidl_interface {
@@ -317,5 +369,11 @@ aidl_interface {
             version: "1",
             imports: ["android.hardware.radio-V2"],
         },
+        {
+            version: "2",
+            imports: ["android.hardware.radio-V3"],
+        },
+
     ],
+    frozen: true,
 }
