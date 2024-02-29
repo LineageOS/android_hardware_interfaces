@@ -772,7 +772,7 @@ enum VehicleProperty {
      * @access VehiclePropertyAccess.READ
      * @data_enum ElectronicStabilityControlState
      * @data_enum ErrorState
-     * @version 2
+     * @version 3
      */
     ELECTRONIC_STABILITY_CONTROL_STATE =
             0x040F + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.INT32,
@@ -2909,7 +2909,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
-     * @version 3
+     * @version 2
      */
     SEAT_AIRBAG_ENABLED =
             0x0B9E + VehiclePropertyGroup.SYSTEM + VehicleArea.SEAT + VehiclePropertyType.BOOLEAN,
@@ -2932,7 +2932,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ
      * @data_enum VehicleAirbagLocation
-     * @version 2
+     * @version 3
      */
     SEAT_AIRBAGS_DEPLOYED =
             0x0BA5 + VehiclePropertyGroup.SYSTEM + VehicleArea.SEAT + VehiclePropertyType.INT32,
@@ -5868,7 +5868,7 @@ enum VehicleProperty {
      * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @access VehiclePropertyAccess.READ_WRITE
      * @access VehiclePropertyAccess.READ
-     * @version 2
+     * @version 3
      */
     DRIVER_DISTRACTION_WARNING_ENABLED =
             0x101F + VehiclePropertyGroup.SYSTEM + VehicleArea.GLOBAL + VehiclePropertyType.BOOLEAN,
