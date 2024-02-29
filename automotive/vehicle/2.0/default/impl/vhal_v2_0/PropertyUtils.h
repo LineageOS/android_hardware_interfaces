@@ -50,6 +50,9 @@ constexpr int ALL_WHEELS =
           VehicleAreaWheel::LEFT_REAR | VehicleAreaWheel::RIGHT_REAR);
 constexpr int SEAT_1_LEFT = (int)(VehicleAreaSeat::ROW_1_LEFT);
 constexpr int SEAT_1_RIGHT = (int)(VehicleAreaSeat::ROW_1_RIGHT);
+constexpr int HVAC_FRONT_ROW = (int)(VehicleAreaSeat::ROW_1_LEFT | VehicleAreaSeat::ROW_1_RIGHT);
+constexpr int HVAC_REAR_ROW = (int)(VehicleAreaSeat::ROW_2_LEFT | VehicleAreaSeat::ROW_2_CENTER |
+                                    VehicleAreaSeat::ROW_2_RIGHT);
 constexpr int HVAC_LEFT = (int)(VehicleAreaSeat::ROW_1_LEFT | VehicleAreaSeat::ROW_2_LEFT |
                                 VehicleAreaSeat::ROW_2_CENTER);
 constexpr int HVAC_RIGHT = (int)(VehicleAreaSeat::ROW_1_RIGHT | VehicleAreaSeat::ROW_2_RIGHT);

@@ -2033,19 +2033,10 @@
             },
             "areas": [
                 {
-                    "areaId": "Constants::SEAT_1_LEFT"
+                    "areaId": "Constants::HVAC_FRONT_ROW"
                 },
                 {
-                    "areaId": "Constants::SEAT_1_RIGHT"
-                },
-                {
-                    "areaId": "Constants::SEAT_2_LEFT"
-                },
-                {
-                    "areaId": "Constants::SEAT_2_RIGHT"
-                },
-                {
-                    "areaId": "Constants::SEAT_2_CENTER"
+                    "areaId": "Constants::HVAC_REAR_ROW"
                 }
             ]
         },
