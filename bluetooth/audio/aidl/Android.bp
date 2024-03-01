@@ -75,9 +75,17 @@ aidl_interface {
                 "android.hardware.audio.common-V2",
             ],
         },
+        {
+            version: "4",
+            imports: [
+                "android.hardware.audio.common-V3",
+                "android.hardware.common-V2",
+                "android.hardware.common.fmq-V1",
+            ],
+        },
 
     ],
-    frozen: false,
+    frozen: true,
 
 }
 
