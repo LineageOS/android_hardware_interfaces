@@ -58,6 +58,11 @@ aidl_interface {
             version: "1",
             imports: [],
         },
+        {
+            version: "2",
+            imports: ["android.hardware.wifi.common-V1"],
+        },
+
     ],
-    frozen: false,
+    frozen: true,
 }
