@@ -449,8 +449,7 @@ const ConfigDeclaration kVehicleProperties[]{
         {.config = {.prop = toInt(VehicleProperty::HVAC_MAX_DEFROST_ON),
                     .access = VehiclePropertyAccess::READ_WRITE,
                     .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-                    .areaConfigs = {VehicleAreaConfig{.areaId = HVAC_FRONT_ROW},
-                                    VehicleAreaConfig{.areaId = HVAC_REAR_ROW}}},
+                    .areaConfigs = {VehicleAreaConfig{.areaId = HVAC_ALL}}},
          .initialValue = {.int32Values = {0}}},
 
         {.config = {.prop = toInt(VehicleProperty::HVAC_RECIRC_ON),
