@@ -868,10 +868,18 @@ enum VehicleProperty {
     HVAC_TEMPERATURE_CURRENT = 0x0502 + 0x10000000 + 0x05000000
             + 0x00600000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:FLOAT
     /**
-     * HVAC, target temperature set.
+     * HVAC target temperature set in Celsius.
      *
-     * The configArray is used to indicate the valid values for HVAC in Fahrenheit and Celsius.
-     * Android might use it in the HVAC app UI.
+     * The minFloatValue and maxFloatValue in VehicleAreaConfig must be defined.
+     *
+     * The minFloatValue indicates the minimum temperature setting in Celsius.
+     * The maxFloatValue indicates the maximum temperature setting in Celsius.
+     *
+     * If all the values between minFloatValue and maxFloatValue are not supported, the configArray
+     * can be used to list the valid temperature values that can be set. It also describes a lookup
+     * table to convert the temperature from Celsius to Fahrenheit and vice versa for this vehicle.
+     * The configArray must be defined if standard unit conversion is not supported on this vehicle.
+     *
      * The configArray is set as follows:
      *      configArray[0] = [the lower bound of the supported temperature in Celsius] * 10.
      *      configArray[1] = [the upper bound of the supported temperature in Celsius] * 10.
@@ -879,14 +887,35 @@ enum VehicleProperty {
      *      configArray[3] = [the lower bound of the supported temperature in Fahrenheit] * 10.
      *      configArray[4] = [the upper bound of the supported temperature in Fahrenheit] * 10.
      *      configArray[5] = [the increment in Fahrenheit] * 10.
+     *
+     * The minFloatValue and maxFloatValue in VehicleAreaConfig must be equal to configArray[0] and
+     * configArray[1] respectively.
+     *
      * For example, if the vehicle supports temperature values as:
      *      [16.0, 16.5, 17.0 ,..., 28.0] in Celsius
-     *      [60.5, 61.5, 62.5 ,..., 85.5] in Fahrenheit.
-     * The configArray should be configArray = {160, 280, 5, 605, 825, 10}.
+     *      [60.5, 61.5, 62.5 ,..., 84.5] in Fahrenheit
+     * The configArray should be configArray = {160, 280, 5, 605, 845, 10}.
      *
-     * If the vehicle supports HVAC_TEMPERATURE_VALUE_SUGGESTION, the application can use
-     * that property to get the suggested value before setting HVAC_TEMPERATURE_SET. Otherwise,
-     * the application may choose the value in HVAC_TEMPERATURE_SET configArray by itself.
+     * Ideally, the ratio of the Celsius increment to the Fahrenheit increment should be as close to
+     * the actual ratio of 1 degree Celsius to 1.8 degrees Fahrenheit.
+     *
+     * There must be a one to one mapping of all Celsius values to Fahrenheit values defined by the
+     * configArray. The configArray will be used by clients to convert this property's temperature
+     * from Celsius to Fahrenheit. Also, it will let clients know what Celsius value to set the
+     * property to achieve their desired Fahreneheit value for the system. If the ECU does not have
+     * a one to one mapping of all Celsius values to Fahrenheit values, then the config array should
+     * only define the list of Celsius and Fahrenheit values that do have a one to one mapping.
+     *
+     * For example, if the ECU supports Celsius values from 16 to 28 and Fahrenheit values from 60
+     * to 85 both with an increment of 1, then one possible configArray would be {160, 280, 10, 600,
+     * 840, 20}. In this case, 85 would not be a supported temperature.
+     *
+     * Any value set in between a valid value should be rounded to the closest valid value.
+     *
+     * It is highly recommended that the OEM also implement the HVAC_TEMPERATURE_VALUE_SUGGESTION
+     * vehicle property because it provides applications a simple method for determining temperature
+     * values that can be set for this vehicle and for converting values between Celsius and
+     * Fahrenheit.
      *
      * This property is defined as VehiclePropertyAccess.READ_WRITE, but OEMs have the option to
      * implement it as VehiclePropertyAccess.READ only.
@@ -1295,7 +1324,22 @@ enum VehicleProperty {
      *
      * An application calls set(VehiclePropValue propValue) with the requested value and unit for
      * the value. OEMs need to return the suggested values in floatValues[2] and floatValues[3] by
-     * onPropertyEvent() callbacks.
+     * onPropertyEvent() callbacks. The suggested values must conform to the values that can be
+     * derived from the HVAC_TEMPERATURE_SET configArray. In other words, the suggested values and
+     * the table of values from the configArray should be the same. It is recommended for the OEM to
+     * add custom logic in their VHAL implementation in order to avoid making requests to the HVAC
+     * ECU.
+     *
+     * The logic can be as follows:
+     * For converting the temperature from celsius to fahrenheit use the following:
+     * // Given tempC and the configArray
+     * float minTempC = configArray[0] / 10.0;
+     * float temperatureIncrementCelsius = configArray[2] / 10.0;
+     * float minTempF = configArray[3] / 10.0;
+     * float temperatureIncrementFahrenheit = configArray[5] / 10.0;
+     * // Round to the closest increment
+     * int numIncrements = round((tempC - minTempC) / temperatureIncrementCelsius);
+     * tempF = temperatureIncrementFahrenheit * numIncrements + minTempF;
      *
      * For example, when a user uses the voice assistant to set HVAC temperature to 66.2 in
      * Fahrenheit.
