@@ -33,6 +33,8 @@
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
 
+namespace {
+
 using ::android::hardware::automotive::remoteaccess::BOOTUP_REASON_SYSTEM_ENTER_GARAGE_MODE;
 using ::android::hardware::automotive::remoteaccess::BOOTUP_REASON_SYSTEM_REMOTE_ACCESS;
 using ::android::hardware::automotive::remoteaccess::BOOTUP_REASON_USER_POWER_ON;
@@ -45,13 +47,18 @@ using ::grpc::ServerWriter;
 
 constexpr int SHUTDOWN_REQUEST = 289410889;
 constexpr int VEHICLE_IN_USE = 287313738;
-const char* COMMAND_RUN_EMU = "source ~/.aae-toolbox/bin/bashrc && aae emulator run";
-const char* COMMAND_SET_VHAL_PROP =
+constexpr char COMMAND_RUN_EMU_LOCAL_IMAGE[] =
+        "source ~/.aae-toolbox/bin/bashrc && aae emulator run";
+constexpr char COMMAND_RUN_EMU[] = "./launch_emu.sh -v \"-writable-system -selinux permissive\"";
+constexpr char COMMAND_SET_VHAL_PROP[] =
         "adb -s emulator-5554 wait-for-device && adb -s emulator-5554 root "
         "&& sleep 1 && adb -s emulator-5554 wait-for-device && adb -s emulator-5554 shell "
         "dumpsys android.hardware.automotive.vehicle.IVehicle/default --set %d -i %d";
 
 pid_t emuPid = 0;
+const char* runEmuCommand = COMMAND_RUN_EMU;
+
+}  // namespace
 
 void RunServer(const std::string& serviceAddr, std::shared_ptr<ServiceImpl> service) {
     ServerBuilder builder;
@@ -95,7 +102,7 @@ bool powerOnEmu(ServiceImpl* service, int32_t bootupReason) {
         return false;
     }
     service->setBootupReason(bootupReason);
-    emuPid = runCommand(COMMAND_RUN_EMU);
+    emuPid = runCommand(runEmuCommand);
     printf("Emulator started in process: %d\n", emuPid);
     return true;
 }
@@ -247,10 +254,16 @@ class MyServiceImpl final : public ServiceImpl {
     };
 };
 
+// Usage: TestWakeupClientServerHost [--local-image] [service_address_to_start]
 int main(int argc, char** argv) {
     std::string serviceAddr = GRPC_SERVICE_ADDRESS;
-    if (argc > 1) {
-        serviceAddr = argv[1];
+    for (int i = 1; i < argc; i++) {
+        char* arg = argv[1];
+        if (strcmp(arg, "--local-image") == 0) {
+            runEmuCommand = COMMAND_RUN_EMU_LOCAL_IMAGE;
+            continue;
+        }
+        serviceAddr = arg;
     }
     // Let the server thread run, we will force kill the server when we exit the program.
     std::shared_ptr<ServiceImpl> service = std::make_shared<MyServiceImpl>();
