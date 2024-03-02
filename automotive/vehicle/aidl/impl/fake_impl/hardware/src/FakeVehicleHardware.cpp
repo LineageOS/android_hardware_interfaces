@@ -907,6 +907,7 @@ FakeVehicleHardware::ValueResultType FakeVehicleHardware::getVehicleInUse(
     auto result = mValuePool->obtainBoolean(response.isvehicleinuse());
     result->prop = toInt(VehicleProperty::VEHICLE_IN_USE);
     result->areaId = 0;
+    result->status = VehiclePropertyStatus::AVAILABLE;
     result->timestamp = elapsedRealtimeNano();
     return result;
 }
@@ -924,6 +925,7 @@ FakeVehicleHardware::ValueResultType FakeVehicleHardware::getApPowerBootupReason
     auto result = mValuePool->obtainInt32(response.bootupreason());
     result->prop = toInt(VehicleProperty::AP_POWER_BOOTUP_REASON);
     result->areaId = 0;
+    result->status = VehiclePropertyStatus::AVAILABLE;
     result->timestamp = elapsedRealtimeNano();
     return result;
 }

@@ -317,6 +317,21 @@ TEST_P(WifiStaIfaceAidlTest, RoamingControl) {
 }
 
 /*
+ * RoamingModeControl
+ */
+TEST_P(WifiStaIfaceAidlTest, RoamingModeControl) {
+    if (interface_version_ < 2) {
+        GTEST_SKIP() << "Roaming mode control is available as of sta_iface V2";
+    }
+    if (!isFeatureSupported(IWifiStaIface::FeatureSetMask::ROAMING_MODE_CONTROL)) {
+        GTEST_SKIP() << "Roaming mode control is not supported.";
+    }
+
+    // Enable aggressive roaming.
+    EXPECT_TRUE(wifi_sta_iface_->setRoamingState(StaRoamingState::AGGRESSIVE).isOk());
+}
+
+/*
  * EnableNDOffload
  */
 TEST_P(WifiStaIfaceAidlTest, EnableNDOffload) {
