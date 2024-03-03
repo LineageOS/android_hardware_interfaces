@@ -104,6 +104,8 @@ const std::unordered_map<std::string, int> CONSTANTS_BY_NAME = {
         {"HVAC_ALL", HVAC_ALL},
         {"HVAC_LEFT", HVAC_LEFT},
         {"HVAC_RIGHT", HVAC_RIGHT},
+        {"HVAC_FRONT_ROW", HVAC_FRONT_ROW},
+        {"HVAC_REAR_ROW", HVAC_REAR_ROW},
         {"WINDOW_1_LEFT", WINDOW_1_LEFT},
         {"WINDOW_1_RIGHT", WINDOW_1_RIGHT},
         {"WINDOW_2_LEFT", WINDOW_2_LEFT},
