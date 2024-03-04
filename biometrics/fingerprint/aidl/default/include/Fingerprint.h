@@ -23,6 +23,7 @@
 #include "FakeFingerprintEngineSide.h"
 #include "FakeFingerprintEngineUdfps.h"
 
+#include "FingerprintConfig.h"
 #include "Session.h"
 #include "thread/WorkerThread.h"
 
@@ -40,10 +41,20 @@ class Fingerprint : public BnFingerprint {
     binder_status_t dump(int fd, const char** args, uint32_t numArgs);
     binder_status_t handleShellCommand(int in, int out, int err, const char** argv, uint32_t argc);
 
+    static FingerprintConfig& cfg() {
+        static FingerprintConfig* cfg = nullptr;
+        if (cfg == nullptr) {
+            cfg = new FingerprintConfig();
+            cfg->init();
+        }
+        return *cfg;
+    }
+
   private:
     void resetConfigToDefault();
     void onHelp(int);
     void onSimFingerDown();
+    void clearConfigSysprop();
 
     std::unique_ptr<FakeFingerprintEngine> mEngine;
     WorkerThread mWorker;
