@@ -23,6 +23,7 @@
 
 #include <aidl/Vintf.h>
 #include <android/binder_auto_utils.h>
+#include <system/audio_effects/aidl_effects_utils.h>
 
 #include "AudioHalBinderServiceUtil.h"
 #include "TestUtils.h"
@@ -72,6 +73,16 @@ class EffectFactoryHelper {
             }
         }
         return result;
+    }
+
+    static int getHalVersion(const std::shared_ptr<IFactory>& factory) {
+        int version = 0;
+        return (factory && factory->getInterfaceVersion(&version).isOk()) ? version : 0;
+    }
+
+    static bool isReopenSupported(const std::shared_ptr<IFactory>& factory) {
+        return EffectFactoryHelper::getHalVersion(factory) >=
+               aidl::android::hardware::audio::effect::kReopenSupportedVersion;
     }
 
   private:
