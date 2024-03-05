@@ -46,5 +46,6 @@ apex {
     prebuilts: [
         "android.hardware.audio.service-aidl.example.rc",
         "android.hardware.audio.service-aidl.xml",
+        "android.hardware.bluetooth.audio.xml",
     ],
 }
