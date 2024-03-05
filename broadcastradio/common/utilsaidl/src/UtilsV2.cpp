@@ -102,15 +102,16 @@ bool isValidV2(const ProgramIdentifier& id) {
             expect(val < 1000u, "SXM channel < 1000");
             break;
         case IdentifierType::HD_STATION_LOCATION: {
+            val >>= 26;
             uint64_t latitudeBit = val & 0x1;
-            expect(latitudeBit == 1u, "Latitude comes first");
-            val >>= 27;
+            expect(latitudeBit == 0u, "Longitude comes first");
+            val >>= 1;
             uint64_t latitudePad = val & 0x1Fu;
-            expect(latitudePad == 0u, "Latitude padding");
-            val >>= 5;
+            expect(latitudePad == 0u, "Longitude padding");
+            val >>= 31;
             uint64_t longitudeBit = val & 0x1;
-            expect(longitudeBit == 1u, "Longitude comes next");
-            val >>= 27;
+            expect(longitudeBit == 1u, "Latitude comes next");
+            val >>= 1;
             uint64_t longitudePad = val & 0x1Fu;
             expect(longitudePad == 0u, "Latitude padding");
             break;
