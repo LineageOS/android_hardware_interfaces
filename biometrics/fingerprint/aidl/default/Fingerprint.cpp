@@ -43,7 +43,7 @@ constexpr char SW_VERSION[] = "vendor/version/revision";
 }  // namespace
 
 Fingerprint::Fingerprint() : mWorker(MAX_WORKER_QUEUE_SIZE) {
-    std::string sensorTypeProp = FingerprintHalProperties::type().value_or("");
+    std::string sensorTypeProp = Fingerprint::cfg().get<std::string>("type");
     if (sensorTypeProp == "" || sensorTypeProp == "default" || sensorTypeProp == "rear") {
         mSensorType = FingerprintSensorType::REAR;
         mEngine = std::make_unique<FakeFingerprintEngineRear>();
@@ -68,15 +68,13 @@ ndk::ScopedAStatus Fingerprint::getSensorProps(std::vector<SensorProps>* out) {
             {HW_COMPONENT_ID, HW_VERSION, FW_VERSION, SERIAL_NUMBER, "" /* softwareVersion */},
             {SW_COMPONENT_ID, "" /* hardwareVersion */, "" /* firmwareVersion */,
              "" /* serialNumber */, SW_VERSION}};
-    auto sensorId = FingerprintHalProperties::sensor_id().value_or(SENSOR_ID);
-    auto sensorStrength =
-            FingerprintHalProperties::sensor_strength().value_or((int)SENSOR_STRENGTH);
-    auto maxEnrollments =
-            FingerprintHalProperties::max_enrollments().value_or(MAX_ENROLLMENTS_PER_USER);
-    auto navigationGuesture = FingerprintHalProperties::navigation_guesture().value_or(false);
-    auto detectInteraction = FingerprintHalProperties::detect_interaction().value_or(false);
-    auto displayTouch = FingerprintHalProperties::display_touch().value_or(true);
-    auto controlIllumination = FingerprintHalProperties::control_illumination().value_or(false);
+    auto sensorId = Fingerprint::cfg().get<std::int32_t>("sensor_id");
+    auto sensorStrength = Fingerprint::cfg().get<std::int32_t>("sensor_strength");
+    auto maxEnrollments = Fingerprint::cfg().get<std::int32_t>("max_enrollments");
+    auto navigationGuesture = Fingerprint::cfg().get<bool>("navigation_guesture");
+    auto detectInteraction = Fingerprint::cfg().get<bool>("detect_interaction");
+    auto displayTouch = Fingerprint::cfg().get<bool>("display_touch");
+    auto controlIllumination = Fingerprint::cfg().get<bool>("control_illumination");
 
     common::CommonProps commonProps = {sensorId, (common::SensorStrength)sensorStrength,
                                        maxEnrollments, componentInfo};
@@ -166,6 +164,14 @@ void Fingerprint::onHelp(int fd) {
 
 void Fingerprint::resetConfigToDefault() {
     LOG(INFO) << __func__ << ": reset virtual HAL configuration to default";
+    Fingerprint::cfg().init();
+#ifdef FPS_DEBUGGABLE
+    clearConfigSysprop();
+#endif
+}
+
+void Fingerprint::clearConfigSysprop() {
+    LOG(INFO) << __func__ << ": clear all systprop configuration";
 #define RESET_CONFIG_O(__NAME__) \
     if (FingerprintHalProperties::__NAME__()) FingerprintHalProperties::__NAME__(std::nullopt)
 #define RESET_CONFIG_V(__NAME__)                       \
