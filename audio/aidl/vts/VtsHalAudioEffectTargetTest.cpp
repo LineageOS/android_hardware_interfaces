@@ -42,6 +42,7 @@ using aidl::android::hardware::audio::effect::Descriptor;
 using aidl::android::hardware::audio::effect::Flags;
 using aidl::android::hardware::audio::effect::IEffect;
 using aidl::android::hardware::audio::effect::IFactory;
+using aidl::android::hardware::audio::effect::kReopenSupportedVersion;
 using aidl::android::hardware::audio::effect::Parameter;
 using aidl::android::hardware::audio::effect::State;
 using aidl::android::media::audio::common::AudioDeviceDescription;
@@ -613,6 +614,10 @@ TEST_P(AudioEffectTest, SetAndGetParameterVolume) {
  * verify reopen sequence.
  */
 TEST_P(AudioEffectDataPathTest, SetCommonParameterAndReopen) {
+    if (!EffectFactoryHelper::isReopenSupported(mFactory)) {
+        GTEST_SKIP() << "Skipping test as effect does not support reopen";
+    }
+
     ASSERT_NO_FATAL_FAILURE(create(mFactory, mEffect, mDescriptor));
 
     Parameter::Common common = EffectHelper::createParamCommon(
@@ -732,6 +737,10 @@ TEST_P(AudioEffectDataPathTest, ConsumeDataAfterRestart) {
 // Send data to effects and expect it to be consumed after effect reopen (IO AudioConfig change).
 // Effects exposing bypass flags or operating in offload mode will be skipped.
 TEST_P(AudioEffectDataPathTest, ConsumeDataAfterReopen) {
+    if (!EffectFactoryHelper::isReopenSupported(mFactory)) {
+        GTEST_SKIP() << "Skipping test as effect does not support reopen";
+    }
+
     ASSERT_NO_FATAL_FAILURE(create(mFactory, mEffect, mDescriptor));
 
     Parameter::Common common = EffectHelper::createParamCommon(
