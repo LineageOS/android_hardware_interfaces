@@ -40,3 +40,10 @@ cc_library_shared {
         "libbluetooth_audio_session_aidl",
     ],
 }
+
+prebuilt_etc {
+    name: "android.hardware.bluetooth.audio.xml",
+    src: "bluetooth_audio.xml",
+    sub_dir: "vintf",
+    installable: false,
+}
