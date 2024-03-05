@@ -63,7 +63,6 @@ class StreamBluetooth : public StreamCommonImpl {
     const std::weak_ptr<IBluetoothA2dp> mBluetoothA2dp;
     const std::weak_ptr<IBluetoothLe> mBluetoothLe;
     const size_t mPreferredDataIntervalUs;
-    const size_t mPreferredFrameCount;
     mutable std::mutex mLock;
     // The lock is also used to serialize calls to the proxy.
     std::shared_ptr<::android::bluetooth::audio::aidl::BluetoothAudioPortAidl> mBtDeviceProxy
