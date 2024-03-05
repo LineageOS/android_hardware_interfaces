@@ -36,21 +36,6 @@ using aidl::android::media::audio::common::AudioUuid;
 
 class EffectFactoryHelper {
   public:
-    explicit EffectFactoryHelper(const std::string& name) : mServiceName(name) {}
-
-    void ConnectToFactoryService() {
-        mEffectFactory = IFactory::fromBinder(binderUtil.connectToService(mServiceName));
-        ASSERT_NE(mEffectFactory, nullptr);
-    }
-
-    void RestartFactoryService() {
-        ASSERT_NE(mEffectFactory, nullptr);
-        mEffectFactory = IFactory::fromBinder(binderUtil.restartService());
-        ASSERT_NE(mEffectFactory, nullptr);
-    }
-
-    std::shared_ptr<IFactory> GetFactory() const { return mEffectFactory; }
-
     static std::vector<std::pair<std::shared_ptr<IFactory>, Descriptor>> getAllEffectDescriptors(
             std::string serviceName, std::optional<AudioUuid> type = std::nullopt) {
         AudioHalBinderServiceUtil util;
@@ -84,9 +69,4 @@ class EffectFactoryHelper {
         return EffectFactoryHelper::getHalVersion(factory) >=
                aidl::android::hardware::audio::effect::kReopenSupportedVersion;
     }
-
-  private:
-    std::shared_ptr<IFactory> mEffectFactory;
-    std::string mServiceName;
-    AudioHalBinderServiceUtil binderUtil;
 };
