@@ -7,6 +7,13 @@ package {
     default_applicable_licenses: ["hardware_interfaces_license"],
 }
 
+// The following target has an insecure implementation of KeyMint where the
+// trusted application (TA) code runs in-process alongside the HAL service
+// code.
+//
+// A real device is required to run the TA code in a secure environment, as
+// per CDD 9.11 [C-1-1]: "MUST back up the keystore implementation with an
+// isolated execution environment."
 cc_binary {
     name: "android.hardware.security.keymint-service",
     relative_install_path: "hw",
@@ -46,6 +53,13 @@ cc_binary {
     ],
 }
 
+// The following target has an insecure implementation of KeyMint where the
+// trusted application (TA) code runs in-process alongside the HAL service
+// code.
+//
+// A real device is required to run the TA code in a secure environment, as
+// per CDD 9.11 [C-1-1]: "MUST back up the keystore implementation with an
+// isolated execution environment."
 rust_binary {
     name: "android.hardware.security.keymint-service.nonsecure",
     relative_install_path: "hw",
