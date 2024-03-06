@@ -26,8 +26,17 @@ namespace aidl::android::hardware::media::bufferpool2::implementation {
 
 using aidl::android::hardware::media::bufferpool2::BufferStatus;
 
+uint32_t wrappedMinus(uint32_t a, uint32_t b) {
+    if (a >= b) {
+        return a - b;
+    } else {
+        return ~(b - a) + 1;
+    }
+}
+
 bool isMessageLater(uint32_t curMsgId, uint32_t prevMsgId) {
-    return curMsgId != prevMsgId && curMsgId - prevMsgId < prevMsgId - curMsgId;
+    return curMsgId != prevMsgId &&
+            wrappedMinus(curMsgId, prevMsgId) < wrappedMinus(prevMsgId, curMsgId);
 }
 
 bool isBufferInRange(BufferId from, BufferId to, BufferId bufferId) {
