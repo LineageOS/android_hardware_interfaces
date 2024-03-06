@@ -16,16 +16,13 @@
 
 #include <algorithm>
 
-#define ATRACE_TAG ATRACE_TAG_AUDIO
 #define LOG_TAG "AHAL_StreamBluetooth"
 #include <Utils.h>
 #include <android-base/logging.h>
 #include <audio_utils/clock.h>
-#include <utils/Trace.h>
 
 #include "core-impl/StreamBluetooth.h"
 
-using aidl::android::hardware::audio::common::frameCountFromDurationUs;
 using aidl::android::hardware::audio::common::SinkMetadata;
 using aidl::android::hardware::audio::common::SourceMetadata;
 using aidl::android::hardware::audio::core::VendorParameter;
@@ -67,8 +64,6 @@ StreamBluetooth::StreamBluetooth(StreamContext* context, const Metadata& metadat
                                        : (mIsInput ? kBluetoothDefaultInputBufferMs
                                                    : kBluetoothDefaultOutputBufferMs) *
                                                  1000),
-      mPreferredFrameCount(
-              frameCountFromDurationUs(mPreferredDataIntervalUs, pcmConfig.sampleRateHz)),
       mBtDeviceProxy(btDeviceProxy) {}
 
 ::android::status_t StreamBluetooth::init() {
@@ -77,6 +72,7 @@ StreamBluetooth::StreamBluetooth(StreamContext* context, const Metadata& metadat
         // This is a normal situation in VTS tests.
         LOG(INFO) << __func__ << ": no BT HAL proxy, stream is non-functional";
     }
+    LOG(INFO) << __func__ << ": preferred data interval (us): " << mPreferredDataIntervalUs;
     return ::android::OK;
 }
 
@@ -108,12 +104,10 @@ StreamBluetooth::StreamBluetooth(StreamContext* context, const Metadata& metadat
         LOG(ERROR) << __func__ << ": state= " << mBtDeviceProxy->getState() << " failed to start";
         return -EIO;
     }
-    const size_t fc = std::min(frameCount, mPreferredFrameCount);
-    const size_t bytesToTransfer = fc * mFrameSizeBytes;
+    const size_t bytesToTransfer = frameCount * mFrameSizeBytes;
     const size_t bytesTransferred = mIsInput ? mBtDeviceProxy->readData(buffer, bytesToTransfer)
                                              : mBtDeviceProxy->writeData(buffer, bytesToTransfer);
     *actualFrameCount = bytesTransferred / mFrameSizeBytes;
-    ATRACE_INT("BTdropped", bytesToTransfer - bytesTransferred);
     PresentationPosition presentation_position;
     if (!mBtDeviceProxy->getPresentationPosition(presentation_position)) {
         presentation_position.remoteDeviceAudioDelayNanos =

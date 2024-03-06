@@ -2024,7 +2024,7 @@ AssertionResult ChainSignaturesAreValid(const vector<Certificate>& chain,
         }
     }
 
-    if (KeyMintAidlTestBase::dump_Attestations) std::cout << cert_data.str();
+    if (KeyMintAidlTestBase::dump_Attestations) std::cout << "cert chain:\n" << cert_data.str();
     return AssertionSuccess();
 }
 
